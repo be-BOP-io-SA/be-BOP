@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { PHOENIXD_ENDPOINT_URL, PHOENIXD_HTTP_PASSWORD } from './env-config';
 import { runtimeConfig } from './runtime-config';
 import { persistConfigElement } from './utils/persistConfig';
+import { queueEmail } from './email';
 
 export const isPhoenixdConfigured = () =>
 	runtimeConfig.phoenixd.enabled && !!runtimeConfig.phoenixd.password;
@@ -10,7 +11,10 @@ export const isPhoenixdConfigured = () =>
 export async function phoenixdInfo(): Promise<{
 	nodeId: string;
 	chain: 'mainnet' | 'testnet';
-	channels: string[];
+	channels: {
+		capacitySat: number;
+		inboundLiquiditySat: number;
+	}[];
 	version: string;
 }> {
 	const res = await fetch(`${runtimeConfig.phoenixd.url}/getinfo`, {
@@ -22,6 +26,39 @@ export async function phoenixdInfo(): Promise<{
 	});
 
 	return await res.json();
+}
+
+/**
+ * Warn the shop by e-mail when a Lightning channel has little room left to receive.
+ *
+ * A full channel does not refuse payments, it makes them cost a fee the shop never asked for — so
+ * the warning has to arrive while there is still time to withdraw. Checked after a payment lands,
+ * which is the only moment the room actually shrinks.
+ *
+ * The threshold is a share of capacity already used, set on the phoenixd page; zero turns the
+ * warning off entirely. No contact e-mail on the seller identity means no one to warn.
+ */
+export async function warnOnAlmostFullChannels(): Promise<void> {
+	const threshold = runtimeConfig.phoenixd.inboundLiquidityWarningThreshold;
+	const contactEmail = runtimeConfig.sellerIdentity?.contact.email;
+	if (!threshold || !contactEmail) {
+		return;
+	}
+
+	const { channels } = await phoenixdInfo();
+	for (const channel of channels) {
+		if (!channel.capacitySat) {
+			continue;
+		}
+		const fill = (channel.capacitySat - channel.inboundLiquiditySat) / channel.capacitySat;
+		if (fill < threshold) {
+			continue;
+		}
+		await queueEmail(contactEmail, 'phoenixd.channel.almostFull', {
+			fillPercentage: Math.round(fill * 100).toString(),
+			inboundSat: channel.inboundLiquiditySat.toString()
+		});
+	}
 }
 
 export async function phoenixdBalance(): Promise<{ balanceSat: number; feeCreditSat: number }> {
@@ -96,6 +133,7 @@ export async function attemptAutoconfigurePhoenixd() {
 				const lnAddress = await phoenixdLnAddress();
 				const bolt12Address = await phoenixdGetBolt12();
 				runtimeConfig.phoenixd = {
+					...prevConfig,
 					enabled: true,
 					url: PHOENIXD_ENDPOINT_URL,
 					password: PHOENIXD_HTTP_PASSWORD,

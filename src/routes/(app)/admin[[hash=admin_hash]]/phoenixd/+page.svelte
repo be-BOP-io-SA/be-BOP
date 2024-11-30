@@ -27,6 +27,28 @@
 
 	let defaultUrl = data.phoenixd.url || 'http://localhost:9740';
 	let showBolt12 = false;
+
+	// Two decimals, like the figure shown underneath: rounding any coarser displayed a threshold as a
+	// value that is not the one applying, and the two numbers are meant to be compared.
+	let thresholdPercentage =
+		Math.round(data.phoenixd.inboundLiquidityWarningThreshold * 10000) / 100;
+
+	/**
+	 * Shown as fill, like the threshold right above it: the two numbers have to be comparable at a
+	 * glance, and the warning is set on how full the channel is rather than on what is left.
+	 */
+	$: channelFill = (data.nodeInfo?.channels ?? [])
+		.filter((channel) => channel.capacitySat > 0)
+		.map((channel) => {
+			const fill = (channel.capacitySat - channel.inboundLiquiditySat) / channel.capacitySat;
+			return {
+				// Kept exact for the comparison and only rounded for display: a channel 0.7% full once
+				// read as "1% full, threshold reached" next to a threshold of 1, while no mail was sent.
+				fill,
+				percentage: Math.round(fill * 10000) / 100,
+				inboundSat: channel.inboundLiquiditySat
+			};
+		});
 </script>
 
 <h1 class="text-3xl">PhoenixD</h1>
@@ -136,6 +158,43 @@
 			</p>
 			<p>{t('admin.phoenixd.pageCmsCode')} <code>[QRCode=Bolt12]</code></p>
 		{/if}
+	</form>
+	<form method="POST" action="?/updateCapacityWarning" class="contents">
+		<label class="form-label">
+			{t('admin.phoenixd.capacityWarningLabel')}
+			<input
+				type="number"
+				name="fillPercentage"
+				class="form-input"
+				min="0"
+				max="100"
+				step="0.01"
+				bind:value={thresholdPercentage}
+			/>
+			<span class="text-sm text-gray-500">{t('admin.phoenixd.capacityWarningHint')}</span>
+		</label>
+
+		{#each channelFill as channel, index}
+			<!-- Same test as the server, on the exact ratio. A threshold of zero means the warning is
+			     off, so nothing is past it. -->
+			{@const past = thresholdPercentage > 0 && channel.fill * 100 >= thresholdPercentage}
+			<div class="flex flex-col gap-1 max-w-[22rem]">
+				<span class="text-sm" class:text-red-600={past}>
+					{t('admin.phoenixd.currentFill', {
+						channel: String(index + 1),
+						fillPercentage: String(channel.percentage),
+						inboundSat: channel.inboundSat.toLocaleString()
+					})}
+				</span>
+				<div class="h-2 w-full rounded bg-gray-200">
+					<div
+						class="h-2 rounded {past ? 'bg-red-600' : 'bg-green-600'}"
+						style="width: {channel.percentage}%"
+					></div>
+				</div>
+			</div>
+		{/each}
+		<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>
 	</form>
 	<form method="POST" action="?/disable" id="disableForm"></form>
 	<dialog bind:this={withdrawDialog} class="max-w-full w-[500px] rounded">
