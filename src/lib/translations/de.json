@@ -1509,7 +1509,10 @@
 			"nodeInfoTitle": "Node-Informationen",
 			"balanceTitle": "Guthaben",
 			"invoicesTitle": "Rechnungen",
-			"withdrawalSuccessful": "Abhebung erfolgreich"
+			"withdrawalSuccessful": "Abhebung erfolgreich",
+			"capacityWarningLabel": "Mich per E-Mail warnen, sobald ein Kanal so voll ist (%)",
+			"capacityWarningHint": "Ein voller Kanal nimmt weiterhin Zahlungen an, sie kosten dann aber eine Gebühr. Die Warnung geht an die Kontaktadresse Ihrer Verkäuferidentität; 0 schaltet sie aus.",
+			"currentFill": "Kanal {channel}: {fillPercentage} % voll, {inboundSat} sat Platz übrig"
 		},
 		"s3": {
 			"notConfiguredWarning": "Der S3-Speicher ist nicht konfiguriert. Konfigurieren Sie ihn in den <0>S3-Einstellungen</0>, bevor Sie Bilder hochladen.",
