@@ -14,9 +14,11 @@
 		fullScreen: boolean;
 		hideFromSEO?: boolean;
 		hasMobileContent?: boolean;
+		hasEmployeeContent?: boolean;
 		maintenanceDisplay: boolean;
 		content: string;
 		mobileContent?: string;
+		employeeContent?: string;
 		metas?: {
 			name: string;
 			content: string;
@@ -32,7 +34,10 @@
 	let hideFromSEO = cmsPage?.hideFromSEO || false;
 	let hasCustomMeta = !!cmsPage?.metas?.length;
 	let hasMobileContent = cmsPage?.hasMobileContent || false;
+	let hasEmployeeContent = cmsPage?.hasEmployeeContent || false;
 	let mobileContent = cmsPage?.mobileContent || '';
+	let employeeContent = cmsPage?.employeeContent || '';
+
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this CMS page?')) {
 			event.preventDefault();
@@ -273,6 +278,37 @@
 				placeholder="HTML content"
 				class="form-input block w-full"
 				bind:value={mobileContent}
+			/>
+		</label>
+	{/if}
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="hasEmployeeContent"
+			bind:checked={hasEmployeeContent}
+			class="form-checkbox"
+		/>
+		This page has a subtitution target for employee
+	</label>
+	{#if hasEmployeeContent}
+		<label class="block w-full mt-4">
+			Employee content
+			<Editor
+				scriptSrc="/tinymce/tinymce.js"
+				bind:value={employeeContent}
+				conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+			/>
+
+			Raw HTML
+
+			<textarea
+				name="employeeContent"
+				cols="30"
+				rows="10"
+				maxlength={MAX_CONTENT_LIMIT}
+				placeholder="HTML content"
+				class="form-input block w-full"
+				bind:value={employeeContent}
 			/>
 		</label>
 	{/if}

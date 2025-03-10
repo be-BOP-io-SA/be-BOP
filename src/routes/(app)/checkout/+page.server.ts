@@ -8,7 +8,7 @@ import { emailsEnabled } from '$lib/server/email';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
-import { POS_ROLE_ID } from '$lib/types/User.js';
+import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User.js';
 import { zodNpub } from '$lib/server/nostr.js';
 import type { JsonObject } from 'type-fest';
 import { omit, set } from 'lodash-es';
@@ -39,6 +39,10 @@ export async function load({ parent, locals }) {
 			{
 				projection: {
 					content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] },
+					employeeContent: {
+						$ifNull: [`$translations.${locals.language}.employeeContent`, '$employeeContent']
+					},
+					hasEmployeeContent: 1,
 					title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] },
 					shortDescription: {
 						$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
@@ -55,6 +59,10 @@ export async function load({ parent, locals }) {
 			{
 				projection: {
 					content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] },
+					employeeContent: {
+						$ifNull: [`$translations.${locals.language}.employeeContent`, '$employeeContent']
+					},
+					hasEmployeeContent: 1,
 					title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] },
 					shortDescription: {
 						$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
@@ -92,11 +100,33 @@ export async function load({ parent, locals }) {
 		noProBilling: runtimeConfig.noProBilling,
 		...(cmsCheckoutTop && {
 			cmsCheckoutTop,
-			cmsCheckoutTopData: cmsFromContent({ content: cmsCheckoutTop.content }, locals)
+			cmsCheckoutTopData: cmsFromContent(
+				{
+					content:
+						locals.user?.roleId !== undefined &&
+						locals.user?.roleId !== CUSTOMER_ROLE_ID &&
+						cmsCheckoutTop.hasEmployeeContent &&
+						cmsCheckoutTop.employeeContent
+							? cmsCheckoutTop.employeeContent
+							: cmsCheckoutTop.content
+				},
+				locals
+			)
 		}),
 		...(cmsCheckoutBottom && {
 			cmsCheckoutBottom,
-			cmsCheckoutBottomData: cmsFromContent({ content: cmsCheckoutBottom.content }, locals)
+			cmsCheckoutBottomData: cmsFromContent(
+				{
+					content:
+						locals.user?.roleId !== undefined &&
+						locals.user?.roleId !== CUSTOMER_ROLE_ID &&
+						cmsCheckoutBottom.hasEmployeeContent &&
+						cmsCheckoutBottom.employeeContent
+							? cmsCheckoutBottom.employeeContent
+							: cmsCheckoutBottom.content
+				},
+				locals
+			)
 		}),
 		defaultOnLocation: runtimeConfig.defaultOnLocation,
 		desiredPaymentTimeout: runtimeConfig.desiredPaymentTimeout

@@ -52,6 +52,17 @@
 			value={data.cmsPage.translations?.[language]?.mobileContent ?? ''}
 		/>
 	</label>
+	<label class="form-label">
+		Employee content
+		<textarea
+			name="employeeContent"
+			class="form-input"
+			rows="10"
+			maxlength={MAX_CONTENT_LIMIT}
+			placeholder={data.cmsPage.employeeContent}
+			value={data.cmsPage.translations?.[language]?.employeeContent ?? ''}
+		/>
+	</label>
 
 	<label class="form-label">
 		Short Description

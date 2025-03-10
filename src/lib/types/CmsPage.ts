@@ -6,6 +6,7 @@ export interface CMSPageTranslatableFields {
 	shortDescription: string;
 	content: string;
 	mobileContent?: string;
+	employeeContent?: string;
 }
 
 export interface CMSPage extends Timestamps, CMSPageTranslatableFields {
@@ -14,6 +15,7 @@ export interface CMSPage extends Timestamps, CMSPageTranslatableFields {
 	maintenanceDisplay: boolean;
 	hideFromSEO?: boolean;
 	hasMobileContent?: boolean;
+	hasEmployeeContent?: boolean;
 	metas?: {
 		name: string;
 		content: string;
