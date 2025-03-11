@@ -18,7 +18,7 @@
 	>
 		<PictureComponent {picture} class="block h-36" />
 		{#if isAdmin}
-			<a target="_blank" href="/admin/product/{product._id}">
+			<a target="_blank" href="/product/{product._id}">
 				<IconExternalNewWindowOpen
 					class="absolute top-0 right-0 bg-white p-1 rounded-full shadow-md h-8 w-auto"
 				/>
