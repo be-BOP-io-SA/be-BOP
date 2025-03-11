@@ -37,7 +37,7 @@ export const productBaseSchema = () => ({
 	standalone: z.boolean({ coerce: true }).default(false),
 	free: z.boolean({ coerce: true }).default(false),
 	stock: z.number({ coerce: true }).int().min(0).optional(),
-	maxQuantityPerOrder: z.number({ coerce: true }).int().min(1).max(99).optional(),
+	maxQuantityPerOrder: z.number({ coerce: true }).int().min(1).optional(),
 	eshopVisible: z.boolean({ coerce: true }).default(false),
 	retailVisible: z.boolean({ coerce: true }).default(false),
 	nostrVisible: z.boolean({ coerce: true }).default(false),
@@ -55,6 +55,15 @@ export const productBaseSchema = () => ({
 				href: z.string().trim(),
 				label: z.string().trim(),
 				fallback: z.boolean({ coerce: true }).default(false)
+			})
+		)
+		.optional()
+		.default([]),
+	externalResources: z
+		.array(
+			z.object({
+				href: z.string().trim(),
+				label: z.string().trim()
 			})
 		)
 		.optional()
@@ -85,5 +94,6 @@ export const productBaseSchema = () => ({
 	hideContentAfter: z.boolean({ coerce: true }).default(false),
 	hasSellDisclaimer: z.boolean({ coerce: true }).default(false),
 	sellDisclaimerTitle: z.string().trim().max(60).optional(),
-	sellDisclaimerReason: z.string().trim().max(10_000).optional()
+	sellDisclaimerReason: z.string().trim().max(10_000).optional(),
+	hideFromSEO: z.boolean({ coerce: true }).default(false)
 });

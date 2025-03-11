@@ -5,32 +5,7 @@
 	export let data;
 	let viewportContentWidth = data.viewportContentWidth;
 	let viewportFor = data.viewportFor;
-	async function confirmSubmit(event: Event) {
-		if (
-			viewportFor === 'employee' &&
-			!confirm(
-				"Mobile-friendly display is still under construction. Are you sure ? This option is meant to be use to check your be-BOP with mobile specific display as an employee. For now, it's mean to be a temporary, and can reduce useability of the back-office to your team and POS session. Are you really sure ?"
-			)
-		) {
-			event.preventDefault();
-		}
-		if (
-			viewportFor === 'visitors' &&
-			!confirm(
-				"Mobile-friendly display is still under construction. Are you sure ? This option is meant to be use to give your visitors a mobile-friendly experience. For now, it's mean to be a temporary, and can degrade display of CMS and other pages of user journey. Are you really sure ?"
-			)
-		) {
-			event.preventDefault();
-		}
-		if (
-			viewportFor === 'everyone' &&
-			!confirm(
-				"Mobile-friendly display is still under construction. Are you sure ? This option is meant to be use on a public test phase of your be-BOP and to provide mobile-friendly experience. For now, it's mean to be a temporary, and can degrade both visitors and employees journey, as POS session. Are you really sure ?"
-			)
-		) {
-			event.preventDefault();
-		}
-	}
+
 	let navbarLinkLine = data.links.navbar.length || 2;
 	let linkLine = data.links.topbar.length || 2;
 	let footerLinkLine = data.links.footer.length || 2;
@@ -291,5 +266,5 @@
 		/>
 		Hide every CMS additional zone on mobile (product, cart, checkout and order page)
 	</label>
-	<button class="btn btn-black self-start" type="submit" on:click={confirmSubmit}>Update</button>
+	<button class="btn btn-black self-start" type="submit">Update</button>
 </form>

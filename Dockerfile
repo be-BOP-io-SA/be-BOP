@@ -17,7 +17,8 @@ ENV PATH="$PNPM_HOME:$PATH"
 
 WORKDIR /app
 
-RUN corepack enable
+RUN npm install -g corepack@latest
+RUN corepack enable pnpm
 
 COPY --link --chown=1000 .npmrc .
 COPY --link --chown=1000 package.json .

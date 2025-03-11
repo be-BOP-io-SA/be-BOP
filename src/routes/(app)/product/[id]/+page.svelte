@@ -157,6 +157,9 @@
 		<!-- eslint-disable svelte/no-at-html-tags -->
 		{@html serializeSchema(schema)}
 	{/if}
+	{#if data.product.hideFromSEO}
+		<meta name="robots" content="noindex" />
+	{/if}
 </svelte:head>
 
 <main class="mx-auto max-w-7xl py-10 px-6">
@@ -178,6 +181,7 @@
 			sessionEmail={data.email}
 			countdowns={data.productCMSBefore.countdowns}
 			galleries={data.productCMSBefore.galleries}
+			leaderboards={data.productCMSBefore.leaderboards}
 			class={data.product.mobile?.hideContentBefore || data.hideCmsZonesOnMobile
 				? 'hidden lg:contents'
 				: ''}
@@ -534,6 +538,7 @@
 								)
 									? 'break-all'
 									: ''} "
+								target={cta.href.startsWith('http') ? '_blank' : '_self'}
 							>
 								{cta.label}
 							</a>
@@ -545,6 +550,7 @@
 								)
 									? 'break-all'
 									: ''} "
+								target={cta.href.startsWith('http') ? '_blank' : '_self'}
 							>
 								{cta.label}
 							</a>
@@ -577,6 +583,7 @@
 			sessionEmail={data.email}
 			countdowns={data.productCMSAfter.countdowns}
 			galleries={data.productCMSAfter.galleries}
+			leaderboards={data.productCMSAfter.leaderboards}
 			class={data.product.mobile?.hideContentAfter || data.hideCmsZonesOnMobile
 				? 'hidden lg:contents'
 				: ''}

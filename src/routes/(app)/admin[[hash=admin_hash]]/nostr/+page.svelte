@@ -125,6 +125,19 @@
 	</label>
 	<button class="btn btn-black self-start" type="submit">Send</button>
 </form>
+<h2 class="text-2xl">Zaps</h2>
+
+<ul>
+	{#each data.receivedMessages.filter((mes) => mes.kind === 9735) as message}
+		<li class="break-words">
+			{#if message.kind === 4}
+				<span title="Encrypted message">'⚡'</span>
+			{/if}
+			<time datetime={message.createdAt.toJSON()}>{message.createdAt.toLocaleString('en-UK')}</time>
+			| {JSON.stringify(message)}
+		</li>
+	{/each}
+</ul>
 <h2 class="text-2xl">Received messages</h2>
 
 <ul>
@@ -132,10 +145,12 @@
 		<li class="break-words">
 			{#if message.kind === 4}
 				<span title="Encrypted message">'🔐'</span>
+				<time datetime={message.createdAt.toJSON()}
+					>{message.createdAt.toLocaleString('en-UK')}</time
+				>
+				|
+				{message.source} | {message.content}
 			{/if}
-			<time datetime={message.createdAt.toJSON()}>{message.createdAt.toLocaleString('en-UK')}</time>
-			|
-			{message.source} | {message.content}
 		</li>
 	{/each}
 </ul>

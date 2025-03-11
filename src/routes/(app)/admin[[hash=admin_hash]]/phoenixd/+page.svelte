@@ -22,6 +22,7 @@
 	let withdrawMode = 'bolt11' as 'bolt11' | 'bitcoin';
 
 	let defaultUrl = data.phoenixd.url || 'http://localhost:9740';
+	let showBolt12 = false;
 </script>
 
 <h1 class="text-3xl">PhoenixD</h1>
@@ -92,6 +93,9 @@
 		<div class="flex gap-2">
 			<button class="btn btn-black" type="submit">Save</button>
 			<button class="btn btn-red" type="submit" form="disableForm">Reset</button>
+			<button class="btn btn-gray" type="button" on:click={() => (showBolt12 = !showBolt12)}
+				>Get bolt12 address</button
+			>
 
 			{#if data.nodeInfo}
 				<button class="btn btn-blue ml-auto" type="button" on:click={() => showDialog()}
@@ -99,6 +103,10 @@
 				>
 			{/if}
 		</div>
+		{#if showBolt12}
+			<p class="break-words">Bolt12 address: {data.bolt12Address}</p>
+			<p>To use it on page CMS, use this code : <code>[QRCode=Bolt12]</code></p>
+		{/if}
 	</form>
 	<form method="POST" action="?/disable" id="disableForm"></form>
 	<dialog bind:this={withdrawDialog} class="max-w-full w-[500px] rounded">

@@ -16,6 +16,12 @@
 	}
 
 	let successMessage = '';
+	let listEmail = data.users.flatMap((user) => user.recovery?.email ?? '');
+	let listNpub = data.users.flatMap((user) => user.recovery?.npub ?? '');
+	function hasDuplicates(list: string[]) {
+		let uniqueSet = new Set(list.filter((recover) => recover));
+		return uniqueSet.size !== list.filter((recover) => recover).length;
+	}
 </script>
 
 <h1 class="text-3xl">Access Rights Management</h1>
@@ -116,7 +122,12 @@
 </ul>
 
 <h2 class="text-2xl">Users</h2>
-
+{#if hasDuplicates(listEmail)}
+	<span class="text-red-500">Duplicated emails was found, please fix them before submit</span>
+{/if}
+{#if hasDuplicates(listNpub)}
+	<span class="text-red-500">Duplicated Npubs was found, please fix them before submit</span>
+{/if}
 <a href="{data.adminPrefix}/arm/user/new" class="underline">Create a user</a>
 
 <ul
@@ -133,7 +144,7 @@
 		<span>Password</span>
 		<span>Delete</span>
 	</li>
-	{#each data.users as user}
+	{#each data.users as user, i}
 		<li class="contents">
 			<form
 				action="{data.adminPrefix}/arm/user/{user._id}?/update"
@@ -178,14 +189,14 @@
 					name="recoveryEmail"
 					class="form-input"
 					disabled={data.roleId !== SUPER_ADMIN_ROLE_ID && user.roleId === SUPER_ADMIN_ROLE_ID}
-					value={user.recovery?.email ?? ''}
+					bind:value={listEmail[i]}
 				/>
 				<input
 					type="text"
 					name="recoveryNpub"
 					class="form-input"
 					disabled={data.roleId !== SUPER_ADMIN_ROLE_ID && user.roleId === SUPER_ADMIN_ROLE_ID}
-					value={user.recovery?.npub ?? ''}
+					bind:value={listNpub[i]}
 				/>
 				<select class="form-input" disabled={user.roleId === SUPER_ADMIN_ROLE_ID} name="roleId">
 					{#each data.roles as role}
@@ -202,7 +213,12 @@
 					<option value="enabled" selected={!user.disabled}>Enabled</option>
 					<option value="disabled" selected={!!user.disabled}>Disabled</option>
 				</select>
-				<button type="submit" class="btn btn-black self-start" title="Save">
+				<button
+					type="submit"
+					class="btn btn-black self-start"
+					title="Save"
+					disabled={hasDuplicates(listEmail) || hasDuplicates(listNpub)}
+				>
 					<IconSave />
 				</button>
 				<button

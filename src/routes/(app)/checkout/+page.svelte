@@ -77,22 +77,26 @@
 
 	function checkForm(event: SubmitEvent) {
 		submitting = true;
-		for (const input of typedValues(npubInputs)) {
-			if (!input) {
-				continue;
-			}
+		try {
+			for (const input of typedValues(npubInputs)) {
+				if (!input) {
+					continue;
+				}
 
-			input.value = trimPrefix(input.value.trim(), 'nostr:');
-			if (
-				input.value &&
-				(!input.value.startsWith('npub1') || bech32.decodeUnsafe(input.value)?.prefix !== 'npub')
-			) {
-				input.setCustomValidity(t('checkout.invalidNpub'));
-				input.reportValidity();
+				input.value = trimPrefix(input.value.trim(), 'nostr:');
+				if (
+					input.value &&
+					(!input.value.startsWith('npub1') || bech32.decodeUnsafe(input.value)?.prefix !== 'npub')
+				) {
+					input.setCustomValidity(t('checkout.invalidNpub'));
+					input.reportValidity();
 
-				event.preventDefault();
-				return;
+					event.preventDefault();
+					return;
+				}
 			}
+		} finally {
+			submitting = false;
 		}
 	}
 
@@ -181,6 +185,7 @@
 			sessionEmail={data.email}
 			countdowns={data.cmsCheckoutTopData.countdowns}
 			galleries={data.cmsCheckoutTopData.galleries}
+			leaderboards={data.cmsCheckoutTopData.leaderboards}
 			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
 		/>
 	{/if}
@@ -1093,6 +1098,7 @@
 			sessionEmail={data.email}
 			countdowns={data.cmsCheckoutBottomData.countdowns}
 			galleries={data.cmsCheckoutBottomData.galleries}
+			leaderboards={data.cmsCheckoutBottomData.leaderboards}
 			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
 		/>
 	{/if}

@@ -137,7 +137,11 @@ export async function fetchOrderForUser(orderId: string) {
 				shipping: item.product.shipping,
 				paymentMethods: item.product.paymentMethods,
 				isTicket: item.product.isTicket,
-				variationLabels: item.product.variationLabels
+				variationLabels: item.product.variationLabels,
+				externalResources: item.product.externalResources?.map((externalResource) => ({
+					label: externalResource.label,
+					href: order.status === 'paid' ? externalResource.href : undefined
+				}))
 			},
 			vatRate: item.vatRate,
 			...(item.customPrice && { customPrice: item.customPrice }),

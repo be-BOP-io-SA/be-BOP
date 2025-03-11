@@ -21,6 +21,8 @@
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import IconStripe from '$lib/components/icons/IconStripe.svelte';
+	import IconDownloadWindow from '$lib/components/icons/IconDownloadWindow.svelte';
+	import IconExternalNewWindowOpen from '$lib/components/icons/IconExternalNewWindowOpen.svelte';
 
 	let currentDate = new Date();
 	export let data;
@@ -87,6 +89,7 @@
 			sessionEmail={data.email}
 			countdowns={data.cmsOrderTopData.countdowns}
 			galleries={data.cmsOrderTopData.galleries}
+			leaderboards={data.cmsOrderTopData.leaderboards}
 			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
 		/>
 	{/if}
@@ -473,7 +476,8 @@
 				<h2 class="text-2xl">{t('product.digitalFiles.title')}</h2>
 				<ul>
 					{#each data.digitalFiles as digitalFile}
-						<li>
+						<li class="flex flex-row gap-2">
+							<IconDownloadWindow class="mt-1 body-hyperlink" />
 							{#if digitalFile.link}
 								<a href={digitalFile.link} class="body-hyperlink hover:underline" target="_blank"
 									>{digitalFile.name}</a
@@ -485,7 +489,25 @@
 					{/each}
 				</ul>
 			{/if}
-
+			{#if data.order.items.flatMap((item) => item.product.externalResources || []).length}
+				<h2 class="text-2xl">{t('order.externalResources.title')}</h2>
+				<ul>
+					{#each data.order.items.flatMap((item) => item.product.externalResources || []) as externalResource}
+						<li class="flex flex-row gap-2">
+							<IconExternalNewWindowOpen class="mt-1 body-hyperlink" />
+							{#if externalResource?.href}
+								<a
+									href={externalResource?.href}
+									class="body-hyperlink hover:underline"
+									target="_blank">{externalResource?.label}</a
+								>
+							{:else}
+								{externalResource?.label}
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			{/if}
 			{#if data.order.vatFree}
 				<p>{t('order.vatFree', { reason: data.order.vatFree.reason })}</p>
 			{/if}
@@ -630,6 +652,7 @@
 			sessionEmail={data.email}
 			countdowns={data.cmsOrderBottomData.countdowns}
 			galleries={data.cmsOrderBottomData.galleries}
+			leaderboards={data.cmsOrderBottomData.leaderboards}
 			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
 		/>
 	{/if}

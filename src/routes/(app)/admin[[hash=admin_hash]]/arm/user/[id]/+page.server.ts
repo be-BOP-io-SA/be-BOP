@@ -2,6 +2,7 @@ import { adminPrefix } from '$lib/server/admin';
 import { collections } from '$lib/server/database.js';
 import { zodNpub } from '$lib/server/nostr.js';
 import { sendResetPasswordNotification } from '$lib/server/sendNotification.js';
+import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { CUSTOMER_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
@@ -45,24 +46,30 @@ export const actions = {
 		if (user.roleId === SUPER_ADMIN_ROLE_ID && locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
 			throw error(400, 'You are not allowed to edit admin information');
 		}
-
-		await collections.users.updateOne(
-			{ _id: user._id },
-			{
-				$set: {
-					login: parsed.login,
-					...(parsed.alias && { alias: parsed.alias }),
-					recovery: {
-						...(parsed.recoveryEmail && { email: parsed.recoveryEmail }),
-						...(parsed.recoveryNpub && { npub: parsed.recoveryNpub })
-					},
-					disabled: parsed.status === 'disabled',
-					roleId: parsed.roleId ?? user.roleId
+		try {
+			await collections.users.updateOne(
+				{ _id: user._id },
+				{
+					$set: {
+						login: parsed.login,
+						...(parsed.alias && { alias: parsed.alias }),
+						recovery: {
+							...(parsed.recoveryEmail && { email: parsed.recoveryEmail }),
+							...(parsed.recoveryNpub && { npub: parsed.recoveryNpub })
+						},
+						disabled: parsed.status === 'disabled',
+						roleId: parsed.roleId ?? user.roleId
+					}
 				}
-			}
-		);
+			);
 
-		throw redirect(303, `${adminPrefix()}/arm`);
+			throw redirect(303, `${adminPrefix()}/arm`);
+		} catch (err) {
+			if (isUniqueConstraintError(err)) {
+				throw error(409, 'A user with the same email or npub already exists');
+			}
+			throw err;
+		}
 	},
 	resetPassword: async function ({ params }) {
 		const user = await collections.users.findOne({ _id: new ObjectId(params.id) });

@@ -149,6 +149,7 @@
 							href={link.href}
 							class=" {data.notResponsive ? '' : 'hidden lg:inline'}"
 							data-sveltekit-preload-data="off"
+							target={link.href.startsWith('http') ? '_blank' : '_self'}
 						>
 							{link.label}
 						</a>

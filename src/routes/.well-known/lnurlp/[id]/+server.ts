@@ -18,14 +18,15 @@ export const OPTIONS = () => {
 };
 
 export const GET = async ({ params, url }) => {
-	if (!isLightningConfigured) {
+	if (!isLightningConfigured && !runtimeConfig.phoenixd.lnAddress) {
 		throw error(400, 'Lighting is not configured');
 	}
+	if (isLightningConfigured) {
+		const info = await lndGetInfo();
 
-	const info = await lndGetInfo();
-
-	if (!info.uris.length) {
-		throw error(400, 'No public Lightning URI');
+		if (!info.uris.length) {
+			throw error(400, 'No public Lightning URI');
+		}
 	}
 
 	let picture: Buffer | null = null;

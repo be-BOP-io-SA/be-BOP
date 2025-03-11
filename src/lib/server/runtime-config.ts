@@ -123,7 +123,9 @@ const baseConfig = {
 	phoenixd: {
 		url: 'http://localhost:9740',
 		enabled: false,
-		password: ''
+		password: '',
+		lnAddress: '',
+		bolt12Address: ''
 	},
 	productActionSettings: {
 		eShop: {
@@ -266,6 +268,24 @@ Amount: {{amount}} {{currency}}</p>`,
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is paid, see <a href="{{orderLink}}">{{orderLink}}</a></p>
 <p>Order <a href="{{orderLink}}">#{{orderNumber}}</a> is not fully paid yet.</p>`,
+			default: true as boolean
+		},
+		'order.update.challenge': {
+			subject: 'Leaderboard {{challengeName}',
+			html: `<p>Dear be-BOP owner,
+The order #{{orderNumber}} {{orderLink}} was successfully paid.
+It contains the following product(s) that increase the challenge {{challengeName}} : </p>
+<p>{{itemsChallenge}}</p>
+<p>Total increase : {{increase}}</p>
+<p>Challenge current level : {{challengeLevel}}</p>`,
+			default: true as boolean
+		},
+		'order.update.leaderboard': {
+			subject: 'Leaderboard {{leaderboardName}}',
+			html: `<p>Dear be-BOP owner,
+The order #{{orderNumber}} {{orderLink}} was successfully paid.
+It contains the following product(s) that increase the leaderboard {{leaderboardName}} : </p>
+<p>{{itemsLeaderboard}}</p>`,
 			default: true as boolean
 		}
 	}

@@ -2,10 +2,11 @@
 	export let text: string;
 	export let goal: number;
 	export let progress: number;
+	export let leaderboard = false;
 	let className = '';
 	export { className as class };
 
-	$: percentage = (progress * 100) / goal;
+	$: percentage = goal !== 0 ? (progress * 100) / goal : 0;
 	$: newPercentage = (goal * 100) / progress;
 </script>
 
@@ -15,7 +16,7 @@
 			? 'bg-green-500'
 			: 'bg-gradient-to-r from-red-500 to-green-500 via-yellow-500'}"
 	>
-		{#if percentage < 100}
+		{#if percentage <= 100}
 			<div
 				data-text={text}
 				style="background-position: {percentage}% 0%"
@@ -33,7 +34,9 @@
 	</div>
 	<div
 		class="absolute inset-0 rounded-[3px] flex justify-end {percentage >= 100
-			? 'bg-green-500'
+			? leaderboard
+				? 'bg-gradient-to-r from-red-500 to-green-500 via-yellow-500'
+				: 'bg-green-500'
 			: ''}"
 		style={percentage >= 100 ? `width: calc(${Math.round(newPercentage)}%);` : ''}
 	>

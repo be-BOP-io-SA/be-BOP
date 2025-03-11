@@ -19,6 +19,10 @@ export interface ProductTranslatableFields {
 		href: string;
 		fallback?: boolean;
 	}[];
+	externalResources?: {
+		label: string;
+		href: string;
+	}[];
 	variationLabels?: {
 		names: Record<string, string>;
 		values: Record<string, Record<string, string>>;
@@ -89,6 +93,7 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 		price?: number;
 	}[];
 	hasSellDisclaimer?: boolean;
+	hideFromSEO?: boolean;
 }
 
 export type BasicProductFrontend = Pick<Product, '_id' | 'price' | 'name' | 'variationLabels'>;

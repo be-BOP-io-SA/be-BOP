@@ -17,6 +17,7 @@ import { setTimeout } from 'node:timers/promises';
 import type { Event } from 'nostr-tools';
 import { uniqBy } from '$lib/utils/uniqBy';
 import { NOSTR_PROTOCOL_VERSION } from '$lib/server/locks/handle-messages';
+import { isPhoenixdConfigured, phoenixdLnAddress } from '$lib/server/phoenixd';
 
 export function load() {
 	return {
@@ -47,7 +48,9 @@ export const actions = {
 			: null;
 
 		const lndInfo = isLightningConfigured ? await lndGetInfo() : null;
-		const lnAddress = lndInfo?.uris?.[0];
+		const lnAddress =
+			lndInfo?.uris?.[0] ??
+			(isPhoenixdConfigured() ? await phoenixdLnAddress().catch(() => null) : null);
 
 		await collections.nostrNotifications.insertOne({
 			_id: new ObjectId(),

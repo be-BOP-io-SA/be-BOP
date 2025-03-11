@@ -1,10 +1,30 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+
 	export let data;
+
+	let errorMessage = '';
+	let loading = false;
 </script>
 
 <h1 class="text-3xl">Bulk Alias Change</h1>
 
-<form class="flex flex-col gap-2" method="post">
+<form
+	class="flex flex-col gap-2"
+	method="post"
+	use:enhance={() => {
+		errorMessage = '';
+		return async ({ result }) => {
+			loading = false;
+
+			if (result.type === 'error') {
+				errorMessage = result.error.message;
+				return;
+			}
+		};
+	}}
+	on:submit|preventDefault={() => (loading = true)}
+>
 	{#each data.products as product}
 		<h2 class="text-2xl">{product.name}</h2>
 		<div class="gap-4 flex flex-col md:flex-row">
@@ -25,5 +45,8 @@
 			</label>
 		</div>
 	{/each}
-	<button class="btn btn-black self-start mt-4" type="submit">Update</button>
+	{#if errorMessage}
+		<span class="text-red-500">{errorMessage}</span>
+	{/if}
+	<button class="btn btn-black self-start mt-4" type="submit" disabled={loading}>Update</button>
 </form>

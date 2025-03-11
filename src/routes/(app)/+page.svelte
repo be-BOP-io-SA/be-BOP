@@ -23,6 +23,7 @@
 		brandName={data.brandName}
 		countdowns={data.cmsData.countdowns}
 		galleries={data.cmsData.galleries}
+		leaderboards={data.cmsData.leaderboards}
 	/>
 {:else}
 	<Catalog {...data.catalog} />

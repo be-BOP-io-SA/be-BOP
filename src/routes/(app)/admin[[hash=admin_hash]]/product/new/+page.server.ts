@@ -19,6 +19,7 @@ import type { Tag } from '$lib/types/Tag';
 import { adminPrefix } from '$lib/server/admin';
 import { pojo } from '$lib/server/pojo';
 import { zodSlug } from '$lib/server/zod';
+import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 
 export const load = async ({ url }) => {
 	const productId = url.searchParams.get('duplicate_from');
@@ -27,7 +28,6 @@ export const load = async ({ url }) => {
 		.find({})
 		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
 		.toArray();
-
 	if (productId) {
 		const product = await collections.products.findOne({ _id: productId });
 
@@ -138,98 +138,110 @@ export const actions: Actions = {
 		await generatePicture(parsed.pictureId, {
 			productId: parsed.slug,
 			cb: async (session) => {
-				await collections.products.insertOne(
-					{
-						_id: parsed.slug,
-						alias: parsed.alias ? [parsed.slug, parsed.alias] : [parsed.slug],
-						createdAt: new Date(),
-						updatedAt: new Date(),
-						description: parsed.description.replaceAll('\r', ''),
-						shortDescription: parsed.shortDescription.replaceAll('\r', ''),
-						name: parsed.name,
-						isTicket: parsed.isTicket,
-						price: {
-							currency: parsed.priceCurrency,
-							amount: priceAmount
-						},
-						type: parsed.type,
-						availableDate: parsed.availableDate || undefined,
-						preorder: parsed.preorder,
-						...(parsed.customPreorderText && { customPreorderText: parsed.customPreorderText }),
-						shipping: parsed.shipping,
-						payWhatYouWant: parsed.payWhatYouWant,
-						...(parsed.hasMaximumPrice &&
-							parsed.maxPriceAmount && {
-								maximumPrice: {
-									amount: parsePriceAmount(parsed.maxPriceAmount, parsed.priceCurrency),
-									currency: parsed.priceCurrency
+				try {
+					await collections.products.insertOne(
+						{
+							_id: parsed.slug,
+							alias: parsed.alias ? [parsed.slug, parsed.alias] : [parsed.slug],
+							createdAt: new Date(),
+							updatedAt: new Date(),
+							description: parsed.description.replaceAll('\r', ''),
+							shortDescription: parsed.shortDescription.replaceAll('\r', ''),
+							name: parsed.name,
+							isTicket: parsed.isTicket,
+							price: {
+								currency: parsed.priceCurrency,
+								amount: priceAmount
+							},
+							type: parsed.type,
+							availableDate: parsed.availableDate || undefined,
+							preorder: parsed.preorder,
+							...(parsed.customPreorderText && { customPreorderText: parsed.customPreorderText }),
+							shipping: parsed.shipping,
+							payWhatYouWant: parsed.payWhatYouWant,
+							...(parsed.hasMaximumPrice &&
+								parsed.maxPriceAmount && {
+									maximumPrice: {
+										amount: parsePriceAmount(parsed.maxPriceAmount, parsed.priceCurrency),
+										currency: parsed.priceCurrency
+									}
+								}),
+							standalone: parsed.payWhatYouWant || parsed.standalone,
+							free: parsed.free,
+							displayShortDescription: parsed.displayShortDescription,
+							...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
+							applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
+							requireSpecificDeliveryFee: parsed.requireSpecificDeliveryFee,
+							...(parsed.stock !== undefined && {
+								stock: { total: parsed.stock, available: parsed.stock, reserved: 0 }
+							}),
+							...(parsed.depositPercentage !== undefined && {
+								deposit: {
+									percentage: parsed.depositPercentage,
+									enforce: parsed.enforceDeposit
 								}
 							}),
-						standalone: parsed.payWhatYouWant || parsed.standalone,
-						free: parsed.free,
-						displayShortDescription: parsed.displayShortDescription,
-						...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
-						applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
-						requireSpecificDeliveryFee: parsed.requireSpecificDeliveryFee,
-						...(parsed.stock !== undefined && {
-							stock: { total: parsed.stock, available: parsed.stock, reserved: 0 }
-						}),
-						...(parsed.depositPercentage !== undefined && {
-							deposit: {
-								percentage: parsed.depositPercentage,
-								enforce: parsed.enforceDeposit
-							}
-						}),
-						...(parsed.maxQuantityPerOrder && {
-							maxQuantityPerOrder: parsed.maxQuantityPerOrder
-						}),
-						...(parsed.restrictPaymentMethods && {
-							paymentMethods: parsed.paymentMethods ?? []
-						}),
-						actionSettings: {
-							eShop: {
-								visible: parsed.eshopVisible,
-								canBeAddedToBasket: parsed.eshopBasket
-							},
-							retail: {
-								visible: parsed.retailVisible,
-								canBeAddedToBasket: parsed.retailBasket
-							},
-							googleShopping: {
-								visible: parsed.googleShoppingVisible
-							},
-							nostr: {
-								visible: parsed.nostrVisible,
-								canBeAddedToBasket: parsed.nostrBasket
-							}
-						},
-						tagIds: parsed.tagIds,
-						cta: parsed.cta?.filter((ctaLink) => ctaLink.label && ctaLink.href),
-						...(parsed.standalone && { hasVariations: parsed.hasVariations }),
-						...(parsed.standalone &&
-							parsed.hasVariations && {
-								variations: variationsParsedPrice.filter(
-									(variation) => variation.name && variation.value
-								)
+							...(parsed.maxQuantityPerOrder && {
+								maxQuantityPerOrder: parsed.maxQuantityPerOrder
 							}),
-						...(parsed.standalone &&
-							parsed.hasVariations &&
-							parsed.variationLabels && {
-								variationLabels: cleanedVariationLabels
+							...(parsed.restrictPaymentMethods && {
+								paymentMethods: parsed.paymentMethods ?? []
 							}),
-						...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
-						hasSellDisclaimer: parsed.hasSellDisclaimer,
-						...(parsed.hasSellDisclaimer &&
-							parsed.sellDisclaimerTitle &&
-							parsed.sellDisclaimerReason && {
-								sellDisclaimer: {
-									title: parsed.sellDisclaimerTitle,
-									reason: parsed.sellDisclaimerReason
+							actionSettings: {
+								eShop: {
+									visible: parsed.eshopVisible,
+									canBeAddedToBasket: parsed.eshopBasket
+								},
+								retail: {
+									visible: parsed.retailVisible,
+									canBeAddedToBasket: parsed.retailBasket
+								},
+								googleShopping: {
+									visible: parsed.googleShoppingVisible
+								},
+								nostr: {
+									visible: parsed.nostrVisible,
+									canBeAddedToBasket: parsed.nostrBasket
 								}
-							})
-					},
-					{ session }
-				);
+							},
+							tagIds: parsed.tagIds,
+							cta: parsed.cta?.filter((ctaLink) => ctaLink.label && ctaLink.href),
+							externalResources: parsed.externalResources?.filter(
+								(externalResourceLink) => externalResourceLink.label && externalResourceLink.href
+							),
+							...(parsed.standalone && { hasVariations: parsed.hasVariations }),
+							...(parsed.standalone &&
+								parsed.hasVariations && {
+									variations: variationsParsedPrice.filter(
+										(variation) => variation.name && variation.value
+									)
+								}),
+							...(parsed.standalone &&
+								parsed.hasVariations &&
+								parsed.variationLabels && {
+									variationLabels: cleanedVariationLabels
+								}),
+							...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
+							hasSellDisclaimer: parsed.hasSellDisclaimer,
+							...(parsed.hasSellDisclaimer &&
+								parsed.sellDisclaimerTitle &&
+								parsed.sellDisclaimerReason && {
+									sellDisclaimer: {
+										title: parsed.sellDisclaimerTitle,
+										reason: parsed.sellDisclaimerReason
+									}
+								}),
+							hideFromSEO: parsed.hideFromSEO
+						},
+						{ session }
+					);
+				} catch (err) {
+					if (isUniqueConstraintError(err)) {
+						throw error(400, 'A product with the same alias already exists');
+					} else {
+						throw err;
+					}
+				}
 			}
 		});
 
@@ -381,6 +393,7 @@ export const actions: Actions = {
 					}),
 					tagIds: product.tagIds,
 					cta: product.cta,
+					externalResources: product.externalResources,
 					...(parsed.standalone && { hasVariations: parsed.hasVariations }),
 					...(parsed.standalone &&
 						parsed.hasVariations && {
@@ -402,7 +415,8 @@ export const actions: Actions = {
 								reason: parsed.sellDisclaimerReason
 							}
 						}),
-					...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) })
+					...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
+					hideFromSEO: parsed.hideFromSEO
 				},
 				{ session }
 			);

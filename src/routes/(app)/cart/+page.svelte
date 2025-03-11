@@ -65,6 +65,7 @@
 			sessionEmail={data.email}
 			countdowns={data.cmsBasketTopData.countdowns}
 			galleries={data.cmsBasketTopData.galleries}
+			leaderboards={data.cmsBasketTopData.leaderboards}
 			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
 		/>
 	{/if}
@@ -368,6 +369,7 @@
 			sessionEmail={data.email}
 			countdowns={data.cmsBasketBottomData.countdowns}
 			galleries={data.cmsBasketBottomData.galleries}
+			leaderboards={data.cmsBasketBottomData.leaderboards}
 			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
 		/>
 	{/if}

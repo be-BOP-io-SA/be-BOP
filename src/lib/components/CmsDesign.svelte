@@ -19,7 +19,8 @@
 		CmsTokens,
 		CmsContactForm,
 		CmsCountdown,
-		CmsGallery
+		CmsGallery,
+		CmsLeaderboard
 	} from '$lib/server/cms';
 	import SpecificationWidget from './SpecificationWidget.svelte';
 	import ContactForm from './ContactForm.svelte';
@@ -27,6 +28,7 @@
 	import CountdownWidget from './CountdownWidget.svelte';
 	import GalleryWidget from './GalleryWidget/GalleryWidget.svelte';
 	import { page } from '$app/stores';
+	import LeaderBoardWidget from './LeaderBoardWidget.svelte';
 	import CurrencyCalculator from './CurrencyCalculator.svelte';
 
 	export let products: CmsProduct[];
@@ -45,6 +47,7 @@
 	export let websiteLink: string | undefined;
 	export let brandName: string | undefined;
 	export let galleries: CmsGallery[];
+	export let leaderboards: CmsLeaderboard[];
 
 	let classNames = '';
 	export { classNames as class };
@@ -64,6 +67,10 @@
 		digitalFiles.map((digitalFile) => [digitalFile.productId, digitalFile])
 	);
 	$: challengeById = Object.fromEntries(challenges.map((challenge) => [challenge._id, challenge]));
+	$: leaderboardById = Object.fromEntries(
+		leaderboards.map((leaderboard) => [leaderboard._id, leaderboard])
+	);
+
 	$: sliderById = Object.fromEntries(sliders.map((slider) => [slider._id, slider]));
 	$: tagById = Object.fromEntries(tags.map((tag) => [tag._id, tag]));
 	$: picturesByTag = groupBy(
@@ -102,11 +109,16 @@
 	);
 	$: countdownById = Object.fromEntries(countdowns.map((countdown) => [countdown._id, countdown]));
 
-	function productsByTag(searchTag: string) {
-		return sortBy(
-			products.filter((product) => product.tagIds?.includes(searchTag)),
-			['alias.1', 'alias.0']
-		);
+	function productsByTag(
+		searchTag: string,
+		by: string[] = ['alias.1', 'alias.0'],
+		sort: 'asc' | 'desc' = 'asc'
+	) {
+		const filteredProducts = products.filter((product) => product.tagIds?.includes(searchTag));
+
+		const sortedProducts = sortBy(filteredProducts, by);
+
+		return sort === 'asc' ? sortedProducts.reverse() : sortedProducts;
 	}
 	$: galleryById = Object.fromEntries(galleries.map((gallery) => [gallery._id, gallery]));
 </script>
@@ -126,7 +138,7 @@
 					class="not-prose my-5"
 				/>
 			{:else if token.type === 'tagProducts' && productsByTag(token.slug)}
-				{#each productsByTag(token.slug) as product}
+				{#each productsByTag(token.slug, ['alias.1', 'alias.0', token.by ?? ''], token.sort) as product}
 					<ProductWidget
 						{product}
 						pictures={picturesByProduct[product._id]}
@@ -182,6 +194,19 @@
 						: ''}{token.height ? `height: ${token.height}px;` : ''}"
 				/>
 				<PictureComponent picture={pictureById[token.slug]} class="my-5 lg:hidden block" />
+			{:else if token.type === 'leaderboardWidget'}
+				<LeaderBoardWidget
+					leaderboard={leaderboardById[token.slug]}
+					{pictures}
+					{products}
+					class="not-prose"
+				/>
+			{:else if token.type === 'qrCode'}
+				{#if token.slug === 'Bolt12'}
+					<a href="lightning:{$page.data.bolt12Address}">
+						<img src="{$page.url.origin}/phoenixd/bolt12/qrcode" class="w-96 h-96" alt="QR code" />
+					</a>
+				{/if}
 			{:else if token.type === 'currencyCalculatorWidget'}
 				<CurrencyCalculator />
 			{:else if token.type === 'html'}
@@ -258,6 +283,23 @@
 					/>
 				{:else if token.type === 'pictureWidget'}
 					<PictureComponent picture={pictureById[token.slug]} class="my-5" />
+				{:else if token.type === 'leaderboardWidget'}
+					<LeaderBoardWidget
+						leaderboard={leaderboardById[token.slug]}
+						{pictures}
+						{products}
+						class="not-prose"
+					/>
+				{:else if token.type === 'qrCode'}
+					{#if token.slug === 'Bolt12'}
+						<a href="lightning:{$page.data.bolt12Address}">
+							<img
+								src="{$page.url.origin}/phoenixd/bolt12/qrcode"
+								class="w-96 h-96"
+								alt="QR code"
+							/>
+						</a>
+					{/if}
 				{:else if token.type === 'currencyCalculatorWidget'}
 					<CurrencyCalculator />
 				{:else if token.type === 'html'}

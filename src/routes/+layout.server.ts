@@ -38,6 +38,7 @@ export async function load(event) {
 		viewportWidth,
 		contactModes: runtimeConfig.contactModes,
 		hideFromSearchEngines: runtimeConfig.hideFromSearchEngines,
-		ageRestriction: runtimeConfig.ageRestriction
+		ageRestriction: runtimeConfig.ageRestriction,
+		bolt12Address: runtimeConfig.phoenixd.bolt12Address
 	};
 }

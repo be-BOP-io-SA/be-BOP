@@ -40,7 +40,7 @@
 			<div class="relative bottom-10 mx-auto w-full flex justify-center p-4 space-x-2">
 				{#each Array.from({ length: pictures.length }, (_, index) => index) as i}
 					<button
-						class="w-3 h-3 rounded-full transition-colors duration-300"
+						class="w-3 h-3 rounded-full transition-colors duration-300 shadow-[2px_2px_4px_rgba(255,255,255,0.5)]"
 						class:body-mainCTA={currentIndex === i}
 						class:bg-gray-200={currentIndex !== i}
 						on:click={() => setIndex(i)}

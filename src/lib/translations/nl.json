@@ -91,7 +91,7 @@
 		"notifications": {
 			"email": "E-mail",
 			"message": "Vul ten minste één contactadres in om op de hoogte te blijven van uw bestellingsnieuws.",
-			"npub": "Geen openbaar adres",
+			"npub": "Publieke sleutel Nostr",
 			"title": "Voer"
 		},
 		"numProducts": {
@@ -466,6 +466,9 @@
 		"depositToPay": "Borg om te betalen",
 		"discount": {
 			"title": "Korting"
+		},
+		"externalResources": {
+			"title": "Externe bron"
 		},
 		"informSeller": "Verkoper informeren",
 		"linkReminder": "Bewaar deze link: <0></0> om later toegang te krijgen tot de bestelling.",

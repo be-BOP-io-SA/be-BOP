@@ -6,6 +6,7 @@ import { ObjectId } from 'mongodb';
 import { zodNpub } from '$lib/server/nostr.js';
 import { sendResetPasswordNotification } from '$lib/server/sendNotification.js';
 import { adminPrefix } from '$lib/server/admin.js';
+import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 
 export const actions = {
 	default: async function ({ request }) {
@@ -44,11 +45,17 @@ export const actions = {
 			updatedAt: new Date(),
 			roleId
 		};
+		try {
+			await collections.users.insertOne(user);
 
-		await collections.users.insertOne(user);
+			await sendResetPasswordNotification(user);
 
-		await sendResetPasswordNotification(user);
-
-		throw redirect(303, `${adminPrefix()}/arm`);
+			throw redirect(303, `${adminPrefix()}/arm`);
+		} catch (err) {
+			if (isUniqueConstraintError(err)) {
+				throw error(409, 'A user with the same email or npub already exists');
+			}
+			throw err;
+		}
 	}
 };

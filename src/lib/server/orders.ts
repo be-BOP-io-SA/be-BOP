@@ -21,7 +21,7 @@ import { toSatoshis } from '$lib/utils/toSatoshis';
 import { currentWallet, getNewAddress, orderAddressLabel } from './bitcoind';
 import { lndCreateInvoice } from './lnd';
 import { ORIGIN } from '$env/static/private';
-import { emailsEnabled } from './email';
+import { emailsEnabled, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
 import { computeDeliveryFees, type Cart, computePriceInfo } from '$lib/types/Cart';
 import { CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
@@ -1073,8 +1073,8 @@ async function generatePaymentInfo(params: {
 				const invoice = await phoenixdCreateInvoice(satoshis, label, params.orderId);
 
 				return {
-					address: invoice.paymentAddress,
-					invoiceId: invoice.paymentHash,
+					address: invoice.payment_address,
+					invoiceId: invoice.r_hash,
 					processor: 'phoenixd'
 				};
 			} else {
@@ -1553,41 +1553,97 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 			);
 		}
 		if (items.length) {
-			const content = `Dear be-BOP owner,
-	
-			The order #${order.number} ${ORIGIN}/order/${order._id} was successfully paid.
-			
-			It contains the following product(s) that increase the challenge ${challenge.name} :
-			${items
-				.map(
-					(item) =>
-						`- ${item.product.name} - price ${
-							item.customPrice?.amount || item.product.price.amount
-						} ${item.customPrice?.currency || item.product.price.currency} - qty ${
-							item.quantity
-						} - total addition to challenge: ${
-							challenge.mode === 'totalProducts'
-								? item.quantity
-								: (item.customPrice?.amount || item.product.price.amount) * item.quantity
-						}`
-				)
-				.join('\n')}			  
-			
-			Total increase : ${increase}
-			
-			Challenge current level : ${challenge.progress}`;
-			await collections.emailNotifications.insertOne({
-				_id: new ObjectId(),
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				subject: 'Challenge Update',
-				htmlContent: content,
-				dest: runtimeConfig.sellerIdentity?.contact.email || SMTP_USER
-			});
+			await queueEmail(
+				runtimeConfig.sellerIdentity?.contact.email || SMTP_USER,
+				'order.update.challenge',
+				{
+					challengeName: challenge.name,
+					orderNumber: `${order.number}`,
+					orderLink: `${ORIGIN}/order/${order._id}`,
+					itemsChallenge: `${items
+						.map(
+							(item) =>
+								`- ${item.product.name} - price ${
+									item.customPrice?.amount || item.product.price.amount
+								} ${item.customPrice?.currency || item.product.price.currency} - qty ${
+									item.quantity
+								} - total addition to challenge: ${
+									challenge.mode === 'totalProducts'
+										? item.quantity
+										: (item.customPrice?.amount || item.product.price.amount) * item.quantity
+								}`
+						)
+						.join('\n')}`,
+					increase: `${increase}`,
+					challengeLevel: `${challenge.progress}`
+				}
+			);
 		}
 	}
 	//#endregion
-
+	//#region leaderboard
+	const leaderboards = await collections.leaderboards
+		.find({
+			beginsAt: { $lt: new Date() },
+			endsAt: { $gt: new Date() }
+		})
+		.toArray();
+	for (const leaderboard of leaderboards) {
+		const productIds = new Set(leaderboard.productIds);
+		const items = order.items.filter((item) => productIds.has(item.product._id));
+		for (const item of items) {
+			const increase =
+				leaderboard.mode === 'totalProducts'
+					? item.quantity
+					: toCurrency(
+							leaderboard.progress[0].currency || 'SAT',
+							(item.customPrice?.amount || item.product.price.amount) * item.quantity,
+							item.customPrice?.currency || item.product.price.currency
+					  );
+			await collections.leaderboards.updateOne(
+				{ _id: leaderboard._id, 'progress.productId': item.product._id },
+				{
+					$inc: { 'progress.$.amount': increase },
+					$push: {
+						event: {
+							type: 'progress',
+							at: new Date(),
+							orderId: order._id,
+							amount: increase,
+							productId: item.product._id
+						}
+					}
+				},
+				{ session }
+			);
+		}
+		if (items.length) {
+			await queueEmail(
+				runtimeConfig.sellerIdentity?.contact.email || SMTP_USER,
+				'order.update.leaderboard',
+				{
+					leaderboardName: leaderboard.name,
+					orderNumber: `${order.number}`,
+					orderLink: `${ORIGIN}/order/${order._id}`,
+					itemsLeaderboard: `${items
+						.map(
+							(item) =>
+								`- ${item.product.name} - price ${
+									item.customPrice?.amount || item.product.price.amount
+								} ${item.customPrice?.currency || item.product.price.currency} - qty ${
+									item.quantity
+								} - total addition to leaderboard: ${
+									leaderboard.mode === 'totalProducts'
+										? item.quantity
+										: (item.customPrice?.amount || item.product.price.amount) * item.quantity
+								}`
+						)
+						.join('\n')}`
+				}
+			);
+		}
+	}
+	//#endregion
 	//#region tickets
 	let i = 0;
 	for (const item of order.items) {

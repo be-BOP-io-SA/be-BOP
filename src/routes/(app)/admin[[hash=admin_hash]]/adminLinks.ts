@@ -188,6 +188,10 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/gallery',
 				label: 'Galleries'
+			},
+			{
+				href: '/admin/leaderboard',
+				label: 'Leaderboards'
 			}
 		]
 	}
