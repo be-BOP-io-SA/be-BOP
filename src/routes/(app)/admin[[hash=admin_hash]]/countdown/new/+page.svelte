@@ -16,7 +16,7 @@
 	const timezoneString = `GMT${timezoneSign}${Math.abs(timezoneOffsetHours)}`;
 </script>
 
-<h1 class="text-3xl">Add a specification</h1>
+<h1 class="text-3xl">Add a countdown</h1>
 
 <form method="post" class="flex flex-col gap-4">
 	<label class="form-label">
