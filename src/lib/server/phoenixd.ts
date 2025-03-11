@@ -130,7 +130,6 @@ export async function phoenixdLookupInvoice(paymentHash: string) {
 			`Could not lookup invoice ${paymentHash} on PhoenixD: ${res.status} ${await res.text()}`
 		);
 	}
-
 	const json = z
 		.object({
 			paymentHash: z.string(),
@@ -141,7 +140,7 @@ export async function phoenixdLookupInvoice(paymentHash: string) {
 			isPaid: z.boolean(),
 			receivedSat: z.number(),
 			fees: z.number(),
-			completedAt: z.number().nullable(), // in MS
+			completedAt: z.number().optional(), // in MS
 			createdAt: z.number() // in MS
 		})
 		.parse(await res.json());
