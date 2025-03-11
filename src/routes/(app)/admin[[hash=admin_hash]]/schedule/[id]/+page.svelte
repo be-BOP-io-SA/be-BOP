@@ -206,8 +206,8 @@
 				<input
 					class="form-checkbox"
 					type="checkbox"
-					name="events[{i}].is_archived"
-					checked={data.schedule.events[i].is_archived}
+					name="events[{i}].isArchived"
+					checked={data.schedule.events[i].isArchived}
 				/>
 				Archive event
 			</label>

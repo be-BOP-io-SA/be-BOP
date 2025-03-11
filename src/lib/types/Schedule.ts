@@ -17,7 +17,7 @@ export interface EventSchedule {
 		label: 'postponed' | 'canceled' | 'soldOut';
 		isUnavailable: boolean;
 	};
-	is_archived?: boolean;
+	isArchived?: boolean;
 }
 
 export interface ScheduleTranslatableFields {

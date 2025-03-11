@@ -64,7 +64,7 @@ export const actions = {
 								isUnavailable: z.boolean({ coerce: true }).default(false)
 							})
 							.optional(),
-						is_archived: z.boolean({ coerce: true }).default(false).optional()
+						isArchived: z.boolean({ coerce: true }).default(false).optional()
 					})
 				)
 			})

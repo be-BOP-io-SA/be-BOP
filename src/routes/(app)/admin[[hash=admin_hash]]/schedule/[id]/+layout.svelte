@@ -9,7 +9,7 @@
 	tabs={[
 		{ href: `${data.adminPrefix}/schedule/${$page.params.id}`, name: 'Edit schedule' },
 		{
-			href: `${data.adminPrefix}/schedule/${$page.params.id}/translations`,
+			href: `#`,
 			name: 'Translations'
 		}
 	]}
