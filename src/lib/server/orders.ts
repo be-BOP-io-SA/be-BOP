@@ -1073,8 +1073,8 @@ async function generatePaymentInfo(params: {
 				const invoice = await phoenixdCreateInvoice(satoshis, label, params.orderId);
 
 				return {
-					address: invoice.paymentAddress,
-					invoiceId: invoice.paymentHash,
+					address: invoice.payment_address,
+					invoiceId: invoice.r_hash,
 					processor: 'phoenixd'
 				};
 			} else {

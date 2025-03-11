@@ -228,7 +228,8 @@ export const actions: Actions = {
 									title: parsed.sellDisclaimerTitle,
 									reason: parsed.sellDisclaimerReason
 								}
-							})
+							}),
+						hideFromSEO: parsed.hideFromSEO
 					},
 					$unset: {
 						...(!parsed.customPreorderText && { customPreorderText: '' }),

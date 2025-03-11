@@ -77,22 +77,26 @@
 
 	function checkForm(event: SubmitEvent) {
 		submitting = true;
-		for (const input of typedValues(npubInputs)) {
-			if (!input) {
-				continue;
-			}
+		try {
+			for (const input of typedValues(npubInputs)) {
+				if (!input) {
+					continue;
+				}
 
-			input.value = trimPrefix(input.value.trim(), 'nostr:');
-			if (
-				input.value &&
-				(!input.value.startsWith('npub1') || bech32.decodeUnsafe(input.value)?.prefix !== 'npub')
-			) {
-				input.setCustomValidity(t('checkout.invalidNpub'));
-				input.reportValidity();
+				input.value = trimPrefix(input.value.trim(), 'nostr:');
+				if (
+					input.value &&
+					(!input.value.startsWith('npub1') || bech32.decodeUnsafe(input.value)?.prefix !== 'npub')
+				) {
+					input.setCustomValidity(t('checkout.invalidNpub'));
+					input.reportValidity();
 
-				event.preventDefault();
-				return;
+					event.preventDefault();
+					return;
+				}
 			}
+		} finally {
+			submitting = false;
 		}
 	}
 

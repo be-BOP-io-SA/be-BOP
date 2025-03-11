@@ -184,12 +184,11 @@ async function handleReceivedMessage(message: NostRReceivedMessage): Promise<voi
 		if (
 			!matched &&
 			!message.tags?.some(([key]) => key === 'bootikVersion') &&
-			!runtimeConfig.disableNostrBotIntro
+			!runtimeConfig.disableNostrBotIntro &&
+			isPrivateMessage
 		) {
 			await send(
-				`Hello ${
-					!isPrivateMessage ? 'world' : isCustomer ? 'customer' : 'you'
-				}! To get the list of commands, say '!help'.`
+				`Hello ${isCustomer ? 'customer' : 'you'}! To get the list of commands, say '!help'.`
 			);
 		}
 		await collections.nostrReceivedMessages.updateOne(

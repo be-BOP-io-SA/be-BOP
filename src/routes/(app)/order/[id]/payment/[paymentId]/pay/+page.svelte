@@ -181,7 +181,7 @@
 	const { t } = useI18n();
 
 	let paymentLoading = false;
-
+	let stripeLoading = true;
 	$: orderPath = '/order/' + $page.params.id;
 
 	function mountSumUpCard() {
@@ -200,6 +200,8 @@
 	}
 
 	function mountStripeCard() {
+		stripeLoading = true;
+
 		// Actually more like "clientSecret"
 		if (data.payment.clientSecret && data.stripePublicKey) {
 			const stripe = window.Stripe(data.stripePublicKey);
@@ -215,6 +217,10 @@
 					layout: 'tabs'
 				})
 				.mount('#payment-element');
+			// Delay to give time for UI to render
+			setTimeout(() => {
+				stripeLoading = false;
+			}, 3000);
 
 			handleSubmit = async () => {
 				try {
@@ -295,7 +301,11 @@
 		{#if data.payment.processor === 'stripe'}
 			<form class="payment-form flex flex-col gap-4" on:submit|preventDefault={handleSubmit}>
 				<div id="payment-element" class="stripe"></div>
-				<button class="btn btn-black self-start" type="submit" disabled={paymentLoading}>
+				<button
+					class="btn btn-black self-start"
+					type="submit"
+					disabled={stripeLoading || paymentLoading}
+				>
 					{t('checkout.cta.submit')}
 				</button>
 			</form>

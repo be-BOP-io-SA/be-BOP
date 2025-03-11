@@ -91,7 +91,7 @@
 		"notifications": {
 			"email": "Email",
 			"message": "Si prega di riempire almeno un indirizzo mail di contatto per ricevere notizie sull'ordine.",
-			"npub": "Indirizzo pubblico",
+			"npub": "Chiave pubblica di Nostr",
 			"title": "Feed e notificazioni"
 		},
 		"numProducts": {

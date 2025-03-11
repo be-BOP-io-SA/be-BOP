@@ -95,7 +95,7 @@ function initRelayPool() {
 		[
 			// Messages sent to us
 			{
-				kinds: [Kind.EncryptedDirectMessage, Kind.Text],
+				kinds: [Kind.EncryptedDirectMessage, Kind.Text, Kind.Zap],
 				'#p': [nostrPublicKeyHex]
 			}
 		],
@@ -109,7 +109,7 @@ function initRelayPool() {
 				if (!event.tags.some((tag) => tag[0] === 'p' && tag[1] === nostrPublicKeyHex)) {
 					return;
 				}
-				if (![Kind.EncryptedDirectMessage, Kind.Text].includes(event.kind)) {
+				if (![Kind.EncryptedDirectMessage, Kind.Text, Kind.Zap].includes(event.kind)) {
 					return;
 				}
 
@@ -219,6 +219,34 @@ async function handleNostrNotification(nostrNotification: NostRNotification): Pr
 						['bootikVersion', String(NOSTR_PROTOCOL_VERSION)]
 					],
 					kind: Kind.EncryptedDirectMessage,
+					sig: ''
+				} satisfies Event;
+			}
+
+			if (nostrNotification.kind === Kind.Zap) {
+				const npub = nostrNotification.dest;
+
+				if (!npub) {
+					return;
+				}
+
+				const receiverPublicKeyHex = nostrToHex(npub);
+
+				return {
+					id: '',
+					content: await nip04.encrypt(nostrPrivateKeyHex, receiverPublicKeyHex, content),
+					created_at: getUnixTime(
+						max([
+							nostrNotification.minCreatedAt ?? nostrNotification.createdAt,
+							nostrNotification.createdAt
+						])
+					),
+					pubkey: nostrPublicKeyHex,
+					tags: [
+						['p', receiverPublicKeyHex],
+						['bootikVersion', String(NOSTR_PROTOCOL_VERSION)]
+					],
+					kind: Kind.Zap,
 					sig: ''
 				} satisfies Event;
 			}

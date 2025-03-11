@@ -79,7 +79,7 @@
 		"deliveryFeesEstimationTooltip": "Ceci est une estimation, le montant définitif sera décidé par votre pays de livraison.",
 		"differentBillingAddress": "Mon adresse de livraison et mon adresse de facturation sont différentes",
 		"digitalNoShippingNeeded": "Tous les produits de votre panier sont des produits numériques. \nVous n'avez pas besoin de fournir d'adresse de livraison.",
-		"invalidNpub": "Adresse publique Nostr invalide",
+		"invalidNpub": "Clé publique Nostr invalide",
 		"isProBilling": "Ceci est une commande professionnelle",
 		"multiplePaymentMethods": "Utiliser plusieurs méthodes de paiements",
 		"multiplePaymentMethodsHelpText": "Vous pourrez définir les méthodes de paiement à l'étape suivante.",
@@ -91,7 +91,7 @@
 		"notifications": {
 			"email": "E-mail",
 			"message": "Merci de remplir au moins une adresse de contact pour être notifié des évolutions de votre commande.",
-			"npub": "Adresse publique Nostr",
+			"npub": "Clé publique Nostr",
 			"title": "Notifications"
 		},
 		"numProducts": {
@@ -528,7 +528,7 @@
 			"partiallyPaid": "partiellement payé",
 			"pending": "en attente"
 		},
-		"paymentStatusNpub": "Adresse publique Nostr pour le statut de paiement",
+		"paymentStatusNpub": "Clé publique Nostr pour le statut de paiement",
 		"receipt": {
 			"accountHolder": "Titulaire",
 			"accountHolderAddress": "Adresse",
