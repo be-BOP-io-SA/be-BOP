@@ -187,7 +187,7 @@
 		{#each data.order.items as item, i}
 			{@const price =
 				item.currencySnapshot.main.customPrice?.amount ?? item.currencySnapshot.main.price.amount}
-			{@const unitPrice = price / item.quantity}
+			<!--{@const unitPrice = price / item.quantity}-->
 			{@const priceCurrency =
 				item.currencySnapshot.main.customPrice?.currency ??
 				item.currencySnapshot.main.price.currency}
@@ -204,7 +204,7 @@
 				>
 				<td class="text-center border border-white px-2">{item.quantity}</td>
 				<td class="text-center border border-white px-2">
-					<PriceTag amount={unitPrice} currency={priceCurrency} inline />
+					<PriceTag amount={price} currency={priceCurrency} inline />
 				</td>
 				<td class="text-center border border-white px-2">{item.vatRate ?? 0}%</td>
 				<td class="text-center border border-white px-2">
@@ -212,7 +212,7 @@
 				</td>
 				<td class="text-right border border-white px-2">
 					<PriceTag
-						amount={price + (price * (item.vatRate ?? 0)) / 100}
+						amount={price * item.quantity + (price * (item.vatRate ?? 0)) / 100}
 						currency={priceCurrency}
 						inline
 					/>
