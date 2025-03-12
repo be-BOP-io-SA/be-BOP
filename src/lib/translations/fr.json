@@ -591,6 +591,7 @@
 		"applyGiftDiscount": "En tant qu'utilisateur de point de vente, j'applique une <0>remise cadeau</0>",
 		"cta": {
 			"cancelOrder": "Annuler",
+			"cancelReplacement": "Annuler le remplacement",
 			"markOrderPaid": "Marquer comme payée",
 			"replacePayment": "Remplacer le mode de paiement",
 			"resendPaymentMethod": "Renvoyer le mode de paiement",

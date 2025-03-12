@@ -591,6 +591,7 @@
 		"applyGiftDiscount": "As a POS user I apply a <0>gift discount</0>",
 		"cta": {
 			"cancelOrder": "Cancel",
+			"cancelReplacement": "Cancel replacement",
 			"markOrderPaid": "Mark paid",
 			"replacePayment": "Replace payment method",
 			"resendPaymentMethod": "Resend payment method",

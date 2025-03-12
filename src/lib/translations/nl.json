@@ -591,6 +591,7 @@
 		"applyGiftDiscount": "Als POS-gebruiker pas ik een <0>cadeaukorting</0> toe",
 		"cta": {
 			"cancelOrder": "Annuleren",
+			"cancelReplacement": "Annuleer vervanging",
 			"markOrderPaid": "Mark betaald",
 			"replacePayment": "Vervang de betaalmethode",
 			"resendPaymentMethod": "Verzend de betaalmethode",

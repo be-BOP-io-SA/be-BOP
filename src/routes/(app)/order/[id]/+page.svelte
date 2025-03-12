@@ -392,7 +392,9 @@
 											openPaymentMethodChange = !openPaymentMethodChange;
 										}}
 									>
-										{t('pos.cta.replacePayment')}
+										{openPaymentMethodChange
+											? t('pos.cta.cancelReplacement')
+											: t('pos.cta.replacePayment')}
 									</button>
 									{#if openPaymentMethodChange}
 										<form

@@ -591,6 +591,7 @@
 		"applyGiftDiscount": "Como usuario de POS, aplico un <0>descuento de regalo</0>",
 		"cta": {
 			"cancelOrder": "Cancelar",
+			"cancelReplacement": "Cancelar reemplazo",
 			"markOrderPaid": "Marcar como pagado",
 			"replacePayment": "Reemplazar el método de pago",
 			"resendPaymentMethod": "Reenviar método de pago",
