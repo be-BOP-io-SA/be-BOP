@@ -592,6 +592,8 @@
 		"cta": {
 			"cancelOrder": "Cancel",
 			"markOrderPaid": "Mark paid",
+			"replacePayment": "Replace payment method",
+			"resendPaymentMethod": "Resend payment method",
 			"updatePaymentInfo": "Update payment information"
 		},
 		"discountJustification": "Justification",

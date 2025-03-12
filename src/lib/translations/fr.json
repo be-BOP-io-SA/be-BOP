@@ -449,7 +449,7 @@
 	"order": {
 		"addPayment": {
 			"amount": "Montant du paiement",
-			"cta": "Envoyer un appel à paiement",
+			"cta": "Envoyer un appel pour le paiement",
 			"currency": "Monnaie de paiement"
 		},
 		"backToOrder": "<< Retour à la commande",
@@ -592,6 +592,8 @@
 		"cta": {
 			"cancelOrder": "Annuler",
 			"markOrderPaid": "Marquer comme payée",
+			"replacePayment": "Remplacer le mode de paiement",
+			"resendPaymentMethod": "Renvoyer le mode de paiement",
 			"updatePaymentInfo": "Mettre à jour les informations de paiement"
 		},
 		"discountJustification": "Justification",

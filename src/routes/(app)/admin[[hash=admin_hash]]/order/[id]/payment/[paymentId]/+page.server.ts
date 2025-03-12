@@ -1,8 +1,10 @@
 import { ORIGIN, SMTP_USER } from '$env/static/private';
 import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database';
-import { onOrderPayment, onOrderPaymentFailed } from '$lib/server/orders';
+import { addOrderPayment, onOrderPayment, onOrderPaymentFailed } from '$lib/server/orders';
+import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { parsePriceAmount } from '$lib/types/Currency';
 import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
@@ -136,5 +138,66 @@ export const actions = {
 			});
 		}
 		throw redirect(303, request.headers.get('referer') || `${adminPrefix()}/order`);
+	},
+	replacePaymentMethod: async ({ params, request, locals }) => {
+		const order = await collections.orders.findOne({
+			_id: params.id
+		});
+
+		if (!order) {
+			throw error(404, 'Order not found');
+		}
+
+		if (order.status !== 'pending') {
+			throw error(400, 'Order is not pending');
+		}
+		const payment = order.payments.find((payment) => payment._id.equals(params.paymentId));
+
+		if (!payment) {
+			throw error(404, 'Payment not found');
+		}
+
+		if (payment.status !== 'pending') {
+			throw error(400, 'Payment is not pending');
+		}
+		await onOrderPaymentFailed(order, payment, 'canceled', true);
+
+		let methods = paymentMethods({ role: locals.user?.roleId });
+
+		for (const item of order.items) {
+			if (item.product.paymentMethods) {
+				methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
+			}
+		}
+
+		if (!methods.length) {
+			throw error(400, 'No payment methods available');
+		}
+
+		const formData = await request.formData();
+		const parsed = z
+			.object({
+				amount: z.string().regex(/^\d+(\.\d+)?$/),
+				method: z.enum(methods as [PaymentMethod, ...PaymentMethod[]])
+			})
+			.parse({
+				amount: formData.get('amount'),
+				method: formData.get('method')
+			});
+
+		const amount = parsePriceAmount(parsed.amount, order.currencySnapshot.main.totalPrice.currency);
+		if (amount <= 0) {
+			throw error(400, 'Invalid amount');
+		}
+		await addOrderPayment(
+			order,
+			parsed.method,
+			{
+				amount,
+				currency: order.currencySnapshot.main.totalPrice.currency
+			},
+			{ expiresAt: null }
+		);
+		throw redirect(303, `/order/${order._id}`);
 	}
 };

@@ -68,6 +68,7 @@
 
 	let tickets = data.order.items.flatMap((item) => item.tickets ?? []);
 	let ticketNumbers = Object.fromEntries(tickets.map((ticket, i) => [ticket, i + 1]));
+	let openPaymentMethodChange = false;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -382,6 +383,64 @@
 										</button>
 									{/if}
 								</form>
+								<div class="flex flex-wrap gap-2">
+									<button
+										type="button"
+										class="btn btn-red"
+										form="replacePaymentForm"
+										on:click={() => {
+											openPaymentMethodChange = !openPaymentMethodChange;
+										}}
+									>
+										{t('pos.cta.replacePayment')}
+									</button>
+									{#if openPaymentMethodChange}
+										<form
+											action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order
+												._id}/payment/{payment.id}?/replacePaymentMethod"
+											method="post"
+											class="contents"
+										>
+											<div class="flex flex-wrap gap-2">
+												<label class="form-label">
+													{t('order.addPayment.amount')}
+													<input
+														class="form-input"
+														type="number"
+														name="amount"
+														min="0"
+														step="any"
+														max={data.order.currencySnapshot.main.totalPrice.amount}
+														value={data.order.currencySnapshot.main.totalPrice.amount}
+														required
+														readonly
+													/>
+												</label>
+												<label class="form-label">
+													{t('order.addPayment.currency')}
+													<select name="currency" class="form-input" disabled>
+														<option value={data.order.currencySnapshot.main.totalPrice.currency}
+															>{data.order.currencySnapshot.main.totalPrice.currency}</option
+														>
+													</select>
+												</label>
+												<label class="form-label">
+													<span>{t('checkout.payment.method')}</span>
+													<select name="method" class="form-input">
+														{#each data.paymentMethods as paymentMethod}
+															<option value={paymentMethod}
+																>{t(`checkout.paymentMethod.${paymentMethod}`)}</option
+															>
+														{/each}
+													</select>
+												</label><br />
+												<button type="submit" class="btn btn-blue self-end"
+													>{t('pos.cta.resendPaymentMethod')}</button
+												>
+											</div>
+										</form>
+									{/if}
+								</div>
 							{/if}
 						{/if}
 

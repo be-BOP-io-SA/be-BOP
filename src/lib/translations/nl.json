@@ -592,6 +592,8 @@
 		"cta": {
 			"cancelOrder": "Annuleren",
 			"markOrderPaid": "Mark betaald",
+			"replacePayment": "Vervang de betaalmethode",
+			"resendPaymentMethod": "Verzend de betaalmethode",
 			"updatePaymentInfo": "Betalingsgegevens bijwerken"
 		},
 		"discountJustification": "Rechtvaardiging",
