@@ -523,6 +523,8 @@
 			"canceledTemplate": "¡Pedido cancelado!",
 			"expired": "expirado",
 			"expiredTemplate": "¡Pedido expirado!",
+			"failed": "fallido",
+			"failedTemplate": "¡Pedido fallido!",
 			"paid": "pagado",
 			"paidTemplate": "¡Pedido <0>pagado</0>!",
 			"partiallyPaid": "parcialmente pagado",

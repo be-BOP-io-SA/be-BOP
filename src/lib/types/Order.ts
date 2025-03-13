@@ -14,7 +14,7 @@ import type { Ticket } from './Ticket';
 import type { OrderLabel } from './OrderLabel';
 import { toBitcoins } from '$lib/utils/toBitcoins';
 
-export type OrderPaymentStatus = 'pending' | 'paid' | 'expired' | 'canceled';
+export type OrderPaymentStatus = 'pending' | 'paid' | 'expired' | 'canceled' | 'failed';
 
 export type DiscountType = 'fiat' | 'percentage';
 

@@ -247,6 +247,9 @@
 										})}
 									</li>
 								{/if}
+								{#if payment.status === 'failed'}
+									{t('order.paymentCBFailed')}
+								{/if}
 							</ul>
 						{/if}
 
@@ -578,6 +581,45 @@
 							<span>{t('checkout.payment.method')}</span>
 							<select name="method" class="form-input">
 								{#each data.paymentMethods as paymentMethod}
+									<option value={paymentMethod}
+										>{t(`checkout.paymentMethod.${paymentMethod}`)}</option
+									>
+								{/each}
+							</select>
+						</label><br />
+						<button type="submit" class="btn btn-blue self-end">{t('order.addPayment.cta')}</button>
+					</div>
+				</form>
+			{/if}
+
+			{#if data.order.status === 'pending' && remainingAmount && (data.roleId === CUSTOMER_ROLE_ID || !data.roleId)}
+				<form action="/order/{data.order._id}?/addPayment" method="post" class="contents">
+					<div class="flex flex-wrap gap-2">
+						<label class="form-label">
+							{t('order.addPayment.amount')}
+							<input
+								class="form-input"
+								type="number"
+								name="amount"
+								min="0"
+								step="any"
+								max={remainingAmount}
+								value={remainingAmount}
+								readonly
+							/>
+						</label>
+						<label class="form-label">
+							{t('order.addPayment.currency')}
+							<select name="currency" class="form-input" disabled>
+								<option value={data.order.currencySnapshot.main.totalPrice.currency}
+									>{data.order.currencySnapshot.main.totalPrice.currency}</option
+								>
+							</select>
+						</label>
+						<label class="form-label">
+							<span>{t('checkout.payment.method')}</span>
+							<select name="method" class="form-input">
+								{#each data.paymentMethods.filter( (pm) => ['card', 'bitcoin', 'lightning', 'paypal'].includes(pm) ) as paymentMethod}
 									<option value={paymentMethod}
 										>{t(`checkout.paymentMethod.${paymentMethod}`)}</option
 									>

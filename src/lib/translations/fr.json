@@ -523,6 +523,8 @@
 			"canceledTemplate": "Votre commande a été annulée manuellement en back-office.",
 			"expired": "expiré",
 			"expiredTemplate": "Votre commande est expirée car le délai de paiement était trop élevé.\nSi vous avez payé cette commande, merci de vous rapprocher de notre service client.",
+			"failed": "echoué",
+			"failedTemplate": "Votre commande à echoué",
 			"paid": "payé",
 			"paidTemplate": "Votre commande est <0>validée</0> !",
 			"partiallyPaid": "partiellement payé",

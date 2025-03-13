@@ -523,6 +523,8 @@
 			"canceledTemplate": "Bestelling geannuleerd!",
 			"expired": "verlopen",
 			"expiredTemplate": "Bestelling verlopen!",
+			"failed": "mislukt",
+			"failedTemplate": "Bestel mislukt!",
 			"paid": "betaald",
 			"paidTemplate": "Bestelling <0>betaald</0>!",
 			"partiallyPaid": "gedeeltelijk betaald",

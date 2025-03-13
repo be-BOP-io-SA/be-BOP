@@ -229,7 +229,7 @@ async function maintainOrders() {
 											currency: checkout.currency
 										});
 									} else if (checkout.status === 'FAILED' || checkout.status === 'EXPIRED') {
-										order = await onOrderPaymentFailed(order, payment, 'expired');
+										order = await onOrderPaymentFailed(order, payment, 'failed');
 									}
 								} catch (err) {
 									console.error(inspect(err, { depth: 10 }));
@@ -285,7 +285,7 @@ async function maintainOrders() {
 											currency: currency
 										});
 									} else if (paymentIntent.status === 'canceled') {
-										order = await onOrderPaymentFailed(order, payment, 'expired');
+										order = await onOrderPaymentFailed(order, payment, 'failed');
 									} else if (payment.expiresAt && new Date() > payment.expiresAt) {
 										const cancelResponse = await fetch(
 											'https://api.stripe.com/v1/payment_intents/' + paymentId + '/cancel',
@@ -305,7 +305,7 @@ async function maintainOrders() {
 													paymentId
 											);
 										}
-										order = await onOrderPaymentFailed(order, payment, 'expired');
+										order = await onOrderPaymentFailed(order, payment, 'failed');
 									}
 								} catch (err) {
 									console.error(inspect(err, { depth: 10 }));
@@ -332,7 +332,7 @@ async function maintainOrders() {
 										checkout.status === 'VOIDED' ||
 										(payment.expiresAt && payment.expiresAt < new Date())
 									) {
-										order = await onOrderPaymentFailed(order, payment, 'expired');
+										order = await onOrderPaymentFailed(order, payment, 'failed');
 									}
 								} catch (err) {
 									console.error(inspect(err, { depth: 10 }));
@@ -362,7 +362,7 @@ async function maintainOrders() {
 								checkout.status === 'VOIDED' ||
 								(payment.expiresAt && payment.expiresAt < new Date())
 							) {
-								order = await onOrderPaymentFailed(order, payment, 'expired');
+								order = await onOrderPaymentFailed(order, payment, 'failed');
 							}
 						} catch (err) {
 							console.error(inspect(err, { depth: 10 }));

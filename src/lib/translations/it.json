@@ -523,6 +523,8 @@
 			"canceledTemplate": "Ordine annullato canceled!",
 			"expired": "Scaduto",
 			"expiredTemplate": "Ordine scaduto!",
+			"failed": "fallito",
+			"failedTemplate": "Ordine fallito!",
 			"paid": "pagato",
 			"paidTemplate": "Ordine <0>paid</0>!",
 			"partiallyPaid": "Parzialmente pagato",
