@@ -513,6 +513,7 @@
 		"paymentAddress": "Betaal adres",
 		"paymentAmount": "Te betalen bedrag",
 		"paymentBic": "BIC",
+		"paymentCBFailed": "Uw paangement is mislukt, u kunt een nieuwe peiement -oproep proberen",
 		"paymentExpiresAt": "Betalingstermijn: <0></0>",
 		"paymentIban": "IBAN waarnaar de overboeking moet worden verzonden",
 		"paymentLink": "Klik hier om met pin te betalen",
