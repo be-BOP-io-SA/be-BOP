@@ -513,6 +513,7 @@
 		"paymentAddress": "Indirizzo di fatturazione",
 		"paymentAmount": "Somma",
 		"paymentBic": "BIC",
+		"paymentCBFailed": "Il tuo Paiment non è riuscito, puoi provare una nuova chiamata Paiment",
 		"paymentExpiresAt": "Scadenza del pagamento: <0></0>",
 		"paymentIban": "IBAN a cui spedire il bonifico",
 		"paymentLink": "Clicca qui per pagare con la carta",

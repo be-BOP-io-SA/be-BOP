@@ -513,6 +513,7 @@
 		"paymentAddress": "Dirección de pago",
 		"paymentAmount": "Monto del pago",
 		"paymentBic": "BIC",
+		"paymentCBFailed": "Su paiamiento ha fallado, puede probar una nueva llamada",
 		"paymentExpiresAt": "Fecha límite de pago: <0></0>",
 		"paymentIban": "IBAN para enviar la transferencia bancaria",
 		"paymentLink": "Clic aquí para pagar con tarjeta",
