@@ -475,6 +475,9 @@
 		"list": {
 			"title": "List of your orders"
 		},
+		"newPaymentAttempt": {
+			"cta": "Try a new payment attempt"
+		},
 		"note": {
 			"author": "{alias} (Employee)",
 			"authorCustomer": "Customer",
@@ -513,7 +516,7 @@
 		"paymentAddress": "Payment address",
 		"paymentAmount": "Payment amount",
 		"paymentBic": "BIC",
-		"paymentCBFailed": "Your paiement has failed, you can try a new paiement call",
+		"paymentCBFailed": "Your paiement has failed, you can attempt a new paiement",
 		"paymentExpiresAt": "Payment deadline: <0></0>",
 		"paymentIban": "IBAN to send the wire transfer to",
 		"paymentLink": "Click here to pay by card with",

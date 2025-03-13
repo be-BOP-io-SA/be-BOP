@@ -475,6 +475,9 @@
 		"list": {
 			"title": "Lijst met uw bestellingen"
 		},
+		"newPaymentAttempt": {
+			"cta": "Probeer een nieuwe betalingspoging"
+		},
 		"note": {
 			"author": "{alias} (werknemer)",
 			"authorCustomer": "Klant",
@@ -513,7 +516,7 @@
 		"paymentAddress": "Betaal adres",
 		"paymentAmount": "Te betalen bedrag",
 		"paymentBic": "BIC",
-		"paymentCBFailed": "Uw paangement is mislukt, u kunt een nieuwe peiement -oproep proberen",
+		"paymentCBFailed": "Uw paischement is mislukt, u kunt een nieuwe paangement proberen",
 		"paymentExpiresAt": "Betalingstermijn: <0></0>",
 		"paymentIban": "IBAN waarnaar de overboeking moet worden verzonden",
 		"paymentLink": "Klik hier om met pin te betalen",

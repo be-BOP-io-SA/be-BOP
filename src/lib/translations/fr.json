@@ -475,6 +475,9 @@
 		"list": {
 			"title": "Liste de vos commandes"
 		},
+		"newPaymentAttempt": {
+			"cta": "Essayez une nouvelle tentative de paiement"
+		},
 		"note": {
 			"author": "{alias} (Employé)",
 			"authorCustomer": "Client",
@@ -513,7 +516,7 @@
 		"paymentAddress": "Adresse de paiement ",
 		"paymentAmount": "Montant de la transaction (hors frais)",
 		"paymentBic": "BIC",
-		"paymentCBFailed": "Votre Pailement a échoué, vous pouvez essayer un nouvel appel de Pailement",
+		"paymentCBFailed": "Votre paiement a échoué, vous pouvez tenter un nouveau paiement",
 		"paymentExpiresAt": "Date limite de paiement: <0></0>",
 		"paymentIban": "IBAN de paiement",
 		"paymentLink": "Cliquez pour payer par carte avec",

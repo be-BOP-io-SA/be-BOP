@@ -475,6 +475,9 @@
 		"list": {
 			"title": "Lista dei tuoi ordini"
 		},
+		"newPaymentAttempt": {
+			"cta": "Prova un nuovo tentativo di pagamento"
+		},
 		"note": {
 			"author": "{alias} (Employee)",
 			"authorCustomer": "Cliente",
@@ -513,7 +516,7 @@
 		"paymentAddress": "Indirizzo di fatturazione",
 		"paymentAmount": "Somma",
 		"paymentBic": "BIC",
-		"paymentCBFailed": "Il tuo Paiment non è riuscito, puoi provare una nuova chiamata Paiment",
+		"paymentCBFailed": "Il tuo paiment è fallito, puoi tentare un nuovo paiment",
 		"paymentExpiresAt": "Scadenza del pagamento: <0></0>",
 		"paymentIban": "IBAN a cui spedire il bonifico",
 		"paymentLink": "Clicca qui per pagare con la carta",
