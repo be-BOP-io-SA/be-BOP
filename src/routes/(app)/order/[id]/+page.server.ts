@@ -8,8 +8,6 @@ import { cmsFromContent } from '$lib/server/cms.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { addOrderPayment } from '$lib/server/orders';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
-import { parsePriceAmount } from '$lib/types/Currency.js';
-import { orderAmountWithNoPaymentsCreated as orderAmountWithNoPayments } from '$lib/types/Order.js';
 import { z } from 'zod';
 import { addMinutes } from 'date-fns';
 
