@@ -95,26 +95,33 @@
 				class="block form-input"
 			/>
 		</label>
-		<label class="form-label">
-			Begins at
-			<input
-				class="form-input"
-				type="datetime-local"
-				name="events[{i}].beginsAt"
-				bind:value={beginsAt}
-				required
-			/>
-		</label>
-		<label class="form-label">
-			Ends at
-			<input
-				class="form-input"
-				type="datetime-local"
-				name="events[{i}].endsAt"
-				min={addDays(beginsAt, 1).toJSON().slice(0, 10)}
-				bind:value={endsAt}
-			/>
-		</label>
+		<div class="flex flex-wrap gap-4">
+			<label class="form-label">
+				Begins at
+				<input
+					class="form-input"
+					type="datetime-local"
+					name="events[{i}].beginsAt"
+					bind:value={beginsAt}
+					required
+				/>
+			</label>
+		</div>
+		<div class="flex flex-wrap gap-4">
+			<label class="form-label">
+				Ends at
+				<input
+					class="form-input"
+					type="datetime-local"
+					name="events[{i}].endsAt"
+					min={addDays(beginsAt, 1).toJSON().slice(0, 10)}
+					bind:value={endsAt}
+				/>
+				<span class="text-sm text-gray-600 mt-2 block">
+					<kbd class="kbd">backspace</kbd> to remove the date.</span
+				>
+			</label>
+		</div>
 		<label class="form-label">
 			Location name
 			<input type="text" name="events[{i}].location.name" class="form-input" />

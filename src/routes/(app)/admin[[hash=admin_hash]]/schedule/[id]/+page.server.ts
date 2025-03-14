@@ -49,8 +49,11 @@ export const actions = {
 						slug: z.string().min(1).optional(),
 						shortDescription: z.string().max(MAX_SHORT_DESCRIPTION_LIMIT).optional(),
 						description: z.string().max(10000).optional(),
-						beginsAt: z.date({ coerce: true }),
-						endsAt: z.date({ coerce: true }),
+						beginsAt: z.string().transform((val) => new Date(val)),
+						endsAt: z
+							.string()
+							.optional()
+							.transform((val) => (val ? new Date(val) : undefined)),
 						location: z
 							.object({
 								name: z.string(),

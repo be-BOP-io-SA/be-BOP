@@ -155,8 +155,13 @@
 						class="form-input"
 						type="datetime-local"
 						name="events[{i}].endsAt"
-						value={new Date(data.schedule.events[i].endsAt ?? '').toISOString().slice(0, 16)}
+						value={data.schedule.events[i].endsAt
+							? new Date(data.schedule.events[i].endsAt).toISOString().slice(0, 16)
+							: ''}
 					/>
+					<span class="text-sm text-gray-600 mt-2 block">
+						<kbd class="kbd">backspace</kbd> to remove the date.</span
+					>
 				</label>
 			</div>
 			<label class="form-label">
