@@ -25,7 +25,10 @@ export interface Picture extends Timestamps {
 	};
 	name: string;
 	galleryId?: string;
-
+	schedule?: {
+		_id: string;
+		eventSlug: string;
+	};
 	storage: {
 		original: ImageData;
 		formats: ImageData[];

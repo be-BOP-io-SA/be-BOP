@@ -27,6 +27,10 @@ export async function generatePicture(
 		tag?: { _id: string; type: TagType };
 		slider?: { _id: string; url?: string; openNewTab?: boolean };
 		galleryId?: string;
+		schedule?: {
+			_id: string;
+			eventSlug: string;
+		};
 		cb?: (session: ClientSession) => Promise<void>;
 	}
 ): Promise<void> {
@@ -93,6 +97,8 @@ export async function generatePicture(
 		? s3TagPrefix(opts.slider._id)
 		: opts?.galleryId
 		? s3GalleryPrefix(opts.galleryId)
+		: opts?.schedule
+		? s3GalleryPrefix(opts.schedule._id)
 		: `pictures/`;
 
 	const path = `${pathPrefix}${_id}${extension}`;
@@ -191,6 +197,9 @@ export async function generatePicture(
 							_id: opts?.slider._id,
 							...(opts.slider.url && { url: opts.slider.url, openNewTab: opts.slider.openNewTab })
 						}
+					}),
+					...(opts?.schedule && {
+						schedule: { _id: opts.schedule._id, eventSlug: opts.schedule.eventSlug }
 					}),
 					createdAt: new Date(),
 					updatedAt: new Date()
