@@ -11,6 +11,7 @@ import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.
 import { parsePriceAmount } from '$lib/types/Currency.js';
 import { orderAmountWithNoPaymentsCreated as orderAmountWithNoPayments } from '$lib/types/Order.js';
 import { z } from 'zod';
+import { addMinutes } from 'date-fns';
 
 export async function load({ params, depends, locals }) {
 	depends(UrlDependency.Order);
@@ -115,12 +116,6 @@ export const actions = {
 			throw error(400, 'Order is not pending');
 		}
 
-		const remainingAmount = orderAmountWithNoPayments(order);
-
-		if (remainingAmount <= 0) {
-			throw error(400, 'Order has no remaining amount to pay');
-		}
-
 		let methods = paymentMethods({ role: locals.user?.roleId });
 
 		for (const item of order.items) {
@@ -136,31 +131,15 @@ export const actions = {
 		const formData = await request.formData();
 		const parsed = z
 			.object({
-				amount: z.string().regex(/^\d+(\.\d+)?$/),
 				method: z.enum(methods as [PaymentMethod, ...PaymentMethod[]])
 			})
 			.parse({
-				amount: formData.get('amount'),
 				method: formData.get('method')
 			});
 
-		const amount = parsePriceAmount(parsed.amount, order.currencySnapshot.main.totalPrice.currency);
-		if (amount <= 0) {
-			throw error(400, 'Invalid amount');
-		}
-		if (amount > remainingAmount) {
-			throw error(400, 'Amount is greater than the remaining amount to pay');
-		}
-
-		await addOrderPayment(
-			order,
-			parsed.method,
-			{
-				amount,
-				currency: order.currencySnapshot.main.totalPrice.currency
-			},
-			{ expiresAt: null }
-		);
+		await addOrderPayment(order, parsed.method, order.currencySnapshot.main.totalPrice, {
+			expiresAt: addMinutes(new Date(), runtimeConfig.desiredPaymentTimeout)
+		});
 
 		throw redirect(303, `/order/${order._id}`);
 	}

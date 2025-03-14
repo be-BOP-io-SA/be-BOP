@@ -68,6 +68,9 @@
 
 	let tickets = data.order.items.flatMap((item) => item.tickets ?? []);
 	let ticketNumbers = Object.fromEntries(tickets.map((ticket, i) => [ticket, i + 1]));
+	let filteredPaymentMethods = data.paymentMethods.filter((pm) =>
+		['card', 'bitcoin', 'lightning', 'paypal'].includes(pm)
+	);
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -524,7 +527,7 @@
 								step="any"
 								max={remainingAmount}
 								value={remainingAmount}
-								readonly
+								disabled
 							/>
 						</label>
 						<label class="form-label">
@@ -538,7 +541,7 @@
 						<label class="form-label">
 							<span>{t('checkout.payment.method')}</span>
 							<select name="method" class="form-input">
-								{#each data.paymentMethods.filter( (pm) => ['card', 'bitcoin', 'lightning', 'paypal'].includes(pm) ) as paymentMethod}
+								{#each filteredPaymentMethods as paymentMethod}
 									<option value={paymentMethod}
 										>{t(`checkout.paymentMethod.${paymentMethod}`)}</option
 									>

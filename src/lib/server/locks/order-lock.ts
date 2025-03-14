@@ -305,7 +305,7 @@ async function maintainOrders() {
 													paymentId
 											);
 										}
-										order = await onOrderPaymentFailed(order, payment, 'failed');
+										order = await onOrderPaymentFailed(order, payment, 'expired');
 									}
 								} catch (err) {
 									console.error(inspect(err, { depth: 10 }));
@@ -328,10 +328,9 @@ async function maintainOrders() {
 											amount: Number(checkout.purchase_units[0].amount.value),
 											currency: checkout.purchase_units[0].amount.currency_code
 										});
-									} else if (
-										checkout.status === 'VOIDED' ||
-										(payment.expiresAt && payment.expiresAt < new Date())
-									) {
+									} else if (payment.expiresAt && payment.expiresAt < new Date()) {
+										order = await onOrderPaymentFailed(order, payment, 'expired');
+									} else if (checkout.status === 'VOIDED') {
 										order = await onOrderPaymentFailed(order, payment, 'failed');
 									}
 								} catch (err) {

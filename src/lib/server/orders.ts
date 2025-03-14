@@ -345,10 +345,7 @@ export async function onOrderPayment(
 export async function onOrderPaymentFailed(
 	order: Order,
 	payment: Order['payments'][0],
-	reason: Exclude<
-		OrderPaymentStatus,
-		Exclude<OrderPaymentStatus, 'canceled' | 'expired' | 'failed'>
-	>
+	reason: Extract<OrderPaymentStatus, 'canceled' | 'expired' | 'failed'>
 ): Promise<Order> {
 	if (!order.payments.includes(payment)) {
 		throw new Error('Sync broken between order and payment');
