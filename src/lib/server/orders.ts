@@ -345,7 +345,8 @@ export async function onOrderPayment(
 export async function onOrderPaymentFailed(
 	order: Order,
 	payment: Order['payments'][0],
-	reason: Extract<OrderPaymentStatus, 'canceled' | 'expired' | 'failed'>
+	reason: Extract<OrderPaymentStatus, 'canceled' | 'expired' | 'failed'>,
+	preserveOrderStatus?: boolean
 ): Promise<Order> {
 	if (!order.payments.includes(payment)) {
 		throw new Error('Sync broken between order and payment');
@@ -365,7 +366,8 @@ export async function onOrderPaymentFailed(
 					...(order.payments.every(
 						(payment) => payment.status === 'canceled' || payment.status === 'expired'
 					) &&
-						order.status === 'pending' && {
+						order.status === 'pending' &&
+						!preserveOrderStatus && {
 							status: reason
 						})
 				}
@@ -1303,7 +1305,10 @@ async function generatePaypalPaymentInfo(params: {
 	};
 }
 
-function paymentMethodExpiration(paymentMethod: PaymentMethod, opts?: { paymentTimeout?: number }) {
+export function paymentMethodExpiration(
+	paymentMethod: PaymentMethod,
+	opts?: { paymentTimeout?: number }
+) {
 	return paymentMethod === 'point-of-sale' || paymentMethod === 'bank-transfer'
 		? undefined
 		: paymentMethod === 'lightning' &&

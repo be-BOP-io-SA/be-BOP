@@ -228,8 +228,10 @@ async function maintainOrders() {
 											amount: checkout.amount,
 											currency: checkout.currency
 										});
-									} else if (checkout.status === 'FAILED' || checkout.status === 'EXPIRED') {
+									} else if (checkout.status === 'FAILED') {
 										order = await onOrderPaymentFailed(order, payment, 'failed');
+									} else if (checkout.status === 'EXPIRED') {
+										order = await onOrderPaymentFailed(order, payment, 'expired');
 									}
 								} catch (err) {
 									console.error(inspect(err, { depth: 10 }));
@@ -357,10 +359,9 @@ async function maintainOrders() {
 									amount: Number(checkout.purchase_units[0].amount.value),
 									currency: checkout.purchase_units[0].amount.currency_code
 								});
-							} else if (
-								checkout.status === 'VOIDED' ||
-								(payment.expiresAt && payment.expiresAt < new Date())
-							) {
+							} else if (payment.expiresAt && payment.expiresAt < new Date()) {
+								order = await onOrderPaymentFailed(order, payment, 'expired');
+							} else if (checkout.status === 'VOIDED') {
 								order = await onOrderPaymentFailed(order, payment, 'failed');
 							}
 						} catch (err) {
