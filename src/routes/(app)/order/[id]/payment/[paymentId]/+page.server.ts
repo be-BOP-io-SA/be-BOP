@@ -49,9 +49,7 @@ export const actions = {
 				method: formData.get('method')
 			});
 		await addOrderPayment(order, parsed.method, payment.price, {
-			expiresAt: paymentMethodExpiration(parsed.method, {
-				paymentTimeout: params.paymentTimeOut
-			})
+			expiresAt: paymentMethodExpiration(parsed.method)
 		});
 		throw redirect(303, `/order/${order._id}`);
 	}

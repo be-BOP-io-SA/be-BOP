@@ -1,15 +1,12 @@
 import { collections } from '$lib/server/database';
 import { UrlDependency } from '$lib/types/UrlDependency';
-import { error, redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { fetchOrderForUser } from './fetchOrderForUser.js';
 import { getPublicS3DownloadLink } from '$lib/server/s3.js';
 import { uniqBy } from '$lib/utils/uniqBy.js';
 import { cmsFromContent } from '$lib/server/cms.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
-import { addOrderPayment } from '$lib/server/orders';
-import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
-import { z } from 'zod';
-import { addMinutes } from 'date-fns';
+import { paymentMethods } from '$lib/server/payment-methods.js';
 
 export async function load({ params, depends, locals }) {
 	depends(UrlDependency.Order);
@@ -100,45 +97,5 @@ export const actions = {
 		);
 
 		throw redirect(303, request.headers.get('referer') || '/');
-	},
-	addPayment: async ({ params, request, locals }) => {
-		const order = await collections.orders.findOne({
-			_id: params.id
-		});
-
-		if (!order) {
-			throw error(404, 'Order not found');
-		}
-
-		if (order.status !== 'pending') {
-			throw error(400, 'Order is not pending');
-		}
-
-		let methods = paymentMethods({ role: locals.user?.roleId });
-
-		for (const item of order.items) {
-			if (item.product.paymentMethods) {
-				methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
-			}
-		}
-
-		if (!methods.length) {
-			throw error(400, 'No payment methods available');
-		}
-
-		const formData = await request.formData();
-		const parsed = z
-			.object({
-				method: z.enum(methods as [PaymentMethod, ...PaymentMethod[]])
-			})
-			.parse({
-				method: formData.get('method')
-			});
-
-		await addOrderPayment(order, parsed.method, order.currencySnapshot.main.totalPrice, {
-			expiresAt: addMinutes(new Date(), runtimeConfig.desiredPaymentTimeout)
-		});
-
-		throw redirect(303, `/order/${order._id}`);
 	}
 };
