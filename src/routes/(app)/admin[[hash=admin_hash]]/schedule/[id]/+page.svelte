@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
-	import { addMonths } from 'date-fns';
 	import PictureComponent from '$lib/components/Picture.svelte';
 
 	export let data;

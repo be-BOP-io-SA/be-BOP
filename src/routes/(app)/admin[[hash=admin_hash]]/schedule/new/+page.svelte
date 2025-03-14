@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
-	import { addDays, addMonths } from 'date-fns';
 
 	let name: string;
 	let slug: string;
