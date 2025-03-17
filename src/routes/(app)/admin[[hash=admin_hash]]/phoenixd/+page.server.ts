@@ -7,6 +7,7 @@ import {
 	phoenixdDetected,
 	phoenixdGetBolt12,
 	phoenixdInfo,
+	phoenixdLnAddress,
 	phoenixdPayInvoice,
 	phoenixdSendOnChain
 } from '$lib/server/phoenixd.js';
@@ -79,6 +80,7 @@ export const actions = {
 			.parse(Object.fromEntries(await event.request.formData()));
 
 		runtimeConfig.phoenixd.password = parsed.password;
+		runtimeConfig.phoenixd.lnAddress = await phoenixdLnAddress();
 		runtimeConfig.phoenixd.bolt12Address = await phoenixdGetBolt12();
 		await collections.runtimeConfig.updateOne(
 			{ _id: 'phoenixd' },

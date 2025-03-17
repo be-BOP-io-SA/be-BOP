@@ -91,7 +91,7 @@
 		"notifications": {
 			"email": "E-mail",
 			"message": "Vul ten minste één contactadres in om op de hoogte te blijven van uw bestellingsnieuws.",
-			"npub": "Geen openbaar adres",
+			"npub": "Publieke sleutel Nostr",
 			"title": "Voer"
 		},
 		"numProducts": {

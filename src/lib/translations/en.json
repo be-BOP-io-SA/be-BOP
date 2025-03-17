@@ -79,7 +79,7 @@
 		"deliveryFeesEstimationTooltip": "This is an estimation, definitive fees will be processed on delivery country selection.",
 		"differentBillingAddress": "My shipping address and my billing address are different",
 		"digitalNoShippingNeeded": "All products in your cart are digital products. You don't need to provide any shipping information.",
-		"invalidNpub": "Invalid Nostr public address",
+		"invalidNpub": "Invalid Nostr public key",
 		"isProBilling": "This is a professional order",
 		"multiplePaymentMethods": "Use several payment methods",
 		"multiplePaymentMethodsHelpText": "You can set payment methods at the next step.",
@@ -91,7 +91,7 @@
 		"notifications": {
 			"email": "Email",
 			"message": "Please fill at least one contact address to be notified about your order news.",
-			"npub": "Nostr public address",
+			"npub": "Nostr public key",
 			"title": "Feed & Notifications"
 		},
 		"numProducts": {
@@ -528,7 +528,7 @@
 			"partiallyPaid": "partially paid",
 			"pending": "pending"
 		},
-		"paymentStatusNpub": "Nostr public address for payment status",
+		"paymentStatusNpub": "Nostr public key for payment status",
 		"receipt": {
 			"accountHolder": "Account holder",
 			"accountHolderAddress": "Address",
