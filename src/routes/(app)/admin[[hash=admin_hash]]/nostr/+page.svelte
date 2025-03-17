@@ -145,10 +145,12 @@
 		<li class="break-words">
 			{#if message.kind === 4}
 				<span title="Encrypted message">'🔐'</span>
+				<time datetime={message.createdAt.toJSON()}
+					>{message.createdAt.toLocaleString('en-UK')}</time
+				>
+				|
+				{message.source} | {message.content}
 			{/if}
-			<time datetime={message.createdAt.toJSON()}>{message.createdAt.toLocaleString('en-UK')}</time>
-			|
-			{message.source} | {message.content}
 		</li>
 	{/each}
 </ul>

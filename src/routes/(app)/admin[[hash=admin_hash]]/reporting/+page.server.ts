@@ -50,7 +50,8 @@ export async function load({ url }) {
 			quantityOrder: sum(order.items.map((items) => items.quantity)),
 			billingAddress: order.billingAddress,
 			shippingAddress: order.shippingAddress,
-			ipCountry: countryFromIp(order.clientIp ?? '')
+			ipCountry: countryFromIp(order.clientIp ?? ''),
+			vat: order.vat
 		})),
 		beginsAt,
 		endsAt,

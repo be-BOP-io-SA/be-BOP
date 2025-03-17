@@ -230,7 +230,8 @@ export const actions: Actions = {
 										title: parsed.sellDisclaimerTitle,
 										reason: parsed.sellDisclaimerReason
 									}
-								})
+								}),
+							hideFromSEO: parsed.hideFromSEO
 						},
 						{ session }
 					);
@@ -414,7 +415,8 @@ export const actions: Actions = {
 								reason: parsed.sellDisclaimerReason
 							}
 						}),
-					...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) })
+					...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
+					hideFromSEO: parsed.hideFromSEO
 				},
 				{ session }
 			);
