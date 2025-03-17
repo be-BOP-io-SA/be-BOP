@@ -7,7 +7,8 @@
 	let pastEventDelay = 60;
 	let displayPastEvents = false;
 	let eventLines = 1;
-	let beginsAt = new Date().toISOString().slice(0, 16);
+	let beginsAt: string[] = [];
+	let endsAt: string[] = [];
 </script>
 
 <h1 class="text-3xl">Add a schedule</h1>
@@ -100,7 +101,7 @@
 					class="form-input"
 					type="datetime-local"
 					name="events[{i}].beginsAt"
-					bind:value={beginsAt}
+					bind:value={beginsAt[i]}
 					required
 				/>
 			</label>
@@ -108,7 +109,13 @@
 		<div class="flex flex-wrap gap-4">
 			<label class="form-label">
 				Ends at
-				<input class="form-input" type="datetime-local" name="events[{i}].endsAt" />
+				<input
+					class="form-input"
+					type="datetime-local"
+					name="events[{i}].endsAt"
+					bind:value={endsAt[i]}
+					min={beginsAt[i]}
+				/>
 				<span class="text-sm text-gray-600 mt-2 block">
 					<kbd class="kbd">backspace</kbd> to remove the date.</span
 				>

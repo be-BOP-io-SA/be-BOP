@@ -8,7 +8,8 @@
 	let slug = data.schedule._id;
 	let displayPastEvents = data.schedule.displayPastEvents;
 	let eventLines = data.schedule.events.length || 1;
-	let beginsAt = new Date().toISOString().slice(0, 16);
+	let beginsAt: string[] = [];
+	let endsAt: string[] = [];
 
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this schedule?')) {
@@ -141,7 +142,9 @@
 						class="form-input"
 						type="datetime-local"
 						name="events[{i}].beginsAt"
-						value={new Date(data.schedule.events[i].beginsAt).toISOString().slice(0, 16)}
+						value={(beginsAt[i] = new Date(data.schedule.events[i].beginsAt)
+							.toISOString()
+							.slice(0, 16))}
 						required
 					/>
 				</label>
@@ -149,6 +152,7 @@
 			<div class="flex flex-wrap gap-4">
 				<label class="form-label">
 					Ends at
+
 					<input
 						class="form-input"
 						type="datetime-local"
@@ -156,6 +160,7 @@
 						value={data.schedule.events[i].endsAt !== null
 							? new Date(data.schedule.events[i].endsAt ?? '').toISOString().slice(0, 16)
 							: ''}
+						min={beginsAt[i]}
 					/>
 					<span class="text-sm text-gray-600 mt-2 block">
 						<kbd class="kbd">backspace</kbd> to remove the date.</span
@@ -264,14 +269,21 @@
 						class="form-input"
 						type="datetime-local"
 						name="events[{i}].beginsAt"
-						bind:value={beginsAt}
+						bind:value={beginsAt[i]}
+						required
 					/>
 				</label>
 			</div>
 			<div class="flex flex-wrap gap-4">
 				<label class="form-label">
 					Ends at
-					<input class="form-input" type="datetime-local" name="events[{i}].endsAt" />
+					<input
+						class="form-input"
+						type="datetime-local"
+						name="events[{i}].endsAt"
+						bind:value={endsAt[i]}
+						min={beginsAt[i]}
+					/>
 					<span class="text-sm text-gray-600 mt-2 block">
 						<kbd class="kbd">backspace</kbd> to remove the date.</span
 					>
