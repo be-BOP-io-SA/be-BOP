@@ -183,6 +183,7 @@ const baseConfig = {
 	],
 	removeBebopLogoPOS: false,
 	contactModes: ['email', 'nostr'],
+	contactModesForceOption: false,
 	posTouchTag: [] as Tag['_id'][],
 	hideCreditCardQrCode: false,
 	overwriteCreditCardSvgColor: false,

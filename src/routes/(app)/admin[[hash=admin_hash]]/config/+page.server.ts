@@ -93,6 +93,7 @@ export const actions = {
 				cartMaxSeparateItems: z.number({ coerce: true }).int().default(0),
 				disableLanguageSelector: z.boolean({ coerce: true }),
 				contactModes: z.string().array(),
+				contactModesForceOption: z.boolean({ coerce: true }),
 				cartPreviewInteractive: z.boolean({ coerce: true }),
 				removeBebopLogoPOS: z.boolean({ coerce: true }),
 				hideCreditCardQrCode: z.boolean({ coerce: true }),

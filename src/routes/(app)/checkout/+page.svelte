@@ -540,7 +540,7 @@
 							{label}
 						</div>
 						<div class="p-4 flex flex-col gap-3">
-							{#if data.emailsEnabled && data.contactModes.includes('email')}
+							{#if (data.contactModesForceOption || data.emailsEnabled) && data.contactModes.includes('email')}
 								<label class="form-label">
 									{t('checkout.notifications.email')}
 									<input

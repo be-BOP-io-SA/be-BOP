@@ -130,6 +130,15 @@
 	{#each selectedContactMode as contactMode}
 		<input type="hidden" name="contactModes" value={contactMode.value} />
 	{/each}
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="contactModesForceOption"
+			class="form-checkbox"
+			checked={data.contactModesForceOption}
+		/>
+		Force option display (email even if smtp config is not done, npub even if nsec config is not done)
+	</label>
 	<h2 class="text-2xl">Cart preview</h2>
 
 	<label class="checkbox-label">
