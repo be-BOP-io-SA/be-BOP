@@ -482,7 +482,10 @@ export async function createOrder(
 	const npubAddress = params.notifications?.paymentStatus?.npub;
 	const email = params.notifications?.paymentStatus?.email;
 
-	const canBeNotified = !!(npubAddress || (emailsEnabled && email));
+	const canBeNotified = !!(
+		npubAddress ||
+		((runtimeConfig.contactModesForceOption || emailsEnabled) && email)
+	);
 
 	if (
 		!canBeNotified &&
