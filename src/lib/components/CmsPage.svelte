@@ -13,7 +13,8 @@
 		CmsContactForm,
 		CmsCountdown,
 		CmsGallery,
-		CmsLeaderboard
+		CmsLeaderboard,
+		CmsSchedule
 	} from '$lib/server/cms';
 	import CmsDesign from './CmsDesign.svelte';
 
@@ -45,6 +46,7 @@
 	export let countdowns: CmsCountdown[];
 	export let galleries: CmsGallery[];
 	export let leaderboards: CmsLeaderboard[];
+	export let schedules: CmsSchedule[];
 
 	const { t } = useI18n();
 </script>
@@ -80,6 +82,7 @@
 		{countdowns}
 		{galleries}
 		{leaderboards}
+		{schedules}
 		class="body body-mainPlan"
 	/>
 {:else}
@@ -107,6 +110,7 @@
 			{countdowns}
 			{galleries}
 			{leaderboards}
+			{schedules}
 			class="body"
 		/>
 	</main>

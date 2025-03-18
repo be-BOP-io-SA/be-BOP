@@ -186,6 +186,7 @@
 			countdowns={data.cmsCheckoutTopData.countdowns}
 			galleries={data.cmsCheckoutTopData.galleries}
 			leaderboards={data.cmsCheckoutTopData.leaderboards}
+			schedules={data.cmsCheckoutTopData.schedules}
 			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
 		/>
 	{/if}
@@ -1099,6 +1100,7 @@
 			countdowns={data.cmsCheckoutBottomData.countdowns}
 			galleries={data.cmsCheckoutBottomData.galleries}
 			leaderboards={data.cmsCheckoutBottomData.leaderboards}
+			schedules={data.cmsCheckoutBottomData.schedules}
 			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
 		/>
 	{/if}
