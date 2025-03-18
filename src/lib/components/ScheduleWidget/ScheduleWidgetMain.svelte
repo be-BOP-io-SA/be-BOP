@@ -11,7 +11,7 @@
 	$: pictureByEventSlug = Object.fromEntries(
 		pictures.map((picture) => [picture.schedule?.eventSlug, picture])
 	);
-	const { t, locale } = useI18n();
+	const { locale } = useI18n();
 </script>
 
 {#each schedule.events as event}
