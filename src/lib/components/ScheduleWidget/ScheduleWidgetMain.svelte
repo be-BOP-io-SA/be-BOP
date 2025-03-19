@@ -61,7 +61,7 @@
 					{event.title}
 				</h2>
 			</a>
-			<p class="text-sm text-gray-600">
+			<p class="text-sm">
 				{upperFirst(
 					event.beginsAt.toLocaleDateString($locale, {
 						weekday: 'long',
@@ -99,7 +99,7 @@
 
 			<p class="font-semibold text-xl mt-2">{event.shortDescription}</p>
 
-			<p class="text-sm text-gray-700 mt-2">
+			<p class="text-sm mt-2">
 				{event.description}
 			</p>
 			{#if event.url}
