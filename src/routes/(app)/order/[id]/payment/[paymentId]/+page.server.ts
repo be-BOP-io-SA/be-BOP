@@ -1,4 +1,4 @@
-import { collections } from '$lib/server/database';
+import { collections, withTransaction } from '$lib/server/database';
 import { addOrderPayment, onOrderPaymentFailed, paymentMethodExpiration } from '$lib/server/orders';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
 import { error, redirect } from '@sveltejs/kit';
@@ -46,12 +46,16 @@ export const actions = {
 			.parse({
 				method: formData.get('method')
 			});
-
-		await addOrderPayment(order, parsed.method, payment.price, {
-			expiresAt: paymentMethodExpiration(parsed.method)
+		await withTransaction(async (session) => {
+			await addOrderPayment(order, parsed.method, payment.price, {
+				expiresAt: paymentMethodExpiration(parsed.method),
+				session
+			});
+			await onOrderPaymentFailed(order, payment, 'canceled', {
+				preserveOrderStatus: true,
+				session
+			});
 		});
-		await onOrderPaymentFailed(order, payment, 'canceled', true);
-
 		throw redirect(303, `/order/${order._id}`);
 	}
 };

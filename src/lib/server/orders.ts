@@ -346,7 +346,7 @@ export async function onOrderPaymentFailed(
 	order: Order,
 	payment: Order['payments'][0],
 	reason: Extract<OrderPaymentStatus, 'canceled' | 'expired' | 'failed'>,
-	preserveOrderStatus?: boolean
+	opts?: { preserveOrderStatus?: boolean; session?: ClientSession }
 ): Promise<Order> {
 	if (!order.payments.includes(payment)) {
 		throw new Error('Sync broken between order and payment');
@@ -367,12 +367,12 @@ export async function onOrderPaymentFailed(
 						(payment) => payment.status === 'canceled' || payment.status === 'expired'
 					) &&
 						order.status === 'pending' &&
-						!preserveOrderStatus && {
+						!opts?.preserveOrderStatus && {
 							status: reason
 						})
 				}
 			},
-			{ returnDocument: 'after', session }
+			{ returnDocument: 'after', session: opts?.session ?? session }
 		);
 		if (!ret.value) {
 			throw new Error('Failed to update order');
