@@ -92,6 +92,9 @@
 				{#if event.location?.name}
 					- <a href={event.location.link}>{event.location.name}</a>
 				{/if}
+				{#if event.unavailabity?.isUnavailable}
+					<span class="font-bold">[{event.unavailabity.label}]</span>
+				{/if}
 			</p>
 
 			<p class="font-semibold text-xl mt-2">{event.shortDescription}</p>

@@ -8,9 +8,12 @@
 	let slug = data.schedule._id;
 	let displayPastEvents = data.schedule.displayPastEvents;
 	let eventLines = data.schedule.events.length || 1;
+	let eventAvailable = data.schedule.events.map((eve) => ({
+		isUnavailable: eve.unavailabity?.isUnavailable ?? false,
+		label: eve.unavailabity?.label ?? ''
+	}));
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
-
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this schedule?')) {
 			event.preventDefault();
@@ -199,17 +202,18 @@
 					class="form-checkbox"
 					type="checkbox"
 					name="events[{i}].unavailabity.isUnavailable"
-					checked={data.schedule.events[i].unavailabity?.isUnavailable}
+					bind:checked={eventAvailable[i].isUnavailable}
 				/>
 				Make event unavailable (postponed, cancelled, sold out)
 			</label>
-			<select class="form-input" name="events[{i}].unavailabity.label">
-				{#each ['postponed', 'canceled', 'soldOut'] as label}
-					<option value={label} selected={data.schedule.events[i].unavailabity?.label === label}>
-						{label}
-					</option>
-				{/each}
-			</select>
+			{#if eventAvailable[i]?.isUnavailable}
+				<input
+					type="text"
+					class="form-input"
+					name="events[{i}].unavailabity.label"
+					value={data.schedule.events[i].unavailabity?.label}
+				/>
+			{/if}
 			<label class="checkbox-label">
 				<input
 					class="form-checkbox"

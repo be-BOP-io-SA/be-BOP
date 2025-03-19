@@ -14,7 +14,7 @@ export interface EventSchedule {
 	};
 	url?: string;
 	unavailabity?: {
-		label: 'postponed' | 'canceled' | 'soldOut';
+		label: string;
 		isUnavailable: boolean;
 	};
 	isArchived?: boolean;
