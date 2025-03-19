@@ -29,9 +29,11 @@ async function maintainOrders() {
 			await setTimeout(5_000);
 			continue;
 		}
-
 		const pendingOrders = await collections.orders
-			.find({ 'payments.status': 'pending', status: 'pending' })
+			.find({
+				'payments.status': { $in: ['pending', 'failed'] },
+				status: { $in: ['pending', 'failed'] }
+			})
 			.toArray()
 			.catch((err) => {
 				console.error(inspect(err, { depth: 10 }));
@@ -39,10 +41,15 @@ async function maintainOrders() {
 			});
 
 		for (let order of pendingOrders) {
-			for (let payment of order.payments.filter((p) => p.status === 'pending')) {
+			for (let payment of order.payments.filter(
+				(p) => p.status === 'pending' || p.status === 'failed'
+			)) {
 				// Since we can overwrite order, we need to update payment too if needed
 				const updatedPayment = order.payments.find((p) => p._id.equals(payment._id));
-				if (!updatedPayment || updatedPayment.status !== 'pending') {
+				if (
+					!updatedPayment ||
+					(updatedPayment.status !== 'pending' && updatedPayment.status !== 'failed')
+				) {
 					continue;
 				}
 				payment = updatedPayment;
@@ -231,6 +238,8 @@ async function maintainOrders() {
 									} else if (checkout.status === 'FAILED') {
 										order = await onOrderPaymentFailed(order, payment, 'failed');
 									} else if (checkout.status === 'EXPIRED') {
+										order = await onOrderPaymentFailed(order, payment, 'expired');
+									} else if (payment.expiresAt && payment.expiresAt < new Date()) {
 										order = await onOrderPaymentFailed(order, payment, 'expired');
 									}
 								} catch (err) {

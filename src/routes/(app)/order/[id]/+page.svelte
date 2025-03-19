@@ -236,7 +236,7 @@
 										{/if}
 									</li>
 								{/if}
-								{#if payment.expiresAt && payment.status === 'pending'}
+								{#if payment.expiresAt && (payment.status === 'pending' || payment.status === 'failed')}
 									<li>
 										{t('order.timeRemaining', {
 											minutes: differenceInMinutes(payment.expiresAt, currentDate)
@@ -251,6 +251,7 @@
 									</li>
 								{/if}
 								{#if payment.status === 'failed'}
+									<br />
 									{t('order.paymentCBFailed')}
 									<form
 										action="/order/{data.order._id}/payment/{payment.id}?/replaceMethod"

@@ -27,8 +27,6 @@ export const actions = {
 			throw error(400, `Payment is not ${payment.status}`);
 		}
 
-		await onOrderPaymentFailed(order, payment, 'canceled', true);
-
 		let methods = paymentMethods({ role: locals.user?.roleId });
 
 		for (const item of order.items) {
@@ -48,9 +46,12 @@ export const actions = {
 			.parse({
 				method: formData.get('method')
 			});
+
 		await addOrderPayment(order, parsed.method, payment.price, {
 			expiresAt: paymentMethodExpiration(parsed.method)
 		});
+		await onOrderPaymentFailed(order, payment, 'canceled', true);
+
 		throw redirect(303, `/order/${order._id}`);
 	}
 };
