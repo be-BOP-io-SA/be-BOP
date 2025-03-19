@@ -354,33 +354,31 @@ export async function onOrderPaymentFailed(
 
 	payment.status = reason; // for  below
 
-	return await withTransaction(async (session) => {
-		const ret = await collections.orders.findOneAndUpdate(
-			{
-				_id: order._id,
-				'payments._id': payment._id
-			},
-			{
-				$set: {
-					'payments.$.status': reason,
-					...(order.payments.every(
-						(payment) => payment.status === 'canceled' || payment.status === 'expired'
-					) &&
-						order.status === 'pending' &&
-						!opts?.preserveOrderStatus && {
-							status: reason
-						})
-				}
-			},
-			{ returnDocument: 'after', session: opts?.session ?? session }
-		);
-		if (!ret.value) {
-			throw new Error('Failed to update order');
-		}
-		order = ret.value;
+	const ret = await collections.orders.findOneAndUpdate(
+		{
+			_id: order._id,
+			'payments._id': payment._id
+		},
+		{
+			$set: {
+				'payments.$.status': reason,
+				...(order.payments.every(
+					(payment) => payment.status === 'canceled' || payment.status === 'expired'
+				) &&
+					order.status === 'pending' &&
+					!opts?.preserveOrderStatus && {
+						status: reason
+					})
+			}
+		},
+		{ returnDocument: 'after', session: opts?.session }
+	);
+	if (!ret.value) {
+		throw new Error('Failed to update order');
+	}
+	order = ret.value;
 
-		return order;
-	});
+	return order;
 }
 
 export async function lastInvoiceNumber(): Promise<number | undefined> {
