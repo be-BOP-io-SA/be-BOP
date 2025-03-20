@@ -37,6 +37,7 @@ export async function load(event) {
 			runtimeConfig.websiteShortDescription,
 		viewportWidth,
 		contactModes: runtimeConfig.contactModes,
+		contactModesForceOption: runtimeConfig.contactModesForceOption,
 		hideFromSearchEngines: runtimeConfig.hideFromSearchEngines,
 		ageRestriction: runtimeConfig.ageRestriction,
 		bolt12Address: runtimeConfig.phoenixd.bolt12Address

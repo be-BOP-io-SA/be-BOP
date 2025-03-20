@@ -2,10 +2,11 @@ import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Product } from '$lib/types/Product';
 import type { Tag } from '$lib/types/Tag';
+import { POS_ROLE_ID } from '$lib/types/User';
 
 export const load = async ({ locals }) => {
 	const query =
-		locals.user?.roleId === locals.user?.roleId
+		locals.user?.roleId === POS_ROLE_ID
 			? { 'actionSettings.retail.visible': true }
 			: { 'actionSettings.eShop.visible': true };
 
