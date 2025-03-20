@@ -345,8 +345,8 @@ export async function onOrderPayment(
 export async function onOrderPaymentFailed(
 	order: Order,
 	payment: Order['payments'][0],
-	reason: Exclude<OrderPaymentStatus, Exclude<OrderPaymentStatus, 'canceled' | 'expired'>>,
-	replacePaymentMethod?: boolean
+	reason: Extract<OrderPaymentStatus, 'canceled' | 'expired' | 'failed'>,
+	opts?: { preserveOrderStatus?: boolean; session?: ClientSession }
 ): Promise<Order> {
 	if (!order.payments.includes(payment)) {
 		throw new Error('Sync broken between order and payment');
@@ -354,33 +354,31 @@ export async function onOrderPaymentFailed(
 
 	payment.status = reason; // for  below
 
-	return await withTransaction(async (session) => {
-		const ret = await collections.orders.findOneAndUpdate(
-			{
-				_id: order._id,
-				'payments._id': payment._id
-			},
-			{
-				$set: {
-					'payments.$.status': reason,
-					...(order.payments.every(
-						(payment) => payment.status === 'canceled' || payment.status === 'expired'
-					) &&
-						order.status === 'pending' &&
-						!replacePaymentMethod && {
-							status: reason
-						})
-				}
-			},
-			{ returnDocument: 'after', session }
-		);
-		if (!ret.value) {
-			throw new Error('Failed to update order');
-		}
-		order = ret.value;
+	const ret = await collections.orders.findOneAndUpdate(
+		{
+			_id: order._id,
+			'payments._id': payment._id
+		},
+		{
+			$set: {
+				'payments.$.status': reason,
+				...(order.payments.every(
+					(payment) => payment.status === 'canceled' || payment.status === 'expired'
+				) &&
+					order.status === 'pending' &&
+					!opts?.preserveOrderStatus && {
+						status: reason
+					})
+			}
+		},
+		{ returnDocument: 'after', session: opts?.session }
+	);
+	if (!ret.value) {
+		throw new Error('Failed to update order');
+	}
+	order = ret.value;
 
-		return order;
-	});
+	return order;
 }
 
 export async function lastInvoiceNumber(): Promise<number | undefined> {
@@ -484,7 +482,10 @@ export async function createOrder(
 	const npubAddress = params.notifications?.paymentStatus?.npub;
 	const email = params.notifications?.paymentStatus?.email;
 
-	const canBeNotified = !!(npubAddress || (emailsEnabled && email));
+	const canBeNotified = !!(
+		npubAddress ||
+		((runtimeConfig.contactModesForceOption || emailsEnabled) && email)
+	);
 
 	if (
 		!canBeNotified &&
@@ -1305,7 +1306,10 @@ async function generatePaypalPaymentInfo(params: {
 	};
 }
 
-function paymentMethodExpiration(paymentMethod: PaymentMethod, opts?: { paymentTimeout?: number }) {
+export function paymentMethodExpiration(
+	paymentMethod: PaymentMethod,
+	opts?: { paymentTimeout?: number }
+) {
 	return paymentMethod === 'point-of-sale' || paymentMethod === 'bank-transfer'
 		? undefined
 		: paymentMethod === 'lightning' &&
