@@ -16,14 +16,20 @@ export const actions: Actions = {
 				sliderId: z.string().optional(),
 				tagId: z.string().optional(),
 				tagType: z.enum([TAGTYPES[0], ...TAGTYPES.slice(1)]).optional(),
-				pictureId: z.string().min(1).max(500)
+				pictureId: z.string().min(1).max(500),
+				scheduleId: z.string().optional(),
+				eventScheduleSlug: z.string().optional()
 			})
 			.parse(Object.fromEntries(formData));
 
 		await generatePicture(fields.pictureId, {
 			productId: fields.productId || undefined,
 			slider: fields.sliderId ? { _id: fields.sliderId } : undefined,
-			tag: fields.tagId && fields.tagType ? { _id: fields.tagId, type: fields.tagType } : undefined
+			tag: fields.tagId && fields.tagType ? { _id: fields.tagId, type: fields.tagType } : undefined,
+			schedule:
+				fields.scheduleId && fields.eventScheduleSlug
+					? { _id: fields.scheduleId, eventSlug: fields.eventScheduleSlug }
+					: undefined
 		});
 
 		if (fields.productId) {
@@ -34,6 +40,9 @@ export const actions: Actions = {
 		}
 		if (fields.tagId) {
 			throw redirect(303, '/admin/tags/' + fields.tagId);
+		}
+		if (fields.scheduleId) {
+			throw redirect(303, '/admin/schedule/' + fields.scheduleId);
 		}
 
 		throw redirect(303, `${adminPrefix()}/picture`);
