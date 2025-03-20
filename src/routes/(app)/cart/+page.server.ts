@@ -3,6 +3,7 @@ import { cmsFromContent } from '$lib/server/cms';
 import { collections, withTransaction } from '$lib/server/database';
 import { refreshAvailableStockInDb } from '$lib/server/product.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error, redirect } from '@sveltejs/kit';
 
 export async function load({ parent, locals }) {
@@ -33,6 +34,10 @@ export async function load({ parent, locals }) {
 			{
 				projection: {
 					content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] },
+					employeeContent: {
+						$ifNull: [`$translations.${locals.language}.employeeContent`, '$employeeContent']
+					},
+					hasEmployeeContent: 1,
 					title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] },
 					shortDescription: {
 						$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
@@ -49,6 +54,10 @@ export async function load({ parent, locals }) {
 			{
 				projection: {
 					content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] },
+					employeeContent: {
+						$ifNull: [`$translations.${locals.language}.employeeContent`, '$employeeContent']
+					},
+					hasEmployeeContent: 1,
 					title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] },
 					shortDescription: {
 						$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
@@ -62,11 +71,33 @@ export async function load({ parent, locals }) {
 	return {
 		...(cmsBasketTop && {
 			cmsBasketTop,
-			cmsBasketTopData: cmsFromContent({ content: cmsBasketTop.content }, locals)
+			cmsBasketTopData: cmsFromContent(
+				{
+					content:
+						locals.user?.roleId !== undefined &&
+						locals.user?.roleId !== CUSTOMER_ROLE_ID &&
+						cmsBasketTop.hasEmployeeContent &&
+						cmsBasketTop.employeeContent
+							? cmsBasketTop.employeeContent
+							: cmsBasketTop.content
+				},
+				locals
+			)
 		}),
 		...(cmsBasketBottom && {
 			cmsBasketBottom,
-			cmsBasketBottomData: cmsFromContent({ content: cmsBasketBottom.content }, locals)
+			cmsBasketBottomData: cmsFromContent(
+				{
+					content:
+						locals.user?.roleId !== undefined &&
+						locals.user?.roleId !== CUSTOMER_ROLE_ID &&
+						cmsBasketBottom.hasEmployeeContent &&
+						cmsBasketBottom.employeeContent
+							? cmsBasketBottom.employeeContent
+							: cmsBasketBottom.content
+				},
+				locals
+			)
 		})
 	};
 }

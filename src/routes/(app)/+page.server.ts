@@ -4,6 +4,7 @@ import { load as catalogLoad } from './catalog/+page.server';
 import { cmsFromContent } from '$lib/server/cms';
 import { redirect } from '@sveltejs/kit';
 import { addYears } from 'date-fns';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 
 export const load = async ({ locals }) => {
 	const cmsPage = await collections.cmsPages.findOne(
@@ -16,6 +17,10 @@ export const load = async ({ locals }) => {
 				mobileContent: {
 					$ifNull: [`$translations.${locals.language}.mobileContent`, '$mobileContent']
 				},
+				employeeContent: {
+					$ifNull: [`$translations.${locals.language}.employeeContent`, '$employeeContent']
+				},
+				hasEmployeeContent: 1,
 				title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] },
 				shortDescription: {
 					$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
@@ -36,7 +41,16 @@ export const load = async ({ locals }) => {
 	return {
 		cmsPage: omit(cmsPage, ['content']),
 		cmsData: cmsFromContent(
-			{ content: cmsPage.content, mobileContent: cmsPage.mobileContent },
+			{
+				content:
+					locals.user?.roleId !== undefined &&
+					locals.user?.roleId !== CUSTOMER_ROLE_ID &&
+					cmsPage.hasEmployeeContent &&
+					cmsPage.employeeContent
+						? cmsPage.employeeContent
+						: cmsPage.content,
+				mobileContent: cmsPage.mobileContent
+			},
 			locals
 		),
 		layoutReset: cmsPage.fullScreen

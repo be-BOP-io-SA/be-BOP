@@ -2,6 +2,7 @@ import { collections } from '$lib/server/database';
 import { omit } from 'lodash-es';
 import { cmsFromContent } from '$lib/server/cms.js';
 import { error } from '@sveltejs/kit';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 
 export async function load({ params, locals, url }) {
 	let cmsPage = await collections.cmsPages.findOne(
@@ -18,11 +19,15 @@ export async function load({ params, locals, url }) {
 				shortDescription: {
 					$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
 				},
+				employeeContent: {
+					$ifNull: [`$translations.${locals.language}.employeeContent`, '$employeeContent']
+				},
 				fullScreen: 1,
 				maintenanceDisplay: 1,
 				hideFromSEO: 1,
 				hasMobileContent: 1,
-				metas: 1
+				metas: 1,
+				hasEmployeeContent: 1
 			}
 		}
 	);
@@ -56,15 +61,31 @@ export async function load({ params, locals, url }) {
 	}
 
 	return {
-		cmsPage: omit(cmsPage, ['content', 'mobileContent']),
+		cmsPage: omit(cmsPage, ['content', 'mobileContent', 'employeeContent']),
 		cmsData: cmsFromContent(
 			url.searchParams.get('content') === 'desktop' ||
 				!cmsPage.hasMobileContent ||
 				!cmsPage.mobileContent
-				? { content: cmsPage.content }
+				? {
+						content:
+							locals.user?.roleId !== undefined &&
+							locals.user?.roleId !== CUSTOMER_ROLE_ID &&
+							cmsPage.hasEmployeeContent &&
+							cmsPage.employeeContent
+								? cmsPage.employeeContent
+								: cmsPage.content
+				  }
 				: url.searchParams.get('content') === 'mobile'
 				? { content: cmsPage.mobileContent }
-				: { content: cmsPage.content, mobileContent: cmsPage.mobileContent },
+				: {
+						content:
+							locals.user?.roleId !== CUSTOMER_ROLE_ID &&
+							cmsPage.hasEmployeeContent &&
+							cmsPage.employeeContent
+								? cmsPage.employeeContent
+								: cmsPage.content,
+						mobileContent: cmsPage.mobileContent
+				  },
 			locals
 		),
 		layoutReset: cmsPage.fullScreen,
