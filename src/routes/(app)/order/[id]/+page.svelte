@@ -68,6 +68,9 @@
 
 	let tickets = data.order.items.flatMap((item) => item.tickets ?? []);
 	let ticketNumbers = Object.fromEntries(tickets.map((ticket, i) => [ticket, i + 1]));
+	let filteredPaymentMethods = data.paymentMethods.filter((pm) =>
+		['card', 'bitcoin', 'lightning', 'paypal'].includes(pm)
+	);
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -234,7 +237,7 @@
 										{/if}
 									</li>
 								{/if}
-								{#if payment.expiresAt && payment.status === 'pending'}
+								{#if payment.expiresAt && (payment.status === 'pending' || payment.status === 'failed')}
 									<li>
 										{t('order.timeRemaining', {
 											minutes: differenceInMinutes(payment.expiresAt, currentDate)
@@ -247,6 +250,52 @@
 											date: payment.paidAt.toLocaleDateString($locale)
 										})}
 									</li>
+								{/if}
+								{#if payment.status === 'failed'}
+									<br />
+									{t('order.paymentCBFailed')}
+									<form
+										action="/order/{data.order._id}/payment/{payment.id}?/replaceMethod"
+										method="post"
+										class="contents"
+									>
+										<div class="flex flex-wrap gap-2">
+											<label class="form-label">
+												{t('order.addPayment.amount')}
+												<input
+													class="form-input"
+													type="number"
+													name="amount"
+													min="0"
+													step="any"
+													max={payment.price.amount}
+													value={payment.price.amount}
+													disabled
+												/>
+											</label>
+											<label class="form-label">
+												{t('order.addPayment.currency')}
+												<select name="currency" class="form-input" disabled>
+													<option value={data.order.currencySnapshot.main.totalPrice.currency}
+														>{data.order.currencySnapshot.main.totalPrice.currency}</option
+													>
+												</select>
+											</label>
+											<label class="form-label">
+												<span>{t('checkout.payment.method')}</span>
+												<select name="method" class="form-input">
+													{#each filteredPaymentMethods as paymentMethod}
+														<option value={paymentMethod}
+															>{t(`checkout.paymentMethod.${paymentMethod}`)}</option
+														>
+													{/each}
+												</select>
+											</label><br />
+											<button type="submit" class="btn btn-blue self-end"
+												>{t('order.newPaymentAttempt.cta')}</button
+											>
+										</div>
+									</form>
 								{/if}
 							</ul>
 						{/if}

@@ -29,9 +29,11 @@ async function maintainOrders() {
 			await setTimeout(5_000);
 			continue;
 		}
-
 		const pendingOrders = await collections.orders
-			.find({ 'payments.status': 'pending', status: 'pending' })
+			.find({
+				'payments.status': { $in: ['pending', 'failed'] },
+				status: 'pending'
+			})
 			.toArray()
 			.catch((err) => {
 				console.error(inspect(err, { depth: 10 }));
@@ -228,7 +230,9 @@ async function maintainOrders() {
 											amount: checkout.amount,
 											currency: checkout.currency
 										});
-									} else if (checkout.status === 'FAILED' || checkout.status === 'EXPIRED') {
+									} else if (checkout.status === 'FAILED') {
+										order = await onOrderPaymentFailed(order, payment, 'failed');
+									} else if (checkout.status === 'EXPIRED') {
 										order = await onOrderPaymentFailed(order, payment, 'expired');
 									}
 								} catch (err) {
@@ -285,7 +289,7 @@ async function maintainOrders() {
 											currency: currency
 										});
 									} else if (paymentIntent.status === 'canceled') {
-										order = await onOrderPaymentFailed(order, payment, 'expired');
+										order = await onOrderPaymentFailed(order, payment, 'failed');
 									} else if (payment.expiresAt && new Date() > payment.expiresAt) {
 										const cancelResponse = await fetch(
 											'https://api.stripe.com/v1/payment_intents/' + paymentId + '/cancel',
@@ -328,11 +332,10 @@ async function maintainOrders() {
 											amount: Number(checkout.purchase_units[0].amount.value),
 											currency: checkout.purchase_units[0].amount.currency_code
 										});
-									} else if (
-										checkout.status === 'VOIDED' ||
-										(payment.expiresAt && payment.expiresAt < new Date())
-									) {
+									} else if (payment.expiresAt && payment.expiresAt < new Date()) {
 										order = await onOrderPaymentFailed(order, payment, 'expired');
+									} else if (checkout.status === 'VOIDED') {
+										order = await onOrderPaymentFailed(order, payment, 'failed');
 									}
 								} catch (err) {
 									console.error(inspect(err, { depth: 10 }));
@@ -358,11 +361,10 @@ async function maintainOrders() {
 									amount: Number(checkout.purchase_units[0].amount.value),
 									currency: checkout.purchase_units[0].amount.currency_code
 								});
-							} else if (
-								checkout.status === 'VOIDED' ||
-								(payment.expiresAt && payment.expiresAt < new Date())
-							) {
+							} else if (payment.expiresAt && payment.expiresAt < new Date()) {
 								order = await onOrderPaymentFailed(order, payment, 'expired');
+							} else if (checkout.status === 'VOIDED') {
+								order = await onOrderPaymentFailed(order, payment, 'failed');
 							}
 						} catch (err) {
 							console.error(inspect(err, { depth: 10 }));
@@ -372,6 +374,16 @@ async function maintainOrders() {
 					case 'point-of-sale':
 					case 'free':
 						break;
+				}
+			}
+
+			for (const payment of order.payments.filter((p) => p.status === 'failed')) {
+				const updatedPayment = order.payments.find((p) => p._id.equals(payment._id));
+				if (!updatedPayment || updatedPayment.status !== 'failed') {
+					continue;
+				}
+				if (payment.expiresAt && payment.expiresAt < new Date()) {
+					order = await onOrderPaymentFailed(order, payment, 'expired');
 				}
 			}
 		}

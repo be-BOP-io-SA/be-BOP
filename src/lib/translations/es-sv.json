@@ -475,6 +475,9 @@
 		"list": {
 			"title": "Lista de pedidos"
 		},
+		"newPaymentAttempt": {
+			"cta": "Prueba un nuevo intento de pago"
+		},
 		"note": {
 			"author": "{alias} (Empleado)",
 			"authorCustomer": "Cliente",
@@ -513,6 +516,7 @@
 		"paymentAddress": "Dirección de pago",
 		"paymentAmount": "Monto del pago",
 		"paymentBic": "BIC",
+		"paymentCBFailed": "Tu paiamiento ha fallado, puedes intentar una nueva pausa",
 		"paymentExpiresAt": "Fecha límite de pago: <0></0>",
 		"paymentIban": "IBAN para enviar la transferencia bancaria",
 		"paymentLink": "Clic aquí para pagar con tarjeta",
@@ -523,6 +527,8 @@
 			"canceledTemplate": "¡Pedido cancelado!",
 			"expired": "expirado",
 			"expiredTemplate": "¡Pedido expirado!",
+			"failed": "fallido",
+			"failedTemplate": "¡Pedido fallido!",
 			"paid": "pagado",
 			"paidTemplate": "¡Pedido <0>pagado</0>!",
 			"partiallyPaid": "parcialmente pagado",
