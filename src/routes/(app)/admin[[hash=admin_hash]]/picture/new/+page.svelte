@@ -9,6 +9,8 @@
 	const productId = $page.url.searchParams.get('productId');
 	const sliderId = $page.url.searchParams.get('sliderId');
 	const tagId = $page.url.searchParams.get('tagId');
+	const scheduleId = $page.url.searchParams.get('scheduleId');
+	const eventScheduleSlug = $page.url.searchParams.get('eventScheduleSlug');
 
 	let files: FileList;
 	let fileName = '';
@@ -111,6 +113,16 @@
 				Associated tag: <a href="/admin/tags/{tagId}" class="hover:underline">{tagId}</a>
 			</p>
 			<input type="hidden" name="tagId" value={tagId} />
+		{/if}
+		{#if scheduleId}
+			<p>
+				Associated Schedule: <a href="/admin/schedule/{scheduleId}" class="hover:underline"
+					>{scheduleId}</a
+				>
+			</p>
+			<p>Event: {eventScheduleSlug}</p>
+			<input type="hidden" name="scheduleId" value={scheduleId} />
+			<input type="hidden" name="eventScheduleSlug" value={eventScheduleSlug} />
 		{/if}
 
 		<input type="submit" class="btn btn-gray self-start" value="Add" />

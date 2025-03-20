@@ -72,7 +72,10 @@
 			product: data.product,
 			quantity,
 			...(data.product.type !== 'subscription' && {
-				customPrice: { amount: customAmount, currency: PWYWCurrency }
+				customPrice: {
+					amount: customAmount,
+					currency: data.product.hasVariations ? data.product.price.currency : PWYWCurrency
+				}
 			}),
 			picture: currentPicture,
 			depositPercentage:
@@ -182,6 +185,7 @@
 			countdowns={data.productCMSBefore.countdowns}
 			galleries={data.productCMSBefore.galleries}
 			leaderboards={data.productCMSBefore.leaderboards}
+			schedules={data.productCMSBefore.schedules}
 			class={data.product.mobile?.hideContentBefore || data.hideCmsZonesOnMobile
 				? 'hidden lg:contents'
 				: ''}
@@ -584,6 +588,7 @@
 			countdowns={data.productCMSAfter.countdowns}
 			galleries={data.productCMSAfter.galleries}
 			leaderboards={data.productCMSAfter.leaderboards}
+			schedules={data.productCMSAfter.schedules}
 			class={data.product.mobile?.hideContentAfter || data.hideCmsZonesOnMobile
 				? 'hidden lg:contents'
 				: ''}

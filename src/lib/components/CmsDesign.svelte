@@ -20,7 +20,8 @@
 		CmsContactForm,
 		CmsCountdown,
 		CmsGallery,
-		CmsLeaderboard
+		CmsLeaderboard,
+		CmsSchedule
 	} from '$lib/server/cms';
 	import SpecificationWidget from './SpecificationWidget.svelte';
 	import ContactForm from './ContactForm.svelte';
@@ -30,6 +31,7 @@
 	import { page } from '$app/stores';
 	import LeaderBoardWidget from './LeaderBoardWidget.svelte';
 	import CurrencyCalculator from './CurrencyCalculator.svelte';
+	import ScheduleWidget from './ScheduleWidget.svelte';
 
 	export let products: CmsProduct[];
 	export let pictures: CmsPicture[];
@@ -48,6 +50,7 @@
 	export let brandName: string | undefined;
 	export let galleries: CmsGallery[];
 	export let leaderboards: CmsLeaderboard[];
+	export let schedules: CmsSchedule[];
 
 	let classNames = '';
 	export { classNames as class };
@@ -73,6 +76,8 @@
 
 	$: sliderById = Object.fromEntries(sliders.map((slider) => [slider._id, slider]));
 	$: tagById = Object.fromEntries(tags.map((tag) => [tag._id, tag]));
+	$: scheduleById = Object.fromEntries(schedules.map((schedule) => [schedule._id, schedule]));
+
 	$: picturesByTag = groupBy(
 		pictures.filter((picture): picture is SetRequired<Picture, 'tag'> => !!picture.tag),
 		'tag._id'
@@ -84,6 +89,10 @@
 	$: picturesByProduct = groupBy(
 		pictures.filter((picture): picture is SetRequired<Picture, 'productId'> => !!picture.productId),
 		'productId'
+	);
+	$: picturesBySchedule = groupBy(
+		pictures.filter((picture): picture is SetRequired<Picture, 'schedule'> => !!picture.schedule),
+		'schedule._id'
 	);
 	$: picturesByGallery = groupBy(
 		pictures.filter((picture): picture is SetRequired<Picture, 'galleryId'> => !!picture.galleryId),
@@ -209,6 +218,12 @@
 				{/if}
 			{:else if token.type === 'currencyCalculatorWidget'}
 				<CurrencyCalculator />
+			{:else if token.type === 'scheduleWidget' && scheduleById[token.slug]}
+				<ScheduleWidget
+					schedule={scheduleById[token.slug]}
+					pictures={picturesBySchedule[token.slug]}
+					class="not-prose my-5"
+				/>
 			{:else if token.type === 'html'}
 				<div class="my-5">
 					<!-- eslint-disable svelte/no-at-html-tags -->
@@ -302,6 +317,12 @@
 					{/if}
 				{:else if token.type === 'currencyCalculatorWidget'}
 					<CurrencyCalculator />
+				{:else if token.type === 'scheduleWidget' && scheduleById[token.slug]}
+					<ScheduleWidget
+						schedule={scheduleById[token.slug]}
+						pictures={picturesBySchedule[token.slug]}
+						class="not-prose my-5"
+					/>
 				{:else if token.type === 'html'}
 					<div class="my-5">
 						<!-- eslint-disable svelte/no-at-html-tags -->

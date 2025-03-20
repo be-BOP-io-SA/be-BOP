@@ -665,6 +665,11 @@
 		"variationPriceLabel": "Variation de prix",
 		"vatExcluded": "Hors TVA"
 	},
+	"schedule": {
+		"dateText": "- de {beginTime} à {endTime}",
+		"moreInfo": "Plus d'info",
+		"uniqueDateText": "- Dés {beginTime}"
+	},
 	"subscription": {
 		"associated": {
 			"npub": "Associé à npub : {npub}"

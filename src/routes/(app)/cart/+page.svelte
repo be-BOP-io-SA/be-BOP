@@ -66,6 +66,7 @@
 			countdowns={data.cmsBasketTopData.countdowns}
 			galleries={data.cmsBasketTopData.galleries}
 			leaderboards={data.cmsBasketTopData.leaderboards}
+			schedules={data.cmsBasketTopData.schedules}
 			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
 		/>
 	{/if}
@@ -370,6 +371,7 @@
 			countdowns={data.cmsBasketBottomData.countdowns}
 			galleries={data.cmsBasketBottomData.galleries}
 			leaderboards={data.cmsBasketBottomData.leaderboards}
+			schedules={data.cmsBasketBottomData.schedules}
 			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
 		/>
 	{/if}
