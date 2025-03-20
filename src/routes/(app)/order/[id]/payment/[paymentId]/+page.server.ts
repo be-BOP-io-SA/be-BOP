@@ -3,7 +3,6 @@ import { addOrderPayment, onOrderPaymentFailed, paymentMethodExpiration } from '
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
 import { parsePriceAmount } from '$lib/types/Currency';
 import { error, redirect } from '@sveltejs/kit';
-import { orderAmountWithNoPaymentsCreated as orderAmountWithNoPayments } from '$lib/types/Order.js';
 import { z } from 'zod';
 
 export const actions = {
