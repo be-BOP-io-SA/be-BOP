@@ -32,7 +32,7 @@ async function maintainOrders() {
 		const pendingOrders = await collections.orders
 			.find({
 				'payments.status': { $in: ['pending', 'failed'] },
-				status: { $in: ['pending', 'failed'] }
+				status: 'pending'
 			})
 			.toArray()
 			.catch((err) => {
