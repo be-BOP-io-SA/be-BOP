@@ -211,7 +211,7 @@
 					type="text"
 					class="form-input"
 					name="events[{i}].unavailabity.label"
-					value={data.schedule.events[i].unavailabity?.label}
+					value={data.schedule.events[i].unavailabity?.label ?? ''}
 				/>
 			{/if}
 			<label class="checkbox-label">

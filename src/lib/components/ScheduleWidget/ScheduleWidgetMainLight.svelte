@@ -1,0 +1,85 @@
+<script lang="ts">
+	import type { Picture } from '$lib/types/Picture';
+	import type { Schedule } from '$lib/types/Schedule';
+	import PictureComponent from '../Picture.svelte';
+	import { useI18n } from '$lib/i18n';
+	import { upperFirst } from '$lib/utils/upperFirst';
+	import { addMinutes } from 'date-fns';
+
+	export let pictures: Picture[] | [];
+	export let schedule: Schedule;
+	let className = '';
+	export { className as class };
+	$: pictureByEventSlug = Object.fromEntries(
+		pictures.map((picture) => [picture.schedule?.eventSlug, picture])
+	);
+	const { t, locale } = useI18n();
+</script>
+
+{#each schedule.events as event}
+	<div class="flex flex-row gap-4 tagWidget tagWidget-main w-full items-center {className}">
+		<div class="flex flex-row">
+			<PictureComponent
+				picture={pictureByEventSlug[event.slug]}
+				class="max-h-[10em] max-w-[10em] object-contain {(event.endsAt &&
+					event.endsAt < new Date()) ||
+				addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
+					? 'opacity-50'
+					: ''}"
+			/>
+			<div class="p-4 pl-8">
+				<h2 class="text-2xl font-bold body-title mb-2">
+					{event.title}
+				</h2>
+				<p class="text-sm">
+					{upperFirst(
+						event.beginsAt.toLocaleDateString($locale, {
+							weekday: 'long',
+							day: 'numeric',
+							month: 'long',
+							year: 'numeric'
+						})
+					)}
+					{#if event.endsAt}
+						{t('schedule.dateText', {
+							beginTime: event.beginsAt.toLocaleTimeString($locale, {
+								hour: '2-digit',
+								minute: '2-digit'
+							}),
+							endTime: event.endsAt.toLocaleTimeString($locale, {
+								hour: '2-digit',
+								minute: '2-digit'
+							})
+						})}
+					{:else}
+						{t('schedule.uniqueDateText', {
+							beginTime: event.beginsAt.toLocaleTimeString($locale, {
+								hour: '2-digit',
+								minute: '2-digit'
+							})
+						})}
+					{/if}
+					{#if event.location?.name}
+						- <a href={event.location.link} target="_blank" class="body-hyperlink"
+							>{event.location.name}</a
+						>
+					{/if}
+					{#if event.unavailabity?.isUnavailable}
+						<span class="font-bold">[{event.unavailabity.label}]</span>
+					{/if}
+				</p>
+				{#if event.url}
+					<div class="flex flex-row">
+						<a
+							href={event.url}
+							target="_blank"
+							class="btn cartPreview-secondaryCTA text-xl text-center whitespace-nowrap p-1 mt-2"
+						>
+							{t('schedule.moreInfo')}
+						</a>
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+{/each}
