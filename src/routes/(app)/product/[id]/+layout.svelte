@@ -22,6 +22,7 @@
 		countdowns={data.cmsData.countdowns}
 		galleries={data.cmsData.galleries}
 		leaderboards={data.cmsData.leaderboards}
+		schedules={data.cmsData.schedules}
 	/>{:else}
 	<slot />
 {/if}

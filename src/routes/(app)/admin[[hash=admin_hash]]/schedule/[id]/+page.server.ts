@@ -63,7 +63,7 @@ export const actions = {
 						url: z.string().optional(),
 						unavailabity: z
 							.object({
-								label: z.enum(['postponed', 'canceled', 'soldOut']),
+								label: z.string(),
 								isUnavailable: z.boolean({ coerce: true }).default(false)
 							})
 							.optional(),

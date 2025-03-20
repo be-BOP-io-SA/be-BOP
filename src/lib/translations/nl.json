@@ -659,6 +659,11 @@
 		"variationPriceLabel": "Variatie Prijs",
 		"vatExcluded": "Exclusief BTW"
 	},
+	"schedule": {
+		"dateText": "- Van {beginTime} tot {endTime}",
+		"moreInfo": "Meer info",
+		"uniqueDateText": "- van {beginTime}"
+	},
 	"subscription": {
 		"associated": {
 			"npub": "Geassocieerd met npub: {npub}"

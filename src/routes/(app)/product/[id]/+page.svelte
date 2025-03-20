@@ -182,6 +182,7 @@
 			countdowns={data.productCMSBefore.countdowns}
 			galleries={data.productCMSBefore.galleries}
 			leaderboards={data.productCMSBefore.leaderboards}
+			schedules={data.productCMSBefore.schedules}
 			class={data.product.mobile?.hideContentBefore || data.hideCmsZonesOnMobile
 				? 'hidden lg:contents'
 				: ''}
@@ -584,6 +585,7 @@
 			countdowns={data.productCMSAfter.countdowns}
 			galleries={data.productCMSAfter.galleries}
 			leaderboards={data.productCMSAfter.leaderboards}
+			schedules={data.productCMSAfter.schedules}
 			class={data.product.mobile?.hideContentAfter || data.hideCmsZonesOnMobile
 				? 'hidden lg:contents'
 				: ''}

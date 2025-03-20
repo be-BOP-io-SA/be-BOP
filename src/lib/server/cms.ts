@@ -91,7 +91,13 @@ type TokenObject =
 			raw: string;
 	  }
 	| { type: 'qrCode'; slug: string; raw: string }
-	| { type: 'currencyCalculatorWidget'; slug: string; raw: string };
+	| { type: 'currencyCalculatorWidget'; slug: string; raw: string }
+	| {
+			type: 'scheduleWidget';
+			slug: string;
+			display: string | undefined;
+			raw: string;
+	  };
 
 export async function cmsFromContent(
 	{ content, mobileContent }: { content: string; mobileContent?: string },
@@ -118,6 +124,8 @@ export async function cmsFromContent(
 		/\[Gallery=(?<slug>[\p{L}\d_-]+)(?:[?\s]display=(?<display>[a-z0-9-]+))?\]/giu;
 	const QRCODE_REGEX = /\[QRCode=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const CURRENCY_CALCULATOR_WIDGET_REGEX = /\[CurrencyCalculator=(?<slug>[a-z0-9-]+)\]/giu;
+	const SCHEDULE_WIDGET_REGEX =
+		/\[Schedule=(?<slug>[\p{L}\d_-]+)(?:[?\s]display=(?<display>[a-z0-9-]+))?\]/giu;
 
 	const productSlugs = new Set<string>();
 	const challengeSlugs = new Set<string>();
@@ -132,6 +140,7 @@ export async function cmsFromContent(
 	const leaderboardSlugs = new Set<string>();
 	const qrCodeSlugs = new Set<string>();
 	const currencyCalculatorSlugs = new Set<string>();
+	const scheduleSlugs = new Set<string>();
 
 	const tokens: {
 		desktop: Array<TokenObject>;
@@ -164,7 +173,8 @@ export async function cmsFromContent(
 			...matchAndSort(content, GALLERY_WIDGET_REGEX, 'galleryWidget'),
 			...matchAndSort(content, LEADERBOARD_WIDGET_REGEX, 'leaderboardWidget'),
 			...matchAndSort(content, QRCODE_REGEX, 'qrCode'),
-			...matchAndSort(content, CURRENCY_CALCULATOR_WIDGET_REGEX, 'currencyCalculatorWidget')
+			...matchAndSort(content, CURRENCY_CALCULATOR_WIDGET_REGEX, 'currencyCalculatorWidget'),
+			...matchAndSort(content, SCHEDULE_WIDGET_REGEX, 'scheduleWidget')
 		].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
 		for (const match of matches) {
 			const html = trimPrefix(trimSuffix(content.slice(index, match.index), '<p>'), '</p>');
@@ -298,6 +308,15 @@ export async function cmsFromContent(
 						token.push({
 							type: 'currencyCalculatorWidget',
 							slug: match.groups.slug,
+							raw: match[0]
+						});
+						break;
+					case 'scheduleWidget':
+						scheduleSlugs.add(match.groups.slug);
+						token.push({
+							type: 'scheduleWidget',
+							slug: match.groups.slug,
+							display: match.groups?.display,
 							raw: match[0]
 						});
 						break;
@@ -523,7 +542,14 @@ export async function cmsFromContent(
 					})
 					.toArray()
 			: [];
-
+	const schedules =
+		scheduleSlugs.size > 0
+			? await collections.schedules
+					.find({
+						_id: { $in: [...scheduleSlugs] }
+					})
+					.toArray()
+			: [];
 	return {
 		tokens,
 		challenges,
@@ -535,6 +561,7 @@ export async function cmsFromContent(
 		countdowns,
 		galleries,
 		leaderboards,
+		schedules,
 		pictures: await collections.pictures
 			.find({
 				$or: [
@@ -549,6 +576,9 @@ export async function cmsFromContent(
 					},
 					{
 						galleryId: { $in: [...gallerySlugs] }
+					},
+					{
+						'schedule._id': { $in: [...scheduleSlugs] }
 					},
 					{
 						_id: { $in: [...pictureSlugs] }
@@ -575,3 +605,4 @@ export type CmsCountdown = Awaited<ReturnType<typeof cmsFromContent>>['countdown
 export type CmsGallery = Awaited<ReturnType<typeof cmsFromContent>>['galleries'][number];
 export type CmsToken = Awaited<ReturnType<typeof cmsFromContent>>['tokens']['desktop'][number];
 export type CmsLeaderboard = Awaited<ReturnType<typeof cmsFromContent>>['leaderboards'][number];
+export type CmsSchedule = Awaited<ReturnType<typeof cmsFromContent>>['schedules'][number];
