@@ -448,8 +448,7 @@
 									</button>
 									{#if openPaymentMethodChange}
 										<form
-											action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order
-												._id}/payment/{payment.id}?/replacePaymentMethod"
+											action="/order/{data.order._id}/payment/{payment.id}?/replaceMethod"
 											method="post"
 											class="contents"
 										>
@@ -462,10 +461,9 @@
 														name="amount"
 														min="0"
 														step="any"
-														max={data.order.currencySnapshot.main.totalPrice.amount}
-														value={data.order.currencySnapshot.main.totalPrice.amount}
+														max={payment.price.amount}
+														value={payment.price.amount}
 														required
-														readonly
 													/>
 												</label>
 												<label class="form-label">
