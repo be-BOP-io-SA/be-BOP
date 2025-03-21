@@ -61,6 +61,11 @@ export const actions = {
 			}
 		}
 		await withTransaction(async (session) => {
+			await onOrderPaymentFailed(order, payment, 'canceled', {
+				preserveOrderStatus: true,
+				session
+			});
+
 			await addOrderPayment(
 				order,
 				parsed.method,
@@ -75,10 +80,6 @@ export const actions = {
 					session
 				}
 			);
-			await onOrderPaymentFailed(order, payment, 'canceled', {
-				preserveOrderStatus: true,
-				session
-			});
 		});
 		throw redirect(303, `/order/${order._id}`);
 	}
