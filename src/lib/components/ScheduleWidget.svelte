@@ -70,14 +70,23 @@
 	};
 </script>
 
-<div class="hidden lg:contents">
+{#if displayOption !== 'calendar'}
+	<div class="hidden lg:contents">
+		<svelte:component
+			this={widget.component}
+			schedule={updatedSchedule}
+			{pictures}
+			class={className}
+		/>
+	</div>
+	<div class="lg:hidden contents">
+		<svelte:component this={ScheduleWidgetMobile} {schedule} {pictures} class={className} />
+	</div>
+{:else}
 	<svelte:component
 		this={widget.component}
 		schedule={updatedSchedule}
 		{pictures}
 		class={className}
 	/>
-</div>
-<div class="lg:hidden contents">
-	<svelte:component this={ScheduleWidgetMobile} {schedule} {pictures} class={className} />
-</div>
+{/if}

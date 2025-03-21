@@ -10,7 +10,7 @@
 	const { t, locale } = useI18n();
 	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
 		(acc, event) => {
-			let dateKey = new Date(event.beginsAt).toISOString().split('T')[0]; // Formate la date (YYYY-MM-DD)
+			let dateKey = new Date(event.beginsAt).toISOString().split('T')[0];
 
 			if (!acc[dateKey]) {
 				acc[dateKey] = [];
