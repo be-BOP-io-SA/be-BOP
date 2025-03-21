@@ -22,14 +22,22 @@
 		},
 		{} as Record<string, typeof schedule.events>
 	);
+	let dateEvent = new Date();
 </script>
 
-<div class="flex flex-col gap-4 {className}">
-	{#each Object.entries(scheduleEventByDay) as [date, events]}
+<div class="max-w-7xl mx-auto {className}">
+	<!-- Calendrier -->
+
+	<div class="relative max-w-sm my-4">
+		<input type="date" class="form-input" bind:value={dateEvent} />
+	</div>
+
+	<!-- Liste des événements -->
+	{#if scheduleEventByDay[dateEvent.toString()]}
 		<div class="flex flex-col gap-2">
 			<h2 class="text-xl font-bold">
 				{upperFirst(
-					new Date(date).toLocaleDateString($locale, {
+					new Date(dateEvent).toLocaleDateString($locale, {
 						weekday: 'long',
 						day: 'numeric',
 						month: 'long',
@@ -37,7 +45,7 @@
 					})
 				)}
 			</h2>
-			{#each events as event}
+			{#each scheduleEventByDay[dateEvent.toString()] as event}
 				<p class="flex flex-row text-sm">
 					{#if event.unavailabity?.isUnavailable}
 						<span class="font-bold">[{event.unavailabity.label}]&nbsp;</span>
@@ -71,5 +79,5 @@
 				</p>
 			{/each}
 		</div>
-	{/each}
+	{/if}
 </div>

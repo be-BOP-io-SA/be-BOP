@@ -16,22 +16,23 @@
 	const { t, locale } = useI18n();
 </script>
 
-{#each schedule.events as event}
-	<div class="flex flex-row gap-4 tagWidget tagWidget-main w-full items-center {className}">
-		<div class="flex flex-row">
-			<PictureComponent
-				picture={pictureByEventSlug[event.slug]}
-				class="max-h-[6em] max-w-[6em] object-contain {(event.endsAt &&
-					event.endsAt < new Date()) ||
-				addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
-					? 'opacity-50'
-					: ''}"
-			/>
-			<div class="p-4 pl-8">
-				<h2 class="text-2xl font-bold body-title mb-2">
+{#each schedule.events as event, i}
+	<div class="max-w-7xl mx-auto space-y-6 {className}">
+		<div class="tagWidget tagWidget-main rounded-lg gap-4">
+			<div class="flex items-center justify-center rounded-md">
+				<PictureComponent
+					picture={pictureByEventSlug[event.slug]}
+					class="object-contain h-full w-full {(event.endsAt && event.endsAt < new Date()) ||
+					addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
+						? 'opacity-50'
+						: ''}"
+				/>
+			</div>
+			<div class="flex flex-col items-center justify-center p-2 m-4 gap-2">
+				<h2 class="text-2xl body-title">
 					{event.title}
 				</h2>
-				<p class="text-sm">
+				<p class="text-xl">
 					{upperFirst(
 						event.beginsAt.toLocaleDateString($locale, {
 							weekday: 'long',
@@ -69,15 +70,9 @@
 					{/if}
 				</p>
 				{#if event.url}
-					<div class="flex flex-row">
-						<a
-							href={event.url}
-							target="_blank"
-							class="btn cartPreview-secondaryCTA text-xl text-center whitespace-nowrap p-1 mt-2"
-						>
-							{t('schedule.moreInfo')}
-						</a>
-					</div>
+					<a href={event.url} target="_blank" class="btn cartPreview-secondaryCTA w-full">
+						{t('schedule.moreInfo')}
+					</a>
 				{/if}
 			</div>
 		</div>

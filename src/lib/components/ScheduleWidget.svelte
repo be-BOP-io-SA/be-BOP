@@ -7,6 +7,8 @@
 	import ScheduleWidgetMain from './ScheduleWidget/ScheduleWidgetMain.svelte';
 	import ScheduleWidgetMainLight from './ScheduleWidget/ScheduleWidgetMainLight.svelte';
 	import ScheduleWidgetList from './ScheduleWidget/ScheduleWidgetList.svelte';
+	import ScheduleWidgetMobile from './ScheduleWidget/ScheduleWidgetMobile.svelte';
+	import ScheduleWidgetCalendar from './ScheduleWidget/ScheduleWidgetCalendar.svelte';
 
 	export let pictures: Picture[] | [];
 	export let schedule: Schedule;
@@ -22,6 +24,9 @@
 		},
 		list: {
 			component: ScheduleWidgetList
+		},
+		calendar: {
+			component: ScheduleWidgetCalendar
 		}
 	};
 
@@ -65,4 +70,14 @@
 	};
 </script>
 
-<svelte:component this={widget.component} schedule={updatedSchedule} {pictures} class={className} />
+<div class="hidden lg:contents">
+	<svelte:component
+		this={widget.component}
+		schedule={updatedSchedule}
+		{pictures}
+		class={className}
+	/>
+</div>
+<div class="lg:hidden contents">
+	<svelte:component this={ScheduleWidgetMobile} {schedule} {pictures} class={className} />
+</div>
