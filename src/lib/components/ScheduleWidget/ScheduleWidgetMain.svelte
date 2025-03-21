@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Picture } from '$lib/types/Picture';
-	import type { EventSchedule, Schedule } from '$lib/types/Schedule';
+	import type { Schedule } from '$lib/types/Schedule';
 	import PictureComponent from '../Picture.svelte';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
@@ -14,44 +14,9 @@
 		pictures.map((picture) => [picture.schedule?.eventSlug, picture])
 	);
 	const { t, locale } = useI18n();
-
-	function compareEvents(a: EventSchedule, b: EventSchedule, sortByDesc: boolean) {
-		return sortByDesc
-			? new Date(b.beginsAt).getTime() - new Date(a.beginsAt).getTime()
-			: new Date(a.beginsAt).getTime() - new Date(b.beginsAt).getTime();
-	}
-
-	let now = new Date();
-
-	let futureEvents: EventSchedule[] = [];
-	let pastEvents: EventSchedule[] = [];
-
-	schedule.events.forEach((eve) => {
-		const endsAt = eve.endsAt
-			? new Date(eve.endsAt)
-			: addMinutes(new Date(eve.beginsAt), schedule.pastEventDelay);
-
-		if (now <= endsAt) {
-			futureEvents.push(eve);
-		} else {
-			pastEvents.push(eve);
-		}
-	});
-
-	futureEvents.sort((a, b) => compareEvents(a, b, schedule.sortByEventDateDesc));
-	pastEvents.sort((a, b) => compareEvents(a, b, schedule.sortByEventDateDesc));
-
-	let updatedSchedule = {
-		...schedule,
-		events: schedule.displayPastEvents
-			? schedule.displayPastEventsAfterFuture
-				? [...futureEvents, ...pastEvents]
-				: [...pastEvents, ...futureEvents]
-			: [...futureEvents]
-	};
 </script>
 
-{#each updatedSchedule.events as event, i}
+{#each schedule.events as event, i}
 	<div
 		class="flex {i % 2 === 1
 			? 'flex-row-reverse'
