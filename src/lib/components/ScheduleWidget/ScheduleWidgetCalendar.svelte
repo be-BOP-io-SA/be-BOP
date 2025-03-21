@@ -22,7 +22,7 @@
 	const { t, locale } = useI18n();
 
 	let currentDate = new Date();
-	let selectedDate: Date | null = null;
+	$: selectedDate = new Date();
 	let days: Date[] = [];
 	let weekDays: string[] = [];
 
