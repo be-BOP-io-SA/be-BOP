@@ -16,7 +16,7 @@
 	const { t, locale } = useI18n();
 </script>
 
-{#each schedule.events as event, i}
+{#each schedule.events as event}
 	<div class="max-w-7xl mx-auto space-y-6 {className}">
 		<div class="tagWidget tagWidget-main rounded-lg gap-4">
 			<div class="flex items-center justify-center rounded-md">
