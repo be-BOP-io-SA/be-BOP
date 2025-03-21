@@ -75,7 +75,7 @@
 	});
 </script>
 
-<div class="max-w-lg mx-auto p-4 bg-white shadow-md rounded-lg {className}">
+<div class="max-w-md mx-auto p-4 bg-white shadow-md rounded-lg {className}">
 	<div class="flex items-center justify-between mb-4">
 		<button on:click={prevMonth} class="p-2 btn-gray btn rounded-full">&lt;</button>
 		<h2 class="text-lg font-semibold">
