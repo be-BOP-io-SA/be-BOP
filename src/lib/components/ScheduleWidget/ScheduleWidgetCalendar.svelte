@@ -62,7 +62,7 @@
 	}
 
 	function isEventDay(date: Date) {
-		return scheduleEventByDay[format(date, 'yyyy-MM-dd')];
+		return scheduleEventByDay[date.toISOString().split('T')[0]];
 	}
 
 	function selectDate(date: Date) {
