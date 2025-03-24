@@ -163,6 +163,10 @@
 					{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.differentDayText', {
 							beginDate: event.beginsAt.toLocaleTimeString($locale, {
+								weekday: 'long',
+								day: 'numeric',
+								month: 'long',
+								year: 'numeric',
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
