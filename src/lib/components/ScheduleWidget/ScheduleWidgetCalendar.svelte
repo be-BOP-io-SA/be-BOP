@@ -28,7 +28,7 @@
 
 	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
 		(acc, event) => {
-			let dateKey = new Date(event.beginsAt).toISOString().split('T')[0];
+			let dateKey = format(new Date(event.beginsAt), 'yyyy-MM-dd');
 
 			if (!acc[dateKey]) {
 				acc[dateKey] = [];
@@ -68,7 +68,7 @@
 	}
 
 	function isEventDay(date: Date) {
-		return scheduleEventByDay[date.toISOString().split('T')[0]];
+		return scheduleEventByDay[format(date, 'yyyy-MM-dd')];
 	}
 
 	function selectDate(date: Date) {
@@ -114,6 +114,7 @@
 		{/each}
 	</div>
 </div>
+
 <div class="max-w-7xl mx-auto {className}">
 	{#if selectedDate && scheduleEventByDay[format(selectedDate, 'yyyy-MM-dd')]}
 		<div class="flex flex-col gap-2">
@@ -127,7 +128,7 @@
 					})
 				)}
 			</h2>
-			{#each scheduleEventByDay[selectedDate.toISOString().split('T')[0]] as event}
+			{#each scheduleEventByDay[format(selectedDate, 'yyyy-MM-dd')] as event}
 				<p class="flex flex-row text-sm gap-2">
 					{#if event.unavailabity?.isUnavailable}
 						<span class="font-bold">[{event.unavailabity.label}]&nbsp;</span>

@@ -22,7 +22,7 @@
 			<div class="flex items-center justify-center rounded-md">
 				<PictureComponent
 					picture={pictureByEventSlug[event.slug]}
-					class="object-contain h-full w-full {(event.endsAt && event.endsAt < new Date()) ||
+					class="object-contain h-[10em] w-auto {(event.endsAt && event.endsAt < new Date()) ||
 					addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
 						? 'opacity-50'
 						: ''}"
