@@ -28,8 +28,14 @@
 
 	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
 		(acc, event) => {
-			const dateKey = event.beginsAt.toISOString().split('T')[0];
-			(acc[dateKey] ||= []).push(event);
+			let dateKey = new Date(event.beginsAt).toISOString().split('T')[0];
+
+			if (!acc[dateKey]) {
+				acc[dateKey] = [];
+			}
+
+			acc[dateKey].push(event);
+
 			return acc;
 		},
 		{} as Record<string, EventSchedule[]>
@@ -66,7 +72,7 @@
 	}
 
 	function selectDate(date: Date) {
-		selectedDate = date;
+		selectedDate = new Date(date.toISOString().split('T')[0]);
 	}
 
 	onMount(() => {
@@ -77,14 +83,14 @@
 
 <div class="max-w-md mx-auto p-4 bg-white shadow-md rounded-lg {className}">
 	<div class="flex items-center justify-between mb-4">
-		<button on:click={prevMonth} class="p-2 btn-gray btn rounded-full">&lt;</button>
+		<button on:click={prevMonth} class="py-2 btn-gray btn rounded-full">&lt;</button>
 		<h2 class="text-lg font-semibold">
 			{new Date(currentDate).toLocaleDateString($locale, {
 				month: 'long',
 				year: 'numeric'
 			})}
 		</h2>
-		<button on:click={nextMonth} class="p-2 btn-gray btn rounded-full">&gt;</button>
+		<button on:click={nextMonth} class="py-2 btn-gray btn rounded-full">&gt;</button>
 	</div>
 
 	<div class="grid grid-cols-7 text-center font-semibold">
@@ -97,7 +103,7 @@
 		{#each days as day}
 			<button
 				on:click={() => selectDate(day)}
-				class="p-2 m-1 rounded-full
+				class="p-2 m-2 rounded-full
 					{isSameDay(day, new Date()) ? ' bg-blue-500 text-white font-bold' : ''}
 					{isEventDay(day) ? 'bg-roseofsharon-500 text-white font-bold' : ''}
 					{selectedDate && isSameDay(day, selectedDate) ? ' ring-2 ring-black' : ''}

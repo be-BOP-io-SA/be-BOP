@@ -20,7 +20,7 @@
 
 			return acc;
 		},
-		{} as Record<string, typeof schedule.events>
+		{} as Record<string, EventSchedule[]>
 	);
 </script>
 
