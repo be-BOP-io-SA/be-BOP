@@ -26,12 +26,21 @@
 	let days: Date[] = [];
 	let weekDays: string[] = [];
 
-	/**let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
+	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
 		(acc, event) => {
-			let current = new Date(event.beginsAt);
-			let end = event.endsAt ? new Date(event.endsAt) : current;
-			while (current <= end) {
-				let dateKey = format(new Date(event.beginsAt), 'yyyy-MM-dd');
+			const startDate = new Date(event.beginsAt);
+			const endDate = event.endsAt ? new Date(event.endsAt) : startDate;
+
+			if (isNaN(startDate.getTime())) {
+				return acc;
+			}
+			if (isNaN(endDate.getTime())) {
+				return acc;
+			}
+
+			let currentDate = new Date(startDate);
+			while (currentDate <= endDate) {
+				const dateKey = format(currentDate, 'yyyy-MM-dd');
 
 				if (!acc[dateKey]) {
 					acc[dateKey] = [];
@@ -39,21 +48,8 @@
 
 				acc[dateKey].push(event);
 
-				current.setDate(current.getDate() + 1);
+				currentDate = addDays(currentDate, 1);
 			}
-			return acc;
-		},
-		{} as Record<string, EventSchedule[]>
-	);**/
-	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
-		(acc, event) => {
-			let dateKey = format(new Date(event.beginsAt), 'yyyy-MM-dd');
-
-			if (!acc[dateKey]) {
-				acc[dateKey] = [];
-			}
-
-			acc[dateKey].push(event);
 
 			return acc;
 		},
