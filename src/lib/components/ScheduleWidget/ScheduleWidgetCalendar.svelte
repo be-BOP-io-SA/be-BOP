@@ -26,7 +26,7 @@
 	let days: Date[] = [];
 	let weekDays: string[] = [];
 
-	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
+	/**let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
 		(acc, event) => {
 			let current = new Date(event.beginsAt);
 			let end = event.endsAt ? new Date(event.endsAt) : current;
@@ -41,6 +41,20 @@
 
 				current.setDate(current.getDate() + 1);
 			}
+			return acc;
+		},
+		{} as Record<string, EventSchedule[]>
+	);**/
+	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
+		(acc, event) => {
+			let dateKey = format(new Date(event.beginsAt), 'yyyy-MM-dd');
+
+			if (!acc[dateKey]) {
+				acc[dateKey] = [];
+			}
+
+			acc[dateKey].push(event);
+
 			return acc;
 		},
 		{} as Record<string, EventSchedule[]>
