@@ -72,7 +72,7 @@
 	}
 
 	function selectDate(date: Date) {
-		selectedDate = new Date(date.toISOString().split('T')[0]);
+		selectedDate = new Date(date);
 	}
 
 	onMount(() => {
@@ -115,7 +115,7 @@
 	</div>
 </div>
 <div class="max-w-7xl mx-auto {className}">
-	{#if selectedDate && scheduleEventByDay[selectedDate.toISOString().split('T')[0]]}
+	{#if selectedDate && scheduleEventByDay[format(selectedDate, 'yyyy-MM-dd')]}
 		<div class="flex flex-col gap-2">
 			<h2 class="text-xl font-bold">
 				{upperFirst(
