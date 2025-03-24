@@ -96,16 +96,16 @@
 	});
 </script>
 
-<div class="max-w-md mx-auto p-4 bg-white shadow-md rounded-lg {className}">
+<div class="max-w-md mx-auto p-4 eventCalendar eventCalendar-main shadow-md rounded-lg {className}">
 	<div class="flex items-center justify-between mb-4">
-		<button on:click={prevMonth} class="py-2 btn-gray btn rounded-full">&lt;</button>
+		<button on:click={prevMonth} class="py-2 eventCalendar-navCTA btn rounded-full">&lt;</button>
 		<h2 class="text-lg font-semibold">
 			{new Date(currentDate).toLocaleDateString($locale, {
 				month: 'long',
 				year: 'numeric'
 			})}
 		</h2>
-		<button on:click={nextMonth} class="py-2 btn-gray btn rounded-full">&gt;</button>
+		<button on:click={nextMonth} class="py-2 eventCalendar-navCTA btn rounded-full">&gt;</button>
 	</div>
 
 	<div class="grid grid-cols-7 text-center font-semibold">
@@ -119,10 +119,10 @@
 			<button
 				on:click={() => selectDate(day)}
 				class="p-2 m-2 rounded-full
-					{isSameDay(day, new Date()) ? ' bg-blue-500 text-white font-bold' : ''}
-					{isEventDay(day) ? 'bg-roseofsharon-500 text-white font-bold' : ''}
+					{isSameDay(day, new Date()) ? 'eventCalendar-currentDate font-bold' : ''}
+					{isEventDay(day) ? 'eventCalendar-hasEvent font-bold' : ''}
 					{selectedDate && isSameDay(day, selectedDate) ? ' ring-2 ring-black' : ''}
-					{format(day, 'M') !== format(currentDate, 'M') ? ' text-gray-400' : ''}"
+					{format(day, 'M') !== format(currentDate, 'M') ? ' text-gray-400 dark:text-gray-800' : ''}"
 			>
 				{format(day, 'd')}
 			</button>

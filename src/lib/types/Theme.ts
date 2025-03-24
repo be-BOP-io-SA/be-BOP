@@ -251,6 +251,37 @@ export const themeFormStructure = {
 				name: 'creditCard.svg.color'
 			}
 		]
+	},
+	eventCalendar: {
+		label: 'Event Calendar',
+		elements: [
+			{
+				label: 'Main background color',
+				name: 'main.backgroundColor'
+			},
+			{
+				label: 'Navigation CTA background color',
+				name: 'navCTA.backgroundColor'
+			},
+			{
+				label: 'Has event date background color',
+				name: 'hasEvent.backgroundColor'
+			},
+			{
+				label: 'Has event date color',
+				name: 'hasEvent.color'
+			},
+			{
+				label: 'Current date background color',
+				name: 'currentDate.backgroundColor'
+			},
+			{
+				label: 'Current date color',
+				name: 'currentDate.color'
+			},
+			{ label: 'Font', name: 'fontFamily' },
+			{ label: 'Font color', name: 'color' },
+		]
 	}
 } satisfies {
 	[key in keyof Omit<ThemeData, 'name'>]: {
