@@ -667,6 +667,7 @@
 	},
 	"schedule": {
 		"dateText": " - from {beginTime} to {endTime}",
+		"differentDayText": " - from {beginDate} to {endDate}",
 		"moreInfo": "More Info",
 		"uniqueDateText": " - from {beginTime}"
 	},

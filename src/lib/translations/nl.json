@@ -667,6 +667,7 @@
 	},
 	"schedule": {
 		"dateText": "- Van {beginTime} tot {endTime}",
+		"differentDayText": "- Van {beginDate} naar {endDate}",
 		"moreInfo": "Meer info",
 		"uniqueDateText": "- van {beginTime}"
 	},

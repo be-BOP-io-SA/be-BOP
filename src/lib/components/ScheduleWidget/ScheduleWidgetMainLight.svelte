@@ -4,7 +4,7 @@
 	import PictureComponent from '../Picture.svelte';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
-	import { addMinutes } from 'date-fns';
+	import { addMinutes, isSameDay } from 'date-fns';
 
 	export let pictures: Picture[] | [];
 	export let schedule: Schedule;
@@ -40,13 +40,28 @@
 							year: 'numeric'
 						})
 					)}
-					{#if event.endsAt}
+					{#if event.endsAt && isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.dateText', {
 							beginTime: event.beginsAt.toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
 							endTime: event.endsAt.toLocaleTimeString($locale, {
+								hour: '2-digit',
+								minute: '2-digit'
+							})
+						})}
+					{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
+						{t('schedule.differentDayText', {
+							beginDate: event.beginsAt.toLocaleTimeString($locale, {
+								hour: '2-digit',
+								minute: '2-digit'
+							}),
+							endDate: event.endsAt.toLocaleTimeString($locale, {
+								weekday: 'long',
+								day: 'numeric',
+								month: 'long',
+								year: 'numeric',
 								hour: '2-digit',
 								minute: '2-digit'
 							})

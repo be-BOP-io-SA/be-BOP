@@ -28,14 +28,19 @@
 
 	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
 		(acc, event) => {
-			let dateKey = format(new Date(event.beginsAt), 'yyyy-MM-dd');
+			let current = new Date(event.beginsAt);
+			let end = event.endsAt ? new Date(event.endsAt) : current;
+			while (current <= end) {
+				let dateKey = format(new Date(event.beginsAt), 'yyyy-MM-dd');
 
-			if (!acc[dateKey]) {
-				acc[dateKey] = [];
+				if (!acc[dateKey]) {
+					acc[dateKey] = [];
+				}
+
+				acc[dateKey].push(event);
+
+				current.setDate(current.getDate() + 1);
 			}
-
-			acc[dateKey].push(event);
-
 			return acc;
 		},
 		{} as Record<string, EventSchedule[]>
@@ -134,13 +139,28 @@
 						<span class="font-bold">[{event.unavailabity.label}]&nbsp;</span>
 					{/if}
 					{event.title}
-					{#if event.endsAt}
+					{#if event.endsAt && isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.dateText', {
 							beginTime: event.beginsAt.toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
 							endTime: event.endsAt.toLocaleTimeString($locale, {
+								hour: '2-digit',
+								minute: '2-digit'
+							})
+						})}
+					{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
+						{t('schedule.differentDayText', {
+							beginDate: event.beginsAt.toLocaleTimeString($locale, {
+								hour: '2-digit',
+								minute: '2-digit'
+							}),
+							endDate: event.endsAt.toLocaleTimeString($locale, {
+								weekday: 'long',
+								day: 'numeric',
+								month: 'long',
+								year: 'numeric',
 								hour: '2-digit',
 								minute: '2-digit'
 							})

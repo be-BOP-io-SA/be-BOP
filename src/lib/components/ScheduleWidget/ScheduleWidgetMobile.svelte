@@ -4,7 +4,7 @@
 	import PictureComponent from '../Picture.svelte';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
-	import { addMinutes } from 'date-fns';
+	import { addMinutes, isSameDay } from 'date-fns';
 
 	export let pictures: Picture[] | [];
 	export let schedule: Schedule;
@@ -17,12 +17,12 @@
 </script>
 
 {#each schedule.events as event}
-	<div class="max-w-7xl mx-auto space-y-6 {className}">
+	<div class="max-w-md mx-auto space-y-6 {className}">
 		<div class="tagWidget tagWidget-main rounded-lg gap-4">
 			<div class="flex items-center justify-center rounded-md">
 				<PictureComponent
 					picture={pictureByEventSlug[event.slug]}
-					class="object-contain h-[10em] w-auto {(event.endsAt && event.endsAt < new Date()) ||
+					class="object-contain h-[15em] w-auto {(event.endsAt && event.endsAt < new Date()) ||
 					addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
 						? 'opacity-50'
 						: ''}"
@@ -41,13 +41,28 @@
 							year: 'numeric'
 						})
 					)}
-					{#if event.endsAt}
+					{#if event.endsAt && isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.dateText', {
 							beginTime: event.beginsAt.toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
 							endTime: event.endsAt.toLocaleTimeString($locale, {
+								hour: '2-digit',
+								minute: '2-digit'
+							})
+						})}
+					{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
+						{t('schedule.differentDayText', {
+							beginDate: event.beginsAt.toLocaleTimeString($locale, {
+								hour: '2-digit',
+								minute: '2-digit'
+							}),
+							endDate: event.endsAt.toLocaleTimeString($locale, {
+								weekday: 'long',
+								day: 'numeric',
+								month: 'long',
+								year: 'numeric',
 								hour: '2-digit',
 								minute: '2-digit'
 							})
