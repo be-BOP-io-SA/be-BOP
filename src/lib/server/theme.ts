@@ -114,7 +114,7 @@ export const themeValidator = z.object({
 		hasEvent: z.object({ backgroundColor, color }),
 		currentDate: z.object({ backgroundColor, color }),
 		fontFamily,
-		color,
+		color
 	})
 });
 

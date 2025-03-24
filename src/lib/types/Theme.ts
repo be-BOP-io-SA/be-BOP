@@ -280,7 +280,7 @@ export const themeFormStructure = {
 				name: 'currentDate.color'
 			},
 			{ label: 'Font', name: 'fontFamily' },
-			{ label: 'Font color', name: 'color' },
+			{ label: 'Font color', name: 'color' }
 		]
 	}
 } satisfies {
