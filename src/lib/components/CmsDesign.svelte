@@ -222,6 +222,7 @@
 				<ScheduleWidget
 					schedule={scheduleById[token.slug]}
 					pictures={picturesBySchedule[token.slug]}
+					displayOption={token.display}
 					class="not-prose my-5"
 				/>
 			{:else if token.type === 'html'}
@@ -321,6 +322,7 @@
 					<ScheduleWidget
 						schedule={scheduleById[token.slug]}
 						pictures={picturesBySchedule[token.slug]}
+						displayOption={token.display}
 						class="not-prose my-5"
 					/>
 				{:else if token.type === 'html'}
