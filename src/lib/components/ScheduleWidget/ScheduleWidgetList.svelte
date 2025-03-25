@@ -2,7 +2,7 @@
 	import type { EventSchedule, Schedule } from '$lib/types/Schedule';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
-	import { format, isSameDay } from 'date-fns';
+	import { addDays, format, isSameDay } from 'date-fns';
 
 	export let schedule: Schedule;
 	let className = '';
@@ -14,14 +14,30 @@
 	$: locationFilter = '';
 	$: nameFilter = '';
 	$: descriptionFilter = '';
-	const scheduleEventByDay = schedule.events.reduce(
+	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
 		(acc, event) => {
-			let dateKey = format(new Date(event.beginsAt), 'yyyy-MM-dd');
-			if (!acc[dateKey]) {
-				acc[dateKey] = [];
+			const startDate = new Date(event.beginsAt);
+			const endDate = event.endsAt ? new Date(event.endsAt) : startDate;
+
+			if (isNaN(startDate.getTime())) {
+				return acc;
+			}
+			if (isNaN(endDate.getTime())) {
+				return acc;
 			}
 
-			acc[dateKey].push(event);
+			let currentDate = new Date(startDate);
+			while (currentDate <= endDate) {
+				const dateKey = format(currentDate, 'yyyy-MM-dd');
+
+				if (!acc[dateKey]) {
+					acc[dateKey] = [];
+				}
+
+				acc[dateKey].push(event);
+
+				currentDate = addDays(currentDate, 1);
+			}
 
 			return acc;
 		},
@@ -42,8 +58,7 @@
 					(!descriptionFilter ||
 						event.shortDescription
 							?.toLowerCase()
-							.includes(descriptionFilter.toLowerCase().trim())) &&
-					(!descriptionFilter ||
+							.includes(descriptionFilter.toLowerCase().trim()) ||
 						event.description?.toLowerCase().includes(descriptionFilter.toLowerCase().trim()))
 			);
 
@@ -64,7 +79,7 @@
 	<input
 		type="text"
 		bind:value={descriptionFilter}
-		placeholder="Search by description..."
+		placeholder="Search short or long description..."
 		class="form-input"
 	/>
 </div>
