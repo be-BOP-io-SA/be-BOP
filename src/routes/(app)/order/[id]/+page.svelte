@@ -463,7 +463,7 @@
 														step="any"
 														max={payment.price.amount}
 														value={payment.price.amount}
-														required
+														disabled
 													/>
 												</label>
 												<label class="form-label">

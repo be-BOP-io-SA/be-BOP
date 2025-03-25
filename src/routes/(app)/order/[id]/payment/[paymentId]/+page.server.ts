@@ -1,7 +1,6 @@
 import { collections, withTransaction } from '$lib/server/database';
 import { addOrderPayment, onOrderPaymentFailed, paymentMethodExpiration } from '$lib/server/orders';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
-import { parsePriceAmount } from '$lib/types/Currency';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 
@@ -43,43 +42,22 @@ export const actions = {
 		const formData = await request.formData();
 		const parsed = z
 			.object({
-				amount: z
-					.string()
-					.regex(/^\d+(\.\d+)?$/)
-					.nullable(),
 				method: z.enum(methods as [PaymentMethod, ...PaymentMethod[]])
 			})
 			.parse({
-				amount: formData.get('amount'),
 				method: formData.get('method')
 			});
-		let amount = 0;
-		if (parsed.amount) {
-			amount = parsePriceAmount(parsed.amount, order.currencySnapshot.main.totalPrice.currency);
-			if (amount <= 0) {
-				throw error(400, 'Invalid amount');
-			}
-		}
+
 		await withTransaction(async (session) => {
 			await onOrderPaymentFailed(order, payment, 'canceled', {
 				preserveOrderStatus: true,
 				session
 			});
 
-			await addOrderPayment(
-				order,
-				parsed.method,
-				amount
-					? {
-							amount,
-							currency: order.currencySnapshot.main.totalPrice.currency
-					  }
-					: payment.price,
-				{
-					expiresAt: paymentMethodExpiration(parsed.method),
-					session
-				}
-			);
+			await addOrderPayment(order, parsed.method, payment.price, {
+				expiresAt: paymentMethodExpiration(parsed.method),
+				session
+			});
 		});
 		throw redirect(303, `/order/${order._id}`);
 	}
