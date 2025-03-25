@@ -201,6 +201,24 @@
 				<input
 					class="form-checkbox"
 					type="checkbox"
+					name="events[{i}].hideFromList"
+					bind:checked={data.schedule.events[i].hideFromList}
+				/>
+				Hide event from list
+			</label>
+			<label class="form-label">
+				Event color on calendar
+				<input
+					type="color"
+					name="events[{i}].colorOnCalendar"
+					class="form-input"
+					value={data.schedule.events[i].colorOnCalendar}
+				/>
+			</label>
+			<label class="checkbox-label">
+				<input
+					class="form-checkbox"
+					type="checkbox"
 					name="events[{i}].unavailabity.isUnavailable"
 					bind:checked={eventAvailable[i].isUnavailable}
 				/>

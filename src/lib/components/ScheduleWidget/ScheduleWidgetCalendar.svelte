@@ -85,6 +85,12 @@
 	function isEventDay(date: Date) {
 		return scheduleEventByDay[format(date, 'yyyy-MM-dd')];
 	}
+	function hasSpecialEvent(date: Date) {
+		const key = format(date, 'yyyy-MM-dd');
+		const events = scheduleEventByDay[key] ?? [];
+		const specialEvent = events.find((event) => event.hideFromList);
+		return specialEvent;
+	}
 
 	function selectDate(date: Date) {
 		selectedDate = new Date(date);
@@ -123,6 +129,9 @@
 					{isEventDay(day) ? 'bg-roseofsharon-500 text-white font-bold' : ''}
 					{selectedDate && isSameDay(day, selectedDate) ? ' ring-2 ring-black' : ''}
 					{format(day, 'M') !== format(currentDate, 'M') ? ' text-gray-400' : ''}"
+				style="background-color:{!!hasSpecialEvent(day)
+					? hasSpecialEvent(day)?.colorOnCalendar
+					: ''};"
 			>
 				{format(day, 'd')}
 			</button>

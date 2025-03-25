@@ -131,6 +131,14 @@
 			Event url
 			<input type="text" name="events[{i}].url" class="form-input" />
 		</label>
+		<label class="checkbox-label">
+			<input class="form-checkbox" type="checkbox" name="events[{i}].hideFromList" />
+			Hide event from list
+		</label>
+		<label class="form-label">
+			Event color on calendar
+			<input type="color" name="events[{i}].colorOnCalendar" class="form-input" />
+		</label>
 	{/each}
 	<button class="btn btn-gray self-start" on:click={() => (eventLines += 1)} type="button"
 		>Add another event

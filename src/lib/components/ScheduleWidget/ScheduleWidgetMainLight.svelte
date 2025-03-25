@@ -17,7 +17,11 @@
 </script>
 
 {#each schedule.events as event}
-	<div class="flex flex-row gap-4 tagWidget tagWidget-main w-full items-center {className}">
+	<div
+		class="flex flex-row gap-4 tagWidget tagWidget-main w-full items-center {className} {event.hideFromList
+			? 'hidden'
+			: ''}"
+	>
 		<div class="flex flex-row">
 			<PictureComponent
 				picture={pictureByEventSlug[event.slug]}

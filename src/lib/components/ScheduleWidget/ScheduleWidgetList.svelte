@@ -11,13 +11,15 @@
 	const { t, locale } = useI18n();
 	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
 		(acc, event) => {
-			let dateKey = format(new Date(event.beginsAt), 'yyyy-MM-dd');
+			if (!event.hideFromList) {
+				let dateKey = format(new Date(event.beginsAt), 'yyyy-MM-dd');
 
-			if (!acc[dateKey]) {
-				acc[dateKey] = [];
+				if (!acc[dateKey]) {
+					acc[dateKey] = [];
+				}
+
+				acc[dateKey].push(event);
 			}
-
-			acc[dateKey].push(event);
 
 			return acc;
 		},
