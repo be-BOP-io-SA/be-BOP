@@ -9,10 +9,14 @@
 	export { className as class };
 
 	const { t, locale } = useI18n();
-	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
+
+	$: dateFilter = '';
+	$: locationFilter = '';
+	$: nameFilter = '';
+	$: descriptionFilter = '';
+	const scheduleEventByDay = schedule.events.reduce(
 		(acc, event) => {
 			let dateKey = format(new Date(event.beginsAt), 'yyyy-MM-dd');
-
 			if (!acc[dateKey]) {
 				acc[dateKey] = [];
 			}
@@ -23,10 +27,45 @@
 		},
 		{} as Record<string, EventSchedule[]>
 	);
+
+	$: filteredEvents = Object.entries(scheduleEventByDay).reduce(
+		(acc, [date, events]) => {
+			if (dateFilter && date !== dateFilter) return acc;
+
+			let filteredEvents = events.filter(
+				(event) =>
+					(!locationFilter ||
+						event.location?.name?.toLowerCase().includes(locationFilter.toLowerCase().trim())) &&
+					(!nameFilter || event.title.toLowerCase().includes(nameFilter.toLowerCase().trim())) &&
+					(!descriptionFilter ||
+						event.shortDescription
+							?.toLowerCase()
+							.includes(descriptionFilter.toLowerCase().trim())) &&
+					(!descriptionFilter ||
+						event.description?.toLowerCase().includes(descriptionFilter.toLowerCase().trim()))
+			);
+
+			if (filteredEvents.length) acc[date] = filteredEvents;
+			return acc;
+		},
+		{} as Record<string, EventSchedule[]>
+	);
 </script>
 
+<div class="flex gap-4 mb-4">
+	<input type="date" bind:value={dateFilter} class="form-input" />
+	<input type="text" bind:value={locationFilter} placeholder="Search place..." class="form-input" />
+	<input type="text" bind:value={nameFilter} placeholder="Search by name..." class="form-input" />
+	<input
+		type="text"
+		bind:value={descriptionFilter}
+		placeholder="Search by description..."
+		class="form-input"
+	/>
+</div>
+
 <div class="flex flex-col gap-4 {className}">
-	{#each Object.entries(scheduleEventByDay) as [date, events]}
+	{#each Object.entries(filteredEvents) as [date, events]}
 		<div class="flex flex-col gap-2">
 			<h2 class="text-xl font-bold">
 				{upperFirst(
