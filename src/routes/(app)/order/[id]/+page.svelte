@@ -277,9 +277,7 @@
 											<label class="form-label">
 												{t('order.addPayment.currency')}
 												<select name="currency" class="form-input" disabled>
-													<option value={data.order.currencySnapshot.main.totalPrice.currency}
-														>{data.order.currencySnapshot.main.totalPrice.currency}</option
-													>
+													<option value={payment.price.currency}>{payment.price.currency}</option>
 												</select>
 											</label>
 											<label class="form-label">
@@ -469,9 +467,7 @@
 												<label class="form-label">
 													{t('order.addPayment.currency')}
 													<select name="currency" class="form-input" disabled>
-														<option value={data.order.currencySnapshot.main.totalPrice.currency}
-															>{data.order.currencySnapshot.main.totalPrice.currency}</option
-														>
+														<option value={payment.price.currency}>{payment.price.currency}</option>
 													</select>
 												</label>
 												<label class="form-label">
