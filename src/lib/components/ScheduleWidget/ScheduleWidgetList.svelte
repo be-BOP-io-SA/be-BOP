@@ -30,7 +30,9 @@
 
 	$: filteredEvents = Object.entries(scheduleEventByDay).reduce(
 		(acc, [date, events]) => {
-			if (dateFilter && date !== dateFilter) return acc;
+			if (dateFilter && date !== dateFilter) {
+				return acc;
+			}
 
 			let filteredEvents = events.filter(
 				(event) =>
@@ -45,7 +47,10 @@
 						event.description?.toLowerCase().includes(descriptionFilter.toLowerCase().trim()))
 			);
 
-			if (filteredEvents.length) acc[date] = filteredEvents;
+			if (filteredEvents.length) {
+				acc[date] = filteredEvents;
+			}
+
 			return acc;
 		},
 		{} as Record<string, EventSchedule[]>
