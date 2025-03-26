@@ -449,7 +449,7 @@
 	"order": {
 		"addPayment": {
 			"amount": "Somma del pagamento",
-			"cta": "Chiama per il pagamento",
+			"cta": "Invia una chiamata per il pagamento",
 			"currency": "valuta del pagamento"
 		},
 		"backToOrder": "<< ritorna all'ordine",
@@ -597,7 +597,10 @@
 		"applyGiftDiscount": "Come utente POS applico uno <0>sconto regalo</0>.",
 		"cta": {
 			"cancelOrder": "Annulla",
+			"cancelReplacement": "Annulla la sostituzione",
 			"markOrderPaid": "Marca pagato",
+			"replacePayment": "Sostituire il metodo di pagamento",
+			"resendPaymentMethod": "Metodo di pagamento di nuovo",
 			"updatePaymentInfo": "Aggiorna le informazioni di pagamento"
 		},
 		"discountJustification": "Ragione",
