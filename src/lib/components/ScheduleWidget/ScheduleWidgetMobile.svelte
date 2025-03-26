@@ -89,8 +89,8 @@
 					<a href={event.url} target="_blank" class="btn cartPreview-secondaryCTA w-full">
 						{t('schedule.moreInfo')}
 					</a>
-					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 				{/if}
+				<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 			</div>
 		</div>
 	</div>
