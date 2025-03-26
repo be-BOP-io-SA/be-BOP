@@ -54,7 +54,7 @@ export const actions = {
 				session
 			});
 
-			await addOrderPayment(order, parsed.method, order.currencySnapshot.main.totalPrice, {
+			await addOrderPayment(order, parsed.method, payment.currencySnapshot.main.price, {
 				expiresAt: paymentMethodExpiration(parsed.method),
 				session
 			});

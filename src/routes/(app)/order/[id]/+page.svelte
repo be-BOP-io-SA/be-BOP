@@ -269,16 +269,16 @@
 													name="amount"
 													min="0"
 													step="any"
-													max={data.order.currencySnapshot.main.totalPrice.amount}
-													value={data.order.currencySnapshot.main.totalPrice.amount}
+													max={payment.currencySnapshot.main.price.amount}
+													value={payment.currencySnapshot.main.price.amount}
 													disabled
 												/>
 											</label>
 											<label class="form-label">
 												{t('order.addPayment.currency')}
 												<select name="currency" class="form-input" disabled>
-													<option value={data.order.currencySnapshot.main.totalPrice.currency}
-														>{data.order.currencySnapshot.main.totalPrice.currency}</option
+													<option value={payment.currencySnapshot.main.price.currency}
+														>{payment.currencySnapshot.main.price.currency}}</option
 													>
 												</select>
 											</label>
@@ -461,16 +461,16 @@
 														name="amount"
 														min="0"
 														step="any"
-														max={data.order.currencySnapshot.main.totalPrice.amount}
-														value={data.order.currencySnapshot.main.totalPrice.amount}
+														max={payment.currencySnapshot.main.price.amount}
+														value={payment.currencySnapshot.main.price.amount}
 														disabled
 													/>
 												</label>
 												<label class="form-label">
 													{t('order.addPayment.currency')}
 													<select name="currency" class="form-input" disabled>
-														<option value={data.order.currencySnapshot.main.totalPrice.currency}
-															>{data.order.currencySnapshot.main.totalPrice.currency}</option
+														<option value={payment.currencySnapshot.main.price.currency}
+															>{payment.currencySnapshot.main.price.currency}</option
 														>
 													</select>
 												</label>
