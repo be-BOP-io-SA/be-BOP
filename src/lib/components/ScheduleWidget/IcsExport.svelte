@@ -45,6 +45,6 @@ END:VCALENDAR`;
 	}
 </script>
 
-<button on:click={() => exportToICS(event)} title={t('shedule.exportEventTitle')}>
+<button on:click={() => exportToICS(event)} title={t('schedule.exportEventTitle')}>
 	<IconDownloadWindow class="h-4 w-auto body-hyperlink" />
 </button>

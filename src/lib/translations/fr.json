@@ -668,6 +668,7 @@
 	"schedule": {
 		"dateText": "- de {beginTime} à {endTime}",
 		"differentDayText": "- Dés {beginDate} au {endDate}",
+		"exportEventTitle": "Exportation fichier d'événements ",
 		"moreInfo": "Plus d'info",
 		"uniqueDateText": "- Dés {beginTime}"
 	},
