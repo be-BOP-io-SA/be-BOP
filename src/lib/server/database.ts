@@ -61,10 +61,10 @@ const client = building
 				...(MONGODB_IP_FAMILY === '4'
 					? { family: 4 }
 					: MONGODB_IP_FAMILY === '6'
-						? { family: 6 }
-						: {})
+					? { family: 6 }
+					: {})
 			}
-		);
+	);
 
 export const connectPromise = building ? Promise.resolve() : client.connect().catch(console.error);
 
