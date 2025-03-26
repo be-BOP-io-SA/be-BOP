@@ -269,15 +269,17 @@
 													name="amount"
 													min="0"
 													step="any"
-													max={payment.price.amount}
-													value={payment.price.amount}
+													max={data.order.currencySnapshot.main.totalPrice.amount}
+													value={data.order.currencySnapshot.main.totalPrice.amount}
 													disabled
 												/>
 											</label>
 											<label class="form-label">
 												{t('order.addPayment.currency')}
 												<select name="currency" class="form-input" disabled>
-													<option value={payment.price.currency}>{payment.price.currency}</option>
+													<option value={data.order.currencySnapshot.main.totalPrice.currency}
+														>{data.order.currencySnapshot.main.totalPrice.currency}</option
+													>
 												</select>
 											</label>
 											<label class="form-label">
@@ -459,15 +461,17 @@
 														name="amount"
 														min="0"
 														step="any"
-														max={payment.price.amount}
-														value={payment.price.amount}
+														max={data.order.currencySnapshot.main.totalPrice.amount}
+														value={data.order.currencySnapshot.main.totalPrice.amount}
 														disabled
 													/>
 												</label>
 												<label class="form-label">
 													{t('order.addPayment.currency')}
 													<select name="currency" class="form-input" disabled>
-														<option value={payment.price.currency}>{payment.price.currency}</option>
+														<option value={data.order.currencySnapshot.main.totalPrice.currency}
+															>{data.order.currencySnapshot.main.totalPrice.currency}</option
+														>
 													</select>
 												</label>
 												<label class="form-label">
