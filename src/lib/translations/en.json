@@ -669,6 +669,11 @@
 		"dateText": " - from {beginTime} to {endTime}",
 		"differentDayText": " - from {beginDate} to {endDate}",
 		"moreInfo": "More Info",
+		"subscribe": {
+			"formSuccessText": "You will receive new event notifications for",
+			"formText": "Add your email or npub to receive notifications on new events."
+		},
+		"subscribeCTA": "Subscribe",
 		"uniqueDateText": " - from {beginTime}"
 	},
 	"subscription": {
