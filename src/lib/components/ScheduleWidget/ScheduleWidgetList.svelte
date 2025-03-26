@@ -40,7 +40,7 @@
 				)}
 			</h2>
 			{#each events as event}
-				<p class="flex flex-row text-sm">
+				<p class="flex flex-row text-sm gap-1">
 					{#if event.unavailabity?.isUnavailable}
 						<span class="font-bold">[{event.unavailabity.label}]&nbsp;</span>
 					{/if}

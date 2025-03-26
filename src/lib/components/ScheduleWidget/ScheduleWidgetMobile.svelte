@@ -5,6 +5,7 @@
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addMinutes, isSameDay } from 'date-fns';
+	import IcsExport from './IcsExport.svelte';
 
 	export let pictures: Picture[] | [];
 	export let schedule: Schedule;
@@ -88,6 +89,7 @@
 					<a href={event.url} target="_blank" class="btn cartPreview-secondaryCTA w-full">
 						{t('schedule.moreInfo')}
 					</a>
+					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 				{/if}
 			</div>
 		</div>

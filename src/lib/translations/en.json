@@ -671,6 +671,9 @@
 		"moreInfo": "More Info",
 		"uniqueDateText": " - from {beginTime}"
 	},
+	"shedule": {
+		"exportEventTitle": "Export event file"
+	},
 	"subscription": {
 		"associated": {
 			"npub": "Associated to npub: {npub}"

@@ -1,10 +1,12 @@
 <script lang="ts">
 	import type { EventSchedule } from '$lib/types/Schedule';
 	import { addMinutes } from 'date-fns';
-	import IconExternalNewWindowOpen from '../icons/IconExternalNewWindowOpen.svelte';
+	import { useI18n } from '$lib/i18n';
+	import IconDownloadWindow from '../icons/IconDownloadWindow.svelte';
 
 	export let event: EventSchedule;
 	export let pastEventDelay: number;
+	const { t } = useI18n();
 
 	function exportToICS(event: EventSchedule) {
 		const start = new Date(event.beginsAt).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -43,6 +45,6 @@ END:VCALENDAR`;
 	}
 </script>
 
-<button on:click={() => exportToICS(event)}>
-	<IconExternalNewWindowOpen class="h-5 w-auto body-hyperlink" />
+<button on:click={() => exportToICS(event)} title={t('shedule.exportEventTitle')}>
+	<IconDownloadWindow class="h-4 w-auto body-hyperlink" />
 </button>
