@@ -22,7 +22,10 @@ export const GET = async ({ params }) => {
 		rssFeed += `  <title>${event.title}</title>\n`;
 		rssFeed += `  <link>${ORIGIN}/schedule/event/${event.slug}</link>\n`;
 		rssFeed += `  <description>${event.shortDescription || ''}</description>\n`;
-		rssFeed += `  <pubDate>${format(event.beginsAt, "EEE, dd MMM yyyy HH:mm:ss 'GMT'")}</pubDate>\n`;
+		rssFeed += `  <pubDate>${format(
+			event.beginsAt,
+			"EEE, dd MMM yyyy HH:mm:ss 'GMT'"
+		)}</pubDate>\n`;
 		rssFeed += `</item>\n`;
 	});
 
