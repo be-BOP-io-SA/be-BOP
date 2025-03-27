@@ -1,7 +1,7 @@
 import type { ObjectId, Timestamp } from 'mongodb';
 import type { CountryAlpha2 } from './Country';
 import type { UserIdentifier } from './UserIdentifier';
-import { Schedule } from './Schedule';
+import type { Schedule } from './Schedule';
 
 export interface PersonalInfo extends Timestamp {
 	_id: ObjectId;
