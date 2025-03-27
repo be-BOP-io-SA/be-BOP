@@ -7,10 +7,12 @@ import { set } from 'lodash-es';
 import type { JsonObject } from 'type-fest';
 import { generateId } from '$lib/utils/generateId';
 import { deletePicture } from '$lib/server/picture';
-import { SMTP_USER } from '$env/static/private';
+import { ORIGIN, SMTP_USER } from '$env/static/private';
 import { queueEmail } from '$lib/server/email';
 import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';
+import { format } from 'date-fns';
+import { runtimeConfig } from '$lib/server/runtime-config';
 
 export const load = async ({ params }) => {
 	const pictures = await collections.pictures
@@ -109,21 +111,38 @@ export const actions = {
 				.toArray();
 
 			for (const subscriber of subscribers) {
-				if (subscriber.email) {
-					await queueEmail(subscriber.email || SMTP_USER, 'schedule.new.event', {
-						scheduleName: schedule.name
-					});
-				}
-				if (subscriber.npub) {
-					const content = `There is a new event on ${schedule.name}`;
-					await collections.nostrNotifications.insertOne({
-						_id: new ObjectId(),
-						createdAt: new Date(),
-						kind: Kind.EncryptedDirectMessage,
-						updatedAt: new Date(),
-						content,
-						dest: subscriber.npub
-					});
+				for (const eventSchedule of newEvents) {
+					if (subscriber.email) {
+						await queueEmail(subscriber.email || SMTP_USER, 'schedule.new.event', {
+							websiteLink: ORIGIN,
+							brandName: runtimeConfig.brandName,
+							scheduleName: schedule.name,
+							eventName: eventSchedule.title,
+							eventDate: format(eventSchedule.beginsAt, 'yyyy-MM-dd'),
+							eventShortDescription: eventSchedule.shortDescription,
+							eventDescription: eventSchedule.description,
+							eventLocationName: eventSchedule.location?.name,
+							eventLocationLink: eventSchedule.location?.link
+						});
+					}
+					if (subscriber.npub) {
+						const content = `This message was sent to you because you have requested event notifications from ${ORIGIN}.
+						A new event was published by ${runtimeConfig.brandName} on schedule ${schedule.name}.
+						${eventSchedule.title} - ${format(eventSchedule.beginsAt, 'yyyy-MM-dd')}
+						${eventSchedule.shortDescription}
+						${eventSchedule.description}
+						${eventSchedule.location?.name}
+						${eventSchedule.location?.link}`;
+
+						await collections.nostrNotifications.insertOne({
+							_id: new ObjectId(),
+							createdAt: new Date(),
+							kind: Kind.EncryptedDirectMessage,
+							updatedAt: new Date(),
+							content,
+							dest: subscriber.npub
+						});
+					}
 				}
 			}
 		}

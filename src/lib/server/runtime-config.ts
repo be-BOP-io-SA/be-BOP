@@ -290,9 +290,14 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 			default: true as boolean
 		},
 		'schedule.new.event': {
-			subject: 'Schedule {{scheduleName}',
-			html: `<p>Dear Customer,
-There is a new event on {{scheduleName}}</p>`,
+			subject: '{{brandName}} - New event on schedule {{scheduleName}}',
+			html: `<p>This message was sent to you because you have requested event notifications from {{websiteLink}}.</p>
+<p></p>
+<p>A new event was published by {{brandName}} on schedule {{scheduleName}}.</p>
+<p>{{eventName}} - {{eventDate}}</p>
+<p>{{eventShortDescription}}</p>
+<p>{{eventDescription}}</p>
+<p><a href="{{eventLocationLink}}">{{eventLocationName}}</a></p>`,
 			default: true as boolean
 		}
 	}
