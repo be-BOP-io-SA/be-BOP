@@ -64,7 +64,7 @@ const client = building
 					? { family: 6 }
 					: {})
 			}
-	   );
+	  );
 
 export const connectPromise = building ? Promise.resolve() : client.connect().catch(console.error);
 
