@@ -118,7 +118,7 @@ export const actions = {
 							brandName: runtimeConfig.brandName,
 							scheduleName: schedule.name,
 							eventName: eventSchedule.title,
-							eventDate: format(eventSchedule.beginsAt, 'yyyy-MM-dd'),
+							eventDate: format(eventSchedule.beginsAt, 'EEEE dd MMM yyyy HH:mm'),
 							eventShortDescription: eventSchedule.shortDescription,
 							eventDescription: eventSchedule.description,
 							eventLocationName: eventSchedule.location?.name,
