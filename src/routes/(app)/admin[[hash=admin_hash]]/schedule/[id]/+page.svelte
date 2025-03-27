@@ -93,6 +93,15 @@
 		/>
 		sort by event date desc (default:asc)
 	</label>
+	<label class="checkbox-label">
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			name="allowSubscription"
+			bind:checked={data.schedule.allowSubscription}
+		/>
+		Allow user to subscribe
+	</label>
 	{#each [...Array(eventLines).keys()] as i}
 		<h1 class="text-xl font-bold">
 			Event #{i + 1}

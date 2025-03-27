@@ -29,6 +29,7 @@ export const actions: Actions = {
 				displayPastEvents: z.boolean({ coerce: true }).default(false),
 				displayPastEventsAfterFuture: z.boolean({ coerce: true }).default(false),
 				sortByEventDateDesc: z.boolean({ coerce: true }).default(false),
+				allowSubscription: z.boolean({ coerce: true }).default(false),
 				events: z.array(
 					z.object({
 						title: z.string().min(1),
@@ -66,6 +67,7 @@ export const actions: Actions = {
 			displayPastEvents: parsed.displayPastEvents,
 			displayPastEventsAfterFuture: parsed.displayPastEventsAfterFuture,
 			sortByEventDateDesc: parsed.sortByEventDateDesc,
+			allowSubscription: parsed.allowSubscription,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 			events: eventWithSlug

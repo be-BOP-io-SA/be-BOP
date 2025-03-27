@@ -16,6 +16,16 @@
 	const { t, locale } = useI18n();
 </script>
 
+{#if schedule.allowSubscription}
+	<div class="flex flex-row {className}">
+		<a
+			href="/schedule/{schedule._id}/subscribe"
+			class="btn btn-gray no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
+		>
+			🔔 {t('schedule.subscribeCTA')}
+		</a>
+	</div>
+{/if}
 {#each schedule.events as event, i}
 	<div
 		class="flex {i % 2 === 1

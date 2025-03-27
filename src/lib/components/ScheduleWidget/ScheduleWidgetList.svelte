@@ -26,6 +26,16 @@
 </script>
 
 <div class="flex flex-col gap-4 {className}">
+	{#if schedule.allowSubscription}
+		<div class="flex flex-row">
+			<a
+				href="/schedule/{schedule._id}/subscribe"
+				class="btn btn-gray no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
+			>
+				🔔 {t('schedule.subscribeCTA')}
+			</a>
+		</div>
+	{/if}
 	{#each Object.entries(scheduleEventByDay) as [date, events]}
 		<div class="flex flex-col gap-2">
 			<h2 class="text-xl font-bold">
