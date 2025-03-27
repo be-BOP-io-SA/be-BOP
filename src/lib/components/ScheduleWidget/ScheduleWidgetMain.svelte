@@ -105,7 +105,7 @@
 						{t('schedule.moreInfo')}
 					</a>
 				{/if}
-				<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
+				<IcsExport {event} pastEventDelay={schedule.pastEventDelay} class="mt-4" />
 			</div>
 		</div>
 	</div>

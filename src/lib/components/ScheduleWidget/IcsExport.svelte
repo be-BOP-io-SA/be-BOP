@@ -6,6 +6,8 @@
 
 	export let event: EventSchedule;
 	export let pastEventDelay: number;
+	let className = '';
+	export { className as class };
 	const { t } = useI18n();
 
 	function exportToICS(event: EventSchedule) {
@@ -31,20 +33,17 @@ LOCATION:${event.location?.name || ''}
 END:VEVENT
 END:VCALENDAR`;
 
-		const blob = new Blob([icsContent], { type: 'text/calendar' });
-		const url = URL.createObjectURL(blob);
-
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = `${event.title.replace(/\s+/g, '_')}.ics`;
-		document.body.appendChild(a);
-		a.click();
-
-		document.body.removeChild(a);
-		URL.revokeObjectURL(url);
+		// Base64
+		const base64Data = btoa(unescape(encodeURIComponent(icsContent)));
+		return `data:text/calendar;base64,${base64Data}`;
 	}
 </script>
 
-<button on:click={() => exportToICS(event)} title={t('schedule.exportEventTitle')}>
+<a
+	href={exportToICS(event)}
+	download="{event.title}.ics"
+	title={t('schedule.exportEventTitle')}
+	class={className}
+>
 	<IconDownloadWindow class="h-4 w-auto body-hyperlink" />
-</button>
+</a>
