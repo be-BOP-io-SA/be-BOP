@@ -5,6 +5,7 @@
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addMinutes, isSameDay } from 'date-fns';
+	import IconRssFeed from '../icons/IconRssFeed.svelte';
 
 	export let pictures: Picture[] | [];
 	export let schedule: Schedule;
@@ -94,8 +95,8 @@
 			<p class="text-sm mt-2">
 				{event.description}
 			</p>
-			{#if event.url}
-				<div class="flex flex-row">
+			<div class="flex flex-row">
+				{#if event.url}
 					<a
 						href={event.url}
 						target="_blank"
@@ -103,8 +104,16 @@
 					>
 						{t('schedule.moreInfo')}
 					</a>
-				</div>
-			{/if}
+				{/if}
+				<a
+					title="Provide rss feed"
+					href="/schedule/{schedule._id}/rss.xml"
+					target="_blank"
+					class="mt-4"
+				>
+					<IconRssFeed />
+				</a>
+			</div>
 		</div>
 	</div>
 {/each}

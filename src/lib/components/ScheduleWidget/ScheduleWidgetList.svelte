@@ -3,6 +3,7 @@
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { format, isSameDay } from 'date-fns';
+	import IconRssFeed from '../icons/IconRssFeed.svelte';
 
 	export let schedule: Schedule;
 	let className = '';
@@ -84,6 +85,9 @@
 					{#if event.url}
 						<a title={t('schedule.moreInfo')} href={event.url} target="_blank">ℹ️</a>
 					{/if}
+					<a title="Provide rss feed" href="/schedule/{schedule._id}/rss.xml" target="_blank">
+						<IconRssFeed />
+					</a>
 				</p>
 			{/each}
 		</div>
