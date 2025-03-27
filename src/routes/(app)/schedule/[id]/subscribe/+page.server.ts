@@ -2,7 +2,6 @@ import { collections } from '$lib/server/database';
 import { zodNpub } from '$lib/server/nostr';
 import { userQuery } from '$lib/server/user';
 import { error } from '@sveltejs/kit';
-import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 export const load = async ({ params }) => {
