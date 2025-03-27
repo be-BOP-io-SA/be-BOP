@@ -7,6 +7,10 @@ import { set } from 'lodash-es';
 import type { JsonObject } from 'type-fest';
 import { generateId } from '$lib/utils/generateId';
 import { deletePicture } from '$lib/server/picture';
+import { SMTP_USER } from '$env/static/private';
+import { queueEmail } from '$lib/server/email';
+import { ObjectId } from 'mongodb';
+import { Kind } from 'nostr-tools';
 
 export const load = async ({ params }) => {
 	const pictures = await collections.pictures
@@ -77,6 +81,10 @@ export const actions = {
 			...parsedEvent,
 			slug: parsedEvent.slug || generateId(parsedEvent.title, true)
 		}));
+
+		const oldEventSlugs = new Set(schedule?.events?.map((event) => event.slug) || []);
+		const newEvents = eventWithSlug.filter((event) => !oldEventSlugs.has(event.slug));
+
 		await collections.schedules.updateOne(
 			{
 				_id: schedule._id
@@ -94,6 +102,31 @@ export const actions = {
 				}
 			}
 		);
+
+		if (newEvents.length > 0) {
+			const subscribers = await collections.personalInfo
+				.find({ subscribedSchedule: schedule._id })
+				.toArray();
+
+			for (const subscriber of subscribers) {
+				if (subscriber.email) {
+					await queueEmail(subscriber.email || SMTP_USER, 'schedule.new.event', {
+						scheduleName: schedule.name
+					});
+				}
+				if (subscriber.npub) {
+					const content = `There is a new event on ${schedule.name}`;
+					await collections.nostrNotifications.insertOne({
+						_id: new ObjectId(),
+						createdAt: new Date(),
+						kind: Kind.EncryptedDirectMessage,
+						updatedAt: new Date(),
+						content,
+						dest: subscriber.npub
+					});
+				}
+			}
+		}
 	},
 
 	delete: async function ({ params }) {

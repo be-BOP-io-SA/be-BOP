@@ -288,6 +288,12 @@ The order #{{orderNumber}} {{orderLink}} was successfully paid.
 It contains the following product(s) that increase the leaderboard {{leaderboardName}} : </p>
 <p>{{itemsLeaderboard}}</p>`,
 			default: true as boolean
+		},
+		'schedule.new.event': {
+			subject: 'Schedule {{scheduleName}',
+			html: `<p>Dear Customer,
+There is a new event on {{scheduleName}}</p>`,
+			default: true as boolean
 		}
 	}
 };
