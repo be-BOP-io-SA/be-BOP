@@ -65,6 +65,11 @@
 			event.preventDefault();
 		}
 	}
+	function confirmCancelOrder(event: Event) {
+		if (!confirm(t('order.confirmCancel'))) {
+			event.preventDefault();
+		}
+	}
 
 	let tickets = data.order.items.flatMap((item) => item.tickets ?? []);
 	let ticketNumbers = Object.fromEntries(tickets.map((ticket, i) => [ticket, i + 1]));
@@ -655,6 +660,19 @@
 			{/if}
 
 			{#if data.order.status === 'pending' && remainingAmount && data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
+				<form
+					action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order._id}?/cancel"
+					method="post"
+					id="cancelOrderForm"
+				></form>
+				<button
+					type="submit"
+					class="btn btn-red"
+					on:click={confirmCancelOrder}
+					form="cancelOrderForm"
+				>
+					{t('pos.cta.cancelMultiPayOrder')}
+				</button>
 				<form
 					action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order
 						._id}?/addPayment"

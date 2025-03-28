@@ -596,6 +596,7 @@
 		"adminInterface": "Admin interface",
 		"applyGiftDiscount": "As a POS user I apply a <0>gift discount</0>",
 		"cta": {
+			"cancelMultiPayOrder": "Cancel order",
 			"cancelOrder": "Cancel",
 			"cancelReplacement": "Cancel replacement",
 			"markOrderPaid": "Mark paid",
