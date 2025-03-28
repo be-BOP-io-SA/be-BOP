@@ -65,6 +65,11 @@
 			event.preventDefault();
 		}
 	}
+	function confirmCancelOrder(event: Event) {
+		if (!confirm(t('pos.cancelOrderMessage'))) {
+			event.preventDefault();
+		}
+	}
 
 	let tickets = data.order.items.flatMap((item) => item.tickets ?? []);
 	let ticketNumbers = Object.fromEntries(tickets.map((ticket, i) => [ticket, i + 1]));
@@ -656,6 +661,12 @@
 
 			{#if data.order.status === 'pending' && remainingAmount && data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
 				<form
+					action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order._id}?/cancel"
+					method="post"
+					id="cancelOrderForm"
+				></form>
+
+				<form
 					action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order
 						._id}?/addPayment"
 					method="post"
@@ -694,6 +705,14 @@
 							</select>
 						</label><br />
 						<button type="submit" class="btn btn-blue self-end">{t('order.addPayment.cta')}</button>
+						<button
+							type="submit"
+							class="btn btn-red"
+							on:click={confirmCancelOrder}
+							form="cancelOrderForm"
+						>
+							{t('pos.cta.cancelMultiPayOrder')}
+						</button>
 					</div>
 				</form>
 			{/if}
