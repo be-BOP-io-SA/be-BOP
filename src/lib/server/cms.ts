@@ -397,7 +397,7 @@ export async function cmsFromContent(
 										`$translations.${locals.language}.shortDescription`,
 										'$shortDescription'
 									]
-								}
+							  }
 							: 1,
 						preorder: 1,
 						name: locals.language
