@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { collections } from '$lib/server/database';
 import type { Challenge } from '$lib/types/Challenge';
 
-export const load = async ({ params }) => {
+export const load = async ({ params, locals }) => {
 	const challenge = await collections.challenges.findOne<
 		Pick<Challenge, '_id' | 'name' | 'goal' | 'progress' | 'endsAt' | 'mode' | 'beginsAt'>
 	>(
@@ -10,7 +10,7 @@ export const load = async ({ params }) => {
 		{
 			projection: {
 				_id: 1,
-				name: 1,
+				name: locals.language ? { $ifNull: [`$translations.${locals.language}.name`, '$name'] } : 1,
 				goal: 1,
 				progress: 1,
 				endsAt: 1,
