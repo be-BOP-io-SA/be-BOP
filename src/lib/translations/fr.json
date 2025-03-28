@@ -597,6 +597,7 @@
 		"applyGiftDiscount": "En tant qu'utilisateur de point de vente, j'applique une <0>remise cadeau</0>",
 		"cancelOrderMessage": "Êtes-vous sûr de vouloir annuler toute la commande?",
 		"cta": {
+			"cancelMultiPayOrder": "Annuler la commande",
 			"cancelOrder": "Annuler",
 			"cancelReplacement": "Annuler le remplacement",
 			"markOrderPaid": "Marquer comme payée",
