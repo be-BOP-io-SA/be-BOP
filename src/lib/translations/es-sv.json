@@ -595,6 +595,7 @@
 	"pos": {
 		"adminInterface": "Interfaz de administrador",
 		"applyGiftDiscount": "Como usuario de POS, aplico un <0>descuento de regalo</0>",
+		"cancelOrderMessage": "¿Estás seguro de que quieres cnacel todo el pedido?",
 		"cta": {
 			"cancelOrder": "Cancelar",
 			"cancelReplacement": "Cancelar reemplazo",

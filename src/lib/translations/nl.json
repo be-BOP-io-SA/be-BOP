@@ -595,6 +595,7 @@
 	"pos": {
 		"adminInterface": "Beheerinterface",
 		"applyGiftDiscount": "Als POS-gebruiker pas ik een <0>cadeaukorting</0> toe",
+		"cancelOrderMessage": "Weet je zeker dat je de hele bestelling wilt cnacel?",
 		"cta": {
 			"cancelOrder": "Annuleren",
 			"cancelReplacement": "Annuleer vervanging",

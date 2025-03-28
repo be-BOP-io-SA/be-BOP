@@ -66,7 +66,7 @@
 		}
 	}
 	function confirmCancelOrder(event: Event) {
-		if (!confirm(t('order.confirmCancel'))) {
+		if (!confirm(t('pos.cancelOrderMessage'))) {
 			event.preventDefault();
 		}
 	}
@@ -665,14 +665,7 @@
 					method="post"
 					id="cancelOrderForm"
 				></form>
-				<button
-					type="submit"
-					class="btn btn-red"
-					on:click={confirmCancelOrder}
-					form="cancelOrderForm"
-				>
-					{t('pos.cta.cancelMultiPayOrder')}
-				</button>
+
 				<form
 					action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order
 						._id}?/addPayment"
@@ -712,6 +705,14 @@
 							</select>
 						</label><br />
 						<button type="submit" class="btn btn-blue self-end">{t('order.addPayment.cta')}</button>
+						<button
+							type="submit"
+							class="btn btn-red"
+							on:click={confirmCancelOrder}
+							form="cancelOrderForm"
+						>
+							{t('pos.cta.cancelMultiPayOrder')}
+						</button>
 					</div>
 				</form>
 			{/if}
