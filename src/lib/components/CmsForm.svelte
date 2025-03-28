@@ -6,6 +6,10 @@
 		TINYMCE_TOOLBAR
 	} from '../../routes/(app)/admin[[hash=admin_hash]]/cms/tinymce-plugins';
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
+	import { isEmpty } from 'lodash-es';
+	import { generateId } from '$lib/utils/generateId';
+	import { z } from 'zod';
+	import { error } from '@sveltejs/kit';
 
 	export let cmsPage: {
 		_id: string;
@@ -37,6 +41,8 @@
 	let hasEmployeeContent = cmsPage?.hasEmployeeContent || false;
 	let mobileContent = cmsPage?.mobileContent || '';
 	let employeeContent = cmsPage?.employeeContent || '';
+	let slugElement: HTMLInputElement;
+	let formElement: HTMLFormElement;
 
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this CMS page?')) {
@@ -45,9 +51,33 @@
 	}
 	let metas = cmsPage?.metas;
 	let cmsMetaLine = cmsPage?.metas?.length ?? 2;
+
+	const slugSchema = z
+		.string()
+		.trim()
+		.max(MAX_NAME_LIMIT)
+		.min(1)
+		.regex(/^(?!admin$)(?!admin-)[^/\\?#]+$/);
+	function validateSlug(event: SubmitEvent) {
+		const value = slugElement.value;
+		const result = slugSchema.safeParse(value);
+		if (!result.success) {
+			slugElement.setCustomValidity(
+				"Slug can't contain special characters: # / \\ ? and cannot begin with the word 'admin'"
+			);
+			slugElement.reportValidity();
+			event.preventDefault();
+			return;
+		} else {
+			formElement.submit();
+		}
+	}
+	$: if (!cmsPage?._id) {
+		slug = generateId(title, false);
+	}
 </script>
 
-<form method="post" class="flex flex-col gap-4">
+<form method="post" class="flex flex-col gap-4" bind:this={formElement} on:submit={validateSlug}>
 	<label>
 		Page slug
 		<input
@@ -55,9 +85,11 @@
 			type="text"
 			placeholder="Page slug"
 			name="slug"
-			value={slug}
+			bind:value={slug}
 			disabled={!!cmsPage}
 			required
+			bind:this={slugElement}
+			on:input={() => slugElement.setCustomValidity('')}
 		/>
 	</label>
 
@@ -69,7 +101,7 @@
 			maxlength={MAX_NAME_LIMIT}
 			name="title"
 			placeholder="Page title"
-			value={title}
+			bind:value={title}
 			required
 		/>
 	</label>
