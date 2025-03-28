@@ -6,10 +6,8 @@
 		TINYMCE_TOOLBAR
 	} from '../../routes/(app)/admin[[hash=admin_hash]]/cms/tinymce-plugins';
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
-	import { isEmpty } from 'lodash-es';
 	import { generateId } from '$lib/utils/generateId';
 	import { z } from 'zod';
-	import { error } from '@sveltejs/kit';
 
 	export let cmsPage: {
 		_id: string;
@@ -57,13 +55,13 @@
 		.trim()
 		.max(MAX_NAME_LIMIT)
 		.min(1)
-		.regex(/^(?!admin$)(?!admin-)[^/\\?#]+$/);
+		.regex(/^(?!admin$)(?!admin-)[a-z0-9-]+$/);
 	function validateSlug(event: SubmitEvent) {
 		const value = slugElement.value;
 		const result = slugSchema.safeParse(value);
 		if (!result.success) {
 			slugElement.setCustomValidity(
-				"Slug can't contain special characters: # / \\ ? and cannot begin with the word 'admin'"
+				"Slug must be lowercase, without spaces or special characters (# / \\ ?) and cannot start with 'admin'"
 			);
 			slugElement.reportValidity();
 			event.preventDefault();
@@ -79,6 +77,19 @@
 
 <form method="post" class="flex flex-col gap-4" bind:this={formElement} on:submit={validateSlug}>
 	<label>
+		Page title
+		<input
+			class="form-input block"
+			type="text"
+			maxlength={MAX_NAME_LIMIT}
+			name="title"
+			placeholder="Page title"
+			bind:value={title}
+			required
+		/>
+	</label>
+
+	<label>
 		Page slug
 		<input
 			class="form-input block"
@@ -90,19 +101,6 @@
 			required
 			bind:this={slugElement}
 			on:input={() => slugElement.setCustomValidity('')}
-		/>
-	</label>
-
-	<label>
-		Page title
-		<input
-			class="form-input block"
-			type="text"
-			maxlength={MAX_NAME_LIMIT}
-			name="title"
-			placeholder="Page title"
-			bind:value={title}
-			required
 		/>
 	</label>
 
