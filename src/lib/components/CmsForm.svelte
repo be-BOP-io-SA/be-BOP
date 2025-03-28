@@ -59,7 +59,7 @@
 	function validateSlug(event: SubmitEvent) {
 		const value = slugElement.value;
 		const result = slugSchema.safeParse(value);
-		if (!result.success) {
+		if (!result.success && !cmsPage?._id) {
 			slugElement.setCustomValidity(
 				"Slug must be lowercase, without spaces or special characters (# / \\ ?) and cannot start with 'admin'"
 			);
