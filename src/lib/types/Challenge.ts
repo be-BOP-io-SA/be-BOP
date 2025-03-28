@@ -1,4 +1,4 @@
-import { LanguageKey } from '$lib/translations';
+import type { LanguageKey } from '$lib/translations';
 import type { Currency } from './Currency';
 import type { Order } from './Order';
 import type { Timestamps } from './Timestamps';

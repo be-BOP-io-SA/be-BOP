@@ -1,8 +1,8 @@
 import { collections } from '$lib/server/database.js';
-import { Order } from '$lib/types/Order';
-import { Product } from '$lib/types/Product';
+import type { Order } from '$lib/types/Order';
+import type { Product } from '$lib/types/Product';
 import { error } from '@sveltejs/kit';
-import { Filter } from 'mongodb';
+import type { Filter } from 'mongodb';
 
 export async function load({ params }) {
 	const challenge = await collections.challenges.findOne({
