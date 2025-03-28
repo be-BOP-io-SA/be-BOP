@@ -13,6 +13,11 @@ export interface EventSchedule {
 		link: string;
 	};
 	url?: string;
+	hideFromList?: boolean;
+	calendar?: {
+		hasCustomColor: boolean;
+		color: string;
+	};
 	unavailabity?: {
 		label: string;
 		isUnavailable: boolean;

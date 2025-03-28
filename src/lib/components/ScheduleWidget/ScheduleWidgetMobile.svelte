@@ -17,7 +17,7 @@
 </script>
 
 {#each schedule.events as event}
-	<div class="max-w-md mx-auto space-y-6 {className}">
+	<div class="max-w-md mx-auto space-y-6 {className} {event.hideFromList ? 'hidden' : ''}">
 		<div class="tagWidget tagWidget-main rounded-lg gap-4">
 			<div class="flex items-center justify-center rounded-md">
 				<PictureComponent
