@@ -2,22 +2,69 @@
 	import type { EventSchedule, Schedule } from '$lib/types/Schedule';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
-	import { format, isSameDay } from 'date-fns';
+	import { addDays, format, isSameDay } from 'date-fns';
 
 	export let schedule: Schedule;
 	let className = '';
 	export { className as class };
 
 	const { t, locale } = useI18n();
+
+	$: dateFilter = '';
+	$: locationFilter = '';
+	$: nameFilter = '';
+	$: descriptionFilter = '';
 	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
 		(acc, event) => {
-			let dateKey = format(new Date(event.beginsAt), 'yyyy-MM-dd');
+			const startDate = new Date(event.beginsAt);
+			const endDate = event.endsAt ? new Date(event.endsAt) : startDate;
 
-			if (!acc[dateKey]) {
-				acc[dateKey] = [];
+			if (isNaN(startDate.getTime())) {
+				return acc;
+			}
+			if (isNaN(endDate.getTime())) {
+				return acc;
 			}
 
-			acc[dateKey].push(event);
+			let currentDate = new Date(startDate);
+			while (currentDate <= endDate) {
+				const dateKey = format(currentDate, 'yyyy-MM-dd');
+
+				if (!acc[dateKey]) {
+					acc[dateKey] = [];
+				}
+
+				acc[dateKey].push(event);
+
+				currentDate = addDays(currentDate, 1);
+			}
+
+			return acc;
+		},
+		{} as Record<string, EventSchedule[]>
+	);
+
+	$: filteredEvents = Object.entries(scheduleEventByDay).reduce(
+		(acc, [date, events]) => {
+			if (dateFilter && date !== dateFilter) {
+				return acc;
+			}
+
+			let filteredEvents = events.filter(
+				(event) =>
+					(!locationFilter ||
+						event.location?.name?.toLowerCase().includes(locationFilter.toLowerCase().trim())) &&
+					(!nameFilter || event.title.toLowerCase().includes(nameFilter.toLowerCase().trim())) &&
+					(!descriptionFilter ||
+						event.shortDescription
+							?.toLowerCase()
+							.includes(descriptionFilter.toLowerCase().trim()) ||
+						event.description?.toLowerCase().includes(descriptionFilter.toLowerCase().trim()))
+			);
+
+			if (filteredEvents.length) {
+				acc[date] = filteredEvents;
+			}
 
 			return acc;
 		},
@@ -25,8 +72,20 @@
 	);
 </script>
 
+<div class="flex gap-4 mb-4">
+	<input type="date" bind:value={dateFilter} class="form-input" />
+	<input type="text" bind:value={locationFilter} placeholder="Search place..." class="form-input" />
+	<input type="text" bind:value={nameFilter} placeholder="Search by name..." class="form-input" />
+	<input
+		type="text"
+		bind:value={descriptionFilter}
+		placeholder="Search short or long description..."
+		class="form-input"
+	/>
+</div>
+
 <div class="flex flex-col gap-4 {className}">
-	{#each Object.entries(scheduleEventByDay) as [date, events]}
+	{#each Object.entries(filteredEvents) as [date, events]}
 		<div class="flex flex-col gap-2">
 			<h2 class="text-xl font-bold">
 				{upperFirst(
