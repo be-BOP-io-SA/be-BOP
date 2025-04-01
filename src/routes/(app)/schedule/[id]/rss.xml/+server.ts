@@ -11,8 +11,8 @@ export const GET = async ({ params }) => {
 	}
 
 	let rssFeed = `<?xml version="1.0" encoding="UTF-8" ?>\n<rss version="2.0">\n<channel>\n`;
-	rssFeed += `<title>${schedule.name}</title>\n`;
-	rssFeed += `<link>${ORIGIN}/schedule/${schedule._id}</link>\n`;
+	rssFeed += `<title>${schedule.name.replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;')}</title>\n`;
+	rssFeed += `<link>${ORIGIN}/schedule/${schedule._id.replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;')}</link>\n`;
 	rssFeed += `<description>List of events</description>\n`;
 	rssFeed += `<lastBuildDate>${new Date().toUTCString()}</lastBuildDate>\n`;
 	rssFeed += `<language>fr</language>\n`;
@@ -20,8 +20,8 @@ export const GET = async ({ params }) => {
 	schedule.events.forEach((event) => {
 		rssFeed += `<item>\n`;
 		rssFeed += `  <title>${event.title}</title>\n`;
-		rssFeed += `  <link>${ORIGIN}/schedule/event/${event.slug}</link>\n`;
-		rssFeed += `  <description>${event.shortDescription || ''}</description>\n`;
+		rssFeed += `  <link>${ORIGIN}/schedule/event/${encodeURIComponent(event.slug)}</link>\n`;
+		rssFeed += `  <description>${event.shortDescription?.replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;') || ''}</description>\n`;
 		rssFeed += `  <pubDate>${format(
 			event.beginsAt,
 			"EEE, dd MMM yyyy HH:mm:ss 'GMT'"
