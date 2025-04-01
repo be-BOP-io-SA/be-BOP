@@ -7,7 +7,6 @@
 	} from '../../routes/(app)/admin[[hash=admin_hash]]/cms/tinymce-plugins';
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 	import { generateId } from '$lib/utils/generateId';
-	import { z } from 'zod';
 
 	export let cmsPage: {
 		_id: string;
@@ -50,16 +49,11 @@
 	let metas = cmsPage?.metas;
 	let cmsMetaLine = cmsPage?.metas?.length ?? 2;
 
-	const slugSchema = z
-		.string()
-		.trim()
-		.max(MAX_NAME_LIMIT)
-		.min(1)
-		.regex(/^(?!admin$)(?!admin-)[a-z0-9-]+$/);
+	const slugRegex = /^(?!admin$)(?!admin-)[a-z0-9-]+$/;
 	function validateSlug(event: SubmitEvent) {
 		const value = slugElement.value;
-		const result = slugSchema.safeParse(value);
-		if (!result.success && !cmsPage?._id) {
+		const result = slugRegex.test(value);
+		if (!result && !cmsPage?._id) {
 			slugElement.setCustomValidity(
 				"Slug must be lowercase, without spaces or special characters (# / \\ ?) and cannot start with 'admin'"
 			);
