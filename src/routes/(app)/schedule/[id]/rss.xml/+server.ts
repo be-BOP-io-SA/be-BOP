@@ -22,7 +22,9 @@ export const GET = async ({ params }) => {
 		rssFeed += `  <title>${event.title
 			.replaceAll(/</g, '&lt;')
 			.replaceAll(/>/g, '&gt;')}</title>\n`;
-		rssFeed += `  <link>${ORIGIN}/schedule/event/${encodeURIComponent(event.slug)}</link>\n`;
+		rssFeed += `<link>${ORIGIN}/schedule/${schedule._id
+			.replaceAll(/</g, '&lt;')
+			.replaceAll(/>/g, '&gt;')}</link>\n`;
 		rssFeed += `  <description>${
 			event.shortDescription?.replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;') || ''
 		}</description>\n`;
