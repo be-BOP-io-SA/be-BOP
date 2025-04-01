@@ -20,12 +20,12 @@ export const GET = async ({ params }) => {
 	schedule.events.forEach((event) => {
 		rssFeed += `<item>\n`;
 		rssFeed += `  <title>${event.title
-				.replaceAll(/</g, '&lt;')
-				.replaceAll(/>/g, '&gt;')}</title>\n`;
+			.replaceAll(/</g, '&lt;')
+			.replaceAll(/>/g, '&gt;')}</title>\n`;
 		rssFeed += `  <link>${ORIGIN}/schedule/event/${encodeURIComponent(event.slug)}</link>\n`;
 		rssFeed += `  <description>${
 			event.shortDescription?.replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;') || ''
-		}</description>\n`;		
+		}</description>\n`;
 		rssFeed += `  <pubDate>${format(
 			event.beginsAt,
 			"EEE, dd MMM yyyy HH:mm:ss 'GMT'"
