@@ -27,8 +27,8 @@ UID:${crypto.randomUUID()}
 DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
 DTSTART:${start}
 DTEND:${end}
-SUMMARY:${event.title}
-DESCRIPTION:${event.description || ''}
+SUMMARY:${event.title.replace(/\s+/g, ' ')}
+DESCRIPTION:${event.description?.replace(/\s+/g, ' ') || ''}
 LOCATION:${event.location?.name || ''}
 END:VEVENT
 END:VCALENDAR`;
