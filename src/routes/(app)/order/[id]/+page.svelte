@@ -65,9 +65,15 @@
 			event.preventDefault();
 		}
 	}
+	function confirmCancelOrder(event: Event) {
+		if (!confirm(t('pos.cancelOrderMessage'))) {
+			event.preventDefault();
+		}
+	}
 
 	let tickets = data.order.items.flatMap((item) => item.tickets ?? []);
 	let ticketNumbers = Object.fromEntries(tickets.map((ticket, i) => [ticket, i + 1]));
+	let openPaymentMethodChange = false;
 	let filteredPaymentMethods = data.paymentMethods.filter((pm) =>
 		['card', 'bitcoin', 'lightning', 'paypal'].includes(pm)
 	);
@@ -251,7 +257,7 @@
 										})}
 									</li>
 								{/if}
-								{#if payment.status === 'failed'}
+								{#if payment.status === 'failed' && (data.roleId === CUSTOMER_ROLE_ID || !data.roleId)}
 									<br />
 									{t('order.paymentCBFailed')}
 									<form
@@ -268,16 +274,16 @@
 													name="amount"
 													min="0"
 													step="any"
-													max={payment.price.amount}
-													value={payment.price.amount}
+													max={payment.currencySnapshot.main.price.amount}
+													value={payment.currencySnapshot.main.price.amount}
 													disabled
 												/>
 											</label>
 											<label class="form-label">
 												{t('order.addPayment.currency')}
 												<select name="currency" class="form-input" disabled>
-													<option value={data.order.currencySnapshot.main.totalPrice.currency}
-														>{data.order.currencySnapshot.main.totalPrice.currency}</option
+													<option value={payment.currencySnapshot.main.price.currency}
+														>{payment.currencySnapshot.main.price.currency}}</option
 													>
 												</select>
 											</label>
@@ -432,6 +438,64 @@
 										</button>
 									{/if}
 								</form>
+								<div class="flex flex-wrap gap-2">
+									<button
+										type="button"
+										class="btn btn-red"
+										form="replacePaymentForm"
+										on:click={() => {
+											openPaymentMethodChange = !openPaymentMethodChange;
+										}}
+									>
+										{openPaymentMethodChange
+											? t('pos.cta.cancelReplacement')
+											: t('pos.cta.replacePayment')}
+									</button>
+									{#if openPaymentMethodChange}
+										<form
+											action="/order/{data.order._id}/payment/{payment.id}?/replaceMethod"
+											method="post"
+											class="contents"
+										>
+											<div class="flex flex-wrap gap-2">
+												<label class="form-label">
+													{t('order.addPayment.amount')}
+													<input
+														class="form-input"
+														type="number"
+														name="amount"
+														min="0"
+														step="any"
+														max={payment.currencySnapshot.main.price.amount}
+														value={payment.currencySnapshot.main.price.amount}
+														disabled
+													/>
+												</label>
+												<label class="form-label">
+													{t('order.addPayment.currency')}
+													<select name="currency" class="form-input" disabled>
+														<option value={payment.currencySnapshot.main.price.currency}
+															>{payment.currencySnapshot.main.price.currency}</option
+														>
+													</select>
+												</label>
+												<label class="form-label">
+													<span>{t('checkout.payment.method')}</span>
+													<select name="method" class="form-input">
+														{#each data.paymentMethods as paymentMethod}
+															<option value={paymentMethod}
+																>{t(`checkout.paymentMethod.${paymentMethod}`)}</option
+															>
+														{/each}
+													</select>
+												</label><br />
+												<button type="submit" class="btn btn-blue self-end"
+													>{t('pos.cta.resendPaymentMethod')}</button
+												>
+											</div>
+										</form>
+									{/if}
+								</div>
 							{/if}
 						{/if}
 
@@ -597,6 +661,12 @@
 
 			{#if data.order.status === 'pending' && remainingAmount && data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
 				<form
+					action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order._id}?/cancel"
+					method="post"
+					id="cancelOrderForm"
+				></form>
+
+				<form
 					action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order
 						._id}?/addPayment"
 					method="post"
@@ -635,6 +705,14 @@
 							</select>
 						</label><br />
 						<button type="submit" class="btn btn-blue self-end">{t('order.addPayment.cta')}</button>
+						<button
+							type="submit"
+							class="btn btn-red"
+							on:click={confirmCancelOrder}
+							form="cancelOrderForm"
+						>
+							{t('pos.cta.cancelMultiPayOrder')}
+						</button>
 					</div>
 				</form>
 			{/if}
