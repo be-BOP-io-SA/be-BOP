@@ -153,9 +153,9 @@
 						method !== 'free' &&
 						(method === 'bitcoin'
 							? toCurrency('SAT', priceInfo.partialPriceWithVat, priceInfo.currency) >=
-							  MIN_SATOSHIS_FOR_BITCOIN_PAYMENT
+								MIN_SATOSHIS_FOR_BITCOIN_PAYMENT
 							: true)
-			  );
+				);
 	$: isDiscountValid =
 		(discountType === 'fiat' &&
 			priceInfoInitial.totalPriceWithVat >=
@@ -497,9 +497,6 @@
 							{#if paymentMethods.length === 0}
 								<p class="text-red-400">{t('checkout.paymentMethod.unavailable')}</p>
 							{/if}
-							{#if 0}
-								<a href="/connect" class="underline body-hyperlink"> Connect another wallet </a>
-							{/if}
 						</div>
 					</label>
 				{/if}
@@ -666,8 +663,8 @@
 							<h3 class="text-base">
 								{item.chosenVariations
 									? item.product.name +
-									  ' - ' +
-									  Object.entries(item.chosenVariations)
+										' - ' +
+										Object.entries(item.chosenVariations)
 											.map(([key, value]) => item.product.variationLabels?.values[key][value])
 											.join(' - ')
 									: item.product.name}
@@ -714,7 +711,7 @@
 									>{item.depositPercentage
 										? `(${(item.depositPercentage / 100).toLocaleString($locale, {
 												style: 'percent'
-										  })})`
+											})})`
 										: ''}</PriceTag
 								>
 								<PriceTag
@@ -780,8 +777,8 @@
 									})}. {priceInfo.singleVatCountry
 										? t('cart.vatSellerCountry')
 										: !isDigital
-										? `${t('checkout.vatShippingAddress')}`
-										: `${t('cart.vatIpCountryText', { link: 'https://lite.ip2location.com' })}`}"
+											? `${t('checkout.vatShippingAddress')}`
+											: `${t('cart.vatIpCountryText', { link: 'https://lite.ip2location.com' })}`}"
 								>
 									<IconInfo class="cursor-pointer" />
 								</div>

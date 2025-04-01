@@ -257,34 +257,6 @@
 						{@html marked(data.product.description.replaceAll('<', '&lt;'))}
 					</p>
 				{/if}
-				{#if 0}
-					<hr class="border-gray-300" />
-					<h2 class="text-[22px]">This product is part of a challenge</h2>
-					<p>
-						By purchasing this product, 20% of its price will go to the funds of the next
-						crowdfunding:
-					</p>
-					<div class="bg-gray-75 border-gray-300 border rounded p-4 flex flex-col">
-						<div class="flex justify-between items-center">
-							<h3 class="font-medium text-[22px]">WACOM CINTIQ 24" for an emerging artist.</h3>
-							<span class="text-base font-light">Ends April 25</span>
-						</div>
-						<GoalProgress
-							class="font-bold mt-3"
-							text="{Number(7).toLocaleString($locale, {
-								style: 'currency',
-								currency: 'EUR',
-								minimumFractionDigits: 0
-							})} 🙂"
-							goal={600}
-							progress={422}
-						/>
-						<div class="flex justify-between mt-1 items-center">
-							<a href="/" class="body-hyperlink underline">How can I contribute?</a>
-							<PriceTag amount={600} class="text-base" currency="EUR" />
-						</div>
-					</div>
-				{/if}
 			</div>
 			<div
 				class="flex flex-col gap-2 border-gray-300 lg:border-l lg:border-b lg:rounded lg:pl-4 lg:pb-4 h-fit overflow-hidden"
@@ -315,9 +287,7 @@
 							hours: hoursDifference
 						})}
 					</h3>
-					{#if 0}
-						<GoalProgress text="1h32min left" goal={600} progress={444} />
-					{/if}
+
 					{#if data.discount.percentage === 100}
 						<hr class="border-gray-300" />
 						<div class="border border-[#F1DA63] bg-[#FFFBD5] p-2 rounded text-base flex gap-2">
@@ -357,10 +327,10 @@
 					{@const verb = isPreorder
 						? 'preorder'
 						: data.product.type === 'donation'
-						? 'donate'
-						: data.product.type === 'subscription'
-						? 'subscribe'
-						: 'buy'}
+							? 'donate'
+							: data.product.type === 'subscription'
+								? 'subscribe'
+								: 'buy'}
 					<form
 						action="?/buy"
 						method="post"

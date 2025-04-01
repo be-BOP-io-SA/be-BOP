@@ -99,33 +99,6 @@
 			</label>
 		</div>
 	{/each}
-	{#if 0}
-		<h3 class="text-xl">Links menu</h3>
-		{#each [0, 1, 2, 3, 4] as i}
-			<div class="flex gap-4">
-				<label class="form-label">
-					Text
-					<input
-						type="text"
-						name="menu[{i}].label"
-						class="form-input"
-						placeholder={data.tag.menu[i]?.label || ''}
-						value={data.tag.translations?.[language]?.menu?.[i]?.label ?? ''}
-					/>
-				</label>
-				<label class="form-label">
-					Url
-					<input
-						type="text"
-						name="menu[{i}].href"
-						class="form-input"
-						placeholder={data.tag.menu[i]?.href || ''}
-						value={data.tag.translations?.[language]?.menu?.[i]?.href ?? ''}
-					/>
-				</label>
-			</div>
-		{/each}
-	{/if}
 
 	<button class="btn btn-black self-start" type="submit">Save</button>
 </form>

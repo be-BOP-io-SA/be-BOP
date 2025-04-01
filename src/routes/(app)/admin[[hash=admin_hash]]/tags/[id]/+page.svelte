@@ -158,31 +158,7 @@
 	<button class="btn btn-gray self-start" on:click={() => (tagCtaLines += 1)} type="button"
 		>Add CTAs
 	</button>
-	{#if 0}
-		<h3 class="text-xl">Links menu</h3>
-		{#each [0, 1, 2, 3, 4] as i}
-			<div class="flex gap-4">
-				<label class="form-label">
-					Text
-					<input
-						type="text"
-						name="menu[{i}].label"
-						class="form-input"
-						value={data.tag.menu[i]?.label || ''}
-					/>
-				</label>
-				<label class="form-label">
-					Url
-					<input
-						type="text"
-						name="menu[{i}].href"
-						class="form-input"
-						value={data.tag.menu[i]?.href || ''}
-					/>
-				</label>
-			</div>
-		{/each}
-	{/if}
+
 	<label class="form-label">
 		CSS override
 		<textarea
