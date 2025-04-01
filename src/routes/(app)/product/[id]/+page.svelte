@@ -327,10 +327,10 @@
 					{@const verb = isPreorder
 						? 'preorder'
 						: data.product.type === 'donation'
-							? 'donate'
-							: data.product.type === 'subscription'
-								? 'subscribe'
-								: 'buy'}
+						? 'donate'
+						: data.product.type === 'subscription'
+						? 'subscribe'
+						: 'buy'}
 					<form
 						action="?/buy"
 						method="post"
