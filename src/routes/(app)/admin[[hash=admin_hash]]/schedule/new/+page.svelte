@@ -140,7 +140,7 @@
 			<input
 				class="form-checkbox"
 				type="checkbox"
-				name="events[{i}].calendar.hasCustomColor"
+				name="events[{i}].calendarHasCustomColor"
 				bind:checked={calendarHasCustomColor}
 			/>
 			Event has custom color on calendar
@@ -148,7 +148,7 @@
 		{#if calendarHasCustomColor}
 			<label class="form-label">
 				Event color on calendar
-				<input type="color" name="events[{i}].calendar.color" class="form-input" />
+				<input type="color" name="events[{i}].calendarColor" class="form-input" />
 			</label>
 		{/if}
 	{/each}

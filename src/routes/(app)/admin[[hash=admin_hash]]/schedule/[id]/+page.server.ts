@@ -62,14 +62,9 @@ export const actions = {
 							.optional(),
 						url: z.string().optional(),
 						hideFromList: z.boolean({ coerce: true }).default(false),
-						calendar: z
-							.object({
-								color: z
-									.string()
-									.regex(/^#[0-9a-f]{6}$/i)
-									.default('#ffffff'),
-								hasCustomColor: z.boolean({ coerce: true }).default(false)
-							})
+						calendarColor: z
+							.string()
+							.regex(/^#[0-9a-f]{6}$/i)
 							.optional(),
 						unavailabity: z
 							.object({

@@ -12,7 +12,7 @@
 		isUnavailable: eve.unavailabity?.isUnavailable ?? false
 	}));
 	let eventCalendar = data.schedule.events.map((eve) => ({
-		hasCustomColor: eve.calendar?.hasCustomColor ?? false
+		calendarColor: !!eve.calendarColor
 	}));
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
@@ -212,19 +212,19 @@
 				<input
 					class="form-checkbox"
 					type="checkbox"
-					name="events[{i}].calendar.hasCustomColor"
-					bind:checked={eventCalendar[i].hasCustomColor}
+					name="events[{i}].calendarHasCustomColor"
+					bind:checked={eventCalendar[i].calendarColor}
 				/>
 				Event has custom color on calendar
 			</label>
-			{#if eventCalendar[i]?.hasCustomColor}
+			{#if eventCalendar[i]?.calendarColor}
 				<label class="form-label">
 					Event color on calendar
 					<input
 						type="color"
-						name="events[{i}].calendar.color"
+						name="events[{i}].calendarColor"
 						class="form-input"
-						value={data.schedule.events[i].calendar?.color}
+						value={data.schedule.events[i].calendarColor}
 					/>
 				</label>
 			{/if}

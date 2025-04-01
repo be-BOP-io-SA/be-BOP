@@ -14,10 +14,7 @@ export interface EventSchedule {
 	};
 	url?: string;
 	hideFromList?: boolean;
-	calendar?: {
-		hasCustomColor: boolean;
-		color: string;
-	};
+	calendarColor?: string;
 	unavailabity?: {
 		label: string;
 		isUnavailable: boolean;
