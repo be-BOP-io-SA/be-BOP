@@ -14,43 +14,35 @@
 	$: locationFilter = '';
 	$: nameFilter = '';
 	$: descriptionFilter = '';
-	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
-		(acc, event) => {
-			const startDate = new Date(event.beginsAt);
-			const endDate = event.endsAt ? new Date(event.endsAt) : startDate;
 
-			if (isNaN(startDate.getTime())) {
-				return acc;
-			}
-			if (isNaN(endDate.getTime())) {
-				return acc;
-			}
+	let scheduleEventByDay: Record<string, EventSchedule[]> = {};
+	for (const event of schedule.events) {
+		const startDate = new Date(event.beginsAt);
+		const endDate = event.endsAt ? new Date(event.endsAt) : startDate;
 
-			let currentDate = new Date(startDate);
-			while (currentDate <= endDate) {
-				const dateKey = format(currentDate, 'yyyy-MM-dd');
+		if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+			continue;
+		}
 
-				if (!acc[dateKey]) {
-					acc[dateKey] = [];
-				}
+		let currentDate = new Date(startDate);
+		while (currentDate <= endDate) {
+			const dateKey = format(currentDate, 'yyyy-MM-dd');
 
-				acc[dateKey].push(event);
-
-				currentDate = addDays(currentDate, 1);
+			if (!scheduleEventByDay[dateKey]) {
+				scheduleEventByDay[dateKey] = [];
 			}
 
-			return acc;
-		},
-		{} as Record<string, EventSchedule[]>
-	);
+			scheduleEventByDay[dateKey].push(event);
 
-	$: filteredEvents = Object.entries(scheduleEventByDay).reduce(
-		(acc, [date, events]) => {
-			if (dateFilter && date !== dateFilter) {
-				return acc;
-			}
+			currentDate = addDays(currentDate, 1);
+		}
+	}
 
-			let filteredEvents = events.filter(
+	$: filteredEvents = Object.fromEntries(
+		Object.entries(scheduleEventByDay).filter(([date, events]) => {
+			if (dateFilter && date !== dateFilter) return false;
+
+			const filtered = events.filter(
 				(event) =>
 					(!locationFilter ||
 						event.location?.name?.toLowerCase().includes(locationFilter.toLowerCase().trim())) &&
@@ -62,13 +54,8 @@
 						event.description?.toLowerCase().includes(descriptionFilter.toLowerCase().trim()))
 			);
 
-			if (filteredEvents.length) {
-				acc[date] = filteredEvents;
-			}
-
-			return acc;
-		},
-		{} as Record<string, EventSchedule[]>
+			return filtered.length > 0;
+		})
 	);
 </script>
 
