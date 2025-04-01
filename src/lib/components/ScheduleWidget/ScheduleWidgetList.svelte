@@ -40,7 +40,9 @@
 
 	$: filteredEvents = Object.fromEntries(
 		Object.entries(scheduleEventByDay).filter(([date, events]) => {
-			if (dateFilter && date !== dateFilter) return false;
+			if (dateFilter && date !== dateFilter) {
+				return false;
+			}
 
 			const filtered = events.filter(
 				(event) =>
