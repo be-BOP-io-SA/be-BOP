@@ -69,6 +69,7 @@
 				placeholder="Enter your login"
 				value={form?.login ?? ''}
 				required
+				disabled={!!form?.disabledUser}
 			/>
 		</label>
 		<label class="form-label">
@@ -81,6 +82,7 @@
 				bind:this={passwordInput}
 				placeholder="Enter your password"
 				required
+				disabled={!!form?.disabledUser}
 			/>
 		</label>
 		<div class="flex flex-row gap-4 mt-2 justify-between">
@@ -105,11 +107,15 @@
 		{#if form?.incorrect || errorMessage}
 			<p class="text-red-500">{errorMessage || 'Invalid credentials, please try again'}</p>
 		{/if}
+		{#if form?.disabledUser}
+			<p class="text-red-500">{form.disabledUser}</p>
+		{/if}
 		<div class="flex justify-center gap-4 mt-2">
 			<input
 				type="submit"
 				class="btn btn-blue text-white"
 				value={data.isAdminCreated ? 'Login' : 'Create Super Admin'}
+				disabled={!!form?.disabledUser}
 			/>
 			{#if data.isAdminCreated}
 				<a href="{data.adminPrefix}/login/recovery" class="btn btn-gray">Recovery</a>

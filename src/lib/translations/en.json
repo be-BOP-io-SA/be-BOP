@@ -595,9 +595,14 @@
 	"pos": {
 		"adminInterface": "Admin interface",
 		"applyGiftDiscount": "As a POS user I apply a <0>gift discount</0>",
+		"cancelOrderMessage": "Are you sure you want to cnacel the entire order ?",
 		"cta": {
+			"cancelMultiPayOrder": "Cancel order",
 			"cancelOrder": "Cancel",
+			"cancelReplacement": "Cancel replacement",
 			"markOrderPaid": "Mark paid",
+			"replacePayment": "Replace payment method",
+			"resendPaymentMethod": "Resend payment method",
 			"updatePaymentInfo": "Update payment information"
 		},
 		"discountJustification": "Justification",

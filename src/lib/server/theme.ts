@@ -107,6 +107,14 @@ export const themeValidator = z.object({
 		creditCard: z.object({
 			svg: z.object({ color })
 		})
+	}),
+	eventCalendar: z.object({
+		main: z.object({ backgroundColor }),
+		navCTA: z.object({ backgroundColor }),
+		hasEvent: z.object({ backgroundColor, color }),
+		currentDate: z.object({ backgroundColor, color }),
+		fontFamily,
+		color
 	})
 });
 

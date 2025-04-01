@@ -424,7 +424,9 @@ export async function cmsFromContent(
 					.project<
 						Pick<Challenge, '_id' | 'name' | 'goal' | 'progress' | 'endsAt' | 'mode' | 'beginsAt'>
 					>({
-						name: 1,
+						name: locals.language
+							? { $ifNull: [`$translations.${locals.language}.name`, '$name'] }
+							: 1,
 						goal: 1,
 						progress: 1,
 						endsAt: 1,
