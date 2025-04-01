@@ -302,8 +302,8 @@
 													<h3 class="text-base font-medium">
 														{item.chosenVariations
 															? item.product.name +
-															' - ' +
-															Object.entries(item.chosenVariations)
+															  ' - ' +
+															  Object.entries(item.chosenVariations)
 																	.map(
 																		([key, value]) =>
 																			item.product.variationLabels?.values[key][value]
