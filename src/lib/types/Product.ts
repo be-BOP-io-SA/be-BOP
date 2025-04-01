@@ -69,6 +69,7 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	 * Setting this to true will also set standalone to true
 	 */
 	payWhatYouWant: boolean;
+	recommendedPWYWAmount?: number;
 	/**
 	 * One line per item in a cart, eg for large products
 	 */
@@ -128,7 +129,7 @@ export function productPriceWithVariations(
 						(vari) => variation[0] === vari.name && variation[1] === vari.value
 					)?.price ?? 0,
 				currency: product.price.currency
-		  }))
+			}))
 		: [];
 
 	return sumCurrency(product.price.currency, [...variationPriceArray, product.price]);

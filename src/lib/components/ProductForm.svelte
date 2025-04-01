@@ -299,7 +299,7 @@
 					name="alias"
 					placeholder="alias"
 					step="any"
-					value={duplicateFromId ? '' : product.alias?.[1] ?? ''}
+					value={duplicateFromId ? '' : (product.alias?.[1] ?? '')}
 				/>
 			</label>
 		</div>
@@ -376,6 +376,23 @@
 			This is a pay-what-you-want product
 		</label>
 		{#if product.payWhatYouWant}
+			<div class="gap-4 flex flex-col md:flex-row">
+				<label class="w-full">
+					Recommended price amount
+					<input
+						class="form-input"
+						type="number"
+						name="recommendedPWYWAmount"
+						placeholder="Price"
+						step="any"
+						min={product.price.amount}
+						max={product.maximumPrice?.amount ?? Infinity}
+						value={(product.recommendedPWYWAmount ?? 0)
+							.toLocaleString('en', { maximumFractionDigits: 8 })
+							.replace(/,/g, '')}
+					/>
+				</label>
+			</div>
 			<label class="checkbox-label">
 				<input
 					class="form-checkbox"
@@ -556,7 +573,7 @@
 											variationLabelsNames[i] +
 												(isNumber(variationLabelsNames[i]) ? '-' : '') +
 												variationLabelsValues[i] || ''
-									  ).toLowerCase()
+										).toLowerCase()
 									: (variationLabelsValues[i] || '').toLowerCase()}]"
 								class="form-input"
 								bind:value={variationLabelsValues[i]}
@@ -599,7 +616,7 @@
 											variationLabelsNames[i] +
 												(isNumber(variationLabelsNames[i]) ? '-' : '') +
 												variationLabelsValues[i] || ''
-									  ).toLowerCase()
+										).toLowerCase()
 									: (variationLabelsValues[i] || '').toLowerCase()}
 							/>
 						{/if}

@@ -44,10 +44,13 @@
 		data.product.price.amount,
 		data.product.price.currency
 	);
+	const PWYWRecommended = data.product.recommendedPWYWAmount
+		? toCurrency(PWYWCurrency, data.product.recommendedPWYWAmount, data.product.price.currency)
+		: 0;
 	const PWYWMaximum = data.product.maximumPrice
 		? toCurrency(PWYWCurrency, data.product.maximumPrice.amount, data.product.maximumPrice.currency)
 		: Infinity;
-	let customAmount = PWYWMinimum;
+	let customAmount = PWYWRecommended ?? PWYWMinimum;
 
 	$: currentPicture =
 		data.pictures.find((picture) => picture._id === $page.url.searchParams.get('picture')) ??
@@ -357,10 +360,10 @@
 					{@const verb = isPreorder
 						? 'preorder'
 						: data.product.type === 'donation'
-						? 'donate'
-						: data.product.type === 'subscription'
-						? 'subscribe'
-						: 'buy'}
+							? 'donate'
+							: data.product.type === 'subscription'
+								? 'subscribe'
+								: 'buy'}
 					<form
 						action="?/buy"
 						method="post"

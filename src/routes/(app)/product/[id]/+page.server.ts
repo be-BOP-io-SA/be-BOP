@@ -37,6 +37,7 @@ export const load = async ({ params, locals }) => {
 			| 'deposit'
 			| 'cta'
 			| 'maximumPrice'
+			| 'recommendedPWYWAmount'
 			| 'mobile'
 			| 'hasVariations'
 			| 'variations'
@@ -82,6 +83,7 @@ export const load = async ({ params, locals }) => {
 				},
 				variations: 1,
 				maximumPrice: 1,
+				recommendedPWYWAmount: 1,
 				mobile: 1,
 				sellDisclaimer: {
 					$ifNull: [`$translations.${locals.language}.sellDisclaimer`, '$sellDisclaimer']
@@ -180,7 +182,7 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			? {
 					amount: parsePriceAmount(customPriceAmount, customPriceCurrency),
 					currency: customPriceCurrency
-			  }
+				}
 			: undefined;
 	await addToCartInDb(product, quantity, {
 		user: userIdentifier(locals),
