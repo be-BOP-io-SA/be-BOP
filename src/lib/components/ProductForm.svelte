@@ -392,6 +392,19 @@
 							.replace(/,/g, '')}
 					/>
 				</label>
+				<label class="w-full">
+					Recommended price currency
+					<select
+						name="maxPriceCurrency"
+						class="form-input"
+						bind:value={product.price.currency}
+						disabled
+					>
+						{#each CURRENCIES as currency}
+							<option value={currency}>{currency}</option>
+						{/each}
+					</select>
+				</label>
 			</div>
 			<label class="checkbox-label">
 				<input
