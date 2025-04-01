@@ -362,8 +362,8 @@
 						: data.product.type === 'donation'
 							? 'donate'
 							: data.product.type === 'subscription'
-								? 'subscribe'
-								: 'buy'}
+							? 'subscribe'
+							: 'buy'}
 					<form
 						action="?/buy"
 						method="post"

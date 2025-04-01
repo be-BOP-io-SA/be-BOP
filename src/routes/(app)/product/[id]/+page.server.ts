@@ -182,7 +182,7 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			? {
 					amount: parsePriceAmount(customPriceAmount, customPriceCurrency),
 					currency: customPriceCurrency
-				}
+			  }
 			: undefined;
 	await addToCartInDb(product, quantity, {
 		user: userIdentifier(locals),
