@@ -5,7 +5,6 @@
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import { applyAction, enhance } from '$app/forms';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
-	import GoalProgress from '$lib/components/GoalProgress.svelte';
 	import { productAddedToCart } from '$lib/stores/productAddedToCart';
 	import { invalidate } from '$app/navigation';
 	import { UrlDependency } from '$lib/types/UrlDependency';

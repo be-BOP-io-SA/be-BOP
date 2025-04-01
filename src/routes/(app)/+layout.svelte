@@ -1,7 +1,4 @@
 <script lang="ts">
-	import IconDownArrow from '$lib/components/icons/IconDownArrow.svelte';
-	import IconSearch from '$lib/components/icons/IconSearch.svelte';
-	import IconWallet from '$lib/components/icons/IconWallet.svelte';
 	import IconBasket from '$lib/components/icons/IconBasket.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import { onMount } from 'svelte';
