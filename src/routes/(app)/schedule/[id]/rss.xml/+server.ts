@@ -16,8 +16,10 @@ export const GET = async ({ params }) => {
 	rssFeed += `<description>List of events</description>\n`;
 	rssFeed += `<lastBuildDate>${new Date().toUTCString()}</lastBuildDate>\n`;
 	rssFeed += `<language>fr</language>\n`;
-	rssFeed += `<atom:link href="${ORIGIN}/schedule/${schedule._id.replaceAll(/</g, '&lt;')}/rss.xml" rel="self" type="application/rss+xml" xmlns:atom="http://www.w3.org/2005/Atom"/>\n`;
-
+	rssFeed += `<atom:link href="${ORIGIN}/schedule/${schedule._id.replaceAll(
+		/</g,
+		'&lt;'
+	)}/rss.xml" rel="self" type="application/rss+xml" xmlns:atom="http://www.w3.org/2005/Atom"/>\n`;
 	schedule.events.forEach((event) => {
 		rssFeed += `<item>\n`;
 		rssFeed += `  <title>${event.title.replaceAll(/</g, '&lt;')}</title>\n`;
