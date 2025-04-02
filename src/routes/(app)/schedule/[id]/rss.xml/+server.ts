@@ -31,7 +31,10 @@ export const GET = async ({ params }) => {
 			addMinutes(schedule.updatedAt, index),
 			"EEE, dd MMM yyyy HH:mm:ss 'GMT'"
 		)}</pubDate>\n`;
-		rssFeed += `<guid isPermaLink="true">${ORIGIN}/schedule/${schedule._id.replaceAll(/</g, '&lt;')}/event/${event.slug}</guid>\n`;
+		rssFeed += `<guid isPermaLink="true">${ORIGIN}/schedule/${schedule._id.replaceAll(
+			/</g,
+			'&lt;'
+		)}/event/${event.slug}</guid>\n`;
 		rssFeed += `</item>\n`;
 	});
 
