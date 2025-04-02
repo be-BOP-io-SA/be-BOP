@@ -247,7 +247,8 @@ export const actions: Actions = {
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
 						...(!hasVariations && { variations: '', variationLabels: '' }),
-						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' })
+						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),
+						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' })
 					}
 				}
 			);
