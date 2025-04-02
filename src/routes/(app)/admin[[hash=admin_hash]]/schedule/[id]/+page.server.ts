@@ -68,6 +68,11 @@ export const actions = {
 							})
 							.optional(),
 						url: z.string().optional(),
+						hideFromList: z.boolean({ coerce: true }).default(false),
+						calendarColor: z
+							.string()
+							.regex(/^#[0-9a-f]{6}$/i)
+							.optional(),
 						unavailabity: z
 							.object({
 								label: z.string(),

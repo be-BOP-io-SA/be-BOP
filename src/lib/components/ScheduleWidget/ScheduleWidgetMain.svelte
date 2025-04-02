@@ -31,7 +31,9 @@
 	<div
 		class="flex {i % 2 === 1
 			? 'flex-row-reverse'
-			: 'flex-row'} gap-4 tagWidget tagWidget-main w-full items-center {className}"
+			: 'flex-row'} gap-4 tagWidget tagWidget-main w-full items-center {className} {event.hideFromList
+			? 'hidden'
+			: ''}"
 	>
 		<div class="grow">
 			<PictureComponent

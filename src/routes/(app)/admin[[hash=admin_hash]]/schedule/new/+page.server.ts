@@ -46,7 +46,12 @@ export const actions: Actions = {
 								link: z.string()
 							})
 							.optional(),
-						url: z.string().optional()
+						url: z.string().optional(),
+						hideFromList: z.boolean({ coerce: true }).default(false),
+						calendarColor: z
+							.string()
+							.regex(/^#[0-9a-f]{6}$/i)
+							.optional()
 					})
 				)
 			})

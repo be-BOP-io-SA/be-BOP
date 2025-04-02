@@ -86,6 +86,12 @@
 	function isEventDay(date: Date) {
 		return scheduleEventByDay[format(date, 'yyyy-MM-dd')];
 	}
+	function hasCustomColorEvents(date: Date) {
+		const key = format(date, 'yyyy-MM-dd');
+		const events = scheduleEventByDay[key] ?? [];
+		const specialEvent = events.filter((event) => event.calendarColor);
+		return specialEvent;
+	}
 
 	function selectDate(date: Date) {
 		selectedDate = new Date(date);
@@ -133,7 +139,11 @@
 					{isSameDay(day, new Date()) ? 'eventCalendar-currentDate font-bold' : ''}
 					{isEventDay(day) ? 'eventCalendar-hasEvent font-bold' : ''}
 					{selectedDate && isSameDay(day, selectedDate) ? ' ring-2 ring-black' : ''}
-					{format(day, 'M') !== format(currentDate, 'M') ? ' text-gray-400 dark:text-gray-800' : ''}"
+					{format(day, 'M') !== format(currentDate, 'M') ? ' text-gray-400' : ''}"
+				style="background-color:{!!hasCustomColorEvents(day) &&
+				hasCustomColorEvents(day).length === 1
+					? hasCustomColorEvents(day)[0].calendarColor
+					: ''}"
 			>
 				{format(day, 'd')}
 			</button>
