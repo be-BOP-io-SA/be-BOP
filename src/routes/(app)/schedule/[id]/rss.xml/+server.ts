@@ -25,9 +25,10 @@ export const GET = async ({ params }) => {
 			event.shortDescription?.replaceAll(/</g, '&lt;') || ''
 		}</description>\n`;
 		rssFeed += `  <pubDate>${format(
-			event.beginsAt,
+			schedule.updatedAt,
 			"EEE, dd MMM yyyy HH:mm:ss 'GMT'"
 		)}</pubDate>\n`;
+		rssFeed += `<guid>${event.slug}</guid>\n`;
 		rssFeed += `</item>\n`;
 	});
 

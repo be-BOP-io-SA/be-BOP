@@ -41,8 +41,11 @@
 				/>
 			</div>
 			<div class="flex flex-col items-center justify-center p-2 m-4 gap-2">
-				<h2 class="text-2xl body-title">
+				<h2 class="text-2xl body-title flex flex-row">
 					{event.title}
+					<a title="Provide rss feed" href="/schedule/{schedule._id}/rss.xml" target="_blank">
+						<IconRssFeed />
+					</a>
 				</h2>
 				<p class="text-xl">
 					{upperFirst(
@@ -101,9 +104,6 @@
 						{t('schedule.moreInfo')}
 					</a>
 				{/if}
-				<a title="Provide rss feed" href="/schedule/{schedule._id}/rss.xml" target="_blank">
-					<IconRssFeed />
-				</a>
 				<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 			</div>
 		</div>

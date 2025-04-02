@@ -44,8 +44,11 @@
 					: ''}"
 			/>
 			<div class="p-4 pl-8">
-				<h2 class="text-2xl font-bold body-title mb-2">
+				<h2 class="text-2xl font-bold body-title mb-2 flex flex-row">
 					{event.title}
+					<a title="Provide rss feed" href="/schedule/{schedule._id}/rss.xml" target="_blank">
+						<IconRssFeed />
+					</a>
 				</h2>
 				<p class="text-sm">
 					{upperFirst(
@@ -109,14 +112,6 @@
 							{t('schedule.moreInfo')}
 						</a>
 					{/if}
-					<a
-						title="Provide rss feed"
-						href="/schedule/{schedule._id}/rss.xml"
-						target="_blank"
-						class="mt-4"
-					>
-						<IconRssFeed />
-					</a>
 					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} class="mt-4" />
 				</div>
 			</div>
