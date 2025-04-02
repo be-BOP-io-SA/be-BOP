@@ -299,7 +299,7 @@
 					name="alias"
 					placeholder="alias"
 					step="any"
-					value={duplicateFromId ? '' : (product.alias?.[1] ?? '')}
+					value={duplicateFromId ? '' : product.alias?.[1] ?? ''}
 				/>
 			</label>
 		</div>
@@ -584,7 +584,7 @@
 											variationLabelsNames[i] +
 												(isNumber(variationLabelsNames[i]) ? '-' : '') +
 												variationLabelsValues[i] || ''
-										).toLowerCase()
+									  ).toLowerCase()
 									: (variationLabelsValues[i] || '').toLowerCase()}]"
 								class="form-input"
 								bind:value={variationLabelsValues[i]}
@@ -627,7 +627,7 @@
 											variationLabelsNames[i] +
 												(isNumber(variationLabelsNames[i]) ? '-' : '') +
 												variationLabelsValues[i] || ''
-										).toLowerCase()
+									  ).toLowerCase()
 									: (variationLabelsValues[i] || '').toLowerCase()}
 							/>
 						{/if}
