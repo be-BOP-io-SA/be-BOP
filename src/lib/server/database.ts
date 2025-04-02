@@ -192,6 +192,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.personalInfo, { 'user.npub': 1 }],
 	[collections.personalInfo, { 'user.email': 1 }],
 	[collections.personalInfo, { 'user.ssoIds': 1 }],
+	[collections.personalInfo, { subscribedSchedule: 1 }, { sparse: true }],
 	[collections.tickets, { orderId: 1 }],
 	[collections.tickets, { productId: 1 }],
 	[collections.tickets, { ticketId: 1 }, { unique: true }],

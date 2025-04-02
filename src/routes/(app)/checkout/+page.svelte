@@ -497,9 +497,6 @@
 							{#if paymentMethods.length === 0}
 								<p class="text-red-400">{t('checkout.paymentMethod.unavailable')}</p>
 							{/if}
-							{#if 0}
-								<a href="/connect" class="underline body-hyperlink"> Connect another wallet </a>
-							{/if}
 						</div>
 					</label>
 				{/if}

@@ -14,6 +14,7 @@
 	import type { EventSchedule, Schedule } from '$lib/types/Schedule';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
+	import IcsExport from './IcsExport.svelte';
 
 	export let schedule: Schedule;
 	let className = '';
@@ -102,6 +103,16 @@
 	});
 </script>
 
+{#if schedule.allowSubscription}
+	<div class="max-w-md mx-auto flex flex-row {className}">
+		<a
+			href="/schedule/{schedule._id}/subscribe"
+			class="btn btn-gray no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
+		>
+			🔔 {t('schedule.subscribeCTA')}
+		</a>
+	</div>
+{/if}
 <div class="max-w-md mx-auto p-4 eventCalendar eventCalendar-main shadow-md rounded-lg {className}">
 	<div class="flex items-center justify-between mb-4">
 		<button on:click={prevMonth} class="py-2 eventCalendar-navCTA btn rounded-full">&lt;</button>
@@ -154,7 +165,7 @@
 				)}
 			</h2>
 			{#each scheduleEventByDay[format(selectedDate, 'yyyy-MM-dd')] as event}
-				<p class="flex flex-row text-sm gap-2">
+				<p class="flex flex-row text-sm gap-1">
 					{#if event.unavailabity?.isUnavailable}
 						<span class="font-bold">[{event.unavailabity.label}]&nbsp;</span>
 					{/if}
@@ -203,6 +214,7 @@
 					{#if event.url}
 						<a title={t('schedule.moreInfo')} href={event.url} target="_blank">ℹ️</a>
 					{/if}
+					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 				</p>
 			{/each}
 		</div>

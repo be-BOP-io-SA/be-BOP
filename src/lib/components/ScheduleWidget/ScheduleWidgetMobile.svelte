@@ -5,6 +5,7 @@
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addMinutes, isSameDay } from 'date-fns';
+	import IcsExport from './IcsExport.svelte';
 
 	export let pictures: Picture[] | [];
 	export let schedule: Schedule;
@@ -16,6 +17,16 @@
 	const { t, locale } = useI18n();
 </script>
 
+{#if schedule.allowSubscription}
+	<div class="max-w-md mx-auto flex flex-row">
+		<a
+			href="/schedule/{schedule._id}/subscribe"
+			class="btn btn-gray no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
+		>
+			🔔 {t('schedule.subscribeCTA')}
+		</a>
+	</div>
+{/if}
 {#each schedule.events as event}
 	<div class="max-w-md mx-auto space-y-6 {className} {event.hideFromList ? 'hidden' : ''}">
 		<div class="tagWidget tagWidget-main rounded-lg gap-4">
@@ -89,6 +100,7 @@
 						{t('schedule.moreInfo')}
 					</a>
 				{/if}
+				<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 			</div>
 		</div>
 	</div>
