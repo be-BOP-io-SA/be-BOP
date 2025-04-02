@@ -3,6 +3,7 @@
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { format, isSameDay } from 'date-fns';
+	import IcsExport from './IcsExport.svelte';
 
 	export let schedule: Schedule;
 	let className = '';
@@ -49,7 +50,7 @@
 				)}
 			</h2>
 			{#each events as event}
-				<p class="flex flex-row text-sm">
+				<p class="flex flex-row text-sm gap-1">
 					{#if event.unavailabity?.isUnavailable}
 						<span class="font-bold">[{event.unavailabity.label}]&nbsp;</span>
 					{/if}
@@ -94,6 +95,7 @@
 					{#if event.url}
 						<a title={t('schedule.moreInfo')} href={event.url} target="_blank">ℹ️</a>
 					{/if}
+					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 				</p>
 			{/each}
 		</div>

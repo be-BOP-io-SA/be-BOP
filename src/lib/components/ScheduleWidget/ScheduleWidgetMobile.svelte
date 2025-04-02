@@ -5,6 +5,7 @@
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addMinutes, isSameDay } from 'date-fns';
+	import IcsExport from './IcsExport.svelte';
 
 	export let pictures: Picture[] | [];
 	export let schedule: Schedule;
@@ -99,6 +100,7 @@
 						{t('schedule.moreInfo')}
 					</a>
 				{/if}
+				<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 			</div>
 		</div>
 	{/each}

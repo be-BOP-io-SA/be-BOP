@@ -5,6 +5,7 @@
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addMinutes, isSameDay } from 'date-fns';
+	import IcsExport from './IcsExport.svelte';
 
 	export let pictures: Picture[] | [];
 	export let schedule: Schedule;
@@ -93,8 +94,8 @@
 						<span class="font-bold">[{event.unavailabity.label}]</span>
 					{/if}
 				</p>
-				{#if event.url}
-					<div class="flex flex-row">
+				<div class="flex flex-row">
+					{#if event.url}
 						<a
 							href={event.url}
 							target="_blank"
@@ -102,8 +103,9 @@
 						>
 							{t('schedule.moreInfo')}
 						</a>
-					</div>
-				{/if}
+					{/if}
+					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} class="mt-4" />
+				</div>
 			</div>
 		</div>
 	</div>

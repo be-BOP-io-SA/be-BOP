@@ -673,6 +673,7 @@
 	"schedule": {
 		"dateText": "- Da {beginTime} a {endTime}",
 		"differentDayText": "- Da {beginDate} a {endDate}",
+		"exportEventTitle": "File di evento di esportazione",
 		"moreInfo": "Maggiori informazioni",
 		"subscribe": {
 			"formSuccessText": "Riceverai nuove notifiche di eventi per",
