@@ -12,7 +12,7 @@
 	let className = '';
 	export { className as class };
 	$: pictureByEventSlug = Object.fromEntries(
-		pictures.map((picture) => [picture.schedule?.eventSlug, picture])
+		(pictures ?? []).map((picture) => [picture.schedule?.eventSlug, picture])
 	);
 	const { t, locale } = useI18n();
 </script>
