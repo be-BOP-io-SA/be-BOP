@@ -1,40 +1,53 @@
-<div class="flex flex-col gap-2">
-	<h1 class="text-3xl">Back-office home</h1>
+<script>
+	import { onMount } from 'svelte';
+	let version = '';
+
+	onMount(async () => {
+		try {
+			const res = await fetch('/.well-known/version.txt');
+			version = await res.text();
+		} catch (error) {
+			console.error('Erreur de récupération de la version:', error);
+		}
+	});
+</script>
+
+<div class="flex flex-col gap-4 mx-auto">
+	<h1 class="text-2xl">Back-office home</h1>
 	<p>
 		Welcome on be-BOP back-office! From here, you'll be able to manage, configure, and monitor your
 		be-BOP.
 	</p>
 
-	<h2>A word from your administrator :</h2>
+	<h1 class="text-xl">A word from your administrator :</h1>
 	<p>
 		<em
-			>"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque interdum at justo eu
-			dapibus. Suspendisse lacinia lacus nec ante euismod, non pulvinar nunc blandit..."</em
+			>Lorem ipsum dolor sit amet consectetur adipisicing elit. Eius unde laudantium quam
+			repudiandae tenetur quaerat veritatis laborum nisi, consequuntur nemo quidem, modi repellendus
+			eveniet culpa autem odit consectetur ipsa tempore.</em
 		>
 	</p>
 
-	<h2>be-BOP version & updates</h2>
+	<h1 class="text-xl">be-BOP version & updates</h1>
 
-	<h3>Version check</h3>
+	<h1 class="text-xl">Version check</h1>
 	<p>
-		You're currently using this version of be-BOP : <span class="code"
-			>2b4316c464652d62c7a06f17902172eb68218b8</span
-		>
+		You're currently using this version of be-BOP :<br />
+		<code class="font-mono">{version}</code>
 	</p>
 	<p>
-		The last version on official repo is : <span class="code"
-			>2b4316c464652d62c7a06f17902172eb68218b8</span
-		>
+		The last version on official repo is : <br />
+		<code class="font-mono">{version}</code>
 	</p>
 
 	<p class="check">✅ Your be-BOP is from an official build</p>
 	<p class="check">✅ Your be-BOP version is up-to-date</p>
 
-	<div class="updates">
-		<h3>Last releases</h3>
-		<a href="#" class="check-link">>>> Check here for more updates</a>
+	<div class="justify-between">
+		<h1 class="text-xl">Last releases</h1>
+		<button>>>> Check here for more updates</button>
 
-		<table class="release-table">
+		<table class="w-full table-auto">
 			<thead>
 				<tr>
 					<th>Release date</th>
@@ -65,18 +78,18 @@
 			</tbody>
 		</table>
 
-		<a href="#" class="check-link">>>> Check for more</a>
+		<button>>>> Check for more</button>
 	</div>
 
-	<h2>Documentation</h2>
+	<h1 class="text-xl">Documentation</h1>
 
 	<p>Select your language :</p>
-	<div class="languages">
-		<img src="flags/en.png" alt="English" class="flag" />
-		<img src="flags/fr.png" alt="French" class="flag" />
-		<img src="flags/it.png" alt="Italian" class="flag" />
-		<img src="flags/nl.png" alt="Dutch" class="flag" />
-		<img src="flags/es.png" alt="Spanish" class="flag" />
+	<div class="flex flex-row justify-evenly">
+		<span>🇬🇧</span>
+		<span>🇫🇷</span>
+		<span>🇮🇹</span>
+		<span>🇪🇸</span>
+		<span>🇳🇱</span>
 	</div>
 
 	<p>Select your topic :</p>
