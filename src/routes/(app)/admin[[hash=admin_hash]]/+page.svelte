@@ -1,5 +1,5 @@
-<div class="container">
-	<h1>Back-office home</h1>
+<div class="flex flex-col gap-2">
+	<h1 class="text-3xl">Back-office home</h1>
 	<p>
 		Welcome on be-BOP back-office! From here, you'll be able to manage, configure, and monitor your
 		be-BOP.
