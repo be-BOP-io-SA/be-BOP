@@ -2,6 +2,7 @@
 	import type { EventSchedule, Schedule } from '$lib/types/Schedule';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
+	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import { addDays, format, isSameDay } from 'date-fns';
 	import IcsExport from './IcsExport.svelte';
 
@@ -143,6 +144,9 @@
 					{#if event.url}
 						<a title={t('schedule.moreInfo')} href={event.url} target="_blank">ℹ️</a>
 					{/if}
+					<a title="Provide rss feed" href="/schedule/{schedule._id}/rss.xml" target="_blank">
+						<IconRssFeed />
+					</a>
 					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 				</p>
 			{/each}

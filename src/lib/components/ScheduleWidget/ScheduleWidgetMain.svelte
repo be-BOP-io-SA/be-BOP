@@ -5,6 +5,7 @@
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addMinutes, isSameDay } from 'date-fns';
+	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
 
 	export let pictures: Picture[] | [];
@@ -46,8 +47,11 @@
 			/>
 		</div>
 		<div class="p-4 grow-[2]">
-			<h2 class="text-2xl font-bold body-title mb-2">
+			<h2 class="text-2xl font-bold body-title mb-2 flex flex-row">
 				{event.title}
+				<a title="Provide rss feed" href="/schedule/{schedule._id}/rss.xml" target="_blank">
+					<IconRssFeed />
+				</a>
 			</h2>
 			<p class="text-sm">
 				{upperFirst(
