@@ -6,6 +6,7 @@
 		TINYMCE_TOOLBAR
 	} from '../../routes/(app)/admin[[hash=admin_hash]]/cms/tinymce-plugins';
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
+	import { generateId } from '$lib/utils/generateId';
 
 	export let cmsPage: {
 		_id: string;
@@ -37,6 +38,8 @@
 	let hasEmployeeContent = cmsPage?.hasEmployeeContent || false;
 	let mobileContent = cmsPage?.mobileContent || '';
 	let employeeContent = cmsPage?.employeeContent || '';
+	let slugElement: HTMLInputElement;
+	let formElement: HTMLFormElement;
 
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this CMS page?')) {
@@ -45,22 +48,28 @@
 	}
 	let metas = cmsPage?.metas;
 	let cmsMetaLine = cmsPage?.metas?.length ?? 2;
+
+	const slugRegex = /^(?!admin$)(?!admin-)[a-z0-9-]+$/;
+	function validateSlug(event: SubmitEvent) {
+		const value = slugElement.value;
+		const result = slugRegex.test(value);
+		if (!result && !cmsPage?._id) {
+			slugElement.setCustomValidity(
+				"Slug must be lowercase, without spaces or special characters (# / \\ ?) and cannot start with 'admin'"
+			);
+			slugElement.reportValidity();
+			event.preventDefault();
+			return;
+		} else {
+			formElement.submit();
+		}
+	}
+	$: if (!cmsPage?._id) {
+		slug = generateId(title, false);
+	}
 </script>
 
-<form method="post" class="flex flex-col gap-4">
-	<label>
-		Page slug
-		<input
-			class="form-input block"
-			type="text"
-			placeholder="Page slug"
-			name="slug"
-			value={slug}
-			disabled={!!cmsPage}
-			required
-		/>
-	</label>
-
+<form method="post" class="flex flex-col gap-4" bind:this={formElement} on:submit={validateSlug}>
 	<label>
 		Page title
 		<input
@@ -69,8 +78,23 @@
 			maxlength={MAX_NAME_LIMIT}
 			name="title"
 			placeholder="Page title"
-			value={title}
+			bind:value={title}
 			required
+		/>
+	</label>
+
+	<label>
+		Page slug
+		<input
+			class="form-input block"
+			type="text"
+			placeholder="Page slug"
+			name="slug"
+			bind:value={slug}
+			disabled={!!cmsPage}
+			required
+			bind:this={slugElement}
+			on:input={() => slugElement.setCustomValidity('')}
 		/>
 	</label>
 
