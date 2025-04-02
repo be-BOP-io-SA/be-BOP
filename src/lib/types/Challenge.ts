@@ -1,27 +1,32 @@
+import type { LanguageKey } from '$lib/translations';
 import type { Currency } from './Currency';
 import type { Order } from './Order';
 import type { Timestamps } from './Timestamps';
 
-export type Challenge = Timestamps & {
-	_id: string;
+export interface ChallengeTranslatableFields {
 	name: string;
+}
+export type Challenge = Timestamps &
+	ChallengeTranslatableFields & {
+		_id: string;
+		translations?: Partial<Record<LanguageKey, Partial<ChallengeTranslatableFields>>>;
 
-	/* If empty, works on all products */
-	productIds: string[];
+		/* If empty, works on all products */
+		productIds: string[];
 
-	recurring: false | 'monthly';
+		recurring: false | 'monthly';
 
-	progress: number;
+		progress: number;
 
-	beginsAt: Date;
-	endsAt: Date;
-	event?: {
-		type: 'progress';
-		at: Date;
-		order: Order['_id'];
-		amount: number;
-	}[];
-} & (
+		beginsAt: Date;
+		endsAt: Date;
+		event?: {
+			type: 'progress';
+			at: Date;
+			order: Order['_id'];
+			amount: number;
+		}[];
+	} & (
 		| {
 				goal: {
 					amount: number;

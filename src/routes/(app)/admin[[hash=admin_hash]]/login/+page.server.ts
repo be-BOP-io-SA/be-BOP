@@ -59,6 +59,14 @@ export const actions = {
 			throw error(400, 'Password has been pwned');
 		}
 
+		if (user.disabled) {
+			return fail(400, {
+				login,
+				disabledUser:
+					'There was an error with this account, please contact your be-BOP administrator to check your account status'
+			});
+		}
+
 		if (!user.password || !(await bcryptjs.compare(password, user.password))) {
 			return fail(400, { login, incorrect: 'password' });
 		}

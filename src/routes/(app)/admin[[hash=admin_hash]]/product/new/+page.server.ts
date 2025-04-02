@@ -159,6 +159,12 @@ export const actions: Actions = {
 							...(parsed.customPreorderText && { customPreorderText: parsed.customPreorderText }),
 							shipping: parsed.shipping,
 							payWhatYouWant: parsed.payWhatYouWant,
+							...(parsed.payWhatYouWant && {
+								recommendedPWYWAmount: parsePriceAmount(
+									parsed.recommendedPWYWAmount,
+									parsed.priceCurrency
+								)
+							}),
 							...(parsed.hasMaximumPrice &&
 								parsed.maxPriceAmount && {
 									maximumPrice: {
@@ -349,6 +355,12 @@ export const actions: Actions = {
 					preorder: parsed.preorder,
 					shipping: parsed.shipping,
 					payWhatYouWant: parsed.payWhatYouWant,
+					...(parsed.payWhatYouWant && {
+						recommendedPWYWAmount: parsePriceAmount(
+							parsed.recommendedPWYWAmount,
+							parsed.priceCurrency
+						)
+					}),
 					...(parsed.hasMaximumPrice &&
 						parsed.maxPriceAmount && {
 							maximumPrice: {

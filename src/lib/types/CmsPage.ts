@@ -23,4 +23,4 @@ export interface CMSPage extends Timestamps, CMSPageTranslatableFields {
 	translations?: Partial<Record<LanguageKey, Partial<CMSPageTranslatableFields>>>;
 }
 
-export const MAX_CONTENT_LIMIT = 50000;
+export const MAX_CONTENT_LIMIT = 100000;

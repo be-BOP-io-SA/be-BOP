@@ -13,6 +13,8 @@ export interface EventSchedule {
 		link: string;
 	};
 	url?: string;
+	hideFromList?: boolean;
+	calendarColor?: string;
 	unavailabity?: {
 		label: string;
 		isUnavailable: boolean;
@@ -31,6 +33,7 @@ export interface Schedule extends Timestamps, ScheduleTranslatableFields {
 	displayPastEvents: boolean;
 	displayPastEventsAfterFuture: boolean;
 	sortByEventDateDesc: boolean;
+	allowSubscription?: boolean;
 
 	translations?: Partial<Record<LanguageKey, Partial<ScheduleTranslatableFields>>>;
 }

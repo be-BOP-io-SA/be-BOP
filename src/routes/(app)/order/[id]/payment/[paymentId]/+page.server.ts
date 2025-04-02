@@ -17,6 +17,7 @@ export const actions = {
 		if (order.status !== 'pending') {
 			throw error(400, 'Order is not pending');
 		}
+
 		const payment = order.payments.find((payment) => payment._id.equals(params.paymentId));
 
 		if (!payment) {
@@ -46,13 +47,15 @@ export const actions = {
 			.parse({
 				method: formData.get('method')
 			});
+
 		await withTransaction(async (session) => {
-			await addOrderPayment(order, parsed.method, payment.price, {
-				expiresAt: paymentMethodExpiration(parsed.method),
-				session
-			});
 			await onOrderPaymentFailed(order, payment, 'canceled', {
 				preserveOrderStatus: true,
+				session
+			});
+
+			await addOrderPayment(order, parsed.method, payment.currencySnapshot.main.price, {
+				expiresAt: paymentMethodExpiration(parsed.method),
 				session
 			});
 		});

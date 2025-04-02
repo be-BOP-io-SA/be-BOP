@@ -7,6 +7,12 @@ import { set } from 'lodash-es';
 import type { JsonObject } from 'type-fest';
 import { generateId } from '$lib/utils/generateId';
 import { deletePicture } from '$lib/server/picture';
+import { ORIGIN, SMTP_USER } from '$env/static/private';
+import { queueEmail } from '$lib/server/email';
+import { ObjectId } from 'mongodb';
+import { Kind } from 'nostr-tools';
+import { format } from 'date-fns';
+import { runtimeConfig } from '$lib/server/runtime-config';
 
 export const load = async ({ params }) => {
 	const pictures = await collections.pictures
@@ -43,6 +49,7 @@ export const actions = {
 				displayPastEvents: z.boolean({ coerce: true }).default(false),
 				displayPastEventsAfterFuture: z.boolean({ coerce: true }).default(false),
 				sortByEventDateDesc: z.boolean({ coerce: true }).default(false),
+				allowSubscription: z.boolean({ coerce: true }).default(false),
 				events: z.array(
 					z.object({
 						title: z.string().min(1),
@@ -61,6 +68,11 @@ export const actions = {
 							})
 							.optional(),
 						url: z.string().optional(),
+						hideFromList: z.boolean({ coerce: true }).default(false),
+						calendarColor: z
+							.string()
+							.regex(/^#[0-9a-f]{6}$/i)
+							.optional(),
 						unavailabity: z
 							.object({
 								label: z.string(),
@@ -76,6 +88,10 @@ export const actions = {
 			...parsedEvent,
 			slug: parsedEvent.slug || generateId(parsedEvent.title, true)
 		}));
+
+		const oldEventSlugs = new Set(schedule?.events?.map((event) => event.slug) || []);
+		const newEvents = eventWithSlug.filter((event) => !oldEventSlugs.has(event.slug));
+
 		await collections.schedules.updateOne(
 			{
 				_id: schedule._id
@@ -87,11 +103,54 @@ export const actions = {
 					displayPastEvents: parsed.displayPastEvents,
 					displayPastEventsAfterFuture: parsed.displayPastEventsAfterFuture,
 					sortByEventDateDesc: parsed.sortByEventDateDesc,
+					allowSubscription: parsed.allowSubscription,
 					updatedAt: new Date(),
 					events: eventWithSlug
 				}
 			}
 		);
+
+		if (newEvents.length > 0) {
+			const subscribers = await collections.personalInfo
+				.find({ subscribedSchedule: schedule._id })
+				.toArray();
+
+			for (const subscriber of subscribers) {
+				for (const eventSchedule of newEvents) {
+					if (subscriber.email) {
+						await queueEmail(subscriber.email || SMTP_USER, 'schedule.new.event', {
+							websiteLink: ORIGIN,
+							brandName: runtimeConfig.brandName,
+							scheduleName: schedule.name,
+							eventName: eventSchedule.title,
+							eventDate: format(eventSchedule.beginsAt, 'EEEE dd MMM yyyy HH:mm'),
+							eventShortDescription: eventSchedule.shortDescription,
+							eventDescription: eventSchedule.description,
+							eventLocationName: eventSchedule.location?.name,
+							eventLocationLink: eventSchedule.location?.link
+						});
+					}
+					if (subscriber.npub) {
+						const content = `This message was sent to you because you have requested event notifications from ${ORIGIN}.
+						A new event was published by ${runtimeConfig.brandName} on schedule ${schedule.name}.
+						${eventSchedule.title} - ${format(eventSchedule.beginsAt, 'yyyy-MM-dd')}
+						${eventSchedule.shortDescription}
+						${eventSchedule.description}
+						${eventSchedule.location?.name}
+						${eventSchedule.location?.link}`;
+
+						await collections.nostrNotifications.insertOne({
+							_id: new ObjectId(),
+							createdAt: new Date(),
+							kind: Kind.EncryptedDirectMessage,
+							updatedAt: new Date(),
+							content,
+							dest: subscriber.npub
+						});
+					}
+				}
+			}
+		}
 	},
 
 	delete: async function ({ params }) {

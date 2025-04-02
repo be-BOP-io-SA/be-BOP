@@ -9,8 +9,10 @@
 	let displayPastEvents = data.schedule.displayPastEvents;
 	let eventLines = data.schedule.events.length || 1;
 	let eventAvailable = data.schedule.events.map((eve) => ({
-		isUnavailable: eve.unavailabity?.isUnavailable ?? false,
-		label: eve.unavailabity?.label ?? ''
+		isUnavailable: eve.unavailabity?.isUnavailable ?? false
+	}));
+	let eventCalendar = data.schedule.events.map((eve) => ({
+		calendarColor: !!eve.calendarColor
 	}));
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
@@ -92,6 +94,15 @@
 			bind:checked={data.schedule.sortByEventDateDesc}
 		/>
 		sort by event date desc (default:asc)
+	</label>
+	<label class="checkbox-label">
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			name="allowSubscription"
+			bind:checked={data.schedule.allowSubscription}
+		/>
+		Allow user to subscribe
 	</label>
 	{#each [...Array(eventLines).keys()] as i}
 		<h1 class="text-xl font-bold">
@@ -197,6 +208,35 @@
 					value={data.schedule.events[i].url}
 				/>
 			</label>
+			<label class="checkbox-label">
+				<input
+					class="form-checkbox"
+					type="checkbox"
+					name="events[{i}].hideFromList"
+					bind:checked={data.schedule.events[i].hideFromList}
+				/>
+				Hide event from list
+			</label>
+			<label class="checkbox-label">
+				<input
+					class="form-checkbox"
+					type="checkbox"
+					name="events[{i}].calendarHasCustomColor"
+					bind:checked={eventCalendar[i].calendarColor}
+				/>
+				Event has custom color on calendar
+			</label>
+			{#if eventCalendar[i]?.calendarColor}
+				<label class="form-label">
+					Event color on calendar
+					<input
+						type="color"
+						name="events[{i}].calendarColor"
+						class="form-input"
+						value={data.schedule.events[i].calendarColor}
+					/>
+				</label>
+			{/if}
 			<label class="checkbox-label">
 				<input
 					class="form-checkbox"

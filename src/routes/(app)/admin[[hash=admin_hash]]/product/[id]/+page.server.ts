@@ -154,6 +154,12 @@ export const actions: Actions = {
 						preorder: parsed.preorder,
 						...(parsed.customPreorderText && { customPreorderText: parsed.customPreorderText }),
 						payWhatYouWant: parsed.payWhatYouWant,
+						...(parsed.payWhatYouWant && {
+							recommendedPWYWAmount: parsePriceAmount(
+								parsed.recommendedPWYWAmount,
+								parsed.priceCurrency
+							)
+						}),
 						...(parsed.hasMaximumPrice &&
 							parsed.maxPriceAmount && {
 								maximumPrice: {
@@ -241,7 +247,8 @@ export const actions: Actions = {
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
 						...(!hasVariations && { variations: '', variationLabels: '' }),
-						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' })
+						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),
+						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' })
 					}
 				}
 			);

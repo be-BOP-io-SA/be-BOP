@@ -1,3 +1,4 @@
+import { adminPrefix } from '$lib/server/admin';
 import { collections } from '$lib/server/database';
 import { addOrderPayment } from '$lib/server/orders';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
@@ -99,5 +100,23 @@ export const actions = {
 			}
 		);
 		throw redirect(303, `/order/${params.id}/notes`);
+	},
+	cancel: async ({ params, request }) => {
+		const order = await collections.orders.findOneAndUpdate(
+			{
+				_id: params.id
+			},
+			{
+				$set: {
+					status: 'canceled'
+				}
+			}
+		);
+
+		if (!order) {
+			throw error(404, 'Order not found');
+		}
+
+		throw redirect(303, request.headers.get('referer') || `${adminPrefix()}/order`);
 	}
 };

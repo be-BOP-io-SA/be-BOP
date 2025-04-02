@@ -449,7 +449,7 @@
 	"order": {
 		"addPayment": {
 			"amount": "Montant du paiement",
-			"cta": "Envoyer un appel à paiement",
+			"cta": "Envoyer un appel pour le paiement",
 			"currency": "Monnaie de paiement"
 		},
 		"backToOrder": "<< Retour à la commande",
@@ -595,9 +595,14 @@
 	"pos": {
 		"adminInterface": "Interface d'administration",
 		"applyGiftDiscount": "En tant qu'utilisateur de point de vente, j'applique une <0>remise cadeau</0>",
+		"cancelOrderMessage": "Êtes-vous sûr de vouloir annuler toute la commande?",
 		"cta": {
+			"cancelMultiPayOrder": "Annuler la commande",
 			"cancelOrder": "Annuler",
+			"cancelReplacement": "Annuler le remplacement",
 			"markOrderPaid": "Marquer comme payée",
+			"replacePayment": "Remplacer le mode de paiement",
+			"resendPaymentMethod": "Renvoyer le mode de paiement",
 			"updatePaymentInfo": "Mettre à jour les informations de paiement"
 		},
 		"discountJustification": "Justification",
@@ -668,7 +673,13 @@
 	"schedule": {
 		"dateText": "- de {beginTime} à {endTime}",
 		"differentDayText": "- Dés {beginDate} au {endDate}",
+		"exportEventTitle": "Exportation fichier d'événements ",
 		"moreInfo": "Plus d'info",
+		"subscribe": {
+			"formSuccessText": "Vous recevrez de nouvelles notifications d'événements pour",
+			"formText": "Ajoutez votre e-mail ou NPUB pour recevoir des notifications sur de nouveaux événements."
+		},
+		"subscribeCTA": "S'abonner",
 		"uniqueDateText": "- Dés {beginTime}"
 	},
 	"subscription": {

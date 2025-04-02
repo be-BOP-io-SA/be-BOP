@@ -3,6 +3,7 @@
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addDays, format, isSameDay } from 'date-fns';
+	import IcsExport from './IcsExport.svelte';
 
 	export let schedule: Schedule;
 	let className = '';
@@ -74,6 +75,16 @@
 </div>
 
 <div class="flex flex-col gap-4 {className}">
+	{#if schedule.allowSubscription}
+		<div class="flex flex-row">
+			<a
+				href="/schedule/{schedule._id}/subscribe"
+				class="btn btn-gray no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
+			>
+				🔔 {t('schedule.subscribeCTA')}
+			</a>
+		</div>
+	{/if}
 	{#each Object.entries(filteredEvents) as [date, events]}
 		<div class="flex flex-col gap-2">
 			<h2 class="text-xl font-bold">
@@ -87,7 +98,7 @@
 				)}
 			</h2>
 			{#each events as event}
-				<p class="flex flex-row text-sm">
+				<p class="flex flex-row text-sm gap-1">
 					{#if event.unavailabity?.isUnavailable}
 						<span class="font-bold">[{event.unavailabity.label}]&nbsp;</span>
 					{/if}
@@ -132,6 +143,7 @@
 					{#if event.url}
 						<a title={t('schedule.moreInfo')} href={event.url} target="_blank">ℹ️</a>
 					{/if}
+					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 				</p>
 			{/each}
 		</div>
