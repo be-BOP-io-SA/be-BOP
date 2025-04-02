@@ -15,6 +15,7 @@
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
+	import IcsExport from './IcsExport.svelte';
 
 	export let schedule: Schedule;
 	let className = '';
@@ -86,6 +87,12 @@
 	function isEventDay(date: Date) {
 		return scheduleEventByDay[format(date, 'yyyy-MM-dd')];
 	}
+	function hasCustomColorEvents(date: Date) {
+		const key = format(date, 'yyyy-MM-dd');
+		const events = scheduleEventByDay[key] ?? [];
+		const specialEvent = events.filter((event) => event.calendarColor);
+		return specialEvent;
+	}
 
 	function selectDate(date: Date) {
 		selectedDate = new Date(date);
@@ -97,16 +104,26 @@
 	});
 </script>
 
-<div class="max-w-md mx-auto p-4 bg-white shadow-md rounded-lg {className}">
+{#if schedule.allowSubscription}
+	<div class="max-w-md mx-auto flex flex-row {className}">
+		<a
+			href="/schedule/{schedule._id}/subscribe"
+			class="btn btn-gray no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
+		>
+			🔔 {t('schedule.subscribeCTA')}
+		</a>
+	</div>
+{/if}
+<div class="max-w-md mx-auto p-4 eventCalendar eventCalendar-main shadow-md rounded-lg {className}">
 	<div class="flex items-center justify-between mb-4">
-		<button on:click={prevMonth} class="py-2 btn-gray btn rounded-full">&lt;</button>
+		<button on:click={prevMonth} class="py-2 eventCalendar-navCTA btn rounded-full">&lt;</button>
 		<h2 class="text-lg font-semibold">
 			{new Date(currentDate).toLocaleDateString($locale, {
 				month: 'long',
 				year: 'numeric'
 			})}
 		</h2>
-		<button on:click={nextMonth} class="py-2 btn-gray btn rounded-full">&gt;</button>
+		<button on:click={nextMonth} class="py-2 eventCalendar-navCTA btn rounded-full">&gt;</button>
 	</div>
 
 	<div class="grid grid-cols-7 text-center font-semibold">
@@ -120,10 +137,14 @@
 			<button
 				on:click={() => selectDate(day)}
 				class="p-2 m-2 rounded-full
-					{isSameDay(day, new Date()) ? ' bg-blue-500 text-white font-bold' : ''}
-					{isEventDay(day) ? 'bg-roseofsharon-500 text-white font-bold' : ''}
+					{isSameDay(day, new Date()) ? 'eventCalendar-currentDate font-bold' : ''}
+					{isEventDay(day) ? 'eventCalendar-hasEvent font-bold' : ''}
 					{selectedDate && isSameDay(day, selectedDate) ? ' ring-2 ring-black' : ''}
 					{format(day, 'M') !== format(currentDate, 'M') ? ' text-gray-400' : ''}"
+				style="background-color:{!!hasCustomColorEvents(day) &&
+				hasCustomColorEvents(day).length === 1
+					? hasCustomColorEvents(day)[0].calendarColor
+					: ''}"
 			>
 				{format(day, 'd')}
 			</button>
@@ -145,7 +166,7 @@
 				)}
 			</h2>
 			{#each scheduleEventByDay[format(selectedDate, 'yyyy-MM-dd')] as event}
-				<p class="flex flex-row text-sm gap-2">
+				<p class="flex flex-row text-sm gap-1">
 					{#if event.unavailabity?.isUnavailable}
 						<span class="font-bold">[{event.unavailabity.label}]&nbsp;</span>
 					{/if}
@@ -164,6 +185,10 @@
 					{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.differentDayText', {
 							beginDate: event.beginsAt.toLocaleTimeString($locale, {
+								weekday: 'long',
+								day: 'numeric',
+								month: 'long',
+								year: 'numeric',
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
@@ -193,6 +218,7 @@
 					<a title="Provide rss feed" href="/schedule/{schedule._id}/rss.xml" target="_blank">
 						<IconRssFeed />
 					</a>
+					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 				</p>
 			{/each}
 		</div>

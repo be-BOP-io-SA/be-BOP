@@ -1,7 +1,4 @@
 <script lang="ts">
-	import IconDownArrow from '$lib/components/icons/IconDownArrow.svelte';
-	import IconSearch from '$lib/components/icons/IconSearch.svelte';
-	import IconWallet from '$lib/components/icons/IconWallet.svelte';
 	import IconBasket from '$lib/components/icons/IconBasket.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import { onMount } from 'svelte';
@@ -155,10 +152,6 @@
 						</a>
 					{/each}
 				</nav>
-				{#if 0}
-					<div class="border-r-[1px] border-gray-700 h-8 border-solid" />
-					<a href="/admin" class="btn btn-blue font-bold">Connect your wallet</a>
-				{/if}
 				<button
 					class="inline-flex flex-col justify-center {data.notResponsive
 						? 'hidden'
@@ -197,9 +190,7 @@
 					>
 						<IconMenu />
 					</button>
-					{#if 0}
-						<a href="/categories" class="flex gap-2 items-center">Categories <IconDownArrow /></a>
-					{/if}
+
 					{#each data.links.navbar as link}
 						<a
 							href={link.href}
@@ -209,27 +200,8 @@
 						>
 					{/each}
 				</nav>
-				{#if 0}
-					<form action="/search" method="post" class="max-w-[520px] grow relative">
-						<input type="text" name="search" class="form-input pr-8 border-gray-300" />
-						<IconSearch class="absolute right-2 top-0 bottom-0 my-auto" />
-					</form>
-				{/if}
+
 				<div class="flex items-center ml-auto gap-2">
-					{#if 0}
-						<IconWallet />
-						<div class="flex flex-col">
-							<PriceTag gap={'gap-1'} currency="BTC" amount={0.00_220_625} main />
-							<PriceTag
-								gap={'gap-1'}
-								currency="BTC"
-								amount={0.00_220_625}
-								secondary
-								class="ml-auto text-sm"
-							/>
-						</div>
-						<div class="border-r-[1px] mx-1 border-gray-800 h-10 border-solid" />
-					{/if}
 					<div class="flex flex-row relative">
 						<a
 							href="/cart"

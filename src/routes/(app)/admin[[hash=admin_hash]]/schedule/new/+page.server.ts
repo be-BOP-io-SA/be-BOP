@@ -29,6 +29,7 @@ export const actions: Actions = {
 				displayPastEvents: z.boolean({ coerce: true }).default(false),
 				displayPastEventsAfterFuture: z.boolean({ coerce: true }).default(false),
 				sortByEventDateDesc: z.boolean({ coerce: true }).default(false),
+				allowSubscription: z.boolean({ coerce: true }).default(false),
 				events: z.array(
 					z.object({
 						title: z.string().min(1),
@@ -45,7 +46,12 @@ export const actions: Actions = {
 								link: z.string()
 							})
 							.optional(),
-						url: z.string().optional()
+						url: z.string().optional(),
+						hideFromList: z.boolean({ coerce: true }).default(false),
+						calendarColor: z
+							.string()
+							.regex(/^#[0-9a-f]{6}$/i)
+							.optional()
 					})
 				)
 			})
@@ -66,6 +72,7 @@ export const actions: Actions = {
 			displayPastEvents: parsed.displayPastEvents,
 			displayPastEventsAfterFuture: parsed.displayPastEventsAfterFuture,
 			sortByEventDateDesc: parsed.sortByEventDateDesc,
+			allowSubscription: parsed.allowSubscription,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 			events: eventWithSlug

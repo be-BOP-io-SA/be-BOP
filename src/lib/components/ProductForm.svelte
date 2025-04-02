@@ -376,6 +376,34 @@
 			This is a pay-what-you-want product
 		</label>
 		{#if product.payWhatYouWant}
+			<div class="gap-4 flex flex-col md:flex-row">
+				<label class="w-full">
+					Recommended price amount
+					<input
+						class="form-input"
+						type="number"
+						name="recommendedPWYWAmount"
+						placeholder="Price"
+						step="any"
+						value={(product.recommendedPWYWAmount ?? 0)
+							.toLocaleString('en', { maximumFractionDigits: 8 })
+							.replace(/,/g, '')}
+					/>
+				</label>
+				<label class="w-full">
+					Recommended price currency
+					<select
+						name="maxPriceCurrency"
+						class="form-input"
+						bind:value={product.price.currency}
+						disabled
+					>
+						{#each CURRENCIES as currency}
+							<option value={currency}>{currency}</option>
+						{/each}
+					</select>
+				</label>
+			</div>
 			<label class="checkbox-label">
 				<input
 					class="form-checkbox"

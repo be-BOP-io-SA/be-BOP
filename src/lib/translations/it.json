@@ -595,7 +595,9 @@
 	"pos": {
 		"adminInterface": "Interfaccia dell'amministratore",
 		"applyGiftDiscount": "Come utente POS applico uno <0>sconto regalo</0>.",
+		"cancelOrderMessage": "Sei sicuro di voler cnacel l'intero ordine?",
 		"cta": {
+			"cancelMultiPayOrder": "Annullare l'ordine",
 			"cancelOrder": "Annulla",
 			"cancelReplacement": "Annulla la sostituzione",
 			"markOrderPaid": "Marca pagato",
@@ -671,7 +673,13 @@
 	"schedule": {
 		"dateText": "- Da {beginTime} a {endTime}",
 		"differentDayText": "- Da {beginDate} a {endDate}",
+		"exportEventTitle": "File di evento di esportazione",
 		"moreInfo": "Maggiori informazioni",
+		"subscribe": {
+			"formSuccessText": "Riceverai nuove notifiche di eventi per",
+			"formText": "Aggiungi la tua e -mail o NPUB per ricevere notifiche su nuovi eventi."
+		},
+		"subscribeCTA": "Iscriviti",
 		"uniqueDateText": "- Da {beginTime}"
 	},
 	"subscription": {

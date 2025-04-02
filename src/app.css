@@ -47,6 +47,14 @@
 	--tagWidget-color: #000000;
 	--tagWidget-hyperlink-color: #2271b1;
 	--order-creditCard-svg-color: #2271b1;
+	--eventCalendar-main-backgroundColor: #ffffff;
+	--eventCalendar-navCTA-backgroundColor: #8a8a8a;
+	--eventCalendar-hasEvent-backgroundColor: #fa8c25;
+	--eventCalendar-hasEvent-color: #ffffff;
+	--eventCalendar-currentDate-backgroundColor: #3e67ed;
+	--eventCalendar-currentDate-color: #ffffff;
+	--eventCalendar-fontFamily: Outfit;
+	--eventCalendar-color: #000000;
 }
 
 @layer base {
@@ -293,7 +301,6 @@
 	.tagWidget-hyperlink {
 		color: var(--tagWidget-hyperlink-color);
 	}
-
 	.prose {
 		--tw-prose-headings: var(--body-title-color);
 		--tw-prose-bold: inherit;
@@ -302,6 +309,26 @@
 	.order-creditCard-svg {
 		color: var(--order-creditCard-svg-color);
 	}
+	.eventCalendar {
+		font-family: var(--eventCalendar-fontFamily);
+		color: var(--eventCalendar-color);
+	}
+	.eventCalendar-main {
+		background-color: var(--eventCalendar-main-backgroundColor);
+	}
+	.eventCalendar-navCTA {
+		background-color: var(--eventCalendar-navCTA-backgroundColor);
+	}
+	.eventCalendar-hasEvent {
+		background-color: var(--eventCalendar-hasEvent-backgroundColor);
+		color: var(--eventCalendar-hasEvent-color);
+	}
+	.eventCalendar-currentDate {
+		background-color: var(--eventCalendar-currentDate-backgroundColor);
+		color: var(--eventCalendar-currentDate-color);
+
+	}
+
 }
 
 @layer utilities {

@@ -6,6 +6,7 @@
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addMinutes, isSameDay } from 'date-fns';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
+	import IcsExport from './IcsExport.svelte';
 
 	export let pictures: Picture[] | [];
 	export let schedule: Schedule;
@@ -17,11 +18,23 @@
 	const { t, locale } = useI18n();
 </script>
 
+{#if schedule.allowSubscription}
+	<div class="flex flex-row {className}">
+		<a
+			href="/schedule/{schedule._id}/subscribe"
+			class="btn btn-gray no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
+		>
+			🔔 {t('schedule.subscribeCTA')}
+		</a>
+	</div>
+{/if}
 {#each schedule.events as event, i}
 	<div
 		class="flex {i % 2 === 1
 			? 'flex-row-reverse'
-			: 'flex-row'} gap-4 tagWidget tagWidget-main w-full items-center {className}"
+			: 'flex-row'} gap-4 tagWidget tagWidget-main w-full items-center {className} {event.hideFromList
+			? 'hidden'
+			: ''}"
 	>
 		<div class="grow">
 			<PictureComponent
@@ -113,6 +126,7 @@
 				>
 					<IconRssFeed />
 				</a>
+				<IcsExport {event} pastEventDelay={schedule.pastEventDelay} class="mt-4" />
 			</div>
 		</div>
 	</div>
