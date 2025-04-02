@@ -96,6 +96,16 @@
 	});
 </script>
 
+{#if schedule.allowSubscription}
+	<div class="max-w-md mx-auto flex flex-row {className}">
+		<a
+			href="/schedule/{schedule._id}/subscribe"
+			class="btn btn-gray no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
+		>
+			🔔 {t('schedule.subscribeCTA')}
+		</a>
+	</div>
+{/if}
 <div class="max-w-md mx-auto p-4 eventCalendar eventCalendar-main shadow-md rounded-lg {className}">
 	<div class="flex items-center justify-between mb-4">
 		<button on:click={prevMonth} class="py-2 eventCalendar-navCTA btn rounded-full">&lt;</button>

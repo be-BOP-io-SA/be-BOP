@@ -16,8 +16,18 @@
 	const { t, locale } = useI18n();
 </script>
 
-{#each schedule.events as event}
-	<div class="max-w-md mx-auto space-y-6 {className}">
+<div class="max-w-md mx-auto space-y-6 {className}">
+	{#if schedule.allowSubscription}
+		<div class="flex flex-row">
+			<a
+				href="/schedule/{schedule._id}/subscribe"
+				class="btn btn-gray no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
+			>
+				🔔 {t('schedule.subscribeCTA')}
+			</a>
+		</div>
+	{/if}
+	{#each schedule.events as event}
 		<div class="tagWidget tagWidget-main rounded-lg gap-4">
 			<div class="flex items-center justify-center rounded-md">
 				<PictureComponent
@@ -91,5 +101,5 @@
 				{/if}
 			</div>
 		</div>
-	</div>
-{/each}
+	{/each}
+</div>

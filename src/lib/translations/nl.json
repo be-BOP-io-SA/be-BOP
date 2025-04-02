@@ -674,6 +674,11 @@
 		"dateText": "- Van {beginTime} tot {endTime}",
 		"differentDayText": "- Van {beginDate} naar {endDate}",
 		"moreInfo": "Meer info",
+		"subscribe": {
+			"formSuccessText": "U ontvangt nieuwe evenementenmeldingen voor",
+			"formText": "Voeg uw e -mail of NPUB toe om meldingen te ontvangen over nieuwe evenementen."
+		},
+		"subscribeCTA": "Abonneren",
 		"uniqueDateText": "- van {beginTime}"
 	},
 	"subscription": {

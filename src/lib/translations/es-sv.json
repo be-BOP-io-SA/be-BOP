@@ -674,6 +674,11 @@
 		"dateText": " - De {beginTime} a {endTime}",
 		"differentDayText": "{beginDate} a {endDate}",
 		"moreInfo": "Más información",
+		"subscribe": {
+			"formSuccessText": "Recibirá nuevas notificaciones de eventos para",
+			"formText": "Agregue su correo electrónico o NPUB para recibir notificaciones sobre nuevos eventos."
+		},
+		"subscribeCTA": "Suscribir",
 		"uniqueDateText": "- De {beginTime}"
 	},
 	"subscription": {
