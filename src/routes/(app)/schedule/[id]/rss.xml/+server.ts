@@ -25,7 +25,7 @@ export const GET = async ({ params }) => {
 		rssFeed += `  <title>${event.title.replaceAll(/</g, '&lt;')}</title>\n`;
 		rssFeed += `<link>${ORIGIN}/schedule/${schedule._id.replaceAll(/</g, '&lt;')}</link>\n`;
 		rssFeed += `  <description>${
-			(event.shortDescription ?? 'description coming soon...').replaceAll(/</g, '&lt;') || ''
+			(event.shortDescription || 'description coming soon...').replaceAll(/</g, '&lt;') || ''
 		}</description>\n`;
 		rssFeed += `  <pubDate>${format(
 			addMinutes(schedule.updatedAt, index),
