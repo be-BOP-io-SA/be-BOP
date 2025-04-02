@@ -299,7 +299,7 @@
 					name="alias"
 					placeholder="alias"
 					step="any"
-					value={duplicateFromId ? '' : product.alias?.[1] ?? ''}
+					value={duplicateFromId ? '' : (product.alias?.[1] ?? '')}
 				/>
 			</label>
 		</div>
@@ -385,8 +385,6 @@
 						name="recommendedPWYWAmount"
 						placeholder="Price"
 						step="any"
-						min={product.price.amount}
-						max={product.maximumPrice?.amount ?? Infinity}
 						value={(product.recommendedPWYWAmount ?? 0)
 							.toLocaleString('en', { maximumFractionDigits: 8 })
 							.replace(/,/g, '')}
@@ -586,7 +584,7 @@
 											variationLabelsNames[i] +
 												(isNumber(variationLabelsNames[i]) ? '-' : '') +
 												variationLabelsValues[i] || ''
-									  ).toLowerCase()
+										).toLowerCase()
 									: (variationLabelsValues[i] || '').toLowerCase()}]"
 								class="form-input"
 								bind:value={variationLabelsValues[i]}
@@ -629,7 +627,7 @@
 											variationLabelsNames[i] +
 												(isNumber(variationLabelsNames[i]) ? '-' : '') +
 												variationLabelsValues[i] || ''
-									  ).toLowerCase()
+										).toLowerCase()
 									: (variationLabelsValues[i] || '').toLowerCase()}
 							/>
 						{/if}

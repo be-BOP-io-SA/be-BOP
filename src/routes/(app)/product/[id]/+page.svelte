@@ -50,7 +50,7 @@
 	const PWYWMaximum = data.product.maximumPrice
 		? toCurrency(PWYWCurrency, data.product.maximumPrice.amount, data.product.maximumPrice.currency)
 		: Infinity;
-	let customAmount = PWYWRecommended ?? PWYWMinimum;
+	let customAmount = PWYWRecommended || PWYWMinimum;
 
 	$: currentPicture =
 		data.pictures.find((picture) => picture._id === $page.url.searchParams.get('picture')) ??
