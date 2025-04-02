@@ -12,10 +12,11 @@ export const GET = async ({ params }) => {
 
 	let rssFeed = `<?xml version="1.0" encoding="UTF-8" ?>\n<rss version="2.0">\n<channel>\n`;
 	rssFeed += `<title>${schedule.name.replaceAll(/</g, '&lt;')}</title>\n`;
-	rssFeed += `<link>${ORIGIN}/schedule/${schedule._id.replaceAll(/</g, '&lt;')}</link>\n`;
+	rssFeed += `<link>${ORIGIN}/schedule/${schedule._id.replaceAll(/</g, '&lt;')}/rss.xml</link>\n`;
 	rssFeed += `<description>List of events</description>\n`;
 	rssFeed += `<lastBuildDate>${new Date().toUTCString()}</lastBuildDate>\n`;
 	rssFeed += `<language>fr</language>\n`;
+	rssFeed += `<atom:link href="${ORIGIN}/schedule/${schedule._id.replaceAll(/</g, '&lt;')}/rss.xml" rel="self" type="application/rss+xml" xmlns:atom="http://www.w3.org/2005/Atom"/>\n`;
 
 	schedule.events.forEach((event) => {
 		rssFeed += `<item>\n`;
@@ -28,7 +29,7 @@ export const GET = async ({ params }) => {
 			schedule.updatedAt,
 			"EEE, dd MMM yyyy HH:mm:ss 'GMT'"
 		)}</pubDate>\n`;
-		rssFeed += `<guid>${event.slug}</guid>\n`;
+		rssFeed += `<guid isPermaLink="false">${event.slug}</guid>\n`;
 		rssFeed += `</item>\n`;
 	});
 
