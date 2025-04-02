@@ -27,35 +27,28 @@
 	let days: Date[] = [];
 	let weekDays: string[] = [];
 
-	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
-		(acc, event) => {
-			const startDate = new Date(event.beginsAt);
-			const endDate = event.endsAt ? new Date(event.endsAt) : startDate;
+	let scheduleEventByDay: Record<string, EventSchedule[]> = {};
+	for (const event of schedule.events) {
+		const startDate = new Date(event.beginsAt);
+		const endDate = event.endsAt ? new Date(event.endsAt) : startDate;
 
-			if (isNaN(startDate.getTime())) {
-				return acc;
-			}
-			if (isNaN(endDate.getTime())) {
-				return acc;
-			}
+		if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+			continue;
+		}
 
-			let currentDate = new Date(startDate);
-			while (currentDate <= endDate) {
-				const dateKey = format(currentDate, 'yyyy-MM-dd');
+		let currentDate = new Date(startDate);
+		while (currentDate <= endDate) {
+			const dateKey = format(currentDate, 'yyyy-MM-dd');
 
-				if (!acc[dateKey]) {
-					acc[dateKey] = [];
-				}
-
-				acc[dateKey].push(event);
-
-				currentDate = addDays(currentDate, 1);
+			if (!scheduleEventByDay[dateKey]) {
+				scheduleEventByDay[dateKey] = [];
 			}
 
-			return acc;
-		},
-		{} as Record<string, EventSchedule[]>
-	);
+			scheduleEventByDay[dateKey].push(event);
+
+			currentDate = addDays(currentDate, 1);
+		}
+	}
 
 	function generateWeekDays() {
 		const start = startOfWeek(new Date(), { weekStartsOn: 1 });
