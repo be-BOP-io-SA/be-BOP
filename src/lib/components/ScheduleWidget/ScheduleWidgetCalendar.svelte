@@ -14,6 +14,8 @@
 	import type { EventSchedule, Schedule } from '$lib/types/Schedule';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
+	import IconRssFeed from '../icons/IconRssFeed.svelte';
+	import IcsExport from './IcsExport.svelte';
 
 	export let schedule: Schedule;
 	let className = '';
@@ -26,35 +28,28 @@
 	let days: Date[] = [];
 	let weekDays: string[] = [];
 
-	let scheduleEventByDay: Record<string, EventSchedule[]> = schedule.events.reduce(
-		(acc, event) => {
-			const startDate = new Date(event.beginsAt);
-			const endDate = event.endsAt ? new Date(event.endsAt) : startDate;
+	let scheduleEventByDay: Record<string, EventSchedule[]> = {};
+	for (const event of schedule.events) {
+		const startDate = new Date(event.beginsAt);
+		const endDate = event.endsAt ? new Date(event.endsAt) : startDate;
 
-			if (isNaN(startDate.getTime())) {
-				return acc;
-			}
-			if (isNaN(endDate.getTime())) {
-				return acc;
-			}
+		if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+			continue;
+		}
 
-			let currentDate = new Date(startDate);
-			while (currentDate <= endDate) {
-				const dateKey = format(currentDate, 'yyyy-MM-dd');
+		let currentDate = new Date(startDate);
+		while (currentDate <= endDate) {
+			const dateKey = format(currentDate, 'yyyy-MM-dd');
 
-				if (!acc[dateKey]) {
-					acc[dateKey] = [];
-				}
-
-				acc[dateKey].push(event);
-
-				currentDate = addDays(currentDate, 1);
+			if (!scheduleEventByDay[dateKey]) {
+				scheduleEventByDay[dateKey] = [];
 			}
 
-			return acc;
-		},
-		{} as Record<string, EventSchedule[]>
-	);
+			scheduleEventByDay[dateKey].push(event);
+
+			currentDate = addDays(currentDate, 1);
+		}
+	}
 
 	function generateWeekDays() {
 		const start = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -85,6 +80,12 @@
 	function isEventDay(date: Date) {
 		return scheduleEventByDay[format(date, 'yyyy-MM-dd')];
 	}
+	function hasCustomColorEvents(date: Date) {
+		const key = format(date, 'yyyy-MM-dd');
+		const events = scheduleEventByDay[key] ?? [];
+		const specialEvent = events.filter((event) => event.calendarColor);
+		return specialEvent;
+	}
 
 	function selectDate(date: Date) {
 		selectedDate = new Date(date);
@@ -96,6 +97,16 @@
 	});
 </script>
 
+{#if schedule.allowSubscription}
+	<div class="max-w-md mx-auto flex flex-row {className}">
+		<a
+			href="/schedule/{schedule._id}/subscribe"
+			class="btn btn-gray no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
+		>
+			🔔 {t('schedule.subscribeCTA')}
+		</a>
+	</div>
+{/if}
 <div class="max-w-md mx-auto p-4 eventCalendar eventCalendar-main shadow-md rounded-lg {className}">
 	<div class="flex items-center justify-between mb-4">
 		<button on:click={prevMonth} class="py-2 eventCalendar-navCTA btn rounded-full">&lt;</button>
@@ -122,7 +133,11 @@
 					{isSameDay(day, new Date()) ? 'eventCalendar-currentDate font-bold' : ''}
 					{isEventDay(day) ? 'eventCalendar-hasEvent font-bold' : ''}
 					{selectedDate && isSameDay(day, selectedDate) ? ' ring-2 ring-black' : ''}
-					{format(day, 'M') !== format(currentDate, 'M') ? ' text-gray-400 dark:text-gray-800' : ''}"
+					{format(day, 'M') !== format(currentDate, 'M') ? ' text-gray-400' : ''}"
+				style="background-color:{!!hasCustomColorEvents(day) &&
+				hasCustomColorEvents(day).length === 1
+					? hasCustomColorEvents(day)[0].calendarColor
+					: ''}"
 			>
 				{format(day, 'd')}
 			</button>
@@ -144,7 +159,7 @@
 				)}
 			</h2>
 			{#each scheduleEventByDay[format(selectedDate, 'yyyy-MM-dd')] as event}
-				<p class="flex flex-row text-sm gap-2">
+				<p class="flex flex-row text-sm gap-1">
 					{#if event.unavailabity?.isUnavailable}
 						<span class="font-bold">[{event.unavailabity.label}]&nbsp;</span>
 					{/if}
@@ -193,6 +208,10 @@
 					{#if event.url}
 						<a title={t('schedule.moreInfo')} href={event.url} target="_blank">ℹ️</a>
 					{/if}
+					<a title="Provide rss feed" href="/schedule/{schedule._id}/rss.xml" target="_blank">
+						<IconRssFeed />
+					</a>
+					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
 				</p>
 			{/each}
 		</div>

@@ -6,6 +6,7 @@
 	let slug: string;
 	let pastEventDelay = 60;
 	let displayPastEvents = false;
+	let calendarHasCustomColor = false;
 	let eventLines = 1;
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
@@ -67,6 +68,10 @@
 	<label class="checkbox-label">
 		<input class="form-checkbox" type="checkbox" name="sortByEventDateDesc" />
 		sort by event date desc (default:asc)
+	</label>
+	<label class="checkbox-label">
+		<input class="form-checkbox" type="checkbox" name="allowSubscription" />
+		Allow user to subscribe
 	</label>
 	{#each [...Array(eventLines).keys()] as i}
 		<h1 class="text-xl font-bold">Event #{i + 1}</h1>
@@ -131,6 +136,25 @@
 			Event url
 			<input type="text" name="events[{i}].url" class="form-input" />
 		</label>
+		<label class="checkbox-label">
+			<input class="form-checkbox" type="checkbox" name="events[{i}].hideFromList" />
+			Hide event from list
+		</label>
+		<label class="checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				name="events[{i}].calendarHasCustomColor"
+				bind:checked={calendarHasCustomColor}
+			/>
+			Event has custom color on calendar
+		</label>
+		{#if calendarHasCustomColor}
+			<label class="form-label">
+				Event color on calendar
+				<input type="color" name="events[{i}].calendarColor" class="form-input" />
+			</label>
+		{/if}
 	{/each}
 	<button class="btn btn-gray self-start" on:click={() => (eventLines += 1)} type="button"
 		>Add another event
