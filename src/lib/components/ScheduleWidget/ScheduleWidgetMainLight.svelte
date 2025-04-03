@@ -7,12 +7,12 @@
 	import { addMinutes, isSameDay } from 'date-fns';
 	import IcsExport from './IcsExport.svelte';
 
-	export let pictures: Picture[] | [];
+	export let pictures: Picture[] = [];
 	export let schedule: Schedule;
 	let className = '';
 	export { className as class };
 	$: pictureByEventSlug = Object.fromEntries(
-		(pictures ?? []).map((picture) => [picture.schedule?.eventSlug, picture])
+		pictures.map((picture) => [picture.schedule?.eventSlug, picture])
 	);
 	const { t, locale } = useI18n();
 </script>
@@ -98,7 +98,7 @@
 						<span class="font-bold">[{event.unavailabity.label}]</span>
 					{/if}
 				</p>
-				<div class="flex flex-row">
+				<div class="flex flex-row gap-4">
 					{#if event.url}
 						<a
 							href={event.url}

@@ -7,12 +7,12 @@
 	import { addMinutes, isSameDay } from 'date-fns';
 	import IcsExport from './IcsExport.svelte';
 
-	export let pictures: Picture[] | [];
+	export let pictures: Picture[] = [];
 	export let schedule: Schedule;
 	let className = '';
 	export { className as class };
 	$: pictureByEventSlug = Object.fromEntries(
-		(pictures ?? []).map((picture) => [picture.schedule?.eventSlug, picture])
+		pictures.map((picture) => [picture.schedule?.eventSlug, picture])
 	);
 	const { t, locale } = useI18n();
 </script>
