@@ -9,7 +9,7 @@
 			const res = await fetch(`/docs/${lang}`);
 			files = await res.json();
 		} catch (error) {
-			console.error('Erreur lors du chargement des fichiers :', error);
+			console.error('Error while loading file :', error);
 		}
 	}
 	onMount(async () => {
