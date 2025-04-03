@@ -100,6 +100,9 @@
 	let externalResourcesLines = product.externalResources?.length
 		? product.externalResources?.length
 		: 3;
+	let displayRawHTMLBefore = false;
+	let displayRawHTMLAfter = false;
+
 	if (product._id && isNew) {
 		product.name = product.name + ' (duplicate)';
 		product._id = generateId(product.name, false);
@@ -1112,7 +1115,17 @@
 						>[CurrencyCalculator=currency-calculator]</code
 					>
 				</p>
+				<label class="checkbox-label mb-2">
+					<input
+						type="checkbox"
+						name="displayRawHTML"
+						bind:checked={displayRawHTMLBefore}
+						class="form-checkbox"
+					/>
+					Display raw HTML
+				</label>
 				<textarea
+					style="display:{displayRawHTMLBefore ? 'block' : 'none'};"
 					name="contentBefore"
 					cols="30"
 					rows="10"
@@ -1143,7 +1156,17 @@
 						>[CurrencyCalculator=currency-calculator]</code
 					>
 				</p>
+				<label class="checkbox-label mb-2">
+					<input
+						type="checkbox"
+						name="displayRawHTML"
+						bind:checked={displayRawHTMLAfter}
+						class="form-checkbox"
+					/>
+					Display raw HTML
+				</label>
 				<textarea
+					style="display:{displayRawHTMLBefore ? 'block' : 'none'};"
 					name="contentAfter"
 					cols="30"
 					rows="10"
