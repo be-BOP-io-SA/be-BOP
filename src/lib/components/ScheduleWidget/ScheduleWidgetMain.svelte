@@ -8,7 +8,7 @@
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
 
-	export let pictures: Picture[] | [];
+	export let pictures: Picture[] = [];
 	export let schedule: Schedule;
 	let className = '';
 	export { className as class };
