@@ -1,20 +1,7 @@
 <script lang="ts">
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { onMount } from 'svelte';
-	$: files = [];
+	export let data;
 	$: lang = 'en';
-
-	async function fetchFiles() {
-		try {
-			const res = await fetch(`/docs/${lang}`);
-			files = await res.json();
-		} catch (error) {
-			console.error('Error while loading file :', error);
-		}
-	}
-	onMount(async () => {
-		fetchFiles();
-	});
 </script>
 
 <div class="flex flex-col gap-4 mx-auto">
@@ -89,27 +76,18 @@
 	<h1 class="text-xl">Documentation</h1>
 
 	<p>Select your language :</p>
-	<div class="flex flex-row justify-evenly">
-		<button
-			on:click={() => {
-				lang = 'en';
-				fetchFiles();
-			}}>🇬🇧</button
-		>
-		<button
-			on:click={() => {
-				lang = 'fr';
-				fetchFiles();
-			}}>🇫🇷</button
-		>
+	<form class="flex flex-row justify-evenly" method="GET">
+		<input type="hidden" bind:value={lang} name="lang" />
+		<button on:click={() => (lang = 'en')}>🇬🇧</button>
+		<button on:click={() => (lang = 'fr')}>🇫🇷</button>
 		<span class="opacity-50">🇮🇹</span>
 		<span class="opacity-50">🇸🇻</span>
 		<span class="opacity-50">🇳🇱</span>
-	</div>
+	</form>
 
 	<p>Select your topic :</p>
 	<ul>
-		{#each files as file}
+		{#each data.files as file}
 			<li><a href="/docs/{lang}/{file}" class="body-hyperlink" target="_blank">{file}</a></li>
 		{/each}
 	</ul>
