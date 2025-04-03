@@ -272,16 +272,17 @@
 		</label>
 		{#if displayRawHTML}
 			Raw HTML
-			<textarea
-				name="content"
-				cols="30"
-				rows="10"
-				maxlength={MAX_CONTENT_LIMIT}
-				placeholder="HTML content"
-				class="form-input block w-full"
-				bind:value={pageContent}
-			/>
 		{/if}
+		<textarea
+			style="display:{displayRawHTML ? 'block' : 'none'};"
+			name="content"
+			cols="30"
+			rows="10"
+			maxlength={MAX_CONTENT_LIMIT}
+			placeholder="HTML content"
+			class="form-input block w-full"
+			bind:value={pageContent}
+		/>
 	</label>
 
 	<label class="checkbox-label">

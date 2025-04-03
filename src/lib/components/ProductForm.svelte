@@ -1124,17 +1124,16 @@
 					/>
 					Display raw HTML
 				</label>
-				{#if displayRawHTMLBefore}
-					<textarea
-						name="contentBefore"
-						cols="30"
-						rows="10"
-						maxlength={MAX_CONTENT_LIMIT}
-						placeholder="HTML content"
-						class="form-input block w-full"
-						bind:value={product.contentBefore}
-					/>
-				{/if}
+				<textarea
+					style="display:{displayRawHTMLBefore ? 'block' : 'none'};"
+					name="contentBefore"
+					cols="30"
+					rows="10"
+					maxlength={MAX_CONTENT_LIMIT}
+					placeholder="HTML content"
+					class="form-input block w-full"
+					bind:value={product.contentBefore}
+				/>
 			</label>
 			<label class="block w-full mt-4">
 				Add CMS code and widgets after product page core
@@ -1166,17 +1165,16 @@
 					/>
 					Display raw HTML
 				</label>
-				{#if displayRawHTMLAfter}
-					<textarea
-						name="contentAfter"
-						cols="30"
-						rows="10"
-						maxlength={MAX_CONTENT_LIMIT}
-						placeholder="HTML content"
-						class="form-input block w-full"
-						bind:value={product.contentAfter}
-					/>
-				{/if}
+				<textarea
+					style="display:{displayRawHTMLBefore ? 'block' : 'none'};"
+					name="contentAfter"
+					cols="30"
+					rows="10"
+					maxlength={MAX_CONTENT_LIMIT}
+					placeholder="HTML content"
+					class="form-input block w-full"
+					bind:value={product.contentAfter}
+				/>
 			</label>
 		{/if}
 
