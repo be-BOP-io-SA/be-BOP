@@ -100,6 +100,9 @@
 	let externalResourcesLines = product.externalResources?.length
 		? product.externalResources?.length
 		: 3;
+	let displayRawHTMLBefore = false;
+	let displayRawHTMLAfter = false;
+
 	if (product._id && isNew) {
 		product.name = product.name + ' (duplicate)';
 		product._id = generateId(product.name, false);
@@ -1112,15 +1115,26 @@
 						>[CurrencyCalculator=currency-calculator]</code
 					>
 				</p>
-				<textarea
-					name="contentBefore"
-					cols="30"
-					rows="10"
-					maxlength={MAX_CONTENT_LIMIT}
-					placeholder="HTML content"
-					class="form-input block w-full"
-					bind:value={product.contentBefore}
-				/>
+				<label class="checkbox-label mb-2">
+					<input
+						type="checkbox"
+						name="displayRawHTML"
+						bind:checked={displayRawHTMLBefore}
+						class="form-checkbox"
+					/>
+					Display raw HTML
+				</label>
+				{#if displayRawHTMLBefore}
+					<textarea
+						name="contentBefore"
+						cols="30"
+						rows="10"
+						maxlength={MAX_CONTENT_LIMIT}
+						placeholder="HTML content"
+						class="form-input block w-full"
+						bind:value={product.contentBefore}
+					/>
+				{/if}
 			</label>
 			<label class="block w-full mt-4">
 				Add CMS code and widgets after product page core
@@ -1143,15 +1157,26 @@
 						>[CurrencyCalculator=currency-calculator]</code
 					>
 				</p>
-				<textarea
-					name="contentAfter"
-					cols="30"
-					rows="10"
-					maxlength={MAX_CONTENT_LIMIT}
-					placeholder="HTML content"
-					class="form-input block w-full"
-					bind:value={product.contentAfter}
-				/>
+				<label class="checkbox-label mb-2">
+					<input
+						type="checkbox"
+						name="displayRawHTML"
+						bind:checked={displayRawHTMLAfter}
+						class="form-checkbox"
+					/>
+					Display raw HTML
+				</label>
+				{#if displayRawHTMLAfter}
+					<textarea
+						name="contentAfter"
+						cols="30"
+						rows="10"
+						maxlength={MAX_CONTENT_LIMIT}
+						placeholder="HTML content"
+						class="form-input block w-full"
+						bind:value={product.contentAfter}
+					/>
+				{/if}
 			</label>
 		{/if}
 

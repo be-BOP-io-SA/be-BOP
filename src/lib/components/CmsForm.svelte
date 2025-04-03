@@ -40,6 +40,7 @@
 	let employeeContent = cmsPage?.employeeContent || '';
 	let slugElement: HTMLInputElement;
 	let formElement: HTMLFormElement;
+	let displayRawHTML = false;
 
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this CMS page?')) {
@@ -260,18 +261,27 @@
 				<code class="font-mono">[Gallery=slug?display=var-1]</code>
 			</li>
 		</ul>
-
-		Raw HTML
-
-		<textarea
-			name="content"
-			cols="30"
-			rows="10"
-			maxlength={MAX_CONTENT_LIMIT}
-			placeholder="HTML content"
-			class="form-input block w-full"
-			bind:value={pageContent}
-		/>
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="displayRawHTML"
+				bind:checked={displayRawHTML}
+				class="form-checkbox"
+			/>
+			Display raw HTML
+		</label>
+		{#if displayRawHTML}
+			Raw HTML
+			<textarea
+				name="content"
+				cols="30"
+				rows="10"
+				maxlength={MAX_CONTENT_LIMIT}
+				placeholder="HTML content"
+				class="form-input block w-full"
+				bind:value={pageContent}
+			/>
+		{/if}
 	</label>
 
 	<label class="checkbox-label">
