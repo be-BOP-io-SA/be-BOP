@@ -1,13 +1,24 @@
-<script>
+<script lang="ts">
 	import { onMount } from 'svelte';
 	let version = '';
+	$: files = [];
+	$: lang = 'en';
 
+	async function fetchFiles() {
+		try {
+			const res = await fetch(`/docs/${lang}`);
+			files = await res.json();
+		} catch (error) {
+			console.error('Erreur lors du chargement des fichiers :', error);
+		}
+	}
 	onMount(async () => {
 		try {
 			const res = await fetch('/.well-known/version.txt');
 			version = await res.text();
+			fetchFiles();
 		} catch (error) {
-			console.error('Erreur de récupération de la version:', error);
+			console.error('Error while fetching version:', error);
 		}
 	});
 </script>
@@ -85,43 +96,27 @@
 
 	<p>Select your language :</p>
 	<div class="flex flex-row justify-evenly">
-		<span>🇬🇧</span>
-		<span>🇫🇷</span>
-		<span>🇮🇹</span>
-		<span>🇪🇸</span>
-		<span>🇳🇱</span>
+		<button
+			on:click={() => {
+				lang = 'en';
+				fetchFiles();
+			}}>🇬🇧</button
+		>
+		<button
+			on:click={() => {
+				lang = 'fr';
+				fetchFiles();
+			}}>🇫🇷</button
+		>
+		<span class="opacity-50">🇮🇹</span>
+		<span class="opacity-50">🇸🇻</span>
+		<span class="opacity-50">🇳🇱</span>
 	</div>
 
 	<p>Select your topic :</p>
-	<ul class="doc-list">
-		<li>00 - initialize beBOP.md</li>
-		<li>FAQ.md</li>
-		<li>VAT-configuration.md</li>
-		<li>admin-reporting.md</li>
-		<li>age-restriction.md</li>
-		<li>back-office-access.md</li>
-		<li>bebop-manifesto.md</li>
-		<li>bulk-picture-name.md</li>
-		<li>challenge-widget.md</li>
-		<li>configuration-bitcoin-nodeless.md</li>
-		<li>countdown-widget.md</li>
-		<li>customise-cart-checkout-order-with-CMS.md</li>
-		<li>delivery-management.md</li>
-		<li>downloadable-files.md</li>
-		<li>form-widget.md</li>
-		<li>gallery-widget.md</li>
-		<li>language-configuration.md</li>
-		<li>layout-design.md</li>
-		<li>leaderboard-widget.md</li>
-		<li>mobile-display.md</li>
-		<li>nostr-configuration.md</li>
-		<li>paypal-configuration.md</li>
-		<li>phoenixd-configuration.md</li>
-		<li>physical-shop.md</li>
-		<li>picture-option.md</li>
-		<li>point-of-sale-options.md</li>
-		<li>pos-touch-screen.md</li>
-		<li>price-product-bulk-change.md</li>
-		<li>product-variation.md</li>
+	<ul>
+		{#each files as file}
+			<li><a href="/docs/{lang}/{file}" class="body-hyperlink" target="_blank">{file}</a></li>
+		{/each}
 	</ul>
 </div>
