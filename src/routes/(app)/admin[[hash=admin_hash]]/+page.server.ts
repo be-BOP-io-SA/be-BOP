@@ -15,7 +15,10 @@ export async function load({ url, locals }) {
 	}
 
 	const querySchema = z.object({
-		lang: z.string().default('en')
+		lang: z
+			.string()
+			.regex(/^[a-z]{2}(-[a-z]{2})?$/i, 'Invalid language format')
+			.default('en')
 	});
 
 	const searchParams = Object.fromEntries(url.searchParams.entries());

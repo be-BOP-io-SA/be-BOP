@@ -1,15 +1,9 @@
 <script lang="ts">
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
 	export let data;
-
 	$: lang = new URL($page.url).searchParams.get('lang') || 'en';
-
-	function changeLanguage(lang: string) {
-		goto(`?lang=${lang}`);
-	}
 </script>
 
 <div class="flex flex-col gap-4 mx-auto">
@@ -84,12 +78,12 @@
 	<h1 class="text-xl">Documentation</h1>
 
 	<p>Select your language :</p>
-	<form class="flex flex-row justify-evenly">
-		<button type="button" on:click={() => changeLanguage('en')}>🇬🇧</button>
-		<button type="button" on:click={() => changeLanguage('fr')}>🇫🇷</button>
-		<button type="button" on:click={() => changeLanguage('it')} class="opacity-50">🇮🇹</button>
-		<button type="button" on:click={() => changeLanguage('es-sv')} class="opacity-50"> 🇸🇻</button>
-		<button type="button" on:click={() => changeLanguage('nl')} class="opacity-50">🇳🇱</button>
+	<form class="flex flex-row justify-evenly" method="GET">
+		<button formaction="?lang=en">🇬🇧</button>
+		<button formaction="?lang=fr">🇫🇷</button>
+		<button formaction="?lang=it" disabled>🇮🇹</button>
+		<button formaction="?lang=es-sv" disabled> 🇸🇻</button>
+		<button formaction="?lang=nl" disabled>🇳🇱</button>
 	</form>
 
 	<p>Select your topic :</p>
