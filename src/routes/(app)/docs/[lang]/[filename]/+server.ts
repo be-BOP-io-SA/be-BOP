@@ -1,3 +1,4 @@
+import { error } from '@sveltejs/kit';
 import fs from 'fs';
 import path from 'path';
 
@@ -6,7 +7,7 @@ export async function GET({ params }) {
 	const filePath = path.resolve('docs', lang, filename);
 
 	if (!fs.existsSync(filePath)) {
-		return new Response(JSON.stringify({ error: 'File not found' }), { status: 404 });
+		throw error(404, 'File not found');
 	}
 
 	const content = fs.readFileSync(filePath, 'utf-8');

@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { PUBLIC_VERSION } from '$env/static/public';
 	import { onMount } from 'svelte';
-	let version = '';
 	$: files = [];
 	$: lang = 'en';
 
@@ -13,13 +13,7 @@
 		}
 	}
 	onMount(async () => {
-		try {
-			const res = await fetch('/.well-known/version.txt');
-			version = await res.text();
-			fetchFiles();
-		} catch (error) {
-			console.error('Error while fetching version:', error);
-		}
+		fetchFiles();
 	});
 </script>
 
@@ -44,11 +38,11 @@
 	<h1 class="text-xl">Version check</h1>
 	<p>
 		You're currently using this version of be-BOP :<br />
-		<code class="font-mono">{version}</code>
+		<code class="font-mono">{PUBLIC_VERSION}</code>
 	</p>
 	<p>
 		The last version on official repo is : <br />
-		<code class="font-mono">{version}</code>
+		<code class="font-mono">{PUBLIC_VERSION}</code>
 	</p>
 
 	<p class="check">✅ Your be-BOP is from an official build</p>
