@@ -272,7 +272,7 @@
 		<textarea
 			name="welcomMessage"
 			cols="30"
-			rows="2"
+			rows="8"
 			placeholder="Welcome message to employees"
 			maxlength="4096"
 			class="form-input block w-full"

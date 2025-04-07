@@ -15,7 +15,7 @@
 
 	<h1 class="text-xl">A word from your administrator :</h1>
 	<p>
-		<em>{data.adminWelcomMessage}</em>
+		<em class="whitespace-pre-line">{data.adminWelcomMessage}</em>
 	</p>
 
 	<h1 class="text-xl">be-BOP version & updates</h1>
