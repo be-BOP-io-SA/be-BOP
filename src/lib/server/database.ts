@@ -120,6 +120,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.pictures, { galleryId: 1, createdAt: 1 }],
 	[collections.pictures, { 'slider._id': 1, createdAt: 1 }],
 	[collections.pictures, { 'tag._id': 1, createdAt: 1 }],
+	[collections.products, { type: 1, createdAt: 1 }],
 	[collections.products, { stock: 1 }, { sparse: true }],
 	[collections.products, { 'actionSettings.eShop.visible': 1 }],
 	[collections.products, { 'actionSettings.retail.visible': 1 }],

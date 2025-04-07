@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { addDays } from 'date-fns';
 	import { MultiSelect } from 'svelte-multiselect';
@@ -25,7 +26,7 @@
 
 <h1 class="text-3xl">Add a discount</h1>
 
-<form method="post" class="flex flex-col gap-4" on:submit={checkForm}>
+<form method="post" class="flex flex-col gap-4" on:submit={checkForm} use:enhance>
 	<label class="form-label">
 		Discount name
 		<input
