@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import PictureComponent from '$lib/components/Picture.svelte';
+	import { CURRENCIES } from '$lib/types/Currency';
 
 	export let data;
 
@@ -14,8 +15,11 @@
 	let eventCalendar = data.schedule.events.map((eve) => ({
 		calendarColor: !!eve.calendarColor
 	}));
+	let createATicket = data.schedule.events.map(() => false);
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
+	let limitedStock = false;
+	let nonFreePrice = false;
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this schedule?')) {
 			event.preventDefault();
@@ -112,6 +116,104 @@
 			>
 		</h1>
 		{#if data.schedule.events && data.schedule.events.length >= i + 1}
+			<form method="post" class="flex flex-col gap-4">
+				<button
+					class="btn {createATicket[i] ? 'btn-red' : 'btn-gray'} self-start"
+					on:click={() => (createATicket[i] = !createATicket[i])}
+					type="button"
+					>{createATicket[i] ? 'Cancel ticket creation' : 'Create a ticket product'}
+				</button>
+				{#if createATicket[i]}
+					<label class="checkbox-label">
+						<input class="form-checkbox" type="checkbox" name="useTitleDateAsShortDesc" />
+						Use title and date as short description
+					</label>
+					<label class="checkbox-label">
+						<input class="form-checkbox" type="checkbox" name="displayShortDescription" />
+						Display short description on product
+					</label>
+					<label class="checkbox-label">
+						<input class="form-checkbox" type="checkbox" name="exportEventToCalendar" />
+						Create CTA for exporting event to calendar
+					</label>
+					<label class="checkbox-label">
+						<input class="form-checkbox" type="checkbox" name="locationUrlCta" />
+						Create a CTA for location URL if not empty
+					</label>
+					<label class="checkbox-label">
+						<input class="form-checkbox" type="checkbox" name="overwriteEventUrl" />
+						Overwrite event URL information with product URL
+					</label>
+					<label class="checkbox-label">
+						<input class="form-checkbox" type="checkbox" name="CTAForMoreInformation" />
+						Create a CTA for event URL ('More Information') if not empty
+					</label>
+					<label class="checkbox-label">
+						<input
+							class="form-checkbox"
+							type="checkbox"
+							name="nonFreePrice"
+							bind:checked={nonFreePrice}
+						/>
+						Set non-free price
+					</label>
+					{#if nonFreePrice}
+						<div class="gap-4 flex flex-col md:flex-row">
+							<label class="w-full">
+								Price amount
+								<input
+									class="form-input"
+									type="number"
+									name="priceAmount"
+									placeholder="Price"
+									step="any"
+									required
+								/>
+							</label>
+
+							<label class="w-full">
+								Price currency
+
+								<select name="priceCurrency" class="form-input">
+									{#each CURRENCIES as currency}
+										<option value={currency}>{currency}</option>
+									{/each}
+								</select>
+							</label>
+						</div>
+					{/if}
+					<label class="checkbox-label">
+						<input
+							class="form-checkbox"
+							type="checkbox"
+							name="limitedStock"
+							bind:checked={limitedStock}
+						/>
+						Use limited stock
+					</label>
+					{#if limitedStock}
+						<label class="form-label">
+							Stock
+							<input
+								class="form-input"
+								type="number"
+								name="stock"
+								placeholder="Stock"
+								step="1"
+								min="0"
+							/>
+						</label>
+					{/if}
+					<button
+						class="btn btn-blue self-start"
+						type="submit"
+						formaction="{data.adminPrefix}/schedule/{data.schedule._id}/event/{data.schedule.events[
+							i
+						].slug}?/creatTicket"
+						>Confirm ticket creation
+					</button>
+				{/if}
+			</form>
 			<label class="form-label">
 				Title
 				<input
