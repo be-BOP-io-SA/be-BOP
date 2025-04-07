@@ -1,16 +1,12 @@
 <script lang="ts">
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 
 	export let data;
 	$: lang = new URL($page.url).searchParams.get('lang') || 'en';
-	function changeLanguage(lang: string) {
-		goto(`?lang=${lang}`);
-	}
 </script>
 
-<div class="flex flex-col gap-4 mx-auto">
+<div class="flex flex-col gap-4">
 	<h1 class="text-2xl">Back-office home</h1>
 	<p>
 		Welcome on be-BOP back-office! From here, you'll be able to manage, configure, and monitor your
@@ -19,11 +15,7 @@
 
 	<h1 class="text-xl">A word from your administrator :</h1>
 	<p>
-		<em
-			>Lorem ipsum dolor sit amet consectetur adipisicing elit. Eius unde laudantium quam
-			repudiandae tenetur quaerat veritatis laborum nisi, consequuntur nemo quidem, modi repellendus
-			eveniet culpa autem odit consectetur ipsa tempore.</em
-		>
+		<em>{data.adminWelcomMessage}</em>
 	</p>
 
 	<h1 class="text-xl">be-BOP version & updates</h1>
@@ -43,60 +35,58 @@
 
 	<div class="justify-between">
 		<h1 class="text-xl">Last releases</h1>
-		<button>>>> Check here for more updates</button>
+		<a href="https://be-bop.io/release-note" target="_blank" class="body-hyperlink">
+			>>> Check here for more updates</a
+		>
 
-		<table class="w-full table-auto">
-			<thead>
-				<tr>
-					<th>Release date</th>
-					<th>Object</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>08/03/2025</td>
-					<td>Feature "Leaderboard"</td>
-				</tr>
-				<tr>
-					<td>06/03/2025</td>
-					<td>Various bugfixes (minor)</td>
-				</tr>
-				<tr>
-					<td>05/03/2025</td>
-					<td>Add VAT and delivery fees on Transactions > Reporting</td>
-				</tr>
-				<tr>
-					<td>04/03/2025</td>
-					<td>Fix on transaction confirmation threshold</td>
-				</tr>
-				<tr>
-					<td>02/03/2025</td>
-					<td>Various documentation</td>
-				</tr>
-			</tbody>
-		</table>
+		{#if 0}
+			<table class="w-full table-auto">
+				<thead>
+					<tr>
+						<th>Release date</th>
+						<th>Object</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>08/03/2025</td>
+						<td>Feature "Leaderboard"</td>
+					</tr>
+					<tr>
+						<td>06/03/2025</td>
+						<td>Various bugfixes (minor)</td>
+					</tr>
+					<tr>
+						<td>05/03/2025</td>
+						<td>Add VAT and delivery fees on Transactions > Reporting</td>
+					</tr>
+					<tr>
+						<td>04/03/2025</td>
+						<td>Fix on transaction confirmation threshold</td>
+					</tr>
+					<tr>
+						<td>02/03/2025</td>
+						<td>Various documentation</td>
+					</tr>
+				</tbody>
+			</table>
 
-		<button>>>> Check for more</button>
+			<button>>>> Check for more</button>
+		{/if}
 	</div>
 
-	<h1 class="text-xl">Documentation</h1>
+	<h1 class="text-xl" id="doc">Documentation</h1>
 
 	<p>Select your language :</p>
-	<form class="flex flex-row justify-evenly" method="GET">
-		<button type="button" on:click={() => changeLanguage('en')}>🇬🇧</button>
-		<button type="button" on:click={() => changeLanguage('fr')}>🇫🇷</button>
-		<button disabled type="button" on:click={() => changeLanguage('it')} class="opacity-50"
-			>🇮🇹</button
-		>
-		<button disabled type="button" on:click={() => changeLanguage('es-sv')} class="opacity-50">
-			🇸🇻</button
-		>
-		<button disabled type="button" on:click={() => changeLanguage('nl')} class="opacity-50"
-			>🇳🇱</button
-		>
-	</form>
-
+	<div class="flex flex-row justify-evenly">
+		<a href="?lang=en#doc">🇬🇧</a>
+		<a href="?lang=fr#doc">🇫🇷</a>
+		<a href="?lang=it" class="opacity-50">🇮🇹</a>
+		<a href="?lang=es-sv" class="opacity-50"> 🇸🇻</a>
+		<a href="?lang=nl" class="opacity-50">🇳🇱</a>
+	</div>
 	<p>Select your topic :</p>
+
 	<ul>
 		{#each data.files as file}
 			<li><a href="/docs/{lang}/{file}" class="body-hyperlink" target="_blank">{file}</a></li>

@@ -248,3 +248,36 @@
 		</li>
 	{/each}
 </ul>
+
+<h2 class="text-2xl">Welcome message to employees</h2>
+<form
+	action="{data.adminPrefix}/arm?/updateWelcomeMessage"
+	method="post"
+	class="contents"
+	use:enhance={({ action }) => {
+		return async ({ result }) => {
+			if (result.type === 'error') {
+				return await applyAction(result);
+			}
+			if (action.searchParams.has('/updateWelcomeMessage')) {
+				successMessage = 'Welcom message to employee udated succesfully';
+			} else {
+				await applyAction(result);
+			}
+		};
+	}}
+>
+	<label class="form-label">
+		message
+		<textarea
+			name="welcomMessage"
+			cols="30"
+			rows="2"
+			placeholder="Welcome message to employees"
+			maxlength="4096"
+			class="form-input block w-full"
+			value={data.adminWelcomMessage}
+		/>
+	</label>
+	<button type="submit" class="btn btn-gray self-start"> Save text </button>
+</form>

@@ -4,6 +4,7 @@ import { adminPrefix } from '$lib/server/admin';
 import { z } from 'zod';
 import fs from 'fs';
 import path from 'path';
+import { runtimeConfig } from '$lib/server/runtime-config.js';
 
 export async function load({ url, locals }) {
 	if (!locals.user) {
@@ -28,7 +29,7 @@ export async function load({ url, locals }) {
 
 	try {
 		const files = fs.readdirSync(docsPath).filter((file) => file.endsWith('.md'));
-		return { files, lang };
+		return { files, lang, adminWelcomMessage: runtimeConfig.adminWelcomMessage };
 	} catch (err) {
 		throw error(404, `Error while fetching file ${err}`);
 	}
