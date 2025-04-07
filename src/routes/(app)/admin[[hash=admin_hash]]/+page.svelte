@@ -85,9 +85,15 @@
 	<form class="flex flex-row justify-evenly" method="GET">
 		<button type="button" on:click={() => changeLanguage('en')}>🇬🇧</button>
 		<button type="button" on:click={() => changeLanguage('fr')}>🇫🇷</button>
-		<button disabled type="button" on:click={() => changeLanguage('it')}>🇮🇹</button>
-		<button disabled type="button" on:click={() => changeLanguage('es-sv')}> 🇸🇻</button>
-		<button disabled type="button" on:click={() => changeLanguage('nl')}>🇳🇱</button>
+		<button disabled type="button" on:click={() => changeLanguage('it')} class="opacity-50"
+			>🇮🇹</button
+		>
+		<button disabled type="button" on:click={() => changeLanguage('es-sv')} class="opacity-50">
+			🇸🇻</button
+		>
+		<button disabled type="button" on:click={() => changeLanguage('nl')} class="opacity-50"
+			>🇳🇱</button
+		>
 	</form>
 
 	<p>Select your topic :</p>
