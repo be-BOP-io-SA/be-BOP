@@ -285,7 +285,7 @@
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
 						{t('product.discountBanner', {
-							discountPercentage: data.discount.percentage,
+							discountPercent: data.discount.percentage,
 							hours: hoursDifference
 						})}
 					</h3>

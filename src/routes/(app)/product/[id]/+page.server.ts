@@ -113,7 +113,6 @@ export const load = async ({ params, locals }) => {
 	const subscriptions = await collections.paidSubscriptions
 		.find({
 			...userQuery(userIdentifier(locals)),
-			productId: product._id,
 			paidUntil: { $gt: new Date() }
 		})
 		.toArray();
