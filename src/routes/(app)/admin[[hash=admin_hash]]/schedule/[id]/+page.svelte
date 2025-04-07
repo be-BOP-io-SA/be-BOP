@@ -30,8 +30,11 @@
 		);
 		eventLines -= 1;
 	}
-	function closeAllDetails() {
-		document.querySelectorAll('details[open]').forEach((el) => el.removeAttribute('open'));
+	function closeDetailByIndex(i: number) {
+		const detail = document.getElementById(`detail-${i}`);
+		if (detail?.hasAttribute('open')) {
+			detail.removeAttribute('open');
+		}
 	}
 </script>
 
@@ -116,6 +119,7 @@
 		<details
 			class="border border-gray-300 rounded-xl p-2"
 			open={!hideAll || !data.schedule.events[i]}
+			id="detail-{i}"
 		>
 			<summary class="text-xl font-bold">
 				<h1 class="items-center inline-flex gap-2">
@@ -304,6 +308,28 @@
 							</div>
 						{/each}
 					</div>
+
+					<div class="flex flex-row justify-between gap-2">
+						<input
+							type="submit"
+							class="btn btn-blue text-white"
+							formaction="?/update"
+							value="Update"
+						/>
+						<button
+							class="btn btn-gray self-start"
+							on:click={() => closeDetailByIndex(i)}
+							type="button"
+						>
+							Hide details
+						</button>
+						<input
+							type="button"
+							class="btn btn-red text-white ml-auto"
+							value="Delete"
+							on:click={() => deleteEventSchedule(data.schedule.events[i].title)}
+						/>
+					</div>
 				{:else}
 					<label class="form-label">
 						Title
@@ -378,9 +404,6 @@
 	<div class="flex flex-row justify-between gap-2">
 		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
 		<a href="/schedule/{data.schedule._id}" class="btn btn-gray">View</a>
-		<button class="btn btn-gray self-start" on:click={closeAllDetails} type="button">
-			Hide details
-		</button>
 		<input
 			type="submit"
 			class="btn btn-red text-white ml-auto"
