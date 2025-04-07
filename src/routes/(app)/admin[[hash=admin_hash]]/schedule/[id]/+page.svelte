@@ -373,7 +373,7 @@
 		</details>
 	{/each}
 	<button class="btn btn-gray self-start" on:click={() => (eventLines += 1)} type="button"
-		>Add another event {hideAll}
+		>Add another event
 	</button>
 	<div class="flex flex-row justify-between gap-2">
 		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
