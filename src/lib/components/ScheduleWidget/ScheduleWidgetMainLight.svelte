@@ -8,7 +8,7 @@
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
 
-	export let pictures: Picture[] | [];
+	export let pictures: Picture[] = [];
 	export let schedule: Schedule;
 	let className = '';
 	export { className as class };
@@ -102,7 +102,7 @@
 						<span class="font-bold">[{event.unavailabity.label}]</span>
 					{/if}
 				</p>
-				<div class="flex flex-row">
+				<div class="flex flex-row gap-4">
 					{#if event.url}
 						<a
 							href={event.url}
