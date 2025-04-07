@@ -41,6 +41,7 @@
 	let slugElement: HTMLInputElement;
 	let formElement: HTMLFormElement;
 	let showTips = false;
+	let displayRawHTML = false;
 
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this CMS page?')) {
@@ -268,9 +269,21 @@
 				</li>
 			</ul>
 		{/if}
-		Raw HTML
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="displayRawHTML"
+				bind:checked={displayRawHTML}
+				class="form-checkbox"
+			/>
+			Display raw HTML
+		</label>
+		{#if displayRawHTML}
+			Raw HTML
+		{/if}
 
 		<textarea
+			style="display:{displayRawHTML ? 'block' : 'none'};"
 			name="content"
 			cols="30"
 			rows="10"
