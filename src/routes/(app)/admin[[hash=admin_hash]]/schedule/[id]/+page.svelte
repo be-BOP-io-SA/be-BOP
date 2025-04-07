@@ -327,7 +327,10 @@
 							type="button"
 							class="btn btn-red text-white ml-auto"
 							value="Delete"
-							on:click={() => deleteEventSchedule(data.schedule.events[i].title)}
+							on:click={() => {
+								deleteEventSchedule(data.schedule.events[i].title);
+								closeDetailByIndex(i);
+							}}
 						/>
 					</div>
 				{:else}
