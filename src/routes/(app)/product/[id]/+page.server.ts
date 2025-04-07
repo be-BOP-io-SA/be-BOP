@@ -117,16 +117,18 @@ export const load = async ({ params, locals }) => {
 			paidUntil: { $gt: new Date() }
 		})
 		.toArray();
-	const discount = await collections.discounts.findOne(
-		{
-			$or: [{ wholeCatalog: true }, { productIds: product._id }],
-			subscriptionIds: { $in: subscriptions.map((sub) => sub.productId) },
-			endsAt: { $gt: new Date() }
-		},
-		{
-			sort: { percentage: -1 }
-		}
-	);
+	const discount = subscriptions.length
+		? await collections.discounts.findOne(
+				{
+					$or: [{ wholeCatalog: true }, { productIds: product._id }],
+					subscriptionIds: { $in: subscriptions.map((sub) => sub.productId) },
+					endsAt: { $gt: new Date() }
+				},
+				{
+					sort: { percentage: -1 }
+				}
+		  )
+		: null;
 
 	return {
 		product,
