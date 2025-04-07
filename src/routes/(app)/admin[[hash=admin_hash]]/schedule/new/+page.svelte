@@ -10,7 +10,6 @@
 	let eventLines = 1;
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
-	let hideAll = false;
 </script>
 
 <h1 class="text-3xl">Add a schedule</h1>
@@ -74,95 +73,89 @@
 		<input class="form-checkbox" type="checkbox" name="allowSubscription" />
 		Allow user to subscribe
 	</label>
-	<button class="btn btn-gray self-start" on:click={() => (hideAll = !hideAll)} type="button">
-		{hideAll ? 'Expand all events' : 'Reduce all events'}
-	</button>
+
 	{#each [...Array(eventLines).keys()] as i}
-		<details class="border border-gray-300 rounded-xl p-4" open={!hideAll}>
-			<summary class="text-xl font-bold">
-				<h1 class="items-center inline-flex gap-2">Event #{i + 1}</h1>
-			</summary>
+		<h1 class="text-xl font-bold gap-2">Event #{i + 1}</h1>
+		<label class="form-label">
+			Title
+			<input type="text" name="events[{i}].title" class="form-input" required />
+		</label>
+		<label class="form-label">
+			Short description
+			<textarea
+				name="events[{i}].shortDescription"
+				cols="30"
+				rows="2"
+				maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
+				class="form-input"
+			/>
+		</label>
+		<label class="form-label">
+			Description
+			<textarea
+				name="events[{i}].description"
+				cols="30"
+				rows="10"
+				maxlength="10000"
+				class="block form-input"
+			/>
+		</label>
+		<div class="flex flex-wrap gap-4">
 			<label class="form-label">
-				Title
-				<input type="text" name="events[{i}].title" class="form-input" required />
-			</label>
-			<label class="form-label">
-				Short description
-				<textarea
-					name="events[{i}].shortDescription"
-					cols="30"
-					rows="2"
-					maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
-					class="form-input"
-				/>
-			</label>
-			<label class="form-label">
-				Description
-				<textarea
-					name="events[{i}].description"
-					cols="30"
-					rows="10"
-					maxlength="10000"
-					class="block form-input"
-				/>
-			</label>
-			<div class="flex flex-wrap gap-4">
-				<label class="form-label">
-					Begins at
-					<input
-						class="form-input"
-						type="datetime-local"
-						name="events[{i}].beginsAt"
-						bind:value={beginsAt[i]}
-						required
-					/>
-				</label>
-			</div>
-			<div class="flex flex-wrap gap-4">
-				<label class="form-label">
-					Ends at
-					<input
-						class="form-input"
-						type="datetime-local"
-						name="events[{i}].endsAt"
-						bind:value={endsAt[i]}
-						min={beginsAt[i]}
-					/>
-					<span class="text-sm text-gray-600 mt-2 block">
-						<kbd class="kbd">backspace</kbd> to remove the date.</span
-					>
-				</label>
-			</div>
-			<label class="form-label">
-				Location name
-				<input type="text" name="events[{i}].location.name" class="form-input" />
-			</label><label class="form-label">
-				Location link
-				<input type="text" name="events[{i}].location.link" class="form-input" />
-			</label><label class="form-label">
-				Event url
-				<input type="text" name="events[{i}].url" class="form-input" />
-			</label>
-			<label class="checkbox-label">
-				<input class="form-checkbox" type="checkbox" name="events[{i}].hideFromList" />
-				Hide event from list
-			</label>
-			<label class="checkbox-label">
+				Begins at
 				<input
-					class="form-checkbox"
-					type="checkbox"
-					name="events[{i}].calendarHasCustomColor"
-					bind:checked={calendarHasCustomColor}
+					class="form-input"
+					type="datetime-local"
+					name="events[{i}].beginsAt"
+					bind:value={beginsAt[i]}
+					required
 				/>
-				Event has custom color on calendar
 			</label>
-			{#if calendarHasCustomColor}
-				<label class="form-label">
-					Event color on calendar
-					<input type="color" name="events[{i}].calendarColor" class="form-input" />
-				</label>
-			{/if}
-		</details>
+		</div>
+		<div class="flex flex-wrap gap-4">
+			<label class="form-label">
+				Ends at
+				<input
+					class="form-input"
+					type="datetime-local"
+					name="events[{i}].endsAt"
+					bind:value={endsAt[i]}
+					min={beginsAt[i]}
+				/>
+				<span class="text-sm text-gray-600 mt-2 block">
+					<kbd class="kbd">backspace</kbd> to remove the date.</span
+				>
+			</label>
+		</div>
+		<label class="form-label">
+			Location name
+			<input type="text" name="events[{i}].location.name" class="form-input" />
+		</label><label class="form-label">
+			Location link
+			<input type="text" name="events[{i}].location.link" class="form-input" />
+		</label><label class="form-label">
+			Event url
+			<input type="text" name="events[{i}].url" class="form-input" />
+		</label>
+		<label class="checkbox-label">
+			<input class="form-checkbox" type="checkbox" name="events[{i}].hideFromList" />
+			Hide event from list
+		</label>
+		<label class="checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				name="events[{i}].calendarHasCustomColor"
+				bind:checked={calendarHasCustomColor}
+			/>
+			Event has custom color on calendar
+		</label>
+		{#if calendarHasCustomColor}
+			<label class="form-label">
+				Event color on calendar
+				<input type="color" name="events[{i}].calendarColor" class="form-input" />
+			</label>
+		{/if}
 	{/each}
 	<button class="btn btn-gray self-start" on:click={() => (eventLines += 1)} type="button"
 		>Add another event

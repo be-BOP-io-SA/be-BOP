@@ -30,6 +30,9 @@
 		);
 		eventLines -= 1;
 	}
+	function closeAllDetails() {
+		document.querySelectorAll('details[open]').forEach((el) => el.removeAttribute('open'));
+	}
 </script>
 
 <h1 class="text-3xl">Edit a schedule</h1>
@@ -110,10 +113,16 @@
 		{hideAll ? 'Expand all events' : 'Reduce all events'}
 	</button>
 	{#each [...Array(eventLines).keys()] as i}
-		<details class="border border-gray-300 rounded-xl p-2" open={!hideAll}>
+		<details
+			class="border border-gray-300 rounded-xl p-2"
+			open={!hideAll || !data.schedule.events[i]}
+		>
 			<summary class="text-xl font-bold">
 				<h1 class="items-center inline-flex gap-2">
 					Event #{i + 1}
+					{data.schedule.events[i] && data.schedule.events[i].title
+						? ' - ' + data.schedule.events[i].title
+						: ''}
 					<button type="button" on:click={() => deleteEventSchedule(data.schedule.events[i].title)}
 						>🗑️</button
 					>
@@ -364,12 +373,14 @@
 		</details>
 	{/each}
 	<button class="btn btn-gray self-start" on:click={() => (eventLines += 1)} type="button"
-		>Add another event
+		>Add another event {hideAll}
 	</button>
 	<div class="flex flex-row justify-between gap-2">
 		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
 		<a href="/schedule/{data.schedule._id}" class="btn btn-gray">View</a>
-
+		<button class="btn btn-gray self-start" on:click={closeAllDetails} type="button">
+			Hide details
+		</button>
 		<input
 			type="submit"
 			class="btn btn-red text-white ml-auto"
