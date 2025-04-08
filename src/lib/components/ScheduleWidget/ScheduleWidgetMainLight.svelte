@@ -112,6 +112,15 @@
 							{t('schedule.moreInfo')}
 						</a>
 					{/if}
+					{#if event.rsvp.target}
+						<a
+							href="/schedule/{schedule._id}/rsvp/{event.slug}"
+							target="_blank"
+							class="btn cartPreview-secondaryCTA text-xl text-center whitespace-nowrap p-1 mt-2"
+						>
+							RSVP
+						</a>
+					{/if}
 					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} class="mt-4" />
 				</div>
 			</div>

@@ -675,6 +675,11 @@
 		"differentDayText": "{beginDate} a {endDate}",
 		"exportEventTitle": "Archivo de eventos de exportación",
 		"moreInfo": "Más información",
+		"rsvp": {
+			"notifyCta": "notificar",
+			"succesfulNotifyMessage": "Su participación es notificada con éxito al creador de eventos",
+			"textMessage": "Agregue su correo electrónico / NPUB para notificar su participación al evento."
+		},
 		"subscribe": {
 			"formSuccessText": "Recibirá nuevas notificaciones de eventos para",
 			"formText": "Agregue su correo electrónico o NPUB para recibir notificaciones sobre nuevos eventos."

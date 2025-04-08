@@ -51,7 +51,10 @@ export const actions: Actions = {
 						calendarColor: z
 							.string()
 							.regex(/^#[0-9a-f]{6}$/i)
-							.optional()
+							.optional(),
+						rsvp: z.object({
+							target: z.string().max(100)
+						})
 					})
 				)
 			})

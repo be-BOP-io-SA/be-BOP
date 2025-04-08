@@ -7,6 +7,7 @@
 	let pastEventDelay = 60;
 	let displayPastEvents = false;
 	let calendarHasCustomColor = false;
+	let rsvpOption = false;
 	let eventLines = 1;
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
@@ -140,6 +141,21 @@
 			<input class="form-checkbox" type="checkbox" name="events[{i}].hideFromList" />
 			Hide event from list
 		</label>
+		<label class="checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				name="events[{i}].rsvp.option"
+				bind:checked={rsvpOption}
+			/>
+			Add RSVP option
+		</label>
+		{#if rsvpOption}
+			<label class="form-label">
+				Target
+				<input type="text" name="events[{i}].rsvp.target" class="form-input" required />
+			</label>
+		{/if}
 		<label class="checkbox-label">
 			<input
 				class="form-checkbox"

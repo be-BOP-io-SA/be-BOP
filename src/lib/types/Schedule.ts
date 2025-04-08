@@ -20,6 +20,9 @@ export interface EventSchedule {
 		isUnavailable: boolean;
 	};
 	isArchived?: boolean;
+	rsvp: {
+		target: string;
+	};
 }
 
 export interface ScheduleTranslatableFields {

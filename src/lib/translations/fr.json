@@ -675,6 +675,11 @@
 		"differentDayText": "- Dés {beginDate} au {endDate}",
 		"exportEventTitle": "Exportation fichier d'événements ",
 		"moreInfo": "Plus d'info",
+		"rsvp": {
+			"notifyCta": "aviser",
+			"succesfulNotifyMessage": "Votre participation est informée avec succès au créateur d'événements",
+			"textMessage": "Ajoutez votre e-mail / NPUB pour informer votre participation à l'événement."
+		},
 		"subscribe": {
 			"formSuccessText": "Vous recevrez de nouvelles notifications d'événements pour",
 			"formText": "Ajoutez votre e-mail ou NPUB pour recevoir des notifications sur de nouveaux événements."

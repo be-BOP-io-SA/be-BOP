@@ -79,7 +79,10 @@ export const actions = {
 								isUnavailable: z.boolean({ coerce: true }).default(false)
 							})
 							.optional(),
-						isArchived: z.boolean({ coerce: true }).default(false).optional()
+						isArchived: z.boolean({ coerce: true }).default(false).optional(),
+						rsvp: z.object({
+							target: z.string().max(100)
+						})
 					})
 				)
 			})
