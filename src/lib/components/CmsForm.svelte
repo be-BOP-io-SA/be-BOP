@@ -40,6 +40,7 @@
 	let employeeContent = cmsPage?.employeeContent || '';
 	let slugElement: HTMLInputElement;
 	let formElement: HTMLFormElement;
+	let showTips = false;
 	let displayRawHTML = false;
 
 	function confirmDelete(event: Event) {
@@ -185,11 +186,12 @@
 			bind:value={pageContent}
 			conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
 		/>
-
-		<label class="checkbox-label my-2 block">
-			<input type="checkbox" name="showTips" class="form-checkbox peer" />
+		<label class="checkbox-label my-2">
+			<input type="checkbox" name="showTips" bind:checked={showTips} class="form-checkbox" />
 			Show tips
-			<ul class="text-gray-700 my-3 list-disc ml-4 hidden peer-checked:block">
+		</label>
+		{#if showTips}
+			<ul class="text-gray-700 my-3 list-disc ml-4">
 				<li>
 					To include products, add a paragraph with only <code class="font-mono"
 						>[Product=slug]</code
@@ -266,8 +268,7 @@
 					<code class="font-mono">[Gallery=slug?display=var-1]</code>
 				</li>
 			</ul>
-		</label>
-
+		{/if}
 		<label class="checkbox-label">
 			<input
 				type="checkbox"
