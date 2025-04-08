@@ -67,7 +67,9 @@ export const actions = {
 			});
 		}
 		if (!address.includes('@')) {
-			const content = `This message was sent to you because you confirmed your participation to this event ${eventSchedule.title} by ${runtimeConfig.brandName}.
+			const content = `This message was sent to you because you confirmed your participation to this event ${
+				eventSchedule.title
+			} by ${runtimeConfig.brandName}.
 				${eventSchedule.title} - ${format(eventSchedule.beginsAt, 'yyyy-MM-dd')}
 				${eventSchedule.shortDescription}
 				${eventSchedule.description}
