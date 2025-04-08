@@ -677,7 +677,8 @@
 		"moreInfo": "Meer info",
 		"rsvp": {
 			"notifyCta": "op de hoogte stellen",
-			"succesfulNotifyMessage": "Uw deelname wordt succesvol op de hoogte gebracht van de maker van evenementen"
+			"succesfulNotifyMessage": "Uw deelname wordt succesvol op de hoogte gebracht van de maker van evenementen",
+			"textMessage": "Voeg uw e -mail / npub toe om uw deelname aan het evenement op de hoogte te stellen."
 		},
 		"subscribe": {
 			"formSuccessText": "U ontvangt nieuwe evenementenmeldingen voor",

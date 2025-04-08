@@ -677,7 +677,8 @@
 		"moreInfo": "Maggiori informazioni",
 		"rsvp": {
 			"notifyCta": "notificare",
-			"succesfulNotifyMessage": "La tua partecipazione viene notificata con successo al creatore di eventi"
+			"succesfulNotifyMessage": "La tua partecipazione viene notificata con successo al creatore di eventi",
+			"textMessage": "Aggiungi la tua e -mail / npub per avvisare la tua partecipazione all'evento."
 		},
 		"subscribe": {
 			"formSuccessText": "Riceverai nuove notifiche di eventi per",
