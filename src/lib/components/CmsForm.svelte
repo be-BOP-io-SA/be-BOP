@@ -40,7 +40,6 @@
 	let employeeContent = cmsPage?.employeeContent || '';
 	let slugElement: HTMLInputElement;
 	let formElement: HTMLFormElement;
-
 	let displayRawHTML = false;
 
 	function confirmDelete(event: Event) {
