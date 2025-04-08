@@ -20,6 +20,7 @@ export interface EventSchedule {
 		isUnavailable: boolean;
 	};
 	isArchived?: boolean;
+	productId?: string;
 }
 
 export interface ScheduleTranslatableFields {

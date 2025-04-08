@@ -135,6 +135,17 @@ export const actions = {
 					throw err;
 				}
 			}
+			await collections.schedules.updateOne(
+				{ _id: params.id, 'events.slug': params.slug },
+				{
+					$set: {
+						'events.$.productId': params.slug,
+						...(parsed.overwriteEventUrl && {
+							'events.$.url': `/product/${params.slug}`
+						})
+					}
+				}
+			);
 		});
 
 		throw redirect(303, `${adminPrefix()}/product/${params.slug}`);
