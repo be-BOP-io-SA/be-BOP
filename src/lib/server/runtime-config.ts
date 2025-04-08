@@ -303,7 +303,8 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 		'schedule.rsvp.admin': {
 			subject: '{{brandName}} - RSVP for {{eventName}}',
 			html: `<p>A new person confirmed participation to this event : {{eventName}}</p>
-<p>{{participantContact}}</p>`
+<p>{{participantContact}}</p>`,
+			default: true as boolean
 		},
 		'schedule.rsvp.user': {
 			subject: '{{brandName}} - Participation confirmation to {{eventName}}',
@@ -316,7 +317,8 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 <p><a href="{{eventLocationLink}}">{{eventLocationLink}}</a></p>
 <p></p>
 <p>If this an error or if you don't want to participate anymore to the event, please notify the organizer through this link :</p>
-<p><a href="{{eventCancellationLink}}">Cancel participation</a></p>`
+<p><a href="{{eventCancellationLink}}">Cancel participation</a></p>`,
+			default: true as boolean
 		}
 	}
 };
