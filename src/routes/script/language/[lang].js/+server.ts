@@ -1,11 +1,11 @@
 import { runtimeConfigUpdatedAt } from '$lib/server/runtime-config.js';
 import { enhancedLanguages, LanguageKey, locales } from '$lib/translations';
 import { typedInclude } from '$lib/utils/typedIncludes.js';
-import formatDistanceFr from 'date-fns/locale/fr/_lib/formatDistance.js?raw';
-import formatDistanceEn from 'date-fns/locale/en-US/_lib/formatDistance.js?raw';
-import formatDistanceIt from 'date-fns/locale/it/_lib/formatDistance.js?raw';
-import formatDistanceNl from 'date-fns/locale/nl/_lib/formatDistance.js?raw';
-import formatDistanceEs from 'date-fns/locale/es/_lib/formatDistance.js?raw';
+import formatDistanceFr from 'date-fns/formatDistance/fr?raw';
+import formatDistanceEn from 'date-fns/formatDistance/en-US?raw';
+import formatDistanceIt from 'date-fns/formatDistance/it?raw';
+import formatDistanceNl from 'date-fns/formatDistance/nl?raw';
+import formatDistanceEs from 'date-fns/formatDistance/es?raw';
 
 const cache: Record<string, string> = {};
 const cachedAt: Record<string, number> = {};

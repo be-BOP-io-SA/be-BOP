@@ -645,8 +645,8 @@
 		"digitalFiles": {
 			"title": "Digitale bestanden"
 		},
-		"discountBanner": "{kortingspercent}% korting voor {timespan}",
-		"discountBannerNoTime": "{kortingspercent}% korting",
+		"discountBanner": "{discountPercent}% korting voor {timespan}",
+		"discountBannerNoTime": "{discountPercent}% korting",
 		"freeWithSub": "Dit product is gratis verkrijgbaar bij uw maandabonnement",
 		"freeWithTitle": "Gratis met \"xxxxx",
 		"horsTaxeShort": "HT",
