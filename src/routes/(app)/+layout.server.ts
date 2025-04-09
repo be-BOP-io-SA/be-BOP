@@ -148,7 +148,7 @@ export async function load(params) {
 								{ wholeCatalog: true },
 								{ productIds: { $in: cart.items.map((p) => p.productId) } }
 							],
-							subscriptionIds: { $in: paidSubs.map((sub) => sub._id) },
+							subscriptionIds: { $in: paidSubs.map((sub) => sub.productId) },
 							beginsAt: {
 								$lt: new Date()
 							},
@@ -186,8 +186,8 @@ export async function load(params) {
 					},
 					{
 						$group: {
-							_id: { $ifNull: ['$productId', null] },
-							discountPercent: { $first: 'percentage' }
+							_id: { $ifNull: ['$productIds', null] },
+							discountPercent: { $first: '$percentage' }
 						}
 					}
 				])
