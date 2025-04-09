@@ -194,10 +194,10 @@ export async function load(params) {
 				.toArray()
 		: [];
 
-	const wholeDiscount = discounts.find((d) => d._id === null)?.discountPercent;
 	const productById = new Map(products.map((p) => [p._id, p]));
 	const productPicturesById = new Map(productPictures.map((p) => [p.productId, p]));
 	const digitalFilesByProductId = groupBy(digitalFiles, (df) => df.productId);
+	const wholeDiscount = discounts.find((d) => d._id === null)?.discountPercent;
 	const discountByProductId = new Map(
 		discounts
 			.filter((d) => d._id !== null)

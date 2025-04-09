@@ -48,6 +48,7 @@ import {
 	generateDerivationIndex,
 	isBitcoinNodelessConfigured
 } from './bitcoin-nodeless';
+import type { Discount } from '$lib/types/Discount';
 
 async function generateOrderNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(
@@ -438,6 +439,7 @@ export async function createOrder(
 		customPrice?: { amount: number; currency: Currency };
 		chosenVariations?: Record<string, string>;
 		depositPercentage?: number;
+		discountPercentage?: number;
 	}>,
 	// null when point of sale want to use multiple payment methods
 	paymentMethod: PaymentMethod | null,
@@ -553,6 +555,95 @@ export async function createOrder(
 		: [];
 
 	const vatExempted = runtimeConfig.vatExempted || !!params.reasonFreeVat;
+
+	const paidSubs = await collections.paidSubscriptions
+		.find({
+			...userQuery(params.user),
+			paidUntil: { $gt: new Date() }
+		})
+		.toArray();
+	const discounts = paidSubs.length
+		? await collections.discounts
+				.aggregate<{
+					_id: Product['_id'] | null;
+					discountPercent: Discount['percentage'];
+					subscriptionIds: Discount['subscriptionIds'];
+				}>([
+					{
+						$match: {
+							$or: [
+								{ wholeCatalog: true },
+								{ productIds: { $in: items.map((p) => p.product._id) } }
+							],
+							subscriptionIds: { $in: paidSubs.map((sub) => sub.productId) },
+							beginsAt: {
+								$lt: new Date()
+							},
+							$and: [
+								{
+									$or: [
+										{
+											endsAt: { $gt: new Date() }
+										},
+										{
+											endsAt: null
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						$sort: {
+							percentage: -1
+						}
+					},
+					{
+						$project: {
+							productIds: 1,
+							percentage: 1,
+							subscriptionIds: 1,
+							_id: 0
+						}
+					},
+					{
+						$unwind: {
+							path: '$productIds',
+							preserveNullAndEmptyArrays: true
+						}
+					},
+					{
+						$group: {
+							_id: { $ifNull: ['$productIds', null] },
+							discountPercent: { $first: '$percentage' },
+							subscriptionIds: { $push: '$subscriptionIds' }
+						}
+					}
+				])
+				.toArray()
+		: [];
+
+	const wholeDiscount = discounts.find((d) => d._id === null)?.discountPercent;
+	const discountByProductId = new Map(
+		discounts
+			.filter((d) => d._id !== null)
+			.map((d) => [
+				d._id,
+				wholeDiscount !== undefined && wholeDiscount > d.discountPercent
+					? wholeDiscount
+					: d.discountPercent
+			])
+	);
+
+	const discountSubIds = new Set(discounts.flatMap((d) => d.subscriptionIds));
+	const usedSubIds = paidSubs
+		.filter((sub) => discountSubIds.has(sub.productId))
+		.map((sub) => sub.productId);
+
+	for (const item of items) {
+		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
+	}
+
 	const priceInfo = computePriceInfo(items, {
 		deliveryFees: shippingPrice,
 		vatExempted,
@@ -970,6 +1061,21 @@ export async function createOrder(
 			},
 			...(params.note && {
 				notes: [
+					...(items.some((item) => item.discountPercentage)
+						? [
+								{
+									content: `Discount applied: ${items
+										.filter((item) => item.discountPercentage)
+										.map(
+											(item) =>
+												`${item.product.name} (${item.product._id}): ${item.discountPercentage}%`
+										)
+										.join(', ')} because of subscription ${usedSubIds.join(', ')}`,
+									createdAt: new Date(),
+									role: null
+								}
+						  ]
+						: []),
 					{
 						content: params.note,
 						createdAt: new Date(),
