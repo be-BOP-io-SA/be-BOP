@@ -271,13 +271,25 @@
 			>
 				<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
 				<div class="flex gap-2 lg:flex-col lg:items-start items-center justify-between">
-					<PriceTag
-						currency={data.product.price.currency}
-						class="text-2xl lg:text-4xl truncate max-w-full"
-						short={false}
-						amount={data.product.hasVariations ? customAmount : data.product.price.amount}
-						main
-					/>
+					<div class="flex gap-4">
+						<PriceTag
+							currency={data.product.price.currency}
+							class="text-2xl lg:text-4xl truncate max-w-full {data.discount ? 'line-through' : ''}"
+							short={!!data.discount}
+							amount={data.product.hasVariations ? customAmount : data.product.price.amount}
+							main
+						/>
+						{#if data.discount}
+							<PriceTag
+								currency={data.product.price.currency}
+								class="text-2xl lg:text-4xl truncate max-w-full"
+								short
+								amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
+									(1 - data.discount.percentage / 100)}
+								main
+							/>
+						{/if}
+					</div>
 					<PriceTag
 						currency={data.product.price.currency}
 						amount={data.product.hasVariations ? customAmount : data.product.price.amount}
