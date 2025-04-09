@@ -3,6 +3,7 @@ import { collections, withTransaction } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError.js';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
+import { exportToICS } from '$lib/types/Schedule.js';
 import { error } from '@sveltejs/kit';
 import { format } from 'date-fns';
 import { z } from 'zod';
@@ -54,7 +55,11 @@ export const actions = {
 
 		const ctaLink: { label: string; href: string; fallback?: boolean }[] = [];
 		if (parsed.exportEventToCalendar) {
-			ctaLink.push({ label: 'Export to calendar', href: '/', fallback: false });
+			ctaLink.push({
+				label: 'Export to calendar',
+				href: exportToICS(eventSchedule, schedule.pastEventDelay),
+				fallback: false
+			});
 		}
 		if (parsed.locationUrlCta && eventSchedule.location?.link) {
 			ctaLink.push({
