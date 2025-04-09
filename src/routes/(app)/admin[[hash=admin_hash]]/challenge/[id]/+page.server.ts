@@ -26,7 +26,8 @@ export const actions = {
 			beginsAt,
 			endsAt,
 			progressChanged,
-			oldProgress
+			oldProgress,
+			globalRatio
 		} = z
 			.object({
 				name: z.string().min(1).max(MAX_NAME_LIMIT),
@@ -45,7 +46,11 @@ export const actions = {
 					.default('0'),
 				progressChanged: z.boolean({ coerce: true }),
 				beginsAt: z.date({ coerce: true }),
-				endsAt: z.date({ coerce: true })
+				endsAt: z.date({ coerce: true }),
+				globalRatio: z
+					.string()
+					.regex(/^\d+(\.\d+)?$/)
+					.default('0')
 			})
 			.parse({
 				name: data.get('name'),
@@ -57,7 +62,8 @@ export const actions = {
 				beginsAt: data.get('beginsAt'),
 				endsAt: data.get('endsAt'),
 				progressChanged: data.get('progressChanged'),
-				oldProgress: data.get('oldProgress')
+				oldProgress: data.get('oldProgress'),
+				globalRatio: data.get('globalRatio') ?? undefined
 			});
 
 		const amount =
@@ -89,6 +95,7 @@ export const actions = {
 					progress: parsedProgress,
 					beginsAt,
 					endsAt,
+					...(challenge.ratio === 'global' && { globalRatio: parseInt(globalRatio) }),
 					updatedAt: new Date()
 				}
 			}

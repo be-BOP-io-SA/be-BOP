@@ -26,6 +26,9 @@ export type Challenge = Timestamps &
 			order: Order['_id'];
 			amount: number;
 		}[];
+		ratio?: 'total' | 'global' | 'perProduct';
+		globalRatio?: number;
+		perProductRatio?: Record<string, number>;
 	} & (
 		| {
 				goal: {
