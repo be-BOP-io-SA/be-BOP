@@ -15,7 +15,7 @@
 		productPriceWithVariations
 	} from '$lib/types/Product';
 	import { toCurrency } from '$lib/utils/toCurrency';
-	import { differenceInHours } from 'date-fns';
+	import { formatDistance } from 'date-fns';
 	import { POS_ROLE_ID } from '$lib/types/User';
 	import { useI18n } from '$lib/i18n';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
@@ -28,9 +28,16 @@
 	let quantity = 1;
 	let loading = false;
 	let errorMessage = '';
-	const endsAt = data.discount ? new Date(data.discount.endsAt).getTime() : Date.now(); // Convert to timestamp
-	const currentTime = Date.now();
-	const hoursDifference = differenceInHours(endsAt, currentTime);
+	let currentTime = Date.now();
+	const { t, locale, formatDistanceLocale } = useI18n();
+
+	$: timeDifference =
+		data.discount?.endsAt &&
+		formatDistance(currentTime, data.discount.endsAt, {
+			addSuffix: false,
+			includeSeconds: true,
+			locale: formatDistanceLocale()
+		});
 	let deposit = 'partial';
 
 	const PWYWCurrency =
@@ -112,7 +119,6 @@
 
 		return true;
 	}
-	const { t, locale } = useI18n();
 	const schema: WithContext<SchemaOrgProduct> = {
 		'@context': `https://schema.org`,
 		'@type': 'Product',
@@ -284,13 +290,19 @@
 				{#if data.discount}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
-						{t('product.discountBanner', {
-							discountPercent: data.discount.percentage,
-							hours: hoursDifference
-						})}
+						{#if timeDifference === undefined}
+							{t('product.discountBannerNoTime', {
+								discountPercent: data.discount.percentage
+							})}
+						{:else}
+							{t('product.discountBanner', {
+								discountPercent: data.discount.percentage,
+								timespan: timeDifference
+							})}
+						{/if}
 					</h3>
 
-					{#if data.discount.percentage === 100}
+					{#if data.discount.percentage === 100 && 0}
 						<hr class="border-gray-300" />
 						<div class="border border-[#F1DA63] bg-[#FFFBD5] p-2 rounded text-base flex gap-2">
 							<IconInfo class="text-[#E4C315]" />
