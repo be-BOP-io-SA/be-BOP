@@ -302,7 +302,7 @@
 				{#if data.discount}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
-						{#if timeDifference === undefined}
+						{#if timeDifference === null}
 							{t('product.discountBannerNoTime', {
 								discountPercent: data.discount.percentage
 							})}

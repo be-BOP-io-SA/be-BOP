@@ -182,10 +182,10 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.sessions, { expiresAt: 1 }, { expireAfterSeconds: 0 }],
 	[collections.sessions, { sessionId: 1 }, { unique: true }],
 	[collections.discounts, { endAt: 1 }],
-	[collections.discounts, { productIds: 1, endsAt: -1 }],
+	[collections.discounts, { productIds: 1, beginsAt: 1 }],
 	[
 		collections.discounts,
-		{ wholeCatalog: 1, endsAt: -1 },
+		{ wholeCatalog: 1, beginsAt: 1 },
 		{ partialFilterExpression: { wholeCatalog: true } }
 	],
 	[collections.personalInfo, { 'user.userId': 1 }],

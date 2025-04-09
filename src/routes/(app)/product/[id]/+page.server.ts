@@ -121,7 +121,21 @@ export const load = async ({ params, locals }) => {
 				{
 					$or: [{ wholeCatalog: true }, { productIds: product._id }],
 					subscriptionIds: { $in: subscriptions.map((sub) => sub.productId) },
-					endsAt: { $gt: new Date() }
+					beginsAt: {
+						$lt: new Date()
+					},
+					$and: [
+						{
+							$or: [
+								{
+									endsAt: { $gt: new Date() }
+								},
+								{
+									endsAt: null
+								}
+							]
+						}
+					]
 				},
 				{
 					sort: { percentage: -1 }

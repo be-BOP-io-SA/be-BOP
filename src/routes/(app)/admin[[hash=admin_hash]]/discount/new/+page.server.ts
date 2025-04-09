@@ -39,7 +39,7 @@ export const actions: Actions = {
 				percentage: z.string().regex(/^\d+(\.\d+)?$/),
 				wholeCatalog: z.boolean({ coerce: true }).default(false),
 				beginsAt: z.date({ coerce: true }),
-				endsAt: z.date({ coerce: true })
+				endsAt: z.date({ coerce: true }).optional()
 			})
 			.parse({
 				name: data.get('name'),
@@ -52,7 +52,7 @@ export const actions: Actions = {
 				wholeCatalog: data.get('wholeCatalog'),
 				percentage: data.get('percentage'),
 				beginsAt: data.get('beginsAt'),
-				endsAt: data.get('endsAt')
+				endsAt: data.get('endsAt') || undefined
 			});
 
 		const slug = generateId(name, true);
@@ -64,7 +64,7 @@ export const actions: Actions = {
 			wholeCatalog,
 			percentage: Number(percentage),
 			beginsAt,
-			endsAt,
+			endsAt: endsAt || null,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		});
