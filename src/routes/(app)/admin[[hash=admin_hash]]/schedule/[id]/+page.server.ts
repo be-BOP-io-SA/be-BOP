@@ -80,9 +80,11 @@ export const actions = {
 							})
 							.optional(),
 						isArchived: z.boolean({ coerce: true }).default(false).optional(),
-						rsvp: z.object({
-							target: z.string().max(100)
-						})
+						rsvp: z
+							.object({
+								target: z.string().max(100)
+							})
+							.optional()
 					})
 				)
 			})

@@ -239,7 +239,7 @@
 						name="events[{i}].rsvp.target"
 						class="form-input"
 						required
-						value={data.schedule.events[i].rsvp?.target}
+						value={data.schedule.events[i].rsvp?.target || data.sellerIdentity?.contact.email || ''}
 					/>
 				</label>
 			{/if}
