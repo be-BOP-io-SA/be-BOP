@@ -705,7 +705,8 @@
 							<div class="flex flex-col ml-auto items-end justify-center">
 								<PriceTag
 									class="text-2xl truncate"
-									amount={(item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100}
+									amount={((item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100) *
+										(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 									currency={price.currency}
 									main
 									>{item.depositPercentage
@@ -715,7 +716,8 @@
 										: ''}</PriceTag
 								>
 								<PriceTag
-									amount={(item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100}
+									amount={((item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100) *
+										(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 									currency={price.currency}
 									class="text-base truncate"
 									secondary
