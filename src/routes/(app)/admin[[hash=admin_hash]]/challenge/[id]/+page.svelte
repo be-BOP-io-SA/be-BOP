@@ -22,8 +22,7 @@
 	$: beginsAtISO = new Date(beginsAt).toISOString();
 	$: endsAtISO = new Date(endsAt).toISOString();
 
-	$: console.log(beginsAtISO, endsAtISO);
-
+	let ratio = data.challenge.ratio || 'total';
 	let endsAtElement: HTMLInputElement;
 	let progressChanged = false;
 	let globalRatioDisable = true;
@@ -100,7 +99,7 @@
 		</label>
 		<label class="form-label w-full">
 			Ratio
-			<select name="ratio" class="form-input" value={data.challenge.ratio} disabled>
+			<select name="ratio" class="form-input" value={ratio} disabled>
 				{#each ['total', 'global', 'perProduct'] as ratio}
 					<option value={ratio}>{ratio === 'total' ? upperFirst(ratio) : `Ratio (${ratio})`}</option
 					>

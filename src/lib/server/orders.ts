@@ -1537,7 +1537,11 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 				: sumCurrency(
 						challenge.goal.currency,
 						items.map((item) => ({
-							amount: (item.customPrice?.amount || item.product.price.amount) * item.quantity,
+							amount:
+								(item.customPrice?.amount || item.product.price.amount) *
+								item.quantity *
+								((challenge.globalRatio || challenge.perProductRatio?.[item.product._id] || 100) /
+									100),
 							currency: item.customPrice?.currency || item.product.price.currency
 						}))
 				  );
