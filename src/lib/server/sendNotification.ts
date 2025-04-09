@@ -76,7 +76,7 @@ export async function sendAuthentificationlink(session: { email?: string; npub?:
 		const jwt = await new SignJWT({ npub: session.npub })
 			.setExpirationTime('1h')
 			.setProtectedHeader({ alg: 'HS256' })
-			.sign(Uint8Array.from(Buffer.from(runtimeConfig.authLinkJwtSigningKey)));
+			.sign(Buffer.from(runtimeConfig.authLinkJwtSigningKey));
 
 		const content = `This message was sent to you because you have requested a temporary session link.
 
@@ -99,7 +99,7 @@ ${runtimeConfig.brandName} team`;
 		const jwt = await new SignJWT({ email: session.email })
 			.setExpirationTime('1h')
 			.setProtectedHeader({ alg: 'HS256' })
-			.sign(Uint8Array.from(Buffer.from(runtimeConfig.authLinkJwtSigningKey)));
+			.sign(Buffer.from(runtimeConfig.authLinkJwtSigningKey));
 		await queueEmail(session.email, 'temporarySessionRequest', {
 			sessionLink: `${ORIGIN}/login?token=${encodeURIComponent(jwt)}`
 		});

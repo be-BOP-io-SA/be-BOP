@@ -5,7 +5,7 @@
 
 	export let data;
 
-	let password: string;
+	let password = '';
 	let formElement: HTMLFormElement;
 	let errorMessage = '';
 
