@@ -151,6 +151,7 @@ export async function fetchOrderForUser(orderId: string) {
 			),
 			currencySnapshot: item.currencySnapshot,
 			depositPercentage: item.depositPercentage,
+			discountPercentage: item.discountPercentage,
 			tickets: item.tickets,
 			chosenVariations: item.chosenVariations
 		})),
