@@ -34,7 +34,7 @@ export type Pojo<T> = ObjectId extends T
 /**
  * Convert an object into a POJO by converting ObjectId to string
  */
-export function pojo<T>(param: T): Pojo<T> {
+export function pojo<T extends object>(param: T): Pojo<T> {
 	if (param === null || typeof param !== 'object') {
 		return param as Pojo<T>;
 	}
