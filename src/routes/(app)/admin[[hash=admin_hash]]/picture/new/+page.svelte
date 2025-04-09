@@ -12,7 +12,7 @@
 	const scheduleId = $page.url.searchParams.get('scheduleId');
 	const eventScheduleSlug = $page.url.searchParams.get('eventScheduleSlug');
 
-	let files: FileList;
+	let files = new FileList();
 	let fileName = '';
 
 	let submitting = false;

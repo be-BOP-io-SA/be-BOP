@@ -111,7 +111,7 @@
 
 	$: logoClass = data.logo.isWide ? 'h-[60px] w-auto' : 'h-[60px] w-[60px] rounded-full';
 	const { t, locale, textAddress } = useI18n();
-	let ageWarning: false;
+	let ageWarning = false;
 </script>
 
 <!--

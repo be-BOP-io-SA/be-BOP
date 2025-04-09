@@ -90,7 +90,7 @@
 	let submitting = false;
 	let sellDisclaimerTitle = product.sellDisclaimer?.title || '';
 	let sellDisclaimerReason = product.sellDisclaimer?.reason || '';
-	let files: FileList;
+	let files: FileList = new FileList();
 	let deposit = product.deposit || {
 		percentage: 50,
 		enforce: false

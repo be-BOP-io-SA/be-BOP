@@ -122,13 +122,14 @@
 			currency: UNDERLYING_CURRENCY
 		},
 		vatProfiles: data.vatProfiles,
-		...(addDiscount &&
-			!isNaN(discountAmount) && {
-				discount: {
-					amount: discountAmount,
-					type: discountType
-				}
-			})
+		...(addDiscount && !isNaN(discountAmount)
+			? {
+					discount: {
+						amount: discountAmount,
+						type: discountType
+					}
+			  }
+			: undefined)
 	});
 	$: priceInfoInitial = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,

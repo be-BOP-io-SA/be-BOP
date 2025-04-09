@@ -3,8 +3,8 @@
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 
-	let name: string;
-	let slug: string;
+	let name = '';
+	let slug = '';
 </script>
 
 <h1 class="text-3xl">Add a label</h1>

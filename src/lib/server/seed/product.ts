@@ -44,7 +44,8 @@ export const TEST_DIGITAL_PRODUCT = {
 			canBeAddedToBasket: true
 		}
 	},
-	vatProfileId: undefined
+	vatProfileId: undefined,
+	hideDiscountExpiration: false
 } satisfies Product;
 
 export const TEST_PHYSICAL_PRODUCT = {
@@ -89,7 +90,8 @@ export const TEST_PHYSICAL_PRODUCT = {
 		}
 	},
 	isTicket: false,
-	vatProfileId: undefined
+	vatProfileId: undefined,
+	hideDiscountExpiration: false
 } satisfies Product;
 
 export const TEST_DIGITAL_PRODUCT_UNLIMITED = {
@@ -128,5 +130,6 @@ export const TEST_DIGITAL_PRODUCT_UNLIMITED = {
 			canBeAddedToBasket: true
 		}
 	},
-	isTicket: false
+	isTicket: false,
+	hideDiscountExpiration: false
 } satisfies Product;

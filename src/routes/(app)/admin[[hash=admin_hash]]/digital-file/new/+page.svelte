@@ -5,7 +5,7 @@
 	const productId = $page.url.searchParams.get('productId');
 	export let data;
 
-	let files: FileList;
+	let files: FileList = new FileList();
 	let name = '';
 
 	let uploading = false;

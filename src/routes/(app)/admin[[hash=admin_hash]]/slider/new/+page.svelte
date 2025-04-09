@@ -8,11 +8,11 @@
 	export let data;
 
 	let submitting = false;
-	let files: FileList;
+	let files = new FileList();
 	let formElement: HTMLFormElement;
 
-	let title: string;
-	let slug: string;
+	let title = '';
+	let slug = '';
 
 	async function checkForm() {
 		submitting = true;
