@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { exportToICS, type EventSchedule } from '$lib/types/Schedule';
-	import { addMinutes } from 'date-fns';
 	import { useI18n } from '$lib/i18n';
 	import IconDownloadWindow from '../icons/IconDownloadWindow.svelte';
 
