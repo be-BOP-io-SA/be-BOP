@@ -3,7 +3,7 @@ import { collections, withTransaction } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError.js';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { format } from 'date-fns';
 import { z } from 'zod';
 
@@ -148,7 +148,7 @@ export const actions = {
 				}
 			);
 		});
-
-		throw redirect(303, `${adminPrefix()}/product/${params.slug}`);
+		const redirectUrl = `${adminPrefix()}/product/${params.slug}`;
+		return { redirectUrl };
 	}
 };

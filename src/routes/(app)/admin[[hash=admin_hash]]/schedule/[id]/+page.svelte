@@ -2,6 +2,8 @@
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import PictureComponent from '$lib/components/Picture.svelte';
 	import { CURRENCIES } from '$lib/types/Currency';
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 
 	export let data;
 
@@ -20,6 +22,8 @@
 	let endsAt: string[] = [];
 	let limitedStock = false;
 	let nonFreePrice = false;
+	let errorMessage = '';
+	let loading = false;
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this schedule?')) {
 			event.preventDefault();
@@ -115,9 +119,32 @@
 				>🗑️</button
 			>
 		</h1>
+		{#if errorMessage}
+			<p class="text-red-500">{errorMessage}</p>
+		{/if}
 		{#if data.schedule.events && data.schedule.events.length >= i + 1}
-			{#if !data.schedule.events[i].productId}
-				<form method="post" class="flex flex-col gap-4">
+			{#if !data.schedule.events[i].productId || !data.schedule.events[i].url?.startsWith('/product')}
+				<form
+					on:submit={() => (loading = true)}
+					method="post"
+					class="flex flex-col gap-4"
+					use:enhance={() => {
+						errorMessage = '';
+						return async ({ result }) => {
+							loading = false;
+
+							if (result.type === 'error') {
+								errorMessage = result.error.message;
+								return;
+							}
+							if (result.type === 'success' && result.data?.['redirectUrl']) {
+								// rerun all `load` functions, following the successful update
+								await invalidateAll();
+								window.open(result.data?.['redirectUrl'].toString(), '_blank');
+							}
+						};
+					}}
+				>
 					<button
 						class="btn {createATicket[i] ? 'btn-red' : 'btn-gray'} self-start"
 						on:click={() => (createATicket[i] = !createATicket[i])}
@@ -210,6 +237,7 @@
 						<button
 							class="btn btn-blue self-start"
 							type="submit"
+							disabled={loading}
 							formaction="{data.adminPrefix}/schedule/{data.schedule._id}/event/{data.schedule
 								.events[i].slug}?/creatTicket"
 							>Confirm ticket creation
