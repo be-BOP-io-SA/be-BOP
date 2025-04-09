@@ -20,7 +20,7 @@ export interface EventSchedule {
 		isUnavailable: boolean;
 	};
 	isArchived?: boolean;
-	rsvp: {
+	rsvp?: {
 		target: string;
 	};
 }

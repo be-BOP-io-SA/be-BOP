@@ -15,7 +15,7 @@
 		calendarColor: !!eve.calendarColor
 	}));
 	let rsvpOptions = data.schedule.events.map((eve) => ({
-		option: !!eve.rsvp.target
+		option: !!eve.rsvp?.target
 	}));
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
@@ -239,7 +239,7 @@
 						name="events[{i}].rsvp.target"
 						class="form-input"
 						required
-						value={data.schedule.events[i].rsvp.target}
+						value={data.schedule.events[i].rsvp?.target}
 					/>
 				</label>
 			{/if}
