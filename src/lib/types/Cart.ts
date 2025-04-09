@@ -102,6 +102,7 @@ export function computePriceInfo(
 		quantity: number;
 		customPrice?: Price;
 		depositPercentage?: number;
+		discountPercentage?: number;
 	}>,
 	params: {
 		vatExempted: boolean;
@@ -165,7 +166,9 @@ export function computePriceInfo(
 		const rate = vatProfile?.rates[country] ?? vatRate(country);
 		const currency = (item.customPrice || item.product.price).currency;
 		const price = fixCurrencyRounding(
-			(item.customPrice || item.product.price).amount * item.quantity,
+			(item.customPrice || item.product.price).amount *
+				item.quantity *
+				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
 			currency
 		);
 		const partialPrice = fixCurrencyRounding(
@@ -189,10 +192,11 @@ export function computePriceInfo(
 		...items.map((item) => ({
 			currency: (item.customPrice || item.product.price).currency,
 			amount:
-				((item.customPrice || item.product.price).amount *
+				(((item.customPrice || item.product.price).amount *
 					item.quantity *
 					(item.depositPercentage ?? 100)) /
-				100
+					100) *
+				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
 		})),
 		params.deliveryFees
 	]);
@@ -213,7 +217,10 @@ export function computePriceInfo(
 	const totalPrice = sumCurrency(UNDERLYING_CURRENCY, [
 		...items.map((item) => ({
 			currency: (item.customPrice || item.product.price).currency,
-			amount: (item.customPrice || item.product.price).amount * item.quantity
+			amount:
+				(item.customPrice || item.product.price).amount *
+				item.quantity *
+				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
 		})),
 		params.deliveryFees
 	]);

@@ -222,7 +222,7 @@ export async function load(params) {
 			return {
 				product: pojo(productDoc),
 				picture: productPictureDoc,
-				digitalFiles: digitalFilesDoc,
+				digitalFiles: digitalFilesDoc ?? [],
 				quantity: item.quantity,
 				...(item.customPrice && { customPrice: item.customPrice }),
 				...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
