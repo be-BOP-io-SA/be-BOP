@@ -3,8 +3,11 @@ import type { IsUnknown, UnknownArray } from 'type-fest';
 
 export type PojoList<T extends UnknownArray> = T extends readonly []
 	? []
-	: T extends readonly [infer F, ...infer R]
-	? [Pojo<F>, ...PojoList<R>]
+	: // Commented out due to TS infinite instantiation error
+	// : T extends readonly [infer F, ...infer R]
+	// ? [Pojo<F>, ...PojoList<R>]
+	T extends Array<infer F>
+	? Pojo<F>[]
 	: IsUnknown<T[number]> extends true
 	? []
 	: Array<Pojo<T[number]>>;
