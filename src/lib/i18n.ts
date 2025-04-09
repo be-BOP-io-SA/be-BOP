@@ -4,6 +4,7 @@ import { getContext } from 'svelte';
 import { writable, get as storeGet } from 'svelte/store';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from './types/Country';
 import type { OrderAddress } from './types/Order';
+import { FormatDistanceFn } from 'date-fns';
 
 export interface LocaleDictionary {
 	[key: string]: LocaleDictionary | string;
@@ -15,6 +16,7 @@ export type LocalesDictionary = {
 const locale = writable<string>('en');
 
 const data: LocalesDictionary = {};
+const functions: Record<string, { formatDistance: FormatDistanceFn }> = {};
 
 let languagesLoaded = false;
 
@@ -26,8 +28,14 @@ export function useI18n(language?: string) {
 	if (browser) {
 		if (!languagesLoaded) {
 			const languages = 'language' in window ? (window.language as LocalesDictionary) : {};
+			const languageFns =
+				'languageFns' in window
+					? (window.languageFns as Record<string, { formatDistance: FormatDistanceFn }>)
+					: {};
 			for (const entry of Object.entries(languages)) {
-				addTranslations(entry[0], entry[1]);
+				addTranslations(entry[0], entry[1], {
+					formatDistance: languageFns[entry[0]]?.formatDistance
+				});
 			}
 			languagesLoaded = true;
 		}
@@ -35,7 +43,17 @@ export function useI18n(language?: string) {
 		// loaded in hooks.server.ts
 	}
 
-	return { t, locale, countryName, te, sortedCountryCodes, textAddress };
+	return {
+		t,
+		locale,
+		countryName,
+		te,
+		sortedCountryCodes,
+		textAddress,
+		formatDistanceLocale: () => ({
+			formatDistance: functions[storeGet(locale)].formatDistance
+		})
+	};
 }
 
 function textAddress(address: OrderAddress) {
@@ -91,6 +109,11 @@ function t(key: string, params?: Record<string, string | number | undefined>) {
 	return translation.replaceAll(/{(\w+)}/g, (_, key) => String(params?.[key] ?? `{${key}}`));
 }
 
-export function addTranslations(locale: string, translations: LocaleDictionary) {
+export function addTranslations(
+	locale: string,
+	translations: LocaleDictionary,
+	fns: { formatDistance: FormatDistanceFn }
+) {
 	data[locale] = translations;
+	functions[locale] = fns;
 }
