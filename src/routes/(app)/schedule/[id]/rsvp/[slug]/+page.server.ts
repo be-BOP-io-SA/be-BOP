@@ -66,7 +66,7 @@ export const actions = {
 				eventDescription: eventSchedule.description,
 				eventLocationName: eventSchedule.location?.name,
 				eventLocationLink: eventSchedule.location?.link,
-				eventCancellationLink: eventSchedule.rsvp.target
+				eventCancellationLink: eventSchedule.rsvp?.target
 			});
 		}
 		if (!address.includes('@')) {

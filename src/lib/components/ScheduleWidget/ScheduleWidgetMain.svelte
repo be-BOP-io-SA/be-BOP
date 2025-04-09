@@ -121,7 +121,7 @@
 						{t('schedule.moreInfo')}
 					</a>
 				{/if}
-				{#if event.rsvp.target}
+				{#if event.rsvp?.target}
 					<a
 						href="/schedule/{schedule._id}/rsvp/{event.slug}"
 						target="_blank"

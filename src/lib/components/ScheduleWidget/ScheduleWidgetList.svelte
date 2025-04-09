@@ -148,7 +148,7 @@
 						<IconRssFeed />
 					</a>
 					<IcsExport {event} pastEventDelay={schedule.pastEventDelay} />
-					{#if event.rsvp.target}
+					{#if event.rsvp?.target}
 						<a href="/schedule/{schedule._id}/rsvp/{event.slug}" target="_blank" title="rsvp option"
 							>🙋</a
 						>
