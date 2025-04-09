@@ -59,6 +59,7 @@
 		availableDate: undefined,
 		displayShortDescription: false,
 		free: false,
+		hideDiscountExpiration: false,
 		stock: undefined,
 		maxQuantityPerOrder: DEFAULT_MAX_QUANTITY_PER_ORDER,
 		actionSettings: defaultActionSettings,
@@ -697,6 +698,15 @@
 				class="form-checkbox"
 			/>
 			Hide this product from search engines
+		</label>
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="hideDiscountExpiration"
+				checked={product.hideDiscountExpiration}
+				class="form-checkbox"
+			/>
+			Hide discount expiration date
 		</label>
 		<label class="form-label">
 			Short description

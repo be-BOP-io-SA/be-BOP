@@ -45,6 +45,7 @@ export const load = async ({ params, locals }) => {
 			| 'sellDisclaimer'
 			| 'hasSellDisclaimer'
 			| 'hideFromSEO'
+			| 'hideDiscountExpiration'
 		>
 	>(
 		{ _id: params.id },
@@ -89,7 +90,8 @@ export const load = async ({ params, locals }) => {
 					$ifNull: [`$translations.${locals.language}.sellDisclaimer`, '$sellDisclaimer']
 				},
 				hasSellDisclaimer: 1,
-				hideFromSEO: 1
+				hideFromSEO: 1,
+				hideDiscountExpiration: 1
 			}
 		}
 	);

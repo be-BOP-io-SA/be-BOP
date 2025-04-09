@@ -299,7 +299,7 @@
 					<span class="font-semibold">{t('product.vatExcluded')}</span>
 				</div>
 
-				{#if data.discount}
+				{#if data.discount && !data.product.hideDiscountExpiration}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
 						{#if timeDifference === null}
