@@ -12,7 +12,6 @@ import { sumCurrency } from '$lib/utils/sumCurrency';
 import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 import { currencies } from '$lib/stores/currencies';
 import { get } from 'svelte/store';
-import { filterUndef } from '$lib/utils/filterUndef';
 import type { User } from './User';
 
 export interface Cart extends Timestamps {
@@ -208,11 +207,11 @@ export function computePriceInfo(
 
 	const partialVat = sumCurrency(
 		UNDERLYING_CURRENCY,
-		filterUndef([...vat, deliveryFeeVat]).map((vat) => vat.partialPrice)
+		[...vat, deliveryFeeVat].filter((p) => p !== undefined).map((vat) => vat.partialPrice)
 	);
 	const totalVat = sumCurrency(
 		UNDERLYING_CURRENCY,
-		filterUndef([...vat, deliveryFeeVat]).map((vat) => vat.price)
+		[...vat, deliveryFeeVat].filter((p) => p !== undefined).map((vat) => vat.price)
 	);
 	const totalPrice = sumCurrency(UNDERLYING_CURRENCY, [
 		...items.map((item) => ({

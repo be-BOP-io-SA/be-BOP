@@ -35,7 +35,6 @@ import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import type { CountryAlpha2 } from '$lib/types/Country';
-import { filterUndef } from '$lib/utils/filterUndef';
 import type { LanguageKey } from '$lib/translations';
 import { filterNullish } from '$lib/utils/fillterNullish';
 import { toUrlEncoded } from '$lib/utils/toUrlEncoded';
@@ -226,22 +225,21 @@ export async function onOrderPayment(
 								currency: payment.currencySnapshot.secondary.price.currency,
 								amount: sumCurrency(
 									payment.currencySnapshot.secondary.price.currency,
-									filterUndef(
-										order.payments
-											.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-											.map((p) => p.currencySnapshot.secondary?.price)
-									)
+									order.payments
+										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
+										.map((p) => p.currencySnapshot.secondary?.price)
+										.filter((p) => p !== undefined)
 								)
 							},
 							'payments.$.currencySnapshot.secondary.remainingToPay': {
 								currency: payment.currencySnapshot.secondary.price.currency,
 								amount: sumCurrency(payment.currencySnapshot.secondary.price.currency, [
 									order.currencySnapshot.secondary.totalPrice,
-									...filterUndef(
-										order.payments
-											.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-											.map((p) => p.currencySnapshot.secondary?.price)
-									).map((p) => ({ currency: p.currency, amount: -p.amount }))
+									...order.payments
+										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
+										.map((p) => p.currencySnapshot.secondary?.price)
+										.filter((p) => p !== undefined)
+										.map((p) => ({ currency: p.currency, amount: -p.amount }))
 								])
 							},
 							'payments.$.currencySnapshot.secondary.received': {
@@ -259,22 +257,21 @@ export async function onOrderPayment(
 								currency: payment.currencySnapshot.accounting.price.currency,
 								amount: sumCurrency(
 									payment.currencySnapshot.accounting.price.currency,
-									filterUndef(
-										order.payments
-											.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-											.map((p) => p.currencySnapshot.accounting?.price)
-									)
+									order.payments
+										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
+										.map((p) => p.currencySnapshot.accounting?.price)
+										.filter((p) => p !== undefined)
 								)
 							},
 							'payments.$.currencySnapshot.accounting.remainingToPay': {
 								currency: payment.currencySnapshot.accounting.price.currency,
 								amount: sumCurrency(payment.currencySnapshot.accounting.price.currency, [
 									order.currencySnapshot.accounting.totalPrice,
-									...filterUndef(
-										order.payments
-											.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-											.map((p) => p.currencySnapshot.accounting?.price)
-									).map((p) => ({ currency: p.currency, amount: -p.amount }))
+									...order.payments
+										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
+										.map((p) => p.currencySnapshot.accounting?.price)
+										.filter((p) => p !== undefined)
+										.map((p) => ({ currency: p.currency, amount: -p.amount }))
 								])
 							},
 							'payments.$.currencySnapshot.accounting.received': {
