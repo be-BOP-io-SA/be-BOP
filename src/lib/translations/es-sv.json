@@ -645,7 +645,7 @@
 		"digitalFiles": {
 			"title": "Archivos digitales"
 		},
-		"discountBanner": "{discountPercent}% de descuento para {timespan}",
+		"discountBanner": "{discountPercent}% de descuento por {timespan}",
 		"discountBannerNoTime": "{discountPercent}% de descuento",
 		"freeWithSub": "Este producto es gratis con una suscripción mensual",
 		"freeWithTitle": "Gratis con \"xxxxx",
