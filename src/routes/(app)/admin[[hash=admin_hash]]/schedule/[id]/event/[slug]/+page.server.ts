@@ -1,5 +1,6 @@
 import { adminPrefix } from '$lib/server/admin';
 import { collections, withTransaction } from '$lib/server/database';
+import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError.js';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import { error, redirect } from '@sveltejs/kit';
@@ -39,13 +40,13 @@ export const actions = {
 					.string()
 					.regex(/^\d+(\.\d+)?$/)
 					.default('0'),
-				priceCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1)]),
+				priceCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1)]).optional(),
 				stock: z.number({ coerce: true }).int().min(0).optional()
 			})
 			.parse(Object.fromEntries(formData));
 		const priceAmount = !parsed.priceAmount
 			? 0
-			: parsePriceAmount(parsed.priceAmount, parsed.priceCurrency);
+			: parsePriceAmount(parsed.priceAmount, parsed.priceCurrency || runtimeConfig.mainCurrency);
 
 		const shortDescription = parsed.useTitleDateAsShortDesc
 			? `${eventSchedule.title} – ${format(new Date(eventSchedule.beginsAt), 'PPP')}`
@@ -93,7 +94,7 @@ export const actions = {
 						name: eventSchedule?.title,
 						isTicket: true,
 						price: {
-							currency: parsed.priceCurrency,
+							currency: parsed.priceCurrency || runtimeConfig.mainCurrency,
 							amount: priceAmount
 						},
 						type: 'resource',
@@ -103,7 +104,7 @@ export const actions = {
 						availableDate: undefined,
 						preorder: false,
 						shipping: false,
-						free: !!parsed.priceAmount,
+						free: !priceAmount,
 						displayShortDescription: parsed.displayShortDescription,
 						standalone: false,
 						payWhatYouWant: false,

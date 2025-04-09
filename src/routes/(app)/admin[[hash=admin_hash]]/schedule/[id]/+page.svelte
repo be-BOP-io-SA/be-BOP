@@ -177,7 +177,9 @@
 
 									<select name="priceCurrency" class="form-input">
 										{#each CURRENCIES as currency}
-											<option value={currency}>{currency}</option>
+											<option value={currency} selected={data.currencies.main === currency}
+												>{currency}</option
+											>
 										{/each}
 									</select>
 								</label>
