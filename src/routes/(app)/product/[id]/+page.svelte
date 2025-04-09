@@ -91,7 +91,8 @@
 				deposit === 'partial' && data.product.deposit ? data.product.deposit.percentage : undefined,
 			...(data.product.hasVariations && {
 				chosenVariations: selectedVariations
-			})
+			}),
+			discountPercentage: data.discount?.percentage
 		};
 	}
 
