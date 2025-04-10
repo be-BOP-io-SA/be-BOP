@@ -5,7 +5,7 @@ import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintErr
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import { exportToICS } from '$lib/types/Schedule.js';
 import { error } from '@sveltejs/kit';
-import { format } from 'date-fns';
+import { addMinutes, format } from 'date-fns';
 import { z } from 'zod';
 
 export const actions = {
@@ -54,9 +54,15 @@ export const actions = {
 			: eventSchedule.shortDescription || '';
 
 		const ctaLink: { label: string; href: string; fallback?: boolean }[] = [];
+		const ctaLinkFr: { label: string; href: string; fallback?: boolean }[] = [];
 		if (parsed.exportEventToCalendar) {
 			ctaLink.push({
 				label: 'Export to calendar',
+				href: exportToICS(eventSchedule, schedule.pastEventDelay),
+				fallback: false
+			});
+			ctaLinkFr.push({
+				label: 'Exporter',
 				href: exportToICS(eventSchedule, schedule.pastEventDelay),
 				fallback: false
 			});
@@ -67,10 +73,20 @@ export const actions = {
 				href: eventSchedule.location.link,
 				fallback: false
 			});
+			ctaLinkFr.push({
+				label: 'Place',
+				href: eventSchedule.location.link,
+				fallback: false
+			});
 		}
 		if (parsed.CTAForMoreInformation && eventSchedule.url) {
 			ctaLink.push({
 				label: 'More Information',
+				href: eventSchedule.url,
+				fallback: false
+			});
+			ctaLink.push({
+				label: "Plus d'info",
 				href: eventSchedule.url,
 				fallback: false
 			});
@@ -129,6 +145,19 @@ export const actions = {
 							nostr: {
 								visible: true,
 								canBeAddedToBasket: true
+							}
+						},
+						event: {
+							beginsAt: eventSchedule.beginsAt,
+							endsAt:
+								eventSchedule.endsAt || addMinutes(eventSchedule.beginsAt, schedule.pastEventDelay)
+						},
+						translations: {
+							en: {
+								cta: ctaLink
+							},
+							fr: {
+								cta: ctaLinkFr
 							}
 						}
 					},

@@ -95,6 +95,10 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	}[];
 	hasSellDisclaimer?: boolean;
 	hideFromSEO?: boolean;
+	event?: {
+		beginsAt: Date;
+		endsAt: Date;
+	};
 }
 
 export type BasicProductFrontend = Pick<Product, '_id' | 'price' | 'name' | 'variationLabels'>;
