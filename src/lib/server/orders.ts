@@ -1544,7 +1544,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 									100),
 							currency: item.customPrice?.currency || item.product.price.currency
 						}))
-					);
+				  );
 		const amountPerProduct = items.map((item) => ({
 			amount:
 				(item.customPrice?.amount || item.product.price.amount) *
