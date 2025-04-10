@@ -1317,7 +1317,7 @@ export function paymentMethodExpiration(
 		  (opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout) > 60
 		? addHours(new Date(), 1)
 		: addMinutes(new Date(), opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout);
-  }
+}
 
 function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
 	switch (paymentMethod) {
