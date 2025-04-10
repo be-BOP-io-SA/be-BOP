@@ -1544,7 +1544,15 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 									100),
 							currency: item.customPrice?.currency || item.product.price.currency
 						}))
-				  );
+					);
+		const amountPerProduct = items.map((item) => ({
+			amount:
+				(item.customPrice?.amount || item.product.price.amount) *
+				item.quantity *
+				((challenge.globalRatio || challenge.perProductRatio?.[item.product._id] || 100) / 100),
+			currency: item.customPrice?.currency || item.product.price.currency,
+			productName: item.product.name
+		}));
 		if (increase > 0) {
 			await collections.challenges.updateOne(
 				{ _id: challenge._id },
@@ -1555,7 +1563,8 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 							type: 'progress',
 							at: new Date(),
 							order: order._id,
-							amount: increase
+							amount: increase,
+							amountPerProduct
 						}
 					}
 				},
