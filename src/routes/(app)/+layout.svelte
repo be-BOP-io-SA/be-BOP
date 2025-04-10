@@ -203,21 +203,23 @@
 
 				<div class="flex items-center ml-auto gap-2">
 					<div class="flex flex-row relative">
-						<a
-							href="/cart"
-							on:click={(ev) => {
-								const isMobile = window.innerWidth < LARGE_SCREEN;
-								if (!items.length || $page.url.pathname === '/checkout' || isMobile) {
-									return;
-								}
-								cartOpen = !cartOpen;
-								ev.preventDefault();
-							}}
-							class="flex gap-2 items-center"
-						>
-							<IconBasket />
-							{totalItems}
-						</a>
+						{#if !data.disableCartIcon}
+							<a
+								href="/cart"
+								on:click={(ev) => {
+									const isMobile = window.innerWidth < LARGE_SCREEN;
+									if (!items.length || $page.url.pathname === '/checkout' || isMobile) {
+										return;
+									}
+									cartOpen = !cartOpen;
+									ev.preventDefault();
+								}}
+								class="flex gap-2 items-center"
+							>
+								<IconBasket />
+								{totalItems}
+							</a>
+						{/if}
 						{#if $productAddedToCart && !$productAddedToCart.widget}
 							<Popup>
 								<ProductAddedToCart
@@ -299,8 +301,8 @@
 													<h3 class="text-base font-medium">
 														{item.chosenVariations
 															? item.product.name +
-															  ' - ' +
-															  Object.entries(item.chosenVariations)
+																' - ' +
+																Object.entries(item.chosenVariations)
 																	.map(
 																		([key, value]) =>
 																			item.product.variationLabels?.values[key][value]
@@ -326,7 +328,7 @@
 													>{item.depositPercentage
 														? `(${(item.depositPercentage / 100).toLocaleString($locale, {
 																style: 'percent'
-														  })})`
+															})})`
 														: ''}</PriceTag
 												>
 												{#if data.cartPreviewInteractive}

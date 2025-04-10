@@ -98,6 +98,7 @@ const baseConfig = {
 	collectIPOnDeliverylessOrders: false,
 	isBillingAddressMandatory: false,
 	disableLanguageSelector: false,
+	disableCartIcon: false,
 	defaultOnLocation: false,
 	languages: locales,
 	defaultLanguage: 'en' as LanguageKey,

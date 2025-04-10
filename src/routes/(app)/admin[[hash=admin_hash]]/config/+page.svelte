@@ -491,7 +491,16 @@
 		/>
 		Disable language selector
 	</label>
-
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			id="disableCartIcon"
+			name="disableCartIcon"
+			class="form-checkbox"
+			checked={data.disableCartIcon}
+		/>
+		Disable cart icon
+	</label>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
