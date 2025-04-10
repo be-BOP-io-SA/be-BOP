@@ -1545,20 +1545,18 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 							currency: item.customPrice?.currency ?? item.product.price.currency
 						}))
 				  );
+		const incObject: Record<string, number> = {};
+
 		for (const item of items) {
-			await collections.challenges.updateOne(
-				{ _id: challenge._id },
-				{
-					$inc: {
-						[`amountPerProduct.${item.product._id}`]: toCurrency(
-							challenge.goal.currency ?? runtimeConfig.mainCurrency,
-							item.product.price.amount,
-							item.product.price.currency
-						)
-					}
-				}
+			const amount = toCurrency(
+				challenge.goal.currency ?? runtimeConfig.mainCurrency,
+				item.product.price.amount,
+				item.product.price.currency
 			);
+
+			incObject[`amountPerProduct.${item.product._id}`] = amount;
 		}
+
 		if (increase > 0) {
 			await collections.challenges.updateOne(
 				{ _id: challenge._id },
@@ -1569,7 +1567,8 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 							type: 'progress',
 							at: new Date(),
 							order: order._id,
-							amount: increase
+							amount: increase,
+							...incObject
 						}
 					}
 				},
