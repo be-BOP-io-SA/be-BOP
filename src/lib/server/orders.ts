@@ -791,7 +791,7 @@ export async function createOrder(
 			...(shippingPrice
 				? {
 						shippingPrice
-				  }
+					}
 				: undefined),
 			payments: [],
 			notifications: {
@@ -1313,10 +1313,10 @@ export function paymentMethodExpiration(
 	return paymentMethod === 'point-of-sale' || paymentMethod === 'bank-transfer'
 		? undefined
 		: paymentMethod === 'lightning' &&
-		  isPhoenixdConfigured() &&
-		  (opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout) > 60
-		? addHours(new Date(), 1)
-		: addMinutes(new Date(), opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout);
+			  isPhoenixdConfigured() &&
+			  (opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout) > 60
+			? addHours(new Date(), 1)
+			: addMinutes(new Date(), opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout);
 }
 
 function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
@@ -1399,7 +1399,7 @@ export async function addOrderPayment(
 			: {
 					amount: orderAmountWithNoPaymentsCreated(order),
 					currency: mainCurrency
-			  };
+				};
 
 	if (paymentMethod !== 'free' && priceToPay.amount < CURRENCY_UNIT[priceToPay.currency]) {
 		throw error(400, 'Order already fully paid with pending payments');
@@ -1544,7 +1544,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 									100),
 							currency: item.customPrice?.currency ?? item.product.price.currency
 						}))
-				  );
+					);
 		const incObject: Record<string, number> = {};
 
 		for (const item of items) {
@@ -1554,7 +1554,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 				item.product.price.currency
 			);
 
-			incObject[`amountPerProduct.${item.product._id}`] = amount;
+			incObject[`${item.product._id}`] = amount;
 		}
 
 		if (increase > 0) {
@@ -1568,7 +1568,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 							at: new Date(),
 							order: order._id,
 							amount: increase,
-							...incObject
+							amountPerProduct: incObject
 						}
 					}
 				},
@@ -1622,7 +1622,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 							leaderboard.progress[0].currency || 'SAT',
 							(item.customPrice?.amount || item.product.price.amount) * item.quantity,
 							item.customPrice?.currency || item.product.price.currency
-					  );
+						);
 			await collections.leaderboards.updateOne(
 				{ _id: leaderboard._id, 'progress.productId': item.product._id },
 				{
