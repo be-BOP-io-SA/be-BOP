@@ -24,11 +24,7 @@ export type Challenge = Timestamps &
 			type: 'progress';
 			at: Date;
 			order: Order['_id'];
-			amountPerProduct?: {
-				amount: number;
-				currency: Currency;
-				productName: string;
-			}[];
+			amountPerProduct?: Record<string, number>[];
 			amount: number;
 		}[];
 		ratio?: 'total' | 'global' | 'perProduct';

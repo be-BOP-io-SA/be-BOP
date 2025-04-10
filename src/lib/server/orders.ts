@@ -791,7 +791,7 @@ export async function createOrder(
 			...(shippingPrice
 				? {
 						shippingPrice
-				  }
+					}
 				: undefined),
 			payments: [],
 			notifications: {
@@ -1313,10 +1313,10 @@ export function paymentMethodExpiration(
 	return paymentMethod === 'point-of-sale' || paymentMethod === 'bank-transfer'
 		? undefined
 		: paymentMethod === 'lightning' &&
-		  isPhoenixdConfigured() &&
-		  (opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout) > 60
-		? addHours(new Date(), 1)
-		: addMinutes(new Date(), opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout);
+			  isPhoenixdConfigured() &&
+			  (opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout) > 60
+			? addHours(new Date(), 1)
+			: addMinutes(new Date(), opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout);
 }
 
 function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
@@ -1399,7 +1399,7 @@ export async function addOrderPayment(
 			: {
 					amount: orderAmountWithNoPaymentsCreated(order),
 					currency: mainCurrency
-			  };
+				};
 
 	if (paymentMethod !== 'free' && priceToPay.amount < CURRENCY_UNIT[priceToPay.currency]) {
 		throw error(400, 'Order already fully paid with pending payments');
@@ -1538,21 +1538,27 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 						challenge.goal.currency,
 						items.map((item) => ({
 							amount:
-								(item.customPrice?.amount || item.product.price.amount) *
+								(item.customPrice?.amount ?? item.product.price.amount) *
 								item.quantity *
-								((challenge.globalRatio || challenge.perProductRatio?.[item.product._id] || 100) /
+								((challenge.globalRatio ?? challenge.perProductRatio?.[item.product._id] ?? 100) /
 									100),
-							currency: item.customPrice?.currency || item.product.price.currency
+							currency: item.customPrice?.currency ?? item.product.price.currency
 						}))
-				  );
-		const amountPerProduct = items.map((item) => ({
-			amount:
-				(item.customPrice?.amount || item.product.price.amount) *
-				item.quantity *
-				((challenge.globalRatio || challenge.perProductRatio?.[item.product._id] || 100) / 100),
-			currency: item.customPrice?.currency || item.product.price.currency,
-			productName: item.product.name
-		}));
+					);
+		for (const item of items) {
+			await collections.challenges.updateOne(
+				{ _id: challenge._id },
+				{
+					$inc: {
+						[`amountPerProduct.${item.product._id}`]: toCurrency(
+							challenge.goal.currency ?? runtimeConfig.mainCurrency,
+							item.product.price.amount,
+							item.product.price.currency
+						)
+					}
+				}
+			);
+		}
 		if (increase > 0) {
 			await collections.challenges.updateOne(
 				{ _id: challenge._id },
@@ -1563,8 +1569,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 							type: 'progress',
 							at: new Date(),
 							order: order._id,
-							amount: increase,
-							amountPerProduct
+							amount: increase
 						}
 					}
 				},
@@ -1618,7 +1623,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 							leaderboard.progress[0].currency || 'SAT',
 							(item.customPrice?.amount || item.product.price.amount) * item.quantity,
 							item.customPrice?.currency || item.product.price.currency
-					  );
+						);
 			await collections.leaderboards.updateOne(
 				{ _id: leaderboard._id, 'progress.productId': item.product._id },
 				{
