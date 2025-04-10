@@ -1622,7 +1622,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 							leaderboard.progress[0].currency || 'SAT',
 							(item.customPrice?.amount || item.product.price.amount) * item.quantity,
 							item.customPrice?.currency || item.product.price.currency
-						);
+					  );
 			await collections.leaderboards.updateOne(
 				{ _id: leaderboard._id, 'progress.productId': item.product._id },
 				{
