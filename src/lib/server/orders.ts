@@ -1546,7 +1546,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 						}))
 				  );
 		const incObject: Record<string, number> = {};
-   		if (challenge.mode === 'moneyAmount') {
+		if (challenge.mode === 'moneyAmount') {
 			for (const item of items) {
 				const amount = toCurrency(
 					challenge.goal.currency,
