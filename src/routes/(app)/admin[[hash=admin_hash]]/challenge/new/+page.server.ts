@@ -22,7 +22,7 @@ export const actions: Actions = {
 	default: async function ({ request }) {
 		const data = await request.formData();
 
-		const { name, goalAmount, mode, productIds, currency, beginsAt, endsAt } = z
+		const { name, goalAmount, mode, ratio, globalRatio, productIds, currency, beginsAt, endsAt } = z
 			.object({
 				name: z.string().min(1).max(MAX_NAME_LIMIT),
 				productIds: z.string().array(),
@@ -31,6 +31,11 @@ export const actions: Actions = {
 					.regex(/^\d+(\.\d+)?$/)
 					.default('0'),
 				mode: z.enum(['totalProducts', 'moneyAmount']),
+				ratio: z.enum(['total', 'global', 'perProduct']).optional(),
+				globalRatio: z
+					.string()
+					.regex(/^\d+(\.\d+)?$/)
+					.default('0'),
 				currency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1)]).optional(),
 				beginsAt: z.date({ coerce: true }),
 				endsAt: z.date({ coerce: true })
@@ -43,6 +48,8 @@ export const actions: Actions = {
 				goalAmount: data.get('goalAmount'),
 				mode: data.get('mode'),
 				currency: data.get('currency') ?? undefined,
+				ratio: data.get('ratio') ?? undefined,
+				globalRatio: data.get('globalRatio') ?? undefined,
 				beginsAt: data.get('beginsAt'),
 				endsAt: data.get('endsAt')
 			});
@@ -81,7 +88,9 @@ export const actions: Actions = {
 				goal: {
 					amount,
 					currency
-				}
+				},
+				ratio,
+				...(ratio === 'global' && { globalRatio: parseInt(globalRatio) })
 			});
 		} else if (mode === 'totalProducts') {
 			await collections.challenges.insertOne({
@@ -96,6 +105,6 @@ export const actions: Actions = {
 			throw error(400, 'Invalid mode');
 		}
 
-		throw redirect(303, `${adminPrefix()}/challenge`);
+		throw redirect(303, `${adminPrefix()}/challenge/${slug}`);
 	}
 };
