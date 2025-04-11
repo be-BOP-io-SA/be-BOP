@@ -494,12 +494,12 @@
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
-			id="disableCartIcon"
-			name="disableCartIcon"
+			id="hideCartInToolbar"
+			name="hideCartInToolbar"
 			class="form-checkbox"
-			checked={data.disableCartIcon}
+			checked={data.hideCartInToolbar}
 		/>
-		Disable cart icon
+		Hide cart icon in toolbar
 	</label>
 	<label class="checkbox-label">
 		<input

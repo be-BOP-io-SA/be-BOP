@@ -2,11 +2,16 @@ import { checkCartItems } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections, withTransaction } from '$lib/server/database';
 import { refreshAvailableStockInDb } from '$lib/server/product.js';
+import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error, redirect } from '@sveltejs/kit';
 
 export async function load({ parent, locals }) {
+	if (runtimeConfig.hideCartInToolbar) {
+		throw error(403, 'This page is not accessible ');
+	}
+
 	const parentData = await parent();
 
 	if (parentData.cart) {

@@ -203,7 +203,7 @@
 
 				<div class="flex items-center ml-auto gap-2">
 					<div class="flex flex-row relative">
-						{#if !data.disableCartIcon}
+						{#if !data.hideCartInToolbar}
 							<a
 								href="/cart"
 								on:click={(ev) => {
@@ -301,8 +301,8 @@
 													<h3 class="text-base font-medium">
 														{item.chosenVariations
 															? item.product.name +
-															  ' - ' +
-															  Object.entries(item.chosenVariations)
+																' - ' +
+																Object.entries(item.chosenVariations)
 																	.map(
 																		([key, value]) =>
 																			item.product.variationLabels?.values[key][value]
@@ -328,7 +328,7 @@
 													>{item.depositPercentage
 														? `(${(item.depositPercentage / 100).toLocaleString($locale, {
 																style: 'percent'
-														  })})`
+															})})`
 														: ''}</PriceTag
 												>
 												{#if data.cartPreviewInteractive}
