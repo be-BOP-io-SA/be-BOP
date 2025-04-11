@@ -53,18 +53,22 @@ export const actions = {
 			? `${eventSchedule.title} – ${format(new Date(eventSchedule.beginsAt), 'PPP')}`
 			: eventSchedule.shortDescription || '';
 
-		const ctaLink: { label: string; href: string; fallback?: boolean }[] = [];
-		const ctaLinkFr: { label: string; href: string; fallback?: boolean }[] = [];
+		const ctaLink: { label: string; href: string; fallback?: boolean; downloadLink?: string }[] =
+			[];
+		const ctaLinkFr: { label: string; href: string; fallback?: boolean; downloadLink?: string }[] =
+			[];
 		if (parsed.exportEventToCalendar) {
 			ctaLink.push({
 				label: 'Export to calendar',
 				href: exportToICS(eventSchedule, schedule.pastEventDelay),
-				fallback: false
+				fallback: false,
+				downloadLink: `${eventSchedule.title}.ics`
 			});
 			ctaLinkFr.push({
 				label: 'Exporter',
 				href: exportToICS(eventSchedule, schedule.pastEventDelay),
-				fallback: false
+				fallback: false,
+				downloadLink: `${eventSchedule.title}.ics`
 			});
 		}
 		if (parsed.locationUrlCta && eventSchedule.location?.link) {

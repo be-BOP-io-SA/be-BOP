@@ -18,6 +18,7 @@ export interface ProductTranslatableFields {
 		label: string;
 		href: string;
 		fallback?: boolean;
+		downloadLink?: string;
 	}[];
 	externalResources?: {
 		label: string;
