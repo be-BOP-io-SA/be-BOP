@@ -377,7 +377,9 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 				const locale = trimPrefix(config._id, 'translations.');
 				if (typedInclude(locales, locale)) {
 					enhancedLanguages[locale] = merge({}, languages[locale], config.data);
-					addTranslations(locale, enhancedLanguages[locale], formatDistanceLocale[locale]);
+					addTranslations(locale, enhancedLanguages[locale], {
+						formatDistance: formatDistanceLocale[locale]
+					});
 				}
 			}
 		}
