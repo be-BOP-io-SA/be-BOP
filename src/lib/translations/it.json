@@ -676,7 +676,7 @@
 		"exportEventTitle": "File di evento di esportazione",
 		"moreInfo": "Maggiori informazioni",
 		"rsvp": {
-			"notifyCta": "notificare",
+			"notifyCta": "Notificare",
 			"succesfulNotifyMessage": "La tua partecipazione viene notificata con successo al creatore di eventi",
 			"textMessage": "Aggiungi la tua e -mail / npub per avvisare la tua partecipazione all'evento."
 		},
