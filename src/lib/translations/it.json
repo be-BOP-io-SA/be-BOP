@@ -481,6 +481,7 @@
 		"note": {
 			"author": "{alias} (Employee)",
 			"authorCustomer": "Cliente",
+			"authorSystem": "Sistema",
 			"backToOrder": "Vai all'ordine",
 			"label": "Messaggio dell'impiegato",
 			"saveText": "Salva il messaggio",

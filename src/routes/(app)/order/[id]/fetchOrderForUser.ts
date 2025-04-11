@@ -180,6 +180,7 @@ export async function fetchOrderForUser(orderId: string) {
 				content: note.content,
 				createdAt: note.createdAt,
 				isEmployee: note.role !== CUSTOMER_ROLE_ID,
+				isSystem: note.role === null,
 				alias: note.userAlias
 			})) || [],
 		receiptNote: order.receiptNote,

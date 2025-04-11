@@ -481,6 +481,7 @@
 		"note": {
 			"author": "{alias} (werknemer)",
 			"authorCustomer": "Klant",
+			"authorSystem": "Systeem",
 			"backToOrder": "Ga naar bestellen",
 			"label": "Opmerking medewerker",
 			"saveText": "Bewaar notitie",
