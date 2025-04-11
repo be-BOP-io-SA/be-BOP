@@ -17,6 +17,7 @@ import { formatDistance as formatDistanceNl } from 'date-fns/formatDistance/nl';
 import { formatDistance as formatDistanceEs } from 'date-fns/formatDistance/es';
 
 import { typedKeys } from '$lib/utils/typedKeys';
+import type { FormatDistanceFn } from 'date-fns';
 
 export const languages = {
 	en,
@@ -27,11 +28,11 @@ export const languages = {
 };
 
 export const formatDistanceLocale = {
-	en: formatDistanceEn,
-	'es-sv': formatDistanceEs,
-	fr: formatDistanceFr,
-	nl: formatDistanceNl,
-	it: formatDistanceIt
+	en: formatDistanceEn as FormatDistanceFn,
+	'es-sv': formatDistanceEs as FormatDistanceFn,
+	fr: formatDistanceFr as FormatDistanceFn,
+	nl: formatDistanceNl as FormatDistanceFn,
+	it: formatDistanceIt as FormatDistanceFn
 };
 
 /**
