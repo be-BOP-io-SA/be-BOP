@@ -4,8 +4,8 @@
 	import { generateId } from '$lib/utils/generateId';
 
 	export let data;
-	let title: string;
-	let slug: string;
+	let title = '';
+	let slug = '';
 	let displayFrom = false;
 	let mandatoryAgreement = false;
 </script>

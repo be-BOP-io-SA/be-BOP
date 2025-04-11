@@ -12,16 +12,22 @@
 	const scheduleId = $page.url.searchParams.get('scheduleId');
 	const eventScheduleSlug = $page.url.searchParams.get('eventScheduleSlug');
 
-	let files: FileList;
+	let files: FileList | null = null;
 	let fileName = '';
 
 	let submitting = false;
 	let formElement: HTMLFormElement;
 
 	async function checkForm() {
+		if (!files) {
+			alert('Please select a file');
+			return;
+		}
+
 		submitting = true;
 		// Need to load here, or for some reason, some inputs disappear afterwards
 		const formData = new FormData(formElement);
+
 		try {
 			const pictureId = await preUploadPicture(data.adminPrefix, files[0], { fileName });
 
@@ -44,6 +50,14 @@
 			submitting = false;
 		}
 	}
+
+	function onChange() {
+		if (files && files.length > 0) {
+			fileName = files[0].name;
+		} else {
+			fileName = '';
+		}
+	}
 </script>
 
 <h1 class="text-3xl">Add a picture</h1>
@@ -60,13 +74,7 @@
 			<input
 				type="file"
 				bind:files
-				on:change={() => {
-					if (files && files.length > 0) {
-						fileName = files[0].name;
-					} else {
-						fileName = '';
-					}
-				}}
+				on:change={onChange}
 				accept="image/jpeg,image/png,image/webp"
 				class="block"
 				required

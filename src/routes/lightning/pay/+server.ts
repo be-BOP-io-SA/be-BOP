@@ -39,7 +39,7 @@ export const GET = async ({ url }) => {
 		.parse(Object.fromEntries(url.searchParams));
 	const result = await jwtVerify(
 		metadataJwt,
-		Buffer.from(runtimeConfig.lnurlPayMetadataJwtSigningKey)
+		Uint8Array.from(Buffer.from(runtimeConfig.lnurlPayMetadataJwtSigningKey))
 	);
 
 	const { metadata } = z

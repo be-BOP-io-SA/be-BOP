@@ -2,8 +2,8 @@
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 
-	let name: string;
-	let slug: string;
+	let name = '';
+	let slug = '';
 	let pastEventDelay = 60;
 	let displayPastEvents = false;
 	let calendarHasCustomColor = false;

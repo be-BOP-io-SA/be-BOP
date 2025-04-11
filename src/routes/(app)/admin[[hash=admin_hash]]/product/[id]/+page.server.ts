@@ -167,6 +167,7 @@ export const actions: Actions = {
 									currency: parsed.priceCurrency
 								}
 							}),
+						hideDiscountExpiration: parsed.hideDiscountExpiration,
 						standalone: parsed.payWhatYouWant || parsed.standalone,
 						free: parsed.free,
 						...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),

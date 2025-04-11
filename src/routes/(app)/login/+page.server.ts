@@ -33,7 +33,10 @@ export const load = async ({ url }) => {
 
 	if (token) {
 		try {
-			const authLink = await jwtVerify(token, Buffer.from(runtimeConfig.authLinkJwtSigningKey));
+			const authLink = await jwtVerify(
+				token,
+				Uint8Array.from(Buffer.from(runtimeConfig.authLinkJwtSigningKey))
+			);
 
 			const { npub, email } = z
 				.object({
@@ -85,7 +88,10 @@ export const actions = {
 			return fail(400, { error: 'Invalid or expired token' });
 		}
 		try {
-			const authLink = await jwtVerify(token, Buffer.from(runtimeConfig.authLinkJwtSigningKey));
+			const authLink = await jwtVerify(
+				token,
+				Uint8Array.from(Buffer.from(runtimeConfig.authLinkJwtSigningKey))
+			);
 
 			const { npub, email } = z
 				.object({

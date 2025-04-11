@@ -17,7 +17,7 @@ export function mapObject<T extends Record<string, any>, U extends IteratorFunc<
 ): {
 	[key in keyof T]: Awaited<ReturnType<FunctionWithArgs<typeof iteratee, [T[key], key]>>>;
 } {
-	const mappedEntries = typedEntries(o).map(([key, val]) => [key, iteratee(val, key)]);
+	const mappedEntries = typedEntries(o).map(([key, val]) => [key, iteratee(val, key as keyof T)]);
 
 	return Object.fromEntries(mappedEntries);
 }

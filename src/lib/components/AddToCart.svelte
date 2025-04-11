@@ -88,6 +88,7 @@
 				customPrice={$productAddedToCart.customPrice}
 				chosenVariations={$productAddedToCart.chosenVariations}
 				depositPercentage={$productAddedToCart.depositPercentage}
+				discountPercentage={$productAddedToCart.discountPercentage}
 			/>
 		</Popup>
 	{/if}

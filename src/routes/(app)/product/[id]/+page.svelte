@@ -15,7 +15,7 @@
 		productPriceWithVariations
 	} from '$lib/types/Product';
 	import { toCurrency } from '$lib/utils/toCurrency';
-	import { differenceInHours } from 'date-fns';
+	import { formatDistance } from 'date-fns';
 	import { POS_ROLE_ID } from '$lib/types/User';
 	import { useI18n } from '$lib/i18n';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
@@ -28,9 +28,16 @@
 	let quantity = 1;
 	let loading = false;
 	let errorMessage = '';
-	const endsAt = data.discount ? new Date(data.discount.endsAt).getTime() : Date.now(); // Convert to timestamp
-	const currentTime = Date.now();
-	const hoursDifference = differenceInHours(endsAt, currentTime);
+	let currentTime = Date.now();
+	const { t, locale, formatDistanceLocale } = useI18n();
+
+	$: timeDifference =
+		data.discount?.endsAt &&
+		formatDistance(currentTime, data.discount.endsAt, {
+			addSuffix: false,
+			includeSeconds: true,
+			locale: formatDistanceLocale()
+		});
 	let deposit = 'partial';
 
 	const PWYWCurrency =
@@ -84,7 +91,8 @@
 				deposit === 'partial' && data.product.deposit ? data.product.deposit.percentage : undefined,
 			...(data.product.hasVariations && {
 				chosenVariations: selectedVariations
-			})
+			}),
+			discountPercentage: data.discount?.percentage
 		};
 	}
 
@@ -112,7 +120,6 @@
 
 		return true;
 	}
-	const { t, locale } = useI18n();
 	const schema: WithContext<SchemaOrgProduct> = {
 		'@context': `https://schema.org`,
 		'@type': 'Product',
@@ -265,32 +272,51 @@
 			>
 				<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
 				<div class="flex gap-2 lg:flex-col lg:items-start items-center justify-between">
+					<div class="flex gap-4">
+						<PriceTag
+							currency={data.product.price.currency}
+							class="text-2xl lg:text-4xl truncate max-w-full {data.discount ? 'line-through' : ''}"
+							short={!!data.discount}
+							amount={data.product.hasVariations ? customAmount : data.product.price.amount}
+							main
+						/>
+						{#if data.discount}
+							<PriceTag
+								currency={data.product.price.currency}
+								class="text-2xl lg:text-4xl truncate max-w-full"
+								short
+								amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
+									(1 - data.discount.percentage / 100)}
+								main
+							/>
+						{/if}
+					</div>
 					<PriceTag
 						currency={data.product.price.currency}
-						class="text-2xl lg:text-4xl truncate max-w-full"
-						short={false}
-						amount={data.product.hasVariations ? customAmount : data.product.price.amount}
-						main
-					/>
-					<PriceTag
-						currency={data.product.price.currency}
-						amount={data.product.hasVariations ? customAmount : data.product.price.amount}
+						amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
+							(data.discount ? 1 - data.discount.percentage / 100 : 1)}
 						secondary
 						class="text-xl"
 					/>
 					<span class="font-semibold">{t('product.vatExcluded')}</span>
 				</div>
 
-				{#if data.discount}
+				{#if data.discount && !data.product.hideDiscountExpiration}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
-						{t('product.discountBanner', {
-							discountPercentage: data.discount.percentage,
-							hours: hoursDifference
-						})}
+						{#if timeDifference === null}
+							{t('product.discountBannerNoTime', {
+								discountPercent: data.discount.percentage
+							})}
+						{:else}
+							{t('product.discountBanner', {
+								discountPercent: data.discount.percentage,
+								timespan: timeDifference
+							})}
+						{/if}
 					</h3>
 
-					{#if data.discount.percentage === 100}
+					{#if data.discount.percentage === 100 && 0}
 						<hr class="border-gray-300" />
 						<div class="border border-[#F1DA63] bg-[#FFFBD5] p-2 rounded text-base flex gap-2">
 							<IconInfo class="text-[#E4C315]" />

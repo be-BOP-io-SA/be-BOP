@@ -14,7 +14,7 @@ export async function load({ params }) {
 	}
 
 	const beginsAt = discount.beginsAt?.toJSON().slice(0, 10);
-	const endsAt = discount.endsAt.toJSON().slice(0, 10);
+	const endsAt = discount.endsAt?.toJSON().slice(0, 10) ?? '';
 	const subscriptions = await collections.products
 		.find({ type: 'subscription' })
 		.project<Pick<Product, '_id' | 'name'>>({ _id: 1, name: 1 })
@@ -56,7 +56,7 @@ export const actions = {
 				percentage: z.string().regex(/^\d+(\.\d+)?$/),
 				wholeCatalog: z.boolean({ coerce: true }).default(false),
 				beginsAt: z.date({ coerce: true }),
-				endsAt: z.date({ coerce: true })
+				endsAt: z.date({ coerce: true }).optional()
 			})
 			.parse({
 				name: data.get('name'),
@@ -69,7 +69,7 @@ export const actions = {
 				wholeCatalog: data.get('wholeCatalog'),
 				percentage: data.get('percentage'),
 				beginsAt: data.get('beginsAt'),
-				endsAt: data.get('endsAt')
+				endsAt: data.get('endsAt') || undefined
 			});
 
 		await collections.discounts.updateOne(
@@ -84,7 +84,7 @@ export const actions = {
 					wholeCatalog,
 					productIds,
 					beginsAt,
-					endsAt,
+					endsAt: endsAt || null,
 					updatedAt: new Date()
 				}
 			}

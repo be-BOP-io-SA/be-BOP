@@ -481,6 +481,7 @@
 		"note": {
 			"author": "{alias} (Employé)",
 			"authorCustomer": "Client",
+			"authorSystem": "Système",
 			"backToOrder": "Aller à la commande",
 			"label": "Note de l'employé",
 			"saveText": "Enregistrer la note",
@@ -645,7 +646,8 @@
 		"digitalFiles": {
 			"title": "Fichiers téléchargeables"
 		},
-		"discountBanner": "{discountPercent}% de réduction pour {hours}h",
+		"discountBanner": "{discountPercent}% de réduction pendant {timespan}",
+		"discountBannerNoTime": "{discountPercent}% de réduction",
 		"freeWithSub": "Ce produit est disponible gratuitement avec votre abonnement mensuel",
 		"freeWithTitle": "Gratuit avec \"xxxxx",
 		"horsTaxeShort": "HT",

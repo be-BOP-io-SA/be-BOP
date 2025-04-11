@@ -7,7 +7,6 @@ import type { Currency } from '$lib/types/Currency';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import type { Order } from '$lib/types/Order';
 import type { Product } from '$lib/types/Product';
-import { filterUndef } from '$lib/utils/filterUndef';
 import { groupBy } from 'lodash-es';
 import { differenceInSeconds } from 'date-fns';
 import type { WithId } from 'mongodb';
@@ -108,24 +107,22 @@ export async function formatCart(
 			.toArray();
 		const digitalFilesByProductId = groupBy(digitalFiles, 'productId');
 
-		return await Promise.all(
-			cart.items
-				.filter((item) => productById[item.productId])
-				.map(async (item) => {
-					const productDoc = productById[item.productId];
-					if (runtimeConfig.deliveryFees.mode !== 'perItem') {
-						delete productDoc.deliveryFees;
-					}
-					return {
-						product: pojo(productDoc),
-						picture: pictureByProductId[item.productId] || null,
-						digitalFiles: digitalFilesByProductId[item.productId] || [],
-						quantity: item.quantity,
-						depositPercentage: item.depositPercentage,
-						...(item.customPrice && { customPrice: item.customPrice })
-					};
-				})
-		).then((res) => filterUndef(res));
+		return cart.items
+			.filter((item) => productById[item.productId])
+			.map((item) => {
+				const productDoc = productById[item.productId];
+				if (runtimeConfig.deliveryFees.mode !== 'perItem') {
+					delete productDoc.deliveryFees;
+				}
+				return {
+					product: pojo(productDoc),
+					picture: pictureByProductId[item.productId] || null,
+					digitalFiles: digitalFilesByProductId[item.productId] || [],
+					quantity: item.quantity,
+					depositPercentage: item.depositPercentage,
+					...(item.customPrice && { customPrice: item.customPrice })
+				};
+			});
 	}
 
 	return [];

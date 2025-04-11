@@ -107,7 +107,8 @@ export function countryFromIp(ip: string): CountryAlpha2 | undefined {
 			cache.set(ip, result);
 			if (cache.size > 10_000) {
 				// This deletes the oldest entry
-				cache.delete(cache.keys().next().value);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				cache.delete(cache.keys().next().value!);
 			}
 
 			return result;

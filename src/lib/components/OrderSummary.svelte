@@ -19,7 +19,10 @@
 	export { classNames as class };
 	export let order: Pick<Order, 'shippingPrice' | 'vat' | 'discount' | 'currencySnapshot'> & {
 		items: Array<
-			Pick<Order['items'][0], 'currencySnapshot' | 'quantity' | 'depositPercentage'> & {
+			Pick<
+				Order['items'][0],
+				'currencySnapshot' | 'quantity' | 'depositPercentage' | 'discountPercentage'
+			> & {
 				digitalFiles: Array<{ _id: string }>;
 				picture?: Picture;
 				product: Pick<
@@ -103,7 +106,8 @@
 					class="text-2xl truncate"
 					amount={item.quantity *
 						(item.currencySnapshot.main.customPrice?.amount ??
-							item.currencySnapshot.main.price.amount)}
+							item.currencySnapshot.main.price.amount) *
+						(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 					currency={item.currencySnapshot.main.customPrice?.currency ??
 						item.currencySnapshot.main.price.currency}
 				/>
@@ -112,7 +116,8 @@
 						class="text-2xl truncate"
 						amount={item.quantity *
 							(item.currencySnapshot.secondary.customPrice?.amount ??
-								item.currencySnapshot.secondary.price.amount)}
+								item.currencySnapshot.secondary.price.amount) *
+							(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 						currency={item.currencySnapshot.secondary.customPrice?.currency ??
 							item.currencySnapshot.secondary.price.currency}
 					/>

@@ -99,5 +99,6 @@ export const productBaseSchema = () => ({
 	hasSellDisclaimer: z.boolean({ coerce: true }).default(false),
 	sellDisclaimerTitle: z.string().trim().max(60).optional(),
 	sellDisclaimerReason: z.string().trim().max(10_000).optional(),
-	hideFromSEO: z.boolean({ coerce: true }).default(false)
+	hideFromSEO: z.boolean({ coerce: true }).default(false),
+	hideDiscountExpiration: z.boolean({ coerce: true }).default(false)
 });

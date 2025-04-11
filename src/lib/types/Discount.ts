@@ -10,5 +10,5 @@ export interface Discount extends Timestamps {
 	percentage: number;
 	wholeCatalog: boolean;
 	beginsAt: Date;
-	endsAt: Date;
+	endsAt: Date | null;
 }

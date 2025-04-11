@@ -12,6 +12,7 @@
 	export let picture: PictureType | undefined;
 	export let customPrice: { amount: number; currency: Currency } | undefined;
 	export let depositPercentage: number | undefined;
+	export let discountPercentage: number | undefined;
 	export let chosenVariations: Record<string, string> | undefined;
 
 	let className = '';
@@ -40,7 +41,8 @@
 		<PriceTag
 			currency={price.currency}
 			class="text-xl body-secondaryText"
-			amount={(price.amount * (depositPercentage ?? 100)) / 100}
+			amount={((price.amount * (depositPercentage ?? 100)) / 100) *
+				(discountPercentage ? (100 - discountPercentage) / 100 : 1)}
 			main
 			>{depositPercentage
 				? `(${(depositPercentage / 100).toLocaleString($locale, { style: 'percent' })})`

@@ -12,7 +12,6 @@ import { sumCurrency } from '$lib/utils/sumCurrency';
 import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 import { currencies } from '$lib/stores/currencies';
 import { get } from 'svelte/store';
-import { filterUndef } from '$lib/utils/filterUndef';
 import type { User } from './User';
 
 export interface Cart extends Timestamps {
@@ -102,6 +101,7 @@ export function computePriceInfo(
 		quantity: number;
 		customPrice?: Price;
 		depositPercentage?: number;
+		discountPercentage?: number;
 	}>,
 	params: {
 		vatExempted: boolean;
@@ -165,7 +165,9 @@ export function computePriceInfo(
 		const rate = vatProfile?.rates[country] ?? vatRate(country);
 		const currency = (item.customPrice || item.product.price).currency;
 		const price = fixCurrencyRounding(
-			(item.customPrice || item.product.price).amount * item.quantity,
+			(item.customPrice || item.product.price).amount *
+				item.quantity *
+				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
 			currency
 		);
 		const partialPrice = fixCurrencyRounding(
@@ -189,10 +191,11 @@ export function computePriceInfo(
 		...items.map((item) => ({
 			currency: (item.customPrice || item.product.price).currency,
 			amount:
-				((item.customPrice || item.product.price).amount *
+				(((item.customPrice || item.product.price).amount *
 					item.quantity *
 					(item.depositPercentage ?? 100)) /
-				100
+					100) *
+				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
 		})),
 		params.deliveryFees
 	]);
@@ -204,16 +207,19 @@ export function computePriceInfo(
 
 	const partialVat = sumCurrency(
 		UNDERLYING_CURRENCY,
-		filterUndef([...vat, deliveryFeeVat]).map((vat) => vat.partialPrice)
+		[...vat, deliveryFeeVat].filter((p) => p !== undefined).map((vat) => vat.partialPrice)
 	);
 	const totalVat = sumCurrency(
 		UNDERLYING_CURRENCY,
-		filterUndef([...vat, deliveryFeeVat]).map((vat) => vat.price)
+		[...vat, deliveryFeeVat].filter((p) => p !== undefined).map((vat) => vat.price)
 	);
 	const totalPrice = sumCurrency(UNDERLYING_CURRENCY, [
 		...items.map((item) => ({
 			currency: (item.customPrice || item.product.price).currency,
-			amount: (item.customPrice || item.product.price).amount * item.quantity
+			amount:
+				(item.customPrice || item.product.price).amount *
+				item.quantity *
+				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
 		})),
 		params.deliveryFees
 	]);

@@ -1,0 +1,61 @@
+diff --git a/package.json b/package.json
+index b1cd5268084704d4b3842d25bb7438f5c161886a..bcc4ff164903d957880123c1d57af5db8f542fa4 100644
+--- a/package.json
++++ b/package.json
+@@ -19,6 +19,56 @@
+   "jsdelivr": "./cdn.min.js",
+   "exports": {
+     "./package.json": "./package.json",
++    "./formatDistance/en-US": {
++      "require": {
++        "types": "./locale/en-US/_lib/formatDistance.d.ts",
++        "default": "./locale/en-US/_lib/formatDistance.js"
++      },
++      "import": {
++        "types": "./locale/en-US/_lib/formatDistance.d.mts",
++        "default": "./locale/en-US/_lib/formatDistance.mjs"
++      }
++    },
++    "./formatDistance/fr": {
++      "require": {
++        "types": "./locale/fr/_lib/formatDistance.d.ts",
++        "default": "./locale/fr/_lib/formatDistance.js"
++      },
++      "import": {
++        "types": "./locale/fr/_lib/formatDistance.d.mts",
++        "default": "./locale/fr/_lib/formatDistance.mjs"
++      }
++    },
++    "./formatDistance/it": {
++      "require": {
++        "types": "./locale/it/_lib/formatDistance.d.ts",
++        "default": "./locale/it/_lib/formatDistance.js"
++      },
++      "import": {
++        "types": "./locale/it/_lib/formatDistance.d.mts",
++        "default": "./locale/it/_lib/formatDistance.mjs"
++      }
++    },
++    "./formatDistance/nl": {
++      "require": {
++        "types": "./locale/nl/_lib/formatDistance.d.ts",
++        "default": "./locale/nl/_lib/formatDistance.js"
++      },
++      "import": {
++        "types": "./locale/nl/_lib/formatDistance.d.mts",
++        "default": "./locale/nl/_lib/formatDistance.mjs"
++      }
++    },
++    "./formatDistance/es": {
++      "require": {
++        "types": "./locale/es/_lib/formatDistance.d.ts",
++        "default": "./locale/es/_lib/formatDistance.js"
++      },
++      "import": {
++        "types": "./locale/es/_lib/formatDistance.d.mts",
++        "default": "./locale/es/_lib/formatDistance.mjs"
++      }
++    },
+     ".": {
+       "require": {
+         "types": "./index.d.ts",

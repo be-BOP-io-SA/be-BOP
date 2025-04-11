@@ -13,6 +13,7 @@ import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { S3_BUCKET } from '$env/static/private';
 import * as mimeTypes from 'mime-types';
 import type { ImageData, Picture, TagType } from '../types/Picture';
+import type { SetRequired } from 'type-fest';
 
 /**
  * Upload picture to S3 under different formats, and create a document in db.pictures.
@@ -240,7 +241,7 @@ export async function deletePicture(pictureId: Picture['_id']) {
 
 export function picturesForProducts(productIds: string[]): Promise<Picture[]> {
 	return collections.pictures
-		.aggregate<Picture>([
+		.aggregate<SetRequired<Picture, 'productId'>>([
 			{ $match: { productId: { $in: productIds } } },
 			{ $sort: { createdAt: 1 } },
 			{

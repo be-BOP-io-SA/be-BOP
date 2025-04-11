@@ -45,6 +45,7 @@ export const load = async ({ params, locals }) => {
 			| 'sellDisclaimer'
 			| 'hasSellDisclaimer'
 			| 'hideFromSEO'
+			| 'hideDiscountExpiration'
 		>
 	>(
 		{ _id: params.id },
@@ -89,7 +90,8 @@ export const load = async ({ params, locals }) => {
 					$ifNull: [`$translations.${locals.language}.sellDisclaimer`, '$sellDisclaimer']
 				},
 				hasSellDisclaimer: 1,
-				hideFromSEO: 1
+				hideFromSEO: 1,
+				hideDiscountExpiration: 1
 			}
 		}
 	);
@@ -113,20 +115,35 @@ export const load = async ({ params, locals }) => {
 	const subscriptions = await collections.paidSubscriptions
 		.find({
 			...userQuery(userIdentifier(locals)),
-			productId: product._id,
 			paidUntil: { $gt: new Date() }
 		})
 		.toArray();
-	const discount = await collections.discounts.findOne(
-		{
-			$or: [{ wholeCatalog: true }, { productIds: product._id }],
-			subscriptionIds: { $in: subscriptions.map((sub) => sub.productId) },
-			endsAt: { $gt: new Date() }
-		},
-		{
-			sort: { percentage: -1 }
-		}
-	);
+	const discount = subscriptions.length
+		? await collections.discounts.findOne(
+				{
+					$or: [{ wholeCatalog: true }, { productIds: product._id }],
+					subscriptionIds: { $in: subscriptions.map((sub) => sub.productId) },
+					beginsAt: {
+						$lt: new Date()
+					},
+					$and: [
+						{
+							$or: [
+								{
+									endsAt: { $gt: new Date() }
+								},
+								{
+									endsAt: null
+								}
+							]
+						}
+					]
+				},
+				{
+					sort: { percentage: -1 }
+				}
+		  )
+		: null;
 
 	return {
 		product,
