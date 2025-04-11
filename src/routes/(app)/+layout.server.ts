@@ -214,6 +214,7 @@ export async function load(params) {
 		cart: cartData,
 		confirmationBlocksThresholds: runtimeConfig.confirmationBlocksThresholds,
 		cartMaxSeparateItems: runtimeConfig.cartMaxSeparateItems,
+		physicalCartMinAmount: runtimeConfig.physicalCartMinAmount,
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
 		hideCmsZonesOnMobile: runtimeConfig.hideCmsZonesOnMobile,
 		notResponsive: runtimeConfig.viewportFor === 'no-one' ? true : false,
