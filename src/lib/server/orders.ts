@@ -1568,7 +1568,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 							type: 'progress',
 							at: new Date(),
 							order: order._id,
-							amount: increase,
+							amount: increase
 						}
 					}
 				},
