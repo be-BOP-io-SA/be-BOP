@@ -12,16 +12,22 @@
 	const scheduleId = $page.url.searchParams.get('scheduleId');
 	const eventScheduleSlug = $page.url.searchParams.get('eventScheduleSlug');
 
-	let files = new FileList();
+	let files: FileList | null = null;
 	let fileName = '';
 
 	let submitting = false;
 	let formElement: HTMLFormElement;
 
 	async function checkForm() {
+		if (!files) {
+			alert('Please select a file');
+			return;
+		}
+
 		submitting = true;
 		// Need to load here, or for some reason, some inputs disappear afterwards
 		const formData = new FormData(formElement);
+
 		try {
 			const pictureId = await preUploadPicture(data.adminPrefix, files[0], { fileName });
 

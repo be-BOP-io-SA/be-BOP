@@ -5,11 +5,15 @@
 	const productId = $page.url.searchParams.get('productId');
 	export let data;
 
-	let files: FileList = new FileList();
+	let files: FileList | null = null;
 	let name = '';
 
 	let uploading = false;
 	async function handleSubmit() {
+		if (!files || files.length === 0) {
+			alert('Please select a file');
+			return;
+		}
 		try {
 			uploading = true;
 			const fileSize = files[0].size;

@@ -11,11 +11,11 @@
 	let name = $page.url.searchParams.get('id')?.replaceAll('-', ' ') ?? '';
 	let slug = pageId ?? '';
 	let formElement: HTMLFormElement;
-	let fileMainPicture = new FileList();
-	let fileFullPicture = new FileList();
-	let fileWideBanner = new FileList();
-	let fileSlimBanner = new FileList();
-	let fileAvatar = new FileList();
+	let fileMainPicture: FileList | null = null;
+	let fileFullPicture: FileList | null = null;
+	let fileWideBanner: FileList | null = null;
+	let fileSlimBanner: FileList | null = null;
+	let fileAvatar: FileList | null = null;
 	let tagCtaLines = 2;
 	let submitting = false;
 	async function handleSubmit() {

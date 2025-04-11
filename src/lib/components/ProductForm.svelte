@@ -90,7 +90,7 @@
 	let submitting = false;
 	let sellDisclaimerTitle = product.sellDisclaimer?.title || '';
 	let sellDisclaimerReason = product.sellDisclaimer?.reason || '';
-	let files: FileList = new FileList();
+	let files: FileList | null = null;
 	let deposit = product.deposit || {
 		percentage: 50,
 		enforce: false
@@ -158,6 +158,10 @@
 				seen.add(key);
 			}
 			if (!duplicateFromId && isNew) {
+				if (!files) {
+					errorMessage = 'Please upload a picture';
+					return;
+				}
 				const pictureId = await preUploadPicture(adminPrefix, files[0], { fileName: product.name });
 
 				formData.set('pictureId', pictureId);
