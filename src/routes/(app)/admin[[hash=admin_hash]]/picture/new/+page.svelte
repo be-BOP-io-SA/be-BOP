@@ -50,6 +50,14 @@
 			submitting = false;
 		}
 	}
+
+	function onChange() {
+		if (files && files.length > 0) {
+			fileName = files[0].name;
+		} else {
+			fileName = '';
+		}
+	}
 </script>
 
 <h1 class="text-3xl">Add a picture</h1>
@@ -66,13 +74,7 @@
 			<input
 				type="file"
 				bind:files
-				on:change={() => {
-					if (files && files.length > 0) {
-						fileName = files[0].name;
-					} else {
-						fileName = '';
-					}
-				}}
+				on:change={onChange}
 				accept="image/jpeg,image/png,image/webp"
 				class="block"
 				required
