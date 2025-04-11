@@ -40,7 +40,7 @@ export async function load(params) {
 	const [logoPictureDark, footerPicture, vatProfiles, cartData] = await Promise.all([
 		runtimeConfig.logo.darkModePictureId
 			? (await collections.pictures.findOne({ _id: runtimeConfig.logo.darkModePictureId })) ||
-			  logoPicture
+				logoPicture
 			: logoPicture,
 		runtimeConfig.footerLogoId
 			? (await collections.pictures.findOne({ _id: runtimeConfig.footerLogoId })) || undefined
@@ -137,7 +137,7 @@ export async function load(params) {
 							};
 						}
 					})
-			  ).then((res) => filterUndef(res))
+				).then((res) => filterUndef(res))
 			: null
 	]);
 	let cmsAgewall: CMSPage | null = null;
@@ -214,6 +214,7 @@ export async function load(params) {
 		cart: cartData,
 		confirmationBlocksThresholds: runtimeConfig.confirmationBlocksThresholds,
 		cartMaxSeparateItems: runtimeConfig.cartMaxSeparateItems,
+		physicalCartMinAmount: runtimeConfig.physicalCartMinAmount,
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
 		hideCmsZonesOnMobile: runtimeConfig.hideCmsZonesOnMobile,
 		notResponsive: runtimeConfig.viewportFor === 'no-one' ? true : false,

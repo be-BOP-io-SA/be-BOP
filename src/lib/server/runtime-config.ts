@@ -198,6 +198,7 @@ const baseConfig = {
 	hideFromSearchEngines: false,
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,
+	physicalCartMinAmount: null as null | number,
 	websiteTitle: 'B2Bitcoin be-BOP',
 	websiteShortDescription: "B2Bitcoin's be-BOP store",
 	emailTemplates: {

@@ -17,6 +17,7 @@
 	let vatSingleCountry = data.vatSingleCountry;
 	let priceReferenceCurrency = data.currencies.priceReference;
 	let hasCartLimitProductLine = !!data.cartMaxSeparateItems;
+	let hasPhysicalCartMinAmount = !!data.physicalCartMinAmount;
 	async function onOverwrite(event: Event) {
 		if (!confirm('Do you want to overwrite current product currencies with this one?')) {
 			event.preventDefault();
@@ -223,6 +224,15 @@
 		/>
 		Remove be-BOP logo from POS QR code
 	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="hasPhysicalCartMinAmount"
+			class="form-checkbox"
+			bind:checked={hasPhysicalCartMinAmount}
+		/>
+		Minimum cart amount for cart with physical
+	</label>
 
 	{#if hasCartLimitProductLine}
 		<label class="form-label">
@@ -232,6 +242,18 @@
 				name="cartMaxSeparateItems"
 				class="form-input max-w-[25rem]"
 				value={data.cartMaxSeparateItems}
+				min="1"
+			/>
+		</label>
+	{/if}
+	{#if hasPhysicalCartMinAmount}
+		<label class="form-label">
+			Set minimum cart amount for cart with physical (en {data.currencies.main})
+			<input
+				type="number"
+				name="physicalCartMinAmount"
+				class="form-input max-w-[25rem]"
+				value={data.physicalCartMinAmount}
 				min="1"
 			/>
 		</label>
