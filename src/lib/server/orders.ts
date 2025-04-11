@@ -1546,17 +1546,18 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 						}))
 				  );
 		const incObject: Record<string, number> = {};
+   		if (challenge.mode === 'moneyAmount') {
+			for (const item of items) {
+				const amount = toCurrency(
+					challenge.goal.currency,
+					item.product.price.amount,
+					item.product.price.currency
+				);
 
-		for (const item of items) {
-			const amount = toCurrency(
-				challenge.goal.currency ?? runtimeConfig.mainCurrency,
-				item.product.price.amount,
-				item.product.price.currency
-			);
-
-			incObject[`${item.product._id}`] = amount;
+				const key = item.product._id;
+				incObject[key] = (incObject[key] || 0) + amount;
+			}
 		}
-
 		if (increase > 0) {
 			await collections.challenges.updateOne(
 				{ _id: challenge._id },
