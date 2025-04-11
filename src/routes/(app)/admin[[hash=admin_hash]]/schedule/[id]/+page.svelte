@@ -22,7 +22,7 @@
 	let endsAt: string[] = [];
 	let limitedStock = false;
 	let nonFreePrice = false;
-	let errorMessage = '';
+	let errorMessage = data.schedule.events.map(() => '');
 	let loading = false;
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this schedule?')) {
@@ -119,8 +119,8 @@
 				>🗑️</button
 			>
 		</h1>
-		{#if errorMessage}
-			<p class="text-red-500">{errorMessage}</p>
+		{#if errorMessage[i]}
+			<p class="text-red-500">{errorMessage[i]}</p>
 		{/if}
 		{#if data.schedule.events && data.schedule.events.length >= i + 1}
 			{#if !data.schedule.events[i].productId || !data.schedule.events[i].url?.startsWith('/product')}
@@ -129,12 +129,12 @@
 					method="post"
 					class="flex flex-col gap-4"
 					use:enhance={() => {
-						errorMessage = '';
+						errorMessage[i] = '';
 						return async ({ result }) => {
 							loading = false;
 
 							if (result.type === 'error') {
-								errorMessage = result.error.message;
+								errorMessage[i] = result.error.message;
 								return;
 							}
 							if (result.type === 'success' && result.data?.['redirectUrl']) {
