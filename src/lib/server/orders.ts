@@ -1057,33 +1057,35 @@ export async function createOrder(
 					})
 				}
 			},
-			...(params.note && {
-				notes: [
-					...(items.some((item) => item.discountPercentage)
-						? [
-								{
-									content: `Discount applied: ${items
-										.filter((item) => item.discountPercentage)
-										.map(
-											(item) =>
-												`${item.product.name} (${item.product._id}): ${item.discountPercentage}%`
-										)
-										.join(', ')} because of subscription ${usedSubIds.join(', ')}`,
-									createdAt: new Date(),
-									role: null
-								}
-						  ]
-						: []),
-					{
-						content: params.note,
-						createdAt: new Date(),
-						role: params.user.userRoleId || CUSTOMER_ROLE_ID,
-						...(params.user && { userId: params.user.userId }),
-						...(npubAddress && { npub: npubAddress }),
-						...(email && { email })
-					}
-				]
-			}),
+			notes: [
+				...(items.some((item) => item.discountPercentage)
+					? [
+							{
+								content: `Discount applied: ${items
+									.filter((item) => item.discountPercentage)
+									.map(
+										(item) =>
+											`${item.product.name} (${item.product._id}): ${item.discountPercentage}%`
+									)
+									.join(', ')} because of subscription ${usedSubIds.join(', ')}`,
+								createdAt: new Date(),
+								role: null
+							}
+					  ]
+					: []),
+				...(params.note
+					? [
+							{
+								content: params.note,
+								createdAt: new Date(),
+								role: params.user.userRoleId || CUSTOMER_ROLE_ID,
+								...(params.user && { userId: params.user.userId }),
+								...(npubAddress && { npub: npubAddress }),
+								...(email && { email })
+							}
+					  ]
+					: [])
+			],
 			...(params.receiptNote && { receiptNote: params.receiptNote }),
 			...(params.reasonOfferDeliveryFees && {
 				deliveryFeesFree: {
