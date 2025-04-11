@@ -8,7 +8,10 @@ import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error, redirect } from '@sveltejs/kit';
 
 export async function load({ parent, locals }) {
-	if (runtimeConfig.hideCartInToolbar) {
+	if (
+		runtimeConfig.hideCartInToolbar &&
+		(locals.user?.roleId === undefined || locals.user.roleId === CUSTOMER_ROLE_ID)
+	) {
 		throw error(403, 'This page is not accessible ');
 	}
 
