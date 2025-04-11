@@ -7,6 +7,7 @@
 
 	export let data;
 	let mode = 'moneyAmount';
+	let ratio = 'total';
 	let beginsAt = new Date().toJSON().slice(0, 10);
 	let endsAt = addMonths(new Date(), 30).toJSON().slice(0, 10);
 	let endsAtElement: HTMLInputElement;
@@ -61,14 +62,30 @@
 	</label>
 	{#if mode === 'moneyAmount'}
 		<label class="form-label w-full">
-			currency
+			Currency
 			<select name="currency" class="form-input">
 				{#each CURRENCIES as currency}
 					<option value={currency}>{currency}</option>
 				{/each}
 			</select>
 		</label>
+		<label class="form-label w-full">
+			Ratio
+			<select name="ratio" class="form-input" bind:value={ratio}>
+				{#each ['total', 'global', 'perProduct'] as ratio}
+					<option value={ratio}>{ratio === 'total' ? upperFirst(ratio) : `Ratio (${ratio})`}</option
+					>
+				{/each}
+			</select>
+		</label>
+		{#if ratio === 'global'}
+			<label class="form-label">
+				Ratio value (global)
+				<input class="form-input" type="number" name="globalRatio" min="0" max="100" required />
+			</label>
+		{/if}
 	{/if}
+
 	<div class="flex flex-wrap gap-4">
 		<label class="form-label">
 			Beginning date

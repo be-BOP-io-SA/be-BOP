@@ -22,10 +22,11 @@
 	$: beginsAtISO = new Date(beginsAt).toISOString();
 	$: endsAtISO = new Date(endsAt).toISOString();
 
-	$: console.log(beginsAtISO, endsAtISO);
-
+	let ratio = data.challenge.ratio || 'total';
 	let endsAtElement: HTMLInputElement;
 	let progressChanged = false;
+	let globalRatioDisable = true;
+
 	function checkForm(event: SubmitEvent) {
 		if (endsAt < beginsAt) {
 			endsAtElement.setCustomValidity('End date must be after beginning date');
@@ -96,6 +97,36 @@
 				{/each}
 			</select>
 		</label>
+		<label class="form-label w-full">
+			Ratio
+			<select name="ratio" class="form-input" value={ratio} disabled>
+				{#each ['total', 'global', 'perProduct'] as ratio}
+					<option value={ratio}>{ratio === 'total' ? upperFirst(ratio) : `Ratio (${ratio})`}</option
+					>
+				{/each}
+			</select>
+		</label>
+		{#if data.challenge.ratio === 'global'}
+			<div class="grid grid-cols-2 gap-4">
+				<label class="form-label">
+					Ratio value (global)
+					<input
+						class="form-input"
+						type="number"
+						name="globalRatio"
+						min="0"
+						max="100"
+						required
+						disabled={globalRatioDisable}
+						value={data.challenge.globalRatio}
+					/>
+				</label>
+				<label class="checkbox-label">
+					<input class="form-checkbox" type="checkbox" bind:checked={globalRatioDisable} />
+					🔐
+				</label>
+			</div>
+		{/if}
 	{/if}
 	<label class="checkbox-label">
 		<input
