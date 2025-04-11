@@ -515,6 +515,7 @@
 									? 'break-all'
 									: ''} "
 								target={cta.href.startsWith('http') ? '_blank' : '_self'}
+								download={cta.downloadLink ?? ''}
 							>
 								{cta.label}
 							</a>
@@ -527,6 +528,7 @@
 									? 'break-all'
 									: ''} "
 								target={cta.href.startsWith('http') ? '_blank' : '_self'}
+								download={cta.downloadLink ?? ''}
 							>
 								{cta.label}
 							</a>
