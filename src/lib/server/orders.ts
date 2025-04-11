@@ -1554,7 +1554,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 					item.product.price.currency
 				);
 
-				const key = item.product._id;
+				const key = `amountPerProduct.${item.product._id}`;
 				incObject[key] = (incObject[key] || 0) + amount;
 			}
 		}
@@ -1562,14 +1562,13 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 			await collections.challenges.updateOne(
 				{ _id: challenge._id },
 				{
-					$inc: { progress: increase },
+					$inc: { progress: increase, ...incObject },
 					$push: {
 						event: {
 							type: 'progress',
 							at: new Date(),
 							order: order._id,
 							amount: increase,
-							amountPerProduct: incObject
 						}
 					}
 				},

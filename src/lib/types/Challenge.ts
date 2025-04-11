@@ -20,11 +20,11 @@ export type Challenge = Timestamps &
 
 		beginsAt: Date;
 		endsAt: Date;
+		amountPerProduct?: Record<string, number>;
 		event?: {
 			type: 'progress';
 			at: Date;
 			order: Order['_id'];
-			amountPerProduct?: Record<string, number>;
 			amount: number;
 		}[];
 		ratio?: 'total' | 'global' | 'perProduct';
