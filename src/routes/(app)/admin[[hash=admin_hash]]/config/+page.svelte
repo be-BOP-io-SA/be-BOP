@@ -513,7 +513,16 @@
 		/>
 		Disable language selector
 	</label>
-
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			id="hideCartInToolbar"
+			name="hideCartInToolbar"
+			class="form-checkbox"
+			checked={data.hideCartInToolbar}
+		/>
+		Hide cart icon in toolbar
+	</label>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"

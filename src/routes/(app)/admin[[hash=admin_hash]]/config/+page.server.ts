@@ -39,7 +39,8 @@ export async function load(event) {
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,
 		removeBebopLogoPOS: runtimeConfig.removeBebopLogoPOS,
 		overwriteCreditCardSvgColor: runtimeConfig.overwriteCreditCardSvgColor,
-		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode
+		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode,
+		hideCartInToolbar: runtimeConfig.hideCartInToolbar
 	};
 }
 
@@ -94,6 +95,7 @@ export const actions = {
 				cartMaxSeparateItems: z.number({ coerce: true }).int().default(0),
 				physicalCartMinAmount: z.number({ coerce: true }).int().default(0),
 				disableLanguageSelector: z.boolean({ coerce: true }),
+				hideCartInToolbar: z.boolean({ coerce: true }),
 				contactModes: z.string().array(),
 				contactModesForceOption: z.boolean({ coerce: true }),
 				cartPreviewInteractive: z.boolean({ coerce: true }),
