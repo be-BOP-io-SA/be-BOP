@@ -238,7 +238,6 @@
 									customPrice={$productAddedToCart.customPrice}
 									chosenVariations={$productAddedToCart.chosenVariations}
 									depositPercentage={$productAddedToCart.depositPercentage}
-									physicalCartCanBeOrdered
 								/>
 							</Popup>
 						{:else if cartOpen}
