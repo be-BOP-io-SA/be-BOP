@@ -490,7 +490,9 @@ const migrations = [
 			await collections.runtimeConfig.insertOne(
 				{
 					_id: 'analyticsScriptSnippet',
-					data: `<script defer data-domain="${new URL(ORIGIN).hostname}" src="${old.data}" data-exclude="/admin/*, /admin-*"></script>`,
+					data: `<script defer data-domain="${new URL(ORIGIN).hostname}" src="${
+						old.data
+					}" data-exclude="/admin/*, /admin-*"></script>`,
 					updatedAt: old.updatedAt
 				},
 				{ session }
