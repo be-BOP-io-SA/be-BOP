@@ -123,7 +123,7 @@
 				<a
 					href={link.href}
 					class="{$page.url.pathname.startsWith(link.href) ? 'underline' : ''} 
-					{(link.label === 'Bitcoin core node' && !data.isBitcoinConfigured) ||
+					{(link.href === '/admin/bitcoind' && !data.isBitcoinConfigured) ||
 					(link.href === '/admin/lnd' && !data.isLightningConfigured)
 						? 'hidden'
 						: ''}"
