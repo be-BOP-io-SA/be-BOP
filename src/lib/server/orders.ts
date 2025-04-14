@@ -1644,17 +1644,33 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 						challenge.goal.currency,
 						items.map((item) => ({
 							amount:
-								(item.customPrice?.amount || item.product.price.amount) *
+								(item.customPrice?.amount ?? item.product.price.amount) *
 								item.quantity *
+								(challenge.perProductRatio?.[item.product._id] ??
+									(challenge.globalRatio ?? 100) / 100) *
 								(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
-							currency: item.customPrice?.currency || item.product.price.currency
+							currency: item.customPrice?.currency ?? item.product.price.currency
 						}))
 				  );
+		const incObject: Record<string, number> = {};
+		if (challenge.mode === 'moneyAmount') {
+			for (const item of items) {
+				const amount =
+					toCurrency(
+						challenge.goal.currency,
+						item.product.price.amount,
+						item.product.price.currency
+					) * (item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1);
+
+				const key = `amountPerProduct.${item.product._id}`;
+				incObject[key] = (incObject[key] || 0) + amount;
+			}
+		}
 		if (increase > 0) {
 			await collections.challenges.updateOne(
 				{ _id: challenge._id },
 				{
-					$inc: { progress: increase },
+					$inc: { progress: increase, ...incObject },
 					$push: {
 						event: {
 							type: 'progress',

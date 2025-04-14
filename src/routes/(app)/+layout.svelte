@@ -203,21 +203,23 @@
 
 				<div class="flex items-center ml-auto gap-2">
 					<div class="flex flex-row relative">
-						<a
-							href="/cart"
-							on:click={(ev) => {
-								const isMobile = window.innerWidth < LARGE_SCREEN;
-								if (!items.length || $page.url.pathname === '/checkout' || isMobile) {
-									return;
-								}
-								cartOpen = !cartOpen;
-								ev.preventDefault();
-							}}
-							class="flex gap-2 items-center"
-						>
-							<IconBasket />
-							{totalItems}
-						</a>
+						{#if !data.hideCartInToolbar}
+							<a
+								href="/cart"
+								on:click={(ev) => {
+									const isMobile = window.innerWidth < LARGE_SCREEN;
+									if (!items.length || $page.url.pathname === '/checkout' || isMobile) {
+										return;
+									}
+									cartOpen = !cartOpen;
+									ev.preventDefault();
+								}}
+								class="flex gap-2 items-center"
+							>
+								<IconBasket />
+								{totalItems}
+							</a>
+						{/if}
 						{#if $productAddedToCart && !$productAddedToCart.widget}
 							<Popup>
 								<ProductAddedToCart
