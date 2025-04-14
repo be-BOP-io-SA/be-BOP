@@ -7,9 +7,13 @@ import { z } from 'zod';
 export async function GET({ params }) {
 	const docsDir = join(rootDir, 'docs');
 
+	const validFolderNameRegex = /^[a-z]{2}(-[a-z]{2})?$/i;
 	const availableLangs = fs
 		.readdirSync(docsDir)
-		.filter((folder) => fs.statSync(join(docsDir, folder)).isDirectory());
+		.filter(
+			(folder) =>
+				validFolderNameRegex.test(folder) && fs.statSync(join(docsDir, folder)).isDirectory()
+		);
 
 	const langSchema = z.enum(availableLangs as [string, ...string[]]);
 	let lang: string;

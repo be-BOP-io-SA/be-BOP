@@ -1,10 +1,11 @@
-import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
-import { error, redirect } from '@sveltejs/kit';
-import { adminPrefix } from '$lib/server/admin';
-import { z } from 'zod';
 import fs from 'fs';
-import path from 'path';
-import { runtimeConfig } from '$lib/server/runtime-config.js';
+import { join } from 'path';
+import { redirect, error } from '@sveltejs/kit';
+import { z } from 'zod';
+import { adminPrefix } from '$lib/server/admin';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { runtimeConfig } from '$lib/server/runtime-config';
+import { rootDir } from '$lib/server/root-dir.js';
 
 export async function load({ url, locals }) {
 	if (!locals.user) {
@@ -15,22 +16,39 @@ export async function load({ url, locals }) {
 		throw error(403, 'This page is only accessible to administrators');
 	}
 
+	const docsRootPath = join(rootDir, 'docs');
+	const availableLangs = fs
+		.readdirSync(docsRootPath, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => entry.name);
+
+	if (availableLangs.length === 0) {
+		throw error(500, 'No documentation folders available');
+	}
+
 	const querySchema = z.object({
-		lang: z
-			.string()
-			.regex(/^[a-z]{2}(-[a-z]{2})?$/i, 'Invalid language format')
-			.default('en')
+		lang: z.enum(availableLangs as [string, ...string[]]).default('en')
 	});
 
 	const searchParams = Object.fromEntries(url.searchParams.entries());
-	const result = querySchema.parse(searchParams);
-	const { lang } = result;
-	const docsPath = path.resolve('docs', lang);
+	const result = querySchema.safeParse(searchParams);
+
+	if (!result.success) {
+		throw error(400, 'Invalid lang param. Allowed values: ' + availableLangs.join(', '));
+	}
+
+	const { lang } = result.data;
+	const docsPath = join(docsRootPath, lang);
 
 	try {
 		const files = fs.readdirSync(docsPath).filter((file) => file.endsWith('.md'));
-		return { files, lang, adminWelcomMessage: runtimeConfig.adminWelcomMessage };
+		return {
+			files,
+			lang,
+			adminWelcomMessage: runtimeConfig.adminWelcomMessage
+		};
 	} catch (err) {
-		throw error(404, `Error while fetching file ${err}`);
+		console.error(`Error reading files from docs/${lang}`, err);
+		throw error(404, `Unable to load documentation files for "${lang}"`);
 	}
 }
