@@ -4,6 +4,7 @@ import { marked } from 'marked';
 import { env } from '$env/dynamic/private';
 import type { OrderPayment } from '$lib/types/Order';
 import { Lock } from './lock';
+import { ORIGIN } from '$env/static/private';
 
 const migrations = [
 	{
@@ -466,6 +467,33 @@ const migrations = [
 							canBeAddedToBasket: true
 						}
 					}
+				},
+				{ session }
+			);
+		}
+	},
+	{
+		_id: new ObjectId('67fd2c1f33909ff6cd56839b'),
+		name: 'Replace plausibleScriptUrl with analyticsScriptSnippet',
+		run: async (session: ClientSession) => {
+			const old = await collections.runtimeConfig.findOne(
+				{ _id: 'plausibleScriptUrl' },
+				{ session }
+			);
+
+			if (!old) {
+				return;
+			}
+
+			await collections.runtimeConfig.deleteOne({ _id: 'plausibleScriptUrl' }, { session });
+
+			await collections.runtimeConfig.insertOne(
+				{
+					_id: 'analyticsScriptSnippet',
+					data: `<script defer data-domain="${new URL(ORIGIN).hostname}" src="${
+						old.data
+					}" data-exclude="/admin/*, /admin-*"></script>`,
+					updatedAt: old.updatedAt
 				},
 				{ session }
 			);

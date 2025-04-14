@@ -121,6 +121,7 @@ const baseConfig = {
 		[TICKET_CHECKER_ROLE_ID]: false
 	},
 	plausibleScriptUrl: '',
+	analyticsScriptSnippet: '',
 	phoenixd: {
 		url: 'http://localhost:9740',
 		enabled: false,
