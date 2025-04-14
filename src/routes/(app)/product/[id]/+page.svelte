@@ -466,8 +466,17 @@
 										{t('ageWarning.agreement')}
 									</label>
 								{/if}
-								<button class="btn body-cta body-mainCTA" disabled={!acceptRestriction || loading}
-									>{t(`product.cta.${verb}`)}</button
+								<button
+									class="btn body-cta body-mainCTA"
+									disabled={!acceptRestriction ||
+										loading ||
+										(!!data.physicalCartMinAmount &&
+											data.product.price.amount * quantity <=
+												toCurrency(
+													data.product.price.currency,
+													data.physicalCartMinAmount,
+													data.currencies.main
+												))}>{t(`product.cta.${verb}`)}</button
 								>
 								<button
 									formaction="?/addToCart"
@@ -479,7 +488,14 @@
 							{:else}
 								<button
 									formaction="?/addToCart"
-									disabled={!acceptRestriction || loading}
+									disabled={!acceptRestriction ||
+										(!!data.physicalCartMinAmount &&
+											data.product.price.amount * quantity <=
+												toCurrency(
+													data.product.price.currency,
+													data.physicalCartMinAmount,
+													data.currencies.main
+												))}
 									class="btn body-cta body-mainCTA"
 								>
 									{t(`product.cta.${verb}`)}
