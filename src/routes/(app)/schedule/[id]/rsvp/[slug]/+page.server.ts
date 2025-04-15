@@ -48,15 +48,33 @@ export const actions = {
 			});
 		rateLimit(locals.clientIp, 'email', 5, { minutes: 5 });
 
-		await queueEmail(
-			runtimeConfig.sellerIdentity?.contact.email || SMTP_USER,
-			'schedule.rsvp.admin',
-			{
+		if (eventSchedule.rsvp && eventSchedule.rsvp.target.includes('@')) {
+			await queueEmail(eventSchedule.rsvp.target || SMTP_USER, 'schedule.rsvp.admin', {
 				brandName: runtimeConfig.brandName,
 				eventName: eventSchedule.title,
 				participantContact: address
-			}
-		);
+			});
+		}
+		if (eventSchedule.rsvp && !eventSchedule.rsvp.target.includes('@')) {
+			const content = `A new person confirmed participation to this event ${
+				eventSchedule.title
+			} by ${runtimeConfig.brandName}.
+				${eventSchedule.title} - ${format(eventSchedule.beginsAt, 'yyyy-MM-dd')}
+				${eventSchedule.shortDescription}
+				${eventSchedule.description}
+				${eventSchedule.location?.name}
+				${eventSchedule.location?.link}
+				Participant contact: ${address}`;
+
+			await collections.nostrNotifications.insertOne({
+				_id: new ObjectId(),
+				createdAt: new Date(),
+				kind: Kind.EncryptedDirectMessage,
+				updatedAt: new Date(),
+				content,
+				dest: eventSchedule.rsvp.target
+			});
+		}
 		if (address.includes('@')) {
 			await queueEmail(address || SMTP_USER, 'schedule.rsvp.user', {
 				brandName: runtimeConfig.brandName,

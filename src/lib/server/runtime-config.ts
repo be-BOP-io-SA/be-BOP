@@ -319,7 +319,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 <p><a href="{{eventLocationLink}}">{{eventLocationLink}}</a></p>
 <p></p>
 <p>If this an error or if you don't want to participate anymore to the event, please notify the organizer through this link :</p>
-<p><a href="{{eventCancellationLink}}">Cancel participation</a></p>`,
+<p><a href="mailto:{{eventCancellationLink}}?subject=Cancel_Participation">Cancel participation</a></p>`,
 			default: true as boolean
 		}
 	}
