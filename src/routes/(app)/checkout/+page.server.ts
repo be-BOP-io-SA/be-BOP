@@ -197,7 +197,7 @@ export const actions = {
 										zip: z.string().default(''),
 										country: z.enum([...COUNTRY_ALPHA2S] as [CountryAlpha2, ...CountryAlpha2[]]),
 										phone: z.string().optional()
-									}
+								  }
 								: {
 										firstName: z.string().min(1),
 										lastName: z.string().min(1),
@@ -207,7 +207,7 @@ export const actions = {
 										zip: z.string().min(1),
 										country: z.enum([...COUNTRY_ALPHA2S] as [CountryAlpha2, ...CountryAlpha2[]]),
 										phone: z.string().optional()
-									}
+								  }
 						)
 					})
 					.parse(json);

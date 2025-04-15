@@ -685,10 +685,10 @@ export async function createOrder(
 
 	const physicalCartCanBeOrdered = !!physicalCartMinAmount
 		? !isDigital &&
-			priceInfo.totalPriceWithVat >=
+		  priceInfo.totalPriceWithVat >=
 				toCurrency(priceInfo.currency, physicalCartMinAmount, runtimeConfig.mainCurrency)
 		: true;
-	
+
 	if (!physicalCartCanBeOrdered) {
 		throw error(403, `Can't order a cart with amount < ${physicalCartMinAmount}`);
 	}

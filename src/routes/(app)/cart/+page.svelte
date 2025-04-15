@@ -48,7 +48,7 @@
 	$: isDigital = items.every((item) => !item.product.shipping);
 	$: physicalCartCanBeOrdered = !!data.physicalCartMinAmount
 		? !isDigital &&
-			priceInfo.partialPriceWithVat >=
+		  priceInfo.partialPriceWithVat >=
 				toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 		: true;
 </script>

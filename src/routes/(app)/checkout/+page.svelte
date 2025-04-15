@@ -153,9 +153,9 @@
 						method !== 'free' &&
 						(method === 'bitcoin'
 							? toCurrency('SAT', priceInfo.partialPriceWithVat, priceInfo.currency) >=
-								MIN_SATOSHIS_FOR_BITCOIN_PAYMENT
+							  MIN_SATOSHIS_FOR_BITCOIN_PAYMENT
 							: true)
-				);
+			);
 	$: isDiscountValid =
 		(discountType === 'fiat' &&
 			priceInfoInitial.totalPriceWithVat >=
@@ -166,7 +166,7 @@
 	let changePaymentTimeOut = false;
 	$: physicalCartCanBeOrdered = !!data.physicalCartMinAmount
 		? !isDigital &&
-			priceInfo.partialPriceWithVat >=
+		  priceInfo.partialPriceWithVat >=
 				toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 		: true;
 </script>
@@ -668,8 +668,8 @@
 							<h3 class="text-base">
 								{item.chosenVariations
 									? item.product.name +
-										' - ' +
-										Object.entries(item.chosenVariations)
+									  ' - ' +
+									  Object.entries(item.chosenVariations)
 											.map(([key, value]) => item.product.variationLabels?.values[key][value])
 											.join(' - ')
 									: item.product.name}
