@@ -17,9 +17,10 @@ export async function load({ url, locals }) {
 	}
 
 	const docsRootPath = join(rootDir, 'docs');
+	const validFolderNameRegex = /^[a-z]{2}(-[a-z]{2})?$/i;
 	const availableLangs = fs
 		.readdirSync(docsRootPath, { withFileTypes: true })
-		.filter((entry) => entry.isDirectory())
+		.filter((entry) => validFolderNameRegex.test(entry.name) && entry.isDirectory())
 		.map((entry) => entry.name);
 
 	if (availableLangs.length === 0) {
