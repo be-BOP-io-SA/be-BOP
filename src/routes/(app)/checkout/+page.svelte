@@ -155,7 +155,7 @@
 							? toCurrency('SAT', priceInfo.partialPriceWithVat, priceInfo.currency) >=
 							  MIN_SATOSHIS_FOR_BITCOIN_PAYMENT
 							: true)
-			);
+			  );
 	$: isDiscountValid =
 		(discountType === 'fiat' &&
 			priceInfoInitial.totalPriceWithVat >=
@@ -716,7 +716,7 @@
 									>{item.depositPercentage
 										? `(${(item.depositPercentage / 100).toLocaleString($locale, {
 												style: 'percent'
-											})})`
+										  })})`
 										: ''}</PriceTag
 								>
 								<PriceTag
@@ -782,8 +782,8 @@
 									})}. {priceInfo.singleVatCountry
 										? t('cart.vatSellerCountry')
 										: !isDigital
-											? `${t('checkout.vatShippingAddress')}`
-											: `${t('cart.vatIpCountryText', { link: 'https://lite.ip2location.com' })}`}"
+										? `${t('checkout.vatShippingAddress')}`
+										: `${t('cart.vatIpCountryText', { link: 'https://lite.ip2location.com' })}`}"
 								>
 									<IconInfo class="cursor-pointer" />
 								</div>
