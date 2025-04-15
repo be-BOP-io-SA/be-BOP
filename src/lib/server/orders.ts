@@ -694,7 +694,7 @@ export async function createOrder(
 	) {
 		throw error(403, `Can't order a cart with amount < ${runtimeConfig.physicalCartMinAmount}`);
 	}
-	
+
 	await withTransaction(async (session) => {
 		const order: Order = {
 			_id: orderId,
