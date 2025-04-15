@@ -68,9 +68,15 @@ export const handleError = (({ error, event }) => {
 		)
 			.filter(
 				(entry: [string, unknown]): entry is [string, string[]] =>
-					!!(entry[0].endsWith('._errors') && Array.isArray(entry[1]) && entry[1].length)
+					!!(
+						(entry[0].endsWith('._errors') || entry[0] === '_errors') &&
+						Array.isArray(entry[1]) &&
+						entry[1].length
+					)
 			)
-			.map(([key, val]) => `${key.slice(0, -'._errors'.length)}: ${val[0]}`)
+			.map(([key, val]) =>
+				key === '_errors' ? val[0] : `${key.slice(0, -'._errors'.length)}: ${val[0]}`
+			)
 			.join(', ');
 
 		return {
