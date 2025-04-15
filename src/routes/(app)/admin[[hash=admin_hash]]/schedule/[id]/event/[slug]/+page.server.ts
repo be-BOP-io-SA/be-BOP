@@ -133,6 +133,7 @@ export const actions = {
 						displayShortDescription: parsed.displayShortDescription,
 						standalone: false,
 						payWhatYouWant: false,
+						hideDiscountExpiration: false,
 						cta: ctaLink.filter((ctaLink) => ctaLink.label && ctaLink.href),
 						actionSettings: {
 							eShop: {
