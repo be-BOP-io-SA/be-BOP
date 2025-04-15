@@ -681,7 +681,7 @@ export async function createOrder(
 			throw error(400, 'error matching on variations choice');
 		}
 	}
-    
+
 	if (
 		!isDigital &&
 		!!runtimeConfig.physicalCartMinAmount &&
