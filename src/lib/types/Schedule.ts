@@ -21,6 +21,9 @@ export interface EventSchedule {
 		isUnavailable: boolean;
 	};
 	isArchived?: boolean;
+	rsvp?: {
+		target: string;
+	};
 	productId?: string;
 }
 

@@ -17,6 +17,9 @@
 	let eventCalendar = data.schedule.events.map((eve) => ({
 		calendarColor: !!eve.calendarColor
 	}));
+	let rsvpOptions = data.schedule.events.map((eve) => ({
+		option: !!eve.rsvp?.target
+	}));
 	let createATicket = data.schedule.events.map(() => false);
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
@@ -44,6 +47,8 @@
 			detail.removeAttribute('open');
 		}
 	}
+	let calendarHasCustomColor = false;
+	let rsvpOption = false;
 </script>
 
 <h1 class="text-3xl">Edit a schedule</h1>
@@ -378,6 +383,29 @@
 						<input
 							class="form-checkbox"
 							type="checkbox"
+							name="events[{i}].rsvp.option"
+							bind:checked={rsvpOptions[i].option}
+						/>
+						Add RSVP option
+					</label>
+					{#if rsvpOptions[i].option}
+						<label class="form-label">
+							Target
+							<input
+								type="text"
+								name="events[{i}].rsvp.target"
+								class="form-input"
+								required
+								value={data.schedule.events[i].rsvp?.target ||
+									data.sellerIdentity?.contact.email ||
+									''}
+							/>
+						</label>
+					{/if}
+					<label class="checkbox-label">
+						<input
+							class="form-checkbox"
+							type="checkbox"
 							name="events[{i}].calendarHasCustomColor"
 							bind:checked={eventCalendar[i].calendarColor}
 						/>
@@ -530,6 +558,40 @@
 						Event url
 						<input type="text" name="events[{i}].url" class="form-input" />
 					</label>
+					<label class="checkbox-label">
+						<input class="form-checkbox" type="checkbox" name="events[{i}].hideFromList" />
+						Hide event from list
+					</label>
+					<label class="checkbox-label">
+						<input
+							class="form-checkbox"
+							type="checkbox"
+							name="events[{i}].rsvp.option"
+							bind:checked={rsvpOption}
+						/>
+						Add RSVP option
+					</label>
+					{#if rsvpOption}
+						<label class="form-label">
+							Target
+							<input type="text" name="events[{i}].rsvp.target" class="form-input" required />
+						</label>
+					{/if}
+					<label class="checkbox-label">
+						<input
+							class="form-checkbox"
+							type="checkbox"
+							name="events[{i}].calendarHasCustomColor"
+							bind:checked={calendarHasCustomColor}
+						/>
+						Event has custom color on calendar
+					</label>
+					{#if calendarHasCustomColor}
+						<label class="form-label">
+							Event color on calendar
+							<input type="color" name="events[{i}].calendarColor" class="form-input" />
+						</label>
+					{/if}
 				{/if}
 			</div>
 		</details>
