@@ -91,10 +91,10 @@
 							if (link.hidden) {
 								return false;
 							}
-							if (!data.isBitcoinConfigured && link.href === '/admin/bitcoind') {
+							if (!data.isBitcoinConfigured && link.href === `${data.adminPrefix}/bitcoind`) {
 								return false;
 							}
-							if (!data.isLightningConfigured && link.href === '/admin/lnd') {
+							if (!data.isLightningConfigured && link.href === `${data.adminPrefix}/lnd`) {
 								return false;
 							}
 							return true;
@@ -106,7 +106,6 @@
 							class="{$page.url.pathname.startsWith(link.href)
 								? 'underline'
 								: ''}  hidden sm:inline"
-							class:underline={$page.url.pathname.startsWith(link.href)}
 							class:italic={data.role && !isAllowedOnPage(data.role, link.href, 'write')}
 							class:opacity-70={data.role && !isAllowedOnPage(data.role, link.href, 'write')}
 						>
@@ -131,10 +130,10 @@
 				if (link.hidden) {
 					return false;
 				}
-				if (!data.isBitcoinConfigured && link.href === '/admin/bitcoind') {
+				if (!data.isBitcoinConfigured && link.href === `${data.adminPrefix}/bitcoind`) {
 					return false;
 				}
-				if (!data.isLightningConfigured && link.href === '/admin/lnd') {
+				if (!data.isLightningConfigured && link.href === `${data.adminPrefix}/lnd`) {
 					return false;
 				}
 				return true;
