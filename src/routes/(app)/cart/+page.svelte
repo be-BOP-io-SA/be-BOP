@@ -46,11 +46,11 @@
 	let loading = false;
 	const { t, locale, countryName } = useI18n();
 	$: isDigital = items.every((item) => !item.product.shipping);
-	$: physicalCartCanBeOrdered =
-		!isDigital &&
-		!!data.physicalCartMinAmount &&
-		priceInfo.partialPriceWithVat >=
-			toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main);
+	$: physicalCartCanBeOrdered = !!data.physicalCartMinAmount
+		? !isDigital &&
+			priceInfo.partialPriceWithVat >=
+				toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
+		: true;
 </script>
 
 <main class="mx-auto max-w-7xl flex flex-col gap-2 px-6 py-10 body-mainPlan">
@@ -358,12 +358,15 @@
 				{/if}
 			</div>
 			<div class="flex justify-end">
-				<a
-					href="/checkout"
-					class="btn body-cta body-mainCTA {!physicalCartCanBeOrdered ? 'opacity-50' : ''}"
-					style="pointer-events: {!physicalCartCanBeOrdered ? 'none' : ''};"
-					>{t('cart.cta.checkout')}</a
+				<button
+					class="btn body-cta body-mainCTA"
+					disabled={!physicalCartCanBeOrdered}
+					on:click={() => {
+						if (physicalCartCanBeOrdered) window.location.href = '/checkout';
+					}}
 				>
+					{t('cart.cta.checkout')}
+				</button>
 			</div>
 		{:else}
 			<p>{t('cart.empty')}</p>

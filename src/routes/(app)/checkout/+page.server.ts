@@ -14,9 +14,6 @@ import type { JsonObject } from 'type-fest';
 import { omit, set } from 'lodash-es';
 import { rateLimit } from '$lib/server/rateLimit.js';
 import { cmsFromContent } from '$lib/server/cms';
-import { computePriceInfo } from '$lib/types/Cart';
-import { UNDERLYING_CURRENCY } from '$lib/types/Currency';
-import { toCurrency } from '$lib/utils/toCurrency';
 
 export async function load({ parent, locals }) {
 	const parentData = await parent();
@@ -24,32 +21,6 @@ export async function load({ parent, locals }) {
 	if (parentData.cart) {
 		try {
 			await checkCartItems(parentData.cart, { user: userIdentifier(locals) });
-			const priceInfoInitial = computePriceInfo(parentData.cart, {
-				bebopCountry: runtimeConfig.vatCountry,
-				vatSingleCountry: runtimeConfig.vatSingleCountry,
-				vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
-				vatExempted: runtimeConfig.vatExempted,
-				userCountry: locals.countryCode,
-				deliveryFees: {
-					amount: 0,
-					currency: UNDERLYING_CURRENCY
-				},
-				vatProfiles: parentData.vatProfiles
-			});
-
-			const isDigital = parentData.cart?.every((item) => !item.product.shipping);
-			const physicalCartCanBeOrdered =
-				!isDigital &&
-				!!runtimeConfig.physicalCartMinAmount &&
-				priceInfoInitial.partialPriceWithVat >=
-					toCurrency(
-						priceInfoInitial.currency,
-						runtimeConfig.physicalCartMinAmount,
-						runtimeConfig.mainCurrency
-					);
-			if (!physicalCartCanBeOrdered) {
-				throw error(403, `Can't order a cart with amount < ${runtimeConfig.physicalCartMinAmount}`);
-			}
 		} catch (err) {
 			throw redirect(303, '/cart');
 		}
@@ -226,7 +197,7 @@ export const actions = {
 										zip: z.string().default(''),
 										country: z.enum([...COUNTRY_ALPHA2S] as [CountryAlpha2, ...CountryAlpha2[]]),
 										phone: z.string().optional()
-								  }
+									}
 								: {
 										firstName: z.string().min(1),
 										lastName: z.string().min(1),
@@ -236,7 +207,7 @@ export const actions = {
 										zip: z.string().min(1),
 										country: z.enum([...COUNTRY_ALPHA2S] as [CountryAlpha2, ...CountryAlpha2[]]),
 										phone: z.string().optional()
-								  }
+									}
 						)
 					})
 					.parse(json);

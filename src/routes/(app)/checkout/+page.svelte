@@ -153,9 +153,9 @@
 						method !== 'free' &&
 						(method === 'bitcoin'
 							? toCurrency('SAT', priceInfo.partialPriceWithVat, priceInfo.currency) >=
-							  MIN_SATOSHIS_FOR_BITCOIN_PAYMENT
+								MIN_SATOSHIS_FOR_BITCOIN_PAYMENT
 							: true)
-			  );
+				);
 	$: isDiscountValid =
 		(discountType === 'fiat' &&
 			priceInfoInitial.totalPriceWithVat >=
@@ -164,6 +164,11 @@
 	let showBillingInfo = false;
 	let isProfessionalOrder = false;
 	let changePaymentTimeOut = false;
+	$: physicalCartCanBeOrdered = !!data.physicalCartMinAmount
+		? !isDigital &&
+			priceInfo.partialPriceWithVat >=
+				toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
+		: true;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -663,8 +668,8 @@
 							<h3 class="text-base">
 								{item.chosenVariations
 									? item.product.name +
-									  ' - ' +
-									  Object.entries(item.chosenVariations)
+										' - ' +
+										Object.entries(item.chosenVariations)
 											.map(([key, value]) => item.product.variationLabels?.values[key][value])
 											.join(' - ')
 									: item.product.name}
@@ -711,7 +716,7 @@
 									>{item.depositPercentage
 										? `(${(item.depositPercentage / 100).toLocaleString($locale, {
 												style: 'percent'
-										  })})`
+											})})`
 										: ''}</PriceTag
 								>
 								<PriceTag
@@ -777,8 +782,8 @@
 									})}. {priceInfo.singleVatCountry
 										? t('cart.vatSellerCountry')
 										: !isDigital
-										? `${t('checkout.vatShippingAddress')}`
-										: `${t('cart.vatIpCountryText', { link: 'https://lite.ip2location.com' })}`}"
+											? `${t('checkout.vatShippingAddress')}`
+											: `${t('cart.vatIpCountryText', { link: 'https://lite.ip2location.com' })}`}"
 								>
 									<IconInfo class="cursor-pointer" />
 								</div>
@@ -1073,7 +1078,10 @@
 					class="btn body-cta body-mainCTA btn-xl -mx-1 -mb-1 mt-1"
 					value={t('checkout.cta.submit')}
 					form="checkout"
-					disabled={isNaN(deliveryFees) || (addDiscount && !isDiscountValid) || submitting}
+					disabled={isNaN(deliveryFees) ||
+						(addDiscount && !isDiscountValid) ||
+						submitting ||
+						!physicalCartCanBeOrdered}
 				/>
 			</article>
 		</div>

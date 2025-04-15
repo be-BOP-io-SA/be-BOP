@@ -488,14 +488,7 @@
 							{:else}
 								<button
 									formaction="?/addToCart"
-									disabled={!acceptRestriction ||
-										(!!data.physicalCartMinAmount &&
-											data.product.price.amount * quantity <=
-												toCurrency(
-													data.product.price.currency,
-													data.physicalCartMinAmount,
-													data.currencies.main
-												))}
+									disabled={!acceptRestriction || loading}
 									class="btn body-cta body-mainCTA"
 								>
 									{t(`product.cta.${verb}`)}
