@@ -24,7 +24,7 @@ export async function load(event) {
 		allPaymentMethods: paymentMethods({ includeDisabled: true, includePOS: true }),
 		disabledPaymentMethods: runtimeConfig.paymentMethods.disabled,
 		origin: ORIGIN,
-		plausibleScriptUrl: runtimeConfig.plausibleScriptUrl,
+		analyticsScriptSnippet: runtimeConfig.analyticsScriptSnippet,
 		adminHash: runtimeConfig.adminHash,
 		collectIPOnDeliverylessOrders: runtimeConfig.collectIPOnDeliverylessOrders,
 		isBillingAddressMandatory: runtimeConfig.isBillingAddressMandatory,
@@ -38,7 +38,8 @@ export async function load(event) {
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,
 		removeBebopLogoPOS: runtimeConfig.removeBebopLogoPOS,
 		overwriteCreditCardSvgColor: runtimeConfig.overwriteCreditCardSvgColor,
-		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode
+		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode,
+		hideCartInToolbar: runtimeConfig.hideCartInToolbar
 	};
 }
 
@@ -85,13 +86,14 @@ export const actions = {
 				),
 				desiredPaymentTimeout: z.number({ coerce: true }).int().min(0),
 				reserveStockInMinutes: z.number({ coerce: true }).int().min(0),
-				plausibleScriptUrl: z.string(),
+				analyticsScriptSnippet: z.string(),
 				collectIPOnDeliverylessOrders: z.boolean({ coerce: true }),
 				adminHash: z.union([z.enum(['']), z.string().regex(/^[a-zA-Z0-9]+$/)]),
 				isBillingAddressMandatory: z.boolean({ coerce: true }),
 				displayNewsletterCommercialProspection: z.boolean({ coerce: true }),
 				cartMaxSeparateItems: z.number({ coerce: true }).int().default(0),
 				disableLanguageSelector: z.boolean({ coerce: true }),
+				hideCartInToolbar: z.boolean({ coerce: true }),
 				contactModes: z.string().array(),
 				contactModesForceOption: z.boolean({ coerce: true }),
 				cartPreviewInteractive: z.boolean({ coerce: true }),

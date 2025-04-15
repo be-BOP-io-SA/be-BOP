@@ -36,14 +36,9 @@
 			src="/script/language/{data.language}.js?v={PUBLIC_VERSION}-{data.languageUpdatedAt.getTime()}"
 		></script>
 	{/if}
-	{#if data.plausibleScriptUrl}
-		<script
-			defer
-			data-domain={$page.url.host}
-			src={data.plausibleScriptUrl.replace(/\.js$/, 'exclusion.js')}
-			data-exclude="/admin/*, /admin-*"
-		>
-		</script>
+	{#if data.analyticsScriptSnippet}
+		<!-- eslint-disable svelte/no-at-html-tags -->
+		{@html data.analyticsScriptSnippet}
 	{/if}
 </svelte:head>
 

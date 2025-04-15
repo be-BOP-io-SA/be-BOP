@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import PictureComponent from '$lib/components/Picture.svelte';
+	import { CURRENCIES } from '$lib/types/Currency';
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 
 	export let data;
 
@@ -14,10 +17,15 @@
 	let eventCalendar = data.schedule.events.map((eve) => ({
 		calendarColor: !!eve.calendarColor
 	}));
+	let createATicket = data.schedule.events.map(() => false);
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
 	let hideAll = true;
 
+	let limitedStock = false;
+	let nonFreePrice = false;
+	let errorMessage = data.schedule.events.map(() => '');
+	let loading = false;
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this schedule?')) {
 			event.preventDefault();

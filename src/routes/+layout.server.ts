@@ -22,7 +22,7 @@ export async function load(event) {
 	})();
 
 	return {
-		plausibleScriptUrl: runtimeConfig.plausibleScriptUrl,
+		analyticsScriptSnippet: runtimeConfig.analyticsScriptSnippet,
 		language: event.locals.language,
 		themeChangeNumber: runtimeConfig.themeChangeNumber,
 		enUpdatedAt: runtimeConfigUpdatedAt[`translations.en`] ?? new Date(0),
