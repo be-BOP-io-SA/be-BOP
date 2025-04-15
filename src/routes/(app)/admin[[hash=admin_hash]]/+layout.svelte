@@ -87,17 +87,19 @@
 						{adminSection.section}
 					</span>
 					{#each adminSection.links
-						.filter((link) => !link.hidden)
+						.filter((link) => {
+							if (link.hidden) return false;
+							if (!data.isBitcoinConfigured && link.href === '/admin/bitcoind') return false;
+							if (!data.isLightningConfigured && link.href === '/admin/lnd') return false;
+							return true;
+						})
 						.filter((l) => (data.role ? isAllowedOnPage(data.role, l.href, 'read') : true)) as link}
 						<a
 							href={link.href}
 							data-sveltekit-preload-data="off"
-							class={`${
-								(link.href === '/admin/bitcoind' && !data.isBitcoinConfigured) ||
-								(link.href === '/admin/lnd' && !data.isLightningConfigured)
-									? 'hidden'
-									: 'hidden sm:inline'
-							}`}
+							class="{$page.url.pathname.startsWith(link.href)
+								? 'underline'
+								: ''}  hidden sm:inline"
 							class:underline={$page.url.pathname.startsWith(link.href)}
 							class:italic={data.role && !isAllowedOnPage(data.role, link.href, 'write')}
 							class:opacity-70={data.role && !isAllowedOnPage(data.role, link.href, 'write')}
@@ -119,14 +121,15 @@
 			<span class="font-bold text-xl">
 				{adminSection.section}
 			</span>
-			{#each adminSection.links.filter((link) => !link.hidden) as link}
+			{#each adminSection.links.filter((link) => {
+				if (link.hidden) return false;
+				if (!data.isBitcoinConfigured && link.href === '/admin/bitcoind') return false;
+				if (!data.isLightningConfigured && link.href === '/admin/lnd') return false;
+				return true;
+			}) as link}
 				<a
 					href={link.href}
-					class="{$page.url.pathname.startsWith(link.href) ? 'underline' : ''} 
-					{(link.href === '/admin/bitcoind' && !data.isBitcoinConfigured) ||
-					(link.href === '/admin/lnd' && !data.isLightningConfigured)
-						? 'hidden'
-						: ''}"
+					class={$page.url.pathname.startsWith(link.href) ? 'underline' : ''}
 					data-sveltekit-preload-data="off"
 					class:italic={data.role && !isAllowedOnPage(data.role, link.href, 'write')}
 					class:opacity-70={data.role && !isAllowedOnPage(data.role, link.href, 'write')}
