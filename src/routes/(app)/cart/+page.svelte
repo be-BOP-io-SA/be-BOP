@@ -362,7 +362,9 @@
 					class="btn body-cta body-mainCTA"
 					disabled={!physicalCartCanBeOrdered}
 					on:click={() => {
-						if (physicalCartCanBeOrdered) window.location.href = '/checkout';
+						if (physicalCartCanBeOrdered) {
+							window.location.href = '/checkout';
+						}
 					}}
 				>
 					{t('cart.cta.checkout')}
