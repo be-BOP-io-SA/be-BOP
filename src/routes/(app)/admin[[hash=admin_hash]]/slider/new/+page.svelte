@@ -8,16 +8,20 @@
 	export let data;
 
 	let submitting = false;
-	let files: FileList;
+	let files: FileList | null = null;
 	let formElement: HTMLFormElement;
 
-	let title: string;
-	let slug: string;
+	let title = '';
+	let slug = '';
 
 	async function checkForm() {
 		submitting = true;
 		// Need to load here, or for some reason, some inputs disappear afterwards
 		const formData = new FormData(formElement);
+		if (!files || files.length === 0) {
+			alert('Please select a file');
+			return;
+		}
 		try {
 			const pictureId = await preUploadPicture(data.adminPrefix, files[0], {
 				fileName: title

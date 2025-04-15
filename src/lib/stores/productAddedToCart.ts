@@ -10,5 +10,6 @@ export const productAddedToCart = writable<{
 	customPrice?: { amount: number; currency: Currency };
 	chosenVariations?: Record<string, string>;
 	depositPercentage?: number;
+	discountPercentage?: number;
 	widget?: unknown;
 } | null>(null);

@@ -7,8 +7,8 @@
 	} from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 
-	let name: string;
-	let slug: string;
+	let name = '';
+	let slug = '';
 	let endsAt = new Date().toISOString().slice(0, 16);
 
 	const timezoneOffsetHours = new Date().getTimezoneOffset() / 60;

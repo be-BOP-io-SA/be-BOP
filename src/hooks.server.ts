@@ -31,7 +31,12 @@ import { building } from '$app/environment';
 import { sha256 } from '$lib/utils/sha256';
 import { countryFromIp } from '$lib/server/geoip';
 import { isAllowedOnPage } from '$lib/types/Role';
-import { enhancedLanguages, locales, type LanguageKey } from '$lib/translations';
+import {
+	enhancedLanguages,
+	formatDistanceLocale,
+	locales,
+	type LanguageKey
+} from '$lib/translations';
 import { addTranslations } from '$lib/i18n';
 import { filterNullish } from '$lib/utils/fillterNullish';
 import { refreshSessionCookie } from '$lib/server/cookies';
@@ -43,7 +48,9 @@ import { toIPv4Maybe } from '$lib/server/utils/toIPv4Maybe';
 const SSO_COOKIE = 'next-auth.session-token';
 
 for (const key of locales) {
-	addTranslations(key, enhancedLanguages[key]);
+	addTranslations(key, enhancedLanguages[key], {
+		formatDistance: formatDistanceLocale[key]
+	});
 }
 
 export const handleError = (({ error, event }) => {

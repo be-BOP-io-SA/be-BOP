@@ -3,8 +3,11 @@ import type { IsUnknown, UnknownArray } from 'type-fest';
 
 export type PojoList<T extends UnknownArray> = T extends readonly []
 	? []
-	: T extends readonly [infer F, ...infer R]
-	? [Pojo<F>, ...PojoList<R>]
+	: // Commented out due to TS infinite instantiation error
+	// : T extends readonly [infer F, ...infer R]
+	// ? [Pojo<F>, ...PojoList<R>]
+	T extends Array<infer F>
+	? Pojo<F>[]
 	: IsUnknown<T[number]> extends true
 	? []
 	: Array<Pojo<T[number]>>;
@@ -34,7 +37,7 @@ export type Pojo<T> = ObjectId extends T
 /**
  * Convert an object into a POJO by converting ObjectId to string
  */
-export function pojo<T>(param: T): Pojo<T> {
+export function pojo<T extends object>(param: T): Pojo<T> {
 	if (param === null || typeof param !== 'object') {
 		return param as Pojo<T>;
 	}

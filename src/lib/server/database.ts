@@ -120,6 +120,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.pictures, { galleryId: 1, createdAt: 1 }],
 	[collections.pictures, { 'slider._id': 1, createdAt: 1 }],
 	[collections.pictures, { 'tag._id': 1, createdAt: 1 }],
+	[collections.products, { type: 1, createdAt: 1 }],
 	[collections.products, { stock: 1 }, { sparse: true }],
 	[collections.products, { 'actionSettings.eShop.visible': 1 }],
 	[collections.products, { 'actionSettings.retail.visible': 1 }],
@@ -180,11 +181,11 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.users, { 'recovery.npub': 1 }, { sparse: true, unique: true }],
 	[collections.sessions, { expiresAt: 1 }, { expireAfterSeconds: 0 }],
 	[collections.sessions, { sessionId: 1 }, { unique: true }],
-	[collections.discounts, { endAt: 1 }],
-	[collections.discounts, { productIds: 1, endsAt: -1 }],
+	[collections.discounts, { productIds: 1, beginsAt: 1 }],
+	[collections.discounts, { subscriptionIds: 1, beginsAt: 1 }],
 	[
 		collections.discounts,
-		{ wholeCatalog: 1, endsAt: -1 },
+		{ wholeCatalog: 1, beginsAt: 1 },
 		{ partialFilterExpression: { wholeCatalog: true } }
 	],
 	[collections.personalInfo, { 'user.userId': 1 }],

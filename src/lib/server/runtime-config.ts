@@ -18,7 +18,13 @@ import { isUniqueConstraintError } from './utils/isUniqueConstraintError';
 import { typedKeys } from '$lib/utils/typedKeys';
 import { addTranslations, type LocalesDictionary } from '$lib/i18n';
 import { trimPrefix } from '$lib/utils/trimPrefix';
-import { enhancedLanguages, languages, locales, type LanguageKey } from '$lib/translations';
+import {
+	enhancedLanguages,
+	formatDistanceLocale,
+	languages,
+	locales,
+	type LanguageKey
+} from '$lib/translations';
 import { merge } from 'lodash-es';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
@@ -393,7 +399,9 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 				const locale = trimPrefix(config._id, 'translations.');
 				if (typedInclude(locales, locale)) {
 					enhancedLanguages[locale] = merge({}, languages[locale], config.data);
-					addTranslations(locale, enhancedLanguages[locale]);
+					addTranslations(locale, enhancedLanguages[locale], {
+						formatDistance: formatDistanceLocale[locale]
+					});
 				}
 			}
 		}

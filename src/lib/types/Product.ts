@@ -59,6 +59,7 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	availableDate?: Date;
 	preorder: boolean;
 	displayShortDescription: boolean;
+	hideDiscountExpiration: boolean;
 	deposit?: {
 		percentage: number;
 		/**
