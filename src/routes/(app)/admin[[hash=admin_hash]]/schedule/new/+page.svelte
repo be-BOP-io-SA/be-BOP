@@ -74,8 +74,9 @@
 		<input class="form-checkbox" type="checkbox" name="allowSubscription" />
 		Allow user to subscribe
 	</label>
+
 	{#each [...Array(eventLines).keys()] as i}
-		<h1 class="text-xl font-bold">Event #{i + 1}</h1>
+		<h1 class="text-xl font-bold gap-2">Event #{i + 1}</h1>
 		<label class="form-label">
 			Title
 			<input type="text" name="events[{i}].title" class="form-input" required />
