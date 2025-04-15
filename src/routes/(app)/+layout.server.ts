@@ -215,6 +215,7 @@ export async function load(params) {
 		confirmationBlocksThresholds: runtimeConfig.confirmationBlocksThresholds,
 		cartMaxSeparateItems: runtimeConfig.cartMaxSeparateItems,
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
+		hideCartInToolbar: runtimeConfig.hideCartInToolbar,
 		hideCmsZonesOnMobile: runtimeConfig.hideCmsZonesOnMobile,
 		notResponsive: runtimeConfig.viewportFor === 'no-one' ? true : false,
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,

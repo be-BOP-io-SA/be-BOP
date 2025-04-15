@@ -491,7 +491,16 @@
 		/>
 		Disable language selector
 	</label>
-
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			id="hideCartInToolbar"
+			name="hideCartInToolbar"
+			class="form-checkbox"
+			checked={data.hideCartInToolbar}
+		/>
+		Hide cart icon in toolbar
+	</label>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
@@ -525,13 +534,14 @@
 	</p>
 
 	<label class="form-label">
-		Plausible script url
-		<input
-			type="text"
+		Analytic script snippet
+		<textarea
+			rows="5"
+			cols="30"
 			class="form-input max-w-[25rem]"
-			name="plausibleScriptUrl"
-			placeholder="https://plausible.yourdomain.com/js/script.js"
-			value={data.plausibleScriptUrl}
+			name="analyticsScriptSnippet"
+			placeholder="plausible script"
+			value={data.analyticsScriptSnippet}
 		/>
 	</label>
 	<input type="submit" value="Update" class="btn btn-gray self-start" />
