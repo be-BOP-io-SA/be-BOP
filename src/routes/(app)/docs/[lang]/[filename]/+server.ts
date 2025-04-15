@@ -1,5 +1,4 @@
 import { rootDir } from '$lib/server/root-dir';
-import { error } from '@sveltejs/kit';
 import fs from 'fs';
 import { join } from 'path';
 import { z } from 'zod';
@@ -16,13 +15,8 @@ export async function GET({ params }) {
 		);
 
 	const langSchema = z.enum(availableLangs as [string, ...string[]]);
-	let lang: string;
 
-	try {
-		lang = langSchema.parse(params.lang);
-	} catch {
-		throw error(400, 'Invalid language');
-	}
+	const lang = langSchema.parse(params.lang);
 
 	const folderPath = join(docsDir, lang);
 
@@ -31,13 +25,8 @@ export async function GET({ params }) {
 		.filter((file) => file.endsWith('.md') && fs.statSync(join(folderPath, file)).isFile());
 
 	const filenameSchema = z.enum(availableFiles as [string, ...string[]]);
-	let filename: string;
 
-	try {
-		filename = filenameSchema.parse(params.filename);
-	} catch {
-		throw error(404, 'File not found');
-	}
+	const filename = filenameSchema.parse(params.filename);
 
 	const filePath = join(folderPath, filename);
 

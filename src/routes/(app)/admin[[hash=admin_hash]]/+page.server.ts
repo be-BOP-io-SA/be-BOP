@@ -32,24 +32,19 @@ export async function load({ url, locals }) {
 	});
 
 	const searchParams = Object.fromEntries(url.searchParams.entries());
-	const result = querySchema.safeParse(searchParams);
+	const result = querySchema.parse(searchParams);
 
-	if (!result.success) {
-		throw error(400, 'Invalid lang param. Allowed values: ' + availableLangs.join(', '));
-	}
-
-	const { lang } = result.data;
-	const docsPath = join(docsRootPath, lang);
+	const docsPath = join(docsRootPath, result.lang);
 
 	try {
 		const files = fs.readdirSync(docsPath).filter((file) => file.endsWith('.md'));
 		return {
 			files,
-			lang,
+			lang: result.lang,
 			adminWelcomMessage: runtimeConfig.adminWelcomMessage
 		};
 	} catch (err) {
-		console.error(`Error reading files from docs/${lang}`, err);
-		throw error(404, `Unable to load documentation files for "${lang}"`);
+		console.error(`Error reading files from docs/${result.lang}`, err);
+		throw error(404, `Unable to load documentation files for "${result.lang}"`);
 	}
 }
