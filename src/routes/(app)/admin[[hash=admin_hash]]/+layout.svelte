@@ -88,9 +88,15 @@
 					</span>
 					{#each adminSection.links
 						.filter((link) => {
-							if (link.hidden) return false;
-							if (!data.isBitcoinConfigured && link.href === '/admin/bitcoind') return false;
-							if (!data.isLightningConfigured && link.href === '/admin/lnd') return false;
+							if (link.hidden) {
+								return false;
+							}
+							if (!data.isBitcoinConfigured && link.href === '/admin/bitcoind') {
+								return false;
+							}
+							if (!data.isLightningConfigured && link.href === '/admin/lnd') {
+								return false;
+							}
 							return true;
 						})
 						.filter((l) => (data.role ? isAllowedOnPage(data.role, l.href, 'read') : true)) as link}
@@ -122,9 +128,15 @@
 				{adminSection.section}
 			</span>
 			{#each adminSection.links.filter((link) => {
-				if (link.hidden) return false;
-				if (!data.isBitcoinConfigured && link.href === '/admin/bitcoind') return false;
-				if (!data.isLightningConfigured && link.href === '/admin/lnd') return false;
+				if (link.hidden) {
+					return false;
+				}
+				if (!data.isBitcoinConfigured && link.href === '/admin/bitcoind') {
+					return false;
+				}
+				if (!data.isLightningConfigured && link.href === '/admin/lnd') {
+					return false;
+				}
 				return true;
 			}) as link}
 				<a
