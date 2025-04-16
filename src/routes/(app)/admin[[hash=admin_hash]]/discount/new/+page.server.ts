@@ -29,32 +29,56 @@ export const load = async () => {
 
 export const actions: Actions = {
 	default: async function ({ request }) {
-		const data = await request.formData();
+		const formData = await request.formData();
+		const quantityPerProductRecord: Record<string, number> = {};
+		for (const [key, value] of formData.entries()) {
+			const match = key.match(/^quantityPerProduct\[(.+?)\]$/);
+			if (match) {
+				quantityPerProductRecord[match[1]] = Number(value);
+			}
+		}
 
-		const { name, percentage, subscriptionIds, productIds, wholeCatalog, beginsAt, endsAt } = z
+		const {
+			name,
+			percentage,
+			subscriptionIds,
+			productIds,
+			wholeCatalog,
+			beginsAt,
+			endsAt,
+			quantityPerProduct,
+			mode
+		} = z
 			.object({
 				name: z.string().min(1).max(MAX_NAME_LIMIT),
 				productIds: z.string().array(),
 				subscriptionIds: z.string().array().min(1),
-				percentage: z.string().regex(/^\d+(\.\d+)?$/),
+				percentage: z
+					.string()
+					.regex(/^\d+(\.\d+)?$/)
+					.optional(),
 				wholeCatalog: z.boolean({ coerce: true }).default(false),
 				beginsAt: z.date({ coerce: true }),
-				endsAt: z.date({ coerce: true }).optional()
+				endsAt: z.date({ coerce: true }).optional(),
+				quantityPerProduct: z.record(z.string(), z.number().min(0).max(100)).optional(),
+				mode: z.enum(['productPercentage', 'freeProductQuantity'])
 			})
 			.parse({
-				name: data.get('name'),
-				subscriptionIds: JSON.parse(String(data.get('subscriptionIds'))).map(
+				name: formData.get('name'),
+				subscriptionIds: JSON.parse(String(formData.get('subscriptionIds'))).map(
 					(x: { value: string }) => x.value
 				),
-				productIds: JSON.parse(String(data.get('productIds') ?? '[]')).map(
+				productIds: JSON.parse(String(formData.get('productIds') ?? '[]')).map(
 					(x: { value: string }) => x.value
 				),
-				wholeCatalog: data.get('wholeCatalog'),
-				percentage: data.get('percentage'),
-				beginsAt: data.get('beginsAt'),
-				endsAt: data.get('endsAt') || undefined
+				wholeCatalog: formData.get('wholeCatalog'),
+				percentage: formData.get('percentage') || undefined,
+				beginsAt: formData.get('beginsAt'),
+				endsAt: formData.get('endsAt') || undefined,
+				quantityPerProduct: quantityPerProductRecord || undefined,
+				mode: formData.get('mode')
 			});
-
+		console;
 		const slug = generateId(name, true);
 		await collections.discounts.insertOne({
 			_id: slug,
@@ -62,8 +86,10 @@ export const actions: Actions = {
 			productIds: productIds,
 			subscriptionIds: subscriptionIds,
 			wholeCatalog,
-			percentage: Number(percentage),
+			...(percentage && { percentage: Number(percentage) }),
 			beginsAt,
+			mode,
+			quantityPerProduct,
 			endsAt: endsAt || null,
 			createdAt: new Date(),
 			updatedAt: new Date()

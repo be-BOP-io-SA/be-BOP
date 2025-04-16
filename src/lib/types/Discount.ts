@@ -7,8 +7,10 @@ export interface Discount extends Timestamps {
 	subscriptionIds: string[];
 	/* If empty, works on all products */
 	productIds: Product['_id'][];
-	percentage: number;
+	percentage?: number;
 	wholeCatalog: boolean;
 	beginsAt: Date;
 	endsAt: Date | null;
+	mode?: 'productPercentage' | 'freeProductQuantity'
+	quantityPerProduct?:Record<string, number>
 }
