@@ -48,7 +48,7 @@
 	$: isDigital = items.every((item) => !item.product.shipping);
 	$: physicalCartCanBeOrdered = !!data.physicalCartMinAmount
 		? !isDigital &&
-		  priceInfo.partialPriceWithVat >=
+			priceInfo.partialPriceWithVat >=
 				toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 		: true;
 </script>
@@ -186,8 +186,8 @@
 								<h2 class="text-2xl">
 									{item.chosenVariations
 										? item.product.name +
-										  ' - ' +
-										  Object.entries(item.chosenVariations)
+											' - ' +
+											Object.entries(item.chosenVariations)
 												.map(([key, value]) => item.product.variationLabels?.values[key][value])
 												.join(' - ')
 										: item.product.name}
@@ -225,7 +225,7 @@
 									>{item.depositPercentage
 										? `(${(item.depositPercentage / 100).toLocaleString($locale, {
 												style: 'percent'
-										  })})`
+											})})`
 										: ''}</PriceTag
 								>
 								{#if item.discountPercentage}
@@ -370,19 +370,15 @@
 					<p class="text-red-500 font-light">{t('cart.minimumPhysicalAmountText')}</p>
 				{/if}
 			</div>
-			<div class="flex justify-end">
+			<form action="/checkout" class="flex justify-end">
 				<button
 					class="btn body-cta body-mainCTA"
 					disabled={!physicalCartCanBeOrdered}
-					on:click={() => {
-						if (physicalCartCanBeOrdered) {
-							window.location.href = '/checkout';
-						}
-					}}
+					type="submit"
 				>
 					{t('cart.cta.checkout')}
 				</button>
-			</div>
+			</form>
 		{:else}
 			<p>{t('cart.empty')}</p>
 		{/if}
