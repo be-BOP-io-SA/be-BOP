@@ -112,14 +112,14 @@
 
 	$: logoClass = data.logo.isWide ? 'h-[60px] w-auto' : 'h-[60px] w-[60px] rounded-full';
 	const { t, locale, textAddress } = useI18n();
-	let ageWarning: false;
 
 	$: isDigital = items.every((item) => !item.product.shipping);
 	$: physicalCartCanBeOrdered = !!data.physicalCartMinAmount
 		? !isDigital &&
-		  priceInfo.partialPriceWithVat >=
+			priceInfo.partialPriceWithVat >=
 				toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 		: true;
+	let ageWarning = false;
 </script>
 
 <!--
@@ -310,8 +310,8 @@
 													<h3 class="text-base font-medium">
 														{item.chosenVariations
 															? item.product.name +
-															  ' - ' +
-															  Object.entries(item.chosenVariations)
+																' - ' +
+																Object.entries(item.chosenVariations)
 																	.map(
 																		([key, value]) =>
 																			item.product.variationLabels?.values[key][value]
@@ -340,7 +340,7 @@
 													>{item.depositPercentage
 														? `(${(item.depositPercentage / 100).toLocaleString($locale, {
 																style: 'percent'
-														  })})`
+															})})`
 														: ''}</PriceTag
 												>
 												{#if data.cartPreviewInteractive}
