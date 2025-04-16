@@ -206,6 +206,19 @@
 		/>
 		Limit product line per cart (for law purpose and small business )
 	</label>
+
+	{#if hasCartLimitProductLine}
+		<label class="form-label">
+			Set maximum product line per cart (minimum 1)
+			<input
+				type="number"
+				name="cartMaxSeparateItems"
+				class="form-input max-w-[25rem]"
+				value={data.cartMaxSeparateItems}
+				min="1"
+			/>
+		</label>
+	{/if}
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
@@ -234,18 +247,6 @@
 		Minimum cart amount for cart with physical
 	</label>
 
-	{#if hasCartLimitProductLine}
-		<label class="form-label">
-			Set maximum product line per cart (minimum 1)
-			<input
-				type="number"
-				name="cartMaxSeparateItems"
-				class="form-input max-w-[25rem]"
-				value={data.cartMaxSeparateItems}
-				min="1"
-			/>
-		</label>
-	{/if}
 	{#if hasPhysicalCartMinAmount}
 		<label class="form-label">
 			Set minimum cart amount for cart with physical (en {data.currencies.main})
