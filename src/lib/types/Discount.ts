@@ -11,6 +11,6 @@ export interface Discount extends Timestamps {
 	wholeCatalog: boolean;
 	beginsAt: Date;
 	endsAt: Date | null;
-	mode?: 'productPercentage' | 'freeProductQuantity'
-	quantityPerProduct?:Record<string, number>
+	mode?: 'productPercentage' | 'freeProductQuantity';
+	quantityPerProduct?: Record<string, number>;
 }
