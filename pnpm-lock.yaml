@@ -5513,4 +5513,3 @@ packages:
 
 settings:
   autoInstallPeers: true
-  excludeLinksFromLockfile: false
