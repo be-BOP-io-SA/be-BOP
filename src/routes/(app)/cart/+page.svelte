@@ -216,20 +216,33 @@
 						</div>
 
 						<div class="flex flex-col items-end justify-center lg:mb-0 mb-4">
-							<PriceTag
-								amount={(item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100}
-								currency={price.currency}
-								main
-								class="text-2xl truncate"
-								>{item.depositPercentage
-									? `(${(item.depositPercentage / 100).toLocaleString($locale, {
-											style: 'percent'
-									  })})`
-									: ''}</PriceTag
-							>
+							<div class="flex gap-2">
+								<PriceTag
+									amount={(item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100}
+									currency={price.currency}
+									main
+									class="text-2xl truncate {item.discountPercentage ? 'line-through' : ''}"
+									>{item.depositPercentage
+										? `(${(item.depositPercentage / 100).toLocaleString($locale, {
+												style: 'percent'
+										  })})`
+										: ''}</PriceTag
+								>
+								{#if item.discountPercentage}
+									<PriceTag
+										amount={((item.quantity * price.amount * (item.depositPercentage ?? 100)) /
+											100) *
+											(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+										currency={price.currency}
+										class="text-2xl truncate "
+										main
+									/>
+								{/if}
+							</div>
 							<PriceTag
 								class="text-base truncate"
-								amount={(item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100}
+								amount={((item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100) *
+									(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 								currency={price.currency}
 								secondary
 							/>

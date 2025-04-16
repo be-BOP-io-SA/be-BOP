@@ -59,6 +59,7 @@
 		availableDate: undefined,
 		displayShortDescription: false,
 		free: false,
+		hideDiscountExpiration: false,
 		stock: undefined,
 		maxQuantityPerOrder: DEFAULT_MAX_QUANTITY_PER_ORDER,
 		actionSettings: defaultActionSettings,
@@ -89,7 +90,7 @@
 	let submitting = false;
 	let sellDisclaimerTitle = product.sellDisclaimer?.title || '';
 	let sellDisclaimerReason = product.sellDisclaimer?.reason || '';
-	let files: FileList;
+	let files: FileList | null = null;
 	let deposit = product.deposit || {
 		percentage: 50,
 		enforce: false
@@ -157,6 +158,10 @@
 				seen.add(key);
 			}
 			if (!duplicateFromId && isNew) {
+				if (!files) {
+					errorMessage = 'Please upload a picture';
+					return;
+				}
 				const pictureId = await preUploadPicture(adminPrefix, files[0], { fileName: product.name });
 
 				formData.set('pictureId', pictureId);
@@ -697,6 +702,15 @@
 				class="form-checkbox"
 			/>
 			Hide this product from search engines
+		</label>
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="hideDiscountExpiration"
+				checked={product.hideDiscountExpiration}
+				class="form-checkbox"
+			/>
+			Hide discount expiration date
 		</label>
 		<label class="form-label">
 			Short description

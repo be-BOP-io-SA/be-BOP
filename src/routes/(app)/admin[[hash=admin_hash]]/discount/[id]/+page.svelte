@@ -12,7 +12,7 @@
 	let wholeCatalog = data.discount.wholeCatalog;
 
 	function checkForm(event: SubmitEvent) {
-		if (endsAt < beginsAt) {
+		if (endsAt && endsAt < beginsAt) {
 			endsAtElement.setCustomValidity('End date must be after beginning date');
 			endsAtElement.reportValidity();
 			event.preventDefault();
@@ -79,7 +79,6 @@
 			<input
 				class="form-input"
 				type="date"
-				required
 				name="endsAt"
 				bind:value={endsAt}
 				bind:this={endsAtElement}

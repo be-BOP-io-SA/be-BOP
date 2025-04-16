@@ -28,7 +28,9 @@
 			</p>
 			<br />
 			{#each data.order.notes as note}
-				{note.isEmployee
+				{note.isSystem
+					? t('order.note.authorSystem')
+					: note.isEmployee
 					? t('order.note.author', { alias: note.alias })
 					: t('order.note.authorCustomer')}<br />
 				<p class="text-base">

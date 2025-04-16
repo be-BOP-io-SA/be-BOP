@@ -2,11 +2,12 @@
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 
-	let name: string;
-	let slug: string;
+	let name = '';
+	let slug = '';
 	let pastEventDelay = 60;
 	let displayPastEvents = false;
 	let calendarHasCustomColor = false;
+	let rsvpOption = false;
 	let eventLines = 1;
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
@@ -73,8 +74,9 @@
 		<input class="form-checkbox" type="checkbox" name="allowSubscription" />
 		Allow user to subscribe
 	</label>
+
 	{#each [...Array(eventLines).keys()] as i}
-		<h1 class="text-xl font-bold">Event #{i + 1}</h1>
+		<h1 class="text-xl font-bold gap-2">Event #{i + 1}</h1>
 		<label class="form-label">
 			Title
 			<input type="text" name="events[{i}].title" class="form-input" required />
@@ -140,6 +142,21 @@
 			<input class="form-checkbox" type="checkbox" name="events[{i}].hideFromList" />
 			Hide event from list
 		</label>
+		<label class="checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				name="events[{i}].rsvp.option"
+				bind:checked={rsvpOption}
+			/>
+			Add RSVP option
+		</label>
+		{#if rsvpOption}
+			<label class="form-label">
+				Target
+				<input type="text" name="events[{i}].rsvp.target" class="form-input" required />
+			</label>
+		{/if}
 		<label class="checkbox-label">
 			<input
 				class="form-checkbox"

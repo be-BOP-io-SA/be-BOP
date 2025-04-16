@@ -18,7 +18,13 @@ import { isUniqueConstraintError } from './utils/isUniqueConstraintError';
 import { typedKeys } from '$lib/utils/typedKeys';
 import { addTranslations, type LocalesDictionary } from '$lib/i18n';
 import { trimPrefix } from '$lib/utils/trimPrefix';
-import { enhancedLanguages, languages, locales, type LanguageKey } from '$lib/translations';
+import {
+	enhancedLanguages,
+	formatDistanceLocale,
+	languages,
+	locales,
+	type LanguageKey
+} from '$lib/translations';
 import { merge } from 'lodash-es';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
@@ -121,6 +127,7 @@ const baseConfig = {
 		[TICKET_CHECKER_ROLE_ID]: false
 	},
 	plausibleScriptUrl: '',
+	analyticsScriptSnippet: '',
 	phoenixd: {
 		url: 'http://localhost:9740',
 		enabled: false,
@@ -301,6 +308,26 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 <p>{{eventDescription}}</p>
 <p><a href="{{eventLocationLink}}">{{eventLocationName}}</a></p>`,
 			default: true as boolean
+		},
+		'schedule.rsvp.admin': {
+			subject: '{{brandName}} - RSVP for {{eventName}}',
+			html: `<p>A new person confirmed participation to this event : {{eventName}}</p>
+<p>{{participantContact}}</p>`,
+			default: true as boolean
+		},
+		'schedule.rsvp.user': {
+			subject: '{{brandName}} - Participation confirmation to {{eventName}}',
+			html: `<p>This message was sent to you because you confirmed your participation to this event : {{eventName}} by {{brandName}}
+<p></p>
+<p>{{eventName}} - {{eventDate}}</p>
+<p>{{eventShortDescription}}</p>
+<p>{{eventDescription}}</p>
+<p>{{eventLocationName}}</p>
+<p><a href="{{eventLocationLink}}">{{eventLocationLink}}</a></p>
+<p></p>
+<p>If this an error or if you don't want to participate anymore to the event, please notify the organizer through this link :</p>
+<p><a href="mailto:{{eventCancellationLink}}?subject=Cancel_Participation">Cancel participation</a></p>`,
+			default: true as boolean
 		}
 	}
 };
@@ -373,7 +400,9 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 				const locale = trimPrefix(config._id, 'translations.');
 				if (typedInclude(locales, locale)) {
 					enhancedLanguages[locale] = merge({}, languages[locale], config.data);
-					addTranslations(locale, enhancedLanguages[locale]);
+					addTranslations(locale, enhancedLanguages[locale], {
+						formatDistance: formatDistanceLocale[locale]
+					});
 				}
 			}
 		}

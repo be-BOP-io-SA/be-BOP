@@ -482,6 +482,7 @@
 		"note": {
 			"author": "{alias} (Employé)",
 			"authorCustomer": "Client",
+			"authorSystem": "Système",
 			"backToOrder": "Aller à la commande",
 			"label": "Note de l'employé",
 			"saveText": "Enregistrer la note",
@@ -646,7 +647,8 @@
 		"digitalFiles": {
 			"title": "Fichiers téléchargeables"
 		},
-		"discountBanner": "{discountPercent}% de réduction pour {hours}h",
+		"discountBanner": "{discountPercent}% de réduction pendant {timespan}",
+		"discountBannerNoTime": "{discountPercent}% de réduction",
 		"freeWithSub": "Ce produit est disponible gratuitement avec votre abonnement mensuel",
 		"freeWithTitle": "Gratuit avec \"xxxxx",
 		"horsTaxeShort": "HT",
@@ -676,6 +678,11 @@
 		"differentDayText": "- Dés {beginDate} au {endDate}",
 		"exportEventTitle": "Exportation fichier d'événements ",
 		"moreInfo": "Plus d'info",
+		"rsvp": {
+			"notifyCta": "Aviser",
+			"succesfulNotifyMessage": "Votre participation est informée avec succès au créateur d'événements",
+			"textMessage": "Ajoutez votre e-mail / NPUB pour informer votre participation à l'événement."
+		},
 		"subscribe": {
 			"formSuccessText": "Vous recevrez de nouvelles notifications d'événements pour",
 			"formText": "Ajoutez votre e-mail ou NPUB pour recevoir des notifications sur de nouveaux événements."

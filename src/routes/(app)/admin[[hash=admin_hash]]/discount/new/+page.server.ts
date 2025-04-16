@@ -35,24 +35,24 @@ export const actions: Actions = {
 			.object({
 				name: z.string().min(1).max(MAX_NAME_LIMIT),
 				productIds: z.string().array(),
-				subscriptionIds: z.string().array(),
+				subscriptionIds: z.string().array().min(1),
 				percentage: z.string().regex(/^\d+(\.\d+)?$/),
 				wholeCatalog: z.boolean({ coerce: true }).default(false),
 				beginsAt: z.date({ coerce: true }),
-				endsAt: z.date({ coerce: true })
+				endsAt: z.date({ coerce: true }).optional()
 			})
 			.parse({
 				name: data.get('name'),
 				subscriptionIds: JSON.parse(String(data.get('subscriptionIds'))).map(
 					(x: { value: string }) => x.value
 				),
-				productIds: JSON.parse(String(data.get('productIds'))).map(
+				productIds: JSON.parse(String(data.get('productIds') ?? '[]')).map(
 					(x: { value: string }) => x.value
 				),
 				wholeCatalog: data.get('wholeCatalog'),
 				percentage: data.get('percentage'),
 				beginsAt: data.get('beginsAt'),
-				endsAt: data.get('endsAt')
+				endsAt: data.get('endsAt') || undefined
 			});
 
 		const slug = generateId(name, true);
@@ -64,7 +64,7 @@ export const actions: Actions = {
 			wholeCatalog,
 			percentage: Number(percentage),
 			beginsAt,
-			endsAt,
+			endsAt: endsAt || null,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		});

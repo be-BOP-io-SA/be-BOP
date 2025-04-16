@@ -35,7 +35,6 @@ import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import type { CountryAlpha2 } from '$lib/types/Country';
-import { filterUndef } from '$lib/utils/filterUndef';
 import type { LanguageKey } from '$lib/translations';
 import { filterNullish } from '$lib/utils/fillterNullish';
 import { toUrlEncoded } from '$lib/utils/toUrlEncoded';
@@ -48,6 +47,7 @@ import {
 	generateDerivationIndex,
 	isBitcoinNodelessConfigured
 } from './bitcoin-nodeless';
+import type { Discount } from '$lib/types/Discount';
 
 async function generateOrderNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(
@@ -225,22 +225,21 @@ export async function onOrderPayment(
 								currency: payment.currencySnapshot.secondary.price.currency,
 								amount: sumCurrency(
 									payment.currencySnapshot.secondary.price.currency,
-									filterUndef(
-										order.payments
-											.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-											.map((p) => p.currencySnapshot.secondary?.price)
-									)
+									order.payments
+										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
+										.map((p) => p.currencySnapshot.secondary?.price)
+										.filter((p) => p !== undefined)
 								)
 							},
 							'payments.$.currencySnapshot.secondary.remainingToPay': {
 								currency: payment.currencySnapshot.secondary.price.currency,
 								amount: sumCurrency(payment.currencySnapshot.secondary.price.currency, [
 									order.currencySnapshot.secondary.totalPrice,
-									...filterUndef(
-										order.payments
-											.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-											.map((p) => p.currencySnapshot.secondary?.price)
-									).map((p) => ({ currency: p.currency, amount: -p.amount }))
+									...order.payments
+										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
+										.map((p) => p.currencySnapshot.secondary?.price)
+										.filter((p) => p !== undefined)
+										.map((p) => ({ currency: p.currency, amount: -p.amount }))
 								])
 							},
 							'payments.$.currencySnapshot.secondary.received': {
@@ -258,22 +257,21 @@ export async function onOrderPayment(
 								currency: payment.currencySnapshot.accounting.price.currency,
 								amount: sumCurrency(
 									payment.currencySnapshot.accounting.price.currency,
-									filterUndef(
-										order.payments
-											.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-											.map((p) => p.currencySnapshot.accounting?.price)
-									)
+									order.payments
+										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
+										.map((p) => p.currencySnapshot.accounting?.price)
+										.filter((p) => p !== undefined)
 								)
 							},
 							'payments.$.currencySnapshot.accounting.remainingToPay': {
 								currency: payment.currencySnapshot.accounting.price.currency,
 								amount: sumCurrency(payment.currencySnapshot.accounting.price.currency, [
 									order.currencySnapshot.accounting.totalPrice,
-									...filterUndef(
-										order.payments
-											.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-											.map((p) => p.currencySnapshot.accounting?.price)
-									).map((p) => ({ currency: p.currency, amount: -p.amount }))
+									...order.payments
+										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
+										.map((p) => p.currencySnapshot.accounting?.price)
+										.filter((p) => p !== undefined)
+										.map((p) => ({ currency: p.currency, amount: -p.amount }))
 								])
 							},
 							'payments.$.currencySnapshot.accounting.received': {
@@ -438,6 +436,7 @@ export async function createOrder(
 		customPrice?: { amount: number; currency: Currency };
 		chosenVariations?: Record<string, string>;
 		depositPercentage?: number;
+		discountPercentage?: number;
 	}>,
 	// null when point of sale want to use multiple payment methods
 	paymentMethod: PaymentMethod | null,
@@ -553,6 +552,95 @@ export async function createOrder(
 		: [];
 
 	const vatExempted = runtimeConfig.vatExempted || !!params.reasonFreeVat;
+
+	const paidSubs = await collections.paidSubscriptions
+		.find({
+			...userQuery(params.user),
+			paidUntil: { $gt: new Date() }
+		})
+		.toArray();
+	const discounts = paidSubs.length
+		? await collections.discounts
+				.aggregate<{
+					_id: Product['_id'] | null;
+					discountPercent: Discount['percentage'];
+					subscriptionIds: Discount['subscriptionIds'];
+				}>([
+					{
+						$match: {
+							$or: [
+								{ wholeCatalog: true },
+								{ productIds: { $in: items.map((p) => p.product._id) } }
+							],
+							subscriptionIds: { $in: paidSubs.map((sub) => sub.productId) },
+							beginsAt: {
+								$lt: new Date()
+							},
+							$and: [
+								{
+									$or: [
+										{
+											endsAt: { $gt: new Date() }
+										},
+										{
+											endsAt: null
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						$sort: {
+							percentage: -1
+						}
+					},
+					{
+						$project: {
+							productIds: 1,
+							percentage: 1,
+							subscriptionIds: 1,
+							_id: 0
+						}
+					},
+					{
+						$unwind: {
+							path: '$productIds',
+							preserveNullAndEmptyArrays: true
+						}
+					},
+					{
+						$group: {
+							_id: { $ifNull: ['$productIds', null] },
+							discountPercent: { $first: '$percentage' },
+							subscriptionIds: { $push: '$subscriptionIds' }
+						}
+					}
+				])
+				.toArray()
+		: [];
+
+	const wholeDiscount = discounts.find((d) => d._id === null)?.discountPercent;
+	const discountByProductId = new Map(
+		discounts
+			.filter((d) => d._id !== null)
+			.map((d) => [
+				d._id,
+				wholeDiscount !== undefined && wholeDiscount > d.discountPercent
+					? wholeDiscount
+					: d.discountPercent
+			])
+	);
+
+	const discountSubIds = new Set(discounts.flatMap((d) => d.subscriptionIds));
+	const usedSubIds = paidSubs
+		.filter((sub) => discountSubIds.has(sub.productId))
+		.map((sub) => sub.productId);
+
+	for (const item of items) {
+		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
+	}
+
 	const priceInfo = computePriceInfo(items, {
 		deliveryFees: shippingPrice,
 		vatExempted,
@@ -708,6 +796,7 @@ export async function createOrder(
 				customPrice: item.customPrice,
 				chosenVariations: item.chosenVariations,
 				depositPercentage: item.depositPercentage,
+				discountPercentage: item.discountPercentage,
 				vatRate: priceInfo.vatRates[i],
 				currencySnapshot: {
 					main: {
@@ -979,18 +1068,35 @@ export async function createOrder(
 					})
 				}
 			},
-			...(params.note && {
-				notes: [
-					{
-						content: params.note,
-						createdAt: new Date(),
-						role: params.user.userRoleId || CUSTOMER_ROLE_ID,
-						...(params.user && { userId: params.user.userId }),
-						...(npubAddress && { npub: npubAddress }),
-						...(email && { email })
-					}
-				]
-			}),
+			notes: [
+				...(items.some((item) => item.discountPercentage)
+					? [
+							{
+								content: `Discount applied: ${items
+									.filter((item) => item.discountPercentage)
+									.map(
+										(item) =>
+											`${item.product.name} (${item.product._id}): ${item.discountPercentage}%`
+									)
+									.join(', ')} because of subscription ${usedSubIds.join(', ')}`,
+								createdAt: new Date(),
+								role: null
+							}
+					  ]
+					: []),
+				...(params.note
+					? [
+							{
+								content: params.note,
+								createdAt: new Date(),
+								role: params.user.userRoleId || CUSTOMER_ROLE_ID,
+								...(params.user && { userId: params.user.userId }),
+								...(npubAddress && { npub: npubAddress }),
+								...(email && { email })
+							}
+					  ]
+					: [])
+			],
 			...(params.receiptNote && { receiptNote: params.receiptNote }),
 			...(params.reasonOfferDeliveryFees && {
 				deliveryFeesFree: {
@@ -1551,19 +1657,21 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 							amount:
 								(item.customPrice?.amount ?? item.product.price.amount) *
 								item.quantity *
-								((challenge.globalRatio ?? challenge.perProductRatio?.[item.product._id] ?? 100) /
-									100),
+								(challenge.perProductRatio?.[item.product._id] ??
+									(challenge.globalRatio ?? 100) / 100) *
+								(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
 							currency: item.customPrice?.currency ?? item.product.price.currency
 						}))
 				  );
 		const incObject: Record<string, number> = {};
 		if (challenge.mode === 'moneyAmount') {
 			for (const item of items) {
-				const amount = toCurrency(
-					challenge.goal.currency,
-					item.product.price.amount,
-					item.product.price.currency
-				);
+				const amount =
+					toCurrency(
+						challenge.goal.currency,
+						item.product.price.amount,
+						item.product.price.currency
+					) * (item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1);
 
 				const key = `amountPerProduct.${item.product._id}`;
 				incObject[key] = (incObject[key] || 0) + amount;

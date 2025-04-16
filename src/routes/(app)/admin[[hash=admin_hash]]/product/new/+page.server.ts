@@ -153,6 +153,7 @@ export const actions: Actions = {
 								currency: parsed.priceCurrency,
 								amount: priceAmount
 							},
+							hideDiscountExpiration: parsed.hideDiscountExpiration,
 							type: parsed.type,
 							availableDate: parsed.availableDate || undefined,
 							preorder: parsed.preorder,
@@ -342,6 +343,7 @@ export const actions: Actions = {
 					alias: parsed.alias ? [parsed.slug, parsed.alias] : [parsed.slug],
 					createdAt: new Date(),
 					updatedAt: new Date(),
+					hideDiscountExpiration: parsed.hideDiscountExpiration,
 					description: parsed.description.replaceAll('\r', ''),
 					shortDescription: parsed.shortDescription.replaceAll('\r', ''),
 					name: parsed.name,

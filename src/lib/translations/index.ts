@@ -5,7 +5,19 @@ import fr from './fr.json';
 import nl from './nl.json';
 import it from './it.json';
 
+// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
+import { formatDistance as formatDistanceEn } from 'date-fns/formatDistance/en-US';
+// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
+import { formatDistance as formatDistanceFr } from 'date-fns/formatDistance/fr';
+// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
+import { formatDistance as formatDistanceIt } from 'date-fns/formatDistance/it';
+// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
+import { formatDistance as formatDistanceNl } from 'date-fns/formatDistance/nl';
+// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
+import { formatDistance as formatDistanceEs } from 'date-fns/formatDistance/es';
+
 import { typedKeys } from '$lib/utils/typedKeys';
+import type { FormatDistanceFn } from 'date-fns';
 
 export const languages = {
 	en,
@@ -15,6 +27,17 @@ export const languages = {
 	it
 };
 
+export const formatDistanceLocale = {
+	en: formatDistanceEn as FormatDistanceFn,
+	'es-sv': formatDistanceEs as FormatDistanceFn,
+	fr: formatDistanceFr as FormatDistanceFn,
+	nl: formatDistanceNl as FormatDistanceFn,
+	it: formatDistanceIt as FormatDistanceFn
+};
+
+/**
+ * Contains dynamic translations loaded from DB.
+ */
 export const enhancedLanguages = merge({}, languages);
 
 export const locales = typedKeys(languages);

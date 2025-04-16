@@ -9,7 +9,6 @@ import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { runtimeConfig } from './runtime-config';
 import { socksDispatcher } from 'fetch-socks';
-import { filterUndef } from '$lib/utils/filterUndef';
 import type { ObjectId } from 'mongodb';
 
 export const isBitcoinConfigured =
@@ -314,7 +313,7 @@ export async function dumpWalletInfo(wallet: string): Promise<{
 		})
 		.parse(json);
 
-	const privKeys = filterUndef(
+	const privKeys = (
 		await Promise.all(
 			addresses.map(async ({ address, amount }) => {
 				const response = await bitcoinRpc('dumpprivkey', [address], wallet);
@@ -333,7 +332,7 @@ export async function dumpWalletInfo(wallet: string): Promise<{
 				};
 			})
 		)
-	);
+	).filter((x) => x !== undefined);
 
 	return {
 		privKeys

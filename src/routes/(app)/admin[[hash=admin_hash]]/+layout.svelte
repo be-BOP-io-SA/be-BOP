@@ -87,7 +87,18 @@
 						{adminSection.section}
 					</span>
 					{#each adminSection.links
-						.filter((link) => !link.hidden)
+						.filter((link) => {
+							if (link.hidden) {
+								return false;
+							}
+							if (!data.isBitcoinConfigured && link.href === `${data.adminPrefix}/bitcoind`) {
+								return false;
+							}
+							if (!data.isLightningConfigured && link.href === `${data.adminPrefix}/lnd`) {
+								return false;
+							}
+							return true;
+						})
 						.filter((l) => (data.role ? isAllowedOnPage(data.role, l.href, 'read') : true)) as link}
 						<a
 							href={link.href}
@@ -115,7 +126,18 @@
 			<span class="font-bold text-xl">
 				{adminSection.section}
 			</span>
-			{#each adminSection.links.filter((link) => !link.hidden) as link}
+			{#each adminSection.links.filter((link) => {
+				if (link.hidden) {
+					return false;
+				}
+				if (!data.isBitcoinConfigured && link.href === `${data.adminPrefix}/bitcoind`) {
+					return false;
+				}
+				if (!data.isLightningConfigured && link.href === `${data.adminPrefix}/lnd`) {
+					return false;
+				}
+				return true;
+			}) as link}
 				<a
 					href={link.href}
 					class={$page.url.pathname.startsWith(link.href) ? 'underline' : ''}

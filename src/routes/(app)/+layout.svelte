@@ -238,6 +238,7 @@
 									customPrice={$productAddedToCart.customPrice}
 									chosenVariations={$productAddedToCart.chosenVariations}
 									depositPercentage={$productAddedToCart.depositPercentage}
+									discountPercentage={$productAddedToCart.discountPercentage}
 								/>
 							</Popup>
 						{:else if cartOpen}
@@ -329,7 +330,10 @@
 											<div class="flex flex-col items-end gap-[6px] ml-auto">
 												<PriceTag
 													class="text-base"
-													amount={(item.quantity * price.amount * (item.depositPercentage ?? 100)) /
+													amount={(item.quantity *
+														price.amount *
+														(item.depositPercentage ?? 100) *
+														(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)) /
 														100}
 													currency={price.currency}
 													main
