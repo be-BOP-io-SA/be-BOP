@@ -76,6 +76,20 @@
 			Npub
 			<input class="form-input" type="text" name="npub" placeholder="search order npub" />
 		</label>
+		<label class="form-label w-[15em]">
+			Employee alias
+			<select name="employeeAlias" class="form-input">
+				<option></option>
+				<option>System</option>
+				{#each data.employees as employee}
+					<option
+						value={employee.alias}
+						selected={$page.url.searchParams.get('employeeAlias') === employee.alias}
+						>{employee.alias}</option
+					>
+				{/each}
+			</select>
+		</label>
 		<label class="form-label w-auto mt-8 flex flex-row">
 			<input type="submit" value="🔍" class="btn btn-gray" on:click={() => (next = 0)} />
 			<a href="/admin/order" class="btn btn-gray">🧹</a>

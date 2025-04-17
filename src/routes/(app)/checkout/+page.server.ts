@@ -461,7 +461,8 @@ export const actions = {
 					sessionId: locals.sessionId,
 					userId: locals.user?._id,
 					userLogin: locals.user?.login,
-					userRoleId: locals.user?.roleId
+					userRoleId: locals.user?.roleId,
+					userAlias: locals.user?.alias
 				},
 				notifications: {
 					paymentStatus: {

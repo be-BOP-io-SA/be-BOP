@@ -186,7 +186,10 @@ export async function fetchOrderForUser(orderId: string) {
 		receiptNote: order.receiptNote,
 		user: {
 			npub: order.user.npub,
-			email: order.user.email
+			email: order.user.email,
+			userRoleId: order.user.userRoleId,
+			userLogin: order.user.userLogin,
+			userAlias: order.user.userAlias
 		},
 		onLocation: order.onLocation
 	};
