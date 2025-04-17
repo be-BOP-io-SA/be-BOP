@@ -91,7 +91,8 @@ export const load = async ({ params, locals }) => {
 				},
 				hasSellDisclaimer: 1,
 				hideFromSEO: 1,
-				hideDiscountExpiration: 1
+				hideDiscountExpiration: 1,
+				shipping: 1
 			}
 		}
 	);

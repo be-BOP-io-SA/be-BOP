@@ -26,6 +26,7 @@
 		"empty": "Winkelwagen is leeg",
 		"fillProductAlias": "Productalias invullen",
 		"items": "Producten",
+		"minimumPhysicalAmountText": "Uw kar bevat geen minimaal fysieke hoeveelheid",
 		"quantity": "Hoeveelheid",
 		"reachedMaxPerLine": "Uw winkelwagen heeft de maximale grootte bereikt. \nOm meer artikelen toe te voegen, verwijdert u artikelen uit uw winkelwagen",
 		"remaining": "Resteert na het afrekenen",

@@ -769,6 +769,17 @@ export async function createOrder(
 			throw error(400, 'error matching on variations choice');
 		}
 	}
+	const physicalCartMinAmount = runtimeConfig.physicalCartMinAmount;
+
+	const physicalCartCanBeOrdered =
+		!!physicalCartMinAmount && !isDigital
+			? priceInfo.totalPriceWithVat >=
+			  toCurrency(priceInfo.currency, physicalCartMinAmount, runtimeConfig.mainCurrency)
+			: true;
+
+	if (!physicalCartCanBeOrdered) {
+		throw error(403, `Can't order a cart with amount < ${physicalCartMinAmount}`);
+	}
 
 	await withTransaction(async (session) => {
 		const order: Order = {
