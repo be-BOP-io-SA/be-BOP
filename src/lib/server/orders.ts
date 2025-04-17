@@ -1587,7 +1587,11 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 		.toArray();
 	const discounts = await collections.discounts
 		.find({
-			subscriptionIds: { $in: subscriptions.map((sub) => sub._id) }
+			subscriptionIds: {
+				$in: order.items
+					.filter((item) => item.product.type === 'subscription')
+					.map((sub) => sub.product._id)
+			}
 		})
 		.toArray();
 	for (const subscription of order.items.filter((item) => item.product.type === 'subscription')) {
