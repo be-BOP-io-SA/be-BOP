@@ -32,6 +32,7 @@ import type { PaymentMethod } from './payment-methods';
 
 const baseConfig = {
 	adminHash: '',
+	adminWelcomMessage: '',
 	isAdminCreated: false,
 	exchangeRate: defaultExchangeRate,
 	mainCurrency: 'BTC' as Currency,
