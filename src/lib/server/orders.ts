@@ -626,7 +626,9 @@ export async function createOrder(
 			.filter((d) => d._id !== null)
 			.map((d) => [
 				d._id,
-				wholeDiscount !== undefined && wholeDiscount > d.discountPercent
+				wholeDiscount !== undefined &&
+				d.discountPercent !== undefined &&
+				wholeDiscount > d.discountPercent
 					? wholeDiscount
 					: d.discountPercent
 			])
@@ -1583,6 +1585,11 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 			productId: { $in: order.items.map((item) => item.product._id) }
 		})
 		.toArray();
+	const discounts = await collections.discounts
+		.find({
+			subscriptionIds: { $in: subscriptions.map((sub) => sub._id) }
+		})
+		.toArray();
 	for (const subscription of order.items.filter((item) => item.product.type === 'subscription')) {
 		const existingSubscription = subscriptions.find(
 			(sub) => sub.productId === subscription.product._id
@@ -1608,6 +1615,19 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 				throw new Error('Failed to update subscription');
 			}
 		} else {
+			const stockByProductId: Record<string, { total: number; available: number; used: number }> =
+				{};
+			for (const discount of discounts) {
+				if (discount.quantityPerProduct) {
+					for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
+						stockByProductId[productId] = {
+							total: quantity,
+							available: quantity,
+							used: 0
+						};
+					}
+				}
+			}
 			await collections.paidSubscriptions.insertOne(
 				{
 					_id: crypto.randomUUID(),
@@ -1617,7 +1637,8 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 					paidUntil: add(new Date(), { [`${runtimeConfig.subscriptionDuration}s`]: 1 }),
 					createdAt: new Date(),
 					updatedAt: new Date(),
-					notifications: []
+					notifications: [],
+					...(stockByProductId && { stockByProductId })
 				},
 				{ session }
 			);
