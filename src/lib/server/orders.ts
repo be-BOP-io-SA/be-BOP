@@ -1617,14 +1617,19 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 		} else {
 			const stockByProductId: Record<string, { total: number; available: number; used: number }> =
 				{};
+
 			for (const discount of discounts) {
 				if (discount.quantityPerProduct) {
 					for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
-						stockByProductId[productId] = {
-							total: quantity,
-							available: quantity,
-							used: 0
-						};
+						if (!stockByProductId[productId]) {
+							stockByProductId[productId] = {
+								total: 0,
+								available: 0,
+								used: 0
+							};
+						}
+						stockByProductId[productId].total += quantity;
+						stockByProductId[productId].available += quantity;
 					}
 				}
 			}
