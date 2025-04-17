@@ -46,11 +46,11 @@
 	let loading = false;
 	const { t, locale, countryName } = useI18n();
 	$: isDigital = items.every((item) => !item.product.shipping);
-	$: physicalCartCanBeOrdered = !!data.physicalCartMinAmount
-		? !isDigital &&
-		  priceInfo.partialPriceWithVat >=
-				toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
-		: true;
+	$: physicalCartCanBeOrdered =
+		!!data.physicalCartMinAmount && !isDigital
+			? priceInfo.partialPriceWithVat >=
+			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
+			: true;
 </script>
 
 <main class="mx-auto max-w-7xl flex flex-col gap-2 px-6 py-10 body-mainPlan">

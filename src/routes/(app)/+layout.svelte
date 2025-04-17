@@ -114,11 +114,11 @@
 	const { t, locale, textAddress } = useI18n();
 
 	$: isDigital = items.every((item) => !item.product.shipping);
-	$: physicalCartCanBeOrdered = !!data.physicalCartMinAmount
-		? !isDigital &&
-		  priceInfo.partialPriceWithVat >=
-				toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
-		: true;
+	$: physicalCartCanBeOrdered =
+		!!data.physicalCartMinAmount && !isDigital
+			? priceInfo.partialPriceWithVat >=
+			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
+			: true;
 	let ageWarning = false;
 </script>
 

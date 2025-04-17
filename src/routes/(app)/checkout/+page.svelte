@@ -165,11 +165,11 @@
 	let showBillingInfo = false;
 	let isProfessionalOrder = false;
 	let changePaymentTimeOut = false;
-	$: physicalCartCanBeOrdered = !!data.physicalCartMinAmount
-		? !isDigital &&
-		  priceInfo.partialPriceWithVat >=
-				toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
-		: true;
+	$: physicalCartCanBeOrdered =
+		!!data.physicalCartMinAmount && !isDigital
+			? priceInfo.partialPriceWithVat >=
+			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
+			: true;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
