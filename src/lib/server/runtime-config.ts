@@ -105,6 +105,7 @@ const baseConfig = {
 	isBillingAddressMandatory: false,
 	disableLanguageSelector: false,
 	hideCartInToolbar: false,
+	hideThemeSelectorInToolbar: false,
 	defaultOnLocation: false,
 	languages: locales,
 	defaultLanguage: 'en' as LanguageKey,
