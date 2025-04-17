@@ -2,6 +2,7 @@ import { collections } from '$lib/server/database';
 import { paymentMethods } from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S } from '$lib/types/Country.js';
 import { type Order, ORDER_PAGINATION_LIMIT } from '$lib/types/Order';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 
 import type { Filter } from 'mongodb';
 import { z } from 'zod';
@@ -17,12 +18,23 @@ export async function load({ url, locals }) {
 		country: z.enum(['' as const, ...COUNTRY_ALPHA2S]).optional(),
 		email: z.string().optional(),
 		label: z.string().optional(),
-		npub: z.string().optional()
+		npub: z.string().optional(),
+		employeeAlias: z.string().optional()
 	});
 
 	const searchParams = Object.fromEntries(url.searchParams.entries());
 	const result = querySchema.parse(searchParams);
-	const { skip, orderNumber, productAlias, paymentMethod, country, email, npub, label } = result;
+	const {
+		skip,
+		orderNumber,
+		productAlias,
+		paymentMethod,
+		country,
+		email,
+		npub,
+		label,
+		employeeAlias
+	} = result;
 
 	const query: Filter<Order> = {};
 
@@ -47,6 +59,11 @@ export async function load({ url, locals }) {
 	if (label) {
 		query['orderLabelIds'] = label;
 	}
+	if (employeeAlias === 'System') {
+		query['user.userAlias'] = { $exists: false };
+	} else if (employeeAlias) {
+		query['user.userAlias'] = employeeAlias;
+	}
 
 	const orders = await collections.orders
 		.find(query)
@@ -55,6 +72,10 @@ export async function load({ url, locals }) {
 		.sort({ createdAt: -1 })
 		.toArray();
 	const labels = await collections.labels.find({}).toArray();
+	const nonCustomers = await collections.users
+		.find({ roleId: { $ne: CUSTOMER_ROLE_ID } })
+		.sort({ _id: 1 })
+		.toArray();
 	return {
 		orders: orders.map((order) => ({
 			_id: order._id,
@@ -75,6 +96,10 @@ export async function load({ url, locals }) {
 			orderLabelIds: order.orderLabelIds
 		})),
 		paymentMethods: methods,
-		labels
+		labels,
+		employees: nonCustomers.map((user) => ({
+			_id: user._id.toString(),
+			alias: user.alias
+		}))
 	};
 }

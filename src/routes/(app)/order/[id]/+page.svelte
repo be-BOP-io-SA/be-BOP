@@ -656,6 +656,13 @@
 							{data.order.user.npub}
 						</p>
 					{/if}
+					<br />
+					{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
+						{t('order.seller.title')}:
+						<p class="body-secondaryText whitespace-pre-line break-words break-all">
+							{data.order.user.userAlias ?? 'System'}
+						</p>
+					{/if}
 				</div>
 			{/if}
 

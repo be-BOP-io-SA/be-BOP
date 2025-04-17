@@ -253,7 +253,7 @@
 			<input class="form-input" type="date" name="endsAt" value={dateString(endsAt)} />
 		</label>
 	</div>
-	<div class="col-span-4">
+	<div class="col-span-2">
 		<label class="form-label">
 			Payment Mean
 			<select name="paymentMethod" class="form-input" disabled={data.paymentMethods.length === 0}>
@@ -262,6 +262,20 @@
 					<option value={paymentMethod} selected={data.paymentMethod === paymentMethod}>
 						{t('checkout.paymentMethod.' + paymentMethod)}
 					</option>
+				{/each}
+			</select>
+		</label>
+	</div>
+	<div class="col-span-2">
+		<label class="form-label">
+			Employee alias
+			<select name="employeeAlias" class="form-input">
+				<option></option>
+				<option>System</option>
+				{#each data.employees as employee}
+					<option value={employee.alias} selected={data.employeeAlias === employee.alias}
+						>{employee.alias}</option
+					>
 				{/each}
 			</select>
 		</label>

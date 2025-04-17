@@ -575,6 +575,9 @@
 		},
 		"requestedAt": "Betaling aangevraagd op <0></0>",
 		"restToPay": "Resteert nog te betalen",
+		"seller": {
+			"title": "Verkoper"
+		},
 		"shippingAddress": {
 			"title": "Afleveradres"
 		},
