@@ -48,7 +48,16 @@ export const actions = {
 
 		const data = await request.formData();
 
-		const { name, subscriptionIds, productIds, wholeCatalog, percentage, beginsAt, endsAt } = z
+		const {
+			name,
+			subscriptionIds,
+			productIds,
+			wholeCatalog,
+			percentage,
+			beginsAt,
+			endsAt,
+			quantityPerProduct
+		} = z
 			.object({
 				name: z.string().min(1).max(MAX_NAME_LIMIT),
 				productIds: z.string().array(),
@@ -56,7 +65,8 @@ export const actions = {
 				percentage: z.string().regex(/^\d+(\.\d+)?$/),
 				wholeCatalog: z.boolean({ coerce: true }).default(false),
 				beginsAt: z.date({ coerce: true }),
-				endsAt: z.date({ coerce: true }).optional()
+				endsAt: z.date({ coerce: true }).optional(),
+				quantityPerProduct: z.record(z.string(), z.number().min(0).max(100)).optional()
 			})
 			.parse({
 				name: data.get('name'),
@@ -69,7 +79,8 @@ export const actions = {
 				wholeCatalog: data.get('wholeCatalog'),
 				percentage: data.get('percentage'),
 				beginsAt: data.get('beginsAt'),
-				endsAt: data.get('endsAt') || undefined
+				endsAt: data.get('endsAt') || undefined,
+				quantityPerProduct: quantityPerProductRecord || undefined
 			});
 
 		await collections.discounts.updateOne(

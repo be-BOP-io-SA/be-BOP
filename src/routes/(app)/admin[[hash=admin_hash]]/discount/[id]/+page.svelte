@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { upperFirst } from '$lib/utils/upperFirst.js';
-	import { keys } from 'lodash-es';
 	import { MultiSelect } from 'svelte-multiselect';
 
 	export let data;
@@ -13,7 +12,8 @@
 	let subscriptions = data.subscriptions;
 	let wholeCatalog = data.discount.wholeCatalog;
 	let mode = data.discount.mode;
-	let productFreeLine = Object.keys(data.discount.quantityPerProduct ?? []).length;
+	let productFree = Object.keys(data.discount.quantityPerProduct ?? []);
+	let productFreeLine = productFree.length;
 	function checkForm(event: SubmitEvent) {
 		if (endsAt && endsAt < beginsAt) {
 			endsAtElement.setCustomValidity('End date must be after beginning date');
@@ -146,7 +146,7 @@
 					<td></td>
 				</tr>
 			</thead>
-			{#each [...(Object.keys(data.discount.quantityPerProduct ?? []) || []), ...Array(productFreeLine).fill( { productId: '', quantity: 0 } )].slice(0, productFreeLine) as product, i}
+			{#each [...productFree, ...Array(productFreeLine).fill( { productId: '', quantity: 0 } )].slice(0, productFreeLine) as product}
 				<tbody>
 					<tr>
 						<td>
@@ -173,7 +173,8 @@
 								type="button"
 								class="self-start"
 								on:click={() => {
-									productFreeLine -= 1;
+									(productFree = productFree.filter((prod) => prod !== product)),
+										(productFreeLine -= 1);
 								}}>🗑️</button
 							>
 						</td>
