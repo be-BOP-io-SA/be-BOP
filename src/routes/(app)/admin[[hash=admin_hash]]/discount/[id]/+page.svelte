@@ -146,12 +146,12 @@
 					<td></td>
 				</tr>
 			</thead>
-			{#each [...productFree, ...Array(productFreeLine).fill( { productId: '', quantity: 0 } )].slice(0, productFreeLine) as product}
+			{#each [...productFree, ...Array(productFreeLine).fill( { productId: '', quantity: 0 } )].slice(0, productFreeLine) as product, i}
 				<tbody>
 					<tr>
 						<td>
 							<label class="form-label m-1">
-								<select class="form-input">
+								<select class="form-input" bind:value={productFree[i]}>
 									{#each availableProductList as prod}
 										<option value={prod._id} selected={prod._id === product}>{prod._id}</option>
 									{/each}
@@ -162,7 +162,7 @@
 							<label class="form-label m-1">
 								<input
 									type="number"
-									name="quantityPerProduct[]"
+									name="quantityPerProduct[{productFree[i]}]"
 									class="form-input"
 									value={data.discount.quantityPerProduct?.[product] ?? 0}
 								/>
