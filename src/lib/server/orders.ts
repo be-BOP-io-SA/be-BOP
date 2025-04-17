@@ -1615,21 +1615,21 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 				throw new Error('Failed to update subscription');
 			}
 		} else {
-			const stockByProductId: Record<string, { total: number; available: number; used: number }> =
+			const freeProductsById: Record<string, { total: number; available: number; used: number }> =
 				{};
 
 			for (const discount of discounts) {
 				if (discount.quantityPerProduct) {
 					for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
-						if (!stockByProductId[productId]) {
-							stockByProductId[productId] = {
+						if (!freeProductsById[productId]) {
+							freeProductsById[productId] = {
 								total: 0,
 								available: 0,
 								used: 0
 							};
 						}
-						stockByProductId[productId].total += quantity;
-						stockByProductId[productId].available += quantity;
+						freeProductsById[productId].total += quantity;
+						freeProductsById[productId].available += quantity;
 					}
 				}
 			}
@@ -1643,7 +1643,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					notifications: [],
-					...(stockByProductId && { stockByProductId })
+					...(freeProductsById && { freeProductsById })
 				},
 				{ session }
 			);

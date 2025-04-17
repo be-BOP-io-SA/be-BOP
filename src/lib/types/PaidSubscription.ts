@@ -26,5 +26,5 @@ export interface PaidSubscription extends Timestamps {
 	}>;
 
 	cancelledAt?: Date;
-	stockByProductId?: Record<string, { available: number; total: number; used: number }>;
+	freeProductsById?: Record<string, { available: number; total: number; used: number }>;
 }
