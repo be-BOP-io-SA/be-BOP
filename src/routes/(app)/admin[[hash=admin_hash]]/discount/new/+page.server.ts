@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { MAX_NAME_LIMIT, type Product } from '$lib/types/Product';
 import { generateId } from '$lib/utils/generateId';
 import { adminPrefix } from '$lib/server/admin';
+import { isEmpty } from 'lodash-es';
 
 export const load = async () => {
 	const subscriptions = await collections.products
@@ -56,7 +57,7 @@ export const actions: Actions = {
 				percentage: z
 					.string()
 					.regex(/^\d+(\.\d+)?$/)
-					.optional(),
+					.default('0'),
 				wholeCatalog: z.boolean({ coerce: true }).default(false),
 				beginsAt: z.date({ coerce: true }),
 				endsAt: z.date({ coerce: true }).optional(),
@@ -72,7 +73,7 @@ export const actions: Actions = {
 					(x: { value: string }) => x.value
 				),
 				wholeCatalog: formData.get('wholeCatalog'),
-				percentage: formData.get('percentage') || undefined,
+				percentage: formData.get('percentage'),
 				beginsAt: formData.get('beginsAt'),
 				endsAt: formData.get('endsAt') || undefined,
 				quantityPerProduct: quantityPerProductRecord || undefined,
@@ -86,10 +87,10 @@ export const actions: Actions = {
 			productIds: productIds,
 			subscriptionIds: subscriptionIds,
 			wholeCatalog,
-			...(percentage && { percentage: Number(percentage) }),
+			percentage: Number(percentage),
 			beginsAt,
 			mode,
-			quantityPerProduct,
+			...(!isEmpty(quantityPerProduct) && { quantityPerProduct }),
 			endsAt: endsAt || null,
 			createdAt: new Date(),
 			updatedAt: new Date()

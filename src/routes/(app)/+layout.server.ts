@@ -203,11 +203,9 @@ export async function load(params) {
 			.filter((d) => d._id !== null)
 			.map((d) => [
 				d._id,
-				wholeDiscount !== undefined &&
-				d.discountPercent !== undefined &&
-				wholeDiscount > d.discountPercent
+				wholeDiscount !== undefined && wholeDiscount > d.discountPercent
 					? wholeDiscount
-					: d.discountPercent ?? 0
+					: d.discountPercent
 			])
 	);
 

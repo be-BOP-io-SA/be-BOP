@@ -286,7 +286,7 @@
 								class="text-2xl lg:text-4xl truncate max-w-full"
 								short
 								amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-									(1 - (data.discount.percentage || 0) / 100)}
+									(1 - data.discount.percentage / 100)}
 								main
 							/>
 						{/if}

@@ -2,6 +2,7 @@ import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database.js';
 import { MAX_NAME_LIMIT, type Product } from '$lib/types/Product.js';
 import { error, redirect } from '@sveltejs/kit';
+import { isEmpty } from 'lodash-es';
 import { z } from 'zod';
 
 export async function load({ params }) {
@@ -71,7 +72,7 @@ export const actions = {
 				percentage: z
 					.string()
 					.regex(/^\d+(\.\d+)?$/)
-					.optional(),
+					.default('0'),
 				wholeCatalog: z.boolean({ coerce: true }).default(false),
 				beginsAt: z.date({ coerce: true }),
 				endsAt: z.date({ coerce: true }).optional(),
@@ -90,7 +91,7 @@ export const actions = {
 				percentage: formData.get('percentage') || undefined,
 				beginsAt: formData.get('beginsAt'),
 				endsAt: formData.get('endsAt') || undefined,
-				quantityPerProduct: quantityPerProductRecord || undefined
+				quantityPerProduct: quantityPerProductRecord
 			});
 
 		await collections.discounts.updateOne(
@@ -107,7 +108,7 @@ export const actions = {
 					beginsAt,
 					endsAt: endsAt || null,
 					updatedAt: new Date(),
-					quantityPerProduct
+					...(!isEmpty(quantityPerProduct) && { quantityPerProduct })
 				}
 			}
 		);

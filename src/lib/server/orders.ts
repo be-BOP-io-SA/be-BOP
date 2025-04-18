@@ -627,11 +627,9 @@ export async function createOrder(
 			.filter((d) => d._id !== null)
 			.map((d) => [
 				d._id,
-				wholeDiscount !== undefined &&
-				d.discountPercent !== undefined &&
-				wholeDiscount > d.discountPercent
+				wholeDiscount !== undefined && wholeDiscount > d.discountPercent
 					? wholeDiscount
-					: d.discountPercent ?? 0
+					: d.discountPercent
 			])
 	);
 
@@ -1648,7 +1646,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					notifications: [],
-					...(isEmpty(freeProductsById) && { freeProductsById })
+					...(!isEmpty(freeProductsById) && { freeProductsById })
 				},
 				{ session }
 			);
