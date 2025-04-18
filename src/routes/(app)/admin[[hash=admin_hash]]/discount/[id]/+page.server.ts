@@ -2,6 +2,7 @@ import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database.js';
 import { MAX_NAME_LIMIT, type Product } from '$lib/types/Product.js';
 import { error, redirect } from '@sveltejs/kit';
+import { isEmpty } from 'lodash-es';
 import { z } from 'zod';
 
 export async function load({ params }) {
@@ -46,30 +47,51 @@ export const actions = {
 			throw error(404, 'discount not found');
 		}
 
-		const data = await request.formData();
-
-		const { name, subscriptionIds, productIds, wholeCatalog, percentage, beginsAt, endsAt } = z
+		const formData = await request.formData();
+		const quantityPerProductRecord: Record<string, number> = {};
+		for (const [key, value] of formData.entries()) {
+			const match = key.match(/^quantityPerProduct\[(.+?)\]$/);
+			if (match) {
+				quantityPerProductRecord[match[1]] = Number(value);
+			}
+		}
+		const {
+			name,
+			subscriptionIds,
+			productIds,
+			wholeCatalog,
+			percentage,
+			beginsAt,
+			endsAt,
+			quantityPerProduct
+		} = z
 			.object({
 				name: z.string().min(1).max(MAX_NAME_LIMIT),
-				productIds: z.string().array(),
+				productIds: z.string().array().optional(),
 				subscriptionIds: z.string().array(),
-				percentage: z.string().regex(/^\d+(\.\d+)?$/),
+				percentage: z
+					.string()
+					.regex(/^\d+(\.\d+)?$/)
+					.optional(),
 				wholeCatalog: z.boolean({ coerce: true }).default(false),
 				beginsAt: z.date({ coerce: true }),
-				endsAt: z.date({ coerce: true }).optional()
+				endsAt: z.date({ coerce: true }).optional(),
+				quantityPerProduct: z.record(z.string(), z.number().min(0).max(100)).optional()
 			})
 			.parse({
-				name: data.get('name'),
-				subscriptionIds: JSON.parse(String(data.get('subscriptionIds'))).map(
+				name: formData.get('name'),
+				subscriptionIds: JSON.parse(String(formData.get('subscriptionIds'))).map(
 					(x: { value: string }) => x.value
 				),
-				productIds: JSON.parse(String(data.get('productIds'))).map(
-					(x: { value: string }) => x.value
-				),
-				wholeCatalog: data.get('wholeCatalog'),
-				percentage: data.get('percentage'),
-				beginsAt: data.get('beginsAt'),
-				endsAt: data.get('endsAt') || undefined
+				productIds:
+					JSON.parse(String(formData.get('productIds') ?? '[]')).map(
+						(x: { value: string }) => x.value
+					) || undefined,
+				wholeCatalog: formData.get('wholeCatalog'),
+				percentage: formData.get('percentage') || undefined,
+				beginsAt: formData.get('beginsAt'),
+				endsAt: formData.get('endsAt') || undefined,
+				quantityPerProduct: quantityPerProductRecord
 			});
 
 		await collections.discounts.updateOne(
@@ -79,13 +101,14 @@ export const actions = {
 			{
 				$set: {
 					name,
-					percentage: Number(percentage),
+					...(percentage && { percentage: Number(percentage) }),
 					subscriptionIds,
 					wholeCatalog,
 					productIds,
 					beginsAt,
 					endsAt: endsAt || null,
-					updatedAt: new Date()
+					updatedAt: new Date(),
+					...(!isEmpty(quantityPerProduct) && { quantityPerProduct })
 				}
 			}
 		);
