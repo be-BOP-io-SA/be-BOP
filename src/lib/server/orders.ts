@@ -48,6 +48,7 @@ import {
 	isBitcoinNodelessConfigured
 } from './bitcoin-nodeless';
 import type { Discount } from '$lib/types/Discount';
+import { isEmpty } from 'lodash-es';
 
 async function generateOrderNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(
@@ -630,7 +631,7 @@ export async function createOrder(
 				d.discountPercent !== undefined &&
 				wholeDiscount > d.discountPercent
 					? wholeDiscount
-					: d.discountPercent
+					: d.discountPercent ?? 0
 			])
 	);
 
@@ -1647,7 +1648,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					notifications: [],
-					...(freeProductsById && { freeProductsById })
+					...(isEmpty(freeProductsById) && { freeProductsById })
 				},
 				{ session }
 			);

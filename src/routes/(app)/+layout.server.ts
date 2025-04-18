@@ -207,7 +207,7 @@ export async function load(params) {
 				d.discountPercent !== undefined &&
 				wholeDiscount > d.discountPercent
 					? wholeDiscount
-					: d.discountPercent
+					: d.discountPercent ?? 0
 			])
 	);
 

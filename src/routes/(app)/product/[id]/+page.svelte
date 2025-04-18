@@ -294,7 +294,7 @@
 					<PriceTag
 						currency={data.product.price.currency}
 						amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-							(data.discount ? 1 - (data.discount.percentage || 0) / 100 : 1)}
+							(data.discount ? 1 - (data.discount.percentage ?? 0) / 100 : 1)}
 						secondary
 						class="text-xl"
 					/>
