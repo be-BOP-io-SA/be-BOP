@@ -57,7 +57,7 @@ export const actions: Actions = {
 				percentage: z
 					.string()
 					.regex(/^\d+(\.\d+)?$/)
-					.default('0'),
+					.optional(),
 				wholeCatalog: z.boolean({ coerce: true }).default(false),
 				beginsAt: z.date({ coerce: true }),
 				endsAt: z.date({ coerce: true }).optional(),
@@ -73,10 +73,10 @@ export const actions: Actions = {
 					(x: { value: string }) => x.value
 				),
 				wholeCatalog: formData.get('wholeCatalog'),
-				percentage: formData.get('percentage'),
+				percentage: formData.get('percentage') || '0',
 				beginsAt: formData.get('beginsAt'),
 				endsAt: formData.get('endsAt') || undefined,
-				quantityPerProduct: quantityPerProductRecord || undefined,
+				quantityPerProduct: quantityPerProductRecord,
 				mode: formData.get('mode')
 			});
 		console;
