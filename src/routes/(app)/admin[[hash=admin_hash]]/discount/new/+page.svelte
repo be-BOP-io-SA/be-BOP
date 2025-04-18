@@ -12,7 +12,7 @@
 	let availableProductList = data.products;
 	let subscriptions = data.subscriptions;
 	let wholeCatalog = false;
-	let mode = 'productPercentage';
+	let mode = 'percentage';
 	let productFreeLine = 2;
 	let productFree: string[] = [];
 	function checkForm(event: SubmitEvent) {
@@ -44,12 +44,12 @@
 	<label class="form-label">
 		Mode
 		<select name="mode" class="form-input" bind:value={mode}>
-			{#each ['productPercentage', 'freeProductQuantity'] as modeDiscount}
+			{#each ['percentage', 'freeProducts'] as modeDiscount}
 				<option value={modeDiscount}>{upperFirst(modeDiscount)}</option>
 			{/each}
 		</select>
 	</label>
-	{#if mode === 'productPercentage'}
+	{#if mode === 'percentage'}
 		<label class="form-label">
 			Discount percentage
 			<input
@@ -96,7 +96,7 @@
 			required
 		/>
 	</label>
-	{#if mode === 'productPercentage'}
+	{#if mode === 'percentage'}
 		<label class="checkbox-label">
 			<input
 				type="checkbox"
@@ -118,7 +118,7 @@
 		{/if}
 	{/if}
 
-	{#if mode === 'freeProductQuantity'}
+	{#if mode === 'freeProducts'}
 		<table class="justify-between gap-4">
 			<thead>
 				<tr>

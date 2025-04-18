@@ -88,7 +88,7 @@ export const actions = {
 						(x: { value: string }) => x.value
 					) || undefined,
 				wholeCatalog: formData.get('wholeCatalog'),
-				percentage: formData.get('percentage') || '0',
+				percentage: formData.get('percentage') || undefined,
 				beginsAt: formData.get('beginsAt'),
 				endsAt: formData.get('endsAt') || undefined,
 				quantityPerProduct: quantityPerProductRecord

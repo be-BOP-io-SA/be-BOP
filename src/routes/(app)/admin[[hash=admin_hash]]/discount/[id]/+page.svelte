@@ -12,7 +12,10 @@
 	let subscriptions = data.subscriptions;
 	let wholeCatalog = data.discount.wholeCatalog;
 	let mode = data.discount.mode;
-	let productFree = Object.keys(data.discount.quantityPerProduct ?? []);
+	let productFree: string[] = [];
+	if (data.discount.mode === 'freeProducts') {
+		productFree = Object.keys(data.discount.quantityPerProduct ?? {});
+	}
 	let productFreeLine = productFree.length;
 	function checkForm(event: SubmitEvent) {
 		if (endsAt && endsAt < beginsAt) {
@@ -55,12 +58,12 @@
 	<label class="form-label">
 		Mode
 		<select name="mode" class="form-input" bind:value={mode} disabled>
-			{#each ['productPercentage', 'freeProductQuantity'] as modeDiscount}
+			{#each ['percentage', 'freeProducts'] as modeDiscount}
 				<option value={modeDiscount}>{upperFirst(modeDiscount)}</option>
 			{/each}
 		</select>
 	</label>
-	{#if mode === 'productPercentage'}
+	{#if mode === 'percentage'}
 		<label class="form-label">
 			Discount percentage
 			<input
@@ -69,7 +72,7 @@
 				min="1"
 				max="100"
 				name="percentage"
-				value={data.discount.percentage}
+				value={data.discount.mode === 'percentage' ? data.discount.percentage : 0}
 				placeholder="discount percentage"
 				required
 			/>
@@ -111,7 +114,7 @@
 			}))}
 		/>
 	</label>
-	{#if mode === 'productPercentage'}
+	{#if mode === 'percentage'}
 		<label class="checkbox-label">
 			<input
 				type="checkbox"
@@ -137,7 +140,7 @@
 		{/if}
 	{/if}
 
-	{#if mode === 'freeProductQuantity'}
+	{#if mode === 'freeProducts'}
 		<table class="justify-between gap-4">
 			<thead>
 				<tr>
@@ -164,7 +167,9 @@
 									type="number"
 									name="quantityPerProduct[{productFree[i]}]"
 									class="form-input"
-									value={data.discount.quantityPerProduct?.[product] ?? 0}
+									value={data.discount.mode === 'freeProducts'
+										? data.discount.quantityPerProduct?.[product] ?? 0
+										: 0}
 								/>
 							</label>
 						</td>

@@ -92,7 +92,8 @@
 			...(data.product.hasVariations && {
 				chosenVariations: selectedVariations
 			}),
-			discountPercentage: data.discount?.percentage
+			discountPercentage:
+				data.discount?.mode === 'percentage' ? data.discount?.percentage : undefined
 		};
 	}
 
@@ -280,7 +281,7 @@
 							amount={data.product.hasVariations ? customAmount : data.product.price.amount}
 							main
 						/>
-						{#if data.discount}
+						{#if data.discount && data.discount.mode === 'percentage'}
 							<PriceTag
 								currency={data.product.price.currency}
 								class="text-2xl lg:text-4xl truncate max-w-full"
@@ -294,14 +295,16 @@
 					<PriceTag
 						currency={data.product.price.currency}
 						amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-							(data.discount ? 1 - (data.discount.percentage ?? 0) / 100 : 1)}
+							(data.discount?.mode === 'percentage' && data.discount?.percentage
+								? 1 - data.discount.percentage / 100
+								: 1)}
 						secondary
 						class="text-xl"
 					/>
 					<span class="font-semibold">{t('product.vatExcluded')}</span>
 				</div>
 
-				{#if data.discount && !data.product.hideDiscountExpiration}
+				{#if data.discount && data.discount.mode === 'percentage' && !data.product.hideDiscountExpiration}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
 						{#if timeDifference === null}
@@ -316,7 +319,7 @@
 						{/if}
 					</h3>
 
-					{#if data.discount.percentage === 100 && 0}
+					{#if data.discount.mode === 'percentage' && data.discount.percentage === 100 && 0}
 						<hr class="border-gray-300" />
 						<div class="border border-[#F1DA63] bg-[#FFFBD5] p-2 rounded text-base flex gap-2">
 							<IconInfo class="text-[#E4C315]" />

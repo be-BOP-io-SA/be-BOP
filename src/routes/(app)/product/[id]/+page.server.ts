@@ -145,7 +145,6 @@ export const load = async ({ params, locals }) => {
 				}
 		  )
 		: null;
-	console.log(discount);
 	return {
 		product,
 		pictures,

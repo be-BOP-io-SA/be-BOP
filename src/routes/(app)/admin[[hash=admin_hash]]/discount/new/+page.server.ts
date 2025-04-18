@@ -1,6 +1,6 @@
 import { collections } from '$lib/server/database';
 import type { Actions } from './$types';
-import { redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { MAX_NAME_LIMIT, type Product } from '$lib/types/Product';
 import { generateId } from '$lib/utils/generateId';
@@ -62,7 +62,7 @@ export const actions: Actions = {
 				beginsAt: z.date({ coerce: true }),
 				endsAt: z.date({ coerce: true }).optional(),
 				quantityPerProduct: z.record(z.string(), z.number().min(0).max(100)).optional(),
-				mode: z.enum(['productPercentage', 'freeProductQuantity'])
+				mode: z.enum(['percentage', 'freeProducts'])
 			})
 			.parse({
 				name: formData.get('name'),
@@ -79,22 +79,41 @@ export const actions: Actions = {
 				quantityPerProduct: quantityPerProductRecord,
 				mode: formData.get('mode')
 			});
-		console;
+
+		if (Number(percentage) < 0 || isNaN(Number(percentage))) {
+			throw error(400, 'Invalid percentage');
+		}
+
+		if (mode === 'percentage' && !percentage) {
+			throw error(400, 'percentage is required');
+		}
+
 		const slug = generateId(name, true);
-		await collections.discounts.insertOne({
+
+		const baseData = {
 			_id: slug,
 			name,
 			productIds: productIds,
 			subscriptionIds: subscriptionIds,
 			wholeCatalog,
-			percentage: Number(percentage),
 			beginsAt,
-			mode,
-			...(!isEmpty(quantityPerProduct) && { quantityPerProduct }),
 			endsAt: endsAt || null,
 			createdAt: new Date(),
 			updatedAt: new Date()
-		});
+		} as const;
+		if (mode === 'percentage' && percentage) {
+			await collections.discounts.insertOne({
+				...baseData,
+				mode,
+				percentage: Number(percentage)
+			});
+		} else if (mode === 'freeProducts' && !isEmpty(quantityPerProduct)) {
+			await collections.discounts.insertOne({
+				...baseData,
+				mode,
+				quantityPerProduct
+			});
+		}
 
 		throw redirect(303, `${adminPrefix()}/discount/${slug}`);
 	}

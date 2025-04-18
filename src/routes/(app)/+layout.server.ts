@@ -9,7 +9,6 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { userQuery } from '$lib/server/user.js';
 import { userIdentifier } from '$lib/server/user.js';
 import type { CMSPage } from '$lib/types/CmsPage.js';
-import type { Discount } from '$lib/types/Discount';
 import type { Product } from '$lib/types/Product';
 import { UrlDependency } from '$lib/types/UrlDependency';
 import type { VatProfile } from '$lib/types/VatProfile.js';
@@ -140,7 +139,7 @@ export async function load(params) {
 		? await collections.discounts
 				.aggregate<{
 					_id: Product['_id'] | null;
-					discountPercent: Discount['percentage'];
+					discountPercent: number;
 				}>([
 					{
 						$match: {

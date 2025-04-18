@@ -564,7 +564,7 @@ export async function createOrder(
 		? await collections.discounts
 				.aggregate<{
 					_id: Product['_id'] | null;
-					discountPercent: Discount['percentage'];
+					discountPercent: number;
 					subscriptionIds: Discount['subscriptionIds'];
 				}>([
 					{
@@ -1584,72 +1584,76 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 			productId: { $in: order.items.map((item) => item.product._id) }
 		})
 		.toArray();
-	const discounts = await collections.discounts
-		.find({
-			subscriptionIds: {
-				$in: order.items
-					.filter((item) => item.product.type === 'subscription')
-					.map((sub) => sub.product._id)
-			}
-		})
-		.toArray();
-	for (const subscription of order.items.filter((item) => item.product.type === 'subscription')) {
-		const existingSubscription = subscriptions.find(
-			(sub) => sub.productId === subscription.product._id
-		);
+	const subscriptionProducts = order.items.filter((item) => item.product.type === 'subscription');
+	if (subscriptionProducts.length) {
+		const discounts = await collections.discounts
+			.find({
+				subscriptionIds: {
+					$in: order.items
+						.filter((item) => item.product.type === 'subscription')
+						.map((sub) => sub.product._id)
+				}
+			})
+			.toArray();
 
-		if (existingSubscription) {
-			const result = await collections.paidSubscriptions.updateOne(
-				{ _id: existingSubscription._id },
-				{
-					$set: {
-						paidUntil: add(max([existingSubscription.paidUntil, new Date()]), {
-							[`${runtimeConfig.subscriptionDuration}s`]: 1
-						}),
-						updatedAt: new Date(),
-						notifications: []
-					},
-					$unset: { cancelledAt: 1 }
-				},
-				{ session }
+		for (const subscription of subscriptionProducts) {
+			const existingSubscription = subscriptions.find(
+				(sub) => sub.productId === subscription.product._id
 			);
 
-			if (!result.modifiedCount) {
-				throw new Error('Failed to update subscription');
-			}
-		} else {
-			const freeProductsById: Record<string, { total: number; available: number; used: number }> =
-				{};
+			if (existingSubscription) {
+				const result = await collections.paidSubscriptions.updateOne(
+					{ _id: existingSubscription._id },
+					{
+						$set: {
+							paidUntil: add(max([existingSubscription.paidUntil, new Date()]), {
+								[`${runtimeConfig.subscriptionDuration}s`]: 1
+							}),
+							updatedAt: new Date(),
+							notifications: []
+						},
+						$unset: { cancelledAt: 1 }
+					},
+					{ session }
+				);
 
-			for (const discount of discounts) {
-				if (discount.quantityPerProduct) {
-					for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
-						if (!freeProductsById[productId]) {
-							freeProductsById[productId] = {
-								total: 0,
-								available: 0,
-								used: 0
-							};
+				if (!result.modifiedCount) {
+					throw new Error('Failed to update subscription');
+				}
+			} else {
+				const freeProductsById: Record<string, { total: number; available: number; used: number }> =
+					{};
+
+				for (const discount of discounts) {
+					if (discount.mode === 'freeProducts' && discount.quantityPerProduct) {
+						for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
+							if (!freeProductsById[productId]) {
+								freeProductsById[productId] = {
+									total: 0,
+									available: 0,
+									used: 0
+								};
+							}
+							freeProductsById[productId].total += quantity;
+							freeProductsById[productId].available += quantity;
 						}
-						freeProductsById[productId].total += quantity;
-						freeProductsById[productId].available += quantity;
 					}
 				}
+				await collections.paidSubscriptions.insertOne(
+					{
+						_id: crypto.randomUUID(),
+						number: await generateSubscriptionNumber(),
+						user: order.user,
+						productId: subscription.product._id,
+						paidUntil: add(new Date(), { [`${runtimeConfig.subscriptionDuration}s`]: 1 }),
+						createdAt: new Date(),
+						updatedAt: new Date(),
+						notifications: [],
+						...(!isEmpty(freeProductsById) && { freeProductsById })
+					},
+					{ session }
+				);
 			}
-			await collections.paidSubscriptions.insertOne(
-				{
-					_id: crypto.randomUUID(),
-					number: await generateSubscriptionNumber(),
-					user: order.user,
-					productId: subscription.product._id,
-					paidUntil: add(new Date(), { [`${runtimeConfig.subscriptionDuration}s`]: 1 }),
-					createdAt: new Date(),
-					updatedAt: new Date(),
-					notifications: [],
-					...(!isEmpty(freeProductsById) && { freeProductsById })
-				},
-				{ session }
-			);
 		}
 	}
 	//#endregion
