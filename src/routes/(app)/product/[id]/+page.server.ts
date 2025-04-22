@@ -126,7 +126,6 @@ export const load = async ({ params, locals }) => {
 					beginsAt: {
 						$lt: new Date()
 					},
-					[`quantityPerProduct.${product._id}.available`]: { $gt: 0 },
 					$and: [
 						{
 							$or: [
