@@ -132,7 +132,7 @@
 				{/if}
 
 				{#each data.canSso.providers as provider}
-					<a class="btn btn-gray" href="/login/oauth/{provider.slug}">
+					<a class="btn btn-gray" href="/login/oauth/{encodeURIComponent(provider.slug)}">
 						<!-- {#if provider.icon}
 							<img src={provider.icon} alt={provider.name} class="w-4 h-4 mr-2" />
 						{/if} -->
