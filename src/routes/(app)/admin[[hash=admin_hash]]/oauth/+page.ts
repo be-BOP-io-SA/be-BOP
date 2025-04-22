@@ -1,6 +1,7 @@
-export async function load({ data }) {
+export async function load({ parent }) {
+	const parentData = await parent();
 	return {
-		...data,
+		...parentData,
 		bodyClass: 'max-w-7xl mx-auto'
 	};
 }

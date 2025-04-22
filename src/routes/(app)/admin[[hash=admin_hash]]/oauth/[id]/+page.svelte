@@ -1,17 +1,13 @@
-<script lang="ts">
+<script>
 	import { page } from '$app/stores';
-	let name = '';
-	let slug = '';
-
-	$: slug = name.toLowerCase().replace(/\s+/g, '-');
+	export let data;
 </script>
 
-<h1 class="text-3xl">New OAuth provider</h1>
+<h1 class="text-3xl">Update OAuth provider</h1>
 
 <p>
-	Create an OAuth application with your provider of choice. Specify <span class="underline"
-		>{$page.url.origin}/oauth/callback</span
-	> as the redirect URL when creating the OAuth application.
+	Specify <span class="underline">{$page.url.origin}/oauth/callback</span> as the redirect URL when creating
+	the OAuth application.
 </p>
 
 <form class="flex flex-col gap-4" method="POST">
@@ -22,7 +18,7 @@
 			class="form-input"
 			type="text"
 			name="name"
-			bind:value={name}
+			value={data.provider.name}
 			placeholder="Google, Github, Discord, ..."
 			required
 		/>
@@ -33,10 +29,11 @@
 		<input
 			class="form-input"
 			type="text"
-			bind:value={slug}
+			value={data.provider.slug}
 			name="slug"
 			placeholder="google, github, discord, ..."
 			required
+			disabled
 		/>
 	</label>
 
@@ -48,6 +45,7 @@
 			name="clientId"
 			placeholder="1234567890-abcde.apps.googleusercontent.com"
 			required
+			value={data.provider.clientId}
 		/>
 	</label>
 
@@ -59,6 +57,7 @@
 			name="clientSecret"
 			placeholder="abcde1234567890"
 			required
+			value={data.provider.clientSecret}
 		/>
 	</label>
 
@@ -70,12 +69,8 @@
 			name="issuer"
 			placeholder="https://accounts.google.com/ or https://my-wordpress.com/wp-json/moserver/xxx"
 			required
+			value={data.provider.issuer}
 		/>
-	</label>
-
-	<label class="checkbox-label">
-		<input type="checkbox" name="enabled" class="form-checkbox" checked={true} />
-		Enable this provider
 	</label>
 
 	<label class="form-label">
@@ -86,11 +81,20 @@
 			name="scope"
 			placeholder="openid email profile"
 			required
-			value="openid email profile"
+			value={data.provider.scope}
 		/>
 		<p class="text-sm">
 			You can remove 'email' if you do not want to request the user's email address
 		</p>
 	</label>
-	<button type="submit" class="btn btn-black self-start">Submit</button>
+
+	<label class="checkbox-label">
+		<input type="checkbox" name="enabled" class="form-checkbox" checked={data.provider.enabled} />
+		Enable this provider
+	</label>
+	<div class="flex flex-row justify-between">
+		<button type="submit" class="btn btn-black self-start" formaction="?/update">Submit</button>
+
+		<button type="submit" class="btn btn-red self-start" formaction="?/delete"> Delete </button>
+	</div>
 </form>

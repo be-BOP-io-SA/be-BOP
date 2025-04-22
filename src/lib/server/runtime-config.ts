@@ -138,10 +138,11 @@ const baseConfig = {
 	oauth: [] as Array<{
 		name: string;
 		slug: string;
-		url: string;
-		scopes: string[];
+		issuer: string;
+		scope: string;
 		clientId: string;
 		clientSecret: string;
+		enabled: boolean;
 	}>,
 	productActionSettings: {
 		eShop: {

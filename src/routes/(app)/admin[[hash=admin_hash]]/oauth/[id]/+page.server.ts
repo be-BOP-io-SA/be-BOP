@@ -1,37 +1,46 @@
-import { adminPrefix } from '$lib/server/admin';
 import { collections } from '$lib/server/database.js';
-import { runtimeConfig } from '$lib/server/runtime-config.js';
-import { redirect } from '@sveltejs/kit';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import { error } from 'console';
 import { z } from 'zod';
 
 export const actions = {
-	default: async ({ request }) => {
+	update: async ({ request, params }) => {
 		const formData = await request.formData();
+		const slug = params.id;
+
 		const parsed = z
 			.object({
 				clientId: z.string().min(1).trim(),
 				clientSecret: z.string().min(1).trim(),
 				issuer: z.string().url().trim(),
 				scope: z.string().min(1).trim(),
-				slug: z.string().min(1).trim(),
 				name: z.string().min(1).trim(),
 				enabled: z.boolean({ coerce: true }).optional()
 			})
 			.parse(Object.fromEntries(formData));
 
-		if (runtimeConfig.oauth.some((o) => o.slug === parsed.slug)) {
-			throw error(400, 'Slug already exists');
+		console.log('parsed', parsed, Object.fromEntries(formData));
+
+		const oauth = runtimeConfig.oauth.find((o) => o.slug === slug);
+
+		if (!oauth) {
+			throw error(404, 'OAuth provider not found: ' + slug);
 		}
 
-		runtimeConfig.oauth.push({
-			clientId: parsed.clientId,
-			clientSecret: parsed.clientSecret,
-			issuer: parsed.issuer,
-			scope: parsed.scope,
-			slug: parsed.slug,
-			name: parsed.name,
-			enabled: parsed.enabled ?? false
+		runtimeConfig.oauth = runtimeConfig.oauth.map((o) => {
+			if (o.slug === slug) {
+				return {
+					...o,
+					clientId: parsed.clientId,
+					clientSecret: parsed.clientSecret,
+					issuer: parsed.issuer,
+					scope: parsed.scope,
+					slug: slug,
+					name: parsed.name,
+					enabled: parsed.enabled ?? false
+				};
+			}
+			return o;
 		});
 
 		await collections.runtimeConfig.updateOne(
@@ -43,12 +52,7 @@ export const actions = {
 					updatedAt: new Date(),
 					data: runtimeConfig.oauth
 				}
-			},
-			{
-				upsert: true
 			}
 		);
-
-		throw redirect(303, `${adminPrefix()}/oauth/${parsed.slug}`);
 	}
 };
