@@ -191,6 +191,7 @@ export async function fetchOrderForUser(orderId: string) {
 			userLogin: order.user.userLogin,
 			userAlias: order.user.userAlias
 		},
-		onLocation: order.onLocation
+		onLocation: order.onLocation,
+		orderLabelIds: order.orderLabelIds
 	};
 }

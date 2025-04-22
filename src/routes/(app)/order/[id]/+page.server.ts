@@ -8,6 +8,7 @@ import { cmsFromContent } from '$lib/server/cms.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
+import { adminPrefix } from '$lib/server/admin.js';
 
 export async function load({ params, depends, locals }) {
 	depends(UrlDependency.Order);
@@ -67,6 +68,7 @@ export async function load({ params, depends, locals }) {
 			methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
 		}
 	}
+	const labels = await collections.labels.find({}).toArray();
 
 	return {
 		order,
@@ -109,7 +111,9 @@ export async function load({ params, depends, locals }) {
 			)
 		}),
 		overwriteCreditCardSvgColor: runtimeConfig.overwriteCreditCardSvgColor,
-		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode
+		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode,
+		labels,
+		adminPrefix: adminPrefix()
 	};
 }
 
