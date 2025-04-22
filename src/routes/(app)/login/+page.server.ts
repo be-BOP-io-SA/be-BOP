@@ -154,7 +154,14 @@ export const actions = {
 	clearSso: async function ({ locals, request }) {
 		const { provider } = z
 			.object({
-				provider: z.enum(['github', 'google', 'facebook', 'twitter'])
+				provider: z.enum([
+					'github',
+					'google',
+					'facebook',
+					'twitter',
+					...runtimeConfig.oauth.filter((o) => o.enabled).map((o) => o.slug),
+					...(locals.sso?.map((sso) => sso.provider) ?? [])
+				])
 			})
 			.parse(Object.fromEntries(await request.formData()));
 

@@ -99,7 +99,7 @@ export const adminLinks: AdminLinks = [
 			},
 			{
 				href: '/admin/oauth',
-				label: 'SSO (OAuth)'
+				label: 'OAuth Providers'
 			}
 		]
 	},

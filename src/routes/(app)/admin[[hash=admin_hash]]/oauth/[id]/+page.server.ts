@@ -54,5 +54,22 @@ export const actions = {
 				}
 			}
 		);
+	},
+	delete: async ({ params }) => {
+		const slug = params.id;
+
+		runtimeConfig.oauth = runtimeConfig.oauth.filter((o) => o.slug !== slug);
+
+		await collections.runtimeConfig.updateOne(
+			{
+				_id: 'oauth'
+			},
+			{
+				$set: {
+					updatedAt: new Date(),
+					data: runtimeConfig.oauth
+				}
+			}
+		);
 	}
 };
