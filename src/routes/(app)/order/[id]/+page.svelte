@@ -123,19 +123,20 @@
 			<h1 class="text-3xl body-title">
 				{t('order.singleTitle', { number: data.order.number })}
 			</h1>
-			<div class="flex flex-row gap-1">
-				{#if data.order.orderLabelIds?.length && labelById}
-					{#each data.order.orderLabelIds as labelId}
-						<OrderLabelComponent orderLabel={labelById[labelId]} class="text-xs" />
-					{/each}
-				{/if}
-				<a
-					href="{data.adminPrefix}/order/{data.order._id}/label"
-					class="bg-gray-200 px-2 rounded-full"
-					title="add label">+</a
-				>
-			</div>
-
+			{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
+				<div class="flex flex-row gap-1">
+					{#if data.order.orderLabelIds?.length && labelById}
+						{#each data.order.orderLabelIds as labelId}
+							<OrderLabelComponent orderLabel={labelById[labelId]} class="text-xs" />
+						{/each}
+					{/if}
+					<a
+						href="{data.adminPrefix}/order/{data.order._id}/label"
+						class="bg-gray-200 px-2 rounded-full"
+						title="add label">+</a
+					>
+				</div>
+			{/if}
 			{#if data.order.notifications?.paymentStatus?.npub}
 				<p>
 					{t('order.paymentStatusNpub')}:
