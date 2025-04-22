@@ -27,7 +27,13 @@ export const load = async ({ url }) => {
 			github: !!(GITHUB_ID && GITHUB_SECRET),
 			google: !!(GOOGLE_ID && GOOGLE_SECRET),
 			facebook: !!(FACEBOOK_ID && FACEBOOK_SECRET),
-			twitter: !!(TWITTER_ID && TWITTER_SECRET)
+			twitter: !!(TWITTER_ID && TWITTER_SECRET),
+			providers: runtimeConfig.oauth
+				.filter((o) => o.enabled)
+				.map((o) => ({
+					name: o.name,
+					slug: o.slug
+				}))
 		}
 	};
 
