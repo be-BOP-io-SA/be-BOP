@@ -6,6 +6,7 @@
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
 	import { toCurrency } from '$lib/utils/toCurrency';
 	import { endOfDay, startOfDay } from 'date-fns';
+	import MultiSelect from 'svelte-multiselect';
 
 	export let data;
 	let tableOrder: HTMLTableElement;
@@ -266,18 +267,25 @@
 			</select>
 		</label>
 	</div>
+	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<div class="col-span-2">
 		<label class="form-label">
 			Employee alias
-			<select name="employeeAlias" class="form-input">
-				<option></option>
-				<option>System</option>
-				{#each data.employees as employee}
-					<option value={employee.alias} selected={data.employeeAlias === employee.alias}
-						>{employee.alias}</option
-					>
-				{/each}
-			</select>
+			<MultiSelect
+				name="employeesAlias"
+				inputClass="form-input"
+				options={[
+					...new Map(
+						[
+							...data.employees.map((employee) => ({
+								value: employee.alias ?? 'System',
+								label: employee.alias ?? 'System'
+							})),
+							{ value: 'System', label: 'System' }
+						].map((option) => [option.value, option])
+					).values()
+				]}
+			/>
 		</label>
 	</div>
 	<div class="col-span-2">

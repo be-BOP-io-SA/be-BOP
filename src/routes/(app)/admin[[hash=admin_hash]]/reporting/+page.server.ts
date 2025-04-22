@@ -14,12 +14,24 @@ export async function load({ url }) {
 		beginsAt: z.date({ coerce: true }).default(subMonths(new Date(), 1)),
 		endsAt: z.date({ coerce: true }).default(new Date()),
 		paymentMethod: z.enum(['' as const, ...methods]).optional(),
-		employeeAlias: z.string().optional()
+		employeesAlias: z.string().array()
 	});
 	const queryParams = Object.fromEntries(url.searchParams.entries());
-	const result = querySchema.parse(queryParams);
-	const { beginsAt, endsAt, paymentMethod, employeeAlias } = result;
-
+	const result = querySchema.parse({
+		...queryParams,
+		employeesAlias: JSON.parse(String(url.searchParams.get('employeesAlias') ?? '[]')).map(
+			(x: { value: string }) => x.value
+		)
+	});
+	const { beginsAt, endsAt, paymentMethod, employeesAlias } = result;
+	const aliasFilter = [];
+	if (employeesAlias.includes('System')) {
+		aliasFilter.push({ 'user.userAlias': { $exists: false } });
+	}
+	const otherAliases = employeesAlias.filter((alias) => alias !== 'System');
+	if (otherAliases.length > 0) {
+		aliasFilter.push({ 'user.userAlias': { $in: otherAliases } });
+	}
 	const orders = await collections.orders
 		.find({
 			createdAt: {
@@ -28,8 +40,7 @@ export async function load({ url }) {
 				$lt: addDays(endsAt, 1)
 			},
 			...(paymentMethod && { 'payments.method': paymentMethod }),
-			...(employeeAlias === 'System' && { 'user.userAlias': { $exists: false } }),
-			...(employeeAlias !== 'System' && { 'user.userAlias': employeeAlias })
+			...(aliasFilter.length > 0 && { $or: aliasFilter })
 		})
 		.sort({ createdAt: -1 })
 		.toArray();
@@ -69,6 +80,6 @@ export async function load({ url }) {
 			_id: user._id.toString(),
 			alias: user.alias
 		})),
-		employeeAlias
+		employeesAlias
 	};
 }
