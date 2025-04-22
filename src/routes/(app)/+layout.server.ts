@@ -140,6 +140,7 @@ export async function load(params) {
 				.aggregate<{
 					_id: Product['_id'] | null;
 					discountPercent: number;
+					mode: 'percentage';
 				}>([
 					{
 						$match: {

@@ -565,6 +565,7 @@ export async function createOrder(
 				.aggregate<{
 					_id: Product['_id'] | null;
 					discountPercent: number;
+					mode: 'percentage';
 					subscriptionIds: Discount['subscriptionIds'];
 				}>([
 					{
