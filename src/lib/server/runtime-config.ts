@@ -135,6 +135,14 @@ const baseConfig = {
 		lnAddress: '',
 		bolt12Address: ''
 	},
+	oauth: [] as Array<{
+		name: string;
+		slug: string;
+		url: string;
+		scopes: string[];
+		clientId: string;
+		clientSecret: string;
+	}>,
 	productActionSettings: {
 		eShop: {
 			visible: true,
