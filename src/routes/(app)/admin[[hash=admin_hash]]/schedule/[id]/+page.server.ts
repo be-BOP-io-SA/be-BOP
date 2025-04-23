@@ -3,7 +3,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { adminPrefix } from '$lib/server/admin';
 import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { generateId } from '$lib/utils/generateId';
 import { deletePicture } from '$lib/server/picture';
