@@ -10,15 +10,24 @@ export function set<T extends object, K extends Paths<T> | string>(
 		throw new TypeError('Expected a string as the key.');
 	}
 
-	const keys = key.split('.') as (keyof T)[];
+	// Parse keys to handle both "." and "[]" operators
+	const keys = key
+		.replace(/\[(\w*)\]/g, '.$1') // Convert "[key]" to ".key"
+		.split('.') as (keyof T)[];
 
 	for (let i = 0; i < keys.length - 1; i++) {
-		const k = keys[i];
-		if (typeof obj[k] !== 'object') {
-			obj[k] = {} as T[keyof T];
+		const k = (keys[i] === '' && Array.isArray(obj) ? obj.length : keys[i]) as keyof T;
+		const subKey = keys[i + 1];
+		const isArrayIndex = typeof subKey === 'string' && /^\d*$/.test(subKey);
+
+		if (typeof obj[k] !== 'object' || obj[k] === null) {
+			obj[k] = isArrayIndex ? ([] as T[keyof T]) : ({} as T[keyof T]);
 		}
 		obj = obj[k] as T;
 	}
 
-	obj[keys[keys.length - 1]] = value as T[keyof T];
+	const lastKey = (
+		keys[keys.length - 1] === '' && Array.isArray(obj) ? obj.length : keys[keys.length - 1]
+	) as keyof T;
+	obj[lastKey] = value as T[keyof T];
 }
