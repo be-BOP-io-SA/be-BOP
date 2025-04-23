@@ -60,7 +60,6 @@
 		"@auth/sveltekit": "^0.3.10",
 		"@aws-sdk/client-s3": "^3.312.0",
 		"@aws-sdk/s3-request-presigner": "^3.316.0",
-		"@bity/api": "^3.10.0",
 		"@fontsource/gloock": "^5.0.0",
 		"@fontsource/poppins": "^4.5.10",
 		"@microsoft/fetch-event-source": "^2.0.1",
