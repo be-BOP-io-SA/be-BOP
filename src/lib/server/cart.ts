@@ -11,7 +11,6 @@ import { runtimeConfig } from './runtime-config';
 import { amountOfProductReserved, refreshAvailableStockInDb } from './product';
 import type { Cart } from '$lib/types/Cart';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
-import { isEqual } from 'lodash-es';
 import { userQuery } from './user';
 import { removeEmpty } from '$lib/utils/removeEmpty';
 import { POS_ROLE_ID } from '$lib/types/User';
@@ -19,6 +18,7 @@ import { addMinutes } from 'date-fns';
 import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { sum } from '$lib/utils/sum';
+import { deepEquals } from '$lib/utils/deep-equals';
 
 export async function getCartFromDb(params: { user: UserIdentifier }): Promise<Cart> {
 	let res = await collections.carts.findOne(userQuery(params.user), { sort: { _id: -1 } });
@@ -33,7 +33,7 @@ export async function getCartFromDb(params: { user: UserIdentifier }): Promise<C
 		};
 	}
 
-	if (!isEqual(removeEmpty(res.user), removeEmpty(params.user))) {
+	if (!deepEquals(removeEmpty(res.user), removeEmpty(params.user))) {
 		res.user = params.user;
 		res.updatedAt = new Date();
 		await collections.carts.updateOne(
