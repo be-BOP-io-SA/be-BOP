@@ -5,7 +5,6 @@
 	import type { Picture } from '$lib/types/Picture';
 	import ProductWidget from './ProductWidget.svelte';
 	import { POS_ROLE_ID } from '$lib/types/User';
-	import { sortBy } from 'lodash-es';
 	import type { SetRequired } from 'type-fest';
 	import TagWidget from './TagWidget.svelte';
 	import type {
@@ -119,16 +118,36 @@
 	);
 	$: countdownById = Object.fromEntries(countdowns.map((countdown) => [countdown._id, countdown]));
 
-	function productsByTag(
-		searchTag: string,
-		by: string[] = ['alias.1', 'alias.0'],
-		sort: 'asc' | 'desc' = 'asc'
-	) {
+	function productsByTag(searchTag: string, by: string = '', sort: 'asc' | 'desc' = 'asc') {
 		const filteredProducts = products.filter((product) => product.tagIds?.includes(searchTag));
 
-		const sortedProducts = sortBy(filteredProducts, by);
+		const sortedProducts = filteredProducts.sort((a, b) => {
+			let aValue = a.alias[1] ?? '';
+			let bValue = b.alias[1] ?? '';
 
-		return sort === 'asc' ? sortedProducts.reverse() : sortedProducts;
+			if (aValue !== bValue) {
+				return aValue.localeCompare(bValue);
+			}
+
+			aValue = a.alias[0] ?? '';
+			bValue = b.alias[0] ?? '';
+
+			if (aValue !== bValue) {
+				return aValue.localeCompare(bValue);
+			}
+
+			if (by) {
+				let aValueBy = a[by as keyof typeof a];
+				let bValueBy = b[by as keyof typeof b];
+
+				if (aValueBy !== bValueBy) {
+					return aValueBy ?? '' < (bValueBy ?? '') ? -1 : 1;
+				}
+			}
+			return 0;
+		});
+
+		return sort === 'asc' ? sortedProducts : sortedProducts.reverse();
 	}
 	$: galleryById = Object.fromEntries(galleries.map((gallery) => [gallery._id, gallery]));
 </script>
@@ -148,7 +167,7 @@
 					class="not-prose my-5"
 				/>
 			{:else if token.type === 'tagProducts' && productsByTag(token.slug)}
-				{#each productsByTag(token.slug, ['alias.1', 'alias.0', token.by ?? ''], token.sort) as product}
+				{#each productsByTag(token.slug, token.by ?? '', token.sort) as product}
 					<ProductWidget
 						{product}
 						pictures={picturesByProduct[product._id] ?? []}
