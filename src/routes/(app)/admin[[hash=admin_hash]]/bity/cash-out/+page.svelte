@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import { currencies } from '$lib/stores/currencies';
-	import { debounce, pick } from 'lodash-es';
+	import { debounce } from 'lodash-es';
 	import { BityApiClient, type BityApiClientInterface } from '@bity/api';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
@@ -10,6 +10,7 @@
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
 	import { useI18n } from '$lib/i18n.js';
 	import { exchangeRate } from '$lib/stores/exchangeRate';
+	import { pick } from '$lib/utils/pick.js';
 
 	export let data;
 

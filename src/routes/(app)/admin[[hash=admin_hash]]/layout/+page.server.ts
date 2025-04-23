@@ -2,9 +2,10 @@ import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { z } from 'zod';
 import type { JsonObject } from 'type-fest';
-import { set, isEqual } from 'lodash-es';
 import { layoutTranslatableSchema } from './layout-schema';
 import { typedKeys } from '$lib/utils/typedKeys';
+import { deepEquals } from '$lib/utils/deep-equals';
+import { set } from '$lib/utils/set';
 
 export const actions = {
 	default: async function ({ request }) {
@@ -42,7 +43,7 @@ export const actions = {
 		);
 
 		for (const key of typedKeys(res)) {
-			if (!isEqual(runtimeConfig[key], res[key])) {
+			if (!deepEquals(runtimeConfig[key], res[key])) {
 				runtimeConfig[key] = res[key] as never;
 				await collections.runtimeConfig.updateOne(
 					{ _id: key },
