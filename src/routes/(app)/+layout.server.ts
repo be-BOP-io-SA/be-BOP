@@ -124,7 +124,10 @@ export async function load(params) {
 					.find<SetRequired<DigitalFile, 'productId'>>({
 						productId: { $in: cart.items.map((it) => it.productId) }
 					})
-					.sort({ createdAt: 1 })
+					.project<Pick<SetRequired<DigitalFile, 'productId'>, 'productId'>>({
+						productId: 1,
+						_id: 0
+					})
 					.toArray()
 			: [],
 		cart.items.length ? await picturesForProducts(cart.items.map((it) => it.productId)) : [],
@@ -224,7 +227,7 @@ export async function load(params) {
 			return {
 				product: pojo(productDoc),
 				picture: productPictureDoc,
-				digitalFiles: digitalFilesDoc ?? [],
+				digitalFilesCount: digitalFilesDoc?.length ?? 0,
 				quantity: item.quantity,
 				...(item.customPrice && { customPrice: item.customPrice }),
 				...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
