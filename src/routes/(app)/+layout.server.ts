@@ -16,7 +16,7 @@ import { UrlDependency } from '$lib/types/UrlDependency';
 import type { VatProfile } from '$lib/types/VatProfile.js';
 import { groupBy } from '$lib/utils/group-by';
 import { error, redirect } from '@sveltejs/kit';
-import { SetRequired } from 'type-fest';
+import type { SetRequired } from 'type-fest';
 
 export async function load(params) {
 	if (!runtimeConfig.isAdminCreated) {
