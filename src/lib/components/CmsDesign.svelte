@@ -32,6 +32,7 @@
 	import CurrencyCalculator from './CurrencyCalculator.svelte';
 	import ScheduleWidget from './ScheduleWidget.svelte';
 	import { groupBy } from '$lib/utils/group-by';
+	import { get } from '$lib/utils/get';
 
 	export let products: CmsProduct[];
 	export let pictures: CmsPicture[];
@@ -118,33 +119,25 @@
 	);
 	$: countdownById = Object.fromEntries(countdowns.map((countdown) => [countdown._id, countdown]));
 
-	function productsByTag(searchTag: string, by = '', sort: 'asc' | 'desc' = 'asc') {
+	function productsByTag(
+		searchTag: string,
+		by: string | undefined = undefined,
+		sort: 'asc' | 'desc' = 'asc'
+	) {
 		const filteredProducts = products.filter((product) => product.tagIds?.includes(searchTag));
 
 		const sortedProducts = filteredProducts.sort((a, b) => {
-			let aValue = a.alias[1] ?? '';
-			let bValue = b.alias[1] ?? '';
-
-			if (aValue !== bValue) {
-				return aValue.localeCompare(bValue);
-			}
-
-			aValue = a.alias[0] ?? '';
-			bValue = b.alias[0] ?? '';
-
-			if (aValue !== bValue) {
-				return aValue.localeCompare(bValue);
-			}
-
 			if (by) {
-				let aValueBy = a[by as keyof typeof a];
-				let bValueBy = b[by as keyof typeof b];
-
+				const aValueBy = get(a, by as keyof typeof a);
+				const bValueBy = get(b, by as keyof typeof b);
 				if (aValueBy !== bValueBy) {
-					return aValueBy ?? '' < (bValueBy ?? '') ? -1 : 1;
+					return (aValueBy ?? '') < (bValueBy ?? '') ? -1 : 1;
 				}
 			}
-			return 0;
+			const aValue = a.alias[1] ?? a.alias[0];
+			const bValue = b.alias[1] ?? b.alias[0];
+
+			return aValue.localeCompare(bValue);
 		});
 
 		return sort === 'asc' ? sortedProducts : sortedProducts.reverse();
