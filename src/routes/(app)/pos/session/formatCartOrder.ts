@@ -11,7 +11,7 @@ import { differenceInSeconds } from 'date-fns';
 import type { WithId } from 'mongodb';
 import { pojo, type PojoObject } from '$lib/server/pojo';
 import { groupBy } from '$lib/utils/group-by';
-import { SetRequired } from 'type-fest';
+import type { SetRequired } from 'type-fest';
 
 type FormattedCartItem = {
 	product: PojoObject<
