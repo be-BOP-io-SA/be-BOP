@@ -648,6 +648,7 @@
 		},
 		"discountBanner": "{discountPercent}% de réduction pendant {timespan}",
 		"discountBannerNoTime": "{discountPercent}% de réduction",
+		"freeProductDiscountText": "Vous avez {available} produits gratuits",
 		"freeWithSub": "Ce produit est disponible gratuitement avec votre abonnement mensuel",
 		"freeWithTitle": "Gratuit avec \"xxxxx",
 		"horsTaxeShort": "HT",

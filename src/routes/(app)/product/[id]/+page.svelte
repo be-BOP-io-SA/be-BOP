@@ -303,6 +303,14 @@
 					/>
 					<span class="font-semibold">{t('product.vatExcluded')}</span>
 				</div>
+				{#if data.freeProductSubscription}
+					<hr class="border-gray-300" />
+					<h3 class="text-[22px]">
+						{t('product.freeProductDiscountText', {
+							available: data.freeProductSubscription.freeProductsById?.[data.product._id].available
+						})}
+					</h3>
+				{/if}
 
 				{#if data.discount && data.discount.mode === 'percentage' && !data.product.hideDiscountExpiration}
 					<hr class="border-gray-300" />

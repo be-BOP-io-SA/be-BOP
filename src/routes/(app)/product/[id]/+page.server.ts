@@ -11,6 +11,7 @@ import { POS_ROLE_ID } from '$lib/types/User';
 import { cmsFromContent } from '$lib/server/cms';
 import type { JsonObject } from 'type-fest';
 import { set } from 'lodash-es';
+import { pojo } from '$lib/server/pojo';
 
 export const load = async ({ params, locals }) => {
 	const product = await collections.products.findOne<
@@ -112,21 +113,36 @@ export const load = async ({ params, locals }) => {
 		.find({ productId: params.id })
 		.sort({ createdAt: 1 })
 		.toArray();
-	const subscriptions = await collections.paidSubscriptions
+	const freeProductSubscriptions = await collections.paidSubscriptions
 		.find({
 			...userQuery(userIdentifier(locals)),
-			paidUntil: { $gt: new Date() }
+			paidUntil: { $gt: new Date() },
+			[`freeProductsById.${product._id}`]: { $exists: true }
 		})
+		.sort({ [`freeProductsById.${product._id}.available`]: -1 })
+		.limit(1)
 		.toArray();
+	const subscriptions = freeProductSubscriptions
+		? []
+		: await collections.paidSubscriptions
+				.find({
+					...userQuery(userIdentifier(locals)),
+					paidUntil: { $gt: new Date() }
+				})
+				.toArray();
 	const discount = subscriptions.length
 		? await collections.discounts.findOne(
 				{
-					$or: [{ wholeCatalog: true }, { productIds: product._id }],
+					$or: [
+						{ wholeCatalog: true },
+						{ productIds: product._id },
+						{ mode: 'percentage' },
+						{ mode: 'freeProducts' }
+					],
 					subscriptionIds: { $in: subscriptions.map((sub) => sub.productId) },
 					beginsAt: {
 						$lt: new Date()
 					},
-					mode: 'percentage',
 					$and: [
 						{
 							$or: [
@@ -156,7 +172,12 @@ export const load = async ({ params, locals }) => {
 			productCMSAfter: cmsFromContent({ content: product.contentAfter }, locals)
 		}),
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
-		websiteShortDescription: product.shortDescription
+		websiteShortDescription: product.shortDescription,
+		freeProductSubscription: freeProductSubscriptions.map((subscription) => ({
+			...pojo(subscription),
+			user: pojo(subscription.user),
+			notifications: subscription.notifications.map(pojo)
+		}))[0]
 	};
 };
 

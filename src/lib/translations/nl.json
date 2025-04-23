@@ -648,6 +648,7 @@
 		},
 		"discountBanner": "{discountPercent}% van voor {timespan}",
 		"discountBannerNoTime": "{discountPercent}% van",
+		"freeProductDiscountText": "U hebt {available} gratis producten",
 		"freeWithSub": "Dit product is gratis verkrijgbaar bij uw maandabonnement",
 		"freeWithTitle": "Gratis met \"xxxxx",
 		"horsTaxeShort": "HT",
