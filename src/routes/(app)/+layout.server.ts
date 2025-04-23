@@ -17,6 +17,7 @@ import type { VatProfile } from '$lib/types/VatProfile.js';
 import { groupBy } from '$lib/utils/group-by';
 import { error, redirect } from '@sveltejs/kit';
 import type { SetRequired } from 'type-fest';
+import { POS_ROLE_ID } from '$lib/types/User.js';
 
 export async function load(params) {
 	if (!runtimeConfig.isAdminCreated) {
@@ -232,10 +233,13 @@ export async function load(params) {
 				...(item.customPrice && { customPrice: item.customPrice }),
 				...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
 				depositPercentage: item.depositPercentage,
-				internalNote: {
-					value: item.internalNote?.value,
-					updatedAt: item.internalNote?.updatedAt
-				},
+				internalNote:
+					item.internalNote && params.locals.user?.roleId === POS_ROLE_ID
+						? {
+								value: item.internalNote?.value,
+								updatedAt: item.internalNote?.updatedAt
+						  }
+						: undefined,
 				discountPercentage: discountByProductId.get(item.productId) ?? wholeDiscount
 			};
 		})
