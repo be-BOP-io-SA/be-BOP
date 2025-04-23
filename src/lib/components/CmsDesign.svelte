@@ -118,7 +118,7 @@
 	);
 	$: countdownById = Object.fromEntries(countdowns.map((countdown) => [countdown._id, countdown]));
 
-	function productsByTag(searchTag: string, by: string = '', sort: 'asc' | 'desc' = 'asc') {
+	function productsByTag(searchTag: string, by = '', sort: 'asc' | 'desc' = 'asc') {
 		const filteredProducts = products.filter((product) => product.tagIds?.includes(searchTag));
 
 		const sortedProducts = filteredProducts.sort((a, b) => {
