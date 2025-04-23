@@ -4,9 +4,9 @@
 	import type { Leaderboard } from '$lib/types/Leaderboard';
 	import type { Product } from '$lib/types/Product';
 	import type { Picture } from '$lib/types/Picture';
-	import { groupBy } from 'lodash-es';
 	import type { SetRequired } from 'type-fest';
 	import PictureComponent from './Picture.svelte';
+	import { groupBy } from '$lib/utils/group-by';
 
 	let className = '';
 	export { className as class };
@@ -20,7 +20,7 @@
 	$: productById = Object.fromEntries(products.map((product) => [product._id, product]));
 	$: picturesByProduct = groupBy(
 		pictures.filter((picture): picture is SetRequired<Picture, 'productId'> => !!picture.productId),
-		'productId'
+		(p) => p.productId
 	);
 	leaderboard.progress.sort((a, b) => b.amount - a.amount);
 </script>
@@ -30,7 +30,7 @@
 		<div class="flex items-center flex-row gap-4">
 			<a href="/product/{progress.productId}" target="_blank">
 				<PictureComponent
-					picture={picturesByProduct[productById[progress.productId]._id][0]}
+					picture={picturesByProduct[productById[progress.productId]._id]?.[0]}
 					class="max-w-[68px] max-h-[68px]"
 				/>
 			</a>

@@ -6,6 +6,7 @@ import { collections } from '$lib/server/database';
 import { picturesForProducts } from '$lib/server/picture.js';
 import { pojo } from '$lib/server/pojo.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import type { DigitalFile } from '$lib/types/DigitalFile';
 import { userQuery } from '$lib/server/user.js';
 import { userIdentifier } from '$lib/server/user.js';
 import type { CMSPage } from '$lib/types/CmsPage.js';
@@ -13,8 +14,9 @@ import type { Discount } from '$lib/types/Discount';
 import type { Product } from '$lib/types/Product';
 import { UrlDependency } from '$lib/types/UrlDependency';
 import type { VatProfile } from '$lib/types/VatProfile.js';
+import { groupBy } from '$lib/utils/group-by';
 import { error, redirect } from '@sveltejs/kit';
-import { groupBy } from 'lodash-es';
+import { SetRequired } from 'type-fest';
 
 export async function load(params) {
 	if (!runtimeConfig.isAdminCreated) {
@@ -119,7 +121,7 @@ export async function load(params) {
 			: [],
 		cart.items.length
 			? await collections.digitalFiles
-					.find({
+					.find<SetRequired<DigitalFile, 'productId'>>({
 						productId: { $in: cart.items.map((it) => it.productId) }
 					})
 					.sort({ createdAt: 1 })

@@ -7,10 +7,11 @@ import type { Currency } from '$lib/types/Currency';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import type { Order } from '$lib/types/Order';
 import type { Product } from '$lib/types/Product';
-import { groupBy } from 'lodash-es';
 import { differenceInSeconds } from 'date-fns';
 import type { WithId } from 'mongodb';
 import { pojo, type PojoObject } from '$lib/server/pojo';
+import { groupBy } from '$lib/utils/group-by';
+import { SetRequired } from 'type-fest';
 
 type FormattedCartItem = {
 	product: PojoObject<
@@ -103,9 +104,11 @@ export async function formatCart(
 			pictures.map((picture) => [picture.productId, picture])
 		);
 		const digitalFiles = await collections.digitalFiles
-			.find({ productId: { $in: products.map((product) => product._id) } })
+			.find<SetRequired<DigitalFile, 'productId'>>({
+				productId: { $in: products.map((product) => product._id) }
+			})
 			.toArray();
-		const digitalFilesByProductId = groupBy(digitalFiles, 'productId');
+		const digitalFilesByProductId = groupBy(digitalFiles, (d) => d.productId);
 
 		return cart.items
 			.filter((item) => productById[item.productId])
@@ -117,7 +120,7 @@ export async function formatCart(
 				return {
 					product: pojo(productDoc),
 					picture: pictureByProductId[item.productId] || null,
-					digitalFiles: digitalFilesByProductId[item.productId] || [],
+					digitalFiles: digitalFilesByProductId[item.productId] ?? [],
 					quantity: item.quantity,
 					depositPercentage: item.depositPercentage,
 					...(item.customPrice && { customPrice: item.customPrice })
