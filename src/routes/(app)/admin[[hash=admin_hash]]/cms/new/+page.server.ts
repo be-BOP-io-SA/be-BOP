@@ -4,7 +4,7 @@ import { zodSlug } from '$lib/server/zod.js';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 import { error, redirect } from '@sveltejs/kit';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
