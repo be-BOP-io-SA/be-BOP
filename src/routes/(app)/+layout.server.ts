@@ -140,7 +140,6 @@ export async function load(params) {
 				.aggregate<{
 					_id: Product['_id'] | null;
 					discountPercent: number;
-					mode: 'percentage';
 				}>([
 					{
 						$match: {
@@ -152,6 +151,7 @@ export async function load(params) {
 							beginsAt: {
 								$lt: new Date()
 							},
+							mode: 'percentage',
 							$and: [
 								{
 									$or: [

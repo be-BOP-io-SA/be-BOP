@@ -126,6 +126,7 @@ export const load = async ({ params, locals }) => {
 					beginsAt: {
 						$lt: new Date()
 					},
+					mode: 'percentage',
 					$and: [
 						{
 							$or: [
