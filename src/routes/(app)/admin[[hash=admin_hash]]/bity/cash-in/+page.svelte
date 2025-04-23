@@ -5,7 +5,7 @@
 	import { currencies } from '$lib/stores/currencies.js';
 	import { CURRENCIES } from '$lib/types/Currency';
 	import { bityEstimate, type BityEstimate, type BityPaymentMethod } from '$lib/types/bity';
-	import { debounce } from 'lodash-es';
+	import { debounce } from '$lib/utils/debounce';
 
 	let estimating = false;
 	let generating = false;
