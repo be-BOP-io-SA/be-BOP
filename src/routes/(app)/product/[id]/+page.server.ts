@@ -122,12 +122,11 @@ export const load = async ({ params, locals }) => {
 	const freeProductSubscriptions = subscriptions.filter(
 		(s) => (s.freeProductsById?.[product._id]?.available ?? 0) > 0
 	);
-	const percentageSubscriptions = freeProductSubscriptions ? [] : subscriptions;
 	const discount = subscriptions.length
 		? await collections.discounts.findOne(
 				{
 					$or: [{ wholeCatalog: true }, { productIds: product._id }],
-					subscriptionIds: { $in: percentageSubscriptions.map((sub) => sub.productId) },
+					subscriptionIds: { $in: subscriptions.map((sub) => sub.productId) },
 					beginsAt: {
 						$lt: new Date()
 					},
