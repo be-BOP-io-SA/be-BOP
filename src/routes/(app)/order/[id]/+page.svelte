@@ -131,7 +131,7 @@
 						{/each}
 					{/if}
 					<a
-						href="{data.adminPrefix}/order/{data.order._id}/label"
+						href="/admin/order/{data.order._id}/label"
 						class="bg-gray-200 px-2 rounded-full"
 						title="add label">+</a
 					>
