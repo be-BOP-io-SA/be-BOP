@@ -272,8 +272,8 @@
 			</select>
 		</label>
 	</div>
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<div class="col-span-3">
+		<!-- svelte-ignore a11y-label-has-associated-control -->
 		<label class="form-label">
 			Employee alias
 			<MultiSelect
