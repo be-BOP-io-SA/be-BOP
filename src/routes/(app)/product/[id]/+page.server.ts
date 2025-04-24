@@ -10,8 +10,8 @@ import { userIdentifier, userQuery } from '$lib/server/user';
 import { POS_ROLE_ID } from '$lib/types/User';
 import { cmsFromContent } from '$lib/server/cms';
 import type { JsonObject } from 'type-fest';
-import { set } from 'lodash-es';
 import { pojo } from '$lib/server/pojo';
+import { set } from '$lib/utils/set';
 
 export const load = async ({ params, locals }) => {
 	const product = await collections.products.findOne<
