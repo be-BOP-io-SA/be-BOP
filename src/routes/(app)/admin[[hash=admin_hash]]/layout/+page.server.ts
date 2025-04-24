@@ -25,7 +25,7 @@ export const actions = {
 					.array(
 						z.object({ name: z.string().trim(), svg: z.string().trim(), href: z.string().trim() })
 					)
-					.optional(),
+					.default([]),
 				displayPoweredBy: z.boolean({ coerce: true }),
 				displayCompanyInfo: z.boolean({ coerce: true }),
 				displayMainShopInfo: z.boolean({ coerce: true }),
