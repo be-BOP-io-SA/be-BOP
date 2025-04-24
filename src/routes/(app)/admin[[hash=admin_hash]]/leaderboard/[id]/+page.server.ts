@@ -3,7 +3,7 @@ import { collections } from '$lib/server/database';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import { MAX_NAME_LIMIT, type Product } from '$lib/types/Product';
 import { error, redirect } from '@sveltejs/kit';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 

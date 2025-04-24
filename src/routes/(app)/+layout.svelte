@@ -410,26 +410,28 @@
 								</div>
 							</Popup>
 						{/if}
-						<button
-							class="ml-4 hidden dark:inline"
-							type="button"
-							on:click={() => {
-								$theme = 'light';
-								window.localStorage.setItem('theme', 'light');
-							}}
-						>
-							<IconModeLight />
-						</button>
-						<button
-							type="button"
-							class="ml-4 dark:hidden"
-							on:click={() => {
-								$theme = 'dark';
-								window.localStorage.setItem('theme', 'dark');
-							}}
-						>
-							<IconModeDark />
-						</button>
+						{#if !data.hideThemeSelectorInToolbar}
+							<button
+								class="ml-4 hidden dark:inline"
+								type="button"
+								on:click={() => {
+									$theme = 'light';
+									window.localStorage.setItem('theme', 'light');
+								}}
+							>
+								<IconModeLight />
+							</button>
+							<button
+								type="button"
+								class="ml-4 dark:hidden"
+								on:click={() => {
+									$theme = 'dark';
+									window.localStorage.setItem('theme', 'dark');
+								}}
+							>
+								<IconModeDark />
+							</button>
+						{/if}
 						{#if !data.disableLanguageSelector && data.locales.length > 1}
 							<select
 								class="ml-4 border-0 cursor-pointer rounded appearance-none bg-none bg-transparent text-xl"

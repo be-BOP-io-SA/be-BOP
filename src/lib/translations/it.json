@@ -575,6 +575,9 @@
 		},
 		"requestedAt": "Pagamento richiesto a <0></0>",
 		"restToPay": "Resto da pagare",
+		"seller": {
+			"title": "Venditore"
+		},
 		"shippingAddress": {
 			"title": "Indirizzo di spedizione"
 		},

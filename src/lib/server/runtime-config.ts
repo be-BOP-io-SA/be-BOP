@@ -25,10 +25,10 @@ import {
 	locales,
 	type LanguageKey
 } from '$lib/translations';
-import { merge } from 'lodash-es';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { PaymentMethod } from './payment-methods';
+import { merge } from '$lib/utils/merge';
 
 const baseConfig = {
 	adminHash: '',
@@ -105,6 +105,7 @@ const baseConfig = {
 	isBillingAddressMandatory: false,
 	disableLanguageSelector: false,
 	hideCartInToolbar: false,
+	hideThemeSelectorInToolbar: false,
 	defaultOnLocation: false,
 	languages: locales,
 	defaultLanguage: 'en' as LanguageKey,
@@ -398,7 +399,11 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 			if (config._id.startsWith('translations.')) {
 				const locale = trimPrefix(config._id, 'translations.');
 				if (typedInclude(locales, locale)) {
-					enhancedLanguages[locale] = merge({}, languages[locale], config.data);
+					enhancedLanguages[locale] = merge(
+						{},
+						languages[locale],
+						config.data as (typeof languages)[LanguageKey]
+					);
 					addTranslations(locale, enhancedLanguages[locale], {
 						formatDistance: formatDistanceLocale[locale]
 					});

@@ -1,7 +1,7 @@
 import { collections } from '$lib/server/database';
 import { z } from 'zod';
 import type { JsonObject } from 'type-fest';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 export const load = async () => {
 	return {
 		pictures: await collections.pictures.find().toArray()

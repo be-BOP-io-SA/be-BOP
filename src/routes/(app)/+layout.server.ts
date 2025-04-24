@@ -6,14 +6,17 @@ import { collections } from '$lib/server/database';
 import { picturesForProducts } from '$lib/server/picture.js';
 import { pojo } from '$lib/server/pojo.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import type { DigitalFile } from '$lib/types/DigitalFile';
 import { userQuery } from '$lib/server/user.js';
 import { userIdentifier } from '$lib/server/user.js';
 import type { CMSPage } from '$lib/types/CmsPage.js';
 import type { Product } from '$lib/types/Product';
 import { UrlDependency } from '$lib/types/UrlDependency';
 import type { VatProfile } from '$lib/types/VatProfile.js';
+import { groupBy } from '$lib/utils/group-by';
 import { error, redirect } from '@sveltejs/kit';
-import { groupBy } from 'lodash-es';
+import type { SetRequired } from 'type-fest';
+import { POS_ROLE_ID } from '$lib/types/User.js';
 
 export async function load(params) {
 	if (!runtimeConfig.isAdminCreated) {
@@ -118,10 +121,13 @@ export async function load(params) {
 			: [],
 		cart.items.length
 			? await collections.digitalFiles
-					.find({
+					.find<SetRequired<DigitalFile, 'productId'>>({
 						productId: { $in: cart.items.map((it) => it.productId) }
 					})
-					.sort({ createdAt: 1 })
+					.project<Pick<SetRequired<DigitalFile, 'productId'>, 'productId'>>({
+						productId: 1,
+						_id: 0
+					})
 					.toArray()
 			: [],
 		cart.items.length ? await picturesForProducts(cart.items.map((it) => it.productId)) : [],
@@ -222,15 +228,18 @@ export async function load(params) {
 			return {
 				product: pojo(productDoc),
 				picture: productPictureDoc,
-				digitalFiles: digitalFilesDoc ?? [],
+				digitalFilesCount: digitalFilesDoc?.length ?? 0,
 				quantity: item.quantity,
 				...(item.customPrice && { customPrice: item.customPrice }),
 				...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
 				depositPercentage: item.depositPercentage,
-				internalNote: {
-					value: item.internalNote?.value,
-					updatedAt: item.internalNote?.updatedAt
-				},
+				internalNote:
+					item.internalNote && params.locals.user?.roleId === POS_ROLE_ID
+						? {
+								value: item.internalNote?.value,
+								updatedAt: item.internalNote?.updatedAt
+						  }
+						: undefined,
 				discountPercentage: discountByProductId.get(item.productId) ?? wholeDiscount
 			};
 		})
@@ -313,6 +322,7 @@ export async function load(params) {
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
 		hideCartInToolbar: runtimeConfig.hideCartInToolbar,
 		hideCmsZonesOnMobile: runtimeConfig.hideCmsZonesOnMobile,
+		hideThemeSelectorInToolbar: runtimeConfig.hideThemeSelectorInToolbar,
 		notResponsive: runtimeConfig.viewportFor === 'no-one' ? true : false,
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,
 		...(cmsAgewall && {

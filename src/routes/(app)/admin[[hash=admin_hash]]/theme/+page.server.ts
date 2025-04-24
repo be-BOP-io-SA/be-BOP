@@ -21,12 +21,13 @@ export const actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 
-		const { mainTheme } = z
+		const { mainTheme, hideThemeSelectorInToolbar } = z
 			.object({
 				mainTheme: z.enum([
 					'',
 					...(await collections.themes.distinct('_id')).map((id) => id.toString())
-				])
+				]),
+				hideThemeSelectorInToolbar: z.boolean({ coerce: true })
 			})
 			.parse(Object.fromEntries(formData));
 
@@ -35,8 +36,14 @@ export const actions = {
 			{ $set: { data: mainTheme, updatedAt: new Date() } },
 			{ upsert: true }
 		);
+		await collections.runtimeConfig.updateOne(
+			{ _id: 'hideThemeSelectorInToolbar' },
+			{ $set: { data: hideThemeSelectorInToolbar, updatedAt: new Date() } },
+			{ upsert: true }
+		);
 
 		runtimeConfig.mainThemeId = mainTheme;
+		runtimeConfig.hideThemeSelectorInToolbar = hideThemeSelectorInToolbar;
 
 		await increaseThemeChangeNumber();
 	}

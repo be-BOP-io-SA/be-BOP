@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ThemeData } from '$lib/server/theme';
 	import { themeFormStructure, systemFonts } from '$lib/types/Theme';
-	import { get } from 'lodash-es';
+	import { get } from '$lib/utils/get';
 
 	export let theme: ThemeData | null = null;
 

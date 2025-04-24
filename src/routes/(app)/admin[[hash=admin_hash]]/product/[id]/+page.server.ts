@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { deletePicture } from '$lib/server/picture';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import type { JsonObject } from 'type-fest';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import { productBaseSchema } from '../product-schema';
 import { amountOfProductReserved, amountOfProductSold } from '$lib/server/product';
 import type { Tag } from '$lib/types/Tag';

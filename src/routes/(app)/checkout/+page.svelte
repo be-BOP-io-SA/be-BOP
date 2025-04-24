@@ -690,7 +690,7 @@
 									<ProductType
 										product={item.product}
 										class="text-sm hidden"
-										hasDigitalFiles={item.digitalFiles.length >= 1}
+										hasDigitalFiles={item.digitalFilesCount > 0}
 										depositPercentage={item.depositPercentage}
 									/>
 								</div>

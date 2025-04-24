@@ -5,7 +5,7 @@ import { adminPrefix } from '$lib/server/admin';
 import { MAX_NAME_LIMIT } from '$lib/types/Product';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 import type { JsonObject } from 'type-fest';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 
 export async function load({ params }) {
 	const contactForm = await collections.contactForms.findOne({

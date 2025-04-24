@@ -1,8 +1,8 @@
 import { collections } from '$lib/server/database';
-import { omit } from 'lodash-es';
 import { cmsFromContent } from '$lib/server/cms.js';
 import { error } from '@sveltejs/kit';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { omit } from '$lib/utils/omit';
 
 export async function load({ params, locals, url }) {
 	let cmsPage = await collections.cmsPages.findOne(

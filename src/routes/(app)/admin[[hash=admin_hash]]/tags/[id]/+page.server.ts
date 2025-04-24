@@ -4,7 +4,7 @@ import type { Actions } from './$types';
 import { z } from 'zod';
 import { MAX_NAME_LIMIT } from '$lib/types/Product';
 import type { JsonObject } from 'type-fest';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import { adminPrefix } from '$lib/server/admin';
 import { deletePicture } from '$lib/server/picture';
 import { tagTranslatableSchema } from './tag-schema';

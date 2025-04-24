@@ -192,7 +192,7 @@
 								<ProductType
 									product={item.product}
 									depositPercentage={item.depositPercentage}
-									hasDigitalFiles={item.digitalFiles.length >= 1}
+									hasDigitalFiles={item.digitalFilesCount >= 1}
 								/>
 							</div>
 							<button
