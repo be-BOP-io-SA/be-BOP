@@ -19,9 +19,7 @@ export async function load({ url }) {
 	const queryParams = Object.fromEntries(url.searchParams.entries());
 	const result = querySchema.parse({
 		...queryParams,
-		employeesAlias: JSON.parse(String(url.searchParams.get('employeesAlias') ?? '[]')).map(
-			(x: { value: string }) => x.value
-		)
+		employeesAlias: url.searchParams.getAll('employeesAlias')
 	});
 	const { beginsAt, endsAt, paymentMethod, employeesAlias } = result;
 	const aliasFilter = [];

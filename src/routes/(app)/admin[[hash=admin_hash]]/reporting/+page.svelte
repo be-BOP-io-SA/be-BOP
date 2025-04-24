@@ -25,6 +25,11 @@
 	let html = '';
 	let loadedHtml = false;
 	let htmlStatus = '';
+	let selectedEmployees =
+		data.employeesAlias?.map((employee) => ({
+			value: employee,
+			label: employee
+		})) ?? [];
 
 	$: beginsAt = startOfDay(data.beginsAt);
 	$: endsAt = endOfDay(data.endsAt);
@@ -268,11 +273,10 @@
 		</label>
 	</div>
 	<!-- svelte-ignore a11y-label-has-associated-control -->
-	<div class="col-span-2">
+	<div class="col-span-3">
 		<label class="form-label">
 			Employee alias
 			<MultiSelect
-				name="employeesAlias"
 				inputClass="form-input"
 				options={[
 					...new Map(
@@ -285,10 +289,14 @@
 						].map((option) => [option.value, option])
 					).values()
 				]}
+				bind:selected={selectedEmployees}
 			/>
+			{#each selectedEmployees.map((employee) => employee.value) as employeeAlias}
+				<input type="hidden" name="employeesAlias" value={employeeAlias} />
+			{/each}
 		</label>
 	</div>
-	<div class="col-span-2">
+	<div class="col-span-1">
 		<button class="submit btn btn-gray mt-8">🔍</button>
 	</div>
 </form>
