@@ -64,15 +64,21 @@ export async function addToCartInDb(
 		customPrice?: { amount: number; currency: Currency };
 		deposit?: boolean;
 		chosenVariations?: Record<string, string>;
+		mode?: 'eshop' | 'nostr' | 'pos';
 	}
 ) {
 	if (
 		params.user.userRoleId === POS_ROLE_ID
 			? !product.actionSettings?.retail?.canBeAddedToBasket
-			: !product.actionSettings?.eShop?.canBeAddedToBasket &&
-			  !product.actionSettings?.nostr.canBeAddedToBasket
+			: params.mode
+			? params.mode === 'eshop'
+				? !product.actionSettings?.eShop?.canBeAddedToBasket
+				: params.mode === 'nostr'
+				? !product.actionSettings?.nostr?.canBeAddedToBasket
+				: !product.actionSettings?.retail?.canBeAddedToBasket
+			: !product.actionSettings?.retail?.canBeAddedToBasket
 	) {
-		throw error(400, "Product can't be added to basket");
+		throw error(400, "Product can't be added to basket ");
 	}
 
 	if (params.customPrice && !product.payWhatYouWant) {

@@ -432,7 +432,8 @@ const commands: Record<
 
 			const cart = await addToCartInDb(product, quantity, {
 				user: { npub: senderNpub },
-				customPrice
+				customPrice,
+				mode: 'nostr'
 			}).catch(async (e) => {
 				console.error(e);
 				await send(e.message);
