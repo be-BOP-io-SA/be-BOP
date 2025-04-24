@@ -10,8 +10,8 @@ import { userIdentifier, userQuery } from '$lib/server/user';
 import { POS_ROLE_ID } from '$lib/types/User';
 import { cmsFromContent } from '$lib/server/cms';
 import type { JsonObject } from 'type-fest';
-import { pojo } from '$lib/server/pojo';
 import { set } from '$lib/utils/set';
+import { sum } from '$lib/utils/sum';
 
 export const load = async ({ params, locals }) => {
 	const product = await collections.products.findOne<
@@ -113,36 +113,25 @@ export const load = async ({ params, locals }) => {
 		.find({ productId: params.id })
 		.sort({ createdAt: 1 })
 		.toArray();
-	const freeProductSubscriptions = await collections.paidSubscriptions
+	const subscriptions = await collections.paidSubscriptions
 		.find({
 			...userQuery(userIdentifier(locals)),
-			paidUntil: { $gt: new Date() },
-			[`freeProductsById.${product._id}`]: { $exists: true }
+			paidUntil: { $gt: new Date() }
 		})
-		.sort({ [`freeProductsById.${product._id}.available`]: -1 })
-		.limit(1)
 		.toArray();
-	const subscriptions = freeProductSubscriptions
-		? []
-		: await collections.paidSubscriptions
-				.find({
-					...userQuery(userIdentifier(locals)),
-					paidUntil: { $gt: new Date() }
-				})
-				.toArray();
+	const freeProductSubscriptions = subscriptions.filter(
+		(s) => (s.freeProductsById?.[product._id]?.available ?? 0) > 0
+	);
+	const percentageSubscriptions = freeProductSubscriptions ? [] : subscriptions;
 	const discount = subscriptions.length
 		? await collections.discounts.findOne(
 				{
-					$or: [
-						{ wholeCatalog: true },
-						{ productIds: product._id },
-						{ mode: 'percentage' },
-						{ mode: 'freeProducts' }
-					],
-					subscriptionIds: { $in: subscriptions.map((sub) => sub.productId) },
+					$or: [{ wholeCatalog: true }, { productIds: product._id }],
+					subscriptionIds: { $in: percentageSubscriptions.map((sub) => sub.productId) },
 					beginsAt: {
 						$lt: new Date()
 					},
+					mode: 'percentage',
 					$and: [
 						{
 							$or: [
@@ -173,11 +162,11 @@ export const load = async ({ params, locals }) => {
 		}),
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
 		websiteShortDescription: product.shortDescription,
-		freeProductSubscription: freeProductSubscriptions.map((subscription) => ({
-			...pojo(subscription),
-			user: pojo(subscription.user),
-			notifications: subscription.notifications.map(pojo)
-		}))[0]
+		freeProductAvailable: freeProductSubscriptions
+			? sum(
+					freeProductSubscriptions.map((sub) => sub.freeProductsById?.[product._id].available ?? 0)
+			  )
+			: null
 	};
 };
 
