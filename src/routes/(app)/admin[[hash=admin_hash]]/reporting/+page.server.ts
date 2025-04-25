@@ -39,8 +39,6 @@ export async function load({ url }) {
 			},
 			...(paymentMethod && { 'payments.method': paymentMethod }),
 			...(aliasFilter.length > 0 && { $or: aliasFilter })
-			...(employeeAlias && employeeAlias === 'System' && { 'user.userAlias': { $exists: false } }),
-			...(employeeAlias && employeeAlias !== 'System' && { 'user.userAlias': employeeAlias })
 		})
 		.sort({ createdAt: -1 })
 		.toArray();
