@@ -23,7 +23,8 @@ describe('cart', () => {
 		await addToCartInDb(TEST_DIGITAL_PRODUCT, 1, {
 			user: {
 				sessionId: 'test-session-id'
-			}
+			},
+			mode: 'eshop'
 		});
 
 		expect(await collections.carts.countDocuments({ 'user.sessionId': 'test-session-id' })).toBe(1);
@@ -34,7 +35,8 @@ describe('cart', () => {
 			addToCartInDb(TEST_DIGITAL_PRODUCT, 10, {
 				user: {
 					sessionId: 'test-session-id'
-				}
+				},
+				mode: 'eshop'
 			})
 		).rejects.toThrow(HttpError_1);
 	});
@@ -43,13 +45,15 @@ describe('cart', () => {
 		await addToCartInDb(TEST_DIGITAL_PRODUCT, TEST_PRODUCT_STOCK, {
 			user: {
 				sessionId: 'test-session-id'
-			}
+			},
+			mode: 'eshop'
 		});
 		await expect(
 			addToCartInDb(TEST_DIGITAL_PRODUCT, TEST_PRODUCT_STOCK, {
 				user: {
 					sessionId: 'test-session-id2'
-				}
+				},
+				mode: 'eshop'
 			})
 		).rejects.toThrow(HttpError_1);
 	});
@@ -58,7 +62,8 @@ describe('cart', () => {
 		await addToCartInDb(TEST_DIGITAL_PRODUCT, TEST_PRODUCT_STOCK, {
 			user: {
 				sessionId: 'test-session-id'
-			}
+			},
+			mode: 'eshop'
 		});
 		const cart = await collections.carts.findOne({ 'user.sessionId': 'test-session-id' });
 		assert(cart, 'Cart should exist');
@@ -67,13 +72,15 @@ describe('cart', () => {
 		await addToCartInDb(TEST_DIGITAL_PRODUCT, TEST_PRODUCT_STOCK, {
 			user: {
 				sessionId: 'test-session-id2'
-			}
+			},
+			mode: 'eshop'
 		});
 		// Refresh first cart
 		await addToCartInDb(TEST_DIGITAL_PRODUCT_UNLIMITED, 1, {
 			user: {
 				sessionId: 'test-session-id'
-			}
+			},
+			mode: 'eshop'
 		});
 		const cart2 = await collections.carts.findOne({ 'user.sessionId': 'test-session-id2' });
 		assert(cart2, 'Cart 2 should exist');

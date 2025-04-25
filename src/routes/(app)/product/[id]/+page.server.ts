@@ -204,6 +204,7 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			: undefined;
 	await addToCartInDb(product, quantity, {
 		user: userIdentifier(locals),
+		mode: 'eshop',
 		...(customPrice && { customPrice }),
 		deposit: deposit === 'partial',
 		...(product.hasVariations && { chosenVariations })
