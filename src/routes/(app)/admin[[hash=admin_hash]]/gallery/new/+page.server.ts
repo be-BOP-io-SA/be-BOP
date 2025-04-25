@@ -2,7 +2,7 @@ import { collections } from '$lib/server/database';
 import type { Actions } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import { MAX_NAME_LIMIT } from '$lib/types/Product';
 import type { JsonObject } from 'type-fest';
 import { adminPrefix } from '$lib/server/admin';

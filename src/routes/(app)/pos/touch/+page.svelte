@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { groupBy } from 'lodash-es';
 	import type { SetRequired } from 'type-fest';
 	import type { Picture } from '$lib/types/Picture';
 	import ProductWidgetPOS from '$lib/components/ProductWidget/ProductWidgetPOS.svelte';
@@ -13,6 +12,7 @@
 	import { invalidate } from '$app/navigation';
 	import { applyAction, enhance } from '$app/forms';
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
+	import { groupBy } from '$lib/utils/group-by.js';
 
 	export let data;
 	$: next = Number($page.url.searchParams.get('skip')) || 0;
@@ -20,7 +20,7 @@
 		data.pictures.filter(
 			(picture): picture is SetRequired<Picture, 'productId'> => !!picture.productId
 		),
-		'productId'
+		(p) => p.productId
 	);
 	$: filter = $page.url.searchParams.get('filter') ?? 'pos-favorite';
 	$: productFiltered =
@@ -172,7 +172,7 @@
 					<div class="col-span-2 grid grid-cols-2 gap-4">
 						{#each displayedProducts as product}
 							{#if !isPreorder(product.availableDate, product.preorder)}
-								<ProductWidgetPOS {product} pictures={picturesByProduct[product._id]} />
+								<ProductWidgetPOS {product} pictures={picturesByProduct[product._id] ?? []} />
 							{/if}
 						{/each}
 						<div class="col-span-2 grid-cols-1 flex gap-2 justify-center">

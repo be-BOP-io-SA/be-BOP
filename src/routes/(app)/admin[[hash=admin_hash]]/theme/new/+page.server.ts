@@ -1,6 +1,6 @@
 import type { Actions } from './$types';
 import { redirect } from '@sveltejs/kit';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import { collections } from '$lib/server/database';
 import { adminPrefix } from '$lib/server/admin';
 import type { Theme } from '$lib/types/Theme';

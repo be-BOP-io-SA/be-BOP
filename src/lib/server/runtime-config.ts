@@ -25,13 +25,14 @@ import {
 	locales,
 	type LanguageKey
 } from '$lib/translations';
-import { merge } from 'lodash-es';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { PaymentMethod } from './payment-methods';
+import { merge } from '$lib/utils/merge';
 
 const baseConfig = {
 	adminHash: '',
+	adminWelcomMessage: '',
 	isAdminCreated: false,
 	exchangeRate: defaultExchangeRate,
 	mainCurrency: 'BTC' as Currency,
@@ -207,6 +208,7 @@ const baseConfig = {
 	hideFromSearchEngines: false,
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,
+	physicalCartMinAmount: null as null | number,
 	websiteTitle: 'B2Bitcoin be-BOP',
 	websiteShortDescription: "B2Bitcoin's be-BOP store",
 	emailTemplates: {
@@ -399,7 +401,11 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 			if (config._id.startsWith('translations.')) {
 				const locale = trimPrefix(config._id, 'translations.');
 				if (typedInclude(locales, locale)) {
-					enhancedLanguages[locale] = merge({}, languages[locale], config.data);
+					enhancedLanguages[locale] = merge(
+						{},
+						languages[locale],
+						config.data as (typeof languages)[LanguageKey]
+					);
 					addTranslations(locale, enhancedLanguages[locale], {
 						formatDistance: formatDistanceLocale[locale]
 					});

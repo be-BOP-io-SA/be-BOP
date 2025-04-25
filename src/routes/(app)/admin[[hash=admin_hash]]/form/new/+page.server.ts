@@ -6,7 +6,7 @@ import { MAX_NAME_LIMIT } from '$lib/types/Product';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 import { adminPrefix } from '$lib/server/admin';
 import { zodSlug } from '$lib/server/zod';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 
 export const load = async () => {};

@@ -1,7 +1,7 @@
 import { collections } from '$lib/server/database';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import type { Actions } from './$types';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { pojo } from '$lib/server/pojo';

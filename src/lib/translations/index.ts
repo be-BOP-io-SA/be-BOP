@@ -1,4 +1,3 @@
-import { merge } from 'lodash-es';
 import en from './en.json';
 import es_sv from './es-sv.json';
 import fr from './fr.json';
@@ -18,6 +17,7 @@ import { formatDistance as formatDistanceEs } from 'date-fns/formatDistance/es';
 
 import { typedKeys } from '$lib/utils/typedKeys';
 import type { FormatDistanceFn } from 'date-fns';
+import { merge } from '$lib/utils/merge';
 
 export const languages = {
 	en,
