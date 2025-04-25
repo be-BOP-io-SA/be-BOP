@@ -6,7 +6,7 @@ import formatDistanceEn from 'date-fns/formatDistance/en-US?raw';
 import formatDistanceIt from 'date-fns/formatDistance/it?raw';
 import formatDistanceNl from 'date-fns/formatDistance/nl?raw';
 import formatDistanceEs from 'date-fns/formatDistance/es?raw';
-import formatDistancePt from 'date-fns/formatDistance/es?raw';
+import formatDistancePt from 'date-fns/formatDistance/pt?raw';
 
 const cache: Record<string, string> = {};
 const cachedAt: Record<string, number> = {};
