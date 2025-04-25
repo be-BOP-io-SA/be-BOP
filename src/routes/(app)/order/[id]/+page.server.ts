@@ -13,7 +13,7 @@ import { OrderLabel } from '$lib/types/OrderLabel.js';
 export async function load({ params, depends, locals }) {
 	depends(UrlDependency.Order);
 
-	const order = await fetchOrderForUser(params.id);
+	const order = await fetchOrderForUser(params.id, { userRoleId: locals.user?.roleId });
 
 	const digitalFiles = uniqBy(
 		order.items.flatMap((item) => item.digitalFiles),
