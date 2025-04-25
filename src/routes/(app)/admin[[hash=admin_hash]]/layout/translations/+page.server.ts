@@ -1,7 +1,7 @@
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { locales, type LanguageKey } from '$lib/translations';
 import { typedFromEntries } from '$lib/utils/typedFromEntries';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { layoutTranslatableSchema } from '../layout-schema';

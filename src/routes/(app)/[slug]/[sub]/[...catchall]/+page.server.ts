@@ -1,7 +1,7 @@
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
+import { omit } from '$lib/utils/omit';
 import { error } from '@sveltejs/kit';
-import { omit } from 'lodash-es';
 
 export async function load({ locals }) {
 	const errorPage = await collections.cmsPages.findOne(

@@ -1,9 +1,9 @@
 import { collections } from '$lib/server/database';
-import { omit } from 'lodash-es';
 import { load as catalogLoad } from './catalog/+page.server';
 import { cmsFromContent } from '$lib/server/cms';
 import { redirect } from '@sveltejs/kit';
 import { addYears } from 'date-fns';
+import { omit } from '$lib/utils/omit';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 
 export const load = async ({ locals }) => {

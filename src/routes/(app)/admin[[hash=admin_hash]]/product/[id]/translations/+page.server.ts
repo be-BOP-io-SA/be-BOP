@@ -2,10 +2,11 @@ import { locales, type LanguageKey } from '$lib/translations/index.js';
 import { mapObject } from '$lib/utils/mapObject.js';
 import { z } from 'zod';
 import { productBaseSchema } from '../../product-schema.js';
-import { pick, set } from 'lodash-es';
 import type { ProductTranslatableFields } from '$lib/types/Product.js';
 import { collections } from '$lib/server/database.js';
 import type { JsonObject } from 'type-fest';
+import { pick } from '$lib/utils/pick.js';
+import { set } from '$lib/utils/set.js';
 
 export const actions = {
 	default: async function ({ request, params }) {

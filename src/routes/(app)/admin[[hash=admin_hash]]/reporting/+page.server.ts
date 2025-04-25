@@ -28,8 +28,8 @@ export async function load({ url }) {
 				$lt: addDays(endsAt, 1)
 			},
 			...(paymentMethod && { 'payments.method': paymentMethod }),
-			...(employeeAlias === 'System' && { 'user.userAlias': { $exists: false } }),
-			...(employeeAlias !== 'System' && { 'user.userAlias': employeeAlias })
+			...(employeeAlias && employeeAlias === 'System' && { 'user.userAlias': { $exists: false } }),
+			...(employeeAlias && employeeAlias !== 'System' && { 'user.userAlias': employeeAlias })
 		})
 		.sort({ createdAt: -1 })
 		.toArray();

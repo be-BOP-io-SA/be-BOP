@@ -2,7 +2,7 @@ import { adminPrefix } from '$lib/server/admin';
 import { collections } from '$lib/server/database';
 import type { OrderLabel } from '$lib/types/OrderLabel';
 import { error, redirect } from '@sveltejs/kit';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
