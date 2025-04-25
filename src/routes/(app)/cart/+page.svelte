@@ -15,6 +15,7 @@
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+	import { toCurrency } from '$lib/utils/toCurrency.js';
 
 	export let data;
 
@@ -44,6 +45,12 @@
 	let formAlias: HTMLInputElement;
 	let loading = false;
 	const { t, locale, countryName } = useI18n();
+	$: isDigital = items.every((item) => !item.product.shipping);
+	$: physicalCartCanBeOrdered =
+		!!data.physicalCartMinAmount && !isDigital
+			? priceInfo.partialPriceWithVat >=
+			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
+			: true;
 </script>
 
 <main class="mx-auto max-w-7xl flex flex-col gap-2 px-6 py-10 body-mainPlan">
@@ -359,8 +366,19 @@
 				</div>
 			{/if}
 			<div class="flex justify-end">
-				<a href="/checkout" class="btn body-cta body-mainCTA">{t('cart.cta.checkout')}</a>
+				{#if !physicalCartCanBeOrdered}
+					<p class="text-red-500 font-light">{t('cart.minimumPhysicalAmountText')}</p>
+				{/if}
 			</div>
+			<form action="/checkout" class="flex justify-end">
+				<button
+					class="btn body-cta body-mainCTA"
+					disabled={!physicalCartCanBeOrdered}
+					type="submit"
+				>
+					{t('cart.cta.checkout')}
+				</button>
+			</form>
 		{:else}
 			<p>{t('cart.empty')}</p>
 		{/if}

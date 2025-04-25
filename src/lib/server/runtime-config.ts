@@ -32,6 +32,7 @@ import { merge } from '$lib/utils/merge';
 
 const baseConfig = {
 	adminHash: '',
+	adminWelcomMessage: '',
 	isAdminCreated: false,
 	exchangeRate: defaultExchangeRate,
 	mainCurrency: 'BTC' as Currency,
@@ -207,6 +208,7 @@ const baseConfig = {
 	hideFromSearchEngines: false,
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,
+	physicalCartMinAmount: null as null | number,
 	websiteTitle: 'B2Bitcoin be-BOP',
 	websiteShortDescription: "B2Bitcoin's be-BOP store",
 	emailTemplates: {
