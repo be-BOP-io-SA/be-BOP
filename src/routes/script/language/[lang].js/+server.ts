@@ -6,6 +6,7 @@ import formatDistanceEn from 'date-fns/formatDistance/en-US?raw';
 import formatDistanceIt from 'date-fns/formatDistance/it?raw';
 import formatDistanceNl from 'date-fns/formatDistance/nl?raw';
 import formatDistanceEs from 'date-fns/formatDistance/es?raw';
+import formatDistanceDe from 'date-fns/formatDistance/de?raw';
 
 const cache: Record<string, string> = {};
 const cachedAt: Record<string, number> = {};
@@ -15,7 +16,8 @@ const formatDistanceRawFiles: Record<LanguageKey, string> = {
 	en: formatDistanceEn,
 	it: formatDistanceIt,
 	nl: formatDistanceNl,
-	'es-sv': formatDistanceEs
+	'es-sv': formatDistanceEs,
+	de: formatDistanceDe
 };
 
 export const GET = async ({ params }) => {

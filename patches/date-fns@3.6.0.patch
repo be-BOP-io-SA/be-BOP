@@ -56,6 +56,16 @@ index b1cd5268084704d4b3842d25bb7438f5c161886a..bcc4ff164903d957880123c1d57af5db
 +        "default": "./locale/es/_lib/formatDistance.mjs"
 +      }
 +    },
++   "./formatDistance/de": {
++      "require": {
++        "types": "./locale/de/_lib/formatDistance.d.ts",
++        "default": "./locale/de/_lib/formatDistance.js"
++      },
++      "import": {
++        "types": "./locale/de/_lib/formatDistance.d.mts",
++        "default": "./locale/de/_lib/formatDistance.mjs"
++      }
++    },
      ".": {
        "require": {
          "types": "./index.d.ts",
