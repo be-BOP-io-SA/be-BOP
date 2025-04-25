@@ -23,7 +23,7 @@ RUN corepack enable pnpm
 COPY --link --chown=1000 .npmrc .
 COPY --link --chown=1000 package.json .
 COPY --link --chown=1000 pnpm-lock.yaml .
-copy --link --chown=1000 patches patches
+COPY --link --chown=1000 patches patches
 
 RUN pnpm install --frozen-lockfile
 
