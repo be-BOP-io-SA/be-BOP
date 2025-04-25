@@ -55,7 +55,7 @@ index b1cd5268084704d4b3842d25bb7438f5c161886a..bcc4ff164903d957880123c1d57af5db
 +        "types": "./locale/es/_lib/formatDistance.d.mts",
 +        "default": "./locale/es/_lib/formatDistance.mjs"
 +      }
-+    }
++    },
      ".": {
        "require": {
          "types": "./index.d.ts",
