@@ -303,11 +303,11 @@
 					/>
 					<span class="font-semibold">{t('product.vatExcluded')}</span>
 				</div>
-				{#if data.freeProductAvailable}
+				{#if data.freeProductsAvailable}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
 						{t('product.freeProductDiscountText', {
-							available: data.freeProductAvailable
+							available: data.freeProductsAvailable
 						})}
 					</h3>
 				{/if}

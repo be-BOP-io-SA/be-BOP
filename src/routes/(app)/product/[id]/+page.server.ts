@@ -119,8 +119,8 @@ export const load = async ({ params, locals }) => {
 			paidUntil: { $gt: new Date() }
 		})
 		.toArray();
-	const freeProductSubscriptions = subscriptions.filter(
-		(s) => (s.freeProductsById?.[product._id]?.available ?? 0) > 0
+	const freeProductsAvailable = sum(
+		subscriptions.map((s) => s.freeProductsById?.[product._id]?.available ?? 0)
 	);
 	const discount = subscriptions.length
 		? await collections.discounts.findOne(
@@ -161,11 +161,7 @@ export const load = async ({ params, locals }) => {
 		}),
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
 		websiteShortDescription: product.shortDescription,
-		freeProductAvailable: freeProductSubscriptions
-			? sum(
-					freeProductSubscriptions.map((sub) => sub.freeProductsById?.[product._id].available ?? 0)
-			  )
-			: null
+		freeProductsAvailable
 	};
 };
 
