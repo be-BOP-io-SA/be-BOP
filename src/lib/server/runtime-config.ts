@@ -32,6 +32,7 @@ import { merge } from '$lib/utils/merge';
 
 const baseConfig = {
 	adminHash: '',
+	adminWelcomMessage: '',
 	isAdminCreated: false,
 	exchangeRate: defaultExchangeRate,
 	mainCurrency: 'BTC' as Currency,
