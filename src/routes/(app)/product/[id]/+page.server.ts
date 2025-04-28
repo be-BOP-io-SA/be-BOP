@@ -92,7 +92,8 @@ export const load = async ({ params, locals }) => {
 				},
 				hasSellDisclaimer: 1,
 				hideFromSEO: 1,
-				hideDiscountExpiration: 1
+				hideDiscountExpiration: 1,
+				shipping: 1
 			}
 		}
 	);
@@ -220,6 +221,7 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			: undefined;
 	await addToCartInDb(product, quantity, {
 		user: userIdentifier(locals),
+		mode: 'eshop',
 		...(customPrice && { customPrice }),
 		...(freeQuantity && { freeQuantity }),
 		deposit: deposit === 'partial',

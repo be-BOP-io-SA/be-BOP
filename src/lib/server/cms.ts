@@ -557,7 +557,7 @@ export async function cmsFromContent(
 		$or: [
 			...(sliderSlugs.size ? [{ 'slider._id': { $in: [...sliderSlugs] } }] : []),
 			...(tagSlugs.size ? [{ 'tag._id': { $in: [...tagSlugs] } }] : []),
-			...(productSlugs.size ? [{ productId: { $in: [...productSlugs] } }] : []),
+			...(products.length ? [{ productId: { $in: [...products.map((prod) => prod._id)] } }] : []),
 			...(gallerySlugs.size ? [{ galleryId: { $in: [...gallerySlugs] } }] : []),
 			...(scheduleSlugs.size ? [{ 'schedule._id': { $in: [...scheduleSlugs] } }] : []),
 			...(pictureSlugs.size ? [{ _id: { $in: [...pictureSlugs] } }] : [])

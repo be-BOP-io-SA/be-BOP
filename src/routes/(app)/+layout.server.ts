@@ -320,6 +320,7 @@ export async function load(params) {
 		cart: cartData,
 		confirmationBlocksThresholds: runtimeConfig.confirmationBlocksThresholds,
 		cartMaxSeparateItems: runtimeConfig.cartMaxSeparateItems,
+		physicalCartMinAmount: runtimeConfig.physicalCartMinAmount,
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
 		hideCartInToolbar: runtimeConfig.hideCartInToolbar,
 		hideCmsZonesOnMobile: runtimeConfig.hideCmsZonesOnMobile,

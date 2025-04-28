@@ -165,6 +165,11 @@
 	let showBillingInfo = false;
 	let isProfessionalOrder = false;
 	let changePaymentTimeOut = false;
+	$: physicalCartCanBeOrdered =
+		!!data.physicalCartMinAmount && !isDigital
+			? priceInfo.partialPriceWithVat >=
+			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
+			: true;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -1078,7 +1083,10 @@
 					class="btn body-cta body-mainCTA btn-xl -mx-1 -mb-1 mt-1"
 					value={t('checkout.cta.submit')}
 					form="checkout"
-					disabled={isNaN(deliveryFees) || (addDiscount && !isDiscountValid) || submitting}
+					disabled={isNaN(deliveryFees) ||
+						(addDiscount && !isDiscountValid) ||
+						submitting ||
+						!physicalCartCanBeOrdered}
 				/>
 			</article>
 		</div>

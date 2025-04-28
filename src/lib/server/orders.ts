@@ -771,6 +771,17 @@ export async function createOrder(
 			throw error(400, 'error matching on variations choice');
 		}
 	}
+	const physicalCartMinAmount = runtimeConfig.physicalCartMinAmount;
+
+	const physicalCartCanBeOrdered =
+		!!physicalCartMinAmount && !isDigital
+			? priceInfo.totalPriceWithVat >=
+			  toCurrency(priceInfo.currency, physicalCartMinAmount, runtimeConfig.mainCurrency)
+			: true;
+
+	if (!physicalCartCanBeOrdered) {
+		throw error(403, `Can't order a cart with amount < ${physicalCartMinAmount}`);
+	}
 
 	await withTransaction(async (session) => {
 		const order: Order = {
@@ -1656,6 +1667,40 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 					{ session }
 				);
 			}
+		}
+	}
+
+	for (const item of order.items) {
+		const freeProductSubscriptions = await collections.paidSubscriptions
+			.find({
+				[`freeProductsById.${item.product._id}`]: { $exists: true },
+				[`freeProductsById.${item.product._id}.available`]: { $gt: 0 }
+			})
+			.toArray();
+
+		for (const sub of freeProductSubscriptions) {
+			await collections.paidSubscriptions.updateOne(
+				{ _id: sub._id },
+				{
+					$inc: {
+						...(item.freeQuantity && {
+							[`freeProductsById.${item.product._id}.used`]: item.quantity
+						})
+					},
+					$set: {
+						...(item.freeQuantity && {
+							[`freeProductsById.${item.product._id}.available`]: Math.max(
+								item.freeQuantity - item.quantity,
+								0
+							)
+						}),
+						updatedAt: new Date(),
+						notifications: []
+					},
+					$unset: { cancelledAt: 1 }
+				},
+				{ session }
+			);
 		}
 	}
 	//#endregion
