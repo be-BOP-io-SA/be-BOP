@@ -42,7 +42,7 @@
 		};
 	}}
 >
-	<button type="submit" class={!hasStock || loading ? 'disabled ' : ''}>
+	<button type="submit" disabled={!hasStock || loading}>
 		<div class="touchScreen-product-cta flex flex-row {className} max-h-[4em]">
 			<div>
 				<PictureComponent picture={pictures[0]} class="object-contain h-24 w-48" />
@@ -53,10 +53,3 @@
 		</div>
 	</button>
 </form>
-
-<style>
-	button.disabled {
-		pointer-events: none;
-		opacity: 0.4;
-	}
-</style>

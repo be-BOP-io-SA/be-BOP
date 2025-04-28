@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product.js';
-	import { upperFirst } from 'lodash-es';
+	import { upperFirst } from '$lib/utils/upperFirst.js';
 
 	export let data;
 	let viewportContentWidth = data.viewportContentWidth;

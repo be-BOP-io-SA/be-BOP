@@ -11,7 +11,7 @@ import { Kind } from 'nostr-tools';
 import { parsePriceAmount } from '$lib/types/Currency';
 import { s3ProductPrefix, s3client } from '$lib/server/s3';
 import type { JsonObject } from 'type-fest';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import { productBaseSchema } from '../product-schema';
 import { generateId } from '$lib/utils/generateId';
 import { CopyObjectCommand, DeleteObjectsCommand } from '@aws-sdk/client-s3';

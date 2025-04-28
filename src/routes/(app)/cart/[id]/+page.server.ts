@@ -80,6 +80,7 @@ export const actions = {
 
 		await addToCartInDb(product, quantity + 1, {
 			user: userIdentifier(locals),
+			mode: 'eshop',
 			totalQuantity: true,
 			deposit
 		});

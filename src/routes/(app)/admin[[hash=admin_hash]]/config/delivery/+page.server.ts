@@ -1,6 +1,6 @@
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { JsonObject } from 'type-fest';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import { z } from 'zod';
 import { collections } from '$lib/server/database';
 import { deliveryFeesSchema } from './schema';

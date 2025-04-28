@@ -4,7 +4,7 @@ import type { JsonObject } from 'type-fest';
 import { cmsTranslatableSchema } from './cms-schema';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 
 export const actions = {
 	update: async function ({ request, params }) {

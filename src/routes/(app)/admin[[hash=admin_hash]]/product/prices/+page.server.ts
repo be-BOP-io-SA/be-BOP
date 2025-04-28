@@ -1,7 +1,7 @@
 import { collections } from '$lib/server/database';
 import { z } from 'zod';
 import type { JsonObject } from 'type-fest';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 
 export const load = async () => {

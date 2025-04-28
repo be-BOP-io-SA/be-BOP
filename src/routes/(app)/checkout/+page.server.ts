@@ -11,9 +11,10 @@ import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User.js';
 import { zodNpub } from '$lib/server/nostr.js';
 import type { JsonObject } from 'type-fest';
-import { omit, set } from 'lodash-es';
 import { rateLimit } from '$lib/server/rateLimit.js';
 import { cmsFromContent } from '$lib/server/cms';
+import { omit } from '$lib/utils/omit.js';
+import { set } from '$lib/utils/set';
 
 export async function load({ parent, locals }) {
 	const parentData = await parent();

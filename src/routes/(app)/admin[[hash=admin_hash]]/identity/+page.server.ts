@@ -4,7 +4,7 @@ import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country.js';
 import type { SellerIdentity } from '$lib/types/SellerIdentity.js';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { error } from '@sveltejs/kit';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
