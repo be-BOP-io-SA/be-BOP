@@ -5,54 +5,55 @@
 		"companyName": "Nome da empresa",
 		"country": "País",
 		"firstName": "Primeiro nome",
-		"lastName": "Sobrenome",
+		"lastName": "Último nome",
 		"phone": "Telefone",
-		"phoneCode": "Se o seu número não for do mesmo país do país de entrega, digite o Código Internacional.",
-		"phoneDisclaimer": "Esta informação é opcional, mas às vezes exigida pelas operadoras. ",
+		"phoneCode": "Se o seu número não for do mesmo país da morada de entrega, por favor introduza o código internacional.",
+		"phoneDisclaimer": "Esta informação é opcional, mas por vezes requerida pelas transportadoras. Não o contactaremos através deste número.",
 		"state": "Estado",
-		"vatNumber": "Número do IVA",
-		"zipCode": "CEP"
+		"vatNumber": "Número de IVA",
+		"zipCode": "Código postal"
 	},
 	"ageWarning": {
-		"agreement": "Eu li as condições de acesso, cumpro -as e as respeito",
-		"navigate": "Continue navegando"
+		"agreement": "Li e cumpro as condições de acesso e respeito-as",
+		"navigate": "Continuar a navegar"
 	},
 	"cart": {
 		"cta": {
-			"checkout": "Confira",
+			"checkout": "Finalizar compra",
 			"discardItem": "Descartar",
 			"view": "Ver carrinho"
 		},
 		"empty": "O carrinho está vazio",
 		"fillProductAlias": "Preencher o alias do produto",
 		"items": "Produtos",
+		"minimumPhysicalAmountText": "O seu carrinho não contém o valor físico mínimo",
 		"quantity": "Quantidade",
-		"reachedMaxPerLine": "Seu carrinho atingiu o tamanho máximo. ",
-		"remaining": "Permanecendo após o checkout",
-		"remainingHelpText": "Para itens com depósitos, o pedido atual é um pagamento parcial.\n",
+		"reachedMaxPerLine": "O seu carrinho atingiu o tamanho máximo. Para adicionar mais artigos, remova itens do seu carrinho",
+		"remaining": "Restante após o checkout",
+		"remainingHelpText": "Para artigos com depósitos, a encomenda atual é um pagamento parcial.\nPara concluir a compra, terá de efetuar outro pagamento com o seguinte valor.\n(O IVA já está incluído no valor)",
 		"remainingShort": "Mais tarde",
 		"sr": {
-			"decrease": "Diminuir a quantidade",
-			"increase": "Aumentar a quantidade",
-			"remove": "Remova o item do carrinho"
+			"decrease": "Diminuir quantidade",
+			"increase": "Aumentar quantidade",
+			"remove": "Remover item do carrinho"
 		},
 		"total": "Total",
-		"vat": "CUBA",
-		"vatIpCountry": "O país é determinado através de dados de <0></0>",
+		"vat": "IVA",
+		"vatIpCountry": "O país é determinado através de dados de ",
 		"vatIpCountryText": "O país é determinado através de dados de {link}",
-		"vatNullOutsideSellerCountry": "Os impostos de importação devem ser pagos pelo cliente à alfândega na entrega.",
+		"vatNullOutsideSellerCountry": "Os impostos de importação devem ser pagos pelo cliente à alfândega no momento da entrega.",
 		"vatRate": "Taxa de IVA para {country}",
 		"vatSellerCountry": "O país é o país do vendedor."
 	},
 	"challenge": {
 		"beginsAt": "Começa em {days} dias",
-		"ended": "Finalizado !",
-		"endsAt": "Termina <0></0> no <1></1>",
-		"goalMet": "Bom trabalho pessoal! ",
-		"goalOvershot": "Vocês são caras incríveis! ",
+		"ended": "Terminou!",
+		"endsAt": "Termina  às ",
+		"goalMet": "Bom trabalho, pessoal! 👏👏",
+		"goalOvershot": "Vocês são incríveis! 🤭",
 		"list": "Lista de desafios",
 		"moneyAmount": {
-			"goalOvershot": "<0></0> em um alvo de <1></1> ! "
+			"goalOvershot": " num objetivo de ! Vocês são incríveis!"
 		},
 		"numProducts": {
 			"one": "{count} produto",
@@ -62,44 +63,44 @@
 		"singleTitle": "Desafio {name}",
 		"title": "Desafios",
 		"totalProducts": {
-			"goalOvershot": "{progress} pré-venda em um alvo de {Goal}! "
+			"goalOvershot": "{progress} pré-vendas num objetivo de {goal}! Vocês são incríveis!"
 		}
 	},
 	"checkout": {
-		"agreeIpCollect": "Eu concordo com a coleção do meu endereço IP (<0>por que?</0>)",
-		"agreeNullVatForeigner": "Eu entendo que terei que pagar IVA na entrega (<0>por que?</0>)",
-		"agreeOnlyDeposit": "Concordo que preciso pagar o restante no futuro (<0>por que?</0>)",
-		"backToCart": "De volta ao carrinho",
-		"billingInfo": "Endereço de Cobrança",
+		"agreeIpCollect": "Concordo com a recolha do meu endereço IP (porquê?)",
+		"agreeNullVatForeigner": "Compreendo que terei de pagar IVA no momento da entrega (porquê?)",
+		"agreeOnlyDeposit": "Concordo que preciso de pagar o restante no futuro (porquê?)",
+		"backToCart": "Voltar ao carrinho",
+		"billingInfo": "Morada de faturação",
 		"changePaymentExpiration": "Alterar o valor de expiração do pagamento (em minutos)",
 		"cta": {
-			"submit": "Prosseguir"
+			"submit": "Avançar"
 		},
-		"deliveryFees": "Taxas de entrega",
-		"deliveryFeesEstimationTooltip": "Isso é uma estimativa, as taxas definitivas serão processadas na seleção de países de entrega.",
-		"differentBillingAddress": "Meu endereço de envio e meu endereço de cobrança são diferentes",
-		"digitalNoShippingNeeded": "Todos os produtos do seu carrinho são produtos digitais. ",
-		"invalidNpub": "Chave pública inválida de nostr",
-		"isProBilling": "Este é um pedido profissional",
-		"multiplePaymentMethods": "Use vários métodos de pagamento",
-		"multiplePaymentMethodsHelpText": "Você pode definir métodos de pagamento na próxima etapa.",
-		"noDeliveryInCountry": "A entrega não está disponível em seu país para alguns dos itens do seu carrinho.",
+		"deliveryFees": "Taxas de envio",
+		"deliveryFeesEstimationTooltip": "Isto é uma estimativa, as taxas definitivas serão processadas na seleção do país de entrega.",
+		"differentBillingAddress": "A minha morada de envio e a minha morada de faturação são diferentes",
+		"digitalNoShippingNeeded": "Todos os produtos no seu carrinho são produtos digitais. Não precisa de fornecer nenhuma informação de envio.",
+		"invalidNpub": "Chave pública Nostr inválida",
+		"isProBilling": "Esta é uma encomenda profissional",
+		"multiplePaymentMethods": "Usar vários métodos de pagamento",
+		"multiplePaymentMethodsHelpText": "Pode definir os métodos de pagamento no próximo passo.",
+		"noDeliveryInCountry": "A entrega não está disponível no seu país para alguns dos artigos do seu carrinho.",
 		"note": {
 			"label": "Deixe uma nota para o comerciante",
-			"title": "Observação"
+			"title": "Nota"
 		},
 		"notifications": {
-			"email": "E-mail",
-			"message": "Por favor, preencha pelo menos um endereço de contato para ser notificado sobre o seu pedido.",
+			"email": "Email",
+			"message": "Por favor, preencha pelo menos um endereço de contacto para ser notificado sobre as novidades da sua encomenda.",
 			"npub": "Chave pública Nostr",
-			"title": "Alimentação e notificações"
+			"title": "Feed & Notificações"
 		},
 		"numProducts": {
 			"one": "{count} produto",
 			"other": "{count} produtos",
 			"zero": "{count} produtos"
 		},
-		"onLocation": "Esta é uma ordem pyhsical totalmente paga no local",
+		"onLocation": "Esta é uma encomenda física totalmente paga para levantamento no local",
 		"payment": {
 			"method": "Método de pagamento",
 			"title": "Pagamento"
@@ -109,31 +110,31 @@
 			"bitcoin": "Onchain",
 			"card": "Cartão de crédito",
 			"cash": "Dinheiro",
-			"free": "Nada a pagar (carrinho grátis)",
-			"lightning": "Raio",
-			"paypal": "PayPal",
+			"free": "Nada a pagar (carrinho gratuito)",
+			"lightning": "Lightning",
+			"paypal": "Paypal",
 			"point-of-sale": "Ponto de venda",
 			"unavailable": "Nenhum método de pagamento disponível."
 		},
-		"paymentStatus": "Status de pagamento",
-		"reasonOfferFeesDefault": "Ordem física totalmente paga no local",
+		"paymentStatus": "Estado do pagamento",
+		"reasonOfferFeesDefault": "Encomenda física totalmente paga para levantamento no local",
 		"receiptNote": {
-			"label": "Forneça informações adicionais sobre a fatura"
+			"label": "Forneça informações adicionais na fatura"
 		},
-		"shipmentInfo": "Informações de remessa",
-		"title": "Confira",
-		"tosAgree": "Eu concordo com o <0>Termos de Serviço</0>",
-		"vatShippingAddress": "O país é determinado pelo endereço de entrega"
+		"shipmentInfo": "Informação de envio",
+		"title": "Finalizar compra",
+		"tosAgree": "Concordo com os termos de serviço",
+		"vatShippingAddress": "O país é determinado pela morada de envio"
 	},
 	"contact": {
 		"form": {
-			"contactUs": "Contate-nos"
+			"contactUs": "Contacte-nos"
 		}
 	},
 	"contactForm": {
-		"content": "Contente",
+		"content": "Conteúdo",
 		"from": "de",
-		"subject": "Tópico"
+		"subject": "Assunto"
 	},
 	"country": {
 		"alpha2": {
@@ -143,12 +144,12 @@
 			"AG": "Antígua e Barbuda",
 			"AI": "Anguilla",
 			"AL": "Albânia",
-			"AM": "Armênia",
-			"AN": "Holanda Antilhas",
+			"AM": "Arménia",
+			"AN": "Antilhas Holandesas",
 			"AO": "Angola",
-			"AQ": "Antártica",
+			"AQ": "Antártida",
 			"AR": "Argentina",
-			"AS": "Samoa americano",
+			"AS": "Samoa Americana",
 			"AT": "Áustria",
 			"AU": "Austrália",
 			"AW": "Aruba",
@@ -157,11 +158,11 @@
 			"BB": "Barbados",
 			"BD": "Bangladesh",
 			"BE": "Bélgica",
-			"BF": "Burkina Faso",
+			"BF": "Burquina Faso",
 			"BG": "Bulgária",
 			"BH": "Bahrein",
 			"BI": "Burundi",
-			"BJ": "Benin",
+			"BJ": "Benim",
 			"BM": "Bermudas",
 			"BN": "Brunei",
 			"BO": "Bolívia",
@@ -175,12 +176,12 @@
 			"BZ": "Belize",
 			"CA": "Canadá",
 			"CC": "Ilhas Cocos (Keeling)",
-			"CD": "Congo, a República Democrática do",
-			"CF": "República da África Central",
+			"CD": "Congo, República Democrática do",
+			"CF": "República Centro-Africana",
 			"CG": "Congo",
 			"CH": "Suíça",
-			"CI": "Côte D'ivoire",
-			"CK": "Ilhas cozinheiras",
+			"CI": "Costa do Marfim",
+			"CK": "Ilhas Cook",
 			"CL": "Chile",
 			"CM": "Camarões",
 			"CN": "China",
@@ -189,9 +190,9 @@
 			"CU": "Cuba",
 			"CV": "Cabo Verde",
 			"CW": "Curaçao",
-			"CX": "Ilha Natal",
+			"CX": "Ilha do Natal",
 			"CY": "Chipre",
-			"CZ": "República Tcheca",
+			"CZ": "República Checa",
 			"DE": "Alemanha",
 			"DJ": "Djibuti",
 			"DK": "Dinamarca",
@@ -199,7 +200,7 @@
 			"DO": "República Dominicana",
 			"DZ": "Argélia",
 			"EC": "Equador",
-			"EE": "Estônia",
+			"EE": "Estónia",
 			"EG": "Egito",
 			"EH": "Saara Ocidental",
 			"ER": "Eritreia",
@@ -209,29 +210,29 @@
 			"FJ": "Fiji",
 			"FK": "Ilhas Falkland (Malvinas)",
 			"FM": "Micronésia",
-			"FO": "Ilhas Faroe",
+			"FO": "Ilhas Faroé",
 			"FR": "França",
 			"GA": "Gabão",
 			"GB": "Reino Unido",
 			"GD": "Granada",
 			"GE": "Geórgia",
-			"GF": "Guiana francesa",
+			"GF": "Guiana Francesa",
 			"GG": "Guernsey",
 			"GH": "Gana",
 			"GI": "Gibraltar",
-			"GL": "Groenlândia",
+			"GL": "Gronelândia",
 			"GM": "Gâmbia",
 			"GN": "Guiné",
 			"GP": "Guadalupe",
 			"GQ": "Guiné Equatorial",
 			"GR": "Grécia",
-			"GS": "Geórgia do Sul e as Ilhas Sandwich South",
+			"GS": "Geórgia do Sul e Ilhas Sandwich do Sul",
 			"GT": "Guatemala",
 			"GU": "Guam",
-			"GW": "Guiné-bissau",
+			"GW": "Guiné-Bissau",
 			"GY": "Guiana",
 			"HK": "Hong Kong",
-			"HM": "Heard Island e McDonald Islands",
+			"HM": "Ilha Heard e Ilhas McDonald",
 			"HN": "Honduras",
 			"HR": "Croácia",
 			"HT": "Haiti",
@@ -240,69 +241,69 @@
 			"ID": "Indonésia",
 			"IE": "Irlanda",
 			"IL": "Israel",
-			"IM": "Ilha de Homem",
+			"IM": "Ilha de Man",
 			"IN": "Índia",
-			"IO": "Território do Oceano Índico Britânico",
+			"IO": "Território Britânico do Oceano Índico",
 			"IQ": "Iraque",
-			"IR": "Irã",
+			"IR": "Irão",
 			"IS": "Islândia",
 			"IT": "Itália",
 			"JE": "Jersey",
 			"JM": "Jamaica",
 			"JO": "Jordânia",
 			"JP": "Japão",
-			"KE": "Quênia",
+			"KE": "Quénia",
 			"KG": "Quirguistão",
 			"KH": "Camboja",
-			"KI": "Kiribati",
+			"KI": "Quiribati",
 			"KM": "Comores",
-			"KN": "Saint Kitts e Nevis",
-			"KP": "Coréia do Norte",
-			"KR": "Coréia do Sul",
+			"KN": "São Cristóvão e Nevis",
+			"KP": "Coreia do Norte",
+			"KR": "Coreia do Sul",
 			"KW": "Kuwait",
-			"KY": "Ilhas Cayman",
+			"KY": "Ilhas Caimão",
 			"KZ": "Cazaquistão",
 			"LA": "Laos",
 			"LB": "Líbano",
-			"LC": "Saint Lucia",
+			"LC": "Santa Lúcia",
 			"LI": "Liechtenstein",
 			"LK": "Sri Lanka",
 			"LR": "Libéria",
 			"LS": "Lesoto",
 			"LT": "Lituânia",
 			"LU": "Luxemburgo",
-			"LV": "Letônia",
+			"LV": "Letónia",
 			"LY": "Líbia",
 			"MA": "Marrocos",
-			"MC": "Mônaco",
+			"MC": "Mónaco",
 			"MD": "Moldávia",
 			"ME": "Montenegro",
-			"MF": "Saint Martin",
+			"MF": "São Martinho",
 			"MG": "Madagáscar",
 			"MH": "Ilhas Marshall",
-			"MK": "Macedônia",
+			"MK": "Macedónia",
 			"ML": "Mali",
 			"MM": "Birmânia",
 			"MN": "Mongólia",
 			"MO": "Macau",
-			"MP": "Ilhas do norte da Mariana",
+			"MP": "Ilhas Marianas do Norte",
 			"MQ": "Martinica",
 			"MR": "Mauritânia",
 			"MS": "Montserrat",
 			"MT": "Malta",
-			"MU": "Maurício",
+			"MU": "Maurícia",
 			"MV": "Maldivas",
 			"MW": "Malawi",
 			"MX": "México",
 			"MY": "Malásia",
 			"MZ": "Moçambique",
 			"NA": "Namíbia",
-			"NC": "Nova Caledônia",
+			"NC": "Nova Caledónia",
 			"NE": "Níger",
-			"NF": "Ilha de Norfolk",
+			"NF": "Ilha Norfolk",
 			"NG": "Nigéria",
 			"NI": "Nicarágua",
-			"NL": "Holanda",
+			"NL": "Países Baixos",
 			"NO": "Noruega",
 			"NP": "Nepal",
 			"NR": "Nauru",
@@ -311,12 +312,12 @@
 			"OM": "Omã",
 			"PA": "Panamá",
 			"PE": "Peru",
-			"PF": "Polinésia francesa",
-			"PG": "Papua Nova Guiné",
+			"PF": "Polinésia Francesa",
+			"PG": "Papua-Nova Guiné",
 			"PH": "Filipinas",
 			"PK": "Paquistão",
-			"PL": "Polônia",
-			"PM": "São Pierre e Miquelon",
+			"PL": "Polónia",
+			"PM": "São Pedro e Miquelão",
 			"PN": "Pitcairn",
 			"PR": "Porto Rico",
 			"PS": "Palestina",
@@ -325,18 +326,18 @@
 			"PY": "Paraguai",
 			"QA": "Catar",
 			"RE": "Reunião",
-			"RO": "Romênia",
+			"RO": "Roménia",
 			"RS": "Sérvia",
 			"RU": "Rússia",
 			"RW": "Ruanda",
 			"SA": "Arábia Saudita",
 			"SB": "Ilhas Salomão",
-			"SC": "Seychelles",
+			"SC": "Seicheles",
 			"SD": "Sudão",
 			"SE": "Suécia",
-			"SG": "Cingapura",
-			"SH": "Saint Helena, Ascensão e Tristan da Cunha",
-			"SI": "Eslovênia",
+			"SG": "Singapura",
+			"SH": "Santa Helena, Ascensão e Tristão da Cunha",
+			"SI": "Eslovénia",
 			"SJ": "Svalbard e Jan Mayen",
 			"SK": "Eslováquia",
 			"SL": "Serra Leoa",
@@ -345,14 +346,14 @@
 			"SO": "Somália",
 			"SR": "Suriname",
 			"SS": "Sudão do Sul",
-			"ST": "São tomo e príncipe",
+			"ST": "São Tomé e Príncipe",
 			"SV": "El Salvador",
-			"SY": "República Árabe da Síria",
+			"SY": "República Árabe Síria",
 			"SZ": "Suazilândia",
-			"TC": "Ilhas Turks e Caicos",
+			"TC": "Ilhas Turcas e Caicos",
 			"TD": "Chade",
-			"TF": "Territórios do Sul da França",
-			"TG": "Ir",
+			"TF": "Territórios Franceses do Sul",
+			"TG": "Togo",
 			"TH": "Tailândia",
 			"TJ": "Tajiquistão",
 			"TK": "Tokelau",
@@ -360,23 +361,23 @@
 			"TM": "Turquemenistão",
 			"TN": "Tunísia",
 			"TO": "Tonga",
-			"TR": "Peru",
+			"TR": "Turquia",
 			"TT": "Trinidad e Tobago",
 			"TV": "Tuvalu",
 			"TW": "Taiwan",
 			"TZ": "Tanzânia",
 			"UA": "Ucrânia",
 			"UG": "Uganda",
-			"UM": "Ilhas Menores Estados Unidos",
-			"US": "Estados Unidos",
+			"UM": "Ilhas Menores Distantes dos Estados Unidos",
+			"US": "Estados Unidos da América",
 			"UY": "Uruguai",
 			"UZ": "Uzbequistão",
-			"VA": "Santa See (Estado da cidade do Vaticano)",
-			"VC": "São Vicente e Granadinas",
+			"VA": "Santa Sé (Cidade do Vaticano)",
+			"VC": "São Vicente eas Granadinas",
 			"VE": "Venezuela",
-			"VG": "Ilhas Virgens, britânicas",
-			"VI": "Ilhas Virgens, EUA",
-			"VN": "Vietnã",
+			"VG": "Ilhas Virgens Britânicas",
+			"VI": "Ilhas Virgens Americanas",
+			"VN": "Vietname",
 			"VU": "Vanuatu",
 			"WF": "Wallis e Futuna",
 			"WS": "Samoa",
@@ -385,21 +386,21 @@
 			"YT": "Mayotte",
 			"ZA": "África do Sul",
 			"ZM": "Zâmbia",
-			"ZW": "Zimbábue"
+			"ZW": "Zimbabwe"
 		}
 	},
 	"error": {
-		"404": "A página {invalidurl} que você solicitou não foi encontrada. ",
+		"404": "A página {invalidUrl} que solicitou não pôde ser encontrada. Por favor, verifique se o seu link está correto ou contacte a equipa do site para reportar o problema.",
 		"title": "Erro {status}"
 	},
 	"footer": {
 		"company": {
-			"contact": "Contato da empresa",
+			"contact": "Contacto da empresa",
 			"identity": "Identidade da empresa"
 		},
-		"poweredBy": "Distribuído por",
+		"poweredBy": "Desenvolvido por",
 		"shop": {
-			"info": "Nossa loja"
+			"info": "a nossa loja"
 		}
 	},
 	"general": {
@@ -409,59 +410,59 @@
 		"cta": {
 			"update": "Atualizar"
 		},
-		"personalInformation": "Informações pessoais"
+		"personalInformation": "Informação pessoal"
 	},
 	"login": {
 		"authenticate": {
 			"ctaCancelLabel": "Voltar",
 			"ctaLabel": "Confirmar",
-			"disclaimer": "Para fins de segurança, nosso site não conhece senha. ",
-			"inputLabel": "Email ou NPUB",
-			"title": "Adicione autenticação"
+			"disclaimer": "Por motivos de segurança, o nosso website não guarda palavras-passe. Pode aceder ao seu espaço pessoal e ao seu histórico de encomendas através de um link de ligação, ou através de uma conta de terceiros (SSO).",
+			"inputLabel": "Email ou npub",
+			"title": "Adicionar autenticação"
 		},
 		"cta": {
-			"authenticateAs": "Autentique como {como}",
-			"clearSession": "Sessão clara",
+			"authenticateAs": "Autenticar como {as}",
+			"clearSession": "Limpar sessão",
 			"identity": "Identidade",
-			"logout": "Log Out",
-			"orders": "Ordens",
-			"signInWith": "Faça login com {provedor}"
+			"logout": "Sair",
+			"orders": "Encomendas",
+			"signInWith": "Iniciar sessão com {provider}"
 		},
 		"password": {
-			"pwned": "Sua senha não é segura, foi encontrada em violações de dados {count}. "
+			"pwned": "A sua palavra-passe não é segura, foi encontrada em {count} fugas de dados. Por favor, redefina a sua palavra-passe."
 		},
 		"session": {
-			"email": "E -mail: {email}",
-			"identityPrefill": "Você pode preencher o seu endereço postal e seu endereço de contato. ",
+			"email": "Email: {email}",
+			"identityPrefill": "Pode pré-preencher a sua morada postal e a sua morada de contacto. Se fizer uma encomenda, estas informações serão pré-preenchidas. Se decidir criar uma conta mais tarde, estas informações serão guardadas para encomendas futuras.",
 			"npub": "Npub: {npub}",
 			"title": "Sessão",
-			"userId": "UserID: {userId}"
+			"userId": "ID do utilizador: {userId}"
 		},
 		"sso": {
-			"title": "Ou fazer login com"
+			"title": "Ou iniciar sessão com"
 		},
-		"willReceiveSessionLink": "Você receberá um link de sessão em seu endereço"
+		"willReceiveSessionLink": "Receberá um link de sessão no seu endereço"
 	},
 	"newsletter": {
-		"allowPartnerContact": "Permita que nossos parceiros enviem solicitações comerciais",
-		"allowSellerContact": "Permita -nos enviar solicitações comerciais"
+		"allowPartnerContact": "Permitir que os nossos parceiros lhe enviem solicitações comerciais",
+		"allowSellerContact": "Permitir que lhe enviemos solicitações comerciais"
 	},
 	"order": {
 		"addPayment": {
 			"amount": "Valor do pagamento",
-			"cta": "Envie uma chamada para pagamento",
+			"cta": "Enviar um pedido de pagamento",
 			"currency": "Moeda de pagamento"
 		},
-		"backToOrder": "<< de volta ao pedido",
-		"clickQR": "Clique no código QR para pagar com sua carteira",
-		"confirmCancel": "Tem certeza ? ",
+		"backToOrder": "<< Voltar à encomenda",
+		"clickQR": "Clique no código QR para pagar com a sua carteira",
+		"confirmCancel": "Tem a certeza? Se este for o seu único pagamento pendente e não houver nenhum pagamento pago na encomenda, a encomenda será cancelada. Em caso de erro, primeiro crie um pagamento e depois elimine este.",
 		"contactAddress": {
-			"title": "Endereço de contato"
+			"title": "Morada de contacto"
 		},
-		"copyAddress": "Copie o endereço de pagamento",
-		"createdAt": "Criado em <0></0>",
-		"depositCancelled": "Solicitação de depósito cancelada",
-		"depositExpired": "Solicitação de depósito expirou",
+		"copyAddress": "Copiar morada de pagamento",
+		"createdAt": "Criado em ",
+		"depositCancelled": "Pedido de depósito cancelado",
+		"depositExpired": "Pedido de depósito expirado",
 		"depositPaid": "Depósito pago",
 		"depositToPay": "Depósito a pagar",
 		"discount": {
@@ -470,249 +471,249 @@
 		"externalResources": {
 			"title": "Recurso externo"
 		},
-		"informSeller": "Informar o vendedor",
-		"linkReminder": "Mantenha este link: <0></0> Para acessar o pedido mais tarde.",
+		"informSeller": "Informar vendedor",
+		"linkReminder": "Guarde este link:  para aceder à encomenda mais tarde.",
 		"list": {
-			"title": "Lista de seus pedidos"
+			"title": "Lista das suas encomendas"
 		},
 		"newPaymentAttempt": {
-			"cta": "Experimente uma nova tentativa de pagamento"
+			"cta": "Tentar um novo pagamento"
 		},
 		"note": {
-			"author": "{alias} (funcionário)",
+			"author": "{alias} (Funcionário)",
 			"authorCustomer": "Cliente",
 			"authorSystem": "Sistema",
-			"backToOrder": "Vá para encomendar",
+			"backToOrder": "Ir para a encomenda",
 			"label": "Nota do funcionário",
-			"saveText": "Salvar nota",
-			"seeText": "Veja Notas do pedido",
-			"title": "Notas de pedido #{number}"
+			"saveText": "Guardar nota",
+			"seeText": "Ver notas da encomenda",
+			"title": "Notas da encomenda #{number}"
 		},
-		"paidAt": "Pago em <0></0>",
+		"paidAt": "Pago em ",
 		"paidWith": {
 			"bank-transfer": "Pago com: transferência bancária verificada",
-			"bitcoin": "Pagado com: Bitcoin na cadeia Pagamento (1 {paymentCurrency} = {exchangeRate} {mainCurrency} no momento do pedido)",
+			"bitcoin": "Pago com: pagamento Bitcoin on-chain (1 {paymentCurrency} = {exchangeRate} {mainCurrency} no momento da encomenda)",
 			"card": "Pago com: cartão bancário",
-			"free": "Não pagou nada",
-			"lightning": "Pago com: transação de raios (1 {paymentCurrency} = {exchangeRate} {mainCurrency} no momento da ordem)",
-			"paypal": "Pago com: PayPal",
+			"free": "Pago nada",
+			"lightning": "Pago com: transação Lightning (1 {paymentCurrency} = {exchangeRate} {mainCurrency} no momento da encomenda)",
+			"paypal": "Pago com: paypal",
 			"point-of-sale": "Pago na loja"
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Pago com: transferência bancária verificada",
-			"bitcoin": "Pagado com: Pagamento na cadeia Bitcoin",
+			"bitcoin": "Pago com: pagamento Bitcoin on-chain",
 			"card": "Pago com: cartão bancário",
-			"free": "Não pagou nada",
-			"lightning": "Pago com: transação de raios",
+			"free": "Pago nada",
+			"lightning": "Pago com: transação Lightning",
 			"point-of-sale": "Pago na loja"
 		},
-		"payToComplete": "Pague para concluir o pedido.",
+		"payToComplete": "Pague para completar a encomenda.",
 		"payToCompleteBitcoin": {
 			"one": "O pagamento será confirmado após 1 confirmação.",
-			"other": "O pagamento será confirmado após as confirmações {count}.",
+			"other": "O pagamento será confirmado após {count} confirmações.",
 			"zero": "O pagamento será confirmado sem esperar por confirmações."
 		},
 		"paymentAccountHolder": "Titular da conta",
-		"paymentAccountHolderAddress": "Endereço",
-		"paymentAddress": "Endereço de pagamento",
+		"paymentAccountHolderAddress": "Morada",
+		"paymentAddress": "Morada de pagamento",
 		"paymentAmount": "Valor do pagamento",
-		"paymentBic": "Bic",
-		"paymentCBFailed": "Seu paiment falhou, você pode tentar um novo pai",
-		"paymentExpiresAt": "Prazo para pagamento: <0></0>",
-		"paymentIban": "Iban para enviar a transferência de arame para",
-		"paymentLink": "Clique aqui para pagar por cartão com",
+		"paymentBic": "BIC",
+		"paymentCBFailed": "O seu pagamento falhou, pode tentar um novo pagamento",
+		"paymentExpiresAt": "Prazo de pagamento: ",
+		"paymentIban": "IBAN para enviar a transferência bancária",
+		"paymentLink": "Clique aqui para pagar com cartão através de",
 		"paymentLinkGeneric": "Clique aqui para pagar com",
-		"paymentPaidAt": "Pagamento feito em {date}",
+		"paymentPaidAt": "Pagamento efetuado em {date}",
 		"paymentStatus": {
 			"canceled": "cancelado",
-			"canceledTemplate": "Pedido cancelado!",
+			"canceledTemplate": "Encomenda cancelada!",
 			"expired": "expirado",
-			"expiredTemplate": "Ordem expirado!",
-			"failed": "fracassado",
-			"failedTemplate": "O pedido falhou!",
+			"expiredTemplate": "Encomenda expirada!",
+			"failed": "falhou",
+			"failedTemplate": "Encomenda falhou!",
 			"paid": "pago",
-			"paidTemplate": "Ordem <0>pago</0>!",
+			"paidTemplate": "Encomenda paga!",
 			"partiallyPaid": "parcialmente pago",
 			"pending": "pendente"
 		},
-		"paymentStatusNpub": "Chave pública Nostr para status de pagamento",
+		"paymentStatusNpub": "Chave pública Nostr para estado do pagamento",
 		"receipt": {
 			"accountHolder": "Titular da conta",
-			"accountHolderAddress": "Endereço",
+			"accountHolderAddress": "Morada",
 			"alreadyPaidAmount": "Valor pago anteriormente",
-			"bankInfo": "Detalhes do banco",
-			"cancelledOrPending": "Esta chamada para pagamento não foi homenageada e expirou ou foi cancelada",
-			"create": "Baixe a fatura",
-			"createProforma": "Faça o download de pré-investigação",
-			"discountExcVat": "Desconto excl. ",
-			"endMessage": "Ficamos à sua disposição para obter mais informações. <0></0> Atenciosamente, <1></1> {BusinessName}",
+			"bankInfo": "Dados bancários",
+			"cancelledOrPending": "Este pedido de pagamento não foi honrado e expirou ou foi cancelado",
+			"create": "Descarregar fatura",
+			"createProforma": "Descarregar fatura pró-forma",
+			"discountExcVat": "Desconto Excl. IVA",
+			"endMessage": "Permanecemos ao seu dispor para qualquer informação adicional.  Cumprimentos,  {businessName}",
 			"fullyPaid": {
-				"message": "Com este pagamento, o pedido {orderNumber} agora está totalmente pago"
+				"message": "Com este pagamento, a encomenda {orderNumber} está agora totalmente paga"
 			},
 			"invoice": "Fatura",
 			"invoiceNumber": "{invoiceNumber}",
 			"itemName": "Natureza",
 			"partialAmount": "Valor pago (pagamento parcial)",
 			"partialAmountPre": "Valor a pagar (pagamento parcial)",
-			"proforma": "Esta é uma fatura do Proforma. ",
-			"proformaInvoiceNumber": "ProforMa- {orderNumber}-{paymentIndex}",
-			"quantity": "Qty",
+			"proforma": "Esta é uma fatura pró-forma. Nenhum pagamento foi efetuado ainda. A fatura final será gerada quando o pagamento for efetuado.",
+			"proformaInvoiceNumber": "PROFORMA-{orderNumber}-{paymentIndex}",
+			"quantity": "Qtd",
 			"remainingAmount": "Valor restante a pagar",
-			"summaryTitle": "Resumo da ordem #{number}",
-			"totalExcVat": "Total excl. ",
-			"totalInclVat": "Total incl. ",
-			"totalVat": "IVA total",
+			"summaryTitle": "Resumo da encomenda #{number}",
+			"totalExcVat": "Total Excl. IVA",
+			"totalInclVat": "Total Incl. IVA",
+			"totalVat": "Total IVA",
 			"unitPrice": "Preço unitário",
-			"vatFreeReason": "IVA isento: {reason}"
+			"vatFreeReason": "Isento de IVA: {reason}"
 		},
 		"receiptFullyPaid": "Gerar recibo (totalmente pago)",
 		"receiptPending": "Gerar recibo (pagamento pendente)",
 		"related": {
-			"invoice": "✅ Fatura N ° {invoiceNumber}",
-			"invoiceFailed": "❌ Fatura N ° {invoiceNumber}",
-			"invoicePending": "⏲ ​​Fatura n ° {invoiceNumber} (aguardando o pagamento)",
+			"invoice": "✅ Fatura nº{invoiceNumber}",
+			"invoiceFailed": "❌ Fatura nº{invoiceNumber}",
+			"invoicePending": "⏲ Fatura nº{invoiceNumber} (a aguardar pagamento)",
 			"title": "Faturas relacionadas"
 		},
-		"requestedAt": "Pagamento solicitado em <0></0>",
-		"restToPay": "Restante para pagar",
+		"requestedAt": "Pagamento solicitado em ",
+		"restToPay": "Restante a pagar",
 		"seller": {
 			"title": "Vendedor"
 		},
 		"shippingAddress": {
-			"title": "Endereço para envio"
+			"title": "Morada de envio"
 		},
-		"singleTitle": "Pedido #{number}",
+		"singleTitle": "Encomenda #{number}",
 		"summary": {
 			"fullyPaid": {
-				"title": "Pedido totalmente pago, valor pendente zero"
+				"title": "Encomenda totalmente paga, valor pendente zero"
 			}
 		},
 		"tickets": {
-			"printAll": "Imprima tudo",
-			"seeAll": "Veja tudo",
-			"ticket": "Ticket #{number}",
-			"title": "Ingressos"
+			"printAll": "Imprimir tudo",
+			"seeAll": "Ver tudo",
+			"ticket": "Bilhete #{number}",
+			"title": "Bilhetes"
 		},
-		"timeRemaining": "Tempo restante:  {minutes} minutos",
-		"vatFree": "Este pedido está livre de IVA. "
+		"timeRemaining": "Tempo restante: {minutes} minutos",
+		"vatFree": "Esta encomenda está isenta de IVA. Motivo: {reason}"
 	},
 	"pos": {
-		"adminInterface": "Interface de administrador",
-		"applyGiftDiscount": "Como usuário de POS, aplico um <0>Desconto do presente</0>",
-		"cancelOrderMessage": "Tem certeza de que deseja cnacel todo o pedido?",
+		"adminInterface": "Interface de administração",
+		"applyGiftDiscount": "Como utilizador POS, aplico um desconto de oferta",
+		"cancelOrderMessage": "Tem a certeza que quer cancelar toda a encomenda?",
 		"cta": {
-			"cancelMultiPayOrder": "Cancelar o pedido",
+			"cancelMultiPayOrder": "Cancelar encomenda",
 			"cancelOrder": "Cancelar",
-			"cancelReplacement": "Cancelar a substituição",
-			"markOrderPaid": "Mark pago",
-			"replacePayment": "Substitua o método de pagamento",
-			"resendPaymentMethod": "Reenviar o método de pagamento",
+			"cancelReplacement": "Cancelar substituição",
+			"markOrderPaid": "Marcar como pago",
+			"replacePayment": "Substituir método de pagamento",
+			"resendPaymentMethod": "Reenviar método de pagamento",
 			"updatePaymentInfo": "Atualizar informações de pagamento"
 		},
 		"discountJustification": "Justificação",
 		"invalidDiscount": "O desconto não é válido!",
 		"lastOrders": {
-			"title": "Últimas ordens"
+			"title": "Últimas encomendas"
 		},
-		"offerDeliveryFees": "Taxas de entrega anuladas para este pedido",
-		"offerOrder": "Oferecer pedido",
+		"offerDeliveryFees": "Anular taxas de envio para esta encomenda",
+		"offerOrder": "Oferecer encomenda",
 		"order": {
 			"satReceived": "recebido"
 		},
-		"pendingPayment": "Pagamento contínuo",
+		"pendingPayment": "Pagamento pendente",
 		"session": {
-			"waitingPaymentConfirmation": "Confirmação de espera",
-			"welcomeMessage": "Estamos felizes em ver você",
+			"waitingPaymentConfirmation": "A aguardar confirmação",
+			"welcomeMessage": "Estamos felizes por vê-lo",
 			"welcomeTitle": "Bem-vindo"
 		},
-		"sessionLink": "Sessão de POS",
-		"sessionTouchLink": "Sessão de POS - Touch Screen",
-		"vatFree": "Este é um pedido livre de IVA (<0>condições</0>)",
-		"vatFreeReason": "Razão livre de IVA"
+		"sessionLink": "Sessão POS",
+		"sessionTouchLink": "Sessão POS - ecrã tátil",
+		"vatFree": "Esta é uma encomenda isenta de IVA (condições)",
+		"vatFreeReason": "Motivo de isenção de IVA"
 	},
 	"product": {
 		"addedToCart": "Produto adicionado ao carrinho",
-		"availableOn": "Disponível em {Date}",
-		"checkBackLater": "Por favor, volte mais tarde",
+		"availableOn": "Disponível em {date}",
+		"checkBackLater": "Por favor, volte a verificar mais tarde",
 		"cta": {
 			"add": "Adicionar ao carrinho",
 			"buy": "Comprar agora",
 			"details": "Detalhes",
-			"donate": "Doe agora",
-			"preorder": "Faça uma encomenda agora",
-			"subscribe": "Inscreva -se agora"
+			"donate": "Doar agora",
+			"preorder": "Pré-encomendar agora",
+			"subscribe": "Subscrever agora"
 		},
 		"deposit": {
-			"payFullPrice": "Pague preço total agora",
-			"payPercentage": "Pague {percentage} agora"
+			"payFullPrice": "Pagar o preço total agora",
+			"payPercentage": "Pagar {percentage} agora"
 		},
 		"digitalFiles": {
-			"title": "Arquivos digitais"
+			"title": "Ficheiros Digitais"
 		},
-		"discountBanner": "{discountPercent}% de desconto para {timespan}",
+		"discountBanner": "{discountPercent}% de desconto durante {timespan}",
 		"discountBannerNoTime": "{discountPercent}% de desconto",
-		"freeWithSub": "Este produto está disponível gratuitamente com sua assinatura mensal",
-		"freeWithTitle": "Grátis com \"xxxxx",
-		"horsTaxeShort": "Ht",
-		"minimumForCurrency": "O valor mínimo para {moeda} é {mínimo}",
-		"nameYourPrice": "Nomeie seu preço ({moeda})",
+		"freeWithSub": "Este produto está disponível gratuitamente com a sua subscrição mensal",
+		"freeWithTitle": "Grátis com \"xxxxx\"",
+		"horsTaxeShort": "Sem IVA",
+		"minimumForCurrency": "O valor mínimo para {currency} é {minimum}",
+		"nameYourPrice": "Dê o seu preço ({currency})",
 		"notForSale": "Este produto não está disponível para venda",
-		"outOfStock": "Fora de estoque",
-		"preorderText": "Esta é uma pré -encomenda, seu produto estará disponível em {date}",
+		"outOfStock": "Esgotado",
+		"preorderText": "Isto é uma pré-encomenda, o seu produto estará disponível em {date}",
 		"pricePlaceholder": "Preço",
-		"seeInCabinet": "Veja em Mycabinet",
+		"seeInCabinet": "Ver no Meu Armário",
 		"type": {
-			"deposit": "Em depósito",
-			"digitalResource": "Recurso digital",
+			"deposit": "Sob depósito",
+			"digitalResource": "Recurso Digital",
 			"donation": "Doação",
 			"physical": "Físico",
-			"preorder": "Pedido antecipado",
-			"preview": "Visualização",
+			"preorder": "Pré-encomenda",
+			"preview": "Pré-visualização",
 			"resource": "Recurso",
 			"subscription": "Subscrição",
 			"ticket": "Bilhete"
 		},
-		"variationPriceLabel": "Preço de variação",
-		"vatExcluded": "Iva excluída"
+		"variationPriceLabel": "Preço da Variação",
+		"vatExcluded": "IVA excluído"
 	},
 	"schedule": {
-		"dateText": " - de {Begintime} a {Endtime}",
-		"differentDayText": " - de {begindate} a {enddate}",
-		"exportEventTitle": "Arquivo de eventos de exportação",
+		"dateText": " - de {beginTime} a {endTime}",
+		"differentDayText": " - de {beginDate} a {endDate}",
+		"exportEventTitle": "Exportar ficheiro do evento",
 		"moreInfo": "Mais informações",
 		"rsvp": {
 			"notifyCta": "Notificar",
-			"succesfulNotifyMessage": "Sua participação é notificada com sucesso para criador de eventos",
-			"textMessage": "Adicione seu email / npub para notificar sua participação no evento."
+			"succesfulNotifyMessage": "A sua participação foi notificada com sucesso ao criador do evento",
+			"textMessage": "Adicione o seu email / npub para notificar a sua participação no evento."
 		},
 		"subscribe": {
-			"formSuccessText": "Você receberá novas notificações de eventos para",
-			"formText": "Adicione seu e -mail ou npub para receber notificações sobre novos eventos."
+			"formSuccessText": "Receberá notificações de novos eventos para",
+			"formText": "Adicione o seu email ou npub para receber notificações sobre novos eventos."
 		},
-		"subscribeCTA": "Inscreva -se",
-		"uniqueDateText": " - de {BeginMe}"
+		"subscribeCTA": "Subscrever",
+		"uniqueDateText": " - a partir das {beginTime}"
 	},
 	"subscription": {
 		"associated": {
 			"npub": "Associado ao npub: {npub}"
 		},
-		"cantRenew": "Assinatura não prevista para renovação",
+		"cantRenew": "Subscrição não elegível para renovação",
 		"cta": {
 			"renew": "Renovar"
 		},
-		"initiallyCreated": "Criado inicialmente: <0></0>",
-		"paidUntil": "Pago até: <0></0>",
-		"singleTitle": "Assinatura #{número}",
+		"initiallyCreated": "Criado inicialmente: ",
+		"paidUntil": "Pago até: ",
+		"singleTitle": "Subscrição #{number}",
 		"status": {
 			"expired": "expirado"
 		}
 	},
 	"ticket": {
-		"boughtAt": "Comprado {data} em {time}",
-		"burn": "Marca Ticket como usado",
+		"boughtAt": "Comprado em {date} às {time}",
+		"burn": "Marcar bilhete como usado",
 		"print": "Imprimir",
-		"scanned": "🔥 Este ingresso foi digitalizado le {date} à {time} e não é mais válido",
-		"unburn": "Marca Ticket como não utilizado"
+		"scanned": "🔥 Este bilhete foi digitalizado a {date} às {time} e já não é válido",
+		"unburn": "Marcar bilhete como não usado"
 	},
 	"widget": {
 		"specification": "Especificações"
