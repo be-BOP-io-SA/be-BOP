@@ -1,10 +1,10 @@
 import { browser } from '$app/environment';
-import { get } from 'lodash-es';
 import { getContext } from 'svelte';
 import { writable, get as storeGet } from 'svelte/store';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from './types/Country';
 import type { OrderAddress } from './types/Order';
 import type { FormatDistanceFn } from 'date-fns';
+import { get } from './utils/get';
 
 export interface LocaleDictionary {
 	[key: string]: LocaleDictionary | string;
@@ -96,7 +96,7 @@ function te(key: string): boolean {
 function t(key: string, params?: Record<string, string | number | undefined>) {
 	let translation = get(data[storeGet(locale)], key) ?? get(data.en, key);
 
-	if (typeof translation !== 'string') {
+	if (translation && typeof translation !== 'string') {
 		if (params?.count !== undefined) {
 			translation = translation[params.count === 1 ? 'one' : params.count === 0 ? 'zero' : 'other'];
 		}

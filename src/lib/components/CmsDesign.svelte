@@ -5,7 +5,6 @@
 	import type { Picture } from '$lib/types/Picture';
 	import ProductWidget from './ProductWidget.svelte';
 	import { POS_ROLE_ID } from '$lib/types/User';
-	import { groupBy, sortBy } from 'lodash-es';
 	import type { SetRequired } from 'type-fest';
 	import TagWidget from './TagWidget.svelte';
 	import type {
@@ -32,6 +31,8 @@
 	import LeaderBoardWidget from './LeaderBoardWidget.svelte';
 	import CurrencyCalculator from './CurrencyCalculator.svelte';
 	import ScheduleWidget from './ScheduleWidget.svelte';
+	import { groupBy } from '$lib/utils/group-by';
+	import { get } from '$lib/utils/get';
 
 	export let products: CmsProduct[];
 	export let pictures: CmsPicture[];
@@ -80,23 +81,23 @@
 
 	$: picturesByTag = groupBy(
 		pictures.filter((picture): picture is SetRequired<Picture, 'tag'> => !!picture.tag),
-		'tag._id'
+		(p) => p.tag._id
 	);
 	$: picturesBySlider = groupBy(
 		pictures.filter((picture): picture is SetRequired<Picture, 'slider'> => !!picture.slider),
-		'slider._id'
+		(p) => p.slider._id
 	);
 	$: picturesByProduct = groupBy(
 		pictures.filter((picture): picture is SetRequired<Picture, 'productId'> => !!picture.productId),
-		'productId'
+		(p) => p.productId
 	);
 	$: picturesBySchedule = groupBy(
 		pictures.filter((picture): picture is SetRequired<Picture, 'schedule'> => !!picture.schedule),
-		'schedule._id'
+		(p) => p.schedule._id
 	);
 	$: picturesByGallery = groupBy(
 		pictures.filter((picture): picture is SetRequired<Picture, 'galleryId'> => !!picture.galleryId),
-		'galleryId'
+		(p) => p.galleryId
 	);
 	$: pictureById = Object.fromEntries(pictures.map((picture) => [picture._id, picture]));
 	$: specificationById = Object.fromEntries(
@@ -120,14 +121,26 @@
 
 	function productsByTag(
 		searchTag: string,
-		by: string[] = ['alias.1', 'alias.0'],
+		by: string | undefined = undefined,
 		sort: 'asc' | 'desc' = 'asc'
 	) {
 		const filteredProducts = products.filter((product) => product.tagIds?.includes(searchTag));
 
-		const sortedProducts = sortBy(filteredProducts, by);
+		const sortedProducts = filteredProducts.sort((a, b) => {
+			if (by) {
+				const aValueBy = get(a, by as keyof typeof a);
+				const bValueBy = get(b, by as keyof typeof b);
+				if (aValueBy !== bValueBy) {
+					return (aValueBy ?? '') < (bValueBy ?? '') ? -1 : 1;
+				}
+			}
+			const aValue = a.alias[1] ?? a.alias[0];
+			const bValue = b.alias[1] ?? b.alias[0];
 
-		return sort === 'asc' ? sortedProducts.reverse() : sortedProducts;
+			return aValue.localeCompare(bValue);
+		});
+
+		return sort === 'asc' ? sortedProducts : sortedProducts.reverse();
 	}
 	$: galleryById = Object.fromEntries(galleries.map((gallery) => [gallery._id, gallery]));
 </script>
@@ -138,7 +151,7 @@
 			{#if token.type === 'productWidget' && productById[token.slug]}
 				<ProductWidget
 					product={productById[token.slug]}
-					pictures={picturesByProduct[token.slug]}
+					pictures={picturesByProduct[token.slug] ?? []}
 					hasDigitalFiles={digitalFilesByProduct[token.slug] !== null}
 					displayOption={token.display}
 					canBuy={roleId === POS_ROLE_ID
@@ -147,10 +160,10 @@
 					class="not-prose my-5"
 				/>
 			{:else if token.type === 'tagProducts' && productsByTag(token.slug)}
-				{#each productsByTag(token.slug, ['alias.1', 'alias.0', token.by ?? ''], token.sort) as product}
+				{#each productsByTag(token.slug, token.by ?? '', token.sort) as product}
 					<ProductWidget
 						{product}
-						pictures={picturesByProduct[product._id]}
+						pictures={picturesByProduct[product._id] ?? []}
 						hasDigitalFiles={digitalFilesByProduct[product._id] !== null}
 						canBuy={roleId === POS_ROLE_ID
 							? product.actionSettings.retail.canBeAddedToBasket
@@ -164,13 +177,13 @@
 			{:else if token.type === 'sliderWidget' && sliderById[token.slug]}
 				<CarouselWidget
 					autoplay={token.autoplay ? token.autoplay : 3000}
-					pictures={picturesBySlider[token.slug]}
+					pictures={picturesBySlider[token.slug] ?? []}
 					class="not-prose mx-auto my-5"
 				/>
 			{:else if token.type === 'tagWidget' && tagById[token.slug]}
 				<TagWidget
 					tag={tagById[token.slug]}
-					pictures={picturesByTag[token.slug]}
+					pictures={picturesByTag[token.slug] ?? []}
 					displayOption={token.display}
 					titleCase={token.titleCase}
 					class="not-prose my-5"
@@ -188,7 +201,7 @@
 			{:else if token.type === 'galleryWidget' && galleryById[token.slug]}
 				<GalleryWidget
 					gallery={galleryById[token.slug]}
-					pictures={picturesByGallery[token.slug]}
+					pictures={picturesByGallery[token.slug] ?? []}
 					displayOption={token.display}
 					class="not-prose my-5"
 				/>
@@ -221,7 +234,7 @@
 			{:else if token.type === 'scheduleWidget' && scheduleById[token.slug]}
 				<ScheduleWidget
 					schedule={scheduleById[token.slug]}
-					pictures={picturesBySchedule[token.slug]}
+					pictures={picturesBySchedule[token.slug] ?? []}
 					displayOption={token.display}
 					class="not-prose my-5"
 				/>
@@ -241,7 +254,7 @@
 				{#if token.type === 'productWidget' && productById[token.slug]}
 					<ProductWidget
 						product={productById[token.slug]}
-						pictures={picturesByProduct[token.slug]}
+						pictures={picturesByProduct[token.slug] ?? []}
 						hasDigitalFiles={digitalFilesByProduct[token.slug] !== null}
 						displayOption={token.display}
 						canBuy={roleId === POS_ROLE_ID
@@ -253,7 +266,7 @@
 					{#each productsByTag(token.slug) as product}
 						<ProductWidget
 							{product}
-							pictures={picturesByProduct[product._id]}
+							pictures={picturesByProduct[product._id] ?? []}
 							hasDigitalFiles={digitalFilesByProduct[product._id] !== null}
 							canBuy={roleId === POS_ROLE_ID
 								? product.actionSettings.retail.canBeAddedToBasket
@@ -267,13 +280,13 @@
 				{:else if token.type === 'sliderWidget' && sliderById[token.slug]}
 					<CarouselWidget
 						autoplay={token.autoplay ? token.autoplay : 3000}
-						pictures={picturesBySlider[token.slug]}
+						pictures={picturesBySlider[token.slug] ?? []}
 						class="not-prose mx-auto my-5"
 					/>
 				{:else if token.type === 'tagWidget' && tagById[token.slug]}
 					<TagWidget
 						tag={tagById[token.slug]}
-						pictures={picturesByTag[token.slug]}
+						pictures={picturesByTag[token.slug] ?? []}
 						displayOption={token.display}
 						class="not-prose my-5"
 					/>
@@ -293,7 +306,7 @@
 				{:else if token.type === 'galleryWidget' && galleryById[token.slug]}
 					<GalleryWidget
 						gallery={galleryById[token.slug]}
-						pictures={picturesByGallery[token.slug]}
+						pictures={picturesByGallery[token.slug] ?? []}
 						displayOption={token.display}
 						class="not-prose my-5"
 					/>
@@ -321,7 +334,7 @@
 				{:else if token.type === 'scheduleWidget' && scheduleById[token.slug]}
 					<ScheduleWidget
 						schedule={scheduleById[token.slug]}
-						pictures={picturesBySchedule[token.slug]}
+						pictures={picturesBySchedule[token.slug] ?? []}
 						displayOption={token.display}
 						class="not-prose my-5"
 					/>

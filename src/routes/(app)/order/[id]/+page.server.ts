@@ -60,7 +60,7 @@ export async function load({ params, depends, locals }) {
 			}
 		)
 	]);
-	let methods = paymentMethods({ role: locals.user?.roleId });
+	let methods = paymentMethods({ role: locals.user?.roleId }).filter((method) => method !== 'free');
 
 	for (const item of order.items) {
 		if (item.product.paymentMethods) {

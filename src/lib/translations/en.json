@@ -26,6 +26,7 @@
 		"empty": "Cart is empty",
 		"fillProductAlias": "Fill product alias",
 		"items": "Products",
+		"minimumPhysicalAmountText": "Your cart doesn't contain minimum physical amount",
 		"quantity": "Quantity",
 		"reachedMaxPerLine": "Your cart reached the maximum size. To add more articles, remove items from your cart",
 		"remaining": "Remaining after checkout",
@@ -575,6 +576,9 @@
 		},
 		"requestedAt": "Payment requested at <0></0>",
 		"restToPay": "Remaining to pay",
+		"seller": {
+			"title": "Seller"
+		},
 		"shippingAddress": {
 			"title": "Shipping address"
 		},

@@ -1,6 +1,6 @@
 import { collections } from '$lib/server/database';
 import { cmsFromContent } from '$lib/server/cms';
-import { omit } from 'lodash-es';
+import { omit } from '$lib/utils/omit';
 
 export const load = async ({ params, locals }) => {
 	const product = await collections.products.countDocuments({ _id: params.id });

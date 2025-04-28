@@ -6,6 +6,7 @@
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
 	import { toCurrency } from '$lib/utils/toCurrency';
 	import { endOfDay, startOfDay } from 'date-fns';
+	import MultiSelect from 'svelte-multiselect';
 
 	export let data;
 	let tableOrder: HTMLTableElement;
@@ -24,6 +25,11 @@
 	let html = '';
 	let loadedHtml = false;
 	let htmlStatus = '';
+	let selectedEmployees =
+		data.employeesAlias?.map((employee) => ({
+			value: employee,
+			label: employee
+		})) ?? [];
 
 	$: beginsAt = startOfDay(data.beginsAt);
 	$: endsAt = endOfDay(data.endsAt);
@@ -253,7 +259,7 @@
 			<input class="form-input" type="date" name="endsAt" value={dateString(endsAt)} />
 		</label>
 	</div>
-	<div class="col-span-4">
+	<div class="col-span-2">
 		<label class="form-label">
 			Payment Mean
 			<select name="paymentMethod" class="form-input" disabled={data.paymentMethods.length === 0}>
@@ -266,7 +272,30 @@
 			</select>
 		</label>
 	</div>
-	<div class="col-span-2">
+	<div class="col-span-3">
+		<label class="form-label">
+			Employee alias
+			<MultiSelect
+				inputClass="form-input"
+				options={[
+					...new Map(
+						[
+							...data.employees.map((employee) => ({
+								value: employee.alias ?? 'System',
+								label: employee.alias ?? 'System'
+							})),
+							{ value: 'System', label: 'System' }
+						].map((option) => [option.value, option])
+					).values()
+				]}
+				bind:selected={selectedEmployees}
+			/>
+			{#each selectedEmployees.map((employee) => employee.value) as employeeAlias}
+				<input type="hidden" name="employeesAlias" value={employeeAlias} />
+			{/each}
+		</label>
+	</div>
+	<div class="col-span-1">
 		<button class="submit btn btn-gray mt-8">🔍</button>
 	</div>
 </form>

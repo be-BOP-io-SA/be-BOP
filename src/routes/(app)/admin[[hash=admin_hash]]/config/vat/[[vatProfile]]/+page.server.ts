@@ -3,7 +3,7 @@ import { collections } from '$lib/server/database.js';
 import { zodObjectId } from '$lib/server/zod.js';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country.js';
 import { redirect } from '@sveltejs/kit';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import { ObjectId } from 'mongodb';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';

@@ -1,7 +1,7 @@
 import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { CURRENCIES } from '$lib/types/Currency.js';
-import { set } from 'lodash-es';
+import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 

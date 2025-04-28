@@ -26,6 +26,7 @@
 		"empty": "Le panier est vide",
 		"fillProductAlias": "Remplir l'alias du produit",
 		"items": "Produits",
+		"minimumPhysicalAmountText": "Votre panier ne contient pas le montant physique minimal",
 		"quantity": "Quantité",
 		"reachedMaxPerLine": "Votre panier a atteint la taille maximale. Veuillez supprimer des lignes de votre panier pour ajouter plus d'articles.",
 		"remaining": "Reste après commande",
@@ -575,6 +576,9 @@
 		},
 		"requestedAt": "Date de demande de paiement: <0></0>",
 		"restToPay": "Reste à payer",
+		"seller": {
+			"title": "Vendeur"
+		},
 		"shippingAddress": {
 			"title": "Adresse de livraison"
 		},

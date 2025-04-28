@@ -16,6 +16,16 @@
 			{/each}
 		</select>
 	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			id="hideThemeSelectorInToolbar"
+			name="hideThemeSelectorInToolbar"
+			class="form-checkbox"
+			checked={data.hideThemeSelectorInToolbar}
+		/>
+		Hide theme selector in toolbar
+	</label>
 	<input type="submit" value="Update" class="btn btn-blue self-start" />
 </form>
 

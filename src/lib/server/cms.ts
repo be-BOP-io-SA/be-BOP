@@ -552,6 +552,22 @@ export async function cmsFromContent(
 					})
 					.toArray()
 			: [];
+
+	const pictureConditions = {
+		$or: [
+			...(sliderSlugs.size ? [{ 'slider._id': { $in: [...sliderSlugs] } }] : []),
+			...(tagSlugs.size ? [{ 'tag._id': { $in: [...tagSlugs] } }] : []),
+			...(products.length ? [{ productId: { $in: [...products.map((prod) => prod._id)] } }] : []),
+			...(gallerySlugs.size ? [{ galleryId: { $in: [...gallerySlugs] } }] : []),
+			...(scheduleSlugs.size ? [{ 'schedule._id': { $in: [...scheduleSlugs] } }] : []),
+			...(pictureSlugs.size ? [{ _id: { $in: [...pictureSlugs] } }] : [])
+		]
+	};
+
+	const pictures = pictureConditions.$or.length
+		? await collections.pictures.find(pictureConditions).sort({ createdAt: 1 }).toArray()
+		: [];
+
 	return {
 		tokens,
 		challenges,
@@ -564,31 +580,7 @@ export async function cmsFromContent(
 		galleries,
 		leaderboards,
 		schedules,
-		pictures: await collections.pictures
-			.find({
-				$or: [
-					{
-						'slider._id': { $in: [...sliderSlugs] }
-					},
-					{
-						'tag._id': { $in: [...tagSlugs] }
-					},
-					{
-						productId: { $in: [...products.map((product) => product._id)] }
-					},
-					{
-						galleryId: { $in: [...gallerySlugs] }
-					},
-					{
-						'schedule._id': { $in: [...scheduleSlugs] }
-					},
-					{
-						_id: { $in: [...pictureSlugs] }
-					}
-				]
-			})
-			.sort({ createdAt: 1 })
-			.toArray(),
+		pictures,
 		digitalFiles,
 		roleId: locals.user?.roleId
 	};

@@ -10,4 +10,5 @@ export interface UserIdentifier {
 	/** Not really identifiers, more like audit/metadata */
 	userLogin?: string;
 	userRoleId?: string;
+	userAlias?: string;
 }

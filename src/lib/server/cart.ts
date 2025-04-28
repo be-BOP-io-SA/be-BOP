@@ -11,7 +11,6 @@ import { runtimeConfig } from './runtime-config';
 import { amountOfProductReserved, refreshAvailableStockInDb } from './product';
 import type { Cart } from '$lib/types/Cart';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
-import { isEqual } from 'lodash-es';
 import { userQuery } from './user';
 import { removeEmpty } from '$lib/utils/removeEmpty';
 import { POS_ROLE_ID } from '$lib/types/User';
@@ -19,6 +18,7 @@ import { addMinutes } from 'date-fns';
 import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { sum } from '$lib/utils/sum';
+import { deepEquals } from '$lib/utils/deep-equals';
 
 export async function getCartFromDb(params: { user: UserIdentifier }): Promise<Cart> {
 	let res = await collections.carts.findOne(userQuery(params.user), { sort: { _id: -1 } });
@@ -33,7 +33,7 @@ export async function getCartFromDb(params: { user: UserIdentifier }): Promise<C
 		};
 	}
 
-	if (!isEqual(removeEmpty(res.user), removeEmpty(params.user))) {
+	if (!deepEquals(removeEmpty(res.user), removeEmpty(params.user))) {
 		res.user = params.user;
 		res.updatedAt = new Date();
 		await collections.carts.updateOne(
@@ -64,14 +64,19 @@ export async function addToCartInDb(
 		customPrice?: { amount: number; currency: Currency };
 		deposit?: boolean;
 		chosenVariations?: Record<string, string>;
+		mode: 'eshop' | 'nostr' | 'pos';
 	}
 ) {
 	if (
 		params.user.userRoleId === POS_ROLE_ID
-			? !product.actionSettings?.retail?.canBeAddedToBasket
-			: !product.actionSettings?.eShop?.canBeAddedToBasket
+			? !product.actionSettings.retail.canBeAddedToBasket
+			: params.mode === 'eshop'
+			? !product.actionSettings.eShop.canBeAddedToBasket
+			: params.mode === 'nostr'
+			? !product.actionSettings.nostr.canBeAddedToBasket
+			: !product.actionSettings.retail.canBeAddedToBasket
 	) {
-		throw error(400, "Product can't be added to basket");
+		throw error(400, "Product can't be added to basket ");
 	}
 
 	if (params.customPrice && !product.payWhatYouWant) {

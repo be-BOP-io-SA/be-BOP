@@ -26,6 +26,7 @@
 		"empty": "Il cartello è vuoto",
 		"fillProductAlias": "Compila l'alias del prodotto",
 		"items": "Prodotti",
+		"minimumPhysicalAmountText": "Il carrello non contiene un importo fisico minimo",
 		"quantity": "Quantità",
 		"reachedMaxPerLine": "Il tuo carrello ha raggiunto la quantità massima. Per aggiungere altri articoli, ti preghiamo di toglierne alcuni",
 		"remaining": "Resto dopo il pagamento",
@@ -575,6 +576,9 @@
 		},
 		"requestedAt": "Pagamento richiesto a <0></0>",
 		"restToPay": "Resto da pagare",
+		"seller": {
+			"title": "Venditore"
+		},
 		"shippingAddress": {
 			"title": "Indirizzo di spedizione"
 		},

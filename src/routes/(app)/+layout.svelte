@@ -31,6 +31,7 @@
 	import { computeDeliveryFees, computePriceInfo } from '$lib/types/Cart.js';
 	import { LARGE_SCREEN } from '$lib/types/Theme.js';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
+	import { toCurrency } from '$lib/utils/toCurrency.js';
 
 	export let data;
 
@@ -111,6 +112,13 @@
 
 	$: logoClass = data.logo.isWide ? 'h-[60px] w-auto' : 'h-[60px] w-[60px] rounded-full';
 	const { t, locale, textAddress } = useI18n();
+
+	$: isDigital = items.every((item) => !item.product.shipping);
+	$: physicalCartCanBeOrdered =
+		!!data.physicalCartMinAmount && !isDigital
+			? priceInfo.partialPriceWithVat >=
+			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
+			: true;
 	let ageWarning = false;
 </script>
 
@@ -404,32 +412,40 @@
 									<a href="/cart" class="btn cartPreview-mainCTA mt-1 whitespace-nowrap">
 										{t('cart.cta.view')}
 									</a>
-									<a href="/checkout" class="btn cartPreview-secondaryCTA">
+									<a
+										href="/checkout"
+										class="btn cartPreview-secondaryCTA {!physicalCartCanBeOrdered
+											? 'opacity-50'
+											: ''}"
+										style="pointer-events: {!physicalCartCanBeOrdered ? 'none' : ''};"
+									>
 										{t('cart.cta.checkout')}
 									</a>
 								</div>
 							</Popup>
 						{/if}
-						<button
-							class="ml-4 hidden dark:inline"
-							type="button"
-							on:click={() => {
-								$theme = 'light';
-								window.localStorage.setItem('theme', 'light');
-							}}
-						>
-							<IconModeLight />
-						</button>
-						<button
-							type="button"
-							class="ml-4 dark:hidden"
-							on:click={() => {
-								$theme = 'dark';
-								window.localStorage.setItem('theme', 'dark');
-							}}
-						>
-							<IconModeDark />
-						</button>
+						{#if !data.hideThemeSelectorInToolbar}
+							<button
+								class="ml-4 hidden dark:inline"
+								type="button"
+								on:click={() => {
+									$theme = 'light';
+									window.localStorage.setItem('theme', 'light');
+								}}
+							>
+								<IconModeLight />
+							</button>
+							<button
+								type="button"
+								class="ml-4 dark:hidden"
+								on:click={() => {
+									$theme = 'dark';
+									window.localStorage.setItem('theme', 'dark');
+								}}
+							>
+								<IconModeDark />
+							</button>
+						{/if}
 						{#if !data.disableLanguageSelector && data.locales.length > 1}
 							<select
 								class="ml-4 border-0 cursor-pointer rounded appearance-none bg-none bg-transparent text-xl"
