@@ -2,7 +2,7 @@ lockfileVersion: '6.0'
 
 patchedDependencies:
   date-fns@3.6.0:
-    hash: xgd3g64urxzmc4mgphefkfsurq
+    hash: wbq6inbnuaniuavhdmuowxx2gq
     path: patches/date-fns@3.6.0.patch
 
 dependencies:
@@ -41,7 +41,7 @@ dependencies:
     version: 0.2.9
   date-fns:
     specifier: ^3.6.0
-    version: 3.6.0(patch_hash=xgd3g64urxzmc4mgphefkfsurq)
+    version: 3.6.0(patch_hash=wbq6inbnuaniuavhdmuowxx2gq)
   date-fns-tz:
     specifier: ^3.1.3
     version: 3.1.3(date-fns@3.6.0)
@@ -2627,10 +2627,10 @@ packages:
     peerDependencies:
       date-fns: ^3.0.0
     dependencies:
-      date-fns: 3.6.0(patch_hash=xgd3g64urxzmc4mgphefkfsurq)
+      date-fns: 3.6.0(patch_hash=wbq6inbnuaniuavhdmuowxx2gq)
     dev: false
 
-  /date-fns@3.6.0(patch_hash=xgd3g64urxzmc4mgphefkfsurq):
+  /date-fns@3.6.0(patch_hash=wbq6inbnuaniuavhdmuowxx2gq):
     resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
     dev: false
     patched: true
