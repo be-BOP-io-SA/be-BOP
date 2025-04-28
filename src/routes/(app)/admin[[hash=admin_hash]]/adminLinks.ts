@@ -96,6 +96,10 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/age-retriction',
 				label: 'Age restriction'
+			},
+			{
+				href: '/admin/oauth',
+				label: 'OAuth Providers'
 			}
 		]
 	},

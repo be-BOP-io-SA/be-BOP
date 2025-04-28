@@ -101,10 +101,10 @@
 			</div>
 		</form>
 
-		{#if data.canSso.github || data.canSso.google || data.canSso.facebook || data.canSso.twitter}
+		{#if data.canSso.github || data.canSso.google || data.canSso.facebook || data.canSso.twitter || data.canSso.providers.length > 0}
 			<h2 class="text-2xl">{t('login.sso.title')}</h2>
 
-			<div class="flex flex-col gap-4 mt-4 self-center">
+			<div class="flex flex-col gap-4 mt-4 self-center flex-wrap">
 				{#if data.canSso.google}
 					<button class="btn btn-gray" on:click={() => signIn('google')}>
 						<IconGoogle class="text-[#db4437] mr-2" />{t('login.cta.signInWith', {
@@ -130,6 +130,15 @@
 						{t('login.cta.signInWith', { provider: 'Github' })}
 					</button>
 				{/if}
+
+				{#each data.canSso.providers as provider}
+					<a class="btn btn-gray" href="/login/oauth/{encodeURIComponent(provider.slug)}">
+						<!-- {#if provider.icon}
+							<img src={provider.icon} alt={provider.name} class="w-4 h-4 mr-2" />
+						{/if} -->
+						{t('login.cta.signInWith', { provider: provider.name })}
+					</a>
+				{/each}
 			</div>
 		{/if}
 	{/if}

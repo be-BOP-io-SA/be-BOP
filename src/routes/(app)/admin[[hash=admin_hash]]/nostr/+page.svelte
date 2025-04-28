@@ -10,6 +10,8 @@
 		prompt('Your NostR private key is:', bech32.encode('nsec', bech32.toWords(hex)));
 	}
 	let relays = data.nostrRelays;
+	let displayPublicMessages = true;
+	let displayPrivateMessages = true;
 </script>
 
 <h1 class="text-3xl">NostR</h1>
@@ -125,26 +127,47 @@
 	</label>
 	<button class="btn btn-black self-start" type="submit">Send</button>
 </form>
-<h2 class="text-2xl">Zaps</h2>
+{#if 0}
+	<h2 class="text-2xl">Zaps</h2>
 
-<ul>
-	{#each data.receivedMessages.filter((mes) => mes.kind === 9735) as message}
-		<li class="break-words">
-			{#if message.kind === 4}
-				<span title="Encrypted message">'⚡'</span>
-			{/if}
-			<time datetime={message.createdAt.toJSON()}>{message.createdAt.toLocaleString('en-UK')}</time>
-			| {JSON.stringify(message)}
-		</li>
-	{/each}
-</ul>
+	<ul>
+		{#each data.receivedMessages.filter((mes) => mes.kind === 9735) as message}
+			<li class="break-words">
+				{#if message.kind === 4}
+					<span title="Encrypted message">'⚡'</span>
+				{/if}
+				<time datetime={message.createdAt.toJSON()}
+					>{message.createdAt.toLocaleString('en-UK')}</time
+				>
+				| {JSON.stringify(message)}
+			</li>
+		{/each}
+	</ul>
+{/if}
 <h2 class="text-2xl">Received messages</h2>
 
+<label class="checkbox-label">
+	<input type="checkbox" bind:checked={displayPublicMessages} class="form-checkbox" />
+	Display public messages (mentions)</label
+>
+
+<label class="checkbox-label">
+	<input type="checkbox" bind:checked={displayPrivateMessages} class="form-checkbox" />
+	Display private messages</label
+>
 <ul>
 	{#each data.receivedMessages as message}
 		<li class="break-words">
-			{#if message.kind === 4}
+			{#if message.kind === 4 && displayPrivateMessages}
 				<span title="Encrypted message">'🔐'</span>
+
+				<time datetime={message.createdAt.toJSON()}
+					>{message.createdAt.toLocaleString('en-UK')}</time
+				>
+				|
+				{message.source} | {message.content}
+			{/if}
+			{#if message.kind !== 4 && displayPublicMessages}
 				<time datetime={message.createdAt.toJSON()}
 					>{message.createdAt.toLocaleString('en-UK')}</time
 				>
