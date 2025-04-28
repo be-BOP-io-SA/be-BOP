@@ -124,6 +124,7 @@
 				<tr>
 					<td>Product slug</td>
 					<td>Free copies quantity</td>
+					<td></td>
 				</tr>
 			</thead>
 			{#each [...Array(productFreeLine).fill( { productId: '', quantity: 0 } )].slice(0, productFreeLine) as product, i}
@@ -147,6 +148,16 @@
 									value={product.quantity}
 								/>
 							</label>
+						</td>
+						<td>
+							<button
+								type="button"
+								class="self-start"
+								on:click={() => {
+									(productFree = productFree.filter((prod) => prod !== productFree[i])),
+										(productFreeLine -= 1);
+								}}>🗑️</button
+							>
 						</td>
 					</tr>
 				</tbody>
