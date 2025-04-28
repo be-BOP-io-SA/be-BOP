@@ -85,6 +85,7 @@
 		"nodemailer": "^6.9.3",
 		"nostr-relaypool": "^0.6.28",
 		"nostr-tools": "^1.11.1",
+		"openid-client": "^6.4.2",
 		"qrcode": "^1.5.3",
 		"schema-dts": "^1.1.2",
 		"sharp": "^0.32.1",
