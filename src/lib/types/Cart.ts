@@ -26,6 +26,7 @@ export interface Cart extends Timestamps {
 		depositPercentage?: number;
 		internalNote?: { value: string; updatedAt: Date; updatedById?: User['_id'] };
 		chosenVariations?: Record<string, string>;
+		freeQuantity?: number;
 	}>;
 }
 
@@ -102,6 +103,7 @@ export function computePriceInfo(
 		customPrice?: Price;
 		depositPercentage?: number;
 		discountPercentage?: number;
+		freeQuantity?: number;
 	}>,
 	params: {
 		vatExempted: boolean;
@@ -166,7 +168,7 @@ export function computePriceInfo(
 		const currency = (item.customPrice || item.product.price).currency;
 		const price = fixCurrencyRounding(
 			(item.customPrice || item.product.price).amount *
-				item.quantity *
+				Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
 				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
 			currency
 		);
@@ -192,7 +194,7 @@ export function computePriceInfo(
 			currency: (item.customPrice || item.product.price).currency,
 			amount:
 				(((item.customPrice || item.product.price).amount *
-					item.quantity *
+					Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
 					(item.depositPercentage ?? 100)) /
 					100) *
 				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
@@ -218,7 +220,7 @@ export function computePriceInfo(
 			currency: (item.customPrice || item.product.price).currency,
 			amount:
 				(item.customPrice || item.product.price).amount *
-				item.quantity *
+				Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
 				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
 		})),
 		params.deliveryFees

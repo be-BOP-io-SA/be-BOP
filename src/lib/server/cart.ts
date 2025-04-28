@@ -64,6 +64,7 @@ export async function addToCartInDb(
 		customPrice?: { amount: number; currency: Currency };
 		deposit?: boolean;
 		chosenVariations?: Record<string, string>;
+		freeQuantity?: number;
 	}
 ) {
 	if (
@@ -187,6 +188,7 @@ export async function addToCartInDb(
 			...(params.chosenVariations && {
 				chosenVariations: params.chosenVariations
 			}),
+			...(params.freeQuantity && { freeQuantity: params.freeQuantity }),
 			reservedUntil: addMinutes(new Date(), runtimeConfig.reserveStockInMinutes),
 			...(depositPercentage && { depositPercentage })
 		});

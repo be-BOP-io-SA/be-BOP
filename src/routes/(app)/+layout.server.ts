@@ -232,6 +232,7 @@ export async function load(params) {
 				quantity: item.quantity,
 				...(item.customPrice && { customPrice: item.customPrice }),
 				...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
+				...(item.freeQuantity && { freeQuantity: item.freeQuantity }),
 				depositPercentage: item.depositPercentage,
 				internalNote:
 					item.internalNote && params.locals.user?.roleId === POS_ROLE_ID

@@ -125,6 +125,7 @@
 			>
 				{#each items as item, i}
 					{@const price = item.customPrice || item.product.price}
+					{@const quantityToPay = Math.max(item.quantity - (item.freeQuantity ?? 0), 0)}
 					<form
 						method="POST"
 						class="contents"
@@ -211,7 +212,7 @@
 						<div class="flex flex-col items-end justify-center lg:mb-0 mb-4">
 							<div class="flex gap-2">
 								<PriceTag
-									amount={(item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100}
+									amount={(quantityToPay * price.amount * (item.depositPercentage ?? 100)) / 100}
 									currency={price.currency}
 									main
 									class="text-2xl truncate {item.discountPercentage ? 'line-through' : ''}"
@@ -223,7 +224,7 @@
 								>
 								{#if item.discountPercentage}
 									<PriceTag
-										amount={((item.quantity * price.amount * (item.depositPercentage ?? 100)) /
+										amount={((quantityToPay * price.amount * (item.depositPercentage ?? 100)) /
 											100) *
 											(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 										currency={price.currency}
@@ -234,7 +235,7 @@
 							</div>
 							<PriceTag
 								class="text-base truncate"
-								amount={((item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100) *
+								amount={((quantityToPay * price.amount * (item.depositPercentage ?? 100)) / 100) *
 									(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 								currency={price.currency}
 								secondary

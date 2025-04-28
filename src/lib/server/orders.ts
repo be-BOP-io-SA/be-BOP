@@ -437,6 +437,7 @@ export async function createOrder(
 		chosenVariations?: Record<string, string>;
 		depositPercentage?: number;
 		discountPercentage?: number;
+		freeQuantity?: number;
 	}>,
 	// null when point of sale want to use multiple payment methods
 	paymentMethod: PaymentMethod | null,
@@ -784,6 +785,7 @@ export async function createOrder(
 				quantity: item.quantity,
 				product: item.product,
 				customPrice: item.customPrice,
+				freeQuantity: item.freeQuantity,
 				chosenVariations: item.chosenVariations,
 				depositPercentage: item.depositPercentage,
 				discountPercentage: item.discountPercentage,

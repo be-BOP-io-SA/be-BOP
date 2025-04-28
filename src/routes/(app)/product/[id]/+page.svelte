@@ -406,6 +406,9 @@
 						class="flex flex-col gap-2"
 					>
 						{#if canBuy}
+							{#if data.freeProductsAvailable}
+								<input type="hidden" name="freeQuantity" value={data.freeProductsAvailable} />
+							{/if}
 							{#if data.product.payWhatYouWant}
 								<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
 								<input type="hidden" name="customPriceCurrency" value={PWYWCurrency} />

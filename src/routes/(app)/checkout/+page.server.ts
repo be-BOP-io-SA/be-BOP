@@ -448,6 +448,7 @@ export const actions = {
 		const orderId = await createOrder(
 			cart.items.map((item) => ({
 				quantity: item.quantity,
+				...(item.freeQuantity && { freeQuantity: item.freeQuantity }),
 				product: byId[item.productId],
 				...(item.customPrice && {
 					customPrice: { amount: item.customPrice.amount, currency: item.customPrice.currency }

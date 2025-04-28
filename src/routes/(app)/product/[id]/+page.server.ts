@@ -181,7 +181,14 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		set(json, key, value);
 	}
 
-	const { quantity, customPriceAmount, customPriceCurrency, deposit, chosenVariations } = z
+	const {
+		quantity,
+		customPriceAmount,
+		customPriceCurrency,
+		deposit,
+		chosenVariations,
+		freeQuantity
+	} = z
 		.object({
 			quantity: z
 				.number({ coerce: true })
@@ -195,7 +202,12 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 				.optional(),
 			customPriceCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1)]).optional(),
 			deposit: z.enum(['partial', 'full']).optional(),
-			chosenVariations: z.record(z.string(), z.string()).optional()
+			chosenVariations: z.record(z.string(), z.string()).optional(),
+			freeQuantity: z
+				.string()
+				.regex(/^\d+(\.\d+)?$/)
+				.transform((val) => Number(val))
+				.optional()
 		})
 		.parse(json);
 
@@ -209,6 +221,7 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 	await addToCartInDb(product, quantity, {
 		user: userIdentifier(locals),
 		...(customPrice && { customPrice }),
+		...(freeQuantity && { freeQuantity }),
 		deposit: deposit === 'partial',
 		...(product.hasVariations && { chosenVariations })
 	});
