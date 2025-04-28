@@ -45,7 +45,7 @@
 		"vatSellerCountry": "O país é o país do vendedor."
 	},
 	"challenge": {
-		"beginsAt": "Começa em {dias} dias",
+		"beginsAt": "Começa em {days} dias",
 		"ended": "Finalizado !",
 		"endsAt": "Termina <0></0> no <1></1>",
 		"goalMet": "Bom trabalho pessoal! ",
@@ -59,10 +59,10 @@
 			"other": "{count} produtos",
 			"zero": "{count} produtos"
 		},
-		"singleTitle": "Desafio {nome}",
+		"singleTitle": "Desafio {name}",
 		"title": "Desafios",
 		"totalProducts": {
-			"goalOvershot": "{Progress} pré-venda em um alvo de {Goal}! "
+			"goalOvershot": "{progress} pré-venda em um alvo de {Goal}! "
 		}
 	},
 	"checkout": {
@@ -435,7 +435,7 @@
 			"identityPrefill": "Você pode preencher o seu endereço postal e seu endereço de contato. ",
 			"npub": "Npub: {npub}",
 			"title": "Sessão",
-			"userId": "UserID: {userID}"
+			"userId": "UserID: {userId}"
 		},
 		"sso": {
 			"title": "Ou fazer login com"
@@ -479,22 +479,22 @@
 			"cta": "Experimente uma nova tentativa de pagamento"
 		},
 		"note": {
-			"author": "{Alias} (funcionário)",
+			"author": "{alias} (funcionário)",
 			"authorCustomer": "Cliente",
 			"authorSystem": "Sistema",
 			"backToOrder": "Vá para encomendar",
 			"label": "Nota do funcionário",
 			"saveText": "Salvar nota",
 			"seeText": "Veja Notas do pedido",
-			"title": "Notas de pedido #{número}"
+			"title": "Notas de pedido #{number}"
 		},
 		"paidAt": "Pago em <0></0>",
 		"paidWith": {
 			"bank-transfer": "Pago com: transferência bancária verificada",
-			"bitcoin": "Pagado com: Bitcoin na cadeia Pagamento (1 {PaymentCurrency} = {trocangeate} {mainCurrency} no momento do pedido)",
+			"bitcoin": "Pagado com: Bitcoin na cadeia Pagamento (1 {paymentCurrency} = {exchangeRate} {mainCurrency} no momento do pedido)",
 			"card": "Pago com: cartão bancário",
 			"free": "Não pagou nada",
-			"lightning": "Pago com: transação de raios (1 {pagendCurrency} = {trocangeate} {mainCurrency} no momento da ordem)",
+			"lightning": "Pago com: transação de raios (1 {paymentCurrency} = {exchangeRate} {mainCurrency} no momento da ordem)",
 			"paypal": "Pago com: PayPal",
 			"point-of-sale": "Pago na loja"
 		},
@@ -522,7 +522,7 @@
 		"paymentIban": "Iban para enviar a transferência de arame para",
 		"paymentLink": "Clique aqui para pagar por cartão com",
 		"paymentLinkGeneric": "Clique aqui para pagar com",
-		"paymentPaidAt": "Pagamento feito em {Date}",
+		"paymentPaidAt": "Pagamento feito em {date}",
 		"paymentStatus": {
 			"canceled": "cancelado",
 			"canceledTemplate": "Pedido cancelado!",
@@ -547,30 +547,30 @@
 			"discountExcVat": "Desconto excl. ",
 			"endMessage": "Ficamos à sua disposição para obter mais informações. <0></0> Atenciosamente, <1></1> {BusinessName}",
 			"fullyPaid": {
-				"message": "Com este pagamento, o pedido {OrderNumber} agora está totalmente pago"
+				"message": "Com este pagamento, o pedido {orderNumber} agora está totalmente pago"
 			},
 			"invoice": "Fatura",
-			"invoiceNumber": "{Invoicenumber}",
+			"invoiceNumber": "{invoiceNumber}",
 			"itemName": "Natureza",
 			"partialAmount": "Valor pago (pagamento parcial)",
 			"partialAmountPre": "Valor a pagar (pagamento parcial)",
 			"proforma": "Esta é uma fatura do Proforma. ",
-			"proformaInvoiceNumber": "ProforMa- {OrderNumber}-{PaymentIndex}",
+			"proformaInvoiceNumber": "ProforMa- {orderNumber}-{paymentIndex}",
 			"quantity": "Qty",
 			"remainingAmount": "Valor restante a pagar",
-			"summaryTitle": "Resumo da ordem #{número}",
+			"summaryTitle": "Resumo da ordem #{number}",
 			"totalExcVat": "Total excl. ",
 			"totalInclVat": "Total incl. ",
 			"totalVat": "IVA total",
 			"unitPrice": "Preço unitário",
-			"vatFreeReason": "IVA isento: {Razão}"
+			"vatFreeReason": "IVA isento: {reason}"
 		},
 		"receiptFullyPaid": "Gerar recibo (totalmente pago)",
 		"receiptPending": "Gerar recibo (pagamento pendente)",
 		"related": {
-			"invoice": "✅ Fatura N ° {Invoicenumber}",
-			"invoiceFailed": "❌ Fatura N ° {Invoicenumber}",
-			"invoicePending": "⏲ ​​Fatura n ° {Invoicenumber} (aguardando o pagamento)",
+			"invoice": "✅ Fatura N ° {invoiceNumber}",
+			"invoiceFailed": "❌ Fatura N ° {invoiceNumber}",
+			"invoicePending": "⏲ ​​Fatura n ° {invoiceNumber} (aguardando o pagamento)",
 			"title": "Faturas relacionadas"
 		},
 		"requestedAt": "Pagamento solicitado em <0></0>",
@@ -581,7 +581,7 @@
 		"shippingAddress": {
 			"title": "Endereço para envio"
 		},
-		"singleTitle": "Número do pedido}",
+		"singleTitle": "Pedido #{number}",
 		"summary": {
 			"fullyPaid": {
 				"title": "Pedido totalmente pago, valor pendente zero"
@@ -590,10 +590,10 @@
 		"tickets": {
 			"printAll": "Imprima tudo",
 			"seeAll": "Veja tudo",
-			"ticket": "Ticket #{número}",
+			"ticket": "Ticket #{number}",
 			"title": "Ingressos"
 		},
-		"timeRemaining": "Tempo restante: {minutos} minutos",
+		"timeRemaining": "Tempo restante:  {minutes} minutos",
 		"vatFree": "Este pedido está livre de IVA. "
 	},
 	"pos": {
