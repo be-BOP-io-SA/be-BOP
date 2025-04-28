@@ -306,9 +306,15 @@
 				{#if data.freeProductsAvailable}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
-						{t('product.freeProductDiscountText', {
-							available: data.freeProductsAvailable
-						})}
+						{#if data.freeProductsAvailable > 1}
+							{t('product.freeProductDiscountText', {
+								available: data.freeProductsAvailable
+							})}
+						{:else}
+							{t('product.freeProductDiscountTextSingular', {
+								available: data.freeProductsAvailable
+							})}
+						{/if}
 					</h3>
 				{/if}
 
