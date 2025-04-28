@@ -27,7 +27,13 @@ export const load = async ({ url }) => {
 			github: !!(GITHUB_ID && GITHUB_SECRET),
 			google: !!(GOOGLE_ID && GOOGLE_SECRET),
 			facebook: !!(FACEBOOK_ID && FACEBOOK_SECRET),
-			twitter: !!(TWITTER_ID && TWITTER_SECRET)
+			twitter: !!(TWITTER_ID && TWITTER_SECRET),
+			providers: runtimeConfig.oauth
+				.filter((o) => o.enabled)
+				.map((o) => ({
+					name: o.name,
+					slug: o.slug
+				}))
 		}
 	};
 
@@ -148,7 +154,14 @@ export const actions = {
 	clearSso: async function ({ locals, request }) {
 		const { provider } = z
 			.object({
-				provider: z.enum(['github', 'google', 'facebook', 'twitter'])
+				provider: z.enum([
+					'github',
+					'google',
+					'facebook',
+					'twitter',
+					...runtimeConfig.oauth.filter((o) => o.enabled).map((o) => o.slug),
+					...(locals.sso?.map((sso) => sso.provider) ?? [])
+				])
 			})
 			.parse(Object.fromEntries(await request.formData()));
 
