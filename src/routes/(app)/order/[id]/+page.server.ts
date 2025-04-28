@@ -8,7 +8,7 @@ import { cmsFromContent } from '$lib/server/cms.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
-import { OrderLabel } from '$lib/types/OrderLabel.js';
+import type { OrderLabel } from '$lib/types/OrderLabel.js';
 
 export async function load({ params, depends, locals }) {
 	depends(UrlDependency.Order);
