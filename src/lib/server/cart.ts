@@ -163,6 +163,19 @@ export async function addToCartInDb(
 	} else if (product.variations?.length) {
 		throw error(400, 'error matching on variations choice');
 	}
+	if (
+		params.freeQuantity &&
+		(await collections.orders.countDocuments(
+			{
+				...userQuery(params.user),
+				'items.product._id': product._id,
+				status: 'pending'
+			},
+			{ limit: 1 }
+		))
+	) {
+		throw error(400, 'You already have a pending order for this free product: ' + product.name);
+	}
 
 	if (existingItem && !product.standalone) {
 		existingItem.quantity = params.totalQuantity ? quantity : existingItem.quantity + quantity;

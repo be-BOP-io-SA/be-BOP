@@ -1674,7 +1674,8 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 		const freeProductSubscriptions = await collections.paidSubscriptions
 			.find({
 				[`freeProductsById.${item.product._id}`]: { $exists: true },
-				[`freeProductsById.${item.product._id}.available`]: { $gt: 0 }
+				[`freeProductsById.${item.product._id}.available`]: { $gt: 0 },
+				paidUntil: { $gt: new Date() }
 			})
 			.toArray();
 
