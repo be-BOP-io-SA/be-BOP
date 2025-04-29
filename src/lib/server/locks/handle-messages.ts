@@ -767,7 +767,9 @@ const commands: Record<
 	'!session': {
 		description: 'Request a temporary session link',
 		execute: async (send, { senderNpub }) => {
-			await send(`You'll receive your temporary link soon..`);
+			if (0) {
+				send('you will receive your temporary link soon...');
+			}
 			await sendAuthentificationlink({ npub: senderNpub });
 		}
 	}
