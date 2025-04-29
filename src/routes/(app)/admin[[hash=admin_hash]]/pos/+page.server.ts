@@ -62,6 +62,7 @@ export const actions = {
 				upsert: true
 			}
 		);
+		runtimeConfig.posPrefillTermOfUse = result.posPrefillTermOfUse;
 
 		throw redirect(303, `${adminPrefix()}/pos`);
 	}
