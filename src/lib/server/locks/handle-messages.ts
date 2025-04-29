@@ -19,6 +19,7 @@ import { rateLimit } from '../rateLimit';
 import { computePriceInfo } from '$lib/types/Cart';
 import { filterNullish } from '$lib/utils/fillterNullish';
 import type { Price } from '$lib/types/Order';
+import { sendAuthentificationlink } from '../sendNotification';
 
 const lock = new Lock('received-messages');
 
@@ -761,6 +762,13 @@ const commands: Record<
 			);
 
 			await send('Subscription #' + number + ' was cancelled, you will not be reminded anymore');
+		}
+	},
+	'!session': {
+		description: 'Request a temporary session link',
+		execute: async (send, { senderNpub }) => {
+			await send(`You'll receive your temporary link soon..`);
+			await sendAuthentificationlink({ npub: senderNpub });
 		}
 	}
 };
