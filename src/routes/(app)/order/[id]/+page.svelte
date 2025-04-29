@@ -23,6 +23,7 @@
 	import IconStripe from '$lib/components/icons/IconStripe.svelte';
 	import IconDownloadWindow from '$lib/components/icons/IconDownloadWindow.svelte';
 	import IconExternalNewWindowOpen from '$lib/components/icons/IconExternalNewWindowOpen.svelte';
+	import OrderLabelComponent from '$lib/components/OrderLabelComponent.svelte';
 
 	let currentDate = new Date();
 	export let data;
@@ -77,6 +78,9 @@
 	let filteredPaymentMethods = data.paymentMethods.filter((pm) =>
 		['card', 'bitcoin', 'lightning', 'paypal'].includes(pm)
 	);
+	$: labelById = data.labels
+		? Object.fromEntries(data.labels.map((label) => [label._id, label]))
+		: undefined;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -116,7 +120,23 @@
 			>
 		</div>
 		<div class="col-span-2 flex flex-col gap-2">
-			<h1 class="text-3xl body-title">{t('order.singleTitle', { number: data.order.number })}</h1>
+			<h1 class="text-3xl body-title">
+				{t('order.singleTitle', { number: data.order.number })}
+			</h1>
+			{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
+				<div class="flex flex-row gap-1">
+					{#if data.order.orderLabelIds?.length && labelById}
+						{#each data.order.orderLabelIds as labelId}
+							<OrderLabelComponent orderLabel={labelById[labelId]} class="text-xs" />
+						{/each}
+					{/if}
+					<a
+						href="/admin/order/{data.order._id}/label"
+						class="bg-gray-200 px-2 rounded-full"
+						title="add label">+</a
+					>
+				</div>
+			{/if}
 			{#if data.order.notifications?.paymentStatus?.npub}
 				<p>
 					{t('order.paymentStatusNpub')}:

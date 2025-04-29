@@ -8,11 +8,12 @@ import { cmsFromContent } from '$lib/server/cms.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
+import type { OrderLabel } from '$lib/types/OrderLabel.js';
 
 export async function load({ params, depends, locals }) {
 	depends(UrlDependency.Order);
 
-	const order = await fetchOrderForUser(params.id);
+	const order = await fetchOrderForUser(params.id, { userRoleId: locals.user?.roleId });
 
 	const digitalFiles = uniqBy(
 		order.items.flatMap((item) => item.digitalFiles),
@@ -67,7 +68,10 @@ export async function load({ params, depends, locals }) {
 			methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
 		}
 	}
-
+	let labels: OrderLabel[] = [];
+	if (locals.user?.roleId && locals.user.roleId !== CUSTOMER_ROLE_ID) {
+		labels = await collections.labels.find({}).toArray();
+	}
 	return {
 		order,
 		paymentMethods: methods,
@@ -109,7 +113,8 @@ export async function load({ params, depends, locals }) {
 			)
 		}),
 		overwriteCreditCardSvgColor: runtimeConfig.overwriteCreditCardSvgColor,
-		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode
+		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode,
+		labels
 	};
 }
 
