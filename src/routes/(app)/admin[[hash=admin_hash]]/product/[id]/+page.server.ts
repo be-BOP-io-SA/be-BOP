@@ -211,6 +211,7 @@ export const actions: Actions = {
 						),
 						contentBefore: parsed.contentBefore,
 						contentAfter: parsed.contentAfter,
+						...(parsed.bookingSpec && { bookingSpec: parsed.bookingSpec }),
 						mobile: {
 							hideContentBefore: parsed.hideContentBefore,
 							hideContentAfter: parsed.hideContentAfter
@@ -249,7 +250,9 @@ export const actions: Actions = {
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
 						...(!hasVariations && { variations: '', variationLabels: '' }),
 						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),
-						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' })
+						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' }),
+						...(!parsed.bookingSpec && { bookingSpec: '' }),
+						...(!parsed.hasMaximumPrice && { maximumPrice: '' })
 					}
 				}
 			);

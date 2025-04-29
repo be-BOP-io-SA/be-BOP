@@ -903,7 +903,7 @@
 
 			<label class="checkbox-label">
 				<input class="form-checkbox" type="checkbox" bind:checked={hasBooking} />
-				The product has a booking specification
+				The product is a booking slot
 			</label>
 
 			{#if hasBooking}

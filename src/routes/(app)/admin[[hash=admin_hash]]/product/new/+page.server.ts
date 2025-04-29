@@ -175,6 +175,7 @@ export const actions: Actions = {
 								}),
 							standalone: parsed.payWhatYouWant || parsed.standalone,
 							free: parsed.free,
+							bookingSpec: parsed.bookingSpec,
 							displayShortDescription: parsed.displayShortDescription,
 							...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
 							applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
@@ -355,6 +356,7 @@ export const actions: Actions = {
 					type: product.type,
 					availableDate: parsed.availableDate || undefined,
 					preorder: parsed.preorder,
+					bookingSpec: parsed.bookingSpec,
 					shipping: parsed.shipping,
 					payWhatYouWant: parsed.payWhatYouWant,
 					...(parsed.payWhatYouWant && {
