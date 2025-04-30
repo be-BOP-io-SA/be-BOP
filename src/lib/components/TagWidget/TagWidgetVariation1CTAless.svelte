@@ -24,7 +24,7 @@
 				<h2 class="text-6xl body-title pb-2 {titleClassNames}">{tag.title}</h2>
 				<h2 class="text-md md:text-xl">
 					<!-- eslint-disable svelte/no-at-html-tags -->
-					{@html marked(tag.content.replaceAll('<', '&lt;'))}
+					{@html tag.content}
 				</h2>
 			</div>
 

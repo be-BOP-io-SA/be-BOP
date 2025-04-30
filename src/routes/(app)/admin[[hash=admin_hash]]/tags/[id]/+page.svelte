@@ -2,6 +2,8 @@
 	import { generateId } from '$lib/utils/generateId';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import PictureComponent from '$lib/components/Picture.svelte';
+	import Editor from '@tinymce/tinymce-svelte';
+	import { TINYMCE_PLUGINS, TINYMCE_TOOLBAR } from '../../cms/tinymce-plugins.js';
 
 	export let data;
 	let name = data.tag.name;
@@ -12,6 +14,7 @@
 		}
 	}
 	let tagCtaLines = data.tag.cta.length || 2;
+	let tagContent = data.tag.content || '';
 </script>
 
 <form method="post" class="flex flex-col gap-4" action="?/update">
@@ -107,19 +110,25 @@
 			name="shortContent"
 			bind:value={data.tag.shortContent}
 			cols="30"
-			rows="2"
+			rows="5"
 			class="form-input"
 		/>
 	</label>
 	<label class="form-label">
 		Full content
+		<Editor
+			scriptSrc="/tinymce/tinymce.js"
+			bind:value={tagContent}
+			conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+		/>
+		Full content HTML
 		<textarea
 			name="content"
-			bind:value={data.tag.content}
 			cols="30"
 			rows="10"
 			maxlength="10000"
 			class="form-input"
+			bind:value={tagContent}
 		/>
 	</label>
 

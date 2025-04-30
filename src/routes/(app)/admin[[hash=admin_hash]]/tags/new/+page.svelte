@@ -5,6 +5,8 @@
 	import { invalidateAll } from '$app/navigation';
 	import { preUploadPicture } from '$lib/types/Picture.js';
 	import { page } from '$app/stores';
+	import Editor from '@tinymce/tinymce-svelte';
+	import { TINYMCE_PLUGINS, TINYMCE_TOOLBAR } from '../../cms/tinymce-plugins.js';
 
 	export let data;
 	let pageId = $page.url.searchParams.get('id') || null;
@@ -18,6 +20,8 @@
 	let fileAvatar: FileList | null = null;
 	let tagCtaLines = 2;
 	let submitting = false;
+	let tagContent = '';
+
 	async function handleSubmit() {
 		try {
 			submitting = true;
@@ -132,7 +136,20 @@
 	</label>
 	<label class="form-label">
 		Full content
-		<textarea name="content" cols="30" rows="10" maxlength="10000" class="form-input" />
+		<Editor
+			scriptSrc="/tinymce/tinymce.js"
+			bind:value={tagContent}
+			conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+		/>
+		Full content HTML
+		<textarea
+			name="content"
+			cols="30"
+			rows="10"
+			maxlength="10000"
+			class="form-input"
+			bind:value={tagContent}
+		/>
 	</label>
 
 	<input type="hidden" name="mainPictureId" />
