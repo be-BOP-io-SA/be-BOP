@@ -1036,7 +1036,14 @@
 				</label>
 				<label class="form-label">
 					Url
-					<input type="text" name="cta[{i}].href" class="form-input" value={link.href} />
+					<input
+						type="text"
+						name="cta[{i}].href"
+						class="form-input"
+						value={link.href}
+						pattern="^(https:\/\/|\/).*"
+						title="Only full URLs starting with https:// or relative URLs starting with / are allowed"
+					/>
 				</label>
 				<label class="checkbox-label">
 					<input
