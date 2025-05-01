@@ -32,7 +32,7 @@
 	import { serializeSchema } from '$lib/utils/jsonLd.js';
 	import type { Product as SchemaOrgProduct, WithContext } from 'schema-dts';
 	import ScheduleWidgetCalendar from '$lib/components/ScheduleWidget/ScheduleWidgetCalendar.svelte';
-	import { dayList, productToScheduleId } from '$lib/types/Schedule.js';
+	import { productToScheduleId } from '$lib/types/Schedule.js';
 	import type { Day } from '$lib/types/Schedule.js';
 	import { toZonedTime } from 'date-fns-tz';
 	import { RangeList } from '$lib/utils/range-list.js';

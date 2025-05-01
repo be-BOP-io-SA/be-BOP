@@ -78,10 +78,6 @@
 		generateCalendar();
 	}
 
-	function toWeekDay(date: Date) {
-		return format(date, 'eeee').toLowerCase() as Day;
-	}
-
 	function isEventDay(date: Date) {
 		return scheduleEventByDay[format(date, 'yyyy-MM-dd')];
 	}
