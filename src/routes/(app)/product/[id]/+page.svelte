@@ -226,7 +226,7 @@
 				<h1 class="text-4xl body-title">{data.product.name}</h1>
 				<!-- Getting this right with rounded borders on both chrome & FF is painful, chrome NEEDs overflow-hidden -->
 				<div
-					class="aspect-video w-full flex lg:hover:overflow-visible {isZoomed
+					class="aspect-video w-full flex overflow-if-child-hovered-lg {isZoomed
 						? 'overflow-visible'
 						: 'overflow-hidden'} overflow-hidden px-4 group"
 				>
@@ -606,3 +606,12 @@
 		/>
 	{/if}
 </main>
+
+<style>
+	/* Note, in recent version of tailwind, probably doable with lg:has-hover:overflow-visible */
+	@media (min-width: 1024px) {
+		.overflow-if-child-hovered-lg:has(:hover) {
+			overflow: visible;
+		}
+	}
+</style>
