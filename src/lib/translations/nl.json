@@ -643,7 +643,9 @@
 			"minute": {
 				"one": "1 minuut",
 				"other": "{count} minuten"
-			}
+			},
+			"time": "Tijd van de dag",
+			"timezone": "Tijdzone: {timeZone}"
 		},
 		"checkBackLater": "Kom later nog eens terug",
 		"cta": {

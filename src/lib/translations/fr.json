@@ -643,7 +643,9 @@
 			"minute": {
 				"one": "1 minute",
 				"other": "{count} Minutes"
-			}
+			},
+			"time": "Heure de la journée",
+			"timezone": "Fuseau horaire: {timeZone}"
 		},
 		"checkBackLater": "Veuillez revenir plus tard",
 		"cta": {

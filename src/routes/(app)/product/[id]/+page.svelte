@@ -33,9 +33,18 @@
 	let errorMessage = '';
 	let currentTime = Date.now();
 	let selectedDate = new Date();
+	let time = '';
 	const { t, locale, formatDistanceLocale } = useI18n();
 
 	$: durations = computeDurations(selectedDate);
+	$: times = computeTimes(selectedDate, quantity);
+
+	$: if (durations.length && quantity > durations.length) {
+		quantity = durations.length;
+	}
+	$: if (times.length && !times.includes(time)) {
+		time = times[0];
+	}
 
 	$: timeDifference =
 		data.discount?.endsAt &&
@@ -109,6 +118,38 @@
 			duration: (i + 1) * spec.slotMinutes,
 			qty: i + 1
 		}));
+	}
+
+	function computeTimes(date: Date, quantity: number) {
+		// todo: handle timezone
+		const weekDay = format(date, 'eeee').toLowerCase() as Day;
+		const spec = data.product.bookingSpec;
+
+		if (!spec) {
+			return [];
+		}
+
+		const specForDay = spec.schedule[weekDay];
+		if (!specForDay) {
+			return [];
+		}
+
+		const [startHours, startMinutes] = specForDay.start.split(':').map(Number);
+		const [endHours, endMinutes] = specForDay.end.split(':').map(Number);
+
+		const start = startHours * 60 + startMinutes;
+		const end = specForDay.end === '00:00' ? 24 * 60 : endHours * 60 + endMinutes;
+
+		return Array.from(
+			{ length: (end - (quantity - 1) * spec.slotMinutes - start) / spec.slotMinutes },
+			(_, i) => minutesToTime(start + i * spec.slotMinutes)
+		);
+	}
+
+	function minutesToTime(minutes: number) {
+		const hours = Math.floor(minutes / 60);
+		const mins = minutes % 60;
+		return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 	}
 
 	function addToCart() {
@@ -493,6 +534,9 @@
 									bind:selectedDate
 									disabledDays={dayList.filter((day) => !data.product.bookingSpec?.schedule[day])}
 								/>
+								{t('product.booking.timezone', {
+									timeZone: data.product.bookingSpec.schedule.timezone
+								})}
 								{#if durations.length}
 									<label class="form-label">
 										{t('product.booking.duration')}
@@ -507,6 +551,24 @@
 													{duration.duration % 60 > 0
 														? t('product.booking.minute', { count: duration.duration % 60 })
 														: ''}
+												</option>
+											{/each}
+										</select>
+									</label>
+
+									<label class="form-label">
+										{t('product.booking.time')}
+										<select class="form-input" bind:value={time} name="time">
+											{#each times as time}
+												<option value={time}>
+													<!-- todo: handle timezone here maybe -->
+													{new Date(selectedDate.toJSON().slice(0, 11) + time).toLocaleTimeString(
+														$locale,
+														{
+															hour: 'numeric',
+															minute: 'numeric'
+														}
+													)}
 												</option>
 											{/each}
 										</select>
