@@ -399,9 +399,10 @@ export async function onOrderPaymentFailed(
 		throw new Error('Failed to update order');
 	}
 	if (
-		(order.status !== ret.value.status && order.status === 'canceled') ||
-		order.status === 'expired' ||
-		order.status === 'failed'
+		order.status !== ret.value.status &&
+		(ret.value.status === 'canceled' ||
+			ret.value.status === 'expired' ||
+			ret.value.status === 'failed')
 	) {
 		await collections.scheduleEvents.updateMany(
 			{
@@ -409,7 +410,7 @@ export async function onOrderPaymentFailed(
 			},
 			{
 				$set: {
-					status: 'cancelled'
+					status: 'canceled'
 				}
 			}
 		);
