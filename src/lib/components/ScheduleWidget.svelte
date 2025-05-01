@@ -10,7 +10,7 @@
 	import ScheduleWidgetMobile from './ScheduleWidget/ScheduleWidgetMobile.svelte';
 	import ScheduleWidgetCalendar from './ScheduleWidget/ScheduleWidgetCalendar.svelte';
 
-	export let pictures: Picture[] | [];
+	export let pictures: Picture[];
 	export let schedule: Schedule;
 	let className = '';
 	export { className as class };
