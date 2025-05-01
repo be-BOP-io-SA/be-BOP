@@ -87,6 +87,7 @@ export async function load({ parent, locals }) {
 		paymentMethods: methods,
 		emailsEnabled,
 		collectIPOnDeliverylessOrders: runtimeConfig.collectIPOnDeliverylessOrders,
+		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
 		personalInfoConnected: {
 			firstName: personalInfoConnected?.firstName,
 			lastName: personalInfoConnected?.lastName,

@@ -13,7 +13,8 @@ export const load = async ({}) => {
 
 	return {
 		tags: tags.filter((tag) => tag._id !== 'pos-favorite'),
-		posTouchTag: runtimeConfig.posTouchTag
+		posTouchTag: runtimeConfig.posTouchTag,
+		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse
 	};
 };
 export const actions = {
@@ -26,10 +27,12 @@ export const actions = {
 		const posTouchTag = JSON.parse(String(posTouchTagString));
 		const result = z
 			.object({
-				posTouchTag: z.string().array()
+				posTouchTag: z.string().array(),
+				posPrefillTermOfUse: z.boolean({ coerce: true })
 			})
 			.parse({
-				posTouchTag
+				posTouchTag,
+				posPrefillTermOfUse: formData.get('posPrefillTermOfUse')
 			});
 		await collections.runtimeConfig.updateOne(
 			{
@@ -45,6 +48,21 @@ export const actions = {
 				upsert: true
 			}
 		);
+		await collections.runtimeConfig.updateOne(
+			{
+				_id: 'posPrefillTermOfUse'
+			},
+			{
+				$set: {
+					data: result.posPrefillTermOfUse,
+					updatedAt: new Date()
+				}
+			},
+			{
+				upsert: true
+			}
+		);
+		runtimeConfig.posPrefillTermOfUse = result.posPrefillTermOfUse;
 
 		throw redirect(303, `${adminPrefix()}/pos`);
 	}

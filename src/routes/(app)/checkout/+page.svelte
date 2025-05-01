@@ -882,7 +882,14 @@
 				{/if}
 
 				<label class="checkbox-label">
-					<input type="checkbox" class="form-checkbox" name="teecees" form="checkout" required />
+					<input
+						type="checkbox"
+						class="form-checkbox"
+						name="teecees"
+						form="checkout"
+						required
+						checked={data.roleId === POS_ROLE_ID && data.posPrefillTermOfUse}
+					/>
 					<span>
 						<Trans key="checkout.tosAgree"
 							><a
