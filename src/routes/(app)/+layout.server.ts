@@ -230,6 +230,7 @@ export async function load(params) {
 			return {
 				product: pojo(productDoc),
 				picture: productPictureDoc,
+				booking: item.booking,
 				digitalFilesCount: digitalFilesDoc?.length ?? 0,
 				quantity: item.quantity,
 				...(item.customPrice && { customPrice: item.customPrice }),

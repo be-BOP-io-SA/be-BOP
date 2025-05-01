@@ -64,6 +64,10 @@ export async function addToCartInDb(
 		customPrice?: { amount: number; currency: Currency };
 		deposit?: boolean;
 		chosenVariations?: Record<string, string>;
+		booking?: {
+			time: Date;
+			durationMinutes: number;
+		};
 		mode: 'eshop' | 'nostr' | 'pos';
 	}
 ) {
@@ -81,6 +85,10 @@ export async function addToCartInDb(
 
 	if (params.customPrice && !product.payWhatYouWant) {
 		throw error(400, 'Product is not pay what you want');
+	}
+
+	if (product.bookingSpec && !params.booking) {
+		throw error(400, 'Product is a booking, please provide booking time and duration');
 	}
 
 	if (
@@ -140,7 +148,7 @@ export async function addToCartInDb(
 		throw error(400, 'Product is out of stock');
 	}
 
-	if (product.standalone) {
+	if (product.standalone || product.bookingSpec) {
 		if (quantity !== 1) {
 			throw error(400, 'You can only order one of this product');
 		}

@@ -21,6 +21,10 @@ export interface Cart extends Timestamps {
 	items: Array<{
 		productId: string;
 		quantity: number;
+		booking?: {
+			time: Date;
+			durationMinutes: number;
+		};
 		customPrice?: { amount: number; currency: Currency };
 		reservedUntil?: Date;
 		depositPercentage?: number;

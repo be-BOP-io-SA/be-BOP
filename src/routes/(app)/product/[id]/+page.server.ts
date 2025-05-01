@@ -179,7 +179,15 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		set(json, key, value);
 	}
 
-	const { quantity, customPriceAmount, customPriceCurrency, deposit, chosenVariations } = z
+	const {
+		quantity,
+		customPriceAmount,
+		customPriceCurrency,
+		deposit,
+		chosenVariations,
+		time,
+		durationMinutes
+	} = z
 		.object({
 			quantity: z
 				.number({ coerce: true })
@@ -193,9 +201,15 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 				.optional(),
 			customPriceCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1)]).optional(),
 			deposit: z.enum(['partial', 'full']).optional(),
-			chosenVariations: z.record(z.string(), z.string()).optional()
+			chosenVariations: z.record(z.string(), z.string()).optional(),
+			time: z.date().optional(),
+			durationMinutes: z.number().int().min(1).optional()
 		})
 		.parse(json);
+
+	if (product.bookingSpec && (!time || !durationMinutes)) {
+		throw error(400, 'Time and duration are required for booking products');
+	}
 
 	const customPrice =
 		customPriceAmount && customPriceCurrency
@@ -209,7 +223,15 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		mode: 'eshop',
 		...(customPrice && { customPrice }),
 		deposit: deposit === 'partial',
-		...(product.hasVariations && { chosenVariations })
+		...(product.hasVariations && { chosenVariations }),
+		...(time && durationMinutes
+			? {
+					booking: {
+						time,
+						durationMinutes: durationMinutes
+					}
+			  }
+			: undefined)
 	});
 }
 

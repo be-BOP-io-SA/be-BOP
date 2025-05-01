@@ -15,7 +15,7 @@
 		productPriceWithVariations
 	} from '$lib/types/Product';
 	import { toCurrency } from '$lib/utils/toCurrency';
-	import { addMinutes, format, formatDistance } from 'date-fns';
+	import { addMinutes, format, formatDistance, isSameDay } from 'date-fns';
 	import { POS_ROLE_ID } from '$lib/types/User';
 	import { useI18n } from '$lib/i18n';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
@@ -25,6 +25,7 @@
 	import ScheduleWidgetCalendar from '$lib/components/ScheduleWidget/ScheduleWidgetCalendar.svelte';
 	import { dayList, productToScheduleId } from '$lib/types/Schedule.js';
 	import type { Day } from '$lib/types/Schedule.js';
+	import { fromZonedTime } from 'date-fns-tz';
 
 	export let data;
 
@@ -34,16 +35,17 @@
 	let currentTime = Date.now();
 	let selectedDate = new Date();
 	let time = '';
+	let durationMinutes = data.product.bookingSpec?.slotMinutes || 0;
 	const { t, locale, formatDistanceLocale } = useI18n();
 
 	$: durations = computeDurations(selectedDate);
-	$: times = computeTimes(selectedDate, quantity);
+	$: times = computeTimes(selectedDate, durationMinutes);
 
-	$: if (durations.length && quantity > durations.length) {
-		quantity = durations.length;
+	$: if (durations.length && durationMinutes > durations[durations.length - 1].duration) {
+		durationMinutes = durations[durations.length - 1].duration;
 	}
-	$: if (times.length && !times.includes(time)) {
-		time = times[0];
+	$: if (times.length && !times.some((t) => t.date === time)) {
+		time = times[0].date;
 	}
 
 	$: timeDifference =
@@ -110,9 +112,21 @@
 		const [startHours, startMinutes] = specForDay.start.split(':').map(Number);
 		const [endHours, endMinutes] = specForDay.end.split(':').map(Number);
 
-		const minutes =
-			(specForDay.end === '00:00' ? 24 * 60 : endHours * 60 + endMinutes) -
-			(startHours * 60 + startMinutes);
+		if (!isSameDay(date, new Date()) && date < new Date()) {
+			// todo: handle timezone
+			return [];
+		}
+
+		const start = Math.max(
+			startHours * 60 + startMinutes,
+			isSameDay(date, new Date()) ? new Date().getHours() * 60 + new Date().getMinutes() : 0
+		); // todo: handle timezone
+		const end = specForDay.end === '00:00' ? 24 * 60 : endHours * 60 + endMinutes;
+		const minutes = end - start;
+
+		if (minutes <= 0) {
+			return [];
+		}
 
 		return Array.from({ length: minutes / spec.slotMinutes }, (_, i) => ({
 			duration: (i + 1) * spec.slotMinutes,
@@ -120,7 +134,7 @@
 		}));
 	}
 
-	function computeTimes(date: Date, quantity: number) {
+	function computeTimes(date: Date, durationMinutes: number) {
 		// todo: handle timezone
 		const weekDay = format(date, 'eeee').toLowerCase() as Day;
 		const spec = data.product.bookingSpec;
@@ -138,12 +152,24 @@
 		const [endHours, endMinutes] = specForDay.end.split(':').map(Number);
 
 		const start = startHours * 60 + startMinutes;
+		// todo: handle timezone
+		const minTime = isSameDay(selectedDate, new Date())
+			? minutesToTime(new Date().getHours() * 60 + new Date().getMinutes())
+			: '00:00';
 		const end = specForDay.end === '00:00' ? 24 * 60 : endHours * 60 + endMinutes;
 
 		return Array.from(
-			{ length: (end - (quantity - 1) * spec.slotMinutes - start) / spec.slotMinutes },
+			{ length: (end - durationMinutes + spec.slotMinutes - start) / spec.slotMinutes },
 			(_, i) => minutesToTime(start + i * spec.slotMinutes)
-		);
+		)
+			.filter((time) => time >= minTime)
+			.map((time) => ({
+				date: fromZonedTime(
+					new Date(selectedDate.toJSON().slice(0, 10) + ' ' + time), // todo: handle timezone better?
+					spec.schedule.timezone
+				).toISOString(),
+				time
+			}));
 	}
 
 	function minutesToTime(minutes: number) {
@@ -540,9 +566,9 @@
 								{#if durations.length}
 									<label class="form-label">
 										{t('product.booking.duration')}
-										<select class="form-input" bind:value={quantity} name="quantity">
+										<select class="form-input" bind:value={durationMinutes} name="durationMinutes">
 											{#each durations as duration}
-												<option value={duration.qty}
+												<option value={duration.duration}
 													>{duration.duration >= 60
 														? t('product.booking.hour', {
 																count: Math.floor(duration.duration / 60)
@@ -560,15 +586,14 @@
 										{t('product.booking.time')}
 										<select class="form-input" bind:value={time} name="time">
 											{#each times as time}
-												<option value={time}>
+												<option value={time.date}>
 													<!-- todo: handle timezone here maybe -->
-													{new Date(selectedDate.toJSON().slice(0, 11) + time).toLocaleTimeString(
-														$locale,
-														{
-															hour: 'numeric',
-															minute: 'numeric'
-														}
-													)}
+													{new Date(
+														selectedDate.toJSON().slice(0, 11) + time.time
+													).toLocaleTimeString($locale, {
+														hour: 'numeric',
+														minute: 'numeric'
+													})}
 												</option>
 											{/each}
 										</select>

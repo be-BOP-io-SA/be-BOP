@@ -642,7 +642,7 @@
 			},
 			"minute": {
 				"one": "1 minute",
-				"other": "{count} Minutes"
+				"other": "{count} minutes"
 			},
 			"time": "Heure de la journée",
 			"timezone": "Fuseau horaire: {timeZone}"

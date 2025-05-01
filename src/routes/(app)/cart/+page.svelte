@@ -218,7 +218,13 @@
 						<div class="flex flex-col items-end justify-center lg:mb-0 mb-4">
 							<div class="flex gap-2">
 								<PriceTag
-									amount={(item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100}
+									amount={(item.quantity *
+										(item.booking && item.product.bookingSpec?.slotMinutes
+											? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+											: 1) *
+										price.amount *
+										(item.depositPercentage ?? 100)) /
+										100}
 									currency={price.currency}
 									main
 									class="text-2xl truncate {item.discountPercentage ? 'line-through' : ''}"
@@ -230,7 +236,12 @@
 								>
 								{#if item.discountPercentage}
 									<PriceTag
-										amount={((item.quantity * price.amount * (item.depositPercentage ?? 100)) /
+										amount={((item.quantity *
+											(item.booking && item.product.bookingSpec?.slotMinutes
+												? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+												: 1) *
+											price.amount *
+											(item.depositPercentage ?? 100)) /
 											100) *
 											(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 										currency={price.currency}
@@ -241,7 +252,13 @@
 							</div>
 							<PriceTag
 								class="text-base truncate"
-								amount={((item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100) *
+								amount={((item.quantity *
+									(item.booking && item.product.bookingSpec?.slotMinutes
+										? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+										: 1) *
+									price.amount *
+									(item.depositPercentage ?? 100)) /
+									100) *
 									(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 								currency={price.currency}
 								secondary
