@@ -398,6 +398,22 @@ export async function onOrderPaymentFailed(
 	if (!ret.value) {
 		throw new Error('Failed to update order');
 	}
+	if (
+		(order.status !== ret.value.status && order.status === 'canceled') ||
+		order.status === 'expired' ||
+		order.status === 'failed'
+	) {
+		await collections.scheduleEvents.updateMany(
+			{
+				orderId: order._id
+			},
+			{
+				$set: {
+					status: 'cancelled'
+				}
+			}
+		);
+	}
 	order = ret.value;
 
 	return order;
@@ -1880,6 +1896,11 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 			productId: { $in: order.items.map((item) => item.product._id) }
 		})
 		.toArray();
+	await collections.scheduleEvents.updateMany(
+		{ orderId: order._id },
+		{ $set: { status: 'confirmed' } },
+		{ session }
+	);
 	for (const subscription of order.items.filter((item) => item.product.type === 'subscription')) {
 		const existingSubscription = subscriptions.find(
 			(sub) => sub.productId === subscription.product._id
