@@ -66,7 +66,7 @@
 		},
 		vatProfiles: data.vatProfiles
 	});
-	$: totalItems = sum(items.map((item) => item.quantity) ?? []);
+	$: totalItems = sum(items.map((item) => (item.product.bookingSpec ? 1 : item.quantity)) ?? []);
 
 	onMount(() => {
 		// Refresh exchange rate every 5 minutescomputeCartPrices

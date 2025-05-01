@@ -163,7 +163,7 @@ export async function addToCartInDb(
 		throw error(400, 'error matching on variations choice');
 	}
 
-	if (existingItem && !product.standalone) {
+	if (existingItem && !product.standalone && !product.bookingSpec) {
 		existingItem.quantity = params.totalQuantity ? quantity : existingItem.quantity + quantity;
 
 		const max = Math.min(

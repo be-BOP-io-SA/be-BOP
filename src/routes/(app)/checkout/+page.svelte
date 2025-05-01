@@ -699,13 +699,17 @@
 										depositPercentage={item.depositPercentage}
 									/>
 								</div>
-								<div>
-									{#if 0}
-										<CartQuantity {item} sm />
-									{:else if item.quantity > 1}
-										{t('cart.quantity')}: {item.quantity}
-									{/if}
-								</div>
+								{#if item.product.bookingSpec}
+									time: ...
+								{:else}
+									<div>
+										{#if 0}
+											<CartQuantity {item} sm />
+										{:else if item.quantity > 1}
+											{t('cart.quantity')}: {item.quantity}
+										{/if}
+									</div>
+								{/if}
 							</div>
 
 							<div class="flex flex-col ml-auto items-end justify-center">
