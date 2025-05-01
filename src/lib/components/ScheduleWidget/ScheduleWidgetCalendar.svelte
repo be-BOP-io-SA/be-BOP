@@ -19,14 +19,9 @@
 
 	export let schedule: Pick<Schedule, 'allowSubscription' | 'events' | 'pastEventDelay' | '_id'>;
 	let className = '';
-	export let disabledDays: Day[] = [];
-	export let timezone: string | null = null;
+	export let isDayDisabled: (date: Date) => boolean = () => false;
 	export let selectedDate = new Date();
 	export { className as class };
-
-	if (timezone) {
-		// todo
-	}
 
 	const { t, locale } = useI18n();
 
@@ -148,9 +143,7 @@
 					{isSameDay(day, new Date()) ? 'eventCalendar-currentDate font-bold' : ''}
 					{isEventDay(day) ? 'eventCalendar-hasEvent font-bold' : ''}
 					{selectedDate && isSameDay(day, selectedDate) ? ' ring-2 ring-black' : ''}
-					{format(day, 'M') !== format(currentDate, 'M') || disabledDays.includes(toWeekDay(day))
-					? ' text-gray-400'
-					: ''}"
+					{format(day, 'M') !== format(currentDate, 'M') || isDayDisabled(day) ? ' text-gray-400' : ''}"
 				style="background-color:{!!hasCustomColorEvents(day) &&
 				hasCustomColorEvents(day).length === 1
 					? hasCustomColorEvents(day)[0].calendarColor

@@ -607,9 +607,8 @@
 										allowSubscription: false,
 										pastEventDelay: 0
 									}}
-									timezone={data.product.bookingSpec.schedule.timezone}
 									bind:selectedDate
-									disabledDays={dayList.filter((day) => !data.product.bookingSpec?.schedule[day])}
+									isDayDisabled={(date) => computeDurations(date).length === 0}
 								/>
 								{t('product.booking.timezone', {
 									timeZone: data.product.bookingSpec.schedule.timezone
