@@ -24,6 +24,10 @@
 	export let selectedDate = new Date();
 	export { className as class };
 
+	if (timezone) {
+		// todo
+	}
+
 	const { t, locale } = useI18n();
 
 	let currentDate = new Date();
