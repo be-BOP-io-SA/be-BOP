@@ -196,7 +196,7 @@
 			leaderboards={data.productCMSBefore.leaderboards}
 			schedules={data.productCMSBefore.schedules}
 			class={data.product.mobile?.hideContentBefore || data.hideCmsZonesOnMobile
-				? 'hidden lg:contents'
+				? 'hidden lg:block'
 				: ''}
 		/>
 	{/if}
@@ -261,10 +261,10 @@
 							? data.product.shortDescription
 							: 'Description'}
 					</h2>
-					<p class="prose body-secondaryText lg:contents hidden">
+					<div class="prose body-secondaryText lg:block hidden">
 						<!-- eslint-disable svelte/no-at-html-tags -->
 						{@html marked(data.product.description.replaceAll('<', '&lt;'))}
-					</p>
+					</div>
 				{/if}
 			</div>
 			<div
@@ -573,10 +573,10 @@
 					{/each}
 				{/if}
 
-				<p class="prose body-secondaryText contents lg:hidden">
+				<div class="prose body-secondaryText block lg:hidden">
 					<!-- eslint-disable svelte/no-at-html-tags -->
 					{@html marked(data.product.description.replaceAll('<', '&lt;'))}
-				</p>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -601,7 +601,7 @@
 			leaderboards={data.productCMSAfter.leaderboards}
 			schedules={data.productCMSAfter.schedules}
 			class={data.product.mobile?.hideContentAfter || data.hideCmsZonesOnMobile
-				? 'hidden lg:contents'
+				? 'hidden lg:block'
 				: ''}
 		/>
 	{/if}

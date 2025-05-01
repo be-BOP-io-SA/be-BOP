@@ -8,6 +8,7 @@ import type { Tag } from './Tag';
 import type { Timestamps } from './Timestamps';
 import type { PaymentMethod } from '$lib/server/payment-methods';
 import { sumCurrency } from '$lib/utils/sumCurrency';
+import type { PickDeep } from 'type-fest';
 
 export interface ProductTranslatableFields {
 	name: string;
@@ -158,8 +159,10 @@ export function isPreorder(
 	return !!(preorder && availableDate && availableDate > new Date());
 }
 
-export function oneMaxPerLine(p: Pick<Product, 'standalone' | 'type'>) {
-	return p.standalone || p.type === 'subscription';
+export function oneMaxPerLine(
+	p: PickDeep<Product, 'standalone' | 'type' | 'bookingSpec.slotMinutes'>
+) {
+	return p.standalone || p.type === 'subscription' || p.bookingSpec;
 }
 export function productPriceWithVariations(
 	product: Pick<Product, 'name' | '_id' | 'price' | 'variations'>,
