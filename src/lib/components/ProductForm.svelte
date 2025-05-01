@@ -28,7 +28,7 @@
 	import type { PaymentMethod } from '$lib/server/payment-methods';
 	import { useI18n } from '$lib/i18n';
 	import { typedFromEntries } from '$lib/utils/typedFromEntries';
-	import { Day, dayList, productToScheduleId } from '$lib/types/Schedule';
+	import { type Day, dayList, productToScheduleId } from '$lib/types/Schedule';
 
 	const { t } = useI18n();
 
