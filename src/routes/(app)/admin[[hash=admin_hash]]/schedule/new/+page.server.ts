@@ -52,9 +52,11 @@ export const actions: Actions = {
 							.string()
 							.regex(/^#[0-9a-f]{6}$/i)
 							.optional(),
-						rsvp: z.object({
-							target: z.string().max(100)
-						})
+						rsvp: z
+							.object({
+								target: z.string().max(100)
+							})
+							.optional()
 					})
 				)
 			})
