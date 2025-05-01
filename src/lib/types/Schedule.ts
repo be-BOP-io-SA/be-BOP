@@ -52,6 +52,7 @@ export interface ScheduleTranslatableFields {
 export interface Schedule extends Timestamps, ScheduleTranslatableFields {
 	_id: string;
 	name: string;
+	/** In minutes */
 	pastEventDelay: number;
 	displayPastEvents: boolean;
 	displayPastEventsAfterFuture: boolean;

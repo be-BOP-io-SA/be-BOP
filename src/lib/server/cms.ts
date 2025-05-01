@@ -17,6 +17,7 @@ import type { Gallery } from '$lib/types/Gallery';
 import type { Leaderboard } from '$lib/types/Leaderboard';
 import { ScheduleEventBooked } from '$lib/types/Schedule';
 import { groupBy } from '$lib/utils/group-by';
+import { subMinutes } from 'date-fns';
 
 const window = new JSDOM('').window;
 
@@ -601,7 +602,11 @@ export async function cmsFromContent(
 		leaderboards,
 		schedules: schedules.map((schedule) => ({
 			...schedule,
-			events: [...schedule.events, ...(scheduleEventsById[schedule._id] ?? [])]
+			events: [...schedule.events, ...(scheduleEventsById[schedule._id] ?? [])].filter((event) =>
+				!schedule.displayPastEvents
+					? (event.endsAt ?? Infinity) > subMinutes(new Date(), schedule.pastEventDelay ?? 0)
+					: true
+			)
 		})),
 		pictures,
 		digitalFiles,
