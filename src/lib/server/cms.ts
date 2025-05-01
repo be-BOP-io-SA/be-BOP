@@ -15,6 +15,8 @@ import type { ContactForm } from '$lib/types/ContactForm';
 import type { Countdown } from '$lib/types/Countdown';
 import type { Gallery } from '$lib/types/Gallery';
 import type { Leaderboard } from '$lib/types/Leaderboard';
+import { ScheduleEventBooked } from '$lib/types/Schedule';
+import { groupBy } from '$lib/utils/group-by';
 
 const window = new JSDOM('').window;
 
@@ -559,7 +561,7 @@ export async function cmsFromContent(
 		]
 	};
 
-	const [digitalFiles, pictures] = await Promise.all([
+	const [digitalFiles, pictures, scheduleEvents] = await Promise.all([
 		products.length > 0
 			? collections.digitalFiles
 					.find({ productId: { $in: products.map((product) => product._id) } })
@@ -572,8 +574,19 @@ export async function cmsFromContent(
 			: Promise.resolve([]),
 		pictureConditions.$or.length
 			? collections.pictures.find(pictureConditions).sort({ createdAt: 1 }).toArray()
+			: Promise.resolve([]),
+		scheduleSlugs.size
+			? collections.schedules
+					.find({ _id: { $in: [...scheduleSlugs] } })
+					.project<Omit<ScheduleEventBooked, '_id' | 'orderId'>>({
+						_id: 0,
+						orderId: 0
+					})
+					.toArray()
 			: Promise.resolve([])
 	]);
+
+	const scheduleEventsById = groupBy(scheduleEvents, (event) => event.scheduleId);
 
 	return {
 		tokens,
@@ -586,7 +599,10 @@ export async function cmsFromContent(
 		countdowns,
 		galleries,
 		leaderboards,
-		schedules,
+		schedules: schedules.map((schedule) => ({
+			...schedule,
+			events: [...schedule.events, ...(scheduleEventsById[schedule._id] ?? [])]
+		})),
 		pictures,
 		digitalFiles,
 		roleId: locals.user?.roleId
