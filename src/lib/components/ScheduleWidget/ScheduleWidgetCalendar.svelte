@@ -11,7 +11,7 @@
 		addMonths,
 		isSameDay
 	} from 'date-fns';
-	import type { EventSchedule, Schedule } from '$lib/types/Schedule';
+	import type { Day, EventSchedule, Schedule } from '$lib/types/Schedule';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
@@ -19,6 +19,8 @@
 
 	export let schedule: Pick<Schedule, 'allowSubscription' | 'events' | 'pastEventDelay' | '_id'>;
 	let className = '';
+	export let disabledDays: Day[] = [];
+	export let timezone: string | null = null;
 	export { className as class };
 
 	const { t, locale } = useI18n();
@@ -75,6 +77,10 @@
 	function nextMonth() {
 		currentDate = addMonths(currentDate, 1);
 		generateCalendar();
+	}
+
+	function toWeekDay(date: Date) {
+		return format(date, 'eeee').toLowerCase() as Day;
 	}
 
 	function isEventDay(date: Date) {
@@ -138,7 +144,9 @@
 					{isSameDay(day, new Date()) ? 'eventCalendar-currentDate font-bold' : ''}
 					{isEventDay(day) ? 'eventCalendar-hasEvent font-bold' : ''}
 					{selectedDate && isSameDay(day, selectedDate) ? ' ring-2 ring-black' : ''}
-					{format(day, 'M') !== format(currentDate, 'M') ? ' text-gray-400' : ''}"
+					{format(day, 'M') !== format(currentDate, 'M') || disabledDays.includes(toWeekDay(day))
+					? ' text-gray-400'
+					: ''}"
 				style="background-color:{!!hasCustomColorEvents(day) &&
 				hasCustomColorEvents(day).length === 1
 					? hasCustomColorEvents(day)[0].calendarColor

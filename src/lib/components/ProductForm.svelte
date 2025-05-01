@@ -28,7 +28,7 @@
 	import type { PaymentMethod } from '$lib/server/payment-methods';
 	import { useI18n } from '$lib/i18n';
 	import { typedFromEntries } from '$lib/utils/typedFromEntries';
-	import { productToScheduleId } from '$lib/types/Schedule';
+	import { Day, dayList, productToScheduleId } from '$lib/types/Schedule';
 
 	const { t } = useI18n();
 
@@ -200,16 +200,7 @@
 	let existingScheduleId =
 		!!product.bookingSpec && !isNew ? productToScheduleId(product._id) : undefined;
 	let availableDateStr = product.availableDate?.toJSON().slice(0, 10);
-	const dayList = [
-		'monday',
-		'tuesday',
-		'wednesday',
-		'thursday',
-		'friday',
-		'saturday',
-		'sunday'
-	] as const;
-	type Day = (typeof dayList)[number];
+
 	let bookingSpec: NonNullable<Product['bookingSpec']> = product.bookingSpec || {
 		slotMinutes: 15,
 		schedule: {

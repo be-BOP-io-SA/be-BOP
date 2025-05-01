@@ -23,7 +23,7 @@
 	import { serializeSchema } from '$lib/utils/jsonLd.js';
 	import type { Product as SchemaOrgProduct, WithContext } from 'schema-dts';
 	import ScheduleWidgetCalendar from '$lib/components/ScheduleWidget/ScheduleWidgetCalendar.svelte';
-	import { productToScheduleId } from '$lib/types/Schedule.js';
+	import { dayList, productToScheduleId } from '$lib/types/Schedule.js';
 
 	export let data;
 
@@ -452,6 +452,8 @@
 										allowSubscription: false,
 										pastEventDelay: 0
 									}}
+									timezone={data.product.bookingSpec.schedule.timezone}
+									disabledDays={dayList.filter((day) => !data.product.bookingSpec?.schedule[day])}
 								/>
 							{/if}
 							{#if data.product.deposit}

@@ -84,3 +84,15 @@ END:VCALENDAR`;
 export function productToScheduleId(productId: Product['_id']) {
 	return `product:${productId}`;
 }
+
+export const dayList = [
+	'monday',
+	'tuesday',
+	'wednesday',
+	'thursday',
+	'friday',
+	'saturday',
+	'sunday'
+] as const;
+
+export type Day = (typeof dayList)[number];
