@@ -2,10 +2,8 @@ import type { LanguageKey } from '$lib/translations';
 import { addMinutes } from 'date-fns';
 import type { Timestamps } from './Timestamps';
 import type { Product } from './Product';
-import type { ObjectId } from 'mongodb';
 
 export interface EventSchedule {
-	_id: ObjectId;
 	title: string;
 	slug: string;
 	shortDescription?: string;

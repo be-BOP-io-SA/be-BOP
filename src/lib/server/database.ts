@@ -108,6 +108,7 @@ const genCollection = () => ({
 	schedules: db.collection<Schedule>('schedules'),
 	scheduleEvents: db.collection<
 		SetRequired<EventSchedule, 'endsAt'> & {
+			_id: ObjectId;
 			scheduleId: Schedule['_id'];
 			orderId: string;
 			status: 'pending' | 'confirmed' | 'cancelled';
