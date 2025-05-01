@@ -634,6 +634,17 @@
 	"product": {
 		"addedToCart": "Product added to cart",
 		"availableOn": "Available on {date}",
+		"booking": {
+			"duration": "Duration",
+			"hour": {
+				"one": "1 hour",
+				"other": "{count} hours"
+			},
+			"minute": {
+				"one": "1 minute",
+				"other": "{count} minutes"
+			}
+		},
 		"checkBackLater": "Please check back later",
 		"cta": {
 			"add": "Add to cart",

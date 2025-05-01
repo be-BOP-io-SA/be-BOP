@@ -634,6 +634,17 @@
 	"product": {
 		"addedToCart": "Product toegevoegd aan winkelwagen",
 		"availableOn": "Beschikbaar op {date}",
+		"booking": {
+			"duration": "Duur",
+			"hour": {
+				"one": "1 uur",
+				"other": "{count} uren"
+			},
+			"minute": {
+				"one": "1 minuut",
+				"other": "{count} minuten"
+			}
+		},
 		"checkBackLater": "Kom later nog eens terug",
 		"cta": {
 			"add": "Voeg toe aan winkelkar",

@@ -15,7 +15,7 @@
 		productPriceWithVariations
 	} from '$lib/types/Product';
 	import { toCurrency } from '$lib/utils/toCurrency';
-	import { formatDistance } from 'date-fns';
+	import { addMinutes, format, formatDistance } from 'date-fns';
 	import { POS_ROLE_ID } from '$lib/types/User';
 	import { useI18n } from '$lib/i18n';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
@@ -24,6 +24,7 @@
 	import type { Product as SchemaOrgProduct, WithContext } from 'schema-dts';
 	import ScheduleWidgetCalendar from '$lib/components/ScheduleWidget/ScheduleWidgetCalendar.svelte';
 	import { dayList, productToScheduleId } from '$lib/types/Schedule.js';
+	import type { Day } from '$lib/types/Schedule.js';
 
 	export let data;
 
@@ -31,7 +32,10 @@
 	let loading = false;
 	let errorMessage = '';
 	let currentTime = Date.now();
+	let selectedDate = new Date();
 	const { t, locale, formatDistanceLocale } = useI18n();
+
+	$: durations = computeDurations(selectedDate);
 
 	$: timeDifference =
 		data.discount?.endsAt &&
@@ -78,6 +82,35 @@
 		data.roleId === POS_ROLE_ID
 			? data.product.actionSettings.retail.canBeAddedToBasket
 			: data.product.actionSettings.eShop.canBeAddedToBasket;
+
+	function computeDurations(date: Date) {
+		// todo: handle timezone
+		const weekDay = format(date, 'eeee').toLowerCase() as Day;
+		const spec = data.product.bookingSpec;
+
+		if (!spec) {
+			return [];
+		}
+
+		const specForDay = spec.schedule[weekDay];
+
+		if (!specForDay) {
+			return [];
+		}
+
+		const [startHours, startMinutes] = specForDay.start.split(':').map(Number);
+		const [endHours, endMinutes] = specForDay.end.split(':').map(Number);
+
+		const minutes =
+			(specForDay.end === '00:00' ? 24 * 60 : endHours * 60 + endMinutes) -
+			(startHours * 60 + startMinutes);
+
+		return Array.from({ length: minutes / spec.slotMinutes }, (_, i) => ({
+			duration: (i + 1) * spec.slotMinutes,
+			qty: i + 1
+		}));
+	}
+
 	function addToCart() {
 		$productAddedToCart = {
 			product: data.product,
@@ -100,6 +133,7 @@
 
 	let PWYWInput: HTMLInputElement | null = null;
 	let acceptRestriction = data.product.hasSellDisclaimer ? false : true;
+	$: wrongDay = data.product.bookingSpec ? durations.length === 0 : false;
 	function checkPWYW() {
 		if (!PWYWInput) {
 			return true;
@@ -279,7 +313,8 @@
 							currency={data.product.price.currency}
 							class="text-2xl lg:text-4xl truncate max-w-full {data.discount ? 'line-through' : ''}"
 							short={!!data.discount}
-							amount={data.product.hasVariations ? customAmount : data.product.price.amount}
+							amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
+								(data.product.bookingSpec ? quantity : 1)}
 							main
 						/>
 						{#if data.discount}
@@ -288,6 +323,7 @@
 								class="text-2xl lg:text-4xl truncate max-w-full"
 								short
 								amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
+									(data.product.bookingSpec ? quantity : 1) *
 									(1 - data.discount.percentage / 100)}
 								main
 							/>
@@ -296,6 +332,7 @@
 					<PriceTag
 						currency={data.product.price.currency}
 						amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
+							(data.product.bookingSpec ? quantity : 1) *
 							(data.discount ? 1 - data.discount.percentage / 100 : 1)}
 						secondary
 						class="text-xl"
@@ -453,8 +490,28 @@
 										pastEventDelay: 0
 									}}
 									timezone={data.product.bookingSpec.schedule.timezone}
+									bind:selectedDate
 									disabledDays={dayList.filter((day) => !data.product.bookingSpec?.schedule[day])}
 								/>
+								{#if durations.length}
+									<label class="form-label">
+										{t('product.booking.duration')}
+										<select class="form-input" bind:value={quantity} name="quantity">
+											{#each durations as duration}
+												<option value={duration.qty}
+													>{duration.duration >= 60
+														? t('product.booking.hour', {
+																count: Math.floor(duration.duration / 60)
+														  })
+														: ''}
+													{duration.duration % 60 > 0
+														? t('product.booking.minute', { count: duration.duration % 60 })
+														: ''}
+												</option>
+											{/each}
+										</select>
+									</label>
+								{/if}
 							{/if}
 							{#if data.product.deposit}
 								<label class="checkbox-label">
@@ -517,12 +574,12 @@
 									: false}
 								<button
 									class="btn body-cta body-mainCTA"
-									disabled={!acceptRestriction || loading || cannotOrderPhysicalProduct}
+									disabled={!acceptRestriction || loading || cannotOrderPhysicalProduct || wrongDay}
 									>{t(`product.cta.${verb}`)}</button
 								>
 								<button
 									formaction="?/addToCart"
-									disabled={!acceptRestriction || loading}
+									disabled={!acceptRestriction || loading || wrongDay}
 									class="btn body-cta body-secondaryCTA"
 								>
 									{t('product.cta.add')}
@@ -530,7 +587,7 @@
 							{:else}
 								<button
 									formaction="?/addToCart"
-									disabled={!acceptRestriction || loading}
+									disabled={!acceptRestriction || loading || wrongDay}
 									class="btn body-cta body-mainCTA"
 								>
 									{t(`product.cta.${verb}`)}

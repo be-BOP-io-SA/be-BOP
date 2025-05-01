@@ -21,12 +21,12 @@
 	let className = '';
 	export let disabledDays: Day[] = [];
 	export let timezone: string | null = null;
+	export let selectedDate = new Date();
 	export { className as class };
 
 	const { t, locale } = useI18n();
 
 	let currentDate = new Date();
-	$: selectedDate = new Date();
 	let days: Date[] = [];
 	let weekDays: string[] = [];
 
