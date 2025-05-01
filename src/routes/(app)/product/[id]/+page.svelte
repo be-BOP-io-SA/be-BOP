@@ -48,8 +48,27 @@
 	let durationMinutes = data.product.bookingSpec?.slotMinutes || 0;
 	const { t, locale, formatDistanceLocale } = useI18n();
 
-	$: durations = computeDurations(selectedDate);
-	$: times = computeTimes(selectedDate, durationMinutes);
+	function generateEvents(scheduledEvents: typeof data.scheduleEvents, cart: typeof data.cart) {
+		return [
+			...scheduledEvents,
+			...cart
+				.filter((item) => item.product._id === data.product._id && item.booking)
+				.map((item) =>
+					item.booking
+						? {
+								beginsAt: item.booking.start,
+								endsAt: item.booking.end
+						  }
+						: null
+				)
+				.filter((item) => item !== null)
+		].sort((a, b) => a.beginsAt.getTime() - b.beginsAt.getTime());
+	}
+
+	$: events = generateEvents(data.scheduleEvents, data.cart);
+
+	$: durations = computeDurations(selectedDate, events);
+	$: times = computeTimes(selectedDate, durationMinutes, events);
 
 	$: if (durations.length && durationMinutes > durations[durations.length - 1].duration) {
 		durationMinutes = durations[durations.length - 1].duration;
@@ -104,7 +123,7 @@
 			? data.product.actionSettings.retail.canBeAddedToBasket
 			: data.product.actionSettings.eShop.canBeAddedToBasket;
 
-	function computeFreeIntervals(date: Date) {
+	function computeFreeIntervals(date: Date, events: Array<{ beginsAt: Date; endsAt?: Date }>) {
 		const now = new Date();
 		const weekDay = format(date, 'eeee').toLowerCase() as Day;
 		const spec = data.product.bookingSpec;
@@ -129,7 +148,7 @@
 			end = addDays(end, 1);
 		}
 
-		const relevantEvents = data.scheduleEvents
+		const relevantEvents = events
 			.map((e) => ({
 				start: toZonedTime(e.beginsAt, Intl.DateTimeFormat().resolvedOptions().timeZone),
 				end: e.endsAt
@@ -151,17 +170,14 @@
 		return freeIntervals; // Added return statement to return the computed free intervals
 	}
 
-	function computeDurations(date: Date) {
+	function computeDurations(date: Date, events: Array<{ beginsAt: Date; endsAt?: Date }>) {
 		const spec = data.product.bookingSpec;
 
 		if (!spec) {
 			return [];
 		}
 
-		const intervals = computeFreeIntervals(date);
-
-		console.log('Intervals:', intervals);
-		console.log('events', data.scheduleEvents);
+		const intervals = computeFreeIntervals(date, events);
 
 		if (!intervals.length) {
 			return [];
@@ -183,7 +199,8 @@
 
 	function computeTimes(
 		date: Date,
-		durationMinutes: number
+		durationMinutes: number,
+		events: Array<{ beginsAt: Date; endsAt?: Date }>
 	): Array<{ date: string; time: string }> {
 		const spec = data.product.bookingSpec;
 
@@ -191,7 +208,7 @@
 			return [];
 		}
 
-		const intervals = computeFreeIntervals(date).filter(
+		const intervals = computeFreeIntervals(date, events).filter(
 			(interval) => differenceInMinutes(interval.end, interval.start) >= durationMinutes
 		);
 
@@ -608,7 +625,7 @@
 										pastEventDelay: 0
 									}}
 									bind:selectedDate
-									isDayDisabled={(date) => computeDurations(date).length === 0}
+									isDayDisabled={(date) => computeDurations(date, events).length === 0}
 								/>
 								{t('product.booking.timezone', {
 									timeZone: data.product.bookingSpec.schedule.timezone
