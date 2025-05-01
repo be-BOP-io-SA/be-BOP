@@ -15,7 +15,16 @@
 		productPriceWithVariations
 	} from '$lib/types/Product';
 	import { toCurrency } from '$lib/utils/toCurrency';
-	import { addDays, format, formatDistance, isSameDay } from 'date-fns';
+	import {
+		addDays,
+		addMinutes,
+		differenceInMinutes,
+		format,
+		formatDistance,
+		isSameDay,
+		startOfDay,
+		subMinutes
+	} from 'date-fns';
 	import { POS_ROLE_ID } from '$lib/types/User';
 	import { useI18n } from '$lib/i18n';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
@@ -30,7 +39,8 @@
 		timeToMinutes
 	} from '$lib/types/Schedule.js';
 	import type { Day } from '$lib/types/Schedule.js';
-	import { fromZonedTime } from 'date-fns-tz';
+	import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+	import { RangeList } from '$lib/utils/range-list.js';
 
 	export let data;
 
@@ -38,7 +48,7 @@
 	let loading = false;
 	let errorMessage = '';
 	let currentTime = Date.now();
-	let selectedDate = addDays(new Date(), 1);
+	let selectedDate = startOfDay(addDays(new Date(), 1));
 	let time = '';
 	let durationMinutes = data.product.bookingSpec?.slotMinutes || 0;
 	const { t, locale, formatDistanceLocale } = useI18n();
@@ -99,8 +109,8 @@
 			? data.product.actionSettings.retail.canBeAddedToBasket
 			: data.product.actionSettings.eShop.canBeAddedToBasket;
 
-	function computeDurations(date: Date) {
-		// todo: handle timezone
+	function computeFreeIntervals(date: Date) {
+		const now = new Date();
 		const weekDay = format(date, 'eeee').toLowerCase() as Day;
 		const spec = data.product.bookingSpec;
 
@@ -114,20 +124,57 @@
 			return [];
 		}
 
-		const [startHours, startMinutes] = specForDay.start.split(':').map(Number);
-		const [endHours, endMinutes] = specForDay.end.split(':').map(Number);
-
-		if (!isSameDay(date, new Date()) && date < new Date()) {
-			// todo: handle timezone
+		if (!isSameDay(date, now) && date < now) {
 			return [];
 		}
 
-		const start = Math.max(
-			startHours * 60 + startMinutes,
-			isSameDay(date, new Date()) ? new Date().getHours() * 60 + new Date().getMinutes() : 0
-		); // todo: handle timezone
-		const end = specForDay.end === '00:00' ? 24 * 60 : endHours * 60 + endMinutes;
-		const minutes = end - start;
+		const start = new Date(format(date, 'yyyy-MM-dd') + ' ' + specForDay.start);
+		let end = new Date(format(date, 'yyyy-MM-dd') + ' ' + specForDay.end);
+		if (specForDay.end === '00:00') {
+			end = addDays(end, 1);
+		}
+
+		const relevantEvents = data.scheduleEvents
+			.map((e) => ({
+				start: toZonedTime(e.beginsAt, Intl.DateTimeFormat().resolvedOptions().timeZone),
+				end: e.endsAt
+					? toZonedTime(e.endsAt, Intl.DateTimeFormat().resolvedOptions().timeZone)
+					: addDays(start, 10)
+			}))
+			.filter((e) => e.start <= end && e.end >= start);
+
+		const rangeList = new RangeList([start.getTime(), end.getTime()]);
+		for (const event of relevantEvents) {
+			rangeList.remove([event.start.getTime(), event.end.getTime()]);
+		}
+
+		const freeIntervals = rangeList.getRemainingRanges().map((range) => ({
+			start: new Date(range[0]),
+			end: new Date(range[1])
+		}));
+
+		return freeIntervals; // Added return statement to return the computed free intervals
+	}
+
+	function computeDurations(date: Date) {
+		const spec = data.product.bookingSpec;
+
+		if (!spec) {
+			return [];
+		}
+
+		const intervals = computeFreeIntervals(date);
+
+		console.log('Intervals:', intervals);
+		console.log('events', data.scheduleEvents);
+
+		if (!intervals.length) {
+			return [];
+		}
+
+		const minutes = Math.max(
+			...intervals.map((interval) => differenceInMinutes(interval.end, interval.start))
+		);
 
 		if (minutes <= 0) {
 			return [];
@@ -139,39 +186,43 @@
 		}));
 	}
 
-	function computeTimes(date: Date, durationMinutes: number) {
-		// todo: handle timezone
-		const weekDay = format(date, 'eeee').toLowerCase() as Day;
+	function computeTimes(
+		date: Date,
+		durationMinutes: number
+	): Array<{ date: string; time: string }> {
 		const spec = data.product.bookingSpec;
 
 		if (!spec) {
 			return [];
 		}
 
-		const specForDay = spec.schedule[weekDay];
-		if (!specForDay) {
+		const intervals = computeFreeIntervals(date).filter(
+			(interval) => differenceInMinutes(interval.end, interval.start) >= durationMinutes
+		);
+
+		if (!intervals.length) {
 			return [];
 		}
 
-		const start = timeToMinutes(specForDay.start);
-		// todo: handle timezone
-		const minTime = isSameDay(selectedDate, new Date())
-			? minutesToTime(new Date().getHours() * 60 + new Date().getMinutes())
-			: '00:00';
-		const end = specForDay.end === '00:00' ? 24 * 60 : timeToMinutes(specForDay.end);
+		const times = intervals.flatMap((interval) => {
+			const start = interval.start;
+			const end = subMinutes(interval.end, durationMinutes);
 
-		return Array.from(
-			{ length: (end - durationMinutes + spec.slotMinutes - start) / spec.slotMinutes },
-			(_, i) => minutesToTime(start + i * spec.slotMinutes)
-		)
-			.filter((time) => time >= minTime)
-			.map((time) => ({
-				date: fromZonedTime(
-					new Date(selectedDate.toJSON().slice(0, 10) + ' ' + time), // todo: handle timezone better?
-					spec.schedule.timezone
-				).toISOString(),
-				time
-			}));
+			const timeSlots = [];
+			let currentTime = start;
+
+			while (currentTime <= end) {
+				timeSlots.push(currentTime);
+				currentTime = addMinutes(currentTime, spec.slotMinutes);
+			}
+
+			return timeSlots;
+		});
+
+		return times.map((time) => ({
+			date: time.toISOString(),
+			time: format(time, 'HH:mm')
+		}));
 	}
 
 	function addToCart() {

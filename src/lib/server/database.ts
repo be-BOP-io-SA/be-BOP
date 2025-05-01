@@ -204,6 +204,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.leaderboards, { beginsAt: 1, endsAt: 1 }],
 	[collections.scheduleEvents, { scheduleId: 1, beginsAt: 1, endsAt: 1 }], // endsAt is just used for index-only scan
 	[collections.scheduleEvents, { scheduleId: 1, status: 1, beginsAt: 1, endsAt: 1 }], // endsAt is just used for index-only scan
+	[collections.scheduleEvents, { scheduleId: 1, status: 1, endsAt: 1 }],
 	[collections.scheduleEvents, { orderId: 1 }]
 ];
 
