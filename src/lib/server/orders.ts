@@ -460,7 +460,7 @@ export async function createOrder(
 		chosenVariations?: Record<string, string>;
 		depositPercentage?: number;
 		discountPercentage?: number;
-		booking?: Cart['items'][0]['booking'];
+		booking?: Cart['items'][0]['booking'] & { _id: ObjectId };
 	}>,
 	// null when point of sale want to use multiple payment methods
 	paymentMethod: PaymentMethod | null,
@@ -842,19 +842,18 @@ export async function createOrder(
 			.map((item) =>
 				item.product.bookingSpec && item.booking !== undefined
 					? {
-							_id: item.product._id,
+							_id: item.booking._id,
+							productId: item.product._id,
 							start: item.booking.start,
 							end: item.booking.end as Date | null
 					  }
 					: undefined
 			)
 			.filter((item) => item !== undefined),
-		(item) => item._id
+		(item) => item.productId
 	);
 
 	const productById = Object.fromEntries(items.map((item) => [item.product._id, item.product]));
-
-	let insertedScheduleIds: ObjectId[] = [];
 
 	if (!isEmptyObject(bookingTimesPerProduct)) {
 		for (const [productId, times] of Object.entries(bookingTimesPerProduct)) {
@@ -982,9 +981,10 @@ export async function createOrder(
 			}
 		}
 
-		const insertResult = await collections.scheduleEvents.insertMany(
+		await collections.scheduleEvents.insertMany(
 			Object.entries(bookingTimesPerProduct).flatMap(([productId, bookings]) =>
 				bookings.map((booking) => ({
+					_id: booking._id,
 					title: '#' + orderNumber + ' - ' + productById[productId].name,
 					slug: productId + '-' + orderNumber,
 					beginsAt: booking.start,
@@ -996,12 +996,10 @@ export async function createOrder(
 				}))
 			)
 		);
-
-		insertedScheduleIds = Object.values(insertResult.insertedIds);
 	}
 
 	try {
-		if (insertedScheduleIds.length) {
+		if (!isEmptyObject(bookingTimesPerProduct)) {
 			// Refetch events to check for conflicts. If so, we'll throw, and it will delete the inserted events
 			await Promise.all(
 				Object.entries(bookingTimesPerProduct).map(async ([productId, times]) => {
@@ -1024,7 +1022,7 @@ export async function createOrder(
 								}
 							],
 							_id: {
-								$nin: insertedScheduleIds
+								$nin: times.map((t) => t._id)
 							}
 						})
 						.project<{
@@ -1066,6 +1064,10 @@ export async function createOrder(
 					chosenVariations: item.chosenVariations,
 					depositPercentage: item.depositPercentage,
 					discountPercentage: item.discountPercentage,
+					...(item.product.bookingSpec &&
+						item.booking && {
+							booking: { start: item.booking.start, end: item.booking.end, _id: item.booking._id }
+						}),
 					vatRate: priceInfo.vatRates[i],
 					currencySnapshot: {
 						main: {
@@ -1407,9 +1409,11 @@ export async function createOrder(
 			}
 		});
 	} catch (e) {
-		if (insertedScheduleIds.length) {
+		if (!isEmptyObject(bookingTimesPerProduct)) {
 			await collections.scheduleEvents.deleteMany({
-				_id: { $in: insertedScheduleIds }
+				_id: {
+					$in: Object.values(bookingTimesPerProduct).flatMap((times) => times.map((t) => t._id))
+				}
 			});
 		}
 		throw e;

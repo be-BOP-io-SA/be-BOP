@@ -15,6 +15,7 @@ import { rateLimit } from '$lib/server/rateLimit.js';
 import { cmsFromContent } from '$lib/server/cms';
 import { omit } from '$lib/utils/omit.js';
 import { set } from '$lib/utils/set';
+import { ObjectId } from 'mongodb';
 
 export async function load({ parent, locals }) {
 	const parentData = await parent();
@@ -453,7 +454,11 @@ export const actions = {
 					customPrice: { amount: item.customPrice.amount, currency: item.customPrice.currency }
 				}),
 				...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
-				depositPercentage: item.depositPercentage
+				depositPercentage: item.depositPercentage,
+				...(item.booking && {
+					...item.booking,
+					_id: new ObjectId()
+				})
 			})),
 			paymentMethod,
 			{
