@@ -215,7 +215,11 @@
 						? `width: ${token.width}px;`
 						: ''}{token.height ? `height: ${token.height}px;` : ''}"
 				/>
-				<PictureComponent picture={pictureById[token.slug]} class="my-5 lg:hidden block" />
+				{#if token.msubstitute}
+					<PictureComponent picture={pictureById[token.msubstitute]} class="my-5 lg:hidden block" />
+				{:else}
+					<PictureComponent picture={pictureById[token.slug]} class="my-5 lg:hidden block" />
+				{/if}
 			{:else if token.type === 'leaderboardWidget'}
 				<LeaderBoardWidget
 					leaderboard={leaderboardById[token.slug]}

@@ -65,6 +65,7 @@ type TokenObject =
 			type: 'pictureWidget';
 			slug: string;
 			raw: string;
+			msubstitute?: string | undefined;
 			fit?: 'cover' | 'contain';
 			width?: number;
 			height?: number;
@@ -114,7 +115,7 @@ export async function cmsFromContent(
 
 	const SPECIFICATION_WIDGET_REGEX = /\[Specification=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const PICTURE_WIDGET_REGEX =
-		/\[Picture=(?<slug>[\p{L}\d_-]+)((?:[?\s]width=(?<width>\d+))?(?:[?\s]height=(?<height>\d+))?(?:[?\s]fit=(?<fit>(cover|contain)))?)*\]/giu;
+		/\[Picture=(?<slug>[\p{L}\d_-]+)((?:[?\s]msubstitute=(?<msubstitute>[\p{L}\d_-]+))?(?:[?\s]width=(?<width>\d+))?(?:[?\s]height=(?<height>\d+))?(?:[?\s]fit=(?<fit>(cover|contain)))?)*\]/giu;
 	const CONTACTFORM_WIDGET_REGEX = /\[Form=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const COUNTDOWN_WIDGET_REGEX = /\[Countdown=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const TAG_PRODUCTS_REGEX =
@@ -230,6 +231,7 @@ export async function cmsFromContent(
 						break;
 					case 'pictureWidget':
 						pictureSlugs.add(match.groups.slug);
+						pictureSlugs.add(match.groups.msubstitute);
 						// With multiple options, to handle any ordering for the options, we need to parse the string again
 						const raw = match[0];
 						const fit = /[?\s]fit=(?<fit>(cover|contain))/.exec(raw)?.groups?.fit as
@@ -241,6 +243,7 @@ export async function cmsFromContent(
 						token.push({
 							type: 'pictureWidget',
 							slug: match.groups.slug,
+							msubstitute: match.groups.msubstitute,
 							raw,
 							fit,
 							width: width ? Number(width) : undefined,
