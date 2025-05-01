@@ -19,6 +19,7 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { trimPrefix } from '$lib/utils/trimPrefix.js';
+	import { addMinutes } from 'date-fns';
 
 	export let data;
 	let submitting = false;
@@ -699,8 +700,19 @@
 										depositPercentage={item.depositPercentage}
 									/>
 								</div>
-								{#if item.product.bookingSpec}
-									time: ...
+								{#if item.product.bookingSpec && item.booking}
+									<p>
+										{Intl.DateTimeFormat($locale, {
+											year: 'numeric',
+											month: 'short',
+											day: 'numeric',
+											hour: '2-digit',
+											minute: '2-digit'
+										}).formatRange(
+											item.booking.time,
+											addMinutes(item.booking.time, item.booking.durationMinutes)
+										)}
+									</p>
 								{:else}
 									<div>
 										{#if 0}
@@ -715,7 +727,13 @@
 							<div class="flex flex-col ml-auto items-end justify-center">
 								<PriceTag
 									class="text-2xl truncate"
-									amount={((item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100) *
+									amount={((item.quantity *
+										(item.booking?.durationMinutes && item.product.bookingSpec?.slotMinutes
+											? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+											: 1) *
+										price.amount *
+										(item.depositPercentage ?? 100)) /
+										100) *
 										(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 									currency={price.currency}
 									main
@@ -726,7 +744,13 @@
 										: ''}</PriceTag
 								>
 								<PriceTag
-									amount={((item.quantity * price.amount * (item.depositPercentage ?? 100)) / 100) *
+									amount={((item.quantity *
+										(item.booking?.durationMinutes && item.product.bookingSpec?.slotMinutes
+											? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+											: 1) *
+										price.amount *
+										(item.depositPercentage ?? 100)) /
+										100) *
 										(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 									currency={price.currency}
 									class="text-base truncate"

@@ -16,6 +16,7 @@
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
+	import { addMinutes } from 'date-fns';
 
 	export let data;
 
@@ -194,6 +195,20 @@
 								</h2>
 							</a>
 							<p class="text-sm hidden lg:contents">{item.product.shortDescription}</p>
+							{#if item.booking}
+								<p>
+									{Intl.DateTimeFormat($locale, {
+										year: 'numeric',
+										month: 'short',
+										day: 'numeric',
+										hour: '2-digit',
+										minute: '2-digit'
+									}).formatRange(
+										item.booking.time,
+										addMinutes(item.booking.time, item.booking.durationMinutes)
+									)}
+								</p>
+							{/if}
 							<div class="grow" />
 							<div class="flex flex-row lg:gap-2">
 								<ProductType

@@ -101,11 +101,19 @@ export function computeDeliveryFees(
 
 export function computePriceInfo(
 	items: Array<{
-		product: { shipping: boolean; price: Price; vatProfileId?: string | ObjectId };
+		product: {
+			shipping: boolean;
+			price: Price;
+			vatProfileId?: string | ObjectId;
+			bookingSpec?: { slotMinutes: number };
+		};
 		quantity: number;
 		customPrice?: Price;
 		depositPercentage?: number;
 		discountPercentage?: number;
+		booking?: {
+			durationMinutes: number;
+		};
 	}>,
 	params: {
 		vatExempted: boolean;
@@ -171,6 +179,9 @@ export function computePriceInfo(
 		const price = fixCurrencyRounding(
 			(item.customPrice || item.product.price).amount *
 				item.quantity *
+				(item.booking?.durationMinutes && item.product.bookingSpec?.slotMinutes
+					? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+					: 1) *
 				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
 			currency
 		);
@@ -197,6 +208,9 @@ export function computePriceInfo(
 			amount:
 				(((item.customPrice || item.product.price).amount *
 					item.quantity *
+					(item.booking?.durationMinutes && item.product.bookingSpec?.slotMinutes
+						? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+						: 1) *
 					(item.depositPercentage ?? 100)) /
 					100) *
 				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
@@ -223,6 +237,9 @@ export function computePriceInfo(
 			amount:
 				(item.customPrice || item.product.price).amount *
 				item.quantity *
+				(item.booking?.durationMinutes && item.product.bookingSpec?.slotMinutes
+					? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+					: 1) *
 				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
 		})),
 		params.deliveryFees

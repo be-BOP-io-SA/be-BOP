@@ -15,7 +15,7 @@
 		productPriceWithVariations
 	} from '$lib/types/Product';
 	import { toCurrency } from '$lib/utils/toCurrency';
-	import { addMinutes, format, formatDistance, isSameDay } from 'date-fns';
+	import { addDays, addMinutes, format, formatDistance, isSameDay } from 'date-fns';
 	import { POS_ROLE_ID } from '$lib/types/User';
 	import { useI18n } from '$lib/i18n';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
@@ -33,7 +33,7 @@
 	let loading = false;
 	let errorMessage = '';
 	let currentTime = Date.now();
-	let selectedDate = new Date();
+	let selectedDate = addDays(new Date(), 1);
 	let time = '';
 	let durationMinutes = data.product.bookingSpec?.slotMinutes || 0;
 	const { t, locale, formatDistanceLocale } = useI18n();
@@ -194,7 +194,10 @@
 			...(data.product.hasVariations && {
 				chosenVariations: selectedVariations
 			}),
-			discountPercentage: data.discount?.percentage
+			discountPercentage: data.discount?.percentage,
+			...(data.product.bookingSpec && {
+				priceMultiplier: durationMinutes / data.product.bookingSpec.slotMinutes
+			})
 		};
 	}
 
@@ -381,7 +384,9 @@
 							class="text-2xl lg:text-4xl truncate max-w-full {data.discount ? 'line-through' : ''}"
 							short={!!data.discount}
 							amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-								(data.product.bookingSpec ? quantity : 1)}
+								(data.product.bookingSpec
+									? durationMinutes / data.product.bookingSpec.slotMinutes
+									: 1)}
 							main
 						/>
 						{#if data.discount}
@@ -390,7 +395,9 @@
 								class="text-2xl lg:text-4xl truncate max-w-full"
 								short
 								amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-									(data.product.bookingSpec ? quantity : 1) *
+									(data.product.bookingSpec
+										? durationMinutes / data.product.bookingSpec.slotMinutes
+										: 1) *
 									(1 - data.discount.percentage / 100)}
 								main
 							/>
@@ -399,7 +406,9 @@
 					<PriceTag
 						currency={data.product.price.currency}
 						amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-							(data.product.bookingSpec ? quantity : 1) *
+							(data.product.bookingSpec
+								? durationMinutes / data.product.bookingSpec.slotMinutes
+								: 1) *
 							(data.discount ? 1 - data.discount.percentage / 100 : 1)}
 						secondary
 						class="text-xl"

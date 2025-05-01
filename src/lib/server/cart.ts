@@ -201,7 +201,14 @@ export async function addToCartInDb(
 				chosenVariations: params.chosenVariations
 			}),
 			reservedUntil: addMinutes(new Date(), runtimeConfig.reserveStockInMinutes),
-			...(depositPercentage && { depositPercentage })
+			...(depositPercentage && { depositPercentage }),
+			...(params.booking &&
+				product.bookingSpec && {
+					booking: {
+						time: params.booking.time,
+						durationMinutes: params.booking.durationMinutes
+					}
+				})
 		});
 	}
 

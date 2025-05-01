@@ -202,8 +202,8 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			customPriceCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1)]).optional(),
 			deposit: z.enum(['partial', 'full']).optional(),
 			chosenVariations: z.record(z.string(), z.string()).optional(),
-			time: z.date().optional(),
-			durationMinutes: z.number().int().min(1).optional()
+			time: z.date({ coerce: true }).optional(),
+			durationMinutes: z.number({ coerce: true }).int().min(1).optional()
 		})
 		.parse(json);
 
@@ -224,7 +224,7 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		...(customPrice && { customPrice }),
 		deposit: deposit === 'partial',
 		...(product.hasVariations && { chosenVariations }),
-		...(time && durationMinutes
+		...(time && durationMinutes && product.bookingSpec
 			? {
 					booking: {
 						time,
