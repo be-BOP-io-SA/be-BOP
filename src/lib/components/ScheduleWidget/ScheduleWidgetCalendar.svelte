@@ -11,7 +11,7 @@
 		addMonths,
 		isSameDay
 	} from 'date-fns';
-	import type { Day, ScheduleEvent, Schedule } from '$lib/types/Schedule';
+	import type { ScheduleEvent, Schedule } from '$lib/types/Schedule';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
