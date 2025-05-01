@@ -20,6 +20,7 @@ import { adminPrefix } from '$lib/server/admin';
 import { pojo } from '$lib/server/pojo';
 import { zodSlug } from '$lib/server/zod';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
+import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 
 export const load = async ({ url }) => {
 	const productId = url.searchParams.get('duplicate_from');
@@ -243,6 +244,21 @@ export const actions: Actions = {
 						},
 						{ session }
 					);
+
+					if (parsed.bookingSpec) {
+						await collections.schedules.insertOne(
+							{
+								...defaultSchedule,
+								_id: productToScheduleId(parsed.slug),
+								name: parsed.name,
+								events: [],
+								createdAt: new Date(),
+								updatedAt: new Date(),
+								productId: parsed.slug
+							},
+							{ session }
+						);
+					}
 				} catch (err) {
 					if (isUniqueConstraintError(err)) {
 						throw error(400, 'A product with the same alias already exists');
@@ -436,6 +452,21 @@ export const actions: Actions = {
 				},
 				{ session }
 			);
+
+			if (parsed.bookingSpec) {
+				await collections.schedules.insertOne(
+					{
+						...defaultSchedule,
+						_id: productToScheduleId(parsed.slug),
+						name: parsed.name,
+						events: [],
+						createdAt: new Date(),
+						updatedAt: new Date(),
+						productId: parsed.slug
+					},
+					{ session }
+				);
+			}
 
 			const picturesToDuplicate = await collections.pictures
 				.find({ productId: duplicateFromId })

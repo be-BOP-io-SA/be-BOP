@@ -1,6 +1,7 @@
 import type { LanguageKey } from '$lib/translations';
 import { addMinutes } from 'date-fns';
 import type { Timestamps } from './Timestamps';
+import type { Product } from './Product';
 
 export interface EventSchedule {
 	title: string;
@@ -24,8 +25,16 @@ export interface EventSchedule {
 	rsvp?: {
 		target: string;
 	};
-	productId?: string;
+	productId?: Product['_id'];
 }
+
+export const defaultSchedule = {
+	pastEventDelay: 60,
+	displayPastEvents: false,
+	displayPastEventsAfterFuture: false,
+	sortByEventDateDesc: false,
+	allowSubscription: false
+} satisfies Partial<Schedule>;
 
 export interface ScheduleTranslatableFields {
 	events: EventSchedule[];
@@ -39,6 +48,7 @@ export interface Schedule extends Timestamps, ScheduleTranslatableFields {
 	displayPastEventsAfterFuture: boolean;
 	sortByEventDateDesc: boolean;
 	allowSubscription?: boolean;
+	productId?: Product['_id'];
 
 	translations?: Partial<Record<LanguageKey, Partial<ScheduleTranslatableFields>>>;
 }
@@ -69,4 +79,8 @@ END:VCALENDAR`;
 	// Base64
 	const base64Data = btoa(unescape(encodeURIComponent(icsContent)));
 	return `data:text/calendar;base64,${base64Data}`;
+}
+
+export function productToScheduleId(productId: Product['_id']) {
+	return `product:${productId}`;
 }

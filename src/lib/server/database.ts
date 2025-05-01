@@ -121,6 +121,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.pictures, { 'slider._id': 1, createdAt: 1 }],
 	[collections.pictures, { 'tag._id': 1, createdAt: 1 }],
 	[collections.pictures, { 'schedule._id': 1, createdAt: 1 }],
+	//^ Todo: use partialFilterExpression but take care of deleting old indexes
 	[collections.products, { type: 1, createdAt: 1 }],
 	[collections.products, { stock: 1 }, { sparse: true }],
 	[collections.products, { 'actionSettings.eShop.visible': 1 }],

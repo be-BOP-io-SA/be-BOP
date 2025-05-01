@@ -12,6 +12,7 @@ import type { Tag } from '$lib/types/Tag';
 import { adminPrefix } from '$lib/server/admin';
 import { ObjectId } from 'mongodb';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
+import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 
 export const load = async ({ params }) => {
 	const pictures = await collections.pictures
@@ -256,6 +257,21 @@ export const actions: Actions = {
 					}
 				}
 			);
+
+			if (
+				parsed.bookingSpec &&
+				!(await collections.schedules.countDocuments({ _id: productToScheduleId(params.id) }))
+			) {
+				await collections.schedules.insertOne({
+					...defaultSchedule,
+					_id: productToScheduleId(params.id),
+					name: parsed.name,
+					events: [],
+					createdAt: new Date(),
+					updatedAt: new Date(),
+					productId: params.id
+				});
+			}
 
 			if (!res.matchedCount) {
 				throw error(404, 'Product not found');

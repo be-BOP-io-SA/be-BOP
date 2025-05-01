@@ -28,6 +28,7 @@
 	import type { PaymentMethod } from '$lib/server/payment-methods';
 	import { useI18n } from '$lib/i18n';
 	import { typedFromEntries } from '$lib/utils/typedFromEntries';
+	import { productToScheduleId } from '$lib/types/Schedule';
 
 	const { t } = useI18n();
 
@@ -196,6 +197,8 @@
 	}
 	let hasMaximumPrice = !!product.maximumPrice;
 	let hasBooking = !!product.bookingSpec;
+	let existingScheduleId =
+		!!product.bookingSpec && !isNew ? productToScheduleId(product._id) : undefined;
 	let availableDateStr = product.availableDate?.toJSON().slice(0, 10);
 	const dayList = [
 		'monday',
@@ -961,6 +964,16 @@
 						{/if}
 					{/each}
 				</div>
+
+				{#if existingScheduleId}
+					<a
+						href="{adminPrefix}/schedule/{existingScheduleId}"
+						target="_blank"
+						class="underline body-hyperlink"
+					>
+						Edit associated schedule
+					</a>
+				{/if}
 			{/if}
 			<h3 class="text-xl">Stock</h3>
 
