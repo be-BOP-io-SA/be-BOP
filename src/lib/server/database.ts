@@ -107,7 +107,11 @@ const genCollection = () => ({
 	labels: db.collection<OrderLabel>('labels'),
 	schedules: db.collection<Schedule>('schedules'),
 	scheduleEvents: db.collection<
-		SetRequired<EventSchedule, 'endsAt'> & { scheduleId: Schedule['_id'] }
+		SetRequired<EventSchedule, 'endsAt'> & {
+			scheduleId: Schedule['_id'];
+			orderId: string;
+			status: 'pending' | 'approved';
+		}
 	>('scheduleEvents'),
 
 	errors: db.collection<unknown & { _id: ObjectId; url: string; method: string }>('errors')
