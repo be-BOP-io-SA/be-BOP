@@ -10,14 +10,15 @@ import { productBaseSchema } from '../product-schema';
 import { amountOfProductReserved, amountOfProductSold } from '$lib/server/product';
 import type { Tag } from '$lib/types/Tag';
 import { adminPrefix } from '$lib/server/admin';
-import { ObjectId } from 'mongodb';
+import { AnyBulkWriteOperation, ObjectId } from 'mongodb';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
+import type { Picture } from '$lib/types/Picture';
 
 export const load = async ({ params }) => {
 	const pictures = await collections.pictures
 		.find({ productId: params.id })
-		.sort({ createdAt: 1 })
+		.sort({ order: 1, createdAt: 1 })
 		.toArray();
 	const digitalFiles = await collections.digitalFiles
 		.find({ productId: params.id })
@@ -285,6 +286,26 @@ export const actions: Actions = {
 		}
 
 		return {};
+	},
+
+	updateOrder: async ({ request }) => {
+		const formData = await request.formData();
+		const pictureIds = z
+			.object({
+				pictureId: z.string().array().min(1)
+			})
+			.parse({
+				pictureId: formData.getAll('pictureId')
+			}).pictureId;
+
+		const bulkOps: AnyBulkWriteOperation<Picture>[] = pictureIds.map((id, index) => ({
+			updateOne: {
+				filter: { _id: id },
+				update: { $set: { order: index } }
+			}
+		}));
+
+		await collections.pictures.bulkWrite(bulkOps, { ordered: false });
 	},
 
 	delete: async ({ params }) => {

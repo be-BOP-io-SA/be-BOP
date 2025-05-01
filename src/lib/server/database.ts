@@ -125,6 +125,7 @@ export const collections = building
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?]> = [
 	[collections.pictures, { productId: 1, createdAt: 1 }],
+	[collections.pictures, { productId: 1, order: 1, createdAt: 1 }],
 	[collections.pictures, { galleryId: 1, createdAt: 1 }],
 	[collections.pictures, { 'slider._id': 1, createdAt: 1 }],
 	[collections.pictures, { 'tag._id': 1, createdAt: 1 }],

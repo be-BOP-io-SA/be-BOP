@@ -113,7 +113,7 @@ export const load = async ({ params, locals }) => {
 
 	const pictures = await collections.pictures
 		.find({ productId: params.id })
-		.sort({ createdAt: 1 })
+		.sort({ order: 1, createdAt: 1 })
 		.toArray();
 	const subscriptions = await collections.paidSubscriptions
 		.find({
