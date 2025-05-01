@@ -13,7 +13,7 @@ import { getWeek, getWeekOfMonth } from 'date-fns';
 import type { Ticket } from './Ticket';
 import type { OrderLabel } from './OrderLabel';
 import { toBitcoins } from '$lib/utils/toBitcoins';
-import { EventSchedule } from './Schedule';
+import type { EventSchedule } from './Schedule';
 
 export type OrderPaymentStatus = 'pending' | 'paid' | 'expired' | 'canceled' | 'failed';
 
