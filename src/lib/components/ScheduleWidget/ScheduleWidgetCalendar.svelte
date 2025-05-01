@@ -11,7 +11,7 @@
 		addMonths,
 		isSameDay
 	} from 'date-fns';
-	import type { Day, EventSchedule, Schedule } from '$lib/types/Schedule';
+	import type { Day, ScheduleEvent, Schedule } from '$lib/types/Schedule';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
@@ -34,7 +34,7 @@
 	let days: Date[] = [];
 	let weekDays: string[] = [];
 
-	let scheduleEventByDay: Record<string, EventSchedule[]> = {};
+	let scheduleEventByDay: Record<string, ScheduleEvent[]> = {};
 	for (const event of schedule.events) {
 		const startDate = new Date(event.beginsAt);
 		const endDate = event.endsAt ? new Date(event.endsAt) : startDate;

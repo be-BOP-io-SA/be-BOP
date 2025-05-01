@@ -2,8 +2,10 @@ import type { LanguageKey } from '$lib/translations';
 import { addMinutes } from 'date-fns';
 import type { Timestamps } from './Timestamps';
 import type { Product } from './Product';
+import type { SetRequired } from 'type-fest';
+import type { ObjectId } from 'mongodb';
 
-export interface EventSchedule {
+export interface ScheduleEvent {
 	title: string;
 	slug: string;
 	shortDescription?: string;
@@ -28,6 +30,13 @@ export interface EventSchedule {
 	productId?: Product['_id'];
 }
 
+export interface ScheduleEventBooked extends SetRequired<ScheduleEvent, 'endsAt'> {
+	_id: ObjectId;
+	scheduleId: Schedule['_id'];
+	orderId: string;
+	status: 'pending' | 'confirmed' | 'cancelled';
+}
+
 export const defaultSchedule = {
 	pastEventDelay: 60,
 	displayPastEvents: false,
@@ -37,7 +46,7 @@ export const defaultSchedule = {
 } satisfies Partial<Schedule>;
 
 export interface ScheduleTranslatableFields {
-	events: EventSchedule[];
+	events: ScheduleEvent[];
 }
 
 export interface Schedule extends Timestamps, ScheduleTranslatableFields {
@@ -53,7 +62,7 @@ export interface Schedule extends Timestamps, ScheduleTranslatableFields {
 	translations?: Partial<Record<LanguageKey, Partial<ScheduleTranslatableFields>>>;
 }
 
-export function exportToICS(event: EventSchedule, pastEventDelay: number) {
+export function exportToICS(event: ScheduleEvent, pastEventDelay: number) {
 	const start = new Date(event.beginsAt).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 	const end = event.endsAt
 		? new Date(event.endsAt).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'

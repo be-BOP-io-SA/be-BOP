@@ -62,7 +62,7 @@ import type { Discount } from '$lib/types/Discount';
 import { groupByNonPartial } from '$lib/utils/group-by';
 import {
 	dayList,
-	EventSchedule,
+	ScheduleEvent,
 	productToScheduleId,
 	Schedule,
 	scheduleToProductId,
@@ -932,8 +932,8 @@ export async function createOrder(
 					.project<{
 						_id: Schedule['_id'];
 						isNew: boolean;
-						start: EventSchedule['beginsAt'];
-						end: NonNullable<EventSchedule['endsAt']> | null;
+						start: ScheduleEvent['beginsAt'];
+						end: NonNullable<ScheduleEvent['endsAt']> | null;
 					}>({
 						_id: { $literal: productId },
 						start: '$beginsAt',
@@ -1028,8 +1028,8 @@ export async function createOrder(
 						.project<{
 							_id: Schedule['_id'];
 							isNew: boolean;
-							start: EventSchedule['beginsAt'];
-							end: NonNullable<EventSchedule['endsAt']> | null;
+							start: ScheduleEvent['beginsAt'];
+							end: NonNullable<ScheduleEvent['endsAt']> | null;
 						}>({
 							_id: { $literal: productId },
 							start: '$beginsAt',

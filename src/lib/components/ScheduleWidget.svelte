@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Picture } from '$lib/types/Picture';
-	import type { EventSchedule, Schedule } from '$lib/types/Schedule';
+	import type { ScheduleEvent, Schedule } from '$lib/types/Schedule';
 	import { typedInclude } from '$lib/utils/typedIncludes';
 	import { typedKeys } from '$lib/utils/typedKeys';
 	import { addMinutes } from 'date-fns';
@@ -34,7 +34,7 @@
 		? widgets[displayOption]
 		: widgets['main'];
 
-	function compareEvents(a: EventSchedule, b: EventSchedule, sortByDesc: boolean) {
+	function compareEvents(a: ScheduleEvent, b: ScheduleEvent, sortByDesc: boolean) {
 		return sortByDesc
 			? new Date(b.beginsAt).getTime() - new Date(a.beginsAt).getTime()
 			: new Date(a.beginsAt).getTime() - new Date(b.beginsAt).getTime();
@@ -42,8 +42,8 @@
 
 	let now = new Date();
 
-	let futureEvents: EventSchedule[] = [];
-	let pastEvents: EventSchedule[] = [];
+	let futureEvents: ScheduleEvent[] = [];
+	let pastEvents: ScheduleEvent[] = [];
 
 	schedule.events.forEach((eve) => {
 		const endsAt = eve.endsAt
