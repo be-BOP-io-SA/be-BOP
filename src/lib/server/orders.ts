@@ -14,7 +14,10 @@ import {
 	addMinutes,
 	differenceInMinutes,
 	differenceInSeconds,
+	endOfDay,
+	isSameDay,
 	max,
+	startOfDay,
 	subSeconds
 } from 'date-fns';
 import { runtimeConfig } from './runtime-config';
@@ -58,13 +61,16 @@ import {
 import type { Discount } from '$lib/types/Discount';
 import { groupByNonPartial } from '$lib/utils/group-by';
 import {
+	dayList,
 	EventSchedule,
 	productToScheduleId,
 	Schedule,
-	scheduleToProductId
+	scheduleToProductId,
+	timeToMinutes
 } from '$lib/types/Schedule';
 import { isEmptyObject } from '$lib/utils/is-empty-object';
 import { binaryFindAround } from '$lib/utils/binary-find';
+import { toZonedTime } from 'date-fns-tz';
 
 async function generateOrderNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(
@@ -848,13 +854,61 @@ export async function createOrder(
 
 	const productById = Object.fromEntries(items.map((item) => [item.product._id, item.product]));
 
-	for (const [productId, times] of Object.entries(bookingTimesPerProduct)) {
-		times.sort(compareBookingsAndThrow(productById[productId].name, false));
-	}
-
 	let insertedScheduleIds: ObjectId[] = [];
 
 	if (!isEmptyObject(bookingTimesPerProduct)) {
+		for (const [productId, times] of Object.entries(bookingTimesPerProduct)) {
+			times.sort(compareBookingsAndThrow(productById[productId].name, false));
+
+			for (const time of times) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const bookingSpec = productById[productId].bookingSpec!;
+
+				if (!time.end) {
+					throw error(400, `Product ${productById[productId].name} booking end time is required`);
+				}
+
+				const startTime = toZonedTime(time.start, bookingSpec.schedule.timezone);
+				const startDay = startOfDay(startTime.getUTCDay() + 6);
+				const endTime = toZonedTime(time.end, bookingSpec.schedule.timezone);
+				const endDay = endOfDay(subSeconds(endTime, 1).getUTCDay() + 6); // Sub-seconds to allow booking until midnight
+
+				if (!isSameDay(startDay, endDay)) {
+					throw error(
+						400,
+						`Product ${productById[productId].name} booking time range must be on the same day`
+					);
+				}
+
+				const dayOfWeek = dayList[(startDay.getUTCDay() + 6) % 7];
+
+				const daySpec = bookingSpec.schedule[dayOfWeek];
+
+				if (!daySpec) {
+					throw error(
+						400,
+						`Product ${productById[productId].name} booking time range is not available on ${dayOfWeek}`
+					);
+				}
+
+				const minutesStart = startTime.getUTCMinutes() + startTime.getUTCHours() * 60;
+				const minutesEnd = endTime.getUTCMinutes() + endTime.getUTCHours() * 60;
+
+				if (minutesStart < timeToMinutes(daySpec.start)) {
+					throw error(
+						400,
+						`Product ${productById[productId].name} booking time range starts before the schedule opening time`
+					);
+				}
+				if (minutesEnd > (daySpec.end === '00:00' ? timeToMinutes(daySpec.end) : 24 * 60)) {
+					throw error(
+						400,
+						`Product ${productById[productId].name} booking time range ends after the schedule closing time`
+					);
+				}
+			}
+		}
+
 		await Promise.all(
 			Object.entries(bookingTimesPerProduct).map(async ([productId, times]) => {
 				const lastTime = times[times.length - 1];
@@ -873,7 +927,8 @@ export async function createOrder(
 							{
 								endsAt: { $gt: times[0].start }
 							}
-						]
+						],
+						status: { $in: ['pending', 'confirmed'] }
 					})
 					.project<{
 						_id: Schedule['_id'];
@@ -946,8 +1001,54 @@ export async function createOrder(
 	}
 
 	try {
-		// todo: check against booking spec too
-		// todo: refetch docs & throw if conflicting with insertedScheduleIds
+		if (insertedScheduleIds.length) {
+			// Refetch events to check for conflicts. If so, we'll throw, and it will delete the inserted events
+			await Promise.all(
+				Object.entries(bookingTimesPerProduct).map(async ([productId, times]) => {
+					const lastTime = times[times.length - 1];
+					const events = await collections.scheduleEvents
+						.find({
+							scheduleId: productToScheduleId(productId),
+							status: { $in: ['pending', 'confirmed'] },
+							...(lastTime.end && {
+								beginsAt: {
+									$lt: lastTime.end
+								}
+							}),
+							$or: [
+								{
+									endsAt: { $exists: false }
+								},
+								{
+									endsAt: { $gt: times[0].start }
+								}
+							],
+							_id: {
+								$nin: insertedScheduleIds
+							}
+						})
+						.project<{
+							_id: Schedule['_id'];
+							isNew: boolean;
+							start: EventSchedule['beginsAt'];
+							end: NonNullable<EventSchedule['endsAt']> | null;
+						}>({
+							_id: { $literal: productId },
+							start: '$beginsAt',
+							end: { $ifNull: ['$endsAt', null] }
+						})
+						.toArray();
+
+					for (const event of events) {
+						binaryFindAround(
+							bookingTimesPerProduct[productId],
+							event,
+							compareBookingsAndThrow(productById[productId].name, true)
+						);
+					}
+				})
+			);
+		}
 
 		await withTransaction(async (session) => {
 			const order: Order = {

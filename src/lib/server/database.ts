@@ -110,7 +110,7 @@ const genCollection = () => ({
 		SetRequired<EventSchedule, 'endsAt'> & {
 			scheduleId: Schedule['_id'];
 			orderId: string;
-			status: 'pending' | 'approved';
+			status: 'pending' | 'confirmed' | 'cancelled';
 		}
 	>('scheduleEvents'),
 
@@ -207,7 +207,9 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.tickets, { orderId: 1 }],
 	[collections.tickets, { productId: 1 }],
 	[collections.tickets, { ticketId: 1 }, { unique: true }],
-	[collections.leaderboards, { beginsAt: 1, endsAt: 1 }]
+	[collections.leaderboards, { beginsAt: 1, endsAt: 1 }],
+	[collections.scheduleEvents, { scheduleId: 1, beginsAt: 1, endsAt: 1 }], // endsAt is just used for index-only scan
+	[collections.scheduleEvents, { scheduleId: 1, status: 1, beginsAt: 1, endsAt: 1 }] // endsAt is just used for index-only scan
 ];
 
 export async function createIndexes() {

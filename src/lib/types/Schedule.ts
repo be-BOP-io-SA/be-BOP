@@ -93,6 +93,17 @@ export function scheduleToProductId(scheduleId: string) {
 	return match[1] as Product['_id'];
 }
 
+export function minutesToTime(minutes: number) {
+	const hours = Math.floor(minutes / 60);
+	const remainingMinutes = minutes % 60;
+	return `${String(hours).padStart(2, '0')}:${String(remainingMinutes).padStart(2, '0')}`;
+}
+
+export function timeToMinutes(time: string) {
+	const [hours, minutes] = time.split(':').map(Number);
+	return hours * 60 + minutes;
+}
+
 export const dayList = [
 	'monday',
 	'tuesday',

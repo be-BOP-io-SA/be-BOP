@@ -23,7 +23,12 @@
 	import { serializeSchema } from '$lib/utils/jsonLd.js';
 	import type { Product as SchemaOrgProduct, WithContext } from 'schema-dts';
 	import ScheduleWidgetCalendar from '$lib/components/ScheduleWidget/ScheduleWidgetCalendar.svelte';
-	import { dayList, productToScheduleId } from '$lib/types/Schedule.js';
+	import {
+		dayList,
+		minutesToTime,
+		productToScheduleId,
+		timeToMinutes
+	} from '$lib/types/Schedule.js';
 	import type { Day } from '$lib/types/Schedule.js';
 	import { fromZonedTime } from 'date-fns-tz';
 
@@ -148,15 +153,12 @@
 			return [];
 		}
 
-		const [startHours, startMinutes] = specForDay.start.split(':').map(Number);
-		const [endHours, endMinutes] = specForDay.end.split(':').map(Number);
-
-		const start = startHours * 60 + startMinutes;
+		const start = timeToMinutes(specForDay.start);
 		// todo: handle timezone
 		const minTime = isSameDay(selectedDate, new Date())
 			? minutesToTime(new Date().getHours() * 60 + new Date().getMinutes())
 			: '00:00';
-		const end = specForDay.end === '00:00' ? 24 * 60 : endHours * 60 + endMinutes;
+		const end = specForDay.end === '00:00' ? 24 * 60 : timeToMinutes(specForDay.end);
 
 		return Array.from(
 			{ length: (end - durationMinutes + spec.slotMinutes - start) / spec.slotMinutes },
@@ -170,12 +172,6 @@
 				).toISOString(),
 				time
 			}));
-	}
-
-	function minutesToTime(minutes: number) {
-		const hours = Math.floor(minutes / 60);
-		const mins = minutes % 60;
-		return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 	}
 
 	function addToCart() {
