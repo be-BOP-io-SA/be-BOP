@@ -178,6 +178,10 @@ export interface Order extends Timestamps {
 				customPrice?: Price;
 			};
 		};
+		booking?: {
+			start: Date;
+			end: Date;
+		};
 		vatRate: number;
 		tickets?: Array<Ticket['ticketId']>;
 	}>;

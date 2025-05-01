@@ -16,7 +16,7 @@
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
-	import { addMinutes } from 'date-fns';
+	import { addMinutes, differenceInMinutes } from 'date-fns';
 
 	export let data;
 
@@ -203,10 +203,7 @@
 										day: 'numeric',
 										hour: '2-digit',
 										minute: '2-digit'
-									}).formatRange(
-										item.booking.time,
-										addMinutes(item.booking.time, item.booking.durationMinutes)
-									)}
+									}).formatRange(item.booking.start, item.booking.end)}
 								</p>
 							{/if}
 							<div class="grow" />
@@ -235,7 +232,8 @@
 								<PriceTag
 									amount={(item.quantity *
 										(item.booking && item.product.bookingSpec?.slotMinutes
-											? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+											? differenceInMinutes(item.booking.end, item.booking.start) /
+											  item.product.bookingSpec.slotMinutes
 											: 1) *
 										price.amount *
 										(item.depositPercentage ?? 100)) /
@@ -253,7 +251,8 @@
 									<PriceTag
 										amount={((item.quantity *
 											(item.booking && item.product.bookingSpec?.slotMinutes
-												? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+												? differenceInMinutes(item.booking.end, item.booking.start) /
+												  item.product.bookingSpec.slotMinutes
 												: 1) *
 											price.amount *
 											(item.depositPercentage ?? 100)) /
@@ -269,7 +268,8 @@
 								class="text-base truncate"
 								amount={((item.quantity *
 									(item.booking && item.product.bookingSpec?.slotMinutes
-										? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+										? differenceInMinutes(item.booking.end, item.booking.start) /
+										  item.product.bookingSpec.slotMinutes
 										: 1) *
 									price.amount *
 									(item.depositPercentage ?? 100)) /

@@ -19,7 +19,7 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { trimPrefix } from '$lib/utils/trimPrefix.js';
-	import { addMinutes } from 'date-fns';
+	import { addMinutes, differenceInMinutes } from 'date-fns';
 
 	export let data;
 	let submitting = false;
@@ -708,10 +708,7 @@
 											day: 'numeric',
 											hour: '2-digit',
 											minute: '2-digit'
-										}).formatRange(
-											item.booking.time,
-											addMinutes(item.booking.time, item.booking.durationMinutes)
-										)}
+										}).formatRange(item.booking.start, item.booking.end)}
 									</p>
 								{:else}
 									<div>
@@ -728,8 +725,9 @@
 								<PriceTag
 									class="text-2xl truncate"
 									amount={((item.quantity *
-										(item.booking?.durationMinutes && item.product.bookingSpec?.slotMinutes
-											? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+										(item.booking && item.product.bookingSpec?.slotMinutes
+											? differenceInMinutes(item.booking.end, item.booking.start) /
+											  item.product.bookingSpec.slotMinutes
 											: 1) *
 										price.amount *
 										(item.depositPercentage ?? 100)) /
@@ -745,8 +743,9 @@
 								>
 								<PriceTag
 									amount={((item.quantity *
-										(item.booking?.durationMinutes && item.product.bookingSpec?.slotMinutes
-											? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+										(item.booking && item.product.bookingSpec?.slotMinutes
+											? differenceInMinutes(item.booking.end, item.booking.start) /
+											  item.product.bookingSpec.slotMinutes
 											: 1) *
 										price.amount *
 										(item.depositPercentage ?? 100)) /

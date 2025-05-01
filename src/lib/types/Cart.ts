@@ -13,6 +13,7 @@ import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 import { currencies } from '$lib/stores/currencies';
 import { get } from 'svelte/store';
 import type { User } from './User';
+import { differenceInMinutes } from 'date-fns';
 
 export interface Cart extends Timestamps {
 	_id: ObjectId;
@@ -22,8 +23,8 @@ export interface Cart extends Timestamps {
 		productId: string;
 		quantity: number;
 		booking?: {
-			time: Date;
-			durationMinutes: number;
+			start: Date;
+			end: Date;
 		};
 		customPrice?: { amount: number; currency: Currency };
 		reservedUntil?: Date;
@@ -112,7 +113,8 @@ export function computePriceInfo(
 		depositPercentage?: number;
 		discountPercentage?: number;
 		booking?: {
-			durationMinutes: number;
+			start: Date;
+			end: Date;
 		};
 	}>,
 	params: {
@@ -179,8 +181,9 @@ export function computePriceInfo(
 		const price = fixCurrencyRounding(
 			(item.customPrice || item.product.price).amount *
 				item.quantity *
-				(item.booking?.durationMinutes && item.product.bookingSpec?.slotMinutes
-					? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+				(item.booking && item.product.bookingSpec?.slotMinutes
+					? differenceInMinutes(item.booking.end, item.booking.start) /
+					  item.product.bookingSpec.slotMinutes
 					: 1) *
 				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
 			currency
@@ -208,8 +211,9 @@ export function computePriceInfo(
 			amount:
 				(((item.customPrice || item.product.price).amount *
 					item.quantity *
-					(item.booking?.durationMinutes && item.product.bookingSpec?.slotMinutes
-						? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+					(item.booking && item.product.bookingSpec?.slotMinutes
+						? differenceInMinutes(item.booking.end, item.booking.start) /
+						  item.product.bookingSpec.slotMinutes
 						: 1) *
 					(item.depositPercentage ?? 100)) /
 					100) *
@@ -237,8 +241,9 @@ export function computePriceInfo(
 			amount:
 				(item.customPrice || item.product.price).amount *
 				item.quantity *
-				(item.booking?.durationMinutes && item.product.bookingSpec?.slotMinutes
-					? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+				(item.booking && item.product.bookingSpec?.slotMinutes
+					? differenceInMinutes(item.booking.end, item.booking.start) /
+					  item.product.bookingSpec.slotMinutes
 					: 1) *
 				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
 		})),

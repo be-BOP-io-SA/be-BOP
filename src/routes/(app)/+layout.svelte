@@ -33,6 +33,7 @@
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { oneMaxPerLine } from '$lib/types/Product.js';
+	import { differenceInMinutes } from 'date-fns';
 
 	export let data;
 
@@ -334,8 +335,9 @@
 													class="text-base"
 													amount={(item.quantity *
 														price.amount *
-														(item.booking?.durationMinutes && item.product.bookingSpec
-															? item.booking.durationMinutes / item.product.bookingSpec.slotMinutes
+														(item.booking && item.product.bookingSpec
+															? differenceInMinutes(item.booking.end, item.booking.start) /
+															  item.product.bookingSpec.slotMinutes
 															: 1) *
 														(item.depositPercentage ?? 100) *
 														(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)) /

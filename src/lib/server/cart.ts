@@ -205,8 +205,8 @@ export async function addToCartInDb(
 			...(params.booking &&
 				product.bookingSpec && {
 					booking: {
-						time: params.booking.time,
-						durationMinutes: params.booking.durationMinutes
+						start: params.booking.time,
+						end: addMinutes(params.booking.time, params.booking.durationMinutes)
 					}
 				})
 		});
