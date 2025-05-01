@@ -985,8 +985,8 @@ export async function createOrder(
 		const insertResult = await collections.scheduleEvents.insertMany(
 			Object.entries(bookingTimesPerProduct).flatMap(([productId, bookings]) =>
 				bookings.map((booking) => ({
-					title: productById[productId].name,
-					slug: productId,
+					title: '#' + orderNumber + ' - ' + productById[productId].name,
+					slug: productId + '-' + orderNumber,
 					beginsAt: booking.start,
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					endsAt: booking.end!,
