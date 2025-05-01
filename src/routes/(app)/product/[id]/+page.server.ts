@@ -46,6 +46,7 @@ export const load = async ({ params, locals }) => {
 			| 'hasSellDisclaimer'
 			| 'hideFromSEO'
 			| 'hideDiscountExpiration'
+			| 'bookingSpec'
 		>
 	>(
 		{ _id: params.id },
@@ -92,7 +93,8 @@ export const load = async ({ params, locals }) => {
 				hasSellDisclaimer: 1,
 				hideFromSEO: 1,
 				hideDiscountExpiration: 1,
-				shipping: 1
+				shipping: 1,
+				bookingSpec: 1
 			}
 		}
 	);

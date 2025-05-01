@@ -22,6 +22,8 @@
 	import { FRACTION_DIGITS_PER_CURRENCY, CURRENCY_UNIT } from '$lib/types/Currency.js';
 	import { serializeSchema } from '$lib/utils/jsonLd.js';
 	import type { Product as SchemaOrgProduct, WithContext } from 'schema-dts';
+	import ScheduleWidgetCalendar from '$lib/components/ScheduleWidget/ScheduleWidgetCalendar.svelte';
+	import { productToScheduleId } from '$lib/types/Schedule.js';
 
 	export let data;
 
@@ -441,6 +443,16 @@
 										{/each}
 									</select>
 								</label>
+							{/if}
+							{#if data.product.bookingSpec}
+								<ScheduleWidgetCalendar
+									schedule={{
+										_id: productToScheduleId(data.product._id),
+										events: [],
+										allowSubscription: false,
+										pastEventDelay: 0
+									}}
+								/>
 							{/if}
 							{#if data.product.deposit}
 								<label class="checkbox-label">

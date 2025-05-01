@@ -17,7 +17,7 @@
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
 
-	export let schedule: Schedule;
+	export let schedule: Pick<Schedule, 'allowSubscription' | 'events' | 'pastEventDelay' | '_id'>;
 	let className = '';
 	export { className as class };
 
@@ -109,14 +109,18 @@
 {/if}
 <div class="max-w-md mx-auto p-4 eventCalendar eventCalendar-main shadow-md rounded-lg {className}">
 	<div class="flex items-center justify-between mb-4">
-		<button on:click={prevMonth} class="py-2 eventCalendar-navCTA btn rounded-full">&lt;</button>
+		<button on:click={prevMonth} type="button" class="py-2 eventCalendar-navCTA btn rounded-full"
+			>&lt;</button
+		>
 		<h2 class="text-lg font-semibold">
 			{new Date(currentDate).toLocaleDateString($locale, {
 				month: 'long',
 				year: 'numeric'
 			})}
 		</h2>
-		<button on:click={nextMonth} class="py-2 eventCalendar-navCTA btn rounded-full">&gt;</button>
+		<button type="button" on:click={nextMonth} class="py-2 eventCalendar-navCTA btn rounded-full"
+			>&gt;</button
+		>
 	</div>
 
 	<div class="grid grid-cols-7 text-center font-semibold">
@@ -128,6 +132,7 @@
 	<div class="grid grid-cols-7 text-center mt-2">
 		{#each days as day}
 			<button
+				type="button"
 				on:click={() => selectDate(day)}
 				class="p-2 m-2 rounded-full
 					{isSameDay(day, new Date()) ? 'eventCalendar-currentDate font-bold' : ''}
