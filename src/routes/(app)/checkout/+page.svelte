@@ -19,7 +19,7 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { trimPrefix } from '$lib/utils/trimPrefix.js';
-	import { addMinutes, differenceInMinutes } from 'date-fns';
+	import { differenceInMinutes } from 'date-fns';
 
 	export let data;
 	let submitting = false;

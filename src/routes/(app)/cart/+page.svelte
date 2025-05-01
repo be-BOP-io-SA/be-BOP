@@ -16,7 +16,7 @@
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
-	import { addMinutes, differenceInMinutes } from 'date-fns';
+	import { differenceInMinutes } from 'date-fns';
 
 	export let data;
 

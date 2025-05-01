@@ -8,7 +8,15 @@ import {
 } from '$lib/types/Order';
 import { ClientSession, ObjectId, type WithId } from 'mongodb';
 import { collections, withTransaction } from './database';
-import { add, addHours, addMinutes, differenceInSeconds, max, subSeconds } from 'date-fns';
+import {
+	add,
+	addHours,
+	addMinutes,
+	differenceInMinutes,
+	differenceInSeconds,
+	max,
+	subSeconds
+} from 'date-fns';
 import { runtimeConfig } from './runtime-config';
 import { generateSubscriptionNumber } from './subscriptions';
 import {
@@ -48,6 +56,14 @@ import {
 	isBitcoinNodelessConfigured
 } from './bitcoin-nodeless';
 import type { Discount } from '$lib/types/Discount';
+import { groupByNonPartial } from '$lib/utils/group-by';
+import {
+	EventSchedule,
+	productToScheduleId,
+	Schedule,
+	scheduleToProductId
+} from '$lib/types/Schedule';
+import { isEmptyObject } from '$lib/utils/is-empty-object';
 
 async function generateOrderNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(
@@ -437,6 +453,7 @@ export async function createOrder(
 		chosenVariations?: Record<string, string>;
 		depositPercentage?: number;
 		discountPercentage?: number;
+		booking?: Cart['items'][0]['booking'];
 	}>,
 	// null when point of sale want to use multiple payment methods
 	paymentMethod: PaymentMethod | null,
@@ -512,6 +529,38 @@ export async function createOrder(
 					.map((product) => product.name)
 					.join(', ')
 		);
+	}
+
+	for (const item of items) {
+		if (item.product.bookingSpec) {
+			if (!item.booking) {
+				throw error(
+					400,
+					`Product ${item.product.name} is a booking, please provide booking time and duration`
+				);
+			}
+			if (item.booking.start <= new Date()) {
+				throw error(400, `Product ${item.product.name} booking start time is in the past`);
+			}
+			if (item.booking.end <= item.booking.start) {
+				throw error(400, `Product ${item.product.name} booking end time is before start time`);
+			}
+			const durationMinutes = differenceInMinutes(item.booking.end, item.booking.start);
+
+			if (durationMinutes < item.product.bookingSpec.slotMinutes) {
+				throw error(
+					400,
+					`Product ${item.product.name} booking duration is less than the minimum duration of ${item.product.bookingSpec.slotMinutes} minutes`
+				);
+			}
+
+			if (durationMinutes % item.product.bookingSpec.slotMinutes !== 0) {
+				throw error(
+					400,
+					`Product ${item.product.name} booking duration is not a multiple of the slot duration of ${item.product.bookingSpec.slotMinutes} minutes`
+				);
+			}
+		}
 	}
 
 	await checkCartItems(items, params.cart);
@@ -779,6 +828,86 @@ export async function createOrder(
 
 	if (!physicalCartCanBeOrdered) {
 		throw error(403, `Can't order a cart with amount < ${physicalCartMinAmount}`);
+	}
+
+	const bookingTimesPerProduct = groupByNonPartial(
+		items
+			.map((item) =>
+				item.product.bookingSpec && item.booking !== undefined
+					? {
+							_id: item.product._id,
+							start: item.booking.start,
+							end: item.booking.end as Date | null,
+							isNew: true
+					  }
+					: undefined
+			)
+			.filter((item) => item !== undefined),
+		(item) => item._id
+	);
+
+	const productById = Object.fromEntries(items.map((item) => [item.product._id, item.product]));
+
+	for (const [productId, times] of Object.entries(bookingTimesPerProduct)) {
+		times.sort(compareBookingsAndThrow(productById[productId].name));
+	}
+
+	if (!isEmptyObject(bookingTimesPerProduct)) {
+		await Promise.all(
+			Object.entries(bookingTimesPerProduct).map(async ([productId, times]) => {
+				const lastTime = times[times.length - 1];
+				const events = await collections.scheduleEvents
+					.find({
+						scheduleId: productToScheduleId(productId),
+						...(lastTime.end && {
+							beginsAt: {
+								$lt: lastTime.end
+							}
+						}),
+						$or: [
+							{
+								endsAt: { $exists: false }
+							},
+							{
+								endsAt: { $gt: times[0].start }
+							}
+						]
+					})
+					.project<{
+						_id: Schedule['_id'];
+						isNew: boolean;
+						start: EventSchedule['beginsAt'];
+						end: NonNullable<EventSchedule['endsAt']> | null;
+					}>({
+						_id: { $literal: productId },
+						isNew: { $literal: false },
+						start: '$beginsAt',
+						end: { $ifNull: ['$endsAt', null] }
+					})
+					.toArray();
+
+				for (const event of events) {
+					// todo: use binaryFindAround
+				}
+			})
+		);
+
+		// Todo: optimize by filtering only events that are in the time range
+		const schedules = await collections.schedules
+			.find({
+				_id: {
+					$in: Object.keys(bookingTimesPerProduct).map((productId) =>
+						productToScheduleId(productId)
+					)
+				}
+			})
+			.toArray();
+
+		for (const schedule of schedules) {
+			const existingBookings = bookingTimesPerProduct[scheduleToProductId(schedule._id)];
+
+			// todo
+		}
 	}
 
 	await withTransaction(async (session) => {
@@ -1830,4 +1959,43 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 			{ session }
 		);
 	}
+}
+
+function compareBookingsAndThrow(productName: string): (
+	a: {
+		start: Date;
+		end?: Date | null;
+		isNew: boolean;
+	},
+	b: { start: Date; end?: Date | null; isNew: boolean }
+) => number {
+	return (a, b) => {
+		if (a.isNew || b.isNew) {
+			if (
+				a.start.getTime() <= b.start.getTime() &&
+				(a.end?.getTime() ?? Infinity) > b.start.getTime()
+			) {
+				throw error(
+					400,
+					`Product ${productName} has overlapping bookings ${
+						a.isNew && b.isNew ? 'in your order' : 'with an existing booking'
+					}`
+				);
+			}
+
+			if (
+				b.start.getTime() <= a.start.getTime() &&
+				(b.end?.getTime() ?? Infinity) > a.start.getTime()
+			) {
+				throw error(
+					400,
+					`Product ${productName} has overlapping bookings ${
+						a.isNew && b.isNew ? 'in your order' : 'with an existing booking'
+					}`
+				);
+			}
+		}
+
+		return a.start.getTime() - b.start.getTime();
+	};
 }

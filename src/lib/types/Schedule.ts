@@ -85,6 +85,14 @@ export function productToScheduleId(productId: Product['_id']) {
 	return `product:${productId}`;
 }
 
+export function scheduleToProductId(scheduleId: string) {
+	const match = scheduleId.match(/product:(.+)/);
+	if (!match) {
+		throw new Error('Invalid schedule ID for a schedule associated with a product');
+	}
+	return match[1] as Product['_id'];
+}
+
 export const dayList = [
 	'monday',
 	'tuesday',
