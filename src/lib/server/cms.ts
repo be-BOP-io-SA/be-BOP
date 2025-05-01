@@ -577,8 +577,17 @@ export async function cmsFromContent(
 			? collections.pictures.find(pictureConditions).sort({ createdAt: 1 }).toArray()
 			: Promise.resolve([]),
 		scheduleSlugs.size
-			? collections.schedules
-					.find({ _id: { $in: [...scheduleSlugs] } })
+			? collections.scheduleEvents
+					.find({
+						scheduleId: { $in: [...scheduleSlugs] },
+						...(schedules.every((schedule) => !schedule.displayPastEvents)
+							? {
+									endsAt: {
+										$gt: subMinutes(new Date(), Math.max(...schedules.map((s) => s.pastEventDelay)))
+									}
+							  }
+							: {})
+					})
 					.project<Omit<ScheduleEventBooked, '_id' | 'orderId'>>({
 						_id: 0,
 						orderId: 0
