@@ -66,7 +66,8 @@ import {
 	productToScheduleId,
 	Schedule,
 	scheduleToProductId,
-	timeToMinutes
+	timeToMinutes,
+	minutesToTime
 } from '$lib/types/Schedule';
 import { isEmptyObject } from '$lib/utils/is-empty-object';
 import { binaryFindAround } from '$lib/utils/binary-find';
@@ -868,9 +869,9 @@ export async function createOrder(
 				}
 
 				const startTime = toZonedTime(time.start, bookingSpec.schedule.timezone);
-				const startDay = startOfDay(startTime.getUTCDay() + 6);
+				const startDay = startOfDay(startTime.getDay() + 6);
 				const endTime = toZonedTime(time.end, bookingSpec.schedule.timezone);
-				const endDay = endOfDay(subSeconds(endTime, 1).getUTCDay() + 6); // Sub-seconds to allow booking until midnight
+				const endDay = endOfDay(subSeconds(endTime, 1).getDay() + 6); // Sub-seconds to allow booking until midnight
 
 				if (!isSameDay(startDay, endDay)) {
 					throw error(
@@ -879,7 +880,7 @@ export async function createOrder(
 					);
 				}
 
-				const dayOfWeek = dayList[(startDay.getUTCDay() + 6) % 7];
+				const dayOfWeek = dayList[(startDay.getDay() + 6) % 7];
 
 				const daySpec = bookingSpec.schedule[dayOfWeek];
 
@@ -890,19 +891,23 @@ export async function createOrder(
 					);
 				}
 
-				const minutesStart = startTime.getUTCMinutes() + startTime.getUTCHours() * 60;
-				const minutesEnd = endTime.getUTCMinutes() + endTime.getUTCHours() * 60;
+				const minutesStart = startTime.getMinutes() + startTime.getHours() * 60;
+				const minutesEnd = endTime.getMinutes() + endTime.getHours() * 60;
 
 				if (minutesStart < timeToMinutes(daySpec.start)) {
 					throw error(
 						400,
-						`Product ${productById[productId].name} booking time range starts before the schedule opening time`
+						`Product ${productById[productId].name} booking time range starts (${minutesToTime(
+							minutesStart
+						)}) before the scheduled opening time (${daySpec.start})`
 					);
 				}
 				if (minutesEnd > (daySpec.end === '00:00' ? timeToMinutes(daySpec.end) : 24 * 60)) {
 					throw error(
 						400,
-						`Product ${productById[productId].name} booking time range ends after the schedule closing time`
+						`Product ${productById[productId].name} booking time range ends (${minutesToTime(
+							minutesEnd
+						)}) after the schedule closing time (${daySpec.end})`
 					);
 				}
 			}

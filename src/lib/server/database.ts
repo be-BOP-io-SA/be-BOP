@@ -105,7 +105,7 @@ const genCollection = () => ({
 	tickets: db.collection<Ticket>('tickets'),
 	labels: db.collection<OrderLabel>('labels'),
 	schedules: db.collection<Schedule>('schedules'),
-	scheduleEvents: db.collection<ScheduleEventBooked>('scheduleEvents'),
+	scheduleEvents: db.collection<ScheduleEventBooked>('schedule.events'),
 
 	errors: db.collection<unknown & { _id: ObjectId; url: string; method: string }>('errors')
 });

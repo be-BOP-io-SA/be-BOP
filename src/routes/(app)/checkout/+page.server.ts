@@ -457,8 +457,10 @@ export const actions = {
 				...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
 				depositPercentage: item.depositPercentage,
 				...(item.booking && {
-					...item.booking,
-					_id: new ObjectId()
+					booking: {
+						...item.booking,
+						_id: new ObjectId()
+					}
 				})
 			})),
 			paymentMethod,
