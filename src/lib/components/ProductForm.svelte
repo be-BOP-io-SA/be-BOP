@@ -593,13 +593,17 @@
 				<div class="flex gap-4">
 					{#if variation.name && variation.value}
 						<label class="form-label">
-							Name
+							Category Id
+							<input disabled type="text" class="form-input" value={variation.name} />
+						</label>
+						<label class="form-label">
+							Category Name
 							<input
 								type="text"
 								name="variationLabels.names[{variation.name}]"
 								class="form-input"
 								value={product.variationLabels?.names[variation.name]}
-								required={!!product.variationLabels?.values[variation.name][variation.value]}
+								required={!!product.variationLabels?.values[variation.name]?.[variation.value]}
 							/>
 						</label>
 						<label class="form-label">
@@ -607,7 +611,7 @@
 								type="text"
 								name="variationLabels.values[{variation.name}][{variation.value}]"
 								class="form-input"
-								value={product.variationLabels?.values[variation.name][variation.value]}
+								value={product.variationLabels?.values[variation.name]?.[variation.value]}
 								bind:this={variationInput[i]}
 								on:input={() => variationInput[i]?.setCustomValidity('')}
 								required={!!product.variationLabels?.names[variation.name]}
@@ -615,7 +619,7 @@
 						</label>
 					{:else}
 						<label class="form-label">
-							Name
+							Category Name
 							<input
 								type="text"
 								name="variationLabels.names[{(
