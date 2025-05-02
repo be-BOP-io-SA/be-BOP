@@ -24,6 +24,8 @@ export interface Cart extends Timestamps {
 		 * Unique identifier for the line in the cart.
 		 *
 		 * Used for removing items from the cart.
+		 *
+		 * Only optional for backwards compatibility.
 		 */
 		_id?: string;
 		productId: string;
