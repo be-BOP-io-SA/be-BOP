@@ -379,26 +379,14 @@ export async function onOrderPaymentFailed(
 			ret.value.status === 'failed')
 	) {
 		for (const item of order.items) {
-			if (item.freeQuantity) {
-				const freeProductSubscriptions = await collections.paidSubscriptions
-					.find({
-						[`freeProductsById.${item.product._id}`]: { $exists: true },
-						[`freeProductsById.${item.product._id}.available`]: { $gt: 0 },
-						paidUntil: { $gt: new Date() }
-					})
-					.toArray();
-
-				for (const sub of freeProductSubscriptions) {
+			if (item.freeProductSources?.length) {
+				for (const source of item.freeProductSources) {
 					await collections.paidSubscriptions.updateOne(
-						{ _id: sub._id },
+						{ _id: source.subscriptionId },
 						{
 							$inc: {
-								...(item.freeQuantity && {
-									[`freeProductsById.${item.product._id}.used`]: -item.quantity
-								}),
-								...(item.freeQuantity && {
-									[`freeProductsById.${item.product._id}.available`]: +item.quantity
-								})
+								[`freeProductsById.${item.product._id}.used`]: -source.quantity,
+								[`freeProductsById.${item.product._id}.available`]: source.quantity
 							},
 							$set: {
 								updatedAt: new Date(),
@@ -478,6 +466,7 @@ export async function createOrder(
 		depositPercentage?: number;
 		discountPercentage?: number;
 		freeQuantity?: number;
+		freeProductSources?: { subscriptionId: string; quantity: number }[];
 	}>,
 	// null when point of sale want to use multiple payment methods
 	paymentMethod: PaymentMethod | null,
@@ -682,40 +671,46 @@ export async function createOrder(
 	for (const item of items) {
 		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
 		if (item.freeQuantity) {
+			let quantityToConsume = Math.min(item.quantity, item.freeQuantity);
 			const freeProductSubscriptions = await collections.paidSubscriptions
 				.find({
 					[`freeProductsById.${item.product._id}`]: { $exists: true },
 					[`freeProductsById.${item.product._id}.available`]: { $gt: 0 },
 					paidUntil: { $gt: new Date() }
 				})
+				.sort({ createdAt: 1 })
 				.toArray();
+			const usedSources: { subscriptionId: string; quantity: number }[] = [];
 
 			for (const sub of freeProductSubscriptions) {
+				if (quantityToConsume <= 0) {
+					break;
+				}
+
+				const subAvailable = sub.freeProductsById?.[item.product._id]?.available ?? 0;
+				if (subAvailable <= 0) {
+					continue;
+				}
+
+				const toUse = Math.min(quantityToConsume, subAvailable);
+				quantityToConsume -= toUse;
 				await collections.paidSubscriptions.updateOne(
 					{ _id: sub._id },
 					{
 						$inc: {
-							...(item.freeQuantity && {
-								[`freeProductsById.${item.product._id}.used`]: item.quantity
-							})
+							[`freeProductsById.${item.product._id}.used`]: toUse,
+							[`freeProductsById.${item.product._id}.available`]: -toUse
 						},
 						$set: {
-							...(item.freeQuantity && {
-								[`freeProductsById.${item.product._id}.available`]: Math.max(
-									item.freeQuantity - item.quantity,
-									0
-								)
-							}),
 							updatedAt: new Date(),
 							notifications: []
 						},
 						$unset: { cancelledAt: 1 }
 					}
 				);
+				usedSources.push({ subscriptionId: sub._id, quantity: toUse });
 			}
-			item.freeQuantity = sum(
-				freeProductSubscriptions.map((s) => s.freeProductsById?.[item.product._id]?.available ?? 0)
-			);
+			item.freeProductSources = usedSources;
 		}
 	}
 

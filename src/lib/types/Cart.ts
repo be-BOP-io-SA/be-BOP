@@ -104,6 +104,7 @@ export function computePriceInfo(
 		depositPercentage?: number;
 		discountPercentage?: number;
 		freeQuantity?: number;
+		freeProductSources?: { subscriptionId: string; quantity: number }[];
 	}>,
 	params: {
 		vatExempted: boolean;

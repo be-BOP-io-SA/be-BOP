@@ -156,6 +156,7 @@ export interface Order extends Timestamps {
 		chosenVariations?: Record<string, string>;
 		depositPercentage?: number;
 		freeQuantity?: number;
+		freeProductSources?: { subscriptionId: string; quantity: number }[];
 		/**
 		 * This is the discount percentage AFTER `currencySnaphot`. To calculate the paid price, multiply
 		 * the price in {@link currencySnaphot} by (1 - discountPercentage / 100).
