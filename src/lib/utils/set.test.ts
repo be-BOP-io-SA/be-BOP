@@ -49,4 +49,10 @@ describe('set', () => {
 		set(obj, 'a.b[c@d]', 3);
 		expect(obj).toEqual({ a: { b: { c: 1, 'c@d': 3 } } });
 	});
+
+	it('should work with [abc.]', () => {
+		const obj = { a: { b: { c: 1 } } };
+		set(obj, 'a.b[abc.]', 3);
+		expect(obj).toEqual({ a: { b: { c: 1, 'abc.': 3 } } });
+	});
 });
