@@ -389,11 +389,10 @@ export async function onOrderPaymentFailed(
 								[`freeProductsById.${item.product._id}.available`]: source.quantity
 							},
 							$set: {
-								updatedAt: new Date(),
-								notifications: []
-							},
-							$unset: { cancelledAt: 1 }
-						}
+								updatedAt: new Date()
+							}
+						},
+						{ session: opts?.session }
 					);
 				}
 			}
@@ -506,6 +505,7 @@ export async function createOrder(
 		};
 		onLocation?: boolean;
 		paymentTimeOut?: number;
+		session?: ClientSession;
 	}
 ): Promise<Order['_id']> {
 	const npubAddress = params.notifications?.paymentStatus?.npub;
@@ -694,6 +694,7 @@ export async function createOrder(
 
 				const toUse = Math.min(quantityToConsume, subAvailable);
 				quantityToConsume -= toUse;
+
 				await collections.paidSubscriptions.updateOne(
 					{ _id: sub._id },
 					{
@@ -702,12 +703,12 @@ export async function createOrder(
 							[`freeProductsById.${item.product._id}.available`]: -toUse
 						},
 						$set: {
-							updatedAt: new Date(),
-							notifications: []
-						},
-						$unset: { cancelledAt: 1 }
-					}
+							updatedAt: new Date()
+						}
+					},
+					{ session: params.session }
 				);
+
 				usedSources.push({ subscriptionId: sub._id, quantity: toUse });
 			}
 			item.freeProductSources = usedSources;
