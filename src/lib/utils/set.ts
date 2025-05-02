@@ -12,7 +12,7 @@ export function set<T extends object, K extends Paths<T> | string>(
 
 	// Parse keys to handle both "." and "[]" operators
 	const keys = key
-		.replace(/\[(\w*)\]/g, '.$1') // Convert "[key]" to ".key"
+		.replace(/\[([^\]]*)\]/g, '.$1') // Convert "[key]" to ".key"
 		.split('.') as (keyof T)[];
 
 	for (let i = 0; i < keys.length - 1; i++) {
