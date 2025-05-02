@@ -2,7 +2,9 @@ import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
 
 const initialValue = browser
-	? document.querySelector('html')?.classList?.contains('dark')
+	? document.querySelector('html')?.classList.contains('dark')
+		? 'dark'
+		: window.matchMedia('(prefers-color-scheme: dark)').matches
 		? 'dark'
 		: 'light'
 	: 'light';
