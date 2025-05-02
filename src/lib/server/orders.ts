@@ -371,6 +371,38 @@ export async function onOrderPaymentFailed(
 		},
 		{ returnDocument: 'after', session: opts?.session }
 	);
+	for (const item of order.items) {
+		if (item.freeQuantity) {
+			const freeProductSubscriptions = await collections.paidSubscriptions
+				.find({
+					[`freeProductsById.${item.product._id}`]: { $exists: true },
+					[`freeProductsById.${item.product._id}.available`]: { $gt: 0 },
+					paidUntil: { $gt: new Date() }
+				})
+				.toArray();
+
+			for (const sub of freeProductSubscriptions) {
+				await collections.paidSubscriptions.updateOne(
+					{ _id: sub._id },
+					{
+						$inc: {
+							...(item.freeQuantity && {
+								[`freeProductsById.${item.product._id}.used`]: -item.quantity
+							}),
+							...(item.freeQuantity && {
+								[`freeProductsById.${item.product._id}.available`]: +item.quantity
+							})
+						},
+						$set: {
+							updatedAt: new Date(),
+							notifications: []
+						},
+						$unset: { cancelledAt: 1 }
+					}
+				);
+			}
+		}
+	}
 	if (!ret.value) {
 		throw new Error('Failed to update order');
 	}
@@ -641,6 +673,42 @@ export async function createOrder(
 
 	for (const item of items) {
 		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
+		if (item.freeQuantity) {
+			const freeProductSubscriptions = await collections.paidSubscriptions
+				.find({
+					[`freeProductsById.${item.product._id}`]: { $exists: true },
+					[`freeProductsById.${item.product._id}.available`]: { $gt: 0 },
+					paidUntil: { $gt: new Date() }
+				})
+				.toArray();
+
+			for (const sub of freeProductSubscriptions) {
+				await collections.paidSubscriptions.updateOne(
+					{ _id: sub._id },
+					{
+						$inc: {
+							...(item.freeQuantity && {
+								[`freeProductsById.${item.product._id}.used`]: item.quantity
+							})
+						},
+						$set: {
+							...(item.freeQuantity && {
+								[`freeProductsById.${item.product._id}.available`]: Math.max(
+									item.freeQuantity - item.quantity,
+									0
+								)
+							}),
+							updatedAt: new Date(),
+							notifications: []
+						},
+						$unset: { cancelledAt: 1 }
+					}
+				);
+			}
+			item.freeQuantity = sum(
+				freeProductSubscriptions.map((s) => s.freeProductsById?.[item.product._id]?.available ?? 0)
+			);
+		}
 	}
 
 	const priceInfo = computePriceInfo(items, {
@@ -1667,41 +1735,6 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 					{ session }
 				);
 			}
-		}
-	}
-
-	for (const item of order.items) {
-		const freeProductSubscriptions = await collections.paidSubscriptions
-			.find({
-				[`freeProductsById.${item.product._id}`]: { $exists: true },
-				[`freeProductsById.${item.product._id}.available`]: { $gt: 0 },
-				paidUntil: { $gt: new Date() }
-			})
-			.toArray();
-
-		for (const sub of freeProductSubscriptions) {
-			await collections.paidSubscriptions.updateOne(
-				{ _id: sub._id },
-				{
-					$inc: {
-						...(item.freeQuantity && {
-							[`freeProductsById.${item.product._id}.used`]: item.quantity
-						})
-					},
-					$set: {
-						...(item.freeQuantity && {
-							[`freeProductsById.${item.product._id}.available`]: Math.max(
-								item.freeQuantity - item.quantity,
-								0
-							)
-						}),
-						updatedAt: new Date(),
-						notifications: []
-					},
-					$unset: { cancelledAt: 1 }
-				},
-				{ session }
-			);
 		}
 	}
 	//#endregion
