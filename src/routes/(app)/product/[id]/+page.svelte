@@ -545,7 +545,9 @@
 					{#each data.product.cta as cta}
 						{#if !cta.fallback}
 							<a
-								href={cta.href}
+								href={cta.href.startsWith('http') || cta.href.includes('/')
+									? cta.href
+									: `/${cta.href}`}
 								class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
 									' '
 								)
