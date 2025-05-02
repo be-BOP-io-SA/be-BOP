@@ -371,35 +371,43 @@ export async function onOrderPaymentFailed(
 		},
 		{ returnDocument: 'after', session: opts?.session }
 	);
-	for (const item of order.items) {
-		if (item.freeQuantity) {
-			const freeProductSubscriptions = await collections.paidSubscriptions
-				.find({
-					[`freeProductsById.${item.product._id}`]: { $exists: true },
-					[`freeProductsById.${item.product._id}.available`]: { $gt: 0 },
-					paidUntil: { $gt: new Date() }
-				})
-				.toArray();
+	if (
+		ret.value &&
+		order.status !== ret.value.status &&
+		(ret.value.status === 'canceled' ||
+			ret.value.status === 'expired' ||
+			ret.value.status === 'failed')
+	) {
+		for (const item of order.items) {
+			if (item.freeQuantity) {
+				const freeProductSubscriptions = await collections.paidSubscriptions
+					.find({
+						[`freeProductsById.${item.product._id}`]: { $exists: true },
+						[`freeProductsById.${item.product._id}.available`]: { $gt: 0 },
+						paidUntil: { $gt: new Date() }
+					})
+					.toArray();
 
-			for (const sub of freeProductSubscriptions) {
-				await collections.paidSubscriptions.updateOne(
-					{ _id: sub._id },
-					{
-						$inc: {
-							...(item.freeQuantity && {
-								[`freeProductsById.${item.product._id}.used`]: -item.quantity
-							}),
-							...(item.freeQuantity && {
-								[`freeProductsById.${item.product._id}.available`]: +item.quantity
-							})
-						},
-						$set: {
-							updatedAt: new Date(),
-							notifications: []
-						},
-						$unset: { cancelledAt: 1 }
-					}
-				);
+				for (const sub of freeProductSubscriptions) {
+					await collections.paidSubscriptions.updateOne(
+						{ _id: sub._id },
+						{
+							$inc: {
+								...(item.freeQuantity && {
+									[`freeProductsById.${item.product._id}.used`]: -item.quantity
+								}),
+								...(item.freeQuantity && {
+									[`freeProductsById.${item.product._id}.available`]: +item.quantity
+								})
+							},
+							$set: {
+								updatedAt: new Date(),
+								notifications: []
+							},
+							$unset: { cancelledAt: 1 }
+						}
+					);
+				}
 			}
 		}
 	}
