@@ -546,7 +546,9 @@
 						{#if !cta.fallback}
 							{#if cta.downloadLink}
 								<a
-									href={cta.href}
+									href={cta.href.startsWith('http') || cta.href.includes('/')
+										? cta.href
+										: `/${cta.href}`}
 									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
 										' '
 									)
@@ -559,7 +561,9 @@
 								</a>
 							{:else}
 								<a
-									href={cta.href}
+									href={cta.href.startsWith('http') || cta.href.includes('/')
+										? cta.href
+										: `/${cta.href}`}
 									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
 										' '
 									)
@@ -573,7 +577,9 @@
 						{:else if !canBuy || amountAvailable <= 0 || (data.cartMaxSeparateItems && data.cart?.length === data.cartMaxSeparateItems)}
 							{#if cta.downloadLink}
 								<a
-									href={cta.href}
+									href={cta.href.startsWith('http') || cta.href.includes('/')
+										? cta.href
+										: `/${cta.href}`}
 									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
 										' '
 									)
@@ -586,7 +592,9 @@
 								</a>
 							{:else}
 								<a
-									href={cta.href}
+									href={cta.href.startsWith('http') || cta.href.includes('/')
+										? cta.href
+										: `/${cta.href}`}
 									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
 										' '
 									)

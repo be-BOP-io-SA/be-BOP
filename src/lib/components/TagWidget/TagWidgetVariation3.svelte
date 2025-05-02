@@ -33,7 +33,7 @@
 				<div class="btn tagWidget-cta lg:mx-20 mx-2 md:text-2xl text-center w-auto">
 					<a
 						class="tagWidget-hyperlink"
-						href={cta.href}
+						href={cta.href.startsWith('http') || cta.href.includes('/') ? cta.href : `/${cta.href}`}
 						target={cta.href.startsWith('http') || cta.openNewTab ? '_blank' : '_self'}
 						>{cta.label}</a
 					>
