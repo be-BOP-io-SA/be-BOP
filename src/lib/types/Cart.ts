@@ -20,6 +20,12 @@ export interface Cart extends Timestamps {
 	user: UserIdentifier;
 
 	items: Array<{
+		/**
+		 * Unique identifier for the line in the cart.
+		 *
+		 * Used for removing items from the cart.
+		 */
+		_id?: string;
 		productId: string;
 		quantity: number;
 		booking?: {

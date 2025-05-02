@@ -14,22 +14,15 @@ export const actions = {
 			throw error(404, 'This product is not in the cart');
 		}
 
-		const { depositPercentage } = z
+		const { lineId } = z
 			.object({
-				depositPercentage: z.number({ coerce: true }).optional()
+				lineId: z.string().optional()
 			})
 			.parse(Object.fromEntries(await request.formData()));
 
-		let item = cart.items.find(
-			(i) =>
-				i.productId === params.id &&
-				(i.depositPercentage ?? undefined) === (depositPercentage ?? undefined)
+		const item = cart.items.find(
+			(i) => i.productId === params.id && (lineId ? i._id === lineId : true)
 		);
-
-		// Like when calling from nostr handle message, we don't know which deposit percentage was used
-		if (!item) {
-			item = cart.items.find((i) => i.productId === params.id);
-		}
 
 		if (!item) {
 			throw error(404, 'This product is not in the cart');
@@ -64,25 +57,28 @@ export const actions = {
 
 		const max = product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER;
 
-		const { quantity, deposit } = z
+		const { quantity, deposit, lineId } = z
 			.object({
 				quantity: z
 					.number({ coerce: true })
 					.int()
 					.min(1)
 					.max(max - 1),
-				deposit: z.boolean({ coerce: true }).optional()
+				deposit: z.boolean({ coerce: true }).optional(),
+				lineId: z.string().optional()
 			})
 			.parse({
 				quantity: formData.get('quantity'),
-				deposit: formData.get('deposit')
+				deposit: formData.get('deposit'),
+				lineId: formData.get('lineId')
 			});
 
 		await addToCartInDb(product, quantity + 1, {
 			user: userIdentifier(locals),
 			mode: 'eshop',
 			totalQuantity: true,
-			deposit
+			deposit,
+			lineId
 		});
 
 		throw redirect(303, request.headers.get('referer') || '/cart');
@@ -100,17 +96,17 @@ export const actions = {
 		const formData = await request.formData();
 
 		const max = product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER;
-		const { quantity, depositPercentage } = z
+		const { quantity, lineId } = z
 			.object({
 				quantity: z.number({ coerce: true }).int().min(1).max(max),
-				depositPercentage: z.number({ coerce: true }).optional()
+				lineId: z.string().optional()
 			})
 			.parse(Object.fromEntries(formData));
 
 		await removeFromCartInDb(product, quantity - 1, {
 			user: userIdentifier(locals),
 			totalQuantity: true,
-			depositPercentage
+			lineId
 		});
 
 		throw redirect(303, request.headers.get('referer') || '/cart');

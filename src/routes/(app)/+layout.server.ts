@@ -228,6 +228,7 @@ export async function load(params) {
 			}
 
 			return {
+				_id: item._id,
 				product: pojo(productDoc),
 				picture: productPictureDoc,
 				booking: item.booking,

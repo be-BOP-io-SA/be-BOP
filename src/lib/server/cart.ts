@@ -68,6 +68,7 @@ export async function addToCartInDb(
 			time: Date;
 			durationMinutes: number;
 		};
+		lineId?: string;
 		mode: 'eshop' | 'nostr' | 'pos';
 	}
 ) {
@@ -135,8 +136,9 @@ export async function addToCartInDb(
 	const existingItem = cart.items.find(
 		(item) =>
 			item.productId === product._id &&
-			// Just in case a null value is stored in the DB
-			(item.depositPercentage ?? undefined) === (depositPercentage ?? undefined)
+			(params.lineId
+				? item._id === params.lineId
+				: (item.depositPercentage ?? undefined) === (depositPercentage ?? undefined))
 	);
 
 	const totalQuantityInCart = () =>
@@ -192,6 +194,7 @@ export async function addToCartInDb(
 			throw error(400, `You can only order ${availableAmount} of this product`);
 		}
 		cart.items.push({
+			_id: crypto.randomUUID(),
 			productId: product._id,
 			quantity: product.type === 'subscription' ? 1 : quantity,
 			...(params.customPrice && {
@@ -243,7 +246,12 @@ export async function addToCartInDb(
 export async function removeFromCartInDb(
 	product: Product,
 	quantity: number,
-	params: { user: UserIdentifier; totalQuantity?: boolean; depositPercentage?: number }
+	params: {
+		user: UserIdentifier;
+		totalQuantity?: boolean;
+		depositPercentage?: number;
+		lineId?: string;
+	}
 ) {
 	if (quantity < 0) {
 		throw new TypeError('Quantity cannot be negative');
@@ -251,16 +259,13 @@ export async function removeFromCartInDb(
 
 	const cart = await getCartFromDb(params);
 
-	let item = cart.items.find(
+	const item = cart.items.find(
 		(i) =>
 			i.productId === product._id &&
-			(i.depositPercentage ?? undefined) === (params.depositPercentage ?? undefined)
+			(params.lineId
+				? i._id === params.lineId
+				: (params.depositPercentage ?? undefined) === (i.depositPercentage ?? undefined))
 	);
-
-	// Like when calling from nostr handle message, we don't know which deposit percentage was used
-	if (!item) {
-		item = cart.items.find((i) => i.productId === product._id);
-	}
 
 	if (!item) {
 		return cart;

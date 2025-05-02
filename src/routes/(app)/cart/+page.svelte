@@ -167,6 +167,9 @@
 							};
 						}}
 					>
+						{#if item._id}
+							<input type="hidden" name="lineId" value={item._id} />
+						{/if}
 						{#if item.depositPercentage ?? undefined !== undefined}
 							<input type="hidden" name="depositPercentage" value={item.depositPercentage} />
 						{/if}
