@@ -700,8 +700,8 @@
 						</label>{/if}
 				</div>
 			{/each}
-			<button class="btn btn-gray" on:click={() => (variationLines += 1)} type="button"
-				>Add variation
+			<button class="btn btn-gray self-start" on:click={() => (variationLines += 1)} type="button">
+				Add variation
 			</button>
 		{/if}
 		<label class="checkbox-label">
