@@ -43,30 +43,13 @@ export function set<T extends object, K extends Paths<T> | string>(
 }
 
 function splitKey(key: string) {
-	let start = 0;
+	const regex = /([^[.\]]+)|\[(.*?)\]/g;
 
-	const ret = [];
-
-	while (1) {
-		const dot = key.indexOf('.', start);
-		const bracket = key.indexOf('[', start);
-		const endBracket = key.indexOf(']', bracket);
-		if (dot === -1 && bracket === -1) {
-			break;
-		}
-
-		if (bracket !== -1 && (dot === -1 || (bracket < dot && endBracket !== -1))) {
-			ret.push(key.slice(start, bracket));
-			ret.push(key.slice(bracket + 1, endBracket));
-			start = endBracket + 1;
-		} else {
-			ret.push(key.substring(start, dot));
-			start = dot + 1;
-		}
+	const matches = [];
+	let match;
+	while ((match = regex.exec(key)) !== null) {
+		matches.push(match[1] || match[2]);
 	}
 
-	if (start < key.length) {
-		ret.push(key.slice(start));
-	}
-	return ret;
+	return matches;
 }

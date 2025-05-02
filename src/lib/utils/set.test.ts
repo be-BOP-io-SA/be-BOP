@@ -55,4 +55,10 @@ describe('set', () => {
 		set(obj, 'a.b[abc.]', 3);
 		expect(obj).toEqual({ a: { b: { c: 1, 'abc.': 3 } } });
 	});
+
+	it('should work with cta[0].label', () => {
+		const obj = {};
+		set(obj, 'cta[0].label', 'test');
+		expect(obj).toEqual({ cta: [{ label: 'test' }] });
+	});
 });
