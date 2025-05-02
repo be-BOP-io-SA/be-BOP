@@ -204,6 +204,7 @@ const baseConfig = {
 	contactModes: ['email', 'nostr'],
 	contactModesForceOption: false,
 	posTouchTag: [] as Tag['_id'][],
+	posPrefillTermOfUse: false,
 	hideCreditCardQrCode: false,
 	overwriteCreditCardSvgColor: false,
 	hideCmsZonesOnMobile: false,
