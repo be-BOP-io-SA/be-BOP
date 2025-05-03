@@ -35,6 +35,7 @@ export interface ScheduleEventBooked extends SetRequired<ScheduleEvent, 'endsAt'
 	scheduleId: Schedule['_id'];
 	orderId: string;
 	status: 'pending' | 'confirmed' | 'canceled';
+	orderCreated: boolean;
 }
 
 export const defaultSchedule = {

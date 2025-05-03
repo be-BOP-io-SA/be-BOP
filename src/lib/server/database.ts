@@ -205,7 +205,8 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.scheduleEvents, { scheduleId: 1, beginsAt: 1, endsAt: 1 }], // endsAt is just used for index-only scan
 	[collections.scheduleEvents, { scheduleId: 1, status: 1, beginsAt: 1, endsAt: 1 }], // endsAt is just used for index-only scan
 	[collections.scheduleEvents, { scheduleId: 1, status: 1, endsAt: 1 }],
-	[collections.scheduleEvents, { orderId: 1 }]
+	[collections.scheduleEvents, { orderId: 1 }],
+	[collections.scheduleEvents, { orderCreated: 1, _id: 1 }] // To cleanup events where there was an error during order creation
 ];
 
 export async function createIndexes() {

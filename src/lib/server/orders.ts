@@ -1014,7 +1014,8 @@ export async function createOrder(
 					endsAt: booking.end!,
 					scheduleId: productToScheduleId(productId),
 					orderId: orderId,
-					status: 'pending'
+					status: 'pending',
+					orderCreated: false
 				}))
 			)
 		);
