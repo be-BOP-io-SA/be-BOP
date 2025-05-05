@@ -674,7 +674,7 @@ export async function createOrder(
 			let quantityToConsume = Math.min(item.quantity, item.freeQuantity);
 			const freeProductSubscriptions = await collections.paidSubscriptions
 				.find({
-					[`freeProductsById.${item.product._id}`]: { $exists: true },
+					...userQuery(params.user),
 					[`freeProductsById.${item.product._id}.available`]: { $gt: 0 },
 					paidUntil: { $gt: new Date() }
 				})
