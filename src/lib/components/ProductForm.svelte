@@ -377,16 +377,16 @@
 			<div class="gap-4 flex flex-col md:flex-row">
 				<label class="w-full">
 					Price amount (VAT included)
-					<input class="form-input" type="number" bind:value={priceAmountVATIncluded} />
+					<input class="form-input" type="number" bind:value={priceAmountVATIncluded} step="any" />
 				</label>
 
 				<label class="w-full">
 					VAT rate
-					<input class="form-input" type="number" bind:value={vatRate} />
+					<input class="form-input" type="number" bind:value={vatRate} step="any" />
 				</label>
 				<label class="w-full">
 					Price amount (VAT excluded)
-					<input class="form-input" type="number" bind:value={priceAmountVATExcluded} />
+					<input class="form-input" type="number" bind:value={priceAmountVATExcluded} step="any" />
 				</label>
 			</div>
 		{/if}
@@ -674,6 +674,7 @@
 							class="form-input"
 							value={variation.price}
 							min="0"
+							step="any"
 						/>
 					</label>
 					{#if variation.name && variation.value}
