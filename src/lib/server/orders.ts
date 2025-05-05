@@ -1687,6 +1687,24 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 			);
 
 			if (existingSubscription) {
+				const freeProductsById: Record<string, { total: number; available: number; used: number }> =
+					{};
+
+				for (const discount of discounts) {
+					if (discount.mode === 'freeProducts' && discount.quantityPerProduct) {
+						for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
+							if (!freeProductsById[productId]) {
+								freeProductsById[productId] = {
+									total: 0,
+									available: 0,
+									used: 0
+								};
+							}
+							freeProductsById[productId].total += quantity;
+							freeProductsById[productId].available += quantity;
+						}
+					}
+				}
 				const result = await collections.paidSubscriptions.updateOne(
 					{ _id: existingSubscription._id },
 					{
@@ -1695,7 +1713,8 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 								[`${runtimeConfig.subscriptionDuration}s`]: 1
 							}),
 							updatedAt: new Date(),
-							notifications: []
+							notifications: [],
+							...(Object.keys(freeProductsById).length !== 0 && { freeProductsById })
 						},
 						$unset: { cancelledAt: 1 }
 					},
