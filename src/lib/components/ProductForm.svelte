@@ -106,8 +106,10 @@
 	let displayVATCalculator = false;
 	let priceAmountVATIncluded = 0;
 	let vatRate = 0;
-	$: priceAmountVATExcluded = ((100 * priceAmountVATIncluded) / (100 + vatRate)).toFixed(
-		FRACTION_DIGITS_PER_CURRENCY[product.price.currency]
+	$: product.price.amount = Number(
+		((100 * priceAmountVATIncluded) / (100 + vatRate)).toFixed(
+			FRACTION_DIGITS_PER_CURRENCY[product.price.currency]
+		)
 	);
 	if (product._id && isNew) {
 		product.name = product.name + ' (duplicate)';
@@ -388,7 +390,7 @@
 				</label>
 				<label class="w-full">
 					Price amount (VAT excluded)
-					<input class="form-input" type="number" bind:value={priceAmountVATExcluded} step="any" />
+					<input class="form-input" type="number" bind:value={product.price.amount} step="any" />
 				</label>
 			</div>
 		{/if}
