@@ -1687,21 +1687,21 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 			);
 
 			if (existingSubscription) {
-				const freeProductsById: Record<string, { total: number; available: number; used: number }> =
-					{};
+				let updatedFreeProductsById: Record<
+					string,
+					{ total: number; available: number; used: number }
+				> = {};
 
 				for (const discount of discounts) {
 					if (discount.mode === 'freeProducts' && discount.quantityPerProduct) {
-						for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
-							if (!freeProductsById[productId]) {
-								freeProductsById[productId] = {
-									total: 0,
-									available: 0,
-									used: 0
-								};
+						updatedFreeProductsById = { ...existingSubscription.freeProductsById };
+
+						for (const [productId, newQuantity] of Object.entries(discount.quantityPerProduct)) {
+							if (!updatedFreeProductsById[productId]) {
+								updatedFreeProductsById[productId] = { total: 0, available: 0, used: 0 };
 							}
-							freeProductsById[productId].total += quantity;
-							freeProductsById[productId].available += quantity;
+							updatedFreeProductsById[productId].total += newQuantity;
+							updatedFreeProductsById[productId].available += newQuantity;
 						}
 					}
 				}
@@ -1714,7 +1714,9 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 							}),
 							updatedAt: new Date(),
 							notifications: [],
-							...(Object.keys(freeProductsById).length !== 0 && { freeProductsById })
+							...(Object.keys(updatedFreeProductsById).length !== 0 && {
+								freeProductsById: updatedFreeProductsById
+							})
 						},
 						$unset: { cancelledAt: 1 }
 					},
