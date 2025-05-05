@@ -103,7 +103,10 @@
 		: 3;
 	let displayRawHTMLBefore = false;
 	let displayRawHTMLAfter = false;
-
+	let displayVATCalculator = false;
+	let priceAmountVATIncluded = 0;
+	let vatRate = 0;
+	$: priceAmountVATExcluded = Math.round((100 * priceAmountVATIncluded) / (100 + vatRate));
 	if (product._id && isNew) {
 		product.name = product.name + ' (duplicate)';
 		product._id = generateId(product.name, false);
@@ -361,6 +364,32 @@
 				</select>
 			</label>
 		</div>
+		<label class="checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				name="vatCalculator"
+				bind:checked={displayVATCalculator}
+			/>
+			Display VAT calculator
+		</label>
+		{#if displayVATCalculator}
+			<div class="gap-4 flex flex-col md:flex-row">
+				<label class="w-full">
+					Price amount (VAT included)
+					<input class="form-input" type="number" bind:value={priceAmountVATIncluded} />
+				</label>
+
+				<label class="w-full">
+					VAT rate
+					<input class="form-input" type="number" bind:value={vatRate} />
+				</label>
+				<label class="w-full">
+					Price amount (VAT excluded)
+					<input class="form-input" type="number" bind:value={priceAmountVATExcluded} />
+				</label>
+			</div>
+		{/if}
 		{#if vatProfiles.length}
 			<label class="form-label">
 				VAT profile
