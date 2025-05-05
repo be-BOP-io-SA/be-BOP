@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CURRENCIES, CURRENCY_UNIT } from '$lib/types/Currency';
+	import { CURRENCIES, CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 	import {
 		DEFAULT_MAX_QUANTITY_PER_ORDER,
 		MAX_NAME_LIMIT,
@@ -106,7 +106,9 @@
 	let displayVATCalculator = false;
 	let priceAmountVATIncluded = 0;
 	let vatRate = 0;
-	$: priceAmountVATExcluded = Math.round((100 * priceAmountVATIncluded) / (100 + vatRate));
+	$: priceAmountVATExcluded = ((100 * priceAmountVATIncluded) / (100 + vatRate)).toFixed(
+		FRACTION_DIGITS_PER_CURRENCY[product.price.currency]
+	);
 	if (product._id && isNew) {
 		product.name = product.name + ' (duplicate)';
 		product._id = generateId(product.name, false);
