@@ -336,7 +336,7 @@
 
 		<div class="gap-4 flex flex-col md:flex-row">
 			<label class="w-full">
-				Price amount
+				Price amount (VAT excluded)
 				<input
 					class="form-input"
 					type="number"
