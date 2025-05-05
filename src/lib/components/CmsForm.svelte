@@ -206,6 +206,10 @@
 					</code>. You can also set the width, height and fit:
 					<code class="font-mono">[Picture=slug width=100 height=100 fit=cover]</code> or
 					<code class="font-mono">[Picture=slug width=100 height=100 fit=contain]</code>
+					And also msubstitute (replacement image on mobile), position
+					<code class="font-mono"
+						>[Picture=slug msubstitute=slug position=right|center|whole-body-width]</code
+					>
 				</li>
 				<li>
 					To include challenges, add a paragraph with only <code class="font-mono"

@@ -69,6 +69,7 @@ type TokenObject =
 			fit?: 'cover' | 'contain';
 			width?: number;
 			height?: number;
+			position?: 'right' | 'center' | 'whole-body-width';
 	  }
 	| { type: 'contactFormWidget'; slug: string; raw: string }
 	| { type: 'countdownWidget'; slug: string; raw: string }
@@ -115,7 +116,7 @@ export async function cmsFromContent(
 
 	const SPECIFICATION_WIDGET_REGEX = /\[Specification=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const PICTURE_WIDGET_REGEX =
-		/\[Picture=(?<slug>[\p{L}\d_-]+)((?:[?\s]msubstitute=(?<msubstitute>[\p{L}\d_-]+))?(?:[?\s]width=(?<width>\d+))?(?:[?\s]height=(?<height>\d+))?(?:[?\s]fit=(?<fit>(cover|contain)))?)*\]/giu;
+		/\[Picture=(?<slug>[\p{L}\d_-]+)((?:[?\s]msubstitute=(?<msubstitute>[\p{L}\d_-]+))?(?:[?\s]width=(?<width>\d+))?(?:[?\s]height=(?<height>\d+))?(?:[?\s]fit=(?<fit>cover|contain))?(?:[?\s]position=(?<position>right|center|whole-body-width))?)*\]/giu;
 	const CONTACTFORM_WIDGET_REGEX = /\[Form=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const COUNTDOWN_WIDGET_REGEX = /\[Countdown=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const TAG_PRODUCTS_REGEX =
@@ -240,6 +241,8 @@ export async function cmsFromContent(
 							| undefined;
 						const width = /[?\s]width=(?<width>\d+)/.exec(raw)?.groups?.width;
 						const height = /[?\s]height=(?<height>\d+)/.exec(raw)?.groups?.height;
+						const position = /[?\s]position=(?<position>(right|center|whole-body-width))/.exec(raw)
+							?.groups?.position as 'right' | 'center' | 'whole-body-width' | undefined;
 						token.push({
 							type: 'pictureWidget',
 							slug: match.groups.slug,
@@ -247,7 +250,8 @@ export async function cmsFromContent(
 							raw,
 							fit,
 							width: width ? Number(width) : undefined,
-							height: height ? Number(height) : undefined
+							height: height ? Number(height) : undefined,
+							position
 						});
 						break;
 					case 'contactFormWidget':
