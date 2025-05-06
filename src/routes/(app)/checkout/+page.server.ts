@@ -446,19 +446,24 @@ export const actions = {
 			);
 		}
 		rateLimit(locals.clientIp, 'email', 10, { minutes: 1 });
-<<<<<<< HEAD
 		let orderId = '';
 		await withTransaction(async (session) => {
 			orderId = await createOrder(
 				cart.items.map((item) => ({
 					quantity: item.quantity,
-					...(item.freeQuantity && { freeQuantity: item.freeQuantity }),
 					product: byId[item.productId],
+					...(item.freeQuantity && { freeQuantity: item.freeQuantity }),
 					...(item.customPrice && {
 						customPrice: { amount: item.customPrice.amount, currency: item.customPrice.currency }
 					}),
 					...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
-					depositPercentage: item.depositPercentage
+					depositPercentage: item.depositPercentage,
+					...(item.booking && {
+						booking: {
+							...item.booking,
+							_id: new ObjectId()
+						}
+					})
 				})),
 				paymentMethod,
 				{
@@ -476,54 +481,6 @@ export const actions = {
 						paymentStatus: {
 							npub: npubAddress,
 							email
-=======
-
-		const orderId = await createOrder(
-			cart.items.map((item) => ({
-				quantity: item.quantity,
-				product: byId[item.productId],
-				...(item.customPrice && {
-					customPrice: { amount: item.customPrice.amount, currency: item.customPrice.currency }
-				}),
-				...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
-				depositPercentage: item.depositPercentage,
-				...(item.booking && {
-					booking: {
-						...item.booking,
-						_id: new ObjectId()
-					}
-				})
-			})),
-			paymentMethod,
-			{
-				locale: locals.language,
-				user: {
-					sessionId: locals.sessionId,
-					userId: locals.user?._id,
-					userLogin: locals.user?.login,
-					userRoleId: locals.user?.roleId,
-					userAlias: locals.user?.alias
-				},
-				notifications: {
-					paymentStatus: {
-						npub: npubAddress,
-						email
-					}
-				},
-				cart,
-				shippingAddress: shippingInfo?.shipping,
-				billingAddress: billingInfo?.billing || shippingInfo?.shipping,
-				userVatCountry: vatCountry,
-				...(locals.user?.roleId === POS_ROLE_ID && isFreeVat && { reasonFreeVat }),
-				...(locals.user?.roleId === POS_ROLE_ID &&
-					discountAmount &&
-					discountType &&
-					discountJustification && {
-						discount: {
-							amount: discountAmount,
-							type: discountType,
-							justification: discountJustification
->>>>>>> abe95b1eeb0235b5eff695b29b26550c62a66a2b
 						}
 					},
 					cart,
