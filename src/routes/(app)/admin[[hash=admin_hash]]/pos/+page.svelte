@@ -26,5 +26,14 @@
 		/>
 	</label>
 	<input type="hidden" name="posTouchTag" bind:value={serializedTags} />
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="posPrefillTermOfUse"
+			class="form-checkbox"
+			checked={data.posPrefillTermOfUse}
+		/>
+		Pre-fill term of use checkbox in /checkout
+	</label>
 	<input type="submit" value="Update" class="btn btn-blue self-start" />
 </form>
