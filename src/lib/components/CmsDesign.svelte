@@ -214,7 +214,7 @@
 						? 'mx-auto'
 						: token.position === 'right'
 						? 'ml-auto'
-						: token.position === 'whole-body-width'
+						: token.position === 'full-width'
 						? 'w-full max-w-none'
 						: ''}"
 					style="{token.fit ? `object-fit: ${token.fit};` : ''}{token.width

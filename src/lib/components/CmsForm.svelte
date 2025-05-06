@@ -208,7 +208,7 @@
 					<code class="font-mono">[Picture=slug width=100 height=100 fit=contain]</code>
 					And also msubstitute (replacement image on mobile), position
 					<code class="font-mono"
-						>[Picture=slug msubstitute=slug position=right|center|whole-body-width]</code
+						>[Picture=slug msubstitute=slug position=right|center|full-width]</code
 					>
 				</li>
 				<li>
