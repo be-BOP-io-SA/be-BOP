@@ -10,13 +10,15 @@ import { productBaseSchema } from '../product-schema';
 import { amountOfProductReserved, amountOfProductSold } from '$lib/server/product';
 import type { Tag } from '$lib/types/Tag';
 import { adminPrefix } from '$lib/server/admin';
-import { ObjectId } from 'mongodb';
+import { AnyBulkWriteOperation, ObjectId } from 'mongodb';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
+import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
+import type { Picture } from '$lib/types/Picture';
 
 export const load = async ({ params }) => {
 	const pictures = await collections.pictures
 		.find({ productId: params.id })
-		.sort({ createdAt: 1 })
+		.sort({ order: 1, createdAt: 1 })
 		.toArray();
 	const digitalFiles = await collections.digitalFiles
 		.find({ productId: params.id })
@@ -211,6 +213,7 @@ export const actions: Actions = {
 						),
 						contentBefore: parsed.contentBefore,
 						contentAfter: parsed.contentAfter,
+						...(parsed.bookingSpec && { bookingSpec: parsed.bookingSpec }),
 						mobile: {
 							hideContentBefore: parsed.hideContentBefore,
 							hideContentAfter: parsed.hideContentAfter
@@ -249,10 +252,27 @@ export const actions: Actions = {
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
 						...(!hasVariations && { variations: '', variationLabels: '' }),
 						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),
-						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' })
+						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' }),
+						...(!parsed.bookingSpec && { bookingSpec: '' }),
+						...(!parsed.hasMaximumPrice && { maximumPrice: '' })
 					}
 				}
 			);
+
+			if (
+				parsed.bookingSpec &&
+				!(await collections.schedules.countDocuments({ _id: productToScheduleId(params.id) }))
+			) {
+				await collections.schedules.insertOne({
+					...defaultSchedule,
+					_id: productToScheduleId(params.id),
+					name: parsed.name,
+					events: [],
+					createdAt: new Date(),
+					updatedAt: new Date(),
+					productId: params.id
+				});
+			}
 
 			if (!res.matchedCount) {
 				throw error(404, 'Product not found');
@@ -266,6 +286,26 @@ export const actions: Actions = {
 		}
 
 		return {};
+	},
+
+	updateOrder: async ({ request }) => {
+		const formData = await request.formData();
+		const pictureIds = z
+			.object({
+				pictureId: z.string().array().min(1)
+			})
+			.parse({
+				pictureId: formData.getAll('pictureId')
+			}).pictureId;
+
+		const bulkOps: AnyBulkWriteOperation<Picture>[] = pictureIds.map((id, index) => ({
+			updateOne: {
+				filter: { _id: id },
+				update: { $set: { order: index } }
+			}
+		}));
+
+		await collections.pictures.bulkWrite(bulkOps, { ordered: false });
 	},
 
 	delete: async ({ params }) => {

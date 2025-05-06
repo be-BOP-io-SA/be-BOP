@@ -27,6 +27,8 @@
 	import type { PojoObject } from '$lib/server/pojo';
 	import type { PaymentMethod } from '$lib/server/payment-methods';
 	import { useI18n } from '$lib/i18n';
+	import { typedFromEntries } from '$lib/utils/typedFromEntries';
+	import { type Day, dayList, productToScheduleId } from '$lib/types/Schedule';
 
 	const { t } = useI18n();
 
@@ -50,6 +52,7 @@
 		name: '',
 		shipping: false,
 		isTicket: false,
+		bookingSpec: undefined,
 		price: {
 			amount: 0,
 			currency: $currencies.priceReference
@@ -200,7 +203,48 @@
 		}
 	}
 	let hasMaximumPrice = !!product.maximumPrice;
+	let hasBooking = !!product.bookingSpec;
+	let existingScheduleId =
+		!!product.bookingSpec && !isNew ? productToScheduleId(product._id) : undefined;
 	let availableDateStr = product.availableDate?.toJSON().slice(0, 10);
+
+	let bookingSpec: NonNullable<Product['bookingSpec']> = product.bookingSpec || {
+		slotMinutes: 15,
+		schedule: {
+			timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+			monday: {
+				start: '09:00',
+				end: '18:00'
+			},
+			tuesday: {
+				start: '09:00',
+				end: '18:00'
+			},
+			wednesday: {
+				start: '09:00',
+				end: '18:00'
+			},
+			thursday: {
+				start: '09:00',
+				end: '18:00'
+			},
+			friday: {
+				start: '09:00',
+				end: '18:00'
+			},
+			saturday: null,
+			sunday: null
+		}
+	};
+	let days = typedFromEntries(
+		dayList.map((day) => [
+			day,
+			{
+				start: bookingSpec.schedule[day]?.start ?? '',
+				end: bookingSpec.schedule[day]?.end ?? ''
+			}
+		])
+	) as Record<Day, { start: string; end: string }>;
 
 	$: changedDate = availableDateStr !== product.availableDate?.toJSON().slice(0, 10);
 	$: enablePreorder = availableDateStr && availableDateStr > new Date().toJSON().slice(0, 10);
@@ -582,13 +626,17 @@
 				<div class="flex gap-4">
 					{#if variation.name && variation.value}
 						<label class="form-label">
-							Name
+							Category Id
+							<input disabled type="text" class="form-input" value={variation.name} />
+						</label>
+						<label class="form-label">
+							Category Name
 							<input
 								type="text"
 								name="variationLabels.names[{variation.name}]"
 								class="form-input"
 								value={product.variationLabels?.names[variation.name]}
-								required={!!product.variationLabels?.values[variation.name][variation.value]}
+								required={!!product.variationLabels?.values[variation.name]?.[variation.value]}
 							/>
 						</label>
 						<label class="form-label">
@@ -596,7 +644,7 @@
 								type="text"
 								name="variationLabels.values[{variation.name}][{variation.value}]"
 								class="form-input"
-								value={product.variationLabels?.values[variation.name][variation.value]}
+								value={product.variationLabels?.values[variation.name]?.[variation.value]}
 								bind:this={variationInput[i]}
 								on:input={() => variationInput[i]?.setCustomValidity('')}
 								required={!!product.variationLabels?.names[variation.name]}
@@ -604,7 +652,7 @@
 						</label>
 					{:else}
 						<label class="form-label">
-							Name
+							Category Name
 							<input
 								type="text"
 								name="variationLabels.names[{(
@@ -690,8 +738,8 @@
 						</label>{/if}
 				</div>
 			{/each}
-			<button class="btn btn-gray" on:click={() => (variationLines += 1)} type="button"
-				>Add variation
+			<button class="btn btn-gray self-start" on:click={() => (variationLines += 1)} type="button">
+				Add variation
 			</button>
 		{/if}
 		<label class="checkbox-label">
@@ -883,6 +931,79 @@
 				The product is a ticket (e.g. for an event)
 			</label>
 
+			<h3 class="text-xl">Booking</h3>
+
+			<label class="checkbox-label">
+				<input class="form-checkbox" type="checkbox" bind:checked={hasBooking} />
+				The product is a booking slot
+			</label>
+
+			{#if hasBooking}
+				<label class="form-label">
+					Booking slot duration
+					<select name="bookingSpec.slotMinutes" class="form-input">
+						<option value="15">15 minutes</option>
+						<option value="30">30 minutes</option>
+						<option value="60">1 hour</option>
+						<option value="120">2 hours</option>
+						<option value={60 * 24}>All day</option>
+					</select>
+				</label>
+
+				<label class="form-label">
+					Timezone
+					<select name="bookingSpec.schedule.timezone" class="form-input">
+						<option value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
+							{Intl.DateTimeFormat().resolvedOptions().timeZone}
+						</option>
+						{#each Intl.supportedValuesOf('timeZone') as timezone}
+							<option value={timezone}>{timezone}</option>
+						{/each}
+					</select>
+				</label>
+
+				<div class="grid gap-2" style="grid-template-columns: min-content 1fr 1fr;">
+					{#each dayList as day}
+						<label class="form-label flex-row gap-2 items-center" for="{day}-start">
+							{day.charAt(0).toUpperCase() + day.slice(1)}
+						</label>
+
+						<input
+							id="{day}-start"
+							type="time"
+							class="form-input"
+							bind:value={days[day].start}
+							on:change={() => (days = { ...days })}
+						/>
+						<input
+							id="{day}-end"
+							type="time"
+							class="form-input"
+							bind:value={days[day].end}
+							on:change={() => (days = { ...days })}
+						/>
+
+						{#if days[day].start && days[day].end}
+							<input
+								type="hidden"
+								name="bookingSpec.schedule[{day}].start"
+								value={days[day].start}
+							/>
+							<input type="hidden" name="bookingSpec.schedule[{day}].end" value={days[day].end} />
+						{/if}
+					{/each}
+				</div>
+
+				{#if existingScheduleId}
+					<a
+						href="{adminPrefix}/schedule/{existingScheduleId}"
+						target="_blank"
+						class="underline body-hyperlink"
+					>
+						Edit associated schedule
+					</a>
+				{/if}
+			{/if}
 			<h3 class="text-xl">Stock</h3>
 
 			<label class="checkbox-label">

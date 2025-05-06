@@ -8,6 +8,7 @@ import type { Tag } from './Tag';
 import type { Timestamps } from './Timestamps';
 import type { PaymentMethod } from '$lib/server/payment-methods';
 import { sumCurrency } from '$lib/utils/sumCurrency';
+import type { PickDeep } from 'type-fest';
 
 export interface ProductTranslatableFields {
 	name: string;
@@ -56,6 +57,43 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	requireSpecificDeliveryFee?: boolean;
 	applyDeliveryFeesOnlyOnce?: boolean;
 	isTicket: boolean;
+	bookingSpec?: {
+		/**
+		 * Number of minutes for the price of the product.
+		 */
+		slotMinutes: number;
+		schedule: {
+			timezone: string; // eg "Europe/Berlin"
+			monday: {
+				start: string; // eg "09:00"
+				end: string; // eg "17:00"
+			} | null;
+			tuesday: {
+				start: string; // eg "09:00"
+				end: string; // eg "17:00"
+			} | null;
+			wednesday: {
+				start: string; // eg "09:00"
+				end: string; // eg "17:00"
+			} | null;
+			thursday: {
+				start: string; // eg "09:00"
+				end: string; // eg "17:00"
+			} | null;
+			friday: {
+				start: string; // eg "09:00"
+				end: string; // eg "17:00"
+			} | null;
+			saturday: {
+				start: string; // eg "09:00"
+				end: string; // eg "17:00"
+			} | null;
+			sunday: {
+				start: string; // eg "09:00"
+				end: string; // eg "17:00"
+			} | null;
+		};
+	};
 	availableDate?: Date;
 	preorder: boolean;
 	displayShortDescription: boolean;
@@ -121,8 +159,10 @@ export function isPreorder(
 	return !!(preorder && availableDate && availableDate > new Date());
 }
 
-export function oneMaxPerLine(p: Pick<Product, 'standalone' | 'type'>) {
-	return p.standalone || p.type === 'subscription';
+export function oneMaxPerLine(
+	p: PickDeep<Product, 'standalone' | 'type' | 'bookingSpec.slotMinutes'>
+) {
+	return p.standalone || p.type === 'subscription' || p.bookingSpec;
 }
 export function productPriceWithVariations(
 	product: Pick<Product, 'name' | '_id' | 'price' | 'variations'>,

@@ -11,24 +11,25 @@
 		addMonths,
 		isSameDay
 	} from 'date-fns';
-	import type { EventSchedule, Schedule } from '$lib/types/Schedule';
+	import type { ScheduleEvent, Schedule } from '$lib/types/Schedule';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
 
-	export let schedule: Schedule;
+	export let schedule: Pick<Schedule, 'allowSubscription' | 'events' | 'pastEventDelay' | '_id'>;
 	let className = '';
+	export let isDayDisabled: (date: Date) => boolean = () => false;
+	export let selectedDate = new Date();
 	export { className as class };
 
 	const { t, locale } = useI18n();
 
 	let currentDate = new Date();
-	$: selectedDate = new Date();
 	let days: Date[] = [];
 	let weekDays: string[] = [];
 
-	let scheduleEventByDay: Record<string, EventSchedule[]> = {};
+	let scheduleEventByDay: Record<string, ScheduleEvent[]> = {};
 	for (const event of schedule.events) {
 		const startDate = new Date(event.beginsAt);
 		const endDate = event.endsAt ? new Date(event.endsAt) : startDate;
@@ -109,14 +110,18 @@
 {/if}
 <div class="max-w-md mx-auto p-4 eventCalendar eventCalendar-main shadow-md rounded-lg {className}">
 	<div class="flex items-center justify-between mb-4">
-		<button on:click={prevMonth} class="py-2 eventCalendar-navCTA btn rounded-full">&lt;</button>
+		<button on:click={prevMonth} type="button" class="py-2 eventCalendar-navCTA btn rounded-full"
+			>&lt;</button
+		>
 		<h2 class="text-lg font-semibold">
 			{new Date(currentDate).toLocaleDateString($locale, {
 				month: 'long',
 				year: 'numeric'
 			})}
 		</h2>
-		<button on:click={nextMonth} class="py-2 eventCalendar-navCTA btn rounded-full">&gt;</button>
+		<button type="button" on:click={nextMonth} class="py-2 eventCalendar-navCTA btn rounded-full"
+			>&gt;</button
+		>
 	</div>
 
 	<div class="grid grid-cols-7 text-center font-semibold">
@@ -128,12 +133,13 @@
 	<div class="grid grid-cols-7 text-center mt-2">
 		{#each days as day}
 			<button
+				type="button"
 				on:click={() => selectDate(day)}
 				class="p-2 m-2 rounded-full
 					{isSameDay(day, new Date()) ? 'eventCalendar-currentDate font-bold' : ''}
 					{isEventDay(day) ? 'eventCalendar-hasEvent font-bold' : ''}
 					{selectedDate && isSameDay(day, selectedDate) ? ' ring-2 ring-black' : ''}
-					{format(day, 'M') !== format(currentDate, 'M') ? ' text-gray-400' : ''}"
+					{format(day, 'M') !== format(currentDate, 'M') || isDayDisabled(day) ? ' text-gray-400' : ''}"
 				style="background-color:{!!hasCustomColorEvents(day) &&
 				hasCustomColorEvents(day).length === 1
 					? hasCustomColorEvents(day)[0].calendarColor

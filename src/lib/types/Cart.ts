@@ -13,14 +13,27 @@ import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 import { currencies } from '$lib/stores/currencies';
 import { get } from 'svelte/store';
 import type { User } from './User';
+import { differenceInMinutes } from 'date-fns';
 
 export interface Cart extends Timestamps {
 	_id: ObjectId;
 	user: UserIdentifier;
 
 	items: Array<{
+		/**
+		 * Unique identifier for the line in the cart.
+		 *
+		 * Used for removing items from the cart.
+		 *
+		 * Only optional for backwards compatibility.
+		 */
+		_id?: string;
 		productId: string;
 		quantity: number;
+		booking?: {
+			start: Date;
+			end: Date;
+		};
 		customPrice?: { amount: number; currency: Currency };
 		reservedUntil?: Date;
 		depositPercentage?: number;
@@ -97,11 +110,20 @@ export function computeDeliveryFees(
 
 export function computePriceInfo(
 	items: Array<{
-		product: { shipping: boolean; price: Price; vatProfileId?: string | ObjectId };
+		product: {
+			shipping: boolean;
+			price: Price;
+			vatProfileId?: string | ObjectId;
+			bookingSpec?: { slotMinutes: number };
+		};
 		quantity: number;
 		customPrice?: Price;
 		depositPercentage?: number;
 		discountPercentage?: number;
+		booking?: {
+			start: Date;
+			end: Date;
+		};
 	}>,
 	params: {
 		vatExempted: boolean;
@@ -167,6 +189,10 @@ export function computePriceInfo(
 		const price = fixCurrencyRounding(
 			(item.customPrice || item.product.price).amount *
 				item.quantity *
+				(item.booking && item.product.bookingSpec?.slotMinutes
+					? differenceInMinutes(item.booking.end, item.booking.start) /
+					  item.product.bookingSpec.slotMinutes
+					: 1) *
 				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
 			currency
 		);
@@ -193,6 +219,10 @@ export function computePriceInfo(
 			amount:
 				(((item.customPrice || item.product.price).amount *
 					item.quantity *
+					(item.booking && item.product.bookingSpec?.slotMinutes
+						? differenceInMinutes(item.booking.end, item.booking.start) /
+						  item.product.bookingSpec.slotMinutes
+						: 1) *
 					(item.depositPercentage ?? 100)) /
 					100) *
 				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
@@ -219,6 +249,10 @@ export function computePriceInfo(
 			amount:
 				(item.customPrice || item.product.price).amount *
 				item.quantity *
+				(item.booking && item.product.bookingSpec?.slotMinutes
+					? differenceInMinutes(item.booking.end, item.booking.start) /
+					  item.product.bookingSpec.slotMinutes
+					: 1) *
 				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
 		})),
 		params.deliveryFees

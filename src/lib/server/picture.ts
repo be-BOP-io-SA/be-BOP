@@ -243,7 +243,7 @@ export function picturesForProducts(productIds: string[]): Promise<Picture[]> {
 	return collections.pictures
 		.aggregate<SetRequired<Picture, 'productId'>>([
 			{ $match: { productId: { $in: productIds } } },
-			{ $sort: { createdAt: 1 } },
+			{ $sort: { order: 1, createdAt: 1 } },
 			{
 				$group: {
 					_id: '$productId',

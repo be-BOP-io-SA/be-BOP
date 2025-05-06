@@ -126,6 +126,12 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		})),
 		items: order.items.map((item) => ({
 			quantity: item.quantity,
+			booking: item.booking
+				? {
+						start: item.booking.start,
+						end: item.booking.end
+				  }
+				: undefined,
 			product: {
 				_id: item.product._id,
 				price: item.product.price,
@@ -141,7 +147,12 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 				externalResources: item.product.externalResources?.map((externalResource) => ({
 					label: externalResource.label,
 					href: order.status === 'paid' ? externalResource.href : undefined
-				}))
+				})),
+				bookingSpec: item.product.bookingSpec
+					? {
+							slotMinutes: item.product.bookingSpec.slotMinutes
+					  }
+					: undefined
 			},
 			vatRate: item.vatRate,
 			...(item.customPrice && { customPrice: item.customPrice }),

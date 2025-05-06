@@ -46,7 +46,7 @@ import type { Gallery } from '$lib/types/Gallery';
 import type { VatProfile } from '$lib/types/VatProfile';
 import type { Ticket } from '$lib/types/Ticket';
 import type { OrderLabel } from '$lib/types/OrderLabel';
-import type { Schedule } from '$lib/types/Schedule';
+import type { ScheduleEventBooked, Schedule } from '$lib/types/Schedule';
 import type { Leaderboard } from '$lib/types/Leaderboard';
 
 // Bigger than the default 10, helpful with MongoDB errors
@@ -105,6 +105,7 @@ const genCollection = () => ({
 	tickets: db.collection<Ticket>('tickets'),
 	labels: db.collection<OrderLabel>('labels'),
 	schedules: db.collection<Schedule>('schedules'),
+	scheduleEvents: db.collection<ScheduleEventBooked>('schedule.events'),
 
 	errors: db.collection<unknown & { _id: ObjectId; url: string; method: string }>('errors')
 });
@@ -117,10 +118,12 @@ export const collections = building
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?]> = [
 	[collections.pictures, { productId: 1, createdAt: 1 }],
+	[collections.pictures, { productId: 1, order: 1, createdAt: 1 }],
 	[collections.pictures, { galleryId: 1, createdAt: 1 }],
 	[collections.pictures, { 'slider._id': 1, createdAt: 1 }],
 	[collections.pictures, { 'tag._id': 1, createdAt: 1 }],
 	[collections.pictures, { 'schedule._id': 1, createdAt: 1 }],
+	//^ Todo: use partialFilterExpression but take care of deleting old indexes
 	[collections.products, { type: 1, createdAt: 1 }],
 	[collections.products, { stock: 1 }, { sparse: true }],
 	[collections.products, { 'actionSettings.eShop.visible': 1 }],
@@ -198,7 +201,12 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.tickets, { orderId: 1 }],
 	[collections.tickets, { productId: 1 }],
 	[collections.tickets, { ticketId: 1 }, { unique: true }],
-	[collections.leaderboards, { beginsAt: 1, endsAt: 1 }]
+	[collections.leaderboards, { beginsAt: 1, endsAt: 1 }],
+	[collections.scheduleEvents, { scheduleId: 1, beginsAt: 1, endsAt: 1 }], // endsAt is just used for index-only scan
+	[collections.scheduleEvents, { scheduleId: 1, status: 1, beginsAt: 1, endsAt: 1 }], // endsAt is just used for index-only scan
+	[collections.scheduleEvents, { scheduleId: 1, status: 1, endsAt: 1 }],
+	[collections.scheduleEvents, { orderId: 1 }],
+	[collections.scheduleEvents, { orderCreated: 1, _id: 1 }] // To cleanup events where there was an error during order creation
 ];
 
 export async function createIndexes() {

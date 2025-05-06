@@ -7,6 +7,7 @@
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 	import { sum } from '$lib/utils/sum.js';
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
+	import { differenceInMinutes } from 'date-fns';
 	import { marked } from 'marked';
 
 	export let data;
@@ -189,6 +190,10 @@
 				{@const price =
 					(item.currencySnapshot.main.customPrice?.amount ??
 						item.currencySnapshot.main.price.amount) *
+					(item.booking && item.product.bookingSpec
+						? differenceInMinutes(item.booking.end, item.booking.start) /
+						  item.product.bookingSpec.slotMinutes
+						: 1) *
 					(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 				<!--{@const unitPrice = price / item.quantity}-->
 				{@const priceCurrency =

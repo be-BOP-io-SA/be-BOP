@@ -11,6 +11,8 @@ import { POS_ROLE_ID } from '$lib/types/User';
 import { cmsFromContent } from '$lib/server/cms';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
+import { productToScheduleId, type ScheduleEvent } from '$lib/types/Schedule';
+import { subDays } from 'date-fns';
 
 export const load = async ({ params, locals }) => {
 	const product = await collections.products.findOne<
@@ -46,6 +48,7 @@ export const load = async ({ params, locals }) => {
 			| 'hasSellDisclaimer'
 			| 'hideFromSEO'
 			| 'hideDiscountExpiration'
+			| 'bookingSpec'
 		>
 	>(
 		{ _id: params.id },
@@ -92,7 +95,8 @@ export const load = async ({ params, locals }) => {
 				hasSellDisclaimer: 1,
 				hideFromSEO: 1,
 				hideDiscountExpiration: 1,
-				shipping: 1
+				shipping: 1,
+				bookingSpec: 1
 			}
 		}
 	);
@@ -109,16 +113,35 @@ export const load = async ({ params, locals }) => {
 		throw redirect(303, '/');
 	}
 
-	const pictures = await collections.pictures
-		.find({ productId: params.id })
-		.sort({ createdAt: 1 })
-		.toArray();
-	const subscriptions = await collections.paidSubscriptions
-		.find({
-			...userQuery(userIdentifier(locals)),
-			paidUntil: { $gt: new Date() }
-		})
-		.toArray();
+	const [pictures, subscriptions, schedule, scheduleEvents] = await Promise.all([
+		collections.pictures.find({ productId: params.id }).sort({ order: 1, createdAt: 1 }).toArray(),
+		collections.paidSubscriptions
+			.find({
+				...userQuery(userIdentifier(locals)),
+				paidUntil: { $gt: new Date() }
+			})
+			.toArray(),
+		// todo: filter events by date directly in query
+		product.bookingSpec
+			? collections.schedules.findOne({ _id: productToScheduleId(product._id) })
+			: null,
+		product.bookingSpec
+			? collections.scheduleEvents
+					.find({
+						scheduleId: productToScheduleId(product._id),
+						status: { $in: ['pending', 'confirmed'] },
+						endsAt: { $gt: subDays(new Date(), 1) }
+					})
+					.sort({ beginsAt: 1 })
+					.project<Pick<ScheduleEvent, 'beginsAt' | 'endsAt'>>({
+						_id: 0,
+						beginsAt: 1,
+						endsAt: 1
+					})
+					.toArray()
+			: []
+	]);
+
 	const discount = subscriptions.length
 		? await collections.discounts.findOne(
 				{
@@ -150,6 +173,15 @@ export const load = async ({ params, locals }) => {
 		product,
 		pictures,
 		discount,
+		scheduleEvents: [
+			...scheduleEvents,
+			...(schedule?.events ?? [])
+				.filter((e) => (e.endsAt ?? Infinity) > subDays(new Date(), 1))
+				.map((e) => ({
+					beginsAt: e.beginsAt,
+					endsAt: e.endsAt
+				}))
+		],
 		...(product.contentBefore && {
 			productCMSBefore: cmsFromContent({ content: product.contentBefore }, locals)
 		}),
@@ -177,7 +209,15 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		set(json, key, value);
 	}
 
-	const { quantity, customPriceAmount, customPriceCurrency, deposit, chosenVariations } = z
+	const {
+		quantity,
+		customPriceAmount,
+		customPriceCurrency,
+		deposit,
+		chosenVariations,
+		time,
+		durationMinutes
+	} = z
 		.object({
 			quantity: z
 				.number({ coerce: true })
@@ -191,9 +231,15 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 				.optional(),
 			customPriceCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1)]).optional(),
 			deposit: z.enum(['partial', 'full']).optional(),
-			chosenVariations: z.record(z.string(), z.string()).optional()
+			chosenVariations: z.record(z.string(), z.string()).optional(),
+			time: z.date({ coerce: true }).optional(),
+			durationMinutes: z.number({ coerce: true }).int().min(1).optional()
 		})
 		.parse(json);
+
+	if (product.bookingSpec && (!time || !durationMinutes)) {
+		throw error(400, 'Time and duration are required for booking products');
+	}
 
 	const customPrice =
 		customPriceAmount && customPriceCurrency
@@ -207,7 +253,15 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		mode: 'eshop',
 		...(customPrice && { customPrice }),
 		deposit: deposit === 'partial',
-		...(product.hasVariations && { chosenVariations })
+		...(product.hasVariations && { chosenVariations }),
+		...(time && durationMinutes && product.bookingSpec
+			? {
+					booking: {
+						time,
+						durationMinutes: durationMinutes
+					}
+			  }
+			: undefined)
 	});
 }
 

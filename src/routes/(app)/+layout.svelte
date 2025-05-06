@@ -32,6 +32,8 @@
 	import { LARGE_SCREEN } from '$lib/types/Theme.js';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
+	import { oneMaxPerLine } from '$lib/types/Product.js';
+	import { differenceInMinutes } from 'date-fns';
 
 	export let data;
 
@@ -241,6 +243,7 @@
 									on:dismiss={() => ($productAddedToCart = null)}
 									product={$productAddedToCart.product}
 									picture={$productAddedToCart.picture}
+									priceMultiplier={$productAddedToCart.priceMultiplier}
 									customPrice={$productAddedToCart.customPrice}
 									chosenVariations={$productAddedToCart.chosenVariations}
 									depositPercentage={$productAddedToCart.depositPercentage}
@@ -292,6 +295,9 @@
 												};
 											}}
 										>
+											{#if item._id}
+												<input type="hidden" name="lineId" value={item._id} />
+											{/if}
 											{#if item.depositPercentage ?? undefined !== undefined}
 												<input
 													type="hidden"
@@ -326,7 +332,7 @@
 															: item.product.name}
 													</h3>
 												</a>
-												{#if item.product.type !== 'subscription' && !item.product.standalone}
+												{#if !oneMaxPerLine(item.product)}
 													<div class="flex items-center gap-2">
 														<span class="text-xs">{t('cart.quantity')}: </span>
 														<CartQuantity {item} sm disabled={!data.cartPreviewInteractive} />
@@ -338,6 +344,10 @@
 													class="text-base"
 													amount={(item.quantity *
 														price.amount *
+														(item.booking && item.product.bookingSpec
+															? differenceInMinutes(item.booking.end, item.booking.start) /
+															  item.product.bookingSpec.slotMinutes
+															: 1) *
 														(item.depositPercentage ?? 100) *
 														(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)) /
 														100}
