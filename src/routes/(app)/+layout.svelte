@@ -153,7 +153,9 @@
 				<nav class="flex gap-10 text-[22px] font-semibold header-tab">
 					{#each data.links.topbar as link}
 						<a
-							href={link.href}
+							href={link.href.startsWith('http') || link.href.includes('/')
+								? link.href
+								: `/${link.href}`}
 							class=" {data.notResponsive ? '' : 'hidden lg:inline'}"
 							data-sveltekit-preload-data="off"
 							target={link.href.startsWith('http') ? '_blank' : '_self'}
@@ -181,7 +183,9 @@
 				{#each data.links.topbar as link}
 					<a
 						class="py-4"
-						href={link.href}
+						href={link.href.startsWith('http') || link.href.includes('/')
+							? link.href
+							: `/${link.href}`}
 						target={link.href.startsWith('http') ? '_blank' : '_self'}
 						data-sveltekit-preload-data="off">{link.label}</a
 					>
@@ -203,7 +207,9 @@
 
 					{#each data.links.navbar as link}
 						<a
-							href={link.href}
+							href={link.href.startsWith('http') || link.href.includes('/')
+								? link.href
+								: `/${link.href}`}
 							class={data.notResponsive ? '' : 'hidden lg:inline'}
 							target={link.href.startsWith('http') ? '_blank' : '_self'}
 							data-sveltekit-preload-data="off">{link.label}</a
@@ -483,8 +489,12 @@
 				class="navbar print:hidden header-tab font-light flex flex-col lg:hidden border-x-0 border-b-0 border-opacity-25 border-t-1 border-white px-4 pb-3"
 			>
 				{#each data.links.navbar as link}
-					<a class="py-2 hover:underline" data-sveltekit-preload-data="off" href={link.href}
-						>{link.label}</a
+					<a
+						class="py-2 hover:underline"
+						data-sveltekit-preload-data="off"
+						href={link.href.startsWith('http') || link.href.includes('/')
+							? link.href
+							: `/${link.href}`}>{link.label}</a
 					>
 				{/each}
 			</nav>
@@ -592,7 +602,9 @@
 						{#each data.links.footer as link}
 							<a
 								class={link.label === '-' ? 'hidden lg:contents' : ''}
-								href={link.href}
+								href={link.href.startsWith('http') || link.href.includes('/')
+									? link.href
+									: `/${link.href}`}
 								target={link.href.startsWith('http') ? '_blank' : '_self'}
 								data-sveltekit-preload-data="off">{link.label}</a
 							>

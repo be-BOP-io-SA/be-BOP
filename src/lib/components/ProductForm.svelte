@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CURRENCIES, CURRENCY_UNIT } from '$lib/types/Currency';
+	import { CURRENCIES, CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 	import {
 		DEFAULT_MAX_QUANTITY_PER_ORDER,
 		MAX_NAME_LIMIT,
@@ -106,7 +106,14 @@
 		: 3;
 	let displayRawHTMLBefore = false;
 	let displayRawHTMLAfter = false;
-
+	let displayVATCalculator = false;
+	let priceAmountVATIncluded = 0;
+	let vatRate = 0;
+	$: product.price.amount = Number(
+		((100 * priceAmountVATIncluded) / (100 + vatRate)).toFixed(
+			FRACTION_DIGITS_PER_CURRENCY[product.price.currency]
+		)
+	);
 	if (product._id && isNew) {
 		product.name = product.name + ' (duplicate)';
 		product._id = generateId(product.name, false);
@@ -373,7 +380,7 @@
 
 		<div class="gap-4 flex flex-col md:flex-row">
 			<label class="w-full">
-				Price amount
+				Price amount (VAT excluded)
 				<input
 					class="form-input"
 					type="number"
@@ -405,6 +412,32 @@
 				</select>
 			</label>
 		</div>
+		<label class="checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				name="vatCalculator"
+				bind:checked={displayVATCalculator}
+			/>
+			Display VAT calculator
+		</label>
+		{#if displayVATCalculator}
+			<div class="gap-4 flex flex-col md:flex-row">
+				<label class="w-full">
+					Price amount (VAT included)
+					<input class="form-input" type="number" bind:value={priceAmountVATIncluded} step="any" />
+				</label>
+
+				<label class="w-full">
+					VAT rate
+					<input class="form-input" type="number" bind:value={vatRate} step="any" />
+				</label>
+				<label class="w-full">
+					Price amount (VAT excluded)
+					<input class="form-input" type="number" bind:value={product.price.amount} step="any" />
+				</label>
+			</div>
+		{/if}
 		{#if vatProfiles.length}
 			<label class="form-label">
 				VAT profile
@@ -693,6 +726,7 @@
 							class="form-input"
 							value={variation.price}
 							min="0"
+							step="any"
 						/>
 					</label>
 					{#if variation.name && variation.value}

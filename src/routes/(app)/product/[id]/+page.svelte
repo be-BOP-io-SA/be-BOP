@@ -769,31 +769,67 @@
 				{#if data.product.cta}
 					{#each data.product.cta as cta}
 						{#if !cta.fallback}
-							<a
-								href={cta.href}
-								class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
-									' '
-								)
-									? 'break-all'
-									: ''} "
-								target={cta.href.startsWith('http') ? '_blank' : '_self'}
-								download={cta.downloadLink ?? ''}
-							>
-								{cta.label}
-							</a>
+							{#if cta.downloadLink}
+								<a
+									href={cta.href.startsWith('http') || cta.href.includes('/')
+										? cta.href
+										: `/${cta.href}`}
+									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
+										' '
+									)
+										? 'break-all'
+										: ''} "
+									target={cta.href.startsWith('http') ? '_blank' : '_self'}
+									download={cta.downloadLink}
+								>
+									{cta.label}
+								</a>
+							{:else}
+								<a
+									href={cta.href.startsWith('http') || cta.href.includes('/')
+										? cta.href
+										: `/${cta.href}`}
+									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
+										' '
+									)
+										? 'break-all'
+										: ''} "
+									target={cta.href.startsWith('http') ? '_blank' : '_self'}
+								>
+									{cta.label}
+								</a>
+							{/if}
 						{:else if !canBuy || amountAvailable <= 0 || (data.cartMaxSeparateItems && data.cart?.length === data.cartMaxSeparateItems)}
-							<a
-								href={cta.href}
-								class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
-									' '
-								)
-									? 'break-all'
-									: ''} "
-								target={cta.href.startsWith('http') ? '_blank' : '_self'}
-								download={cta.downloadLink ?? ''}
-							>
-								{cta.label}
-							</a>
+							{#if cta.downloadLink}
+								<a
+									href={cta.href.startsWith('http') || cta.href.includes('/')
+										? cta.href
+										: `/${cta.href}`}
+									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
+										' '
+									)
+										? 'break-all'
+										: ''} "
+									target={cta.href.startsWith('http') ? '_blank' : '_self'}
+									download={cta.downloadLink}
+								>
+									{cta.label}
+								</a>
+							{:else}
+								<a
+									href={cta.href.startsWith('http') || cta.href.includes('/')
+										? cta.href
+										: `/${cta.href}`}
+									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
+										' '
+									)
+										? 'break-all'
+										: ''} "
+									target={cta.href.startsWith('http') ? '_blank' : '_self'}
+								>
+									{cta.label}
+								</a>
+							{/if}
 						{/if}
 					{/each}
 				{/if}
