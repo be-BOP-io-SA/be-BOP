@@ -84,6 +84,7 @@
 		<a href="?lang=it#doc">🇮🇹</a>
 		<a href="?lang=es-sv#doc"> 🇸🇻</a>
 		<a href="?lang=nl#doc">🇳🇱</a>
+		<a href="?lang=de#doc">🇩🇪</a>
 		<a href="?lang=pt#doc">🇵🇹</a>
 	</div>
 	<p>Select your topic :</p>
