@@ -13,6 +13,7 @@ export interface ImageData {
 
 export interface Picture extends Timestamps {
 	_id: string;
+	order?: number;
 	productId?: string;
 	tag?: {
 		_id: string;

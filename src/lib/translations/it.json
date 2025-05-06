@@ -634,6 +634,19 @@
 	"product": {
 		"addedToCart": "Prodotto aggiunto al carrello",
 		"availableOn": "Disponibile il {date}",
+		"booking": {
+			"duration": "Durata",
+			"hour": {
+				"one": "1 ora",
+				"other": "{count} ore"
+			},
+			"minute": {
+				"one": "1 minuto",
+				"other": "{count} minuti"
+			},
+			"time": "Ora del giorno",
+			"timezone": "Fuso orario: {timeZone}"
+		},
 		"checkBackLater": "Ricontrolla tra un po'",
 		"cta": {
 			"add": "Aggiungi al carrello",

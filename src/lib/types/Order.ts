@@ -13,6 +13,7 @@ import { getWeek, getWeekOfMonth } from 'date-fns';
 import type { Ticket } from './Ticket';
 import type { OrderLabel } from './OrderLabel';
 import { toBitcoins } from '$lib/utils/toBitcoins';
+import type { ScheduleEventBooked } from './Schedule';
 
 export type OrderPaymentStatus = 'pending' | 'paid' | 'expired' | 'canceled' | 'failed';
 
@@ -179,6 +180,11 @@ export interface Order extends Timestamps {
 				price: Price;
 				customPrice?: Price;
 			};
+		};
+		booking?: {
+			_id: ScheduleEventBooked['_id'];
+			start: Date;
+			end: Date;
 		};
 		vatRate: number;
 		tickets?: Array<Ticket['ticketId']>;

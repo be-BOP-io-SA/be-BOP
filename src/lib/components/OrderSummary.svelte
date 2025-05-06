@@ -8,12 +8,14 @@
 	} from '$lib/types/Order';
 	import type { Picture } from '$lib/types/Picture';
 	import type { Product } from '$lib/types/Product';
+	import { differenceInMinutes } from 'date-fns';
 	import PictureComponent from './Picture.svelte';
 	import PriceTag from './PriceTag.svelte';
 	import ProductType from './ProductType.svelte';
 	import IconInfo from './icons/IconInfo.svelte';
+	import type { PickDeep } from 'type-fest';
 
-	const { t, countryName } = useI18n();
+	const { t, countryName, locale } = useI18n();
 
 	let classNames = '';
 	export { classNames as class };
@@ -29,7 +31,7 @@
 			> & {
 				digitalFiles: Array<{ _id: string }>;
 				picture?: Picture;
-				product: Pick<
+				product: PickDeep<
 					Product,
 					| '_id'
 					| 'name'
@@ -39,8 +41,13 @@
 					| 'shipping'
 					| 'isTicket'
 					| 'variationLabels'
+					| 'bookingSpec.slotMinutes'
 				>;
 				chosenVariations: Record<string, string> | undefined;
+				booking?: {
+					start: Date;
+					end: Date;
+				};
 			}
 		>;
 		payments: Array<Pick<OrderPayment, 'currencySnapshot' | 'status' | 'method'>>;
@@ -102,6 +109,15 @@
 					{#if item.quantity > 1}
 						{t('cart.quantity')}: {item.quantity}
 					{/if}
+					{#if item.booking}
+						{Intl.DateTimeFormat($locale, {
+							year: 'numeric',
+							month: 'short',
+							day: 'numeric',
+							hour: '2-digit',
+							minute: '2-digit'
+						}).formatRange(item.booking.start, item.booking.end)}
+					{/if}
 				</div>
 			</div>
 
@@ -109,6 +125,10 @@
 				<PriceTag
 					class="text-2xl truncate"
 					amount={Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
+						(item.booking && item.product.bookingSpec
+							? differenceInMinutes(item.booking.end, item.booking.start) /
+							  item.product.bookingSpec.slotMinutes
+							: 1) *
 						(item.currencySnapshot.main.customPrice?.amount ??
 							item.currencySnapshot.main.price.amount) *
 						(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}

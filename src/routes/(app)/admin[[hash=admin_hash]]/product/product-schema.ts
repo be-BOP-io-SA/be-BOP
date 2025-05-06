@@ -30,6 +30,109 @@ export const productBaseSchema = () => ({
 	requireSpecificDeliveryFee: z.boolean({ coerce: true }).default(false),
 	payWhatYouWant: z.boolean({ coerce: true }).default(false),
 	hasMaximumPrice: z.boolean({ coerce: true }).default(false),
+	bookingSpec: z
+		.object({
+			// 	/**
+			//  * Number of minutes for the price of the product.
+			//  */
+			// slotMinutes: number;
+			// schedule: {
+			// 	timezone: string; // eg "Europe/Berlin"
+			// 	monday: {
+			// 		start: string; // eg "09:00"
+			// 		end: string; // eg "17:00"
+			// 	} | null;
+			// 	tuesday: {
+			// 		start: string; // eg "09:00"
+			// 		end: string; // eg "17:00"
+			// 	} | null;
+			// 	wednesday: {
+			// 		start: string; // eg "09:00"
+			// 		end: string; // eg "17:00"
+			// 	} | null;
+			// 	thursday: {
+			// 		start: string; // eg "09:00"
+			// 		end: string; // eg "17:00"
+			// 	} | null;
+			// 	friday: {
+			// 		start: string; // eg "09:00"
+			// 		end: string; // eg "17:00"
+			// 	} | null;
+			// 	saturday: {
+			// 		start: string; // eg "09:00"
+			// 		end: string; // eg "17:00"
+			// 	} | null;
+			// 	sunday: {
+			// 		start: string; // eg "09:00"
+			// 		end: string; // eg "17:00"
+			// 	} | null;
+			// };
+			slotMinutes: z
+				.number({ coerce: true })
+				.int()
+				.min(1)
+				.max(24 * 60),
+			schedule: z.object({
+				timezone: z.enum(Intl.supportedValuesOf('timeZone') as [string, ...string[]]),
+				monday: z
+					.object({
+						start: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/),
+						end: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/)
+					})
+					.nullable()
+					.optional()
+					.default(null),
+				tuesday: z
+					.object({
+						start: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/),
+						end: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/)
+					})
+					.nullable()
+					.optional()
+					.default(null),
+				wednesday: z
+					.object({
+						start: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/),
+						end: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/)
+					})
+					.nullable()
+					.optional()
+					.default(null),
+				thursday: z
+					.object({
+						start: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/),
+						end: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/)
+					})
+					.nullable()
+					.optional()
+					.default(null),
+				friday: z
+					.object({
+						start: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/),
+						end: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/)
+					})
+					.nullable()
+					.optional()
+					.default(null),
+				saturday: z
+					.object({
+						start: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/),
+						end: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/)
+					})
+					.nullable()
+					.optional()
+					.default(null),
+				sunday: z
+					.object({
+						start: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/),
+						end: z.string().regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/)
+					})
+					.nullable()
+					.optional()
+					.default(null)
+			})
+		})
+		.optional(),
 	maxPriceAmount: z
 		.string()
 		.regex(/^\d+(\.\d+)?$/)

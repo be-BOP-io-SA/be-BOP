@@ -19,6 +19,7 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { trimPrefix } from '$lib/utils/trimPrefix.js';
+	import { differenceInMinutes } from 'date-fns';
 
 	export let data;
 	let submitting = false;
@@ -701,19 +702,38 @@
 										depositPercentage={item.depositPercentage}
 									/>
 								</div>
-								<div>
-									{#if 0}
-										<CartQuantity {item} sm />
-									{:else if item.quantity > 1}
-										{t('cart.quantity')}: {item.quantity}
-									{/if}
-								</div>
+								{#if item.product.bookingSpec && item.booking}
+									<p>
+										{Intl.DateTimeFormat($locale, {
+											year: 'numeric',
+											month: 'short',
+											day: 'numeric',
+											hour: '2-digit',
+											minute: '2-digit'
+										}).formatRange(item.booking.start, item.booking.end)}
+									</p>
+								{:else}
+									<div>
+										{#if 0}
+											<CartQuantity {item} sm />
+										{:else if item.quantity > 1}
+											{t('cart.quantity')}: {item.quantity}
+										{/if}
+									</div>
+								{/if}
 							</div>
 
 							<div class="flex flex-col ml-auto items-end justify-center">
 								<PriceTag
 									class="text-2xl truncate"
-									amount={((quantityToPay * price.amount * (item.depositPercentage ?? 100)) / 100) *
+									amount={((quantityToPay *
+										(item.booking && item.product.bookingSpec?.slotMinutes
+											? differenceInMinutes(item.booking.end, item.booking.start) /
+											  item.product.bookingSpec.slotMinutes
+											: 1) *
+										price.amount *
+										(item.depositPercentage ?? 100)) /
+										100) *
 										(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 									currency={price.currency}
 									main
@@ -724,7 +744,14 @@
 										: ''}</PriceTag
 								>
 								<PriceTag
-									amount={((quantityToPay * price.amount * (item.depositPercentage ?? 100)) / 100) *
+									amount={((quantityToPay *
+										(item.booking && item.product.bookingSpec?.slotMinutes
+											? differenceInMinutes(item.booking.end, item.booking.start) /
+											  item.product.bookingSpec.slotMinutes
+											: 1) *
+										price.amount *
+										(item.depositPercentage ?? 100)) /
+										100) *
 										(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 									currency={price.currency}
 									class="text-base truncate"
@@ -857,7 +884,14 @@
 				{/if}
 
 				<label class="checkbox-label">
-					<input type="checkbox" class="form-checkbox" name="teecees" form="checkout" required />
+					<input
+						type="checkbox"
+						class="form-checkbox"
+						name="teecees"
+						form="checkout"
+						required
+						checked={data.roleId === POS_ROLE_ID && data.posPrefillTermOfUse}
+					/>
 					<span>
 						<Trans key="checkout.tosAgree"
 							><a

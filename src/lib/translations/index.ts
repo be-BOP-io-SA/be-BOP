@@ -3,6 +3,8 @@ import es_sv from './es-sv.json';
 import fr from './fr.json';
 import nl from './nl.json';
 import it from './it.json';
+import de from './de.json';
+import pt from './pt.json';
 
 // @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
 import { formatDistance as formatDistanceEn } from 'date-fns/formatDistance/en-US';
@@ -14,6 +16,10 @@ import { formatDistance as formatDistanceIt } from 'date-fns/formatDistance/it';
 import { formatDistance as formatDistanceNl } from 'date-fns/formatDistance/nl';
 // @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
 import { formatDistance as formatDistanceEs } from 'date-fns/formatDistance/es';
+// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
+import { formatDistance as formatDistanceDe } from 'date-fns/formatDistance/de';
+// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
+import { formatDistance as formatDistancePt } from 'date-fns/formatDistance/pt';
 
 import { typedKeys } from '$lib/utils/typedKeys';
 import type { FormatDistanceFn } from 'date-fns';
@@ -24,7 +30,9 @@ export const languages = {
 	'es-sv': es_sv,
 	fr,
 	nl,
-	it
+	it,
+	de,
+	pt
 };
 
 export const formatDistanceLocale = {
@@ -32,7 +40,9 @@ export const formatDistanceLocale = {
 	'es-sv': formatDistanceEs as FormatDistanceFn,
 	fr: formatDistanceFr as FormatDistanceFn,
 	nl: formatDistanceNl as FormatDistanceFn,
-	it: formatDistanceIt as FormatDistanceFn
+	it: formatDistanceIt as FormatDistanceFn,
+	de: formatDistanceDe as FormatDistanceFn,
+	pt: formatDistancePt as FormatDistanceFn
 };
 
 /**
@@ -49,5 +59,7 @@ export const languageNames: Record<LanguageKey, string> = {
 	'es-sv': 'Español (El Salvador)',
 	fr: 'Français',
 	nl: 'Nederlands',
-	it: 'Italian'
+	it: 'Italian',
+	de: 'Deutsch',
+	pt: 'Portuguese'
 };

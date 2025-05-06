@@ -14,6 +14,7 @@
 	export let depositPercentage: number | undefined;
 	export let discountPercentage: number | undefined;
 	export let chosenVariations: Record<string, string> | undefined;
+	export let priceMultiplier: number | undefined;
 
 	let className = '';
 	export { className as class };
@@ -41,7 +42,7 @@
 		<PriceTag
 			currency={price.currency}
 			class="text-xl body-secondaryText"
-			amount={((price.amount * (depositPercentage ?? 100)) / 100) *
+			amount={((price.amount * (priceMultiplier ?? 1) * (depositPercentage ?? 100)) / 100) *
 				(discountPercentage ? (100 - discountPercentage) / 100 : 1)}
 			main
 			>{depositPercentage

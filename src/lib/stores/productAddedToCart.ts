@@ -12,4 +12,5 @@ export const productAddedToCart = writable<{
 	depositPercentage?: number;
 	discountPercentage?: number;
 	widget?: unknown;
+	priceMultiplier?: number;
 } | null>(null);

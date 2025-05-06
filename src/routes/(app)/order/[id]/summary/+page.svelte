@@ -5,6 +5,7 @@
 	import { useI18n } from '$lib/i18n.js';
 	import { invoiceNumberVariables, orderRemainingToPay } from '$lib/types/Order.js';
 	import { sum } from '$lib/utils/sum.js';
+	import { differenceInMinutes } from 'date-fns';
 	import { marked } from 'marked';
 
 	export let data;
@@ -128,11 +129,29 @@
 				>
 				<td class="text-center border border-white px-2">{item.quantity}</td>
 				<td class="text-center border border-white px-2">
-					<PriceTag amount={price} currency={priceCurrency} inline />
+					<PriceTag
+						amount={price *
+							(item.booking && item.product.bookingSpec
+								? differenceInMinutes(item.booking.end, item.booking.start) /
+								  item.product.bookingSpec.slotMinutes
+								: 1)}
+						currency={priceCurrency}
+						inline
+					/>
 				</td>
 				<td class="text-center border border-white px-2">{item.vatRate ?? 0}%</td>
 				<td class="text-center border border-white px-2">
-					<PriceTag amount={(price * (item.vatRate ?? 0)) / 100} currency={priceCurrency} inline />
+					<PriceTag
+						amount={(price *
+							(item.booking && item.product.bookingSpec
+								? differenceInMinutes(item.booking.end, item.booking.start) /
+								  item.product.bookingSpec.slotMinutes
+								: 1) *
+							(item.vatRate ?? 0)) /
+							100}
+						currency={priceCurrency}
+						inline
+					/>
 				</td>
 				<td class="text-right border border-white px-2">
 					<PriceTag

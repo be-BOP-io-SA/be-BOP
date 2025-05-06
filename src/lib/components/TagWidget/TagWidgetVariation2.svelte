@@ -33,7 +33,9 @@
 					<div class="btn tagWidget-cta text-xl text-center w-auto p-3">
 						<a
 							class="tagWidget-hyperlink"
-							href={cta.href}
+							href={cta.href.startsWith('http') || cta.href.includes('/')
+								? cta.href
+								: `/${cta.href}`}
 							target={cta.href.startsWith('http') || cta.openNewTab ? '_blank' : '_self'}
 							>{cta.label}</a
 						>

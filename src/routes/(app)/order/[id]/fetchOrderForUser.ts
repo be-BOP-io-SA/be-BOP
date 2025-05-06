@@ -10,7 +10,7 @@ import { FAKE_ORDER_INVOICE_NUMBER } from '$lib/types/Order';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error } from '@sveltejs/kit';
 
-export async function fetchOrderForUser(orderId: string) {
+export async function fetchOrderForUser(orderId: string, params?: { userRoleId?: string }) {
 	const order = await collections.orders.findOne({
 		_id: orderId
 	});
@@ -126,6 +126,12 @@ export async function fetchOrderForUser(orderId: string) {
 		})),
 		items: order.items.map((item) => ({
 			quantity: item.quantity,
+			booking: item.booking
+				? {
+						start: item.booking.start,
+						end: item.booking.end
+				  }
+				: undefined,
 			product: {
 				_id: item.product._id,
 				price: item.product.price,
@@ -141,7 +147,12 @@ export async function fetchOrderForUser(orderId: string) {
 				externalResources: item.product.externalResources?.map((externalResource) => ({
 					label: externalResource.label,
 					href: order.status === 'paid' ? externalResource.href : undefined
-				}))
+				})),
+				bookingSpec: item.product.bookingSpec
+					? {
+							slotMinutes: item.product.bookingSpec.slotMinutes
+					  }
+					: undefined
 			},
 			vatRate: item.vatRate,
 			...(item.customPrice && { customPrice: item.customPrice }),
@@ -192,6 +203,7 @@ export async function fetchOrderForUser(orderId: string) {
 			userLogin: order.user.userLogin,
 			userAlias: order.user.userAlias
 		},
-		onLocation: order.onLocation
+		onLocation: order.onLocation,
+		...(params?.userRoleId !== CUSTOMER_ROLE_ID && { orderLabelIds: order.orderLabelIds })
 	};
 }

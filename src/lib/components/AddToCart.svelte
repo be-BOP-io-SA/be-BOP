@@ -89,6 +89,7 @@
 				chosenVariations={$productAddedToCart.chosenVariations}
 				depositPercentage={$productAddedToCart.depositPercentage}
 				discountPercentage={$productAddedToCart.discountPercentage}
+				priceMultiplier={$productAddedToCart.priceMultiplier}
 			/>
 		</Popup>
 	{/if}

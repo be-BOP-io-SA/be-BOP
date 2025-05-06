@@ -15,6 +15,9 @@ import type { ContactForm } from '$lib/types/ContactForm';
 import type { Countdown } from '$lib/types/Countdown';
 import type { Gallery } from '$lib/types/Gallery';
 import type { Leaderboard } from '$lib/types/Leaderboard';
+import { ScheduleEventBooked } from '$lib/types/Schedule';
+import { groupBy } from '$lib/utils/group-by';
+import { subMinutes } from 'date-fns';
 
 const window = new JSDOM('').window;
 
@@ -65,6 +68,7 @@ type TokenObject =
 			type: 'pictureWidget';
 			slug: string;
 			raw: string;
+			msubstitute?: string | undefined;
 			fit?: 'cover' | 'contain';
 			width?: number;
 			height?: number;
@@ -114,7 +118,7 @@ export async function cmsFromContent(
 
 	const SPECIFICATION_WIDGET_REGEX = /\[Specification=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const PICTURE_WIDGET_REGEX =
-		/\[Picture=(?<slug>[\p{L}\d_-]+)((?:[?\s]width=(?<width>\d+))?(?:[?\s]height=(?<height>\d+))?(?:[?\s]fit=(?<fit>(cover|contain)))?)*\]/giu;
+		/\[Picture=(?<slug>[\p{L}\d_-]+)((?:[?\s]msubstitute=(?<msubstitute>[\p{L}\d_-]+))?(?:[?\s]width=(?<width>\d+))?(?:[?\s]height=(?<height>\d+))?(?:[?\s]fit=(?<fit>(cover|contain)))?)*\]/giu;
 	const CONTACTFORM_WIDGET_REGEX = /\[Form=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const COUNTDOWN_WIDGET_REGEX = /\[Countdown=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const TAG_PRODUCTS_REGEX =
@@ -125,7 +129,7 @@ export async function cmsFromContent(
 	const QRCODE_REGEX = /\[QRCode=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const CURRENCY_CALCULATOR_WIDGET_REGEX = /\[CurrencyCalculator=(?<slug>[a-z0-9-]+)\]/giu;
 	const SCHEDULE_WIDGET_REGEX =
-		/\[Schedule=(?<slug>[\p{L}\d_-]+)(?:[?\s]display=(?<display>[a-z0-9-]+))?\]/giu;
+		/\[Schedule=(?<slug>[\p{L}\d_:-]+)(?:[?\s]display=(?<display>(main|main-light|list|calendar)))?\]/giu;
 
 	const productSlugs = new Set<string>();
 	const challengeSlugs = new Set<string>();
@@ -230,6 +234,7 @@ export async function cmsFromContent(
 						break;
 					case 'pictureWidget':
 						pictureSlugs.add(match.groups.slug);
+						pictureSlugs.add(match.groups.msubstitute);
 						// With multiple options, to handle any ordering for the options, we need to parse the string again
 						const raw = match[0];
 						const fit = /[?\s]fit=(?<fit>(cover|contain))/.exec(raw)?.groups?.fit as
@@ -241,6 +246,7 @@ export async function cmsFromContent(
 						token.push({
 							type: 'pictureWidget',
 							slug: match.groups.slug,
+							msubstitute: match.groups.msubstitute,
 							raw,
 							fit,
 							width: width ? Number(width) : undefined,
@@ -361,9 +367,19 @@ export async function cmsFromContent(
 		.flatMap((leaderboard) => leaderboard.progress || [])
 		.map((progressItem) => progressItem.productId);
 
-	const products =
+	const [
+		products,
+		challenges,
+		sliders,
+		tags,
+		specifications,
+		contactForms,
+		countdowns,
+		galleries,
+		schedules
+	] = await Promise.all([
 		tagProductsSlugs.size > 0 || productSlugs.size > 0 || allProductsLead.length > 0
-			? await collections.products
+			? collections.products
 					.find({
 						$or: [
 							{ tagIds: { $in: [...tagProductsSlugs] } },
@@ -414,10 +430,9 @@ export async function cmsFromContent(
 						hasSellDisclaimer: 1
 					})
 					.toArray()
-			: [];
-	const challenges =
+			: [],
 		challengeSlugs.size > 0
-			? await collections.challenges
+			? collections.challenges
 					.find({
 						_id: { $in: [...challengeSlugs] }
 					})
@@ -434,30 +449,17 @@ export async function cmsFromContent(
 						mode: 1
 					})
 					.toArray()
-			: [];
-	const sliders =
+			: [],
 		sliderSlugs.size > 0
-			? await collections.sliders
+			? collections.sliders
 					.find({
 						_id: { $in: [...sliderSlugs] }
 					})
 					.toArray()
-			: [];
+			: [],
 
-	const digitalFiles =
-		products.length > 0
-			? await collections.digitalFiles
-					.find({ productId: { $in: products.map((product) => product._id) } })
-					.project<Pick<DigitalFile, '_id' | 'name' | 'productId'>>({
-						name: 1,
-						productId: 1
-					})
-					.sort({ createdAt: 1 })
-					.toArray()
-			: [];
-	const tags =
 		tagSlugs.size > 0
-			? await collections.tags
+			? collections.tags
 					.find({
 						_id: { $in: [...tagSlugs] }
 					})
@@ -474,10 +476,9 @@ export async function cmsFromContent(
 						cta: { $ifNull: [`$translations.${locals.language}.cta`, '$cta'] }
 					})
 					.toArray()
-			: [];
-	const specifications =
+			: [],
 		specificationSlugs.size > 0
-			? await collections.specifications
+			? collections.specifications
 					.find({
 						_id: { $in: [...specificationSlugs] }
 					})
@@ -486,10 +487,9 @@ export async function cmsFromContent(
 						content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] }
 					})
 					.toArray()
-			: [];
-	const contactForms =
+			: [],
 		contactFormSlugs.size > 0
-			? await collections.contactForms
+			? collections.contactForms
 					.find({
 						_id: { $in: [...contactFormSlugs] }
 					})
@@ -513,10 +513,9 @@ export async function cmsFromContent(
 						disclaimer: { $ifNull: [`$translations.${locals.language}.disclaimer`, '$disclaimer'] }
 					})
 					.toArray()
-			: [];
-	const countdowns =
+			: [],
 		countdownFormSlugs.size > 0
-			? await collections.countdowns
+			? collections.countdowns
 					.find({
 						_id: { $in: [...countdownFormSlugs] }
 					})
@@ -530,10 +529,9 @@ export async function cmsFromContent(
 						endsAt: 1
 					})
 					.toArray()
-			: [];
-	const galleries =
+			: [],
 		gallerySlugs.size > 0
-			? await collections.galleries
+			? collections.galleries
 					.find({
 						_id: { $in: [...gallerySlugs] }
 					})
@@ -543,15 +541,15 @@ export async function cmsFromContent(
 						secondary: { $ifNull: [`$translations.${locals.language}.secondary`, '$secondary'] }
 					})
 					.toArray()
-			: [];
-	const schedules =
+			: [],
 		scheduleSlugs.size > 0
-			? await collections.schedules
+			? collections.schedules
 					.find({
 						_id: { $in: [...scheduleSlugs] }
 					})
 					.toArray()
-			: [];
+			: []
+	]);
 
 	const pictureConditions = {
 		$or: [
@@ -564,9 +562,41 @@ export async function cmsFromContent(
 		]
 	};
 
-	const pictures = pictureConditions.$or.length
-		? await collections.pictures.find(pictureConditions).sort({ createdAt: 1 }).toArray()
-		: [];
+	const [digitalFiles, pictures, scheduleEvents] = await Promise.all([
+		products.length > 0
+			? collections.digitalFiles
+					.find({ productId: { $in: products.map((product) => product._id) } })
+					.project<Pick<DigitalFile, '_id' | 'name' | 'productId'>>({
+						name: 1,
+						productId: 1
+					})
+					.sort({ createdAt: 1 })
+					.toArray()
+			: Promise.resolve([]),
+		pictureConditions.$or.length
+			? collections.pictures.find(pictureConditions).sort({ createdAt: 1 }).toArray()
+			: Promise.resolve([]),
+		scheduleSlugs.size
+			? collections.scheduleEvents
+					.find({
+						scheduleId: { $in: [...scheduleSlugs] },
+						...(schedules.every((schedule) => !schedule.displayPastEvents)
+							? {
+									endsAt: {
+										$gt: subMinutes(new Date(), Math.max(...schedules.map((s) => s.pastEventDelay)))
+									}
+							  }
+							: {})
+					})
+					.project<Omit<ScheduleEventBooked, '_id' | 'orderId'>>({
+						_id: 0,
+						orderId: 0
+					})
+					.toArray()
+			: Promise.resolve([])
+	]);
+
+	const scheduleEventsById = groupBy(scheduleEvents, (event) => event.scheduleId);
 
 	return {
 		tokens,
@@ -579,7 +609,14 @@ export async function cmsFromContent(
 		countdowns,
 		galleries,
 		leaderboards,
-		schedules,
+		schedules: schedules.map((schedule) => ({
+			...schedule,
+			events: [...schedule.events, ...(scheduleEventsById[schedule._id] ?? [])].filter((event) =>
+				!schedule.displayPastEvents
+					? (event.endsAt ?? Infinity) > subMinutes(new Date(), schedule.pastEventDelay ?? 0)
+					: true
+			)
+		})),
 		pictures,
 		digitalFiles,
 		roleId: locals.user?.roleId

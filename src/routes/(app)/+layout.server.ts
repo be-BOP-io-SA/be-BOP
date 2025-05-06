@@ -15,7 +15,7 @@ import { UrlDependency } from '$lib/types/UrlDependency';
 import type { VatProfile } from '$lib/types/VatProfile.js';
 import { groupBy } from '$lib/utils/group-by';
 import { error, redirect } from '@sveltejs/kit';
-import type { SetRequired } from 'type-fest';
+import type { PickDeep, SetRequired } from 'type-fest';
 import { POS_ROLE_ID } from '$lib/types/User.js';
 
 export async function load(params) {
@@ -67,7 +67,7 @@ export async function load(params) {
 			? await collections.products
 					.find({ _id: { $in: cart.items.map((it) => it.productId) } })
 					.project<
-						Pick<
+						PickDeep<
 							Product,
 							| '_id'
 							| 'name'
@@ -88,6 +88,7 @@ export async function load(params) {
 							| 'vatProfileId'
 							| 'paymentMethods'
 							| 'variationLabels'
+							| 'bookingSpec.slotMinutes'
 						>
 					>({
 						_id: 1,
@@ -109,6 +110,7 @@ export async function load(params) {
 						stock: 1,
 						vatProfileId: 1,
 						paymentMethods: 1,
+						'bookingSpec.slotMinutes': 1,
 						isTicket: 1,
 						variationLabels: {
 							$ifNull: [`$translations.${locals.language}.variationLabels`, '$variationLabels']
@@ -226,8 +228,10 @@ export async function load(params) {
 			}
 
 			return {
+				_id: item._id,
 				product: pojo(productDoc),
 				picture: productPictureDoc,
+				booking: item.booking,
 				digitalFilesCount: digitalFilesDoc?.length ?? 0,
 				quantity: item.quantity,
 				...(item.customPrice && { customPrice: item.customPrice }),

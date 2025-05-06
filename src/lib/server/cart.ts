@@ -65,6 +65,11 @@ export async function addToCartInDb(
 		deposit?: boolean;
 		chosenVariations?: Record<string, string>;
 		freeQuantity?: number;
+		booking?: {
+			time: Date;
+			durationMinutes: number;
+		};
+		lineId?: string;
 		mode: 'eshop' | 'nostr' | 'pos';
 	}
 ) {
@@ -82,6 +87,10 @@ export async function addToCartInDb(
 
 	if (params.customPrice && !product.payWhatYouWant) {
 		throw error(400, 'Product is not pay what you want');
+	}
+
+	if (product.bookingSpec && !params.booking) {
+		throw error(400, 'Product is a booking, please provide booking time and duration');
 	}
 
 	if (
@@ -128,8 +137,9 @@ export async function addToCartInDb(
 	const existingItem = cart.items.find(
 		(item) =>
 			item.productId === product._id &&
-			// Just in case a null value is stored in the DB
-			(item.depositPercentage ?? undefined) === (depositPercentage ?? undefined)
+			(params.lineId
+				? item._id === params.lineId
+				: (item.depositPercentage ?? undefined) === (depositPercentage ?? undefined))
 	);
 
 	const totalQuantityInCart = () =>
@@ -141,7 +151,7 @@ export async function addToCartInDb(
 		throw error(400, 'Product is out of stock');
 	}
 
-	if (product.standalone) {
+	if (product.standalone || product.bookingSpec) {
 		if (quantity !== 1) {
 			throw error(400, 'You can only order one of this product');
 		}
@@ -163,7 +173,8 @@ export async function addToCartInDb(
 	} else if (product.variations?.length) {
 		throw error(400, 'error matching on variations choice');
 	}
-	if (existingItem && !product.standalone) {
+
+	if (existingItem && !product.standalone && !product.bookingSpec) {
 		existingItem.quantity = params.totalQuantity ? quantity : existingItem.quantity + quantity;
 
 		const max = Math.min(
@@ -184,6 +195,7 @@ export async function addToCartInDb(
 			throw error(400, `You can only order ${availableAmount} of this product`);
 		}
 		cart.items.push({
+			_id: crypto.randomUUID(),
 			productId: product._id,
 			quantity: product.type === 'subscription' ? 1 : quantity,
 			...(params.customPrice && {
@@ -194,7 +206,14 @@ export async function addToCartInDb(
 			}),
 			...(params.freeQuantity && { freeQuantity: params.freeQuantity }),
 			reservedUntil: addMinutes(new Date(), runtimeConfig.reserveStockInMinutes),
-			...(depositPercentage && { depositPercentage })
+			...(depositPercentage && { depositPercentage }),
+			...(params.booking &&
+				product.bookingSpec && {
+					booking: {
+						start: params.booking.time,
+						end: addMinutes(params.booking.time, params.booking.durationMinutes)
+					}
+				})
 		});
 	}
 
@@ -229,7 +248,12 @@ export async function addToCartInDb(
 export async function removeFromCartInDb(
 	product: Product,
 	quantity: number,
-	params: { user: UserIdentifier; totalQuantity?: boolean; depositPercentage?: number }
+	params: {
+		user: UserIdentifier;
+		totalQuantity?: boolean;
+		depositPercentage?: number;
+		lineId?: string;
+	}
 ) {
 	if (quantity < 0) {
 		throw new TypeError('Quantity cannot be negative');
@@ -237,16 +261,13 @@ export async function removeFromCartInDb(
 
 	const cart = await getCartFromDb(params);
 
-	let item = cart.items.find(
+	const item = cart.items.find(
 		(i) =>
 			i.productId === product._id &&
-			(i.depositPercentage ?? undefined) === (params.depositPercentage ?? undefined)
+			(params.lineId
+				? i._id === params.lineId
+				: (params.depositPercentage ?? undefined) === (i.depositPercentage ?? undefined))
 	);
-
-	// Like when calling from nostr handle message, we don't know which deposit percentage was used
-	if (!item) {
-		item = cart.items.find((i) => i.productId === product._id);
-	}
 
 	if (!item) {
 		return cart;
