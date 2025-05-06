@@ -36,6 +36,7 @@
 	import type { Day } from '$lib/types/Schedule.js';
 	import { toZonedTime } from 'date-fns-tz';
 	import { RangeList } from '$lib/utils/range-list.js';
+	import { sum } from '$lib/utils/sum.js';
 
 	export let data;
 
@@ -260,6 +261,17 @@
 			})
 		};
 	}
+	$: freeProductsAvailable = !data.product.standalone
+		? data.freeProductsAvailable
+		: Math.max(
+				data.freeProductsAvailable -
+					sum(
+						data.cart
+							.filter((item) => item.product._id === data.product._id)
+							.map((val) => val.quantity)
+					),
+				0
+		  );
 
 	let PWYWInput: HTMLInputElement | null = null;
 	let acceptRestriction = data.product.hasSellDisclaimer ? false : true;
@@ -477,16 +489,16 @@
 					/>
 					<span class="font-semibold">{t('product.vatExcluded')}</span>
 				</div>
-				{#if data.freeProductsAvailable}
+				{#if freeProductsAvailable}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
-						{#if data.freeProductsAvailable > 1}
+						{#if freeProductsAvailable > 1}
 							{t('product.freeProductDiscountText', {
-								available: data.freeProductsAvailable
+								available: freeProductsAvailable
 							})}
 						{:else}
 							{t('product.freeProductDiscountTextSingular', {
-								available: data.freeProductsAvailable
+								available: freeProductsAvailable
 							})}
 						{/if}
 					</h3>
@@ -580,8 +592,8 @@
 						class="flex flex-col gap-2"
 					>
 						{#if canBuy}
-							{#if data.freeProductsAvailable}
-								<input type="hidden" name="freeQuantity" value={data.freeProductsAvailable} />
+							{#if freeProductsAvailable}
+								<input type="hidden" name="freeQuantity" value={freeProductsAvailable} />
 							{/if}
 							{#if data.product.payWhatYouWant}
 								<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
