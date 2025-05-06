@@ -1,8 +1,8 @@
 diff --git a/package.json b/package.json
-index b1cd5268084704d4b3842d25bb7438f5c161886a..bcc4ff164903d957880123c1d57af5db8f542fa4 100644
+index b1cd5268084704d4b3842d25bb7438f5c161886a..9dc368fdfd339e9a00f674a7788d60ea25a00456 100644
 --- a/package.json
 +++ b/package.json
-@@ -19,6 +19,56 @@
+@@ -19,6 +19,76 @@
    "jsdelivr": "./cdn.min.js",
    "exports": {
      "./package.json": "./package.json",
@@ -54,6 +54,26 @@ index b1cd5268084704d4b3842d25bb7438f5c161886a..bcc4ff164903d957880123c1d57af5db
 +      "import": {
 +        "types": "./locale/es/_lib/formatDistance.d.mts",
 +        "default": "./locale/es/_lib/formatDistance.mjs"
++      }
++    },
++    "./formatDistance/pt": {
++      "require": {
++        "types": "./locale/pt/_lib/formatDistance.d.ts",
++        "default": "./locale/pt/_lib/formatDistance.js"
++      },
++      "import": {
++        "types": "./locale/pt/_lib/formatDistance.d.mts",
++        "default": "./locale/pt/_lib/formatDistance.mjs"
++      }
++    },
++    "./formatDistance/de": {
++      "require": {
++        "types": "./locale/de/_lib/formatDistance.d.ts",
++        "default": "./locale/de/_lib/formatDistance.js"
++      },
++      "import": {
++        "types": "./locale/de/_lib/formatDistance.d.mts",
++        "default": "./locale/de/_lib/formatDistance.mjs"
 +      }
 +    },
      ".": {
