@@ -81,11 +81,11 @@ async function cleanup() {
 			const expiredSchedules = await collections.scheduleEvents
 				.find({
 					_id: {
-						$lt: ObjectId.createFromTime(getUnixTime(subMinutes(new Date(), 5))),
-						status: 'pending',
-						orderCreated: false,
-						orderId: true
-					}
+						$lt: ObjectId.createFromTime(getUnixTime(subMinutes(new Date(), 5)))
+					},
+					orderId: { $exists: true },
+					orderCreated: false,
+					status: 'pending'
 				})
 				.toArray();
 
@@ -108,7 +108,7 @@ async function cleanup() {
 				}
 			}
 		} catch (err) {
-			console.error(err);
+			console.error('Error during cleanup schedules', err);
 		}
 
 		await setTimeout(5_000);
