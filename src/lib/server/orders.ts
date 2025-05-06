@@ -872,6 +872,7 @@ export async function createOrder(
 				chosenVariations: item.chosenVariations,
 				depositPercentage: item.depositPercentage,
 				discountPercentage: item.discountPercentage,
+				freeProductSources: item.freeProductSources,
 				vatRate: priceInfo.vatRates[i],
 				currencySnapshot: {
 					main: {
