@@ -254,7 +254,7 @@
 				chosenVariations: selectedVariations
 			}),
 			discountPercentage:
-				data.discount?.mode === 'percentage' ? data.discount?.percentage : undefined
+				data.discount?.mode === 'percentage' ? data.discount?.percentage : undefined,
 			...(data.product.bookingSpec && {
 				priceMultiplier: durationMinutes / data.product.bookingSpec.slotMinutes
 			})
