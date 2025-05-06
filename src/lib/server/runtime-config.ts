@@ -200,6 +200,8 @@ const baseConfig = {
 		'wss://nos.lol',
 		'wss://relay.snort.social'
 	],
+	visitorDarkLightMode: 'system' as 'light' | 'dark' | 'system',
+	employeeDarkLightMode: 'system' as 'light' | 'dark' | 'system',
 	removeBebopLogoPOS: false,
 	contactModes: ['email', 'nostr'],
 	contactModesForceOption: false,

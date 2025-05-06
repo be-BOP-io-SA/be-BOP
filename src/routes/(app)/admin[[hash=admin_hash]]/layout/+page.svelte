@@ -10,27 +10,74 @@
 	let linkLine = data.links.topbar.length || 2;
 	let footerLinkLine = data.links.footer.length || 2;
 	let socialLinkLine = data.links.socialNetworkIcons.length || 2;
+	let visitorDarkLightMode: 'light' | 'dark' | 'system' = data.visitorDarkLightMode;
+	let employeeDarkLightMode: 'light' | 'dark' | 'system' = data.employeeDarkLightMode;
 </script>
 
 <form method="post" class="flex flex-col gap-4">
+	<h3 class="text-xl">Visitor default dark/light mode</h3>
 	<label class="checkbox-label">
 		<input
-			type="checkbox"
-			name="usersDarkDefaultTheme"
-			class="form-checkbox"
-			checked={data.usersDarkDefaultTheme}
+			type="radio"
+			bind:group={visitorDarkLightMode}
+			class="form-radio"
+			name="visitorDarkLightMode"
+			value="light"
 		/>
-		Use Dark mode by default for users
+		Use light mode by default fo users
 	</label>
 	<label class="checkbox-label">
 		<input
-			type="checkbox"
-			name="employeesDarkDefaultTheme"
-			class="form-checkbox"
-			checked={data.employeesDarkefaulTheme}
+			type="radio"
+			bind:group={visitorDarkLightMode}
+			class="form-radio"
+			name="visitorDarkLightMode"
+			value="dark"
 		/>
-		Use Dark mode by default for employees
+		Use Dark mode by default fo users
 	</label>
+	<label class="checkbox-label">
+		<input
+			type="radio"
+			bind:group={visitorDarkLightMode}
+			class="form-radio"
+			name="visitorDarkLightMode"
+			value="system"
+		/>
+		Use Dark/light mode corresponding to browser /OS by default for users
+	</label>
+	<h3 class="text-xl">Employee default dark/light mode</h3>
+	<label class="checkbox-label">
+		<input
+			type="radio"
+			bind:group={employeeDarkLightMode}
+			class="form-radio"
+			name="employeeDarkLightMode"
+			value="light"
+		/>
+		Use light mode by default fo employee
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="radio"
+			bind:group={employeeDarkLightMode}
+			class="form-radio"
+			name="employeeDarkLightMode"
+			value="dark"
+		/>
+		Use Dark mode by default fo employee
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="radio"
+			bind:group={employeeDarkLightMode}
+			class="form-radio"
+			name="employeeDarkLightMode"
+			value="system"
+		/>
+		Use Dark/light mode corresponding to browser /OS by default for employee
+	</label>
+
 	<h2 class="text-2xl">Top bar</h2>
 
 	<label class="form-label">
