@@ -27,7 +27,7 @@ import {
 	TWITTER_SECRET
 } from '$env/static/private';
 import { sequence } from '@sveltejs/kit/hooks';
-import { building } from '$app/environment';
+import { browser, building } from '$app/environment';
 import { sha256 } from '$lib/utils/sha256';
 import { countryFromIp } from '$lib/server/geoip';
 import { isAllowedOnPage } from '$lib/types/Role';
@@ -301,12 +301,21 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 			if (!transformed) {
 				transformed = true;
 				const darkDefaultTheme =
-					isAdminUrl && !isAdminLoginLogoutUrl
-						? runtimeConfig.employeesDarkDefaultTheme
-						: runtimeConfig.usersDarkDefaultTheme;
+					event.locals.user && event.locals.user?.roleId !== CUSTOMER_ROLE_ID
+						? runtimeConfig.employeeDarkLightMode
+						: runtimeConfig.visitorDarkLightMode;
+
 				return html.replace(
 					'<html',
-					`<html lang="${event.locals.language}" class="${darkDefaultTheme ? 'dark' : ''}"`
+					`<html lang="${event.locals.language}" class="${
+						darkDefaultTheme === 'system' &&
+						browser &&
+						window.matchMedia('(prefers-color-scheme: dark)').matches
+							? 'dark'
+							: darkDefaultTheme === 'dark'
+							? 'dark'
+							: ''
+					}"`
 				);
 			}
 			return html;
