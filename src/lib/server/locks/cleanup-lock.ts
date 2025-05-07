@@ -1,10 +1,11 @@
 import { Lock } from '$lib/server/lock';
-import { subDays } from 'date-fns';
+import { getUnixTime, subDays, subMinutes } from 'date-fns';
 import { collections } from '../database';
 import { processClosed } from '../process';
 import { setTimeout } from 'node:timers/promises';
 import { s3client } from '../s3';
 import { S3_BUCKET } from '$env/static/private';
+import { ObjectId } from 'mongodb';
 
 const lock = new Lock('cleanup');
 
@@ -74,6 +75,40 @@ async function cleanup() {
 			}
 		} catch (err) {
 			console.error(err);
+		}
+
+		try {
+			const expiredSchedules = await collections.scheduleEvents
+				.find({
+					_id: {
+						$lt: ObjectId.createFromTime(getUnixTime(subMinutes(new Date(), 5)))
+					},
+					orderId: { $exists: true },
+					orderCreated: false,
+					status: 'pending'
+				})
+				.toArray();
+
+			for (const schedule of expiredSchedules) {
+				if ((await collections.orders.countDocuments({ _id: schedule.orderId })) > 0) {
+					await collections.scheduleEvents.updateOne(
+						{
+							_id: schedule._id
+						},
+						{
+							$set: {
+								orderCreated: true
+							}
+						}
+					);
+				} else {
+					await collections.scheduleEvents.deleteOne({
+						_id: schedule._id
+					});
+				}
+			}
+		} catch (err) {
+			console.error('Error during cleanup schedules', err);
 		}
 
 		await setTimeout(5_000);

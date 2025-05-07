@@ -17,3 +17,11 @@ export function groupBy<T, K extends string | number | symbol>(
 
 	return result;
 }
+
+export function groupByNonPartial<T, K extends string | number | symbol>(
+	iterable: Iterable<T>,
+	keyGetter: (elem: T) => K
+): Record<K, T[]> {
+	const result = groupBy(iterable, keyGetter);
+	return result as Record<K, T[]>;
+}

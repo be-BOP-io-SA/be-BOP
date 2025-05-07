@@ -37,4 +37,28 @@ describe('set', () => {
 		set(obj, 'a.b[0]', 1);
 		expect(obj).toEqual({ a: { b: [1] } });
 	});
+
+	it('should handle space in key', () => {
+		const obj = { a: { b: { c: 1 } } };
+		set(obj, 'a.b[c d]', 2);
+		expect(obj).toEqual({ a: { b: { c: 1, 'c d': 2 } } });
+	});
+
+	it('should handle special characters in key', () => {
+		const obj = { a: { b: { c: 1 } } };
+		set(obj, 'a.b[c@d]', 3);
+		expect(obj).toEqual({ a: { b: { c: 1, 'c@d': 3 } } });
+	});
+
+	it('should work with [abc.]', () => {
+		const obj = { a: { b: { c: 1 } } };
+		set(obj, 'a.b[abc.]', 3);
+		expect(obj).toEqual({ a: { b: { c: 1, 'abc.': 3 } } });
+	});
+
+	it('should work with cta[0].label', () => {
+		const obj = {};
+		set(obj, 'cta[0].label', 'test');
+		expect(obj).toEqual({ cta: [{ label: 'test' }] });
+	});
 });

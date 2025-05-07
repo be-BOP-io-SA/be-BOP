@@ -81,9 +81,11 @@
 	<div class="flex flex-row justify-evenly">
 		<a href="?lang=en#doc">🇬🇧</a>
 		<a href="?lang=fr#doc">🇫🇷</a>
-		<a href="?lang=it#doc" class="opacity-50">🇮🇹</a>
-		<a href="?lang=es-sv#doc" class="opacity-50"> 🇸🇻</a>
-		<a href="?lang=nl#doc" class="opacity-50">🇳🇱</a>
+		<a href="?lang=it#doc">🇮🇹</a>
+		<a href="?lang=es-sv#doc"> 🇸🇻</a>
+		<a href="?lang=nl#doc">🇳🇱</a>
+		<a href="?lang=de#doc">🇩🇪</a>
+		<a href="?lang=pt#doc">🇵🇹</a>
 	</div>
 	<p>Select your topic :</p>
 

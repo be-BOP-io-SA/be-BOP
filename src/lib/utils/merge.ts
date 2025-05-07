@@ -32,16 +32,26 @@ export function merge<Target, Sources extends unknown[]>(
 	}
 
 	for (const [key, sourceVal] of Object.entries(source as typeof target)) {
-		const targetVal = target[key];
+		const targetVal = Object.getOwnPropertyDescriptor(target, key)?.value;
 
 		if (sourceVal === undefined) {
 			continue;
 		}
 
 		if (!isObject(sourceVal)) {
-			target[key] = sourceVal;
+			Object.defineProperty(target, key, {
+				value: sourceVal,
+				writable: true,
+				enumerable: true,
+				configurable: true
+			});
 		} else if (!isObject(targetVal)) {
-			target[key] = isObject(sourceVal) ? deepClone(sourceVal) : sourceVal;
+			Object.defineProperty(target, key, {
+				value: isObject(sourceVal) ? deepClone(sourceVal) : sourceVal,
+				writable: true,
+				enumerable: true,
+				configurable: true
+			});
 		} else {
 			merge(targetVal, sourceVal);
 		}

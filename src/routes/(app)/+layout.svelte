@@ -33,6 +33,9 @@
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import IconSystem from '$lib/components/icons/IconSystem.svelte';
+	import { oneMaxPerLine } from '$lib/types/Product.js';
+	import { differenceInMinutes } from 'date-fns';
+
 	export let data;
 
 	let topMenuOpen = false;
@@ -170,7 +173,9 @@
 				<nav class="flex gap-10 text-[22px] font-semibold header-tab">
 					{#each data.links.topbar as link}
 						<a
-							href={link.href}
+							href={link.href.startsWith('http') || link.href.includes('/')
+								? link.href
+								: `/${link.href}`}
 							class=" {data.notResponsive ? '' : 'hidden lg:inline'}"
 							data-sveltekit-preload-data="off"
 							target={link.href.startsWith('http') ? '_blank' : '_self'}
@@ -198,7 +203,9 @@
 				{#each data.links.topbar as link}
 					<a
 						class="py-4"
-						href={link.href}
+						href={link.href.startsWith('http') || link.href.includes('/')
+							? link.href
+							: `/${link.href}`}
 						target={link.href.startsWith('http') ? '_blank' : '_self'}
 						data-sveltekit-preload-data="off">{link.label}</a
 					>
@@ -220,7 +227,9 @@
 
 					{#each data.links.navbar as link}
 						<a
-							href={link.href}
+							href={link.href.startsWith('http') || link.href.includes('/')
+								? link.href
+								: `/${link.href}`}
 							class={data.notResponsive ? '' : 'hidden lg:inline'}
 							target={link.href.startsWith('http') ? '_blank' : '_self'}
 							data-sveltekit-preload-data="off">{link.label}</a
@@ -254,6 +263,7 @@
 									on:dismiss={() => ($productAddedToCart = null)}
 									product={$productAddedToCart.product}
 									picture={$productAddedToCart.picture}
+									priceMultiplier={$productAddedToCart.priceMultiplier}
 									customPrice={$productAddedToCart.customPrice}
 									chosenVariations={$productAddedToCart.chosenVariations}
 									depositPercentage={$productAddedToCart.depositPercentage}
@@ -305,6 +315,9 @@
 												};
 											}}
 										>
+											{#if item._id}
+												<input type="hidden" name="lineId" value={item._id} />
+											{/if}
 											{#if item.depositPercentage ?? undefined !== undefined}
 												<input
 													type="hidden"
@@ -339,7 +352,7 @@
 															: item.product.name}
 													</h3>
 												</a>
-												{#if item.product.type !== 'subscription' && !item.product.standalone}
+												{#if !oneMaxPerLine(item.product)}
 													<div class="flex items-center gap-2">
 														<span class="text-xs">{t('cart.quantity')}: </span>
 														<CartQuantity {item} sm disabled={!data.cartPreviewInteractive} />
@@ -351,6 +364,10 @@
 													class="text-base"
 													amount={(item.quantity *
 														price.amount *
+														(item.booking && item.product.bookingSpec
+															? differenceInMinutes(item.booking.end, item.booking.start) /
+															  item.product.bookingSpec.slotMinutes
+															: 1) *
 														(item.depositPercentage ?? 100) *
 														(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)) /
 														100}
@@ -499,8 +516,12 @@
 				class="navbar print:hidden header-tab font-light flex flex-col lg:hidden border-x-0 border-b-0 border-opacity-25 border-t-1 border-white px-4 pb-3"
 			>
 				{#each data.links.navbar as link}
-					<a class="py-2 hover:underline" data-sveltekit-preload-data="off" href={link.href}
-						>{link.label}</a
+					<a
+						class="py-2 hover:underline"
+						data-sveltekit-preload-data="off"
+						href={link.href.startsWith('http') || link.href.includes('/')
+							? link.href
+							: `/${link.href}`}>{link.label}</a
 					>
 				{/each}
 			</nav>
@@ -608,7 +629,9 @@
 						{#each data.links.footer as link}
 							<a
 								class={link.label === '-' ? 'hidden lg:contents' : ''}
-								href={link.href}
+								href={link.href.startsWith('http') || link.href.includes('/')
+									? link.href
+									: `/${link.href}`}
 								target={link.href.startsWith('http') ? '_blank' : '_self'}
 								data-sveltekit-preload-data="off">{link.label}</a
 							>

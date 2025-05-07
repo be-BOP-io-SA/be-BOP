@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { EventSchedule, Schedule } from '$lib/types/Schedule';
+	import type { ScheduleEvent, Schedule } from '$lib/types/Schedule';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
@@ -17,7 +17,7 @@
 	$: nameFilter = '';
 	$: descriptionFilter = '';
 
-	let scheduleEventByDay: Record<string, EventSchedule[]> = {};
+	let scheduleEventByDay: Record<string, ScheduleEvent[]> = {};
 	for (const event of schedule.events) {
 		const startDate = new Date(event.beginsAt);
 		const endDate = event.endsAt ? new Date(event.endsAt) : startDate;

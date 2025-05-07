@@ -11,17 +11,22 @@ export function set<T extends object, K extends Paths<T> | string>(
 	}
 
 	// Parse keys to handle both "." and "[]" operators
-	const keys = key
-		.replace(/\[(\w*)\]/g, '.$1') // Convert "[key]" to ".key"
-		.split('.') as (keyof T)[];
+	const keys = splitKey(key);
 
 	for (let i = 0; i < keys.length - 1; i++) {
 		const k = (keys[i] === '' && Array.isArray(obj) ? obj.length : keys[i]) as keyof T;
 		const subKey = keys[i + 1];
 		const isArrayIndex = typeof subKey === 'string' && /^\d*$/.test(subKey);
 
-		if (typeof obj[k] !== 'object' || obj[k] === null) {
-			obj[k] = isArrayIndex ? ([] as T[keyof T]) : ({} as T[keyof T]);
+		const prop = Object.getOwnPropertyDescriptor(obj, k);
+
+		if (typeof prop?.value !== 'object' || prop?.value === null) {
+			Object.defineProperty(obj, k, {
+				value: isArrayIndex ? [] : {},
+				writable: true,
+				enumerable: true,
+				configurable: true
+			});
 		}
 		obj = obj[k] as T;
 	}
@@ -29,5 +34,22 @@ export function set<T extends object, K extends Paths<T> | string>(
 	const lastKey = (
 		keys[keys.length - 1] === '' && Array.isArray(obj) ? obj.length : keys[keys.length - 1]
 	) as keyof T;
-	obj[lastKey] = value as T[keyof T];
+	Object.defineProperty(obj, lastKey, {
+		value: value as T[keyof T],
+		writable: true,
+		enumerable: true,
+		configurable: true
+	});
+}
+
+function splitKey(key: string) {
+	const regex = /([^[.\]]+)|\[(.*?)\]/g;
+
+	const matches = [];
+	let match;
+	while ((match = regex.exec(key)) !== null) {
+		matches.push(match[1] || match[2]);
+	}
+
+	return matches;
 }

@@ -78,6 +78,10 @@
 			disabled
 		/>
 	</label>
+	<small class="text-sm text-gray-500 block">
+		To use in a CMS zone, use <kbd class="kbd">[Schedule={slug}]</kbd> or
+		<kbd class="kbd">[Schedule={slug} display=calendar]</kbd>
+	</small>
 	<label class="form-label">
 		Set desired delay for event with no end time (in minutes)
 		<input
