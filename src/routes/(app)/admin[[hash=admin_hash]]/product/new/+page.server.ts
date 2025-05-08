@@ -448,7 +448,8 @@ export const actions: Actions = {
 							}
 						}),
 					...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
-					hideFromSEO: parsed.hideFromSEO
+					hideFromSEO: parsed.hideFromSEO,
+					translations: product.translations
 				},
 				{ session }
 			);
