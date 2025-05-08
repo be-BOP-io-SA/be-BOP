@@ -107,7 +107,7 @@
 	let displayRawHTMLBefore = false;
 	let displayRawHTMLAfter = false;
 	let displayVATCalculator = false;
-	let priceAmountVATIncluded = 0;
+	let priceAmountVATIncluded = product.price.amount;
 	let vatRate = 0;
 	$: product.price.amount = Number(
 		((100 * priceAmountVATIncluded) / (100 + vatRate)).toFixed(
