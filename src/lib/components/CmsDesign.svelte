@@ -210,6 +210,12 @@
 					picture={pictureById[token.slug]}
 					class="my-5 lg:block hidden {token.height ? `h-[${token.height}px]` : ''} {token.width
 						? `w-[${token.width}px]`
+						: ''} {token.position === 'center'
+						? 'mx-auto'
+						: token.position === 'right'
+						? 'ml-auto'
+						: token.position === 'full-width'
+						? 'w-full max-w-none'
 						: ''}"
 					style="{token.fit ? `object-fit: ${token.fit};` : ''}{token.width
 						? `width: ${token.width}px;`
