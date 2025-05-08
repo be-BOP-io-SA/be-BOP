@@ -165,7 +165,8 @@
 					{/each}
 				</nav>
 				<button
-					class="inline-flex flex-col justify-center {data.notResponsive
+					class="inline-flex flex-col justify-center {data.notResponsive ||
+					!data.links.topbar.length
 						? 'hidden'
 						: 'lg:hidden'} cursor-pointer text-4xl transition header-tab"
 					class:rotate-90={topMenuOpen}
@@ -196,7 +197,8 @@
 			<div class="mx-auto max-w-7xl flex items-center gap-6 px-6 grow">
 				<nav class="flex gap-6 font-light items-center">
 					<button
-						class="inline-flex flex-col justify-center {data.notResponsive
+						class="inline-flex flex-col justify-center {data.notResponsive ||
+						!data.links.navbar.length
 							? 'hidden'
 							: 'lg:hidden'} cursor-pointer text-2xl transition"
 						class:rotate-90={navMenuOpen}
