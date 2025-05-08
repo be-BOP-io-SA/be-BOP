@@ -245,7 +245,13 @@
 			}
 		])
 	) as Record<Day, { start: string; end: string }>;
-
+	let bookingSpecSlotOptions = [
+		{ value: 15, label: '15 minutes' },
+		{ value: 30, label: '30 minutes' },
+		{ value: 60, label: '1 hour' },
+		{ value: 120, label: '2 hours' },
+		{ value: 60 * 24, label: 'All day' }
+	];
 	$: changedDate = availableDateStr !== product.availableDate?.toJSON().slice(0, 10);
 	$: enablePreorder = availableDateStr && availableDateStr > new Date().toJSON().slice(0, 10);
 
@@ -942,11 +948,11 @@
 				<label class="form-label">
 					Booking slot duration
 					<select name="bookingSpec.slotMinutes" class="form-input">
-						<option value="15">15 minutes</option>
-						<option value="30">30 minutes</option>
-						<option value="60">1 hour</option>
-						<option value="120">2 hours</option>
-						<option value={60 * 24}>All day</option>
+						{#each bookingSpecSlotOptions as { value, label }}
+							<option {value} selected={product.bookingSpec?.slotMinutes === value}>
+								{label}
+							</option>
+						{/each}
 					</select>
 				</label>
 
