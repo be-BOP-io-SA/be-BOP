@@ -233,17 +233,36 @@
 <h1 class="text-3xl">Reporting</h1>
 <div class="gap-4 grid grid-cols-3">
 	<label class="col-span-3 checkbox-label">
-		<input class="form-checkbox" type="checkbox" bind:checked={includePending} /> include pending orders
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			bind:checked={includePending}
+			on:click={() => (loadedHtml = false)}
+		/> include pending orders
 	</label>
 	<label class="col-span-3 checkbox-label">
-		<input class="form-checkbox" type="checkbox" bind:checked={includeExpired} /> include expired orders
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			bind:checked={includeExpired}
+			on:click={() => (loadedHtml = false)}
+		/> include expired orders
 	</label>
 	<label class="col-span-3 checkbox-label">
-		<input class="form-checkbox" type="checkbox" bind:checked={includeCanceled} /> include canceled orders
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			bind:checked={includeCanceled}
+			on:click={() => (loadedHtml = false)}
+		/> include canceled orders
 	</label>
 	<label class="col-span-3 checkbox-label">
-		<input class="form-checkbox" type="checkbox" bind:checked={includePartiallyPaid} /> include partially
-		paid orders
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			bind:checked={includePartiallyPaid}
+			on:click={() => (loadedHtml = false)}
+		/> include partially paid orders
 	</label>
 </div>
 <form method="GET" class="grid grid-cols-12 gap-2 col-span-12">
@@ -296,7 +315,7 @@
 		</label>
 	</div>
 	<div class="col-span-1">
-		<button class="submit btn btn-gray mt-8">🔍</button>
+		<button class="submit btn btn-gray mt-8" on:click={() => (loadedHtml = false)}>🔍</button>
 	</div>
 </form>
 <div class="gap-4 grid grid-cols-12 mr-auto">
