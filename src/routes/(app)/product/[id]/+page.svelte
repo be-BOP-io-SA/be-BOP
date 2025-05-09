@@ -267,7 +267,7 @@
 				data.freeProductsAvailable -
 					sum(
 						data.cart
-							.filter((item) => item.product._id === data.product._id)
+							.filter((item) => item.freeQuantity && item.product._id === data.product._id)
 							.map((val) => val.quantity)
 					),
 				0
