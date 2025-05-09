@@ -24,7 +24,7 @@
 			name="visitorDarkLightMode"
 			value="light"
 		/>
-		Use light mode by default fo users
+		Use light mode by default for users
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -34,7 +34,7 @@
 			name="visitorDarkLightMode"
 			value="dark"
 		/>
-		Use Dark mode by default fo users
+		Use Dark mode by default for users
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -44,7 +44,7 @@
 			name="visitorDarkLightMode"
 			value="system"
 		/>
-		Use Dark/light mode corresponding to browser /OS by default for users
+		Use Dark/light mode corresponding to browser / OS by default for users
 	</label>
 	<h3 class="text-xl">Employee default dark/light mode</h3>
 	<label class="checkbox-label">
@@ -55,7 +55,7 @@
 			name="employeeDarkLightMode"
 			value="light"
 		/>
-		Use light mode by default fo employee
+		Use light mode by default for employee
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -65,7 +65,7 @@
 			name="employeeDarkLightMode"
 			value="dark"
 		/>
-		Use Dark mode by default fo employee
+		Use Dark mode by default for employee
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -75,7 +75,7 @@
 			name="employeeDarkLightMode"
 			value="system"
 		/>
-		Use Dark/light mode corresponding to browser /OS by default for employee
+		Use Dark/light mode corresponding to browser / OS by default for employee
 	</label>
 
 	<h2 class="text-2xl">Top bar</h2>
