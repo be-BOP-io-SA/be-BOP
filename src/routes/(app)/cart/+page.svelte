@@ -133,6 +133,7 @@
 			>
 				{#each items as item, i}
 					{@const price = item.customPrice || item.product.price}
+					{@const quantityToPay = Math.max(item.quantity - (item.freeQuantity ?? 0), 0)}
 					<form
 						method="POST"
 						class="contents"
@@ -233,7 +234,7 @@
 						<div class="flex flex-col items-end justify-center lg:mb-0 mb-4">
 							<div class="flex gap-2">
 								<PriceTag
-									amount={(item.quantity *
+									amount={(quantityToPay *
 										(item.booking && item.product.bookingSpec?.slotMinutes
 											? differenceInMinutes(item.booking.end, item.booking.start) /
 											  item.product.bookingSpec.slotMinutes
@@ -252,7 +253,7 @@
 								>
 								{#if item.discountPercentage}
 									<PriceTag
-										amount={((item.quantity *
+										amount={((quantityToPay *
 											(item.booking && item.product.bookingSpec?.slotMinutes
 												? differenceInMinutes(item.booking.end, item.booking.start) /
 												  item.product.bookingSpec.slotMinutes
@@ -269,7 +270,7 @@
 							</div>
 							<PriceTag
 								class="text-base truncate"
-								amount={((item.quantity *
+								amount={((quantityToPay *
 									(item.booking && item.product.bookingSpec?.slotMinutes
 										? differenceInMinutes(item.booking.end, item.booking.start) /
 										  item.product.bookingSpec.slotMinutes

@@ -637,6 +637,8 @@
 				</div>
 				{#each items as item}
 					{@const price = item.customPrice || item.product.price}
+					{@const quantityToPay = Math.max(item.quantity - (item.freeQuantity ?? 0), 0)}
+
 					<form
 						method="POST"
 						class="flex flex-col mt-2"
@@ -724,7 +726,7 @@
 							<div class="flex flex-col ml-auto items-end justify-center">
 								<PriceTag
 									class="text-2xl truncate"
-									amount={((item.quantity *
+									amount={((quantityToPay *
 										(item.booking && item.product.bookingSpec?.slotMinutes
 											? differenceInMinutes(item.booking.end, item.booking.start) /
 											  item.product.bookingSpec.slotMinutes
@@ -742,7 +744,7 @@
 										: ''}</PriceTag
 								>
 								<PriceTag
-									amount={((item.quantity *
+									amount={((quantityToPay *
 										(item.booking && item.product.bookingSpec?.slotMinutes
 											? differenceInMinutes(item.booking.end, item.booking.start) /
 											  item.product.bookingSpec.slotMinutes

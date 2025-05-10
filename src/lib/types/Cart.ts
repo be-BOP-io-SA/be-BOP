@@ -39,6 +39,7 @@ export interface Cart extends Timestamps {
 		depositPercentage?: number;
 		internalNote?: { value: string; updatedAt: Date; updatedById?: User['_id'] };
 		chosenVariations?: Record<string, string>;
+		freeQuantity?: number;
 	}>;
 }
 
@@ -120,6 +121,8 @@ export function computePriceInfo(
 		customPrice?: Price;
 		depositPercentage?: number;
 		discountPercentage?: number;
+		freeQuantity?: number;
+		freeProductSources?: { subscriptionId: string; quantity: number }[];
 		booking?: {
 			start: Date;
 			end: Date;
@@ -188,7 +191,7 @@ export function computePriceInfo(
 		const currency = (item.customPrice || item.product.price).currency;
 		const price = fixCurrencyRounding(
 			(item.customPrice || item.product.price).amount *
-				item.quantity *
+				Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
 				(item.booking && item.product.bookingSpec?.slotMinutes
 					? differenceInMinutes(item.booking.end, item.booking.start) /
 					  item.product.bookingSpec.slotMinutes
@@ -218,7 +221,7 @@ export function computePriceInfo(
 			currency: (item.customPrice || item.product.price).currency,
 			amount:
 				(((item.customPrice || item.product.price).amount *
-					item.quantity *
+					Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
 					(item.booking && item.product.bookingSpec?.slotMinutes
 						? differenceInMinutes(item.booking.end, item.booking.start) /
 						  item.product.bookingSpec.slotMinutes
@@ -248,7 +251,7 @@ export function computePriceInfo(
 			currency: (item.customPrice || item.product.price).currency,
 			amount:
 				(item.customPrice || item.product.price).amount *
-				item.quantity *
+				Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
 				(item.booking && item.product.bookingSpec?.slotMinutes
 					? differenceInMinutes(item.booking.end, item.booking.start) /
 					  item.product.bookingSpec.slotMinutes

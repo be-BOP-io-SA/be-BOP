@@ -23,7 +23,11 @@
 		items: Array<
 			Pick<
 				Order['items'][0],
-				'currencySnapshot' | 'quantity' | 'depositPercentage' | 'discountPercentage'
+				| 'currencySnapshot'
+				| 'quantity'
+				| 'depositPercentage'
+				| 'discountPercentage'
+				| 'freeQuantity'
 			> & {
 				digitalFiles: Array<{ _id: string }>;
 				picture?: Picture;
@@ -120,7 +124,7 @@
 			<div class="flex flex-col ml-auto items-end justify-center">
 				<PriceTag
 					class="text-2xl truncate"
-					amount={item.quantity *
+					amount={Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
 						(item.booking && item.product.bookingSpec
 							? differenceInMinutes(item.booking.end, item.booking.start) /
 							  item.product.bookingSpec.slotMinutes
@@ -134,7 +138,7 @@
 				{#if item.currencySnapshot.secondary}
 					<PriceTag
 						class="text-2xl truncate"
-						amount={item.quantity *
+						amount={Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
 							(item.currencySnapshot.secondary.customPrice?.amount ??
 								item.currencySnapshot.secondary.price.amount) *
 							(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}

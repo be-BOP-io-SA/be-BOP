@@ -45,50 +45,99 @@ export const actions = {
 		if (!discount) {
 			throw error(404, 'discount not found');
 		}
+		const formData = await request.formData();
 
-		const data = await request.formData();
-
-		const { name, subscriptionIds, productIds, wholeCatalog, percentage, beginsAt, endsAt } = z
-			.object({
-				name: z.string().min(1).max(MAX_NAME_LIMIT),
-				productIds: z.string().array(),
-				subscriptionIds: z.string().array(),
-				percentage: z.string().regex(/^\d+(\.\d+)?$/),
-				wholeCatalog: z.boolean({ coerce: true }).default(false),
-				beginsAt: z.date({ coerce: true }),
-				endsAt: z.date({ coerce: true }).optional()
-			})
-			.parse({
-				name: data.get('name'),
-				subscriptionIds: JSON.parse(String(data.get('subscriptionIds'))).map(
-					(x: { value: string }) => x.value
-				),
-				productIds: JSON.parse(String(data.get('productIds'))).map(
-					(x: { value: string }) => x.value
-				),
-				wholeCatalog: data.get('wholeCatalog'),
-				percentage: data.get('percentage'),
-				beginsAt: data.get('beginsAt'),
-				endsAt: data.get('endsAt') || undefined
-			});
-
-		await collections.discounts.updateOne(
-			{
-				_id: discount._id
-			},
-			{
-				$set: {
-					name,
-					percentage: Number(percentage),
-					subscriptionIds,
-					wholeCatalog,
-					productIds,
-					beginsAt,
-					endsAt: endsAt || null,
-					updatedAt: new Date()
-				}
+		const quantityPerProduct: Record<string, number> = {};
+		for (const [key, value] of formData.entries()) {
+			const match = key.match(/^quantityPerProduct\[(.+?)\]$/);
+			if (match) {
+				quantityPerProduct[match[1]] = Number(value);
 			}
-		);
+		}
+
+		const base = z.object({
+			name: z.string().min(1).max(MAX_NAME_LIMIT),
+			subscriptionIds: z.string().array().min(1),
+			productIds: z.string().array(),
+			wholeCatalog: z.boolean({ coerce: true }).default(false),
+			beginsAt: z.date({ coerce: true }),
+			endsAt: z.date({ coerce: true }).nullable()
+		});
+
+		const percentageSchema = z.object({
+			percentage: z
+				.string()
+				.regex(/^\d+(\.\d+)?$/)
+				.transform((val) => Number(val))
+		});
+
+		const freeProductsSchema = z.object({
+			quantityPerProduct: z.record(z.string(), z.number().min(0).max(100)).optional()
+		});
+
+		const baseData = base.parse({
+			name: formData.get('name'),
+			subscriptionIds: JSON.parse(String(formData.get('subscriptionIds'))).map(
+				(x: { value: string }) => x.value
+			),
+			productIds: JSON.parse(String(formData.get('productIds') ?? '[]')).map(
+				(x: { value: string }) => x.value
+			),
+			wholeCatalog: formData.get('wholeCatalog'),
+			beginsAt: formData.get('beginsAt'),
+			endsAt: formData.get('endsAt') || null
+		});
+
+		const timestamp = { createdAt: new Date(), updatedAt: new Date() };
+
+		if (discount.mode === 'percentage') {
+			const parsed = percentageSchema.safeParse({ percentage: formData.get('percentage') });
+
+			if (!parsed.success || parsed.data.percentage < 0 || isNaN(parsed.data.percentage)) {
+				throw error(400, 'Invalid or missing percentage');
+			}
+
+			const percentageDiscount = {
+				...baseData,
+				...timestamp,
+				percentage: parsed.data.percentage
+			};
+			await collections.discounts.updateOne(
+				{
+					_id: discount._id
+				},
+				{
+					$set: percentageDiscount
+				}
+			);
+		}
+
+		if (discount.mode === 'freeProducts') {
+			const parsed = freeProductsSchema.safeParse({ quantityPerProduct });
+
+			if (
+				!parsed.success ||
+				!parsed.data.quantityPerProduct ||
+				Object.keys(parsed.data.quantityPerProduct).length === 0
+			) {
+				throw error(400, 'Invalid or missing quantityPerProduct');
+			}
+
+			const freeProductsDiscount = {
+				...baseData,
+				...timestamp,
+				quantityPerProduct: parsed.data.quantityPerProduct
+			};
+
+			await collections.discounts.updateOne(
+				{
+					_id: discount._id
+				},
+				{
+					$set: freeProductsDiscount
+				}
+			);
+		}
 	},
 
 	delete: async function ({ params }) {

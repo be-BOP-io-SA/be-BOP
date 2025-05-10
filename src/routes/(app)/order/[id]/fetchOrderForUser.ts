@@ -156,6 +156,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 			},
 			vatRate: item.vatRate,
 			...(item.customPrice && { customPrice: item.customPrice }),
+			...(item.freeQuantity && { freeQuantity: item.freeQuantity }),
 			picture: pictures.find((picture) => picture.productId === item.product._id),
 			digitalFiles: digitalFiles.filter(
 				(digitalFile) => digitalFile.productId === item.product._id

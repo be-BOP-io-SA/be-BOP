@@ -36,6 +36,7 @@
 	import type { Day } from '$lib/types/Schedule.js';
 	import { toZonedTime } from 'date-fns-tz';
 	import { RangeList } from '$lib/utils/range-list.js';
+	import { sum } from '$lib/utils/sum.js';
 
 	export let data;
 
@@ -253,12 +254,24 @@
 			...(data.product.hasVariations && {
 				chosenVariations: selectedVariations
 			}),
-			discountPercentage: data.discount?.percentage,
+			discountPercentage:
+				data.discount?.mode === 'percentage' ? data.discount?.percentage : undefined,
 			...(data.product.bookingSpec && {
 				priceMultiplier: durationMinutes / data.product.bookingSpec.slotMinutes
 			})
 		};
 	}
+	$: freeProductsAvailable = !data.product.standalone
+		? data.freeProductsAvailable
+		: Math.max(
+				data.freeProductsAvailable -
+					sum(
+						data.cart
+							.filter((item) => item.freeQuantity && item.product._id === data.product._id)
+							.map((val) => val.quantity)
+					),
+				0
+		  );
 
 	let PWYWInput: HTMLInputElement | null = null;
 	let acceptRestriction = data.product.hasSellDisclaimer ? false : true;
@@ -448,7 +461,7 @@
 									: 1)}
 							main
 						/>
-						{#if data.discount}
+						{#if data.discount && data.discount.mode === 'percentage'}
 							<PriceTag
 								currency={data.product.price.currency}
 								class="text-2xl lg:text-4xl truncate max-w-full"
@@ -468,14 +481,30 @@
 							(data.product.bookingSpec
 								? durationMinutes / data.product.bookingSpec.slotMinutes
 								: 1) *
-							(data.discount ? 1 - data.discount.percentage / 100 : 1)}
+							(data.discount?.mode === 'percentage' && data.discount?.percentage
+								? 1 - data.discount.percentage / 100
+								: 1)}
 						secondary
 						class="text-xl"
 					/>
 					<span class="font-semibold">{t('product.vatExcluded')}</span>
 				</div>
+				{#if freeProductsAvailable}
+					<hr class="border-gray-300" />
+					<h3 class="text-[22px]">
+						{#if freeProductsAvailable > 1}
+							{t('product.freeProductDiscountText', {
+								available: freeProductsAvailable
+							})}
+						{:else}
+							{t('product.freeProductDiscountTextSingular', {
+								available: freeProductsAvailable
+							})}
+						{/if}
+					</h3>
+				{/if}
 
-				{#if data.discount && !data.product.hideDiscountExpiration}
+				{#if data.discount && data.discount.mode === 'percentage' && !data.product.hideDiscountExpiration}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
 						{#if timeDifference === null}
@@ -490,7 +519,7 @@
 						{/if}
 					</h3>
 
-					{#if data.discount.percentage === 100 && 0}
+					{#if data.discount.mode === 'percentage' && data.discount.percentage === 100 && 0}
 						<hr class="border-gray-300" />
 						<div class="border border-[#F1DA63] bg-[#FFFBD5] p-2 rounded text-base flex gap-2">
 							<IconInfo class="text-[#E4C315]" />
@@ -563,6 +592,9 @@
 						class="flex flex-col gap-2"
 					>
 						{#if canBuy}
+							{#if freeProductsAvailable}
+								<input type="hidden" name="freeQuantity" value={freeProductsAvailable} />
+							{/if}
 							{#if data.product.payWhatYouWant}
 								<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
 								<input type="hidden" name="customPriceCurrency" value={PWYWCurrency} />

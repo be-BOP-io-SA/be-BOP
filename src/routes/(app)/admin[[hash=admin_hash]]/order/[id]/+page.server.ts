@@ -110,11 +110,30 @@ export const actions = {
 				$set: {
 					status: 'canceled'
 				}
-			}
+			},
+			{ returnDocument: 'after' }
 		);
 
-		if (!order) {
+		if (!order.value) {
 			throw error(404, 'Order not found');
+		}
+		for (const item of order.value?.items) {
+			if (item.freeProductSources?.length) {
+				for (const source of item.freeProductSources) {
+					await collections.paidSubscriptions.updateOne(
+						{ _id: source.subscriptionId },
+						{
+							$inc: {
+								[`freeProductsById.${item.product._id}.used`]: -source.quantity,
+								[`freeProductsById.${item.product._id}.available`]: source.quantity
+							},
+							$set: {
+								updatedAt: new Date()
+							}
+						}
+					);
+				}
+			}
 		}
 
 		throw redirect(303, request.headers.get('referer') || `${adminPrefix()}/order`);

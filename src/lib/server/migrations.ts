@@ -498,6 +498,17 @@ const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('680751f0e6ba7ca6454423d0'),
+		name: 'Add mode to existing discounts',
+		run: async (session: ClientSession) => {
+			await collections.discounts.updateMany(
+				{ percentage: { $exists: true }, mode: { $exists: false } },
+				{ $set: { mode: 'percentage' } },
+				{ session }
+			);
+		}
 	}
 ];
 

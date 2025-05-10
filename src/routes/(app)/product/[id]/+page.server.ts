@@ -11,6 +11,7 @@ import { POS_ROLE_ID } from '$lib/types/User';
 import { cmsFromContent } from '$lib/server/cms';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
+import { sum } from '$lib/utils/sum';
 import { productToScheduleId, type ScheduleEvent } from '$lib/types/Schedule';
 import { subDays } from 'date-fns';
 
@@ -141,7 +142,9 @@ export const load = async ({ params, locals }) => {
 					.toArray()
 			: []
 	]);
-
+	const freeProductsAvailable = sum(
+		subscriptions.map((s) => s.freeProductsById?.[product._id]?.available ?? 0)
+	);
 	const discount = subscriptions.length
 		? await collections.discounts.findOne(
 				{
@@ -150,6 +153,7 @@ export const load = async ({ params, locals }) => {
 					beginsAt: {
 						$lt: new Date()
 					},
+					mode: 'percentage',
 					$and: [
 						{
 							$or: [
@@ -168,7 +172,6 @@ export const load = async ({ params, locals }) => {
 				}
 		  )
 		: null;
-
 	return {
 		product,
 		pictures,
@@ -189,7 +192,8 @@ export const load = async ({ params, locals }) => {
 			productCMSAfter: cmsFromContent({ content: product.contentAfter }, locals)
 		}),
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
-		websiteShortDescription: product.shortDescription
+		websiteShortDescription: product.shortDescription,
+		freeProductsAvailable
 	};
 };
 
@@ -215,6 +219,7 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		customPriceCurrency,
 		deposit,
 		chosenVariations,
+		freeQuantity,
 		time,
 		durationMinutes
 	} = z
@@ -232,6 +237,11 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			customPriceCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1)]).optional(),
 			deposit: z.enum(['partial', 'full']).optional(),
 			chosenVariations: z.record(z.string(), z.string()).optional(),
+			freeQuantity: z
+				.string()
+				.regex(/^\d+(\.\d+)?$/)
+				.transform((val) => Number(val))
+				.optional(),
 			time: z.date({ coerce: true }).optional(),
 			durationMinutes: z.number({ coerce: true }).int().min(1).optional()
 		})
@@ -252,6 +262,7 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		user: userIdentifier(locals),
 		mode: 'eshop',
 		...(customPrice && { customPrice }),
+		...(freeQuantity && { freeQuantity }),
 		deposit: deposit === 'partial',
 		...(product.hasVariations && { chosenVariations }),
 		...(time && durationMinutes && product.bookingSpec
