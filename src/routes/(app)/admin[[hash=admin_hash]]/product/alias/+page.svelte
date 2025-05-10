@@ -27,7 +27,7 @@
 >
 	{#each data.products as product}
 		<h2 class="text-2xl">{product.name}</h2>
-		<div class="gap-4 flex flex-col md:flex-row">
+		<div class="gap-4 mx-4 flex flex-col md:flex-row">
 			<label class="w-full">
 				Current slug
 				<input class="form-input" type="text" placeholder="slug" value={product._id} disabled />
