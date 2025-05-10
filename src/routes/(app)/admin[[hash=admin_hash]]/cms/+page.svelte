@@ -32,6 +32,9 @@
 </script>
 
 <a href="{data.adminPrefix}/cms/new" class="underline block body-hyperlink">Add CMS page</a>
+<a href="{data.adminPrefix}/cms/seo-edit" class="underline block body-hyperlink"
+	>Bulk CMS SEO edit</a
+>
 
 {#if typedKeys(specialPages).some((key) => cmsPageMap.has(key))}
 	<h2 class="text-2xl">Existing Special pages</h2>
