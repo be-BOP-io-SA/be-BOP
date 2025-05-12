@@ -8,7 +8,10 @@ export const isPhoenixdConfigured = () =>
 export async function phoenixdInfo(): Promise<{
 	nodeId: string;
 	chain: 'mainnet' | 'testnet';
-	channels: string[];
+	channels: {
+		capacitySat: number;
+		inboundLiquiditySat: number;
+	}[];
 	version: string;
 }> {
 	const res = await fetch(`${runtimeConfig.phoenixd.url}/getinfo`, {

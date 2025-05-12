@@ -1,3 +1,4 @@
+import { LIGHTNING_INBOUND_LIQUIDITY_WARNING_THRESHOLD } from '$env/static/private';
 import { collections } from '../database';
 import { setTimeout } from 'node:timers/promises';
 import { processClosed } from '../process';
@@ -10,7 +11,7 @@ import { toSatoshis } from '$lib/utils/toSatoshis';
 import { onOrderPayment, onOrderPaymentFailed } from '../orders';
 import { refreshPromise, runtimeConfig, runtimeConfigUpdatedAt } from '../runtime-config';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
-import { phoenixdLookupInvoice } from '../phoenixd';
+import { phoenixdInfo, phoenixdLookupInvoice } from '../phoenixd';
 import { CURRENCIES, CURRENCY_UNIT } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { isPaypalEnabled, paypalGetCheckout } from '../paypal';
@@ -18,8 +19,39 @@ import { differenceInMinutes } from 'date-fns';
 import { z } from 'zod';
 import { getSatoshiReceivedNodeless } from '../bitcoin-nodeless';
 import { trimSuffix } from '$lib/utils/trimSuffix';
+import { ObjectId } from 'mongodb';
 
 const lock = new Lock('orders');
+
+const INBOUND_LIQUIDITY_THRESHOLD: number =
+	parseFloat(LIGHTNING_INBOUND_LIQUIDITY_WARNING_THRESHOLD) || 0.3;
+
+async function notifyAdminOnLowPhoenixdInboundLiquidity(): Promise<void> {
+	const contactEmail: string | undefined = runtimeConfig.sellerIdentity?.contact.email;
+	if (!contactEmail) {
+		return;
+	}
+	const nodeInfo = await phoenixdInfo();
+	for (const channel of nodeInfo.channels) {
+		if (channel.inboundLiquiditySat / channel.capacitySat < INBOUND_LIQUIDITY_THRESHOLD) {
+			const templateKey = `<p>This message was sent to you because your Lightning Network channel
+			capacity is about to reach its maximum limit. Once full, you may incur unexpected processing fees
+			for incoming payments.</p>
+
+			<p>To prevent this, please withdraw some funds via the <strong>Settings &gt; Phoenixd</strong>
+			section on your dashboard. This quick action will free up capacity and ensure smoother payment
+			processing.</p>`;
+			await collections.emailNotifications.insertOne({
+				_id: new ObjectId(),
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				subject: 'Action Required: Lightning Channel Capacity Reaching Maximum',
+				htmlContent: templateKey,
+				dest: contactEmail
+			});
+		}
+	}
+}
 
 async function maintainOrders() {
 	await refreshPromise;
@@ -169,6 +201,7 @@ async function maintainOrders() {
 											}
 										}
 									);
+									await notifyAdminOnLowPhoenixdInboundLiquidity();
 								} else {
 									if (payment.expiresAt && payment.expiresAt < new Date()) {
 										order = await onOrderPaymentFailed(order, payment, 'expired');
