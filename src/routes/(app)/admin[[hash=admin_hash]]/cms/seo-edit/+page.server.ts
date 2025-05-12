@@ -33,7 +33,7 @@ export const actions = {
 		for (const [key, value] of Object.entries(json)) {
 			const { title, shortDescription } = z
 				.object({
-					title: z.string().trim().max(MAX_SHORT_DESCRIPTION_LIMIT),
+					title: z.string().trim().max(MAX_SHORT_DESCRIPTION_LIMIT).optional(),
 					shortDescription: z.string().trim().optional()
 				})
 				.parse(value);
@@ -42,7 +42,7 @@ export const actions = {
 				{ _id: key },
 				{
 					$set: {
-						title,
+						title: title ?? '',
 						shortDescription: shortDescription ?? '',
 						updatedAt: new Date()
 					}
