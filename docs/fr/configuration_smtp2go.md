@@ -1,4 +1,4 @@
-#Introduction
+# Introduction
 
 Cette documentation a pour but de permettre aux propriétaires d'un be-BOP de pouvoir configurer l'envoi automatique d'emails de la manière la plus simple et gratuite qui ait été trouvée.
 
