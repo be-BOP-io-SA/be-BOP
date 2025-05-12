@@ -2,12 +2,11 @@ import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
 
 const initialValue = browser
-	? (window.localStorage.getItem('theme') as 'light' | 'dark' | 'system') ??
-	  (document.querySelector('html')?.classList.contains('dark')
-			? 'dark'
-			: window.matchMedia('(prefers-color-scheme: dark)').matches
-			? 'dark'
-			: 'light')
+	? document.querySelector('html')?.classList.contains('dark')
+		? 'dark'
+		: document.querySelector('html')?.classList.contains('system')
+		? 'system'
+		: 'light'
 	: 'light';
 
 const theme = writable<'light' | 'dark' | 'system'>(initialValue);

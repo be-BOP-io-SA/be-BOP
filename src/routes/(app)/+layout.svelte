@@ -133,12 +133,7 @@
 	];
 
 	function setTheme(value: string) {
-		if (value === 'system') {
-			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			$theme = prefersDark ? 'dark' : 'light';
-		} else {
-			$theme = value as 'light' | 'dark' | 'system';
-		}
+		$theme = value as 'light' | 'dark' | 'system';
 		localStorage.setItem('theme', value);
 		open = false;
 	}
