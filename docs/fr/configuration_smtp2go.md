@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/b6deea1f-1c5e-49bc-b851-aaa5ac311d11)# Introduction
+#Introduction
 
 Cette documentation a pour but de permettre aux propriétaires d'un be-BOP de pouvoir configurer l'envoi automatique d'emails de la manière la plus simple et gratuite qui ait été trouvée.
 
