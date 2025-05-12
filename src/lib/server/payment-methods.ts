@@ -1,7 +1,7 @@
 import { env } from '$env/dynamic/private';
 import { POS_ROLE_ID } from '$lib/types/User';
 import { isBitcoinConfigured as isBitcoindConfigured } from './bitcoind';
-import { isLightningConfigured as isLndConfigured } from './lnd';
+import { isLndConfigured } from './lnd';
 import { isPhoenixdConfigured } from './phoenixd';
 import { runtimeConfig } from './runtime-config';
 import { isSumupEnabled } from './sumup';
@@ -55,7 +55,7 @@ export const paymentMethods = (opts?: {
 						case 'bitcoin':
 							return isBitcoindConfigured || isBitcoinNodelessConfigured();
 						case 'lightning':
-							return isLndConfigured || isPhoenixdConfigured();
+							return isLndConfigured() || isPhoenixdConfigured();
 						case 'point-of-sale':
 							return opts?.role === POS_ROLE_ID || opts?.includePOS;
 						case 'free':
