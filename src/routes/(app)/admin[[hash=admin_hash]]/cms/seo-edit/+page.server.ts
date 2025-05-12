@@ -46,8 +46,7 @@ export const actions = {
 						shortDescription: shortDescription ?? '',
 						updatedAt: new Date()
 					}
-				},
-				{ upsert: true }
+				}
 			);
 		}
 		throw redirect(303, request.headers.get('referer') || '/admin/cms/seo-edit');
