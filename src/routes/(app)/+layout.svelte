@@ -32,6 +32,7 @@
 	import { LARGE_SCREEN } from '$lib/types/Theme.js';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
+	import IconSystem from '$lib/components/icons/IconSystem.svelte';
 	import { oneMaxPerLine } from '$lib/types/Product.js';
 	import { differenceInMinutes } from 'date-fns';
 
@@ -122,6 +123,20 @@
 			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 			: true;
 	let ageWarning = false;
+
+	let open = false;
+
+	const options = [
+		{ value: 'light', label: 'Clair', icon: IconModeLight },
+		{ value: 'dark', label: 'Sombre', icon: IconModeDark },
+		{ value: 'system', label: 'Système', icon: IconSystem }
+	];
+
+	function setTheme(value: string) {
+		$theme = value as 'light' | 'dark' | 'system';
+		localStorage.setItem('theme', value);
+		open = false;
+	}
 </script>
 
 <!--
@@ -444,27 +459,34 @@
 							</Popup>
 						{/if}
 						{#if !data.hideThemeSelectorInToolbar}
-							<button
-								class="ml-4 hidden dark:inline"
-								type="button"
-								on:click={() => {
-									$theme = 'light';
-									window.localStorage.setItem('theme', 'light');
-								}}
-							>
-								<IconModeLight />
-							</button>
-							<button
-								type="button"
-								class="ml-4 dark:hidden"
-								on:click={() => {
-									$theme = 'dark';
-									window.localStorage.setItem('theme', 'dark');
-								}}
-							>
-								<IconModeDark />
-							</button>
+							<div class="flex relative">
+								<button
+									class="ml-4 flex items-center gap-2 rounded text-xl"
+									on:click={() => (open = !open)}
+								>
+									{#each options as opt (opt.value)}
+										{#if opt.value === $theme}
+											<svelte:component this={opt.icon} class="w-5 h-5" />
+										{/if}
+									{/each}
+								</button>
+
+								{#if open}
+									<div class="absolute left-10 mt-2 w-48 shadow-lg rounded z-10 navbar">
+										{#each options as opt}
+											<button
+												class="flex items-center gap-2 w-full px-4 py-2 text-left"
+												on:click={() => setTheme(opt.value)}
+											>
+												<svelte:component this={opt.icon} class="w-5 h-5" />
+												<span>{opt.label}</span>
+											</button>
+										{/each}
+									</div>
+								{/if}
+							</div>
 						{/if}
+
 						{#if !data.disableLanguageSelector && data.locales.length > 1}
 							<select
 								class="ml-4 border-0 cursor-pointer rounded appearance-none bg-none bg-transparent text-xl"

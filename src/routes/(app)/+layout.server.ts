@@ -317,6 +317,8 @@ export async function load(params) {
 				runtimeConfig.topbarLinks,
 			socialNetworkIcons: runtimeConfig.socialNetworkIcons
 		},
+		visitorDarkLightMode: runtimeConfig.visitorDarkLightMode,
+		employeeDarkLightMode: runtimeConfig.employeeDarkLightMode,
 		sellerIdentity: runtimeConfig.sellerIdentity,
 		shopInformation: runtimeConfig.shopInformation,
 		deliveryFees: runtimeConfig.deliveryFees,

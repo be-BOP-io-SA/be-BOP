@@ -301,12 +301,12 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 			if (!transformed) {
 				transformed = true;
 				const darkDefaultTheme =
-					isAdminUrl && !isAdminLoginLogoutUrl
-						? runtimeConfig.employeesDarkDefaultTheme
-						: runtimeConfig.usersDarkDefaultTheme;
+					event.locals.user && event.locals.user?.roleId !== CUSTOMER_ROLE_ID
+						? runtimeConfig.employeeDarkLightMode
+						: runtimeConfig.visitorDarkLightMode;
 				return html.replace(
 					'<html',
-					`<html lang="${event.locals.language}" class="${darkDefaultTheme ? 'dark' : ''}"`
+					`<html lang="${event.locals.language}" class="${darkDefaultTheme}"`
 				);
 			}
 			return html;
