@@ -191,6 +191,9 @@ const baseConfig = {
 		currency: 'EUR' as Currency,
 		sandbox: false
 	},
+	swissBitcoinPay: {
+		apiKey: ''
+	},
 	bity: {
 		clientId: ''
 	},
