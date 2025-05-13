@@ -4,11 +4,9 @@ import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { collections } from '$lib/server/database';
 import { adminPrefix } from '$lib/server/admin';
-import { themeFormStructure, type Theme } from '$lib/types/Theme';
-import type { Timestamps } from '$lib/types/Timestamps';
-import { increaseThemeChangeNumber, themeValidator } from '$lib/server/theme';
+import { themeFormStructure } from '$lib/types/Theme';
+import { increaseThemeChangeNumber, ThemeData, themeValidator } from '$lib/server/theme';
 import { ObjectId } from 'mongodb';
-import { object } from 'zod';
 import { get } from '$lib/utils/get';
 
 export async function load({ params }) {
@@ -35,7 +33,7 @@ export const actions: Actions = {
 			set(json, key, value);
 		}
 
-		const theme = themeValidator.parse(json) satisfies Omit<Theme, '_id' | keyof Timestamps>;
+		const theme = themeValidator.parse(json) satisfies ThemeData;
 
 		await collections.themes.updateOne(
 			{ _id: new ObjectId(params.id) },
@@ -79,10 +77,7 @@ export const actions: Actions = {
 				}
 			}
 		}
-		const theme = themeValidator.parse(jsonToDuplicate) satisfies Omit<
-			Theme,
-			'_id' | keyof Timestamps
-		>;
+		const theme = themeValidator.parse(jsonToDuplicate) satisfies ThemeData;
 
 		await collections.themes.updateOne(
 			{ _id: new ObjectId(params.id) },
@@ -126,10 +121,7 @@ export const actions: Actions = {
 				}
 			}
 		}
-		const theme = themeValidator.parse(jsonToDuplicate) satisfies Omit<
-			Theme,
-			'_id' | keyof Timestamps
-		>;
+		const theme = themeValidator.parse(jsonToDuplicate) satisfies ThemeData;
 
 		await collections.themes.updateOne(
 			{ _id: new ObjectId(params.id) },
