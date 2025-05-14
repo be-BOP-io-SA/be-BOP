@@ -523,52 +523,45 @@ const migrations = [
 	},
 	{
 		_id: new ObjectId('68246400cd3efad54fa14bb3'),
-		name: 'Replace usersDarkDefaultTheme with visitorDarkLightMode',
+		name: 'Replace usersDarkDefaultTheme and employeesDarkDefaultTheme',
 		run: async (session: ClientSession) => {
-			const old = await collections.runtimeConfig.findOne(
+			// MIGRATION 1 — usersDarkDefaultTheme => visitorDarkLightMode
+			const oldVisitor = await collections.runtimeConfig.findOne(
 				{ _id: 'usersDarkDefaultTheme' },
 				{ session }
 			);
 
-			if (!old) {
-				return;
+			if (oldVisitor) {
+				await collections.runtimeConfig.insertOne(
+					{
+						_id: 'visitorDarkLightMode',
+						data: oldVisitor.data === true ? 'dark' : 'light',
+						updatedAt: oldVisitor.updatedAt
+					},
+					{ session }
+				);
+				await collections.runtimeConfig.deleteOne({ _id: 'usersDarkDefaultTheme' }, { session });
 			}
-
-			await collections.runtimeConfig.deleteOne({ _id: 'usersDarkDefaultTheme' }, { session });
-
-			await collections.runtimeConfig.insertOne(
-				{
-					_id: 'visitorDarkLightMode',
-					data: old.data === true ? 'dark' : 'light',
-					updatedAt: old.updatedAt
-				},
-				{ session }
-			);
-		}
-	},
-	{
-		_id: new ObjectId('682464349e0d17ede08e51bc'),
-		name: 'Replace employeesDarkDefaultTheme with employeeDarkLightMode',
-		run: async (session: ClientSession) => {
-			const old = await collections.runtimeConfig.findOne(
+			// MIGRATION 2 — employeesDarkDefaultTheme => employeeDarkLightMode
+			const oldEmployee = await collections.runtimeConfig.findOne(
 				{ _id: 'employeesDarkDefaultTheme' },
 				{ session }
 			);
 
-			if (!old) {
-				return;
+			if (oldEmployee) {
+				await collections.runtimeConfig.insertOne(
+					{
+						_id: 'employeeDarkLightMode',
+						data: oldEmployee.data === true ? 'dark' : 'light',
+						updatedAt: oldEmployee.updatedAt
+					},
+					{ session }
+				);
+				await collections.runtimeConfig.deleteOne(
+					{ _id: 'employeesDarkDefaultTheme' },
+					{ session }
+				);
 			}
-
-			await collections.runtimeConfig.deleteOne({ _id: 'employeesDarkDefaultTheme' }, { session });
-
-			await collections.runtimeConfig.insertOne(
-				{
-					_id: 'employeeDarkLightMode',
-					data: old.data === true ? 'dark' : 'light',
-					updatedAt: old.updatedAt
-				},
-				{ session }
-			);
 		}
 	}
 ];
