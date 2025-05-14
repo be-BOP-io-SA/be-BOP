@@ -428,6 +428,7 @@
 			"orders": "Commandes",
 			"signInWith": "Connectez-vous avec {provider}"
 		},
+		"nsecBlockTitle": "Ne partagez jamais votre nsec ici, mettez votre npub uniquement!",
 		"password": {
 			"pwned": "Votre mot de passe n'est pas sécurisé, il a été trouvé dans {count} brèches de données. Veuillez réinitialiser votre mot de passe."
 		},

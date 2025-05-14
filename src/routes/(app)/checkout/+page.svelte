@@ -568,6 +568,8 @@
 										class="form-input"
 										bind:this={npubInputs[key]}
 										bind:value={npubs[key]}
+										pattern="^(?!nsec).*"
+										title={t('login.nsecBlockTitle')}
 										name="{key}NPUB"
 										placeholder="npub1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 										required={key === 'paymentStatus' &&
