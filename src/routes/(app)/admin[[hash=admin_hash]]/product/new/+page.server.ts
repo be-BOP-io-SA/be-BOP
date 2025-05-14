@@ -71,7 +71,7 @@ export const actions: Actions = {
 		const parsed = z
 			.object({
 				slug: zodSlug(),
-				pictureIds: z.string().trim().min(1).max(500).array(),
+				pictureIds: z.string().trim().min(1).max(500).array().min(1),
 				type: z.enum(['resource', 'donation', 'subscription']),
 				tagIds: z.string().array(),
 				...productBaseSchema()
@@ -135,16 +135,15 @@ export const actions: Actions = {
 				delete cleanedVariationLabels.values[key];
 			}
 		}
-		await Promise.all(
+
+		await withTransaction(async (session) => {
 			parsed.pictureIds.map(async (pictureId) => {
 				if (pictureId) {
 					await generatePicture(pictureId, {
 						productId: parsed.slug
 					});
 				}
-			})
-		);
-		await withTransaction(async (session) => {
+			});
 			try {
 				await collections.products.insertOne(
 					{
