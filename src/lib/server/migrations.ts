@@ -520,6 +520,56 @@ const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('68246400cd3efad54fa14bb3'),
+		name: 'Replace usersDarkDefaultTheme with visitorDarkLightMode',
+		run: async (session: ClientSession) => {
+			const old = await collections.runtimeConfig.findOne(
+				{ _id: 'usersDarkDefaultTheme' },
+				{ session }
+			);
+
+			if (!old) {
+				return;
+			}
+
+			await collections.runtimeConfig.deleteOne({ _id: 'usersDarkDefaultTheme' }, { session });
+
+			await collections.runtimeConfig.insertOne(
+				{
+					_id: 'visitorDarkLightMode',
+					data: old.data === true ? 'dark' : 'light',
+					updatedAt: old.updatedAt
+				},
+				{ session }
+			);
+		}
+	},
+	{
+		_id: new ObjectId('682464349e0d17ede08e51bc'),
+		name: 'Replace employeesDarkDefaultTheme with employeeDarkLightMode',
+		run: async (session: ClientSession) => {
+			const old = await collections.runtimeConfig.findOne(
+				{ _id: 'employeesDarkDefaultTheme' },
+				{ session }
+			);
+
+			if (!old) {
+				return;
+			}
+
+			await collections.runtimeConfig.deleteOne({ _id: 'employeesDarkDefaultTheme' }, { session });
+
+			await collections.runtimeConfig.insertOne(
+				{
+					_id: 'employeeDarkLightMode',
+					data: old.data === true ? 'dark' : 'light',
+					updatedAt: old.updatedAt
+				},
+				{ session }
+			);
+		}
 	}
 ];
 
