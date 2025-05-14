@@ -71,7 +71,7 @@ export const actions: Actions = {
 		const parsed = z
 			.object({
 				slug: zodSlug(),
-				pictureId: z.string().trim().min(1).max(500),
+				pictureIds: z.string().trim().min(1).max(500).array(),
 				type: z.enum(['resource', 'donation', 'subscription']),
 				tagIds: z.string().array(),
 				...productBaseSchema()
@@ -135,136 +135,141 @@ export const actions: Actions = {
 				delete cleanedVariationLabels.values[key];
 			}
 		}
-
-		await generatePicture(parsed.pictureId, {
-			productId: parsed.slug,
-			cb: async (session) => {
-				try {
-					await collections.products.insertOne(
-						{
-							_id: parsed.slug,
-							alias: parsed.alias ? [parsed.slug, parsed.alias] : [parsed.slug],
-							createdAt: new Date(),
-							updatedAt: new Date(),
-							description: parsed.description.replaceAll('\r', ''),
-							shortDescription: parsed.shortDescription.replaceAll('\r', ''),
-							name: parsed.name,
-							isTicket: parsed.isTicket,
-							price: {
-								currency: parsed.priceCurrency,
-								amount: priceAmount
+		await Promise.all(
+			parsed.pictureIds.map(async (pictureId) => {
+				if (pictureId) {
+					await generatePicture(pictureId, {
+						productId: parsed.slug
+					});
+				}
+			})
+		);
+		await withTransaction(async (session) => {
+			try {
+				await collections.products.insertOne(
+					{
+						_id: parsed.slug,
+						alias: parsed.alias ? [parsed.slug, parsed.alias] : [parsed.slug],
+						createdAt: new Date(),
+						updatedAt: new Date(),
+						description: parsed.description.replaceAll('\r', ''),
+						shortDescription: parsed.shortDescription.replaceAll('\r', ''),
+						name: parsed.name,
+						isTicket: parsed.isTicket,
+						price: {
+							currency: parsed.priceCurrency,
+							amount: priceAmount
+						},
+						hideDiscountExpiration: parsed.hideDiscountExpiration,
+						type: parsed.type,
+						availableDate: parsed.availableDate || undefined,
+						preorder: parsed.preorder,
+						...(parsed.customPreorderText && { customPreorderText: parsed.customPreorderText }),
+						shipping: parsed.shipping,
+						payWhatYouWant: parsed.payWhatYouWant,
+						...(parsed.payWhatYouWant && {
+							recommendedPWYWAmount: parsePriceAmount(
+								parsed.recommendedPWYWAmount,
+								parsed.priceCurrency
+							)
+						}),
+						...(parsed.hasMaximumPrice &&
+							parsed.maxPriceAmount && {
+								maximumPrice: {
+									amount: parsePriceAmount(parsed.maxPriceAmount, parsed.priceCurrency),
+									currency: parsed.priceCurrency
+								}
+							}),
+						standalone: parsed.payWhatYouWant || parsed.standalone,
+						free: parsed.free,
+						bookingSpec: parsed.bookingSpec,
+						displayShortDescription: parsed.displayShortDescription,
+						...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
+						applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
+						requireSpecificDeliveryFee: parsed.requireSpecificDeliveryFee,
+						...(parsed.stock !== undefined && {
+							stock: { total: parsed.stock, available: parsed.stock, reserved: 0 }
+						}),
+						...(parsed.depositPercentage !== undefined && {
+							deposit: {
+								percentage: parsed.depositPercentage,
+								enforce: parsed.enforceDeposit
+							}
+						}),
+						...(parsed.maxQuantityPerOrder && {
+							maxQuantityPerOrder: parsed.maxQuantityPerOrder
+						}),
+						...(parsed.restrictPaymentMethods && {
+							paymentMethods: parsed.paymentMethods ?? []
+						}),
+						actionSettings: {
+							eShop: {
+								visible: parsed.eshopVisible,
+								canBeAddedToBasket: parsed.eshopBasket
 							},
-							hideDiscountExpiration: parsed.hideDiscountExpiration,
-							type: parsed.type,
-							availableDate: parsed.availableDate || undefined,
-							preorder: parsed.preorder,
-							...(parsed.customPreorderText && { customPreorderText: parsed.customPreorderText }),
-							shipping: parsed.shipping,
-							payWhatYouWant: parsed.payWhatYouWant,
-							...(parsed.payWhatYouWant && {
-								recommendedPWYWAmount: parsePriceAmount(
-									parsed.recommendedPWYWAmount,
-									parsed.priceCurrency
+							retail: {
+								visible: parsed.retailVisible,
+								canBeAddedToBasket: parsed.retailBasket
+							},
+							googleShopping: {
+								visible: parsed.googleShoppingVisible
+							},
+							nostr: {
+								visible: parsed.nostrVisible,
+								canBeAddedToBasket: parsed.nostrBasket
+							}
+						},
+						tagIds: parsed.tagIds,
+						cta: parsed.cta?.filter((ctaLink) => ctaLink.label && ctaLink.href),
+						externalResources: parsed.externalResources?.filter(
+							(externalResourceLink) => externalResourceLink.label && externalResourceLink.href
+						),
+						...(parsed.standalone && { hasVariations: parsed.hasVariations }),
+						...(parsed.standalone &&
+							parsed.hasVariations && {
+								variations: variationsParsedPrice.filter(
+									(variation) => variation.name && variation.value
 								)
 							}),
-							...(parsed.hasMaximumPrice &&
-								parsed.maxPriceAmount && {
-									maximumPrice: {
-										amount: parsePriceAmount(parsed.maxPriceAmount, parsed.priceCurrency),
-										currency: parsed.priceCurrency
-									}
-								}),
-							standalone: parsed.payWhatYouWant || parsed.standalone,
-							free: parsed.free,
-							bookingSpec: parsed.bookingSpec,
-							displayShortDescription: parsed.displayShortDescription,
-							...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
-							applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
-							requireSpecificDeliveryFee: parsed.requireSpecificDeliveryFee,
-							...(parsed.stock !== undefined && {
-								stock: { total: parsed.stock, available: parsed.stock, reserved: 0 }
+						...(parsed.standalone &&
+							parsed.hasVariations &&
+							parsed.variationLabels && {
+								variationLabels: cleanedVariationLabels
 							}),
-							...(parsed.depositPercentage !== undefined && {
-								deposit: {
-									percentage: parsed.depositPercentage,
-									enforce: parsed.enforceDeposit
+						...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
+						hasSellDisclaimer: parsed.hasSellDisclaimer,
+						...(parsed.hasSellDisclaimer &&
+							parsed.sellDisclaimerTitle &&
+							parsed.sellDisclaimerReason && {
+								sellDisclaimer: {
+									title: parsed.sellDisclaimerTitle,
+									reason: parsed.sellDisclaimerReason
 								}
 							}),
-							...(parsed.maxQuantityPerOrder && {
-								maxQuantityPerOrder: parsed.maxQuantityPerOrder
-							}),
-							...(parsed.restrictPaymentMethods && {
-								paymentMethods: parsed.paymentMethods ?? []
-							}),
-							actionSettings: {
-								eShop: {
-									visible: parsed.eshopVisible,
-									canBeAddedToBasket: parsed.eshopBasket
-								},
-								retail: {
-									visible: parsed.retailVisible,
-									canBeAddedToBasket: parsed.retailBasket
-								},
-								googleShopping: {
-									visible: parsed.googleShoppingVisible
-								},
-								nostr: {
-									visible: parsed.nostrVisible,
-									canBeAddedToBasket: parsed.nostrBasket
-								}
-							},
-							tagIds: parsed.tagIds,
-							cta: parsed.cta?.filter((ctaLink) => ctaLink.label && ctaLink.href),
-							externalResources: parsed.externalResources?.filter(
-								(externalResourceLink) => externalResourceLink.label && externalResourceLink.href
-							),
-							...(parsed.standalone && { hasVariations: parsed.hasVariations }),
-							...(parsed.standalone &&
-								parsed.hasVariations && {
-									variations: variationsParsedPrice.filter(
-										(variation) => variation.name && variation.value
-									)
-								}),
-							...(parsed.standalone &&
-								parsed.hasVariations &&
-								parsed.variationLabels && {
-									variationLabels: cleanedVariationLabels
-								}),
-							...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
-							hasSellDisclaimer: parsed.hasSellDisclaimer,
-							...(parsed.hasSellDisclaimer &&
-								parsed.sellDisclaimerTitle &&
-								parsed.sellDisclaimerReason && {
-									sellDisclaimer: {
-										title: parsed.sellDisclaimerTitle,
-										reason: parsed.sellDisclaimerReason
-									}
-								}),
-							hideFromSEO: parsed.hideFromSEO
+						hideFromSEO: parsed.hideFromSEO
+					},
+					{ session }
+				);
+
+				if (parsed.bookingSpec) {
+					await collections.schedules.insertOne(
+						{
+							...defaultSchedule,
+							_id: productToScheduleId(parsed.slug),
+							name: parsed.name,
+							events: [],
+							createdAt: new Date(),
+							updatedAt: new Date(),
+							productId: parsed.slug
 						},
 						{ session }
 					);
-
-					if (parsed.bookingSpec) {
-						await collections.schedules.insertOne(
-							{
-								...defaultSchedule,
-								_id: productToScheduleId(parsed.slug),
-								name: parsed.name,
-								events: [],
-								createdAt: new Date(),
-								updatedAt: new Date(),
-								productId: parsed.slug
-							},
-							{ session }
-						);
-					}
-				} catch (err) {
-					if (isUniqueConstraintError(err)) {
-						throw error(400, 'A product with the same alias already exists');
-					} else {
-						throw err;
-					}
+				}
+			} catch (err) {
+				if (isUniqueConstraintError(err)) {
+					throw error(400, 'A product with the same alias already exists');
+				} else {
+					throw err;
 				}
 			}
 		});
