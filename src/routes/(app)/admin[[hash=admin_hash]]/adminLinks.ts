@@ -127,6 +127,10 @@ export const adminLinks: AdminLinks = [
 				label: 'Paypal'
 			},
 			{
+				href: '/admin/swiss-bitcoin-pay',
+				label: 'Swiss Bitcoin Pay'
+			},
+			{
 				href: '/admin/bitcoind',
 				label: 'Bitcoin core node'
 			},

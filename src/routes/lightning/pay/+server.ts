@@ -1,4 +1,4 @@
-import { isLightningConfigured, lndCreateInvoice } from '$lib/server/lnd';
+import { isLndConfigured, lndCreateInvoice } from '$lib/server/lnd';
 import { phoenixdCreateInvoice } from '$lib/server/phoenixd';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { SATOSHIS_PER_BTC } from '$lib/types/Currency';
@@ -18,7 +18,7 @@ export const OPTIONS = () => {
 };
 
 export const GET = async ({ url }) => {
-	if (!isLightningConfigured && !runtimeConfig.phoenixd.lnAddress) {
+	if (!isLndConfigured() && !runtimeConfig.phoenixd.lnAddress) {
 		throw error(400, 'Lightning is not configured');
 	}
 
@@ -47,7 +47,7 @@ export const GET = async ({ url }) => {
 			metadata: z.string()
 		})
 		.parse(result.payload);
-	const invoice = isLightningConfigured
+	const invoice = isLndConfigured()
 		? await lndCreateInvoice(amount, {
 				descriptionHash: await crypto.subtle.digest('SHA-256', new TextEncoder().encode(metadata)),
 				milliSatoshis: true

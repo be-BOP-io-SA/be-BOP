@@ -94,7 +94,7 @@
 							if (!data.isBitcoinConfigured && link.href === `${data.adminPrefix}/bitcoind`) {
 								return false;
 							}
-							if (!data.isLightningConfigured && link.href === `${data.adminPrefix}/lnd`) {
+							if (!data.isLndConfigured && link.href === `${data.adminPrefix}/lnd`) {
 								return false;
 							}
 							return true;
@@ -133,7 +133,7 @@
 				if (!data.isBitcoinConfigured && link.href === `${data.adminPrefix}/bitcoind`) {
 					return false;
 				}
-				if (!data.isLightningConfigured && link.href === `${data.adminPrefix}/lnd`) {
+				if (!data.isLndConfigured && link.href === `${data.adminPrefix}/lnd`) {
 					return false;
 				}
 				return true;

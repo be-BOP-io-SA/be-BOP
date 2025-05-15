@@ -15,14 +15,16 @@ if (LND_MACAROON_PATH && LND_MACAROON_VALUE) {
 	throw new Error('Cannot specify both LND_MACAROON_PATH and LND_MACAROON_VALUE');
 }
 
-export const isLightningConfigured = !!LND_REST_URL;
+export function isLndConfigured() {
+	return !!LND_REST_URL;
+}
 
 const macaroon = LND_MACAROON_PATH
 	? readFileSync(LND_MACAROON_PATH).toString('hex')
 	: LND_MACAROON_VALUE;
 
 const dispatcher =
-	isLightningConfigured &&
+	isLndConfigured() &&
 	TOR_PROXY_URL &&
 	new URL(TOR_PROXY_URL).protocol === 'socks5:' &&
 	new URL(LND_REST_URL).hostname.endsWith('.onion')
@@ -63,7 +65,7 @@ export function lndRpc(
 	path: string,
 	options: { method?: string; headers?: Record<string, string>; body?: string } = {}
 ) {
-	if (!isLightningConfigured) {
+	if (!isLndConfigured()) {
 		throw error(500, 'LND Rest is not configured');
 	}
 	return fetch(`${LND_REST_URL}${path}`, {

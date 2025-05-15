@@ -30,7 +30,7 @@ import {
 import { error } from '@sveltejs/kit';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { currentWallet, getNewAddress, orderAddressLabel } from './bitcoind';
-import { lndCreateInvoice } from './lnd';
+import { isLndConfigured, lndCreateInvoice } from './lnd';
 import { ORIGIN } from '$env/static/private';
 import { emailsEnabled, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
@@ -72,6 +72,7 @@ import {
 import { isEmptyObject } from '$lib/utils/is-empty-object';
 import { binaryFindAround } from '$lib/utils/binary-find';
 import { toZonedTime } from 'date-fns-tz';
+import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
 
 async function generateOrderNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(
@@ -1568,7 +1569,22 @@ async function generatePaymentInfo(params: {
 				}
 			})();
 			const satoshis = toSatoshis(params.toPay.amount, params.toPay.currency);
-			if (isPhoenixdConfigured()) {
+			if (isSwissBitcoinPayConfigured()) {
+				const invoice = await swissBitcoinPayCreateInvoice({
+					label,
+					orderId: `${params.orderNumber}`,
+					expiresAt: params.expiresAt,
+					toPay: {
+						amount: satoshis,
+						currency: 'SAT'
+					}
+				});
+				return {
+					address: invoice.payment_address,
+					invoiceId: invoice.invoiceId,
+					processor: 'swiss-bitcoin-pay'
+				};
+			} else if (isPhoenixdConfigured()) {
 				// no way to configure an expiration date for now
 				const invoice = await phoenixdCreateInvoice(satoshis, label, params.orderId);
 
@@ -1577,7 +1593,7 @@ async function generatePaymentInfo(params: {
 					invoiceId: invoice.r_hash,
 					processor: 'phoenixd'
 				};
-			} else {
+			} else if (isLndConfigured()) {
 				const invoice = await lndCreateInvoice(satoshis, {
 					...(params.expiresAt && {
 						expireAfterSeconds: differenceInSeconds(params.expiresAt, new Date())
@@ -1590,6 +1606,8 @@ async function generatePaymentInfo(params: {
 					invoiceId: invoice.r_hash,
 					processor: 'lnd'
 				};
+			} else {
+				throw new Error('No lightning payment processors available.');
 			}
 		}
 		case 'point-of-sale': {
@@ -2309,4 +2327,36 @@ function compareBookingsAndThrow(
 
 		return a.start.getTime() - b.start.getTime();
 	};
+}
+
+async function swissBitcoinPayCreateInvoice(params: {
+	label: string;
+	orderId: string;
+	toPay: Price;
+	expiresAt?: Date;
+}): Promise<{
+	payment_address: string;
+	invoiceId: string;
+}> {
+	const accountingNote = `Order #${params.orderId}`;
+	const device = runtimeConfig.brandName;
+	try {
+		const checkout = await sbpCreateCheckout({
+			title: params.label,
+			description: accountingNote,
+			amount: params.toPay.amount,
+			unit: params.toPay.currency === 'SAT' ? 'sat' : params.toPay.currency,
+			extra: {
+				customDevice: device
+			},
+			...(params.expiresAt === undefined
+				? {}
+				: { delay: differenceInMinutes(params.expiresAt, new Date()) })
+		});
+		const payment_address = checkout.pr;
+		const invoiceId = checkout.id;
+		return { payment_address, invoiceId };
+	} catch (err) {
+		throw error(402, `Failed to create Swiss Bitcoin Pay Invoice: ${err}`);
+	}
 }
