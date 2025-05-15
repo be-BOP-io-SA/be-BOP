@@ -11,6 +11,7 @@ import { onOrderPayment, onOrderPaymentFailed } from '../orders';
 import { refreshPromise, runtimeConfig, runtimeConfigUpdatedAt } from '../runtime-config';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { phoenixdLookupInvoice } from '../phoenixd';
+import { sbpGetCheckoutStatus } from '../swiss-bitcoin-pay';
 import { CURRENCIES, CURRENCY_UNIT } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { isPaypalEnabled, paypalGetCheckout } from '../paypal';
@@ -149,42 +150,80 @@ async function maintainOrders() {
 					case 'lightning':
 						try {
 							if (!payment.invoiceId) {
-								throw new Error('Missing invoice ID on lightning order');
+								throw new Error('Missing invoice ID on lightning payment');
 							}
-							if (payment.processor === 'phoenixd') {
-								const invoice = await phoenixdLookupInvoice(payment.invoiceId);
-
-								if (invoice.isPaid) {
-									order = await onOrderPayment(
-										order,
-										payment,
-										{
-											amount: invoice.receivedSat,
-											currency: 'SAT'
-										},
-										{
-											fees: {
-												amount: invoice.feesSat,
-												currency: 'SAT'
-											}
-										}
+							if (!payment.processor) {
+								throw new Error('Missing processor on lightning payment');
+							}
+							switch (payment.processor) {
+								case 'sumup':
+								case 'bitcoind':
+								case 'stripe':
+								case 'paypal':
+								case 'bitcoin-nodeless':
+									throw new Error(
+										`Unsupported processor ${payment.processor} for lightning payments`
 									);
-								} else {
-									if (payment.expiresAt && payment.expiresAt < new Date()) {
+								case 'swiss-bitcoin-pay':
+									const invoiceId = payment.invoiceId;
+									const paymentStatus = await sbpGetCheckoutStatus(invoiceId);
+									if (paymentStatus.isPaid) {
+										let currency = paymentStatus.unit?.toUpperCase();
+										let amount = paymentStatus.amount;
+										// Workaround undocumented behaviour in Swiss Bitcoin Pay.
+										if (currency === undefined && paymentStatus.fiatUnit === 'sat') {
+											currency = 'SAT';
+											amount = paymentStatus.fiatAmount;
+										}
+										if (!typedInclude(CURRENCIES, currency)) {
+											throw new Error(
+												`SPB invoice ${invoiceId} was paid in unexpected currency ${currency}`
+											);
+										}
+										order = await onOrderPayment(order, payment, {
+											amount,
+											currency
+										});
+									} else if (paymentStatus.isExpired) {
+										order = await onOrderPaymentFailed(order, payment, 'expired');
+									} else {
+										// Payment is waiting. Nothing to do.
+									}
+									break;
+								case 'lnd':
+									const lndInvoice = await lndLookupInvoice(payment.invoiceId);
+									if (lndInvoice.state === 'SETTLED') {
+										order = await onOrderPayment(order, payment, {
+											amount: lndInvoice.amt_paid_sat,
+											currency: 'SAT'
+										});
+									} else if (lndInvoice.state === 'CANCELED') {
 										order = await onOrderPaymentFailed(order, payment, 'expired');
 									}
-								}
-							} else {
-								const invoice = await lndLookupInvoice(payment.invoiceId);
-
-								if (invoice.state === 'SETTLED') {
-									order = await onOrderPayment(order, payment, {
-										amount: invoice.amt_paid_sat,
-										currency: 'SAT'
-									});
-								} else if (invoice.state === 'CANCELED') {
-									order = await onOrderPaymentFailed(order, payment, 'expired');
-								}
+									break;
+								case 'phoenixd':
+									const phoenixdInvoice = await phoenixdLookupInvoice(payment.invoiceId);
+									if (phoenixdInvoice.isPaid) {
+										order = await onOrderPayment(
+											order,
+											payment,
+											{
+												amount: phoenixdInvoice.receivedSat,
+												currency: 'SAT'
+											},
+											{
+												fees: {
+													amount: phoenixdInvoice.feesSat,
+													currency: 'SAT'
+												}
+											}
+										);
+									} else {
+										if (payment.expiresAt && payment.expiresAt < new Date()) {
+											order = await onOrderPaymentFailed(order, payment, 'expired');
+										}
+									}
+									break;
 							}
 						} catch (err) {
 							console.error(inspect(err, { depth: 10 }));
@@ -340,6 +379,7 @@ async function maintainOrders() {
 								} catch (err) {
 									console.error(inspect(err, { depth: 10 }));
 								}
+								break;
 							default:
 								console.error('Unknown card processor', payment.processor);
 						}

@@ -1,4 +1,4 @@
-import { isLightningConfigured, lndGetInfo } from '$lib/server/lnd';
+import { isLndConfigured, lndGetInfo } from '$lib/server/lnd';
 import { getPrivateS3DownloadLink } from '$lib/server/s3';
 import { SATOSHIS_PER_BTC } from '$lib/types/Currency';
 import { runtimeConfig } from '$lib/server/runtime-config';
@@ -18,10 +18,10 @@ export const OPTIONS = () => {
 };
 
 export const GET = async ({ params, url }) => {
-	if (!isLightningConfigured && !runtimeConfig.phoenixd.lnAddress) {
+	if (!isLndConfigured() && !runtimeConfig.phoenixd.lnAddress) {
 		throw error(400, 'Lighting is not configured');
 	}
-	if (isLightningConfigured) {
+	if (isLndConfigured()) {
 		const info = await lndGetInfo();
 
 		if (!info.uris.length) {

@@ -509,6 +509,17 @@ const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('68230a070000000000000000'),
+		name: 'Ensure payment processor is set on lightning payments',
+		run: async (session: ClientSession) => {
+			await collections.orders.updateMany(
+				{ payments: { $elemMatch: { method: 'lightning', processor: { $exists: false } } } },
+				{ $set: { 'payments.$.processor': 'lnd' } },
+				{ session }
+			);
+		}
 	}
 ];
 

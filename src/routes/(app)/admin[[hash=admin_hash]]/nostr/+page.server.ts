@@ -1,6 +1,6 @@
 import { ORIGIN } from '$env/static/private';
 import { collections } from '$lib/server/database';
-import { isLightningConfigured, lndGetInfo } from '$lib/server/lnd';
+import { isLndConfigured, lndGetInfo } from '$lib/server/lnd';
 import {
 	nostrPrivateKey,
 	nostrPublicKey,
@@ -47,7 +47,7 @@ export const actions = {
 			  )?.width}`
 			: null;
 
-		const lndInfo = isLightningConfigured ? await lndGetInfo() : null;
+		const lndInfo = isLndConfigured() ? await lndGetInfo() : null;
 		const lnAddress =
 			lndInfo?.uris?.[0] ??
 			(isPhoenixdConfigured() ? await phoenixdLnAddress().catch(() => null) : null);
