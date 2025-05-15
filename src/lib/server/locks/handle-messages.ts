@@ -772,6 +772,32 @@ const commands: Record<
 			}
 			await sendAuthentificationlink({ npub: senderNpub });
 		}
+	},
+	'!schedule': {
+		description: 'Allow to RSVP to an event and subscribe to a Schedule',
+		maintenanceBlocked: true,
+		args: [
+			{ name: 'slug', default: 'all' },
+			{ name: 'mode', default: 'light' }
+		],
+		execute: async (send, { senderNpub, args }) => {
+			const slug = args.slug;
+			if (slug !== 'all') {
+				const schedule = await collections.schedules.findOne({ _id: slug });
+				send(
+					`${schedule?.events
+						.map((eventSchedule) => {
+							eventSchedule.slug + '-' + eventSchedule.beginsAt + '-' + eventSchedule.title;
+						})
+						.join('\n')}`
+				);
+			} else {
+				const schedules = await collections.schedules.find({}).toArray();
+				send(`${schedules.map((schedule) => `${schedule._id} - ${schedule.name} 1`).join('\n')}`);
+			}
+			console.log(args);
+			console.log(senderNpub);
+		}
 	}
 };
 
