@@ -4,7 +4,6 @@
 	import { get } from '$lib/utils/get';
 
 	export let theme: ThemeData | null = null;
-
 	function getValueForKey(key: string) {
 		return get(theme, key);
 	}
