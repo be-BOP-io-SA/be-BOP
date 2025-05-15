@@ -1,4 +1,4 @@
-import { ObjectId, type ChangeStreamDocument, type ChangeStream } from 'mongodb';
+import { ObjectId, type ChangeStreamDocument, type ChangeStream, Filter } from 'mongodb';
 import { collections } from '../database';
 import { Lock } from '../lock';
 import type { NostRReceivedMessage } from '$lib/types/NostRReceivedMessage';
@@ -260,13 +260,68 @@ const commands: Record<
 	},
 	'!catalog': {
 		description: 'Show the list of products',
-		execute: async (send) => {
+		args: [
+			{ name: 's', default: 'all' },
+			{
+				name: 't',
+				enum: ['digital', 'ship', 'free', 'pwyw', 'event', 'preorder', 'sub', 'tip', 'all'],
+				default: 'all'
+			},
+			{
+				name: 'm',
+				enum: ['light', 'mid', 'full'],
+				default: 'light'
+			}
+		],
+
+		execute: async (send, { args }) => {
 			if (!runtimeConfig.discovery) {
 				await send('Discovery is not enabled for this bootik. You cannot access the catalog.');
 			} else {
-				const products = await collections.products
-					.find({ 'actionSettings.eShop.visible': true, 'actionSettings.nostr.visible': true })
-					.toArray();
+				const query: Filter<Product> = {
+					'actionSettings.eShop.visible': true,
+					'actionSettings.nostr.visible': true
+				};
+				const searchTerm = args.s;
+				const productType = args.t;
+				const mode = args.m;
+				if (searchTerm !== 'all') {
+					query.$or = [
+						{ name: { $regex: searchTerm, $options: 'i' } },
+						{ shortDescription: { $regex: searchTerm, $options: 'i' } },
+						{ description: { $regex: searchTerm, $options: 'i' } }
+					];
+				}
+				switch (productType) {
+					case 'digital':
+						query['shipping'] = false;
+						break;
+					case 'ship':
+						query['shipping'] = true;
+						break;
+					case 'free':
+						query['price.amount'] = 0;
+						break;
+					case 'pwyw':
+						query['payWhatYouWant'] = true;
+						break;
+					case 'event':
+						query['isTicket'] = true;
+						break;
+					case 'preorder':
+						query.$and = [{ preorder: true }, { availableDate: { $gt: new Date() } }];
+						break;
+					case 'sub':
+						query['type'] = 'subscription';
+						break;
+					case 'tip':
+						query['type'] = 'donation';
+						break;
+					default:
+						break;
+				}
+
+				const products = await collections.products.find(query).toArray();
 
 				if (!products.length) {
 					await send('Catalog is empty');
@@ -274,13 +329,27 @@ const commands: Record<
 					// todo: proper price depending on currency
 					await send(
 						products
-							.map(
-								(product) =>
-									`- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
-										product.price.amount,
-										product.price.currency
-									).toLocaleString('en-US')} SAT / ${ORIGIN}/product/${product._id}`
-							)
+							.map((product) => {
+								switch (mode) {
+									case 'mid':
+										return `- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
+											product.price.amount,
+											product.price.currency
+										).toLocaleString('en-US')} SAT / ${ORIGIN}/product/${product._id}`;
+									case 'full':
+										return `- ${product.name} [ref: "${product._id}"] / ${
+											product.shortDescription
+										} / ${product.description} / ${toSatoshis(
+											product.price.amount,
+											product.price.currency
+										).toLocaleString('en-US')} SAT / ${ORIGIN}/product/${product._id}`;
+									default:
+										return `- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
+											product.price.amount,
+											product.price.currency
+										).toLocaleString('en-US')} SAT`;
+								}
+							})
 							.join('\n')
 					);
 				}
