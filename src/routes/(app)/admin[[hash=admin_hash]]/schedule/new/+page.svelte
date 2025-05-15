@@ -25,8 +25,8 @@
 			name="name"
 			placeholder="schedule name"
 			bind:value={name}
-			on:change={() => (slug = generateId(name, true))}
-			on:input={() => (slug = generateId(name, true))}
+			on:change={() => (slug = generateId(name, false))}
+			on:input={() => (slug = generateId(name, false))}
 			required
 		/>
 	</label>
