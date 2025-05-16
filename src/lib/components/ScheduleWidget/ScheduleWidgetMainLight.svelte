@@ -63,18 +63,39 @@
 						{t('schedule.dateText', {
 							beginTime: event.beginsAt.toLocaleTimeString($locale, {
 								hour: '2-digit',
-								minute: '2-digit'
+								minute: '2-digit',
+								...(schedule.timezone && {
+									timeZone: `Etc/GMT${
+										schedule.timezone > 0
+											? '+' + schedule.timezone
+											: '-' + Math.abs(schedule.timezone ?? 0)
+									}`
+								})
 							}),
 							endTime: event.endsAt.toLocaleTimeString($locale, {
 								hour: '2-digit',
-								minute: '2-digit'
+								minute: '2-digit',
+								...(schedule.timezone && {
+									timeZone: `Etc/GMT${
+										schedule.timezone > 0
+											? '+' + schedule.timezone
+											: '-' + Math.abs(schedule.timezone ?? 0)
+									}`
+								})
 							})
 						})}
 					{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.differentDayText', {
 							beginDate: event.beginsAt.toLocaleTimeString($locale, {
 								hour: '2-digit',
-								minute: '2-digit'
+								minute: '2-digit',
+								...(schedule.timezone && {
+									timeZone: `Etc/GMT${
+										schedule.timezone > 0
+											? '+' + schedule.timezone
+											: '-' + Math.abs(schedule.timezone ?? 0)
+									}`
+								})
 							}),
 							endDate: event.endsAt.toLocaleTimeString($locale, {
 								weekday: 'long',
@@ -82,14 +103,28 @@
 								month: 'long',
 								year: 'numeric',
 								hour: '2-digit',
-								minute: '2-digit'
+								minute: '2-digit',
+								...(schedule.timezone && {
+									timeZone: `Etc/GMT${
+										schedule.timezone > 0
+											? '+' + schedule.timezone
+											: '-' + Math.abs(schedule.timezone ?? 0)
+									}`
+								})
 							})
 						})}
 					{:else}
 						{t('schedule.uniqueDateText', {
 							beginTime: event.beginsAt.toLocaleTimeString($locale, {
 								hour: '2-digit',
-								minute: '2-digit'
+								minute: '2-digit',
+								...(schedule.timezone && {
+									timeZone: `Etc/GMT${
+										schedule.timezone > 0
+											? '+' + schedule.timezone
+											: '-' + Math.abs(schedule.timezone ?? 0)
+									}`
+								})
 							})
 						})}
 					{/if}

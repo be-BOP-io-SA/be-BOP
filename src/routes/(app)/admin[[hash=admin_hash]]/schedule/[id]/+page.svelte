@@ -49,6 +49,8 @@
 	}
 	let calendarHasCustomColor = false;
 	let rsvpOption = false;
+	let hasTimezone = !!data.schedule.timezone;
+	const gmtOffsets = Array.from({ length: 25 }, (_, i) => i - 12);
 </script>
 
 <h1 class="text-3xl">Edit a schedule</h1>
@@ -129,6 +131,20 @@
 		/>
 		Allow user to subscribe
 	</label>
+	<label class="checkbox-label">
+		<input class="form-checkbox" type="checkbox" bind:checked={hasTimezone} />
+		Set GMT timezone instead of server timezone
+	</label>
+	{#if hasTimezone}
+		<select class="form-input" name="timezone">
+			{#each gmtOffsets as offset}
+				<option value={offset} selected={offset === data.schedule.timezone}>
+					GMT {offset > 0 ? '+' : offset < 0 ? '-' : ''}{Math.abs(offset)}
+				</option>
+			{/each}</select
+		>
+	{/if}
+
 	<button class="btn btn-gray self-start" on:click={() => (hideAll = !hideAll)} type="button">
 		{hideAll ? 'Expand all events' : 'Reduce all events'}
 	</button>

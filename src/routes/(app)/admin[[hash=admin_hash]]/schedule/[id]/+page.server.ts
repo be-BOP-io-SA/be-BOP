@@ -50,6 +50,10 @@ export const actions = {
 				displayPastEventsAfterFuture: z.boolean({ coerce: true }).default(false),
 				sortByEventDateDesc: z.boolean({ coerce: true }).default(false),
 				allowSubscription: z.boolean({ coerce: true }).default(false),
+				timezone: z
+					.string()
+					.regex(/^-?\d+(\.\d+)?$/)
+					.optional(),
 				events: z.array(
 					z.object({
 						title: z.string().min(1),
@@ -109,8 +113,12 @@ export const actions = {
 					displayPastEventsAfterFuture: parsed.displayPastEventsAfterFuture,
 					sortByEventDateDesc: parsed.sortByEventDateDesc,
 					allowSubscription: parsed.allowSubscription,
+					...(parsed.timezone && { timezone: Number(parsed.timezone) }),
 					updatedAt: new Date(),
 					events: eventWithSlug
+				},
+				$unset: {
+					...(!parsed.timezone && { timezone: '' })
 				}
 			}
 		);
