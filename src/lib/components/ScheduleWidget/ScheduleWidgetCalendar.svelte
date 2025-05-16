@@ -16,8 +16,12 @@
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
+	import { toZonedTime } from 'date-fns-tz';
 
-	export let schedule: Pick<Schedule, 'allowSubscription' | 'events' | 'pastEventDelay' | '_id'>;
+	export let schedule: Pick<
+		Schedule,
+		'allowSubscription' | 'events' | 'pastEventDelay' | '_id' | 'timezone'
+	>;
 	let className = '';
 	export let isDayDisabled: (date: Date) => boolean = () => false;
 	export let selectedDate = new Date();
@@ -172,18 +176,27 @@
 					{event.title}
 					{#if event.endsAt && isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.dateText', {
-							beginTime: event.beginsAt.toLocaleTimeString($locale, {
+							beginTime: toZonedTime(
+								event.beginsAt,
+								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
-							endTime: event.endsAt.toLocaleTimeString($locale, {
+							endTime: toZonedTime(
+								event.endsAt,
+								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							})
 						})}
 					{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.differentDayText', {
-							beginDate: event.beginsAt.toLocaleTimeString($locale, {
+							beginDate: toZonedTime(
+								event.beginsAt,
+								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+							).toLocaleTimeString($locale, {
 								weekday: 'long',
 								day: 'numeric',
 								month: 'long',
@@ -191,7 +204,10 @@
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
-							endDate: event.endsAt.toLocaleTimeString($locale, {
+							endDate: toZonedTime(
+								event.endsAt,
+								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+							).toLocaleTimeString($locale, {
 								weekday: 'long',
 								day: 'numeric',
 								month: 'long',
@@ -202,7 +218,10 @@
 						})}
 					{:else}
 						{t('schedule.uniqueDateText', {
-							beginTime: event.beginsAt.toLocaleTimeString($locale, {
+							beginTime: toZonedTime(
+								event.beginsAt,
+								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							})
