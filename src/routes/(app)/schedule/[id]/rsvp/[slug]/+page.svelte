@@ -18,6 +18,8 @@
 				name="address"
 				placeholder="test@example.com"
 				required
+				pattern="^(?!nsec).*"
+				title={t('login.nsecBlockTitle')}
 			/>
 		</label>
 		<input class="form-input" type="hidden" name="scheduleId" value={data.schedule._id} />

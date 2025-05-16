@@ -428,6 +428,7 @@
 			"orders": "Bestellungen",
 			"signInWith": "Anmelden mit {provider}"
 		},
+		"nsecBlockTitle": "Teilen Sie NIEMALS Ihren NSEC hier, setzen Sie nur Ihren NPUB!",
 		"password": {
 			"pwned": "Ihr Passwort ist unsicher, es wurde in {count} Datenlecks gefunden. Bitte setzen Sie Ihr Passwort zurück."
 		},

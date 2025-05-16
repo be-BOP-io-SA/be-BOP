@@ -428,6 +428,7 @@
 			"orders": "Encomendas",
 			"signInWith": "Iniciar sessão com {provider}"
 		},
+		"nsecBlockTitle": "Nunca compartilhe seu NSEC! \nAqui, coloque seu npub apenas!",
 		"password": {
 			"pwned": "A sua palavra-passe não é segura, foi encontrada em {count} fugas de dados. Por favor, redefina a sua palavra-passe."
 		},

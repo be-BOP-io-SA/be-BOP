@@ -88,6 +88,8 @@
 					name="address"
 					placeholder="test@example.com"
 					required
+					pattern="^(?!nsec).*"
+					title={t('login.nsecBlockTitle')}
 				/>
 			</label>
 			{#if form?.successUser}
