@@ -61,70 +61,45 @@
 					)}
 					{#if event.endsAt && isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.dateText', {
-							beginTime: event.beginsAt.toLocaleTimeString($locale, {
+							beginTime: new Date(
+								event.beginsAt.getTime() - (schedule.timezone ?? 0) * 60 * 60 * 1000
+							).toLocaleTimeString($locale, {
 								hour: '2-digit',
-								minute: '2-digit',
-								...(schedule.timezone && {
-									timeZone: `Etc/GMT${
-										schedule.timezone > 0
-											? '+' + schedule.timezone
-											: '-' + Math.abs(schedule.timezone ?? 0)
-									}`
-								})
+								minute: '2-digit'
 							}),
-							endTime: event.endsAt.toLocaleTimeString($locale, {
+							endTime: new Date(
+								event.endsAt.getTime() - (schedule.timezone ?? 0) * 60 * 60 * 1000
+							).toLocaleTimeString($locale, {
 								hour: '2-digit',
-								minute: '2-digit',
-								...(schedule.timezone && {
-									timeZone: `Etc/GMT${
-										schedule.timezone > 0
-											? '+' + schedule.timezone
-											: '-' + Math.abs(schedule.timezone ?? 0)
-									}`
-								})
+								minute: '2-digit'
 							})
 						})}
 					{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.differentDayText', {
-							beginDate: event.beginsAt.toLocaleTimeString($locale, {
+							beginDate: new Date(
+								event.beginsAt.getTime() - (schedule.timezone ?? 0) * 60 * 60 * 1000
+							).toLocaleTimeString($locale, {
 								hour: '2-digit',
-								minute: '2-digit',
-								...(schedule.timezone && {
-									timeZone: `Etc/GMT${
-										schedule.timezone > 0
-											? '+' + schedule.timezone
-											: '-' + Math.abs(schedule.timezone ?? 0)
-									}`
-								})
+								minute: '2-digit'
 							}),
-							endDate: event.endsAt.toLocaleTimeString($locale, {
+							endDate: new Date(
+								event.endsAt.getTime() - (schedule.timezone ?? 0) * 60 * 60 * 1000
+							).toLocaleTimeString($locale, {
 								weekday: 'long',
 								day: 'numeric',
 								month: 'long',
 								year: 'numeric',
 								hour: '2-digit',
-								minute: '2-digit',
-								...(schedule.timezone && {
-									timeZone: `Etc/GMT${
-										schedule.timezone > 0
-											? '+' + schedule.timezone
-											: '-' + Math.abs(schedule.timezone ?? 0)
-									}`
-								})
+								minute: '2-digit'
 							})
 						})}
 					{:else}
 						{t('schedule.uniqueDateText', {
-							beginTime: event.beginsAt.toLocaleTimeString($locale, {
+							beginTime: new Date(
+								event.beginsAt.getTime() - (schedule.timezone ?? 0) * 60 * 60 * 1000
+							).toLocaleTimeString($locale, {
 								hour: '2-digit',
-								minute: '2-digit',
-								...(schedule.timezone && {
-									timeZone: `Etc/GMT${
-										schedule.timezone > 0
-											? '+' + schedule.timezone
-											: '-' + Math.abs(schedule.timezone ?? 0)
-									}`
-								})
+								minute: '2-digit'
 							})
 						})}
 					{/if}
