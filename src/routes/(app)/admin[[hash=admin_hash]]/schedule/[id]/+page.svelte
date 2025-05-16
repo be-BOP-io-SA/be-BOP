@@ -4,6 +4,7 @@
 	import { CURRENCIES } from '$lib/types/Currency';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import Select from 'svelte-select';
 
 	export let data;
 
@@ -50,6 +51,13 @@
 	let calendarHasCustomColor = false;
 	let rsvpOption = false;
 	let hasTimezone = !!data.schedule.timezone;
+	const timezones = Intl.supportedValuesOf('timeZone').map((tz, index) => ({
+		index,
+		value: tz,
+		label: tz
+	}));
+	const defaultTz = data.schedule.timezone;
+	let selectedTimezone = timezones.find((tz) => tz.value === defaultTz) ?? null;
 </script>
 
 <h1 class="text-3xl">Edit a schedule</h1>
@@ -135,14 +143,15 @@
 		Set GMT timezone instead of server timezone
 	</label>
 	{#if hasTimezone}
-		<select name="timezone" class="form-input">
-			<option value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
-				{Intl.DateTimeFormat().resolvedOptions().timeZone}
-			</option>
-			{#each Intl.supportedValuesOf('timeZone') as timezone}
-				<option value={timezone} selected={timezone === data.schedule.timezone}>{timezone}</option>
-			{/each}
-		</select>
+		<Select
+			items={timezones}
+			searchable={true}
+			placeholder="Select a timezone"
+			clearable={true}
+			bind:value={selectedTimezone}
+			class="form-input"
+		/>
+		<input type="hidden" name="timezone" value={selectedTimezone?.value} />
 	{/if}
 
 	<button class="btn btn-gray self-start" on:click={() => (hideAll = !hideAll)} type="button">

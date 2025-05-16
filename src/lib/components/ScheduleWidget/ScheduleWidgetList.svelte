@@ -6,6 +6,7 @@
 	import { addDays, format, isSameDay } from 'date-fns';
 	import IcsExport from './IcsExport.svelte';
 	import { toZonedTime } from 'date-fns-tz';
+	import { getScheduleTimezone } from '$lib/utils/scheduleTimezone';
 
 	export let schedule: Schedule;
 	let className = '';
@@ -109,45 +110,45 @@
 						{t('schedule.dateText', {
 							beginTime: toZonedTime(
 								event.beginsAt,
-								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+								getScheduleTimezone(schedule)
 							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
-							endTime: toZonedTime(
-								event.endsAt,
-								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
-							).toLocaleTimeString($locale, {
-								hour: '2-digit',
-								minute: '2-digit'
-							})
+							endTime: toZonedTime(event.endsAt, getScheduleTimezone(schedule)).toLocaleTimeString(
+								$locale,
+								{
+									hour: '2-digit',
+									minute: '2-digit'
+								}
+							)
 						})}
 					{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.differentDayText', {
 							beginDate: toZonedTime(
 								event.beginsAt,
-								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+								getScheduleTimezone(schedule)
 							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
-							endDate: toZonedTime(
-								event.endsAt,
-								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
-							).toLocaleTimeString($locale, {
-								weekday: 'long',
-								day: 'numeric',
-								month: 'long',
-								year: 'numeric',
-								hour: '2-digit',
-								minute: '2-digit'
-							})
+							endDate: toZonedTime(event.endsAt, getScheduleTimezone(schedule)).toLocaleTimeString(
+								$locale,
+								{
+									weekday: 'long',
+									day: 'numeric',
+									month: 'long',
+									year: 'numeric',
+									hour: '2-digit',
+									minute: '2-digit'
+								}
+							)
 						})}
 					{:else}
 						{t('schedule.uniqueDateText', {
 							beginTime: toZonedTime(
 								event.beginsAt,
-								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+								getScheduleTimezone(schedule)
 							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'

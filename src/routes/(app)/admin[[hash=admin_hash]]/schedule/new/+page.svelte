@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
+	import Select from 'svelte-select';
 
 	let name = '';
 	let slug = '';
@@ -12,7 +13,15 @@
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
 	let hasTimezone = false;
-	const gmtOffsets = Array.from({ length: 25 }, (_, i) => i - 12);
+	const timezones = Intl.supportedValuesOf('timeZone').map((tz, index) => ({
+		index,
+		value: tz,
+		label: tz
+	}));
+
+	const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+	let selectedTimezone = timezones.find((tz) => tz.value === defaultTz) ?? null;
 </script>
 
 <h1 class="text-3xl">Add a schedule</h1>
@@ -81,14 +90,15 @@
 		Set GMT timezone instead of server timezone
 	</label>
 	{#if hasTimezone}
-		<select name="timezone" class="form-input">
-			<option value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
-				{Intl.DateTimeFormat().resolvedOptions().timeZone}
-			</option>
-			{#each Intl.supportedValuesOf('timeZone') as timezone}
-				<option value={timezone}>{timezone}</option>
-			{/each}
-		</select>
+		<Select
+			items={timezones}
+			searchable={true}
+			placeholder="Select a timezone"
+			clearable={true}
+			bind:value={selectedTimezone}
+			class="form-input"
+		/>
+		<input type="hidden" name="timezone" value={selectedTimezone?.value} />
 	{/if}
 
 	{#each [...Array(eventLines).keys()] as i}
