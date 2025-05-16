@@ -59,7 +59,7 @@ export interface Schedule extends Timestamps, ScheduleTranslatableFields {
 	displayPastEventsAfterFuture: boolean;
 	sortByEventDateDesc: boolean;
 	allowSubscription?: boolean;
-	timezone?: number;
+	timezone?: string; // eg "Europe/Berlin"
 	productId?: Product['_id'];
 
 	translations?: Partial<Record<LanguageKey, Partial<ScheduleTranslatableFields>>>;

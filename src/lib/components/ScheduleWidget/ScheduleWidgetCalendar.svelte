@@ -16,6 +16,7 @@
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
+	import { toZonedTime } from 'date-fns-tz';
 
 	export let schedule: Pick<
 		Schedule,
@@ -175,14 +176,16 @@
 					{event.title}
 					{#if event.endsAt && isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.dateText', {
-							beginTime: new Date(
-								event.beginsAt.getTime() - (schedule.timezone ?? 0) * 60 * 60 * 1000
+							beginTime: toZonedTime(
+								event.beginsAt,
+								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
 							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
-							endTime: new Date(
-								event.endsAt.getTime() - (schedule.timezone ?? 0) * 60 * 60 * 1000
+							endTime: toZonedTime(
+								event.endsAt,
+								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
 							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
@@ -190,8 +193,9 @@
 						})}
 					{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.differentDayText', {
-							beginDate: new Date(
-								event.beginsAt.getTime() - (schedule.timezone ?? 0) * 60 * 60 * 1000
+							beginDate: toZonedTime(
+								event.beginsAt,
+								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
 							).toLocaleTimeString($locale, {
 								weekday: 'long',
 								day: 'numeric',
@@ -200,8 +204,9 @@
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
-							endDate: new Date(
-								event.endsAt.getTime() - (schedule.timezone ?? 0) * 60 * 60 * 1000
+							endDate: toZonedTime(
+								event.endsAt,
+								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
 							).toLocaleTimeString($locale, {
 								weekday: 'long',
 								day: 'numeric',
@@ -213,8 +218,9 @@
 						})}
 					{:else}
 						{t('schedule.uniqueDateText', {
-							beginTime: new Date(
-								event.beginsAt.getTime() - (schedule.timezone ?? 0) * 60 * 60 * 1000
+							beginTime: toZonedTime(
+								event.beginsAt,
+								schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
 							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'

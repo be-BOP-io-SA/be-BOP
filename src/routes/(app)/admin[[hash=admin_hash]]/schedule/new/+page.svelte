@@ -81,13 +81,14 @@
 		Set GMT timezone instead of server timezone
 	</label>
 	{#if hasTimezone}
-		<select class="form-input" name="timezone">
-			{#each gmtOffsets as offset}
-				<option value={offset}>
-					GMT {offset > 0 ? '+' : offset < 0 ? '-' : ''}{Math.abs(offset)}
-				</option>
-			{/each}</select
-		>
+		<select name="timezone" class="form-input">
+			<option value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
+				{Intl.DateTimeFormat().resolvedOptions().timeZone}
+			</option>
+			{#each Intl.supportedValuesOf('timeZone') as timezone}
+				<option value={timezone}>{timezone}</option>
+			{/each}
+		</select>
 	{/if}
 
 	{#each [...Array(eventLines).keys()] as i}
