@@ -12,7 +12,6 @@
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
 	let hasTimezone = false;
-	const gmtOffsets = Array.from({ length: 25 }, (_, i) => i - 12);
 </script>
 
 <h1 class="text-3xl">Add a schedule</h1>
