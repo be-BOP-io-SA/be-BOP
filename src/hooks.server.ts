@@ -306,7 +306,7 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 						: runtimeConfig.visitorDarkLightMode;
 				return html.replace(
 					'<html',
-					`<html lang="${event.locals.language}" class="${darkDefaultTheme}"`
+					`<html lang="${event.locals.language}" class="${darkDefaultTheme}" data-theme="${darkDefaultTheme}"`
 				);
 			}
 			return html;
