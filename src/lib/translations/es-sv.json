@@ -428,6 +428,7 @@
 			"orders": "Pedidos",
 			"signInWith": "Iniciar sesión con {provider}"
 		},
+		"nsecBlockTitle": "Nunca comparta su NSEC aquí, ¡solo su NPUB!",
 		"password": {
 			"pwned": "La contraseña no es segura, se ha encontrado en {count} filtraciones de datos. Por favor, actualice su contraseña."
 		},

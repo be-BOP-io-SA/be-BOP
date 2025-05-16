@@ -472,14 +472,14 @@
 								</button>
 
 								{#if open}
-									<div class="absolute left-10 mt-2 w-48 shadow-lg rounded z-10 navbar">
+									<div class="absolute left-10 mt-2 shadow-lg rounded z-10 navbar">
 										{#each options as opt}
 											<button
 												class="flex items-center gap-2 w-full px-4 py-2 text-left"
 												on:click={() => setTheme(opt.value)}
 											>
 												<svelte:component this={opt.icon} class="w-5 h-5" />
-												<span>{opt.label}</span>
+												<span class="hidden lg:contents">{opt.label}</span>
 											</button>
 										{/each}
 									</div>
@@ -489,7 +489,7 @@
 
 						{#if !data.disableLanguageSelector && data.locales.length > 1}
 							<select
-								class="ml-4 border-0 cursor-pointer rounded appearance-none bg-none bg-transparent text-xl"
+								class="ml-4 border-0 cursor-pointer rounded appearance-none bg-none bg-transparent text-xl p-0"
 								size="0"
 								bind:value={$locale}
 								on:change={() => {

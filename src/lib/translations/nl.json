@@ -428,6 +428,7 @@
 			"orders": "Bestellingen",
 			"signInWith": "Inloggen met {provider}"
 		},
+		"nsecBlockTitle": "Deel nooit uw NSEC! \nHier, zet je NPUB alleen!",
 		"password": {
 			"pwned": "Uw wachtwoord is onveilig. Het is aangetroffen bij {count} datalekken. \nStel alstublieft uw wachtwoord opnieuw in."
 		},

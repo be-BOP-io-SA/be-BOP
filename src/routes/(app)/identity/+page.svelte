@@ -117,6 +117,8 @@
 						class="form-input"
 						placeholder={data.npub || ''}
 						value={data.personalInfoConnected?.npub || ''}
+						pattern="^(?!nsec).*"
+						title={t('login.nsecBlockTitle')}
 					/>
 				</label>
 				{#if data.displayNewsletterCommercialProspection}

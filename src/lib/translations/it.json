@@ -428,6 +428,7 @@
 			"orders": "Ordini",
 			"signInWith": "Connettiti con {provider}"
 		},
+		"nsecBlockTitle": "Non condividere mai il tuo NSEC! \nQui, metti solo il tuo NPUB!",
 		"password": {
 			"pwned": "La tua password non è sicura, è stata trovata in {count} violazioni di dati. Si prega di reimpostare la password."
 		},

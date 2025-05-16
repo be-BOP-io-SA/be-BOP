@@ -428,6 +428,7 @@
 			"orders": "Orders",
 			"signInWith": "Sign In With {provider}"
 		},
+		"nsecBlockTitle": "Never share your nsec here, put your npub only !",
 		"password": {
 			"pwned": "Your password is unsafe, it has been found in {count} data breaches. Please reset your password."
 		},

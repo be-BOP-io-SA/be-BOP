@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<script>
-			const theme = localStorage.getItem('theme');
+			const theme = localStorage.getItem('theme') ?? document.documentElement.dataset.theme;
 			if (theme === 'dark') {
 				document.documentElement.classList.add('dark');
 			} else if (theme === 'light') {
