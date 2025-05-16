@@ -172,9 +172,15 @@
 					errorMessage = 'Please upload a picture';
 					return;
 				}
-				const pictureId = await preUploadPicture(adminPrefix, files[0], { fileName: product.name });
+				let index = 0;
+				for (const file of files) {
+					const pictureId = await preUploadPicture(adminPrefix, file, {
+						fileName: `${product.name}-${index}`
+					});
 
-				formData.set('pictureId', pictureId);
+					formData.set(`pictureIds[${index}]`, pictureId);
+					index++;
+				}
 			}
 
 			const action = (event.submitter as HTMLButtonElement | null)?.formAction.includes('?/')
@@ -1364,6 +1370,7 @@
 						class="block"
 						bind:files
 						required
+						multiple
 					/>
 				</label>
 			{/if}

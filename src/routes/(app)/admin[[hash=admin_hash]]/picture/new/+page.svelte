@@ -29,9 +29,15 @@
 		const formData = new FormData(formElement);
 
 		try {
-			const pictureId = await preUploadPicture(data.adminPrefix, files[0], { fileName });
+			let index = 0;
+			for (const file of files) {
+				const pictureId = await preUploadPicture(data.adminPrefix, file, {
+					fileName: `${fileName}-${index}`
+				});
 
-			formData.set('pictureId', pictureId);
+				formData.set(`pictureIds[${index}]`, pictureId);
+				index++;
+			}
 
 			const finalResponse = await fetch(formElement.action, {
 				method: 'POST',
@@ -78,6 +84,7 @@
 				accept="image/jpeg,image/png,image/webp"
 				class="block"
 				required
+				multiple
 			/>
 		</label>
 
