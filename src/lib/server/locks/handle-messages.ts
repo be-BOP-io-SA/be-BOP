@@ -125,7 +125,7 @@ async function handleReceivedMessage(message: NostRReceivedMessage): Promise<voi
 					const minArgs = command.args.filter((arg) => !arg.default).length;
 					const maxArgs = command.args.length;
 
-					if (rawArgs.length < minArgs || rawArgs.length > maxArgs) {
+					if ((rawArgs.length < minArgs || rawArgs.length > maxArgs) && command.args.length !== 1) {
 						await send(
 							`Invalid syntax. Usage: "${await usage(
 								commandName,
@@ -259,101 +259,120 @@ const commands: Record<
 		}
 	},
 	'!catalog': {
-		description: 'Show the list of products',
+		description:
+			'Show the list of products \n !catalog s:searchterm \n !catalog t:type \n !catalog m:mode',
 		args: [
-			{ name: 's', default: 'all' },
 			{
-				name: 't',
-				enum: ['digital', 'ship', 'free', 'pwyw', 'event', 'preorder', 'sub', 'tip', 'all'],
-				default: 'all'
-			},
-			{
-				name: 'm',
-				enum: ['light', 'mid', 'full'],
-				default: 'light'
+				name: 'options',
+				default: 's:all t:all m:light'
 			}
 		],
-
 		execute: async (send, { args }) => {
 			if (!runtimeConfig.discovery) {
 				await send('Discovery is not enabled for this bootik. You cannot access the catalog.');
-			} else {
-				const query: Filter<Product> = {
-					'actionSettings.eShop.visible': true,
-					'actionSettings.nostr.visible': true
-				};
-				const searchTerm = args.s;
-				const productType = args.t;
-				const mode = args.m;
-				if (searchTerm !== 'all') {
-					query.$or = [
-						{ name: { $regex: searchTerm, $options: 'i' } },
-						{ shortDescription: { $regex: searchTerm, $options: 'i' } },
-						{ description: { $regex: searchTerm, $options: 'i' } }
-					];
-				}
-				switch (productType) {
-					case 'digital':
-						query['shipping'] = false;
-						break;
-					case 'ship':
-						query['shipping'] = true;
-						break;
-					case 'free':
-						query['price.amount'] = 0;
-						break;
-					case 'pwyw':
-						query['payWhatYouWant'] = true;
-						break;
-					case 'event':
-						query['isTicket'] = true;
-						break;
-					case 'preorder':
-						query.$and = [{ preorder: true }, { availableDate: { $gt: new Date() } }];
-						break;
-					case 'sub':
-						query['type'] = 'subscription';
-						break;
-					case 'tip':
-						query['type'] = 'donation';
-						break;
-					default:
-						break;
+				return;
+			}
+
+			const query: Filter<Product> = {
+				'actionSettings.eShop.visible': true,
+				'actionSettings.nostr.visible': true
+			};
+
+			// Parser les options
+			const rawOptions = args.options?.trim().split(/\s+/) ?? [];
+			const parsedArgs: Record<string, string | string[]> = {};
+			for (const option of rawOptions) {
+				const [key, ...rest] = option.split(':');
+				const value = rest.join(':');
+
+				if (!key) {
+					continue;
 				}
 
-				const products = await collections.products.find(query).toArray();
-
-				if (!products.length) {
-					await send('Catalog is empty');
+				if (parsedArgs[key]) {
+					if (Array.isArray(parsedArgs[key])) {
+						(parsedArgs[key] as string[]).push(value);
+					} else {
+						parsedArgs[key] = [parsedArgs[key] as string, value];
+					}
 				} else {
-					// todo: proper price depending on currency
-					await send(
-						products
-							.map((product) => {
-								switch (mode) {
-									case 'mid':
-										return `- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
-											product.price.amount,
-											product.price.currency
-										).toLocaleString('en-US')} SAT / ${ORIGIN}/product/${product._id}`;
-									case 'full':
-										return `- ${product.name} [ref: "${product._id}"] / ${
-											product.shortDescription
-										} / ${product.description} / ${toSatoshis(
-											product.price.amount,
-											product.price.currency
-										).toLocaleString('en-US')} SAT / ${ORIGIN}/product/${product._id}`;
-									default:
-										return `- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
-											product.price.amount,
-											product.price.currency
-										).toLocaleString('en-US')} SAT`;
-								}
-							})
-							.join('\n')
-					);
+					parsedArgs[key] = value;
 				}
 			}
+
+			const searchTerm = parsedArgs.s === 'all' ? '' : (parsedArgs.s as string);
+			const productTypes = Array.isArray(parsedArgs.t)
+				? parsedArgs.t
+				: parsedArgs.t
+				? [parsedArgs.t]
+				: [];
+			const mode = ['light', 'mid', 'full'].includes(parsedArgs.m as string)
+				? (parsedArgs.m as 'light' | 'mid' | 'full')
+				: 'light';
+
+			if (searchTerm) {
+				query.$or = [
+					{ name: { $regex: searchTerm, $options: 'i' } },
+					{ shortDescription: { $regex: searchTerm, $options: 'i' } },
+					{ description: { $regex: searchTerm, $options: 'i' } }
+				];
+			}
+			if (productTypes.includes('digital')) {
+				query['shipping'] = false;
+			}
+			if (productTypes.includes('ship')) {
+				query['shipping'] = true;
+			}
+			if (productTypes.includes('free')) {
+				query['price.amount'] = 0;
+			}
+			if (productTypes.includes('pwyw')) {
+				query['payWhatYouWant'] = true;
+			}
+			if (productTypes.includes('event')) {
+				query['isTicket'] = true;
+			}
+			if (productTypes.includes('preorder')) {
+				query.$and = [{ preorder: true }, { availableDate: { $gt: new Date() } }];
+			}
+			if (productTypes.includes('sub')) {
+				query['type'] = 'subscription';
+			}
+			if (productTypes.includes('tip')) {
+				query['type'] = 'donation';
+			}
+
+			const products = await collections.products.find(query).toArray();
+
+			if (!products.length) {
+				await send('Catalog is empty');
+				return;
+			}
+
+			await send(
+				products
+					.map((product) => {
+						switch (mode) {
+							case 'mid':
+								return `- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
+									product.price.amount,
+									product.price.currency
+								).toLocaleString('en-US')} SAT / ${ORIGIN}/product/${product._id}`;
+							case 'full':
+								return `- ${product.name} [ref: "${product._id}"] / ${product.shortDescription} / ${
+									product.description
+								} / ${toSatoshis(product.price.amount, product.price.currency).toLocaleString(
+									'en-US'
+								)} SAT / ${ORIGIN}/product/${product._id}`;
+							default:
+								return `- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
+									product.price.amount,
+									product.price.currency
+								).toLocaleString('en-US')} SAT`;
+						}
+					})
+					.join('\n')
+			);
 		}
 	},
 	'!detailed catalog': {
