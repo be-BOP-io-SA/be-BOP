@@ -130,12 +130,12 @@
 		{/each}
 	</div>
 
-	<div class="grid grid-cols-7 text-center mt-2">
+	<div class="grid grid-cols-7 text-center mt-1">
 		{#each days as day}
 			<button
 				type="button"
 				on:click={() => selectDate(day)}
-				class="p-2 m-2 rounded-full
+				class="p-2 m-1 rounded-full
 					{isSameDay(day, new Date()) ? 'eventCalendar-currentDate font-bold' : ''}
 					{isEventDay(day) ? 'eventCalendar-hasEvent font-bold' : ''}
 					{selectedDate && isSameDay(day, selectedDate) ? ' ring-2 ring-black' : ''}
