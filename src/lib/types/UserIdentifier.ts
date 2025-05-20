@@ -11,4 +11,5 @@ export interface UserIdentifier {
 	userLogin?: string;
 	userRoleId?: string;
 	userAlias?: string;
+	userHasPosOptions?: boolean;
 }

@@ -12,6 +12,7 @@ export const actions = {
 			.object({
 				id: z.string().trim(),
 				name: z.string().trim(),
+				hasPosOptions: z.boolean({ coerce: true }),
 				read: z.array(z.string()).default([]),
 				write: z.array(z.string()).default([]),
 				forbidden: z.array(z.string()).default([])
@@ -19,6 +20,7 @@ export const actions = {
 			.parse({
 				id: data.get('id'),
 				name: data.get('name'),
+				hasPosOptions: data.get('hasPosOptions'),
 				read: JSON.parse(data.get('read')?.toString() ?? '[]'),
 				write: JSON.parse(data.get('write')?.toString() ?? '[]'),
 				forbidden: JSON.parse(data.get('forbidden')?.toString() ?? '[]')
@@ -31,6 +33,7 @@ export const actions = {
 		await collections.roles.insertOne({
 			_id: parsed.id,
 			name: parsed.name,
+			hasPosOptions: parsed.hasPosOptions,
 			permissions: {
 				read: parsed.read,
 				write: parsed.write,

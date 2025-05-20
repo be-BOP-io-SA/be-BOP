@@ -29,7 +29,7 @@ export const actions = {
 			throw error(400, 'Order has no remaining amount to pay');
 		}
 
-		let methods = paymentMethods({ role: locals.user?.roleId });
+		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
 
 		for (const item of order.items) {
 			if (item.product.paymentMethods) {

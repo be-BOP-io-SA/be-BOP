@@ -28,7 +28,7 @@ export const actions = {
 			throw error(400, `Payment is not ${payment.status}`);
 		}
 
-		let methods = paymentMethods({ role: locals.user?.roleId });
+		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
 
 		for (const item of order.items) {
 			if (item.product.paymentMethods) {
