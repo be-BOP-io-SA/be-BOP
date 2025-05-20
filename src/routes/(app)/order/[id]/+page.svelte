@@ -14,7 +14,7 @@
 		orderAmountWithNoPaymentsCreated
 	} from '$lib/types/Order';
 	import { UrlDependency } from '$lib/types/UrlDependency';
-	import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User.js';
+	import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 	import { differenceInMinutes } from 'date-fns';
 	import { onMount } from 'svelte';
 	import IconSumupWide from '$lib/components/icons/IconSumupWide.svelte';
@@ -93,7 +93,7 @@
 			pictures={data.cmsOrderTopData.pictures}
 			tags={data.cmsOrderTopData.tags}
 			digitalFiles={data.cmsOrderTopData.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.cmsOrderTopData.specifications}
 			contactForms={data.cmsOrderTopData.contactForms}
 			pageName={data.cmsOrderTop.title}
@@ -414,13 +414,13 @@
 
 							{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
 								<form
-									action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order
+									action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order
 										._id}/payment/{payment.id}?/cancel"
 									method="post"
 									id="cancelForm"
 								></form>
 								<form
-									action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order
+									action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order
 										._id}/payment/{payment.id}?/confirm"
 									method="post"
 									class="flex flex-wrap gap-2"
@@ -521,7 +521,7 @@
 
 						{#if (payment.method === 'point-of-sale' || payment.method === 'bank-transfer') && data.roleId !== CUSTOMER_ROLE_ID && data.roleId && payment.status === 'paid'}
 							<form
-								action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order
+								action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order
 									._id}/payment/{payment.id}?/updatePaymentDetail"
 								method="post"
 								class="contents"
@@ -688,14 +688,13 @@
 
 			{#if data.order.status === 'pending' && remainingAmount && data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
 				<form
-					action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order._id}?/cancel"
+					action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order._id}?/cancel"
 					method="post"
 					id="cancelOrderForm"
 				></form>
 
 				<form
-					action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order
-						._id}?/addPayment"
+					action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order._id}?/addPayment"
 					method="post"
 					class="contents"
 				>
@@ -758,7 +757,7 @@
 				{/if}
 
 				<form
-					action="/{data.roleId === POS_ROLE_ID ? 'pos' : 'admin'}/order/{data.order._id}?/saveNote"
+					action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order._id}?/saveNote"
 					method="post"
 					class="contents"
 				>
@@ -798,7 +797,7 @@
 			pictures={data.cmsOrderBottomData.pictures}
 			tags={data.cmsOrderBottomData.tags}
 			digitalFiles={data.cmsOrderBottomData.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.cmsOrderBottomData.specifications}
 			contactForms={data.cmsOrderBottomData.contactForms}
 			pageName={data.cmsOrderBottom.title}

@@ -1,7 +1,6 @@
 import type { Challenge } from '$lib/types/Challenge';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import type { Product } from '$lib/types/Product';
-import { POS_ROLE_ID } from '$lib/types/User';
 import { trimPrefix } from '$lib/utils/trimPrefix';
 import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
@@ -106,7 +105,7 @@ type TokenObject =
 
 export async function cmsFromContent(
 	{ content, mobileContent }: { content: string; mobileContent?: string },
-	locals: Partial<PickDeep<App.Locals, 'user.roleId' | 'language' | 'email' | 'sso'>>
+	locals: Partial<PickDeep<App.Locals, 'user.hasPosOptions' | 'language' | 'email' | 'sso'>>
 ) {
 	const PRODUCT_WIDGET_REGEX =
 		/\[Product=(?<slug>[\p{L}\d_-]+)(?:[?\s]display=(?<display>[a-z0-9-]+))?\]/giu;
@@ -345,10 +344,9 @@ export async function cmsFromContent(
 		processMatches(tokens.mobile, mobileContent, index);
 	}
 
-	const query =
-		locals.user?.roleId === POS_ROLE_ID
-			? { 'actionSettings.retail.visible': true }
-			: { 'actionSettings.eShop.visible': true };
+	const query = locals.user?.hasPosOptions
+		? { 'actionSettings.retail.visible': true }
+		: { 'actionSettings.eShop.visible': true };
 	const leaderboards =
 		leaderboardSlugs.size > 0
 			? await collections.leaderboards
@@ -623,7 +621,7 @@ export async function cmsFromContent(
 		})),
 		pictures,
 		digitalFiles,
-		roleId: locals.user?.roleId
+		hasPosOptions: locals.user?.hasPosOptions
 	};
 }
 
