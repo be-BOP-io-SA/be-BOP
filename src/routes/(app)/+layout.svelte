@@ -161,7 +161,7 @@
 						<img class="dark:hidden {logoClass}" src={DEFAULT_LOGO_DARK} alt="" />
 					{/if}
 					{#if !data.logo.isWide}
-						<span class="header-shopName font-bold text-[32px]">{data.brandName}</span>
+						<span class="header-shopName font-bold text-[24px]">{data.brandName}</span>
 					{/if}
 				</a>
 				<span class="grow body-mainPlan" />
