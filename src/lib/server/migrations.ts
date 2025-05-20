@@ -570,6 +570,17 @@ const migrations = [
 				);
 			}
 		}
+	},
+	{
+		_id: new ObjectId('682df8048d5704e22e41212b'),
+		name: 'Add hasPosOptions to all user with roleID=point-of-sale',
+		run: async (session: ClientSession) => {
+			await collections.users.updateMany(
+				{ roleId: 'point-of-sale' },
+				{ $set: { hasPosOptions: true } },
+				{ session }
+			);
+		}
 	}
 ];
 

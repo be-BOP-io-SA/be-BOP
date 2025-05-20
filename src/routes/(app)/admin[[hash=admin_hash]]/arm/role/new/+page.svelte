@@ -14,7 +14,10 @@
 		Role name
 		<input class="form-input" type="text" name="name" required placeholder="Role name" />
 	</label>
-
+	<label class="checkbox-label">
+		<input class="form-checkbox" type="checkbox" name="hasPosOptions" />
+		Has POS access
+	</label>
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Read/Write access

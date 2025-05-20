@@ -13,7 +13,6 @@ import type { Cart } from '$lib/types/Cart';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import { userQuery } from './user';
 import { removeEmpty } from '$lib/utils/removeEmpty';
-import { POS_ROLE_ID } from '$lib/types/User';
 import { addMinutes } from 'date-fns';
 import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
@@ -74,7 +73,7 @@ export async function addToCartInDb(
 	}
 ) {
 	if (
-		params.user.userRoleId === POS_ROLE_ID
+		params.user.userHasPosOptions
 			? !product.actionSettings.retail.canBeAddedToBasket
 			: params.mode === 'eshop'
 			? !product.actionSettings.eShop.canBeAddedToBasket

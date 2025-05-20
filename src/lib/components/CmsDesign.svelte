@@ -4,7 +4,6 @@
 	import PictureComponent from './Picture.svelte';
 	import type { Picture } from '$lib/types/Picture';
 	import ProductWidget from './ProductWidget.svelte';
-	import { POS_ROLE_ID } from '$lib/types/User';
 	import type { SetRequired } from 'type-fest';
 	import TagWidget from './TagWidget.svelte';
 	import type {
@@ -40,7 +39,7 @@
 	export let tokens: CmsTokens;
 	export let sliders: CmsSlider[];
 	export let digitalFiles: CmsDigitalFile[];
-	export let roleId: string | undefined;
+	export let hasPosOptions: boolean | undefined;
 	export let sessionEmail: string | undefined;
 	export let tags: CmsTag[];
 	export let specifications: CmsSpecification[];
@@ -154,7 +153,7 @@
 					pictures={picturesByProduct[token.slug] ?? []}
 					hasDigitalFiles={digitalFilesByProduct[token.slug] !== null}
 					displayOption={token.display}
-					canBuy={roleId === POS_ROLE_ID
+					canBuy={hasPosOptions
 						? productById[token.slug].actionSettings.retail.canBeAddedToBasket
 						: productById[token.slug].actionSettings.eShop.canBeAddedToBasket}
 					class="not-prose my-5"
@@ -165,7 +164,7 @@
 						{product}
 						pictures={picturesByProduct[product._id] ?? []}
 						hasDigitalFiles={digitalFilesByProduct[product._id] !== null}
-						canBuy={roleId === POS_ROLE_ID
+						canBuy={hasPosOptions
 							? product.actionSettings.retail.canBeAddedToBasket
 							: product.actionSettings.eShop.canBeAddedToBasket}
 						class="not-prose my-5"
@@ -267,7 +266,7 @@
 						pictures={picturesByProduct[token.slug] ?? []}
 						hasDigitalFiles={digitalFilesByProduct[token.slug] !== null}
 						displayOption={token.display}
-						canBuy={roleId === POS_ROLE_ID
+						canBuy={hasPosOptions
 							? productById[token.slug].actionSettings.retail.canBeAddedToBasket
 							: productById[token.slug].actionSettings.eShop.canBeAddedToBasket}
 						class="not-prose my-5"
@@ -278,7 +277,7 @@
 							{product}
 							pictures={picturesByProduct[product._id] ?? []}
 							hasDigitalFiles={digitalFilesByProduct[product._id] !== null}
-							canBuy={roleId === POS_ROLE_ID
+							canBuy={hasPosOptions
 								? product.actionSettings.retail.canBeAddedToBasket
 								: product.actionSettings.eShop.canBeAddedToBasket}
 							class="not-prose my-5"

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { collections } from '$lib/server/database';
 import { error, redirect } from '@sveltejs/kit';
-import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
+import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { ObjectId } from 'mongodb';
 import { zodNpub } from '$lib/server/nostr.js';
 import { sendResetPasswordNotification } from '$lib/server/sendNotification.js';
@@ -41,6 +41,7 @@ export const actions = {
 				...(email && { email }),
 				...(npub && { npub })
 			},
+			hasPosOptions: roleId === POS_ROLE_ID,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 			roleId
