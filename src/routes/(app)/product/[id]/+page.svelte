@@ -380,7 +380,7 @@
 	{/if}
 
 	<div class="flex flex-row my-12">
-		<div class="w-14 min-w-[48px] py-14 hidden lg:block">
+		<div class="w-14 min-w-[48px] py-14 mx-2 hidden lg:block">
 			{#if data.pictures.length > 1}
 				{#each data.pictures as picture, i}
 					<a
@@ -418,7 +418,7 @@
 					/>
 				</div>
 				{#if data.pictures.length > 1}
-					<div class="flex flex-row min-w-[96px] sm:inline lg:hidden py-12">
+					<div class="flex flex-row min-w-[96px] sm:inline lg:hidden py-12 gap-1">
 						{#each data.pictures as picture, i}
 							<a href={i === 0 ? $page.url.pathname : '?picture=' + picture._id}>
 								<Picture
