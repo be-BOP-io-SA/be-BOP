@@ -9,7 +9,7 @@ import { adminPrefix as _adminPrefix } from '$lib/server/admin';
 import '$lib/server/locks';
 import { refreshPromise, runtimeConfig } from '$lib/server/runtime-config';
 import type { CMSPage } from '$lib/types/CmsPage';
-import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import GitHub from '@auth/core/providers/github';
 import Google from '@auth/core/providers/google';
 import Facebook from '@auth/core/providers/facebook';
@@ -221,7 +221,8 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 						_id: user._id,
 						login: user.login ? user.login : '',
 						roleId: user.roleId,
-						alias: user.alias
+						alias: user.alias,
+						hasPosOptions: user.hasPosOptions
 					};
 				}
 			}
@@ -290,7 +291,7 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 			throw redirect(303, '/admin/login');
 		}
 
-		if (event.locals.user.roleId !== POS_ROLE_ID) {
+		if (!event.locals.user.hasPosOptions) {
 			throw error(403, 'You are not allowed to access this page, only point-of-sale accounts are.');
 		}
 	}

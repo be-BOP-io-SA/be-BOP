@@ -4,7 +4,6 @@
 	import IconLogout from '~icons/ant-design/logout-outlined';
 	import { slide } from 'svelte/transition';
 	import { isAllowedOnPage } from '$lib/types/Role';
-	import { POS_ROLE_ID } from '$lib/types/User';
 	import { adminLinks as adminLinksImported } from './adminLinks.js';
 
 	export let data;
@@ -69,7 +68,7 @@
 						>
 					</span>
 				{/each}
-				{#if data.roleId === POS_ROLE_ID}
+				{#if data.hasPosOptions}
 					<a
 						href="/pos"
 						data-sveltekit-preload-data="off"
@@ -149,7 +148,7 @@
 				</a>
 			{/each}
 		{/each}
-		{#if data.roleId === POS_ROLE_ID}
+		{#if data.hasPosOptions}
 			<a
 				href="/pos"
 				data-sveltekit-preload-data="off"

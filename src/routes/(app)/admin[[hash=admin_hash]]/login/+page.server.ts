@@ -5,18 +5,13 @@ import bcryptjs from 'bcryptjs';
 import { addSeconds, addYears } from 'date-fns';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { createSuperAdminUserInDb, renewSessionId } from '$lib/server/user.js';
-import {
-	CUSTOMER_ROLE_ID,
-	MIN_PASSWORD_LENGTH,
-	POS_ROLE_ID,
-	checkPasswordPwnedTimes
-} from '$lib/types/User.js';
+import { CUSTOMER_ROLE_ID, MIN_PASSWORD_LENGTH, checkPasswordPwnedTimes } from '$lib/types/User.js';
 import { adminPrefix } from '$lib/server/admin.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
 
 export const load = async ({ locals }) => {
 	if (locals.user) {
-		throw redirect(303, locals.user.roleId === POS_ROLE_ID ? '/pos' : `/admin`);
+		throw redirect(303, locals.user.hasPosOptions ? '/pos' : `/admin`);
 	}
 
 	return {
@@ -94,7 +89,7 @@ export const actions = {
 
 		await renewSessionId(locals, cookies);
 
-		if (user.roleId === POS_ROLE_ID) {
+		if (user.hasPosOptions) {
 			throw redirect(303, `/pos`);
 		}
 

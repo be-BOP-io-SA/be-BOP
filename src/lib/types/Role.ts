@@ -5,7 +5,7 @@ import { CUSTOMER_ROLE_ID } from './User';
 export interface Role extends Timestamps {
 	_id: string;
 	name: string;
-
+	hasPosOptions?: boolean;
 	permissions: {
 		read: string[];
 		write: string[];

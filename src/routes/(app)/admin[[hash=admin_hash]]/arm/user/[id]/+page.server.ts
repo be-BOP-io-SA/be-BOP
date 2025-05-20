@@ -32,7 +32,8 @@ export const actions = {
 				recoveryEmail: z.string().email().optional(),
 				recoveryNpub: zodNpub().optional(),
 				status: z.enum(['enabled', 'disabled']).optional(),
-				roleId: z.enum([allowedRoles[0]._id, ...allowedRoles.map((role) => role._id)]).optional()
+				roleId: z.enum([allowedRoles[0]._id, ...allowedRoles.map((role) => role._id)]).optional(),
+				hasPosOptions: z.boolean({ coerce: true })
 			})
 			.parse({
 				...Object.fromEntries(data),
@@ -57,6 +58,7 @@ export const actions = {
 							...(parsed.recoveryEmail && { email: parsed.recoveryEmail }),
 							...(parsed.recoveryNpub && { npub: parsed.recoveryNpub })
 						},
+						hasPosOptions: parsed.hasPosOptions,
 						disabled: parsed.status === 'disabled',
 						roleId: parsed.roleId ?? user.roleId
 					}
