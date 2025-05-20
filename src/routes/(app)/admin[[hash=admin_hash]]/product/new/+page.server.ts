@@ -71,7 +71,7 @@ export const actions: Actions = {
 		const parsed = z
 			.object({
 				slug: zodSlug(),
-				pictureId: z.string().trim().min(1).max(500),
+				pictureIds: z.string().trim().min(1).max(500).array().min(1),
 				type: z.enum(['resource', 'donation', 'subscription']),
 				tagIds: z.string().array(),
 				...productBaseSchema()
@@ -135,8 +135,7 @@ export const actions: Actions = {
 				delete cleanedVariationLabels.values[key];
 			}
 		}
-
-		await generatePicture(parsed.pictureId, {
+		await generatePicture(parsed.pictureIds[0], {
 			productId: parsed.slug,
 			cb: async (session) => {
 				try {
@@ -268,6 +267,16 @@ export const actions: Actions = {
 				}
 			}
 		});
+
+		await Promise.all(
+			parsed.pictureIds.slice(1).map(async (pictureId) => {
+				if (pictureId) {
+					await generatePicture(pictureId, {
+						productId: parsed.slug
+					});
+				}
+			})
+		);
 
 		onProductCreated({ _id: parsed.slug, name: parsed.name });
 
