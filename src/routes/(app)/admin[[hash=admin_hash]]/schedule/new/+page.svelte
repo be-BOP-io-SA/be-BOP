@@ -11,6 +11,7 @@
 	let eventLines = 1;
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
+	let hasTimezone = false;
 </script>
 
 <h1 class="text-3xl">Add a schedule</h1>
@@ -74,6 +75,20 @@
 		<input class="form-checkbox" type="checkbox" name="allowSubscription" />
 		Allow user to subscribe
 	</label>
+	<label class="checkbox-label">
+		<input class="form-checkbox" type="checkbox" bind:checked={hasTimezone} />
+		Set GMT timezone instead of server timezone
+	</label>
+	{#if hasTimezone}
+		<select name="timezone" class="form-input">
+			<option value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
+				{Intl.DateTimeFormat().resolvedOptions().timeZone}
+			</option>
+			{#each Intl.supportedValuesOf('timeZone') as timezone}
+				<option value={timezone}>{timezone}</option>
+			{/each}
+		</select>
+	{/if}
 
 	{#each [...Array(eventLines).keys()] as i}
 		<h1 class="text-xl font-bold gap-2">Event #{i + 1}</h1>

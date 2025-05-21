@@ -49,6 +49,7 @@
 	}
 	let calendarHasCustomColor = false;
 	let rsvpOption = false;
+	let hasTimezone = !!data.schedule.timezone;
 </script>
 
 <h1 class="text-3xl">Edit a schedule</h1>
@@ -129,6 +130,21 @@
 		/>
 		Allow user to subscribe
 	</label>
+	<label class="checkbox-label">
+		<input class="form-checkbox" type="checkbox" bind:checked={hasTimezone} />
+		Set GMT timezone instead of server timezone
+	</label>
+	{#if hasTimezone}
+		<select name="timezone" class="form-input">
+			<option value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
+				{Intl.DateTimeFormat().resolvedOptions().timeZone}
+			</option>
+			{#each Intl.supportedValuesOf('timeZone') as timezone}
+				<option value={timezone} selected={timezone === data.schedule.timezone}>{timezone}</option>
+			{/each}
+		</select>
+	{/if}
+
 	<button class="btn btn-gray self-start" on:click={() => (hideAll = !hideAll)} type="button">
 		{hideAll ? 'Expand all events' : 'Reduce all events'}
 	</button>

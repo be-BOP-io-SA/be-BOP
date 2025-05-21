@@ -7,6 +7,8 @@
 	import { addMinutes, isSameDay } from 'date-fns';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
+	import { toZonedTime } from 'date-fns-tz';
+	import { getScheduleTimezone } from '$lib/utils/scheduleTimezone';
 
 	export let pictures: Picture[] = [];
 	export let schedule: Schedule;
@@ -64,33 +66,48 @@
 				)}
 				{#if event.endsAt && isSameDay(event.endsAt, event.beginsAt)}
 					{t('schedule.dateText', {
-						beginTime: event.beginsAt.toLocaleTimeString($locale, {
+						beginTime: toZonedTime(
+							event.beginsAt,
+							getScheduleTimezone(schedule)
+						).toLocaleTimeString($locale, {
 							hour: '2-digit',
 							minute: '2-digit'
 						}),
-						endTime: event.endsAt.toLocaleTimeString($locale, {
-							hour: '2-digit',
-							minute: '2-digit'
-						})
+						endTime: toZonedTime(event.endsAt, getScheduleTimezone(schedule)).toLocaleTimeString(
+							$locale,
+							{
+								hour: '2-digit',
+								minute: '2-digit'
+							}
+						)
 					})}
 				{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
 					{t('schedule.differentDayText', {
-						beginDate: event.beginsAt.toLocaleTimeString($locale, {
+						beginDate: toZonedTime(
+							event.beginsAt,
+							getScheduleTimezone(schedule)
+						).toLocaleTimeString($locale, {
 							hour: '2-digit',
 							minute: '2-digit'
 						}),
-						endDate: event.endsAt.toLocaleTimeString($locale, {
-							weekday: 'long',
-							day: 'numeric',
-							month: 'long',
-							year: 'numeric',
-							hour: '2-digit',
-							minute: '2-digit'
-						})
+						endDate: toZonedTime(event.endsAt, getScheduleTimezone(schedule)).toLocaleTimeString(
+							$locale,
+							{
+								weekday: 'long',
+								day: 'numeric',
+								month: 'long',
+								year: 'numeric',
+								hour: '2-digit',
+								minute: '2-digit'
+							}
+						)
 					})}
 				{:else}
 					{t('schedule.uniqueDateText', {
-						beginTime: event.beginsAt.toLocaleTimeString($locale, {
+						beginTime: toZonedTime(
+							event.beginsAt,
+							getScheduleTimezone(schedule)
+						).toLocaleTimeString($locale, {
 							hour: '2-digit',
 							minute: '2-digit'
 						})
