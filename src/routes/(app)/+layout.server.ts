@@ -303,6 +303,7 @@ export async function load(params) {
 		displayPoweredBy: runtimeConfig.displayPoweredBy,
 		displayCompanyInfo: runtimeConfig.displayCompanyInfo,
 		displayMainShopInfo: runtimeConfig.displayMainShopInfo,
+		disableZoomProductPicture: runtimeConfig.disableZoomProductPicture,
 		viewportContentWidth: runtimeConfig.viewportContentWidth,
 		viewportFor: runtimeConfig.viewportFor,
 		links: {

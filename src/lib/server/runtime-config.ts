@@ -108,6 +108,7 @@ const baseConfig = {
 	hideCartInToolbar: false,
 	hideThemeSelectorInToolbar: false,
 	defaultOnLocation: false,
+	disableZoomProductPicture: false,
 	languages: locales,
 	defaultLanguage: 'en' as LanguageKey,
 	checkoutButtonOnProductPage: true,
