@@ -2,7 +2,7 @@
 	import IconRefresh from '$lib/components/icons/IconRefresh.svelte';
 	import IconSave from '~icons/ant-design/save-outlined';
 	import IconDelete from '~icons/ant-design/delete-outlined';
-	import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
+	import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 	import { applyAction, enhance } from '$app/forms';
 	import { MultiSelect } from 'svelte-multiselect';
 	import { defaultRoleOptions } from '$lib/types/Role';
@@ -34,10 +34,11 @@
 
 <a href="{data.adminPrefix}/arm/role/new" class="underline">Create a role</a>
 
-<ul class="grid grid-cols-[auto_auto_auto_auto_auto_min-content_min-content] gap-2">
+<ul class="grid grid-cols-[auto_auto_auto_auto_auto__auto_min-content_min-content] gap-2">
 	<li class="contents">
 		<span>Role ID</span>
 		<span>Role name</span>
+		<span>Has POS access</span>
 		<span>Write access</span>
 		<span>Read access</span>
 		<span>Forbidden access</span>
@@ -73,6 +74,12 @@
 					disabled={role._id === SUPER_ADMIN_ROLE_ID}
 					value={role.name}
 				/>
+				<input
+					class="form-checkbox"
+					type="checkbox"
+					name="hasPosOptions"
+					checked={role.hasPosOptions}
+				/>
 				<MultiSelect
 					name="write"
 					selected={role.permissions.write}
@@ -106,7 +113,7 @@
 					type="submit"
 					class="btn btn-red self-start"
 					formaction="{data.adminPrefix}/arm/role/{role._id}?/delete"
-					disabled={role._id === SUPER_ADMIN_ROLE_ID || role._id === POS_ROLE_ID}
+					disabled={role._id === SUPER_ADMIN_ROLE_ID}
 					title="Delete role"
 					on:click={(e) => {
 						if (!confirm(`Are you sure you want to delete this role: ${role._id}?`)) {
@@ -131,7 +138,7 @@
 <a href="{data.adminPrefix}/arm/user/new" class="underline">Create a user</a>
 
 <ul
-	class="grid grid-cols-[auto_auto_auto_auto_auto_auto_min-content_min-content_min-content] gap-2"
+	class="grid grid-cols-[auto_auto_auto_auto_auto_min-content_auto_min-content_min-content_min-content] gap-2"
 >
 	<li class="contents">
 		<span>Login</span>
@@ -139,6 +146,7 @@
 		<span>Recovery Email</span>
 		<span>Recovery Npub</span>
 		<span>Role</span>
+		<span>Has POS access</span>
 		<span>Status</span>
 		<span>Save</span>
 		<span>Password</span>
@@ -209,6 +217,13 @@
 						</option>
 					{/each}
 				</select>
+				<input
+					class="form-checkbox"
+					type="checkbox"
+					name="hasPosOptions"
+					checked={user.hasPosOptions}
+					disabled={!data.roles.find((rol) => rol._id === user.roleId)?.hasPosOptions}
+				/>
 				<select class="form-input" disabled={user.roleId === SUPER_ADMIN_ROLE_ID} name="status">
 					<option value="enabled" selected={!user.disabled}>Enabled</option>
 					<option value="disabled" selected={!!user.disabled}>Disabled</option>

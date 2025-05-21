@@ -510,6 +510,7 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 					write: [],
 					forbidden: []
 				},
+				hasPosOptions: true,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			})
