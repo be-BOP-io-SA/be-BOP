@@ -578,7 +578,7 @@ export async function cmsFromContent(
 					.toArray()
 			: Promise.resolve([]),
 		pictureConditions.$or.length
-			? collections.pictures.find(pictureConditions).sort({ createdAt: 1 }).toArray()
+			? collections.pictures.find(pictureConditions).sort({ order: 1, createdAt: 1 }).toArray()
 			: Promise.resolve([]),
 		scheduleSlugs.size
 			? collections.scheduleEvents
