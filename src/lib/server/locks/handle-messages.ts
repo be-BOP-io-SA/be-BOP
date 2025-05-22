@@ -117,10 +117,13 @@ async function handleReceivedMessage(message: NostRReceivedMessage): Promise<voi
 				}
 
 				if (command.args?.length) {
-					const rawArgs = toMatchLower
-						.slice(commandName.length + 1)
-						.split(' ')
-						.map((s) => s.trim());
+					const rawArgs =
+						command.args.length !== 1
+							? toMatchLower
+									.slice(commandName.length + 1)
+									.split(' ')
+									.map((s) => s.trim())
+							: [toMatchLower.slice(commandName.length + 1).trim()];
 
 					const minArgs = command.args.filter((arg) => !arg.default).length;
 					const maxArgs = command.args.length;
@@ -260,11 +263,16 @@ const commands: Record<
 	},
 	'!catalog': {
 		description:
-			'Show the list of products \n !catalog s:searchterm \n !catalog t:type \n !catalog m:mode',
+			'Show the list of products with filtering options\n' +
+			'Usage: !catalog [s:searchterm] [t:type] [m:mode]\n' +
+			'Search: s:searchterm (searches in name, short description, description)\n' +
+			'Types: t:digital, t:ship, t:free, t:pwyw, t:event, t:preorder, t:sub, t:tip (can combine multiple t: options)\n' +
+			'Modes: m:light (name, price, ref), m:mid (+ url), m:full (+ descriptions)\n' +
+			'Example: !catalog s:bitcoin t:event t:free m:light',
 		args: [
 			{
 				name: 'options',
-				default: 's:all t:all m:light'
+				default: 'm:mid'
 			}
 		],
 		execute: async (send, { args }) => {
@@ -278,15 +286,30 @@ const commands: Record<
 				'actionSettings.nostr.visible': true
 			};
 
-			// Parser les options
 			const rawOptions = args.options?.trim().split(/\s+/) ?? [];
 			const parsedArgs: Record<string, string | string[]> = {};
+
 			for (const option of rawOptions) {
+				if (!option.includes(':')) {
+					await send(
+						`Invalid option format: "${option}". Use format prefix:value (e.g., s:bitcoin, t:event, m:light)`
+					);
+					return;
+				}
+
 				const [key, ...rest] = option.split(':');
 				const value = rest.join(':');
 
-				if (!key) {
-					continue;
+				if (!key || !value) {
+					await send(`Invalid option format: "${option}". Both prefix and value are required.`);
+					return;
+				}
+
+				if (!['s', 't', 'm'].includes(key)) {
+					await send(
+						`Invalid prefix: "${key}". Valid prefixes are: s (search), t (type), m (mode)`
+					);
+					return;
 				}
 
 				if (parsedArgs[key]) {
@@ -300,16 +323,7 @@ const commands: Record<
 				}
 			}
 
-			const searchTerm = parsedArgs.s === 'all' ? '' : (parsedArgs.s as string);
-			const productTypes = Array.isArray(parsedArgs.t)
-				? parsedArgs.t
-				: parsedArgs.t
-				? [parsedArgs.t]
-				: [];
-			const mode = ['light', 'mid', 'full'].includes(parsedArgs.m as string)
-				? (parsedArgs.m as 'light' | 'mid' | 'full')
-				: 'light';
-
+			const searchTerm = parsedArgs.s as string;
 			if (searchTerm) {
 				query.$or = [
 					{ name: { $regex: searchTerm, $options: 'i' } },
@@ -317,29 +331,73 @@ const commands: Record<
 					{ description: { $regex: searchTerm, $options: 'i' } }
 				];
 			}
-			if (productTypes.includes('digital')) {
-				query['shipping'] = false;
+
+			const productTypes = Array.isArray(parsedArgs.t)
+				? parsedArgs.t
+				: parsedArgs.t
+				? [parsedArgs.t]
+				: [];
+
+			const validTypes = ['digital', 'ship', 'free', 'pwyw', 'event', 'preorder', 'sub', 'tip'];
+			const invalidTypes = productTypes.filter((type) => !validTypes.includes(type));
+
+			if (invalidTypes.length > 0) {
+				await send(
+					`Invalid product type(s): ${invalidTypes.join(', ')}. Valid types: ${validTypes.join(
+						', '
+					)}`
+				);
+				return;
 			}
-			if (productTypes.includes('ship')) {
-				query['shipping'] = true;
+
+			const queryConditions: Filter<Product>[] = [];
+
+			for (const type of productTypes) {
+				switch (type) {
+					case 'digital':
+						queryConditions.push({ shipping: false });
+						break;
+					case 'ship':
+						queryConditions.push({ shipping: true });
+						break;
+					case 'free':
+						queryConditions.push({ 'price.amount': 0 });
+						break;
+					case 'pwyw':
+						queryConditions.push({ payWhatYouWant: true });
+						break;
+					case 'event':
+						queryConditions.push({ isTicket: true });
+						break;
+					case 'preorder':
+						queryConditions.push({
+							$and: [{ preorder: true }, { availableDate: { $gt: new Date() } }]
+						});
+						break;
+					case 'sub':
+						queryConditions.push({ type: 'subscription' });
+						break;
+					case 'tip':
+						queryConditions.push({ type: 'donation' });
+						break;
+				}
 			}
-			if (productTypes.includes('free')) {
-				query['price.amount'] = 0;
+
+			if (queryConditions.length > 0) {
+				if (queryConditions.length === 1) {
+					Object.assign(query, queryConditions[0]);
+				} else {
+					query.$and = query.$and || [];
+					query.$and.push({ $or: queryConditions });
+				}
 			}
-			if (productTypes.includes('pwyw')) {
-				query['payWhatYouWant'] = true;
-			}
-			if (productTypes.includes('event')) {
-				query['isTicket'] = true;
-			}
-			if (productTypes.includes('preorder')) {
-				query.$and = [{ preorder: true }, { availableDate: { $gt: new Date() } }];
-			}
-			if (productTypes.includes('sub')) {
-				query['type'] = 'subscription';
-			}
-			if (productTypes.includes('tip')) {
-				query['type'] = 'donation';
+
+			const mode = (parsedArgs.m as string) || 'mid';
+			const validModes = ['light', 'mid', 'full'];
+
+			if (!validModes.includes(mode)) {
+				await send(`Invalid display mode: "${mode}". Valid modes: ${validModes.join(', ')}`);
+				return;
 			}
 
 			const products = await collections.products.find(query).toArray();
