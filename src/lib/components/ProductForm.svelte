@@ -99,7 +99,7 @@
 		enforce: false
 	};
 	let errorMessage = '';
-	$: variationLines = product.variations?.length ? product.variations?.length : 2;
+	let variationLines = product.variations?.length ? product.variations?.length : 2;
 	let productCtaLines = product.cta?.length ? product.cta.length : 3;
 	let externalResourcesLines = product.externalResources?.length
 		? product.externalResources?.length
