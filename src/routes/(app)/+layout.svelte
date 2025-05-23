@@ -265,6 +265,7 @@
 									chosenVariations={$productAddedToCart.chosenVariations}
 									depositPercentage={$productAddedToCart.depositPercentage}
 									discountPercentage={$productAddedToCart.discountPercentage}
+									removePopinProductPrice={data.removePopinProductPrice}
 								/>
 							</Popup>
 						{:else if cartOpen}

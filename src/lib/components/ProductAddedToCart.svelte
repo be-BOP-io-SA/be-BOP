@@ -15,6 +15,7 @@
 	export let discountPercentage: number | undefined;
 	export let chosenVariations: Record<string, string> | undefined;
 	export let priceMultiplier: number | undefined;
+	export let removePopinProductPrice: boolean | undefined;
 
 	let className = '';
 	export { className as class };
@@ -39,17 +40,18 @@
 						.join(' - ')
 				: product.name}
 		</h3>
-		<PriceTag
-			currency={price.currency}
-			class="text-xl body-secondaryText"
-			amount={((price.amount * (priceMultiplier ?? 1) * (depositPercentage ?? 100)) / 100) *
-				(discountPercentage ? (100 - discountPercentage) / 100 : 1)}
-			main
-			>{depositPercentage
-				? `(${(depositPercentage / 100).toLocaleString($locale, { style: 'percent' })})`
-				: ''}</PriceTag
-		>
-
+		{#if !removePopinProductPrice}
+			<PriceTag
+				currency={price.currency}
+				class="text-xl body-secondaryText"
+				amount={((price.amount * (priceMultiplier ?? 1) * (depositPercentage ?? 100)) / 100) *
+					(discountPercentage ? (100 - discountPercentage) / 100 : 1)}
+				main
+				>{depositPercentage
+					? `(${(depositPercentage / 100).toLocaleString($locale, { style: 'percent' })})`
+					: ''}</PriceTag
+			>
+		{/if}
 		<div class="flex gap-2">
 			<a href="/cart" class="grow basis-0 btn cartPreview-mainCTA min-h-[2em] h-auto">
 				{t('cart.cta.view')}
