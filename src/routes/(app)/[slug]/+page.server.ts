@@ -60,32 +60,37 @@ export async function load({ params, locals, url }) {
 		}
 	}
 
+	const showEmployeeContent =
+		locals.user?.roleId !== undefined &&
+		locals.user?.roleId !== CUSTOMER_ROLE_ID &&
+		!!cmsPage.hasEmployeeContent &&
+		!!cmsPage.employeeContent;
+	const showMobileContent = !!cmsPage.hasMobileContent && !!cmsPage.mobileContent;
+
+	let content;
+	let mobileContent;
+
+	if (url.searchParams.get('content') === 'desktop' || !showMobileContent) {
+		content = cmsPage.content;
+	} else if (url.searchParams.get('content') === 'mobile' && cmsPage.mobileContent) {
+		showMobileContent satisfies true;
+		content = cmsPage.mobileContent;
+	} else {
+		content = cmsPage.content;
+		mobileContent = cmsPage.mobileContent;
+	}
+
+	if (showEmployeeContent && cmsPage.employeeContent) {
+		content = cmsPage.employeeContent;
+	}
+
 	return {
 		cmsPage: omit(cmsPage, ['content', 'mobileContent', 'employeeContent']),
 		cmsData: cmsFromContent(
-			url.searchParams.get('content') === 'desktop' ||
-				!cmsPage.hasMobileContent ||
-				!cmsPage.mobileContent
-				? {
-						content:
-							locals.user?.roleId !== undefined &&
-							locals.user?.roleId !== CUSTOMER_ROLE_ID &&
-							cmsPage.hasEmployeeContent &&
-							cmsPage.employeeContent
-								? cmsPage.employeeContent
-								: cmsPage.content
-				  }
-				: url.searchParams.get('content') === 'mobile'
-				? { content: cmsPage.mobileContent }
-				: {
-						content:
-							locals.user?.roleId !== CUSTOMER_ROLE_ID &&
-							cmsPage.hasEmployeeContent &&
-							cmsPage.employeeContent
-								? cmsPage.employeeContent
-								: cmsPage.content,
-						mobileContent: cmsPage.mobileContent
-				  },
+			{
+				content,
+				...{ mobileContent }
+			},
 			locals
 		),
 		layoutReset: cmsPage.fullScreen,
