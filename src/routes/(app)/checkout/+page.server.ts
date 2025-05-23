@@ -83,6 +83,10 @@ export async function load({ parent, locals }) {
 			methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
 		}
 	}
+	const forceContentVersion =
+		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
+			? 'employee'
+			: undefined;
 	return {
 		paymentMethods: methods,
 		emailsEnabled,
@@ -105,13 +109,10 @@ export async function load({ parent, locals }) {
 			cmsCheckoutTop,
 			cmsCheckoutTopData: cmsFromContent(
 				{
-					content:
-						locals.user?.roleId !== undefined &&
-						locals.user?.roleId !== CUSTOMER_ROLE_ID &&
-						cmsCheckoutTop.hasEmployeeContent &&
-						cmsCheckoutTop.employeeContent
-							? cmsCheckoutTop.employeeContent
-							: cmsCheckoutTop.content
+					desktopContent: cmsCheckoutTop.content,
+					employeeContent:
+						(cmsCheckoutTop?.hasEmployeeContent && cmsCheckoutTop.employeeContent) || undefined,
+					forceContentVersion
 				},
 				locals
 			)
@@ -120,13 +121,11 @@ export async function load({ parent, locals }) {
 			cmsCheckoutBottom,
 			cmsCheckoutBottomData: cmsFromContent(
 				{
-					content:
-						locals.user?.roleId !== undefined &&
-						locals.user?.roleId !== CUSTOMER_ROLE_ID &&
-						cmsCheckoutBottom.hasEmployeeContent &&
-						cmsCheckoutBottom.employeeContent
-							? cmsCheckoutBottom.employeeContent
-							: cmsCheckoutBottom.content
+					desktopContent: cmsCheckoutBottom.content,
+					employeeContent:
+						(cmsCheckoutBottom?.hasEmployeeContent && cmsCheckoutBottom.employeeContent) ||
+						undefined,
+					forceContentVersion
 				},
 				locals
 			)

@@ -29,7 +29,7 @@ export async function load({ locals }) {
 		return {
 			cmsPage: omit(errorPage, ['content']),
 			cmsData: cmsFromContent(
-				{ content: errorPage.content, mobileContent: errorPage.mobileContent },
+				{ desktopContent: errorPage.content, mobileContent: errorPage.mobileContent },
 				locals
 			),
 			layoutReset: errorPage.fullScreen

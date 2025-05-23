@@ -27,7 +27,7 @@ export const load = async ({ params, locals }) => {
 		if (errorPage) {
 			return {
 				cmsPage: omit(errorPage, ['content']),
-				cmsData: cmsFromContent({ content: errorPage.content }, locals)
+				cmsData: cmsFromContent({ desktopContent: errorPage.content }, locals)
 			};
 		}
 	}
