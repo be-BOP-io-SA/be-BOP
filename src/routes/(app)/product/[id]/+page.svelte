@@ -411,9 +411,9 @@
 					<Picture
 						picture={currentPicture}
 						on:click={handleClick}
-						class="mx-auto rounded h-full object-contain transition duration-500 transform lg:hover:scale-150 basis-[content] {isZoomed
-							? 'lg:scale-100 scale-150'
-							: ''}"
+						class="mx-auto rounded h-full object-contain transition duration-500 transform {!data.disableZoomProductPicture
+							? 'lg:hover:scale-150'
+							: ''} basis-[content] {isZoomed ? 'lg:scale-100 scale-150' : ''}"
 						sizes="(min-width: 1280px) 896px, 70vw"
 					/>
 				</div>
