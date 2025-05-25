@@ -420,7 +420,10 @@
 				{#if data.pictures.length > 1}
 					<div class="flex flex-row min-w-[96px] sm:inline lg:hidden py-12 gap-1">
 						{#each data.pictures as picture, i}
-							<a href={i === 0 ? $page.url.pathname : '?picture=' + picture._id}>
+							<a
+								href={i === 0 ? $page.url.pathname : '?picture=' + picture._id}
+								data-sveltekit-noscroll
+							>
 								<Picture
 									{picture}
 									class="h-12 w-12 rounded-sm object-cover {picture === currentPicture
