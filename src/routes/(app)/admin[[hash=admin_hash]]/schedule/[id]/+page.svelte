@@ -5,6 +5,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import Select from 'svelte-select';
+	import { browser } from '$app/environment';
 
 	export let data;
 
@@ -58,6 +59,9 @@
 	}));
 	const defaultTz = data.schedule.timezone;
 	let selectedTimezone = timezones.find((tz) => tz.value === defaultTz) ?? null;
+	const timezoneOffsetHours = new Date().getTimezoneOffset() / 60;
+	const timezoneSign = timezoneOffsetHours > 0 ? '-' : '+';
+	const timezoneString = `GMT${timezoneSign}${Math.abs(timezoneOffsetHours)}`;
 </script>
 
 <h1 class="text-3xl">Edit a schedule</h1>
@@ -143,6 +147,7 @@
 		Set GMT timezone instead of server timezone
 	</label>
 	{#if hasTimezone}
+		{#if browser}(your browser's current zone is {timezoneString}){/if}
 		<Select
 			items={timezones}
 			searchable={true}
