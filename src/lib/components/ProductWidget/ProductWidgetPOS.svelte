@@ -48,7 +48,7 @@
 				<PictureComponent picture={pictures[0]} class="object-contain h-24 w-24" style="object-fit: cover;" />
 			</div>
 			<div class="p-3 flex items-start text-left">
-				<h2 class="text-3xl break-all">{product.name}</h2>
+				<h2 class="text-3xl break-word">{product.name}</h2>
 			</div>
 		</div>
 	</button>
