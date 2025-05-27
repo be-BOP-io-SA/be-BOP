@@ -45,7 +45,11 @@
 	<button type="submit" disabled={!hasStock || loading}>
 		<div class="touchScreen-product-cta flex flex-row {className} max-h-[4em]">
 			<div>
-				<PictureComponent picture={pictures[0]} class="object-contain h-24 w-24" style="object-fit: cover;" />
+				<PictureComponent
+					picture={pictures[0]}
+					class="object-contain h-24 w-24"
+					style="object-fit: cover;"
+				/>
 			</div>
 			<div class="p-3 flex items-start text-left">
 				<h2 class="text-3xl break-word">{product.name}</h2>
