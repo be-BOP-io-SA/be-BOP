@@ -140,7 +140,7 @@
 		/>
 		Force option display (email even if smtp config is not done, npub even if nsec config is not done)
 	</label>
-	<h2 class="text-2xl">Cart preview</h2>
+	<h2 class="text-2xl">Cart</h2>
 
 	<label class="checkbox-label">
 		<input
@@ -150,6 +150,15 @@
 			checked={data.cartPreviewInteractive}
 		/>
 		Make cart preview interactive
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="removePopinProductPrice"
+			class="form-checkbox"
+			checked={data.removePopinProductPrice}
+		/>
+		Remove product price on pop-in when adding to Cart
 	</label>
 	<h2 class="text-2xl">Checkout</h2>
 

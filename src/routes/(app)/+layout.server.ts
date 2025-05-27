@@ -334,6 +334,7 @@ export async function load(params) {
 		hideThemeSelectorInToolbar: runtimeConfig.hideThemeSelectorInToolbar,
 		notResponsive: runtimeConfig.viewportFor === 'no-one' ? true : false,
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,
+		removePopinProductPrice: runtimeConfig.removePopinProductPrice,
 		...(cmsAgewall && {
 			cmsAgewall,
 			cmsAgewallData: cmsFromContent({ content: cmsAgewall.content }, locals)
