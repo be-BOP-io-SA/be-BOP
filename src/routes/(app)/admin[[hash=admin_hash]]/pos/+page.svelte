@@ -9,11 +9,16 @@
 		})) ?? [];
 
 	$: serializedTags = JSON.stringify(selectedTags.map((tag) => tag.value));
+	function handleSubmit(event: Event) {
+		if (selectedTags.length > 8 && !confirm('Are you sure ?')) {
+			event.preventDefault();
+		}
+	}
 </script>
 
 <h1 class="text-3xl">POS</h1>
 
-<form method="post" class="flex flex-col gap-6">
+<form method="post" class="flex flex-col gap-6" on:submit={handleSubmit}>
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Product Tags
