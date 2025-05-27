@@ -46,6 +46,8 @@
 		vatProfiles: data.vatProfiles
 	});
 	const { t } = useI18n();
+	let posProductPagination = POS_PRODUCT_PAGINATION;
+
 	$: displayedProducts = productFiltered.slice(next, next + posProductPagination);
 	$: totalPages = Math.ceil(productFiltered.length / posProductPagination);
 	$: currentPage = Math.floor(next / posProductPagination) + 1;
@@ -78,15 +80,15 @@
 	$: lastItemId = items.length > 0 ? items[items.length - 1]?.product?._id : null;
 	let warningMessage = '';
 
-	let posProductPagination = POS_PRODUCT_PAGINATION;
-
 	function updatePaginationLimit() {
 		const width = window.screen.width;
 
-		if (width < 640) {
-			posProductPagination = 12; // Affiche plus sur mobile
+		if (width < 480) {
+			posProductPagination = 22;
+		} else if (width < 768) {
+			posProductPagination = 16;
 		} else if (width < 1024) {
-			posProductPagination = 12; // Tablette
+			posProductPagination = 14;
 		} else {
 			posProductPagination = 10;
 		}
@@ -201,8 +203,7 @@
 								<a
 									class="btn touchScreen-product-secondaryCTA text-3xl"
 									on:click={() => (next = Math.max(0, next - posProductPagination))}
-									href={`?filter=${filter}&skip=${Math.max(0, next - posProductPagination)}`}
-									>&lt;</a
+									href={`?filter=${filter}&skip=${Math.max(0, next)}`}>&lt;</a
 								>
 							{/if}
 							PAGE {currentPage}/{totalPages}
@@ -210,7 +211,7 @@
 								<a
 									class="btn touchScreen-product-secondaryCTA text-3xl"
 									on:click={() => (next += posProductPagination)}
-									href={`?filter=${filter}&skip=${next + posProductPagination}`}>&gt;</a
+									href={`?filter=${filter}&skip=${next}`}>&gt;</a
 								>
 							{/if}
 						</div>
