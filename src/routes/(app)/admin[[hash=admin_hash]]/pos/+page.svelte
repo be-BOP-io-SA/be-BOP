@@ -10,11 +10,16 @@
 
 	$: serializedTags = JSON.stringify(selectedTags.map((tag) => tag.value));
 	let posDisplayOrderQrAfterPayment = data.posDisplayOrderQrAfterPayment;
+	function handleSubmit(event: Event) {
+		if (selectedTags.length > 8 && !confirm('Are you sure ?')) {
+			event.preventDefault();
+		}
+	}
 </script>
 
 <h1 class="text-3xl">POS</h1>
 
-<form method="post" class="flex flex-col gap-6">
+<form method="post" class="flex flex-col gap-6" on:submit={handleSubmit}>
 	<h2 class="text-2xl">Tap-to-pay / external POS reconciliation</h2>
 	<label class="form-label">
 		Select Tap-to-pay provider
