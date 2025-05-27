@@ -52,7 +52,7 @@
 				/>
 			</div>
 			<div class="p-3 flex items-start text-left">
-				<h2 class="text-3xl break-word">{product.name}</h2>
+				<h2 class="text-3xl break-all break-words">{product.name}</h2>
 			</div>
 		</div>
 	</button>

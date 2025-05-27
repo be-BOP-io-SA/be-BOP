@@ -83,10 +83,12 @@
 	function updatePaginationLimit() {
 		const width = window.screen.width;
 
-		if (width < 640) {
-			posProductPagination = 12; // Affiche plus sur mobile
+		if (width < 480) {
+			posProductPagination = 22;
+		} else if (width < 768) {
+			posProductPagination = 16;
 		} else if (width < 1024) {
-			posProductPagination = 12; // Tablette
+			posProductPagination = 14;
 		} else {
 			posProductPagination = 10;
 		}
