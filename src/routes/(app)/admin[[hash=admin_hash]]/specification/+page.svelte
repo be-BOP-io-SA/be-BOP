@@ -10,9 +10,8 @@
 	{#each data.specifications as specification}
 		<li>
 			{specification._id} -
-			<a
-				href="{data.adminPrefix}/specification/{specification._id}"
-				class="underline body-hyperlink">{specification.title}</a
+			<a href="{data.adminPrefix}/specification/{specification._id}" class="underline"
+				>{specification.title}</a
 			>
 		</li>
 	{:else}

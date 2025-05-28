@@ -10,9 +10,7 @@
 	{#each data.contactForms as contactForm}
 		<li>
 			{contactForm._id} -
-			<a href="{data.adminPrefix}/form/{contactForm._id}" class="underline body-hyperlink"
-				>{contactForm.title}</a
-			>
+			<a href="{data.adminPrefix}/form/{contactForm._id}" class="underline">{contactForm.title}</a>
 		</li>
 	{:else}
 		No contact form yet

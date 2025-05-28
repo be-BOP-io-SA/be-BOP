@@ -39,10 +39,7 @@
 
 	<div class="flex flex-row flex-wrap gap-6 mt-6">
 		{#each data.digitalFiles as digitalFile}
-			<a
-				href="{data.adminPrefix}/digital-file/{digitalFile._id}"
-				class="body-hyperlink hover:underline"
-			>
+			<a href="{data.adminPrefix}/digital-file/{digitalFile._id}" class="hover:underline">
 				{digitalFile.name}
 			</a>
 		{/each}

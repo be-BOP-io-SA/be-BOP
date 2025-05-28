@@ -13,7 +13,7 @@
 	</p>
 
 	{#if currentSelected}
-		<a href="{data.adminPrefix}/config/vat" class="body-hyperlink">Create new profile</a>
+		<a href="{data.adminPrefix}/config/vat" class="underline">Create new profile</a>
 	{/if}
 
 	<h2 class="text-2xl">VAT profiles</h2>
@@ -27,7 +27,7 @@
 					{#if currentSelected === profile._id}
 						<strong>{profile.name}</strong>
 					{:else}
-						<a href="{data.adminPrefix}/config/vat/{profile._id}" class="body-hyperlink">
+						<a href="{data.adminPrefix}/config/vat/{profile._id}" class="underline">
 							{profile.name}
 						</a>
 					{/if}

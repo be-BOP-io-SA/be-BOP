@@ -31,10 +31,8 @@
 	const cmsPageMap = new Map(data.cmsPages.map((cmsPage) => [cmsPage._id, cmsPage]));
 </script>
 
-<a href="{data.adminPrefix}/cms/new" class="underline block body-hyperlink">Add CMS page</a>
-<a href="{data.adminPrefix}/cms/seo-edit" class="underline block body-hyperlink"
-	>Bulk CMS SEO edit</a
->
+<a href="{data.adminPrefix}/cms/new" class="underline block">Add CMS page</a>
+<a href="{data.adminPrefix}/cms/seo-edit" class="underline block">Bulk CMS SEO edit</a>
 
 {#if typedKeys(specialPages).some((key) => cmsPageMap.has(key))}
 	<h2 class="text-2xl">Existing Special pages</h2>
@@ -52,7 +50,7 @@
 				<tr>
 					<td class="border border-gray-300 p-2">
 						{#if cmsPageMap.get(specialPage)?.hasMobileContent}📱{:else}💻{/if}
-						<a href="{data.adminPrefix}/cms/{specialPage}" class="underline body-hyperlink">
+						<a href="{data.adminPrefix}/cms/{specialPage}" class="underline">
 							{specialPage}
 						</a>
 					</td>
@@ -79,7 +77,7 @@
 				<tr>
 					<td class="border border-gray-300 p-2">
 						{#if cmsPage.hasMobileContent}📱{:else}💻{/if}
-						<a href="{data.adminPrefix}/cms/{cmsPage._id}" class="underline body-hyperlink">
+						<a href="{data.adminPrefix}/cms/{cmsPage._id}" class="underline">
 							{cmsPage._id}
 						</a>
 					</td>
@@ -104,7 +102,7 @@
 			{#each typedKeys(specialPages).filter((key) => !cmsPageMap.has(key)) as specialPage}
 				<tr>
 					<td class="border border-gray-300 p-2">
-						<a href="{data.adminPrefix}/cms/new?id={specialPage}" class="underline body-hyperlink">
+						<a href="{data.adminPrefix}/cms/new?id={specialPage}" class="underline">
 							{specialPage}
 						</a>
 					</td>

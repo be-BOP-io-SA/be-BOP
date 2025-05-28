@@ -11,7 +11,7 @@
 		<div class="flex flex-col text-center">
 			<a
 				href="{data.adminPrefix}/digital-file/{file._id}"
-				class="flex flex-col items-center underline body-hyperlink"
+				class="flex flex-col items-center underline"
 			>
 				<h2 class="text-xl">{file.name}</h2>
 			</a>

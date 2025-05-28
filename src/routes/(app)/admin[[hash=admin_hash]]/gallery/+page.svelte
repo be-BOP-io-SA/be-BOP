@@ -10,9 +10,7 @@
 	{#each data.galleries as gallery}
 		<li>
 			{gallery._id} -
-			<a href="{data.adminPrefix}/gallery/{gallery._id}" class="underline body-hyperlink"
-				>{gallery.name}</a
-			>
+			<a href="{data.adminPrefix}/gallery/{gallery._id}" class="underline">{gallery.name}</a>
 		</li>
 	{:else}
 		No gallery yet

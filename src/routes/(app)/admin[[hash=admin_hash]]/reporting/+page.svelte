@@ -337,10 +337,8 @@
 					{#each orderFiltered as order}
 						<tr class="hover:bg-gray-100 whitespace-nowrap">
 							<td class="border border-gray-300 px-4 py-2"
-								><a
-									href="/admin/order/{order._id}/json"
-									target="_blank"
-									class="underline body-hyperlink">{order.number}</a
+								><a href="/admin/order/{order._id}/json" target="_blank" class="underline"
+									>{order.number}</a
 								></td
 							>
 							<td class="border border-gray-300 px-4 py-2"
@@ -355,7 +353,7 @@
 								</time>
 							</td>
 							<td class="border border-gray-300 px-4 py-2">
-								<a href="/order/{order._id}" target="_blank" class="underline body-hyperlink">
+								<a href="/order/{order._id}" target="_blank" class="underline">
 									{order.status}
 								</a>
 							</td>
@@ -521,7 +519,7 @@
 								<td class="border border-gray-300 px-4 py-2">{payment.method}</td>
 								<td class="border border-gray-300 px-4 py-2">
 									<a
-										class="body-hyperlink underline"
+										class=" underline"
 										target="_blank"
 										href="/order/{order._id}/payment/{payment.id}/receipt">{payment.status}</a
 									>
