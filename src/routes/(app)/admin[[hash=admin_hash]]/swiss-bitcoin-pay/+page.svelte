@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
 	export let data;
 </script>
 
@@ -16,3 +17,11 @@
 	</div>
 </form>
 <form class="contents" method="post" action="?/delete" id="delete-form"></form>
+
+<h2 class="text-2xl">Invoices</h2>
+
+<SetLightningQrCodeDescription
+	bind:invoiceDescription={data.lightningInvoiceDescription}
+	bind:brandName={data.brandName}
+	showThirdPartyWarning={true}
+/>
