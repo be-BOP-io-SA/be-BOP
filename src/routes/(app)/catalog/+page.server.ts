@@ -1,8 +1,13 @@
 import { collections } from '$lib/server/database';
 import { picturesForProducts } from '$lib/server/picture.js';
 import type { Product } from '$lib/types/Product';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
+import { error } from '@sveltejs/kit';
 
 export async function load({ locals }) {
+	if (locals?.user?.roleId === CUSTOMER_ROLE_ID || !locals.user?.roleId) {
+		throw error(403, 'You are not allowed to access this page.');
+	}
 	const query = locals?.user?.hasPosOptions
 		? { 'actionSettings.retail.visible': true }
 		: { 'actionSettings.eShop.visible': true };
