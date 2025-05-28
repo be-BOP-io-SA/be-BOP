@@ -7,6 +7,7 @@
 	import { addMinutes, isSameDay } from 'date-fns';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
+	import DEFAULT_EVENT_PICTURE from '$lib/assets/event-default-picture.svg';
 
 	export let pictures: Picture[] = [];
 	export let schedule: Schedule;
@@ -37,14 +38,27 @@
 			: ''}"
 	>
 		<div class="grow">
-			<PictureComponent
-				picture={pictureByEventSlug[event.slug]}
-				class="max-h-[240x] max-w-[240px] ml-auto object-contain  {(event.endsAt &&
-					event.endsAt < new Date()) ||
-				addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
-					? 'opacity-50'
-					: ''}"
-			/>
+			{#if pictureByEventSlug[event.slug]}
+				<PictureComponent
+					picture={pictureByEventSlug[event.slug]}
+					class="max-h-[240x] max-w-[240px] ml-auto object-contain  {(event.endsAt &&
+						event.endsAt < new Date()) ||
+					addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
+						? 'opacity-50'
+						: ''}"
+				/>
+			{:else}
+				<!-- svelte-ignore a11y-img-redundant-alt -->
+				<img
+					srcset={DEFAULT_EVENT_PICTURE}
+					alt="default-event-picture"
+					class="max-h-[240x] max-w-[240px] ml-auto object-contain {(event.endsAt &&
+						event.endsAt < new Date()) ||
+					addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
+						? 'opacity-50'
+						: ''}"
+				/>
+			{/if}
 		</div>
 		<div class="p-4 grow-[2]">
 			<h2 class="text-2xl font-bold body-title mb-2 flex flex-row">
