@@ -1,5 +1,4 @@
 import { env } from '$env/dynamic/private';
-import { POS_ROLE_ID } from '$lib/types/User';
 import { isBitcoinConfigured as isBitcoindConfigured } from './bitcoind';
 import { isLndConfigured } from './lnd';
 import { isPhoenixdConfigured } from './phoenixd';
@@ -32,7 +31,7 @@ export type PaymentProcessor =
 	| 'bitcoin-nodeless';
 
 export const paymentMethods = (opts?: {
-	role?: string;
+	hasPosOptions?: boolean;
 	includePOS?: boolean;
 	includeDisabled?: boolean;
 	totalSatoshis?: number;
@@ -59,7 +58,7 @@ export const paymentMethods = (opts?: {
 						case 'lightning':
 							return isSwissBitcoinPayConfigured() || isLndConfigured() || isPhoenixdConfigured();
 						case 'point-of-sale':
-							return opts?.role === POS_ROLE_ID || opts?.includePOS;
+							return opts?.hasPosOptions || opts?.includePOS;
 						case 'free':
 							return opts?.totalSatoshis === undefined;
 					}
