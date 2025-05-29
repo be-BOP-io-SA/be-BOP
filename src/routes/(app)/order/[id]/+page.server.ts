@@ -72,6 +72,10 @@ export async function load({ params, depends, locals }) {
 	if (locals.user?.roleId && locals.user.roleId !== CUSTOMER_ROLE_ID) {
 		labels = await collections.labels.find({}).toArray();
 	}
+	const forceContentVersion =
+		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
+			? 'employee'
+			: undefined;
 	return {
 		order,
 		paymentMethods: methods,
@@ -86,13 +90,10 @@ export async function load({ params, depends, locals }) {
 			cmsOrderTop,
 			cmsOrderTopData: cmsFromContent(
 				{
-					content:
-						locals.user?.roleId !== undefined &&
-						locals.user?.roleId !== CUSTOMER_ROLE_ID &&
-						cmsOrderTop.hasEmployeeContent &&
-						cmsOrderTop.employeeContent
-							? cmsOrderTop.employeeContent
-							: cmsOrderTop.content
+					desktopContent: cmsOrderTop.content,
+					employeeContent:
+						(cmsOrderTop.hasEmployeeContent && cmsOrderTop.employeeContent) || undefined,
+					forceContentVersion
 				},
 				locals
 			)
@@ -101,13 +102,10 @@ export async function load({ params, depends, locals }) {
 			cmsOrderBottom,
 			cmsOrderBottomData: cmsFromContent(
 				{
-					content:
-						locals.user?.roleId !== undefined &&
-						locals.user?.roleId !== CUSTOMER_ROLE_ID &&
-						cmsOrderBottom.hasEmployeeContent &&
-						cmsOrderBottom.employeeContent
-							? cmsOrderBottom.employeeContent
-							: cmsOrderBottom.content
+					desktopContent: cmsOrderBottom.content,
+					employeeContent:
+						(cmsOrderBottom.hasEmployeeContent && cmsOrderBottom.employeeContent) || undefined,
+					forceContentVersion
 				},
 				locals
 			)
