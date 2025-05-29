@@ -1,10 +1,12 @@
 import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { updateLightningInvoiceDescription } from '$lib/server/actions.js';
 import { z } from 'zod';
 
 export async function load() {
 	return {
-		apiKey: runtimeConfig.swissBitcoinPay.apiKey
+		apiKey: runtimeConfig.swissBitcoinPay.apiKey,
+		lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription
 	};
 }
 
@@ -31,7 +33,6 @@ export const actions = {
 		);
 		runtimeConfig.swissBitcoinPay = swissBitcoinPay;
 	},
-
 	delete: async function () {
 		await collections.runtimeConfig.deleteOne({
 			_id: 'swissBitcoinPay'
@@ -39,5 +40,6 @@ export const actions = {
 		runtimeConfig.swissBitcoinPay = {
 			apiKey: ''
 		};
-	}
+	},
+	updateLightningInvoiceDescription
 };
