@@ -674,7 +674,6 @@
 						accept="image/jpeg,image/png,image/webp"
 						class="block"
 						on:change={(e) => handleFileChange(e, i - (data.schedule.events.length || 1))}
-						required
 						disabled={submitting}
 					/>
 				{/if}
