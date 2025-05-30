@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
+	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
 
 	export let data;
 	export let form;
@@ -217,4 +218,12 @@
 		<h2 class="text-2xl">Balance</h2>
 		<pre>{JSON.stringify(data.balance, null, 2)}</pre>
 	{/if}
+
+	<h2 class="text-2xl">Invoices</h2>
+
+	<SetLightningQrCodeDescription
+		bind:invoiceDescription={data.lightningInvoiceDescription}
+		bind:brandName={data.brandName}
+		showThirdPartyWarning={true}
+	/>
 {/if}
