@@ -11,7 +11,7 @@
 		{#each data.sliders as slider}
 			<li>
 				{slider._id} -
-				<a href="/admin/slider/{slider._id}" class="underline body-hyperlink">{slider.title}</a>
+				<a href="/admin/slider/{slider._id}" class="underline">{slider.title}</a>
 			</li>
 		{:else}
 			No slider yet

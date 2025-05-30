@@ -137,7 +137,7 @@
 			{#each typedKeys(specialTags).filter((key) => tagsMap.has(key)) as specialTag}
 				<tr>
 					<td class="border border-gray-300 p-2">
-						<a href="{data.adminPrefix}/tags/{specialTag}" class="underline body-hyperlink">
+						<a href="{data.adminPrefix}/tags/{specialTag}" class="underline">
 							{specialTag}
 						</a>
 					</td>
@@ -162,7 +162,7 @@
 			{#each typedKeys(specialTags).filter((key) => !tagsMap.has(key)) as specialTag}
 				<tr>
 					<td class="border border-gray-300 p-2">
-						<a href="{data.adminPrefix}/tags/new?id={specialTag}" class="underline body-hyperlink">
+						<a href="{data.adminPrefix}/tags/new?id={specialTag}" class="underline">
 							{specialTag}
 						</a>
 					</td>

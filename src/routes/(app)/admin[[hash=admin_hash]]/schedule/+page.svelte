@@ -10,9 +10,7 @@
 	{#each data.schedules as schedule}
 		<li>
 			{schedule._id} -
-			<a href="{data.adminPrefix}/schedule/{schedule._id}" class="underline body-hyperlink"
-				>{schedule.name}</a
-			>
+			<a href="{data.adminPrefix}/schedule/{schedule._id}" class="underline">{schedule.name}</a>
 		</li>
 	{:else}
 		No schedule yet

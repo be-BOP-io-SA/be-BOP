@@ -39,7 +39,7 @@
 	<p>
 		You can show/hide the language selector <a
 			href="{data.adminPrefix}/config#disableLanguageSelector"
-			class="body-hyperlink"
+			class="underline"
 		>
 			here
 		</a>
