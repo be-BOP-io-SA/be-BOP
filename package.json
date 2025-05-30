@@ -89,6 +89,7 @@
 		"qrcode": "^1.5.3",
 		"schema-dts": "^1.1.2",
 		"sharp": "^0.32.1",
+		"svelte-select": "^5.8.3",
 		"tinymce": "^6.7.0",
 		"ts-node": "^10.9.1",
 		"undici": "^5.22.1",

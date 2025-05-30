@@ -7,7 +7,8 @@
 	import { addMinutes, isSameDay } from 'date-fns';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
-	import DEFAULT_EVENT_PICTURE from '$lib/assets/event-default-picture.svg';
+	import { getScheduleTimezone, offsetFromUTC } from '$lib/utils/scheduleTimezone';
+	import { onMount } from 'svelte';
 
 	export let pictures: Picture[] = [];
 	export let schedule: Schedule;
@@ -44,7 +45,7 @@
 				{:else}
 					<!-- svelte-ignore a11y-img-redundant-alt -->
 					<img
-						srcset={DEFAULT_EVENT_PICTURE}
+						src="/asset/event-default-picture.png"
 						alt="default-event-picture"
 						class="object-contain h-[15em] w-auto {(event.endsAt && event.endsAt < new Date()) ||
 						addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
@@ -71,22 +72,34 @@
 					)}
 					{#if event.endsAt && isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.dateText', {
-							beginTime: event.beginsAt.toLocaleTimeString($locale, {
+							beginTime: addMinutes(
+								event.beginsAt,
+								offsetFromUTC(getScheduleTimezone(schedule))
+							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
-							endTime: event.endsAt.toLocaleTimeString($locale, {
+							endTime: addMinutes(
+								event.endsAt,
+								offsetFromUTC(getScheduleTimezone(schedule))
+							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							})
 						})}
 					{:else if event.endsAt && !isSameDay(event.endsAt, event.beginsAt)}
 						{t('schedule.differentDayText', {
-							beginDate: event.beginsAt.toLocaleTimeString($locale, {
+							beginDate: addMinutes(
+								event.beginsAt,
+								offsetFromUTC(getScheduleTimezone(schedule))
+							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							}),
-							endDate: event.endsAt.toLocaleTimeString($locale, {
+							endDate: addMinutes(
+								event.endsAt,
+								offsetFromUTC(getScheduleTimezone(schedule))
+							).toLocaleTimeString($locale, {
 								weekday: 'long',
 								day: 'numeric',
 								month: 'long',
@@ -97,7 +110,10 @@
 						})}
 					{:else}
 						{t('schedule.uniqueDateText', {
-							beginTime: event.beginsAt.toLocaleTimeString($locale, {
+							beginTime: addMinutes(
+								event.beginsAt,
+								offsetFromUTC(getScheduleTimezone(schedule))
+							).toLocaleTimeString($locale, {
 								hour: '2-digit',
 								minute: '2-digit'
 							})
