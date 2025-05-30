@@ -78,6 +78,16 @@
 		Use Dark/light mode corresponding to browser / OS by default for employee
 	</label>
 
+	<h2 class="text-2xl">Product</h2>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="disableZoomProductPicture"
+			class="form-checkbox"
+			checked={data.disableZoomProductPicture}
+		/>
+		Disable zoom on product pictures.
+	</label>
 	<h2 class="text-2xl">Top bar</h2>
 
 	<label class="form-label">

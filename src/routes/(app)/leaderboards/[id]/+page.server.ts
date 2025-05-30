@@ -38,7 +38,7 @@ export const load = async ({ params, locals }) => {
 		.find({
 			productId: { $in: [...products.map((product) => product._id)] }
 		})
-		.sort({ createdAt: 1 })
+		.sort({ order: 1, createdAt: 1 })
 		.toArray();
 	return {
 		leaderboard,

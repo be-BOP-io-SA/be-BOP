@@ -411,16 +411,19 @@
 					<Picture
 						picture={currentPicture}
 						on:click={handleClick}
-						class="mx-auto rounded h-full object-contain transition duration-500 transform lg:hover:scale-150 basis-[content] {isZoomed
-							? 'lg:scale-100 scale-150'
-							: ''}"
+						class="mx-auto rounded h-full object-contain transition duration-500 transform {!data.disableZoomProductPicture
+							? 'lg:hover:scale-150'
+							: ''} basis-[content] {isZoomed ? 'lg:scale-100 scale-150' : ''}"
 						sizes="(min-width: 1280px) 896px, 70vw"
 					/>
 				</div>
 				{#if data.pictures.length > 1}
 					<div class="flex flex-row min-w-[96px] sm:inline lg:hidden py-12 gap-1">
 						{#each data.pictures as picture, i}
-							<a href={i === 0 ? $page.url.pathname : '?picture=' + picture._id}>
+							<a
+								href={i === 0 ? $page.url.pathname : '?picture=' + picture._id}
+								data-sveltekit-noscroll
+							>
 								<Picture
 									{picture}
 									class="h-12 w-12 rounded-sm object-cover {picture === currentPicture

@@ -303,6 +303,7 @@ export async function load(params) {
 		displayPoweredBy: runtimeConfig.displayPoweredBy,
 		displayCompanyInfo: runtimeConfig.displayCompanyInfo,
 		displayMainShopInfo: runtimeConfig.displayMainShopInfo,
+		disableZoomProductPicture: runtimeConfig.disableZoomProductPicture,
 		viewportContentWidth: runtimeConfig.viewportContentWidth,
 		viewportFor: runtimeConfig.viewportFor,
 		links: {
@@ -333,6 +334,7 @@ export async function load(params) {
 		hideThemeSelectorInToolbar: runtimeConfig.hideThemeSelectorInToolbar,
 		notResponsive: runtimeConfig.viewportFor === 'no-one' ? true : false,
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,
+		removePopinProductPrice: runtimeConfig.removePopinProductPrice,
 		...(cmsAgewall && {
 			cmsAgewall,
 			cmsAgewallData: cmsFromContent({ content: cmsAgewall.content }, locals)
