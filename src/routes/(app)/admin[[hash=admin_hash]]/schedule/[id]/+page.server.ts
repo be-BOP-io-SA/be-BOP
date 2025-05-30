@@ -6,7 +6,7 @@ import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product'
 import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { generateId } from '$lib/utils/generateId';
-import { deletePicture } from '$lib/server/picture';
+import { deletePicture, generatePicture } from '$lib/server/picture';
 import { ORIGIN, SMTP_USER } from '$env/static/private';
 import { queueEmail } from '$lib/server/email';
 import { ObjectId } from 'mongodb';
@@ -50,6 +50,7 @@ export const actions = {
 				displayPastEventsAfterFuture: z.boolean({ coerce: true }).default(false),
 				sortByEventDateDesc: z.boolean({ coerce: true }).default(false),
 				allowSubscription: z.boolean({ coerce: true }).default(false),
+				eventPictures: z.string().trim().min(1).max(500).array().min(1).optional(),
 				timezone: z.string().optional(),
 				events: z.array(
 					z.object({
@@ -97,6 +98,16 @@ export const actions = {
 
 		const oldEventSlugs = new Set(schedule?.events?.map((event) => event.slug) || []);
 		const newEvents = eventWithSlug.filter((event) => !oldEventSlugs.has(event.slug));
+
+		if (parsed.eventPictures) {
+			await Promise.all(
+				parsed.eventPictures.map(async (eventPicture, index) => {
+					await generatePicture(eventPicture, {
+						schedule: { _id: schedule._id, eventSlug: newEvents[index].slug }
+					});
+				})
+			);
+		}
 
 		await collections.schedules.updateOne(
 			{
@@ -161,6 +172,7 @@ export const actions = {
 				}
 			}
 		}
+		throw redirect(303, `${adminPrefix()}/schedule/${schedule._id}`);
 	},
 
 	delete: async function ({ params }) {
