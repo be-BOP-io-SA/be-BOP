@@ -81,18 +81,18 @@
 	let warningMessage = '';
 
 	function updatePaginationLimit() {
-		const width = window.screen.width;
-
-		if (width < 480) {
-			posProductPagination = 22;
-		} else if (width < 768) {
-			posProductPagination = 16;
-		} else if (width < 1024) {
-			posProductPagination = 14;
+		const height = window.innerHeight;
+		if (window.screen.height >= 1080) {
+			posProductPagination = 6;
 		} else {
-			posProductPagination = 10;
+			let calculatedPagination = Math.floor(height / 100);
+			if (calculatedPagination % 2 !== 0) {
+				calculatedPagination += 1;
+			}
+			posProductPagination = Math.max(5, calculatedPagination);
 		}
 	}
+
 	onMount(() => {
 		updatePaginationLimit();
 		window.addEventListener('resize', updatePaginationLimit);
@@ -104,7 +104,7 @@
 <div class="flex flex-col h-screen justify-between">
 	<main class="mb-auto flex-grow">
 		<div class="grid grid-cols-3 gap-4 h-full">
-			<div class="touchScreen-ticket-menu p-3 h-full">
+			<div class="touchScreen-ticket-menu p-3">
 				{#if items.length}
 					<h3 class="text-3xl">TICKET n° tmp</h3>
 					{#each items as item, i}
