@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
+	import Select from 'svelte-select';
 
 	let name = '';
 	let slug = '';
@@ -11,6 +13,19 @@
 	let eventLines = 1;
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
+	let hasTimezone = false;
+	const timezones = Intl.supportedValuesOf('timeZone').map((tz, index) => ({
+		index,
+		value: tz,
+		label: tz
+	}));
+
+	const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+	let selectedTimezone = timezones.find((tz) => tz.value === defaultTz) ?? null;
+	const timezoneOffsetHours = new Date().getTimezoneOffset() / 60;
+	const timezoneSign = timezoneOffsetHours > 0 ? '-' : '+';
+	const timezoneString = `GMT${timezoneSign}${Math.abs(timezoneOffsetHours)}`;
 </script>
 
 <h1 class="text-3xl">Add a schedule</h1>
@@ -74,6 +89,22 @@
 		<input class="form-checkbox" type="checkbox" name="allowSubscription" />
 		Allow user to subscribe
 	</label>
+	<label class="checkbox-label">
+		<input class="form-checkbox" type="checkbox" bind:checked={hasTimezone} />
+		Set GMT timezone instead of server timezone
+	</label>
+	{#if hasTimezone}
+		{#if browser}(your browser's current zone is {timezoneString}){/if}
+		<Select
+			items={timezones}
+			searchable={true}
+			placeholder="Select a timezone"
+			clearable={true}
+			bind:value={selectedTimezone}
+			class="form-input"
+		/>
+		<input type="hidden" name="timezone" value={selectedTimezone?.value} />
+	{/if}
 
 	{#each [...Array(eventLines).keys()] as i}
 		<h1 class="text-xl font-bold gap-2">Event #{i + 1}</h1>
