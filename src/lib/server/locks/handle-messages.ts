@@ -1,4 +1,4 @@
-import { ObjectId, type ChangeStreamDocument, type ChangeStream } from 'mongodb';
+import { ObjectId, type ChangeStreamDocument, type ChangeStream, Filter } from 'mongodb';
 import { collections } from '../database';
 import { Lock } from '../lock';
 import type { NostRReceivedMessage } from '$lib/types/NostRReceivedMessage';
@@ -117,15 +117,18 @@ async function handleReceivedMessage(message: NostRReceivedMessage): Promise<voi
 				}
 
 				if (command.args?.length) {
-					const rawArgs = toMatchLower
-						.slice(commandName.length + 1)
-						.split(' ')
-						.map((s) => s.trim());
+					const rawArgs =
+						command.args.length !== 1
+							? toMatchLower
+									.slice(commandName.length + 1)
+									.split(' ')
+									.map((s) => s.trim())
+							: [toMatchLower.slice(commandName.length + 1).trim()];
 
 					const minArgs = command.args.filter((arg) => !arg.default).length;
 					const maxArgs = command.args.length;
 
-					if (rawArgs.length < minArgs || rawArgs.length > maxArgs) {
+					if ((rawArgs.length < minArgs || rawArgs.length > maxArgs) && command.args.length !== 1) {
 						await send(
 							`Invalid syntax. Usage: "${await usage(
 								commandName,
@@ -259,32 +262,175 @@ const commands: Record<
 		}
 	},
 	'!catalog': {
-		description: 'Show the list of products',
-		execute: async (send) => {
+		description:
+			'Show the list of products with filtering options\n' +
+			'Usage: !catalog [s:searchterm] [t:type] [m:mode]\n' +
+			'Search: s:searchterm (searches in name, short description, description)\n' +
+			'Types: t:digital, t:ship, t:free, t:pwyw, t:event, t:preorder, t:sub, t:tip (can combine multiple t: options)\n' +
+			'Modes: m:light (name, price, ref), m:mid (+ url), m:full (+ descriptions)\n' +
+			'Example: !catalog s:bitcoin t:event t:free m:light',
+		args: [
+			{
+				name: 'options',
+				default: 'm:mid'
+			}
+		],
+		execute: async (send, { args }) => {
 			if (!runtimeConfig.discovery) {
 				await send('Discovery is not enabled for this bootik. You cannot access the catalog.');
-			} else {
-				const products = await collections.products
-					.find({ 'actionSettings.eShop.visible': true, 'actionSettings.nostr.visible': true })
-					.toArray();
+				return;
+			}
 
-				if (!products.length) {
-					await send('Catalog is empty');
-				} else {
-					// todo: proper price depending on currency
+			const query: Filter<Product> = {
+				'actionSettings.eShop.visible': true,
+				'actionSettings.nostr.visible': true
+			};
+
+			const rawOptions = args.options?.trim().split(/\s+/) ?? [];
+			const parsedArgs: Record<string, string | string[]> = {};
+
+			for (const option of rawOptions) {
+				if (!option.includes(':')) {
 					await send(
-						products
-							.map(
-								(product) =>
-									`- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
-										product.price.amount,
-										product.price.currency
-									).toLocaleString('en-US')} SAT / ${ORIGIN}/product/${product._id}`
-							)
-							.join('\n')
+						`Invalid option format: "${option}". Use format prefix:value (e.g., s:bitcoin, t:event, m:light)`
 					);
+					return;
+				}
+
+				const [key, ...rest] = option.split(':');
+				const value = rest.join(':');
+
+				if (!key || !value) {
+					await send(`Invalid option format: "${option}". Both prefix and value are required.`);
+					return;
+				}
+
+				if (!['s', 't', 'm'].includes(key)) {
+					await send(
+						`Invalid prefix: "${key}". Valid prefixes are: s (search), t (type), m (mode)`
+					);
+					return;
+				}
+
+				if (parsedArgs[key]) {
+					if (Array.isArray(parsedArgs[key])) {
+						(parsedArgs[key] as string[]).push(value);
+					} else {
+						parsedArgs[key] = [parsedArgs[key] as string, value];
+					}
+				} else {
+					parsedArgs[key] = value;
 				}
 			}
+
+			const searchTerm = parsedArgs.s as string;
+			if (searchTerm) {
+				query.$or = [
+					{ name: { $regex: searchTerm, $options: 'i' } },
+					{ shortDescription: { $regex: searchTerm, $options: 'i' } },
+					{ description: { $regex: searchTerm, $options: 'i' } }
+				];
+			}
+
+			const productTypes = Array.isArray(parsedArgs.t)
+				? parsedArgs.t
+				: parsedArgs.t
+				? [parsedArgs.t]
+				: [];
+
+			const validTypes = ['digital', 'ship', 'free', 'pwyw', 'event', 'preorder', 'sub', 'tip'];
+			const invalidTypes = productTypes.filter((type) => !validTypes.includes(type));
+
+			if (invalidTypes.length > 0) {
+				await send(
+					`Invalid product type(s): ${invalidTypes.join(', ')}. Valid types: ${validTypes.join(
+						', '
+					)}`
+				);
+				return;
+			}
+
+			const queryConditions: Filter<Product>[] = [];
+
+			for (const type of productTypes) {
+				switch (type) {
+					case 'digital':
+						queryConditions.push({ shipping: false });
+						break;
+					case 'ship':
+						queryConditions.push({ shipping: true });
+						break;
+					case 'free':
+						queryConditions.push({ 'price.amount': 0 });
+						break;
+					case 'pwyw':
+						queryConditions.push({ payWhatYouWant: true });
+						break;
+					case 'event':
+						queryConditions.push({ isTicket: true });
+						break;
+					case 'preorder':
+						queryConditions.push({
+							$and: [{ preorder: true }, { availableDate: { $gt: new Date() } }]
+						});
+						break;
+					case 'sub':
+						queryConditions.push({ type: 'subscription' });
+						break;
+					case 'tip':
+						queryConditions.push({ type: 'donation' });
+						break;
+				}
+			}
+
+			if (queryConditions.length > 0) {
+				if (queryConditions.length === 1) {
+					Object.assign(query, queryConditions[0]);
+				} else {
+					query.$and = query.$and || [];
+					query.$and.push({ $or: queryConditions });
+				}
+			}
+
+			const mode = (parsedArgs.m as string) || 'mid';
+			const validModes = ['light', 'mid', 'full'];
+
+			if (!validModes.includes(mode)) {
+				await send(`Invalid display mode: "${mode}". Valid modes: ${validModes.join(', ')}`);
+				return;
+			}
+
+			const products = await collections.products.find(query).toArray();
+
+			if (!products.length) {
+				await send('Catalog is empty');
+				return;
+			}
+
+			await send(
+				products
+					.map((product) => {
+						switch (mode) {
+							case 'mid':
+								return `- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
+									product.price.amount,
+									product.price.currency
+								).toLocaleString('en-US')} SAT / ${ORIGIN}/product/${product._id}`;
+							case 'full':
+								return `- ${product.name} [ref: "${product._id}"] / ${product.shortDescription} / ${
+									product.description
+								} / ${toSatoshis(product.price.amount, product.price.currency).toLocaleString(
+									'en-US'
+								)} SAT / ${ORIGIN}/product/${product._id}`;
+							default:
+								return `- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
+									product.price.amount,
+									product.price.currency
+								).toLocaleString('en-US')} SAT`;
+						}
+					})
+					.join('\n')
+			);
 		}
 	},
 	'!detailed catalog': {
