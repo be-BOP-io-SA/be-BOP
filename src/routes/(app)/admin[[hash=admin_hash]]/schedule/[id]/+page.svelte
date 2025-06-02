@@ -144,8 +144,8 @@
 		/>
 	</label>
 	<small class="text-sm text-gray-500 block">
-		To use in a CMS zone, use <kbd class="kbd">[Schedule={slug}]</kbd> or
-		<kbd class="kbd">[Schedule={slug} display=calendar]</kbd>
+		To use in a CMS zone, use <kbd class="kbd body-secondaryCTA">[Schedule={slug}]</kbd> or
+		<kbd class="kbd body-secondaryCTA">[Schedule={slug} display=calendar]</kbd>
 	</small>
 	<label class="form-label">
 		Set desired delay for event with no end time (in minutes)
@@ -425,7 +425,7 @@
 								min={beginsAt[i]}
 							/>
 							<span class="text-sm text-gray-600 mt-2 block">
-								<kbd class="kbd">backspace</kbd> to remove the date.</span
+								<kbd class="kbd body-secondaryCTA">backspace</kbd> to remove the date.</span
 							>
 						</label>
 					</div>
@@ -564,7 +564,7 @@
 							value="Update"
 						/>
 						<button
-							class="btn btn-gray self-start"
+							class="btn body-mainCTA self-start"
 							on:click={() => closeDetailByIndex(i)}
 							type="button"
 						>
@@ -628,7 +628,7 @@
 								min={beginsAt[i]}
 							/>
 							<span class="text-sm text-gray-600 mt-2 block">
-								<kbd class="kbd">backspace</kbd> to remove the date.</span
+								<kbd class="kbd body-secondaryCTA">backspace</kbd> to remove the date.</span
 							>
 						</label>
 					</div>
@@ -689,12 +689,12 @@
 			</div>
 		</details>
 	{/each}
-	<button class="btn btn-gray self-start" on:click={() => (eventLines += 1)} type="button"
+	<button class="btn body-mainCTA self-start" on:click={() => (eventLines += 1)} type="button"
 		>Add another event
 	</button>
 	<div class="flex flex-row justify-between gap-2">
 		<input type="submit" class="btn btn-blue text-white" value="Update" disabled={submitting} />
-		<a href="/schedule/{data.schedule._id}" class="btn btn-gray">View</a>
+		<a href="/schedule/{data.schedule._id}" class="btn body-mainCTA">View</a>
 		<input
 			type="submit"
 			class="btn btn-red text-white ml-auto"

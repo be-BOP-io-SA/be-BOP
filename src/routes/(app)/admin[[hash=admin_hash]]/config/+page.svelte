@@ -576,7 +576,7 @@
 			value={data.analyticsScriptSnippet}
 		/>
 	</label>
-	<input type="submit" value="Update" class="btn btn-gray self-start" />
+	<input type="submit" value="Update" class="btn body-mainCTA self-start" />
 </form>
 
 <p>

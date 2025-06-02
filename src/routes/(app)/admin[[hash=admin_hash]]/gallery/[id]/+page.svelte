@@ -221,7 +221,7 @@
 			disabled={submitting}
 			on:click|preventDefault={handleSubmit}
 		/>
-		<a href="/gallery/{data.gallery._id}" class="btn btn-gray">View</a>
+		<a href="/gallery/{data.gallery._id}" class="btn body-mainCTA">View</a>
 
 		<button
 			type="submit"

@@ -22,7 +22,7 @@
 		/>
 		<input
 			type="submit"
-			class="btn btn-gray self-start"
+			class="btn body-mainCTA self-start"
 			value="Duplicate light to dark"
 			formaction="?/duplicateToDark"
 			on:click={confirmDuplicate}

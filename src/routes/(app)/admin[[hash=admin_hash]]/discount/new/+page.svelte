@@ -163,7 +163,10 @@
 				</tbody>
 			{/each}
 		</table>
-		<button class="btn btn-gray self-start" on:click={() => (productFreeLine += 1)} type="button"
+		<button
+			class="btn body-mainCTA self-start"
+			on:click={() => (productFreeLine += 1)}
+			type="button"
 			>Add product
 		</button>
 	{/if}

@@ -30,7 +30,7 @@
 		>Download file</a
 	>
 	<div class="flex gap-4 justify-between">
-		<input type="submit" value="Update" class="btn btn-gray" />
+		<input type="submit" value="Update" class="btn body-mainCTA" />
 		<input type="submit" value="Delete" formaction="?/delete" class="btn btn-red" />
 	</div>
 </form>
