@@ -91,6 +91,7 @@
 		>Required Subscription
 
 		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			name="subscriptionIds"
 			options={subscriptions.map((p) => ({ label: p.name, value: p._id }))}
 			required
@@ -111,6 +112,7 @@
 			<label class="form-label"
 				>Products
 				<MultiSelect
+					--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 					name="productIds"
 					options={availableProductList.map((p) => ({ label: p.name, value: p._id }))}
 				/>
@@ -163,7 +165,10 @@
 				</tbody>
 			{/each}
 		</table>
-		<button class="btn btn-gray self-start" on:click={() => (productFreeLine += 1)} type="button"
+		<button
+			class="btn body-mainCTA self-start"
+			on:click={() => (productFreeLine += 1)}
+			type="button"
 			>Add product
 		</button>
 	{/if}

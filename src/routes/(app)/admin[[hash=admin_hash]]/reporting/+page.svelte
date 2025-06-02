@@ -301,6 +301,7 @@
 		<label class="form-label">
 			Employee alias
 			<MultiSelect
+				--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 				inputClass="form-input"
 				options={[
 					...new Map(
@@ -321,7 +322,7 @@
 		</label>
 	</div>
 	<div class="col-span-1">
-		<button class="submit btn btn-gray mt-8" on:click={() => (loadedHtml = false)}>🔍</button>
+		<button class="submit btn body-mainCTA mt-8" on:click={() => (loadedHtml = false)}>🔍</button>
 	</div>
 </form>
 <div class="gap-4 grid grid-cols-12 mr-auto">

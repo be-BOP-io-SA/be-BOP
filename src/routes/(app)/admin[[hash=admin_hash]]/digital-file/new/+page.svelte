@@ -99,7 +99,7 @@
 	{/if}
 
 	{#if !uploading}
-		<input type="submit" class="btn btn-gray self-start" value="Add" />
+		<input type="submit" class="btn body-mainCTA self-start" value="Add" />
 	{:else}
 		<p>Uploading...</p>
 	{/if}

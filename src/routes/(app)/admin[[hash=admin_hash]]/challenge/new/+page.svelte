@@ -122,6 +122,7 @@
 	<label class="form-label"
 		>Products
 		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			name="productIds"
 			options={data.products.map((p) => ({ label: p.name, value: p._id }))}
 		/>
