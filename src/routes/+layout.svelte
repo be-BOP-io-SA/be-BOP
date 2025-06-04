@@ -21,6 +21,14 @@
 	<meta name="viewport" content={data.viewportWidth} />
 	<meta name="description" content={$page.data.websiteShortDescription} />
 	<link rel="stylesheet" href="/style/variables.css?v={data.themeChangeNumber}" />
+
+	<link rel="manifest" href="/manifest.json">
+	<script>
+	  if ('serviceWorker' in navigator) {
+	    navigator.serviceWorker.register('/service-worker.js');
+	  }
+	</script>
+
 	{#if data.faviconPictureId}
 		<link rel="icon" href="/favicon/{data.faviconPictureId}" />
 	{:else}
