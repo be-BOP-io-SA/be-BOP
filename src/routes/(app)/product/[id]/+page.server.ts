@@ -50,6 +50,7 @@ export const load = async ({ params, locals }) => {
 			| 'hideFromSEO'
 			| 'hideDiscountExpiration'
 			| 'bookingSpec'
+			| 'vatProfileId'
 		>
 	>(
 		{ _id: params.id },
@@ -97,7 +98,8 @@ export const load = async ({ params, locals }) => {
 				hideFromSEO: 1,
 				hideDiscountExpiration: 1,
 				shipping: 1,
-				bookingSpec: 1
+				bookingSpec: 1,
+				vatProfileId: 1
 			}
 		}
 	);
