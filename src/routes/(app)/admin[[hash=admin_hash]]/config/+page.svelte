@@ -346,6 +346,15 @@
 			/>
 			Make VAT = 0% for deliveries outside seller's country
 		</label>
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="displayVatIncludedInProduct"
+				class="form-checkbox"
+				bind:checked={data.displayVatIncludedInProduct}
+			/>
+			Display VAT included estimated price in product page
+		</label>
 		<label class="form-label">
 			Seller's country for VAT purposes
 			<select name="vatCountry" class="form-input">

@@ -680,7 +680,8 @@
 			"ticket": "Bilhete"
 		},
 		"variationPriceLabel": "Preço da Variação",
-		"vatExcluded": "IVA excluído"
+		"vatExcluded": "IVA excluído",
+		"vatIncluded": "Preço estimado, incluindo imposto"
 	},
 	"schedule": {
 		"dateText": " - de {beginTime} a {endTime}",

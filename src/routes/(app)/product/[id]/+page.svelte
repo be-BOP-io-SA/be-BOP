@@ -37,6 +37,7 @@
 	import { toZonedTime } from 'date-fns-tz';
 	import { RangeList } from '$lib/utils/range-list.js';
 	import { sum } from '$lib/utils/sum.js';
+	import { vatRate } from '$lib/types/Country';
 
 	export let data;
 
@@ -323,6 +324,13 @@
 	$: if (data.product.hasVariations) {
 		customAmount = productPriceWithVariations(data.product, selectedVariations);
 	}
+	const country = data.vatSingleCountry ? data.vatCountry : data.countryCode ?? data.vatCountry;
+	const vatProfile = data.product.vatProfileId
+		? data.vatProfiles.find(
+				(profile) => profile._id.toString() === data.product.vatProfileId?.toString()
+		  )
+		: undefined;
+	const rate = vatProfile?.rates[country] ?? vatRate(country);
 </script>
 
 <svelte:head>
@@ -452,46 +460,148 @@
 				class="flex flex-col gap-2 border-gray-300 lg:border-l lg:border-b lg:rounded lg:pl-4 lg:pb-4 h-fit overflow-hidden"
 			>
 				<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
-				<div class="flex gap-2 lg:flex-col lg:items-start items-center justify-between">
-					<div class="flex gap-4">
-						<PriceTag
-							currency={data.product.price.currency}
-							class="text-2xl lg:text-4xl truncate max-w-full {data.discount ? 'line-through' : ''}"
-							short={!!data.discount}
-							amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-								(data.product.bookingSpec
-									? durationMinutes / data.product.bookingSpec.slotMinutes
-									: 1)}
-							main
-						/>
-						{#if data.discount && data.discount.mode === 'percentage'}
+				{#if data.displayVatIncludedInProduct}
+					<div class="flex-row gap-2 lg:flex-col lg:items-start items-center justify-between">
+						<div class="max-md:flex max-md:flex-row max-md:justify-between">
+							<div class="flex gap-4">
+								<PriceTag
+									currency={data.product.price.currency}
+									class="text-2xl lg:text-4xl truncate max-w-full {data.discount
+										? 'line-through'
+										: ''}"
+									short={!!data.discount}
+									amount={(data.product.hasVariations
+										? customAmount * (1 + rate / 100)
+										: data.product.price.amount * (1 + rate / 100)) *
+										(data.product.bookingSpec
+											? durationMinutes / data.product.bookingSpec.slotMinutes
+											: 1)}
+									main
+								/>
+								{#if data.discount && data.discount.mode === 'percentage'}
+									<PriceTag
+										currency={data.product.price.currency}
+										class="text-2xl lg:text-4xl truncate max-w-full"
+										short
+										amount={(data.product.hasVariations
+											? customAmount * (1 + rate / 100)
+											: data.product.price.amount * (1 + rate / 100)) *
+											(data.product.bookingSpec
+												? durationMinutes / data.product.bookingSpec.slotMinutes
+												: 1) *
+											(1 - data.discount.percentage / 100)}
+										main
+									/>
+								{/if}
+							</div>
 							<PriceTag
 								currency={data.product.price.currency}
-								class="text-2xl lg:text-4xl truncate max-w-full"
-								short
+								amount={(data.product.hasVariations
+									? customAmount * (1 + rate / 100)
+									: data.product.price.amount * (1 + rate / 100)) *
+									(data.product.bookingSpec
+										? durationMinutes / data.product.bookingSpec.slotMinutes
+										: 1) *
+									(data.discount?.mode === 'percentage' && data.discount?.percentage
+										? 1 - data.discount.percentage / 100
+										: 1)}
+								secondary
+								class="text-xl"
+							/>
+						</div>
+						<span>{t('product.vatIncluded')} ({t('cart.vat')} {rate}%)</span>
+						<div class="max-md:flex max-md:flex-row max-md:justify-between">
+							<div class="flex gap-4">
+								<PriceTag
+									currency={data.product.price.currency}
+									class="text-md font-semibold truncate max-w-full {data.discount
+										? 'line-through'
+										: ''}"
+									short={!!data.discount}
+									amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
+										(data.product.bookingSpec
+											? durationMinutes / data.product.bookingSpec.slotMinutes
+											: 1)}
+									main
+								/> <span class="font-semibold lg:contents hidden">{t('product.vatExcluded')}</span>
+
+								{#if data.discount && data.discount.mode === 'percentage'}
+									<PriceTag
+										currency={data.product.price.currency}
+										class="text-2xl lg:text-4xl truncate max-w-full"
+										short
+										amount={(data.product.hasVariations
+											? customAmount
+											: data.product.price.amount) *
+											(data.product.bookingSpec
+												? durationMinutes / data.product.bookingSpec.slotMinutes
+												: 1) *
+											(1 - data.discount.percentage / 100)}
+										main
+									/>
+								{/if}
+							</div>
+							<PriceTag
+								currency={data.product.price.currency}
 								amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
 									(data.product.bookingSpec
 										? durationMinutes / data.product.bookingSpec.slotMinutes
 										: 1) *
-									(1 - data.discount.percentage / 100)}
+									(data.discount?.mode === 'percentage' && data.discount?.percentage
+										? 1 - data.discount.percentage / 100
+										: 1)}
+								secondary
+								class={data.displayVatIncludedInProduct ? 'text-md' : 'text-xl'}
+							/>
+						</div>
+						<span class="font-semibold contents lg:hidden">{t('product.vatExcluded')}</span>
+					</div>
+				{:else}
+					<div class="flex gap-2 lg:flex-col lg:items-start items-center justify-between">
+						<div class="flex gap-4">
+							<PriceTag
+								currency={data.product.price.currency}
+								class="text-2xl lg:text-4xl truncate max-w-full {data.discount
+									? 'line-through'
+									: ''}"
+								short={!!data.discount}
+								amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
+									(data.product.bookingSpec
+										? durationMinutes / data.product.bookingSpec.slotMinutes
+										: 1)}
 								main
 							/>
-						{/if}
+
+							{#if data.discount && data.discount.mode === 'percentage'}
+								<PriceTag
+									currency={data.product.price.currency}
+									class="text-2xl lg:text-4xl truncate max-w-full"
+									short
+									amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
+										(data.product.bookingSpec
+											? durationMinutes / data.product.bookingSpec.slotMinutes
+											: 1) *
+										(1 - data.discount.percentage / 100)}
+									main
+								/>
+							{/if}
+						</div>
+						<PriceTag
+							currency={data.product.price.currency}
+							amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
+								(data.product.bookingSpec
+									? durationMinutes / data.product.bookingSpec.slotMinutes
+									: 1) *
+								(data.discount?.mode === 'percentage' && data.discount?.percentage
+									? 1 - data.discount.percentage / 100
+									: 1)}
+							secondary
+							class="text-xl"
+						/>
+						<span class="font-semibold">{t('product.vatExcluded')}</span>
 					</div>
-					<PriceTag
-						currency={data.product.price.currency}
-						amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-							(data.product.bookingSpec
-								? durationMinutes / data.product.bookingSpec.slotMinutes
-								: 1) *
-							(data.discount?.mode === 'percentage' && data.discount?.percentage
-								? 1 - data.discount.percentage / 100
-								: 1)}
-						secondary
-						class="text-xl"
-					/>
-					<span class="font-semibold">{t('product.vatExcluded')}</span>
-				</div>
+				{/if}
+
 				{#if freeProductsAvailable}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">

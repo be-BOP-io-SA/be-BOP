@@ -695,7 +695,8 @@
 			"ticket": "Ticket"
 		},
 		"variationPriceLabel": "Variation de prix",
-		"vatExcluded": "Hors TVA"
+		"vatExcluded": "Hors TVA",
+		"vatIncluded": "Prix TTC estimé"
 	},
 	"schedule": {
 		"dateText": "- de {beginTime} à {endTime}",

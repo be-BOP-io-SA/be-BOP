@@ -76,6 +76,7 @@ export const actions = {
 				vatExemptionReason: z.string().default(runtimeConfig.vatExemptionReason),
 				vatSingleCountry: z.boolean({ coerce: true }),
 				vatNullOutsideSellerCountry: z.boolean({ coerce: true }),
+				displayVatIncludedInProduct: z.boolean({ coerce: true }),
 				vatCountry: z.string().default(runtimeConfig.vatCountry),
 				subscriptionReminderSeconds: z
 					.number({ coerce: true })
