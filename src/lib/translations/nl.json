@@ -690,7 +690,8 @@
 			"ticket": "Ticket"
 		},
 		"variationPriceLabel": "Variatie Prijs",
-		"vatExcluded": "Exclusief BTW"
+		"vatExcluded": "Exclusief BTW",
+		"vatIncluded": "Geschatte prijs inclusief belasting"
 	},
 	"schedule": {
 		"dateText": "- Van {beginTime} tot {endTime}",

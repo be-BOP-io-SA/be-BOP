@@ -285,6 +285,7 @@ export async function load(params) {
 		vatSingleCountry: runtimeConfig.vatSingleCountry,
 		vatCountry: runtimeConfig.vatCountry,
 		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
+		displayVatIncludedInProduct: runtimeConfig.displayVatIncludedInProduct,
 		currencies: {
 			main: runtimeConfig.mainCurrency,
 			secondary: runtimeConfig.secondaryCurrency,

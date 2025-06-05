@@ -102,6 +102,7 @@ const baseConfig = {
 	vatSingleCountry: false,
 	vatCountry: 'FR' satisfies CountryAlpha2 as CountryAlpha2,
 	vatNullOutsideSellerCountry: false,
+	displayVatIncludedInProduct: false,
 	collectIPOnDeliverylessOrders: false,
 	isBillingAddressMandatory: false,
 	disableLanguageSelector: false,
