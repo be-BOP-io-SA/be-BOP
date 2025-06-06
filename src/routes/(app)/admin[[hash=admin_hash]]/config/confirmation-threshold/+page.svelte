@@ -109,6 +109,6 @@
 			Add confirmation threshold
 		</button>
 
-		<button type="submit" class="btn btn-gray self-start">Save</button>
+		<button type="submit" class="btn body-mainCTA self-start">Save</button>
 	</form>
 </main>

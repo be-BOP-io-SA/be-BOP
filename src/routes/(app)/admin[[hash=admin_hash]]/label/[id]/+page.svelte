@@ -67,7 +67,7 @@
 
 	<div class="flex flex-row justify-between gap-2">
 		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
-		<a href="/label/{data.label._id}" class="btn btn-gray">View</a>
+		<a href="/label/{data.label._id}" class="btn body-mainCTA">View</a>
 
 		<input
 			type="submit"

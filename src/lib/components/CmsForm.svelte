@@ -175,7 +175,7 @@
 					>{/if}
 			</div>
 		{/each}
-		<button class="btn btn-gray" on:click={() => (cmsMetaLine += 1)} type="button"
+		<button class="btn body-mainCTA" on:click={() => (cmsMetaLine += 1)} type="button"
 			>Add custom meta balise
 		</button>
 	{/if}
@@ -364,10 +364,10 @@
 		{#if cmsPage}
 			<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
 			{#if hasMobileContent && mobileContent}
-				<a href="/{slug}?content=desktop" class="btn btn-gray">View 💻</a>
-				<a href="/{slug}?content=mobile" class="btn btn-gray">View 📱</a>
+				<a href="/{slug}?content=desktop" class="btn body-mainCTA">View 💻</a>
+				<a href="/{slug}?content=mobile" class="btn body-mainCTA">View 📱</a>
 			{:else}
-				<a href="/{slug}" class="btn btn-gray">View</a>
+				<a href="/{slug}" class="btn body-mainCTA">View</a>
 			{/if}
 
 			<input

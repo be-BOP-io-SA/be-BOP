@@ -279,5 +279,5 @@
 			value={data.adminWelcomMessage}
 		/>
 	</label>
-	<button type="submit" class="btn btn-gray self-start"> Save text </button>
+	<button type="submit" class="btn body-mainCTA self-start"> Save text </button>
 </form>

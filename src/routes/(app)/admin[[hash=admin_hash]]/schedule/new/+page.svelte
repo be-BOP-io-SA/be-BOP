@@ -208,7 +208,7 @@
 					min={beginsAt[i]}
 				/>
 				<span class="text-sm text-gray-600 mt-2 block">
-					<kbd class="kbd">backspace</kbd> to remove the date.</span
+					<kbd class="kbd body-secondaryCTA">backspace</kbd> to remove the date.</span
 				>
 			</label>
 		</div>
@@ -264,7 +264,7 @@
 			disabled={submitting}
 		/>
 	{/each}
-	<button class="btn btn-gray self-start" on:click={() => (eventLines += 1)} type="button"
+	<button class="btn body-mainCTA self-start" on:click={() => (eventLines += 1)} type="button"
 		>Add another event
 	</button>
 
