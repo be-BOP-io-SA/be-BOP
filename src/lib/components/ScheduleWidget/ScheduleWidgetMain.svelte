@@ -8,6 +8,7 @@
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
 	import { getScheduleTimezone, offsetFromUTC } from '$lib/utils/scheduleTimezone';
+	import { onMount } from 'svelte';
 
 	export let pictures: Picture[] = [];
 	export let schedule: Schedule;
@@ -17,6 +18,11 @@
 		pictures.map((picture) => [picture.schedule?.eventSlug, picture])
 	);
 	const { t, locale } = useI18n();
+
+	let cacheBuster = 0;
+	onMount(() => {
+		cacheBuster = Date.now();
+	});
 </script>
 
 {#if schedule.allowSubscription}
@@ -38,14 +44,27 @@
 			: ''}"
 	>
 		<div class="grow">
-			<PictureComponent
-				picture={pictureByEventSlug[event.slug]}
-				class="max-h-[240x] max-w-[240px] ml-auto object-contain  {(event.endsAt &&
-					event.endsAt < new Date()) ||
-				addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
-					? 'opacity-50'
-					: ''}"
-			/>
+			{#if pictureByEventSlug[event.slug]}
+				<PictureComponent
+					picture={pictureByEventSlug[event.slug]}
+					class="max-h-[240x] max-w-[240px] ml-auto object-contain  {(event.endsAt &&
+						event.endsAt < new Date()) ||
+					addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
+						? 'opacity-50'
+						: ''}"
+				/>
+			{:else}
+				<!-- svelte-ignore a11y-img-redundant-alt -->
+				<img
+					src="/asset/event-default-picture.png?t{cacheBuster}"
+					alt="default-event-picture"
+					class="max-h-[240x] max-w-[240px] ml-auto object-contain {(event.endsAt &&
+						event.endsAt < new Date()) ||
+					addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
+						? 'opacity-50'
+						: ''}"
+				/>
+			{/if}
 		</div>
 		<div class="p-4 grow-[2]">
 			<h2 class="text-2xl font-bold body-title mb-2 flex flex-row">
