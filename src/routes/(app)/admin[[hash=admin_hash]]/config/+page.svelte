@@ -34,7 +34,7 @@
 		})) ?? [];
 </script>
 
-<h1 class="text-3xl">Config</h1>
+<h1 class="text-3xl">General settings</h1>
 
 {#if form?.success}
 	<div class="alert alert-success">{form.success}</div>
