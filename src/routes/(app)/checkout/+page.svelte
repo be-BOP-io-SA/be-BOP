@@ -171,6 +171,7 @@
 			? priceInfo.partialPriceWithVat >=
 			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 			: true;
+	let prefillWithShopInfo = data.roleId === POS_ROLE_ID && !data.notPrefillCheckoutAddress;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -216,9 +217,9 @@
 							class="form-input"
 							name="shipping.firstName"
 							autocomplete="given-name"
-							required={data.roleId !== POS_ROLE_ID}
+							required={data.roleId !== POS_ROLE_ID || data.notPrefillCheckoutAddress}
 							value={data.personalInfoConnected?.firstName ??
-								(data.roleId === POS_ROLE_ID && data.shopInformation?.businessName
+								(data.shopInformation?.businessName && prefillWithShopInfo
 									? data.shopInformation.businessName
 									: '') ??
 								''}
@@ -232,7 +233,7 @@
 							class="form-input"
 							name="shipping.lastName"
 							autocomplete="family-name"
-							required={data.roleId !== POS_ROLE_ID}
+							required={data.roleId !== POS_ROLE_ID || data.notPrefillCheckoutAddress}
 							value={data.personalInfoConnected?.lastName ?? ''}
 						/>
 					</label>
@@ -244,9 +245,9 @@
 							class="form-input"
 							autocomplete="street-address"
 							name="shipping.address"
-							required={data.roleId !== POS_ROLE_ID}
+							required={data.roleId !== POS_ROLE_ID || data.notPrefillCheckoutAddress}
 							value={data.personalInfoConnected?.address?.street ??
-								(data.roleId === POS_ROLE_ID && data.shopInformation?.address?.street
+								(data.shopInformation?.address?.street && prefillWithShopInfo
 									? data.shopInformation.address.street
 									: '') ??
 								''}
@@ -272,7 +273,7 @@
 							name="shipping.state"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.state ??
-								(data.roleId === POS_ROLE_ID && data.shopInformation?.address?.state
+								(data.shopInformation?.address?.state && prefillWithShopInfo
 									? data.shopInformation.address.state
 									: '') ??
 								''}
@@ -286,11 +287,11 @@
 							name="shipping.city"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.city ??
-								(data.roleId === POS_ROLE_ID && data.shopInformation?.address?.city
+								(data.shopInformation?.address?.city && prefillWithShopInfo
 									? data.shopInformation.address.city
 									: '') ??
 								''}
-							required={data.roleId !== POS_ROLE_ID}
+							required={data.roleId !== POS_ROLE_ID || data.notPrefillCheckoutAddress}
 						/>
 					</label>
 					<label class="form-label col-span-2">
@@ -301,11 +302,11 @@
 							name="shipping.zip"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.zip ??
-								(data.roleId === POS_ROLE_ID && data.shopInformation?.address?.zip
+								(data.shopInformation?.address?.zip && prefillWithShopInfo
 									? data.shopInformation.address.zip
 									: '') ??
 								''}
-							required={data.roleId !== POS_ROLE_ID}
+							required={data.roleId !== POS_ROLE_ID || data.notPrefillCheckoutAddress}
 							autocomplete="postal-code"
 						/>
 					</label>
@@ -315,7 +316,7 @@
 							type="tel"
 							name="shipping.phone"
 							class="form-input"
-							value={data.roleId === POS_ROLE_ID && data.shopInformation?.contact?.phone
+							value={data.shopInformation?.contact?.phone && prefillWithShopInfo
 								? data.shopInformation.contact.phone
 								: ''}
 						/>

@@ -35,5 +35,14 @@
 		/>
 		Pre-fill term of use checkbox in /checkout
 	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="notPrefillCheckoutAddress"
+			class="form-checkbox"
+			checked={data.notPrefillCheckoutAddress}
+		/>
+		Do no prefill checkout with shop address on PoS session
+	</label>
 	<input type="submit" value="Update" class="btn btn-blue self-start" />
 </form>
