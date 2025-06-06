@@ -20,6 +20,8 @@ import { computePriceInfo } from '$lib/types/Cart';
 import { filterNullish } from '$lib/utils/fillterNullish';
 import type { Price } from '$lib/types/Order';
 import { sendAuthentificationlink } from '../sendNotification';
+import { actions as scheduleSubscriptionAction } from '../../../routes/(app)/schedule/[id]/subscribe/+page.server';
+import { actions as rsvpNotifyAction } from '../../../routes/(app)/schedule/[id]/rsvp/[slug]/+page.server';
 
 const lock = new Lock('received-messages');
 
@@ -117,15 +119,18 @@ async function handleReceivedMessage(message: NostRReceivedMessage): Promise<voi
 				}
 
 				if (command.args?.length) {
-					const rawArgs = toMatchLower
-						.slice(commandName.length + 1)
-						.split(' ')
-						.map((s) => s.trim());
+					const rawArgs =
+						command.args.length !== 1
+							? toMatchLower
+									.slice(commandName.length + 1)
+									.split(' ')
+									.map((s) => s.trim())
+							: [toMatchLower.slice(commandName.length + 1).trim()];
 
 					const minArgs = command.args.filter((arg) => !arg.default).length;
 					const maxArgs = command.args.length;
 
-					if (rawArgs.length < minArgs || rawArgs.length > maxArgs) {
+					if ((rawArgs.length < minArgs || rawArgs.length > maxArgs) && command.args.length !== 1) {
 						await send(
 							`Invalid syntax. Usage: "${await usage(
 								commandName,
@@ -771,6 +776,82 @@ const commands: Record<
 				send('you will receive your temporary link soon...');
 			}
 			await sendAuthentificationlink({ npub: senderNpub });
+		}
+	},
+	'!schedule': {
+		description: 'Show list schedule, allow to RSVP to an event and subscribe to a Schedule',
+		maintenanceBlocked: true,
+		args: [{ name: 'options', default: 'm:light' }],
+		execute: async (send, { senderNpub, args }) => {
+			const rawOptions = args.options?.trim().split(/\s+/) ?? [];
+			const parsedArgs: Record<string, string> = {};
+
+			for (const option of rawOptions) {
+				if (!option.includes(':')) {
+					await send(
+						`Invalid option format: "${option}". Use format prefix:value (e.g., s:slug, a:sub, rsvp:slug)`
+					);
+					return;
+				}
+
+				const [key, ...rest] = option.split(':');
+				const value = rest.join(':');
+
+				if (!key || !value) {
+					await send(`Invalid option format: "${option}". Both prefix and value are required.`);
+					return;
+				}
+				if (!['s', 'm', 'a', 'rsvp'].includes(key)) {
+					await send(
+						`Invalid prefix: "${key}". Valid prefixes are: s (slug), a (sub), m (mode), rsvp (eventSlug)`
+					);
+					return;
+				}
+				parsedArgs[key] = value;
+			}
+			const sub = parsedArgs.a;
+			const rsvp = parsedArgs.rsvp;
+			const mode = parsedArgs.mode as 'light' | 'mid' | 'full';
+			const slug = parsedArgs.s;
+			if (slug) {
+				const schedule = await collections.schedules.findOne({ _id: slug });
+				if (rsvp) {
+					const rsvpNotify = rsvpNotifyAction.notify;
+					const request = { address: senderNpub };
+
+					// @ts-expect-error different route but compatible
+					rsvpNotify(request);
+					await send(`rsvp ${rsvp}`);
+				} else if (sub === 'sub') {
+					const addSubscription = scheduleSubscriptionAction.addSubscription;
+					const request = { address: senderNpub, scheduleId: schedule?._id };
+
+					// @ts-expect-error different route but compatible
+					addSubscription(request);
+					await send('Subscription added !');
+					return;
+				} else {
+					send(
+						`${schedule?.events
+							.map((eventSchedule) => {
+								switch (mode) {
+									case 'mid':
+										return `- ${eventSchedule.slug}/ ${eventSchedule.shortDescription} / ${eventSchedule.beginsAt} / ${eventSchedule.location?.name} / ${ORIGIN}/schedule/${schedule._id}/event/${eventSchedule.slug}`;
+									case 'full':
+										return `- ${eventSchedule.slug}/ ${eventSchedule.shortDescription} / ${eventSchedule.beginsAt} / ${eventSchedule.location?.name} / ${eventSchedule.location?.link} / ${ORIGIN}/schedule/${schedule._id}/event/${eventSchedule.slug} / ${eventSchedule.url}`;
+									default:
+										return `- ${eventSchedule.slug} / ${eventSchedule.beginsAt} / ${eventSchedule.title}`;
+								}
+							})
+							.join('\n')}`
+					);
+				}
+			} else {
+				const schedules = await collections.schedules.find({}).toArray();
+				send(
+					`${schedules.map((schedule) => `-${schedule.name} [slug: ${schedule._id} ]`).join('\n')}`
+				);
+			}
 		}
 	}
 };
