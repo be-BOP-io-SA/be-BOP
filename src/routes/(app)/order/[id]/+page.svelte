@@ -24,6 +24,7 @@
 	import IconDownloadWindow from '$lib/components/icons/IconDownloadWindow.svelte';
 	import IconExternalNewWindowOpen from '$lib/components/icons/IconExternalNewWindowOpen.svelte';
 	import OrderLabelComponent from '$lib/components/OrderLabelComponent.svelte';
+	import { browser } from '$app/environment';
 
 	let currentDate = new Date();
 	export let data;
@@ -81,6 +82,10 @@
 	$: labelById = data.labels
 		? Object.fromEntries(data.labels.map((label) => [label._id, label]))
 		: undefined;
+
+	function isMobile() {
+		return browser && window.matchMedia('(max-width: 767px)').matches;
+	}
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -335,7 +340,9 @@
 								>{t('order.receipt.createProforma')}</button
 							>
 							<iframe
-								src="/order/{data.order._id}/payment/{payment.id}/receipt"
+								src={isMobile() && data.roleId === POS_ROLE_ID
+									? `/order/${data.order._id}/payment/${payment.id}/ticket`
+									: `/order/${data.order._id}/payment/${payment.id}/receipt`}
 								style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
 								title=""
 								on:load={() => (receiptReady = { ...receiptReady, [payment.id]: true })}
@@ -352,7 +359,9 @@
 							>
 							{#if payment.invoice.number !== FAKE_ORDER_INVOICE_NUMBER}
 								<iframe
-									src="/order/{data.order._id}/payment/{payment.id}/receipt"
+									src={isMobile() && data.roleId === POS_ROLE_ID
+										? `/order/${data.order._id}/payment/${payment.id}/ticket`
+										: `/order/${data.order._id}/payment/${payment.id}/receipt`}
 									style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
 									title=""
 									on:load={() => (receiptReady = { ...receiptReady, [payment.id]: true })}
