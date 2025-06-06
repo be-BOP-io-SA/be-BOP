@@ -37,6 +37,7 @@
 	import { toZonedTime } from 'date-fns-tz';
 	import { RangeList } from '$lib/utils/range-list.js';
 	import { sum } from '$lib/utils/sum.js';
+	import { vatRate } from '$lib/types/Country';
 
 	export let data;
 
@@ -323,6 +324,13 @@
 	$: if (data.product.hasVariations) {
 		customAmount = productPriceWithVariations(data.product, selectedVariations);
 	}
+	const country = data.vatSingleCountry ? data.vatCountry : data.countryCode ?? data.vatCountry;
+	const vatProfile = data.product.vatProfileId
+		? data.vatProfiles.find(
+				(profile) => profile._id.toString() === data.product.vatProfileId?.toString()
+		  )
+		: undefined;
+	const rate = vatProfile?.rates[country] ?? vatRate(country);
 </script>
 
 <svelte:head>
@@ -453,6 +461,55 @@
 			>
 				<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
 				<div class="flex gap-2 lg:flex-col lg:items-start items-center justify-between">
+					{#if data.displayVatIncludedInProduct}
+						<div class="flex gap-4">
+							<PriceTag
+								currency={data.product.price.currency}
+								class="text-2xl lg:text-4xl truncate max-w-full {data.discount
+									? 'line-through'
+									: ''}"
+								short={!!data.discount}
+								amount={(data.product.hasVariations
+									? customAmount * (1 + rate / 100)
+									: data.product.price.amount * (1 + rate / 100)) *
+									(data.product.bookingSpec
+										? durationMinutes / data.product.bookingSpec.slotMinutes
+										: 1)}
+								main
+							/>
+							{#if data.discount && data.discount.mode === 'percentage'}
+								<PriceTag
+									currency={data.product.price.currency}
+									class="text-2xl lg:text-4xl truncate max-w-full"
+									short
+									amount={(data.product.hasVariations
+										? customAmount * (1 + rate / 100)
+										: data.product.price.amount * (1 + rate / 100)) *
+										(data.product.bookingSpec
+											? durationMinutes / data.product.bookingSpec.slotMinutes
+											: 1) *
+										(1 - data.discount.percentage / 100)}
+									main
+								/>
+							{/if}
+						</div>
+						<PriceTag
+							currency={data.product.price.currency}
+							amount={(data.product.hasVariations
+								? customAmount * (1 + rate / 100)
+								: data.product.price.amount * (1 + rate / 100)) *
+								(data.product.bookingSpec
+									? durationMinutes / data.product.bookingSpec.slotMinutes
+									: 1) *
+								(data.discount?.mode === 'percentage' && data.discount?.percentage
+									? 1 - data.discount.percentage / 100
+									: 1)}
+							secondary
+							class="text-xl"
+						/>
+						<span class="font-semibold">{t('product.vatIncluded')} ({t('cart.vat')} {rate}%)</span>
+						<br />
+					{/if}
 					<div class="flex gap-4">
 						<PriceTag
 							currency={data.product.price.currency}
