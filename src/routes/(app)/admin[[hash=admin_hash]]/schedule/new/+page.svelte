@@ -1,6 +1,13 @@
 <script lang="ts">
+	import { preUploadPicture } from '$lib/types/Picture';
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
+	import { applyAction, deserialize } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import Select from 'svelte-select';
+
+	export let data;
 
 	let name = '';
 	let slug = '';
@@ -11,11 +18,72 @@
 	let eventLines = 1;
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
+	let submitting = false;
+	let eventPictures: FileList[] = [];
+	let formElement: HTMLFormElement;
+
+	function handleFileChange(event: Event, index: number) {
+		const target = event.target as HTMLInputElement;
+		if (target.files) {
+			eventPictures[index] = target.files;
+		}
+	}
+	async function handleSubmit() {
+		try {
+			submitting = true;
+			const formData = new FormData(formElement);
+
+			await Promise.all(
+				eventPictures.map(async (picture, index) => {
+					if (picture) {
+						const pictureId = await preUploadPicture(data.adminPrefix, picture[0], {
+							fileName: name
+						});
+						formData.set(`eventPictures[${index}]`, pictureId);
+					}
+				})
+			);
+
+			const finalResponse = await fetch(formElement.action, {
+				method: 'POST',
+				body: formData
+			});
+
+			const result = deserialize(await finalResponse.text());
+
+			if (result.type === 'success') {
+				// rerun all `load` functions, following the successful update
+				await invalidateAll();
+			}
+
+			applyAction(result);
+		} finally {
+			submitting = false;
+		}
+	}
+	let hasTimezone = false;
+	const timezones = Intl.supportedValuesOf('timeZone').map((tz, index) => ({
+		index,
+		value: tz,
+		label: tz
+	}));
+
+	const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+	let selectedTimezone = timezones.find((tz) => tz.value === defaultTz) ?? null;
+	const timezoneOffsetHours = new Date().getTimezoneOffset() / 60;
+	const timezoneSign = timezoneOffsetHours > 0 ? '-' : '+';
+	const timezoneString = `GMT${timezoneSign}${Math.abs(timezoneOffsetHours)}`;
 </script>
 
 <h1 class="text-3xl">Add a schedule</h1>
 
-<form method="post" class="flex flex-col gap-4">
+<form
+	method="post"
+	class="flex flex-col gap-4"
+	on:submit|preventDefault={handleSubmit}
+	bind:this={formElement}
+>
 	<label class="form-label">
 		Name
 		<input
@@ -74,6 +142,22 @@
 		<input class="form-checkbox" type="checkbox" name="allowSubscription" />
 		Allow user to subscribe
 	</label>
+	<label class="checkbox-label">
+		<input class="form-checkbox" type="checkbox" bind:checked={hasTimezone} />
+		Set GMT timezone instead of server timezone
+	</label>
+	{#if hasTimezone}
+		{#if browser}(your browser's current zone is {timezoneString}){/if}
+		<Select
+			items={timezones}
+			searchable={true}
+			placeholder="Select a timezone"
+			clearable={true}
+			bind:value={selectedTimezone}
+			class="form-input"
+		/>
+		<input type="hidden" name="timezone" value={selectedTimezone?.value} />
+	{/if}
 
 	{#each [...Array(eventLines).keys()] as i}
 		<h1 class="text-xl font-bold gap-2">Event #{i + 1}</h1>
@@ -172,10 +256,22 @@
 				<input type="color" name="events[{i}].calendarColor" class="form-input" />
 			</label>
 		{/if}
+		<input
+			type="file"
+			accept="image/jpeg,image/png,image/webp"
+			class="block"
+			on:change={(e) => handleFileChange(e, i)}
+			disabled={submitting}
+		/>
 	{/each}
 	<button class="btn btn-gray self-start" on:click={() => (eventLines += 1)} type="button"
 		>Add another event
 	</button>
 
-	<input type="submit" class="btn btn-blue self-start text-white" value="Submit" />
+	<input
+		type="submit"
+		class="btn btn-blue self-start text-white"
+		value="Submit"
+		disabled={submitting}
+	/>
 </form>

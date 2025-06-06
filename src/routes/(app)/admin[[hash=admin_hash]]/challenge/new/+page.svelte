@@ -81,7 +81,15 @@
 		{#if ratio === 'global'}
 			<label class="form-label">
 				Ratio value (global)
-				<input class="form-input" type="number" name="globalRatio" min="0" max="100" required />
+				<input
+					class="form-input"
+					type="number"
+					name="globalRatio"
+					min="0"
+					max="100"
+					step="any"
+					required
+				/>
 			</label>
 		{/if}
 	{/if}

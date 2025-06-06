@@ -2,8 +2,11 @@
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import PictureComponent from '$lib/components/Picture.svelte';
 	import { CURRENCIES } from '$lib/types/Currency';
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { preUploadPicture } from '$lib/types/Picture.js';
+	import Select from 'svelte-select';
+	import { browser } from '$app/environment';
 
 	export let data;
 
@@ -11,16 +14,16 @@
 	let slug = data.schedule._id;
 	let displayPastEvents = data.schedule.displayPastEvents;
 	let eventLines = data.schedule.events.length || 1;
-	let eventAvailable = data.schedule.events.map((eve) => ({
+	$: eventAvailable = data.schedule.events.map((eve) => ({
 		isUnavailable: eve.unavailabity?.isUnavailable ?? false
 	}));
-	let eventCalendar = data.schedule.events.map((eve) => ({
+	$: eventCalendar = data.schedule.events.map((eve) => ({
 		calendarColor: !!eve.calendarColor
 	}));
-	let rsvpOptions = data.schedule.events.map((eve) => ({
+	$: rsvpOptions = data.schedule.events.map((eve) => ({
 		option: !!eve.rsvp?.target
 	}));
-	let createATicket = data.schedule.events.map(() => false);
+	$: createATicket = data.schedule.events.map(() => false);
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
 	let hideAll = true;
@@ -49,11 +52,73 @@
 	}
 	let calendarHasCustomColor = false;
 	let rsvpOption = false;
+	let submitting = false;
+	let eventPictures: FileList[] = [];
+	let formElement: HTMLFormElement;
+
+	function handleFileChange(event: Event, index: number) {
+		const target = event.target as HTMLInputElement;
+		if (target.files) {
+			eventPictures[index] = target.files;
+		}
+	}
+	async function handleSubmit(event: SubmitEvent) {
+		submitting = true;
+		const formData = new FormData(formElement);
+		try {
+			await Promise.all(
+				eventPictures.map(async (picture, index) => {
+					if (picture) {
+						const pictureId = await preUploadPicture(data.adminPrefix, picture[0], {
+							fileName: name
+						});
+						formData.set(`eventPictures[${index}]`, pictureId);
+					}
+				})
+			);
+			const action = (event.submitter as HTMLButtonElement | null)?.formAction.includes('?/')
+				? (event.submitter as HTMLButtonElement).formAction
+				: formElement.action;
+
+			const finalResponse = await fetch(action, {
+				method: 'POST',
+				body: formData
+			});
+
+			const result = deserialize(await finalResponse.text());
+
+			if (result.type === 'success') {
+				// rerun all `load` functions, following the successful update
+				await invalidateAll();
+			}
+
+			applyAction(result);
+		} finally {
+			submitting = false;
+		}
+	}
+	let hasTimezone = !!data.schedule.timezone;
+	const timezones = Intl.supportedValuesOf('timeZone').map((tz, index) => ({
+		index,
+		value: tz,
+		label: tz
+	}));
+	const defaultTz = data.schedule.timezone;
+	let selectedTimezone = timezones.find((tz) => tz.value === defaultTz) ?? null;
+	const timezoneOffsetHours = new Date().getTimezoneOffset() / 60;
+	const timezoneSign = timezoneOffsetHours > 0 ? '-' : '+';
+	const timezoneString = `GMT${timezoneSign}${Math.abs(timezoneOffsetHours)}`;
 </script>
 
 <h1 class="text-3xl">Edit a schedule</h1>
 
-<form method="post" class="flex flex-col gap-4">
+<form
+	method="post"
+	class="flex flex-col gap-4"
+	bind:this={formElement}
+	action="?/update"
+	on:submit|preventDefault={handleSubmit}
+>
 	<label class="form-label">
 		Name
 		<input
@@ -129,6 +194,23 @@
 		/>
 		Allow user to subscribe
 	</label>
+	<label class="checkbox-label">
+		<input class="form-checkbox" type="checkbox" bind:checked={hasTimezone} />
+		Set GMT timezone instead of server timezone
+	</label>
+	{#if hasTimezone}
+		{#if browser}(your browser's current zone is {timezoneString}){/if}
+		<Select
+			items={timezones}
+			searchable={true}
+			placeholder="Select a timezone"
+			clearable={true}
+			bind:value={selectedTimezone}
+			class="form-input"
+		/>
+		<input type="hidden" name="timezone" value={selectedTimezone?.value} />
+	{/if}
+
 	<button class="btn btn-gray self-start" on:click={() => (hideAll = !hideAll)} type="button">
 		{hideAll ? 'Expand all events' : 'Reduce all events'}
 	</button>
@@ -596,6 +678,13 @@
 							<input type="color" name="events[{i}].calendarColor" class="form-input" />
 						</label>
 					{/if}
+					<input
+						type="file"
+						accept="image/jpeg,image/png,image/webp"
+						class="block"
+						on:change={(e) => handleFileChange(e, i - (data.schedule.events.length || 1))}
+						disabled={submitting}
+					/>
 				{/if}
 			</div>
 		</details>
@@ -604,13 +693,13 @@
 		>Add another event
 	</button>
 	<div class="flex flex-row justify-between gap-2">
-		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
+		<input type="submit" class="btn btn-blue text-white" value="Update" disabled={submitting} />
 		<a href="/schedule/{data.schedule._id}" class="btn btn-gray">View</a>
 		<input
 			type="submit"
 			class="btn btn-red text-white ml-auto"
-			formaction="?/delete"
 			value="Delete"
+			formaction="?/delete"
 			on:click={confirmDelete}
 		/>
 	</div>

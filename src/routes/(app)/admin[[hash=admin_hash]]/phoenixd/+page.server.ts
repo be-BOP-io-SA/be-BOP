@@ -12,6 +12,7 @@ import {
 	phoenixdSendOnChain
 } from '$lib/server/phoenixd.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { updateLightningInvoiceDescription } from '$lib/server/actions.js';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
@@ -23,6 +24,7 @@ export const load = async () => {
 		]);
 
 		return {
+			lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
 			phoenixd: runtimeConfig.phoenixd,
 			dockerIp: dockerIp?.address
 		};
@@ -33,6 +35,7 @@ export const load = async () => {
 		const balance = await phoenixdBalance();
 		const bolt12Address = await phoenixdGetBolt12();
 		return {
+			lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
 			phoenixd: runtimeConfig.phoenixd,
 			nodeInfo,
 			balance,
@@ -40,6 +43,7 @@ export const load = async () => {
 		};
 	} catch (err) {
 		return {
+			lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
 			phoenixd: runtimeConfig.phoenixd,
 			nodeInfo: null,
 			balance: null,
@@ -91,6 +95,7 @@ export const actions = {
 			{ upsert: true }
 		);
 	},
+	updateLightningInvoiceDescription,
 	async disable() {
 		runtimeConfig.phoenixd.enabled = false;
 		runtimeConfig.phoenixd.password = '';

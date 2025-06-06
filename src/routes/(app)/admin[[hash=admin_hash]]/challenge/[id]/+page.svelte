@@ -117,6 +117,7 @@
 						min="0"
 						max="100"
 						required
+						step="any"
 						disabled={globalRatioDisable}
 						value={data.challenge.globalRatio}
 					/>

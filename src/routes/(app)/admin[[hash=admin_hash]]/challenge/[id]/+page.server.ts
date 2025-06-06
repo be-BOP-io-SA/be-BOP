@@ -81,7 +81,6 @@ export const actions = {
 		if (amount < 0 || isNaN(amount)) {
 			throw error(400, 'Invalid amount');
 		}
-
 		const updateResult = await collections.challenges.updateOne(
 			{
 				_id: challenge._id,
@@ -95,7 +94,7 @@ export const actions = {
 					progress: parsedProgress,
 					beginsAt,
 					endsAt,
-					...(challenge.ratio === 'global' && { globalRatio: parseInt(globalRatio) }),
+					...(challenge.ratio === 'global' && { globalRatio: Number(globalRatio) }),
 					updatedAt: new Date()
 				}
 			}

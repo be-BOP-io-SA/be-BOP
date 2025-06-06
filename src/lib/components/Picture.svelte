@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { Picture } from '$lib/types/Picture';
-	import DEFAULT_PICTURE from '$lib/assets/default-picture.svg';
 
 	export let picture: Picture | undefined;
 	let className = '';
@@ -99,7 +98,10 @@
 	$: sizeHint =
 		matchedWidth !== null && !maxWidth ? matchedWidth : computedWidth ?? maxComputedWidth;
 	function handleError(event: Event) {
-		(event.target as HTMLImageElement).srcset = DEFAULT_PICTURE;
+		let cacheBuster: number = Date.now();
+		(event.target as HTMLImageElement).srcset = '';
+		(event.target as HTMLImageElement).sizes = '';
+		(event.target as HTMLImageElement).srcset = `/asset/default-picture.png?t=${cacheBuster}`;
 	}
 </script>
 
@@ -109,6 +111,9 @@
 		alt={picture.name}
 		width={picture.storage.formats[0].width}
 		height={picture.storage.formats[0].height}
+		src={picture.storage.formats
+			.map((format) => `/picture/raw/${picture?._id}/format/${format.width}?v=1 ${format.width}w`)
+			.join(', ')}
 		srcset={picture.storage.formats
 			.map((format) => `/picture/raw/${picture?._id}/format/${format.width}?v=1 ${format.width}w`)
 			.join(', ')}
