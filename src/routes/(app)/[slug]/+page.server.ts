@@ -12,22 +12,22 @@ export async function load({ params, locals, url }) {
 		{
 			projection: {
 				content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] },
-				mobileContent: {
-					$ifNull: [`$translations.${locals.language}.mobileContent`, '$mobileContent']
-				},
-				title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] },
-				shortDescription: {
-					$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
-				},
 				employeeContent: {
 					$ifNull: [`$translations.${locals.language}.employeeContent`, '$employeeContent']
 				},
 				fullScreen: 1,
-				maintenanceDisplay: 1,
-				hideFromSEO: 1,
+				hasEmployeeContent: 1,
 				hasMobileContent: 1,
+				hideFromSEO: 1,
+				maintenanceDisplay: 1,
 				metas: 1,
-				hasEmployeeContent: 1
+				mobileContent: {
+					$ifNull: [`$translations.${locals.language}.mobileContent`, '$mobileContent']
+				},
+				shortDescription: {
+					$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
+				},
+				title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] }
 			}
 		}
 	);
@@ -60,32 +60,24 @@ export async function load({ params, locals, url }) {
 		}
 	}
 
+	const forceContentVersion =
+		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
+			? 'employee'
+			: url.searchParams.get('content') === 'desktop'
+			? 'desktop'
+			: url.searchParams.get('content') === 'mobile'
+			? 'mobile'
+			: undefined;
+
 	return {
 		cmsPage: omit(cmsPage, ['content', 'mobileContent', 'employeeContent']),
 		cmsData: cmsFromContent(
-			url.searchParams.get('content') === 'desktop' ||
-				!cmsPage.hasMobileContent ||
-				!cmsPage.mobileContent
-				? {
-						content:
-							locals.user?.roleId !== undefined &&
-							locals.user?.roleId !== CUSTOMER_ROLE_ID &&
-							cmsPage.hasEmployeeContent &&
-							cmsPage.employeeContent
-								? cmsPage.employeeContent
-								: cmsPage.content
-				  }
-				: url.searchParams.get('content') === 'mobile'
-				? { content: cmsPage.mobileContent }
-				: {
-						content:
-							locals.user?.roleId !== CUSTOMER_ROLE_ID &&
-							cmsPage.hasEmployeeContent &&
-							cmsPage.employeeContent
-								? cmsPage.employeeContent
-								: cmsPage.content,
-						mobileContent: cmsPage.mobileContent
-				  },
+			{
+				desktopContent: cmsPage.content,
+				employeeContent: (cmsPage.hasEmployeeContent && cmsPage.employeeContent) || undefined,
+				mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
+				forceContentVersion
+			},
 			locals
 		),
 		layoutReset: cmsPage.fullScreen,

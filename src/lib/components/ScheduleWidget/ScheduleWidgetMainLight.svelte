@@ -8,7 +8,6 @@
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
 	import IcsExport from './IcsExport.svelte';
 	import { getScheduleTimezone, offsetFromUTC } from '$lib/utils/scheduleTimezone';
-	import { onMount } from 'svelte';
 
 	export let pictures: Picture[] = [];
 	export let schedule: Schedule;
