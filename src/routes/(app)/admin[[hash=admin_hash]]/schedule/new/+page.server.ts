@@ -70,7 +70,7 @@ export const actions: Actions = {
 		}
 		const eventWithSlug = parsed.events.map((parsedEvent) => ({
 			...parsedEvent,
-			slug: generateId(parsedEvent.title, true)
+			slug: generateId(parsedEvent.title, false)
 		}));
 		if (parsed.eventPictures) {
 			await Promise.all(

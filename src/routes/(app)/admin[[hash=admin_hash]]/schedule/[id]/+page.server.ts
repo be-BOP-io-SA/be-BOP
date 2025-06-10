@@ -93,7 +93,7 @@ export const actions = {
 			.parse(json);
 		const eventWithSlug = parsed.events.map((parsedEvent) => ({
 			...parsedEvent,
-			slug: parsedEvent.slug || generateId(parsedEvent.title, true)
+			slug: parsedEvent.slug || generateId(parsedEvent.title, false)
 		}));
 
 		const oldEventSlugs = new Set(schedule?.events?.map((event) => event.slug) || []);

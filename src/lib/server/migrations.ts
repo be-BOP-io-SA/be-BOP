@@ -520,6 +520,46 @@ const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('682eff6501272b90dccd0f29'),
+		name: 'Convert schedule IDs to lowercase and update picture.schedule._id',
+		run: async (session: ClientSession) => {
+			const schedulesWithUppercaseIds = await collections.schedules
+				.find({ _id: { $regex: /[A-Z]/ } }, { session })
+				.toArray();
+
+			for (const schedule of schedulesWithUppercaseIds) {
+				const oldId = schedule._id;
+				const newId = oldId.toLowerCase();
+
+				if (oldId === newId) {
+					continue;
+				}
+
+				try {
+					const newSchedule = {
+						...schedule,
+						_id: newId,
+						events: schedule.events.map((oldEvent) => ({
+							...oldEvent,
+							slug: oldEvent.slug.toLowerCase()
+						}))
+					};
+					await collections.schedules.insertOne(newSchedule, { session });
+
+					await collections.schedules.deleteOne({ _id: oldId }, { session });
+
+					await collections.pictures.updateMany(
+						{ 'schedule._id': oldId },
+						{ $set: { 'schedule._id': newId } },
+						{ session }
+					);
+				} catch (error) {
+					throw error;
+				}
+			}
+		}
 	}
 ];
 
