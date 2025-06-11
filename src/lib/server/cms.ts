@@ -427,6 +427,9 @@ export async function cmsFromContent(
 							| 'alias'
 							| 'isTicket'
 							| 'hasSellDisclaimer'
+							| 'payWhatYouWant'
+							| 'bookingSpec'
+							| 'hasVariations'
 						>
 					>({
 						price: 1,
@@ -450,7 +453,10 @@ export async function cmsFromContent(
 						tagIds: 1,
 						alias: 1,
 						isTicket: 1,
-						hasSellDisclaimer: 1
+						hasSellDisclaimer: 1,
+						payWhatYouWant: 1,
+						bookingSpec: 1,
+						hasVariations: 1
 					})
 					.toArray()
 			: [],
