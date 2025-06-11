@@ -16,7 +16,6 @@ import type { VatProfile } from '$lib/types/VatProfile.js';
 import { groupBy } from '$lib/utils/group-by';
 import { error, redirect } from '@sveltejs/kit';
 import type { PickDeep, SetRequired } from 'type-fest';
-import { POS_ROLE_ID } from '$lib/types/User.js';
 
 export async function load(params) {
 	if (!runtimeConfig.isAdminCreated) {
@@ -239,7 +238,7 @@ export async function load(params) {
 				...(item.freeQuantity && { freeQuantity: item.freeQuantity }),
 				depositPercentage: item.depositPercentage,
 				internalNote:
-					item.internalNote && params.locals.user?.roleId === POS_ROLE_ID
+					item.internalNote && params.locals.user?.hasPosOptions
 						? {
 								value: item.internalNote?.value,
 								updatedAt: item.internalNote?.updatedAt
@@ -282,6 +281,7 @@ export async function load(params) {
 		npub: locals.npub,
 		sso: locals.sso,
 		userId: locals.user?._id.toString(),
+		hasPosOptions: locals.user?.hasPosOptions,
 		vatSingleCountry: runtimeConfig.vatSingleCountry,
 		vatCountry: runtimeConfig.vatCountry,
 		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,

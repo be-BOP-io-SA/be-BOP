@@ -35,7 +35,7 @@
 	export let tokens: CmsTokens;
 	export let sliders: CmsSlider[];
 	export let digitalFiles: CmsDigitalFile[];
-	export let roleId: string | undefined;
+	export let hasPosOptions: boolean | undefined;
 	export let sessionEmail: string | undefined;
 	export let pageName: string | undefined;
 	export let websiteLink: string | undefined;
@@ -72,7 +72,7 @@
 		{digitalFiles}
 		{sliders}
 		{tags}
-		{roleId}
+		{hasPosOptions}
 		{specifications}
 		{contactForms}
 		{sessionEmail}
@@ -100,7 +100,7 @@
 			{digitalFiles}
 			{sliders}
 			{tags}
-			{roleId}
+			{hasPosOptions}
 			{specifications}
 			{contactForms}
 			{sessionEmail}
