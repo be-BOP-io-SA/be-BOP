@@ -589,6 +589,10 @@
 				"title": "Ordine pagato interamente, importo residuo zero"
 			}
 		},
+		"ticket": {
+			"detail": "Dettaglio",
+			"sincerely": "Sinceramente"
+		},
 		"tickets": {
 			"printAll": "Stampa tutto",
 			"seeAll": "Vedi tutto",

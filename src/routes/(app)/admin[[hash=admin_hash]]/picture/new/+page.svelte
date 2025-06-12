@@ -140,6 +140,6 @@
 			<input type="hidden" name="eventScheduleSlug" value={eventScheduleSlug} />
 		{/if}
 
-		<input type="submit" class="btn btn-gray self-start" value="Add" />
+		<input type="submit" class="btn body-mainCTA self-start" value="Add" />
 	</fieldset>
 </form>

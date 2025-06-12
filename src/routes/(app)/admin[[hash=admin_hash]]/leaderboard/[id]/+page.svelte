@@ -143,6 +143,7 @@
 	<label class="form-label">
 		Products
 		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			disabled
 			name="productIds"
 			options={data.products.map((p) => ({ label: p.name, value: p._id }))}
@@ -155,7 +156,7 @@
 
 	<div class="flex flex-row justify-between gap-2">
 		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
-		<a href="/leaderboards/{data.leaderboard._id}" class="btn btn-gray">View</a>
+		<a href="/leaderboards/{data.leaderboard._id}" class="btn body-mainCTA">View</a>
 
 		<input
 			type="submit"

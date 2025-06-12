@@ -14,6 +14,7 @@
 			<label class="form-label"
 				>Product Tags
 				<MultiSelect
+					--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 					name="{product._id}.tagIds"
 					options={data.tags.map((tag) => ({
 						value: tag._id,

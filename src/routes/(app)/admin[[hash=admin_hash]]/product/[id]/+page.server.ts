@@ -135,7 +135,7 @@ export const actions: Actions = {
 			}
 		}
 		const hasVariations =
-			parsed.payWhatYouWant && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
+			parsed.hasVariations && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
 		try {
 			const res = await collections.products.updateOne(
 				{ _id: params.id },
@@ -170,7 +170,7 @@ export const actions: Actions = {
 								}
 							}),
 						hideDiscountExpiration: parsed.hideDiscountExpiration,
-						standalone: parsed.payWhatYouWant || parsed.standalone,
+						standalone: parsed.hasVariations || parsed.payWhatYouWant || parsed.standalone,
 						free: parsed.free,
 						...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
 						applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,

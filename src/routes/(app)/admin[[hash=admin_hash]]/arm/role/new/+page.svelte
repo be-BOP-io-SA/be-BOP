@@ -18,19 +18,34 @@
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Read/Write access
-		<MultiSelect options={defaultRoleOptions} allowUserOptions name="write" />
+		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
+			options={defaultRoleOptions}
+			allowUserOptions
+			name="write"
+		/>
 	</label>
 
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Read access
-		<MultiSelect options={defaultRoleOptions} allowUserOptions name="read" />
+		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
+			options={defaultRoleOptions}
+			allowUserOptions
+			name="read"
+		/>
 	</label>
 
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Forbidden access
-		<MultiSelect options={defaultRoleOptions} allowUserOptions name="forbidden" />
+		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
+			options={defaultRoleOptions}
+			allowUserOptions
+			name="forbidden"
+		/>
 	</label>
 
 	<input type="submit" value="Create" class="btn btn-black self-start" />

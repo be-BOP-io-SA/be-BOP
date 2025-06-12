@@ -165,6 +165,6 @@
 <svelte:head>
 	<meta name="viewport" content="width=1000" />
 </svelte:head>
-<main class="p-4 flex flex-col gap-4 {$page.data.bodyClass || ''}">
+<main class="p-4 flex flex-col gap-4 body-mainPlan {$page.data.bodyClass || ''}">
 	<slot />
 </main>

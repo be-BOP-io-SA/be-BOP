@@ -589,6 +589,10 @@
 				"title": "Bestellung vollständig bezahlt, ausstehender Betrag null"
 			}
 		},
+		"ticket": {
+			"detail": "Detail",
+			"sincerely": "Aufrichtig"
+		},
 		"tickets": {
 			"printAll": "Alle drucken",
 			"seeAll": "Alle anzeigen",

@@ -172,7 +172,7 @@ export const actions: Actions = {
 										currency: parsed.priceCurrency
 									}
 								}),
-							standalone: parsed.payWhatYouWant || parsed.standalone,
+							standalone: parsed.hasVariations || parsed.payWhatYouWant || parsed.standalone,
 							free: parsed.free,
 							bookingSpec: parsed.bookingSpec,
 							displayShortDescription: parsed.displayShortDescription,
@@ -216,15 +216,13 @@ export const actions: Actions = {
 							externalResources: parsed.externalResources?.filter(
 								(externalResourceLink) => externalResourceLink.label && externalResourceLink.href
 							),
-							...(parsed.payWhatYouWant && { hasVariations: parsed.hasVariations }),
-							...(parsed.payWhatYouWant &&
-								parsed.hasVariations && {
-									variations: variationsParsedPrice.filter(
-										(variation) => variation.name && variation.value
-									)
-								}),
-							...(parsed.payWhatYouWant &&
-								parsed.hasVariations &&
+							...(parsed.hasVariations && { hasVariations: parsed.hasVariations }),
+							...(parsed.hasVariations && {
+								variations: variationsParsedPrice.filter(
+									(variation) => variation.name && variation.value
+								)
+							}),
+							...(parsed.hasVariations &&
 								parsed.variationLabels && {
 									variationLabels: cleanedVariationLabels
 								}),
@@ -396,7 +394,7 @@ export const actions: Actions = {
 								currency: parsed.priceCurrency
 							}
 						}),
-					standalone: parsed.standalone,
+					standalone: parsed.hasVariations || parsed.payWhatYouWant || parsed.standalone,
 					free: parsed.free,
 					...(parsed.stock !== undefined && {
 						stock: { total: parsed.stock, available: parsed.stock, reserved: 0 }
@@ -434,15 +432,13 @@ export const actions: Actions = {
 					tagIds: product.tagIds,
 					cta: product.cta,
 					externalResources: product.externalResources,
-					...(parsed.standalone && { hasVariations: parsed.hasVariations }),
-					...(parsed.standalone &&
-						parsed.hasVariations && {
-							variations: variationsParsedPrice.filter(
-								(variation) => variation.name && variation.value
-							)
-						}),
-					...(parsed.standalone &&
-						parsed.hasVariations &&
+					...(parsed.hasVariations && { hasVariations: parsed.hasVariations }),
+					...(parsed.hasVariations && {
+						variations: variationsParsedPrice.filter(
+							(variation) => variation.name && variation.value
+						)
+					}),
+					...(parsed.hasVariations &&
 						parsed.variationLabels && {
 							variationLabels: cleanedVariationLabels
 						}),

@@ -208,7 +208,7 @@
 			</label>
 		</div>
 	{/each}
-	<button class="btn btn-gray self-start" on:click={() => (tagCtaLines += 1)} type="button"
+	<button class="btn body-mainCTA self-start" on:click={() => (tagCtaLines += 1)} type="button"
 		>Add CTAs
 	</button>
 
