@@ -36,14 +36,28 @@
 			: ''}"
 	>
 		<div class="flex flex-row">
-			<PictureComponent
-				picture={pictureByEventSlug[event.slug]}
-				class="max-h-[6em] max-w-[6em] object-contain {(event.endsAt &&
-					event.endsAt < new Date()) ||
-				addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
-					? 'opacity-50'
-					: ''}"
-			/>
+			{#if pictureByEventSlug[event.slug]}
+				<PictureComponent
+					picture={pictureByEventSlug[event.slug]}
+					class="max-h-[6em] max-w-[6em] object-contain {(event.endsAt &&
+						event.endsAt < new Date()) ||
+					addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
+						? 'opacity-50'
+						: ''}"
+				/>
+			{:else}
+				<!-- svelte-ignore a11y-img-redundant-alt -->
+				<img
+					src="/asset/event-default-picture.png"
+					alt="default-event-picture"
+					class="max-h-[6em] max-w-[6em] object-contain {(event.endsAt &&
+						event.endsAt < new Date()) ||
+					addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
+						? 'opacity-50'
+						: ''}"
+				/>
+			{/if}
+
 			<div class="p-4 pl-8">
 				<h2 class="text-2xl font-bold body-title mb-2 flex flex-row">
 					{event.title}
