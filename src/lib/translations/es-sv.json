@@ -589,6 +589,10 @@
 				"title": "Pedido completamente pagado, ningún monto pendiente"
 			}
 		},
+		"ticket": {
+			"detail": "Detalle",
+			"sincerely": "Atentamente"
+		},
 		"tickets": {
 			"printAll": "Imprimir todo",
 			"seeAll": "Ver todo",

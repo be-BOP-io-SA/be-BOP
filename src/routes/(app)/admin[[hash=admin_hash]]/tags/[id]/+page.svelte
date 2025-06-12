@@ -155,7 +155,7 @@
 			>
 		</div>
 	{/each}
-	<button class="btn btn-gray self-start" on:click={() => (tagCtaLines += 1)} type="button"
+	<button class="btn body-mainCTA self-start" on:click={() => (tagCtaLines += 1)} type="button"
 		>Add CTAs
 	</button>
 
@@ -172,7 +172,7 @@
 	</label>
 	<div class="flex flex-row justify-between gap-2">
 		<input type="submit" class="btn btn-blue self-start text-white" value="Update" />
-		<a href="/tag/{data.tag._id}" class="btn btn-gray">View</a>
+		<a href="/tag/{data.tag._id}" class="btn body-mainCTA">View</a>
 
 		<button
 			type="submit"

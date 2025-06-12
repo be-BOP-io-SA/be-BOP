@@ -74,6 +74,7 @@
 					value={role.name}
 				/>
 				<MultiSelect
+					--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 					name="write"
 					selected={role.permissions.write}
 					options={defaultRoleOptions}
@@ -81,6 +82,7 @@
 					allowUserOptions
 				/>
 				<MultiSelect
+					--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 					name="read"
 					selected={role.permissions.read}
 					options={defaultRoleOptions}
@@ -88,6 +90,7 @@
 					allowUserOptions
 				/>
 				<MultiSelect
+					--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 					name="forbidden"
 					selected={role.permissions.forbidden}
 					options={defaultRoleOptions}
@@ -279,5 +282,5 @@
 			value={data.adminWelcomMessage}
 		/>
 	</label>
-	<button type="submit" class="btn btn-gray self-start"> Save text </button>
+	<button type="submit" class="btn body-mainCTA self-start"> Save text </button>
 </form>
