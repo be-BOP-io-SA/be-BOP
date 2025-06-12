@@ -212,6 +212,7 @@ const baseConfig = {
 	contactModesForceOption: false,
 	posTouchTag: [] as Tag['_id'][],
 	posPrefillTermOfUse: false,
+	notPrefillCheckoutAddress: false,
 	hideCreditCardQrCode: false,
 	overwriteCreditCardSvgColor: false,
 	hideCmsZonesOnMobile: false,
