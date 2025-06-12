@@ -12,10 +12,11 @@
 
 <h1 class="text-3xl">Add a contact form</h1>
 <p>
-	<kbd class="kbd">{'{{websiteLink}}'}</kbd>, <kbd class="kbd">{'{{brandName}}'}</kbd>,
-	<kbd class="kbd">{'{{pageLink}}'}</kbd>
+	<kbd class="kbd body-secondaryCTA">{'{{websiteLink}}'}</kbd>,
+	<kbd class="kbd body-secondaryCTA">{'{{brandName}}'}</kbd>,
+	<kbd class="kbd body-secondaryCTA">{'{{pageLink}}'}</kbd>
 	and
-	<kbd class="kbd">{'{{pageName}}'}</kbd> are always available in templates.
+	<kbd class="kbd body-secondaryCTA">{'{{pageName}}'}</kbd> are always available in templates.
 </p>
 <form method="post" class="flex flex-col gap-4">
 	<label class="form-label">
