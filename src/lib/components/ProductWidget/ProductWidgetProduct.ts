@@ -14,4 +14,7 @@ export type ProductWidgetProduct = Pick<
 	| 'stock'
 	| 'isTicket'
 	| 'hasSellDisclaimer'
+	| 'payWhatYouWant'
+	| 'bookingSpec'
+	| 'hasVariations'
 >;

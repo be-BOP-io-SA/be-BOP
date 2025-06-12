@@ -24,6 +24,9 @@
 		| 'type'
 		| 'stock'
 		| 'hasSellDisclaimer'
+		| 'payWhatYouWant'
+		| 'bookingSpec'
+		| 'hasVariations'
 	>;
 	const widget = {};
 
@@ -41,6 +44,12 @@
 	export let btnTranslationKey = 'product.cta.add';
 	const { t } = useI18n();
 	let hasStock = !!(product.stock?.available ?? Infinity);
+	let canBeAddedToCart =
+		!product.hasVariations &&
+		!product.bookingSpec &&
+		!product.payWhatYouWant &&
+		hasStock &&
+		!product.hasSellDisclaimer;
 </script>
 
 <form
@@ -61,7 +70,7 @@
 		};
 	}}
 >
-	{#if hasStock && !product.hasSellDisclaimer}
+	{#if canBeAddedToCart}
 		<button
 			type="submit"
 			disabled={loading}
