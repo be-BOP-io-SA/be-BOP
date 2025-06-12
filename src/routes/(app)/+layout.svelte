@@ -168,12 +168,12 @@
 				<nav class="flex gap-10 text-[22px] font-semibold header-tab">
 					{#each data.links.topbar as link}
 						<a
-							href={link.href.startsWith('http') || link.href.includes('/')
+							href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
 								? link.href
 								: `/${link.href}`}
 							class=" {data.notResponsive ? '' : 'hidden lg:inline'}"
 							data-sveltekit-preload-data="off"
-							target={link.href.startsWith('http') ? '_blank' : '_self'}
+							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 						>
 							{link.label}
 						</a>
@@ -199,10 +199,10 @@
 				{#each data.links.topbar as link}
 					<a
 						class="py-4"
-						href={link.href.startsWith('http') || link.href.includes('/')
+						href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
 							? link.href
 							: `/${link.href}`}
-						target={link.href.startsWith('http') ? '_blank' : '_self'}
+						target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 						data-sveltekit-preload-data="off">{link.label}</a
 					>
 				{/each}
@@ -224,11 +224,11 @@
 
 					{#each data.links.navbar as link}
 						<a
-							href={link.href.startsWith('http') || link.href.includes('/')
+							href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
 								? link.href
 								: `/${link.href}`}
 							class={data.notResponsive ? '' : 'hidden lg:inline'}
-							target={link.href.startsWith('http') ? '_blank' : '_self'}
+							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 							data-sveltekit-preload-data="off">{link.label}</a
 						>
 					{/each}
@@ -518,7 +518,7 @@
 					<a
 						class="py-2 hover:underline"
 						data-sveltekit-preload-data="off"
-						href={link.href.startsWith('http') || link.href.includes('/')
+						href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
 							? link.href
 							: `/${link.href}`}>{link.label}</a
 					>
@@ -628,10 +628,10 @@
 						{#each data.links.footer as link}
 							<a
 								class={link.label === '-' ? 'hidden lg:contents' : ''}
-								href={link.href.startsWith('http') || link.href.includes('/')
+								href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
 									? link.href
 									: `/${link.href}`}
-								target={link.href.startsWith('http') ? '_blank' : '_self'}
+								target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 								data-sveltekit-preload-data="off">{link.label}</a
 							>
 						{/each}
