@@ -15,6 +15,7 @@
 	<label class="form-label">
 		Order Label Ids
 		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			options={data.labels.map((label) => ({
 				value: label._id,
 				label: label.name

@@ -99,7 +99,7 @@
 		enforce: false
 	};
 	let errorMessage = '';
-	let variationLines = product.variations?.length ? product.variations?.length : 2;
+	let variationLines = product.variations?.length ? product.variations?.length : 1;
 	let productCtaLines = product.cta?.length ? product.cta.length : 3;
 	let externalResourcesLines = product.externalResources?.length
 		? product.externalResources?.length
@@ -274,7 +274,7 @@
 		product.payWhatYouWant = false;
 	}
 
-	$: if (product.payWhatYouWant) {
+	$: if (product.payWhatYouWant || product.hasVariations) {
 		product.standalone = true;
 	}
 
@@ -317,9 +317,21 @@
 	}
 	function duplicateVariation(
 		variation: { name: string; value: string; price?: number },
-		index: number
+		index: number,
+		newVariation: boolean
 	) {
-		product.variations?.splice(index, 0, variation);
+		if (newVariation) {
+			variationLabelsNames.push(variation.name);
+			variationLabelsValues.push(variation.value);
+		} else {
+			const newVariationValue = crypto.randomUUID();
+			if (product.variationLabels) {
+				product.variationLabels.values[variation.name][newVariationValue] =
+					product.variationLabels.values[variation.name][variation.value];
+			}
+			product.variations?.splice(index + 1, 0, { ...variation, value: newVariationValue });
+		}
+
 		variationLines++;
 	}
 	$: variationLabelsToUpdate = product.variationLabels || { names: {}, values: {} };
@@ -575,7 +587,7 @@
 				bind:checked={product.standalone}
 				on:input={() => priceAmountElement?.setCustomValidity('')}
 				name="standalone"
-				disabled={product.payWhatYouWant}
+				disabled={product.payWhatYouWant || product.hasVariations}
 			/>
 			This is a standalone product
 		</label>
@@ -652,18 +664,19 @@
 				type="checkbox"
 				bind:checked={product.hasVariations}
 				name="hasVariations"
-				disabled={!product.payWhatYouWant}
 			/>
 			Product has light variations (no stock difference)
 		</label>
 		{#if product.hasVariations}
-			{#each [...(product.variations || []), ...Array(variationLines).fill( { name: '', value: '', price: 0 } )].slice(0, variationLines) as variation, i}
+			{@const productVariationsDisplayed = [
+				...(product.variations || []),
+				...Array(variationLines).fill({ name: '', value: '', price: 0 })
+			].slice(0, variationLines)}
+			{#each productVariationsDisplayed as variation, i}
 				<div class="flex gap-4">
 					{#if variation.name && variation.value}
-						<button
-							class={i === 0 ? 'mt-8' : ''}
-							type="button"
-							on:click={() => duplicateVariation(variation, i)}>➕</button
+						<button type="button" on:click={() => duplicateVariation(variation, i, false)}
+							>➕</button
 						>
 						<label class="form-label">
 							{i === 0 ? 'Category Id' : ''}
@@ -683,13 +696,7 @@
 							{i === 0 ? 'Value' : ''}
 							<input
 								type="text"
-								name="variationLabels.values[{variation.name}][{isNumber(variationInput[i]?.value)
-									? (
-											variation.name +
-												(isNumber(variation.name) ? '-' : '') +
-												variationInput[i]?.value || ''
-									  ).toLowerCase()
-									: (variationInput[i]?.value || '').toLowerCase()}]"
+								name="variationLabels.values[{variation.name}][{variation.value}]"
 								class="form-input"
 								value={product.variationLabels?.values[variation.name]?.[variation.value]}
 								bind:this={variationInput[i]}
@@ -700,16 +707,16 @@
 							/>
 						</label>
 					{:else}
+						{@const disableButton = !variationLabelsNames[i] && !variationLabelsValues[i]}
 						<button
-							class="{i === 0 ? 'mt-8' : ''} {!variationLabelsNames[i] && !variationLabelsValues[i]
-								? 'opacity-50'
-								: ''}"
+							class={disableButton ? 'opacity-50' : ''}
 							type="button"
-							disabled={!variationLabelsNames[i] && !variationLabelsValues[i]}
+							disabled={disableButton}
 							on:click={() =>
 								duplicateVariation(
 									{ name: variationLabelsNames[i], value: variationLabelsValues[i], price: 0 },
-									i
+									i,
+									true
 								)}>➕</button
 						>
 						<label class="form-label">
@@ -762,13 +769,7 @@
 								type="hidden"
 								name="variations[{i}].value"
 								class="form-input"
-								value={isNumber(variationInput[i]?.value)
-									? (
-											variation.name +
-												(isNumber(variation.name) ? '-' : '') +
-												variationInput[i]?.value || ''
-									  ).toLowerCase()
-									: (variationInput[i]?.value || '').toLowerCase()}
+								value={variation.value}
 							/>
 						{:else}
 							<input
@@ -804,20 +805,17 @@
 					</label>
 					{#if variation.name && variation.value}
 						<button
-							class={i === 0 ? 'mt-8' : ''}
 							type="button"
 							on:click={() => deleteVariationLabel(variation.name, variation.value)}>➖</button
 						>
 						<button
-							class={i === 0 ? 'mt-8 opacity-50' : ''}
+							class={i === 0 ? 'opacity-50' : ''}
 							type="button"
 							disabled={i === 0}
 							on:click={() => moveVariation(i, i - 1)}>🔺</button
 						>
 						<button
-							class="{i === 0 ? 'mt-8' : ''}{i === (product.variations?.length ?? 1) - 1
-								? 'opacity-50'
-								: ''}"
+							class={i === (product.variations?.length ?? 1) - 1 ? 'opacity-50' : ''}
 							type="button"
 							disabled={i === (product.variations?.length ?? 1) - 1}
 							on:click={() => moveVariation(i, i + 1)}>🔻</button
@@ -825,7 +823,11 @@
 					{/if}
 				</div>
 			{/each}
-			<button class="btn btn-gray self-start" on:click={() => (variationLines += 1)} type="button">
+			<button
+				class="btn body-mainCTA self-start"
+				on:click={() => (variationLines += 1)}
+				type="button"
+			>
 				Add variation
 			</button>
 		{/if}
@@ -918,6 +920,7 @@
 		<label class="form-label"
 			>Product Tags
 			<MultiSelect
+				--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 				name="tagIds"
 				options={tags.map((tag) => ({
 					value: tag._id,
@@ -944,7 +947,7 @@
 					/>
 					<span class="text-sm text-gray-600 mt-2 block"
 						>Leave empty if your product is immediately available. Press
-						<kbd class="kbd">backspace</kbd> to remove the date.</span
+						<kbd class="kbd body-secondaryCTA">backspace</kbd> to remove the date.</span
 					>
 				</label>
 				{#if !isNew}
@@ -1300,7 +1303,10 @@
 				>
 			</div>
 		{/each}
-		<button class="btn btn-gray self-start" on:click={() => (productCtaLines += 1)} type="button"
+		<button
+			class="btn body-mainCTA self-start"
+			on:click={() => (productCtaLines += 1)}
+			type="button"
 			>Add CTAs
 		</button>
 
@@ -1344,7 +1350,7 @@
 			</div>
 		{/each}
 		<button
-			class="btn btn-gray self-start"
+			class="btn body-mainCTA self-start"
 			on:click={() => (externalResourcesLines += 1)}
 			type="button"
 			>Add external resource
@@ -1462,8 +1468,8 @@
 				}}>{isNew ? 'Create' : 'Update'}</button
 			>
 			{#if !isNew}
-				<a href="/product/{product._id}" class="btn btn-gray" target="_blank">View</a>
-				<a href="{adminPrefix}/product/new?duplicate_from={product._id}" class="btn btn-gray">
+				<a href="/product/{product._id}" class="btn body-mainCTA" target="_blank">View</a>
+				<a href="{adminPrefix}/product/new?duplicate_from={product._id}" class="btn body-mainCTA">
 					Duplicate
 				</a>
 				<button

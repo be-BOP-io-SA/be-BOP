@@ -589,6 +589,10 @@
 				"title": "Encomenda totalmente paga, valor pendente zero"
 			}
 		},
+		"ticket": {
+			"detail": "Detalhe",
+			"sincerely": "Sinceramente"
+		},
 		"tickets": {
 			"printAll": "Imprimir tudo",
 			"seeAll": "Ver tudo",

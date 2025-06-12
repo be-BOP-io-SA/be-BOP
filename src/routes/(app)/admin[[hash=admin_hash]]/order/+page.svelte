@@ -91,8 +91,8 @@
 			</select>
 		</label>
 		<label class="form-label w-auto mt-8 flex flex-row">
-			<input type="submit" value="🔍" class="btn btn-gray" on:click={() => (next = 0)} />
-			<a href="/admin/order" class="btn btn-gray">🧹</a>
+			<input type="submit" value="🔍" class="btn body-mainCTA" on:click={() => (next = 0)} />
+			<a href="/admin/order" class="btn body-mainCTA">🧹</a>
 		</label>
 	</div>
 	<OrdersList orders={data.orders} adminPrefix={data.adminPrefix} orderLabels={data.labels} />
