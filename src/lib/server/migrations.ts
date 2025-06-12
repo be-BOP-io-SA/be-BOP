@@ -520,6 +520,17 @@ const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('684af38a6fbd314f44a84f88'),
+		name: 'Set paywhatYouWant for products with hasVariation',
+		run: async (session: ClientSession) => {
+			await collections.products.updateMany(
+				{ hasVariations: { $exists: true } },
+				{ $set: { payWhatYouWant: true } },
+				{ session }
+			);
+		}
 	}
 ];
 

@@ -299,6 +299,29 @@
 	function isNumber(value: string) {
 		return !isNaN(Number(value)) && value.trim() !== '';
 	}
+	function moveVariation(fromIndex: number, toIndex: number): void {
+		if (product.variations) {
+			if (
+				fromIndex < 0 ||
+				toIndex < 0 ||
+				fromIndex >= product.variations.length ||
+				toIndex >= product.variations.length
+			) {
+				return;
+			}
+			const newVariations = [...product.variations];
+			const [movedItem] = newVariations.splice(fromIndex, 1);
+			newVariations.splice(toIndex, 0, movedItem);
+			product.variations = newVariations;
+		}
+	}
+	function duplicateVariation(
+		variation: { name: string; value: string; price?: number },
+		index: number
+	) {
+		product.variations?.splice(index, 0, variation);
+		variationLines++;
+	}
 	$: variationLabelsToUpdate = product.variationLabels || { names: {}, values: {} };
 	function deleteVariationLabel(key: string, valueKey: string) {
 		variationLabelsToUpdate = {
@@ -629,7 +652,7 @@
 				type="checkbox"
 				bind:checked={product.hasVariations}
 				name="hasVariations"
-				disabled={!product.standalone}
+				disabled={!product.payWhatYouWant}
 			/>
 			Product has light variations (no stock difference)
 		</label>
@@ -637,12 +660,17 @@
 			{#each [...(product.variations || []), ...Array(variationLines).fill( { name: '', value: '', price: 0 } )].slice(0, variationLines) as variation, i}
 				<div class="flex gap-4">
 					{#if variation.name && variation.value}
+						<button
+							class={i === 0 ? 'mt-8' : ''}
+							type="button"
+							on:click={() => duplicateVariation(variation, i)}>➕</button
+						>
 						<label class="form-label">
-							Category Id
+							{i === 0 ? 'Category Id' : ''}
 							<input disabled type="text" class="form-input" value={variation.name} />
 						</label>
 						<label class="form-label">
-							Category Name
+							{i === 0 ? 'Category Name' : ''}
 							<input
 								type="text"
 								name="variationLabels.names[{variation.name}]"
@@ -652,19 +680,44 @@
 							/>
 						</label>
 						<label class="form-label">
-							Value <input
+							{i === 0 ? 'Value' : ''}
+							<input
 								type="text"
-								name="variationLabels.values[{variation.name}][{variation.value}]"
+								name="variationLabels.values[{variation.name}][{isNumber(variationInput[i]?.value)
+									? (
+											variation.name +
+												(isNumber(variation.name) ? '-' : '') +
+												variationInput[i]?.value || ''
+									  ).toLowerCase()
+									: (variationInput[i]?.value || '').toLowerCase()}]"
 								class="form-input"
 								value={product.variationLabels?.values[variation.name]?.[variation.value]}
 								bind:this={variationInput[i]}
-								on:input={() => variationInput[i]?.setCustomValidity('')}
+								on:input={() => (
+									variationInput[i]?.setCustomValidity(''), (variationInput[i] = variationInput[i])
+								)}
 								required={!!product.variationLabels?.names[variation.name]}
 							/>
 						</label>
 					{:else}
+						<button
+							class="{i === 0 ? 'mt-8' : ''} {!variationLabelsNames[i] && !variationLabelsValues[i]
+								? 'opacity-50'
+								: ''}"
+							type="button"
+							disabled={!variationLabelsNames[i] && !variationLabelsValues[i]}
+							on:click={() =>
+								duplicateVariation(
+									{ name: variationLabelsNames[i], value: variationLabelsValues[i], price: 0 },
+									i
+								)}>➕</button
+						>
 						<label class="form-label">
-							Category Name
+							{i === 0 ? 'Category Id' : ''}
+							<input disabled type="text" class="form-input" bind:value={variationLabelsNames[i]} />
+						</label>
+						<label class="form-label">
+							{i === 0 ? 'Category Name' : ''}
 							<input
 								type="text"
 								name="variationLabels.names[{(
@@ -676,7 +729,8 @@
 							/>
 						</label>
 						<label class="form-label">
-							Value <input
+							{i === 0 ? 'Value' : ''}
+							<input
 								type="text"
 								name="variationLabels.values[{(
 									(isNumber(variationLabelsNames[i]) ? 'name' : '') + variationLabelsNames[i] || ''
@@ -708,7 +762,13 @@
 								type="hidden"
 								name="variations[{i}].value"
 								class="form-input"
-								value={variation.value}
+								value={isNumber(variationInput[i]?.value)
+									? (
+											variation.name +
+												(isNumber(variation.name) ? '-' : '') +
+												variationInput[i]?.value || ''
+									  ).toLowerCase()
+									: (variationInput[i]?.value || '').toLowerCase()}
 							/>
 						{:else}
 							<input
@@ -732,7 +792,8 @@
 									: (variationLabelsValues[i] || '').toLowerCase()}
 							/>
 						{/if}
-						Price difference<input
+						{i === 0 ? 'Price difference' : ''}
+						<input
 							type="number"
 							name="variations[{i}].price"
 							class="form-input"
@@ -742,12 +803,26 @@
 						/>
 					</label>
 					{#if variation.name && variation.value}
-						<label class="form-label mt-8">
-							<button
-								type="button"
-								on:click={() => deleteVariationLabel(variation.name, variation.value)}>🗑️</button
-							>
-						</label>{/if}
+						<button
+							class={i === 0 ? 'mt-8' : ''}
+							type="button"
+							on:click={() => deleteVariationLabel(variation.name, variation.value)}>➖</button
+						>
+						<button
+							class={i === 0 ? 'mt-8 opacity-50' : ''}
+							type="button"
+							disabled={i === 0}
+							on:click={() => moveVariation(i, i - 1)}>🔺</button
+						>
+						<button
+							class="{i === 0 ? 'mt-8' : ''}{i === (product.variations?.length ?? 1) - 1
+								? 'opacity-50'
+								: ''}"
+							type="button"
+							disabled={i === (product.variations?.length ?? 1) - 1}
+							on:click={() => moveVariation(i, i + 1)}>🔻</button
+						>
+					{/if}
 				</div>
 			{/each}
 			<button class="btn btn-gray self-start" on:click={() => (variationLines += 1)} type="button">

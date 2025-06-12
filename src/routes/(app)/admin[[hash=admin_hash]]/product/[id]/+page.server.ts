@@ -135,7 +135,7 @@ export const actions: Actions = {
 			}
 		}
 		const hasVariations =
-			parsed.standalone && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
+			parsed.payWhatYouWant && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
 		try {
 			const res = await collections.products.updateOne(
 				{ _id: params.id },

@@ -24,7 +24,6 @@ import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 
 export const load = async ({ url }) => {
 	const productId = url.searchParams.get('duplicate_from');
-
 	const tags = await collections.tags
 		.find({})
 		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
@@ -217,14 +216,14 @@ export const actions: Actions = {
 							externalResources: parsed.externalResources?.filter(
 								(externalResourceLink) => externalResourceLink.label && externalResourceLink.href
 							),
-							...(parsed.standalone && { hasVariations: parsed.hasVariations }),
-							...(parsed.standalone &&
+							...(parsed.payWhatYouWant && { hasVariations: parsed.hasVariations }),
+							...(parsed.payWhatYouWant &&
 								parsed.hasVariations && {
 									variations: variationsParsedPrice.filter(
 										(variation) => variation.name && variation.value
 									)
 								}),
-							...(parsed.standalone &&
+							...(parsed.payWhatYouWant &&
 								parsed.hasVariations &&
 								parsed.variationLabels && {
 									variationLabels: cleanedVariationLabels
