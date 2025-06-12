@@ -589,6 +589,10 @@
 				"title": "Commande entièrement payée, montant restant dû zéro"
 			}
 		},
+		"ticket": {
+			"detail": "Détail",
+			"sincerely": "Cordialement"
+		},
 		"tickets": {
 			"printAll": "Tout imprimer",
 			"seeAll": "Tout voir",
