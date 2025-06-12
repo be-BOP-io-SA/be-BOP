@@ -108,33 +108,33 @@
 
 			<div class="flex flex-col gap-4 mt-4 self-center flex-wrap">
 				{#if data.canSso.google}
-					<button class="btn btn-gray" on:click={() => signIn('google')}>
+					<button class="btn body-mainCTA" on:click={() => signIn('google')}>
 						<IconGoogle class="text-[#db4437] mr-2" />{t('login.cta.signInWith', {
 							provider: 'Google'
 						})}
 					</button>
 				{/if}
 				{#if data.canSso.facebook}
-					<button class="btn btn-gray" on:click={() => signIn('facebook')}>
+					<button class="btn body-mainCTA" on:click={() => signIn('facebook')}>
 						<IconFacebook class="text-[#4267B2] mr-2" />
 						{t('login.cta.signInWith', { provider: 'Facebook' })}
 					</button>
 				{/if}
 				{#if data.canSso.twitter}
-					<button class="btn btn-gray" on:click={() => signIn('twitter')}>
+					<button class="btn body-mainCTA" on:click={() => signIn('twitter')}>
 						<IconTwitter class="text-[#1DA1F2] mr-2" />
 						{t('login.cta.signInWith', { provider: 'Twitter' })}
 					</button>
 				{/if}
 				{#if data.canSso.github}
-					<button class="btn btn-gray" on:click={() => signIn('github')}>
+					<button class="btn body-mainCTA" on:click={() => signIn('github')}>
 						<IconGithub class="mr-2" />
 						{t('login.cta.signInWith', { provider: 'Github' })}
 					</button>
 				{/if}
 
 				{#each data.canSso.providers as provider}
-					<a class="btn btn-gray" href="/login/oauth/{encodeURIComponent(provider.slug)}">
+					<a class="btn body-mainCTA" href="/login/oauth/{encodeURIComponent(provider.slug)}">
 						<!-- {#if provider.icon}
 							<img src={provider.icon} alt={provider.name} class="w-4 h-4 mr-2" />
 						{/if} -->

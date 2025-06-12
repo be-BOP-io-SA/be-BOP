@@ -527,11 +527,11 @@
 		{/if}
 
 		{#if $page.url.pathname.startsWith('/admin')}
-			<div class="grow">
+			<div class="grow body-mainPlan">
 				<slot />
 			</div>
 		{:else if $page.url.pathname === '/pos'}
-			<div class="grow">
+			<div class="grow body-mainPlan">
 				<slot />
 			</div>
 		{:else}
@@ -555,7 +555,7 @@
 						</label>
 						<input
 							type="submit"
-							class="btn btn-gray my-4 w-full"
+							class="btn body-mainCTA my-4 w-full"
 							value={t('ageWarning.navigate')}
 							disabled={!ageWarning}
 						/>

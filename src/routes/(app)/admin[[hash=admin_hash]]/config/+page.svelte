@@ -34,7 +34,7 @@
 		})) ?? [];
 </script>
 
-<h1 class="text-3xl">Config</h1>
+<h1 class="text-3xl">General settings</h1>
 
 {#if form?.success}
 	<div class="alert alert-success">{form.success}</div>
@@ -120,6 +120,7 @@
 	<label class="form-label">
 		Contact Modes
 		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			options={['email', 'nostr'].map((contact) => ({
 				value: contact,
 				label: contact
@@ -576,7 +577,7 @@
 			value={data.analyticsScriptSnippet}
 		/>
 	</label>
-	<input type="submit" value="Update" class="btn btn-gray self-start" />
+	<input type="submit" value="Update" class="btn body-mainCTA self-start" />
 </form>
 
 <p>

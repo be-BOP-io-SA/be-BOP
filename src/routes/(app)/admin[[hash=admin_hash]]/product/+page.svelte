@@ -41,6 +41,9 @@
 <a href="{data.adminPrefix}/product/prices" class="underline block">Products price</a>
 <a href="{data.adminPrefix}/product/alias" class="underline block">Products aliases</a>
 <a href="{data.adminPrefix}/product/tags" class="underline block">Products tags</a>
+<a href="{data.adminPrefix}/product/default-picture" class="underline block"
+	>Products default picture</a
+>
 
 {#if 0}
 	<button on:click={exportData} class="btn btn-black self-start">Export catalog</button>
@@ -159,8 +162,8 @@
 			</select>
 		</label>
 		<label class="form-label w-auto mt-8 flex flex-row">
-			<input type="submit" value="🔍" class="btn btn-gray" on:click={() => (next = 0)} />
-			<a href="/admin/product" class="btn btn-gray">🧹</a>
+			<input type="submit" value="🔍" class="btn body-mainCTA" on:click={() => (next = 0)} />
+			<a href="/admin/product" class="btn body-mainCTA">🧹</a>
 		</label>
 	</div>
 	<div class="flex flex-row flex-wrap gap-6">

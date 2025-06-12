@@ -2,8 +2,9 @@
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import PictureComponent from '$lib/components/Picture.svelte';
 	import { CURRENCIES } from '$lib/types/Currency';
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { preUploadPicture } from '$lib/types/Picture.js';
 	import Select from 'svelte-select';
 	import { browser } from '$app/environment';
 
@@ -13,16 +14,16 @@
 	let slug = data.schedule._id;
 	let displayPastEvents = data.schedule.displayPastEvents;
 	let eventLines = data.schedule.events.length || 1;
-	let eventAvailable = data.schedule.events.map((eve) => ({
+	$: eventAvailable = data.schedule.events.map((eve) => ({
 		isUnavailable: eve.unavailabity?.isUnavailable ?? false
 	}));
-	let eventCalendar = data.schedule.events.map((eve) => ({
+	$: eventCalendar = data.schedule.events.map((eve) => ({
 		calendarColor: !!eve.calendarColor
 	}));
-	let rsvpOptions = data.schedule.events.map((eve) => ({
+	$: rsvpOptions = data.schedule.events.map((eve) => ({
 		option: !!eve.rsvp?.target
 	}));
-	let createATicket = data.schedule.events.map(() => false);
+	$: createATicket = data.schedule.events.map(() => false);
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
 	let hideAll = true;
@@ -51,6 +52,51 @@
 	}
 	let calendarHasCustomColor = false;
 	let rsvpOption = false;
+	let submitting = false;
+	let eventPictures: FileList[] = [];
+	let formElement: HTMLFormElement;
+
+	function handleFileChange(event: Event, index: number) {
+		const target = event.target as HTMLInputElement;
+		if (target.files) {
+			eventPictures[index] = target.files;
+		}
+	}
+	async function handleSubmit(event: SubmitEvent) {
+		submitting = true;
+		const formData = new FormData(formElement);
+		try {
+			await Promise.all(
+				eventPictures.map(async (picture, index) => {
+					if (picture) {
+						const pictureId = await preUploadPicture(data.adminPrefix, picture[0], {
+							fileName: name
+						});
+						formData.set(`eventPictures[${index}]`, pictureId);
+					}
+				})
+			);
+			const action = (event.submitter as HTMLButtonElement | null)?.formAction.includes('?/')
+				? (event.submitter as HTMLButtonElement).formAction
+				: formElement.action;
+
+			const finalResponse = await fetch(action, {
+				method: 'POST',
+				body: formData
+			});
+
+			const result = deserialize(await finalResponse.text());
+
+			if (result.type === 'success') {
+				// rerun all `load` functions, following the successful update
+				await invalidateAll();
+			}
+
+			applyAction(result);
+		} finally {
+			submitting = false;
+		}
+	}
 	let hasTimezone = !!data.schedule.timezone;
 	const timezones = Intl.supportedValuesOf('timeZone').map((tz, index) => ({
 		index,
@@ -66,7 +112,13 @@
 
 <h1 class="text-3xl">Edit a schedule</h1>
 
-<form method="post" class="flex flex-col gap-4">
+<form
+	method="post"
+	class="flex flex-col gap-4"
+	bind:this={formElement}
+	action="?/update"
+	on:submit|preventDefault={handleSubmit}
+>
 	<label class="form-label">
 		Name
 		<input
@@ -92,8 +144,8 @@
 		/>
 	</label>
 	<small class="text-sm text-gray-500 block">
-		To use in a CMS zone, use <kbd class="kbd">[Schedule={slug}]</kbd> or
-		<kbd class="kbd">[Schedule={slug} display=calendar]</kbd>
+		To use in a CMS zone, use <kbd class="kbd body-secondaryCTA">[Schedule={slug}]</kbd> or
+		<kbd class="kbd body-secondaryCTA">[Schedule={slug} display=calendar]</kbd>
 	</small>
 	<label class="form-label">
 		Set desired delay for event with no end time (in minutes)
@@ -373,7 +425,7 @@
 								min={beginsAt[i]}
 							/>
 							<span class="text-sm text-gray-600 mt-2 block">
-								<kbd class="kbd">backspace</kbd> to remove the date.</span
+								<kbd class="kbd body-secondaryCTA">backspace</kbd> to remove the date.</span
 							>
 						</label>
 					</div>
@@ -512,7 +564,7 @@
 							value="Update"
 						/>
 						<button
-							class="btn btn-gray self-start"
+							class="btn body-mainCTA self-start"
 							on:click={() => closeDetailByIndex(i)}
 							type="button"
 						>
@@ -576,7 +628,7 @@
 								min={beginsAt[i]}
 							/>
 							<span class="text-sm text-gray-600 mt-2 block">
-								<kbd class="kbd">backspace</kbd> to remove the date.</span
+								<kbd class="kbd body-secondaryCTA">backspace</kbd> to remove the date.</span
 							>
 						</label>
 					</div>
@@ -626,21 +678,28 @@
 							<input type="color" name="events[{i}].calendarColor" class="form-input" />
 						</label>
 					{/if}
+					<input
+						type="file"
+						accept="image/jpeg,image/png,image/webp"
+						class="block"
+						on:change={(e) => handleFileChange(e, i - (data.schedule.events.length || 1))}
+						disabled={submitting}
+					/>
 				{/if}
 			</div>
 		</details>
 	{/each}
-	<button class="btn btn-gray self-start" on:click={() => (eventLines += 1)} type="button"
+	<button class="btn body-mainCTA self-start" on:click={() => (eventLines += 1)} type="button"
 		>Add another event
 	</button>
 	<div class="flex flex-row justify-between gap-2">
-		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
-		<a href="/schedule/{data.schedule._id}" class="btn btn-gray">View</a>
+		<input type="submit" class="btn btn-blue text-white" value="Update" disabled={submitting} />
+		<a href="/schedule/{data.schedule._id}" class="btn body-mainCTA">View</a>
 		<input
 			type="submit"
 			class="btn btn-red text-white ml-auto"
-			formaction="?/delete"
 			value="Delete"
+			formaction="?/delete"
 			on:click={confirmDelete}
 		/>
 	</div>

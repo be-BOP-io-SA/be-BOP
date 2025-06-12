@@ -81,7 +81,7 @@
 		<div class="flex flex-row">
 			<a
 				href="/schedule/{schedule._id}/subscribe"
-				class="btn btn-gray no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
+				class="btn body-mainCTA no-underline text-xl text-center whitespace-nowrap p-2 mt-2"
 			>
 				🔔 {t('schedule.subscribeCTA')}
 			</a>

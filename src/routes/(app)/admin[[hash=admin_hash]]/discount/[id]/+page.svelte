@@ -106,6 +106,7 @@
 	<label class="form-label"
 		>Required Subscription
 		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			name="subscriptionIds"
 			options={subscriptions.map((p) => ({ label: p.name, value: p._id }))}
 			selected={data.discount.subscriptionIds.map((p) => ({
@@ -129,6 +130,7 @@
 			<label class="form-label"
 				>Products
 				<MultiSelect
+					--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 					name="productIds"
 					options={availableProductList.map((p) => ({ label: p.name, value: p._id }))}
 					selected={data.discount.productIds.map((p) => ({
@@ -187,13 +189,16 @@
 				</tbody>
 			{/each}
 		</table>
-		<button class="btn btn-gray self-start" on:click={() => (productFreeLine += 1)} type="button"
+		<button
+			class="btn body-mainCTA self-start"
+			on:click={() => (productFreeLine += 1)}
+			type="button"
 			>Add product
 		</button>
 	{/if}
 	<div class="flex flex-row justify-between gap-2">
 		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
-		<a href="/discounts/{data.discount._id}" class="btn btn-gray">View</a>
+		<a href="/discounts/{data.discount._id}" class="btn body-mainCTA">View</a>
 
 		<input
 			type="submit"
