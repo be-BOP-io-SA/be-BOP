@@ -265,7 +265,7 @@
 			<br slot="1" />
 		</Trans>
 	</p>
-	{#if identity.bank}
+	{#if identity.bank && !data.hideShopBankOnTicket}
 		<p>
 			<br /><span style="text-decoration: underline;">{t('order.receipt.bankInfo')}:</span><br />
 			{#if identity.bank.accountHolder}
