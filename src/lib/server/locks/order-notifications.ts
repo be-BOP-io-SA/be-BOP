@@ -214,6 +214,8 @@ async function handleOrderNotification(order: Order): Promise<void> {
 								// no email
 								break;
 						}
+					default:
+						break;
 				}
 
 				const { t } = useI18n(order.locale || 'en');
@@ -237,13 +239,15 @@ async function handleOrderNotification(order: Order): Promise<void> {
 						await queueEmail(email, templateKey, vars, {
 							session,
 							...(!!runtimeConfig.sellerIdentity?.contact.email &&
-								runtimeConfig.copyOrderEmailsToAdmin && {
+								runtimeConfig.copyOrderEmailsToAdmin &&
+								runtimeConfig.emailTemplates[templateKey].sendCopyToAdmin && {
 									bcc: runtimeConfig.sellerIdentity?.contact.email
 								})
 						});
 					} else if (
 						runtimeConfig.sellerIdentity?.contact.email &&
-						runtimeConfig.copyOrderEmailsToAdmin
+						runtimeConfig.copyOrderEmailsToAdmin &&
+						runtimeConfig.emailTemplates[templateKey].sendCopyToAdmin
 					) {
 						await queueEmail(runtimeConfig.sellerIdentity?.contact.email, templateKey, vars, {
 							session
