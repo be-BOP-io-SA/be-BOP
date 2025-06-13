@@ -292,6 +292,24 @@
 		Target color can be changed in <a href="/admin/theme" class="underline">theme</a>("Order" then
 		"Credit card svg fill color" in theme)
 	</p>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="hideShopBankOnReceipt"
+			class="form-checkbox"
+			checked={data.hideShopBankOnReceipt}
+		/>
+		Don't display shop bank account information on receipt
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="hideShopBankOnTicket"
+			class="form-checkbox"
+			checked={data.hideShopBankOnTicket}
+		/>
+		Don't display shop bank account information on ticket
+	</label>
 	<h2 class="text-2xl">VAT</h2>
 
 	<label class="checkbox-label">

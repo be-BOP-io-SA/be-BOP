@@ -347,7 +347,7 @@
 		</Trans>
 	</div>
 
-	{#if identity.bank}
+	{#if identity.bank && !data.hideShopBankOnReceipt}
 		<div class="mt-4 text-right">
 			<h2 class="text-xl">{t('order.receipt.bankInfo')} :</h2>
 			<table class="ml-auto">
