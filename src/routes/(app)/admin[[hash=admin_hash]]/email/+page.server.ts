@@ -1,5 +1,7 @@
 import { collections } from '$lib/server/database';
+import { defaultConfig, EmailTemplateKey, runtimeConfig } from '$lib/server/runtime-config';
 import type { EmailNotification } from '$lib/types/EmailNotification';
+import { typedKeys } from '$lib/utils/typedKeys';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 
@@ -16,12 +18,21 @@ export async function load() {
 			})
 			.sort({ _id: -1 })
 			.limit(100)
-			.toArray()
+			.toArray(),
+		copyOrderEmailsToAdmin: runtimeConfig.copyOrderEmailsToAdmin,
+		orderEmailTemplates: Object.fromEntries(
+			Object.entries(runtimeConfig.emailTemplates).filter(
+				([key]) =>
+					key.startsWith('order') &&
+					key !== 'order.update.leaderboard' &&
+					key !== 'order.update.challenge'
+			)
+		)
 	};
 }
 
 export const actions = {
-	default: async function ({ request }) {
+	send: async function ({ request }) {
 		const { to, subject, body } = z
 			.object({
 				to: z.string().email(),
@@ -42,5 +53,57 @@ export const actions = {
 		return {
 			success: true
 		};
+	},
+	update: async function ({ request }) {
+		const formData = await request.formData();
+		const result = z
+			.object({
+				copyOrderEmailsToAdmin: z.boolean({ coerce: true })
+			})
+			.parse(Object.fromEntries(formData));
+
+		await collections.runtimeConfig.updateOne(
+			{ _id: 'copyOrderEmailsToAdmin' },
+			{
+				$set: { data: result.copyOrderEmailsToAdmin, updatedAt: new Date() },
+				$setOnInsert: { createdAt: new Date() }
+			},
+			{ upsert: true }
+		);
+		runtimeConfig.copyOrderEmailsToAdmin = result.copyOrderEmailsToAdmin;
+	},
+	updateEmailCopy: async function ({ request }) {
+		const formData = await request.formData();
+
+		const parsed = z
+			.object({
+				key: z.enum(
+					typedKeys(runtimeConfig.emailTemplates) as [EmailTemplateKey, ...EmailTemplateKey[]]
+				),
+				sendToUser: z.boolean({ coerce: true }),
+				sendCopyToAdmin: z.boolean({ coerce: true })
+			})
+			.parse(Object.fromEntries(formData));
+
+		runtimeConfig.emailTemplates[parsed.key] = {
+			subject: runtimeConfig.emailTemplates[parsed.key].subject,
+			html: runtimeConfig.emailTemplates[parsed.key].html,
+			default:
+				defaultConfig.emailTemplates[parsed.key].subject ===
+					runtimeConfig.emailTemplates[parsed.key].subject &&
+				defaultConfig.emailTemplates[parsed.key].html ===
+					runtimeConfig.emailTemplates[parsed.key].html,
+			sendToUser: parsed.sendToUser,
+			sendCopyToAdmin: parsed.sendCopyToAdmin
+		};
+
+		await collections.runtimeConfig.updateOne(
+			{ _id: `emailTemplates` },
+			{
+				$set: { data: runtimeConfig.emailTemplates, updatedAt: new Date() },
+				$setOnInsert: { createdAt: new Date() }
+			},
+			{ upsert: true }
+		);
 	}
 };
