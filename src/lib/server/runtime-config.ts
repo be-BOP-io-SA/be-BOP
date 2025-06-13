@@ -214,6 +214,8 @@ const baseConfig = {
 	posPrefillTermOfUse: false,
 	hideCreditCardQrCode: false,
 	overwriteCreditCardSvgColor: false,
+	hideShopBankOnReceipt: false,
+	hideShopBankOnTicket: false,
 	hideCmsZonesOnMobile: false,
 	copyOrderEmailsToAdmin: true,
 	usersDarkDefaultTheme: false,
