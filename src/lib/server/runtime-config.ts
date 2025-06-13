@@ -106,6 +106,7 @@ const baseConfig = {
 	isBillingAddressMandatory: false,
 	disableLanguageSelector: false,
 	hideCartInToolbar: false,
+	removePopinProductPrice: false,
 	hideThemeSelectorInToolbar: false,
 	defaultOnLocation: false,
 	disableZoomProductPicture: false,

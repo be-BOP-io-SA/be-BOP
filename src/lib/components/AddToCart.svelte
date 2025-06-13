@@ -8,6 +8,7 @@
 	import { invalidate } from '$app/navigation';
 	import { UrlDependency } from '$lib/types/UrlDependency';
 	import { useI18n } from '$lib/i18n';
+	import { page } from '$app/stores';
 
 	let loading = false;
 	export let picture: Picture | undefined;
@@ -90,6 +91,7 @@
 				depositPercentage={$productAddedToCart.depositPercentage}
 				discountPercentage={$productAddedToCart.discountPercentage}
 				priceMultiplier={$productAddedToCart.priceMultiplier}
+				removePopinProductPrice={$page.data.removePopinProductPrice}
 			/>
 		</Popup>
 	{/if}

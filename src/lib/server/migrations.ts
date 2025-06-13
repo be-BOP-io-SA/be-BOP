@@ -520,6 +520,56 @@ const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('68246400cd3efad54fa14bb3'),
+		name: 'Replace usersDarkDefaultTheme and employeesDarkDefaultTheme',
+		run: async (session: ClientSession) => {
+			// MIGRATION 1 — usersDarkDefaultTheme => visitorDarkLightMode
+			const oldVisitor = await collections.runtimeConfig.findOne(
+				{ _id: 'usersDarkDefaultTheme' },
+				{ session }
+			);
+
+			await collections.runtimeConfig.updateOne(
+				{ _id: 'visitorDarkLightMode' },
+				{
+					$set: {
+						data: oldVisitor && oldVisitor.data === true ? 'dark' : 'light',
+						updatedAt: oldVisitor ? oldVisitor.updatedAt : new Date()
+					}
+				},
+				{ upsert: true, session }
+			);
+
+			if (oldVisitor) {
+				await collections.runtimeConfig.deleteOne({ _id: 'usersDarkDefaultTheme' }, { session });
+			}
+
+			// MIGRATION 2 — employeesDarkDefaultTheme => employeeDarkLightMode
+			const oldEmployee = await collections.runtimeConfig.findOne(
+				{ _id: 'employeesDarkDefaultTheme' },
+				{ session }
+			);
+
+			await collections.runtimeConfig.updateOne(
+				{ _id: 'employeeDarkLightMode' },
+				{
+					$set: {
+						data: oldEmployee && oldEmployee.data === true ? 'dark' : 'light',
+						updatedAt: oldEmployee ? oldEmployee.updatedAt : new Date()
+					}
+				},
+				{ upsert: true, session }
+			);
+
+			if (oldEmployee) {
+				await collections.runtimeConfig.deleteOne(
+					{ _id: 'employeesDarkDefaultTheme' },
+					{ session }
+				);
+			}
+		}
 	}
 ];
 

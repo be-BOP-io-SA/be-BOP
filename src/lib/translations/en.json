@@ -589,6 +589,10 @@
 				"title": "Order fully paid, outstanding amount zero"
 			}
 		},
+		"ticket": {
+			"detail": "Detail",
+			"sincerely": "Sincerely"
+		},
 		"tickets": {
 			"printAll": "Print all",
 			"seeAll": "See all",

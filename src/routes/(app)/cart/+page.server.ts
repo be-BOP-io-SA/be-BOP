@@ -76,18 +76,19 @@ export async function load({ parent, locals }) {
 			}
 		)
 	]);
+	const forceContentVersion =
+		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
+			? 'employee'
+			: undefined;
 	return {
 		...(cmsBasketTop && {
 			cmsBasketTop,
 			cmsBasketTopData: cmsFromContent(
 				{
-					content:
-						locals.user?.roleId !== undefined &&
-						locals.user?.roleId !== CUSTOMER_ROLE_ID &&
-						cmsBasketTop.hasEmployeeContent &&
-						cmsBasketTop.employeeContent
-							? cmsBasketTop.employeeContent
-							: cmsBasketTop.content
+					desktopContent: cmsBasketTop.content,
+					employeeContent:
+						(cmsBasketTop?.hasEmployeeContent && cmsBasketTop.employeeContent) || undefined,
+					forceContentVersion
 				},
 				locals
 			)
@@ -96,13 +97,10 @@ export async function load({ parent, locals }) {
 			cmsBasketBottom,
 			cmsBasketBottomData: cmsFromContent(
 				{
-					content:
-						locals.user?.roleId !== undefined &&
-						locals.user?.roleId !== CUSTOMER_ROLE_ID &&
-						cmsBasketBottom.hasEmployeeContent &&
-						cmsBasketBottom.employeeContent
-							? cmsBasketBottom.employeeContent
-							: cmsBasketBottom.content
+					desktopContent: cmsBasketBottom.content,
+					employeeContent:
+						(cmsBasketBottom?.hasEmployeeContent && cmsBasketBottom.employeeContent) || undefined,
+					forceContentVersion
 				},
 				locals
 			)

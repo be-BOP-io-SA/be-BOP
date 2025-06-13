@@ -589,6 +589,10 @@
 				"title": "Bestelling volledig betaald, openstaand bedrag nul"
 			}
 		},
+		"ticket": {
+			"detail": "Detail",
+			"sincerely": "Eerlijk"
+		},
 		"tickets": {
 			"printAll": "Alles afdrukken",
 			"seeAll": "Alles zien",

@@ -90,7 +90,7 @@ export const actions: Actions = {
 					currency
 				},
 				ratio,
-				...(ratio === 'global' && { globalRatio: parseInt(globalRatio) })
+				...(ratio === 'global' && { globalRatio: Number(globalRatio) })
 			});
 		} else if (mode === 'totalProducts') {
 			await collections.challenges.insertOne({

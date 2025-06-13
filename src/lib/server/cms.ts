@@ -105,7 +105,17 @@ type TokenObject =
 	  };
 
 export async function cmsFromContent(
-	{ content, mobileContent }: { content: string; mobileContent?: string },
+	{
+		desktopContent,
+		mobileContent,
+		employeeContent,
+		forceContentVersion
+	}: {
+		desktopContent: string;
+		employeeContent?: string;
+		mobileContent?: string;
+		forceContentVersion?: 'desktop' | 'mobile' | 'employee';
+	},
 	locals: Partial<PickDeep<App.Locals, 'user.roleId' | 'language' | 'email' | 'sso'>>
 ) {
 	const PRODUCT_WIDGET_REGEX =
@@ -146,14 +156,6 @@ export async function cmsFromContent(
 	const qrCodeSlugs = new Set<string>();
 	const currencyCalculatorSlugs = new Set<string>();
 	const scheduleSlugs = new Set<string>();
-
-	const tokens: {
-		desktop: Array<TokenObject>;
-		mobile?: Array<TokenObject>;
-	} = {
-		desktop: [],
-		mobile: mobileContent ? [] : undefined
-	};
 
 	function matchAndSort(content: string, regex: RegExp, type: string) {
 		const regexMatches = [...content.matchAll(regex)];
@@ -340,9 +342,26 @@ export async function cmsFromContent(
 		});
 	};
 
-	processMatches(tokens.desktop, content, index);
-	if (mobileContent?.length && tokens.mobile) {
-		processMatches(tokens.mobile, mobileContent, index);
+	const tokens: {
+		desktop: Array<TokenObject>;
+		mobile?: Array<TokenObject>;
+	} = {
+		desktop: [],
+		mobile: undefined // Reassigned later on adaptive content.
+	};
+
+	if (forceContentVersion === 'desktop' && desktopContent) {
+		processMatches(tokens.desktop, desktopContent, index);
+	} else if (forceContentVersion === 'employee' && employeeContent) {
+		processMatches(tokens.desktop, employeeContent, index);
+	} else if (forceContentVersion === 'mobile' && mobileContent) {
+		processMatches(tokens.desktop, mobileContent, index);
+	} else {
+		processMatches(tokens.desktop, desktopContent, index);
+		if (mobileContent?.length) {
+			tokens.mobile = [];
+			processMatches(tokens.mobile, mobileContent, index);
+		}
 	}
 
 	const query =

@@ -41,17 +41,22 @@
 					type="submit"
 					value="Remove from logo"
 					formaction="?/removeLogo"
-					class="btn btn-gray"
+					class="btn body-mainCTA"
 				/>
 			{:else}
-				<input type="submit" value="Set as logo" formaction="?/setAsLogo" class="btn btn-gray" />
+				<input
+					type="submit"
+					value="Set as logo"
+					formaction="?/setAsLogo"
+					class="btn body-mainCTA"
+				/>
 			{/if}
 			{#if data.logo.darkModePictureId === data.picture._id}
 				<input
 					type="submit"
 					value="Remove from dark logo"
 					formaction="?/removeLogo"
-					class="btn btn-gray"
+					class="btn body-mainCTA"
 					on:click={() => (darkPicture = 'dark')}
 				/>
 			{:else}
@@ -59,7 +64,7 @@
 					type="submit"
 					value="Set as dark logo"
 					formaction="?/setAsLogo"
-					class="btn btn-gray"
+					class="btn body-mainCTA"
 					on:click={() => (darkPicture = 'dark')}
 				/>
 			{/if}
@@ -68,14 +73,14 @@
 					type="submit"
 					value="Remove from footer logo"
 					formaction="?/removeFooterLogo"
-					class="btn btn-gray"
+					class="btn body-mainCTA"
 				/>
 			{:else}
 				<input
 					type="submit"
 					value="Set as footer logo"
 					formaction="?/setAsFooterLogo"
-					class="btn btn-gray"
+					class="btn body-mainCTA"
 				/>
 			{/if}
 			{#if data.faviconPictureId === data.picture._id}
@@ -83,14 +88,14 @@
 					type="submit"
 					value="Remove from favicon"
 					formaction="?/removeFavicon"
-					class="btn btn-gray"
+					class="btn body-mainCTA"
 				/>
 			{:else}
 				<input
 					type="submit"
 					value="Set as favicon"
 					formaction="?/setAsFavicon"
-					class="btn btn-gray"
+					class="btn body-mainCTA"
 				/>
 			{/if}
 		{/if}
