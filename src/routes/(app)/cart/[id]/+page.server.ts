@@ -112,29 +112,49 @@ export const actions = {
 		throw redirect(303, request.headers.get('referer') || '/cart');
 	},
 	addNote: async ({ locals, params, request }) => {
+		const formData = await request.formData();
+
 		const cart = await collections.carts.findOne(userQuery(userIdentifier(locals)));
 
 		if (!cart) {
 			throw error(404, 'No cart found for user');
 		}
-		const formData = await request.formData();
-		const { note } = z
+		const product = await collections.products.findOne({ _id: params.id });
+
+		if (!product) {
+			await collections.carts.updateMany(
+				{ productId: params.id },
+				{ $pull: { items: { productId: params.id } }, $set: { updatedAt: new Date() } }
+			);
+			throw error(404, 'This product does not exist');
+		}
+
+		const max = product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER;
+		const { quantity, note } = z
 			.object({
-				note: z.string().trim().min(1)
+				quantity: z
+					.number({ coerce: true })
+					.int()
+					.min(1)
+					.max(max - 1),
+				note: z.string().trim().optional()
 			})
 			.parse({
+				quantity: formData.get('quantity'),
 				note: formData.get('note')
 			});
-
 		const res = await collections.carts.updateOne(
 			{ _id: cart._id, 'items.productId': params.id },
 			{
 				$set: {
-					'items.$.internalNote': {
-						value: note,
-						updatedAt: new Date(),
-						updatedById: locals.user?._id
-					}
+					...(note?.length && {
+						'items.$.internalNote': {
+							value: note,
+							updatedAt: new Date(),
+							updatedById: locals.user?._id
+						}
+					}),
+					'items.$.quantity': quantity
 				}
 			}
 		);
@@ -142,5 +162,47 @@ export const actions = {
 		if (!res.matchedCount) {
 			throw error(404, 'This product is not in the cart');
 		}
+		throw redirect(301, '/pos/touch');
+	},
+	setQuantity: async ({ locals, params, request }) => {
+		const product = await collections.products.findOne({ _id: params.id });
+
+		if (!product) {
+			await collections.carts.updateOne(userQuery(userIdentifier(locals)), {
+				$pull: { items: { productId: params.id } },
+				$set: { updatedAt: new Date() }
+			});
+			throw error(404, 'This product does not exist');
+		}
+
+		const formData = await request.formData();
+
+		const max = product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER;
+
+		const { quantity, deposit, lineId } = z
+			.object({
+				quantity: z
+					.number({ coerce: true })
+					.int()
+					.min(1)
+					.max(max - 1),
+				deposit: z.boolean({ coerce: true }).optional(),
+				lineId: z.string().optional()
+			})
+			.parse({
+				quantity: formData.get('quantity'),
+				deposit: formData.get('deposit'),
+				lineId: formData.get('lineId')
+			});
+
+		await addToCartInDb(product, quantity, {
+			user: userIdentifier(locals),
+			mode: 'eshop',
+			totalQuantity: true,
+			deposit,
+			lineId
+		});
+
+		throw redirect(303, request.headers.get('referer') || '/cart');
 	}
 };

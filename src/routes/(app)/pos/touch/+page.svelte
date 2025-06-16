@@ -2,7 +2,11 @@
 	import type { SetRequired } from 'type-fest';
 	import type { Picture } from '$lib/types/Picture';
 	import ProductWidgetPOS from '$lib/components/ProductWidget/ProductWidgetPOS.svelte';
-	import { POS_PRODUCT_PAGINATION, isPreorder } from '$lib/types/Product';
+	import {
+		DEFAULT_MAX_QUANTITY_PER_ORDER,
+		POS_PRODUCT_PAGINATION,
+		isPreorder
+	} from '$lib/types/Product';
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n.js';
 	import PriceTag from '$lib/components/PriceTag.svelte';
@@ -49,31 +53,19 @@
 	$: totalPages = Math.ceil(productFiltered.length / POS_PRODUCT_PAGINATION);
 	$: currentPage = Math.floor(next / POS_PRODUCT_PAGINATION) + 1;
 
-	async function addNoteToItem(event: Event, index: number, defaultPrompt: string) {
-		event.preventDefault();
-		const notePrompt = prompt('enter a comment:', defaultPrompt);
-		if (notePrompt) {
-			items[index].internalNote = { value: notePrompt, updatedAt: new Date() };
-			items = [...items];
-			const formData = new FormData(formNotes[index]);
-			formData.set('note', notePrompt);
-			try {
-				const response = await fetch(formNotes[index].action, {
-					method: 'POST',
-					body: formData
-				});
-				const result = await response.json();
-				if (result.type === 'error') {
-					alert(result.error.message);
-				} else {
-					await invalidate(UrlDependency.Cart);
-				}
-			} catch (error) {
-				alert('There was an error submitting the form.');
-			}
-		}
+	let noteDialog: HTMLDialogElement | null;
+	$: itemIndex = 0;
+	$: itemNote = '';
+	$: quantity = 0;
+	let loading = false;
+	function showDialog(index: number) {
+		itemIndex = index;
+		itemNote = items[itemIndex].internalNote?.value || '';
+		quantity = items[itemIndex].quantity;
+		noteDialog?.showModal();
 	}
-	let formNotes: HTMLFormElement[] = [];
+
+	let formNotes: HTMLFormElement;
 	$: lastItemId = items.length > 0 ? items[items.length - 1]?.product?._id : null;
 	let warningMessage = '';
 </script>
@@ -84,46 +76,108 @@
 			<div class="touchScreen-ticket-menu p-3 h-full">
 				{#if items.length}
 					<h3 class="text-3xl">TICKET n° tmp</h3>
+					<dialog bind:this={noteDialog} class="max-w-full w-[600px] rounded mx-auto p-6 relative">
+						<form
+							method="post"
+							bind:this={formNotes}
+							action="/cart/{items[itemIndex].product._id}/?/addNote"
+						>
+							<button
+								type="button"
+								class="absolute top-0 right-0 p-1 rounded-full shadow-md h-5 w-auto text-xs font-bold"
+								on:click={() => noteDialog?.close()}>X</button
+							>
+							<div class="grid grid-cols-[auto_min-content]">
+								<h1 class="text-2xl">{t('cart.posTouch.commentLine')}</h1>
+								<label class="flex">
+									<span class="text-2xl">qty:</span>
+									<select value={items[itemIndex].quantity} class="form-input w-16">
+										{#each Array(10)
+											.fill(0)
+											.map((_, i) => i + 1) as i}
+											<option value={i} on:click={() => (quantity = i)}>{i}</option>
+										{/each}
+									</select>
+								</label>
+							</div>
+							<div class="flex-row p-2">
+								{quantity} X {items[itemIndex].product.name.toUpperCase()}<br />
+								<label class="form-label">
+									{t('cart.posTouch.commentLabel')}
+									<textarea
+										name="note"
+										cols="30"
+										rows="5"
+										placeholder="add a comment"
+										maxlength="1000"
+										class="form-input"
+										value={itemNote}
+									/>
+								</label>
+								<input type="hidden" name="lineId" value={items[itemIndex]._id} />
+								<input type="hidden" name="quantity" value={quantity} />
+							</div>
+							<div class="flex justify-between">
+								<button
+									type="button"
+									class="btn touchScreen-action-cta text-start text-2xl justify-between"
+									disabled={loading || quantity <= 1}
+									on:click={() => quantity--}
+								>
+									-
+								</button>
+								<input
+									type="submit"
+									value={t('cart.posTouch.saveNote')}
+									class="btn body-mainCTA text-start text-2xl justify-between"
+									disabled={loading}
+								/>
+								<button
+									type="button"
+									class="btn touchScreen-action-cta text-start text-2xl justify-between"
+									disabled={loading ||
+										items[itemIndex].quantity >=
+											(items[itemIndex].product.maxQuantityPerOrder ||
+												DEFAULT_MAX_QUANTITY_PER_ORDER)}
+									on:click={() => quantity++}
+								>
+									+
+								</button>
+							</div>
+						</form>
+					</dialog>
 					{#each items as item, i}
 						<div class="flex flex-col py-3 gap-4">
-							<form
-								method="post"
-								bind:this={formNotes[i]}
-								action="/cart/{item.product._id}/?/addNote"
+							<button
+								class="text-start text-2xl w-full justify-between"
+								on:click={() => showDialog(i)}
 							>
-								<input type="hidden" name="note" />
-								<button
-									type="submit"
-									class="text-start text-2xl w-full justify-between"
-									on:click={(event) => addNoteToItem(event, i, item.internalNote?.value || '')}
-								>
-									{item.quantity} X {item.product.name.toUpperCase()}<br />
-									{item.internalNote?.value ? '+' + item.internalNote.value : ''}
-									<div class="flex text-2xl flex-row items-end justify-end">
-										{#if item.quantity > 1}{item.quantity}X
-										{/if}
-										<PriceTag
-											amount={item.product.price.amount}
+								{item.quantity} X {item.product.name.toUpperCase()}<br />
+								{item.internalNote?.value ? '+' + item.internalNote.value : ''}
+								<div class="flex text-2xl flex-row items-end justify-end">
+									{#if item.quantity > 1}{item.quantity}X
+									{/if}
+									<PriceTag
+										amount={item.product.price.amount}
+										currency={item.product.price.currency}
+										class="text-2xl"
+										main
+									/>
+								</div>
+								{#if item.quantity > 1}
+									<div class="text-2xl flex flex-row items-end justify-end">
+										=<PriceTag
+											amount={item.quantity * item.product.price.amount}
 											currency={item.product.price.currency}
 											class="text-2xl"
 											main
 										/>
 									</div>
-									{#if item.quantity > 1}
-										<div class="text-2xl flex flex-row items-end justify-end">
-											=<PriceTag
-												amount={item.quantity * item.product.price.amount}
-												currency={item.product.price.currency}
-												class="text-2xl"
-												main
-											/>
-										</div>
-									{/if}
-									<div class="text-2xl flex flex-row items-end justify-end">
-										+<span class="font-semibold">{t('cart.vat')} {priceInfo.vatRates[i]}%</span>
-									</div>
-								</button><br />
-							</form>
+								{/if}
+								<div class="text-2xl flex flex-row items-end justify-end">
+									+<span class="font-semibold">{t('cart.vat')} {priceInfo.vatRates[i]}%</span>
+								</div>
+							</button><br />
 						</div>
 					{/each}
 					<div class="flex flex-col border-t border-gray-300 py-6">

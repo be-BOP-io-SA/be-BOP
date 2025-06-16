@@ -27,6 +27,11 @@
 		"fillProductAlias": "Preencher o alias do produto",
 		"items": "Produtos",
 		"minimumPhysicalAmountText": "O seu carrinho não contém o valor físico mínimo",
+		"posTouch": {
+			"commentLabel": "Comentário",
+			"commentLine": "Comentário Linha do artigo",
+			"saveNote": "Salvar"
+		},
 		"quantity": "Quantidade",
 		"reachedMaxPerLine": "O seu carrinho atingiu o tamanho máximo. Para adicionar mais artigos, remova itens do seu carrinho",
 		"remaining": "Restante após o checkout",

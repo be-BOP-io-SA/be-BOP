@@ -27,6 +27,11 @@
 		"fillProductAlias": "Remplir l'alias du produit",
 		"items": "Produits",
 		"minimumPhysicalAmountText": "Votre panier ne contient pas le montant physique minimal",
+		"posTouch": {
+			"commentLabel": "Commentaire",
+			"commentLine": "Ajouter un commentaire",
+			"saveNote": "Sauver"
+		},
 		"quantity": "Quantité",
 		"reachedMaxPerLine": "Votre panier a atteint la taille maximale. Veuillez supprimer des lignes de votre panier pour ajouter plus d'articles.",
 		"remaining": "Reste après commande",

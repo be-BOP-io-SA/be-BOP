@@ -27,6 +27,11 @@
 		"fillProductAlias": "Compila l'alias del prodotto",
 		"items": "Prodotti",
 		"minimumPhysicalAmountText": "Il carrello non contiene un importo fisico minimo",
+		"posTouch": {
+			"commentLabel": "Commento",
+			"commentLine": "COMMENT ARTICOLO LINEA",
+			"saveNote": "Salva"
+		},
 		"quantity": "Quantità",
 		"reachedMaxPerLine": "Il tuo carrello ha raggiunto la quantità massima. Per aggiungere altri articoli, ti preghiamo di toglierne alcuni",
 		"remaining": "Resto dopo il pagamento",
