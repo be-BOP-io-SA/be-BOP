@@ -27,6 +27,11 @@
 		"fillProductAlias": "Produkt-Alias ausfüllen",
 		"items": "Produkte",
 		"minimumPhysicalAmountText": "Ihr Warenkorb enthält nicht den Mindestbetrag für physische Produkte",
+		"posTouch": {
+			"commentLabel": "Kommentar",
+			"commentLine": "Kommentarartikelzeile",
+			"saveNote": "Speichern"
+		},
 		"quantity": "Menge",
 		"reachedMaxPerLine": "Ihr Warenkorb hat die maximale Größe erreicht. Um weitere Artikel hinzuzufügen, entfernen Sie Artikel aus Ihrem Warenkorb",
 		"remaining": "Verbleibend nach dem Auschecken",

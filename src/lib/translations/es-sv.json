@@ -27,6 +27,11 @@
 		"fillProductAlias": "Rellenar alias de producto",
 		"items": "Productos",
 		"minimumPhysicalAmountText": "Su carrito no contiene una cantidad física mínima",
+		"posTouch": {
+			"commentLabel": "Comentario",
+			"commentLine": "Comentar la línea del artículo",
+			"saveNote": "Ahorrar"
+		},
 		"quantity": "Cantidad",
 		"reachedMaxPerLine": "La lista de compras está llena. Para agregar más artículos, elimina elementos de la lista",
 		"remaining": "Restante después del pago",
