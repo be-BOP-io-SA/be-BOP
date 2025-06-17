@@ -15,11 +15,13 @@
 		onmessage?: ((this: CustomEventSource, ev: MessageEvent) => unknown) | null;
 		close?: () => void;
 	}
+	export let data;
 
-	const ORDER_CLEAR_TIMEOUT = 5_000;
+	const ORDER_CLEAR_TIMEOUT = data.posDisplayOrderQrAfterPayment
+		? data.posQrCodeAfterPayment.timeBeforeRedirecting * 1_000
+		: 5_000;
 
 	let eventSourceInstance: CustomEventSource | void | null = null;
-	export let data;
 	let cart = data.cart;
 	let order = data.order;
 
@@ -167,6 +169,18 @@
 		<div class="flex flex-col items-center gap-3">
 			<h1 class="text-3xl text-center">{t('order.singleTitle', { number: order?.number })}</h1>
 			<CheckCircleOutlined font-size="160" />
+			{#if data.posDisplayOrderQrAfterPayment}
+				<img
+					src="/order/{order?._id}/qrcode?logo={!data.posQrCodeAfterPayment.removeBebobLogo}"
+					alt="QR code"
+					class="h-96 w-96"
+				/>
+				{#if data.posQrCodeAfterPayment.displayCustomerCta}
+					<a href="/pos/session" on:click={() => (view = 'welcome')} class="btn btn-blue w-full"
+						>{t('order.paymentDoneCustomerCTA')}</a
+					>
+				{/if}
+			{/if}
 		</div>
 	{:else if view === 'welcome'}
 		<div class="flex flex-col items-center">
