@@ -520,6 +520,7 @@
 		"paymentAmount": "Te betalen bedrag",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Uw paischement is mislukt, u kunt een nieuwe paangement proberen",
+		"paymentDoneCustomerCTA": "Ik ben klaar",
 		"paymentExpiresAt": "Betalingstermijn: <0></0>",
 		"paymentIban": "IBAN waarnaar de overboeking moet worden verzonden",
 		"paymentLink": "Klik hier om met pin te betalen",

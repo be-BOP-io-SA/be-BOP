@@ -225,6 +225,12 @@ const baseConfig = {
 	displayMainShopInfo: false,
 	disableNostrBotIntro: false,
 	hideFromSearchEngines: false,
+	posDisplayOrderQrAfterPayment: false,
+	posQrCodeAfterPayment: {
+		timeBeforeRedirecting: 10,
+		displayCustomerCta: false,
+		removeBebobLogo: false
+	},
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,
 	physicalCartMinAmount: null as null | number,

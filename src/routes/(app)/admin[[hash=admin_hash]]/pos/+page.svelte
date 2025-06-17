@@ -9,6 +9,7 @@
 		})) ?? [];
 
 	$: serializedTags = JSON.stringify(selectedTags.map((tag) => tag.value));
+	let posDisplayOrderQrAfterPayment = data.posDisplayOrderQrAfterPayment;
 </script>
 
 <h1 class="text-3xl">POS</h1>
@@ -36,5 +37,45 @@
 		/>
 		Pre-fill term of use checkbox in /checkout
 	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="posDisplayOrderQrAfterPayment"
+			class="form-checkbox"
+			bind:checked={posDisplayOrderQrAfterPayment}
+		/>
+		Display order QR code on PoS after payment
+	</label>
+	{#if posDisplayOrderQrAfterPayment}
+		<label class="form-label">
+			set a time before redirecting to home
+
+			<input
+				type="number"
+				step="1"
+				name="posQrCodeAfterPayment.timeBeforeRedirecting"
+				class="form-input"
+				value={data.posQrCodeAfterPayment.timeBeforeRedirecting}
+			/>
+		</label>
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="posQrCodeAfterPayment.displayCustomerCta"
+				class="form-checkbox"
+				checked={data.posQrCodeAfterPayment.displayCustomerCta}
+			/>
+			Display the customer CTA on PoS after payment
+		</label>
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="posQrCodeAfterPayment.removeBebobLogo"
+				class="form-checkbox"
+				checked={data.posQrCodeAfterPayment.removeBebobLogo}
+			/>
+			Remove be-BOP logo from POS after payment QR code
+		</label>
+	{/if}
 	<input type="submit" value="Update" class="btn btn-blue self-start" />
 </form>
