@@ -389,6 +389,45 @@
 			"ZW": "Zimbabwe"
 		}
 	},
+	"customer-touch": {
+		"cart": {
+			"totalTTC": "Total TTC"
+		}
+	},
+	"customerTouch": {
+		"cancelOrderTitlle": "Abandonner la commande",
+		"cart": {
+			"ht": "HT",
+			"targetOnSite": "Sur place",
+			"targetTakeAway": "Emporter",
+			"title": "Votre commande"
+		},
+		"cta": {
+			"abandonment": "Abandon",
+			"addFirstProduct": "Ajouter le 1er produit",
+			"addProduct": "Ajouter",
+			"end": "Terminer",
+			"pay": "Payer",
+			"retakeOrder": "Reprendre la commande"
+		},
+		"ctaBack": "Retour",
+		"deletedOrderTitle": "Votre commande a été supprimée!",
+		"loginText": "Se connecter?",
+		"noThanksCta": "Non merci",
+		"orderConfirmedTitle": "Commande  n ° {number} confirmée!",
+		"orderPaidTitle": "Commande payée",
+		"orderTitle": "Recevoir la quittance ?",
+		"payForOrderTitle": "Merci de régler votre commande.",
+		"payment": {
+			"Title": "Choisissez votre methode de paiement"
+		},
+		"printCta": "Imprimer",
+		"sendTicketCta": "Envoyer",
+		"welcomHello": "Bonjour",
+		"welcomeOnSiteCta": "Sur place",
+		"welcomeQuestion": " Où desirez-vous manger?",
+		"welcomeTakeAwayCta": "À emporter"
+	},
 	"error": {
 		"404": "La page {invalidUrl} que vous avez demandée est introuvable. Veuillez vérifier que votre lien est correct ou contactez l'équipe du site pour leur signaler le problème. ",
 		"title": "Erreur {status}"
