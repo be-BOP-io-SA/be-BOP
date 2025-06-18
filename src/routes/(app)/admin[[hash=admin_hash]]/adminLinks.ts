@@ -94,6 +94,10 @@ export const adminLinks: AdminLinks = [
 				label: 'POS'
 			},
 			{
+				href: '/admin/cti',
+				label: 'CTI'
+			},
+			{
 				href: '/admin/age-retriction',
 				label: 'Age restriction'
 			},
