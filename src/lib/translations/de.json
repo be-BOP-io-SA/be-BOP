@@ -389,6 +389,45 @@
 			"ZW": "Simbabwe"
 		}
 	},
+	"customer-touch": {
+		"cart": {
+			"totalTTC": "Total TTC"
+		}
+	},
+	"customerTouch": {
+		"cancelOrderTitlle": "Die Bestellung aufgeben?",
+		"cart": {
+			"ht": "Ht",
+			"targetOnSite": "Vor Ort",
+			"targetTakeAway": "Wegbringen",
+			"title": "Ihre Bestellung"
+		},
+		"cta": {
+			"abandonment": "Aufgabe",
+			"addFirstProduct": "Fügen Sie das 1. Produkt hinzu",
+			"addProduct": "Hinzufügen",
+			"end": "Ende",
+			"pay": "Zahlen",
+			"retakeOrder": "Lebenslaufbestellung"
+		},
+		"ctaBack": "Zurück",
+		"deletedOrderTitle": "Ihre Bestellung wurde gelöscht!",
+		"loginText": "Einloggen?",
+		"noThanksCta": "Nein danke",
+		"orderConfirmedTitle": "Bestellung N ° {number} bestätigt!",
+		"orderPaidTitle": "Bestellung bezahlt",
+		"orderTitle": "Die Quittung erhalten?",
+		"payForOrderTitle": "Bitte bezahlen Sie für Ihre Bestellung.",
+		"payment": {
+			"Title": "Wählen Sie Ihre Zahlungsmethode"
+		},
+		"printCta": "Drucken",
+		"sendTicketCta": "Schicken",
+		"welcomHello": "Hallo",
+		"welcomeOnSiteCta": "Vor Ort",
+		"welcomeQuestion": "Wo möchten Sie essen?",
+		"welcomeTakeAwayCta": "Wegbringen"
+	},
 	"error": {
 		"404": "Die von Ihnen angeforderte Seite {invalidUrl} konnte nicht gefunden werden. Bitte überprüfen Sie, ob Ihr Link korrekt ist, oder kontaktieren Sie das Website-Team, um das Problem zu melden.",
 		"title": "Fehler {status}"

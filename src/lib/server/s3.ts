@@ -142,7 +142,16 @@ export function s3ProductPrefix(productId: string): string {
 export function s3TagPrefix(tagId: string): string {
 	return `tags/${tagId}/`;
 }
+export function s3SliderPrefix(sliderId: string): string {
+	return `sliders/${sliderId}/`;
+}
 export function s3GalleryPrefix(galleryId: string): string {
 	return `galleries/${galleryId}/`;
+}
+export function s3SchedulePrefix(scheduleId: string): string {
+	return `schedules/${scheduleId}/`;
+}
+export function s3CtiPrefix(ctiCategorySlug: string): string {
+	return `cti/${ctiCategorySlug}/`;
 }
 export { s3client, publicS3Client };

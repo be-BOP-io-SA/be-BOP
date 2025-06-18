@@ -389,6 +389,45 @@
 			"ZW": "Zimbabwe"
 		}
 	},
+	"customer-touch": {
+		"cart": {
+			"totalTTC": "Totaal TTC"
+		}
+	},
+	"customerTouch": {
+		"cancelOrderTitlle": "De bestelling verlaten?",
+		"cart": {
+			"ht": "HT",
+			"targetOnSite": "Ter plaatse",
+			"targetTakeAway": "Wegnemen",
+			"title": "Uw bestelling"
+		},
+		"cta": {
+			"abandonment": "Verstandigheid",
+			"addFirstProduct": "Voeg het 1e product toe",
+			"addProduct": "Toevoegen",
+			"end": "Einde",
+			"pay": "Betalen",
+			"retakeOrder": "Hervatten bestelling"
+		},
+		"ctaBack": "Rug",
+		"deletedOrderTitle": "Uw bestelling is verwijderd!",
+		"loginText": "Log in?",
+		"noThanksCta": "Nee bedankt",
+		"orderConfirmedTitle": "Bestel n ° {number} bevestigd!",
+		"orderPaidTitle": "Betaal bestelling",
+		"orderTitle": "Het ontvangstbewijs ontvangen?",
+		"payForOrderTitle": "Betaal alstublieft voor uw bestelling.",
+		"payment": {
+			"Title": "Kies uw betaalmethode"
+		},
+		"printCta": "Afdrukken",
+		"sendTicketCta": "Versturen",
+		"welcomHello": "Hallo",
+		"welcomeOnSiteCta": "Ter plaatse",
+		"welcomeQuestion": "Waar zou je willen eten?",
+		"welcomeTakeAwayCta": "Wegnemen"
+	},
 	"error": {
 		"404": "De door u opgevraagde pagina {invalidUrl} kon niet worden gevonden. \nControleer of uw link correct is of neem contact op met het siteteam om het probleem te melden.",
 		"title": "Fout {status}"

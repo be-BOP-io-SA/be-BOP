@@ -26,6 +26,10 @@
 	<a href="/admin" class="body-hyperlink hover:underline" target="_blank"
 		>{t('pos.adminInterface')}</a
 	>
+	<a href="/pos/customer-touch/welcome" class="body-hyperlink hover:underline"
+		>Customer Touch Screen</a
+	>
+
 	<form method="POST" on:submit={handleSubmit}>
 		<label class="checkbox-label">
 			<input type="checkbox" class="form-checkbox" name="overwriteIP" bind:checked={overwriteIP} />
