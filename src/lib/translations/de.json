@@ -520,6 +520,7 @@
 		"paymentAmount": "Zahlungsbetrag",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Ihre Zahlung ist fehlgeschlagen, Sie können einen neuen Zahlungsversuch starten",
+		"paymentDoneCustomerCTA": "ich bin fertig",
 		"paymentExpiresAt": "Zahlungsfrist: ",
 		"paymentIban": "IBAN für die Überweisung",
 		"paymentLink": "Klicken Sie hier, um per Karte mit zu bezahlen",

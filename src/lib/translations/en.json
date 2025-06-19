@@ -520,6 +520,7 @@
 		"paymentAmount": "Payment amount",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Your paiement has failed, you can attempt a new paiement",
+		"paymentDoneCustomerCTA": "I'm done",
 		"paymentExpiresAt": "Payment deadline: <0></0>",
 		"paymentIban": "IBAN to send the wire transfer to",
 		"paymentLink": "Click here to pay by card with",

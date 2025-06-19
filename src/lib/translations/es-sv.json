@@ -520,6 +520,7 @@
 		"paymentAmount": "Monto del pago",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Tu paiamiento ha fallado, puedes intentar una nueva pausa",
+		"paymentDoneCustomerCTA": "He terminado",
 		"paymentExpiresAt": "Fecha límite de pago: <0></0>",
 		"paymentIban": "IBAN para enviar la transferencia bancaria",
 		"paymentLink": "Clic aquí para pagar con tarjeta",
