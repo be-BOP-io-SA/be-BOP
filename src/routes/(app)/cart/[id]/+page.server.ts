@@ -142,5 +142,46 @@ export const actions = {
 		if (!res.matchedCount) {
 			throw error(404, 'This product is not in the cart');
 		}
+	},
+	setQuantity: async ({ locals, params, request }) => {
+		const product = await collections.products.findOne({ _id: params.id });
+
+		if (!product) {
+			await collections.carts.updateOne(userQuery(userIdentifier(locals)), {
+				$pull: { items: { productId: params.id } },
+				$set: { updatedAt: new Date() }
+			});
+			throw error(404, 'This product does not exist');
+		}
+
+		const formData = await request.formData();
+
+		const max = product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER;
+
+		const { quantity, deposit, lineId } = z
+			.object({
+				quantity: z
+					.number({ coerce: true })
+					.int()
+					.min(1)
+					.max(max - 1),
+				deposit: z.boolean({ coerce: true }).optional(),
+				lineId: z.string().optional()
+			})
+			.parse({
+				quantity: formData.get('quantity'),
+				deposit: formData.get('deposit'),
+				lineId: formData.get('lineId')
+			});
+
+		await addToCartInDb(product, quantity, {
+			user: userIdentifier(locals),
+			mode: 'eshop',
+			totalQuantity: true,
+			deposit,
+			lineId
+		});
+
+		throw redirect(303, request.headers.get('referer') || '/cart');
 	}
 };
