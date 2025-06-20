@@ -389,6 +389,15 @@
 			"ZW": "Simbabwe"
 		}
 	},
+	"customerTouch": {
+		"ctaBack": "Zurück",
+		"loginText": "Einloggen?",
+		"noThanksCta": "Nein danke",
+		"welcomHello": "Hallo",
+		"welcomeOnSiteCta": "Vor Ort",
+		"welcomeQuestion": "Wo möchten Sie essen?",
+		"welcomeTakeAwayCta": "Wegbringen"
+	},
 	"error": {
 		"404": "Die von Ihnen angeforderte Seite {invalidUrl} konnte nicht gefunden werden. Bitte überprüfen Sie, ob Ihr Link korrekt ist, oder kontaktieren Sie das Website-Team, um das Problem zu melden.",
 		"title": "Fehler {status}"

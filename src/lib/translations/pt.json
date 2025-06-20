@@ -389,6 +389,15 @@
 			"ZW": "Zimbabwe"
 		}
 	},
+	"customerTouch": {
+		"ctaBack": "Voltar",
+		"loginText": "Conecte-se?",
+		"noThanksCta": "Não, obrigado",
+		"welcomHello": "Olá",
+		"welcomeOnSiteCta": "No local",
+		"welcomeQuestion": "Onde você gostaria de comer?",
+		"welcomeTakeAwayCta": "Remover"
+	},
 	"error": {
 		"404": "A página {invalidUrl} que solicitou não pôde ser encontrada. Por favor, verifique se o seu link está correto ou contacte a equipa do site para reportar o problema.",
 		"title": "Erro {status}"

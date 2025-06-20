@@ -389,6 +389,15 @@
 			"ZW": "Zimbabwe"
 		}
 	},
+	"customerTouch": {
+		"ctaBack": "Rug",
+		"loginText": "Log in?",
+		"noThanksCta": "Nee bedankt",
+		"welcomHello": "Hallo",
+		"welcomeOnSiteCta": "Ter plaatse",
+		"welcomeQuestion": "Waar zou je willen eten?",
+		"welcomeTakeAwayCta": "Wegnemen"
+	},
 	"error": {
 		"404": "De door u opgevraagde pagina {invalidUrl} kon niet worden gevonden. \nControleer of uw link correct is of neem contact op met het siteteam om het probleem te melden.",
 		"title": "Fout {status}"
