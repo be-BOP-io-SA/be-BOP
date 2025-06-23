@@ -117,6 +117,7 @@
 						min="0"
 						max="100"
 						required
+						step="any"
 						disabled={globalRatioDisable}
 						value={data.challenge.globalRatio}
 					/>
@@ -184,6 +185,7 @@
 	<label class="form-label">
 		Products
 		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			name="productIds"
 			options={data.products.map((p) => ({ label: p.name, value: p._id }))}
 			selected={data.challenge.productIds.map((productId) => ({
@@ -195,7 +197,7 @@
 
 	<div class="flex flex-row justify-between gap-2">
 		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
-		<a href="/challenges/{data.challenge._id}" class="btn btn-gray">View</a>
+		<a href="/challenges/{data.challenge._id}" class="btn body-mainCTA">View</a>
 
 		<input
 			type="submit"

@@ -520,6 +520,7 @@
 		"paymentAmount": "Montant de la transaction (hors frais)",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Votre paiement a échoué, vous pouvez tenter un nouveau paiement",
+		"paymentDoneCustomerCTA": "J'ai fini",
 		"paymentExpiresAt": "Date limite de paiement: <0></0>",
 		"paymentIban": "IBAN de paiement",
 		"paymentLink": "Cliquez pour payer par carte avec",
@@ -588,6 +589,10 @@
 			"fullyPaid": {
 				"title": "Commande entièrement payée, montant restant dû zéro"
 			}
+		},
+		"ticket": {
+			"detail": "Détail",
+			"sincerely": "Cordialement"
 		},
 		"tickets": {
 			"printAll": "Tout imprimer",
@@ -690,7 +695,8 @@
 			"ticket": "Ticket"
 		},
 		"variationPriceLabel": "Variation de prix",
-		"vatExcluded": "Hors TVA"
+		"vatExcluded": "Hors TVA",
+		"vatIncluded": "Prix TTC estimé"
 	},
 	"schedule": {
 		"dateText": "- de {beginTime} à {endTime}",

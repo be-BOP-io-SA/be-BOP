@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
+	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
 
 	export let data;
 	export let form;
@@ -93,7 +94,7 @@
 		<div class="flex gap-2">
 			<button class="btn btn-black" type="submit">Save</button>
 			<button class="btn btn-red" type="submit" form="disableForm">Reset</button>
-			<button class="btn btn-gray" type="button" on:click={() => (showBolt12 = !showBolt12)}
+			<button class="btn body-mainCTA" type="button" on:click={() => (showBolt12 = !showBolt12)}
 				>Get bolt12 address</button
 			>
 
@@ -194,8 +195,10 @@
 			<div class="flex gap-2">
 				<button class="btn btn-black" type="submit">Withdraw</button>
 
-				<button class="btn btn-gray ml-auto" type="button" on:click={() => withdrawDialog?.close()}
-					>Cancel</button
+				<button
+					class="btn body-mainCTA ml-auto"
+					type="button"
+					on:click={() => withdrawDialog?.close()}>Cancel</button
 				>
 			</div>
 		</form>
@@ -217,4 +220,12 @@
 		<h2 class="text-2xl">Balance</h2>
 		<pre>{JSON.stringify(data.balance, null, 2)}</pre>
 	{/if}
+
+	<h2 class="text-2xl">Invoices</h2>
+
+	<SetLightningQrCodeDescription
+		bind:invoiceDescription={data.lightningInvoiceDescription}
+		bind:brandName={data.brandName}
+		showThirdPartyWarning={true}
+	/>
 {/if}

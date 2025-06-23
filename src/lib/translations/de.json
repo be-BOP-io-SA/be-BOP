@@ -520,6 +520,7 @@
 		"paymentAmount": "Zahlungsbetrag",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Ihre Zahlung ist fehlgeschlagen, Sie können einen neuen Zahlungsversuch starten",
+		"paymentDoneCustomerCTA": "ich bin fertig",
 		"paymentExpiresAt": "Zahlungsfrist: ",
 		"paymentIban": "IBAN für die Überweisung",
 		"paymentLink": "Klicken Sie hier, um per Karte mit zu bezahlen",
@@ -588,6 +589,10 @@
 			"fullyPaid": {
 				"title": "Bestellung vollständig bezahlt, ausstehender Betrag null"
 			}
+		},
+		"ticket": {
+			"detail": "Detail",
+			"sincerely": "Aufrichtig"
 		},
 		"tickets": {
 			"printAll": "Alle drucken",
@@ -675,7 +680,8 @@
 			"ticket": "Ticket"
 		},
 		"variationPriceLabel": "Variationspreis",
-		"vatExcluded": "Ohne MwSt."
+		"vatExcluded": "Ohne MwSt.",
+		"vatIncluded": "Geschätzter Preis einschließlich Steuer"
 	},
 	"schedule": {
 		"dateText": " - von {beginTime} bis {endTime}",

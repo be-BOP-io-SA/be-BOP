@@ -750,7 +750,11 @@
 						</label>{/if}
 				</div>
 			{/each}
-			<button class="btn btn-gray self-start" on:click={() => (variationLines += 1)} type="button">
+			<button
+				class="btn body-mainCTA self-start"
+				on:click={() => (variationLines += 1)}
+				type="button"
+			>
 				Add variation
 			</button>
 		{/if}
@@ -843,6 +847,7 @@
 		<label class="form-label"
 			>Product Tags
 			<MultiSelect
+				--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 				name="tagIds"
 				options={tags.map((tag) => ({
 					value: tag._id,
@@ -869,7 +874,7 @@
 					/>
 					<span class="text-sm text-gray-600 mt-2 block"
 						>Leave empty if your product is immediately available. Press
-						<kbd class="kbd">backspace</kbd> to remove the date.</span
+						<kbd class="kbd body-secondaryCTA">backspace</kbd> to remove the date.</span
 					>
 				</label>
 				{#if !isNew}
@@ -1225,7 +1230,10 @@
 				>
 			</div>
 		{/each}
-		<button class="btn btn-gray self-start" on:click={() => (productCtaLines += 1)} type="button"
+		<button
+			class="btn body-mainCTA self-start"
+			on:click={() => (productCtaLines += 1)}
+			type="button"
 			>Add CTAs
 		</button>
 
@@ -1269,7 +1277,7 @@
 			</div>
 		{/each}
 		<button
-			class="btn btn-gray self-start"
+			class="btn body-mainCTA self-start"
 			on:click={() => (externalResourcesLines += 1)}
 			type="button"
 			>Add external resource
@@ -1387,8 +1395,8 @@
 				}}>{isNew ? 'Create' : 'Update'}</button
 			>
 			{#if !isNew}
-				<a href="/product/{product._id}" class="btn btn-gray" target="_blank">View</a>
-				<a href="{adminPrefix}/product/new?duplicate_from={product._id}" class="btn btn-gray">
+				<a href="/product/{product._id}" class="btn body-mainCTA" target="_blank">View</a>
+				<a href="{adminPrefix}/product/new?duplicate_from={product._id}" class="btn body-mainCTA">
 					Duplicate
 				</a>
 				<button

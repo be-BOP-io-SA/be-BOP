@@ -100,14 +100,14 @@
 
 {#if !data.bip84}
 	<p>
-		BIP 84 is not enabled. Configure <kbd class="kbd">BIP84_XPUB</kbd> in the environment to enable it,
-		as well as the bitcoin node
+		BIP 84 is not enabled. Configure <kbd class="kbd body-secondaryCTA">BIP84_XPUB</kbd> in the environment
+		to enable it, as well as the bitcoin node
 	</p>
 {:else}
 	<ul>
 		<li>BIP 84 Xpub: {data.bip84Xpub}</li>
 		<li>
-			Derivation path: <kbd class="kbd">m/84'/0'/0'</kbd>
+			Derivation path: <kbd class="kbd body-secondaryCTA">m/84'/0'/0'</kbd>
 		</li>
 		<li>
 			Note that you need to create a new wallet (if not already done) via the UI, so that it will

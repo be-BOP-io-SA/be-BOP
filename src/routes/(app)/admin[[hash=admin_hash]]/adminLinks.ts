@@ -63,11 +63,11 @@ export const adminLinks: AdminLinks = [
 		]
 	},
 	{
-		section: 'Config',
+		section: 'Settings',
 		links: [
 			{
 				href: '/admin/config',
-				label: 'Config'
+				label: 'General'
 			},
 			{
 				href: '/admin/language',

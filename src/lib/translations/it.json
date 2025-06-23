@@ -520,6 +520,7 @@
 		"paymentAmount": "Somma",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Il tuo paiment è fallito, puoi tentare un nuovo paiment",
+		"paymentDoneCustomerCTA": "Ho finito",
 		"paymentExpiresAt": "Scadenza del pagamento: <0></0>",
 		"paymentIban": "IBAN a cui spedire il bonifico",
 		"paymentLink": "Clicca qui per pagare con la carta",
@@ -588,6 +589,10 @@
 			"fullyPaid": {
 				"title": "Ordine pagato interamente, importo residuo zero"
 			}
+		},
+		"ticket": {
+			"detail": "Dettaglio",
+			"sincerely": "Sinceramente"
 		},
 		"tickets": {
 			"printAll": "Stampa tutto",
@@ -690,7 +695,8 @@
 			"ticket": "ticket"
 		},
 		"variationPriceLabel": "Prezzo di variazione",
-		"vatExcluded": "IVA esclusa"
+		"vatExcluded": "IVA esclusa",
+		"vatIncluded": "Prezzo stimato inclusa l'imposta"
 	},
 	"schedule": {
 		"dateText": "- Da {beginTime} a {endTime}",

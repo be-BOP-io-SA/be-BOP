@@ -16,7 +16,7 @@
 					? data.challenge.perProductRatio[product._id]
 					: 100}
 				min="0"
-				step="1"
+				step="any"
 				max="100"
 				required
 			/>

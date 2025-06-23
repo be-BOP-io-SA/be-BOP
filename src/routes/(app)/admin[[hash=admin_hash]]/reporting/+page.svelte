@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { afterNavigate } from '$app/navigation';
 	import { useI18n } from '$lib/i18n.js';
 	import { invoiceNumberVariables } from '$lib/types/Order.js';
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding.js';
@@ -25,6 +26,7 @@
 	let html = '';
 	let loadedHtml = false;
 	let htmlStatus = '';
+	let isLoading = false;
 	let selectedEmployees =
 		data.employeesAlias?.map((employee) => ({
 			value: employee,
@@ -228,25 +230,48 @@
 			}
 		);
 	}
+
+	afterNavigate(() => {
+		isLoading = false;
+	});
 </script>
 
 <h1 class="text-3xl">Reporting</h1>
 <div class="gap-4 grid grid-cols-3">
 	<label class="col-span-3 checkbox-label">
-		<input class="form-checkbox" type="checkbox" bind:checked={includePending} /> include pending orders
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			bind:checked={includePending}
+			on:click={() => (loadedHtml = false)}
+		/> include pending orders
 	</label>
 	<label class="col-span-3 checkbox-label">
-		<input class="form-checkbox" type="checkbox" bind:checked={includeExpired} /> include expired orders
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			bind:checked={includeExpired}
+			on:click={() => (loadedHtml = false)}
+		/> include expired orders
 	</label>
 	<label class="col-span-3 checkbox-label">
-		<input class="form-checkbox" type="checkbox" bind:checked={includeCanceled} /> include canceled orders
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			bind:checked={includeCanceled}
+			on:click={() => (loadedHtml = false)}
+		/> include canceled orders
 	</label>
 	<label class="col-span-3 checkbox-label">
-		<input class="form-checkbox" type="checkbox" bind:checked={includePartiallyPaid} /> include partially
-		paid orders
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			bind:checked={includePartiallyPaid}
+			on:click={() => (loadedHtml = false)}
+		/> include partially paid orders
 	</label>
 </div>
-<form method="GET" class="grid grid-cols-12 gap-2 col-span-12">
+<form method="GET" class="grid grid-cols-12 gap-2 col-span-12" on:submit={() => (isLoading = true)}>
 	<div class="col-span-3">
 		<label class="form-label">
 			BeginsAt
@@ -276,6 +301,7 @@
 		<label class="form-label">
 			Employee alias
 			<MultiSelect
+				--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 				inputClass="form-input"
 				options={[
 					...new Map(
@@ -296,7 +322,7 @@
 		</label>
 	</div>
 	<div class="col-span-1">
-		<button class="submit btn btn-gray mt-8">🔍</button>
+		<button class="submit btn body-mainCTA mt-8" on:click={() => (loadedHtml = false)}>🔍</button>
 	</div>
 </form>
 <div class="gap-4 grid grid-cols-12 mr-auto">
@@ -307,7 +333,7 @@
 				Export CSV
 			</button>
 			<button
-				disabled={!!htmlStatus}
+				disabled={!!htmlStatus || isLoading}
 				class="btn btn-blue mb-2"
 				on:click={loadedHtml ? () => iframePrint.contentWindow?.print() : exportPdf}
 			>

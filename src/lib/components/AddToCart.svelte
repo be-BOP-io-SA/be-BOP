@@ -8,6 +8,7 @@
 	import { invalidate } from '$app/navigation';
 	import { UrlDependency } from '$lib/types/UrlDependency';
 	import { useI18n } from '$lib/i18n';
+	import { page } from '$app/stores';
 
 	let loading = false;
 	export let picture: Picture | undefined;
@@ -23,6 +24,9 @@
 		| 'type'
 		| 'stock'
 		| 'hasSellDisclaimer'
+		| 'payWhatYouWant'
+		| 'bookingSpec'
+		| 'hasVariations'
 	>;
 	const widget = {};
 
@@ -40,6 +44,12 @@
 	export let btnTranslationKey = 'product.cta.add';
 	const { t } = useI18n();
 	let hasStock = !!(product.stock?.available ?? Infinity);
+	let canBeAddedToCart =
+		!product.hasVariations &&
+		!product.bookingSpec &&
+		!product.payWhatYouWant &&
+		hasStock &&
+		!product.hasSellDisclaimer;
 </script>
 
 <form
@@ -60,7 +70,7 @@
 		};
 	}}
 >
-	{#if hasStock && !product.hasSellDisclaimer}
+	{#if canBeAddedToCart}
 		<button
 			type="submit"
 			disabled={loading}
@@ -90,6 +100,7 @@
 				depositPercentage={$productAddedToCart.depositPercentage}
 				discountPercentage={$productAddedToCart.discountPercentage}
 				priceMultiplier={$productAddedToCart.priceMultiplier}
+				removePopinProductPrice={$page.data.removePopinProductPrice}
 			/>
 		</Popup>
 	{/if}

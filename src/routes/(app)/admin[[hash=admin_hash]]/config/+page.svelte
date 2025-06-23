@@ -34,7 +34,7 @@
 		})) ?? [];
 </script>
 
-<h1 class="text-3xl">Config</h1>
+<h1 class="text-3xl">General settings</h1>
 
 {#if form?.success}
 	<div class="alert alert-success">{form.success}</div>
@@ -120,6 +120,7 @@
 	<label class="form-label">
 		Contact Modes
 		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			options={['email', 'nostr'].map((contact) => ({
 				value: contact,
 				label: contact
@@ -140,7 +141,7 @@
 		/>
 		Force option display (email even if smtp config is not done, npub even if nsec config is not done)
 	</label>
-	<h2 class="text-2xl">Cart preview</h2>
+	<h2 class="text-2xl">Cart</h2>
 
 	<label class="checkbox-label">
 		<input
@@ -150,6 +151,15 @@
 			checked={data.cartPreviewInteractive}
 		/>
 		Make cart preview interactive
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="removePopinProductPrice"
+			class="form-checkbox"
+			checked={data.removePopinProductPrice}
+		/>
+		Remove product price on pop-in when adding to Cart
 	</label>
 	<h2 class="text-2xl">Checkout</h2>
 
@@ -282,6 +292,24 @@
 		Target color can be changed in <a href="/admin/theme" class="underline">theme</a>("Order" then
 		"Credit card svg fill color" in theme)
 	</p>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="hideShopBankOnReceipt"
+			class="form-checkbox"
+			checked={data.hideShopBankOnReceipt}
+		/>
+		Don't display shop bank account information on receipt
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="hideShopBankOnTicket"
+			class="form-checkbox"
+			checked={data.hideShopBankOnTicket}
+		/>
+		Don't display shop bank account information on ticket
+	</label>
 	<h2 class="text-2xl">VAT</h2>
 
 	<label class="checkbox-label">
@@ -317,6 +345,15 @@
 				bind:checked={data.vatNullOutsideSellerCountry}
 			/>
 			Make VAT = 0% for deliveries outside seller's country
+		</label>
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="displayVatIncludedInProduct"
+				class="form-checkbox"
+				bind:checked={data.displayVatIncludedInProduct}
+			/>
+			Display VAT included estimated price in product page
 		</label>
 		<label class="form-label">
 			Seller's country for VAT purposes
@@ -567,7 +604,7 @@
 			value={data.analyticsScriptSnippet}
 		/>
 	</label>
-	<input type="submit" value="Update" class="btn btn-gray self-start" />
+	<input type="submit" value="Update" class="btn body-mainCTA self-start" />
 </form>
 
 <p>
