@@ -24,6 +24,7 @@
 	import IconDownloadWindow from '$lib/components/icons/IconDownloadWindow.svelte';
 	import IconExternalNewWindowOpen from '$lib/components/icons/IconExternalNewWindowOpen.svelte';
 	import OrderLabelComponent from '$lib/components/OrderLabelComponent.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import { browser } from '$app/environment';
 
 	let currentDate = new Date();
@@ -426,50 +427,103 @@
 							{/if}
 
 							{#if roleIsStaff}
-								<form
-									action="{orderStaffActionBaseUrl}/payment/{payment.id}?/cancel"
-									method="post"
-									id="cancelForm"
-								></form>
-								<form
-									action="{orderStaffActionBaseUrl}/payment/{payment.id}?/confirm"
-									method="post"
-									class="flex flex-wrap gap-2"
-								>
-									{#if payment.method === 'bank-transfer'}
-										<input
-											class="form-input w-auto"
-											type="text"
-											name="bankTransferNumber"
-											required
-											placeholder="bank transfer number"
-										/>
-									{/if}
-									{#if payment.method === 'point-of-sale'}
-										<input
-											class="form-input grow mx-2"
-											type="text"
-											name="detail"
-											required
-											placeholder="Detail (card transaction ID, or point-of-sale payment method)"
-										/>
-									{/if}
-
-									<button
-										type="submit"
-										class="btn btn-red"
-										on:click={confirmCancel}
-										form="cancelForm"
+								{@const tapToPayInProgress =
+									payment.posTapToPay && payment.posTapToPay.expiresAt > new Date()}
+								{#if tapToPayInProgress}
+									<form
+										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/cancelTapToPay"
+										method="post"
+										id="cancelTapToPayForm"
+										class="flex flex-col flex-wrap gap-2"
 									>
-										{t('pos.cta.cancelOrder')}
-									</button>
-									{#if payment.method === 'point-of-sale' || payment.method === 'bank-transfer'}
-										<button type="submit" class="btn btn-black">
-											{t('pos.cta.markOrderPaid')}
+										<button type="submit" class="btn btn-green whitespace-nowrap w-min" disabled>
+											{'Tap to pay'}
+										</button>
+										{t('pos.tapToPay.inProgress')}
+										<Spinner class="w-36" />
+									</form>
+								{:else}
+									<form
+										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/cancel"
+										method="post"
+										id="cancelForm"
+									></form>
+									<form
+										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/tapToPay"
+										method="post"
+										id="tapToPayForm"
+									></form>
+									<form
+										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/confirm"
+										method="post"
+										class="flex flex-wrap gap-2"
+									>
+										{#if payment.method === 'bank-transfer'}
+											<input
+												class="form-input w-auto"
+												type="text"
+												name="bankTransferNumber"
+												required
+												placeholder="bank transfer number"
+											/>
+										{/if}
+										{#if payment.method === 'point-of-sale'}
+											<input
+												class="form-input grow mx-2"
+												type="text"
+												name="detail"
+												required
+												placeholder="Detail (card transaction ID, or point-of-sale payment method)"
+											/>
+										{/if}
+
+										<button
+											type="submit"
+											class="btn btn-red"
+											on:click={confirmCancel}
+											form="cancelForm"
+										>
+											{t('pos.cta.cancelOrder')}
+										</button>
+										{#if payment.method === 'point-of-sale' || payment.method === 'bank-transfer'}
+											<button type="submit" class="btn btn-black">
+												{t('pos.cta.markOrderPaid')}
+											</button>
+										{/if}
+										{#if payment.method === 'point-of-sale'}
+											{#if data.tapToPay.inUseByOtherOrder}
+												<p class="text-red-500 w-full">
+													{t('pos.tapToPay.inUseByOtherOrder')}
+												</p>
+											{:else if data.tapToPay.configured}
+												<button
+													type="submit"
+													form="tapToPayForm"
+													class="btn btn-green"
+													on:click={() =>
+														data.tapToPay.onActivationUrl &&
+														window.open(
+															data.tapToPay.onActivationUrl,
+															'_blank',
+															'noopener,noreferrer'
+														)}
+												>
+													{'Tap to pay'}
+												</button>
+											{/if}
+										{/if}
+									</form>
+								{/if}
+								<div class="flex flex-wrap gap-2">
+									{#if tapToPayInProgress}
+										<button
+											type="submit"
+											class="btn btn-red whitespace-nowrap"
+											form="cancelTapToPayForm"
+										>
+											{t('pos.cta.cancelTapToPay')}
 										</button>
 									{/if}
-								</form>
-								<div class="flex flex-wrap gap-2">
 									<button
 										type="button"
 										class="btn btn-red"

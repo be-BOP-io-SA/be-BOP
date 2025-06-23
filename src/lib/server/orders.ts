@@ -74,6 +74,23 @@ import { binaryFindAround } from '$lib/utils/binary-find';
 import { toZonedTime } from 'date-fns-tz';
 import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
 
+export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
+	const other = await collections.orders.findOne({
+		_id: { $ne: orderId },
+		payments: {
+			$elemMatch: {
+				status: 'pending',
+				method: 'point-of-sale',
+				'posTapToPay.expiresAt': { $gt: new Date() }
+			}
+		}
+	});
+	if (other) {
+		return other._id;
+	}
+	return null;
+}
+
 async function generateOrderNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(
 		{ _id: 'orderNumber' },
@@ -117,6 +134,7 @@ export async function onOrderPayment(
 		bankTransferNumber?: string;
 		detail?: string;
 		fees?: Price;
+		tapToPay?: { expiresAt: Date };
 		providedSession?: ClientSession;
 	}
 ): Promise<Order> {
@@ -142,6 +160,9 @@ export async function onOrderPayment(
 					'payments.$.status': 'paid',
 					...(params?.bankTransferNumber && {
 						'payments.$.bankTransferNumber': params.bankTransferNumber
+					}),
+					...(params?.tapToPay && {
+						'payments.$.posTapToPay.expiresAt': params.tapToPay.expiresAt
 					}),
 					...(params?.detail && {
 						'payments.$.detail': params.detail
@@ -392,6 +413,9 @@ export async function onOrderPaymentFailed(
 					!opts?.preserveOrderStatus && {
 						status: reason
 					})
+			},
+			$unset: {
+				'payments.$.posTapToPay': 1
 			}
 		},
 		{ returnDocument: 'after', session: opts?.session }
