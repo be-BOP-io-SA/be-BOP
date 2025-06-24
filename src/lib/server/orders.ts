@@ -773,6 +773,16 @@ export async function createOrder(
 		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
 		if (item.freeQuantity) {
 			let quantityToConsume = Math.min(item.quantity, item.freeQuantity);
+			if (item.booking && item.product.bookingSpec) {
+				if (item.quantity !== 1) {
+					throw new Error('Booking slots can not be ordered multiple times.');
+				}
+				// Booking slots are added to the reservation as a single item, regardless
+				// of how many slots they span.
+				quantityToConsume =
+					differenceInMinutes(item.booking.end, item.booking.start) /
+					item.product.bookingSpec.slotMinutes;
+			}
 			const freeProductSubscriptions = await collections.paidSubscriptions
 				.find({
 					...userQuery(params.user),
