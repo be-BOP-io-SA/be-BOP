@@ -8,7 +8,7 @@ import type { Filter } from 'mongodb';
 import { z } from 'zod';
 
 export async function load({ url, locals }) {
-	const methods = paymentMethods({ role: locals.user?.roleId });
+	const methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
 
 	const querySchema = z.object({
 		skip: z.number({ coerce: true }).int().min(0).optional().default(0),

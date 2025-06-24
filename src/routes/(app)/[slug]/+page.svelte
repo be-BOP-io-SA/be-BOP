@@ -12,7 +12,7 @@
 	products={data.cmsData.products}
 	pictures={data.cmsData.pictures}
 	digitalFiles={data.cmsData.digitalFiles}
-	roleId={data.roleId ? data.roleId : ''}
+	hasPosOptions={data.hasPosOptions}
 	specifications={data.cmsData.specifications}
 	contactForms={data.cmsData.contactForms}
 	pageName={data.cmsPage.title}

@@ -34,10 +34,11 @@
 
 <a href="{data.adminPrefix}/arm/role/new" class="underline">Create a role</a>
 
-<ul class="grid grid-cols-[auto_auto_auto_auto_auto_min-content_min-content] gap-2">
+<ul class="grid grid-cols-[auto_auto_auto_auto_auto__auto_min-content_min-content] gap-2">
 	<li class="contents">
 		<span>Role ID</span>
 		<span>Role name</span>
+		<span>POS</span>
 		<span>Write access</span>
 		<span>Read access</span>
 		<span>Forbidden access</span>
@@ -59,6 +60,7 @@
 						if (action.searchParams.has('/update')) {
 							successMessage = 'Role updated: ' + role._id;
 							blurActiveElement();
+							window.location.reload();
 						} else {
 							await applyAction(result);
 						}
@@ -70,8 +72,15 @@
 					type="text"
 					name="name"
 					class="form-input"
-					disabled={role._id === SUPER_ADMIN_ROLE_ID}
 					value={role.name}
+					readonly={role._id === SUPER_ADMIN_ROLE_ID}
+				/>
+				<input
+					class="form-checkbox place-self-center"
+					type="checkbox"
+					name="hasPosOptions"
+					checked={role.hasPosOptions || role._id === POS_ROLE_ID}
+					disabled={role._id === POS_ROLE_ID}
 				/>
 				<MultiSelect
 					--sms-options-bg="var(--body-mainPlan-backgroundColor)"
@@ -97,19 +106,14 @@
 					allowUserOptions
 					disabled={role._id === SUPER_ADMIN_ROLE_ID}
 				/>
-				<button
-					type="submit"
-					class="btn btn-black self-start"
-					disabled={role._id === SUPER_ADMIN_ROLE_ID}
-					title="Save"
-				>
+				<button type="submit" class="btn btn-black self-start" title="Save">
 					<IconSave />
 				</button>
 				<button
 					type="submit"
 					class="btn btn-red self-start"
 					formaction="{data.adminPrefix}/arm/role/{role._id}?/delete"
-					disabled={role._id === SUPER_ADMIN_ROLE_ID || role._id === POS_ROLE_ID}
+					disabled={role._id === SUPER_ADMIN_ROLE_ID}
 					title="Delete role"
 					on:click={(e) => {
 						if (!confirm(`Are you sure you want to delete this role: ${role._id}?`)) {
@@ -134,7 +138,7 @@
 <a href="{data.adminPrefix}/arm/user/new" class="underline">Create a user</a>
 
 <ul
-	class="grid grid-cols-[auto_auto_auto_auto_auto_auto_min-content_min-content_min-content] gap-2"
+	class="grid grid-cols-[auto_auto_auto_auto_auto_min-content_auto_min-content_min-content_min-content] gap-2"
 >
 	<li class="contents">
 		<span>Login</span>
@@ -142,6 +146,7 @@
 		<span>Recovery Email</span>
 		<span>Recovery Npub</span>
 		<span>Role</span>
+		<span>POS</span>
 		<span>Status</span>
 		<span>Save</span>
 		<span>Password</span>
@@ -167,6 +172,7 @@
 						} else if (action.searchParams.has('/update')) {
 							successMessage = 'Account updated: ' + user.login;
 							blurActiveElement();
+							window.location.reload();
 						} else {
 							await applyAction(result);
 						}
@@ -212,6 +218,16 @@
 						</option>
 					{/each}
 				</select>
+				{#if user.roleId === SUPER_ADMIN_ROLE_ID}
+					<input type="hidden" name="roleId" value={SUPER_ADMIN_ROLE_ID} />
+				{/if}
+				<input
+					class="form-checkbox place-self-center"
+					type="checkbox"
+					name="hasPosOptions"
+					bind:checked={user.hasPosOptions}
+					disabled={data.roles.find((rol) => rol._id === user.roleId)?.hasPosOptions}
+				/>
 				<select class="form-input" disabled={user.roleId === SUPER_ADMIN_ROLE_ID} name="status">
 					<option value="enabled" selected={!user.disabled}>Enabled</option>
 					<option value="disabled" selected={!!user.disabled}>Disabled</option>

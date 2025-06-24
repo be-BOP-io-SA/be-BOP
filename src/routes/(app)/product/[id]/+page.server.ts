@@ -7,7 +7,6 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { addToCartInDb } from '$lib/server/cart';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import { userIdentifier, userQuery } from '$lib/server/user';
-import { POS_ROLE_ID } from '$lib/types/User';
 import { cmsFromContent } from '$lib/server/cms';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
@@ -109,7 +108,7 @@ export const load = async ({ params, locals }) => {
 	}
 
 	if (
-		locals.user?.roleId === POS_ROLE_ID
+		locals.user?.hasPosOptions
 			? !product.actionSettings.retail.visible
 			: !product.actionSettings.eShop.visible
 	) {

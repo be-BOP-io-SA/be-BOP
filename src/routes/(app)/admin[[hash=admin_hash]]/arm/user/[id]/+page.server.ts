@@ -21,9 +21,7 @@ export const actions = {
 			throw error(403, 'You cannot update a customer from here');
 		}
 
-		const allowedRoles = (await collections.roles.find().toArray()).filter(
-			(role) => role._id !== SUPER_ADMIN_ROLE_ID
-		);
+		const allowedRoles = await collections.roles.find().toArray();
 
 		const parsed = z
 			.object({
@@ -32,7 +30,8 @@ export const actions = {
 				recoveryEmail: z.string().email().optional(),
 				recoveryNpub: zodNpub().optional(),
 				status: z.enum(['enabled', 'disabled']).optional(),
-				roleId: z.enum([allowedRoles[0]._id, ...allowedRoles.map((role) => role._id)]).optional()
+				roleId: z.enum([allowedRoles[0]._id, ...allowedRoles.map((role) => role._id)]).optional(),
+				hasPosOptions: z.boolean({ coerce: true })
 			})
 			.parse({
 				...Object.fromEntries(data),
@@ -46,7 +45,15 @@ export const actions = {
 		if (user.roleId === SUPER_ADMIN_ROLE_ID && locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
 			throw error(400, 'You are not allowed to edit admin information');
 		}
+		const role = await collections.roles.findOne({
+			_id: parsed.roleId
+		});
+		if (!role) {
+			throw error(404, 'Role not found');
+		}
 		try {
+			const hasPosOptions = parsed.hasPosOptions || role.hasPosOptions;
+
 			await collections.users.updateOne(
 				{ _id: user._id },
 				{
@@ -57,6 +64,7 @@ export const actions = {
 							...(parsed.recoveryEmail && { email: parsed.recoveryEmail }),
 							...(parsed.recoveryNpub && { npub: parsed.recoveryNpub })
 						},
+						hasPosOptions,
 						disabled: parsed.status === 'disabled',
 						roleId: parsed.roleId ?? user.roleId
 					}

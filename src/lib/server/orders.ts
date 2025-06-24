@@ -42,7 +42,7 @@ import { checkCartItems } from './cart';
 import { userQuery } from './user';
 import { SMTP_USER } from '$env/static/private';
 import { toCurrency } from '$lib/utils/toCurrency';
-import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import type { CountryAlpha2 } from '$lib/types/Country';
@@ -563,7 +563,7 @@ export async function createOrder(
 		!canBeNotified &&
 		paymentMethod !== 'point-of-sale' &&
 		paymentMethod !== null &&
-		params.user.userRoleId !== POS_ROLE_ID
+		!params.user.userHasPosOptions
 	) {
 		throw error(400, emailsEnabled ? 'Missing npub address or email' : 'Missing npub address');
 	}
@@ -648,7 +648,7 @@ export async function createOrder(
 	}
 
 	const discountInfo =
-		params.user.userRoleId === POS_ROLE_ID && params?.discount?.amount ? params.discount : null;
+		params.user.userHasPosOptions && params?.discount?.amount ? params.discount : null;
 
 	const vatProfiles = products.some((p) => p.vatProfileId)
 		? await collections.vatProfiles
@@ -814,7 +814,7 @@ export async function createOrder(
 		currency: Currency;
 		amount: number;
 	} | null = null;
-	if (priceInfo.discount && params.discount && params.user.userRoleId === POS_ROLE_ID) {
+	if (priceInfo.discount && params.discount && params.user.userHasPosOptions) {
 		discount = {
 			currency: params.discount.type === 'fiat' ? runtimeConfig.mainCurrency : 'SAT',
 			amount: params.discount.type === 'fiat' ? params?.discount?.amount : priceInfo.discount

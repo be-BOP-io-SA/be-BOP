@@ -12,7 +12,6 @@
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
-	import { POS_ROLE_ID } from '$lib/types/User.js';
 	import { toSatoshis } from '$lib/utils/toSatoshis';
 	import { MIN_SATOSHIS_FOR_BITCOIN_PAYMENT, type DiscountType } from '$lib/types/Order.js';
 	import { useI18n } from '$lib/i18n';
@@ -31,7 +30,7 @@
 	let country = defaultShippingCountry;
 
 	let isFreeVat = false;
-	let onLocation = data.roleId === POS_ROLE_ID && data.defaultOnLocation;
+	let onLocation = data.hasPosOptions && data.defaultOnLocation;
 	$: offerDeliveryFees = onLocation;
 	let addDiscount = false;
 	let offerOrder = false;
@@ -67,13 +66,11 @@
 	};
 
 	const emails: Record<FeedKey, string> = {
-		paymentStatus:
-			data.roleId === POS_ROLE_ID ? '' : data.email || data.personalInfoConnected?.email || ''
+		paymentStatus: data.hasPosOptions ? '' : data.email || data.personalInfoConnected?.email || ''
 	};
 
 	const npubs: Record<FeedKey, string> = {
-		paymentStatus:
-			data.roleId === POS_ROLE_ID ? '' : data.npub || data.personalInfoConnected?.npub || ''
+		paymentStatus: data.hasPosOptions ? '' : data.npub || data.personalInfoConnected?.npub || ''
 	};
 
 	function checkForm(event: SubmitEvent) {
@@ -108,7 +105,7 @@
 
 	$: items = data.cart || [];
 	$: deliveryFees =
-		data.roleId === 'POS_ROLE_ID' && data.deliveryFees.allowFreeForPOS
+		data.hasPosOptions && data.deliveryFees.allowFreeForPOS
 			? 0
 			: computeDeliveryFees(UNDERLYING_CURRENCY, country, items, data.deliveryFees);
 
@@ -171,8 +168,8 @@
 			? priceInfo.partialPriceWithVat >=
 			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 			: true;
-	let prefillWithShopInfo = data.roleId === POS_ROLE_ID && !data.posDisablePrefillCheckoutAddress;
-	let enforceCheckoutAdress = data.roleId !== POS_ROLE_ID || data.posDisablePrefillCheckoutAddress;
+	let prefillWithShopInfo = data.hasPosOptions && !data.posDisablePrefillCheckoutAddress;
+	let enforceCheckoutAdress = !data.hasPosOptions || data.posDisablePrefillCheckoutAddress;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -185,7 +182,7 @@
 			pictures={data.cmsCheckoutTopData.pictures}
 			tags={data.cmsCheckoutTopData.tags}
 			digitalFiles={data.cmsCheckoutTopData.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.cmsCheckoutTopData.specifications}
 			contactForms={data.cmsCheckoutTopData.contactForms}
 			pageName={data.cmsCheckoutTop.title}
@@ -220,7 +217,7 @@
 							autocomplete="given-name"
 							required={enforceCheckoutAdress}
 							value={data.personalInfoConnected?.firstName ??
-								(data.shopInformation?.businessName && prefillWithShopInfo
+								(prefillWithShopInfo && data.shopInformation?.businessName
 									? data.shopInformation.businessName
 									: '') ??
 								''}
@@ -248,7 +245,7 @@
 							name="shipping.address"
 							required={enforceCheckoutAdress}
 							value={data.personalInfoConnected?.address?.street ??
-								(data.shopInformation?.address?.street && prefillWithShopInfo
+								(prefillWithShopInfo && data.shopInformation?.address?.street
 									? data.shopInformation.address.street
 									: '') ??
 								''}
@@ -274,7 +271,7 @@
 							name="shipping.state"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.state ??
-								(data.shopInformation?.address?.state && prefillWithShopInfo
+								(prefillWithShopInfo && data.shopInformation?.address?.state
 									? data.shopInformation.address.state
 									: '') ??
 								''}
@@ -288,7 +285,7 @@
 							name="shipping.city"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.city ??
-								(data.shopInformation?.address?.city && prefillWithShopInfo
+								(prefillWithShopInfo && data.shopInformation?.address?.city
 									? data.shopInformation.address.city
 									: '') ??
 								''}
@@ -303,7 +300,7 @@
 							name="shipping.zip"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.zip ??
-								(data.shopInformation?.address?.zip && prefillWithShopInfo
+								(prefillWithShopInfo && data.shopInformation?.address?.zip
 									? data.shopInformation.address.zip
 									: '') ??
 								''}
@@ -317,7 +314,7 @@
 							type="tel"
 							name="shipping.phone"
 							class="form-input"
-							value={data.shopInformation?.contact?.phone && prefillWithShopInfo
+							value={prefillWithShopInfo && data.shopInformation?.contact?.phone
 								? data.shopInformation.contact.phone
 								: ''}
 						/>
@@ -351,7 +348,7 @@
 						{t('checkout.isProBilling')}
 					</label>
 				{/if}
-				{#if data.defaultOnLocation && data.roleId === POS_ROLE_ID && !isDigital}
+				{#if data.defaultOnLocation && data.hasPosOptions && !isDigital}
 					<label class="col-span-6 checkbox-label">
 						<input
 							type="checkbox"
@@ -471,7 +468,7 @@
 			<section class="gap-4 flex flex-col">
 				<h2 class="font-light text-2xl">{t('checkout.payment.title')}</h2>
 
-				{#if data.roleId === POS_ROLE_ID}
+				{#if data.hasPosOptions}
 					<label class="checkbox-label">
 						<input
 							type="checkbox"
@@ -509,7 +506,7 @@
 						</div>
 					</label>
 				{/if}
-				{#if data.roleId === POS_ROLE_ID && paymentMethod !== 'point-of-sale' && paymentMethod !== 'bank-transfer'}
+				{#if data.hasPosOptions && paymentMethod !== 'point-of-sale' && paymentMethod !== 'bank-transfer'}
 					<label class="checkbox-label">
 						<input
 							type="checkbox"
@@ -557,11 +554,12 @@
 										name="{key}Email"
 										bind:value={emails[key]}
 										required={key === 'paymentStatus' &&
-											data.roleId !== POS_ROLE_ID &&
+											!data.hasPosOptions &&
 											(!npubs[key] || !data.contactModes.includes('nostr'))}
 									/>
 								</label>
 							{/if}
+
 							{#if data.contactModes.includes('nostr')}
 								<label class="form-label">
 									{t('checkout.notifications.npub')}
@@ -576,7 +574,7 @@
 										placeholder="npub1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 										required={key === 'paymentStatus' &&
 											(!emails[key] || !data.contactModes.includes('email')) &&
-											data.roleId !== POS_ROLE_ID}
+											!data.hasPosOptions}
 										on:change={(ev) => ev.currentTarget.setCustomValidity('')}
 									/>
 								</label>
@@ -612,7 +610,7 @@
 					<div class="pl-4 py-2 body-mainPlan border-b border-gray-300 text-xl font-light">
 						{t('checkout.note.title')}
 					</div>
-					{#if data.roleId === POS_ROLE_ID}
+					{#if data.hasPosOptions}
 						<div class="p-4 flex flex-col gap-3">
 							<label class="form-label text-xl">
 								{t('checkout.receiptNote.label')}
@@ -894,7 +892,7 @@
 						name="teecees"
 						form="checkout"
 						required
-						checked={data.roleId === POS_ROLE_ID && data.posPrefillTermOfUse}
+						checked={data.hasPosOptions && data.posPrefillTermOfUse}
 					/>
 					<span>
 						<Trans key="checkout.tosAgree"
@@ -979,7 +977,7 @@
 					</label>
 				{/if}
 
-				{#if data.roleId === POS_ROLE_ID}
+				{#if data.hasPosOptions}
 					{#if !data.vatExempted}
 						<label class="checkbox-label">
 							<input
@@ -1138,7 +1136,7 @@
 			pictures={data.cmsCheckoutBottomData.pictures}
 			tags={data.cmsCheckoutBottomData.tags}
 			digitalFiles={data.cmsCheckoutBottomData.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.cmsCheckoutBottomData.specifications}
 			contactForms={data.cmsCheckoutBottomData.contactForms}
 			pageName={data.cmsCheckoutBottom.title}
