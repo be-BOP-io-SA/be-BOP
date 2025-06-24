@@ -109,25 +109,67 @@ export function computeDeliveryFees(
 	return deliveryFeesConfig.onlyPayHighest ? Math.max(...fees) : sum(fees);
 }
 
+type ItemForPriceInfo = {
+	product: {
+		shipping: boolean;
+		price: Price;
+		vatProfileId?: string | ObjectId;
+		bookingSpec?: { slotMinutes: number };
+	};
+	quantity: number;
+	customPrice?: Price;
+	depositPercentage?: number;
+	discountPercentage?: number;
+	freeQuantity?: number;
+	freeProductSources?: { subscriptionId: string; quantity: number }[];
+	booking?: {
+		start: Date;
+		end: Date;
+	};
+};
+
+function itemBasePrice(item: ItemForPriceInfo): Price {
+	return item.customPrice || item.product.price;
+}
+
+type PriceToBillForItem = {
+	amount: Price['amount'];
+	currency: Price['currency'];
+	quantityToAccount: number;
+	quantityToBill: number;
+};
+
+function priceToBillForItem(item: ItemForPriceInfo): PriceToBillForItem {
+	let quantityToAccount;
+	if (item.booking) {
+		if (item.quantity !== 1) {
+			throw new Error('Booking slots can not be ordered multiple times.');
+		} else if (!item.product.bookingSpec?.slotMinutes) {
+			throw new Error('Item is a booking slot, but product is missing booking spec.');
+		}
+		quantityToAccount =
+			differenceInMinutes(item.booking.end, item.booking.start) /
+			item.product.bookingSpec.slotMinutes;
+	} else {
+		quantityToAccount = item.quantity;
+	}
+	const quantityToBill = Math.max(quantityToAccount - (item.freeQuantity ?? 0), 0);
+	const discountFactor = (item.discountPercentage ?? 0) / 100;
+	const basePrice = itemBasePrice(item);
+	const amountToBill = fixCurrencyRounding(
+		basePrice.amount * quantityToBill * (1 - discountFactor),
+		basePrice.currency
+	);
+	return {
+		amount: amountToBill,
+		currency: basePrice.currency,
+		quantityToAccount,
+		quantityToBill
+	};
+}
+
 export function computePriceInfo(
-	items: Array<{
-		product: {
-			shipping: boolean;
-			price: Price;
-			vatProfileId?: string | ObjectId;
-			bookingSpec?: { slotMinutes: number };
-		};
-		quantity: number;
-		customPrice?: Price;
-		depositPercentage?: number;
-		discountPercentage?: number;
-		freeQuantity?: number;
-		freeProductSources?: { subscriptionId: string; quantity: number }[];
-		booking?: {
-			start: Date;
-			end: Date;
-		};
-	}>,
+	items: Array<ItemForPriceInfo>,
 	params: {
 		vatExempted: boolean;
 		vatNullOutsideSellerCountry: boolean;
@@ -169,7 +211,7 @@ export function computePriceInfo(
 		params.vatNullOutsideSellerCountry && params.bebopCountry !== params.userCountry;
 	const singleVatCountry = params.vatSingleCountry && !!params.bebopCountry;
 
-	const vatForItem = (item: (typeof items)[0]) => {
+	const vatForItem = (item: ItemForPriceInfo) => {
 		if (params.vatExempted) {
 			return undefined;
 		}
@@ -188,23 +230,12 @@ export function computePriceInfo(
 			  )
 			: undefined;
 		const rate = vatProfile?.rates[country] ?? vatRate(country);
-		const currency = (item.customPrice || item.product.price).currency;
-		const price = fixCurrencyRounding(
-			(item.customPrice || item.product.price).amount *
-				Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
-				(item.booking && item.product.bookingSpec?.slotMinutes
-					? differenceInMinutes(item.booking.end, item.booking.start) /
-					  item.product.bookingSpec.slotMinutes
-					: 1) *
-				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
-			currency
-		);
-		const partialPrice = fixCurrencyRounding(
-			(price * (item.depositPercentage ?? 100)) / 100,
-			currency
-		);
-		const vat = fixCurrencyRounding(price * (rate / 100), currency);
-		const partialVat = fixCurrencyRounding(partialPrice * (rate / 100), currency);
+		const { amount: amountToBill, currency } = priceToBillForItem(item);
+		const toDepositFactor = (item.depositPercentage ?? 100) / 100;
+		const partialPrice = fixCurrencyRounding(amountToBill * toDepositFactor, currency);
+		const vatFactor = rate / 100;
+		const vat = fixCurrencyRounding(amountToBill * vatFactor, currency);
+		const partialVat = fixCurrencyRounding(partialPrice * vatFactor, currency);
 		return {
 			price: { amount: vat, currency },
 			partialPrice: {
@@ -217,19 +248,14 @@ export function computePriceInfo(
 	};
 
 	const partialPrice = sumCurrency(UNDERLYING_CURRENCY, [
-		...items.map((item) => ({
-			currency: (item.customPrice || item.product.price).currency,
-			amount:
-				(((item.customPrice || item.product.price).amount *
-					Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
-					(item.booking && item.product.bookingSpec?.slotMinutes
-						? differenceInMinutes(item.booking.end, item.booking.start) /
-						  item.product.bookingSpec.slotMinutes
-						: 1) *
-					(item.depositPercentage ?? 100)) /
-					100) *
-				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
-		})),
+		...items.map((item) => {
+			const toDepositFactor = (item.depositPercentage ?? 100) / 100;
+			const { amount, currency } = priceToBillForItem(item);
+			return {
+				amount: amount * toDepositFactor,
+				currency
+			};
+		}),
 		params.deliveryFees
 	]);
 	const vat = items.map(vatForItem);
@@ -247,17 +273,7 @@ export function computePriceInfo(
 		[...vat, deliveryFeeVat].filter((p) => p !== undefined).map((vat) => vat.price)
 	);
 	const totalPrice = sumCurrency(UNDERLYING_CURRENCY, [
-		...items.map((item) => ({
-			currency: (item.customPrice || item.product.price).currency,
-			amount:
-				(item.customPrice || item.product.price).amount *
-				Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
-				(item.booking && item.product.bookingSpec?.slotMinutes
-					? differenceInMinutes(item.booking.end, item.booking.start) /
-					  item.product.bookingSpec.slotMinutes
-					: 1) *
-				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
-		})),
+		...items.map(priceToBillForItem),
 		params.deliveryFees
 	]);
 
