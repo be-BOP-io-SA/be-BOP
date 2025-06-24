@@ -171,7 +171,8 @@
 			? priceInfo.partialPriceWithVat >=
 			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 			: true;
-	let prefillWithShopInfo = data.roleId === POS_ROLE_ID && !data.notPrefillCheckoutAddress;
+	let prefillWithShopInfo = data.roleId === POS_ROLE_ID && !data.posDisablePrefillCheckoutAddress;
+	let enforceCheckoutAdress = data.roleId !== POS_ROLE_ID || data.posDisablePrefillCheckoutAddress;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -217,7 +218,7 @@
 							class="form-input"
 							name="shipping.firstName"
 							autocomplete="given-name"
-							required={data.roleId !== POS_ROLE_ID || data.notPrefillCheckoutAddress}
+							required={enforceCheckoutAdress}
 							value={data.personalInfoConnected?.firstName ??
 								(data.shopInformation?.businessName && prefillWithShopInfo
 									? data.shopInformation.businessName
@@ -233,7 +234,7 @@
 							class="form-input"
 							name="shipping.lastName"
 							autocomplete="family-name"
-							required={data.roleId !== POS_ROLE_ID || data.notPrefillCheckoutAddress}
+							required={enforceCheckoutAdress}
 							value={data.personalInfoConnected?.lastName ?? ''}
 						/>
 					</label>
@@ -245,7 +246,7 @@
 							class="form-input"
 							autocomplete="street-address"
 							name="shipping.address"
-							required={data.roleId !== POS_ROLE_ID || data.notPrefillCheckoutAddress}
+							required={enforceCheckoutAdress}
 							value={data.personalInfoConnected?.address?.street ??
 								(data.shopInformation?.address?.street && prefillWithShopInfo
 									? data.shopInformation.address.street
@@ -291,7 +292,7 @@
 									? data.shopInformation.address.city
 									: '') ??
 								''}
-							required={data.roleId !== POS_ROLE_ID || data.notPrefillCheckoutAddress}
+							required={enforceCheckoutAdress}
 						/>
 					</label>
 					<label class="form-label col-span-2">
@@ -306,7 +307,7 @@
 									? data.shopInformation.address.zip
 									: '') ??
 								''}
-							required={data.roleId !== POS_ROLE_ID || data.notPrefillCheckoutAddress}
+							required={enforceCheckoutAdress}
 							autocomplete="postal-code"
 						/>
 					</label>

@@ -92,8 +92,8 @@ export async function load({ parent, locals }) {
 		emailsEnabled,
 		collectIPOnDeliverylessOrders: runtimeConfig.collectIPOnDeliverylessOrders,
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
-		notPrefillCheckoutAddress: runtimeConfig.notPrefillCheckoutAddress,
-		personalInfoConnected: !runtimeConfig.notPrefillCheckoutAddress
+		posDisablePrefillCheckoutAddress: runtimeConfig.posDisablePrefillCheckoutAddress,
+		personalInfoConnected: !runtimeConfig.posDisablePrefillCheckoutAddress
 			? {
 					firstName: personalInfoConnected?.firstName,
 					lastName: personalInfoConnected?.lastName,

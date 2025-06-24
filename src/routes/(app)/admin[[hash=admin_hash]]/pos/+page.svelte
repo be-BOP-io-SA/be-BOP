@@ -40,11 +40,11 @@
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
-			name="notPrefillCheckoutAddress"
+			name="posDisablePrefillCheckoutAddress"
 			class="form-checkbox"
-			checked={data.notPrefillCheckoutAddress}
+			checked={data.posDisablePrefillCheckoutAddress}
 		/>
-		Do no prefill checkout with shop address on PoS session
+		Do not prefill checkout with shop address on PoS session
 	</label>
 	<label class="checkbox-label">
 		<input
