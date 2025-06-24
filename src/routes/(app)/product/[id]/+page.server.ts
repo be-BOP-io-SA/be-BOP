@@ -50,6 +50,7 @@ export const load = async ({ params, locals }) => {
 			| 'hideFromSEO'
 			| 'hideDiscountExpiration'
 			| 'bookingSpec'
+			| 'vatProfileId'
 		>
 	>(
 		{ _id: params.id },
@@ -97,7 +98,8 @@ export const load = async ({ params, locals }) => {
 				hideFromSEO: 1,
 				hideDiscountExpiration: 1,
 				shipping: 1,
-				bookingSpec: 1
+				bookingSpec: 1,
+				vatProfileId: 1
 			}
 		}
 	);
@@ -186,10 +188,10 @@ export const load = async ({ params, locals }) => {
 				}))
 		],
 		...(product.contentBefore && {
-			productCMSBefore: cmsFromContent({ content: product.contentBefore }, locals)
+			productCMSBefore: cmsFromContent({ desktopContent: product.contentBefore }, locals)
 		}),
 		...(product.contentAfter && {
-			productCMSAfter: cmsFromContent({ content: product.contentAfter }, locals)
+			productCMSAfter: cmsFromContent({ desktopContent: product.contentAfter }, locals)
 		}),
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
 		websiteShortDescription: product.shortDescription,

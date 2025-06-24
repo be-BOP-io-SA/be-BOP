@@ -8,6 +8,7 @@ import { zodSlug } from '$lib/server/zod';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { generateId } from '$lib/utils/generateId';
+import { generatePicture } from '$lib/server/picture';
 
 export const load = async () => {};
 
@@ -30,6 +31,7 @@ export const actions: Actions = {
 				displayPastEventsAfterFuture: z.boolean({ coerce: true }).default(false),
 				sortByEventDateDesc: z.boolean({ coerce: true }).default(false),
 				allowSubscription: z.boolean({ coerce: true }).default(false),
+				eventPictures: z.string().trim().min(1).max(500).array().min(1).optional(),
 				timezone: z.string().optional(),
 				events: z.array(
 					z.object({
@@ -70,7 +72,15 @@ export const actions: Actions = {
 			...parsedEvent,
 			slug: generateId(parsedEvent.title, true)
 		}));
-
+		if (parsed.eventPictures) {
+			await Promise.all(
+				parsed.eventPictures.map(async (eventPicture, index) => {
+					await generatePicture(eventPicture, {
+						schedule: { _id: parsed.slug, eventSlug: eventWithSlug[index].slug }
+					});
+				})
+			);
+		}
 		await collections.schedules.insertOne({
 			_id: parsed.slug,
 			name: parsed.name,

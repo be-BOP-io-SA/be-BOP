@@ -6,7 +6,7 @@ import { addYears } from 'date-fns';
 import { omit } from '$lib/utils/omit';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 
-export const load = async ({ locals }) => {
+export const load = async ({ locals, url }) => {
 	const cmsPage = await collections.cmsPages.findOne(
 		{
 			_id: 'home'
@@ -14,19 +14,20 @@ export const load = async ({ locals }) => {
 		{
 			projection: {
 				content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] },
-				mobileContent: {
-					$ifNull: [`$translations.${locals.language}.mobileContent`, '$mobileContent']
-				},
 				employeeContent: {
 					$ifNull: [`$translations.${locals.language}.employeeContent`, '$employeeContent']
 				},
+				fullScreen: 1,
 				hasEmployeeContent: 1,
-				title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] },
+				hasMobileContent: 1,
+				maintenanceDisplay: 1,
+				mobileContent: {
+					$ifNull: [`$translations.${locals.language}.mobileContent`, '$mobileContent']
+				},
 				shortDescription: {
 					$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
 				},
-				fullScreen: 1,
-				maintenanceDisplay: 1
+				title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] }
 			}
 		}
 	);
@@ -38,18 +39,23 @@ export const load = async ({ locals }) => {
 		};
 	}
 
+	const forceContentVersion =
+		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
+			? 'employee'
+			: url.searchParams.get('content') === 'desktop'
+			? 'desktop'
+			: url.searchParams.get('content') === 'mobile'
+			? 'mobile'
+			: undefined;
+
 	return {
-		cmsPage: omit(cmsPage, ['content']),
+		cmsPage: omit(cmsPage, ['content', 'mobileContent', 'employeeContent']),
 		cmsData: cmsFromContent(
 			{
-				content:
-					locals.user?.roleId !== undefined &&
-					locals.user?.roleId !== CUSTOMER_ROLE_ID &&
-					cmsPage.hasEmployeeContent &&
-					cmsPage.employeeContent
-						? cmsPage.employeeContent
-						: cmsPage.content,
-				mobileContent: cmsPage.mobileContent
+				desktopContent: cmsPage.content,
+				mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
+				employeeContent: (cmsPage.hasEmployeeContent && cmsPage.employeeContent) || undefined,
+				forceContentVersion
 			},
 			locals
 		),

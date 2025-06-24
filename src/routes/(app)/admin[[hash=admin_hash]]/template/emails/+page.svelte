@@ -16,15 +16,20 @@
 </script>
 
 <p>
-	<kbd class="kbd">{'{{websiteLink}}'}</kbd>, <kbd class="kbd">{'{{brandName}}'}</kbd>,
-	<kbd class="kbd">{'{{iban}}'}</kbd>
-	and <kbd class="kbd">{'{{bic}}'}</kbd> are always available in templates.
+	<kbd class="kbd body-secondaryCTA">{'{{websiteLink}}'}</kbd>,
+	<kbd class="kbd body-secondaryCTA">{'{{brandName}}'}</kbd>,
+	<kbd class="kbd body-secondaryCTA">{'{{iban}}'}</kbd>
+	and <kbd class="kbd body-secondaryCTA">{'{{bic}}'}</kbd> are always available in templates.
 </p>
 <p>
-	For orders, <kbd class="kbd">{'{{orderNumber}}'}</kbd>, <kbd class="kbd">{'{{orderLink}}'}</kbd>,
-	<kbd class="kbd">{'{{invoiceLink}}'}</kbd>, <kbd class="kbd">{'{{amount}}'}</kbd>,
-	<kbd class="kbd">{'{{currency}}'}</kbd>, <kbd class="kbd">{'{{paymentStatus}}'}</kbd>,
-	<kbd class="kbd">{'{{paymentLink}}'}</kbd>, <kbd class="kbd">{'{{qrcodeLink}}'}</kbd> are also available.
+	For orders, <kbd class="kbd body-secondaryCTA">{'{{orderNumber}}'}</kbd>,
+	<kbd class="kbd body-secondaryCTA">{'{{orderLink}}'}</kbd>,
+	<kbd class="kbd body-secondaryCTA">{'{{invoiceLink}}'}</kbd>,
+	<kbd class="kbd body-secondaryCTA">{'{{amount}}'}</kbd>,
+	<kbd class="kbd body-secondaryCTA">{'{{currency}}'}</kbd>,
+	<kbd class="kbd body-secondaryCTA">{'{{paymentStatus}}'}</kbd>,
+	<kbd class="kbd body-secondaryCTA">{'{{paymentLink}}'}</kbd>,
+	<kbd class="kbd body-secondaryCTA">{'{{qrcodeLink}}'}</kbd> are also available.
 </p>
 {#each zippedTemplates as template}
 	<form class="contents" method="post">
@@ -61,7 +66,7 @@
 			<button type="submit" class="btn btn-black" formaction="?/update">Update</button>
 			<button
 				type="submit"
-				class="btn btn-gray"
+				class="btn body-mainCTA"
 				formaction="?/reset"
 				on:click={(e) => {
 					if (!confirm('Are you sure you want to reset this template to the default?')) {

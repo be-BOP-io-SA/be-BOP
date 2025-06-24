@@ -118,7 +118,7 @@
 				disabled={!!form?.disabledUser}
 			/>
 			{#if data.isAdminCreated}
-				<a href="{data.adminPrefix}/login/recovery" class="btn btn-gray">Recovery</a>
+				<a href="{data.adminPrefix}/login/recovery" class="btn body-mainCTA">Recovery</a>
 			{/if}
 		</div>
 	</form>

@@ -285,6 +285,7 @@ export async function load(params) {
 		vatSingleCountry: runtimeConfig.vatSingleCountry,
 		vatCountry: runtimeConfig.vatCountry,
 		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
+		displayVatIncludedInProduct: runtimeConfig.displayVatIncludedInProduct,
 		currencies: {
 			main: runtimeConfig.mainCurrency,
 			secondary: runtimeConfig.secondaryCurrency,
@@ -337,7 +338,7 @@ export async function load(params) {
 		removePopinProductPrice: runtimeConfig.removePopinProductPrice,
 		...(cmsAgewall && {
 			cmsAgewall,
-			cmsAgewallData: cmsFromContent({ content: cmsAgewall.content }, locals)
+			cmsAgewallData: cmsFromContent({ desktopContent: cmsAgewall.content }, locals)
 		}),
 		sessionAcceptAgeLimitation: locals.acceptAgeLimitation
 	};

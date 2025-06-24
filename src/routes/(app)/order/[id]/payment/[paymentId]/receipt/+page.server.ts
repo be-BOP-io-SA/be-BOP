@@ -29,6 +29,7 @@ export async function load({ params }) {
 		payment,
 		layoutReset: true,
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		sellerIdentity: (order.sellerIdentity || runtimeConfig.sellerIdentity)!
+		sellerIdentity: (order.sellerIdentity || runtimeConfig.sellerIdentity)!,
+		hideShopBankOnReceipt: runtimeConfig.hideShopBankOnReceipt
 	};
 }

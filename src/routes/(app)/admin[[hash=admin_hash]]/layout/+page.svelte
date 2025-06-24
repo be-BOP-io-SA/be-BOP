@@ -150,7 +150,7 @@
 			>
 		</div>
 	{/each}
-	<button class="btn btn-gray self-start" on:click={() => (linkLine += 1)} type="button"
+	<button class="btn body-mainCTA self-start" on:click={() => (linkLine += 1)} type="button"
 		>Add topbar link
 	</button>
 
@@ -180,7 +180,7 @@
 			>
 		</div>
 	{/each}
-	<button class="btn btn-gray self-start" on:click={() => (navbarLinkLine += 1)} type="button"
+	<button class="btn body-mainCTA self-start" on:click={() => (navbarLinkLine += 1)} type="button"
 		>Add navbar link
 	</button>
 
@@ -237,7 +237,7 @@
 			>
 		</div>
 	{/each}
-	<button class="btn btn-gray self-start" on:click={() => (footerLinkLine += 1)} type="button"
+	<button class="btn body-mainCTA self-start" on:click={() => (footerLinkLine += 1)} type="button"
 		>Add footer link
 	</button>
 
@@ -288,7 +288,7 @@
 			>
 		</div>
 	{/each}
-	<button class="btn btn-gray self-start" on:click={() => (socialLinkLine += 1)} type="button"
+	<button class="btn body-mainCTA self-start" on:click={() => (socialLinkLine += 1)} type="button"
 		>Add social network link
 	</button>
 	<h2 class="text-2xl">Mobile Display</h2>

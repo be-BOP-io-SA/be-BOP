@@ -520,6 +520,7 @@
 		"paymentAmount": "Monto del pago",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Tu paiamiento ha fallado, puedes intentar una nueva pausa",
+		"paymentDoneCustomerCTA": "He terminado",
 		"paymentExpiresAt": "Fecha límite de pago: <0></0>",
 		"paymentIban": "IBAN para enviar la transferencia bancaria",
 		"paymentLink": "Clic aquí para pagar con tarjeta",
@@ -588,6 +589,10 @@
 			"fullyPaid": {
 				"title": "Pedido completamente pagado, ningún monto pendiente"
 			}
+		},
+		"ticket": {
+			"detail": "Detalle",
+			"sincerely": "Atentamente"
 		},
 		"tickets": {
 			"printAll": "Imprimir todo",
@@ -690,7 +695,8 @@
 			"ticket": "Ticket"
 		},
 		"variationPriceLabel": "Precio de variación",
-		"vatExcluded": "IVA excluido"
+		"vatExcluded": "No incluye IVA",
+		"vatIncluded": "Precio estimado con IVA incluido"
 	},
 	"schedule": {
 		"dateText": " - De {beginTime} a {endTime}",
