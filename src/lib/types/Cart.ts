@@ -134,12 +134,13 @@ function itemBasePrice(item: ItemForPriceInfo): Price {
 
 type PriceToBillForItem = {
 	amount: Price['amount'];
+	amountWithoutDiscount: Price['amount'];
 	currency: Price['currency'];
 	quantityToAccount: number;
 	quantityToBill: number;
 };
 
-function priceToBillForItem(item: ItemForPriceInfo): PriceToBillForItem {
+export function priceToBillForItem(item: ItemForPriceInfo): PriceToBillForItem {
 	let quantityToAccount;
 	if (item.booking) {
 		if (item.quantity !== 1) {
@@ -156,12 +157,19 @@ function priceToBillForItem(item: ItemForPriceInfo): PriceToBillForItem {
 	const quantityToBill = Math.max(quantityToAccount - (item.freeQuantity ?? 0), 0);
 	const discountFactor = (item.discountPercentage ?? 0) / 100;
 	const basePrice = itemBasePrice(item);
+	const amountWithoutDiscount = fixCurrencyRounding(
+		basePrice.amount * quantityToBill,
+		basePrice.currency
+	);
+	// The amount to bill is computed independentlly from the amount without
+	// discount because we don't want to use a rounded amount.
 	const amountToBill = fixCurrencyRounding(
 		basePrice.amount * quantityToBill * (1 - discountFactor),
 		basePrice.currency
 	);
 	return {
 		amount: amountToBill,
+		amountWithoutDiscount,
 		currency: basePrice.currency,
 		quantityToAccount,
 		quantityToBill

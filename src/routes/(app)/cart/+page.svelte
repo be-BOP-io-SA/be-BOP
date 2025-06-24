@@ -8,7 +8,7 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { useI18n } from '$lib/i18n';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/types/Cart.js';
+	import { computeDeliveryFees, computePriceInfo, priceToBillForItem } from '$lib/types/Cart.js';
 	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import { oneMaxPerLine } from '$lib/types/Product.js';
@@ -16,7 +16,6 @@
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
-	import { differenceInMinutes } from 'date-fns';
 
 	export let data;
 
@@ -132,8 +131,8 @@
 				style="grid-template-columns: auto 1fr auto auto"
 			>
 				{#each items as item, i}
-					{@const price = item.customPrice || item.product.price}
-					{@const quantityToPay = Math.max(item.quantity - (item.freeQuantity ?? 0), 0)}
+					{@const priceToBill = priceToBillForItem(item)}
+					{@const toDepositFactor = (item.depositPercentage ?? 100) / 100}
 					<form
 						method="POST"
 						class="contents"
@@ -234,35 +233,21 @@
 						<div class="flex flex-col items-end justify-center lg:mb-0 mb-4">
 							<div class="flex gap-2">
 								<PriceTag
-									amount={(quantityToPay *
-										(item.booking && item.product.bookingSpec?.slotMinutes
-											? differenceInMinutes(item.booking.end, item.booking.start) /
-											  item.product.bookingSpec.slotMinutes
-											: 1) *
-										price.amount *
-										(item.depositPercentage ?? 100)) /
-										100}
-									currency={price.currency}
+									amount={priceToBill.amountWithoutDiscount * toDepositFactor}
+									currency={priceToBill.currency}
 									main
 									class="text-2xl truncate {item.discountPercentage ? 'line-through' : ''}"
-									>{item.depositPercentage
-										? `(${(item.depositPercentage / 100).toLocaleString($locale, {
-												style: 'percent'
-										  })})`
-										: ''}</PriceTag
 								>
+									{#if item.depositPercentage}
+										{(item.depositPercentage / 100).toLocaleString($locale, {
+											style: 'percent'
+										})}
+									{/if}
+								</PriceTag>
 								{#if item.discountPercentage}
 									<PriceTag
-										amount={((quantityToPay *
-											(item.booking && item.product.bookingSpec?.slotMinutes
-												? differenceInMinutes(item.booking.end, item.booking.start) /
-												  item.product.bookingSpec.slotMinutes
-												: 1) *
-											price.amount *
-											(item.depositPercentage ?? 100)) /
-											100) *
-											(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
-										currency={price.currency}
+										amount={priceToBill.amount * toDepositFactor}
+										currency={priceToBill.currency}
 										class="text-2xl truncate "
 										main
 									/>
@@ -270,16 +255,8 @@
 							</div>
 							<PriceTag
 								class="text-base truncate"
-								amount={((quantityToPay *
-									(item.booking && item.product.bookingSpec?.slotMinutes
-										? differenceInMinutes(item.booking.end, item.booking.start) /
-										  item.product.bookingSpec.slotMinutes
-										: 1) *
-									price.amount *
-									(item.depositPercentage ?? 100)) /
-									100) *
-									(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
-								currency={price.currency}
+								amount={priceToBill.amount * toDepositFactor}
+								currency={priceInfo.currency}
 								secondary
 							/>
 							<span class="font-semibold">{t('cart.vat')} {priceInfo.vatRates[i]}%</span>
