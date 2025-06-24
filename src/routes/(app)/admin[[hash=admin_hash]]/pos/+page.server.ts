@@ -47,25 +47,17 @@ export const actions = {
 
 		const parsedOptsForPosQrCodeAfterPayment = z
 			.object({
-				posQrCodeAfterPayment: z
-					.object({
-						timeBeforeRedirecting: z
-							.string()
-							.regex(/^\d+(\.\d+)?$/)
-							.optional(),
-						displayCustomerCta: z.boolean({ coerce: true }).optional(),
-						removeBebobLogo: z.boolean({ coerce: true }).optional()
-					})
-					.optional()
+				timeBeforeRedirecting: z
+					.string()
+					.regex(/^\d+(\.\d+)?$/)
+					.default('10'),
+				displayCustomerCta: z.boolean({ coerce: true }).default(false),
+				removeBebobLogo: z.boolean({ coerce: true }).default(false)
 			})
-			.parse(json);
+			.parse(json.posQrCodeAfterPayment ?? {});
 		const posQrCodeAfterPayment = {
-			...parsedOptsForPosQrCodeAfterPayment.posQrCodeAfterPayment,
-			timeBeforeRedirecting: Number(
-				parsedOptsForPosQrCodeAfterPayment.posQrCodeAfterPayment
-					? parsedOptsForPosQrCodeAfterPayment.posQrCodeAfterPayment?.timeBeforeRedirecting
-					: 10
-			)
+			...parsedOptsForPosQrCodeAfterPayment,
+			timeBeforeRedirecting: Number(parsedOptsForPosQrCodeAfterPayment.timeBeforeRedirecting)
 		};
 		await collections.runtimeConfig.updateOne(
 			{
