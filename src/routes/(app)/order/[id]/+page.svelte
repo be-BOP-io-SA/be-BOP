@@ -86,6 +86,10 @@
 	function isMobile() {
 		return browser && window.matchMedia('(max-width: 767px)').matches;
 	}
+	const roleIsStaff = !!data.roleId && data.roleId !== CUSTOMER_ROLE_ID;
+	const orderStaffActionBaseUrl = data.hasPosOptions
+		? `/pos/order/${data.order._id}`
+		: `/admin/order/${data.order._id}`;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -128,7 +132,7 @@
 			<h1 class="text-3xl body-title">
 				{t('order.singleTitle', { number: data.order.number })}
 			</h1>
-			{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
+			{#if roleIsStaff}
 				<div class="flex flex-row gap-1">
 					{#if data.order.orderLabelIds?.length && labelById}
 						{#each data.order.orderLabelIds as labelId}
@@ -282,7 +286,7 @@
 										})}
 									</li>
 								{/if}
-								{#if payment.status === 'failed' && (data.roleId === CUSTOMER_ROLE_ID || !data.roleId)}
+								{#if payment.status === 'failed' && !roleIsStaff}
 									<br />
 									{t('order.paymentCBFailed')}
 									<form
@@ -421,16 +425,14 @@
 								{/if}
 							{/if}
 
-							{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
+							{#if roleIsStaff}
 								<form
-									action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order
-										._id}/payment/{payment.id}?/cancel"
+									action="{orderStaffActionBaseUrl}/payment/{payment.id}?/cancel"
 									method="post"
 									id="cancelForm"
 								></form>
 								<form
-									action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order
-										._id}/payment/{payment.id}?/confirm"
+									action="{orderStaffActionBaseUrl}/payment/{payment.id}?/confirm"
 									method="post"
 									class="flex flex-wrap gap-2"
 								>
@@ -528,10 +530,9 @@
 							{/if}
 						{/if}
 
-						{#if (payment.method === 'point-of-sale' || payment.method === 'bank-transfer') && data.roleId !== CUSTOMER_ROLE_ID && data.roleId && payment.status === 'paid'}
+						{#if (payment.method === 'point-of-sale' || payment.method === 'bank-transfer') && roleIsStaff && payment.status === 'paid'}
 							<form
-								action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order
-									._id}/payment/{payment.id}?/updatePaymentDetail"
+								action="{orderStaffActionBaseUrl}/payment/{payment.id}?/updatePaymentDetail"
 								method="post"
 								class="contents"
 							>
@@ -686,7 +687,7 @@
 						</p>
 					{/if}
 					<br />
-					{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
+					{#if roleIsStaff}
 						{t('order.seller.title')}:
 						<p class="body-secondaryText whitespace-pre-line break-words break-all">
 							{data.order.user.userAlias ?? 'System'}
@@ -695,18 +696,9 @@
 				</div>
 			{/if}
 
-			{#if data.order.status === 'pending' && remainingAmount && data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
-				<form
-					action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order._id}?/cancel"
-					method="post"
-					id="cancelOrderForm"
-				></form>
-
-				<form
-					action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order._id}?/addPayment"
-					method="post"
-					class="contents"
-				>
+			{#if data.order.status === 'pending' && remainingAmount && roleIsStaff}
+				<form action="{orderStaffActionBaseUrl}?/cancel" method="post" id="cancelOrderForm"></form>
+				<form action="{orderStaffActionBaseUrl}?/addPayment" method="post" class="contents">
 					<div class="flex flex-wrap gap-2">
 						<label class="form-label">
 							{t('order.addPayment.amount')}
@@ -752,7 +744,7 @@
 				</form>
 			{/if}
 
-			{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
+			{#if roleIsStaff}
 				{#if data.order.payments.length > 1 && data.order.status !== 'expired' && data.order.status !== 'canceled'}
 					{#if data.order.status === 'paid'}
 						<a class="btn bg-green-600 text-white self-start" href="/order/{data.order._id}/summary"
@@ -765,11 +757,7 @@
 					{/if}
 				{/if}
 
-				<form
-					action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order._id}?/saveNote"
-					method="post"
-					class="contents"
-				>
+				<form action="{orderStaffActionBaseUrl}?/saveNote" method="post" class="contents">
 					<section class="gap-4 flex flex-col">
 						<article class="rounded border border-gray-300 overflow-hidden flex flex-col">
 							<div class="p-4 flex flex-col gap-3">
