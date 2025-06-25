@@ -168,6 +168,8 @@
 			? priceInfo.partialPriceWithVat >=
 			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 			: true;
+	let prefillWithShopInfo = data.hasPosOptions && !data.posDisablePrefillCheckoutAddress;
+	let enforceCheckoutAdress = !data.hasPosOptions || data.posDisablePrefillCheckoutAddress;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -213,9 +215,9 @@
 							class="form-input"
 							name="shipping.firstName"
 							autocomplete="given-name"
-							required={!data.hasPosOptions}
+							required={enforceCheckoutAdress}
 							value={data.personalInfoConnected?.firstName ??
-								(data.hasPosOptions && data.shopInformation?.businessName
+								(prefillWithShopInfo && data.shopInformation?.businessName
 									? data.shopInformation.businessName
 									: '') ??
 								''}
@@ -229,7 +231,7 @@
 							class="form-input"
 							name="shipping.lastName"
 							autocomplete="family-name"
-							required={!data.hasPosOptions}
+							required={enforceCheckoutAdress}
 							value={data.personalInfoConnected?.lastName ?? ''}
 						/>
 					</label>
@@ -241,9 +243,9 @@
 							class="form-input"
 							autocomplete="street-address"
 							name="shipping.address"
-							required={!data.hasPosOptions}
+							required={enforceCheckoutAdress}
 							value={data.personalInfoConnected?.address?.street ??
-								(data.hasPosOptions && data.shopInformation?.address?.street
+								(prefillWithShopInfo && data.shopInformation?.address?.street
 									? data.shopInformation.address.street
 									: '') ??
 								''}
@@ -269,7 +271,7 @@
 							name="shipping.state"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.state ??
-								(data.hasPosOptions && data.shopInformation?.address?.state
+								(prefillWithShopInfo && data.shopInformation?.address?.state
 									? data.shopInformation.address.state
 									: '') ??
 								''}
@@ -283,11 +285,11 @@
 							name="shipping.city"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.city ??
-								(data.hasPosOptions && data.shopInformation?.address?.city
+								(prefillWithShopInfo && data.shopInformation?.address?.city
 									? data.shopInformation.address.city
 									: '') ??
 								''}
-							required={!data.hasPosOptions}
+							required={enforceCheckoutAdress}
 						/>
 					</label>
 					<label class="form-label col-span-2">
@@ -298,11 +300,11 @@
 							name="shipping.zip"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.zip ??
-								(data.hasPosOptions && data.shopInformation?.address?.zip
+								(prefillWithShopInfo && data.shopInformation?.address?.zip
 									? data.shopInformation.address.zip
 									: '') ??
 								''}
-							required={!data.hasPosOptions}
+							required={enforceCheckoutAdress}
 							autocomplete="postal-code"
 						/>
 					</label>
@@ -312,7 +314,7 @@
 							type="tel"
 							name="shipping.phone"
 							class="form-input"
-							value={data.hasPosOptions && data.shopInformation?.contact?.phone
+							value={prefillWithShopInfo && data.shopInformation?.contact?.phone
 								? data.shopInformation.contact.phone
 								: ''}
 						/>
