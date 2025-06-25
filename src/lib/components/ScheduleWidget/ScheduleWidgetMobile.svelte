@@ -33,13 +33,25 @@
 	<div class="max-w-md mx-auto space-y-6 {className} {event.hideFromList ? 'hidden' : ''}">
 		<div class="tagWidget tagWidget-main rounded-lg gap-4">
 			<div class="flex items-center justify-center rounded-md">
-				<PictureComponent
-					picture={pictureByEventSlug[event.slug]}
-					class="object-contain h-[15em] w-auto {(event.endsAt && event.endsAt < new Date()) ||
-					addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
-						? 'opacity-50'
-						: ''}"
-				/>
+				{#if pictureByEventSlug[event.slug]}
+					<PictureComponent
+						picture={pictureByEventSlug[event.slug]}
+						class="object-contain h-[15em] w-auto {(event.endsAt && event.endsAt < new Date()) ||
+						addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
+							? 'opacity-50'
+							: ''}"
+					/>
+				{:else}
+					<!-- svelte-ignore a11y-img-redundant-alt -->
+					<img
+						src="/asset/event-default-picture.png"
+						alt="default-event-picture"
+						class="object-contain h-[15em] w-auto {(event.endsAt && event.endsAt < new Date()) ||
+						addMinutes(new Date(event.beginsAt), schedule.pastEventDelay) < new Date()
+							? 'opacity-50'
+							: ''}"
+					/>
+				{/if}
 			</div>
 			<div class="flex flex-col items-center justify-center p-2 m-4 gap-2">
 				<h2 class="text-2xl body-title flex flex-row">
