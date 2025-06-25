@@ -1,71 +1,101 @@
-import { collections } from '$lib/server/database';
-import { error, redirect } from '@sveltejs/kit';
-import type { RequestEvent } from './$types';
-import { DEFAULT_MAX_QUANTITY_PER_ORDER, type Product } from '$lib/types/Product';
-import { z } from 'zod';
-import { runtimeConfig } from '$lib/server/runtime-config';
 import { addToCartInDb } from '$lib/server/cart';
-import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
-import { userIdentifier, userQuery } from '$lib/server/user';
 import { cmsFromContent } from '$lib/server/cms';
-import type { JsonObject } from 'type-fest';
+import { collections } from '$lib/server/database';
+import { runtimeConfig } from '$lib/server/runtime-config';
+import { userIdentifier, userQuery } from '$lib/server/user';
+import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
+import { DEFAULT_MAX_QUANTITY_PER_ORDER, type Product } from '$lib/types/Product';
+import { productToScheduleId, type ScheduleEvent } from '$lib/types/Schedule';
 import { set } from '$lib/utils/set';
 import { sum } from '$lib/utils/sum';
-import { productToScheduleId, type ScheduleEvent } from '$lib/types/Schedule';
+import { UserIdentifier } from '$lib/types/UserIdentifier';
+import type { RequestEvent } from './$types';
+import { error, redirect } from '@sveltejs/kit';
 import { subDays } from 'date-fns';
+import type { JsonObject } from 'type-fest';
+import { z } from 'zod';
 
-export const load = async ({ params, locals }) => {
-	const product = await collections.products.findOne<
-		Pick<
-			Product,
-			| '_id'
-			| 'name'
-			| 'price'
-			| 'shortDescription'
-			| 'description'
-			| 'availableDate'
-			| 'preorder'
-			| 'customPreorderText'
-			| 'type'
-			| 'shipping'
-			| 'displayShortDescription'
-			| 'payWhatYouWant'
-			| 'standalone'
-			| 'maxQuantityPerOrder'
-			| 'stock'
-			| 'actionSettings'
-			| 'contentBefore'
-			| 'contentAfter'
-			| 'deposit'
-			| 'cta'
-			| 'maximumPrice'
-			| 'recommendedPWYWAmount'
-			| 'mobile'
-			| 'hasVariations'
-			| 'variations'
-			| 'variationLabels'
-			| 'sellDisclaimer'
-			| 'hasSellDisclaimer'
-			| 'hideFromSEO'
-			| 'hideDiscountExpiration'
-			| 'bookingSpec'
-			| 'vatProfileId'
-		>
-	>(
-		{ _id: params.id },
+async function fetchApplicableDiscount(productId: string, userSubscriptionIds: string[]) {
+	return collections.discounts.findOne(
+		{
+			$or: [{ wholeCatalog: true }, { productIds: productId }],
+			subscriptionIds: { $in: userSubscriptionIds },
+			beginsAt: {
+				$lt: new Date()
+			},
+			mode: 'percentage',
+			$and: [
+				{
+					$or: [
+						{
+							endsAt: { $gt: new Date() }
+						},
+						{
+							endsAt: null
+						}
+					]
+				}
+			]
+		},
+		{
+			sort: { percentage: -1 }
+		}
+	);
+}
+
+async function fetchProduct(
+	productId: string,
+	language: App.Locals['language']
+): Promise<Pick<
+	Product,
+	| '_id'
+	| 'name'
+	| 'price'
+	| 'shortDescription'
+	| 'description'
+	| 'availableDate'
+	| 'preorder'
+	| 'customPreorderText'
+	| 'type'
+	| 'shipping'
+	| 'displayShortDescription'
+	| 'payWhatYouWant'
+	| 'standalone'
+	| 'maxQuantityPerOrder'
+	| 'stock'
+	| 'actionSettings'
+	| 'contentBefore'
+	| 'contentAfter'
+	| 'deposit'
+	| 'cta'
+	| 'maximumPrice'
+	| 'recommendedPWYWAmount'
+	| 'mobile'
+	| 'hasVariations'
+	| 'variations'
+	| 'variationLabels'
+	| 'sellDisclaimer'
+	| 'hasSellDisclaimer'
+	| 'hideFromSEO'
+	| 'hideDiscountExpiration'
+	| 'bookingSpec'
+	| 'vatProfileId'
+> | null> {
+	return collections.products.findOne<ReturnType<Awaited<typeof fetchProduct>>>(
+		{ _id: productId },
 		{
 			projection: {
 				_id: 1,
-				name: { $ifNull: [`$translations.${locals.language}.name`, '$name'] },
+				name: { $ifNull: [`$translations.${language}.name`, '$name'] },
 				price: 1,
 				shortDescription: {
-					$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
+					$ifNull: [`$translations.${language}.shortDescription`, '$shortDescription']
 				},
-				description: { $ifNull: [`$translations.${locals.language}.description`, '$description'] },
+				description: { $ifNull: [`$translations.${language}.description`, '$description'] },
 				availableDate: 1,
 				preorder: 1,
 				customPreorderText: {
-					$ifNull: [`$translations.${locals.language}.customPreorderText`, '$customPreorderText']
+					$ifNull: [`$translations.${language}.customPreorderText`, '$customPreorderText']
 				},
 				type: 1,
 				displayShortDescription: 1,
@@ -75,23 +105,23 @@ export const load = async ({ params, locals }) => {
 				stock: 1,
 				actionSettings: 1,
 				contentBefore: {
-					$ifNull: [`$translations.${locals.language}.contentBefore`, '$contentBefore']
+					$ifNull: [`$translations.${language}.contentBefore`, '$contentBefore']
 				},
 				contentAfter: {
-					$ifNull: [`$translations.${locals.language}.contentAfter`, '$contentAfter']
+					$ifNull: [`$translations.${language}.contentAfter`, '$contentAfter']
 				},
 				deposit: 1,
-				cta: { $ifNull: [`$translations.${locals.language}.cta`, '$cta'] },
+				cta: { $ifNull: [`$translations.${language}.cta`, '$cta'] },
 				hasVariations: 1,
 				variationLabels: {
-					$ifNull: [`$translations.${locals.language}.variationLabels`, '$variationLabels']
+					$ifNull: [`$translations.${language}.variationLabels`, '$variationLabels']
 				},
 				variations: 1,
 				maximumPrice: 1,
 				recommendedPWYWAmount: 1,
 				mobile: 1,
 				sellDisclaimer: {
-					$ifNull: [`$translations.${locals.language}.sellDisclaimer`, '$sellDisclaimer']
+					$ifNull: [`$translations.${language}.sellDisclaimer`, '$sellDisclaimer']
 				},
 				hasSellDisclaimer: 1,
 				hideFromSEO: 1,
@@ -102,11 +132,48 @@ export const load = async ({ params, locals }) => {
 			}
 		}
 	);
+}
 
+async function fetchProductPictures(productId: string) {
+	return collections.pictures.find({ productId }).sort({ order: 1, createdAt: 1 }).toArray();
+}
+
+async function fetchUserSubscriptions(userIdentifier: UserIdentifier) {
+	return collections.paidSubscriptions
+		.find({
+			...userQuery(userIdentifier),
+			paidUntil: { $gt: new Date() }
+		})
+		.toArray();
+}
+
+async function fetchProductSchedule(productId: string) {
+	// todo: filter events by date directly in query
+	return collections.schedules.findOne({ _id: productToScheduleId(productId) });
+}
+
+async function fetchProductScheduleEvents(productId: string) {
+	return collections.scheduleEvents
+		.find({
+			scheduleId: productToScheduleId(productId),
+			status: { $in: ['pending', 'confirmed'] },
+			endsAt: { $gt: subDays(new Date(), 1) }
+		})
+		.sort({ beginsAt: 1 })
+		.project<Pick<ScheduleEvent, 'beginsAt' | 'endsAt'>>({
+			_id: 0,
+			beginsAt: 1,
+			endsAt: 1
+		})
+		.toArray();
+}
+
+export const load = async ({ params, locals }) => {
+	const productId = params.id;
+	const product = await fetchProduct(productId, locals.language);
 	if (!product) {
 		throw error(404, 'Page not found');
 	}
-
 	if (
 		locals.user?.hasPosOptions
 			? !product.actionSettings.retail.visible
@@ -114,67 +181,23 @@ export const load = async ({ params, locals }) => {
 	) {
 		throw redirect(303, '/');
 	}
-
-	const [pictures, subscriptions, schedule, scheduleEvents] = await Promise.all([
-		collections.pictures.find({ productId: params.id }).sort({ order: 1, createdAt: 1 }).toArray(),
-		collections.paidSubscriptions
-			.find({
-				...userQuery(userIdentifier(locals)),
-				paidUntil: { $gt: new Date() }
-			})
-			.toArray(),
-		// todo: filter events by date directly in query
-		product.bookingSpec
-			? collections.schedules.findOne({ _id: productToScheduleId(product._id) })
-			: null,
-		product.bookingSpec
-			? collections.scheduleEvents
-					.find({
-						scheduleId: productToScheduleId(product._id),
-						status: { $in: ['pending', 'confirmed'] },
-						endsAt: { $gt: subDays(new Date(), 1) }
-					})
-					.sort({ beginsAt: 1 })
-					.project<Pick<ScheduleEvent, 'beginsAt' | 'endsAt'>>({
-						_id: 0,
-						beginsAt: 1,
-						endsAt: 1
-					})
-					.toArray()
-			: []
+	const [pictures, userSubscriptions, schedule, scheduleEvents] = await Promise.all([
+		fetchProductPictures(productId),
+		fetchUserSubscriptions(userIdentifier(locals)),
+		product.bookingSpec ? fetchProductSchedule(productId) : null,
+		product.bookingSpec ? fetchProductScheduleEvents(productId) : []
 	]);
 	const freeProductsAvailable = sum(
-		subscriptions.map((s) => s.freeProductsById?.[product._id]?.available ?? 0)
+		userSubscriptions.map((s) => s.freeProductsById?.[product._id]?.available ?? 0)
 	);
-	const discount = subscriptions.length
-		? await collections.discounts.findOne(
-				{
-					$or: [{ wholeCatalog: true }, { productIds: product._id }],
-					subscriptionIds: { $in: subscriptions.map((sub) => sub.productId) },
-					beginsAt: {
-						$lt: new Date()
-					},
-					mode: 'percentage',
-					$and: [
-						{
-							$or: [
-								{
-									endsAt: { $gt: new Date() }
-								},
-								{
-									endsAt: null
-								}
-							]
-						}
-					]
-				},
-				{
-					sort: { percentage: -1 }
-				}
+	const discount = userSubscriptions.length
+		? await fetchApplicableDiscount(
+				productId,
+				userSubscriptions.map((sub) => sub.productId)
 		  )
 		: null;
 	return {
-		product,
+		product: { ...product, vatProfileId: product.vatProfileId?.toString() },
 		pictures,
 		discount,
 		scheduleEvents: [
