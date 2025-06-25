@@ -15,7 +15,7 @@ import { subDays } from 'date-fns';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
-async function fetchApplicableDiscounts(productId: string, userSubscriptionIds: string[]) {
+async function fetchApplicableDiscount(productId: string, userSubscriptionIds: string[]) {
 	return collections.discounts.findOne(
 		{
 			$or: [{ wholeCatalog: true }, { productIds: productId }],
@@ -191,13 +191,13 @@ export const load = async ({ params, locals }) => {
 		userSubscriptions.map((s) => s.freeProductsById?.[product._id]?.available ?? 0)
 	);
 	const discount = userSubscriptions.length
-		? await fetchApplicableDiscounts(
+		? await fetchApplicableDiscount(
 				productId,
 				userSubscriptions.map((sub) => sub.productId)
 		  )
 		: null;
 	return {
-		product,
+		product: { ...product, vatProfileId: product.vatProfileId?.toString() },
 		pictures,
 		discount,
 		scheduleEvents: [
