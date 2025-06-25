@@ -16,6 +16,26 @@ import type { VatProfile } from '$lib/types/VatProfile.js';
 import { groupBy } from '$lib/utils/group-by';
 import { error, redirect } from '@sveltejs/kit';
 import type { PickDeep, SetRequired } from 'type-fest';
+import { UserIdentifier } from '$lib/types/UserIdentifier';
+import { Cart } from '$lib/types/Cart';
+
+async function getCartAndRemoveSomeItems(userIdentifier: UserIdentifier): Promise<Cart> {
+	const cartInDb = await getCartFromDb({ user: userIdentifier });
+	const itemsAfterRemoval = cartInDb.items.filter((item) => {
+		if (item.booking && item.booking.start < new Date()) {
+			// Booking starts in the past, remove from cart.
+			return false;
+		}
+		return true;
+	});
+	if (itemsAfterRemoval !== cartInDb.items) {
+		await collections.carts.updateOne(
+			{ _id: cartInDb._id },
+			{ $set: { items: itemsAfterRemoval } }
+		);
+	}
+	return { ...cartInDb, items: itemsAfterRemoval };
+}
 
 export async function load(params) {
 	if (!runtimeConfig.isAdminCreated) {
@@ -35,7 +55,7 @@ export async function load(params) {
 	depends(UrlDependency.Cart);
 
 	const [cart, logoPicture] = await Promise.all([
-		getCartFromDb({ user: userIdentifier(locals) }),
+		getCartAndRemoveSomeItems(userIdentifier(locals)),
 		runtimeConfig.logo.pictureId
 			? (await collections.pictures.findOne({ _id: runtimeConfig.logo.pictureId })) || undefined
 			: undefined
