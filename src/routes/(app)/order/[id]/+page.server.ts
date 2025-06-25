@@ -5,6 +5,7 @@ import { fetchOrderForUser } from './fetchOrderForUser.js';
 import { getPublicS3DownloadLink } from '$lib/server/s3.js';
 import { uniqBy } from '$lib/utils/uniqBy.js';
 import { cmsFromContent } from '$lib/server/cms.js';
+import { conflictingTapToPayOrder } from '$lib/server/orders.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
@@ -78,9 +79,15 @@ export async function load({ params, depends, locals }) {
 		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
 			? 'employee'
 			: undefined;
+	const tapToPay = {
+		configured: !!runtimeConfig.posTapToPay.processor,
+		inUseByOtherOrder: !!(await conflictingTapToPayOrder(order._id)),
+		onActivationUrl: runtimeConfig.posTapToPay.onActivationUrl
+	};
 	return {
 		order,
 		paymentMethods: methods,
+		tapToPay,
 		digitalFiles: Promise.all(
 			digitalFiles.map(async (file) => ({
 				name: file.name,

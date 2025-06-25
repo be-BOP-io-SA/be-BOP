@@ -20,15 +20,17 @@ const ALL_PAYMENT_METHODS = [
 ] as const;
 export type PaymentMethod = (typeof ALL_PAYMENT_METHODS)[number];
 
-export type PaymentProcessor =
-	| 'sumup'
-	| 'bitcoind'
-	| 'lnd'
-	| 'phoenixd'
-	| 'swiss-bitcoin-pay'
-	| 'stripe'
-	| 'paypal'
-	| 'bitcoin-nodeless';
+export const ALL_PAYMENT_PROCESSORS = [
+	'sumup',
+	'bitcoind',
+	'lnd',
+	'phoenixd',
+	'swiss-bitcoin-pay',
+	'stripe',
+	'paypal',
+	'bitcoin-nodeless'
+] as const;
+export type PaymentProcessor = (typeof ALL_PAYMENT_PROCESSORS)[number];
 
 export const paymentMethods = (opts?: {
 	hasPosOptions?: boolean;

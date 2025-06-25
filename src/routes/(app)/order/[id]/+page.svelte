@@ -24,6 +24,7 @@
 	import IconDownloadWindow from '$lib/components/icons/IconDownloadWindow.svelte';
 	import IconExternalNewWindowOpen from '$lib/components/icons/IconExternalNewWindowOpen.svelte';
 	import OrderLabelComponent from '$lib/components/OrderLabelComponent.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import { browser } from '$app/environment';
 
 	let currentDate = new Date();
@@ -86,6 +87,10 @@
 	function isMobile() {
 		return browser && window.matchMedia('(max-width: 767px)').matches;
 	}
+	const roleIsStaff = !!data.roleId && data.roleId !== CUSTOMER_ROLE_ID;
+	const orderStaffActionBaseUrl = data.hasPosOptions
+		? `/pos/order/${data.order._id}`
+		: `/admin/order/${data.order._id}`;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -128,7 +133,7 @@
 			<h1 class="text-3xl body-title">
 				{t('order.singleTitle', { number: data.order.number })}
 			</h1>
-			{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
+			{#if roleIsStaff}
 				<div class="flex flex-row gap-1">
 					{#if data.order.orderLabelIds?.length && labelById}
 						{#each data.order.orderLabelIds as labelId}
@@ -282,7 +287,7 @@
 										})}
 									</li>
 								{/if}
-								{#if payment.status === 'failed' && (data.roleId === CUSTOMER_ROLE_ID || !data.roleId)}
+								{#if payment.status === 'failed' && !roleIsStaff}
 									<br />
 									{t('order.paymentCBFailed')}
 									<form
@@ -421,53 +426,104 @@
 								{/if}
 							{/if}
 
-							{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
-								<form
-									action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order
-										._id}/payment/{payment.id}?/cancel"
-									method="post"
-									id="cancelForm"
-								></form>
-								<form
-									action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order
-										._id}/payment/{payment.id}?/confirm"
-									method="post"
-									class="flex flex-wrap gap-2"
-								>
-									{#if payment.method === 'bank-transfer'}
-										<input
-											class="form-input w-auto"
-											type="text"
-											name="bankTransferNumber"
-											required
-											placeholder="bank transfer number"
-										/>
-									{/if}
-									{#if payment.method === 'point-of-sale'}
-										<input
-											class="form-input grow mx-2"
-											type="text"
-											name="detail"
-											required
-											placeholder="Detail (card transaction ID, or point-of-sale payment method)"
-										/>
-									{/if}
-
-									<button
-										type="submit"
-										class="btn btn-red"
-										on:click={confirmCancel}
-										form="cancelForm"
+							{#if roleIsStaff}
+								{@const tapToPayInProgress =
+									payment.posTapToPay && payment.posTapToPay.expiresAt > new Date()}
+								{#if tapToPayInProgress}
+									<form
+										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/cancelTapToPay"
+										method="post"
+										id="cancelTapToPayForm"
+										class="flex flex-col flex-wrap gap-2"
 									>
-										{t('pos.cta.cancelOrder')}
-									</button>
-									{#if payment.method === 'point-of-sale' || payment.method === 'bank-transfer'}
-										<button type="submit" class="btn btn-black">
-											{t('pos.cta.markOrderPaid')}
+										<button type="submit" class="btn btn-green whitespace-nowrap w-min" disabled>
+											{'Tap to pay'}
+										</button>
+										{t('pos.tapToPay.inProgress')}
+										<Spinner class="w-36" />
+									</form>
+								{:else}
+									<form
+										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/cancel"
+										method="post"
+										id="cancelForm"
+									></form>
+									<form
+										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/tapToPay"
+										method="post"
+										id="tapToPayForm"
+									></form>
+									<form
+										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/confirm"
+										method="post"
+										class="flex flex-wrap gap-2"
+									>
+										{#if payment.method === 'bank-transfer'}
+											<input
+												class="form-input w-auto"
+												type="text"
+												name="bankTransferNumber"
+												required
+												placeholder="bank transfer number"
+											/>
+										{/if}
+										{#if payment.method === 'point-of-sale'}
+											<input
+												class="form-input grow mx-2"
+												type="text"
+												name="detail"
+												required
+												placeholder="Detail (card transaction ID, or point-of-sale payment method)"
+											/>
+										{/if}
+
+										<button
+											type="submit"
+											class="btn btn-red"
+											on:click={confirmCancel}
+											form="cancelForm"
+										>
+											{t('pos.cta.cancelOrder')}
+										</button>
+										{#if payment.method === 'point-of-sale' || payment.method === 'bank-transfer'}
+											<button type="submit" class="btn btn-black">
+												{t('pos.cta.markOrderPaid')}
+											</button>
+										{/if}
+										{#if payment.method === 'point-of-sale'}
+											{#if data.tapToPay.inUseByOtherOrder}
+												<p class="text-red-500 w-full">
+													{t('pos.tapToPay.inUseByOtherOrder')}
+												</p>
+											{:else if data.tapToPay.configured}
+												<button
+													type="submit"
+													form="tapToPayForm"
+													class="btn btn-green"
+													on:click={() =>
+														data.tapToPay.onActivationUrl &&
+														window.open(
+															data.tapToPay.onActivationUrl,
+															'_blank',
+															'noopener,noreferrer'
+														)}
+												>
+													{'Tap to pay'}
+												</button>
+											{/if}
+										{/if}
+									</form>
+								{/if}
+								<div class="flex flex-wrap gap-2">
+									{#if tapToPayInProgress}
+										<button
+											type="submit"
+											class="btn btn-red whitespace-nowrap"
+											form="cancelTapToPayForm"
+										>
+											{t('pos.cta.cancelTapToPay')}
 										</button>
 									{/if}
-								</form>
-								<div class="flex flex-wrap gap-2">
 									<button
 										type="button"
 										class="btn btn-red"
@@ -528,10 +584,9 @@
 							{/if}
 						{/if}
 
-						{#if (payment.method === 'point-of-sale' || payment.method === 'bank-transfer') && data.roleId !== CUSTOMER_ROLE_ID && data.roleId && payment.status === 'paid'}
+						{#if (payment.method === 'point-of-sale' || payment.method === 'bank-transfer') && roleIsStaff && payment.status === 'paid'}
 							<form
-								action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order
-									._id}/payment/{payment.id}?/updatePaymentDetail"
+								action="{orderStaffActionBaseUrl}/payment/{payment.id}?/updatePaymentDetail"
 								method="post"
 								class="contents"
 							>
@@ -686,7 +741,7 @@
 						</p>
 					{/if}
 					<br />
-					{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
+					{#if roleIsStaff}
 						{t('order.seller.title')}:
 						<p class="body-secondaryText whitespace-pre-line break-words break-all">
 							{data.order.user.userAlias ?? 'System'}
@@ -695,18 +750,9 @@
 				</div>
 			{/if}
 
-			{#if data.order.status === 'pending' && remainingAmount && data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
-				<form
-					action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order._id}?/cancel"
-					method="post"
-					id="cancelOrderForm"
-				></form>
-
-				<form
-					action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order._id}?/addPayment"
-					method="post"
-					class="contents"
-				>
+			{#if data.order.status === 'pending' && remainingAmount && roleIsStaff}
+				<form action="{orderStaffActionBaseUrl}?/cancel" method="post" id="cancelOrderForm"></form>
+				<form action="{orderStaffActionBaseUrl}?/addPayment" method="post" class="contents">
 					<div class="flex flex-wrap gap-2">
 						<label class="form-label">
 							{t('order.addPayment.amount')}
@@ -752,7 +798,7 @@
 				</form>
 			{/if}
 
-			{#if data.roleId !== CUSTOMER_ROLE_ID && data.roleId}
+			{#if roleIsStaff}
 				{#if data.order.payments.length > 1 && data.order.status !== 'expired' && data.order.status !== 'canceled'}
 					{#if data.order.status === 'paid'}
 						<a class="btn bg-green-600 text-white self-start" href="/order/{data.order._id}/summary"
@@ -765,11 +811,7 @@
 					{/if}
 				{/if}
 
-				<form
-					action="/{data.hasPosOptions ? 'pos' : 'admin'}/order/{data.order._id}?/saveNote"
-					method="post"
-					class="contents"
-				>
+				<form action="{orderStaffActionBaseUrl}?/saveNote" method="post" class="contents">
 					<section class="gap-4 flex flex-col">
 						<article class="rounded border border-gray-300 overflow-hidden flex flex-col">
 							<div class="p-4 flex flex-col gap-3">
