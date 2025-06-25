@@ -27,7 +27,7 @@ import {
 } from '$lib/translations';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
-import type { PaymentMethod } from './payment-methods';
+import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import { merge } from '$lib/utils/merge';
 
 const baseConfig = {
@@ -214,6 +214,10 @@ const baseConfig = {
 	posTouchTag: [] as Tag['_id'][],
 	posPrefillTermOfUse: false,
 	posDisablePrefillCheckoutAddress: false,
+	posTapToPay: {
+		processor: undefined as PaymentProcessor | undefined,
+		onActivationUrl: undefined as string | undefined
+	},
 	hideCreditCardQrCode: false,
 	overwriteCreditCardSvgColor: false,
 	hideShopBankOnReceipt: false,

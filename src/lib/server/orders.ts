@@ -9,6 +9,7 @@ import {
 import { ClientSession, ObjectId, type WithId } from 'mongodb';
 import { collections, withTransaction } from './database';
 import {
+	Duration,
 	add,
 	addHours,
 	addMinutes,
@@ -73,6 +74,24 @@ import { isEmptyObject } from '$lib/utils/is-empty-object';
 import { binaryFindAround } from '$lib/utils/binary-find';
 import { toZonedTime } from 'date-fns-tz';
 import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
+import { PaidSubscription } from '$lib/types/PaidSubscription';
+
+export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
+	const other = await collections.orders.findOne({
+		_id: { $ne: orderId },
+		payments: {
+			$elemMatch: {
+				status: 'pending',
+				method: 'point-of-sale',
+				'posTapToPay.expiresAt': { $gt: new Date() }
+			}
+		}
+	});
+	if (other) {
+		return other._id;
+	}
+	return null;
+}
 
 async function generateOrderNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(
@@ -117,6 +136,7 @@ export async function onOrderPayment(
 		bankTransferNumber?: string;
 		detail?: string;
 		fees?: Price;
+		tapToPay?: { expiresAt: Date };
 		providedSession?: ClientSession;
 	}
 ): Promise<Order> {
@@ -142,6 +162,9 @@ export async function onOrderPayment(
 					'payments.$.status': 'paid',
 					...(params?.bankTransferNumber && {
 						'payments.$.bankTransferNumber': params.bankTransferNumber
+					}),
+					...(params?.tapToPay && {
+						'payments.$.posTapToPay.expiresAt': params.tapToPay.expiresAt
 					}),
 					...(params?.detail && {
 						'payments.$.detail': params.detail
@@ -392,6 +415,9 @@ export async function onOrderPaymentFailed(
 					!opts?.preserveOrderStatus && {
 						status: reason
 					})
+			},
+			$unset: {
+				'payments.$.posTapToPay': 1
 			}
 		},
 		{ returnDocument: 'after', session: opts?.session }
@@ -1984,113 +2010,105 @@ export async function addOrderPayment(
 	return payment;
 }
 
-export async function updateAfterOrderPaid(order: Order, session: ClientSession) {
-	// #region subscriptions
-	const subscriptions = await collections.paidSubscriptions
+/** Adds the free products of the specified discount to the specified accumulator */
+function addDiscountFreeProducts(
+	discount: Discount,
+	freeProductsById: NonNullable<PaidSubscription['freeProductsById']>
+) {
+	if (discount.mode === 'freeProducts' && discount.quantityPerProduct) {
+		for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
+			if (!freeProductsById[productId]) {
+				freeProductsById[productId] = { total: 0, available: 0, used: 0 };
+			}
+			freeProductsById[productId].total += quantity;
+			freeProductsById[productId].available += quantity;
+		}
+	}
+}
+
+const subscriptionDuration: Duration = {
+	hour: { hours: 1 },
+	day: { days: 1 },
+	month: { months: 1 }
+}[runtimeConfig.subscriptionDuration] satisfies Duration;
+
+async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSession) {
+	const subscriptionProducts = order.items.filter((item) => item.product.type === 'subscription');
+	const existingSubscriptions = await collections.paidSubscriptions
 		.find({
 			...userQuery(order.user),
 			productId: { $in: order.items.map((item) => item.product._id) }
 		})
 		.toArray();
-	const subscriptionProducts = order.items.filter((item) => item.product.type === 'subscription');
-	if (subscriptionProducts.length) {
-		const discounts = await collections.discounts
-			.find({
-				subscriptionIds: {
-					$in: order.items
-						.filter((item) => item.product.type === 'subscription')
-						.map((sub) => sub.product._id)
-				}
-			})
-			.toArray();
+	const discounts = await collections.discounts
+		.find({
+			subscriptionIds: {
+				$in: subscriptionProducts.map((sub) => sub.product._id)
+			}
+		})
+		.toArray();
+	for (const subscription of subscriptionProducts) {
+		const discountsForSubscription = discounts.filter((discount) =>
+			discount.productIds.includes(subscription.product._id)
+		);
+		const existing = existingSubscriptions.find(
+			(sub) => sub.productId === subscription.product._id
+		);
+		if (existing) {
+			const updatedFreeProductsById = structuredClone(existing.freeProductsById ?? {});
+			for (const discount of discountsForSubscription) {
+				addDiscountFreeProducts(discount, updatedFreeProductsById);
+			}
+			const result = await collections.paidSubscriptions.updateOne(
+				{ _id: existing._id },
+				{
+					$set: {
+						paidUntil: add(max([existing.paidUntil, new Date()]), subscriptionDuration),
+						updatedAt: new Date(),
+						notifications: [],
+						...(Object.keys(updatedFreeProductsById).length !== 0 && {
+							freeProductsById: updatedFreeProductsById
+						})
+					},
+					$unset: { cancelledAt: 1 }
+				},
+				{ session }
+			);
+			if (!result.modifiedCount) {
+				throw new Error('Failed to update subscription');
+			}
+		} else {
+			const freeProductsById: PaidSubscription['freeProductsById'] = {};
+			for (const discount of discountsForSubscription) {
+				addDiscountFreeProducts(discount, freeProductsById);
+			}
+			await collections.paidSubscriptions.insertOne(
+				{
+					_id: crypto.randomUUID(),
+					number: await generateSubscriptionNumber(),
+					user: order.user,
+					productId: subscription.product._id,
+					paidUntil: add(new Date(), subscriptionDuration),
+					createdAt: new Date(),
+					updatedAt: new Date(),
+					notifications: [],
+					...(Object.keys(freeProductsById).length !== 0 && { freeProductsById })
+				},
+				{ session }
+			);
+		}
+	}
+}
+
+export async function updateAfterOrderPaid(order: Order, session: ClientSession) {
+	if (order.items.some((item) => item.product.type === 'subscription')) {
 		await collections.scheduleEvents.updateMany(
 			{ orderId: order._id },
 			{ $set: { status: 'confirmed' } },
 			{ session }
 		);
-
-		for (const subscription of subscriptionProducts) {
-			const existingSubscription = subscriptions.find(
-				(sub) => sub.productId === subscription.product._id
-			);
-
-			if (existingSubscription) {
-				let updatedFreeProductsById: Record<
-					string,
-					{ total: number; available: number; used: number }
-				> = {};
-
-				for (const discount of discounts) {
-					if (discount.mode === 'freeProducts' && discount.quantityPerProduct) {
-						updatedFreeProductsById = { ...existingSubscription.freeProductsById };
-
-						for (const [productId, newQuantity] of Object.entries(discount.quantityPerProduct)) {
-							if (!updatedFreeProductsById[productId]) {
-								updatedFreeProductsById[productId] = { total: 0, available: 0, used: 0 };
-							}
-							updatedFreeProductsById[productId].total += newQuantity;
-							updatedFreeProductsById[productId].available += newQuantity;
-						}
-					}
-				}
-				const result = await collections.paidSubscriptions.updateOne(
-					{ _id: existingSubscription._id },
-					{
-						$set: {
-							paidUntil: add(max([existingSubscription.paidUntil, new Date()]), {
-								[`${runtimeConfig.subscriptionDuration}s`]: 1
-							}),
-							updatedAt: new Date(),
-							notifications: [],
-							...(Object.keys(updatedFreeProductsById).length !== 0 && {
-								freeProductsById: updatedFreeProductsById
-							})
-						},
-						$unset: { cancelledAt: 1 }
-					},
-					{ session }
-				);
-
-				if (!result.modifiedCount) {
-					throw new Error('Failed to update subscription');
-				}
-			} else {
-				const freeProductsById: Record<string, { total: number; available: number; used: number }> =
-					{};
-
-				for (const discount of discounts) {
-					if (discount.mode === 'freeProducts' && discount.quantityPerProduct) {
-						for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
-							if (!freeProductsById[productId]) {
-								freeProductsById[productId] = {
-									total: 0,
-									available: 0,
-									used: 0
-								};
-							}
-							freeProductsById[productId].total += quantity;
-							freeProductsById[productId].available += quantity;
-						}
-					}
-				}
-				await collections.paidSubscriptions.insertOne(
-					{
-						_id: crypto.randomUUID(),
-						number: await generateSubscriptionNumber(),
-						user: order.user,
-						productId: subscription.product._id,
-						paidUntil: add(new Date(), { [`${runtimeConfig.subscriptionDuration}s`]: 1 }),
-						createdAt: new Date(),
-						updatedAt: new Date(),
-						notifications: [],
-						...(Object.keys(freeProductsById).length !== 0 && { freeProductsById })
-					},
-					{ session }
-				);
-			}
-		}
+		await applyOrderSubscriptionsDiscounts(order, session);
 	}
-	//#endregion
 
 	//#region challenges
 	const challenges = await collections.challenges

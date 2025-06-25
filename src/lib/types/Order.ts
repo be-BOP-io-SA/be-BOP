@@ -95,6 +95,10 @@ export interface OrderPayment {
 	createdAt?: Date;
 	/** For lightning addresses, contains the hash to look up the invoice */
 	invoiceId?: string;
+	posTapToPay?: {
+		startsAt: Date;
+		expiresAt: Date;
+	};
 	/** For card transactions */
 	checkoutId?: string;
 	clientSecret?: string;
