@@ -27,6 +27,11 @@
 		"fillProductAlias": "Productalias invullen",
 		"items": "Producten",
 		"minimumPhysicalAmountText": "Uw kar bevat geen minimaal fysieke hoeveelheid",
+		"posTouch": {
+			"commentLabel": "Opmerking",
+			"commentLine": "Reageer artikelregel",
+			"saveNote": "Redden"
+		},
 		"quantity": "Hoeveelheid",
 		"reachedMaxPerLine": "Uw winkelwagen heeft de maximale grootte bereikt. \nOm meer artikelen toe te voegen, verwijdert u artikelen uit uw winkelwagen",
 		"remaining": "Resteert na het afrekenen",
