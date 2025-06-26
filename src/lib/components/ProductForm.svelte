@@ -125,6 +125,18 @@
 		// Need to load here, or for some reason, some inputs disappear afterwards
 		const formData = new FormData(formElement);
 
+		// --- Cleaining empty variationLabels ---
+		const keysToDelete = [];
+		for (const [key, value] of formData.entries()) {
+			if (key.startsWith('variationLabels.') && typeof value === 'string' && value.trim() === '') {
+				keysToDelete.push(key);
+			}
+		}
+		keysToDelete.forEach((key) => {
+			formData.delete(key);
+		});
+		//--- end
+
 		try {
 			if (
 				priceAmountElement.value &&
