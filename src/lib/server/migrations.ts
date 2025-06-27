@@ -581,6 +581,17 @@ const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('685e7b8042317d9719fb0b7b'),
+		name: 'Remove freeQuantity from cart items',
+		run: async (session: ClientSession) => {
+			await collections.carts.updateMany(
+				{},
+				{ $unset: { 'items.$[].freeQuantity': 1 } },
+				{ session }
+			);
+		}
 	}
 ];
 

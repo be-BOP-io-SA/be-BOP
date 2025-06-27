@@ -8,12 +8,7 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { useI18n } from '$lib/i18n';
-	import {
-		computeDeliveryFees,
-		computePriceInfo,
-		freeProductUnitsForCart,
-		priceToBillForItem
-	} from '$lib/cart';
+	import { computeDeliveryFees } from '$lib/cart';
 	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import { oneMaxPerLine } from '$lib/types/Product.js';
@@ -29,26 +24,12 @@
 	let errorMessage = data.errorMessage;
 	let errorProductId = '';
 
-	$: items = data.cart || [];
+	$: items = data.cart.items;
 	$: deliveryFees =
 		data.countryCode && isAlpha2CountryCode(data.countryCode)
 			? computeDeliveryFees(UNDERLYING_CURRENCY, data.countryCode, items, data.deliveryFees)
 			: NaN;
-	$: priceInfo = computePriceInfo(items, {
-		bebopCountry: data.vatCountry,
-		deliveryFees: {
-			amount: deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
-		freeProductUnits: freeProductUnitsForCart(
-			items.map((item) => ({ ...item, productId: item.product._id }))
-		),
-		userCountry: data.countryCode,
-		vatExempted: data.vatExempted,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatProfiles: data.vatProfiles,
-		vatSingleCountry: data.vatSingleCountry
-	});
+	$: priceInfo = data.cart.priceInfo;
 	let alias = '';
 	let formAlias: HTMLInputElement;
 	let loading = false;
@@ -139,9 +120,7 @@
 				style="grid-template-columns: auto 1fr auto auto"
 			>
 				{#each items as item, i}
-					{@const priceToBill = priceToBillForItem(item, {
-						freeUnits: item.freeQuantity ?? 0
-					})}
+					{@const price = priceInfo.perItem[i]}
 					{@const toDepositFactor = (item.depositPercentage ?? 100) / 100}
 					<form
 						method="POST"
@@ -243,8 +222,8 @@
 						<div class="flex flex-col items-end justify-center lg:mb-0 mb-4">
 							<div class="flex gap-2">
 								<PriceTag
-									amount={priceToBill.amountWithoutDiscount * toDepositFactor}
-									currency={priceToBill.currency}
+									amount={price.amountWithoutDiscount * toDepositFactor}
+									currency={price.currency}
 									main
 									class="text-2xl truncate {item.discountPercentage ? 'line-through' : ''}"
 								>
@@ -256,8 +235,8 @@
 								</PriceTag>
 								{#if item.discountPercentage}
 									<PriceTag
-										amount={priceToBill.amount * toDepositFactor}
-										currency={priceToBill.currency}
+										amount={price.amount * toDepositFactor}
+										currency={price.currency}
 										class="text-2xl truncate "
 										main
 									/>
@@ -265,8 +244,8 @@
 							</div>
 							<PriceTag
 								class="text-base truncate"
-								amount={priceToBill.amount * toDepositFactor}
-								currency={priceInfo.currency}
+								amount={price.amount * toDepositFactor}
+								currency={price.currency}
 								secondary
 							/>
 							<span class="font-semibold">{t('cart.vat')} {priceInfo.vatRates[i]}%</span>

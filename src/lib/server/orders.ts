@@ -22,7 +22,7 @@ import {
 	subSeconds
 } from 'date-fns';
 import { runtimeConfig } from './runtime-config';
-import { generateSubscriptionNumber } from './subscriptions';
+import { freeProductsForUser, generateSubscriptionNumber } from './subscriptions';
 import {
 	checkProductVariationsIntegrity,
 	productPriceWithVariations,
@@ -36,7 +36,7 @@ import { ORIGIN } from '$env/static/private';
 import { emailsEnabled, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
 import { type Cart } from '$lib/types/Cart';
-import { computeDeliveryFees, computePriceInfo, freeProductUnitsForCart } from '$lib/cart';
+import { CartPriceInfo, computeDeliveryFees, computePriceInfo } from '$lib/cart';
 import { CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { refreshAvailableStockInDb } from './product';
@@ -76,6 +76,40 @@ import { binaryFindAround } from '$lib/utils/binary-find';
 import { toZonedTime } from 'date-fns-tz';
 import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
 import { PaidSubscription } from '$lib/types/PaidSubscription';
+import type { FetchOrderResult } from '../../routes/(app)/order/[id]/fetchOrderForUser';
+
+/**
+ * FIXME: The computation bellow uses runtime configuration features. This is
+ * problematic because whe should be able to compute the same price info...
+ */
+export async function priceInfoForOrderProbablyIncorrectBuyOkayForDisplay(
+	order: FetchOrderResult
+): Promise<CartPriceInfo> {
+	// The free products for this order are computed from the information stored in the order
+	const freeProductUnits = order.items.reduce((acc: Record<string, number>, item) => {
+		if (item.freeQuantity && item.product._id) {
+			acc[item.product._id] = item.freeQuantity + (acc[item.product._id] ?? 0);
+		}
+		return acc;
+	}, {});
+	// FIXME: This is fundamentally incorrect, since the current VAT profiles do
+	// not necessarily correspond to those used when the order was created.
+	const vatProfiles = await collections.vatProfiles.find({}).toArray();
+	return computePriceInfo(order.items, {
+		bebopCountry: runtimeConfig.vatCountry,
+		deliveryFees: order.currencySnapshot.main.shippingPrice ?? {
+			amount: 0,
+			currency: order.currencySnapshot.main.totalPrice.currency
+		},
+		discount: null,
+		freeProductUnits,
+		userCountry: undefined,
+		vatExempted: false,
+		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
+		vatProfiles,
+		vatSingleCountry: runtimeConfig.vatSingleCountry
+	});
+}
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
 	const other = await collections.orders.findOne({
@@ -533,7 +567,6 @@ export async function createOrder(
 		chosenVariations?: Record<string, string>;
 		depositPercentage?: number;
 		discountPercentage?: number;
-		freeQuantity?: number;
 		freeProductSources?: { subscriptionId: string; quantity: number }[];
 		booking?: Cart['items'][0]['booking'] & { _id: ObjectId };
 	}>,
@@ -770,20 +803,25 @@ export async function createOrder(
 		.filter((sub) => discountSubIds.has(sub.productId))
 		.map((sub) => sub.productId);
 
-	for (const item of items) {
+	const priceInfo = computePriceInfo(items, {
+		bebopCountry: runtimeConfig.vatCountry,
+		deliveryFees: shippingPrice,
+		discount: discountInfo,
+		freeProductUnits: await freeProductsForUser(
+			params.user,
+			items.map((item) => item.product._id)
+		),
+		userCountry: params.userVatCountry,
+		vatExempted,
+		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
+		vatProfiles,
+		vatSingleCountry: runtimeConfig.vatSingleCountry
+	});
+
+	for (const { item, price } of items.map((item, i) => ({ item, price: priceInfo.perItem[i] }))) {
 		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
-		if (item.freeQuantity) {
-			let quantityToConsume = Math.min(item.quantity, item.freeQuantity);
-			if (item.booking && item.product.bookingSpec) {
-				if (item.quantity !== 1) {
-					throw new Error('Booking slots can not be ordered multiple times.');
-				}
-				// Booking slots are added to the reservation as a single item, regardless
-				// of how many slots they span.
-				quantityToConsume =
-					differenceInMinutes(item.booking.end, item.booking.start) /
-					item.product.bookingSpec.slotMinutes;
-			}
+		if (price.usedFreeUnits) {
+			let quantityToConsume = price.usedFreeUnits;
 			const freeProductSubscriptions = await collections.paidSubscriptions
 				.find({
 					...userQuery(params.user),
@@ -826,20 +864,6 @@ export async function createOrder(
 			item.freeProductSources = usedSources;
 		}
 	}
-
-	const priceInfo = computePriceInfo(items, {
-		bebopCountry: runtimeConfig.vatCountry || undefined,
-		deliveryFees: shippingPrice,
-		discount: discountInfo,
-		freeProductUnits: freeProductUnitsForCart(
-			items.map((item) => ({ ...item, productId: item.product._id }))
-		),
-		userCountry: params.userVatCountry,
-		vatExempted,
-		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
-		vatProfiles,
-		vatSingleCountry: runtimeConfig.vatSingleCountry
-	});
 	const vatExemptedReason = vatExempted
 		? params.reasonFreeVat || runtimeConfig.vatExemptionReason
 		: undefined;
@@ -1202,7 +1226,7 @@ export async function createOrder(
 					chosenVariations: item.chosenVariations,
 					depositPercentage: item.depositPercentage,
 					discountPercentage: item.discountPercentage,
-					freeQuantity: item.freeQuantity,
+					freeQuantity: priceInfo.perItem[i].usedFreeUnits,
 					freeProductSources: item.freeProductSources,
 					...(item.product.bookingSpec &&
 						item.booking && {

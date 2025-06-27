@@ -22,7 +22,7 @@ export async function load({ parent, locals }) {
 
 	if (parentData.cart) {
 		try {
-			await checkCartItems(parentData.cart, { user: userIdentifier(locals) });
+			await checkCartItems(parentData.cart.items, { user: userIdentifier(locals) });
 		} catch (err) {
 			throw redirect(303, '/cart');
 		}
@@ -78,7 +78,7 @@ export async function load({ parent, locals }) {
 
 	let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
 
-	for (const item of parentData.cart ?? []) {
+	for (const item of parentData.cart.items ?? []) {
 		if (item.product.paymentMethods) {
 			methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
 		}
@@ -450,7 +450,6 @@ export const actions = {
 				cart.items.map((item) => ({
 					quantity: item.quantity,
 					product: byId[item.productId],
-					...(item.freeQuantity && { freeQuantity: item.freeQuantity }),
 					...(item.customPrice && {
 						customPrice: { amount: item.customPrice.amount, currency: item.customPrice.currency }
 					}),
