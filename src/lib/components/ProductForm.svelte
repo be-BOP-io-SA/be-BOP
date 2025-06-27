@@ -99,7 +99,7 @@
 		enforce: false
 	};
 	let errorMessage = '';
-	let variationLines = product.variations?.length ? product.variations?.length : 2;
+	let variationLines = product.variations?.length ? product.variations?.length : 1;
 	let productCtaLines = product.cta?.length ? product.cta.length : 3;
 	let externalResourcesLines = product.externalResources?.length
 		? product.externalResources?.length
@@ -274,7 +274,7 @@
 		product.payWhatYouWant = false;
 	}
 
-	$: if (product.payWhatYouWant) {
+	$: if (product.payWhatYouWant || product.hasVariations) {
 		product.standalone = true;
 	}
 
@@ -298,6 +298,41 @@
 	let variationLabelsValues: string[] = [];
 	function isNumber(value: string) {
 		return !isNaN(Number(value)) && value.trim() !== '';
+	}
+	function moveVariation(fromIndex: number, toIndex: number): void {
+		if (product.variations) {
+			if (
+				fromIndex < 0 ||
+				toIndex < 0 ||
+				fromIndex >= product.variations.length ||
+				toIndex >= product.variations.length
+			) {
+				return;
+			}
+			const newVariations = [...product.variations];
+			const [movedItem] = newVariations.splice(fromIndex, 1);
+			newVariations.splice(toIndex, 0, movedItem);
+			product.variations = newVariations;
+		}
+	}
+	function duplicateVariation(
+		variation: { name: string; value: string; price?: number },
+		index: number,
+		newVariation: boolean
+	) {
+		if (newVariation) {
+			variationLabelsNames.push(variation.name);
+			variationLabelsValues.push(variation.value);
+		} else {
+			const newVariationValue = crypto.randomUUID();
+			if (product.variationLabels) {
+				product.variationLabels.values[variation.name][newVariationValue] =
+					product.variationLabels.values[variation.name][variation.value];
+			}
+			product.variations?.splice(index + 1, 0, { ...variation, value: newVariationValue });
+		}
+
+		variationLines++;
 	}
 	$: variationLabelsToUpdate = product.variationLabels || { names: {}, values: {} };
 	function deleteVariationLabel(key: string, valueKey: string) {
@@ -552,7 +587,7 @@
 				bind:checked={product.standalone}
 				on:input={() => priceAmountElement?.setCustomValidity('')}
 				name="standalone"
-				disabled={product.payWhatYouWant}
+				disabled={product.payWhatYouWant || product.hasVariations}
 			/>
 			This is a standalone product
 		</label>
@@ -629,7 +664,6 @@
 				type="checkbox"
 				bind:checked={product.hasVariations}
 				name="hasVariations"
-				disabled={!product.standalone}
 			/>
 			Product has light variations (no stock difference)
 		</label>
@@ -637,12 +671,15 @@
 			{#each [...(product.variations || []), ...Array(variationLines).fill( { name: '', value: '', price: 0 } )].slice(0, variationLines) as variation, i}
 				<div class="flex gap-4">
 					{#if variation.name && variation.value}
+						<button type="button" on:click={() => duplicateVariation(variation, i, false)}
+							>➕</button
+						>
 						<label class="form-label">
-							Category Id
+							{i === 0 ? 'Category Id' : ''}
 							<input disabled type="text" class="form-input" value={variation.name} />
 						</label>
 						<label class="form-label">
-							Category Name
+							{i === 0 ? 'Category Name' : ''}
 							<input
 								type="text"
 								name="variationLabels.names[{variation.name}]"
@@ -652,19 +689,38 @@
 							/>
 						</label>
 						<label class="form-label">
-							Value <input
+							{i === 0 ? 'Value' : ''}
+							<input
 								type="text"
 								name="variationLabels.values[{variation.name}][{variation.value}]"
 								class="form-input"
 								value={product.variationLabels?.values[variation.name]?.[variation.value]}
 								bind:this={variationInput[i]}
-								on:input={() => variationInput[i]?.setCustomValidity('')}
+								on:input={() => (
+									variationInput[i]?.setCustomValidity(''), (variationInput[i] = variationInput[i])
+								)}
 								required={!!product.variationLabels?.names[variation.name]}
 							/>
 						</label>
 					{:else}
+						{@const disableButton = !variationLabelsNames[i] && !variationLabelsValues[i]}
+						<button
+							class={disableButton ? 'opacity-50' : ''}
+							type="button"
+							disabled={disableButton}
+							on:click={() =>
+								duplicateVariation(
+									{ name: variationLabelsNames[i], value: variationLabelsValues[i], price: 0 },
+									i,
+									true
+								)}>➕</button
+						>
 						<label class="form-label">
-							Category Name
+							{i === 0 ? 'Category Id' : ''}
+							<input disabled type="text" class="form-input" bind:value={variationLabelsNames[i]} />
+						</label>
+						<label class="form-label">
+							{i === 0 ? 'Category Name' : ''}
 							<input
 								type="text"
 								name="variationLabels.names[{(
@@ -676,7 +732,8 @@
 							/>
 						</label>
 						<label class="form-label">
-							Value <input
+							{i === 0 ? 'Value' : ''}
+							<input
 								type="text"
 								name="variationLabels.values[{(
 									(isNumber(variationLabelsNames[i]) ? 'name' : '') + variationLabelsNames[i] || ''
@@ -732,7 +789,8 @@
 									: (variationLabelsValues[i] || '').toLowerCase()}
 							/>
 						{/if}
-						Price difference<input
+						{i === 0 ? 'Price difference' : ''}
+						<input
 							type="number"
 							name="variations[{i}].price"
 							class="form-input"
@@ -742,12 +800,23 @@
 						/>
 					</label>
 					{#if variation.name && variation.value}
-						<label class="form-label mt-8">
-							<button
-								type="button"
-								on:click={() => deleteVariationLabel(variation.name, variation.value)}>🗑️</button
-							>
-						</label>{/if}
+						<button
+							type="button"
+							on:click={() => deleteVariationLabel(variation.name, variation.value)}>➖</button
+						>
+						<button
+							class={i === 0 ? 'opacity-50' : ''}
+							type="button"
+							disabled={i === 0}
+							on:click={() => moveVariation(i, i - 1)}>🔺</button
+						>
+						<button
+							class={i === (product.variations?.length ?? 1) - 1 ? 'opacity-50' : ''}
+							type="button"
+							disabled={i === (product.variations?.length ?? 1) - 1}
+							on:click={() => moveVariation(i, i + 1)}>🔻</button
+						>
+					{/if}
 				</div>
 			{/each}
 			<button
