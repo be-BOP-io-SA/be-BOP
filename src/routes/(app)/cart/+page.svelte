@@ -8,7 +8,12 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { useI18n } from '$lib/i18n';
-	import { computeDeliveryFees, computePriceInfo, priceToBillForItem } from '$lib/types/Cart.js';
+	import {
+		computeDeliveryFees,
+		computePriceInfo,
+		freeProductUnitsForCart,
+		priceToBillForItem
+	} from '$lib/cart';
 	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import { oneMaxPerLine } from '$lib/types/Product.js';
@@ -31,15 +36,18 @@
 			: NaN;
 	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted,
-		userCountry: data.countryCode,
 		deliveryFees: {
 			amount: deliveryFees || 0,
 			currency: UNDERLYING_CURRENCY
 		},
-		vatProfiles: data.vatProfiles
+		freeProductUnits: freeProductUnitsForCart(
+			items.map((item) => ({ ...item, productId: item.product._id }))
+		),
+		userCountry: data.countryCode,
+		vatExempted: data.vatExempted,
+		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
+		vatProfiles: data.vatProfiles,
+		vatSingleCountry: data.vatSingleCountry
 	});
 	let alias = '';
 	let formAlias: HTMLInputElement;
@@ -131,7 +139,9 @@
 				style="grid-template-columns: auto 1fr auto auto"
 			>
 				{#each items as item, i}
-					{@const priceToBill = priceToBillForItem(item)}
+					{@const priceToBill = priceToBillForItem(item, {
+						freeUnits: item.freeQuantity ?? 0
+					})}
 					{@const toDepositFactor = (item.depositPercentage ?? 100) / 100}
 					<form
 						method="POST"
