@@ -389,6 +389,40 @@
 			"ZW": "Zimbabwe"
 		}
 	},
+	"customerTouch": {
+		"cancelOrderTitlle": "Abandonar a ordem?",
+		"cart": {
+			"ht": "Ht",
+			"targetOnSite": "No local",
+			"targetTakeAway": "Remover",
+			"title": "Seu pedido"
+		},
+		"cta": {
+			"abandonment": "Abandono",
+			"addFirstProduct": "Adicione o 1º produto",
+			"addProduct": "Adicionar",
+			"end": "Fim",
+			"pay": "Pagar",
+			"retakeOrder": "Retomar o pedido"
+		},
+		"ctaBack": "Voltar",
+		"deletedOrderTitle": "Seu pedido foi excluído!",
+		"loginText": "Conecte-se?",
+		"noThanksCta": "Não, obrigado",
+		"orderConfirmedTitle": "Order n ° {number} confirmado!",
+		"orderPaidTitle": "Pedido pago",
+		"orderTitle": "Receber o recibo?",
+		"payForOrderTitle": "Por favor, pague pelo seu pedido.",
+		"payment": {
+			"Title": "Escolha o seu método de pagamento"
+		},
+		"printCta": "Imprimir",
+		"sendTicketCta": "Enviar",
+		"welcomHello": "Olá",
+		"welcomeOnSiteCta": "No local",
+		"welcomeQuestion": "Onde você gostaria de comer?",
+		"welcomeTakeAwayCta": "Remover"
+	},
 	"error": {
 		"404": "A página {invalidUrl} que solicitou não pôde ser encontrada. Por favor, verifique se o seu link está correto ou contacte a equipa do site para reportar o problema.",
 		"title": "Erro {status}"
