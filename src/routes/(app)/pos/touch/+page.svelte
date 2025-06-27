@@ -6,7 +6,7 @@
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n.js';
 	import PriceTag from '$lib/components/PriceTag.svelte';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/types/Cart.js';
+	import { computeDeliveryFees, computePriceInfo, freeProductUnitsForCart } from '$lib/cart';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import { invalidate } from '$app/navigation';
@@ -34,15 +34,18 @@
 			: NaN;
 	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted,
-		userCountry: data.countryCode,
 		deliveryFees: {
 			amount: deliveryFees || 0,
 			currency: UNDERLYING_CURRENCY
 		},
-		vatProfiles: data.vatProfiles
+		freeProductUnits: freeProductUnitsForCart(
+			data.cart.map((item) => ({ ...item, productId: item.product._id }))
+		),
+		userCountry: data.countryCode,
+		vatExempted: data.vatExempted,
+		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
+		vatProfiles: data.vatProfiles,
+		vatSingleCountry: data.vatSingleCountry
 	});
 	const { t } = useI18n();
 	$: displayedProducts = productFiltered.slice(next, next + POS_PRODUCT_PAGINATION);

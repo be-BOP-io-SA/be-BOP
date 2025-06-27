@@ -8,7 +8,7 @@
 	import { typedValues } from '$lib/utils/typedValues';
 	import { typedInclude } from '$lib/utils/typedIncludes';
 	import ProductType from '$lib/components/ProductType.svelte';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/types/Cart';
+	import { computeDeliveryFees, computePriceInfo, freeProductUnitsForCart } from '$lib/cart';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
@@ -111,14 +111,17 @@
 
 	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted || isFreeVat,
-		userCountry: isDigital ? digitalCountry : country,
 		deliveryFees: {
 			amount: offerDeliveryFees ? 0 : deliveryFees || 0,
 			currency: UNDERLYING_CURRENCY
 		},
+		freeProductUnits: freeProductUnitsForCart(
+			items.map((item) => ({ ...item, productId: item.product._id }))
+		),
+		userCountry: isDigital ? digitalCountry : country,
+		vatExempted: data.vatExempted || isFreeVat,
+		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
+		vatSingleCountry: data.vatSingleCountry,
 		vatProfiles: data.vatProfiles,
 		...(addDiscount && !isNaN(discountAmount)
 			? {
@@ -131,15 +134,18 @@
 	});
 	$: priceInfoInitial = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted || isFreeVat,
-		userCountry: isDigital ? digitalCountry : country,
 		deliveryFees: {
 			amount: offerDeliveryFees ? 0 : deliveryFees || 0,
 			currency: UNDERLYING_CURRENCY
 		},
-		vatProfiles: data.vatProfiles
+		freeProductUnits: freeProductUnitsForCart(
+			items.map((item) => ({ ...item, productId: item.product._id }))
+		),
+		userCountry: isDigital ? digitalCountry : country,
+		vatExempted: data.vatExempted || isFreeVat,
+		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
+		vatProfiles: data.vatProfiles,
+		vatSingleCountry: data.vatSingleCountry
 	});
 
 	$: isDigital = items.every((item) => !item.product.shipping);

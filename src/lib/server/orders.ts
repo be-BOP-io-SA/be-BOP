@@ -35,7 +35,8 @@ import { isLndConfigured, lndCreateInvoice } from './lnd';
 import { ORIGIN } from '$env/static/private';
 import { emailsEnabled, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
-import { computeDeliveryFees, type Cart, computePriceInfo } from '$lib/types/Cart';
+import { type Cart } from '$lib/types/Cart';
+import { computeDeliveryFees, computePriceInfo, freeProductUnitsForCart } from '$lib/cart';
 import { CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { refreshAvailableStockInDb } from './product';
@@ -827,14 +828,17 @@ export async function createOrder(
 	}
 
 	const priceInfo = computePriceInfo(items, {
-		deliveryFees: shippingPrice,
-		vatExempted,
-		userCountry: params.userVatCountry,
 		bebopCountry: runtimeConfig.vatCountry || undefined,
-		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
-		vatSingleCountry: runtimeConfig.vatSingleCountry,
+		deliveryFees: shippingPrice,
 		discount: discountInfo,
-		vatProfiles: vatProfiles
+		freeProductUnits: freeProductUnitsForCart(
+			items.map((item) => ({ ...item, productId: item.product._id }))
+		),
+		userCountry: params.userVatCountry,
+		vatExempted,
+		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
+		vatProfiles,
+		vatSingleCountry: runtimeConfig.vatSingleCountry
 	});
 	const vatExemptedReason = vatExempted
 		? params.reasonFreeVat || runtimeConfig.vatExemptionReason

@@ -6,7 +6,7 @@
 	import { onMount } from 'svelte';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import { useI18n } from '$lib/i18n';
-	import { computePriceInfo } from '$lib/types/Cart.js';
+	import { computePriceInfo, freeProductUnitsForCart } from '$lib/cart';
 	import { orderRemainingToPay } from '$lib/types/Order.js';
 	import Trans from '$lib/components/Trans.svelte';
 
@@ -84,15 +84,18 @@
 	// 		: NaN;
 	$: priceInfo = computePriceInfo(cart, {
 		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted,
-		userCountry: data.countryCode,
 		deliveryFees: {
 			amount: 0, //deliveryFees || 0,
 			currency: UNDERLYING_CURRENCY
 		},
-		vatProfiles: data.vatProfiles
+		freeProductUnits: freeProductUnitsForCart(
+			cart.map((item) => ({ ...item, productId: item.product._id }))
+		),
+		userCountry: data.countryCode,
+		vatExempted: data.vatExempted,
+		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
+		vatProfiles: data.vatProfiles,
+		vatSingleCountry: data.vatSingleCountry
 	});
 
 	const { t, locale, countryName } = useI18n();

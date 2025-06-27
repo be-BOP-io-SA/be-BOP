@@ -28,7 +28,7 @@
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency';
 	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/types/Cart.js';
+	import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 	import { LARGE_SCREEN } from '$lib/types/Theme.js';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
