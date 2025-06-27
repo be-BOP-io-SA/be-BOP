@@ -35,7 +35,6 @@
 	import type { Day } from '$lib/types/Schedule.js';
 	import { toZonedTime } from 'date-fns-tz';
 	import { RangeList } from '$lib/utils/range-list.js';
-	import { sum } from '$lib/utils/sum.js';
 	import { vatRate } from '$lib/types/Country';
 
 	export let data;
@@ -52,7 +51,7 @@
 	function generateEvents(scheduledEvents: typeof data.scheduleEvents, cart: typeof data.cart) {
 		return [
 			...scheduledEvents,
-			...cart
+			...cart.items
 				.filter((item) => item.product._id === data.product._id && item.booking)
 				.map((item) =>
 					item.booking
@@ -260,17 +259,7 @@
 			})
 		};
 	}
-	$: freeProductsAvailable = !data.product.standalone
-		? data.freeProductsAvailable
-		: Math.max(
-				data.freeProductsAvailable -
-					sum(
-						data.cart
-							.filter((item) => item.freeQuantity && item.product._id === data.product._id)
-							.map((val) => val.quantity)
-					),
-				0
-		  );
+	$: freeProductsAvailable = data.freeProductsAvailable;
 
 	let PWYWInput: HTMLInputElement | null = null;
 	let acceptRestriction = data.product.hasSellDisclaimer ? false : true;
@@ -840,7 +829,7 @@
 									<br />
 									{t('product.checkBackLater')}
 								</p>
-							{:else if data.cartMaxSeparateItems && data.cart?.length === data.cartMaxSeparateItems}
+							{:else if data.cartMaxSeparateItems && data.cart.items.length === data.cartMaxSeparateItems}
 								<p class="text-red-500">
 									{t('cart.reachedMaxPerLine')}
 								</p>
@@ -942,7 +931,7 @@
 									{cta.label}
 								</a>
 							{/if}
-						{:else if !canBuy || amountAvailable <= 0 || (data.cartMaxSeparateItems && data.cart?.length === data.cartMaxSeparateItems)}
+						{:else if !canBuy || amountAvailable <= 0 || (data.cartMaxSeparateItems && data.cart.items.length === data.cartMaxSeparateItems)}
 							{#if cta.downloadLink}
 								<a
 									href={cta.href.startsWith('http') || cta.href.includes('/')

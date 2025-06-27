@@ -8,7 +8,7 @@
 	export let sm = false;
 	export let disabled = false;
 
-	export let item: NonNullable<LayoutData['cart']>[number];
+	export let item: NonNullable<LayoutData['cart']['items']>[number];
 
 	const { t } = useI18n();
 </script>

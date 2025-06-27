@@ -10,6 +10,8 @@ import { FAKE_ORDER_INVOICE_NUMBER } from '$lib/types/Order';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error } from '@sveltejs/kit';
 
+export type FetchOrderResult = Awaited<ReturnType<typeof fetchOrderForUser>>;
+
 export async function fetchOrderForUser(orderId: string, params?: { userRoleId?: string }) {
 	const order = await collections.orders.findOne({
 		_id: orderId

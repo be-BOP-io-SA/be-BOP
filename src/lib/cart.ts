@@ -4,7 +4,6 @@ import { sum } from '$lib/utils/sum';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import type { RuntimeConfig } from './server/runtime-config';
-import type { Cart } from './types/Cart';
 import { vatRate, type CountryAlpha2 } from './types/Country';
 import { UNDERLYING_CURRENCY, type Currency } from './types/Currency';
 import type { DiscountType, Price } from './types/Order';
@@ -91,6 +90,7 @@ function computeCartPrice(
 	const usedFreeUnits: Record<string, number> = Object();
 	const amounts = [];
 	const partialAmounts = [];
+	const perItem = [];
 	if (params.deliveryFees) {
 		amounts.push({ amount: params.deliveryFees.amount, currency: params.deliveryFees.currency });
 	}
@@ -109,11 +109,15 @@ function computeCartPrice(
 		amounts.push({ amount, currency });
 		const depositFactor = (item.depositPercentage ?? 100) / 100;
 		partialAmounts.push({ amount: amount * depositFactor, currency });
+		perItem.push(priceToBill);
 	}
 	return {
-		totalAmount: sumCurrency(UNDERLYING_CURRENCY, amounts),
-		partialAmount: sumCurrency(UNDERLYING_CURRENCY, partialAmounts),
-		currency: UNDERLYING_CURRENCY,
+		cart: {
+			currency: UNDERLYING_CURRENCY,
+			partialAmount: sumCurrency(UNDERLYING_CURRENCY, partialAmounts),
+			totalAmount: sumCurrency(UNDERLYING_CURRENCY, amounts)
+		},
+		perItem,
 		usedFreeUnits
 	};
 }
@@ -202,6 +206,29 @@ function vatForCart(
 	return { vats, usedFreeUnits };
 }
 
+export type CartPriceInfo = {
+	currency: Currency;
+	discount: number;
+	partialPrice: number;
+	partialPriceWithVat: number;
+	partialVat: number;
+	perItem: PriceToBillForItem[];
+	physicalVatAtCustoms: boolean;
+	singleVatCountry: boolean;
+	totalPrice: number;
+	totalPriceWithVat: number;
+	totalVat: number;
+	/** Aggregate physical vat & digital vat when rates are the same or one is null */
+	vat: Array<{
+		price: Price;
+		rate: number;
+		country: CountryAlpha2;
+		partialPrice: Price;
+	}>;
+	/** Vat rate for each individual item */
+	vatRates: number[];
+};
+
 export function computePriceInfo(
 	items: Array<ItemForPriceInfo>,
 	params: {
@@ -221,35 +248,16 @@ export function computePriceInfo(
 			rates: Partial<Record<CountryAlpha2, number>>;
 		}>;
 	}
-): {
-	physicalVatAtCustoms: boolean;
-	partialPrice: number;
-	partialVat: number;
-	totalPrice: number;
-	totalVat: number;
-	totalPriceWithVat: number;
-	partialPriceWithVat: number;
-	discount: number;
-	singleVatCountry: boolean;
-	currency: Currency;
-	/** Aggregate physical vat & digital vat when rates are the same or one is null */
-	vat: Array<{
-		price: Price;
-		rate: number;
-		country: CountryAlpha2;
-		partialPrice: Price;
-	}>;
-	/** Vat rate for each individual item */
-	vatRates: number[];
-} {
+): CartPriceInfo {
 	const freeUnits = params.freeProductUnits;
 	const isPhysicalVatExempted =
 		params.vatNullOutsideSellerCountry && params.bebopCountry !== params.userCountry;
 	const singleVatCountry = params.vatSingleCountry && !!params.bebopCountry;
-	const { partialAmount: partialPrice, totalAmount: totalPrice } = computeCartPrice(items, {
+	const cartPrice = computeCartPrice(items, {
 		deliveryFees: params.deliveryFees,
 		freeUnits
 	});
+	const { partialAmount: partialPrice, totalAmount: totalPrice } = cartPrice.cart;
 	const cartVat = vatForCart(items, {
 		...params,
 		freeUnits,
@@ -347,26 +355,20 @@ export function computePriceInfo(
 	}
 
 	return {
-		physicalVatAtCustoms: isPhysicalVatExempted,
-		partialPrice,
-		partialVat,
-		totalPrice,
-		totalVat,
-		totalPriceWithVat,
-		partialPriceWithVat,
-		singleVatCountry,
 		currency: UNDERLYING_CURRENCY,
 		discount: discountAmount,
+		partialPrice,
+		partialPriceWithVat,
+		partialVat,
+		perItem: cartPrice.perItem,
+		physicalVatAtCustoms: isPhysicalVatExempted,
+		singleVatCountry,
+		totalPrice,
+		totalPriceWithVat,
+		totalVat,
 		vat: reducedVat.sort((a, b) => a.rate - b.rate),
 		vatRates
 	};
-}
-
-export function freeProductUnitsForCart(items: Cart['items']): Record<string, number> {
-	return items.reduce((acc: Record<string, number>, item) => {
-		acc[item.productId] = item.quantity;
-		return acc;
-	}, {});
 }
 
 export function computeDeliveryFees(
