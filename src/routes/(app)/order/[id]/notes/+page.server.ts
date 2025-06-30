@@ -2,6 +2,7 @@ import { UrlDependency } from '$lib/types/UrlDependency';
 import { error, redirect } from '@sveltejs/kit';
 import { fetchOrderForUser } from '../fetchOrderForUser';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { priceInfoForOrderProbablyIncorrectBuyOkayForDisplay } from '$lib/server/orders';
 
 export async function load({ params, depends, locals }) {
 	depends(UrlDependency.Order);
@@ -15,6 +16,8 @@ export async function load({ params, depends, locals }) {
 	}
 
 	return {
-		order
+		order,
+		priceInfoProbablyIncorrectBuyOkayForDisplay:
+			await priceInfoForOrderProbablyIncorrectBuyOkayForDisplay(order)
 	};
 }

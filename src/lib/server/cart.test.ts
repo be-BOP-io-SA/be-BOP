@@ -10,7 +10,7 @@ import {
 	TEST_DIGITAL_PRODUCT_UNLIMITED,
 	TEST_PHYSICAL_PRODUCT
 } from './seed/product';
-import { computePriceInfo } from '$lib/types/Cart';
+import { computePriceInfo } from '$lib/cart';
 import { toCurrency } from '$lib/utils/toCurrency';
 
 describe('cart', () => {
@@ -111,16 +111,14 @@ describe('cart', () => {
 		describe('when vatExempted is true', () => {
 			it('should return the price without VAT', () => {
 				const priceInfo = computePriceInfo([{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }], {
-					vatExempted: true,
 					bebopCountry: 'FR',
+					deliveryFees: { amount: 0, currency: 'EUR' },
+					freeProductUnits: {},
 					userCountry: 'CH',
-					deliveryFees: {
-						amount: 0,
-						currency: 'EUR'
-					},
+					vatExempted: true,
 					vatNullOutsideSellerCountry: false,
-					vatSingleCountry: false,
-					vatProfiles: []
+					vatProfiles: [],
+					vatSingleCountry: false
 				});
 				expect(priceInfo.totalPriceWithVat).toBe(
 					toCurrency(
@@ -139,16 +137,14 @@ describe('cart', () => {
 			describe("when the user's country is the same as the seller's country", () => {
 				it('should return the price with VAT for physical products', () => {
 					const priceInfo = computePriceInfo([{ product: TEST_PHYSICAL_PRODUCT, quantity: 1 }], {
-						vatExempted: false,
 						bebopCountry: 'FR',
+						deliveryFees: { amount: 0, currency: 'EUR' },
+						freeProductUnits: {},
 						userCountry: 'FR',
-						deliveryFees: {
-							amount: 0,
-							currency: 'EUR'
-						},
+						vatExempted: false,
 						vatNullOutsideSellerCountry: true,
-						vatSingleCountry: false,
-						vatProfiles: []
+						vatProfiles: [],
+						vatSingleCountry: false
 					});
 					expect(priceInfo.totalPriceWithVat).toBeGreaterThan(priceInfo.totalPrice);
 					expect(priceInfo.totalVat).toBeGreaterThan(0);
@@ -169,16 +165,14 @@ describe('cart', () => {
 			describe("when the user's country is different from the seller's country", () => {
 				it('should return the price with VAT for digital products', () => {
 					const priceInfo = computePriceInfo([{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }], {
-						vatExempted: false,
 						bebopCountry: 'FR',
+						deliveryFees: { amount: 0, currency: 'EUR' },
+						freeProductUnits: {},
 						userCountry: 'CH',
-						deliveryFees: {
-							amount: 0,
-							currency: 'EUR'
-						},
+						vatExempted: false,
 						vatNullOutsideSellerCountry: true,
-						vatSingleCountry: false,
-						vatProfiles: []
+						vatProfiles: [],
+						vatSingleCountry: false
 					});
 
 					expect(priceInfo.totalPriceWithVat).toBeGreaterThan(priceInfo.totalPrice);
@@ -188,16 +182,14 @@ describe('cart', () => {
 
 				it('should return the price without VAT for physical products', () => {
 					const priceInfo = computePriceInfo([{ product: TEST_PHYSICAL_PRODUCT, quantity: 1 }], {
-						vatExempted: false,
 						bebopCountry: 'FR',
+						deliveryFees: { amount: 0, currency: 'EUR' },
+						freeProductUnits: {},
 						userCountry: 'CH',
-						deliveryFees: {
-							amount: 0,
-							currency: 'EUR'
-						},
+						vatExempted: false,
 						vatNullOutsideSellerCountry: true,
-						vatSingleCountry: false,
-						vatProfiles: []
+						vatProfiles: [],
+						vatSingleCountry: false
 					});
 					expect(priceInfo.totalPriceWithVat).toBe(
 						toCurrency(

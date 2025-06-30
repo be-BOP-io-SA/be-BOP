@@ -8,7 +8,7 @@
 	import { typedValues } from '$lib/utils/typedValues';
 	import { typedInclude } from '$lib/utils/typedIncludes';
 	import ProductType from '$lib/components/ProductType.svelte';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/types/Cart';
+	import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
@@ -18,7 +18,6 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { trimPrefix } from '$lib/utils/trimPrefix.js';
-	import { differenceInMinutes } from 'date-fns';
 
 	export let data;
 	let submitting = false;
@@ -103,43 +102,25 @@
 		? paymentMethod
 		: paymentMethods[0];
 
-	$: items = data.cart || [];
+	$: items = data.cart.items;
 	$: deliveryFees =
 		data.hasPosOptions && data.deliveryFees.allowFreeForPOS
 			? 0
 			: computeDeliveryFees(UNDERLYING_CURRENCY, country, items, data.deliveryFees);
 
-	$: priceInfo = computePriceInfo(items, {
-		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted || isFreeVat,
-		userCountry: isDigital ? digitalCountry : country,
-		deliveryFees: {
-			amount: offerDeliveryFees ? 0 : deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
-		vatProfiles: data.vatProfiles,
-		...(addDiscount && !isNaN(discountAmount)
-			? {
-					discount: {
-						amount: discountAmount,
-						type: discountType
-					}
-			  }
-			: undefined)
-	});
+	$: priceInfo = data.cart.priceInfo;
 	$: priceInfoInitial = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted || isFreeVat,
-		userCountry: isDigital ? digitalCountry : country,
 		deliveryFees: {
 			amount: offerDeliveryFees ? 0 : deliveryFees || 0,
 			currency: UNDERLYING_CURRENCY
 		},
-		vatProfiles: data.vatProfiles
+		freeProductUnits: data.cart.freeProductUnits,
+		userCountry: isDigital ? digitalCountry : country,
+		vatExempted: data.vatExempted || isFreeVat,
+		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
+		vatProfiles: data.vatProfiles,
+		vatSingleCountry: data.vatSingleCountry
 	});
 
 	$: isDigital = items.every((item) => !item.product.shipping);
@@ -633,12 +614,10 @@
 					<a href="/cart" class="body-hyperlink hover:underline"
 						>&lt;&lt;{t('checkout.backToCart')}</a
 					>
-					<p>{t('checkout.numProducts', { count: data.cart?.length ?? 0 })}</p>
+					<p>{t('checkout.numProducts', { count: data.cart.items.length ?? 0 })}</p>
 				</div>
-				{#each items as item}
-					{@const price = item.customPrice || item.product.price}
-					{@const quantityToPay = Math.max(item.quantity - (item.freeQuantity ?? 0), 0)}
-
+				{#each items as item, i}
+					{@const price = priceInfo.perItem[i]}
 					<form
 						method="POST"
 						class="flex flex-col mt-2"
@@ -726,15 +705,7 @@
 							<div class="flex flex-col ml-auto items-end justify-center">
 								<PriceTag
 									class="text-2xl truncate"
-									amount={((quantityToPay *
-										(item.booking && item.product.bookingSpec?.slotMinutes
-											? differenceInMinutes(item.booking.end, item.booking.start) /
-											  item.product.bookingSpec.slotMinutes
-											: 1) *
-										price.amount *
-										(item.depositPercentage ?? 100)) /
-										100) *
-										(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+									amount={(price.amount * (item.depositPercentage ?? 100)) / 100}
 									currency={price.currency}
 									main
 									>{item.depositPercentage
@@ -744,15 +715,7 @@
 										: ''}</PriceTag
 								>
 								<PriceTag
-									amount={((quantityToPay *
-										(item.booking && item.product.bookingSpec?.slotMinutes
-											? differenceInMinutes(item.booking.end, item.booking.start) /
-											  item.product.bookingSpec.slotMinutes
-											: 1) *
-										price.amount *
-										(item.depositPercentage ?? 100)) /
-										100) *
-										(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+									amount={(price.amount * (item.depositPercentage ?? 100)) / 100}
 									currency={price.currency}
 									class="text-base truncate"
 									secondary

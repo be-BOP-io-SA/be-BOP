@@ -16,10 +16,11 @@ import { building } from '$app/environment';
 import { paymentMethods } from '../payment-methods';
 import { userQuery } from '../user';
 import { rateLimit } from '../rateLimit';
-import { computePriceInfo } from '$lib/types/Cart';
+import { computePriceInfo } from '$lib/cart';
 import { filterNullish } from '$lib/utils/fillterNullish';
 import type { Price } from '$lib/types/Order';
 import { sendAuthentificationlink } from '../sendNotification';
+import { freeProductsForUser } from '../subscriptions';
 
 const lock = new Lock('received-messages');
 
@@ -522,7 +523,8 @@ const commands: Record<
 				name: 'paymentMethod',
 				enum: async (senderNpub) => {
 					try {
-						const cart = await getCartFromDb({ user: { npub: senderNpub } });
+						const user = { npub: senderNpub };
+						const cart = await getCartFromDb({ user });
 
 						if (!cart) {
 							return paymentMethods();
@@ -552,13 +554,17 @@ const commands: Record<
 							: [];
 
 						const totalPrice = computePriceInfo(items, {
-							deliveryFees: { amount: 0, currency: 'SAT' },
-							vatExempted: runtimeConfig.vatExempted,
-							userCountry: undefined,
 							bebopCountry: runtimeConfig.vatCountry || undefined,
+							deliveryFees: { amount: 0, currency: 'SAT' },
+							freeProductUnits: await freeProductsForUser(
+								user,
+								items.map((item) => item.product._id)
+							),
+							userCountry: undefined,
+							vatExempted: runtimeConfig.vatExempted,
 							vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
-							vatSingleCountry: runtimeConfig.vatSingleCountry,
-							vatProfiles
+							vatProfiles,
+							vatSingleCountry: runtimeConfig.vatSingleCountry
 						});
 
 						return paymentMethods({

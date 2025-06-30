@@ -5,7 +5,10 @@ import { fetchOrderForUser } from './fetchOrderForUser.js';
 import { getPublicS3DownloadLink } from '$lib/server/s3.js';
 import { uniqBy } from '$lib/utils/uniqBy.js';
 import { cmsFromContent } from '$lib/server/cms.js';
-import { conflictingTapToPayOrder } from '$lib/server/orders.js';
+import {
+	conflictingTapToPayOrder,
+	priceInfoForOrderProbablyIncorrectBuyOkayForDisplay
+} from '$lib/server/orders';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
@@ -86,6 +89,8 @@ export async function load({ params, depends, locals }) {
 	};
 	return {
 		order,
+		priceInfoProbablyIncorrectBuyOkayForDisplay:
+			await priceInfoForOrderProbablyIncorrectBuyOkayForDisplay(order),
 		paymentMethods: methods,
 		tapToPay,
 		digitalFiles: Promise.all(
