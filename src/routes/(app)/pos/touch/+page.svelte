@@ -13,6 +13,7 @@
 	import { applyAction, enhance } from '$app/forms';
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
 	import { groupBy } from '$lib/utils/group-by.js';
+	import { onMount } from 'svelte';
 
 	export let data;
 	$: next = Number($page.url.searchParams.get('skip')) || 0;
@@ -45,9 +46,11 @@
 		vatProfiles: data.vatProfiles
 	});
 	const { t } = useI18n();
-	$: displayedProducts = productFiltered.slice(next, next + POS_PRODUCT_PAGINATION);
-	$: totalPages = Math.ceil(productFiltered.length / POS_PRODUCT_PAGINATION);
-	$: currentPage = Math.floor(next / POS_PRODUCT_PAGINATION) + 1;
+	let posProductPagination = POS_PRODUCT_PAGINATION;
+
+	$: displayedProducts = productFiltered.slice(next, next + posProductPagination);
+	$: totalPages = Math.ceil(productFiltered.length / posProductPagination);
+	$: currentPage = Math.floor(next / posProductPagination) + 1;
 
 	async function addNoteToItem(event: Event, index: number, defaultPrompt: string) {
 		event.preventDefault();
@@ -76,12 +79,32 @@
 	let formNotes: HTMLFormElement[] = [];
 	$: lastItemId = items.length > 0 ? items[items.length - 1]?.product?._id : null;
 	let warningMessage = '';
+
+	function updatePaginationLimit() {
+		const height = window.innerHeight;
+		if (window.screen.height >= 1080) {
+			posProductPagination = 6;
+		} else {
+			let calculatedPagination = Math.floor(height / 100);
+			if (calculatedPagination % 2 !== 0) {
+				calculatedPagination += 1;
+			}
+			posProductPagination = Math.max(5, calculatedPagination);
+		}
+	}
+
+	onMount(() => {
+		updatePaginationLimit();
+		window.addEventListener('resize', updatePaginationLimit);
+
+		return () => window.removeEventListener('resize', updatePaginationLimit);
+	});
 </script>
 
 <div class="flex flex-col h-screen justify-between">
 	<main class="mb-auto flex-grow">
 		<div class="grid grid-cols-3 gap-4 h-full">
-			<div class="touchScreen-ticket-menu p-3 h-full">
+			<div class="touchScreen-ticket-menu p-3">
 				{#if items.length}
 					<h3 class="text-3xl">TICKET n° tmp</h3>
 					{#each items as item, i}
@@ -179,15 +202,15 @@
 							{#if next > 0}
 								<a
 									class="btn touchScreen-product-secondaryCTA text-3xl"
-									on:click={() => (next = Math.max(0, next - POS_PRODUCT_PAGINATION))}
+									on:click={() => (next = Math.max(0, next - posProductPagination))}
 									href={`?filter=${filter}&skip=${Math.max(0, next)}`}>&lt;</a
 								>
 							{/if}
 							PAGE {currentPage}/{totalPages}
-							{#if next + POS_PRODUCT_PAGINATION < productFiltered.length}
+							{#if next + posProductPagination < productFiltered.length}
 								<a
 									class="btn touchScreen-product-secondaryCTA text-3xl"
-									on:click={() => (next += POS_PRODUCT_PAGINATION)}
+									on:click={() => (next += posProductPagination)}
 									href={`?filter=${filter}&skip=${next}`}>&gt;</a
 								>
 							{/if}
