@@ -541,7 +541,7 @@
 						{#if data.cmsAgewall && data.cmsAgewallData}
 							<CmsDesign
 								{...data.cmsAgewallData}
-								roleId={data.roleId ? data.roleId : ''}
+								hasPosOptions={data.hasPosOptions}
 								pageName={data.cmsAgewall?.title}
 								websiteLink={data.websiteLink}
 								brandName={data.brandName}

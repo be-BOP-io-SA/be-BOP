@@ -611,6 +611,7 @@
 			"cancelMultiPayOrder": "Cancelar pedido",
 			"cancelOrder": "Cancelar",
 			"cancelReplacement": "Cancelar reemplazo",
+			"cancelTapToPay": "Cancelar el Tap-to-pay",
 			"markOrderPaid": "Marcar como pagado",
 			"replacePayment": "Reemplazar el método de pago",
 			"resendPaymentMethod": "Reenviar método de pago",
@@ -634,6 +635,10 @@
 		},
 		"sessionLink": "Sesión POS",
 		"sessionTouchLink": "Sesión POS - pantalla táctil",
+		"tapToPay": {
+			"inProgress": "El pago se validará automáticamente cuando la transacción externa haya sido registrada y validada.",
+			"inUseByOtherOrder": "El pago por Tap-to-pay está desactivado porque hay otro pedido en curso usando este método de pago. Se puede cobrar manualmente e ingresar luego el número de transacción en este campo."
+		},
 		"vatFree": "Esta compra es libre de IVA (<0>condiciones</0>)",
 		"vatFreeReason": "Razón de exención de IVA"
 	},

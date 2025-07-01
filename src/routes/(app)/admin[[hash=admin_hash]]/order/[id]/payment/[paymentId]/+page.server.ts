@@ -1,7 +1,7 @@
 import { ORIGIN, SMTP_USER } from '$env/static/private';
 import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database';
-import { onOrderPayment, onOrderPaymentFailed } from '$lib/server/orders';
+import { conflictingTapToPayOrder, onOrderPayment, onOrderPaymentFailed } from '$lib/server/orders';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
@@ -76,8 +76,74 @@ export const actions = {
 		}
 
 		await onOrderPaymentFailed(order, payment, 'canceled');
-
 		throw redirect(303, request.headers.get('referer') || `${adminPrefix()}/order`);
+	},
+
+	cancelTapToPay: async ({ params, request }) => {
+		const order = await collections.orders.findOne({
+			_id: params.id
+		});
+		if (!order) {
+			throw error(404, 'Order not found');
+		}
+		const payment = order.payments.find((payment) => payment._id.equals(params.paymentId));
+		if (!payment) {
+			throw error(404, 'Payment not found');
+		}
+		const currentTime = new Date();
+		if (!payment.posTapToPay || payment.posTapToPay.expiresAt < currentTime) {
+			return;
+		}
+		if (currentTime < payment.posTapToPay.startsAt) {
+			payment.posTapToPay.startsAt = currentTime;
+		}
+		payment.posTapToPay.expiresAt = currentTime;
+		payment.processor = undefined;
+		await collections.orders.updateOne({ _id: order._id }, { $set: { payments: order.payments } });
+		throw redirect(303, request.headers.get('referer') || `${adminPrefix()}/order`);
+	},
+
+	tapToPay: async (event) => {
+		const { params, request } = event;
+		const tapToPayProcessor = runtimeConfig.posTapToPay.processor;
+		if (!tapToPayProcessor) {
+			throw error(400, 'Tap-to-pay processor not configured');
+		}
+		const order = await collections.orders.findOne({
+			_id: params.id
+		});
+		if (!order) {
+			throw error(404, 'Order not found');
+		}
+		const payment = order.payments.find((payment) => payment._id.equals(params.paymentId));
+		if (!payment) {
+			throw error(404, 'Payment not found');
+		}
+		if (payment.status !== 'pending') {
+			throw error(400, 'Payment is not pending');
+		}
+		if (payment.method !== 'point-of-sale') {
+			throw error(400, 'Payment is not point-of-sale');
+		}
+		if (payment.posTapToPay && payment.posTapToPay.expiresAt > new Date()) {
+			throw error(400, 'Payment is already waiting tap-to-pay');
+		}
+		const conflictingOrder = await conflictingTapToPayOrder(order._id);
+		if (conflictingOrder) {
+			throw error(400, 'Another payment is already waiting on tap-to-pay');
+		}
+		payment.posTapToPay = {
+			startsAt: new Date(),
+			expiresAt: new Date(Date.now() + 1000 * 60 * 5)
+		};
+		payment.processor = tapToPayProcessor;
+		await collections.orders.updateOne({ _id: order._id }, { $set: { payments: order.payments } });
+		const racingConflictingOrder = await conflictingTapToPayOrder(order._id);
+		if (racingConflictingOrder) {
+			actions.cancelTapToPay(event);
+		} else {
+			throw redirect(303, request.headers.get('referer') || `${adminPrefix()}/order`);
+		}
 	},
 	updatePaymentDetail: async ({ params, request, locals }) => {
 		const order = await collections.orders.findOne({

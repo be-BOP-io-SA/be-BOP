@@ -12,15 +12,57 @@ import { refreshPromise, runtimeConfig, runtimeConfigUpdatedAt } from '../runtim
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { phoenixdLookupInvoice } from '../phoenixd';
 import { sbpGetCheckoutStatus } from '../swiss-bitcoin-pay';
-import { CURRENCIES, CURRENCY_UNIT } from '$lib/types/Currency';
+import { CURRENCIES, CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { isPaypalEnabled, paypalGetCheckout } from '../paypal';
+import { isStripeEnabled } from '../stripe';
 import { differenceInMinutes } from 'date-fns';
 import { z } from 'zod';
 import { getSatoshiReceivedNodeless } from '../bitcoin-nodeless';
 import { trimSuffix } from '$lib/utils/trimSuffix';
+import { Order } from '$lib/types/Order';
+import { ObjectId } from 'mongodb';
+import { lastSuccessfulPaymentIntents } from '../stripe';
 
 const lock = new Lock('orders');
+
+async function findMatchingTapToPayOrderStripe(
+	order: Order,
+	paymentId: ObjectId
+): Promise<string | undefined> {
+	const payment = order.payments.find((p) => p._id === paymentId);
+	if (!payment) {
+		throw new Error(`Payment ${paymentId} or order ${order._id} not found`);
+	}
+	const tapToPay = payment.posTapToPay;
+	if (!tapToPay) {
+		return;
+	}
+	const amountInCurrencyUnit =
+		payment.price.amount * Math.pow(10, FRACTION_DIGITS_PER_CURRENCY[payment.price.currency]);
+	return lastSuccessfulPaymentIntents().then((pis) => {
+		const matchingPaymentIntent = pis.find((pi) => {
+			const amountMatches =
+				pi.amount_received === amountInCurrencyUnit &&
+				pi.currency.toUpperCase() === payment.price.currency;
+			const compatibleTimestamp =
+				// To account for clock skew, we accept payments to
+				// tap-to-pay orders up to 5 seconds before the start time.
+				new Date((pi.created + 5) * 1000) > tapToPay.startsAt &&
+				// Approximation of the time the payment was completed. This is acceptable
+				// because we assume the payment intent is created after tap-to-pay was
+				// requested and completed shortly after. To account for clock skew, we
+				// accept payments to tap-to-pay orders up to 5 seconds after the end time.
+				new Date((pi.created - 5) * 1000) < tapToPay.expiresAt;
+			return compatibleTimestamp && amountMatches;
+		});
+		if (matchingPaymentIntent) {
+			return matchingPaymentIntent.id;
+		} else {
+			return undefined;
+		}
+	});
+}
 
 async function maintainOrders() {
 	await refreshPromise;
@@ -409,9 +451,54 @@ async function maintainOrders() {
 						} catch (err) {
 							console.error(inspect(err, { depth: 10 }));
 						}
+					case 'point-of-sale':
+						try {
+							if (payment.posTapToPay && payment.posTapToPay.expiresAt > new Date()) {
+								switch (payment.processor) {
+									case 'stripe':
+										if (!isStripeEnabled()) {
+											throw new Error(
+												`Tap-to-pay payment ${payment._id} requests processor stripe but ` +
+													'stripe is currently not configured.'
+											);
+										}
+										const matchingPaymentReference = await findMatchingTapToPayOrderStripe(
+											order,
+											payment._id
+										);
+										if (matchingPaymentReference) {
+											await onOrderPayment(order, payment, payment.price, {
+												// Release the tap-to-pay lock
+												tapToPay: { expiresAt: new Date(Date.now() + 5000) },
+												detail: `${payment.processor} - ${matchingPaymentReference}`
+											});
+										}
+										break;
+									case 'paypal':
+									case 'phoenixd':
+									case 'sumup':
+									case 'bitcoind':
+									case 'lnd':
+									case 'swiss-bitcoin-pay':
+									case 'bitcoin-nodeless':
+										throw new Error(
+											`Tap-to-pay payment ${payment._id} requests processor ` +
+												`${payment.processor}, but Tap-to-pay using this processor is ` +
+												'not supported.'
+										);
+									case undefined:
+										throw new Error('Missing processor for tap-to-pay payment');
+									default:
+										payment.processor satisfies never;
+										break;
+								}
+							}
+						} catch (err) {
+							console.error(inspect(err, { depth: 10 }));
+						}
+						break;
 					// handled by admin
 					case 'bank-transfer':
-					case 'point-of-sale':
 					case 'free':
 						break;
 				}

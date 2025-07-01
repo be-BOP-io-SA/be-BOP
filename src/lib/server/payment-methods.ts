@@ -1,5 +1,4 @@
 import { env } from '$env/dynamic/private';
-import { POS_ROLE_ID } from '$lib/types/User';
 import { isBitcoinConfigured as isBitcoindConfigured } from './bitcoind';
 import { isLndConfigured } from './lnd';
 import { isPhoenixdConfigured } from './phoenixd';
@@ -21,18 +20,20 @@ const ALL_PAYMENT_METHODS = [
 ] as const;
 export type PaymentMethod = (typeof ALL_PAYMENT_METHODS)[number];
 
-export type PaymentProcessor =
-	| 'sumup'
-	| 'bitcoind'
-	| 'lnd'
-	| 'phoenixd'
-	| 'swiss-bitcoin-pay'
-	| 'stripe'
-	| 'paypal'
-	| 'bitcoin-nodeless';
+export const ALL_PAYMENT_PROCESSORS = [
+	'sumup',
+	'bitcoind',
+	'lnd',
+	'phoenixd',
+	'swiss-bitcoin-pay',
+	'stripe',
+	'paypal',
+	'bitcoin-nodeless'
+] as const;
+export type PaymentProcessor = (typeof ALL_PAYMENT_PROCESSORS)[number];
 
 export const paymentMethods = (opts?: {
-	role?: string;
+	hasPosOptions?: boolean;
 	includePOS?: boolean;
 	includeDisabled?: boolean;
 	totalSatoshis?: number;
@@ -59,7 +60,7 @@ export const paymentMethods = (opts?: {
 						case 'lightning':
 							return isSwissBitcoinPayConfigured() || isLndConfigured() || isPhoenixdConfigured();
 						case 'point-of-sale':
-							return opts?.role === POS_ROLE_ID || opts?.includePOS;
+							return opts?.hasPosOptions || opts?.includePOS;
 						case 'free':
 							return opts?.totalSatoshis === undefined;
 					}

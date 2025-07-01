@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { upperFirst } from '$lib/utils/upperFirst.js';
 	import { MultiSelect } from 'svelte-multiselect';
@@ -33,10 +34,22 @@
 			event.preventDefault();
 		}
 	}
+	let updateSubscriptionsWithMissingDiscountsProcess: undefined | 'in-progress' | 'completed';
 </script>
 
 <h1 class="text-3xl">Edit a discount</h1>
 
+<form
+	action="?/updateSubscriptionsWithMissingDiscounts"
+	method="post"
+	id="updateSubscriptionsWithMissingDiscountsForm"
+	use:enhance={() => {
+		updateSubscriptionsWithMissingDiscountsProcess = 'in-progress';
+		return () => {
+			updateSubscriptionsWithMissingDiscountsProcess = 'completed';
+		};
+	}}
+></form>
 <form method="post" class="flex flex-col gap-4" on:submit={checkForm}>
 	<label class="form-label">
 		Discount slug
@@ -197,8 +210,24 @@
 		</button>
 	{/if}
 	<div class="flex flex-row justify-between gap-2">
-		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
-		<a href="/discounts/{data.discount._id}" class="btn body-mainCTA">View</a>
+		<div class="flex gap-2 w-min">
+			<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
+			<a href="/discounts/{data.discount._id}" class="btn body-mainCTA">View</a>
+			<button
+				type="submit"
+				class="btn btn-green text-white ml-auto whitespace-nowrap"
+				form="updateSubscriptionsWithMissingDiscountsForm"
+				disabled={updateSubscriptionsWithMissingDiscountsProcess === 'in-progress'}
+			>
+				{#if updateSubscriptionsWithMissingDiscountsProcess === 'in-progress'}
+					Updating...
+				{:else if updateSubscriptionsWithMissingDiscountsProcess === 'completed'}
+					Subscriptions updated ✓
+				{:else}
+					Update subscriptions with missing discounts
+				{/if}
+			</button>
+		</div>
 
 		<input
 			type="submit"

@@ -25,7 +25,6 @@
 		startOfDay,
 		subMinutes
 	} from 'date-fns';
-	import { POS_ROLE_ID } from '$lib/types/User';
 	import { useI18n } from '$lib/i18n';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { FRACTION_DIGITS_PER_CURRENCY, CURRENCY_UNIT } from '$lib/types/Currency.js';
@@ -120,10 +119,9 @@
 		0
 	);
 
-	$: canBuy =
-		data.roleId === POS_ROLE_ID
-			? data.product.actionSettings.retail.canBeAddedToBasket
-			: data.product.actionSettings.eShop.canBeAddedToBasket;
+	$: canBuy = data.hasPosOptions
+		? data.product.actionSettings.retail.canBeAddedToBasket
+		: data.product.actionSettings.eShop.canBeAddedToBasket;
 
 	function computeFreeIntervals(date: Date, events: Array<{ beginsAt: Date; endsAt?: Date }>) {
 		const now = new Date();
@@ -370,7 +368,7 @@
 			pictures={data.productCMSBefore.pictures}
 			tags={data.productCMSBefore.tags}
 			digitalFiles={data.productCMSBefore.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.productCMSBefore.specifications}
 			contactForms={data.productCMSBefore?.contactForms}
 			pageName={data.product.name}
@@ -995,7 +993,7 @@
 			products={data.productCMSAfter.products}
 			pictures={data.productCMSAfter.pictures}
 			digitalFiles={data.productCMSAfter.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.productCMSAfter.specifications}
 			contactForms={data.productCMSAfter.contactForms}
 			pageName={data.product.name}

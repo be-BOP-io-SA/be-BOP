@@ -8,10 +8,6 @@ export const actions = {
 	update: async function ({ params, request }) {
 		const roleId = params.id;
 
-		if (roleId === SUPER_ADMIN_ROLE_ID) {
-			throw error(403, 'You cannot edit the super admin role');
-		}
-
 		const role = await collections.roles.findOne({
 			_id: roleId
 		});
@@ -25,12 +21,14 @@ export const actions = {
 		const parsed = z
 			.object({
 				name: z.string().trim(),
+				hasPosOptions: z.boolean({ coerce: true }),
 				read: z.array(z.string()).default([]),
 				write: z.array(z.string()).default([]),
 				forbidden: z.array(z.string()).default([])
 			})
 			.parse({
 				name: data.get('name'),
+				hasPosOptions: data.get('hasPosOptions'),
 				read: JSON.parse(data.get('read')?.toString() ?? '[]'),
 				write: JSON.parse(data.get('write')?.toString() ?? '[]'),
 				forbidden: JSON.parse(data.get('forbidden')?.toString() ?? '[]')
@@ -43,6 +41,7 @@ export const actions = {
 			{
 				$set: {
 					name: parsed.name,
+					hasPosOptions: roleId === POS_ROLE_ID || parsed.hasPosOptions,
 					permissions: {
 						read: parsed.read,
 						write: parsed.write,
@@ -52,13 +51,17 @@ export const actions = {
 				}
 			}
 		);
+		await collections.users.updateMany(
+			{ roleId: roleId },
+			{ $set: { hasPosOptions: roleId === POS_ROLE_ID || parsed.hasPosOptions } }
+		);
 
 		throw redirect(303, `${adminPrefix()}/arm`);
 	},
 	delete: async function ({ params }) {
 		const roleId = params.id;
 
-		if (roleId === SUPER_ADMIN_ROLE_ID || roleId === POS_ROLE_ID) {
+		if (roleId === SUPER_ADMIN_ROLE_ID) {
 			throw error(403, 'You cannot delete this role');
 		}
 

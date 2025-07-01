@@ -140,6 +140,50 @@ export const actions = {
 		}
 	},
 
+	updateSubscriptionsWithMissingDiscounts: async function ({ params }) {
+		const discount = await collections.discounts.findOne({
+			_id: params.id
+		});
+		if (!discount) {
+			throw error(404, 'discount not found');
+		}
+		if (discount.mode !== 'freeProducts') {
+			return;
+		}
+		const subscriptionsToUpdate = await collections.paidSubscriptions
+			.find({
+				paidUntil: { $gt: new Date() },
+				productId: { $in: discount.subscriptionIds },
+				cancelledAt: { $exists: false }
+			})
+			.toArray();
+		for (const subscriptionId of discount.subscriptionIds) {
+			const toUpdate = subscriptionsToUpdate.find(
+				(subscription) => subscription.productId === subscriptionId
+			);
+			if (!toUpdate) {
+				continue;
+			}
+			const updatedFreeProductsById = structuredClone(toUpdate.freeProductsById ?? {});
+			for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
+				if (!updatedFreeProductsById[productId]) {
+					updatedFreeProductsById[productId] = { total: quantity, available: quantity, used: 0 };
+				}
+			}
+			await collections.paidSubscriptions.updateOne(
+				{ _id: toUpdate._id },
+				{
+					$set: {
+						updatedAt: new Date(),
+						...(Object.keys(updatedFreeProductsById).length !== 0 && {
+							freeProductsById: updatedFreeProductsById
+						})
+					}
+				}
+			);
+		}
+	},
+
 	delete: async function ({ params }) {
 		await collections.discounts.deleteOne({
 			_id: params.id

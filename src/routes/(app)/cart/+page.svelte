@@ -64,7 +64,7 @@
 			pictures={data.cmsBasketTopData.pictures}
 			tags={data.cmsBasketTopData.tags}
 			digitalFiles={data.cmsBasketTopData.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.cmsBasketTopData.specifications}
 			contactForms={data.cmsBasketTopData.contactForms}
 			pageName={data.cmsBasketTop?.title}
@@ -428,7 +428,7 @@
 			pictures={data.cmsBasketBottomData.pictures}
 			tags={data.cmsBasketBottomData.tags}
 			digitalFiles={data.cmsBasketBottomData.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.cmsBasketBottomData.specifications}
 			contactForms={data.cmsBasketBottomData.contactForms}
 			pageName={data.cmsBasketBottom?.title}
