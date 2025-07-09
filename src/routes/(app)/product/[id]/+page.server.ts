@@ -282,9 +282,10 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 					currency: customPriceCurrency
 			  }
 			: undefined;
+	const user = userIdentifier(locals);
 	await addToCartInDb(product, quantity, {
-		user: userIdentifier(locals),
-		mode: 'eshop',
+		user: user,
+		mode: user.userHasPosOptions ? 'pos' : 'eshop',
 		...(customPrice && { customPrice }),
 		...(freeQuantity && { freeQuantity }),
 		deposit: deposit === 'partial',
