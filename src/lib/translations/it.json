@@ -520,6 +520,7 @@
 		"paymentAmount": "Somma",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Il tuo paiment è fallito, puoi tentare un nuovo paiment",
+		"paymentCBFailedReasonPretext": "Il processore di pagamento ha fornito il seguente messaggio: ",
 		"paymentDoneCustomerCTA": "Ho finito",
 		"paymentExpiresAt": "Scadenza del pagamento: <0></0>",
 		"paymentIban": "IBAN a cui spedire il bonifico",

@@ -7,14 +7,19 @@ import { Lock } from '../lock';
 import { inspect } from 'node:util';
 import { lndLookupInvoice } from '../lnd';
 import { toSatoshis } from '$lib/utils/toSatoshis';
-import { onOrderPayment, onOrderPaymentFailed } from '../orders';
+import { onOrderPayment, onOrderPaymentFailed, PaymentFailureProcessingOptions } from '../orders';
 import { refreshPromise, runtimeConfig, runtimeConfigUpdatedAt } from '../runtime-config';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { phoenixdLookupInvoice } from '../phoenixd';
 import { sbpGetCheckoutStatus } from '../swiss-bitcoin-pay';
-import { CURRENCIES, CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+import {
+	CURRENCIES,
+	CURRENCY_UNIT,
+	Currency,
+	FRACTION_DIGITS_PER_CURRENCY
+} from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
-import { isPaypalEnabled, paypalGetCheckout } from '../paypal';
+import { isPaypalEnabled, paypalGetCheckoutAndCapture } from '../paypal';
 import { isStripeEnabled } from '../stripe';
 import { differenceInMinutes } from 'date-fns';
 import { z } from 'zod';
@@ -23,8 +28,16 @@ import { trimSuffix } from '$lib/utils/trimSuffix';
 import { Order, OrderPayment } from '$lib/types/Order';
 import { ObjectId, WithId } from 'mongodb';
 import { lastSuccessfulPaymentIntents } from '../stripe';
+import { subsumGetCheckout } from '../sumup';
 
 const lock = new Lock('orders');
+
+function asCurrencyOrThrow(value: string): Currency {
+	if (!typedInclude(CURRENCIES, value)) {
+		throw new Error(`Invalid currency: ${value}`);
+	}
+	return value;
+}
 
 /**
  * Returns a possibly updated order, after processing any possible updates to the payment.
@@ -33,33 +46,23 @@ async function processCardPaymentSumup(
 	order: WithId<Order>,
 	payment: OrderPayment
 ): Promise<Order> {
-	if (!runtimeConfig.sumUp.apiKey) {
-		throw new Error('Missing sumup API key');
-	}
-	const checkoutId = payment.checkoutId;
-	if (!checkoutId) {
+	if (!payment.checkoutId) {
 		throw new Error('Missing checkout ID on card order');
 	}
-	const response = await fetch(`https://api.sumup.com/v0.1/checkouts/${checkoutId}`, {
-		headers: {
-			Authorization: 'Bearer ' + runtimeConfig.sumUp.apiKey
-		},
-		...{ autoSelectFamily: true }
-	});
-	if (!response.ok) {
-		throw new Error(
-			`Failed to fetch checkout status for order ${order._id} and checkout ${checkoutId}`
-		);
-	}
-	const checkout = await response.json();
+	const checkout = await subsumGetCheckout(payment.checkoutId);
 	if (checkout.status === 'PAID') {
-		payment.transactions = checkout.transactions;
+		payment.transactions = (checkout.transactions ?? [])
+			// tx contains more information, but we store it opaquely.
+			.map((tx) => ({ ...tx, currency: asCurrencyOrThrow(tx.currency) }));
 		return onOrderPayment(order, payment, {
 			amount: checkout.amount,
-			currency: checkout.currency
+			currency: asCurrencyOrThrow(checkout.currency)
 		});
 	} else if (checkout.status === 'FAILED') {
-		return onOrderPaymentFailed(order, payment, 'failed');
+		const opts: PaymentFailureProcessingOptions = {
+			processorDenialMessage: checkout.reason?.description
+		};
+		return onOrderPaymentFailed(order, payment, 'failed', opts);
 	} else if (payment.expiresAt && payment.expiresAt < new Date()) {
 		return onOrderPaymentFailed(order, payment, 'expired');
 	} else {
@@ -92,6 +95,10 @@ async function processCardPaymentStripe(
 	const paymentIntent: {
 		status: string;
 		amount_received: number;
+		last_payment_error?: {
+			advice_code?: string;
+			message?: string;
+		};
 		currency: string;
 	} = await response.json();
 	if (paymentIntent.status === 'succeeded') {
@@ -104,7 +111,16 @@ async function processCardPaymentStripe(
 			currency: currency
 		});
 	} else if (paymentIntent.status === 'canceled') {
-		return onOrderPaymentFailed(order, payment, 'failed');
+		const opts: PaymentFailureProcessingOptions = {};
+		if (paymentIntent.last_payment_error) {
+			const { advice_code, message } = paymentIntent.last_payment_error;
+			if (message) {
+				opts.processorDenialMessage = message;
+			} else if (advice_code) {
+				opts.processorDenialMessage = `the network issued the following advice: ${advice_code}`;
+			}
+		}
+		return onOrderPaymentFailed(order, payment, 'failed', opts);
 	} else if (payment.expiresAt && new Date() > payment.expiresAt) {
 		const cancelResponse = await fetch(
 			`https://api.stripe.com/v1/payment_intents/${paymentId}/cancel`,
@@ -134,12 +150,17 @@ async function processCardPaymentPaypal(
 	if (!payment.checkoutId) {
 		throw new Error('Missing checkout ID on PayPal order');
 	}
-	const checkout = await paypalGetCheckout(payment.checkoutId);
+	const checkout = await paypalGetCheckoutAndCapture(payment.checkoutId);
 	if (checkout.status === 'COMPLETED') {
 		return onOrderPayment(order, payment, {
 			amount: Number(checkout.purchase_units[0].amount.value),
 			currency: checkout.purchase_units[0].amount.currency_code
 		});
+	} else if (checkout.status === 'FAILED') {
+		const opts: PaymentFailureProcessingOptions = {
+			processorDenialMessage: checkout.capture_error
+		};
+		return onOrderPaymentFailed(order, payment, 'failed', opts);
 	} else if (payment.expiresAt && payment.expiresAt < new Date()) {
 		return onOrderPaymentFailed(order, payment, 'expired');
 	} else if (checkout.status === 'VOIDED') {
@@ -432,7 +453,7 @@ async function maintainOrders() {
 								throw new Error('Missing checkout ID on PayPal order');
 							}
 
-							const checkout = await paypalGetCheckout(payment.checkoutId);
+							const checkout = await paypalGetCheckoutAndCapture(payment.checkoutId);
 
 							if (checkout.status === 'COMPLETED') {
 								order = await onOrderPayment(order, payment, {

@@ -1,7 +1,7 @@
 import { collections } from '$lib/server/database';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { isOrderFullyPaid } from '$lib/server/orders';
-import { isPaypalEnabled, paypalGetCheckout } from '$lib/server/paypal';
+import { isPaypalEnabled, paypalGetCheckoutAndCapture } from '$lib/server/paypal';
 import { picturesForProducts } from '$lib/server/picture';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { isStripeEnabled } from '$lib/server/stripe';
@@ -84,7 +84,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 					}
 				}
 			} else if (payment.processor === 'paypal' && isPaypalEnabled()) {
-				const checkout = await paypalGetCheckout(payment.checkoutId);
+				const checkout = await paypalGetCheckoutAndCapture(payment.checkoutId);
 				if (checkout.status === 'COMPLETED' || checkout.status === 'APPROVED') {
 					payment.status = 'paid';
 
@@ -110,6 +110,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 			method: payment.method,
 			posTapToPay: payment.posTapToPay,
 			processor: payment.method === 'card' ? payment.processor : undefined,
+			processorDenialMessage: payment.processorDenialMessage,
 			status: payment.status,
 			address: payment.address,
 			expiresAt: payment.expiresAt,

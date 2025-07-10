@@ -520,6 +520,7 @@
 		"paymentAmount": "Zahlungsbetrag",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Ihre Zahlung ist fehlgeschlagen, Sie können einen neuen Zahlungsversuch starten",
+		"paymentCBFailedReason": "Der Zahlungsabwickler hat die folgende Nachricht bereitgestellt: ",
 		"paymentDoneCustomerCTA": "ich bin fertig",
 		"paymentExpiresAt": "Zahlungsfrist: ",
 		"paymentIban": "IBAN für die Überweisung",

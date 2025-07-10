@@ -520,6 +520,7 @@
 		"paymentAmount": "Valor do pagamento",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "O seu pagamento falhou, pode tentar um novo pagamento",
+		"paymentCBFailedReasonPretext": "O processador de pagamento forneceu a seguinte mensagem: ",
 		"paymentDoneCustomerCTA": "terminei",
 		"paymentExpiresAt": "Prazo de pagamento: ",
 		"paymentIban": "IBAN para enviar a transferência bancária",
