@@ -290,6 +290,14 @@
 								{#if payment.status === 'failed' && !roleIsStaff}
 									<br />
 									{t('order.paymentCBFailed')}
+									{#if payment.processorDenialMessage}
+										<p class="my-2 w-full">
+											{t('order.paymentCBFailedReasonPretext')}
+											<span class="text-red-500">
+												{payment.processorDenialMessage}
+											</span>
+										</p>
+									{/if}
 									<form
 										action="/order/{data.order._id}/payment/{payment.id}?/replaceMethod"
 										method="post"

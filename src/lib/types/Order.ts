@@ -86,6 +86,10 @@ export interface OrderPayment {
 	method: PaymentMethod;
 	processor?: PaymentProcessor;
 	/**
+	 * When the payment has failed, a message to the user explaining the reason.
+	 */
+	processorDenialMessage?: string;
+	/**
 	 * Can be unset for cash or bank transfer payments for example.
 	 */
 	expiresAt?: Date;
