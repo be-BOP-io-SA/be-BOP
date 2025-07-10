@@ -60,7 +60,7 @@ async function processCardPaymentSumup(
 		});
 	} else if (checkout.status === 'FAILED') {
 		return onOrderPaymentFailed(order, payment, 'failed');
-	} else if (checkout.status === 'EXPIRED') {
+	} else if (payment.expiresAt && payment.expiresAt < new Date()) {
 		return onOrderPaymentFailed(order, payment, 'expired');
 	} else {
 		return order;
