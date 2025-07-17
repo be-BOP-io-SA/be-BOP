@@ -190,7 +190,10 @@
 			window.SumUpCard.mount({
 				id: 'payment-element',
 				checkoutId: data.payment.checkoutId,
-				onResponse: function (type) {
+				onResponse: function (type, body) {
+					console.log("Type and body for sumsup");
+					console.log(type);
+					console.log(body);
 					if (type === 'success') {
 						goto(orderPath);
 					}
