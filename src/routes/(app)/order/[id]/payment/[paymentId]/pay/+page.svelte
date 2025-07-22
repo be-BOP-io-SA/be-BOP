@@ -320,10 +320,14 @@
 		{/if}
 	</div>
 	<div class="self-center md:self-stretch">
-		<OrderSummary order={data.order} class="sticky top-4 -mt-1" />
+		<OrderSummary
+			class="sticky top-4 -mt-1"
+			order={data.order}
+			orderPriceInfo={data.priceInfoProbablyIncorrectBuyOkayForDisplay}
+		/>
 	</div>
 </main>
-<!-- 
+<!--
 <style>
 	#payment-element.sumup {
 		--cui-border-danger: #f44336;
