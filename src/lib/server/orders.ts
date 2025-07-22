@@ -423,11 +423,17 @@ export async function onOrderPayment(
 	return params?.providedSession ? await fn(params.providedSession) : await withTransaction(fn);
 }
 
+export type PaymentFailureProcessingOptions = {
+	preserveOrderStatus?: boolean;
+	processorDenialMessage?: string;
+	session?: ClientSession;
+};
+
 export async function onOrderPaymentFailed(
 	order: Order,
 	payment: Order['payments'][0],
 	reason: Extract<OrderPaymentStatus, 'canceled' | 'expired' | 'failed'>,
-	opts?: { preserveOrderStatus?: boolean; session?: ClientSession }
+	opts?: PaymentFailureProcessingOptions
 ): Promise<Order> {
 	if (!order.payments.includes(payment)) {
 		throw new Error('Sync broken between order and payment');
@@ -443,6 +449,9 @@ export async function onOrderPaymentFailed(
 		{
 			$set: {
 				'payments.$.status': reason,
+				...(opts?.processorDenialMessage && {
+					'payments.$.processorDenialMessage': opts.processorDenialMessage
+				}),
 				...(order.payments.every(
 					(payment) => payment.status === 'canceled' || payment.status === 'expired'
 				) &&
