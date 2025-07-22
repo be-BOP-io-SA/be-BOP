@@ -51,13 +51,14 @@ export const actions = {
 				{
 					locale: locals.language,
 					user: {
+						email: locals.email,
+						npub: locals.npub,
 						sessionId: locals.sessionId,
+						userAlias: locals.user?.alias,
+						userHasPosOptions: locals.user?.hasPosOptions,
 						userId: locals.user?._id,
 						userLogin: locals.user?.login,
-						userRoleId: locals.user?.roleId,
-						userAlias: locals.user?.alias,
-						npub: locals.npub,
-						email: locals.email
+						userRoleId: locals.user?.roleId
 					},
 
 					cart,

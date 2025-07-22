@@ -1,10 +1,11 @@
 export interface CustomerTouchInterface {
-	welcomeCmsSlug?: string;
+	enableCustomerLogin: boolean;
 	categories?: Array<{
-		slug: string;
 		cmsSlug: string;
-		label: string;
 		isArchived: boolean;
+		label: string;
 		position: number;
+		slug: string;
 	}>;
+	welcomeCmsSlug?: string;
 }
