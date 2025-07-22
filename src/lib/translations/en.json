@@ -396,8 +396,7 @@
 	},
 	"customerTouch": {
 		"": {
-			"payment": {
-			}
+			"payment": {}
 		},
 		"cancelOrderTitlle": "Abandon the order?",
 		"cart": {
@@ -429,6 +428,14 @@
 			"Title": "Choose your payment method"
 		},
 		"printCta": "Print",
+		"receipt": {
+			"emailAddressPrompt": "Please enter your email address",
+			"howToSend": "How should we send the receipt?",
+			"scanNostrNpubPrompt": "Scan our Nostr npub",
+			"sendCodePrompt": "and send a dm with the following code:",
+			"sendEmailCta": "Send receipt",
+			"sent": "Receipt sent"
+		},
 		"sendTicketCta": "Send",
 		"welcomHello": "Hello",
 		"welcomeOnSiteCta": "On site",

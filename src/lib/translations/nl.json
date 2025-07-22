@@ -422,6 +422,14 @@
 			"Title": "Kies uw betaalmethode"
 		},
 		"printCta": "Afdrukken",
+		"receipt": {
+			"emailAddressPrompt": "Voer je e-mailadres in",
+			"howToSend": "Hoe wil je de bon ontvangen?",
+			"scanNostrNpubPrompt": "Scan onze Nostr-npub",
+			"sendCodePrompt": "en stuur een dm met de volgende code:",
+			"sendEmailCta": "Bon versturen",
+			"sent": "Bon verstuurd"
+		},
 		"sendTicketCta": "Versturen",
 		"welcomHello": "Hallo",
 		"welcomeOnSiteCta": "Ter plaatse",
