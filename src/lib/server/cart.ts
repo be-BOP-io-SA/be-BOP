@@ -51,6 +51,24 @@ export async function getCartFromDb(params: { user: UserIdentifier }): Promise<C
 	return res;
 }
 
+function canAddToCart(
+	product: Product,
+	user: UserIdentifier,
+	actionMechanism: 'eshop' | 'nostr' | 'pos'
+): boolean {
+	switch (actionMechanism) {
+		case 'pos':
+			return !!user.userHasPosOptions && product.actionSettings.retail.canBeAddedToBasket;
+		case 'eshop':
+			return product.actionSettings.eShop.canBeAddedToBasket;
+		case 'nostr':
+			return product.actionSettings.nostr.canBeAddedToBasket;
+		default:
+			actionMechanism satisfies never;
+			return false;
+	}
+}
+
 /**
  * Be wary if adding Zod: called from NostR as well and need human readable error messages
  */
@@ -71,15 +89,7 @@ export async function addToCartInDb(
 		mode: 'eshop' | 'nostr' | 'pos';
 	}
 ) {
-	if (
-		params.user.userHasPosOptions
-			? !product.actionSettings.retail.canBeAddedToBasket
-			: params.mode === 'eshop'
-			? !product.actionSettings.eShop.canBeAddedToBasket
-			: params.mode === 'nostr'
-			? !product.actionSettings.nostr.canBeAddedToBasket
-			: !product.actionSettings.retail.canBeAddedToBasket
-	) {
+	if (!canAddToCart(product, params.user, params.mode)) {
 		throw error(400, "Product can't be added to basket ");
 	}
 
