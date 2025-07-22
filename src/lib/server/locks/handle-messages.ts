@@ -182,11 +182,40 @@ async function handleReceivedMessage(message: NostRReceivedMessage): Promise<voi
 				break;
 			}
 		}
+		let msgIsCustomerTouchInterfaceCode = false;
+		if (!matched && isPrivateMessage) {
+			const matched = content.trim().match(/^([0-9]{6})$/);
+			if (matched && matched[0] !== null) {
+				const codeAttempt = matched[0];
+				const ctiNotification = await collections.ctiOrderNotifications.findOne({
+					'authenticationCode.value': codeAttempt,
+					'authenticationCode.expiresAt': { $gt: new Date() }
+				});
+				if (ctiNotification) {
+					const orderUrl = `${ORIGIN}/order/${ctiNotification.orderId}`;
+					await send(
+						`Hello customer! Thank you for your visit. You can address the receipt for your order here: ${orderUrl}`
+					);
+					console.log(
+						`Matched CTI authentication code. A link to order order ${ctiNotification.orderId} was sent.`
+					);
+					await collections.ctiOrderNotifications.updateOne(
+						{ _id: ctiNotification._id },
+						{ $set: { receiptSentAt: new Date() } }
+					);
+				}
+				console.log(
+					`CTI authentication code-looking message did not match any CTI authentication code.`
+				);
+				msgIsCustomerTouchInterfaceCode = true;
+			}
+		}
 
 		if (
 			!matched &&
 			!message.tags?.some(([key]) => key === 'bootikVersion') &&
 			!runtimeConfig.disableNostrBotIntro &&
+			!msgIsCustomerTouchInterfaceCode &&
 			isPrivateMessage
 		) {
 			await send(

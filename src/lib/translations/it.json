@@ -421,6 +421,14 @@
 			"Title": "Scegli il tuo metodo di pagamento"
 		},
 		"printCta": "Stampa",
+		"receipt": {
+			"emailAddressPrompt": "Inserisci il tuo indirizzo email",
+			"howToSend": "Come vuoi ricevere la ricevuta?",
+			"scanNostrNpubPrompt": "Scansiona il nostro npub di Nostr",
+			"sendCodePrompt": "e invia un DM con il seguente codice:",
+			"sendEmailCta": "Invia ricevuta",
+			"sent": "Ricevuta inviata"
+		},
 		"sendTicketCta": "Inviare",
 		"welcomHello": "Ciao",
 		"welcomeOnSiteCta": "Sul posto",

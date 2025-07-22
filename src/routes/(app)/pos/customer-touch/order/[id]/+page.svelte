@@ -5,10 +5,13 @@
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import { onDestroy, onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	export let data;
 	const { t } = useI18n();
 	let timeoutId: ReturnType<typeof setInterval>;
+	let receiptSent = $page.url.searchParams.get('receiptSent') === 'true';
+	let displayRecipientSent = receiptSent;
 	onMount(() => {
 		timeoutId = setTimeout(() => {
 			goto('/pos/customer-touch/welcome');
@@ -86,11 +89,21 @@
 			>
 				{t('customerTouch.noThanksCta')}
 			</a>
-			<button
-				class="flex justify-center items-center bg-[#8fd16a] font-bold py-4 rounded-lg text-xl shadow-md"
-			>
-				{t('customerTouch.sendTicketCta')}
-			</button>
+			{#if displayRecipientSent}
+				<button
+					class="flex justify-center items-center border-[#8fd16a] border-[2px] font-bold py-4 rounded-lg text-xl shadow-md"
+					on:click={() => (displayRecipientSent = false)}
+				>
+					{t('customerTouch.receipt.sent')} ✅
+				</button>
+			{:else}
+				<a
+					href="{$page.url.pathname}/send-receipt"
+					class="flex justify-center items-center bg-[#8fd16a] font-bold py-4 rounded-lg text-xl shadow-md"
+				>
+					{t('customerTouch.sendTicketCta')}
+				</a>
+			{/if}
 			<button
 				type="button"
 				disabled={!data.order.payments[0].id}

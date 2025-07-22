@@ -422,6 +422,14 @@
 			"Title": "Wählen Sie Ihre Zahlungsmethode"
 		},
 		"printCta": "Drucken",
+		"receipt": {
+			"emailAddressPrompt": "Bitte geben Sie Ihre E-Mail-Adresse ein",
+			"howToSend": "Wie dürfen wir Ihnen die Quittung zukommen lassen?",
+			"scanNostrNpubPrompt": "Bitte scannen Sie unseren Nostr-npub",
+			"sendCodePrompt": "und senden Sie eine Direktnachricht mit folgendem Code:",
+			"sendEmailCta": "Quittung senden",
+			"sent": "Quittung wurde gesendet"
+		},
 		"sendTicketCta": "Schicken",
 		"welcomHello": "Hallo",
 		"welcomeOnSiteCta": "Vor Ort",

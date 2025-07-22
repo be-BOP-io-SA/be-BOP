@@ -48,6 +48,7 @@ import type { Ticket } from '$lib/types/Ticket';
 import type { OrderLabel } from '$lib/types/OrderLabel';
 import type { ScheduleEventBooked, Schedule } from '$lib/types/Schedule';
 import type { Leaderboard } from '$lib/types/Leaderboard';
+import { CtiOrderNotification } from '$lib/types/CtiOrderNotification';
 
 // Bigger than the default 10, helpful with MongoDB errors
 Error.stackTraceLimit = 100;
@@ -88,6 +89,7 @@ const genCollection = () => ({
 	cmsPages: db.collection<CMSPage>('cmsPages'),
 	challenges: db.collection<Challenge>('challenges'),
 	leaderboards: db.collection<Leaderboard>('leaderboards'),
+	ctiOrderNotifications: db.collection<CtiOrderNotification>('ctiNotifications'),
 	roles: db.collection<Role>('roles'),
 	users: db.collection<User>('users'),
 	discounts: db.collection<Discount>('discounts'),
