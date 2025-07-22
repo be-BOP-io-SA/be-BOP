@@ -11,15 +11,13 @@ import { addToCartInDb, getCartFromDb, removeFromCartInDb } from '../cart';
 import type { Product } from '$lib/types/Product';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { createOrder } from '../orders';
-import { typedEntries } from '$lib/utils/typedEntries';
 import { building } from '$app/environment';
 import { paymentMethods } from '../payment-methods';
 import { userQuery } from '../user';
 import { rateLimit } from '../rateLimit';
-import { computePriceInfo } from '$lib/types/Cart';
-import { filterNullish } from '$lib/utils/fillterNullish';
 import type { Price } from '$lib/types/Order';
 import { sendAuthentificationlink } from '../sendNotification';
+import { parseNostrMessage, type ParsedNostrMessage } from './nostr-message-parser';
 
 const lock = new Lock('received-messages');
 
@@ -90,7 +88,6 @@ async function handleReceivedMessage(message: NostRReceivedMessage): Promise<voi
 
 		message = updatedMessage;
 
-		const content = message.content;
 		const senderNpub = message.source;
 		const minCreatedAt = addSeconds(message.createdAt, 1);
 
@@ -98,89 +95,46 @@ async function handleReceivedMessage(message: NostRReceivedMessage): Promise<voi
 			(await collections.nostrNotifications.countDocuments({ dest: senderNpub }, { limit: 1 })) > 0;
 		const isPrivateMessage = message.kind === Kind.EncryptedDirectMessage;
 
-		const send = (message: string) => sendMessage(senderNpub, message, minCreatedAt);
+		const send = (msg: string) => sendMessage(senderNpub, msg, minCreatedAt);
 
-		const toMatch = content.trim().replaceAll(/\s+/g, ' ');
-		const toMatchLower = toMatch.toLowerCase();
+		// --- NEW PARSING LOGIC ---
+		const parsedMessage = parseNostrMessage(message.content);
 
+		if (parsedMessage.errors.length > 0) {
+			// Handle parsing errors, e.g., send error message to user
+			await send(
+				`Sorry, I couldn't understand your command. Errors:\n${parsedMessage.errors.join('\n')}`
+			);
+			// Mark as processed even if there are parsing errors to avoid reprocessing
+			await collections.nostrReceivedMessages.updateOne(
+				{ _id: message._id },
+				{ $set: { processedAt: new Date(), updatedAt: new Date() } }
+			);
+			return;
+		}
+
+		const commandName = parsedMessage.command;
 		let matched = false;
 
-		out: for (const [commandName, command] of typedEntries(commands)) {
-			if (toMatchLower === commandName || toMatchLower.startsWith(`${commandName} `)) {
-				matched = true;
+		const commandHandler = commands[commandName];
 
-				if (command.maintenanceBlocked && runtimeConfig.isMaintenance) {
-					await send(
-						`Sorry, ${runtimeConfig.brandName} / ${ORIGIN} is currently under maintenance, try again later.`
-					);
-					break;
-				}
+		if (commandHandler) {
+			matched = true;
 
-				if (command.args?.length) {
-					const rawArgs = toMatchLower
-						.slice(commandName.length + 1)
-						.split(' ')
-						.map((s) => s.trim());
-
-					const minArgs = command.args.filter((arg) => !arg.default).length;
-					const maxArgs = command.args.length;
-
-					if (rawArgs.length < minArgs || rawArgs.length > maxArgs) {
-						await send(
-							`Invalid syntax. Usage: "${await usage(
-								commandName,
-								senderNpub
-							)}". Between ${minArgs} and ${maxArgs} arguments expected.`
-						);
-						break;
-					}
-
-					const args: Record<string, string> = {};
-
-					for (let i = 0; i < command.args.length; i++) {
-						const arg = command.args[i];
-						const rawArg = rawArgs[i];
-
-						if (!rawArg) {
-							if (!arg.default) {
-								await send(
-									`Invalid syntax. Usage: "${await usage(commandName, senderNpub)}", ${
-										arg.name
-									} expected.`
-								);
-								break out;
-							}
-							args[arg.name] = arg.default;
-							continue;
-						}
-
-						if (arg.enum) {
-							const enumVal =
-								typeof arg.enum === 'function' ? await arg.enum(senderNpub) : arg.enum;
-							if (!enumVal.includes(rawArg)) {
-								await send(
-									`Invalid syntax. Usage: "${await usage(commandName, senderNpub)}", ${
-										arg.name
-									} must be one of: ${enumVal.join(', ')}.`
-								);
-								break out;
-							}
-						}
-
-						args[arg.name] = rawArgs[i];
-					}
-
-					await command.execute(send, { senderNpub, args });
-				} else {
-					if (toMatchLower !== commandName) {
-						await send(`Invalid syntax. Usage: "${commandName}", no arguments expected.`);
-						break;
-					}
-					await command.execute(send, { senderNpub, args: {} });
-				}
-				break;
+			if (commandHandler.maintenanceBlocked && runtimeConfig.isMaintenance) {
+				await send(
+					`Sorry, ${runtimeConfig.brandName} / ${ORIGIN} is currently under maintenance, try again later.`
+				);
+			} else {
+				// Pass parsed options and variadic argument directly to the command handler
+				await commandHandler.execute(send, {
+					senderNpub,
+					parsedCommand: parsedMessage // Pass the entire parsed object
+				});
 			}
 		}
+
+		// --- END NEW PARSING LOGIC ---
 
 		if (
 			!matched &&
@@ -228,30 +182,23 @@ const commands: Record<
 	string,
 	{
 		description: string;
-		args?: Array<{
-			name: string;
-			enum?:
-				| Array<string>
-				| ((senderNpub: string) => Readonly<Array<string>> | Promise<Readonly<Array<string>>>);
-			default?: string;
-		}>;
 		execute: (
 			send: (message: string) => Promise<unknown>,
-			params: { senderNpub: string; args: Record<string, string> }
+			params: { senderNpub: string; parsedCommand: ParsedNostrMessage }
 		) => Promise<void>;
 		maintenanceBlocked?: boolean;
 	}
 > = {
 	'!help': {
 		description: 'Show the list of commands',
-		execute: async (send, params) => {
+		execute: async (send, { senderNpub }) => {
 			await send(
 				`Available commands\n\n` +
 					(
 						await Promise.all(
 							Object.entries(commands).map(
 								async ([name, { description }]) =>
-									`- ${await usage(name, params.senderNpub)}: ${description}`
+									`- ${await usage(name, senderNpub)}: ${description}`
 							)
 						)
 					).join('\n')
@@ -259,110 +206,167 @@ const commands: Record<
 		}
 	},
 	'!catalog': {
-		description: 'Show the list of products',
-		execute: async (send) => {
+		description:
+			'Show the list of products with optional filters and display modes. Usage: !catalog [s:<searchterm>] [t:<type>] [m:<mode>]',
+		execute: async (send, { parsedCommand }) => {
 			if (!runtimeConfig.discovery) {
 				await send('Discovery is not enabled for this bootik. You cannot access the catalog.');
-			} else {
-				const products = await collections.products
-					.find({ 'actionSettings.eShop.visible': true, 'actionSettings.nostr.visible': true })
-					.toArray();
+				return;
+			}
+			console.log(parsedCommand);
+			const { options, variadicArg } = parsedCommand;
 
-				if (!products.length) {
-					await send('Catalog is empty');
-				} else {
-					// todo: proper price depending on currency
+			const query: Record<string, unknown> = {
+				'actionSettings.eShop.visible': true,
+				'actionSettings.nostr.visible': true
+			};
+
+			const searchTerm = (options.s as string) || variadicArg;
+
+			if (searchTerm) {
+				const searchRegex = new RegExp(searchTerm, 'i');
+				query.$or = [
+					{ name: { $regex: searchRegex } },
+					{ shortDescription: { $regex: searchRegex } },
+					{ longDescription: { $regex: searchRegex } }
+				];
+			}
+
+			// Apply type filters (from 't' option)
+			const types = (options.t as string[]) || []; // 't' option can be an array
+
+			if (types.length > 0) {
+				const typeConditions: Record<string, unknown>[] = [];
+				const invalidTypes: string[] = [];
+				for (const type of types) {
+					switch (
+						type.toLowerCase() // Ensure type is lowercase for matching
+					) {
+						case 'digital':
+							typeConditions.push({ shipping: false });
+							break;
+						case 'ship':
+							typeConditions.push({ shipping: true });
+							break;
+						case 'free':
+							typeConditions.push({ 'price.amount': 0 });
+							break;
+						case 'pwyw':
+							typeConditions.push({ payWhatYouWant: true });
+							break;
+						case 'event':
+							typeConditions.push({ isEvent: true });
+							break;
+						case 'preorder':
+							typeConditions.push({ 'preorder.enabled': true });
+							break;
+						case 'sub':
+							typeConditions.push({ isSubscription: true });
+							break;
+						case 'tip':
+							typeConditions.push({ isTip: true });
+							break;
+						default:
+							invalidTypes.push(type);
+							break;
+					}
+				}
+				if (invalidTypes.length > 0) {
 					await send(
-						products
-							.map(
-								(product) =>
-									`- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
-										product.price.amount,
-										product.price.currency
-									).toLocaleString('en-US')} SAT / ${ORIGIN}/product/${product._id}`
-							)
-							.join('\n')
+						`Invalid product type(s) found: ${invalidTypes.join(', ')}. Valid types are: ${[
+							'digital',
+							'ship',
+							'free',
+							'pwyw',
+							'event',
+							'preorder',
+							'sub',
+							'tip'
+						].join(', ')}.`
 					);
+					return;
+				}
+				if (typeConditions.length > 0) {
+					query.$and = ((query.$and as unknown[]) || []).concat(typeConditions);
 				}
 			}
-		}
-	},
-	'!detailed catalog': {
-		description: 'Show the list of products, with product descriptions',
-		execute: async (send) => {
-			if (!runtimeConfig.discovery) {
-				await send('Discovery is not enabled for this bootik. You cannot access the catalog.');
-			} else {
-				const products = await collections.products
-					.find({ 'actionSettings.eShop.visible': true, 'actionSettings.nostr.visible': true })
-					.toArray();
 
-				if (!products.length) {
-					await send('Catalog is empty');
+			// Determine display mode
+			let displayMode = 'mid' as 'light' | 'mid' | 'full'; // Default
+			const modeOption = options.m as string; // 'm' option is a single string
+
+			if (modeOption) {
+				if (typedInclude(['light', 'mid', 'full'], modeOption.toLowerCase())) {
+					displayMode = modeOption.toLowerCase() as typeof displayMode;
 				} else {
-					// todo: proper price depending on currency
 					await send(
-						products
-							.map(
-								(product) =>
-									`- ${product.name} [ref: "${product._id}"] / ${toSatoshis(
-										product.price.amount,
-										product.price.currency
-									).toLocaleString('en-US')} SAT / ${ORIGIN}/product/${
-										product._id
-									} / ${product.shortDescription.replaceAll(/\s+/g, ' ')}`
-							)
-							.join('\n')
+						`Invalid display mode: '${modeOption}'. Valid modes are: ${[
+							'light',
+							'mid',
+							'full'
+						].join(', ')}.`
 					);
+					return;
 				}
 			}
-		}
-	},
-	'!cart': {
-		description: 'Show the contents of your cart',
-		maintenanceBlocked: true,
-		execute: async (send, { senderNpub }) => {
-			const cart = await getCartFromDb({ user: { npub: senderNpub } });
 
-			if (!cart || !cart.items.length) {
-				await send('Your cart is empty');
-			} else {
-				const products = await collections.products
-					.find({ _id: { $in: cart.items.map((item) => item.productId) } })
-					.toArray();
-				const productById = Object.fromEntries(products.map((product) => [product._id, product]));
+			const products = await collections.products.find(query).toArray();
 
-				let totalPrice = 0;
-				const items = cart.items
-					.filter((item) => productById[item.productId])
-					.map((item) => {
-						const product = productById[item.productId];
-						const price = toSatoshis(
-							(item.customPrice?.amount ?? product.price.amount) * item.quantity,
-							item.customPrice?.currency ?? product.price.currency
-						);
-						totalPrice += price;
-						return `- ref: "${product._id}" / ${price.toLocaleString('en-US')} SAT / Quantity: ${
-							item.quantity
+			if (!products.length) {
+				await send('No products found matching your criteria.');
+				return;
+			}
+
+			// Function to format a single product based on the mode
+			const formatProduct = (product: Product, mode: typeof displayMode): string => {
+				const satoshisPrice = toSatoshis(
+					product.price.amount,
+					product.price.currency
+				).toLocaleString('en-US');
+				const productUrl = `${ORIGIN}/product/${product._id}`;
+
+				switch (mode) {
+					case 'light':
+						return `- ${product.name} [ref: "${product._id}"] / ${satoshisPrice} SAT`;
+					case 'mid': // Default
+						return `- ${product.name} [ref: "${product._id}"] / ${satoshisPrice} SAT / ${productUrl}`;
+					case 'full':
+						return `- ${product.name} [ref: "${
+							product._id
+						}"] / ${satoshisPrice} SAT / ${productUrl} / ${product.shortDescription.replaceAll(
+							/\s+/g,
+							' '
+						)} ${
+							product.description
+								? `(Long Description: ${product.description.replaceAll(/\s+/g, ' ')})`
+								: ''
 						}`;
-					});
-				await send(
-					items.join('\n') +
-						`\n\nTotal: ${totalPrice.toLocaleString('en-US')} SAT. Type "checkout" to pay.`
-				);
-			}
+					default:
+						return `- ${product.name} [ref: "${product._id}"] / ${satoshisPrice} SAT / ${productUrl}`;
+				}
+			};
+
+			await send(products.map((p) => formatProduct(p, displayMode)).join('\n'));
 		}
 	},
 	'!add': {
 		description: 'Add a product to your cart',
 		maintenanceBlocked: true,
-		args: [{ name: 'ref' }, { name: 'quantity', default: '1' }],
-		execute: async (send, { senderNpub, args }) => {
-			const ref = args.ref;
-			let quantity = parseInt(args.quantity);
+		execute: async (send, { senderNpub, parsedCommand }) => {
+			const ref = parsedCommand.variadicArg;
+			let quantity = parseInt((parsedCommand.options.quantity as string) || '1');
+
+			if (!ref) {
+				await send('Invalid syntax. Usage: "!add <ref> [quantity]". <ref> is missing.');
+				return;
+			}
 
 			if (isNaN(quantity) || quantity <= 0) {
-				await send('Invalid quantity: ' + args.quantity);
+				await send(
+					'Invalid quantity: ' +
+						((parsedCommand.options.quantity as string) || parsedCommand.variadicArg)
+				);
+				return;
 			}
 
 			const product = await collections.products.findOne({ _id: ref });
@@ -461,19 +465,64 @@ const commands: Record<
 			);
 		}
 	},
+	'!cart': {
+		description: 'Show the contents of your cart',
+		maintenanceBlocked: true,
+		execute: async (send, { senderNpub }) => {
+			// Reverted to original signature
+			const cart = await getCartFromDb({ user: { npub: senderNpub } });
+
+			if (!cart || !cart.items.length) {
+				await send('Your cart is empty');
+			} else {
+				const products = await collections.products
+					.find({ _id: { $in: cart.items.map((item) => item.productId) } })
+					.toArray();
+				const productById = Object.fromEntries(products.map((product) => [product._id, product]));
+
+				let totalPrice = 0;
+				const items = cart.items
+					.filter((item) => productById[item.productId])
+					.map((item) => {
+						const product = productById[item.productId];
+						const price = toSatoshis(
+							(item.customPrice?.amount ?? product.price.amount) * item.quantity,
+							item.customPrice?.currency ?? product.price.currency
+						);
+						totalPrice += price;
+						return `- ref: "${product._id}" / ${price.toLocaleString('en-US')} SAT / Quantity: ${
+							item.quantity
+						}`;
+					});
+				await send(
+					items.join('\n') +
+						`\n\nTotal: ${totalPrice.toLocaleString('en-US')} SAT. Type "checkout" to pay.`
+				);
+			}
+		}
+	},
 	'!remove': {
 		description: 'Remove a product from your cart',
 		maintenanceBlocked: true,
-		args: [{ name: 'ref' }, { name: 'quantity', default: 'all' }],
-		execute: async (send, { senderNpub, args }) => {
-			const ref = args.ref;
-			const quantity = args.quantity === 'all' ? Infinity : parseInt(args.quantity);
+		execute: async (send, { senderNpub, parsedCommand }) => {
+			const ref = parsedCommand.variadicArg; // Assuming 'ref' is the variadic argument
+			const quantity =
+				parsedCommand.options.quantity === 'all'
+					? Infinity
+					: parseInt((parsedCommand.options.quantity as string) || 'all');
 
-			if (isNaN(quantity) || quantity < 0) {
-				await send('Invalid quantity: ' + args.quantity);
+			if (!ref) {
+				await send('Invalid syntax. Usage: "!remove <ref> [quantity|all]". <ref> is missing.');
 				return;
 			}
 
+			if (isNaN(quantity) || quantity < 0) {
+				await send(
+					'Invalid quantity: ' +
+						((parsedCommand.options.quantity as string) || parsedCommand.variadicArg)
+				);
+				return;
+			}
 			const product = await collections.products.findOne({ _id: ref });
 
 			if (!product) {
@@ -517,62 +566,19 @@ const commands: Record<
 	'!checkout': {
 		description: 'Checkout your cart',
 		maintenanceBlocked: true,
-		args: [
-			{
-				name: 'paymentMethod',
-				enum: async (senderNpub) => {
-					try {
-						const cart = await getCartFromDb({ user: { npub: senderNpub } });
+		execute: async (send, { senderNpub, parsedCommand }) => {
+			const paymentMethod = parsedCommand.variadicArg;
 
-						if (!cart) {
-							return paymentMethods();
-						}
-
-						const products = await collections.products
-							.find({ _id: { $in: cart.items.map((i) => i.productId) } })
-							.toArray();
-
-						const productById = Object.fromEntries(products.map((p) => [p._id, p]));
-
-						const items = cart.items
-							.filter((i) => productById[i.productId])
-							.map((i) => ({
-								quantity: i.quantity,
-								product: productById[i.productId],
-								depositPercentage: i.depositPercentage,
-								customPrice: i.customPrice,
-								chosenVariations: i.chosenVariations
-							}))
-							.filter((i) => !!i.product);
-
-						const vatProfiles = products.some((p) => p.vatProfileId)
-							? await collections.vatProfiles
-									.find({ _id: { $in: filterNullish(products.map((p) => p.vatProfileId)) } })
-									.toArray()
-							: [];
-
-						const totalPrice = computePriceInfo(items, {
-							deliveryFees: { amount: 0, currency: 'SAT' },
-							vatExempted: runtimeConfig.vatExempted,
-							userCountry: undefined,
-							bebopCountry: runtimeConfig.vatCountry || undefined,
-							vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
-							vatSingleCountry: runtimeConfig.vatSingleCountry,
-							vatProfiles
-						});
-
-						return paymentMethods({
-							totalSatoshis: toSatoshis(totalPrice.totalPriceWithVat, totalPrice.currency)
-						});
-					} catch {
-						return paymentMethods();
-					}
-				}
+			if (!paymentMethod) {
+				const availablePaymentMethods = paymentMethods().filter((m) => m !== 'free');
+				await send(
+					`Invalid syntax. Usage: "!checkout <paymentMethod>". Payment method is missing. Available: ${availablePaymentMethods.join(
+						', '
+					)}.`
+				);
+				return;
 			}
-		],
-		execute: async (send, { senderNpub, args }) => {
-			const paymentMethod = args.paymentMethod;
-
+			// ... rest of the !checkout logic
 			const cart = await getCartFromDb({ user: { npub: senderNpub } });
 
 			if (!cart) {
@@ -616,7 +622,6 @@ const commands: Record<
 					chosenVariations: i.chosenVariations
 				}));
 
-			// Should not happen
 			const availablePaymentMethods = paymentMethods().filter((m) => m !== 'free');
 			if (!typedInclude(availablePaymentMethods, paymentMethod)) {
 				await send(
@@ -732,12 +737,11 @@ const commands: Record<
 	},
 	'!cancel': {
 		description: 'Cancel a paid subscription',
-		args: [{ name: 'subscriptionNumber' }],
-		execute: async (send, { senderNpub, args }) => {
-			const number = parseInt(args.subscriptionNumber, 10);
+		execute: async (send, { senderNpub, parsedCommand }) => {
+			const number = parseInt(parsedCommand.variadicArg, 10);
 
 			if (isNaN(number)) {
-				await send('Invalid subscription number: ' + args.subscriptionNumber);
+				await send('Invalid subscription number: ' + parsedCommand.variadicArg);
 				return;
 			}
 
@@ -776,6 +780,11 @@ const commands: Record<
 };
 
 async function usage(commandName: string, senderNpub: string) {
+	console.log(senderNpub);
+
+	return commandName;
+}
+/**async function usage(commandName: string, senderNpub: string) {
 	const command = commands[commandName];
 
 	return `${commandName} ${(
@@ -790,4 +799,4 @@ async function usage(commandName: string, senderNpub: string) {
 			)
 		)
 	).join('')}`.trim();
-}
+}**/
