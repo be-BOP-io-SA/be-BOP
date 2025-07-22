@@ -19,7 +19,7 @@ export async function load({ parent, locals }) {
 
 	if (parentData.cart) {
 		try {
-			await checkCartItems(parentData.cart, { user: userIdentifier(locals) });
+			await checkCartItems(parentData.cart.items, { user: userIdentifier(locals) });
 		} catch (err) {
 			if (
 				typeof err === 'object' &&

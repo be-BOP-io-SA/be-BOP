@@ -6,9 +6,6 @@
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n.js';
 	import PriceTag from '$lib/components/PriceTag.svelte';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/types/Cart.js';
-	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
-	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import { invalidate } from '$app/navigation';
 	import { applyAction, enhance } from '$app/forms';
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
@@ -27,23 +24,8 @@
 		filter === 'all'
 			? data.products
 			: data.products.filter((product) => product.tagIds?.includes(filter));
-	$: items = data.cart || [];
-	$: deliveryFees =
-		data.countryCode && isAlpha2CountryCode(data.countryCode)
-			? computeDeliveryFees(UNDERLYING_CURRENCY, data.countryCode, items, data.deliveryFees)
-			: NaN;
-	$: priceInfo = computePriceInfo(items, {
-		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted,
-		userCountry: data.countryCode,
-		deliveryFees: {
-			amount: deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
-		vatProfiles: data.vatProfiles
-	});
+	$: items = data.cart.items;
+	$: priceInfo = data.cart.priceInfo;
 	const { t } = useI18n();
 	$: displayedProducts = productFiltered.slice(next, next + POS_PRODUCT_PAGINATION);
 	$: totalPages = Math.ceil(productFiltered.length / POS_PRODUCT_PAGINATION);

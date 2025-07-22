@@ -168,7 +168,7 @@ async function fetchProductScheduleEvents(productId: string) {
 		.toArray();
 }
 
-export const load = async ({ params, locals }) => {
+export const load = async ({ params, parent, locals }) => {
 	const productId = params.id;
 	const product = await fetchProduct(productId, locals.language);
 	if (!product) {
@@ -181,15 +181,24 @@ export const load = async ({ params, locals }) => {
 	) {
 		throw redirect(303, '/');
 	}
-	const [pictures, userSubscriptions, schedule, scheduleEvents] = await Promise.all([
+	const [pictures, userSubscriptions, schedule, scheduleEvents, parentData] = await Promise.all([
 		fetchProductPictures(productId),
 		fetchUserSubscriptions(userIdentifier(locals)),
 		product.bookingSpec ? fetchProductSchedule(productId) : null,
-		product.bookingSpec ? fetchProductScheduleEvents(productId) : []
+		product.bookingSpec ? fetchProductScheduleEvents(productId) : [],
+		parent()
 	]);
-	const freeProductsAvailable = sum(
+	const totalFreeProducts = sum(
 		userSubscriptions.map((s) => s.freeProductsById?.[product._id]?.available ?? 0)
 	);
+	const freeProductsInCart = parentData.cart.items
+		.map(
+			(item, i) =>
+				[item.product._id, parentData.cart.priceInfo.perItem[i].usedFreeUnits ?? 0] as const
+		)
+		.filter((idAndCount) => idAndCount[0] === productId)
+		.reduce((acc, idAndCount) => acc + idAndCount[1], 0);
+	const freeProductsAvailable = totalFreeProducts - freeProductsInCart;
 	const discount = userSubscriptions.length
 		? await fetchApplicableDiscount(
 				productId,
@@ -243,7 +252,6 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		customPriceCurrency,
 		deposit,
 		chosenVariations,
-		freeQuantity,
 		time,
 		durationMinutes
 	} = z
@@ -261,11 +269,6 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			customPriceCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1)]).optional(),
 			deposit: z.enum(['partial', 'full']).optional(),
 			chosenVariations: z.record(z.string(), z.string()).optional(),
-			freeQuantity: z
-				.string()
-				.regex(/^\d+(\.\d+)?$/)
-				.transform((val) => Number(val))
-				.optional(),
 			time: z.date({ coerce: true }).optional(),
 			durationMinutes: z.number({ coerce: true }).int().min(1).optional()
 		})
@@ -282,11 +285,11 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 					currency: customPriceCurrency
 			  }
 			: undefined;
+	const user = userIdentifier(locals);
 	await addToCartInDb(product, quantity, {
-		user: userIdentifier(locals),
-		mode: 'eshop',
+		user: user,
+		mode: user.userHasPosOptions ? 'pos' : 'eshop',
 		...(customPrice && { customPrice }),
-		...(freeQuantity && { freeQuantity }),
 		deposit: deposit === 'partial',
 		...(product.hasVariations && { chosenVariations }),
 		...(time && durationMinutes && product.bookingSpec
