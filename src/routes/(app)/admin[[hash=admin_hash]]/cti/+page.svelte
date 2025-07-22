@@ -7,6 +7,7 @@
 
 	export let data;
 	let enableCustomerTouchInterface = data.enableCustomerTouchInterface;
+	let enableCustomerLogin = !!data.cti?.enableCustomerLogin;
 	let categoryLines = data.cti?.categories?.length || 1;
 	let labels: string[] = [];
 	let slug: string[] = [];
@@ -101,6 +102,15 @@
 				</select>
 			</label>
 		</div>
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="enableCustomerLogin"
+				class="form-checkbox"
+				bind:checked={enableCustomerLogin}
+			/>
+			Enable Customer Touch Interface
+		</label>
 		{#each [...Array(categoryLines).keys()] as i}
 			<details
 				class="border border-gray-300 rounded-xl p-2"

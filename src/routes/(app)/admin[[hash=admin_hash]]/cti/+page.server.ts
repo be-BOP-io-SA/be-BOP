@@ -45,6 +45,7 @@ export const actions: Actions = {
 		});
 		const parsed = z
 			.object({
+				enableCustomerLogin: z.boolean({ coerce: true }),
 				welcomeCmsSlug: z.string().optional(),
 				categories: z.array(categorySchema).optional()
 			})

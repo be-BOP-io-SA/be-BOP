@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { Cart } from '$lib/types/Cart.js';
-import { redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 
@@ -24,6 +25,15 @@ export const actions = {
 			createdAt: new Date(),
 			user: userIdentifier(locals)
 		});
-		throw redirect(303, '/pos/customer-touch/start');
+		const isEnabled = runtimeConfig.enableCustomerTouchInterface;
+		const ctiConfig = runtimeConfig.customerTouchInterface;
+		if (!isEnabled || !ctiConfig) {
+			throw error(400, 'Customer Touch Interface is not enabled');
+		}
+		if (ctiConfig.enableCustomerLogin) {
+			throw redirect(302, '/pos/customer-touch/start');
+		} else {
+			throw redirect(302, '/pos/customer-touch/list/home');
+		}
 	}
 };
