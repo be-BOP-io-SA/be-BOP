@@ -213,6 +213,7 @@ const baseConfig = {
 	contactModesForceOption: false,
 	posTouchTag: [] as Tag['_id'][],
 	posPrefillTermOfUse: false,
+	posDisablePrefillCheckoutAddress: false,
 	posTapToPay: {
 		processor: undefined as PaymentProcessor | undefined,
 		onActivationUrl: undefined as string | undefined
