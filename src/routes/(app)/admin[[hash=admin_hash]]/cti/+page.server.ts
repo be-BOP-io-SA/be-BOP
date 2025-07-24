@@ -45,9 +45,10 @@ export const actions: Actions = {
 		});
 		const parsed = z
 			.object({
+				categories: z.array(categorySchema).optional(),
 				enableCustomerLogin: z.boolean({ coerce: true }),
-				welcomeCmsSlug: z.string().optional(),
-				categories: z.array(categorySchema).optional()
+				timeoutNostrSeconds: z.number({ coerce: true }).int().min(10),
+				welcomeCmsSlug: z.string().optional()
 			})
 			.parse(json);
 		const parsedCti = z
