@@ -1,10 +1,23 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import IconEmail from '$lib/components/icons/IconEmail.svelte';
 	import IconNostr from '$lib/components/icons/IconNostr.svelte';
 	import { useI18n } from '$lib/i18n';
+	import { onDestroy, onMount } from 'svelte';
 
 	const { t } = useI18n();
+	let backToWelcomeScreenTimeoutSeconds: ReturnType<typeof setInterval>;
+	onMount(() => {
+		backToWelcomeScreenTimeoutSeconds = setTimeout(() => {
+			goto('/pos/customer-touch/welcome');
+		}, 30 * 1000);
+	});
+	onDestroy(() => {
+		if (backToWelcomeScreenTimeoutSeconds) {
+			clearTimeout(backToWelcomeScreenTimeoutSeconds);
+		}
+	});
 </script>
 
 <div class="mx-auto max-w-7xl px-8">

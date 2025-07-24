@@ -3,10 +3,13 @@ import { collections } from '$lib/server/database';
 import { nostrPublicKey } from '$lib/server/nostr';
 import { redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
+import { runtimeConfig } from '$lib/server/runtime-config';
 
 export async function load({ params, depends }) {
 	depends(UrlDependency.CtiOrderNotification);
 	const orderId = params.id;
+	const backToWelcomeScreenTimeoutSeconds =
+		runtimeConfig.customerTouchInterface?.timeoutNostrSeconds ?? 60;
 
 	let otpCode;
 	const existing = await collections.ctiOrderNotifications.findOne({
@@ -34,6 +37,7 @@ export async function load({ params, depends }) {
 	}
 
 	return {
+		backToWelcomeScreenTimeoutSeconds,
 		nostrPublicKey,
 		otpCode
 	};
