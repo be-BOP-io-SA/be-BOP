@@ -111,6 +111,16 @@
 			/>
 			Enable Customer Touch Interface
 		</label>
+		<label class="form-label">
+			Timeout to submit the verification code through Nostr (in seconds).
+			<input
+				name="timeoutNostrSeconds"
+				type="number"
+				min="10"
+				class="form-input max-w-[25rem]"
+				value="10"
+			/>
+		</label>
 		{#each [...Array(categoryLines).keys()] as i}
 			<details
 				class="border border-gray-300 rounded-xl p-2"

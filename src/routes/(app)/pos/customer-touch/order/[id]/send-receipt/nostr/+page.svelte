@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n.js';
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
@@ -7,16 +7,23 @@
 	export let data;
 
 	const { t } = useI18n();
-	let timeoutId: ReturnType<typeof setInterval>;
+	let refreshTimeoutId: ReturnType<typeof setInterval>;
+	let backToWelcomeScreenTimeoutId: ReturnType<typeof setInterval>;
 
 	onMount(() => {
-		timeoutId = setInterval(() => {
+		refreshTimeoutId = setInterval(() => {
 			invalidate(UrlDependency.CtiOrderNotification);
 		}, 1000);
+		backToWelcomeScreenTimeoutId = setTimeout(() => {
+			goto('/pos/customer-touch/welcome');
+		}, data.backToWelcomeScreenTimeoutSeconds * 1000);
 	});
 	onDestroy(() => {
-		if (timeoutId) {
-			clearTimeout(timeoutId);
+		if (refreshTimeoutId) {
+			clearTimeout(refreshTimeoutId);
+		}
+		if (backToWelcomeScreenTimeoutId) {
+			clearTimeout(backToWelcomeScreenTimeoutId);
 		}
 	});
 </script>

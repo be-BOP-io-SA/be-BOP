@@ -11,11 +11,10 @@
 	const { t } = useI18n();
 	let timeoutId: ReturnType<typeof setInterval>;
 	let receiptSent = $page.url.searchParams.get('receiptSent') === 'true';
-	let displayRecipientSent = receiptSent;
 	onMount(() => {
 		timeoutId = setTimeout(() => {
 			goto('/pos/customer-touch/welcome');
-		}, 30000);
+		}, receiptSent ? 10000 : 30000);
 	});
 	onDestroy(() => {
 		if (timeoutId) {
