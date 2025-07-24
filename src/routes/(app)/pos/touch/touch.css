@@ -24,6 +24,8 @@
 	font-family: var(--touchScreen-category-fontFamily);
 	background-color: var(--touchScreen-category-cta-backgroundColor);
 	color: var(--touchScreen-category-cta-color);
+	padding-top: 0.25em;
+	padding-bottom: 0.25em;
 }
 .touchScreen-product-cta {
 	font-family: var(--touchScreen-product-cta-fontFamily);

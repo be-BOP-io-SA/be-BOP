@@ -10,6 +10,7 @@
 	import { applyAction, enhance } from '$app/forms';
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
 	import { groupBy } from '$lib/utils/group-by.js';
+	import { onMount } from 'svelte';
 
 	export let data;
 	$: next = Number($page.url.searchParams.get('skip')) || 0;
@@ -27,9 +28,11 @@
 	$: items = data.cart.items;
 	$: priceInfo = data.cart.priceInfo;
 	const { t } = useI18n();
-	$: displayedProducts = productFiltered.slice(next, next + POS_PRODUCT_PAGINATION);
-	$: totalPages = Math.ceil(productFiltered.length / POS_PRODUCT_PAGINATION);
-	$: currentPage = Math.floor(next / POS_PRODUCT_PAGINATION) + 1;
+	let posProductPagination = POS_PRODUCT_PAGINATION;
+
+	$: displayedProducts = productFiltered.slice(next, next + posProductPagination);
+	$: totalPages = Math.ceil(productFiltered.length / posProductPagination);
+	$: currentPage = Math.floor(next / posProductPagination) + 1;
 
 	async function addNoteToItem(event: Event, index: number, defaultPrompt: string) {
 		event.preventDefault();
@@ -58,6 +61,26 @@
 	let formNotes: HTMLFormElement[] = [];
 	$: lastItemId = items.length > 0 ? items[items.length - 1]?.product?._id : null;
 	let warningMessage = '';
+
+	function updatePaginationLimit() {
+		const width = window.screen.width;
+
+		if (width < 480) {
+			posProductPagination = 22;
+		} else if (width < 768) {
+			posProductPagination = 16;
+		} else if (width < 1024) {
+			posProductPagination = 14;
+		} else {
+			posProductPagination = 10;
+		}
+	}
+	onMount(() => {
+		updatePaginationLimit();
+		window.addEventListener('resize', updatePaginationLimit);
+
+		return () => window.removeEventListener('resize', updatePaginationLimit);
+	});
 </script>
 
 <div class="flex flex-col h-screen justify-between">
@@ -161,15 +184,15 @@
 							{#if next > 0}
 								<a
 									class="btn touchScreen-product-secondaryCTA text-3xl"
-									on:click={() => (next = Math.max(0, next - POS_PRODUCT_PAGINATION))}
+									on:click={() => (next = Math.max(0, next - posProductPagination))}
 									href={`?filter=${filter}&skip=${Math.max(0, next)}`}>&lt;</a
 								>
 							{/if}
 							PAGE {currentPage}/{totalPages}
-							{#if next + POS_PRODUCT_PAGINATION < productFiltered.length}
+							{#if next + posProductPagination < productFiltered.length}
 								<a
 									class="btn touchScreen-product-secondaryCTA text-3xl"
-									on:click={() => (next += POS_PRODUCT_PAGINATION)}
+									on:click={() => (next += posProductPagination)}
 									href={`?filter=${filter}&skip=${next}`}>&gt;</a
 								>
 							{/if}
