@@ -6,7 +6,7 @@ import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
 import DOMPurify from 'dompurify';
 import { collections } from './database';
-import { ALLOW_JS_INJECTION } from '$env/static/private';
+import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import type { PickDeep } from 'type-fest';
 import type { Specification } from '$lib/types/Specification';
 import type { Tag } from '$lib/types/Tag';

@@ -25,7 +25,7 @@ import {
 	ORIGIN,
 	TWITTER_ID,
 	TWITTER_SECRET
-} from '$env/static/private';
+} from '$lib/server/env-config';
 import { sequence } from '@sveltejs/kit/hooks';
 import { building } from '$app/environment';
 import { sha256 } from '$lib/utils/sha256';

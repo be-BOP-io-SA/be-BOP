@@ -1,4 +1,4 @@
-import { ALLOW_BITCOIN_RPC, BIP84_XPUB } from '$env/static/private';
+import { ALLOW_BITCOIN_RPC, BIP84_XPUB } from '$lib/server/env-config';
 import {
 	createWallet,
 	listWallets,
