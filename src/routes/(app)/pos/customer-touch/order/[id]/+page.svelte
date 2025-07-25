@@ -82,24 +82,24 @@
 	<div class="w-full flex flex-col items-center">
 		<h2 class="text-2xl font-bold mb-6 text-center">{t('customerTouch.orderTitle')}</h2>
 
-		<div class="w-full grid grid-cols-3 justify-center gap-4">
-			<a
-				href="/pos/customer-touch/welcome"
-				class="flex justify-center items-center bg-[#f47c8c] text-white font-bold py-4 rounded-lg text-xl shadow-md"
-			>
-				{t('customerTouch.noThanksCta')}
-			</a>
-			{#if displayRecipientSent}
+		<div class="w-full flex justify-center gap-4">
+			{#if receiptSent}
 				<button
-					class="flex justify-center items-center border-[#8fd16a] border-[2px] font-bold py-4 rounded-lg text-xl shadow-md"
-					on:click={() => (displayRecipientSent = false)}
+					class="flex w-1/3 justify-center items-center border-[#8fd16a] border-[2px] font-bold py-4 rounded-lg text-xl shadow-md"
+					disabled
 				>
 					{t('customerTouch.receipt.sent')} ✅
 				</button>
 			{:else}
 				<a
+					href="/pos/customer-touch/welcome"
+					class="flex w-1/3 justify-center items-center bg-[#f47c8c] text-white font-bold py-4 rounded-lg text-xl shadow-md"
+				>
+					{t('customerTouch.noThanksCta')}
+				</a>
+				<a
 					href="{$page.url.pathname}/send-receipt"
-					class="flex justify-center items-center bg-[#8fd16a] font-bold py-4 rounded-lg text-xl shadow-md"
+					class="flex w-1/3 justify-center items-center bg-[#8fd16a] font-bold py-4 rounded-lg text-xl shadow-md"
 				>
 					{t('customerTouch.sendTicketCta')}
 				</a>
@@ -108,7 +108,7 @@
 				type="button"
 				disabled={!data.order.payments[0].id}
 				on:click={() => receiptIFrame[data.order.payments[0].id]?.contentWindow?.print()}
-				class="flex justify-center items-center bg-[#8fd16a] font-bold py-4 rounded-lg text-xl shadow-md"
+				class="flex w-1/3 justify-center items-center bg-[#8fd16a] font-bold py-4 rounded-lg text-xl shadow-md"
 			>
 				{t('customerTouch.printCta')}
 			</button>

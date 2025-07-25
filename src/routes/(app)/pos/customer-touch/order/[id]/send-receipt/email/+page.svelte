@@ -16,7 +16,7 @@
 				class="w-full p-2 bg-gray-100 border-2 border-transparent rounded-lg text-lg text-gray-800 mb-4 placeholder-gray-400"
 			/>
 			<button
-				class="bg-gray-100 font-semibold p-2 rounded-lg text-lg hover:bg-gray-200 transition-colors duration-200"
+				class="flex w-1/3 justify-center items-center bg-[#8fd16a] font-bold py-4 rounded-lg text-xl shadow-md"
 				type="submit"
 			>
 				{t('customerTouch.receipt.sendEmailCta')}
