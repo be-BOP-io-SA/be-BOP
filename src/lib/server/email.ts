@@ -7,7 +7,7 @@ import {
 	SMTP_USER,
 	SMTP_FROM,
 	ORIGIN
-} from '$env/static/private';
+} from '$lib/server/env-config';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { htmlToText } from 'html-to-text';
 import { defaultConfig, runtimeConfig, type EmailTemplateKey } from './runtime-config';

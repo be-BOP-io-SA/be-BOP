@@ -6,7 +6,7 @@ import {
 	LND_MACAROON_VALUE,
 	LND_REST_URL,
 	TOR_PROXY_URL
-} from '$env/static/private';
+} from '$lib/server/env-config';
 import { z } from 'zod';
 import { error } from '@sveltejs/kit';
 import { socksDispatcher } from 'fetch-socks';

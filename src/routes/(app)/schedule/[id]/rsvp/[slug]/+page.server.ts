@@ -1,4 +1,4 @@
-import { SMTP_USER } from '$env/static/private';
+import { SMTP_USER } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import { queueEmail } from '$lib/server/email';
 import { zodNpub } from '$lib/server/nostr';
