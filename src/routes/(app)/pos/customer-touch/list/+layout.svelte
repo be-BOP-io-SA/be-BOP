@@ -3,32 +3,13 @@
 	import IconSearch from '$lib/components/icons/IconSearch.svelte';
 	import { useI18n } from '$lib/i18n';
 	import PictureComponent from '$lib/components/Picture.svelte';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/cart.js';
-	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
-	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
 	export let data;
 	const { t } = useI18n();
-	$: items = data.cart || [];
-	$: deliveryFees =
-		data.countryCode && isAlpha2CountryCode(data.countryCode)
-			? computeDeliveryFees(UNDERLYING_CURRENCY, data.countryCode, items, data.deliveryFees)
-			: NaN;
-	$: priceInfo = computePriceInfo(items, {
-		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted,
-		userCountry: data.countryCode,
-		deliveryFees: {
-			amount: deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
-		vatProfiles: data.vatProfiles
-	});
+	$: priceInfo = data.cart.priceInfo;
 </script>
 
 <div class="mx-auto max-w-7xl px-2">
