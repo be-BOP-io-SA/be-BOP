@@ -1,0 +1,48 @@
+import { env } from '$env/dynamic/private';
+import * as staticEnv from '$env/static/private';
+
+export const ADMIN_LOGIN = env.ADMIN_LOGIN ?? staticEnv.ADMIN_LOGIN;
+export const ADMIN_PASSWORD = env.ADMIN_PASSWORD ?? staticEnv.ADMIN_PASSWORD;
+export const ALLOW_BITCOIN_RPC = env.ALLOW_BITCOIN_RPC ?? staticEnv.ALLOW_BITCOIN_RPC;
+export const ALLOW_DUMPING_WALLET = env.ALLOW_DUMPING_WALLET ?? staticEnv.ALLOW_DUMPING_WALLET;
+export const ALLOW_JS_INJECTION = env.ALLOW_JS_INJECTION ?? staticEnv.ALLOW_JS_INJECTION;
+export const ALLOW_LND_RPC = env.ALLOW_LND_RPC ?? staticEnv.ALLOW_LND_RPC;
+export const BIP84_XPUB = env.BIP84_XPUB ?? staticEnv.BIP84_XPUB;
+export const BITCOIN_RPC_PASSWORD = env.BITCOIN_RPC_PASSWORD ?? staticEnv.BITCOIN_RPC_PASSWORD;
+export const BITCOIN_RPC_URL = env.BITCOIN_RPC_URL ?? staticEnv.BITCOIN_RPC_URL;
+export const BITCOIN_RPC_USER = env.BITCOIN_RPC_USER ?? staticEnv.BITCOIN_RPC_USER;
+export const FACEBOOK_ID = env.FACEBOOK_ID ?? staticEnv.FACEBOOK_ID;
+export const FACEBOOK_SECRET = env.FACEBOOK_SECRET ?? staticEnv.FACEBOOK_SECRET;
+export const GITHUB_ID = env.GITHUB_ID ?? staticEnv.GITHUB_ID;
+export const GITHUB_SECRET = env.GITHUB_SECRET ?? staticEnv.GITHUB_SECRET;
+export const GOOGLE_ID = env.GOOGLE_ID ?? staticEnv.GOOGLE_ID;
+export const GOOGLE_SECRET = env.GOOGLE_SECRET ?? staticEnv.GOOGLE_SECRET;
+export const LINK_PRELOAD_HEADERS = env.LINK_PRELOAD_HEADERS ?? staticEnv.LINK_PRELOAD_HEADERS;
+export const LND_MACAROON_PATH = env.LND_MACAROON_PATH ?? staticEnv.LND_MACAROON_PATH;
+export const LND_MACAROON_VALUE = env.LND_MACAROON_VALUE ?? staticEnv.LND_MACAROON_VALUE;
+export const LND_REST_URL = env.LND_REST_URL ?? staticEnv.LND_REST_URL;
+export const MONGODB_DB = env.MONGODB_DB ?? staticEnv.MONGODB_DB;
+export const MONGODB_DIRECT_CONNECTION =
+	env.MONGODB_DIRECT_CONNECTION ?? staticEnv.MONGODB_DIRECT_CONNECTION;
+export const MONGODB_IP_FAMILY = env.MONGODB_IP_FAMILY ?? staticEnv.MONGODB_IP_FAMILY;
+export const MONGODB_URL = env.MONGODB_URL ?? staticEnv.MONGODB_URL;
+export const NOSTR_PRIVATE_KEY = env.NOSTR_PRIVATE_KEY ?? staticEnv.NOSTR_PRIVATE_KEY;
+export const NO_LOCK = env.NO_LOCK ?? staticEnv.NO_LOCK;
+export const ORIGIN = env.ORIGIN ?? staticEnv.ORIGIN;
+export const PUBLIC_S3_ENDPOINT_URL =
+	env.PUBLIC_S3_ENDPOINT_URL ?? staticEnv.PUBLIC_S3_ENDPOINT_URL;
+export const S3_BUCKET = env.S3_BUCKET ?? staticEnv.S3_BUCKET;
+export const S3_ENDPOINT_URL = env.S3_ENDPOINT_URL ?? staticEnv.S3_ENDPOINT_URL;
+export const S3_KEY_ID = env.S3_KEY_ID ?? staticEnv.S3_KEY_ID;
+export const S3_KEY_SECRET = env.S3_KEY_SECRET ?? staticEnv.S3_KEY_SECRET;
+export const S3_PROXY_DOWNLOADS = env.S3_PROXY_DOWNLOADS ?? staticEnv.S3_PROXY_DOWNLOADS;
+export const S3_REGION = env.S3_REGION ?? staticEnv.S3_REGION;
+export const SMTP_FAKE = env.SMTP_FAKE ?? staticEnv.SMTP_FAKE;
+export const SMTP_FROM = env.SMTP_FROM ?? staticEnv.SMTP_FROM;
+export const SMTP_HOST = env.SMTP_HOST ?? staticEnv.SMTP_HOST;
+export const SMTP_PASSWORD = env.SMTP_PASSWORD ?? staticEnv.SMTP_PASSWORD;
+export const SMTP_PORT = env.SMTP_PORT ?? staticEnv.SMTP_PORT;
+export const SMTP_USER = env.SMTP_USER ?? staticEnv.SMTP_USER;
+export const TOR_PROXY_URL = env.TOR_PROXY_URL ?? staticEnv.TOR_PROXY_URL;
+export const TWITTER_ID = env.TWITTER_ID ?? staticEnv.TWITTER_ID;
+export const TWITTER_SECRET = env.TWITTER_SECRET ?? staticEnv.TWITTER_SECRET;
