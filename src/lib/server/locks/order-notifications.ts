@@ -8,7 +8,7 @@ import {
 } from 'mongodb';
 import { collections, withTransaction } from '../database';
 import { Lock } from '../lock';
-import { ORIGIN } from '$env/static/private';
+import { ORIGIN } from '$lib/server/env-config';
 import { Kind } from 'nostr-tools';
 import { toBitcoins } from '$lib/utils/toBitcoins';
 import { getUnixTime, subHours } from 'date-fns';

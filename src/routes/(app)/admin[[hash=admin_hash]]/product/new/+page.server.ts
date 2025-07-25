@@ -4,7 +4,7 @@ import type { Actions } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { ObjectId } from 'mongodb';
-import { ORIGIN, S3_BUCKET } from '$env/static/private';
+import { ORIGIN, S3_BUCKET } from '$lib/server/env-config';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Product } from '$lib/types/Product';
 import { Kind } from 'nostr-tools';

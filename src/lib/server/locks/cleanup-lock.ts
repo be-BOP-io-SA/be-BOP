@@ -4,7 +4,7 @@ import { collections } from '../database';
 import { processClosed } from '../process';
 import { setTimeout } from 'node:timers/promises';
 import { s3client } from '../s3';
-import { S3_BUCKET } from '$env/static/private';
+import { S3_BUCKET } from '$lib/server/env-config';
 import { ObjectId } from 'mongodb';
 
 const lock = new Lock('cleanup');

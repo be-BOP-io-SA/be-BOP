@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { collections } from '$lib/server/database';
 import { getPrivateS3DownloadLink, getPublicS3DownloadLink } from '$lib/server/s3';
-import { S3_PROXY_DOWNLOADS } from '$env/static/private';
+import { S3_PROXY_DOWNLOADS } from '$lib/server/env-config';
 
 // We prefer to act as a middleman to add cache-control headers
 // Chrome could handle caching with redirects but not Firefox
