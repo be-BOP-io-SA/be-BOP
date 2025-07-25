@@ -41,7 +41,6 @@ export const actions = {
 				cart.items.map((item) => ({
 					quantity: item.quantity,
 					product: byId[item.productId],
-					...(item.freeQuantity && { freeQuantity: item.freeQuantity }),
 					...(item.customPrice && {
 						customPrice: { amount: item.customPrice.amount, currency: item.customPrice.currency }
 					}),

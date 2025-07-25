@@ -4,33 +4,14 @@
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import { useI18n } from '$lib/i18n.js';
-
-	import { computeDeliveryFees, computePriceInfo } from '$lib/cart.js';
-	import { isAlpha2CountryCode } from '$lib/types/Country.js';
-	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import { DEFAULT_MAX_QUANTITY_PER_ORDER } from '$lib/types/Product.js';
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
 
 	export let data;
 	const { t } = useI18n();
 
-	$: items = data.cart || [];
-	$: deliveryFees =
-		data.countryCode && isAlpha2CountryCode(data.countryCode)
-			? computeDeliveryFees(UNDERLYING_CURRENCY, data.countryCode, items, data.deliveryFees)
-			: NaN;
-	$: priceInfo = computePriceInfo(items, {
-		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted,
-		userCountry: data.countryCode,
-		deliveryFees: {
-			amount: deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
-		vatProfiles: data.vatProfiles
-	});
+	$: items = data.cart.items || [];
+	$: priceInfo = data.cart.priceInfo;
 </script>
 
 <main class="flex flex-col bg-gray-100 border rounded-lg">
@@ -45,9 +26,9 @@
 		</div>
 
 		<div class="flex flex-col gap-4">
-			{#each items as item}
-				{@const price = item.customPrice || item.product.price}
-				{@const quantityToPay = Math.max(item.quantity - (item.freeQuantity ?? 0), 0)}
+			{#each items as item, i}
+				{@const price = priceInfo.perItem[i]}
+				{@const toDepositFactor = (item.depositPercentage ?? 100) / 100}
 				<form
 					class="grid grid-cols-[min-content_auto] gap-2"
 					method="post"
@@ -87,7 +68,11 @@
 									: item.product.name}
 							</p>
 							<p class="font-semibold">
-								<PriceTag amount={quantityToPay * price.amount} currency={price.currency} main />
+								<PriceTag
+									amount={price.amountWithoutDiscount * toDepositFactor}
+									currency={price.currency}
+									main
+								/>
 							</p>
 						</div>
 						<input type="hidden" name="quantity" value={item.quantity} />
