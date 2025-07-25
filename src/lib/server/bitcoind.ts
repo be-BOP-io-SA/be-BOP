@@ -4,7 +4,7 @@ import {
 	BITCOIN_RPC_USER,
 	TOR_PROXY_URL,
 	BIP84_XPUB
-} from '$env/static/private';
+} from '$lib/server/env-config';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { runtimeConfig } from './runtime-config';
