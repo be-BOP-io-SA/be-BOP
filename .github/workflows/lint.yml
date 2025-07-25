@@ -61,3 +61,34 @@ jobs:
       - name: 'Check translation errors'
         run: |
           node scripts/check-translations.mjs
+
+  check_branch_up_to_date:
+    name: Check branch is up to date with target branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for accurate ancestry and range-diff
+          ref: ${{ github.head_ref }}
+
+      - name: Fetch target branch
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+
+      - name: Check ancestry and show range-diff if needed
+        run: |
+          TARGET_BRANCH=origin/${{ github.event.pull_request.base.ref }}
+
+          echo "🔍 Checking if HEAD is a descendant of $TARGET_BRANCH..."
+
+          if ! git merge-base --is-ancestor "$TARGET_BRANCH" HEAD; then
+            echo "❌ Your branch is behind '$TARGET_BRANCH'. Please rebase it."
+            echo ""
+            echo "📊 Diff between the rebased and current history (range-diff):"
+            git range-diff "$TARGET_BRANCH"...HEAD || echo "(range-diff failed)"
+
+            exit 1
+          fi
+
+          echo "✅ Branch is up to date with '$TARGET_BRANCH'."
