@@ -77,6 +77,7 @@ import { toZonedTime } from 'date-fns-tz';
 import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
 import { PaidSubscription } from '$lib/types/PaidSubscription';
 import type { FetchOrderResult } from '../../routes/(app)/order/[id]/fetchOrderForUser';
+import { btcpayCreateLnInvoice, isBtcpayServerConfigured } from './btcpay-server';
 
 /**
  * FIXME: The computation bellow uses runtime configuration features. This is
@@ -1648,6 +1649,17 @@ async function generatePaymentInfo(params: {
 					invoiceId: invoice.invoiceId,
 					processor: 'swiss-bitcoin-pay'
 				};
+			} else if (isBtcpayServerConfigured()) {
+				const invoice = await btcpayServerCreateInvoice({
+					label,
+					expiresAt: params.expiresAt,
+					amountInSats: satoshis
+				});
+				return {
+					address: invoice.payment_address,
+					invoiceId: invoice.invoiceId,
+					processor: 'btcpay-server'
+				};
 			} else if (isPhoenixdConfigured()) {
 				// no way to configure an expiration date for now
 				const invoice = await phoenixdCreateInvoice(satoshis, label, params.orderId);
@@ -2414,5 +2426,31 @@ async function swissBitcoinPayCreateInvoice(params: {
 		return { payment_address, invoiceId };
 	} catch (err) {
 		throw error(402, `Failed to create Swiss Bitcoin Pay Invoice: ${err}`);
+	}
+}
+
+async function btcpayServerCreateInvoice(params: {
+	label: string;
+	amountInSats: number;
+	expiresAt?: Date;
+}): Promise<{
+	payment_address: string;
+	invoiceId: string;
+}> {
+	try {
+		const invoice = await btcpayCreateLnInvoice({
+			amount: `${params.amountInSats * 1000}`,
+			description: params.label,
+			...(params.expiresAt === undefined
+				? {}
+				: {
+						expiry: differenceInSeconds(params.expiresAt, new Date())
+				  })
+		});
+		const payment_address = invoice.BOLT11;
+		const invoiceId = invoice.id;
+		return { payment_address, invoiceId };
+	} catch (err) {
+		throw error(402, `Failed to create BTCPay Server Invoice: ${err}`);
 	}
 }

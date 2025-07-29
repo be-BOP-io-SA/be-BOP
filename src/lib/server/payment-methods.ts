@@ -8,6 +8,7 @@ import { isStripeEnabled } from './stripe';
 import { isPaypalEnabled } from './paypal';
 import { isBitcoinNodelessConfigured } from './bitcoin-nodeless';
 import { isSwissBitcoinPayConfigured } from './swiss-bitcoin-pay';
+import { isBtcpayServerConfigured } from './btcpay-server';
 
 const ALL_PAYMENT_METHODS = [
 	'card',
@@ -21,14 +22,15 @@ const ALL_PAYMENT_METHODS = [
 export type PaymentMethod = (typeof ALL_PAYMENT_METHODS)[number];
 
 export const ALL_PAYMENT_PROCESSORS = [
-	'sumup',
+	'bitcoin-nodeless',
 	'bitcoind',
+	'btcpay-server',
 	'lnd',
-	'phoenixd',
-	'swiss-bitcoin-pay',
-	'stripe',
 	'paypal',
-	'bitcoin-nodeless'
+	'phoenixd',
+	'stripe',
+	'sumup',
+	'swiss-bitcoin-pay'
 ] as const;
 export type PaymentProcessor = (typeof ALL_PAYMENT_PROCESSORS)[number];
 
@@ -58,7 +60,12 @@ export const paymentMethods = (opts?: {
 						case 'bitcoin':
 							return isBitcoindConfigured || isBitcoinNodelessConfigured();
 						case 'lightning':
-							return isSwissBitcoinPayConfigured() || isLndConfigured() || isPhoenixdConfigured();
+							return (
+								isSwissBitcoinPayConfigured() ||
+								isBtcpayServerConfigured() ||
+								isLndConfigured() ||
+								isPhoenixdConfigured()
+							);
 						case 'point-of-sale':
 							return opts?.hasPosOptions || opts?.includePOS;
 						case 'free':

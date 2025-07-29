@@ -188,6 +188,11 @@ const baseConfig = {
 		secretKey: '',
 		currency: 'EUR' as Currency
 	},
+	btcpayServer: {
+		apiKey: '',
+		serverUrl: '',
+		storeId: ''
+	},
 	paypal: {
 		clientId: '',
 		secret: '',
