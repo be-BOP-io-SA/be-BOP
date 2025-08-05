@@ -32,7 +32,7 @@ export const load = async ({ locals }) => {
 		products,
 		pictures: await collections.pictures
 			.find({ productId: { $in: [...products.map((product) => product._id)] } })
-			.sort({ createdAt: 1 })
+			.sort({ order: 1, createdAt: 1 })
 			.toArray(),
 		tags
 	};
