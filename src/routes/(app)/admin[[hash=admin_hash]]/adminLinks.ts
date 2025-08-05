@@ -119,6 +119,10 @@ export const adminLinks: AdminLinks = [
 				label: 'Stripe'
 			},
 			{
+				href: '/admin/btcpay-server',
+				label: 'BTCPay Server'
+			},
+			{
 				href: '/admin/phoenixd',
 				label: 'PhoenixD'
 			},

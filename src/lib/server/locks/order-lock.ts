@@ -10,6 +10,7 @@ import { toSatoshis } from '$lib/utils/toSatoshis';
 import { onOrderPayment, onOrderPaymentFailed } from '../orders';
 import { refreshPromise, runtimeConfig, runtimeConfigUpdatedAt } from '../runtime-config';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
+import { btcpayGetLnInvoice } from '../btcpay-server';
 import { phoenixdLookupInvoice } from '../phoenixd';
 import { sbpGetCheckoutStatus } from '../swiss-bitcoin-pay';
 import { CURRENCIES, CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
@@ -206,6 +207,28 @@ async function maintainOrders() {
 									throw new Error(
 										`Unsupported processor ${payment.processor} for lightning payments`
 									);
+								case 'btcpay-server':
+									const invoice = await btcpayGetLnInvoice(payment.invoiceId);
+									switch (invoice.status) {
+										case 'Paid':
+											order = await onOrderPayment(order, payment, {
+												amount: Number(invoice.amountReceived) / 1000,
+												currency: 'SAT'
+											});
+											break;
+										case 'Unpaid':
+											// Nothing to do.
+											break;
+										case 'Expired':
+											order = await onOrderPaymentFailed(order, payment, 'expired');
+											break;
+										default:
+											console.log(
+												`Unexpected status for BTCPay Server invoice ${payment.invoiceId}: ${invoice.status}`
+											);
+											invoice.status satisfies never;
+									}
+									break;
 								case 'swiss-bitcoin-pay':
 									const invoiceId = payment.invoiceId;
 									const paymentStatus = await sbpGetCheckoutStatus(invoiceId);
@@ -474,6 +497,7 @@ async function maintainOrders() {
 											});
 										}
 										break;
+									case 'btcpay-server':
 									case 'paypal':
 									case 'phoenixd':
 									case 'sumup':
