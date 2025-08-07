@@ -1,0 +1,52 @@
+# This service is managed by bebop-wizard
+[Unit]
+Description=MinIO Object Storage Server
+Documentation=https://min.io/docs/minio/linux/index.html
+After=network.target
+Wants=network.target
+
+[Service]
+Type=notify
+DynamicUser=yes
+ExecStartPre=/usr/bin/mkdir -p /var/lib/minio/be-BOP
+ExecStart=/usr/local/bin/minio server /var/lib/minio/be-BOP --console-address :9001
+Restart=always
+RestartSec=5
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# State directory for persistent data
+StateDirectory=minio
+StateDirectoryMode=0755
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictNamespaces=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Working directory and environment
+WorkingDirectory=/var/lib/minio
+Environment=HOME=/var/lib/minio
+EnvironmentFile=/etc/minio/config.env
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=minio
+
+# Resource limits
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

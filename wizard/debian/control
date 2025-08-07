@@ -1,0 +1,39 @@
+Source: bebop-wizard
+Section: admin
+Priority: optional
+Maintainer: Roosembert Palacios <roos@be-bop.io>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Homepage: https://be-bop.io
+Vcs-Git: https://github.com/be-BOP-io-SA/be-BOP.git
+Vcs-Browser: https://github.com/be-BOP-io-SA/be-BOP
+
+Package: bebop-wizard
+Architecture: amd64
+Depends: ${misc:Depends},
+         debconf (>= 0.5),
+         bash (>= 4.0),
+         curl,
+         gnupg,
+         jq,
+         openssl,
+         stow,
+         systemd,
+         ssl-cert,
+         unzip,
+         wget
+Conflicts: nodejs (<< 19)
+Recommends:
+        certbot,
+        dialog,
+        nginx,
+        python3-certbot-nginx,
+        mongodb-org,
+        nodejs (>= 19)
+Description: be-BOP installation, configuration and deployment wizard
+ A comprehensive tool for managing simple be-BOP deployments.
+ .
+ The wizard simplifies the deployment of a complete be-BOP installation
+ based on recommended configurations. It is recommended for users who
+ want to quickly set up a simple and reasonably secure be-BOP
+ installation without the need for manual configuration.

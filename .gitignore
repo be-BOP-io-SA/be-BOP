@@ -12,3 +12,8 @@ build.zip
 # Copied in vite.config.ts
 static/tinymce
 lib/utils/timeZoneOffset.ts
+
+# debian packages for the wizard
+/bebop-wizard_*.buildinfo
+/bebop-wizard_*.changes
+/bebop-wizard_*.deb

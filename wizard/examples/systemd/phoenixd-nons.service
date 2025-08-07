@@ -1,0 +1,41 @@
+# This service is managed by bebop-wizard
+[Unit]
+Description=phoenixd Lightning Network Daemon
+Documentation=https://github.com/ACINQ/phoenixd
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/phoenixd --http-bind-ip=127.0.0.1
+Restart=always
+RestartSec=5
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# State directory for persistent data
+StateDirectory=phoenixd
+StateDirectoryMode=0755
+
+# Security settings
+NoNewPrivileges=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+
+# Working directory and environment
+WorkingDirectory=/var/lib/phoenixd
+Environment=HOME=/var/lib/phoenixd
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=phoenixd
+
+# Resource limits
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
