@@ -1,0 +1,145 @@
+Template: bebop-wizard/use-recommended-deployment
+Type: boolean
+Default: true
+Description: Proceed with recommended configuration?
+ Choose whether to proceed with recommended default deployment or
+ configure each component individually.
+ .
+ Enabling this option will install be-BOP with a ready-to-use
+ configuration using recommended defaults for all components.
+ .
+ When disabled, you will be prompted to configure each component
+ individually, giving you full control over the installation.
+
+Template: bebop-wizard/install-phoenixd
+Type: boolean
+Default: true
+Description: Install phoenixd Lightning Network daemon?
+ phoenixd enables Bitcoin payments through the Lightning network.
+ .
+ phoenixd is a Lightning Network daemon developed by ACINQ that powers
+ their Phoenix wallet. It is designed to be a self-contained, always-on
+ Lightning backend running on behalf of Phoenix users. It handles all
+ the complex Lightning operations in a secure, scalable, and
+ non-custodial manner.
+ .
+ This will download, and install phoenixd with a secure systemd service
+ configuration using dynamic users. be-BOP will use phoenixd to receive
+ payments in the Lightning Network.
+
+Template: bebop-wizard/install-minio
+Type: boolean
+Default: true
+Description: Install MinIO object storage server?
+ MinIO is a high-performance object storage server compatible with
+ Amazon S3 APIs.
+ .
+ This will install and enable MinIO specifically configured for use with
+ be-BOP.
+
+Template: bebop-wizard/configure-mongodb-repo
+Type: boolean
+Default: true
+Description: Configure MongoDB 8.0 APT repository?
+ This will add the official MongoDB 8.0 repository to your system's
+ package sources, allowing the installation and update MongoDB using
+ apt.
+
+Template: bebop-wizard/configure-nodejs-repo
+Type: boolean
+Default: true
+Description: Configure Node.js 22 APT repository?
+ This will add the official Node.js 22.x repository to your system's
+ package sources, allowing the installation of the latest Node.js LTS
+ version using apt.
+
+Template: bebop-wizard/bebop-domain
+Type: string
+Description: Domain name of the be-BOP deployment.
+ be-BOP will be configured to run under the specified domain. TLS
+ certificates will be obtained through Let's Encrypt. It is also used to
+ configure standard web security features. be-BOP will also use it as
+ origin to register various callback URLs as needed and per the shop
+ configuration.
+ .
+ Make sure that both the main domain and the s3 subdomain have DNS
+ records pointing to this server's IP address. For example, if you enter
+ "example.com", nginx will be configured for example.com (be-BOP) and
+ s3.example.com (MinIO object storage).
+
+Template: bebop-wizard/bebop-service
+Type: boolean
+Default: true
+Description: Configure and enable be-BOP?
+ Enabling this option will install a configuration for be-BOP. When
+ possible, the systemd service will be enabled and set to start
+ automatically. Mind that, in order for be-BOP to be accessible from the
+ internet, it is necessary to either enable the nginx-service option or
+ manually configure a reverse proxy.
+ .
+ When disabled, no configuration for bebop will be generated; thus,
+ bebop access will have to be configured by other means. Moreover, the
+ be-BOP service will not be enabled. Examples for the configuration and
+ service unit can be found under /usr/share/bebop-wizard/examples/.
+
+Template: bebop-wizard/minio-service
+Type: boolean
+Default: true
+Description: Configure and enable MinIO?
+ Enabling this option will install a configuration and systemd service
+ unit for MinIO. The systemd service will be enabled and set to start
+ automatically. Additionally, be-BOP will be configured to use MinIO.
+ .
+ When disabled, no configuration for MinIO will be generated, the
+ service unit will not be installed and be-BOP will not be configured to
+ use MinIO; thus, S3 access will have to be configured by other means.
+ Moreover, the be-BOP service will not be enabled. An example service
+ unit is available under /usr/share/bebop-wizard/examples/.
+
+Template: bebop-wizard/nginx-service
+Type: boolean
+Default: true
+Description: Configure and enable nginx?
+ Enabling this option will install nginx along with a configuration
+ satisfying a recommemded be-BOP deployment.
+ .
+ This configuration includes SSL/TLS setup and proper proxy settings for
+ be-BOP and MinIO. TLS certificates will be provisioned through Let's
+ Encrypt; thus, it is required that the machine is reachable from the
+ public internet and for suitable domain name records to resolve to the
+ machine's IP address.
+ .
+ For example, if you have a domain name example.com, you should ensure
+ that both A and AAAA records for example.com and s3.example.com
+ resolve to the machine's IP address and connections on ports 80 and
+ 443 are not blocked.
+ .
+ When disabled, nor nginx nor any site configuration will be
+ installed. An example nginx configuration is available under
+ /usr/share/bebop-wizard/examples/.
+
+Template: bebop-wizard/phoenixd-service
+Type: boolean
+Default: false
+Description: Configure and enable phoenixd?
+ Enabling this option will install and enable a systemd service unit for
+ phoenixd. Additionally, be-BOP will be configured to use phoenixd.
+ .
+ When disabled, no service unit will be installed. An example systemd
+ service unit is available under /usr/share/bebop-wizard/examples/.
+
+Template: bebop-wizard/finish-installation
+Type: note
+Description: Complete the installation
+ To finish setting up be-BOP, you need to run one final command after
+ this package installation completes.
+ .
+ Once you see the command prompt again, please type:
+ .
+   sudo bebop-wizard finish_debian_install
+ .
+ This final step will download and install additional software components
+ that you selected earlier, then start all the services you've configured.
+ This separate step is required because some software (like Node.js,
+ MongoDB, and other components) must be installed after this initial
+ package setup is complete.

@@ -1,0 +1,221 @@
+#!/bin/bash
+set -eo pipefail
+
+. /usr/share/debconf/confmodule
+
+CONFIGFILE="/etc/be-BOP/config.env"
+
+if [ -f "${CONFIGFILE}" ]; then
+    # Extract ORIGIN from config file, even if it's commented out.
+    ORIGIN=$(
+        grep -E '^\s*#?\s*ORIGIN\s*=' "${CONFIGFILE}" | \
+        tail -n 1 | \
+        sed 's/^\s*#\?\s*ORIGIN\s*=\s*//' | \
+        sed 's/\s*$//' | \
+        sed "s/^[\"'']//" | \
+        sed "s/[\"'']\$//"
+    )
+    if echo "$ORIGIN" | grep -q "^https\?://"; then
+        DOMAIN=$(echo "$ORIGIN" | sed 's|^https\?://||' | sed 's|/.*$||')
+        db_set bebop-wizard/bebop-domain "$DOMAIN"
+    fi
+fi
+
+if [ -f "${CONFIGFILE}" ] && \
+    grep -q "This deployment is managed by bebop-wizard" "${CONFIGFILE}"; then
+    db_set bebop-wizard/use-recommended-deployment true
+    db_set bebop-wizard/bebop-service true
+elif [ -f "${CONFIGFILE}" ] && \
+    grep -q "This configuration is managed by bebop-wizard" "${CONFIGFILE}"; then
+    db_set bebop-wizard/use-recommended-deployment false
+    db_set bebop-wizard/bebop-service true
+elif [ -f "${CONFIGFILE}" ]; then
+    db_set bebop-wizard/use-recommended-deployment false
+    db_set bebop-wizard/bebop-service false
+fi
+
+MONGODB_REPO_FILE="/etc/apt/sources.list.d/mongodb-org-8.0.list"
+if [ -f "${MONGODB_REPO_FILE}" ] && \
+    grep -q "This file is managed by bebop-wizard" "${MONGODB_REPO_FILE}"; then
+    db_set bebop-wizard/configure-mongodb-repo true
+elif [ -f "${MONGODB_REPO_FILE}" ]; then
+    db_set bebop-wizard/configure-mongodb-repo false
+fi
+
+NODEJS_REPO_FILE="/etc/apt/sources.list.d/nodesource.list"
+if [ -f "${NODEJS_REPO_FILE}" ] && \
+    grep -q "This file is managed by bebop-wizard" "${NODEJS_REPO_FILE}"; then
+    db_set bebop-wizard/configure-nodejs-repo true
+elif [ -f "${NODEJS_REPO_FILE}" ]; then
+    db_set bebop-wizard/configure-nodejs-repo false
+fi
+
+NGINX_SITE_CONF="/etc/nginx/sites-available/be-BOP.conf"
+if [ -f "${NGINX_SITE_CONF}" ] && \
+    grep -q "The sites in this file are managed by bebop-wizard" "${NGINX_SITE_CONF}"; then
+    db_set bebop-wizard/nginx-service true
+elif [ -f "${NGINX_SITE_CONF}" ]; then
+    db_set bebop-wizard/nginx-service false
+fi
+
+MINIO_SERVICE_FILE="/etc/systemd/system/minio-bebop.service"
+if [ -f "${MINIO_SERVICE_FILE}" ] && \
+    grep -q "This service is managed by bebop-wizard" "${MINIO_SERVICE_FILE}"; then
+    db_set bebop-wizard/install-minio true
+    db_set bebop-wizard/minio-service true
+elif [ -d "/usr/local/minio" ]; then
+    db_set bebop-wizard/install-minio true
+    db_set bebop-wizard/minio-service false
+fi
+
+PHOENIX_SERVICE_FILE="/etc/systemd/system/phoenixd-bebop.service"
+if [ -f "${PHOENIX_SERVICE_FILE}" ] && \
+    grep -q "This service is managed by bebop-wizard" "${PHOENIX_SERVICE_FILE}"; then
+    db_set bebop-wizard/install-phoenixd true
+    db_set bebop-wizard/phoenixd-service true
+elif [ -d "/usr/local/phoenixd" ]; then
+    db_set bebop-wizard/install-phoenixd true
+    db_set bebop-wizard/phoenixd-service false
+fi
+
+# Check if the response looks like a valid domain or subdomain
+is_probably_valid_domain() {
+    TO_CHECK="$1"
+    if [ -z "$TO_CHECK" ]; then
+        return 1
+    elif [ "$TO_CHECK" = "localhost" ]; then
+        return 0
+    elif echo "$TO_CHECK" | grep -qE '^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$' && \
+       [ ${#TO_CHECK} -le 253 ] ; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+step1() {
+    if ! db_input high bebop-wizard/bebop-domain; then
+        db_get bebop-wizard/bebop-domain
+        DOMAIN="$RET"
+        db_fget bebop-wizard/bebop-domain seen
+        SEEN="$RET"
+        if [ "$SEEN" = "false" ] && ! is_probably_valid_domain "$DOMAIN"; then
+            echo "ERROR: Required question 'bebop-wizard/bebop-domain' could not be displayed. Exiting." >&2
+            exit 10
+       fi
+    fi
+    db_input high bebop-wizard/use-recommended-deployment || true
+}
+
+step2() {
+    QUESTION_PRIORITY="high"
+    db_get bebop-wizard/use-recommended-deployment
+    if [ "$RET" = "true" ]; then
+        QUESTION_PRIORITY="low"
+    fi
+
+    db_input "${QUESTION_PRIORITY}" bebop-wizard/install-phoenixd || true
+    db_input "${QUESTION_PRIORITY}" bebop-wizard/install-minio || true
+    db_input "${QUESTION_PRIORITY}" bebop-wizard/configure-mongodb-repo || true
+    db_input "${QUESTION_PRIORITY}" bebop-wizard/configure-nodejs-repo || true
+}
+
+step3() {
+    QUESTION_PRIORITY="high"
+    db_get bebop-wizard/use-recommended-deployment
+    if [ "$RET" = "true" ]; then
+        QUESTION_PRIORITY="low"
+    fi
+
+    db_get bebop-wizard/install-phoenixd
+    if [ "$RET" = "true" ]; then
+        db_input "${QUESTION_PRIORITY}" bebop-wizard/phoenixd-service || true
+    fi
+
+    db_get bebop-wizard/install-minio
+    if [ "$RET" = "true" ]; then
+        db_input "${QUESTION_PRIORITY}" bebop-wizard/minio-service || true
+    fi
+
+    db_input "${QUESTION_PRIORITY}" bebop-wizard/bebop-service || true
+    db_input "${QUESTION_PRIORITY}" bebop-wizard/nginx-service || true
+}
+
+can_continue() {
+    CURRENT_STEP="$1"
+    case "${CURRENT_STEP}" in
+        1)
+            db_get bebop-wizard/bebop-domain
+            if ! is_probably_valid_domain "$RET"; then
+                return 1
+            fi
+            return 0;
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+}
+
+process_step() {
+    CURRENT_STEP="$1"
+    case "${CURRENT_STEP}" in
+        1)
+            db_get bebop-wizard/use-recommended-deployment
+            if [ "$RET" = "true" ]; then
+                db_set bebop-wizard/install-phoenixd true
+                db_set bebop-wizard/install-minio true
+                db_set bebop-wizard/configure-mongodb-repo true
+                db_set bebop-wizard/configure-nodejs-repo true
+                db_set bebop-wizard/phoenixd-service true
+                db_set bebop-wizard/minio-service true
+                db_set bebop-wizard/bebop-service true
+                db_set bebop-wizard/nginx-service true
+            fi
+            ;;
+        *)
+            ;;
+    esac
+}
+
+STEP=1
+while true; do
+    case "${STEP}" in
+        1)
+            step1
+            ;;
+        2)
+            step2
+            ;;
+        3)
+            step3
+            ;;
+        *)
+            # The default case catches when $STEP is greater than the
+            # last implemented configuration step, and breaks out of the
+            # loop. This requires that steps be numbered consecutively
+            # from 1 with no gaps, as the default case will also be
+            # entered if there is a break in the numbering
+            break # exits the enclosing "while" loop
+            ;;
+    esac
+    if db_go; then
+        if can_continue $STEP; then
+            process_step $STEP
+            STEP=$((STEP + 1))
+        fi
+    else
+        STEP=$((STEP - 1))
+    fi
+done
+
+if [ $STEP -eq 0 ]; then
+     # The user has asked to back up from the first question. This case
+     # is problematical. Regular dpkg and apt package installation isn't
+     # capable of backing up questions between packages as this is
+     # written, so this will exit leaving the package unconfigured.
+     # Probably the best way to handle the situation...
+     exit 10
+fi
+
+db_stop

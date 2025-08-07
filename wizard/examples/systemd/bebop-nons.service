@@ -1,0 +1,41 @@
+# This service is managed by bebop-wizard
+[Unit]
+Description=be-BOP Application Server
+Documentation=https://github.com/be-BOP/be-BOP
+After=network.target minio-bebop.service mongod.service
+Wants=network.target minio-bebop.service mongod.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/pnpm run-production
+Restart=always
+RestartSec=5
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# State directory for persistent data
+StateDirectory=be-BOP/state
+StateDirectoryMode=0755
+
+# Security settings
+NoNewPrivileges=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+# Working directory and environment
+WorkingDirectory=/var/lib/be-BOP/releases/current
+Environment=HOME=/var/lib/be-BOP/state
+Environment=NODE_ENV=production
+EnvironmentFile=/etc/be-BOP/config.env
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=be-BOP
+
+# Resource limits
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
