@@ -1,7 +1,7 @@
 <script lang="ts">
 	import IconBack from '$lib/components/icons/IconBack.svelte';
 	import { useI18n } from '$lib/i18n';
-	import { bitcoinPaymentQrCodeString, lightningPaymentQrCodeString } from '$lib/types/Order';
+	import { bitcoinPaymentQrCodeString } from '$lib/types/Order';
 	import IconSumupWide from '$lib/components/icons/IconSumupWide.svelte';
 	import IconStripe from '$lib/components/icons/IconStripe.svelte';
 	import { goto, invalidate } from '$app/navigation';
@@ -43,13 +43,11 @@
 		{#each data.order.payments as payment}
 			{#if payment.status === 'pending'}
 				{#if payment.method === 'lightning'}
-					<a href={lightningPaymentQrCodeString(payment.address ?? '')}>
-						<img
-							src="/order/{data.order._id}/payment/{payment.id}/qrcode"
-							class="w-96 h-96"
-							alt="QR code"
-						/></a
-					>
+					<img
+						src="/order/{data.order._id}/payment/{payment.id}/qrcode"
+						class="w-96 h-96"
+						alt="QR code"
+					/>
 				{/if}
 				{#if payment.method === 'card'}
 					<a
