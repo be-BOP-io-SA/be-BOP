@@ -54,6 +54,7 @@ export const load = async ({}) => {
 		tags: tags.filter((tag) => tag._id !== 'pos-favorite'),
 		posTouchTag: runtimeConfig.posTouchTag,
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
+		posDisablePrefillCheckoutAddress: runtimeConfig.posDisablePrefillCheckoutAddress,
 		posDisplayOrderQrAfterPayment: runtimeConfig.posDisplayOrderQrAfterPayment,
 		posQrCodeAfterPayment: runtimeConfig.posQrCodeAfterPayment,
 		tapToPay: {
@@ -80,6 +81,7 @@ export const actions = {
 			.object({
 				posDisplayOrderQrAfterPayment: z.boolean({ coerce: true }),
 				posPrefillTermOfUse: z.boolean({ coerce: true }),
+				posDisablePrefillCheckoutAddress: z.boolean({ coerce: true }),
 				posTouchTag: z.string().array(),
 				tapToPayOnActivationUrl: z.string(),
 				tapToPayProvider: z.string()
@@ -114,6 +116,11 @@ export const actions = {
 			result.posDisplayOrderQrAfterPayment
 		);
 		runtimeConfig.posDisplayOrderQrAfterPayment = result.posDisplayOrderQrAfterPayment;
+		await persistConfigElement(
+			'posDisablePrefillCheckoutAddress',
+			result.posDisablePrefillCheckoutAddress
+		);
+		runtimeConfig.posDisablePrefillCheckoutAddress = result.posDisablePrefillCheckoutAddress;
 		await persistConfigElement('posTouchTag', result.posTouchTag);
 		runtimeConfig.posTouchTag = result.posTouchTag;
 		await persistConfigElement('posQrCodeAfterPayment', posQrCodeAfterPayment);

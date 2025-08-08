@@ -75,6 +75,15 @@
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
+			name="posDisablePrefillCheckoutAddress"
+			class="form-checkbox"
+			checked={data.posDisablePrefillCheckoutAddress}
+		/>
+		Do not prefill checkout with shop address on PoS session
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
 			name="posDisplayOrderQrAfterPayment"
 			class="form-checkbox"
 			bind:checked={posDisplayOrderQrAfterPayment}

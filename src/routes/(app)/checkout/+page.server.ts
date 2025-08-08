@@ -92,15 +92,18 @@ export async function load({ parent, locals }) {
 		emailsEnabled,
 		collectIPOnDeliverylessOrders: runtimeConfig.collectIPOnDeliverylessOrders,
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
-		personalInfoConnected: {
-			firstName: personalInfoConnected?.firstName,
-			lastName: personalInfoConnected?.lastName,
-			address: personalInfoConnected?.address,
-			_id: personalInfoConnected?._id.toString(),
-			newsletter: personalInfoConnected?.newsletter,
-			npub: personalInfoConnected?.npub,
-			email: personalInfoConnected?.email
-		},
+		posDisablePrefillCheckoutAddress: runtimeConfig.posDisablePrefillCheckoutAddress,
+		personalInfoConnected: !runtimeConfig.posDisablePrefillCheckoutAddress
+			? {
+					firstName: personalInfoConnected?.firstName,
+					lastName: personalInfoConnected?.lastName,
+					address: personalInfoConnected?.address,
+					_id: personalInfoConnected?._id.toString(),
+					newsletter: personalInfoConnected?.newsletter,
+					npub: personalInfoConnected?.npub,
+					email: personalInfoConnected?.email
+			  }
+			: {},
 		shopInformation: runtimeConfig.shopInformation,
 		isBillingAddressMandatory: runtimeConfig.isBillingAddressMandatory,
 		displayNewsletterCommercialProspection: runtimeConfig.displayNewsletterCommercialProspection,
