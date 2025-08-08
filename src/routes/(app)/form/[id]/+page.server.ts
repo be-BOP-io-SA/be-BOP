@@ -1,4 +1,4 @@
-import { ORIGIN, SMTP_USER } from '$env/static/private';
+import { ORIGIN, SMTP_USER } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import { rateLimit } from '$lib/server/rateLimit';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
