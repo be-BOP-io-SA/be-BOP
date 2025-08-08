@@ -5,10 +5,9 @@
 	import IconCreditCard from '$lib/components/icons/IconCreditCard.svelte';
 	import IconPaypal from '$lib/components/icons/IconPaypal.svelte';
 	import { useI18n } from '$lib/i18n';
-	import IconCash from './IconCash.svelte';
 	import IconLightning from './IconLightning.svelte';
 	const { t } = useI18n();
-	let paymentMethod = 'cash';
+	let paymentMethod = 'lightning';
 </script>
 
 <div class="mx-auto max-w-7xl p-2">
@@ -55,14 +54,6 @@
 			>
 				<IconLightning />
 				<span>{t('checkout.paymentMethod.lightning')}</span>
-			</button>
-
-			<button
-				on:click={() => (paymentMethod = 'point-of-sale')}
-				class="w-full px-6 py-4 bg-gray-100 border border-gray-400 rounded-lg text-xl flex items-center justify-center gap-2 shadow-sm hover:bg-gray-200 transition-colors duration-200"
-			>
-				<IconCash />
-				{t('checkout.paymentMethod.cash')}
 			</button>
 		</form>
 	</div>
