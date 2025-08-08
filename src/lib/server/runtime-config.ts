@@ -252,30 +252,40 @@ const baseConfig = {
 			html: `<p>This message was sent to you because you have requested to reset your password.</p>
 <p>Follow <a href="{{resetLink}}">this link</a> to reset your password.</p>
 <p>If you didn't ask for this password reset procedure, please ignore this message and do nothing.</p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		temporarySessionRequest: {
 			subject: 'Temporary session request',
 			html: `<p>This message was sent to you because you have requested a temporary session link.</p>
 <p>Follow <a href="{{sessionLink}}">this link</a> to create your temporary session.</p>
 <p>If you didn't ask for this temporary session procedure, please ignore this message and do nothing.</p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'order.payment.expired': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is expired, see <a href="{{orderLink}}">{{orderLink}}</a></p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'order.payment.canceled': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is cancelled, see <a href="{{orderLink}}">{{orderLink}}</a></p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'order.payment.pending.card': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
 <p>Please pay using this link: <a href="{{paymentLink}}">{{paymentLink}}</a></p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'order.payment.pending.bank-transfer': {
 			subject: 'Order #{{orderNumber}}',
@@ -284,38 +294,50 @@ const baseConfig = {
 <p>IBAN: {{iban}}<br/>
 BIC: {{bic}}<br/>
 Amount: {{amount}} {{currency}}</p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'order.payment.pending.paypal': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
 <p>Please pay using this link: <a href="{{paymentLink}}">{{paymentLink}}</a></p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'order.payment.pending.lightning': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
 <p>Please pay using this information:</p>
 <p>Lightning invoice: {{paymentAddress}}</p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'order.payment.pending.bitcoin': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
 <p>Please send {{amount}} {{currency}} to {{paymentAddress}}</p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'order.paid': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is paid, see <a href="{{orderLink}}">{{orderLink}}</a></p>
 <p>Order <a href="{{orderLink}}">#{{orderNumber}}</a> is fully paid!</p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'order.payment.paid': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is paid, see <a href="{{orderLink}}">{{orderLink}}</a></p>
 <p>Order <a href="{{orderLink}}">#{{orderNumber}}</a> is not fully paid yet.</p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'order.update.challenge': {
 			subject: 'Leaderboard {{challengeName}',
@@ -325,7 +347,9 @@ It contains the following product(s) that increase the challenge {{challengeName
 <p>{{itemsChallenge}}</p>
 <p>Total increase : {{increase}}</p>
 <p>Challenge current level : {{challengeLevel}}</p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'order.update.leaderboard': {
 			subject: 'Leaderboard {{leaderboardName}}',
@@ -333,7 +357,9 @@ It contains the following product(s) that increase the challenge {{challengeName
 The order #{{orderNumber}} {{orderLink}} was successfully paid.
 It contains the following product(s) that increase the leaderboard {{leaderboardName}} : </p>
 <p>{{itemsLeaderboard}}</p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'schedule.new.event': {
 			subject: '{{brandName}} - New event on schedule {{scheduleName}}',
@@ -344,13 +370,17 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 <p>{{eventShortDescription}}</p>
 <p>{{eventDescription}}</p>
 <p><a href="{{eventLocationLink}}">{{eventLocationName}}</a></p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'schedule.rsvp.admin': {
 			subject: '{{brandName}} - RSVP for {{eventName}}',
 			html: `<p>A new person confirmed participation to this event : {{eventName}}</p>
 <p>{{participantContact}}</p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		},
 		'schedule.rsvp.user': {
 			subject: '{{brandName}} - Participation confirmation to {{eventName}}',
@@ -364,7 +394,9 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 <p></p>
 <p>If this an error or if you don't want to participate anymore to the event, please notify the organizer through this link :</p>
 <p><a href="mailto:{{eventCancellationLink}}?subject=Cancel_Participation">Cancel participation</a></p>`,
-			default: true as boolean
+			default: true as boolean,
+			sendToUser: true as boolean,
+			sendCopyToAdmin: true as boolean
 		}
 	}
 };
