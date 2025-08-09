@@ -389,6 +389,59 @@
 			"ZW": "Zimbabwe"
 		}
 	},
+	"customer-touch": {
+		"cart": {
+			"totalTTC": "Total TTC"
+		}
+	},
+	"customerTouch": {
+		"": {
+			"payment": {}
+		},
+		"cancelOrderTitlle": "Abandon the order?",
+		"cart": {
+			"ht": "HT",
+			"targetOnSite": "On site",
+			"targetTakeAway": "Take away",
+			"title": "Your order"
+		},
+		"clickRedirect": "click here if you're not redirected",
+		"cta": {
+			"abandonment": "Cancel",
+			"addFirstProduct": "Add 1st product",
+			"addProduct": "Add",
+			"end": "End",
+			"pay": "Pay",
+			"resumeOrder": "Resume !",
+			"retakeOrder": "Resume order"
+		},
+		"ctaBack": "Back",
+		"deletedOrderTitle": "Your order has been deleted !",
+		"loginText": "Log in?",
+		"noThanksCta": "No thanks",
+		"orderConfirmedTitle": "Order n° {number} confirmed !",
+		"orderPaidTitle": "Order Paid",
+		"orderPaymentFailedTitle": "Order payment failed",
+		"orderTitle": "Receive the receipt ?",
+		"payForOrderTitle": "Please pay for your order.",
+		"payment": {
+			"Title": "Choose your payment method"
+		},
+		"printCta": "Print",
+		"receipt": {
+			"emailAddressPrompt": "Please enter your email address",
+			"howToSend": "How should we send the receipt?",
+			"scanNostrNpubPrompt": "Scan our Nostr npub",
+			"sendCodePrompt": "and send a dm with the following code:",
+			"sendEmailCta": "Send receipt",
+			"sent": "Receipt sent"
+		},
+		"sendTicketCta": "Send",
+		"welcomHello": "Hello",
+		"welcomeOnSiteCta": "On site",
+		"welcomeQuestion": "Where would you like to eat?",
+		"welcomeTakeAwayCta": "Take away"
+	},
 	"error": {
 		"404": "The page {invalidUrl} you requested could not be found. Please check that your link is correct or contact the site team to report the problem.",
 		"title": "Error {status}"
