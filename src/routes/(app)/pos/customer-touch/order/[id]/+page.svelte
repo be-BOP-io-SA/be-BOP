@@ -109,6 +109,7 @@
 				disabled={!data.order.payments[0].id}
 				on:click={() => receiptIFrame[data.order.payments[0].id]?.contentWindow?.print()}
 				class="flex w-1/3 justify-center items-center bg-[#8fd16a] font-bold py-4 rounded-lg text-xl shadow-md"
+				style="display: none;"
 			>
 				{t('customerTouch.printCta')}
 			</button>
