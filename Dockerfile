@@ -10,8 +10,6 @@ COPY --link .git .git
 # Compute last commit hash
 RUN git rev-parse HEAD > /app/.git-commit-hash
 
-FROM node:20-slim
-
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
@@ -31,12 +29,20 @@ COPY --link --chown=1000 src src
 COPY --link --chown=1000 assets assets
 COPY --link --chown=1000 static static
 COPY --link --chown=1000 docs docs
-COPY --link --chown=1000 tsconfig.json *.config.js *.config.ts entrypoint.sh .env ./
+COPY --link --chown=1000 tsconfig.json *.config.js *.config.ts setup-env.sh .env .env.local ./
+
+RUN chmod +x /app/setup-env.sh && /app/setup-env.sh
+
+RUN PUBLIC_VERSION=$(cat ./.git-commit-hash) pnpm run build
+RUN pnpm prune --prod
+
+# Final stage
+FROM node:20-slim
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+COPY --from=build /app /app
 
 EXPOSE 3000
-
-COPY --link --chown=1000 --from=build /app/.git-commit-hash /app/.git-commit-hash
-
-RUN chmod +x /app/entrypoint.sh
-
-CMD ["/bin/bash", "-c", "/app/entrypoint.sh"]
+CMD ["node", "--enable-source-maps", "build/index.js"]

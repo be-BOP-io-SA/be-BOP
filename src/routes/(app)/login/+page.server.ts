@@ -5,19 +5,19 @@ import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { fail, redirect } from '@sveltejs/kit';
 import { collections } from '$lib/server/database.js';
 import { addDays } from 'date-fns';
-import {
-	FACEBOOK_ID,
-	FACEBOOK_SECRET,
-	GITHUB_ID,
-	GITHUB_SECRET,
-	GOOGLE_ID,
-	GOOGLE_SECRET,
-	TWITTER_ID,
-	TWITTER_SECRET
-} from '$env/static/private';
 import { zodNpub } from '$lib/server/nostr.js';
 import { renewSessionId } from '$lib/server/user.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
+
+import { env } from '$env/dynamic/private';
+const FACEBOOK_ID = env.FACEBOOK_ID;
+const FACEBOOK_SECRET = env.FACEBOOK_SECRET;
+const GITHUB_ID = env.GITHUB_ID;
+const GITHUB_SECRET = env.GITHUB_SECRET;
+const GOOGLE_ID = env.GOOGLE_ID;
+const GOOGLE_SECRET = env.GOOGLE_SECRET;
+const TWITTER_ID = env.TWITTER_ID;
+const TWITTER_SECRET = env.TWITTER_SECRET;
 
 export const load = async ({ url }) => {
 	const token = url.searchParams.get('token');

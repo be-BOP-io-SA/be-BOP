@@ -8,7 +8,6 @@ import {
 } from 'mongodb';
 import { collections, withTransaction } from '../database';
 import { Lock } from '../lock';
-import { ORIGIN } from '$env/static/private';
 import { Kind } from 'nostr-tools';
 import { toBitcoins } from '$lib/utils/toBitcoins';
 import { getUnixTime, subHours } from 'date-fns';
@@ -20,6 +19,9 @@ import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import { queueEmail } from '../email';
 import { useI18n } from '$lib/i18n';
 import { typedInclude } from '$lib/utils/typedIncludes';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
 
 const lock = new Lock('order-notifications');
 

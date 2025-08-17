@@ -1,8 +1,10 @@
-import { S3_BUCKET } from '$env/static/private';
 import { collections, withTransaction } from '$lib/server/database';
 import { s3client } from '$lib/server/s3';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
+
+import { env } from '$env/dynamic/private';
+const S3_BUCKET = env.S3_BUCKET;
 
 export async function POST({ request }) {
 	const { digitalFileId } = z

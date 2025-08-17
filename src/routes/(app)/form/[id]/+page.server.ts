@@ -1,4 +1,3 @@
-import { ORIGIN, SMTP_USER } from '$env/static/private';
 import { collections } from '$lib/server/database';
 import { rateLimit } from '$lib/server/rateLimit';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
@@ -6,6 +5,10 @@ import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';
 import { z } from 'zod';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
+const SMTP_USER = env.SMTP_USER;
 
 export const load = async ({ params, locals }) => {
 	const contactForm = await collections.contactForms.findOne(

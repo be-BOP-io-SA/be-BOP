@@ -5,8 +5,10 @@ import { processClosed } from '../process';
 import { setTimeout } from 'node:timers/promises';
 import { refreshPromise, runtimeConfig } from '../runtime-config';
 import { ObjectId } from 'mongodb';
-import { ORIGIN } from '$env/static/private';
 import { Kind } from 'nostr-tools';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
 
 const lock = new Lock('paid-subscriptions');
 

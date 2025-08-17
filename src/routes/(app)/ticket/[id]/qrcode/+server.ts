@@ -1,5 +1,7 @@
-import { ORIGIN } from '$env/static/private';
 import qrcode from 'qrcode';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
 
 export async function GET({ params }) {
 	return new Response(

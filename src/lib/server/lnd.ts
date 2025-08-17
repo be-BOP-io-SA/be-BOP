@@ -1,15 +1,15 @@
 import { readFileSync } from 'node:fs';
 // We use undici instead of native fetch to be able to accept self-signed certificates
 import { Agent, fetch } from 'undici';
-import {
-	LND_MACAROON_PATH,
-	LND_MACAROON_VALUE,
-	LND_REST_URL,
-	TOR_PROXY_URL
-} from '$env/static/private';
 import { z } from 'zod';
 import { error } from '@sveltejs/kit';
 import { socksDispatcher } from 'fetch-socks';
+
+import { env } from '$env/dynamic/private';
+const LND_MACAROON_PATH = env.LND_MACAROON_PATH;
+const LND_MACAROON_VALUE = env.LND_MACAROON_VALUE;
+const LND_REST_URL = env.LND_REST_URL;
+const TOR_PROXY_URL = env.TOR_PROXY_URL;
 
 if (LND_MACAROON_PATH && LND_MACAROON_VALUE) {
 	throw new Error('Cannot specify both LND_MACAROON_PATH and LND_MACAROON_VALUE');

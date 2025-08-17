@@ -1,8 +1,10 @@
-import { NOSTR_PRIVATE_KEY } from '$env/static/private';
 import { bech32 } from 'bech32';
 import { getPublicKey } from 'nostr-tools';
 import { z } from 'zod';
 import { runtimeConfig } from './runtime-config';
+
+import { env } from '$env/dynamic/private';
+const NOSTR_PRIVATE_KEY = env.NOSTR_PRIVATE_KEY;
 
 export const nostrPrivateKey = NOSTR_PRIVATE_KEY;
 export let nostrPublicKey = '';

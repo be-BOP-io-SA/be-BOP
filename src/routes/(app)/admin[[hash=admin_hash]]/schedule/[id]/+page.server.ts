@@ -7,12 +7,15 @@ import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { generateId } from '$lib/utils/generateId';
 import { deletePicture, generatePicture } from '$lib/server/picture';
-import { ORIGIN, SMTP_USER } from '$env/static/private';
 import { queueEmail } from '$lib/server/email';
 import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';
 import { format } from 'date-fns';
 import { runtimeConfig } from '$lib/server/runtime-config';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
+const SMTP_USER = env.SMTP_USER;
 
 export const load = async ({ params }) => {
 	const pictures = await collections.pictures

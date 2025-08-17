@@ -2,7 +2,6 @@ import { fail } from '@sveltejs/kit';
 import * as devalue from 'devalue';
 import type { Challenge } from '$lib/types/Challenge.js';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { S3_REGION, S3_KEY_ID, S3_KEY_SECRET, S3_BUCKET, SMTP_USER } from '$env/static/private';
 import type { Picture } from '$lib/types/Picture';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import { sendEmail } from '$lib/server/email.js';
@@ -10,6 +9,13 @@ import { z } from 'zod';
 import { collections, db } from '$lib/server/database.js';
 import { ObjectId } from 'mongodb';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
+
+import { env } from '$env/dynamic/private';
+const S3_REGION = env.S3_REGION;
+const S3_KEY_ID = env.S3_KEY_ID;
+const S3_KEY_SECRET = env.S3_KEY_SECRET;
+const S3_BUCKET = env.S3_BUCKET;
+const SMTP_USER = env.SMTP_USER;
 
 export function load({ url }) {
 	return {

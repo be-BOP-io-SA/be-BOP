@@ -3,7 +3,6 @@ import { collections } from '../database';
 import { Lock } from '../lock';
 import type { NostRReceivedMessage } from '$lib/types/NostRReceivedMessage';
 import { Kind } from 'nostr-tools';
-import { ORIGIN } from '$env/static/private';
 import { refreshPromise, runtimeConfig } from '../runtime-config';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { addSeconds, formatDistance, subMinutes } from 'date-fns';
@@ -21,6 +20,9 @@ import { filterNullish } from '$lib/utils/fillterNullish';
 import type { Price } from '$lib/types/Order';
 import { sendAuthentificationlink } from '../sendNotification';
 import { freeProductsForUser } from '../subscriptions';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
 
 const lock = new Lock('received-messages');
 

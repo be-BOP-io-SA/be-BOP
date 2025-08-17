@@ -58,6 +58,3 @@ if ! grep -q "^${S3_KEY_SECRET}$" ${ENV_LOCAL_PATH}; then
 		exit 1;
 	fi;
 fi
-
-ORIGIN="${ORIGIN:-http://localhost:3000}" PUBLIC_VERSION=$(cat ./.git-commit-hash) pnpm run build
-PORT=3000 node --enable-source-maps build/index.js

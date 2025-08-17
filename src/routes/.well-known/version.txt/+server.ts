@@ -1,4 +1,6 @@
-import { PUBLIC_VERSION } from '$env/static/public';
+import { env } from '$env/dynamic/public';
+
+const PUBLIC_VERSION = env.PUBLIC_VERSION;
 
 export const GET = () =>
 	new Response(PUBLIC_VERSION, { headers: { 'Content-Type': 'text/plain' } });

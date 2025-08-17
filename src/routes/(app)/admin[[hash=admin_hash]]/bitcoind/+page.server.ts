@@ -1,4 +1,3 @@
-import { ALLOW_BITCOIN_RPC, BIP84_XPUB } from '$env/static/private';
 import {
 	createWallet,
 	listWallets,
@@ -15,6 +14,10 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Order } from '$lib/types/Order.js';
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
+
+import { env } from '$env/dynamic/private';
+const ALLOW_BITCOIN_RPC = env.ALLOW_BITCOIN_RPC;
+const BIP84_XPUB = env.BIP84_XPUB;
 
 export async function load() {
 	const wallets = await listWallets();

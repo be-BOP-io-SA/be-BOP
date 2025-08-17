@@ -1,19 +1,19 @@
 import { createTestAccount, createTransport, type Transporter } from 'nodemailer';
-import {
-	SMTP_FAKE,
-	SMTP_HOST,
-	SMTP_PASSWORD,
-	SMTP_PORT,
-	SMTP_USER,
-	SMTP_FROM,
-	ORIGIN
-} from '$env/static/private';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { htmlToText } from 'html-to-text';
 import { defaultConfig, runtimeConfig, type EmailTemplateKey } from './runtime-config';
 import { collections } from './database';
 import { ClientSession, ObjectId } from 'mongodb';
 import { mapKeys } from '$lib/utils/mapKeys';
+
+import { env } from '$env/dynamic/private';
+const SMTP_FAKE = env.SMTP_FAKE;
+const SMTP_HOST = env.SMTP_HOST;
+const SMTP_PASSWORD = env.SMTP_PASSWORD;
+const SMTP_PORT = env.SMTP_PORT;
+const SMTP_USER = env.SMTP_USER;
+const SMTP_FROM = env.SMTP_FROM;
+const ORIGIN = env.ORIGIN;
 
 const fakeEmail = SMTP_FAKE === 'true' || SMTP_FAKE === '1';
 export const emailsEnabled = !!(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD) || fakeEmail;

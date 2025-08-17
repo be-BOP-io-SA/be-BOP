@@ -4,7 +4,6 @@ import type { Actions } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { ObjectId } from 'mongodb';
-import { ORIGIN, S3_BUCKET } from '$env/static/private';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Product } from '$lib/types/Product';
 import { Kind } from 'nostr-tools';
@@ -21,6 +20,10 @@ import { pojo } from '$lib/server/pojo';
 import { zodSlug } from '$lib/server/zod';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
+const S3_BUCKET = env.S3_BUCKET;
 
 export const load = async ({ url }) => {
 	const productId = url.searchParams.get('duplicate_from');

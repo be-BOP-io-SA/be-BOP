@@ -1,4 +1,3 @@
-import { ORIGIN, SMTP_USER } from '$env/static/private';
 import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database';
 import { conflictingTapToPayOrder, onOrderPayment, onOrderPaymentFailed } from '$lib/server/orders';
@@ -6,6 +5,10 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
+const SMTP_USER = env.SMTP_USER;
 
 export const actions = {
 	confirm: async ({ params, request }) => {

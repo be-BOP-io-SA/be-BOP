@@ -4,8 +4,10 @@ import { collections } from '../database';
 import { processClosed } from '../process';
 import { setTimeout } from 'node:timers/promises';
 import { s3client } from '../s3';
-import { S3_BUCKET } from '$env/static/private';
 import { ObjectId } from 'mongodb';
+
+import { env } from '$env/dynamic/private';
+const S3_BUCKET = env.S3_BUCKET;
 
 const lock = new Lock('cleanup');
 

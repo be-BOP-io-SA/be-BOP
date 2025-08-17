@@ -1,9 +1,11 @@
-import { S3_BUCKET } from '$env/static/private';
 import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database';
 import { getPublicS3DownloadLink, s3client } from '$lib/server/s3';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { error, redirect } from '@sveltejs/kit';
+
+import { env } from '$env/dynamic/private';
+const S3_BUCKET = env.S3_BUCKET;
 
 export async function load({ params }) {
 	const digitalFile = await collections.digitalFiles.findOne({

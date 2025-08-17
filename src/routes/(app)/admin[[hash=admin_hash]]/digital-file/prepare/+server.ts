@@ -1,4 +1,3 @@
-import { S3_BUCKET } from '$env/static/private';
 import { collections } from '$lib/server/database';
 import { publicS3Client, secureLink } from '$lib/server/s3';
 import { generateId } from '$lib/utils/generateId';
@@ -7,6 +6,9 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { error } from '@sveltejs/kit';
 import * as mimeTypes from 'mime-types';
 import { z } from 'zod';
+
+import { env } from '$env/dynamic/private';
+const S3_BUCKET = env.S3_BUCKET;
 
 export async function POST({ request }) {
 	const body = z

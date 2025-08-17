@@ -1,4 +1,3 @@
-import { SMTP_USER } from '$env/static/private';
 import { collections } from '$lib/server/database';
 import { queueEmail } from '$lib/server/email';
 import { zodNpub } from '$lib/server/nostr';
@@ -9,6 +8,9 @@ import { format } from 'date-fns';
 import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';
 import { z } from 'zod';
+
+import { env } from '$env/dynamic/private';
+const SMTP_USER = env.SMTP_USER;
 
 export const load = async ({ params }) => {
 	const schedule = await collections.schedules.findOne({ _id: params.id });

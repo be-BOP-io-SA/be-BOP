@@ -10,10 +10,12 @@ import {
 	s3client
 } from './s3';
 import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { S3_BUCKET } from '$env/static/private';
 import * as mimeTypes from 'mime-types';
 import type { ImageData, Picture, TagType } from '../types/Picture';
 import type { SetRequired } from 'type-fest';
+
+import { env } from '$env/dynamic/private';
+const S3_BUCKET = env.S3_BUCKET;
 
 /**
  * Upload picture to S3 under different formats, and create a document in db.pictures.

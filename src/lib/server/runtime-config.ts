@@ -4,7 +4,6 @@ import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
 import type { Currency } from '$lib/types/Currency';
 import type { DeliveryFees } from '$lib/types/DeliveryFees';
 import { currencies } from '$lib/stores/currencies';
-import { ADMIN_LOGIN, ADMIN_PASSWORD } from '$env/static/private';
 import { createSuperAdminUserInDb } from './user';
 import { runMigrations } from './migrations';
 import type { ProductActionSettings } from '$lib/types/ProductActionSettings';
@@ -29,6 +28,10 @@ import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import { merge } from '$lib/utils/merge';
+
+import { env } from '$env/dynamic/private';
+const ADMIN_LOGIN = env.ADMIN_LOGIN;
+const ADMIN_PASSWORD = env.ADMIN_PASSWORD;
 
 const baseConfig = {
 	adminHash: '',

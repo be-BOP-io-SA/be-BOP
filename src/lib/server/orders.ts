@@ -32,7 +32,6 @@ import { error } from '@sveltejs/kit';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { currentWallet, getNewAddress, orderAddressLabel } from './bitcoind';
 import { isLndConfigured, lndCreateInvoice } from './lnd';
-import { ORIGIN } from '$env/static/private';
 import { emailsEnabled, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
 import { type Cart } from '$lib/types/Cart';
@@ -42,7 +41,6 @@ import { sumCurrency } from '$lib/utils/sumCurrency';
 import { refreshAvailableStockInDb } from './product';
 import { checkCartItems } from './cart';
 import { userQuery } from './user';
-import { SMTP_USER } from '$env/static/private';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
@@ -128,6 +126,10 @@ export async function conflictingTapToPayOrder(orderId: string): Promise<string 
 	}
 	return null;
 }
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
+const SMTP_USER = env.SMTP_USER;
 
 async function generateOrderNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(

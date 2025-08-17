@@ -14,18 +14,6 @@ import GitHub from '@auth/core/providers/github';
 import Google from '@auth/core/providers/google';
 import Facebook from '@auth/core/providers/facebook';
 import Twitter from '@auth/core/providers/twitter';
-import {
-	FACEBOOK_ID,
-	FACEBOOK_SECRET,
-	GITHUB_ID,
-	GITHUB_SECRET,
-	GOOGLE_ID,
-	GOOGLE_SECRET,
-	LINK_PRELOAD_HEADERS,
-	ORIGIN,
-	TWITTER_ID,
-	TWITTER_SECRET
-} from '$env/static/private';
 import { sequence } from '@sveltejs/kit/hooks';
 import { building } from '$app/environment';
 import { sha256 } from '$lib/utils/sha256';
@@ -44,6 +32,18 @@ import { renewSessionId } from '$lib/server/user';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { rateLimit } from '$lib/server/rateLimit';
 import { toIPv4Maybe } from '$lib/server/utils/toIPv4Maybe';
+
+import { env } from '$env/dynamic/private';
+const FACEBOOK_ID = env.FACEBOOK_ID;
+const FACEBOOK_SECRET = env.FACEBOOK_SECRET;
+const GITHUB_ID = env.GITHUB_ID;
+const GITHUB_SECRET = env.GITHUB_SECRET;
+const GOOGLE_ID = env.GOOGLE_ID;
+const GOOGLE_SECRET = env.GOOGLE_SECRET;
+const LINK_PRELOAD_HEADERS = env.LINK_PRELOAD_HEADERS;
+const ORIGIN = env.ORIGIN;
+const TWITTER_ID = env.TWITTER_ID;
+const TWITTER_SECRET = env.TWITTER_SECRET;
 
 const SSO_COOKIE = 'next-auth.session-token';
 

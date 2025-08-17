@@ -1,4 +1,3 @@
-import { ORIGIN } from '$env/static/private';
 import { collections } from '$lib/server/database';
 import { isLndConfigured, lndGetInfo } from '$lib/server/lnd';
 import {
@@ -18,6 +17,9 @@ import type { Event } from 'nostr-tools';
 import { uniqBy } from '$lib/utils/uniqBy';
 import { NOSTR_PROTOCOL_VERSION } from '$lib/server/locks/handle-messages';
 import { isPhoenixdConfigured, phoenixdLnAddress } from '$lib/server/phoenixd';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
 
 export function load() {
 	return {

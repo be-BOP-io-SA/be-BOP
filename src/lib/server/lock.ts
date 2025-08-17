@@ -2,8 +2,9 @@ import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { processClosed } from './process';
 import { setTimeout } from 'node:timers/promises';
-import { NO_LOCK } from '$env/static/private';
+
 import { env } from '$env/dynamic/private';
+const NO_LOCK = env.NO_LOCK;
 
 const processId = new ObjectId();
 

@@ -1,4 +1,3 @@
-import { ORIGIN } from '$env/static/private';
 import { adminPrefix } from '$lib/server/admin.js';
 import { getCartFromDb } from '$lib/server/cart.js';
 import { cmsFromContent } from '$lib/server/cms.js';
@@ -40,6 +39,9 @@ async function getCartAndRemoveSomeItems(userIdentifier: UserIdentifier): Promis
 	}
 	return { ...cartInDb, items: itemsAfterRemoval };
 }
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
 
 export async function load(params) {
 	if (!runtimeConfig.isAdminCreated) {

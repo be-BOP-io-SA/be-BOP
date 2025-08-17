@@ -1,7 +1,7 @@
 node_modules
 *.md
 dist
-.env.local
 .svelte-kit
 
 # We do not add .git as we need it to get the commit hash
+# We do not add .env.local as we need it to pre-build docker in the build stage

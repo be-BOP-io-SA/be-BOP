@@ -1,4 +1,3 @@
-import { ALLOW_LND_RPC } from '$env/static/private';
 import {
 	lndActivateAutopilot,
 	lndAutopilotActive,
@@ -12,6 +11,9 @@ import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { updateLightningInvoiceDescription } from '$lib/server/actions.js';
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
+
+import { env } from '$env/dynamic/private';
+const ALLOW_LND_RPC = env.ALLOW_LND_RPC;
 
 export async function load() {
 	return {

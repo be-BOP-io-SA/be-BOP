@@ -1,7 +1,9 @@
-import { ORIGIN } from '$env/static/private';
 import { collections } from '$lib/server/database';
 import { error } from '@sveltejs/kit';
 import { addMinutes, format } from 'date-fns';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
 
 export const GET = async ({ params }) => {
 	const schedule = await collections.schedules.findOne({ _id: params.id });

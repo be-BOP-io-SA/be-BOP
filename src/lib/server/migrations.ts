@@ -1,10 +1,11 @@
 import { ClientSession, ObjectId } from 'mongodb';
 import { collections, withTransaction } from './database';
 import { marked } from 'marked';
-import { env } from '$env/dynamic/private';
 import type { OrderPayment } from '$lib/types/Order';
 import { Lock } from './lock';
-import { ORIGIN } from '$env/static/private';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
 
 const migrations = [
 	{

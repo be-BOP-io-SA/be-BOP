@@ -1,15 +1,15 @@
-import {
-	BITCOIN_RPC_URL,
-	BITCOIN_RPC_PASSWORD,
-	BITCOIN_RPC_USER,
-	TOR_PROXY_URL,
-	BIP84_XPUB
-} from '$env/static/private';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { runtimeConfig } from './runtime-config';
 import { socksDispatcher } from 'fetch-socks';
 import type { ObjectId } from 'mongodb';
+
+import { env } from '$env/dynamic/private';
+const BITCOIN_RPC_URL = env.BITCOIN_RPC_URL;
+const BITCOIN_RPC_PASSWORD = env.BITCOIN_RPC_PASSWORD;
+const BITCOIN_RPC_USER = env.BITCOIN_RPC_USER;
+const TOR_PROXY_URL = env.TOR_PROXY_URL;
+const BIP84_XPUB = env.BIP84_XPUB;
 
 export const isBitcoinConfigured =
 	!!BITCOIN_RPC_URL && !!BITCOIN_RPC_PASSWORD && !!BITCOIN_RPC_USER;

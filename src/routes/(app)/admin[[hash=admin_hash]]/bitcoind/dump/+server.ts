@@ -1,7 +1,9 @@
-import { ALLOW_DUMPING_WALLET } from '$env/static/private';
 import { dumpWalletInfo } from '$lib/server/bitcoind';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
+
+import { env } from '$env/dynamic/private';
+const ALLOW_DUMPING_WALLET = env.ALLOW_DUMPING_WALLET;
 
 export const POST = async (params) => {
 	const { wallet } = z.object({ wallet: z.string() }).parse(await params.request.json());

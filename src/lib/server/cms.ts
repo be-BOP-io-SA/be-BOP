@@ -6,7 +6,6 @@ import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
 import DOMPurify from 'dompurify';
 import { collections } from './database';
-import { ALLOW_JS_INJECTION } from '$env/static/private';
 import type { PickDeep } from 'type-fest';
 import type { Specification } from '$lib/types/Specification';
 import type { Tag } from '$lib/types/Tag';
@@ -17,6 +16,9 @@ import type { Leaderboard } from '$lib/types/Leaderboard';
 import { ScheduleEventBooked } from '$lib/types/Schedule';
 import { groupBy } from '$lib/utils/group-by';
 import { subMinutes } from 'date-fns';
+
+import { env } from '$env/dynamic/private';
+const ALLOW_JS_INJECTION = env.ALLOW_JS_INJECTION;
 
 const window = new JSDOM('').window;
 

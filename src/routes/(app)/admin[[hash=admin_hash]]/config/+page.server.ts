@@ -1,4 +1,3 @@
-import { ORIGIN } from '$env/static/private';
 import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { CURRENCIES } from '$lib/types/Currency';
@@ -8,6 +7,9 @@ import { adminPrefix } from '$lib/server/admin';
 import { z } from 'zod';
 import { redirect } from '@sveltejs/kit';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
+
+import { env } from '$env/dynamic/private';
+const ORIGIN = env.ORIGIN;
 
 export async function load(event) {
 	return {

@@ -2,9 +2,11 @@ import { collections } from '$lib/server/database';
 import { z } from 'zod';
 import { sendResetPasswordNotification } from '$lib/server/sendNotification';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
-import { SMTP_USER } from '$env/static/private';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
+
+import { env } from '$env/dynamic/private';
+const SMTP_USER = env.SMTP_USER;
 
 export const load = async () => {};
 

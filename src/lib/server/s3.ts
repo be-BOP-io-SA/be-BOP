@@ -1,14 +1,14 @@
 import { building } from '$app/environment';
-import {
-	S3_KEY_ID,
-	S3_REGION,
-	S3_KEY_SECRET,
-	S3_ENDPOINT_URL,
-	S3_BUCKET
-} from '$env/static/private';
-import { PUBLIC_S3_ENDPOINT_URL } from '$env/static/public';
 import * as AWS from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+import { env } from '$env/dynamic/private';
+const S3_KEY_ID = env.S3_KEY_ID;
+const S3_REGION = env.S3_REGION;
+const S3_KEY_SECRET = env.S3_KEY_SECRET;
+const S3_ENDPOINT_URL = env.S3_ENDPOINT_URL;
+const S3_BUCKET = env.S3_BUCKET;
+const PUBLIC_S3_ENDPOINT_URL = env.PUBLIC_S3_ENDPOINT_URL;
 
 const s3client = building
 	? (null as unknown as AWS.S3)

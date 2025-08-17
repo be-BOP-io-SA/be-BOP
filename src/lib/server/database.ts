@@ -1,10 +1,4 @@
 import {
-	MONGODB_URL,
-	MONGODB_DB,
-	MONGODB_IP_FAMILY,
-	MONGODB_DIRECT_CONNECTION
-} from '$env/static/private';
-import {
 	MongoClient,
 	ObjectId,
 	type WithSessionCallback,
@@ -37,7 +31,6 @@ import type { Tag } from '$lib/types/Tag';
 import type { Slider } from '$lib/types/slider';
 import { building } from '$app/environment';
 import type { Theme } from '$lib/types/Theme';
-import { env } from '$env/dynamic/private';
 import type { PersonalInfo } from '$lib/types/PersonalInfo';
 import type { Specification } from '$lib/types/Specification';
 import type { ContactForm } from '$lib/types/ContactForm';
@@ -48,6 +41,12 @@ import type { Ticket } from '$lib/types/Ticket';
 import type { OrderLabel } from '$lib/types/OrderLabel';
 import type { ScheduleEventBooked, Schedule } from '$lib/types/Schedule';
 import type { Leaderboard } from '$lib/types/Leaderboard';
+
+import { env } from '$env/dynamic/private';
+const MONGODB_URL = env.MONGODB_URL;
+const MONGODB_DB = env.MONGODB_DB;
+const MONGODB_IP_FAMILY = env.MONGODB_IP_FAMILY;
+const MONGODB_DIRECT_CONNECTION = env.MONGODB_DIRECT_CONNECTION;
 
 // Bigger than the default 10, helpful with MongoDB errors
 Error.stackTraceLimit = 100;
