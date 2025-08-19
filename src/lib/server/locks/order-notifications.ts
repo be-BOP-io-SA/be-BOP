@@ -214,6 +214,11 @@ async function handleOrderNotification(order: Order): Promise<void> {
 								// no email
 								break;
 						}
+					case 'failed':
+						break;
+					default:
+						payment.status satisfies never;
+						break;
 				}
 
 				const { t } = useI18n(order.locale || 'en');
