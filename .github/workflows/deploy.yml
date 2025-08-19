@@ -28,9 +28,6 @@ jobs:
           cache: 'pnpm'
       - run: |
           pnpm install --frozen-lockfile
-          cat << EOF > .env.local
-          ${{ secrets.DOT_ENV }}
-          EOF
           pnpm build
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
@@ -40,6 +37,9 @@ jobs:
           known_hosts: ${{ vars.SSH_KNOWN_HOSTS }}
       - name: Deploy
         run: |
-          zip -r build.zip build
+          cat << EOF > env
+          ${{ secrets.DOT_ENV }}
+          EOF
+          zip -r build.zip build env
           scp -P ${{ vars.SSH_PORT }} build.zip ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}:${{ vars.SSH_FOLDER }}/build.zip
-          ssh -p ${{ vars.SSH_PORT }} ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} "hostnamectl && git lfs install && cd ${{ vars.SSH_FOLDER }} && git remote prune origin && git fetch && git checkout $GITHUB_SHA && pnpm install && unzip -o build.zip && pm2 reload ${{ vars.PM2_APP_NAME }} && cd build && find . -mtime +30 -type f -delete"
+          ssh -p ${{ vars.SSH_PORT }} ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} "hostnamectl && git lfs install && cd ${{ vars.SSH_FOLDER }} && git remote prune origin && git fetch && git checkout $GITHUB_SHA && pnpm install && unzip -o build.zip && npx --yes @dotenvx/dotenvx run -f ./env -- pm2 reload ${{ vars.PM2_APP_NAME }} --update-env && rm ./env && cd build && find . -mtime +30 -type f -delete"
