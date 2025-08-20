@@ -7,7 +7,7 @@ import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { generateId } from '$lib/utils/generateId';
 import { deletePicture, generatePicture } from '$lib/server/picture';
-import { ORIGIN, SMTP_USER } from '$env/static/private';
+import { ORIGIN, SMTP_USER } from '$lib/server/env-config';
 import { queueEmail } from '$lib/server/email';
 import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';

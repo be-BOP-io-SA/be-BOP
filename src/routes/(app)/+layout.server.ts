@@ -1,4 +1,4 @@
-import { ORIGIN } from '$env/static/private';
+import { ORIGIN } from '$lib/server/env-config';
 import { adminPrefix } from '$lib/server/admin.js';
 import { getCartFromDb } from '$lib/server/cart.js';
 import { cmsFromContent } from '$lib/server/cms.js';

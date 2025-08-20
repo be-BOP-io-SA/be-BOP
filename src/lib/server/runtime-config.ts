@@ -4,7 +4,7 @@ import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
 import type { Currency } from '$lib/types/Currency';
 import type { DeliveryFees } from '$lib/types/DeliveryFees';
 import { currencies } from '$lib/stores/currencies';
-import { ADMIN_LOGIN, ADMIN_PASSWORD } from '$env/static/private';
+import { ADMIN_LOGIN, ADMIN_PASSWORD } from '$lib/server/env-config';
 import { createSuperAdminUserInDb } from './user';
 import { runMigrations } from './migrations';
 import type { ProductActionSettings } from '$lib/types/ProductActionSettings';
