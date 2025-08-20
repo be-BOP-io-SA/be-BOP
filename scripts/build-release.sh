@@ -43,7 +43,7 @@ cp -r ./patches "$OUTPUT_DIR/$ARTIFACT_NAME"
 cp package.json "$OUTPUT_DIR/$ARTIFACT_NAME/package.json"
 cp pnpm-lock.yaml "$OUTPUT_DIR/$ARTIFACT_NAME/pnpm-lock.yaml"
 cp -r ./assets "$OUTPUT_DIR/$ARTIFACT_NAME/assets"
-cp -r ./docs "$OUTPUT_DIR/$ARTIFACT_NAME/assets"
+cp -r ./docs "$OUTPUT_DIR/$ARTIFACT_NAME/docs"
 
 echo "✅ Release artifact created successfully!"
 echo "📁 Directory: $OUTPUT_DIR/$ARTIFACT_NAME"
