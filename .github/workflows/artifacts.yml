@@ -69,8 +69,8 @@ jobs:
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-          echo "commit_date=$COMMIT_DATE" >> $GITHUB_ENV
-          echo "hash=$HASH" >> $GITHUB_ENV
+          echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
       - name: Create release archive
         run: |
           cd release_artifacts
@@ -78,7 +78,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: rel-${{ steps.commit.outputs.commit_date }}-${{ steps.commit.outputs.hash }}
+          tag_name: rel/${{ steps.commit.outputs.commit_date }}/${{ steps.commit.outputs.hash }}
           name: ${{ steps.commit.outputs.title }}
           body: ${{ steps.commit.outputs.body }}
           files: ${{ steps.artifact.outputs.ARTIFACT_DIR }}.zip
