@@ -1,0 +1,88 @@
+#!/bin/bash
+set -eo pipefail
+
+. /usr/share/debconf/confmodule
+
+run_and_log() {
+    if [ -S /run/systemd/journal/socket ]; then
+        # Journald available — tag entries for bebop-wizard
+        echo "Running $*" | systemd-cat -t bebop-wizard
+        "$@" 2>&1 | tee >(systemd-cat -t bebop-wizard) >&2
+    else
+        # Fallback to file logging with timestamp
+        echo "[$(date +'%F %T')] CMD: $*" > /var/log/bebop-wizard.log
+        "$@" 2>&1 | tee -a "/var/log/bebop-wizard.log" >&2
+    fi
+}
+
+configure_with_bebop_wizard() {
+    declare -a OPTS=()
+
+    # Step 1
+    db_get bebop-wizard/bebop-domain
+    if [ -n "$RET" ]; then
+        OPTS+=("--domain" "$RET")
+    fi
+    db_get bebop-wizard/use-recommended-deployment
+    if [ "$RET" = "true" ]; then
+        OPTS+=("--managed-deployment")
+    fi
+
+    # Step 2
+    db_get bebop-wizard/install-phoenixd
+    if [ "$RET" = "true" ]; then
+        OPTS+=("--install-phoenixd")
+    fi
+    db_get bebop-wizard/install-minio
+    if [ "$RET" = "true" ]; then
+        OPTS+=("--install-minio")
+    fi
+    db_get bebop-wizard/configure-mongodb-repo
+    if [ "$RET" = "true" ]; then
+        OPTS+=("--with-mongodb-repo")
+    fi
+    db_get bebop-wizard/configure-nodejs-repo
+    if [ "$RET" = "true" ]; then
+        OPTS+=("--with-nodejs-repo")
+    fi
+
+    # Step 3
+    db_get bebop-wizard/bebop-service
+    if [ "$RET" = "true" ]; then
+        OPTS+=("--managed-bebop")
+    fi
+    db_get bebop-wizard/minio-service
+    if [ "$RET" = "true" ]; then
+        OPTS+=("--managed-minio")
+    fi
+    db_get bebop-wizard/nginx-service
+    if [ "$RET" = "true" ]; then
+        OPTS+=("--managed-nginx")
+    fi
+    db_get bebop-wizard/phoenixd-service
+    if [ "$RET" = "true" ]; then
+        OPTS+=("--managed-phoenixd")
+    fi
+
+    run_and_log bebop-wizard configure --defer "${OPTS[@]}"
+}
+
+case "$1" in
+    configure)
+        configure_with_bebop_wizard
+        run_and_log bebop-wizard update --defer
+
+        db_input high bebop-wizard/finish-installation || true
+        db_go || true
+        ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+db_stop
+exit 0

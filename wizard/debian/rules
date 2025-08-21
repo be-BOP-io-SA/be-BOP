@@ -1,0 +1,29 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	true
+
+override_dh_auto_install:
+	# Install the main wizard script
+	install -D -m 755 bebop-wizard.sh debian/bebop-wizard/usr/bin/bebop-wizard
+
+	# Install example configurations
+	install -D -m 644 examples/be-BOP/managed-configuration.env debian/bebop-wizard/usr/share/bebop-wizard/examples/managed-configuration.env
+	install -D -m 644 examples/be-BOP/managed-deployment.env debian/bebop-wizard/usr/share/bebop-wizard/examples/managed-deployment.env
+	install -D -m 644 examples/minio/config.env debian/bebop-wizard/usr/share/bebop-wizard/examples/minio/config.env
+
+	# Install example configuration files
+	install -d debian/bebop-wizard/usr/share/bebop-wizard/examples/systemd
+	install -m 644 examples/systemd/bebop.service debian/bebop-wizard/usr/share/bebop-wizard/examples/systemd/
+	install -m 644 examples/systemd/bebop-nons.service debian/bebop-wizard/usr/share/bebop-wizard/examples/systemd/
+	install -m 644 examples/systemd/minio.service debian/bebop-wizard/usr/share/bebop-wizard/examples/systemd/
+	install -m 644 examples/systemd/minio-nons.service debian/bebop-wizard/usr/share/bebop-wizard/examples/systemd/
+	install -m 644 examples/systemd/phoenixd.service debian/bebop-wizard/usr/share/bebop-wizard/examples/systemd/
+	install -m 644 examples/systemd/phoenixd-nons.service debian/bebop-wizard/usr/share/bebop-wizard/examples/systemd/
+
+	install -d debian/bebop-wizard/usr/share/bebop-wizard/examples/nginx
+	install -m 644 examples/nginx/be-BOP.conf debian/bebop-wizard/usr/share/bebop-wizard/examples/nginx/
+	install -m 644 examples/nginx/be-BOP-localhost.conf debian/bebop-wizard/usr/share/bebop-wizard/examples/nginx/
