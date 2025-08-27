@@ -1,4 +1,3 @@
-import { building } from '$app/environment';
 import {
 	PUBLIC_S3_ENDPOINT_URL,
 	S3_BUCKET,
@@ -10,31 +9,28 @@ import {
 import * as AWS from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const s3client = building
-	? (null as unknown as AWS.S3)
+const s3client = new AWS.S3({
+	endpoint: S3_ENDPOINT_URL,
+	region: S3_REGION,
+	credentials: { accessKeyId: S3_KEY_ID, secretAccessKey: S3_KEY_SECRET },
+	// Handle minio, eg http://minio:9000/bucket instead of http://bucket.minio:9000
+	// Should work with any S3-compatible server, so no harm in leaving it on
+	forcePathStyle: true
+});
+
+/**
+ * To use with getSignedUrl. If PUBLIC_S3_ENDPOINT_URL is set, it will be used instead of S3_ENDPOINT_URL.
+ */
+const publicS3Client = !PUBLIC_S3_ENDPOINT_URL
+	? s3client
 	: new AWS.S3({
-			endpoint: S3_ENDPOINT_URL,
+			endpoint: PUBLIC_S3_ENDPOINT_URL,
 			region: S3_REGION,
 			credentials: { accessKeyId: S3_KEY_ID, secretAccessKey: S3_KEY_SECRET },
 			// Handle minio, eg http://minio:9000/bucket instead of http://bucket.minio:9000
 			// Should work with any S3-compatible server, so no harm in leaving it on
 			forcePathStyle: true
 	  });
-
-/**
- * To use with getSignedUrl. If PUBLIC_S3_ENDPOINT_URL is set, it will be used instead of S3_ENDPOINT_URL.
- */
-const publicS3Client =
-	building || !PUBLIC_S3_ENDPOINT_URL
-		? s3client
-		: new AWS.S3({
-				endpoint: PUBLIC_S3_ENDPOINT_URL,
-				region: S3_REGION,
-				credentials: { accessKeyId: S3_KEY_ID, secretAccessKey: S3_KEY_SECRET },
-				// Handle minio, eg http://minio:9000/bucket instead of http://bucket.minio:9000
-				// Should work with any S3-compatible server, so no harm in leaving it on
-				forcePathStyle: true
-		  });
 
 if (s3client) {
 	try {
