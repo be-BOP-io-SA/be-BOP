@@ -2,6 +2,14 @@
 
 P2P BeBOP for merch, subscribers and peerfunding
 
+## Hot topics ☢☢☢
+
+### Issue with S3 management (Aug 28th)
+`main` is compromised due to a regression related to the setup wizard, use `git checkout 263a1391225870e3bc6ac8c820395f0ea6fe1e3f` to deploy the last good commit until https://github.com/be-BOP-io-SA/be-BOP/pull/2035 is resolved.
+
+### Issue with delivery fees (Aug 16th)
+If you sell online products with physical component, `main` is compromised due to https://github.com/be-BOP-io-SA/be-BOP/issues/2022 , use `git checkout e5dc8ef3a4bd923c468be21e90139abedb30bdc2` as last good commit until https://github.com/be-BOP-io-SA/be-BOP/pull/2034 is resolved.
+
 ## Requirements
 
 - A S3-compatible object storage. There are hundreds of solutions, including https://min.io/, an open source solution that can be run inside docker, or paid services like AWS, Scaleway, ...
