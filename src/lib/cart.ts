@@ -91,9 +91,6 @@ function computeCartPrice(
 	const amounts = [];
 	const partialAmounts = [];
 	const perItem = [];
-	if (params.deliveryFees) {
-		amounts.push({ amount: params.deliveryFees.amount, currency: params.deliveryFees.currency });
-	}
 	for (const item of items) {
 		let priceToBill;
 		if (item.product._id) {
@@ -110,6 +107,13 @@ function computeCartPrice(
 		const depositFactor = (item.depositPercentage ?? 100) / 100;
 		partialAmounts.push({ amount: amount * depositFactor, currency });
 		perItem.push(priceToBill);
+	}
+	if (params.deliveryFees) {
+		amounts.push({ amount: params.deliveryFees.amount, currency: params.deliveryFees.currency });
+		partialAmounts.push({
+			amount: params.deliveryFees.amount,
+			currency: params.deliveryFees.currency
+		});
 	}
 	return {
 		cart: {
