@@ -11,6 +11,7 @@
 	const tagId = $page.url.searchParams.get('tagId');
 	const scheduleId = $page.url.searchParams.get('scheduleId');
 	const eventScheduleSlug = $page.url.searchParams.get('eventScheduleSlug');
+	const ctiCategorySlug = $page.url.searchParams.get('ctiCategorySlug');
 
 	let files: FileList | null = null;
 	let fileName = '';
@@ -139,7 +140,13 @@
 			<input type="hidden" name="scheduleId" value={scheduleId} />
 			<input type="hidden" name="eventScheduleSlug" value={eventScheduleSlug} />
 		{/if}
-
+		{#if ctiCategorySlug}
+			<p>
+				Associated CTI category:
+				{ctiCategorySlug}
+			</p>
+			<input type="hidden" name="ctiCategorySlug" value={ctiCategorySlug} />
+		{/if}
 		<input type="submit" class="btn body-mainCTA self-start" value="Add" />
 	</fieldset>
 </form>
