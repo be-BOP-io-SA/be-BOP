@@ -18,7 +18,14 @@ declare global {
 			status?: number;
 			sessionId: string;
 			countryCode?: CountryAlpha2;
-			user?: { _id: ObjectId; login: string; roleId: string; role?: Role; alias?: string };
+			user?: {
+				_id: ObjectId;
+				login: string;
+				roleId: string;
+				role?: Role;
+				alias?: string;
+				hasPosOptions?: boolean;
+			};
 			email?: string;
 			npub?: string;
 			sso?: Array<{

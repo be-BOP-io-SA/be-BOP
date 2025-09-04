@@ -14,6 +14,7 @@ export async function load() {
 			_id: user._id.toString(),
 			login: user.login,
 			alias: user.alias,
+			hasPosOptions: user.hasPosOptions,
 			roleId: user.roleId,
 			disabled: user.disabled,
 			recovery: user.recovery,

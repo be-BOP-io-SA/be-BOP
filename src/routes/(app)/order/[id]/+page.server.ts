@@ -5,6 +5,10 @@ import { fetchOrderForUser } from './fetchOrderForUser.js';
 import { getPublicS3DownloadLink } from '$lib/server/s3.js';
 import { uniqBy } from '$lib/utils/uniqBy.js';
 import { cmsFromContent } from '$lib/server/cms.js';
+import {
+	conflictingTapToPayOrder,
+	priceInfoForOrderProbablyIncorrectBuyOkayForDisplay
+} from '$lib/server/orders';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
@@ -61,7 +65,9 @@ export async function load({ params, depends, locals }) {
 			}
 		)
 	]);
-	let methods = paymentMethods({ role: locals.user?.roleId }).filter((method) => method !== 'free');
+	let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }).filter(
+		(method) => method !== 'free'
+	);
 
 	for (const item of order.items) {
 		if (item.product.paymentMethods) {
@@ -76,9 +82,17 @@ export async function load({ params, depends, locals }) {
 		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
 			? 'employee'
 			: undefined;
+	const tapToPay = {
+		configured: !!runtimeConfig.posTapToPay.processor,
+		inUseByOtherOrder: !!(await conflictingTapToPayOrder(order._id)),
+		onActivationUrl: runtimeConfig.posTapToPay.onActivationUrl
+	};
 	return {
 		order,
+		priceInfoProbablyIncorrectBuyOkayForDisplay:
+			await priceInfoForOrderProbablyIncorrectBuyOkayForDisplay(order),
 		paymentMethods: methods,
+		tapToPay,
 		digitalFiles: Promise.all(
 			digitalFiles.map(async (file) => ({
 				name: file.name,

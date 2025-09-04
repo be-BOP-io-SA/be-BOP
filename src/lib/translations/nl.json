@@ -525,6 +525,7 @@
 		"paymentAmount": "Te betalen bedrag",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Uw paischement is mislukt, u kunt een nieuwe paangement proberen",
+		"paymentDoneCustomerCTA": "Ik ben klaar",
 		"paymentExpiresAt": "Betalingstermijn: <0></0>",
 		"paymentIban": "IBAN waarnaar de overboeking moet worden verzonden",
 		"paymentLink": "Klik hier om met pin te betalen",
@@ -615,6 +616,7 @@
 			"cancelMultiPayOrder": "Annuleer de bestelling",
 			"cancelOrder": "Annuleren",
 			"cancelReplacement": "Annuleer vervanging",
+			"cancelTapToPay": "Annuleer Tap-to-pay",
 			"markOrderPaid": "Mark betaald",
 			"replacePayment": "Vervang de betaalmethode",
 			"resendPaymentMethod": "Verzend de betaalmethode",
@@ -638,6 +640,10 @@
 		},
 		"sessionLink": "Bezit",
 		"sessionTouchLink": "POS-sessie - touchscreen",
+		"tapToPay": {
+			"inProgress": "De betaling wordt automatisch gevalideerd zodra de externe transactie is geregistreerd en gevalideerd.",
+			"inUseByOtherOrder": "Tap-to-pay is uitgeschakeld omdat er al een andere bestelling bezig is met deze betaalmethode. U kunt handmatig afrekenen en daarna het transactie­nummer in dit veld invullen."
+		},
 		"vatFree": "Dit is een BTW-vrije bestelling (<0>voorwaarden</0>)",
 		"vatFreeReason": "BTW-vrije reden"
 	},
@@ -699,7 +705,8 @@
 			"ticket": "Ticket"
 		},
 		"variationPriceLabel": "Variatie Prijs",
-		"vatExcluded": "Exclusief BTW"
+		"vatExcluded": "Exclusief BTW",
+		"vatIncluded": "Geschatte prijs inclusief belasting"
 	},
 	"schedule": {
 		"dateText": "- Van {beginTime} tot {endTime}",

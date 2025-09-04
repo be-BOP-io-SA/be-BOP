@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { CartPriceInfo } from '$lib/cart';
 	import { useI18n } from '$lib/i18n';
 	import {
 		orderAmountWithNoPaymentsCreated,
@@ -8,7 +9,6 @@
 	} from '$lib/types/Order';
 	import type { Picture } from '$lib/types/Picture';
 	import type { Product } from '$lib/types/Product';
-	import { differenceInMinutes } from 'date-fns';
 	import PictureComponent from './Picture.svelte';
 	import PriceTag from './PriceTag.svelte';
 	import ProductType from './ProductType.svelte';
@@ -52,6 +52,7 @@
 		>;
 		payments: Array<Pick<OrderPayment, 'currencySnapshot' | 'status' | 'method'>>;
 	};
+	export let orderPriceInfo: CartPriceInfo;
 	$: validDeposits = order.payments.filter(
 		(p) =>
 			p.currencySnapshot.main.price.amount < order.currencySnapshot.main.totalPrice.amount &&
@@ -70,7 +71,7 @@
 	<div class="flex justify-between">
 		{t('checkout.numProducts', { count: order.items.length ?? 0 })}
 	</div>
-	{#each order.items as item}
+	{#each order.items as item, i}
 		<a href="/product/{item.product._id}">
 			<h3 class="text-base">
 				{item.chosenVariations
@@ -124,21 +125,16 @@
 			<div class="flex flex-col ml-auto items-end justify-center">
 				<PriceTag
 					class="text-2xl truncate"
-					amount={Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
-						(item.booking && item.product.bookingSpec
-							? differenceInMinutes(item.booking.end, item.booking.start) /
-							  item.product.bookingSpec.slotMinutes
-							: 1) *
+					amount={orderPriceInfo.perItem[i].unitsToBill *
 						(item.currencySnapshot.main.customPrice?.amount ??
-							item.currencySnapshot.main.price.amount) *
-						(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+							item.currencySnapshot.main.price.amount)}
 					currency={item.currencySnapshot.main.customPrice?.currency ??
 						item.currencySnapshot.main.price.currency}
 				/>
 				{#if item.currencySnapshot.secondary}
 					<PriceTag
 						class="text-2xl truncate"
-						amount={Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
+						amount={orderPriceInfo.perItem[i].unitsToBill *
 							(item.currencySnapshot.secondary.customPrice?.amount ??
 								item.currencySnapshot.secondary.price.amount) *
 							(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}

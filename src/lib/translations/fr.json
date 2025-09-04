@@ -525,6 +525,7 @@
 		"paymentAmount": "Montant de la transaction (hors frais)",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Votre paiement a échoué, vous pouvez tenter un nouveau paiement",
+		"paymentDoneCustomerCTA": "J'ai fini",
 		"paymentExpiresAt": "Date limite de paiement: <0></0>",
 		"paymentIban": "IBAN de paiement",
 		"paymentLink": "Cliquez pour payer par carte avec",
@@ -615,6 +616,7 @@
 			"cancelMultiPayOrder": "Annuler la commande",
 			"cancelOrder": "Annuler",
 			"cancelReplacement": "Annuler le remplacement",
+			"cancelTapToPay": "Annuler le Tap-to-pay",
 			"markOrderPaid": "Marquer comme payée",
 			"replacePayment": "Remplacer le mode de paiement",
 			"resendPaymentMethod": "Renvoyer le mode de paiement",
@@ -638,6 +640,10 @@
 		},
 		"sessionLink": "Session point de vente",
 		"sessionTouchLink": "Session point de vente - écran tactile",
+		"tapToPay": {
+			"inProgress": "Le paiement sera validé automatiquement quand la transaction externe sera enregistrée et validée.",
+			"inUseByOtherOrder": "L'encaissement tap-to-pay est désactivé car une autre commande est en cours avec ce mode d'encaissement. Vous pouvez encaisser manuellement et indiquer ensuite le numéro de transaction dans ce champ."
+		},
 		"vatFree": "Il s'agit d'une commande sans TVA (<0>conditions</0>)",
 		"vatFreeReason": "Motif hors TVA"
 	},
@@ -699,7 +705,8 @@
 			"ticket": "Ticket"
 		},
 		"variationPriceLabel": "Variation de prix",
-		"vatExcluded": "Hors TVA"
+		"vatExcluded": "Hors TVA",
+		"vatIncluded": "Prix TTC estimé"
 	},
 	"schedule": {
 		"dateText": "- de {beginTime} à {endTime}",

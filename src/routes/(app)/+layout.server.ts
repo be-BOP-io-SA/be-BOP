@@ -6,6 +6,7 @@ import { collections } from '$lib/server/database';
 import { picturesForProducts } from '$lib/server/picture.js';
 import { pojo } from '$lib/server/pojo.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { freeProductsForUser } from '$lib/server/subscriptions';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import { userQuery } from '$lib/server/user.js';
 import { userIdentifier } from '$lib/server/user.js';
@@ -16,7 +17,29 @@ import type { VatProfile } from '$lib/types/VatProfile.js';
 import { groupBy } from '$lib/utils/group-by';
 import { error, redirect } from '@sveltejs/kit';
 import type { PickDeep, SetRequired } from 'type-fest';
-import { POS_ROLE_ID } from '$lib/types/User.js';
+import { UserIdentifier } from '$lib/types/UserIdentifier';
+import { Cart } from '$lib/types/Cart';
+import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
+import { UNDERLYING_CURRENCY } from '$lib/types/Currency';
+import { isAlpha2CountryCode } from '$lib/types/Country';
+
+async function getCartAndRemoveSomeItems(userIdentifier: UserIdentifier): Promise<Cart> {
+	const cartInDb = await getCartFromDb({ user: userIdentifier });
+	const itemsAfterRemoval = cartInDb.items.filter((item) => {
+		if (item.booking && item.booking.start < new Date()) {
+			// Booking starts in the past, remove from cart.
+			return false;
+		}
+		return true;
+	});
+	if (itemsAfterRemoval !== cartInDb.items) {
+		await collections.carts.updateOne(
+			{ _id: cartInDb._id },
+			{ $set: { items: itemsAfterRemoval } }
+		);
+	}
+	return { ...cartInDb, items: itemsAfterRemoval };
+}
 
 export async function load(params) {
 	if (!runtimeConfig.isAdminCreated) {
@@ -35,8 +58,9 @@ export async function load(params) {
 
 	depends(UrlDependency.Cart);
 
+	const user = userIdentifier(locals);
 	const [cart, logoPicture] = await Promise.all([
-		getCartFromDb({ user: userIdentifier(locals) }),
+		getCartAndRemoveSomeItems(user),
 		runtimeConfig.logo.pictureId
 			? (await collections.pictures.findOne({ _id: runtimeConfig.logo.pictureId })) || undefined
 			: undefined
@@ -135,10 +159,7 @@ export async function load(params) {
 		cart.items.length ? await picturesForProducts(cart.items.map((it) => it.productId)) : [],
 		cart.items.length
 			? collections.paidSubscriptions
-					.find({
-						...userQuery(userIdentifier(locals)),
-						paidUntil: { $gt: new Date() }
-					})
+					.find({ ...userQuery(user), paidUntil: { $gt: new Date() } })
 					.toArray()
 			: []
 	]);
@@ -217,7 +238,7 @@ export async function load(params) {
 			])
 	);
 
-	const cartData = cart.items
+	const cartItems = cart.items
 		.map((item) => {
 			const productDoc = productById.get(item.productId);
 			const productPictureDoc = productPicturesById.get(item.productId);
@@ -236,10 +257,9 @@ export async function load(params) {
 				quantity: item.quantity,
 				...(item.customPrice && { customPrice: item.customPrice }),
 				...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
-				...(item.freeQuantity && { freeQuantity: item.freeQuantity }),
 				depositPercentage: item.depositPercentage,
 				internalNote:
-					item.internalNote && params.locals.user?.roleId === POS_ROLE_ID
+					item.internalNote && params.locals.user?.hasPosOptions
 						? {
 								value: item.internalNote?.value,
 								updatedAt: item.internalNote?.updatedAt
@@ -249,6 +269,32 @@ export async function load(params) {
 			};
 		})
 		.filter((x) => x !== undefined);
+	const cartFreeProductUnits = await freeProductsForUser(
+		user,
+		cartItems.map((item) => item.product._id)
+	);
+	const deliveryFees =
+		locals.countryCode && isAlpha2CountryCode(locals.countryCode)
+			? computeDeliveryFees(
+					UNDERLYING_CURRENCY,
+					locals.countryCode,
+					cartItems,
+					runtimeConfig.deliveryFees
+			  )
+			: NaN;
+	const cartPriceInfo = computePriceInfo(cartItems, {
+		bebopCountry: runtimeConfig.vatCountry,
+		deliveryFees: {
+			amount: deliveryFees || 0,
+			currency: UNDERLYING_CURRENCY
+		},
+		freeProductUnits: cartFreeProductUnits,
+		userCountry: locals.countryCode,
+		vatExempted: runtimeConfig.vatExempted,
+		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
+		vatSingleCountry: runtimeConfig.vatSingleCountry,
+		vatProfiles
+	});
 
 	let cmsAgewall: CMSPage | null = null;
 	if (runtimeConfig.ageRestriction.enabled && !locals.acceptAgeLimitation) {
@@ -282,9 +328,11 @@ export async function load(params) {
 		npub: locals.npub,
 		sso: locals.sso,
 		userId: locals.user?._id.toString(),
+		hasPosOptions: locals.user?.hasPosOptions,
 		vatSingleCountry: runtimeConfig.vatSingleCountry,
 		vatCountry: runtimeConfig.vatCountry,
 		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
+		displayVatIncludedInProduct: runtimeConfig.displayVatIncludedInProduct,
 		currencies: {
 			main: runtimeConfig.mainCurrency,
 			secondary: runtimeConfig.secondaryCurrency,
@@ -324,7 +372,11 @@ export async function load(params) {
 		shopInformation: runtimeConfig.shopInformation,
 		deliveryFees: runtimeConfig.deliveryFees,
 		websiteLink: ORIGIN,
-		cart: cartData,
+		cart: {
+			items: cartItems,
+			freeProductUnits: cartFreeProductUnits,
+			priceInfo: cartPriceInfo
+		},
 		confirmationBlocksThresholds: runtimeConfig.confirmationBlocksThresholds,
 		cartMaxSeparateItems: runtimeConfig.cartMaxSeparateItems,
 		physicalCartMinAmount: runtimeConfig.physicalCartMinAmount,

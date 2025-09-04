@@ -19,6 +19,7 @@ export interface User extends Timestamps {
 		token: string;
 		expiresAt: Date;
 	};
+	hasPosOptions?: boolean;
 	alias?: string;
 }
 

@@ -221,7 +221,8 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 						_id: user._id,
 						login: user.login ? user.login : '',
 						roleId: user.roleId,
-						alias: user.alias
+						alias: user.alias,
+						hasPosOptions: user.hasPosOptions
 					};
 				}
 			}
@@ -290,7 +291,7 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 			throw redirect(303, '/admin/login');
 		}
 
-		if (event.locals.user.roleId !== POS_ROLE_ID) {
+		if (!event.locals.user.hasPosOptions && event.locals.user.roleId !== POS_ROLE_ID) {
 			throw error(403, 'You are not allowed to access this page, only point-of-sale accounts are.');
 		}
 	}

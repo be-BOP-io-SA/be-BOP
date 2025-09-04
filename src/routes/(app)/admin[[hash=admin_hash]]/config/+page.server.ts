@@ -39,6 +39,8 @@ export async function load(event) {
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,
 		removeBebopLogoPOS: runtimeConfig.removeBebopLogoPOS,
 		overwriteCreditCardSvgColor: runtimeConfig.overwriteCreditCardSvgColor,
+		hideShopBankOnReceipt: runtimeConfig.hideShopBankOnReceipt,
+		hideShopBankOnTicket: runtimeConfig.hideShopBankOnTicket,
 		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode,
 		hideCartInToolbar: runtimeConfig.hideCartInToolbar,
 		removePopinProductPrice: runtimeConfig.removePopinProductPrice
@@ -59,6 +61,8 @@ export const actions = {
 				noProBilling: z.boolean({ coerce: true }),
 				discovery: z.boolean({ coerce: true }),
 				copyOrderEmailsToAdmin: z.boolean({ coerce: true }),
+				hideShopBankOnReceipt: z.boolean({ coerce: true }),
+				hideShopBankOnTicket: z.boolean({ coerce: true }),
 				subscriptionDuration: z.enum(['month', 'day', 'hour']),
 				mainCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1).filter((c) => c !== 'SAT')]),
 				secondaryCurrency: z
@@ -72,6 +76,7 @@ export const actions = {
 				vatExemptionReason: z.string().default(runtimeConfig.vatExemptionReason),
 				vatSingleCountry: z.boolean({ coerce: true }),
 				vatNullOutsideSellerCountry: z.boolean({ coerce: true }),
+				displayVatIncludedInProduct: z.boolean({ coerce: true }),
 				vatCountry: z.string().default(runtimeConfig.vatCountry),
 				subscriptionReminderSeconds: z
 					.number({ coerce: true })

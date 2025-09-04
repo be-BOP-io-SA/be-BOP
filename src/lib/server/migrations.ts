@@ -570,6 +570,28 @@ const migrations = [
 				);
 			}
 		}
+	},
+	{
+		_id: new ObjectId('682df8048d5704e22e41212b'),
+		name: 'Add hasPosOptions to all user with roleID=point-of-sale',
+		run: async (session: ClientSession) => {
+			await collections.users.updateMany(
+				{ roleId: 'point-of-sale' },
+				{ $set: { hasPosOptions: true } },
+				{ session }
+			);
+		}
+	},
+	{
+		_id: new ObjectId('685e7b8042317d9719fb0b7b'),
+		name: 'Remove freeQuantity from cart items',
+		run: async (session: ClientSession) => {
+			await collections.carts.updateMany(
+				{},
+				{ $unset: { 'items.$[].freeQuantity': 1 } },
+				{ session }
+			);
+		}
 	}
 ];
 

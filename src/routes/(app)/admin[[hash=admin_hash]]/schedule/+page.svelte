@@ -3,6 +3,9 @@
 </script>
 
 <a href="{data.adminPrefix}/schedule/new" class="underline block">Add schedule</a>
+<a href="{data.adminPrefix}/schedule/event-default-picture" class="underline block"
+	>Event default picture</a
+>
 
 <h1 class="text-3xl">List of Schedules</h1>
 

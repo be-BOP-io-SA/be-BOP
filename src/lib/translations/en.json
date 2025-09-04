@@ -525,6 +525,7 @@
 		"paymentAmount": "Payment amount",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Your paiement has failed, you can attempt a new paiement",
+		"paymentDoneCustomerCTA": "I'm done",
 		"paymentExpiresAt": "Payment deadline: <0></0>",
 		"paymentIban": "IBAN to send the wire transfer to",
 		"paymentLink": "Click here to pay by card with",
@@ -615,6 +616,7 @@
 			"cancelMultiPayOrder": "Cancel order",
 			"cancelOrder": "Cancel",
 			"cancelReplacement": "Cancel replacement",
+			"cancelTapToPay": "Cancel Tap-to-pay",
 			"markOrderPaid": "Mark paid",
 			"replacePayment": "Replace payment method",
 			"resendPaymentMethod": "Resend payment method",
@@ -638,6 +640,10 @@
 		},
 		"sessionLink": "POS session",
 		"sessionTouchLink": "POS session - touch screen",
+		"tapToPay": {
+			"inProgress": "The payment will be automatically validated once the external transaction is recorded and validated.",
+			"inUseByOtherOrder": "Tap-to-pay is disabled because another order is currently using this payment method. You can collect payment manually and then enter the transaction number in this field."
+		},
 		"vatFree": "This is a VAT-free order (<0>conditions</0>)",
 		"vatFreeReason": "VAT-free reason"
 	},
@@ -699,7 +705,8 @@
 			"ticket": "Ticket"
 		},
 		"variationPriceLabel": "Variation Price",
-		"vatExcluded": "VAT excluded"
+		"vatExcluded": "VAT excluded",
+		"vatIncluded": "Estimated price including tax"
 	},
 	"schedule": {
 		"dateText": " - from {beginTime} to {endTime}",

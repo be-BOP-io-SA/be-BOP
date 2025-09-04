@@ -525,6 +525,7 @@
 		"paymentAmount": "Zahlungsbetrag",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Ihre Zahlung ist fehlgeschlagen, Sie können einen neuen Zahlungsversuch starten",
+		"paymentDoneCustomerCTA": "ich bin fertig",
 		"paymentExpiresAt": "Zahlungsfrist: ",
 		"paymentIban": "IBAN für die Überweisung",
 		"paymentLink": "Klicken Sie hier, um per Karte mit zu bezahlen",
@@ -615,6 +616,7 @@
 			"cancelMultiPayOrder": "Bestellung stornieren",
 			"cancelOrder": "Abbrechen",
 			"cancelReplacement": "Ersatz stornieren",
+			"cancelTapToPay": "Tap-to-pay Abbrechen",
 			"markOrderPaid": "Als bezahlt markieren",
 			"replacePayment": "Zahlungsmethode ersetzen",
 			"resendPaymentMethod": "Zahlungsmethode erneut senden",
@@ -638,6 +640,10 @@
 		},
 		"sessionLink": "POS-Sitzung",
 		"sessionTouchLink": "POS-Sitzung - Touchscreen",
+		"tapToPay": {
+			"inProgress": "Die Zahlung wird automatisch bestätigt, sobald die externe Transaktion erfasst und bestätigt wurde.",
+			"inUseByOtherOrder": "Die Tap-to-Pay-Zahlung ist deaktiviert, da eine andere Bestellung diesen Zahlungsmodus verwendet. Sie können die Zahlung manuell entgegennehmen und anschließend die Transaktionsnummer in dieses Feld eintragen."
+		},
 		"vatFree": "Dies ist eine mehrwertsteuerfreie Bestellung (Bedingungen)",
 		"vatFreeReason": "Grund für Mehrwertsteuerbefreiung"
 	},
@@ -684,7 +690,8 @@
 			"ticket": "Ticket"
 		},
 		"variationPriceLabel": "Variationspreis",
-		"vatExcluded": "Ohne MwSt."
+		"vatExcluded": "Ohne MwSt.",
+		"vatIncluded": "Geschätzter Preis einschließlich Steuer"
 	},
 	"schedule": {
 		"dateText": " - von {beginTime} bis {endTime}",

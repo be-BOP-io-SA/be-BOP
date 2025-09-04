@@ -8,7 +8,7 @@ import { emailsEnabled } from '$lib/server/email';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
-import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User.js';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { zodNpub } from '$lib/server/nostr.js';
 import type { JsonObject } from 'type-fest';
 import { rateLimit } from '$lib/server/rateLimit.js';
@@ -22,7 +22,7 @@ export async function load({ parent, locals }) {
 
 	if (parentData.cart) {
 		try {
-			await checkCartItems(parentData.cart, { user: userIdentifier(locals) });
+			await checkCartItems(parentData.cart.items, { user: userIdentifier(locals) });
 		} catch (err) {
 			throw redirect(303, '/cart');
 		}
@@ -76,9 +76,9 @@ export async function load({ parent, locals }) {
 		)
 	]);
 
-	let methods = paymentMethods({ role: locals.user?.roleId });
+	let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
 
-	for (const item of parentData.cart ?? []) {
+	for (const item of parentData.cart.items ?? []) {
 		if (item.product.paymentMethods) {
 			methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
 		}
@@ -153,7 +153,7 @@ export const actions = {
 			)
 			.toArray();
 
-		let methods = paymentMethods({ role: locals.user?.roleId });
+		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
 
 		for (const product of products) {
 			if (product.paymentMethods) {
@@ -189,7 +189,7 @@ export const actions = {
 			: z
 					.object({
 						shipping: z.object(
-							locals.user?.roleId === POS_ROLE_ID
+							locals.user?.hasPosOptions
 								? {
 										firstName: z.string().default(''),
 										lastName: z.string().default(''),
@@ -288,12 +288,11 @@ export const actions = {
 					.parse(json)
 			: null;
 
-		const multiplePaymentMethods =
-			locals.user?.roleId === POS_ROLE_ID
-				? z
-						.object({ multiplePaymentMethods: z.coerce.boolean().optional() })
-						.parse(Object.fromEntries(formData)).multiplePaymentMethods
-				: false;
+		const multiplePaymentMethods = locals.user?.hasPosOptions
+			? z
+					.object({ multiplePaymentMethods: z.coerce.boolean().optional() })
+					.parse(Object.fromEntries(formData)).multiplePaymentMethods
+			: false;
 
 		const paymentMethod = multiplePaymentMethods
 			? null
@@ -321,7 +320,7 @@ export const actions = {
 		let offerDeliveryFees: boolean | undefined;
 		let reasonOfferDeliveryFees: string | undefined;
 
-		if (locals.user?.roleId === POS_ROLE_ID) {
+		if (locals.user?.hasPosOptions) {
 			const vatDetails = z
 				.object({
 					isFreeVat: z.coerce.boolean().optional(),
@@ -374,7 +373,7 @@ export const actions = {
 			);
 		}
 		const physicalFullyPaid =
-			locals.user?.roleId === POS_ROLE_ID && runtimeConfig.defaultOnLocation
+			locals.user?.hasPosOptions && runtimeConfig.defaultOnLocation
 				? z
 						.object({
 							onLocation: z.boolean({ coerce: true }).default(false)
@@ -451,7 +450,6 @@ export const actions = {
 				cart.items.map((item) => ({
 					quantity: item.quantity,
 					product: byId[item.productId],
-					...(item.freeQuantity && { freeQuantity: item.freeQuantity }),
 					...(item.customPrice && {
 						customPrice: { amount: item.customPrice.amount, currency: item.customPrice.currency }
 					}),
@@ -474,7 +472,8 @@ export const actions = {
 						userRoleId: locals.user?.roleId,
 						userAlias: locals.user?.alias,
 						npub: locals.npub,
-						email: locals.email
+						email: locals.email,
+						userHasPosOptions: locals.user?.hasPosOptions
 					},
 					notifications: {
 						paymentStatus: {
@@ -486,8 +485,8 @@ export const actions = {
 					shippingAddress: shippingInfo?.shipping,
 					billingAddress: billingInfo?.billing || shippingInfo?.shipping,
 					userVatCountry: vatCountry,
-					...(locals.user?.roleId === POS_ROLE_ID && isFreeVat && { reasonFreeVat }),
-					...(locals.user?.roleId === POS_ROLE_ID &&
+					...(locals.user?.hasPosOptions && isFreeVat && { reasonFreeVat }),
+					...(locals.user?.hasPosOptions &&
 						discountAmount &&
 						discountType &&
 						discountJustification && {
@@ -499,7 +498,7 @@ export const actions = {
 						}),
 					...(note && { note: note.noteContent }),
 					...(agreements.allowCollectIP && { clientIp: locals.clientIp }),
-					...(locals.user?.roleId === POS_ROLE_ID &&
+					...(locals.user?.hasPosOptions &&
 						runtimeConfig.deliveryFees.allowFreeForPOS &&
 						offerDeliveryFees && { reasonOfferDeliveryFees }),
 					...(receiptNote && { receiptNote: receiptNote.receiptNoteContent }),

@@ -9,6 +9,7 @@ import {
 import { ClientSession, ObjectId, type WithId } from 'mongodb';
 import { collections, withTransaction } from './database';
 import {
+	Duration,
 	add,
 	addHours,
 	addMinutes,
@@ -21,7 +22,7 @@ import {
 	subSeconds
 } from 'date-fns';
 import { runtimeConfig } from './runtime-config';
-import { generateSubscriptionNumber } from './subscriptions';
+import { freeProductsForUser, generateSubscriptionNumber } from './subscriptions';
 import {
 	checkProductVariationsIntegrity,
 	productPriceWithVariations,
@@ -34,7 +35,8 @@ import { isLndConfigured, lndCreateInvoice } from './lnd';
 import { ORIGIN } from '$env/static/private';
 import { emailsEnabled, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
-import { computeDeliveryFees, type Cart, computePriceInfo } from '$lib/types/Cart';
+import { type Cart } from '$lib/types/Cart';
+import { CartPriceInfo, computeDeliveryFees, computePriceInfo } from '$lib/cart';
 import { CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { refreshAvailableStockInDb } from './product';
@@ -42,7 +44,7 @@ import { checkCartItems } from './cart';
 import { userQuery } from './user';
 import { SMTP_USER } from '$env/static/private';
 import { toCurrency } from '$lib/utils/toCurrency';
-import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import type { CountryAlpha2 } from '$lib/types/Country';
@@ -73,6 +75,59 @@ import { isEmptyObject } from '$lib/utils/is-empty-object';
 import { binaryFindAround } from '$lib/utils/binary-find';
 import { toZonedTime } from 'date-fns-tz';
 import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
+import { PaidSubscription } from '$lib/types/PaidSubscription';
+import type { FetchOrderResult } from '../../routes/(app)/order/[id]/fetchOrderForUser';
+import { btcpayCreateLnInvoice, isBtcpayServerConfigured } from './btcpay-server';
+
+/**
+ * FIXME: The computation bellow uses runtime configuration features. This is
+ * problematic because whe should be able to compute the same price info...
+ */
+export async function priceInfoForOrderProbablyIncorrectBuyOkayForDisplay(
+	order: FetchOrderResult
+): Promise<CartPriceInfo> {
+	// The free products for this order are computed from the information stored in the order
+	const freeProductUnits = order.items.reduce((acc: Record<string, number>, item) => {
+		if (item.freeQuantity && item.product._id) {
+			acc[item.product._id] = item.freeQuantity + (acc[item.product._id] ?? 0);
+		}
+		return acc;
+	}, {});
+	// FIXME: This is fundamentally incorrect, since the current VAT profiles do
+	// not necessarily correspond to those used when the order was created.
+	const vatProfiles = await collections.vatProfiles.find({}).toArray();
+	return computePriceInfo(order.items, {
+		bebopCountry: runtimeConfig.vatCountry,
+		deliveryFees: order.currencySnapshot.main.shippingPrice ?? {
+			amount: 0,
+			currency: order.currencySnapshot.main.totalPrice.currency
+		},
+		discount: null,
+		freeProductUnits,
+		userCountry: undefined,
+		vatExempted: false,
+		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
+		vatProfiles,
+		vatSingleCountry: runtimeConfig.vatSingleCountry
+	});
+}
+
+export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
+	const other = await collections.orders.findOne({
+		_id: { $ne: orderId },
+		payments: {
+			$elemMatch: {
+				status: 'pending',
+				method: 'point-of-sale',
+				'posTapToPay.expiresAt': { $gt: new Date() }
+			}
+		}
+	});
+	if (other) {
+		return other._id;
+	}
+	return null;
+}
 
 async function generateOrderNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(
@@ -117,6 +172,7 @@ export async function onOrderPayment(
 		bankTransferNumber?: string;
 		detail?: string;
 		fees?: Price;
+		tapToPay?: { expiresAt: Date };
 		providedSession?: ClientSession;
 	}
 ): Promise<Order> {
@@ -142,6 +198,9 @@ export async function onOrderPayment(
 					'payments.$.status': 'paid',
 					...(params?.bankTransferNumber && {
 						'payments.$.bankTransferNumber': params.bankTransferNumber
+					}),
+					...(params?.tapToPay && {
+						'payments.$.posTapToPay.expiresAt': params.tapToPay.expiresAt
 					}),
 					...(params?.detail && {
 						'payments.$.detail': params.detail
@@ -392,6 +451,9 @@ export async function onOrderPaymentFailed(
 					!opts?.preserveOrderStatus && {
 						status: reason
 					})
+			},
+			$unset: {
+				'payments.$.posTapToPay': 1
 			}
 		},
 		{ returnDocument: 'after', session: opts?.session }
@@ -506,7 +568,6 @@ export async function createOrder(
 		chosenVariations?: Record<string, string>;
 		depositPercentage?: number;
 		discountPercentage?: number;
-		freeQuantity?: number;
 		freeProductSources?: { subscriptionId: string; quantity: number }[];
 		booking?: Cart['items'][0]['booking'] & { _id: ObjectId };
 	}>,
@@ -563,7 +624,7 @@ export async function createOrder(
 		!canBeNotified &&
 		paymentMethod !== 'point-of-sale' &&
 		paymentMethod !== null &&
-		params.user.userRoleId !== POS_ROLE_ID
+		!params.user.userHasPosOptions
 	) {
 		throw error(400, emailsEnabled ? 'Missing npub address or email' : 'Missing npub address');
 	}
@@ -648,7 +709,7 @@ export async function createOrder(
 	}
 
 	const discountInfo =
-		params.user.userRoleId === POS_ROLE_ID && params?.discount?.amount ? params.discount : null;
+		params.user.userHasPosOptions && params?.discount?.amount ? params.discount : null;
 
 	const vatProfiles = products.some((p) => p.vatProfileId)
 		? await collections.vatProfiles
@@ -743,10 +804,25 @@ export async function createOrder(
 		.filter((sub) => discountSubIds.has(sub.productId))
 		.map((sub) => sub.productId);
 
-	for (const item of items) {
+	const priceInfo = computePriceInfo(items, {
+		bebopCountry: runtimeConfig.vatCountry,
+		deliveryFees: shippingPrice,
+		discount: discountInfo,
+		freeProductUnits: await freeProductsForUser(
+			params.user,
+			items.map((item) => item.product._id)
+		),
+		userCountry: params.userVatCountry,
+		vatExempted,
+		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
+		vatProfiles,
+		vatSingleCountry: runtimeConfig.vatSingleCountry
+	});
+
+	for (const { item, price } of items.map((item, i) => ({ item, price: priceInfo.perItem[i] }))) {
 		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
-		if (item.freeQuantity) {
-			let quantityToConsume = Math.min(item.quantity, item.freeQuantity);
+		if (price.usedFreeUnits) {
+			let quantityToConsume = price.usedFreeUnits;
 			const freeProductSubscriptions = await collections.paidSubscriptions
 				.find({
 					...userQuery(params.user),
@@ -789,17 +865,6 @@ export async function createOrder(
 			item.freeProductSources = usedSources;
 		}
 	}
-
-	const priceInfo = computePriceInfo(items, {
-		deliveryFees: shippingPrice,
-		vatExempted,
-		userCountry: params.userVatCountry,
-		bebopCountry: runtimeConfig.vatCountry || undefined,
-		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
-		vatSingleCountry: runtimeConfig.vatSingleCountry,
-		discount: discountInfo,
-		vatProfiles: vatProfiles
-	});
 	const vatExemptedReason = vatExempted
 		? params.reasonFreeVat || runtimeConfig.vatExemptionReason
 		: undefined;
@@ -814,7 +879,7 @@ export async function createOrder(
 		currency: Currency;
 		amount: number;
 	} | null = null;
-	if (priceInfo.discount && params.discount && params.user.userRoleId === POS_ROLE_ID) {
+	if (priceInfo.discount && params.discount && params.user.userHasPosOptions) {
 		discount = {
 			currency: params.discount.type === 'fiat' ? runtimeConfig.mainCurrency : 'SAT',
 			amount: params.discount.type === 'fiat' ? params?.discount?.amount : priceInfo.discount
@@ -1162,7 +1227,7 @@ export async function createOrder(
 					chosenVariations: item.chosenVariations,
 					depositPercentage: item.depositPercentage,
 					discountPercentage: item.discountPercentage,
-					freeQuantity: item.freeQuantity,
+					freeQuantity: priceInfo.perItem[i].usedFreeUnits,
 					freeProductSources: item.freeProductSources,
 					...(item.product.bookingSpec &&
 						item.booking && {
@@ -1584,6 +1649,17 @@ async function generatePaymentInfo(params: {
 					invoiceId: invoice.invoiceId,
 					processor: 'swiss-bitcoin-pay'
 				};
+			} else if (isBtcpayServerConfigured()) {
+				const invoice = await btcpayServerCreateInvoice({
+					label,
+					expiresAt: params.expiresAt,
+					amountInSats: satoshis
+				});
+				return {
+					address: invoice.payment_address,
+					invoiceId: invoice.invoiceId,
+					processor: 'btcpay-server'
+				};
 			} else if (isPhoenixdConfigured()) {
 				// no way to configure an expiration date for now
 				const invoice = await phoenixdCreateInvoice(satoshis, label, params.orderId);
@@ -1984,113 +2060,105 @@ export async function addOrderPayment(
 	return payment;
 }
 
-export async function updateAfterOrderPaid(order: Order, session: ClientSession) {
-	// #region subscriptions
-	const subscriptions = await collections.paidSubscriptions
+/** Adds the free products of the specified discount to the specified accumulator */
+function addDiscountFreeProducts(
+	discount: Discount,
+	freeProductsById: NonNullable<PaidSubscription['freeProductsById']>
+) {
+	if (discount.mode === 'freeProducts' && discount.quantityPerProduct) {
+		for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
+			if (!freeProductsById[productId]) {
+				freeProductsById[productId] = { total: 0, available: 0, used: 0 };
+			}
+			freeProductsById[productId].total += quantity;
+			freeProductsById[productId].available += quantity;
+		}
+	}
+}
+
+const subscriptionDuration: Duration = {
+	hour: { hours: 1 },
+	day: { days: 1 },
+	month: { months: 1 }
+}[runtimeConfig.subscriptionDuration] satisfies Duration;
+
+async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSession) {
+	const subscriptionProducts = order.items.filter((item) => item.product.type === 'subscription');
+	const existingSubscriptions = await collections.paidSubscriptions
 		.find({
 			...userQuery(order.user),
 			productId: { $in: order.items.map((item) => item.product._id) }
 		})
 		.toArray();
-	const subscriptionProducts = order.items.filter((item) => item.product.type === 'subscription');
-	if (subscriptionProducts.length) {
-		const discounts = await collections.discounts
-			.find({
-				subscriptionIds: {
-					$in: order.items
-						.filter((item) => item.product.type === 'subscription')
-						.map((sub) => sub.product._id)
-				}
-			})
-			.toArray();
+	const discounts = await collections.discounts
+		.find({
+			subscriptionIds: {
+				$in: subscriptionProducts.map((sub) => sub.product._id)
+			}
+		})
+		.toArray();
+	for (const subscription of subscriptionProducts) {
+		const discountsForSubscription = discounts.filter((discount) =>
+			discount.productIds.includes(subscription.product._id)
+		);
+		const existing = existingSubscriptions.find(
+			(sub) => sub.productId === subscription.product._id
+		);
+		if (existing) {
+			const updatedFreeProductsById = structuredClone(existing.freeProductsById ?? {});
+			for (const discount of discountsForSubscription) {
+				addDiscountFreeProducts(discount, updatedFreeProductsById);
+			}
+			const result = await collections.paidSubscriptions.updateOne(
+				{ _id: existing._id },
+				{
+					$set: {
+						paidUntil: add(max([existing.paidUntil, new Date()]), subscriptionDuration),
+						updatedAt: new Date(),
+						notifications: [],
+						...(Object.keys(updatedFreeProductsById).length !== 0 && {
+							freeProductsById: updatedFreeProductsById
+						})
+					},
+					$unset: { cancelledAt: 1 }
+				},
+				{ session }
+			);
+			if (!result.modifiedCount) {
+				throw new Error('Failed to update subscription');
+			}
+		} else {
+			const freeProductsById: PaidSubscription['freeProductsById'] = {};
+			for (const discount of discountsForSubscription) {
+				addDiscountFreeProducts(discount, freeProductsById);
+			}
+			await collections.paidSubscriptions.insertOne(
+				{
+					_id: crypto.randomUUID(),
+					number: await generateSubscriptionNumber(),
+					user: order.user,
+					productId: subscription.product._id,
+					paidUntil: add(new Date(), subscriptionDuration),
+					createdAt: new Date(),
+					updatedAt: new Date(),
+					notifications: [],
+					...(Object.keys(freeProductsById).length !== 0 && { freeProductsById })
+				},
+				{ session }
+			);
+		}
+	}
+}
+
+export async function updateAfterOrderPaid(order: Order, session: ClientSession) {
+	if (order.items.some((item) => item.product.type === 'subscription')) {
 		await collections.scheduleEvents.updateMany(
 			{ orderId: order._id },
 			{ $set: { status: 'confirmed' } },
 			{ session }
 		);
-
-		for (const subscription of subscriptionProducts) {
-			const existingSubscription = subscriptions.find(
-				(sub) => sub.productId === subscription.product._id
-			);
-
-			if (existingSubscription) {
-				let updatedFreeProductsById: Record<
-					string,
-					{ total: number; available: number; used: number }
-				> = {};
-
-				for (const discount of discounts) {
-					if (discount.mode === 'freeProducts' && discount.quantityPerProduct) {
-						updatedFreeProductsById = { ...existingSubscription.freeProductsById };
-
-						for (const [productId, newQuantity] of Object.entries(discount.quantityPerProduct)) {
-							if (!updatedFreeProductsById[productId]) {
-								updatedFreeProductsById[productId] = { total: 0, available: 0, used: 0 };
-							}
-							updatedFreeProductsById[productId].total += newQuantity;
-							updatedFreeProductsById[productId].available += newQuantity;
-						}
-					}
-				}
-				const result = await collections.paidSubscriptions.updateOne(
-					{ _id: existingSubscription._id },
-					{
-						$set: {
-							paidUntil: add(max([existingSubscription.paidUntil, new Date()]), {
-								[`${runtimeConfig.subscriptionDuration}s`]: 1
-							}),
-							updatedAt: new Date(),
-							notifications: [],
-							...(Object.keys(updatedFreeProductsById).length !== 0 && {
-								freeProductsById: updatedFreeProductsById
-							})
-						},
-						$unset: { cancelledAt: 1 }
-					},
-					{ session }
-				);
-
-				if (!result.modifiedCount) {
-					throw new Error('Failed to update subscription');
-				}
-			} else {
-				const freeProductsById: Record<string, { total: number; available: number; used: number }> =
-					{};
-
-				for (const discount of discounts) {
-					if (discount.mode === 'freeProducts' && discount.quantityPerProduct) {
-						for (const [productId, quantity] of Object.entries(discount.quantityPerProduct)) {
-							if (!freeProductsById[productId]) {
-								freeProductsById[productId] = {
-									total: 0,
-									available: 0,
-									used: 0
-								};
-							}
-							freeProductsById[productId].total += quantity;
-							freeProductsById[productId].available += quantity;
-						}
-					}
-				}
-				await collections.paidSubscriptions.insertOne(
-					{
-						_id: crypto.randomUUID(),
-						number: await generateSubscriptionNumber(),
-						user: order.user,
-						productId: subscription.product._id,
-						paidUntil: add(new Date(), { [`${runtimeConfig.subscriptionDuration}s`]: 1 }),
-						createdAt: new Date(),
-						updatedAt: new Date(),
-						notifications: [],
-						...(Object.keys(freeProductsById).length !== 0 && { freeProductsById })
-					},
-					{ session }
-				);
-			}
-		}
+		await applyOrderSubscriptionsDiscounts(order, session);
 	}
-	//#endregion
 
 	//#region challenges
 	const challenges = await collections.challenges
@@ -2358,5 +2426,31 @@ async function swissBitcoinPayCreateInvoice(params: {
 		return { payment_address, invoiceId };
 	} catch (err) {
 		throw error(402, `Failed to create Swiss Bitcoin Pay Invoice: ${err}`);
+	}
+}
+
+async function btcpayServerCreateInvoice(params: {
+	label: string;
+	amountInSats: number;
+	expiresAt?: Date;
+}): Promise<{
+	payment_address: string;
+	invoiceId: string;
+}> {
+	try {
+		const invoice = await btcpayCreateLnInvoice({
+			amount: `${params.amountInSats * 1000}`,
+			description: params.label,
+			...(params.expiresAt === undefined
+				? {}
+				: {
+						expiry: differenceInSeconds(params.expiresAt, new Date())
+				  })
+		});
+		const payment_address = invoice.BOLT11;
+		const invoiceId = invoice.id;
+		return { payment_address, invoiceId };
+	} catch (err) {
+		throw error(402, `Failed to create BTCPay Server Invoice: ${err}`);
 	}
 }

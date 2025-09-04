@@ -27,7 +27,7 @@ import {
 } from '$lib/translations';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
-import type { PaymentMethod } from './payment-methods';
+import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import { merge } from '$lib/utils/merge';
 
 const baseConfig = {
@@ -102,6 +102,7 @@ const baseConfig = {
 	vatSingleCountry: false,
 	vatCountry: 'FR' satisfies CountryAlpha2 as CountryAlpha2,
 	vatNullOutsideSellerCountry: false,
+	displayVatIncludedInProduct: false,
 	collectIPOnDeliverylessOrders: false,
 	isBillingAddressMandatory: false,
 	disableLanguageSelector: false,
@@ -187,6 +188,11 @@ const baseConfig = {
 		secretKey: '',
 		currency: 'EUR' as Currency
 	},
+	btcpayServer: {
+		apiKey: '',
+		serverUrl: '',
+		storeId: ''
+	},
 	paypal: {
 		clientId: '',
 		secret: '',
@@ -212,8 +218,14 @@ const baseConfig = {
 	contactModesForceOption: false,
 	posTouchTag: [] as Tag['_id'][],
 	posPrefillTermOfUse: false,
+	posTapToPay: {
+		processor: undefined as PaymentProcessor | undefined,
+		onActivationUrl: undefined as string | undefined
+	},
 	hideCreditCardQrCode: false,
 	overwriteCreditCardSvgColor: false,
+	hideShopBankOnReceipt: false,
+	hideShopBankOnTicket: false,
 	hideCmsZonesOnMobile: false,
 	copyOrderEmailsToAdmin: true,
 	usersDarkDefaultTheme: false,
@@ -223,6 +235,12 @@ const baseConfig = {
 	displayMainShopInfo: false,
 	disableNostrBotIntro: false,
 	hideFromSearchEngines: false,
+	posDisplayOrderQrAfterPayment: false,
+	posQrCodeAfterPayment: {
+		timeBeforeRedirecting: 10,
+		displayCustomerCta: false,
+		removeBebobLogo: false
+	},
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,
 	physicalCartMinAmount: null as null | number,
@@ -512,6 +530,7 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 					write: [],
 					forbidden: []
 				},
+				hasPosOptions: true,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			})

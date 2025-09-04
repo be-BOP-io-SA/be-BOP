@@ -8,18 +8,16 @@
 	import { typedValues } from '$lib/utils/typedValues';
 	import { typedInclude } from '$lib/utils/typedIncludes';
 	import ProductType from '$lib/components/ProductType.svelte';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/types/Cart';
+	import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
-	import { POS_ROLE_ID } from '$lib/types/User.js';
 	import { toSatoshis } from '$lib/utils/toSatoshis';
 	import { MIN_SATOSHIS_FOR_BITCOIN_PAYMENT, type DiscountType } from '$lib/types/Order.js';
 	import { useI18n } from '$lib/i18n';
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { trimPrefix } from '$lib/utils/trimPrefix.js';
-	import { differenceInMinutes } from 'date-fns';
 
 	export let data;
 	let submitting = false;
@@ -31,8 +29,6 @@
 	let country = defaultShippingCountry;
 
 	let isFreeVat = false;
-	let onLocation = data.roleId === POS_ROLE_ID && data.defaultOnLocation;
-	$: offerDeliveryFees = onLocation;
 	let addDiscount = false;
 	let offerOrder = false;
 	let discountAmount = 0;
@@ -46,6 +42,13 @@
 				offerOrder = false;
 			}
 		}
+	}
+
+	let canOfferDeliveryFees = (data.hasPosOptions && data.deliveryFees.allowFreeForPOS) || false;
+	let offerDeliveryFees = false;
+	let orderFullyPaidOnLocation = canOfferDeliveryFees && data.defaultOnLocation;
+	$: {
+		offerDeliveryFees = orderFullyPaidOnLocation;
 	}
 
 	let multiplePaymentMethods = false;
@@ -67,13 +70,11 @@
 	};
 
 	const emails: Record<FeedKey, string> = {
-		paymentStatus:
-			data.roleId === POS_ROLE_ID ? '' : data.email || data.personalInfoConnected?.email || ''
+		paymentStatus: data.hasPosOptions ? '' : data.email || data.personalInfoConnected?.email || ''
 	};
 
 	const npubs: Record<FeedKey, string> = {
-		paymentStatus:
-			data.roleId === POS_ROLE_ID ? '' : data.npub || data.personalInfoConnected?.npub || ''
+		paymentStatus: data.hasPosOptions ? '' : data.npub || data.personalInfoConnected?.npub || ''
 	};
 
 	function checkForm(event: SubmitEvent) {
@@ -106,45 +107,27 @@
 		? paymentMethod
 		: paymentMethods[0];
 
-	$: items = data.cart || [];
-	$: deliveryFees =
-		data.roleId === 'POS_ROLE_ID' && data.deliveryFees.allowFreeForPOS
-			? 0
-			: computeDeliveryFees(UNDERLYING_CURRENCY, country, items, data.deliveryFees);
+	$: items = data.cart.items;
+	$: orderDeliveryFees = computeDeliveryFees(
+		UNDERLYING_CURRENCY,
+		country,
+		items,
+		data.deliveryFees
+	);
+	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
 
+	// A PoS operator may apply different discounts, such as on-site promotions or free delivery;
+	// thus, the price info is computed from scratch to reflect the correct value.
 	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted || isFreeVat,
+		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		freeProductUnits: data.cart.freeProductUnits,
 		userCountry: isDigital ? digitalCountry : country,
-		deliveryFees: {
-			amount: offerDeliveryFees ? 0 : deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
-		vatProfiles: data.vatProfiles,
-		...(addDiscount && !isNaN(discountAmount)
-			? {
-					discount: {
-						amount: discountAmount,
-						type: discountType
-					}
-			  }
-			: undefined)
-	});
-	$: priceInfoInitial = computePriceInfo(items, {
-		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
+		vatExempted: data.vatExempted,
 		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted || isFreeVat,
-		userCountry: isDigital ? digitalCountry : country,
-		deliveryFees: {
-			amount: offerDeliveryFees ? 0 : deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
+		vatSingleCountry: data.vatSingleCountry,
 		vatProfiles: data.vatProfiles
 	});
-
 	$: isDigital = items.every((item) => !item.product.shipping);
 
 	$: paymentMethods =
@@ -160,8 +143,7 @@
 			  );
 	$: isDiscountValid =
 		(discountType === 'fiat' &&
-			priceInfoInitial.totalPriceWithVat >=
-				toSatoshis(discountAmount || 0, data.currencies.main)) ||
+			priceInfo.totalPriceWithVat >= toSatoshis(discountAmount || 0, data.currencies.main)) ||
 		(discountType === 'percentage' && discountAmount <= 100);
 	let showBillingInfo = false;
 	let isProfessionalOrder = false;
@@ -171,6 +153,15 @@
 			? priceInfo.partialPriceWithVat >=
 			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 			: true;
+
+	function handleOfferDeliveryFeesChange(e: Event) {
+		const element = e.target as HTMLInputElement;
+		if (element.checked) {
+			setTimeout(() => {
+				document.getElementById('reasonOfferDeliveryFees')?.focus();
+			}, 100);
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -183,7 +174,7 @@
 			pictures={data.cmsCheckoutTopData.pictures}
 			tags={data.cmsCheckoutTopData.tags}
 			digitalFiles={data.cmsCheckoutTopData.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.cmsCheckoutTopData.specifications}
 			contactForms={data.cmsCheckoutTopData.contactForms}
 			pageName={data.cmsCheckoutTop.title}
@@ -216,9 +207,9 @@
 							class="form-input"
 							name="shipping.firstName"
 							autocomplete="given-name"
-							required={data.roleId !== POS_ROLE_ID}
+							required={!data.hasPosOptions}
 							value={data.personalInfoConnected?.firstName ??
-								(data.roleId === POS_ROLE_ID && data.shopInformation?.businessName
+								(data.hasPosOptions && data.shopInformation?.businessName
 									? data.shopInformation.businessName
 									: '') ??
 								''}
@@ -232,7 +223,7 @@
 							class="form-input"
 							name="shipping.lastName"
 							autocomplete="family-name"
-							required={data.roleId !== POS_ROLE_ID}
+							required={!data.hasPosOptions}
 							value={data.personalInfoConnected?.lastName ?? ''}
 						/>
 					</label>
@@ -244,9 +235,9 @@
 							class="form-input"
 							autocomplete="street-address"
 							name="shipping.address"
-							required={data.roleId !== POS_ROLE_ID}
+							required={!data.hasPosOptions}
 							value={data.personalInfoConnected?.address?.street ??
-								(data.roleId === POS_ROLE_ID && data.shopInformation?.address?.street
+								(data.hasPosOptions && data.shopInformation?.address?.street
 									? data.shopInformation.address.street
 									: '') ??
 								''}
@@ -272,7 +263,7 @@
 							name="shipping.state"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.state ??
-								(data.roleId === POS_ROLE_ID && data.shopInformation?.address?.state
+								(data.hasPosOptions && data.shopInformation?.address?.state
 									? data.shopInformation.address.state
 									: '') ??
 								''}
@@ -286,11 +277,11 @@
 							name="shipping.city"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.city ??
-								(data.roleId === POS_ROLE_ID && data.shopInformation?.address?.city
+								(data.hasPosOptions && data.shopInformation?.address?.city
 									? data.shopInformation.address.city
 									: '') ??
 								''}
-							required={data.roleId !== POS_ROLE_ID}
+							required={!data.hasPosOptions}
 						/>
 					</label>
 					<label class="form-label col-span-2">
@@ -301,11 +292,11 @@
 							name="shipping.zip"
 							class="form-input"
 							value={data.personalInfoConnected?.address?.zip ??
-								(data.roleId === POS_ROLE_ID && data.shopInformation?.address?.zip
+								(data.hasPosOptions && data.shopInformation?.address?.zip
 									? data.shopInformation.address.zip
 									: '') ??
 								''}
-							required={data.roleId !== POS_ROLE_ID}
+							required={!data.hasPosOptions}
 							autocomplete="postal-code"
 						/>
 					</label>
@@ -315,7 +306,7 @@
 							type="tel"
 							name="shipping.phone"
 							class="form-input"
-							value={data.roleId === POS_ROLE_ID && data.shopInformation?.contact?.phone
+							value={data.hasPosOptions && data.shopInformation?.contact?.phone
 								? data.shopInformation.contact.phone
 								: ''}
 						/>
@@ -349,14 +340,14 @@
 						{t('checkout.isProBilling')}
 					</label>
 				{/if}
-				{#if data.defaultOnLocation && data.roleId === POS_ROLE_ID && !isDigital}
+				{#if canOfferDeliveryFees && !isDigital}
 					<label class="col-span-6 checkbox-label">
 						<input
 							type="checkbox"
 							class="form-checkbox"
 							form="checkout"
 							name="onLocation"
-							bind:checked={onLocation}
+							bind:checked={orderFullyPaidOnLocation}
 						/>
 						{t('checkout.onLocation')}
 					</label>
@@ -469,7 +460,7 @@
 			<section class="gap-4 flex flex-col">
 				<h2 class="font-light text-2xl">{t('checkout.payment.title')}</h2>
 
-				{#if data.roleId === POS_ROLE_ID}
+				{#if data.hasPosOptions}
 					<label class="checkbox-label">
 						<input
 							type="checkbox"
@@ -507,7 +498,7 @@
 						</div>
 					</label>
 				{/if}
-				{#if data.roleId === POS_ROLE_ID && paymentMethod !== 'point-of-sale' && paymentMethod !== 'bank-transfer'}
+				{#if data.hasPosOptions && paymentMethod !== 'point-of-sale' && paymentMethod !== 'bank-transfer'}
 					<label class="checkbox-label">
 						<input
 							type="checkbox"
@@ -555,11 +546,12 @@
 										name="{key}Email"
 										bind:value={emails[key]}
 										required={key === 'paymentStatus' &&
-											data.roleId !== POS_ROLE_ID &&
+											!data.hasPosOptions &&
 											(!npubs[key] || !data.contactModes.includes('nostr'))}
 									/>
 								</label>
 							{/if}
+
 							{#if data.contactModes.includes('nostr')}
 								<label class="form-label">
 									{t('checkout.notifications.npub')}
@@ -574,7 +566,7 @@
 										placeholder="npub1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 										required={key === 'paymentStatus' &&
 											(!emails[key] || !data.contactModes.includes('email')) &&
-											data.roleId !== POS_ROLE_ID}
+											!data.hasPosOptions}
 										on:change={(ev) => ev.currentTarget.setCustomValidity('')}
 									/>
 								</label>
@@ -610,7 +602,7 @@
 					<div class="pl-4 py-2 body-mainPlan border-b border-gray-300 text-xl font-light">
 						{t('checkout.note.title')}
 					</div>
-					{#if data.roleId === POS_ROLE_ID}
+					{#if data.hasPosOptions}
 						<div class="p-4 flex flex-col gap-3">
 							<label class="form-label text-xl">
 								{t('checkout.receiptNote.label')}
@@ -635,12 +627,10 @@
 					<a href="/cart" class="body-hyperlink hover:underline"
 						>&lt;&lt;{t('checkout.backToCart')}</a
 					>
-					<p>{t('checkout.numProducts', { count: data.cart?.length ?? 0 })}</p>
+					<p>{t('checkout.numProducts', { count: data.cart.items.length ?? 0 })}</p>
 				</div>
-				{#each items as item}
-					{@const price = item.customPrice || item.product.price}
-					{@const quantityToPay = Math.max(item.quantity - (item.freeQuantity ?? 0), 0)}
-
+				{#each items as item, i}
+					{@const price = priceInfo.perItem[i]}
 					<form
 						method="POST"
 						class="flex flex-col mt-2"
@@ -728,15 +718,7 @@
 							<div class="flex flex-col ml-auto items-end justify-center">
 								<PriceTag
 									class="text-2xl truncate"
-									amount={((quantityToPay *
-										(item.booking && item.product.bookingSpec?.slotMinutes
-											? differenceInMinutes(item.booking.end, item.booking.start) /
-											  item.product.bookingSpec.slotMinutes
-											: 1) *
-										price.amount *
-										(item.depositPercentage ?? 100)) /
-										100) *
-										(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+									amount={(price.amount * (item.depositPercentage ?? 100)) / 100}
 									currency={price.currency}
 									main
 									>{item.depositPercentage
@@ -746,15 +728,7 @@
 										: ''}</PriceTag
 								>
 								<PriceTag
-									amount={((quantityToPay *
-										(item.booking && item.product.bookingSpec?.slotMinutes
-											? differenceInMinutes(item.booking.end, item.booking.start) /
-											  item.product.bookingSpec.slotMinutes
-											: 1) *
-										price.amount *
-										(item.depositPercentage ?? 100)) /
-										100) *
-										(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+									amount={(price.amount * (item.depositPercentage ?? 100)) / 100}
 									currency={price.currency}
 									class="text-base truncate"
 									secondary
@@ -766,19 +740,18 @@
 					<div class="border-b border-gray-300 col-span-4" />
 				{/each}
 
-				{#if deliveryFees && !offerDeliveryFees}
+				{#if deliveryFeesToBill}
 					<div class="flex justify-between items-center">
 						<h3 class="text-base">{t('checkout.deliveryFees')}</h3>
-
 						<div class="flex flex-col ml-auto items-end justify-center">
 							<PriceTag
 								class="text-2xl truncate"
-								amount={deliveryFees}
+								amount={deliveryFeesToBill}
 								currency={UNDERLYING_CURRENCY}
 								main
 							/>
 							<PriceTag
-								amount={deliveryFees}
+								amount={deliveryFeesToBill}
 								currency={UNDERLYING_CURRENCY}
 								class="text-base truncate"
 								secondary
@@ -786,7 +759,7 @@
 						</div>
 					</div>
 					<div class="border-b border-gray-300 col-span-4" />
-				{:else if isNaN(deliveryFees)}
+				{:else if isNaN(deliveryFeesToBill)}
 					<div class="alert-error mt-3">
 						{t('checkout.noDeliveryInCountry')}
 					</div>
@@ -892,7 +865,7 @@
 						name="teecees"
 						form="checkout"
 						required
-						checked={data.roleId === POS_ROLE_ID && data.posPrefillTermOfUse}
+						checked={data.hasPosOptions && data.posPrefillTermOfUse}
 					/>
 					<span>
 						<Trans key="checkout.tosAgree"
@@ -977,7 +950,7 @@
 					</label>
 				{/if}
 
-				{#if data.roleId === POS_ROLE_ID}
+				{#if data.hasPosOptions}
 					{#if !data.vatExempted}
 						<label class="checkbox-label">
 							<input
@@ -1086,28 +1059,30 @@
 							/>
 						</label>
 					{/if}
-					{#if data.deliveryFees.allowFreeForPOS && deliveryFees}
-						<label class="checkbox-label">
+					{#if canOfferDeliveryFees && orderDeliveryFees}
+						{@const displayToTheUser = !orderFullyPaidOnLocation}
+						<label class="checkbox-label" style={displayToTheUser ? '' : 'display: none;'}>
 							<input
 								type="checkbox"
 								class="form-checkbox"
 								name="offerDeliveryFees"
 								form="checkout"
 								bind:checked={offerDeliveryFees}
+								on:change={handleOfferDeliveryFeesChange}
 							/>
 							{t('pos.offerDeliveryFees')}
 						</label>
-
-						{#if offerDeliveryFees}
-							<label class="form-label col-span-3">
+						{#if orderDeliveryFees !== deliveryFeesToBill}
+							<label class="form-label col-span-3" style={displayToTheUser ? '' : 'display: none;'}>
 								{t('pos.discountJustification')}
 								<input
+									id="reasonOfferDeliveryFees"
 									type="text"
 									class="form-input"
 									form="checkout"
 									name="reasonOfferDeliveryFees"
 									required
-									value={onLocation ? t('checkout.reasonOfferFeesDefault') : ''}
+									value={orderFullyPaidOnLocation ? t('checkout.reasonOfferFeesDefault') : ''}
 								/></label
 							>
 						{/if}
@@ -1119,7 +1094,7 @@
 					class="btn body-cta body-mainCTA btn-xl -mx-1 -mb-1 mt-1"
 					value={t('checkout.cta.submit')}
 					form="checkout"
-					disabled={isNaN(deliveryFees) ||
+					disabled={isNaN(deliveryFeesToBill) ||
 						(addDiscount && !isDiscountValid) ||
 						submitting ||
 						!physicalCartCanBeOrdered}
@@ -1136,7 +1111,7 @@
 			pictures={data.cmsCheckoutBottomData.pictures}
 			tags={data.cmsCheckoutBottomData.tags}
 			digitalFiles={data.cmsCheckoutBottomData.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.cmsCheckoutBottomData.specifications}
 			contactForms={data.cmsCheckoutBottomData.contactForms}
 			pageName={data.cmsCheckoutBottom.title}

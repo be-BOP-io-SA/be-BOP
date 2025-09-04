@@ -28,13 +28,12 @@
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency';
 	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/types/Cart.js';
+	import { computeDeliveryFees } from '$lib/cart';
 	import { LARGE_SCREEN } from '$lib/types/Theme.js';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import IconSystem from '$lib/components/icons/IconSystem.svelte';
 	import { oneMaxPerLine } from '$lib/types/Product.js';
-	import { differenceInMinutes } from 'date-fns';
 
 	export let data;
 
@@ -52,23 +51,12 @@
 	$: $exchangeRate = data.exchangeRate;
 	$: $currencies = data.currencies;
 
-	$: items = data.cart || [];
+	$: items = data.cart.items;
 	$: deliveryFees =
 		data.countryCode && isAlpha2CountryCode(data.countryCode)
 			? computeDeliveryFees(UNDERLYING_CURRENCY, data.countryCode, items, data.deliveryFees)
 			: NaN;
-	$: priceInfo = computePriceInfo(items, {
-		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted,
-		userCountry: data.countryCode,
-		deliveryFees: {
-			amount: deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
-		vatProfiles: data.vatProfiles
-	});
+	$: priceInfo = data.cart.priceInfo;
 	$: totalItems = sum(items.map((item) => item.quantity) ?? []);
 
 	onMount(() => {
@@ -168,12 +156,12 @@
 				<nav class="flex gap-10 text-[22px] font-semibold header-tab">
 					{#each data.links.topbar as link}
 						<a
-							href={link.href.startsWith('http') || link.href.includes('/')
+							href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
 								? link.href
 								: `/${link.href}`}
 							class=" {data.notResponsive ? '' : 'hidden lg:inline'}"
 							data-sveltekit-preload-data="off"
-							target={link.href.startsWith('http') ? '_blank' : '_self'}
+							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 						>
 							{link.label}
 						</a>
@@ -199,10 +187,10 @@
 				{#each data.links.topbar as link}
 					<a
 						class="py-4"
-						href={link.href.startsWith('http') || link.href.includes('/')
+						href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
 							? link.href
 							: `/${link.href}`}
-						target={link.href.startsWith('http') ? '_blank' : '_self'}
+						target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 						data-sveltekit-preload-data="off">{link.label}</a
 					>
 				{/each}
@@ -224,11 +212,11 @@
 
 					{#each data.links.navbar as link}
 						<a
-							href={link.href.startsWith('http') || link.href.includes('/')
+							href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
 								? link.href
 								: `/${link.href}`}
 							class={data.notResponsive ? '' : 'hidden lg:inline'}
-							target={link.href.startsWith('http') ? '_blank' : '_self'}
+							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 							data-sveltekit-preload-data="off">{link.label}</a
 						>
 					{/each}
@@ -271,9 +259,8 @@
 						{:else if cartOpen}
 							<Popup>
 								<div class="p-2 gap-2 flex flex-col cartPreview">
-									{#each items as item}
-										{@const price = item.customPrice ?? item.product.price}
-
+									{#each items as item, i}
+										{@const price = priceInfo.perItem[i]}
 										{#if cartErrorMessage && cartErrorProductId === item.product._id}
 											<div class="text-red-600 text-sm">{cartErrorMessage}</div>
 										{/if}
@@ -361,23 +348,15 @@
 											<div class="flex flex-col items-end gap-[6px] ml-auto">
 												<PriceTag
 													class="text-base"
-													amount={(Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
-														price.amount *
-														(item.booking && item.product.bookingSpec
-															? differenceInMinutes(item.booking.end, item.booking.start) /
-															  item.product.bookingSpec.slotMinutes
-															: 1) *
-														(item.depositPercentage ?? 100) *
-														(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)) /
-														100}
+													amount={(price.amount * (item.depositPercentage ?? 100)) / 100}
 													currency={price.currency}
 													main
 													>{item.depositPercentage
 														? `(${(item.depositPercentage / 100).toLocaleString($locale, {
 																style: 'percent'
 														  })})`
-														: ''}</PriceTag
-												>
+														: ''}
+												</PriceTag>
 												{#if data.cartPreviewInteractive}
 													<button formaction="/cart/{item.product._id}/?/remove">
 														<IconTrash class="body-secondaryText" />
@@ -518,7 +497,7 @@
 					<a
 						class="py-2 hover:underline"
 						data-sveltekit-preload-data="off"
-						href={link.href.startsWith('http') || link.href.includes('/')
+						href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
 							? link.href
 							: `/${link.href}`}>{link.label}</a
 					>
@@ -541,7 +520,7 @@
 						{#if data.cmsAgewall && data.cmsAgewallData}
 							<CmsDesign
 								{...data.cmsAgewallData}
-								roleId={data.roleId ? data.roleId : ''}
+								hasPosOptions={data.hasPosOptions}
 								pageName={data.cmsAgewall?.title}
 								websiteLink={data.websiteLink}
 								brandName={data.brandName}
@@ -628,10 +607,10 @@
 						{#each data.links.footer as link}
 							<a
 								class={link.label === '-' ? 'hidden lg:contents' : ''}
-								href={link.href.startsWith('http') || link.href.includes('/')
+								href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
 									? link.href
 									: `/${link.href}`}
-								target={link.href.startsWith('http') ? '_blank' : '_self'}
+								target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 								data-sveltekit-preload-data="off">{link.label}</a
 							>
 						{/each}

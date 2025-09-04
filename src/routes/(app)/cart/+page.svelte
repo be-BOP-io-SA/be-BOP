@@ -8,7 +8,7 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { useI18n } from '$lib/i18n';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/types/Cart.js';
+	import { computeDeliveryFees } from '$lib/cart';
 	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import { oneMaxPerLine } from '$lib/types/Product.js';
@@ -16,7 +16,6 @@
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
-	import { differenceInMinutes } from 'date-fns';
 
 	export let data;
 
@@ -25,23 +24,12 @@
 	let errorMessage = data.errorMessage;
 	let errorProductId = '';
 
-	$: items = data.cart || [];
+	$: items = data.cart.items;
 	$: deliveryFees =
 		data.countryCode && isAlpha2CountryCode(data.countryCode)
 			? computeDeliveryFees(UNDERLYING_CURRENCY, data.countryCode, items, data.deliveryFees)
 			: NaN;
-	$: priceInfo = computePriceInfo(items, {
-		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted,
-		userCountry: data.countryCode,
-		deliveryFees: {
-			amount: deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
-		vatProfiles: data.vatProfiles
-	});
+	$: priceInfo = data.cart.priceInfo;
 	let alias = '';
 	let formAlias: HTMLInputElement;
 	let loading = false;
@@ -64,7 +52,7 @@
 			pictures={data.cmsBasketTopData.pictures}
 			tags={data.cmsBasketTopData.tags}
 			digitalFiles={data.cmsBasketTopData.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.cmsBasketTopData.specifications}
 			contactForms={data.cmsBasketTopData.contactForms}
 			pageName={data.cmsBasketTop?.title}
@@ -132,8 +120,8 @@
 				style="grid-template-columns: auto 1fr auto auto"
 			>
 				{#each items as item, i}
-					{@const price = item.customPrice || item.product.price}
-					{@const quantityToPay = Math.max(item.quantity - (item.freeQuantity ?? 0), 0)}
+					{@const price = priceInfo.perItem[i]}
+					{@const toDepositFactor = (item.depositPercentage ?? 100) / 100}
 					<form
 						method="POST"
 						class="contents"
@@ -234,34 +222,20 @@
 						<div class="flex flex-col items-end justify-center lg:mb-0 mb-4">
 							<div class="flex gap-2">
 								<PriceTag
-									amount={(quantityToPay *
-										(item.booking && item.product.bookingSpec?.slotMinutes
-											? differenceInMinutes(item.booking.end, item.booking.start) /
-											  item.product.bookingSpec.slotMinutes
-											: 1) *
-										price.amount *
-										(item.depositPercentage ?? 100)) /
-										100}
+									amount={price.amountWithoutDiscount * toDepositFactor}
 									currency={price.currency}
 									main
 									class="text-2xl truncate {item.discountPercentage ? 'line-through' : ''}"
-									>{item.depositPercentage
-										? `(${(item.depositPercentage / 100).toLocaleString($locale, {
-												style: 'percent'
-										  })})`
-										: ''}</PriceTag
 								>
+									{#if item.depositPercentage}
+										{(item.depositPercentage / 100).toLocaleString($locale, {
+											style: 'percent'
+										})}
+									{/if}
+								</PriceTag>
 								{#if item.discountPercentage}
 									<PriceTag
-										amount={((quantityToPay *
-											(item.booking && item.product.bookingSpec?.slotMinutes
-												? differenceInMinutes(item.booking.end, item.booking.start) /
-												  item.product.bookingSpec.slotMinutes
-												: 1) *
-											price.amount *
-											(item.depositPercentage ?? 100)) /
-											100) *
-											(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+										amount={price.amount * toDepositFactor}
 										currency={price.currency}
 										class="text-2xl truncate "
 										main
@@ -270,15 +244,7 @@
 							</div>
 							<PriceTag
 								class="text-base truncate"
-								amount={((quantityToPay *
-									(item.booking && item.product.bookingSpec?.slotMinutes
-										? differenceInMinutes(item.booking.end, item.booking.start) /
-										  item.product.bookingSpec.slotMinutes
-										: 1) *
-									price.amount *
-									(item.depositPercentage ?? 100)) /
-									100) *
-									(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+								amount={price.amount * toDepositFactor}
 								currency={price.currency}
 								secondary
 							/>
@@ -428,7 +394,7 @@
 			pictures={data.cmsBasketBottomData.pictures}
 			tags={data.cmsBasketBottomData.tags}
 			digitalFiles={data.cmsBasketBottomData.digitalFiles}
-			roleId={data.roleId ? data.roleId : ''}
+			hasPosOptions={data.hasPosOptions}
 			specifications={data.cmsBasketBottomData.specifications}
 			contactForms={data.cmsBasketBottomData.contactForms}
 			pageName={data.cmsBasketBottom?.title}

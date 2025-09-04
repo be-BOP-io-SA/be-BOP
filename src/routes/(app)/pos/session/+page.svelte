@@ -6,7 +6,6 @@
 	import { onMount } from 'svelte';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import { useI18n } from '$lib/i18n';
-	import { computePriceInfo } from '$lib/types/Cart.js';
 	import { orderRemainingToPay } from '$lib/types/Order.js';
 	import Trans from '$lib/components/Trans.svelte';
 
@@ -15,15 +14,18 @@
 		onmessage?: ((this: CustomEventSource, ev: MessageEvent) => unknown) | null;
 		close?: () => void;
 	}
+	export let data;
 
-	const ORDER_CLEAR_TIMEOUT = 5_000;
+	const ORDER_CLEAR_TIMEOUT = data.posDisplayOrderQrAfterPayment
+		? data.posQrCodeAfterPayment.timeBeforeRedirecting * 1_000
+		: 5_000;
 
 	let eventSourceInstance: CustomEventSource | void | null = null;
-	export let data;
-	let cart = data.cart;
+	let formattedCart = data.formattedCart;
 	let order = data.order;
 
-	$: view = cart && cart.length > 0 ? 'updateCart' : order ? order.status : 'welcome';
+	$: view =
+		formattedCart && formattedCart.length > 0 ? 'updateCart' : order ? order.status : 'welcome';
 
 	let currentTimeout = setTimeout(() => {
 		if (order === data.order && order?.status !== 'pending') {
@@ -38,7 +40,7 @@
 					try {
 						const { eventType, cart: sseCart, order: sseOrder } = JSON.parse(ev.data);
 						if (eventType === 'cart') {
-							cart = sseCart;
+							formattedCart = sseCart;
 						} else if (eventType === 'order') {
 							order = sseOrder;
 							clearTimeout(currentTimeout);
@@ -75,23 +77,7 @@
 			cleanUpServerEvents();
 		};
 	});
-
-	// $: deliveryFees =
-	// 	data.countryCode && isAlpha2CountryCode(data.countryCode)
-	// 		? computeDeliveryFees(UNDERLYING_CURRENCY, data.countryCode, items, data.deliveryFees)
-	// 		: NaN;
-	$: priceInfo = computePriceInfo(cart, {
-		bebopCountry: data.vatCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatExempted: data.vatExempted,
-		userCountry: data.countryCode,
-		deliveryFees: {
-			amount: 0, //deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
-		vatProfiles: data.vatProfiles
-	});
+	$: priceInfo = data.cart.priceInfo;
 
 	const { t, locale, countryName } = useI18n();
 </script>
@@ -101,9 +87,9 @@
 </svelte:head>
 <main class="fixed top-0 bottom-0 right-0 left-0 bg-white p-4">
 	{#if view === 'updateCart'}
-		{#if cart.length}
+		{#if formattedCart.length}
 			<div class="overflow-auto h-[90vh]">
-				{#each cart as item}
+				{#each formattedCart as item}
 					{@const price = item.customPrice || item.product.price}
 					<div class="flex items-center justify-between w-full">
 						<div class="flex flex-col">
@@ -167,6 +153,18 @@
 		<div class="flex flex-col items-center gap-3">
 			<h1 class="text-3xl text-center">{t('order.singleTitle', { number: order?.number })}</h1>
 			<CheckCircleOutlined font-size="160" />
+			{#if data.posDisplayOrderQrAfterPayment}
+				<img
+					src="/order/{order?._id}/qrcode?logo={!data.posQrCodeAfterPayment.removeBebobLogo}"
+					alt="QR code"
+					class="h-96 w-96"
+				/>
+				{#if data.posQrCodeAfterPayment.displayCustomerCta}
+					<a href="/pos/session" on:click={() => (view = 'welcome')} class="btn btn-blue w-full"
+						>{t('order.paymentDoneCustomerCTA')}</a
+					>
+				{/if}
+			{/if}
 		</div>
 	{:else if view === 'welcome'}
 		<div class="flex flex-col items-center">
@@ -234,7 +232,7 @@
 				</div>
 			</div>
 		</div>
-	{:else if cart && view === 'updateCart'}
+	{:else if formattedCart && view === 'updateCart'}
 		<div class="flex justify-between flex-col p-2 gap-2 bg-gray-300 fixed left-0 right-0 bottom-0">
 			{#each priceInfo.vat as vat}
 				<div class="flex justify-end border-b border-gray-300 gap-6">

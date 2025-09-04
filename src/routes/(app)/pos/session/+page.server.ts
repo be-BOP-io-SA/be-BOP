@@ -21,9 +21,11 @@ export const load = async ({ locals }) => {
 	const formattedCart = await formatCart(cart, locals);
 
 	return {
-		cart: formattedCart,
+		formattedCart,
 		order: order && formatOrder(order),
 		layoutReset: true,
-		removeBebopLogoPOS: runtimeConfig.removeBebopLogoPOS
+		removeBebopLogoPOS: runtimeConfig.removeBebopLogoPOS,
+		posDisplayOrderQrAfterPayment: runtimeConfig.posDisplayOrderQrAfterPayment,
+		posQrCodeAfterPayment: runtimeConfig.posQrCodeAfterPayment
 	};
 };
