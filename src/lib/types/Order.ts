@@ -156,6 +156,15 @@ export interface Order extends Timestamps {
 	locale: LanguageKey;
 
 	items: Array<{
+		/**
+		 * Unique identifier for a line in the order.
+		 *
+		 * Used to correlate a specific item in the cart or orderTab. Special care
+		 * should be taken for this value not to be controlled by the user.
+		 *
+		 * Only optional for backwards compatibility.
+		 */
+		_id?: ObjectId;
 		product: Product;
 		quantity: number;
 		customPrice?: { amount: number; currency: Currency };
