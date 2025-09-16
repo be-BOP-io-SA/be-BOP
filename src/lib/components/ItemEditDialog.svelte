@@ -1,11 +1,12 @@
 <script lang="ts">
-	import type { CartItemFrontend } from '../../routes/(app)/+layout.server';
 	import { DEFAULT_MAX_QUANTITY_PER_ORDER } from '$lib/types/Product';
 
-	export let item: CartItemFrontend;
-	export let onClose: () => void;
-	export let onUpdateNote: (note: string) => Promise<void>;
-	export let onUpdateQuantity: (quantity: number) => Promise<void>;
+	export let item: {
+		internalNote?: { value: string };
+		quantity: number;
+		product: { name: string; maxQuantityPerOrder?: number };
+	};
+	export let onClose: (_: { note?: string; quantity?: number }) => Promise<void>;
 
 	let note = item.internalNote?.value || '';
 	let quantity = item.quantity;
@@ -32,18 +33,23 @@
 	}
 
 	async function saveChanges() {
+		const payload: Parameters<typeof onClose>[0] = {};
 		if (quantity !== item.quantity) {
-			await onUpdateQuantity(quantity);
+			payload.quantity = quantity;
 		}
 		if (note !== (item.internalNote?.value || '')) {
-			await onUpdateNote(note);
+			payload.note = note;
 		}
-		onClose();
+		await onClose(payload);
+	}
+
+	async function cancel() {
+		await onClose({});
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
-			onClose();
+			cancel();
 		}
 		if (event.key === 'Enter' && event.ctrlKey) {
 			saveChanges();
@@ -56,7 +62,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
 	class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-	on:click={onClose}
+	on:click={cancel}
 	role="dialog"
 	tabindex="-1"
 	aria-modal="true"
@@ -80,7 +86,7 @@
 			<button
 				type="button"
 				class="touchScreen-action-secondaryCTA text-2xl p-2 px-4 leading-none"
-				on:click={onClose}
+				on:click={cancel}
 				aria-label="Close dialog"
 			>
 				×
@@ -168,12 +174,12 @@
 			<button
 				type="button"
 				class="touchScreen-action-secondaryCTA text-3xl p-4 text-center"
-				on:click={onClose}
+				on:click={cancel}
 			>
 				ANNULER
 			</button>
 			<button
-				type="submit"
+				type="button"
 				class="touchScreen-action-cta text-3xl p-4 text-center"
 				on:click={saveChanges}
 			>

@@ -14,6 +14,7 @@
 	import ItemEditDialog from '$lib/components/ItemEditDialog.svelte';
 
 	export let data;
+	const tabSlug: string = data.tabSlug;
 	$: next = Number($page.url.searchParams.get('skip')) || 0;
 	$: picturesByProduct = groupBy(
 		data.pictures.filter(
@@ -26,8 +27,8 @@
 		filter === 'all'
 			? data.products
 			: data.products.filter((product) => product.tagIds?.includes(filter));
-	$: items = data.cart.items;
-	$: priceInfo = data.cart.priceInfo;
+	$: items = data.orderTab.items;
+	$: priceInfo = data.priceInfo;
 	const { t } = useI18n();
 	let posProductPagination = POS_PRODUCT_PAGINATION;
 
@@ -35,97 +36,32 @@
 	$: totalPages = Math.ceil(productFiltered.length / posProductPagination);
 	$: currentPage = Math.floor(next / posProductPagination) + 1;
 
-	// Dialog state
-	let showDialog = false;
-	let selectedItemIndex = -1;
+	let itemToEditIndex: number | undefined = undefined;
 
-	function openItemDialog(event: Event, index: number) {
-		event.preventDefault();
-		selectedItemIndex = index;
-		showDialog = true;
+	function openEditItemDialog(itemIndex: number) {
+		itemToEditIndex = itemIndex;
 	}
 
-	async function updateItemNote(note: string) {
-		const index = selectedItemIndex;
-
-		items[index].internalNote = { value: note, updatedAt: new Date() };
-
-		const formData = new FormData(formNotes[index]);
-		formData.set('note', note);
-
-		try {
-			const response = await fetch(formNotes[index].action, {
-				method: 'POST',
-				body: formData
-			});
-			const result = await response.json();
-			if (result.type === 'error') {
-				alert(result.error.message);
-			} else {
-				await invalidate(UrlDependency.Cart);
-			}
-		} catch (error) {
-			console.error(error);
-			alert('There was an error submitting the form.');
-		}
-	}
-
-	async function updateItemQuantity(quantity: number) {
-		const index = selectedItemIndex;
-		const item = items[index];
-		const currentQuantity = item.quantity;
-
-		if (quantity === currentQuantity) {
+	async function concludeEditItem(payload: { note?: string; quantity?: number }) {
+		if (itemToEditIndex === undefined || Object.keys(payload).length === 0) {
+			itemToEditIndex = undefined;
 			return;
 		}
-
-		// Update UI optimistically
-		items[index].quantity = quantity;
-
-		try {
-			// Handle removal (quantity = 0)
-			if (quantity === 0) {
-				const formData = new FormData();
-				if (item._id) {
-					formData.set('lineId', item._id);
-				}
-
-				const response = await fetch(`/cart/${item.product._id}?/remove`, {
-					method: 'POST',
-					body: formData
-				});
-
-				const json = await response.json();
-				if (json.type === 'error') {
-					throw new Error(json.error.message);
-				}
-			} else if (quantity !== currentQuantity) {
-				// Handle quantity change
-				const formData = new FormData();
-				formData.set('quantity', quantity.toString());
-				if (item._id) {
-					formData.set('lineId', item._id);
-				}
-
-				formData.set('mode', 'pos');
-
-				const response = await fetch(`/cart/${item.product._id}?/setQuantity`, {
-					method: 'POST',
-					body: formData
-				});
-
-				const json = await response.json();
-				if (json.type === 'error') {
-					throw new Error(json.error.message);
-				}
+		const form = formNotes.at(itemToEditIndex);
+		if (form) {
+			const note = payload.note ?? items[itemToEditIndex].internalNote?.value ?? '';
+			const notesInput = form.querySelector('input[name="note"]');
+			if (notesInput && notesInput instanceof HTMLInputElement) {
+				notesInput.value = note;
 			}
-
-			await invalidate(UrlDependency.Cart);
-		} catch (error) {
-			// Revert UI change on error
-			items[index].quantity = currentQuantity;
-			alert(error instanceof Error ? error.message : 'There was an error updating the quantity.');
+			const quantity = payload.quantity ?? items[itemToEditIndex].quantity;
+			const quantityInput = form.querySelector('input[name="quantity"]');
+			if (quantityInput && quantityInput instanceof HTMLInputElement) {
+				quantityInput.value = quantity.toString();
+			}
+			form.submit();
 		}
+		itemToEditIndex = undefined;
 	}
 
 	let formNotes: HTMLFormElement[] = [];
@@ -145,6 +81,15 @@
 			posProductPagination = 10;
 		}
 	}
+
+	function selfPageLink(params: Record<string, { toString(): string }>): string {
+		const search = new URLSearchParams($page.url.searchParams);
+		for (const [key, value] of Object.entries(params)) {
+			search.set(key, value.toString());
+		}
+		return `?${search.toString()}`;
+	}
+
 	onMount(() => {
 		updatePaginationLimit();
 		window.addEventListener('resize', updatePaginationLimit);
@@ -153,7 +98,7 @@
 	});
 </script>
 
-<div class="flex flex-col h-screen justify-between" inert={showDialog}>
+<div class="flex flex-col h-screen justify-between" inert={itemToEditIndex !== undefined}>
 	<main class="mb-auto flex-grow">
 		<div class="grid grid-cols-3 gap-4 h-full">
 			<div class="touchScreen-ticket-menu p-3 h-full">
@@ -162,15 +107,19 @@
 					{#each items as item, i}
 						<div class="flex flex-col py-3 gap-4">
 							<form
+								id="modify-item-{i}"
 								method="post"
 								bind:this={formNotes[i]}
-								action="/cart/{item.product._id}?/addNote"
+								action="?/updateOrderTabItem"
 							>
 								<input type="hidden" name="note" />
+								<input type="hidden" name="tabItemId" value={item.tabItemId} />
+								<input type="hidden" name="tabSlug" value={tabSlug} />
+								<input type="hidden" name="quantity" />
 								<button
-									type="submit"
+									type="button"
 									class="text-start text-2xl w-full justify-between"
-									on:click={(event) => openItemDialog(event, i)}
+									on:click={() => openEditItemDialog(i)}
 								>
 									{item.quantity} X {item.product.name.toUpperCase()}<br />
 									{item.internalNote?.value ? '+' + item.internalNote.value : ''}
@@ -232,22 +181,31 @@
 			</div>
 			<div class="col-span-2">
 				<div class="grid grid-cols-2 gap-4 text-3xl text-center">
-					<a class="col-span-2 touchScreen-category-cta" href="?filter=pos-favorite&skip=0"
-						>FAVORIS</a
+					<a
+						class="col-span-2 touchScreen-category-cta"
+						href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}>FAVORIS</a
 					>
 					{#each data.tags as favoriteTag}
-						<a class="touchScreen-category-cta" href="?filter={favoriteTag._id}&skip=0"
-							>{favoriteTag.name}</a
+						<a
+							class="touchScreen-category-cta"
+							href={selfPageLink({ filter: favoriteTag._id, skip: 0 })}>{favoriteTag.name}</a
 						>
 					{/each}
-					<a class="col-span-2 touchScreen-category-cta" href="?filter=all&skip=0"
+					<a
+						class="col-span-2 touchScreen-category-cta"
+						href={selfPageLink({ filter: 'all', skip: 0 })}
+					>
 						>TOUS LES ARTICLES</a
 					>
 
 					<div class="col-span-2 grid grid-cols-2 gap-4">
 						{#each displayedProducts as product}
 							{#if !isPreorder(product.availableDate, product.preorder)}
-								<ProductWidgetPOS {product} pictures={picturesByProduct[product._id] ?? []} />
+								<ProductWidgetPOS
+									{product}
+									{tabSlug}
+									pictures={picturesByProduct[product._id] ?? []}
+								/>
 							{/if}
 						{/each}
 						<div class="col-span-2 grid-cols-1 flex gap-2 justify-center">
@@ -255,7 +213,7 @@
 								<a
 									class="btn touchScreen-product-secondaryCTA text-3xl"
 									on:click={() => (next = Math.max(0, next - posProductPagination))}
-									href={`?filter=${filter}&skip=${Math.max(0, next)}`}>&lt;</a
+									href={selfPageLink({ filter, skip: Math.max(0, next) })}>&lt;</a
 								>
 							{/if}
 							PAGE {currentPage}/{totalPages}
@@ -263,7 +221,7 @@
 								<a
 									class="btn touchScreen-product-secondaryCTA text-3xl"
 									on:click={() => (next += posProductPagination)}
-									href={`?filter=${filter}&skip=${next}`}>&gt;</a
+									href={selfPageLink({ filter, skip: next })}>&gt;</a
 								>
 							{/if}
 						</div>
@@ -294,9 +252,14 @@
 			</div>
 		</div>
 		<div class="grid grid-cols-2 gap-4 mt-2">
-			<a class="touchScreen-action-cta text-3xl p-4 text-center" href="/checkout?display=headless"
-				>PAYER</a
+			<form
+				class="touchScreen-action-cta text-3xl p-4 text-center"
+				method="post"
+				action="/pos?/checkoutTab"
 			>
+				<input type="hidden" name="tabSlug" value={tabSlug} />
+				<button type="submit"> PAYER </button>
+			</form>
 			<form
 				method="post"
 				class="grid grid-cols-2 gap-4"
@@ -333,11 +296,6 @@
 </div>
 
 <!-- Item Edit Dialog -->
-{#if showDialog && selectedItemIndex >= 0}
-	<ItemEditDialog
-		item={items[selectedItemIndex]}
-		onClose={() => (showDialog = false)}
-		onUpdateNote={updateItemNote}
-		onUpdateQuantity={updateItemQuantity}
-	/>
+{#if itemToEditIndex !== undefined && itemToEditIndex >= 0}
+	<ItemEditDialog item={items[itemToEditIndex]} onClose={concludeEditItem} />
 {/if}

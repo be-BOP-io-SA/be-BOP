@@ -528,6 +528,7 @@ export async function lastInvoiceNumber(): Promise<number | undefined> {
 
 export async function createOrder(
 	items: Array<{
+		_id?: ObjectId;
 		quantity: number;
 		product: Product;
 		customPrice?: { amount: number; currency: Currency };
@@ -1195,6 +1196,7 @@ export async function createOrder(
 				status: 'pending',
 				sellerIdentity: runtimeConfig.sellerIdentity,
 				items: items.map((item, i) => ({
+					_id: item._id,
 					quantity: item.quantity,
 					product: item.product,
 					customPrice: item.customPrice,
@@ -1534,6 +1536,23 @@ export async function createOrder(
 			}
 
 			if (params.cart) {
+				// This is completely unrelated to the process of creating an order, but
+				// inserted here because there's no separation between the implementation of
+				// creating an order and the business process of creating an order.
+				// Unfortunately, the author cannot address this due to time constraints.
+				{
+					await collections.orderTabs.updateOne(
+						{},
+						{
+							$unset: { 'items.$[elem].cartId': 1 },
+							$set: { 'items.$[elem].orderId': order._id.toString() }
+						},
+						{
+							arrayFilters: [{ 'elem.cartId': params.cart._id }],
+							session
+						}
+					);
+				}
 				/** Also delete "old" carts with partial user info */
 				await collections.carts.deleteMany(userQuery(params.cart.user), { session });
 			}

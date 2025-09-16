@@ -448,6 +448,8 @@ export const actions = {
 		await withTransaction(async (session) => {
 			orderId = await createOrder(
 				cart.items.map((item) => ({
+					// Workaround since the type item._id of the cart item is not ObjectId
+					_id: item._id && ObjectId.isValid(item._id) ? new ObjectId(item._id) : undefined,
 					quantity: item.quantity,
 					product: byId[item.productId],
 					...(item.customPrice && {
