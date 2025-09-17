@@ -32,7 +32,7 @@
 	let addDiscount = false;
 	let offerOrder = false;
 	let discountAmount = 0;
-	let discountType: DiscountType;
+	let discountType: DiscountType | undefined = undefined;
 	$: {
 		if (offerOrder) {
 			discountType = 'percentage';
@@ -116,11 +116,20 @@
 	);
 	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
 
+	$: possiblyOutOfBoundsDiscount =
+		addDiscount && discountType
+			? {
+					type: discountType,
+					amount: discountAmount
+			  }
+			: undefined;
+
 	// A PoS operator may apply different discounts, such as on-site promotions or free delivery;
 	// thus, the price info is computed from scratch to reflect the correct value.
 	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
 		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		discount: possiblyOutOfBoundsDiscount,
 		freeProductUnits: data.cart.freeProductUnits,
 		userCountry: isDigital ? digitalCountry : country,
 		vatExempted: data.vatExempted,
