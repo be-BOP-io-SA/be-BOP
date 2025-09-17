@@ -102,7 +102,7 @@ export async function priceInfoForOrderProbablyIncorrectBuyOkayForDisplay(
 			amount: 0,
 			currency: order.currencySnapshot.main.totalPrice.currency
 		},
-		discount: null,
+		discount: undefined,
 		freeProductUnits,
 		userCountry: undefined,
 		vatExempted: false,
@@ -709,7 +709,7 @@ export async function createOrder(
 	}
 
 	const discountInfo =
-		params.user.userHasPosOptions && params?.discount?.amount ? params.discount : null;
+		params.user.userHasPosOptions && params?.discount?.amount ? params.discount : undefined;
 
 	const vatProfiles = products.some((p) => p.vatProfileId)
 		? await collections.vatProfiles
