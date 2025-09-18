@@ -129,3 +129,20 @@ export async function addToOrderTab(params: { tabSlug: string; productId: string
 	}
 	await collections.orderTabs.updateOne({ _id: orderTab._id }, { $set: { items: orderTab.items } });
 }
+
+export async function removeFromOrderTab(params: {
+	tabSlug: string;
+	tabItemId: string;
+}): Promise<void> {
+	if (!ObjectId.isValid(params.tabItemId)) {
+		throw new Error('Invalid tab item ID');
+	}
+	await collections.orderTabs.updateOne(
+		{ slug: params.tabSlug },
+		{ $pull: { items: { _id: new ObjectId(params.tabItemId) } } }
+	);
+}
+
+export async function removeOrderTab(params: { tabSlug: string }): Promise<void> {
+	await collections.orderTabs.deleteOne({ slug: params.tabSlug });
+}
