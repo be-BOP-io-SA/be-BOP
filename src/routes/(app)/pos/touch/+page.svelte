@@ -65,7 +65,6 @@
 	}
 
 	let formNotes: HTMLFormElement[] = [];
-	$: lastItemId = items.length > 0 ? items[items.length - 1]?.product?._id : null;
 	let warningMessage = '';
 
 	function updatePaginationLimit() {
@@ -252,14 +251,12 @@
 			</div>
 		</div>
 		<div class="grid grid-cols-2 gap-4 mt-2">
-			<form
+			<a
 				class="touchScreen-action-cta text-3xl p-4 text-center"
-				method="post"
-				action="/pos?/checkoutTab"
+				href="/pos/touch/split?tab={tabSlug}"
 			>
-				<input type="hidden" name="tabSlug" value={tabSlug} />
-				<button type="submit"> PAYER </button>
-			</form>
+				PAYER
+			</a>
 			<form
 				method="post"
 				class="grid grid-cols-2 gap-4"
@@ -273,21 +270,25 @@
 							alert(result.error?.message);
 							return await applyAction(result);
 						}
-						await invalidate(UrlDependency.Cart);
+						await invalidate(UrlDependency.orderTab(tabSlug));
 					};
 				}}
 			>
+				<input type="hidden" name="tabSlug" value={tabSlug} />
+				{#if items.length}
+					<input type="hidden" name="tabItemId" value={items[items.length - 1].tabItemId} />
+				{/if}
 				<button
 					class="col-span-1 touchScreen-action-cancel text-3xl p-4 text-center"
 					disabled={!items.length}
-					formaction="/cart/{lastItemId}/?/remove"
+					formaction="/pos?/removeFromTab"
 					on:click={() => (warningMessage = 'Do you want to delete the last cart line ?')}
 					>❎</button
 				>
 				<button
 					class="col-span-1 touchScreen-action-delete text-3xl p-4 text-center"
 					disabled={!items.length}
-					formaction="/cart/?/removeAll"
+					formaction="/pos/?/removeTab"
 					on:click={() => (warningMessage = 'Do you want to delete all cart line ?')}>🗑️</button
 				>
 			</form>
