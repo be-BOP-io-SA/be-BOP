@@ -4,6 +4,13 @@ import { redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { z } from 'zod';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
+import {
+	addToOrderTab,
+	checkoutOrderTab,
+	removeFromOrderTab,
+	removeOrderTab
+} from '$lib/server/orderTab';
+import { removeUserCarts } from '$lib/server/cart';
 
 export const load = async (event) => {
 	const lastOrders = await collections.orders
@@ -41,6 +48,57 @@ export const load = async (event) => {
 };
 
 export const actions: Actions = {
+	addToTab: async ({ request }) => {
+		const formData = await request.formData();
+		const { tabSlug, productId } = z
+			.object({
+				tabSlug: z.string().min(1).max(100),
+				productId: z.string().min(1).max(100)
+			})
+			.parse({
+				tabSlug: formData.get('tabSlug'),
+				productId: formData.get('productId')
+			});
+		await addToOrderTab({ tabSlug, productId });
+	},
+	removeFromTab: async ({ request }) => {
+		const formData = await request.formData();
+		const { tabSlug, tabItemId } = z
+			.object({
+				tabSlug: z.string().min(1).max(100),
+				tabItemId: z.string().min(1).max(100)
+			})
+			.parse({
+				tabSlug: formData.get('tabSlug'),
+				tabItemId: formData.get('tabItemId')
+			});
+		await removeFromOrderTab({ tabSlug, tabItemId });
+	},
+	removeTab: async ({ request }) => {
+		const formData = await request.formData();
+		const { tabSlug } = z
+			.object({
+				tabSlug: z.string().min(1).max(100)
+			})
+			.parse({
+				tabSlug: formData.get('tabSlug')
+			});
+		await removeOrderTab({ tabSlug });
+	},
+	checkoutTab: async ({ request, locals }) => {
+		const formData = await request.formData();
+		const { tabSlug } = z
+			.object({
+				tabSlug: z.string().min(1).max(100)
+			})
+			.parse({
+				tabSlug: formData.get('tabSlug')
+			});
+		const user = userIdentifier(locals);
+		await removeUserCarts(user);
+		await checkoutOrderTab({ slug: tabSlug, user });
+		throw redirect(303, '/checkout');
+	},
 	overwrite: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const country = z

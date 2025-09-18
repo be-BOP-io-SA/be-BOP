@@ -12,21 +12,23 @@ import { differenceInMinutes } from 'date-fns';
 import type { ObjectId } from 'mongodb';
 import { get } from 'svelte/store';
 
-type ItemForPriceInfo = {
+export type ProductForPriceInfo = {
+	// The id is optional here, so we can compute prices for “products” that are
+	// not in the database (e.g. delivery fees)
+	_id?: string;
+	shipping: boolean;
+	price: Price;
+	vatProfileId?: string | ObjectId;
+	bookingSpec?: { slotMinutes: number };
+};
+
+export type ItemForPriceInfo = {
 	booking?: { start: Date; end: Date };
 	customPrice?: Price;
 	depositPercentage?: number;
 	discountPercentage?: number;
 	freeProductSources?: { subscriptionId: string; quantity: number }[];
-	product: {
-		// The id is optional here, so we can compute prices for “products” that are
-		// not in the database (e.g. delivery fees)
-		_id?: string;
-		shipping: boolean;
-		price: Price;
-		vatProfileId?: string | ObjectId;
-		bookingSpec?: { slotMinutes: number };
-	};
+	product: ProductForPriceInfo;
 	quantity: number;
 };
 
@@ -233,15 +235,49 @@ export type CartPriceInfo = {
 	vatRates: number[];
 };
 
+export type CartDiscount = {
+	type: DiscountType;
+	amount: number;
+};
+
+/**
+ * Ensures that a discount is within the bounds of the cart total.
+ *
+ * @param discount
+ * @param cartTotal the max amount when the discount type is "fiat"
+ */
+function ensureDiscountWithinBounds(discount: CartDiscount, cartTotal: number): CartDiscount {
+	switch (discount.type) {
+		case 'fiat':
+			return {
+				type: discount.type,
+				amount: Math.max(Math.min(discount.amount, cartTotal), 0)
+			};
+		case 'percentage':
+			return {
+				type: discount.type,
+				amount: Math.max(Math.min(discount.amount, 100), 0)
+			};
+		default:
+			discount.type satisfies never;
+			throw new Error(`Invalid discount type: ${discount.type}`);
+	}
+}
+
+/**
+ * Computes different prices for cart-like objects.
+ *
+ * @param items
+ * @param params Please mind the following notes:
+ *        - If the specified discount is out of bounds, it will be adjusted to the nearest valid value.
+ * @returns
+ */
 export function computePriceInfo(
 	items: Array<ItemForPriceInfo>,
 	params: {
 		bebopCountry: CountryAlpha2 | undefined;
 		deliveryFees: Price;
-		discount?: {
-			amount: number;
-			type: DiscountType;
-		} | null;
+		discount?: CartDiscount;
 		freeProductUnits: Record<string, number>;
 		userCountry: CountryAlpha2 | undefined;
 		vatExempted: boolean;
@@ -289,18 +325,18 @@ export function computePriceInfo(
 	let discountAmount = 0;
 
 	if (params.discount) {
+		const discount = ensureDiscountWithinBounds(params.discount, totalPriceWithVat);
 		const oldTotalPriceWithVat = totalPriceWithVat;
-		if (params.discount.type === 'percentage') {
-			const discount = (totalPriceWithVat * params.discount.amount) / 100;
+		if (discount.type === 'percentage') {
 			totalPriceWithVat = fixCurrencyRounding(
-				Math.max(totalPriceWithVat - discount, 0),
+				Math.max((totalPriceWithVat * (100 - discount.amount)) / 100, 0),
 				UNDERLYING_CURRENCY
 			);
 		} else {
 			totalPriceWithVat = Math.max(
 				sumCurrency(UNDERLYING_CURRENCY, [
 					{ amount: totalPriceWithVat, currency: UNDERLYING_CURRENCY },
-					{ amount: -params.discount.amount, currency: get(currencies).main }
+					{ amount: -discount.amount, currency: get(currencies).main }
 				]),
 				0
 			);
