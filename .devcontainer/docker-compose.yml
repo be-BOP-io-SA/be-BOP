@@ -1,0 +1,29 @@
+# Ideally we'd extend the main docker-compose.yml file, or use only the main docker-compose with profiles,
+# but I don't want to disturb existing workflows
+services:
+  mongo:
+    image: mongo:6.0.9
+    command: --replSet rs0 --bind_ip_all
+    mem_limit: '5g'
+    mem_reservation: '3g'
+    healthcheck:
+      test: test $$(mongosh --quiet --eval 'try {rs.status().ok} catch(e) {rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:${LOCAL_MONGO_PORT:-27017}"}]}).ok}') -eq 1
+      interval: 5s
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - 27017:27017
+  minio:
+    image: quay.io/minio/minio:latest
+    environment:
+      MINIO_ACCESS_KEY: ${S3_KEY_ID:-minio}
+      MINIO_SECRET_KEY: ${S3_KEY_SECRET:-minio123}
+      MINIO_SERVER_URL: ${S3_ENDPOINT_URL:-http://localhost:9000}
+    volumes:
+      - minio-data:/data
+    command: server /data
+    ports:
+      - 9000:9000
+volumes:
+  mongo-data:
+  minio-data:

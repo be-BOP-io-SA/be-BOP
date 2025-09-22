@@ -228,6 +228,19 @@ pnpm install
 pnpm dev
 ```
 
+### Dev containers
+
+If you open the project inside a dev container (using `.devcontainer/devcontainer.json`), you just need to:
+
+- create a `.env.local` file with the values provided in the terminal
+- run `pnpm dev` in the terminal
+
+If you leave the container and reopen it, you may need to start the deps again:
+
+```console
+docker compose -f .devcontainer/docker-compose.yml up -d
+```
+
 ### Configuring the Object Storage
 
 Many cloud-hosted object storages like AWS S3 or Scaleway have free tiers that are more than enough for local development.
