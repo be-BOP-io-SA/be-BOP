@@ -32,27 +32,30 @@ export function isZPubValid(zpub: string): boolean {
 }
 
 export async function generateDerivationIndex(): Promise<number> {
-	const res = await collections.runtimeConfig.findOneAndUpdate(
-		{ _id: 'bitcoinNodeless' },
-		{
-			$inc: { 'data.derivationIndex': 1 as never },
-			$set: { updatedAt: new Date() }
-		},
-		{ returnDocument: 'before' }
-	);
-
-	if (!res.value) {
-		throw new Error('Failed to increment derivation index');
+	let index = runtimeConfig.bitcoinNodeless.derivationIndex;
+	
+	for (let attempts = 0; attempts < 10; attempts++) {
+		const address = bip84Address(runtimeConfig.bitcoinNodeless.publicKey, index);
+		const isUsed = await isAddressUsed(address).catch(() => false);
+		
+		if (!isUsed) {
+			await collections.runtimeConfig.updateOne(
+				{ _id: 'bitcoinNodeless' },
+				{ $set: { 'data.derivationIndex': index + 1, updatedAt: new Date() } }
+			);
+			runtimeConfig.bitcoinNodeless.derivationIndex = index + 1;
+			return index;
+		}
+		index++;
 	}
-
-	const val = res.value.data as typeof defaultConfig.bitcoinNodeless;
-
-	return val.derivationIndex;
+	throw new Error('Too many used 	addresses in sequence');
 }
 
 export async function getSatoshiReceivedNodeless(
 	address: string,
-	confirmations: number
+	confirmations: number,
+	orderCreatedAt?: Date,
+	orderExpiresAt?: Date
 ): Promise<{
 	satReceived: number;
 	transactions: Array<{
@@ -61,13 +64,12 @@ export async function getSatoshiReceivedNodeless(
 		id: string;
 	}>;
 }> {
-	const resp = await fetch(
-		new URL(
-			trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + `/api/address/${address}/txs`
-		)
-	);
+	const mempoolUrl = trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + `/api/address/${address}/txs`;
+	
+	const resp = await fetch(new URL(mempoolUrl));
 
 	if (!resp.ok) {
+		console.warn(`Mempool API error: ${resp.status} ${resp.statusText} for URL: ${mempoolUrl}`);
 		throw new Error('Failed to fetch transactions for ' + address + ': ' + resp.status);
 	}
 
@@ -78,7 +80,9 @@ export async function getSatoshiReceivedNodeless(
 			z.object({
 				txid: z.string(),
 				status: z.object({
-					block_height: z.number().optional()
+					block_height: z.number().optional(),
+					block_time: z.number().optional(),
+					confirmed: z.boolean()
 				}),
 				vout: z.array(
 					z.object({
@@ -91,12 +95,28 @@ export async function getSatoshiReceivedNodeless(
 		.parse(json);
 
 	const transactions = res
-		.filter((tx) =>
-			confirmations === 0
-				? true
-				: tx.status.block_height &&
-				  tx.status.block_height <= runtimeConfig.bitcoinBlockHeight - confirmations + 1
-		)
+		.filter((tx) => {
+			if (confirmations > 0) {
+				if (!tx.status.block_height || 
+					tx.status.block_height > runtimeConfig.bitcoinBlockHeight - confirmations + 1) {
+					return false;
+				}
+			}
+			
+			if (orderCreatedAt && tx.status.confirmed && tx.status.block_time) {
+				const txTime = new Date(tx.status.block_time * 1000);
+				
+				if (txTime < orderCreatedAt) {
+					return false;
+				}
+				
+				if (orderExpiresAt && txTime > orderExpiresAt) {
+					return false;
+				}
+			}
+			
+			return true;
+		})
 		.filter((tx) => tx.vout.some((vout) => vout.scriptpubkey_address === address))
 		.map((tx) => ({
 			currency: 'SAT' as const,
@@ -112,4 +132,16 @@ export async function getSatoshiReceivedNodeless(
 		satReceived: total,
 		transactions
 	};
+}
+
+export async function isAddressUsed(address: string): Promise<boolean> {
+	try {
+		const mempoolUrl = trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + `/api/address/${address}/txs`;
+		const resp = await fetch(new URL(mempoolUrl));
+		if (!resp.ok) return false;
+		const txs = await resp.json();
+		return Array.isArray(txs) && txs.length > 0;
+	} catch {
+		return false;
+	}
 }

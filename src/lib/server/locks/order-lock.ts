@@ -101,38 +101,40 @@ async function maintainOrders() {
 									!runtimeConfigUpdatedAt['bitcoinBlockHeight'] ||
 									differenceInMinutes(new Date(), runtimeConfigUpdatedAt['bitcoinBlockHeight']) >= 1
 								) {
-									const resp = await fetch(
-										new URL(
-											trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') +
-												'/api/blocks/tip/height'
-										)
-									);
-
-									if (!resp.ok) {
-										throw new Error('Failed to fetch block height');
-									}
-
-									const blockHeight = z.number().parse(await resp.json());
-
-									if (runtimeConfig.bitcoinBlockHeight !== blockHeight) {
-										console.log('Updating bitcoin block height to', blockHeight);
-										runtimeConfig.bitcoinBlockHeight = blockHeight;
-										runtimeConfigUpdatedAt['bitcoinBlockHeight'] = new Date();
-
-										await collections.runtimeConfig.updateOne(
-											{
-												_id: 'bitcoinBlockHeight'
-											},
-											{
-												$set: {
-													data: blockHeight,
-													updatedAt: new Date()
-												}
-											},
-											{
-												upsert: true
-											}
+									try {
+										const resp = await fetch(
+											new URL(
+												trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') +
+													'/api/blocks/tip/height'
+											)
 										);
+
+										if (resp.ok) {
+											const blockHeight = z.number().parse(await resp.json());
+
+											if (runtimeConfig.bitcoinBlockHeight !== blockHeight) {
+												console.log('Updating bitcoin block height to', blockHeight);
+												runtimeConfig.bitcoinBlockHeight = blockHeight;
+												runtimeConfigUpdatedAt['bitcoinBlockHeight'] = new Date();
+
+												await collections.runtimeConfig.updateOne(
+													{
+														_id: 'bitcoinBlockHeight'
+													},
+													{
+														$set: {
+															data: blockHeight,
+															updatedAt: new Date()
+														}
+													},
+													{
+														upsert: true
+													}
+												);
+											}
+										}
+									} catch {
+										// maintainOrders continues
 									}
 								}
 
@@ -142,7 +144,12 @@ async function maintainOrders() {
 
 								const nConfirmations = getConfirmationBlocks(payment.price);
 
-								const received = await getSatoshiReceivedNodeless(payment.address, nConfirmations);
+								const received = await getSatoshiReceivedNodeless(
+									payment.address, 
+									nConfirmations,
+									order.createdAt,
+									payment.expiresAt
+								);
 
 								payment.transactions = received.transactions;
 								satReceived = received.satReceived;
