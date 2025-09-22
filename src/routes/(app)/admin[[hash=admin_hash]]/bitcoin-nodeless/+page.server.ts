@@ -1,7 +1,8 @@
 import {
 	bip84Address,
 	isBitcoinNodelessConfigured,
-	isZPubValid
+	isZPubValid,
+	isAddressUsed
 } from '$lib/server/bitcoin-nodeless.js';
 import { collections } from '$lib/server/database.js';
 import { defaultConfig, runtimeConfig } from '$lib/server/runtime-config';
@@ -9,17 +10,34 @@ import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 
 export async function load() {
-	const nextAddresses = isBitcoinNodelessConfigured()
-		? Array.from({ length: 10 }, (_, i) => i).map((i) =>
-				bip84Address(
-					runtimeConfig.bitcoinNodeless.publicKey,
-					runtimeConfig.bitcoinNodeless.derivationIndex + i
-				)
-		  )
-		: [];
+	if (!isBitcoinNodelessConfigured()) {
+		return {
+			bitcoinNodeless: runtimeConfig.bitcoinNodeless,
+			nextAddresses: [],
+			hasAlreadyUsedNextAddresses: false
+		};
+	}
+
+	const ADDRESS_CHECK_TIMEOUT_MS = 3000;
+
+	const nextAddresses = await Promise.all(
+		Array.from({ length: 10 }, async (_, i) => {
+			const index = runtimeConfig.bitcoinNodeless.derivationIndex + i;
+			const address = bip84Address(runtimeConfig.bitcoinNodeless.publicKey, index);
+			
+			const isUsed = await Promise.race([
+				isAddressUsed(address),
+				new Promise<false>((resolve) => setTimeout(() => resolve(false), ADDRESS_CHECK_TIMEOUT_MS))
+			]).catch(() => false);
+			
+			return { address, isUsed, index };
+		})
+	);
+
 	return {
 		bitcoinNodeless: runtimeConfig.bitcoinNodeless,
-		nextAddresses
+		nextAddresses,
+		hasAlreadyUsedNextAddresses: nextAddresses.some(addr => addr.isUsed)
 	};
 }
 
