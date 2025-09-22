@@ -39,10 +39,15 @@ export async function generateDerivationIndex(): Promise<number> {
 		const isUsed = await isAddressUsed(address).catch(() => false);
 		
 		if (!isUsed) {
-			await collections.runtimeConfig.updateOne(
+			const result = await collections.runtimeConfig.updateOne(
 				{ _id: 'bitcoinNodeless' },
 				{ $set: { 'data.derivationIndex': index + 1, updatedAt: new Date() } }
 			);
+			
+			if (result.matchedCount === 0) {
+				throw new Error('Bitcoin nodeless config not found');
+			}
+			
 			runtimeConfig.bitcoinNodeless.derivationIndex = index + 1;
 			return index;
 		}
