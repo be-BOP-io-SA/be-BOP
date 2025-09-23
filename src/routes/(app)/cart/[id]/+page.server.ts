@@ -126,7 +126,7 @@ export const actions = {
 
 		const formData = await request.formData();
 
-		const max = product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER;
+		const max = product.maxQuantityPerOrder ?? DEFAULT_MAX_QUANTITY_PER_ORDER;
 
 		const { quantity, mode, lineId } = z
 			.object({
