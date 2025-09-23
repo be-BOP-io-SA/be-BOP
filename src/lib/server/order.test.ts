@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { cleanDb } from './test-utils';
+import { cleanDb, createDiscount, createPaidSubscription } from './test-utils';
 import { collections } from './database';
 import {
 	TEST_DIGITAL_PRODUCT,
@@ -9,7 +9,6 @@ import {
 } from './seed/product';
 import { addOrderPayment, createOrder, lastInvoiceNumber, onOrderPayment } from './orders';
 import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
-import { addDays, subDays } from 'date-fns';
 
 describe('order', () => {
 	beforeEach(async () => {
@@ -230,30 +229,13 @@ describe('order', () => {
 	});
 
 	it('should allow free method payment when only item is fully discounted due to an active subscription', async () => {
-		await collections.paidSubscriptions.insertOne({
-			_id: 'blablabla',
-			productId: TEST_SUBSCRIPTION_PRODUCT._id,
-			paidUntil: addDays(new Date(), 1),
-			createdAt: new Date(),
-			updatedAt: new Date(),
-			number: 1,
-			user: {
-				sessionId: 'test-session-id'
-			},
-			notifications: []
+		await createPaidSubscription(TEST_SUBSCRIPTION_PRODUCT._id, {
+			sessionId: 'test-session-id'
 		});
-		await collections.discounts.insertOne({
-			_id: 'blablabla',
-			productIds: [TEST_DISCOUNTED_PRODUCT._id],
-			percentage: 100,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-			subscriptionIds: [TEST_SUBSCRIPTION_PRODUCT._id],
-			endsAt: addDays(new Date(), 1),
-			beginsAt: subDays(new Date(), 1),
-			name: 'blablabla',
-			wholeCatalog: false,
-			mode: 'percentage'
+		await createDiscount({
+			discountedProductId: TEST_DISCOUNTED_PRODUCT._id,
+			subscriptionProductId: TEST_SUBSCRIPTION_PRODUCT._id,
+			percentage: 100
 		});
 
 		const orderId = await createOrder(

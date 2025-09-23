@@ -13,5 +13,5 @@ Install the i18n-ally extension for VSCode, which will help you with the transla
 Adding unit tests is always welcome. You can run an individual test this way
 
 ```console
-pnpm test:unit -t "<part oftest name>"
+pnpm test:unit -t "<part of test name>"
 ```
