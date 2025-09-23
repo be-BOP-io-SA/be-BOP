@@ -13,6 +13,7 @@
 	import { onMount } from 'svelte';
 
 	export let data;
+	const tabSlug: string = data.tabSlug;
 	$: next = Number($page.url.searchParams.get('skip')) || 0;
 	$: picturesByProduct = groupBy(
 		data.pictures.filter(
@@ -25,8 +26,8 @@
 		filter === 'all'
 			? data.products
 			: data.products.filter((product) => product.tagIds?.includes(filter));
-	$: items = data.cart.items;
-	$: priceInfo = data.cart.priceInfo;
+	$: items = data.orderTab.items;
+	$: priceInfo = data.priceInfo;
 	const { t } = useI18n();
 	let posProductPagination = POS_PRODUCT_PAGINATION;
 
@@ -59,7 +60,6 @@
 		}
 	}
 	let formNotes: HTMLFormElement[] = [];
-	$: lastItemId = items.length > 0 ? items[items.length - 1]?.product?._id : null;
 	let warningMessage = '';
 
 	function updatePaginationLimit() {
@@ -75,6 +75,15 @@
 			posProductPagination = 10;
 		}
 	}
+
+	function selfPageLink(params: Record<string, { toString(): string }>): string {
+		const search = new URLSearchParams($page.url.searchParams);
+		for (const [key, value] of Object.entries(params)) {
+			search.set(key, value.toString());
+		}
+		return `?${search.toString()}`;
+	}
+
 	onMount(() => {
 		updatePaginationLimit();
 		window.addEventListener('resize', updatePaginationLimit);
@@ -91,12 +100,10 @@
 					<h3 class="text-3xl">TICKET n° tmp</h3>
 					{#each items as item, i}
 						<div class="flex flex-col py-3 gap-4">
-							<form
-								method="post"
-								bind:this={formNotes[i]}
-								action="/cart/{item.product._id}/?/addNote"
-							>
+							<form method="post" bind:this={formNotes[i]} action="?/addNote">
 								<input type="hidden" name="note" />
+								<input type="hidden" name="tabItemId" value={item.tabItemId} />
+								<input type="hidden" name="tabSlug" value={tabSlug} />
 								<button
 									type="submit"
 									class="text-start text-2xl w-full justify-between"
@@ -162,22 +169,31 @@
 			</div>
 			<div class="col-span-2">
 				<div class="grid grid-cols-2 gap-4 text-3xl text-center">
-					<a class="col-span-2 touchScreen-category-cta" href="?filter=pos-favorite&skip=0"
-						>FAVORIS</a
+					<a
+						class="col-span-2 touchScreen-category-cta"
+						href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}>FAVORIS</a
 					>
 					{#each data.tags as favoriteTag}
-						<a class="touchScreen-category-cta" href="?filter={favoriteTag._id}&skip=0"
-							>{favoriteTag.name}</a
+						<a
+							class="touchScreen-category-cta"
+							href={selfPageLink({ filter: favoriteTag._id, skip: 0 })}>{favoriteTag.name}</a
 						>
 					{/each}
-					<a class="col-span-2 touchScreen-category-cta" href="?filter=all&skip=0"
+					<a
+						class="col-span-2 touchScreen-category-cta"
+						href={selfPageLink({ filter: 'all', skip: 0 })}
+					>
 						>TOUS LES ARTICLES</a
 					>
 
 					<div class="col-span-2 grid grid-cols-2 gap-4">
 						{#each displayedProducts as product}
 							{#if !isPreorder(product.availableDate, product.preorder)}
-								<ProductWidgetPOS {product} pictures={picturesByProduct[product._id] ?? []} />
+								<ProductWidgetPOS
+									{product}
+									{tabSlug}
+									pictures={picturesByProduct[product._id] ?? []}
+								/>
 							{/if}
 						{/each}
 						<div class="col-span-2 grid-cols-1 flex gap-2 justify-center">
@@ -185,7 +201,7 @@
 								<a
 									class="btn touchScreen-product-secondaryCTA text-3xl"
 									on:click={() => (next = Math.max(0, next - posProductPagination))}
-									href={`?filter=${filter}&skip=${Math.max(0, next)}`}>&lt;</a
+									href={selfPageLink({ filter, skip: Math.max(0, next) })}>&lt;</a
 								>
 							{/if}
 							PAGE {currentPage}/{totalPages}
@@ -193,7 +209,7 @@
 								<a
 									class="btn touchScreen-product-secondaryCTA text-3xl"
 									on:click={() => (next += posProductPagination)}
-									href={`?filter=${filter}&skip=${next}`}>&gt;</a
+									href={selfPageLink({ filter, skip: next })}>&gt;</a
 								>
 							{/if}
 						</div>
@@ -224,9 +240,12 @@
 			</div>
 		</div>
 		<div class="grid grid-cols-2 gap-4 mt-2">
-			<a class="touchScreen-action-cta text-3xl p-4 text-center" href="/checkout?display=headless"
-				>PAYER</a
+			<a
+				class="touchScreen-action-cta text-3xl p-4 text-center"
+				href="/pos/touch/split?tab={tabSlug}"
 			>
+				PAYER
+			</a>
 			<form
 				method="post"
 				class="grid grid-cols-2 gap-4"
@@ -240,21 +259,25 @@
 							alert(result.error?.message);
 							return await applyAction(result);
 						}
-						await invalidate(UrlDependency.Cart);
+						await invalidate(UrlDependency.orderTab(tabSlug));
 					};
 				}}
 			>
+				<input type="hidden" name="tabSlug" value={tabSlug} />
+				{#if items.length}
+					<input type="hidden" name="tabItemId" value={items[items.length - 1].tabItemId} />
+				{/if}
 				<button
 					class="col-span-1 touchScreen-action-cancel text-3xl p-4 text-center"
 					disabled={!items.length}
-					formaction="/cart/{lastItemId}/?/remove"
+					formaction="/pos?/removeFromTab"
 					on:click={() => (warningMessage = 'Do you want to delete the last cart line ?')}
 					>❎</button
 				>
 				<button
 					class="col-span-1 touchScreen-action-delete text-3xl p-4 text-center"
 					disabled={!items.length}
-					formaction="/cart/?/removeAll"
+					formaction="/pos/?/removeTab"
 					on:click={() => (warningMessage = 'Do you want to delete all cart line ?')}>🗑️</button
 				>
 			</form>
