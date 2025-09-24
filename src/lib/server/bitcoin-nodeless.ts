@@ -151,4 +151,3 @@ export async function isAddressUsed(address: string): Promise<boolean> {
 		return false;
 	}
 }
-
