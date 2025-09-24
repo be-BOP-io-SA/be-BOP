@@ -102,7 +102,7 @@ export async function priceInfoForOrderProbablyIncorrectBuyOkayForDisplay(
 			amount: 0,
 			currency: order.currencySnapshot.main.totalPrice.currency
 		},
-		discount: null,
+		discount: undefined,
 		freeProductUnits,
 		userCountry: undefined,
 		vatExempted: false,
@@ -709,7 +709,7 @@ export async function createOrder(
 	}
 
 	const discountInfo =
-		params.user.userHasPosOptions && params?.discount?.amount ? params.discount : null;
+		params.user.userHasPosOptions && params?.discount?.amount ? params.discount : undefined;
 
 	const vatProfiles = products.some((p) => p.vatProfileId)
 		? await collections.vatProfiles
@@ -777,10 +777,16 @@ export async function createOrder(
 						}
 					},
 					{
+						$unwind: {
+							path: '$subscriptionIds',
+							preserveNullAndEmptyArrays: false
+						}
+					},
+					{
 						$group: {
 							_id: { $ifNull: ['$productIds', null] },
 							discountPercent: { $first: '$percentage' },
-							subscriptionIds: { $push: '$subscriptionIds' }
+							subscriptionIds: { $addToSet: '$subscriptionIds' }
 						}
 					}
 				])
@@ -804,6 +810,9 @@ export async function createOrder(
 		.filter((sub) => discountSubIds.has(sub.productId))
 		.map((sub) => sub.productId);
 
+	for (const item of items) {
+		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
+	}
 	const priceInfo = computePriceInfo(items, {
 		bebopCountry: runtimeConfig.vatCountry,
 		deliveryFees: shippingPrice,
@@ -820,7 +829,6 @@ export async function createOrder(
 	});
 
 	for (const { item, price } of items.map((item, i) => ({ item, price: priceInfo.perItem[i] }))) {
-		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
 		if (price.usedFreeUnits) {
 			let quantityToConsume = price.usedFreeUnits;
 			const freeProductSubscriptions = await collections.paidSubscriptions

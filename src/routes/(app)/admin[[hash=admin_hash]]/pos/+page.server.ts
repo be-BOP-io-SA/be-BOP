@@ -7,26 +7,8 @@ import { set } from '$lib/utils/set';
 import { error, redirect } from '@sveltejs/kit';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
+import { persistConfigElement } from '$lib/server/utils/persistConfig';
 
-async function persistConfigElement<K extends keyof typeof runtimeConfig>(
-	key: K,
-	value: (typeof runtimeConfig)[K]
-) {
-	await collections.runtimeConfig.updateOne(
-		{
-			_id: key
-		},
-		{
-			$set: {
-				data: value,
-				updatedAt: new Date()
-			}
-		},
-		{
-			upsert: true
-		}
-	);
-}
 
 export const load = async ({}) => {
 	const tags = await collections.tags

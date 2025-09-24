@@ -123,11 +123,23 @@
 			</div>
 
 			<div class="flex flex-col ml-auto items-end justify-center">
+				{#if item.discountPercentage}
+					<PriceTag
+						class="text-2xl truncate line-through"
+						amount={orderPriceInfo.perItem[i].unitsToBill *
+							(item.currencySnapshot.main.customPrice?.amount ??
+								item.currencySnapshot.main.price.amount)}
+						currency={item.currencySnapshot.main.customPrice?.currency ??
+							item.currencySnapshot.main.price.currency}
+						short={!!item.discountPercentage}
+					/>
+				{/if}
 				<PriceTag
 					class="text-2xl truncate"
 					amount={orderPriceInfo.perItem[i].unitsToBill *
 						(item.currencySnapshot.main.customPrice?.amount ??
-							item.currencySnapshot.main.price.amount)}
+							item.currencySnapshot.main.price.amount) *
+						(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
 					currency={item.currencySnapshot.main.customPrice?.currency ??
 						item.currencySnapshot.main.price.currency}
 				/>

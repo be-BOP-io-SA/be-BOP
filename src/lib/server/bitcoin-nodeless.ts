@@ -5,6 +5,7 @@ import { collections } from './database';
 import { z } from 'zod';
 import { sum } from '$lib/utils/sum';
 import { trimSuffix } from '$lib/utils/trimSuffix';
+import { persistConfigElement } from './utils/persistConfig';
 
 export function isBitcoinNodelessConfigured(): boolean {
 	return (
@@ -36,31 +37,31 @@ export async function generateDerivationIndex(): Promise<number> {
 	
 	for (let attempts = 0; attempts < 10; attempts++) {
 		const address = bip84Address(runtimeConfig.bitcoinNodeless.publicKey, index);
-		const isUsed = await isAddressUsed(address).catch(() => false);
+		const isUsed = await isAddressUsed(address).catch((err) => {
+			console.warn(`Failed to check if address ${address} is used:`, err);
+			return false;
+		});
 		
 		if (!isUsed) {
-			const result = await collections.runtimeConfig.updateOne(
-				{ _id: 'bitcoinNodeless' },
-				{ $set: { 'data.derivationIndex': index + 1, updatedAt: new Date() } }
-			);
+			const updatedConfig = {
+				...runtimeConfig.bitcoinNodeless,
+				derivationIndex: index + 1
+			};
 			
-			if (result.matchedCount === 0) {
-				throw new Error('Bitcoin nodeless config not found');
-			}
-			
-			runtimeConfig.bitcoinNodeless.derivationIndex = index + 1;
+			await persistConfigElement('bitcoinNodeless', updatedConfig);
+			runtimeConfig.bitcoinNodeless = updatedConfig;
 			return index;
 		}
 		index++;
 	}
-	throw new Error('Too many used 	addresses in sequence');
+	throw new Error('Unable to provide the next derivation index because too many intermediate derivations are already used');
 }
 
 export async function getSatoshiReceivedNodeless(
 	address: string,
 	confirmations: number,
-	orderCreatedAt?: Date,
-	orderExpiresAt?: Date
+	orderCreatedAt: Date,
+	orderExpiresAt: Date
 ): Promise<{
 	satReceived: number;
 	transactions: Array<{
@@ -108,14 +109,14 @@ export async function getSatoshiReceivedNodeless(
 				}
 			}
 			
-			if (orderCreatedAt && tx.status.confirmed && tx.status.block_time) {
+			if (tx.status.confirmed && tx.status.block_time) {
 				const txTime = new Date(tx.status.block_time * 1000);
 				
 				if (txTime < orderCreatedAt) {
 					return false;
 				}
 				
-				if (orderExpiresAt && txTime > orderExpiresAt) {
+				if (txTime > orderExpiresAt) {
 					return false;
 				}
 			}
@@ -141,11 +142,11 @@ export async function getSatoshiReceivedNodeless(
 
 export async function isAddressUsed(address: string): Promise<boolean> {
 	try {
-		const mempoolUrl = trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + `/api/address/${address}/txs`;
+		const mempoolUrl = trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + `/api/address/${address}`;
 		const resp = await fetch(new URL(mempoolUrl));
 		if (!resp.ok) return false;
-		const txs = await resp.json();
-		return Array.isArray(txs) && txs.length > 0;
+		const data = await resp.json();
+		return (data.chain_stats?.tx_count ?? 0) > 0;
 	} catch {
 		return false;
 	}

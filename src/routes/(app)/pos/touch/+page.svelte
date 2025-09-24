@@ -11,6 +11,7 @@
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
 	import { groupBy } from '$lib/utils/group-by.js';
 	import { onMount } from 'svelte';
+	import ItemEditDialog from '$lib/components/ItemEditDialog.svelte';
 
 	export let data;
 	$: next = Number($page.url.searchParams.get('skip')) || 0;
@@ -34,30 +35,99 @@
 	$: totalPages = Math.ceil(productFiltered.length / posProductPagination);
 	$: currentPage = Math.floor(next / posProductPagination) + 1;
 
-	async function addNoteToItem(event: Event, index: number, defaultPrompt: string) {
+	// Dialog state
+	let showDialog = false;
+	let selectedItemIndex = -1;
+
+	function openItemDialog(event: Event, index: number) {
 		event.preventDefault();
-		const notePrompt = prompt('enter a comment:', defaultPrompt);
-		if (notePrompt) {
-			items[index].internalNote = { value: notePrompt, updatedAt: new Date() };
-			items = [...items];
-			const formData = new FormData(formNotes[index]);
-			formData.set('note', notePrompt);
-			try {
-				const response = await fetch(formNotes[index].action, {
+		selectedItemIndex = index;
+		showDialog = true;
+	}
+
+	async function updateItemNote(note: string) {
+		const index = selectedItemIndex;
+
+		items[index].internalNote = { value: note, updatedAt: new Date() };
+
+		const formData = new FormData(formNotes[index]);
+		formData.set('note', note);
+
+		try {
+			const response = await fetch(formNotes[index].action, {
+				method: 'POST',
+				body: formData
+			});
+			const result = await response.json();
+			if (result.type === 'error') {
+				alert(result.error.message);
+			} else {
+				await invalidate(UrlDependency.Cart);
+			}
+		} catch (error) {
+			console.error(error);
+			alert('There was an error submitting the form.');
+		}
+	}
+
+	async function updateItemQuantity(quantity: number) {
+		const index = selectedItemIndex;
+		const item = items[index];
+		const currentQuantity = item.quantity;
+
+		if (quantity === currentQuantity) {
+			return;
+		}
+
+		// Update UI optimistically
+		items[index].quantity = quantity;
+
+		try {
+			// Handle removal (quantity = 0)
+			if (quantity === 0) {
+				const formData = new FormData();
+				if (item._id) {
+					formData.set('lineId', item._id);
+				}
+
+				const response = await fetch(`/cart/${item.product._id}?/remove`, {
 					method: 'POST',
 					body: formData
 				});
-				const result = await response.json();
-				if (result.type === 'error') {
-					alert(result.error.message);
-				} else {
-					await invalidate(UrlDependency.Cart);
+
+				const json = await response.json();
+				if (json.type === 'error') {
+					throw new Error(json.error.message);
 				}
-			} catch (error) {
-				alert('There was an error submitting the form.');
+			} else if (quantity !== currentQuantity) {
+				// Handle quantity change
+				const formData = new FormData();
+				formData.set('quantity', quantity.toString());
+				if (item._id) {
+					formData.set('lineId', item._id);
+				}
+
+				formData.set('mode', 'pos');
+
+				const response = await fetch(`/cart/${item.product._id}?/setQuantity`, {
+					method: 'POST',
+					body: formData
+				});
+
+				const json = await response.json();
+				if (json.type === 'error') {
+					throw new Error(json.error.message);
+				}
 			}
+
+			await invalidate(UrlDependency.Cart);
+		} catch (error) {
+			// Revert UI change on error
+			items[index].quantity = currentQuantity;
+			alert(error instanceof Error ? error.message : 'There was an error updating the quantity.');
 		}
 	}
+
 	let formNotes: HTMLFormElement[] = [];
 	$: lastItemId = items.length > 0 ? items[items.length - 1]?.product?._id : null;
 	let warningMessage = '';
@@ -83,7 +153,7 @@
 	});
 </script>
 
-<div class="flex flex-col h-screen justify-between">
+<div class="flex flex-col h-screen justify-between" inert={showDialog}>
 	<main class="mb-auto flex-grow">
 		<div class="grid grid-cols-3 gap-4 h-full">
 			<div class="touchScreen-ticket-menu p-3 h-full">
@@ -94,13 +164,13 @@
 							<form
 								method="post"
 								bind:this={formNotes[i]}
-								action="/cart/{item.product._id}/?/addNote"
+								action="/cart/{item.product._id}?/addNote"
 							>
 								<input type="hidden" name="note" />
 								<button
 									type="submit"
 									class="text-start text-2xl w-full justify-between"
-									on:click={(event) => addNoteToItem(event, i, item.internalNote?.value || '')}
+									on:click={(event) => openItemDialog(event, i)}
 								>
 									{item.quantity} X {item.product.name.toUpperCase()}<br />
 									{item.internalNote?.value ? '+' + item.internalNote.value : ''}
@@ -261,3 +331,13 @@
 		</div>
 	</footer>
 </div>
+
+<!-- Item Edit Dialog -->
+{#if showDialog && selectedItemIndex >= 0}
+	<ItemEditDialog
+		item={items[selectedItemIndex]}
+		onClose={() => (showDialog = false)}
+		onUpdateNote={updateItemNote}
+		onUpdateQuantity={updateItemQuantity}
+	/>
+{/if}

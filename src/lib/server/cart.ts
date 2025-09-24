@@ -69,6 +69,26 @@ function canAddToCart(
 	}
 }
 
+export function findItemInCart(
+	cart: Cart,
+	productId: string,
+	lineId?: string,
+	/**
+	 * When `lineId` is provided, `depositPercentage` is ignored
+	 */
+	depositPercentage?: number
+) {
+	return cart.items.find(
+		(item) =>
+			item.productId === productId &&
+			(lineId
+				? item._id === lineId
+				: depositPercentage
+				? item.depositPercentage === depositPercentage
+				: true)
+	);
+}
+
 /**
  * Be wary if adding Zod: called from NostR as well and need human readable error messages
  */
@@ -86,6 +106,7 @@ export async function addToCartInDb(
 			durationMinutes: number;
 		};
 		lineId?: string;
+		cart?: Cart;
 		mode: 'eshop' | 'nostr' | 'pos';
 	}
 ) {
@@ -135,20 +156,14 @@ export async function addToCartInDb(
 		? product.deposit.percentage
 		: undefined;
 
-	let cart = await getCartFromDb({ user: params.user });
+	let cart = params.cart ?? (await getCartFromDb({ user: params.user }));
 	if (
 		runtimeConfig.cartMaxSeparateItems &&
 		cart.items.length >= runtimeConfig.cartMaxSeparateItems
 	) {
 		throw error(400, 'Cart has too many items');
 	}
-	const existingItem = cart.items.find(
-		(item) =>
-			item.productId === product._id &&
-			(params.lineId
-				? item._id === params.lineId
-				: (item.depositPercentage ?? undefined) === (depositPercentage ?? undefined))
-	);
+	const existingItem = findItemInCart(cart, product._id, params.lineId, depositPercentage);
 
 	const totalQuantityInCart = () =>
 		sum(cart.items.filter((item) => item.productId === product._id).map((item) => item.quantity));
@@ -260,21 +275,16 @@ export async function removeFromCartInDb(
 		totalQuantity?: boolean;
 		depositPercentage?: number;
 		lineId?: string;
+		cart?: Cart;
 	}
 ) {
 	if (quantity < 0) {
 		throw new TypeError('Quantity cannot be negative');
 	}
 
-	const cart = await getCartFromDb(params);
+	const cart = params.cart ?? (await getCartFromDb(params));
 
-	const item = cart.items.find(
-		(i) =>
-			i.productId === product._id &&
-			(params.lineId
-				? i._id === params.lineId
-				: (params.depositPercentage ?? undefined) === (i.depositPercentage ?? undefined))
-	);
+	const item = findItemInCart(cart, product._id, params.lineId, params.depositPercentage);
 
 	if (!item) {
 		return cart;
@@ -287,6 +297,7 @@ export async function removeFromCartInDb(
 	item.quantity = Math.min(
 		availableAmount,
 		newQty,
+		item.quantity,
 		product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER
 	);
 
