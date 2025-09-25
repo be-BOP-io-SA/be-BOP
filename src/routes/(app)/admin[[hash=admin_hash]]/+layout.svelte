@@ -6,6 +6,7 @@
 	import { isAllowedOnPage } from '$lib/types/Role';
 	import { adminLinks as adminLinksImported } from './adminLinks.js';
 	import { POS_ROLE_ID } from '$lib/types/User.js';
+	import 'shepherd.js/dist/css/shepherd.css';
 
 	export let data;
 

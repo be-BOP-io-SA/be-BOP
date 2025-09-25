@@ -1,9 +1,100 @@
 <script lang="ts">
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/stores';
+	import Shepherd from 'shepherd.js';
+	import { tick } from 'svelte';
 
 	export let data;
 	$: lang = new URL($page.url).searchParams.get('lang') || 'en';
+
+	function setupTutorial() {
+		const tour = new Shepherd.Tour({
+			useModalOverlay: true,
+			defaultStepOptions: {
+				cancelIcon: {
+					enabled: true
+				},
+				classes: 'shepherd-target',
+				scrollTo: { behavior: 'smooth', block: 'center' }
+			}
+		});
+		tour.addStep({
+			title: 'Creating a product',
+			text: 'The products menu is under the merch section',
+			attachTo: {
+				element: 'a[href="#Merch"]',
+				on: 'bottom'
+			},
+			buttons: [
+				{
+					action() {
+						return this.back();
+					},
+					classes: 'shepherd-button-secondary',
+					text: 'Back'
+				},
+				{
+					action() {
+						(document.querySelector('a[href="#Merch"]') as HTMLAnchorElement)?.click();
+						tick().then(this.next);
+					},
+					text: 'Continue'
+				}
+			],
+			id: 'section'
+		});
+		tour.addStep({
+			title: 'Creating a product',
+			text: 'Click on the product admin page',
+			attachTo: {
+				element: 'a[href="/admin/product"]',
+				on: 'bottom'
+			},
+			buttons: [
+				{
+					action() {
+						return this.back();
+					},
+					classes: 'shepherd-button-secondary',
+					text: 'Back'
+				},
+				{
+					action() {
+						(document.querySelector('a[href="/admin/product"]') as HTMLAnchorElement)?.click();
+						setTimeout(() => tick().then(this.next), 300);
+					},
+					text: 'Continue'
+				}
+			],
+			id: 'section'
+		});
+		tour.addStep({
+			title: 'Creating a product',
+			text: 'Go to create product page',
+			attachTo: {
+				element: 'a[href="/admin/product/new"]',
+				on: 'bottom-start'
+			},
+			buttons: [
+				{
+					action() {
+						return this.back();
+					},
+					classes: 'shepherd-button-secondary',
+					text: 'Back'
+				},
+				{
+					action() {
+						(document.querySelector('a[href="/admin/product/new"]') as HTMLAnchorElement)?.click();
+						tick().then(this.next);
+					},
+					text: 'Continue'
+				}
+			],
+			id: 'section'
+		});
+		tour.start();
+	}
 </script>
 
 <div class="flex flex-col gap-4">
@@ -12,6 +103,10 @@
 		Welcome on be-BOP back-office! From here, you'll be able to manage, configure, and monitor your
 		be-BOP.
 	</p>
+
+	<button class="btn btn-primary border-red-500 border-4 w-fit" on:click={setupTutorial}>
+		Click me to start Shepherd tour!
+	</button>
 
 	<h1 class="text-xl">A word from your administrator :</h1>
 	<p>
