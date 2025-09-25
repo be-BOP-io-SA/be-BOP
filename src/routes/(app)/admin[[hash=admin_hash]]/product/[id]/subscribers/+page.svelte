@@ -15,7 +15,7 @@
 		);
 
 		const csvRows = data.map((row) => row.join(',')).join('\n');
-		const csvData = 'ID,Status,Last Payment,NostR,Email\n' + csvRows;
+		const csvData = 'ID,Status,Last Payment,Paid Until,NostR,Email\n' + csvRows;
 
 		downloadCSV(csvData, 'subscriptions.csv');
 	}
@@ -58,7 +58,12 @@
 				<th
 					class="px-6 py-3 bg-gray-200 text-left text-xs leading-4 font-medium text-gray-600 uppercase tracking-wider"
 				>
-					Last Paiement
+					Last Payment
+				</th>
+				<th
+					class="px-6 py-3 bg-gray-200 text-left text-xs leading-4 font-medium text-gray-600 uppercase tracking-wider"
+				>
+					Paid Until
 				</th>
 				<th
 					class="px-6 py-3 bg-gray-200 text-left text-xs leading-4 font-medium text-gray-600 uppercase tracking-wider"
@@ -75,14 +80,22 @@
 		<tbody class="bg-white divide-y divide-gray-200">
 			{#if data.subscriptions.length > 0}
 				{#each data.subscriptions as subscription}
+					{@const status = subscription.paidUntil > new Date() ? 'active' : 'expired'}
 					<tr>
 						<td class="px-6 py-4 whitespace-no-wrap"> {subscription._id}</td>
-						<td class="px-6 py-4 whitespace-no-wrap">
-							{subscription.paidUntil > new Date() ? 'active' : 'expired'}
+						<td
+							class="px-6 py-4 whitespace-no-wrap {status === 'active'
+								? 'text-green-500'
+								: 'text-red-500'} font-bold"
+						>
+							{status}
 						</td>
 						<td class="px-6 py-4 whitespace-no-wrap">
 							{subscription.updatedAt.toLocaleDateString($locale)}</td
 						>
+						<td class="px-6 py-4 whitespace-no-wrap">
+							{subscription.paidUntil.toLocaleDateString($locale)}
+						</td>
 						<td class="px-6 py-4 whitespace-no-wrap"> {subscription.user?.npub ?? ''}</td>
 						<td class="px-6 py-4 whitespace-no-wrap"> {subscription.user?.email ?? ''}</td>
 					</tr>
