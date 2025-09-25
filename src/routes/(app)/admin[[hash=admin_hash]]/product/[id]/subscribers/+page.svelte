@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n.js';
 
 	export let data;
@@ -15,7 +16,7 @@
 		);
 
 		const csvRows = data.map((row) => row.join(',')).join('\n');
-		const csvData = 'ID,Status,Last Payment,Paid Until,NostR,Email\n' + csvRows;
+		const csvData = 'ID,Status,Last Payment,Paid Until,Cancelled,NostR,Email\n' + csvRows;
 
 		downloadCSV(csvData, 'subscriptions.csv');
 	}
@@ -68,6 +69,11 @@
 				<th
 					class="px-6 py-3 bg-gray-200 text-left text-xs leading-4 font-medium text-gray-600 uppercase tracking-wider"
 				>
+					Cancelled
+				</th>
+				<th
+					class="px-6 py-3 bg-gray-200 text-left text-xs leading-4 font-medium text-gray-600 uppercase tracking-wider"
+				>
 					NostR
 				</th>
 				<th
@@ -95,6 +101,19 @@
 						>
 						<td class="px-6 py-4 whitespace-no-wrap">
 							{subscription.paidUntil.toLocaleDateString($locale)}
+						</td>
+						<td class="px-6 py-4 whitespace-no-wrap">
+							{#if subscription.cancelledAt}
+								Yes
+							{:else}
+								No
+
+								{#if status === 'active'}
+									<form action="?/cancel" method="post" use:enhance>
+										<button type="submit" class="btn btn-red">Cancel</button>
+									</form>
+								{/if}
+							{/if}
 						</td>
 						<td class="px-6 py-4 whitespace-no-wrap"> {subscription.user?.npub ?? ''}</td>
 						<td class="px-6 py-4 whitespace-no-wrap"> {subscription.user?.email ?? ''}</td>
