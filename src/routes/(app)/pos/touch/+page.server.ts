@@ -1,4 +1,3 @@
-import { computePriceInfo } from '$lib/cart.js';
 import { collections } from '$lib/server/database';
 import {
 	concludeOrderTab,
@@ -7,41 +6,13 @@ import {
 } from '$lib/server/orderTab.js';
 import { picturesForProducts } from '$lib/server/picture';
 import { pojo } from '$lib/server/pojo';
-import { runtimeConfig } from '$lib/server/runtime-config';
-import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 import { OrderTab, OrderTabItem } from '$lib/types/OrderTab';
-import { Picture } from '$lib/types/Picture.js';
+import type { Picture } from '$lib/types/Picture.js';
 import type { Product } from '$lib/types/Product';
-import type { Tag } from '$lib/types/Tag';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
-import type { PageServerParentData } from './$types.js';
 import { UrlDependency } from '$lib/types/UrlDependency.js';
 import { ObjectId } from 'mongodb';
-
-async function getProductsToDisplay(params: {
-	query: Record<string, unknown>;
-	language?: string;
-}): Promise<
-	Pick<Product, '_id' | 'price' | 'name' | 'preorder' | 'availableDate' | 'tagIds' | 'stock'>[]
-> {
-	return collections.products
-		.find({
-			...params.query
-		})
-		.project<
-			Pick<Product, '_id' | 'price' | 'name' | 'preorder' | 'availableDate' | 'tagIds' | 'stock'>
-		>({
-			price: 1,
-			preorder: 1,
-			name: params.language ? { $ifNull: [`$translations.${params.language}.name`, '$name'] } : 1,
-			availableDate: 1,
-			tagIds: 1,
-			stock: 1
-		})
-		.sort({ createdAt: 1 })
-		.toArray();
-}
 
 function defaultTab(): string {
 	return 'tab-0';
@@ -113,7 +84,8 @@ async function hydratedOrderItems(
 
 async function getHydratedOrderTab(locale: Locale, tabSlug: string) {
 	const tab = await getOrCreateOrderTab({ slug: tabSlug });
-	return { ...tab, items: await hydratedOrderItems(locale, tab.items) };
+	const items = await hydratedOrderItems(locale, tab.items);
+	return { ...tab, items };
 }
 
 function getTabSlugFromPageOrRedirect(url: URL): string {
@@ -126,57 +98,16 @@ function getTabSlugFromPageOrRedirect(url: URL): string {
 	return tabSlug;
 }
 
-async function tabPriceInfo(
-	items: HydratedTabItem[],
-	country: App.Locals['countryCode'],
-	vatProfiles: PageServerParentData['vatProfiles']
-) {
-	return computePriceInfo(items, {
-		bebopCountry: runtimeConfig.vatCountry,
-		deliveryFees: {
-			amount: 0,
-			currency: UNDERLYING_CURRENCY
-		},
-		freeProductUnits: {},
-		userCountry: country,
-		vatExempted: runtimeConfig.vatExempted,
-		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
-		vatSingleCountry: runtimeConfig.vatSingleCountry,
-		vatProfiles
-	});
-}
-
-export const load = async ({ locals, url, parent, depends }) => {
+export const load = async ({ locals, url, depends }) => {
 	const tabSlug = getTabSlugFromPageOrRedirect(url);
 	depends(UrlDependency.orderTab(tabSlug));
-
 	if (await orderTabNotEmptyAndFullyPaid({ slug: tabSlug })) {
 		await concludeOrderTab({ slug: tabSlug });
 	}
-
 	const orderTab = await getHydratedOrderTab(locals.language, tabSlug);
-	const products = await getProductsToDisplay({
-		language: locals.language,
-		query: locals.user?.hasPosOptions
-			? { 'actionSettings.retail.visible': true }
-			: { 'actionSettings.eShop.visible': true }
-	});
-	const tags = await collections.tags
-		.find({ _id: { $in: [...runtimeConfig.posTouchTag] } })
-		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
-		.toArray();
-	const { vatProfiles } = await parent();
-	const priceInfo = await tabPriceInfo(orderTab.items, locals.countryCode, vatProfiles);
 	return {
 		orderTab: pojo(orderTab),
-		pictures: await collections.pictures
-			.find({ productId: { $in: [...products.map((product) => product._id)] } })
-			.sort({ order: 1, createdAt: 1 })
-			.toArray(),
-		priceInfo,
-		products,
-		tabSlug,
-		tags
+		tabSlug
 	};
 };
 
