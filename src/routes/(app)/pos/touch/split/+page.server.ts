@@ -1,6 +1,6 @@
 import { ItemForPriceInfo, ProductForPriceInfo } from '$lib/cart';
 import { collections } from '$lib/server/database';
-import { getOrCreateOrderTab } from '$lib/server/orderTab';
+import { clearAbandonedCartsAndOrdersFromTab, getOrCreateOrderTab } from '$lib/server/orderTab';
 import { OrderTab, OrderTabItem } from '$lib/types/OrderTab';
 import { UrlDependency } from '$lib/types/UrlDependency';
 import { redirect } from '@sveltejs/kit';
@@ -67,6 +67,7 @@ function getTabSlugFromPageOrRedirect(url: URL): string {
 
 export const load = async ({ depends, locals, url }) => {
 	const tabSlug = getTabSlugFromPageOrRedirect(url);
+	await clearAbandonedCartsAndOrdersFromTab(tabSlug);
 	const orderTab = await getHydratedOrderTab(locals.language, tabSlug);
 	depends(UrlDependency.orderTab(tabSlug));
 

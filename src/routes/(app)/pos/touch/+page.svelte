@@ -11,6 +11,8 @@
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
 	import { groupBy } from '$lib/utils/group-by.js';
 	import { onMount } from 'svelte';
+	import { computePriceInfo } from '$lib/cart.js';
+	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 
 	export let data;
 	const tabSlug: string = data.tabSlug;
@@ -27,7 +29,17 @@
 			? data.products
 			: data.products.filter((product) => product.tagIds?.includes(filter));
 	$: items = data.orderTab.items;
-	$: priceInfo = data.priceInfo;
+	$: priceInfo = computePriceInfo(items, {
+		bebopCountry: data.vatCountry,
+		deliveryFees: { amount: 0, currency: UNDERLYING_CURRENCY },
+		freeProductUnits: {},
+		userCountry: data.countryCode,
+		vatExempted: data.vatExempted,
+		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
+		vatSingleCountry: data.vatSingleCountry,
+		vatProfiles: data.vatProfiles
+	});
+
 	const { t } = useI18n();
 	let posProductPagination = POS_PRODUCT_PAGINATION;
 
