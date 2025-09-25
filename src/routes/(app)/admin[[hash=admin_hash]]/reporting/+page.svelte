@@ -23,6 +23,7 @@
 	let includeExpired = false;
 	let includeCanceled = false;
 	let includePartiallyPaid = false;
+	let filterByTag = !!data.tagId;
 	let html = '';
 	let loadedHtml = false;
 	let htmlStatus = '';
@@ -123,10 +124,15 @@
 		downloadCSV(csvData, filename);
 	}
 
-	function quantityOfProduct(orders: typeof paidOrders) {
+	function quantityOfProduct(orders: typeof paidOrders, tagFilter?: string) {
 		const productQuantities: Record<string, { quantity: number; total: number }> = {};
 		for (const order of orders) {
 			for (const item of order.items) {
+				// If tagFilter is specified, only include products that have that tag
+				if (tagFilter && !item.product.tagIds?.includes(tagFilter)) {
+					continue;
+				}
+
 				if (productQuantities[item.product._id]) {
 					productQuantities[item.product._id].quantity += item.quantity;
 					productQuantities[item.product._id].total += toCurrency(
@@ -321,6 +327,36 @@
 			{/each}
 		</label>
 	</div>
+	<div class="col-span-12">
+		<label class="checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				bind:checked={filterByTag}
+				disabled={data.reportingTags.length === 0}
+				on:click={() => (loadedHtml = false)}
+			/>
+			Filter with product tag
+		</label>
+		{#if data.reportingTags.length > 0}
+			<label class="form-label mt-2">
+				Select tag
+				<select name="tagId" class="form-input" disabled={!filterByTag} value={data.tagId ?? ''}>
+					<option value="">Select a tag...</option>
+					{#each data.reportingTags as tag}
+						<option value={tag._id} selected={data.tagId === tag._id}>
+							{tag.name}
+						</option>
+					{/each}
+				</select>
+			</label>
+		{:else}
+			<p class="text-sm text-gray-600 mt-1">
+				No tags available for filtering. Tags must be enabled as "Available as filter for reporting"
+				in their settings to appear here.
+			</p>
+		{/if}
+	</div>
 	<div class="col-span-1">
 		<button class="submit btn body-mainCTA mt-8" on:click={() => (loadedHtml = false)}>🔍</button>
 	</div>
@@ -452,37 +488,39 @@
 					<!-- Order rows -->
 					{#each orderFiltered as order}
 						{#each order.items as item}
-							<tr class="hover:bg-gray-100 whitespace-nowrap">
-								<td class="border border-gray-300 px-4 py-2"
-									>{data.websiteLink + '/product/' + item.product._id}</td
-								>
-								<td class="border border-gray-300 px-4 py-2">{item.product.name}</td>
-								<td class="border border-gray-300 px-4 py-2">{item.quantity}</td>
-								<td class="border border-gray-300 px-4 py-2">{item.depositPercentage ?? 100}</td>
-								<td class="border border-gray-300 px-4 py-2">{order.number}</td><td
-									class="border border-gray-300 px-4 py-2"
-								>
-									<time
-										datetime={order.createdAt.toISOString()}
-										title={order.createdAt.toLocaleString($locale)}
+							{#if !data.tagId || item.product.tagIds?.includes(data.tagId)}
+								<tr class="hover:bg-gray-100 whitespace-nowrap">
+									<td class="border border-gray-300 px-4 py-2"
+										>{data.websiteLink + '/product/' + item.product._id}</td
 									>
-										{order.createdAt.toLocaleDateString($locale)}
-									</time>
-								</td>
-								<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
-								<td class="border border-gray-300 px-4 py-2"
-									>{(toCurrency(
-										data.currencies.main,
-										(item.customPrice?.amount ?? item.product.price.amount) *
-											(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
-										item.customPrice?.currency ?? item.product.price.currency
-									) *
-										(item.product.deposit?.percentage ?? 100) *
-										item.quantity) /
-										100}</td
-								>
-								<td class="border border-gray-300 px-4 py-2">{item.vatRate}</td>
-							</tr>
+									<td class="border border-gray-300 px-4 py-2">{item.product.name}</td>
+									<td class="border border-gray-300 px-4 py-2">{item.quantity}</td>
+									<td class="border border-gray-300 px-4 py-2">{item.depositPercentage ?? 100}</td>
+									<td class="border border-gray-300 px-4 py-2">{order.number}</td><td
+										class="border border-gray-300 px-4 py-2"
+									>
+										<time
+											datetime={order.createdAt.toISOString()}
+											title={order.createdAt.toLocaleString($locale)}
+										>
+											{order.createdAt.toLocaleDateString($locale)}
+										</time>
+									</td>
+									<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
+									<td class="border border-gray-300 px-4 py-2"
+										>{(toCurrency(
+											data.currencies.main,
+											(item.customPrice?.amount ?? item.product.price.amount) *
+												(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
+											item.customPrice?.currency ?? item.product.price.currency
+										) *
+											(item.product.deposit?.percentage ?? 100) *
+											item.quantity) /
+											100}</td
+									>
+									<td class="border border-gray-300 px-4 py-2">{item.vatRate}</td>
+								</tr>
+							{/if}
 						{/each}
 					{/each}
 				</tbody>
@@ -660,7 +698,7 @@
 				</thead>
 				<tbody>
 					<!-- Order rows -->
-					{#each Object.entries(quantityOfProduct(paidOrders)).sort((a, b) => b[1].quantity - a[1].quantity) as [productId, { quantity, total }]}
+					{#each Object.entries(quantityOfProduct(paidOrders, data.tagId)).sort((a, b) => b[1].quantity - a[1].quantity) as [productId, { quantity, total }]}
 						<tr class="hover:bg-gray-100 whitespace-nowrap">
 							<td class="border border-gray-300 px-4 py-2">
 								<time datetime={beginsAt.toISOString()} title={beginsAt.toLocaleString($locale)}>
