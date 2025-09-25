@@ -15,7 +15,7 @@ import { UrlDependency } from '$lib/types/UrlDependency.js';
 import { ObjectId } from 'mongodb';
 
 function defaultTab(): string {
-	return 'tab-0';
+	return 'table-0';
 }
 
 type ProductProjection = Pick<

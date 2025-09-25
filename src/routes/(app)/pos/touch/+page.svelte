@@ -6,7 +6,7 @@
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n.js';
 	import PriceTag from '$lib/components/PriceTag.svelte';
-	import { invalidate } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import { applyAction, enhance } from '$app/forms';
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
 	import { groupBy } from '$lib/utils/group-by.js';
@@ -16,7 +16,7 @@
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 
 	export let data;
-	const tabSlug: string = data.tabSlug;
+	$: tabSlug = data.tabSlug;
 	$: next = Number($page.url.searchParams.get('skip')) || 0;
 	$: picturesByProduct = groupBy(
 		data.pictures.filter(
@@ -107,7 +107,87 @@
 
 		return () => window.removeEventListener('resize', updatePaginationLimit);
 	});
+
+	let tabSelectModalOpen = false;
+	const tabs = {
+		tables: Array.from({ length: 11 }, (_, i) => `table-${i + 1}`),
+		terrasses: ['terrasse-1', 'terrasse-2', 'terrasse-3', 'terrasse-4', 'gazebo-1', 'gazebo-2'],
+		walkIns: Array.from({ length: 15 }, (_, i) => `client-${i + 1}`)
+	};
+	function closeTabSelectModel() {
+		tabSelectModalOpen = false;
+	}
+	function selectTab(tab: string) {
+		goto(selfPageLink({ tab }), { invalidateAll: true });
+		closeTabSelectModel();
+	}
 </script>
+
+{#if tabSelectModalOpen}
+	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+		<div
+			class="bg-white rounded-xl shadow-lg w-[400px] max-w-[90vw] max-h-[90vh] overflow-y-auto p-6 relative"
+		>
+			<button
+				class="absolute top-2 right-2 text-gray-500 hover:text-black"
+				on:click={closeTabSelectModel}
+			>
+				✕
+			</button>
+
+			<h2 class="text-lg font-semibold mb-4">@@Select a tab:</h2>
+
+			<section class="mb-6">
+				<h3 class="font-medium mb-2">Tables :</h3>
+				<div class="grid grid-cols-3 gap-2">
+					{#each tabs.tables as table}
+						<button
+							class="touchScreen-product-cta text-white min-h-[50px] rounded-md p-2 hover:bg-purple-600"
+							on:click={() => selectTab(table)}
+						>
+							{table}
+						</button>
+					{/each}
+				</div>
+			</section>
+
+			<section class="mb-6">
+				<h3 class="font-medium mb-2">Terrasse :</h3>
+				<div class="grid grid-cols-3 gap-2">
+					{#each tabs.terrasses as terrasse}
+						<button
+							class="touchScreen-product-cta text-white min-h-[50px] rounded-md py-2 hover:bg-purple-600"
+							on:click={() => selectTab(terrasse)}
+						>
+							{terrasse}
+						</button>
+					{/each}
+				</div>
+			</section>
+
+			<section class="mb-6">
+				<h3 class="font-medium mb-2">Comptoir :</h3>
+				<div class="grid grid-cols-3 gap-2">
+					{#each tabs.walkIns as client}
+						<button
+							class="touchScreen-product-cta text-white min-h-[50px] rounded-md py-2 hover:bg-purple-600"
+							on:click={() => selectTab(client)}
+						>
+							{client}
+						</button>
+					{/each}
+				</div>
+			</section>
+
+			<button
+				class="mt-4 w-fit bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900"
+				on:click={closeTabSelectModel}
+			>
+				@@Cancel
+			</button>
+		</div>
+	</div>
+{/if}
 
 <div class="flex flex-col h-screen justify-between" inert={itemToEditIndex !== undefined}>
 	<main class="mb-auto flex-grow">
@@ -245,7 +325,7 @@
 		<div class="grid grid-cols-3 gap-4 mt-2">
 			<button
 				class="touchScreen-ticket-menu text-3xl p-4 text-center"
-				on:click={() => alert('Not developped yet')}>TICKETS</button
+				on:click={() => (tabSelectModalOpen = true)}>TICKETS</button
 			>
 			<div class="col-span-2 grid grid-cols-3 gap-4">
 				<button
