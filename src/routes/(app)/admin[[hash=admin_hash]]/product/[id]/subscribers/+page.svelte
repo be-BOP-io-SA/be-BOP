@@ -4,21 +4,47 @@
 
 	export let data;
 
+	const { locale } = useI18n();
+
+	// Process subscription data for display and export
+	$: tableData = data.subscriptions.map((subscription) => {
+		const status = subscription.paidUntil > new Date() ? 'active' : 'expired';
+		const cancelled = subscription.cancelledAt ? 'Yes' : 'No';
+
+		return {
+			id: subscription._id,
+			status,
+			lastPayment: subscription.updatedAt.toLocaleDateString($locale),
+			paidUntil: subscription.paidUntil.toLocaleDateString($locale),
+			cancelled,
+			nostr: subscription.user?.npub ?? '',
+			email: subscription.user?.email ?? '',
+			// Keep original subscription for actions
+			originalSubscription: subscription
+		};
+	});
+
 	function exportcsv() {
-		const table = document.getElementById('subscription-table');
-		if (!table) {
+		if (tableData.length === 0) {
 			return;
 		}
 
-		const rows = table.querySelectorAll('tr');
-		const data = Array.from(rows).map((row) =>
-			Array.from(row.querySelectorAll('td')).map((cell) => cell.innerText.trim())
-		);
+		const headers = ['ID', 'Status', 'Last Payment', 'Paid Until', 'Cancelled', 'NostR', 'Email'];
+		const csvRows = tableData.map((row) => [
+			row.id,
+			row.status,
+			row.lastPayment,
+			row.paidUntil,
+			row.cancelled,
+			row.nostr,
+			row.email
+		]);
 
-		const csvRows = data.map((row) => row.join(',')).join('\n');
-		const csvData = 'ID,Status,Last Payment,Paid Until,Cancelled,NostR,Email\n' + csvRows;
+		const csvContent = [headers, ...csvRows]
+			.map((row) => row.map((field) => `"${field}"`).join(','))
+			.join('\n');
 
-		downloadCSV(csvData, 'subscriptions.csv');
+		downloadCSV(csvContent, 'subscriptions.csv');
 	}
 
 	function downloadCSV(csvData: string, filename: string) {
@@ -29,8 +55,6 @@
 		document.body.appendChild(link);
 		link.click();
 	}
-
-	const { locale } = useI18n();
 </script>
 
 <!-- <h1 class="text-3xl">Edit a product</h1> -->
@@ -84,39 +108,42 @@
 			</tr>
 		</thead>
 		<tbody class="bg-white divide-y divide-gray-200">
-			{#if data.subscriptions.length > 0}
-				{#each data.subscriptions as subscription}
-					{@const status = subscription.paidUntil > new Date() ? 'active' : 'expired'}
+			{#if tableData.length > 0}
+				{#each tableData as row}
 					<tr>
-						<td class="px-6 py-4 whitespace-no-wrap"> {subscription._id}</td>
+						<td class="px-6 py-4 whitespace-no-wrap">{row.id}</td>
 						<td
-							class="px-6 py-4 whitespace-no-wrap {status === 'active'
+							class="px-6 py-4 whitespace-no-wrap {row.status === 'active'
 								? 'text-green-500'
 								: 'text-red-500'} font-bold"
 						>
-							{status}
+							{row.status}
 						</td>
 						<td class="px-6 py-4 whitespace-no-wrap">
-							{subscription.updatedAt.toLocaleDateString($locale)}</td
-						>
-						<td class="px-6 py-4 whitespace-no-wrap">
-							{subscription.paidUntil.toLocaleDateString($locale)}
+							{row.lastPayment}
 						</td>
 						<td class="px-6 py-4 whitespace-no-wrap">
-							{#if subscription.cancelledAt}
+							{row.paidUntil}
+						</td>
+						<td class="px-6 py-4 whitespace-no-wrap">
+							{#if row.originalSubscription.cancelledAt}
 								Yes
+							{:else if row.status === 'active'}
+								<!-- instead of showing "No", we just the cancel button when the subscription is active -->
+								<form
+									action="{data.adminPrefix}/product/{row.originalSubscription
+										.productId}/subscribers/{row.originalSubscription._id}?/cancel"
+									method="post"
+									use:enhance
+								>
+									<button type="submit" class="btn btn-red">Cancel</button>
+								</form>
 							{:else}
 								No
-
-								{#if status === 'active'}
-									<form action="?/cancel" method="post" use:enhance>
-										<button type="submit" class="btn btn-red">Cancel</button>
-									</form>
-								{/if}
 							{/if}
 						</td>
-						<td class="px-6 py-4 whitespace-no-wrap"> {subscription.user?.npub ?? ''}</td>
-						<td class="px-6 py-4 whitespace-no-wrap"> {subscription.user?.email ?? ''}</td>
+						<td class="px-6 py-4 whitespace-no-wrap">{row.nostr}</td>
+						<td class="px-6 py-4 whitespace-no-wrap">{row.email}</td>
 					</tr>
 				{/each}
 			{:else}
