@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { addToOrderTab, checkoutOrderTab, getOrCreateOrderTab } from './orderTab';
+import {
+	addToOrderTab,
+	checkoutOrderTab,
+	clearAbandonedCartsAndOrdersFromTab,
+	getOrCreateOrderTab
+} from './orderTab';
 import { collections } from './database';
 import { OrderTab } from '$lib/types/OrderTab';
 
@@ -88,6 +93,7 @@ describe('addProductToOrderTab', () => {
 		}
 		const deleteRes = await collections.carts.deleteMany({ user: { email } });
 		expect(deleteRes.deletedCount).toBe(1);
+		await clearAbandonedCartsAndOrdersFromTab(tabSlug);
 		const orderTab2 = await getOrCreateOrderTab({ slug: tabSlug });
 		for (const item of orderTab2.items) {
 			expect(item.cartId).toEqual(undefined);
