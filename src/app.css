@@ -178,9 +178,15 @@
 		@apply cursor-pointer rounded-sm;
 	}
 
+	label:has(.form-checkbox:disabled),
+	fieldset:disabled label:has(.form-checkbox) {
+		@apply cursor-not-allowed opacity-50;
+	}
+
+	/* Fallback for browsers that don't support :has - but do not apply opacity-50 to avoid stacking with opacity-50 from :has */
 	.form-checkbox:disabled,
 	fieldset:disabled .form-checkbox {
-		@apply cursor-not-allowed opacity-50;
+		@apply cursor-not-allowed;
 	}
 
 	.form-radio {
@@ -326,9 +332,7 @@
 	.eventCalendar-currentDate {
 		background-color: var(--eventCalendar-currentDate-backgroundColor);
 		color: var(--eventCalendar-currentDate-color);
-
 	}
-
 }
 
 @layer utilities {
