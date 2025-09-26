@@ -14,6 +14,7 @@
 	import ItemEditDialog from '$lib/components/ItemEditDialog.svelte';
 	import { computePriceInfo } from '$lib/cart.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
+	import { sluggifyTab } from '$lib/types/PosTabGroup.js';
 
 	export let data;
 	$: tabSlug = data.tabSlug;
@@ -109,15 +110,11 @@
 	});
 
 	let tabSelectModalOpen = false;
-	const tabs = {
-		tables: Array.from({ length: 11 }, (_, i) => `table-${i + 1}`),
-		terrasses: ['terrasse-1', 'terrasse-2', 'terrasse-3', 'terrasse-4', 'gazebo-1', 'gazebo-2'],
-		walkIns: Array.from({ length: 15 }, (_, i) => `client-${i + 1}`)
-	};
 	function closeTabSelectModel() {
 		tabSelectModalOpen = false;
 	}
-	function selectTab(tab: string) {
+	function selectTab(groupIndex: number, tabIndex: number) {
+		const tab = sluggifyTab(data.posTabGroups, groupIndex, tabIndex);
 		goto(selfPageLink({ tab }), { invalidateAll: true });
 		closeTabSelectModel();
 	}
@@ -137,47 +134,26 @@
 
 			<h2 class="text-lg font-semibold mb-4">@@Select a tab:</h2>
 
-			<section class="mb-6">
-				<h3 class="font-medium mb-2">Tables :</h3>
-				<div class="grid grid-cols-3 gap-2">
-					{#each tabs.tables as table}
-						<button
-							class="touchScreen-product-cta text-white min-h-[50px] rounded-md p-2 hover:bg-purple-600"
-							on:click={() => selectTab(table)}
-						>
-							{table}
-						</button>
-					{/each}
-				</div>
-			</section>
-
-			<section class="mb-6">
-				<h3 class="font-medium mb-2">Terrasse :</h3>
-				<div class="grid grid-cols-3 gap-2">
-					{#each tabs.terrasses as terrasse}
-						<button
-							class="touchScreen-product-cta text-white min-h-[50px] rounded-md py-2 hover:bg-purple-600"
-							on:click={() => selectTab(terrasse)}
-						>
-							{terrasse}
-						</button>
-					{/each}
-				</div>
-			</section>
-
-			<section class="mb-6">
-				<h3 class="font-medium mb-2">Comptoir :</h3>
-				<div class="grid grid-cols-3 gap-2">
-					{#each tabs.walkIns as client}
-						<button
-							class="touchScreen-product-cta text-white min-h-[50px] rounded-md py-2 hover:bg-purple-600"
-							on:click={() => selectTab(client)}
-						>
-							{client}
-						</button>
-					{/each}
-				</div>
-			</section>
+			{#each data.posTabGroups as tabGroup, groupIndex}
+				<section class="mb-6">
+					<h3 class="font-medium mb-2">{tabGroup.name}</h3>
+					{#if tabGroup.tabs.length > 0}
+						<div class="grid grid-cols-3 gap-2">
+							{#each tabGroup.tabs as tab, tabIndex}
+								<button
+									class="touchScreen-product-cta text-white min-h-[50px] rounded-md py-2"
+									style="background-color: {tab.color}"
+									on:click={() => selectTab(groupIndex, tabIndex)}
+								>
+									{tab.label ?? `${tabGroup.name} ${tabIndex + 1}`}
+								</button>
+							{/each}
+						</div>
+					{:else}
+						<p class="text-gray-500">@@This group has no tabs</p>
+					{/if}
+				</section>
+			{/each}
 
 			<button
 				class="mt-4 w-fit bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900"
