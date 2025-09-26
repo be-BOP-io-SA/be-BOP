@@ -13,9 +13,11 @@ import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { UrlDependency } from '$lib/types/UrlDependency.js';
 import { ObjectId } from 'mongodb';
+import { runtimeConfig } from '$lib/server/runtime-config.js';
+import { sluggifyTab } from '$lib/types/PosTabGroup.js';
 
 function defaultTab(): string {
-	return 'table-0';
+	return sluggifyTab(runtimeConfig.posTabGroups, 0, 0);
 }
 
 type ProductProjection = Pick<
@@ -107,6 +109,7 @@ export const load = async ({ locals, url, depends }) => {
 	const orderTab = await getHydratedOrderTab(locals.language, tabSlug);
 	return {
 		orderTab: pojo(orderTab),
+		posTabGroups: runtimeConfig.posTabGroups,
 		tabSlug
 	};
 };
