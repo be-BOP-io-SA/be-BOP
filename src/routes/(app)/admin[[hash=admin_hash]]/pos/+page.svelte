@@ -62,7 +62,7 @@
 	</label>
 	<input type="hidden" name="posTouchTag" bind:value={serializedTags} />
 
-	<h2 class="text-2xl">Touchscreen PoS interface</h2>
+	<h2 class="text-2xl">PoS Checkout</h2>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
