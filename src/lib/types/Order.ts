@@ -9,11 +9,12 @@ import type { ObjectId } from 'mongodb';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import type { LanguageKey } from '$lib/translations';
 import type { User } from './User';
-import { getWeek, getWeekOfMonth } from 'date-fns';
+import { differenceInMinutes, getWeek, getWeekOfMonth } from 'date-fns';
 import type { Ticket } from './Ticket';
 import type { OrderLabel } from './OrderLabel';
 import { toBitcoins } from '$lib/utils/toBitcoins';
 import type { ScheduleEventBooked } from './Schedule';
+import type { PickDeep } from 'type-fest';
 
 export type OrderPaymentStatus = 'pending' | 'paid' | 'expired' | 'canceled' | 'failed';
 
@@ -414,4 +415,58 @@ export function bitcoinPaymentQrCodeString(
 
 export function lightningPaymentQrCodeString(paymentAddress: string) {
 	return `lightning:${paymentAddress}`;
+}
+
+export type OrderItemInfoNeededForFinalPrice = PickDeep<
+	Order['items'][0],
+	| 'currencySnapshot'
+	| 'discountPercentage'
+	| 'booking.start'
+	| 'booking.end'
+	| 'product.bookingSpec.slotMinutes'
+	| 'quantity'
+	| 'freeQuantity'
+>;
+
+export function orderItemPrice(
+	item: OrderItemInfoNeededForFinalPrice,
+	currency: 'main' | 'priceReference' | 'secondary' | 'accounting'
+) {
+	return (
+		orderItemPriceUndiscounted(item, currency) *
+		(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
+	);
+}
+
+export function orderIndividualItemPrice(
+	item: Pick<Order['items'][0], 'currencySnapshot' | 'discountPercentage'>,
+	currency: 'main' | 'priceReference' | 'secondary' | 'accounting'
+) {
+	const currencySnapshot = item.currencySnapshot[currency];
+	if (!currencySnapshot) {
+		throw new Error(`Currency snapshot ${currency} not found`);
+	}
+	return (
+		(currencySnapshot.customPrice?.amount ?? currencySnapshot.price.amount) *
+		(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
+	);
+}
+
+export function orderItemPriceUndiscounted(
+	item: OrderItemInfoNeededForFinalPrice,
+	currency: 'main' | 'priceReference' | 'secondary' | 'accounting'
+) {
+	const currencySnapshot = item.currencySnapshot[currency];
+	if (!currencySnapshot) {
+		throw new Error(`Currency snapshot ${currency} not found`);
+	}
+	const quantity =
+		item.booking && item.product.bookingSpec
+			? differenceInMinutes(item.booking.end, item.booking.start) /
+			  item.product.bookingSpec.slotMinutes
+			: item.quantity;
+
+	const paidQuantity = Math.max(quantity - (item.freeQuantity ?? 0), 0);
+
+	return (currencySnapshot.customPrice?.amount ?? currencySnapshot.price.amount) * paidQuantity;
 }
