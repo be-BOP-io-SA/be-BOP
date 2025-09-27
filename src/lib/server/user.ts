@@ -57,7 +57,7 @@ export async function createSuperAdminUserInDb(login: string, password: string) 
 export function userIdentifier(locals: App.Locals): UserIdentifier {
 	const secondaryEmails = locals.sso?.flatMap((sso) => (sso.email ? [sso.email] : []));
 	return {
-		ssoIds: locals.sso?.map((sso) => sso.id),
+		ssoIds: locals.sso?.map((sso) => `${sso.provider}:${sso.id}`),
 		userId: locals.user?._id,
 		email: locals.email,
 		secondaryEmails,
@@ -79,7 +79,26 @@ export function userQuery(user: UserIdentifier) {
 			...(emails.length ? [{ 'user.email': { $in: emails } }] : []),
 			...(user.npub ? [{ 'user.npub': user.npub }] : []),
 			...(user.sessionId ? [{ 'user.sessionId': user.sessionId }] : []),
-			...(user.ssoIds?.length ? [{ 'user.ssoIds': { $in: user.ssoIds } }] : [])
+			...(user.ssoIds?.length
+				? [
+						{
+							'user.ssoIds': {
+								$in: [
+									...user.ssoIds,
+									/**
+									 * To fetch legacy data (sessions, subscriptions, personal info, ...) when ssoIds was not prefixed with provider
+									 *
+									 * ssoId was never stored for orders so prior to the previous commit, so we may be able to remove the line below
+									 * after a few months
+									 */
+									...user.ssoIds
+										.filter((sso) => sso.includes(':'))
+										.map((sso) => sso.slice(sso.indexOf(':') + 1))
+								]
+							}
+						}
+				  ]
+				: [])
 		]
 	};
 

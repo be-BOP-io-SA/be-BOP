@@ -465,16 +465,7 @@ export const actions = {
 				paymentMethod,
 				{
 					locale: locals.language,
-					user: {
-						sessionId: locals.sessionId,
-						userId: locals.user?._id,
-						userLogin: locals.user?.login,
-						userRoleId: locals.user?.roleId,
-						userAlias: locals.user?.alias,
-						npub: locals.npub,
-						email: locals.email,
-						userHasPosOptions: locals.user?.hasPosOptions
-					},
+					user: userIdentifier(locals),
 					notifications: {
 						paymentStatus: {
 							npub: npubAddress,
