@@ -14,6 +14,7 @@
 	let tableProduct: HTMLTableElement;
 	let tablePayment: HTMLTableElement;
 	let tableOrderSynthesis: HTMLTableElement;
+	let tableOrderSynthesisTag: HTMLTableElement;
 	let tablePaymentSynthesis: HTMLTableElement;
 	let tableProductSynthesis: HTMLTableElement;
 	let tableDeliveryFeesSynthesis: HTMLTableElement;
@@ -58,16 +59,27 @@
 			(includePartiallyPaid && order.payments.find((payment) => payment.status === 'paid'))
 	);
 	$: orderSynthesis = {
-		orderQuantity: sum(paidOrders.map((order) => order.quantityOrder)),
 		count: paidOrders.length,
 		orderTotal: sumCurrency(
 			data.currencies.main,
 			paidOrders.map((order) => order.currencySnapshot.main.totalPrice)
-		),
-		averageCart: 0
+		)
+	};
+	$: orderSynthesisTag = {
+		count: paidOrders.length,
+		orderTotal: sumCurrency(
+			data.currencies.main,
+			paidOrders.flatMap((order) =>
+				order.items
+					.filter((item) => item.product.tagIds?.includes(data.tagId ?? ''))
+					.map((item) => ({
+						amount: orderItemPrice(item, 'main'),
+						currency: item.currencySnapshot.main.price.currency
+					}))
+			)
+		)
 	};
 	$: orderDeliveryFeesSynthesis = {
-		orderQuantity: sum(paidOrders.map((order) => order.quantityOrder)),
 		orderNumber: paidOrders.length,
 		orderFeesTotal: sumCurrency(
 			data.currencies.main,
@@ -75,17 +87,25 @@
 				(order) =>
 					order.currencySnapshot.main.shippingPrice ?? { amount: 0, currency: data.currencies.main }
 			)
-		),
-		averageFeesCart: 0
+		)
 	};
+
 	$: vatSynthesis = {
-		orderQuantity: sum(paidOrders.map((order) => order.quantityOrder)),
 		orderNumber: paidOrders.length,
 		total: sumCurrency(
 			data.currencies.main,
-			paidOrders.flatMap((order) => order.currencySnapshot.main.vat ?? [])
-		),
-		averageCart: 0
+			data.tagId
+				? paidOrders.flatMap(
+						(order) =>
+							order.items
+								.filter((item) => item.product.tagIds?.includes(data.tagId ?? ''))
+								.flatMap((item) => ({
+									amount: (orderItemPrice(item, 'main') * item.vatRate) / 100,
+									currency: item.currencySnapshot.main.price.currency
+								})) ?? []
+				  )
+				: paidOrders.flatMap((order) => order.currencySnapshot.main.vat ?? [])
+		)
 	};
 
 	function downloadCSV(csvData: string, filename: string) {
@@ -448,6 +468,9 @@
 	/>
 	<div class="col-span-12">
 		<h1 class="text-2xl font-bold mb-4">Product detail</h1>
+		{#if data.tagId}
+			<p class="text-sm text-gray-600 mb-2">Only showing products with the tag "{data.tagId}".</p>
+		{/if}
 		<button
 			on:click={() => exportcsv(tableProduct, 'product-detail.csv')}
 			class="btn btn-blue mb-2"
@@ -652,9 +675,66 @@
 				</tbody>
 			</table>
 		</div>
+
+		{#if data.tagId}
+			<p class="mt-4 mb-2">
+				Synthesis for tag "{data.tagId}" only - order flat discount and shipping price are not
+				included, only the specific products with the tag are included.
+			</p>
+			<button
+				on:click={() => exportcsv(tableOrderSynthesisTag, 'orderSythesisExport.csv')}
+				class="btn btn-blue mb-2"
+			>
+				Export CSV
+			</button>
+
+			<div class="overflow-x-auto max-h-[500px]">
+				<table
+					class="min-w-full table-auto border border-gray-300 bg-white"
+					bind:this={tableOrderSynthesisTag}
+				>
+					<thead class="bg-gray-200">
+						<tr class="whitespace-nowrap">
+							<th class="border border-gray-300 px-4 py-2">Period</th>
+							<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
+							<th class="border border-gray-300 px-4 py-2">order Total</th>
+							<th class="border border-gray-300 px-4 py-2">Average Cart</th>
+							<th class="border border-gray-300 py-2">Currency</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr class="hover:bg-gray-100 whitespace-nowrap">
+							<td class="border border-gray-300 px-4 py-2">
+								<time datetime={beginsAt.toISOString()} title={beginsAt.toLocaleString($locale)}>
+									{beginsAt.toLocaleDateString($locale)}
+								</time>
+								—
+								<time datetime={endsAt.toISOString()} title={endsAt.toLocaleString($locale)}>
+									{endsAt.toLocaleDateString($locale)}
+								</time>
+							</td>
+							<td class="border border-gray-300 px-4 py-2">{orderSynthesisTag.count}</td>
+							<td class="border border-gray-300 px-4 py-2">{orderSynthesisTag.orderTotal}</td>
+							<td class="border border-gray-300 px-4 py-2"
+								>{orderSynthesisTag.count
+									? fixCurrencyRounding(
+											orderSynthesisTag.orderTotal / orderSynthesisTag.count,
+											data.currencies.main
+									  )
+									: 0}</td
+							>
+							<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		{/if}
 	</div>
 	<div class="col-span-12">
 		<h1 class="text-2xl font-bold mb-4">Product synthesis</h1>
+		{#if data.tagId}
+			<p class="text-sm text-gray-600 mb-2">Only showing products with the tag "{data.tagId}".</p>
+		{/if}
 		<button
 			on:click={() => exportcsv(tableProductSynthesis, 'orderItemsSythesisExport.csv')}
 			class="btn btn-blue mb-2"
@@ -751,6 +831,11 @@
 	</div>
 	<div class="col-span-12">
 		<h1 class="text-2xl font-bold mb-4">VAT Synthesis</h1>
+		{#if data.tagId}
+			<p class="text-sm text-gray-600 mb-2">
+				Only showing VAT for products with the tag "{data.tagId}".
+			</p>
+		{/if}
 		<button
 			on:click={() => exportcsv(tableVATSynthesis, 'vat-synthesis.csv')}
 			class="btn btn-blue mb-2"

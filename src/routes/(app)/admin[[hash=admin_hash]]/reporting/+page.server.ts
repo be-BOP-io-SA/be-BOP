@@ -1,6 +1,5 @@
 import { collections } from '$lib/server/database';
 import { countryFromIp } from '$lib/server/geoip';
-import { sum } from '$lib/utils/sum';
 import { pojo } from '$lib/server/pojo.js';
 import { addDays, subDays, subMonths } from 'date-fns';
 import { z } from 'zod';
@@ -79,7 +78,6 @@ export async function load({ url }) {
 					vatProfileId: item.product.vatProfileId?.toString()
 				}
 			})),
-			quantityOrder: sum(order.items.map((items) => items.quantity)),
 			billingAddress: order.billingAddress,
 			shippingAddress: order.shippingAddress,
 			ipCountry: countryFromIp(order.clientIp ?? ''),
