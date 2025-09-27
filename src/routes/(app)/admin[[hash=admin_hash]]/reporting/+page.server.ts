@@ -1,11 +1,11 @@
 import { collections } from '$lib/server/database';
 import { countryFromIp } from '$lib/server/geoip';
-import { sum } from '$lib/utils/sum';
 import { pojo } from '$lib/server/pojo.js';
 import { addDays, subDays, subMonths } from 'date-fns';
 import { z } from 'zod';
 import { paymentMethods } from '$lib/server/payment-methods';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import type { Tag } from '$lib/types/Tag';
 
 export async function load({ url }) {
 	const methods = paymentMethods({ includePOS: true });
@@ -14,14 +14,15 @@ export async function load({ url }) {
 		beginsAt: z.date({ coerce: true }).default(subMonths(new Date(), 1)),
 		endsAt: z.date({ coerce: true }).default(new Date()),
 		paymentMethod: z.enum(['' as const, ...methods]).optional(),
-		employeesAlias: z.string().array()
+		employeesAlias: z.string().array(),
+		tagId: z.string().optional()
 	});
 	const queryParams = Object.fromEntries(url.searchParams.entries());
 	const result = querySchema.parse({
 		...queryParams,
 		employeesAlias: url.searchParams.getAll('employeesAlias')
 	});
-	const { beginsAt, endsAt, paymentMethod, employeesAlias } = result;
+	const { beginsAt, endsAt, paymentMethod, employeesAlias, tagId } = result;
 	const aliasFilter = [];
 	if (employeesAlias.includes('System')) {
 		aliasFilter.push({ 'user.userAlias': { $exists: false } });
@@ -30,6 +31,10 @@ export async function load({ url }) {
 	if (otherAliases.length > 0) {
 		aliasFilter.push({ 'user.userAlias': { $in: otherAliases } });
 	}
+
+	// Build tag filter for orders that contain products with the specified tag
+	const tagFilter = tagId ? { 'items.product.tagIds': tagId } : {};
+
 	const orders = await collections.orders
 		.find({
 			createdAt: {
@@ -38,7 +43,8 @@ export async function load({ url }) {
 				$lt: addDays(endsAt, 1)
 			},
 			...(paymentMethod && { 'payments.method': paymentMethod }),
-			...(aliasFilter.length > 0 && { $or: aliasFilter })
+			...(aliasFilter.length > 0 && { $or: aliasFilter }),
+			...tagFilter
 		})
 		.sort({ createdAt: -1 })
 		.toArray();
@@ -46,6 +52,14 @@ export async function load({ url }) {
 		.find({ roleId: { $ne: CUSTOMER_ROLE_ID } })
 		.sort({ _id: 1 })
 		.toArray();
+
+	// Load tags that are available for reporting filter
+	const reportingTags = await collections.tags
+		.find({ reportingFilter: true })
+		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
+		.sort({ name: 1 })
+		.toArray();
+
 	return {
 		orders: orders.map((order) => ({
 			_id: order._id,
@@ -64,7 +78,6 @@ export async function load({ url }) {
 					vatProfileId: item.product.vatProfileId?.toString()
 				}
 			})),
-			quantityOrder: sum(order.items.map((items) => items.quantity)),
 			billingAddress: order.billingAddress,
 			shippingAddress: order.shippingAddress,
 			ipCountry: countryFromIp(order.clientIp ?? ''),
@@ -78,6 +91,8 @@ export async function load({ url }) {
 			_id: user._id.toString(),
 			alias: user.alias
 		})),
-		employeesAlias
+		employeesAlias,
+		reportingTags,
+		tagId
 	};
 }

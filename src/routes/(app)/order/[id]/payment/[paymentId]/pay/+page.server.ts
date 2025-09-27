@@ -3,7 +3,6 @@ import { error, redirect } from '@sveltejs/kit';
 import { fetchOrderForUser } from '../../../fetchOrderForUser.js';
 import { isStripeEnabled } from '$lib/server/stripe.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
-import { priceInfoForOrderProbablyIncorrectBuyOkayForDisplay } from '$lib/server/orders.js';
 
 export async function load({ params, depends }) {
 	const order = await fetchOrderForUser(params.id);
@@ -36,8 +35,6 @@ export async function load({ params, depends }) {
 
 	return {
 		order,
-		priceInfoProbablyIncorrectBuyOkayForDisplay:
-			await priceInfoForOrderProbablyIncorrectBuyOkayForDisplay(order),
 		payment,
 		stripePublicKey: isStripeEnabled() ? runtimeConfig.stripe.publicKey : null
 	};

@@ -50,11 +50,7 @@
 		</div>
 
 		<div class="">
-			<OrderSummary
-				class="sticky top-4 -mr-2 -mt-2"
-				order={data.order}
-				orderPriceInfo={data.priceInfoProbablyIncorrectBuyOkayForDisplay}
-			/>
+			<OrderSummary class="sticky top-4 -mr-2 -mt-2" order={data.order} />
 		</div>
 	</div>
 </main>

@@ -317,11 +317,7 @@
 		{/if}
 	</div>
 	<div class="self-center md:self-stretch">
-		<OrderSummary
-			class="sticky top-4 -mt-1"
-			order={data.order}
-			orderPriceInfo={data.priceInfoProbablyIncorrectBuyOkayForDisplay}
-		/>
+		<OrderSummary class="sticky top-4 -mt-1" order={data.order} />
 	</div>
 </main>
 <!--
