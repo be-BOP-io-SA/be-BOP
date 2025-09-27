@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
 	import { useI18n } from '$lib/i18n.js';
-	import { invoiceNumberVariables } from '$lib/types/Order.js';
+	import { invoiceNumberVariables, orderItemPrice } from '$lib/types/Order.js';
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding.js';
 	import { sum } from '$lib/utils/sum.js';
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
@@ -480,7 +480,7 @@
 						<th class="border border-gray-300 px-4 py-2">Order ID</th>
 						<th class="border border-gray-300 px-4 py-2">Order Date</th>
 						<th class="border border-gray-300 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Amount</th>
+						<th class="border border-gray-300 px-4 py-2">Price</th>
 						<th class="border border-gray-300 px-4 py-2">Vat Rate</th>
 					</tr>
 				</thead>
@@ -507,17 +507,7 @@
 										</time>
 									</td>
 									<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
-									<td class="border border-gray-300 px-4 py-2"
-										>{(toCurrency(
-											data.currencies.main,
-											(item.customPrice?.amount ?? item.product.price.amount) *
-												(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
-											item.customPrice?.currency ?? item.product.price.currency
-										) *
-											(item.product.deposit?.percentage ?? 100) *
-											item.quantity) /
-											100}</td
-									>
+									<td class="border border-gray-300 px-4 py-2">{orderItemPrice(item, 'main')}</td>
 									<td class="border border-gray-300 px-4 py-2">{item.vatRate}</td>
 								</tr>
 							{/if}
