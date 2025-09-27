@@ -368,18 +368,25 @@
 </form>
 <div class="gap-4 grid grid-cols-12 mr-auto">
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Order detail</h1>
-		<div class="flex gap-2">
-			<button on:click={() => exportcsv(tableOrder, 'order-detail.csv')} class="btn btn-blue mb-2">
-				Export CSV
-			</button>
-			<button
-				disabled={!!htmlStatus || isLoading}
-				class="btn btn-blue mb-2"
-				on:click={loadedHtml ? () => iframePrint.contentWindow?.print() : exportPdf}
-			>
-				{loadedHtml ? 'Print' : htmlStatus || 'Prepare PDF'}
-			</button>
+		<div class="flex items-center justify-between mb-4">
+			<h1 class="text-2xl font-bold">Order detail</h1>
+			<div class="flex gap-2">
+				<button
+					on:click={() => exportcsv(tableOrder, 'order-detail.csv')}
+					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+					title="Export as CSV"
+				>
+					📊 CSV
+				</button>
+				<button
+					disabled={!!htmlStatus || isLoading}
+					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
+					on:click={loadedHtml ? () => iframePrint.contentWindow?.print() : exportPdf}
+					title={loadedHtml ? 'Print receipts' : 'Prepare PDF receipts'}
+				>
+					🖨️ {loadedHtml ? 'Print' : htmlStatus || 'PDF'}
+				</button>
+			</div>
 		</div>
 
 		<div class="overflow-x-auto max-h-[500px]">
@@ -467,16 +474,23 @@
 		style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
 	/>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Product detail</h1>
-		{#if data.tagId}
-			<p class="text-sm text-gray-600 mb-2">Only showing products with the tag "{data.tagId}".</p>
-		{/if}
-		<button
-			on:click={() => exportcsv(tableProduct, 'product-detail.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<div>
+				<h1 class="text-2xl font-bold">Product detail</h1>
+				{#if data.tagId}
+					<p class="text-sm text-gray-600 mt-1">
+						Only showing products with the tag "{data.tagId}".
+					</p>
+				{/if}
+			</div>
+			<button
+				on:click={() => exportcsv(tableProduct, 'product-detail.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table class="min-w-full table-auto border border-gray-300 bg-white" bind:this={tableProduct}>
 				<thead class="bg-gray-200">
@@ -528,13 +542,14 @@
 		</div>
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Payment Detail</h1>
-		<div class="flex gap-2">
+		<div class="flex items-center justify-between mb-4">
+			<h1 class="text-2xl font-bold">Payment Detail</h1>
 			<button
 				on:click={() => exportcsv(tablePayment, 'payment-detail.csv')}
-				class="btn btn-blue mb-2"
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
 			>
-				Export CSV
+				📊 CSV
 			</button>
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
@@ -628,13 +643,16 @@
 		</div>
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Order synthesis</h1>
-		<button
-			on:click={() => exportcsv(tableOrderSynthesis, 'orderSythesisExport.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<h1 class="text-2xl font-bold">Order synthesis</h1>
+			<button
+				on:click={() => exportcsv(tableOrderSynthesis, 'orderSythesisExport.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
 				class="min-w-full table-auto border border-gray-300 bg-white"
@@ -677,16 +695,19 @@
 		</div>
 
 		{#if data.tagId}
-			<p class="mt-4 mb-2">
-				Synthesis for tag "{data.tagId}" only - order flat discount and shipping price are not
-				included, only the specific products with the tag are included.
-			</p>
-			<button
-				on:click={() => exportcsv(tableOrderSynthesisTag, 'orderSythesisExport.csv')}
-				class="btn btn-blue mb-2"
-			>
-				Export CSV
-			</button>
+			<div class="flex items-start justify-between mt-4 mb-4">
+				<p class="text-sm text-gray-600">
+					Synthesis for tag "{data.tagId}" only - order flat discount and shipping price are not
+					included, only the specific products with the tag are included.
+				</p>
+				<button
+					on:click={() => exportcsv(tableOrderSynthesisTag, 'orderSythesisExport.csv')}
+					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors ml-4"
+					title="Export tag synthesis as CSV"
+				>
+					📊 CSV
+				</button>
+			</div>
 
 			<div class="overflow-x-auto max-h-[500px]">
 				<table
@@ -731,16 +752,23 @@
 		{/if}
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Product synthesis</h1>
-		{#if data.tagId}
-			<p class="text-sm text-gray-600 mb-2">Only showing products with the tag "{data.tagId}".</p>
-		{/if}
-		<button
-			on:click={() => exportcsv(tableProductSynthesis, 'orderItemsSythesisExport.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<div>
+				<h1 class="text-2xl font-bold">Product synthesis</h1>
+				{#if data.tagId}
+					<p class="text-sm text-gray-600 mt-1">
+						Only showing products with the tag "{data.tagId}".
+					</p>
+				{/if}
+			</div>
+			<button
+				on:click={() => exportcsv(tableProductSynthesis, 'orderItemsSythesisExport.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
 				class="min-w-full table-auto border border-gray-300 bg-white"
@@ -781,13 +809,16 @@
 		</div>
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Payment synthesis</h1>
-		<button
-			on:click={() => exportcsv(tablePaymentSynthesis, 'orderPaymentSythesis.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<h1 class="text-2xl font-bold">Payment synthesis</h1>
+			<button
+				on:click={() => exportcsv(tablePaymentSynthesis, 'orderPaymentSythesis.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
 				class="min-w-full table-auto border border-gray-300 bg-white"
@@ -830,18 +861,23 @@
 		</div>
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">VAT Synthesis</h1>
-		{#if data.tagId}
-			<p class="text-sm text-gray-600 mb-2">
-				Only showing VAT for products with the tag "{data.tagId}".
-			</p>
-		{/if}
-		<button
-			on:click={() => exportcsv(tableVATSynthesis, 'vat-synthesis.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<div>
+				<h1 class="text-2xl font-bold">VAT Synthesis</h1>
+				{#if data.tagId}
+					<p class="text-sm text-gray-600 mt-1">
+						Only showing VAT for products with the tag "{data.tagId}".
+					</p>
+				{/if}
+			</div>
+			<button
+				on:click={() => exportcsv(tableVATSynthesis, 'vat-synthesis.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
 				class="min-w-full table-auto border border-gray-300 bg-white"
@@ -886,13 +922,16 @@
 		</div>
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Delivery Fees</h1>
-		<button
-			on:click={() => exportcsv(tableDeliveryFeesSynthesis, 'deliveryFeesSynthesisExport.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<h1 class="text-2xl font-bold">Delivery Fees</h1>
+			<button
+				on:click={() => exportcsv(tableDeliveryFeesSynthesis, 'deliveryFeesSynthesisExport.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
 				class="min-w-full table-auto border border-gray-300 bg-white"
