@@ -6,8 +6,8 @@
 <h1 class="text-3xl">Update OAuth provider</h1>
 
 <p>
-	Specify <span class="underline">{$page.url.origin}/oauth/callback</span> as the redirect URL when creating
-	the OAuth application.
+	Specify <span class="underline">{$page.url.origin}/oauth/{data.provider.slug}/callback</span> as the
+	redirect URL when creating the OAuth application.
 </p>
 
 <form class="flex flex-col gap-4" method="POST">
