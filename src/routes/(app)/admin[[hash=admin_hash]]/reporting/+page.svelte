@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
 	import { useI18n } from '$lib/i18n.js';
-	import { invoiceNumberVariables, orderItemPrice } from '$lib/types/Order.js';
+	import { invoiceNumberVariables, orderItemPrice, type Price } from '$lib/types/Order.js';
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding.js';
 	import { sum } from '$lib/utils/sum.js';
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
@@ -59,15 +59,10 @@
 	);
 	$: orderSynthesis = {
 		orderQuantity: sum(paidOrders.map((order) => order.quantityOrder)),
-		orderNumber: paidOrders.length,
-		orderTotal: sum(
-			paidOrders.map((order) =>
-				toCurrency(
-					data.currencies.main,
-					order.currencySnapshot.main.totalPrice.amount,
-					order.currencySnapshot.main.totalPrice.currency
-				)
-			)
+		count: paidOrders.length,
+		orderTotal: sumCurrency(
+			data.currencies.main,
+			paidOrders.map((order) => order.currencySnapshot.main.totalPrice)
 		),
 		averageCart: 0
 	};
@@ -83,16 +78,12 @@
 		),
 		averageFeesCart: 0
 	};
-	$: orderVATSynthesis = {
+	$: vatSynthesis = {
 		orderQuantity: sum(paidOrders.map((order) => order.quantityOrder)),
 		orderNumber: paidOrders.length,
-		orderVATTotal: sum(
-			paidOrders.map((order) =>
-				sumCurrency(
-					data.currencies.main,
-					order.currencySnapshot.main.vat ?? [{ amount: 0, currency: 'SAT' }]
-				)
-			)
+		total: sumCurrency(
+			data.currencies.main,
+			paidOrders.flatMap((order) => order.currencySnapshot.main.vat ?? [])
 		),
 		averageCart: 0
 	};
@@ -156,27 +147,21 @@
 	}
 	function quantityOfPaymentMean(orders: typeof paidOrders) {
 		const paymentMeanQuantities: Record<string, { quantity: number; total: number }> = {};
+		const paymentMeanDetails: Record<string, Price[]> = {};
+
 		for (const order of orders) {
 			for (const payment of order.payments) {
-				if (paymentMeanQuantities[payment.method]) {
-					paymentMeanQuantities[payment.method].quantity += 1;
-					paymentMeanQuantities[payment.method].total += toCurrency(
-						data.currencies.main,
-						payment.currencySnapshot.main.price.amount,
-						payment.currencySnapshot.main.price.currency
-					);
-				} else {
-					paymentMeanQuantities[payment.method] = {
-						quantity: 1,
-						total: toCurrency(
-							data.currencies.main,
-							payment.currencySnapshot.main.price.amount,
-							payment.currencySnapshot.main.price.currency
-						)
-					};
-				}
+				paymentMeanDetails[payment.method] ??= [];
+				paymentMeanDetails[payment.method].push(payment.currencySnapshot.main.price);
+				paymentMeanQuantities[payment.method] ??= { quantity: 0, total: 0 };
+				paymentMeanQuantities[payment.method].quantity += 1;
 			}
 		}
+
+		for (const [method, details] of Object.entries(paymentMeanDetails)) {
+			paymentMeanQuantities[method].total = sumCurrency(data.currencies.main, details);
+		}
+
 		return paymentMeanQuantities;
 	}
 	function fetchProductById(productId: string) {
@@ -506,9 +491,11 @@
 											{order.createdAt.toLocaleDateString($locale)}
 										</time>
 									</td>
-									<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
+									<td class="border border-gray-300 px-4 py-2">
+										{item.currencySnapshot.main.price.currency}
+									</td>
 									<td class="border border-gray-300 px-4 py-2">{orderItemPrice(item, 'main')}</td>
-									<td class="border border-gray-300 px-4 py-2">{item.vatRate}</td>
+									<td class="border border-gray-300 px-4 py-2">{item.vatRate} %</td>
 								</tr>
 							{/if}
 						{/each}
@@ -650,11 +637,14 @@
 								{endsAt.toLocaleDateString($locale)}
 							</time>
 						</td>
-						<td class="border border-gray-300 px-4 py-2">{orderSynthesis.orderNumber}</td>
+						<td class="border border-gray-300 px-4 py-2">{orderSynthesis.count}</td>
 						<td class="border border-gray-300 px-4 py-2">{orderSynthesis.orderTotal}</td>
 						<td class="border border-gray-300 px-4 py-2"
-							>{orderSynthesis.orderNumber
-								? orderSynthesis.orderTotal / orderSynthesis.orderNumber
+							>{orderSynthesis.count
+								? fixCurrencyRounding(
+										orderSynthesis.orderTotal / orderSynthesis.count,
+										data.currencies.main
+								  )
 								: 0}</td
 						>
 						<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
@@ -750,7 +740,9 @@
 							<td class="border border-gray-300 px-4 py-2">{quantity}</td>
 							<td class="border border-gray-300 px-4 py-2">{total}</td>
 							<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
-							<td class="border border-gray-300 px-4 py-2">{total / quantity}</td>
+							<td class="border border-gray-300 px-4 py-2"
+								>{fixCurrencyRounding(total / quantity, data.currencies.main)}</td
+							>
 						</tr>
 					{/each}
 				</tbody>
@@ -774,8 +766,8 @@
 					<tr class="whitespace-nowrap">
 						<th class="border border-gray-300 px-4 py-2">Period</th>
 						<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">order VAT Total</th>
-						<th class="border border-gray-300 px-4 py-2">Average VAT Cart</th>
+						<th class="border border-gray-300 px-4 py-2">VAT Total</th>
+						<th class="border border-gray-300 px-4 py-2">Average VAT per order</th>
 						<th class="border border-gray-300 py-2">Currency</th>
 					</tr>
 				</thead>
@@ -790,14 +782,14 @@
 								{endsAt.toLocaleDateString($locale)}
 							</time>
 						</td>
-						<td class="border border-gray-300 px-4 py-2">{orderVATSynthesis.orderNumber}</td>
+						<td class="border border-gray-300 px-4 py-2">{vatSynthesis.orderNumber}</td>
 						<td class="border border-gray-300 px-4 py-2"
-							>{fixCurrencyRounding(orderVATSynthesis.orderVATTotal, data.currencies.main)}</td
+							>{fixCurrencyRounding(vatSynthesis.total, data.currencies.main)}</td
 						>
 						<td class="border border-gray-300 px-4 py-2"
-							>{orderVATSynthesis.orderNumber
+							>{vatSynthesis.orderNumber
 								? fixCurrencyRounding(
-										orderVATSynthesis.orderVATTotal / orderSynthesis.orderNumber,
+										vatSynthesis.total / orderSynthesis.count,
 										data.currencies.main
 								  )
 								: 0}</td
@@ -849,7 +841,11 @@
 						>
 						<td class="border border-gray-300 px-4 py-2"
 							>{orderDeliveryFeesSynthesis.orderNumber
-								? orderDeliveryFeesSynthesis.orderFeesTotal / orderDeliveryFeesSynthesis.orderNumber
+								? fixCurrencyRounding(
+										orderDeliveryFeesSynthesis.orderFeesTotal /
+											orderDeliveryFeesSynthesis.orderNumber,
+										data.currencies.main
+								  )
 								: 0}</td
 						>
 						<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
