@@ -829,6 +829,14 @@
 							<a href="/order/{data.order._id}/notes" class="btn lg:w-auto w-full btn-gray self-end"
 								>{t('order.note.seeText')}</a
 							>
+							{#if data.order.orderTabSlug}
+								<a
+									href="/pos/touch/tab/{data.order.orderTabSlug}"
+									class="btn lg:w-auto w-full btn-gray self-end"
+								>
+									@@Back to order tab
+								</a>
+							{/if}
 						</div>
 					</section>
 				</form>

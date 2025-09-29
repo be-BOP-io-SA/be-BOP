@@ -1516,7 +1516,8 @@ export async function createOrder(
 					}
 				}),
 				...(params.engagements && { engagements: params.engagements }),
-				...(params.onLocation && { onLocation: params.onLocation })
+				...(params.onLocation && { onLocation: params.onLocation }),
+				...(params.cart?.orderTabSlug && { orderTabSlug: params.cart.orderTabSlug })
 			};
 			await collections.orders.insertOne(order, { session });
 
@@ -1540,9 +1541,9 @@ export async function createOrder(
 				// inserted here because there's no separation between the implementation of
 				// creating an order and the business process of creating an order.
 				// Unfortunately, the author cannot address this due to time constraints.
-				{
-					await collections.orderTabs.updateOne(
-						{},
+				if (order.orderTabSlug) {
+					await collections.orderTabs.updateMany(
+						{ slug: order.orderTabSlug },
 						{
 							$unset: { 'items.$[elem].cartId': 1 },
 							$set: { 'items.$[elem].orderId': order._id.toString() }

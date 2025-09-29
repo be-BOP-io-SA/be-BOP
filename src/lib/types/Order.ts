@@ -203,6 +203,7 @@ export interface Order extends Timestamps {
 		vatRate: number;
 		tickets?: Array<Ticket['ticketId']>;
 	}>;
+	orderTabSlug?: string;
 
 	shippingAddress?: OrderAddress;
 	billingAddress?: OrderAddress;
