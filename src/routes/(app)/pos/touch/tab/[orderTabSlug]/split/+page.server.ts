@@ -3,14 +3,13 @@ import { collections } from '$lib/server/database';
 import { clearAbandonedCartsAndOrdersFromTab, getOrCreateOrderTab } from '$lib/server/orderTab';
 import { OrderTab, OrderTabItem } from '$lib/types/OrderTab';
 import { UrlDependency } from '$lib/types/UrlDependency';
-import { redirect } from '@sveltejs/kit';
 
 type Locale = App.Locals['language'];
 type ProductProjection = ProductForPriceInfo & { name: string };
 
 type HydratedTabItem = {
 	internalNote: OrderTabItem['internalNote'];
-	product: ProductProjection;
+	product: Omit<ProductProjection, 'vatProfileId'> & { vatProfileId?: string };
 	quantity: number;
 	tabItemId: string;
 };
@@ -43,7 +42,7 @@ async function hydratedOrderItems(
 			if (product) {
 				return {
 					internalNote: item.internalNote,
-					product,
+					product: { ...product, vatProfileId: product.vatProfileId?.toString() },
 					quantity: item.quantity,
 					tabItemId: item._id.toString()
 				};
@@ -57,16 +56,8 @@ async function getHydratedOrderTab(locale: Locale, tabSlug: string) {
 	return { slug: tab.slug, items: await hydratedOrderItems(locale, tab.items) };
 }
 
-function getTabSlugFromPageOrRedirect(url: URL): string {
-	const tabSlug = url.searchParams.get('tab');
-	if (tabSlug === null) {
-		throw redirect(303, '/pos/touch');
-	}
-	return tabSlug;
-}
-
-export const load = async ({ depends, locals, url }) => {
-	const tabSlug = getTabSlugFromPageOrRedirect(url);
+export const load = async ({ depends, locals, params }) => {
+	const tabSlug = params.orderTabSlug;
 	await clearAbandonedCartsAndOrdersFromTab(tabSlug);
 	const orderTab = await getHydratedOrderTab(locals.language, tabSlug);
 	depends(UrlDependency.orderTab(tabSlug));

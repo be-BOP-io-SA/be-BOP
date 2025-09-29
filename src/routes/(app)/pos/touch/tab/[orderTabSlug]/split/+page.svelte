@@ -223,7 +223,7 @@
 			{#if rightPannel === 'menu'}
 				<a
 					class="touchScreen-action-cancel uppercase text-3xl text-white p-4 text-center"
-					href="/pos/touch?tab={tabSlug}"
+					href="/pos/touch/tab/{tabSlug}"
 				>
 					@@Return
 				</a>
