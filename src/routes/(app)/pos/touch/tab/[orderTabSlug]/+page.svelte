@@ -166,10 +166,10 @@
 	</div>
 {/if}
 
-<div class="flex flex-col h-screen justify-between" inert={itemToEditIndex !== undefined}>
-	<main class="mb-auto flex-grow">
+<div class="flex flex-col h-screen justify-between min-h-min" inert={itemToEditIndex !== undefined}>
+	<main class="mb-auto flex-grow overflow-y-auto">
 		<div class="grid grid-cols-3 gap-4 h-full">
-			<div class="touchScreen-ticket-menu p-3 h-full">
+			<div class="touchScreen-ticket-menu p-3 h-full overflow-y-auto">
 				{#if items.length}
 					<h3 class="text-3xl">TICKET n° tmp</h3>
 					{#each items as item, i}
@@ -247,7 +247,7 @@
 					<p>{t('cart.empty')}</p>
 				{/if}
 			</div>
-			<div class="col-span-2">
+			<div class="col-span-2 overflow-y-auto">
 				<div class="grid grid-cols-2 gap-4 text-3xl text-center">
 					<a
 						class="col-span-2 touchScreen-category-cta"
@@ -298,7 +298,7 @@
 			</div>
 		</div>
 	</main>
-	<footer>
+	<footer class="shrink-0">
 		<div class="grid grid-cols-3 gap-4 mt-2">
 			<button
 				class="touchScreen-ticket-menu text-3xl p-4 text-center"

@@ -81,9 +81,9 @@
 </script>
 
 <div class="flex flex-col h-screen justify-between">
-	<main class="mb-auto flex-grow">
+	<main class="mb-auto flex-grow min-h-min overflow-y-auto">
 		<div class="grid grid-cols-2 gap-4 h-full">
-			<div class="touchScreen-ticket-menu flex flex-col justify-between p-3 h-full">
+			<div class="touchScreen-ticket-menu flex flex-col justify-between p-3 h-full overflow-y-auto">
 				{#if tab.items.length}
 					<div>
 						<h3 class="font-semibold text-3xl">@@Tab {tab.slug}</h3>
@@ -218,7 +218,7 @@
 			</div>
 		</div>
 	</main>
-	<footer>
+	<footer class="shrink-0">
 		<div class="grid grid-cols-2 gap-4 mt-2">
 			{#if rightPannel === 'menu'}
 				<a
