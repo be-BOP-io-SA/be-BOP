@@ -24,7 +24,8 @@ export const actions: Actions = {
 				tagType: z.enum([TAGTYPES[0], ...TAGTYPES.slice(1)]).optional(),
 				pictureIds: z.string().trim().min(1).max(500).array().min(1),
 				scheduleId: z.string().optional(),
-				eventScheduleSlug: z.string().optional()
+				eventScheduleSlug: z.string().optional(),
+				ctiCategorySlug: z.string().optional()
 			})
 			.parse(json);
 
@@ -35,7 +36,8 @@ export const actions: Actions = {
 			schedule:
 				fields.scheduleId && fields.eventScheduleSlug
 					? { _id: fields.scheduleId, eventSlug: fields.eventScheduleSlug }
-					: undefined
+					: undefined,
+			ctiCategorySlug: fields.ctiCategorySlug || undefined
 		});
 
 		if (fields.productId) {
@@ -57,6 +59,9 @@ export const actions: Actions = {
 		}
 		if (fields.scheduleId) {
 			throw redirect(303, '/admin/schedule/' + fields.scheduleId);
+		}
+		if (fields.ctiCategorySlug) {
+			throw redirect(303, '/admin/cti');
 		}
 
 		throw redirect(303, `${adminPrefix()}/picture`);

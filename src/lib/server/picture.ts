@@ -4,8 +4,11 @@ import type { ClientSession } from 'mongodb';
 import { error } from '@sveltejs/kit';
 import {
 	getPrivateS3DownloadLink,
+	s3CtiPrefix,
 	s3GalleryPrefix,
 	s3ProductPrefix,
+	s3SchedulePrefix,
+	s3SliderPrefix,
 	s3TagPrefix,
 	s3client
 } from './s3';
@@ -28,6 +31,7 @@ export async function generatePicture(
 		tag?: { _id: string; type: TagType };
 		slider?: { _id: string; url?: string; openNewTab?: boolean };
 		galleryId?: string;
+		ctiCategorySlug?: string;
 		schedule?: {
 			_id: string;
 			eventSlug: string;
@@ -95,11 +99,13 @@ export async function generatePicture(
 		: opts?.tag
 		? s3TagPrefix(opts.tag._id)
 		: opts?.slider
-		? s3TagPrefix(opts.slider._id)
+		? s3SliderPrefix(opts.slider._id)
 		: opts?.galleryId
 		? s3GalleryPrefix(opts.galleryId)
 		: opts?.schedule
-		? s3GalleryPrefix(opts.schedule._id)
+		? s3SchedulePrefix(opts.schedule._id)
+		: opts?.ctiCategorySlug
+		? s3CtiPrefix(opts?.ctiCategorySlug)
 		: `pictures/`;
 
 	const path = `${pathPrefix}${_id}${extension}`;
@@ -202,6 +208,7 @@ export async function generatePicture(
 					...(opts?.schedule && {
 						schedule: { _id: opts.schedule._id, eventSlug: opts.schedule.eventSlug }
 					}),
+					...(opts?.ctiCategorySlug && { ctiCategorySlug: opts.ctiCategorySlug }),
 					createdAt: new Date(),
 					updatedAt: new Date()
 				},

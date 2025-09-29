@@ -389,6 +389,52 @@
 			"ZW": "Zimbabwe"
 		}
 	},
+	"customer-touch": {
+		"cart": {
+			"totalTTC": "TTC totale"
+		}
+	},
+	"customerTouch": {
+		"cancelOrderTitlle": "Abbandonare l'ordine?",
+		"cart": {
+			"ht": "Ht",
+			"targetTakeAway": "Porta via",
+			"title": "Il tuo ordine"
+		},
+		"cta": {
+			"abandonment": "Abbandono",
+			"addFirstProduct": "Aggiungi il primo prodotto",
+			"addProduct": "Aggiungere",
+			"end": "FINE",
+			"pay": "Paga",
+			"retakeOrder": "Riprendi l'ordine"
+		},
+		"ctaBack": "Indietro",
+		"deletedOrderTitle": "Il tuo ordine è stato eliminato!",
+		"loginText": "Login?",
+		"noThanksCta": "No grazie",
+		"orderConfirmedTitle": "Ordina n ° {number} confermato!",
+		"orderPaidTitle": "Ordine pagato",
+		"orderTitle": "Ricevere la ricevuta?",
+		"payForOrderTitle": "Si prega di pagare per il tuo ordine.",
+		"payment": {
+			"Title": "Scegli il tuo metodo di pagamento"
+		},
+		"printCta": "Stampa",
+		"receipt": {
+			"emailAddressPrompt": "Inserisci il tuo indirizzo email",
+			"howToSend": "Come vuoi ricevere la ricevuta?",
+			"scanNostrNpubPrompt": "Scansiona il nostro npub di Nostr",
+			"sendCodePrompt": "e invia un DM con il seguente codice:",
+			"sendEmailCta": "Invia ricevuta",
+			"sent": "Ricevuta inviata"
+		},
+		"sendTicketCta": "Inviare",
+		"welcomHello": "Ciao",
+		"welcomeOnSiteCta": "Sul posto",
+		"welcomeQuestion": "Dove vorresti mangiare?",
+		"welcomeTakeAwayCta": "Porta via"
+	},
 	"error": {
 		"404": "La pagina {invalidUrl} che hai richiesto non è stata trovata. Verifica che il tuo link sia corretto o contatta il team del sito per segnalare il problema.",
 		"title": "Errore {status}"

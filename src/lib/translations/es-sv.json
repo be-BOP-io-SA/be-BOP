@@ -389,6 +389,53 @@
 			"ZW": "Zimbabue"
 		}
 	},
+	"customer-touch": {
+		"cart": {
+			"totalTTC": "TTC total"
+		}
+	},
+	"customerTouch": {
+		"cancelOrderTitlle": "Abandonar la orden?",
+		"cart": {
+			"ht": "HT",
+			"targetOnSite": "En el sitio",
+			"targetTakeAway": "Llevar",
+			"title": "Tu pedido"
+		},
+		"cta": {
+			"abandonment": "Abandono",
+			"addFirstProduct": "Agregar primer producto",
+			"addProduct": "Agregar",
+			"end": "Fin",
+			"pay": "Pagar",
+			"retakeOrder": "Pedido de reanudación"
+		},
+		"ctaBack": "Atrás",
+		"deletedOrderTitle": "¡Tu pedido ha sido eliminado!",
+		"loginText": "¿Acceso?",
+		"noThanksCta": "No, gracias",
+		"orderConfirmedTitle": "Orden n ° {number} Confirmado!",
+		"orderPaidTitle": "Pedido pagado",
+		"orderTitle": "Recibir el recibo?",
+		"payForOrderTitle": "Por favor, pague su pedido.",
+		"payment": {
+			"Title": "Elija su método de pago"
+		},
+		"printCta": "Imprimir",
+		"receipt": {
+			"emailAddressPrompt": "Por favor, ingresa tu dirección de correo electrónico",
+			"howToSend": "¿Cómo queres que enviemos el recibo?",
+			"scanNostrNpubPrompt": "Escanea nuestra npub de Nostr",
+			"sendCodePrompt": "y envía un mensaje directo con el código siguiente:",
+			"sendEmailCta": "Enviar recibo",
+			"sent": "Recibo enviado"
+		},
+		"sendTicketCta": "Enviar",
+		"welcomHello": "Hola",
+		"welcomeOnSiteCta": "En el sitio",
+		"welcomeQuestion": "¿Dónde te gustaría comer?",
+		"welcomeTakeAwayCta": "Llevar"
+	},
 	"error": {
 		"404": "La página {invalidUrl} que accedió no se encuentra. Por favor asegúrese que el enlace es correcto o contáctenos para informarnos del problema.",
 		"title": "Error {status}"

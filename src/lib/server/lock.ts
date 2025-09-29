@@ -1,7 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { processClosed } from './process';
-import { setTimeout } from 'node:timers/promises';
 import { NO_LOCK } from '$env/static/private';
 import { env } from '$env/dynamic/private';
 
@@ -108,8 +107,7 @@ export class Lock {
 		}
 		while (!processClosed && !this.destroyed) {
 			await this.tryAcquire();
-
-			await setTimeout(5_000);
+			await new Promise((resolve) => setTimeout(resolve, 5_000));
 		}
 
 		this.ownsLock = false;

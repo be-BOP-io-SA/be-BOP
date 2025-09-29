@@ -182,7 +182,12 @@
 
 	let paymentLoading = false;
 	let stripeLoading = true;
-	$: orderPath = '/order/' + $page.params.id;
+	let originPayment = $page.url.searchParams.get('origin');
+
+	$: orderPath =
+		originPayment === 'customer-touch'
+			? '/pos/customer-touch/payment/' + $page.params.id
+			: '/order/' + $page.params.id;
 
 	function mountSumUpCard() {
 		// Should always be true due to backend validation, doing this for TS
@@ -296,7 +301,12 @@
 	let handleSubmit = () => {};
 </script>
 
-<main class="mx-auto max-w-7xl py-10 px-6 flex flex-col md:flex-row gap-4 justify-around">
+<main
+	class="py-10 px-6 flex flex-col md:flex-row gap-4 justify-around {originPayment ===
+	'customer-touch'
+		? 'fixed top-0 bottom-0 right-0 left-0 bg-white'
+		: 'mx-auto max-w-7xl'}"
+>
 	<div class="grow">
 		{#if data.payment.processor === 'stripe'}
 			<form class="payment-form flex flex-col gap-4" on:submit|preventDefault={handleSubmit}>
@@ -316,7 +326,7 @@
 			></div>
 		{/if}
 	</div>
-	<div class="self-center md:self-stretch">
+	<div class="self-center md:self-stretch {originPayment === 'customer-touch' ? 'hidden' : ''}">
 		<OrderSummary
 			class="sticky top-4 -mt-1"
 			order={data.order}

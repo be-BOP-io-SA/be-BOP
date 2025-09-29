@@ -26,6 +26,7 @@ export interface Picture extends Timestamps {
 	};
 	name: string;
 	galleryId?: string;
+	ctiCategorySlug?: string;
 	schedule?: {
 		_id: string;
 		eventSlug: string;
