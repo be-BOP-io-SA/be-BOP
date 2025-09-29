@@ -2,14 +2,6 @@
 	import { useI18n } from '$lib/i18n.js';
 
 	export let data;
-	function subscriptionStatus(subscriptionUpdatedAt: Date, subscriptionPaidUntil: Date) {
-		if (subscriptionUpdatedAt.getTime() + subscriptionPaidUntil.getTime() >= Date.now()) {
-			return 'active';
-		} else {
-			subscriptionUpdatedAt.getTime() + subscriptionPaidUntil.getTime() < Date.now();
-		}
-		return 'expired';
-	}
 
 	function exportcsv() {
 		const table = document.getElementById('subscription-table');
@@ -86,7 +78,7 @@
 					<tr>
 						<td class="px-6 py-4 whitespace-no-wrap"> {subscription._id}</td>
 						<td class="px-6 py-4 whitespace-no-wrap">
-							{subscriptionStatus(subscription.updatedAt, subscription.paidUntil)}
+							{subscription.paidUntil > new Date() ? 'active' : 'expired'}
 						</td>
 						<td class="px-6 py-4 whitespace-no-wrap">
 							{subscription.updatedAt.toLocaleDateString($locale)}</td

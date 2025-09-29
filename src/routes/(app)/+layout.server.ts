@@ -394,3 +394,5 @@ export async function load(params) {
 		sessionAcceptAgeLimitation: locals.acceptAgeLimitation
 	};
 }
+
+export type CartItemFrontend = Awaited<ReturnType<typeof load>>['cart']['items'][number];

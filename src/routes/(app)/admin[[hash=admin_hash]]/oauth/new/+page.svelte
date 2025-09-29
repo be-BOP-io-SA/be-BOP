@@ -10,7 +10,7 @@
 
 <p>
 	Create an OAuth application with your provider of choice. Specify <span class="underline"
-		>{$page.url.origin}/oauth/callback</span
+		>{$page.url.origin}/oauth/{slug || '[slug]'}/callback</span
 	> as the redirect URL when creating the OAuth application.
 </p>
 

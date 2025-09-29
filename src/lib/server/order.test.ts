@@ -1,14 +1,24 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { cleanDb } from './test-utils';
+import { cleanDb, createDiscount, createPaidSubscription } from './test-utils';
 import { collections } from './database';
-import { TEST_DIGITAL_PRODUCT, TEST_DIGITAL_PRODUCT_UNLIMITED } from './seed/product';
+import {
+	TEST_DIGITAL_PRODUCT,
+	TEST_DIGITAL_PRODUCT_UNLIMITED,
+	TEST_DISCOUNTED_PRODUCT,
+	TEST_SUBSCRIPTION_PRODUCT
+} from './seed/product';
 import { addOrderPayment, createOrder, lastInvoiceNumber, onOrderPayment } from './orders';
 import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
 
 describe('order', () => {
 	beforeEach(async () => {
 		await cleanDb();
-		await collections.products.insertMany([TEST_DIGITAL_PRODUCT, TEST_DIGITAL_PRODUCT_UNLIMITED]);
+		await collections.products.insertMany([
+			TEST_DIGITAL_PRODUCT,
+			TEST_DIGITAL_PRODUCT_UNLIMITED,
+			TEST_SUBSCRIPTION_PRODUCT,
+			TEST_DISCOUNTED_PRODUCT
+		]);
 	});
 
 	describe('onOrderPaid', () => {
@@ -216,5 +226,44 @@ describe('order', () => {
 		order1 = await collections.orders.findOne({ _id: order1Id });
 		expect(await lastInvoiceNumber()).toBe(3);
 		expect(order1?.payments[1].invoice?.number).toBe(3);
+	});
+
+	it('should allow free method payment when only item is fully discounted due to an active subscription', async () => {
+		await createPaidSubscription(TEST_SUBSCRIPTION_PRODUCT._id, {
+			sessionId: 'test-session-id'
+		});
+		await createDiscount({
+			discountedProductId: TEST_DISCOUNTED_PRODUCT._id,
+			subscriptionProductId: TEST_SUBSCRIPTION_PRODUCT._id,
+			percentage: 100
+		});
+
+		const orderId = await createOrder(
+			[
+				{
+					product: TEST_DISCOUNTED_PRODUCT,
+					quantity: 1
+				}
+			],
+			'free',
+			{
+				locale: 'en',
+				user: {
+					sessionId: 'test-session-id'
+				},
+				notifications: {
+					paymentStatus: {
+						npub: 'test-npub'
+					}
+				},
+				userVatCountry: 'FR',
+				shippingAddress: null
+			}
+		);
+
+		const order = await collections.orders.findOne({ _id: orderId });
+		expect(order?.payments[0].method).toBe('free');
+		expect(order?.items[0].discountPercentage).toBe(100);
+		expect(order?.currencySnapshot.main.totalPrice.amount).toBe(0);
 	});
 });

@@ -29,12 +29,10 @@
 	let country = defaultShippingCountry;
 
 	let isFreeVat = false;
-	let onLocation = data.hasPosOptions && data.defaultOnLocation;
-	$: offerDeliveryFees = onLocation;
 	let addDiscount = false;
 	let offerOrder = false;
 	let discountAmount = 0;
-	let discountType: DiscountType;
+	let discountType: DiscountType | undefined = undefined;
 	$: {
 		if (offerOrder) {
 			discountType = 'percentage';
@@ -44,6 +42,13 @@
 				offerOrder = false;
 			}
 		}
+	}
+
+	let canOfferDeliveryFees = (data.hasPosOptions && data.deliveryFees.allowFreeForPOS) || false;
+	let offerDeliveryFees = false;
+	let orderFullyPaidOnLocation = canOfferDeliveryFees && data.defaultOnLocation;
+	$: {
+		offerDeliveryFees = orderFullyPaidOnLocation;
 	}
 
 	let multiplePaymentMethods = false;
@@ -103,26 +108,35 @@
 		: paymentMethods[0];
 
 	$: items = data.cart.items;
-	$: deliveryFees =
-		data.hasPosOptions && data.deliveryFees.allowFreeForPOS
-			? 0
-			: computeDeliveryFees(UNDERLYING_CURRENCY, country, items, data.deliveryFees);
+	$: orderDeliveryFees = computeDeliveryFees(
+		UNDERLYING_CURRENCY,
+		country,
+		items,
+		data.deliveryFees
+	);
+	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
 
-	$: priceInfo = data.cart.priceInfo;
-	$: priceInfoInitial = computePriceInfo(items, {
+	$: possiblyOutOfBoundsDiscount =
+		addDiscount && discountType
+			? {
+					type: discountType,
+					amount: discountAmount
+			  }
+			: undefined;
+
+	// A PoS operator may apply different discounts, such as on-site promotions or free delivery;
+	// thus, the price info is computed from scratch to reflect the correct value.
+	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		deliveryFees: {
-			amount: offerDeliveryFees ? 0 : deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
+		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		discount: possiblyOutOfBoundsDiscount,
 		freeProductUnits: data.cart.freeProductUnits,
 		userCountry: isDigital ? digitalCountry : country,
-		vatExempted: data.vatExempted || isFreeVat,
+		vatExempted: data.vatExempted,
 		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatProfiles: data.vatProfiles,
-		vatSingleCountry: data.vatSingleCountry
+		vatSingleCountry: data.vatSingleCountry,
+		vatProfiles: data.vatProfiles
 	});
-
 	$: isDigital = items.every((item) => !item.product.shipping);
 
 	$: paymentMethods =
@@ -138,8 +152,7 @@
 			  );
 	$: isDiscountValid =
 		(discountType === 'fiat' &&
-			priceInfoInitial.totalPriceWithVat >=
-				toSatoshis(discountAmount || 0, data.currencies.main)) ||
+			priceInfo.totalPriceWithVat >= toSatoshis(discountAmount || 0, data.currencies.main)) ||
 		(discountType === 'percentage' && discountAmount <= 100);
 	let showBillingInfo = false;
 	let isProfessionalOrder = false;
@@ -149,6 +162,15 @@
 			? priceInfo.partialPriceWithVat >=
 			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 			: true;
+
+	function handleOfferDeliveryFeesChange(e: Event) {
+		const element = e.target as HTMLInputElement;
+		if (element.checked) {
+			setTimeout(() => {
+				document.getElementById('reasonOfferDeliveryFees')?.focus();
+			}, 100);
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -327,14 +349,14 @@
 						{t('checkout.isProBilling')}
 					</label>
 				{/if}
-				{#if data.defaultOnLocation && data.hasPosOptions && !isDigital}
+				{#if canOfferDeliveryFees && !isDigital}
 					<label class="col-span-6 checkbox-label">
 						<input
 							type="checkbox"
 							class="form-checkbox"
 							form="checkout"
 							name="onLocation"
-							bind:checked={onLocation}
+							bind:checked={orderFullyPaidOnLocation}
 						/>
 						{t('checkout.onLocation')}
 					</label>
@@ -727,19 +749,18 @@
 					<div class="border-b border-gray-300 col-span-4" />
 				{/each}
 
-				{#if deliveryFees && !offerDeliveryFees}
+				{#if deliveryFeesToBill}
 					<div class="flex justify-between items-center">
 						<h3 class="text-base">{t('checkout.deliveryFees')}</h3>
-
 						<div class="flex flex-col ml-auto items-end justify-center">
 							<PriceTag
 								class="text-2xl truncate"
-								amount={deliveryFees}
+								amount={deliveryFeesToBill}
 								currency={UNDERLYING_CURRENCY}
 								main
 							/>
 							<PriceTag
-								amount={deliveryFees}
+								amount={deliveryFeesToBill}
 								currency={UNDERLYING_CURRENCY}
 								class="text-base truncate"
 								secondary
@@ -747,7 +768,7 @@
 						</div>
 					</div>
 					<div class="border-b border-gray-300 col-span-4" />
-				{:else if isNaN(deliveryFees)}
+				{:else if isNaN(deliveryFeesToBill)}
 					<div class="alert-error mt-3">
 						{t('checkout.noDeliveryInCountry')}
 					</div>
@@ -1047,28 +1068,30 @@
 							/>
 						</label>
 					{/if}
-					{#if data.deliveryFees.allowFreeForPOS && deliveryFees}
-						<label class="checkbox-label">
+					{#if canOfferDeliveryFees && orderDeliveryFees}
+						{@const displayToTheUser = !orderFullyPaidOnLocation}
+						<label class="checkbox-label" style={displayToTheUser ? '' : 'display: none;'}>
 							<input
 								type="checkbox"
 								class="form-checkbox"
 								name="offerDeliveryFees"
 								form="checkout"
 								bind:checked={offerDeliveryFees}
+								on:change={handleOfferDeliveryFeesChange}
 							/>
 							{t('pos.offerDeliveryFees')}
 						</label>
-
-						{#if offerDeliveryFees}
-							<label class="form-label col-span-3">
+						{#if orderDeliveryFees !== deliveryFeesToBill}
+							<label class="form-label col-span-3" style={displayToTheUser ? '' : 'display: none;'}>
 								{t('pos.discountJustification')}
 								<input
+									id="reasonOfferDeliveryFees"
 									type="text"
 									class="form-input"
 									form="checkout"
 									name="reasonOfferDeliveryFees"
 									required
-									value={onLocation ? t('checkout.reasonOfferFeesDefault') : ''}
+									value={orderFullyPaidOnLocation ? t('checkout.reasonOfferFeesDefault') : ''}
 								/></label
 							>
 						{/if}
@@ -1080,7 +1103,7 @@
 					class="btn body-cta body-mainCTA btn-xl -mx-1 -mb-1 mt-1"
 					value={t('checkout.cta.submit')}
 					form="checkout"
-					disabled={isNaN(deliveryFees) ||
+					disabled={isNaN(deliveryFeesToBill) ||
 						(addDiscount && !isDiscountValid) ||
 						submitting ||
 						!physicalCartCanBeOrdered}
