@@ -33,7 +33,6 @@ export async function load(event) {
 		cartMaxSeparateItems: runtimeConfig.cartMaxSeparateItems,
 		physicalCartMinAmount: runtimeConfig.physicalCartMinAmount,
 		accountingCurrency: runtimeConfig.accountingCurrency,
-		copyOrderEmailsToAdmin: runtimeConfig.copyOrderEmailsToAdmin,
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
 		defaultOnLocation: runtimeConfig.defaultOnLocation,
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,

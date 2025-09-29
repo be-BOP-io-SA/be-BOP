@@ -12,7 +12,12 @@ import { ORIGIN } from '$env/static/private';
 import { Kind } from 'nostr-tools';
 import { toBitcoins } from '$lib/utils/toBitcoins';
 import { getUnixTime, subHours } from 'date-fns';
-import { refreshPromise, type EmailTemplateKey, runtimeConfig } from '../runtime-config';
+import {
+	refreshPromise,
+	type EmailTemplateKey,
+	runtimeConfig,
+	defaultConfig
+} from '../runtime-config';
 import { refreshAvailableStockInDb } from '../product';
 import { rateLimit } from '../rateLimit';
 import { isOrderFullyPaid } from '../orders';
@@ -214,6 +219,8 @@ async function handleOrderNotification(order: Order): Promise<void> {
 								// no email
 								break;
 						}
+					default:
+						break;
 				}
 
 				const { t } = useI18n(order.locale || 'en');
@@ -237,13 +244,15 @@ async function handleOrderNotification(order: Order): Promise<void> {
 						await queueEmail(email, templateKey, vars, {
 							session,
 							...(!!runtimeConfig.sellerIdentity?.contact.email &&
-								runtimeConfig.copyOrderEmailsToAdmin && {
+								(runtimeConfig.emailTemplates[templateKey].sendCopyToAdmin ||
+									defaultConfig.emailTemplates[templateKey].sendCopyToAdmin) && {
 									bcc: runtimeConfig.sellerIdentity?.contact.email
 								})
 						});
 					} else if (
 						runtimeConfig.sellerIdentity?.contact.email &&
-						runtimeConfig.copyOrderEmailsToAdmin
+						(runtimeConfig.emailTemplates[templateKey].sendCopyToAdmin ||
+							defaultConfig.emailTemplates[templateKey].sendCopyToAdmin)
 					) {
 						await queueEmail(runtimeConfig.sellerIdentity?.contact.email, templateKey, vars, {
 							session

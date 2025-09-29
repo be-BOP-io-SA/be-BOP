@@ -34,7 +34,9 @@ export const actions = {
 			html: parsed.html,
 			default:
 				parsed.subject === defaultConfig.emailTemplates[parsed.key].subject &&
-				parsed.html === defaultConfig.emailTemplates[parsed.key].html
+				parsed.html === defaultConfig.emailTemplates[parsed.key].html,
+			sendToUser: true,
+			sendCopyToAdmin: true
 		};
 
 		await collections.runtimeConfig.updateOne(
