@@ -99,17 +99,19 @@ export const load = async ({ locals, depends, params }) => {
 	};
 };
 
-function parseAddNoteFormData(formData: FormData) {
+function parseUpdateOrderTabItemReq(formData: FormData) {
 	return z
 		.object({
-			note: z.string().trim().min(1),
-			tabSlug: z.string().trim().min(1),
-			tabItemId: z.string().trim().min(1)
+			note: z.string().trim().min(0),
+			quantity: z.coerce.number().min(0).max(100),
+			tabItemId: z.string().trim().min(1),
+			tabSlug: z.string().trim().min(1)
 		})
 		.parse({
 			note: formData.get('note'),
-			tabSlug: formData.get('tabSlug'),
-			tabItemId: formData.get('tabItemId')
+			quantity: formData.get('quantity'),
+			tabItemId: formData.get('tabItemId'),
+			tabSlug: formData.get('tabSlug')
 		});
 }
 

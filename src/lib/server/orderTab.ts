@@ -105,6 +105,7 @@ export async function checkoutOrderTab({ slug, user }: { slug: string; user: Use
 	const createResult = await collections.carts.insertOne({
 		_id: new ObjectId(),
 		items: cartItems,
+		orderTabSlug: slug,
 		updatedAt: new Date(),
 		createdAt: new Date(),
 		user
