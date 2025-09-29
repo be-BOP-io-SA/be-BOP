@@ -115,8 +115,9 @@
 	}
 	function selectTab(groupIndex: number, tabIndex: number) {
 		const tab = sluggifyTab(data.posTabGroups, groupIndex, tabIndex);
-		goto(selfPageLink({ tab }), { invalidateAll: true });
-		closeTabSelectModel();
+		goto(`${tab}`).then(() => {
+			closeTabSelectModel();
+		});
 	}
 </script>
 
@@ -321,7 +322,7 @@
 		<div class="grid grid-cols-2 gap-4 mt-2">
 			<a
 				class="touchScreen-action-cta text-3xl p-4 text-center"
-				href="/pos/touch/split?tab={tabSlug}"
+				href="/pos/touch/tab/{tabSlug}/split"
 			>
 				PAYER
 			</a>
