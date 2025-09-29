@@ -60,7 +60,15 @@ export interface PaypalCheckout {
 	id: string;
 	create_time: string;
 	update_time: string;
-	status: 'COMPLETED' | 'VOIDED' | 'CREATED' | 'SAVED' | 'APPROVED' | 'PAYER_ACTION_REQUIRED';
+	status:
+		| 'APPROVED'
+		| 'COMPLETED'
+		| 'CREATED'
+		| 'FAILED'
+		| 'PAYER_ACTION_REQUIRED'
+		| 'SAVED'
+		| 'VOIDED';
+	capture_error?: string;
 	purchase_units: {
 		amount: {
 			currency_code: Currency;
@@ -70,7 +78,25 @@ export interface PaypalCheckout {
 	payment_source: Record<string, unknown>;
 }
 
-export async function paypalGetCheckout(checkoutId: string): Promise<PaypalCheckout> {
+type PayPalCaptureErrorResponse = {
+	name: string;
+	message: string;
+	debug_id?: string;
+	details?: {
+		issue: string;
+		description?: string;
+		field?: string;
+	}[];
+};
+
+const PAYPAL_CAPTURE_ERROR_MESSAGES: Record<string, string> = {
+	INSTRUMENT_DECLINED: 'Your payment method was declined.',
+	PAYER_CANNOT_PAY: 'This PayPal account cannot complete the payment.',
+	TRANSACTION_REFUSED: 'The transaction was refused.',
+	INSUFFICIENT_FUNDS: 'Your PayPal account has insufficient funds.'
+};
+
+export async function paypalGetCheckoutAndCapture(checkoutId: string): Promise<PaypalCheckout> {
 	const response = await fetch(`${paypalApiOrigin()}/v2/checkout/orders/${checkoutId}`, {
 		headers: {
 			Authorization: `Bearer ${await paypalAccessToken()}`
@@ -96,12 +122,25 @@ export async function paypalGetCheckout(checkoutId: string): Promise<PaypalCheck
 			}
 		);
 
-		if (!captureResponse.ok) {
+		if (captureResponse.status === 422) {
+			const errorResponse: PayPalCaptureErrorResponse = await captureResponse.json();
+			const details = errorResponse.details ?? [];
+			const error = details.find((detail) => detail.issue in PAYPAL_CAPTURE_ERROR_MESSAGES);
+			if (error) {
+				checkout.capture_error = PAYPAL_CAPTURE_ERROR_MESSAGES[error.issue];
+				checkout.status = 'FAILED';
+			} else {
+				throw new Error(
+					`Failed to capture PayPal payment for checkout ${checkoutId}: ` +
+						`${JSON.stringify(errorResponse)}`
+				);
+			}
+		} else if (captureResponse.ok) {
+			checkout.status = 'COMPLETED';
+		} else {
 			console.error(captureResponse.status, await captureResponse.text());
-			throw new Error('Failed to capture PayPal payment for checkout ' + checkoutId);
+			throw new Error(`Failed to capture PayPal payment for checkout ${checkoutId}`);
 		}
-
-		checkout.status = 'COMPLETED';
 	}
 
 	return checkout;
