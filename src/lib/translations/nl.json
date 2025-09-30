@@ -640,7 +640,50 @@
 			"inUseByOtherOrder": "Tap-to-pay is uitgeschakeld omdat er al een andere bestelling bezig is met deze betaalmethode. U kunt handmatig afrekenen en daarna het transactie­nummer in dit veld invullen."
 		},
 		"vatFree": "Dit is een BTW-vrije bestelling (<0>voorwaarden</0>)",
-		"vatFreeReason": "BTW-vrije reden"
+		"vatFreeReason": "BTW-vrije reden",
+		"touch": {
+			"selectTab": "Selecteer een tabblad:",
+			"noTabs": "Deze groep heeft geen tabbladen",
+			"cancel": "Annuleren",
+			"ticketNumber": "TICKET nr.",
+			"vatBreakdown": "Waarvan BTW",
+			"favorites": "FAVORIETEN",
+			"allProducts": "ALLE PRODUCTEN",
+			"pagination": "PAGINA {currentPage}/{totalPages}",
+			"tickets": "TICKETS",
+			"save": "OPSLAAN",
+			"pool": "POOL",
+			"openDrawer": "LADE OPENEN",
+			"pay": "BETALEN",
+			"notDeveloped": "Nog niet ontwikkeld",
+			"confirmDeleteLastItem": "Wil je de laatste winkelwagen regel verwijderen?",
+			"confirmDeleteAllItems": "Wil je alle winkelwagen regels verwijderen?"
+		},
+		"itemEdit": {
+			"quantity": "Hoeveelheid",
+			"directSelection": "Directe selectie",
+			"qtyZeroRemove": "0 (Verwijderen)",
+			"itemRemoved": "Artikel verwijderd",
+			"comment": "Opmerking",
+			"commentPlaceholder": "Voer een opmerking in...",
+			"cancel": "ANNULEREN",
+			"save": "OPSLAAN"
+		},
+		"split": {
+			"notAvailableYet": "Nog niet beschikbaar",
+			"tabHeader": "Tab {slug}",
+			"tabToPayNow": "Tab {slug} (nu te betalen)",
+			"exclVat": "excl. BTW",
+			"inclVat": "incl. BTW {rates}",
+			"vatRate": "BTW {rate}%",
+			"cashIn": "Afrekenen",
+			"all": "alles",
+			"split": "Splitsen",
+			"shares": "delen",
+			"itemize": "specificeren",
+			"return": "Terug",
+			"paySelected": "Selectie betalen"
+		}
 	},
 	"product": {
 		"addedToCart": "Product toegevoegd aan winkelwagen",
