@@ -70,6 +70,15 @@
 		/>
 		Use light/dark inverted mode
 	</label>
+	<label class="checkbox-label">
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			bind:checked={data.tag.reportingFilter}
+			name="reportingFilter"
+		/>
+		Available as filter for reporting
+	</label>
 	<div class="flex flex-col gap-4 w-[20em]">
 		<label class="form-label">
 			Tag family

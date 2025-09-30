@@ -3,11 +3,14 @@
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import Trans from '$lib/components/Trans.svelte';
 	import { useI18n } from '$lib/i18n.js';
-	import { invoiceNumberVariables } from '$lib/types/Order.js';
+	import {
+		invoiceNumberVariables,
+		orderIndividualItemPrice,
+		orderItemPrice
+	} from '$lib/types/Order.js';
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 	import { sum } from '$lib/utils/sum.js';
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
-	import { differenceInMinutes } from 'date-fns';
 	import { marked } from 'marked';
 
 	export let data;
@@ -187,15 +190,6 @@
 		</thead>
 		<tbody>
 			{#each data.order.items as item, i}
-				{@const price =
-					(item.currencySnapshot.main.customPrice?.amount ??
-						item.currencySnapshot.main.price.amount) *
-					(item.booking && item.product.bookingSpec
-						? differenceInMinutes(item.booking.end, item.booking.start) /
-						  item.product.bookingSpec.slotMinutes
-						: 1) *
-					(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
-				<!--{@const unitPrice = price / item.quantity}-->
 				{@const priceCurrency =
 					item.currencySnapshot.main.customPrice?.currency ??
 					item.currencySnapshot.main.price.currency}
@@ -210,21 +204,28 @@
 									.join(' - ')
 							: item.product.name}</td
 					>
-					<td class="text-center border border-white px-2">{item.quantity}</td>
+					<td class="text-center border border-white px-2"
+						>{item.quantity - (item.freeQuantity ?? 0)}
+						{item.freeQuantity ? '+' + item.freeQuantity : ''}</td
+					>
 					<td class="text-center border border-white px-2">
-						<PriceTag amount={price} currency={priceCurrency} inline />
+						<PriceTag
+							amount={orderIndividualItemPrice(item, 'main')}
+							currency={priceCurrency}
+							inline
+						/>
 					</td>
 					<td class="text-center border border-white px-2">{item.vatRate ?? 0}%</td>
 					<td class="text-center border border-white px-2">
 						<PriceTag
-							amount={((price * (item.vatRate ?? 0)) / 100) * item.quantity}
+							amount={(orderItemPrice(item, 'main') * (item.vatRate ?? 0)) / 100}
 							currency={priceCurrency}
 							inline
 						/>
 					</td>
 					<td class="text-right border border-white px-2">
 						<PriceTag
-							amount={(price + (price * (item.vatRate ?? 0)) / 100) * item.quantity}
+							amount={(orderItemPrice(item, 'main') * (100 + (item.vatRate ?? 0))) / 100}
 							currency={priceCurrency}
 							inline
 						/>

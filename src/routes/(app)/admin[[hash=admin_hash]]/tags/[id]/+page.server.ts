@@ -39,6 +39,7 @@ export const actions: Actions = {
 				widgetUseOnly: z.boolean({ coerce: true }).default(false),
 				productTagging: z.boolean({ coerce: true }).default(false),
 				useLightDark: z.boolean({ coerce: true }).default(false),
+				reportingFilter: z.boolean({ coerce: true }).default(false),
 				cssOverride: z.string().trim().max(10_000),
 				...tagTranslatableSchema
 			})
@@ -61,6 +62,7 @@ export const actions: Actions = {
 					widgetUseOnly: parsed.widgetUseOnly,
 					productTagging: parsed.productTagging,
 					useLightDark: parsed.useLightDark,
+					reportingFilter: parsed.reportingFilter,
 					cta: parsed.cta?.filter((cta) => cta.label && cta.href),
 					menu: parsed.menu?.filter((menu) => menu.label && menu.href)
 				}

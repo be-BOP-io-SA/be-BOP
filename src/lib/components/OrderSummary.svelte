@@ -1,11 +1,12 @@
 <script lang="ts">
-	import type { CartPriceInfo } from '$lib/cart';
 	import { useI18n } from '$lib/i18n';
 	import {
 		orderAmountWithNoPaymentsCreated,
 		type Order,
 		type OrderPayment,
-		PAYMENT_METHOD_EMOJI
+		PAYMENT_METHOD_EMOJI,
+		orderItemPriceUndiscounted,
+		orderItemPrice
 	} from '$lib/types/Order';
 	import type { Picture } from '$lib/types/Picture';
 	import type { Product } from '$lib/types/Product';
@@ -52,7 +53,6 @@
 		>;
 		payments: Array<Pick<OrderPayment, 'currencySnapshot' | 'status' | 'method'>>;
 	};
-	export let orderPriceInfo: CartPriceInfo;
 	$: validDeposits = order.payments.filter(
 		(p) =>
 			p.currencySnapshot.main.price.amount < order.currencySnapshot.main.totalPrice.amount &&
@@ -71,7 +71,7 @@
 	<div class="flex justify-between">
 		{t('checkout.numProducts', { count: order.items.length ?? 0 })}
 	</div>
-	{#each order.items as item, i}
+	{#each order.items as item}
 		<a href="/product/{item.product._id}">
 			<h3 class="text-base">
 				{item.chosenVariations
@@ -126,9 +126,7 @@
 				{#if item.discountPercentage}
 					<PriceTag
 						class="text-2xl truncate line-through"
-						amount={orderPriceInfo.perItem[i].unitsToBill *
-							(item.currencySnapshot.main.customPrice?.amount ??
-								item.currencySnapshot.main.price.amount)}
+						amount={orderItemPriceUndiscounted(item, 'main')}
 						currency={item.currencySnapshot.main.customPrice?.currency ??
 							item.currencySnapshot.main.price.currency}
 						short={!!item.discountPercentage}
@@ -136,20 +134,14 @@
 				{/if}
 				<PriceTag
 					class="text-2xl truncate"
-					amount={orderPriceInfo.perItem[i].unitsToBill *
-						(item.currencySnapshot.main.customPrice?.amount ??
-							item.currencySnapshot.main.price.amount) *
-						(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+					amount={orderItemPrice(item, 'main')}
 					currency={item.currencySnapshot.main.customPrice?.currency ??
 						item.currencySnapshot.main.price.currency}
 				/>
 				{#if item.currencySnapshot.secondary}
 					<PriceTag
 						class="text-2xl truncate"
-						amount={orderPriceInfo.perItem[i].unitsToBill *
-							(item.currencySnapshot.secondary.customPrice?.amount ??
-								item.currencySnapshot.secondary.price.amount) *
-							(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+						amount={orderItemPrice(item, 'secondary')}
 						currency={item.currencySnapshot.secondary.customPrice?.currency ??
 							item.currencySnapshot.secondary.price.currency}
 					/>
