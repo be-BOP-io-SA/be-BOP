@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { DEFAULT_MAX_QUANTITY_PER_ORDER } from '$lib/types/Product';
+	import { useI18n } from '$lib/i18n';
 
 	export let item: {
 		internalNote?: { value: string };
@@ -11,6 +12,8 @@
 	let note = item.internalNote?.value || '';
 	let quantity = item.quantity;
 	let noteInput: HTMLTextAreaElement;
+
+	const { t } = useI18n();
 
 	$: maxQuantity = item.product.maxQuantityPerOrder ?? DEFAULT_MAX_QUANTITY_PER_ORDER;
 
@@ -97,7 +100,7 @@
 		<div class="px-6 py-6 space-y-6">
 			<!-- Quantity Section -->
 			<div class="space-y-4">
-				<div class="block text-xl font-semibold text-gray-900">Quantité</div>
+				<div class="block text-xl font-semibold text-gray-900">{t('pos.itemEdit.quantity')}</div>
 
 				<!-- Quantity Controls -->
 				<div class="flex items-center space-x-4">
@@ -132,7 +135,7 @@
 					<!-- Direct Quantity Select -->
 					<div>
 						<label for="quantity-select" class="block text-sm text-gray-600 mb-1">
-							Sélection directe:
+							{t('pos.itemEdit.directSelection')}:
 						</label>
 						<select
 							id="quantity-select"
@@ -140,7 +143,7 @@
 							value={quantity}
 							on:change={handleQuantitySelect}
 						>
-							<option value={0}>0 (Supprimer)</option>
+							<option value={0}>{t('pos.itemEdit.qtyZeroRemove')}</option>
 							{#each Array.from({ length: maxQuantity }, (_, i) => i + 1) as num}
 								<option value={num}>{num}</option>
 							{/each}
@@ -150,20 +153,22 @@
 
 				<!-- Status Display -->
 				{#if quantity === 0}
-					<div class="text-center text-red-600 text-xl font-bold">Article supprimé</div>
+					<div class="text-center text-red-600 text-xl font-bold">
+						{t('pos.itemEdit.itemRemoved')}
+					</div>
 				{/if}
 			</div>
 
 			<!-- Note Section -->
 			<div class="space-y-4">
 				<label for="note-input" class="block text-xl font-semibold text-gray-900">
-					Commentaire
+					{t('pos.itemEdit.comment')}
 				</label>
 				<textarea
 					id="note-input"
 					bind:this={noteInput}
 					bind:value={note}
-					placeholder="Entrez un commentaire..."
+					placeholder={t('pos.itemEdit.commentPlaceholder')}
 					class="w-full h-24 text-lg border border-gray-300 px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				></textarea>
 			</div>
@@ -176,14 +181,14 @@
 				class="touchScreen-action-secondaryCTA text-3xl p-4 text-center"
 				on:click={cancel}
 			>
-				ANNULER
+				{t('pos.itemEdit.cancel')}
 			</button>
 			<button
 				type="button"
 				class="touchScreen-action-cta text-3xl p-4 text-center"
 				on:click={saveChanges}
 			>
-				VALIDER
+				{t('pos.itemEdit.save')}
 			</button>
 		</div>
 	</form>

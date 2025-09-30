@@ -68,13 +68,13 @@
 	}
 	function rightPannelSplitShares() {
 		if (true) {
-			alert('@@Not available yet');
+			alert(t('pos.split.notAvailableYet'));
 			return;
 		}
 		rightPannel = 'split-shares';
 	}
 	function checkoutSplitPayment() {
-		alert('@@Not available yet');
+		alert(t('pos.split.notAvailableYet'));
 		return;
 	}
 	const { t } = useI18n();
@@ -86,7 +86,7 @@
 			<div class="touchScreen-ticket-menu flex flex-col justify-between p-3 h-full overflow-y-auto">
 				{#if tab.items.length}
 					<div>
-						<h3 class="font-semibold text-3xl">@@Tab {tab.slug}</h3>
+						<h3 class="font-semibold text-3xl">{t('pos.split.tabHeader', { slug: tab.slug })}</h3>
 						{#each tab.items as item, i}
 							{@const itemPrice = tabItemsPriceInfo.perItem[i]}
 							{@const itemVatRate = tabItemsPriceInfo.vatRates[i]}
@@ -98,9 +98,9 @@
 									{item.quantity} X {item.product.name.toUpperCase()}<br />
 									{item.internalNote?.value ? '+' + item.internalNote.value : ''}
 									<div class="grid grid-cols-4 w-full items-center justify-around text-xl">
-										<div>@@excl. VAT</div>
+										<div>{t('pos.split.exclVat')}</div>
 										<PriceTag amount={itemPrice.amount} currency={itemPrice.currency} main />
-										<div>@@VAT {itemVatRate}%</div>
+										<div>{t('pos.split.vatRate', { rate: itemVatRate })}</div>
 										<PriceTag
 											amount={itemPrice.amount * itemVatRate}
 											currency={itemPrice.currency}
@@ -114,7 +114,7 @@
 					<div class="flex flex-col border-t border-gray-300 py-6 w-fit">
 						<h2 class="text-3xl underline uppercase">{t('cart.total')}</h2>
 						<div class="grid grid-cols-2 gap-4 grid-rows-2 justify-start">
-							<div class="text-2xl">@@excl. VAT</div>
+							<div class="text-2xl">{t('pos.split.exclVat')}</div>
 							<PriceTag
 								amount={tabItemsPriceInfo.partialPrice}
 								currency={tabItemsPriceInfo.currency}
@@ -122,7 +122,9 @@
 								class="text-2xl"
 							/>
 							<div class="text-2xl">
-								@@incl. VAT {tabItemsPriceInfo.vat.map((vat) => `${vat.rate}%`).join(', ')}
+								{t('pos.split.inclVat', {
+									rates: tabItemsPriceInfo.vat.map((vat) => `${vat.rate}%`).join(', ')
+								})}
 							</div>
 							<PriceTag
 								amount={tabItemsPriceInfo.partialPriceWithVat}
@@ -146,26 +148,28 @@
 						>
 							<input type="hidden" name="tabSlug" value={tabSlug} />
 							<button class="text-white font-bold py-2 px-4 text-6xl" type="submit">
-								@@Cash in<br />(all)
+								{t('pos.split.cashIn')}<br />({t('pos.split.all')})
 							</button>
 						</form>
 						<button
 							class="flex-1 bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 text-6xl"
 							on:click={rightPannelSplitShares}
 						>
-							@@Split<br />(shares)
+							{t('pos.split.split')}<br />({t('pos.split.shares')})
 						</button>
 						<button
 							class="flex-1 bg-yellow-800 hover:bg-yellow-900 text-white font-bold py-2 px-4 text-6xl"
 							on:click={rightPannelSplitItems}
 						>
-							@@Split<br />(itemize)
+							{t('pos.split.split')}<br />({t('pos.split.itemize')})
 						</button>
 					</div>
 				{:else if rightPannel === 'split-items'}
 					<div class="touchScreen-ticket-menu flex flex-col justify-between p-3 h-full">
 						<div>
-							<h3 class="font-semibold text-3xl">@@Tab {tab.slug} (to pay now)</h3>
+							<h3 class="font-semibold text-3xl">
+								{t('pos.split.tabToPayNow', { slug: tab.slug })}
+							</h3>
 							{#each splitTabItems as item, i}
 								{@const itemPrice = splitTabPriceInfo.perItem[i]}
 								{@const itemVatRate = splitTabPriceInfo.vatRates[i]}
@@ -177,9 +181,9 @@
 										{item.quantity} X {item.product.name.toUpperCase()}<br />
 										{item.internalNote?.value ? '+' + item.internalNote.value : ''}
 										<div class="grid grid-cols-4 w-full items-center justify-around text-xl">
-											<div>@@excl. VAT</div>
+											<div>{t('pos.split.exclVat')}</div>
 											<PriceTag amount={itemPrice.amount} currency={itemPrice.currency} main />
-											<div>@@VAT {itemVatRate}%</div>
+											<div>{t('pos.split.vatRate', { rate: itemVatRate })}</div>
 											<PriceTag
 												amount={itemPrice.amount * itemVatRate}
 												currency={itemPrice.currency}
@@ -193,7 +197,7 @@
 						<div class="flex flex-col border-t border-gray-300 py-6 w-fit">
 							<h2 class="text-3xl underline uppercase">{t('cart.total')}</h2>
 							<div class="grid grid-cols-2 gap-4 grid-rows-2 justify-start">
-								<div class="text-2xl">@@excl. VAT</div>
+								<div class="text-2xl">{t('pos.split.exclVat')}</div>
 								<PriceTag
 									amount={splitTabPriceInfo.partialPrice}
 									currency={splitTabPriceInfo.currency}
@@ -201,7 +205,9 @@
 									class="text-2xl"
 								/>
 								<div class="text-2xl">
-									@@incl. VAT {splitTabPriceInfo.vat.map((vat) => `${vat.rate}%`).join(', ')}
+									{t('pos.split.inclVat', {
+										rates: splitTabPriceInfo.vat.map((vat) => `${vat.rate}%`).join(', ')
+									})}
 								</div>
 								<PriceTag
 									amount={splitTabPriceInfo.partialPriceWithVat}
@@ -225,14 +231,14 @@
 					class="touchScreen-action-cancel uppercase text-3xl text-white p-4 text-center"
 					href="/pos/touch/tab/{tabSlug}"
 				>
-					@@Return
+					{t('pos.split.return')}
 				</a>
 			{:else}
 				<button
 					class="touchScreen-action-cancel uppercase text-3xl text-white p-4 text-center"
 					on:click={rightPannelMenu}
 				>
-					@@Return<br />
+					{t('pos.split.return')}
 				</button>
 			{/if}
 			{#if rightPannel === 'split-items' && splitTabPriceInfo.partialPriceWithVat > 0}
@@ -240,7 +246,7 @@
 					class="touchScreen-action-cta uppercase text-3xl text-white p-4 text-center"
 					on:click={checkoutSplitPayment}
 				>
-					@@Pay selected
+					{t('pos.split.paySelected')}
 				</button>
 			{/if}
 		</div>

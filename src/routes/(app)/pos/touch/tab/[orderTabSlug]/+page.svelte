@@ -133,7 +133,7 @@
 				✕
 			</button>
 
-			<h2 class="text-lg font-semibold mb-4">@@Select a tab:</h2>
+			<h2 class="text-lg font-semibold mb-4">{t('pos.touch.selectTab')}</h2>
 
 			{#each data.posTabGroups as tabGroup, groupIndex}
 				<section class="mb-6">
@@ -151,7 +151,7 @@
 							{/each}
 						</div>
 					{:else}
-						<p class="text-gray-500">@@This group has no tabs</p>
+						<p class="text-gray-500">{t('pos.touch.noTabs')}</p>
 					{/if}
 				</section>
 			{/each}
@@ -160,7 +160,7 @@
 				class="mt-4 w-fit bg-gray-800 text-white text-2xl min-h-[3rem] py-2 px-4 rounded-md hover:bg-gray-900"
 				on:click={closeTabSelectModel}
 			>
-				@@Cancel
+				{t('pos.touch.cancel')}
 			</button>
 		</div>
 	</div>
@@ -171,7 +171,7 @@
 		<div class="grid grid-cols-3 gap-4 h-full">
 			<div class="touchScreen-ticket-menu p-3 h-full overflow-y-auto">
 				{#if items.length}
-					<h3 class="text-3xl">TICKET n° tmp</h3>
+					<h3 class="text-3xl">{t('pos.touch.ticketNumber')} tmp</h3>
 					{#each items as item, i}
 						<div class="flex flex-col py-3 gap-4">
 							<form
@@ -230,7 +230,7 @@
 						</div>
 						{#each priceInfo.vat as vat}
 							<div class="flex flex-col">
-								<h2 class="text-[28px]">Dont TVA</h2>
+								<h2 class="text-[28px]">{t('pos.touch.vatBreakdown')}</h2>
 								<div class="text-2xl flex flex-row items-end justify-end">
 									{vat.rate}% =
 									<PriceTag
@@ -251,7 +251,7 @@
 				<div class="grid grid-cols-2 gap-4 text-3xl text-center">
 					<a
 						class="col-span-2 touchScreen-category-cta"
-						href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}>FAVORIS</a
+						href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}>{t('pos.touch.favorites')}</a
 					>
 					{#each data.tags as favoriteTag}
 						<a
@@ -263,7 +263,7 @@
 						class="col-span-2 touchScreen-category-cta"
 						href={selfPageLink({ filter: 'all', skip: 0 })}
 					>
-						>TOUS LES ARTICLES</a
+						{t('pos.touch.allProducts')}</a
 					>
 
 					<div class="col-span-2 grid grid-cols-2 gap-4">
@@ -284,7 +284,7 @@
 									href={selfPageLink({ filter, skip: Math.max(0, next) })}>&lt;</a
 								>
 							{/if}
-							PAGE {currentPage}/{totalPages}
+							{t('pos.touch.pagination', { currentPage, totalPages })}
 							{#if next + posProductPagination < productFiltered.length}
 								<a
 									class="btn touchScreen-product-secondaryCTA text-3xl"
@@ -302,20 +302,20 @@
 		<div class="grid grid-cols-3 gap-4 mt-2">
 			<button
 				class="touchScreen-ticket-menu text-3xl p-4 text-center"
-				on:click={() => (tabSelectModalOpen = true)}>TICKETS</button
+				on:click={() => (tabSelectModalOpen = true)}>{t('pos.touch.tickets')}</button
 			>
 			<div class="col-span-2 grid grid-cols-3 gap-4">
 				<button
 					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
-					on:click={() => alert('Not developped yet')}>SAUVER</button
+					on:click={() => alert(t('pos.touch.notDeveloped'))}>{t('pos.touch.save')}</button
 				>
 				<button
 					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
-					on:click={() => alert('Not developped yet')}>POOL</button
+					on:click={() => alert(t('pos.touch.notDeveloped'))}>{t('pos.touch.pool')}</button
 				>
 				<button
 					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
-					on:click={() => alert('Not developped yet')}>OUVRIR TIROIR</button
+					on:click={() => alert(t('pos.touch.notDeveloped'))}>{t('pos.touch.openDrawer')}</button
 				>
 			</div>
 		</div>
@@ -324,7 +324,7 @@
 				class="touchScreen-action-cta text-3xl p-4 text-center"
 				href="/pos/touch/tab/{tabSlug}/split"
 			>
-				PAYER
+				{t('pos.touch.pay')}
 			</a>
 			<form
 				method="post"
@@ -351,14 +351,13 @@
 					class="col-span-1 touchScreen-action-cancel text-3xl p-4 text-center"
 					disabled={!items.length}
 					formaction="/pos?/removeFromTab"
-					on:click={() => (warningMessage = 'Do you want to delete the last cart line ?')}
-					>❎</button
+					on:click={() => (warningMessage = t('pos.touch.confirmDeleteLastItem'))}>❎</button
 				>
 				<button
 					class="col-span-1 touchScreen-action-delete text-3xl p-4 text-center"
 					disabled={!items.length}
 					formaction="/pos/?/removeTab"
-					on:click={() => (warningMessage = 'Do you want to delete all cart line ?')}>🗑️</button
+					on:click={() => (warningMessage = t('pos.touch.confirmDeleteAllItems'))}>🗑️</button
 				>
 			</form>
 		</div>

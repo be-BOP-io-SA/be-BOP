@@ -640,7 +640,50 @@
 			"inUseByOtherOrder": "L'encaissement tap-to-pay est désactivé car une autre commande est en cours avec ce mode d'encaissement. Vous pouvez encaisser manuellement et indiquer ensuite le numéro de transaction dans ce champ."
 		},
 		"vatFree": "Il s'agit d'une commande sans TVA (<0>conditions</0>)",
-		"vatFreeReason": "Motif hors TVA"
+		"vatFreeReason": "Motif hors TVA",
+		"touch": {
+			"selectTab": "Sélectionner un onglet :",
+			"noTabs": "Ce groupe n'a pas d'onglets",
+			"cancel": "Annuler",
+			"ticketNumber": "TICKET n°",
+			"vatBreakdown": "Dont TVA",
+			"favorites": "FAVORIS",
+			"allProducts": "TOUS LES ARTICLES",
+			"pagination": "PAGE {currentPage}/{totalPages}",
+			"tickets": "TICKETS",
+			"save": "SAUVER",
+			"pool": "POOL",
+			"openDrawer": "OUVRIR TIROIR",
+			"pay": "PAYER",
+			"notDeveloped": "Pas encore développé",
+			"confirmDeleteLastItem": "Voulez-vous supprimer la dernière ligne du panier ?",
+			"confirmDeleteAllItems": "Voulez-vous supprimer toutes les lignes du panier ?"
+		},
+		"itemEdit": {
+			"quantity": "Quantité",
+			"directSelection": "Sélection directe",
+			"qtyZeroRemove": "0 (Supprimer)",
+			"itemRemoved": "Article supprimé",
+			"comment": "Commentaire",
+			"commentPlaceholder": "Entrez un commentaire...",
+			"cancel": "ANNULER",
+			"save": "VALIDER"
+		},
+		"split": {
+			"notAvailableYet": "Pas encore disponible",
+			"tabHeader": "Onglet {slug}",
+			"tabToPayNow": "Onglet {slug} (à payer maintenant)",
+			"exclVat": "HT",
+			"inclVat": "TTC {rates}",
+			"vatRate": "TVA {rate}%",
+			"cashIn": "Encaisser",
+			"all": "tout",
+			"split": "Diviser",
+			"shares": "parts",
+			"itemize": "détailler",
+			"return": "Retour",
+			"paySelected": "Payer la sélection"
+		}
 	},
 	"product": {
 		"addedToCart": "Produit ajouté au panier",
