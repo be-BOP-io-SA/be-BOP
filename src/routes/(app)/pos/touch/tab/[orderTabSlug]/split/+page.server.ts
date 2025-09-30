@@ -1,14 +1,17 @@
 import { ItemForPriceInfo, ProductForPriceInfo } from '$lib/cart';
 import { collections } from '$lib/server/database';
 import { clearAbandonedCartsAndOrdersFromTab, getOrCreateOrderTab } from '$lib/server/orderTab';
-import { OrderTab, OrderTabItem } from '$lib/types/OrderTab';
+import { OrderTab } from '$lib/types/OrderTab';
 import { UrlDependency } from '$lib/types/UrlDependency';
 
 type Locale = App.Locals['language'];
 type ProductProjection = ProductForPriceInfo & { name: string };
 
 type HydratedTabItem = {
-	internalNote: OrderTabItem['internalNote'];
+	internalNote?: {
+		value: string;
+		updatedAt: Date;
+	};
 	product: Omit<ProductProjection, 'vatProfileId'> & { vatProfileId?: string };
 	quantity: number;
 	tabItemId: string;
@@ -41,7 +44,10 @@ async function hydratedOrderItems(
 			const product = productById.get(item.productId);
 			if (product) {
 				return {
-					internalNote: item.internalNote,
+					internalNote: item.internalNote && {
+						value: item.internalNote.value,
+						updatedAt: item.internalNote.updatedAt
+					},
 					product: { ...product, vatProfileId: product.vatProfileId?.toString() },
 					quantity: item.quantity,
 					tabItemId: item._id.toString()
