@@ -124,7 +124,7 @@
 {#if tabSelectModalOpen}
 	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
 		<div
-			class="bg-white rounded-xl shadow-lg w-[400px] max-w-[90vw] max-h-[90vh] overflow-y-auto p-6 relative"
+			class="bg-white rounded-xl shadow-lg w-fit max-w-[90vw] max-h-[90vh] overflow-y-auto p-6 relative"
 		>
 			<button
 				class="absolute top-2 right-2 text-gray-500 hover:text-black"
@@ -142,7 +142,7 @@
 						<div class="grid grid-cols-3 gap-2">
 							{#each tabGroup.tabs as tab, tabIndex}
 								<button
-									class="touchScreen-product-cta text-white min-h-[50px] rounded-md py-2"
+									class="touchScreen-product-cta text-white text-3xl min-h-[5rem] w-60 rounded-md py-2"
 									style="background-color: {tab.color}"
 									on:click={() => selectTab(groupIndex, tabIndex)}
 								>
@@ -157,7 +157,7 @@
 			{/each}
 
 			<button
-				class="mt-4 w-fit bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900"
+				class="mt-4 w-fit bg-gray-800 text-white text-2xl min-h-[3rem] py-2 px-4 rounded-md hover:bg-gray-900"
 				on:click={closeTabSelectModel}
 			>
 				@@Cancel
