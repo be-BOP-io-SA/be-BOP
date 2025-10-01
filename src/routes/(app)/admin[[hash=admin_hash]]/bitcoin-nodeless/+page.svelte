@@ -77,6 +77,16 @@
 		</p>
 	</label>
 
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="skipUsedAddresses"
+			class="form-checkbox"
+			checked={data.bitcoinNodeless.skipUsedAddresses ?? true}
+		/>
+		Skip on-chain address to use for invoicing if it's already used
+	</label>
+
 	<div class="flex gap-2">
 		{#if alreadySet}
 			<button class="btn btn-black" type="submit" formaction="?/update">Update</button>

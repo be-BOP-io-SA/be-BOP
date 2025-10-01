@@ -35,26 +35,33 @@ export function isZPubValid(zpub: string): boolean {
 export async function generateDerivationIndex(): Promise<number> {
 	let index = runtimeConfig.bitcoinNodeless.derivationIndex;
 	
-	for (let attempts = 0; attempts < 10; attempts++) {
-		const address = bip84Address(runtimeConfig.bitcoinNodeless.publicKey, index);
-		const isUsed = await isAddressUsed(address).catch((err) => {
-			console.warn(`Failed to check if address ${address} is used:`, err);
-			return false;
-		});
-		
-		if (!isUsed) {
-			const updatedConfig = {
-				...runtimeConfig.bitcoinNodeless,
-				derivationIndex: index + 1
-			};
+	if (runtimeConfig.bitcoinNodeless.skipUsedAddresses) {
+		for (let attempts = 0; attempts < 10; attempts++) {
+			const address = bip84Address(runtimeConfig.bitcoinNodeless.publicKey, index);
+			const isUsed = await isAddressUsed(address).catch((err) => {
+				console.warn(`Failed to check if address ${address} is used:`, err);
+				return false;
+			});
 			
-			await persistConfigElement('bitcoinNodeless', updatedConfig);
-			runtimeConfig.bitcoinNodeless = updatedConfig;
-			return index;
+			if (!isUsed) {
+				break;
+			}
+			index++;
 		}
-		index++;
+		
+		if (index >= runtimeConfig.bitcoinNodeless.derivationIndex + 10) {
+			throw new Error('Unable to provide the next derivation index because too many intermediate derivations are already used');
+		}
 	}
-	throw new Error('Unable to provide the next derivation index because too many intermediate derivations are already used');
+	
+	const updatedConfig = {
+		...runtimeConfig.bitcoinNodeless,
+		derivationIndex: index + 1
+	};
+	
+	await persistConfigElement('bitcoinNodeless', updatedConfig);
+	runtimeConfig.bitcoinNodeless = updatedConfig;
+	return index;
 }
 
 export async function getSatoshiReceivedNodeless(

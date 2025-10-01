@@ -178,7 +178,8 @@ const baseConfig = {
 		mempoolUrl: 'https://mempool.space',
 		format: 'bip84' as const,
 		publicKey: '',
-		derivationIndex: 0
+		derivationIndex: 0,
+		skipUsedAddresses: true
 	},
 	bitcoinBlockHeight: 0,
 	stripe: {
