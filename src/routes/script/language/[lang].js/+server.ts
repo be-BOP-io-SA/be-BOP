@@ -1,5 +1,5 @@
 import { runtimeConfigUpdatedAt } from '$lib/server/runtime-config.js';
-import { enhancedLanguages, LanguageKey, locales } from '$lib/translations';
+import { enhancedLanguages, locales, type LanguageKey } from '$lib/translations';
 import { typedInclude } from '$lib/utils/typedIncludes.js';
 import formatDistanceFr from 'date-fns/formatDistance/fr?raw';
 import formatDistanceEn from 'date-fns/formatDistance/en-US?raw';

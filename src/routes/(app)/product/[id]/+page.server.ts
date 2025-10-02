@@ -8,7 +8,7 @@ import { DEFAULT_MAX_QUANTITY_PER_ORDER, type Product } from '$lib/types/Product
 import { productToScheduleId, type ScheduleEvent } from '$lib/types/Schedule';
 import { set } from '$lib/utils/set';
 import { sum } from '$lib/utils/sum';
-import { UserIdentifier } from '$lib/types/UserIdentifier';
+import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { RequestEvent } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { subDays } from 'date-fns';

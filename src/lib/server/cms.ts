@@ -14,7 +14,7 @@ import type { ContactForm } from '$lib/types/ContactForm';
 import type { Countdown } from '$lib/types/Countdown';
 import type { Gallery } from '$lib/types/Gallery';
 import type { Leaderboard } from '$lib/types/Leaderboard';
-import { ScheduleEventBooked } from '$lib/types/Schedule';
+import type { ScheduleEventBooked } from '$lib/types/Schedule';
 import { groupBy } from '$lib/utils/group-by';
 import { subMinutes } from 'date-fns';
 

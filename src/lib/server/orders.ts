@@ -64,18 +64,18 @@ import type { Discount } from '$lib/types/Discount';
 import { groupByNonPartial } from '$lib/utils/group-by';
 import {
 	dayList,
-	ScheduleEvent,
+	minutesToTime,
 	productToScheduleId,
-	Schedule,
 	scheduleToProductId,
 	timeToMinutes,
-	minutesToTime
+	type Schedule,
+	type ScheduleEvent
 } from '$lib/types/Schedule';
 import { isEmptyObject } from '$lib/utils/is-empty-object';
 import { binaryFindAround } from '$lib/utils/binary-find';
 import { toZonedTime } from 'date-fns-tz';
 import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
-import { PaidSubscription } from '$lib/types/PaidSubscription';
+import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import { btcpayCreateLnInvoice, isBtcpayServerConfigured } from './btcpay-server';
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
