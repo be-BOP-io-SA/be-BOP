@@ -21,7 +21,7 @@ import { differenceInMinutes } from 'date-fns';
 import { z } from 'zod';
 import { getSatoshiReceivedNodeless } from '../bitcoin-nodeless';
 import { trimSuffix } from '$lib/utils/trimSuffix';
-import { Order } from '$lib/types/Order';
+import type { Order } from '$lib/types/Order';
 import { ObjectId } from 'mongodb';
 import { lastSuccessfulPaymentIntents } from '../stripe';
 
