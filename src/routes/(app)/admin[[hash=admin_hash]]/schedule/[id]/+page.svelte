@@ -14,16 +14,32 @@
 	let slug = data.schedule._id;
 	let displayPastEvents = data.schedule.displayPastEvents;
 	let eventLines = data.schedule.events.length || 1;
-	$: eventAvailable = data.schedule.events.map((eve) => ({
+	let eventAvailable = data.schedule.events.map((eve) => ({
 		isUnavailable: eve.unavailabity?.isUnavailable ?? false
 	}));
-	$: eventCalendar = data.schedule.events.map((eve) => ({
+	let eventCalendar = data.schedule.events.map((eve) => ({
 		calendarColor: !!eve.calendarColor
 	}));
-	$: rsvpOptions = data.schedule.events.map((eve) => ({
+	let rsvpOptions = data.schedule.events.map((eve) => ({
 		option: !!eve.rsvp?.target
 	}));
-	$: createATicket = data.schedule.events.map(() => false);
+	let createATicket = data.schedule.events.map(() => false);
+
+	$: if (data.schedule.events.length !== eventAvailable.length) {
+		eventAvailable = data.schedule.events.map((eve) => ({
+			isUnavailable: eve.unavailabity?.isUnavailable ?? false
+		}));
+		eventCalendar = data.schedule.events.map((eve) => ({
+			calendarColor: !!eve.calendarColor
+		}));
+		rsvpOptions = data.schedule.events.map((eve) => ({
+			option: !!eve.rsvp?.target
+		}));
+		createATicket = data.schedule.events.map(() => false);
+		errorMessage = data.schedule.events.map(() => '');
+		eventLines = data.schedule.events.length;
+	}
+
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
 	let hideAll = true;
