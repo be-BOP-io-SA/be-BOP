@@ -108,12 +108,14 @@ export async function cmsFromContent(
 		desktopContent,
 		mobileContent,
 		employeeContent,
-		forceContentVersion
+		forceContentVersion,
+		forceUnsanitizedContent
 	}: {
 		desktopContent: string;
 		employeeContent?: string;
 		mobileContent?: string;
 		forceContentVersion?: 'desktop' | 'mobile' | 'employee';
+		forceUnsanitizedContent?: boolean;
 	},
 	locals: Partial<PickDeep<App.Locals, 'user.hasPosOptions' | 'language' | 'email' | 'sso'>>
 ) {
@@ -184,9 +186,10 @@ export async function cmsFromContent(
 		].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
 		for (const match of matches) {
 			const html = trimPrefix(trimSuffix(content.slice(index, match.index), '<p>'), '</p>');
+			const displayUnsanitizedContent = ALLOW_JS_INJECTION === 'true' || forceUnsanitizedContent;
 			token.push({
 				type: 'html',
-				raw: ALLOW_JS_INJECTION === 'true' ? html : purify.sanitize(html, { ADD_ATTR: ['target'] })
+				raw: displayUnsanitizedContent ? html : purify.sanitize(html, { ADD_ATTR: ['target'] })
 			});
 			if (match.groups?.slug) {
 				switch (match.type) {

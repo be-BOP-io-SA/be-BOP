@@ -55,7 +55,8 @@ export const load = async ({ locals, url }) => {
 				desktopContent: cmsPage.content,
 				mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
 				employeeContent: (cmsPage.hasEmployeeContent && cmsPage.employeeContent) || undefined,
-				forceContentVersion
+				forceContentVersion,
+				forceUnsanitizedContent: cmsPage.displayRawContent
 			},
 			locals
 		),

@@ -23,6 +23,7 @@
 		title: string;
 		shortDescription: string;
 		fullScreen: boolean;
+		displayRawContent?: boolean;
 		hideFromSEO?: boolean | undefined;
 		metas?: {
 			name: string;
@@ -83,7 +84,7 @@
 		{galleries}
 		{leaderboards}
 		{schedules}
-		class="body body-mainPlan"
+		class={cmsPage.displayRawContent ? '' : 'body body-mainPlan'}
 	/>
 {:else}
 	<main class="mx-auto max-w-7xl px-6">
@@ -111,7 +112,7 @@
 			{galleries}
 			{leaderboards}
 			{schedules}
-			class="body"
+			class={cmsPage.displayRawContent ? '' : 'body'}
 		/>
 	</main>
 {/if}
