@@ -84,7 +84,7 @@
 		{galleries}
 		{leaderboards}
 		{schedules}
-		class={cmsPage.displayRawContent ? '' : 'body body-mainPlan'}
+		class={cmsPage.displayRawContent ? '' : 'prose max-w-full body body-mainPlan'}
 	/>
 {:else}
 	<main class="mx-auto max-w-7xl px-6">
@@ -112,7 +112,7 @@
 			{galleries}
 			{leaderboards}
 			{schedules}
-			class={cmsPage.displayRawContent ? '' : 'body'}
+			class={cmsPage.displayRawContent ? '' : 'prose max-w-full body'}
 		/>
 	</main>
 {/if}

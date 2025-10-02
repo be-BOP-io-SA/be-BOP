@@ -369,8 +369,8 @@
 			leaderboards={data.productCMSBefore.leaderboards}
 			schedules={data.productCMSBefore.schedules}
 			class={data.product.mobile?.hideContentBefore || data.hideCmsZonesOnMobile
-				? 'hidden lg:block'
-				: ''}
+				? 'prose max-w-full hidden lg:block'
+				: 'prose max-w-full'}
 		/>
 	{/if}
 
@@ -994,8 +994,8 @@
 			leaderboards={data.productCMSAfter.leaderboards}
 			schedules={data.productCMSAfter.schedules}
 			class={data.product.mobile?.hideContentAfter || data.hideCmsZonesOnMobile
-				? 'hidden lg:block'
-				: ''}
+				? 'prose max-w-full hidden lg:block'
+				: 'prose max-w-full'}
 		/>
 	{/if}
 </main>

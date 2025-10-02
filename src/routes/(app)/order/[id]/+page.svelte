@@ -114,7 +114,7 @@
 			galleries={data.cmsOrderTopData.galleries}
 			leaderboards={data.cmsOrderTopData.leaderboards}
 			schedules={data.cmsOrderTopData.schedules}
-			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
+			class={data.hideCmsZonesOnMobile ? 'prose max-w-full hidden lg:contents' : 'prose max-w-full'}
 		/>
 	{/if}
 	<div
@@ -859,7 +859,7 @@
 			galleries={data.cmsOrderBottomData.galleries}
 			leaderboards={data.cmsOrderBottomData.leaderboards}
 			schedules={data.cmsOrderBottomData.schedules}
-			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
+			class={data.hideCmsZonesOnMobile ? 'prose max-w-full hidden lg:contents' : 'prose max-w-full'}
 		/>
 	{/if}
 </main>

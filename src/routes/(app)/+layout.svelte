@@ -525,7 +525,9 @@
 								websiteLink={data.websiteLink}
 								brandName={data.brandName}
 								sessionEmail={data.email}
-								class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
+								class={data.hideCmsZonesOnMobile
+									? 'prose max-w-full hidden lg:contents'
+									: 'prose max-w-full'}
 							/>
 						{/if}
 						<label class="label-checkbox my-4">
