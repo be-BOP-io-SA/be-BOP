@@ -1,0 +1,86 @@
+name: Build and release artifacts
+
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Build release artifact
+        run: |
+          ./scripts/build-release.sh
+          # Extract artifact directory name for later steps
+          HASH=$(git rev-parse --short HEAD)
+          COMMIT_DATE="$(git log -1 --date=format:%F --pretty=format:%cd)"
+          ARTIFACT_PATH=$(ls -d release/bebop-* | head -n 1)
+          echo "Artifact path: $ARTIFACT_PATH"
+          echo "ARTIFACT_PATH=$ARTIFACT_PATH" >> $GITHUB_ENV
+          echo "COMMIT_DATE=$COMMIT_DATE" >> $GITHUB_ENV
+          echo "HASH=$HASH" >> $GITHUB_ENV
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: be-BOP release ${{ env.COMMIT_DATE }} (${{ env.HASH }})
+          path: ${{ env.ARTIFACT_PATH }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download built artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: release_artifacts
+      - name: Discover artifact folder
+        id: artifact
+        run: |
+          ARTIFACT_DIR=$(ls release_artifacts)
+          echo "ARTIFACT_DIR=$ARTIFACT_DIR" >> $GITHUB_OUTPUT
+      - name: Get merge commit message
+        id: commit
+        run: |
+          TITLE=$(git log -1 --pretty=%s)
+          BODY=$(git log -1 --pretty=%b)
+          COMMIT_DATE="$(git log -1 --date=format:%F --pretty=format:%cd)"
+          HASH=$(git rev-parse --short HEAD)
+          echo "title<<EOF" >> $GITHUB_OUTPUT
+          echo "$TITLE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+      - name: Create release archive
+        run: |
+          cd release_artifacts
+          zip -r "../${{ steps.artifact.outputs.ARTIFACT_DIR }}.zip" "${{ steps.artifact.outputs.ARTIFACT_DIR }}"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rel/${{ steps.commit.outputs.commit_date }}/${{ steps.commit.outputs.hash }}
+          name: ${{ steps.commit.outputs.title }}
+          body: ${{ steps.commit.outputs.body }}
+          files: ${{ steps.artifact.outputs.ARTIFACT_DIR }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
