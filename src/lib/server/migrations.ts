@@ -4,7 +4,7 @@ import { marked } from 'marked';
 import { env } from '$env/dynamic/private';
 import type { OrderPayment } from '$lib/types/Order';
 import { Lock } from './lock';
-import { ORIGIN } from '$env/static/private';
+import { ORIGIN } from '$lib/server/env-config';
 
 const migrations = [
 	{

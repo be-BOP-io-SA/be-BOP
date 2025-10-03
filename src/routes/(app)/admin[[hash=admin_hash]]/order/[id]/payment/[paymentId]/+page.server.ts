@@ -1,4 +1,4 @@
-import { ORIGIN, SMTP_USER } from '$env/static/private';
+import { ORIGIN, SMTP_USER } from '$lib/server/env-config';
 import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database';
 import { conflictingTapToPayOrder, onOrderPayment, onOrderPaymentFailed } from '$lib/server/orders';

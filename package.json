@@ -4,15 +4,16 @@
 	"private": true,
 	"packageManager": "pnpm@8.3.1",
 	"scripts": {
-		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "vite preview --port 5012",
-		"test": "playwright test",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"test:unit": "vitest --no-threads",
+		"dev": "vite dev",
+		"format": "prettier --write",
 		"lint": "eslint",
-		"format": "prettier --write"
+		"preview": "vite preview --port 5012",
+		"run-production": "node build/index.js",
+		"test": "playwright test",
+		"test:unit": "vitest --no-threads"
 	},
 	"devDependencies": {
 		"@fontsource/outfit": "^4.5.11",
