@@ -170,6 +170,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 			tickets: item.tickets,
 			chosenVariations: item.chosenVariations
 		})),
+		orderTabSlug: order.orderTabSlug,
 		shippingPrice: order.shippingPrice && {
 			amount: order.shippingPrice.amount,
 			currency: order.shippingPrice.currency

@@ -640,7 +640,50 @@
 			"inUseByOtherOrder": "Tap-to-pay is disabled because another order is currently using this payment method. You can collect payment manually and then enter the transaction number in this field."
 		},
 		"vatFree": "This is a VAT-free order (<0>conditions</0>)",
-		"vatFreeReason": "VAT-free reason"
+		"vatFreeReason": "VAT-free reason",
+		"touch": {
+			"selectTab": "Select a tab:",
+			"noTabs": "This group has no tabs",
+			"cancel": "Cancel",
+			"ticketNumber": "TICKET n°",
+			"vatBreakdown": "Incl. VAT",
+			"favorites": "FAVORITES",
+			"allProducts": "ALL PRODUCTS",
+			"pagination": "PAGE {currentPage}/{totalPages}",
+			"tickets": "TICKETS",
+			"save": "SAVE",
+			"pool": "POOL",
+			"openDrawer": "OPEN DRAWER",
+			"pay": "PAY",
+			"notDeveloped": "Not developed yet",
+			"confirmDeleteLastItem": "Do you want to delete the last cart line?",
+			"confirmDeleteAllItems": "Do you want to delete all cart lines?"
+		},
+		"itemEdit": {
+			"quantity": "Quantity",
+			"directSelection": "Direct selection",
+			"qtyZeroRemove": "0 (Remove)",
+			"itemRemoved": "Item removed",
+			"comment": "Comment",
+			"commentPlaceholder": "Enter a comment...",
+			"cancel": "CANCEL",
+			"save": "SAVE"
+		},
+		"split": {
+			"notAvailableYet": "Not available yet",
+			"tabHeader": "Tab {slug}",
+			"tabToPayNow": "Tab {slug} (to pay now)",
+			"exclVat": "excl. VAT",
+			"inclVat": "incl. VAT {rates}",
+			"vatRate": "VAT {rate}%",
+			"cashIn": "Cash in",
+			"all": "all",
+			"split": "Split",
+			"shares": "shares",
+			"itemize": "itemize",
+			"return": "Return",
+			"paySelected": "Pay selected"
+		}
 	},
 	"product": {
 		"addedToCart": "Product added to cart",
