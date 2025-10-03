@@ -27,6 +27,41 @@ import { lastSuccessfulPaymentIntents } from '../stripe';
 
 const lock = new Lock('orders');
 
+async function updateBitcoinBlockHeight(): Promise<void> {
+	try {
+		const resp = await fetch(
+			new URL(trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + '/api/blocks/tip/height')
+		);
+
+		if (resp.ok) {
+			const blockHeight = z.number().parse(await resp.json());
+
+			if (runtimeConfig.bitcoinBlockHeight !== blockHeight) {
+				console.log('Updating bitcoin block height to', blockHeight);
+				runtimeConfig.bitcoinBlockHeight = blockHeight;
+				runtimeConfigUpdatedAt['bitcoinBlockHeight'] = new Date();
+
+				await collections.runtimeConfig.updateOne(
+					{
+						_id: 'bitcoinBlockHeight'
+					},
+					{
+						$set: {
+							data: blockHeight,
+							updatedAt: new Date()
+						}
+					},
+					{
+						upsert: true
+					}
+				);
+			}
+		}
+	} catch {
+		// maintainOrders continues
+	}
+}
+
 async function findMatchingTapToPayOrderStripe(
 	order: Order,
 	paymentId: ObjectId
@@ -101,39 +136,7 @@ async function maintainOrders() {
 									!runtimeConfigUpdatedAt['bitcoinBlockHeight'] ||
 									differenceInMinutes(new Date(), runtimeConfigUpdatedAt['bitcoinBlockHeight']) >= 1
 								) {
-									const resp = await fetch(
-										new URL(
-											trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') +
-												'/api/blocks/tip/height'
-										)
-									);
-
-									if (!resp.ok) {
-										throw new Error('Failed to fetch block height');
-									}
-
-									const blockHeight = z.number().parse(await resp.json());
-
-									if (runtimeConfig.bitcoinBlockHeight !== blockHeight) {
-										console.log('Updating bitcoin block height to', blockHeight);
-										runtimeConfig.bitcoinBlockHeight = blockHeight;
-										runtimeConfigUpdatedAt['bitcoinBlockHeight'] = new Date();
-
-										await collections.runtimeConfig.updateOne(
-											{
-												_id: 'bitcoinBlockHeight'
-											},
-											{
-												$set: {
-													data: blockHeight,
-													updatedAt: new Date()
-												}
-											},
-											{
-												upsert: true
-											}
-										);
-									}
+									await updateBitcoinBlockHeight();
 								}
 
 								if (!payment.address) {
@@ -142,7 +145,16 @@ async function maintainOrders() {
 
 								const nConfirmations = getConfirmationBlocks(payment.price);
 
-								const received = await getSatoshiReceivedNodeless(payment.address, nConfirmations);
+								if (!payment.address || !payment.expiresAt) {
+									throw new Error('Bitcoin nodeless payment missing required address or expiresAt');
+								}
+
+								const received = await getSatoshiReceivedNodeless(
+									payment.address,
+									nConfirmations,
+									order.createdAt,
+									payment.expiresAt
+								);
 
 								payment.transactions = received.transactions;
 								satReceived = received.satReceived;
