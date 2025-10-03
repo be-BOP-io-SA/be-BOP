@@ -135,7 +135,7 @@ export const actions: Actions = {
 			}
 		}
 		const hasVariations =
-			parsed.standalone && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
+			parsed.hasVariations && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
 		try {
 			const res = await collections.products.updateOne(
 				{ _id: params.id },
@@ -170,7 +170,7 @@ export const actions: Actions = {
 								}
 							}),
 						hideDiscountExpiration: parsed.hideDiscountExpiration,
-						standalone: parsed.payWhatYouWant || parsed.standalone,
+						standalone: parsed.payWhatYouWant || hasVariations || parsed.standalone,
 						free: parsed.free,
 						...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
 						applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
@@ -250,7 +250,6 @@ export const actions: Actions = {
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
-						...(!hasVariations && { variations: '', variationLabels: '' }),
 						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),
 						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' }),
 						...(!parsed.bookingSpec && { bookingSpec: '' }),
