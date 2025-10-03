@@ -170,20 +170,27 @@
 			}
 
 			const seen = new Set<string>();
-			for (const [i, value] of variationLabelsValues.entries()) {
-				const key = JSON.stringify(
-					`${variationLabelsNames[i] || product.variations?.[i].name}, ${
-						value || product.variations?.[i].value
-					}`
-				).toLowerCase();
+			const duplicateIndex = Array.from({
+				length: Math.max(product.variations?.length || 0, variationLabelsValues.length)
+			}).findIndex((_, i) => {
+				const name = product.variations?.[i]?.name || variationLabelsNames[i];
+				const value = product.variations?.[i]?.value || variationLabelsValues[i] || '';
 
-				if (seen.has(key)) {
-					variationInput[i].setCustomValidity(`Duplicate variations found ${key}`);
-					variationInput[i].reportValidity();
-					event.preventDefault();
-					return;
+				if (!name || !value) {
+					return false;
 				}
+
+				const key = `${name},${value}`.toLowerCase();
+				const isDuplicate = seen.has(key);
 				seen.add(key);
+				return isDuplicate;
+			});
+
+			if (duplicateIndex !== -1) {
+				variationInput[duplicateIndex]?.setCustomValidity('Duplicate variation found');
+				variationInput[duplicateIndex]?.reportValidity();
+				event.preventDefault();
+				return;
 			}
 			if (!duplicateFromId && isNew) {
 				if (!files) {
@@ -296,6 +303,10 @@
 		product.standalone = true;
 	}
 
+	$: if (product.hasVariations) {
+		product.standalone = true;
+	}
+
 	$: if (product.free) {
 		allowDeposit = false;
 	}
@@ -312,12 +323,92 @@
 			event.preventDefault();
 		}
 	}
+	/**
+	 * Temporary storage for NEW variations being entered in empty form rows.
+	 *
+	 * Data flow:
+	 * 1. User enters data in empty row → stored in these arrays (ephemeral UI state)
+	 * 2. User clicks ➕ button → moved to `product.variations` (persistent state)
+	 * 3. User clicks Update button → saved to database via FormData
+	 *
+	 * These arrays are NOT stored in the database - they only hold input for unsaved rows.
+	 *
+	 * @see product.variationLabels - Permanent storage for variation metadata (names/translations)
+	 * @see product.variations - Permanent storage for active variations with price differences
+	 */
 	let variationLabelsNames: string[] = [];
 	let variationLabelsValues: string[] = [];
+
 	function isNumber(value: string) {
 		return !isNaN(Number(value)) && value.trim() !== '';
 	}
+
+	/**
+	 * Moves a variation up or down in the list by swapping positions.
+	 *
+	 * Used by 🔺 (move up) and 🔻 (move down) buttons on saved variations.
+	 *
+	 * @param fromIndex - Current position of the variation (0-based)
+	 * @param toIndex - Target position to move to (0-based)
+	 */
+	function moveVariation(fromIndex: number, toIndex: number): void {
+		if (product.variations) {
+			if (
+				fromIndex < 0 ||
+				toIndex < 0 ||
+				fromIndex >= product.variations.length ||
+				toIndex >= product.variations.length
+			) {
+				return;
+			}
+			const newVariations = [...product.variations];
+			const [movedItem] = newVariations.splice(fromIndex, 1);
+			newVariations.splice(toIndex, 0, movedItem);
+			product.variations = newVariations;
+		}
+	}
+	/**
+	 * Duplicates a variation by creating a copy immediately after the original.
+	 *
+	 * Called when user clicks ➕ button on a variation row.
+	 * Generates a unique ID via generateId and copies the original label.
+	 *
+	 * @param index - Position of the original variation
+	 * @param variation - Variation data (name, value, price)
+	 */
+	function duplicateVariation(
+		index: number,
+		variation: { name: string; value: string; price?: number }
+	) {
+		const newValueId = generateId(variation.name, true);
+
+		product.variations?.splice(index + 1, 0, {
+			name: variation.name,
+			value: newValueId,
+			price: variation.price ?? 0
+		});
+
+		if (product.variationLabels?.values?.[variation.name]) {
+			product.variationLabels.values[variation.name][newValueId] =
+				product.variationLabels.values[variation.name][variation.value] || variation.value;
+		}
+
+		variationLines++;
+	}
 	$: variationLabelsToUpdate = product.variationLabels || { names: {}, values: {} };
+
+	/**
+	 * Deletes a variation from the product.
+	 *
+	 * Called when user clicks ➖ button on a saved variation row.
+	 * Removes the variation from both `product.variations` array and
+	 * `product.variationLabels` metadata.
+	 *
+	 * If all values for a category are deleted, also removes the category itself.
+	 *
+	 * @param key - Category ID (e.g., "size", "color")
+	 * @param valueKey - Value ID (e.g., "small", "red")
+	 */
 	function deleteVariationLabel(key: string, valueKey: string) {
 		variationLabelsToUpdate = {
 			...variationLabelsToUpdate,
@@ -926,10 +1017,36 @@
 								{#if variation.name && variation.value}
 									<button
 										type="button"
+										class="px-2 py-2 hover:bg-green-50 rounded-md"
+										on:click={() => duplicateVariation(i, variation)}
+										title="Duplicate variation"
+									>
+										➕
+									</button>
+									<button
+										type="button"
 										class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
 										on:click={() => deleteVariationLabel(variation.name, variation.value)}
 									>
 										🗑️
+									</button>
+									<button
+										type="button"
+										class="px-2 py-2 hover:bg-gray-100 rounded-md"
+										class:opacity-50={i === 0}
+										disabled={i === 0}
+										on:click={() => moveVariation(i, i - 1)}
+									>
+										🔺
+									</button>
+									<button
+										type="button"
+										class="px-2 py-2 hover:bg-gray-100 rounded-md"
+										class:opacity-50={i === (product.variations?.length ?? 1) - 1}
+										disabled={i === (product.variations?.length ?? 1) - 1}
+										on:click={() => moveVariation(i, i + 1)}
+									>
+										🔻
 									</button>
 								{/if}
 							</div>
