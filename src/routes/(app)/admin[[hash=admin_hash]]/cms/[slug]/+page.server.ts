@@ -33,6 +33,7 @@ export const actions = {
 			hasMobileContent,
 			mobileContent,
 			hasEmployeeContent,
+			displayRawContent,
 			employeeContent,
 			metas
 		} = z
@@ -44,6 +45,7 @@ export const actions = {
 				desktopDisplayOnly: z.boolean({ coerce: true }),
 				hasMobileContent: z.boolean({ coerce: true }),
 				hasEmployeeContent: z.boolean({ coerce: true }),
+				displayRawContent: z.boolean({ coerce: true }).default(false),
 				metas: z
 					.array(
 						z.object({
@@ -73,6 +75,7 @@ export const actions = {
 					hasEmployeeContent,
 					...(hasEmployeeContent && { employeeContent }),
 					...(metas.length && { metas: metas.filter((meta) => meta.name && meta.content) }),
+					displayRawContent,
 					updatedAt: new Date()
 				},
 				$unset: {

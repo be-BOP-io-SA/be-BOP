@@ -16,6 +16,7 @@
 		hideFromSEO?: boolean;
 		hasMobileContent?: boolean;
 		hasEmployeeContent?: boolean;
+		displayRawContent?: boolean;
 		maintenanceDisplay: boolean;
 		content: string;
 		mobileContent?: string;
@@ -36,6 +37,7 @@
 	let hasCustomMeta = !!cmsPage?.metas?.length;
 	let hasMobileContent = cmsPage?.hasMobileContent || false;
 	let hasEmployeeContent = cmsPage?.hasEmployeeContent || false;
+	let advancedHtmlEdition = cmsPage?.displayRawContent || false;
 	let mobileContent = cmsPage?.mobileContent || '';
 	let employeeContent = cmsPage?.employeeContent || '';
 	let slugElement: HTMLInputElement;
@@ -50,6 +52,12 @@
 	}
 	let metas = cmsPage?.metas;
 	let cmsMetaLine = cmsPage?.metas?.length ?? 2;
+
+	$: if (advancedHtmlEdition) {
+		displayRawHTML = true;
+	} else {
+		displayRawHTML = false;
+	}
 
 	const slugRegex = /^(?!admin$)(?!admin-)[a-z0-9-]+$/;
 	function validateSlug(event: SubmitEvent) {
@@ -179,13 +187,30 @@
 			>Add custom meta balise
 		</button>
 	{/if}
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="displayRawContent"
+			bind:checked={advancedHtmlEdition}
+			class="form-checkbox"
+		/>
+		Use advanced HTML edition
+	</label>
+	{#if advancedHtmlEdition}
+		<p class="text-red-500">
+			Warning: use at your own risk, only if you're a Jedi of web or a be-BOP McGyver. Never use on
+			an already existing CMS page, otherwise, you'll risk losing your CMS content.
+		</p>
+	{/if}
 	<label class="block w-full mt-4">
 		Content
-		<Editor
-			scriptSrc="/tinymce/tinymce.js"
-			bind:value={pageContent}
-			conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
-		/>
+		{#if !advancedHtmlEdition}
+			<Editor
+				scriptSrc="/tinymce/tinymce.js"
+				bind:value={pageContent}
+				conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+			/>
+		{/if}
 		<label class="checkbox-label my-2">
 			<input type="checkbox" name="showTips" bind:checked={showTips} class="form-checkbox" />
 			Show tips
@@ -278,6 +303,7 @@
 				type="checkbox"
 				name="displayRawHTML"
 				bind:checked={displayRawHTML}
+				disabled={advancedHtmlEdition}
 				class="form-checkbox"
 			/>
 			Display raw HTML

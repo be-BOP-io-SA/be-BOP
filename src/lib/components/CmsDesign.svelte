@@ -145,7 +145,7 @@
 </script>
 
 <div class={tokens.mobile ? 'hidden lg:contents' : 'contents'}>
-	<div class="prose max-w-full {classNames}">
+	<div class={classNames}>
 		{#each tokens.desktop as token}
 			{#if token.type === 'productWidget' && productById[token.slug]}
 				<ProductWidget
@@ -258,7 +258,7 @@
 </div>
 {#if tokens.mobile}
 	<div class="contents lg:hidden">
-		<div class="prose max-w-full {classNames}">
+		<div class={classNames}>
 			{#each tokens.mobile as token}
 				{#if token.type === 'productWidget' && productById[token.slug]}
 					<ProductWidget

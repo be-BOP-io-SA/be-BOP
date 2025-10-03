@@ -16,6 +16,7 @@ export interface CMSPage extends Timestamps, CMSPageTranslatableFields {
 	hideFromSEO?: boolean;
 	hasMobileContent?: boolean;
 	hasEmployeeContent?: boolean;
+	displayRawContent?: boolean;
 	metas?: {
 		name: string;
 		content: string;

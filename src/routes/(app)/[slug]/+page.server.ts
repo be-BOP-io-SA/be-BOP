@@ -17,6 +17,7 @@ export async function load({ params, locals, url }) {
 				},
 				fullScreen: 1,
 				hasEmployeeContent: 1,
+				displayRawContent: 1,
 				hasMobileContent: 1,
 				hideFromSEO: 1,
 				maintenanceDisplay: 1,
@@ -76,7 +77,8 @@ export async function load({ params, locals, url }) {
 				desktopContent: cmsPage.content,
 				employeeContent: (cmsPage.hasEmployeeContent && cmsPage.employeeContent) || undefined,
 				mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
-				forceContentVersion
+				forceContentVersion,
+				forceUnsanitizedContent: cmsPage.displayRawContent
 			},
 			locals
 		),
