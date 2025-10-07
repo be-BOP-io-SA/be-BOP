@@ -10,7 +10,7 @@ import { isBitcoinNodelessConfigured } from './bitcoin-nodeless';
 import { isSwissBitcoinPayConfigured } from './swiss-bitcoin-pay';
 import { isBtcpayServerConfigured } from './btcpay-server';
 
-const ALL_PAYMENT_METHODS = [
+export const ALL_PAYMENT_METHODS = [
 	'card',
 	'bank-transfer',
 	'bitcoin',

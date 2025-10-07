@@ -4,6 +4,7 @@ import { ALL_PAYMENT_PROCESSORS } from '$lib/server/payment-methods.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Tag } from '$lib/types/Tag';
 import { set } from '$lib/utils/set';
+import { typedInclude } from '$lib/utils/typedIncludes';
 import { error, redirect } from '@sveltejs/kit';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
@@ -82,8 +83,8 @@ export const actions = {
 					})
 					.array(),
 				posTouchTag: z.string().array(),
-				tapToPayOnActivationUrl: z.string(),
-				tapToPayProvider: z.string()
+				tapToPayOnActivationUrl: z.string().trim().optional(),
+				tapToPayProvider: z.string().optional()
 			})
 			.parse({
 				...json,
@@ -91,9 +92,11 @@ export const actions = {
 				posTouchTag
 			});
 		const posTapToPay = {
-			processor: ALL_PAYMENT_PROCESSORS.find((p) => p === result.tapToPayProvider),
-			onActivationUrl:
-				result.tapToPayOnActivationUrl === '' ? undefined : result.tapToPayOnActivationUrl
+			processor:
+				result.tapToPayProvider && typedInclude(ALL_PAYMENT_PROCESSORS, result.tapToPayProvider)
+					? result.tapToPayProvider
+					: undefined,
+			onActivationUrl: result.tapToPayOnActivationUrl || undefined
 		};
 		const parsedOptsForPosQrCodeAfterPayment = z
 			.object({
