@@ -640,7 +640,50 @@
 			"inUseByOtherOrder": "Die Tap-to-Pay-Zahlung ist deaktiviert, da eine andere Bestellung diesen Zahlungsmodus verwendet. Sie können die Zahlung manuell entgegennehmen und anschließend die Transaktionsnummer in dieses Feld eintragen."
 		},
 		"vatFree": "Dies ist eine mehrwertsteuerfreie Bestellung (Bedingungen)",
-		"vatFreeReason": "Grund für Mehrwertsteuerbefreiung"
+		"vatFreeReason": "Grund für Mehrwertsteuerbefreiung",
+		"touch": {
+			"selectTab": "Tab auswählen:",
+			"noTabs": "Diese Gruppe hat keine Tabs",
+			"cancel": "Abbrechen",
+			"ticketNumber": "TICKET Nr.",
+			"vatBreakdown": "Davon MwSt",
+			"favorites": "FAVORITEN",
+			"allProducts": "ALLE ARTIKEL",
+			"pagination": "SEITE {currentPage}/{totalPages}",
+			"tickets": "TICKETS",
+			"save": "SPEICHERN",
+			"pool": "POOL",
+			"openDrawer": "KASSE ÖFFNEN",
+			"pay": "BEZAHLEN",
+			"notDeveloped": "Noch nicht entwickelt",
+			"confirmDeleteLastItem": "Möchten Sie die letzte Warenkorb-Zeile löschen?",
+			"confirmDeleteAllItems": "Möchten Sie alle Warenkorb-Zeilen löschen?"
+		},
+		"itemEdit": {
+			"quantity": "Menge",
+			"directSelection": "Direkte Auswahl",
+			"qtyZeroRemove": "0 (Entfernen)",
+			"itemRemoved": "Artikel entfernt",
+			"comment": "Kommentar",
+			"commentPlaceholder": "Kommentar eingeben...",
+			"cancel": "ABBRECHEN",
+			"save": "SPEICHERN"
+		},
+		"split": {
+			"notAvailableYet": "Noch nicht verfügbar",
+			"tabHeader": "Tab {slug}",
+			"tabToPayNow": "Tab {slug} (jetzt zu bezahlen)",
+			"exclVat": "ohne MwSt",
+			"inclVat": "inkl. MwSt {rates}",
+			"vatRate": "MwSt {rate}%",
+			"cashIn": "Kassieren",
+			"all": "alles",
+			"split": "Aufteilen",
+			"shares": "Anteile",
+			"itemize": "aufschlüsseln",
+			"return": "Zurück",
+			"paySelected": "Auswahl bezahlen"
+		}
 	},
 	"product": {
 		"addedToCart": "Produkt zum Warenkorb hinzugefügt",

@@ -640,7 +640,50 @@
 			"inUseByOtherOrder": "O pagamento via tap-to-pay está desativado porque há outro pedido em andamento usando este método. Você pode cobrar manualmente e depois inserir o número da transação neste campo."
 		},
 		"vatFree": "Esta é uma encomenda isenta de IVA (condições)",
-		"vatFreeReason": "Motivo de isenção de IVA"
+		"vatFreeReason": "Motivo de isenção de IVA",
+		"touch": {
+			"selectTab": "Selecionar um separador:",
+			"noTabs": "Este grupo não tem separadores",
+			"cancel": "Cancelar",
+			"ticketNumber": "BILHETE n°",
+			"vatBreakdown": "Dos quais IVA",
+			"favorites": "FAVORITOS",
+			"allProducts": "TODOS OS ARTIGOS",
+			"pagination": "PÁGINA {currentPage}/{totalPages}",
+			"tickets": "BILHETES",
+			"save": "GUARDAR",
+			"pool": "POOL",
+			"openDrawer": "ABRIR GAVETA",
+			"pay": "PAGAR",
+			"notDeveloped": "Ainda não desenvolvido",
+			"confirmDeleteLastItem": "Quer eliminar a última linha do carrinho?",
+			"confirmDeleteAllItems": "Quer eliminar todas as linhas do carrinho?"
+		},
+		"itemEdit": {
+			"quantity": "Quantidade",
+			"directSelection": "Seleção direta",
+			"qtyZeroRemove": "0 (Remover)",
+			"itemRemoved": "Artigo removido",
+			"comment": "Comentário",
+			"commentPlaceholder": "Insira um comentário...",
+			"cancel": "CANCELAR",
+			"save": "GUARDAR"
+		},
+		"split": {
+			"notAvailableYet": "Ainda não disponível",
+			"tabHeader": "Separador {slug}",
+			"tabToPayNow": "Separador {slug} (a pagar agora)",
+			"exclVat": "sem IVA",
+			"inclVat": "com IVA {rates}",
+			"vatRate": "IVA {rate}%",
+			"cashIn": "Cobrar",
+			"all": "tudo",
+			"split": "Dividir",
+			"shares": "partes",
+			"itemize": "detalhar",
+			"return": "Voltar",
+			"paySelected": "Pagar selecionados"
+		}
 	},
 	"product": {
 		"addedToCart": "Produto adicionado ao carrinho",

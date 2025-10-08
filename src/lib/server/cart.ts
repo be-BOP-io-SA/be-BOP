@@ -374,3 +374,7 @@ export async function checkCartItems(
 		}
 	}
 }
+
+export async function removeUserCarts(user: UserIdentifier) {
+	await collections.carts.deleteMany({ user });
+}

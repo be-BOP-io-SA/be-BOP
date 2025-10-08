@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { productAddedToCart } from '$lib/stores/productAddedToCart';
 	import type { Picture } from '$lib/types/Picture';
 	import type { Product } from '$lib/types/Product';
 	import PictureComponent from '../Picture.svelte';
@@ -9,39 +8,31 @@
 
 	export let pictures: Picture[] | [];
 	export let product: Pick<Product, 'name' | '_id' | 'price' | 'stock'>;
+	export let tabSlug: string;
 	let loading = false;
 	let className = '';
 	export { className as class };
-	const widget = {};
-	function addToCart() {
-		$productAddedToCart = {
-			product,
-			quantity: 1,
-			picture: pictures[0],
-			widget
-		};
-	}
 	let hasStock = !!(product.stock?.available ?? Infinity);
 </script>
 
 <form
 	method="post"
 	class="contents"
-	action="/product/{product._id}?/addToCart"
+	action="/pos?/addToTab"
 	use:enhance={() => {
 		loading = true;
-		return async ({ result }) => {
+		return ({ result }) => {
 			loading = false;
 			if (result.type === 'error') {
 				alert(result.error.message);
 				return;
 			}
-
-			await invalidate(UrlDependency.Cart);
-			addToCart();
+			invalidate(UrlDependency.orderTab(tabSlug));
 		};
 	}}
 >
+	<input type="hidden" name="tabSlug" value={tabSlug} />
+	<input type="hidden" name="productId" value={product._id} />
 	<button type="submit" disabled={!hasStock || loading}>
 		<div class="touchScreen-product-cta flex flex-row {className} max-h-[4em]">
 			<div>

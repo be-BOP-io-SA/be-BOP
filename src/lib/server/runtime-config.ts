@@ -11,6 +11,7 @@ import type { ProductActionSettings } from '$lib/types/ProductActionSettings';
 import type { ConfirmationThresholds } from '$lib/types/ConfirmationThresholds';
 import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID, TICKET_CHECKER_ROLE_ID } from '$lib/types/User';
 import { building } from '$app/environment';
+import { defaultPosTabGroups } from '$lib/types/PosTabGroup';
 import type { SellerIdentity } from '$lib/types/SellerIdentity';
 import type { Tag } from '$lib/types/Tag';
 
@@ -218,6 +219,7 @@ const baseConfig = {
 	contactModes: ['email', 'nostr'],
 	contactModesForceOption: false,
 	posTouchTag: [] as Tag['_id'][],
+	posTabGroups: defaultPosTabGroups(),
 	posPrefillTermOfUse: false,
 	posTapToPay: {
 		processor: undefined as PaymentProcessor | undefined,
