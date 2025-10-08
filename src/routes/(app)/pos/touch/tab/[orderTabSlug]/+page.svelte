@@ -72,7 +72,7 @@
 			if (quantityInput && quantityInput instanceof HTMLInputElement) {
 				quantityInput.value = quantity.toString();
 			}
-			form.submit();
+			form.requestSubmit();
 		}
 		itemToEditIndex = undefined;
 	}
@@ -179,6 +179,14 @@
 								method="post"
 								bind:this={formNotes[i]}
 								action="?/updateOrderTabItem"
+								use:enhance={() => {
+									return async ({ result }) => {
+										if (result.type === 'error') {
+											return await applyAction(result);
+										}
+										await invalidate(UrlDependency.orderTab(tabSlug));
+									};
+								}}
 							>
 								<input type="hidden" name="note" />
 								<input type="hidden" name="tabItemId" value={item.tabItemId} />

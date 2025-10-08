@@ -88,10 +88,20 @@ async function getHydratedOrderTab(locale: Locale, tabSlug: string) {
 export const load = async ({ locals, depends, params }) => {
 	const tabSlug = params.orderTabSlug;
 	depends(UrlDependency.orderTab(tabSlug));
-	if (await orderTabNotEmptyAndFullyPaid({ slug: tabSlug })) {
+
+	const [shouldConclude, initialOrderTab] = await Promise.all([
+		orderTabNotEmptyAndFullyPaid({ slug: tabSlug }),
+		getHydratedOrderTab(locals.language, tabSlug)
+	]);
+
+	let orderTab;
+	if (shouldConclude) {
 		await concludeOrderTab({ slug: tabSlug });
+		orderTab = await getHydratedOrderTab(locals.language, tabSlug);
+	} else {
+		orderTab = initialOrderTab;
 	}
-	const orderTab = await getHydratedOrderTab(locals.language, tabSlug);
+
 	return {
 		orderTab: pojo(orderTab),
 		posTabGroups: runtimeConfig.posTabGroups,
@@ -120,8 +130,6 @@ export const actions = {
 		const { note, quantity, tabSlug, tabItemId } = parseUpdateOrderTabItemReq(
 			await request.formData()
 		);
-		const orderTab = await getHydratedOrderTab(locals.language, tabSlug);
-
 		if (!ObjectId.isValid(tabItemId)) {
 			throw error(400, 'The specified tab item is invalid');
 		}
@@ -129,7 +137,7 @@ export const actions = {
 		let res;
 		if (quantity === 0) {
 			res = await collections.orderTabs.updateOne(
-				{ _id: orderTab._id },
+				{ slug: tabSlug },
 				{
 					$pull: {
 						items: { _id: new ObjectId(tabItemId) }
@@ -138,7 +146,7 @@ export const actions = {
 			);
 		} else {
 			res = await collections.orderTabs.updateOne(
-				{ _id: orderTab._id },
+				{ slug: tabSlug },
 				{
 					$set: {
 						'items.$[elem].internalNote': {
