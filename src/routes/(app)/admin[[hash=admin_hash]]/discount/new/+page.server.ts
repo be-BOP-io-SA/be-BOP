@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { MAX_NAME_LIMIT, type Product } from '$lib/types/Product';
 import { generateId } from '$lib/utils/generateId';
 import { adminPrefix } from '$lib/server/admin';
-import { Discount } from '$lib/types/Discount';
+import type { Discount } from '$lib/types/Discount';
 
 export const load = async () => {
 	const subscriptions = await collections.products

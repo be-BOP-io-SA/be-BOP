@@ -1,4 +1,4 @@
-import { ALLOW_LND_RPC } from '$env/static/private';
+import { ALLOW_LND_RPC } from '$lib/server/env-config';
 import {
 	lndActivateAutopilot,
 	lndAutopilotActive,

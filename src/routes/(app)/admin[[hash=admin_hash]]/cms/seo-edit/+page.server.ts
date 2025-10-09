@@ -1,5 +1,5 @@
 import { collections } from '$lib/server/database';
-import { CMSPage } from '$lib/types/CmsPage.js';
+import type { CMSPage } from '$lib/types/CmsPage';
 import { MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 import { set } from '$lib/utils/set';
 import { redirect } from '@sveltejs/kit';

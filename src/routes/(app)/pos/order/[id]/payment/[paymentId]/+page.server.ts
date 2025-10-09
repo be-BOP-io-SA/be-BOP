@@ -3,7 +3,7 @@ import { error } from '@sveltejs/kit';
 import { actions as adminOrderActions } from '../../../../../admin[[hash=admin_hash]]/order/[id]/payment/[paymentId]/+page.server';
 import { adminPrefix } from '$lib/server/admin';
 import { isAllowedOnPage } from '$lib/types/Role';
-import { Order } from '$lib/types/Order';
+import type { Order } from '$lib/types/Order';
 
 function throwIfPosAccountCannotManageOrder(
 	order: Order | null,

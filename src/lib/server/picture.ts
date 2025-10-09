@@ -10,7 +10,7 @@ import {
 	s3client
 } from './s3';
 import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { S3_BUCKET } from '$env/static/private';
+import { S3_BUCKET } from '$lib/server/env-config';
 import * as mimeTypes from 'mime-types';
 import type { ImageData, Picture, TagType } from '../types/Picture';
 import type { SetRequired } from 'type-fest';

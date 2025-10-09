@@ -14,7 +14,7 @@ import {
 	GOOGLE_SECRET,
 	TWITTER_ID,
 	TWITTER_SECRET
-} from '$env/static/private';
+} from '$lib/server/env-config';
 import { zodNpub } from '$lib/server/nostr.js';
 import { renewSessionId } from '$lib/server/user.js';
 import { rateLimit } from '$lib/server/rateLimit.js';

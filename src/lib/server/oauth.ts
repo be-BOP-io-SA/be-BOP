@@ -1,4 +1,4 @@
-import { RuntimeConfig } from './runtime-config';
+import type { RuntimeConfig } from './runtime-config';
 import * as client from 'openid-client';
 
 const configs: Record<string, client.Configuration> = {};

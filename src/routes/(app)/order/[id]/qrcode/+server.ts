@@ -3,7 +3,7 @@ import qrcode from 'qrcode';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { building } from '$app/environment';
-import { ORIGIN } from '$env/static/private';
+import { ORIGIN } from '$lib/server/env-config';
 
 const bebopLogoSvg = building ? '' : readFileSync(join(rootDir, 'assets/bebop-b.svg'), 'utf-8');
 

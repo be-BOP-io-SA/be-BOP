@@ -1,4 +1,4 @@
-import { NOSTR_PRIVATE_KEY } from '$env/static/private';
+import { NOSTR_PRIVATE_KEY } from '$lib/server/env-config';
 import { bech32 } from 'bech32';
 import { getPublicKey } from 'nostr-tools';
 import { z } from 'zod';

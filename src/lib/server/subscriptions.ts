@@ -1,5 +1,5 @@
-import { PaidSubscription } from '$lib/types/PaidSubscription';
-import { UserIdentifier } from '$lib/types/UserIdentifier';
+import type { PaidSubscription } from '$lib/types/PaidSubscription';
+import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import { collections } from './database';
 import { userQuery } from './user';
 
