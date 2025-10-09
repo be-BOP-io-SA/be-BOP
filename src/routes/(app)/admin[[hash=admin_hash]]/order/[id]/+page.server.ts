@@ -45,11 +45,13 @@ export const actions = {
 		const parsed = z
 			.object({
 				amount: z.string().regex(/^\d+(\.\d+)?$/),
-				method: z.enum(methods as [PaymentMethod, ...PaymentMethod[]])
+				method: z.enum(methods as [PaymentMethod, ...PaymentMethod[]]),
+				posSubtype: z.string().nullable().optional()
 			})
 			.parse({
 				amount: formData.get('amount'),
-				method: formData.get('method')
+				method: formData.get('method'),
+				posSubtype: formData.get('posSubtype')
 			});
 
 		const amount = parsePriceAmount(parsed.amount, order.currencySnapshot.main.totalPrice.currency);
@@ -67,7 +69,11 @@ export const actions = {
 				amount,
 				currency: order.currencySnapshot.main.totalPrice.currency
 			},
-			{ expiresAt: null }
+			{
+				expiresAt: null,
+				...(parsed.method === 'point-of-sale' &&
+					parsed.posSubtype && { posSubtype: parsed.posSubtype })
+			}
 		);
 
 		throw redirect(303, `/order/${order._id}`);

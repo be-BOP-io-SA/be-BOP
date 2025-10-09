@@ -86,6 +86,17 @@ export interface OrderPayment {
 	};
 	method: PaymentMethod;
 	processor?: PaymentProcessor;
+
+	/**
+	 * For 'point-of-sale' payments, specifies the subtype slug
+	 * References PosPaymentSubtype.slug
+	 *
+	 * Examples: "cash", "check", "external-tpe"
+	 *
+	 * If undefined → legacy PoS payment (backward compatibility)
+	 */
+	posSubtype?: string;
+
 	/**
 	 * Can be unset for cash or bank transfer payments for example.
 	 */

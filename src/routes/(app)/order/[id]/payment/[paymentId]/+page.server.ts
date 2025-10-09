@@ -42,10 +42,12 @@ export const actions = {
 		const formData = await request.formData();
 		const parsed = z
 			.object({
-				method: z.enum(methods as [PaymentMethod, ...PaymentMethod[]])
+				method: z.enum(methods as [PaymentMethod, ...PaymentMethod[]]),
+				posSubtype: z.string().optional()
 			})
 			.parse({
-				method: formData.get('method')
+				method: formData.get('method'),
+				posSubtype: formData.get('posSubtype')
 			});
 
 		await withTransaction(async (session) => {
@@ -56,7 +58,9 @@ export const actions = {
 
 			await addOrderPayment(order, parsed.method, payment.currencySnapshot.main.price, {
 				expiresAt: paymentMethodExpiration(parsed.method),
-				session
+				session,
+				...(parsed.method === 'point-of-sale' &&
+					parsed.posSubtype && { posSubtype: parsed.posSubtype })
 			});
 		});
 		throw redirect(303, `/order/${order._id}`);

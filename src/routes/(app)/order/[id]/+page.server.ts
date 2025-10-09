@@ -81,13 +81,22 @@ export async function load({ params, depends, locals }) {
 			: undefined;
 	const tapToPay = {
 		configured: !!runtimeConfig.posTapToPay.processor,
-		inUseByOtherOrder: !!(await conflictingTapToPayOrder(order._id)),
-		onActivationUrl: runtimeConfig.posTapToPay.onActivationUrl
+		inUseByOtherOrder: !!(await conflictingTapToPayOrder(order._id))
 	};
+
+	const posSubtypes = (
+		await collections.posPaymentSubtypes.find({}).sort({ sortOrder: 1 }).toArray()
+	).map((subtype) => ({
+		slug: subtype.slug,
+		name: subtype.name,
+		description: subtype.description
+	}));
+
 	return {
 		order,
 		paymentMethods: methods,
 		tapToPay,
+		posSubtypes,
 		digitalFiles: Promise.all(
 			digitalFiles.map(async (file) => ({
 				name: file.name,

@@ -60,12 +60,15 @@ export async function load({ url }) {
 		.sort({ name: 1 })
 		.toArray();
 
+	const posSubtypes = await collections.posPaymentSubtypes.find({}).toArray();
+
 	return {
 		orders: orders.map((order) => ({
 			_id: order._id,
 			payments: order.payments.map((payment) => ({
 				...pojo(payment),
-				id: payment._id.toString()
+				id: payment._id.toString(),
+				posSubtype: payment.posSubtype
 			})),
 			number: order.number,
 			createdAt: order.createdAt,
@@ -93,6 +96,10 @@ export async function load({ url }) {
 		})),
 		employeesAlias,
 		reportingTags,
-		tagId
+		tagId,
+		posSubtypes: posSubtypes.map((subtype) => ({
+			slug: subtype.slug,
+			name: subtype.name
+		}))
 	};
 }

@@ -82,8 +82,8 @@ export const actions = {
 					})
 					.array(),
 				posTouchTag: z.string().array(),
-				tapToPayOnActivationUrl: z.string(),
-				tapToPayProvider: z.string()
+				tapToPayOnActivationUrl: z.string().optional(),
+				tapToPayProvider: z.string().optional()
 			})
 			.parse({
 				...json,
@@ -91,9 +91,13 @@ export const actions = {
 				posTouchTag
 			});
 		const posTapToPay = {
-			processor: ALL_PAYMENT_PROCESSORS.find((p) => p === result.tapToPayProvider),
+			processor: result.tapToPayProvider
+				? ALL_PAYMENT_PROCESSORS.find((p) => p === result.tapToPayProvider)
+				: undefined,
 			onActivationUrl:
-				result.tapToPayOnActivationUrl === '' ? undefined : result.tapToPayOnActivationUrl
+				result.tapToPayOnActivationUrl && result.tapToPayOnActivationUrl !== ''
+					? result.tapToPayOnActivationUrl
+					: undefined
 		};
 		const parsedOptsForPosQrCodeAfterPayment = z
 			.object({
