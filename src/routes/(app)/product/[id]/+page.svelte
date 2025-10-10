@@ -143,8 +143,8 @@
 
 		const start = new Date(format(date, 'yyyy-MM-dd') + ' ' + specForDay.start);
 		let end = new Date(format(date, 'yyyy-MM-dd') + ' ' + specForDay.end);
-		if (specForDay.end === '00:00') {
-			end = addDays(end, 1);
+		if (specForDay.end === '00:00' || specForDay.end === '23:59') {
+			end = addDays(new Date(format(date, 'yyyy-MM-dd') + ' 00:00'), 1);
 		}
 
 		const relevantEvents = events
@@ -166,7 +166,17 @@
 			end: new Date(range[1])
 		}));
 
-		return freeIntervals; // Added return statement to return the computed free intervals
+		if (isSameDay(date, now)) {
+			const is24HourSlot = spec.slotMinutes === 1440;
+
+			if (is24HourSlot) {
+				return freeIntervals;
+			}
+
+			return freeIntervals.filter((interval) => interval.end > now);
+		}
+
+		return freeIntervals;
 	}
 
 	function computeDurations(date: Date, events: Array<{ beginsAt: Date; endsAt?: Date }>) {
@@ -201,6 +211,7 @@
 		durationMinutes: number,
 		events: Array<{ beginsAt: Date; endsAt?: Date }>
 	): Array<{ date: string; time: string }> {
+		const now = new Date();
 		const spec = data.product.bookingSpec;
 
 		if (!spec) {
@@ -215,6 +226,8 @@
 			return [];
 		}
 
+		const is24HourSlot = spec.slotMinutes === 1440;
+
 		const times = intervals.flatMap((interval) => {
 			const start = interval.start;
 			const end = subMinutes(interval.end, durationMinutes);
@@ -223,7 +236,9 @@
 			let currentTime = start;
 
 			while (currentTime <= end) {
-				timeSlots.push(currentTime);
+				if (is24HourSlot || currentTime > now) {
+					timeSlots.push(currentTime);
+				}
 				currentTime = addMinutes(currentTime, spec.slotMinutes);
 			}
 
@@ -783,18 +798,29 @@
 
 									<label class="form-label">
 										{t('product.booking.time')}
-										<select class="form-input" bind:value={time} name="time">
-											{#each times as time}
-												<option value={time.date}>
-													<!-- todo: handle timezone here maybe -->
-													{new Date(
-														selectedDate.toJSON().slice(0, 11) + time.time
-													).toLocaleTimeString($locale, {
-														hour: 'numeric',
-														minute: 'numeric'
-													})}
-												</option>
-											{/each}
+										<select
+											class="form-input"
+											bind:value={time}
+											name="time"
+											disabled={!times.length}
+										>
+											{#if !times.length}
+												<option value="" disabled selected
+													>No available time slots for this date</option
+												>
+											{:else}
+												{#each times as time}
+													<option value={time.date}>
+														<!-- todo: handle timezone here maybe -->
+														{new Date(
+															selectedDate.toJSON().slice(0, 11) + time.time
+														).toLocaleTimeString($locale, {
+															hour: 'numeric',
+															minute: 'numeric'
+														})}
+													</option>
+												{/each}
+											{/if}
 										</select>
 									</label>
 								{/if}

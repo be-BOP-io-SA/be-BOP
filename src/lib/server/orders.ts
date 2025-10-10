@@ -1001,6 +1001,32 @@ export async function createOrder(
 				}
 
 				const startTime = toZonedTime(time.start, bookingSpec.schedule.timezone);
+
+				const now = new Date();
+				const is24HourSlot = bookingSpec.slotMinutes === 1440;
+
+				if (is24HourSlot) {
+					const startDay = startOfDay(startTime);
+					const today = startOfDay(toZonedTime(now, bookingSpec.schedule.timezone));
+
+					if (startDay < today) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking date is in the past. ` +
+								`Please refresh the page and select a future date.`
+						);
+					}
+				} else {
+					const currentTime = toZonedTime(now, bookingSpec.schedule.timezone);
+
+					if (startTime <= currentTime) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time is in the past. ` +
+								`Please refresh the page and select a future time slot.`
+						);
+					}
+				}
 				const startDay = startOfDay(startTime.getDay() + 6);
 				const endTime = toZonedTime(time.end, bookingSpec.schedule.timezone);
 				const endDay = endOfDay(subSeconds(endTime, 1).getDay() + 6); // Sub-seconds to allow booking until midnight
