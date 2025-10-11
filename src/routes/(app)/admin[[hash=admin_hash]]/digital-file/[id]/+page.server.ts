@@ -1,4 +1,4 @@
-import { S3_BUCKET } from '$env/static/private';
+import { S3_BUCKET } from '$lib/server/env-config';
 import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database';
 import { getPublicS3DownloadLink, s3client } from '$lib/server/s3';

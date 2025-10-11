@@ -6,7 +6,7 @@ import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
 import DOMPurify from 'dompurify';
 import { collections } from './database';
-import { ALLOW_JS_INJECTION } from '$env/static/private';
+import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import type { PickDeep } from 'type-fest';
 import type { Specification } from '$lib/types/Specification';
 import type { Tag } from '$lib/types/Tag';
@@ -14,7 +14,7 @@ import type { ContactForm } from '$lib/types/ContactForm';
 import type { Countdown } from '$lib/types/Countdown';
 import type { Gallery } from '$lib/types/Gallery';
 import type { Leaderboard } from '$lib/types/Leaderboard';
-import { ScheduleEventBooked } from '$lib/types/Schedule';
+import type { ScheduleEventBooked } from '$lib/types/Schedule';
 import { groupBy } from '$lib/utils/group-by';
 import { subMinutes } from 'date-fns';
 

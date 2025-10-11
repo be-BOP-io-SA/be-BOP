@@ -1,4 +1,4 @@
-import { ORIGIN } from '$env/static/private';
+import { ORIGIN } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import type { User } from '$lib/types/User';
 import { ObjectId } from 'mongodb';

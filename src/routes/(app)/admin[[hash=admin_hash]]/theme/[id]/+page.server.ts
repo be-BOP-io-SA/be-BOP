@@ -5,7 +5,7 @@ import { set } from '$lib/utils/set';
 import { collections } from '$lib/server/database';
 import { adminPrefix } from '$lib/server/admin';
 import { themeFormStructure } from '$lib/types/Theme';
-import { increaseThemeChangeNumber, ThemeData, themeValidator } from '$lib/server/theme';
+import { increaseThemeChangeNumber, themeValidator, type ThemeData } from '$lib/server/theme';
 import { ObjectId } from 'mongodb';
 import { get } from '$lib/utils/get';
 

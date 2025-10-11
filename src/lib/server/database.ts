@@ -3,7 +3,7 @@ import {
 	MONGODB_DB,
 	MONGODB_IP_FAMILY,
 	MONGODB_DIRECT_CONNECTION
-} from '$env/static/private';
+} from '$lib/server/env-config';
 import {
 	MongoClient,
 	ObjectId,

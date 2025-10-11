@@ -1,4 +1,4 @@
-import { ORIGIN } from '$env/static/private';
+import { ORIGIN } from '$lib/server/env-config';
 import qrcode from 'qrcode';
 
 export async function GET({ params }) {

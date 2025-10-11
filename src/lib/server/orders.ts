@@ -32,7 +32,7 @@ import { error } from '@sveltejs/kit';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { currentWallet, getNewAddress, orderAddressLabel } from './bitcoind';
 import { isLndConfigured, lndCreateInvoice } from './lnd';
-import { ORIGIN } from '$env/static/private';
+import { ORIGIN } from '$lib/server/env-config';
 import { emailsEnabled, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
 import { type Cart } from '$lib/types/Cart';
@@ -42,7 +42,7 @@ import { sumCurrency } from '$lib/utils/sumCurrency';
 import { refreshAvailableStockInDb } from './product';
 import { checkCartItems } from './cart';
 import { userQuery } from './user';
-import { SMTP_USER } from '$env/static/private';
+import { SMTP_USER } from '$lib/server/env-config';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
@@ -64,18 +64,18 @@ import type { Discount } from '$lib/types/Discount';
 import { groupByNonPartial } from '$lib/utils/group-by';
 import {
 	dayList,
-	ScheduleEvent,
+	minutesToTime,
 	productToScheduleId,
-	Schedule,
 	scheduleToProductId,
 	timeToMinutes,
-	minutesToTime
+	type Schedule,
+	type ScheduleEvent
 } from '$lib/types/Schedule';
 import { isEmptyObject } from '$lib/utils/is-empty-object';
 import { binaryFindAround } from '$lib/utils/binary-find';
 import { toZonedTime } from 'date-fns-tz';
 import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
-import { PaidSubscription } from '$lib/types/PaidSubscription';
+import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import { btcpayCreateLnInvoice, isBtcpayServerConfigured } from './btcpay-server';
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {

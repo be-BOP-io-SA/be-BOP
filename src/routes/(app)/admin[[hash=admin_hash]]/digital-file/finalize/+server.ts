@@ -1,4 +1,4 @@
-import { S3_BUCKET } from '$env/static/private';
+import { S3_BUCKET } from '$lib/server/env-config';
 import { collections, withTransaction } from '$lib/server/database';
 import { s3client } from '$lib/server/s3';
 import { error } from '@sveltejs/kit';
