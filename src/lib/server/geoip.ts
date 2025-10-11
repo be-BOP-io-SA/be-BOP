@@ -27,6 +27,9 @@ if (!building) {
 				country
 			});
 		}
+		if (ipv4s.length === 0) {
+			console.error('Unable to load IPv4 database: Database file is empty');
+		}
 	}
 
 	{
@@ -44,6 +47,9 @@ if (!building) {
 				end: BigInt(end),
 				country
 			});
+		}
+		if (ipv6s.length === 0) {
+			console.error('Unable to load IPv6 database: Database file is empty');
 		}
 	}
 
