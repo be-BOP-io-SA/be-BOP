@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ManageOrderTabs from '$lib/components/ManageOrderTabs.svelte';
 	import { MultiSelect } from 'svelte-multiselect';
 	export let data;
 
@@ -7,8 +8,10 @@
 			value: tagId,
 			label: data.tags.find((tag) => tag._id === tagId)?.name ?? tagId
 		})) ?? [];
+	let tabGroups = data.posTabGroups;
 
 	$: serializedTags = JSON.stringify(selectedTags.map((tag) => tag.value));
+	$: serializedTabGroups = JSON.stringify(tabGroups);
 	let posDisplayOrderQrAfterPayment = data.posDisplayOrderQrAfterPayment;
 	function handleSubmit(event: Event) {
 		if (selectedTags.length > 8 && !confirm('Are you sure ?')) {
@@ -62,7 +65,14 @@
 	</label>
 	<input type="hidden" name="posTouchTag" bind:value={serializedTags} />
 
-	<h2 class="text-2xl">Touchscreen PoS interface</h2>
+	<!-- svelte-ignore a11y-label-has-associated-control -->
+	<label class="form-label">
+		Tabs management
+		<ManageOrderTabs bind:tabGroups />
+	</label>
+	<input type="hidden" name="posTabGroups" bind:value={serializedTabGroups} />
+
+	<h2 class="text-2xl">PoS Checkout</h2>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"

@@ -34,6 +34,7 @@ export const load = async ({}) => {
 	return {
 		tags: tags.filter((tag) => tag._id !== 'pos-favorite'),
 		posTouchTag: runtimeConfig.posTouchTag,
+		posTabGroups: runtimeConfig.posTabGroups,
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
 		posDisplayOrderQrAfterPayment: runtimeConfig.posDisplayOrderQrAfterPayment,
 		posQrCodeAfterPayment: runtimeConfig.posQrCodeAfterPayment,
@@ -52,21 +53,41 @@ export const actions = {
 		for (const [key, value] of formData) {
 			set(json, key, value);
 		}
+
+		const posTabGroupsString = formData.get('posTabGroups');
+		if (!posTabGroupsString) {
+			throw error(400, 'No posTabGroups provided');
+		}
+		const posTabGroups = JSON.parse(String(posTabGroupsString));
+
 		const posTouchTagString = formData.get('posTouchTag');
 		if (!posTouchTagString) {
 			throw error(400, 'No posTouchTag provided');
 		}
 		const posTouchTag = JSON.parse(String(posTouchTagString));
+
 		const result = z
 			.object({
 				posDisplayOrderQrAfterPayment: z.boolean({ coerce: true }),
 				posPrefillTermOfUse: z.boolean({ coerce: true }),
+				posTabGroups: z
+					.object({
+						name: z.string().min(1).max(100),
+						tabs: z
+							.object({
+								label: z.string().min(1).max(100).optional(),
+								color: z.string().min(1).max(100).optional()
+							})
+							.array()
+					})
+					.array(),
 				posTouchTag: z.string().array(),
 				tapToPayOnActivationUrl: z.string(),
 				tapToPayProvider: z.string()
 			})
 			.parse({
 				...json,
+				posTabGroups,
 				posTouchTag
 			});
 		const posTapToPay = {
@@ -97,6 +118,8 @@ export const actions = {
 		runtimeConfig.posDisplayOrderQrAfterPayment = result.posDisplayOrderQrAfterPayment;
 		await persistConfigElement('posTouchTag', result.posTouchTag);
 		runtimeConfig.posTouchTag = result.posTouchTag;
+		await persistConfigElement('posTabGroups', result.posTabGroups);
+		runtimeConfig.posTabGroups = result.posTabGroups;
 		await persistConfigElement('posQrCodeAfterPayment', posQrCodeAfterPayment);
 		runtimeConfig.posQrCodeAfterPayment = posQrCodeAfterPayment;
 		await persistConfigElement('posTapToPay', posTapToPay);

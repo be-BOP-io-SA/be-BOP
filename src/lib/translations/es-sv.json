@@ -640,7 +640,50 @@
 			"inUseByOtherOrder": "El pago por Tap-to-pay está desactivado porque hay otro pedido en curso usando este método de pago. Se puede cobrar manualmente e ingresar luego el número de transacción en este campo."
 		},
 		"vatFree": "Esta compra es libre de IVA (<0>condiciones</0>)",
-		"vatFreeReason": "Razón de exención de IVA"
+		"vatFreeReason": "Razón de exención de IVA",
+		"touch": {
+			"selectTab": "Seleccionar una pestaña:",
+			"noTabs": "Este grupo no tiene pestañas",
+			"cancel": "Cancelar",
+			"ticketNumber": "TICKET n°",
+			"vatBreakdown": "De los cuales IVA",
+			"favorites": "FAVORITOS",
+			"allProducts": "TODOS LOS ARTÍCULOS",
+			"pagination": "PÁGINA {currentPage}/{totalPages}",
+			"tickets": "TICKETS",
+			"save": "GUARDAR",
+			"pool": "POOL",
+			"openDrawer": "ABRIR CAJÓN",
+			"pay": "PAGAR",
+			"notDeveloped": "Aún no desarrollado",
+			"confirmDeleteLastItem": "¿Quieres eliminar la última línea del carrito?",
+			"confirmDeleteAllItems": "¿Quieres eliminar todas las líneas del carrito?"
+		},
+		"itemEdit": {
+			"quantity": "Cantidad",
+			"directSelection": "Selección directa",
+			"qtyZeroRemove": "0 (Eliminar)",
+			"itemRemoved": "Artículo eliminado",
+			"comment": "Comentario",
+			"commentPlaceholder": "Ingresa un comentario...",
+			"cancel": "CANCELAR",
+			"save": "GUARDAR"
+		},
+		"split": {
+			"notAvailableYet": "Aún no disponible",
+			"tabHeader": "Pestaña {slug}",
+			"tabToPayNow": "Pestaña {slug} (a pagar ahora)",
+			"exclVat": "sin IVA",
+			"inclVat": "con IVA {rates}",
+			"vatRate": "IVA {rate}%",
+			"cashIn": "Cobrar",
+			"all": "todo",
+			"split": "Dividir",
+			"shares": "partes",
+			"itemize": "detallar",
+			"return": "Volver",
+			"paySelected": "Pagar selección"
+		}
 	},
 	"product": {
 		"addedToCart": "Producto añadido a la lista de compras",

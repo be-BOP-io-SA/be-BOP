@@ -12,21 +12,23 @@ import { differenceInMinutes } from 'date-fns';
 import type { ObjectId } from 'mongodb';
 import { get } from 'svelte/store';
 
-type ItemForPriceInfo = {
+export type ProductForPriceInfo = {
+	// The id is optional here, so we can compute prices for “products” that are
+	// not in the database (e.g. delivery fees)
+	_id?: string;
+	shipping: boolean;
+	price: Price;
+	vatProfileId?: string | ObjectId;
+	bookingSpec?: { slotMinutes: number };
+};
+
+export type ItemForPriceInfo = {
 	booking?: { start: Date; end: Date };
 	customPrice?: Price;
 	depositPercentage?: number;
 	discountPercentage?: number;
 	freeProductSources?: { subscriptionId: string; quantity: number }[];
-	product: {
-		// The id is optional here, so we can compute prices for “products” that are
-		// not in the database (e.g. delivery fees)
-		_id?: string;
-		shipping: boolean;
-		price: Price;
-		vatProfileId?: string | ObjectId;
-		bookingSpec?: { slotMinutes: number };
-	};
+	product: ProductForPriceInfo;
 	quantity: number;
 };
 
