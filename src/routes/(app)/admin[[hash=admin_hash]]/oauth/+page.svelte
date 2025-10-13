@@ -4,7 +4,7 @@
 
 <h1 class="text-3xl">OAuth Providers</h1>
 
-You can add a "sign in with ..." to your bebop supporting any OAuth provider. Whether you want to
+You can add a "sign in with ..." to your be-BOP supporting any OAuth provider. Whether you want to
 use Google, Discord or your own WordPress with the wp-oauth server plugin.
 
 {#if data.oauth}

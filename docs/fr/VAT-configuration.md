@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Nativement, beBOP affiche des prix hors-taxe.
+Nativement, be-BOP affiche des prix hors-taxe.
 Les calculs de TVA sont réalisés dès le panier.
 
 Il existe 3 grands régimes de TVA, dont une variation :
@@ -20,7 +20,7 @@ Ces points sont abordés dans le [privacy-management.md](/docs/fr/privacy-manage
 
 ## Cas 1 : exemption de TVA sur sous justification
 
-Dans /admin/config se trouve l'option **Disable VAT for my beBOP** (*Désactiver la TVA pour mon beBOP*).
+Dans /admin/config se trouve l'option **Disable VAT for my be-BOP** (*Désactiver la TVA pour mon be-BOP*).
 Une fois la case activée, **une TVA de 0% est appliquée sur l'ensemble des futures commandes**.
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/a86a4edd-e70d-466d-b573-ed0ef9e56025)
@@ -68,7 +68,7 @@ Même si l'adresse de facturation de votre client est dans le pays de votre entr
 Quand cette option est activée, dans le tunnel (page /checkout), le client devra valider une nouvelle option obligatoire : **I understand that I will have to pay VAT upon delivery** (*Je comprends que je devrais payer la VAT au moment de la livraison*).
 Le lien de cette option renvoie vers la page CMS /why-vat-customs , à créer et à compléter pour expliquer pourquoi votre client doit s'acquitter de la TVA de son pays dès réception de votre article.
 
-### Client se faisant livrer dans le pays du beBOP
+### Client se faisant livrer dans le pays du be-BOP
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/5a99fe97-6448-423f-bebb-313e410c6444)
 
@@ -88,8 +88,8 @@ Quand, dans /amdin/config, aucune option de régime de TVA n'est activée et qu'
 
 ## L'IP de l'utilisateur utilisée pour l'évaluation de la TVA est-elle stockée ?
 Ces points sont abordés dans le [privacy-management.md](/docs/frprivacy-management.md).
-Mais, sans autre configuration exigeant des informations du client, l'information n'est pas stockée : elle est récupérée du navigateur (car fournie par ce dernier) et utilisée pour donner une estimation de la TVA et des frais de port avant le renseignement de l'adresse postale du client (recommandation légale imposée par certains pays), mais elle n'est nativement pas stockée dans les bases de données beBOP.
-En revanche, les services fiscaux et frontaliers peuvent exiger dans certains pays un nombre de preuves justifiant le paiement de la TVA par le client qui n'est pas celle du pays du vendeur. En ce cas, beBOP propose certaines options (sans pour autant les encourager nativement).
+Mais, sans autre configuration exigeant des informations du client, l'information n'est pas stockée : elle est récupérée du navigateur (car fournie par ce dernier) et utilisée pour donner une estimation de la TVA et des frais de port avant le renseignement de l'adresse postale du client (recommandation légale imposée par certains pays), mais elle n'est nativement pas stockée dans les bases de données be-BOP.
+En revanche, les services fiscaux et frontaliers peuvent exiger dans certains pays un nombre de preuves justifiant le paiement de la TVA par le client qui n'est pas celle du pays du vendeur. En ce cas, be-BOP propose certaines options (sans pour autant les encourager nativement).
 A noter que l'IP est considérée comme une donnée de facturation valide dans certains pays, et que le vendeur n'est pas responsable de l'adresse IP poussée par le navigateur du client.
 
 ## Quel régime de TVA choisir ?
@@ -100,7 +100,7 @@ Le régime de TVA de votre entreprise peut dépendre :
 - de votre chiffre d'affaire annuel
 - d'autres subtilités légales et administratives
 
-Le plus sur est de consulter votre comptable, avocat ou service aux entreprises compétent afin de connaître votre régime de TVA cible et le configurer dans beBOP.
+Le plus sur est de consulter votre comptable, avocat ou service aux entreprises compétent afin de connaître votre régime de TVA cible et le configurer dans be-BOP.
 
 ## Gesttion des profils de TVA réduite
 
@@ -122,7 +122,7 @@ Puis, dans l'interface d'administration des produits (/admin/product/{id}), vous
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/81a8fbe3-8670-4172-a752-537022789304)
 
-"No custom VAT profile" prendra par défaut la TVA générale du beBOP.
+"No custom VAT profile" prendra par défaut la TVA générale du be-BOP.
 
 La TVA de chaque article sera affichée au panier :
 

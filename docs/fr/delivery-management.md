@@ -1,7 +1,7 @@
 # Gestion des frais d'envoi
 
 ## Introduction
-beBOP, à l'heure actuelle, ne propose qu'un seul mode d'expédition générique.
+be-BOP, à l'heure actuelle, ne propose qu'un seul mode d'expédition générique.
 En revanche, plusieurs modes de gestion des frais d'envoi sont proposés.
 Les frais d'envoi peuvent être configurés :
 - au global sur /admin/config/delivery

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-beBOP allows you to interact with your community on the Internet, and can also be used as a cash register software (in a stand or store).
+be-BOP allows you to interact with your community on the Internet, and can also be used as a cash register software (in a stand or store).
 
 POS: Point Of Sale (for store checkout behavior)
 
@@ -21,7 +21,7 @@ The point-of-sale role is configured by default in the /admin/arm module:
 
 ## Login to POS account
 
-Once assigned to a profile, the person with POS access must go to the login page in administration (/admin/login , where /admin is the secure string configured by the beBOP owner (see [back-office-access.md](back-office-access.md) ) and log in.
+Once assigned to a profile, the person with POS access must go to the login page in administration (/admin/login , where /admin is the secure string configured by the be-BOP owner (see [back-office-access.md](back-office-access.md) ) and log in.
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/0e0f9eef-69cd-4c88-9402-3ed1fd3167e5)
 
@@ -154,7 +154,7 @@ If the option is activated, a compulsory justification must be completed, for ma
 
 You must also choose the type of reduction:
 - in %age (an error message will be displayed in case of invalid entry, or 100% reduction)
-- in amount corresponding to the beBOP's main currency (see [currency-management.md](currency-management.md) ) (an error message will be displayed in the event of an invalid entry, or a reduction of corresponding to the order total)
+- in amount corresponding to the be-BOP's main currency (see [currency-management.md](currency-management.md) ) (an error message will be displayed in the event of an invalid entry, or a reduction of corresponding to the order total)
 
 ⚖️ Your local law must authorize the use of this option and its maximum amounts, for which you are responsible (e.g. single price law in France).
 
@@ -205,7 +205,7 @@ Activating these options without obtaining the customer's explicit consent is yo
 
 ### Point of Sale Payment
 
-Pending the creation of Point of Sale payment subtypes, Point of Sale payment includes all non-beBOP payments:
+Pending the creation of Point of Sale payment subtypes, Point of Sale payment includes all non-be-BOP payments:
 - use of a physical POS terminal (we do not yet automatically reconcile with Sum UP POS terminals, even if the site account and the POS terminal account are shared)
 - cash
 - cheque (for countries still using it)
@@ -318,7 +318,7 @@ If your physical POS terminal is out of order, your customer can scan a QR Code 
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/43f192a5-30ab-44bd-87f3-c60c1d5fad14)
 
-The display then returns to the welcome/standby display, with the welcome message and beBOP logo.
+The display then returns to the welcome/standby display, with the welcome message and be-BOP logo.
 
 ### When a Point of Sale payment is made
 

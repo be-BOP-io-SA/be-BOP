@@ -2,7 +2,7 @@
 
 ## Introduction
 
-beBOP utilise nativement certaines pages obligatoires pour afficher différents textes (type mentions légales), la homepage ou des pages d'erreur.
+be-BOP utilise nativement certaines pages obligatoires pour afficher différents textes (type mentions légales), la homepage ou des pages d'erreur.
 Ces pages sont des pages CMS pouvant être personnalisées dans /admin/CMS comme n'importe quelle page de contenu enrichi.
 
 Les slugs de ces pages sont :
@@ -61,11 +61,11 @@ Remplir cette page est fastidieux, mais néanmoins obligatoire !
 Voir [privacy-management.md](/docs/fr/privacy-management.md)
 Cette page est usuellement afichée dans les liens du footer du site.
 Elle permet à vos visiteurs de connaîtres toutes les conditions d'utilisations de leurs informations personnelles, du respect de la RGPD, de la collecte de cookies, etc.
-Nativement, le seul cookie present (bootik-session) sur beBOP est le cookie de session qui est essential au bon fonctionnement.
+Nativement, le seul cookie present (bootik-session) sur be-BOP est le cookie de session qui est essential au bon fonctionnement.
 Nous n’utilisons pas de cookie publicitaire.
 Un second cookie (lang) est présent pour la conservation du choix de la langue.
 En tant que propriétaire, vous pouvez récolter plus d'informations (information de facturation, adresse IP) pour raisons légales et comptables : à vous de l'expliquer dans cette page.
-De plus, si, nativement, les optins pour démarchage commercial sont désactivés sur beBOP, leur présentation (désactivée) au client est possible, et vous devez vous engager à respecter le choix du client sur ce qu'il choisit ou non dans ses optins.
+De plus, si, nativement, les optins pour démarchage commercial sont désactivés sur be-BOP, leur présentation (désactivée) au client est possible, et vous devez vous engager à respecter le choix du client sur ce qu'il choisit ou non dans ses optins.
 Remplir cette page est fastidieux, mais néanmoins obligatoire et éthique vis-à-vis de vos visiteurs !
 
 ## /why-vat-customs - Paiement aux douanes dès réception
@@ -75,7 +75,7 @@ Dans le cadre du régime de TVA 2B (vente au taux de TVA du pays du vendeur et e
 ## /why-collect-ip - Justification de la collecte d'IP
 Voir [privacy-management.md](/docs/fr/privacy-management.md)
 Si, pour raison comptable ou légale, vous devez stocker l'IP de votre client lors d'un achat dématérialisé sans adresse postale (via /admin/config avec l'option **Request IP collection on deliveryless order** (*Demander le stockage de l'IP pour les demandes sans livraison physique*)), le client disposera d'une option obligatoire pour terminer sa commande **I agree to the collection of my IP address (why?)** (*J'accepte la collecte de mon adresse IP (pourquoi?)*).
-Le lien de cette option renvoie vers /why-collect-ip , où il est préférable d'expliquer pourquoi vous souhaitez la sauvegarde d'une telle donnée (en rappelant que l'acceptation par le client est obligatoire pour finaliser la commande si vous configurez votre beBOP ainsi).
+Le lien de cette option renvoie vers /why-collect-ip , où il est préférable d'expliquer pourquoi vous souhaitez la sauvegarde d'une telle donnée (en rappelant que l'acceptation par le client est obligatoire pour finaliser la commande si vous configurez votre be-BOP ainsi).
 
 ## /why-pay-reminder - Engagement de paiement d'une commande sur acompte
 Voir [order-with-deposit.md](/doc/fr/order-with-deposit.md)

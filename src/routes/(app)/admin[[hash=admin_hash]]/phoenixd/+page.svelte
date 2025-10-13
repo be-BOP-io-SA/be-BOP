@@ -33,7 +33,7 @@
 		PhoenixD is not active yet. Follow <a
 			href="https://phoenix.acinq.co/server/get-started"
 			class="body-hyperlink underline">this procedure</a
-		> to install it on the same server as beBOP.
+		> to install it on the same server as be-BOP.
 	</p>
 
 	<p>Once done, click on "Detect PhoenixD Server" button</p>

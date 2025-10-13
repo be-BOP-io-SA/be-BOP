@@ -1,8 +1,8 @@
-# Initialize your beBOP
+# Initialize your be-BOP
 
 Quick dirty summary before cleaner documentation
 
-Once your beBOP is up (don't forget the readme.md) :
+Once your be-BOP is up (don't forget the readme.md) :
 
 ## Super-admin account
 
@@ -16,7 +16,7 @@ Once your beBOP is up (don't forget the readme.md) :
 Go to /admin/config, go to "Admin hash", define a hash, and save.
 Now, the backoffice address is /admin-yourhash
 
-### Make your beBOP into maintenance mode
+### Make your be-BOP into maintenance mode
 
 Go to /admin/config, check "Enable maintenance mode".
 You can an any IPv4 comma-separated to allow access to the front-office.
@@ -28,7 +28,7 @@ Go to /admin/config :
 - second currency is optional and is used to be displayed on front
 - price reference currency is the default currency you'll create your price on, but you'll be able to change that product per product
   - by clicking the red button and confirming, your product currencies will be overwritten to the chosen selection, but the price won't be updated
-- accounting currency allows for full BTC currency beBOp to save the exchange rate of Bitcoin at the time of the order.
+- accounting currency allows for full BTC currency be-BOP to save the exchange rate of Bitcoin at the time of the order.
 
 ### Timing
 
@@ -46,7 +46,7 @@ etc
 
 ### Order expiration
 
-"Set desired timeout for payment (in minute)" allows to cancel an order on beBOP system if the transaction wasn't paid or verified enough.
+"Set desired timeout for payment (in minute)" allows to cancel an order on be-BOP system if the transaction wasn't paid or verified enough.
 It's only for Bitcoin-onchain, Lightning and Credit card by sum up.
 A too short time will oblige you to have short / null onchain confirmation block target.
 A too long time will block your products stock while the order is pending.

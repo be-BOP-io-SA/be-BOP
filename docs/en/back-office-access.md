@@ -1,14 +1,14 @@
 # Back-office access
 
-People with a beBOP employee account and the super-admin can log in to the back office via /admin
+People with a be-BOP employee account and the super-admin can log in to the back office via /admin
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/73caa204-cc6e-4341-822b-0c0de228f1aa)
 
 ## First-time login and secure access
 
-As the /admin url is too obvious, the beBOP owner can configure a special string to secure access to the back office.
+As the /admin url is too obvious, the be-BOP owner can configure a special string to secure access to the back office.
 
-To do this, when you create beBOP, go to /admin/config, then to this area :
+To do this, when you create be-BOP, go to /admin/config, then to this area :
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/851475e9-965e-4078-8cec-51b0d875b46f)
 
@@ -43,7 +43,7 @@ You will then have access to the admin area, depending on the rights assigned to
 
 During employee.e login, your password is checked.
 The first and last encrypted characters of your password string are sent to [Have I Been Pawned](https://haveibeenpwned.com/), which returns a series of whole strings.
-beBOP then checks locally whether your password is present in this list (so that it is not communicated directly to Have I Been Pawned).
+be-BOP then checks locally whether your password is present in this list (so that it is not communicated directly to Have I Been Pawned).
 If the password is present, you'll be blocked with this security message, inviting you to change your password:
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/f1107869-e56f-448a-b48b-8768e3b24e8a)
@@ -68,7 +68,7 @@ You will then be prompted to enter your login.
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/7b7edd40-5200-4f88-946d-fc3798e16a9d)
 
-If you enter the wrong identifier, you'll be notified, and you can try again with a different one. If you can't find your identifier, you'll have to ask the beBOP administrator to give you the information again.
+If you enter the wrong identifier, you'll be notified, and you can try again with a different one. If you can't find your identifier, you'll have to ask the be-BOP administrator to give you the information again.
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/cc91761f-7d98-4c16-a528-9b1939d12c85)
 
