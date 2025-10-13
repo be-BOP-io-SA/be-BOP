@@ -2,7 +2,7 @@
 
 ## Introduction
 
-beBOP natively uses certain mandatory pages to display various texts (such as legal notices), the homepage or error pages.
+be-BOP natively uses certain mandatory pages to display various texts (such as legal notices), the homepage or error pages.
 These pages are CMS pages that can be customized in /admin/CMS like any other rich content page.
 
 The slugs for these pages are :
@@ -61,11 +61,11 @@ Filling in this page is tedious, but nonetheless mandatory!
 See [privacy-management.md](/docs/en/privacy-management.md)
 This page is usually displayed in the site footer links.
 It lets your visitors know all the conditions governing the use of their personal information, compliance with the RGPD, cookie collection, etc.
-The only cookie present (bootik-session) on beBOP is the session cookie, which is essential for proper operation.
+The only cookie present (bootik-session) on be-BOP is the session cookie, which is essential for proper operation.
 We do not use advertising cookies.
 A second cookie (lang) is present to store your choice of language.
 As the owner, you can collect more information (billing information, IP address) for legal and accounting reasons: please explain on this page.
-What's more, although optins for commercial canvassing are natively deactivated on beBOP, it is possible to present them (deactivated) to the customer, and you must undertake to respect the customer's choice as to what he chooses or not in his optins.
+What's more, although optins for commercial canvassing are natively deactivated on be-BOP, it is possible to present them (deactivated) to the customer, and you must undertake to respect the customer's choice as to what he chooses or not in his optins.
 Filling in this page is tedious, but nonetheless mandatory and ethical towards your visitors!
 
 ## /why-vat-customs - Payment to customs on receipt
@@ -75,7 +75,7 @@ Under the 2B VAT regime (sale at the VAT rate of the seller's country and exempt
 ## /why-collect-ip - Justification for collecting IP
 See [privacy-management.md](/docs/en/privacy-management.md)
 If, for accounting or legal reasons, you need to store your customer's IP address for a dematerialized purchase without a postal address (via /admin/config with the **Request IP collection on deliveryless order** option), the customer will be given a mandatory option to complete the order **I agree to the collection of my IP address (why?)**.
-The link for this option goes to /why-collect-ip , where it's best to explain why you want to save such data (remembering that customer acceptance is mandatory to finalize the order if you configure your beBOP in this way).
+The link for this option goes to /why-collect-ip , where it's best to explain why you want to save such data (remembering that customer acceptance is mandatory to finalize the order if you configure your be-BOP in this way).
 
 ## /why-pay-reminder - Commitment to pay an order on account
 See [order-with-deposit.md](/doc/en/order-with-deposit.md)

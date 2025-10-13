@@ -1,14 +1,14 @@
 # Accès au back-office
 
-Les gens possédant un compte beBOP employé et le super-admin peuvent se connecter au back-office via /admin
+Les gens possédant un compte be-BOP employé et le super-admin peuvent se connecter au back-office via /admin
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/73caa204-cc6e-4341-822b-0c0de228f1aa)
 
 ## Première connexion et accès sécurisé
 
-L'url /admin étant trop évidente, le ou la propriétaire du beBOP peut configurer une chaine spéciale pour sécuriser l'accès au back-office.
+L'url /admin étant trop évidente, le ou la propriétaire du be-BOP peut configurer une chaine spéciale pour sécuriser l'accès au back-office.
 
-Pour cela, à la crétion du beBOP, il faut se rendre dans /admin/config, puis dans cette zone :
+Pour cela, à la crétion du be-BOP il faut se rendre dans /admin/config, puis dans cette zone :
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/851475e9-965e-4078-8cec-51b0d875b46f)
 
@@ -43,7 +43,7 @@ Vous aurez ensuite accès à l'admin, en fonction des droits qui auront été at
 
 Lors de la connexion employé.e, votre mot de passe est contrôlé.
 Les premiers et derniers caractères chiffrés de la chaîne de votre mot de passe sont envoyés à [Have I Been Pawned](https://haveibeenpwned.com/), qui nous renvoie une série de chaines entières.
-beBOP contrôle ensuite localement si votre mot de passe est présent dans cette liste (ainsi, il n'est pas communiqué directement à Have I Been Pawned).
+be-BOP contrôle ensuite localement si votre mot de passe est présent dans cette liste (ainsi, il n'est pas communiqué directement à Have I Been Pawned).
 Si le mot de passe y est présent, vous serez bloqué avec ce message de sécurité, vous invitant à changer de mot de passe :
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/f1107869-e56f-448a-b48b-8768e3b24e8a)
@@ -68,7 +68,7 @@ Vous êtes alors amené à saisir votre identifiant.
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/7b7edd40-5200-4f88-946d-fc3798e16a9d)
 
-Si vous vous trompez d'idenfitiant, cela vous le sera signalé, et vous pourrez retenter l'opération avec un autre identifiant. Si vous ne retrouvez pas votre identifiant, il faudra demander à l'administrateur du beBOP de vous redonner l'information.
+Si vous vous trompez d'idenfitiant, cela vous le sera signalé, et vous pourrez retenter l'opération avec un autre identifiant. Si vous ne retrouvez pas votre identifiant, il faudra demander à l'administrateur du be-BOP de vous redonner l'information.
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/cc91761f-7d98-4c16-a528-9b1939d12c85)
 

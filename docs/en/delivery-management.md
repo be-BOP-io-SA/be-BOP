@@ -1,7 +1,7 @@
 # Shipping costs management
 
 ## Introduction
-beBOP currently offers only one generic shipping method.
+be-BOP currently offers only one generic shipping method.
 However, there are several ways to manage shipping costs.
 Shipping costs can be configured :
 - globally on /admin/config/delivery

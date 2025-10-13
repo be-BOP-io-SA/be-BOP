@@ -2,7 +2,7 @@
 
 ## Introduction
 
-beBOP vous permet à la fois d'interagir avec votre communauté sur internet, mais également d'être utilisé comme logiciel de caisse (en stand ou magasin).
+be-BOP vous permet à la fois d'interagir avec votre communauté sur internet, mais également d'être utilisé comme logiciel de caisse (en stand ou magasin).
 
 POS : Point Of Sale (point de vente, pour avoir un comportement de caisse de magasin)
 
@@ -21,7 +21,7 @@ Le rôle point-of-sale est configuré par défaut dans le module /admin/arm :
 
 ## Connexion au compte POS
 
-Une fois attribué à un profil, la personne possédant les accès POS doit se rendre sur la page d'identification dans l'administration (/admin/login , où /admin est la chaîne sécurisée configurée par le propriétaire du beBOP (voir [back-office-access.md](back-office-access.md) ) puis s'identifier.
+Une fois attribué à un profil, la personne possédant les accès POS doit se rendre sur la page d'identification dans l'administration (/admin/login , où /admin est la chaîne sécurisée configurée par le propriétaire du be-BOP (voir [back-office-access.md](back-office-access.md) ) puis s'identifier.
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/0e0f9eef-69cd-4c88-9402-3ed1fd3167e5)
 
@@ -118,7 +118,7 @@ La somme (frais de port + tva liée) sera déduite à la page suivante (les prix
 
 Le compte POS permet d'utiliser :
 - les paiements classiques proposés sur le site qui ont été activés et sont éligibles ( [payment-management.md](payment-management.md ) pour l'ensemble des produits du panier 
-- le paiement Point of Sale, qui inclut tout paiement extérieur au système beBOP
+- le paiement Point of Sale, qui inclut tout paiement extérieur au système be-BOP
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/23185560-a3bf-4aab-8268-dd93fbbea47c)
 
@@ -154,7 +154,7 @@ En cas d'activation de l'option, une justification obligatoire sera à renseign�
 
 Il faut également choisir le type de réduction :
 - en %age (un message d'erreur sera affiché en cas d'entrée invalide, ou de réduction de 100%)
-- en montant correspondance à la devise principale du beBOP ( voir [currency-management.md](currency-management.md) ) (un message d'erreur sera affiché en cas d'entrée invalide, ou de réduction de correspondant au total de la commande)
+- en montant correspondance à la devise principale du be-BOP ( voir [currency-management.md](currency-management.md) ) (un message d'erreur sera affiché en cas d'entrée invalide, ou de réduction de correspondant au total de la commande)
 
 ⚖️ Votre loi locale doit autoriser l'utilisation de cette option et ses montants maximum, dont vous êtes responsable (par exemple : loi du prix unique en France)
 
@@ -205,7 +205,7 @@ Activer ces options sans obtenir l'aval explicite du client est de votre respons
 
 ### Paiement Point of Sale
 
-En attendant la création de sous-types de paiement Point of Sale, le paiement Point of Sale inclut tous les paiements hors-beBOP :
+En attendant la création de sous-types de paiement Point of Sale, le paiement Point of Sale inclut tous les paiements hors-be-BOP :
 - l'utilisation d'un TPE physique (nous ne faisons pas encore de réconciliation automatique avec les TPE Sum UP, même si le compte du site et le compte du TPE sont partagés)
 - cash
 - chèque (pour les pays qui l'utilisent encore)
@@ -234,7 +234,7 @@ Une fois l'encaissement réalisé, vous pouvez renseigner et valider le champ et
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/e99ab058-f739-47f7-8082-0c5580c7fc08)
 
-💡 Si vous souhaitez exporter la facture en PDF, vous pouvez choisir en destination d'impression "Enregistrer au format PDF" (beBOP ne permet nativement pas la génération d'un document PDF pour le moment)
+💡 Si vous souhaitez exporter la facture en PDF, vous pouvez choisir en destination d'impression "Enregistrer au format PDF" (be-BOP ne permet nativement pas la génération d'un document PDF pour le moment)
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/92822dc4-291f-4acd-9bd2-726ef3cab469)
 
@@ -318,7 +318,7 @@ Si votre TPE physique est en panne, votre client peut scanner un QR Code avec so
 
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/43f192a5-30ab-44bd-87f3-c60c1d5fad14)
 
-L'affichage revient ensuite vers l'affichage d'accueil / attente, avec le message de bienvenue et le logo du beBOP.
+L'affichage revient ensuite vers l'affichage d'accueil / attente, avec le message de bienvenue et le logo du be-BOP.
 
 ### Lorsqu'un paiement Point of Sale est réalisé
 

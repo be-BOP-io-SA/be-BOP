@@ -1,6 +1,6 @@
 ![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/533af93b-00c9-4d04-82db-599d4de59cf2)
 
-# beBOP Manifesto
+# be-BOP Manifesto
 
 https://be-bop.io/bebop-manifesto
 
@@ -25,7 +25,7 @@ Et si, ces dernières années, l’émergence de solutions comme Sum Up ou Twint
 
 Les solutions auto-hébergées, quant à elles, peuvent se révéler d’une versatilité telle qu’elles pourraient équiper de grands groupes e-commerce, intégrer des PIMs, des MDMs, et singer le fonctionnement et l’organisation de géants (via une base freemium et des plugins optionnels payants rapidement indispensables, parfois même pour le respect de la loi), là où les besoins des créateurs et créatrices de contenus sont bien plus simples, et leurs compétences sont des compétences de création, non de prise en main d’un système e-commerce avancé nécessitant les coûteuses interventions de web agencies.
 
-Aussi, pour répondre à ces problématiques, de plus en plus présentes chez les créateurs et les créatrices de contenu, nous avons décidé de désigner beBOP :
+Aussi, pour répondre à ces problématiques, de plus en plus présentes chez les créateurs et les créatrices de contenu, nous avons décidé de désigner be-BOP :
 - en proposant une solution hébergée sans plugin, open-source et libre, pour plus de stabilité, et pour profiter d’un écosystème complet, activable ou non selon les besoins, sans frais caché supplémentaire (merch, CMS, ARM, analytic, suivi de facturation, i18n, accessibilité…)
 - en incluant directement la simplicité du SEO : exit la double saisie d’informations produits et de pages statiques versus les balises meta, ce qui est affiché sur le site est ce qui est référencé par les crawlers SEO
 - en permettant à un soutien, au sein d’un même parcours, de pouvoir réaliser à la fois un achat, un don, une souscription périodique et une précommande sans avoir besoin de jongler entre plusieurs plateformes spécialisées
@@ -43,7 +43,7 @@ Et pour cela, nos leviers sont la souveraineté numérique, l’incensurabilité
 
 > Il n’y a pas que brûler des livres qui m’inquiète. Il y a aussi ceux qui ne seront jamais écrits, du fait de la crainte de la censure. - **Judy Blume**
 
-## Le futur de beBOP et des marketplaces décentralisées
+## Le futur de be-BOP et des marketplaces décentralisées
 
 > De l'émulation distinguez bien l'envie:
 > L'une mène à la gloire, et l'autre au déshonneur;
@@ -61,21 +61,21 @@ De la même façon, les grandes marketplaces centralisées, type CDiscount ou Am
 En revanche, la collaboration entre créateurs et créatrices, l’effet “Capsule”, le featuring et le partenariat ont un effet vertueux et intemporel : une création commune, un événement partagé, un projet mixant les univers, ce type d’actions a tendance à faire converger les communautés et les soutiens. Les créateurs et créatrices, main dans la main, amènent leurs communautés à se rencontrer et à se mélanger.
 Mais ce genre de chose, informatiquement et à l’heure actuelle, n’est possible qu’au gré de la création de plateformes dédiées, ou de services centralisés peu adaptés.
 
-Avec le produit beBOP, nous pouvons, à l’heure actuelle, proposer aux créateurs et aux créatrices de contenu d’avoir leur solution auto-hébergée pour partager leurs contenus et monétiser leur communauté.
+Avec le produit be-BOP, nous pouvons, à l’heure actuelle, proposer aux créateurs et aux créatrices de contenu d’avoir leur solution auto-hébergée pour partager leurs contenus et monétiser leur communauté.
 
-Avec la fonction Cross-beBOP, nous pourrons, grâce à une cinématique d’association basée sur Nostr, permettre à deux beBOP ou plus de pouvoir :
+Avec la fonction Cross-be-BOP, nous pourrons, grâce à une cinématique d’association basée sur Nostr, permettre à deux be-BOP ou plus de pouvoir :
 autoriser la collaboration directe
 réaliser des échanges de catalogue automatiques pour vendre les produits de l’un ou l’autre
-appliquer automatiquement des marges et commissions préalablement configurées dans les back-offices de chaque beBOP, avec un envoi automatique via Lightning
-envoyer des ordres de facturation au beBOP du créateur ou de la créatrice d’origine afin de pouvoir tracer automatiquement dans sa comptabilité et sa gestion des stocks la vente affiliée
+appliquer automatiquement des marges et commissions préalablement configurées dans les back-offices de chaque be-BOP, avec un envoi automatique via Lightning
+envoyer des ordres de facturation au be-BOP du créateur ou de la créatrice d’origine afin de pouvoir tracer automatiquement dans sa comptabilité et sa gestion des stocks la vente affiliée
 mener des campagnes de financement participatif (appelées peerfunding car sans tiers faisant de rétention des fonds) mêlant les créations de chacun et chacune
 
-Enfin, avec la fonction Meta-beBOP, nous voulons réinventer le rôle de l’influenceur et de l’utilisation classique du promocode ou du lien d’affiliation pour permettre la mise en place de showrooms pour sélections et coups de cœur.
-Sous couvert de l’activation d’un paramètre Discovery par le créateur ou la créatrice de contenu possédant un beBOP, avec la définition d’un pourcentage de marge (commission de Discovery), n’importe qui pourrait ouvrir son propre beBOP et l’alimenter depuis ces catalogues publics, à la manière du Cross-beBOP :
+Enfin, avec la fonction Meta-be-BOP, nous voulons réinventer le rôle de l’influenceur et de l’utilisation classique du promocode ou du lien d’affiliation pour permettre la mise en place de showrooms pour sélections et coups de cœur.
+Sous couvert de l’activation d’un paramètre Discovery par le créateur ou la créatrice de contenu possédant un be-BOP, avec la définition d’un pourcentage de marge (commission de Discovery), n’importe qui pourrait ouvrir son propre be-BOP et l’alimenter depuis ces catalogues publics, à la manière du Cross-be-BOP :
 - Un influenceur littéraire pourrait mettre en avant sa sélection de livres de différentes maisons d’éditions, accompagnées de ses critiques, et toucher la commission sur vente définie par ces derniers
 - Une ONG pourrait présenter une sélection de projets et de campagnes de peerfunding à but humanitaire ou caritatif en décidant simplement de les rendre visible, sans réclamer de marge
-- Un propriétaire de beBOP doté d’un noeud Bitcoin, d’un relais Lightning et de plusieurs modes de paiements fiat (type CB, SoFort, AliPay, virement ou autre) pourrait permettre à des propriétaires de beBOP n’ayant pas accès à ces services de toucher un public plus large qui ne serait pas limité à leur seul mode de paiement accessible
+- Un propriétaire de be-BOP doté d’un noeud Bitcoin, d’un relais Lightning et de plusieurs modes de paiements fiat (type CB, SoFort, AliPay, virement ou autre) pourrait permettre à des propriétaires de be-BOP n’ayant pas accès à ces services de toucher un public plus large qui ne serait pas limité à leur seul mode de paiement accessible
 
-Et, ce, de manière entièrement décentralisée : pas d’API centrale, pas de serveur de marketplace servant de noeud d’information, avec une communication en étoile entre chaque boutique par le biais de bots Nostr liés au back-end de chaque beBOP, configuré par le créateur ou la créatrice de contenu, pour permettre un partage résilient, décentralisé et pair-à-pair de leur contenu auprès d’un public plus large.
+Et, ce, de manière entièrement décentralisée : pas d’API centrale, pas de serveur de marketplace servant de noeud d’information, avec une communication en étoile entre chaque boutique par le biais de bots Nostr liés au back-end de chaque be-BOP, configuré par le créateur ou la créatrice de contenu, pour permettre un partage résilient, décentralisé et pair-à-pair de leur contenu auprès d’un public plus large.
 
-Par ces fonctions de Cross-beBOP et de Meta-beBOP, nous espérons encourager des opérations éphémères, de l’événementiel, des festivals, des coopératives artistiques, où créateurs et créatrices de contenu pourraient travailler de pair, mais en autonomie pour dépasser le cadre de leur seule activité, et bénéficier de la sélection d’inconnus ou d’inconnues qui valoriserait la qualité de leurs créations autrement que par une simple critique, mais par une véritable curation artistique ou artisanale.
+Par ces fonctions de Cross-be-BOP et de Meta-be-BOP, nous espérons encourager des opérations éphémères, de l’événementiel, des festivals, des coopératives artistiques, où créateurs et créatrices de contenu pourraient travailler de pair, mais en autonomie pour dépasser le cadre de leur seule activité, et bénéficier de la sélection d’inconnus ou d’inconnues qui valoriserait la qualité de leurs créations autrement que par une simple critique, mais par une véritable curation artistique ou artisanale.
