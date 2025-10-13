@@ -535,7 +535,7 @@ export const actions = {
 							acceptedExportationAndVATObligation: agreements.isVATNullForeigner
 						})
 					},
-					...(physicalFullyPaid?.onLocation && { onLocation: physicalFullyPaid.onLocation }),
+					...(physicalFullyPaid && { onLocation: physicalFullyPaid.onLocation }),
 					...(desiredPayment.paymentTimeOut && { paymentTimeOut: desiredPayment.paymentTimeOut }),
 					session
 				}
