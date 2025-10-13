@@ -11,6 +11,8 @@ import {
 	removeOrderTab
 } from '$lib/server/orderTab';
 import { removeUserCarts } from '$lib/server/cart';
+import { getCurrentPosSession } from '$lib/server/pos-sessions';
+import { runtimeConfig } from '$lib/server/runtime-config';
 
 export const load = async (event) => {
 	const lastOrders = await collections.orders
@@ -23,6 +25,8 @@ export const load = async (event) => {
 	const session = await collections.sessions.findOne({
 		sessionId: event.locals.sessionId
 	});
+
+	const currentPosSession = runtimeConfig.posSession.enabled ? await getCurrentPosSession() : null;
 
 	return {
 		orders: lastOrders.map((order) => ({
@@ -43,7 +47,19 @@ export const load = async (event) => {
 			status: order.status
 		})),
 		countryCode: event.locals.countryCode,
-		sessionPos: session?.pos
+		sessionPos: session?.pos,
+		posSession: runtimeConfig.posSession,
+		currentSession: currentPosSession
+			? {
+					_id: currentPosSession._id.toString(),
+					status: currentPosSession.status,
+					openedAt: currentPosSession.openedAt,
+					openedBy:
+						currentPosSession.openedBy.userAlias ||
+						currentPosSession.openedBy.userLogin ||
+						currentPosSession.openedBy.userId
+			  }
+			: null
 	};
 };
 
