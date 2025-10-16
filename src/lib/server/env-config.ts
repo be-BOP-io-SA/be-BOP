@@ -42,6 +42,10 @@ export const NO_LOCK = dynPrivateEnv.NO_LOCK ?? staticPrivateEnv.NO_LOCK;
 export const ORIGIN = dynPrivateEnv.ORIGIN ?? staticPrivateEnv.ORIGIN;
 export const PUBLIC_S3_ENDPOINT_URL =
 	dynPublicEnv.PUBLIC_S3_ENDPOINT_URL ?? staticPublicEnv.PUBLIC_S3_ENDPOINT_URL;
+export const PHOENIXD_ENDPOINT_URL =
+	dynPrivateEnv.PHOENIXD_ENDPOINT_URL ?? staticPrivateEnv.PHOENIXD_ENDPOINT_URL;
+export const PHOENIXD_HTTP_PASSWORD =
+	dynPrivateEnv.PHOENIXD_HTTP_PASSWORD ?? staticPrivateEnv.PHOENIXD_HTTP_PASSWORD;
 export const S3_BUCKET = dynPrivateEnv.S3_BUCKET ?? staticPrivateEnv.S3_BUCKET;
 export const S3_ENDPOINT_URL = dynPrivateEnv.S3_ENDPOINT_URL ?? staticPrivateEnv.S3_ENDPOINT_URL;
 export const S3_KEY_ID = dynPrivateEnv.S3_KEY_ID ?? staticPrivateEnv.S3_KEY_ID;
