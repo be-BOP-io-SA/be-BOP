@@ -769,7 +769,9 @@
 	},
 	"subscription": {
 		"associated": {
-			"npub": "Associated to npub: {npub}"
+			"title": "Associated to:",
+			"npub": "Associated to npub: {npub}",
+			"email": "Associated to email: {email}"
 		},
 		"cantRenew": "Subscription not due for renewal",
 		"cta": {

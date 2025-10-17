@@ -422,6 +422,35 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 <p>Opened by: {{openedBy}}</p>
 <p>Date: {{openedAt}}</p>`,
 			default: true as boolean
+		},
+		'subscription.reminder': {
+			subject: 'Your subscription #{{subscriptionNumber}} is expiring soon',
+			html: `<p>Dear customer,</p>
+<p>Your subscription #{{subscriptionNumber}} is going to expire {{expirationTime}}.</p>
+<p>To continue enjoying our services, please renew your subscription by following this link:</p>
+<p><a href="{{subscriptionLink}}">{{subscriptionLink}}</a></p>
+<p>If you have any questions, please contact us.</p>
+<p>Best regards,<br/>{{brandName}}</p>`,
+			default: true as boolean
+		},
+		'subscription.ended': {
+			subject: 'Your subscription #{{subscriptionNumber}} has expired',
+			html: `<p>Dear customer,</p>
+<p>Your subscription #{{subscriptionNumber}} has expired.</p>
+<p>If you wish to renew your subscription, please follow this link:</p>
+<p><a href="{{subscriptionLink}}">{{subscriptionLink}}</a></p>
+<p>Thank you for using our services.</p>
+<p>Best regards,<br/>{{brandName}}</p>`,
+			default: true as boolean
+		},
+		'subscription.renewed': {
+			subject: 'Your subscription #{{subscriptionNumber}} has been renewed',
+			html: `<p>Dear customer,</p>
+<p>Your subscription #{{subscriptionNumber}} has been successfully renewed!</p>
+<p>New expiration date: {{newExpirationDate}}</p>
+<p>Thank you for your continued support.</p>
+<p>Best regards,<br/>{{brandName}}</p>`,
+			default: true as boolean
 		}
 	}
 };
