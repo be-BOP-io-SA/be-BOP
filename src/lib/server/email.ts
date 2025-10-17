@@ -81,7 +81,7 @@ export async function sendEmail(params: {
 		})
 	});
 
-	console.log('Email sent', res);
+	console.log(`✅ Email sent [${params.subject}] → ${params.to}`, res);
 }
 
 export async function queueEmail(
@@ -93,6 +93,8 @@ export async function queueEmail(
 		bcc?: string;
 	}
 ): Promise<void> {
+	console.log(`📧 Queueing email: ${templateKey} → ${to}`);
+
 	const lowerVars = mapKeys(
 		{
 			...vars,
