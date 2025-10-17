@@ -1,11 +1,12 @@
 import { collections } from '$lib/server/database';
 import { createOrder } from '$lib/server/orders';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { userIdentifier, userQuery } from '$lib/server/user.js';
+import { userQuery } from '$lib/server/user.js';
 import { error, redirect } from '@sveltejs/kit';
-import { subSeconds } from 'date-fns';
+import { subHours, subSeconds } from 'date-fns';
+import type { Actions } from './$types';
 
-export async function load({ params, locals }) {
+export async function load({ params, locals }: { params: { id: string }; locals: App.Locals }) {
 	const subscription = await collections.paidSubscriptions.findOne({
 		_id: params.id
 	});
@@ -46,6 +47,7 @@ export async function load({ params, locals }) {
 		subscription: {
 			createdAt: subscription.createdAt,
 			npub: subscription.user.npub,
+			email: subscription.user.email,
 			paidUntil: subscription.paidUntil,
 			number: subscription.number
 		},
@@ -58,8 +60,8 @@ export async function load({ params, locals }) {
 	};
 }
 
-export const actions = {
-	renew: async function ({ params, locals }) {
+export const actions: Actions = {
+	renew: async ({ params, locals }) => {
 		const subscription = await collections.paidSubscriptions.findOne({
 			_id: params.id
 		});
@@ -81,8 +83,8 @@ export const actions = {
 		const lastOrder = await collections.orders.findOne(
 			{
 				'items.product._id': product._id,
-				'payment.status': 'paid',
-				orConditions
+				'payments.status': 'paid',
+				...orConditions
 			},
 			{
 				sort: { createdAt: -1 }
@@ -105,6 +107,22 @@ export const actions = {
 			);
 		}
 
+		const existingPendingOrder = await collections.orders.findOne(
+			{
+				'items.product._id': product._id,
+				status: 'pending',
+				...orConditions,
+				createdAt: { $gte: subHours(new Date(), 2) }
+			},
+			{
+				sort: { createdAt: -1 }
+			}
+		);
+
+		if (existingPendingOrder) {
+			throw redirect(303, `/order/${existingPendingOrder._id}`);
+		}
+
 		const orderId = await createOrder(
 			[
 				{
@@ -115,14 +133,19 @@ export const actions = {
 			paidPayment.method,
 			{
 				locale: locals.language,
-				user: userIdentifier(locals),
+				user: subscription.user,
 				shippingAddress: lastOrder.shippingAddress,
 				userVatCountry:
 					lastOrder.shippingAddress?.country ||
 					locals.countryCode ||
 					runtimeConfig.vatCountry ||
 					undefined,
-				notifications: lastOrder.notifications
+				notifications: {
+					paymentStatus: {
+						...(subscription.user.email && { email: subscription.user.email }),
+						...(subscription.user.npub && { npub: subscription.user.npub })
+					}
+				}
 			}
 		);
 
