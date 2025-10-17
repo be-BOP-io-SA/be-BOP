@@ -1,10 +1,12 @@
-import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
+import { MongoServerError, Timestamp, type ChangeStream, type ChangeStreamDocument } from 'mongodb';
 import { Lock } from '../lock';
 import { collections } from '../database';
 import type { EmailNotification } from '$lib/types/EmailNotification';
 import { emailsEnabled, sendEmail } from '../email';
 import { building } from '$app/environment';
 import { rateLimit } from '../rateLimit';
+import { getUnixTime, subHours } from 'date-fns';
+import { typedInclude } from '$lib/utils/typedIncludes';
 
 const lock = emailsEnabled ? new Lock('notifications.email') : null;
 
@@ -62,24 +64,40 @@ async function handleEmailNotification(email: EmailNotification): Promise<void> 
 	}
 }
 
-let changeStream: ChangeStream<EmailNotification>;
+let changeStream: ChangeStream<EmailNotification> | null = null;
 
-function watch() {
+async function watch(opts?: { operationTime?: Timestamp }) {
 	try {
 		rateLimit('0.0.0.0', 'changeStream.email-notifications', 10, { minutes: 5 });
 	} catch {
 		console.error("Too many change streams errors for 'email-notifications', exiting");
 		process.exit(1);
 	}
-	changeStream = collections.emailNotifications.watch([{ $match: { operationType: 'insert' } }], {
-		fullDocument: 'updateLookup'
-	});
-	changeStream.on('change', (ev) => handleChanges(ev).catch(console.error));
-	changeStream.on('error', (err) => {
-		console.error('email-notifications', err);
-		changeStream.close().catch(console.error);
-		watch();
-	});
+	changeStream = collections.emailNotifications
+		.watch([{ $match: { operationType: 'insert' } }], {
+			fullDocument: 'updateLookup',
+			...(opts?.operationTime && {
+				startAtOperationTime: opts.operationTime
+			})
+		})
+		.on('change', (ev) => handleChanges(ev).catch(console.error))
+		.once('error', async (err) => {
+			console.error('change stream error', err);
+			changeStream?.close().catch(console.error);
+			changeStream = null;
+
+			if (
+				err instanceof MongoServerError &&
+				typedInclude(['ChangeStreamHistoryLost', 'ChangeStreamFatalError'], err.codeName)
+			) {
+				// Restart from 1 hour ago if history was lost
+				watch({ operationTime: Timestamp.fromBits(0, getUnixTime(subHours(new Date(), 1))) });
+			} else {
+				watch();
+			}
+		});
+
+	return changeStream;
 }
 
 if (emailsEnabled && !building) {

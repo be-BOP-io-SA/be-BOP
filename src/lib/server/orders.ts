@@ -2103,11 +2103,12 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, updatedFreeProductsById);
 			}
+			const newPaidUntil = add(max([existing.paidUntil, new Date()]), subscriptionDuration);
 			const result = await collections.paidSubscriptions.updateOne(
 				{ _id: existing._id },
 				{
 					$set: {
-						paidUntil: add(max([existing.paidUntil, new Date()]), subscriptionDuration),
+						paidUntil: newPaidUntil,
 						updatedAt: new Date(),
 						notifications: [],
 						...(Object.keys(updatedFreeProductsById).length !== 0 && {
@@ -2120,6 +2121,21 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			);
 			if (!result.modifiedCount) {
 				throw new Error('Failed to update subscription');
+			}
+
+			if (existing.user.email) {
+				await queueEmail(
+					existing.user.email,
+					'subscription.renewed',
+					{
+						subscriptionNumber: existing.number.toString(),
+						newExpirationDate: newPaidUntil.toLocaleString(order.locale || 'en', {
+							dateStyle: 'full',
+							timeStyle: 'short'
+						})
+					},
+					{ session }
+				);
 			}
 		} else {
 			const freeProductsById: PaidSubscription['freeProductsById'] = {};
