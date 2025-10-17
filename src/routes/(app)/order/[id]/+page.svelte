@@ -177,8 +177,8 @@
 								class="break-words {payment.status === 'paid'
 									? 'text-green-500'
 									: 'body-secondaryText'} "
-								amount={payment.price.amount}
-								currency={payment.price.currency}
+								amount={payment.price?.amount ?? payment.currencySnapshot?.main.price.amount}
+								currency={payment.price?.currency ?? payment.currencySnapshot?.main.price.currency}
 							/> - {t(`order.paymentStatus.${payment.status}`)}</span
 						>
 					</summary>
