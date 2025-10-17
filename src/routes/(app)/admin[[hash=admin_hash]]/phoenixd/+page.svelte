@@ -28,7 +28,7 @@
 
 <h1 class="text-3xl">PhoenixD</h1>
 
-{#if !data.phoenixd.enabled}
+{#if !data.phoenixd.enabled && !data.configManagedByEnvVars}
 	<p>
 		PhoenixD is not active yet. Follow <a
 			href="https://phoenix.acinq.co/server/get-started"
@@ -80,20 +80,31 @@
 {:else}
 	<p>Note that PhoenixD lightning payments have a max expiration of one hour.</p>
 	<form class="contents" method="POST" action="?/update">
-		<label class="form-label">
-			PhoenixD http password (from phoenix.conf)
-			<input
-				type="password"
-				name="password"
-				class="form-input"
-				value={data.phoenixd.password}
-				required
-			/>
-		</label>
+		{#if !data.configManagedByEnvVars}
+			<label class="form-label">
+				PhoenixD http password (from phoenix.conf)
+				<input
+					type="password"
+					name="password"
+					class="form-input"
+					value={data.phoenixd.password}
+					required
+				/>
+			</label>
+		{:else}
+			<div class="bg-gray-100 p-3 rounded">
+				<p class="text-gray-500">
+					Your Phoenixd settings are managed through environment variables and cannot be viewed or
+					edited from the be-BOP back office.
+				</p>
+			</div>
+		{/if}
 
 		<div class="flex gap-2">
-			<button class="btn btn-black" type="submit">Save</button>
-			<button class="btn btn-red" type="submit" form="disableForm">Reset</button>
+			{#if !data.configManagedByEnvVars}
+				<button class="btn btn-black" type="submit">Save</button>
+				<button class="btn btn-red" type="submit" form="disableForm">Reset</button>
+			{/if}
 			<button class="btn body-mainCTA" type="button" on:click={() => (showBolt12 = !showBolt12)}
 				>Get bolt12 address</button
 			>

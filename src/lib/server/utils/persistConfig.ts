@@ -13,7 +13,8 @@ export async function persistConfigElement<K extends keyof typeof runtimeConfig>
 			$set: {
 				data: value,
 				updatedAt: new Date()
-			}
+			},
+			$setOnInsert: { createdAt: new Date() }
 		},
 		{
 			upsert: true
