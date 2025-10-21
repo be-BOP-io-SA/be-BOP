@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { CURRENCIES, CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+	import {
+		CURRENCIES,
+		CURRENCY_UNIT,
+		computePriceForStorage,
+		readStoredPrice
+	} from '$lib/types/Currency';
 	import {
 		DEFAULT_MAX_QUANTITY_PER_ORDER,
 		MAX_NAME_LIMIT,
@@ -109,11 +114,11 @@
 	let displayVATCalculator = false;
 	let priceAmountVATIncluded = product.price.amount;
 	let vatRate = 0;
-	$: product.price.amount = Number(
-		((100 * priceAmountVATIncluded) / (100 + vatRate)).toFixed(
-			FRACTION_DIGITS_PER_CURRENCY[product.price.currency]
-		)
+	$: product.price = computePriceForStorage(
+		(100 * priceAmountVATIncluded) / (100 + vatRate),
+		product.price.currency
 	);
+	$: displayPrecision = readStoredPrice(product.price).precision;
 	if (product._id && isNew) {
 		product.name = product.name + ' (duplicate)';
 		product._id = generateId(product.name, false);
@@ -458,7 +463,18 @@
 				</label>
 				<label class="w-full">
 					Price amount (VAT excluded)
-					<input class="form-input" type="number" bind:value={product.price.amount} step="any" />
+					<input
+						class="form-input"
+						type="number"
+						value={product.price.amount
+							.toLocaleString('en', {
+								maximumFractionDigits: displayPrecision,
+								minimumFractionDigits: 0
+							})
+							.replace(/,/g, '')}
+						step="any"
+						readonly
+					/>
 				</label>
 			</div>
 		{/if}

@@ -61,16 +61,12 @@ export function priceToBillForItem(
 	const unitsToBill = Math.max(unitsToAccount - params.freeUnits, 0);
 	const discountFactor = (item.discountPercentage ?? 0) / 100;
 	const basePrice = item.customPrice || item.product.price;
-	const amountWithoutDiscount = fixCurrencyRounding(
-		basePrice.amount * unitsToBill,
-		basePrice.currency
-	);
+	// Don't round the amount without VAT - preserve storage precision (4 decimals)
+	const amountWithoutDiscount = basePrice.amount * unitsToBill;
 	// The amount to bill is computed independentlly from the amount without
 	// discount because we don't want to use a rounded amount.
-	const amountToBill = fixCurrencyRounding(
-		basePrice.amount * unitsToBill * (1 - discountFactor),
-		basePrice.currency
-	);
+	const amountToBill = basePrice.amount * unitsToBill * (1 - discountFactor);
+
 	return {
 		amount: amountToBill,
 		amountWithoutDiscount,
@@ -161,10 +157,14 @@ function computeVatForItem(
 	const rate = vatProfile?.rates[country] ?? vatRate(country);
 	const { amount: amountToBill, currency, usedFreeUnits } = priceToBillForItem(item, { freeUnits });
 	const toDepositFactor = (item.depositPercentage ?? 100) / 100;
-	const partialPrice = fixCurrencyRounding(amountToBill * toDepositFactor, currency);
+	// Don't round partialPrice - preserve precision for VAT calculation
+	const partialPrice = amountToBill * toDepositFactor;
 	const vatFactor = rate / 100;
-	const vat = fixCurrencyRounding(amountToBill * vatFactor, currency);
-	const partialVat = fixCurrencyRounding(partialPrice * vatFactor, currency);
+
+	// Don't round VAT - preserve precision for final calculation
+	const vat = amountToBill * vatFactor;
+	const partialVat = partialPrice * vatFactor;
+
 	return {
 		price: { amount: vat, currency },
 		partialPrice: {
@@ -352,6 +352,10 @@ export function computePriceInfo(
 			);
 		}
 	}
+
+	// Round final prices to display precision (2 decimals for fiat)
+	totalPriceWithVat = fixCurrencyRounding(totalPriceWithVat, UNDERLYING_CURRENCY);
+	partialPriceWithVat = fixCurrencyRounding(partialPriceWithVat, UNDERLYING_CURRENCY);
 
 	const vatRates = cartVat.vats.map((vat) => vat?.rate ?? 0);
 	const reducedVat: Array<{

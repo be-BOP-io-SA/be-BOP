@@ -10,6 +10,7 @@
 	import { differenceInMinutes } from 'date-fns';
 	import { marked } from 'marked';
 	import DEFAULT_LOGO from '$lib/assets/bebop-light.svg';
+	import { computePriceForDisplay } from '$lib/types/Currency';
 
 	export let data;
 
@@ -164,17 +165,24 @@
 		&nbsp; &nbsp;<span style="text-decoration: underline;">{t('order.receipt.totalInclVat')}</span>
 		<br />
 		{#each data.order.items as item, i}
-			{@const price =
-				(item.currencySnapshot.main.customPrice?.amount ??
-					item.currencySnapshot.main.price.amount) *
-				(item.booking && item.product.bookingSpec
-					? differenceInMinutes(item.booking.end, item.booking.start) /
-					  item.product.bookingSpec.slotMinutes
-					: 1) *
-				(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+			{@const basePrice =
+				item.currencySnapshot.main.customPrice?.amount ?? item.currencySnapshot.main.price.amount}
 			{@const priceCurrency =
 				item.currencySnapshot.main.customPrice?.currency ??
 				item.currencySnapshot.main.price.currency}
+			{@const bookingMultiplier =
+				item.booking && item.product.bookingSpec
+					? differenceInMinutes(item.booking.end, item.booking.start) /
+					  item.product.bookingSpec.slotMinutes
+					: 1}
+			{@const discountMultiplier = item.discountPercentage
+				? (100 - item.discountPercentage) / 100
+				: 1}
+			{@const unitPrice = basePrice * bookingMultiplier * discountMultiplier}
+			{@const totalPrice = unitPrice * item.quantity}
+			{@const vatRate = item.vatRate ?? 0}
+			{@const vatAmount = (totalPrice * vatRate) / 100}
+			{@const totalWithVat = computePriceForDisplay(totalPrice + vatAmount, priceCurrency).amount}
 			{i + 1} &nbsp; &nbsp;{item.chosenVariations
 				? item.product.name +
 				  ' - ' +
@@ -182,19 +190,15 @@
 						.map(([key, value]) => item.product.variationLabels?.values[key][value])
 						.join(' - ')
 				: item.product.name} &nbsp; &nbsp;{item.quantity} &nbsp; &nbsp; <PriceTag
-				amount={price}
+				amount={unitPrice}
 				currency={priceCurrency}
 				inline
 			/>
-			&nbsp; &nbsp;{item.vatRate ?? 0}% &nbsp; &nbsp;<PriceTag
-				amount={((price * (item.vatRate ?? 0)) / 100) * item.quantity}
+			&nbsp; &nbsp;{vatRate}% &nbsp; &nbsp;<PriceTag
+				amount={vatAmount}
 				currency={priceCurrency}
 				inline
-			/>&nbsp; &nbsp;<PriceTag
-				amount={(price + (price * (item.vatRate ?? 0)) / 100) * item.quantity}
-				currency={priceCurrency}
-				inline
-			/><br />
+			/>&nbsp; &nbsp;<PriceTag amount={totalWithVat} currency={priceCurrency} inline /><br />
 		{/each}
 		{#if data.order.shippingPrice && mainCurrencySnapshot.shippingPrice?.amount}
 			<span style="text-decoration: underline;">{t('checkout.deliveryFees')}<br /></span>
