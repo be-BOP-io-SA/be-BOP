@@ -23,6 +23,7 @@ export type DiscountType = 'fiat' | 'percentage';
 export type Price = {
 	amount: number;
 	currency: Currency;
+	precision?: number;
 };
 
 export interface Note {
