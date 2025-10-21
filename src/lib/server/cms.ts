@@ -30,6 +30,8 @@ purify.addHook('afterSanitizeAttributes', function (node) {
 	}
 });
 type TokenObject =
+	| { type: 'htmlDocumentMarker' }
+	| { type: 'htmlHeadSection'; rawContents: string }
 	| {
 			type: 'html';
 			raw: string;
@@ -142,6 +144,8 @@ export async function cmsFromContent(
 	const CURRENCY_CALCULATOR_WIDGET_REGEX = /\[CurrencyCalculator=(?<slug>[a-z0-9-]+)\]/giu;
 	const SCHEDULE_WIDGET_REGEX =
 		/\[Schedule=(?<slug>[\p{L}\d_:-]+)(?:[?\s]display=(?<display>(main|main-light|list|calendar)))?\]/giu;
+	const HTML_DOCUMENT_MARKER_REGEX = /^[\s]*<!doctype html>[\s]*/giu;
+	const HTML_HEAD_SECTION_REGEX = /<head[^>]*>(?<contents>[\s\S]*?)<\/head>/giu;
 
 	const productSlugs = new Set<string>();
 	const challengeSlugs = new Set<string>();
@@ -169,6 +173,8 @@ export async function cmsFromContent(
 
 	const processMatches = (token: TokenObject[], content: string, index: number) => {
 		const matches = [
+			...matchAndSort(content, HTML_DOCUMENT_MARKER_REGEX, 'htmlDocumentMarker'),
+			...matchAndSort(content, HTML_HEAD_SECTION_REGEX, 'htmlHeadSection'),
 			...matchAndSort(content, PRODUCT_WIDGET_REGEX, 'productWidget'),
 			...matchAndSort(content, CHALLENGE_WIDGET_REGEX, 'challengeWidget'),
 			...matchAndSort(content, SLIDER_WIDGET_REGEX, 'sliderWidget'),
@@ -184,13 +190,28 @@ export async function cmsFromContent(
 			...matchAndSort(content, CURRENCY_CALCULATOR_WIDGET_REGEX, 'currencyCalculatorWidget'),
 			...matchAndSort(content, SCHEDULE_WIDGET_REGEX, 'scheduleWidget')
 		].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+		let contentIsFullHtmlDocument = false;
 		for (const match of matches) {
-			const html = trimPrefix(trimSuffix(content.slice(index, match.index), '<p>'), '</p>');
-			const displayUnsanitizedContent = ALLOW_JS_INJECTION === 'true' || forceUnsanitizedContent;
-			token.push({
-				type: 'html',
-				raw: displayUnsanitizedContent ? html : purify.sanitize(html, { ADD_ATTR: ['target'] })
-			});
+			if (match.type === 'htmlDocumentMarker') {
+				contentIsFullHtmlDocument = true;
+				token.push({ type: 'htmlDocumentMarker' });
+			} else if (match.type === 'htmlHeadSection') {
+				token.push({
+					type: 'htmlHeadSection',
+					rawContents: match.groups?.contents ?? ''
+				});
+			} else {
+				const html = contentIsFullHtmlDocument
+					? // If the content is a full HTML document, remove the <body> tag (since we'll use the body tag provided by svelte).
+					  // The <head> contents will be handled by the htmlHeadSection match.
+					  trimPrefix(trimSuffix(content.slice(index, match.index), '<body>'), '</body>')
+					: trimPrefix(trimSuffix(content.slice(index, match.index), '<p>'), '</p>');
+				const displayUnsanitizedContent = ALLOW_JS_INJECTION === 'true' || forceUnsanitizedContent;
+				token.push({
+					type: 'html',
+					raw: displayUnsanitizedContent ? html : purify.sanitize(html, { ADD_ATTR: ['target'] })
+				});
+			}
 			if (match.groups?.slug) {
 				switch (match.type) {
 					case 'productWidget':

@@ -70,18 +70,21 @@ export async function load({ params, locals, url }) {
 			? 'mobile'
 			: undefined;
 
+	const cmsData = await cmsFromContent(
+		{
+			desktopContent: cmsPage.content,
+			employeeContent: (cmsPage.hasEmployeeContent && cmsPage.employeeContent) || undefined,
+			mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
+			forceContentVersion,
+			forceUnsanitizedContent: cmsPage.displayRawContent
+		},
+		locals
+	);
+
 	return {
 		cmsPage: omit(cmsPage, ['content', 'mobileContent', 'employeeContent']),
-		cmsData: cmsFromContent(
-			{
-				desktopContent: cmsPage.content,
-				employeeContent: (cmsPage.hasEmployeeContent && cmsPage.employeeContent) || undefined,
-				mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
-				forceContentVersion,
-				forceUnsanitizedContent: cmsPage.displayRawContent
-			},
-			locals
-		),
+		cmsData,
+		disableAppLayout: cmsData.tokens.desktop[0]?.type === 'htmlDocumentMarker',
 		layoutReset: cmsPage.fullScreen,
 		websiteShortDescription: cmsPage.shortDescription
 	};
