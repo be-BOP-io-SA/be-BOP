@@ -6,7 +6,6 @@ import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { Actions } from './$types';
 import { z } from 'zod';
 
-// @ts-expect-error - SvelteKit auto-generates types for params
 export const load = async ({ params }) => {
 	const product = await collections.products.findOne({ _id: params.id });
 	const subscriptions = await collections.paidSubscriptions
@@ -30,20 +29,18 @@ export const load = async ({ params }) => {
 // Zod schemas
 const subscriberSchema = z.object({
 	emailOrNpub: z.string().trim().min(1, 'Email or npub required'),
-	paidUntil: z.string().refine(
-		(val) => !isNaN(new Date(val).getTime()),
-		{ message: 'Invalid date format' }
-	)
+	paidUntil: z
+		.string()
+		.refine((val) => !isNaN(new Date(val).getTime()), { message: 'Invalid date format' })
 });
 
 const csvRowSchema = z
 	.object({
 		email: z.string().email().optional().or(z.literal('')),
 		npub: z.string().startsWith('npub1', 'Invalid npub format').optional().or(z.literal('')),
-		paidUntil: z.string().refine(
-			(val) => !isNaN(new Date(val).getTime()),
-			{ message: 'Invalid date format' }
-		)
+		paidUntil: z
+			.string()
+			.refine((val) => !isNaN(new Date(val).getTime()), { message: 'Invalid date format' })
 	})
 	.refine((data) => data.email || data.npub, { message: 'Either email or npub is required' });
 
@@ -144,9 +141,9 @@ export const actions: Actions = {
 			paidUntil: formData.get(`subscribers[${i}].paidUntil`)?.toString()
 		}))
 			.filter((sub) => sub.emailOrNpub && sub.paidUntil)
-			.map((sub) => ({ 
-				emailOrNpub: sub.emailOrNpub as string, 
-				paidUntil: sub.paidUntil as string 
+			.map((sub) => ({
+				emailOrNpub: sub.emailOrNpub as string,
+				paidUntil: sub.paidUntil as string
 			}));
 
 		if (subscribers.length === 0) {
@@ -176,7 +173,9 @@ export const actions: Actions = {
 		// Check for duplicates
 		const duplicateChecks = await Promise.all(
 			validated.map(async (v) => {
-				if ('error' in v) {return null;}
+				if ('error' in v) {
+					return null;
+				}
 				const user = buildUserIdentifier(v.parsed);
 
 				return collections.paidSubscriptions.findOne({
@@ -195,7 +194,9 @@ export const actions: Actions = {
 
 		// Create all subscriptions
 		const subscribersData = validated.map((v) => {
-			if ('error' in v) {throw new Error('Validation failed');}
+			if ('error' in v) {
+				throw new Error('Validation failed');
+			}
 			return { ...v.parsed, paidUntil: v.paidUntil };
 		});
 
@@ -328,6 +329,39 @@ export const actions: Actions = {
 		await collections.paidSubscriptions.insertMany(subscriptions);
 
 		return { success: true, imported: subscriptions.length };
+	},
+
+	cancelSubscriber: async ({ request, params }) => {
+		const formData = await request.formData();
+		const subscriptionId = formData.get('subscriptionId')?.toString();
+
+		if (!subscriptionId) {
+			return fail(400, { error: 'Subscription ID required' });
+		}
+
+		const validationResult = subscriptionIdSchema.safeParse(subscriptionId);
+		if (!validationResult.success) {
+			return fail(400, { error: validationResult.error.errors[0].message });
+		}
+
+		const result = await collections.paidSubscriptions.updateOne(
+			{
+				_id: validationResult.data,
+				productId: params.id
+			},
+			{
+				$set: {
+					cancelledAt: new Date(),
+					updatedAt: new Date()
+				}
+			}
+		);
+
+		if (result.matchedCount === 0) {
+			return fail(404, { error: 'Subscription not found' });
+		}
+
+		return { success: true, cancelled: true };
 	},
 
 	deleteSubscriber: async ({ request, params }) => {

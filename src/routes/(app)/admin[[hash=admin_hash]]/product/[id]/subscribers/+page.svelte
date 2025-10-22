@@ -40,10 +40,7 @@
 	}
 
 	// Generic handler for actions with confirmation
-	function createConfirmHandler(
-		confirmMessage: string,
-		onSuccess?: () => void
-	): ReturnType<SubmitFunction> {
+	function createConfirmHandler(confirmMessage: string, onSuccess?: () => void): SubmitFunction {
 		return () => {
 			const confirmed = confirm(confirmMessage);
 			if (!confirmed) {
@@ -107,7 +104,9 @@
 	] as const;
 
 	function exportcsv() {
-		if (tableData.length === 0) {return;}
+		if (tableData.length === 0) {
+			return;
+		}
 
 		const headers = csvColumns.map((col) => col.header);
 		const csvRows = tableData.map((row) => csvColumns.map((col) => row[col.key]));
@@ -159,17 +158,22 @@
 			showAddForm = false;
 			showImportForm = false;
 
-		const messageTemplates: Record<string, (val: number | undefined) => string> = {
-			imported: (n) => `Successfully imported ${n} subscription(s)`,
-			added: (n) => `Successfully added ${n} subscriber(s)`,
-			bulkDeleted: (n) => `Successfully deleted ${n} subscription(s)`,
-			bulkCancelled: (n) => `Successfully cancelled ${n} subscription(s)`,
-			deleted: () => 'Subscription deleted successfully'
-		};
+			const messageTemplates: Record<string, (val: number | undefined) => string> = {
+				imported: (n) => `Successfully imported ${n} subscription(s)`,
+				added: (n) => `Successfully added ${n} subscriber(s)`,
+				bulkDeleted: (n) => `Successfully deleted ${n} subscription(s)`,
+				bulkCancelled: (n) => `Successfully cancelled ${n} subscription(s)`,
+				cancelled: () => 'Subscription cancelled successfully',
+				deleted: () => 'Subscription deleted successfully'
+			};
 
-			const matchedKey = Object.keys(messageTemplates).find((key) => form[key] !== undefined);
+			const matchedKey = Object.keys(messageTemplates).find(
+				(key) => form[key as keyof typeof form] !== undefined
+			);
 			successMessage = matchedKey
-				? messageTemplates[matchedKey](form[matchedKey])
+				? messageTemplates[matchedKey](
+						(form as Record<string, unknown>)[matchedKey] as number | undefined
+				  )
 				: 'Operation completed successfully';
 
 			setTimeout(() => (successMessage = ''), 5000);
@@ -449,7 +453,31 @@
 					</td>
 					<td class="data-table-cell">{row.lastPayment}</td>
 					<td class="data-table-cell">{row.paidUntil}</td>
-					<td class="data-table-cell">{row.cancelled}</td>
+					<td class="data-table-cell">
+						{#if row.cancelled === 'Yes'}
+							<span class="text-gray-600">Yes</span>
+						{:else}
+							<div class="flex flex-col items-center gap-0.5">
+								<span class="text-sm">No</span>
+								<form
+									method="POST"
+									action="?/cancelSubscriber"
+									use:enhance={createConfirmHandler(
+										'Are you sure you want to cancel this subscription?'
+									)}
+								>
+									<input type="hidden" name="subscriptionId" value={row.id} />
+									<button
+										type="submit"
+										class="btn-orange text-xs px-2 py-0.5 rounded"
+										title="Cancel subscription"
+									>
+										Cancel
+									</button>
+								</form>
+							</div>
+						{/if}
+					</td>
 					<td class="data-table-cell">
 						{#if row.nostr}
 							<div class="font-mono text-xs max-w-[200px] max-h-[3rem] overflow-auto break-all">
