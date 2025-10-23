@@ -42,6 +42,19 @@
 		vatProfiles: data.vatProfiles
 	});
 
+	$: poolLabel = (() => {
+		const found = data.posTabGroups
+			.flatMap((group, groupIndex) =>
+				group.tabs.map((tab, tabIndex) => ({ group, tab, tabIndex, groupIndex }))
+			)
+			.find(
+				({ groupIndex, tabIndex }) =>
+					sluggifyTab(data.posTabGroups, groupIndex, tabIndex) === tabSlug
+			);
+
+		return found ? found.tab.label ?? `${found.group.name} ${found.tabIndex + 1}` : 'TMP';
+	})();
+
 	const { t } = useI18n();
 	let posProductPagination = POS_PRODUCT_PAGINATION;
 
@@ -181,7 +194,7 @@
 		<div class="grid grid-cols-3 gap-4 h-full">
 			<div class="touchScreen-ticket-menu p-3 h-full overflow-y-auto">
 				{#if items.length}
-					<h3 class="text-3xl">{t('pos.touch.ticketNumber')} tmp</h3>
+					<h3 class="text-3xl">{poolLabel}</h3>
 					{#each items as item, i}
 						<div class="flex flex-col py-3 gap-4">
 							<form
@@ -317,25 +330,15 @@
 		</div>
 	</main>
 	<footer class="shrink-0">
-		<div class="grid grid-cols-3 gap-4 mt-2">
+		<div class="grid grid-cols-2 gap-4 mt-2">
 			<button
 				class="touchScreen-ticket-menu text-3xl p-4 text-center"
 				on:click={() => (tabSelectModalOpen = true)}>{t('pos.touch.tickets')}</button
 			>
-			<div class="col-span-2 grid grid-cols-3 gap-4">
-				<button
-					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
-					on:click={() => alert(t('pos.touch.notDeveloped'))}>{t('pos.touch.save')}</button
-				>
-				<button
-					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
-					on:click={() => alert(t('pos.touch.notDeveloped'))}>{t('pos.touch.pool')}</button
-				>
-				<button
-					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
-					on:click={() => alert(t('pos.touch.notDeveloped'))}>{t('pos.touch.openDrawer')}</button
-				>
-			</div>
+			<button
+				class="touchScreen-action-secondaryCTA text-3xl p-4"
+				on:click={() => alert(t('pos.touch.notDeveloped'))}>{t('pos.touch.openDrawer')}</button
+			>
 		</div>
 		<div class="grid grid-cols-2 gap-4 mt-2">
 			<a
