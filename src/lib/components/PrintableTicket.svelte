@@ -1,0 +1,76 @@
+<script lang="ts">
+	import type { Product } from '$lib/types/Product';
+	import { format } from 'date-fns';
+
+	export let poolLabel: string;
+	export let generatedAt: Date | undefined = undefined;
+	export let tagGroups: Array<{
+		tagNames: string[];
+		items: Array<{
+			product: Pick<Product, 'name'>;
+			quantity: number;
+			variations: Array<{ text: string; count: number }>;
+			notes: string[];
+		}>;
+	}> = [];
+
+	$: ticketText = tagGroups
+		.flatMap((group) => [
+			`TICKET ${poolLabel.toUpperCase()}`,
+			...(generatedAt ? [format(generatedAt, 'HH:mm').replace(':', 'h').toUpperCase()] : []),
+			'',
+			...(group.tagNames.length > 0 ? [`--- ${group.tagNames.join(', ').toUpperCase()} ---`] : []),
+			...group.items.flatMap((item) => [
+				`${item.quantity} X ${item.product.name.toUpperCase()}`,
+				...item.variations.map((v) => `${v.count} ${v.text}`),
+				...item.notes.map((note) => `+${note}`)
+			]),
+			'',
+			'',
+			''
+		])
+		.join('\n');
+</script>
+
+<svelte:head>
+	<style>
+		@media print {
+			@page {
+				margin: 5mm;
+			}
+
+			body {
+				margin: 0;
+				padding: 0;
+			}
+
+			body * {
+				visibility: hidden;
+			}
+			.printable,
+			.printable * {
+				visibility: visible;
+			}
+			.printable {
+				position: absolute;
+				left: 0;
+				top: 0;
+				width: 80mm;
+				max-width: 100%;
+			}
+			.printable pre {
+				margin: 0;
+				padding: 0;
+				font-size: 12px;
+				line-height: 1.3;
+			}
+			.no-print {
+				display: none !important;
+			}
+		}
+	</style>
+</svelte:head>
+
+<div class="printable hidden print:block">
+	<pre class="font-mono whitespace-pre-wrap">{ticketText}</pre>
+</div>

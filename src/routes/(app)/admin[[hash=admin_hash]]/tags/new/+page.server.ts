@@ -90,6 +90,7 @@ export const actions: Actions = {
 			productTagging: parsed.productTagging,
 			useLightDark: parsed.useLightDark,
 			reportingFilter: parsed.reportingFilter,
+			printReceiptFilter: false,
 			cta: parsed.cta?.filter((ctaLink) => ctaLink.label && ctaLink.href),
 			menu: parsed.menu?.filter((menuLink) => menuLink.label && menuLink.href)
 		});
