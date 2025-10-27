@@ -592,6 +592,17 @@ const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('684af38a6fbd314f44a84f88'),
+		name: 'Set standalone for products with hasVariations',
+		run: async (session: ClientSession) => {
+			await collections.products.updateMany(
+				{ hasVariations: true, standalone: { $ne: true } },
+				{ $set: { standalone: true } },
+				{ session }
+			);
+		}
 	}
 ];
 

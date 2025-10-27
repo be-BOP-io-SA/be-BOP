@@ -290,6 +290,10 @@
 		product.standalone = true;
 	}
 
+	$: if (product.hasVariations) {
+		product.standalone = true;
+	}
+
 	$: if (product.free) {
 		allowDeposit = false;
 	}
@@ -306,12 +310,84 @@
 			event.preventDefault();
 		}
 	}
+	/**
+	 * Temporary storage for NEW variations being entered in empty form rows.
+	 *
+	 * Data flow:
+	 * 1. User enters data in empty row → stored in these arrays (ephemeral UI state)
+	 * 2. User clicks ➕ button → moved to `product.variations` (persistent state)
+	 * 3. User clicks Update button → saved to database via FormData
+	 *
+	 * These arrays are NOT stored in the database - they only hold input for unsaved rows.
+	 *
+	 * @see product.variationLabels - Permanent storage for variation metadata (names/translations)
+	 * @see product.variations - Permanent storage for active variations with price differences
+	 */
 	let variationLabelsNames: string[] = [];
 	let variationLabelsValues: string[] = [];
+
 	function isNumber(value: string) {
 		return !isNaN(Number(value)) && value.trim() !== '';
 	}
+
+	/**
+	 * Moves a variation up or down in the list by swapping positions.
+	 *
+	 * Used by 🔺 (move up) and 🔻 (move down) buttons on saved variations.
+	 *
+	 * @param fromIndex - Current position of the variation (0-based)
+	 * @param toIndex - Target position to move to (0-based)
+	 */
+	function moveVariation(fromIndex: number, toIndex: number): void {
+		if (product.variations) {
+			if (
+				fromIndex < 0 ||
+				toIndex < 0 ||
+				fromIndex >= product.variations.length ||
+				toIndex >= product.variations.length
+			) {
+				return;
+			}
+			const newVariations = [...product.variations];
+			const [movedItem] = newVariations.splice(fromIndex, 1);
+			newVariations.splice(toIndex, 0, movedItem);
+			product.variations = newVariations;
+		}
+	}
+	/**
+	 * Adds a new variation to the product from temporary input arrays.
+	 *
+	 * Called when user clicks ➕ button on an empty variation row.
+	 * Moves variation from temporary UI state (variationLabelsNames/Values arrays)
+	 * into persistent product.variations array.
+	 *
+	 * Note: Despite the name "duplicate", this function adds NEW variations,
+	 * not duplicates existing ones. The name is kept for backward compatibility.
+	 *
+	 * @param variation - Variation data from temporary arrays (name, value, price)
+	 * @param index - Position in variations array to insert at (0-based)
+	 */
+	function duplicateVariation(
+		variation: { name: string; value: string; price?: number },
+		index: number
+	) {
+		product.variations?.splice(index, 0, variation);
+		variationLines++;
+	}
 	$: variationLabelsToUpdate = product.variationLabels || { names: {}, values: {} };
+
+	/**
+	 * Deletes a variation from the product.
+	 *
+	 * Called when user clicks ➖ button on a saved variation row.
+	 * Removes the variation from both `product.variations` array and
+	 * `product.variationLabels` metadata.
+	 *
+	 * If all values for a category are deleted, also removes the category itself.
+	 *
+	 * @param key - Category ID (e.g., "size", "color")
+	 * @param valueKey - Value ID (e.g., "small", "red")
+	 */
 	function deleteVariationLabel(key: string, valueKey: string) {
 		variationLabelsToUpdate = {
 			...variationLabelsToUpdate,
@@ -564,7 +640,7 @@
 				bind:checked={product.standalone}
 				on:input={() => priceAmountElement?.setCustomValidity('')}
 				name="standalone"
-				disabled={product.payWhatYouWant}
+				disabled={product.payWhatYouWant || product.hasVariations}
 			/>
 			This is a standalone product
 		</label>
@@ -641,7 +717,6 @@
 				type="checkbox"
 				bind:checked={product.hasVariations}
 				name="hasVariations"
-				disabled={!product.standalone}
 			/>
 			Product has light variations (no stock difference)
 		</label>
@@ -649,12 +724,19 @@
 			{#each [...(product.variations || []), ...Array(variationLines).fill( { name: '', value: '', price: 0 } )].slice(0, variationLines) as variation, i}
 				<div class="flex gap-4">
 					{#if variation.name && variation.value}
+						{@const categoryValues = product.variationLabels?.values[variation.name]}
+						{@const currentValueLabel = categoryValues?.[variation.value]}
+						<button
+							class={i === 0 ? 'mt-8' : ''}
+							type="button"
+							on:click={() => duplicateVariation(variation, i)}>➕</button
+						>
 						<label class="form-label">
-							Category Id
+							{i === 0 ? 'Category Id' : ''}
 							<input disabled type="text" class="form-input" value={variation.name} />
 						</label>
 						<label class="form-label">
-							Category Name
+							{i === 0 ? 'Category Name' : ''}
 							<input
 								type="text"
 								name="variationLabels.names[{variation.name}]"
@@ -664,19 +746,37 @@
 							/>
 						</label>
 						<label class="form-label">
-							Value <input
+							{i === 0 ? 'Value' : ''}
+							<input
 								type="text"
 								name="variationLabels.values[{variation.name}][{variation.value}]"
 								class="form-input"
-								value={product.variationLabels?.values[variation.name]?.[variation.value]}
+								value={currentValueLabel}
 								bind:this={variationInput[i]}
-								on:input={() => variationInput[i]?.setCustomValidity('')}
+								on:input={() => {
+									variationInput[i]?.setCustomValidity('');
+								}}
 								required={!!product.variationLabels?.names[variation.name]}
 							/>
 						</label>
 					{:else}
+						{@const isEmptyVariation = !variationLabelsNames[i] && !variationLabelsValues[i]}
+						<button
+							class="{i === 0 ? 'mt-8' : ''} {isEmptyVariation ? 'opacity-50' : ''}"
+							type="button"
+							disabled={isEmptyVariation}
+							on:click={() =>
+								duplicateVariation(
+									{ name: variationLabelsNames[i], value: variationLabelsValues[i], price: 0 },
+									i
+								)}>➕</button
+						>
 						<label class="form-label">
-							Category Name
+							{i === 0 ? 'Category Id' : ''}
+							<input disabled type="text" class="form-input" bind:value={variationLabelsNames[i]} />
+						</label>
+						<label class="form-label">
+							{i === 0 ? 'Category Name' : ''}
 							<input
 								type="text"
 								name="variationLabels.names[{(
@@ -688,7 +788,8 @@
 							/>
 						</label>
 						<label class="form-label">
-							Value <input
+							{i === 0 ? 'Value' : ''}
+							<input
 								type="text"
 								name="variationLabels.values[{(
 									(isNumber(variationLabelsNames[i]) ? 'name' : '') + variationLabelsNames[i] || ''
@@ -720,7 +821,13 @@
 								type="hidden"
 								name="variations[{i}].value"
 								class="form-input"
-								value={variation.value}
+								value={isNumber(variationInput[i]?.value)
+									? (
+											variation.name +
+												(isNumber(variation.name) ? '-' : '') +
+												variationInput[i]?.value || ''
+									  ).toLowerCase()
+									: (variationInput[i]?.value || '').toLowerCase()}
 							/>
 						{:else}
 							<input
@@ -744,7 +851,8 @@
 									: (variationLabelsValues[i] || '').toLowerCase()}
 							/>
 						{/if}
-						Price difference<input
+						{i === 0 ? 'Price difference' : ''}
+						<input
 							type="number"
 							name="variations[{i}].price"
 							class="form-input"
@@ -754,12 +862,26 @@
 						/>
 					</label>
 					{#if variation.name && variation.value}
-						<label class="form-label mt-8">
-							<button
-								type="button"
-								on:click={() => deleteVariationLabel(variation.name, variation.value)}>🗑️</button
-							>
-						</label>{/if}
+						<button
+							class={i === 0 ? 'mt-8' : ''}
+							type="button"
+							on:click={() => deleteVariationLabel(variation.name, variation.value)}>➖</button
+						>
+						<button
+							class={i === 0 ? 'mt-8 opacity-50' : ''}
+							type="button"
+							disabled={i === 0}
+							on:click={() => moveVariation(i, i - 1)}>🔺</button
+						>
+						<button
+							class="{i === 0 ? 'mt-8' : ''}{i === (product.variations?.length ?? 1) - 1
+								? 'opacity-50'
+								: ''}"
+							type="button"
+							disabled={i === (product.variations?.length ?? 1) - 1}
+							on:click={() => moveVariation(i, i + 1)}>🔻</button
+						>
+					{/if}
 				</div>
 			{/each}
 			<button
