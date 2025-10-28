@@ -15,7 +15,17 @@
 
 	<ProductItem product={data.product} picture={data.picture} />
 
-	<p>{t('subscription.associated.npub', { npub: data.subscription.npub })}</p>
+	{#if data.subscription.npub || data.subscription.email}
+		<div class="flex flex-col gap-1">
+			<p class="font-semibold">{t('subscription.associated.title')}</p>
+			{#if data.subscription.npub}
+				<p class="ml-4">npub: {data.subscription.npub}</p>
+			{/if}
+			{#if data.subscription.email}
+				<p class="ml-4">email: {data.subscription.email}</p>
+			{/if}
+		</div>
+	{/if}
 
 	<p>
 		<Trans key="subscription.initiallyCreated"
