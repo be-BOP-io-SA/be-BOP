@@ -16,6 +16,7 @@ import { cmsFromContent } from '$lib/server/cms';
 import { omit } from '$lib/utils/omit.js';
 import { set } from '$lib/utils/set';
 import { ObjectId } from 'mongodb';
+import type { Tag } from '$lib/types/Tag';
 
 export async function load({ parent, locals }) {
 	const parentData = await parent();
@@ -93,8 +94,17 @@ export async function load({ parent, locals }) {
 		.sort({ sortOrder: 1 })
 		.toArray();
 
+	const reportingTags = locals.user?.hasPosOptions
+		? await collections.tags
+				.find({ reportingFilter: true })
+				.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
+				.sort({ name: 1 })
+				.toArray()
+		: [];
+
 	return {
 		paymentMethods: methods,
+		reportingTags,
 		emailsEnabled,
 		collectIPOnDeliverylessOrders: runtimeConfig.collectIPOnDeliverylessOrders,
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,

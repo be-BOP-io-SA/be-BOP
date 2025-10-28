@@ -139,6 +139,62 @@
 	});
 	$: isDigital = items.every((item) => !item.product.shipping);
 
+	$: tagBreakdown = (() => {
+		if (!data.hasPosOptions || !data.reportingTags || !items || items.length === 0) {
+			return [];
+		}
+
+		const reportingTagIds = new Set(data.reportingTags.map((tag) => tag._id));
+
+		const itemsWithIndices = items.map((item, index) => ({ item, index }));
+
+		const tagEntries = data.reportingTags
+			.map((tag) => {
+				const itemsWithTag = itemsWithIndices.filter(({ item }) =>
+					item.product.tagIds?.includes(tag._id)
+				);
+
+				if (itemsWithTag.length === 0) {
+					return null;
+				}
+
+				const totalWithVat = itemsWithTag.reduce((sum, { index }) => {
+					const itemPriceInfo = priceInfo.perItem[index];
+					const itemVatRate = priceInfo.vatRates[index];
+					return sum + itemPriceInfo.amount * (1 + itemVatRate / 100);
+				}, 0);
+
+				return {
+					tagName: tag.name,
+					totalWithVat,
+					currency: priceInfo.perItem[itemsWithTag[0].index].currency
+				};
+			})
+			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+
+		const itemsWithoutReportingTags = itemsWithIndices.filter(
+			({ item }) =>
+				!item.product.tagIds || !item.product.tagIds.some((tagId) => reportingTagIds.has(tagId))
+		);
+
+		const otherEntry =
+			itemsWithoutReportingTags.length > 0
+				? [
+						{
+							tagName: null as null,
+							totalWithVat: itemsWithoutReportingTags.reduce((sum, { index }) => {
+								const itemPriceInfo = priceInfo.perItem[index];
+								const itemVatRate = priceInfo.vatRates[index];
+								return sum + itemPriceInfo.amount * (1 + itemVatRate / 100);
+							}, 0),
+							currency: priceInfo.perItem[itemsWithoutReportingTags[0].index].currency
+						}
+				  ]
+				: [];
+
+		return [...tagEntries, ...otherEntry];
+	})();
+
 	$: paymentMethods =
 		priceInfo.totalPriceWithVat === 0
 			? ['free']
@@ -1108,6 +1164,29 @@
 							>
 						{/if}
 					{/if}
+				{/if}
+
+				{#if tagBreakdown.length > 0}
+					<div class="-mx-3 p-3 flex flex-col gap-2 border-t border-gray-300 mt-2">
+						<h3 class="text-base font-medium">{t('pos.split.includingVatIncluded')}</h3>
+						{#each tagBreakdown as tag}
+							<div class="flex justify-between items-center">
+								<span class="text-sm">
+									{#if tag.tagName === null}
+										{t('pos.split.otherProducts')}
+									{:else}
+										{t('pos.split.tagProducts', { name: tag.tagName })}
+									{/if}
+								</span>
+								<PriceTag
+									amount={tag.totalWithVat}
+									currency={tag.currency}
+									main
+									class="text-base"
+								/>
+							</div>
+						{/each}
+					</div>
 				{/if}
 
 				<input

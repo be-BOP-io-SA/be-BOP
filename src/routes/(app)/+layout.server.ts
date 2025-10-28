@@ -97,6 +97,7 @@ export async function load(params) {
 							| 'name'
 							| 'price'
 							| 'shortDescription'
+							| 'tagIds'
 							| 'type'
 							| 'availableDate'
 							| 'shipping'
@@ -121,6 +122,7 @@ export async function load(params) {
 						shortDescription: {
 							$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
 						},
+						tagIds: 1,
 						type: 1,
 						shipping: 1,
 						availableDate: 1,

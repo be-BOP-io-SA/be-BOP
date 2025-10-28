@@ -682,7 +682,10 @@
 			"shares": "shares",
 			"itemize": "itemize",
 			"return": "Return",
-			"paySelected": "Pay selected"
+			"paySelected": "Pay selected",
+			"includingVatIncluded": "Including (VAT included):",
+			"tagProducts": "Tag \"{name}\" products",
+			"otherProducts": "Other products"
 		}
 	},
 	"product": {
