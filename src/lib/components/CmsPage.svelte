@@ -48,23 +48,26 @@
 	export let galleries: CmsGallery[];
 	export let leaderboards: CmsLeaderboard[];
 	export let schedules: CmsSchedule[];
+	$: contentIsHtmlDocument = tokens.desktop[0]?.type === 'htmlDocumentMarker';
 
 	const { t } = useI18n();
 </script>
 
 <svelte:head>
-	<title>{cmsPage.title}</title>
-	{#if cmsPage.hideFromSEO}
-		<meta name="robots" content="noindex" />
-	{/if}
-	{#if cmsPage.metas?.length}
-		{#each cmsPage.metas as meta}
-			<meta name={meta.name} content={meta.content} />
-		{/each}
+	{#if !contentIsHtmlDocument}
+		<title>{cmsPage.title}</title>
+		{#if cmsPage.hideFromSEO}
+			<meta name="robots" content="noindex" />
+		{/if}
+		{#if cmsPage.metas?.length}
+			{#each cmsPage.metas as meta}
+				<meta name={meta.name} content={meta.content} />
+			{/each}
+		{/if}
 	{/if}
 </svelte:head>
 
-{#if cmsPage.fullScreen}
+{#if cmsPage.fullScreen || contentIsHtmlDocument}
 	<CmsDesign
 		{products}
 		{pictures}

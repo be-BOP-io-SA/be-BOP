@@ -1,25 +1,9 @@
 <!doctype html>
 <html>
 	<head>
-		<meta charset="utf-8" />
-		<script>
-			const theme = localStorage.getItem('theme') ?? document.documentElement.dataset.theme;
-			if (theme === 'dark') {
-				document.documentElement.classList.add('dark');
-			} else if (theme === 'light') {
-				document.documentElement.classList.remove('dark');
-			} else {
-				if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-					document.documentElement.classList.add('dark');
-				} else {
-					document.documentElement.classList.remove('dark');
-				}
-			}
-		</script>
 		%sveltekit.head%
 	</head>
-
 	<body>
-		<div style="display: contents">%sveltekit.body%</div>
+		%sveltekit.body%
 	</body>
 </html>

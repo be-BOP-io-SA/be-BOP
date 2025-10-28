@@ -117,6 +117,7 @@
 		])
 	);
 	$: countdownById = Object.fromEntries(countdowns.map((countdown) => [countdown._id, countdown]));
+	$: contentIsHtmlDocument = tokens.desktop[0]?.type === 'htmlDocumentMarker';
 
 	function productsByTag(
 		searchTag: string,
@@ -144,122 +145,124 @@
 	$: galleryById = Object.fromEntries(galleries.map((gallery) => [gallery._id, gallery]));
 </script>
 
-<div class={tokens.mobile ? 'hidden lg:contents' : 'contents'}>
-	<div class={classNames}>
-		{#each tokens.desktop as token}
-			{#if token.type === 'productWidget' && productById[token.slug]}
+<svelte:head>
+	{#each tokens.desktop.filter((token) => token.type === 'htmlHeadSection') as token}
+		<!-- eslint-disable svelte/no-at-html-tags -->
+		{@html token.rawContents}
+	{/each}
+</svelte:head>
+
+{#if contentIsHtmlDocument}
+	{#each tokens.desktop as token}
+		{#if token.type === 'productWidget' && productById[token.slug]}
+			<ProductWidget
+				product={productById[token.slug]}
+				pictures={picturesByProduct[token.slug] ?? []}
+				hasDigitalFiles={digitalFilesByProduct[token.slug] !== null}
+				displayOption={token.display}
+				canBuy={hasPosOptions
+					? productById[token.slug].actionSettings.retail.canBeAddedToBasket
+					: productById[token.slug].actionSettings.eShop.canBeAddedToBasket}
+				class="not-prose my-5"
+			/>
+		{:else if token.type === 'tagProducts' && productsByTag(token.slug)}
+			{#each productsByTag(token.slug, token.by ?? '', token.sort) as product}
 				<ProductWidget
-					product={productById[token.slug]}
-					pictures={picturesByProduct[token.slug] ?? []}
-					hasDigitalFiles={digitalFilesByProduct[token.slug] !== null}
-					displayOption={token.display}
+					{product}
+					pictures={picturesByProduct[product._id] ?? []}
+					hasDigitalFiles={digitalFilesByProduct[product._id] !== null}
 					canBuy={hasPosOptions
-						? productById[token.slug].actionSettings.retail.canBeAddedToBasket
-						: productById[token.slug].actionSettings.eShop.canBeAddedToBasket}
+						? product.actionSettings.retail.canBeAddedToBasket
+						: product.actionSettings.eShop.canBeAddedToBasket}
 					class="not-prose my-5"
-				/>
-			{:else if token.type === 'tagProducts' && productsByTag(token.slug)}
-				{#each productsByTag(token.slug, token.by ?? '', token.sort) as product}
-					<ProductWidget
-						{product}
-						pictures={picturesByProduct[product._id] ?? []}
-						hasDigitalFiles={digitalFilesByProduct[product._id] !== null}
-						canBuy={hasPosOptions
-							? product.actionSettings.retail.canBeAddedToBasket
-							: product.actionSettings.eShop.canBeAddedToBasket}
-						class="not-prose my-5"
-						displayOption={token.display}
-					/>
-				{/each}
-			{:else if token.type === 'challengeWidget' && challengeById[token.slug]}
-				<ChallengeWidget challenge={challengeById[token.slug]} class="not-prose my-5" />
-			{:else if token.type === 'sliderWidget' && sliderById[token.slug]}
-				<CarouselWidget
-					autoplay={token.autoplay ? token.autoplay : 3000}
-					pictures={picturesBySlider[token.slug] ?? []}
-					class="not-prose mx-auto my-5"
-				/>
-			{:else if token.type === 'tagWidget' && tagById[token.slug]}
-				<TagWidget
-					tag={tagById[token.slug]}
-					pictures={picturesByTag[token.slug] ?? []}
 					displayOption={token.display}
-					titleCase={token.titleCase}
-					class="not-prose my-5"
 				/>
-			{:else if token.type === 'specificationWidget' && specificationById[token.slug]}
-				<SpecificationWidget specification={specificationById[token.slug]} class="not-prose my-5" />
-			{:else if token.type === 'contactFormWidget' && contactFormById[token.slug]}
-				<ContactForm
-					contactForm={contactFormById[token.slug]}
-					{sessionEmail}
-					class="not-prose my-5"
-				/>
-			{:else if token.type === 'countdownWidget' && countdownById[token.slug]}
-				<CountdownWidget countdown={countdownById[token.slug]} class="not-prose my-5" />
-			{:else if token.type === 'galleryWidget' && galleryById[token.slug]}
-				<GalleryWidget
-					gallery={galleryById[token.slug]}
-					pictures={picturesByGallery[token.slug] ?? []}
-					displayOption={token.display}
-					class="not-prose my-5"
-				/>
-			{:else if token.type === 'pictureWidget'}
-				<PictureComponent
-					picture={pictureById[token.slug]}
-					class="my-5 lg:block hidden {token.height ? `h-[${token.height}px]` : ''} {token.width
-						? `w-[${token.width}px]`
-						: ''} {token.position === 'center'
-						? 'mx-auto'
-						: token.position === 'right'
-						? 'ml-auto'
-						: token.position === 'full-width'
-						? 'w-full max-w-none'
-						: ''}"
-					style="{token.fit ? `object-fit: ${token.fit};` : ''}{token.width
-						? `width: ${token.width}px;`
-						: ''}{token.height ? `height: ${token.height}px;` : ''}"
-				/>
-				{#if token.msubstitute}
-					<PictureComponent picture={pictureById[token.msubstitute]} class="my-5 lg:hidden block" />
-				{:else}
-					<PictureComponent picture={pictureById[token.slug]} class="my-5 lg:hidden block" />
-				{/if}
-			{:else if token.type === 'leaderboardWidget'}
-				<LeaderBoardWidget
-					leaderboard={leaderboardById[token.slug]}
-					{pictures}
-					{products}
-					class="not-prose"
-				/>
-			{:else if token.type === 'qrCode'}
-				{#if token.slug === 'Bolt12'}
-					<a href="lightning:{$page.data.bolt12Address}">
-						<img src="{$page.url.origin}/phoenixd/bolt12/qrcode" class="w-96 h-96" alt="QR code" />
-					</a>
-				{/if}
-			{:else if token.type === 'currencyCalculatorWidget'}
-				<CurrencyCalculator />
-			{:else if token.type === 'scheduleWidget' && scheduleById[token.slug]}
-				<ScheduleWidget
-					schedule={scheduleById[token.slug]}
-					pictures={picturesBySchedule[token.slug] ?? []}
-					displayOption={token.display}
-					class="not-prose my-5"
-				/>
-			{:else if token.type === 'html'}
-				<div class="my-5">
-					<!-- eslint-disable svelte/no-at-html-tags -->
-					{@html token.raw}
-				</div>
+			{/each}
+		{:else if token.type === 'challengeWidget' && challengeById[token.slug]}
+			<ChallengeWidget challenge={challengeById[token.slug]} class="not-prose my-5" />
+		{:else if token.type === 'sliderWidget' && sliderById[token.slug]}
+			<CarouselWidget
+				autoplay={token.autoplay ? token.autoplay : 3000}
+				pictures={picturesBySlider[token.slug] ?? []}
+				class="not-prose mx-auto my-5"
+			/>
+		{:else if token.type === 'tagWidget' && tagById[token.slug]}
+			<TagWidget
+				tag={tagById[token.slug]}
+				pictures={picturesByTag[token.slug] ?? []}
+				displayOption={token.display}
+				titleCase={token.titleCase}
+				class="not-prose my-5"
+			/>
+		{:else if token.type === 'specificationWidget' && specificationById[token.slug]}
+			<SpecificationWidget specification={specificationById[token.slug]} class="not-prose my-5" />
+		{:else if token.type === 'contactFormWidget' && contactFormById[token.slug]}
+			<ContactForm
+				contactForm={contactFormById[token.slug]}
+				{sessionEmail}
+				class="not-prose my-5"
+			/>
+		{:else if token.type === 'countdownWidget' && countdownById[token.slug]}
+			<CountdownWidget countdown={countdownById[token.slug]} class="not-prose my-5" />
+		{:else if token.type === 'galleryWidget' && galleryById[token.slug]}
+			<GalleryWidget
+				gallery={galleryById[token.slug]}
+				pictures={picturesByGallery[token.slug] ?? []}
+				displayOption={token.display}
+				class="not-prose my-5"
+			/>
+		{:else if token.type === 'pictureWidget'}
+			<PictureComponent
+				picture={pictureById[token.slug]}
+				class="my-5 lg:block hidden {token.height ? `h-[${token.height}px]` : ''} {token.width
+					? `w-[${token.width}px]`
+					: ''} {token.position === 'center'
+					? 'mx-auto'
+					: token.position === 'right'
+					? 'ml-auto'
+					: token.position === 'full-width'
+					? 'w-full max-w-none'
+					: ''}"
+				style="{token.fit ? `object-fit: ${token.fit};` : ''}{token.width
+					? `width: ${token.width}px;`
+					: ''}{token.height ? `height: ${token.height}px;` : ''}"
+			/>
+			{#if token.msubstitute}
+				<PictureComponent picture={pictureById[token.msubstitute]} class="my-5 lg:hidden block" />
+			{:else}
+				<PictureComponent picture={pictureById[token.slug]} class="my-5 lg:hidden block" />
 			{/if}
-		{/each}
-	</div>
-</div>
-{#if tokens.mobile}
-	<div class="contents lg:hidden">
+		{:else if token.type === 'leaderboardWidget'}
+			<LeaderBoardWidget
+				leaderboard={leaderboardById[token.slug]}
+				{pictures}
+				{products}
+				class="not-prose"
+			/>
+		{:else if token.type === 'qrCode'}
+			{#if token.slug === 'Bolt12'}
+				<a href="lightning:{$page.data.bolt12Address}">
+					<img src="{$page.url.origin}/phoenixd/bolt12/qrcode" class="w-96 h-96" alt="QR code" />
+				</a>
+			{/if}
+		{:else if token.type === 'currencyCalculatorWidget'}
+			<CurrencyCalculator />
+		{:else if token.type === 'scheduleWidget' && scheduleById[token.slug]}
+			<ScheduleWidget
+				schedule={scheduleById[token.slug]}
+				pictures={picturesBySchedule[token.slug] ?? []}
+				displayOption={token.display}
+				class="not-prose my-5"
+			/>
+		{:else if token.type === 'html'}
+			<!-- eslint-disable svelte/no-at-html-tags -->
+			{@html token.raw}
+		{/if}
+	{/each}
+{:else}
+	<div class={tokens.mobile ? 'hidden lg:contents' : 'contents'}>
 		<div class={classNames}>
-			{#each tokens.mobile as token}
+			{#each tokens.desktop as token}
 				{#if token.type === 'productWidget' && productById[token.slug]}
 					<ProductWidget
 						product={productById[token.slug]}
@@ -272,7 +275,7 @@
 						class="not-prose my-5"
 					/>
 				{:else if token.type === 'tagProducts' && productsByTag(token.slug)}
-					{#each productsByTag(token.slug) as product}
+					{#each productsByTag(token.slug, token.by ?? '', token.sort) as product}
 						<ProductWidget
 							{product}
 							pictures={picturesByProduct[product._id] ?? []}
@@ -297,6 +300,7 @@
 						tag={tagById[token.slug]}
 						pictures={picturesByTag[token.slug] ?? []}
 						displayOption={token.display}
+						titleCase={token.titleCase}
 						class="not-prose my-5"
 					/>
 				{:else if token.type === 'specificationWidget' && specificationById[token.slug]}
@@ -320,7 +324,29 @@
 						class="not-prose my-5"
 					/>
 				{:else if token.type === 'pictureWidget'}
-					<PictureComponent picture={pictureById[token.slug]} class="my-5" />
+					<PictureComponent
+						picture={pictureById[token.slug]}
+						class="my-5 lg:block hidden {token.height ? `h-[${token.height}px]` : ''} {token.width
+							? `w-[${token.width}px]`
+							: ''} {token.position === 'center'
+							? 'mx-auto'
+							: token.position === 'right'
+							? 'ml-auto'
+							: token.position === 'full-width'
+							? 'w-full max-w-none'
+							: ''}"
+						style="{token.fit ? `object-fit: ${token.fit};` : ''}{token.width
+							? `width: ${token.width}px;`
+							: ''}{token.height ? `height: ${token.height}px;` : ''}"
+					/>
+					{#if token.msubstitute}
+						<PictureComponent
+							picture={pictureById[token.msubstitute]}
+							class="my-5 lg:hidden block"
+						/>
+					{:else}
+						<PictureComponent picture={pictureById[token.slug]} class="my-5 lg:hidden block" />
+					{/if}
 				{:else if token.type === 'leaderboardWidget'}
 					<LeaderBoardWidget
 						leaderboard={leaderboardById[token.slug]}
@@ -356,4 +382,105 @@
 			{/each}
 		</div>
 	</div>
+	{#if tokens.mobile}
+		<div class="contents lg:hidden">
+			<div class={classNames}>
+				{#each tokens.mobile as token}
+					{#if token.type === 'productWidget' && productById[token.slug]}
+						<ProductWidget
+							product={productById[token.slug]}
+							pictures={picturesByProduct[token.slug] ?? []}
+							hasDigitalFiles={digitalFilesByProduct[token.slug] !== null}
+							displayOption={token.display}
+							canBuy={hasPosOptions
+								? productById[token.slug].actionSettings.retail.canBeAddedToBasket
+								: productById[token.slug].actionSettings.eShop.canBeAddedToBasket}
+							class="not-prose my-5"
+						/>
+					{:else if token.type === 'tagProducts' && productsByTag(token.slug)}
+						{#each productsByTag(token.slug) as product}
+							<ProductWidget
+								{product}
+								pictures={picturesByProduct[product._id] ?? []}
+								hasDigitalFiles={digitalFilesByProduct[product._id] !== null}
+								canBuy={hasPosOptions
+									? product.actionSettings.retail.canBeAddedToBasket
+									: product.actionSettings.eShop.canBeAddedToBasket}
+								class="not-prose my-5"
+								displayOption={token.display}
+							/>
+						{/each}
+					{:else if token.type === 'challengeWidget' && challengeById[token.slug]}
+						<ChallengeWidget challenge={challengeById[token.slug]} class="not-prose my-5" />
+					{:else if token.type === 'sliderWidget' && sliderById[token.slug]}
+						<CarouselWidget
+							autoplay={token.autoplay ? token.autoplay : 3000}
+							pictures={picturesBySlider[token.slug] ?? []}
+							class="not-prose mx-auto my-5"
+						/>
+					{:else if token.type === 'tagWidget' && tagById[token.slug]}
+						<TagWidget
+							tag={tagById[token.slug]}
+							pictures={picturesByTag[token.slug] ?? []}
+							displayOption={token.display}
+							class="not-prose my-5"
+						/>
+					{:else if token.type === 'specificationWidget' && specificationById[token.slug]}
+						<SpecificationWidget
+							specification={specificationById[token.slug]}
+							class="not-prose my-5"
+						/>
+					{:else if token.type === 'contactFormWidget' && contactFormById[token.slug]}
+						<ContactForm
+							contactForm={contactFormById[token.slug]}
+							{sessionEmail}
+							class="not-prose my-5"
+						/>
+					{:else if token.type === 'countdownWidget' && countdownById[token.slug]}
+						<CountdownWidget countdown={countdownById[token.slug]} class="not-prose my-5" />
+					{:else if token.type === 'galleryWidget' && galleryById[token.slug]}
+						<GalleryWidget
+							gallery={galleryById[token.slug]}
+							pictures={picturesByGallery[token.slug] ?? []}
+							displayOption={token.display}
+							class="not-prose my-5"
+						/>
+					{:else if token.type === 'pictureWidget'}
+						<PictureComponent picture={pictureById[token.slug]} class="my-5" />
+					{:else if token.type === 'leaderboardWidget'}
+						<LeaderBoardWidget
+							leaderboard={leaderboardById[token.slug]}
+							{pictures}
+							{products}
+							class="not-prose"
+						/>
+					{:else if token.type === 'qrCode'}
+						{#if token.slug === 'Bolt12'}
+							<a href="lightning:{$page.data.bolt12Address}">
+								<img
+									src="{$page.url.origin}/phoenixd/bolt12/qrcode"
+									class="w-96 h-96"
+									alt="QR code"
+								/>
+							</a>
+						{/if}
+					{:else if token.type === 'currencyCalculatorWidget'}
+						<CurrencyCalculator />
+					{:else if token.type === 'scheduleWidget' && scheduleById[token.slug]}
+						<ScheduleWidget
+							schedule={scheduleById[token.slug]}
+							pictures={picturesBySchedule[token.slug] ?? []}
+							displayOption={token.display}
+							class="not-prose my-5"
+						/>
+					{:else if token.type === 'html'}
+						<div class="my-5">
+							<!-- eslint-disable svelte/no-at-html-tags -->
+							{@html token.raw}
+						</div>
+					{/if}
+				{/each}
+			</div>
+		</div>
+	{/if}
 {/if}
