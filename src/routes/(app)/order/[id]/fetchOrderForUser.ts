@@ -27,6 +27,23 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		.find({ productId: { $in: order.items.map((item) => item.product._id) } })
 		.toArray();
 
+	const posSubtypesMap = new Map<
+		string,
+		{ tapToPayOnActivationUrl?: string; hasProcessor: boolean }
+	>();
+
+	for (const payment of order.payments) {
+		if (payment.posSubtype && !posSubtypesMap.has(payment.posSubtype)) {
+			const subtype = await collections.posPaymentSubtypes.findOne({
+				slug: payment.posSubtype
+			});
+			posSubtypesMap.set(payment.posSubtype, {
+				tapToPayOnActivationUrl: subtype?.tapToPay?.onActivationUrl,
+				hasProcessor: !!subtype?.tapToPay?.processor
+			});
+		}
+	}
+
 	for (const payment of order.payments) {
 		// Check if the payment has been paid but the status is still pending in DB
 		// In that case, we send back the status as paid, but do not update the DB (it's taken care of by order-lock)
@@ -110,7 +127,14 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		payments: order.payments.map((payment) => ({
 			id: payment._id.toString(),
 			method: payment.method,
+			posSubtype: payment.posSubtype,
 			posTapToPay: payment.posTapToPay,
+			tapToPayOnActivationUrl: payment.posSubtype
+				? posSubtypesMap.get(payment.posSubtype)?.tapToPayOnActivationUrl
+				: undefined,
+			posSubtypeHasProcessor: payment.posSubtype
+				? posSubtypesMap.get(payment.posSubtype)?.hasProcessor ?? false
+				: false,
 			processor: payment.method === 'card' ? payment.processor : undefined,
 			status: payment.status,
 			address: payment.address,

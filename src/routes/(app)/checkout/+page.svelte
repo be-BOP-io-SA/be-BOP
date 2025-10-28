@@ -506,6 +506,18 @@
 							{/if}
 						</div>
 					</label>
+					{#if paymentMethod === 'point-of-sale' && data.posSubtypes?.length}
+						<label class="form-label col-span-6">
+							<span>Payment Type</span>
+							<select name="posSubtype" class="form-input" required>
+								{#each data.posSubtypes as subtype}
+									<option value={subtype.slug}>
+										{subtype.name}
+									</option>
+								{/each}
+							</select>
+						</label>
+					{/if}
 				{/if}
 				{#if data.hasPosOptions && paymentMethod !== 'point-of-sale' && paymentMethod !== 'bank-transfer'}
 					<label class="checkbox-label">

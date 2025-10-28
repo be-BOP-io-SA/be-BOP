@@ -2,6 +2,7 @@ import { ORIGIN, SMTP_USER } from '$lib/server/env-config';
 import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database';
 import { conflictingTapToPayOrder, onOrderPayment, onOrderPaymentFailed } from '$lib/server/orders';
+import { type PaymentProcessor } from '$lib/server/payment-methods';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
@@ -105,10 +106,7 @@ export const actions = {
 
 	tapToPay: async (event) => {
 		const { params, request } = event;
-		const tapToPayProcessor = runtimeConfig.posTapToPay.processor;
-		if (!tapToPayProcessor) {
-			throw error(400, 'Tap-to-pay processor not configured');
-		}
+
 		const order = await collections.orders.findOne({
 			_id: params.id
 		});
@@ -125,6 +123,27 @@ export const actions = {
 		if (payment.method !== 'point-of-sale') {
 			throw error(400, 'Payment is not point-of-sale');
 		}
+
+		let tapToPayProcessor: PaymentProcessor | undefined;
+
+		if (payment.posSubtype) {
+			const subtype = await collections.posPaymentSubtypes.findOne({
+				slug: payment.posSubtype
+			});
+
+			if (subtype?.tapToPay) {
+				tapToPayProcessor = subtype.tapToPay.processor;
+			}
+		}
+
+		if (!tapToPayProcessor) {
+			tapToPayProcessor = runtimeConfig.posTapToPay.processor;
+		}
+
+		if (!tapToPayProcessor) {
+			throw error(400, 'Tap-to-pay not configured for this payment type');
+		}
+
 		if (payment.posTapToPay && payment.posTapToPay.expiresAt > new Date()) {
 			throw error(400, 'Payment is already waiting tap-to-pay');
 		}

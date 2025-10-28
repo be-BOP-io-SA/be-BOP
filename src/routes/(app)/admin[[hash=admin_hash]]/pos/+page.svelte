@@ -22,34 +22,14 @@
 
 <h1 class="text-3xl">POS</h1>
 
+<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+	<p class="text-sm text-blue-900">
+		ℹ️ Tap-to-pay settings have been moved to
+		<a href="/admin/pos-payments" class="font-bold underline">Payment Settings → PoS Payments</a>
+	</p>
+</div>
+
 <form method="post" class="flex flex-col gap-6" on:submit={handleSubmit}>
-	<h2 class="text-2xl">Tap-to-pay / external POS reconciliation</h2>
-	<label class="form-label">
-		Select Tap-to-pay provider
-		<select name="tapToPayProvider" class="form-input max-w-[25rem]">
-			{#each data.tapToPay.providers as provider}
-				<option
-					value={provider.provider}
-					selected={data.tapToPay.currentProcessor === provider.provider}
-					disabled={!provider.available}
-				>
-					{provider.displayName}
-				</option>
-			{/each}
-		</select>
-	</label>
-
-	<label class="form-label">
-		Fill mobile application URL (optional)
-		<input
-			type="text"
-			class="form-input max-w-[25rem]"
-			name="tapToPayOnActivationUrl"
-			placeholder="e.g. https://open.paynow-app.com"
-			value={data.tapToPay.onActivationUrl}
-		/>
-	</label>
-
 	<h2 class="text-2xl">Touchscreen PoS interface</h2>
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">

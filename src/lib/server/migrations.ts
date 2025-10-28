@@ -5,6 +5,7 @@ import { env } from '$env/dynamic/private';
 import type { OrderPayment } from '$lib/types/Order';
 import { Lock } from './lock';
 import { ORIGIN } from '$lib/server/env-config';
+import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 
 const migrations = [
 	{
@@ -591,6 +592,31 @@ const migrations = [
 				{ $unset: { 'items.$[].freeQuantity': 1 } },
 				{ session }
 			);
+		}
+	},
+	{
+		_id: new ObjectId('68e52126bf9841f187344d14'),
+		name: 'Create default PoS payment subtype: Cash',
+		run: async (session: ClientSession) => {
+			const existingCount = await collections.posPaymentSubtypes.countDocuments({}, { session });
+			if (existingCount > 0) {
+				console.log('PoS payment subtypes already exist, skipping migration');
+				return;
+			}
+
+			const defaultSubtype: PosPaymentSubtype = {
+				_id: new ObjectId(),
+				slug: 'cash',
+				name: 'Cash',
+				description: 'Cash payments',
+				sortOrder: 1,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+
+			await collections.posPaymentSubtypes.insertOne(defaultSubtype, { session });
+
+			console.log('Created default PoS payment subtype: Cash');
 		}
 	}
 ];
