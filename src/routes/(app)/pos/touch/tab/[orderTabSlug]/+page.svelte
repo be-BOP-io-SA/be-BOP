@@ -122,27 +122,44 @@
 </script>
 
 {#if tabSelectModalOpen}
-	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+	<div
+		class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+		role="button"
+		tabindex="0"
+		on:click={(e) => {
+			if (e.target === e.currentTarget) {
+				closeTabSelectModel();
+			}
+		}}
+		on:keydown={(e) => e.key === 'Escape' && closeTabSelectModel()}
+	>
 		<div
 			class="bg-white rounded-xl shadow-lg w-fit max-w-[90vw] max-h-[90vh] overflow-y-auto p-6 relative"
+			role="dialog"
+			aria-modal="true"
 		>
 			<button
-				class="absolute top-2 right-2 text-gray-500 hover:text-black"
+				class="absolute top-2 right-2 bg-gray-800 text-white text-2xl min-h-[3rem] py-2 px-4 rounded-md hover:bg-gray-900"
 				on:click={closeTabSelectModel}
 			>
-				✕
+				{t('pos.touch.cancel')}
 			</button>
 
 			<h2 class="text-lg font-semibold mb-4">{t('pos.touch.selectTab')}</h2>
 
 			{#each data.posTabGroups as tabGroup, groupIndex}
 				<section class="mb-6">
-					<h3 class="font-medium mb-2">{tabGroup.name}</h3>
+					<h3 class="text-2xl font-semibold mb-3">{tabGroup.name}</h3>
 					{#if tabGroup.tabs.length > 0}
 						<div class="grid grid-cols-3 gap-2">
 							{#each tabGroup.tabs as tab, tabIndex}
+								{@const isActive = tabSlug === sluggifyTab(data.posTabGroups, groupIndex, tabIndex)}
 								<button
-									class="touchScreen-product-cta text-white text-3xl min-h-[5rem] w-60 rounded-md py-2"
+									class="touchScreen-product-cta text-3xl min-h-[5rem] w-60 rounded-md py-2"
+									class:ring-4={isActive}
+									class:ring-green-500={isActive}
+									class:!text-green-300={isActive}
+									class:!text-white={!isActive}
 									style="background-color: {tab.color}"
 									on:click={() => selectTab(groupIndex, tabIndex)}
 								>
@@ -155,13 +172,6 @@
 					{/if}
 				</section>
 			{/each}
-
-			<button
-				class="mt-4 w-fit bg-gray-800 text-white text-2xl min-h-[3rem] py-2 px-4 rounded-md hover:bg-gray-900"
-				on:click={closeTabSelectModel}
-			>
-				{t('pos.touch.cancel')}
-			</button>
 		</div>
 	</div>
 {/if}
