@@ -5,6 +5,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import { UrlDependency } from '$lib/types/UrlDependency';
+	import { useI18n } from '$lib/i18n';
 
 	export let pictures: Picture[] | [];
 	export let product: Pick<Product, 'name' | '_id' | 'price' | 'stock'>;
@@ -13,6 +14,8 @@
 	let className = '';
 	export { className as class };
 	let hasStock = !!(product.stock?.available ?? Infinity);
+
+	const { t } = useI18n();
 </script>
 
 <form
@@ -25,6 +28,10 @@
 			loading = false;
 			if (result.type === 'error') {
 				alert(result.error.message);
+				return;
+			}
+			if (result.type === 'failure' && result.data?.error === 'maxQuantityReached') {
+				alert(t('pos.touch.maxQuantityReached', { max: Number(result.data.maxQuantity) }));
 				return;
 			}
 			invalidate(UrlDependency.orderTab(tabSlug));

@@ -1,6 +1,6 @@
 import { collections } from '$lib/server/database.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
-import { redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { z } from 'zod';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
@@ -11,6 +11,8 @@ import {
 	removeOrderTab
 } from '$lib/server/orderTab';
 import { removeUserCarts } from '$lib/server/cart';
+import { getCurrentPosSession } from '$lib/server/pos-sessions';
+import { runtimeConfig } from '$lib/server/runtime-config';
 
 export const load = async (event) => {
 	const lastOrders = await collections.orders
@@ -23,6 +25,8 @@ export const load = async (event) => {
 	const session = await collections.sessions.findOne({
 		sessionId: event.locals.sessionId
 	});
+
+	const currentPosSession = runtimeConfig.posSession.enabled ? await getCurrentPosSession() : null;
 
 	return {
 		orders: lastOrders.map((order) => ({
@@ -43,7 +47,19 @@ export const load = async (event) => {
 			status: order.status
 		})),
 		countryCode: event.locals.countryCode,
-		sessionPos: session?.pos
+		sessionPos: session?.pos,
+		posSession: runtimeConfig.posSession,
+		currentSession: currentPosSession
+			? {
+					_id: currentPosSession._id.toString(),
+					status: currentPosSession.status,
+					openedAt: currentPosSession.openedAt,
+					openedBy:
+						currentPosSession.openedBy.userAlias ||
+						currentPosSession.openedBy.userLogin ||
+						currentPosSession.openedBy.userId
+			  }
+			: null
 	};
 };
 
@@ -59,7 +75,10 @@ export const actions: Actions = {
 				tabSlug: formData.get('tabSlug'),
 				productId: formData.get('productId')
 			});
-		await addToOrderTab({ tabSlug, productId });
+		const result = await addToOrderTab({ tabSlug, productId });
+		if (!result.success) {
+			return fail(400, { error: result.error, maxQuantity: result.maxQuantity });
+		}
 	},
 	removeFromTab: async ({ request }) => {
 		const formData = await request.formData();
