@@ -112,10 +112,19 @@
 		{#each data.order.items as item, i}
 			{@const price =
 				item.currencySnapshot.main.customPrice?.amount ?? item.currencySnapshot.main.price.amount}
-			<!--{@const unitPrice = price / item.quantity}-->
+			{@const bookingMultiplier =
+				item.booking && item.product.bookingSpec
+					? differenceInMinutes(item.booking.end, item.booking.start) /
+					  item.product.bookingSpec.slotMinutes
+					: 1}
 			{@const priceCurrency =
 				item.currencySnapshot.main.customPrice?.currency ??
 				item.currencySnapshot.main.price.currency}
+			{@const unitPrice = price * bookingMultiplier}
+			{@const totalPrice = unitPrice * item.quantity}
+			{@const vatRate = item.vatRate ?? 0}
+			{@const vatAmount = (totalPrice * vatRate) / 100}
+			{@const totalWithVat = totalPrice + vatAmount}
 			<tr style:background-color={i % 2 === 0 ? '#fef2cc' : '#e7e6e6'}>
 				<td class="text-center border border-white px-2">{i + 1}</td>
 				<td class="text-center border border-white px-2"
@@ -129,36 +138,14 @@
 				>
 				<td class="text-center border border-white px-2">{item.quantity}</td>
 				<td class="text-center border border-white px-2">
-					<PriceTag
-						amount={price *
-							(item.booking && item.product.bookingSpec
-								? differenceInMinutes(item.booking.end, item.booking.start) /
-								  item.product.bookingSpec.slotMinutes
-								: 1)}
-						currency={priceCurrency}
-						inline
-					/>
+					<PriceTag amount={unitPrice} currency={priceCurrency} inline />
 				</td>
-				<td class="text-center border border-white px-2">{item.vatRate ?? 0}%</td>
+				<td class="text-center border border-white px-2">{vatRate}%</td>
 				<td class="text-center border border-white px-2">
-					<PriceTag
-						amount={(price *
-							(item.booking && item.product.bookingSpec
-								? differenceInMinutes(item.booking.end, item.booking.start) /
-								  item.product.bookingSpec.slotMinutes
-								: 1) *
-							(item.vatRate ?? 0)) /
-							100}
-						currency={priceCurrency}
-						inline
-					/>
+					<PriceTag amount={vatAmount} currency={priceCurrency} inline />
 				</td>
 				<td class="text-right border border-white px-2">
-					<PriceTag
-						amount={price * item.quantity + (price * (item.vatRate ?? 0)) / 100}
-						currency={priceCurrency}
-						inline
-					/>
+					<PriceTag amount={totalWithVat} currency={priceCurrency} inline />
 				</td>
 			</tr>
 		{/each}
