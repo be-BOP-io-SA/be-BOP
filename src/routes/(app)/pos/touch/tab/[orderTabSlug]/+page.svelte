@@ -558,13 +558,11 @@
 				class="touchScreen-ticket-menu text-3xl p-4 text-center"
 				on:click={() => (tabSelectModalOpen = true)}>{t('pos.touch.tickets')}</button
 			>
-			<div class="col-span-2 grid grid-cols-3 gap-4">
-				<button
-					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
-					disabled={!items.length}
-					on:click={() => (printModalOpen = true)}>PRINT TICKET</button
-				>
-			</div>
+			<button
+				class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
+				disabled={!items.length}
+				on:click={() => (printModalOpen = true)}>PRINT TICKET</button
+			>
 		</div>
 		<div class="grid grid-cols-2 gap-4 mt-2">
 			<a
