@@ -233,6 +233,22 @@
 		@apply mb-4 p-4 bg-red-50 border border-red-200 rounded max-h-60 overflow-y-auto;
 	}
 
+	.admin-table {
+		@apply border border-gray-300 divide-y divide-gray-300 border-collapse;
+	}
+
+	.admin-table-header {
+		@apply bg-gray-200;
+	}
+
+	.admin-table-th {
+		@apply border border-gray-300 p-2;
+	}
+
+	.admin-table-td {
+		@apply border border-gray-300 p-2;
+	}
+
 	.body-secondPlan {
 		color: var(--body-text-color);
 		font-family: var(--body-text-fontFamily);

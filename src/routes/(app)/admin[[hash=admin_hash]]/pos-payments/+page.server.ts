@@ -131,6 +131,18 @@ export const actions: Actions = {
 			return fail(400, { error: parsed.error.message });
 		}
 
+		const subtype = await collections.posPaymentSubtypes.findOne({
+			_id: new ObjectId(parsed.data.id)
+		});
+
+		if (!subtype) {
+			return fail(404, { error: 'Subtype not found' });
+		}
+
+		if (subtype.slug === 'cash' && parsed.data.disabled) {
+			return fail(400, { error: 'Cannot disable cash subtype' });
+		}
+
 		const processor = asPaymentProcessor(parsed.data.tapToPayProcessor);
 
 		const updateData: Partial<PosPaymentSubtype> = {
@@ -165,6 +177,10 @@ export const actions: Actions = {
 		const subtype = await collections.posPaymentSubtypes.findOne({ _id: new ObjectId(id) });
 		if (!subtype) {
 			return fail(404, { error: 'Subtype not found' });
+		}
+
+		if (subtype.slug === 'cash') {
+			return fail(400, { error: 'Cannot delete cash subtype' });
 		}
 
 		const ordersCount = await collections.orders.countDocuments({

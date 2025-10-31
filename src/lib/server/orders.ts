@@ -44,6 +44,7 @@ import { checkCartItems } from './cart';
 import { userQuery } from './user';
 import { SMTP_USER } from '$lib/server/env-config';
 import { toCurrency } from '$lib/utils/toCurrency';
+import { toStorageCurrency } from '$lib/utils/toStorageCurrency';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
@@ -1240,7 +1241,7 @@ export async function createOrder(
 					currencySnapshot: {
 						main: {
 							price: {
-								amount: toCurrency(
+								amount: toStorageCurrency(
 									runtimeConfig.mainCurrency,
 									item.product.price.amount,
 									item.product.price.currency
@@ -1249,7 +1250,7 @@ export async function createOrder(
 							},
 							...(item.customPrice && {
 								customPrice: {
-									amount: toCurrency(
+									amount: toStorageCurrency(
 										runtimeConfig.mainCurrency,
 										item.customPrice.amount,
 										item.customPrice.currency
@@ -1261,7 +1262,7 @@ export async function createOrder(
 						...(runtimeConfig.secondaryCurrency && {
 							secondary: {
 								price: {
-									amount: toCurrency(
+									amount: toStorageCurrency(
 										runtimeConfig.secondaryCurrency,
 										item.product.price.amount,
 										item.product.price.currency
@@ -1270,7 +1271,7 @@ export async function createOrder(
 								},
 								...(item.customPrice && {
 									customPrice: {
-										amount: toCurrency(
+										amount: toStorageCurrency(
 											runtimeConfig.secondaryCurrency,
 											item.customPrice.amount,
 											item.customPrice.currency
@@ -1283,7 +1284,7 @@ export async function createOrder(
 						...(runtimeConfig.accountingCurrency && {
 							accounting: {
 								price: {
-									amount: toCurrency(
+									amount: toStorageCurrency(
 										runtimeConfig.accountingCurrency,
 										item.product.price.amount,
 										item.product.price.currency
@@ -1292,7 +1293,7 @@ export async function createOrder(
 								},
 								...(item.customPrice && {
 									customPrice: {
-										amount: toCurrency(
+										amount: toStorageCurrency(
 											runtimeConfig.accountingCurrency,
 											item.customPrice.amount,
 											item.customPrice.currency
@@ -1304,7 +1305,7 @@ export async function createOrder(
 						}),
 						priceReference: {
 							price: {
-								amount: toCurrency(
+								amount: toStorageCurrency(
 									runtimeConfig.priceReferenceCurrency,
 									item.product.price.amount,
 									item.product.price.currency
@@ -1313,7 +1314,7 @@ export async function createOrder(
 							},
 							...(item.customPrice && {
 								customPrice: {
-									amount: toCurrency(
+									amount: toStorageCurrency(
 										runtimeConfig.priceReferenceCurrency,
 										item.customPrice.amount,
 										item.customPrice.currency
@@ -1543,7 +1544,7 @@ export async function createOrder(
 					}
 				}),
 				...(params.engagements && { engagements: params.engagements }),
-				...(params.onLocation && { onLocation: params.onLocation }),
+				...(params.onLocation !== undefined && { onLocation: params.onLocation }),
 				...(params.cart?.orderTabSlug && { orderTabSlug: params.cart.orderTabSlug })
 			};
 			await collections.orders.insertOne(order, { session });
