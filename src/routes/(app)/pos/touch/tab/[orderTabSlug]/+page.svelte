@@ -2,6 +2,7 @@
 	import type { SetRequired } from 'type-fest';
 	import type { Picture } from '$lib/types/Picture';
 	import ProductWidgetPOS from '$lib/components/ProductWidget/ProductWidgetPOS.svelte';
+	import CategorySelect from '$lib/components/CategorySelect.svelte';
 	import { POS_PRODUCT_PAGINATION, isPreorder } from '$lib/types/Product';
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n.js';
@@ -131,6 +132,10 @@
 		goto(`${tab}`).then(() => {
 			closeTabSelectModel();
 		});
+	}
+
+	function handleCategorySelect(filterId: string) {
+		goto(selfPageLink({ filter: filterId, skip: 0 }));
 	}
 </script>
 
@@ -280,22 +285,35 @@
 			</div>
 			<div class="col-span-2 overflow-y-auto">
 				<div class="grid grid-cols-2 gap-4 text-3xl text-center">
-					<a
-						class="col-span-2 touchScreen-category-cta"
-						href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}>{t('pos.touch.favorites')}</a
-					>
-					{#each data.tags as favoriteTag}
+					{#if data.posUseSelectForTags}
+						<!-- Select menu mode -->
+						<div class="col-span-2">
+							<CategorySelect
+								tags={data.tags}
+								currentFilter={filter}
+								onSelect={handleCategorySelect}
+							/>
+						</div>
+					{:else}
+						<!-- Button mode (current) -->
 						<a
-							class="touchScreen-category-cta"
-							href={selfPageLink({ filter: favoriteTag._id, skip: 0 })}>{favoriteTag.name}</a
+							class="col-span-2 touchScreen-category-cta"
+							href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}
+							>{t('pos.touch.favorites')}</a
 						>
-					{/each}
-					<a
-						class="col-span-2 touchScreen-category-cta"
-						href={selfPageLink({ filter: 'all', skip: 0 })}
-					>
-						{t('pos.touch.allProducts')}</a
-					>
+						{#each data.tags as favoriteTag}
+							<a
+								class="touchScreen-category-cta"
+								href={selfPageLink({ filter: favoriteTag._id, skip: 0 })}>{favoriteTag.name}</a
+							>
+						{/each}
+						<a
+							class="col-span-2 touchScreen-category-cta"
+							href={selfPageLink({ filter: 'all', skip: 0 })}
+						>
+							{t('pos.touch.allProducts')}</a
+						>
+					{/if}
 
 					<div class="col-span-2 grid grid-cols-2 gap-4">
 						{#each displayedProducts as product}

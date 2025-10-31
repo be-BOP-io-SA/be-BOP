@@ -105,7 +105,8 @@ export const load = async ({ locals, depends, params }) => {
 	return {
 		orderTab: pojo(orderTab),
 		posTabGroups: runtimeConfig.posTabGroups,
-		tabSlug
+		tabSlug,
+		posUseSelectForTags: runtimeConfig.posUseSelectForTags
 	};
 };
 
