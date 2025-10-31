@@ -1,7 +1,10 @@
 <script lang="ts">
 	import ManageOrderTabs from '$lib/components/ManageOrderTabs.svelte';
 	import { MultiSelect } from 'svelte-multiselect';
+	import { useI18n } from '$lib/i18n';
 	export let data;
+
+	const { t } = useI18n();
 
 	let selectedTags =
 		data.posTouchTag?.map((tagId) => ({
@@ -52,27 +55,22 @@
 		Enable Z-ticket management
 	</label>
 
-	{#if posSession.enabled}
-		<label class="checkbox-label">
-			<input
-				type="checkbox"
-				name="posSession.allowXTicketEditing"
-				class="form-checkbox"
-				bind:checked={posSession.allowXTicketEditing}
-			/>
-			Allow X ticket editing
-		</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="posUseSelectForTags"
+			class="form-checkbox"
+			checked={data.posUseSelectForTags}
+		/>
+		{t('pos.useSelectForTags')}
+	</label>
 
-		<label class="checkbox-label">
-			<input
-				type="checkbox"
-				name="posSession.cashDeltaJustificationMandatory"
-				class="form-checkbox"
-				bind:checked={posSession.cashDeltaJustificationMandatory}
-			/>
-			Make cash delta justification mandatory
-		</label>
-	{/if}
+	<!-- svelte-ignore a11y-label-has-associated-control -->
+	<label class="form-label">
+		Tabs management
+		<ManageOrderTabs bind:tabGroups />
+	</label>
+	<input type="hidden" name="posTabGroups" bind:value={serializedTabGroups} />
 
 	<h2 class="text-2xl mt-8">PoS Checkout</h2>
 	<label class="checkbox-label">

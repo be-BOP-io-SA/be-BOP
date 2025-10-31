@@ -17,7 +17,14 @@ import { runtimeConfig } from '$lib/server/runtime-config.js';
 
 type ProductProjection = Pick<
 	Product,
-	'_id' | 'name' | 'shortDescription' | 'vatProfileId' | 'variationLabels' | 'shipping' | 'price'
+	| '_id'
+	| 'name'
+	| 'shortDescription'
+	| 'vatProfileId'
+	| 'variationLabels'
+	| 'shipping'
+	| 'price'
+	| 'maxQuantityPerOrder'
 >;
 
 type Locale = App.Locals['language'];
@@ -49,7 +56,8 @@ async function hydratedOrderItems(
 				vatProfileId: 1,
 				variationLabels: {
 					$ifNull: [`$translations.${locale}.variationLabels`, '$variationLabels']
-				}
+				},
+				maxQuantityPerOrder: 1
 			})
 			.toArray(),
 		picturesForProducts(tabItems.map((it) => it.productId))
@@ -105,7 +113,8 @@ export const load = async ({ locals, depends, params }) => {
 	return {
 		orderTab: pojo(orderTab),
 		posTabGroups: runtimeConfig.posTabGroups,
-		tabSlug
+		tabSlug,
+		posUseSelectForTags: runtimeConfig.posUseSelectForTags
 	};
 };
 

@@ -1,6 +1,6 @@
 import { collections } from '$lib/server/database.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
-import { redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { z } from 'zod';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
@@ -75,7 +75,10 @@ export const actions: Actions = {
 				tabSlug: formData.get('tabSlug'),
 				productId: formData.get('productId')
 			});
-		await addToOrderTab({ tabSlug, productId });
+		const result = await addToOrderTab({ tabSlug, productId });
+		if (!result.success) {
+			return fail(400, { error: result.error, maxQuantity: result.maxQuantity });
+		}
 	},
 	removeFromTab: async ({ request }) => {
 		const formData = await request.formData();
