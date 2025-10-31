@@ -1,7 +1,10 @@
 <script lang="ts">
 	import ManageOrderTabs from '$lib/components/ManageOrderTabs.svelte';
 	import { MultiSelect } from 'svelte-multiselect';
+	import { useI18n } from '$lib/i18n';
 	export let data;
+
+	const { t } = useI18n();
 
 	let selectedTags =
 		data.posTouchTag?.map((tagId) => ({
@@ -44,6 +47,16 @@
 		/>
 	</label>
 	<input type="hidden" name="posTouchTag" bind:value={serializedTags} />
+
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="posUseSelectForTags"
+			class="form-checkbox"
+			checked={data.posUseSelectForTags}
+		/>
+		{t('pos.useSelectForTags')}
+	</label>
 
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
