@@ -55,6 +55,28 @@
 		Enable Z-ticket management
 	</label>
 
+	{#if posSession.enabled}
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="posSession.allowXTicketEditing"
+				class="form-checkbox"
+				bind:checked={posSession.allowXTicketEditing}
+			/>
+			Allow X ticket editing
+		</label>
+
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="posSession.cashDeltaJustificationMandatory"
+				class="form-checkbox"
+				bind:checked={posSession.cashDeltaJustificationMandatory}
+			/>
+			Make cash delta justification mandatory
+		</label>
+	{/if}
+
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
