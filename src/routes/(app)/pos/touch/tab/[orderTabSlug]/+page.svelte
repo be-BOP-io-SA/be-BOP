@@ -538,7 +538,7 @@
 		</div>
 	</main>
 	<footer class="shrink-0">
-		<div class="grid grid-cols-2 gap-4 mt-2">
+		<div class="grid grid-cols-3 gap-4 mt-2">
 			<button
 				class="touchScreen-ticket-menu text-3xl p-4 text-center"
 				on:click={() => (tabSelectModalOpen = true)}>{t('pos.touch.tickets')}</button
@@ -546,7 +546,8 @@
 			<div class="col-span-2 grid grid-cols-3 gap-4">
 				<button
 					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
-					on:click={() => alert(t('pos.touch.notDeveloped'))}>{t('pos.touch.save')}</button
+					disabled={!items.length}
+					on:click={() => (printModalOpen = true)}>PRINT TICKET</button
 				>
 				<button
 					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
