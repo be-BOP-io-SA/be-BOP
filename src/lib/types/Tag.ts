@@ -25,6 +25,7 @@ export interface Tag extends Timestamps, TagTranslatableFields {
 	productTagging: boolean;
 	useLightDark: boolean;
 	reportingFilter: boolean;
+	printReceiptFilter: boolean;
 	cssOveride: string;
 
 	translations?: Partial<Record<LanguageKey, Partial<TagTranslatableFields>>>;
