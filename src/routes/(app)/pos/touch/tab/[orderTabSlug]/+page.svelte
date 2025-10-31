@@ -332,6 +332,7 @@
 		setTimeout(() => {
 			window.print();
 		}, 100);
+	}
 	function handleCategorySelect(filterId: string) {
 		goto(selfPageLink({ filter: filterId, skip: 0 }));
 	}
