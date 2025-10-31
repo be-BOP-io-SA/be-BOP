@@ -220,6 +220,7 @@ const baseConfig = {
 	contactModesForceOption: false,
 	posTouchTag: [] as Tag['_id'][],
 	posTabGroups: defaultPosTabGroups(),
+	posUseSelectForTags: false,
 	posPrefillTermOfUse: false,
 	posTapToPay: {
 		processor: undefined as PaymentProcessor | undefined,
@@ -243,6 +244,11 @@ const baseConfig = {
 		timeBeforeRedirecting: 10,
 		displayCustomerCta: false,
 		removeBebobLogo: false
+	},
+	posSession: {
+		enabled: false,
+		allowXTicketEditing: false,
+		cashDeltaJustificationMandatory: false
 	},
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,
@@ -367,6 +373,15 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 <p></p>
 <p>If this an error or if you don't want to participate anymore to the event, please notify the organizer through this link :</p>
 <p><a href="mailto:{{eventCancellationLink}}?subject=Cancel_Participation">Cancel participation</a></p>`,
+			default: true as boolean
+		},
+		'pos.cash.mismatch': {
+			subject: '{{brandName}} - Cash opening mismatch',
+			html: `<p>Warning: Cash opening amount does not match the previous session closing amount.</p>
+<p>Expected: {{expectedAmount}} {{expectedCurrency}}</p>
+<p>Actual: {{actualAmount}} {{actualCurrency}}</p>
+<p>Opened by: {{openedBy}}</p>
+<p>Date: {{openedAt}}</p>`,
 			default: true as boolean
 		}
 	}

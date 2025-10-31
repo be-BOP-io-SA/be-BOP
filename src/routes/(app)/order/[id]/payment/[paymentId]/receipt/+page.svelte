@@ -3,11 +3,7 @@
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import Trans from '$lib/components/Trans.svelte';
 	import { useI18n } from '$lib/i18n.js';
-	import {
-		invoiceNumberVariables,
-		orderIndividualItemPrice,
-		orderItemPrice
-	} from '$lib/types/Order.js';
+	import { invoiceNumberVariables, orderIndividualItemPrice } from '$lib/types/Order.js';
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 	import { sum } from '$lib/utils/sum.js';
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
@@ -193,6 +189,12 @@
 				{@const priceCurrency =
 					item.currencySnapshot.main.customPrice?.currency ??
 					item.currencySnapshot.main.price.currency}
+				{@const unitPrice = orderIndividualItemPrice(item, 'main')}
+				{@const paidQuantity = item.quantity - (item.freeQuantity ?? 0)}
+				{@const totalPrice = unitPrice * paidQuantity}
+				{@const vatRate = item.vatRate ?? 0}
+				{@const vatAmount = (totalPrice * vatRate) / 100}
+				{@const totalWithVat = totalPrice + vatAmount}
 				<tr style:background-color={i % 2 === 0 ? '#fef2cc' : '#e7e6e6'}>
 					<td class="text-center border border-white px-2">{i + 1}</td>
 					<td class="text-center border border-white px-2"
@@ -205,30 +207,18 @@
 							: item.product.name}</td
 					>
 					<td class="text-center border border-white px-2"
-						>{item.quantity - (item.freeQuantity ?? 0)}
+						>{paidQuantity}
 						{item.freeQuantity ? '+' + item.freeQuantity : ''}</td
 					>
 					<td class="text-center border border-white px-2">
-						<PriceTag
-							amount={orderIndividualItemPrice(item, 'main')}
-							currency={priceCurrency}
-							inline
-						/>
+						<PriceTag amount={unitPrice} currency={priceCurrency} inline />
 					</td>
-					<td class="text-center border border-white px-2">{item.vatRate ?? 0}%</td>
+					<td class="text-center border border-white px-2">{vatRate}%</td>
 					<td class="text-center border border-white px-2">
-						<PriceTag
-							amount={(orderItemPrice(item, 'main') * (item.vatRate ?? 0)) / 100}
-							currency={priceCurrency}
-							inline
-						/>
+						<PriceTag amount={vatAmount} currency={priceCurrency} inline />
 					</td>
 					<td class="text-right border border-white px-2">
-						<PriceTag
-							amount={(orderItemPrice(item, 'main') * (100 + (item.vatRate ?? 0))) / 100}
-							currency={priceCurrency}
-							inline
-						/>
+						<PriceTag amount={totalWithVat} currency={priceCurrency} inline />
 					</td>
 				</tr>
 			{/each}

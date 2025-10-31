@@ -635,6 +635,7 @@
 		},
 		"sessionLink": "POS session",
 		"sessionTouchLink": "POS session - touch screen",
+		"useSelectForTags": "Use select menu for product tag selection",
 		"tapToPay": {
 			"inProgress": "The payment will be automatically validated once the external transaction is recorded and validated.",
 			"inUseByOtherOrder": "Tap-to-pay is disabled because another order is currently using this payment method. You can collect payment manually and then enter the transaction number in this field."
@@ -657,7 +658,8 @@
 			"pay": "PAY",
 			"notDeveloped": "Not developed yet",
 			"confirmDeleteLastItem": "Do you want to delete the last cart line?",
-			"confirmDeleteAllItems": "Do you want to delete all cart lines?"
+			"confirmDeleteAllItems": "Do you want to delete all cart lines?",
+			"maxQuantityReached": "Maximum quantity per order reached ({max})"
 		},
 		"itemEdit": {
 			"quantity": "Quantity",

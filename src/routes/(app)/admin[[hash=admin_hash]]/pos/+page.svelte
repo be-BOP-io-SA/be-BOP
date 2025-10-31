@@ -1,7 +1,10 @@
 <script lang="ts">
 	import ManageOrderTabs from '$lib/components/ManageOrderTabs.svelte';
 	import { MultiSelect } from 'svelte-multiselect';
+	import { useI18n } from '$lib/i18n';
 	export let data;
+
+	const { t } = useI18n();
 
 	let selectedTags =
 		data.posTouchTag?.map((tagId) => ({
@@ -13,6 +16,16 @@
 	$: serializedTags = JSON.stringify(selectedTags.map((tag) => tag.value));
 	$: serializedTabGroups = JSON.stringify(tabGroups);
 	let posDisplayOrderQrAfterPayment = data.posDisplayOrderQrAfterPayment;
+
+	let posSession = { ...data.posSession };
+
+	$: if (
+		(posSession.allowXTicketEditing || posSession.cashDeltaJustificationMandatory) &&
+		!posSession.enabled
+	) {
+		posSession.enabled = true;
+	}
+
 	function handleSubmit(event: Event) {
 		if (selectedTags.length > 8 && !confirm('Are you sure ?')) {
 			event.preventDefault();
@@ -30,20 +43,27 @@
 </div>
 
 <form method="post" class="flex flex-col gap-6" on:submit={handleSubmit}>
-	<h2 class="text-2xl">Touchscreen PoS interface</h2>
-	<!-- svelte-ignore a11y-label-has-associated-control -->
-	<label class="form-label">
-		Product Tags
-		<MultiSelect
-			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
-			options={data.tags.map((tag) => ({
-				value: tag._id,
-				label: tag.name
-			}))}
-			bind:selected={selectedTags}
+	<h2 class="text-2xl">POS Session Management (Z-Ticket System)</h2>
+
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="posSession.enabled"
+			class="form-checkbox"
+			bind:checked={posSession.enabled}
 		/>
+		Enable Z-ticket management
 	</label>
-	<input type="hidden" name="posTouchTag" bind:value={serializedTags} />
+
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="posUseSelectForTags"
+			class="form-checkbox"
+			checked={data.posUseSelectForTags}
+		/>
+		{t('pos.useSelectForTags')}
+	</label>
 
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
@@ -52,7 +72,7 @@
 	</label>
 	<input type="hidden" name="posTabGroups" bind:value={serializedTabGroups} />
 
-	<h2 class="text-2xl">PoS Checkout</h2>
+	<h2 class="text-2xl mt-8">PoS Checkout</h2>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
@@ -102,5 +122,55 @@
 			Remove be-BOP logo from POS after payment QR code
 		</label>
 	{/if}
+
+	<h2 class="text-2xl mt-8">Tap-to-pay / external POS reconciliation</h2>
+	<label class="form-label">
+		Select Tap-to-pay provider
+		<select name="tapToPayProvider" class="form-input max-w-[25rem]">
+			{#each data.tapToPay.providers as provider}
+				<option
+					value={provider.provider}
+					selected={data.tapToPay.currentProcessor === provider.provider}
+					disabled={!provider.available}
+				>
+					{provider.displayName}
+				</option>
+			{/each}
+		</select>
+	</label>
+
+	<label class="form-label">
+		Fill mobile application URL (optional)
+		<input
+			type="text"
+			class="form-input max-w-[25rem]"
+			name="tapToPayOnActivationUrl"
+			placeholder="e.g. https://open.paynow-app.com"
+			value={data.tapToPay.onActivationUrl}
+		/>
+	</label>
+
+	<h2 class="text-2xl">Touchscreen PoS interface</h2>
+	<!-- svelte-ignore a11y-label-has-associated-control -->
+	<label class="form-label">
+		Product Tags
+		<MultiSelect
+			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
+			options={data.tags.map((tag) => ({
+				value: tag._id,
+				label: tag.name
+			}))}
+			bind:selected={selectedTags}
+		/>
+	</label>
+	<input type="hidden" name="posTouchTag" bind:value={serializedTags} />
+
+	<!-- svelte-ignore a11y-label-has-associated-control -->
+	<label class="form-label">
+		Tabs management
+		<ManageOrderTabs bind:tabGroups />
+	</label>
+	<input type="hidden" name="posTabGroups" bind:value={serializedTabGroups} />
+
 	<input type="submit" value="Update" class="btn btn-blue self-start" />
 </form>

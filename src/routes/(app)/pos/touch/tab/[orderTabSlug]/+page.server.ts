@@ -25,6 +25,7 @@ type ProductProjection = Pick<
 	| 'shipping'
 	| 'price'
 	| 'tagIds'
+	| 'maxQuantityPerOrder'
 >;
 
 type Locale = App.Locals['language'];
@@ -80,7 +81,8 @@ async function hydratedOrderItems(
 				variationLabels: {
 					$ifNull: [`$translations.${locale}.variationLabels`, '$variationLabels']
 				},
-				tagIds: 1
+				tagIds: 1,
+				maxQuantityPerOrder: 1
 			})
 			.toArray(),
 		picturesForProducts(tabItems.map((it) => it.productId))
@@ -152,7 +154,8 @@ export const load = async ({ locals, depends, params }) => {
 		tabSlug,
 		printTags: pojo(printTags),
 		posTouchScreenTags: pojo(posTouchScreenTags),
-		printTagsMap
+		printTagsMap,
+		posUseSelectForTags: runtimeConfig.posUseSelectForTags
 	};
 };
 

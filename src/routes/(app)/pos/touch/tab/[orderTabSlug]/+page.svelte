@@ -2,6 +2,7 @@
 	import type { SetRequired } from 'type-fest';
 	import type { Picture } from '$lib/types/Picture';
 	import ProductWidgetPOS from '$lib/components/ProductWidget/ProductWidgetPOS.svelte';
+	import CategorySelect from '$lib/components/CategorySelect.svelte';
 	import { POS_PRODUCT_PAGINATION, isPreorder } from '$lib/types/Product';
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n.js';
@@ -45,6 +46,19 @@
 		vatSingleCountry: data.vatSingleCountry,
 		vatProfiles: data.vatProfiles
 	});
+
+	$: poolLabel = (() => {
+		const found = data.posTabGroups
+			.flatMap((group, groupIndex) =>
+				group.tabs.map((tab, tabIndex) => ({ group, tab, tabIndex, groupIndex }))
+			)
+			.find(
+				({ groupIndex, tabIndex }) =>
+					sluggifyTab(data.posTabGroups, groupIndex, tabIndex) === tabSlug
+			);
+
+		return found ? found.tab.label ?? `${found.group.name} ${found.tabIndex + 1}` : 'TMP';
+	})();
 
 	const { t } = useI18n();
 	let posProductPagination = POS_PRODUCT_PAGINATION;
@@ -318,31 +332,50 @@
 		setTimeout(() => {
 			window.print();
 		}, 100);
+	function handleCategorySelect(filterId: string) {
+		goto(selfPageLink({ filter: filterId, skip: 0 }));
 	}
 </script>
 
 {#if tabSelectModalOpen}
-	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+	<div
+		class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+		role="button"
+		tabindex="0"
+		on:click={(e) => {
+			if (e.target === e.currentTarget) {
+				closeTabSelectModel();
+			}
+		}}
+		on:keydown={(e) => e.key === 'Escape' && closeTabSelectModel()}
+	>
 		<div
 			class="bg-white rounded-xl shadow-lg w-fit max-w-[90vw] max-h-[90vh] overflow-y-auto p-6 relative"
+			role="dialog"
+			aria-modal="true"
 		>
 			<button
-				class="absolute top-2 right-2 text-gray-500 hover:text-black"
+				class="absolute top-2 right-2 bg-gray-800 text-white text-2xl min-h-[3rem] py-2 px-4 rounded-md hover:bg-gray-900"
 				on:click={closeTabSelectModel}
 			>
-				✕
+				{t('pos.touch.cancel')}
 			</button>
 
 			<h2 class="text-lg font-semibold mb-4">{t('pos.touch.selectTab')}</h2>
 
 			{#each data.posTabGroups as tabGroup, groupIndex}
 				<section class="mb-6">
-					<h3 class="font-medium mb-2">{tabGroup.name}</h3>
+					<h3 class="text-2xl font-semibold mb-3">{tabGroup.name}</h3>
 					{#if tabGroup.tabs.length > 0}
 						<div class="grid grid-cols-3 gap-2">
 							{#each tabGroup.tabs as tab, tabIndex}
+								{@const isActive = tabSlug === sluggifyTab(data.posTabGroups, groupIndex, tabIndex)}
 								<button
-									class="touchScreen-product-cta text-white text-3xl min-h-[5rem] w-60 rounded-md py-2"
+									class="touchScreen-product-cta text-3xl min-h-[5rem] w-60 rounded-md py-2"
+									class:ring-4={isActive}
+									class:ring-green-500={isActive}
+									class:!text-green-300={isActive}
+									class:!text-white={!isActive}
 									style="background-color: {tab.color}"
 									on:click={() => selectTab(groupIndex, tabIndex)}
 								>
@@ -355,13 +388,6 @@
 					{/if}
 				</section>
 			{/each}
-
-			<button
-				class="mt-4 w-fit bg-gray-800 text-white text-2xl min-h-[3rem] py-2 px-4 rounded-md hover:bg-gray-900"
-				on:click={closeTabSelectModel}
-			>
-				{t('pos.touch.cancel')}
-			</button>
 		</div>
 	</div>
 {/if}
@@ -369,9 +395,9 @@
 <div class="flex flex-col h-screen justify-between min-h-min" inert={itemToEditIndex !== undefined}>
 	<main class="mb-auto flex-grow overflow-y-auto">
 		<div class="grid grid-cols-3 gap-4 h-full">
-			<div class="touchScreen-ticket-menu p-3 h-full overflow-y-auto">
+			<div class="touchScreen-ticket-menu p-3 h-full overflow-y-auto flex flex-col">
 				{#if items.length}
-					<h3 class="text-3xl">{t('pos.touch.ticketNumber')} tmp</h3>
+					<h3 class="text-3xl">{poolLabel}</h3>
 					{#each items as item, i}
 						<div class="flex flex-col py-3 gap-4">
 							<form
@@ -394,62 +420,64 @@
 								<input type="hidden" name="quantity" />
 								<button
 									type="button"
-									class="text-start text-2xl w-full justify-between"
+									class="text-start text-2xl w-full"
 									on:click={() => openEditItemDialog(i)}
 								>
-									{item.quantity} X {item.product.name.toUpperCase()}<br />
-									{item.internalNote?.value ? '+' + item.internalNote.value : ''}
-									<div class="flex text-2xl flex-row items-end justify-end">
-										{#if item.quantity > 1}{item.quantity}X
-										{/if}
+									<div class="mb-1">{item.quantity} x {item.product.name.toUpperCase()}</div>
+									{#if item.internalNote?.value}
+										<div class="text-lg mb-1">+{item.internalNote.value}</div>
+									{/if}
+									<div
+										class="grid grid-cols-[1fr_1fr_1fr] lg:grid-cols-[minmax(auto,25px)_1fr_1fr_1fr] gap-x-2 text-sm sm:text-base md:text-lg lg:text-xl"
+									>
+										<span class="hidden lg:block">HT</span>
 										<PriceTag
-											amount={item.product.price.amount}
-											currency={item.product.price.currency}
-											class="text-2xl"
+											amount={priceInfo.perItem[i].amount}
+											currency={priceInfo.perItem[i].currency}
+											class="text-sm sm:text-base md:text-lg lg:text-xl text-right"
 											main
 										/>
-									</div>
-									{#if item.quantity > 1}
-										<div class="text-2xl flex flex-row items-end justify-end">
-											=<PriceTag
-												amount={item.quantity * item.product.price.amount}
-												currency={item.product.price.currency}
-												class="text-2xl"
-												main
-											/>
-										</div>
-									{/if}
-									<div class="text-2xl flex flex-row items-end justify-end">
-										+<span class="font-semibold">{t('cart.vat')} {priceInfo.vatRates[i]}%</span>
+										<span class="whitespace-nowrap">TTC {priceInfo.vatRates[i]}%</span>
+										<PriceTag
+											amount={priceInfo.perItem[i].amount * (1 + priceInfo.vatRates[i] / 100)}
+											currency={priceInfo.perItem[i].currency}
+											class="text-sm sm:text-base md:text-lg lg:text-xl text-right"
+											main
+										/>
 									</div>
 								</button><br />
 							</form>
 						</div>
 					{/each}
-					<div class="flex flex-col border-t border-gray-300 py-6">
-						<h2 class="text-3xl">{t('cart.total').toUpperCase()} =</h2>
-						<div class="flex flex-col items-end justify-end">
+					<div class="flex flex-col border-t border-gray-300 py-4 mt-auto">
+						<h2 class="text-xl sm:text-2xl md:text-3xl underline mb-1">TOTAL</h2>
+						<div
+							class="grid grid-cols-[auto_1fr] items-start gap-x-2 gap-y-0 text-base sm:text-lg md:text-xl lg:text-2xl"
+						>
+							<span class="whitespace-nowrap">HT</span>
+							<PriceTag
+								amount={priceInfo.partialPrice}
+								currency={priceInfo.currency}
+								main
+								class="text-base sm:text-lg md:text-xl lg:text-2xl text-right"
+							/>
+							<span class="whitespace-nowrap">TTC</span>
 							<PriceTag
 								amount={priceInfo.partialPriceWithVat}
 								currency={priceInfo.currency}
 								main
-								class="text-2xl"
+								class="text-base sm:text-lg md:text-xl lg:text-2xl text-right"
 							/>
+							{#each priceInfo.vat as vat}
+								<span class="whitespace-nowrap">Incl. VAT {vat.rate}%</span>
+								<PriceTag
+									amount={vat.partialPrice.amount}
+									currency={vat.partialPrice.currency}
+									main
+									class="text-base sm:text-lg md:text-xl lg:text-2xl text-right"
+								/>
+							{/each}
 						</div>
-						{#each priceInfo.vat as vat}
-							<div class="flex flex-col">
-								<h2 class="text-[28px]">{t('pos.touch.vatBreakdown')}</h2>
-								<div class="text-2xl flex flex-row items-end justify-end">
-									{vat.rate}% =
-									<PriceTag
-										amount={vat.partialPrice.amount}
-										currency={vat.partialPrice.currency}
-										main
-										class="text-[28px]"
-									/>
-								</div>
-							</div>
-						{/each}
 					</div>
 				{:else}
 					<p>{t('cart.empty')}</p>
@@ -462,17 +490,35 @@
 						href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}>{t('pos.touch.favorites')}</a
 					>
 					{#each data.posTouchScreenTags as favoriteTag}
+					{#if data.posUseSelectForTags}
+						<!-- Select menu mode -->
+						<div class="col-span-2">
+							<CategorySelect
+								tags={data.tags}
+								currentFilter={filter}
+								onSelect={handleCategorySelect}
+							/>
+						</div>
+					{:else}
+						<!-- Button mode (current) -->
 						<a
-							class="touchScreen-category-cta"
-							href={selfPageLink({ filter: favoriteTag._id, skip: 0 })}>{favoriteTag.name}</a
+							class="col-span-2 touchScreen-category-cta"
+							href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}
+							>{t('pos.touch.favorites')}</a
 						>
-					{/each}
-					<a
-						class="col-span-2 touchScreen-category-cta"
-						href={selfPageLink({ filter: 'all', skip: 0 })}
-					>
-						{t('pos.touch.allProducts')}</a
-					>
+						{#each data.tags as favoriteTag}
+							<a
+								class="touchScreen-category-cta"
+								href={selfPageLink({ filter: favoriteTag._id, skip: 0 })}>{favoriteTag.name}</a
+							>
+						{/each}
+						<a
+							class="col-span-2 touchScreen-category-cta"
+							href={selfPageLink({ filter: 'all', skip: 0 })}
+						>
+							{t('pos.touch.allProducts')}</a
+						>
+					{/if}
 
 					<div class="col-span-2 grid grid-cols-2 gap-4">
 						{#each displayedProducts as product}
@@ -507,7 +553,7 @@
 		</div>
 	</main>
 	<footer class="shrink-0">
-		<div class="grid grid-cols-3 gap-4 mt-2">
+		<div class="grid grid-cols-2 gap-4 mt-2">
 			<button
 				class="touchScreen-ticket-menu text-3xl p-4 text-center"
 				on:click={() => (tabSelectModalOpen = true)}>{t('pos.touch.tickets')}</button
@@ -517,14 +563,6 @@
 					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
 					disabled={!items.length}
 					on:click={() => (printModalOpen = true)}>PRINT TICKET</button
-				>
-				<button
-					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
-					on:click={() => alert(t('pos.touch.notDeveloped'))}>{t('pos.touch.pool')}</button
-				>
-				<button
-					class="col-span-1 touchScreen-action-secondaryCTA text-3xl p-4"
-					on:click={() => alert(t('pos.touch.notDeveloped'))}>{t('pos.touch.openDrawer')}</button
 				>
 			</div>
 		</div>
