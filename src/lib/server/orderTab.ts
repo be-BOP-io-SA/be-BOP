@@ -121,13 +121,30 @@ export async function checkoutOrderTab({ slug, user }: { slug: string; user: Use
 	);
 }
 
-export async function addToOrderTab(params: { tabSlug: string; productId: string }): Promise<void> {
+export async function addToOrderTab(params: {
+	tabSlug: string;
+	productId: string;
+}): Promise<{ success: true } | { success: false; error: string; maxQuantity: number }> {
 	const orderTab = await getOrCreateOrderTab({ slug: params.tabSlug });
+
 	const existingLineIndex = orderTab.items.findIndex(
 		(item) => !item.cartId && !item.orderId && item.productId === params.productId
 	);
+
+	const currentQuantity = existingLineIndex !== -1 ? orderTab.items[existingLineIndex].quantity : 0;
+	const newQuantity = currentQuantity + 1;
+
+	const product = await collections.products.findOne({ _id: params.productId });
+	if (product?.maxQuantityPerOrder && newQuantity > product.maxQuantityPerOrder) {
+		return {
+			success: false,
+			error: 'maxQuantityReached',
+			maxQuantity: product.maxQuantityPerOrder
+		};
+	}
+
 	if (existingLineIndex !== -1) {
-		orderTab.items[existingLineIndex].quantity += 1;
+		orderTab.items[existingLineIndex].quantity = newQuantity;
 	} else {
 		orderTab.items.push({
 			_id: new ObjectId(),
@@ -135,7 +152,11 @@ export async function addToOrderTab(params: { tabSlug: string; productId: string
 			quantity: 1
 		});
 	}
+
 	await collections.orderTabs.updateOne({ _id: orderTab._id }, { $set: { items: orderTab.items } });
+	return {
+		success: true
+	};
 }
 
 export async function removeFromOrderTab(params: {
