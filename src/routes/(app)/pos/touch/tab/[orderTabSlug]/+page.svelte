@@ -490,7 +490,6 @@
 						class="col-span-2 touchScreen-category-cta"
 						href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}>{t('pos.touch.favorites')}</a
 					>
-					{#each data.posTouchScreenTags as favoriteTag}
 					{#if data.posUseSelectForTags}
 						<!-- Select menu mode -->
 						<div class="col-span-2">
@@ -507,7 +506,7 @@
 							href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}
 							>{t('pos.touch.favorites')}</a
 						>
-						{#each data.tags as favoriteTag}
+						{#each data.posTouchScreenTags as favoriteTag}
 							<a
 								class="touchScreen-category-cta"
 								href={selfPageLink({ filter: favoriteTag._id, skip: 0 })}>{favoriteTag.name}</a
