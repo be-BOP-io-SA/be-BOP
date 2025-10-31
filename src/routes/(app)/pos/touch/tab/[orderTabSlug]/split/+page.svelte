@@ -102,7 +102,7 @@
 										<PriceTag amount={itemPrice.amount} currency={itemPrice.currency} main />
 										<div>{t('pos.split.vatRate', { rate: itemVatRate })}</div>
 										<PriceTag
-											amount={itemPrice.amount * itemVatRate}
+											amount={(itemPrice.amount * itemVatRate) / 100}
 											currency={itemPrice.currency}
 											main
 										/>
@@ -185,7 +185,7 @@
 											<PriceTag amount={itemPrice.amount} currency={itemPrice.currency} main />
 											<div>{t('pos.split.vatRate', { rate: itemVatRate })}</div>
 											<PriceTag
-												amount={itemPrice.amount * itemVatRate}
+												amount={(itemPrice.amount * itemVatRate) / 100}
 												currency={itemPrice.currency}
 												main
 											/>
