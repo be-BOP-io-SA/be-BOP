@@ -5,8 +5,6 @@ import type { Currency } from '$lib/types/Currency';
 import type { DeliveryFees } from '$lib/types/DeliveryFees';
 import { currencies } from '$lib/stores/currencies';
 import {
-	ADMIN_LOGIN,
-	ADMIN_PASSWORD,
 	NOSTR_PRIVATE_KEY,
 	SMTP_HOST,
 	SMTP_PORT,
@@ -21,7 +19,6 @@ import {
 	S3_KEY_ID,
 	S3_KEY_SECRET
 } from '$lib/server/env-config';
-import { createSuperAdminUserInDb } from './user';
 import { runMigrations } from './migrations';
 import type { ProductActionSettings } from '$lib/types/ProductActionSettings';
 import type { ConfirmationThresholds } from '$lib/types/ConfirmationThresholds';
@@ -589,10 +586,6 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 			{ $set: { data: crypto.randomUUID(), updatedAt: new Date() } },
 			{ upsert: true }
 		);
-	}
-
-	if (!runtimeConfig.isAdminCreated && ADMIN_LOGIN && ADMIN_PASSWORD) {
-		await createSuperAdminUserInDb(ADMIN_LOGIN, ADMIN_PASSWORD).catch(console.error);
 	}
 
 	if ((await collections.roles.countDocuments({ _id: SUPER_ADMIN_ROLE_ID }, { limit: 1 })) === 0) {
