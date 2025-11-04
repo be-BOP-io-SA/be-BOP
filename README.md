@@ -3,7 +3,7 @@
 be-BOP is a free and open-source, peer-to-peer monetization platform built for
 communities and creators. It combines e-commerce, point-of-sale (PoS),
 subscriptions, crowdfunding/peerfunding, ticketing, donations, and
-pay-what-you-want models — all under one roof. 
+pay-what-you-want models — all under one roof.
 
 ## Requirements
 
