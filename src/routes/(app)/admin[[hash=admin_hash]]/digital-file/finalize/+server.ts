@@ -1,6 +1,6 @@
 import { S3_BUCKET } from '$lib/server/env-config';
 import { collections, withTransaction } from '$lib/server/database';
-import { s3client } from '$lib/server/s3';
+import { getS3Client } from '$lib/server/s3';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 
@@ -19,7 +19,7 @@ export async function POST({ request }) {
 		throw error(404, 'The associated pending digital file does not exist');
 	}
 
-	const info = await s3client.headObject({
+	const info = await getS3Client().headObject({
 		Bucket: S3_BUCKET,
 		Key: pendingFile.storage.key
 	});

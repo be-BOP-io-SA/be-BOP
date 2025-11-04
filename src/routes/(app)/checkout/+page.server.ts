@@ -4,7 +4,7 @@ import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { createOrder } from '$lib/server/orders';
-import { emailsEnabled } from '$lib/server/email';
+import { isEmailConfigured } from '$lib/server/email';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
@@ -105,7 +105,7 @@ export async function load({ parent, locals }) {
 	return {
 		paymentMethods: methods,
 		reportingTags,
-		emailsEnabled,
+		emailsEnabled: isEmailConfigured(),
 		collectIPOnDeliverylessOrders: runtimeConfig.collectIPOnDeliverylessOrders,
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
 		personalInfoConnected: {

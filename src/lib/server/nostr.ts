@@ -1,26 +1,44 @@
-import { NOSTR_PRIVATE_KEY } from '$lib/server/env-config';
 import { bech32 } from 'bech32';
 import { getPublicKey } from 'nostr-tools';
 import { z } from 'zod';
 import { runtimeConfig } from './runtime-config';
 
-export const nostrPrivateKey = NOSTR_PRIVATE_KEY;
-export let nostrPublicKey = '';
-export let nostrPrivateKeyHex = '';
-export let nostrPublicKeyHex = '';
+type NostrKeys = {
+	privKey: string;
+	privKeyHex: string;
+	pubKey: string;
+	pubKeyHex: string;
+};
 
-if (NOSTR_PRIVATE_KEY) {
-	const decoded = bech32.decode(NOSTR_PRIVATE_KEY);
-	if (decoded.prefix !== 'nsec') {
-		throw new Error('Invalid NOSTR_PRIVATE_KEY');
+let _nostrKeys: NostrKeys | undefined = undefined;
+
+export function isNostrConfigured(): boolean {
+	return !!runtimeConfig.nostr.privateKey;
+}
+
+function mkNostrKeys({ privateKey }: typeof runtimeConfig.nostr): NostrKeys {
+	let privKey;
+	try {
+		privKey = zodNsec().parse(privateKey);
+	} catch (error) {
+		throw new Error('Invalid Nostr Private Key');
 	}
+	const privKeyHex = nostrToHex(privKey);
+	const publicKey = getPublicKey(privKeyHex);
+	const pubKey = bech32.encode('npub', bech32.toWords(Buffer.from(publicKey, 'hex')));
+	const pubKeyHex = nostrToHex(pubKey);
+	return { privKey, privKeyHex, pubKey, pubKeyHex };
+}
 
-	nostrPrivateKeyHex = nostrToHex(NOSTR_PRIVATE_KEY);
+export function getNostrKeys(): NostrKeys {
+	if (!_nostrKeys) {
+		_nostrKeys = mkNostrKeys(runtimeConfig.nostr);
+	}
+	return _nostrKeys;
+}
 
-	const publicKey = getPublicKey(nostrPrivateKeyHex);
-
-	nostrPublicKey = bech32.encode('npub', bech32.toWords(Buffer.from(publicKey, 'hex')));
-	nostrPublicKeyHex = nostrToHex(nostrPublicKey);
+export function resetNostrKeys() {
+	_nostrKeys = undefined;
 }
 
 export function nostrToHex(key: string): string {
@@ -38,6 +56,16 @@ export function zodNpub() {
 		.startsWith('npub')
 		.refine((npubAddress) => bech32.decodeUnsafe(npubAddress, 90)?.prefix === 'npub', {
 			message: 'Invalid npub address'
+		});
+}
+
+export function zodNsec() {
+	return z
+		.string()
+		.trim()
+		.startsWith('nsec')
+		.refine((nsec) => bech32.decodeUnsafe(nsec, 90)?.prefix === 'nsec', {
+			message: 'Invalid nsec address'
 		});
 }
 

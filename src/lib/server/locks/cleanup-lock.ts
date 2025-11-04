@@ -3,7 +3,7 @@ import { getUnixTime, subDays, subMinutes } from 'date-fns';
 import { collections } from '../database';
 import { processClosed } from '../process';
 import { setTimeout } from 'node:timers/promises';
-import { s3client } from '../s3';
+import { getS3Client } from '../s3';
 import { S3_BUCKET } from '$lib/server/env-config';
 import { ObjectId } from 'mongodb';
 
@@ -27,7 +27,7 @@ async function cleanup() {
 				.toArray();
 
 			for (const file of expiredFiles) {
-				await s3client
+				await getS3Client()
 					.deleteObject({
 						Bucket: S3_BUCKET,
 						Key: file.storage.key
@@ -53,7 +53,7 @@ async function cleanup() {
 				.toArray();
 
 			for (const picture of expiredPictures) {
-				await s3client
+				await getS3Client()
 					.deleteObject({
 						Bucket: S3_BUCKET,
 						Key: picture.storage.original.key
@@ -61,7 +61,7 @@ async function cleanup() {
 					.catch();
 
 				for (const format of picture.storage.formats) {
-					await s3client
+					await getS3Client()
 						.deleteObject({
 							Bucket: S3_BUCKET,
 							Key: format.key

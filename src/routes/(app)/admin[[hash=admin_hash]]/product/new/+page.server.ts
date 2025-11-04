@@ -9,7 +9,7 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Product } from '$lib/types/Product';
 import { Kind } from 'nostr-tools';
 import { parsePriceAmount } from '$lib/types/Currency';
-import { s3ProductPrefix, s3client } from '$lib/server/s3';
+import { s3ProductPrefix, getS3Client } from '$lib/server/s3';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { productBaseSchema } from '../product-schema';
@@ -511,7 +511,7 @@ export const actions: Actions = {
 				};
 
 				insertedS3Keys.push(pictureToInsert.storage.original.key);
-				await s3client.send(
+				await getS3Client().send(
 					new CopyObjectCommand({
 						Bucket: S3_BUCKET,
 						CopySource: `/${S3_BUCKET}/${picture.storage.original.key}`,
@@ -522,7 +522,7 @@ export const actions: Actions = {
 				let formatIndex = 0;
 				for (const format of picture.storage.formats) {
 					insertedS3Keys.push(format.key);
-					await s3client.send(
+					await getS3Client().send(
 						new CopyObjectCommand({
 							Bucket: S3_BUCKET,
 							CopySource: `/${S3_BUCKET}/${format.key}`,
@@ -548,7 +548,7 @@ export const actions: Actions = {
 				};
 
 				insertedS3Keys.push(digitalFileToInsert.storage.key);
-				await s3client.send(
+				await getS3Client().send(
 					new CopyObjectCommand({
 						Bucket: S3_BUCKET,
 						CopySource: `/${S3_BUCKET}/${file.storage.key}`,
@@ -559,7 +559,7 @@ export const actions: Actions = {
 				await collections.digitalFiles.insertOne(digitalFileToInsert, { session });
 			}
 		}).catch((err) => {
-			s3client
+			getS3Client()
 				.send(
 					new DeleteObjectsCommand({
 						Bucket: S3_BUCKET,
