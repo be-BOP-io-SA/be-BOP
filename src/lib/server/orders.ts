@@ -30,7 +30,12 @@ import {
 } from '$lib/types/Product';
 import { error } from '@sveltejs/kit';
 import { toSatoshis } from '$lib/utils/toSatoshis';
-import { currentWallet, getNewAddress, orderAddressLabel } from './bitcoind';
+import {
+	currentWallet,
+	getNewAddress,
+	isBitcoinConfigured as isBitcoindConfigured,
+	orderAddressLabel
+} from './bitcoind';
 import { isLndConfigured, lndCreateInvoice } from './lnd';
 import { ORIGIN } from '$lib/server/env-config';
 import { isEmailConfigured, queueEmail } from './email';
@@ -1633,22 +1638,60 @@ async function generatePaymentInfo(params: {
 	processor?: PaymentProcessor;
 }> {
 	switch (params.method) {
-		case 'bitcoin':
-			if (isBitcoinNodelessConfigured()) {
-				return {
+		case 'bitcoin': {
+			const preference = runtimeConfig.paymentProcessorPreferences?.bitcoin;
+			const hardcodedPriority: PaymentProcessor[] = ['bitcoin-nodeless', 'bitcoind'];
+
+			const availability: Partial<Record<PaymentProcessor, boolean>> = {
+				'bitcoin-nodeless': isBitcoinNodelessConfigured(),
+				bitcoind: isBitcoindConfigured
+			};
+
+			const generators: Partial<
+				Record<
+					PaymentProcessor,
+					() => Promise<{
+						address?: string;
+						wallet?: string;
+						label?: string;
+						invoiceId?: string;
+						checkoutId?: string;
+						meta?: unknown;
+						processor?: PaymentProcessor;
+					}>
+				>
+			> = {
+				'bitcoin-nodeless': async () => ({
 					address: bip84Address(
 						runtimeConfig.bitcoinNodeless.publicKey,
 						await generateDerivationIndex()
 					),
 					processor: 'bitcoin-nodeless'
-				};
-			}
-			return {
-				address: await getNewAddress(orderAddressLabel(params.orderId, params.paymentId)),
-				wallet: await currentWallet(),
-				label: orderAddressLabel(params.orderId, params.paymentId),
-				processor: 'bitcoind'
+				}),
+				bitcoind: async () => ({
+					address: await getNewAddress(orderAddressLabel(params.orderId, params.paymentId)),
+					wallet: await currentWallet(),
+					label: orderAddressLabel(params.orderId, params.paymentId),
+					processor: 'bitcoind'
+				})
 			};
+
+			const orderedProcessors =
+				preference && availability[preference]
+					? [preference, ...hardcodedPriority.filter((p) => p !== preference)]
+					: hardcodedPriority;
+
+			for (const processor of orderedProcessors) {
+				if (availability[processor]) {
+					const generator = generators[processor];
+					if (generator) {
+						return await generator();
+					}
+				}
+			}
+
+			throw new Error('No bitcoin payment processors available.');
+		}
 		case 'lightning': {
 			const label = (() => {
 				switch (runtimeConfig.lightningQrCodeDescription) {
@@ -1663,57 +1706,101 @@ async function generatePaymentInfo(params: {
 				}
 			})();
 			const satoshis = toSatoshis(params.toPay.amount, params.toPay.currency);
-			if (isSwissBitcoinPayConfigured()) {
-				const invoice = await swissBitcoinPayCreateInvoice({
-					label,
-					orderId: `${params.orderNumber}`,
-					expiresAt: params.expiresAt,
-					toPay: {
-						amount: satoshis,
-						currency: 'SAT'
+			const preference = runtimeConfig.paymentProcessorPreferences?.lightning;
+			const hardcodedPriority: PaymentProcessor[] = [
+				'swiss-bitcoin-pay',
+				'btcpay-server',
+				'phoenixd',
+				'lnd'
+			];
+
+			const availability: Partial<Record<PaymentProcessor, boolean>> = {
+				'swiss-bitcoin-pay': isSwissBitcoinPayConfigured(),
+				'btcpay-server': isBtcpayServerConfigured(),
+				phoenixd: isPhoenixdConfigured(),
+				lnd: isLndConfigured()
+			};
+
+			const generators: Partial<
+				Record<
+					PaymentProcessor,
+					() => Promise<{
+						address?: string;
+						wallet?: string;
+						label?: string;
+						invoiceId?: string;
+						checkoutId?: string;
+						meta?: unknown;
+						processor?: PaymentProcessor;
+					}>
+				>
+			> = {
+				'swiss-bitcoin-pay': async () => {
+					const invoice = await swissBitcoinPayCreateInvoice({
+						label,
+						orderId: `${params.orderNumber}`,
+						expiresAt: params.expiresAt,
+						toPay: {
+							amount: satoshis,
+							currency: 'SAT'
+						}
+					});
+					return {
+						address: invoice.payment_address,
+						invoiceId: invoice.invoiceId,
+						processor: 'swiss-bitcoin-pay'
+					};
+				},
+				'btcpay-server': async () => {
+					const invoice = await btcpayServerCreateInvoice({
+						label,
+						expiresAt: params.expiresAt,
+						amountInSats: satoshis
+					});
+					return {
+						address: invoice.payment_address,
+						invoiceId: invoice.invoiceId,
+						processor: 'btcpay-server'
+					};
+				},
+				phoenixd: async () => {
+					const invoice = await phoenixdCreateInvoice(satoshis, label, params.orderId);
+					return {
+						address: invoice.payment_address,
+						invoiceId: invoice.r_hash,
+						processor: 'phoenixd'
+					};
+				},
+				lnd: async () => {
+					const invoice = await lndCreateInvoice(satoshis, {
+						...(params.expiresAt && {
+							expireAfterSeconds: differenceInSeconds(params.expiresAt, new Date())
+						}),
+						label
+					});
+					return {
+						address: invoice.payment_request,
+						invoiceId: invoice.r_hash,
+						processor: 'lnd'
+					};
+				}
+			};
+
+			const orderedProcessors =
+				preference && availability[preference]
+					? [preference, ...hardcodedPriority.filter((p) => p !== preference)]
+					: hardcodedPriority;
+
+			for (const processor of orderedProcessors) {
+				if (availability[processor]) {
+					const generator = generators[processor];
+					if (generator) {
+						return await generator();
 					}
-				});
-				return {
-					address: invoice.payment_address,
-					invoiceId: invoice.invoiceId,
-					processor: 'swiss-bitcoin-pay'
-				};
-			} else if (isBtcpayServerConfigured()) {
-				const invoice = await btcpayServerCreateInvoice({
-					label,
-					expiresAt: params.expiresAt,
-					amountInSats: satoshis
-				});
-				return {
-					address: invoice.payment_address,
-					invoiceId: invoice.invoiceId,
-					processor: 'btcpay-server'
-				};
-			} else if (isPhoenixdConfigured()) {
-				// no way to configure an expiration date for now
-				const invoice = await phoenixdCreateInvoice(satoshis, label, params.orderId);
-
-				return {
-					address: invoice.payment_address,
-					invoiceId: invoice.r_hash,
-					processor: 'phoenixd'
-				};
-			} else if (isLndConfigured()) {
-				const invoice = await lndCreateInvoice(satoshis, {
-					...(params.expiresAt && {
-						expireAfterSeconds: differenceInSeconds(params.expiresAt, new Date())
-					}),
-					label
-				});
-
-				return {
-					address: invoice.payment_request,
-					invoiceId: invoice.r_hash,
-					processor: 'lnd'
-				};
-			} else {
-				throw new Error('No lightning payment processors available.');
+				}
 			}
+
+			throw new Error('No lightning payment processors available.');
 		}
 		case 'point-of-sale': {
 		}
@@ -1743,110 +1830,137 @@ async function generateCardPaymentInfo(params: {
 	processor: PaymentProcessor;
 	clientSecret?: string;
 }> {
-	if (isSumupEnabled()) {
-		const resp = await fetch('https://api.sumup.com/v0.1/checkouts', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${runtimeConfig.sumUp.apiKey}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				amount: toCurrency(
-					runtimeConfig.sumUp.currency,
-					params.toPay.amount,
-					params.toPay.currency
-				),
-				currency: runtimeConfig.sumUp.currency,
-				checkout_reference: params.orderId + '-' + params.paymentId,
-				merchant_code: runtimeConfig.sumUp.merchantCode,
-				redirect_url: `${ORIGIN}/order/${params.orderId}`,
-				description: 'Order ' + params.orderNumber,
-				...(params.expiresAt && {
-					valid_until: params.expiresAt.toISOString()
+	const preference = runtimeConfig.paymentProcessorPreferences?.card;
+	const hardcodedPriority: PaymentProcessor[] = ['sumup', 'stripe'];
+
+	const availability: Partial<Record<PaymentProcessor, boolean>> = {
+		sumup: isSumupEnabled(),
+		stripe: isStripeEnabled()
+	};
+
+	const generators: Partial<
+		Record<
+			PaymentProcessor,
+			() => Promise<{
+				checkoutId: string;
+				meta: unknown;
+				address: string;
+				processor: PaymentProcessor;
+				clientSecret?: string;
+			}>
+		>
+	> = {
+		sumup: async () => {
+			const resp = await fetch('https://api.sumup.com/v0.1/checkouts', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${runtimeConfig.sumUp.apiKey}`,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					amount: toCurrency(
+						runtimeConfig.sumUp.currency,
+						params.toPay.amount,
+						params.toPay.currency
+					),
+					currency: runtimeConfig.sumUp.currency,
+					checkout_reference: params.orderId + '-' + params.paymentId,
+					merchant_code: runtimeConfig.sumUp.merchantCode,
+					redirect_url: `${ORIGIN}/order/${params.orderId}`,
+					description: 'Order ' + params.orderNumber,
+					...(params.expiresAt && {
+						valid_until: params.expiresAt.toISOString()
+					})
+				}),
+				...{ autoSelectFamily: true }
+			});
+
+			if (!resp.ok) {
+				console.error(await resp.text());
+				throw error(402, 'Sumup checkout creation failed');
+			}
+
+			const json = await resp.json();
+			const checkoutId = json.id;
+
+			if (!checkoutId || typeof checkoutId !== 'string') {
+				console.error('no checkout id', json);
+				throw error(402, 'Sumup checkout creation failed');
+			}
+
+			return {
+				checkoutId,
+				meta: json,
+				address: `${ORIGIN}/order/${params.orderId}/payment/${params.paymentId}/pay`,
+				processor: 'sumup'
+			};
+		},
+		stripe: async () => {
+			const response = await fetch('https://api.stripe.com/v1/payment_intents', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${runtimeConfig.stripe.secretKey}`,
+					'Content-Type': 'application/x-www-form-urlencoded'
+				},
+				body: toUrlEncoded({
+					amount: Math.round(
+						toCurrency(runtimeConfig.stripe.currency, params.toPay.amount, params.toPay.currency) /
+							CURRENCY_UNIT[runtimeConfig.stripe.currency]
+					),
+					currency: runtimeConfig.stripe.currency.toLowerCase(),
+					automatic_payment_methods: {
+						enabled: true
+					},
+					metadata: {
+						orderId: params.orderId,
+						paymentId: params.paymentId.toHexString()
+					},
+					description: 'Order ' + params.orderNumber
 				})
-			}),
-			...{ autoSelectFamily: true }
-		});
+			});
 
-		if (!resp.ok) {
-			console.error(await resp.text());
-			throw error(402, 'Sumup checkout creation failed');
+			if (!response.ok) {
+				console.error(await response.text());
+				throw error(402, 'Stripe payment intent creation failed');
+			}
+
+			const json = await response.json();
+			const clientSecret = json.client_secret;
+
+			if (!clientSecret || typeof clientSecret !== 'string') {
+				console.error('no client secret', json);
+				throw error(402, 'Stripe payment intent creation failed');
+			}
+
+			const paymentId = json.id;
+
+			if (!paymentId || typeof paymentId !== 'string') {
+				console.error('no payment id', json);
+				throw error(402, 'Stripe payment intent creation failed');
+			}
+
+			return {
+				checkoutId: paymentId,
+				clientSecret,
+				meta: json,
+				address: `${ORIGIN}/order/${params.orderId}/payment/${params.paymentId}/pay`,
+				processor: 'stripe'
+			};
 		}
+	};
 
-		const json = await resp.json();
+	const orderedProcessors =
+		preference && availability[preference]
+			? [preference, ...hardcodedPriority.filter((p) => p !== preference)]
+			: hardcodedPriority;
 
-		const checkoutId = json.id;
-
-		if (!checkoutId || typeof checkoutId !== 'string') {
-			console.error('no checkout id', json);
-			throw error(402, 'Sumup checkout creation failed');
+	for (const processor of orderedProcessors) {
+		if (availability[processor]) {
+			const generator = generators[processor];
+			if (generator) {
+				return await generator();
+			}
 		}
-
-		return {
-			checkoutId,
-			meta: json,
-			address: `${ORIGIN}/order/${params.orderId}/payment/${params.paymentId}/pay`,
-			processor: 'sumup'
-		};
-	}
-
-	if (isStripeEnabled()) {
-		// Create payment intent
-		const response = await fetch('https://api.stripe.com/v1/payment_intents', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${runtimeConfig.stripe.secretKey}`,
-				'Content-Type': 'application/x-www-form-urlencoded'
-			},
-			body: toUrlEncoded({
-				amount: Math.round(
-					toCurrency(runtimeConfig.stripe.currency, params.toPay.amount, params.toPay.currency) /
-						CURRENCY_UNIT[runtimeConfig.stripe.currency]
-				),
-				currency: runtimeConfig.stripe.currency.toLowerCase(),
-				automatic_payment_methods: {
-					enabled: true
-				},
-				metadata: {
-					orderId: params.orderId,
-					paymentId: params.paymentId.toHexString()
-				},
-				description: 'Order ' + params.orderNumber
-			})
-		});
-
-		if (!response.ok) {
-			console.error(await response.text());
-			throw error(402, 'Stripe payment intent creation failed');
-		}
-
-		const json = await response.json();
-
-		const clientSecret = json.client_secret;
-
-		if (!clientSecret || typeof clientSecret !== 'string') {
-			console.error('no client secret', json);
-			throw error(402, 'Stripe payment intent creation failed');
-		}
-
-		const paymentId = json.id;
-
-		if (!paymentId || typeof paymentId !== 'string') {
-			console.error('no payment id', json);
-			throw error(402, 'Stripe payment intent creation failed');
-		}
-
-		return {
-			checkoutId: paymentId,
-			clientSecret,
-			meta: json,
-			address: `${ORIGIN}/order/${params.orderId}/payment/${params.paymentId}/pay`,
-			processor: 'stripe'
-		};
-	}
-
-	if (isPaypalEnabled()) {
-		return await generatePaypalPaymentInfo(params);
 	}
 
 	throw error(402, 'No card payment processor configured');
