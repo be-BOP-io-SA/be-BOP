@@ -1,7 +1,7 @@
 import { S3_BUCKET } from '$lib/server/env-config';
 import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database';
-import { getPublicS3DownloadLink, s3client } from '$lib/server/s3';
+import { getPublicS3DownloadLink, getS3Client } from '$lib/server/s3';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { error, redirect } from '@sveltejs/kit';
 
@@ -32,7 +32,7 @@ export const actions = {
 
 		await collections.digitalFiles.deleteOne({ _id: params.id });
 
-		await s3client
+		await getS3Client()
 			.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: digitalFile.storage.key }))
 			.catch(console.error);
 		if (digitalFile.productId) {

@@ -4,8 +4,21 @@ import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
 import type { Currency } from '$lib/types/Currency';
 import type { DeliveryFees } from '$lib/types/DeliveryFees';
 import { currencies } from '$lib/stores/currencies';
-import { ADMIN_LOGIN, ADMIN_PASSWORD } from '$lib/server/env-config';
-import { createSuperAdminUserInDb } from './user';
+import {
+	NOSTR_PRIVATE_KEY,
+	SMTP_HOST,
+	SMTP_PORT,
+	SMTP_USER,
+	SMTP_PASSWORD,
+	SMTP_FROM,
+	SMTP_FAKE,
+	S3_BUCKET,
+	S3_ENDPOINT_URL,
+	PUBLIC_S3_ENDPOINT_URL,
+	S3_REGION,
+	S3_KEY_ID,
+	S3_KEY_SECRET
+} from '$lib/server/env-config';
 import { runMigrations } from './migrations';
 import type { ProductActionSettings } from '$lib/types/ProductActionSettings';
 import type { ConfirmationThresholds } from '$lib/types/ConfirmationThresholds';
@@ -30,6 +43,9 @@ import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import { merge } from '$lib/utils/merge';
+import { typedEntries } from '$lib/utils/typedEntries';
+import { deepEquals } from '$lib/utils/deep-equals';
+import { deepClone } from '$lib/utils/deep-clone';
 
 const baseConfig = {
 	adminHash: '',
@@ -207,6 +223,9 @@ const baseConfig = {
 	bity: {
 		clientId: ''
 	},
+	nostr: {
+		privateKey: ''
+	},
 	nostrRelays: [
 		'wss://nostr.wine',
 		'wss://nostr.lu.ke',
@@ -249,6 +268,22 @@ const baseConfig = {
 	physicalCartMinAmount: null as null | number,
 	websiteTitle: 'B2Bitcoin be-BOP',
 	websiteShortDescription: "B2Bitcoin's be-BOP store",
+	smtp: {
+		host: '',
+		port: 587,
+		user: '',
+		password: '',
+		from: '',
+		fake: false
+	},
+	s3: {
+		bucket: '',
+		endpointUrl: '',
+		publicEndpointUrl: '',
+		region: '',
+		keyId: '',
+		keySecret: ''
+	},
 	emailTemplates: {
 		passwordReset: {
 			subject: 'Password reset',
@@ -374,6 +409,63 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 
 export const defaultConfig = Object.freeze(baseConfig);
 
+function overridesFromEnvVars(base: typeof baseConfig): Partial<typeof baseConfig> {
+	const overrides: Partial<typeof baseConfig> = {};
+
+	// First check if SMTP_PORT can be parsed if it exists
+	let smtpPortValid = true;
+	if (SMTP_PORT) {
+		const parsedPort = parseInt(SMTP_PORT);
+		if (isNaN(parsedPort)) {
+			smtpPortValid = false;
+		}
+	}
+
+	const updatedSmtp = {
+		...base.smtp,
+		...(SMTP_HOST && { host: SMTP_HOST }),
+		...(SMTP_PORT && { port: parseInt(SMTP_PORT) }),
+		...(SMTP_USER && { user: SMTP_USER }),
+		...(SMTP_PASSWORD && { password: SMTP_PASSWORD }),
+		...(SMTP_FROM && { from: SMTP_FROM }),
+		...((SMTP_FAKE === 'true' || SMTP_FAKE === '1') && { fake: true })
+	};
+	if (smtpPortValid && !deepEquals(updatedSmtp, base.smtp)) {
+		overrides.smtp = updatedSmtp;
+	}
+
+	const updatedS3 = {
+		...base.s3,
+		...(S3_BUCKET && { bucket: S3_BUCKET }),
+		...(S3_ENDPOINT_URL && { endpointUrl: S3_ENDPOINT_URL }),
+		...(PUBLIC_S3_ENDPOINT_URL && { publicEndpointUrl: PUBLIC_S3_ENDPOINT_URL }),
+		...(S3_REGION && { region: S3_REGION }),
+		...(S3_KEY_ID && { keyId: S3_KEY_ID }),
+		...(S3_KEY_SECRET && { keySecret: S3_KEY_SECRET })
+	};
+	if (!deepEquals(updatedS3, base.s3)) {
+		overrides.s3 = updatedS3;
+	}
+
+	// Nostr overrides
+	const updatedNostr = { ...base.nostr, privateKey: NOSTR_PRIVATE_KEY };
+	if (!deepEquals(updatedNostr, base.nostr)) {
+		overrides.nostr = updatedNostr;
+	}
+
+	return overrides;
+}
+
+/**
+ * Apply environment variable overrides to runtime config.
+ */
+function applyEnvOverrides(runtimeConfig: RuntimeConfig): void {
+	const overrides = overridesFromEnvVars(runtimeConfig);
+	for (const [key, value] of typedEntries(overrides)) {
+		(runtimeConfig as Record<typeof key, unknown>)[key] = value;
+	}
+}
+
 export type EmailTemplateKey = keyof typeof defaultConfig.emailTemplates;
 
 export const runtimeConfigUpdatedAt: Partial<Record<ConfigKey, Date>> = {};
@@ -496,10 +588,6 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 		);
 	}
 
-	if (!runtimeConfig.isAdminCreated && ADMIN_LOGIN && ADMIN_PASSWORD) {
-		await createSuperAdminUserInDb(ADMIN_LOGIN, ADMIN_PASSWORD).catch(console.error);
-	}
-
 	if ((await collections.roles.countDocuments({ _id: SUPER_ADMIN_ROLE_ID }, { limit: 1 })) === 0) {
 		await collections.roles
 			.insertOne({
@@ -573,6 +661,37 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 				throw err;
 			}
 		}
+
+		// Apply environment variable overrides for values not configured in database
+		const prevSmtp = deepClone(runtimeConfig.smtp);
+		const prevS3 = deepClone(runtimeConfig.s3);
+		const prevNostr = deepClone(runtimeConfig.nostr);
+
+		applyEnvOverrides(runtimeConfig);
+
+		const promises = [];
+		// Only reset systems if their configurations actually changed
+		if (!deepEquals(runtimeConfig.smtp, prevSmtp)) {
+			const { resetTransporter } = await import('./email.js');
+			promises.push(resetTransporter());
+		}
+
+		if (!deepEquals(runtimeConfig.s3, prevS3)) {
+			const { resetS3Clients } = await import('./s3.js');
+			promises.push(resetS3Clients());
+		}
+
+		if (!deepEquals(runtimeConfig.nostr, prevNostr)) {
+			const { getNostrKeys, resetNostrKeys } = await import('./nostr.js');
+			try {
+				resetNostrKeys();
+				getNostrKeys();
+			} catch (err) {
+				console.error('Failed to load updated Nostr keys:', err);
+				runtimeConfig.nostr = prevNostr;
+			}
+		}
+		await Promise.all(promises);
 	}
 }
 
@@ -580,7 +699,10 @@ export function stop(): void {
 	changeStream?.close().catch(console.error);
 }
 
-export const runtimeConfig = structuredClone(baseConfig) as RuntimeConfig;
+export const runtimeConfig = structuredClone({
+	...baseConfig,
+	...overridesFromEnvVars(baseConfig)
+}) as RuntimeConfig;
 
 export function resetConfig() {
 	if (!import.meta.env.VITEST) {

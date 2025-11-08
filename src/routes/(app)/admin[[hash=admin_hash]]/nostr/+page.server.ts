@@ -1,12 +1,14 @@
-import { ORIGIN } from '$lib/server/env-config';
+import { NOSTR_PRIVATE_KEY, ORIGIN } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import { isLndConfigured, lndGetInfo } from '$lib/server/lnd';
 import {
-	nostrPrivateKey,
-	nostrPublicKey,
+	getNostrKeys,
+	isNostrConfigured,
 	nostrRelays,
 	nostrToHex,
-	zodNpub
+	resetNostrKeys,
+	zodNpub,
+	zodNsec
 } from '$lib/server/nostr';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { ObjectId } from 'mongodb';
@@ -18,19 +20,27 @@ import type { Event } from 'nostr-tools';
 import { uniqBy } from '$lib/utils/uniqBy';
 import { NOSTR_PROTOCOL_VERSION } from '$lib/server/locks/handle-messages';
 import { isPhoenixdConfigured, phoenixdLnAddress } from '$lib/server/phoenixd';
+import { persistConfigElement } from '$lib/server/utils/persistConfig.js';
+
+function settingsEnforcedByEnvVars(): boolean {
+	return !!NOSTR_PRIVATE_KEY;
+}
 
 export function load() {
+	const { privKey, pubKey } = isNostrConfigured() ? getNostrKeys() : {};
 	return {
-		origin: ORIGIN,
-		nostrPrivateKey: nostrPrivateKey,
-		nostrPublicKey: nostrPublicKey,
-		nostrRelays: runtimeConfig.nostrRelays,
 		disableNostrBotIntro: runtimeConfig.disableNostrBotIntro,
+		nostr: runtimeConfig.nostr,
+		nostrPrivateKey: privKey,
+		nostrPublicKey: pubKey,
+		nostrRelays: runtimeConfig.nostrRelays,
+		origin: ORIGIN,
 		receivedMessages: collections.nostrReceivedMessages
 			.find({})
 			.sort({ createdAt: -1 })
 			.limit(100)
-			.toArray()
+			.toArray(),
+		settingsEnforcedByEnvVars: settingsEnforcedByEnvVars()
 	};
 }
 
@@ -73,6 +83,11 @@ export const actions = {
 			success:
 				'Nostr Certification queued. When changing logo / brand name / ..., please certify again.'
 		};
+	},
+	delete: async () => {
+		/* “delete” here persists an empty key, because the config does not support this setting missing */
+		await persistConfigElement('nostr', { privateKey: '' });
+		runtimeConfig.nostr.privateKey = '';
 	},
 	sendMessage: async ({ request }) => {
 		const form = await request.formData();
@@ -172,6 +187,17 @@ export const actions = {
 		runtimeConfig.disableNostrBotIntro = disableNostrBotIntro;
 		return {
 			success: `Nostr-bot intro message ${disableNostrBotIntro ? 'disabled !' : 'enabled !'}`
+		};
+	},
+	updatePrivateKey: async ({ request }) => {
+		const formData = await request.formData();
+		const privateKey = zodNsec().parse(formData.get('privateKey'));
+		await persistConfigElement('nostr', { privateKey });
+		runtimeConfig.nostr.privateKey = privateKey;
+		resetNostrKeys();
+		return {
+			success: 'Nostr private key updated successfully!',
+			error: undefined
 		};
 	}
 };

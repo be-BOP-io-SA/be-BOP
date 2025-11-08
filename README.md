@@ -3,7 +3,7 @@
 be-BOP is a free and open-source, peer-to-peer monetization platform built for
 communities and creators. It combines e-commerce, point-of-sale (PoS),
 subscriptions, crowdfunding/peerfunding, ticketing, donations, and
-pay-what-you-want models — all under one roof. 
+pay-what-you-want models — all under one roof.
 
 ## Requirements
 
@@ -22,8 +22,6 @@ The app will automatically configure the S3 bucket to accept CORS PUT calls.
 
 Add `.env.local` or `.env.{development,test,production}.local` files for secrets not committed to git and to override the `.env`
 
-- `ADMIN_LOGIN` - Automatically create an admin user with this login
-- `ADMIN_PASSWORD` - Automatically create an admin user with this password
 - `LINK_PRELOAD_HEADERS` - Set to `true` to enable the `Link rel=preload` header, see [explanation](https://nitropack.io/blog/post/link-rel-preload-explained). If you do so, you may need to configure nginx to allow bigger header with `proxy_buffer_size   16k`, see [explanation](https://www.getpagespeed.com/server-setup/nginx/tuning-proxy_buffer_size-in-nginx).
 - `MONGODB_URL` - The connection URL to the MongoDB replicaset
 - `MONGODB_DB` - The DB name, defaulting to "bebop"

@@ -33,7 +33,7 @@ import { toSatoshis } from '$lib/utils/toSatoshis';
 import { currentWallet, getNewAddress, orderAddressLabel } from './bitcoind';
 import { isLndConfigured, lndCreateInvoice } from './lnd';
 import { ORIGIN } from '$lib/server/env-config';
-import { emailsEnabled, queueEmail } from './email';
+import { isEmailConfigured, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
 import { type Cart } from '$lib/types/Cart';
 import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
@@ -585,7 +585,7 @@ export async function createOrder(
 
 	const canBeNotified = !!(
 		npubAddress ||
-		((runtimeConfig.contactModesForceOption || emailsEnabled) && email)
+		((runtimeConfig.contactModesForceOption || isEmailConfigured()) && email)
 	);
 
 	if (
@@ -594,7 +594,10 @@ export async function createOrder(
 		paymentMethod !== null &&
 		!params.user.userHasPosOptions
 	) {
-		throw error(400, emailsEnabled ? 'Missing npub address or email' : 'Missing npub address');
+		throw error(
+			400,
+			isEmailConfigured() ? 'Missing npub address or email' : 'Missing npub address'
+		);
 	}
 
 	const products = items.map((item) => item.product);
