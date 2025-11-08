@@ -18,6 +18,7 @@ import {
 import { NOSTR_PROTOCOL_VERSION } from './handle-messages';
 import { building } from '$app/environment';
 import { rateLimit } from '../rateLimit';
+import { sendPeriodicBeacon } from '../telemetry-helpers';
 
 const lock = new Lock('notifications.nostr');
 const processingIds = new Set<string>();
@@ -35,6 +36,12 @@ export async function closeRelayPool() {
 
 async function maintainLock() {
 	while (!processClosed) {
+		try {
+			await sendPeriodicBeacon();
+		} catch (err) {
+			console.error('Telemetry beacon error:', err);
+		}
+
 		if (!lock?.ownsLock || !isNostrConfigured()) {
 			await closeRelayPool();
 		} else if (!relayPool && isNostrConfigured()) {

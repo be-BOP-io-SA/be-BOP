@@ -787,5 +787,32 @@
 	},
 	"widget": {
 		"specification": "Caractéristiques techniques"
+	},
+	"telemetry": {
+		"banner": {
+			"aWordFrom": "Un mot de",
+			"title": "Un mot de be-BOP :",
+			"description1": "Afin de soutenir gratuitement le logiciel be-BOP, vous pouvez rendre publique l'existence de votre boutique.",
+			"description2": "Aucune donnée ne sera envoyée à be-BOP.io SA, à part l'uri de votre boutique et votre consentement pour communiquer autour de cette dernière. Vos informations privées et les informations de vos clients ne seront pas partagées.",
+			"description3": "Votre partage sera utilisé pour des statistiques anonymes sur le nombre d'utilisateurs et d'utilisatrices de be-BOP (qui n'est pas suivi automatiquement car nous respectons la vie privée et le consentement), et pour ponctuellement faire des campagnes de communication et de promotion autour des be-BOP déployés partout dans le monde. Une première notification sera envoyée au Nostr-bot de be-BOP.io, puis chaque semaine tant que votre be-BOP est actif. Vous pouvez par la suite désactiver ce message régulier dans <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a>.",
+			"question": "Acceptez-vous de partager l'existence de votre be-BOP ?",
+			"acceptButton": "Partager",
+			"declineButton": "Me rappeler dans 30 jours",
+			"accepted": {
+				"thankYou": "Merci d'avoir choisi de partager l'existence de votre boutique à be-BOP.io à des fins statistiques et promotionnelles !",
+				"message": "Aucune donnée ne sera envoyée à be-BOP.io SA, à part l'url de votre boutique et votre consentement pour communiquer autour de cette dernière. Vous pouvez vous rendre dans <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> pour désactiver cette télémétrie optionnelle.",
+				"autoHideCountdown": "Ce message disparaîtra dans {seconds} secondes..."
+			},
+			"declined": {
+				"respect": "Nous respectons votre choix de ne pas partager d'informations de votre boutique.",
+				"reaskCountdown": "Ce message sera masqué dans {seconds} secondes...",
+				"reask": "Nous vous reposerons la question dans 30 jours. Néanmoins, vous pouvez directement refuser le rappel en cliquant sur le bouton",
+				"hideButton": "Masquer définitivement"
+			}
+		},
+		"seo": {
+			"checkboxLabel": "Activer le signal beacon vers le nostr-bot be-BOP.io pour partager l'existence de votre boutique",
+			"infoBlock": "Ce paramètre contrôle si votre boutique envoie des signaux périodiques à be-BOP.io. Nous valorisons la vie privée : seuls l'URL de votre boutique et la version du logiciel be-BOP sont partagés. Aucune donnée personnelle ou client n'est transmise. Cela nous aide pour le débogage et nous montre que la communauté be-BOP grandit."
+		}
 	}
 }

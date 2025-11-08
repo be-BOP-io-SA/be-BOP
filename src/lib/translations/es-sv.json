@@ -787,5 +787,32 @@
 	},
 	"widget": {
 		"specification": "Especificaciones"
+	},
+	"telemetry": {
+		"banner": {
+			"aWordFrom": "Unas palabras de",
+			"title": "Unas palabras de be-BOP:",
+			"description1": "Para apoyar gratuitamente el software be-BOP, puedes hacer pública la existencia de tu tienda.",
+			"description2": "No se enviarán datos a be-BOP.io SA, excepto la URI de tu tienda y tu consentimiento para comunicar sobre ella. Tu información privada y la información de tus clientes no se compartirán.",
+			"description3": "Tu participación se utilizará para estadísticas anónimas sobre el número de usuarios de be-BOP (que no se rastrea automáticamente porque respetamos la privacidad y el consentimiento), y para realizar ocasionalmente campañas de comunicación y promoción sobre los be-BOP desplegados en todo el mundo. Se enviará una primera notificación al bot Nostr de be-BOP.io, luego semanalmente mientras tu be-BOP esté activo. Puedes desactivar este mensaje regular más adelante en <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a>.",
+			"question": "¿Aceptas compartir la existencia de tu be-BOP?",
+			"acceptButton": "Compartir",
+			"declineButton": "Recordármelo en 30 días",
+			"accepted": {
+				"thankYou": "¡Gracias por elegir compartir la existencia de tu tienda con be-BOP.io con fines estadísticos y promocionales!",
+				"message": "No se enviarán datos a be-BOP.io SA, excepto la URL de tu tienda y tu consentimiento para comunicar sobre ella. Puedes ir a <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> para desactivar esta telemetría opcional.",
+				"autoHideCountdown": "Este mensaje desaparecerá en {seconds} segundos..."
+			},
+			"declined": {
+				"respect": "Respetamos tu decisión de no compartir información sobre tu tienda.",
+				"reaskCountdown": "Este mensaje se ocultará en {seconds} segundos...",
+				"reask": "Te preguntaremos de nuevo en 30 días. Sin embargo, puedes rechazar directamente el recordatorio haciendo clic en el botón",
+				"hideButton": "No volver a preguntarme"
+			}
+		},
+		"seo": {
+			"checkboxLabel": "Activar señal beacon al bot Nostr de be-BOP.io para compartir la existencia de tu tienda",
+			"infoBlock": "Esta configuración controla si tu tienda envía señales periódicas a be-BOP.io. Valoramos la privacidad: solo se comparten la URL de tu tienda y la versión del software be-BOP. No se transmite ninguna información personal o de clientes. Esto nos ayuda con la depuración y nos muestra que la comunidad be-BOP está creciendo."
+		}
 	}
 }

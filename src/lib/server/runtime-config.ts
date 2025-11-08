@@ -257,6 +257,11 @@ const baseConfig = {
 	displayMainShopInfo: false,
 	disableNostrBotIntro: false,
 	hideFromSearchEngines: false,
+	telemetry: null as null | {
+		enabled: boolean;
+		nextPrompt: Date | null;
+		nextBeaconDate: Date | null;
+	},
 	posDisplayOrderQrAfterPayment: false,
 	posQrCodeAfterPayment: {
 		timeBeforeRedirecting: 10,

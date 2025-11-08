@@ -772,5 +772,32 @@
 	},
 	"widget": {
 		"specification": "Spezifikationen"
+	},
+	"telemetry": {
+		"banner": {
+			"aWordFrom": "Ein Wort von",
+			"title": "Ein Wort von be-BOP:",
+			"description1": "Um die kostenlose be-BOP-Software zu unterstützen, können Sie die Existenz Ihres Shops öffentlich machen.",
+			"description2": "Es werden keine Daten an be-BOP.io SA gesendet, außer der URI Ihres Shops und Ihrer Zustimmung zur Kommunikation darüber. Ihre privaten Informationen und die Informationen Ihrer Kunden werden nicht weitergegeben.",
+			"description3": "Ihr Beitrag wird für anonyme Statistiken über die Anzahl der be-BOP-Benutzer verwendet (die nicht automatisch erfasst werden, da wir Datenschutz und Einwilligung respektieren) und um gelegentlich Kommunikations- und Promotionskampagnen über weltweit eingesetzte be-BOPs durchzuführen. Eine erste Benachrichtigung wird an den Nostr-Bot von be-BOP.io gesendet, dann wöchentlich, solange Ihr be-BOP aktiv ist. Sie können diese regelmäßige Nachricht später unter <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a> deaktivieren.",
+			"question": "Akzeptieren Sie, die Existenz Ihres be-BOP zu teilen?",
+			"acceptButton": "Teilen",
+			"declineButton": "Erinnern Sie mich in 30 Tagen",
+			"accepted": {
+				"thankYou": "Vielen Dank, dass Sie sich entschieden haben, die Existenz Ihres Shops mit be-BOP.io für statistische und Werbezwecke zu teilen!",
+				"message": "Es werden keine Daten an be-BOP.io SA gesendet, außer der URL Ihres Shops und Ihrer Zustimmung zur Kommunikation darüber. Sie können unter <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> diese optionale Telemetrie deaktivieren.",
+				"autoHideCountdown": "Diese Nachricht verschwindet in {seconds} Sekunden..."
+			},
+			"declined": {
+				"respect": "Wir respektieren Ihre Entscheidung, keine Informationen über Ihren Shop zu teilen.",
+				"reaskCountdown": "Diese Nachricht wird in {seconds} Sekunden ausgeblendet...",
+				"reask": "Wir werden Sie in 30 Tagen erneut fragen. Sie können die Erinnerung jedoch direkt ablehnen, indem Sie auf die Schaltfläche klicken",
+				"hideButton": "Nie wieder fragen"
+			}
+		},
+		"seo": {
+			"checkboxLabel": "Beacon-Signal an be-BOP.io Nostr-Bot aktivieren, um die Existenz Ihres Shops zu teilen",
+			"infoBlock": "Diese Einstellung steuert, ob Ihr Shop regelmäßige Signale an be-BOP.io sendet. Wir legen Wert auf Datenschutz: Es werden nur Ihre Shop-URL und die be-BOP-Softwareversion weitergegeben. Keine persönlichen Daten oder Kundendaten werden übertragen. Dies hilft uns beim Debuggen und zeigt uns, dass die be-BOP-Community wächst."
+		}
 	}
 }
