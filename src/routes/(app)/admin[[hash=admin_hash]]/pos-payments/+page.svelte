@@ -66,6 +66,9 @@
 						<div class="flex-1">
 							<div class="flex items-center gap-2">
 								<h3 class="font-bold text-lg">{subtype.name}</h3>
+								{#if subtype.slug === 'cash'}
+									<span class="text-xs bg-blue-600 text-white px-2 py-1 rounded">System</span>
+								{/if}
 								{#if subtype.disabled}
 									<span class="text-xs bg-gray-500 text-white px-2 py-1 rounded">Disabled</span>
 								{/if}
@@ -95,6 +98,7 @@
 							<button
 								type="button"
 								class="btn btn-sm"
+								disabled={subtype.slug === 'cash'}
 								on:click={() => {
 									editingSubtype = subtype;
 									showCreateForm = false;
@@ -122,6 +126,7 @@
 								<button
 									type="submit"
 									class="btn btn-sm btn-danger"
+									disabled={subtype.slug === 'cash'}
 									on:click={(e) => {
 										if (!confirm(`Delete "${subtype.name}"?\n\nThis action cannot be undone.`)) {
 											e.preventDefault();
@@ -269,7 +274,7 @@
 			</label>
 
 			<!-- Disabled checkbox (only for edit) -->
-			{#if editingSubtype}
+			{#if editingSubtype && editingSubtype.slug !== 'cash'}
 				<label class="checkbox-label flex items-center gap-2">
 					<input
 						type="checkbox"

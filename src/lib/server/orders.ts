@@ -1546,7 +1546,7 @@ export async function createOrder(
 					}
 				}),
 				...(params.engagements && { engagements: params.engagements }),
-				...(params.onLocation && { onLocation: params.onLocation }),
+				...(params.onLocation !== undefined && { onLocation: params.onLocation }),
 				...(params.cart?.orderTabSlug && { orderTabSlug: params.cart.orderTabSlug })
 			};
 			await collections.orders.insertOne(order, { session });

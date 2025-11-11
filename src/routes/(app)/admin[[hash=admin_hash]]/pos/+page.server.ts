@@ -4,11 +4,11 @@ import { ALL_PAYMENT_PROCESSORS } from '$lib/server/payment-methods.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Tag } from '$lib/types/Tag';
 import { set } from '$lib/utils/set';
-import { typedInclude } from '$lib/utils/typedIncludes';
 import { error, redirect } from '@sveltejs/kit';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { persistConfigElement } from '$lib/server/utils/persistConfig';
+import type { Actions } from './$types';
 
 export const load = async ({}) => {
 	const tags = await collections.tags
@@ -39,6 +39,7 @@ export const load = async ({}) => {
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
 		posDisplayOrderQrAfterPayment: runtimeConfig.posDisplayOrderQrAfterPayment,
 		posQrCodeAfterPayment: runtimeConfig.posQrCodeAfterPayment,
+		posSession: runtimeConfig.posSession,
 		tapToPay: {
 			providers: tapToPayProviders,
 			currentProcessor: runtimeConfig.posTapToPay.processor,
@@ -47,8 +48,8 @@ export const load = async ({}) => {
 	};
 };
 
-export const actions = {
-	default: async function ({ request }) {
+export const actions: Actions = {
+	default: async ({ request }) => {
 		const formData = await request.formData();
 		const json: JsonObject = {};
 		for (const [key, value] of formData) {
@@ -84,7 +85,18 @@ export const actions = {
 					.array(),
 				posTouchTag: z.string().array(),
 				tapToPayOnActivationUrl: z.string().trim().optional(),
-				tapToPayProvider: z.string().optional()
+				tapToPayProvider: z.string().optional(),
+				posSession: z
+					.object({
+						enabled: z.boolean({ coerce: true }).default(false),
+						allowXTicketEditing: z.boolean({ coerce: true }).default(false),
+						cashDeltaJustificationMandatory: z.boolean({ coerce: true }).default(false)
+					})
+					.default({
+						enabled: false,
+						allowXTicketEditing: false,
+						cashDeltaJustificationMandatory: false
+					})
 			})
 			.parse({
 				...json,
@@ -92,11 +104,9 @@ export const actions = {
 				posTouchTag
 			});
 		const posTapToPay = {
-			processor:
-				result.tapToPayProvider && typedInclude(ALL_PAYMENT_PROCESSORS, result.tapToPayProvider)
-					? result.tapToPayProvider
-					: undefined,
-			onActivationUrl: result.tapToPayOnActivationUrl || undefined
+			processor: ALL_PAYMENT_PROCESSORS.find((p) => p === result.tapToPayProvider),
+			onActivationUrl:
+				result.tapToPayOnActivationUrl === '' ? undefined : result.tapToPayOnActivationUrl
 		};
 		const parsedOptsForPosQrCodeAfterPayment = z
 			.object({
@@ -127,6 +137,8 @@ export const actions = {
 		runtimeConfig.posQrCodeAfterPayment = posQrCodeAfterPayment;
 		await persistConfigElement('posTapToPay', posTapToPay);
 		runtimeConfig.posTapToPay = posTapToPay;
+		await persistConfigElement('posSession', result.posSession);
+		runtimeConfig.posSession = result.posSession;
 		throw redirect(303, `${adminPrefix()}/pos`);
 	}
 };
