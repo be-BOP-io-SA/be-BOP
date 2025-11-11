@@ -1,13 +1,5 @@
 import { createTestAccount, createTransport, type Transporter } from 'nodemailer';
-import {
-	SMTP_FAKE,
-	SMTP_HOST,
-	SMTP_PASSWORD,
-	SMTP_PORT,
-	SMTP_USER,
-	SMTP_FROM,
-	ORIGIN
-} from '$lib/server/env-config';
+import { ORIGIN } from '$lib/server/env-config';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { htmlToText } from 'html-to-text';
 import { defaultConfig, runtimeConfig, type EmailTemplateKey } from './runtime-config';
@@ -15,17 +7,29 @@ import { collections } from './database';
 import { ClientSession, ObjectId } from 'mongodb';
 import { mapKeys } from '$lib/utils/mapKeys';
 
-const fakeEmail = SMTP_FAKE === 'true' || SMTP_FAKE === '1';
-export const emailsEnabled = !!(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD) || fakeEmail;
+export function isEmailConfigured() {
+	return (
+		(runtimeConfig.smtp.host &&
+			runtimeConfig.smtp.port &&
+			runtimeConfig.smtp.user &&
+			runtimeConfig.smtp.password) ||
+		runtimeConfig.smtp.fake
+	);
+}
 
 let _transporter: Transporter<SMTPTransport.SentMessageInfo> | null;
+
+export async function resetTransporter() {
+	_transporter = null;
+	await getTransporter();
+}
 
 async function getTransporter() {
 	if (_transporter) {
 		return _transporter;
 	}
 
-	if (fakeEmail) {
+	if (runtimeConfig.smtp.fake) {
 		const testAccount = await createTestAccount();
 
 		_transporter = createTransport({
@@ -39,12 +43,12 @@ async function getTransporter() {
 		});
 	} else {
 		_transporter = createTransport({
-			host: SMTP_HOST,
-			port: parseInt(SMTP_PORT),
-			secure: SMTP_PORT === '465',
+			host: runtimeConfig.smtp.host,
+			port: runtimeConfig.smtp.port,
+			secure: runtimeConfig.smtp.port === 465,
 			auth: {
-				user: SMTP_USER,
-				pass: SMTP_PASSWORD
+				user: runtimeConfig.smtp.user,
+				pass: runtimeConfig.smtp.password
 			}
 		});
 	}
@@ -64,7 +68,7 @@ export async function sendEmail(params: {
 	const transporter = await getTransporter();
 
 	const res = await transporter.sendMail({
-		from: SMTP_FROM || SMTP_USER,
+		from: runtimeConfig.smtp.from || runtimeConfig.smtp.user,
 		to: params.to,
 		subject: params.subject,
 		html: params.html,

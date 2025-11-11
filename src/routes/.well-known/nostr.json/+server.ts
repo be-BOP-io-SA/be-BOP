@@ -1,4 +1,4 @@
-import { nostrPublicKeyHex, nostrRelays } from '$lib/server/nostr';
+import { getNostrKeys, isNostrConfigured, nostrRelays } from '$lib/server/nostr';
 import { error } from '@sveltejs/kit';
 import { runtimeConfig } from '$lib/server/runtime-config';
 
@@ -13,6 +13,10 @@ export const OPTIONS = () => {
 };
 
 export const GET = () => {
+	if (!isNostrConfigured()) {
+		throw error(404);
+	}
+	const { pubKeyHex: nostrPublicKeyHex } = getNostrKeys();
 	if (!nostrPublicKeyHex) {
 		throw error(404);
 	}

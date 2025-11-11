@@ -3,8 +3,6 @@ import { env as dynPublicEnv } from '$env/dynamic/public';
 import * as staticPrivateEnv from '$env/static/private';
 import * as staticPublicEnv from '$env/static/public';
 
-export const ADMIN_LOGIN = dynPrivateEnv.ADMIN_LOGIN ?? staticPrivateEnv.ADMIN_LOGIN;
-export const ADMIN_PASSWORD = dynPrivateEnv.ADMIN_PASSWORD ?? staticPrivateEnv.ADMIN_PASSWORD;
 export const ALLOW_BITCOIN_RPC =
 	dynPrivateEnv.ALLOW_BITCOIN_RPC ?? staticPrivateEnv.ALLOW_BITCOIN_RPC;
 export const ALLOW_DUMPING_WALLET =

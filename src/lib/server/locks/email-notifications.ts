@@ -2,13 +2,17 @@ import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
 import { Lock } from '../lock';
 import { collections } from '../database';
 import type { EmailNotification } from '$lib/types/EmailNotification';
-import { emailsEnabled, sendEmail } from '../email';
+import { isEmailConfigured, sendEmail } from '../email';
 import { building } from '$app/environment';
 import { rateLimit } from '../rateLimit';
 
-const lock = emailsEnabled ? new Lock('notifications.email') : null;
+const lock = new Lock('notifications.email');
 
 async function handleChanges(change: ChangeStreamDocument<EmailNotification>): Promise<void> {
+	if (!isEmailConfigured()) {
+		return;
+	}
+
 	if (!lock?.ownsLock || !('fullDocument' in change) || !change.fullDocument) {
 		return;
 	}
@@ -82,18 +86,26 @@ function watch() {
 	});
 }
 
-if (emailsEnabled && !building) {
+async function processEmailNotifications() {
+	if (!isEmailConfigured()) {
+		return;
+	}
+
+	const docs = collections.emailNotifications.find({
+		processedAt: { $exists: false }
+	});
+
+	for await (const doc of docs) {
+		await handleEmailNotification(doc);
+	}
+}
+
+if (!building) {
 	watch();
 
 	if (lock) {
 		lock.onAcquire = async () => {
-			const docs = collections.emailNotifications.find({
-				processedAt: { $exists: false }
-			});
-
-			for await (const doc of docs) {
-				await handleEmailNotification(doc);
-			}
+			await processEmailNotifications();
 		};
 	}
 }
