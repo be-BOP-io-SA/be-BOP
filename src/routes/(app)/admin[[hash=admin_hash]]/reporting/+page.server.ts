@@ -64,7 +64,7 @@ export async function load({ url }) {
 
 	return {
 		orders: orders.map((order) => ({
-			_id: order._id,
+			_id: order._id.toString(),
 			payments: order.payments.map((payment) => ({
 				...pojo(payment),
 				id: payment._id.toString(),
@@ -76,6 +76,7 @@ export async function load({ url }) {
 			status: order.status,
 			items: order.items.map((item) => ({
 				...item,
+				_id: item._id?.toString(),
 				product: {
 					...item.product,
 					vatProfileId: item.product.vatProfileId?.toString()
