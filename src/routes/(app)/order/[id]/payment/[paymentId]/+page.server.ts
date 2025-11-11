@@ -44,7 +44,7 @@ export const actions = {
 		const parsed = z
 			.object({
 				method: z.enum(ALL_PAYMENT_METHODS),
-				posSubtype: z.string().optional()
+				posSubtype: z.string().nullable().optional()
 			})
 			.parse({
 				method: formData.get('method'),

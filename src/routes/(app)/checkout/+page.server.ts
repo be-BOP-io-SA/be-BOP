@@ -326,7 +326,7 @@ export const actions = {
 			paymentMethod === 'point-of-sale'
 				? z
 						.object({
-							posSubtype: z.string().optional()
+							posSubtype: z.string().nullable().optional()
 						})
 						.parse(Object.fromEntries(formData)).posSubtype
 				: undefined;
