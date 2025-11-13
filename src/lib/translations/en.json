@@ -791,5 +791,32 @@
 	},
 	"widget": {
 		"specification": "Specifications"
+	},
+	"telemetry": {
+		"banner": {
+			"aWordFrom": "A word from",
+			"title": "A word from be-BOP:",
+			"description1": "To support the free be-BOP software, you can make your shop's existence public.",
+			"description2": "No data will be sent to be-BOP.io SA, except your shop's URI and your consent to communicate about it. Your private information and your customers' information will not be shared.",
+			"description3": "Your sharing will be used for anonymous statistics on the number of be-BOP users (which is not automatically tracked because we respect privacy and consent), and to occasionally conduct communication and promotional campaigns about be-BOP deployments around the world. An initial notification will be sent to be-BOP.io's Nostr-bot, then weekly as long as your be-BOP is active. You can later disable this regular message in <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/SEO</a>.",
+			"question": "Do you accept to share the existence of your be-BOP?",
+			"acceptButton": "Share",
+			"declineButton": "Remind me in 30 days",
+			"accepted": {
+				"thankYou": "Thank you for choosing to share your shop's existence with be-BOP.io for statistical and promotional purposes!",
+				"message": "No data will be sent to be-BOP.io SA, except your shop's URL and your consent to communicate about it. You can go to <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> to disable this optional telemetry.",
+				"autoHideCountdown": "This message will disappear in {seconds} seconds..."
+			},
+			"declined": {
+				"respect": "We respect your choice not to share information about your shop.",
+				"reaskCountdown": "This message will hide in {seconds} seconds...",
+				"reask": "We will ask you again in 30 days. However, you can directly refuse the reminder by clicking on the button",
+				"hideButton": "Never ask me again"
+			}
+		},
+		"seo": {
+			"checkboxLabel": "Enable beacon signal to be-BOP.io nostr-bot to share your shop existence",
+			"infoBlock": "This setting controls whether your shop sends periodic signals to be-BOP.io. We value privacy: only your shop URL and be-BOP software version are shared. No personal or customer data is transmitted. This helps us with debugging and shows us that the be-BOP community is growing."
+		}
 	}
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/stores';
+	import TelemetryBanner from '$lib/components/TelemetryBanner.svelte';
 
 	export let data;
 	$: lang = new URL($page.url).searchParams.get('lang') || 'en';
@@ -17,6 +18,10 @@
 	<p>
 		<em class="whitespace-pre-line">{data.adminWelcomMessage}</em>
 	</p>
+
+	{#if data.showTelemetryBanner}
+		<TelemetryBanner adminPrefix={data.adminPrefix} />
+	{/if}
 
 	<h1 class="text-xl">be-BOP version & updates</h1>
 
