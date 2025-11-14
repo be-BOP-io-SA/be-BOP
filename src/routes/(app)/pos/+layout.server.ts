@@ -46,6 +46,7 @@ export const load = async ({ locals }) => {
 		layoutReset: true,
 		pictures,
 		products,
-		tags
+		tags,
+		posUseSelectForTags: runtimeConfig.posUseSelectForTags
 	};
 };
