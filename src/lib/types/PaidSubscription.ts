@@ -21,8 +21,16 @@ export interface PaidSubscription extends Timestamps {
 		type: 'reminder' | 'expiration';
 		createdAt: Date;
 		/** 'none' is in the case where the notification medium is not supported */
-		medium: 'nostr' | 'none'; // todo: email
+		medium: 'nostr' | 'email' | 'none';
 		_id: ObjectId;
+	}>;
+
+	notificationHistory?: Array<{
+		type: 'reminder' | 'expiration';
+		createdAt: Date;
+		medium: 'nostr' | 'email' | 'none';
+		_id: ObjectId;
+		forPaidUntil: Date;
 	}>;
 
 	cancelledAt?: Date;
