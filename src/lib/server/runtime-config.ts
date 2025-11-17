@@ -61,6 +61,7 @@ const baseConfig = {
 	accountingCurrency: null as Currency | null,
 	orderNumber: 0,
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
+	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
 	subscriptionNumber: 0,
 	themeChangeNumber: 0,
 	isMaintenance: false,

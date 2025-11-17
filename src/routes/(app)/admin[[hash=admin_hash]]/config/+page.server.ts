@@ -7,7 +7,19 @@ import { typedKeys } from '$lib/utils/typedKeys.js';
 import { adminPrefix } from '$lib/server/admin';
 import { z } from 'zod';
 import { redirect } from '@sveltejs/kit';
-import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
+import {
+	paymentMethods,
+	type PaymentMethod,
+	type PaymentProcessor
+} from '$lib/server/payment-methods.js';
+import { isSumupEnabled } from '$lib/server/sumup';
+import { isStripeEnabled } from '$lib/server/stripe';
+import { isBitcoinConfigured as isBitcoindConfigured } from '$lib/server/bitcoind';
+import { isBitcoinNodelessConfigured } from '$lib/server/bitcoin-nodeless';
+import { isLndConfigured } from '$lib/server/lnd';
+import { isPhoenixdConfigured } from '$lib/server/phoenixd';
+import { isSwissBitcoinPayConfigured } from '$lib/server/swiss-bitcoin-pay';
+import { isBtcpayServerConfigured } from '$lib/server/btcpay-server';
 
 export async function load(event) {
 	return {
@@ -26,6 +38,7 @@ export async function load(event) {
 		origin: ORIGIN,
 		analyticsScriptSnippet: runtimeConfig.analyticsScriptSnippet,
 		adminHash: runtimeConfig.adminHash,
+		adminPrefix: adminPrefix(),
 		collectIPOnDeliverylessOrders: runtimeConfig.collectIPOnDeliverylessOrders,
 		isBillingAddressMandatory: runtimeConfig.isBillingAddressMandatory,
 		displayNewsletterCommercialProspection: runtimeConfig.displayNewsletterCommercialProspection,
@@ -43,7 +56,20 @@ export async function load(event) {
 		hideShopBankOnTicket: runtimeConfig.hideShopBankOnTicket,
 		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode,
 		hideCartInToolbar: runtimeConfig.hideCartInToolbar,
-		removePopinProductPrice: runtimeConfig.removePopinProductPrice
+		removePopinProductPrice: runtimeConfig.removePopinProductPrice,
+		// Payment processor preferences
+		preferredProcessorCard: runtimeConfig.paymentProcessorPreferences?.card ?? '',
+		preferredProcessorBitcoin: runtimeConfig.paymentProcessorPreferences?.bitcoin ?? '',
+		preferredProcessorLightning: runtimeConfig.paymentProcessorPreferences?.lightning ?? '',
+		// Processor availability flags
+		sumUpConfigured: isSumupEnabled(),
+		stripeConfigured: isStripeEnabled(),
+		bitcoindConfigured: isBitcoindConfigured,
+		bitcoinNodelessConfigured: isBitcoinNodelessConfigured(),
+		lndConfigured: isLndConfigured(),
+		phoenixdConfigured: isPhoenixdConfigured(),
+		swissBitcoinPayConfigured: isSwissBitcoinPayConfigured(),
+		btcpayServerConfigured: isBtcpayServerConfigured()
 	};
 }
 
@@ -108,7 +134,12 @@ export const actions = {
 				removeBebopLogoPOS: z.boolean({ coerce: true }),
 				hideCreditCardQrCode: z.boolean({ coerce: true }),
 				overwriteCreditCardSvgColor: z.boolean({ coerce: true }),
-				removePopinProductPrice: z.boolean({ coerce: true })
+				removePopinProductPrice: z.boolean({ coerce: true }),
+				preferredProcessorCard: z.enum(['sumup', 'stripe', '']).optional(),
+				preferredProcessorBitcoin: z.enum(['bitcoind', 'bitcoin-nodeless', '']).optional(),
+				preferredProcessorLightning: z
+					.enum(['lnd', 'phoenixd', 'swiss-bitcoin-pay', 'btcpay-server', ''])
+					.optional()
 			})
 			.parse({
 				...Object.fromEntries(formData),
@@ -116,7 +147,13 @@ export const actions = {
 				contactModes: formData.getAll('contactModes')
 			});
 
-		const { paymentMethods: orderedPaymentMethods, ...runtimeConfigUpdates } = {
+		const {
+			paymentMethods: orderedPaymentMethods,
+			preferredProcessorCard,
+			preferredProcessorBitcoin,
+			preferredProcessorLightning,
+			...runtimeConfigUpdates
+		} = {
 			...result,
 			secondaryCurrency: result.secondaryCurrency || null,
 			accountingCurrency: result.accountingCurrency || null,
@@ -150,6 +187,31 @@ export const actions = {
 				{ _id: 'paymentMethods' },
 				{
 					$set: { data: newPaymentMethods, updatedAt: new Date() },
+					$setOnInsert: { createdAt: new Date() }
+				},
+				{ upsert: true }
+			);
+		}
+
+		// Save processor preferences
+		const preferences: Partial<Record<PaymentMethod, PaymentProcessor>> = {
+			...(preferredProcessorCard && {
+				card: preferredProcessorCard
+			}),
+			...(preferredProcessorBitcoin && {
+				bitcoin: preferredProcessorBitcoin
+			}),
+			...(preferredProcessorLightning && {
+				lightning: preferredProcessorLightning
+			})
+		};
+
+		if (JSON.stringify(runtimeConfig.paymentProcessorPreferences) !== JSON.stringify(preferences)) {
+			runtimeConfig.paymentProcessorPreferences = preferences;
+			await collections.runtimeConfig.updateOne(
+				{ _id: 'paymentProcessorPreferences' },
+				{
+					$set: { data: preferences, updatedAt: new Date() },
 					$setOnInsert: { createdAt: new Date() }
 				},
 				{ upsert: true }

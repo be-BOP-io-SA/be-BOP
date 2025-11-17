@@ -52,7 +52,7 @@ export const paymentMethods = (opts?: {
 					}
 					switch (method) {
 						case 'card':
-							return isSumupEnabled() || isStripeEnabled() || isPaypalEnabled();
+							return isSumupEnabled() || isStripeEnabled();
 						case 'paypal':
 							return isPaypalEnabled();
 						case 'bank-transfer':
