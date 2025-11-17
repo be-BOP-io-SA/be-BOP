@@ -240,6 +240,7 @@ const baseConfig = {
 	contactModesForceOption: false,
 	posTouchTag: [] as Tag['_id'][],
 	posTabGroups: defaultPosTabGroups(),
+	posUseSelectForTags: false,
 	posPrefillTermOfUse: false,
 	posTapToPay: {
 		processor: undefined as PaymentProcessor | undefined,
