@@ -255,12 +255,17 @@
 	{#each validDeposits as payment}
 		<div class="py-3 flex flex-col">
 			<div class="flex justify-between">
-				<span class="text-xl"
-					><span title={t('checkout.paymentMethod.' + payment.method)}
-						>{PAYMENT_METHOD_EMOJI[payment.method]}</span
-					>
-					- {payment.status === 'paid' ? t('order.depositPaid') : t('order.depositToPay')}
-				</span>
+				<div class="flex flex-col">
+					<span class="text-xl"
+						><span title={t('checkout.paymentMethod.' + payment.method)}
+							>{PAYMENT_METHOD_EMOJI[payment.method]}</span
+						>
+						- {payment.status === 'paid' ? t('order.depositPaid') : t('order.depositToPay')}
+					</span>
+					{#if payment.status === 'pending'}
+						<span class="text-sm text-gray-500">pending</span>
+					{/if}
+				</div>
 				<PriceTag
 					class="text-2xl"
 					amount={payment.currencySnapshot.main.price.amount}
@@ -277,8 +282,8 @@
 		</div>
 	{/each}
 
-	{#if orderAmountWithNoPaymentsCreated(order)}
-		{@const remaining = orderAmountWithNoPaymentsCreated(order)}
+	{#if orderAmountWithNoPaymentsCreated(order, { ignorePendingPayments: true })}
+		{@const remaining = orderAmountWithNoPaymentsCreated(order, { ignorePendingPayments: true })}
 		<div class="py-3 flex flex-col">
 			<div class="flex justify-between">
 				<span class="text-xl">{t('order.restToPay')}</span>
