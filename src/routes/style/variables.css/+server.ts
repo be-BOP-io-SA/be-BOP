@@ -31,7 +31,13 @@ export const GET = async ({}) => {
 
 function generateVariables(themeData: ThemeData) {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const { name, ...validated } = themeValidator.parse(themeData);
+	const parseResult = themeValidator.safeParse(themeData);
+	if (!parseResult.success) {
+		console.error('[CSS VARIABLES] Theme validation failed:', parseResult.error.errors);
+		return { nonColors: {}, darkModeColors: {}, lightModeColors: {} };
+	}
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	const { name, ...validated } = parseResult.data;
 	const flattened = flatten(validated) as Record<string, string>;
 
 	const nonColors: Record<string, string> = {};

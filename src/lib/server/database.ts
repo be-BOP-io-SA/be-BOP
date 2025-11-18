@@ -157,6 +157,8 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.orders, { 'payments.invoice.number': 1 }, { unique: true, sparse: true }],
 	[collections.orders, { 'payments.status': 1 }],
 	[collections.orders, { status: 1, 'payments.status': 1 }],
+	[collections.orders, { orderTabId: 1, status: 1 }, { sparse: true }],
+	[collections.orders, { orderTabId: 1, splitMode: 1, status: 1 }, { sparse: true }],
 	[collections.orders, { orderLabelIds: 1 }, { sparse: true }],
 	[collections.digitalFiles, { productId: 1 }],
 	[collections.digitalFiles, { secret: 1 }, { unique: true, sparse: true }],
@@ -217,7 +219,8 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.posPaymentSubtypes, { sortOrder: 1 }],
 	[collections.posPaymentSubtypes, { disabled: 1 }],
 	[collections.posSessions, { status: 1, openedAt: -1 }],
-	[collections.posSessions, { closedAt: -1 }]
+	[collections.posSessions, { closedAt: -1 }],
+	[collections.orderTabs, { slug: 1 }, { unique: true }]
 ];
 
 export async function createIndexes() {

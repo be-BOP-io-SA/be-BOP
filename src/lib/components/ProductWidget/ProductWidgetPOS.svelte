@@ -34,6 +34,10 @@
 				alert(t('pos.touch.maxQuantityReached', { max: Number(result.data.maxQuantity) }));
 				return;
 			}
+			if (result.type === 'failure' && result.data?.error === 'sharesPaymentStarted') {
+				alert(t('pos.split.completeSharesFirst'));
+				return;
+			}
 			invalidate(UrlDependency.orderTab(tabSlug));
 		};
 	}}

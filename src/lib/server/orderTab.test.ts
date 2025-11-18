@@ -93,7 +93,8 @@ describe('addProductToOrderTab', () => {
 		}
 		const deleteRes = await collections.carts.deleteMany({ user: { email } });
 		expect(deleteRes.deletedCount).toBe(1);
-		await clearAbandonedCartsAndOrdersFromTab(tabSlug);
+		const tabForCleanup = await getOrCreateOrderTab({ slug: tabSlug });
+		await clearAbandonedCartsAndOrdersFromTab(tabForCleanup);
 		const orderTab2 = await getOrCreateOrderTab({ slug: tabSlug });
 		for (const item of orderTab2.items) {
 			expect(item.cartId).toEqual(undefined);
