@@ -1529,7 +1529,12 @@ export async function createOrder(
 				}),
 				...(params.engagements && { engagements: params.engagements }),
 				...(params.onLocation !== undefined && { onLocation: params.onLocation }),
-				...(params.cart?.orderTabSlug && { orderTabSlug: params.cart.orderTabSlug })
+				...(params.cart?.orderTabSlug && {
+					orderTabSlug: params.cart.orderTabSlug,
+					orderTabId: params.cart.orderTabId,
+					cartId: params.cart._id,
+					splitMode: params.cart.splitMode
+				})
 			};
 			await collections.orders.insertOne(order, { session });
 
@@ -1562,8 +1567,7 @@ export async function createOrder(
 					await collections.orderTabs.updateMany(
 						{ slug: order.orderTabSlug },
 						{
-							$unset: { 'items.$[elem].cartId': 1 },
-							$set: { 'items.$[elem].orderId': order._id.toString() }
+							$unset: { 'items.$[elem].cartId': 1 }
 						},
 						{
 							arrayFilters: [{ 'elem.cartId': params.cart._id }],
@@ -2086,15 +2090,24 @@ export async function addOrderPayment(
 	price: Price,
 	/**
 	 * `null` expiresAt means the payment method has no expiration
+	 * `ignorePendingPayments` allows creating new payment even if pending payments cover full amount (for PoS)
 	 */
-	opts?: { expiresAt?: Date | null; session?: ClientSession; posSubtype?: string }
+	opts?: {
+		expiresAt?: Date | null;
+		session?: ClientSession;
+		posSubtype?: string;
+		ignorePendingPayments?: boolean;
+	}
 ) {
 	if (order.status !== 'pending') {
 		throw error(400, 'Order is not pending');
 	}
 
-	if (paymentMethod !== 'free' && isOrderFullyPaid(order, { includePendingOrders: true })) {
-		throw error(400, 'Order already fully paid with pending payments');
+	if (
+		paymentMethod !== 'free' &&
+		isOrderFullyPaid(order, { includePendingOrders: !opts?.ignorePendingPayments })
+	) {
+		throw error(400, 'Order already fully paid');
 	}
 
 	// We reuse the same currencies as previous payments
@@ -2103,17 +2116,16 @@ export async function addOrderPayment(
 	const priceReferenceCurrency = order.currencySnapshot.priceReference.totalPrice.currency;
 	const accountingCurrency = order.currencySnapshot.accounting?.totalPrice.currency;
 
+	const remainingAmount = orderAmountWithNoPaymentsCreated(order, {
+		ignorePendingPayments: opts?.ignorePendingPayments
+	});
 	const priceToPay =
-		toCurrency(mainCurrency, price.amount, price.currency) <=
-		orderAmountWithNoPaymentsCreated(order)
+		toCurrency(mainCurrency, price.amount, price.currency) <= remainingAmount
 			? price
-			: {
-					amount: orderAmountWithNoPaymentsCreated(order),
-					currency: mainCurrency
-			  };
+			: { amount: remainingAmount, currency: mainCurrency };
 
 	if (paymentMethod !== 'free' && priceToPay.amount < CURRENCY_UNIT[priceToPay.currency]) {
-		throw error(400, 'Order already fully paid with pending payments');
+		throw error(400, 'Order already fully paid');
 	}
 
 	const paymentId = new ObjectId();
@@ -2272,6 +2284,11 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 }
 
 export async function updateAfterOrderPaid(order: Order, session: ClientSession) {
+	if (order.orderTabSlug) {
+		const { handleOrderTabAfterPayment } = await import('./orderTab');
+		await handleOrderTabAfterPayment({ order, session });
+	}
+
 	if (order.items.some((item) => item.product.type === 'subscription')) {
 		await collections.scheduleEvents.updateMany(
 			{ orderId: order._id },

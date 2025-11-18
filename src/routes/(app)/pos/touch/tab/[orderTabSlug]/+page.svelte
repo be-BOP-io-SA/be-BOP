@@ -35,7 +35,7 @@
 		filter === 'all'
 			? data.products
 			: data.products.filter((product) => product.tagIds?.includes(filter));
-	$: items = data.orderTab.items;
+	$: items = data.orderTab.items.filter((item) => item.quantity > 0);
 	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
 		deliveryFees: { amount: 0, currency: UNDERLYING_CURRENCY },
