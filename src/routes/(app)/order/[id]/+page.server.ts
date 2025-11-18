@@ -94,6 +94,7 @@ export async function load({ params, depends, locals }) {
 
 	return {
 		order,
+		splitMode: order.splitMode,
 		paymentMethods: methods,
 		tapToPay,
 		posSubtypes,

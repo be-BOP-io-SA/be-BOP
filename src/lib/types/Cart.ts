@@ -30,4 +30,6 @@ export interface Cart extends Timestamps {
 		chosenVariations?: Record<string, string>;
 	}>;
 	orderTabSlug?: string;
+	orderTabId?: ObjectId;
+	splitMode?: 'items' | 'shares';
 }

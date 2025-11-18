@@ -217,7 +217,8 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.posPaymentSubtypes, { sortOrder: 1 }],
 	[collections.posPaymentSubtypes, { disabled: 1 }],
 	[collections.posSessions, { status: 1, openedAt: -1 }],
-	[collections.posSessions, { closedAt: -1 }]
+	[collections.posSessions, { closedAt: -1 }],
+	[collections.orderTabs, { slug: 1 }]
 ];
 
 export async function createIndexes() {

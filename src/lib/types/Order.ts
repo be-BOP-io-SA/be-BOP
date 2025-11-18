@@ -215,6 +215,9 @@ export interface Order extends Timestamps {
 		tickets?: Array<Ticket['ticketId']>;
 	}>;
 	orderTabSlug?: string;
+	orderTabId?: ObjectId;
+	cartId?: ObjectId;
+	splitMode?: 'items' | 'shares';
 
 	shippingAddress?: OrderAddress;
 	billingAddress?: OrderAddress;

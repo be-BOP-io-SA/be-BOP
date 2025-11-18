@@ -675,6 +675,8 @@
 			"notAvailableYet": "Not available yet",
 			"tabHeader": "Tab {slug}",
 			"tabToPayNow": "Tab {slug} (to pay now)",
+			"pool": "POOL",
+			"poolRemainingToPay": "POOL (remaining to be paid)",
 			"exclVat": "excl. VAT",
 			"inclVat": "incl. VAT {rates}",
 			"vatRate": "VAT {rate}%",
@@ -687,7 +689,19 @@
 			"paySelected": "Pay selected",
 			"includingVatIncluded": "Including (VAT included):",
 			"tagProducts": "Tag \"{name}\" products",
-			"otherProducts": "Other products"
+			"otherProducts": "Other products",
+			"selectItems": "Please select items to pay",
+			"splitByShares": "Split by shares",
+			"enterNumberOfParts": "Enter number of parts",
+			"manualAmount": "Manual amount",
+			"ok": "OK",
+			"payRemaining": "Pay Remaining",
+			"totalAlreadyPaid": "Total already paid (incl. VAT)",
+			"remainingToPay": "Remaining to pay (incl. VAT)",
+			"allPaid": "All is paid",
+			"completeSharesFirst": "Complete payment via Split by shares",
+			"closePool": "Close pool",
+			"globalTicket": "Global ticket"
 		}
 	},
 	"product": {

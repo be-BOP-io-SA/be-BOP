@@ -1548,7 +1548,12 @@ export async function createOrder(
 				}),
 				...(params.engagements && { engagements: params.engagements }),
 				...(params.onLocation !== undefined && { onLocation: params.onLocation }),
-				...(params.cart?.orderTabSlug && { orderTabSlug: params.cart.orderTabSlug })
+				...(params.cart?.orderTabSlug && {
+					orderTabSlug: params.cart.orderTabSlug,
+					orderTabId: params.cart.orderTabId,
+					cartId: params.cart._id,
+					splitMode: params.cart.splitMode
+				})
 			};
 			await collections.orders.insertOne(order, { session });
 
@@ -1582,7 +1587,6 @@ export async function createOrder(
 						{ slug: order.orderTabSlug },
 						{
 							$unset: { 'items.$[elem].cartId': 1 },
-							$set: { 'items.$[elem].orderId': order._id.toString() }
 						},
 						{
 							arrayFilters: [{ 'elem.cartId': params.cart._id }],
@@ -2181,7 +2185,15 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 	}
 }
 
-export async function updateAfterOrderPaid(order: Order, session: ClientSession) {
+export async function updateAfterOrderPaid(
+	order: Order,
+	session: ClientSession
+) {
+	if (order.orderTabSlug) {
+		const { handleOrderTabAfterPayment } = await import('./orderTab');
+		await handleOrderTabAfterPayment({ order, session });
+	}
+
 	if (order.items.some((item) => item.product.type === 'subscription')) {
 		await collections.scheduleEvents.updateMany(
 			{ orderId: order._id },

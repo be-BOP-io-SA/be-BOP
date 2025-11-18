@@ -886,6 +886,14 @@
 								>{t('order.note.seeText')}</a
 							>
 							{#if data.order.orderTabSlug}
+								{#if data.splitMode}
+									<a
+										href="/pos/touch/tab/{data.order.orderTabSlug}/split?mode={data.splitMode}"
+										class="btn lg:w-auto w-full btn-black self-end"
+									>
+										@@Continue split ({data.splitMode})
+									</a>
+								{/if}
 								<a
 									href="/pos/touch/tab/{data.order.orderTabSlug}"
 									class="btn lg:w-auto w-full btn-gray self-end"
