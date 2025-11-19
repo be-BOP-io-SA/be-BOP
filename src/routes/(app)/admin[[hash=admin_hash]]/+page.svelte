@@ -20,7 +20,7 @@
 	</p>
 
 	{#if data.showTelemetryBanner}
-		<TelemetryBanner adminPrefix={data.adminPrefix} />
+		<TelemetryBanner adminPrefix={data.adminPrefix} nostrConfigured={data.nostrConfigured} />
 	{/if}
 
 	<h1 class="text-xl">be-BOP version & updates</h1>

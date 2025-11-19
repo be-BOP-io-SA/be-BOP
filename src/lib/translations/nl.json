@@ -801,6 +801,7 @@
 			"question": "Accepteert u om het bestaan van uw be-BOP te delen?",
 			"acceptButton": "Delen",
 			"declineButton": "Herinner me over 30 dagen",
+			"configureNostrButton": "Nostr configureren",
 			"accepted": {
 				"thankYou": "Bedankt dat u ervoor heeft gekozen om het bestaan van uw winkel te delen met be-BOP.io voor statistische en promotionele doeleinden!",
 				"message": "Er worden geen gegevens naar be-BOP.io SA verzonden, behalve de URL van uw winkel en uw toestemming om hierover te communiceren. U kunt naar <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> gaan om deze optionele telemetrie uit te schakelen.",
