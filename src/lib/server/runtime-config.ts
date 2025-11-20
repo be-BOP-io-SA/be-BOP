@@ -111,7 +111,7 @@ const baseConfig = {
 		{ label: 'Privacy Policy', href: '/privacy' }
 	],
 
-	viewportFor: 'no-one' as 'employee' | 'no-one' | 'visitors' | 'everyone',
+	viewportFor: 'everyone' as 'employee' | 'no-one' | 'visitors' | 'everyone',
 	viewportContentWidth: 1000,
 	socialNetworkIcons: [] as Array<{ name: string; svg: string; href: string }>,
 	cartPreviewInteractive: false,
