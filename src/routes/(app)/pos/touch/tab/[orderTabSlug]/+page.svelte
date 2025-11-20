@@ -16,6 +16,10 @@
 	import { computePriceInfo } from '$lib/cart.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import { sluggifyTab } from '$lib/types/PosTabGroup.js';
+	import PrintTicketModal from '$lib/components/PrintTicketModal.svelte';
+	import PrintableTicket from '$lib/components/PrintableTicket.svelte';
+	import type { PrintTicketOptions } from '$lib/types/PrintTicketOptions';
+	import type { PrintHistoryEntry } from '$lib/types/PrintHistoryEntry';
 
 	export let data;
 	$: tabSlug = data.tabSlug;
@@ -42,19 +46,6 @@
 		vatSingleCountry: data.vatSingleCountry,
 		vatProfiles: data.vatProfiles
 	});
-
-	$: poolLabel = (() => {
-		const found = data.posTabGroups
-			.flatMap((group, groupIndex) =>
-				group.tabs.map((tab, tabIndex) => ({ group, tab, tabIndex, groupIndex }))
-			)
-			.find(
-				({ groupIndex, tabIndex }) =>
-					sluggifyTab(data.posTabGroups, groupIndex, tabIndex) === tabSlug
-			);
-
-		return found ? found.tab.label ?? `${found.group.name} ${found.tabIndex + 1}` : 'TMP';
-	})();
 
 	const { t } = useI18n();
 	let posProductPagination = POS_PRODUCT_PAGINATION;
@@ -136,6 +127,202 @@
 
 	function handleCategorySelect(filterId: string) {
 		goto(selfPageLink({ filter: filterId, skip: 0 }));
+	}
+
+	let printModalOpen = false;
+	let ticketTagGroups: Array<{
+		tagNames: string[];
+		items: Array<{
+			product: { name: string };
+			quantity: number;
+			variations: Array<{ text: string; count: number }>;
+			notes: string[];
+		}>;
+	}> = [];
+	let ticketGeneratedAt: Date | undefined = undefined;
+
+	type TicketGroup = {
+		product: (typeof items)[0]['product'];
+		totalQuantity: number;
+		variations: Array<{ text: string; count: number }>;
+		notes: string[];
+		itemIds: string[];
+	};
+
+	let availablePrintTags = data.printTags;
+	$: availablePrintTags = data.printTags;
+
+	$: hasNewItems = items.some((item) => item.quantity - (item.printedQuantity ?? 0) > 0);
+
+	let poolLabel = 'n° tmp';
+	$: {
+		const tabs = data.posTabGroups.flatMap((group, g) =>
+			group.tabs.map((tab, i) => ({
+				slug: sluggifyTab(data.posTabGroups, g, i),
+				label: tab.label ?? `${group.name} ${i + 1}`
+			}))
+		);
+		poolLabel = tabs.find(({ slug }) => slug === tabSlug)?.label ?? 'n° tmp';
+	}
+
+	async function handlePrintTicket(options: PrintTicketOptions) {
+		const filteredItems = items
+			.map((item) => ({
+				...item,
+				newQuantity: item.quantity - (item.printedQuantity ?? 0)
+			}))
+			.filter((item) => {
+				if (options.mode === 'newlyOrdered' && item.newQuantity <= 0) {
+					return false;
+				}
+				if (options.tagFilter && !item.product.tagIds?.includes(options.tagFilter)) {
+					return false;
+				}
+				return true;
+			});
+
+		type TagGroupKey = string;
+		type ProductGroups = Map<string, TicketGroup>;
+
+		const tagGroups = filteredItems.reduce((acc, item) => {
+			const qtyToUse = options.mode === 'newlyOrdered' ? item.newQuantity : item.quantity;
+
+			const printableTagIds = (item.product.tagIds ?? [])
+				.filter((tagId) => data.printTagsMap[tagId])
+				.slice()
+				.sort();
+			const tagKey = printableTagIds.join(',');
+
+			if (!acc.has(tagKey)) {
+				acc.set(tagKey, new Map<string, TicketGroup>());
+			}
+			const productGroups = acc.get(tagKey);
+			if (!productGroups) {
+				return acc;
+			}
+
+			const productKey = item.product._id;
+			const existing = productGroups.get(productKey);
+
+			if (!existing) {
+				productGroups.set(productKey, {
+					product: item.product,
+					totalQuantity: qtyToUse,
+					variations:
+						item.chosenVariations && Object.keys(item.chosenVariations).length > 0
+							? [{ text: Object.values(item.chosenVariations).join(' '), count: qtyToUse }]
+							: [],
+					notes: item.internalNote?.value ? [item.internalNote.value] : [],
+					itemIds: [item.tabItemId]
+				});
+			} else {
+				existing.totalQuantity += qtyToUse;
+				existing.itemIds.push(item.tabItemId);
+
+				if (item.chosenVariations && Object.keys(item.chosenVariations).length > 0) {
+					const variationText = Object.values(item.chosenVariations).join(' ');
+					const existingVariation = existing.variations.find((v) => v.text === variationText);
+					if (existingVariation) {
+						existingVariation.count += qtyToUse;
+					} else {
+						existing.variations.push({ text: variationText, count: qtyToUse });
+					}
+				}
+
+				if (item.internalNote?.value) {
+					existing.notes.push(item.internalNote.value);
+				}
+			}
+
+			return acc;
+		}, new Map<TagGroupKey, ProductGroups>());
+
+		const uniqueTags = new Set<string>();
+		let totalItemCount = 0;
+
+		ticketTagGroups = Array.from(tagGroups.entries())
+			.map(([tagKey, productGroups]) => {
+				const tagIds = tagKey ? tagKey.split(',') : [];
+				const tagNames = tagIds
+					.map((id) => data.printTagsMap[id])
+					.filter(Boolean)
+					.sort();
+
+				tagNames.forEach((tagName) => uniqueTags.add(tagName));
+
+				const items = Array.from(productGroups.values()).map((group) => {
+					totalItemCount += group.totalQuantity;
+					return {
+						product: { name: group.product.name },
+						quantity: group.totalQuantity,
+						variations: group.variations,
+						notes: group.notes
+					};
+				});
+
+				return {
+					tagNames,
+					items
+				};
+			})
+			.sort((a, b) => {
+				const aName = a.tagNames.join(', ');
+				const bName = b.tagNames.join(', ');
+				return aName.localeCompare(bName);
+			});
+
+		ticketGeneratedAt = new Date();
+
+		setTimeout(() => {
+			window.print();
+
+			if (totalItemCount > 0 && ticketGeneratedAt) {
+				const historyEntry: PrintHistoryEntry = {
+					timestamp: ticketGeneratedAt,
+					poolLabel,
+					itemCount: totalItemCount,
+					tagNames: Array.from(uniqueTags).sort(),
+					tagGroups: ticketTagGroups
+				};
+
+				const historyFormData = new FormData();
+				historyFormData.set('entry', JSON.stringify(historyEntry));
+
+				fetch('?/savePrintHistory', {
+					method: 'POST',
+					body: historyFormData
+				}).catch((error) => {
+					console.error('Error saving print history:', error);
+				});
+			}
+
+			if (options.mode === 'newlyOrdered' && filteredItems.length > 0) {
+				const updates = filteredItems.map((item) => ({
+					itemId: item.tabItemId,
+					currentQuantity: item.quantity
+				}));
+				const formData = new FormData();
+				formData.set('updates', JSON.stringify(updates));
+
+				fetch('?/updatePrintStatus', {
+					method: 'POST',
+					body: formData
+				}).catch((error) => {
+					console.error('Error updating print status:', error);
+				});
+			}
+
+			invalidate(UrlDependency.orderTab(tabSlug));
+		}, 100);
+	}
+
+	function handleReprintFromHistory(entry: PrintHistoryEntry) {
+		ticketTagGroups = entry.tagGroups;
+		ticketGeneratedAt = new Date();
+
+		setTimeout(() => {
+			window.print();
+		}, 100);
 	}
 </script>
 
@@ -289,7 +476,7 @@
 						<!-- Select menu mode -->
 						<div class="col-span-2">
 							<CategorySelect
-								tags={data.tags}
+								tags={data.posTouchScreenTags}
 								currentFilter={filter}
 								onSelect={handleCategorySelect}
 							/>
@@ -300,7 +487,7 @@
 							class="col-span-2 touchScreen-category-cta"
 							href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}>{t('pos.touch.favorites')}</a
 						>
-						{#each data.tags as favoriteTag}
+						{#each data.posTouchScreenTags as favoriteTag}
 							<a
 								class="touchScreen-category-cta"
 								href={selfPageLink({ filter: favoriteTag._id, skip: 0 })}>{favoriteTag.name}</a
@@ -350,11 +537,12 @@
 		<div class="grid grid-cols-2 gap-4 mt-2">
 			<button
 				class="touchScreen-ticket-menu text-3xl p-4 text-center"
-				on:click={() => (tabSelectModalOpen = true)}>{t('pos.touch.tickets')}</button
+				on:click={() => (tabSelectModalOpen = true)}>POOL</button
 			>
 			<button
 				class="touchScreen-action-secondaryCTA text-3xl p-4"
-				on:click={() => alert(t('pos.touch.notDeveloped'))}>{t('pos.touch.openDrawer')}</button
+				disabled={!items.length}
+				on:click={() => (printModalOpen = true)}>PRINT TICKETS</button
 			>
 		</div>
 		<div class="grid grid-cols-2 gap-4 mt-2">
@@ -401,6 +589,20 @@
 		</div>
 	</footer>
 </div>
+
+<!-- Print Ticket Modal -->
+<PrintTicketModal
+	bind:isOpen={printModalOpen}
+	availableTags={availablePrintTags}
+	{hasNewItems}
+	printHistory={data.orderTab.printHistory ?? []}
+	onConfirm={handlePrintTicket}
+	onCancel={() => (printModalOpen = false)}
+	onReprintFromHistory={handleReprintFromHistory}
+/>
+
+<!-- Printable Ticket (hidden on screen, visible on print) -->
+<PrintableTicket {poolLabel} tagGroups={ticketTagGroups} generatedAt={ticketGeneratedAt} />
 
 <!-- Item Edit Dialog -->
 {#if itemToEditIndex !== undefined && itemToEditIndex >= 0}
