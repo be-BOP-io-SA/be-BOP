@@ -806,6 +806,7 @@
 			"question": "Do you accept to share the existence of your be-BOP?",
 			"acceptButton": "Share",
 			"declineButton": "Remind me in 30 days",
+			"configureNostrButton": "Configure Nostr",
 			"accepted": {
 				"thankYou": "Thank you for choosing to share your shop's existence with be-BOP.io for statistical and promotional purposes!",
 				"message": "No data will be sent to be-BOP.io SA, except your shop's URL and your consent to communicate about it. You can go to <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> to disable this optional telemetry.",

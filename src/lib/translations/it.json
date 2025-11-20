@@ -801,6 +801,7 @@
 			"question": "Accetti di condividere l'esistenza del tuo be-BOP?",
 			"acceptButton": "Condividi",
 			"declineButton": "Ricordamelo tra 30 giorni",
+			"configureNostrButton": "Configura Nostr",
 			"accepted": {
 				"thankYou": "Grazie per aver scelto di condividere l'esistenza del tuo negozio con be-BOP.io per scopi statistici e promozionali!",
 				"message": "Nessun dato verrà inviato a be-BOP.io SA, tranne l'URL del tuo negozio e il tuo consenso a comunicare al riguardo. Puoi andare su <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> per disattivare questa telemetria opzionale.",

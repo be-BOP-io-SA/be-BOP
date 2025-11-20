@@ -7,6 +7,7 @@ import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { rootDir } from '$lib/server/root-dir.js';
 import { enableTelemetry, disableTelemetry } from '$lib/server/telemetry-helpers';
+import { isNostrConfigured } from '$lib/server/nostr';
 
 export async function load({ url, locals }) {
 	if (!locals.user) {
@@ -55,7 +56,8 @@ export async function load({ url, locals }) {
 			files,
 			lang: result.lang,
 			adminWelcomMessage: runtimeConfig.adminWelcomMessage,
-			showTelemetryBanner
+			showTelemetryBanner,
+			nostrConfigured: isNostrConfigured()
 		};
 	} catch (err) {
 		console.error(`Error reading files from docs/${result.lang}`, err);

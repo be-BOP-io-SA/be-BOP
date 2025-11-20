@@ -5,6 +5,7 @@
 	import DEFAULT_LOGO from '$lib/assets/bebop-light.svg';
 
 	export let adminPrefix: string;
+	export let nostrConfigured: boolean;
 
 	const { t } = useI18n();
 
@@ -150,10 +151,20 @@
 						}}
 					>
 						<input type="hidden" name="choice" value="accept" />
-						<button type="submit" class="btn bg-green-600 text-white hover:bg-green-700">
+						<button
+							type="submit"
+							disabled={!nostrConfigured}
+							class="btn bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
 							{t('telemetry.banner.acceptButton')}
 						</button>
 					</form>
+
+					{#if !nostrConfigured}
+						<a href="{adminPrefix}/nostr" class="btn bg-blue-600 text-white hover:bg-blue-700">
+							{t('telemetry.banner.configureNostrButton')}
+						</a>
+					{/if}
 
 					<form
 						method="post"
