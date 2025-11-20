@@ -784,7 +784,8 @@
 			"details": "Detalles",
 			"donate": "Donar",
 			"preorder": "Preordenar",
-			"subscribe": "Suscribirse"
+			"subscribe": "Suscribirse",
+			"view": "Ver producto"
 		},
 		"deposit": {
 			"payFullPrice": "Pagar el precio completo ahora",

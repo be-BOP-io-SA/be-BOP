@@ -16,6 +16,7 @@
 	export let product: ProductWidgetProduct;
 	export let hasDigitalFiles: boolean;
 	export let canBuy: boolean;
+	export let externalUrl: string | undefined = undefined;
 
 	let className = '';
 	export { className as class };
@@ -57,6 +58,7 @@
 		{product}
 		{pictures}
 		{hasDigitalFiles}
+		{externalUrl}
 		class={className}
 	/>
 </div>
@@ -67,6 +69,7 @@
 		{pictures}
 		{hasDigitalFiles}
 		{canAddToCart}
+		{externalUrl}
 		class={className}
 	/>
 </div>
