@@ -146,19 +146,11 @@
 
 				if (productQuantities[item.product._id]) {
 					productQuantities[item.product._id].quantity += item.quantity;
-					productQuantities[item.product._id].total += toCurrency(
-						data.currencies.main,
-						item.customPrice?.amount ?? item.product.price.amount,
-						item.product.price.currency
-					);
+					productQuantities[item.product._id].total += orderItemPrice(item, 'main');
 				} else {
 					productQuantities[item.product._id] = {
 						quantity: item.quantity,
-						total: toCurrency(
-							data.currencies.main,
-							item.customPrice?.amount ?? item.product.price.amount,
-							item.product.price.currency
-						)
+						total: orderItemPrice(item, 'main')
 					};
 				}
 			}
