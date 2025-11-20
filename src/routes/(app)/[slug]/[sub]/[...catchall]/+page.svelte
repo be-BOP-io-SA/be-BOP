@@ -10,6 +10,7 @@
 	sliders={data.cmsData.sliders}
 	tags={data.cmsData.tags}
 	products={data.cmsData.products}
+	externalProducts={data.cmsData.externalProducts}
 	pictures={data.cmsData.pictures}
 	digitalFiles={data.cmsData.digitalFiles}
 	hasPosOptions={data.hasPosOptions}
