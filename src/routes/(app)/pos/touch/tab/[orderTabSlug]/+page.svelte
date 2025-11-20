@@ -384,7 +384,7 @@
 <div class="flex flex-col h-screen justify-between min-h-min" inert={itemToEditIndex !== undefined}>
 	<main class="mb-auto flex-grow overflow-y-auto">
 		<div class="grid grid-cols-3 gap-4 h-full">
-			<div class="touchScreen-ticket-menu p-3 h-full overflow-y-auto">
+			<div class="touchScreen-ticket-menu p-3 h-full overflow-y-auto flex flex-col">
 				{#if items.length}
 					<h3 class="text-3xl">{poolLabel}</h3>
 					{#each items as item, i}
@@ -409,62 +409,66 @@
 								<input type="hidden" name="quantity" />
 								<button
 									type="button"
-									class="text-start text-2xl w-full justify-between"
+									class="text-start text-2xl w-full"
 									on:click={() => openEditItemDialog(i)}
 								>
-									{item.quantity} X {item.product.name.toUpperCase()}<br />
-									{item.internalNote?.value ? '+' + item.internalNote.value : ''}
-									<div class="flex text-2xl flex-row items-end justify-end">
-										{#if item.quantity > 1}{item.quantity}X
-										{/if}
+									<div class="mb-1">{item.quantity} x {item.product.name.toUpperCase()}</div>
+									{#if item.internalNote?.value}
+										<div class="text-lg mb-1">+{item.internalNote.value}</div>
+									{/if}
+									<div
+										class="grid grid-cols-[1fr_1fr_1fr] lg:grid-cols-[minmax(auto,25px)_1fr_1fr_1fr] gap-x-2 text-sm sm:text-base md:text-lg lg:text-xl"
+									>
+										<span class="hidden lg:block">{t('pos.touch.exclVat')}</span>
 										<PriceTag
-											amount={item.product.price.amount}
-											currency={item.product.price.currency}
-											class="text-2xl"
+											amount={priceInfo.perItem[i].amount}
+											currency={priceInfo.perItem[i].currency}
+											class="text-sm sm:text-base md:text-lg lg:text-xl text-right"
 											main
 										/>
-									</div>
-									{#if item.quantity > 1}
-										<div class="text-2xl flex flex-row items-end justify-end">
-											=<PriceTag
-												amount={item.quantity * item.product.price.amount}
-												currency={item.product.price.currency}
-												class="text-2xl"
-												main
-											/>
-										</div>
-									{/if}
-									<div class="text-2xl flex flex-row items-end justify-end">
-										+<span class="font-semibold">{t('cart.vat')} {priceInfo.vatRates[i]}%</span>
+										<span class="whitespace-nowrap"
+											>{t('pos.touch.inclVat')} {priceInfo.vatRates[i]}%</span
+										>
+										<PriceTag
+											amount={priceInfo.perItem[i].amount * (1 + priceInfo.vatRates[i] / 100)}
+											currency={priceInfo.perItem[i].currency}
+											class="text-sm sm:text-base md:text-lg lg:text-xl text-right"
+											main
+										/>
 									</div>
 								</button><br />
 							</form>
 						</div>
 					{/each}
-					<div class="flex flex-col border-t border-gray-300 py-6">
-						<h2 class="text-3xl">{t('cart.total').toUpperCase()} =</h2>
-						<div class="flex flex-col items-end justify-end">
+					<div class="flex flex-col border-t border-gray-300 py-4 mt-auto">
+						<h2 class="text-xl sm:text-2xl md:text-3xl underline mb-1">{t('pos.touch.total')}</h2>
+						<div
+							class="grid grid-cols-[auto_1fr] items-start gap-x-2 gap-y-0 text-base sm:text-lg md:text-xl lg:text-2xl"
+						>
+							<span class="whitespace-nowrap">{t('pos.touch.exclVat')}</span>
+							<PriceTag
+								amount={priceInfo.partialPrice}
+								currency={priceInfo.currency}
+								main
+								class="text-base sm:text-lg md:text-xl lg:text-2xl text-right"
+							/>
+							<span class="whitespace-nowrap">{t('pos.touch.inclVat')}</span>
 							<PriceTag
 								amount={priceInfo.partialPriceWithVat}
 								currency={priceInfo.currency}
 								main
-								class="text-2xl"
+								class="text-base sm:text-lg md:text-xl lg:text-2xl text-right"
 							/>
+							{#each priceInfo.vat as vat}
+								<span class="whitespace-nowrap">{t('pos.touch.vatBreakdown')} {vat.rate}%</span>
+								<PriceTag
+									amount={vat.partialPrice.amount}
+									currency={vat.partialPrice.currency}
+									main
+									class="text-base sm:text-lg md:text-xl lg:text-2xl text-right"
+								/>
+							{/each}
 						</div>
-						{#each priceInfo.vat as vat}
-							<div class="flex flex-col">
-								<h2 class="text-[28px]">{t('pos.touch.vatBreakdown')}</h2>
-								<div class="text-2xl flex flex-row items-end justify-end">
-									{vat.rate}% =
-									<PriceTag
-										amount={vat.partialPrice.amount}
-										currency={vat.partialPrice.currency}
-										main
-										class="text-[28px]"
-									/>
-								</div>
-							</div>
-						{/each}
 					</div>
 				{:else}
 					<p>{t('cart.empty')}</p>
