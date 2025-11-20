@@ -31,46 +31,48 @@
 	const mainCurrency = $currencies.main;
 	const secondaryCurrency = $currencies.secondary;
 
-	$: actualCurrency = main ? mainCurrency : secondary ? secondaryCurrency : convertedTo ?? currency;
+	$: actualCurrency = (
+		main ? mainCurrency : secondary ? secondaryCurrency : convertedTo ?? currency
+	) as Currency | null;
 	$: actualAmount = actualCurrency === null ? 0 : toCurrency(actualCurrency, amount, currency);
 
-	$: displayedAmount = !force
-		? actualCurrency === 'BTC' && actualAmount < 0.01
-			? actualAmount * SATOSHIS_PER_BTC
-			: actualCurrency === 'SAT' && actualAmount >= 1_000_000
-			? actualAmount / SATOSHIS_PER_BTC
-			: actualAmount
-		: actualAmount;
-	$: displayedCurrency = !force
-		? actualCurrency === 'BTC' && actualAmount < 0.01
-			? 'SAT'
-			: actualCurrency === 'SAT' && actualAmount >= 1_000_000
-			? 'BTC'
-			: actualCurrency || 'BTC'
-		: actualCurrency || 'BTC';
+	// Auto-conversion thresholds: small BTC amounts show as SAT, large SAT amounts show as BTC
+	$: [displayedAmount, displayedCurrency] = (() => {
+		if (!force && actualCurrency === 'BTC' && actualAmount < 0.01) {
+			return [actualAmount * SATOSHIS_PER_BTC, 'SAT'] as const;
+		}
+		if (!force && actualCurrency === 'SAT' && actualAmount >= 1_000_000) {
+			return [actualAmount / SATOSHIS_PER_BTC, 'BTC'] as const;
+		}
+		return [actualAmount, actualCurrency || 'BTC'] as const;
+	})() as [number, Currency];
 
-	$: displayed =
-		displayedCurrency !== 'BTC' && actualAmount > 0 && displayedAmount < 0.01
-			? '< ' +
-			  Number(0.01).toLocaleString('en', {
-					style: displayedCurrency === 'SAT' ? undefined : 'currency',
-					currency: displayedCurrency === 'SAT' ? undefined : displayedCurrency,
-					maximumFractionDigits: 2,
-					minimumFractionDigits: 0
-			  })
-			: displayedAmount.toLocaleString('en', {
-					style:
-						displayedCurrency === 'SAT' || displayedCurrency === 'BTC' ? undefined : 'currency',
-					currency:
-						displayedCurrency === 'SAT' || displayedCurrency === 'BTC'
-							? undefined
-							: displayedCurrency,
-					maximumFractionDigits: displayedCurrency === 'BTC' ? 8 : 2,
-					minimumFractionDigits:
-						!Number.isInteger(displayedAmount) && displayedCurrency !== 'BTC'
-							? FRACTION_DIGITS_PER_CURRENCY[displayedCurrency]
-							: 0
-			  }) + (displayedCurrency === 'SAT' && !short ? ' SAT' : '');
+	// Helper: check if currency is crypto (SAT or BTC)
+	$: isCrypto = displayedCurrency === 'SAT' || displayedCurrency === 'BTC';
+
+	// Determine decimal places based on currency
+	$: maximumFractionDigits = FRACTION_DIGITS_PER_CURRENCY[displayedCurrency];
+
+	$: minimumFractionDigits =
+		!Number.isInteger(displayedAmount) && !isCrypto ? maximumFractionDigits : 0;
+
+	// Edge case: very small fiat amounts (> 0 but < 0.01) show as "< 0.01"
+	$: isSmallFiatAmount = !isCrypto && actualAmount > 0 && displayedAmount < 0.01;
+
+	// Build small formatting config - crypto gets no currency symbol, fiat gets it
+	$: formatConfig = {
+		maximumFractionDigits,
+		minimumFractionDigits,
+		...(isCrypto ? {} : { style: 'currency' as const, currency: displayedCurrency })
+	} satisfies Intl.NumberFormatOptions;
+
+	$: formattedAmount = isSmallFiatAmount
+		? (0.01).toLocaleString('en', { style: 'currency', currency: displayedCurrency })
+		: displayedAmount.toLocaleString('en', formatConfig);
+
+	$: displayed = isSmallFiatAmount
+		? `< ${formattedAmount}`
+		: `${formattedAmount}${displayedCurrency === 'SAT' && !short ? ' SAT' : ''}`;
 </script>
 
 {#if actualCurrency}

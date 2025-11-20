@@ -23,6 +23,27 @@ export type DiscountType = 'fiat' | 'percentage';
 export type Price = {
 	amount: number;
 	currency: Currency;
+	/**
+	 * Number of decimal places for storing this price.
+	 *
+	 * **Optional for backwards compatibility** - when undefined, defaults to
+	 * FRACTION_DIGITS_PER_CURRENCY (2 for fiat, 8 for BTC).
+	 *
+	 * New prices saved with storage precision will have this set to
+	 * STORAGE_FRACTION_DIGITS_PER_CURRENCY (4 for fiat, 8 for BTC).
+	 *
+	 * This allows storing precise base prices (e.g., 4.6253 CHF) that result
+	 * in round numbers after VAT calculation (e.g., 5.00 CHF with 8.1% VAT).
+	 *
+	 * @example
+	 * // Old price from DB (no precision field):
+	 * { amount: 5.00, currency: 'CHF' }  // precision defaults to 2
+	 *
+	 * @example
+	 * // New price from DB (with precision):
+	 * { amount: 4.6253, currency: 'CHF', precision: 4 }
+	 */
+	precision?: number;
 };
 
 export interface Note {

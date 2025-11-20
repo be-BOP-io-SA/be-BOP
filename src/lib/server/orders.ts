@@ -49,6 +49,7 @@ import { checkCartItems } from './cart';
 import { userQuery } from './user';
 import { SMTP_USER } from '$lib/server/env-config';
 import { toCurrency } from '$lib/utils/toCurrency';
+import { convertAmountToCurrencyForStorage } from '$lib/utils/toStorageCurrency';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
@@ -1247,87 +1248,63 @@ export async function createOrder(
 					vatRate: priceInfo.vatRates[i],
 					currencySnapshot: {
 						main: {
-							price: {
-								amount: toCurrency(
-									runtimeConfig.mainCurrency,
-									item.product.price.amount,
-									item.product.price.currency
-								),
-								currency: runtimeConfig.mainCurrency
-							},
+							price: convertAmountToCurrencyForStorage(
+								runtimeConfig.mainCurrency,
+								item.product.price.amount,
+								item.product.price.currency
+							),
 							...(item.customPrice && {
-								customPrice: {
-									amount: toCurrency(
-										runtimeConfig.mainCurrency,
-										item.customPrice.amount,
-										item.customPrice.currency
-									),
-									currency: runtimeConfig.mainCurrency
-								}
+								customPrice: convertAmountToCurrencyForStorage(
+									runtimeConfig.mainCurrency,
+									item.customPrice.amount,
+									item.customPrice.currency
+								)
 							})
 						},
 						...(runtimeConfig.secondaryCurrency && {
 							secondary: {
-								price: {
-									amount: toCurrency(
-										runtimeConfig.secondaryCurrency,
-										item.product.price.amount,
-										item.product.price.currency
-									),
-									currency: runtimeConfig.secondaryCurrency
-								},
+								price: convertAmountToCurrencyForStorage(
+									runtimeConfig.secondaryCurrency,
+									item.product.price.amount,
+									item.product.price.currency
+								),
 								...(item.customPrice && {
-									customPrice: {
-										amount: toCurrency(
-											runtimeConfig.secondaryCurrency,
-											item.customPrice.amount,
-											item.customPrice.currency
-										),
-										currency: runtimeConfig.secondaryCurrency
-									}
+									customPrice: convertAmountToCurrencyForStorage(
+										runtimeConfig.secondaryCurrency,
+										item.customPrice.amount,
+										item.customPrice.currency
+									)
 								})
 							}
 						}),
 						...(runtimeConfig.accountingCurrency && {
 							accounting: {
-								price: {
-									amount: toCurrency(
-										runtimeConfig.accountingCurrency,
-										item.product.price.amount,
-										item.product.price.currency
-									),
-									currency: runtimeConfig.accountingCurrency
-								},
+								price: convertAmountToCurrencyForStorage(
+									runtimeConfig.accountingCurrency,
+									item.product.price.amount,
+									item.product.price.currency
+								),
 								...(item.customPrice && {
-									customPrice: {
-										amount: toCurrency(
-											runtimeConfig.accountingCurrency,
-											item.customPrice.amount,
-											item.customPrice.currency
-										),
-										currency: runtimeConfig.accountingCurrency
-									}
+									customPrice: convertAmountToCurrencyForStorage(
+										runtimeConfig.accountingCurrency,
+										item.customPrice.amount,
+										item.customPrice.currency
+									)
 								})
 							}
 						}),
 						priceReference: {
-							price: {
-								amount: toCurrency(
-									runtimeConfig.priceReferenceCurrency,
-									item.product.price.amount,
-									item.product.price.currency
-								),
-								currency: runtimeConfig.priceReferenceCurrency
-							},
+							price: convertAmountToCurrencyForStorage(
+								runtimeConfig.priceReferenceCurrency,
+								item.product.price.amount,
+								item.product.price.currency
+							),
 							...(item.customPrice && {
-								customPrice: {
-									amount: toCurrency(
-										runtimeConfig.priceReferenceCurrency,
-										item.customPrice.amount,
-										item.customPrice.currency
-									),
-									currency: runtimeConfig.priceReferenceCurrency
-								}
+								customPrice: convertAmountToCurrencyForStorage(
+									runtimeConfig.priceReferenceCurrency,
+									item.customPrice.amount,
+									item.customPrice.currency
+								)
 							})
 						}
 					}
