@@ -1,6 +1,8 @@
 import type { Challenge } from '$lib/types/Challenge';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import type { Product } from '$lib/types/Product';
+import type { Picture } from '$lib/types/Picture';
+import type { Currency } from '$lib/types/Currency';
 import { trimPrefix } from '$lib/utils/trimPrefix';
 import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
@@ -17,6 +19,12 @@ import type { Leaderboard } from '$lib/types/Leaderboard';
 import type { ScheduleEventBooked } from '$lib/types/Schedule';
 import { groupBy } from '$lib/utils/group-by';
 import { subMinutes } from 'date-fns';
+import { z } from 'zod';
+import type { ProductWidgetProduct } from '$lib/components/ProductWidget/ProductWidgetProduct';
+export type ExternalProductData = ProductWidgetProduct & {
+	externalUrl: string;
+	pictures: Picture[];
+};
 
 const window = new JSDOM('').window;
 
@@ -29,6 +37,90 @@ purify.addHook('afterSanitizeAttributes', function (node) {
 		node.setAttribute('rel', 'noopener');
 	}
 });
+
+// Zod schema for external product data validation
+const externalProductSchema = z.object({
+	_id: z.string(),
+	name: z.string(),
+	shortDescription: z.string(),
+	price: z.object({
+		amount: z.number(),
+		currency: z.string()
+	}),
+	pictures: z.array(z.any()).optional()
+});
+
+async function fetchExternalProduct(url: string): Promise<ExternalProductData | null> {
+	try {
+		// Parse URL to extract base and slug
+		const urlObj = new URL(url);
+		const pathMatch = urlObj.pathname.match(/\/product\/([^\/]+)/);
+
+		if (!pathMatch) {
+			console.error('Invalid product URL format:', url);
+			return null;
+		}
+
+		const slug = pathMatch[1];
+		const apiUrl = `${urlObj.origin}/.well-known/product/${slug}`;
+
+		const response = await fetch(apiUrl, {
+			headers: { Accept: 'application/json' },
+			signal: AbortSignal.timeout(5000) // 5s timeout
+		});
+
+		if (!response.ok) {
+			console.error(`Failed to fetch external product: ${response.status}`);
+			return null;
+		}
+
+		const rawData = await response.json();
+
+		// Runtime validation with Zod
+		const parseResult = externalProductSchema.safeParse(rawData);
+
+		if (!parseResult.success) {
+			console.error('[fetchExternalProduct] Invalid external product data:', parseResult.error);
+			return null;
+		}
+
+		// Map to ProductWidgetProduct with safe defaults
+		const result = {
+			_id: parseResult.data._id,
+			name: parseResult.data.name,
+			shortDescription: parseResult.data.shortDescription,
+			price: {
+				amount: parseResult.data.price.amount,
+				currency: parseResult.data.price.currency as Currency
+			},
+			externalUrl: url,
+			pictures: (parseResult.data.pictures as Picture[]) ?? [],
+			// Required ProductWidgetProduct fields with safe defaults
+			preorder: false,
+			availableDate: undefined,
+			shipping: false,
+			type: 'resource' as const,
+			actionSettings: {
+				eShop: { visible: true, canBeAddedToBasket: false },
+				retail: { visible: false, canBeAddedToBasket: false },
+				googleShopping: { visible: false },
+				nostr: { visible: false, canBeAddedToBasket: false }
+			},
+			stock: { available: 999999, total: 999999, reserved: 0 },
+			isTicket: false,
+			hasSellDisclaimer: false,
+			payWhatYouWant: false,
+			bookingSpec: undefined,
+			hasVariations: false
+		};
+
+		return result;
+	} catch (err) {
+		console.error('[fetchExternalProduct] Error fetching external product:', err);
+		return null;
+	}
+}
+
 type TokenObject =
 	| {
 			type: 'html';
@@ -37,6 +129,12 @@ type TokenObject =
 	| {
 			type: 'productWidget';
 			slug: string;
+			display: string | undefined;
+			raw: string;
+	  }
+	| {
+			type: 'externalProductWidget';
+			url: string;
 			display: string | undefined;
 			raw: string;
 	  }
@@ -119,8 +217,18 @@ export async function cmsFromContent(
 	},
 	locals: Partial<PickDeep<App.Locals, 'user.hasPosOptions' | 'language' | 'email' | 'sso'>>
 ) {
+	/**
+	 * Matches product widget syntax in CMS content:
+	 * - [Product=slug] for local products
+	 * - [Product=https://example.com/product/slug] for external products
+	 * - [Product=slug display=img-5] or [Product=slug?display=img-5] for display options
+	 *
+	 * Named groups:
+	 * - slug: either full URL (http/https) or local slug (unicode letters, digits, _, -)
+	 * - display: optional display variant (img-0 through img-6)
+	 */
 	const PRODUCT_WIDGET_REGEX =
-		/\[Product=(?<slug>[\p{L}\d_-]+)(?:[?\s]display=(?<display>[a-z0-9-]+))?\]/giu;
+		/\[Product=(?<slug>https?:\/\/[^\s\]]+|[\p{L}\d_-]+)(?:[?\s]display=(?<display>[a-z0-9-]+))?\]/giu;
 	const CHALLENGE_WIDGET_REGEX = /\[Challenge=(?<slug>[a-z0-9-]+)\]/giu;
 	const LEADERBOARD_WIDGET_REGEX = /\[Leaderboard=(?<slug>[a-z0-9-]+)\]/giu;
 	const SLIDER_WIDGET_REGEX =
@@ -144,6 +252,7 @@ export async function cmsFromContent(
 		/\[Schedule=(?<slug>[\p{L}\d_:-]+)(?:[?\s]display=(?<display>(main|main-light|list|calendar)))?\]/giu;
 
 	const productSlugs = new Set<string>();
+	const externalProductUrls = new Set<string>();
 	const challengeSlugs = new Set<string>();
 	const sliderSlugs = new Set<string>();
 	const tagSlugs = new Set<string>();
@@ -194,13 +303,30 @@ export async function cmsFromContent(
 			if (match.groups?.slug) {
 				switch (match.type) {
 					case 'productWidget':
-						productSlugs.add(match.groups.slug);
-						token.push({
-							type: 'productWidget',
-							slug: match.groups.slug,
-							display: match.groups?.display,
-							raw: match[0]
-						});
+						const slugOrUrl = match.groups.slug;
+						if (slugOrUrl.startsWith('http://') || slugOrUrl.startsWith('https://')) {
+							// External product URL
+							const url = new URL(slugOrUrl);
+							const displayOption = url.searchParams.get('display') || match.groups?.display;
+							url.searchParams.delete('display');
+
+							externalProductUrls.add(url.href);
+							token.push({
+								type: 'externalProductWidget',
+								url: url.href,
+								display: displayOption,
+								raw: match[0]
+							});
+						} else {
+							// Local product slug
+							productSlugs.add(slugOrUrl);
+							token.push({
+								type: 'productWidget',
+								slug: slugOrUrl,
+								display: match.groups?.display,
+								raw: match[0]
+							});
+						}
 						break;
 					case 'challengeWidget':
 						challengeSlugs.add(match.groups.slug);
@@ -390,6 +516,13 @@ export async function cmsFromContent(
 	const allProductsLead = leaderboards
 		.flatMap((leaderboard) => leaderboard.progress || [])
 		.map((progressItem) => progressItem.productId);
+
+	const externalProducts: ExternalProductData[] =
+		externalProductUrls.size > 0
+			? (await Promise.all([...externalProductUrls].map(fetchExternalProduct))).filter(
+					(p): p is ExternalProductData => p !== null
+			  )
+			: [];
 
 	const [
 		products,
@@ -633,6 +766,7 @@ export async function cmsFromContent(
 		challenges,
 		sliders,
 		products,
+		externalProducts,
 		tags,
 		specifications,
 		contactForms,
