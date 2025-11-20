@@ -1,4 +1,5 @@
 import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
 import type { Currency } from '$lib/types/Currency';
@@ -22,6 +23,7 @@ import {
 import { runMigrations } from './migrations';
 import type { ProductActionSettings } from '$lib/types/ProductActionSettings';
 import type { ConfirmationThresholds } from '$lib/types/ConfirmationThresholds';
+import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID, TICKET_CHECKER_ROLE_ID } from '$lib/types/User';
 import { building } from '$app/environment';
 import { defaultPosTabGroups } from '$lib/types/PosTabGroup';
@@ -646,6 +648,26 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 				createdAt: new Date(),
 				updatedAt: new Date()
 			})
+			.catch((err) => {
+				if (isUniqueConstraintError(err)) {
+					return;
+				}
+				throw err;
+			});
+	}
+
+	// Create default PoS payment subtype: Cash
+	if ((await collections.posPaymentSubtypes.countDocuments({}, { limit: 1 })) === 0) {
+		await collections.posPaymentSubtypes
+			.insertOne({
+				_id: new ObjectId(),
+				slug: 'cash',
+				name: 'Cash',
+				description: 'Cash payments',
+				sortOrder: 1,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			} satisfies PosPaymentSubtype)
 			.catch((err) => {
 				if (isUniqueConstraintError(err)) {
 					return;
