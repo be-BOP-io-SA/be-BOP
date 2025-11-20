@@ -76,13 +76,15 @@ export const actions = {
 			throw error(500, 'Product associated to subscription not found');
 		}
 
-		const orConditions = userQuery(subscription.user);
-
 		const lastOrder = await collections.orders.findOne(
 			{
-				'items.product._id': product._id,
-				'payment.status': 'paid',
-				orConditions
+				$and: [
+					{
+						'items.product._id': product._id,
+						'payments.status': 'paid'
+					},
+					userQuery(subscription.user)
+				]
 			},
 			{
 				sort: { createdAt: -1 }
