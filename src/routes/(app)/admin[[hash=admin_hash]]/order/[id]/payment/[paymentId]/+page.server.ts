@@ -8,6 +8,13 @@ import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 
+const PAYMENT_DETAIL_MAX_LENGTH = 100;
+
+const paymentDetailSchema = (required: boolean) =>
+	required
+		? z.string().trim().min(1).max(PAYMENT_DETAIL_MAX_LENGTH)
+		: z.string().trim().max(PAYMENT_DETAIL_MAX_LENGTH).optional();
+
 export const actions = {
 	confirm: async ({ params, request }) => {
 		const order = await collections.orders.findOne({
@@ -31,23 +38,20 @@ export const actions = {
 		const bankInfo =
 			payment.method === 'bank-transfer'
 				? z
-						.object({
-							bankTransferNumber: z.string().trim().min(1).max(100)
-						})
-						.parse({
-							bankTransferNumber: formData.get('bankTransferNumber')
-						})
+						.object({ bankTransferNumber: paymentDetailSchema(true) })
+						.parse({ bankTransferNumber: formData.get('bankTransferNumber') })
 				: null;
-		const posInfo =
-			payment.method === 'point-of-sale'
-				? z
-						.object({
-							detail: z.string().trim().min(1).max(100)
-						})
-						.parse({
-							detail: formData.get('detail')
-						})
+
+		let posInfo = null;
+		if (payment.method === 'point-of-sale') {
+			const subtype = payment.posSubtype
+				? await collections.posPaymentSubtypes.findOne({ slug: payment.posSubtype })
 				: null;
+			const required = subtype?.paymentDetailRequired ?? false;
+			posInfo = z
+				.object({ detail: paymentDetailSchema(required) })
+				.parse({ detail: formData.get('detail') });
+		}
 
 		await onOrderPayment(order, payment, payment.price, {
 			...(bankInfo &&
@@ -186,13 +190,9 @@ export const actions = {
 			throw error(400, 'Payment is not paid');
 		}
 		const formData = await request.formData();
-		const informationUpdate = z
-			.object({
-				paymentDetail: z.string().trim().min(1).max(100)
-			})
-			.parse({
-				paymentDetail: formData.get('paymentDetail')
-			});
+		const informationUpdate = z.object({ paymentDetail: paymentDetailSchema(true) }).parse({
+			paymentDetail: formData.get('paymentDetail')
+		});
 
 		await collections.orders.updateOne(
 			{ _id: order._id, 'payments._id': payment._id },
