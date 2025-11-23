@@ -89,7 +89,8 @@ export async function load({ params, depends, locals }) {
 	).map((subtype) => ({
 		slug: subtype.slug,
 		name: subtype.name,
-		description: subtype.description
+		description: subtype.description,
+		paymentDetailRequired: subtype.paymentDetailRequired
 	}));
 
 	return {
