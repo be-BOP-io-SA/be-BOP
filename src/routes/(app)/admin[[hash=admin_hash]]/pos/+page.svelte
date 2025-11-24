@@ -12,6 +12,8 @@
 			label: data.tags.find((tag) => tag._id === tagId)?.name ?? tagId
 		})) ?? [];
 	let tabGroups = data.posTabGroups;
+	let posPoolEmptyIcon = data.posPoolEmptyIcon || '';
+	let posPoolOccupiedIcon = data.posPoolOccupiedIcon || '';
 
 	$: serializedTags = JSON.stringify(selectedTags.map((tag) => tag.value));
 	$: serializedTabGroups = JSON.stringify(tabGroups);
@@ -178,6 +180,27 @@
 			checked={data.posUseSelectForTags}
 		/>
 		{t('pos.useSelectForTags')}
+	</label>
+
+	<label class="form-label">
+		Pool name label for non-empty pools
+		<small class="text-gray-600"
+			>If empty, default icon will be shown: {data.defaultFullPoolIcon}</small
+		>
+		<input
+			type="text"
+			name="posPoolOccupiedIcon"
+			class="form-input"
+			bind:value={posPoolOccupiedIcon}
+		/>
+	</label>
+
+	<label class="form-label">
+		Pool name label for empty pools
+		<small class="text-gray-600"
+			>If empty, default icon will be shown: {data.defaultEmptyPoolIcon}</small
+		>
+		<input type="text" name="posPoolEmptyIcon" class="form-input" bind:value={posPoolEmptyIcon} />
 	</label>
 
 	<!-- svelte-ignore a11y-label-has-associated-control -->

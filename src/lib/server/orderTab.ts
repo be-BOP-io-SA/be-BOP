@@ -72,11 +72,11 @@ export async function getOrCreateOrderTab({ slug }: { slug: string }): Promise<O
 }
 
 export async function orderTabNotEmptyAndFullyPaid({ slug }: { slug: string }): Promise<boolean> {
-	const returned = await getOrCreateOrderTab({ slug });
-	const items = returned.items;
-	if (items.length === 0) {
+	const returned = await collections.orderTabs.findOne({ slug });
+	if (!returned || returned.items.length === 0) {
 		return false;
 	}
+	const items = returned.items;
 	if (!items.map((item) => item.orderId).every(Boolean)) {
 		// At least one of the items is not associated to an order.
 		return false;
