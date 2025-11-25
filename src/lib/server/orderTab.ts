@@ -1,9 +1,10 @@
 import { OrderTab } from '$lib/types/OrderTab';
-import { ObjectId } from 'mongodb';
+import { ObjectId, type ClientSession } from 'mongodb';
 import { collections } from './database';
 import { filterNullish } from '$lib/utils/fillterNullish';
 import { UserIdentifier } from '$lib/types/UserIdentifier';
 import { Order } from '$lib/types/Order';
+import { error } from '@sveltejs/kit';
 
 function mkOrderTab(slug: string): OrderTab {
 	return {
@@ -59,12 +60,15 @@ export async function clearAbandonedCartsAndOrdersFromTab(slug: string): Promise
 
 export async function getOrCreateOrderTab({ slug }: { slug: string }): Promise<OrderTab> {
 	const returned = await collections.orderTabs.findOne({ slug });
+
 	if (returned === null) {
 		const newOrderTab = mkOrderTab(slug);
 		const insertResult = await collections.orderTabs.insertOne(newOrderTab);
+
 		if (!insertResult.acknowledged || insertResult.insertedId !== newOrderTab._id) {
 			throw new Error('Failed to create order tab');
 		}
+
 		return newOrderTab;
 	} else {
 		return returned;
@@ -72,11 +76,11 @@ export async function getOrCreateOrderTab({ slug }: { slug: string }): Promise<O
 }
 
 export async function orderTabNotEmptyAndFullyPaid({ slug }: { slug: string }): Promise<boolean> {
-	const returned = await getOrCreateOrderTab({ slug });
-	const items = returned.items;
-	if (items.length === 0) {
+	const returned = await collections.orderTabs.findOne({ slug });
+	if (!returned || returned.items.length === 0) {
 		return false;
 	}
+	const items = returned.items;
 	if (!items.map((item) => item.orderId).every(Boolean)) {
 		// At least one of the items is not associated to an order.
 		return false;
@@ -93,31 +97,70 @@ export async function concludeOrderTab({ slug }: { slug: string }) {
 	await collections.orderTabs.deleteOne({ slug });
 }
 
-export async function checkoutOrderTab({ slug, user }: { slug: string; user: UserIdentifier }) {
+export async function checkoutOrderTab({
+	slug,
+	user,
+	splitMode,
+	itemQuantities
+}: {
+	slug: string;
+	user: UserIdentifier;
+	splitMode?: 'shares' | 'items';
+	itemQuantities?: Map<string, number>;
+}) {
 	const orderTab = await getOrCreateOrderTab({ slug });
-	const cartItems = orderTab.items.map((line) => ({
-		_id: line._id.toString(),
-		productId: line.productId,
-		quantity: line.quantity,
-		internalNote: line.internalNote,
-		chosenVariations: line.chosenVariations
-	}));
+
+	// Build cart items
+	const cartItems = itemQuantities
+		? Array.from(itemQuantities.entries()).map(([itemId, qty]) => {
+				const tabItem = orderTab.items.find((i) => i._id.toString() === itemId);
+				if (!tabItem) {
+					const availableItems = orderTab.items.map((i) => i._id.toString());
+					console.error('Item not found in orderTab:', {
+						requestedItemId: itemId,
+						availableItems
+					});
+					throw error(400, 'Item not found in order tab');
+				}
+				return {
+					_id: itemId,
+					productId: tabItem.productId,
+					quantity: qty,
+					internalNote: tabItem.internalNote,
+					chosenVariations: tabItem.chosenVariations
+				};
+		  })
+		: orderTab.items.map((line) => ({
+				_id: line._id.toString(),
+				productId: line.productId,
+				quantity: line.quantity,
+				internalNote: line.internalNote,
+				chosenVariations: line.chosenVariations
+		  }));
+
+	// Determine final splitMode
+	const finalSplitMode = itemQuantities ? 'items' : splitMode;
+
 	const createResult = await collections.carts.insertOne({
 		_id: new ObjectId(),
 		items: cartItems,
 		orderTabSlug: slug,
+		orderTabId: orderTab._id,
+		...(finalSplitMode && { splitMode: finalSplitMode }),
 		updatedAt: new Date(),
 		createdAt: new Date(),
 		user
 	});
-	const cart = await collections.carts.findOne({ _id: createResult.insertedId });
-	if (!createResult.acknowledged || !cart) {
+
+	if (!createResult.acknowledged) {
 		throw new Error('Failed to create cart');
 	}
+
+	// Link items to cartId
 	await collections.orderTabs.updateOne(
 		{ _id: orderTab._id },
 		{ $set: { 'items.$[elem].cartId': createResult.insertedId } },
-		{ arrayFilters: [{ 'elem._id': { $in: cart.items.map((item) => new ObjectId(item._id)) } }] }
+		{ arrayFilters: [{ 'elem._id': { $in: cartItems.map((item) => new ObjectId(item._id)) } }] }
 	);
 }
 
@@ -127,12 +170,12 @@ export async function addToOrderTab(params: {
 }): Promise<{ success: true } | { success: false; error: string; maxQuantity: number }> {
 	const orderTab = await getOrCreateOrderTab({ slug: params.tabSlug });
 
-	const existingLineIndex = orderTab.items.findIndex(
-		(item) => !item.cartId && !item.orderId && item.productId === params.productId
+	const poolStartedPayments = orderTab.items.some((i) => i.originalQuantity !== undefined);
+	const existingItem = orderTab.items.find(
+		(i) => !i.cartId && i.productId === params.productId && (!i.orderId || i.quantity === 0)
 	);
 
-	const currentQuantity = existingLineIndex !== -1 ? orderTab.items[existingLineIndex].quantity : 0;
-	const newQuantity = currentQuantity + 1;
+	const newQuantity = (existingItem?.quantity ?? 0) + 1;
 
 	const product = await collections.products.findOne({ _id: params.productId });
 	if (product?.maxQuantityPerOrder && newQuantity > product.maxQuantityPerOrder) {
@@ -143,20 +186,23 @@ export async function addToOrderTab(params: {
 		};
 	}
 
-	if (existingLineIndex !== -1) {
-		orderTab.items[existingLineIndex].quantity = newQuantity;
+	if (existingItem) {
+		existingItem.quantity = newQuantity;
+		if (existingItem.originalQuantity !== undefined) {
+			existingItem.originalQuantity += 1;
+		}
+		delete existingItem.orderId; // Reactivate item if it was fully paid
 	} else {
 		orderTab.items.push({
 			_id: new ObjectId(),
 			productId: params.productId,
-			quantity: 1
+			quantity: 1,
+			...(poolStartedPayments && { originalQuantity: 1 })
 		});
 	}
 
 	await collections.orderTabs.updateOne({ _id: orderTab._id }, { $set: { items: orderTab.items } });
-	return {
-		success: true
-	};
+	return { success: true };
 }
 
 export async function removeFromOrderTab(params: {
@@ -174,4 +220,83 @@ export async function removeFromOrderTab(params: {
 
 export async function removeOrderTab(params: { tabSlug: string }): Promise<void> {
 	await collections.orderTabs.deleteOne({ slug: params.tabSlug });
+}
+
+export async function handleOrderTabAfterPayment({
+	order,
+	session
+}: {
+	order: Order;
+	session?: ClientSession;
+}) {
+	if (!order.orderTabSlug) {
+		return;
+	}
+
+	const { orderTabSlug } = order;
+
+	const lastPaidPayment = [...order.payments].reverse().find((p) => p.status === 'paid');
+	if (!lastPaidPayment) {
+		return;
+	}
+
+	const paymentId = lastPaidPayment._id.toString();
+
+	const orderTab = await collections.orderTabs.findOne(
+		{ slug: orderTabSlug },
+		{ projection: { items: 1, processedPayments: 1 }, session }
+	);
+	if (orderTab?.processedPayments?.includes(paymentId)) {
+		return;
+	}
+
+	const hasOriginalQuantity = orderTab?.items.some((i) => i.originalQuantity !== undefined);
+	if (!hasOriginalQuantity && orderTab) {
+		const setOriginalOps = orderTab.items.map((item) => ({
+			updateOne: {
+				filter: { slug: orderTabSlug, 'items._id': item._id },
+				update: { $set: { 'items.$.originalQuantity': item.quantity } }
+			}
+		}));
+
+		if (setOriginalOps.length > 0) {
+			await collections.orderTabs.bulkWrite(setOriginalOps, { session });
+		}
+	}
+
+	if (order.splitMode === 'items') {
+		const bulkOps = order.items
+			.filter((item) => item._id)
+			.map((item) => {
+				const tabItem = orderTab?.items.find((i) => item._id && i._id.equals(item._id));
+				const currentQuantity = tabItem?.quantity || 0;
+
+				const updateFields: Record<string, unknown> = {
+					$inc: { 'items.$.quantity': -item.quantity }
+				};
+
+				if (currentQuantity === item.quantity) {
+					updateFields.$set = {
+						'items.$.orderId': order._id
+					};
+				}
+
+				return {
+					updateOne: {
+						filter: { slug: orderTabSlug, 'items._id': item._id },
+						update: updateFields
+					}
+				};
+			});
+
+		if (bulkOps.length > 0) {
+			await collections.orderTabs.bulkWrite(bulkOps, { session });
+		}
+	}
+
+	await collections.orderTabs.updateOne(
+		{ slug: orderTabSlug },
+		{ $addToSet: { processedPayments: paymentId } },
+		{ session }
+	);
 }

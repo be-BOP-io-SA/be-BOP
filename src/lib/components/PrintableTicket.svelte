@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Product } from '$lib/types/Product';
+	import type { Currency } from '$lib/types/Currency';
 	import { format } from 'date-fns';
 
 	export let poolLabel: string;
@@ -14,22 +15,66 @@
 		}>;
 	}> = [];
 
-	$: ticketText = tagGroups
-		.flatMap((group) => [
-			`TICKET ${poolLabel.toUpperCase()}`,
-			...(generatedAt ? [format(generatedAt, 'HH:mm').replace(':', 'h').toUpperCase()] : []),
-			'',
-			...(group.tagNames.length > 0 ? [`--- ${group.tagNames.join(', ').toUpperCase()} ---`] : []),
-			...group.items.flatMap((item) => [
-				`${item.quantity} X ${item.product.name.toUpperCase()}`,
-				...item.variations.map((v) => `${v.count} ${v.text}`),
-				...item.notes.map((note) => `+${note}`)
-			]),
-			'',
-			'',
-			''
-		])
-		.join('\n');
+	// Optional: for customer receipts with prices
+	export let priceInfo:
+		| {
+				itemPrices: Array<{ amount: number; currency: Currency }>;
+				total: number;
+				vatRate: number;
+				currency: Currency;
+		  }
+		| undefined = undefined;
+
+	$: ticketText = priceInfo
+		? // Customer receipt with prices
+		  tagGroups
+				.flatMap((group, groupIdx) => {
+					let itemIndex = 0;
+					return [
+						groupIdx === 0 ? `TICKET "${poolLabel}"` : '',
+						groupIdx === 0 && generatedAt ? format(generatedAt, 'dd/MM/yyyy HH:mm') : '',
+						groupIdx === 0 ? '\n' : '',
+						...group.items.flatMap((item) => {
+							const price = priceInfo.itemPrices[itemIndex++];
+							return [
+								`${item.quantity} X ${item.product.name.toUpperCase()}`,
+								...item.variations.map((v) => `  ${v.count} ${v.text}`),
+								...item.notes.map((note) => `  +${note}`),
+								price ? `${price.currency} ${price.amount.toFixed(2)}` : '',
+								''
+							];
+						}),
+						...(groupIdx === tagGroups.length - 1
+							? [
+									'\n',
+									'Total',
+									`incl. VAT ${priceInfo.vatRate.toFixed(1)}%`,
+									`${priceInfo.currency} ${priceInfo.total.toFixed(2)}`
+							  ]
+							: [])
+					];
+				})
+				.filter(Boolean)
+				.join('\n')
+		: // Kitchen ticket without prices
+		  tagGroups
+				.flatMap((group) => [
+					`TICKET ${poolLabel.toUpperCase()}`,
+					...(generatedAt ? [format(generatedAt, 'HH:mm').replace(':', 'h').toUpperCase()] : []),
+					'',
+					...(group.tagNames.length > 0
+						? [`--- ${group.tagNames.join(', ').toUpperCase()} ---`]
+						: []),
+					...group.items.flatMap((item) => [
+						`${item.quantity} X ${item.product.name.toUpperCase()}`,
+						...item.variations.map((v) => `${v.count} ${v.text}`),
+						...item.notes.map((note) => `+${note}`)
+					]),
+					'',
+					'',
+					''
+				])
+				.join('\n');
 </script>
 
 <svelte:head>
