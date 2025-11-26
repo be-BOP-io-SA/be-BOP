@@ -12,5 +12,6 @@ export interface PosPaymentSubtype extends Timestamps {
 		onActivationUrl?: string;
 	};
 	disabled?: boolean;
+	paymentDetailRequired?: boolean;
 	sortOrder: number;
 }

@@ -98,7 +98,6 @@
 							<button
 								type="button"
 								class="btn btn-sm"
-								disabled={subtype.slug === 'cash'}
 								on:click={() => {
 									editingSubtype = subtype;
 									showCreateForm = false;
@@ -184,6 +183,7 @@
 					bind:value={nameInput}
 					placeholder="e.g. Cash, Check, External POS Terminal"
 					required
+					disabled={editingSubtype?.slug === 'cash'}
 				/>
 			</label>
 
@@ -220,7 +220,7 @@
 					class="form-input"
 					rows="2"
 					placeholder="Optional description for admin reference"
-					>{editingSubtype?.description || ''}</textarea
+					disabled={editingSubtype?.slug === 'cash'}>{editingSubtype?.description || ''}</textarea
 				>
 			</label>
 
@@ -243,6 +243,7 @@
 							urlInput = '';
 						}
 					}}
+					disabled={editingSubtype?.slug === 'cash'}
 				>
 					<option value="">Not used</option>
 					{#each data.availableProcessors as proc}
@@ -266,12 +267,26 @@
 					class="form-input"
 					bind:value={urlInput}
 					placeholder="e.g. https://open.paynow-app.com"
-					disabled={tapToPayUrlDisabled}
+					disabled={tapToPayUrlDisabled || editingSubtype?.slug === 'cash'}
 				/>
 				<p class="text-xs text-gray-500 mt-1">
 					Deep link to open the payment terminal app (e.g. Paynow for Stripe)
 				</p>
 			</label>
+
+			<!-- Payment Detail Required checkbox (only for edit) -->
+			{#if editingSubtype}
+				<label class="checkbox-label flex items-center gap-2">
+					<input
+						type="checkbox"
+						name="paymentDetailRequired"
+						class="form-checkbox"
+						value="true"
+						checked={editingSubtype.paymentDetailRequired}
+					/>
+					<span>Make payment detail mandatory</span>
+				</label>
+			{/if}
 
 			<!-- Disabled checkbox (only for edit) -->
 			{#if editingSubtype && editingSubtype.slug !== 'cash'}

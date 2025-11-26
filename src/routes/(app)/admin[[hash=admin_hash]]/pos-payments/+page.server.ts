@@ -13,6 +13,21 @@ function asPaymentProcessor(value: string): PaymentProcessor | undefined {
 	return typedInclude(ALL_PAYMENT_PROCESSORS, value) ? value : undefined;
 }
 
+const tapToPayProcessorEnum = z.enum(['', ...ALL_PAYMENT_PROCESSORS]);
+
+const cashSubtypeUpdateSchema = z.object({
+	paymentDetailRequired: z.boolean().optional()
+});
+
+const regularSubtypeUpdateSchema = z.object({
+	name: z.string().min(1),
+	description: z.string().optional(),
+	tapToPayProcessor: tapToPayProcessorEnum,
+	tapToPayUrl: z.string().trim().optional(),
+	disabled: z.boolean().optional(),
+	paymentDetailRequired: z.boolean().optional()
+});
+
 export const load = async () => {
 	const subtypesRaw = await collections.posPaymentSubtypes
 		.find({})
@@ -57,7 +72,7 @@ export const actions: Actions = {
 					.regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
 				name: z.string().min(1),
 				description: z.string().optional(),
-				tapToPayProcessor: z.enum(['', 'stripe', 'sumup']),
+				tapToPayProcessor: tapToPayProcessorEnum,
 				tapToPayUrl: z.string().trim().optional()
 			})
 			.safeParse({
@@ -109,57 +124,65 @@ export const actions: Actions = {
 	update: async ({ request }) => {
 		const formData = await request.formData();
 
-		const parsed = z
-			.object({
-				id: z.string().min(1),
-				name: z.string().min(1),
-				description: z.string().optional(),
-				tapToPayProcessor: z.enum(['', 'stripe', 'sumup']),
-				tapToPayUrl: z.string().trim().optional(),
-				disabled: z.boolean().optional()
-			})
-			.safeParse({
-				id: formData.get('id'),
-				name: formData.get('name'),
-				description: formData.get('description'),
-				tapToPayProcessor: formData.get('tapToPayProcessor') || '',
-				tapToPayUrl: formData.get('tapToPayUrl') || '',
-				disabled: formData.get('disabled') === 'true'
-			});
+		const idParsed = z.object({ id: z.string().min(1) }).safeParse({ id: formData.get('id') });
 
-		if (!parsed.success) {
-			return fail(400, { error: parsed.error.message });
+		if (!idParsed.success) {
+			return fail(400, { error: 'Invalid ID' });
 		}
 
 		const subtype = await collections.posPaymentSubtypes.findOne({
-			_id: new ObjectId(parsed.data.id)
+			_id: new ObjectId(idParsed.data.id)
 		});
 
 		if (!subtype) {
 			return fail(404, { error: 'Subtype not found' });
 		}
 
-		if (subtype.slug === 'cash' && parsed.data.disabled) {
+		if (subtype.slug === 'cash' && formData.get('disabled') === 'true') {
 			return fail(400, { error: 'Cannot disable cash subtype' });
 		}
 
-		const processor = asPaymentProcessor(parsed.data.tapToPayProcessor);
+		const parsed =
+			subtype.slug === 'cash'
+				? cashSubtypeUpdateSchema.safeParse({
+						paymentDetailRequired: formData.get('paymentDetailRequired') === 'true'
+				  })
+				: regularSubtypeUpdateSchema.safeParse({
+						name: formData.get('name'),
+						description: formData.get('description'),
+						tapToPayProcessor: formData.get('tapToPayProcessor') || '',
+						tapToPayUrl: formData.get('tapToPayUrl') || '',
+						disabled: formData.get('disabled') === 'true',
+						paymentDetailRequired: formData.get('paymentDetailRequired') === 'true'
+				  });
 
-		const updateData: Partial<PosPaymentSubtype> = {
-			name: parsed.data.name,
-			description: parsed.data.description || undefined,
-			tapToPay: processor
-				? {
-						processor,
-						onActivationUrl: parsed.data.tapToPayUrl || undefined
-				  }
-				: undefined,
-			disabled: parsed.data.disabled,
-			updatedAt: new Date()
-		};
+		if (!parsed.success) {
+			return fail(400, { error: parsed.error.message });
+		}
+
+		let updateData: Partial<PosPaymentSubtype>;
+		if (subtype.slug === 'cash') {
+			updateData = {
+				paymentDetailRequired: parsed.data.paymentDetailRequired,
+				updatedAt: new Date()
+			} satisfies Partial<PosPaymentSubtype>;
+		} else {
+			const data = parsed.data as z.infer<typeof regularSubtypeUpdateSchema>;
+			const processor = asPaymentProcessor(data.tapToPayProcessor);
+			updateData = {
+				name: data.name,
+				description: data.description || undefined,
+				tapToPay: processor
+					? { processor, onActivationUrl: data.tapToPayUrl || undefined }
+					: undefined,
+				disabled: data.disabled,
+				paymentDetailRequired: data.paymentDetailRequired,
+				updatedAt: new Date()
+			} satisfies Partial<PosPaymentSubtype>;
+		}
 
 		const result = await collections.posPaymentSubtypes.updateOne(
-			{ _id: new ObjectId(parsed.data.id) },
+			{ _id: new ObjectId(idParsed.data.id) },
 			{ $set: updateData }
 		);
 

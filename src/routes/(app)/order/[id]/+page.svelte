@@ -466,6 +466,11 @@
 										<Spinner class="w-36" />
 									</form>
 								{:else}
+									{@const posSubtype =
+										payment.method === 'point-of-sale' && payment.posSubtype
+											? data.posSubtypes?.find((s) => s.slug === payment.posSubtype)
+											: null}
+									{@const detailRequired = posSubtype?.paymentDetailRequired ?? false}
 									<form
 										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/cancel"
 										method="post"
@@ -495,7 +500,7 @@
 												class="form-input grow mx-2"
 												type="text"
 												name="detail"
-												required
+												required={detailRequired}
 												placeholder="Detail (card transaction ID, or point-of-sale payment method)"
 											/>
 										{/if}
