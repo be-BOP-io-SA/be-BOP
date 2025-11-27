@@ -1037,9 +1037,9 @@ export async function createOrder(
 						);
 					}
 				}
-				const startDay = startOfDay(startTime.getDay() + 6);
+				const startDay = startOfDay(startTime);
 				const endTime = toZonedTime(time.end, bookingSpec.schedule.timezone);
-				const endDay = endOfDay(subSeconds(endTime, 1).getDay() + 6); // Sub-seconds to allow booking until midnight
+				const endDay = endOfDay(subSeconds(endTime, 1)); // Sub-seconds to allow booking until midnight
 
 				if (!isSameDay(startDay, endDay)) {
 					throw error(

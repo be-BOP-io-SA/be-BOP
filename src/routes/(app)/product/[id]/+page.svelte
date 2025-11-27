@@ -31,8 +31,7 @@
 	import { serializeSchema } from '$lib/utils/jsonLd.js';
 	import type { Product as SchemaOrgProduct, WithContext } from 'schema-dts';
 	import ScheduleWidgetCalendar from '$lib/components/ScheduleWidget/ScheduleWidgetCalendar.svelte';
-	import { productToScheduleId } from '$lib/types/Schedule.js';
-	import type { Day } from '$lib/types/Schedule.js';
+	import { productToScheduleId, dayList } from '$lib/types/Schedule.js';
 	import { toZonedTime } from 'date-fns-tz';
 	import { RangeList } from '$lib/utils/range-list.js';
 	import { vatRate } from '$lib/types/Country';
@@ -124,7 +123,7 @@
 
 	function computeFreeIntervals(date: Date, events: Array<{ beginsAt: Date; endsAt?: Date }>) {
 		const now = new Date();
-		const weekDay = format(date, 'eeee').toLowerCase() as Day;
+		const weekDay = dayList[(date.getDay() + 6) % 7];
 		const spec = data.product.bookingSpec;
 
 		if (!spec) {
@@ -415,7 +414,7 @@
 				<!-- Getting this right with rounded borders on both chrome & FF is painful, chrome NEEDs overflow-hidden -->
 				<div
 					class="aspect-video w-full flex overflow-if-child-hovered-lg {isZoomed
-						? 'overflow-visible'
+						? 'overflow-visible relative z-50'
 						: 'overflow-hidden'} overflow-hidden px-4 group"
 				>
 					<Picture
@@ -1031,6 +1030,8 @@
 	@media (min-width: 1024px) {
 		.overflow-if-child-hovered-lg:has(:hover) {
 			overflow: visible;
+			position: relative;
+			z-index: 50;
 		}
 	}
 </style>
