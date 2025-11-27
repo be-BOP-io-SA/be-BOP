@@ -1,7 +1,7 @@
 import { adminPrefix } from '$lib/server/admin';
 import { collections } from '$lib/server/database';
 import { ALL_PAYMENT_PROCESSORS } from '$lib/server/payment-methods.js';
-import { runtimeConfig } from '$lib/server/runtime-config';
+import { runtimeConfig, defaultConfig } from '$lib/server/runtime-config';
 import type { Tag } from '$lib/types/Tag';
 import { set } from '$lib/utils/set';
 import { error, redirect } from '@sveltejs/kit';
@@ -36,6 +36,10 @@ export const load = async ({}) => {
 		tags: tags.filter((tag) => tag._id !== 'pos-favorite'),
 		posTouchTag: runtimeConfig.posTouchTag,
 		posTabGroups: runtimeConfig.posTabGroups,
+		posPoolEmptyIcon: runtimeConfig.posPoolEmptyIcon,
+		posPoolOccupiedIcon: runtimeConfig.posPoolOccupiedIcon,
+		defaultEmptyPoolIcon: defaultConfig.posPoolEmptyIcon,
+		defaultFullPoolIcon: defaultConfig.posPoolOccupiedIcon,
 		posUseSelectForTags: runtimeConfig.posUseSelectForTags,
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
 		posDisplayOrderQrAfterPayment: runtimeConfig.posDisplayOrderQrAfterPayment,
@@ -86,6 +90,8 @@ export const actions: Actions = {
 					})
 					.array(),
 				posTouchTag: z.string().array(),
+				posPoolEmptyIcon: z.string().optional(),
+				posPoolOccupiedIcon: z.string().optional(),
 				tapToPayOnActivationUrl: z.string().trim().optional(),
 				tapToPayProvider: z.string().optional(),
 				posSession: z
@@ -135,6 +141,13 @@ export const actions: Actions = {
 		runtimeConfig.posTouchTag = result.posTouchTag;
 		await persistConfigElement('posTabGroups', result.posTabGroups);
 		runtimeConfig.posTabGroups = result.posTabGroups;
+		const posPoolEmptyIcon = result.posPoolEmptyIcon === '' ? undefined : result.posPoolEmptyIcon;
+		const posPoolOccupiedIcon =
+			result.posPoolOccupiedIcon === '' ? undefined : result.posPoolOccupiedIcon;
+		await persistConfigElement('posPoolEmptyIcon', posPoolEmptyIcon);
+		runtimeConfig.posPoolEmptyIcon = posPoolEmptyIcon;
+		await persistConfigElement('posPoolOccupiedIcon', posPoolOccupiedIcon);
+		runtimeConfig.posPoolOccupiedIcon = posPoolOccupiedIcon;
 		await persistConfigElement('posUseSelectForTags', result.posUseSelectForTags);
 		runtimeConfig.posUseSelectForTags = result.posUseSelectForTags;
 		await persistConfigElement('posQrCodeAfterPayment', posQrCodeAfterPayment);

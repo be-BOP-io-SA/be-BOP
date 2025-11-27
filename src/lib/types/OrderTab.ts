@@ -21,3 +21,8 @@ export interface OrderTab extends Timestamps {
 	items: Array<OrderTabItem>;
 	printHistory?: PrintHistoryEntry[];
 }
+
+export interface OrderTabPoolStatus {
+	slug: string;
+	itemsCount: number;
+}
