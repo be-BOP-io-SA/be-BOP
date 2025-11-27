@@ -336,11 +336,13 @@
 	{#if hasMobileContent}
 		<label class="block w-full mt-4">
 			Substitution content
-			<Editor
-				scriptSrc="/tinymce/tinymce.js"
-				bind:value={mobileContent}
-				conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
-			/>
+			{#if !advancedHtmlEdition}
+				<Editor
+					scriptSrc="/tinymce/tinymce.js"
+					bind:value={mobileContent}
+					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+				/>
+			{/if}
 
 			Raw HTML
 
@@ -367,11 +369,13 @@
 	{#if hasEmployeeContent}
 		<label class="block w-full mt-4">
 			Employee content
-			<Editor
-				scriptSrc="/tinymce/tinymce.js"
-				bind:value={employeeContent}
-				conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
-			/>
+			{#if !advancedHtmlEdition}
+				<Editor
+					scriptSrc="/tinymce/tinymce.js"
+					bind:value={employeeContent}
+					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+				/>
+			{/if}
 
 			Raw HTML
 
