@@ -358,7 +358,11 @@
 					{#if tabGroup.tabs.length > 0}
 						<div class="grid grid-cols-3 gap-2">
 							{#each tabGroup.tabs as tab, tabIndex}
-								{@const isActive = tabSlug === sluggifyTab(data.posTabGroups, groupIndex, tabIndex)}
+								{@const tabSlugComputed = sluggifyTab(data.posTabGroups, groupIndex, tabIndex)}
+								{@const isActive = tabSlug === tabSlugComputed}
+								{@const orderTab = data.allOrderTabs.find((t) => t.slug === tabSlugComputed)}
+								{@const isEmpty = !orderTab || (orderTab.itemsCount ?? 0) === 0}
+								{@const icon = isEmpty ? data.posPoolEmptyIcon : data.posPoolOccupiedIcon}
 								<button
 									class="touchScreen-product-cta text-3xl min-h-[5rem] w-60 rounded-md py-2"
 									class:ring-4={isActive}
@@ -368,7 +372,7 @@
 									style="background-color: {tab.color}"
 									on:click={() => selectTab(groupIndex, tabIndex)}
 								>
-									{tab.label ?? `${tabGroup.name} ${tabIndex + 1}`}
+									{tab.label ?? `${tabGroup.name} ${tabIndex + 1}`} <span class="ml-2">{icon}</span>
 								</button>
 							{/each}
 						</div>

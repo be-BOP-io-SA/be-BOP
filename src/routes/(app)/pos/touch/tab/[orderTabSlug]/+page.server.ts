@@ -6,14 +6,14 @@ import {
 } from '$lib/server/orderTab.js';
 import { picturesForProducts } from '$lib/server/picture';
 import { pojo } from '$lib/server/pojo';
-import { OrderTab, OrderTabItem } from '$lib/types/OrderTab';
+import { OrderTab, OrderTabItem, OrderTabPoolStatus } from '$lib/types/OrderTab';
 import type { Picture } from '$lib/types/Picture.js';
 import type { Product } from '$lib/types/Product';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { UrlDependency } from '$lib/types/UrlDependency.js';
 import { ObjectId } from 'mongodb';
-import { runtimeConfig } from '$lib/server/runtime-config.js';
+import { runtimeConfig, defaultConfig } from '$lib/server/runtime-config.js';
 
 type ProductProjection = Pick<
 	Product,
@@ -125,9 +125,10 @@ export const load = async ({ locals, depends, params }) => {
 	const tabSlug = params.orderTabSlug;
 	depends(UrlDependency.orderTab(tabSlug));
 
-	const [shouldConclude, initialOrderTab, printTags, posTouchScreenTags] = await Promise.all([
+	const initialOrderTab = await getHydratedOrderTab(locals.language, tabSlug);
+
+	const [shouldConclude, printTags, posTouchScreenTags] = await Promise.all([
 		orderTabNotEmptyAndFullyPaid({ slug: tabSlug }),
-		getHydratedOrderTab(locals.language, tabSlug),
 		collections.tags
 			.find({ printReceiptFilter: true })
 			.project<{ _id: string; name: string }>({ _id: 1, name: 1 })
@@ -146,11 +147,18 @@ export const load = async ({ locals, depends, params }) => {
 		orderTab = initialOrderTab;
 	}
 
+	const allOrderTabs = await collections.orderTabs
+		.aggregate<OrderTabPoolStatus>([{ $project: { slug: 1, itemsCount: { $size: '$items' } } }])
+		.toArray();
+
 	const printTagsMap = Object.fromEntries(printTags.map((tag) => [tag._id, tag.name]));
 
 	return {
 		orderTab: pojo(orderTab),
 		posTabGroups: runtimeConfig.posTabGroups,
+		posPoolEmptyIcon: runtimeConfig.posPoolEmptyIcon ?? defaultConfig.posPoolEmptyIcon,
+		posPoolOccupiedIcon: runtimeConfig.posPoolOccupiedIcon ?? defaultConfig.posPoolOccupiedIcon,
+		allOrderTabs: pojo(allOrderTabs),
 		tabSlug,
 		posUseSelectForTags: runtimeConfig.posUseSelectForTags,
 		printTags: pojo(printTags),

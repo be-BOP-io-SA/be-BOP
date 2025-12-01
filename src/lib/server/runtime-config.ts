@@ -242,6 +242,8 @@ const baseConfig = {
 	contactModesForceOption: false,
 	posTouchTag: [] as Tag['_id'][],
 	posTabGroups: defaultPosTabGroups(),
+	posPoolEmptyIcon: '✅' as string | undefined,
+	posPoolOccupiedIcon: '⏳' as string | undefined,
 	posUseSelectForTags: false,
 	posPrefillTermOfUse: false,
 	posTapToPay: {
