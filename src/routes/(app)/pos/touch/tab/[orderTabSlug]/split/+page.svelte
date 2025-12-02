@@ -11,9 +11,7 @@
 	import { PAYMENT_METHOD_EMOJI } from '$lib/types/Order';
 	import type { PaymentMethod } from '$lib/server/payment-methods';
 	import { page } from '$app/stores';
-	import { afterNavigate, invalidate } from '$app/navigation';
 	import { enhance } from '$app/forms';
-	import { UrlDependency } from '$lib/types/UrlDependency';
 
 	const { t } = useI18n();
 
@@ -39,7 +37,16 @@
 		methods: PaymentMethod[],
 		subtypes: PaymentSubtype[]
 	): PaymentOption[] {
-		const subtypesByParent = Map.groupBy(subtypes, (s) => s.parentMethod);
+		const subtypesByParent = subtypes.reduce((map, subtype) => {
+			if (!map.has(subtype.parentMethod)) {
+				map.set(subtype.parentMethod, []);
+			}
+			const existing = map.get(subtype.parentMethod);
+			if (existing) {
+				existing.push(subtype);
+			}
+			return map;
+		}, new Map<PaymentMethod, PaymentSubtype[]>());
 
 		return methods
 			.filter((method) => method !== 'free')
@@ -205,12 +212,6 @@
 			alert(t('pos.split.selectItems'));
 		}
 	}
-
-	afterNavigate(async ({ from }) => {
-		if (from?.url.pathname.includes('/order/')) {
-			await invalidate(UrlDependency.orderTab(tabSlug));
-		}
-	});
 
 	// Print functionality
 	let printing = false;

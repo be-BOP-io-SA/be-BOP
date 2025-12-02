@@ -74,26 +74,30 @@ async function hydratedOrderItems(
 		.filter((item): item is NonNullable<typeof item> => item !== undefined);
 }
 
-async function getHydratedOrderTab(locale: Locale, tabSlug: string) {
-	const tab = await getOrCreateOrderTab({ slug: tabSlug });
+async function getHydratedOrderTab(locale: Locale, tab: OrderTab) {
 	return { slug: tab.slug, items: await hydratedOrderItems(locale, tab.items) };
 }
 
 export const load = async ({ depends, locals, params }) => {
 	const tabSlug = params.orderTabSlug;
-	await clearAbandonedCartsAndOrdersFromTab(tabSlug);
-
 	const tab = await getOrCreateOrderTab({ slug: tabSlug });
 
-	const orderTab = await getHydratedOrderTab(locals.language, tabSlug);
-	depends(UrlDependency.orderTab(tabSlug));
+	const [orderTab, allPoolOrders, posSubtypes] = await Promise.all([
+		getHydratedOrderTab(locals.language, tab),
+		collections.orders
+			.find({
+				orderTabId: tab._id,
+				status: { $in: ['pending', 'paid'] }
+			})
+			.toArray(),
+		collections.posPaymentSubtypes
+			.find({ disabled: { $ne: true } })
+			.sort({ sortOrder: 1 })
+			.toArray(),
+		clearAbandonedCartsAndOrdersFromTab(tab)
+	]);
 
-	const allPoolOrders = await collections.orders
-		.find({
-			orderTabId: tab._id,
-			status: { $in: ['pending', 'paid'] }
-		})
-		.toArray();
+	depends(UrlDependency.orderTab(tabSlug));
 
 	const sharesOrder = allPoolOrders.find((o) => o.splitMode === 'shares');
 
@@ -142,10 +146,6 @@ export const load = async ({ depends, locals, params }) => {
 	orderTab.items satisfies ItemForPriceInfo[];
 
 	const methods = paymentMethods({ hasPosOptions: true, includePOS: true });
-	const posSubtypes = await collections.posPaymentSubtypes
-		.find({ disabled: { $ne: true } })
-		.sort({ sortOrder: 1 })
-		.toArray();
 
 	return {
 		orderTab,

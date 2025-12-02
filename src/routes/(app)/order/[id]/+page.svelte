@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { navigating, page } from '$app/stores';
 	import OrderSummary from '$lib/components/OrderSummary.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import Trans from '$lib/components/Trans.svelte';
@@ -38,6 +38,10 @@
 	onMount(() => {
 		const interval = setInterval(() => {
 			currentDate = new Date();
+
+			if ($navigating) {
+				return;
+			}
 
 			if (
 				data.order.status === 'pending' ||

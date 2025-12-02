@@ -16,46 +16,50 @@ function mkOrderTab(slug: string): OrderTab {
 	};
 }
 
-export async function clearAbandonedCartsAndOrdersFromTab(slug: string): Promise<void> {
-	const returned = await collections.orderTabs.findOne({ slug });
-	if (!returned) {
+export async function clearAbandonedCartsAndOrdersFromTab(tab: OrderTab): Promise<void> {
+	const referencedOrderIds = filterNullish(tab.items.map((item) => item.orderId));
+	const referencedCartIds = filterNullish(tab.items.map((item) => item.cartId));
+
+	if (referencedOrderIds.length === 0 && referencedCartIds.length === 0) {
 		return;
 	}
-	const referencedOrderIds = filterNullish(returned.items.map((item) => item.orderId));
-	const referencedCartIds = filterNullish(returned.items.map((item) => item.cartId));
 
-	const [acceptedOrders, acceptedCartIds] = await Promise.all([
+	const [acceptedOrderIds, acceptedCartIds] = await Promise.all([
 		collections.orders
 			.find({ _id: { $in: referencedOrderIds }, status: { $in: ['pending', 'paid'] } })
 			.project({ _id: 1 })
-			.toArray(),
+			.toArray()
+			.then((orders) => new Set(orders.map((o) => o._id.toString()))),
 		collections.carts
 			.find({ _id: { $in: referencedCartIds } })
 			.project({ _id: 1 })
 			.toArray()
+			.then((carts) => new Set(carts.map((c) => c._id.toString())))
 	]);
 
-	const rejectedOrderIds = referencedOrderIds.filter(
-		(id) => !acceptedOrders.some((order) => order._id.toString() === id)
-	);
-	if (rejectedOrderIds.length > 0) {
-		await collections.orderTabs.updateMany(
-			{ _id: returned._id },
-			{ $unset: { 'items.$[elem].orderId': 1 } },
-			{ arrayFilters: [{ 'elem.orderId': { $in: rejectedOrderIds } }] }
-		);
-	}
+	const rejectedOrderIds = referencedOrderIds.filter((id) => !acceptedOrderIds.has(id));
+	const rejectedCartIds = referencedCartIds.filter((id) => !acceptedCartIds.has(id));
 
-	const rejectedCartIds = referencedCartIds.filter(
-		(id) => !acceptedCartIds.some((cart) => cart._id.toString() === id)
-	);
-	if (rejectedCartIds.length > 0) {
-		await collections.orderTabs.updateMany(
-			{ _id: returned._id },
-			{ $unset: { 'items.$[elem].cartId': 1 } },
-			{ arrayFilters: [{ 'elem.cartId': { $in: rejectedCartIds } }] }
-		);
-	}
+	await Promise.all([
+		...(rejectedOrderIds.length > 0
+			? [
+					collections.orderTabs.updateMany(
+						{ _id: tab._id },
+						{ $unset: { 'items.$[elem].orderId': 1 } },
+						{ arrayFilters: [{ 'elem.orderId': { $in: rejectedOrderIds } }] }
+					)
+			  ]
+			: []),
+		...(rejectedCartIds.length > 0
+			? [
+					collections.orderTabs.updateMany(
+						{ _id: tab._id },
+						{ $unset: { 'items.$[elem].cartId': 1 } },
+						{ arrayFilters: [{ 'elem.cartId': { $in: rejectedCartIds } }] }
+					)
+			  ]
+			: [])
+	]);
 }
 
 export async function getOrCreateOrderTab({ slug }: { slug: string }): Promise<OrderTab> {
