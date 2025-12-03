@@ -19,8 +19,11 @@ export const load = async ({ locals, url }) => {
 				},
 				fullScreen: 1,
 				hasEmployeeContent: 1,
+				displayRawContent: 1,
 				hasMobileContent: 1,
+				hideFromSEO: 1,
 				maintenanceDisplay: 1,
+				metas: 1,
 				mobileContent: {
 					$ifNull: [`$translations.${locals.language}.mobileContent`, '$mobileContent']
 				},
@@ -53,14 +56,15 @@ export const load = async ({ locals, url }) => {
 		cmsData: cmsFromContent(
 			{
 				desktopContent: cmsPage.content,
-				mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
 				employeeContent: (cmsPage.hasEmployeeContent && cmsPage.employeeContent) || undefined,
+				mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
 				forceContentVersion,
 				forceUnsanitizedContent: cmsPage.displayRawContent
 			},
 			locals
 		),
-		layoutReset: cmsPage.fullScreen
+		layoutReset: cmsPage.fullScreen,
+		websiteShortDescription: cmsPage.shortDescription
 	};
 };
 
