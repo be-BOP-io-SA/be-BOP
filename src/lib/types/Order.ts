@@ -239,6 +239,7 @@ export interface Order extends Timestamps {
 			_id: ScheduleEventBooked['_id'];
 			start: Date;
 			end: Date;
+			bookedDates?: Date[];
 		};
 		vatRate: number;
 		tickets?: Array<Ticket['ticketId']>;
@@ -482,6 +483,7 @@ export type OrderItemInfoNeededForFinalPrice = PickDeep<
 	| 'discountPercentage'
 	| 'booking.start'
 	| 'booking.end'
+	| 'booking.bookedDates'
 	| 'product.bookingSpec.slotMinutes'
 	| 'quantity'
 	| 'freeQuantity'
@@ -519,13 +521,17 @@ export function orderItemPriceUndiscounted(
 	if (!currencySnapshot) {
 		throw new Error(`Currency snapshot ${currency} not found`);
 	}
+
 	const quantity =
 		item.booking && item.product.bookingSpec
-			? differenceInMinutes(item.booking.end, item.booking.start) /
-			  item.product.bookingSpec.slotMinutes
+			? item.booking.bookedDates?.length ??
+			  differenceInMinutes(item.booking.end, item.booking.start) /
+					item.product.bookingSpec.slotMinutes
 			: item.quantity;
 
 	const paidQuantity = Math.max(quantity - (item.freeQuantity ?? 0), 0);
+	const price =
+		(currencySnapshot.customPrice?.amount ?? currencySnapshot.price.amount) * paidQuantity;
 
-	return (currencySnapshot.customPrice?.amount ?? currencySnapshot.price.amount) * paidQuantity;
+	return price;
 }
