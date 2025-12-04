@@ -18,6 +18,7 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { trimPrefix } from '$lib/utils/trimPrefix.js';
+	import { formatBookedDates } from '$lib/utils/formatBookedDates.js';
 
 	export let data;
 	let submitting = false;
@@ -773,13 +774,17 @@
 								</div>
 								{#if item.product.bookingSpec && item.booking}
 									<p>
-										{Intl.DateTimeFormat($locale, {
-											year: 'numeric',
-											month: 'short',
-											day: 'numeric',
-											hour: '2-digit',
-											minute: '2-digit'
-										}).formatRange(item.booking.start, item.booking.end)}
+										{#if item.booking.bookedDates?.length}
+											{formatBookedDates(item.booking.bookedDates)}
+										{:else}
+											{Intl.DateTimeFormat($locale, {
+												year: 'numeric',
+												month: 'short',
+												day: 'numeric',
+												hour: '2-digit',
+												minute: '2-digit'
+											}).formatRange(item.booking.start, item.booking.end)}
+										{/if}
 									</p>
 								{:else}
 									<div>

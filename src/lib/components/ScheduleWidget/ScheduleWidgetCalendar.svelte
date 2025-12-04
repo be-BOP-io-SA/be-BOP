@@ -10,7 +10,10 @@
 		subMonths,
 		addMonths,
 		isSameDay,
-		addMinutes
+		addMinutes,
+		startOfDay,
+		differenceInDays,
+		isWithinInterval
 	} from 'date-fns';
 	import type { ScheduleEvent, Schedule } from '$lib/types/Schedule';
 	import { useI18n } from '$lib/i18n';
@@ -26,6 +29,9 @@
 	let className = '';
 	export let isDayDisabled: (date: Date) => boolean = () => false;
 	export let selectedDate = new Date();
+	export let rangeMode = false;
+	export let selectedEndDate: Date | null = null;
+	export let maxRangeDays = 31;
 	export { className as class };
 
 	const { t, locale } = useI18n();
@@ -94,8 +100,34 @@
 	}
 
 	function selectDate(date: Date) {
-		selectedDate = new Date(date);
+		if (isDayDisabled(date)) {
+			return;
+		}
+
+		const newDate = new Date(date);
+
+		if (!rangeMode || !selectedDate || selectedEndDate || isSameDay(date, selectedDate)) {
+			selectedDate = newDate;
+			selectedEndDate = null;
+			return;
+		}
+
+		if (Math.abs(differenceInDays(date, selectedDate)) + 1 > maxRangeDays) {
+			return;
+		}
+
+		[selectedDate, selectedEndDate] =
+			date < selectedDate ? [newDate, new Date(selectedDate)] : [selectedDate, newDate];
 	}
+
+	const isInRange = (day: Date) =>
+		rangeMode &&
+		selectedDate &&
+		selectedEndDate &&
+		isWithinInterval(startOfDay(day), {
+			start: startOfDay(selectedDate),
+			end: startOfDay(selectedEndDate)
+		});
 
 	onMount(() => {
 		generateCalendar();
@@ -113,7 +145,9 @@
 		</a>
 	</div>
 {/if}
-<div class="max-w-md mx-auto p-4 eventCalendar eventCalendar-main shadow-md rounded-lg {className}">
+<div
+	class="max-w-md mx-auto p-4 eventCalendar eventCalendar-main shadow-md rounded-lg min-w-[340px] min-h-[400px] {className}"
+>
 	<div class="flex items-center justify-between mb-4">
 		<button on:click={prevMonth} type="button" class="py-2 eventCalendar-navCTA btn rounded-full"
 			>&lt;</button
@@ -137,17 +171,27 @@
 
 	<div class="grid grid-cols-7 text-center mt-1">
 		{#each days as day}
+			{@const disabled = isDayDisabled(day)}
+			{@const inRange = isInRange(day)}
+			{@const isToday = isSameDay(day, new Date())}
+			{@const isStart = selectedDate && isSameDay(day, selectedDate)}
+			{@const isEnd = rangeMode && selectedEndDate && isSameDay(day, selectedEndDate)}
+			{@const isOtherMonth = day.getMonth() !== currentDate.getMonth()}
+			{@const customColorEvents = hasCustomColorEvents(day)}
 			<button
 				type="button"
 				on:click={() => selectDate(day)}
+				{disabled}
 				class="p-2 m-1 rounded-full
-					{isSameDay(day, new Date()) ? 'eventCalendar-currentDate font-bold' : ''}
+					{isToday ? 'eventCalendar-currentDate font-bold' : ''}
 					{isEventDay(day) ? 'eventCalendar-hasEvent font-bold' : ''}
-					{selectedDate && isSameDay(day, selectedDate) ? ' ring-2 ring-black' : ''}
-					{format(day, 'M') !== format(currentDate, 'M') || isDayDisabled(day) ? ' text-gray-400' : ''}"
-				style="background-color:{!!hasCustomColorEvents(day) &&
-				hasCustomColorEvents(day).length === 1
-					? hasCustomColorEvents(day)[0].calendarColor
+					{isStart || isEnd ? 'ring-2 ring-black' : ''}
+					{inRange ? (disabled ? 'bg-gray-100' : 'bg-blue-100') : ''}
+					{disabled || isOtherMonth ? 'text-gray-300' : ''}
+					{inRange && disabled ? 'text-gray-400' : ''}
+					{disabled ? 'cursor-not-allowed' : 'hover:bg-gray-100 cursor-pointer'}"
+				style="background-color:{customColorEvents.length === 1
+					? customColorEvents[0].calendarColor
 					: ''}"
 			>
 				{format(day, 'd')}
