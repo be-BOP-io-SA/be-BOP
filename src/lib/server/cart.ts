@@ -13,7 +13,7 @@ import type { Cart } from '$lib/types/Cart';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import { userQuery } from './user';
 import { removeEmpty } from '$lib/utils/removeEmpty';
-import { addMinutes } from 'date-fns';
+import { addDays, addMinutes } from 'date-fns';
 import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { sum } from '$lib/utils/sum';
@@ -104,6 +104,7 @@ export async function addToCartInDb(
 		booking?: {
 			time: Date;
 			durationMinutes: number;
+			bookedDates?: Date[];
 		};
 		lineId?: string;
 		cart?: Cart;
@@ -233,7 +234,10 @@ export async function addToCartInDb(
 				product.bookingSpec && {
 					booking: {
 						start: params.booking.time,
-						end: addMinutes(params.booking.time, params.booking.durationMinutes)
+						end: params.booking.bookedDates?.length
+							? addDays(params.booking.bookedDates[params.booking.bookedDates.length - 1], 1)
+							: addMinutes(params.booking.time, params.booking.durationMinutes),
+						...(params.booking.bookedDates?.length && { bookedDates: params.booking.bookedDates })
 					}
 				})
 		});
