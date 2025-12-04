@@ -1182,6 +1182,17 @@
 								</select>
 							</label>
 
+							<label class="form-label">
+								Max bookable days (0 = unlimited)
+								<input
+									type="number"
+									name="bookingSpec.maxBookableDays"
+									class="form-input"
+									min="0"
+									value={product.bookingSpec?.maxBookableDays ?? 0}
+								/>
+							</label>
+
 							<div>
 								<p class="text-sm font-medium text-gray-700 mb-2">Weekly schedule:</p>
 								<div class="grid gap-2" style="grid-template-columns: min-content 1fr 1fr;">

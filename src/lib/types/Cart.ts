@@ -22,6 +22,8 @@ export interface Cart extends Timestamps {
 		booking?: {
 			start: Date;
 			end: Date;
+			/** List of specific dates booked (for non-contiguous multi-day bookings) */
+			bookedDates?: Date[];
 		};
 		customPrice?: { amount: number; currency: Currency };
 		reservedUntil?: Date;
