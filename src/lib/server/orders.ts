@@ -15,7 +15,7 @@ import {
 	addMinutes,
 	differenceInMinutes,
 	differenceInSeconds,
-	endOfDay,
+	eachDayOfInterval,
 	isSameDay,
 	max,
 	startOfDay,
@@ -1037,46 +1037,60 @@ export async function createOrder(
 						);
 					}
 				}
-				const startDay = startOfDay(startTime.getDay() + 6);
+				const startDay = startOfDay(startTime);
 				const endTime = toZonedTime(time.end, bookingSpec.schedule.timezone);
-				const endDay = endOfDay(subSeconds(endTime, 1).getDay() + 6); // Sub-seconds to allow booking until midnight
+				const endDay = startOfDay(subSeconds(endTime, 1)); // Use startOfDay for comparison, sub-seconds to handle midnight
 
-				if (!isSameDay(startDay, endDay)) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range must be on the same day`
-					);
-				}
+				const getDayOfWeek = (date: Date) => dayList[(date.getDay() + 6) % 7];
 
-				const dayOfWeek = dayList[(startDay.getDay() + 6) % 7];
+				if (is24HourSlot) {
+					const days = eachDayOfInterval({ start: startDay, end: endDay });
+					const unavailable = days.find((day) => !bookingSpec.schedule[getDayOfWeek(day)]);
+					if (unavailable) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} is not available on ${getDayOfWeek(
+								unavailable
+							)}`
+						);
+					}
+				} else {
+					if (!isSameDay(startDay, endDay)) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range must be on the same day`
+						);
+					}
 
-				const daySpec = bookingSpec.schedule[dayOfWeek];
+					const dayOfWeek = getDayOfWeek(startDay);
+					const daySpec = bookingSpec.schedule[dayOfWeek];
 
-				if (!daySpec) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range is not available on ${dayOfWeek}`
-					);
-				}
+					if (!daySpec) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range is not available on ${dayOfWeek}`
+						);
+					}
 
-				const minutesStart = startTime.getMinutes() + startTime.getHours() * 60;
-				const minutesEnd = endTime.getMinutes() + endTime.getHours() * 60;
+					const minutesStart = startTime.getMinutes() + startTime.getHours() * 60;
+					const minutesEnd = endTime.getMinutes() + endTime.getHours() * 60;
 
-				if (minutesStart < timeToMinutes(daySpec.start)) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range starts (${minutesToTime(
-							minutesStart
-						)}) before the scheduled opening time (${daySpec.start})`
-					);
-				}
-				if (minutesEnd > (daySpec.end === '00:00' ? timeToMinutes(daySpec.end) : 24 * 60)) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range ends (${minutesToTime(
-							minutesEnd
-						)}) after the schedule closing time (${daySpec.end})`
-					);
+					if (minutesStart < timeToMinutes(daySpec.start)) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range starts (${minutesToTime(
+								minutesStart
+							)}) before the scheduled opening time (${daySpec.start})`
+						);
+					}
+					if (minutesEnd > (daySpec.end === '00:00' ? timeToMinutes(daySpec.end) : 24 * 60)) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range ends (${minutesToTime(
+								minutesEnd
+							)}) after the schedule closing time (${daySpec.end})`
+						);
+					}
 				}
 			}
 		}

@@ -104,6 +104,7 @@ export async function addToCartInDb(
 		booking?: {
 			time: Date;
 			durationMinutes: number;
+			bookedDates?: Date[];
 		};
 		lineId?: string;
 		cart?: Cart;
@@ -233,7 +234,8 @@ export async function addToCartInDb(
 				product.bookingSpec && {
 					booking: {
 						start: params.booking.time,
-						end: addMinutes(params.booking.time, params.booking.durationMinutes)
+						end: addMinutes(params.booking.time, params.booking.durationMinutes),
+						...(params.booking.bookedDates?.length && { bookedDates: params.booking.bookedDates })
 					}
 				})
 		});
