@@ -18,7 +18,9 @@
 	import {
 		addDays,
 		addMinutes,
+		differenceInDays,
 		differenceInMinutes,
+		eachDayOfInterval,
 		format,
 		formatDistance,
 		isSameDay,
@@ -31,11 +33,13 @@
 	import { serializeSchema } from '$lib/utils/jsonLd.js';
 	import type { Product as SchemaOrgProduct, WithContext } from 'schema-dts';
 	import ScheduleWidgetCalendar from '$lib/components/ScheduleWidget/ScheduleWidgetCalendar.svelte';
-	import { productToScheduleId } from '$lib/types/Schedule.js';
-	import type { Day } from '$lib/types/Schedule.js';
+	import { productToScheduleId, dayList } from '$lib/types/Schedule.js';
 	import { toZonedTime } from 'date-fns-tz';
 	import { RangeList } from '$lib/utils/range-list.js';
 	import { vatRate } from '$lib/types/Country';
+	import { formatBookedDates } from '$lib/utils/formatBookedDates';
+
+	const FULL_DAY_MINUTES = 1440;
 
 	export let data;
 
@@ -43,34 +47,70 @@
 	let loading = false;
 	let errorMessage = '';
 	let currentTime = Date.now();
-	let selectedDate = startOfDay(addDays(new Date(), 1));
+	const is24HourSlotInit = data.product.bookingSpec?.slotMinutes === FULL_DAY_MINUTES;
+	const searchStart = startOfDay(is24HourSlotInit ? new Date() : addDays(new Date(), 1));
+	const initialDate =
+		eachDayOfInterval({ start: searchStart, end: addDays(searchStart, 60) }).find(
+			(day) => computeDurations(day, data.scheduleEvents).length > 0
+		) ?? searchStart;
+	let selectedDate = initialDate;
+	let selectedEndDate: Date | null = is24HourSlotInit ? initialDate : null;
 	let time = '';
 	let durationMinutes = data.product.bookingSpec?.slotMinutes || 0;
 	const { t, locale, formatDistanceLocale } = useI18n();
 
-	function generateEvents(scheduledEvents: typeof data.scheduleEvents, cart: typeof data.cart) {
+	$: is24HourSlot = data.product.bookingSpec?.slotMinutes === FULL_DAY_MINUTES;
+
+	function getAvailableDatesInRange(
+		start: Date,
+		end: Date | null,
+		evts: Array<{ beginsAt: Date; endsAt?: Date }>
+	): Date[] {
+		return eachDayOfInterval({ start: startOfDay(start), end: startOfDay(end ?? start) }).filter(
+			(date) => computeDurations(date, evts).length > 0
+		);
+	}
+
+	$: availableDatesInRange = is24HourSlot
+		? getAvailableDatesInRange(selectedDate, selectedEndDate, events)
+		: [];
+
+	$: if (is24HourSlot && selectedDate && data.product.bookingSpec) {
+		durationMinutes = availableDatesInRange.length * data.product.bookingSpec.slotMinutes;
+		time = selectedDate.toISOString();
+	}
+
+	$: selectedRangeDays = selectedEndDate ? differenceInDays(selectedEndDate, selectedDate) + 1 : 1;
+
+	function mergeScheduledAndCartEvents(scheduledEvents: typeof data.scheduleEvents, cart: typeof data.cart) {
 		return [
 			...scheduledEvents,
 			...cart.items
 				.filter((item) => item.product._id === data.product._id && item.booking)
-				.map((item) =>
-					item.booking
-						? {
-								beginsAt: item.booking.start,
-								endsAt: item.booking.end
-						  }
-						: null
+				.flatMap((item) =>
+					item.booking?.bookedDates?.length
+						? item.booking.bookedDates.map((date) => ({
+								beginsAt: date,
+								endsAt: addDays(date, 1)
+						  }))
+						: item.booking
+						? [{ beginsAt: item.booking.start, endsAt: item.booking.end }]
+						: []
 				)
-				.filter((item) => item !== null)
 		].sort((a, b) => a.beginsAt.getTime() - b.beginsAt.getTime());
 	}
 
-	$: events = generateEvents(data.scheduleEvents, data.cart);
+	$: events = mergeScheduledAndCartEvents(data.scheduleEvents, data.cart);
 
 	$: durations = computeDurations(selectedDate, events);
 	$: times = computeTimes(selectedDate, durationMinutes, events);
 
-	$: if (durations.length && durationMinutes > durations[durations.length - 1].duration) {
+	// For hourly slots, clamp duration to max available. Skip for 24h slots (range-based duration)
+	$: if (
+		!is24HourSlot &&
+		durations.length &&
+		durationMinutes > durations[durations.length - 1].duration
+	) {
 		durationMinutes = durations[durations.length - 1].duration;
 	}
 	$: if (times.length && !times.some((t) => t.date === time)) {
@@ -124,7 +164,7 @@
 
 	function computeFreeIntervals(date: Date, events: Array<{ beginsAt: Date; endsAt?: Date }>) {
 		const now = new Date();
-		const weekDay = format(date, 'eeee').toLowerCase() as Day;
+		const weekDay = dayList[(date.getDay() + 6) % 7];
 		const spec = data.product.bookingSpec;
 
 		if (!spec) {
@@ -167,12 +207,9 @@
 		}));
 
 		if (isSameDay(date, now)) {
-			const is24HourSlot = spec.slotMinutes === 1440;
-
 			if (is24HourSlot) {
 				return freeIntervals;
 			}
-
 			return freeIntervals.filter((interval) => interval.end > now);
 		}
 
@@ -190,6 +227,10 @@
 
 		if (!intervals.length) {
 			return [];
+		}
+
+		if (spec.slotMinutes === FULL_DAY_MINUTES) {
+			return [{ duration: spec.slotMinutes }];
 		}
 
 		const minutes = Math.max(
@@ -226,8 +267,6 @@
 			return [];
 		}
 
-		const is24HourSlot = spec.slotMinutes === 1440;
-
 		const times = intervals.flatMap((interval) => {
 			const start = interval.start;
 			const end = subMinutes(interval.end, durationMinutes);
@@ -251,7 +290,7 @@
 		}));
 	}
 
-	function addToCart() {
+	function addToCart(multiplier?: number) {
 		$productAddedToCart = {
 			product: data.product,
 			quantity,
@@ -270,7 +309,7 @@
 			discountPercentage:
 				data.discount?.mode === 'percentage' ? data.discount?.percentage : undefined,
 			...(data.product.bookingSpec && {
-				priceMultiplier: durationMinutes / data.product.bookingSpec.slotMinutes
+				priceMultiplier: multiplier ?? durationMinutes / data.product.bookingSpec.slotMinutes
 			})
 		};
 	}
@@ -278,7 +317,12 @@
 
 	let PWYWInput: HTMLInputElement | null = null;
 	let acceptRestriction = data.product.hasSellDisclaimer ? false : true;
-	$: wrongDay = data.product.bookingSpec ? durations.length === 0 : false;
+	// For 24-hour slots, check if date(s) selected; for hourly slots, check if durations available
+	$: wrongDay = data.product.bookingSpec
+		? is24HourSlot
+			? !selectedDate || computeDurations(selectedDate, events).length === 0
+			: durations.length === 0
+		: false;
 	function checkPWYW() {
 		if (!PWYWInput) {
 			return true;
@@ -333,6 +377,29 @@
 		  )
 		: undefined;
 	const rate = vatProfile?.rates[country] ?? vatRate(country);
+
+	// Price calculation helpers
+	$: basePrice = data.product.hasVariations ? customAmount : data.product.price.amount;
+	$: bookingMultiplier = data.product.bookingSpec
+		? durationMinutes / data.product.bookingSpec.slotMinutes
+		: 1;
+	$: unitPrice = basePrice * bookingMultiplier;
+	$: unitPriceWithVat = unitPrice * (1 + rate / 100);
+	$: discountMultiplier =
+		data.discount?.mode === 'percentage' && data.discount?.percentage
+			? 1 - data.discount.percentage / 100
+			: 1;
+	$: finalPrice = unitPrice * discountMultiplier;
+	$: finalPriceWithVat = unitPriceWithVat * discountMultiplier;
+
+	// Schedule calendar config
+	const calendarSchedule = {
+		_id: productToScheduleId(data.product._id),
+		events: [] as import('$lib/types/Schedule').ScheduleEvent[],
+		allowSubscription: false,
+		pastEventDelay: 0
+	};
+	$: isDayUnavailable = (date: Date) => computeDurations(date, events).length === 0;
 </script>
 
 <svelte:head>
@@ -472,41 +539,22 @@
 										? 'line-through'
 										: ''}"
 									short={!!data.discount}
-									amount={(data.product.hasVariations
-										? customAmount * (1 + rate / 100)
-										: data.product.price.amount * (1 + rate / 100)) *
-										(data.product.bookingSpec
-											? durationMinutes / data.product.bookingSpec.slotMinutes
-											: 1)}
+									amount={unitPriceWithVat}
 									main
 								/>
-								{#if data.discount && data.discount.mode === 'percentage'}
+								{#if data.discount?.mode === 'percentage'}
 									<PriceTag
 										currency={data.product.price.currency}
 										class="text-2xl lg:text-4xl truncate max-w-full"
 										short
-										amount={(data.product.hasVariations
-											? customAmount * (1 + rate / 100)
-											: data.product.price.amount * (1 + rate / 100)) *
-											(data.product.bookingSpec
-												? durationMinutes / data.product.bookingSpec.slotMinutes
-												: 1) *
-											(1 - data.discount.percentage / 100)}
+										amount={finalPriceWithVat}
 										main
 									/>
 								{/if}
 							</div>
 							<PriceTag
 								currency={data.product.price.currency}
-								amount={(data.product.hasVariations
-									? customAmount * (1 + rate / 100)
-									: data.product.price.amount * (1 + rate / 100)) *
-									(data.product.bookingSpec
-										? durationMinutes / data.product.bookingSpec.slotMinutes
-										: 1) *
-									(data.discount?.mode === 'percentage' && data.discount?.percentage
-										? 1 - data.discount.percentage / 100
-										: 1)}
+								amount={finalPriceWithVat}
 								secondary
 								class="text-xl"
 							/>
@@ -520,40 +568,25 @@
 										? 'line-through'
 										: ''}"
 									short={!!data.discount}
-									amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-										(data.product.bookingSpec
-											? durationMinutes / data.product.bookingSpec.slotMinutes
-											: 1)}
+									amount={unitPrice}
 									main
-								/> <span class="font-semibold lg:contents hidden">{t('product.vatExcluded')}</span>
-
-								{#if data.discount && data.discount.mode === 'percentage'}
+								/>
+								<span class="font-semibold lg:contents hidden">{t('product.vatExcluded')}</span>
+								{#if data.discount?.mode === 'percentage'}
 									<PriceTag
 										currency={data.product.price.currency}
 										class="text-2xl lg:text-4xl truncate max-w-full"
 										short
-										amount={(data.product.hasVariations
-											? customAmount
-											: data.product.price.amount) *
-											(data.product.bookingSpec
-												? durationMinutes / data.product.bookingSpec.slotMinutes
-												: 1) *
-											(1 - data.discount.percentage / 100)}
+										amount={finalPrice}
 										main
 									/>
 								{/if}
 							</div>
 							<PriceTag
 								currency={data.product.price.currency}
-								amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-									(data.product.bookingSpec
-										? durationMinutes / data.product.bookingSpec.slotMinutes
-										: 1) *
-									(data.discount?.mode === 'percentage' && data.discount?.percentage
-										? 1 - data.discount.percentage / 100
-										: 1)}
+								amount={finalPrice}
 								secondary
-								class={data.displayVatIncludedInProduct ? 'text-md' : 'text-xl'}
+								class="text-md"
 							/>
 						</div>
 						<span class="font-semibold contents lg:hidden">{t('product.vatExcluded')}</span>
@@ -567,36 +600,22 @@
 									? 'line-through'
 									: ''}"
 								short={!!data.discount}
-								amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-									(data.product.bookingSpec
-										? durationMinutes / data.product.bookingSpec.slotMinutes
-										: 1)}
+								amount={unitPrice}
 								main
 							/>
-
-							{#if data.discount && data.discount.mode === 'percentage'}
+							{#if data.discount?.mode === 'percentage'}
 								<PriceTag
 									currency={data.product.price.currency}
 									class="text-2xl lg:text-4xl truncate max-w-full"
 									short
-									amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-										(data.product.bookingSpec
-											? durationMinutes / data.product.bookingSpec.slotMinutes
-											: 1) *
-										(1 - data.discount.percentage / 100)}
+									amount={finalPrice}
 									main
 								/>
 							{/if}
 						</div>
 						<PriceTag
 							currency={data.product.price.currency}
-							amount={(data.product.hasVariations ? customAmount : data.product.price.amount) *
-								(data.product.bookingSpec
-									? durationMinutes / data.product.bookingSpec.slotMinutes
-									: 1) *
-								(data.discount?.mode === 'percentage' && data.discount?.percentage
-									? 1 - data.discount.percentage / 100
-									: 1)}
+							amount={finalPrice}
 							secondary
 							class="text-xl"
 						/>
@@ -699,8 +718,17 @@
 									return await applyAction(result);
 								}
 
+								// Capture multiplier BEFORE invalidate changes durationMinutes
+								const priceMultiplier = data.product.bookingSpec
+									? durationMinutes / data.product.bookingSpec.slotMinutes
+									: 1;
 								await invalidate(UrlDependency.Cart);
-								addToCart();
+								addToCart(priceMultiplier);
+								// Reset selection for 24h slot mode after adding to cart
+								if (is24HourSlot) {
+									selectedDate = startOfDay(new Date());
+									selectedEndDate = startOfDay(new Date());
+								}
 								document.body.scrollIntoView();
 							};
 						}}
@@ -764,65 +792,113 @@
 								</label>
 							{/if}
 							{#if data.product.bookingSpec}
-								<ScheduleWidgetCalendar
-									schedule={{
-										_id: productToScheduleId(data.product._id),
-										events: [],
-										allowSubscription: false,
-										pastEventDelay: 0
-									}}
-									bind:selectedDate
-									isDayDisabled={(date) => computeDurations(date, events).length === 0}
-								/>
-								{t('product.booking.timezone', {
-									timeZone: data.product.bookingSpec.schedule.timezone
-								})}
-								{#if durations.length}
-									<label class="form-label">
-										{t('product.booking.duration')}
-										<select class="form-input" bind:value={durationMinutes} name="durationMinutes">
-											{#each durations as duration}
-												<option value={duration.duration}
-													>{duration.duration >= 60
-														? t('product.booking.hour', {
-																count: Math.floor(duration.duration / 60)
-														  })
-														: ''}
-													{duration.duration % 60 > 0
-														? t('product.booking.minute', { count: duration.duration % 60 })
-														: ''}
-												</option>
-											{/each}
-										</select>
-									</label>
-
-									<label class="form-label">
-										{t('product.booking.time')}
-										<select
-											class="form-input"
-											bind:value={time}
-											name="time"
-											disabled={!times.length}
-										>
-											{#if !times.length}
-												<option value="" disabled selected
-													>No available time slots for this date</option
-												>
+								{#if is24HourSlot}
+									<!-- 24-hour slot mode: date range selection -->
+									<p class="text-sm text-gray-600 mb-2">
+										{t('product.booking.selectDateRange')}
+									</p>
+									<ScheduleWidgetCalendar
+										schedule={calendarSchedule}
+										bind:selectedDate
+										bind:selectedEndDate
+										rangeMode={true}
+										isDayDisabled={isDayUnavailable}
+									/>
+									{t('product.booking.timezone', {
+										timeZone: data.product.bookingSpec.schedule.timezone
+									})}
+									{#if selectedDate && availableDatesInRange.length > 0}
+										<p class="font-medium mt-2">
+											{#if selectedEndDate && !isSameDay(selectedDate, selectedEndDate)}
+												{t('product.booking.selectedRangeWithAvailable', {
+													totalDays: selectedRangeDays,
+													availableDays: availableDatesInRange.length,
+													dates: formatBookedDates(availableDatesInRange)
+												})}
 											{:else}
-												{#each times as time}
-													<option value={time.date}>
-														<!-- todo: handle timezone here maybe -->
-														{new Date(
-															selectedDate.toJSON().slice(0, 11) + time.time
-														).toLocaleTimeString($locale, {
-															hour: 'numeric',
-															minute: 'numeric'
-														})}
+												{t('product.booking.selectedDate', {
+													date: selectedDate.toLocaleDateString($locale)
+												})}
+											{/if}
+										</p>
+									{:else if selectedDate}
+										<p class="font-medium mt-2 text-red-500">
+											{t('product.booking.noAvailableDays')}
+										</p>
+									{/if}
+									<input type="hidden" name="time" value={time} />
+									<input type="hidden" name="durationMinutes" value={durationMinutes} />
+									<input
+										type="hidden"
+										name="endDate"
+										value={selectedEndDate?.toISOString() ?? ''}
+									/>
+									<input
+										type="hidden"
+										name="bookedDates"
+										value={availableDatesInRange.map((d) => d.toISOString()).join(',')}
+									/>
+								{:else}
+									<!-- Hourly booking mode: single date + duration + time -->
+									<ScheduleWidgetCalendar
+										schedule={calendarSchedule}
+										bind:selectedDate
+										isDayDisabled={isDayUnavailable}
+									/>
+									{t('product.booking.timezone', {
+										timeZone: data.product.bookingSpec.schedule.timezone
+									})}
+									{#if durations.length}
+										<label class="form-label">
+											{t('product.booking.duration')}
+											<select
+												class="form-input"
+												bind:value={durationMinutes}
+												name="durationMinutes"
+											>
+												{#each durations as duration}
+													<option value={duration.duration}
+														>{duration.duration >= 60
+															? t('product.booking.hour', {
+																	count: Math.floor(duration.duration / 60)
+															  })
+															: ''}
+														{duration.duration % 60 > 0
+															? t('product.booking.minute', { count: duration.duration % 60 })
+															: ''}
 													</option>
 												{/each}
-											{/if}
-										</select>
-									</label>
+											</select>
+										</label>
+
+										<label class="form-label">
+											{t('product.booking.time')}
+											<select
+												class="form-input"
+												bind:value={time}
+												name="time"
+												disabled={!times.length}
+											>
+												{#if !times.length}
+													<option value="" disabled selected
+														>No available time slots for this date</option
+													>
+												{:else}
+													{#each times as time}
+														<option value={time.date}>
+															<!-- todo: handle timezone here maybe -->
+															{new Date(
+																selectedDate.toJSON().slice(0, 11) + time.time
+															).toLocaleTimeString($locale, {
+																hour: 'numeric',
+																minute: 'numeric'
+															})}
+														</option>
+													{/each}
+												{/if}
+											</select>
+										</label>
+									{/if}
 								{/if}
 							{/if}
 							{#if data.product.deposit}
@@ -925,69 +1001,27 @@
 					</p>
 				{/if}
 				{#if data.product.cta}
+					{@const showFallbackCta =
+						!canBuy ||
+						amountAvailable <= 0 ||
+						(data.cartMaxSeparateItems && data.cart.items.length === data.cartMaxSeparateItems)}
 					{#each data.product.cta as cta}
-						{#if !cta.fallback}
-							{#if cta.downloadLink}
-								<a
-									href={cta.href.startsWith('http') || cta.href.includes('/')
-										? cta.href
-										: `/${cta.href}`}
-									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
-										' '
-									)
-										? 'break-all'
-										: ''} "
-									target={cta.href.startsWith('http') ? '_blank' : '_self'}
-									download={cta.downloadLink}
-								>
-									{cta.label}
-								</a>
-							{:else}
-								<a
-									href={cta.href.startsWith('http') || cta.href.includes('/')
-										? cta.href
-										: `/${cta.href}`}
-									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
-										' '
-									)
-										? 'break-all'
-										: ''} "
-									target={cta.href.startsWith('http') ? '_blank' : '_self'}
-								>
-									{cta.label}
-								</a>
-							{/if}
-						{:else if !canBuy || amountAvailable <= 0 || (data.cartMaxSeparateItems && data.cart.items.length === data.cartMaxSeparateItems)}
-							{#if cta.downloadLink}
-								<a
-									href={cta.href.startsWith('http') || cta.href.includes('/')
-										? cta.href
-										: `/${cta.href}`}
-									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
-										' '
-									)
-										? 'break-all'
-										: ''} "
-									target={cta.href.startsWith('http') ? '_blank' : '_self'}
-									download={cta.downloadLink}
-								>
-									{cta.label}
-								</a>
-							{:else}
-								<a
-									href={cta.href.startsWith('http') || cta.href.includes('/')
-										? cta.href
-										: `/${cta.href}`}
-									class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
-										' '
-									)
-										? 'break-all'
-										: ''} "
-									target={cta.href.startsWith('http') ? '_blank' : '_self'}
-								>
-									{cta.label}
-								</a>
-							{/if}
+						{@const ctaHref =
+							cta.href.startsWith('http') || cta.href.includes('/') ? cta.href : `/${cta.href}`}
+						{@const isExternal = cta.href.startsWith('http')}
+						{#if !cta.fallback || showFallbackCta}
+							<a
+								href={ctaHref}
+								class="btn body-cta body-secondaryCTA h-auto min-h-[2em] break-words hyphens-auto text-center {!cta.label.includes(
+									' '
+								)
+									? 'break-all'
+									: ''}"
+								target={isExternal ? '_blank' : '_self'}
+								download={cta.downloadLink || null}
+							>
+								{cta.label}
+							</a>
 						{/if}
 					{/each}
 				{/if}
