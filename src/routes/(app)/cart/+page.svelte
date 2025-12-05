@@ -24,19 +24,19 @@
 	let errorMessage = data.errorMessage;
 	let errorProductId = '';
 
-	$: items = data.cart.items;
+	$: items = data.cart?.items ?? [];
 	$: deliveryFees =
 		data.countryCode && isAlpha2CountryCode(data.countryCode)
 			? computeDeliveryFees(UNDERLYING_CURRENCY, data.countryCode, items, data.deliveryFees)
 			: NaN;
-	$: priceInfo = data.cart.priceInfo;
+	$: priceInfo = data.cart?.priceInfo;
 	let alias = '';
 	let formAlias: HTMLInputElement;
 	let loading = false;
 	const { t, locale, countryName } = useI18n();
 	$: isDigital = items.every((item) => !item.product.shipping);
 	$: physicalCartCanBeOrdered =
-		!!data.physicalCartMinAmount && !isDigital
+		!!data.physicalCartMinAmount && !isDigital && priceInfo
 			? priceInfo.partialPriceWithVat >=
 			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 			: true;
@@ -114,7 +114,7 @@
 			<p class="text-red-500">{errorMessage}</p>
 		{/if}
 
-		{#if items.length}
+		{#if items.length && priceInfo}
 			<div
 				class="lg:grid gap-x-4 gap-y-6 overflow-hidden"
 				style="grid-template-columns: auto 1fr auto auto"

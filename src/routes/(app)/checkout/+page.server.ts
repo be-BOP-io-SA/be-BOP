@@ -7,6 +7,7 @@ import { createOrder } from '$lib/server/orders';
 import { isEmailConfigured } from '$lib/server/email';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
+import { applyResolvedStock } from '$lib/server/product.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { zodNpub } from '$lib/server/nostr.js';
@@ -21,9 +22,16 @@ import type { Tag } from '$lib/types/Tag';
 export async function load({ parent, locals }) {
 	const parentData = await parent();
 
+	const cartItemsWithResolvedStock = await Promise.all(
+		parentData.cart.items.map(async (item) => ({
+			...item,
+			product: await applyResolvedStock(item.product)
+		}))
+	);
+
 	if (parentData.cart) {
 		try {
-			await checkCartItems(parentData.cart.items, { user: userIdentifier(locals) });
+			await checkCartItems(cartItemsWithResolvedStock, { user: userIdentifier(locals) });
 		} catch (err) {
 			throw redirect(303, '/cart');
 		}
@@ -163,7 +171,7 @@ export const actions = {
 			throw error(400, 'Cart is empty');
 		}
 
-		const products = await collections.products
+		const productsFromDb = await collections.products
 			.find({
 				_id: { $in: cart.items.map((item) => item.productId) }
 			})
@@ -172,6 +180,11 @@ export const actions = {
 				Object.assign(omit(product, 'translations'), product.translations?.[locals.language] ?? {})
 			)
 			.toArray();
+
+		// Resolve stock for products with stockReference
+		const products = await Promise.all(
+			productsFromDb.map(async (product) => await applyResolvedStock(product))
+		);
 
 		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
 
