@@ -678,6 +678,8 @@
 			"notAvailableYet": "Not available yet",
 			"tabHeader": "Tab {slug}",
 			"tabToPayNow": "Tab {slug} (to pay now)",
+			"pool": "POOL",
+			"poolRemainingToPay": "POOL (remaining to be paid)",
 			"exclVat": "excl. VAT",
 			"inclVat": "incl. VAT {rates}",
 			"vatRate": "VAT {rate}%",
@@ -687,10 +689,23 @@
 			"shares": "shares",
 			"itemize": "itemize",
 			"return": "Return",
+			"continueSplit": "Continue split ({mode})",
 			"paySelected": "Pay selected",
 			"includingVatIncluded": "Including (VAT included):",
 			"tagProducts": "Tag \"{name}\" products",
-			"otherProducts": "Other products"
+			"otherProducts": "Other products",
+			"selectItems": "Please select items to pay",
+			"splitByShares": "Split by shares",
+			"enterNumberOfParts": "Enter number of parts",
+			"manualAmount": "Manual amount",
+			"ok": "OK",
+			"payRemaining": "Pay Remaining",
+			"totalAlreadyPaid": "Total already paid (incl. VAT)",
+			"remainingToPay": "Remaining to pay (incl. VAT)",
+			"allPaid": "All is paid",
+			"completeSharesFirst": "You have already started paying for the pool through \"Split (shares)\" payments. Please complete all payments and close the pool first. ",
+			"closePool": "Close pool",
+			"globalTicket": "Global ticket"
 		}
 	},
 	"product": {
