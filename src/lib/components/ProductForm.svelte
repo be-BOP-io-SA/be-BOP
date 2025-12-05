@@ -48,6 +48,7 @@
 	export let vatProfiles: LayoutServerData['vatProfiles'];
 	export let defaultActionSettings: ProductActionSettings;
 	export let availablePaymentMethods: PaymentMethod[];
+	export let productsWithStock: { _id: string; name: string }[] = [];
 	export let product: WithId<PojoObject<Product>> = {
 		_id: '',
 		payWhatYouWant: false,
@@ -1069,6 +1070,28 @@
 						value={product.stock?.total ?? 0}
 					/>
 				</label>
+
+				<label class="form-label">
+					{t('admin.product.stockReference.label')}
+					<select
+						class="form-input"
+						name="stockReferenceProductId"
+						value={product.stockReference?.productId ?? ''}
+					>
+						<option value="">{t('admin.product.stockReference.noReference')}</option>
+						{#each productsWithStock as p}
+							{#if p._id !== product._id}
+								<option value={p._id}>{p.name}</option>
+							{/if}
+						{/each}
+					</select>
+				</label>
+
+				{#if product.stockReference?.productId}
+					<p class="text-sm text-gray-600">
+						{t('admin.product.stockReference.warning')}
+					</p>
+				{/if}
 			{/if}
 
 			{#if !isNew}
