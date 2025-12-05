@@ -1,5 +1,6 @@
 import { ItemForPriceInfo, ProductForPriceInfo } from '$lib/cart';
 import { collections } from '$lib/server/database';
+import { ObjectId } from 'mongodb';
 import {
 	clearAbandonedCartsAndOrdersFromTab,
 	getOrCreateOrderTab,
@@ -178,46 +179,53 @@ export const actions = {
 		const formData = await request.formData();
 		const user = userIdentifier(locals);
 
+		let itemQuantities: Map<string, number> | null = null;
 		if (formData.has('itemQuantities')) {
 			try {
-				const itemQuantities = new Map(
+				itemQuantities = new Map(
 					itemQuantitiesSchema.parse(JSON.parse(formData.get('itemQuantities') as string))
 				);
 				if (!itemQuantities.size) {
 					return fail(400, { error: 'No items selected' });
 				}
-
-				await removeUserCarts(user);
-				await checkoutOrderTab({ slug: params.orderTabSlug, user, itemQuantities });
 			} catch (err) {
 				return fail(400, { error: err instanceof Error ? err.message : 'Invalid item data' });
 			}
-
-			throw redirect(303, '/checkout');
 		}
-
-		const orderTab = await getOrCreateOrderTab({ slug: params.orderTabSlug });
 
 		const paymentParams = sharePaymentSchema.safeParse(Object.fromEntries(formData));
 
-		if (paymentParams.success) {
-			// Get payment method and subtype from form
+		if (itemQuantities || paymentParams.success) {
+			const splitMode: 'items' | 'shares' = itemQuantities ? 'items' : 'shares';
+
 			const selectedMethod = (formData.get('paymentMethod') as PaymentMethod) || 'point-of-sale';
 			const selectedSubtype = formData.get('subtype') as string | null;
 
-			let order = await collections.orders.findOne({
-				orderTabId: orderTab._id,
-				splitMode: 'shares',
-				status: { $in: ['pending', 'paid'] }
-			});
+			const orderTab = await getOrCreateOrderTab({ slug: params.orderTabSlug });
+
+			let order =
+				splitMode === 'shares'
+					? await collections.orders.findOne({
+							orderTabId: orderTab._id,
+							splitMode: 'shares',
+							status: { $in: ['pending', 'paid'] }
+					  })
+					: null;
 
 			if (!order) {
-				await checkoutOrderTab({ slug: params.orderTabSlug, user, splitMode: 'shares' });
+				await removeUserCarts(user);
+
+				await checkoutOrderTab({
+					slug: params.orderTabSlug,
+					user,
+					splitMode,
+					...(itemQuantities && { itemQuantities })
+				});
 
 				const cart = await collections.carts.findOne({
 					orderTabSlug: params.orderTabSlug,
 					orderTabId: orderTab._id,
-					splitMode: 'shares'
+					splitMode
 				});
 				if (!cart) {
 					console.error('Cart creation failed for orderTab:', {
@@ -228,21 +236,22 @@ export const actions = {
 				}
 
 				const products = await collections.products
-					.find({ _id: { $in: orderTab.items.map((i) => i.productId) } })
+					.find({ _id: { $in: cart.items.map((i) => i.productId) } })
 					.toArray();
 
 				const productById = new Map(products.map((p) => [p._id.toString(), p]));
-				const items = orderTab.items.map((item) => {
-					const product = productById.get(item.productId.toString());
+				const items = cart.items.map((cartItem) => {
+					const product = productById.get(cartItem.productId.toString());
 					if (!product) {
-						throw new Error(`Product ${item.productId} not found`);
+						throw new Error(`Product ${cartItem.productId} not found`);
 					}
+
 					return {
-						_id: item._id,
-						quantity: item.quantity,
+						_id: cartItem._id ? new ObjectId(cartItem._id) : undefined,
+						quantity: cartItem.quantity,
 						product,
-						internalNote: item.internalNote,
-						chosenVariations: item.chosenVariations
+						internalNote: cartItem.internalNote,
+						chosenVariations: cartItem.chosenVariations
 					};
 				});
 
@@ -264,9 +273,13 @@ export const actions = {
 			// Division may produce non-integer (e.g. 10/6 = 1.666...)
 			// Rounded to currency precision in addOrderPayment() → toCurrency()
 			const amountToPay =
-				paymentParams.data.mode === 'equal'
+				splitMode === 'items'
+					? order.currencySnapshot.main.totalPrice.amount // full amount
+					: paymentParams.success && paymentParams.data.mode === 'equal'
 					? remainingToPay / paymentParams.data.shares
-					: Math.min(paymentParams.data.customAmount, remainingToPay);
+					: paymentParams.success && paymentParams.data.mode === 'custom-amount'
+					? Math.min(paymentParams.data.customAmount, remainingToPay)
+					: order.currencySnapshot.main.totalPrice.amount;
 
 			await addOrderPayment(
 				order,
@@ -281,23 +294,12 @@ export const actions = {
 				}
 			);
 
-			const returnUrl = `/pos/touch/tab/${params.orderTabSlug}/split?mode=shares`;
+			const returnUrl = `/pos/touch/tab/${params.orderTabSlug}/split?mode=${splitMode}`;
 			throw redirect(303, `/order/${order._id}?returnTo=${encodeURIComponent(returnUrl)}`);
 		}
 
-		await removeUserCarts(user);
-
-		try {
-			await checkoutOrderTab({
-				slug: params.orderTabSlug,
-				user,
-				splitMode: 'shares'
-			});
-		} catch (error) {
-			return fail(400, { error: error instanceof Error ? error.message : 'Unknown error' });
-		}
-
-		throw redirect(303, '/checkout');
+		// Invalid request - neither itemQuantities nor valid payment params
+		return fail(400, { error: 'Invalid request: missing itemQuantities or payment params' });
 	},
 
 	closePool: async ({ params }) => {

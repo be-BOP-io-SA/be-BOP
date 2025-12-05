@@ -12,6 +12,9 @@
 	import type { PaymentMethod } from '$lib/server/payment-methods';
 	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
+	import PosPaymentMethodSelector, {
+		type PaymentOption
+	} from '$lib/components/PosPaymentMethodSelector.svelte';
 
 	const { t } = useI18n();
 
@@ -24,13 +27,6 @@
 	$: tab = data.orderTab;
 
 	// Payment method selector
-	type PaymentOption = {
-		method: PaymentMethod;
-		subtype: string | null;
-		label: string;
-		icon: string;
-	};
-
 	type PaymentSubtype = { slug: string; name: string; parentMethod: PaymentMethod };
 
 	function buildPaymentOptions(
@@ -374,26 +370,22 @@
 							currency={splitTabPriceInfo.currency}
 							vatRates={splitTabPriceInfo.vat.map((vat) => vat.rate)}
 						/>
+
+						<!-- Payment method selector (always visible in items mode) -->
+						<div class="mt-6">
+							<PosPaymentMethodSelector
+								{paymentOptions}
+								bind:selectedIndex={selectedPaymentIndex}
+							/>
+						</div>
 					</div>
 				{:else if rightPannel === 'split-shares'}
 					<div class="flex flex-col h-full gap-4 p-4 overflow-y-auto">
 						{#if !data.sharesOrder?.isFullyPaid}
-							{#if paymentOptions.length > 0}
-								<div class="grid grid-cols-4 gap-2">
-									{#each paymentOptions as option, i}
-										<button
-											type="button"
-											class="p-3 rounded text-center {selectedPaymentIndex === i
-												? 'bg-blue-600 text-white'
-												: 'bg-blue-100'}"
-											on:click={() => (selectedPaymentIndex = i)}
-										>
-											<div class="text-3xl">{option.icon}</div>
-											<div class="text-sm truncate">{option.label}</div>
-										</button>
-									{/each}
-								</div>
-							{/if}
+							<PosPaymentMethodSelector
+								{paymentOptions}
+								bind:selectedIndex={selectedPaymentIndex}
+							/>
 
 							<div class="grid grid-cols-3 gap-3">
 								{#each Array.from({ length: POS_SPLIT_SHARES_MAX_NUMS }, (_, i) => i + 1) as num}
@@ -629,6 +621,10 @@
 					on:submit={validateItemsCheckout}
 				>
 					<input type="hidden" name="itemQuantities" value={itemQuantitiesJson} />
+					<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
+					{#if selectedPayment?.subtype}
+						<input type="hidden" name="subtype" value={selectedPayment.subtype} />
+					{/if}
 					<button
 						type="submit"
 						class="uppercase text-3xl p-4 text-center w-full {splitTabPriceInfo.partialPriceWithVat >
