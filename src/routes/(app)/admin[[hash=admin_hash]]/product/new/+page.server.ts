@@ -1,5 +1,10 @@
 import { collections, withTransaction } from '$lib/server/database';
 import { generatePicture } from '$lib/server/picture';
+import {
+	getProductsWithStock,
+	validateStockReference,
+	cleanVariationLabels
+} from '$lib/server/product';
 import type { Actions } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -29,6 +34,7 @@ export const load = async ({ url }) => {
 		.find({})
 		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
 		.toArray();
+	const productsWithStock = await getProductsWithStock();
 	if (productId) {
 		const product = await collections.products.findOne({ _id: productId });
 
@@ -49,12 +55,14 @@ export const load = async ({ url }) => {
 				pictures,
 				digitalFiles,
 				tags,
+				productsWithStock,
 				currency: runtimeConfig.priceReferenceCurrency
 			};
 		}
 	}
 	return {
-		tags
+		tags,
+		productsWithStock
 	};
 };
 
@@ -109,32 +117,23 @@ export const actions: Actions = {
 		if (!parsed.free && !parsed.payWhatYouWant && parsed.priceAmount === '0') {
 			parsed.free = true;
 		}
-		const cleanedVariationLabels: {
-			names: Record<string, string>;
-			values: Record<string, Record<string, string>>;
-		} = {
-			names: {},
-			values: {}
-		};
-		for (const key in parsed.variationLabels?.names) {
-			const nameValue = parsed.variationLabels.names[key];
+		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
 
-			if (nameValue.trim() !== '') {
-				cleanedVariationLabels.names[key] = nameValue;
+		// Validate stock reference if provided
+		if (parsed.stockReferenceProductId) {
+			const validation = await validateStockReference(parsed.slug, parsed.stockReferenceProductId);
+
+			if (!validation.valid) {
+				console.warn(
+					`Stock reference validation failed: ` +
+						`product=${parsed.slug}, ` +
+						`reference=${parsed.stockReferenceProductId}, ` +
+						`reason=${validation.error}`
+				);
+				throw error(400, validation.error || 'Invalid stock reference');
 			}
 		}
-		for (const key in parsed.variationLabels?.values) {
-			const valueEntries = parsed.variationLabels.values[key];
-			cleanedVariationLabels.values[key] = {};
-			for (const valueKey in valueEntries) {
-				if (valueEntries[valueKey].trim() !== '') {
-					cleanedVariationLabels.values[key][valueKey] = valueEntries[valueKey];
-				}
-			}
-			if (Object.keys(cleanedVariationLabels.values[key]).length === 0) {
-				delete cleanedVariationLabels.values[key];
-			}
-		}
+
 		await generatePicture(parsed.pictureIds[0], {
 			productId: parsed.slug,
 			cb: async (session) => {
@@ -182,6 +181,11 @@ export const actions: Actions = {
 							requireSpecificDeliveryFee: parsed.requireSpecificDeliveryFee,
 							...(parsed.stock !== undefined && {
 								stock: { total: parsed.stock, available: parsed.stock, reserved: 0 }
+							}),
+							...(parsed.stockReferenceProductId && {
+								stockReference: {
+									productId: parsed.stockReferenceProductId
+								}
 							}),
 							...(parsed.depositPercentage !== undefined && {
 								deposit: {
@@ -336,32 +340,8 @@ export const actions: Actions = {
 			...variation,
 			price: Math.max(parsePriceAmount(variation.price, parsed.priceCurrency), 0)
 		}));
-		const cleanedVariationLabels: {
-			names: Record<string, string>;
-			values: Record<string, Record<string, string>>;
-		} = {
-			names: {},
-			values: {}
-		};
-		for (const key in parsed.variationLabels?.names) {
-			const nameValue = parsed.variationLabels.names[key];
+		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
 
-			if (nameValue.trim() !== '') {
-				cleanedVariationLabels.names[key] = nameValue;
-			}
-		}
-		for (const key in parsed.variationLabels?.values) {
-			const valueEntries = parsed.variationLabels.values[key];
-			cleanedVariationLabels.values[key] = {};
-			for (const valueKey in valueEntries) {
-				if (valueEntries[valueKey].trim() !== '') {
-					cleanedVariationLabels.values[key][valueKey] = valueEntries[valueKey];
-				}
-			}
-			if (Object.keys(cleanedVariationLabels.values[key]).length === 0) {
-				delete cleanedVariationLabels.values[key];
-			}
-		}
 		await withTransaction(async (session) => {
 			await collections.products.insertOne(
 				{

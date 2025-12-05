@@ -8,7 +8,7 @@ import {
 } from '$lib/types/Product';
 import { error } from '@sveltejs/kit';
 import { runtimeConfig } from './runtime-config';
-import { amountOfProductReserved, refreshAvailableStockInDb } from './product';
+import { amountOfStockReserved, refreshAvailableStockInDb } from './product';
 import type { Cart } from '$lib/types/Cart';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import { userQuery } from './user';
@@ -322,7 +322,7 @@ async function computeAvailableAmount(product: Product, cart: Cart): Promise<num
 	return !product.stock
 		? Infinity
 		: product.stock.total -
-				(await amountOfProductReserved(product._id, {
+				(await amountOfStockReserved(product.stockReference?.productId || product._id, {
 					exclude: {
 						sessionId: cart.user.sessionId,
 						npub: cart.user.npub
@@ -333,7 +333,7 @@ async function computeAvailableAmount(product: Product, cart: Cart): Promise<num
 export async function checkCartItems(
 	items: Array<{
 		quantity: number;
-		product: Pick<Product, 'stock' | '_id' | 'name' | 'maxQuantityPerOrder'>;
+		product: Pick<Product, 'stock' | '_id' | 'name' | 'maxQuantityPerOrder' | 'stockReference'>;
 	}>,
 	opts?: {
 		user?: UserIdentifier;
@@ -350,9 +350,11 @@ export async function checkCartItems(
 
 	for (const productId of Object.keys(qtyPerItem)) {
 		const product = productById[productId];
-		const available = product.stock
-			? product.stock.total - (await amountOfProductReserved(productId, { exclude: opts?.user }))
-			: Infinity;
+		const productStockAlreadyReserved = await amountOfStockReserved(
+			product.stockReference?.productId || productId,
+			{ exclude: opts?.user }
+		);
+		const available = product.stock ? product.stock.total - productStockAlreadyReserved : Infinity;
 		if (product.stock && qtyPerItem[productId] > available) {
 			if (!available) {
 				throw error(400, 'Product is out of stock: ' + product.name);

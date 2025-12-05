@@ -13,6 +13,15 @@
 		"vatNumber": "Numéro TVA",
 		"zipCode": "Code postal"
 	},
+	"admin": {
+		"product": {
+			"stockReference": {
+				"label": "Référencer le stock d'un autre produit (optionnel)",
+				"noReference": "-- Pas de référence (utiliser le stock propre) --",
+				"warning": "⚠️ Ce produit référence le stock d'un autre produit. Les modifications de stock affecteront le produit référencé."
+			}
+		}
+	},
 	"ageWarning": {
 		"agreement": "J'ai pris connaissance des conditions d'accès, les remplis et les respecte.",
 		"navigate": "Continuer la navigation"

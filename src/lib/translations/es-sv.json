@@ -13,6 +13,15 @@
 		"vatNumber": "Número de IVA",
 		"zipCode": "Código postal"
 	},
+	"admin": {
+		"product": {
+			"stockReference": {
+				"label": "Referenciar el stock de otro producto (opcional)",
+				"noReference": "-- Sin referencia (usar stock propio) --",
+				"warning": "⚠️ Este producto referencia el stock de otro producto. Los cambios de stock afectarán al producto referenciado."
+			}
+		}
+	},
 	"ageWarning": {
 		"agreement": "He leído las condiciones de acceso, las cumplo y las respeto",
 		"navigate": "Continuar navegando"

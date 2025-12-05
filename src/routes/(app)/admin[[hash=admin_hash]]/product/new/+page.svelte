@@ -13,6 +13,7 @@
 	isNew
 	duplicateFromId={data.product?._id}
 	tags={data.tags}
+	productsWithStock={data.productsWithStock}
 	product={data.product ?? undefined}
 	defaultActionSettings={data.productActionSettings}
 	vatProfiles={data.vatProfiles}

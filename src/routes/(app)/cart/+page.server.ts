@@ -1,7 +1,7 @@
 import { checkCartItems } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections, withTransaction } from '$lib/server/database';
-import { refreshAvailableStockInDb } from '$lib/server/product.js';
+import { applyResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
@@ -17,9 +17,17 @@ export async function load({ parent, locals }) {
 
 	const parentData = await parent();
 
+	// Resolve stock for cart items FIRST (needed for checkCartItems)
+	const cartItemsWithResolvedStock = await Promise.all(
+		parentData.cart.items.map(async (item) => ({
+			...item,
+			product: await applyResolvedStock(item.product)
+		}))
+	);
+
 	if (parentData.cart) {
 		try {
-			await checkCartItems(parentData.cart.items, { user: userIdentifier(locals) });
+			await checkCartItems(cartItemsWithResolvedStock, { user: userIdentifier(locals) });
 		} catch (err) {
 			if (
 				typeof err === 'object' &&
@@ -34,6 +42,7 @@ export async function load({ parent, locals }) {
 			}
 		}
 	}
+
 	const [cmsBasketTop, cmsBasketBottom] = await Promise.all([
 		collections.cmsPages.findOne(
 			{
@@ -81,6 +90,10 @@ export async function load({ parent, locals }) {
 			? 'employee'
 			: undefined;
 	return {
+		cart: {
+			...parentData.cart,
+			items: cartItemsWithResolvedStock
+		},
 		...(cmsBasketTop && {
 			cmsBasketTop,
 			cmsBasketTopData: cmsFromContent(

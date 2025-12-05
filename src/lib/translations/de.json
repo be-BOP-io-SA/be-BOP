@@ -13,6 +13,15 @@
 		"vatNumber": "Umsatzsteuer-Identifikationsnummer",
 		"zipCode": "Postleitzahl"
 	},
+	"admin": {
+		"product": {
+			"stockReference": {
+				"label": "Auf Lagerbestand eines anderen Produkts verweisen (optional)",
+				"noReference": "-- Keine Referenz (eigenen Lagerbestand verwenden) --",
+				"warning": "⚠️ Dieses Produkt verweist auf den Lagerbestand eines anderen Produkts. Lagerbestandsänderungen wirken sich auf das referenzierte Produkt aus."
+			}
+		}
+	},
 	"ageWarning": {
 		"agreement": "Ich habe die Zugangsbedingungen gelesen, erfülle sie und respektiere sie",
 		"navigate": "Weiter stöbern"

@@ -13,6 +13,15 @@
 		"vatNumber": "btw-nummer",
 		"zipCode": "Postcode"
 	},
+	"admin": {
+		"product": {
+			"stockReference": {
+				"label": "Verwijzing naar voorraad van ander product (optioneel)",
+				"noReference": "-- Geen verwijzing (gebruik eigen voorraad) --",
+				"warning": "⚠️ Dit product verwijst naar de voorraad van een ander product. Voorraadwijzigingen zullen het gerefereerde product beïnvloeden."
+			}
+		}
+	},
 	"ageWarning": {
 		"agreement": "Ik heb de toegangsvoorwaarden gelezen, voldoe eraan en respecteer ze",
 		"navigate": "Vervolg de navigatie"

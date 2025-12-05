@@ -2524,9 +2524,11 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 
 	// Update product stock in DB
 	for (const item of order.items.filter((item) => item.product.stock)) {
+		const productIdToDecrement = item.product.stockReference?.productId || item.product._id;
+
 		await collections.products.updateOne(
 			{
-				_id: item.product._id
+				_id: productIdToDecrement
 			},
 			{
 				$inc: { 'stock.total': -item.quantity, 'stock.available': -item.quantity },
