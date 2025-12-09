@@ -155,6 +155,8 @@
 
 	$: hasNewItems = items.some((item) => item.quantity - (item.printedQuantity ?? 0) > 0);
 
+	let expandedGroupId: string | null = null;
+
 	let poolLabel = 'n° tmp';
 	$: {
 		const tabs = data.posTabGroups.flatMap((group, g) =>
@@ -514,33 +516,86 @@
 				{#if rightPanel === 'products'}
 					<div class="grid grid-cols-2 gap-4 text-3xl text-center">
 						{#if data.posUseSelectForTags}
-							<!-- Select menu mode -->
+							<!-- Dropdown mode -->
 							<div class="col-span-2">
 								<CategorySelect
 									tags={data.posTouchScreenTags}
+									tagGroups={data.tagGroups}
 									currentFilter={filter}
 									onSelect={handleCategorySelect}
 								/>
 							</div>
 						{:else}
-							<!-- Button mode (current) -->
+							<!-- Button mode -->
+							{@const shouldShowGroups = data.tagGroups.length >= 2}
+
 							<a
 								class="col-span-2 touchScreen-category-cta"
 								href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}
-								>{t('pos.touch.favorites')}</a
 							>
-							{#each data.posTouchScreenTags as favoriteTag}
-								<a
-									class="touchScreen-category-cta"
-									href={selfPageLink({ filter: favoriteTag._id, skip: 0 })}>{favoriteTag.name}</a
-								>
-							{/each}
+								{t('pos.touch.favorites')}
+							</a>
+
+							{#if shouldShowGroups}
+								<!-- Group mode: collapse/expand -->
+								{#each data.tagGroups as group}
+									<button
+										type="button"
+										class="col-span-2 touchScreen-category-cta flex items-center justify-between px-6"
+										on:click={() => {
+											expandedGroupId = expandedGroupId === group._id ? null : group._id;
+										}}
+									>
+										<span>{group.name}</span>
+										<svg
+											class="w-8 h-8 transition-transform {expandedGroupId === group._id
+												? 'rotate-180'
+												: ''}"
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M19 9l-7 7-7-7"
+											/>
+										</svg>
+									</button>
+
+									{#if expandedGroupId === group._id}
+										<div class="col-span-2 grid grid-cols-2 gap-4 mb-2">
+											{#each data.posTouchScreenTags.filter( (t) => group.tagIds.includes(t._id) ) as tag}
+												<a
+													class="touchScreen-category-cta"
+													href={selfPageLink({ filter: tag._id, skip: 0 })}
+												>
+													{tag.name}
+												</a>
+											{/each}
+										</div>
+									{/if}
+								{/each}
+							{:else}
+								<!-- Flat mode (0-1 groups) -->
+								{#each data.posTouchScreenTags as tag}
+									<a
+										class="touchScreen-category-cta"
+										href={selfPageLink({ filter: tag._id, skip: 0 })}
+									>
+										{tag.name}
+									</a>
+								{/each}
+							{/if}
+
 							<a
 								class="col-span-2 touchScreen-category-cta"
 								href={selfPageLink({ filter: 'all', skip: 0 })}
 							>
-								{t('pos.touch.allProducts')}</a
-							>
+								{t('pos.touch.allProducts')}
+							</a>
 						{/if}
 
 						<div class="col-span-2 grid grid-cols-2 gap-4">

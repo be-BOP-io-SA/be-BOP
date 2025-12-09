@@ -2,22 +2,49 @@
 	import ManageOrderTabs from '$lib/components/ManageOrderTabs.svelte';
 	import { MultiSelect } from 'svelte-multiselect';
 	import { useI18n } from '$lib/i18n';
+	import type { TagGroup } from '$lib/types/TagGroup';
 	export let data;
 
 	const { t } = useI18n();
 
-	let selectedTags =
-		data.posTouchTag?.map((tagId) => ({
-			value: tagId,
-			label: data.tags.find((tag) => tag._id === tagId)?.name ?? tagId
-		})) ?? [];
 	let tabGroups = data.posTabGroups;
+	let tagGroups: TagGroup[] = data.tagGroups ?? [];
 	let posPoolEmptyIcon = data.posPoolEmptyIcon || '';
 	let posPoolOccupiedIcon = data.posPoolOccupiedIcon || '';
 
-	$: serializedTags = JSON.stringify(selectedTags.map((tag) => tag.value));
+	const groupSelectionsMap: Record<string, Array<{ value: string; label: string }>> = {};
+
+	// Initialize from existing tagGroups (one-time, not reactive)
+	tagGroups.forEach((group) => {
+		groupSelectionsMap[group._id] = group.tagIds.map((tagId) => ({
+			value: tagId,
+			label: data.tags.find((t) => t._id === tagId)?.name ?? tagId
+		}));
+	});
+
+	function syncSelectionsToGroups() {
+		tagGroups = tagGroups.map(
+			(g): TagGroup => ({
+				...g,
+				tagIds: groupSelectionsMap[g._id]?.map((s) => s.value) ?? g.tagIds
+			})
+		);
+	}
+
+	function getAllTagIdsFromGroups(): string[] {
+		const allTagIds = new Set<string>();
+		tagGroups.forEach((group) => {
+			const tagIds = groupSelectionsMap[group._id]?.map((s) => s.value) ?? group.tagIds;
+			tagIds.forEach((id) => allTagIds.add(id));
+		});
+		return Array.from(allTagIds);
+	}
+
 	$: serializedTabGroups = JSON.stringify(tabGroups);
+	$: serializedTagGroups = JSON.stringify(tagGroups);
+
 	let posDisplayOrderQrAfterPayment = data.posDisplayOrderQrAfterPayment;
+	let posUseSelectForTags = data.posUseSelectForTags;
 
 	let posSession = { ...data.posSession };
 
@@ -29,8 +56,27 @@
 	}
 
 	function handleSubmit(event: Event) {
-		if (selectedTags.length > 8 && !confirm('Are you sure ?')) {
-			event.preventDefault();
+		syncSelectionsToGroups();
+
+		// Only warn for button mode (not dropdown mode)
+		if (!posUseSelectForTags) {
+			const { maxGroup, maxCount } = tagGroups.reduce(
+				(acc, group) => {
+					const count = groupSelectionsMap[group._id]?.length ?? group.tagIds.length;
+					return count > acc.maxCount ? { maxGroup: group, maxCount: count } : acc;
+				},
+				{ maxGroup: null as TagGroup | null, maxCount: 0 }
+			);
+
+			if (maxCount > 8 && maxGroup) {
+				const confirmMessage = t('pos.tagGroups.tooManyTagsWarning', {
+					groupName: maxGroup.name,
+					count: maxCount.toString()
+				});
+				if (!confirm(confirmMessage)) {
+					event.preventDefault();
+				}
+			}
 		}
 	}
 </script>
@@ -158,29 +204,83 @@
 	</label>
 
 	<h2 class="text-2xl">Touchscreen PoS interface</h2>
-	<!-- svelte-ignore a11y-label-has-associated-control -->
-	<label class="form-label">
-		Product Tags
-		<MultiSelect
-			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
-			options={data.tags.map((tag) => ({
-				value: tag._id,
-				label: tag.name
-			}))}
-			bind:selected={selectedTags}
-		/>
-	</label>
-	<input type="hidden" name="posTouchTag" bind:value={serializedTags} />
 
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
 			name="posUseSelectForTags"
 			class="form-checkbox"
-			checked={data.posUseSelectForTags}
+			bind:checked={posUseSelectForTags}
 		/>
 		{t('pos.useSelectForTags')}
 	</label>
+
+	<!-- svelte-ignore a11y-label-has-associated-control -->
+	<label class="form-label">
+		Product Tags
+
+		{#each tagGroups as group, idx (group._id)}
+			<div class="border border-gray-300 rounded-lg mb-4">
+				<div class="flex justify-between items-center bg-gray-100 gap-2 px-4 py-2">
+					<input
+						type="text"
+						bind:value={group.name}
+						placeholder={t('pos.tagGroups.groupNamePlaceholder')}
+						class="border font-semibold rounded px-2 py-1 text-sm"
+					/>
+					<button
+						type="button"
+						class="text-sm text-red-600 hover:underline"
+						on:click|preventDefault|stopPropagation={() => {
+							const deletedGroupId = group._id;
+							tagGroups = tagGroups.filter((g, i) => i !== idx);
+							delete groupSelectionsMap[deletedGroupId];
+						}}
+					>
+						{t('pos.tagGroups.deleteGroup')}
+					</button>
+				</div>
+
+				<!-- svelte-ignore a11y-label-has-associated-control -->
+				<label class="form-label px-4 py-3">
+					<MultiSelect
+						--sms-options-bg="var(--body-mainPlan-backgroundColor)"
+						options={data.tags.map((tag) => ({ value: tag._id, label: tag.name }))}
+						bind:selected={groupSelectionsMap[group._id]}
+					/>
+				</label>
+			</div>
+		{/each}
+	</label>
+
+	<div class="border rounded-lg shadow-sm w-fit mb-4">
+		<div class="flex justify-center items-center bg-gray-50 px-4 py-2">
+			<button
+				type="button"
+				class="text-sm text-blue-600 hover:underline"
+				on:click={() => {
+					const newGroupId = `temp-${Date.now()}`;
+					tagGroups = [
+						...tagGroups,
+						{
+							_id: newGroupId,
+							name: '',
+							tagIds: [],
+							order: tagGroups.length,
+							createdAt: new Date(),
+							updatedAt: new Date()
+						}
+					];
+					groupSelectionsMap[newGroupId] = [];
+				}}
+			>
+				{t('pos.tagGroups.addGroup')}
+			</button>
+		</div>
+	</div>
+
+	<input type="hidden" name="tagGroups" value={serializedTagGroups} />
+	<input type="hidden" name="posTouchTag" value={JSON.stringify(getAllTagIdsFromGroups())} />
 
 	<label class="form-label">
 		Pool name label for non-empty pools

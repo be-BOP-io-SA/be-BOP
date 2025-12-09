@@ -642,10 +642,17 @@
 		},
 		"vatFree": "This is a VAT-free order (<0>conditions</0>)",
 		"vatFreeReason": "VAT-free reason",
+		"tagGroups": {
+			"addGroup": "Add Group",
+			"deleteGroup": "Delete Group",
+			"groupNamePlaceholder": "Group Name",
+			"tooManyTagsWarning": "Group \"{groupName}\" has {count} tags. Too many for button mode. Enable \"Use select menu\" option or reduce tags. Continue?"
+		},
 		"touch": {
 			"selectTab": "Select a tab:",
 			"noTabs": "This group has no tabs",
 			"cancel": "Cancel",
+			"back": "← Back",
 			"ticketNumber": "TICKET n°",
 			"exclVat": "EX",
 			"inclVat": "INC",

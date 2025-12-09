@@ -135,16 +135,25 @@ export const load = async ({ locals, depends, params }) => {
 
 	const initialOrderTab = await getHydratedOrderTab(locals.language, tabSlug);
 
-	const [shouldConclude, printTags, posTouchScreenTags] = await Promise.all([
+	const [shouldConclude, printTags, tagGroupsData] = await Promise.all([
 		orderTabNotEmptyAndFullyPaid({ slug: tabSlug }),
 		collections.tags
 			.find({ printReceiptFilter: true })
 			.project<{ _id: string; name: string }>({ _id: 1, name: 1 })
 			.toArray(),
-		collections.tags
-			.find({ _id: { $in: runtimeConfig.posTouchTag } })
-			.project<{ _id: string; name: string }>({ _id: 1, name: 1 })
-			.toArray()
+		(async () => {
+			const groups = await collections.tagGroups.find().sort({ order: 1 }).toArray();
+			const tagIds = groups.flatMap((g) => g.tagIds);
+			const tags = await collections.tags
+				.find({ _id: { $in: tagIds } })
+				.project<{ _id: string; name: string }>({ _id: 1, name: 1 })
+				.toArray();
+
+			return {
+				groups: groups.map((g) => pojo(g)),
+				tags: tags.map((t) => pojo(t))
+			};
+		})()
 	]);
 
 	let orderTab;
@@ -170,7 +179,8 @@ export const load = async ({ locals, depends, params }) => {
 		tabSlug,
 		posUseSelectForTags: runtimeConfig.posUseSelectForTags,
 		printTags: pojo(printTags),
-		posTouchScreenTags: pojo(posTouchScreenTags),
+		tagGroups: tagGroupsData.groups,
+		posTouchScreenTags: tagGroupsData.tags,
 		printTagsMap
 	};
 };
