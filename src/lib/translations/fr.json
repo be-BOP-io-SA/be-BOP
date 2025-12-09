@@ -641,10 +641,17 @@
 		},
 		"vatFree": "Il s'agit d'une commande sans TVA (<0>conditions</0>)",
 		"vatFreeReason": "Motif hors TVA",
+		"tagGroups": {
+			"addGroup": "Ajouter un groupe",
+			"deleteGroup": "Supprimer le groupe",
+			"groupNamePlaceholder": "Nom du groupe",
+			"tooManyTagsWarning": "Le groupe \"{groupName}\" contient {count} étiquettes. Trop pour le mode bouton. Activez l'option \"Utiliser le menu de sélection\" ou réduisez les étiquettes. Continuer ?"
+		},
 		"touch": {
 			"selectTab": "Sélectionner un onglet :",
 			"noTabs": "Ce groupe n'a pas d'onglets",
 			"cancel": "Annuler",
+			"back": "← Retour",
 			"ticketNumber": "TICKET n°",
 			"exclVat": "HT",
 			"inclVat": "TTC",

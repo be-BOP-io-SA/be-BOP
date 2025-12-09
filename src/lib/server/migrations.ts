@@ -618,6 +618,35 @@ const migrations = [
 
 			console.log('Created default PoS payment subtype: Cash');
 		}
+	},
+	{
+		_id: new ObjectId('67558e01e92e590e858af9cd'),
+		name: 'Create default tag group for existing POS configurations',
+		run: async (session: ClientSession) => {
+			const existingGroups = await collections.tagGroups.countDocuments({}, { session });
+			if (existingGroups > 0) {
+				return;
+			}
+
+			const config = await collections.runtimeConfig.findOne({ _id: 'posTouchTag' }, { session });
+			const posTouchTag = (config?.data as string[]) ?? [];
+
+			if (posTouchTag.length === 0) {
+				return;
+			}
+
+			await collections.tagGroups.insertOne(
+				{
+					_id: new ObjectId().toHexString(),
+					name: 'All Tags',
+					tagIds: posTouchTag,
+					order: 0,
+					createdAt: new Date(),
+					updatedAt: new Date()
+				},
+				{ session }
+			);
+		}
 	}
 ];
 

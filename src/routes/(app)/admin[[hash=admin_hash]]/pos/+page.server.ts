@@ -1,8 +1,10 @@
 import { adminPrefix } from '$lib/server/admin';
 import { collections } from '$lib/server/database';
 import { ALL_PAYMENT_PROCESSORS } from '$lib/server/payment-methods.js';
+import { ObjectId } from 'mongodb';
 import { runtimeConfig, defaultConfig } from '$lib/server/runtime-config';
 import type { Tag } from '$lib/types/Tag';
+import type { TagGroup } from '$lib/types/TagGroup';
 import { set } from '$lib/utils/set';
 import { error, redirect } from '@sveltejs/kit';
 import type { JsonObject } from 'type-fest';
@@ -10,11 +12,19 @@ import { z } from 'zod';
 import { persistConfigElement } from '$lib/server/utils/persistConfig';
 import type { Actions } from './$types';
 
+interface RawTagGroup {
+	_id: string;
+	name: string;
+	tagIds: string[];
+	createdAt?: string | Date;
+	updatedAt?: string | Date;
+}
+
 export const load = async ({}) => {
-	const tags = await collections.tags
-		.find({})
-		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
-		.toArray();
+	const [tags, tagGroups] = await Promise.all([
+		collections.tags.find({}).project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 }).toArray(),
+		collections.tagGroups.find({}).sort({ order: 1 }).toArray()
+	]);
 	const supportedTapToPayProviders = ['not-used', 'stripe'] as const;
 	const tapToPayProviders: { provider: string; displayName: string; available: boolean }[] =
 		supportedTapToPayProviders.map((provider) => {
@@ -34,6 +44,16 @@ export const load = async ({}) => {
 		});
 	return {
 		tags: tags.filter((tag) => tag._id !== 'pos-favorite'),
+		tagGroups: tagGroups.map(
+			(g): TagGroup => ({
+				_id: g._id,
+				name: g.name,
+				tagIds: g.tagIds,
+				order: g.order,
+				createdAt: g.createdAt,
+				updatedAt: g.updatedAt
+			})
+		),
 		posTouchTag: runtimeConfig.posTouchTag,
 		posTabGroups: runtimeConfig.posTabGroups,
 		posPoolEmptyIcon: runtimeConfig.posPoolEmptyIcon,
@@ -72,6 +92,13 @@ export const actions: Actions = {
 			throw error(400, 'No posTouchTag provided');
 		}
 		const posTouchTag = JSON.parse(String(posTouchTagString));
+
+		const tagGroupsString = formData.get('tagGroups');
+		const tagGroupsParsed = tagGroupsString
+			? JSON.parse(String(tagGroupsString))
+					.filter((group: { name: string }) => group.name.trim() !== '')
+					.map((group: RawTagGroup, index: number) => ({ ...group, order: index }))
+			: [];
 
 		const result = z
 			.object({
@@ -156,6 +183,22 @@ export const actions: Actions = {
 		runtimeConfig.posTapToPay = posTapToPay;
 		await persistConfigElement('posSession', result.posSession);
 		runtimeConfig.posSession = result.posSession;
+
+		await collections.tagGroups.deleteMany({});
+		if (tagGroupsParsed.length > 0) {
+			const groupsToInsert = tagGroupsParsed.map((group: RawTagGroup & { order: number }) => ({
+				_id: group._id.startsWith('temp-') ? new ObjectId().toHexString() : group._id,
+				name: group.name,
+				tagIds: group.tagIds,
+				order: group.order,
+				createdAt: group._id.startsWith('temp-')
+					? new Date()
+					: new Date(group.createdAt ?? new Date()),
+				updatedAt: new Date()
+			}));
+			await collections.tagGroups.insertMany(groupsToInsert);
+		}
+
 		throw redirect(303, `${adminPrefix()}/pos`);
 	}
 };

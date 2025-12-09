@@ -641,10 +641,17 @@
 		},
 		"vatFree": "Dies ist eine mehrwertsteuerfreie Bestellung (Bedingungen)",
 		"vatFreeReason": "Grund für Mehrwertsteuerbefreiung",
+		"tagGroups": {
+			"addGroup": "Gruppe hinzufügen",
+			"deleteGroup": "Gruppe löschen",
+			"groupNamePlaceholder": "Gruppenname",
+			"tooManyTagsWarning": "Die Gruppe \"{groupName}\" hat {count} Tags. Zu viele für den Button-Modus. Aktivieren Sie \"Auswahlmenü verwenden\" oder reduzieren Sie die Tags. Fortfahren?"
+		},
 		"touch": {
 			"selectTab": "Tab auswählen:",
 			"noTabs": "Diese Gruppe hat keine Tabs",
 			"cancel": "Abbrechen",
+			"back": "← Zurück",
 			"ticketNumber": "TICKET Nr.",
 			"exclVat": "oM",
 			"inclVat": "iM",
