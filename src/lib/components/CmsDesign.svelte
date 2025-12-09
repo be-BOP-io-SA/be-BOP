@@ -34,6 +34,12 @@
 	import { get } from '$lib/utils/get';
 
 	export let products: CmsProduct[];
+	export let externalProducts: Array<
+		import('$lib/components/ProductWidget/ProductWidgetProduct').ProductWidgetProduct & {
+			externalUrl: string;
+			pictures: import('$lib/types/Picture').Picture[];
+		}
+	> = [];
 	export let pictures: CmsPicture[];
 	export let challenges: CmsChallenge[];
 	export let tokens: CmsTokens;
@@ -66,6 +72,9 @@
 	);
 
 	$: productById = Object.fromEntries(products.map((product) => [product._id, product]));
+	$: externalProductById = Object.fromEntries(
+		externalProducts.map((product) => [product.externalUrl, product])
+	);
 	$: digitalFilesByProduct = Object.fromEntries(
 		digitalFiles.map((digitalFile) => [digitalFile.productId, digitalFile])
 	);
@@ -156,6 +165,18 @@
 					canBuy={hasPosOptions
 						? productById[token.slug].actionSettings.retail.canBeAddedToBasket
 						: productById[token.slug].actionSettings.eShop.canBeAddedToBasket}
+					class="not-prose my-5"
+				/>
+			{:else if token.type === 'externalProductWidget' && externalProductById[token.url]}
+				{@const externalProduct = externalProductById[token.url]}
+				{@const picturesForWidget = externalProduct.pictures ?? []}
+				<ProductWidget
+					product={externalProduct}
+					pictures={picturesForWidget}
+					hasDigitalFiles={false}
+					displayOption={token.display}
+					canBuy={false}
+					externalUrl={token.url}
 					class="not-prose my-5"
 				/>
 			{:else if token.type === 'tagProducts' && productsByTag(token.slug)}
