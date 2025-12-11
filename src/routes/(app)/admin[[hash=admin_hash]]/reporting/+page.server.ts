@@ -80,7 +80,13 @@ export async function load({ url }) {
 				product: {
 					...item.product,
 					vatProfileId: item.product.vatProfileId?.toString()
-				}
+				},
+				booking: item.booking
+					? {
+							...item.booking,
+							_id: item.booking._id.toString()
+					  }
+					: undefined
 			})),
 			billingAddress: order.billingAddress,
 			shippingAddress: order.shippingAddress,
