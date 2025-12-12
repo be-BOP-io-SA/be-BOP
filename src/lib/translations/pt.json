@@ -641,10 +641,17 @@
 		},
 		"vatFree": "Esta é uma encomenda isenta de IVA (condições)",
 		"vatFreeReason": "Motivo de isenção de IVA",
+		"tagGroups": {
+			"addGroup": "Adicionar grupo",
+			"deleteGroup": "Eliminar grupo",
+			"groupNamePlaceholder": "Nome do grupo",
+			"tooManyTagsWarning": "O grupo \"{groupName}\" tem {count} etiquetas. Demasiadas para o modo de botões. Ative a opção \"Usar menu de seleção\" ou reduza as etiquetas. Continuar?"
+		},
 		"touch": {
 			"selectTab": "Selecionar um separador:",
 			"noTabs": "Este grupo não tem separadores",
 			"cancel": "Cancelar",
+			"back": "← Voltar",
 			"ticketNumber": "BILHETE n°",
 			"exclVat": "SEM",
 			"inclVat": "COM",

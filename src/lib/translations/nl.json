@@ -641,10 +641,17 @@
 		},
 		"vatFree": "Dit is een BTW-vrije bestelling (<0>voorwaarden</0>)",
 		"vatFreeReason": "BTW-vrije reden",
+		"tagGroups": {
+			"addGroup": "Groep toevoegen",
+			"deleteGroup": "Groep verwijderen",
+			"groupNamePlaceholder": "Groepsnaam",
+			"tooManyTagsWarning": "Groep \"{groupName}\" heeft {count} tags. Te veel voor knoppenmodus. Activeer \"Gebruik selectiemenu\" optie of verminder tags. Doorgaan?"
+		},
 		"touch": {
 			"selectTab": "Selecteer een tabblad:",
 			"noTabs": "Deze groep heeft geen tabbladen",
 			"cancel": "Annuleren",
+			"back": "← Terug",
 			"ticketNumber": "TICKET nr.",
 			"exclVat": "EX",
 			"inclVat": "INC",

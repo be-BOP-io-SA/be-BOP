@@ -1,40 +1,86 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n';
 	import type { Tag } from '$lib/types/Tag';
+	import type { TagGroup } from '$lib/types/TagGroup';
 
 	export let tags: Pick<Tag, '_id' | 'name'>[];
+	export let tagGroups: Pick<TagGroup, '_id' | 'name' | 'tagIds'>[] = [];
 	export let currentFilter: string;
 	export let onSelect: (filterId: string) => void;
 
 	const { t } = useI18n();
 
 	let isOpen = false;
+	let currentGroupId: string | null = null;
 
 	interface Option {
 		id: string;
 		label: string;
+		type: 'special' | 'group' | 'tag';
 	}
 
-	$: options = [
-		{ id: 'pos-favorite', label: t('pos.touch.favorites') },
-		...tags.map((tag) => ({ id: tag._id, label: tag.name })),
-		{ id: 'all', label: t('pos.touch.allProducts') }
-	] as Option[];
+	$: shouldShowGroups = tagGroups.length >= 2;
 
-	$: currentLabel =
-		options.find((opt) => opt.id === currentFilter)?.label || t('pos.touch.favorites');
+	// Level 1: Groups or flat tags
+	$: level1Options = shouldShowGroups
+		? [
+				{ id: 'pos-favorite', label: t('pos.touch.favorites'), type: 'special' as const },
+				...tagGroups.map((g) => ({ id: g._id, label: g.name, type: 'group' as const })),
+				{ id: 'all', label: t('pos.touch.allProducts'), type: 'special' as const }
+		  ]
+		: [
+				{ id: 'pos-favorite', label: t('pos.touch.favorites'), type: 'tag' as const },
+				...tags.map((t) => ({ id: t._id, label: t.name, type: 'tag' as const })),
+				{ id: 'all', label: t('pos.touch.allProducts'), type: 'tag' as const }
+		  ];
+
+	// Level 2: Tags in selected group
+	$: level2Options = currentGroupId
+		? (() => {
+				const group = tagGroups.find((g) => g._id === currentGroupId);
+				return group
+					? tags
+							.filter((t) => group.tagIds.includes(t._id))
+							.map((t) => ({ id: t._id, label: t.name, type: 'tag' as const }))
+					: [];
+		  })()
+		: [];
+
+	$: options = level2Options.length > 0 ? level2Options : level1Options;
+	$: showBackButton = currentGroupId !== null;
+
+	$: currentLabel = (() => {
+		if (currentFilter === 'pos-favorite') {
+			return t('pos.touch.favorites');
+		}
+		if (currentFilter === 'all') {
+			return t('pos.touch.allProducts');
+		}
+		const tag = tags.find((t) => t._id === currentFilter);
+		return tag ? tag.name : t('pos.touch.favorites');
+	})();
 
 	function toggleDropdown() {
 		isOpen = !isOpen;
 	}
 
-	function selectOption(optionId: string) {
-		onSelect(optionId);
-		isOpen = false;
+	function selectOption(option: Option) {
+		if (option.type === 'group') {
+			currentGroupId = option.id;
+		} else {
+			onSelect(option.id);
+			currentGroupId = null;
+			isOpen = false;
+		}
+	}
+
+	function goBack() {
+		currentGroupId = null;
 	}
 
 	function closeDropdown() {
 		isOpen = false;
+		currentGroupId = null;
 	}
 </script>
 
@@ -79,6 +125,17 @@
 			role="menu"
 			tabindex="-1"
 		>
+			{#if showBackButton}
+				<button
+					type="button"
+					class="w-full text-left px-6 py-4 text-2xl font-medium uppercase border-b border-gray-300 bg-gray-50 hover:bg-gray-100"
+					on:click={goBack}
+					role="menuitem"
+				>
+					{t('pos.touch.back')}
+				</button>
+			{/if}
+
 			{#each options as option}
 				<button
 					type="button"
@@ -86,10 +143,13 @@
 					currentFilter
 						? 'bg-purple-100 text-purple-600 font-bold'
 						: 'text-gray-900'}"
-					on:click={() => selectOption(option.id)}
+					on:click={() => selectOption(option)}
 					role="menuitem"
 				>
 					{option.label}
+					{#if option.type === 'group'}
+						<span class="float-right">→</span>
+					{/if}
 				</button>
 			{/each}
 		</div>
