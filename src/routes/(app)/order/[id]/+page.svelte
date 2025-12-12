@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { navigating, page } from '$app/stores';
 	import OrderSummary from '$lib/components/OrderSummary.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import Trans from '$lib/components/Trans.svelte';
@@ -39,6 +39,10 @@
 		const interval = setInterval(() => {
 			currentDate = new Date();
 
+			if ($navigating) {
+				return;
+			}
+
 			if (
 				data.order.status === 'pending' ||
 				data.order.payments.some((p) => p.invoice?.number === FAKE_ORDER_INVOICE_NUMBER)
@@ -63,7 +67,9 @@
 	let ticketIframe: HTMLIFrameElement | null = null;
 	let ticketReady = false;
 
-	$: remainingAmount = orderAmountWithNoPaymentsCreated(data.order);
+	$: remainingAmount = orderAmountWithNoPaymentsCreated(data.order, {
+		ignorePendingPayments: true
+	});
 	let disableInfoChange = true;
 	function confirmCancel(event: Event) {
 		if (!confirm(t('order.confirmCancel'))) {
@@ -891,6 +897,14 @@
 								>{t('order.note.seeText')}</a
 							>
 							{#if data.order.orderTabSlug}
+								{#if data.splitMode}
+									<a
+										href="/pos/touch/tab/{data.order.orderTabSlug}/split?mode={data.splitMode}"
+										class="btn lg:w-auto w-full btn-black self-end"
+									>
+										{t('pos.split.continueSplit', { mode: data.splitMode })}
+									</a>
+								{/if}
 								<a
 									href="/pos/touch/tab/{data.order.orderTabSlug}"
 									class="btn lg:w-auto w-full btn-gray self-end"
