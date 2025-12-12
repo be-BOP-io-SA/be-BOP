@@ -49,6 +49,9 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 		total: number;
 		reserved: number;
 	};
+	stockReference?: {
+		productId: string;
+	};
 	vatProfileId?: ObjectId;
 	maxQuantityPerOrder?: number;
 	type: 'subscription' | 'resource' | 'donation';
