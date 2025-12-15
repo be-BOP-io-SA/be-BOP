@@ -452,7 +452,10 @@
 		"addPayment": {
 			"amount": "Payment amount",
 			"cta": "Send a call for payment",
-			"currency": "Payment currency"
+			"currency": "Payment currency",
+			"posSubtype": "Type",
+			"submit": "Add",
+			"title": "Add payment"
 		},
 		"backToOrder": "<< Back to order",
 		"clickQR": "Click on the QR code to pay with your wallet",
@@ -706,6 +709,25 @@
 			"completeSharesFirst": "You have already started paying for the pool through \"Split (shares)\" payments. Please complete all payments and close the pool first. ",
 			"closePool": "Close pool",
 			"globalTicket": "Global ticket"
+		},
+		"btn": {
+			"add": "Add",
+			"cancel": "Cancel",
+			"paid": "Paid",
+			"replace": "Change ▾",
+			"replaceSubmit": "Change",
+			"tapToPay": "Card Tap",
+			"cancelTap": "Stop Tap"
+		},
+		"input": {
+			"txNumber": "TX #",
+			"detail": "Detail"
+		},
+		"label": {
+			"amount": "Amount",
+			"currency": "Currency",
+			"method": "Method",
+			"subtype": "Type"
 		},
 		"discount": {
 			"title": "Discount",

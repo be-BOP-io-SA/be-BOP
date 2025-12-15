@@ -37,6 +37,12 @@
 
 	export let data;
 
+	// Hide header/footer in POS mode on specific routes
+	$: hideHeaderFooter =
+		data.hasPosOptions &&
+		['/pos', '/order', '/checkout'].some((path) => $page.url.pathname.startsWith(path)) &&
+		$page.url.searchParams.get('returnTo')?.startsWith('/pos/touch');
+
 	let topMenuOpen = false;
 	let navMenuOpen = false;
 
@@ -135,7 +141,7 @@
 	{#if $page.data.layoutReset || $page.url.searchParams.get('display') === 'headless'}
 		<slot />
 	{:else}
-		<header class="header items-center flex h-[100px] print:hidden">
+		<header class="header items-center flex h-[100px] print:hidden" class:hidden={hideHeaderFooter}>
 			<div class="mx-auto max-w-7xl flex items-center gap-6 px-6 grow">
 				<a class="flex items-center gap-4" href="/">
 					{#if data.logoPicture}
@@ -183,6 +189,7 @@
 			<nav
 				transition:slide
 				class="header print:hidden header-tab flex flex-col lg:hidden text-[22px] font-semibold border-x-0 border-b-0 border-opacity-25 border-t-1 border-white px-10 py-4"
+				class:hidden={hideHeaderFooter}
 			>
 				{#each data.links.topbar as link}
 					<a
@@ -196,7 +203,7 @@
 				{/each}
 			</nav>
 		{/if}
-		<header class="navbar h-[66px] items-center flex print:hidden">
+		<header class="navbar h-[66px] items-center flex print:hidden" class:hidden={hideHeaderFooter}>
 			<div class="mx-auto max-w-7xl flex items-center gap-6 px-6 grow">
 				<nav class="flex gap-6 font-light items-center">
 					<button
@@ -547,7 +554,7 @@
 			</div>
 		{/if}
 
-		<footer class="footer h-auto items-center flex print:hidden">
+		<footer class="footer h-auto items-center flex print:hidden" class:hidden={hideHeaderFooter}>
 			<div
 				class="mx-auto max-w-7xl px-6 py-6 items-start justify-between gap-y-8 w-full grid grid-cols-1 lg:flex lg:flex-wrap gap-4"
 			>
