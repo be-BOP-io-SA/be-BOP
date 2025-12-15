@@ -100,6 +100,37 @@ export async function concludeOrderTab({ slug }: { slug: string }) {
 	await collections.orderTabs.deleteOne({ slug });
 }
 
+async function applyPoolDiscountToCartItems(
+	cartItems: Array<{ productId: string; discountPercentage?: number }>,
+	poolDiscount: OrderTab['discount']
+) {
+	if (!poolDiscount || poolDiscount.percentage <= 0) {
+		return;
+	}
+
+	if (poolDiscount.tagId) {
+		const filterTagId = poolDiscount.tagId;
+		const productIds = cartItems.map((item) => item.productId);
+		const products = await collections.products
+			.find({ _id: { $in: productIds } })
+			.project<{ _id: string; tagIds?: string[] }>({ _id: 1, tagIds: 1 })
+			.toArray();
+
+		const productTagsMap = new Map(products.map((p) => [p._id, p.tagIds ?? []]));
+
+		cartItems.forEach((item) => {
+			const productTags = productTagsMap.get(item.productId) ?? [];
+			if (productTags.includes(filterTagId)) {
+				item.discountPercentage = poolDiscount.percentage;
+			}
+		});
+	} else {
+		cartItems.forEach((item) => {
+			item.discountPercentage = poolDiscount.percentage;
+		});
+	}
+}
+
 export async function checkoutOrderTab({
 	slug,
 	user,
@@ -107,6 +138,8 @@ export async function checkoutOrderTab({
 	itemQuantities
 }: CheckoutOrderTabParams) {
 	const orderTab = await getOrCreateOrderTab({ slug });
+
+	const poolDiscount = orderTab.discount;
 
 	// Build cart items
 	const cartItems = itemQuantities
@@ -135,6 +168,8 @@ export async function checkoutOrderTab({
 				internalNote: line.internalNote,
 				chosenVariations: line.chosenVariations
 		  }));
+
+	await applyPoolDiscountToCartItems(cartItems, poolDiscount);
 
 	const createResult = await collections.carts.insertOne({
 		_id: new ObjectId(),

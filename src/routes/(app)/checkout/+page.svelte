@@ -36,9 +36,9 @@
 	$: {
 		if (offerOrder) {
 			discountType = 'percentage';
-			discountAmount = 100;
+			discountAmount = 99;
 		} else {
-			if (discountType !== 'percentage' || discountAmount !== 100) {
+			if (discountType !== 'percentage' || discountAmount !== 99) {
 				offerOrder = false;
 			}
 		}
@@ -209,7 +209,7 @@
 	$: isDiscountValid =
 		(discountType === 'fiat' &&
 			priceInfo.totalPriceWithVat >= toSatoshis(discountAmount || 0, data.currencies.main)) ||
-		(discountType === 'percentage' && discountAmount <= 100);
+		(discountType === 'percentage' && discountAmount <= 99);
 	let showBillingInfo = false;
 	let isProfessionalOrder = false;
 	let changePaymentTimeOut = false;
