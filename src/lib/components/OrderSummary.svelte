@@ -29,6 +29,7 @@
 				| 'depositPercentage'
 				| 'discountPercentage'
 				| 'freeQuantity'
+				| 'vatRate'
 			> & {
 				digitalFiles: Array<{ _id: string }>;
 				picture?: Picture;
@@ -63,6 +64,26 @@
 			p.currencySnapshot.main.price.amount < order.currencySnapshot.main.totalPrice.amount &&
 			(p.status === 'expired' || p.status === 'canceled')
 	);
+
+	// Calculate total discount from all items with discountPercentage
+	const calculateTotalDiscount = (currency: 'main' | 'secondary') =>
+		order.items.reduce(
+			(sum, item) => {
+				if (!item.discountPercentage || !item.currencySnapshot[currency]) {
+					return sum;
+				}
+				const priceWithoutVat = orderItemPriceUndiscounted(item, currency);
+				const priceWithVat = priceWithoutVat * (1 + item.vatRate / 100);
+				const discount = priceWithVat * (item.discountPercentage / 100);
+				return sum + discount;
+			},
+			0
+		);
+
+	$: totalDiscountAmount = calculateTotalDiscount('main');
+	$: totalDiscountAmountSecondary = order.currencySnapshot.secondary
+		? calculateTotalDiscount('secondary')
+		: 0;
 </script>
 
 <article
@@ -206,24 +227,40 @@
 		<div class="border-b border-gray-300 col-span-4" />
 	{/each}
 
-	{#if order?.discount}
+	{#if totalDiscountAmount > 0 || order?.discount}
 		<div class="flex justify-between items-center">
 			<h3 class="text-base flex items-center gap-2">
 				{t('order.discount.title')}
 			</h3>
 
 			<div class="flex flex-col ml-auto items-end justify-center">
-				{#if order.currencySnapshot.main.discount}
+				{#if order?.discount && order.currencySnapshot.main.discount}
+					<!-- Old discount mechanism (from /checkout) -->
 					<PriceTag
 						class="text-2xl truncate"
 						amount={order.currencySnapshot.main.discount.amount}
 						currency={order.currencySnapshot.main.discount.currency}
 					/>
+				{:else}
+					<!-- New discount mechanism (from POS pool via item.discountPercentage) -->
+					<PriceTag
+						class="text-2xl truncate"
+						amount={totalDiscountAmount}
+						currency={order.currencySnapshot.main.totalPrice.currency}
+					/>
 				{/if}
-				{#if order.currencySnapshot.secondary?.discount}
+				{#if order?.discount && order.currencySnapshot.secondary?.discount}
+					<!-- Old discount mechanism secondary currency -->
 					<PriceTag
 						amount={order.currencySnapshot.secondary.discount.amount}
 						currency={order.currencySnapshot.secondary.discount.currency}
+						class="text-base truncate"
+					/>
+				{:else if order.currencySnapshot.secondary && totalDiscountAmountSecondary > 0}
+					<!-- New discount mechanism secondary currency -->
+					<PriceTag
+						amount={totalDiscountAmountSecondary}
+						currency={order.currencySnapshot.secondary.totalPrice.currency}
 						class="text-base truncate"
 					/>
 				{/if}
