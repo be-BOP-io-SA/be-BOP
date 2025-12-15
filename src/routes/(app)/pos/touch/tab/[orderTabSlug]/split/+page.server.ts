@@ -255,7 +255,8 @@ export const actions = {
 						quantity: cartItem.quantity,
 						product,
 						internalNote: cartItem.internalNote,
-						chosenVariations: cartItem.chosenVariations
+						chosenVariations: cartItem.chosenVariations,
+						discountPercentage: cartItem.discountPercentage
 					};
 				});
 
@@ -264,7 +265,15 @@ export const actions = {
 					user,
 					userVatCountry: runtimeConfig.vatCountry,
 					shippingAddress: null,
-					cart
+					cart,
+					...(cart.poolDiscount &&
+						cart.poolDiscount.percentage > 0 && {
+							discount: {
+								amount: cart.poolDiscount.percentage,
+								type: 'percentage',
+								justification: cart.poolDiscount.motive || 'Pool discount'
+							}
+						})
 				});
 
 				order = await collections.orders.findOne({ _id: orderId });
