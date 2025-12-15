@@ -23,6 +23,11 @@ export interface OrderTab extends Timestamps {
 	items: Array<OrderTabItem>;
 	processedPayments?: string[];
 	printHistory?: PrintHistoryEntry[];
+	discount?: {
+		percentage: number;
+		tagId?: string;
+		motive?: string;
+	};
 }
 
 export interface OrderTabPoolStatus {
