@@ -76,7 +76,11 @@ async function hydratedOrderItems(
 }
 
 async function getHydratedOrderTab(locale: Locale, tab: OrderTab) {
-	return { slug: tab.slug, items: await hydratedOrderItems(locale, tab.items) };
+	return {
+		slug: tab.slug,
+		items: await hydratedOrderItems(locale, tab.items),
+		discount: tab.discount
+	};
 }
 
 export const load = async ({ depends, locals, params }) => {
@@ -255,7 +259,8 @@ export const actions = {
 						quantity: cartItem.quantity,
 						product,
 						internalNote: cartItem.internalNote,
-						chosenVariations: cartItem.chosenVariations
+						chosenVariations: cartItem.chosenVariations,
+						discountPercentage: cartItem.discountPercentage
 					};
 				});
 

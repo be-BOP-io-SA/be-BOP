@@ -61,6 +61,14 @@ const printHistoryEntrySchema = z.object({
 	)
 });
 
+const discountSchema = z
+	.object({
+		percentage: z.number().min(0).max(99),
+		tagId: z.string().optional(),
+		motive: z.string().max(500).optional()
+	})
+	.nullable();
+
 async function hydratedOrderItems(
 	locale: Locale,
 	tabItems: OrderTab['items']
@@ -274,6 +282,36 @@ export const actions = {
 				},
 				$set: { updatedAt: new Date() }
 			}
+		);
+	},
+	updateDiscount: async ({ request, params }) => {
+		const formData = await request.formData();
+		const discountJson = formData.get('discount');
+
+		if (typeof discountJson !== 'string') {
+			throw error(400, 'Invalid discount data');
+		}
+
+		const discount = discountSchema.parse(JSON.parse(discountJson));
+
+		const orderTab = await collections.orderTabs.findOne(
+			{ slug: params.orderTabSlug },
+			{ projection: { processedPayments: 1 } }
+		);
+
+		if (!orderTab) {
+			throw error(404, 'Order tab not found');
+		}
+
+		if (orderTab.processedPayments?.length) {
+			throw error(403, 'Cannot modify discount after payment has started');
+		}
+
+		await collections.orderTabs.updateOne(
+			{ slug: params.orderTabSlug },
+			discount && discount.percentage > 0
+				? { $set: { discount, updatedAt: new Date() } }
+				: { $unset: { discount: 1 }, $set: { updatedAt: new Date() } }
 		);
 	}
 };
