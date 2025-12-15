@@ -20,6 +20,7 @@
 	import PrintableTicket from '$lib/components/PrintableTicket.svelte';
 	import type { PrintTicketOptions } from '$lib/types/PrintTicketOptions';
 	import type { PrintHistoryEntry } from '$lib/types/PrintHistoryEntry';
+	import { z } from 'zod';
 
 	export let data;
 	$: tabSlug = data.tabSlug;
@@ -324,6 +325,37 @@
 			window.print();
 		}, 100);
 	}
+
+	// Discount UI state
+	let rightPanel: 'products' | 'discount' = 'products';
+	let selectedPercentage = 0;
+	let selectedTagId: string | null = null;
+	let discountMotive = '';
+	let showManualInput = false;
+	let manualPercentage = '';
+	let discountError = '';
+
+	$: isDiscountLocked = !!data.orderTab.processedPayments?.length;
+	$: discountData =
+		selectedPercentage > 0
+			? JSON.stringify({
+					percentage: selectedPercentage,
+					...(selectedTagId && { tagId: selectedTagId }),
+					...(discountMotive.trim() && { motive: discountMotive.trim() })
+			  })
+			: JSON.stringify(null);
+
+	const PRESET_PERCENTAGES = [10, 20, 25, 50, 75];
+	const percentageSchema = z.coerce.number().min(0).max(99);
+
+	function openDiscountPanel() {
+		rightPanel = 'discount';
+		selectedPercentage = data.orderTab.discount?.percentage ?? 0;
+		selectedTagId = data.orderTab.discount?.tagId ?? null;
+		discountMotive = data.orderTab.discount?.motive ?? '';
+		showManualInput = false;
+		manualPercentage = '';
+	}
 </script>
 
 {#if tabSelectModalOpen}
@@ -387,7 +419,7 @@
 
 <div class="flex flex-col h-screen justify-between min-h-min" inert={itemToEditIndex !== undefined}>
 	<main class="mb-auto flex-grow overflow-y-auto">
-		<div class="grid grid-cols-3 gap-4 h-full">
+		<div class="grid {rightPanel === 'discount' ? 'grid-cols-2' : 'grid-cols-3'} gap-4 h-full">
 			<div class="touchScreen-ticket-menu p-3 h-full overflow-y-auto flex flex-col">
 				{#if items.length}
 					<h3 class="text-3xl">{poolLabel}</h3>
@@ -478,123 +510,330 @@
 					<p>{t('cart.empty')}</p>
 				{/if}
 			</div>
-			<div class="col-span-2 overflow-y-auto">
-				<div class="grid grid-cols-2 gap-4 text-3xl text-center">
-					{#if data.posUseSelectForTags}
-						<!-- Select menu mode -->
-						<div class="col-span-2">
-							<CategorySelect
-								tags={data.posTouchScreenTags}
-								currentFilter={filter}
-								onSelect={handleCategorySelect}
-							/>
-						</div>
-					{:else}
-						<!-- Button mode (current) -->
-						<a
-							class="col-span-2 touchScreen-category-cta"
-							href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}>{t('pos.touch.favorites')}</a
-						>
-						{#each data.posTouchScreenTags as favoriteTag}
-							<a
-								class="touchScreen-category-cta"
-								href={selfPageLink({ filter: favoriteTag._id, skip: 0 })}>{favoriteTag.name}</a
-							>
-						{/each}
-						<a
-							class="col-span-2 touchScreen-category-cta"
-							href={selfPageLink({ filter: 'all', skip: 0 })}
-						>
-							{t('pos.touch.allProducts')}</a
-						>
-					{/if}
-
-					<div class="col-span-2 grid grid-cols-2 gap-4">
-						{#each displayedProducts as product}
-							{#if !isPreorder(product.availableDate, product.preorder)}
-								<ProductWidgetPOS
-									{product}
-									{tabSlug}
-									pictures={picturesByProduct[product._id] ?? []}
+			<div class="{rightPanel === 'discount' ? '' : 'col-span-2'} overflow-y-auto">
+				{#if rightPanel === 'products'}
+					<div class="grid grid-cols-2 gap-4 text-3xl text-center">
+						{#if data.posUseSelectForTags}
+							<!-- Select menu mode -->
+							<div class="col-span-2">
+								<CategorySelect
+									tags={data.posTouchScreenTags}
+									currentFilter={filter}
+									onSelect={handleCategorySelect}
 								/>
-							{/if}
-						{/each}
-						<div class="col-span-2 grid-cols-1 flex gap-2 justify-center">
-							{#if next > 0}
+							</div>
+						{:else}
+							<!-- Button mode (current) -->
+							<a
+								class="col-span-2 touchScreen-category-cta"
+								href={selfPageLink({ filter: 'pos-favorite', skip: 0 })}
+								>{t('pos.touch.favorites')}</a
+							>
+							{#each data.posTouchScreenTags as favoriteTag}
 								<a
-									class="btn touchScreen-product-secondaryCTA text-3xl"
-									on:click={() => (next = Math.max(0, next - posProductPagination))}
-									href={selfPageLink({ filter, skip: Math.max(0, next) })}>&lt;</a
+									class="touchScreen-category-cta"
+									href={selfPageLink({ filter: favoriteTag._id, skip: 0 })}>{favoriteTag.name}</a
 								>
-							{/if}
-							{t('pos.touch.pagination', { currentPage, totalPages })}
-							{#if next + posProductPagination < productFiltered.length}
-								<a
-									class="btn touchScreen-product-secondaryCTA text-3xl"
-									on:click={() => (next += posProductPagination)}
-									href={selfPageLink({ filter, skip: next })}>&gt;</a
-								>
-							{/if}
+							{/each}
+							<a
+								class="col-span-2 touchScreen-category-cta"
+								href={selfPageLink({ filter: 'all', skip: 0 })}
+							>
+								{t('pos.touch.allProducts')}</a
+							>
+						{/if}
+
+						<div class="col-span-2 grid grid-cols-2 gap-4">
+							{#each displayedProducts as product}
+								{#if !isPreorder(product.availableDate, product.preorder)}
+									<ProductWidgetPOS
+										{product}
+										{tabSlug}
+										pictures={picturesByProduct[product._id] ?? []}
+									/>
+								{/if}
+							{/each}
+							<div class="col-span-2 grid-cols-1 flex gap-2 justify-center">
+								{#if next > 0}
+									<a
+										class="btn touchScreen-product-secondaryCTA text-3xl"
+										on:click={() => (next = Math.max(0, next - posProductPagination))}
+										href={selfPageLink({ filter, skip: Math.max(0, next) })}>&lt;</a
+									>
+								{/if}
+								{t('pos.touch.pagination', { currentPage, totalPages })}
+								{#if next + posProductPagination < productFiltered.length}
+									<a
+										class="btn touchScreen-product-secondaryCTA text-3xl"
+										on:click={() => (next += posProductPagination)}
+										href={selfPageLink({ filter, skip: next })}>&gt;</a
+									>
+								{/if}
+							</div>
 						</div>
 					</div>
-				</div>
+				{:else if rightPanel === 'discount'}
+					<!-- Discount UI -->
+					<div class="flex flex-col h-full gap-4 p-4 overflow-y-auto bg-yellow-50">
+						<h2 class="text-4xl font-semibold mb-2">{t('pos.discount.title')}</h2>
+
+						<!-- Percentage buttons grid -->
+						<div class="grid grid-cols-3 gap-3">
+							<button
+								class="col-span-3 text-2xl font-bold p-4 rounded {selectedPercentage === 0 &&
+								!showManualInput
+									? 'bg-blue-800'
+									: 'bg-yellow-800'} text-white"
+								disabled={isDiscountLocked}
+								on:click={() => {
+									selectedPercentage = 0;
+									showManualInput = false;
+								}}
+							>
+								{t('pos.discount.noDiscount')}
+							</button>
+
+							{#each PRESET_PERCENTAGES as percentage}
+								<button
+									class="text-2xl font-bold p-4 rounded {selectedPercentage === percentage &&
+									!showManualInput
+										? 'bg-blue-800'
+										: 'bg-yellow-800'} text-white"
+									disabled={isDiscountLocked}
+									on:click={() => {
+										selectedPercentage = percentage;
+										showManualInput = false;
+									}}
+								>
+									{percentage}%
+								</button>
+							{/each}
+
+							<button
+								class="col-span-3 text-2xl font-bold p-4 rounded {showManualInput
+									? 'bg-blue-800'
+									: 'bg-yellow-800'} text-white"
+								disabled={isDiscountLocked}
+								on:click={() => {
+									showManualInput = true;
+									manualPercentage =
+										selectedPercentage > 0 && !PRESET_PERCENTAGES.includes(selectedPercentage)
+											? selectedPercentage.toString()
+											: '';
+								}}
+							>
+								{t('pos.discount.manualPercent')}
+							</button>
+						</div>
+
+						<!-- Manual percentage input -->
+						{#if showManualInput}
+							<div class="flex gap-2">
+								<input
+									type="number"
+									min="0"
+									max="100"
+									step="0.1"
+									bind:value={manualPercentage}
+									on:input={() => {
+										const result = percentageSchema.safeParse(manualPercentage);
+										if (result.success) {
+											selectedPercentage = result.data;
+										}
+									}}
+									placeholder={t('pos.discount.manualPercentPlaceholder')}
+									class="flex-1 text-3xl p-3 border-2 border-gray-300 rounded"
+									disabled={isDiscountLocked}
+								/>
+							</div>
+						{/if}
+
+						<!-- Tag filters -->
+						<h3 class="text-2xl font-semibold mt-4 mb-2">{t('pos.discount.applyToTag')}</h3>
+						<div class="grid grid-cols-3 gap-3">
+							{#each data.printTags as tag}
+								<button
+									class="text-2xl font-bold p-4 rounded {selectedTagId === tag._id
+										? 'bg-blue-800'
+										: 'bg-yellow-800'} text-white"
+									disabled={isDiscountLocked}
+									on:click={() => (selectedTagId = tag._id)}
+								>
+									{tag.name}
+								</button>
+							{/each}
+
+							<button
+								class="col-span-3 text-2xl font-bold p-4 rounded {selectedTagId === null
+									? 'bg-blue-800'
+									: 'bg-yellow-800'} text-white"
+								disabled={isDiscountLocked}
+								on:click={() => (selectedTagId = null)}
+							>
+								{t('pos.discount.allProducts')}
+							</button>
+						</div>
+
+						<!-- Current discount display -->
+						<div class="bg-white border-2 border-gray-300 p-4 rounded mt-4">
+							<p class="text-xl mb-2">
+								<strong>{t('pos.discount.currentDiscount')}</strong>
+								{#if data.orderTab.discount && data.orderTab.discount.percentage > 0}
+									{data.orderTab.discount.percentage}%
+									{#if data.orderTab.discount.tagId}
+										- {data.printTags.find((t) => t._id === data.orderTab.discount?.tagId)?.name ??
+											'Unknown tag'}
+									{:else}
+										- {t('pos.discount.allProducts')}
+									{/if}
+								{:else}
+									{t('pos.discount.none')}
+								{/if}
+							</p>
+							<p class="text-xl">
+								<strong>{t('pos.discount.motiveLabelOptional')}</strong>
+								{data.orderTab.discount?.motive ?? t('pos.discount.none')}
+							</p>
+						</div>
+
+						<!-- Motive input (optional) -->
+						<div>
+							<label for="motive" class="block text-2xl font-semibold mb-2"
+								>{t('pos.discount.motiveLabelOptional')}</label
+							>
+							<input
+								id="motive"
+								type="text"
+								bind:value={discountMotive}
+								placeholder={t('pos.discount.motivePlaceholder')}
+								class="w-full text-2xl p-3 border-2 border-gray-300 rounded"
+								disabled={isDiscountLocked}
+							/>
+						</div>
+
+						{#if discountError}
+							<div class="bg-red-100 border-2 border-red-400 p-4 rounded">
+								<p class="text-red-600 text-xl text-center">
+									{discountError}
+								</p>
+							</div>
+						{/if}
+
+						{#if isDiscountLocked}
+							<div class="bg-red-100 border-2 border-red-400 p-4 rounded">
+								<p class="text-red-600 text-xl text-center">
+									{t('pos.discount.lockedWarning')}
+								</p>
+							</div>
+						{/if}
+					</div>
+				{/if}
 			</div>
 		</div>
 	</main>
 	<footer class="shrink-0">
-		<div class="grid grid-cols-2 gap-4 mt-2">
-			<button
-				class="touchScreen-ticket-menu text-3xl p-4 text-center"
-				on:click={() => (tabSelectModalOpen = true)}>POOL</button
-			>
-			<button
-				class="touchScreen-action-secondaryCTA text-3xl p-4"
-				disabled={!items.length}
-				on:click={() => (printModalOpen = true)}>PRINT TICKETS</button
-			>
+		<div class="grid {rightPanel === 'discount' ? 'grid-cols-2' : 'grid-cols-3'} gap-4 mt-2">
+			{#if rightPanel === 'products'}
+				<button
+					class="touchScreen-ticket-menu text-3xl p-4 text-center"
+					on:click={() => (tabSelectModalOpen = true)}>POOL</button
+				>
+				<button
+					class="touchScreen-action-secondaryCTA text-3xl p-4"
+					disabled={!items.length}
+					on:click={() => (printModalOpen = true)}>PRINT TICKETS</button
+				>
+				<button
+					class="touchScreen-action-secondaryCTA text-3xl p-4 uppercase"
+					disabled={!items.length}
+					on:click={openDiscountPanel}>{t('pos.discount.title')}</button
+				>
+			{:else if rightPanel === 'discount'}
+				<button
+					class="touchScreen-action-cancel uppercase text-3xl text-white p-4 text-center"
+					on:click={() => (rightPanel = 'products')}
+				>
+					{t('pos.split.return')}
+				</button>
+
+				<form
+					method="POST"
+					action="?/updateDiscount"
+					use:enhance={() => {
+						discountError = '';
+						return async ({ result }) => {
+							if (result.type === 'error') {
+								discountError = result.error?.message || 'Failed to save discount';
+								return;
+							}
+							if (result.type === 'failure') {
+								discountError =
+									(result.data && typeof result.data === 'object' && 'message' in result.data
+										? String(result.data.message)
+										: null) || 'Failed to save discount';
+								return;
+							}
+							await invalidate(UrlDependency.orderTab(tabSlug));
+							rightPanel = 'products';
+						};
+					}}
+				>
+					<input type="hidden" name="discount" value={discountData} />
+					<button
+						type="submit"
+						class="bg-green-800 hover:bg-green-900 uppercase text-3xl text-white p-4 text-center w-full"
+						disabled={isDiscountLocked}
+					>
+						{t('pos.discount.save')}
+					</button>
+				</form>
+			{/if}
 		</div>
-		<div class="grid grid-cols-2 gap-4 mt-2">
-			<a
-				class="touchScreen-action-cta text-3xl p-4 text-center"
-				href="/pos/touch/tab/{tabSlug}/split"
-			>
-				{t('pos.touch.pay')}
-			</a>
-			<form
-				method="post"
-				class="grid grid-cols-2 gap-4"
-				use:enhance={(event) => {
-					if (!confirm(warningMessage)) {
-						event.cancel();
-						return;
-					}
-					return async ({ result }) => {
-						if (result.type === 'error') {
-							alert(result.error?.message);
-							return await applyAction(result);
+		<!-- eslint-disable-next-line svelte/no-dupe-else-if-blocks -->
+		{#if rightPanel === 'products'}
+			<div class="grid grid-cols-3 gap-4 mt-2">
+				<a
+					class="touchScreen-action-cta text-3xl p-4 text-center"
+					href="/pos/touch/tab/{tabSlug}/split"
+				>
+					{t('pos.touch.pay')}
+				</a>
+				<form
+					method="post"
+					class="col-span-2 grid grid-cols-2 gap-4"
+					use:enhance={(event) => {
+						if (!confirm(warningMessage)) {
+							event.cancel();
+							return;
 						}
-						await invalidate(UrlDependency.orderTab(tabSlug));
-					};
-				}}
-			>
-				<input type="hidden" name="tabSlug" value={tabSlug} />
-				{#if items.length}
-					<input type="hidden" name="tabItemId" value={items[items.length - 1].tabItemId} />
-				{/if}
-				<button
-					class="col-span-1 touchScreen-action-cancel text-3xl p-4 text-center"
-					disabled={!items.length}
-					formaction="/pos?/removeFromTab"
-					on:click={() => (warningMessage = t('pos.touch.confirmDeleteLastItem'))}>❎</button
+						return async ({ result }) => {
+							if (result.type === 'error') {
+								alert(result.error?.message);
+								return await applyAction(result);
+							}
+							await invalidate(UrlDependency.orderTab(tabSlug));
+						};
+					}}
 				>
-				<button
-					class="col-span-1 touchScreen-action-delete text-3xl p-4 text-center"
-					disabled={!items.length}
-					formaction="/pos/?/removeTab"
-					on:click={() => (warningMessage = t('pos.touch.confirmDeleteAllItems'))}>🗑️</button
-				>
-			</form>
-		</div>
+					<input type="hidden" name="tabSlug" value={tabSlug} />
+					{#if items.length}
+						<input type="hidden" name="tabItemId" value={items[items.length - 1].tabItemId} />
+					{/if}
+					<button
+						class="col-span-1 touchScreen-action-cancel text-3xl p-4 text-center"
+						disabled={!items.length}
+						formaction="/pos?/removeFromTab"
+						on:click={() => (warningMessage = t('pos.touch.confirmDeleteLastItem'))}>❎</button
+					>
+					<button
+						class="col-span-1 touchScreen-action-delete text-3xl p-4 text-center"
+						disabled={!items.length}
+						formaction="/pos/?/removeTab"
+						on:click={() => (warningMessage = t('pos.touch.confirmDeleteAllItems'))}>🗑️</button
+					>
+				</form>
+			</div>
+		{/if}
 	</footer>
 </div>
 

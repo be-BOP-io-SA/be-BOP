@@ -518,12 +518,20 @@
 						{#if data.sharesOrder}
 							<div class="bg-gray-100 p-6 rounded-lg space-y-3">
 								<div class="text-3xl font-semibold">{t('pos.split.totalAlreadyPaid')}</div>
+								{#if tab.discount && tab.discount.percentage > 0}
+									<!-- Show strikethrough undiscounted price -->
+									<div class="text-3xl font-bold line-through text-gray-500">
+										<PriceTag
+											amount={originalTabTotalWithVat}
+											currency={UNDERLYING_CURRENCY}
+											main
+										/>
+									</div>
+								{/if}
 								<div class="text-4xl font-bold">
 									<PriceTag
-										amount={isPoolFullyPaid
-											? originalTabTotalWithVat
-											: data.sharesOrder.totalAlreadyPaid}
-										currency={isPoolFullyPaid ? UNDERLYING_CURRENCY : data.sharesOrder.currency}
+										amount={data.sharesOrder.totalAlreadyPaid}
+										currency={data.sharesOrder.currency}
 										main
 									/>
 								</div>

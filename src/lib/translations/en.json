@@ -706,6 +706,20 @@
 			"completeSharesFirst": "You have already started paying for the pool through \"Split (shares)\" payments. Please complete all payments and close the pool first. ",
 			"closePool": "Close pool",
 			"globalTicket": "Global ticket"
+		},
+		"discount": {
+			"title": "Discount",
+			"noDiscount": "No discount",
+			"manualPercent": "Manual %",
+			"manualPercentPlaceholder": "Enter percentage (0-100)",
+			"applyToTag": "Apply to tag :",
+			"allProducts": "All products",
+			"currentDiscount": "Current discount:",
+			"none": "None",
+			"motiveLabelOptional": "Discount motive (optional):",
+			"motivePlaceholder": "e.g., Passeport gourmand",
+			"lockedWarning": "⚠️ Cannot modify discount after payment has started",
+			"save": "Save"
 		}
 	},
 	"product": {
