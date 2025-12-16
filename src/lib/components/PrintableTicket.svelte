@@ -59,6 +59,9 @@
 		: // Kitchen ticket without prices
 		  tagGroups
 				.flatMap((group) => [
+					'',
+					'',
+					'',
 					`TICKET ${poolLabel.toUpperCase()}`,
 					...(generatedAt ? [format(generatedAt, 'HH:mm').replace(':', 'h').toUpperCase()] : []),
 					'',
