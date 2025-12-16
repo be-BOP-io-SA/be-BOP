@@ -702,6 +702,7 @@
 			"pagination": "PAGINA {currentPage}/{totalPages}",
 			"tickets": "TICKETS",
 			"save": "OPSLAAN",
+			"moveItems": "Items verplaatsen",
 			"pool": "POOL",
 			"openDrawer": "LADE OPENEN",
 			"pay": "BETALEN",

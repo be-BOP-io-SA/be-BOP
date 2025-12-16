@@ -703,6 +703,7 @@
 			"pagination": "PÁGINA {currentPage}/{totalPages}",
 			"tickets": "BILHETES",
 			"save": "GUARDAR",
+			"moveItems": "Mover itens",
 			"pool": "POOL",
 			"openDrawer": "ABRIR GAVETA",
 			"pay": "PAGAR",

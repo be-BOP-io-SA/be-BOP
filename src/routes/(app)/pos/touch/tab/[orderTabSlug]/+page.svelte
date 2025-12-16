@@ -14,12 +14,13 @@
 	import { onMount } from 'svelte';
 	import ItemEditDialog from '$lib/components/ItemEditDialog.svelte';
 	import { computePriceInfo } from '$lib/cart.js';
-	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
+	import { UNDERLYING_CURRENCY, type Currency } from '$lib/types/Currency.js';
 	import { sluggifyTab } from '$lib/types/PosTabGroup.js';
 	import PrintTicketModal from '$lib/components/PrintTicketModal.svelte';
 	import PrintableTicket from '$lib/components/PrintableTicket.svelte';
 	import type { PrintTicketOptions } from '$lib/types/PrintTicketOptions';
 	import type { PrintHistoryEntry } from '$lib/types/PrintHistoryEntry';
+	import MoveItemsModal from '$lib/components/MoveItemsModal.svelte';
 	import { z } from 'zod';
 
 	export let data;
@@ -37,16 +38,25 @@
 			? data.products
 			: data.products.filter((product) => product.tagIds?.includes(filter));
 	$: items = data.orderTab.items.filter((item) => item.quantity > 0);
-	$: priceInfo = computePriceInfo(items, {
+	$: priceConfig = {
 		bebopCountry: data.vatCountry,
-		deliveryFees: { amount: 0, currency: UNDERLYING_CURRENCY },
+		deliveryFees: { amount: 0, currency: UNDERLYING_CURRENCY as Currency },
 		freeProductUnits: {},
 		userCountry: data.countryCode,
 		vatExempted: data.vatExempted,
 		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
 		vatSingleCountry: data.vatSingleCountry,
 		vatProfiles: data.vatProfiles
-	});
+	};
+
+	$: priceInfo = computePriceInfo(items, priceConfig);
+
+	$: availableTabs = data.posTabGroups.flatMap((group) =>
+		group.tabs.map((tab, idx) => ({
+			slug: sluggifyTab(data.posTabGroups, data.posTabGroups.indexOf(group), idx),
+			name: tab.label ?? `${group.name} ${idx + 1}`
+		}))
+	);
 
 	const { t } = useI18n();
 	let posProductPagination = POS_PRODUCT_PAGINATION;
@@ -120,6 +130,8 @@
 	});
 
 	let tabSelectModalOpen = false;
+	let moveItemsModalOpen = false;
+
 	function closeTabSelectModel() {
 		tabSelectModalOpen = false;
 	}
@@ -394,12 +406,23 @@
 			role="dialog"
 			aria-modal="true"
 		>
-			<button
-				class="absolute top-2 right-2 bg-gray-800 text-white text-2xl min-h-[3rem] py-2 px-4 rounded-md hover:bg-gray-900"
-				on:click={closeTabSelectModel}
-			>
-				{t('pos.touch.cancel')}
-			</button>
+			<div class="absolute top-2 right-2 flex gap-2">
+				<button
+					class="bg-blue-600 text-white text-2xl min-h-[3rem] py-2 px-4 rounded-md hover:bg-blue-700 uppercase"
+					on:click={() => {
+						closeTabSelectModel();
+						moveItemsModalOpen = true;
+					}}
+				>
+					{t('pos.touch.moveItems')}
+				</button>
+				<button
+					class="bg-gray-800 text-white text-2xl min-h-[3rem] py-2 px-4 rounded-md hover:bg-gray-900"
+					on:click={closeTabSelectModel}
+				>
+					{t('pos.touch.cancel')}
+				</button>
+			</div>
 
 			<h2 class="text-lg font-semibold mb-4">{t('pos.touch.selectTab')}</h2>
 
@@ -435,6 +458,17 @@
 		</div>
 	</div>
 {/if}
+
+<MoveItemsModal
+	isOpen={moveItemsModalOpen}
+	currentTabSlug={tabSlug}
+	{availableTabs}
+	allOrderTabs={data.allOrderTabs}
+	{priceConfig}
+	emptyIcon={data.posPoolEmptyIcon}
+	occupiedIcon={data.posPoolOccupiedIcon}
+	onClose={() => (moveItemsModalOpen = false)}
+/>
 
 <div class="flex flex-col h-screen justify-between min-h-min" inert={itemToEditIndex !== undefined}>
 	<main class="mb-auto flex-grow overflow-y-auto">
