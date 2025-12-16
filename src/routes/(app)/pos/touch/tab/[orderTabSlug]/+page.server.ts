@@ -323,5 +323,18 @@ export const actions = {
 				? { $set: { discount, updatedAt: new Date() } }
 				: { $unset: { discount: 1 }, $set: { updatedAt: new Date() } }
 		);
+	},
+	updatePeopleCount: async ({ request, params }) => {
+		const formData = await request.formData();
+		const peopleCountValue = formData.get('peopleCount');
+
+		const peopleCountFromPosUi = z.coerce.number().int().min(0).max(100).parse(peopleCountValue);
+
+		await collections.orderTabs.updateOne(
+			{ slug: params.orderTabSlug },
+			peopleCountFromPosUi > 0
+				? { $set: { peopleCountFromPosUi, updatedAt: new Date() } }
+				: { $unset: { peopleCountFromPosUi: 1 }, $set: { updatedAt: new Date() } }
+		);
 	}
 };
