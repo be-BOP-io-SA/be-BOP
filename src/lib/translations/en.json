@@ -569,7 +569,8 @@
 			"totalInclVat": "Total Incl. VAT",
 			"totalVat": "Total VAT",
 			"unitPrice": "Unit price",
-			"vatFreeReason": "Vat exempted: {reason}"
+			"vatFreeReason": "Vat exempted: {reason}",
+			"peopleCount": "Number of people"
 		},
 		"receiptFullyPaid": "Generate receipt(fully paid)",
 		"receiptPending": "Generate receipt(pending payment)",

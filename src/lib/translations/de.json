@@ -569,7 +569,8 @@
 			"totalInclVat": "Gesamtbetrag inkl. MwSt.",
 			"totalVat": "Gesamt-MwSt.",
 			"unitPrice": "Stückpreis",
-			"vatFreeReason": "MwSt.-befreit: {reason}"
+			"vatFreeReason": "MwSt.-befreit: {reason}",
+			"peopleCount": "Anzahl der Personen"
 		},
 		"receiptFullyPaid": "Quittung erstellen (vollständig bezahlt)",
 		"receiptPending": "Quittung erstellen (ausstehende Zahlung)",
