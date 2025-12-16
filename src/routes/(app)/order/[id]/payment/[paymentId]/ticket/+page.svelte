@@ -279,6 +279,11 @@
 				.iban}<br />BIC &nbsp; &nbsp;{identity.bank.bic}
 		</p>
 	{/if}
+	{#if data.order.peopleCountFromPosUi}
+		<p>
+			<br />{t('order.receipt.peopleCount')}: {data.order.peopleCountFromPosUi}
+		</p>
+	{/if}
 	{#if data.order.receiptNote}
 		<div class="mt-4 text-center">
 			<p>

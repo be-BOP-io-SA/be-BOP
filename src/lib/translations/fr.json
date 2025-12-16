@@ -566,7 +566,8 @@
 			"totalInclVat": "Total TTC",
 			"totalVat": "TVA totale",
 			"unitPrice": "Prix ​​unit. HT",
-			"vatFreeReason": "Exempt de TVA: {reason}"
+			"vatFreeReason": "Exempt de TVA: {reason}",
+			"peopleCount": "Nombre de personnes"
 		},
 		"receiptFullyPaid": "Générer un reçu (entièrement payé)",
 		"receiptPending": "Générer un reçu (en attente de paiement)",
@@ -616,6 +617,20 @@
 			"replacePayment": "Remplacer le mode de paiement",
 			"resendPaymentMethod": "Renvoyer le mode de paiement",
 			"updatePaymentInfo": "Mettre à jour les informations de paiement"
+		},
+		"discount": {
+			"title": "Remise",
+			"noDiscount": "Pas de remise",
+			"manualPercent": "% Manuel",
+			"manualPercentPlaceholder": "Entrer le pourcentage (0-100)",
+			"applyToTag": "Appliquer à l'étiquette :",
+			"allProducts": "Tous les produits",
+			"currentDiscount": "Remise actuelle :",
+			"none": "Aucune",
+			"motiveLabelOptional": "Motif de la remise (optionnel) :",
+			"motivePlaceholder": "par ex., Passeport gourmand",
+			"lockedWarning": "⚠️ Impossible de modifier la remise après le début du paiement",
+			"save": "Enregistrer"
 		},
 		"discountJustification": "Justification",
 		"invalidDiscount": "La réduction n'est pas valable !",

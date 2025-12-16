@@ -197,6 +197,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		orderTabSlug: order.orderTabSlug,
 		cartId: order.cartId?.toString(),
 		splitMode: order.splitMode,
+		peopleCountFromPosUi: order.peopleCountFromPosUi,
 		shippingPrice: order.shippingPrice && {
 			amount: order.shippingPrice.amount,
 			currency: order.shippingPrice.currency

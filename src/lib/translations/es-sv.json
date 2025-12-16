@@ -566,7 +566,8 @@
 			"totalInclVat": "Total con IVA",
 			"totalVat": "Total IVA",
 			"unitPrice": "Precio unitario",
-			"vatFreeReason": "Exento de IVA: {reason}"
+			"vatFreeReason": "Exento de IVA: {reason}",
+			"peopleCount": "Número de personas"
 		},
 		"receiptFullyPaid": "Generar recibo (completamente pagado)",
 		"receiptPending": "Generar recibo (pago pendiente)",
@@ -616,6 +617,20 @@
 			"replacePayment": "Reemplazar el método de pago",
 			"resendPaymentMethod": "Reenviar método de pago",
 			"updatePaymentInfo": "Actualizar información de pago"
+		},
+		"discount": {
+			"title": "Descuento",
+			"noDiscount": "Sin descuento",
+			"manualPercent": "% Manual",
+			"manualPercentPlaceholder": "Ingrese el porcentaje (0-100)",
+			"applyToTag": "Aplicar a la etiqueta:",
+			"allProducts": "Todos los productos",
+			"currentDiscount": "Descuento actual:",
+			"none": "Ninguno",
+			"motiveLabelOptional": "Motivo del descuento (opcional):",
+			"motivePlaceholder": "ej., Passeport gourmand",
+			"lockedWarning": "⚠️ No se puede modificar el descuento después de que ha comenzado el pago",
+			"save": "Guardar"
 		},
 		"discountJustification": "Justificación",
 		"invalidDiscount": "¡Descuento no válido!",
