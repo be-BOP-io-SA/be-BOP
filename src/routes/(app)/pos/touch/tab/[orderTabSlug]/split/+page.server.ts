@@ -273,7 +273,8 @@ export const actions = {
 								type: 'percentage',
 								justification: cart.poolDiscount.motive || 'Pool discount'
 							}
-						})
+						}),
+					peopleCountFromPosUi: orderTab.peopleCountFromPosUi
 				});
 
 				order = await collections.orders.findOne({ _id: orderId });
