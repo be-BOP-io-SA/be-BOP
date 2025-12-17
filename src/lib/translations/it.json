@@ -641,10 +641,17 @@
 		},
 		"vatFree": "Questo è un ordine esente da IVA (<0>conditions</0>)",
 		"vatFreeReason": "ragione dell'esenzione da IVA",
+		"tagGroups": {
+			"addGroup": "Aggiungi gruppo",
+			"deleteGroup": "Elimina gruppo",
+			"groupNamePlaceholder": "Nome del gruppo",
+			"tooManyTagsWarning": "Il gruppo \"{groupName}\" ha {count} tag. Troppi per la modalità pulsante. Attivare l'opzione \"Usa menu di selezione\" o ridurre i tag. Continuare?"
+		},
 		"touch": {
 			"selectTab": "Seleziona una scheda:",
 			"noTabs": "Questo gruppo non ha schede",
 			"cancel": "Annulla",
+			"back": "← Indietro",
 			"ticketNumber": "BIGLIETTO n°",
 			"exclVat": "NET",
 			"inclVat": "LOR",
