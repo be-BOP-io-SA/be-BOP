@@ -6,6 +6,23 @@ import { sum } from '$lib/utils/sum';
 import { trimSuffix } from '$lib/utils/trimSuffix';
 import { persistConfigElement } from './utils/persistConfig';
 
+// Cache for throttling mempool API calls (30 seconds per address)
+const MEMPOOL_THROTTLE_MS = 30_000;
+const mempoolCache = new Map<
+	string,
+	{
+		lastFetchedAt: number;
+		result: {
+			satReceived: number;
+			transactions: Array<{
+				currency: 'SAT';
+				amount: number;
+				id: string;
+			}>;
+		};
+	}
+>();
+
 export function isBitcoinNodelessConfigured(): boolean {
 	return (
 		!!runtimeConfig.bitcoinNodeless.publicKey &&
@@ -78,6 +95,12 @@ export async function getSatoshiReceivedNodeless(
 		id: string;
 	}>;
 }> {
+	// Check cache to avoid hitting mempool.space rate limits
+	const cached = mempoolCache.get(address);
+	if (cached && Date.now() - cached.lastFetchedAt < MEMPOOL_THROTTLE_MS) {
+		return cached.result;
+	}
+
 	const mempoolUrl =
 		trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + `/api/address/${address}/txs`;
 
@@ -145,10 +168,18 @@ export async function getSatoshiReceivedNodeless(
 
 	const total = sum(transactions.map((tx) => tx.amount));
 
-	return {
+	const result = {
 		satReceived: total,
 		transactions
 	};
+
+	// Update cache
+	mempoolCache.set(address, {
+		lastFetchedAt: Date.now(),
+		result
+	});
+
+	return result;
 }
 
 export async function isAddressUsed(address: string): Promise<boolean> {
