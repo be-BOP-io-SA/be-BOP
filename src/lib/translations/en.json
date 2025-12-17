@@ -752,7 +752,8 @@
 			"details": "Details",
 			"donate": "Donate now",
 			"preorder": "Pre-order now",
-			"subscribe": "Subscribe now"
+			"subscribe": "Subscribe now",
+			"view": "View Product"
 		},
 		"deposit": {
 			"payFullPrice": "Pay full price now",
