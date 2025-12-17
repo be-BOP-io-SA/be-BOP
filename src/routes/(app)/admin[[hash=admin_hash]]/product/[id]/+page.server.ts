@@ -107,6 +107,9 @@ export const actions: Actions = {
 			...variation,
 			price: Math.max(parsePriceAmount(variation.price, parsed.priceCurrency), 0)
 		}));
+		const validVariations = variationsParsedPrice.filter(
+			(variation) => variation.name && variation.value
+		);
 		const amountInCarts = await amountOfProductReserved(params.id);
 		const cleanedVariationLabels: {
 			names: Record<string, string>;
@@ -115,27 +118,21 @@ export const actions: Actions = {
 			names: {},
 			values: {}
 		};
-		for (const key in parsed.variationLabels?.names) {
-			const nameValue = parsed.variationLabels.names[key];
+		for (const variation of validVariations) {
+			if (variation.nameLabel?.trim()) {
+				cleanedVariationLabels.names[variation.name] = variation.nameLabel.trim();
+			}
 
-			if (nameValue.trim() !== '') {
-				cleanedVariationLabels.names[key] = nameValue;
-			}
-		}
-		for (const key in parsed.variationLabels?.values) {
-			const valueEntries = parsed.variationLabels.values[key];
-			cleanedVariationLabels.values[key] = {};
-			for (const valueKey in valueEntries) {
-				if (valueEntries[valueKey].trim() !== '') {
-					cleanedVariationLabels.values[key][valueKey] = valueEntries[valueKey];
+			if (variation.valueLabel?.trim()) {
+				if (!cleanedVariationLabels.values[variation.name]) {
+					cleanedVariationLabels.values[variation.name] = {};
 				}
-			}
-			if (Object.keys(cleanedVariationLabels.values[key]).length === 0) {
-				delete cleanedVariationLabels.values[key];
+				cleanedVariationLabels.values[variation.name][variation.value] =
+					variation.valueLabel.trim();
 			}
 		}
 		const hasVariations =
-			parsed.standalone && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
+			parsed.hasVariations && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
 		try {
 			const res = await collections.products.updateOne(
 				{ _id: params.id },
@@ -170,7 +167,7 @@ export const actions: Actions = {
 								}
 							}),
 						hideDiscountExpiration: parsed.hideDiscountExpiration,
-						standalone: parsed.payWhatYouWant || parsed.standalone,
+						standalone: parsed.payWhatYouWant || hasVariations || parsed.standalone,
 						free: parsed.free,
 						...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
 						applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
@@ -224,12 +221,11 @@ export const actions: Actions = {
 							paymentMethods: parsed.paymentMethods ?? []
 						}),
 						hasVariations,
-						...(hasVariations && {
-							variations: variationsParsedPrice.filter(
-								(variation) => variation.name && variation.value
-							),
-							variationLabels: cleanedVariationLabels
-						}),
+						...(hasVariations &&
+							validVariations.length > 0 && {
+								variations: validVariations,
+								variationLabels: cleanedVariationLabels
+							}),
 						hasSellDisclaimer: parsed.hasSellDisclaimer,
 						...(parsed.hasSellDisclaimer &&
 							parsed.sellDisclaimerTitle &&
@@ -250,11 +246,15 @@ export const actions: Actions = {
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
-						...(!hasVariations && { variations: '', variationLabels: '' }),
 						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),
 						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' }),
 						...(!parsed.bookingSpec && { bookingSpec: '' }),
-						...(!parsed.hasMaximumPrice && { maximumPrice: '' })
+						...(!parsed.hasMaximumPrice && { maximumPrice: '' }),
+						...(parsed.hasVariations &&
+							validVariations.length === 0 && {
+								variations: '',
+								variationLabels: ''
+							})
 					}
 				}
 			);
