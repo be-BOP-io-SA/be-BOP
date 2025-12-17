@@ -33,4 +33,9 @@ export interface Cart extends Timestamps {
 	orderTabSlug?: string;
 	orderTabId?: ObjectId;
 	splitMode?: 'items' | 'shares';
+	poolDiscount?: {
+		percentage: number;
+		tagId?: string;
+		motive?: string;
+	};
 }

@@ -177,6 +177,7 @@ export async function checkoutOrderTab({
 		orderTabSlug: slug,
 		orderTabId: orderTab._id,
 		...(splitMode && { splitMode }),
+		...(poolDiscount && poolDiscount.percentage > 0 && { poolDiscount }),
 		updatedAt: new Date(),
 		createdAt: new Date(),
 		user

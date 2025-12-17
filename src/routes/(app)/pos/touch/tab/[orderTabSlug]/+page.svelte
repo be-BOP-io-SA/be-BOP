@@ -335,6 +335,9 @@
 	let manualPercentage = '';
 	let discountError = '';
 
+	let peopleDropdownOpen = false;
+	const peopleCountOptions = Array.from({ length: 21 }, (_, i) => i);
+
 	$: isDiscountLocked = !!data.orderTab.processedPayments?.length;
 	$: discountData =
 		selectedPercentage > 0
@@ -738,16 +741,68 @@
 					class="touchScreen-ticket-menu text-3xl p-4 text-center"
 					on:click={() => (tabSelectModalOpen = true)}>POOL</button
 				>
-				<button
-					class="touchScreen-action-secondaryCTA text-3xl p-4"
-					disabled={!items.length}
-					on:click={() => (printModalOpen = true)}>PRINT TICKETS</button
-				>
-				<button
-					class="touchScreen-action-secondaryCTA text-3xl p-4 uppercase"
-					disabled={!items.length}
-					on:click={openDiscountPanel}>{t('pos.discount.title')}</button
-				>
+				<div class="col-span-2 grid gap-4" style="grid-template-columns: 1fr 1fr 200px;">
+					<button
+						class="touchScreen-action-secondaryCTA text-3xl p-4"
+						disabled={!items.length}
+						on:click={() => (printModalOpen = true)}>PRINT TICKETS</button
+					>
+					<button
+						class="touchScreen-action-secondaryCTA text-3xl p-4 uppercase"
+						disabled={!items.length}
+						on:click={openDiscountPanel}>{t('pos.discount.title')}</button
+					>
+					<div class="flex items-center gap-2 bg-gray-200 rounded p-2 h-full relative">
+						<span class="text-3xl pl-1">👨‍👩‍👧‍👦</span>
+						<button
+							type="button"
+							class="flex-1 text-2xl text-center p-2 border-0 rounded bg-white hover:bg-gray-50 flex items-center justify-center gap-2"
+							on:click={() => (peopleDropdownOpen = !peopleDropdownOpen)}
+						>
+							<span>{data.orderTab.peopleCountFromPosUi ?? 0}</span>
+							<span class="text-sm opacity-70">{peopleDropdownOpen ? '▲' : '▼'}</span>
+						</button>
+						{#if peopleDropdownOpen}
+							<div
+								class="absolute bottom-full left-0 right-0 mb-2 bg-white border-2 border-gray-400 rounded shadow-xl overflow-hidden z-50"
+								style="max-height: min(80vh, 500px);"
+							>
+								<div class="overflow-y-auto" style="max-height: min(80vh, 500px);">
+									<form
+										method="POST"
+										action="?/updatePeopleCount"
+										use:enhance={() => {
+											return async ({ result }) => {
+												if (result.type === 'error') {
+													return await applyAction(result);
+												}
+												await invalidate(UrlDependency.orderTab(tabSlug));
+												peopleDropdownOpen = false;
+											};
+										}}
+									>
+										<input type="hidden" name="peopleCount" value="" />
+										{#each peopleCountOptions as count}
+											<button
+												type="submit"
+												class="w-full text-2xl py-3 px-4 hover:bg-blue-100 text-center border-b border-gray-200 last:border-b-0"
+												on:click={(e) => {
+													const form = e.currentTarget.closest('form');
+													const input = form?.querySelector('input[name="peopleCount"]');
+													if (input instanceof HTMLInputElement) {
+														input.value = count.toString();
+													}
+												}}
+											>
+												{count}
+											</button>
+										{/each}
+									</form>
+								</div>
+							</div>
+						{/if}
+					</div>
+				</div>
 			{:else if rightPanel === 'discount'}
 				<button
 					class="touchScreen-action-cancel uppercase text-3xl text-white p-4 text-center"
@@ -789,7 +844,6 @@
 				</form>
 			{/if}
 		</div>
-		<!-- eslint-disable-next-line svelte/no-dupe-else-if-blocks -->
 		{#if rightPanel === 'products'}
 			<div class="grid grid-cols-3 gap-4 mt-2">
 				<a

@@ -269,7 +269,16 @@ export const actions = {
 					user,
 					userVatCountry: runtimeConfig.vatCountry,
 					shippingAddress: null,
-					cart
+					cart,
+					...(cart.poolDiscount &&
+						cart.poolDiscount.percentage > 0 && {
+							discount: {
+								amount: cart.poolDiscount.percentage,
+								type: 'percentage',
+								justification: cart.poolDiscount.motive || 'Pool discount'
+							}
+						}),
+					peopleCountFromPosUi: orderTab.peopleCountFromPosUi
 				});
 
 				order = await collections.orders.findOne({ _id: orderId });
