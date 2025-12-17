@@ -76,7 +76,11 @@ async function hydratedOrderItems(
 }
 
 async function getHydratedOrderTab(locale: Locale, tab: OrderTab) {
-	return { slug: tab.slug, items: await hydratedOrderItems(locale, tab.items) };
+	return {
+		slug: tab.slug,
+		items: await hydratedOrderItems(locale, tab.items),
+		discount: tab.discount
+	};
 }
 
 export const load = async ({ depends, locals, params }) => {
