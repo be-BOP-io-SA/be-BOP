@@ -1,4 +1,4 @@
-import { collections } from '$lib/server/database';
+import { collections, withTransaction } from '$lib/server/database';
 import {
 	concludeOrderTab,
 	getOrCreateOrderTab,
@@ -68,6 +68,15 @@ const discountSchema = z
 		motive: z.string().max(500).optional()
 	})
 	.nullable();
+
+const movesSchema = z.array(
+	z.object({
+		itemId: z.string(),
+		from: z.string(),
+		to: z.string(),
+		quantity: z.number()
+	})
+);
 
 async function hydratedOrderItems(
 	locale: Locale,
@@ -323,5 +332,106 @@ export const actions = {
 				? { $set: { discount, updatedAt: new Date() } }
 				: { $unset: { discount: 1 }, $set: { updatedAt: new Date() } }
 		);
+	},
+
+	moveItems: async ({ request }) => {
+		const movesJson = (await request.formData()).get('moves');
+
+		if (typeof movesJson !== 'string') {
+			throw error(400, 'Invalid moves data');
+		}
+
+		const moves = movesSchema.parse(JSON.parse(movesJson));
+
+		if (!moves.length) {
+			return;
+		}
+
+		await withTransaction(async (session) => {
+			for (const { itemId, from, to, quantity } of moves) {
+				if (quantity === 0) {
+					continue;
+				}
+
+				const id = new ObjectId(itemId);
+
+				// Get source item
+				const sourceTab = await collections.orderTabs.findOne(
+					{ slug: from, 'items._id': id },
+					{ projection: { 'items.$': 1 }, session }
+				);
+
+				if (!sourceTab?.items?.[0]) {
+					continue;
+				}
+
+				const itemToMove = sourceTab.items[0];
+
+				// Decrement source
+				await collections.orderTabs.updateOne(
+					{ slug: from, 'items._id': id },
+					{ $inc: { 'items.$.quantity': -quantity }, $set: { updatedAt: new Date() } },
+					{ session }
+				);
+
+				// Find matching in target
+				const targetTab = await collections.orderTabs.findOne(
+					{ slug: to },
+					{ projection: { items: 1 }, session }
+				);
+
+				const matchingItem = targetTab?.items?.find(
+					(item) =>
+						item.productId === itemToMove.productId &&
+						JSON.stringify(item.chosenVariations ?? {}) ===
+							JSON.stringify(itemToMove.chosenVariations ?? {})
+				);
+
+				// Increment or push
+				await collections.orderTabs.updateOne(
+					{ slug: to, ...(matchingItem && { 'items._id': matchingItem._id }) },
+					matchingItem
+						? { $inc: { 'items.$.quantity': quantity }, $set: { updatedAt: new Date() } }
+						: {
+								$push: { items: { ...itemToMove, _id: new ObjectId(), quantity } },
+								$set: { updatedAt: new Date() }
+						  },
+					{ session }
+				);
+			}
+
+			// Merge duplicates and cleanup in affected pools
+			const affectedSlugs = [...new Set(moves.flatMap((m) => [m.from, m.to]))];
+
+			await Promise.all(
+				affectedSlugs.map(async (slug) => {
+					const tab = await collections.orderTabs.findOne(
+						{ slug },
+						{ projection: { items: 1 }, session }
+					);
+					if (!tab?.items?.length) {
+						return;
+					}
+
+					const merged = tab.items.reduce((m, i) => {
+						const k = `${i.productId}:${JSON.stringify(i.chosenVariations ?? {})}`;
+						const p = m.get(k);
+						return m.set(k, p ? { ...p, quantity: p.quantity + i.quantity } : i);
+					}, new Map());
+
+					// Merge + cleanup in one update
+					await collections.orderTabs.updateOne(
+						{ slug },
+						{
+							$set: {
+								items: [...merged.values()].filter((i) => i.quantity > 0),
+								updatedAt: new Date()
+							}
+						},
+						{ session }
+					);
+				})
+			);
+		});
 	}
 };
