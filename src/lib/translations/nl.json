@@ -566,7 +566,8 @@
 			"totalInclVat": "Totaal Incl. VAT",
 			"totalVat": "Totale BTW",
 			"unitPrice": "Eenheid prijs",
-			"vatFreeReason": "Vrijgesteld van btw: {reason}"
+			"vatFreeReason": "Vrijgesteld van btw: {reason}",
+			"peopleCount": "Aantal personen"
 		},
 		"receiptFullyPaid": "Bon genereren (volledig betaald)",
 		"receiptPending": "Ontvangst genereren (betaling in behandeling)",
@@ -616,6 +617,20 @@
 			"replacePayment": "Vervang de betaalmethode",
 			"resendPaymentMethod": "Verzend de betaalmethode",
 			"updatePaymentInfo": "Betalingsgegevens bijwerken"
+		},
+		"discount": {
+			"title": "Korting",
+			"noDiscount": "Geen korting",
+			"manualPercent": "Handmatig %",
+			"manualPercentPlaceholder": "Voer percentage in (0-100)",
+			"applyToTag": "Toepassen op tag:",
+			"allProducts": "Alle producten",
+			"currentDiscount": "Huidige korting:",
+			"none": "Geen",
+			"motiveLabelOptional": "Kortingsmotief (optioneel):",
+			"motivePlaceholder": "bijv., Passeport gourmand",
+			"lockedWarning": "⚠️ Kan korting niet wijzigen nadat betaling is begonnen",
+			"save": "Opslaan"
 		},
 		"discountJustification": "Rechtvaardiging",
 		"invalidDiscount": "Korting is niet geldig!",

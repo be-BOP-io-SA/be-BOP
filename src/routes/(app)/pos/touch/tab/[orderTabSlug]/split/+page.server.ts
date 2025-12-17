@@ -269,7 +269,8 @@ export const actions = {
 					user,
 					userVatCountry: runtimeConfig.vatCountry,
 					shippingAddress: null,
-					cart
+					cart,
+					peopleCountFromPosUi: orderTab.peopleCountFromPosUi
 				});
 
 				order = await collections.orders.findOne({ _id: orderId });
