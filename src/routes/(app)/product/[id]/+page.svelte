@@ -27,14 +27,18 @@
 	} from 'date-fns';
 	import { useI18n } from '$lib/i18n';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
-	import { FRACTION_DIGITS_PER_CURRENCY, CURRENCY_UNIT } from '$lib/types/Currency.js';
+	import {
+		FRACTION_DIGITS_PER_CURRENCY,
+		CURRENCY_UNIT,
+		computePriceForDisplay
+	} from '$lib/types/Currency.js';
 	import { serializeSchema } from '$lib/utils/jsonLd.js';
 	import type { Product as SchemaOrgProduct, WithContext } from 'schema-dts';
 	import ScheduleWidgetCalendar from '$lib/components/ScheduleWidget/ScheduleWidgetCalendar.svelte';
 	import { productToScheduleId, dayList } from '$lib/types/Schedule.js';
 	import { toZonedTime } from 'date-fns-tz';
 	import { RangeList } from '$lib/utils/range-list.js';
-	import { vatRate } from '$lib/types/Country';
+	import { computeVatRate, vatMultiplier } from '$lib/utils/vat';
 
 	export let data;
 
@@ -85,21 +89,40 @@
 		});
 	let deposit = 'partial';
 
+	const rate = computeVatRate({
+		productVatProfileId: data.product.vatProfileId,
+		vatProfiles: data.vatProfiles,
+		bebopCountry: data.vatCountry,
+		userCountry: data.countryCode,
+		vatSingleCountry: data.vatSingleCountry
+	});
+
 	const PWYWCurrency =
 		data.currencies.main === 'BTC' &&
 		toCurrency('BTC', data.product.price.amount, data.product.price.currency) < 0.01
 			? 'SAT'
 			: data.currencies.main;
-	const PWYWMinimum = toCurrency(
-		PWYWCurrency,
-		data.product.price.amount,
-		data.product.price.currency
-	);
+	const PWYWMinimum = computePriceForDisplay(
+		toCurrency(PWYWCurrency, data.product.price.amount, data.product.price.currency) *
+			vatMultiplier(rate, data.displayVatIncludedInProduct),
+		PWYWCurrency
+	).amount;
 	const PWYWRecommended = data.product.recommendedPWYWAmount
-		? toCurrency(PWYWCurrency, data.product.recommendedPWYWAmount, data.product.price.currency)
+		? computePriceForDisplay(
+				toCurrency(PWYWCurrency, data.product.recommendedPWYWAmount, data.product.price.currency) *
+					vatMultiplier(rate, data.displayVatIncludedInProduct),
+				PWYWCurrency
+		  ).amount
 		: 0;
 	const PWYWMaximum = data.product.maximumPrice
-		? toCurrency(PWYWCurrency, data.product.maximumPrice.amount, data.product.maximumPrice.currency)
+		? computePriceForDisplay(
+				toCurrency(
+					PWYWCurrency,
+					data.product.maximumPrice.amount,
+					data.product.maximumPrice.currency
+				) * vatMultiplier(rate, data.displayVatIncludedInProduct),
+				PWYWCurrency
+		  ).amount
 		: Infinity;
 	let customAmount = Math.max(PWYWRecommended, PWYWMinimum);
 
@@ -325,13 +348,6 @@
 	$: if (data.product.hasVariations) {
 		customAmount = productPriceWithVariations(data.product, selectedVariations);
 	}
-	const country = data.vatSingleCountry ? data.vatCountry : data.countryCode ?? data.vatCountry;
-	const vatProfile = data.product.vatProfileId
-		? data.vatProfiles.find(
-				(profile) => profile._id.toString() === data.product.vatProfileId?.toString()
-		  )
-		: undefined;
-	const rate = vatProfile?.rates[country] ?? vatRate(country);
 </script>
 
 <svelte:head>
@@ -472,8 +488,8 @@
 										: ''}"
 									short={!!data.discount}
 									amount={(data.product.hasVariations
-										? customAmount * (1 + rate / 100)
-										: data.product.price.amount * (1 + rate / 100)) *
+										? customAmount * vatMultiplier(rate, true)
+										: data.product.price.amount * vatMultiplier(rate, true)) *
 										(data.product.bookingSpec
 											? durationMinutes / data.product.bookingSpec.slotMinutes
 											: 1)}
@@ -485,8 +501,8 @@
 										class="text-2xl lg:text-4xl truncate max-w-full"
 										short
 										amount={(data.product.hasVariations
-											? customAmount * (1 + rate / 100)
-											: data.product.price.amount * (1 + rate / 100)) *
+											? customAmount * vatMultiplier(rate, true)
+											: data.product.price.amount * vatMultiplier(rate, true)) *
 											(data.product.bookingSpec
 												? durationMinutes / data.product.bookingSpec.slotMinutes
 												: 1) *
@@ -498,8 +514,8 @@
 							<PriceTag
 								currency={data.product.price.currency}
 								amount={(data.product.hasVariations
-									? customAmount * (1 + rate / 100)
-									: data.product.price.amount * (1 + rate / 100)) *
+									? customAmount * vatMultiplier(rate, true)
+									: data.product.price.amount * vatMultiplier(rate, true)) *
 									(data.product.bookingSpec
 										? durationMinutes / data.product.bookingSpec.slotMinutes
 										: 1) *

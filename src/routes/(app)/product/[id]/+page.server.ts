@@ -5,6 +5,7 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import { DEFAULT_MAX_QUANTITY_PER_ORDER, type Product } from '$lib/types/Product';
+import { computeVatRate, extractVat } from '$lib/utils/vat';
 import { productToScheduleId, type ScheduleEvent } from '$lib/types/Schedule';
 import { set } from '$lib/utils/set';
 import { sum } from '$lib/utils/sum';
@@ -285,6 +286,22 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 					currency: customPriceCurrency
 			  }
 			: undefined;
+
+	// For PWYW products with VAT-included display: extract VAT from entered price
+	if (customPrice && product.payWhatYouWant && runtimeConfig.displayVatIncludedInProduct) {
+		const vatProfiles = await collections.vatProfiles.find().toArray();
+		const rate = computeVatRate({
+			productVatProfileId: product.vatProfileId,
+			vatProfiles,
+			bebopCountry: runtimeConfig.vatCountry,
+			userCountry: locals.countryCode,
+			vatSingleCountry: runtimeConfig.vatSingleCountry
+		});
+
+		// Extract VAT: entered price is WITH VAT, we need to store WITHOUT VAT
+		customPrice.amount = extractVat(customPrice.amount, rate);
+	}
+
 	const user = userIdentifier(locals);
 	await addToCartInDb(product, quantity, {
 		user: user,

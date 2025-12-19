@@ -4,7 +4,8 @@ import { sum } from '$lib/utils/sum';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import type { RuntimeConfig } from './server/runtime-config';
-import { vatRate, type CountryAlpha2 } from './types/Country';
+import { type CountryAlpha2 } from './types/Country';
+import { computeVatRate } from './utils/vat';
 import { UNDERLYING_CURRENCY, type Currency } from './types/Currency';
 import type { DiscountType, Price } from './types/Order';
 import type { Product } from './types/Product';
@@ -148,13 +149,14 @@ function computeVatForItem(
 	if (!country) {
 		return undefined;
 	}
-	const vatProfile = item.product.vatProfileId
-		? params.vatProfiles.find(
-				(profile) => profile._id.toString() === item.product.vatProfileId?.toString()
-		  )
-		: undefined;
+	const rate = computeVatRate({
+		productVatProfileId: item.product.vatProfileId,
+		vatProfiles: params.vatProfiles,
+		bebopCountry: params.bebopCountry,
+		userCountry: params.userCountry,
+		vatSingleCountry: params.vatSingleCountry
+	});
 	const freeUnits = params.freeUnits ?? 0;
-	const rate = vatProfile?.rates[country] ?? vatRate(country);
 	const { amount: amountToBill, currency, usedFreeUnits } = priceToBillForItem(item, { freeUnits });
 	const toDepositFactor = (item.depositPercentage ?? 100) / 100;
 	// Don't round partialPrice - preserve precision for VAT calculation
