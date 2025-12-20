@@ -708,6 +708,25 @@
 			"itemize": "aufschlüsseln",
 			"return": "Zurück",
 			"paySelected": "Auswahl bezahlen"
+		},
+		"btn": {
+			"add": "Hinzufügen",
+			"cancel": "Abbrechen",
+			"paid": "Bezahlt",
+			"replace": "Ändern ▾",
+			"replaceSubmit": "Ändern",
+			"tapToPay": "Karte Tap",
+			"cancelTap": "Tap stoppen"
+		},
+		"input": {
+			"txNumber": "TX #",
+			"detail": "Detail"
+		},
+		"label": {
+			"amount": "Betrag",
+			"currency": "Währung",
+			"method": "Methode",
+			"subtype": "Typ"
 		}
 	},
 	"product": {

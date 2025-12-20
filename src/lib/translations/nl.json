@@ -708,6 +708,25 @@
 			"itemize": "specificeren",
 			"return": "Terug",
 			"paySelected": "Selectie betalen"
+		},
+		"btn": {
+			"add": "Toevoegen",
+			"cancel": "Annuleren",
+			"paid": "Betaald",
+			"replace": "Wijzigen ▾",
+			"replaceSubmit": "Wijzigen",
+			"tapToPay": "Kaart Tap",
+			"cancelTap": "Stop Tap"
+		},
+		"input": {
+			"txNumber": "TX #",
+			"detail": "Detail"
+		},
+		"label": {
+			"amount": "Bedrag",
+			"currency": "Valuta",
+			"method": "Methode",
+			"subtype": "Type"
 		}
 	},
 	"product": {

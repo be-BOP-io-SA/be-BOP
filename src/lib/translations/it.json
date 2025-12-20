@@ -708,6 +708,25 @@
 			"itemize": "dettagliare",
 			"return": "Indietro",
 			"paySelected": "Paga selezionati"
+		},
+		"btn": {
+			"add": "Aggiungi",
+			"cancel": "Annulla",
+			"paid": "Pagato",
+			"replace": "Cambia ▾",
+			"replaceSubmit": "Cambia",
+			"tapToPay": "Tap carta",
+			"cancelTap": "Ferma Tap"
+		},
+		"input": {
+			"txNumber": "TX #",
+			"detail": "Dettaglio"
+		},
+		"label": {
+			"amount": "Importo",
+			"currency": "Valuta",
+			"method": "Metodo",
+			"subtype": "Tipo"
 		}
 	},
 	"product": {
