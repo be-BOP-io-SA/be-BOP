@@ -40,7 +40,7 @@
 		}
 	});
 
-	function waitForElement(selector: string, timeout = 5000): Promise<Element | null> {
+	function waitForElement(selector: string, timeout = 3000): Promise<Element | null> {
 		return new Promise((resolve) => {
 			const element = document.querySelector(selector);
 			if (element) {
@@ -48,9 +48,12 @@
 				return;
 			}
 
+			let resolved = false;
 			const observer = new MutationObserver(() => {
+				if (resolved) return;
 				const el = document.querySelector(selector);
 				if (el) {
+					resolved = true;
 					observer.disconnect();
 					resolve(el);
 				}
@@ -59,8 +62,11 @@
 			observer.observe(document.body, { childList: true, subtree: true });
 
 			setTimeout(() => {
-				observer.disconnect();
-				resolve(null);
+				if (!resolved) {
+					resolved = true;
+					observer.disconnect();
+					resolve(null);
+				}
 			}, timeout);
 		});
 	}
@@ -187,44 +193,61 @@
 
 		const { type, selector, validation } = stepDef.requiredAction;
 
-		if (type === 'input' && validation === 'non-empty') {
-			const input = document.querySelector(selector) as HTMLInputElement;
-			console.log('[Tutorial] Setting up input monitoring for', selector, 'found:', !!input);
-
-			if (input) {
-				const updateButtonState = () => {
-					// Shepherd renders buttons inside .shepherd-footer
-					const footer = document.querySelector('.shepherd-footer');
-					const buttons = footer?.querySelectorAll('button');
-					// Get the last button (Next/Finish) - skip the first one if it's "Previous"
-					const nextBtn = buttons && buttons.length > 0 ? buttons[buttons.length - 1] as HTMLButtonElement : null;
-
-					console.log('[Tutorial] Updating button state, found button:', !!nextBtn, 'input value:', input.value);
-
-					if (nextBtn) {
-						const hasValue = input.value.trim().length > 0;
-						if (hasValue) {
-							nextBtn.disabled = false;
-							nextBtn.classList.remove('shepherd-button-disabled');
-							nextBtn.style.opacity = '1';
-							nextBtn.style.pointerEvents = 'auto';
-						} else {
-							nextBtn.disabled = true;
-							nextBtn.classList.add('shepherd-button-disabled');
-							nextBtn.style.opacity = '0.5';
-							nextBtn.style.pointerEvents = 'none';
-						}
-					}
-				};
-
-				input.addEventListener('input', updateButtonState);
-				// Also listen for paste and change events
-				input.addEventListener('paste', () => setTimeout(updateButtonState, 10));
-				input.addEventListener('change', updateButtonState);
-
-				// Small delay to ensure Shepherd has rendered the buttons
-				setTimeout(updateButtonState, 100);
+		const enableNextButton = () => {
+			const footer = document.querySelector('.shepherd-footer');
+			const buttons = footer?.querySelectorAll('button');
+			const nextBtn = buttons && buttons.length > 0 ? buttons[buttons.length - 1] as HTMLButtonElement : null;
+			if (nextBtn) {
+				nextBtn.disabled = false;
+				nextBtn.style.opacity = '1';
+				nextBtn.style.pointerEvents = 'auto';
 			}
+		};
+
+		const disableNextButton = () => {
+			const footer = document.querySelector('.shepherd-footer');
+			const buttons = footer?.querySelectorAll('button');
+			const nextBtn = buttons && buttons.length > 0 ? buttons[buttons.length - 1] as HTMLButtonElement : null;
+			if (nextBtn) {
+				nextBtn.disabled = true;
+				nextBtn.style.opacity = '0.5';
+				nextBtn.style.pointerEvents = 'none';
+			}
+		};
+
+		if (type === 'input' && validation === 'non-empty') {
+			const input = document.querySelector(selector!) as HTMLInputElement;
+			if (!input) {
+				console.log('[Tutorial] Input not found for monitoring:', selector);
+				return;
+			}
+
+			console.log('[Tutorial] Setting up input monitoring for', selector);
+
+			const updateButtonState = () => {
+				const hasValue = input.value.trim().length > 0;
+				if (hasValue) {
+					enableNextButton();
+				} else {
+					disableNextButton();
+				}
+			};
+
+			input.addEventListener('input', updateButtonState);
+			input.addEventListener('change', updateButtonState);
+
+			// Initial state after Shepherd renders
+			setTimeout(updateButtonState, 150);
+
+		} else if (type === 'click') {
+			// For click actions, enable the Next button immediately
+			// The user needs to click the target element, but we don't block the tutorial
+			console.log('[Tutorial] Click action step - Next button enabled');
+			setTimeout(enableNextButton, 150);
+		} else if (type === 'form-submit') {
+			// For form submissions, enable the Next button immediately
+			console.log('[Tutorial] Form submit action step - Next button enabled');
+			setTimeout(enableNextButton, 150);
 		}
 	}
 
