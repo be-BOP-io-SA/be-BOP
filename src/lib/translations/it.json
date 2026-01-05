@@ -744,5 +744,51 @@
 	},
 	"widget": {
 		"specification": "Specificità"
+	},
+	"tutorial": {
+		"common": {
+			"skip": "Salta",
+			"next": "Avanti",
+			"back": "Indietro",
+			"finish": "Fine",
+			"progress": "Passo {current} di {total}",
+			"startPrompt": {
+				"title": "Benvenuto in be-BOP!",
+				"text": "Vuoi fare un rapido tour per iniziare?",
+				"start": "Inizia Tutorial",
+				"later": "Forse Dopo"
+			},
+			"resumePrompt": {
+				"title": "Riprendere il Tutorial?",
+				"text": "Hai un tutorial incompleto. Vuoi continuare da dove avevi lasciato?",
+				"resume": "Riprendi",
+				"startOver": "Ricomincia",
+				"skip": "Salta"
+			},
+			"rerunPrompt": {
+				"title": "Tutorial Aggiornato",
+				"text": "Questo tutorial è stato aggiornato. Vuoi rifarlo?",
+				"rerun": "Fai Tutorial",
+				"skip": "Salta"
+			}
+		},
+		"onboarding": {
+			"step1": {
+				"title": "Imposta Indirizzo di Recupero",
+				"text": "Prima di tutto, configuriamo il tuo indirizzo npub di recupero. Questo è importante per il recupero dell'account tramite Nostr."
+			},
+			"step2": {
+				"title": "Genera Chiave Nostr",
+				"text": "Ora genera la tua chiave privata NostR per comunicazioni decentralizzate sicure."
+			},
+			"step3": {
+				"title": "Configura Hash Admin",
+				"text": "Imposta un hash admin personalizzato per proteggere il tuo URL admin. Questo aggiunge un ulteriore livello di sicurezza."
+			},
+			"step4": {
+				"title": "Completa Identità Aziendale",
+				"text": "Infine, compila le informazioni sulla tua identità aziendale. Queste appariranno su fatture e ricevute."
+			}
+		}
 	}
 }

@@ -11,3 +11,6 @@ build.zip
 # Copied in vite.config.ts
 static/tinymce
 lib/utils/timeZoneOffset.ts
+# Claude Code local files
+.claude/
+claude/

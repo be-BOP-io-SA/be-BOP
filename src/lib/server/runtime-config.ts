@@ -242,6 +242,13 @@ const baseConfig = {
 		removeBebobLogo: false
 	},
 	displayNewsletterCommercialProspection: false,
+	tutorialPolicy: {
+		employeeTutorialMode: 'optional' as 'mandatory' | 'optional' | 'disabled',
+		autoLaunchOnboarding: true,
+		showIncompletePrompt: true,
+		allowSkip: true,
+		allowRerun: true
+	},
 	cartMaxSeparateItems: null as null | number,
 	physicalCartMinAmount: null as null | number,
 	websiteTitle: 'B2Bitcoin be-BOP',

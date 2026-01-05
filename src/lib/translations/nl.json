@@ -744,5 +744,51 @@
 	},
 	"widget": {
 		"specification": "Specificaties"
+	},
+	"tutorial": {
+		"common": {
+			"skip": "Overslaan",
+			"next": "Volgende",
+			"back": "Terug",
+			"finish": "Voltooien",
+			"progress": "Stap {current} van {total}",
+			"startPrompt": {
+				"title": "Welkom bij be-BOP!",
+				"text": "Wilt u een korte rondleiding volgen om te beginnen?",
+				"start": "Start Tutorial",
+				"later": "Misschien Later"
+			},
+			"resumePrompt": {
+				"title": "Tutorial Hervatten?",
+				"text": "U heeft een onvoltooide tutorial. Wilt u verdergaan waar u gebleven was?",
+				"resume": "Hervatten",
+				"startOver": "Opnieuw Beginnen",
+				"skip": "Overslaan"
+			},
+			"rerunPrompt": {
+				"title": "Tutorial Bijgewerkt",
+				"text": "Deze tutorial is bijgewerkt. Wilt u deze opnieuw doorlopen?",
+				"rerun": "Tutorial Volgen",
+				"skip": "Overslaan"
+			}
+		},
+		"onboarding": {
+			"step1": {
+				"title": "Hersteladres Instellen",
+				"text": "Laten we eerst uw herstel-npub-adres instellen. Dit is belangrijk voor accountherstel via Nostr."
+			},
+			"step2": {
+				"title": "Nostr Sleutel Genereren",
+				"text": "Genereer nu uw NostR privésleutel voor veilige gedecentraliseerde communicatie."
+			},
+			"step3": {
+				"title": "Admin Hash Configureren",
+				"text": "Stel een aangepaste admin-hash in om uw admin-URL te beveiligen. Dit voegt een extra beveiligingslaag toe."
+			},
+			"step4": {
+				"title": "Bedrijfsidentiteit Voltooien",
+				"text": "Vul tot slot uw bedrijfsidentiteitsgegevens in. Deze verschijnen op facturen en bonnen."
+			}
+		}
 	}
 }

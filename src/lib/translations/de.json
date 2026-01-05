@@ -729,5 +729,51 @@
 	},
 	"widget": {
 		"specification": "Spezifikationen"
+	},
+	"tutorial": {
+		"common": {
+			"skip": "Überspringen",
+			"next": "Weiter",
+			"back": "Zurück",
+			"finish": "Fertig",
+			"progress": "Schritt {current} von {total}",
+			"startPrompt": {
+				"title": "Willkommen bei be-BOP!",
+				"text": "Möchten Sie eine kurze Tour machen, um loszulegen?",
+				"start": "Tutorial starten",
+				"later": "Vielleicht später"
+			},
+			"resumePrompt": {
+				"title": "Tutorial fortsetzen?",
+				"text": "Sie haben ein unvollständiges Tutorial. Möchten Sie dort weitermachen, wo Sie aufgehört haben?",
+				"resume": "Fortsetzen",
+				"startOver": "Neu beginnen",
+				"skip": "Überspringen"
+			},
+			"rerunPrompt": {
+				"title": "Tutorial aktualisiert",
+				"text": "Dieses Tutorial wurde aktualisiert. Möchten Sie es erneut durchgehen?",
+				"rerun": "Tutorial starten",
+				"skip": "Überspringen"
+			}
+		},
+		"onboarding": {
+			"step1": {
+				"title": "Wiederherstellungsadresse festlegen",
+				"text": "Zuerst richten wir Ihre Wiederherstellungs-npub-Adresse ein. Dies ist wichtig für die Kontowiederherstellung über Nostr."
+			},
+			"step2": {
+				"title": "Nostr-Schlüssel generieren",
+				"text": "Generieren Sie jetzt Ihren privaten NostR-Schlüssel für sichere dezentrale Kommunikation."
+			},
+			"step3": {
+				"title": "Admin-Hash konfigurieren",
+				"text": "Legen Sie einen benutzerdefinierten Admin-Hash fest, um Ihre Admin-URL zu sichern. Dies fügt eine zusätzliche Sicherheitsebene hinzu."
+			},
+			"step4": {
+				"title": "Geschäftsidentität vervollständigen",
+				"text": "Füllen Sie abschließend Ihre Geschäftsidentitätsinformationen aus. Diese erscheinen auf Rechnungen und Quittungen."
+			}
+		}
 	}
 }
