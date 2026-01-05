@@ -209,9 +209,9 @@
 				buttons
 			});
 
-			console.log('[Tutorial] Starting tour');
-			tour.start();
-			console.log('[Tutorial] Tour started');
+			console.log('[Tutorial] Showing step:', stepDef.id);
+			tour.show(stepDef.id);
+			console.log('[Tutorial] Step shown');
 
 			if (stepDef.requiredAction) {
 				setupRequiredActionMonitoring(stepDef);
