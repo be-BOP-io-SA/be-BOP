@@ -36,13 +36,24 @@
 	});
 
 	afterNavigate(({ to }) => {
+		console.log('[Tutorial] afterNavigate', {
+			isNavigating,
+			pendingStepIndex,
+			isActive: $tutorialStore.isActive,
+			tour: !!tour,
+			tutorial: !!tutorial,
+			toPath: to?.url.pathname
+		});
 		if (isNavigating && pendingStepIndex !== null && $tutorialStore.isActive) {
 			isNavigating = false;
 
 			// Check if we're on the correct route for the current step
-			if (to?.url.pathname && tutorialStore.isOnCorrectRoute(to.url.pathname)) {
+			const isCorrectRoute = to?.url.pathname && tutorialStore.isOnCorrectRoute(to.url.pathname);
+			console.log('[Tutorial] isCorrectRoute', isCorrectRoute);
+			if (isCorrectRoute) {
 				// Resume tour after DOM settles
 				setTimeout(() => {
+					console.log('[Tutorial] afterNavigate timeout - resuming', { tour: !!tour });
 					tutorialStore.resumeAfterNavigation();
 					if (tour) {
 						showCurrentStep();
@@ -159,12 +170,20 @@
 	}
 
 	async function showCurrentStep() {
-		if (!tour || !tutorial) return;
+		console.log('[Tutorial] showCurrentStep called', { tour: !!tour, tutorial: !!tutorial });
+		if (!tour || !tutorial) {
+			console.log('[Tutorial] showCurrentStep early return - tour or tutorial missing');
+			return;
+		}
 
 		const stepIndex = $tutorialStore.currentStepIndex;
 		const step = tutorial.steps[stepIndex];
+		console.log('[Tutorial] step', { stepIndex, step: step?.id });
 
-		if (!step) return;
+		if (!step) {
+			console.log('[Tutorial] showCurrentStep early return - no step');
+			return;
+		}
 
 		// Check if we need to navigate to the step's route
 		const currentPath = $page.url.pathname.replace(/^\/admin-[a-zA-Z0-9]+/, '/admin');
@@ -178,13 +197,15 @@
 		}
 
 		// Wait for the target element to be available
+		console.log('[Tutorial] waiting for element', step.attachTo.element);
 		const element = await waitForElement(step.attachTo.element);
 		if (!element) {
-			console.error(`Tutorial: Cannot show step ${step.id}, element not found: ${step.attachTo.element}`);
+			console.error(`[Tutorial] Cannot show step ${step.id}, element not found: ${step.attachTo.element}`);
 			return;
 		}
 
 		// Show the step
+		console.log('[Tutorial] showing step', stepIndex);
 		tour.show(stepIndex);
 	}
 
@@ -262,10 +283,12 @@
 
 	// Start tutorial
 	export function startTutorial() {
+		console.log('[Tutorial] startTutorial called', { tutorial: !!tutorial });
 		if (!tutorial) return;
 
 		tutorialStore.startTutorial(tutorial, progress ?? undefined);
 		initializeTour();
+		console.log('[Tutorial] tour initialized, calling showCurrentStep');
 		showCurrentStep();
 	}
 
@@ -297,11 +320,13 @@
 	}
 
 	onMount(() => {
+		console.log('[Tutorial] onMount', { tutorial: !!tutorial });
 		// Listen for external requests to start the tutorial
 		window.addEventListener('tutorial:request-start', handleRequestStart as EventListener);
 
 		// Check if we need to restore a paused tour
 		const restored = tutorialStore.initialize();
+		console.log('[Tutorial] onMount restored', { restored, tutorial: !!tutorial });
 		if (restored && tutorial) {
 			initializeTour();
 			setTimeout(() => showCurrentStep(), 300);
@@ -313,6 +338,7 @@
 	});
 
 	onDestroy(() => {
+		console.log('[Tutorial] onDestroy');
 		if (tour) {
 			tour.cancel();
 			tour = null;
