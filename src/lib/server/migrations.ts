@@ -5,8 +5,7 @@ import { env } from '$env/dynamic/private';
 import type { OrderPayment } from '$lib/types/Order';
 import { Lock } from './lock';
 import { ORIGIN } from '$env/static/private';
-import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
-import type { Tutorial } from '$lib/types/Tutorial';
+import { seedTutorials } from './tutorials/seed';
 
 const migrations = [
 	{
@@ -597,83 +596,9 @@ const migrations = [
 	},
 	{
 		_id: new ObjectId('678a1b2c3d4e5f6a7b8c9d0e'),
-		name: 'Add default onboarding tutorial',
+		name: 'Seed default tutorials',
 		run: async (session: ClientSession) => {
-			const existingTutorial = await collections.tutorials.findOne(
-				{ _id: 'onboarding' },
-				{ session }
-			);
-
-			if (existingTutorial) {
-				return;
-			}
-
-			const onboardingTutorial: Tutorial = {
-				_id: 'onboarding',
-				name: 'Super Admin Onboarding',
-				description: 'Initial setup guide for new be-BOP installations',
-				version: 1,
-				targetRoles: [SUPER_ADMIN_ROLE_ID],
-				isActive: true,
-				triggerType: 'first-login',
-				estimatedTimeMinutes: 10,
-				steps: [
-					{
-						id: 'arm-recovery',
-						order: 1,
-						route: '/admin/arm',
-						attachTo: { element: 'input[name="recoveryNpub"]', on: 'right' },
-						titleKey: 'tutorial.onboarding.step1.title',
-						textKey: 'tutorial.onboarding.step1.text',
-						requiredAction: {
-							type: 'form-submit',
-							selector: 'form',
-							validation: 'non-empty'
-						}
-					},
-					{
-						id: 'nostr-nsec',
-						order: 2,
-						route: '/admin/arm',
-						attachTo: { element: 'button[data-generate-nsec]', on: 'right' },
-						titleKey: 'tutorial.onboarding.step2.title',
-						textKey: 'tutorial.onboarding.step2.text',
-						requiredAction: {
-							type: 'click',
-							selector: 'button[data-generate-nsec]'
-						}
-					},
-					{
-						id: 'admin-hash',
-						order: 3,
-						route: '/admin/config',
-						attachTo: { element: 'input[name="adminHash"]', on: 'right' },
-						titleKey: 'tutorial.onboarding.step3.title',
-						textKey: 'tutorial.onboarding.step3.text',
-						requiredAction: {
-							type: 'input',
-							selector: 'input[name="adminHash"]',
-							validation: 'non-empty'
-						}
-					},
-					{
-						id: 'identity-setup',
-						order: 4,
-						route: '/admin/identity',
-						attachTo: { element: 'input[name="brandName"]', on: 'right' },
-						titleKey: 'tutorial.onboarding.step4.title',
-						textKey: 'tutorial.onboarding.step4.text',
-						requiredAction: {
-							type: 'form-submit',
-							selector: 'form'
-						}
-					}
-				],
-				createdAt: new Date(),
-				updatedAt: new Date()
-			};
-
-			await collections.tutorials.insertOne(onboardingTutorial, { session });
+			await seedTutorials(session);
 		}
 	}
 ];
