@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { beforeNavigate, afterNavigate } from '$app/navigation';
+	import { beforeNavigate, afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Shepherd from 'shepherd.js';
 	import { tutorialStore } from '$lib/stores/tutorial';
@@ -21,11 +21,17 @@
 
 	// Handle navigation - pause tour before, resume after
 	beforeNavigate(({ to, cancel }) => {
-		if (tour && $tutorialStore.isActive && $tutorialStore.status === 'running') {
-			isNavigating = true;
-			pendingStepIndex = $tutorialStore.currentStepIndex;
-			tutorialStore.pauseForNavigation();
-			tour.hide();
+		if (tour && $tutorialStore.isActive) {
+			const status = $tutorialStore.status;
+			if (status === 'running') {
+				// User navigated manually while tour is running
+				tutorialStore.pauseForNavigation();
+				tour.hide();
+			}
+			if (status === 'running' || status === 'waiting_for_navigation') {
+				isNavigating = true;
+				pendingStepIndex = $tutorialStore.currentStepIndex;
+			}
 		}
 	});
 
@@ -91,13 +97,7 @@
 					element: step.attachTo.element,
 					on: step.attachTo.on
 				},
-				buttons: getButtonsForStep(index),
-				when: {
-					show: () => {
-						// Wait for element to be available
-						waitForElement(step.attachTo.element);
-					}
-				}
+				buttons: getButtonsForStep(index)
 			});
 		});
 
@@ -137,22 +137,28 @@
 		return buttons;
 	}
 
-	function waitForElement(selector: string, maxAttempts = 20) {
-		let attempts = 0;
-		const check = () => {
-			const el = document.querySelector(selector);
-			if (el) {
-				return;
-			}
-			attempts++;
-			if (attempts < maxAttempts) {
-				setTimeout(check, 100);
-			}
-		};
-		check();
+	function waitForElement(selector: string, maxAttempts = 30): Promise<Element | null> {
+		return new Promise((resolve) => {
+			let attempts = 0;
+			const check = () => {
+				const el = document.querySelector(selector);
+				if (el) {
+					resolve(el);
+					return;
+				}
+				attempts++;
+				if (attempts < maxAttempts) {
+					setTimeout(check, 100);
+				} else {
+					console.warn(`Tutorial: Element not found after ${maxAttempts} attempts: ${selector}`);
+					resolve(null);
+				}
+			};
+			check();
+		});
 	}
 
-	function showCurrentStep() {
+	async function showCurrentStep() {
 		if (!tour || !tutorial) return;
 
 		const stepIndex = $tutorialStore.currentStepIndex;
@@ -167,7 +173,14 @@
 		if (!currentPath.startsWith(stepRoute)) {
 			// Need to navigate first - the afterNavigate will resume the tour
 			tutorialStore.pauseForNavigation();
-			window.location.href = normalizeRoute(stepRoute);
+			await goto(normalizeRoute(stepRoute));
+			return;
+		}
+
+		// Wait for the target element to be available
+		const element = await waitForElement(step.attachTo.element);
+		if (!element) {
+			console.error(`Tutorial: Cannot show step ${step.id}, element not found: ${step.attachTo.element}`);
 			return;
 		}
 
@@ -175,7 +188,7 @@
 		tour.show(stepIndex);
 	}
 
-	function handleNext() {
+	async function handleNext() {
 		if (!tutorial) return;
 
 		const nextIndex = $tutorialStore.currentStepIndex + 1;
@@ -194,13 +207,13 @@
 		if (!currentPath.startsWith(nextStep.route)) {
 			tutorialStore.pauseForNavigation();
 			tour?.hide();
-			window.location.href = normalizeRoute(nextStep.route);
+			await goto(normalizeRoute(nextStep.route));
 		} else {
 			tour?.next();
 		}
 	}
 
-	function handleBack() {
+	async function handleBack() {
 		if (!tutorial) return;
 
 		const prevIndex = $tutorialStore.currentStepIndex - 1;
@@ -215,7 +228,7 @@
 		if (!currentPath.startsWith(prevStep.route)) {
 			tutorialStore.pauseForNavigation();
 			tour?.hide();
-			window.location.href = normalizeRoute(prevStep.route);
+			await goto(normalizeRoute(prevStep.route));
 		} else {
 			tour?.back();
 		}
