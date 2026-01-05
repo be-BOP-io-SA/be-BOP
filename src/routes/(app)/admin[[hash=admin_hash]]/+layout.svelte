@@ -6,9 +6,9 @@
 	import { isAllowedOnPage } from '$lib/types/Role';
 	import { adminLinks as adminLinksImported } from './adminLinks.js';
 	import { POS_ROLE_ID } from '$lib/types/User.js';
-	// TEMP: Disabled for debugging
-	// import 'shepherd.js/dist/css/shepherd.css';
-	// import { TutorialProvider, TutorialProgress } from '$lib/components/tutorial';
+	// TEST: Re-enable imports only
+	import 'shepherd.js/dist/css/shepherd.css';
+	import { TutorialProvider, TutorialProgress } from '$lib/components/tutorial';
 
 	export let data;
 
