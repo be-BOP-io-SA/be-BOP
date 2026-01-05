@@ -170,7 +170,9 @@
 <svelte:head>
 	<meta name="viewport" content="width=1000" />
 </svelte:head>
-<!-- TEMP: Disabled TutorialProvider to debug error -->
-<main class="p-4 flex flex-col gap-4 body-mainPlan {$page.data.bodyClass || ''}">
-	<slot />
-</main>
+<!-- TEST: TutorialProvider with minimal props -->
+<TutorialProvider tutorial={null} progress={null} adminPrefix={data.adminPrefix}>
+	<main class="p-4 flex flex-col gap-4 body-mainPlan {$page.data.bodyClass || ''}">
+		<slot />
+	</main>
+</TutorialProvider>
