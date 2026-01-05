@@ -622,7 +622,7 @@ const migrations = [
 						id: 'arm-recovery',
 						order: 1,
 						route: '/admin/arm',
-						attachTo: { element: 'input[name="recoveryNpub"]', on: 'bottom' },
+						attachTo: { element: 'input[name="recoveryNpub"]', on: 'right' },
 						titleKey: 'tutorial.onboarding.step1.title',
 						textKey: 'tutorial.onboarding.step1.text',
 						requiredAction: {
@@ -635,7 +635,7 @@ const migrations = [
 						id: 'nostr-nsec',
 						order: 2,
 						route: '/admin/arm',
-						attachTo: { element: 'button[data-generate-nsec]', on: 'bottom' },
+						attachTo: { element: 'button[data-generate-nsec]', on: 'right' },
 						titleKey: 'tutorial.onboarding.step2.title',
 						textKey: 'tutorial.onboarding.step2.text',
 						requiredAction: {
@@ -647,7 +647,7 @@ const migrations = [
 						id: 'admin-hash',
 						order: 3,
 						route: '/admin/config',
-						attachTo: { element: 'input[name="adminHash"]', on: 'bottom' },
+						attachTo: { element: 'input[name="adminHash"]', on: 'right' },
 						titleKey: 'tutorial.onboarding.step3.title',
 						textKey: 'tutorial.onboarding.step3.text',
 						requiredAction: {
@@ -660,7 +660,7 @@ const migrations = [
 						id: 'identity-setup',
 						order: 4,
 						route: '/admin/identity',
-						attachTo: { element: 'input[name="brandName"]', on: 'bottom' },
+						attachTo: { element: 'input[name="brandName"]', on: 'right' },
 						titleKey: 'tutorial.onboarding.step4.title',
 						textKey: 'tutorial.onboarding.step4.text',
 						requiredAction: {
