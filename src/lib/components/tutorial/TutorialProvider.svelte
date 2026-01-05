@@ -117,6 +117,63 @@
 		tour.on('complete', handleTourComplete);
 	}
 
+	function isRequiredActionComplete(stepIndex: number): boolean {
+		if (!tutorial) return true;
+		const step = tutorial.steps[stepIndex];
+		if (!step?.requiredAction) return true;
+
+		const { type, selector, validation } = step.requiredAction;
+
+		if (type === 'input' && validation === 'non-empty' && selector) {
+			const input = document.querySelector(selector) as HTMLInputElement | null;
+			return input ? input.value.trim().length > 0 : false;
+		}
+
+		// For click and form-submit, we don't block - they proceed on action
+		return true;
+	}
+
+	function setupRequiredActionListener(stepIndex: number) {
+		if (!tutorial || !tour) return;
+		const step = tutorial.steps[stepIndex];
+		if (!step?.requiredAction) return;
+
+		const { type, selector, validation } = step.requiredAction;
+
+		if (type === 'input' && validation === 'non-empty' && selector) {
+			const input = document.querySelector(selector) as HTMLInputElement | null;
+			if (input) {
+				const updateButtonState = () => {
+					const nextBtn = document.querySelector('.shepherd-button-primary') as HTMLButtonElement | null;
+					if (nextBtn) {
+						const isComplete = input.value.trim().length > 0;
+						nextBtn.disabled = !isComplete;
+						nextBtn.style.opacity = isComplete ? '1' : '0.5';
+						nextBtn.style.cursor = isComplete ? 'pointer' : 'not-allowed';
+					}
+				};
+
+				// Initial state
+				updateButtonState();
+
+				// Listen for changes
+				input.addEventListener('input', updateButtonState);
+
+				// Store cleanup function
+				(window as any).__tutorialCleanup = () => {
+					input.removeEventListener('input', updateButtonState);
+				};
+			}
+		}
+	}
+
+	function cleanupRequiredActionListener() {
+		if ((window as any).__tutorialCleanup) {
+			(window as any).__tutorialCleanup();
+			delete (window as any).__tutorialCleanup;
+		}
+	}
+
 	function getButtonsForStep(stepIndex: number): Shepherd.Step.StepOptionsButton[] {
 		const buttons: Shepherd.Step.StepOptionsButton[] = [];
 		const isFirstStep = stepIndex === 0;
@@ -142,7 +199,12 @@
 		buttons.push({
 			text: isLastStep ? t('tutorial.common.finish') : t('tutorial.common.next'),
 			classes: 'shepherd-button-primary',
-			action: () => (isLastStep ? handleComplete() : handleNext())
+			action: () => {
+				if (!isRequiredActionComplete(stepIndex)) {
+					return; // Don't proceed if required action not complete
+				}
+				isLastStep ? handleComplete() : handleNext();
+			}
 		});
 
 		return buttons;
@@ -204,9 +266,15 @@
 			return;
 		}
 
+		// Cleanup previous listener
+		cleanupRequiredActionListener();
+
 		// Show the step
 		console.log('[Tutorial] showing step', stepIndex);
 		tour.show(stepIndex);
+
+		// Setup listener for required action validation (after a small delay for DOM)
+		setTimeout(() => setupRequiredActionListener(stepIndex), 100);
 	}
 
 	async function handleNext() {
@@ -256,6 +324,7 @@
 	}
 
 	function handleSkip() {
+		cleanupRequiredActionListener();
 		tour?.cancel();
 		tutorialStore.skipTutorial();
 		// TODO: Save skip status to server
@@ -263,6 +332,7 @@
 	}
 
 	function handleComplete() {
+		cleanupRequiredActionListener();
 		const totalTime = tutorialStore.completeTutorial();
 		tour?.complete();
 		// TODO: Save completion to server
@@ -339,6 +409,7 @@
 
 	onDestroy(() => {
 		console.log('[Tutorial] onDestroy');
+		cleanupRequiredActionListener();
 		if (tour) {
 			tour.cancel();
 			tour = null;
