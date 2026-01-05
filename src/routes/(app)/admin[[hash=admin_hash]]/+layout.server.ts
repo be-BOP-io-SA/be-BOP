@@ -12,31 +12,49 @@ export async function load({ locals }) {
 	 */
 
 	// Load tutorial data for logged-in users
-	// TEMPORARILY DISABLED - debugging /admin error
-	const activeTutorial = null;
-	const tutorialProgress = null;
+	let activeTutorial = null;
+	let tutorialProgress = null;
 
-	// if (locals.user) {
-	// 	try {
-	// 		// Find active tutorials for user's role
-	// 		activeTutorial = await collections.tutorials.findOne({
-	// 			_id: DEFAULT_TUTORIAL_ID,
-	// 			isActive: true,
-	// 			targetRoles: locals.user.roleId
-	// 		});
+	if (locals.user) {
+		try {
+			// Find active tutorials for user's role
+			const tutorial = await collections.tutorials.findOne({
+				_id: DEFAULT_TUTORIAL_ID,
+				isActive: true,
+				targetRoles: locals.user.roleId
+			});
 
-	// 		// Get user's progress on this tutorial
-	// 		if (activeTutorial) {
-	// 			tutorialProgress = await collections.tutorialProgress.findOne({
-	// 				userId: locals.user._id,
-	// 				tutorialId: activeTutorial._id
-	// 			});
-	// 		}
-	// 	} catch (e) {
-	// 		console.error('Error loading tutorial data:', e);
-	// 		// Continue without tutorial - don't break the admin page
-	// 	}
-	// }
+			if (tutorial) {
+				// Serialize dates for client transfer
+				activeTutorial = {
+					...tutorial,
+					createdAt: tutorial.createdAt?.toISOString?.() ?? tutorial.createdAt,
+					updatedAt: tutorial.updatedAt?.toISOString?.() ?? tutorial.updatedAt
+				};
+			}
+
+			// Get user's progress on this tutorial
+			if (activeTutorial) {
+				const progress = await collections.tutorialProgress.findOne({
+					userId: locals.user._id,
+					tutorialId: activeTutorial._id
+				});
+
+				if (progress) {
+					tutorialProgress = {
+						...progress,
+						startedAt: progress.startedAt?.toISOString?.() ?? progress.startedAt,
+						completedAt: progress.completedAt?.toISOString?.() ?? progress.completedAt,
+						lastAccessedAt: progress.lastAccessedAt?.toISOString?.() ?? progress.lastAccessedAt,
+						stepCompletedAt: progress.stepCompletedAt?.map((d: Date) => d?.toISOString?.() ?? d) ?? []
+					};
+				}
+			}
+		} catch (e) {
+			console.error('Error loading tutorial data:', e);
+			// Continue without tutorial - don't break the admin page
+		}
+	}
 
 	return {
 		productActionSettings: runtimeConfig.productActionSettings,
