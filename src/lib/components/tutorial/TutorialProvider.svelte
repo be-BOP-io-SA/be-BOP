@@ -17,6 +17,7 @@
 	let tour: Shepherd.Tour | null = null;
 	let isNavigating = false;
 	let pendingStepIndex: number | null = null;
+	let isShowingStep = false; // Guard against concurrent calls
 
 	beforeNavigate(() => {
 		console.log('[Tutorial] beforeNavigate');
@@ -93,113 +94,123 @@
 	async function showCurrentStep() {
 		if (!tutorial || !tour) return;
 
-		const state = $tutorialStore;
-		const stepDef = tutorial.steps[state.currentStepIndex];
-
-		if (!stepDef) {
-			console.log('[Tutorial] No step definition for index', state.currentStepIndex);
+		// Prevent concurrent calls
+		if (isShowingStep) {
+			console.log('[Tutorial] Already showing a step, skipping');
 			return;
 		}
+		isShowingStep = true;
 
-		console.log('[Tutorial] Showing step', stepDef.id, 'on route', stepDef.route);
+		try {
+			const state = $tutorialStore;
+			const stepDef = tutorial.steps[state.currentStepIndex];
 
-		// Check if we need to navigate
-		const currentPath = $page.url.pathname.replace(/^\/admin-[a-zA-Z0-9]+/, '/admin');
-		if (!currentPath.startsWith(stepDef.route)) {
-			console.log('[Tutorial] Need to navigate from', currentPath, 'to', stepDef.route);
-			pendingStepIndex = state.currentStepIndex;
-			tutorialStore.pauseForNavigation();
-			const targetRoute = stepDef.route.replace('/admin', adminPrefix);
-			await goto(targetRoute);
-			return;
-		}
+			if (!stepDef) {
+				console.log('[Tutorial] No step definition for index', state.currentStepIndex);
+				return;
+			}
 
-		// Wait for element
-		console.log('[Tutorial] Waiting for element:', stepDef.attachTo.element);
-		const element = await waitForElement(stepDef.attachTo.element);
-		if (!element) {
-			console.error('[Tutorial] Cannot show step', stepDef.id, ', element not found:', stepDef.attachTo.element);
-			return;
-		}
-		console.log('[Tutorial] Element found, clearing old steps');
+			console.log('[Tutorial] Showing step', stepDef.id, 'on route', stepDef.route);
 
-		// Clear existing steps and add current one
-		const stepsToDestroy = [...tour.steps];
-		console.log('[Tutorial] Steps to destroy:', stepsToDestroy.length);
-		for (const step of stepsToDestroy) {
-			step.destroy();
-		}
-		console.log('[Tutorial] Steps cleared, adding new step');
+			// Check if we need to navigate
+			const currentPath = $page.url.pathname.replace(/^\/admin-[a-zA-Z0-9]+/, '/admin');
+			if (!currentPath.startsWith(stepDef.route)) {
+				console.log('[Tutorial] Need to navigate from', currentPath, 'to', stepDef.route);
+				pendingStepIndex = state.currentStepIndex;
+				tutorialStore.pauseForNavigation();
+				const targetRoute = stepDef.route.replace('/admin', adminPrefix);
+				await goto(targetRoute);
+				return;
+			}
 
-		const isLastStep = state.currentStepIndex >= tutorial.steps.length - 1;
-		const buttons = [];
+			// Wait for element
+			console.log('[Tutorial] Waiting for element:', stepDef.attachTo.element);
+			const element = await waitForElement(stepDef.attachTo.element);
+			if (!element) {
+				console.error('[Tutorial] Cannot show step', stepDef.id, ', element not found:', stepDef.attachTo.element);
+				return;
+			}
+			console.log('[Tutorial] Element found, clearing old steps');
 
-		if (state.currentStepIndex > 0) {
-			buttons.push({
-				text: t('tutorial.common.previous'),
-				action: async () => {
-					tour?.hide();
-					tutorialStore.prevStep();
-					await showCurrentStep();
-				},
-				classes: 'shepherd-button-secondary'
-			});
-		}
+			// Clear existing steps and add current one
+			const stepsToDestroy = [...tour.steps];
+			console.log('[Tutorial] Steps to destroy:', stepsToDestroy.length);
+			for (const step of stepsToDestroy) {
+				step.destroy();
+			}
+			console.log('[Tutorial] Steps cleared, adding new step');
 
-		if (isLastStep) {
-			buttons.push({
-				text: t('tutorial.common.finish'),
-				action: async () => {
-					const totalTime = tutorialStore.completeTutorial();
-					tour?.complete();
-					// Save completion to server
-					try {
-						await fetch('/api/tutorial/complete', {
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ tutorialId: tutorial?._id, totalTimeMs: totalTime })
-						});
-					} catch (e) {
-						console.error('[Tutorial] Failed to save completion:', e);
+			const isLastStep = state.currentStepIndex >= tutorial.steps.length - 1;
+			const buttons: Array<{ text: string; action: () => void | Promise<void>; classes?: string; disabled?: boolean }> = [];
+
+			if (state.currentStepIndex > 0) {
+				buttons.push({
+					text: t('tutorial.common.previous') || 'Previous',
+					action: async () => {
+						tour?.hide();
+						tutorialStore.prevStep();
+						await showCurrentStep();
+					},
+					classes: 'shepherd-button-secondary'
+				});
+			}
+
+			if (isLastStep) {
+				buttons.push({
+					text: t('tutorial.common.finish') || 'Finish',
+					action: async () => {
+						const totalTime = tutorialStore.completeTutorial();
+						tour?.complete();
+						try {
+							await fetch('/api/tutorial/complete', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({ tutorialId: tutorial?._id, totalTimeMs: totalTime })
+							});
+						} catch (e) {
+							console.error('[Tutorial] Failed to save completion:', e);
+						}
 					}
-				}
+				});
+			} else {
+				const hasRequiredAction = !!stepDef.requiredAction;
+				buttons.push({
+					text: t('tutorial.common.next') || 'Next',
+					action: async () => {
+						console.log('[Tutorial] Next button clicked');
+						tour?.hide();
+						tutorialStore.nextStep();
+						await showCurrentStep();
+					},
+					disabled: hasRequiredAction,
+					classes: hasRequiredAction ? 'shepherd-button-primary shepherd-button-disabled' : 'shepherd-button-primary'
+				});
+			}
+
+			console.log('[Tutorial] Adding step to tour');
+			const stepTitle = t(stepDef.titleKey) || stepDef.titleKey;
+			const stepText = t(stepDef.textKey) || stepDef.textKey;
+			const stepCounter = t('tutorial.common.stepCounter', { current: state.currentStepIndex + 1, total: tutorial.steps.length }) || `Step ${state.currentStepIndex + 1} of ${tutorial.steps.length}`;
+
+			tour.addStep({
+				id: stepDef.id,
+				title: `${tutorial.name} - ${stepCounter}`,
+				text: `<strong>${stepTitle}</strong><br/>${stepText}`,
+				attachTo: { element: stepDef.attachTo.element, on: stepDef.attachTo.on },
+				buttons
 			});
-		} else {
-			// Check if this step has a required action
-			const hasRequiredAction = !!stepDef.requiredAction;
-			buttons.push({
-				text: t('tutorial.common.next'),
-				action: async () => {
-					console.log('[Tutorial] Next button clicked, advancing to next step');
-					tour?.hide();
-					tutorialStore.nextStep();
-					console.log('[Tutorial] Calling showCurrentStep...');
-					await showCurrentStep();
-					console.log('[Tutorial] showCurrentStep completed');
-				},
-				disabled: hasRequiredAction,
-				classes: hasRequiredAction ? 'shepherd-button-primary shepherd-button-disabled' : 'shepherd-button-primary'
-			});
+
+			console.log('[Tutorial] Starting tour');
+			tour.start();
+			console.log('[Tutorial] Tour started');
+
+			if (stepDef.requiredAction) {
+				setupRequiredActionMonitoring(stepDef);
+			}
+			console.log('[Tutorial] showCurrentStep finished');
+		} finally {
+			isShowingStep = false;
 		}
-
-		console.log('[Tutorial] Adding step to tour');
-		tour.addStep({
-			id: stepDef.id,
-			title: `${tutorial.name} - ${t('tutorial.common.stepCounter', { current: state.currentStepIndex + 1, total: tutorial.steps.length })}`,
-			text: `<strong>${t(stepDef.titleKey)}</strong><br/>${t(stepDef.textKey)}`,
-			attachTo: { element: stepDef.attachTo.element, on: stepDef.attachTo.on },
-			buttons
-		});
-
-		console.log('[Tutorial] Starting tour');
-		tour.start();
-		console.log('[Tutorial] Tour started');
-
-		// Setup required action monitoring if needed
-		if (stepDef.requiredAction) {
-			setupRequiredActionMonitoring(stepDef);
-		}
-		console.log('[Tutorial] showCurrentStep finished');
 	}
 
 	function setupRequiredActionMonitoring(stepDef: Tutorial['steps'][0]) {
