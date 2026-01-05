@@ -377,11 +377,21 @@
 
 	onMount(() => {
 		console.log('[Tutorial] onMount', { tutorial: !!tutorial, isActive: $tutorialStore.isActive });
+
+		// Debug: Check what's in session storage
+		try {
+			const stored = sessionStorage.getItem('bebop-tutorial-state');
+			console.log('[Tutorial] Session storage content:', stored);
+		} catch (e) {
+			console.log('[Tutorial] Could not read session storage:', e);
+		}
+
 		window.addEventListener('tutorial:request-start', handleRequestStart as EventListener);
 
 		// Try to restore tutorial state (e.g., after page reload from form submission)
 		if (tutorial) {
 			const restoredStepIndex = tutorialStore.initialize();
+			console.log('[Tutorial] Initialize returned:', restoredStepIndex);
 			if (restoredStepIndex >= 0) {
 				console.log('[Tutorial] Restoring tutorial after page reload to step', restoredStepIndex);
 				initializeTour();
