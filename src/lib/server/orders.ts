@@ -2133,9 +2133,13 @@ export async function addOrderPayment(
 	const expiresAt =
 		opts?.expiresAt !== undefined ? opts.expiresAt : paymentMethodExpiration(paymentMethod);
 
+	const isFreePayment = paymentMethod === 'free';
+	const paidAt = isFreePayment ? new Date() : undefined;
+
 	const payment: OrderPayment = {
 		_id: paymentId,
-		status: 'pending',
+		status: isFreePayment ? 'paid' : 'pending',
+		...(paidAt && { paidAt }),
 		method: paymentMethod,
 		price: paymentPrice(paymentMethod, priceToPay),
 		...(paymentMethod === 'point-of-sale' && opts?.posSubtype && { posSubtype: opts.posSubtype }),
@@ -2190,6 +2194,12 @@ export async function addOrderPayment(
 		},
 		{ session: opts?.session }
 	);
+
+	// free payments creating as 'paid'
+	if (isFreePayment) {
+		order.payments.push(payment);
+		await onOrderPayment(order, payment, payment.price, { providedSession: opts?.session });
+	}
 
 	return payment;
 }

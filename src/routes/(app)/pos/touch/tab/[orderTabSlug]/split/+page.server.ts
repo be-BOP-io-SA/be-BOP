@@ -174,7 +174,7 @@ const sharePaymentSchema = z.discriminatedUnion('mode', [
 	}),
 	z.object({
 		mode: z.literal('custom-amount'),
-		customAmount: z.coerce.number().positive()
+		customAmount: z.coerce.number().nonnegative()
 	})
 ]);
 
@@ -212,7 +212,8 @@ export const actions = {
 					? await collections.orders.findOne({
 							orderTabId: orderTab._id,
 							splitMode: 'shares',
-							status: { $in: ['pending', 'paid'] }
+							status: { $in: ['pending', 'paid'] },
+							'payments.0': { $exists: true }
 					  })
 					: null;
 

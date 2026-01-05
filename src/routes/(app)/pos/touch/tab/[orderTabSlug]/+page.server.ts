@@ -64,7 +64,7 @@ const printHistoryEntrySchema = z.object({
 
 const discountSchema = z
 	.object({
-		percentage: z.number().min(0).max(99),
+		percentage: z.number().min(0).max(100),
 		tagId: z.string().optional(),
 		motive: z.string().max(500).optional()
 	})

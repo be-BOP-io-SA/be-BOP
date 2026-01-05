@@ -361,8 +361,8 @@
 			  })
 			: JSON.stringify(null);
 
-	const PRESET_PERCENTAGES = [10, 20, 25, 50, 75];
-	const percentageSchema = z.coerce.number().min(0).max(99);
+	const PRESET_PERCENTAGES = [10, 20, 25, 50, 75, 100];
+	const percentageSchema = z.coerce.number().min(0).max(100);
 
 	function openDiscountPanel() {
 		rightPanel = 'discount';
