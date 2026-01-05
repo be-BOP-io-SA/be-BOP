@@ -750,8 +750,10 @@
 			"skip": "Skip",
 			"next": "Next",
 			"back": "Back",
+			"previous": "Previous",
 			"finish": "Finish",
 			"progress": "Step {current} of {total}",
+			"stepCounter": "Step {current} of {total}",
 			"startPrompt": {
 				"title": "Welcome to be-BOP!",
 				"text": "Would you like to take a quick tour to get started?",
@@ -775,17 +777,21 @@
 		"onboarding": {
 			"step1": {
 				"title": "Set Recovery Address",
-				"text": "First, let's set up your recovery npub address. This is important for account recovery via Nostr."
+				"text": "Enter your recovery npub address. This is important for account recovery via Nostr."
 			},
 			"step2": {
-				"title": "Generate Nostr Key",
-				"text": "Now generate your NostR private key for secure decentralized communications."
+				"title": "Save Recovery Settings",
+				"text": "Click the Save button to save your recovery address."
 			},
 			"step3": {
+				"title": "Generate Nostr Key",
+				"text": "Generate your NostR private key for secure decentralized communications. Click the button to create a new key."
+			},
+			"step4": {
 				"title": "Configure Admin Hash",
 				"text": "Set a custom admin hash to secure your admin URL. This adds an extra layer of security."
 			},
-			"step4": {
+			"step5": {
 				"title": "Complete Business Identity",
 				"text": "Finally, fill in your business identity information. This will appear on invoices and receipts."
 			}

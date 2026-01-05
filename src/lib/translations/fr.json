@@ -750,8 +750,10 @@
 			"skip": "Passer",
 			"next": "Suivant",
 			"back": "Retour",
+			"previous": "Précédent",
 			"finish": "Terminer",
 			"progress": "Etape {current} sur {total}",
+			"stepCounter": "Etape {current} sur {total}",
 			"startPrompt": {
 				"title": "Bienvenue sur be-BOP !",
 				"text": "Souhaitez-vous suivre un guide rapide pour commencer ?",
@@ -775,17 +777,21 @@
 		"onboarding": {
 			"step1": {
 				"title": "Configurer l'adresse de récupération",
-				"text": "Commençons par configurer votre adresse npub de récupération. C'est important pour la récupération de compte via Nostr."
+				"text": "Entrez votre adresse npub de récupération. C'est important pour la récupération de compte via Nostr."
 			},
 			"step2": {
-				"title": "Générer la clé Nostr",
-				"text": "Générez maintenant votre clé privée NostR pour des communications décentralisées sécurisées."
+				"title": "Enregistrer les paramètres",
+				"text": "Cliquez sur le bouton Sauvegarder pour enregistrer votre adresse de récupération."
 			},
 			"step3": {
+				"title": "Générer la clé Nostr",
+				"text": "Générez votre clé privée NostR pour des communications décentralisées sécurisées. Cliquez sur le bouton pour créer une nouvelle clé."
+			},
+			"step4": {
 				"title": "Configurer le hash admin",
 				"text": "Définissez un hash admin personnalisé pour sécuriser votre URL d'administration. Cela ajoute une couche de sécurité supplémentaire."
 			},
-			"step4": {
+			"step5": {
 				"title": "Compléter l'identité de l'entreprise",
 				"text": "Enfin, remplissez les informations d'identité de votre entreprise. Elles apparaîtront sur les factures et les reçus."
 			}
