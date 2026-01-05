@@ -189,18 +189,41 @@
 
 		if (type === 'input' && validation === 'non-empty') {
 			const input = document.querySelector(selector) as HTMLInputElement;
+			console.log('[Tutorial] Setting up input monitoring for', selector, 'found:', !!input);
+
 			if (input) {
 				const updateButtonState = () => {
-					const nextBtn = document.querySelector('.shepherd-button-primary') as HTMLButtonElement;
+					// Shepherd renders buttons inside .shepherd-footer
+					const footer = document.querySelector('.shepherd-footer');
+					const buttons = footer?.querySelectorAll('button');
+					// Get the last button (Next/Finish) - skip the first one if it's "Previous"
+					const nextBtn = buttons && buttons.length > 0 ? buttons[buttons.length - 1] as HTMLButtonElement : null;
+
+					console.log('[Tutorial] Updating button state, found button:', !!nextBtn, 'input value:', input.value);
+
 					if (nextBtn) {
 						const hasValue = input.value.trim().length > 0;
-						nextBtn.disabled = !hasValue;
-						nextBtn.classList.toggle('shepherd-button-disabled', !hasValue);
+						if (hasValue) {
+							nextBtn.disabled = false;
+							nextBtn.classList.remove('shepherd-button-disabled');
+							nextBtn.style.opacity = '1';
+							nextBtn.style.pointerEvents = 'auto';
+						} else {
+							nextBtn.disabled = true;
+							nextBtn.classList.add('shepherd-button-disabled');
+							nextBtn.style.opacity = '0.5';
+							nextBtn.style.pointerEvents = 'none';
+						}
 					}
 				};
 
 				input.addEventListener('input', updateButtonState);
-				updateButtonState(); // Initial check
+				// Also listen for paste and change events
+				input.addEventListener('paste', () => setTimeout(updateButtonState, 10));
+				input.addEventListener('change', updateButtonState);
+
+				// Small delay to ensure Shepherd has rendered the buttons
+				setTimeout(updateButtonState, 100);
 			}
 		}
 	}
