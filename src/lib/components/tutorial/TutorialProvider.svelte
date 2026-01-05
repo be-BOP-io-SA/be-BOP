@@ -283,10 +283,13 @@
 			const footer = document.querySelector('.shepherd-footer');
 			const buttons = footer?.querySelectorAll('button');
 			const nextBtn = buttons && buttons.length > 0 ? buttons[buttons.length - 1] as HTMLButtonElement : null;
+			console.log('[Tutorial] enableNextButton - footer:', !!footer, 'buttons:', buttons?.length, 'nextBtn:', !!nextBtn);
 			if (nextBtn) {
 				nextBtn.disabled = false;
 				nextBtn.style.opacity = '1';
 				nextBtn.style.pointerEvents = 'auto';
+				nextBtn.classList.remove('shepherd-button-disabled');
+				console.log('[Tutorial] Next button ENABLED');
 			}
 		};
 
@@ -298,6 +301,7 @@
 				nextBtn.disabled = true;
 				nextBtn.style.opacity = '0.5';
 				nextBtn.style.pointerEvents = 'none';
+				nextBtn.classList.add('shepherd-button-disabled');
 			}
 		};
 
@@ -308,10 +312,11 @@
 				return;
 			}
 
-			console.log('[Tutorial] Setting up input monitoring for', selector);
+			console.log('[Tutorial] Setting up input monitoring for', selector, 'current value:', input.value);
 
 			const updateButtonState = () => {
 				const hasValue = input.value.trim().length > 0;
+				console.log('[Tutorial] updateButtonState - hasValue:', hasValue, 'value:', input.value);
 				if (hasValue) {
 					enableNextButton();
 				} else {
@@ -322,8 +327,8 @@
 			input.addEventListener('input', updateButtonState);
 			input.addEventListener('change', updateButtonState);
 
-			// Initial state after Shepherd renders
-			setTimeout(updateButtonState, 150);
+			// Initial state after Shepherd renders - use longer delay
+			setTimeout(updateButtonState, 300);
 
 		} else if (type === 'click') {
 			// For click actions, enable the Next button immediately
