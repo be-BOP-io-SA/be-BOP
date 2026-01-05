@@ -261,13 +261,26 @@
 		}
 	}
 
+	function handleRequestStart(event: CustomEvent) {
+		if (tutorial) {
+			tutorialStore.showPrompt('start');
+		}
+	}
+
 	onMount(() => {
+		// Listen for external requests to start the tutorial
+		window.addEventListener('tutorial:request-start', handleRequestStart as EventListener);
+
 		// Check if we need to restore a paused tour
 		const restored = tutorialStore.initialize();
 		if (restored && tutorial) {
 			initializeTour();
 			setTimeout(() => showCurrentStep(), 300);
 		}
+
+		return () => {
+			window.removeEventListener('tutorial:request-start', handleRequestStart as EventListener);
+		};
 	});
 
 	onDestroy(() => {

@@ -1,9 +1,16 @@
 <script lang="ts">
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/stores';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
 	$: lang = new URL($page.url).searchParams.get('lang') || 'en';
+
+	const { t } = useI18n();
+
+	function startOnboardingTutorial() {
+		window.dispatchEvent(new CustomEvent('tutorial:request-start'));
+	}
 </script>
 
 <div class="flex flex-col gap-4">
@@ -12,6 +19,10 @@
 		Welcome on be-BOP back-office! From here, you'll be able to manage, configure, and monitor your
 		be-BOP.
 	</p>
+
+	<button class="btn btn-primary w-fit" on:click={startOnboardingTutorial}>
+		{t('tutorial.common.startPrompt.start')}
+	</button>
 
 	<h1 class="text-xl">A word from your administrator :</h1>
 	<p>
