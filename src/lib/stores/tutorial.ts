@@ -90,19 +90,21 @@ function createTutorialStore() {
 
 		/**
 		 * Initialize the store, potentially restoring from session storage
+		 * Returns the restored step index if successful, or -1 if no restoration
 		 */
-		initialize: () => {
+		initialize: (): number => {
 			const persisted = getPersistedState();
-			if (persisted && persisted.isActive && persisted.status === 'waiting_for_navigation') {
+			if (persisted && persisted.isActive && (persisted.status === 'waiting_for_navigation' || persisted.status === 'running')) {
+				const stepIndex = persisted.currentStepIndex ?? 0;
 				update((state) => ({
 					...state,
 					...persisted,
 					status: 'running' as const,
 					stepStartTime: Date.now()
 				}));
-				return true; // Indicates we restored a paused tour
+				return stepIndex; // Return the step index to restore to
 			}
-			return false;
+			return -1; // No restoration
 		},
 
 		/**

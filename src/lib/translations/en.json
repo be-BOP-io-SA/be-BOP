@@ -754,6 +754,9 @@
 			"finish": "Finish",
 			"progress": "Step {current} of {total}",
 			"stepCounter": "Step {current} of {total}",
+			"stepSkipped": "Step Complete",
+			"alreadyConfigured": "This is already configured. Click Next to continue.",
+			"stepNotNeeded": "This step is not needed. Click Next to continue.",
 			"startPrompt": {
 				"title": "Welcome to be-BOP!",
 				"text": "Would you like to take a quick tour to get started?",

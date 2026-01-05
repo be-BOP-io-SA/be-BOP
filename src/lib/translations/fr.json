@@ -754,6 +754,9 @@
 			"finish": "Terminer",
 			"progress": "Etape {current} sur {total}",
 			"stepCounter": "Etape {current} sur {total}",
+			"stepSkipped": "Étape terminée",
+			"alreadyConfigured": "Ceci est déjà configuré. Cliquez sur Suivant pour continuer.",
+			"stepNotNeeded": "Cette étape n'est pas nécessaire. Cliquez sur Suivant pour continuer.",
 			"startPrompt": {
 				"title": "Bienvenue sur be-BOP !",
 				"text": "Souhaitez-vous suivre un guide rapide pour commencer ?",

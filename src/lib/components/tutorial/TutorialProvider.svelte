@@ -131,20 +131,50 @@
 			if (stepDef.skipCondition) {
 				const { elementExists, elementMissing } = stepDef.skipCondition;
 				let shouldSkip = false;
+				let skipReason = '';
 
 				if (elementExists && document.querySelector(elementExists)) {
 					console.log('[Tutorial] Skip condition met: element exists', elementExists);
 					shouldSkip = true;
+					skipReason = 'already_configured';
 				}
 				if (elementMissing && !document.querySelector(elementMissing)) {
 					console.log('[Tutorial] Skip condition met: element missing', elementMissing);
 					shouldSkip = true;
+					skipReason = 'not_available';
 				}
 
 				if (shouldSkip) {
-					console.log('[Tutorial] Skipping step', stepDef.id);
-					tutorialStore.nextStep();
-					await showCurrentStep();
+					console.log('[Tutorial] Showing skip notification for step', stepDef.id);
+
+					// Clear existing steps
+					const stepsToDestroy = [...tour.steps];
+					for (const step of stepsToDestroy) {
+						step.destroy();
+					}
+
+					// Show a brief notification that this step is being skipped
+					const skipTitle = t('tutorial.common.stepSkipped') || 'Step Complete';
+					const skipText = skipReason === 'already_configured'
+						? (t('tutorial.common.alreadyConfigured') || 'This is already configured. Moving to the next step...')
+						: (t('tutorial.common.stepNotNeeded') || 'This step is not needed. Moving to the next step...');
+
+					tour.addStep({
+						id: `${stepDef.id}-skipped`,
+						title: `${tutorial.name} - ${stepDef.id}`,
+						text: `<p>${skipText}</p>`,
+						buttons: [{
+							text: t('tutorial.common.next') || 'Next',
+							action: async () => {
+								tour?.hide();
+								tutorialStore.nextStep();
+								isShowingStep = false; // Reset guard before recursive call
+								await showCurrentStep();
+							}
+						}]
+					});
+
+					tour.show(`${stepDef.id}-skipped`);
 					return;
 				}
 			}
@@ -344,16 +374,18 @@
 		console.log('[Tutorial] onMount', { tutorial: !!tutorial, isActive: $tutorialStore.isActive });
 		window.addEventListener('tutorial:request-start', handleRequestStart as EventListener);
 
-		// DISABLED: State restoration was causing auto-advance issues
-		// const restored = tutorialStore.initialize();
-		// if (restored && tutorial) {
-		// 	console.log('[Tutorial] Restoring paused tutorial');
-		// 	initializeTour();
-		// 	showCurrentStep();
-		// }
-
-		// Clear any stale session state on mount
-		tutorialStore.reset();
+		// Try to restore tutorial state (e.g., after page reload from form submission)
+		if (tutorial) {
+			const restoredStepIndex = tutorialStore.initialize();
+			if (restoredStepIndex >= 0) {
+				console.log('[Tutorial] Restoring tutorial after page reload to step', restoredStepIndex);
+				initializeTour();
+				// Use setTimeout to let the page render first
+				setTimeout(() => {
+					showCurrentStep();
+				}, 200);
+			}
+		}
 
 		return () => {
 			window.removeEventListener('tutorial:request-start', handleRequestStart as EventListener);
