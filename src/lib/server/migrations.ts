@@ -593,13 +593,6 @@ const migrations = [
 				{ session }
 			);
 		}
-	},
-	{
-		_id: new ObjectId('678a1b2c3d4e5f6a7b8c9d0e'),
-		name: 'Seed default tutorials',
-		run: async (session: ClientSession) => {
-			await seedTutorials(session);
-		}
 	}
 ];
 
@@ -656,5 +649,13 @@ export async function runMigrations() {
 
 	while ((await collections.migrations.countDocuments()) < migrations.length) {
 		await new Promise((resolve) => setTimeout(resolve, 1000));
+	}
+
+	// Seed tutorials after migrations (runs every startup to handle version updates)
+	try {
+		await seedTutorials();
+		console.log('Tutorials seeded successfully');
+	} catch (e) {
+		console.error('Error seeding tutorials:', e);
 	}
 }
