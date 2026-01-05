@@ -2191,6 +2191,14 @@ export async function addOrderPayment(
 		{ session: opts?.session }
 	);
 
+	// Auto-complete free payments immediately
+	if (paymentMethod === 'free') {
+		order.payments.push(payment);
+		await onOrderPayment(order, payment, payment.price, { providedSession: opts?.session });
+		payment.status = 'paid';
+		payment.paidAt = new Date();
+	}
+
 	return payment;
 }
 

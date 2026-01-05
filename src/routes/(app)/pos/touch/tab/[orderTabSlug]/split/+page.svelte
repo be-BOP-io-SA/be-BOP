@@ -31,8 +31,20 @@
 
 	function buildPaymentOptions(
 		methods: PaymentMethod[],
-		subtypes: PaymentSubtype[]
+		subtypes: PaymentSubtype[],
+		showFreeOnly: boolean
 	): PaymentOption[] {
+		if (showFreeOnly) {
+			return [
+				{
+					method: 'free',
+					subtype: null,
+					label: t('checkout.paymentMethod.free'),
+					icon: PAYMENT_METHOD_EMOJI.free
+				}
+			];
+		}
+
 		const subtypesByParent = subtypes.reduce((map, subtype) => {
 			if (!map.has(subtype.parentMethod)) {
 				map.set(subtype.parentMethod, []);
@@ -67,10 +79,28 @@
 			});
 	}
 
-	$: paymentOptions = buildPaymentOptions(
+	// Show 'free' only when:
+	// - Items mode: items ARE selected AND their total is 0 (free items)
+	// - Shares mode: entire tab total is 0 (all items are free) OR 100% discount applied
+	$: hasSelectedItems = splitTabQuantities.some((qty) => qty > 0);
+	$: showFreeOnlyForItems = hasSelectedItems && splitTabPriceInfo.partialPriceWithVat === 0;
+	// Check if pool has 100% discount (without tagId = applies to all items)
+	$: isFullPoolDiscount = tab.discount?.percentage === 100 && !tab.discount?.tagId;
+	$: showFreeOnlyForShares = tabItemsPriceInfo.partialPriceWithVat === 0 || isFullPoolDiscount;
+
+	$: paymentOptionsForItems = buildPaymentOptions(
 		data.availablePaymentMethods ?? [],
-		data.paymentSubtypes ?? []
+		data.paymentSubtypes ?? [],
+		showFreeOnlyForItems
 	);
+	$: paymentOptionsForShares = buildPaymentOptions(
+		data.availablePaymentMethods ?? [],
+		data.paymentSubtypes ?? [],
+		showFreeOnlyForShares
+	);
+
+	$: paymentOptions =
+		rightPannel === 'split-items' ? paymentOptionsForItems : paymentOptionsForShares;
 
 	let selectedPaymentIndex = 0;
 	$: selectedPayment = paymentOptions[selectedPaymentIndex] ?? paymentOptions[0];
@@ -637,10 +667,11 @@
 					<button
 						type="submit"
 						class="uppercase text-3xl p-4 text-center w-full {splitTabPriceInfo.partialPriceWithVat >
-						0
+							0 || selectedPayment?.method === 'free'
 							? 'touchScreen-action-cta'
 							: 'bg-gray-400 text-white cursor-not-allowed'}"
-						disabled={splitTabPriceInfo.partialPriceWithVat === 0}
+						disabled={splitTabPriceInfo.partialPriceWithVat === 0 &&
+							selectedPayment?.method !== 'free'}
 					>
 						{t('pos.split.paySelected')}
 					</button>
