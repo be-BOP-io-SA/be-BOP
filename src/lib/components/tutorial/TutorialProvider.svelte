@@ -115,16 +115,21 @@
 		}
 
 		// Wait for element
+		console.log('[Tutorial] Waiting for element:', stepDef.attachTo.element);
 		const element = await waitForElement(stepDef.attachTo.element);
 		if (!element) {
 			console.error('[Tutorial] Cannot show step', stepDef.id, ', element not found:', stepDef.attachTo.element);
 			return;
 		}
+		console.log('[Tutorial] Element found, clearing old steps');
 
 		// Clear existing steps and add current one
-		while (tour.steps.length > 0) {
-			tour.steps[0].destroy();
+		const stepsToDestroy = [...tour.steps];
+		console.log('[Tutorial] Steps to destroy:', stepsToDestroy.length);
+		for (const step of stepsToDestroy) {
+			step.destroy();
 		}
+		console.log('[Tutorial] Steps cleared, adding new step');
 
 		const isLastStep = state.currentStepIndex >= tutorial.steps.length - 1;
 		const buttons = [];
@@ -132,9 +137,10 @@
 		if (state.currentStepIndex > 0) {
 			buttons.push({
 				text: t('tutorial.common.previous'),
-				action: () => {
+				action: async () => {
+					tour?.hide();
 					tutorialStore.prevStep();
-					showCurrentStep();
+					await showCurrentStep();
 				},
 				classes: 'shepherd-button-secondary'
 			});
@@ -163,15 +169,20 @@
 			const hasRequiredAction = !!stepDef.requiredAction;
 			buttons.push({
 				text: t('tutorial.common.next'),
-				action: () => {
+				action: async () => {
+					console.log('[Tutorial] Next button clicked, advancing to next step');
+					tour?.hide();
 					tutorialStore.nextStep();
-					showCurrentStep();
+					console.log('[Tutorial] Calling showCurrentStep...');
+					await showCurrentStep();
+					console.log('[Tutorial] showCurrentStep completed');
 				},
 				disabled: hasRequiredAction,
 				classes: hasRequiredAction ? 'shepherd-button-primary shepherd-button-disabled' : 'shepherd-button-primary'
 			});
 		}
 
+		console.log('[Tutorial] Adding step to tour');
 		tour.addStep({
 			id: stepDef.id,
 			title: `${tutorial.name} - ${t('tutorial.common.stepCounter', { current: state.currentStepIndex + 1, total: tutorial.steps.length })}`,
@@ -180,12 +191,15 @@
 			buttons
 		});
 
+		console.log('[Tutorial] Starting tour');
 		tour.start();
+		console.log('[Tutorial] Tour started');
 
 		// Setup required action monitoring if needed
 		if (stepDef.requiredAction) {
 			setupRequiredActionMonitoring(stepDef);
 		}
+		console.log('[Tutorial] showCurrentStep finished');
 	}
 
 	function setupRequiredActionMonitoring(stepDef: Tutorial['steps'][0]) {
