@@ -394,12 +394,23 @@
 		// Listen for external requests to start the tutorial
 		window.addEventListener('tutorial:request-start', handleRequestStart as EventListener);
 
-		// Check if we need to restore a paused tour
-		const restored = tutorialStore.initialize();
-		console.log('[Tutorial] onMount restored', { restored, tutorial: !!tutorial });
-		if (restored && tutorial) {
-			initializeTour();
-			setTimeout(() => showCurrentStep(), 300);
+		try {
+			// If store has active state but no tutorial data available, reset it
+			if ($tutorialStore.isActive && !tutorial) {
+				console.log('[Tutorial] Resetting stale tutorial state');
+				tutorialStore.reset();
+			}
+
+			// Check if we need to restore a paused tour
+			const restored = tutorialStore.initialize();
+			console.log('[Tutorial] onMount restored', { restored, tutorial: !!tutorial });
+			if (restored && tutorial) {
+				initializeTour();
+				setTimeout(() => showCurrentStep(), 300);
+			}
+		} catch (e) {
+			console.error('[Tutorial] Error in onMount:', e);
+			tutorialStore.reset();
 		}
 
 		return () => {

@@ -16,19 +16,24 @@ export async function load({ locals }) {
 	let tutorialProgress = null;
 
 	if (locals.user) {
-		// Find active tutorials for user's role
-		activeTutorial = await collections.tutorials.findOne({
-			_id: DEFAULT_TUTORIAL_ID,
-			isActive: true,
-			targetRoles: locals.user.roleId
-		});
-
-		// Get user's progress on this tutorial
-		if (activeTutorial) {
-			tutorialProgress = await collections.tutorialProgress.findOne({
-				userId: locals.user._id,
-				tutorialId: activeTutorial._id
+		try {
+			// Find active tutorials for user's role
+			activeTutorial = await collections.tutorials.findOne({
+				_id: DEFAULT_TUTORIAL_ID,
+				isActive: true,
+				targetRoles: locals.user.roleId
 			});
+
+			// Get user's progress on this tutorial
+			if (activeTutorial) {
+				tutorialProgress = await collections.tutorialProgress.findOne({
+					userId: locals.user._id,
+					tutorialId: activeTutorial._id
+				});
+			}
+		} catch (e) {
+			console.error('Error loading tutorial data:', e);
+			// Continue without tutorial - don't break the admin page
 		}
 	}
 
