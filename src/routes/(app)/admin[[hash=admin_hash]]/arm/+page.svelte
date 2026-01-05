@@ -158,6 +158,7 @@
 				action="{data.adminPrefix}/arm/user/{user._id}?/update"
 				method="post"
 				class="contents"
+				data-role={user.roleId}
 				use:enhance={({ action }) => {
 					return async ({ result }) => {
 						if (result.type === 'error') {

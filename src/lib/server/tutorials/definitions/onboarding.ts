@@ -15,12 +15,12 @@ export const onboardingTutorial: Tutorial = {
 			id: 'arm-recovery',
 			order: 1,
 			route: '/admin/arm',
-			attachTo: { element: 'input[name="recoveryNpub"]', on: 'bottom' },
+			attachTo: { element: 'form[data-role="super-admin"] input[name="recoveryNpub"]', on: 'bottom' },
 			titleKey: 'tutorial.onboarding.step1.title',
 			textKey: 'tutorial.onboarding.step1.text',
 			requiredAction: {
 				type: 'input',
-				selector: 'input[name="recoveryNpub"]',
+				selector: 'form[data-role="super-admin"] input[name="recoveryNpub"]',
 				validation: 'non-empty'
 			}
 		},
