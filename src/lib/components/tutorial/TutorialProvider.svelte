@@ -28,16 +28,20 @@
 	});
 
 	afterNavigate(() => {
-		console.log('[Tutorial] afterNavigate', { isNavigating, pendingStepIndex });
-		if (isNavigating && $tutorialStore.isActive) {
+		console.log('[Tutorial] afterNavigate', { isNavigating, pendingStepIndex, isActive: $tutorialStore.isActive });
+		// Only proceed if we initiated the navigation AND have a pending step
+		if (isNavigating && pendingStepIndex !== null && $tutorialStore.isActive) {
+			const stepToShow = pendingStepIndex;
 			isNavigating = false;
+			pendingStepIndex = null;
 			// Small delay to let the page render
 			setTimeout(() => {
-				if (pendingStepIndex !== null) {
-					showCurrentStep();
-					pendingStepIndex = null;
-				}
-			}, 100);
+				console.log('[Tutorial] Showing step after navigation:', stepToShow);
+				showCurrentStep();
+			}, 150);
+		} else {
+			// Reset flags if conditions aren't met
+			isNavigating = false;
 		}
 	});
 
@@ -174,13 +178,18 @@
 				});
 			} else {
 				const hasRequiredAction = !!stepDef.requiredAction;
+				const currentStepId = stepDef.id;
 				buttons.push({
 					text: t('tutorial.common.next') || 'Next',
 					action: async () => {
-						console.log('[Tutorial] Next button clicked');
+						console.log('[Tutorial] ===== NEXT BUTTON CLICKED =====');
+						console.log('[Tutorial] Current step was:', currentStepId);
+						console.log('[Tutorial] Store state before nextStep:', $tutorialStore.currentStepIndex);
 						tour?.hide();
 						tutorialStore.nextStep();
+						console.log('[Tutorial] Store state after nextStep:', $tutorialStore.currentStepIndex);
 						await showCurrentStep();
+						console.log('[Tutorial] ===== NEXT COMPLETE =====');
 					},
 					disabled: hasRequiredAction,
 					classes: hasRequiredAction ? 'shepherd-button-primary shepherd-button-disabled' : 'shepherd-button-primary'
@@ -280,6 +289,7 @@
 		if (!tutorial) return;
 
 		console.log('[Tutorial] Starting tutorial', tutorial._id);
+		tutorialStore.reset(); // Clear any existing state
 		tutorialStore.startTutorial(tutorial, progress ?? undefined);
 		initializeTour();
 		await showCurrentStep();
@@ -312,13 +322,16 @@
 		console.log('[Tutorial] onMount', { tutorial: !!tutorial, isActive: $tutorialStore.isActive });
 		window.addEventListener('tutorial:request-start', handleRequestStart as EventListener);
 
-		// Check if we need to restore a paused tutorial
-		const restored = tutorialStore.initialize();
-		if (restored && tutorial) {
-			console.log('[Tutorial] Restoring paused tutorial');
-			initializeTour();
-			showCurrentStep();
-		}
+		// DISABLED: State restoration was causing auto-advance issues
+		// const restored = tutorialStore.initialize();
+		// if (restored && tutorial) {
+		// 	console.log('[Tutorial] Restoring paused tutorial');
+		// 	initializeTour();
+		// 	showCurrentStep();
+		// }
+
+		// Clear any stale session state on mount
+		tutorialStore.reset();
 
 		return () => {
 			window.removeEventListener('tutorial:request-start', handleRequestStart as EventListener);
