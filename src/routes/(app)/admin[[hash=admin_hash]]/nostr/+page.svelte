@@ -29,7 +29,7 @@
 {/if}
 
 {#if data.nostrPrivateKey}
-	<p class="break-words">Your NostR private key is: {data.nostrPrivateKey}</p>
+	<p class="break-words" data-tutorial="nostr-key-exists">Your NostR private key is: {data.nostrPrivateKey}</p>
 	<p class="break-words">Your NostR public key is: {data.nostrPublicKey}</p>
 
 	{#if data.origin}
@@ -61,7 +61,7 @@
 	</form>
 {:else}
 	<p>You don't have a NostR private key yet.</p>
-	<button class="btn btn-black self-start" type="button" on:click={createNostrKey}
+	<button class="btn btn-black self-start" type="button" on:click={createNostrKey} data-tutorial="create-nostr-key"
 		>Create NostR private key</button
 	>
 {/if}

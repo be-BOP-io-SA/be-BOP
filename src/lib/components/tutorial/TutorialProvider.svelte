@@ -116,7 +116,7 @@
 
 			console.log('[Tutorial] Showing step', stepDef.id, 'on route', stepDef.route);
 
-			// Check if we need to navigate
+			// Check if we need to navigate first
 			const currentPath = $page.url.pathname.replace(/^\/admin-[a-zA-Z0-9]+/, '/admin');
 			if (!currentPath.startsWith(stepDef.route)) {
 				console.log('[Tutorial] Need to navigate from', currentPath, 'to', stepDef.route);
@@ -125,6 +125,28 @@
 				const targetRoute = stepDef.route.replace('/admin', adminPrefix);
 				await goto(targetRoute);
 				return;
+			}
+
+			// Check skip condition (only after navigation, so we're on the right page)
+			if (stepDef.skipCondition) {
+				const { elementExists, elementMissing } = stepDef.skipCondition;
+				let shouldSkip = false;
+
+				if (elementExists && document.querySelector(elementExists)) {
+					console.log('[Tutorial] Skip condition met: element exists', elementExists);
+					shouldSkip = true;
+				}
+				if (elementMissing && !document.querySelector(elementMissing)) {
+					console.log('[Tutorial] Skip condition met: element missing', elementMissing);
+					shouldSkip = true;
+				}
+
+				if (shouldSkip) {
+					console.log('[Tutorial] Skipping step', stepDef.id);
+					tutorialStore.nextStep();
+					await showCurrentStep();
+					return;
+				}
 			}
 
 			// Wait for element

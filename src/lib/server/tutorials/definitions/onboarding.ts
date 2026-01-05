@@ -5,7 +5,7 @@ export const onboardingTutorial: Tutorial = {
 	_id: 'onboarding',
 	name: 'Super Admin Onboarding',
 	description: 'Initial setup guide for new be-BOP installations',
-	version: 2,
+	version: 3,
 	targetRoles: [SUPER_ADMIN_ROLE_ID],
 	isActive: true,
 	triggerType: 'first-login',
@@ -40,12 +40,16 @@ export const onboardingTutorial: Tutorial = {
 			id: 'nostr-key',
 			order: 3,
 			route: '/admin/nostr',
-			attachTo: { element: 'button.btn-black', on: 'right' },
+			attachTo: { element: '[data-tutorial="create-nostr-key"]', on: 'right' },
 			titleKey: 'tutorial.onboarding.step3.title',
 			textKey: 'tutorial.onboarding.step3.text',
 			requiredAction: {
 				type: 'click',
-				selector: 'button.btn-black'
+				selector: '[data-tutorial="create-nostr-key"]'
+			},
+			// Skip this step if nostr key already exists
+			skipCondition: {
+				elementExists: '[data-tutorial="nostr-key-exists"]'
 			}
 		},
 		{

@@ -33,6 +33,13 @@ export interface TutorialStepAttachTo {
 	on: ShepherdPosition;
 }
 
+export interface TutorialStepSkipCondition {
+	/** Element selector - if this element exists, skip this step */
+	elementExists?: string;
+	/** Element selector - if this element does NOT exist, skip this step */
+	elementMissing?: string;
+}
+
 export interface TutorialStep {
 	id: string;
 	order: number;
@@ -41,6 +48,8 @@ export interface TutorialStep {
 	titleKey: string;
 	textKey: string;
 	requiredAction?: TutorialRequiredAction;
+	/** Condition to automatically skip this step */
+	skipCondition?: TutorialStepSkipCondition;
 }
 
 export interface TutorialPolicy {
