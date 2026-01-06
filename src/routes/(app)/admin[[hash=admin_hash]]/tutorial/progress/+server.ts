@@ -28,12 +28,54 @@ export const POST = async ({ locals, request }) => {
 	}
 
 	const now = new Date();
+
+	// For completed tutorials, merge stepTimes keeping max duration per step
+	let mergedStepTimes = stepTimes ?? [];
+	let mergedTotalTimeMs = totalTimeMs ?? 0;
+	let completionCount = 1;
+
+	if (status === 'completed') {
+		const existing = await collections.tutorialProgress.findOne({
+			userId: locals.user._id,
+			tutorialId
+		});
+
+		if (existing) {
+			// Merge stepTimes: keep max duration for each stepId
+			const stepTimeMap = new Map<string, number>();
+
+			// Add existing step times
+			for (const st of existing.stepTimes ?? []) {
+				const current = stepTimeMap.get(st.stepId) ?? 0;
+				stepTimeMap.set(st.stepId, Math.max(current, st.durationMs ?? 0));
+			}
+
+			// Merge with new step times, keeping max
+			for (const st of stepTimes ?? []) {
+				const current = stepTimeMap.get(st.stepId) ?? 0;
+				stepTimeMap.set(st.stepId, Math.max(current, st.durationMs ?? 0));
+			}
+
+			// Convert back to array
+			mergedStepTimes = Array.from(stepTimeMap.entries()).map(([stepId, durationMs]) => ({
+				stepId,
+				durationMs
+			}));
+
+			// Keep max total time
+			mergedTotalTimeMs = Math.max(existing.totalTimeMs ?? 0, totalTimeMs ?? 0);
+
+			// Increment completion count
+			completionCount = (existing.completionCount ?? 0) + 1;
+		}
+	}
+
 	const updateData: Partial<TutorialProgress> = {
 		tutorialVersion,
 		status: status as TutorialStatus,
 		currentStepIndex: currentStepIndex ?? 0,
-		totalTimeMs: totalTimeMs ?? 0,
-		stepTimes: stepTimes ?? [],
+		totalTimeMs: mergedTotalTimeMs,
+		stepTimes: mergedStepTimes,
 		lastActiveAt: now,
 		updatedAt: now
 	};
@@ -44,6 +86,8 @@ export const POST = async ({ locals, request }) => {
 	} else if (status === 'completed') {
 		updateData.completedAt = now;
 		updateData.wasInterrupted = false;
+		// @ts-expect-error completionCount not in type yet
+		updateData.completionCount = completionCount;
 	} else if (status === 'skipped') {
 		updateData.skippedAt = now;
 		updateData.wasInterrupted = false;
