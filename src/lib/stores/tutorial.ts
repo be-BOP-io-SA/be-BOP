@@ -68,6 +68,7 @@ function clearPersistedState() {
 	if (!browser) return;
 	try {
 		sessionStorage.removeItem(STORAGE_KEY);
+		sessionStorage.removeItem('bebop-tutorial-action-completed');
 	} catch {
 		// Ignore storage errors
 	}
