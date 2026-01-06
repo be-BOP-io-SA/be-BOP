@@ -22,6 +22,12 @@
 	beforeNavigate(() => {
 		console.log('[Tutorial] beforeNavigate', { isActive: $tutorialStore.isActive, currentStep: $tutorialStore.currentStepIndex });
 		if ($tutorialStore.isActive) {
+			// Calculate elapsed time for current step
+			const elapsedTime = $tutorialStore.stepStartTime
+				? Date.now() - $tutorialStore.stepStartTime
+				: 0;
+			const totalWithElapsed = $tutorialStore.totalTimeMs + elapsedTime;
+
 			// Explicitly save state before navigation
 			const stateToSave = {
 				isActive: $tutorialStore.isActive,
@@ -29,7 +35,7 @@
 				currentStepIndex: $tutorialStore.currentStepIndex,
 				totalSteps: $tutorialStore.totalSteps,
 				status: 'running',
-				totalTimeMs: $tutorialStore.totalTimeMs
+				totalTimeMs: totalWithElapsed
 			};
 			try {
 				sessionStorage.setItem('bebop-tutorial-state', JSON.stringify(stateToSave));
@@ -443,17 +449,23 @@
 	// Save state before page unloads (works for form submissions)
 	function handleBeforeUnload() {
 		if ($tutorialStore.isActive) {
+			// Calculate elapsed time for current step
+			const elapsedTime = $tutorialStore.stepStartTime
+				? Date.now() - $tutorialStore.stepStartTime
+				: 0;
+			const totalWithElapsed = $tutorialStore.totalTimeMs + elapsedTime;
+
 			const stateToSave = {
 				isActive: true,
 				tutorialId: $tutorialStore.tutorialId,
 				currentStepIndex: $tutorialStore.currentStepIndex,
 				totalSteps: $tutorialStore.totalSteps,
 				status: 'running',
-				totalTimeMs: $tutorialStore.totalTimeMs
+				totalTimeMs: totalWithElapsed
 			};
 			try {
 				sessionStorage.setItem('bebop-tutorial-state', JSON.stringify(stateToSave));
-				console.log('[Tutorial] State saved on beforeunload');
+				console.log('[Tutorial] State saved on beforeunload, totalTimeMs:', totalWithElapsed);
 			} catch (e) {
 				// Ignore
 			}
