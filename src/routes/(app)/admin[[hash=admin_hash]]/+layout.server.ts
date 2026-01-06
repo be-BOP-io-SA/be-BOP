@@ -42,11 +42,19 @@ export async function load({ locals }) {
 
 				if (progress) {
 					tutorialProgress = {
-						...progress,
-						startedAt: progress.startedAt?.toISOString?.() ?? progress.startedAt,
-						completedAt: progress.completedAt?.toISOString?.() ?? progress.completedAt,
-						lastAccessedAt: progress.lastAccessedAt?.toISOString?.() ?? progress.lastAccessedAt,
-						stepCompletedAt: progress.stepCompletedAt?.map((d: Date) => d?.toISOString?.() ?? d) ?? []
+						_id: progress._id.toString(),
+						userId: progress.userId.toString(),
+						tutorialId: progress.tutorialId,
+						tutorialVersion: progress.tutorialVersion,
+						status: progress.status,
+						currentStepIndex: progress.currentStepIndex,
+						totalTimeMs: progress.totalTimeMs,
+						wasInterrupted: progress.wasInterrupted,
+						startedAt: progress.startedAt?.toISOString?.() ?? null,
+						completedAt: progress.completedAt?.toISOString?.() ?? null,
+						skippedAt: progress.skippedAt?.toISOString?.() ?? null,
+						lastActiveAt: progress.lastActiveAt?.toISOString?.() ?? null,
+						stepTimes: progress.stepTimes ?? []
 					};
 				}
 			}
