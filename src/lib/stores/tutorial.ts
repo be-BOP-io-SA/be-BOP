@@ -15,6 +15,7 @@ export interface TutorialState {
 	totalSteps: number;
 	status: 'idle' | 'running' | 'paused' | 'waiting_for_navigation';
 	stepStartTime: number | null;
+	stepAccumulatedMs: number; // Time accumulated for current step across page reloads
 	totalTimeMs: number;
 	stepTimes: StepTimeRecord[];
 	showPrompt: boolean;
@@ -30,6 +31,7 @@ const initialState: TutorialState = {
 	totalSteps: 0,
 	status: 'idle',
 	stepStartTime: null,
+	stepAccumulatedMs: 0,
 	totalTimeMs: 0,
 	stepTimes: [],
 	showPrompt: false,
@@ -63,6 +65,7 @@ function persistState(state: TutorialState) {
 			currentStepIndex: state.currentStepIndex,
 			totalSteps: state.totalSteps,
 			status: state.status,
+			stepAccumulatedMs: state.stepAccumulatedMs,
 			totalTimeMs: state.totalTimeMs,
 			stepTimes: state.stepTimes
 		};
@@ -104,6 +107,7 @@ function createTutorialStore() {
 					...state,
 					...persisted,
 					stepTimes: persisted.stepTimes ?? [],
+					stepAccumulatedMs: persisted.stepAccumulatedMs ?? 0,
 					status: 'running' as const,
 					stepStartTime: Date.now(),
 					currentTutorial: tutorial ?? state.currentTutorial
@@ -130,6 +134,7 @@ function createTutorialStore() {
 				totalSteps: tutorial.steps.length,
 				status: 'running',
 				stepStartTime: Date.now(),
+				stepAccumulatedMs: 0,
 				totalTimeMs: progress?.totalTimeMs ?? 0,
 				stepTimes: existingStepTimes,
 				showPrompt: false,
@@ -144,17 +149,19 @@ function createTutorialStore() {
 		 */
 		nextStep: () => {
 			update((state) => {
-				const stepDuration = state.stepStartTime ? Date.now() - state.stepStartTime : 0;
+				const currentElapsed = state.stepStartTime ? Date.now() - state.stepStartTime : 0;
+				const totalStepDuration = state.stepAccumulatedMs + currentElapsed;
 				const currentStepId = state.currentTutorial?.steps[state.currentStepIndex]?.id;
 				const newStepTimes = currentStepId
-					? [...state.stepTimes, { stepId: currentStepId, durationMs: stepDuration }]
+					? [...state.stepTimes, { stepId: currentStepId, durationMs: totalStepDuration }]
 					: state.stepTimes;
 				return {
 					...state,
 					currentStepIndex: state.currentStepIndex + 1,
-					totalTimeMs: state.totalTimeMs + stepDuration,
+					totalTimeMs: state.totalTimeMs + currentElapsed,
 					stepTimes: newStepTimes,
-					stepStartTime: Date.now()
+					stepStartTime: Date.now(),
+					stepAccumulatedMs: 0 // Reset for new step
 				};
 			});
 		},
@@ -208,8 +215,9 @@ function createTutorialStore() {
 		 */
 		completeTutorial: (): { totalTimeMs: number; stepTimes: StepTimeRecord[] } => {
 			const state = get({ subscribe });
-			const lastStepDuration = state.stepStartTime ? Date.now() - state.stepStartTime : 0;
-			const finalTime = state.totalTimeMs + lastStepDuration;
+			const currentElapsed = state.stepStartTime ? Date.now() - state.stepStartTime : 0;
+			const lastStepDuration = state.stepAccumulatedMs + currentElapsed;
+			const finalTime = state.totalTimeMs + currentElapsed;
 
 			// Record the last step's time
 			const lastStepId = state.currentTutorial?.steps[state.currentStepIndex]?.id;

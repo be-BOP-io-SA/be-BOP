@@ -27,6 +27,8 @@
 				? Date.now() - $tutorialStore.stepStartTime
 				: 0;
 			const totalWithElapsed = $tutorialStore.totalTimeMs + elapsedTime;
+			// Accumulate step time across page reloads
+			const stepAccumulatedMs = $tutorialStore.stepAccumulatedMs + elapsedTime;
 
 			// Explicitly save state before navigation
 			const stateToSave = {
@@ -35,6 +37,7 @@
 				currentStepIndex: $tutorialStore.currentStepIndex,
 				totalSteps: $tutorialStore.totalSteps,
 				status: 'running',
+				stepAccumulatedMs,
 				totalTimeMs: totalWithElapsed,
 				stepTimes: $tutorialStore.stepTimes
 			};
@@ -456,6 +459,8 @@
 				? Date.now() - $tutorialStore.stepStartTime
 				: 0;
 			const totalWithElapsed = $tutorialStore.totalTimeMs + elapsedTime;
+			// Accumulate step time across page reloads
+			const stepAccumulatedMs = $tutorialStore.stepAccumulatedMs + elapsedTime;
 
 			const stateToSave = {
 				isActive: true,
@@ -463,6 +468,7 @@
 				currentStepIndex: $tutorialStore.currentStepIndex,
 				totalSteps: $tutorialStore.totalSteps,
 				status: 'running',
+				stepAccumulatedMs,
 				totalTimeMs: totalWithElapsed,
 				stepTimes: $tutorialStore.stepTimes
 			};
