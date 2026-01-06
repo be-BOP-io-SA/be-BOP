@@ -3,6 +3,11 @@ import { writable, get } from 'svelte/store';
 import type { Tutorial, TutorialStep } from '$lib/types/Tutorial';
 import type { TutorialProgress, TutorialStatus } from '$lib/types/TutorialProgress';
 
+export interface StepTimeRecord {
+	stepId: string;
+	durationMs: number;
+}
+
 export interface TutorialState {
 	isActive: boolean;
 	tutorialId: string | null;
@@ -11,6 +16,7 @@ export interface TutorialState {
 	status: 'idle' | 'running' | 'paused' | 'waiting_for_navigation';
 	stepStartTime: number | null;
 	totalTimeMs: number;
+	stepTimes: StepTimeRecord[];
 	showPrompt: boolean;
 	promptType: 'start' | 'resume' | 'rerun' | null;
 	currentTutorial: Tutorial | null;
@@ -25,6 +31,7 @@ const initialState: TutorialState = {
 	status: 'idle',
 	stepStartTime: null,
 	totalTimeMs: 0,
+	stepTimes: [],
 	showPrompt: false,
 	promptType: null,
 	currentTutorial: null,
@@ -56,7 +63,8 @@ function persistState(state: TutorialState) {
 			currentStepIndex: state.currentStepIndex,
 			totalSteps: state.totalSteps,
 			status: state.status,
-			totalTimeMs: state.totalTimeMs
+			totalTimeMs: state.totalTimeMs,
+			stepTimes: state.stepTimes
 		};
 		sessionStorage.setItem(STORAGE_KEY, JSON.stringify(toPersist));
 	} catch {
@@ -95,6 +103,7 @@ function createTutorialStore() {
 				update((state) => ({
 					...state,
 					...persisted,
+					stepTimes: persisted.stepTimes ?? [],
 					status: 'running' as const,
 					stepStartTime: Date.now()
 				}));
@@ -108,6 +117,11 @@ function createTutorialStore() {
 		 */
 		startTutorial: (tutorial: Tutorial, progress?: TutorialProgress) => {
 			const resumeFromStep = progress?.currentStepIndex ?? 0;
+			// Convert progress stepTimes to our format if resuming
+			const existingStepTimes: StepTimeRecord[] = progress?.stepTimes?.map(st => ({
+				stepId: st.stepId,
+				durationMs: st.durationMs ?? 0
+			})) ?? [];
 			set({
 				isActive: true,
 				tutorialId: tutorial._id,
@@ -116,6 +130,7 @@ function createTutorialStore() {
 				status: 'running',
 				stepStartTime: Date.now(),
 				totalTimeMs: progress?.totalTimeMs ?? 0,
+				stepTimes: existingStepTimes,
 				showPrompt: false,
 				promptType: null,
 				currentTutorial: tutorial,
@@ -129,10 +144,15 @@ function createTutorialStore() {
 		nextStep: () => {
 			update((state) => {
 				const stepDuration = state.stepStartTime ? Date.now() - state.stepStartTime : 0;
+				const currentStepId = state.currentTutorial?.steps[state.currentStepIndex]?.id;
+				const newStepTimes = currentStepId
+					? [...state.stepTimes, { stepId: currentStepId, durationMs: stepDuration }]
+					: state.stepTimes;
 				return {
 					...state,
 					currentStepIndex: state.currentStepIndex + 1,
 					totalTimeMs: state.totalTimeMs + stepDuration,
+					stepTimes: newStepTimes,
 					stepStartTime: Date.now()
 				};
 			});
@@ -183,12 +203,18 @@ function createTutorialStore() {
 
 		/**
 		 * Complete the current tutorial
+		 * Returns { totalTimeMs, stepTimes }
 		 */
-		completeTutorial: () => {
+		completeTutorial: (): { totalTimeMs: number; stepTimes: StepTimeRecord[] } => {
 			const state = get({ subscribe });
-			const finalTime = state.stepStartTime
-				? state.totalTimeMs + (Date.now() - state.stepStartTime)
-				: state.totalTimeMs;
+			const lastStepDuration = state.stepStartTime ? Date.now() - state.stepStartTime : 0;
+			const finalTime = state.totalTimeMs + lastStepDuration;
+
+			// Record the last step's time
+			const lastStepId = state.currentTutorial?.steps[state.currentStepIndex]?.id;
+			const finalStepTimes = lastStepId
+				? [...state.stepTimes, { stepId: lastStepId, durationMs: lastStepDuration }]
+				: state.stepTimes;
 
 			set({
 				...initialState,
@@ -196,7 +222,7 @@ function createTutorialStore() {
 			});
 			clearPersistedState();
 
-			return finalTime;
+			return { totalTimeMs: finalTime, stepTimes: finalStepTimes };
 		},
 
 		/**

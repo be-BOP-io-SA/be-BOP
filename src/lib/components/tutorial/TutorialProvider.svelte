@@ -35,7 +35,8 @@
 				currentStepIndex: $tutorialStore.currentStepIndex,
 				totalSteps: $tutorialStore.totalSteps,
 				status: 'running',
-				totalTimeMs: totalWithElapsed
+				totalTimeMs: totalWithElapsed,
+				stepTimes: $tutorialStore.stepTimes
 			};
 			try {
 				sessionStorage.setItem('bebop-tutorial-state', JSON.stringify(stateToSave));
@@ -239,7 +240,7 @@
 				buttons.push({
 					text: t('tutorial.common.finish') || 'Finish',
 					action: async () => {
-						const totalTime = tutorialStore.completeTutorial();
+						const { totalTimeMs, stepTimes } = tutorialStore.completeTutorial();
 						tour?.complete();
 						try {
 							await fetch(`${adminPrefix}/tutorial/progress`, {
@@ -249,7 +250,8 @@
 									tutorialId: tutorial?._id,
 									tutorialVersion: tutorial?.version ?? 1,
 									status: 'completed',
-									totalTimeMs: totalTime
+									totalTimeMs,
+									stepTimes
 								})
 							});
 						} catch (e) {
@@ -461,7 +463,8 @@
 				currentStepIndex: $tutorialStore.currentStepIndex,
 				totalSteps: $tutorialStore.totalSteps,
 				status: 'running',
-				totalTimeMs: totalWithElapsed
+				totalTimeMs: totalWithElapsed,
+				stepTimes: $tutorialStore.stepTimes
 			};
 			try {
 				sessionStorage.setItem('bebop-tutorial-state', JSON.stringify(stateToSave));
