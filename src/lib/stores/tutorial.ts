@@ -76,14 +76,9 @@ function clearPersistedState() {
 function createTutorialStore() {
 	const { subscribe, set, update } = writable<TutorialState>(initialState);
 
-	// Persist state changes for navigation survival
-	subscribe((state) => {
-		if (state.isActive) {
-			persistState(state);
-		} else {
-			clearPersistedState();
-		}
-	});
+	// Note: We no longer auto-clear on isActive=false
+	// because that was causing issues with form submissions.
+	// State is now explicitly saved in beforeunload and cleared in skipTutorial/completeTutorial.
 
 	return {
 		subscribe,

@@ -393,6 +393,26 @@
 		startTutorial();
 	}
 
+	// Save state before page unloads (works for form submissions)
+	function handleBeforeUnload() {
+		if ($tutorialStore.isActive) {
+			const stateToSave = {
+				isActive: true,
+				tutorialId: $tutorialStore.tutorialId,
+				currentStepIndex: $tutorialStore.currentStepIndex,
+				totalSteps: $tutorialStore.totalSteps,
+				status: 'running',
+				totalTimeMs: $tutorialStore.totalTimeMs
+			};
+			try {
+				sessionStorage.setItem('bebop-tutorial-state', JSON.stringify(stateToSave));
+				console.log('[Tutorial] State saved on beforeunload');
+			} catch (e) {
+				// Ignore
+			}
+		}
+	}
+
 	onMount(() => {
 		console.log('[Tutorial] onMount', { tutorial: !!tutorial, isActive: $tutorialStore.isActive });
 
@@ -405,6 +425,7 @@
 		}
 
 		window.addEventListener('tutorial:request-start', handleRequestStart as EventListener);
+		window.addEventListener('beforeunload', handleBeforeUnload);
 
 		// Try to restore tutorial state (e.g., after page reload from form submission)
 		if (tutorial) {
@@ -422,6 +443,7 @@
 
 		return () => {
 			window.removeEventListener('tutorial:request-start', handleRequestStart as EventListener);
+			window.removeEventListener('beforeunload', handleBeforeUnload);
 		};
 	});
 
