@@ -78,6 +78,15 @@ export async function getOrCreateOrderTab({ slug }: { slug: string }): Promise<O
 	}
 }
 
+export async function hasSharesPaymentStarted(orderTabId: ObjectId): Promise<boolean> {
+	const sharesOrder = await collections.orders.findOne({
+		orderTabId,
+		splitMode: 'shares',
+		payments: { $elemMatch: { status: 'paid' } }
+	});
+	return !!sharesOrder;
+}
+
 export async function orderTabNotEmptyAndFullyPaid({ slug }: { slug: string }): Promise<boolean> {
 	const returned = await collections.orderTabs.findOne({ slug });
 	if (!returned || returned.items.length === 0) {

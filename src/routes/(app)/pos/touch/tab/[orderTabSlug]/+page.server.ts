@@ -2,6 +2,7 @@ import { collections } from '$lib/server/database';
 import {
 	concludeOrderTab,
 	getOrCreateOrderTab,
+	hasSharesPaymentStarted,
 	orderTabNotEmptyAndFullyPaid
 } from '$lib/server/orderTab.js';
 import { picturesForProducts } from '$lib/server/picture';
@@ -135,7 +136,7 @@ export const load = async ({ locals, depends, params }) => {
 
 	const initialOrderTab = await getHydratedOrderTab(locals.language, tabSlug);
 
-	const [shouldConclude, printTags, tagGroupsData] = await Promise.all([
+	const [shouldConclude, printTags, tagGroupsData, itemRemovalBlocked] = await Promise.all([
 		orderTabNotEmptyAndFullyPaid({ slug: tabSlug }),
 		collections.tags
 			.find({ printReceiptFilter: true })
@@ -153,7 +154,8 @@ export const load = async ({ locals, depends, params }) => {
 				groups: groups.map((g) => pojo(g)),
 				tags: tags.map((t) => pojo(t))
 			};
-		})()
+		})(),
+		hasSharesPaymentStarted(initialOrderTab._id)
 	]);
 
 	let orderTab;
@@ -181,7 +183,8 @@ export const load = async ({ locals, depends, params }) => {
 		printTags: pojo(printTags),
 		tagGroups: tagGroupsData.groups,
 		posTouchScreenTags: tagGroupsData.tags,
-		printTagsMap
+		printTagsMap,
+		itemRemovalBlocked
 	};
 };
 
@@ -208,6 +211,12 @@ export const actions = {
 		);
 		if (!ObjectId.isValid(tabItemId)) {
 			throw error(400, 'The specified tab item is invalid');
+		}
+
+		const orderTab = await getOrCreateOrderTab({ slug: tabSlug });
+
+		if (await hasSharesPaymentStarted(orderTab._id)) {
+			throw error(403, 'sharesPaymentStarted');
 		}
 
 		let res;
