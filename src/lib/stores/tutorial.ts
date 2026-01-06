@@ -96,7 +96,7 @@ function createTutorialStore() {
 		 * Initialize the store, potentially restoring from session storage
 		 * Returns the restored step index if successful, or -1 if no restoration
 		 */
-		initialize: (): number => {
+		initialize: (tutorial?: Tutorial | null): number => {
 			const persisted = getPersistedState();
 			if (persisted && persisted.isActive && (persisted.status === 'waiting_for_navigation' || persisted.status === 'running')) {
 				const stepIndex = persisted.currentStepIndex ?? 0;
@@ -105,7 +105,8 @@ function createTutorialStore() {
 					...persisted,
 					stepTimes: persisted.stepTimes ?? [],
 					status: 'running' as const,
-					stepStartTime: Date.now()
+					stepStartTime: Date.now(),
+					currentTutorial: tutorial ?? state.currentTutorial
 				}));
 				return stepIndex; // Return the step index to restore to
 			}

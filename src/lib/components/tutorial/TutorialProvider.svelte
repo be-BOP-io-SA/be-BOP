@@ -491,7 +491,7 @@
 
 		// Try to restore tutorial state (e.g., after page reload from form submission)
 		if (tutorial) {
-			const restoredStepIndex = tutorialStore.initialize();
+			const restoredStepIndex = tutorialStore.initialize(tutorial);
 			console.log('[Tutorial] Initialize returned:', restoredStepIndex);
 			if (restoredStepIndex >= 0) {
 				console.log('[Tutorial] Restoring tutorial after page reload to step', restoredStepIndex);
