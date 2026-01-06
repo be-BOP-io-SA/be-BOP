@@ -356,7 +356,7 @@
 		} else if (type === 'click') {
 			// For click actions (especially on submit buttons), keep Next disabled
 			// until the user actually clicks the element
-			console.log('[Tutorial] Click action step - Next button disabled until click');
+			console.log('[Tutorial] Click action step - checking if action already completed');
 
 			const targetElement = selector ? document.querySelector(selector) : null;
 			if (targetElement) {
@@ -375,6 +375,10 @@
 						// Ignore parse errors
 					}
 				}
+
+				// Action not completed yet - disable Next button initially
+				console.log('[Tutorial] Action not completed, disabling Next button');
+				setTimeout(disableNextButton, 150);
 
 				// Add click listener to save completion state before form submits
 				const handleClick = () => {
