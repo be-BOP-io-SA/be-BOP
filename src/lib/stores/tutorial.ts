@@ -121,12 +121,17 @@ function createTutorialStore() {
 		 * Start a new tutorial
 		 */
 		startTutorial: (tutorial: Tutorial, progress?: TutorialProgress) => {
-			const resumeFromStep = progress?.currentStepIndex ?? 0;
-			// Convert progress stepTimes to our format if resuming
-			const existingStepTimes: StepTimeRecord[] = progress?.stepTimes?.map(st => ({
-				stepId: st.stepId,
-				durationMs: st.durationMs ?? 0
-			})) ?? [];
+			// Only resume from previous progress if it's in_progress (not completed/skipped)
+			const isResuming = progress?.status === 'in_progress';
+			const resumeFromStep = isResuming ? (progress?.currentStepIndex ?? 0) : 0;
+			// Only preserve stepTimes when resuming an in-progress tutorial
+			const existingStepTimes: StepTimeRecord[] = isResuming
+				? (progress?.stepTimes?.map(st => ({
+						stepId: st.stepId,
+						durationMs: st.durationMs ?? 0
+					})) ?? [])
+				: [];
+			const existingTotalTime = isResuming ? (progress?.totalTimeMs ?? 0) : 0;
 			set({
 				isActive: true,
 				tutorialId: tutorial._id,
@@ -135,7 +140,7 @@ function createTutorialStore() {
 				status: 'running',
 				stepStartTime: Date.now(),
 				stepAccumulatedMs: 0,
-				totalTimeMs: progress?.totalTimeMs ?? 0,
+				totalTimeMs: existingTotalTime,
 				stepTimes: existingStepTimes,
 				showPrompt: false,
 				promptType: null,
