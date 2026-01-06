@@ -20,9 +20,27 @@
 	let isShowingStep = false; // Guard against concurrent calls
 
 	beforeNavigate(() => {
-		console.log('[Tutorial] beforeNavigate');
-		if (tour && $tutorialStore.isActive) {
-			tour.hide();
+		console.log('[Tutorial] beforeNavigate', { isActive: $tutorialStore.isActive, currentStep: $tutorialStore.currentStepIndex });
+		if ($tutorialStore.isActive) {
+			// Explicitly save state before navigation
+			const stateToSave = {
+				isActive: $tutorialStore.isActive,
+				tutorialId: $tutorialStore.tutorialId,
+				currentStepIndex: $tutorialStore.currentStepIndex,
+				totalSteps: $tutorialStore.totalSteps,
+				status: 'running',
+				totalTimeMs: $tutorialStore.totalTimeMs
+			};
+			try {
+				sessionStorage.setItem('bebop-tutorial-state', JSON.stringify(stateToSave));
+				console.log('[Tutorial] State saved before navigation:', stateToSave);
+			} catch (e) {
+				console.error('[Tutorial] Failed to save state:', e);
+			}
+
+			if (tour) {
+				tour.hide();
+			}
 			isNavigating = true;
 		}
 	});
@@ -408,8 +426,14 @@
 	});
 
 	onDestroy(() => {
+		// Don't call tour.complete() as it might trigger events that clear state
+		// Just hide the tour and clean up
 		if (tour) {
-			tour.complete();
+			try {
+				tour.hide();
+			} catch (e) {
+				// Ignore errors during cleanup
+			}
 			tour = null;
 		}
 	});
