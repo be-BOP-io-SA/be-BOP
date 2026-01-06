@@ -7,6 +7,8 @@ import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
 import {
 	addToOrderTab,
 	checkoutOrderTab,
+	getOrCreateOrderTab,
+	hasSharesPaymentStarted,
 	removeFromOrderTab,
 	removeOrderTab
 } from '$lib/server/orderTab';
@@ -91,6 +93,12 @@ export const actions: Actions = {
 				tabSlug: formData.get('tabSlug'),
 				tabItemId: formData.get('tabItemId')
 			});
+
+		const orderTab = await getOrCreateOrderTab({ slug: tabSlug });
+		if (await hasSharesPaymentStarted(orderTab._id)) {
+			return fail(403, { error: 'sharesPaymentStarted' });
+		}
+
 		await removeFromOrderTab({ tabSlug, tabItemId });
 	},
 	removeTab: async ({ request }) => {
@@ -102,6 +110,12 @@ export const actions: Actions = {
 			.parse({
 				tabSlug: formData.get('tabSlug')
 			});
+
+		const orderTab = await getOrCreateOrderTab({ slug: tabSlug });
+		if (await hasSharesPaymentStarted(orderTab._id)) {
+			return fail(403, { error: 'sharesPaymentStarted' });
+		}
+
 		await removeOrderTab({ tabSlug });
 	},
 	checkoutTab: async ({ request, locals }) => {

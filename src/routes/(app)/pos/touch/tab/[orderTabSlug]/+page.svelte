@@ -58,6 +58,10 @@
 	let itemToEditIndex: number | undefined = undefined;
 
 	function openEditItemDialog(itemIndex: number) {
+		if (data.itemRemovalBlocked) {
+			alert(t('pos.split.completeSharesFirst'));
+			return;
+		}
 		itemToEditIndex = itemIndex;
 	}
 
@@ -888,13 +892,27 @@
 						class="col-span-1 touchScreen-action-cancel text-3xl p-4 text-center"
 						disabled={!items.length}
 						formaction="/pos?/removeFromTab"
-						on:click={() => (warningMessage = t('pos.touch.confirmDeleteLastItem'))}>❎</button
+						on:click={(e) => {
+							if (data.itemRemovalBlocked) {
+								e.preventDefault();
+								alert(t('pos.split.completeSharesFirst'));
+								return;
+							}
+							warningMessage = t('pos.touch.confirmDeleteLastItem');
+						}}>❎</button
 					>
 					<button
 						class="col-span-1 touchScreen-action-delete text-3xl p-4 text-center"
 						disabled={!items.length}
 						formaction="/pos/?/removeTab"
-						on:click={() => (warningMessage = t('pos.touch.confirmDeleteAllItems'))}>🗑️</button
+						on:click={(e) => {
+							if (data.itemRemovalBlocked) {
+								e.preventDefault();
+								alert(t('pos.split.completeSharesFirst'));
+								return;
+							}
+							warningMessage = t('pos.touch.confirmDeleteAllItems');
+						}}>🗑️</button
 					>
 				</form>
 			</div>
