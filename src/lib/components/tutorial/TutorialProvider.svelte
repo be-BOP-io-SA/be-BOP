@@ -236,10 +236,15 @@
 						const totalTime = tutorialStore.completeTutorial();
 						tour?.complete();
 						try {
-							await fetch('/api/tutorial/complete', {
+							await fetch(`${adminPrefix}/tutorial/progress`, {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({ tutorialId: tutorial?._id, totalTimeMs: totalTime })
+								body: JSON.stringify({
+									tutorialId: tutorial?._id,
+									tutorialVersion: tutorial?.version ?? 1,
+									status: 'completed',
+									totalTimeMs: totalTime
+								})
 							});
 						} catch (e) {
 							console.error('[Tutorial] Failed to save completion:', e);
@@ -349,10 +354,48 @@
 			setTimeout(updateButtonState, 300);
 
 		} else if (type === 'click') {
-			// For click actions, enable the Next button immediately
-			// The user needs to click the target element, but we don't block the tutorial
-			console.log('[Tutorial] Click action step - Next button enabled');
-			setTimeout(enableNextButton, 150);
+			// For click actions (especially on submit buttons), keep Next disabled
+			// until the user actually clicks the element
+			console.log('[Tutorial] Click action step - Next button disabled until click');
+
+			const targetElement = selector ? document.querySelector(selector) : null;
+			if (targetElement) {
+				// Check if action was already completed (e.g., after page reload from form submit)
+				const completedAction = sessionStorage.getItem('bebop-tutorial-action-completed');
+				if (completedAction) {
+					try {
+						const parsed = JSON.parse(completedAction);
+						if (parsed.stepId === stepDef.id) {
+							console.log('[Tutorial] Action already completed for this step, enabling Next');
+							sessionStorage.removeItem('bebop-tutorial-action-completed');
+							setTimeout(enableNextButton, 150);
+							return;
+						}
+					} catch {
+						// Ignore parse errors
+					}
+				}
+
+				// Add click listener to save completion state before form submits
+				const handleClick = () => {
+					console.log('[Tutorial] Target element clicked, saving action completion');
+					sessionStorage.setItem('bebop-tutorial-action-completed', JSON.stringify({
+						stepId: stepDef.id,
+						completedAt: Date.now()
+					}));
+					// For non-submit buttons, enable Next immediately
+					if (!(targetElement as HTMLButtonElement).type?.includes('submit')) {
+						enableNextButton();
+					}
+					// For submit buttons, the page will reload and we'll enable on restore
+				};
+
+				targetElement.addEventListener('click', handleClick, { once: true });
+			} else {
+				// Element not found, enable Next as fallback
+				console.log('[Tutorial] Click target not found, enabling Next as fallback');
+				setTimeout(enableNextButton, 150);
+			}
 		} else if (type === 'form-submit') {
 			// For form submissions, enable the Next button immediately
 			console.log('[Tutorial] Form submit action step - Next button enabled');
