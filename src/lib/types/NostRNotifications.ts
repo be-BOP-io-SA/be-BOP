@@ -9,7 +9,7 @@ export interface NostRNotification extends Timestamps {
 	_id: ObjectId;
 
 	content: string;
-	kind: Kind.EncryptedDirectMessage | Kind.Metadata;
+	kind: Kind.EncryptedDirectMessage | Kind.Metadata | Kind.Zap;
 
 	/**
 	 * When kind is Kind.EncryptedDirectMessage, this is the recipient's pubkey
@@ -20,4 +20,24 @@ export interface NostRNotification extends Timestamps {
 	minCreatedAt?: Date;
 
 	processedAt?: Date;
+
+	// NIP-57 Zap Receipt fields (when kind === Kind.Zap):
+
+	/** BOLT11 invoice (for zap receipt) */
+	bolt11?: string;
+
+	/** Payment preimage (for zap receipt) */
+	preimage?: string;
+
+	/** Stringified zap request event (for description tag of zap receipt) */
+	zapRequest?: string;
+
+	/** Receiver pubkey hex (for 'p' tag) */
+	receiverPubkey?: string;
+
+	/** Sender pubkey hex (for 'P' tag) */
+	senderPubkey?: string;
+
+	/** Optional event ID being zapped (for 'e' tag) */
+	eventId?: string;
 }

@@ -244,28 +244,24 @@ async function handleNostrNotification(nostrNotification: NostRNotification): Pr
 			}
 
 			if (nostrNotification.kind === Kind.Zap) {
-				const npub = nostrNotification.dest;
+				const tags: string[][] = [
+					['p', nostrNotification.receiverPubkey || ''],
+					['P', nostrNotification.senderPubkey || ''],
+					['bolt11', nostrNotification.bolt11 || ''],
+					['preimage', nostrNotification.preimage || ''],
+					['description', nostrNotification.zapRequest || '']
+				];
 
-				if (!npub) {
-					return;
+				if (nostrNotification.eventId) {
+					tags.push(['e', nostrNotification.eventId]);
 				}
-
-				const receiverPublicKeyHex = nostrToHex(npub);
 
 				return {
 					id: '',
-					content: await nip04.encrypt(nostrPrivateKeyHex, receiverPublicKeyHex, content),
-					created_at: getUnixTime(
-						max([
-							nostrNotification.minCreatedAt ?? nostrNotification.createdAt,
-							nostrNotification.createdAt
-						])
-					),
+					content: nostrNotification.content, // Empty for public zaps
+					created_at: getUnixTime(new Date()),
 					pubkey: nostrPublicKeyHex,
-					tags: [
-						['p', receiverPublicKeyHex],
-						['bootikVersion', String(NOSTR_PROTOCOL_VERSION)]
-					],
+					tags,
 					kind: Kind.Zap,
 					sig: ''
 				} satisfies Event;
