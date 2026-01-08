@@ -153,18 +153,9 @@ export const actions = {
 		const formData = await request.formData();
 
 		const relays = z.string().array().parse(formData.getAll('relays'));
-		await collections.runtimeConfig.updateOne(
-			{
-				_id: 'nostrRelays'
-			},
-			{
-				$set: {
-					data: relays.filter((rel) => rel.startsWith('wss://')),
-					updatedAt: new Date()
-				}
-			}
-		);
-		runtimeConfig.nostrRelays = relays.filter((rel) => rel.startsWith('wss://'));
+		const filteredRelays = relays.filter((rel) => rel.startsWith('wss://'));
+		await persistConfigElement('nostrRelays', filteredRelays);
+		runtimeConfig.nostrRelays = filteredRelays;
 		return {
 			success: 'Relay list updated sucessfully !'
 		};
