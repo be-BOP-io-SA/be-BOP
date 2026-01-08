@@ -662,6 +662,7 @@
 			"pagination": "PAGINA {currentPage}/{totalPages}",
 			"tickets": "BIGLIETTI",
 			"save": "SALVA",
+			"moveItems": "Sposta articoli",
 			"pool": "POOL",
 			"openDrawer": "APRI CASSETTO",
 			"pay": "PAGA",

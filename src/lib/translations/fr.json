@@ -662,6 +662,7 @@
 			"pagination": "PAGE {currentPage}/{totalPages}",
 			"tickets": "TICKETS",
 			"save": "SAUVER",
+			"moveItems": "Déplacer les articles",
 			"pool": "POOL",
 			"openDrawer": "OUVRIR TIROIR",
 			"pay": "PAYER",
