@@ -194,6 +194,7 @@ export async function phoenixdLookupInvoice(paymentHash: string) {
 		feesSat: json.fees,
 		receivedSat: json.receivedSat,
 		isPaid: json.isPaid,
+		preimage: json.preimage, // NIP-57: preimage for zap receipts
 		createdAt: new Date(json.createdAt),
 		completedAt: json.completedAt ? new Date(json.completedAt) : null,
 		externalId: json.externalId,

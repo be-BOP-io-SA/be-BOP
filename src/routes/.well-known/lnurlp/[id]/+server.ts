@@ -6,6 +6,7 @@ import { collections } from '$lib/server/database';
 import { SignJWT } from 'jose';
 import sharp from 'sharp';
 import { error } from '@sveltejs/kit';
+import { getNostrKeys, isNostrConfigured } from '$lib/server/nostr';
 
 export const OPTIONS = () => {
 	return new Response(null, {
@@ -76,7 +77,12 @@ export const GET = async ({ params, url }) => {
 			// values in millisatoshis
 			minSendable: 1,
 			maxSendable: SATOSHIS_PER_BTC * 1000,
-			metadata
+			metadata,
+			// NIP-57 Zaps
+			...(isNostrConfigured() && {
+				allowsNostr: true,
+				nostrPubkey: getNostrKeys().pubKeyHex
+			})
 		}),
 		{
 			headers: {

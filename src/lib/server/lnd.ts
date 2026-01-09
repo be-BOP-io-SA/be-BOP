@@ -220,11 +220,16 @@ export async function lndLookupInvoice(invoiceId: string) {
 		.object({
 			amt_paid_sat: z.number({ coerce: true }).int(),
 			state: z.enum(['SETTLED', 'CANCELED', 'ACCEPTED', 'OPEN']),
-			settled_at: z.number({ coerce: true }).int().optional()
+			settled_at: z.number({ coerce: true }).int().optional(),
+			r_preimage: z.string().optional() // NIP-57: preimage for zap receipts
 		})
 		.parse(json);
 
-	return { ...ret, settled_at: ret.settled_at ? new Date(ret.settled_at * 1000) : undefined };
+	return {
+		...ret,
+		settled_at: ret.settled_at ? new Date(ret.settled_at * 1000) : undefined,
+		preimage: ret.r_preimage ? Buffer.from(ret.r_preimage, 'base64').toString('hex') : undefined
+	};
 }
 
 export async function lndListInvoices() {
