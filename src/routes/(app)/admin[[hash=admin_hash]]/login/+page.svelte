@@ -110,15 +110,17 @@
 		{#if form?.disabledUser}
 			<p class="text-red-500">{form.disabledUser}</p>
 		{/if}
-		<div class="flex justify-center gap-4 mt-2">
+		<div class="flex flex-col gap-4 mt-2">
 			<input
 				type="submit"
-				class="btn btn-blue text-white"
+				class="btn btn-blue text-white w-full"
 				value={data.isAdminCreated ? 'Login' : 'Create Super Admin'}
 				disabled={!!form?.disabledUser}
 			/>
 			{#if data.isAdminCreated}
-				<a href="{data.adminPrefix}/login/recovery" class="btn body-mainCTA">Recovery</a>
+				<a href="{data.adminPrefix}/login/recovery" class="btn body-mainCTA w-full text-center"
+					>Recovery</a
+				>
 			{/if}
 		</div>
 	</form>
