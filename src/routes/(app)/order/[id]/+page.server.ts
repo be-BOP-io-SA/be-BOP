@@ -11,7 +11,7 @@ import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import type { OrderLabel } from '$lib/types/OrderLabel.js';
 
-export async function load({ params, depends, locals }) {
+export async function load({ params, depends, locals, url }) {
 	depends(UrlDependency.Order);
 
 	const order = await fetchOrderForUser(params.id, { userRoleId: locals.user?.roleId });
@@ -93,12 +93,17 @@ export async function load({ params, depends, locals }) {
 		paymentDetailRequired: subtype.paymentDetailRequired
 	}));
 
+	const returnTo = url.searchParams.get('returnTo');
+	const posMode = locals.user?.hasPosOptions && returnTo?.startsWith('/pos/touch');
+
 	return {
 		order,
 		splitMode: order.splitMode,
 		paymentMethods: methods,
 		tapToPay,
 		posSubtypes,
+		posMode: posMode,
+		hasPosOptions: locals.user?.hasPosOptions,
 		digitalFiles: Promise.all(
 			digitalFiles.map(async (file) => ({
 				name: file.name,
