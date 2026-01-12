@@ -7,3 +7,4 @@ import './nostr-notifications';
 import './handle-messages';
 import './subscription-lock';
 import './stock-lock';
+import './zap-lock';

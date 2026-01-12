@@ -52,6 +52,7 @@ import type { Leaderboard } from '$lib/types/Leaderboard';
 import type { OrderTab } from '$lib/types/OrderTab';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import type { PosSession } from '$lib/types/PosSession';
+import type { PendingZap } from '$lib/types/PendingZap';
 
 // Bigger than the default 10, helpful with MongoDB errors
 Error.stackTraceLimit = 100;
@@ -114,6 +115,7 @@ const genCollection = () => ({
 	scheduleEvents: db.collection<ScheduleEventBooked>('schedule.events'),
 	posPaymentSubtypes: db.collection<PosPaymentSubtype>('posPaymentSubtypes'),
 	posSessions: db.collection<PosSession>('posSessions'),
+	pendingZaps: db.collection<PendingZap>('pendingZaps'),
 
 	errors: db.collection<unknown & { _id: ObjectId; url: string; method: string }>('errors')
 });
@@ -222,7 +224,9 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.posPaymentSubtypes, { disabled: 1 }],
 	[collections.posSessions, { status: 1, openedAt: -1 }],
 	[collections.posSessions, { closedAt: -1 }],
-	[collections.orderTabs, { slug: 1 }, { unique: true }]
+	[collections.orderTabs, { slug: 1 }, { unique: true }],
+	[collections.pendingZaps, { processedAt: 1 }],
+	[collections.pendingZaps, { invoiceId: 1 }, { unique: true }]
 ];
 
 export async function createIndexes() {
