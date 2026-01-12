@@ -452,7 +452,10 @@
 		"addPayment": {
 			"amount": "Te betalen bedrag",
 			"cta": "Stuur een oproep voor betaling",
-			"currency": "Betalingsvaluta"
+			"currency": "Betalingsvaluta",
+			"posSubtype": "Type",
+			"submit": "Toevoegen",
+			"title": "Betaling toevoegen"
 		},
 		"backToOrder": "<< Terug naar bestelling",
 		"clickQR": "Klik op de QR-code om met uw portemonnee te betalen",
@@ -616,6 +619,25 @@
 			"replacePayment": "Vervang de betaalmethode",
 			"resendPaymentMethod": "Verzend de betaalmethode",
 			"updatePaymentInfo": "Betalingsgegevens bijwerken"
+		},
+		"btn": {
+			"add": "Toevoegen",
+			"cancel": "Annuleren",
+			"cancelTap": "Stop Tap",
+			"paid": "Betaald",
+			"replace": "Wijzigen ▾",
+			"replaceSubmit": "Wijzigen",
+			"tapToPay": "Kaartbetaling"
+		},
+		"input": {
+			"detail": "Detail",
+			"txNumber": "TX nr."
+		},
+		"label": {
+			"amount": "Bedrag",
+			"currency": "Valuta",
+			"method": "Methode",
+			"subtype": "Type"
 		},
 		"discountJustification": "Rechtvaardiging",
 		"invalidDiscount": "Korting is niet geldig!",

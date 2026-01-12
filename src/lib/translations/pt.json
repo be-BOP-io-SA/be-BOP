@@ -452,7 +452,10 @@
 		"addPayment": {
 			"amount": "Valor do pagamento",
 			"cta": "Enviar um pedido de pagamento",
-			"currency": "Moeda de pagamento"
+			"currency": "Moeda de pagamento",
+			"posSubtype": "Tipo",
+			"submit": "Adicionar",
+			"title": "Adicionar pagamento"
 		},
 		"backToOrder": "<< Voltar à encomenda",
 		"clickQR": "Clique no código QR para pagar com a sua carteira",
@@ -606,6 +609,25 @@
 	"pos": {
 		"adminInterface": "Interface de administração",
 		"applyGiftDiscount": "Como utilizador POS, aplico um desconto de oferta",
+		"btn": {
+			"add": "Adicionar",
+			"cancel": "Cancelar",
+			"cancelTap": "Parar Tap",
+			"paid": "Pago",
+			"replace": "Alterar ▾",
+			"replaceSubmit": "Alterar",
+			"tapToPay": "Pagamento com cartão"
+		},
+		"input": {
+			"detail": "Detalhe",
+			"txNumber": "TX n°"
+		},
+		"label": {
+			"amount": "Valor",
+			"currency": "Moeda",
+			"method": "Método",
+			"subtype": "Tipo"
+		},
 		"cancelOrderMessage": "Tem a certeza que quer cancelar toda a encomenda?",
 		"cta": {
 			"cancelMultiPayOrder": "Cancelar encomenda",

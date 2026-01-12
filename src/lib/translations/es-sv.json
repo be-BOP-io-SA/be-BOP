@@ -452,7 +452,10 @@
 		"addPayment": {
 			"amount": "Monto del pago",
 			"cta": "Envíe una llamada para el pago",
-			"currency": "Moneda del pago"
+			"currency": "Moneda del pago",
+			"posSubtype": "Tipo",
+			"submit": "Agregar",
+			"title": "Agregar pago"
 		},
 		"backToOrder": "<< Regresar al pedido",
 		"clickQR": "Haz clic en el código QR para pagar con tu billetera",
@@ -606,6 +609,25 @@
 	"pos": {
 		"adminInterface": "Interfaz de administrador",
 		"applyGiftDiscount": "Como usuario de POS, aplico un <0>descuento de regalo</0>",
+		"btn": {
+			"add": "Agregar",
+			"cancel": "Cancelar",
+			"cancelTap": "Detener Tap",
+			"paid": "Pagado",
+			"replace": "Cambiar ▾",
+			"replaceSubmit": "Cambiar",
+			"tapToPay": "Pago con tarjeta"
+		},
+		"input": {
+			"detail": "Detalle",
+			"txNumber": "TX n°"
+		},
+		"label": {
+			"amount": "Monto",
+			"currency": "Moneda",
+			"method": "Método",
+			"subtype": "Tipo"
+		},
 		"cancelOrderMessage": "¿Estás seguro de que quieres cnacel todo el pedido?",
 		"cta": {
 			"cancelMultiPayOrder": "Cancelar pedido",

@@ -452,7 +452,10 @@
 		"addPayment": {
 			"amount": "Zahlungsbetrag",
 			"cta": "Zahlungsaufforderung senden",
-			"currency": "Zahlungswährung"
+			"currency": "Zahlungswährung",
+			"posSubtype": "Typ",
+			"submit": "Hinzufügen",
+			"title": "Zahlung hinzufügen"
 		},
 		"backToOrder": "<< Zurück zur Bestellung",
 		"clickQR": "Klicken Sie auf den QR-Code, um mit Ihrer Wallet zu bezahlen",
@@ -606,6 +609,25 @@
 	"pos": {
 		"adminInterface": "Admin-Oberfläche",
 		"applyGiftDiscount": "Als POS-Benutzer wende ich einen Geschenkrabatt an",
+		"btn": {
+			"add": "Hinzufügen",
+			"cancel": "Abbrechen",
+			"cancelTap": "Tap stoppen",
+			"paid": "Bezahlt",
+			"replace": "Ändern ▾",
+			"replaceSubmit": "Ändern",
+			"tapToPay": "Kartenzahlung"
+		},
+		"input": {
+			"detail": "Detail",
+			"txNumber": "TX-Nr."
+		},
+		"label": {
+			"amount": "Betrag",
+			"currency": "Währung",
+			"method": "Methode",
+			"subtype": "Typ"
+		},
 		"cancelOrderMessage": "Sind Sie sicher, dass Sie die gesamte Bestellung stornieren möchten?",
 		"cta": {
 			"cancelMultiPayOrder": "Bestellung stornieren",
