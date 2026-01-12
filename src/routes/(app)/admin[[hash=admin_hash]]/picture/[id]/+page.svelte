@@ -28,7 +28,7 @@
 	</label>
 
 	<Picture picture={data.picture} class="object-contain max-h-[500px] max-w-full" />
-	<div class="flex gap-4">
+	<div class="flex flex-wrap gap-4">
 		<input type="submit" value="Update" class="btn btn-black" />
 		<input type="hidden" name="darkPicture" bind:value={darkPicture} />
 		<label class="checkbox-label">
@@ -95,6 +95,21 @@
 					type="submit"
 					value="Set as favicon"
 					formaction="?/setAsFavicon"
+					class="btn body-mainCTA"
+				/>
+			{/if}
+			{#if data.ticketLogoId === data.picture._id}
+				<input
+					type="submit"
+					value="Remove from ticket logo"
+					formaction="?/removeTicketLogo"
+					class="btn body-mainCTA"
+				/>
+			{:else}
+				<input
+					type="submit"
+					value="Set as ticket logo"
+					formaction="?/setAsTicketLogo"
 					class="btn body-mainCTA"
 				/>
 			{/if}

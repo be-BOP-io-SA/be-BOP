@@ -242,8 +242,8 @@
 		}
 	}
 
-	// Print functionality
-	let printing = false;
+	// Print functionality - always render PrintableTicket in DOM for mobile compatibility
+	let ticketGeneratedAt: Date | undefined = undefined;
 
 	// Prevent double-click on payment forms
 	let submitting = false;
@@ -271,12 +271,32 @@
 		.join(' ');
 
 	function handlePrintGlobalTicket() {
-		printing = true;
+		ticketGeneratedAt = new Date();
 		setTimeout(() => {
 			window.print();
-			printing = false;
 		}, 100);
 	}
+
+	$: printTotals = poolTotals ?? computePoolTotals(originalQuantitiesPriceInfo);
+	$: printDiscount = tab.discount;
+	$: printHasDiscount = printDiscount && printDiscount.percentage > 0;
+	$: printTotalAfterDiscount =
+		printHasDiscount && printDiscount
+			? printTotals.incl * (1 - printDiscount.percentage / 100)
+			: printTotals.incl;
+
+	$: printVatBreakdown = (() => {
+		const vatByRate = new Map<number, number>();
+		originalQuantitiesPriceInfo.perItem.forEach((item, i) => {
+			const rate = originalQuantitiesPriceInfo.vatRates[i];
+			const vatAmount = item.amount * (rate / 100);
+			vatByRate.set(rate, (vatByRate.get(rate) ?? 0) + vatAmount);
+		});
+		return Array.from(vatByRate.entries())
+			.map(([rate, amount]) => ({ rate, amount }))
+			.sort((a, b) => a.rate - b.rate);
+	})();
+	$: printTotalExclVat = printTotals.excl;
 </script>
 
 <div class="flex flex-col h-screen justify-between">
@@ -299,9 +319,15 @@
 					</div>
 					<PosSplitTotalSection
 						totalExcl={poolTotals.excl}
-						totalIncl={poolTotals.incl}
+						totalIncl={tab.discount && tab.discount.percentage > 0
+							? poolTotals.incl * (1 - tab.discount.percentage / 100)
+							: poolTotals.incl}
 						currency={poolCurrency}
 						vatRates={poolVatRates}
+						totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
+							? poolTotals.incl
+							: undefined}
+						discountPercentage={tab.discount?.percentage}
 					/>
 				{:else if tab.items.length}
 					<div>
@@ -327,9 +353,15 @@
 					</div>
 					<PosSplitTotalSection
 						totalExcl={tabItemsPriceInfo.partialPrice}
-						totalIncl={tabItemsPriceInfo.partialPriceWithVat}
+						totalIncl={tab.discount && tab.discount.percentage > 0
+							? tabItemsPriceInfo.partialPriceWithVat * (1 - tab.discount.percentage / 100)
+							: tabItemsPriceInfo.partialPriceWithVat}
 						currency={tabItemsPriceInfo.currency}
 						vatRates={tabItemsPriceInfo.vat.map((vat) => vat.rate)}
+						totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
+							? tabItemsPriceInfo.partialPriceWithVat
+							: undefined}
+						discountPercentage={tab.discount?.percentage}
 					/>
 				{:else}
 					<p>{t('cart.empty')}</p>
@@ -674,6 +706,12 @@
 				>
 					{t('pos.split.return')}
 				</a>
+				<button
+					class="bg-green-800 hover:bg-green-900 uppercase text-3xl text-white p-4 text-center"
+					on:click={handlePrintGlobalTicket}
+				>
+					{t('pos.split.globalTicket')}
+				</button>
 			{:else}
 				<button
 					class="touchScreen-action-cancel uppercase text-3xl text-white p-4 text-center"
@@ -711,26 +749,35 @@
 	</footer>
 </div>
 
-{#if printing && poolTotals}
-	<PrintableTicket
-		{poolLabel}
-		generatedAt={new Date()}
-		tagGroups={[
-			{
-				tagNames: [],
-				items: tab.items.map((item) => ({
-					product: { name: item.product.name },
-					quantity: item.originalQuantity ?? item.quantity,
-					variations: [],
-					notes: []
-				}))
-			}
-		]}
-		priceInfo={{
-			itemPrices: originalQuantitiesPriceInfo.perItem,
-			total: poolTotals.incl,
-			vatRate: poolVatRates[0] ?? 0,
-			currency: poolCurrency
-		}}
-	/>
-{/if}
+<!-- PrintableTicket always in DOM for mobile print compatibility -->
+<PrintableTicket
+	{poolLabel}
+	generatedAt={ticketGeneratedAt}
+	tagGroups={[
+		{
+			tagNames: [],
+			items: tab.items.map((item) => ({
+				product: { name: item.product.name },
+				quantity: item.originalQuantity ?? item.quantity,
+				variations: [],
+				notes: []
+			}))
+		}
+	]}
+	priceInfo={{
+		itemPrices: originalQuantitiesPriceInfo.perItem,
+		total: printTotalAfterDiscount,
+		totalExclVat: printTotalExclVat,
+		vatBreakdown: printVatBreakdown,
+		currency: poolCurrency,
+		...(printHasDiscount && printDiscount
+			? {
+					totalBeforeDiscount: printTotals.incl,
+					discountPercentage: printDiscount.percentage
+			  }
+			: {})
+	}}
+	companyInfo={data.companyInfo}
+	companyLogoUrl={data.companyLogoUrl}
+	showBebopLogo={data.showBebopLogo}
+/>

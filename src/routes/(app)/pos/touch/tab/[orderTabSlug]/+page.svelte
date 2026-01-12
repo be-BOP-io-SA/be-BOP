@@ -11,7 +11,7 @@
 	import { applyAction, enhance } from '$app/forms';
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
 	import { groupBy } from '$lib/utils/group-by.js';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import ItemEditDialog from '$lib/components/ItemEditDialog.svelte';
 	import { computePriceInfo } from '$lib/cart.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
@@ -280,6 +280,10 @@
 
 		ticketGeneratedAt = new Date();
 
+		// Close modal before printing and wait for DOM update
+		printModalOpen = false;
+		await tick();
+
 		setTimeout(() => {
 			window.print();
 
@@ -329,13 +333,31 @@
 				items = items;
 			}
 
+			// notes are one-time per print
+			const itemsWithNotes = filteredItems.filter((item) => item.internalNote?.value);
+			if (itemsWithNotes.length > 0) {
+				const itemIds = itemsWithNotes.map((item) => item.tabItemId);
+				const notesFormData = new FormData();
+				notesFormData.set('itemIds', JSON.stringify(itemIds));
+
+				fetch('?/clearPrintedNotes', {
+					method: 'POST',
+					body: notesFormData
+				}).catch((error) => {
+					console.error('Error clearing printed notes:', error);
+				});
+			}
+
 			invalidate(UrlDependency.orderTab(tabSlug));
 		}, 100);
 	}
 
-	function handleReprintFromHistory(entry: PrintHistoryEntry) {
+	async function handleReprintFromHistory(entry: PrintHistoryEntry) {
 		ticketTagGroups = entry.tagGroups;
 		ticketGeneratedAt = new Date();
+
+		printModalOpen = false;
+		await tick();
 
 		setTimeout(() => {
 			window.print();
@@ -987,7 +1009,12 @@
 />
 
 <!-- Printable Ticket (hidden on screen, visible on print) -->
-<PrintableTicket {poolLabel} tagGroups={ticketTagGroups} generatedAt={ticketGeneratedAt} />
+<PrintableTicket
+	{poolLabel}
+	tagGroups={ticketTagGroups}
+	generatedAt={ticketGeneratedAt}
+	showBebopLogo={false}
+/>
 
 <!-- Item Edit Dialog -->
 {#if itemToEditIndex !== undefined && itemToEditIndex >= 0}

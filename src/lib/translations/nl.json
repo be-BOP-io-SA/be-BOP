@@ -577,6 +577,7 @@
 			"totalExcVat": "Totaal Excl. VAT",
 			"totalInclVat": "Totaal Incl. VAT",
 			"totalVat": "Totale BTW",
+			"totalWithDiscount": "Totaal met korting",
 			"unitPrice": "Eenheid prijs",
 			"vatFreeReason": "Vrijgesteld van btw: {reason}",
 			"peopleCount": "Aantal personen"
@@ -695,6 +696,7 @@
 			"ticketNumber": "TICKET nr.",
 			"exclVat": "EX",
 			"inclVat": "INC",
+			"subtotal": "SUBTOTAAL",
 			"total": "TOTAAL",
 			"vatBreakdown": "Waarvan BTW",
 			"favorites": "FAVORIETEN",
@@ -728,6 +730,7 @@
 			"poolRemainingToPay": "POOL (nog te betalen)",
 			"exclVat": "excl. BTW",
 			"inclVat": "incl. BTW {rates}",
+			"inclVatShort": "incl. BTW",
 			"vatRate": "BTW {rate}%",
 			"cashIn": "Afrekenen",
 			"all": "alles",
@@ -751,7 +754,9 @@
 			"allPaid": "Alles betaald",
 			"completeSharesFirst": "U bent al begonnen met betalen via \"Splitsen (delen)\". Voltooi alle betalingen en sluit de pool eerst.",
 			"closePool": "Pool sluiten",
-			"globalTicket": "Globaal ticket"
+			"globalTicket": "Globaal ticket",
+			"beforeDiscount": "VOOR KORTING",
+			"afterDiscount": "NA KORTING"
 		},
 		"discount": {
 			"title": "Korting",

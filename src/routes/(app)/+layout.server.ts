@@ -349,6 +349,7 @@ export async function load(params) {
 		logoPictureDark,
 		logo: runtimeConfig.logo,
 		footerLogoId: runtimeConfig.footerLogoId,
+		ticketLogoId: runtimeConfig.ticketLogoId,
 		footerPicture,
 		usersDarkDefaultTheme: runtimeConfig.usersDarkDefaultTheme,
 		employeesDarkefaulTheme: runtimeConfig.employeesDarkDefaultTheme,

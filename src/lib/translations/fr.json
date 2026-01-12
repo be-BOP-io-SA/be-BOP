@@ -577,6 +577,7 @@
 			"totalExcVat": "Total HT",
 			"totalInclVat": "Total TTC",
 			"totalVat": "TVA totale",
+			"totalWithDiscount": "Total avec remise",
 			"unitPrice": "Prix ​​unit. HT",
 			"vatFreeReason": "Exempt de TVA: {reason}",
 			"peopleCount": "Nombre de personnes"
@@ -696,6 +697,7 @@
 			"ticketNumber": "TICKET n°",
 			"exclVat": "HT",
 			"inclVat": "TTC",
+			"subtotal": "SOUS-TOTAL",
 			"total": "TOTAL",
 			"vatBreakdown": "Dont TVA",
 			"favorites": "FAVORIS",
@@ -729,6 +731,7 @@
 			"poolRemainingToPay": "POOL (reste à payer)",
 			"exclVat": "HT",
 			"inclVat": "TTC {rates}",
+			"inclVatShort": "TTC",
 			"vatRate": "TVA {rate}%",
 			"cashIn": "Encaisser",
 			"all": "tout",
@@ -752,7 +755,9 @@
 			"allPaid": "Tout est payé",
 			"completeSharesFirst": "Vous avez déjà commencé à payer le pool via des paiements \"Diviser (parts)\". Veuillez terminer tous les paiements et fermer le pool d'abord.",
 			"closePool": "Fermer le pool",
-			"globalTicket": "Ticket global"
+			"globalTicket": "Ticket global",
+			"beforeDiscount": "AVANT REMISE",
+			"afterDiscount": "APRÈS REMISE"
 		},
 		"discount": {
 			"title": "Remise",
