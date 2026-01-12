@@ -313,6 +313,16 @@
 				}).catch((error) => {
 					console.error('Error updating print status:', error);
 				});
+
+				// Clear notes locally for printed items to avoid stale cache
+				for (const item of filteredItems) {
+					const idx = items.findIndex((i) => i.tabItemId === item.tabItemId);
+					if (idx !== -1) {
+						items[idx].internalNote = undefined;
+					}
+				}
+				// Force the reactive system (Svelte) to update all 'items' dependencies.
+				items = items;
 			}
 
 			invalidate(UrlDependency.orderTab(tabSlug));
