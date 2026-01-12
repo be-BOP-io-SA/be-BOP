@@ -264,6 +264,9 @@ export const actions = {
 						'items.$.printStatus': 'acknowledged',
 						'items.$.printedQuantity': update.currentQuantity,
 						updatedAt: new Date()
+					},
+					$unset: {
+						'items.$.internalNote': 1
 					}
 				}
 			);
