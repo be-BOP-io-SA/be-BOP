@@ -568,6 +568,7 @@
 			"totalExcVat": "Gesamtbetrag exkl. MwSt.",
 			"totalInclVat": "Gesamtbetrag inkl. MwSt.",
 			"totalVat": "Gesamt-MwSt.",
+			"totalWithDiscount": "Gesamt mit Rabatt",
 			"unitPrice": "Stückpreis",
 			"vatFreeReason": "MwSt.-befreit: {reason}"
 		},
@@ -678,6 +679,7 @@
 			"ticketNumber": "TICKET Nr.",
 			"exclVat": "oM",
 			"inclVat": "iM",
+			"subtotal": "ZWISCHENSUMME",
 			"total": "TOTAL",
 			"vatBreakdown": "Davon MwSt",
 			"favorites": "FAVORITEN",
@@ -711,6 +713,7 @@
 			"poolRemainingToPay": "POOL (noch zu bezahlen)",
 			"exclVat": "ohne MwSt",
 			"inclVat": "inkl. MwSt {rates}",
+			"inclVatShort": "inkl. MwSt",
 			"vatRate": "MwSt {rate}%",
 			"cashIn": "Kassieren",
 			"all": "alles",
@@ -734,7 +737,9 @@
 			"allPaid": "Alles bezahlt",
 			"completeSharesFirst": "Sie haben bereits begonnen, den Pool über \"Aufteilen (Anteile)\" zu bezahlen. Bitte schließen Sie alle Zahlungen ab und schließen Sie den Pool zuerst.",
 			"closePool": "Pool schließen",
-			"globalTicket": "Gesamtticket"
+			"globalTicket": "Gesamtticket",
+			"beforeDiscount": "VOR RABATT",
+			"afterDiscount": "NACH RABATT"
 		},
 		"discount": {
 			"title": "Rabatt",

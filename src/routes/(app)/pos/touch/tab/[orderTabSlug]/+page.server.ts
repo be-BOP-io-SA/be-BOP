@@ -281,6 +281,32 @@ export const actions = {
 			);
 		}
 	},
+	clearPrintedNotes: async ({ request, params }) => {
+		const formData = await request.formData();
+		const { itemIds } = z
+			.object({
+				itemIds: z.string()
+			})
+			.parse({
+				itemIds: formData.get('itemIds')
+			});
+
+		const parsedItemIds = JSON.parse(itemIds) as string[];
+
+		for (const itemId of parsedItemIds) {
+			await collections.orderTabs.updateOne(
+				{ slug: params.orderTabSlug, 'items._id': new ObjectId(itemId) },
+				{
+					$unset: {
+						'items.$.internalNote': ''
+					},
+					$set: {
+						updatedAt: new Date()
+					}
+				}
+			);
+		}
+	},
 	savePrintHistory: async ({ request, params }) => {
 		const formData = await request.formData();
 		const { entry } = z
