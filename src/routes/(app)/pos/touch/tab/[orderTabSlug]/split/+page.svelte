@@ -31,8 +31,20 @@
 
 	function buildPaymentOptions(
 		methods: PaymentMethod[],
-		subtypes: PaymentSubtype[]
+		subtypes: PaymentSubtype[],
+		showFreeOnly: boolean
 	): PaymentOption[] {
+		if (showFreeOnly) {
+			return [
+				{
+					method: 'free',
+					subtype: null,
+					label: t('checkout.paymentMethod.free'),
+					icon: PAYMENT_METHOD_EMOJI.free
+				}
+			];
+		}
+
 		const subtypesByParent = subtypes.reduce((map, subtype) => {
 			if (!map.has(subtype.parentMethod)) {
 				map.set(subtype.parentMethod, []);
@@ -67,10 +79,28 @@
 			});
 	}
 
-	$: paymentOptions = buildPaymentOptions(
+	// Show 'free' only when:
+	// - Items mode: items ARE selected AND their total is 0 (free items)
+	// - Shares mode: entire tab total is 0 (all items are free) OR 100% discount applied
+	$: hasSelectedItems = splitTabQuantities.some((qty) => qty > 0);
+	$: showFreeOnlyForItems = hasSelectedItems && splitTabPriceInfo.partialPriceWithVat === 0;
+	// Check if pool has 100% discount (without tagId = applies to all items)
+	$: isFullPoolDiscount = tab.discount?.percentage === 100 && !tab.discount?.tagId;
+	$: showFreeOnlyForShares = tabItemsPriceInfo.partialPriceWithVat === 0 || isFullPoolDiscount;
+
+	$: paymentOptionsForItems = buildPaymentOptions(
 		data.availablePaymentMethods ?? [],
-		data.paymentSubtypes ?? []
+		data.paymentSubtypes ?? [],
+		showFreeOnlyForItems
 	);
+	$: paymentOptionsForShares = buildPaymentOptions(
+		data.availablePaymentMethods ?? [],
+		data.paymentSubtypes ?? [],
+		showFreeOnlyForShares
+	);
+
+	$: paymentOptions =
+		rightPannel === 'split-items' ? paymentOptionsForItems : paymentOptionsForShares;
 
 	let selectedPaymentIndex = 0;
 	$: selectedPayment = paymentOptions[selectedPaymentIndex] ?? paymentOptions[0];
@@ -214,6 +244,25 @@
 
 	// Print functionality
 	let printing = false;
+
+	// Prevent double-click on payment forms
+	let submitting = false;
+	const handlePaymentSubmit = () => {
+		submitting = true;
+		return async ({
+			result,
+			update
+		}: {
+			result: { type: string };
+			update: () => Promise<void>;
+		}) => {
+			await update();
+			// Only unlock on error/failure so user can retry; on redirect page will change anyway
+			if (result.type === 'failure' || result.type === 'error') {
+				submitting = false;
+			}
+		};
+	};
 
 	// Beautify tabSlug for display: "table-3" → "Table 3"
 	$: poolLabel = tabSlug
@@ -385,7 +434,11 @@
 
 							<div class="grid grid-cols-3 gap-3">
 								{#each Array.from({ length: POS_SPLIT_SHARES_MAX_NUMS }, (_, i) => i + 1) as num}
-									<form method="POST" action="?/checkoutTabPartial" use:enhance>
+									<form
+										method="POST"
+										action="?/checkoutTabPartial"
+										use:enhance={handlePaymentSubmit}
+									>
 										<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
 										{#if selectedPayment?.subtype}
 											<input type="hidden" name="subtype" value={selectedPayment.subtype} />
@@ -405,9 +458,10 @@
 										{/if}
 										<button
 											type="submit"
+											disabled={submitting}
 											class="{num === 1 && fromCashInAll
 												? 'bg-green-800'
-												: 'bg-yellow-800'} text-white font-bold text-4xl p-4 rounded w-full"
+												: 'bg-yellow-800'} text-white font-bold text-4xl p-4 rounded w-full disabled:opacity-50"
 										>
 											{num}
 										</button>
@@ -415,7 +469,7 @@
 								{/each}
 							</div>
 
-							<form method="POST" action="?/checkoutTabPartial" use:enhance>
+							<form method="POST" action="?/checkoutTabPartial" use:enhance={handlePaymentSubmit}>
 								<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
 								{#if selectedPayment?.subtype}
 									<input type="hidden" name="subtype" value={selectedPayment.subtype} />
@@ -435,7 +489,8 @@
 								/>
 								<button
 									type="submit"
-									class="w-full bg-green-800 text-white font-bold py-4 text-3xl rounded"
+									disabled={submitting}
+									class="w-full bg-green-800 text-white font-bold py-4 text-3xl rounded disabled:opacity-50"
 								>
 									{t('pos.split.payRemaining') || 'Pay Remaining'}
 								</button>
@@ -459,7 +514,7 @@
 									<form
 										method="POST"
 										action="?/checkoutTabPartial"
-										use:enhance
+										use:enhance={handlePaymentSubmit}
 										on:submit={() => (showCustomShares = false)}
 									>
 										<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
@@ -468,7 +523,11 @@
 										{/if}
 										<input type="hidden" name="mode" value="equal" />
 										<input type="hidden" name="shares" bind:value={sharesInput} />
-										<button type="submit" class="bg-green-800 text-white px-8 text-3xl rounded">
+										<button
+											type="submit"
+											disabled={submitting}
+											class="bg-green-800 text-white px-8 text-3xl rounded disabled:opacity-50"
+										>
 											{t('pos.split.ok')}
 										</button>
 									</form>
@@ -495,7 +554,7 @@
 									<form
 										method="POST"
 										action="?/checkoutTabPartial"
-										use:enhance
+										use:enhance={handlePaymentSubmit}
 										on:submit={() => (showCustomAmount = false)}
 									>
 										<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
@@ -504,7 +563,11 @@
 										{/if}
 										<input type="hidden" name="mode" value="custom-amount" />
 										<input type="hidden" name="customAmount" bind:value={customAmountInput} />
-										<button type="submit" class="bg-green-800 text-white px-8 text-3xl rounded">
+										<button
+											type="submit"
+											disabled={submitting}
+											class="bg-green-800 text-white px-8 text-3xl rounded disabled:opacity-50"
+										>
 											{t('pos.split.ok')}
 										</button>
 									</form>
@@ -623,7 +686,7 @@
 				<form
 					method="POST"
 					action="?/checkoutTabPartial"
-					use:enhance
+					use:enhance={handlePaymentSubmit}
 					on:submit={validateItemsCheckout}
 				>
 					<input type="hidden" name="itemQuantities" value={itemQuantitiesJson} />
@@ -634,10 +697,11 @@
 					<button
 						type="submit"
 						class="uppercase text-3xl p-4 text-center w-full {splitTabPriceInfo.partialPriceWithVat >
-						0
+							0 || selectedPayment?.method === 'free'
 							? 'touchScreen-action-cta'
-							: 'bg-gray-400 text-white cursor-not-allowed'}"
-						disabled={splitTabPriceInfo.partialPriceWithVat === 0}
+							: 'bg-gray-400 text-white cursor-not-allowed'} disabled:opacity-50"
+						disabled={submitting ||
+							(splitTabPriceInfo.partialPriceWithVat === 0 && selectedPayment?.method !== 'free')}
 					>
 						{t('pos.split.paySelected')}
 					</button>
