@@ -100,13 +100,10 @@
 
 	$: hasOriginalQuantities = tab.items.some((item) => item.originalQuantity !== undefined);
 
-	let isPoolFullyPaid: boolean;
-	$: {
-		const allZero = tab.items.every((item) => item.quantity === 0);
-		isPoolFullyPaid = data.sharesOrder?._id
-			? data.sharesOrder.isFullyPaid && hasOriginalQuantities
-			: hasOriginalQuantities && allZero;
-	}
+	$: isPoolFullyPaid = data.sharesOrder?._id
+		? data.sharesOrder.isFullyPaid
+		: tab.items.every((item) => item.quantity === 0) &&
+		  tab.items.some((item) => item.originalQuantity !== undefined);
 
 	// Pool fully paid calculations (based on original quantities)
 	$: itemsWithOriginalQuantities = tab.items.map((item) => ({
