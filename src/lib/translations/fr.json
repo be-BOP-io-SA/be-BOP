@@ -669,6 +669,7 @@
 			"groupNamePlaceholder": "Nom du groupe",
 			"tooManyTagsWarning": "Le groupe \"{groupName}\" contient {count} étiquettes. Trop pour le mode bouton. Activez l'option \"Utiliser le menu de sélection\" ou réduisez les étiquettes. Continuer ?"
 		},
+		"useSelectForTags": "Utiliser le menu de sélection pour la sélection des étiquettes de produit",
 		"touch": {
 			"selectTab": "Sélectionner un onglet :",
 			"noTabs": "Ce groupe n'a pas d'onglets",
@@ -689,7 +690,8 @@
 			"pay": "PAYER",
 			"notDeveloped": "Pas encore développé",
 			"confirmDeleteLastItem": "Voulez-vous supprimer la dernière ligne du panier ?",
-			"confirmDeleteAllItems": "Voulez-vous supprimer toutes les lignes du panier ?"
+			"confirmDeleteAllItems": "Voulez-vous supprimer toutes les lignes du panier ?",
+			"maxQuantityReached": "Quantité maximale par commande atteinte ({max})"
 		},
 		"itemEdit": {
 			"quantity": "Quantité",
@@ -829,7 +831,9 @@
 	},
 	"subscription": {
 		"associated": {
-			"npub": "Associé à npub : {npub}"
+			"npub": "Associé à npub : {npub}",
+			"email": "Associé à email : {email}",
+			"title": "Associé à :"
 		},
 		"cantRenew": "Abonnement non renouvelable",
 		"cta": {

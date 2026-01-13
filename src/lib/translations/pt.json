@@ -669,6 +669,7 @@
 			"groupNamePlaceholder": "Nome do grupo",
 			"tooManyTagsWarning": "O grupo \"{groupName}\" tem {count} etiquetas. Demasiadas para o modo de botões. Ative a opção \"Usar menu de seleção\" ou reduza as etiquetas. Continuar?"
 		},
+		"useSelectForTags": "Usar menu de seleção para seleção de etiquetas de produto",
 		"touch": {
 			"selectTab": "Selecionar um separador:",
 			"noTabs": "Este grupo não tem separadores",
@@ -689,7 +690,8 @@
 			"pay": "PAGAR",
 			"notDeveloped": "Ainda não desenvolvido",
 			"confirmDeleteLastItem": "Quer eliminar a última linha do carrinho?",
-			"confirmDeleteAllItems": "Quer eliminar todas as linhas do carrinho?"
+			"confirmDeleteAllItems": "Quer eliminar todas as linhas do carrinho?",
+			"maxQuantityReached": "Quantidade máxima por encomenda atingida ({max})"
 		},
 		"itemEdit": {
 			"quantity": "Quantidade",
@@ -752,6 +754,19 @@
 	"product": {
 		"addedToCart": "Produto adicionado ao carrinho",
 		"availableOn": "Disponível em {date}",
+		"booking": {
+			"duration": "Duração",
+			"hour": {
+				"one": "1 hora",
+				"other": "{count} horas"
+			},
+			"minute": {
+				"one": "1 minuto",
+				"other": "{count} minutos"
+			},
+			"time": "Hora do dia",
+			"timezone": "Fuso horário: {timeZone}"
+		},
 		"checkBackLater": "Por favor, volte a verificar mais tarde",
 		"cta": {
 			"add": "Adicionar ao carrinho",
@@ -770,6 +785,8 @@
 		},
 		"discountBanner": "{discountPercent}% de desconto durante {timespan}",
 		"discountBannerNoTime": "{discountPercent}% de desconto",
+		"freeProductDiscountText": "Você tem {available} produtos gratuitos",
+		"freeProductDiscountTextSingular": "Você tem {available} produto gratuito",
 		"freeWithSub": "Este produto está disponível gratuitamente com a sua subscrição mensal",
 		"freeWithTitle": "Grátis com \"xxxxx\"",
 		"horsTaxeShort": "Sem IVA",
@@ -814,7 +831,9 @@
 	},
 	"subscription": {
 		"associated": {
-			"npub": "Associado ao npub: {npub}"
+			"title": "Associado a:",
+			"npub": "Associado ao npub: {npub}",
+			"email": "Associado ao email: {email}"
 		},
 		"cantRenew": "Subscrição não elegível para renovação",
 		"cta": {

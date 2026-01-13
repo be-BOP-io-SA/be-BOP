@@ -689,7 +689,8 @@
 			"pay": "PAGAR",
 			"notDeveloped": "Aún no desarrollado",
 			"confirmDeleteLastItem": "¿Quieres eliminar la última línea del carrito?",
-			"confirmDeleteAllItems": "¿Quieres eliminar todas las líneas del carrito?"
+			"confirmDeleteAllItems": "¿Quieres eliminar todas las líneas del carrito?",
+			"maxQuantityReached": "Cantidad máxima alcanzada"
 		},
 		"itemEdit": {
 			"quantity": "Cantidad",
@@ -747,7 +748,8 @@
 			"motivePlaceholder": "ej. Pasaporte gourmet",
 			"lockedWarning": "⚠️ No se puede modificar el descuento después de iniciar el pago",
 			"save": "Guardar"
-		}
+		},
+		"useSelectForTags": "Usar menú desplegable para etiquetas"
 	},
 	"product": {
 		"addedToCart": "Producto añadido a la lista de compras",
@@ -829,7 +831,9 @@
 	},
 	"subscription": {
 		"associated": {
-			"npub": "Asociado a la npub: {npub}"
+			"npub": "Asociado a la npub: {npub}",
+			"email": "Asociado a email: {email}",
+			"title": "Asociado a:"
 		},
 		"cantRenew": "Suscripción no necesita renovarse",
 		"cta": {
