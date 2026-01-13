@@ -452,7 +452,10 @@
 		"addPayment": {
 			"amount": "Zahlungsbetrag",
 			"cta": "Zahlungsaufforderung senden",
-			"currency": "Zahlungswährung"
+			"currency": "Zahlungswährung",
+			"posSubtype": "Typ",
+			"submit": "Hinzufügen",
+			"title": "Zahlung hinzufügen"
 		},
 		"backToOrder": "<< Zurück zur Bestellung",
 		"clickQR": "Klicken Sie auf den QR-Code, um mit Ihrer Wallet zu bezahlen",
@@ -606,6 +609,25 @@
 	"pos": {
 		"adminInterface": "Admin-Oberfläche",
 		"applyGiftDiscount": "Als POS-Benutzer wende ich einen Geschenkrabatt an",
+		"btn": {
+			"add": "Hinzufügen",
+			"cancel": "Abbrechen",
+			"cancelTap": "Tap stoppen",
+			"paid": "Bezahlt",
+			"replace": "Ändern ▾",
+			"replaceSubmit": "Ändern",
+			"tapToPay": "Kartenzahlung"
+		},
+		"input": {
+			"detail": "Detail",
+			"txNumber": "TX-Nr."
+		},
+		"label": {
+			"amount": "Betrag",
+			"currency": "Währung",
+			"method": "Methode",
+			"subtype": "Typ"
+		},
 		"cancelOrderMessage": "Sind Sie sicher, dass Sie die gesamte Bestellung stornieren möchten?",
 		"cta": {
 			"cancelMultiPayOrder": "Bestellung stornieren",
@@ -647,6 +669,7 @@
 			"groupNamePlaceholder": "Gruppenname",
 			"tooManyTagsWarning": "Die Gruppe \"{groupName}\" hat {count} Tags. Zu viele für den Button-Modus. Aktivieren Sie \"Auswahlmenü verwenden\" oder reduzieren Sie die Tags. Fortfahren?"
 		},
+		"useSelectForTags": "Auswahlmenü für Produkt-Tag-Auswahl verwenden",
 		"touch": {
 			"selectTab": "Tab auswählen:",
 			"noTabs": "Diese Gruppe hat keine Tabs",
@@ -667,7 +690,8 @@
 			"pay": "BEZAHLEN",
 			"notDeveloped": "Noch nicht entwickelt",
 			"confirmDeleteLastItem": "Möchten Sie die letzte Warenkorb-Zeile löschen?",
-			"confirmDeleteAllItems": "Möchten Sie alle Warenkorb-Zeilen löschen?"
+			"confirmDeleteAllItems": "Möchten Sie alle Warenkorb-Zeilen löschen?",
+			"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})"
 		},
 		"itemEdit": {
 			"quantity": "Menge",
@@ -730,6 +754,19 @@
 	"product": {
 		"addedToCart": "Produkt zum Warenkorb hinzugefügt",
 		"availableOn": "Verfügbar am {date}",
+		"booking": {
+			"duration": "Dauer",
+			"hour": {
+				"one": "1 Stunde",
+				"other": "{count} Stunden"
+			},
+			"minute": {
+				"one": "1 Minute",
+				"other": "{count} Minuten"
+			},
+			"time": "Tageszeit",
+			"timezone": "Zeitzone: {timeZone}"
+		},
 		"checkBackLater": "Bitte schauen Sie später wieder vorbei",
 		"cta": {
 			"add": "Zum Warenkorb hinzufügen",
@@ -748,6 +785,8 @@
 		},
 		"discountBanner": "{discountPercent}% Rabatt für {timespan}",
 		"discountBannerNoTime": "{discountPercent}% Rabatt",
+		"freeProductDiscountText": "Sie haben {available} kostenlose Produkte",
+		"freeProductDiscountTextSingular": "Sie haben {available} kostenloses Produkt",
 		"freeWithSub": "Dieses Produkt ist kostenlos mit Ihrem monatlichen Abonnement erhältlich",
 		"freeWithTitle": "Kostenlos mit „xxxxx“",
 		"horsTaxeShort": "Netto",
@@ -792,7 +831,9 @@
 	},
 	"subscription": {
 		"associated": {
-			"npub": "Verknüpft mit Npub: {npub}"
+			"title": "Verknüpft mit:",
+			"npub": "Verknüpft mit Npub: {npub}",
+			"email": "Verknüpft mit E-Mail: {email}"
 		},
 		"cantRenew": "Abonnement nicht zur Verlängerung fällig",
 		"cta": {

@@ -452,7 +452,10 @@
 		"addPayment": {
 			"amount": "Montant du paiement",
 			"cta": "Envoyer un appel pour le paiement",
-			"currency": "Monnaie de paiement"
+			"currency": "Monnaie de paiement",
+			"posSubtype": "Type",
+			"submit": "Ajouter",
+			"title": "Ajouter un paiement"
 		},
 		"backToOrder": "<< Retour à la commande",
 		"clickQR": "Cliquez sur le QR code pour payer avec votre portefeuille",
@@ -606,6 +609,25 @@
 	"pos": {
 		"adminInterface": "Interface d'administration",
 		"applyGiftDiscount": "En tant qu'utilisateur de point de vente, j'applique une <0>remise cadeau</0>",
+		"btn": {
+			"add": "Ajouter",
+			"cancel": "Annuler",
+			"cancelTap": "Arrêter Tap",
+			"paid": "Payé",
+			"replace": "Modifier ▾",
+			"replaceSubmit": "Modifier",
+			"tapToPay": "Paiement carte"
+		},
+		"input": {
+			"detail": "Détail",
+			"txNumber": "TX n°"
+		},
+		"label": {
+			"amount": "Montant",
+			"currency": "Devise",
+			"method": "Méthode",
+			"subtype": "Type"
+		},
 		"cancelOrderMessage": "Êtes-vous sûr de vouloir annuler toute la commande?",
 		"cta": {
 			"cancelMultiPayOrder": "Annuler la commande",
@@ -647,6 +669,7 @@
 			"groupNamePlaceholder": "Nom du groupe",
 			"tooManyTagsWarning": "Le groupe \"{groupName}\" contient {count} étiquettes. Trop pour le mode bouton. Activez l'option \"Utiliser le menu de sélection\" ou réduisez les étiquettes. Continuer ?"
 		},
+		"useSelectForTags": "Utiliser le menu de sélection pour la sélection des étiquettes de produit",
 		"touch": {
 			"selectTab": "Sélectionner un onglet :",
 			"noTabs": "Ce groupe n'a pas d'onglets",
@@ -667,7 +690,8 @@
 			"pay": "PAYER",
 			"notDeveloped": "Pas encore développé",
 			"confirmDeleteLastItem": "Voulez-vous supprimer la dernière ligne du panier ?",
-			"confirmDeleteAllItems": "Voulez-vous supprimer toutes les lignes du panier ?"
+			"confirmDeleteAllItems": "Voulez-vous supprimer toutes les lignes du panier ?",
+			"maxQuantityReached": "Quantité maximale par commande atteinte ({max})"
 		},
 		"itemEdit": {
 			"quantity": "Quantité",
@@ -807,7 +831,9 @@
 	},
 	"subscription": {
 		"associated": {
-			"npub": "Associé à npub : {npub}"
+			"npub": "Associé à npub : {npub}",
+			"email": "Associé à email : {email}",
+			"title": "Associé à :"
 		},
 		"cantRenew": "Abonnement non renouvelable",
 		"cta": {
