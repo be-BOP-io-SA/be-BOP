@@ -690,7 +690,7 @@
 			"notDeveloped": "Non ancora sviluppato",
 			"confirmDeleteLastItem": "Vuoi eliminare l'ultima riga del carrello?",
 			"confirmDeleteAllItems": "Vuoi eliminare tutte le righe del carrello?",
-			"maxQuantityReached": "Quantità massima raggiunta"
+			"maxQuantityReached": "Quantità massima per ordine raggiunta ({max})"
 		},
 		"itemEdit": {
 			"quantity": "Quantità",

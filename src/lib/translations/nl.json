@@ -690,7 +690,7 @@
 			"notDeveloped": "Nog niet ontwikkeld",
 			"confirmDeleteLastItem": "Wil je de laatste winkelwagen regel verwijderen?",
 			"confirmDeleteAllItems": "Wil je alle winkelwagen regels verwijderen?",
-			"maxQuantityReached": "Maximale hoeveelheid bereikt"
+			"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})"
 		},
 		"itemEdit": {
 			"quantity": "Hoeveelheid",
