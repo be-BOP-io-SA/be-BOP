@@ -34,6 +34,6 @@ export async function GET({ params }) {
 
 	return new Response(content, {
 		status: 200,
-		headers: { 'Content-Type': 'text/plain' }
+		headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 	});
 }
