@@ -115,6 +115,11 @@
 		</p>
 	{:else}
 		<h1 class="text-3xl mt-4">{t('customerTouch.orderPaymentFailedTitle')}!</h1>
-		<p></p>
+		<a
+			href="/pos/customer-touch/list/home"
+			class="mt-4 bg-[#8fd16a] text-black text-xl font-semibold rounded-lg px-6 py-3"
+		>
+			{t('customerTouch.nav.home')}
+		</a>
 	{/if}
 </div>

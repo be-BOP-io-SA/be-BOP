@@ -6,11 +6,13 @@
 	import IconPaypal from '$lib/components/icons/IconPaypal.svelte';
 	import { useI18n } from '$lib/i18n';
 	import IconLightning from './IconLightning.svelte';
+	import { enhance } from '$app/forms';
 
 	export let data;
 
 	const { t } = useI18n();
 	let paymentMethod = data.isFreeOrder ? 'free' : 'lightning';
+	let submitting = false;
 
 	$: availableMethods = data.paymentMethods;
 </script>
@@ -28,18 +30,29 @@
 			{t('customerTouch.payment.Title')}
 		</h1>
 
-		<form method="post" class="w-full flex flex-col gap-4">
+		<form
+			method="post"
+			class="w-full flex flex-col gap-4"
+			use:enhance={() => {
+				submitting = true;
+				return async ({ update }) => {
+					await update();
+					submitting = false;
+				};
+			}}
+		>
 			<input type="hidden" name="paymentMethod" bind:value={paymentMethod} />
 
 			{#if data.isFreeOrder}
 				<button
 					type="submit"
-					class="w-full px-6 py-4 bg-green-100 border border-green-400 rounded-lg text-xl flex items-center justify-center gap-4 shadow-sm hover:bg-green-200 transition-colors duration-200"
+					disabled={submitting}
+					class="w-full px-6 py-4 bg-green-100 border border-green-400 rounded-lg text-xl flex items-center justify-center gap-4 shadow-sm hover:bg-green-200 transition-colors duration-200 disabled:opacity-70"
 				>
 					<svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
 					</svg>
-					{t('checkout.paymentMethod.free')}
+					{submitting ? t('customerTouch.helpRequest.sending') : t('checkout.paymentMethod.free')}
 				</button>
 			{:else}
 				{#if availableMethods.includes('card')}

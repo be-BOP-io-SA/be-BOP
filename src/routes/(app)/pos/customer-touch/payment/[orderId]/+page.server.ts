@@ -34,7 +34,7 @@ export const actions: Actions = {
 		throw redirect(303, '/pos/customer-touch/list/drop');
 	},
 
-	requestHelp: async ({ params, cookies }) => {
+	requestHelp: async ({ params, cookies, locals }) => {
 		const npub = runtimeConfig.customerTouchInterface?.helpRequestNpub;
 		if (!npub) {
 			throw error(400, 'Help request not configured');
@@ -58,9 +58,10 @@ export const actions: Actions = {
 
 		// Insert Nostr notification
 		const { ORIGIN } = await import('$env/static/private');
+		const employeeAlias = locals.user?.alias ? ` (${locals.user.alias})` : '';
 		await collections.nostrNotifications.insertOne({
 			_id: new (await import('mongodb')).ObjectId(),
-			content: `Help required by customer on CTI for order #${order.number}: ${ORIGIN}/order/${order._id}`,
+			content: `Help required by customer on CTI${employeeAlias} for order #${order.number}: ${ORIGIN}/order/${order._id}`,
 			kind: Kind.EncryptedDirectMessage,
 			dest: npub,
 			createdAt: new Date(),
