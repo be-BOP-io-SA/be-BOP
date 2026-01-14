@@ -1,3 +1,4 @@
+import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userIdentifier, userQuery } from '$lib/server/user';
@@ -13,13 +14,17 @@ export const load = async ({ locals }) => {
 		{ _id: 'touch-intro-1' },
 		{
 			projection: {
-				content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] }
+				content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] },
+				title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] }
 			}
 		}
 	);
 
 	return {
-		cmsIntroContent: cmsIntro?.content ?? null
+		...(cmsIntro && {
+			cmsIntro,
+			cmsIntroData: cmsFromContent({ desktopContent: cmsIntro.content }, locals)
+		})
 	};
 };
 
