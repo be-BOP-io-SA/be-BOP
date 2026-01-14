@@ -10,6 +10,7 @@
 	import { applyAction, enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import { UrlDependency } from '$lib/types/UrlDependency';
+	import { ctiAddToCartState } from '$lib/stores/ctiAddToCart';
 
 	export let data;
 	const { t } = useI18n();
@@ -39,6 +40,7 @@
 		method="post"
 		use:enhance={({ action }) => {
 			loading = true;
+			ctiAddToCartState.set('loading');
 
 			errorMessage = '';
 			return async ({ result }) => {
@@ -46,15 +48,18 @@
 
 				if (result.type === 'error') {
 					errorMessage = result.error.message;
+					ctiAddToCartState.set('idle');
 					console.log(errorMessage);
 					return;
 				}
 
 				if (!action.searchParams.has('/addToCart')) {
+					ctiAddToCartState.set('idle');
 					return await applyAction(result);
 				}
 
 				await invalidate(UrlDependency.Cart);
+				ctiAddToCartState.set('success');
 				document.body.scrollIntoView();
 			};
 		}}

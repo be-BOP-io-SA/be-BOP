@@ -7,10 +7,25 @@
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { ctiAddToCartState } from '$lib/stores/ctiAddToCart';
+	import { onDestroy } from 'svelte';
 
 	export let data;
 	const { t } = useI18n();
 	$: priceInfo = data.cart.priceInfo;
+
+	let successTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	$: if ($ctiAddToCartState === 'success') {
+		if (successTimeout) clearTimeout(successTimeout);
+		successTimeout = setTimeout(() => {
+			ctiAddToCartState.set('idle');
+		}, 5000);
+	}
+
+	onDestroy(() => {
+		if (successTimeout) clearTimeout(successTimeout);
+	});
 </script>
 
 <div class="mx-auto max-w-7xl px-2">
@@ -102,13 +117,20 @@
 						{t('customerTouch.cta.viewCart')}
 					</button>
 					<button
-						class="bg-[#8fd16a] text-black flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
+						class="bg-[#8fd16a] text-black flex-1 flex justify-center items-center text-xl rounded-lg font-semibold p-4 {$ctiAddToCartState !== 'idle' ? 'opacity-70' : ''}"
+						disabled={$ctiAddToCartState !== 'idle'}
 						on:click={() => {
 							const form = document.getElementById('product-add-form');
 							if (form) form.requestSubmit();
 						}}
 					>
-						{t('customerTouch.cta.addProduct')}
+						{#if $ctiAddToCartState === 'success'}
+							<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+							</svg>
+						{:else}
+							{t('customerTouch.cta.addProduct')}
+						{/if}
 					</button>
 				</div>
 			{:else}<button
