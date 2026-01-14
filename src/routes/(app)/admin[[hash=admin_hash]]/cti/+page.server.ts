@@ -20,11 +20,19 @@ export async function load() {
 			_id: 1
 		})
 		.toArray();
+	const tags = await collections.tags
+		.find({})
+		.project<{ _id: string; name: string }>({
+			_id: 1,
+			name: 1
+		})
+		.toArray();
 	return {
 		enableCustomerTouchInterface: runtimeConfig.enableCustomerTouchInterface,
 		cti: runtimeConfig.customerTouchInterface,
 		pictures,
-		cmsPages
+		cmsPages,
+		tags
 	};
 }
 
@@ -41,7 +49,8 @@ export const actions: Actions = {
 			cmsSlug: z.string(),
 			label: z.string(),
 			isArchived: z.boolean({ coerce: true }),
-			position: z.coerce.number().default(0)
+			position: z.coerce.number().default(0),
+			tagId: z.string().optional()
 		});
 		const parsed = z
 			.object({

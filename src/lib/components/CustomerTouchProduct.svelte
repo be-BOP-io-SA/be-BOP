@@ -8,7 +8,7 @@
 	export let product: Pick<Product, '_id' | 'price' | 'name'>;
 </script>
 
-<a href="/pos/customer-touch/list/{product._id}" class="rounded-xl w-full items-center mx-auto">
+<a href="/pos/customer-touch/list/product/{product._id}" class="rounded-xl w-full items-center mx-auto">
 	<div class="relative w-full h-40">
 		<PictureComponent {picture} class="object-cover w-full h-full rounded-xl shadow-md" />
 		<span class="absolute top-2 right-2 bg-white text-black px-2 rounded-lg">

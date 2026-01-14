@@ -160,6 +160,19 @@
 								value={data.cti.categories[i].label}
 							/>
 						</label>
+						<div class="grid grid-cols-3">
+							<label class="form-label">
+								Product tag
+								<select name="categories[{i}].tagId" class="form-input">
+									<option value="">-- Select a tag --</option>
+									{#each data.tags as tag}
+										<option value={tag._id} selected={tag._id === data.cti.categories[i].tagId}>
+											{tag.name} ({tag._id})
+										</option>
+									{/each}
+								</select>
+							</label>
+						</div>
 						<input type="hidden" name="categories[{i}].slug" value={data.cti?.categories[i].slug} />
 						<label class="checkbox-label">
 							<input
@@ -247,6 +260,19 @@
 								on:input={() => (slug[i] = generateId(labels[i], true).toLowerCase())}
 							/>
 						</label>
+						<div class="grid grid-cols-3">
+							<label class="form-label">
+								Product tag
+								<select name="categories[{i}].tagId" class="form-input">
+									<option value="">-- Select a tag --</option>
+									{#each data.tags as tag}
+										<option value={tag._id}>
+											{tag.name} ({tag._id})
+										</option>
+									{/each}
+								</select>
+							</label>
+						</div>
 						<input type="hidden" bind:value={slug[i]} name="categories[{i}].slug" />
 						<label class="checkbox-label">
 							<input class="form-checkbox" type="checkbox" name="categories[{i}].archiveCategory" />

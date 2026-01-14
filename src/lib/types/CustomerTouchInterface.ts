@@ -6,6 +6,7 @@ export interface CustomerTouchInterface {
 		label: string;
 		position: number;
 		slug: string;
+		tagId?: string;
 	}>;
 	timeoutNostrSeconds?: number;
 	welcomeCmsSlug?: string;
