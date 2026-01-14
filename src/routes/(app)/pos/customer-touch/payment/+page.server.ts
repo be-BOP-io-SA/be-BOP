@@ -98,11 +98,6 @@ export const actions = {
 						userLogin: locals.user?.login,
 						userRoleId: locals.user?.roleId
 					},
-					notifications: {
-						paymentStatus: {
-							email: runtimeConfig.sellerIdentity?.contact.email
-						}
-					},
 					cart,
 					shippingAddress: null,
 					billingAddress: null,

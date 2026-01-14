@@ -12,6 +12,8 @@
 		<form method="post" class="flex flex-col gap-2 items-center w-full">
 			<input
 				type="email"
+				name="email"
+				required
 				placeholder="Email"
 				class="w-full p-2 bg-gray-100 border-2 border-transparent rounded-lg text-lg text-gray-800 mb-4 placeholder-gray-400"
 			/>
