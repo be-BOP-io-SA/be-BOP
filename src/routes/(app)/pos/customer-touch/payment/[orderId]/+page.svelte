@@ -52,20 +52,11 @@
 					/>
 				{/if}
 				{#if payment.method === 'bitcoin' && payment.address}
-					<span class="body-hyperlink font-light italic">{t('order.clickQR')}</span>
-					<a
-						href={bitcoinPaymentQrCodeString(
-							payment.address,
-							payment.price.amount,
-							payment.price.currency
-						)}
-					>
-						<img
-							src="/order/{data.order._id}/payment/{payment.id}/qrcode"
-							class="w-96 h-96"
-							alt="QR code"
-						/>
-					</a>
+					<img
+						src="/order/{data.order._id}/payment/{payment.id}/qrcode"
+						class="w-96 h-96"
+						alt="QR code"
+					/>
 				{/if}
 			{/if}
 		{/each}

@@ -120,12 +120,12 @@
 			{:else if $page.url.pathname === '/pos/customer-touch/list/cart'}
 				<button
 					class="bg-[#8fd16a] text-black flex justify-center text-xl rounded-lg font-semibold p-4 mb-8"
-					disabled={priceInfo.totalPrice === 0}
+					disabled={!data.cart.items?.length}
 					on:click={() => goto('/pos/customer-touch/payment')}
 				>
 					{t('customerTouch.cta.pay')}
 				</button>
-			{:else if priceInfo.totalPrice === 0}
+			{:else if !data.cart.items?.length}
 				<button
 					class="bg-[#8fd16a] text-black flex justify-center text-xl rounded-lg font-semibold p-4 mb-8"
 					disabled

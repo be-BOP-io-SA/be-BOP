@@ -154,7 +154,7 @@
 						<select
 							name="quantity"
 							bind:value={quantity}
-							class="form-input w-10 border-0 cursor-pointer rounded appearance-none bg-none bg-transparent font-bold"
+							class="form-input w-12 border-0 cursor-pointer rounded appearance-none bg-none bg-transparent font-bold text-center"
 						>
 							{#each Array(amountAvailable)
 								.fill(0)

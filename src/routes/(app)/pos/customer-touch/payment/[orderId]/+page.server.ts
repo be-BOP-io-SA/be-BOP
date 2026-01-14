@@ -57,9 +57,10 @@ export const actions: Actions = {
 		}
 
 		// Insert Nostr notification
+		const { ORIGIN } = await import('$env/static/private');
 		await collections.nostrNotifications.insertOne({
 			_id: new (await import('mongodb')).ObjectId(),
-			content: `Help required by customer on CTI for order #${order.number}`,
+			content: `Help required by customer on CTI for order #${order.number}: ${ORIGIN}/order/${order._id}`,
 			kind: Kind.EncryptedDirectMessage,
 			dest: npub,
 			createdAt: new Date(),
