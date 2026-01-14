@@ -434,7 +434,11 @@
 		"welcomHello": "Hallo",
 		"welcomeOnSiteCta": "Vor Ort",
 		"welcomeQuestion": "Wo möchten Sie essen?",
-		"welcomeTakeAwayCta": "Wegbringen"
+		"welcomeTakeAwayCta": "Wegbringen",
+		"nav": {
+			"home": "Startseite",
+			"allProducts": "Alle Produkte"
+		}
 	},
 	"error": {
 		"404": "Die von Ihnen angeforderte Seite {invalidUrl} konnte nicht gefunden werden. Bitte überprüfen Sie, ob Ihr Link korrekt ist, oder kontaktieren Sie das Website-Team, um das Problem zu melden.",

@@ -1,19 +1,32 @@
 <script lang="ts">
-	import CustomerTouchProduct from '$lib/components/CustomerTouchProduct.svelte';
+	import CmsDesign from '$lib/components/CmsDesign.svelte';
 
 	export let data;
-	$: picturesByProduct = Object.fromEntries(
-		[...data.pictures].reverse().map((picture) => [picture.productId, picture])
-	);
 </script>
 
 <main class="flex flex-col bg-gray-100 border rounded-lg">
-	<div class="p-2 text-center">
-		<h2 class="text-3xl font-bold text-gray-900 mb-4">CMS content / Searchlist</h2>
-		<div class="grid grid-cols-3 gap-2 h-[90vh] overflow-scroll">
-			{#each data.products as product}
-				<CustomerTouchProduct {product} picture={picturesByProduct[product._id]} />
-			{/each}
+	{#if data.cmsWelcome && data.cmsWelcomeData}
+		<div class="p-4">
+			<CmsDesign
+				challenges={data.cmsWelcomeData.challenges}
+				tokens={data.cmsWelcomeData.tokens}
+				sliders={data.cmsWelcomeData.sliders}
+				products={data.cmsWelcomeData.products}
+				pictures={data.cmsWelcomeData.pictures}
+				tags={data.cmsWelcomeData.tags}
+				digitalFiles={data.cmsWelcomeData.digitalFiles}
+				specifications={data.cmsWelcomeData.specifications}
+				contactForms={data.cmsWelcomeData.contactForms}
+				countdowns={data.cmsWelcomeData.countdowns}
+				galleries={data.cmsWelcomeData.galleries}
+				leaderboards={data.cmsWelcomeData.leaderboards}
+				schedules={data.cmsWelcomeData.schedules}
+				pageName={data.cmsWelcome.title}
+				websiteLink={data.websiteLink}
+				brandName={data.brandName}
+				sessionEmail={data.email}
+				hasPosOptions={false}
+			/>
 		</div>
-	</div>
+	{/if}
 </main>

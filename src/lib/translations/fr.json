@@ -434,7 +434,11 @@
 		"welcomHello": "Bonjour",
 		"welcomeOnSiteCta": "Sur place",
 		"welcomeQuestion": " Où desirez-vous manger?",
-		"welcomeTakeAwayCta": "À emporter"
+		"welcomeTakeAwayCta": "À emporter",
+		"nav": {
+			"home": "Accueil",
+			"allProducts": "Tous les produits"
+		}
 	},
 	"error": {
 		"404": "La page {invalidUrl} que vous avez demandée est introuvable. Veuillez vérifier que votre lien est correct ou contactez l'équipe du site pour leur signaler le problème. ",

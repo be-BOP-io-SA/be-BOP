@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd missing pos.btn, pos.input, pos.label translations\n\nFix TypeError when accessing order page in pending status for non-English\nlanguages. The pos.btn, pos.input and pos.label translation sections were\nonly present in en.json, causing the i18n get\\(\\) function to crash when\ntrying to access pos.input.detail on undefined.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(ls:*)",
+      "Bash(done)",
+      "Bash(node -e:*)",
+      "WebFetch(domain:planb.academy)",
+      "Bash(git push:*)",
+      "Bash(find:*)",
+      "Bash(npm run check:*)",
+      "Bash(npx svelte-check:*)",
+      "Bash(git rm:*)",
+      "Bash(npm install)",
+      "Bash(npx tsc:*)",
+      "Bash(gh issue list:*)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

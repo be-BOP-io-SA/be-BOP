@@ -434,7 +434,11 @@
 		"welcomHello": "Hallo",
 		"welcomeOnSiteCta": "Ter plaatse",
 		"welcomeQuestion": "Waar zou je willen eten?",
-		"welcomeTakeAwayCta": "Wegnemen"
+		"welcomeTakeAwayCta": "Wegnemen",
+		"nav": {
+			"home": "Home",
+			"allProducts": "Alle producten"
+		}
 	},
 	"error": {
 		"404": "De door u opgevraagde pagina {invalidUrl} kon niet worden gevonden. \nControleer of uw link correct is of neem contact op met het siteteam om het probleem te melden.",

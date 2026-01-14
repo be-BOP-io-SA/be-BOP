@@ -1,6 +1,7 @@
 <script lang="ts">
 	import IconBack from '$lib/components/icons/IconBack.svelte';
-	import IconSearch from '$lib/components/icons/IconSearch.svelte';
+	import IconHome from '$lib/components/icons/IconHome.svelte';
+	import IconGrid from '$lib/components/icons/IconGrid.svelte';
 	import { useI18n } from '$lib/i18n';
 	import PictureComponent from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
@@ -31,9 +32,20 @@
 					<div
 						class="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center mb-1"
 					>
-						<IconSearch />
+						<IconHome />
 					</div>
-					Recherche
+					{t('customerTouch.nav.home')}
+				</a>
+				<a
+					href="/pos/customer-touch/list/all"
+					class="flex flex-col items-center px-4 py-3 text-lg font-semibold hover:bg-gray-700"
+				>
+					<div
+						class="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center mb-1"
+					>
+						<IconGrid />
+					</div>
+					{t('customerTouch.nav.allProducts')}
 				</a>
 				{#if data.cti.categories}
 					{#each data.cti.categories as category}

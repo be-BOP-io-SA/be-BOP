@@ -429,7 +429,11 @@
 		"welcomHello": "Olá",
 		"welcomeOnSiteCta": "No local",
 		"welcomeQuestion": "Onde você gostaria de comer?",
-		"welcomeTakeAwayCta": "Remover"
+		"welcomeTakeAwayCta": "Remover",
+		"nav": {
+			"home": "Início",
+			"allProducts": "Todos os produtos"
+		}
 	},
 	"error": {
 		"404": "A página {invalidUrl} que solicitou não pôde ser encontrada. Por favor, verifique se o seu link está correto ou contacte a equipa do site para reportar o problema.",

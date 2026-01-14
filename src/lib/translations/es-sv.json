@@ -434,7 +434,11 @@
 		"welcomHello": "Hola",
 		"welcomeOnSiteCta": "En el sitio",
 		"welcomeQuestion": "¿Dónde te gustaría comer?",
-		"welcomeTakeAwayCta": "Llevar"
+		"welcomeTakeAwayCta": "Llevar",
+		"nav": {
+			"home": "Inicio",
+			"allProducts": "Todos los productos"
+		}
 	},
 	"error": {
 		"404": "La página {invalidUrl} que accedió no se encuentra. Por favor asegúrese que el enlace es correcto o contáctenos para informarnos del problema.",

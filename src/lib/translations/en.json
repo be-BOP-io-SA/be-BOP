@@ -399,6 +399,10 @@
 			"payment": {}
 		},
 		"cancelOrderTitlle": "Abandon the order?",
+		"nav": {
+			"allProducts": "All products",
+			"home": "Home"
+		},
 		"cart": {
 			"ht": "HT",
 			"targetOnSite": "On site",
