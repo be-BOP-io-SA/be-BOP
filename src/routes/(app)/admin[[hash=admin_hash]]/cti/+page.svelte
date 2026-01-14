@@ -193,6 +193,15 @@
 							/>
 							Archive category
 						</label>
+						<label class="checkbox-label">
+							<input
+								class="form-checkbox"
+								type="checkbox"
+								name="categories[{i}].isCmsOnly"
+								checked={data.cti?.categories[i].isCmsOnly}
+							/>
+							This is not a category, but a CMS-only page (no products)
+						</label>
 						<a
 							href="{data.adminPrefix}/picture/new?ctiCategorySlug={data.cti.categories[i].slug}"
 							class="underline"
@@ -285,8 +294,12 @@
 						</div>
 						<input type="hidden" bind:value={slug[i]} name="categories[{i}].slug" />
 						<label class="checkbox-label">
-							<input class="form-checkbox" type="checkbox" name="categories[{i}].archiveCategory" />
+							<input class="form-checkbox" type="checkbox" name="categories[{i}].isArchived" />
 							Archive category
+						</label>
+						<label class="checkbox-label">
+							<input class="form-checkbox" type="checkbox" name="categories[{i}].isCmsOnly" />
+							This is not a category, but a CMS-only page (no products)
 						</label>
 						<input
 							type="file"

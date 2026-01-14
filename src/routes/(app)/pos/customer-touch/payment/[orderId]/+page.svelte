@@ -50,23 +50,6 @@
 					/>
 				{/if}
 				{#if payment.method === 'card'}
-					<a
-						href="/order/{data.order._id}/payment/{payment.id}/pay?origin=customer-touch"
-						class="body-hyperlink"
-					>
-						<span>{t('order.paymentLink')}</span>
-						{#if payment.processor === 'sumup'}
-							<IconSumupWide class="h-12 " />
-						{:else if payment.processor === 'stripe'}
-							<IconStripe class="h-12" />
-						{:else if payment.processor === 'paypal'}
-							<img
-								src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_200x51.png"
-								alt="PayPal"
-								class="h-12"
-							/>
-						{/if}
-					</a>
 					<img
 						src="/order/{data.order._id}/payment/{payment.id}/qrcode"
 						class="w-96 h-96"

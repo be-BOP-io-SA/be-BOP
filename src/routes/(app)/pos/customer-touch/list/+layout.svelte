@@ -63,9 +63,9 @@
 					{t('customerTouch.nav.allProducts')}
 				</a>
 				{#if data.cti.categories}
-					{#each data.cti.categories.filter((c) => !c.isArchived && c.tagId) as category}
+					{#each data.cti.categories.filter((c) => !c.isArchived && (c.tagId || c.isCmsOnly)) as category}
 						<a
-							href="/pos/customer-touch/list/{category.tagId}"
+							href="/pos/customer-touch/list/{category.isCmsOnly ? `cms/${category.slug}` : category.tagId}"
 							class="flex flex-col items-center px-2 py-1 text-lg font-medium hover:bg-gray-700 transition-colors duration-200"
 						>
 							<div

@@ -49,6 +49,7 @@ export const actions: Actions = {
 			cmsSlug: z.string(),
 			label: z.string(),
 			isArchived: z.boolean({ coerce: true }),
+			isCmsOnly: z.boolean({ coerce: true }).optional(),
 			position: z.coerce.number().default(0),
 			tagId: z.string().optional()
 		});
