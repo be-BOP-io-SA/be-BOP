@@ -1,5 +1,6 @@
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import { userIdentifier, userQuery } from '$lib/server/user';
 
 export const load = async ({ locals }) => {
@@ -16,6 +17,7 @@ export const load = async ({ locals }) => {
 	);
 
 	return {
+		timeoutDroppedSeconds: runtimeConfig.customerTouchInterface?.timeoutDroppedSeconds ?? 30,
 		...(cmsDrop && {
 			cmsDrop,
 			cmsDropData: cmsFromContent({ desktopContent: cmsDrop.content }, locals)

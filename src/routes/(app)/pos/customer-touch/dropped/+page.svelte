@@ -10,7 +10,7 @@
 	onMount(() => {
 		timeoutId = setTimeout(() => {
 			goto('/pos/customer-touch/welcome');
-		}, 30000);
+		}, data.timeoutDroppedSeconds * 1000);
 	});
 	onDestroy(() => {
 		if (timeoutId) {

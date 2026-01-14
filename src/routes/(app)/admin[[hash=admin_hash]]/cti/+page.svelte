@@ -112,13 +112,23 @@
 			Enable Customer Touch Interface
 		</label>
 		<label class="form-label">
+			Timeout on dropped page before returning to welcome (in seconds).
+			<input
+				name="timeoutDroppedSeconds"
+				type="number"
+				min="5"
+				class="form-input max-w-[25rem]"
+				value={data.cti?.timeoutDroppedSeconds ?? 30}
+			/>
+		</label>
+		<label class="form-label">
 			Timeout to submit the verification code through Nostr (in seconds).
 			<input
 				name="timeoutNostrSeconds"
 				type="number"
 				min="10"
 				class="form-input max-w-[25rem]"
-				value="10"
+				value={data.cti?.timeoutNostrSeconds ?? 10}
 			/>
 		</label>
 		{#each [...Array(categoryLines).keys()] as i}
