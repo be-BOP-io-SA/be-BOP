@@ -92,23 +92,7 @@
 			>
 				{t('customerTouch.cta.abandonment')}
 			</button>
-			{#if priceInfo.totalPrice === 0}
-				<button
-					class="bg-[#8fd16a] text-black flex justify-center text-xl rounded-lg font-semibold p-4 mb-8"
-					disabled={priceInfo.totalPrice === 0}
-					on:click={() => goto('/pos/customer-touch/list/cart')}
-				>
-					{t('customerTouch.cta.addFirstProduct')}
-				</button>
-			{:else if $page.url.pathname === '/pos/customer-touch/list/cart'}
-				<button
-					class="bg-[#8fd16a] text-black flex justify-center text-xl rounded-lg font-semibold p-4 mb-8"
-					disabled={priceInfo.totalPrice === 0}
-					on:click={() => goto('/pos/customer-touch/payment')}
-				>
-					{t('customerTouch.cta.pay')}
-				</button>
-			{:else if $page.url.pathname.startsWith('/pos/customer-touch/list/product/')}
+			{#if $page.url.pathname.startsWith('/pos/customer-touch/list/product/')}
 				<div class="flex gap-2 mb-8">
 					<button
 						class="bg-blue-500 text-white flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
@@ -133,11 +117,28 @@
 						{/if}
 					</button>
 				</div>
-			{:else}<button
+			{:else if $page.url.pathname === '/pos/customer-touch/list/cart'}
+				<button
 					class="bg-[#8fd16a] text-black flex justify-center text-xl rounded-lg font-semibold p-4 mb-8"
 					disabled={priceInfo.totalPrice === 0}
+					on:click={() => goto('/pos/customer-touch/payment')}
+				>
+					{t('customerTouch.cta.pay')}
+				</button>
+			{:else if priceInfo.totalPrice === 0}
+				<button
+					class="bg-[#8fd16a] text-black flex justify-center text-xl rounded-lg font-semibold p-4 mb-8"
+					disabled
 					on:click={() => goto('/pos/customer-touch/list/cart')}
-					><PriceTag
+				>
+					{t('customerTouch.cta.addFirstProduct')}
+				</button>
+			{:else}
+				<button
+					class="bg-[#8fd16a] text-black flex justify-center text-xl rounded-lg font-semibold p-4 mb-8"
+					on:click={() => goto('/pos/customer-touch/list/cart')}
+				>
+					<PriceTag
 						amount={priceInfo.totalPriceWithVat}
 						currency={priceInfo.currency}
 						main
