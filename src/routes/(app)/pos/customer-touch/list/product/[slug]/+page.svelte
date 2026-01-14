@@ -33,6 +33,7 @@
 
 <main class="flex flex-col bg-gray-100 border rounded-lg">
 	<form
+		id="product-add-form"
 		class="p-2 text-center"
 		action="/product/{data.product._id}?/addToCart"
 		method="post"
@@ -58,7 +59,6 @@
 			};
 		}}
 	>
-		<h2 class="text-3xl font-bold text-gray-900 mb-4">CMS content / Product page</h2>
 		<h2 class="flex text-2xl font-bold text-gray-900 mb-8 break-all break-words">
 			{data.product.name}
 		</h2>
@@ -148,13 +148,6 @@
 						</button>
 					</div>
 				{/if}
-				<button
-					class="bg-[#8fd16a] p-2 font-bold hover:opacity-90 {loading ? 'opacity-50' : ''}"
-					type="submit"
-					disabled={loading}
-				>
-					{t('customerTouch.cta.addProduct')}
-				</button>
 			</div>
 
 			<div class="flex w-full text-lg">

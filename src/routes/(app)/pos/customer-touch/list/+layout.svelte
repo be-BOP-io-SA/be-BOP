@@ -93,6 +93,24 @@
 				>
 					{t('customerTouch.cta.pay')}
 				</button>
+			{:else if $page.url.pathname.startsWith('/pos/customer-touch/list/product/')}
+				<div class="flex gap-2 mb-8">
+					<button
+						class="bg-blue-500 text-white flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
+						on:click={() => goto('/pos/customer-touch/list/cart')}
+					>
+						{t('customerTouch.cta.viewCart')}
+					</button>
+					<button
+						class="bg-[#8fd16a] text-black flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
+						on:click={() => {
+							const form = document.getElementById('product-add-form');
+							if (form) form.requestSubmit();
+						}}
+					>
+						{t('customerTouch.cta.addProduct')}
+					</button>
+				</div>
 			{:else}<button
 					class="bg-[#8fd16a] text-black flex justify-center text-xl rounded-lg font-semibold p-4 mb-8"
 					disabled={priceInfo.totalPrice === 0}
