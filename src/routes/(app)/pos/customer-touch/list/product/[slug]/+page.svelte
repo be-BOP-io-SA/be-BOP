@@ -30,6 +30,19 @@
 		customAmount = productPriceWithVariations(data.product, selectedVariations);
 	}
 	let loading = false;
+
+	function getVariationPriceDiff(variationName: string, variationValue: string): number {
+		return (
+			data.product.variations?.find((v) => v.name === variationName && v.value === variationValue)
+				?.price ?? 0
+		);
+	}
+
+	function formatPriceDiff(priceDiff: number): string {
+		if (priceDiff === 0) return '';
+		const sign = priceDiff > 0 ? '+' : '';
+		return ` (${sign}${priceDiff.toFixed(2)} ${data.product.price.currency})`;
+	}
 </script>
 
 <main class="flex flex-col bg-gray-100 border rounded-lg">
@@ -117,7 +130,12 @@
 							class="w-full font-semibold bg-white"
 						>
 							{#each Object.entries(data.product.variationLabels.values[key]) as [valueKey, valueLabel]}
-								<option value={valueKey}>{valueLabel}</option>
+								{@const priceDiff = getVariationPriceDiff(key, valueKey)}
+								<option value={valueKey}
+									>{priceDiff !== 0
+										? `${priceDiff > 0 ? '+' : ''}${priceDiff.toFixed(2)} ${data.product.price.currency} - `
+										: ''}{valueLabel}</option
+								>
 							{/each}
 						</select>
 					</div>
