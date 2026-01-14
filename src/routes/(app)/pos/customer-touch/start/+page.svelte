@@ -1,9 +1,12 @@
 <script lang="ts">
+	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import IconBack from '$lib/components/icons/IconBack.svelte';
 	import IconEmail from '$lib/components/icons/IconEmail.svelte';
 	import IconNostr from '$lib/components/icons/IconNostr.svelte';
 	import IconQr from '$lib/components/icons/IconQr.svelte';
 	import { useI18n } from '$lib/i18n';
+
+	export let data;
 
 	const { t } = useI18n();
 </script>
@@ -17,11 +20,32 @@
 		{t('customerTouch.ctaBack')}
 	</button>
 
-	<div
-		class="w-full bg-gray-100 mt-4 rounded-lg p-12 flex items-center justify-center text-center font-semibold text-gray-700 text-xl mb-4"
-	>
-		CMS Intro<br />/touch-intro-2
-	</div>
+	{#if data.cmsIntro2 && data.cmsIntro2Data}
+		<div
+			class="w-full bg-gray-100 mt-4 rounded-lg p-12 flex items-center justify-center text-center font-semibold text-gray-700 text-xl mb-4"
+		>
+			<CmsDesign
+				challenges={data.cmsIntro2Data.challenges}
+				tokens={data.cmsIntro2Data.tokens}
+				sliders={data.cmsIntro2Data.sliders}
+				products={data.cmsIntro2Data.products}
+				pictures={data.cmsIntro2Data.pictures}
+				tags={data.cmsIntro2Data.tags}
+				digitalFiles={data.cmsIntro2Data.digitalFiles}
+				specifications={data.cmsIntro2Data.specifications}
+				contactForms={data.cmsIntro2Data.contactForms}
+				countdowns={data.cmsIntro2Data.countdowns}
+				galleries={data.cmsIntro2Data.galleries}
+				leaderboards={data.cmsIntro2Data.leaderboards}
+				schedules={data.cmsIntro2Data.schedules}
+				pageName={data.cmsIntro2.title}
+				websiteLink={data.websiteLink}
+				brandName={data.brandName}
+				sessionEmail={data.email}
+				hasPosOptions={false}
+			/>
+		</div>
+	{/if}
 
 	<div class="flex flex-col items-center justify-center">
 		<h1 class="text-3xl font-bold text-gray-900 m-4">{t('customerTouch.loginText')}</h1>
@@ -60,9 +84,30 @@
 			</div>
 		</div>
 	</div>
-	<div
-		class="w-full bg-gray-100 mt-4 rounded-lg p-12 flex items-center justify-center text-center font-semibold text-gray-700 text-xl"
-	>
-		CMS Intro<br />/touch-intro-2
-	</div>
+	{#if data.cmsIntro2 && data.cmsIntro2Data}
+		<div
+			class="w-full bg-gray-100 mt-4 rounded-lg p-12 flex items-center justify-center text-center font-semibold text-gray-700 text-xl"
+		>
+			<CmsDesign
+				challenges={data.cmsIntro2Data.challenges}
+				tokens={data.cmsIntro2Data.tokens}
+				sliders={data.cmsIntro2Data.sliders}
+				products={data.cmsIntro2Data.products}
+				pictures={data.cmsIntro2Data.pictures}
+				tags={data.cmsIntro2Data.tags}
+				digitalFiles={data.cmsIntro2Data.digitalFiles}
+				specifications={data.cmsIntro2Data.specifications}
+				contactForms={data.cmsIntro2Data.contactForms}
+				countdowns={data.cmsIntro2Data.countdowns}
+				galleries={data.cmsIntro2Data.galleries}
+				leaderboards={data.cmsIntro2Data.leaderboards}
+				schedules={data.cmsIntro2Data.schedules}
+				pageName={data.cmsIntro2.title}
+				websiteLink={data.websiteLink}
+				brandName={data.brandName}
+				sessionEmail={data.email}
+				hasPosOptions={false}
+			/>
+		</div>
+	{/if}
 </div>
