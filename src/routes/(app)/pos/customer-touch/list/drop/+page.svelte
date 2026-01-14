@@ -29,9 +29,7 @@
 	</div>
 
 	{#if data.cmsDropConfirm && data.cmsDropConfirmData}
-		<div
-			class="w-full bg-[#f0f0f0] rounded-xl p-8 flex items-center justify-center text-center font-semibold text-gray-700 text-xl md:text-2xl"
-		>
+		<div class="w-full bg-[#f0f0f0] rounded-xl p-8">
 			<CmsDesign
 				challenges={data.cmsDropConfirmData.challenges}
 				tokens={data.cmsDropConfirmData.tokens}

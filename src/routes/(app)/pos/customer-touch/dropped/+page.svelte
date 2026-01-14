@@ -26,9 +26,7 @@
 	</h1>
 
 	{#if data.cmsDrop && data.cmsDropData}
-		<div
-			class="w-full bg-[#f0f0f0] rounded-xl p-8 flex items-center justify-center text-center font-semibold text-gray-700 text-xl md:text-2xl"
-		>
+		<div class="w-full bg-[#f0f0f0] rounded-xl p-8">
 			<CmsDesign
 				challenges={data.cmsDropData.challenges}
 				tokens={data.cmsDropData.tokens}

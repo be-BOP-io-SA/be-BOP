@@ -21,9 +21,7 @@
 	</button>
 
 	{#if data.cmsIntro2 && data.cmsIntro2Data}
-		<div
-			class="w-full bg-gray-100 mt-4 rounded-lg p-12 flex items-center justify-center text-center font-semibold text-gray-700 text-xl mb-4"
-		>
+		<div class="w-full bg-gray-100 mt-4 rounded-lg p-12 mb-4">
 			<CmsDesign
 				challenges={data.cmsIntro2Data.challenges}
 				tokens={data.cmsIntro2Data.tokens}
@@ -85,9 +83,7 @@
 		</div>
 	</div>
 	{#if data.cmsIntro2 && data.cmsIntro2Data}
-		<div
-			class="w-full bg-gray-100 mt-4 rounded-lg p-12 flex items-center justify-center text-center font-semibold text-gray-700 text-xl"
-		>
+		<div class="w-full bg-gray-100 mt-4 rounded-lg p-12">
 			<CmsDesign
 				challenges={data.cmsIntro2Data.challenges}
 				tokens={data.cmsIntro2Data.tokens}
