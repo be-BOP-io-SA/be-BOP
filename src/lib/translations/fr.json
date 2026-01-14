@@ -420,7 +420,13 @@
 		"orderTitle": "Recevoir la quittance ?",
 		"payForOrderTitle": "Merci de régler votre commande.",
 		"payment": {
-			"Title": "Choisissez votre methode de paiement"
+			"Title": "Choisissez votre methode de paiement",
+			"chosenMethod": "Méthode de paiement choisie"
+		},
+		"helpRequest": {
+			"askForHelp": "Demander de l'aide",
+			"sending": "Envoi en cours...",
+			"someoneComing": "Quelqu'un arrive..."
 		},
 		"printCta": "Imprimer",
 		"receipt": {

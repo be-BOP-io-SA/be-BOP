@@ -430,7 +430,13 @@
 		"orderTitle": "Receive the receipt ?",
 		"payForOrderTitle": "Please pay for your order.",
 		"payment": {
-			"Title": "Choose your payment method"
+			"Title": "Choose your payment method",
+			"chosenMethod": "Chosen payment method"
+		},
+		"helpRequest": {
+			"askForHelp": "Ask for help",
+			"sending": "Sending...",
+			"someoneComing": "Someone is coming..."
 		},
 		"printCta": "Print",
 		"receipt": {

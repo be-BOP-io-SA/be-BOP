@@ -57,6 +57,8 @@ export const actions: Actions = {
 			.object({
 				categories: z.array(categorySchema).optional(),
 				enableCustomerLogin: z.boolean({ coerce: true }),
+				helpRequestNpub: z.string().optional(),
+				helpRequestCooldownSeconds: z.number({ coerce: true }).int().min(10).optional(),
 				timeoutDroppedSeconds: z.number({ coerce: true }).int().min(5).optional(),
 				timeoutNostrSeconds: z.number({ coerce: true }).int().min(10),
 				welcomeCmsSlug: z.string().optional()

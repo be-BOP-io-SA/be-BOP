@@ -421,6 +421,11 @@
 		"payment": {
 			"Title": "Scegli il tuo metodo di pagamento"
 		},
+		"helpRequest": {
+			"askForHelp": "Chiedi aiuto",
+			"sending": "Invio in corso...",
+			"someoneComing": "Qualcuno sta arrivando..."
+		},
 		"printCta": "Stampa",
 		"receipt": {
 			"emailAddressPrompt": "Inserisci il tuo indirizzo email",

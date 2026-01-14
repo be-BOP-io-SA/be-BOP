@@ -131,6 +131,27 @@
 				value={data.cti?.timeoutNostrSeconds ?? 10}
 			/>
 		</label>
+		<h2 class="text-xl font-bold mt-4">Help Request Configuration</h2>
+		<label class="form-label">
+			Target npub for help requests (Nostr public key)
+			<input
+				name="helpRequestNpub"
+				type="text"
+				class="form-input max-w-[40rem]"
+				placeholder="npub1..."
+				value={data.cti?.helpRequestNpub ?? ''}
+			/>
+		</label>
+		<label class="form-label">
+			Cooldown before help can be requested again (in seconds).
+			<input
+				name="helpRequestCooldownSeconds"
+				type="number"
+				min="10"
+				class="form-input max-w-[25rem]"
+				value={data.cti?.helpRequestCooldownSeconds ?? 60}
+			/>
+		</label>
 		{#each [...Array(categoryLines).keys()] as i}
 			<details
 				class="border border-gray-300 rounded-xl p-2"

@@ -422,6 +422,11 @@
 		"payment": {
 			"Title": "Kies uw betaalmethode"
 		},
+		"helpRequest": {
+			"askForHelp": "Vraag om hulp",
+			"sending": "Verzenden...",
+			"someoneComing": "Er komt iemand aan..."
+		},
 		"printCta": "Afdrukken",
 		"receipt": {
 			"emailAddressPrompt": "Voer je e-mailadres in",

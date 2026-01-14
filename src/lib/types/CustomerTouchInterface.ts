@@ -9,6 +9,8 @@ export interface CustomerTouchInterface {
 		slug: string;
 		tagId?: string;
 	}>;
+	helpRequestNpub?: string;
+	helpRequestCooldownSeconds?: number;
 	timeoutDroppedSeconds?: number;
 	timeoutNostrSeconds?: number;
 	welcomeCmsSlug?: string;

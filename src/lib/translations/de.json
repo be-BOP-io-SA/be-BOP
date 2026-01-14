@@ -422,6 +422,11 @@
 		"payment": {
 			"Title": "Wählen Sie Ihre Zahlungsmethode"
 		},
+		"helpRequest": {
+			"askForHelp": "Um Hilfe bitten",
+			"sending": "Wird gesendet...",
+			"someoneComing": "Jemand kommt..."
+		},
 		"printCta": "Drucken",
 		"receipt": {
 			"emailAddressPrompt": "Bitte geben Sie Ihre E-Mail-Adresse ein",
