@@ -8,6 +8,19 @@ import { z } from 'zod';
 
 export const load = async ({ locals }) => {
 	await collections.carts.deleteMany(userQuery(userIdentifier(locals)));
+
+	const cmsIntro = await collections.cmsPages.findOne(
+		{ _id: 'touch-intro-1' },
+		{
+			projection: {
+				content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] }
+			}
+		}
+	);
+
+	return {
+		cmsIntroContent: cmsIntro?.content ?? null
+	};
 };
 
 export const actions = {

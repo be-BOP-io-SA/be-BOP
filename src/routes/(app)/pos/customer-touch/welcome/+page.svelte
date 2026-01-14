@@ -1,7 +1,9 @@
-<script>
+<script lang="ts">
 	import IconBag from '$lib/components/icons/IconBag.svelte';
 	import IconChair from '$lib/components/icons/IconChair.svelte';
 	import { useI18n } from '$lib/i18n';
+
+	export let data;
 
 	const { t } = useI18n();
 	let target = '';
@@ -32,9 +34,11 @@
 			>
 		</button>
 	</div>
-	<div class="grid grid-cols sm:flex-row gap-6 mt-2">
-		<div class="flex flex-col items-center p-10 bg-gray-100 rounded-xl shadow-md justify-center">
-			CMS Intro /touch-intro-1
+	{#if data.cmsIntroContent}
+		<div class="grid grid-cols sm:flex-row gap-6 mt-2">
+			<div class="flex flex-col items-center p-10 bg-gray-100 rounded-xl shadow-md justify-center">
+				{@html data.cmsIntroContent}
+			</div>
 		</div>
-	</div>
+	{/if}
 </form>
