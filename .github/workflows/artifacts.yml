@@ -25,19 +25,30 @@ jobs:
       - name: Build release artifact
         run: |
           ./scripts/build-release.sh
-          # Extract artifact directory name for later steps
           HASH=$(git rev-parse --short HEAD)
-          COMMIT_DATE="$(git log -1 --date=format:%F --pretty=format:%cd)"
-          ARTIFACT_PATH=$(ls -d release/bebop-* | head -n 1)
-          echo "Artifact path: $ARTIFACT_PATH"
-          echo "ARTIFACT_PATH=$ARTIFACT_PATH" >> $GITHUB_ENV
-          echo "COMMIT_DATE=$COMMIT_DATE" >> $GITHUB_ENV
           echo "HASH=$HASH" >> $GITHUB_ENV
-      - name: Upload artifact
+          COMMIT_DATE="$(git log -1 --date=format:%F --pretty=format:%cd)"
+          echo "COMMIT_DATE=$COMMIT_DATE" >> $GITHUB_ENV
+          RELEASE_NAME="be-BOP release $COMMIT_DATE ($HASH)"
+          cd ./release
+          mv bebop-* "$RELEASE_NAME"
+          zip -r ./be-BOP-release.zip "$RELEASE_NAME"
+          rm -fr "$RELEASE_NAME"
+          cd ..
+      - name: Upload artifact (PR)
+        if: github.ref != 'refs/heads/main'
+        uses: mmkal/artifact.ci/upload@main
+        with:
+          name: be-BOP-release
+          path: release/
+          artifactci-visibility: public
+          artifactci-mode: eager
+      - name: Upload artifact (main)
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: be-BOP-release
-          path: ${{ env.ARTIFACT_PATH }}
+          path: release/
 
   release:
     name: Create GitHub Release
@@ -53,11 +64,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: release_artifacts
-      - name: Discover artifact folder
-        id: artifact
-        run: |
-          ARTIFACT_DIR=$(ls release_artifacts)
-          echo "ARTIFACT_DIR=$ARTIFACT_DIR" >> $GITHUB_OUTPUT
+          merge-multiple: true
       - name: Get merge commit message
         id: commit
         run: |
@@ -71,18 +78,21 @@ jobs:
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+          echo "release_name<<EOF" >> $GITHUB_OUTPUT
+          echo "be-BOP release $COMMIT_DATE ($HASH)" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
           echo "hash=$HASH" >> $GITHUB_OUTPUT
       - name: Create release archive
         run: |
           cd release_artifacts
-          zip -r "../${{ steps.artifact.outputs.ARTIFACT_DIR }}.zip" "${{ steps.artifact.outputs.ARTIFACT_DIR }}"
+          mv be-BOP-release.zip "../${{ steps.commit.outputs.release_name }}.zip"
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: rel/${{ steps.commit.outputs.commit_date }}/${{ steps.commit.outputs.hash }}
           name: ${{ steps.commit.outputs.title }}
           body: ${{ steps.commit.outputs.body }}
-          files: ${{ steps.artifact.outputs.ARTIFACT_DIR }}.zip
+          files: ${{ steps.commit.outputs.release_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
