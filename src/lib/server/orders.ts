@@ -584,6 +584,7 @@ export async function createOrder(
 		onLocation?: boolean;
 		paymentTimeOut?: number;
 		posSubtype?: string;
+		peopleCountFromPosUi?: number;
 		session?: ClientSession;
 	}
 ): Promise<Order['_id']> {
@@ -1535,6 +1536,9 @@ export async function createOrder(
 					orderTabId: params.cart.orderTabId,
 					cartId: params.cart._id,
 					splitMode: params.cart.splitMode
+				}),
+				...(params.peopleCountFromPosUi !== undefined && {
+					peopleCountFromPosUi: params.peopleCountFromPosUi
 				})
 			};
 			await collections.orders.insertOne(order, { session });

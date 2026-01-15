@@ -569,7 +569,8 @@
 			"totalInclVat": "Total TTC",
 			"totalVat": "TVA totale",
 			"unitPrice": "Prix ​​unit. HT",
-			"vatFreeReason": "Exempt de TVA: {reason}"
+			"vatFreeReason": "Exempt de TVA: {reason}",
+			"peopleCount": "Nombre de personnes"
 		},
 		"receiptFullyPaid": "Générer un reçu (entièrement payé)",
 		"receiptPending": "Générer un reçu (en attente de paiement)",

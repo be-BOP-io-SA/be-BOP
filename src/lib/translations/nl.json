@@ -569,7 +569,8 @@
 			"totalInclVat": "Totaal Incl. VAT",
 			"totalVat": "Totale BTW",
 			"unitPrice": "Eenheid prijs",
-			"vatFreeReason": "Vrijgesteld van btw: {reason}"
+			"vatFreeReason": "Vrijgesteld van btw: {reason}",
+			"peopleCount": "Aantal personen"
 		},
 		"receiptFullyPaid": "Bon genereren (volledig betaald)",
 		"receiptPending": "Ontvangst genereren (betaling in behandeling)",

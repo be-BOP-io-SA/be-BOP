@@ -246,6 +246,7 @@ export interface Order extends Timestamps {
 	orderTabId?: ObjectId;
 	cartId?: ObjectId;
 	splitMode?: 'items' | 'shares';
+	peopleCountFromPosUi?: number;
 
 	shippingAddress?: OrderAddress;
 	billingAddress?: OrderAddress;
