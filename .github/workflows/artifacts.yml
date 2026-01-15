@@ -36,7 +36,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: be-BOP-release
+          name: be-BOP release ${{ env.COMMIT_DATE }} (${{ env.HASH }})
           path: ${{ env.ARTIFACT_PATH }}
 
   release:
