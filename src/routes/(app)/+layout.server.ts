@@ -109,6 +109,7 @@ export async function load(params) {
 							| 'standalone'
 							| 'maxQuantityPerOrder'
 							| 'stock'
+							| 'stockReference'
 							| 'isTicket'
 							| 'vatProfileId'
 							| 'paymentMethods'
@@ -134,6 +135,7 @@ export async function load(params) {
 						standalone: 1,
 						maxQuantityPerOrder: 1,
 						stock: 1,
+						stockReference: 1,
 						vatProfileId: 1,
 						paymentMethods: 1,
 						'bookingSpec.slotMinutes': 1,

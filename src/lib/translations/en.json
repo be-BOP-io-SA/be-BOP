@@ -13,6 +13,15 @@
 		"vatNumber": "VAT number",
 		"zipCode": "Zip code"
 	},
+	"admin": {
+		"product": {
+			"stockReference": {
+				"label": "Reference another product's stock (optional)",
+				"noReference": "-- No reference (use own stock) --",
+				"warning": "⚠️ This product references another product's stock. Stock changes will affect the referenced product."
+			}
+		}
+	},
 	"ageWarning": {
 		"agreement": "I have read the access conditions, fulfill them and respect them",
 		"navigate": "Continue browsing"

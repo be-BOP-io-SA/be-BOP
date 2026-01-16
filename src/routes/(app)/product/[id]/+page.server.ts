@@ -1,6 +1,7 @@
 import { addToCartInDb } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
+import { loadProductWithResolvedStock, resolveStockProduct } from '$lib/server/product';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
@@ -81,6 +82,7 @@ async function fetchProduct(
 	| 'hideDiscountExpiration'
 	| 'bookingSpec'
 	| 'vatProfileId'
+	| 'stockReference'
 > | null> {
 	return collections.products.findOne<ReturnType<Awaited<typeof fetchProduct>>>(
 		{ _id: productId },
@@ -129,7 +131,8 @@ async function fetchProduct(
 				hideDiscountExpiration: 1,
 				shipping: 1,
 				bookingSpec: 1,
-				vatProfileId: 1
+				vatProfileId: 1,
+				stockReference: 1
 			}
 		}
 	);
@@ -182,6 +185,12 @@ export const load = async ({ params, parent, locals }) => {
 	) {
 		throw redirect(303, '/');
 	}
+
+	const resolved = product.stockReference?.productId ? await resolveStockProduct(productId) : null;
+	if (resolved?.stock) {
+		product.stock = resolved.stock;
+	}
+
 	const [pictures, userSubscriptions, schedule, scheduleEvents, parentData] = await Promise.all([
 		fetchProductPictures(productId),
 		fetchUserSubscriptions(userIdentifier(locals)),
@@ -242,9 +251,7 @@ export const load = async ({ params, parent, locals }) => {
 };
 
 async function addToCart({ params, request, locals }: RequestEvent) {
-	const product = await collections.products.findOne({
-		alias: params.id
-	});
+	const product = await loadProductWithResolvedStock(params.id);
 
 	if (!product) {
 		throw error(404, 'Product not found');
