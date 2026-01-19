@@ -31,6 +31,23 @@ export function isZPubValid(zpub: string): boolean {
 	}
 }
 
+export const mempoolTransactionSchema = z.object({
+	txid: z.string(),
+	status: z.object({
+		block_height: z.number().optional(),
+		block_time: z.number().optional(),
+		confirmed: z.boolean()
+	}),
+	vout: z.array(
+		z.object({
+			scriptpubkey_address: z.string().optional(),
+			value: z.number()
+		})
+	)
+});
+
+export type MempoolTransaction = z.infer<typeof mempoolTransactionSchema>;
+
 export async function generateDerivationIndex(): Promise<number> {
 	let index = runtimeConfig.bitcoinNodeless.derivationIndex;
 
@@ -90,24 +107,7 @@ export async function getSatoshiReceivedNodeless(
 
 	const json = await resp.json();
 
-	const res = z
-		.array(
-			z.object({
-				txid: z.string(),
-				status: z.object({
-					block_height: z.number().optional(),
-					block_time: z.number().optional(),
-					confirmed: z.boolean()
-				}),
-				vout: z.array(
-					z.object({
-						scriptpubkey_address: z.string().optional(),
-						value: z.number()
-					})
-				)
-			})
-		)
-		.parse(json);
+	const res = z.array(mempoolTransactionSchema).parse(json);
 
 	const transactions = res
 		.filter((tx) => {
