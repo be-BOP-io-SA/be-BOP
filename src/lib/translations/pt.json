@@ -569,7 +569,8 @@
 			"totalInclVat": "Total Incl. IVA",
 			"totalVat": "Total IVA",
 			"unitPrice": "Preço unitário",
-			"vatFreeReason": "Isento de IVA: {reason}"
+			"vatFreeReason": "Isento de IVA: {reason}",
+			"peopleCount": "Número de pessoas"
 		},
 		"receiptFullyPaid": "Gerar recibo (totalmente pago)",
 		"receiptPending": "Gerar recibo (pagamento pendente)",
