@@ -89,7 +89,7 @@ dependencies:
     version: 6.9.3
   nostr-relaypool:
     specifier: ^0.6.28
-    version: 0.6.28(ws@8.14.2)
+    version: 0.6.28(ws@8.19.0)
   nostr-tools:
     specifier: ^1.11.1
     version: 1.11.1
@@ -117,6 +117,9 @@ dependencies:
   undici:
     specifier: ^5.22.1
     version: 5.22.1
+  ws:
+    specifier: ^8.19.0
+    version: 8.19.0
   zod:
     specifier: ^3.21.4
     version: 3.21.4
@@ -3480,12 +3483,12 @@ packages:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
     dev: true
 
-  /isomorphic-ws@5.0.0(ws@8.14.2):
+  /isomorphic-ws@5.0.0(ws@8.19.0):
     resolution: {integrity: sha512-muId7Zzn9ywDsyXgTIafTry2sV3nySZeUDe6YedVd1Hvuuep5AsIlqK+XefWpYTyJG5e503F2xIuT2lcU6rCSw==}
     peerDependencies:
       ws: '*'
     dependencies:
-      ws: 8.14.2
+      ws: 8.19.0
     dev: false
 
   /jiti@1.18.2:
@@ -3542,7 +3545,7 @@ packages:
       whatwg-encoding: 2.0.0
       whatwg-mimetype: 3.0.0
       whatwg-url: 12.0.1
-      ws: 8.14.2
+      ws: 8.19.0
       xml-name-validator: 4.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -3862,11 +3865,11 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /nostr-relaypool@0.6.28(ws@8.14.2):
+  /nostr-relaypool@0.6.28(ws@8.19.0):
     resolution: {integrity: sha512-kyLChBunf6IB2O3MSPHBe9iSokBGyqZHvAJXZ5+eh9C4znAu7iY8L/yh0V4Ta/P9TtzDna3QTEgFWVan4m0vBA==}
     dependencies:
       '@jest/source-map': 29.4.3
-      isomorphic-ws: 5.0.0(ws@8.14.2)
+      isomorphic-ws: 5.0.0(ws@8.19.0)
       nostr-tools: 1.11.1
       safe-stable-stringify: 2.4.3
     transitivePeerDependencies:
@@ -5377,8 +5380,8 @@ packages:
   /wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
-  /ws@8.14.2:
-    resolution: {integrity: sha512-wEBG1ftX4jcglPxgFCMJmZ2PLtSbJ2Peg6TmpJFTbe9GZYOQCDPdMYu/Tm0/bGZkw8paZnJY45J4K2PZrLYq8g==}
+  /ws@8.19.0:
+    resolution: {integrity: sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
