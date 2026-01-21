@@ -34,6 +34,12 @@
 	import { get } from '$lib/utils/get';
 
 	export let products: CmsProduct[];
+	export let externalProducts: Array<
+		import('$lib/components/ProductWidget/ProductWidgetProduct').ProductWidgetProduct & {
+			externalUrl: string;
+			pictures: import('$lib/types/Picture').Picture[];
+		}
+	> = [];
 	export let pictures: CmsPicture[];
 	export let challenges: CmsChallenge[];
 	export let tokens: CmsTokens;
@@ -66,6 +72,9 @@
 	);
 
 	$: productById = Object.fromEntries(products.map((product) => [product._id, product]));
+	$: externalProductById = Object.fromEntries(
+		externalProducts.map((product) => [product.externalUrl, product])
+	);
 	$: digitalFilesByProduct = Object.fromEntries(
 		digitalFiles.map((digitalFile) => [digitalFile.productId, digitalFile])
 	);
@@ -147,17 +156,30 @@
 <div class={tokens.mobile ? 'hidden lg:contents' : 'contents'}>
 	<div class={classNames}>
 		{#each tokens.desktop as token}
-			{#if token.type === 'productWidget' && productById[token.slug]}
-				<ProductWidget
-					product={productById[token.slug]}
-					pictures={picturesByProduct[token.slug] ?? []}
-					hasDigitalFiles={digitalFilesByProduct[token.slug] !== null}
-					displayOption={token.display}
-					canBuy={hasPosOptions
-						? productById[token.slug].actionSettings.retail.canBeAddedToBasket
-						: productById[token.slug].actionSettings.eShop.canBeAddedToBasket}
-					class="not-prose my-5"
-				/>
+			{#if token.type === 'productWidget'}
+				{#if token.slug && productById[token.slug]}
+					<ProductWidget
+						product={productById[token.slug]}
+						pictures={picturesByProduct[token.slug] ?? []}
+						hasDigitalFiles={digitalFilesByProduct[token.slug] !== null}
+						displayOption={token.display}
+						canBuy={hasPosOptions
+							? productById[token.slug].actionSettings.retail.canBeAddedToBasket
+							: productById[token.slug].actionSettings.eShop.canBeAddedToBasket}
+						class="not-prose my-5"
+					/>
+				{:else if token.externalUrl && externalProductById[token.externalUrl]}
+					{@const externalProduct = externalProductById[token.externalUrl]}
+					<ProductWidget
+						product={externalProduct}
+						pictures={externalProduct.pictures ?? []}
+						hasDigitalFiles={false}
+						displayOption={token.display}
+						canBuy={false}
+						externalUrl={token.externalUrl}
+						class="not-prose my-5"
+					/>
+				{/if}
 			{:else if token.type === 'tagProducts' && productsByTag(token.slug)}
 				{#each productsByTag(token.slug, token.by ?? '', token.sort) as product}
 					<ProductWidget
@@ -260,17 +282,30 @@
 	<div class="contents lg:hidden">
 		<div class={classNames}>
 			{#each tokens.mobile as token}
-				{#if token.type === 'productWidget' && productById[token.slug]}
-					<ProductWidget
-						product={productById[token.slug]}
-						pictures={picturesByProduct[token.slug] ?? []}
-						hasDigitalFiles={digitalFilesByProduct[token.slug] !== null}
-						displayOption={token.display}
-						canBuy={hasPosOptions
-							? productById[token.slug].actionSettings.retail.canBeAddedToBasket
-							: productById[token.slug].actionSettings.eShop.canBeAddedToBasket}
-						class="not-prose my-5"
-					/>
+				{#if token.type === 'productWidget'}
+					{#if token.slug && productById[token.slug]}
+						<ProductWidget
+							product={productById[token.slug]}
+							pictures={picturesByProduct[token.slug] ?? []}
+							hasDigitalFiles={digitalFilesByProduct[token.slug] !== null}
+							displayOption={token.display}
+							canBuy={hasPosOptions
+								? productById[token.slug].actionSettings.retail.canBeAddedToBasket
+								: productById[token.slug].actionSettings.eShop.canBeAddedToBasket}
+							class="not-prose my-5"
+						/>
+					{:else if token.externalUrl && externalProductById[token.externalUrl]}
+						{@const externalProduct = externalProductById[token.externalUrl]}
+						<ProductWidget
+							product={externalProduct}
+							pictures={externalProduct.pictures ?? []}
+							hasDigitalFiles={false}
+							displayOption={token.display}
+							canBuy={false}
+							externalUrl={token.externalUrl}
+							class="not-prose my-5"
+						/>
+					{/if}
 				{:else if token.type === 'tagProducts' && productsByTag(token.slug)}
 					{#each productsByTag(token.slug) as product}
 						<ProductWidget

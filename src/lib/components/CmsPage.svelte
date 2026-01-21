@@ -31,6 +31,12 @@
 		}[];
 	};
 	export let products: CmsProduct[];
+	export let externalProducts: Array<
+		import('$lib/components/ProductWidget/ProductWidgetProduct').ProductWidgetProduct & {
+			externalUrl: string;
+			pictures: import('$lib/types/Picture').Picture[];
+		}
+	> = [];
 	export let pictures: CmsPicture[];
 	export let challenges: CmsChallenge[];
 	export let tokens: CmsTokens;
@@ -67,6 +73,7 @@
 {#if cmsPage.fullScreen}
 	<CmsDesign
 		{products}
+		{externalProducts}
 		{pictures}
 		{challenges}
 		{tokens}
@@ -95,6 +102,7 @@
 		{/if}
 		<CmsDesign
 			{products}
+			{externalProducts}
 			{pictures}
 			{challenges}
 			{tokens}
