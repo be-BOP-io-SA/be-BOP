@@ -1,6 +1,7 @@
 import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { error } from 'console';
+import { error, redirect } from '@sveltejs/kit';
+import { adminPrefix } from '$lib/server/admin';
 import { z } from 'zod';
 
 export const actions = {
@@ -71,5 +72,7 @@ export const actions = {
 				}
 			}
 		);
+
+		throw redirect(303, `${adminPrefix()}/oauth`);
 	}
 };
