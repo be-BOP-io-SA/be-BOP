@@ -7,6 +7,7 @@
 	import { preUploadPicture } from '$lib/types/Picture.js';
 	import Select from 'svelte-select';
 	import { browser } from '$app/environment';
+	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 
 	export let data;
 
@@ -124,6 +125,11 @@
 	const timezoneOffsetHours = new Date().getTimezoneOffset() / 60;
 	const timezoneSign = timezoneOffsetHours > 0 ? '-' : '+';
 	const timezoneString = `GMT${timezoneSign}${Math.abs(timezoneOffsetHours)}`;
+
+	// Currency options for ticket pricing Select component
+	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+	let selectedTicketCurrency =
+		allCurrenciesOptions.find((c) => c.value === data.currencies.main) || null;
 
 	function handleInvalidInput(event: Event) {
 		const target = event.target as HTMLInputElement;
@@ -338,15 +344,20 @@
 										</label>
 
 										<label class="w-full">
-											Price currency
-
-											<select name="priceCurrency" class="form-input">
-												{#each CURRENCIES as currency}
-													<option value={currency} selected={data.currencies.main === currency}
-														>{currency}</option
-													>
-												{/each}
-											</select>
+											<CurrencyLabel label="Price currency" />
+											<Select
+												items={allCurrenciesOptions}
+												searchable={true}
+												clearable={false}
+												bind:value={selectedTicketCurrency}
+												class="form-input"
+											/>
+											<input
+												type="hidden"
+												name="priceCurrency"
+												value={selectedTicketCurrency?.value || ''}
+												required
+											/>
 										</label>
 									</div>
 								{/if}

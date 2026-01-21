@@ -4,6 +4,8 @@
 	import { typedEntries } from '$lib/utils/typedEntries';
 	import type { DeliveryFees } from '$lib/types/DeliveryFees';
 	import { useI18n } from '$lib/i18n';
+	import Select from 'svelte-select';
+	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 
 	export let deliveryFees: DeliveryFees = {};
 	export let defaultCurrency: Currency;
@@ -12,6 +14,20 @@
 	let feeCountryToAdd: CountryAlpha2 | 'default' = 'default';
 
 	const { countryName, sortedCountryCodes } = useI18n();
+
+	// Currency options for Select components
+	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+
+	// Track selected currencies for each country
+	let selectedCurrencies: Record<string, { value: Currency; label: string } | null> = {};
+	$: {
+		for (const [country, fee] of typedEntries(deliveryFees)) {
+			if (!selectedCurrencies[country] && fee) {
+				selectedCurrencies[country] =
+					allCurrenciesOptions.find((c) => c.value === fee.currency) || null;
+			}
+		}
+	}
 
 	$: if (!deliveryFees) {
 		deliveryFees = {};
@@ -72,14 +88,20 @@
 			</label>
 
 			<label class="w-full">
-				Currency
-				<select name="deliveryFees[{country}].currency" class="form-input" {disabled}>
-					{#each CURRENCIES as currency}
-						<option value={currency} selected={deliveryFee?.currency === currency}>
-							{currency}
-						</option>
-					{/each}
-				</select>
+				<CurrencyLabel label="Currency" />
+				<Select
+					items={allCurrenciesOptions}
+					searchable={true}
+					clearable={false}
+					bind:value={selectedCurrencies[country]}
+					{disabled}
+					class="form-input"
+				/>
+				<input
+					type="hidden"
+					name="deliveryFees[{country}].currency"
+					value={selectedCurrencies[country]?.value || ''}
+				/>
 			</label>
 		</div>
 		<button

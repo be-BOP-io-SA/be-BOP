@@ -4,12 +4,18 @@
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addDays, addMonths } from 'date-fns';
 	import { MultiSelect } from 'svelte-multiselect';
+	import Select from 'svelte-select';
+	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 
 	export let data;
 	let mode = 'moneyAmount';
 	let beginsAt = new Date().toJSON().slice(0, 10);
 	let endsAt = addMonths(new Date(), 30).toJSON().slice(0, 10);
 	let endsAtElement: HTMLInputElement;
+
+	// Currency options for Select component
+	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+	let selectedCurrency = allCurrenciesOptions[0] || null;
 
 	function checkForm(event: SubmitEvent) {
 		if (endsAt < beginsAt) {
@@ -49,12 +55,15 @@
 
 	{#if mode === 'moneyAmount'}
 		<label class="form-label w-full">
-			currency
-			<select name="currency" class="form-input">
-				{#each CURRENCIES as currency}
-					<option value={currency}>{currency}</option>
-				{/each}
-			</select>
+			<CurrencyLabel label="currency" />
+			<Select
+				items={allCurrenciesOptions}
+				searchable={true}
+				clearable={false}
+				bind:value={selectedCurrency}
+				class="form-input"
+			/>
+			<input type="hidden" name="currency" value={selectedCurrency?.value || ''} required />
 		</label>
 	{/if}
 	<div class="flex flex-wrap gap-4">

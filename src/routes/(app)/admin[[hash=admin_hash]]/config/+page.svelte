@@ -8,6 +8,7 @@
 	import { formatDistance } from 'date-fns';
 	import { exchangeRate } from '$lib/stores/exchangeRate';
 	import { useI18n } from '$lib/i18n.js';
+	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import MultiSelect from 'svelte-multiselect';
 	import Select from 'svelte-select';
@@ -22,16 +23,26 @@
 	let hasPhysicalCartMinAmount = !!data.physicalCartMinAmount;
 
 	// Currency options for Select components (exclude SAT for main/secondary/accounting)
-	const currenciesWithoutSat = CURRENCIES.filter((c) => c !== 'SAT').map((c) => ({ value: c, label: c }));
+	const currenciesWithoutSat = CURRENCIES.filter((c) => c !== 'SAT').map((c) => ({
+		value: c,
+		label: c
+	}));
 	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
 
 	// Selected values for Select components
-	let selectedMainCurrency = currenciesWithoutSat.find((c) => c.value === data.currencies.main) || null;
-	let selectedSecondaryCurrency = data.currencies.secondary ? currenciesWithoutSat.find((c) => c.value === data.currencies.secondary) : null;
-	let selectedPriceReferenceCurrency = allCurrenciesOptions.find((c) => c.value === data.currencies.priceReference) || null;
-	let selectedAccountingCurrency = data.accountingCurrency ? currenciesWithoutSat.find((c) => c.value === data.accountingCurrency) : null;
+	let selectedMainCurrency =
+		currenciesWithoutSat.find((c) => c.value === data.currencies.main) || null;
+	let selectedSecondaryCurrency = data.currencies.secondary
+		? currenciesWithoutSat.find((c) => c.value === data.currencies.secondary)
+		: null;
+	let selectedPriceReferenceCurrency =
+		allCurrenciesOptions.find((c) => c.value === data.currencies.priceReference) || null;
+	let selectedAccountingCurrency = data.accountingCurrency
+		? currenciesWithoutSat.find((c) => c.value === data.accountingCurrency)
+		: null;
 
-	$: priceReferenceCurrency = selectedPriceReferenceCurrency?.value || data.currencies.priceReference;
+	$: priceReferenceCurrency =
+		selectedPriceReferenceCurrency?.value || data.currencies.priceReference;
 	async function onOverwrite(event: Event) {
 		if (!confirm('Do you want to overwrite current product currencies with this one?')) {
 			event.preventDefault();
@@ -92,7 +103,7 @@
 <form method="post" action="?/update" class="flex flex-col gap-6">
 	<h2 class="text-2xl">Currencies</h2>
 	<label class="form-label">
-		Main currency
+		<CurrencyLabel label="Main currency" />
 		<Select
 			items={currenciesWithoutSat}
 			searchable={true}
@@ -104,7 +115,7 @@
 	</label>
 
 	<label class="form-label">
-		Secondary currency
+		<CurrencyLabel label="Secondary currency" />
 		<Select
 			items={currenciesWithoutSat}
 			searchable={true}
@@ -117,7 +128,7 @@
 	</label>
 
 	<label class="form-label">
-		Price reference currency (to avoid exchange rate fluctuations)
+		<CurrencyLabel label="Price reference currency (to avoid exchange rate fluctuations)" />
 		<div class="flex gap-2">
 			<Select
 				items={allCurrenciesOptions}
@@ -126,7 +137,11 @@
 				bind:value={selectedPriceReferenceCurrency}
 				class="form-input max-w-[25rem]"
 			/>
-			<input type="hidden" name="priceReferenceCurrency" value={selectedPriceReferenceCurrency?.value || ''} />
+			<input
+				type="hidden"
+				name="priceReferenceCurrency"
+				value={selectedPriceReferenceCurrency?.value || ''}
+			/>
 			<button type="submit" class="btn btn-red self-start" form="overwrite">
 				<IconRefresh />
 			</button>
@@ -134,7 +149,7 @@
 	</label>
 
 	<label class="form-label">
-		Accounting currency
+		<CurrencyLabel label="Accounting currency" />
 		<Select
 			items={currenciesWithoutSat}
 			searchable={true}
@@ -143,7 +158,11 @@
 			bind:value={selectedAccountingCurrency}
 			class="form-input max-w-[25rem]"
 		/>
-		<input type="hidden" name="accountingCurrency" value={selectedAccountingCurrency?.value || ''} />
+		<input
+			type="hidden"
+			name="accountingCurrency"
+			value={selectedAccountingCurrency?.value || ''}
+		/>
 		<p class="text-sm">
 			Payment amounts will also be stored in this currency. Useful for a full-crypto shop but you
 			still want to keep track of fiat values at time of payment.

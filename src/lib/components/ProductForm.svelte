@@ -18,6 +18,7 @@
 	import Select from 'svelte-select';
 	import type { LayoutServerData } from '../../routes/(app)/$types';
 	import DeliveryFeesSelector from './DeliveryFeesSelector.svelte';
+	import CurrencyLabel from './CurrencyLabel.svelte';
 	import Editor from '@tinymce/tinymce-svelte';
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 	import {
@@ -119,7 +120,8 @@
 
 	// Currency options for Select component
 	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
-	let selectedCurrency = allCurrenciesOptions.find((c) => c.value === product.price.currency) || null;
+	let selectedCurrency =
+		allCurrenciesOptions.find((c) => c.value === product.price.currency) || null;
 	$: if (selectedCurrency) {
 		product.price.currency = selectedCurrency.value;
 	}
@@ -436,8 +438,7 @@
 			</label>
 
 			<label class="w-full">
-				Price currency
-
+				<CurrencyLabel label="Price currency" />
 				<Select
 					items={allCurrenciesOptions}
 					searchable={true}

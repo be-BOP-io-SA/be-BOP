@@ -4,6 +4,8 @@
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { MultiSelect } from 'svelte-multiselect';
 	import { formatInTimeZone } from 'date-fns-tz';
+	import Select from 'svelte-select';
+	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 
 	export let data;
 
@@ -20,6 +22,20 @@
 
 	let endsAtElement: HTMLInputElement;
 	let progressChanged = false;
+
+	// Currency options for Select components
+	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+	let selectedCurrencies: Record<number, { value: string; label: string } | null> = {};
+	$: {
+		for (let i = 0; i < data.leaderboard.progress.length; i++) {
+			if (!selectedCurrencies[i]) {
+				selectedCurrencies[i] =
+					allCurrenciesOptions.find((c) => c.value === data.leaderboard.progress[i].currency) ||
+					null;
+			}
+		}
+	}
+
 	function checkForm(event: SubmitEvent) {
 		if (endsAt < beginsAt) {
 			endsAtElement.setCustomValidity('End date must be after beginning date');
@@ -100,14 +116,20 @@
 			</label>
 			{#if data.leaderboard.mode === 'moneyAmount'}
 				<label class="w-full">
-					currency
-					<select name="progress[{i}].currency" class="form-input" disabled={!progressChanged}>
-						{#each CURRENCIES as currency}
-							<option value={currency} selected={progress.currency === currency}>
-								{currency}
-							</option>
-						{/each}
-					</select>
+					<CurrencyLabel label="currency" />
+					<Select
+						items={allCurrenciesOptions}
+						searchable={true}
+						clearable={false}
+						bind:value={selectedCurrencies[i]}
+						disabled={!progressChanged}
+						class="form-input"
+					/>
+					<input
+						type="hidden"
+						name="progress[{i}].currency"
+						value={selectedCurrencies[i]?.value || ''}
+					/>
 				</label>
 			{/if}
 		</div>
