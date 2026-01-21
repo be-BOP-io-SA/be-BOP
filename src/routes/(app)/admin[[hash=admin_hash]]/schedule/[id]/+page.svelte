@@ -233,7 +233,7 @@
 	{#each [...Array(eventLines).keys()] as i}
 		<details
 			class="border border-gray-300 rounded-xl p-2"
-			open={!hideAll || !data.schedule.events[i]}
+			open={!hideAll || !data.schedule.events[i] || !!errorMessage[i]}
 			id="detail-{i}"
 		>
 			<summary class="text-xl font-bold">
