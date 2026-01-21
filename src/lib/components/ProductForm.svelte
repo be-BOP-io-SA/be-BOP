@@ -15,6 +15,7 @@
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import type { WithId } from 'mongodb';
 	import { MultiSelect } from 'svelte-multiselect';
+	import Select from 'svelte-select';
 	import type { LayoutServerData } from '../../routes/(app)/$types';
 	import DeliveryFeesSelector from './DeliveryFeesSelector.svelte';
 	import Editor from '@tinymce/tinymce-svelte';
@@ -115,6 +116,13 @@
 	let displayVATCalculator = false;
 	let priceAmountVATIncluded = product.price.amount;
 	let vatRate = 0;
+
+	// Currency options for Select component
+	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+	let selectedCurrency = allCurrenciesOptions.find((c) => c.value === product.price.currency) || null;
+	$: if (selectedCurrency) {
+		product.price.currency = selectedCurrency.value;
+	}
 	$: product.price = computePriceForStorage(
 		(100 * priceAmountVATIncluded) / (100 + vatRate),
 		product.price.currency
@@ -430,16 +438,15 @@
 			<label class="w-full">
 				Price currency
 
-				<select
-					name="priceCurrency"
+				<Select
+					items={allCurrenciesOptions}
+					searchable={true}
+					clearable={false}
+					bind:value={selectedCurrency}
+					on:change={() => priceAmountElement?.setCustomValidity('')}
 					class="form-input"
-					bind:value={product.price.currency}
-					on:input={() => priceAmountElement?.setCustomValidity('')}
-				>
-					{#each CURRENCIES as currency}
-						<option value={currency}>{currency}</option>
-					{/each}
-				</select>
+				/>
+				<input type="hidden" name="priceCurrency" value={selectedCurrency?.value || ''} />
 			</label>
 		</div>
 		<label class="checkbox-label">
