@@ -10,7 +10,8 @@
 	$: cashIncome = data.incomes
 		.filter((i) => i.paymentSubtype === 'cash')
 		.reduce((sum, i) => sum + i.amount, 0);
-	$: theoreticalClosing = data.session.cashOpening.amount + cashIncome - (bankDepositAmount ?? 0);
+	$: totalOutcomes = (bankDepositAmount ?? 0) + data.cashbackTotal;
+	$: theoreticalClosing = data.session.cashOpening.amount + cashIncome - totalOutcomes;
 	$: cashDelta = (cashClosingAmount ?? 0) - theoreticalClosing;
 	$: hasCashDelta = Math.abs(cashDelta) > 0.01;
 	$: shouldShowJustification = hasCashDelta;
@@ -49,17 +50,25 @@
 			<!-- Daily Outcomes -->
 			<div>
 				<p class="font-semibold text-blue-700 mb-2">Daily outcomes:</p>
-				{#if (bankDepositAmount ?? 0) > 0}
-					<p class="ml-4">
-						• Bank deposit: {(bankDepositAmount ?? 0).toFixed(2)}
-						{data.session.cashOpening.currency}
-					</p>
+				{#if (bankDepositAmount ?? 0) > 0 || data.cashbackTotal > 0}
+					{#if (bankDepositAmount ?? 0) > 0}
+						<p class="ml-4">
+							• Bank deposit: {(bankDepositAmount ?? 0).toFixed(2)}
+							{data.session.cashOpening.currency}
+						</p>
+					{/if}
+					{#if data.cashbackTotal > 0}
+						<p class="ml-4">
+							• Cashback to customer: {data.cashbackTotal.toFixed(2)}
+							{data.session.cashOpening.currency}
+						</p>
+					{/if}
 				{:else}
 					<p class="ml-4 text-gray-500">No outcomes recorded</p>
 				{/if}
 				<p class="font-bold mt-3">Daily outcomes total:</p>
 				<p class="ml-0">
-					{(bankDepositAmount ?? 0).toFixed(2)}
+					{totalOutcomes.toFixed(2)}
 					{data.session.cashOpening.currency}
 				</p>
 			</div>
@@ -76,7 +85,7 @@
 					{data.session.cashOpening.currency}
 				</p>
 				<p class="ml-4">
-					• Daily cash outcomes: {(bankDepositAmount ?? 0).toFixed(2)}
+					• Daily cash outcomes: {totalOutcomes.toFixed(2)}
 					{data.session.cashOpening.currency}
 				</p>
 				<p class="ml-4">
@@ -156,6 +165,24 @@
 				<span class="text-gray-600">{data.session.cashOpening.currency}</span>
 			</div>
 		</div>
+
+		{#if data.cashbackTotal > 0}
+			<div>
+				<label for="cashbackTotal" class="form-label">
+					Cashback to customer (automatic count)
+				</label>
+				<div class="flex items-center gap-2">
+					<input
+						type="text"
+						id="cashbackTotal"
+						value={data.cashbackTotal.toFixed(2)}
+						class="form-input flex-1 bg-gray-100"
+						readonly
+					/>
+					<span class="text-gray-600">{data.session.cashOpening.currency}</span>
+				</div>
+			</div>
+		{/if}
 
 		{#if shouldShowJustification}
 			<div class="bg-yellow-50 border border-yellow-300 rounded-lg p-4">

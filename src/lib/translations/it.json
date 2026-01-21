@@ -628,6 +628,14 @@
 			"replaceSubmit": "Modifica",
 			"tapToPay": "Pagamento carta"
 		},
+		"cashback": {
+			"title": "Resto ▾",
+			"toPay": "Da pagare",
+			"paid": "Pagato",
+			"change": "Resto",
+			"cancel": "Annulla resto",
+			"validate": "Conferma"
+		},
 		"input": {
 			"detail": "Dettaglio",
 			"txNumber": "TX n°"

@@ -160,6 +160,7 @@ export interface OrderPayment {
 	lastStatusNotified?: OrderPaymentStatus;
 	bankTransferNumber?: string;
 	detail?: string;
+	cashbackAmount?: Price;
 }
 
 export type SerializedOrderPayment = Omit<OrderPayment, '_id'> & {

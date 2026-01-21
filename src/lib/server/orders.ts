@@ -147,6 +147,7 @@ export async function onOrderPayment(
 		fees?: Price;
 		tapToPay?: { expiresAt: Date };
 		providedSession?: ClientSession;
+		cashbackAmount?: Price;
 	}
 ): Promise<Order> {
 	const invoiceNumber = ((await lastInvoiceNumber()) ?? 0) + 1;
@@ -177,6 +178,9 @@ export async function onOrderPayment(
 					}),
 					...(params?.detail && {
 						'payments.$.detail': params.detail
+					}),
+					...(params?.cashbackAmount && {
+						'payments.$.cashbackAmount': params.cashbackAmount
 					}),
 					'payments.$.paidAt': paidAt,
 					...(isOrderFullyPaid(order) && {

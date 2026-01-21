@@ -1,7 +1,8 @@
 import {
 	closePosSession,
 	getCurrentPosSession,
-	calculateDailyIncomes
+	calculateDailyIncomes,
+	calculateTotalCashback
 } from '$lib/server/pos-sessions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { error, redirect } from '@sveltejs/kit';
@@ -18,6 +19,7 @@ export const load = async ({ locals }: { locals: App.Locals }) => {
 	}
 
 	const dailyIncomes = await calculateDailyIncomes(posSession);
+	const cashbackTotal = await calculateTotalCashback(posSession);
 
 	return {
 		session: {
@@ -31,6 +33,7 @@ export const load = async ({ locals }: { locals: App.Locals }) => {
 			amount: inc.amount,
 			currency: inc.currency
 		})),
+		cashbackTotal: cashbackTotal.amount,
 		cashDeltaJustificationMandatory: runtimeConfig.posSession.cashDeltaJustificationMandatory,
 		user: locals.user
 			? {

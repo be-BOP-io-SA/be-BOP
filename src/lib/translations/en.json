@@ -736,6 +736,14 @@
 			"tapToPay": "Card Tap",
 			"cancelTap": "Stop Tap"
 		},
+		"cashback": {
+			"title": "Cashback ▾",
+			"toPay": "To pay",
+			"paid": "Paid",
+			"change": "Change",
+			"cancel": "Cancel cashback",
+			"validate": "Validate"
+		},
 		"input": {
 			"txNumber": "TX #",
 			"detail": "Detail"

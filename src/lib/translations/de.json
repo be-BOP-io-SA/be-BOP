@@ -628,6 +628,14 @@
 			"replaceSubmit": "Ändern",
 			"tapToPay": "Kartenzahlung"
 		},
+		"cashback": {
+			"title": "Bargeldauszahlung ▾",
+			"toPay": "Zu zahlen",
+			"paid": "Bezahlt",
+			"change": "Rückgeld",
+			"cancel": "Bargeldauszahlung abbrechen",
+			"validate": "Bestätigen"
+		},
 		"input": {
 			"detail": "Detail",
 			"txNumber": "TX-Nr."

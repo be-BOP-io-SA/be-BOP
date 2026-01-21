@@ -628,6 +628,14 @@
 			"replaceSubmit": "Cambiar",
 			"tapToPay": "Pago con tarjeta"
 		},
+		"cashback": {
+			"title": "Cambio de efectivo ▾",
+			"toPay": "A pagar",
+			"paid": "Pagado",
+			"change": "Vuelto",
+			"cancel": "Cancelar cambio",
+			"validate": "Validar"
+		},
 		"input": {
 			"detail": "Detalle",
 			"txNumber": "TX n°"

@@ -639,6 +639,14 @@
 			"replaceSubmit": "Wijzigen",
 			"tapToPay": "Kaartbetaling"
 		},
+		"cashback": {
+			"title": "Wisselgeld ▾",
+			"toPay": "Te betalen",
+			"paid": "Betaald",
+			"change": "Wisselgeld",
+			"cancel": "Wisselgeld annuleren",
+			"validate": "Bevestigen"
+		},
 		"input": {
 			"detail": "Detail",
 			"txNumber": "TX nr."
