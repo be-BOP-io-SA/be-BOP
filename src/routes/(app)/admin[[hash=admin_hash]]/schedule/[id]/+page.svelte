@@ -124,6 +124,15 @@
 	const timezoneOffsetHours = new Date().getTimezoneOffset() / 60;
 	const timezoneSign = timezoneOffsetHours > 0 ? '-' : '+';
 	const timezoneString = `GMT${timezoneSign}${Math.abs(timezoneOffsetHours)}`;
+
+	function handleInvalidInput(event: Event) {
+		const target = event.target as HTMLInputElement;
+		// Find and open the parent <details> element so the browser can focus the invalid input
+		const detailsParent = target.closest('details');
+		if (detailsParent && !detailsParent.hasAttribute('open')) {
+			detailsParent.setAttribute('open', '');
+		}
+	}
 </script>
 
 <h1 class="text-3xl">Edit a schedule</h1>
@@ -382,6 +391,7 @@
 							class="form-input"
 							required
 							value={data.schedule.events[i].title}
+							on:invalid={handleInvalidInput}
 						/>
 						<input
 							type="hidden"
@@ -424,6 +434,7 @@
 									.toISOString()
 									.slice(0, 16))}
 								required
+								on:invalid={handleInvalidInput}
 							/>
 						</label>
 					</div>
@@ -501,6 +512,7 @@
 								value={data.schedule.events[i].rsvp?.target ||
 									data.sellerIdentity?.contact.email ||
 									''}
+								on:invalid={handleInvalidInput}
 							/>
 						</label>
 					{/if}
@@ -599,7 +611,13 @@
 				{:else}
 					<label class="form-label">
 						Title
-						<input type="text" name="events[{i}].title" class="form-input" required />
+						<input
+							type="text"
+							name="events[{i}].title"
+							class="form-input"
+							required
+							on:invalid={handleInvalidInput}
+						/>
 					</label>
 					<label class="form-label">
 						Short description
@@ -630,6 +648,7 @@
 								name="events[{i}].beginsAt"
 								bind:value={beginsAt[i]}
 								required
+								on:invalid={handleInvalidInput}
 							/>
 						</label>
 					</div>
@@ -676,7 +695,13 @@
 					{#if rsvpOption}
 						<label class="form-label">
 							Target
-							<input type="text" name="events[{i}].rsvp.target" class="form-input" required />
+							<input
+								type="text"
+								name="events[{i}].rsvp.target"
+								class="form-input"
+								required
+								on:invalid={handleInvalidInput}
+							/>
 						</label>
 					{/if}
 					<label class="checkbox-label">
