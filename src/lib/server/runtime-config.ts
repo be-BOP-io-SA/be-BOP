@@ -282,8 +282,8 @@ const baseConfig = {
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,
 	physicalCartMinAmount: null as null | number,
-	websiteTitle: 'B2Bitcoin be-BOP',
-	websiteShortDescription: "B2Bitcoin's be-BOP store",
+	websiteTitle: 'My be-BOP',
+	websiteShortDescription: 'My be-BOP store description',
 	smtp: {
 		host: '',
 		port: 587,

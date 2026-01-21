@@ -1,4 +1,4 @@
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/533af93b-00c9-4d04-82db-599d4de59cf2)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/533af93b-00c9-4d04-82db-599d4de59cf2)
 
 # be-BOP Manifesto
 
