@@ -1,6 +1,6 @@
 import { addToCartInDb, findItemInCart, getCartFromDb, removeFromCartInDb } from '$lib/server/cart';
 import { collections, withTransaction } from '$lib/server/database';
-import { refreshAvailableStockInDb } from '$lib/server/product.js';
+import { loadProductWithResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { DEFAULT_MAX_QUANTITY_PER_ORDER } from '$lib/types/Product.js';
 import { error, redirect } from '@sveltejs/kit';
@@ -43,7 +43,7 @@ export const actions = {
 		throw redirect(303, request.headers.get('referer') || '/cart');
 	},
 	increase: async ({ locals, params, request }) => {
-		const product = await collections.products.findOne({ _id: params.id });
+		const product = await loadProductWithResolvedStock(params.id);
 
 		if (!product) {
 			await collections.carts.updateOne(userQuery(userIdentifier(locals)), {
@@ -80,7 +80,7 @@ export const actions = {
 		throw redirect(303, request.headers.get('referer') || '/cart');
 	},
 	decrease: async ({ request, locals, params }) => {
-		const product = await collections.products.findOne({ _id: params.id });
+		const product = await loadProductWithResolvedStock(params.id);
 
 		if (!product) {
 			await collections.carts.updateMany(
@@ -108,7 +108,7 @@ export const actions = {
 		throw redirect(303, request.headers.get('referer') || '/cart');
 	},
 	setQuantity: async ({ locals, params, request }) => {
-		const product = await collections.products.findOne({ _id: params.id });
+		const product = await loadProductWithResolvedStock(params.id);
 
 		if (!product) {
 			await collections.carts.updateOne(userQuery(userIdentifier(locals)), {

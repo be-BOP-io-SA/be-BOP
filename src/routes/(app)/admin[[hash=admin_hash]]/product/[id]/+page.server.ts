@@ -7,7 +7,13 @@ import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { productBaseSchema } from '../product-schema';
-import { amountOfProductReserved, amountOfProductSold } from '$lib/server/product';
+import {
+	amountOfStockReserved,
+	amountOfProductSold,
+	getProductsWithStock,
+	validateStockReference,
+	cleanVariationLabels
+} from '$lib/server/product';
 import type { Tag } from '$lib/types/Tag';
 import { adminPrefix } from '$lib/server/admin';
 import { AnyBulkWriteOperation, ObjectId } from 'mongodb';
@@ -28,8 +34,9 @@ export const load = async ({ params }) => {
 		.find({})
 		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
 		.toArray();
+	const productsWithStock = await getProductsWithStock();
 	const [reserved, sold, scanned] = await Promise.all([
-		amountOfProductReserved(params.id),
+		amountOfStockReserved(params.id),
 		amountOfProductSold(params.id),
 		collections.tickets.countDocuments({ productId: params.id, scanned: { $exists: true } })
 	]);
@@ -38,6 +45,7 @@ export const load = async ({ params }) => {
 		pictures,
 		digitalFiles,
 		tags,
+		productsWithStock,
 		reserved,
 		sold,
 		scanned
@@ -107,35 +115,26 @@ export const actions: Actions = {
 			...variation,
 			price: Math.max(parsePriceAmount(variation.price, parsed.priceCurrency), 0)
 		}));
-		const amountInCarts = await amountOfProductReserved(params.id);
-		const cleanedVariationLabels: {
-			names: Record<string, string>;
-			values: Record<string, Record<string, string>>;
-		} = {
-			names: {},
-			values: {}
-		};
-		for (const key in parsed.variationLabels?.names) {
-			const nameValue = parsed.variationLabels.names[key];
-
-			if (nameValue.trim() !== '') {
-				cleanedVariationLabels.names[key] = nameValue;
-			}
-		}
-		for (const key in parsed.variationLabels?.values) {
-			const valueEntries = parsed.variationLabels.values[key];
-			cleanedVariationLabels.values[key] = {};
-			for (const valueKey in valueEntries) {
-				if (valueEntries[valueKey].trim() !== '') {
-					cleanedVariationLabels.values[key][valueKey] = valueEntries[valueKey];
-				}
-			}
-			if (Object.keys(cleanedVariationLabels.values[key]).length === 0) {
-				delete cleanedVariationLabels.values[key];
-			}
-		}
+		const amountInCarts = await amountOfStockReserved(params.id);
+		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
 		const hasVariations =
 			parsed.standalone && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
+
+		// Validate stock reference if provided
+		if (parsed.stockReferenceProductId) {
+			const validation = await validateStockReference(params.id, parsed.stockReferenceProductId);
+
+			if (!validation.valid) {
+				console.warn(
+					`Stock reference validation failed: ` +
+						`product=${params.id}, ` +
+						`reference=${parsed.stockReferenceProductId}, ` +
+						`reason=${validation.error}`
+				);
+				throw error(400, validation.error || 'Invalid stock reference');
+			}
+		}
+
 		try {
 			const res = await collections.products.updateOne(
 				{ _id: params.id },
@@ -239,13 +238,19 @@ export const actions: Actions = {
 									reason: parsed.sellDisclaimerReason
 								}
 							}),
-						hideFromSEO: parsed.hideFromSEO
+						hideFromSEO: parsed.hideFromSEO,
+						...(parsed.stockReferenceProductId && {
+							stockReference: {
+								productId: parsed.stockReferenceProductId
+							}
+						})
 					},
 					$unset: {
 						...(!parsed.customPreorderText && { customPreorderText: '' }),
 						...(!parsed.availableDate && { availableDate: '' }),
 						...(!parsed.deliveryFees && { deliveryFees: '' }),
 						...(parsed.stock === undefined && { stock: '' }),
+						...(!parsed.stockReferenceProductId && { stockReference: '' }),
 						...(!parsed.maxQuantityPerOrder && { maxQuantityPerOrder: '' }),
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
@@ -309,9 +314,26 @@ export const actions: Actions = {
 	},
 
 	delete: async ({ params }) => {
+		// Check if other products reference this product's stock
+		const dependentProducts = await collections.products.countDocuments({
+			'stockReference.productId': params.id
+		});
+
+		if (dependentProducts > 0) {
+			throw error(
+				400,
+				`Cannot delete product. ${dependentProducts} product${
+					dependentProducts > 1 ? 's' : ''
+				} reference this product's stock. Please remove or update those references first.`
+			);
+		}
+
+		// Delete pictures
 		for await (const picture of collections.pictures.find({ productId: params.id })) {
 			await deletePicture(picture._id);
 		}
+
+		// Delete product
 		await collections.products.deleteOne({ _id: params.id });
 
 		throw redirect(303, `${adminPrefix()}/product`);
