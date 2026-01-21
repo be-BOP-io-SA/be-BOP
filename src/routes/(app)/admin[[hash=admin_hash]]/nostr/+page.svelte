@@ -80,6 +80,7 @@
 		Private Key (nsec format)
 		<input
 			bind:this={nsecInputEl}
+			type="password"
 			class="form-input"
 			name="privateKey"
 			bind:value={data.nostr.privateKey}
