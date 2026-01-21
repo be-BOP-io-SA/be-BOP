@@ -19,7 +19,27 @@ export const load = async ({ params }) => {
 
 export const actions: Actions = {
 	update: async function (input) {
-		const name = String((await input.request.formData()).get('name'));
+		const formData = await input.request.formData();
+		const name = String(formData.get('name'));
+		const logoIsWide = Boolean(formData.get('isWide'));
+
+		// If this picture is currently set as logo (light or dark mode), update the isWide setting
+		if (
+			runtimeConfig.logo.pictureId === input.params.id ||
+			runtimeConfig.logo.darkModePictureId === input.params.id
+		) {
+			await collections.runtimeConfig.updateOne(
+				{ _id: 'logo' },
+				{
+					$set: {
+						'data.isWide': logoIsWide,
+						updatedAt: new Date()
+					}
+				}
+			);
+			runtimeConfig.logo.isWide = logoIsWide;
+		}
+
 		await collections.pictures.updateOne(
 			{ _id: input.params.id },
 			{
