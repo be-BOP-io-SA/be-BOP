@@ -12,7 +12,6 @@
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
-	import { toSatoshis } from '$lib/utils/toSatoshis';
 	import { MIN_SATOSHIS_FOR_BITCOIN_PAYMENT, type DiscountType } from '$lib/types/Order.js';
 	import { useI18n } from '$lib/i18n';
 	import Trans from '$lib/components/Trans.svelte';
@@ -36,9 +35,9 @@
 	$: {
 		if (offerOrder) {
 			discountType = 'percentage';
-			discountAmount = 99;
+			discountAmount = 100;
 		} else {
-			if (discountType !== 'percentage' || discountAmount !== 99) {
+			if (discountType !== 'percentage' || discountAmount !== 100) {
 				offerOrder = false;
 			}
 		}
@@ -116,6 +115,8 @@
 	);
 	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
 
+	$: isFreeOfCharge = addDiscount && discountType === 'percentage' && discountAmount === 100;
+
 	$: possiblyOutOfBoundsDiscount =
 		addDiscount && discountType
 			? {
@@ -126,6 +127,18 @@
 
 	// A PoS operator may apply different discounts, such as on-site promotions or free delivery;
 	// thus, the price info is computed from scratch to reflect the correct value.
+	// Compute price WITHOUT discount for validation purposes
+	$: priceInfoWithoutDiscount = computePriceInfo(items, {
+		bebopCountry: data.vatCountry,
+		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		discount: undefined,
+		freeProductUnits: data.cart.freeProductUnits,
+		userCountry: isDigital ? digitalCountry : country,
+		vatExempted: data.vatExempted,
+		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
+		vatSingleCountry: data.vatSingleCountry,
+		vatProfiles: data.vatProfiles
+	});
 	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
 		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
@@ -195,21 +208,27 @@
 		return [...tagEntries, ...otherEntry];
 	})();
 
-	$: paymentMethods =
-		priceInfo.totalPriceWithVat === 0
-			? ['free']
-			: data.paymentMethods.filter(
-					(method) =>
-						method !== 'free' &&
-						(method === 'bitcoin'
-							? toCurrency('SAT', priceInfo.partialPriceWithVat, priceInfo.currency) >=
-							  MIN_SATOSHIS_FOR_BITCOIN_PAYMENT
-							: true)
-			  );
+	$: nothingToPay = priceInfo.totalPriceWithVat === 0 || isFreeOfCharge;
+	$: paymentMethods = nothingToPay
+		? ['free']
+		: data.paymentMethods.filter(
+				(method) =>
+					method !== 'free' &&
+					(method === 'bitcoin'
+						? toCurrency('SAT', priceInfo.partialPriceWithVat, priceInfo.currency) >=
+						  MIN_SATOSHIS_FOR_BITCOIN_PAYMENT
+						: true)
+		  );
 	$: isDiscountValid =
+		isFreeOfCharge ||
 		(discountType === 'fiat' &&
-			priceInfo.totalPriceWithVat >= toSatoshis(discountAmount || 0, data.currencies.main)) ||
-		(discountType === 'percentage' && discountAmount <= 99);
+			discountAmount <=
+				toCurrency(
+					data.currencies.main,
+					priceInfoWithoutDiscount.totalPriceWithVat,
+					UNDERLYING_CURRENCY
+				)) ||
+		(discountType === 'percentage' && discountAmount <= 100);
 	let showBillingInfo = false;
 	let isProfessionalOrder = false;
 	let changePaymentTimeOut = false;
