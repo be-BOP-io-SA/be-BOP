@@ -23,9 +23,17 @@
 	export let ticketReady = false;
 
 	let openPaymentMethodChange = false;
+	let openCashbackSection = false;
 	let disableInfoChange = true;
+	let paidAmount: number | null = null;
 
 	$: tapToPayInProgress = payment.posTapToPay && payment.posTapToPay.expiresAt > new Date();
+	$: toPay = payment.currencySnapshot.main.price.amount;
+	$: changeAmount = Math.max(0, (paidAmount ?? 0) - toPay);
+	$: isInsufficientPayment = paidAmount !== null && paidAmount < toPay;
+	$: isPosNonCash = payment.method === 'point-of-sale' && payment.posSubtype !== 'cash';
+	$: showCashbackButton =
+		posMode && payment.method === 'point-of-sale' && payment.status === 'pending';
 	$: posSubtype =
 		payment.method === 'point-of-sale' && payment.posSubtype
 			? posSubtypes?.find((s) => s.slug === payment.posSubtype)
@@ -180,6 +188,22 @@
 				{/if}
 			</form>
 
+			<!-- Hidden cashback input for form submission (non-cash only, positive change) -->
+			{#if showCashbackButton && isPosNonCash && changeAmount > 0}
+				<input
+					type="hidden"
+					name="cashbackAmount"
+					value={changeAmount}
+					form="confirmForm-{payment.id}"
+				/>
+				<input
+					type="hidden"
+					name="cashbackCurrency"
+					value={payment.price.currency}
+					form="confirmForm-{payment.id}"
+				/>
+			{/if}
+
 			<!-- Unified button container (POS mode = grid, normal = flex) -->
 			<div class="flex flex-wrap gap-2 unified-buttons">
 				<!-- Cancel button -->
@@ -194,7 +218,12 @@
 
 				<!-- Mark paid button (POS + bank-transfer only) -->
 				{#if payment.method === 'point-of-sale' || payment.method === 'bank-transfer'}
-					<button type="submit" class="btn btn-black" form="confirmForm-{payment.id}">
+					<button
+						type="submit"
+						class="btn btn-black"
+						form="confirmForm-{payment.id}"
+						disabled={isInsufficientPayment}
+					>
 						{t(posMode ? 'pos.btn.paid' : 'pos.cta.markOrderPaid')}
 					</button>
 				{/if}
@@ -220,6 +249,22 @@
 						? t('pos.cta.cancelReplacement')
 						: t(posMode ? 'pos.btn.replace' : 'pos.cta.replacePayment')}
 				</button>
+
+				<!-- Cashback button (POS mode only) -->
+				{#if showCashbackButton}
+					<button
+						type="button"
+						class="btn {openCashbackSection ? 'btn-gray' : 'btn-blue'}"
+						on:click={() => {
+							openCashbackSection = !openCashbackSection;
+							if (!openCashbackSection) {
+								paidAmount = null;
+							}
+						}}
+					>
+						{openCashbackSection ? t('pos.cashback.cancel') : t('pos.cashback.title')}
+					</button>
+				{/if}
 			</div>
 
 			<!-- Expanded payment form -->
@@ -232,6 +277,72 @@
 					{posSubtypes}
 					{posMode}
 				/>
+			{/if}
+
+			<!-- Expanded cashback section -->
+			{#if openCashbackSection}
+				<div class="cashback-section border rounded-lg p-4 bg-gray-50">
+					<div class="grid gap-3">
+						<!-- A payer (To pay) - read only -->
+						<div>
+							<label for="toPay-{payment.id}" class="block text-sm text-gray-600 mb-1"
+								>{t('pos.cashback.toPay')}</label
+							>
+							<input
+								type="text"
+								readonly
+								id="toPay-{payment.id}"
+								value={toPay.toFixed(2)}
+								class="form-input w-full bg-gray-100"
+							/>
+						</div>
+
+						<!-- Payé (Paid) - editable -->
+						<div>
+							<label for="paidAmount-{payment.id}" class="block text-sm text-gray-600 mb-1">
+								{t('pos.cashback.paid')}
+							</label>
+							<input
+								type="number"
+								step="0.01"
+								min="0"
+								id="paidAmount-{payment.id}"
+								bind:value={paidAmount}
+								class="form-input w-full"
+								class:border-red-500={isInsufficientPayment}
+								class:bg-red-50={isInsufficientPayment}
+								placeholder={toPay.toFixed(2)}
+							/>
+						</div>
+
+						<!-- A rendre (Change) - calculated -->
+						<div>
+							<label for="changeAmount-{payment.id}" class="block text-sm text-gray-600 mb-1"
+								>{t('pos.cashback.change')}</label
+							>
+							<input
+								type="text"
+								readonly
+								id="changeAmount-{payment.id}"
+								value={changeAmount.toFixed(2)}
+								class="form-input w-full"
+								class:bg-red-50={isInsufficientPayment}
+								class:text-red-600={isInsufficientPayment}
+								class:bg-green-50={changeAmount > 0}
+								class:text-green-600={changeAmount > 0}
+							/>
+						</div>
+
+						<!-- Validate button -->
+						<button
+							type="button"
+							class="btn btn-blue w-full mt-2"
+							on:click={() => (openCashbackSection = false)}
+						>
+							{t('pos.cashback.validate')}
+						</button>
+					</div>
+				</div>
 			{/if}
 		{/if}
 	{/if}

@@ -7,6 +7,8 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
+import { CURRENCIES, type Currency } from '$lib/types/Currency';
+import { typedInclude } from '$lib/utils/typedIncludes';
 
 const PAYMENT_DETAIL_MAX_LENGTH = 100;
 
@@ -53,10 +55,23 @@ export const actions = {
 				.parse({ detail: formData.get('detail') });
 		}
 
+		let cashbackInfo: { amount: number; currency: Currency } | undefined;
+		const cashbackAmountRaw = formData.get('cashbackAmount');
+		const cashbackCurrencyRaw = formData.get('cashbackCurrency');
+
+		if (cashbackAmountRaw && cashbackCurrencyRaw) {
+			const amount = parseFloat(cashbackAmountRaw as string);
+			const currencyStr = cashbackCurrencyRaw as string;
+			if (!isNaN(amount) && amount > 0 && typedInclude(CURRENCIES, currencyStr)) {
+				cashbackInfo = { amount, currency: currencyStr };
+			}
+		}
+
 		await onOrderPayment(order, payment, payment.price, {
 			...(bankInfo &&
 				bankInfo.bankTransferNumber && { bankTransferNumber: bankInfo.bankTransferNumber }),
-			...(posInfo && posInfo.detail && { detail: posInfo.detail })
+			...(posInfo && posInfo.detail && { detail: posInfo.detail }),
+			...(cashbackInfo && { cashbackAmount: cashbackInfo })
 		});
 
 		throw redirect(303, request.headers.get('referer') || `${adminPrefix()}/order`);
