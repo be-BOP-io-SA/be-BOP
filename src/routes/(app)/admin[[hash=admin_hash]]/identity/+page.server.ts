@@ -9,7 +9,7 @@ import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
 export function load({ locals }) {
-	// Until https://github.com/B2Bitcoin/beBOP/issues/220
+	// Until https://github.com/be-BOP-io-SA/be-BOP/issues/220
 	if (locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
 		throw error(403, 'Forbidden. Only Super Admin can access this page !');
 	}
@@ -21,7 +21,7 @@ export function load({ locals }) {
 
 export const actions = {
 	default: async ({ request, locals }) => {
-		// Until https://github.com/B2Bitcoin/beBOP/issues/220
+		// Until https://github.com/be-BOP-io-SA/be-BOP/issues/220
 		if (locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
 			throw error(403, 'Forbidden. Only Super Admin can access this page !');
 		}

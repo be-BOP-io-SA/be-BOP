@@ -14,16 +14,16 @@ Il existe 3 grands régimes de TVA, dont une variation :
 Pour contrôle fiscal, respect de la loi et comptabilité, il est parfois nécessaire recueillir des données liées au client, pour justifier une éventuelle exonération de TVA.
 Ces points sont abordés dans le [privacy-management.md](/docs/fr/privacy-management.md).
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/69990b7f-a264-4325-a411-246def3454c4)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/69990b7f-a264-4325-a411-246def3454c4)
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/c5363c2c-22cf-4d01-8a9e-d0d3e204bef9)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/c5363c2c-22cf-4d01-8a9e-d0d3e204bef9)
 
 ## Cas 1 : exemption de TVA sur sous justification
 
 Dans /admin/config se trouve l'option **Disable VAT for my be-BOP** (*Désactiver la TVA pour mon be-BOP*).
 Une fois la case activée, **une TVA de 0% est appliquée sur l'ensemble des futures commandes**.
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/a86a4edd-e70d-466d-b573-ed0ef9e56025)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/a86a4edd-e70d-466d-b573-ed0ef9e56025)
 
 L'activation de cette option active la sous-option **VAT exemption reason (appears on the invoice)** (*Raison d'exemption de TVA (apparaît sur les factures)*).
 Il s'agit du texte légal à renseigner pour justifier de l'absence de TVA à votre client.
@@ -35,14 +35,14 @@ Par exemple, en France :
 
 Le motif renseigné sera alors indiqué sur chacune de vos factures.
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/e062d151-e141-42a2-88b8-7fffc1a7c0ec)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/e062d151-e141-42a2-88b8-7fffc1a7c0ec)
 
 ## Cas 2A : vente au taux de TVA du pays du vendeur
 
 Dans /admin/config se trouve l'option **Use VAT rate from seller's country (always true for products that are digital goods)** (*Utiliser la TVA du pays du vendeur (toujours vrai pour les articles sans livraison)*).
 Il faut ensuite choisir le pays auquel est rattaché votre entreprise dans l'option **Seller's country for VAT purposes** (*Pays du vendeur pour définition de la TVA*).
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/9822f6da-20de-42fe-af20-c83e033c2e7d)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/9822f6da-20de-42fe-af20-c83e033c2e7d)
 
 En procédant ainsi :
 - le taux de TVA indiqué au panier sera celui du pays de votre entreprise (avec un indicateur rappelant ce pays)
@@ -56,7 +56,7 @@ Dans le cas précédent, dans /admin/config, si vous activez l'option **Make VAT
 
 Il en sera de même pour l'achat d'articles téléchargeables, de dons ou d'abonnements (le taux de TVA appliqué sera celui du pays de votre entreprise).
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/910d6910-cc3c-438b-982d-30c32f329405)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/910d6910-cc3c-438b-982d-30c32f329405)
 
 En revanche, si votre client veut se faire livrer votre marchandise dans son pays (qui n'est pas celui de votre entreprise) :
 - le taux de TVA indiqué au panier sera celui du pays dans lequel est géolocalisé son IP (d'après des données originaires de ip2location.com)
@@ -70,15 +70,15 @@ Le lien de cette option renvoie vers la page CMS /why-vat-customs , à créer et
 
 ### Client se faisant livrer dans le pays du be-BOP
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/5a99fe97-6448-423f-bebb-313e410c6444)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/5a99fe97-6448-423f-bebb-313e410c6444)
 
 ### Client se faisant livrer ailleurs
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/ac7f10e2-ff68-49f3-814d-a3569e112242)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/ac7f10e2-ff68-49f3-814d-a3569e112242)
 
 ## Cas 3 : vente au taux de TVA du pays de l'acheteur
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/6b96f29f-c309-4106-9c6b-76d7ddf4b554)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/6b96f29f-c309-4106-9c6b-76d7ddf4b554)
 
 Quand, dans /amdin/config, aucune option de régime de TVA n'est activée et qu'un pays de TVA est choisi, la TVA appliquée sera celle du client :
 - le taux de TVA indiqué au panier sera celui du pays dans lequel est géolocalisé son IP (d'après des données originaires de ip2location.com)
@@ -108,27 +108,27 @@ Selon les pays, certains pays bénéficient d'un taux de TVA réduit (produits c
 Pour cela, il faut créer des **Custom VAT Rates**.
 Le lien est accesible dans /admin/config, et sur /admin/config/vat :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/97971eba-b664-47f9-89f2-5a7ce37abb99)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/97971eba-b664-47f9-89f2-5a7ce37abb99)
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/7bf9c28a-944f-4449-8d17-f95892566542)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/7bf9c28a-944f-4449-8d17-f95892566542)
 
 Vous pouvez nommer et enregistrer un profil, et renseigner un taux de TVA personnalisé par pays (sans précision, c'est la TVA par défaut qui sera appliquée).
 
 Exemple de Custom VAT Rate dédié aux livres :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/b3e977d2-fe4d-4e40-9d47-75030b06b1a1)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/b3e977d2-fe4d-4e40-9d47-75030b06b1a1)
 
 Puis, dans l'interface d'administration des produits (/admin/product/{id}), vous pouvez renseigner le profil de TVA souhaité en fonction du type de produit :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/81a8fbe3-8670-4172-a752-537022789304)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/81a8fbe3-8670-4172-a752-537022789304)
 
 "No custom VAT profile" prendra par défaut la TVA générale du be-BOP.
 
 La TVA de chaque article sera affichée au panier :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/931dfd41-9ed5-43e0-b571-2a6d76cec130)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/931dfd41-9ed5-43e0-b571-2a6d76cec130)
 
 Et éagalelement sur la facture :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/72863ad5-c4f1-4906-b0d7-69cf5c4df6c9)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/72863ad5-c4f1-4906-b0d7-69cf5c4df6c9)
 
