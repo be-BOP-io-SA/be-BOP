@@ -67,19 +67,6 @@ export const actions: Actions = {
 			});
 
 			await collections.tagFamilies.insertMany(familiesToInsert);
-
-			// Update tags that reference renamed families
-			for (const family of validatedFamilies) {
-				if (!family._id.startsWith('temp-')) {
-					const newSlug = generateId(family.name, false);
-					if (newSlug !== family._id) {
-						await collections.tags.updateMany(
-							{ family: family._id },
-							{ $set: { family: newSlug } }
-						);
-					}
-				}
-			}
 		}
 
 		// Clear family reference for tags whose family was deleted
