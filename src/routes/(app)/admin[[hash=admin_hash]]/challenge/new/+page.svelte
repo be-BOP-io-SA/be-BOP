@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { CURRENCIES } from '$lib/types/Currency.js';
+	import { sortCurrenciesDefault } from '$lib/types/Currency.js';
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addDays, addMonths } from 'date-fns';
 	import { MultiSelect } from 'svelte-multiselect';
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
+	import { currencies } from '$lib/stores/currencies';
 
 	export let data;
 	let mode = 'moneyAmount';
@@ -14,8 +15,9 @@
 	let endsAt = addMonths(new Date(), 30).toJSON().slice(0, 10);
 	let endsAtElement: HTMLInputElement;
 
-	// Currency options for Select component
-	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+	// Currency options for Select component (sorted: main → secondary → BTC/SAT → fiat A-Z)
+	const sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
+	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
 	let selectedCurrency = allCurrenciesOptions[0] || null;
 
 	function checkForm(event: SubmitEvent) {

@@ -781,3 +781,69 @@ export function readStoredPrice(storedPrice: Price): Price {
  * the result in the user's currency.
  */
 export const UNDERLYING_CURRENCY = 'SAT';
+
+// Crypto currencies (BTC, SAT)
+const CRYPTO_CURRENCIES: Currency[] = ['BTC', 'SAT'];
+
+/**
+ * Sort currencies for product form:
+ * priceReference → main → secondary → BTC/SAT → fiat A-Z
+ */
+export function sortCurrenciesForProduct(
+	priceReference: Currency | undefined,
+	main: Currency | undefined,
+	secondary: Currency | null | undefined
+): Currency[] {
+	const priority: Currency[] = [];
+
+	if (priceReference) priority.push(priceReference);
+	if (main && !priority.includes(main)) priority.push(main);
+	if (secondary && !priority.includes(secondary)) priority.push(secondary);
+
+	// Add BTC/SAT if not already included
+	for (const crypto of CRYPTO_CURRENCIES) {
+		if (!priority.includes(crypto)) priority.push(crypto);
+	}
+
+	// Add remaining fiat currencies A-Z
+	const remaining = CURRENCIES.filter(
+		(c) => !priority.includes(c) && !CRYPTO_CURRENCIES.includes(c)
+	);
+
+	return [...priority, ...remaining];
+}
+
+/**
+ * Sort currencies for /admin/config:
+ * BTC/SAT → fiat A-Z
+ */
+export function sortCurrenciesForConfig(): Currency[] {
+	const fiat = CURRENCIES.filter((c) => !CRYPTO_CURRENCIES.includes(c));
+	return [...CRYPTO_CURRENCIES, ...fiat];
+}
+
+/**
+ * Sort currencies for general use (widgets, leaderboard, challenge, etc.):
+ * main → secondary → BTC/SAT → fiat A-Z
+ */
+export function sortCurrenciesDefault(
+	main: Currency | undefined,
+	secondary: Currency | null | undefined
+): Currency[] {
+	const priority: Currency[] = [];
+
+	if (main) priority.push(main);
+	if (secondary && !priority.includes(secondary)) priority.push(secondary);
+
+	// Add BTC/SAT if not already included
+	for (const crypto of CRYPTO_CURRENCIES) {
+		if (!priority.includes(crypto)) priority.push(crypto);
+	}
+
+	// Add remaining fiat currencies A-Z
+	const remaining = CURRENCIES.filter(
+		(c) => !priority.includes(c) && !CRYPTO_CURRENCIES.includes(c)
+	);
+
+	return [...priority, ...remaining];
+}

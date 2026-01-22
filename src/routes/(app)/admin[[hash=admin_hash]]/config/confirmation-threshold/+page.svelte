@@ -1,8 +1,9 @@
 <script lang="ts">
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
-	import { CURRENCIES } from '$lib/types/Currency';
+	import { sortCurrenciesDefault } from '$lib/types/Currency';
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
+	import { currencies } from '$lib/stores/currencies';
 
 	export let data;
 
@@ -12,8 +13,9 @@
 		thresholds.thresholds = [{ minAmount: 0, maxAmount: 0, confirmationBlocks: 0 }];
 	}
 
-	// Currency options for Select component
-	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+	// Currency options for Select component (sorted: main → secondary → BTC/SAT → fiat A-Z)
+	const sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
+	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
 	let selectedCurrency = allCurrenciesOptions.find((c) => c.value === thresholds.currency) || null;
 	$: if (selectedCurrency) {
 		thresholds.currency = selectedCurrency.value;

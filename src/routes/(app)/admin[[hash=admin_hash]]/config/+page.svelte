@@ -4,7 +4,7 @@
 	import IconUpArrow from '~icons/ant-design/arrow-up-outlined';
 	import IconDownArrow from '~icons/ant-design/arrow-down-outlined';
 
-	import { CURRENCIES } from '$lib/types/Currency';
+	import { sortCurrenciesForConfig } from '$lib/types/Currency';
 	import { formatDistance } from 'date-fns';
 	import { exchangeRate } from '$lib/stores/exchangeRate';
 	import { useI18n } from '$lib/i18n.js';
@@ -22,12 +22,13 @@
 	let hasCartLimitProductLine = !!data.cartMaxSeparateItems;
 	let hasPhysicalCartMinAmount = !!data.physicalCartMinAmount;
 
-	// Currency options for Select components (exclude SAT for main/secondary/accounting)
-	const currenciesWithoutSat = CURRENCIES.filter((c) => c !== 'SAT').map((c) => ({
-		value: c,
-		label: c
-	}));
-	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+	// Currency options for Select components (sorted: BTC/SAT → fiat A-Z)
+	// Exclude SAT for main/secondary/accounting
+	const sortedCurrencies = sortCurrenciesForConfig();
+	const currenciesWithoutSat = sortedCurrencies
+		.filter((c) => c !== 'SAT')
+		.map((c) => ({ value: c, label: c }));
+	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
 
 	// Selected values for Select components
 	let selectedMainCurrency =
