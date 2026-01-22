@@ -87,7 +87,7 @@ export const actions: Actions = {
 			f._id.startsWith('temp-') ? generateId(f.name, false) : f._id
 		);
 		await collections.tags.updateMany(
-			{ family: { $nin: [...remainingFamilyIds, '', null, undefined] } },
+			{ family: { $exists: true, $ne: '', $nin: remainingFamilyIds } },
 			{ $unset: { family: '' } }
 		);
 
