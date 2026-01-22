@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import PictureComponent from '$lib/components/Picture.svelte';
-	import { CURRENCIES } from '$lib/types/Currency';
+	import { sortCurrenciesDefault } from '$lib/types/Currency';
 	import { applyAction, enhance, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { preUploadPicture } from '$lib/types/Picture.js';
 	import Select from 'svelte-select';
 	import { browser } from '$app/environment';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
+	import { currencies } from '$lib/stores/currencies';
 
 	export let data;
 
@@ -126,8 +127,9 @@
 	const timezoneSign = timezoneOffsetHours > 0 ? '-' : '+';
 	const timezoneString = `GMT${timezoneSign}${Math.abs(timezoneOffsetHours)}`;
 
-	// Currency options for ticket pricing Select component
-	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+	// Currency options for ticket pricing Select component (sorted: main → secondary → BTC/SAT → fiat A-Z)
+	const sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
+	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
 	let selectedTicketCurrency =
 		allCurrenciesOptions.find((c) => c.value === data.currencies.main) || null;
 

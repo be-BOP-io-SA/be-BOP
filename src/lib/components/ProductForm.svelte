@@ -1,9 +1,9 @@
 <script lang="ts">
 	import {
-		CURRENCIES,
 		CURRENCY_UNIT,
 		computePriceForStorage,
-		readStoredPrice
+		readStoredPrice,
+		sortCurrenciesForProduct
 	} from '$lib/types/Currency';
 	import {
 		DEFAULT_MAX_QUANTITY_PER_ORDER,
@@ -118,8 +118,13 @@
 	let priceAmountVATIncluded = product.price.amount;
 	let vatRate = 0;
 
-	// Currency options for Select component
-	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+	// Currency options for Select component (sorted: priceRef → main → secondary → BTC/SAT → fiat A-Z)
+	const sortedCurrencies = sortCurrenciesForProduct(
+		$currencies.priceReference,
+		$currencies.main,
+		$currencies.secondary
+	);
+	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
 	let selectedCurrency =
 		allCurrenciesOptions.find((c) => c.value === product.price.currency) || null;
 	$: if (selectedCurrency) {

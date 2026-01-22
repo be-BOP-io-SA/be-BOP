@@ -1,15 +1,17 @@
 <script lang="ts">
-	import { CURRENCIES } from '$lib/types/Currency';
+	import { sortCurrenciesDefault } from '$lib/types/Currency';
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
+	import { currencies } from '$lib/stores/currencies';
 
 	export let data;
 
 	// PayPal supports all fiat currencies (no BTC/SAT)
-	const currenciesWithoutCrypto = CURRENCIES.filter((c) => c !== 'BTC' && c !== 'SAT').map((c) => ({
-		value: c,
-		label: c
-	}));
+	// Sort: main → secondary → fiat A-Z (excluding crypto)
+	const sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
+	const currenciesWithoutCrypto = sortedCurrencies
+		.filter((c) => c !== 'BTC' && c !== 'SAT')
+		.map((c) => ({ value: c, label: c }));
 	let selectedCurrency =
 		currenciesWithoutCrypto.find((c) => c.value === data.paypal.currency) || null;
 	$: if (selectedCurrency) {

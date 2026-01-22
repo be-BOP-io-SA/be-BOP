@@ -1,13 +1,14 @@
 <script lang="ts">
 	import {
-		CURRENCIES,
 		SATOSHIS_PER_BTC,
 		computePriceForStorage,
-		FRACTION_DIGITS_PER_CURRENCY
+		FRACTION_DIGITS_PER_CURRENCY,
+		sortCurrenciesForProduct
 	} from '$lib/types/Currency';
 	import type { Price } from '$lib/types/Order';
 	import Select from 'svelte-select';
 	import CurrencyLabel from './CurrencyLabel.svelte';
+	import { currencies } from '$lib/stores/currencies';
 
 	export let productId: string;
 	export let productName: string;
@@ -18,8 +19,13 @@
 	let vatRate = 0;
 	let currency = initialPrice.currency;
 
-	// Currency options for Select component
-	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+	// Currency options for Select component (sorted: priceRef → main → secondary → BTC/SAT → fiat A-Z)
+	const sortedCurrencies = sortCurrenciesForProduct(
+		$currencies.priceReference,
+		$currencies.main,
+		$currencies.secondary
+	);
+	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
 	let selectedCurrency = allCurrenciesOptions.find((c) => c.value === currency) || null;
 	$: if (selectedCurrency) {
 		currency = selectedCurrency.value;

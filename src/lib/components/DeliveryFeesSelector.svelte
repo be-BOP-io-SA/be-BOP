@@ -1,11 +1,12 @@
 <script lang="ts">
 	import type { CountryAlpha2 } from '$lib/types/Country';
-	import { CURRENCIES, type Currency } from '$lib/types/Currency';
+	import { sortCurrenciesDefault, type Currency } from '$lib/types/Currency';
 	import { typedEntries } from '$lib/utils/typedEntries';
 	import type { DeliveryFees } from '$lib/types/DeliveryFees';
 	import { useI18n } from '$lib/i18n';
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
+	import { currencies } from '$lib/stores/currencies';
 
 	export let deliveryFees: DeliveryFees = {};
 	export let defaultCurrency: Currency;
@@ -15,8 +16,9 @@
 
 	const { countryName, sortedCountryCodes } = useI18n();
 
-	// Currency options for Select components
-	const allCurrenciesOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+	// Currency options for Select components (sorted: main → secondary → BTC/SAT → fiat A-Z)
+	const sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
+	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
 
 	// Track selected currencies for each country
 	let selectedCurrencies: Record<string, { value: Currency; label: string } | null> = {};

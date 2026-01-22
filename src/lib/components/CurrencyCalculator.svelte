@@ -1,11 +1,37 @@
 <script lang="ts">
-	import { CURRENCIES } from '$lib/types/Currency';
+	import { sortCurrenciesDefault, type Currency } from '$lib/types/Currency';
 	import { toCurrency } from '$lib/utils/toCurrency';
-	import type { Currency } from '$lib/types/Currency';
+	import { currencies } from '$lib/stores/currencies';
+	import { sellerIdentity } from '$lib/stores/sellerIdentity';
+	import { getCurrencyFromCountry } from '$lib/types/Country';
+
+	// Compute default second currency based on rules:
+	// 1. secondary (if set)
+	// 2. BTC (if main ≠ BTC)
+	// 3. currency from seller's VAT country (if main = BTC)
+	// 4. USD (fallback)
+	function getDefaultSecondCurrency(
+		main: Currency,
+		secondary: Currency | null | undefined,
+		sellerCountry: string | undefined
+	): Currency {
+		if (secondary) return secondary;
+		if (main !== 'BTC') return 'BTC';
+		const countryCurrency = getCurrencyFromCountry(sellerCountry as Parameters<typeof getCurrencyFromCountry>[0]);
+		if (countryCurrency) return countryCurrency as Currency;
+		return 'USD';
+	}
+
+	// Currency options sorted: main → secondary → BTC/SAT → fiat A-Z
+	$: sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
 
 	$: firstCurrencyAmount = 1;
-	$: firstCurrency = 'BTC' as Currency;
-	$: secondCurrency = 'EUR' as Currency;
+	$: firstCurrency = $currencies.main;
+	$: secondCurrency = getDefaultSecondCurrency(
+		$currencies.main,
+		$currencies.secondary,
+		$sellerIdentity?.address?.country
+	);
 	$: secondCurrencyAmount = toCurrency(secondCurrency, firstCurrencyAmount, firstCurrency);
 </script>
 
@@ -23,7 +49,7 @@
 			class="p-2 bg-gray-700 text-white border-l border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
 			bind:value={firstCurrency}
 		>
-			{#each CURRENCIES as currency}
+			{#each sortedCurrencies as currency}
 				<option value={currency} selected={currency === firstCurrency}>{currency}</option>
 			{/each}
 		</select>
@@ -44,7 +70,7 @@
 			class="p-2 bg-gray-700 text-white border-l border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
 			bind:value={secondCurrency}
 		>
-			{#each CURRENCIES as currency}
+			{#each sortedCurrencies as currency}
 				<option value={currency} selected={currency === secondCurrency}>{currency}</option>
 			{/each}
 		</select>
