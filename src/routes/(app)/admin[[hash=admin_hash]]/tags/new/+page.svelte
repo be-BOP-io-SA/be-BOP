@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { generateId } from '$lib/utils/generateId';
-	import { upperFirst } from '$lib/utils/upperFirst';
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { preUploadPicture } from '$lib/types/Picture.js';
@@ -115,8 +114,9 @@
 		<label class="form-label">
 			Tag family
 			<select class="form-input" name="family">
-				{#each ['creators', 'events', 'retailers', 'temporal'] as family}
-					<option value={family}>{upperFirst(family)}</option>
+				<option value="">No family</option>
+				{#each data.families as family}
+					<option value={family._id}>{family.name}</option>
 				{/each}
 			</select>
 		</label>

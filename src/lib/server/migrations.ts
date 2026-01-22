@@ -647,6 +647,32 @@ const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('679145a0e92e590e858af001'),
+		name: 'Seed default tag families',
+		run: async (session: ClientSession) => {
+			const existingCount = await collections.tagFamilies.countDocuments({}, { session });
+			if (existingCount > 0) {
+				return;
+			}
+
+			const defaultFamilies = [
+				{ _id: 'creators', name: 'Creators', order: 1 },
+				{ _id: 'retailers', name: 'Retailers', order: 2 },
+				{ _id: 'events', name: 'Events', order: 3 },
+				{ _id: 'temporal', name: 'Temporal', order: 4 }
+			];
+
+			await collections.tagFamilies.insertMany(
+				defaultFamilies.map((f) => ({
+					...f,
+					createdAt: new Date(),
+					updatedAt: new Date()
+				})),
+				{ session }
+			);
+		}
 	}
 ];
 
