@@ -1,10 +1,12 @@
 import { collections } from '$lib/server/database';
 import {
+	buildTagGroupsForPrint,
 	concludeOrderTab,
 	getOrCreateOrderTab,
 	hasSharesPaymentStarted,
 	orderTabNotEmptyAndFullyPaid
 } from '$lib/server/orderTab.js';
+import type { PrintHistoryEntry } from '$lib/types/PrintHistoryEntry';
 import { picturesForProducts } from '$lib/server/picture';
 import { pojo } from '$lib/server/pojo';
 import { OrderTab, OrderTabItem, OrderTabPoolStatus } from '$lib/types/OrderTab';
@@ -41,26 +43,6 @@ type HydratedTabItem = {
 	printedQuantity: OrderTabItem['printedQuantity'];
 	chosenVariations: OrderTabItem['chosenVariations'];
 };
-
-const printHistoryEntrySchema = z.object({
-	timestamp: z.coerce.date(),
-	poolLabel: z.string(),
-	itemCount: z.number(),
-	tagNames: z.array(z.string()),
-	tagGroups: z.array(
-		z.object({
-			tagNames: z.array(z.string()),
-			items: z.array(
-				z.object({
-					product: z.object({ name: z.string() }),
-					quantity: z.number(),
-					variations: z.array(z.object({ text: z.string(), count: z.number() })),
-					notes: z.array(z.string())
-				})
-			)
-		})
-	)
-});
 
 const discountSchema = z
 	.object({
@@ -309,22 +291,80 @@ export const actions = {
 	},
 	savePrintHistory: async ({ request, params }) => {
 		const formData = await request.formData();
-		const { entry } = z
+		const { mode, poolLabel, itemIds } = z
 			.object({
-				entry: z.string()
+				mode: z.enum(['all', 'newlyOrdered']),
+				poolLabel: z.string(),
+				itemIds: z.string()
 			})
 			.parse({
-				entry: formData.get('entry')
+				mode: formData.get('mode'),
+				poolLabel: formData.get('poolLabel'),
+				itemIds: formData.get('itemIds')
 			});
 
-		const parsedEntry = printHistoryEntrySchema.parse(JSON.parse(entry));
+		const parsedItemIds = z.array(z.string()).parse(JSON.parse(itemIds));
+		if (parsedItemIds.length === 0) {
+			return;
+		}
+
+		const tab = await getOrCreateOrderTab({ slug: params.orderTabSlug });
+
+		const filteredItems = tab.items.filter((item) => parsedItemIds.includes(item._id.toString()));
+		if (filteredItems.length === 0) {
+			return;
+		}
+
+		const products = await collections.products
+			.find({ _id: { $in: filteredItems.map((it) => it.productId) } })
+			.project<{ _id: string; name: string; tagIds?: string[] }>({
+				_id: 1,
+				name: 1,
+				tagIds: 1
+			})
+			.toArray();
+		const productById = new Map(products.map((p) => [p._id.toString(), p]));
+
+		const printTags = await collections.tags
+			.find({ printReceiptFilter: true })
+			.project<{ _id: string; name: string }>({ _id: 1, name: 1 })
+			.toArray();
+		const printTagsMap = Object.fromEntries(printTags.map((t) => [t._id, t.name]));
+
+		const enrichedItems = filteredItems
+			.map((item) => {
+				const product = productById.get(item.productId.toString());
+				if (!product) {
+					return null;
+				}
+				return { ...item, product };
+			})
+			.filter((item): item is NonNullable<typeof item> => item !== null);
+
+		const { tagGroups, uniqueTagNames, totalItemCount } = buildTagGroupsForPrint(
+			enrichedItems,
+			printTagsMap,
+			mode
+		);
+
+		if (totalItemCount === 0) {
+			return;
+		}
+
+		const historyEntry: PrintHistoryEntry = {
+			timestamp: new Date(),
+			poolLabel,
+			itemCount: totalItemCount,
+			tagNames: uniqueTagNames,
+			tagGroups
+		};
 
 		await collections.orderTabs.updateOne(
 			{ slug: params.orderTabSlug },
 			{
 				$push: {
 					printHistory: {
-						$each: [parsedEntry],
+						$each: [historyEntry],
 						$slice: -30
 					}
 				},

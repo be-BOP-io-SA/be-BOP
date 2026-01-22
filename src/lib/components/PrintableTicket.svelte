@@ -196,7 +196,6 @@
 	/**
 	 * Wraps text to fit within given width
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function wordWrap(text: string, width: number = ticketWidth): string[] {
 		const lines: string[] = [];
 		let currentLine = '';
@@ -244,6 +243,7 @@
 	 * Applies invert formatting to text - white on black (ESC/POS only)
 	 * In plain mode, wraps text with brackets for visibility
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function invert(text: string): string {
 		if (!useEscPos) {
 			return `[${text.trim()}]`;
@@ -289,6 +289,32 @@
 			}))
 		);
 	})();
+
+	// Helper: render variations and notes for an item (shared between global and kitchen tickets)
+	type ItemWithExtras = {
+		variations: Array<{ text: string; count: number }>;
+		notes: string[];
+	};
+
+	const renderVariationsAndNotes = (item: ItemWithExtras, lines: string[], indent = '  ') => {
+		item.variations.forEach((variation) => {
+			lines.push(
+				tableRow([
+					{ text: '', width: 0.15 },
+					{ text: `${indent}${variation.count} ${variation.text}`, width: 0.85, align: 'LEFT' }
+				])
+			);
+		});
+
+		item.notes.forEach((note) => {
+			lines.push(
+				tableRow([
+					{ text: '', width: 0.15 },
+					{ text: `${indent}+${note}`, width: 0.85, align: 'LEFT' }
+				])
+			);
+		});
+	};
 
 	// Ticket Builder - generates formatted ticket content
 	$: ticketContent = (() => {
@@ -339,23 +365,7 @@
 					])
 				);
 
-				item.variations.forEach((variation) => {
-					lines.push(
-						tableRow([
-							{ text: '', width: 0.15 },
-							{ text: `  ${variation.count} ${variation.text}`, width: 0.85, align: 'LEFT' }
-						])
-					);
-				});
-
-				item.notes.forEach((note) => {
-					lines.push(
-						tableRow([
-							{ text: '', width: 0.15 },
-							{ text: `  +${note}`, width: 0.85, align: 'LEFT' }
-						])
-					);
-				});
+				renderVariationsAndNotes(item, lines);
 			};
 
 			let lastGroupKey = '';
@@ -544,7 +554,7 @@
 
 			lines.push(separator('═'));
 		} else {
-			// Kitchen ticket (no prices)
+			// Kitchen ticket (no prices) - unified format with global ticket
 			lines.push('');
 			if (useEscPos) {
 				lines.push(ESC.DOUBLE_HEIGHT + bold(centerText(`TICKET ${poolLabel.toUpperCase()}`, 16)));
@@ -559,34 +569,32 @@
 			}
 
 			lines.push(separator('═'));
-			lines.push('');
 
-			// Items grouped by tags
 			tagGroups.forEach((group) => {
 				if (group.tagNames.length > 0) {
 					lines.push('');
-					lines.push(invert(centerText(` ${group.tagNames.join(', ').toUpperCase()} `)));
-					lines.push('');
+					lines.push(separator('-'));
+					const tagText = group.tagNames.join(', ').toUpperCase();
+					wordWrap(tagText, ticketWidth).forEach((line) => {
+						lines.push(line);
+					});
+					lines.push(separator('-'));
 				}
 
 				group.items.forEach((item) => {
-					// Item with quantity
-					lines.push(bold(`${item.quantity}x ${item.product.name.toUpperCase()}`));
+					const itemName = item.product.name.toUpperCase();
+					lines.push(
+						tableRow([
+							{ text: `${item.quantity}x`, width: 0.15, align: 'LEFT', bold: true },
+							{ text: itemName, width: 0.85, align: 'LEFT', bold: true }
+						])
+					);
 
-					// Variations
-					item.variations.forEach((variation) => {
-						lines.push(`  ${variation.count} ${variation.text}`);
-					});
-
-					// Notes
-					item.notes.forEach((note) => {
-						lines.push(`  +${note}`);
-					});
-
-					lines.push('');
+					renderVariationsAndNotes(item, lines, '');
 				});
 			});
 
+			lines.push('');
 			lines.push(separator('═'));
 		}
 
@@ -688,16 +696,6 @@
 			body {
 				margin: 0 !important;
 				padding: 0 !important;
-			}
-
-			/* Hide everything except .printable */
-			body * {
-				visibility: hidden;
-			}
-
-			.printable,
-			.printable * {
-				visibility: visible;
 			}
 
 			.printable {

@@ -4,7 +4,6 @@
 	import PosSplitTotalSection from '$lib/components/PosSplitTotalSection.svelte';
 	import PosPaymentsList from '$lib/components/PosPaymentsList.svelte';
 	import PosSplitItemRow from '$lib/components/PosSplitItemRow.svelte';
-	import PrintableTicket from '$lib/components/PrintableTicket.svelte';
 	import { useI18n } from '$lib/i18n';
 	import { UNDERLYING_CURRENCY, type Currency } from '$lib/types/Currency.js';
 	import { toCurrency } from '$lib/utils/toCurrency';
@@ -242,8 +241,7 @@
 		}
 	}
 
-	// Print functionality - always render PrintableTicket in DOM for mobile compatibility
-	let ticketGeneratedAt: Date | undefined = undefined;
+	let ticketIframe: HTMLIFrameElement;
 
 	// Prevent double-click on payment forms
 	let submitting = false;
@@ -264,39 +262,9 @@
 		};
 	};
 
-	// Beautify tabSlug for display: "table-3" → "Table 3"
-	$: poolLabel = tabSlug
-		.split('-')
-		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-		.join(' ');
-
 	function handlePrintGlobalTicket() {
-		ticketGeneratedAt = new Date();
-		setTimeout(() => {
-			window.print();
-		}, 100);
+		ticketIframe?.contentWindow?.print();
 	}
-
-	$: printTotals = poolTotals ?? computePoolTotals(originalQuantitiesPriceInfo);
-	$: printDiscount = tab.discount;
-	$: printHasDiscount = printDiscount && printDiscount.percentage > 0;
-	$: printTotalAfterDiscount =
-		printHasDiscount && printDiscount
-			? printTotals.incl * (1 - printDiscount.percentage / 100)
-			: printTotals.incl;
-
-	$: printVatBreakdown = (() => {
-		const vatByRate = new Map<number, number>();
-		originalQuantitiesPriceInfo.perItem.forEach((item, i) => {
-			const rate = originalQuantitiesPriceInfo.vatRates[i];
-			const vatAmount = item.amount * (rate / 100);
-			vatByRate.set(rate, (vatByRate.get(rate) ?? 0) + vatAmount);
-		});
-		return Array.from(vatByRate.entries())
-			.map(([rate, amount]) => ({ rate, amount }))
-			.sort((a, b) => a.rate - b.rate);
-	})();
-	$: printTotalExclVat = printTotals.excl;
 </script>
 
 <div class="flex flex-col h-screen justify-between">
@@ -749,35 +717,9 @@
 	</footer>
 </div>
 
-<!-- PrintableTicket always in DOM for mobile print compatibility -->
-<PrintableTicket
-	{poolLabel}
-	generatedAt={ticketGeneratedAt}
-	tagGroups={[
-		{
-			tagNames: [],
-			items: tab.items.map((item) => ({
-				product: { name: item.product.name },
-				quantity: item.originalQuantity ?? item.quantity,
-				variations: [],
-				notes: []
-			}))
-		}
-	]}
-	priceInfo={{
-		itemPrices: originalQuantitiesPriceInfo.perItem,
-		total: printTotalAfterDiscount,
-		totalExclVat: printTotalExclVat,
-		vatBreakdown: printVatBreakdown,
-		currency: poolCurrency,
-		...(printHasDiscount && printDiscount
-			? {
-					totalBeforeDiscount: printTotals.incl,
-					discountPercentage: printDiscount.percentage
-			  }
-			: {})
-	}}
-	companyInfo={data.companyInfo}
-	companyLogoUrl={data.companyLogoUrl}
-	showBebopLogo={data.showBebopLogo}
+<iframe
+	src="/pos/touch/tab/{tabSlug}/ticket"
+	style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
+	title="Global Ticket"
+	bind:this={ticketIframe}
 />
