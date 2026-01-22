@@ -54,11 +54,11 @@
 
 	$exchangeRate = data.exchangeRate;
 	$currencies = data.currencies;
-	$sellerIdentity = data.sellerIdentity;
+	$sellerIdentity = data.sellerIdentity ?? undefined;
 
 	$: $exchangeRate = data.exchangeRate;
 	$: $currencies = data.currencies;
-	$: $sellerIdentity = data.sellerIdentity;
+	$: $sellerIdentity = data.sellerIdentity ?? undefined;
 
 	$: items = data.cart.items;
 	$: deliveryFees =
