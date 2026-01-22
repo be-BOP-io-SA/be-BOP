@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
 	import { typedKeys } from '$lib/utils/typedKeys.js';
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
 	import type { TagFamily } from '$lib/types/TagFamily';
@@ -9,11 +8,6 @@
 
 	// Local state for families (following /admin/pos pattern)
 	let families: TagFamily[] = data.families.map((f) => ({ ...f }));
-
-	// Sync local state when data changes (after form submission)
-	$: if (data.families) {
-		families = data.families.map((f) => ({ ...f }));
-	}
 
 	$: serializedFamilies = JSON.stringify(families);
 
@@ -120,17 +114,7 @@
 </div>
 
 <!-- Family management (following /admin/pos pattern) -->
-<form
-	method="post"
-	action="?/saveFamilies"
-	use:enhance={() => {
-		return async ({ update }) => {
-			await update();
-			await invalidateAll();
-		};
-	}}
-	class="mb-6 p-4 bg-gray-100 rounded"
->
+<form method="post" action="?/saveFamilies" use:enhance class="mb-6 p-4 bg-gray-100 rounded">
 	<h2 class="text-xl mb-2">Tag Families</h2>
 
 	<div class="flex gap-2 items-end mb-4">
