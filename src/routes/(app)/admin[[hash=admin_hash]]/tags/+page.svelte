@@ -49,16 +49,13 @@
 
 	// Delete confirmation
 	let deletingFamilyId: string | null = null;
-	let forceDelete = false;
 
 	function confirmDelete(familyId: string) {
 		deletingFamilyId = familyId;
-		forceDelete = false;
 	}
 
 	function cancelDelete() {
 		deletingFamilyId = null;
-		forceDelete = false;
 	}
 
 	// Special tags
