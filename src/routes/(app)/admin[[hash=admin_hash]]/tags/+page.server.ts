@@ -1,8 +1,14 @@
 import { collections } from '$lib/server/database';
 import { z } from 'zod';
-import { fail } from '@sveltejs/kit';
 import { generateId } from '$lib/utils/generateId';
 import type { Actions } from './$types';
+
+interface RawTagFamily {
+	_id: string;
+	name: string;
+	createdAt?: string | Date;
+	updatedAt?: string | Date;
+}
 
 export const load = async () => {
 	const [tags, families] = await Promise.all([
@@ -17,66 +23,77 @@ export const load = async () => {
 };
 
 export const actions: Actions = {
-	createFamily: async ({ request }) => {
+	saveFamilies: async ({ request }) => {
 		const formData = await request.formData();
+		const familiesString = formData.get('families');
 
-		const parsed = z
-			.object({
-				name: z.string().min(1).max(100)
-			})
-			.safeParse({
-				name: formData.get('name')
-			});
+		const familiesParsed: RawTagFamily[] = familiesString
+			? JSON.parse(String(familiesString))
+					.filter((family: { name: string }) => family.name.trim() !== '')
+					.map((family: RawTagFamily, index: number) => ({ ...family, order: index }))
+			: [];
 
-		if (!parsed.success) {
-			return fail(400, { error: 'Invalid family name' });
-		}
-
-		const slug = generateId(parsed.data.name, false);
-
-		const existing = await collections.tagFamilies.findOne({ _id: slug });
-		if (existing) {
-			return fail(400, { error: 'A family with this name already exists' });
-		}
-
-		const maxOrder = await collections.tagFamilies.find({}).sort({ order: -1 }).limit(1).toArray();
-
-		await collections.tagFamilies.insertOne({
-			_id: slug,
-			name: parsed.data.name.trim(),
-			order: (maxOrder[0]?.order ?? 0) + 1,
-			createdAt: new Date(),
-			updatedAt: new Date()
+		// Validate each family
+		const familySchema = z.object({
+			_id: z.string(),
+			name: z.string().min(1).max(100),
+			order: z.number(),
+			createdAt: z.union([z.string(), z.date()]).optional(),
+			updatedAt: z.union([z.string(), z.date()]).optional()
 		});
 
-		return { success: true };
-	},
+		const validatedFamilies = familiesParsed.map((f) => familySchema.parse(f));
 
-	deleteFamily: async ({ request }) => {
-		const formData = await request.formData();
-		const id = String(formData.get('id'));
-		const force = formData.get('force') === 'true';
+		// Get current families to preserve timestamps
+		const existingFamilies = await collections.tagFamilies.find({}).toArray();
+		const existingMap = new Map(existingFamilies.map((f) => [f._id, f]));
 
-		if (!id) {
-			return fail(400, { error: 'Family ID is required' });
-		}
+		// Delete all and re-insert
+		await collections.tagFamilies.deleteMany({});
 
-		const tagsCount = await collections.tags.countDocuments({ family: id });
+		if (validatedFamilies.length > 0) {
+			const familiesToInsert = validatedFamilies.map((family) => {
+				const isNew = family._id.startsWith('temp-');
+				const slug = isNew ? generateId(family.name, false) : family._id;
+				const existing = existingMap.get(family._id);
 
-		if (tagsCount > 0 && !force) {
-			return fail(400, {
-				error: `This family has ${tagsCount} tag(s). Use force delete to dissociate them.`,
-				requiresForce: true,
-				familyId: id,
-				tagsCount
+				return {
+					_id: slug,
+					name: family.name.trim(),
+					order: family.order,
+					createdAt: isNew ? new Date() : (existing?.createdAt ?? new Date()),
+					updatedAt: new Date()
+				};
 			});
+
+			await collections.tagFamilies.insertMany(familiesToInsert);
+
+			// Update tags that reference renamed families
+			for (const family of validatedFamilies) {
+				if (family._id.startsWith('temp-')) {
+					const newSlug = generateId(family.name, false);
+					// No need to update tags for new families
+				} else {
+					const newSlug = generateId(family.name, false);
+					if (newSlug !== family._id) {
+						// Family was renamed, update tag references
+						await collections.tags.updateMany(
+							{ family: family._id },
+							{ $set: { family: newSlug } }
+						);
+					}
+				}
+			}
 		}
 
-		if (tagsCount > 0 && force) {
-			await collections.tags.updateMany({ family: id }, { $unset: { family: '' } });
-		}
-
-		await collections.tagFamilies.deleteOne({ _id: id });
+		// Clear family reference for tags whose family was deleted
+		const remainingFamilyIds = validatedFamilies.map((f) =>
+			f._id.startsWith('temp-') ? generateId(f.name, false) : f._id
+		);
+		await collections.tags.updateMany(
+			{ family: { $nin: [...remainingFamilyIds, '', null, undefined] } },
+			{ $unset: { family: '' } }
+		);
 
 		return { success: true };
 	}

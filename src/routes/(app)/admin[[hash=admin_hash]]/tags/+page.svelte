@@ -2,12 +2,17 @@
 	import { enhance } from '$app/forms';
 	import { typedKeys } from '$lib/utils/typedKeys.js';
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
+	import type { TagFamily } from '$lib/types/TagFamily';
 
 	export let data;
-	export let form;
+
+	// Local state for families (following /admin/pos pattern)
+	let families: TagFamily[] = data.families.map((f) => ({ ...f }));
+
+	$: serializedFamilies = JSON.stringify(families);
 
 	// Group tags by family
-	$: tagsByFamily = data.families.map((family) => ({
+	$: tagsByFamily = families.map((family) => ({
 		family,
 		tags: data.tags.filter((tag) => tag.family === family._id)
 	}));
@@ -18,7 +23,7 @@
 	// Expand/collapse state - default all to expanded
 	let expandedFamilies: Record<string, boolean> = {};
 	$: {
-		for (const family of data.families) {
+		for (const family of families) {
 			if (expandedFamilies[family._id] === undefined) {
 				expandedFamilies[family._id] = true;
 			}
@@ -29,7 +34,7 @@
 	}
 
 	function expandAll() {
-		for (const family of data.families) {
+		for (const family of families) {
 			expandedFamilies[family._id] = true;
 		}
 		expandedFamilies['_orphan'] = true;
@@ -37,25 +42,46 @@
 	}
 
 	function collapseAll() {
-		for (const family of data.families) {
+		for (const family of families) {
 			expandedFamilies[family._id] = false;
 		}
 		expandedFamilies['_orphan'] = false;
 		expandedFamilies = expandedFamilies;
 	}
 
-	// New family form
+	// New family input
 	let newFamilyName = '';
 
-	// Delete confirmation
-	let deletingFamilyId: string | null = null;
-
-	function confirmDelete(familyId: string) {
-		deletingFamilyId = familyId;
+	function addFamily() {
+		if (!newFamilyName.trim()) return;
+		const newFamily: TagFamily = {
+			_id: `temp-${Date.now()}`,
+			name: newFamilyName.trim(),
+			order: families.length,
+			createdAt: new Date(),
+			updatedAt: new Date()
+		};
+		families = [...families, newFamily];
+		expandedFamilies[newFamily._id] = true;
+		newFamilyName = '';
 	}
 
-	function cancelDelete() {
-		deletingFamilyId = null;
+	function deleteFamily(familyId: string) {
+		const family = families.find((f) => f._id === familyId);
+		const tagsInFamily = data.tags.filter((t) => t.family === familyId).length;
+
+		if (tagsInFamily > 0) {
+			if (
+				!confirm(
+					`This family "${family?.name}" has ${tagsInFamily} tag(s). Deleting it will dissociate these tags. Continue?`
+				)
+			) {
+				return;
+			}
+		}
+
+		families = families.filter((f) => f._id !== familyId);
+		delete expandedFamilies[familyId];
 	}
 
 	// Special tags
@@ -85,27 +111,51 @@
 	<button class="btn btn-gray text-sm" on:click={collapseAll}>Collapse All</button>
 </div>
 
-<!-- Add new family -->
-<div class="mb-6 p-4 bg-gray-100 rounded">
+<!-- Family management (following /admin/pos pattern) -->
+<form method="post" action="?/saveFamilies" use:enhance class="mb-6 p-4 bg-gray-100 rounded">
 	<h2 class="text-xl mb-2">Tag Families</h2>
-	<form method="post" action="?/createFamily" use:enhance class="flex gap-2 items-end">
+
+	<div class="flex gap-2 items-end mb-4">
 		<label class="form-label">
 			New family name
 			<input
 				type="text"
-				name="name"
 				class="form-input"
 				bind:value={newFamilyName}
 				placeholder="Enter family name"
-				required
+				on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addFamily())}
 			/>
 		</label>
-		<button type="submit" class="btn btn-black">Add Family</button>
-	</form>
-	{#if form?.error && !form?.requiresForce}
-		<p class="text-red-500 mt-2">{form.error}</p>
+		<button type="button" class="btn btn-black" on:click={addFamily}>Add Family</button>
+	</div>
+
+	{#if families.length > 0}
+		<div class="space-y-2 mb-4">
+			{#each families as family, idx (family._id)}
+				<div class="flex items-center gap-2 bg-white p-2 rounded border">
+					<span class="text-gray-500 text-sm w-6">{idx + 1}.</span>
+					<input
+						type="text"
+						bind:value={family.name}
+						class="form-input flex-1"
+						placeholder="Family name"
+					/>
+					<button
+						type="button"
+						class="text-red-500 hover:text-red-700"
+						title="Delete family"
+						on:click={() => deleteFamily(family._id)}
+					>
+						<IconTrash />
+					</button>
+				</div>
+			{/each}
+		</div>
 	{/if}
-</div>
+
+	<input type="hidden" name="families" value={serializedFamilies} />
+	<button type="submit" class="btn btn-blue text-white">Save Families</button>
+</form>
 
 <!-- Tag families list -->
 <div class="space-y-4">
@@ -123,32 +173,6 @@
 					({expandedFamilies[family._id] ? 'collapse' : 'expand'})
 				</a>
 				<span class="text-gray-500 text-sm">({tags.length} tags)</span>
-
-				<!-- Delete button -->
-				{#if deletingFamilyId === family._id}
-					<form method="post" action="?/deleteFamily" use:enhance class="inline flex gap-1">
-						<input type="hidden" name="id" value={family._id} />
-						{#if form?.requiresForce && form?.familyId === family._id}
-							<span class="text-red-500 text-sm">{form.error}</span>
-							<input type="hidden" name="force" value="true" />
-							<button type="submit" class="btn btn-red text-sm">Force Delete</button>
-						{:else}
-							<button type="submit" class="btn btn-red text-sm">Confirm</button>
-						{/if}
-						<button type="button" class="btn btn-gray text-sm" on:click={cancelDelete}>
-							Cancel
-						</button>
-					</form>
-				{:else}
-					<button
-						type="button"
-						class="text-red-500 hover:text-red-700"
-						title="Delete family"
-						on:click={() => confirmDelete(family._id)}
-					>
-						<IconTrash />
-					</button>
-				{/if}
 			</div>
 
 			{#if expandedFamilies[family._id]}
@@ -174,7 +198,7 @@
 	{/each}
 
 	<!-- Orphan tags -->
-	{#if orphanTags.length > 0 || data.families.length === 0}
+	{#if orphanTags.length > 0 || families.length === 0}
 		<div class="border-l-4 border-orange-300 pl-4">
 			<div class="flex items-center gap-2">
 				<span>Family:</span>
