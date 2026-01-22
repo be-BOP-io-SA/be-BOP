@@ -537,7 +537,7 @@
 						bind:value={product.price.currency}
 						disabled
 					>
-						{#each CURRENCIES as currency}
+						{#each sortedCurrencies as currency}
 							<option value={currency}>{currency}</option>
 						{/each}
 					</select>
@@ -580,7 +580,7 @@
 						bind:value={product.price.currency}
 						disabled
 					>
-						{#each CURRENCIES as currency}
+						{#each sortedCurrencies as currency}
 							<option value={currency}>{currency}</option>
 						{/each}
 					</select>
