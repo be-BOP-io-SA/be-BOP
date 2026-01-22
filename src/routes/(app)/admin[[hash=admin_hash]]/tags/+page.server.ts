@@ -38,11 +38,7 @@ export const actions = {
 			return fail(400, { error: 'A family with this name already exists' });
 		}
 
-		const maxOrder = await collections.tagFamilies
-			.find({})
-			.sort({ order: -1 })
-			.limit(1)
-			.toArray();
+		const maxOrder = await collections.tagFamilies.find({}).sort({ order: -1 }).limit(1).toArray();
 
 		await collections.tagFamilies.insertOne({
 			_id: slug,
