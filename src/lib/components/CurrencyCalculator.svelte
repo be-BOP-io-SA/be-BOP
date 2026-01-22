@@ -17,7 +17,9 @@
 	): Currency {
 		if (secondary) return secondary;
 		if (main !== 'BTC') return 'BTC';
-		const countryCurrency = getCurrencyFromCountry(sellerCountry as Parameters<typeof getCurrencyFromCountry>[0]);
+		const countryCurrency = getCurrencyFromCountry(
+			sellerCountry as Parameters<typeof getCurrencyFromCountry>[0]
+		);
 		if (countryCurrency) return countryCurrency as Currency;
 		return 'USD';
 	}
