@@ -2,6 +2,7 @@ import { collections } from '$lib/server/database';
 import { z } from 'zod';
 import { fail } from '@sveltejs/kit';
 import { generateId } from '$lib/utils/generateId';
+import type { Actions } from './$types';
 
 export const load = async () => {
 	const [tags, families] = await Promise.all([
@@ -15,7 +16,7 @@ export const load = async () => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	createFamily: async ({ request }) => {
 		const formData = await request.formData();
 
