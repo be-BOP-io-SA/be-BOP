@@ -15,12 +15,18 @@
 		secondary: Currency | null | undefined,
 		sellerCountry: string | undefined
 	): Currency {
-		if (secondary) return secondary;
-		if (main !== 'BTC') return 'BTC';
+		if (secondary) {
+			return secondary;
+		}
+		if (main !== 'BTC') {
+			return 'BTC';
+		}
 		const countryCurrency = getCurrencyFromCountry(
 			sellerCountry as Parameters<typeof getCurrencyFromCountry>[0]
 		);
-		if (countryCurrency) return countryCurrency as Currency;
+		if (countryCurrency) {
+			return countryCurrency as Currency;
+		}
 		return 'USD';
 	}
 

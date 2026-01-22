@@ -796,13 +796,21 @@ export function sortCurrenciesForProduct(
 ): Currency[] {
 	const priority: Currency[] = [];
 
-	if (priceReference) priority.push(priceReference);
-	if (main && !priority.includes(main)) priority.push(main);
-	if (secondary && !priority.includes(secondary)) priority.push(secondary);
+	if (priceReference) {
+		priority.push(priceReference);
+	}
+	if (main && !priority.includes(main)) {
+		priority.push(main);
+	}
+	if (secondary && !priority.includes(secondary)) {
+		priority.push(secondary);
+	}
 
 	// Add BTC/SAT if not already included
 	for (const crypto of CRYPTO_CURRENCIES) {
-		if (!priority.includes(crypto)) priority.push(crypto);
+		if (!priority.includes(crypto)) {
+			priority.push(crypto);
+		}
 	}
 
 	// Add remaining fiat currencies A-Z
@@ -832,12 +840,18 @@ export function sortCurrenciesDefault(
 ): Currency[] {
 	const priority: Currency[] = [];
 
-	if (main) priority.push(main);
-	if (secondary && !priority.includes(secondary)) priority.push(secondary);
+	if (main) {
+		priority.push(main);
+	}
+	if (secondary && !priority.includes(secondary)) {
+		priority.push(secondary);
+	}
 
 	// Add BTC/SAT if not already included
 	for (const crypto of CRYPTO_CURRENCIES) {
-		if (!priority.includes(crypto)) priority.push(crypto);
+		if (!priority.includes(crypto)) {
+			priority.push(crypto);
+		}
 	}
 
 	// Add remaining fiat currencies A-Z
