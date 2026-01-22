@@ -61,7 +61,7 @@ export const actions: Actions = {
 					_id: slug,
 					name: family.name.trim(),
 					order: family.order,
-					createdAt: isNew ? new Date() : (existing?.createdAt ?? new Date()),
+					createdAt: isNew ? new Date() : existing?.createdAt ?? new Date(),
 					updatedAt: new Date()
 				};
 			});
