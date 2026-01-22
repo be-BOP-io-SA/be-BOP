@@ -53,7 +53,9 @@
 	let newFamilyName = '';
 
 	function addFamily() {
-		if (!newFamilyName.trim()) return;
+		if (!newFamilyName.trim()) {
+			return;
+		}
 		const newFamily: TagFamily = {
 			_id: `temp-${Date.now()}`,
 			name: newFamilyName.trim(),

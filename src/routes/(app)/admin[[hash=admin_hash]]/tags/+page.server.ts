@@ -70,13 +70,9 @@ export const actions: Actions = {
 
 			// Update tags that reference renamed families
 			for (const family of validatedFamilies) {
-				if (family._id.startsWith('temp-')) {
-					const newSlug = generateId(family.name, false);
-					// No need to update tags for new families
-				} else {
+				if (!family._id.startsWith('temp-')) {
 					const newSlug = generateId(family.name, false);
 					if (newSlug !== family._id) {
-						// Family was renamed, update tag references
 						await collections.tags.updateMany(
 							{ family: family._id },
 							{ $set: { family: newSlug } }
