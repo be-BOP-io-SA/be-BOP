@@ -5,25 +5,29 @@
 	import { sellerIdentity } from '$lib/stores/sellerIdentity';
 	import { getCurrencyFromCountry } from '$lib/types/Country';
 	import Select from 'svelte-select';
+	import { get } from 'svelte/store';
 
-	// Compute default second currency based on rules:
-	// 1. secondary (if set)
-	// 2. BTC (if main ≠ BTC)
-	// 3. currency from seller's VAT country (if main = BTC)
-	// 4. USD (fallback)
-	function getDefaultSecondCurrency(
-		main: Currency,
-		secondary: Currency | null | undefined,
-		sellerCountry: string | undefined
-	): Currency {
-		if (secondary) {
-			return secondary;
+	// Get initial values from stores
+	const initialCurrencies = get(currencies);
+	const initialSellerIdentity = get(sellerIdentity);
+
+	// Currency options sorted: main → secondary → BTC/SAT → fiat A-Z
+	const sortedCurrencies = sortCurrenciesDefault(
+		initialCurrencies.main,
+		initialCurrencies.secondary
+	);
+	const currencyOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+
+	// Compute default second currency
+	function getDefaultSecondCurrency(): Currency {
+		if (initialCurrencies.secondary) {
+			return initialCurrencies.secondary;
 		}
-		if (main !== 'BTC') {
+		if (initialCurrencies.main !== 'BTC') {
 			return 'BTC';
 		}
 		const countryCurrency = getCurrencyFromCountry(
-			sellerCountry as Parameters<typeof getCurrencyFromCountry>[0]
+			initialSellerIdentity?.address?.country as Parameters<typeof getCurrencyFromCountry>[0]
 		);
 		if (countryCurrency) {
 			return countryCurrency as Currency;
@@ -31,31 +35,16 @@
 		return 'USD';
 	}
 
-	// Currency options sorted: main → secondary → BTC/SAT → fiat A-Z
-	$: sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
-	$: currencyOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+	// Initialize selected values
+	let selectedFirstCurrency =
+		currencyOptions.find((c) => c.value === initialCurrencies.main) || currencyOptions[0];
+	let selectedSecondCurrency =
+		currencyOptions.find((c) => c.value === getDefaultSecondCurrency()) || currencyOptions[1];
 
 	let firstCurrencyAmount = 1;
-	$: firstCurrencyDefault = $currencies.main;
-	$: secondCurrencyDefault = getDefaultSecondCurrency(
-		$currencies.main,
-		$currencies.secondary,
-		$sellerIdentity?.address?.country
-	);
 
-	let selectedFirstCurrency: { value: Currency; label: Currency } | null = null;
-	let selectedSecondCurrency: { value: Currency; label: Currency } | null = null;
-	let initialized = false;
-
-	$: if (!initialized && currencyOptions.length > 0) {
-		selectedFirstCurrency = currencyOptions.find((c) => c.value === firstCurrencyDefault) || null;
-		selectedSecondCurrency =
-			currencyOptions.find((c) => c.value === secondCurrencyDefault) || null;
-		initialized = true;
-	}
-
-	$: firstCurrency = selectedFirstCurrency?.value ?? firstCurrencyDefault;
-	$: secondCurrency = selectedSecondCurrency?.value ?? secondCurrencyDefault;
+	$: firstCurrency = selectedFirstCurrency?.value || initialCurrencies.main;
+	$: secondCurrency = selectedSecondCurrency?.value || 'BTC';
 	$: secondCurrencyAmount = toCurrency(secondCurrency, firstCurrencyAmount, firstCurrency);
 </script>
 
