@@ -14,9 +14,9 @@
 	<a href="/order/{orderId}/payment/{payment.id}/pay" class="body-hyperlink">
 		<span>{t('order.paymentLink')}</span>
 		{#if payment.processor === 'sumup'}
-			<IconSumupWide class="h-12" />
+			<IconSumupWide class="h-12 order-creditCard-svg" />
 		{:else if payment.processor === 'stripe'}
-			<IconStripe class="h-12" />
+			<IconStripe class="h-12 order-creditCard-svg" />
 		{:else if payment.processor === 'paypal'}
 			<img
 				src="https://www.paypalobjects.com/webstatic/mktg/Logo/pp-logo-200px.png"
