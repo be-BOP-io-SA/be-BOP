@@ -9,6 +9,7 @@ import { type Product, PRODUCT_PAGINATION_LIMIT } from '$lib/types/Product';
 import { picturesForProducts } from '$lib/server/picture';
 import type { Filter } from 'mongodb';
 import { escapeForRegex } from '$lib/utils/escapeForRegex';
+import type { Tag } from '$lib/types/Tag';
 
 export const load = async ({ url }) => {
 	const querySchema = z.object({
@@ -22,11 +23,12 @@ export const load = async ({ url }) => {
 				...['shipping', 'standalone', 'payWhatYouWant', 'free', 'isTicket', 'preorder']
 			])
 			.optional(),
-		stock: z.enum(['' as const, ...['no-stock-management', 'with-stock', 'no-stock']]).optional()
+		stock: z.enum(['' as const, ...['no-stock-management', 'with-stock', 'no-stock']]).optional(),
+		tagId: z.string().optional()
 	});
 	const searchParams = Object.fromEntries(url.searchParams.entries());
 	const result = querySchema.parse(searchParams);
-	const { skip, productId, productName, productType, productAttribute, stock } = result;
+	const { skip, productId, productName, productType, productAttribute, stock, tagId } = result;
 
 	const query: Filter<Product> = {};
 
@@ -60,6 +62,10 @@ export const load = async ({ url }) => {
 		}
 	}
 
+	if (tagId) {
+		query.tagIds = tagId;
+	}
+
 	const products = await collections.products
 		.find(query)
 		.skip(skip)
@@ -68,9 +74,15 @@ export const load = async ({ url }) => {
 		.toArray();
 	const productIds = products.map((product) => product._id);
 
+	const tags = await collections.tags
+		.find({})
+		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
+		.toArray();
+
 	return {
 		products: products.map((product) => pojo(product)),
-		pictures: await picturesForProducts(productIds)
+		pictures: await picturesForProducts(productIds),
+		tags: tags.map((tag) => pojo(tag))
 	};
 };
 
