@@ -4,7 +4,6 @@
 	import PosSplitTotalSection from '$lib/components/PosSplitTotalSection.svelte';
 	import PosPaymentsList from '$lib/components/PosPaymentsList.svelte';
 	import PosSplitItemRow from '$lib/components/PosSplitItemRow.svelte';
-	import PrintableTicket from '$lib/components/PrintableTicket.svelte';
 	import { useI18n } from '$lib/i18n';
 	import { UNDERLYING_CURRENCY, type Currency } from '$lib/types/Currency.js';
 	import { toCurrency } from '$lib/utils/toCurrency';
@@ -242,8 +241,7 @@
 		}
 	}
 
-	// Print functionality
-	let printing = false;
+	let ticketIframe: HTMLIFrameElement;
 
 	// Prevent double-click on payment forms
 	let submitting = false;
@@ -264,18 +262,8 @@
 		};
 	};
 
-	// Beautify tabSlug for display: "table-3" → "Table 3"
-	$: poolLabel = tabSlug
-		.split('-')
-		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-		.join(' ');
-
 	function handlePrintGlobalTicket() {
-		printing = true;
-		setTimeout(() => {
-			window.print();
-			printing = false;
-		}, 100);
+		ticketIframe?.contentWindow?.print();
 	}
 </script>
 
@@ -299,9 +287,15 @@
 					</div>
 					<PosSplitTotalSection
 						totalExcl={poolTotals.excl}
-						totalIncl={poolTotals.incl}
+						totalIncl={tab.discount && tab.discount.percentage > 0
+							? poolTotals.incl * (1 - tab.discount.percentage / 100)
+							: poolTotals.incl}
 						currency={poolCurrency}
 						vatRates={poolVatRates}
+						totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
+							? poolTotals.incl
+							: undefined}
+						discountPercentage={tab.discount?.percentage}
 					/>
 				{:else if tab.items.length}
 					<div>
@@ -327,9 +321,15 @@
 					</div>
 					<PosSplitTotalSection
 						totalExcl={tabItemsPriceInfo.partialPrice}
-						totalIncl={tabItemsPriceInfo.partialPriceWithVat}
+						totalIncl={tab.discount && tab.discount.percentage > 0
+							? tabItemsPriceInfo.partialPriceWithVat * (1 - tab.discount.percentage / 100)
+							: tabItemsPriceInfo.partialPriceWithVat}
 						currency={tabItemsPriceInfo.currency}
 						vatRates={tabItemsPriceInfo.vat.map((vat) => vat.rate)}
+						totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
+							? tabItemsPriceInfo.partialPriceWithVat
+							: undefined}
+						discountPercentage={tab.discount?.percentage}
 					/>
 				{:else}
 					<p>{t('cart.empty')}</p>
@@ -674,6 +674,12 @@
 				>
 					{t('pos.split.return')}
 				</a>
+				<button
+					class="bg-green-800 hover:bg-green-900 uppercase text-3xl text-white p-4 text-center"
+					on:click={handlePrintGlobalTicket}
+				>
+					{t('pos.split.globalTicket')}
+				</button>
 			{:else}
 				<button
 					class="touchScreen-action-cancel uppercase text-3xl text-white p-4 text-center"
@@ -711,26 +717,9 @@
 	</footer>
 </div>
 
-{#if printing && poolTotals}
-	<PrintableTicket
-		{poolLabel}
-		generatedAt={new Date()}
-		tagGroups={[
-			{
-				tagNames: [],
-				items: tab.items.map((item) => ({
-					product: { name: item.product.name },
-					quantity: item.originalQuantity ?? item.quantity,
-					variations: [],
-					notes: []
-				}))
-			}
-		]}
-		priceInfo={{
-			itemPrices: originalQuantitiesPriceInfo.perItem,
-			total: poolTotals.incl,
-			vatRate: poolVatRates[0] ?? 0,
-			currency: poolCurrency
-		}}
-	/>
-{/if}
+<iframe
+	src="/pos/touch/tab/{tabSlug}/ticket"
+	style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
+	title="Global Ticket"
+	bind:this={ticketIframe}
+/>

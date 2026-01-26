@@ -17,7 +17,6 @@
 	import { UNDERLYING_CURRENCY, type Currency } from '$lib/types/Currency.js';
 	import { sluggifyTab } from '$lib/types/PosTabGroup.js';
 	import PrintTicketModal from '$lib/components/PrintTicketModal.svelte';
-	import PrintableTicket from '$lib/components/PrintableTicket.svelte';
 	import type { PrintTicketOptions } from '$lib/types/PrintTicketOptions';
 	import type { PrintHistoryEntry } from '$lib/types/PrintHistoryEntry';
 	import MoveItemsModal from '$lib/components/MoveItemsModal.svelte';
@@ -147,24 +146,10 @@
 	}
 
 	let printModalOpen = false;
-	let ticketTagGroups: Array<{
-		tagNames: string[];
-		items: Array<{
-			product: { name: string };
-			quantity: number;
-			variations: Array<{ text: string; count: number }>;
-			notes: string[];
-		}>;
-	}> = [];
-	let ticketGeneratedAt: Date | undefined = undefined;
 
-	type TicketGroup = {
-		product: (typeof items)[0]['product'];
-		totalQuantity: number;
-		variations: Array<{ text: string; count: number }>;
-		notes: string[];
-		itemIds: string[];
-	};
+	let kitchenTicketIframe: HTMLIFrameElement;
+	let currentTicketUrl = `/pos/touch/tab/${tabSlug}/kitchen-ticket`;
+	let onIframeLoaded: (() => void) | null = null;
 
 	let availablePrintTags = data.printTags;
 	$: availablePrintTags = data.printTags;
@@ -185,6 +170,16 @@
 	}
 
 	async function handlePrintTicket(options: PrintTicketOptions) {
+		const ticketUrl = new URL(`/pos/touch/tab/${tabSlug}/kitchen-ticket`, window.location.origin);
+		if (options.mode) {
+			ticketUrl.searchParams.set('mode', options.mode);
+		}
+		if (options.tagFilter) {
+			ticketUrl.searchParams.set('tagFilter', options.tagFilter);
+		}
+
+		printModalOpen = false;
+
 		const filteredItems = items
 			.map((item) => ({
 				...item,
@@ -200,158 +195,60 @@
 				return true;
 			});
 
-		type TagGroupKey = string;
-		type ProductGroups = Map<string, TicketGroup>;
+		currentTicketUrl = ticketUrl.toString();
 
-		const tagGroups = filteredItems.reduce((acc, item) => {
-			const qtyToUse = options.mode === 'newlyOrdered' ? item.newQuantity : item.quantity;
+		onIframeLoaded = () => {
+			kitchenTicketIframe?.contentWindow?.print();
+		};
 
-			const printableTagIds = (item.product.tagIds ?? [])
-				.filter((tagId) => data.printTagsMap[tagId])
-				.slice()
-				.sort();
-			const tagKey = printableTagIds.join(',');
+		if (filteredItems.length > 0) {
+			// save print history (server builds tagGroups)
+			const historyFormData = new FormData();
+			historyFormData.set('mode', options.mode ?? 'all');
+			historyFormData.set('poolLabel', poolLabel);
+			historyFormData.set('itemIds', JSON.stringify(filteredItems.map((i) => i.tabItemId)));
+			fetch('?/savePrintHistory', { method: 'POST', body: historyFormData }).catch(console.error);
 
-			if (!acc.has(tagKey)) {
-				acc.set(tagKey, new Map<string, TicketGroup>());
-			}
-			const productGroups = acc.get(tagKey);
-			if (!productGroups) {
-				return acc;
-			}
-
-			const productKey = item.product._id;
-			const existing = productGroups.get(productKey);
-
-			if (!existing) {
-				productGroups.set(productKey, {
-					product: item.product,
-					totalQuantity: qtyToUse,
-					variations:
-						item.chosenVariations && Object.keys(item.chosenVariations).length > 0
-							? [{ text: Object.values(item.chosenVariations).join(' '), count: qtyToUse }]
-							: [],
-					notes: item.internalNote?.value ? [item.internalNote.value] : [],
-					itemIds: [item.tabItemId]
-				});
-			} else {
-				existing.totalQuantity += qtyToUse;
-				existing.itemIds.push(item.tabItemId);
-
-				if (item.chosenVariations && Object.keys(item.chosenVariations).length > 0) {
-					const variationText = Object.values(item.chosenVariations).join(' ');
-					const existingVariation = existing.variations.find((v) => v.text === variationText);
-					if (existingVariation) {
-						existingVariation.count += qtyToUse;
-					} else {
-						existing.variations.push({ text: variationText, count: qtyToUse });
-					}
-				}
-
-				if (item.internalNote?.value) {
-					existing.notes.push(item.internalNote.value);
-				}
-			}
-
-			return acc;
-		}, new Map<TagGroupKey, ProductGroups>());
-
-		const uniqueTags = new Set<string>();
-		let totalItemCount = 0;
-
-		ticketTagGroups = Array.from(tagGroups.entries())
-			.map(([tagKey, productGroups]) => {
-				const tagIds = tagKey ? tagKey.split(',') : [];
-				const tagNames = tagIds
-					.map((id) => data.printTagsMap[id])
-					.filter(Boolean)
-					.sort();
-
-				tagNames.forEach((tagName) => uniqueTags.add(tagName));
-
-				const items = Array.from(productGroups.values()).map((group) => {
-					totalItemCount += group.totalQuantity;
-					return {
-						product: { name: group.product.name },
-						quantity: group.totalQuantity,
-						variations: group.variations,
-						notes: group.notes
-					};
-				});
-
-				return {
-					tagNames,
-					items
-				};
-			})
-			.sort((a, b) => {
-				const aName = a.tagNames.join(', ');
-				const bName = b.tagNames.join(', ');
-				return aName.localeCompare(bName);
-			});
-
-		ticketGeneratedAt = new Date();
-
-		setTimeout(() => {
-			window.print();
-
-			if (totalItemCount > 0 && ticketGeneratedAt) {
-				const historyEntry: PrintHistoryEntry = {
-					timestamp: ticketGeneratedAt,
-					poolLabel,
-					itemCount: totalItemCount,
-					tagNames: Array.from(uniqueTags).sort(),
-					tagGroups: ticketTagGroups
-				};
-
-				const historyFormData = new FormData();
-				historyFormData.set('entry', JSON.stringify(historyEntry));
-
-				fetch('?/savePrintHistory', {
-					method: 'POST',
-					body: historyFormData
-				}).catch((error) => {
-					console.error('Error saving print history:', error);
-				});
-			}
-
-			if (options.mode === 'newlyOrdered' && filteredItems.length > 0) {
+			// Update print status for newlyOrdered mode
+			if (options.mode === 'newlyOrdered') {
 				const updates = filteredItems.map((item) => ({
 					itemId: item.tabItemId,
 					currentQuantity: item.quantity
 				}));
 				const formData = new FormData();
 				formData.set('updates', JSON.stringify(updates));
+				fetch('?/updatePrintStatus', { method: 'POST', body: formData }).catch(console.error);
 
-				fetch('?/updatePrintStatus', {
-					method: 'POST',
-					body: formData
-				}).catch((error) => {
-					console.error('Error updating print status:', error);
-				});
-
-				// Clear notes locally for printed items to avoid stale cache
+				// clear notes locally
 				for (const item of filteredItems) {
 					const idx = items.findIndex((i) => i.tabItemId === item.tabItemId);
 					if (idx !== -1) {
 						items[idx].internalNote = undefined;
 					}
 				}
-				// Force the reactive system (Svelte) to update all 'items' dependencies.
 				items = items;
 			}
 
+			// notes are one-time per print
+			const itemsWithNotes = filteredItems.filter((item) => item.internalNote?.value);
+			if (itemsWithNotes.length > 0) {
+				const notesFormData = new FormData();
+				notesFormData.set('itemIds', JSON.stringify(itemsWithNotes.map((item) => item.tabItemId)));
+				fetch('?/clearPrintedNotes', { method: 'POST', body: notesFormData }).catch(console.error);
+			}
+
 			invalidate(UrlDependency.orderTab(tabSlug));
-		}, 100);
+		}
 	}
 
-	function handleReprintFromHistory(entry: PrintHistoryEntry) {
-		ticketTagGroups = entry.tagGroups;
-		ticketGeneratedAt = new Date();
+	function handleReprintFromHistory(entry: PrintHistoryEntry, historyIndex: number) {
+		const ticketUrl = `/pos/touch/tab/${tabSlug}/kitchen-ticket?historyIndex=${historyIndex}`;
+		printModalOpen = false;
+		currentTicketUrl = ticketUrl;
 
-		setTimeout(() => {
-			window.print();
-		}, 100);
+		onIframeLoaded = () => {
+			kitchenTicketIframe?.contentWindow?.print();
+		};
 	}
 
 	// Discount UI state
@@ -1020,8 +917,19 @@
 	onReprintFromHistory={handleReprintFromHistory}
 />
 
-<!-- Printable Ticket (hidden on screen, visible on print) -->
-<PrintableTicket {poolLabel} tagGroups={ticketTagGroups} generatedAt={ticketGeneratedAt} />
+<iframe
+	src={currentTicketUrl}
+	style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
+	title="Kitchen Ticket"
+	on:load={() => {
+		if (onIframeLoaded) {
+			const callback = onIframeLoaded;
+			onIframeLoaded = null;
+			callback();
+		}
+	}}
+	bind:this={kitchenTicketIframe}
+/>
 
 <!-- Item Edit Dialog -->
 {#if itemToEditIndex !== undefined && itemToEditIndex >= 0}

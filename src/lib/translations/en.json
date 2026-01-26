@@ -577,6 +577,7 @@
 			"totalExcVat": "Total Excl. VAT",
 			"totalInclVat": "Total Incl. VAT",
 			"totalVat": "Total VAT",
+			"totalWithDiscount": "Total with discount",
 			"unitPrice": "Unit price",
 			"vatFreeReason": "Vat exempted: {reason}",
 			"peopleCount": "Number of people"
@@ -669,6 +670,7 @@
 			"ticketNumber": "TICKET n°",
 			"exclVat": "EX",
 			"inclVat": "INC",
+			"subtotal": "SUBTOTAL",
 			"total": "TOTAL",
 			"vatBreakdown": "Incl. VAT",
 			"favorites": "FAVORITES",
@@ -703,6 +705,7 @@
 			"poolRemainingToPay": "POOL (remaining to be paid)",
 			"exclVat": "excl. VAT",
 			"inclVat": "incl. VAT {rates}",
+			"inclVatShort": "incl. VAT",
 			"vatRate": "VAT {rate}%",
 			"cashIn": "Cash in",
 			"all": "all",
@@ -726,7 +729,9 @@
 			"allPaid": "All is paid",
 			"completeSharesFirst": "You have already started paying for the pool through \"Split (shares)\" payments. Please complete all payments and close the pool first. ",
 			"closePool": "Close pool",
-			"globalTicket": "Global ticket"
+			"globalTicket": "Global ticket",
+			"beforeDiscount": "BEFORE DISCOUNT",
+			"afterDiscount": "AFTER DISCOUNT"
 		},
 		"btn": {
 			"add": "Add",

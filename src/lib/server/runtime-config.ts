@@ -95,6 +95,7 @@ const baseConfig = {
 	logo: { isWide: false, pictureId: '', darkModePictureId: '' },
 	faviconPictureId: '',
 	footerLogoId: '',
+	ticketLogoId: '',
 	lnurlPayMetadataJwtSigningKey: '',
 	authLinkJwtSigningKey: '',
 	ssoSecret: '',

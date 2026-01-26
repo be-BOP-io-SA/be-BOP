@@ -186,6 +186,53 @@ export const actions: Actions = {
 			runtimeConfig.footerLogoId = '';
 		}
 	},
+
+	setAsTicketLogo: async function ({ params }) {
+		const picture = await collections.pictures.findOne({ _id: params.id });
+
+		if (!picture) {
+			throw error(404);
+		}
+
+		if (picture.productId) {
+			throw error(400, 'Picture is already associated to a product');
+		}
+		if (picture.tag) {
+			throw error(400, 'Picture is already associated to a tag');
+		}
+		if (picture.slider) {
+			throw error(400, 'Picture is already associated to a slide');
+		}
+
+		await collections.runtimeConfig.updateOne(
+			{
+				_id: 'ticketLogoId'
+			},
+			{
+				$set: { data: picture._id, updatedAt: new Date() }
+			},
+			{
+				upsert: true
+			}
+		);
+		runtimeConfig.ticketLogoId = picture._id;
+	},
+
+	removeTicketLogo: async function ({ params }) {
+		if (runtimeConfig.ticketLogoId === params.id) {
+			await collections.runtimeConfig.updateOne(
+				{
+					_id: 'ticketLogoId'
+				},
+				{ $set: { data: '', updatedAt: new Date() } },
+				{
+					upsert: true
+				}
+			);
+			runtimeConfig.ticketLogoId = '';
+		}
+	},
+
 	setAsFavicon: async function ({ params }) {
 		const picture = await collections.pictures.findOne({ _id: params.id });
 

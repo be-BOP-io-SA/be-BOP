@@ -102,6 +102,8 @@ export const load = async ({ depends, locals, params }) => {
 		clearAbandonedCartsAndOrdersFromTab(tab)
 	]);
 
+	const sellerIdentity = runtimeConfig.sellerIdentity;
+
 	depends(UrlDependency.orderTab(tabSlug));
 
 	const sharesOrder = allPoolOrders.find((o) => o.splitMode === 'shares');
@@ -152,6 +154,11 @@ export const load = async ({ depends, locals, params }) => {
 
 	const methods = paymentMethods({ hasPosOptions: true, includePOS: true });
 
+	const companyLogoId = runtimeConfig.ticketLogoId || runtimeConfig.logo?.pictureId;
+	const companyLogoUrl = companyLogoId ? `/picture/raw/${companyLogoId}/format/128` : undefined;
+
+	const showBebopLogo = !runtimeConfig.removeBebopLogoPOS;
+
 	return {
 		orderTab,
 		tabSlug,
@@ -161,7 +168,15 @@ export const load = async ({ depends, locals, params }) => {
 			slug: s.slug,
 			name: s.name,
 			parentMethod: 'point-of-sale' as PaymentMethod
-		}))
+		})),
+		companyInfo: {
+			businessName: sellerIdentity?.businessName,
+			address: sellerIdentity?.address,
+			vatNumber: sellerIdentity?.vatNumber,
+			phone: sellerIdentity?.contact?.phone
+		},
+		companyLogoUrl,
+		showBebopLogo
 	};
 };
 

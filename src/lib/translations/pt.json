@@ -577,6 +577,7 @@
 			"totalExcVat": "Total Excl. IVA",
 			"totalInclVat": "Total Incl. IVA",
 			"totalVat": "Total IVA",
+			"totalWithDiscount": "Total com desconto",
 			"unitPrice": "Preço unitário",
 			"vatFreeReason": "Isento de IVA: {reason}",
 			"peopleCount": "Número de pessoas"
@@ -696,6 +697,7 @@
 			"ticketNumber": "BILHETE n°",
 			"exclVat": "SEM",
 			"inclVat": "COM",
+			"subtotal": "SUBTOTAL",
 			"total": "TOTAL",
 			"vatBreakdown": "Dos quais IVA",
 			"favorites": "FAVORITOS",
@@ -730,6 +732,7 @@
 			"poolRemainingToPay": "POOL (a pagar)",
 			"exclVat": "sem IVA",
 			"inclVat": "com IVA {rates}",
+			"inclVatShort": "com IVA",
 			"vatRate": "IVA {rate}%",
 			"cashIn": "Cobrar",
 			"all": "tudo",
@@ -753,7 +756,9 @@
 			"allPaid": "Tudo pago",
 			"completeSharesFirst": "Já começou a pagar o pool através de pagamentos \"Dividir (partes)\". Por favor complete todos os pagamentos e feche o pool primeiro.",
 			"closePool": "Fechar pool",
-			"globalTicket": "Ticket global"
+			"globalTicket": "Ticket global",
+			"beforeDiscount": "ANTES DO DESCONTO",
+			"afterDiscount": "APÓS O DESCONTO"
 		},
 		"discount": {
 			"title": "Desconto",

@@ -5,15 +5,12 @@
 </script>
 
 <PrintableTicket
-	poolLabel="Order #{data.order.number}"
-	generatedAt={data.payment.paidAt ?? data.payment.createdAt}
+	poolLabel={data.poolLabel}
+	generatedAt={data.generatedAt}
 	tagGroups={data.tagGroups}
 	priceInfo={data.priceInfo}
 	companyInfo={data.companyInfo}
 	companyLogoUrl={data.companyLogoUrl}
-	showBebopLogo={true}
+	showBebopLogo={data.showBebopLogo}
 	showOnScreen={true}
-	showGroupHeaders={true}
-	sharesInfo={data.sharesInfo}
-	peopleCount={data.peopleCount}
 />

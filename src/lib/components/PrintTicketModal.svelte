@@ -10,7 +10,7 @@
 	export let printHistory: PrintHistoryEntry[] = [];
 	export let onConfirm: (options: PrintTicketOptions) => void;
 	export let onCancel: () => void;
-	export let onReprintFromHistory: (entry: PrintHistoryEntry) => void;
+	export let onReprintFromHistory: (entry: PrintHistoryEntry, historyIndex: number) => void;
 
 	let activeTab: 'print' | 'history' = 'print';
 	let mode: 'all' | 'newlyOrdered' = 'all';
@@ -48,8 +48,8 @@
 		activeTab = 'print';
 	}
 
-	function handleReprint(entry: PrintHistoryEntry) {
-		onReprintFromHistory(entry);
+	function handleReprint(entry: PrintHistoryEntry, historyIndex: number) {
+		onReprintFromHistory(entry, historyIndex);
 		isOpen = false;
 		activeTab = 'print';
 	}
@@ -177,7 +177,7 @@
 												<button
 													type="button"
 													class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-base font-bold rounded"
-													on:click={() => handleReprint(entry)}
+													on:click={() => handleReprint(entry, printHistory.length - 1 - index)}
 												>
 													PRINT
 												</button>

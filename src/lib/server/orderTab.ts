@@ -351,3 +351,93 @@ export async function handleOrderTabAfterPayment({
 		{ session }
 	);
 }
+
+/**
+ * Builds tagGroups for kitchen ticket printing from order tab items.
+ * Used by both kitchen-ticket page and savePrintHistory action.
+ */
+export function buildTagGroupsForPrint(
+	items: Array<{
+		quantity: number;
+		printedQuantity?: number;
+		chosenVariations?: Record<string, string>;
+		internalNote?: { value: string };
+		product: { _id: string; name: string; tagIds?: string[] };
+	}>,
+	printTagsMap: Record<string, string>,
+	mode: 'all' | 'newlyOrdered' = 'all'
+) {
+	// Map<tagKey, Map<productId, {name, qty, variations, notes}>>
+	const groups = new Map<
+		string,
+		Map<
+			string,
+			{
+				name: string;
+				qty: number;
+				variations: Map<string, number>;
+				notes: string[];
+			}
+		>
+	>();
+	let totalItemCount = 0;
+	const uniqueTagNames = new Set<string>();
+
+	items.forEach((item) => {
+		const newQty = item.quantity - (item.printedQuantity ?? 0);
+		if (mode === 'newlyOrdered' && newQty <= 0) {
+			return;
+		}
+
+		const qty = mode === 'newlyOrdered' ? newQty : item.quantity;
+		totalItemCount += qty;
+
+		const tagKey = (item.product.tagIds ?? [])
+			.filter((id) => printTagsMap[id])
+			.sort()
+			.join(',');
+
+		const products = groups.get(tagKey) ?? groups.set(tagKey, new Map()).get(tagKey) ?? new Map();
+
+		const existing = products.get(item.product._id);
+		const g = existing ?? {
+			name: item.product.name,
+			qty: 0,
+			variations: new Map<string, number>(),
+			notes: [] as string[]
+		};
+		if (!existing) {
+			products.set(item.product._id, g);
+		}
+
+		g.qty += qty;
+		if (item.chosenVariations && Object.keys(item.chosenVariations).length) {
+			const varText = Object.values(item.chosenVariations).join(' ');
+			g.variations.set(varText, (g.variations.get(varText) ?? 0) + qty);
+		}
+		if (item.internalNote?.value) {
+			g.notes.push(item.internalNote.value);
+		}
+	});
+
+	const tagGroups = [...groups.entries()]
+		.map(([tagKey, products]) => {
+			const tagNames = (tagKey ? tagKey.split(',') : [])
+				.map((id) => printTagsMap[id])
+				.filter(Boolean)
+				.sort();
+			tagNames.forEach((n) => uniqueTagNames.add(n));
+			return {
+				tagNames,
+				items: [...products.values()].map((p) => ({
+					product: { name: p.name },
+					quantity: p.qty,
+					variations: [...p.variations.entries()].map(([text, count]) => ({ text, count })),
+					notes: p.notes
+				}))
+			};
+		})
+		.sort((a, b) => a.tagNames.join(', ').localeCompare(b.tagNames.join(', ')));
+
+	return { tagGroups, uniqueTagNames: [...uniqueTagNames].sort(), totalItemCount };
+}
