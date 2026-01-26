@@ -703,6 +703,7 @@
 			"pagination": "SEITE {currentPage}/{totalPages}",
 			"tickets": "TICKETS",
 			"save": "SPEICHERN",
+			"moveItems": "Artikel verschieben",
 			"pool": "POOL",
 			"openDrawer": "KASSE ÖFFNEN",
 			"pay": "BEZAHLEN",

@@ -676,6 +676,7 @@
 			"pagination": "PAGE {currentPage}/{totalPages}",
 			"tickets": "TICKETS",
 			"save": "SAVE",
+			"moveItems": "Move Items",
 			"pool": "POOL",
 			"openDrawer": "OPEN DRAWER",
 			"pay": "PAY",

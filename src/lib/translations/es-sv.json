@@ -702,6 +702,7 @@
 			"pagination": "PÁGINA {currentPage}/{totalPages}",
 			"tickets": "TICKETS",
 			"save": "GUARDAR",
+			"moveItems": "Mover artículos",
 			"pool": "POOL",
 			"openDrawer": "ABRIR CAJÓN",
 			"pay": "PAGAR",
