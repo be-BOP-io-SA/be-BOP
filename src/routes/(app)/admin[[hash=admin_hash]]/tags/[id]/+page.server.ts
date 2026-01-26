@@ -10,13 +10,14 @@ import { deletePicture } from '$lib/server/picture';
 import { tagTranslatableSchema } from './tag-schema';
 
 export const load = async ({ params }) => {
-	const pictures = await collections.pictures
-		.find({ 'tag._id': params.id })
-		.sort({ createdAt: 1 })
-		.toArray();
+	const [pictures, families] = await Promise.all([
+		collections.pictures.find({ 'tag._id': params.id }).sort({ createdAt: 1 }).toArray(),
+		collections.tagFamilies.find({}).sort({ order: 1 }).toArray()
+	]);
 
 	return {
-		pictures
+		pictures,
+		families
 	};
 };
 
@@ -35,7 +36,7 @@ export const actions: Actions = {
 		const parsed = z
 			.object({
 				name: z.string().trim().min(1).max(MAX_NAME_LIMIT),
-				family: z.enum(['creators', 'events', 'retailers', 'temporal']),
+				family: z.string().optional(),
 				widgetUseOnly: z.boolean({ coerce: true }).default(false),
 				productTagging: z.boolean({ coerce: true }).default(false),
 				useLightDark: z.boolean({ coerce: true }).default(false),
