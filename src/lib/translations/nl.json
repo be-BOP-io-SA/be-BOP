@@ -773,6 +773,11 @@
 			"lockedWarning": "⚠️ Korting kan niet worden gewijzigd nadat de betaling is gestart",
 			"save": "Opslaan"
 		},
+		"midTicket": {
+			"title": "Keuken-/tussenbon instellingen",
+			"topBlankLines": "Aantal lege regels bovenaan de bon (voor klemmen)",
+			"topBlankLinesHint": "Standaard: 0"
+		},
 		"useSelectForTags": "Gebruik dropdown voor tags"
 	},
 	"product": {
