@@ -178,6 +178,8 @@
 			ticketUrl.searchParams.set('tagFilter', options.tagFilter);
 		}
 
+		ticketUrl.searchParams.set('_t', Date.now().toString());
+
 		printModalOpen = false;
 
 		const filteredItems = items
@@ -195,49 +197,59 @@
 				return true;
 			});
 
+		// Collect data before any async operations (to avoid race condition)
+		const filteredItemIds = filteredItems.map((item) => item.tabItemId);
+		const itemsWithNotes = filteredItems.filter((item) => item.internalNote?.value);
+		const printedItemIds = new Set(filteredItemIds);
+		const isNewlyOrdered = options.mode === 'newlyOrdered';
+
 		currentTicketUrl = ticketUrl.toString();
 
-		onIframeLoaded = () => {
+		onIframeLoaded = async () => {
 			kitchenTicketIframe?.contentWindow?.print();
-		};
 
-		if (filteredItems.length > 0) {
-			// save print history (server builds tagGroups)
-			const historyFormData = new FormData();
-			historyFormData.set('mode', options.mode ?? 'all');
-			historyFormData.set('poolLabel', poolLabel);
-			historyFormData.set('itemIds', JSON.stringify(filteredItems.map((i) => i.tabItemId)));
-			fetch('?/savePrintHistory', { method: 'POST', body: historyFormData }).catch(console.error);
+			// All server updates after iframe will be loaded (so data will be shown on ticket first)
+			const serverUpdates: Promise<unknown>[] = [];
 
 			// Update print status for newlyOrdered mode
-			if (options.mode === 'newlyOrdered') {
+			if (isNewlyOrdered && filteredItems.length > 0) {
 				const updates = filteredItems.map((item) => ({
 					itemId: item.tabItemId,
 					currentQuantity: item.quantity
 				}));
 				const formData = new FormData();
 				formData.set('updates', JSON.stringify(updates));
-				fetch('?/updatePrintStatus', { method: 'POST', body: formData }).catch(console.error);
-
-				// clear notes locally
-				for (const item of filteredItems) {
-					const idx = items.findIndex((i) => i.tabItemId === item.tabItemId);
-					if (idx !== -1) {
-						items[idx].internalNote = undefined;
-					}
-				}
-				items = items;
+				serverUpdates.push(fetch('?/updatePrintStatus', { method: 'POST', body: formData }));
 			}
 
-			// notes are one-time per print
-			const itemsWithNotes = filteredItems.filter((item) => item.internalNote?.value);
+			// Clear notes on server
 			if (itemsWithNotes.length > 0) {
 				const notesFormData = new FormData();
 				notesFormData.set('itemIds', JSON.stringify(itemsWithNotes.map((item) => item.tabItemId)));
-				fetch('?/clearPrintedNotes', { method: 'POST', body: notesFormData }).catch(console.error);
+				serverUpdates.push(fetch('?/clearPrintedNotes', { method: 'POST', body: notesFormData }));
 			}
 
+			await Promise.all(serverUpdates).catch(console.error);
+
 			invalidate(UrlDependency.orderTab(tabSlug));
+		};
+
+		if (filteredItems.length > 0) {
+			const historyFormData = new FormData();
+			historyFormData.set('mode', options.mode ?? 'all');
+			historyFormData.set('poolLabel', poolLabel);
+			historyFormData.set('itemIds', JSON.stringify(filteredItemIds));
+			fetch('?/savePrintHistory', { method: 'POST', body: historyFormData }).catch(console.error);
+
+			// Update UI immediately: clear notes (all modes) + update printedQuantity (newlyOrdered)
+			items = items.map((item) => {
+				if (!printedItemIds.has(item.tabItemId)) {
+					return item;
+				}
+				return isNewlyOrdered
+					? { ...item, printedQuantity: item.quantity, internalNote: undefined }
+					: { ...item, internalNote: undefined };
+			});
 		}
 	}
 

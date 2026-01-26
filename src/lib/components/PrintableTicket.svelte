@@ -58,6 +58,9 @@
 	// Set to true to enable ESC/POS commands for compatible thermal printers
 	export let useEscPos = false;
 
+	// Number of blank lines at top of each kitchen ticket section (for clamping)
+	export let topBlankLines = 0;
+
 	// ESC/POS Command Constants
 	const ESC = {
 		// Text formatting
@@ -555,30 +558,33 @@
 			lines.push(separator('═'));
 		} else {
 			// Kitchen ticket (no prices) - unified format with global ticket
-			lines.push('');
-			if (useEscPos) {
-				lines.push(ESC.DOUBLE_HEIGHT + bold(centerText(`TICKET ${poolLabel.toUpperCase()}`, 16)));
-				if (generatedAt) {
-					lines.push(ESC.DOUBLE_WIDTH + centerText(format(generatedAt, 'HH:mm'), 16) + ESC.NORMAL);
-				}
-			} else {
-				lines.push(centerText(`TICKET ${poolLabel.toUpperCase()}`));
-				if (generatedAt) {
-					lines.push(centerText(format(generatedAt, 'HH:mm')));
-				}
-			}
-
-			lines.push(separator('═'));
+			const bottomBlankLines = 2; // Fixed blank lines at bottom of each section (for thermal printer cut)
 
 			tagGroups.forEach((group) => {
+				lines.push(...Array(topBlankLines).fill(''));
+
+				lines.push(separator('═'));
+				if (useEscPos) {
+					lines.push(ESC.DOUBLE_HEIGHT + bold(centerText(`TICKET ${poolLabel.toUpperCase()}`, 16)));
+					if (generatedAt) {
+						lines.push(
+							ESC.DOUBLE_WIDTH + centerText(format(generatedAt, 'HH:mm'), 16) + ESC.NORMAL
+						);
+					}
+				} else {
+					lines.push(centerText(`TICKET ${poolLabel.toUpperCase()}`));
+					if (generatedAt) {
+						lines.push(centerText(format(generatedAt, 'HH:mm')));
+					}
+				}
+				lines.push(separator('═'));
+
 				if (group.tagNames.length > 0) {
-					lines.push('');
-					lines.push(separator('-'));
 					const tagText = group.tagNames.join(', ').toUpperCase();
 					wordWrap(tagText, ticketWidth).forEach((line) => {
-						lines.push(line);
+						lines.push(centerText(line));
 					});
-					lines.push(separator('-'));
+					lines.push(separator('═'));
 				}
 
 				group.items.forEach((item) => {
@@ -592,10 +598,10 @@
 
 					renderVariationsAndNotes(item, lines, '');
 				});
-			});
 
-			lines.push('');
-			lines.push(separator('═'));
+				lines.push(separator('═'));
+				lines.push(...Array(bottomBlankLines).fill(''));
+			});
 		}
 
 		return lines.filter((line) => line !== undefined).join('\n');

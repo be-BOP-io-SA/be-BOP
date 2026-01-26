@@ -773,6 +773,11 @@
 			"motivePlaceholder": "ex. Passaporte gourmet",
 			"lockedWarning": "⚠️ Não é possível modificar o desconto após o início do pagamento",
 			"save": "Guardar"
+		},
+		"midTicket": {
+			"title": "Configurações de ticket de cozinha/intermediário",
+			"topBlankLines": "Número de linhas em branco no topo do ticket (para fixação)",
+			"topBlankLinesHint": "Padrão: 0"
 		}
 	},
 	"product": {

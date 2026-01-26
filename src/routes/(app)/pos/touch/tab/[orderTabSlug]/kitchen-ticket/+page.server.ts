@@ -1,5 +1,6 @@
 import { collections } from '$lib/server/database';
 import { buildTagGroupsForPrint, getOrCreateOrderTab } from '$lib/server/orderTab';
+import { runtimeConfig } from '$lib/server/runtime-config';
 
 export async function load({ locals, params, url }) {
 	const tab = await getOrCreateOrderTab({ slug: params.orderTabSlug });
@@ -22,7 +23,8 @@ export async function load({ locals, params, url }) {
 			poolLabel: historyEntry?.poolLabel ?? poolLabel,
 			generatedAt: new Date(),
 			tagGroups: historyEntry?.tagGroups ?? [],
-			showBebopLogo: false
+			showBebopLogo: false,
+			topBlankLines: runtimeConfig.posMidTicketTopBlankLines
 		};
 	}
 
@@ -67,6 +69,7 @@ export async function load({ locals, params, url }) {
 		poolLabel,
 		generatedAt: new Date(),
 		tagGroups,
-		showBebopLogo: false
+		showBebopLogo: false,
+		topBlankLines: runtimeConfig.posMidTicketTopBlankLines
 	};
 }
