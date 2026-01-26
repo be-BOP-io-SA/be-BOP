@@ -11,11 +11,12 @@ import { collections, withTransaction } from './database';
 import {
 	Duration,
 	add,
+	addDays,
 	addHours,
 	addMinutes,
 	differenceInMinutes,
 	differenceInSeconds,
-	endOfDay,
+	eachDayOfInterval,
 	isSameDay,
 	max,
 	startOfDay,
@@ -994,7 +995,8 @@ export async function createOrder(
 							_id: item.booking._id,
 							productId: item.product._id,
 							start: item.booking.start,
-							end: item.booking.end as Date | null
+							end: item.booking.end as Date | null,
+							bookedDates: item.booking.bookedDates
 					  }
 					: undefined
 			)
@@ -1045,44 +1047,62 @@ export async function createOrder(
 				}
 				const startDay = startOfDay(startTime);
 				const endTime = toZonedTime(time.end, bookingSpec.schedule.timezone);
-				const endDay = endOfDay(subSeconds(endTime, 1)); // Sub-seconds to allow booking until midnight
+				const endDay = startOfDay(subSeconds(endTime, 1)); // Use startOfDay for comparison, sub-seconds to handle midnight
 
-				if (!isSameDay(startDay, endDay)) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range must be on the same day`
+				const getDayOfWeek = (date: Date) => dayList[(date.getDay() + 6) % 7];
+
+				if (is24HourSlot) {
+					const daysToValidate = time.bookedDates?.length
+						? time.bookedDates.map((d) => startOfDay(d))
+						: eachDayOfInterval({ start: startDay, end: endDay });
+					const unavailable = daysToValidate.find(
+						(day) => !bookingSpec.schedule[getDayOfWeek(day)]
 					);
-				}
+					if (unavailable) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} is not available on ${getDayOfWeek(
+								unavailable
+							)}`
+						);
+					}
+				} else {
+					if (!isSameDay(startDay, endDay)) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range must be on the same day`
+						);
+					}
 
-				const dayOfWeek = dayList[(startDay.getDay() + 6) % 7];
+					const dayOfWeek = getDayOfWeek(startDay);
+					const daySpec = bookingSpec.schedule[dayOfWeek];
 
-				const daySpec = bookingSpec.schedule[dayOfWeek];
+					if (!daySpec) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range is not available on ${dayOfWeek}`
+						);
+					}
 
-				if (!daySpec) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range is not available on ${dayOfWeek}`
-					);
-				}
+					const minutesStart = startTime.getMinutes() + startTime.getHours() * 60;
+					const minutesEnd = endTime.getMinutes() + endTime.getHours() * 60;
 
-				const minutesStart = startTime.getMinutes() + startTime.getHours() * 60;
-				const minutesEnd = endTime.getMinutes() + endTime.getHours() * 60;
-
-				if (minutesStart < timeToMinutes(daySpec.start)) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range starts (${minutesToTime(
-							minutesStart
-						)}) before the scheduled opening time (${daySpec.start})`
-					);
-				}
-				if (minutesEnd > (daySpec.end === '00:00' ? timeToMinutes(daySpec.end) : 24 * 60)) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range ends (${minutesToTime(
-							minutesEnd
-						)}) after the schedule closing time (${daySpec.end})`
-					);
+					if (minutesStart < timeToMinutes(daySpec.start)) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range starts (${minutesToTime(
+								minutesStart
+							)}) before the scheduled opening time (${daySpec.start})`
+						);
+					}
+					if (minutesEnd > (daySpec.end === '00:00' ? timeToMinutes(daySpec.end) : 24 * 60)) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range ends (${minutesToTime(
+								minutesEnd
+							)}) after the schedule closing time (${daySpec.end})`
+						);
+					}
 				}
 			}
 		}
@@ -1160,20 +1180,47 @@ export async function createOrder(
 			}
 		}
 
+		const createScheduleEvent = (
+			productId: string,
+			eventId: ObjectId,
+			beginsAt: Date,
+			endsAt: Date,
+			slugSuffix = ''
+		) => ({
+			_id: eventId,
+			title: '#' + orderNumber + ' - ' + productById[productId].name,
+			slug: productId + '-' + orderNumber + slugSuffix,
+			beginsAt,
+			endsAt,
+			scheduleId: productToScheduleId(productId),
+			orderId: orderId,
+			status: 'pending' as const,
+			orderCreated: false
+		});
+
 		await collections.scheduleEvents.insertMany(
 			Object.entries(bookingTimesPerProduct).flatMap(([productId, bookings]) =>
-				bookings.map((booking) => ({
-					_id: booking._id,
-					title: '#' + orderNumber + ' - ' + productById[productId].name,
-					slug: productId + '-' + orderNumber,
-					beginsAt: booking.start,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					endsAt: booking.end!,
-					scheduleId: productToScheduleId(productId),
-					orderId: orderId,
-					status: 'pending',
-					orderCreated: false
-				}))
+				bookings.flatMap((booking) =>
+					booking.bookedDates?.length
+						? booking.bookedDates.map((date, index) =>
+								createScheduleEvent(
+									productId,
+									index === 0 ? booking._id : new ObjectId(),
+									startOfDay(date),
+									addDays(startOfDay(date), 1),
+									index > 0 ? '-' + index : ''
+								)
+						  )
+						: [
+								createScheduleEvent(
+									productId,
+									booking._id,
+									booking.start,
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									booking.end!
+								)
+						  ]
+				)
 			)
 		);
 	}
@@ -1188,6 +1235,7 @@ export async function createOrder(
 						.find({
 							scheduleId: productToScheduleId(productId),
 							status: { $in: ['pending', 'confirmed'] },
+							orderId: { $ne: orderId },
 							...(lastTime.end && {
 								beginsAt: {
 									$lt: lastTime.end
@@ -1200,10 +1248,7 @@ export async function createOrder(
 								{
 									endsAt: { $gt: times[0].start }
 								}
-							],
-							_id: {
-								$nin: times.map((t) => t._id)
-							}
+							]
 						})
 						.project<{
 							_id: Schedule['_id'];
@@ -1249,7 +1294,12 @@ export async function createOrder(
 					freeProductSources: item.freeProductSources,
 					...(item.product.bookingSpec &&
 						item.booking && {
-							booking: { start: item.booking.start, end: item.booking.end, _id: item.booking._id }
+							booking: {
+								start: item.booking.start,
+								end: item.booking.end,
+								_id: item.booking._id,
+								...(item.booking.bookedDates?.length && { bookedDates: item.booking.bookedDates })
+							}
 						}),
 					vatRate: priceInfo.vatRates[i],
 					currencySnapshot: {
@@ -1600,9 +1650,7 @@ export async function createOrder(
 	} catch (e) {
 		if (!isEmptyObject(bookingTimesPerProduct)) {
 			await collections.scheduleEvents.deleteMany({
-				_id: {
-					$in: Object.values(bookingTimesPerProduct).flatMap((times) => times.map((t) => t._id))
-				}
+				orderId: orderId
 			});
 		}
 		throw e;
@@ -2547,29 +2595,46 @@ function compareBookingsAndThrow(
 	productName: string,
 	withOld: boolean
 ): (
-	a: {
-		start: Date;
-		end?: Date | null;
-	},
-	b: { start: Date; end?: Date | null }
+	a: { start: Date; end?: Date | null; bookedDates?: Date[] },
+	b: { start: Date; end?: Date | null; bookedDates?: Date[] }
 ) => number {
 	return (a, b) => {
-		if (
-			a.start.getTime() <= b.start.getTime() &&
-			(a.end?.getTime() ?? Infinity) > b.start.getTime()
-		) {
-			throw error(
-				400,
-				`Product ${productName} has overlapping bookings ${
-					!withOld ? 'in your order' : 'with an existing booking'
-				}`
-			);
-		}
+		const timeRangeOverlaps = (s1: number, e1: number, s2: number, e2: number) =>
+			s1 < e2 && e1 > s2;
 
-		if (
-			b.start.getTime() <= a.start.getTime() &&
-			(b.end?.getTime() ?? Infinity) > a.start.getTime()
-		) {
+		const datesOverlapRange = (dates: Date[], rangeStart: number, rangeEnd: number) =>
+			dates.some((d) => {
+				const dayStart = startOfDay(d).getTime();
+				const dayEnd = addDays(d, 1).getTime();
+				return timeRangeOverlaps(dayStart, dayEnd, rangeStart, rangeEnd);
+			});
+
+		const aDates = a.bookedDates;
+		const bDates = b.bookedDates;
+
+		const hasOverlap = (() => {
+			if (aDates?.length && bDates?.length) {
+				const aDayStarts = aDates.map((d) => startOfDay(d).getTime());
+				return bDates.some((d) => aDayStarts.includes(startOfDay(d).getTime()));
+			}
+
+			if (aDates?.length) {
+				return datesOverlapRange(aDates, b.start.getTime(), b.end?.getTime() ?? Infinity);
+			}
+
+			if (bDates?.length) {
+				return datesOverlapRange(bDates, a.start.getTime(), a.end?.getTime() ?? Infinity);
+			}
+
+			return timeRangeOverlaps(
+				a.start.getTime(),
+				a.end?.getTime() ?? Infinity,
+				b.start.getTime(),
+				b.end?.getTime() ?? Infinity
+			);
+		})();
+
+		if (hasOverlap) {
 			throw error(
 				400,
 				`Product ${productName} has overlapping bookings ${

@@ -15,6 +15,7 @@
 	import ProductType from './ProductType.svelte';
 	import IconInfo from './icons/IconInfo.svelte';
 	import type { PickDeep } from 'type-fest';
+	import { formatBookedDates } from '$lib/utils/formatBookedDates';
 
 	const { t, countryName, locale } = useI18n();
 
@@ -49,6 +50,7 @@
 				booking?: {
 					start: Date;
 					end: Date;
+					bookedDates?: Date[];
 				};
 			}
 		>;
@@ -129,13 +131,17 @@
 						{t('cart.quantity')}: {item.quantity}
 					{/if}
 					{#if item.booking}
-						{Intl.DateTimeFormat($locale, {
-							year: 'numeric',
-							month: 'short',
-							day: 'numeric',
-							hour: '2-digit',
-							minute: '2-digit'
-						}).formatRange(item.booking.start, item.booking.end)}
+						{#if item.booking.bookedDates?.length}
+							{formatBookedDates(item.booking.bookedDates)}
+						{:else}
+							{Intl.DateTimeFormat($locale, {
+								year: 'numeric',
+								month: 'short',
+								day: 'numeric',
+								hour: '2-digit',
+								minute: '2-digit'
+							}).formatRange(item.booking.start, item.booking.end)}
+						{/if}
 					{/if}
 				</div>
 			</div>
