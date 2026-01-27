@@ -108,7 +108,7 @@ export class Lock {
 		}
 		while (!processClosed && !this.destroyed) {
 			await this.tryAcquire();
-			await new Promise((resolve) => setTimeout(resolve, 5_000));
+			await setTimeout(5_000);
 		}
 
 		this.ownsLock = false;
