@@ -37,8 +37,8 @@
 		{t('customerTouch.ctaBack')}
 	</button>
 
-	<div class="grid grid-cols-[min-content_1fr] gap-2 flex-1 min-h-0">
-		<aside class="bg-[#2f2f32] text-white flex flex-col rounded-lg pt-2 overflow-y-auto">
+	<div class="grid grid-cols-[min-content_1fr] grid-rows-[1fr_auto] gap-x-2 flex-1 min-h-0">
+		<aside class="row-span-2 bg-[#2f2f32] text-white flex flex-col rounded-lg pt-2 overflow-y-auto">
 			<nav class="flex-1">
 				<a
 					href="/pos/customer-touch/list/home"
@@ -84,83 +84,81 @@
 				{/if}
 			</nav>
 		</aside>
-		<div class="flex flex-col min-h-0">
-			<div class="flex-1 overflow-y-auto min-h-0">
-				<slot />
-			</div>
-			{#if $page.url.pathname !== '/pos/customer-touch/list/drop'}
-				{#if $page.url.pathname.startsWith('/pos/customer-touch/list/product/')}
-					<div class="shrink-0 flex flex-col gap-2 pt-2 pb-4">
-						<button
-							on:click={() => goto('/pos/customer-touch/list/drop')}
-							class="bg-[#2f2f32] text-white flex justify-center text-xl font-semibold rounded-lg p-4"
-						>
-							{t('customerTouch.cta.abandonment')}
-						</button>
-						<div class="flex gap-2">
-							<button
-								class="bg-blue-500 text-white flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
-								on:click={() => goto('/pos/customer-touch/list/cart')}
-							>
-								{t('customerTouch.cta.viewCart')}
-							</button>
-							<button
-								class="bg-[#8fd16a] text-black flex-1 flex justify-center items-center text-xl rounded-lg font-semibold p-4 {$ctiAddToCartState !== 'idle' ? 'opacity-70' : ''}"
-								disabled={$ctiAddToCartState !== 'idle'}
-								on:click={() => {
-									const form = document.getElementById('product-add-form');
-									if (form) form.requestSubmit();
-								}}
-							>
-								{#if $ctiAddToCartState === 'success'}
-									<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-									</svg>
-								{:else}
-									{t('customerTouch.cta.addProduct')}
-								{/if}
-							</button>
-						</div>
-					</div>
-				{:else}
-					<div class="shrink-0 flex gap-2 pt-2 pb-4">
-						<button
-							on:click={() => goto('/pos/customer-touch/list/drop')}
-							class="bg-[#2f2f32] text-white flex-1 flex justify-center text-xl font-semibold rounded-lg p-4"
-						>
-							{t('customerTouch.cta.abandonment')}
-						</button>
-						{#if $page.url.pathname === '/pos/customer-touch/list/cart'}
-							<button
-								class="bg-[#8fd16a] text-black flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
-								disabled={!data.cart.items?.length}
-								on:click={() => goto('/pos/customer-touch/payment')}
-							>
-								{t('customerTouch.cta.pay')}
-							</button>
-						{:else if !data.cart.items?.length}
-							<button
-								class="bg-[#8fd16a] text-black flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
-								disabled
-								on:click={() => goto('/pos/customer-touch/list/cart')}
-							>
-								{t('customerTouch.cta.addFirstProduct')}
-							</button>
-						{:else}
-							<button
-								class="bg-[#8fd16a] text-black flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
-								on:click={() => goto('/pos/customer-touch/list/cart')}
-							>
-								<PriceTag
-									amount={priceInfo.totalPriceWithVat}
-									currency={priceInfo.currency}
-									main
-								/>&nbsp;/ {t('customerTouch.cta.end')}
-							</button>
-						{/if}
-					</div>
-				{/if}
-			{/if}
+		<div class="overflow-y-auto min-h-0">
+			<slot />
 		</div>
+		{#if $page.url.pathname !== '/pos/customer-touch/list/drop'}
+			{#if $page.url.pathname.startsWith('/pos/customer-touch/list/product/')}
+				<div class="flex flex-col gap-2 pt-2 pb-4">
+					<button
+						on:click={() => goto('/pos/customer-touch/list/drop')}
+						class="bg-[#2f2f32] text-white flex justify-center text-xl font-semibold rounded-lg p-4"
+					>
+						{t('customerTouch.cta.abandonment')}
+					</button>
+					<div class="flex gap-2">
+						<button
+							class="bg-blue-500 text-white flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
+							on:click={() => goto('/pos/customer-touch/list/cart')}
+						>
+							{t('customerTouch.cta.viewCart')}
+						</button>
+						<button
+							class="bg-[#8fd16a] text-black flex-1 flex justify-center items-center text-xl rounded-lg font-semibold p-4 {$ctiAddToCartState !== 'idle' ? 'opacity-70' : ''}"
+							disabled={$ctiAddToCartState !== 'idle'}
+							on:click={() => {
+								const form = document.getElementById('product-add-form');
+								if (form) form.requestSubmit();
+							}}
+						>
+							{#if $ctiAddToCartState === 'success'}
+								<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+								</svg>
+							{:else}
+								{t('customerTouch.cta.addProduct')}
+							{/if}
+						</button>
+					</div>
+				</div>
+			{:else}
+				<div class="flex gap-2 pt-2 pb-4">
+					<button
+						on:click={() => goto('/pos/customer-touch/list/drop')}
+						class="bg-[#2f2f32] text-white flex-1 flex justify-center text-xl font-semibold rounded-lg p-4"
+					>
+						{t('customerTouch.cta.abandonment')}
+					</button>
+					{#if $page.url.pathname === '/pos/customer-touch/list/cart'}
+						<button
+							class="bg-[#8fd16a] text-black flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
+							disabled={!data.cart.items?.length}
+							on:click={() => goto('/pos/customer-touch/payment')}
+						>
+							{t('customerTouch.cta.pay')}
+						</button>
+					{:else if !data.cart.items?.length}
+						<button
+							class="bg-[#8fd16a] text-black flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
+							disabled
+							on:click={() => goto('/pos/customer-touch/list/cart')}
+						>
+							{t('customerTouch.cta.addFirstProduct')}
+						</button>
+					{:else}
+						<button
+							class="bg-[#8fd16a] text-black flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
+							on:click={() => goto('/pos/customer-touch/list/cart')}
+						>
+							<PriceTag
+								amount={priceInfo.totalPriceWithVat}
+								currency={priceInfo.currency}
+								main
+							/>&nbsp;/ {t('customerTouch.cta.end')}
+						</button>
+					{/if}
+				</div>
+			{/if}
+		{/if}
 	</div>
 </div>
