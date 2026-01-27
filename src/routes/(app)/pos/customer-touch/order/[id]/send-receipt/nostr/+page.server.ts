@@ -1,6 +1,6 @@
 import { UrlDependency } from '$lib/types/UrlDependency.js';
 import { collections } from '$lib/server/database';
-import { nostrPublicKey } from '$lib/server/nostr';
+import { getNostrKeys } from '$lib/server/nostr';
 import { redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { runtimeConfig } from '$lib/server/runtime-config';
@@ -38,7 +38,7 @@ export async function load({ params, depends }) {
 
 	return {
 		backToWelcomeScreenTimeoutSeconds,
-		nostrPublicKey,
+		nostrPublicKey: getNostrKeys().pubKey,
 		otpCode
 	};
 }
