@@ -61,7 +61,7 @@ export const actions: Actions = {
 			throw redirect(303, '/admin/schedule/' + fields.scheduleId);
 		}
 		if (fields.ctiCategorySlug) {
-			throw redirect(303, '/admin/cti');
+			throw redirect(303, `${adminPrefix()}/cti`);
 		}
 
 		throw redirect(303, `${adminPrefix()}/picture`);
