@@ -245,6 +245,7 @@ const baseConfig = {
 	posTabGroups: defaultPosTabGroups(),
 	posPoolEmptyIcon: '✅' as string | undefined,
 	posPoolOccupiedIcon: '⏳' as string | undefined,
+	posMidTicketTopBlankLines: 3,
 	posUseSelectForTags: false,
 	posPrefillTermOfUse: false,
 	posTapToPay: {

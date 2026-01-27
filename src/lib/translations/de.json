@@ -773,6 +773,11 @@
 			"motivePlaceholder": "z.B. Passeport gourmand",
 			"lockedWarning": "⚠️ Rabatt kann nach Zahlungsbeginn nicht mehr geändert werden",
 			"save": "Speichern"
+		},
+		"midTicket": {
+			"title": "Küchen-/Zwischenticket-Einstellungen",
+			"topBlankLines": "Anzahl der Leerzeilen oben auf dem Ticket (zum Einspannen)",
+			"topBlankLinesHint": "Standard: 0"
 		}
 	},
 	"product": {

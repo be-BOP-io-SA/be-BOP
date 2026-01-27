@@ -773,6 +773,11 @@
 			"lockedWarning": "⚠️ No se puede modificar el descuento después de iniciar el pago",
 			"save": "Guardar"
 		},
+		"midTicket": {
+			"title": "Configuración de ticket de cocina/intermedio",
+			"topBlankLines": "Número de líneas en blanco en la parte superior del ticket (para sujeción)",
+			"topBlankLinesHint": "Por defecto: 0"
+		},
 		"useSelectForTags": "Usar menú desplegable para etiquetas"
 	},
 	"product": {

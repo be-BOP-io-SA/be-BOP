@@ -773,6 +773,11 @@
 			"motivePlaceholder": "e.g., Passeport gourmand",
 			"lockedWarning": "⚠️ Cannot modify discount after payment has started",
 			"save": "Save"
+		},
+		"midTicket": {
+			"title": "Kitchen/Mid-Ticket Settings",
+			"topBlankLines": "Number of blank lines at the top of mid-ticket (for clamping)",
+			"topBlankLinesHint": "Default: 0"
 		}
 	},
 	"product": {

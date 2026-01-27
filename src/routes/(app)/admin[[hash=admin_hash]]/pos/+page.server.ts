@@ -58,6 +58,7 @@ export const load = async ({}) => {
 		posTabGroups: runtimeConfig.posTabGroups,
 		posPoolEmptyIcon: runtimeConfig.posPoolEmptyIcon,
 		posPoolOccupiedIcon: runtimeConfig.posPoolOccupiedIcon,
+		posMidTicketTopBlankLines: runtimeConfig.posMidTicketTopBlankLines,
 		defaultEmptyPoolIcon: defaultConfig.posPoolEmptyIcon,
 		defaultFullPoolIcon: defaultConfig.posPoolOccupiedIcon,
 		posUseSelectForTags: runtimeConfig.posUseSelectForTags,
@@ -119,6 +120,7 @@ export const actions: Actions = {
 				posTouchTag: z.string().array(),
 				posPoolEmptyIcon: z.string().optional(),
 				posPoolOccupiedIcon: z.string().optional(),
+				posMidTicketTopBlankLines: z.number({ coerce: true }).min(0).max(20).default(3),
 				tapToPayOnActivationUrl: z.string().trim().optional(),
 				tapToPayProvider: z.string().optional(),
 				posSession: z
@@ -175,6 +177,8 @@ export const actions: Actions = {
 		runtimeConfig.posPoolEmptyIcon = posPoolEmptyIcon;
 		await persistConfigElement('posPoolOccupiedIcon', posPoolOccupiedIcon);
 		runtimeConfig.posPoolOccupiedIcon = posPoolOccupiedIcon;
+		await persistConfigElement('posMidTicketTopBlankLines', result.posMidTicketTopBlankLines);
+		runtimeConfig.posMidTicketTopBlankLines = result.posMidTicketTopBlankLines;
 		await persistConfigElement('posUseSelectForTags', result.posUseSelectForTags);
 		runtimeConfig.posUseSelectForTags = result.posUseSelectForTags;
 		await persistConfigElement('posQrCodeAfterPayment', posQrCodeAfterPayment);
