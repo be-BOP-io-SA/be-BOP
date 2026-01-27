@@ -62,8 +62,8 @@
 <svelte:head>
 	<meta name="viewport" content="width=500" />
 </svelte:head>
-<main class="fixed top-0 bottom-0 right-0 left-0 bg-white px-4 overflow-scroll">
-	<div class="flex items-center justify-between w-full">
+<main class="fixed top-0 bottom-0 right-0 left-0 bg-white px-4 flex flex-col overflow-hidden">
+	<div class="shrink-0 flex items-center justify-between w-full">
 		<div class="font-sans">{currentTime}</div>
 
 		<div class="flex flex-col items-center">
@@ -133,7 +133,7 @@
 			{/if}
 		</div>
 	</div>
-	<div class="grow body-mainPlan">
+	<div class="flex-1 min-h-0 body-mainPlan">
 		<slot />
 	</div>
 </main>

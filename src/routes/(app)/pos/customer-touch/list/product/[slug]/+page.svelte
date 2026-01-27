@@ -81,8 +81,8 @@
 			{data.product.name}
 		</h2>
 
-		<div class="grid grid-cols-[auto_auto] w-full mb-8 gap-2">
-			<div class="rounded-xl shadow-lg overflow-hidden">
+		<div class="flex w-full mb-8 gap-2">
+			<div class="rounded-xl shadow-lg overflow-hidden max-w-[60%] aspect-[5/3]">
 				<PictureComponent
 					picture={data.pictures[pictureId]}
 					class="object-cover w-full h-full rounded-xl shadow-md"

@@ -28,7 +28,7 @@
 	});
 </script>
 
-<div class="mx-auto max-w-7xl px-2 h-screen flex flex-col overflow-hidden">
+<div class="mx-auto max-w-7xl px-2 h-full flex flex-col overflow-hidden">
 	<button
 		class="shrink-0 self-start text-gray-800 font-semibold text-lg flex items-center mb-4"
 		on:click={() => history.back()}
@@ -89,14 +89,14 @@
 				<slot />
 			</div>
 			{#if $page.url.pathname !== '/pos/customer-touch/list/drop'}
-				<div class="shrink-0 flex flex-col gap-2 pt-2 pb-4">
-					<button
-						on:click={() => goto('/pos/customer-touch/list/drop')}
-						class="bg-[#2f2f32] text-white flex justify-center text-xl font-semibold rounded-lg p-4"
-					>
-						{t('customerTouch.cta.abandonment')}
-					</button>
-					{#if $page.url.pathname.startsWith('/pos/customer-touch/list/product/')}
+				{#if $page.url.pathname.startsWith('/pos/customer-touch/list/product/')}
+					<div class="shrink-0 flex flex-col gap-2 pt-2 pb-4">
+						<button
+							on:click={() => goto('/pos/customer-touch/list/drop')}
+							class="bg-[#2f2f32] text-white flex justify-center text-xl font-semibold rounded-lg p-4"
+						>
+							{t('customerTouch.cta.abandonment')}
+						</button>
 						<div class="flex gap-2">
 							<button
 								class="bg-blue-500 text-white flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
@@ -121,35 +121,45 @@
 								{/if}
 							</button>
 						</div>
-					{:else if $page.url.pathname === '/pos/customer-touch/list/cart'}
+					</div>
+				{:else}
+					<div class="shrink-0 flex gap-2 pt-2 pb-4">
 						<button
-							class="bg-[#8fd16a] text-black flex justify-center text-xl rounded-lg font-semibold p-4"
-							disabled={!data.cart.items?.length}
-							on:click={() => goto('/pos/customer-touch/payment')}
+							on:click={() => goto('/pos/customer-touch/list/drop')}
+							class="bg-[#2f2f32] text-white flex-1 flex justify-center text-xl font-semibold rounded-lg p-4"
 						>
-							{t('customerTouch.cta.pay')}
+							{t('customerTouch.cta.abandonment')}
 						</button>
-					{:else if !data.cart.items?.length}
-						<button
-							class="bg-[#8fd16a] text-black flex justify-center text-xl rounded-lg font-semibold p-4"
-							disabled
-							on:click={() => goto('/pos/customer-touch/list/cart')}
-						>
-							{t('customerTouch.cta.addFirstProduct')}
-						</button>
-					{:else}
-						<button
-							class="bg-[#8fd16a] text-black flex justify-center text-xl rounded-lg font-semibold p-4"
-							on:click={() => goto('/pos/customer-touch/list/cart')}
-						>
-							<PriceTag
-								amount={priceInfo.totalPriceWithVat}
-								currency={priceInfo.currency}
-								main
-							/>&nbsp;/ {t('customerTouch.cta.end')}
-						</button>
-					{/if}
-				</div>
+						{#if $page.url.pathname === '/pos/customer-touch/list/cart'}
+							<button
+								class="bg-[#8fd16a] text-black flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
+								disabled={!data.cart.items?.length}
+								on:click={() => goto('/pos/customer-touch/payment')}
+							>
+								{t('customerTouch.cta.pay')}
+							</button>
+						{:else if !data.cart.items?.length}
+							<button
+								class="bg-[#8fd16a] text-black flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
+								disabled
+								on:click={() => goto('/pos/customer-touch/list/cart')}
+							>
+								{t('customerTouch.cta.addFirstProduct')}
+							</button>
+						{:else}
+							<button
+								class="bg-[#8fd16a] text-black flex-1 flex justify-center text-xl rounded-lg font-semibold p-4"
+								on:click={() => goto('/pos/customer-touch/list/cart')}
+							>
+								<PriceTag
+									amount={priceInfo.totalPriceWithVat}
+									currency={priceInfo.currency}
+									main
+								/>&nbsp;/ {t('customerTouch.cta.end')}
+							</button>
+						{/if}
+					</div>
+				{/if}
 			{/if}
 		</div>
 	</div>
