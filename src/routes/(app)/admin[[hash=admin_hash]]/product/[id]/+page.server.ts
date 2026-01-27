@@ -115,10 +115,13 @@ export const actions: Actions = {
 			...variation,
 			price: Math.max(parsePriceAmount(variation.price, parsed.priceCurrency), 0)
 		}));
+		const validVariations = variationsParsedPrice.filter(
+			(variation) => variation.name && variation.value
+		);
 		const amountInCarts = await amountOfStockReserved(params.id);
 		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
 		const hasVariations =
-			parsed.standalone && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
+			parsed.hasVariations && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
 
 		// Validate stock reference if provided
 		if (parsed.stockReferenceProductId) {
@@ -169,7 +172,7 @@ export const actions: Actions = {
 								}
 							}),
 						hideDiscountExpiration: parsed.hideDiscountExpiration,
-						standalone: parsed.payWhatYouWant || parsed.standalone,
+						standalone: parsed.payWhatYouWant || hasVariations || parsed.standalone,
 						free: parsed.free,
 						...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
 						applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
@@ -223,12 +226,11 @@ export const actions: Actions = {
 							paymentMethods: parsed.paymentMethods ?? []
 						}),
 						hasVariations,
-						...(hasVariations && {
-							variations: variationsParsedPrice.filter(
-								(variation) => variation.name && variation.value
-							),
-							variationLabels: cleanedVariationLabels
-						}),
+						...(hasVariations &&
+							validVariations.length > 0 && {
+								variations: validVariations,
+								variationLabels: cleanedVariationLabels
+							}),
 						hasSellDisclaimer: parsed.hasSellDisclaimer,
 						...(parsed.hasSellDisclaimer &&
 							parsed.sellDisclaimerTitle &&
@@ -255,11 +257,15 @@ export const actions: Actions = {
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
-						...(!hasVariations && { variations: '', variationLabels: '' }),
 						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),
 						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' }),
 						...(!parsed.bookingSpec && { bookingSpec: '' }),
-						...(!parsed.hasMaximumPrice && { maximumPrice: '' })
+						...(!parsed.hasMaximumPrice && { maximumPrice: '' }),
+						...(parsed.hasVariations &&
+							validVariations.length === 0 && {
+								variations: '',
+								variationLabels: ''
+							})
 					}
 				}
 			);
