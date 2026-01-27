@@ -19,7 +19,27 @@ export const load = async ({ params }) => {
 
 export const actions: Actions = {
 	update: async function (input) {
-		const name = String((await input.request.formData()).get('name'));
+		const formData = await input.request.formData();
+		const name = String(formData.get('name'));
+		const logoIsWide = Boolean(formData.get('isWide'));
+
+		// If this picture is currently set as logo (light or dark mode), update the isWide setting
+		if (
+			runtimeConfig.logo.pictureId === input.params.id ||
+			runtimeConfig.logo.darkModePictureId === input.params.id
+		) {
+			await collections.runtimeConfig.updateOne(
+				{ _id: 'logo' },
+				{
+					$set: {
+						'data.isWide': logoIsWide,
+						updatedAt: new Date()
+					}
+				}
+			);
+			runtimeConfig.logo.isWide = logoIsWide;
+		}
+
 		await collections.pictures.updateOne(
 			{ _id: input.params.id },
 			{
@@ -166,6 +186,53 @@ export const actions: Actions = {
 			runtimeConfig.footerLogoId = '';
 		}
 	},
+
+	setAsTicketLogo: async function ({ params }) {
+		const picture = await collections.pictures.findOne({ _id: params.id });
+
+		if (!picture) {
+			throw error(404);
+		}
+
+		if (picture.productId) {
+			throw error(400, 'Picture is already associated to a product');
+		}
+		if (picture.tag) {
+			throw error(400, 'Picture is already associated to a tag');
+		}
+		if (picture.slider) {
+			throw error(400, 'Picture is already associated to a slide');
+		}
+
+		await collections.runtimeConfig.updateOne(
+			{
+				_id: 'ticketLogoId'
+			},
+			{
+				$set: { data: picture._id, updatedAt: new Date() }
+			},
+			{
+				upsert: true
+			}
+		);
+		runtimeConfig.ticketLogoId = picture._id;
+	},
+
+	removeTicketLogo: async function ({ params }) {
+		if (runtimeConfig.ticketLogoId === params.id) {
+			await collections.runtimeConfig.updateOne(
+				{
+					_id: 'ticketLogoId'
+				},
+				{ $set: { data: '', updatedAt: new Date() } },
+				{
+					upsert: true
+				}
+			);
+			runtimeConfig.ticketLogoId = '';
+		}
+	},
+
 	setAsFavicon: async function ({ params }) {
 		const picture = await collections.pictures.findOne({ _id: params.id });
 

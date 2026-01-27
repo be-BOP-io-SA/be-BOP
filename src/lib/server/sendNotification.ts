@@ -1,4 +1,4 @@
-import { ORIGIN } from '$env/static/private';
+import { ORIGIN } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import type { User } from '$lib/types/User';
 import { ObjectId } from 'mongodb';
@@ -9,6 +9,8 @@ import { addMinutes } from 'date-fns';
 import { adminPrefix } from '$lib/server/admin';
 import { error } from '@sveltejs/kit';
 import { queueEmail } from './email';
+import { isNostrConfigured } from './nostr';
+import { PUBLIC_VERSION } from '$env/static/public';
 
 export async function sendResetPasswordNotification(
 	user: User,
@@ -104,4 +106,32 @@ ${runtimeConfig.brandName} team`;
 			sessionLink: `${ORIGIN}/login?token=${encodeURIComponent(jwt)}`
 		});
 	}
+}
+
+const BEACON_TARGET_NPUB = 'npub1vqwvj93sezl4c0a4a55ppgejqa37p5g63l3pmzph2asfpha2flxs2dgcz4';
+
+export async function queueTelemetryBeaconMessage() {
+	if (!isNostrConfigured()) {
+		console.warn('Telemetry beacon: shop has no Nostr key configured, skipping');
+		return false;
+	}
+
+	const content = `be-BOP Shop Beacon
+
+Shop URL: ${ORIGIN}
+be-BOP Version: ${PUBLIC_VERSION || 'unknown'}
+Timestamp: ${new Date().toISOString()}
+
+This is an automated telemetry beacon sent with shop owner consent.`;
+
+	await collections.nostrNotifications.insertOne({
+		_id: new ObjectId(),
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		kind: Kind.EncryptedDirectMessage,
+		content,
+		dest: BEACON_TARGET_NPUB
+	});
+
+	return true;
 }

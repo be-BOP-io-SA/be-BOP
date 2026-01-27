@@ -10,10 +10,10 @@ import {
 	s3SchedulePrefix,
 	s3SliderPrefix,
 	s3TagPrefix,
-	s3client
+	getS3Client
 } from './s3';
 import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { S3_BUCKET } from '$env/static/private';
+import { S3_BUCKET } from '$lib/server/env-config';
 import * as mimeTypes from 'mime-types';
 import type { ImageData, Picture, TagType } from '../types/Picture';
 import type { SetRequired } from 'type-fest';
@@ -59,7 +59,7 @@ export async function generatePicture(
 		throw error(400, 'Error when uploading picture');
 	}
 
-	await s3client
+	await getS3Client()
 		.deleteObject({
 			Key: pendingPicture.storage.original.key,
 			Bucket: S3_BUCKET
@@ -110,7 +110,7 @@ export async function generatePicture(
 
 	const path = `${pathPrefix}${_id}${extension}`;
 
-	await s3client.send(
+	await getS3Client().send(
 		new PutObjectCommand({
 			Bucket: S3_BUCKET,
 			Key: path,
@@ -133,7 +133,7 @@ export async function generatePicture(
 		if (width <= 2048 && height <= 2048) {
 			const key = `${pathPrefix}${_id}-${width}x${height}.webp`;
 			const buffer = await image.toFormat('webp').toBuffer();
-			await s3client.send(
+			await getS3Client().send(
 				new PutObjectCommand({
 					Bucket: S3_BUCKET,
 					Key: key,
@@ -167,7 +167,7 @@ export async function generatePicture(
 				}
 
 				const key = `${pathPrefix}${_id}-${newWidth}x${newHeight}.webp`;
-				await s3client.send(
+				await getS3Client().send(
 					new PutObjectCommand({
 						Bucket: S3_BUCKET,
 						Key: key,
@@ -222,7 +222,9 @@ export async function generatePicture(
 	} catch (err) {
 		// Remove uploaded files
 		for (const key of uploadedKeys) {
-			s3client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: key })).catch();
+			getS3Client()
+				.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: key }))
+				.catch();
 		}
 		throw err;
 	}
@@ -236,12 +238,12 @@ export async function deletePicture(pictureId: Picture['_id']) {
 	}
 
 	for (const format of res.value.storage.formats) {
-		await s3client
+		await getS3Client()
 			.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: format.key }))
 			.catch(console.error);
 	}
 
-	await s3client
+	await getS3Client()
 		.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: res.value.storage.original.key }))
 		.catch(console.error);
 }

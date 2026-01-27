@@ -5,16 +5,13 @@ import { fetchOrderForUser } from './fetchOrderForUser.js';
 import { getPublicS3DownloadLink } from '$lib/server/s3.js';
 import { uniqBy } from '$lib/utils/uniqBy.js';
 import { cmsFromContent } from '$lib/server/cms.js';
-import {
-	conflictingTapToPayOrder,
-	priceInfoForOrderProbablyIncorrectBuyOkayForDisplay
-} from '$lib/server/orders';
+import { conflictingTapToPayOrder } from '$lib/server/orders';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import type { OrderLabel } from '$lib/types/OrderLabel.js';
 
-export async function load({ params, depends, locals }) {
+export async function load({ params, depends, locals, url }) {
 	depends(UrlDependency.Order);
 
 	const order = await fetchOrderForUser(params.id, { userRoleId: locals.user?.roleId });
@@ -84,15 +81,29 @@ export async function load({ params, depends, locals }) {
 			: undefined;
 	const tapToPay = {
 		configured: !!runtimeConfig.posTapToPay.processor,
-		inUseByOtherOrder: !!(await conflictingTapToPayOrder(order._id)),
-		onActivationUrl: runtimeConfig.posTapToPay.onActivationUrl
+		inUseByOtherOrder: !!(await conflictingTapToPayOrder(order._id))
 	};
+
+	const posSubtypes = (
+		await collections.posPaymentSubtypes.find({}).sort({ sortOrder: 1 }).toArray()
+	).map((subtype) => ({
+		slug: subtype.slug,
+		name: subtype.name,
+		description: subtype.description,
+		paymentDetailRequired: subtype.paymentDetailRequired
+	}));
+
+	const returnTo = url.searchParams.get('returnTo');
+	const posMode = locals.user?.hasPosOptions && returnTo?.startsWith('/pos/touch');
+
 	return {
 		order,
-		priceInfoProbablyIncorrectBuyOkayForDisplay:
-			await priceInfoForOrderProbablyIncorrectBuyOkayForDisplay(order),
+		splitMode: order.splitMode,
 		paymentMethods: methods,
 		tapToPay,
+		posSubtypes,
+		posMode: posMode,
+		hasPosOptions: locals.user?.hasPosOptions,
 		digitalFiles: Promise.all(
 			digitalFiles.map(async (file) => ({
 				name: file.name,

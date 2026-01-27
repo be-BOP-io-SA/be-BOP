@@ -2,13 +2,7 @@ import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
 import { Lock } from '../lock';
 import { processClosed } from '../process';
 import type { NostRNotification } from '$lib/types/NostRNotifications';
-import {
-	hexToNpub,
-	nostrPrivateKeyHex,
-	nostrPublicKeyHex,
-	nostrRelays,
-	nostrToHex
-} from '../nostr';
+import { getNostrKeys, hexToNpub, isNostrConfigured, nostrRelays, nostrToHex } from '../nostr';
 import { fromUnixTime, getUnixTime, max } from 'date-fns';
 import { collections } from '../database';
 import { RelayPool } from 'nostr-relaypool';
@@ -24,25 +18,37 @@ import {
 import { NOSTR_PROTOCOL_VERSION } from './handle-messages';
 import { building } from '$app/environment';
 import { rateLimit } from '../rateLimit';
+import { sendPeriodicBeacon } from '../telemetry-helpers';
 
-const lock = nostrPrivateKeyHex ? new Lock('notifications.nostr') : null;
+const lock = new Lock('notifications.nostr');
 const processingIds = new Set<string>();
 
 let relayPool: RelayPool | null = null;
 
+export async function closeRelayPool() {
+	try {
+		await relayPool?.close()?.then(() => console.log('Closed Nostr Relay Pool'));
+	} catch (err) {
+		console.error(err);
+	}
+	relayPool = null;
+}
+
 async function maintainLock() {
 	while (!processClosed) {
-		if (!lock?.ownsLock) {
-			try {
-				relayPool?.close();
-			} catch (err) {
-				console.error(err);
-			}
-			relayPool = null;
-		} else if (!relayPool) {
-			initRelayPool();
+		try {
+			await sendPeriodicBeacon();
+		} catch (err) {
+			console.error('Telemetry beacon error:', err);
 		}
 
+		if (!lock?.ownsLock || !isNostrConfigured()) {
+			await closeRelayPool();
+		} else if (!relayPool && isNostrConfigured()) {
+			if (initRelayPool()) {
+				processUnprocessedNotifications();
+			}
+		}
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 	}
 }
@@ -67,25 +73,33 @@ function watch() {
 	});
 }
 
-if (nostrPrivateKeyHex && !building) {
+if (!building) {
 	if (lock) {
 		lock.onAcquire = async () => {
-			const unprocessedNotifications = collections.nostrNotifications.find({
-				processedAt: { $exists: false }
-			});
-
-			for await (const notification of unprocessedNotifications) {
-				await handleNostrNotification(notification);
-			}
+			await processUnprocessedNotifications();
 		};
 	}
-
 	watch();
 }
 
-function initRelayPool() {
-	if (relayPool) {
+async function processUnprocessedNotifications() {
+	if (!isNostrConfigured()) {
 		return;
+	}
+
+	const unprocessedNotifications = collections.nostrNotifications.find({
+		processedAt: { $exists: false }
+	});
+
+	for await (const notification of unprocessedNotifications) {
+		await handleNostrNotification(notification);
+	}
+}
+
+function initRelayPool(): boolean {
+	const { pubKeyHex: nostrPublicKeyHex, privKeyHex: nostrPrivateKeyHex } = getNostrKeys();
+	if (relayPool) {
+		return false;
 	}
 
 	relayPool ||= new RelayPool(nostrRelays, { autoReconnect: true });
@@ -141,6 +155,7 @@ function initRelayPool() {
 		undefined,
 		undefined
 	);
+	return true;
 }
 
 async function handleChanges(change: ChangeStreamDocument<NostRNotification>): Promise<void> {
@@ -158,6 +173,10 @@ async function handleChanges(change: ChangeStreamDocument<NostRNotification>): P
 }
 
 async function handleNostrNotification(nostrNotification: NostRNotification): Promise<void> {
+	if (!isNostrConfigured()) {
+		return;
+	}
+
 	if (nostrNotification.processedAt || processingIds.has(nostrNotification._id.toHexString())) {
 		return;
 	}
@@ -174,6 +193,7 @@ async function handleNostrNotification(nostrNotification: NostRNotification): Pr
 		}
 
 		nostrNotification = updatedNotification;
+		const { pubKeyHex: nostrPublicKeyHex, privKeyHex: nostrPrivateKeyHex } = getNostrKeys();
 
 		const event = await (async () => {
 			const content = nostrNotification.content;
@@ -224,28 +244,24 @@ async function handleNostrNotification(nostrNotification: NostRNotification): Pr
 			}
 
 			if (nostrNotification.kind === Kind.Zap) {
-				const npub = nostrNotification.dest;
+				const tags: string[][] = [
+					['p', nostrNotification.receiverPubkey || ''],
+					['P', nostrNotification.senderPubkey || ''],
+					['bolt11', nostrNotification.bolt11 || ''],
+					['preimage', nostrNotification.preimage || ''],
+					['description', nostrNotification.zapRequest || '']
+				];
 
-				if (!npub) {
-					return;
+				if (nostrNotification.eventId) {
+					tags.push(['e', nostrNotification.eventId]);
 				}
-
-				const receiverPublicKeyHex = nostrToHex(npub);
 
 				return {
 					id: '',
-					content: await nip04.encrypt(nostrPrivateKeyHex, receiverPublicKeyHex, content),
-					created_at: getUnixTime(
-						max([
-							nostrNotification.minCreatedAt ?? nostrNotification.createdAt,
-							nostrNotification.createdAt
-						])
-					),
+					content: nostrNotification.content, // Empty for public zaps
+					created_at: getUnixTime(new Date()),
 					pubkey: nostrPublicKeyHex,
-					tags: [
-						['p', receiverPublicKeyHex],
-						['bootikVersion', String(NOSTR_PROTOCOL_VERSION)]
-					],
+					tags,
 					kind: Kind.Zap,
 					sig: ''
 				} satisfies Event;

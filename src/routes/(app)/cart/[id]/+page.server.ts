@@ -1,6 +1,6 @@
-import { addToCartInDb, removeFromCartInDb } from '$lib/server/cart';
+import { addToCartInDb, findItemInCart, getCartFromDb, removeFromCartInDb } from '$lib/server/cart';
 import { collections, withTransaction } from '$lib/server/database';
-import { refreshAvailableStockInDb } from '$lib/server/product.js';
+import { loadProductWithResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { DEFAULT_MAX_QUANTITY_PER_ORDER } from '$lib/types/Product.js';
 import { error, redirect } from '@sveltejs/kit';
@@ -43,7 +43,7 @@ export const actions = {
 		throw redirect(303, request.headers.get('referer') || '/cart');
 	},
 	increase: async ({ locals, params, request }) => {
-		const product = await collections.products.findOne({ _id: params.id });
+		const product = await loadProductWithResolvedStock(params.id);
 
 		if (!product) {
 			await collections.carts.updateOne(userQuery(userIdentifier(locals)), {
@@ -67,11 +67,7 @@ export const actions = {
 				deposit: z.boolean({ coerce: true }).optional(),
 				lineId: z.string().optional()
 			})
-			.parse({
-				quantity: formData.get('quantity'),
-				deposit: formData.get('deposit'),
-				lineId: formData.get('lineId')
-			});
+			.parse(Object.fromEntries(formData));
 
 		await addToCartInDb(product, quantity + 1, {
 			user: userIdentifier(locals),
@@ -84,7 +80,7 @@ export const actions = {
 		throw redirect(303, request.headers.get('referer') || '/cart');
 	},
 	decrease: async ({ request, locals, params }) => {
-		const product = await collections.products.findOne({ _id: params.id });
+		const product = await loadProductWithResolvedStock(params.id);
 
 		if (!product) {
 			await collections.carts.updateMany(
@@ -108,6 +104,64 @@ export const actions = {
 			totalQuantity: true,
 			lineId
 		});
+
+		throw redirect(303, request.headers.get('referer') || '/cart');
+	},
+	setQuantity: async ({ locals, params, request }) => {
+		const product = await loadProductWithResolvedStock(params.id);
+
+		if (!product) {
+			await collections.carts.updateOne(userQuery(userIdentifier(locals)), {
+				$pull: { items: { productId: params.id } },
+				$set: { updatedAt: new Date() }
+			});
+			throw error(404, 'This product does not exist');
+		}
+
+		const cart = await getCartFromDb({ user: userIdentifier(locals) });
+
+		if (!cart) {
+			throw error(404, 'No cart found for user');
+		}
+
+		const formData = await request.formData();
+
+		const max = product.maxQuantityPerOrder ?? DEFAULT_MAX_QUANTITY_PER_ORDER;
+
+		const { quantity, mode, lineId } = z
+			.object({
+				quantity: z.number({ coerce: true }).int().min(1).max(max),
+				mode: z.enum(['eshop', 'pos']),
+				lineId: z.string().optional()
+			})
+			.parse(Object.fromEntries(formData));
+
+		const item = findItemInCart(cart, params.id, lineId);
+
+		if (!item) {
+			throw error(404, 'This product is not in the cart');
+		}
+
+		if (item.quantity === quantity) {
+			return;
+		}
+
+		if (item.quantity > quantity) {
+			await removeFromCartInDb(product, quantity, {
+				user: userIdentifier(locals),
+				totalQuantity: true,
+				lineId,
+				cart
+			});
+		} else {
+			await addToCartInDb(product, quantity, {
+				user: userIdentifier(locals),
+				mode,
+				lineId,
+				totalQuantity: true,
+				cart
+			});
+		}
 
 		throw redirect(303, request.headers.get('referer') || '/cart');
 	},

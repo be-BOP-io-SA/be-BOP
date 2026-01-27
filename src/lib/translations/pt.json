@@ -13,6 +13,15 @@
 		"vatNumber": "Número de IVA",
 		"zipCode": "Código postal"
 	},
+	"admin": {
+		"product": {
+			"stockReference": {
+				"label": "Referenciar o stock de outro produto (opcional)",
+				"noReference": "-- Sem referência (usar stock próprio) --",
+				"warning": "⚠️ Este produto referencia o stock de outro produto. As alterações de stock afetarão o produto referenciado."
+			}
+		}
+	},
 	"ageWarning": {
 		"agreement": "Li e cumpro as condições de acesso e respeito-as",
 		"navigate": "Continuar a navegar"
@@ -504,7 +513,10 @@
 		"addPayment": {
 			"amount": "Valor do pagamento",
 			"cta": "Enviar um pedido de pagamento",
-			"currency": "Moeda de pagamento"
+			"currency": "Moeda de pagamento",
+			"posSubtype": "Tipo",
+			"submit": "Adicionar",
+			"title": "Adicionar pagamento"
 		},
 		"backToOrder": "<< Voltar à encomenda",
 		"clickQR": "Clique no código QR para pagar com a sua carteira",
@@ -617,8 +629,10 @@
 			"totalExcVat": "Total Excl. IVA",
 			"totalInclVat": "Total Incl. IVA",
 			"totalVat": "Total IVA",
+			"totalWithDiscount": "Total com desconto",
 			"unitPrice": "Preço unitário",
-			"vatFreeReason": "Isento de IVA: {reason}"
+			"vatFreeReason": "Isento de IVA: {reason}",
+			"peopleCount": "Número de pessoas"
 		},
 		"receiptFullyPaid": "Gerar recibo (totalmente pago)",
 		"receiptPending": "Gerar recibo (pagamento pendente)",
@@ -658,6 +672,33 @@
 	"pos": {
 		"adminInterface": "Interface de administração",
 		"applyGiftDiscount": "Como utilizador POS, aplico um desconto de oferta",
+		"btn": {
+			"add": "Adicionar",
+			"cancel": "Cancelar",
+			"cancelTap": "Parar Tap",
+			"paid": "Pago",
+			"replace": "Alterar ▾",
+			"replaceSubmit": "Alterar",
+			"tapToPay": "Pagamento com cartão"
+		},
+		"cashback": {
+			"title": "Troco ▾",
+			"toPay": "A pagar",
+			"paid": "Pago",
+			"change": "Troco",
+			"cancel": "Cancelar troco",
+			"validate": "Validar"
+		},
+		"input": {
+			"detail": "Detalhe",
+			"txNumber": "TX n°"
+		},
+		"label": {
+			"amount": "Valor",
+			"currency": "Moeda",
+			"method": "Método",
+			"subtype": "Tipo"
+		},
 		"cancelOrderMessage": "Tem a certeza que quer cancelar toda a encomenda?",
 		"cta": {
 			"cancelMultiPayOrder": "Cancelar encomenda",
@@ -692,11 +733,116 @@
 			"inUseByOtherOrder": "O pagamento via tap-to-pay está desativado porque há outro pedido em andamento usando este método. Você pode cobrar manualmente e depois inserir o número da transação neste campo."
 		},
 		"vatFree": "Esta é uma encomenda isenta de IVA (condições)",
-		"vatFreeReason": "Motivo de isenção de IVA"
+		"vatFreeReason": "Motivo de isenção de IVA",
+		"tagGroups": {
+			"addGroup": "Adicionar grupo",
+			"deleteGroup": "Eliminar grupo",
+			"groupNamePlaceholder": "Nome do grupo",
+			"tooManyTagsWarning": "O grupo \"{groupName}\" tem {count} etiquetas. Demasiadas para o modo de botões. Ative a opção \"Usar menu de seleção\" ou reduza as etiquetas. Continuar?"
+		},
+		"useSelectForTags": "Usar menu de seleção para seleção de etiquetas de produto",
+		"touch": {
+			"selectTab": "Selecionar um separador:",
+			"noTabs": "Este grupo não tem separadores",
+			"cancel": "Cancelar",
+			"back": "← Voltar",
+			"ticketNumber": "BILHETE n°",
+			"exclVat": "SEM",
+			"inclVat": "COM",
+			"subtotal": "SUBTOTAL",
+			"total": "TOTAL",
+			"vatBreakdown": "Dos quais IVA",
+			"favorites": "FAVORITOS",
+			"allProducts": "TODOS OS ARTIGOS",
+			"pagination": "PÁGINA {currentPage}/{totalPages}",
+			"tickets": "BILHETES",
+			"save": "GUARDAR",
+			"moveItems": "Mover itens",
+			"pool": "POOL",
+			"openDrawer": "ABRIR GAVETA",
+			"pay": "PAGAR",
+			"notDeveloped": "Ainda não desenvolvido",
+			"confirmDeleteLastItem": "Quer eliminar a última linha do carrinho?",
+			"confirmDeleteAllItems": "Quer eliminar todas as linhas do carrinho?",
+			"maxQuantityReached": "Quantidade máxima por encomenda atingida ({max})"
+		},
+		"itemEdit": {
+			"quantity": "Quantidade",
+			"directSelection": "Seleção direta",
+			"qtyZeroRemove": "0 (Remover)",
+			"itemRemoved": "Artigo removido",
+			"comment": "Comentário",
+			"commentPlaceholder": "Insira um comentário...",
+			"cancel": "CANCELAR",
+			"save": "GUARDAR"
+		},
+		"split": {
+			"notAvailableYet": "Ainda não disponível",
+			"tabHeader": "Separador {slug}",
+			"tabToPayNow": "Separador {slug} (a pagar agora)",
+			"pool": "POOL",
+			"poolRemainingToPay": "POOL (a pagar)",
+			"exclVat": "sem IVA",
+			"inclVat": "com IVA {rates}",
+			"inclVatShort": "com IVA",
+			"vatRate": "IVA {rate}%",
+			"cashIn": "Cobrar",
+			"all": "tudo",
+			"split": "Dividir",
+			"shares": "partes",
+			"itemize": "detalhar",
+			"return": "Voltar",
+			"continueSplit": "Continuar divisão ({mode})",
+			"paySelected": "Pagar selecionados",
+			"includingVatIncluded": "Incluindo (IVA incluído):",
+			"tagProducts": "Produtos \"{name}\"",
+			"otherProducts": "Outros produtos",
+			"selectItems": "Por favor selecione itens para pagar",
+			"splitByShares": "Dividir por partes",
+			"enterNumberOfParts": "Número de partes",
+			"manualAmount": "Valor manual",
+			"ok": "OK",
+			"payRemaining": "Pagar restante",
+			"totalAlreadyPaid": "Total já pago (IVA incluído)",
+			"remainingToPay": "A pagar (IVA incluído)",
+			"allPaid": "Tudo pago",
+			"completeSharesFirst": "Já começou a pagar o pool através de pagamentos \"Dividir (partes)\". Por favor complete todos os pagamentos e feche o pool primeiro.",
+			"closePool": "Fechar pool",
+			"globalTicket": "Ticket global",
+			"beforeDiscount": "ANTES DO DESCONTO",
+			"afterDiscount": "APÓS O DESCONTO"
+		},
+		"discount": {
+			"title": "Desconto",
+			"noDiscount": "Sem desconto",
+			"manualPercent": "% manual",
+			"manualPercentPlaceholder": "Introduza percentagem (0-100)",
+			"applyToTag": "Aplicar à etiqueta:",
+			"allProducts": "Todos os produtos",
+			"currentDiscount": "Desconto atual:",
+			"none": "Nenhum",
+			"motiveLabelOptional": "Motivo do desconto (opcional):",
+			"motivePlaceholder": "ex. Passaporte gourmet",
+			"lockedWarning": "⚠️ Não é possível modificar o desconto após o início do pagamento",
+			"save": "Guardar"
+		}
 	},
 	"product": {
 		"addedToCart": "Produto adicionado ao carrinho",
 		"availableOn": "Disponível em {date}",
+		"booking": {
+			"duration": "Duração",
+			"hour": {
+				"one": "1 hora",
+				"other": "{count} horas"
+			},
+			"minute": {
+				"one": "1 minuto",
+				"other": "{count} minutos"
+			},
+			"time": "Hora do dia",
+			"timezone": "Fuso horário: {timeZone}"
+		},
 		"checkBackLater": "Por favor, volte a verificar mais tarde",
 		"cta": {
 			"add": "Adicionar ao carrinho",
@@ -704,7 +850,8 @@
 			"details": "Detalhes",
 			"donate": "Doar agora",
 			"preorder": "Pré-encomendar agora",
-			"subscribe": "Subscrever agora"
+			"subscribe": "Subscrever agora",
+			"view": "Ver produto"
 		},
 		"deposit": {
 			"payFullPrice": "Pagar o preço total agora",
@@ -715,6 +862,8 @@
 		},
 		"discountBanner": "{discountPercent}% de desconto durante {timespan}",
 		"discountBannerNoTime": "{discountPercent}% de desconto",
+		"freeProductDiscountText": "Você tem {available} produtos gratuitos",
+		"freeProductDiscountTextSingular": "Você tem {available} produto gratuito",
 		"freeWithSub": "Este produto está disponível gratuitamente com a sua subscrição mensal",
 		"freeWithTitle": "Grátis com \"xxxxx\"",
 		"horsTaxeShort": "Sem IVA",
@@ -759,7 +908,9 @@
 	},
 	"subscription": {
 		"associated": {
-			"npub": "Associado ao npub: {npub}"
+			"title": "Associado a:",
+			"npub": "Associado ao npub: {npub}",
+			"email": "Associado ao email: {email}"
 		},
 		"cantRenew": "Subscrição não elegível para renovação",
 		"cta": {
@@ -781,5 +932,33 @@
 	},
 	"widget": {
 		"specification": "Especificações"
+	},
+	"telemetry": {
+		"banner": {
+			"aWordFrom": "Uma palavra de",
+			"title": "Uma palavra de be-BOP:",
+			"description1": "Para apoiar gratuitamente o software be-BOP, pode tornar pública a existência da sua loja.",
+			"description2": "Nenhum dado será enviado para be-BOP.io SA, exceto o URI da sua loja e o seu consentimento para comunicar sobre ela. As suas informações privadas e as informações dos seus clientes não serão partilhadas.",
+			"description3": "A sua partilha será utilizada para estatísticas anónimas sobre o número de utilizadores be-BOP (que não é rastreado automaticamente porque respeitamos a privacidade e o consentimento), e para realizar ocasionalmente campanhas de comunicação e promoção sobre os be-BOPs implementados em todo o mundo. Uma primeira notificação será enviada para o bot Nostr de be-BOP.io, depois semanalmente enquanto o seu be-BOP estiver ativo. Pode posteriormente desativar esta mensagem regular em <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a>.",
+			"question": "Aceita partilhar a existência do seu be-BOP?",
+			"acceptButton": "Partilhar",
+			"declineButton": "Lembrar-me em 30 dias",
+			"configureNostrButton": "Configurar Nostr",
+			"accepted": {
+				"thankYou": "Obrigado por escolher partilhar a existência da sua loja com be-BOP.io para fins estatísticos e promocionais!",
+				"message": "Nenhum dado será enviado para be-BOP.io SA, exceto o URL da sua loja e o seu consentimento para comunicar sobre ela. Pode ir a <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> para desativar esta telemetria opcional.",
+				"autoHideCountdown": "Esta mensagem desaparecerá em {seconds} segundos..."
+			},
+			"declined": {
+				"respect": "Respeitamos a sua escolha de não partilhar informações sobre a sua loja.",
+				"reaskCountdown": "Esta mensagem será ocultada em {seconds} segundos...",
+				"reask": "Voltaremos a perguntar-lhe em 30 dias. No entanto, pode recusar diretamente o lembrete clicando no botão",
+				"hideButton": "Nunca mais me perguntar"
+			}
+		},
+		"seo": {
+			"checkboxLabel": "Ativar sinal beacon para o bot Nostr de be-BOP.io para partilhar a existência da sua loja",
+			"infoBlock": "Esta configuração controla se a sua loja envia sinais periódicos para be-BOP.io. Valorizamos a privacidade: apenas o URL da sua loja e a versão do software be-BOP são partilhados. Nenhum dado pessoal ou de clientes é transmitido. Isto ajuda-nos com a depuração e mostra-nos que a comunidade be-BOP está a crescer."
+		}
 	}
 }

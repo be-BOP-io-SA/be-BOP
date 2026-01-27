@@ -4,9 +4,10 @@ import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { createOrder } from '$lib/server/orders';
-import { emailsEnabled } from '$lib/server/email';
+import { isEmailConfigured } from '$lib/server/email';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
+import { applyResolvedStock } from '$lib/server/product.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { zodNpub } from '$lib/server/nostr.js';
@@ -16,13 +17,21 @@ import { cmsFromContent } from '$lib/server/cms';
 import { omit } from '$lib/utils/omit.js';
 import { set } from '$lib/utils/set';
 import { ObjectId } from 'mongodb';
+import type { Tag } from '$lib/types/Tag';
 
 export async function load({ parent, locals }) {
 	const parentData = await parent();
 
+	const cartItemsWithResolvedStock = await Promise.all(
+		parentData.cart.items.map(async (item) => ({
+			...item,
+			product: await applyResolvedStock(item.product)
+		}))
+	);
+
 	if (parentData.cart) {
 		try {
-			await checkCartItems(parentData.cart.items, { user: userIdentifier(locals) });
+			await checkCartItems(cartItemsWithResolvedStock, { user: userIdentifier(locals) });
 		} catch (err) {
 			throw redirect(303, '/cart');
 		}
@@ -87,9 +96,24 @@ export async function load({ parent, locals }) {
 		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
 			? 'employee'
 			: undefined;
+
+	const posSubtypes = await collections.posPaymentSubtypes
+		.find({ disabled: { $ne: true } })
+		.sort({ sortOrder: 1 })
+		.toArray();
+
+	const reportingTags = locals.user?.hasPosOptions
+		? await collections.tags
+				.find({ reportingFilter: true })
+				.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
+				.sort({ name: 1 })
+				.toArray()
+		: [];
+
 	return {
 		paymentMethods: methods,
-		emailsEnabled,
+		reportingTags,
+		emailsEnabled: isEmailConfigured(),
 		collectIPOnDeliverylessOrders: runtimeConfig.collectIPOnDeliverylessOrders,
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
 		personalInfoConnected: {
@@ -105,6 +129,10 @@ export async function load({ parent, locals }) {
 		isBillingAddressMandatory: runtimeConfig.isBillingAddressMandatory,
 		displayNewsletterCommercialProspection: runtimeConfig.displayNewsletterCommercialProspection,
 		noProBilling: runtimeConfig.noProBilling,
+		posSubtypes: posSubtypes.map((subtype) => ({
+			slug: subtype.slug,
+			name: subtype.name
+		})),
 		...(cmsCheckoutTop && {
 			cmsCheckoutTop,
 			cmsCheckoutTopData: cmsFromContent(
@@ -143,7 +171,7 @@ export const actions = {
 			throw error(400, 'Cart is empty');
 		}
 
-		const products = await collections.products
+		const productsFromDb = await collections.products
 			.find({
 				_id: { $in: cart.items.map((item) => item.productId) }
 			})
@@ -152,6 +180,11 @@ export const actions = {
 				Object.assign(omit(product, 'translations'), product.translations?.[locals.language] ?? {})
 			)
 			.toArray();
+
+		// Resolve stock for products with stockReference
+		const products = await Promise.all(
+			productsFromDb.map(async (product) => await applyResolvedStock(product))
+		);
 
 		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
 
@@ -302,6 +335,15 @@ export const actions = {
 					})
 					.parse(Object.fromEntries(formData)).paymentMethod;
 
+		const posSubtype =
+			paymentMethod === 'point-of-sale'
+				? z
+						.object({
+							posSubtype: z.string().nullable().optional()
+						})
+						.parse(Object.fromEntries(formData)).posSubtype
+				: undefined;
+
 		const { discountAmount, discountType, discountJustification } = z
 			.object({
 				discountAmount: z.coerce.number().optional(),
@@ -448,6 +490,8 @@ export const actions = {
 		await withTransaction(async (session) => {
 			orderId = await createOrder(
 				cart.items.map((item) => ({
+					// Workaround since the type item._id of the cart item is not ObjectId
+					_id: item._id && ObjectId.isValid(item._id) ? new ObjectId(item._id) : undefined,
 					quantity: item.quantity,
 					product: byId[item.productId],
 					...(item.customPrice && {
@@ -465,16 +509,8 @@ export const actions = {
 				paymentMethod,
 				{
 					locale: locals.language,
-					user: {
-						sessionId: locals.sessionId,
-						userId: locals.user?._id,
-						userLogin: locals.user?.login,
-						userRoleId: locals.user?.roleId,
-						userAlias: locals.user?.alias,
-						npub: locals.npub,
-						email: locals.email,
-						userHasPosOptions: locals.user?.hasPosOptions
-					},
+					user: userIdentifier(locals),
+					...(posSubtype && { posSubtype }),
 					notifications: {
 						paymentStatus: {
 							npub: npubAddress,
@@ -512,7 +548,7 @@ export const actions = {
 							acceptedExportationAndVATObligation: agreements.isVATNullForeigner
 						})
 					},
-					...(physicalFullyPaid?.onLocation && { onLocation: physicalFullyPaid.onLocation }),
+					...(physicalFullyPaid && { onLocation: physicalFullyPaid.onLocation }),
 					...(desiredPayment.paymentTimeOut && { paymentTimeOut: desiredPayment.paymentTimeOut }),
 					session
 				}

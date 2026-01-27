@@ -1,11 +1,12 @@
 <script lang="ts">
-	import type { CartPriceInfo } from '$lib/cart';
 	import { useI18n } from '$lib/i18n';
 	import {
 		orderAmountWithNoPaymentsCreated,
 		type Order,
 		type OrderPayment,
-		PAYMENT_METHOD_EMOJI
+		PAYMENT_METHOD_EMOJI,
+		orderItemPriceUndiscounted,
+		orderItemPrice
 	} from '$lib/types/Order';
 	import type { Picture } from '$lib/types/Picture';
 	import type { Product } from '$lib/types/Product';
@@ -28,6 +29,7 @@
 				| 'depositPercentage'
 				| 'discountPercentage'
 				| 'freeQuantity'
+				| 'vatRate'
 			> & {
 				digitalFiles: Array<{ _id: string }>;
 				picture?: Picture;
@@ -52,7 +54,6 @@
 		>;
 		payments: Array<Pick<OrderPayment, 'currencySnapshot' | 'status' | 'method'>>;
 	};
-	export let orderPriceInfo: CartPriceInfo;
 	$: validDeposits = order.payments.filter(
 		(p) =>
 			p.currencySnapshot.main.price.amount < order.currencySnapshot.main.totalPrice.amount &&
@@ -63,6 +64,23 @@
 			p.currencySnapshot.main.price.amount < order.currencySnapshot.main.totalPrice.amount &&
 			(p.status === 'expired' || p.status === 'canceled')
 	);
+
+	// Calculate total discount from all items with discountPercentage
+	const calculateTotalDiscount = (currency: 'main' | 'secondary') =>
+		order.items.reduce((sum, item) => {
+			if (!item.discountPercentage || !item.currencySnapshot[currency]) {
+				return sum;
+			}
+			const priceWithoutVat = orderItemPriceUndiscounted(item, currency);
+			const priceWithVat = priceWithoutVat * (1 + item.vatRate / 100);
+			const discount = priceWithVat * (item.discountPercentage / 100);
+			return sum + discount;
+		}, 0);
+
+	$: totalDiscountAmount = calculateTotalDiscount('main');
+	$: totalDiscountAmountSecondary = order.currencySnapshot.secondary
+		? calculateTotalDiscount('secondary')
+		: 0;
 </script>
 
 <article
@@ -71,7 +89,7 @@
 	<div class="flex justify-between">
 		{t('checkout.numProducts', { count: order.items.length ?? 0 })}
 	</div>
-	{#each order.items as item, i}
+	{#each order.items as item}
 		<a href="/product/{item.product._id}">
 			<h3 class="text-base">
 				{item.chosenVariations
@@ -123,21 +141,25 @@
 			</div>
 
 			<div class="flex flex-col ml-auto items-end justify-center">
+				{#if item.discountPercentage}
+					<PriceTag
+						class="text-2xl truncate line-through"
+						amount={orderItemPriceUndiscounted(item, 'main')}
+						currency={item.currencySnapshot.main.customPrice?.currency ??
+							item.currencySnapshot.main.price.currency}
+						short={!!item.discountPercentage}
+					/>
+				{/if}
 				<PriceTag
 					class="text-2xl truncate"
-					amount={orderPriceInfo.perItem[i].unitsToBill *
-						(item.currencySnapshot.main.customPrice?.amount ??
-							item.currencySnapshot.main.price.amount)}
+					amount={orderItemPrice(item, 'main')}
 					currency={item.currencySnapshot.main.customPrice?.currency ??
 						item.currencySnapshot.main.price.currency}
 				/>
 				{#if item.currencySnapshot.secondary}
 					<PriceTag
 						class="text-2xl truncate"
-						amount={orderPriceInfo.perItem[i].unitsToBill *
-							(item.currencySnapshot.secondary.customPrice?.amount ??
-								item.currencySnapshot.secondary.price.amount) *
-							(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)}
+						amount={orderItemPrice(item, 'secondary')}
 						currency={item.currencySnapshot.secondary.customPrice?.currency ??
 							item.currencySnapshot.secondary.price.currency}
 					/>
@@ -202,24 +224,40 @@
 		<div class="border-b border-gray-300 col-span-4" />
 	{/each}
 
-	{#if order?.discount}
+	{#if totalDiscountAmount > 0 || order?.discount}
 		<div class="flex justify-between items-center">
 			<h3 class="text-base flex items-center gap-2">
 				{t('order.discount.title')}
 			</h3>
 
 			<div class="flex flex-col ml-auto items-end justify-center">
-				{#if order.currencySnapshot.main.discount}
+				{#if order?.discount && order.currencySnapshot.main.discount}
+					<!-- Old discount mechanism (from /checkout) -->
 					<PriceTag
 						class="text-2xl truncate"
 						amount={order.currencySnapshot.main.discount.amount}
 						currency={order.currencySnapshot.main.discount.currency}
 					/>
+				{:else}
+					<!-- New discount mechanism (from POS pool via item.discountPercentage) -->
+					<PriceTag
+						class="text-2xl truncate"
+						amount={totalDiscountAmount}
+						currency={order.currencySnapshot.main.totalPrice.currency}
+					/>
 				{/if}
-				{#if order.currencySnapshot.secondary?.discount}
+				{#if order?.discount && order.currencySnapshot.secondary?.discount}
+					<!-- Old discount mechanism secondary currency -->
 					<PriceTag
 						amount={order.currencySnapshot.secondary.discount.amount}
 						currency={order.currencySnapshot.secondary.discount.currency}
+						class="text-base truncate"
+					/>
+				{:else if order.currencySnapshot.secondary && totalDiscountAmountSecondary > 0}
+					<!-- New discount mechanism secondary currency -->
+					<PriceTag
+						amount={totalDiscountAmountSecondary}
+						currency={order.currencySnapshot.secondary.totalPrice.currency}
 						class="text-base truncate"
 					/>
 				{/if}
@@ -251,12 +289,17 @@
 	{#each validDeposits as payment}
 		<div class="py-3 flex flex-col">
 			<div class="flex justify-between">
-				<span class="text-xl"
-					><span title={t('checkout.paymentMethod.' + payment.method)}
-						>{PAYMENT_METHOD_EMOJI[payment.method]}</span
-					>
-					- {payment.status === 'paid' ? t('order.depositPaid') : t('order.depositToPay')}
-				</span>
+				<div class="flex flex-col">
+					<span class="text-xl"
+						><span title={t('checkout.paymentMethod.' + payment.method)}
+							>{PAYMENT_METHOD_EMOJI[payment.method]}</span
+						>
+						- {payment.status === 'paid' ? t('order.depositPaid') : t('order.depositToPay')}
+					</span>
+					{#if payment.status === 'pending'}
+						<span class="text-sm text-gray-500">pending</span>
+					{/if}
+				</div>
 				<PriceTag
 					class="text-2xl"
 					amount={payment.currencySnapshot.main.price.amount}
@@ -273,8 +316,8 @@
 		</div>
 	{/each}
 
-	{#if orderAmountWithNoPaymentsCreated(order)}
-		{@const remaining = orderAmountWithNoPaymentsCreated(order)}
+	{#if orderAmountWithNoPaymentsCreated(order, { ignorePendingPayments: true })}
+		{@const remaining = orderAmountWithNoPaymentsCreated(order, { ignorePendingPayments: true })}
 		<div class="py-3 flex flex-col">
 			<div class="flex justify-between">
 				<span class="text-xl">{t('order.restToPay')}</span>

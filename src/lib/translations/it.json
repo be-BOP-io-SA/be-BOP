@@ -13,6 +13,15 @@
 		"vatNumber": "Numero IVA",
 		"zipCode": "Codice d'avviamento postale"
 	},
+	"admin": {
+		"product": {
+			"stockReference": {
+				"label": "Riferimento allo stock di un altro prodotto (opzionale)",
+				"noReference": "-- Nessun riferimento (usa stock proprio) --",
+				"warning": "⚠️ Questo prodotto fa riferimento allo stock di un altro prodotto. Le modifiche allo stock influenzeranno il prodotto di riferimento."
+			}
+		}
+	},
 	"ageWarning": {
 		"agreement": "Ho letto le condizioni di accesso, le adempio e le rispetto",
 		"navigate": "Continua la navigazione"
@@ -508,7 +517,10 @@
 		"addPayment": {
 			"amount": "Somma del pagamento",
 			"cta": "Invia una chiamata per il pagamento",
-			"currency": "valuta del pagamento"
+			"currency": "valuta del pagamento",
+			"posSubtype": "Tipo",
+			"submit": "Aggiungi",
+			"title": "Aggiungi pagamento"
 		},
 		"backToOrder": "<< ritorna all'ordine",
 		"clickQR": "Clicca sul codice QR per pagare con il tuo portafoglio",
@@ -621,8 +633,10 @@
 			"totalExcVat": "Totale IVA esclusa",
 			"totalInclVat": "Totale IVA inclusa",
 			"totalVat": "Totale IVA",
+			"totalWithDiscount": "Totale con sconto",
 			"unitPrice": "Prezzo unitario",
-			"vatFreeReason": "Esente dall'IVA: {reason}"
+			"vatFreeReason": "Esente dall'IVA: {reason}",
+			"peopleCount": "Numero di persone"
 		},
 		"receiptFullyPaid": "Genera il ticket (pagato completamente)",
 		"receiptPending": "Genera il ticket (pagamento in attesa)",
@@ -662,6 +676,33 @@
 	"pos": {
 		"adminInterface": "Interfaccia dell'amministratore",
 		"applyGiftDiscount": "Come utente POS applico uno <0>sconto regalo</0>.",
+		"btn": {
+			"add": "Aggiungi",
+			"cancel": "Annulla",
+			"cancelTap": "Ferma Tap",
+			"paid": "Pagato",
+			"replace": "Modifica ▾",
+			"replaceSubmit": "Modifica",
+			"tapToPay": "Pagamento carta"
+		},
+		"cashback": {
+			"title": "Resto ▾",
+			"toPay": "Da pagare",
+			"paid": "Pagato",
+			"change": "Resto",
+			"cancel": "Annulla resto",
+			"validate": "Conferma"
+		},
+		"input": {
+			"detail": "Dettaglio",
+			"txNumber": "TX n°"
+		},
+		"label": {
+			"amount": "Importo",
+			"currency": "Valuta",
+			"method": "Metodo",
+			"subtype": "Tipo"
+		},
 		"cancelOrderMessage": "Sei sicuro di voler cnacel l'intero ordine?",
 		"cta": {
 			"cancelMultiPayOrder": "Annullare l'ordine",
@@ -696,7 +737,99 @@
 			"inUseByOtherOrder": "Il pagamento tap-to-pay è disattivato perché un altro ordine è in corso con questo metodo di pagamento. Puoi incassare manualmente e poi inserire il numero di transazione in questo campo."
 		},
 		"vatFree": "Questo è un ordine esente da IVA (<0>conditions</0>)",
-		"vatFreeReason": "ragione dell'esenzione da IVA"
+		"vatFreeReason": "ragione dell'esenzione da IVA",
+		"tagGroups": {
+			"addGroup": "Aggiungi gruppo",
+			"deleteGroup": "Elimina gruppo",
+			"groupNamePlaceholder": "Nome del gruppo",
+			"tooManyTagsWarning": "Il gruppo \"{groupName}\" ha {count} tag. Troppi per la modalità pulsante. Attivare l'opzione \"Usa menu di selezione\" o ridurre i tag. Continuare?"
+		},
+		"touch": {
+			"selectTab": "Seleziona una scheda:",
+			"noTabs": "Questo gruppo non ha schede",
+			"cancel": "Annulla",
+			"back": "← Indietro",
+			"ticketNumber": "BIGLIETTO n°",
+			"exclVat": "NET",
+			"inclVat": "LOR",
+			"subtotal": "SUBTOTALE",
+			"total": "TOTALE",
+			"vatBreakdown": "Di cui IVA",
+			"favorites": "PREFERITI",
+			"allProducts": "TUTTI I PRODOTTI",
+			"pagination": "PAGINA {currentPage}/{totalPages}",
+			"tickets": "BIGLIETTI",
+			"save": "SALVA",
+			"moveItems": "Sposta articoli",
+			"pool": "POOL",
+			"openDrawer": "APRI CASSETTO",
+			"pay": "PAGA",
+			"notDeveloped": "Non ancora sviluppato",
+			"confirmDeleteLastItem": "Vuoi eliminare l'ultima riga del carrello?",
+			"confirmDeleteAllItems": "Vuoi eliminare tutte le righe del carrello?",
+			"maxQuantityReached": "Quantità massima per ordine raggiunta ({max})"
+		},
+		"itemEdit": {
+			"quantity": "Quantità",
+			"directSelection": "Selezione diretta",
+			"qtyZeroRemove": "0 (Rimuovi)",
+			"itemRemoved": "Articolo rimosso",
+			"comment": "Commento",
+			"commentPlaceholder": "Inserisci un commento...",
+			"cancel": "ANNULLA",
+			"save": "SALVA"
+		},
+		"split": {
+			"notAvailableYet": "Non ancora disponibile",
+			"tabHeader": "Scheda {slug}",
+			"tabToPayNow": "Scheda {slug} (da pagare ora)",
+			"pool": "POOL",
+			"poolRemainingToPay": "POOL (da pagare)",
+			"exclVat": "esclusa IVA",
+			"inclVat": "inclusa IVA {rates}",
+			"inclVatShort": "IVA incl.",
+			"vatRate": "IVA {rate}%",
+			"cashIn": "Incassa",
+			"all": "tutto",
+			"split": "Dividi",
+			"shares": "quote",
+			"itemize": "dettagliare",
+			"return": "Indietro",
+			"continueSplit": "Continua divisione ({mode})",
+			"paySelected": "Paga selezionati",
+			"includingVatIncluded": "Di cui (IVA inclusa):",
+			"tagProducts": "Prodotti \"{name}\"",
+			"otherProducts": "Altri prodotti",
+			"selectItems": "Seleziona gli articoli da pagare",
+			"splitByShares": "Dividi per quote",
+			"enterNumberOfParts": "Numero di quote",
+			"manualAmount": "Importo manuale",
+			"ok": "OK",
+			"payRemaining": "Paga il resto",
+			"totalAlreadyPaid": "Totale già pagato (IVA inclusa)",
+			"remainingToPay": "Da pagare (IVA inclusa)",
+			"allPaid": "Tutto pagato",
+			"completeSharesFirst": "Hai già iniziato a pagare il pool tramite pagamenti \"Dividi (quote)\". Completa tutti i pagamenti e chiudi prima il pool.",
+			"closePool": "Chiudi pool",
+			"globalTicket": "Ticket globale",
+			"beforeDiscount": "PRIMA DELLO SCONTO",
+			"afterDiscount": "DOPO LO SCONTO"
+		},
+		"discount": {
+			"title": "Sconto",
+			"noDiscount": "Nessuno sconto",
+			"manualPercent": "% manuale",
+			"manualPercentPlaceholder": "Inserisci percentuale (0-100)",
+			"applyToTag": "Applica al tag:",
+			"allProducts": "Tutti i prodotti",
+			"currentDiscount": "Sconto attuale:",
+			"none": "Nessuno",
+			"motiveLabelOptional": "Motivo dello sconto (opzionale):",
+			"motivePlaceholder": "es. Passaporto gourmet",
+			"lockedWarning": "⚠️ Impossibile modificare lo sconto dopo l'inizio del pagamento",
+			"save": "Salva"
+		},
+		"useSelectForTags": "Usa menu a tendina per i tag"
 	},
 	"product": {
 		"addedToCart": "Prodotto aggiunto al carrello",
@@ -721,7 +854,8 @@
 			"details": "Dettagli",
 			"donate": "Fa' un offerta ora",
 			"preorder": "Preordina ora ",
-			"subscribe": "Sottoscrivi ora"
+			"subscribe": "Sottoscrivi ora",
+			"view": "Vedi prodotto"
 		},
 		"deposit": {
 			"payFullPrice": "Paga il prezzo integrale ora",
@@ -778,7 +912,9 @@
 	},
 	"subscription": {
 		"associated": {
-			"npub": "Associato a npub: {npub}"
+			"npub": "Associato a npub: {npub}",
+			"email": "Associato a email: {email}",
+			"title": "Associato a:"
 		},
 		"cantRenew": "Abbonamento non soggetto a rinnovo",
 		"cta": {
@@ -800,5 +936,33 @@
 	},
 	"widget": {
 		"specification": "Specificità"
+	},
+	"telemetry": {
+		"banner": {
+			"aWordFrom": "Una parola da",
+			"title": "Una parola da be-BOP:",
+			"description1": "Per supportare gratuitamente il software be-BOP, puoi rendere pubblica l'esistenza del tuo negozio.",
+			"description2": "Nessun dato verrà inviato a be-BOP.io SA, tranne l'URI del tuo negozio e il tuo consenso a comunicare al riguardo. Le tue informazioni private e quelle dei tuoi clienti non verranno condivise.",
+			"description3": "La tua condivisione sarà utilizzata per statistiche anonime sul numero di utenti be-BOP (che non viene tracciato automaticamente perché rispettiamo la privacy e il consenso), e per condurre occasionalmente campagne di comunicazione e promozione sui be-BOP distribuiti in tutto il mondo. Una prima notifica verrà inviata al bot Nostr di be-BOP.io, poi settimanalmente finché il tuo be-BOP è attivo. Puoi successivamente disattivare questo messaggio regolare in <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a>.",
+			"question": "Accetti di condividere l'esistenza del tuo be-BOP?",
+			"acceptButton": "Condividi",
+			"declineButton": "Ricordamelo tra 30 giorni",
+			"configureNostrButton": "Configura Nostr",
+			"accepted": {
+				"thankYou": "Grazie per aver scelto di condividere l'esistenza del tuo negozio con be-BOP.io per scopi statistici e promozionali!",
+				"message": "Nessun dato verrà inviato a be-BOP.io SA, tranne l'URL del tuo negozio e il tuo consenso a comunicare al riguardo. Puoi andare su <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> per disattivare questa telemetria opzionale.",
+				"autoHideCountdown": "Questo messaggio scomparirà tra {seconds} secondi..."
+			},
+			"declined": {
+				"respect": "Rispettiamo la tua scelta di non condividere informazioni sul tuo negozio.",
+				"reaskCountdown": "Questo messaggio verrà nascosto tra {seconds} secondi...",
+				"reask": "Ti faremo nuovamente la domanda tra 30 giorni. Tuttavia, puoi rifiutare direttamente il promemoria facendo clic sul pulsante",
+				"hideButton": "Non chiedermelo mai più"
+			}
+		},
+		"seo": {
+			"checkboxLabel": "Abilita il segnale beacon verso il bot Nostr di be-BOP.io per condividere l'esistenza del tuo negozio",
+			"infoBlock": "Questa impostazione controlla se il tuo negozio invia segnali periodici a be-BOP.io. Diamo valore alla privacy: vengono condivisi solo l'URL del tuo negozio e la versione del software be-BOP. Non vengono trasmessi dati personali o dei clienti. Questo ci aiuta con il debug e ci mostra che la comunità be-BOP sta crescendo."
+		}
 	}
 }

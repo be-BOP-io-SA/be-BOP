@@ -29,21 +29,26 @@
 	let country = defaultShippingCountry;
 
 	let isFreeVat = false;
-	let onLocation = data.hasPosOptions && data.defaultOnLocation;
-	$: offerDeliveryFees = onLocation;
 	let addDiscount = false;
 	let offerOrder = false;
 	let discountAmount = 0;
-	let discountType: DiscountType;
+	let discountType: DiscountType | undefined = undefined;
 	$: {
 		if (offerOrder) {
 			discountType = 'percentage';
-			discountAmount = 100;
+			discountAmount = 99;
 		} else {
-			if (discountType !== 'percentage' || discountAmount !== 100) {
+			if (discountType !== 'percentage' || discountAmount !== 99) {
 				offerOrder = false;
 			}
 		}
+	}
+
+	let canOfferDeliveryFees = (data.hasPosOptions && data.deliveryFees.allowFreeForPOS) || false;
+	let offerDeliveryFees = false;
+	let orderFullyPaidOnLocation = canOfferDeliveryFees && data.defaultOnLocation;
+	$: {
+		offerDeliveryFees = orderFullyPaidOnLocation;
 	}
 
 	let multiplePaymentMethods = false;
@@ -103,27 +108,92 @@
 		: paymentMethods[0];
 
 	$: items = data.cart.items;
-	$: deliveryFees =
-		data.hasPosOptions && data.deliveryFees.allowFreeForPOS
-			? 0
-			: computeDeliveryFees(UNDERLYING_CURRENCY, country, items, data.deliveryFees);
+	$: orderDeliveryFees = computeDeliveryFees(
+		UNDERLYING_CURRENCY,
+		country,
+		items,
+		data.deliveryFees
+	);
+	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
 
-	$: priceInfo = data.cart.priceInfo;
-	$: priceInfoInitial = computePriceInfo(items, {
+	$: possiblyOutOfBoundsDiscount =
+		addDiscount && discountType
+			? {
+					type: discountType,
+					amount: discountAmount
+			  }
+			: undefined;
+
+	// A PoS operator may apply different discounts, such as on-site promotions or free delivery;
+	// thus, the price info is computed from scratch to reflect the correct value.
+	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		deliveryFees: {
-			amount: offerDeliveryFees ? 0 : deliveryFees || 0,
-			currency: UNDERLYING_CURRENCY
-		},
+		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		discount: possiblyOutOfBoundsDiscount,
 		freeProductUnits: data.cart.freeProductUnits,
 		userCountry: isDigital ? digitalCountry : country,
-		vatExempted: data.vatExempted || isFreeVat,
+		vatExempted: data.vatExempted,
 		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatProfiles: data.vatProfiles,
-		vatSingleCountry: data.vatSingleCountry
+		vatSingleCountry: data.vatSingleCountry,
+		vatProfiles: data.vatProfiles
 	});
-
 	$: isDigital = items.every((item) => !item.product.shipping);
+
+	$: tagBreakdown = (() => {
+		if (!data.hasPosOptions || !data.reportingTags || !items || items.length === 0) {
+			return [];
+		}
+
+		const reportingTagIds = new Set(data.reportingTags.map((tag) => tag._id));
+
+		const itemsWithIndices = items.map((item, index) => ({ item, index }));
+
+		const tagEntries = data.reportingTags
+			.map((tag) => {
+				const itemsWithTag = itemsWithIndices.filter(({ item }) =>
+					item.product.tagIds?.includes(tag._id)
+				);
+
+				if (itemsWithTag.length === 0) {
+					return null;
+				}
+
+				const totalWithVat = itemsWithTag.reduce((sum, { index }) => {
+					const itemPriceInfo = priceInfo.perItem[index];
+					const itemVatRate = priceInfo.vatRates[index];
+					return sum + itemPriceInfo.amount * (1 + itemVatRate / 100);
+				}, 0);
+
+				return {
+					tagName: tag.name,
+					totalWithVat,
+					currency: priceInfo.perItem[itemsWithTag[0].index].currency
+				};
+			})
+			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+
+		const itemsWithoutReportingTags = itemsWithIndices.filter(
+			({ item }) =>
+				!item.product.tagIds || !item.product.tagIds.some((tagId) => reportingTagIds.has(tagId))
+		);
+
+		const otherEntry =
+			itemsWithoutReportingTags.length > 0
+				? [
+						{
+							tagName: null as null,
+							totalWithVat: itemsWithoutReportingTags.reduce((sum, { index }) => {
+								const itemPriceInfo = priceInfo.perItem[index];
+								const itemVatRate = priceInfo.vatRates[index];
+								return sum + itemPriceInfo.amount * (1 + itemVatRate / 100);
+							}, 0),
+							currency: priceInfo.perItem[itemsWithoutReportingTags[0].index].currency
+						}
+				  ]
+				: [];
+
+		return [...tagEntries, ...otherEntry];
+	})();
 
 	$: paymentMethods =
 		priceInfo.totalPriceWithVat === 0
@@ -138,9 +208,8 @@
 			  );
 	$: isDiscountValid =
 		(discountType === 'fiat' &&
-			priceInfoInitial.totalPriceWithVat >=
-				toSatoshis(discountAmount || 0, data.currencies.main)) ||
-		(discountType === 'percentage' && discountAmount <= 100);
+			priceInfo.totalPriceWithVat >= toSatoshis(discountAmount || 0, data.currencies.main)) ||
+		(discountType === 'percentage' && discountAmount <= 99);
 	let showBillingInfo = false;
 	let isProfessionalOrder = false;
 	let changePaymentTimeOut = false;
@@ -149,6 +218,15 @@
 			? priceInfo.partialPriceWithVat >=
 			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 			: true;
+
+	function handleOfferDeliveryFeesChange(e: Event) {
+		const element = e.target as HTMLInputElement;
+		if (element.checked) {
+			setTimeout(() => {
+				document.getElementById('reasonOfferDeliveryFees')?.focus();
+			}, 100);
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -172,7 +250,7 @@
 			galleries={data.cmsCheckoutTopData.galleries}
 			leaderboards={data.cmsCheckoutTopData.leaderboards}
 			schedules={data.cmsCheckoutTopData.schedules}
-			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
+			class={data.hideCmsZonesOnMobile ? 'prose max-w-full hidden lg:contents' : 'prose max-w-full'}
 		/>
 	{/if}
 	<div
@@ -327,14 +405,14 @@
 						{t('checkout.isProBilling')}
 					</label>
 				{/if}
-				{#if data.defaultOnLocation && data.hasPosOptions && !isDigital}
+				{#if canOfferDeliveryFees && !isDigital}
 					<label class="col-span-6 checkbox-label">
 						<input
 							type="checkbox"
 							class="form-checkbox"
 							form="checkout"
 							name="onLocation"
-							bind:checked={onLocation}
+							bind:checked={orderFullyPaidOnLocation}
 						/>
 						{t('checkout.onLocation')}
 					</label>
@@ -484,6 +562,18 @@
 							{/if}
 						</div>
 					</label>
+					{#if paymentMethod === 'point-of-sale' && data.posSubtypes?.length}
+						<label class="form-label col-span-6">
+							<span>Payment Type</span>
+							<select name="posSubtype" class="form-input" required>
+								{#each data.posSubtypes as subtype}
+									<option value={subtype.slug}>
+										{subtype.name}
+									</option>
+								{/each}
+							</select>
+						</label>
+					{/if}
 				{/if}
 				{#if data.hasPosOptions && paymentMethod !== 'point-of-sale' && paymentMethod !== 'bank-transfer'}
 					<label class="checkbox-label">
@@ -727,19 +817,18 @@
 					<div class="border-b border-gray-300 col-span-4" />
 				{/each}
 
-				{#if deliveryFees && !offerDeliveryFees}
+				{#if deliveryFeesToBill}
 					<div class="flex justify-between items-center">
 						<h3 class="text-base">{t('checkout.deliveryFees')}</h3>
-
 						<div class="flex flex-col ml-auto items-end justify-center">
 							<PriceTag
 								class="text-2xl truncate"
-								amount={deliveryFees}
+								amount={deliveryFeesToBill}
 								currency={UNDERLYING_CURRENCY}
 								main
 							/>
 							<PriceTag
-								amount={deliveryFees}
+								amount={deliveryFeesToBill}
 								currency={UNDERLYING_CURRENCY}
 								class="text-base truncate"
 								secondary
@@ -747,7 +836,7 @@
 						</div>
 					</div>
 					<div class="border-b border-gray-300 col-span-4" />
-				{:else if isNaN(deliveryFees)}
+				{:else if isNaN(deliveryFeesToBill)}
 					<div class="alert-error mt-3">
 						{t('checkout.noDeliveryInCountry')}
 					</div>
@@ -1047,32 +1136,57 @@
 							/>
 						</label>
 					{/if}
-					{#if data.deliveryFees.allowFreeForPOS && deliveryFees}
-						<label class="checkbox-label">
+					{#if canOfferDeliveryFees && orderDeliveryFees}
+						{@const displayToTheUser = !orderFullyPaidOnLocation}
+						<label class="checkbox-label" style={displayToTheUser ? '' : 'display: none;'}>
 							<input
 								type="checkbox"
 								class="form-checkbox"
 								name="offerDeliveryFees"
 								form="checkout"
 								bind:checked={offerDeliveryFees}
+								on:change={handleOfferDeliveryFeesChange}
 							/>
 							{t('pos.offerDeliveryFees')}
 						</label>
-
-						{#if offerDeliveryFees}
-							<label class="form-label col-span-3">
+						{#if orderDeliveryFees !== deliveryFeesToBill}
+							<label class="form-label col-span-3" style={displayToTheUser ? '' : 'display: none;'}>
 								{t('pos.discountJustification')}
 								<input
+									id="reasonOfferDeliveryFees"
 									type="text"
 									class="form-input"
 									form="checkout"
 									name="reasonOfferDeliveryFees"
 									required
-									value={onLocation ? t('checkout.reasonOfferFeesDefault') : ''}
+									value={orderFullyPaidOnLocation ? t('checkout.reasonOfferFeesDefault') : ''}
 								/></label
 							>
 						{/if}
 					{/if}
+				{/if}
+
+				{#if tagBreakdown.length > 0}
+					<div class="-mx-3 p-3 flex flex-col gap-2 border-t border-gray-300 mt-2">
+						<h3 class="text-base font-medium">{t('pos.split.includingVatIncluded')}</h3>
+						{#each tagBreakdown as tag}
+							<div class="flex justify-between items-center">
+								<span class="text-sm">
+									{#if tag.tagName === null}
+										{t('pos.split.otherProducts')}
+									{:else}
+										{t('pos.split.tagProducts', { name: tag.tagName })}
+									{/if}
+								</span>
+								<PriceTag
+									amount={tag.totalWithVat}
+									currency={tag.currency}
+									main
+									class="text-base"
+								/>
+							</div>
+						{/each}
+					</div>
 				{/if}
 
 				<input
@@ -1080,7 +1194,7 @@
 					class="btn body-cta body-mainCTA btn-xl -mx-1 -mb-1 mt-1"
 					value={t('checkout.cta.submit')}
 					form="checkout"
-					disabled={isNaN(deliveryFees) ||
+					disabled={isNaN(deliveryFeesToBill) ||
 						(addDiscount && !isDiscountValid) ||
 						submitting ||
 						!physicalCartCanBeOrdered}
@@ -1108,7 +1222,7 @@
 			galleries={data.cmsCheckoutBottomData.galleries}
 			leaderboards={data.cmsCheckoutBottomData.leaderboards}
 			schedules={data.cmsCheckoutBottomData.schedules}
-			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
+			class={data.hideCmsZonesOnMobile ? 'prose max-w-full hidden lg:contents' : 'prose max-w-full'}
 		/>
 	{/if}
 </main>

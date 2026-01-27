@@ -1,4 +1,5 @@
 import { collections } from '$lib/server/database.js';
+import { PHOENIXD_ENDPOINT_URL, PHOENIXD_HTTP_PASSWORD } from '$lib/server/env-config';
 import { lookup as dnsLookup } from 'node:dns/promises';
 import { setTimeout } from 'node:timers/promises';
 import {
@@ -17,6 +18,7 @@ import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
 export const load = async () => {
+	const configManagedByEnvVars = !!PHOENIXD_ENDPOINT_URL && !!PHOENIXD_HTTP_PASSWORD;
 	if (!isPhoenixdConfigured()) {
 		const dockerIp = await Promise.race([
 			dnsLookup('host.docker.internal').catch(() => null),
@@ -24,9 +26,10 @@ export const load = async () => {
 		]);
 
 		return {
+			configManagedByEnvVars,
+			dockerIp: dockerIp?.address,
 			lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
-			phoenixd: runtimeConfig.phoenixd,
-			dockerIp: dockerIp?.address
+			phoenixd: runtimeConfig.phoenixd
 		};
 	}
 
@@ -35,19 +38,21 @@ export const load = async () => {
 		const balance = await phoenixdBalance();
 		const bolt12Address = await phoenixdGetBolt12();
 		return {
-			lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
-			phoenixd: runtimeConfig.phoenixd,
-			nodeInfo,
 			balance,
-			bolt12Address
+			bolt12Address,
+			lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
+			nodeInfo,
+			phoenixd: runtimeConfig.phoenixd,
+			configManagedByEnvVars
 		};
 	} catch (err) {
 		return {
-			lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
-			phoenixd: runtimeConfig.phoenixd,
-			nodeInfo: null,
 			balance: null,
-			bolt12Address: null
+			bolt12Address: null,
+			lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
+			nodeInfo: null,
+			phoenixd: runtimeConfig.phoenixd,
+			configManagedByEnvVars
 		};
 	}
 };

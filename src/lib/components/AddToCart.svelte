@@ -65,7 +65,7 @@
 
 			await invalidate(UrlDependency.Cart);
 			addToCart();
-			// Not for the widget, see https://github.com/B2Bitcoin/B2BitcoinBootik/issues/243
+			// Not for the widget, see https://github.com/be-BOP-io-SA/be-BOP/issues/243
 			//document.body.scrollIntoView();
 		};
 	}}

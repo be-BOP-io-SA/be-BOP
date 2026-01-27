@@ -1,13 +1,15 @@
 .DS_Store
-node_modules
-/build
-/.svelte-kit
-/package
-.env.local
 .env.*.local
+.env.local
+/.svelte-kit
+/build
+/package
+/release
+build.zip
+node_modules
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-build.zip
+
 # Copied in vite.config.ts
 static/tinymce
 lib/utils/timeZoneOffset.ts

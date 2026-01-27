@@ -14,16 +14,32 @@
 	let slug = data.schedule._id;
 	let displayPastEvents = data.schedule.displayPastEvents;
 	let eventLines = data.schedule.events.length || 1;
-	$: eventAvailable = data.schedule.events.map((eve) => ({
+	let eventAvailable = data.schedule.events.map((eve) => ({
 		isUnavailable: eve.unavailabity?.isUnavailable ?? false
 	}));
-	$: eventCalendar = data.schedule.events.map((eve) => ({
+	let eventCalendar = data.schedule.events.map((eve) => ({
 		calendarColor: !!eve.calendarColor
 	}));
-	$: rsvpOptions = data.schedule.events.map((eve) => ({
+	let rsvpOptions = data.schedule.events.map((eve) => ({
 		option: !!eve.rsvp?.target
 	}));
-	$: createATicket = data.schedule.events.map(() => false);
+	let createATicket = data.schedule.events.map(() => false);
+
+	$: if (data.schedule.events.length !== eventAvailable.length) {
+		eventAvailable = data.schedule.events.map((eve) => ({
+			isUnavailable: eve.unavailabity?.isUnavailable ?? false
+		}));
+		eventCalendar = data.schedule.events.map((eve) => ({
+			calendarColor: !!eve.calendarColor
+		}));
+		rsvpOptions = data.schedule.events.map((eve) => ({
+			option: !!eve.rsvp?.target
+		}));
+		createATicket = data.schedule.events.map(() => false);
+		errorMessage = data.schedule.events.map(() => '');
+		eventLines = data.schedule.events.length;
+	}
+
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
 	let hideAll = true;
@@ -108,6 +124,15 @@
 	const timezoneOffsetHours = new Date().getTimezoneOffset() / 60;
 	const timezoneSign = timezoneOffsetHours > 0 ? '-' : '+';
 	const timezoneString = `GMT${timezoneSign}${Math.abs(timezoneOffsetHours)}`;
+
+	function handleInvalidInput(event: Event) {
+		const target = event.target as HTMLInputElement;
+		// Find and open the parent <details> element so the browser can focus the invalid input
+		const detailsParent = target.closest('details');
+		if (detailsParent && !detailsParent.hasAttribute('open')) {
+			detailsParent.setAttribute('open', '');
+		}
+	}
 </script>
 
 <h1 class="text-3xl">Edit a schedule</h1>
@@ -217,7 +242,7 @@
 	{#each [...Array(eventLines).keys()] as i}
 		<details
 			class="border border-gray-300 rounded-xl p-2"
-			open={!hideAll || !data.schedule.events[i]}
+			open={!hideAll || !data.schedule.events[i] || !!errorMessage[i]}
 			id="detail-{i}"
 		>
 			<summary class="text-xl font-bold">
@@ -366,6 +391,7 @@
 							class="form-input"
 							required
 							value={data.schedule.events[i].title}
+							on:invalid={handleInvalidInput}
 						/>
 						<input
 							type="hidden"
@@ -408,6 +434,7 @@
 									.toISOString()
 									.slice(0, 16))}
 								required
+								on:invalid={handleInvalidInput}
 							/>
 						</label>
 					</div>
@@ -485,6 +512,7 @@
 								value={data.schedule.events[i].rsvp?.target ||
 									data.sellerIdentity?.contact.email ||
 									''}
+								on:invalid={handleInvalidInput}
 							/>
 						</label>
 					{/if}
@@ -583,7 +611,13 @@
 				{:else}
 					<label class="form-label">
 						Title
-						<input type="text" name="events[{i}].title" class="form-input" required />
+						<input
+							type="text"
+							name="events[{i}].title"
+							class="form-input"
+							required
+							on:invalid={handleInvalidInput}
+						/>
 					</label>
 					<label class="form-label">
 						Short description
@@ -614,6 +648,7 @@
 								name="events[{i}].beginsAt"
 								bind:value={beginsAt[i]}
 								required
+								on:invalid={handleInvalidInput}
 							/>
 						</label>
 					</div>
@@ -660,7 +695,13 @@
 					{#if rsvpOption}
 						<label class="form-label">
 							Target
-							<input type="text" name="events[{i}].rsvp.target" class="form-input" required />
+							<input
+								type="text"
+								name="events[{i}].rsvp.target"
+								class="form-input"
+								required
+								on:invalid={handleInvalidInput}
+							/>
 						</label>
 					{/if}
 					<label class="checkbox-label">

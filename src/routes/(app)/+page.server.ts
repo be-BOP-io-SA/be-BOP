@@ -55,7 +55,8 @@ export const load = async ({ locals, url }) => {
 				desktopContent: cmsPage.content,
 				mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
 				employeeContent: (cmsPage.hasEmployeeContent && cmsPage.employeeContent) || undefined,
-				forceContentVersion
+				forceContentVersion,
+				forceUnsanitizedContent: cmsPage.displayRawContent
 			},
 			locals
 		),
@@ -64,7 +65,19 @@ export const load = async ({ locals, url }) => {
 };
 
 export const actions = {
-	navigate: async ({ locals }) => {
+	navigate: async ({ locals, request }) => {
+		const formData = await request.formData();
+		let redirectTo = formData.get('redirectTo')?.toString() || '/';
+
+		// Only allow redirect to public pages (not employee-only areas)
+		if (
+			!redirectTo.startsWith('/') ||
+			redirectTo.startsWith('/admin') ||
+			redirectTo.startsWith('/pos')
+		) {
+			redirectTo = '/';
+		}
+
 		await collections.sessions.updateOne(
 			{
 				sessionId: locals.sessionId
@@ -81,6 +94,6 @@ export const actions = {
 			},
 			{ upsert: true }
 		);
-		throw redirect(303, `/`);
+		throw redirect(303, redirectTo);
 	}
 };

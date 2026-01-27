@@ -178,9 +178,15 @@
 		@apply cursor-pointer rounded-sm;
 	}
 
+	label:has(.form-checkbox:disabled),
+	fieldset:disabled label:has(.form-checkbox) {
+		@apply cursor-not-allowed opacity-50;
+	}
+
+	/* Fallback for browsers that don't support :has - but do not apply opacity-50 to avoid stacking with opacity-50 from :has */
 	.form-checkbox:disabled,
 	fieldset:disabled .form-checkbox {
-		@apply cursor-not-allowed opacity-50;
+		@apply cursor-not-allowed;
 	}
 
 	.form-radio {
@@ -202,6 +208,47 @@
 	.alert-info {
 		@apply border border-blue-400 p-2 text-blue-600 rounded;
 	}
+
+	.alert-banner {
+		@apply px-4 py-3 rounded mb-4 border;
+	}
+
+	.alert-banner-success {
+		@apply alert-banner bg-green-100 border-green-400 text-green-700;
+	}
+
+	.alert-banner-error {
+		@apply alert-banner bg-red-100 border-red-400 text-red-700;
+	}
+
+	.data-table-header {
+		@apply px-3 py-2 bg-gray-200 text-left text-xs leading-4 font-medium text-gray-600 uppercase tracking-wider;
+	}
+
+	.data-table-cell {
+		@apply px-3 py-2 whitespace-nowrap text-sm;
+	}
+
+	.modal-error-box {
+		@apply mb-4 p-4 bg-red-50 border border-red-200 rounded max-h-60 overflow-y-auto;
+	}
+
+	.admin-table {
+		@apply border border-gray-300 divide-y divide-gray-300 border-collapse;
+	}
+
+	.admin-table-header {
+		@apply bg-gray-200;
+	}
+
+	.admin-table-th {
+		@apply border border-gray-300 p-2;
+	}
+
+	.admin-table-td {
+		@apply border border-gray-300 p-2;
+	}
+
 	.body-secondPlan {
 		color: var(--body-text-color);
 		font-family: var(--body-text-fontFamily);
@@ -326,9 +373,7 @@
 	.eventCalendar-currentDate {
 		background-color: var(--eventCalendar-currentDate-backgroundColor);
 		color: var(--eventCalendar-currentDate-color);
-
 	}
-
 }
 
 @layer utilities {

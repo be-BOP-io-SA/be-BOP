@@ -3,7 +3,7 @@ import {
 	MONGODB_DB,
 	MONGODB_IP_FAMILY,
 	MONGODB_DIRECT_CONNECTION
-} from '$env/static/private';
+} from '$lib/server/env-config';
 import {
 	MongoClient,
 	ObjectId,
@@ -34,6 +34,7 @@ import type { Discount } from '$lib/types/Discount';
 import type { Session } from '$lib/types/Session';
 import type { Migration } from '$lib/types/Migration';
 import type { Tag } from '$lib/types/Tag';
+import type { TagGroup } from '$lib/types/TagGroup';
 import type { Slider } from '$lib/types/slider';
 import { building } from '$app/environment';
 import type { Theme } from '$lib/types/Theme';
@@ -49,6 +50,10 @@ import type { OrderLabel } from '$lib/types/OrderLabel';
 import type { ScheduleEventBooked, Schedule } from '$lib/types/Schedule';
 import type { Leaderboard } from '$lib/types/Leaderboard';
 import { CtiOrderNotification } from '$lib/types/CtiOrderNotification';
+import type { OrderTab } from '$lib/types/OrderTab';
+import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
+import type { PosSession } from '$lib/types/PosSession';
+import type { PendingZap } from '$lib/types/PendingZap';
 
 // Bigger than the default 10, helpful with MongoDB errors
 Error.stackTraceLimit = 100;
@@ -83,6 +88,7 @@ const genCollection = () => ({
 	digitalFiles: db.collection<DigitalFile>('digitalFiles'),
 	pendingDigitalFiles: db.collection<DigitalFile>('digitalFiles.pending'),
 	orders: db.collection<Order>('orders'),
+	orderTabs: db.collection<OrderTab>('orderTabs'),
 	nostrNotifications: db.collection<NostRNotification>('notifications.nostr'),
 	emailNotifications: db.collection<EmailNotification>('notifications.email'),
 	nostrReceivedMessages: db.collection<NostRReceivedMessage>('nostr.receivedMessage'),
@@ -96,6 +102,7 @@ const genCollection = () => ({
 	sessions: db.collection<Session>('sessions'),
 	migrations: db.collection<Migration>('migrations'),
 	tags: db.collection<Tag>('tags'),
+	tagGroups: db.collection<TagGroup>('tagGroups'),
 	sliders: db.collection<Slider>('sliders'),
 	themes: db.collection<Theme>('themes'),
 	personalInfo: db.collection<PersonalInfo>('personalInfo'),
@@ -108,6 +115,9 @@ const genCollection = () => ({
 	labels: db.collection<OrderLabel>('labels'),
 	schedules: db.collection<Schedule>('schedules'),
 	scheduleEvents: db.collection<ScheduleEventBooked>('schedule.events'),
+	posPaymentSubtypes: db.collection<PosPaymentSubtype>('posPaymentSubtypes'),
+	posSessions: db.collection<PosSession>('posSessions'),
+	pendingZaps: db.collection<PendingZap>('pendingZaps'),
 
 	errors: db.collection<unknown & { _id: ObjectId; url: string; method: string }>('errors')
 });
@@ -153,6 +163,8 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.orders, { 'payments.invoice.number': 1 }, { unique: true, sparse: true }],
 	[collections.orders, { 'payments.status': 1 }],
 	[collections.orders, { status: 1, 'payments.status': 1 }],
+	[collections.orders, { orderTabId: 1, status: 1 }, { sparse: true }],
+	[collections.orders, { orderTabId: 1, splitMode: 1, status: 1 }, { sparse: true }],
 	[collections.orders, { orderLabelIds: 1 }, { sparse: true }],
 	[collections.digitalFiles, { productId: 1 }],
 	[collections.digitalFiles, { secret: 1 }, { unique: true, sparse: true }],
@@ -208,7 +220,15 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.scheduleEvents, { scheduleId: 1, status: 1, beginsAt: 1, endsAt: 1 }], // endsAt is just used for index-only scan
 	[collections.scheduleEvents, { scheduleId: 1, status: 1, endsAt: 1 }],
 	[collections.scheduleEvents, { orderId: 1 }],
-	[collections.scheduleEvents, { orderCreated: 1, _id: 1 }] // To cleanup events where there was an error during order creation
+	[collections.scheduleEvents, { orderCreated: 1, _id: 1 }], // To cleanup events where there was an error during order creation
+	[collections.posPaymentSubtypes, { slug: 1 }, { unique: true }],
+	[collections.posPaymentSubtypes, { sortOrder: 1 }],
+	[collections.posPaymentSubtypes, { disabled: 1 }],
+	[collections.posSessions, { status: 1, openedAt: -1 }],
+	[collections.posSessions, { closedAt: -1 }],
+	[collections.orderTabs, { slug: 1 }, { unique: true }],
+	[collections.pendingZaps, { processedAt: 1 }],
+	[collections.pendingZaps, { invoiceId: 1 }, { unique: true }]
 ];
 
 export async function createIndexes() {

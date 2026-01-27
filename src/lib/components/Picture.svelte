@@ -112,10 +112,18 @@
 		width={picture.storage.formats[0].width}
 		height={picture.storage.formats[0].height}
 		src={picture.storage.formats
-			.map((format) => `/picture/raw/${picture?._id}/format/${format.width}?v=1 ${format.width}w`)
+			.map((format) =>
+				format.url
+					? `${format.url} ${format.width}w`
+					: `/picture/raw/${picture?._id}/format/${format.width}?v=1 ${format.width}w`
+			)
 			.join(', ')}
 		srcset={picture.storage.formats
-			.map((format) => `/picture/raw/${picture?._id}/format/${format.width}?v=1 ${format.width}w`)
+			.map((format) =>
+				format.url
+					? `${format.url} ${format.width}w`
+					: `/picture/raw/${picture?._id}/format/${format.width}?v=1 ${format.width}w`
+			)
 			.join(', ')}
 		sizes={sizeHint !== null ? `${sizeHint}px` : undefined}
 		class={className}

@@ -25,7 +25,7 @@ import {
 	ORIGIN,
 	TWITTER_ID,
 	TWITTER_SECRET
-} from '$env/static/private';
+} from '$lib/server/env-config';
 import { sequence } from '@sveltejs/kit/hooks';
 import { building } from '$app/environment';
 import { sha256 } from '$lib/utils/sha256';
@@ -44,6 +44,7 @@ import { renewSessionId } from '$lib/server/user';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { rateLimit } from '$lib/server/rateLimit';
 import { toIPv4Maybe } from '$lib/server/utils/toIPv4Maybe';
+import { attemptAutoconfigurePhoenixd } from '$lib/server/phoenixd';
 
 const SSO_COOKIE = 'next-auth.session-token';
 
@@ -509,3 +510,6 @@ const handleSSO = authProviders
 export const handle = handleSSO
 	? sequence(addSecurityHeaders, handleGlobal, handleSSO, handleSsoCookie)
 	: sequence(addSecurityHeaders, handleGlobal);
+
+// Kick-off autoconfiguration of phoenixd
+attemptAutoconfigurePhoenixd();

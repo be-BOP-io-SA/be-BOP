@@ -9,11 +9,12 @@ import type { ObjectId } from 'mongodb';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import type { LanguageKey } from '$lib/translations';
 import type { User } from './User';
-import { getWeek, getWeekOfMonth } from 'date-fns';
+import { differenceInMinutes, getWeek, getWeekOfMonth } from 'date-fns';
 import type { Ticket } from './Ticket';
 import type { OrderLabel } from './OrderLabel';
 import { toBitcoins } from '$lib/utils/toBitcoins';
 import type { ScheduleEventBooked } from './Schedule';
+import type { PickDeep } from 'type-fest';
 
 export type OrderPaymentStatus = 'pending' | 'paid' | 'expired' | 'canceled' | 'failed';
 
@@ -22,6 +23,27 @@ export type DiscountType = 'fiat' | 'percentage';
 export type Price = {
 	amount: number;
 	currency: Currency;
+	/**
+	 * Number of decimal places for storing this price.
+	 *
+	 * **Optional for backwards compatibility** - when undefined, defaults to
+	 * FRACTION_DIGITS_PER_CURRENCY (2 for fiat, 8 for BTC).
+	 *
+	 * New prices saved with storage precision will have this set to
+	 * STORAGE_FRACTION_DIGITS_PER_CURRENCY (4 for fiat, 8 for BTC).
+	 *
+	 * This allows storing precise base prices (e.g., 4.6253 CHF) that result
+	 * in round numbers after VAT calculation (e.g., 5.00 CHF with 8.1% VAT).
+	 *
+	 * @example
+	 * // Old price from DB (no precision field):
+	 * { amount: 5.00, currency: 'CHF' }  // precision defaults to 2
+	 *
+	 * @example
+	 * // New price from DB (with precision):
+	 * { amount: 4.6253, currency: 'CHF', precision: 4 }
+	 */
+	precision?: number;
 };
 
 export interface Note {
@@ -85,6 +107,17 @@ export interface OrderPayment {
 	};
 	method: PaymentMethod;
 	processor?: PaymentProcessor;
+
+	/**
+	 * For 'point-of-sale' payments, specifies the subtype slug
+	 * References PosPaymentSubtype.slug
+	 *
+	 * Examples: "cash", "check", "external-tpe"
+	 *
+	 * If undefined → legacy PoS payment (backward compatibility)
+	 */
+	posSubtype?: string;
+
 	/**
 	 * Can be unset for cash or bank transfer payments for example.
 	 */
@@ -127,7 +160,15 @@ export interface OrderPayment {
 	lastStatusNotified?: OrderPaymentStatus;
 	bankTransferNumber?: string;
 	detail?: string;
+	cashbackAmount?: Price;
 }
+
+export type SerializedOrderPayment = Omit<OrderPayment, '_id'> & {
+	id: string;
+	tapToPayOnActivationUrl?: string;
+	posSubtypeHasProcessor?: boolean;
+	confirmationBlocksRequired: number;
+};
 
 export const FAKE_ORDER_INVOICE_NUMBER = -1;
 
@@ -155,6 +196,15 @@ export interface Order extends Timestamps {
 	locale: LanguageKey;
 
 	items: Array<{
+		/**
+		 * Unique identifier for a line in the order.
+		 *
+		 * Used to correlate a specific item in the cart or orderTab. Special care
+		 * should be taken for this value not to be controlled by the user.
+		 *
+		 * Only optional for backwards compatibility.
+		 */
+		_id?: ObjectId;
 		product: Product;
 		quantity: number;
 		customPrice?: { amount: number; currency: Currency };
@@ -193,6 +243,11 @@ export interface Order extends Timestamps {
 		vatRate: number;
 		tickets?: Array<Ticket['ticketId']>;
 	}>;
+	orderTabSlug?: string;
+	orderTabId?: ObjectId;
+	cartId?: ObjectId;
+	splitMode?: 'items' | 'shares';
+	peopleCountFromPosUi?: number;
 
 	shippingAddress?: OrderAddress;
 	billingAddress?: OrderAddress;
@@ -299,7 +354,8 @@ export type SimplifiedOrder = Omit<Order, 'payments' | 'notes'> & {
 export function orderAmountWithNoPaymentsCreated(
 	order: Pick<Order, 'currencySnapshot'> & {
 		payments: Pick<OrderPayment, 'currencySnapshot' | 'status'>[];
-	}
+	},
+	opts?: { ignorePendingPayments?: boolean }
 ): number {
 	return sumCurrency(order.currencySnapshot.main.totalPrice.currency, [
 		{
@@ -307,7 +363,11 @@ export function orderAmountWithNoPaymentsCreated(
 			currency: order.currencySnapshot.main.totalPrice.currency
 		},
 		...order.payments
-			.filter((payment) => payment.status === 'pending' || payment.status === 'paid')
+			.filter((payment) =>
+				opts?.ignorePendingPayments
+					? payment.status === 'paid'
+					: payment.status === 'pending' || payment.status === 'paid'
+			)
 			.map((payment) => ({
 				amount: -payment.currencySnapshot.main.price.amount,
 				currency: payment.currencySnapshot.main.price.currency
@@ -414,4 +474,58 @@ export function bitcoinPaymentQrCodeString(
 
 export function lightningPaymentQrCodeString(paymentAddress: string) {
 	return `lightning:${paymentAddress}`;
+}
+
+export type OrderItemInfoNeededForFinalPrice = PickDeep<
+	Order['items'][0],
+	| 'currencySnapshot'
+	| 'discountPercentage'
+	| 'booking.start'
+	| 'booking.end'
+	| 'product.bookingSpec.slotMinutes'
+	| 'quantity'
+	| 'freeQuantity'
+>;
+
+export function orderItemPrice(
+	item: OrderItemInfoNeededForFinalPrice,
+	currency: 'main' | 'priceReference' | 'secondary' | 'accounting'
+) {
+	return (
+		orderItemPriceUndiscounted(item, currency) *
+		(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
+	);
+}
+
+export function orderIndividualItemPrice(
+	item: Pick<Order['items'][0], 'currencySnapshot' | 'discountPercentage'>,
+	currency: 'main' | 'priceReference' | 'secondary' | 'accounting'
+) {
+	const currencySnapshot = item.currencySnapshot[currency];
+	if (!currencySnapshot) {
+		throw new Error(`Currency snapshot ${currency} not found`);
+	}
+	return (
+		(currencySnapshot.customPrice?.amount ?? currencySnapshot.price.amount) *
+		(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
+	);
+}
+
+export function orderItemPriceUndiscounted(
+	item: OrderItemInfoNeededForFinalPrice,
+	currency: 'main' | 'priceReference' | 'secondary' | 'accounting'
+) {
+	const currencySnapshot = item.currencySnapshot[currency];
+	if (!currencySnapshot) {
+		throw new Error(`Currency snapshot ${currency} not found`);
+	}
+	const quantity =
+		item.booking && item.product.bookingSpec
+			? differenceInMinutes(item.booking.end, item.booking.start) /
+			  item.product.bookingSpec.slotMinutes
+			: item.quantity;
+
+	const paidQuantity = Math.max(quantity - (item.freeQuantity ?? 0), 0);
+
+	return (currencySnapshot.customPrice?.amount ?? currencySnapshot.price.amount) * paidQuantity;
 }

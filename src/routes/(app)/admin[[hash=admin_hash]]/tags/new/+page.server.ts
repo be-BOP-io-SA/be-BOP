@@ -29,6 +29,7 @@ export const actions: Actions = {
 				widgetUseOnly: z.boolean({ coerce: true }).default(false),
 				productTagging: z.boolean({ coerce: true }).default(false),
 				useLightDark: z.boolean({ coerce: true }).default(false),
+				reportingFilter: z.boolean({ coerce: true }).default(false),
 				title: z.string(),
 				subtitle: z.string(),
 				mainPictureId: z.string().trim().max(500),
@@ -88,6 +89,8 @@ export const actions: Actions = {
 			widgetUseOnly: parsed.widgetUseOnly,
 			productTagging: parsed.productTagging,
 			useLightDark: parsed.useLightDark,
+			reportingFilter: parsed.reportingFilter,
+			printReceiptFilter: false,
 			cta: parsed.cta?.filter((ctaLink) => ctaLink.label && ctaLink.href),
 			menu: parsed.menu?.filter((menuLink) => menuLink.label && menuLink.href)
 		});

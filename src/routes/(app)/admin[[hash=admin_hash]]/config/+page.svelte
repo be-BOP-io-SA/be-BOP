@@ -10,6 +10,7 @@
 	import { useI18n } from '$lib/i18n.js';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import MultiSelect from 'svelte-multiselect';
+	import ProcessorSelector from '$lib/components/ProcessorSelector.svelte';
 	export let data;
 	export let form;
 
@@ -32,6 +33,35 @@
 			value: contact,
 			label: ['email', 'nostr'].find((cont) => cont === contact) ?? contact
 		})) ?? [];
+
+	// Available processors (based on configured ones)
+	const availableCardProcessors = [
+		{ name: 'sumup' as const, configured: data.sumUpConfigured },
+		{ name: 'stripe' as const, configured: data.stripeConfigured }
+	]
+		.filter((p) => p.configured)
+		.map((p) => p.name);
+
+	const availableBitcoinProcessors = [
+		{ name: 'bitcoin-nodeless' as const, configured: data.bitcoinNodelessConfigured },
+		{ name: 'bitcoind' as const, configured: data.bitcoindConfigured }
+	]
+		.filter((p) => p.configured)
+		.map((p) => p.name);
+
+	const availableLightningProcessors = [
+		{ name: 'swiss-bitcoin-pay' as const, configured: data.swissBitcoinPayConfigured },
+		{ name: 'btcpay-server' as const, configured: data.btcpayServerConfigured },
+		{ name: 'phoenixd' as const, configured: data.phoenixdConfigured },
+		{ name: 'lnd' as const, configured: data.lndConfigured }
+	]
+		.filter((p) => p.configured)
+		.map((p) => p.name);
+
+	// Reactive local state for live preview
+	let selectedCardProcessor = data.preferredProcessorCard;
+	let selectedBitcoinProcessor = data.preferredProcessorBitcoin;
+	let selectedLightningProcessor = data.preferredProcessorLightning;
 </script>
 
 <h1 class="text-3xl">General settings</h1>
@@ -416,6 +446,50 @@
 			</button>
 		{/each}
 	</div>
+
+	<h2 class="text-2xl">Payment processor preferences</h2>
+	<p class="text-sm mb-4">
+		Choose which processor to use first. If it fails, the system will automatically try the next
+		processor in the fallback chain.
+	</p>
+
+	<ProcessorSelector
+		label="Preferred card processor"
+		name="preferredProcessorCard"
+		availableProcessors={availableCardProcessors}
+		bind:selectedProcessor={selectedCardProcessor}
+		preferredProcessor={data.preferredProcessorCard}
+		configLinks={[
+			{ href: `${data.adminPrefix}/sumup`, name: 'SumUp' },
+			{ href: `${data.adminPrefix}/stripe`, name: 'Stripe' }
+		]}
+	/>
+
+	<ProcessorSelector
+		label="Preferred Bitcoin on-chain processor"
+		name="preferredProcessorBitcoin"
+		availableProcessors={availableBitcoinProcessors}
+		bind:selectedProcessor={selectedBitcoinProcessor}
+		preferredProcessor={data.preferredProcessorBitcoin}
+		configLinks={[
+			{ href: `${data.adminPrefix}/bitcoin-nodeless`, name: 'Bitcoin Nodeless' },
+			{ href: '#', name: 'Bitcoind via environment variables' }
+		]}
+	/>
+
+	<ProcessorSelector
+		label="Preferred Lightning processor"
+		name="preferredProcessorLightning"
+		availableProcessors={availableLightningProcessors}
+		bind:selectedProcessor={selectedLightningProcessor}
+		preferredProcessor={data.preferredProcessorLightning}
+		configLinks={[
+			{ href: `${data.adminPrefix}/phoenixd`, name: 'PhoenixD' },
+			{ href: `${data.adminPrefix}/swiss-bitcoin-pay`, name: 'Swiss Bitcoin Pay' },
+			{ href: `${data.adminPrefix}/btcpay-server`, name: 'BTCPay Server' },
+			{ href: '#', name: 'LND via environment variables' }
+		]}
+	/>
 
 	<h2 class="text-2xl">Timing</h2>
 	<label class="form-label">

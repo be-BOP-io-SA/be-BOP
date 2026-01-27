@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
 	import { useI18n } from '$lib/i18n.js';
-	import { invoiceNumberVariables } from '$lib/types/Order.js';
+	import { invoiceNumberVariables, orderItemPrice, type Price } from '$lib/types/Order.js';
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding.js';
 	import { sum } from '$lib/utils/sum.js';
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
@@ -14,6 +14,7 @@
 	let tableProduct: HTMLTableElement;
 	let tablePayment: HTMLTableElement;
 	let tableOrderSynthesis: HTMLTableElement;
+	let tableOrderSynthesisTag: HTMLTableElement;
 	let tablePaymentSynthesis: HTMLTableElement;
 	let tableProductSynthesis: HTMLTableElement;
 	let tableDeliveryFeesSynthesis: HTMLTableElement;
@@ -23,6 +24,7 @@
 	let includeExpired = false;
 	let includeCanceled = false;
 	let includePartiallyPaid = false;
+	let filterByTag = !!data.tagId;
 	let html = '';
 	let loadedHtml = false;
 	let htmlStatus = '';
@@ -57,21 +59,27 @@
 			(includePartiallyPaid && order.payments.find((payment) => payment.status === 'paid'))
 	);
 	$: orderSynthesis = {
-		orderQuantity: sum(paidOrders.map((order) => order.quantityOrder)),
-		orderNumber: paidOrders.length,
-		orderTotal: sum(
-			paidOrders.map((order) =>
-				toCurrency(
-					data.currencies.main,
-					order.currencySnapshot.main.totalPrice.amount,
-					order.currencySnapshot.main.totalPrice.currency
-				)
+		count: paidOrders.length,
+		orderTotal: sumCurrency(
+			data.currencies.main,
+			paidOrders.map((order) => order.currencySnapshot.main.totalPrice)
+		)
+	};
+	$: orderSynthesisTag = {
+		count: paidOrders.length,
+		orderTotal: sumCurrency(
+			data.currencies.main,
+			paidOrders.flatMap((order) =>
+				order.items
+					.filter((item) => item.product.tagIds?.includes(data.tagId ?? ''))
+					.map((item) => ({
+						amount: orderItemPrice(item, 'main'),
+						currency: item.currencySnapshot.main.price.currency
+					}))
 			)
-		),
-		averageCart: 0
+		)
 	};
 	$: orderDeliveryFeesSynthesis = {
-		orderQuantity: sum(paidOrders.map((order) => order.quantityOrder)),
 		orderNumber: paidOrders.length,
 		orderFeesTotal: sumCurrency(
 			data.currencies.main,
@@ -79,21 +87,25 @@
 				(order) =>
 					order.currencySnapshot.main.shippingPrice ?? { amount: 0, currency: data.currencies.main }
 			)
-		),
-		averageFeesCart: 0
+		)
 	};
-	$: orderVATSynthesis = {
-		orderQuantity: sum(paidOrders.map((order) => order.quantityOrder)),
+
+	$: vatSynthesis = {
 		orderNumber: paidOrders.length,
-		orderVATTotal: sum(
-			paidOrders.map((order) =>
-				sumCurrency(
-					data.currencies.main,
-					order.currencySnapshot.main.vat ?? [{ amount: 0, currency: 'SAT' }]
-				)
-			)
-		),
-		averageCart: 0
+		total: sumCurrency(
+			data.currencies.main,
+			data.tagId
+				? paidOrders.flatMap(
+						(order) =>
+							order.items
+								.filter((item) => item.product.tagIds?.includes(data.tagId ?? ''))
+								.flatMap((item) => ({
+									amount: (orderItemPrice(item, 'main') * item.vatRate) / 100,
+									currency: item.currencySnapshot.main.price.currency
+								})) ?? []
+				  )
+				: paidOrders.flatMap((order) => order.currencySnapshot.main.vat ?? [])
+		)
 	};
 
 	function downloadCSV(csvData: string, filename: string) {
@@ -123,25 +135,22 @@
 		downloadCSV(csvData, filename);
 	}
 
-	function quantityOfProduct(orders: typeof paidOrders) {
+	function quantityOfProduct(orders: typeof paidOrders, tagFilter?: string) {
 		const productQuantities: Record<string, { quantity: number; total: number }> = {};
 		for (const order of orders) {
 			for (const item of order.items) {
+				// If tagFilter is specified, only include products that have that tag
+				if (tagFilter && !item.product.tagIds?.includes(tagFilter)) {
+					continue;
+				}
+
 				if (productQuantities[item.product._id]) {
 					productQuantities[item.product._id].quantity += item.quantity;
-					productQuantities[item.product._id].total += toCurrency(
-						data.currencies.main,
-						item.customPrice?.amount ?? item.product.price.amount,
-						item.product.price.currency
-					);
+					productQuantities[item.product._id].total += orderItemPrice(item, 'main');
 				} else {
 					productQuantities[item.product._id] = {
 						quantity: item.quantity,
-						total: toCurrency(
-							data.currencies.main,
-							item.customPrice?.amount ?? item.product.price.amount,
-							item.product.price.currency
-						)
+						total: orderItemPrice(item, 'main')
 					};
 				}
 			}
@@ -150,27 +159,25 @@
 	}
 	function quantityOfPaymentMean(orders: typeof paidOrders) {
 		const paymentMeanQuantities: Record<string, { quantity: number; total: number }> = {};
+		const paymentMeanDetails: Record<string, Price[]> = {};
+
 		for (const order of orders) {
 			for (const payment of order.payments) {
-				if (paymentMeanQuantities[payment.method]) {
-					paymentMeanQuantities[payment.method].quantity += 1;
-					paymentMeanQuantities[payment.method].total += toCurrency(
-						data.currencies.main,
-						payment.currencySnapshot.main.price.amount,
-						payment.currencySnapshot.main.price.currency
-					);
-				} else {
-					paymentMeanQuantities[payment.method] = {
-						quantity: 1,
-						total: toCurrency(
-							data.currencies.main,
-							payment.currencySnapshot.main.price.amount,
-							payment.currencySnapshot.main.price.currency
-						)
-					};
-				}
+				const key =
+					payment.method === 'point-of-sale' && payment.posSubtype
+						? `${payment.method}:${payment.posSubtype}`
+						: payment.method;
+				paymentMeanDetails[key] ??= [];
+				paymentMeanDetails[key].push(payment.currencySnapshot.main.price);
+				paymentMeanQuantities[key] ??= { quantity: 0, total: 0 };
+				paymentMeanQuantities[key].quantity += 1;
 			}
 		}
+
+		for (const [method, details] of Object.entries(paymentMeanDetails)) {
+			paymentMeanQuantities[method].total = sumCurrency(data.currencies.main, details);
+		}
+
 		return paymentMeanQuantities;
 	}
 	function fetchProductById(productId: string) {
@@ -321,24 +328,61 @@
 			{/each}
 		</label>
 	</div>
+	<div class="col-span-12">
+		<label class="checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				bind:checked={filterByTag}
+				disabled={data.reportingTags.length === 0}
+				on:click={() => (loadedHtml = false)}
+			/>
+			Filter with product tag
+		</label>
+		{#if data.reportingTags.length > 0}
+			<label class="form-label mt-2">
+				Select tag
+				<select name="tagId" class="form-input" disabled={!filterByTag} value={data.tagId ?? ''}>
+					<option value="">Select a tag...</option>
+					{#each data.reportingTags as tag}
+						<option value={tag._id} selected={data.tagId === tag._id}>
+							{tag.name}
+						</option>
+					{/each}
+				</select>
+			</label>
+		{:else}
+			<p class="text-sm text-gray-600 mt-1">
+				No tags available for filtering. Tags must be enabled as "Available as filter for reporting"
+				in their settings to appear here.
+			</p>
+		{/if}
+	</div>
 	<div class="col-span-1">
 		<button class="submit btn body-mainCTA mt-8" on:click={() => (loadedHtml = false)}>🔍</button>
 	</div>
 </form>
 <div class="gap-4 grid grid-cols-12 mr-auto">
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Order detail</h1>
-		<div class="flex gap-2">
-			<button on:click={() => exportcsv(tableOrder, 'order-detail.csv')} class="btn btn-blue mb-2">
-				Export CSV
-			</button>
-			<button
-				disabled={!!htmlStatus || isLoading}
-				class="btn btn-blue mb-2"
-				on:click={loadedHtml ? () => iframePrint.contentWindow?.print() : exportPdf}
-			>
-				{loadedHtml ? 'Print' : htmlStatus || 'Prepare PDF'}
-			</button>
+		<div class="flex items-center justify-between mb-4">
+			<h1 class="text-2xl font-bold">Order detail</h1>
+			<div class="flex gap-2">
+				<button
+					on:click={() => exportcsv(tableOrder, 'order-detail.csv')}
+					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+					title="Export as CSV"
+				>
+					📊 CSV
+				</button>
+				<button
+					disabled={!!htmlStatus || isLoading}
+					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
+					on:click={loadedHtml ? () => iframePrint.contentWindow?.print() : exportPdf}
+					title={loadedHtml ? 'Print receipts' : 'Prepare PDF receipts'}
+				>
+					🖨️ {loadedHtml ? 'Print' : htmlStatus || 'PDF'}
+				</button>
+			</div>
 		</div>
 
 		<div class="overflow-x-auto max-h-[500px]">
@@ -426,13 +470,23 @@
 		style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
 	/>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Product detail</h1>
-		<button
-			on:click={() => exportcsv(tableProduct, 'product-detail.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<div>
+				<h1 class="text-2xl font-bold">Product detail</h1>
+				{#if data.tagId}
+					<p class="text-sm text-gray-600 mt-1">
+						Only showing products with the tag "{data.tagId}".
+					</p>
+				{/if}
+			</div>
+			<button
+				on:click={() => exportcsv(tableProduct, 'product-detail.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table class="min-w-full table-auto border border-gray-300 bg-white" bind:this={tableProduct}>
 				<thead class="bg-gray-200">
@@ -444,7 +498,7 @@
 						<th class="border border-gray-300 px-4 py-2">Order ID</th>
 						<th class="border border-gray-300 px-4 py-2">Order Date</th>
 						<th class="border border-gray-300 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Amount</th>
+						<th class="border border-gray-300 px-4 py-2">Price</th>
 						<th class="border border-gray-300 px-4 py-2">Vat Rate</th>
 					</tr>
 				</thead>
@@ -452,37 +506,31 @@
 					<!-- Order rows -->
 					{#each orderFiltered as order}
 						{#each order.items as item}
-							<tr class="hover:bg-gray-100 whitespace-nowrap">
-								<td class="border border-gray-300 px-4 py-2"
-									>{data.websiteLink + '/product/' + item.product._id}</td
-								>
-								<td class="border border-gray-300 px-4 py-2">{item.product.name}</td>
-								<td class="border border-gray-300 px-4 py-2">{item.quantity}</td>
-								<td class="border border-gray-300 px-4 py-2">{item.depositPercentage ?? 100}</td>
-								<td class="border border-gray-300 px-4 py-2">{order.number}</td><td
-									class="border border-gray-300 px-4 py-2"
-								>
-									<time
-										datetime={order.createdAt.toISOString()}
-										title={order.createdAt.toLocaleString($locale)}
+							{#if !data.tagId || item.product.tagIds?.includes(data.tagId)}
+								<tr class="hover:bg-gray-100 whitespace-nowrap">
+									<td class="border border-gray-300 px-4 py-2"
+										>{data.websiteLink + '/product/' + item.product._id}</td
 									>
-										{order.createdAt.toLocaleDateString($locale)}
-									</time>
-								</td>
-								<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
-								<td class="border border-gray-300 px-4 py-2"
-									>{(toCurrency(
-										data.currencies.main,
-										(item.customPrice?.amount ?? item.product.price.amount) *
-											(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1),
-										item.customPrice?.currency ?? item.product.price.currency
-									) *
-										(item.product.deposit?.percentage ?? 100) *
-										item.quantity) /
-										100}</td
-								>
-								<td class="border border-gray-300 px-4 py-2">{item.vatRate}</td>
-							</tr>
+									<td class="border border-gray-300 px-4 py-2">{item.product.name}</td>
+									<td class="border border-gray-300 px-4 py-2">{item.quantity}</td>
+									<td class="border border-gray-300 px-4 py-2">{item.depositPercentage ?? 100}</td>
+									<td class="border border-gray-300 px-4 py-2">{order.number}</td><td
+										class="border border-gray-300 px-4 py-2"
+									>
+										<time
+											datetime={order.createdAt.toISOString()}
+											title={order.createdAt.toLocaleString($locale)}
+										>
+											{order.createdAt.toLocaleDateString($locale)}
+										</time>
+									</td>
+									<td class="border border-gray-300 px-4 py-2">
+										{item.currencySnapshot.main.price.currency}
+									</td>
+									<td class="border border-gray-300 px-4 py-2">{orderItemPrice(item, 'main')}</td>
+									<td class="border border-gray-300 px-4 py-2">{item.vatRate} %</td>
+								</tr>
+							{/if}
 						{/each}
 					{/each}
 				</tbody>
@@ -490,13 +538,14 @@
 		</div>
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Payment Detail</h1>
-		<div class="flex gap-2">
+		<div class="flex items-center justify-between mb-4">
+			<h1 class="text-2xl font-bold">Payment Detail</h1>
 			<button
 				on:click={() => exportcsv(tablePayment, 'payment-detail.csv')}
-				class="btn btn-blue mb-2"
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
 			>
-				Export CSV
+				📊 CSV
 			</button>
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
@@ -544,7 +593,12 @@
 									{/if}
 								</td>
 								<td class="border border-gray-300 px-4 py-2">{order.status}</td>
-								<td class="border border-gray-300 px-4 py-2">{payment.method}</td>
+								<td class="border border-gray-300 px-4 py-2"
+									>{payment.method}{#if payment.method === 'point-of-sale' && payment.posSubtype}
+										{@const subtype = data.posSubtypes?.find((s) => s.slug === payment.posSubtype)}
+										({subtype?.name || payment.posSubtype})
+									{/if}</td
+								>
 								<td class="border border-gray-300 px-4 py-2">
 									<a
 										class="body-hyperlink underline"
@@ -590,13 +644,16 @@
 		</div>
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Order synthesis</h1>
-		<button
-			on:click={() => exportcsv(tableOrderSynthesis, 'orderSythesisExport.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<h1 class="text-2xl font-bold">Order synthesis</h1>
+			<button
+				on:click={() => exportcsv(tableOrderSynthesis, 'orderSythesisExport.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
 				class="min-w-full table-auto border border-gray-300 bg-white"
@@ -622,11 +679,14 @@
 								{endsAt.toLocaleDateString($locale)}
 							</time>
 						</td>
-						<td class="border border-gray-300 px-4 py-2">{orderSynthesis.orderNumber}</td>
+						<td class="border border-gray-300 px-4 py-2">{orderSynthesis.count}</td>
 						<td class="border border-gray-300 px-4 py-2">{orderSynthesis.orderTotal}</td>
 						<td class="border border-gray-300 px-4 py-2"
-							>{orderSynthesis.orderNumber
-								? orderSynthesis.orderTotal / orderSynthesis.orderNumber
+							>{orderSynthesis.count
+								? fixCurrencyRounding(
+										orderSynthesis.orderTotal / orderSynthesis.count,
+										data.currencies.main
+								  )
 								: 0}</td
 						>
 						<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
@@ -634,15 +694,82 @@
 				</tbody>
 			</table>
 		</div>
+
+		{#if data.tagId}
+			<div class="flex items-start justify-between mt-4 mb-4">
+				<p class="text-sm text-gray-600">
+					Synthesis for tag "{data.tagId}" only - order flat discount and shipping price are not
+					included, only the specific products with the tag are included.
+				</p>
+				<button
+					on:click={() => exportcsv(tableOrderSynthesisTag, 'orderSythesisExport.csv')}
+					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors ml-4"
+					title="Export tag synthesis as CSV"
+				>
+					📊 CSV
+				</button>
+			</div>
+
+			<div class="overflow-x-auto max-h-[500px]">
+				<table
+					class="min-w-full table-auto border border-gray-300 bg-white"
+					bind:this={tableOrderSynthesisTag}
+				>
+					<thead class="bg-gray-200">
+						<tr class="whitespace-nowrap">
+							<th class="border border-gray-300 px-4 py-2">Period</th>
+							<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
+							<th class="border border-gray-300 px-4 py-2">order Total</th>
+							<th class="border border-gray-300 px-4 py-2">Average Cart</th>
+							<th class="border border-gray-300 py-2">Currency</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr class="hover:bg-gray-100 whitespace-nowrap">
+							<td class="border border-gray-300 px-4 py-2">
+								<time datetime={beginsAt.toISOString()} title={beginsAt.toLocaleString($locale)}>
+									{beginsAt.toLocaleDateString($locale)}
+								</time>
+								—
+								<time datetime={endsAt.toISOString()} title={endsAt.toLocaleString($locale)}>
+									{endsAt.toLocaleDateString($locale)}
+								</time>
+							</td>
+							<td class="border border-gray-300 px-4 py-2">{orderSynthesisTag.count}</td>
+							<td class="border border-gray-300 px-4 py-2">{orderSynthesisTag.orderTotal}</td>
+							<td class="border border-gray-300 px-4 py-2"
+								>{orderSynthesisTag.count
+									? fixCurrencyRounding(
+											orderSynthesisTag.orderTotal / orderSynthesisTag.count,
+											data.currencies.main
+									  )
+									: 0}</td
+							>
+							<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		{/if}
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Product synthesis</h1>
-		<button
-			on:click={() => exportcsv(tableProductSynthesis, 'orderItemsSythesisExport.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<div>
+				<h1 class="text-2xl font-bold">Product synthesis</h1>
+				{#if data.tagId}
+					<p class="text-sm text-gray-600 mt-1">
+						Only showing products with the tag "{data.tagId}".
+					</p>
+				{/if}
+			</div>
+			<button
+				on:click={() => exportcsv(tableProductSynthesis, 'orderItemsSythesisExport.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
 				class="min-w-full table-auto border border-gray-300 bg-white"
@@ -660,7 +787,7 @@
 				</thead>
 				<tbody>
 					<!-- Order rows -->
-					{#each Object.entries(quantityOfProduct(paidOrders)).sort((a, b) => b[1].quantity - a[1].quantity) as [productId, { quantity, total }]}
+					{#each Object.entries(quantityOfProduct(paidOrders, data.tagId)).sort((a, b) => b[1].quantity - a[1].quantity) as [productId, { quantity, total }]}
 						<tr class="hover:bg-gray-100 whitespace-nowrap">
 							<td class="border border-gray-300 px-4 py-2">
 								<time datetime={beginsAt.toISOString()} title={beginsAt.toLocaleString($locale)}>
@@ -683,13 +810,16 @@
 		</div>
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Payment synthesis</h1>
-		<button
-			on:click={() => exportcsv(tablePaymentSynthesis, 'orderPaymentSythesis.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<h1 class="text-2xl font-bold">Payment synthesis</h1>
+			<button
+				on:click={() => exportcsv(tablePaymentSynthesis, 'orderPaymentSythesis.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
 				class="min-w-full table-auto border border-gray-300 bg-white"
@@ -708,6 +838,10 @@
 				<tbody>
 					<!-- Order rows -->
 					{#each Object.entries(quantityOfPaymentMean(paidOrders)).sort((a, b) => b[1].quantity - a[1].quantity) as [method, { quantity, total }]}
+						{@const [paymentMethod, posSubtypeSlug] = method.split(':')}
+						{@const subtype = posSubtypeSlug
+							? data.posSubtypes?.find((s) => s.slug === posSubtypeSlug)
+							: null}
 						<tr class="hover:bg-gray-100 whitespace-nowrap">
 							<td class="border border-gray-300 px-4 py-2">
 								<time datetime={beginsAt.toISOString()}>
@@ -718,11 +852,16 @@
 									{endsAt.toLocaleDateString($locale)}
 								</time>
 							</td>
-							<td class="border border-gray-300 px-4 py-2">{method}</td>
+							<td class="border border-gray-300 px-4 py-2"
+								>{paymentMethod}{#if subtype}
+									({subtype.name}){/if}</td
+							>
 							<td class="border border-gray-300 px-4 py-2">{quantity}</td>
 							<td class="border border-gray-300 px-4 py-2">{total}</td>
 							<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
-							<td class="border border-gray-300 px-4 py-2">{total / quantity}</td>
+							<td class="border border-gray-300 px-4 py-2"
+								>{fixCurrencyRounding(total / quantity, data.currencies.main)}</td
+							>
 						</tr>
 					{/each}
 				</tbody>
@@ -730,13 +869,23 @@
 		</div>
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">VAT Synthesis</h1>
-		<button
-			on:click={() => exportcsv(tableVATSynthesis, 'vat-synthesis.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<div>
+				<h1 class="text-2xl font-bold">VAT Synthesis</h1>
+				{#if data.tagId}
+					<p class="text-sm text-gray-600 mt-1">
+						Only showing VAT for products with the tag "{data.tagId}".
+					</p>
+				{/if}
+			</div>
+			<button
+				on:click={() => exportcsv(tableVATSynthesis, 'vat-synthesis.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
 				class="min-w-full table-auto border border-gray-300 bg-white"
@@ -746,8 +895,8 @@
 					<tr class="whitespace-nowrap">
 						<th class="border border-gray-300 px-4 py-2">Period</th>
 						<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">order VAT Total</th>
-						<th class="border border-gray-300 px-4 py-2">Average VAT Cart</th>
+						<th class="border border-gray-300 px-4 py-2">VAT Total</th>
+						<th class="border border-gray-300 px-4 py-2">Average VAT per order</th>
 						<th class="border border-gray-300 py-2">Currency</th>
 					</tr>
 				</thead>
@@ -762,14 +911,14 @@
 								{endsAt.toLocaleDateString($locale)}
 							</time>
 						</td>
-						<td class="border border-gray-300 px-4 py-2">{orderVATSynthesis.orderNumber}</td>
+						<td class="border border-gray-300 px-4 py-2">{vatSynthesis.orderNumber}</td>
 						<td class="border border-gray-300 px-4 py-2"
-							>{fixCurrencyRounding(orderVATSynthesis.orderVATTotal, data.currencies.main)}</td
+							>{fixCurrencyRounding(vatSynthesis.total, data.currencies.main)}</td
 						>
 						<td class="border border-gray-300 px-4 py-2"
-							>{orderVATSynthesis.orderNumber
+							>{vatSynthesis.orderNumber
 								? fixCurrencyRounding(
-										orderVATSynthesis.orderVATTotal / orderSynthesis.orderNumber,
+										vatSynthesis.total / orderSynthesis.count,
 										data.currencies.main
 								  )
 								: 0}</td
@@ -781,13 +930,16 @@
 		</div>
 	</div>
 	<div class="col-span-12">
-		<h1 class="text-2xl font-bold mb-4">Delivery Fees</h1>
-		<button
-			on:click={() => exportcsv(tableDeliveryFeesSynthesis, 'deliveryFeesSynthesisExport.csv')}
-			class="btn btn-blue mb-2"
-		>
-			Export CSV
-		</button>
+		<div class="flex items-center justify-between mb-4">
+			<h1 class="text-2xl font-bold">Delivery Fees</h1>
+			<button
+				on:click={() => exportcsv(tableDeliveryFeesSynthesis, 'deliveryFeesSynthesisExport.csv')}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				title="Export as CSV"
+			>
+				📊 CSV
+			</button>
+		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
 				class="min-w-full table-auto border border-gray-300 bg-white"
@@ -821,7 +973,11 @@
 						>
 						<td class="border border-gray-300 px-4 py-2"
 							>{orderDeliveryFeesSynthesis.orderNumber
-								? orderDeliveryFeesSynthesis.orderFeesTotal / orderDeliveryFeesSynthesis.orderNumber
+								? fixCurrencyRounding(
+										orderDeliveryFeesSynthesis.orderFeesTotal /
+											orderDeliveryFeesSynthesis.orderNumber,
+										data.currencies.main
+								  )
 								: 0}</td
 						>
 						<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>

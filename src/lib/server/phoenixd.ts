@@ -1,6 +1,8 @@
-import { z } from 'zod';
-import { runtimeConfig } from './runtime-config';
 import { error } from '@sveltejs/kit';
+import { z } from 'zod';
+import { PHOENIXD_ENDPOINT_URL, PHOENIXD_HTTP_PASSWORD } from './env-config';
+import { runtimeConfig } from './runtime-config';
+import { persistConfigElement } from './utils/persistConfig';
 
 export const isPhoenixdConfigured = () =>
 	runtimeConfig.phoenixd.enabled && !!runtimeConfig.phoenixd.password;
@@ -73,6 +75,48 @@ export async function phoenixdDetected(url?: string): Promise<boolean> {
 		),
 		new Promise((resolve) => setTimeout(() => resolve(false), 2000))
 	]);
+}
+
+export async function attemptAutoconfigurePhoenixd() {
+	if (PHOENIXD_ENDPOINT_URL && PHOENIXD_HTTP_PASSWORD) {
+		if (
+			PHOENIXD_ENDPOINT_URL === runtimeConfig.phoenixd.url &&
+			PHOENIXD_HTTP_PASSWORD === runtimeConfig.phoenixd.password
+		) {
+			// Configuration already set
+			return;
+		} else if (await phoenixdDetected(PHOENIXD_ENDPOINT_URL)) {
+			const prevConfig = { ...runtimeConfig.phoenixd };
+			// “Temporarily” set the URL and password since they are required by
+			// phoenixdLnAddress and phoenixdGetBolt12
+			runtimeConfig.phoenixd.url = PHOENIXD_ENDPOINT_URL;
+			runtimeConfig.phoenixd.password = PHOENIXD_HTTP_PASSWORD;
+
+			try {
+				const lnAddress = await phoenixdLnAddress();
+				const bolt12Address = await phoenixdGetBolt12();
+				runtimeConfig.phoenixd = {
+					enabled: true,
+					url: PHOENIXD_ENDPOINT_URL,
+					password: PHOENIXD_HTTP_PASSWORD,
+					lnAddress,
+					bolt12Address
+				};
+				await persistConfigElement('phoenixd', runtimeConfig.phoenixd);
+				console.log('Phoenixd configuration completed successfully');
+			} catch (error) {
+				// Restore previous configuration
+				runtimeConfig.phoenixd = prevConfig;
+				console.error('Unable to conclude phoenixd configuration:', error);
+			}
+		} else {
+			console.error(
+				'In the presence of a non-empty PHOENIXD_ENDPOINT_URL environment variable. ' +
+					`I attempted to reach phoenixd at ${PHOENIXD_ENDPOINT_URL}, but failed. ` +
+					`Please check the value of the PHOENIXD_ENDPOINT_URL variable`
+			);
+		}
+	}
 }
 
 export async function phoenixdCreateInvoice(
@@ -150,6 +194,7 @@ export async function phoenixdLookupInvoice(paymentHash: string) {
 		feesSat: json.fees,
 		receivedSat: json.receivedSat,
 		isPaid: json.isPaid,
+		preimage: json.preimage, // NIP-57: preimage for zap receipts
 		createdAt: new Date(json.createdAt),
 		completedAt: json.completedAt ? new Date(json.completedAt) : null,
 		externalId: json.externalId,

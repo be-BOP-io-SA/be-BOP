@@ -26,6 +26,7 @@ export const actions = {
 			hasMobileContent,
 			mobileContent,
 			hasEmployeeContent,
+			displayRawContent,
 			employeeContent,
 			metas
 		} = z
@@ -39,6 +40,7 @@ export const actions = {
 				hasMobileContent: z.boolean({ coerce: true }),
 				mobileContent: z.string().max(MAX_CONTENT_LIMIT).optional(),
 				hasEmployeeContent: z.boolean({ coerce: true }),
+				displayRawContent: z.boolean({ coerce: true }).default(false),
 				employeeContent: z.string().max(MAX_CONTENT_LIMIT).optional(),
 				metas: z
 					.array(z.object({ name: z.string().trim(), content: z.string().trim() }))
@@ -70,7 +72,8 @@ export const actions = {
 			...(hasEmployeeContent && employeeContent && { employeeContent }),
 			...(metas.length && { metas: metas.filter((meta) => meta.name && meta.content) }),
 			createdAt: new Date(),
-			updatedAt: new Date()
+			updatedAt: new Date(),
+			displayRawContent
 		});
 
 		throw redirect(303, `${adminPrefix()}/cms/${slug}`);

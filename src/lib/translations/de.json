@@ -13,6 +13,15 @@
 		"vatNumber": "Umsatzsteuer-Identifikationsnummer",
 		"zipCode": "Postleitzahl"
 	},
+	"admin": {
+		"product": {
+			"stockReference": {
+				"label": "Auf Lagerbestand eines anderen Produkts verweisen (optional)",
+				"noReference": "-- Keine Referenz (eigenen Lagerbestand verwenden) --",
+				"warning": "⚠️ Dieses Produkt verweist auf den Lagerbestand eines anderen Produkts. Lagerbestandsänderungen wirken sich auf das referenzierte Produkt aus."
+			}
+		}
+	},
 	"ageWarning": {
 		"agreement": "Ich habe die Zugangsbedingungen gelesen, erfülle sie und respektiere sie",
 		"navigate": "Weiter stöbern"
@@ -509,7 +518,10 @@
 		"addPayment": {
 			"amount": "Zahlungsbetrag",
 			"cta": "Zahlungsaufforderung senden",
-			"currency": "Zahlungswährung"
+			"currency": "Zahlungswährung",
+			"posSubtype": "Typ",
+			"submit": "Hinzufügen",
+			"title": "Zahlung hinzufügen"
 		},
 		"backToOrder": "<< Zurück zur Bestellung",
 		"clickQR": "Klicken Sie auf den QR-Code, um mit Ihrer Wallet zu bezahlen",
@@ -622,8 +634,10 @@
 			"totalExcVat": "Gesamtbetrag exkl. MwSt.",
 			"totalInclVat": "Gesamtbetrag inkl. MwSt.",
 			"totalVat": "Gesamt-MwSt.",
+			"totalWithDiscount": "Gesamt mit Rabatt",
 			"unitPrice": "Stückpreis",
-			"vatFreeReason": "MwSt.-befreit: {reason}"
+			"vatFreeReason": "MwSt.-befreit: {reason}",
+			"peopleCount": "Anzahl der Personen"
 		},
 		"receiptFullyPaid": "Quittung erstellen (vollständig bezahlt)",
 		"receiptPending": "Quittung erstellen (ausstehende Zahlung)",
@@ -663,6 +677,33 @@
 	"pos": {
 		"adminInterface": "Admin-Oberfläche",
 		"applyGiftDiscount": "Als POS-Benutzer wende ich einen Geschenkrabatt an",
+		"btn": {
+			"add": "Hinzufügen",
+			"cancel": "Abbrechen",
+			"cancelTap": "Tap stoppen",
+			"paid": "Bezahlt",
+			"replace": "Ändern ▾",
+			"replaceSubmit": "Ändern",
+			"tapToPay": "Kartenzahlung"
+		},
+		"cashback": {
+			"title": "Bargeldauszahlung ▾",
+			"toPay": "Zu zahlen",
+			"paid": "Bezahlt",
+			"change": "Rückgeld",
+			"cancel": "Bargeldauszahlung abbrechen",
+			"validate": "Bestätigen"
+		},
+		"input": {
+			"detail": "Detail",
+			"txNumber": "TX-Nr."
+		},
+		"label": {
+			"amount": "Betrag",
+			"currency": "Währung",
+			"method": "Methode",
+			"subtype": "Typ"
+		},
 		"cancelOrderMessage": "Sind Sie sicher, dass Sie die gesamte Bestellung stornieren möchten?",
 		"cta": {
 			"cancelMultiPayOrder": "Bestellung stornieren",
@@ -697,11 +738,116 @@
 			"inUseByOtherOrder": "Die Tap-to-Pay-Zahlung ist deaktiviert, da eine andere Bestellung diesen Zahlungsmodus verwendet. Sie können die Zahlung manuell entgegennehmen und anschließend die Transaktionsnummer in dieses Feld eintragen."
 		},
 		"vatFree": "Dies ist eine mehrwertsteuerfreie Bestellung (Bedingungen)",
-		"vatFreeReason": "Grund für Mehrwertsteuerbefreiung"
+		"vatFreeReason": "Grund für Mehrwertsteuerbefreiung",
+		"tagGroups": {
+			"addGroup": "Gruppe hinzufügen",
+			"deleteGroup": "Gruppe löschen",
+			"groupNamePlaceholder": "Gruppenname",
+			"tooManyTagsWarning": "Die Gruppe \"{groupName}\" hat {count} Tags. Zu viele für den Button-Modus. Aktivieren Sie \"Auswahlmenü verwenden\" oder reduzieren Sie die Tags. Fortfahren?"
+		},
+		"useSelectForTags": "Auswahlmenü für Produkt-Tag-Auswahl verwenden",
+		"touch": {
+			"selectTab": "Tab auswählen:",
+			"noTabs": "Diese Gruppe hat keine Tabs",
+			"cancel": "Abbrechen",
+			"back": "← Zurück",
+			"ticketNumber": "TICKET Nr.",
+			"exclVat": "oM",
+			"inclVat": "iM",
+			"subtotal": "ZWISCHENSUMME",
+			"total": "TOTAL",
+			"vatBreakdown": "Davon MwSt",
+			"favorites": "FAVORITEN",
+			"allProducts": "ALLE ARTIKEL",
+			"pagination": "SEITE {currentPage}/{totalPages}",
+			"tickets": "TICKETS",
+			"save": "SPEICHERN",
+			"moveItems": "Artikel verschieben",
+			"pool": "POOL",
+			"openDrawer": "KASSE ÖFFNEN",
+			"pay": "BEZAHLEN",
+			"notDeveloped": "Noch nicht entwickelt",
+			"confirmDeleteLastItem": "Möchten Sie die letzte Warenkorb-Zeile löschen?",
+			"confirmDeleteAllItems": "Möchten Sie alle Warenkorb-Zeilen löschen?",
+			"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})"
+		},
+		"itemEdit": {
+			"quantity": "Menge",
+			"directSelection": "Direkte Auswahl",
+			"qtyZeroRemove": "0 (Entfernen)",
+			"itemRemoved": "Artikel entfernt",
+			"comment": "Kommentar",
+			"commentPlaceholder": "Kommentar eingeben...",
+			"cancel": "ABBRECHEN",
+			"save": "SPEICHERN"
+		},
+		"split": {
+			"notAvailableYet": "Noch nicht verfügbar",
+			"tabHeader": "Tab {slug}",
+			"tabToPayNow": "Tab {slug} (jetzt zu bezahlen)",
+			"pool": "POOL",
+			"poolRemainingToPay": "POOL (noch zu bezahlen)",
+			"exclVat": "ohne MwSt",
+			"inclVat": "inkl. MwSt {rates}",
+			"inclVatShort": "inkl. MwSt",
+			"vatRate": "MwSt {rate}%",
+			"cashIn": "Kassieren",
+			"all": "alles",
+			"split": "Aufteilen",
+			"shares": "Anteile",
+			"itemize": "aufschlüsseln",
+			"return": "Zurück",
+			"continueSplit": "Aufteilung fortsetzen ({mode})",
+			"paySelected": "Auswahl bezahlen",
+			"includingVatIncluded": "Davon (inkl. MwSt):",
+			"tagProducts": "Produkte \"{name}\"",
+			"otherProducts": "Andere Produkte",
+			"selectItems": "Bitte wählen Sie Artikel zum Bezahlen",
+			"splitByShares": "Nach Anteilen aufteilen",
+			"enterNumberOfParts": "Anzahl der Anteile",
+			"manualAmount": "Manueller Betrag",
+			"ok": "OK",
+			"payRemaining": "Rest bezahlen",
+			"totalAlreadyPaid": "Bereits bezahlt (inkl. MwSt)",
+			"remainingToPay": "Noch zu bezahlen (inkl. MwSt)",
+			"allPaid": "Alles bezahlt",
+			"completeSharesFirst": "Sie haben bereits begonnen, den Pool über \"Aufteilen (Anteile)\" zu bezahlen. Bitte schließen Sie alle Zahlungen ab und schließen Sie den Pool zuerst.",
+			"closePool": "Pool schließen",
+			"globalTicket": "Gesamtticket",
+			"beforeDiscount": "VOR RABATT",
+			"afterDiscount": "NACH RABATT"
+		},
+		"discount": {
+			"title": "Rabatt",
+			"noDiscount": "Kein Rabatt",
+			"manualPercent": "Manuell %",
+			"manualPercentPlaceholder": "Prozentsatz eingeben (0-100)",
+			"applyToTag": "Auf Tag anwenden:",
+			"allProducts": "Alle Produkte",
+			"currentDiscount": "Aktueller Rabatt:",
+			"none": "Keiner",
+			"motiveLabelOptional": "Rabattgrund (optional):",
+			"motivePlaceholder": "z.B. Passeport gourmand",
+			"lockedWarning": "⚠️ Rabatt kann nach Zahlungsbeginn nicht mehr geändert werden",
+			"save": "Speichern"
+		}
 	},
 	"product": {
 		"addedToCart": "Produkt zum Warenkorb hinzugefügt",
 		"availableOn": "Verfügbar am {date}",
+		"booking": {
+			"duration": "Dauer",
+			"hour": {
+				"one": "1 Stunde",
+				"other": "{count} Stunden"
+			},
+			"minute": {
+				"one": "1 Minute",
+				"other": "{count} Minuten"
+			},
+			"time": "Tageszeit",
+			"timezone": "Zeitzone: {timeZone}"
+		},
 		"checkBackLater": "Bitte schauen Sie später wieder vorbei",
 		"cta": {
 			"add": "Zum Warenkorb hinzufügen",
@@ -709,7 +855,8 @@
 			"details": "Details",
 			"donate": "Jetzt spenden",
 			"preorder": "Jetzt vorbestellen",
-			"subscribe": "Jetzt abonnieren"
+			"subscribe": "Jetzt abonnieren",
+			"view": "Produkt ansehen"
 		},
 		"deposit": {
 			"payFullPrice": "Jetzt den vollen Preis bezahlen",
@@ -720,6 +867,8 @@
 		},
 		"discountBanner": "{discountPercent}% Rabatt für {timespan}",
 		"discountBannerNoTime": "{discountPercent}% Rabatt",
+		"freeProductDiscountText": "Sie haben {available} kostenlose Produkte",
+		"freeProductDiscountTextSingular": "Sie haben {available} kostenloses Produkt",
 		"freeWithSub": "Dieses Produkt ist kostenlos mit Ihrem monatlichen Abonnement erhältlich",
 		"freeWithTitle": "Kostenlos mit „xxxxx“",
 		"horsTaxeShort": "Netto",
@@ -764,7 +913,9 @@
 	},
 	"subscription": {
 		"associated": {
-			"npub": "Verknüpft mit Npub: {npub}"
+			"title": "Verknüpft mit:",
+			"npub": "Verknüpft mit Npub: {npub}",
+			"email": "Verknüpft mit E-Mail: {email}"
 		},
 		"cantRenew": "Abonnement nicht zur Verlängerung fällig",
 		"cta": {
@@ -786,5 +937,33 @@
 	},
 	"widget": {
 		"specification": "Spezifikationen"
+	},
+	"telemetry": {
+		"banner": {
+			"aWordFrom": "Ein Wort von",
+			"title": "Ein Wort von be-BOP:",
+			"description1": "Um die kostenlose be-BOP-Software zu unterstützen, können Sie die Existenz Ihres Shops öffentlich machen.",
+			"description2": "Es werden keine Daten an be-BOP.io SA gesendet, außer der URI Ihres Shops und Ihrer Zustimmung zur Kommunikation darüber. Ihre privaten Informationen und die Informationen Ihrer Kunden werden nicht weitergegeben.",
+			"description3": "Ihr Beitrag wird für anonyme Statistiken über die Anzahl der be-BOP-Benutzer verwendet (die nicht automatisch erfasst werden, da wir Datenschutz und Einwilligung respektieren) und um gelegentlich Kommunikations- und Promotionskampagnen über weltweit eingesetzte be-BOPs durchzuführen. Eine erste Benachrichtigung wird an den Nostr-Bot von be-BOP.io gesendet, dann wöchentlich, solange Ihr be-BOP aktiv ist. Sie können diese regelmäßige Nachricht später unter <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a> deaktivieren.",
+			"question": "Akzeptieren Sie, die Existenz Ihres be-BOP zu teilen?",
+			"acceptButton": "Teilen",
+			"declineButton": "Erinnern Sie mich in 30 Tagen",
+			"configureNostrButton": "Nostr konfigurieren",
+			"accepted": {
+				"thankYou": "Vielen Dank, dass Sie sich entschieden haben, die Existenz Ihres Shops mit be-BOP.io für statistische und Werbezwecke zu teilen!",
+				"message": "Es werden keine Daten an be-BOP.io SA gesendet, außer der URL Ihres Shops und Ihrer Zustimmung zur Kommunikation darüber. Sie können unter <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> diese optionale Telemetrie deaktivieren.",
+				"autoHideCountdown": "Diese Nachricht verschwindet in {seconds} Sekunden..."
+			},
+			"declined": {
+				"respect": "Wir respektieren Ihre Entscheidung, keine Informationen über Ihren Shop zu teilen.",
+				"reaskCountdown": "Diese Nachricht wird in {seconds} Sekunden ausgeblendet...",
+				"reask": "Wir werden Sie in 30 Tagen erneut fragen. Sie können die Erinnerung jedoch direkt ablehnen, indem Sie auf die Schaltfläche klicken",
+				"hideButton": "Nie wieder fragen"
+			}
+		},
+		"seo": {
+			"checkboxLabel": "Beacon-Signal an be-BOP.io Nostr-Bot aktivieren, um die Existenz Ihres Shops zu teilen",
+			"infoBlock": "Diese Einstellung steuert, ob Ihr Shop regelmäßige Signale an be-BOP.io sendet. Wir legen Wert auf Datenschutz: Es werden nur Ihre Shop-URL und die be-BOP-Softwareversion weitergegeben. Keine persönlichen Daten oder Kundendaten werden übertragen. Dies hilft uns beim Debuggen und zeigt uns, dass die be-BOP-Community wächst."
+		}
 	}
 }

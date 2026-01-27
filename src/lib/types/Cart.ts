@@ -27,7 +27,11 @@ export interface Cart extends Timestamps {
 		customPrice?: { amount: number; currency: Currency };
 		reservedUntil?: Date;
 		depositPercentage?: number;
+		discountPercentage?: number;
 		internalNote?: { value: string; updatedAt: Date; updatedById?: User['_id'] };
 		chosenVariations?: Record<string, string>;
 	}>;
+	orderTabSlug?: string;
+	orderTabId?: ObjectId;
+	splitMode?: 'items' | 'shares';
 }

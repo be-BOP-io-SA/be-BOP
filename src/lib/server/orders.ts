@@ -30,20 +30,27 @@ import {
 } from '$lib/types/Product';
 import { error } from '@sveltejs/kit';
 import { toSatoshis } from '$lib/utils/toSatoshis';
-import { currentWallet, getNewAddress, orderAddressLabel } from './bitcoind';
+import {
+	currentWallet,
+	getNewAddress,
+	isBitcoinConfigured as isBitcoindConfigured,
+	orderAddressLabel
+} from './bitcoind';
 import { isLndConfigured, lndCreateInvoice } from './lnd';
-import { ORIGIN } from '$env/static/private';
-import { emailsEnabled, queueEmail } from './email';
+import { ORIGIN } from '$lib/server/env-config';
+import { isEmailConfigured, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
 import { type Cart } from '$lib/types/Cart';
-import { CartPriceInfo, computeDeliveryFees, computePriceInfo } from '$lib/cart';
+import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 import { CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { refreshAvailableStockInDb } from './product';
 import { checkCartItems } from './cart';
+import { handleOrderTabAfterPayment } from './orderTab';
 import { userQuery } from './user';
-import { SMTP_USER } from '$env/static/private';
+import { SMTP_USER } from '$lib/server/env-config';
 import { toCurrency } from '$lib/utils/toCurrency';
+import { convertAmountToCurrencyForStorage } from '$lib/utils/toStorageCurrency';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
@@ -64,53 +71,19 @@ import type { Discount } from '$lib/types/Discount';
 import { groupByNonPartial } from '$lib/utils/group-by';
 import {
 	dayList,
-	ScheduleEvent,
+	minutesToTime,
 	productToScheduleId,
-	Schedule,
 	scheduleToProductId,
 	timeToMinutes,
-	minutesToTime
+	type Schedule,
+	type ScheduleEvent
 } from '$lib/types/Schedule';
 import { isEmptyObject } from '$lib/utils/is-empty-object';
 import { binaryFindAround } from '$lib/utils/binary-find';
 import { toZonedTime } from 'date-fns-tz';
 import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
-import { PaidSubscription } from '$lib/types/PaidSubscription';
-import type { FetchOrderResult } from '../../routes/(app)/order/[id]/fetchOrderForUser';
+import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import { btcpayCreateLnInvoice, isBtcpayServerConfigured } from './btcpay-server';
-
-/**
- * FIXME: The computation bellow uses runtime configuration features. This is
- * problematic because whe should be able to compute the same price info...
- */
-export async function priceInfoForOrderProbablyIncorrectBuyOkayForDisplay(
-	order: FetchOrderResult
-): Promise<CartPriceInfo> {
-	// The free products for this order are computed from the information stored in the order
-	const freeProductUnits = order.items.reduce((acc: Record<string, number>, item) => {
-		if (item.freeQuantity && item.product._id) {
-			acc[item.product._id] = item.freeQuantity + (acc[item.product._id] ?? 0);
-		}
-		return acc;
-	}, {});
-	// FIXME: This is fundamentally incorrect, since the current VAT profiles do
-	// not necessarily correspond to those used when the order was created.
-	const vatProfiles = await collections.vatProfiles.find({}).toArray();
-	return computePriceInfo(order.items, {
-		bebopCountry: runtimeConfig.vatCountry,
-		deliveryFees: order.currencySnapshot.main.shippingPrice ?? {
-			amount: 0,
-			currency: order.currencySnapshot.main.totalPrice.currency
-		},
-		discount: null,
-		freeProductUnits,
-		userCountry: undefined,
-		vatExempted: false,
-		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
-		vatProfiles,
-		vatSingleCountry: runtimeConfig.vatSingleCountry
-	});
-}
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
 	const other = await collections.orders.findOne({
@@ -174,6 +147,7 @@ export async function onOrderPayment(
 		fees?: Price;
 		tapToPay?: { expiresAt: Date };
 		providedSession?: ClientSession;
+		cashbackAmount?: Price;
 	}
 ): Promise<Order> {
 	const invoiceNumber = ((await lastInvoiceNumber()) ?? 0) + 1;
@@ -204,6 +178,9 @@ export async function onOrderPayment(
 					}),
 					...(params?.detail && {
 						'payments.$.detail': params.detail
+					}),
+					...(params?.cashbackAmount && {
+						'payments.$.cashbackAmount': params.cashbackAmount
 					}),
 					'payments.$.paidAt': paidAt,
 					...(isOrderFullyPaid(order) && {
@@ -562,6 +539,7 @@ export async function lastInvoiceNumber(): Promise<number | undefined> {
 
 export async function createOrder(
 	items: Array<{
+		_id?: ObjectId;
 		quantity: number;
 		product: Product;
 		customPrice?: { amount: number; currency: Currency };
@@ -609,6 +587,8 @@ export async function createOrder(
 		};
 		onLocation?: boolean;
 		paymentTimeOut?: number;
+		posSubtype?: string;
+		peopleCountFromPosUi?: number;
 		session?: ClientSession;
 	}
 ): Promise<Order['_id']> {
@@ -617,7 +597,7 @@ export async function createOrder(
 
 	const canBeNotified = !!(
 		npubAddress ||
-		((runtimeConfig.contactModesForceOption || emailsEnabled) && email)
+		((runtimeConfig.contactModesForceOption || isEmailConfigured()) && email)
 	);
 
 	if (
@@ -626,7 +606,10 @@ export async function createOrder(
 		paymentMethod !== null &&
 		!params.user.userHasPosOptions
 	) {
-		throw error(400, emailsEnabled ? 'Missing npub address or email' : 'Missing npub address');
+		throw error(
+			400,
+			isEmailConfigured() ? 'Missing npub address or email' : 'Missing npub address'
+		);
 	}
 
 	const products = items.map((item) => item.product);
@@ -709,7 +692,7 @@ export async function createOrder(
 	}
 
 	const discountInfo =
-		params.user.userHasPosOptions && params?.discount?.amount ? params.discount : null;
+		params.user.userHasPosOptions && params?.discount?.amount ? params.discount : undefined;
 
 	const vatProfiles = products.some((p) => p.vatProfileId)
 		? await collections.vatProfiles
@@ -777,10 +760,16 @@ export async function createOrder(
 						}
 					},
 					{
+						$unwind: {
+							path: '$subscriptionIds',
+							preserveNullAndEmptyArrays: false
+						}
+					},
+					{
 						$group: {
 							_id: { $ifNull: ['$productIds', null] },
 							discountPercent: { $first: '$percentage' },
-							subscriptionIds: { $push: '$subscriptionIds' }
+							subscriptionIds: { $addToSet: '$subscriptionIds' }
 						}
 					}
 				])
@@ -804,6 +793,9 @@ export async function createOrder(
 		.filter((sub) => discountSubIds.has(sub.productId))
 		.map((sub) => sub.productId);
 
+	for (const item of items) {
+		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
+	}
 	const priceInfo = computePriceInfo(items, {
 		bebopCountry: runtimeConfig.vatCountry,
 		deliveryFees: shippingPrice,
@@ -820,7 +812,6 @@ export async function createOrder(
 	});
 
 	for (const { item, price } of items.map((item, i) => ({ item, price: priceInfo.perItem[i] }))) {
-		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
 		if (price.usedFreeUnits) {
 			let quantityToConsume = price.usedFreeUnits;
 			const freeProductSubscriptions = await collections.paidSubscriptions
@@ -1026,9 +1017,35 @@ export async function createOrder(
 				}
 
 				const startTime = toZonedTime(time.start, bookingSpec.schedule.timezone);
-				const startDay = startOfDay(startTime.getDay() + 6);
+
+				const now = new Date();
+				const is24HourSlot = bookingSpec.slotMinutes === 1440;
+
+				if (is24HourSlot) {
+					const startDay = startOfDay(startTime);
+					const today = startOfDay(toZonedTime(now, bookingSpec.schedule.timezone));
+
+					if (startDay < today) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking date is in the past. ` +
+								`Please refresh the page and select a future date.`
+						);
+					}
+				} else {
+					const currentTime = toZonedTime(now, bookingSpec.schedule.timezone);
+
+					if (startTime <= currentTime) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time is in the past. ` +
+								`Please refresh the page and select a future time slot.`
+						);
+					}
+				}
+				const startDay = startOfDay(startTime);
 				const endTime = toZonedTime(time.end, bookingSpec.schedule.timezone);
-				const endDay = endOfDay(subSeconds(endTime, 1).getDay() + 6); // Sub-seconds to allow booking until midnight
+				const endDay = endOfDay(subSeconds(endTime, 1)); // Sub-seconds to allow booking until midnight
 
 				if (!isSameDay(startDay, endDay)) {
 					throw error(
@@ -1221,6 +1238,7 @@ export async function createOrder(
 				status: 'pending',
 				sellerIdentity: runtimeConfig.sellerIdentity,
 				items: items.map((item, i) => ({
+					_id: item._id,
 					quantity: item.quantity,
 					product: item.product,
 					customPrice: item.customPrice,
@@ -1236,87 +1254,63 @@ export async function createOrder(
 					vatRate: priceInfo.vatRates[i],
 					currencySnapshot: {
 						main: {
-							price: {
-								amount: toCurrency(
-									runtimeConfig.mainCurrency,
-									item.product.price.amount,
-									item.product.price.currency
-								),
-								currency: runtimeConfig.mainCurrency
-							},
+							price: convertAmountToCurrencyForStorage(
+								runtimeConfig.mainCurrency,
+								item.product.price.amount,
+								item.product.price.currency
+							),
 							...(item.customPrice && {
-								customPrice: {
-									amount: toCurrency(
-										runtimeConfig.mainCurrency,
-										item.customPrice.amount,
-										item.customPrice.currency
-									),
-									currency: runtimeConfig.mainCurrency
-								}
+								customPrice: convertAmountToCurrencyForStorage(
+									runtimeConfig.mainCurrency,
+									item.customPrice.amount,
+									item.customPrice.currency
+								)
 							})
 						},
 						...(runtimeConfig.secondaryCurrency && {
 							secondary: {
-								price: {
-									amount: toCurrency(
-										runtimeConfig.secondaryCurrency,
-										item.product.price.amount,
-										item.product.price.currency
-									),
-									currency: runtimeConfig.secondaryCurrency
-								},
+								price: convertAmountToCurrencyForStorage(
+									runtimeConfig.secondaryCurrency,
+									item.product.price.amount,
+									item.product.price.currency
+								),
 								...(item.customPrice && {
-									customPrice: {
-										amount: toCurrency(
-											runtimeConfig.secondaryCurrency,
-											item.customPrice.amount,
-											item.customPrice.currency
-										),
-										currency: runtimeConfig.secondaryCurrency
-									}
+									customPrice: convertAmountToCurrencyForStorage(
+										runtimeConfig.secondaryCurrency,
+										item.customPrice.amount,
+										item.customPrice.currency
+									)
 								})
 							}
 						}),
 						...(runtimeConfig.accountingCurrency && {
 							accounting: {
-								price: {
-									amount: toCurrency(
-										runtimeConfig.accountingCurrency,
-										item.product.price.amount,
-										item.product.price.currency
-									),
-									currency: runtimeConfig.accountingCurrency
-								},
+								price: convertAmountToCurrencyForStorage(
+									runtimeConfig.accountingCurrency,
+									item.product.price.amount,
+									item.product.price.currency
+								),
 								...(item.customPrice && {
-									customPrice: {
-										amount: toCurrency(
-											runtimeConfig.accountingCurrency,
-											item.customPrice.amount,
-											item.customPrice.currency
-										),
-										currency: runtimeConfig.accountingCurrency
-									}
+									customPrice: convertAmountToCurrencyForStorage(
+										runtimeConfig.accountingCurrency,
+										item.customPrice.amount,
+										item.customPrice.currency
+									)
 								})
 							}
 						}),
 						priceReference: {
-							price: {
-								amount: toCurrency(
-									runtimeConfig.priceReferenceCurrency,
-									item.product.price.amount,
-									item.product.price.currency
-								),
-								currency: runtimeConfig.priceReferenceCurrency
-							},
+							price: convertAmountToCurrencyForStorage(
+								runtimeConfig.priceReferenceCurrency,
+								item.product.price.amount,
+								item.product.price.currency
+							),
 							...(item.customPrice && {
-								customPrice: {
-									amount: toCurrency(
-										runtimeConfig.priceReferenceCurrency,
-										item.customPrice.amount,
-										item.customPrice.currency
-									),
-									currency: runtimeConfig.priceReferenceCurrency
-								}
+								customPrice: convertAmountToCurrencyForStorage(
+									runtimeConfig.priceReferenceCurrency,
+									item.customPrice.amount,
+									item.customPrice.currency
+								)
 							})
 						}
 					}
@@ -1540,7 +1534,16 @@ export async function createOrder(
 					}
 				}),
 				...(params.engagements && { engagements: params.engagements }),
-				...(params.onLocation && { onLocation: params.onLocation })
+				...(params.onLocation !== undefined && { onLocation: params.onLocation }),
+				...(params.cart?.orderTabSlug && {
+					orderTabSlug: params.cart.orderTabSlug,
+					orderTabId: params.cart.orderTabId,
+					cartId: params.cart._id,
+					splitMode: params.cart.splitMode
+				}),
+				...(params.peopleCountFromPosUi !== undefined && {
+					peopleCountFromPosUi: params.peopleCountFromPosUi
+				})
 			};
 			await collections.orders.insertOne(order, { session });
 
@@ -1554,12 +1557,33 @@ export async function createOrder(
 					order,
 					paymentMethod,
 					{ currency: 'SAT', amount: partialSatoshis },
-					{ session, expiresAt }
+					{
+						session,
+						expiresAt,
+						...(paymentMethod === 'point-of-sale' &&
+							params.posSubtype && { posSubtype: params.posSubtype })
+					}
 				);
 				order.payments.push(orderPayment);
 			}
 
 			if (params.cart) {
+				// This is completely unrelated to the process of creating an order, but
+				// inserted here because there's no separation between the implementation of
+				// creating an order and the business process of creating an order.
+				// Unfortunately, the author cannot address this due to time constraints.
+				if (order.orderTabSlug) {
+					await collections.orderTabs.updateMany(
+						{ slug: order.orderTabSlug },
+						{
+							$unset: { 'items.$[elem].cartId': 1 }
+						},
+						{
+							arrayFilters: [{ 'elem.cartId': params.cart._id }],
+							session
+						}
+					);
+				}
 				/** Also delete "old" carts with partial user info */
 				await collections.carts.deleteMany(userQuery(params.cart.user), { session });
 			}
@@ -1604,22 +1628,60 @@ async function generatePaymentInfo(params: {
 	processor?: PaymentProcessor;
 }> {
 	switch (params.method) {
-		case 'bitcoin':
-			if (isBitcoinNodelessConfigured()) {
-				return {
+		case 'bitcoin': {
+			const preference = runtimeConfig.paymentProcessorPreferences?.bitcoin;
+			const hardcodedPriority: PaymentProcessor[] = ['bitcoin-nodeless', 'bitcoind'];
+
+			const availability: Partial<Record<PaymentProcessor, boolean>> = {
+				'bitcoin-nodeless': isBitcoinNodelessConfigured(),
+				bitcoind: isBitcoindConfigured
+			};
+
+			const generators: Partial<
+				Record<
+					PaymentProcessor,
+					() => Promise<{
+						address?: string;
+						wallet?: string;
+						label?: string;
+						invoiceId?: string;
+						checkoutId?: string;
+						meta?: unknown;
+						processor?: PaymentProcessor;
+					}>
+				>
+			> = {
+				'bitcoin-nodeless': async () => ({
 					address: bip84Address(
 						runtimeConfig.bitcoinNodeless.publicKey,
 						await generateDerivationIndex()
 					),
 					processor: 'bitcoin-nodeless'
-				};
-			}
-			return {
-				address: await getNewAddress(orderAddressLabel(params.orderId, params.paymentId)),
-				wallet: await currentWallet(),
-				label: orderAddressLabel(params.orderId, params.paymentId),
-				processor: 'bitcoind'
+				}),
+				bitcoind: async () => ({
+					address: await getNewAddress(orderAddressLabel(params.orderId, params.paymentId)),
+					wallet: await currentWallet(),
+					label: orderAddressLabel(params.orderId, params.paymentId),
+					processor: 'bitcoind'
+				})
 			};
+
+			const orderedProcessors =
+				preference && availability[preference]
+					? [preference, ...hardcodedPriority.filter((p) => p !== preference)]
+					: hardcodedPriority;
+
+			for (const processor of orderedProcessors) {
+				if (availability[processor]) {
+					const generator = generators[processor];
+					if (generator) {
+						return await generator();
+					}
+				}
+			}
+
+			throw new Error('No bitcoin payment processors available.');
+		}
 		case 'lightning': {
 			const label = (() => {
 				switch (runtimeConfig.lightningQrCodeDescription) {
@@ -1634,57 +1696,101 @@ async function generatePaymentInfo(params: {
 				}
 			})();
 			const satoshis = toSatoshis(params.toPay.amount, params.toPay.currency);
-			if (isSwissBitcoinPayConfigured()) {
-				const invoice = await swissBitcoinPayCreateInvoice({
-					label,
-					orderId: `${params.orderNumber}`,
-					expiresAt: params.expiresAt,
-					toPay: {
-						amount: satoshis,
-						currency: 'SAT'
+			const preference = runtimeConfig.paymentProcessorPreferences?.lightning;
+			const hardcodedPriority: PaymentProcessor[] = [
+				'swiss-bitcoin-pay',
+				'btcpay-server',
+				'phoenixd',
+				'lnd'
+			];
+
+			const availability: Partial<Record<PaymentProcessor, boolean>> = {
+				'swiss-bitcoin-pay': isSwissBitcoinPayConfigured(),
+				'btcpay-server': isBtcpayServerConfigured(),
+				phoenixd: isPhoenixdConfigured(),
+				lnd: isLndConfigured()
+			};
+
+			const generators: Partial<
+				Record<
+					PaymentProcessor,
+					() => Promise<{
+						address?: string;
+						wallet?: string;
+						label?: string;
+						invoiceId?: string;
+						checkoutId?: string;
+						meta?: unknown;
+						processor?: PaymentProcessor;
+					}>
+				>
+			> = {
+				'swiss-bitcoin-pay': async () => {
+					const invoice = await swissBitcoinPayCreateInvoice({
+						label,
+						orderId: `${params.orderNumber}`,
+						expiresAt: params.expiresAt,
+						toPay: {
+							amount: satoshis,
+							currency: 'SAT'
+						}
+					});
+					return {
+						address: invoice.payment_address,
+						invoiceId: invoice.invoiceId,
+						processor: 'swiss-bitcoin-pay'
+					};
+				},
+				'btcpay-server': async () => {
+					const invoice = await btcpayServerCreateInvoice({
+						label,
+						expiresAt: params.expiresAt,
+						amountInSats: satoshis
+					});
+					return {
+						address: invoice.payment_address,
+						invoiceId: invoice.invoiceId,
+						processor: 'btcpay-server'
+					};
+				},
+				phoenixd: async () => {
+					const invoice = await phoenixdCreateInvoice(satoshis, label, params.orderId);
+					return {
+						address: invoice.payment_address,
+						invoiceId: invoice.r_hash,
+						processor: 'phoenixd'
+					};
+				},
+				lnd: async () => {
+					const invoice = await lndCreateInvoice(satoshis, {
+						...(params.expiresAt && {
+							expireAfterSeconds: differenceInSeconds(params.expiresAt, new Date())
+						}),
+						label
+					});
+					return {
+						address: invoice.payment_request,
+						invoiceId: invoice.r_hash,
+						processor: 'lnd'
+					};
+				}
+			};
+
+			const orderedProcessors =
+				preference && availability[preference]
+					? [preference, ...hardcodedPriority.filter((p) => p !== preference)]
+					: hardcodedPriority;
+
+			for (const processor of orderedProcessors) {
+				if (availability[processor]) {
+					const generator = generators[processor];
+					if (generator) {
+						return await generator();
 					}
-				});
-				return {
-					address: invoice.payment_address,
-					invoiceId: invoice.invoiceId,
-					processor: 'swiss-bitcoin-pay'
-				};
-			} else if (isBtcpayServerConfigured()) {
-				const invoice = await btcpayServerCreateInvoice({
-					label,
-					expiresAt: params.expiresAt,
-					amountInSats: satoshis
-				});
-				return {
-					address: invoice.payment_address,
-					invoiceId: invoice.invoiceId,
-					processor: 'btcpay-server'
-				};
-			} else if (isPhoenixdConfigured()) {
-				// no way to configure an expiration date for now
-				const invoice = await phoenixdCreateInvoice(satoshis, label, params.orderId);
-
-				return {
-					address: invoice.payment_address,
-					invoiceId: invoice.r_hash,
-					processor: 'phoenixd'
-				};
-			} else if (isLndConfigured()) {
-				const invoice = await lndCreateInvoice(satoshis, {
-					...(params.expiresAt && {
-						expireAfterSeconds: differenceInSeconds(params.expiresAt, new Date())
-					}),
-					label
-				});
-
-				return {
-					address: invoice.payment_request,
-					invoiceId: invoice.r_hash,
-					processor: 'lnd'
-				};
-			} else {
-				throw new Error('No lightning payment processors available.');
+				}
 			}
+
+			throw new Error('No lightning payment processors available.');
 		}
 		case 'point-of-sale': {
 		}
@@ -1714,110 +1820,137 @@ async function generateCardPaymentInfo(params: {
 	processor: PaymentProcessor;
 	clientSecret?: string;
 }> {
-	if (isSumupEnabled()) {
-		const resp = await fetch('https://api.sumup.com/v0.1/checkouts', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${runtimeConfig.sumUp.apiKey}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				amount: toCurrency(
-					runtimeConfig.sumUp.currency,
-					params.toPay.amount,
-					params.toPay.currency
-				),
-				currency: runtimeConfig.sumUp.currency,
-				checkout_reference: params.orderId + '-' + params.paymentId,
-				merchant_code: runtimeConfig.sumUp.merchantCode,
-				redirect_url: `${ORIGIN}/order/${params.orderId}`,
-				description: 'Order ' + params.orderNumber,
-				...(params.expiresAt && {
-					valid_until: params.expiresAt.toISOString()
+	const preference = runtimeConfig.paymentProcessorPreferences?.card;
+	const hardcodedPriority: PaymentProcessor[] = ['sumup', 'stripe'];
+
+	const availability: Partial<Record<PaymentProcessor, boolean>> = {
+		sumup: isSumupEnabled(),
+		stripe: isStripeEnabled()
+	};
+
+	const generators: Partial<
+		Record<
+			PaymentProcessor,
+			() => Promise<{
+				checkoutId: string;
+				meta: unknown;
+				address: string;
+				processor: PaymentProcessor;
+				clientSecret?: string;
+			}>
+		>
+	> = {
+		sumup: async () => {
+			const resp = await fetch('https://api.sumup.com/v0.1/checkouts', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${runtimeConfig.sumUp.apiKey}`,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					amount: toCurrency(
+						runtimeConfig.sumUp.currency,
+						params.toPay.amount,
+						params.toPay.currency
+					),
+					currency: runtimeConfig.sumUp.currency,
+					checkout_reference: params.orderId + '-' + params.paymentId,
+					merchant_code: runtimeConfig.sumUp.merchantCode,
+					redirect_url: `${ORIGIN}/order/${params.orderId}`,
+					description: 'Order ' + params.orderNumber,
+					...(params.expiresAt && {
+						valid_until: params.expiresAt.toISOString()
+					})
+				}),
+				...{ autoSelectFamily: true }
+			});
+
+			if (!resp.ok) {
+				console.error(await resp.text());
+				throw error(402, 'Sumup checkout creation failed');
+			}
+
+			const json = await resp.json();
+			const checkoutId = json.id;
+
+			if (!checkoutId || typeof checkoutId !== 'string') {
+				console.error('no checkout id', json);
+				throw error(402, 'Sumup checkout creation failed');
+			}
+
+			return {
+				checkoutId,
+				meta: json,
+				address: `${ORIGIN}/order/${params.orderId}/payment/${params.paymentId}/pay`,
+				processor: 'sumup'
+			};
+		},
+		stripe: async () => {
+			const response = await fetch('https://api.stripe.com/v1/payment_intents', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${runtimeConfig.stripe.secretKey}`,
+					'Content-Type': 'application/x-www-form-urlencoded'
+				},
+				body: toUrlEncoded({
+					amount: Math.round(
+						toCurrency(runtimeConfig.stripe.currency, params.toPay.amount, params.toPay.currency) /
+							CURRENCY_UNIT[runtimeConfig.stripe.currency]
+					),
+					currency: runtimeConfig.stripe.currency.toLowerCase(),
+					automatic_payment_methods: {
+						enabled: true
+					},
+					metadata: {
+						orderId: params.orderId,
+						paymentId: params.paymentId.toHexString()
+					},
+					description: 'Order ' + params.orderNumber
 				})
-			}),
-			...{ autoSelectFamily: true }
-		});
+			});
 
-		if (!resp.ok) {
-			console.error(await resp.text());
-			throw error(402, 'Sumup checkout creation failed');
+			if (!response.ok) {
+				console.error(await response.text());
+				throw error(402, 'Stripe payment intent creation failed');
+			}
+
+			const json = await response.json();
+			const clientSecret = json.client_secret;
+
+			if (!clientSecret || typeof clientSecret !== 'string') {
+				console.error('no client secret', json);
+				throw error(402, 'Stripe payment intent creation failed');
+			}
+
+			const paymentId = json.id;
+
+			if (!paymentId || typeof paymentId !== 'string') {
+				console.error('no payment id', json);
+				throw error(402, 'Stripe payment intent creation failed');
+			}
+
+			return {
+				checkoutId: paymentId,
+				clientSecret,
+				meta: json,
+				address: `${ORIGIN}/order/${params.orderId}/payment/${params.paymentId}/pay`,
+				processor: 'stripe'
+			};
 		}
+	};
 
-		const json = await resp.json();
+	const orderedProcessors =
+		preference && availability[preference]
+			? [preference, ...hardcodedPriority.filter((p) => p !== preference)]
+			: hardcodedPriority;
 
-		const checkoutId = json.id;
-
-		if (!checkoutId || typeof checkoutId !== 'string') {
-			console.error('no checkout id', json);
-			throw error(402, 'Sumup checkout creation failed');
+	for (const processor of orderedProcessors) {
+		if (availability[processor]) {
+			const generator = generators[processor];
+			if (generator) {
+				return await generator();
+			}
 		}
-
-		return {
-			checkoutId,
-			meta: json,
-			address: `${ORIGIN}/order/${params.orderId}/payment/${params.paymentId}/pay`,
-			processor: 'sumup'
-		};
-	}
-
-	if (isStripeEnabled()) {
-		// Create payment intent
-		const response = await fetch('https://api.stripe.com/v1/payment_intents', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${runtimeConfig.stripe.secretKey}`,
-				'Content-Type': 'application/x-www-form-urlencoded'
-			},
-			body: toUrlEncoded({
-				amount: Math.round(
-					toCurrency(runtimeConfig.stripe.currency, params.toPay.amount, params.toPay.currency) /
-						CURRENCY_UNIT[runtimeConfig.stripe.currency]
-				),
-				currency: runtimeConfig.stripe.currency.toLowerCase(),
-				automatic_payment_methods: {
-					enabled: true
-				},
-				metadata: {
-					orderId: params.orderId,
-					paymentId: params.paymentId.toHexString()
-				},
-				description: 'Order ' + params.orderNumber
-			})
-		});
-
-		if (!response.ok) {
-			console.error(await response.text());
-			throw error(402, 'Stripe payment intent creation failed');
-		}
-
-		const json = await response.json();
-
-		const clientSecret = json.client_secret;
-
-		if (!clientSecret || typeof clientSecret !== 'string') {
-			console.error('no client secret', json);
-			throw error(402, 'Stripe payment intent creation failed');
-		}
-
-		const paymentId = json.id;
-
-		if (!paymentId || typeof paymentId !== 'string') {
-			console.error('no payment id', json);
-			throw error(402, 'Stripe payment intent creation failed');
-		}
-
-		return {
-			checkoutId: paymentId,
-			clientSecret,
-			meta: json,
-			address: `${ORIGIN}/order/${params.orderId}/payment/${params.paymentId}/pay`,
-			processor: 'stripe'
-		};
-	}
-
-	if (isPaypalEnabled()) {
-		return await generatePaypalPaymentInfo(params);
 	}
 
 	throw error(402, 'No card payment processor configured');
@@ -1966,15 +2099,24 @@ export async function addOrderPayment(
 	price: Price,
 	/**
 	 * `null` expiresAt means the payment method has no expiration
+	 * `ignorePendingPayments` allows creating new payment even if pending payments cover full amount (for PoS)
 	 */
-	opts?: { expiresAt?: Date | null; session?: ClientSession }
+	opts?: {
+		expiresAt?: Date | null;
+		session?: ClientSession;
+		posSubtype?: string;
+		ignorePendingPayments?: boolean;
+	}
 ) {
 	if (order.status !== 'pending') {
 		throw error(400, 'Order is not pending');
 	}
 
-	if (paymentMethod !== 'free' && isOrderFullyPaid(order, { includePendingOrders: true })) {
-		throw error(400, 'Order already fully paid with pending payments');
+	if (
+		paymentMethod !== 'free' &&
+		isOrderFullyPaid(order, { includePendingOrders: !opts?.ignorePendingPayments })
+	) {
+		throw error(400, 'Order already fully paid');
 	}
 
 	// We reuse the same currencies as previous payments
@@ -1983,28 +2125,32 @@ export async function addOrderPayment(
 	const priceReferenceCurrency = order.currencySnapshot.priceReference.totalPrice.currency;
 	const accountingCurrency = order.currencySnapshot.accounting?.totalPrice.currency;
 
+	const remainingAmount = orderAmountWithNoPaymentsCreated(order, {
+		ignorePendingPayments: opts?.ignorePendingPayments
+	});
 	const priceToPay =
-		toCurrency(mainCurrency, price.amount, price.currency) <=
-		orderAmountWithNoPaymentsCreated(order)
+		toCurrency(mainCurrency, price.amount, price.currency) <= remainingAmount
 			? price
-			: {
-					amount: orderAmountWithNoPaymentsCreated(order),
-					currency: mainCurrency
-			  };
+			: { amount: remainingAmount, currency: mainCurrency };
 
 	if (paymentMethod !== 'free' && priceToPay.amount < CURRENCY_UNIT[priceToPay.currency]) {
-		throw error(400, 'Order already fully paid with pending payments');
+		throw error(400, 'Order already fully paid');
 	}
 
 	const paymentId = new ObjectId();
 	const expiresAt =
 		opts?.expiresAt !== undefined ? opts.expiresAt : paymentMethodExpiration(paymentMethod);
 
+	const isFreePayment = paymentMethod === 'free';
+	const paidAt = isFreePayment ? new Date() : undefined;
+
 	const payment: OrderPayment = {
 		_id: paymentId,
-		status: 'pending',
+		status: isFreePayment ? 'paid' : 'pending',
+		...(paidAt && { paidAt }),
 		method: paymentMethod,
 		price: paymentPrice(paymentMethod, priceToPay),
+		...(paymentMethod === 'point-of-sale' && opts?.posSubtype && { posSubtype: opts.posSubtype }),
 		currencySnapshot: {
 			main: {
 				price: {
@@ -2056,6 +2202,12 @@ export async function addOrderPayment(
 		},
 		{ session: opts?.session }
 	);
+
+	// free payments creating as 'paid'
+	if (isFreePayment) {
+		order.payments.push(payment);
+		await onOrderPayment(order, payment, payment.price, { providedSession: opts?.session });
+	}
 
 	return payment;
 }
@@ -2109,23 +2261,50 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, updatedFreeProductsById);
 			}
+			const newPaidUntil = add(max([existing.paidUntil, new Date()]), subscriptionDuration);
+
+			const archivedNotifications = existing.notifications.map((notif) => ({
+				...notif,
+				forPaidUntil: existing.paidUntil
+			}));
+
 			const result = await collections.paidSubscriptions.updateOne(
 				{ _id: existing._id },
 				{
 					$set: {
-						paidUntil: add(max([existing.paidUntil, new Date()]), subscriptionDuration),
+						paidUntil: newPaidUntil,
 						updatedAt: new Date(),
 						notifications: [],
 						...(Object.keys(updatedFreeProductsById).length !== 0 && {
 							freeProductsById: updatedFreeProductsById
 						})
 					},
+					...(archivedNotifications.length > 0 && {
+						$push: {
+							notificationHistory: { $each: archivedNotifications }
+						}
+					}),
 					$unset: { cancelledAt: 1 }
 				},
 				{ session }
 			);
 			if (!result.modifiedCount) {
 				throw new Error('Failed to update subscription');
+			}
+
+			if (existing.user.email) {
+				await queueEmail(
+					existing.user.email,
+					'subscription.renewed',
+					{
+						subscriptionNumber: existing.number.toString(),
+						newExpirationDate: newPaidUntil.toLocaleString(order.locale || 'en', {
+							dateStyle: 'full',
+							timeStyle: 'short'
+						})
+					},
+					{ session }
+				);
 			}
 		} else {
 			const freeProductsById: PaidSubscription['freeProductsById'] = {};
@@ -2151,6 +2330,10 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 }
 
 export async function updateAfterOrderPaid(order: Order, session: ClientSession) {
+	if (order.orderTabSlug) {
+		await handleOrderTabAfterPayment({ order, session });
+	}
+
 	if (order.items.some((item) => item.product.type === 'subscription')) {
 		await collections.scheduleEvents.updateMany(
 			{ orderId: order._id },
@@ -2345,9 +2528,11 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 
 	// Update product stock in DB
 	for (const item of order.items.filter((item) => item.product.stock)) {
+		const productIdToDecrement = item.product.stockReference?.productId || item.product._id;
+
 		await collections.products.updateOne(
 			{
-				_id: item.product._id
+				_id: productIdToDecrement
 			},
 			{
 				$inc: { 'stock.total': -item.quantity, 'stock.available': -item.quantity },

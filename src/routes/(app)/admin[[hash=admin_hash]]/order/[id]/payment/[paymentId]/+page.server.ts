@@ -1,11 +1,21 @@
-import { ORIGIN, SMTP_USER } from '$env/static/private';
+import { ORIGIN, SMTP_USER } from '$lib/server/env-config';
 import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database';
 import { conflictingTapToPayOrder, onOrderPayment, onOrderPaymentFailed } from '$lib/server/orders';
+import { type PaymentProcessor } from '$lib/server/payment-methods';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
+import { CURRENCIES, type Currency } from '$lib/types/Currency';
+import { typedInclude } from '$lib/utils/typedIncludes';
+
+const PAYMENT_DETAIL_MAX_LENGTH = 100;
+
+const paymentDetailSchema = (required: boolean) =>
+	required
+		? z.string().trim().min(1).max(PAYMENT_DETAIL_MAX_LENGTH)
+		: z.string().trim().max(PAYMENT_DETAIL_MAX_LENGTH).optional();
 
 export const actions = {
 	confirm: async ({ params, request }) => {
@@ -30,28 +40,38 @@ export const actions = {
 		const bankInfo =
 			payment.method === 'bank-transfer'
 				? z
-						.object({
-							bankTransferNumber: z.string().trim().min(1).max(100)
-						})
-						.parse({
-							bankTransferNumber: formData.get('bankTransferNumber')
-						})
+						.object({ bankTransferNumber: paymentDetailSchema(true) })
+						.parse({ bankTransferNumber: formData.get('bankTransferNumber') })
 				: null;
-		const posInfo =
-			payment.method === 'point-of-sale'
-				? z
-						.object({
-							detail: z.string().trim().min(1).max(100)
-						})
-						.parse({
-							detail: formData.get('detail')
-						})
+
+		let posInfo = null;
+		if (payment.method === 'point-of-sale') {
+			const subtype = payment.posSubtype
+				? await collections.posPaymentSubtypes.findOne({ slug: payment.posSubtype })
 				: null;
+			const required = subtype?.paymentDetailRequired ?? false;
+			posInfo = z
+				.object({ detail: paymentDetailSchema(required) })
+				.parse({ detail: formData.get('detail') });
+		}
+
+		let cashbackInfo: { amount: number; currency: Currency } | undefined;
+		const cashbackAmountRaw = formData.get('cashbackAmount');
+		const cashbackCurrencyRaw = formData.get('cashbackCurrency');
+
+		if (cashbackAmountRaw && cashbackCurrencyRaw) {
+			const amount = parseFloat(cashbackAmountRaw as string);
+			const currencyStr = cashbackCurrencyRaw as string;
+			if (!isNaN(amount) && amount > 0 && typedInclude(CURRENCIES, currencyStr)) {
+				cashbackInfo = { amount, currency: currencyStr };
+			}
+		}
 
 		await onOrderPayment(order, payment, payment.price, {
 			...(bankInfo &&
 				bankInfo.bankTransferNumber && { bankTransferNumber: bankInfo.bankTransferNumber }),
-			...(posInfo && posInfo.detail && { detail: posInfo.detail })
+			...(posInfo && posInfo.detail && { detail: posInfo.detail }),
+			...(cashbackInfo && { cashbackAmount: cashbackInfo })
 		});
 
 		throw redirect(303, request.headers.get('referer') || `${adminPrefix()}/order`);
@@ -105,10 +125,7 @@ export const actions = {
 
 	tapToPay: async (event) => {
 		const { params, request } = event;
-		const tapToPayProcessor = runtimeConfig.posTapToPay.processor;
-		if (!tapToPayProcessor) {
-			throw error(400, 'Tap-to-pay processor not configured');
-		}
+
 		const order = await collections.orders.findOne({
 			_id: params.id
 		});
@@ -125,6 +142,27 @@ export const actions = {
 		if (payment.method !== 'point-of-sale') {
 			throw error(400, 'Payment is not point-of-sale');
 		}
+
+		let tapToPayProcessor: PaymentProcessor | undefined;
+
+		if (payment.posSubtype) {
+			const subtype = await collections.posPaymentSubtypes.findOne({
+				slug: payment.posSubtype
+			});
+
+			if (subtype?.tapToPay) {
+				tapToPayProcessor = subtype.tapToPay.processor;
+			}
+		}
+
+		if (!tapToPayProcessor) {
+			tapToPayProcessor = runtimeConfig.posTapToPay.processor;
+		}
+
+		if (!tapToPayProcessor) {
+			throw error(400, 'Tap-to-pay not configured for this payment type');
+		}
+
 		if (payment.posTapToPay && payment.posTapToPay.expiresAt > new Date()) {
 			throw error(400, 'Payment is already waiting tap-to-pay');
 		}
@@ -167,13 +205,9 @@ export const actions = {
 			throw error(400, 'Payment is not paid');
 		}
 		const formData = await request.formData();
-		const informationUpdate = z
-			.object({
-				paymentDetail: z.string().trim().min(1).max(100)
-			})
-			.parse({
-				paymentDetail: formData.get('paymentDetail')
-			});
+		const informationUpdate = z.object({ paymentDetail: paymentDetailSchema(true) }).parse({
+			paymentDetail: formData.get('paymentDetail')
+		});
 
 		await collections.orders.updateOne(
 			{ _id: order._id, 'payments._id': payment._id },

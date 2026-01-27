@@ -3,7 +3,7 @@ import { collections } from '../database';
 import { Lock } from '../lock';
 import type { NostRReceivedMessage } from '$lib/types/NostRReceivedMessage';
 import { Kind } from 'nostr-tools';
-import { ORIGIN } from '$env/static/private';
+import { ORIGIN } from '$lib/server/env-config';
 import { refreshPromise, runtimeConfig } from '../runtime-config';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { addSeconds, formatDistance, subMinutes } from 'date-fns';
@@ -627,14 +627,14 @@ const commands: Record<
 			}
 			if (runtimeConfig.isBillingAddressMandatory) {
 				await send(
-					`This beBOP is configured to always require a billing address, but this is not supported yet via NostR`
+					`This be-BOP is configured to always require a billing address, but this is not supported yet via NostR`
 				);
 				return;
 			}
 
 			if (runtimeConfig.collectIPOnDeliverylessOrders) {
 				await send(
-					`Sorry, this beBOP requires an IP address or shipping address for each order, which is not possible via NostR at the moment`
+					`Sorry, this be-BOP requires an IP address or shipping address for each order, which is not possible via NostR at the moment`
 				);
 				return;
 			}

@@ -13,6 +13,15 @@
 		"vatNumber": "btw-nummer",
 		"zipCode": "Postcode"
 	},
+	"admin": {
+		"product": {
+			"stockReference": {
+				"label": "Verwijzing naar voorraad van ander product (optioneel)",
+				"noReference": "-- Geen verwijzing (gebruik eigen voorraad) --",
+				"warning": "⚠️ Dit product verwijst naar de voorraad van een ander product. Voorraadwijzigingen zullen het gerefereerde product beïnvloeden."
+			}
+		}
+	},
 	"ageWarning": {
 		"agreement": "Ik heb de toegangsvoorwaarden gelezen, voldoe eraan en respecteer ze",
 		"navigate": "Vervolg de navigatie"
@@ -509,7 +518,10 @@
 		"addPayment": {
 			"amount": "Te betalen bedrag",
 			"cta": "Stuur een oproep voor betaling",
-			"currency": "Betalingsvaluta"
+			"currency": "Betalingsvaluta",
+			"posSubtype": "Type",
+			"submit": "Toevoegen",
+			"title": "Betaling toevoegen"
 		},
 		"backToOrder": "<< Terug naar bestelling",
 		"clickQR": "Klik op de QR-code om met uw portemonnee te betalen",
@@ -622,8 +634,10 @@
 			"totalExcVat": "Totaal Excl. VAT",
 			"totalInclVat": "Totaal Incl. VAT",
 			"totalVat": "Totale BTW",
+			"totalWithDiscount": "Totaal met korting",
 			"unitPrice": "Eenheid prijs",
-			"vatFreeReason": "Vrijgesteld van btw: {reason}"
+			"vatFreeReason": "Vrijgesteld van btw: {reason}",
+			"peopleCount": "Aantal personen"
 		},
 		"receiptFullyPaid": "Bon genereren (volledig betaald)",
 		"receiptPending": "Ontvangst genereren (betaling in behandeling)",
@@ -674,6 +688,33 @@
 			"resendPaymentMethod": "Verzend de betaalmethode",
 			"updatePaymentInfo": "Betalingsgegevens bijwerken"
 		},
+		"btn": {
+			"add": "Toevoegen",
+			"cancel": "Annuleren",
+			"cancelTap": "Stop Tap",
+			"paid": "Betaald",
+			"replace": "Wijzigen ▾",
+			"replaceSubmit": "Wijzigen",
+			"tapToPay": "Kaartbetaling"
+		},
+		"cashback": {
+			"title": "Wisselgeld ▾",
+			"toPay": "Te betalen",
+			"paid": "Betaald",
+			"change": "Wisselgeld",
+			"cancel": "Wisselgeld annuleren",
+			"validate": "Bevestigen"
+		},
+		"input": {
+			"detail": "Detail",
+			"txNumber": "TX nr."
+		},
+		"label": {
+			"amount": "Bedrag",
+			"currency": "Valuta",
+			"method": "Methode",
+			"subtype": "Type"
+		},
 		"discountJustification": "Rechtvaardiging",
 		"invalidDiscount": "Korting is niet geldig!",
 		"lastOrders": {
@@ -697,7 +738,99 @@
 			"inUseByOtherOrder": "Tap-to-pay is uitgeschakeld omdat er al een andere bestelling bezig is met deze betaalmethode. U kunt handmatig afrekenen en daarna het transactie­nummer in dit veld invullen."
 		},
 		"vatFree": "Dit is een BTW-vrije bestelling (<0>voorwaarden</0>)",
-		"vatFreeReason": "BTW-vrije reden"
+		"vatFreeReason": "BTW-vrije reden",
+		"tagGroups": {
+			"addGroup": "Groep toevoegen",
+			"deleteGroup": "Groep verwijderen",
+			"groupNamePlaceholder": "Groepsnaam",
+			"tooManyTagsWarning": "Groep \"{groupName}\" heeft {count} tags. Te veel voor knoppenmodus. Activeer \"Gebruik selectiemenu\" optie of verminder tags. Doorgaan?"
+		},
+		"touch": {
+			"selectTab": "Selecteer een tabblad:",
+			"noTabs": "Deze groep heeft geen tabbladen",
+			"cancel": "Annuleren",
+			"back": "← Terug",
+			"ticketNumber": "TICKET nr.",
+			"exclVat": "EX",
+			"inclVat": "INC",
+			"subtotal": "SUBTOTAAL",
+			"total": "TOTAAL",
+			"vatBreakdown": "Waarvan BTW",
+			"favorites": "FAVORIETEN",
+			"allProducts": "ALLE PRODUCTEN",
+			"pagination": "PAGINA {currentPage}/{totalPages}",
+			"tickets": "TICKETS",
+			"save": "OPSLAAN",
+			"moveItems": "Items verplaatsen",
+			"pool": "POOL",
+			"openDrawer": "LADE OPENEN",
+			"pay": "BETALEN",
+			"notDeveloped": "Nog niet ontwikkeld",
+			"confirmDeleteLastItem": "Wil je de laatste winkelwagen regel verwijderen?",
+			"confirmDeleteAllItems": "Wil je alle winkelwagen regels verwijderen?",
+			"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})"
+		},
+		"itemEdit": {
+			"quantity": "Hoeveelheid",
+			"directSelection": "Directe selectie",
+			"qtyZeroRemove": "0 (Verwijderen)",
+			"itemRemoved": "Artikel verwijderd",
+			"comment": "Opmerking",
+			"commentPlaceholder": "Voer een opmerking in...",
+			"cancel": "ANNULEREN",
+			"save": "OPSLAAN"
+		},
+		"split": {
+			"notAvailableYet": "Nog niet beschikbaar",
+			"tabHeader": "Tab {slug}",
+			"tabToPayNow": "Tab {slug} (nu te betalen)",
+			"pool": "POOL",
+			"poolRemainingToPay": "POOL (nog te betalen)",
+			"exclVat": "excl. BTW",
+			"inclVat": "incl. BTW {rates}",
+			"inclVatShort": "incl. BTW",
+			"vatRate": "BTW {rate}%",
+			"cashIn": "Afrekenen",
+			"all": "alles",
+			"split": "Splitsen",
+			"shares": "delen",
+			"itemize": "specificeren",
+			"return": "Terug",
+			"continueSplit": "Verdeel voortzetten ({mode})",
+			"paySelected": "Selectie betalen",
+			"includingVatIncluded": "Waarvan (BTW inbegrepen):",
+			"tagProducts": "Producten \"{name}\"",
+			"otherProducts": "Andere producten",
+			"selectItems": "Selecteer artikelen om te betalen",
+			"splitByShares": "Verdelen per delen",
+			"enterNumberOfParts": "Aantal delen",
+			"manualAmount": "Handmatig bedrag",
+			"ok": "OK",
+			"payRemaining": "Rest betalen",
+			"totalAlreadyPaid": "Totaal al betaald (BTW inbegrepen)",
+			"remainingToPay": "Nog te betalen (BTW inbegrepen)",
+			"allPaid": "Alles betaald",
+			"completeSharesFirst": "U bent al begonnen met betalen via \"Splitsen (delen)\". Voltooi alle betalingen en sluit de pool eerst.",
+			"closePool": "Pool sluiten",
+			"globalTicket": "Globaal ticket",
+			"beforeDiscount": "VOOR KORTING",
+			"afterDiscount": "NA KORTING"
+		},
+		"discount": {
+			"title": "Korting",
+			"noDiscount": "Geen korting",
+			"manualPercent": "Handmatig %",
+			"manualPercentPlaceholder": "Voer percentage in (0-100)",
+			"applyToTag": "Toepassen op tag:",
+			"allProducts": "Alle producten",
+			"currentDiscount": "Huidige korting:",
+			"none": "Geen",
+			"motiveLabelOptional": "Reden voor korting (optioneel):",
+			"motivePlaceholder": "bijv. Passeport gourmand",
+			"lockedWarning": "⚠️ Korting kan niet worden gewijzigd nadat de betaling is gestart",
+			"save": "Opslaan"
+		},
+		"useSelectForTags": "Gebruik dropdown voor tags"
 	},
 	"product": {
 		"addedToCart": "Product toegevoegd aan winkelwagen",
@@ -722,7 +855,8 @@
 			"details": "Details",
 			"donate": "Doneer nu",
 			"preorder": "Bestel nu vooraf",
-			"subscribe": "Abonneer nu"
+			"subscribe": "Abonneer nu",
+			"view": "Bekijk product"
 		},
 		"deposit": {
 			"payFullPrice": "Betaal nu de volledige prijs",
@@ -779,7 +913,9 @@
 	},
 	"subscription": {
 		"associated": {
-			"npub": "Geassocieerd met npub: {npub}"
+			"npub": "Geassocieerd met npub: {npub}",
+			"email": "Gekoppeld aan e-mail: {email}",
+			"title": "Gekoppeld aan:"
 		},
 		"cantRenew": "Abonnement hoeft niet te worden verlengd",
 		"cta": {
@@ -801,5 +937,33 @@
 	},
 	"widget": {
 		"specification": "Specificaties"
+	},
+	"telemetry": {
+		"banner": {
+			"aWordFrom": "Een woord van",
+			"title": "Een woord van be-BOP:",
+			"description1": "Om de gratis be-BOP-software te ondersteunen, kunt u het bestaan van uw winkel openbaar maken.",
+			"description2": "Er worden geen gegevens naar be-BOP.io SA verzonden, behalve de URI van uw winkel en uw toestemming om hierover te communiceren. Uw privégegevens en die van uw klanten worden niet gedeeld.",
+			"description3": "Uw bijdrage wordt gebruikt voor anonieme statistieken over het aantal be-BOP-gebruikers (dat niet automatisch wordt gevolgd omdat wij privacy en toestemming respecteren), en om af en toe communicatie- en promotiecampagnes te voeren over wereldwijd ingezette be-BOPs. Een eerste notificatie wordt verzonden naar de Nostr-bot van be-BOP.io, vervolgens wekelijks zolang uw be-BOP actief is. U kunt dit regelmatige bericht later uitschakelen in <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a>.",
+			"question": "Accepteert u om het bestaan van uw be-BOP te delen?",
+			"acceptButton": "Delen",
+			"declineButton": "Herinner me over 30 dagen",
+			"configureNostrButton": "Nostr configureren",
+			"accepted": {
+				"thankYou": "Bedankt dat u ervoor heeft gekozen om het bestaan van uw winkel te delen met be-BOP.io voor statistische en promotionele doeleinden!",
+				"message": "Er worden geen gegevens naar be-BOP.io SA verzonden, behalve de URL van uw winkel en uw toestemming om hierover te communiceren. U kunt naar <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> gaan om deze optionele telemetrie uit te schakelen.",
+				"autoHideCountdown": "Dit bericht verdwijnt over {seconds} seconden..."
+			},
+			"declined": {
+				"respect": "We respecteren uw keuze om geen informatie over uw winkel te delen.",
+				"reaskCountdown": "Dit bericht wordt verborgen over {seconds} seconden...",
+				"reask": "We zullen u over 30 dagen opnieuw vragen. U kunt de herinnering echter direct weigeren door op de knop te klikken",
+				"hideButton": "Vraag het me nooit meer"
+			}
+		},
+		"seo": {
+			"checkboxLabel": "Beacon-signaal naar be-BOP.io Nostr-bot inschakelen om het bestaan van uw winkel te delen",
+			"infoBlock": "Deze instelling bepaalt of uw winkel periodieke signalen naar be-BOP.io verzendt. We waarderen privacy: alleen uw winkel-URL en de be-BOP-softwareversie worden gedeeld. Er worden geen persoonlijke gegevens of klantgegevens verzonden. Dit helpt ons bij het debuggen en laat ons zien dat de be-BOP-gemeenschap groeit."
+		}
 	}
 }

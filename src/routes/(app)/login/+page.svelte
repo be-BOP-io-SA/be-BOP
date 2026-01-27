@@ -23,12 +23,7 @@
 	<h2 class="text-2xl">{t('login.session.title')}</h2>
 	<ul class="list-disc ml-4">
 		{#if data.userId}
-			<li class="flex gap-2 items-center">
-				{t('login.session.userId', { userId: data.userId })}
-				<form action="?/clearUserId" class="contents" use:enhance method="post">
-					<button class="text-red-500 hover:underline"><IconTrash /></button>
-				</form>
-			</li>
+			<li>{t('login.session.userId', { userId: data.userId })}</li>
 		{/if}
 		{#if data.email && !data.emailFromSso}
 			<li class="flex gap-2 items-center break-words break-all">

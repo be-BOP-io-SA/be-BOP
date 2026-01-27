@@ -11,10 +11,13 @@
 	export let product: ProductWidgetProduct;
 	export let hasDigitalFiles: boolean;
 	export let canAddToCart: boolean;
+	export let externalUrl: string | undefined = undefined;
 
 	let className = '';
 	export { className as class };
 	const { t } = useI18n();
+
+	$: productUrl = externalUrl ?? `/product/${product._id}`;
 </script>
 
 <div
@@ -28,14 +31,24 @@
 				class="last:rounded-tr first:rounded-bl pl-2 text-sm"
 			/>
 		</div>
-		<a href="/product/{product._id}" class="-ml-6">
+		<a
+			href={productUrl}
+			class="-ml-6"
+			target={externalUrl ? '_blank' : undefined}
+			rel={externalUrl ? 'noopener noreferrer' : undefined}
+		>
 			<PictureComponent picture={pictures[0]} class="object-contain max-h-[264px] max-w-[264px]" />
 		</a>
 	</div>
 
 	<div class="flex flex-col gap-2">
 		<div class="flex flex-col gap-2">
-			<a href="/product/{product._id}" class="flex flex-col">
+			<a
+				href={productUrl}
+				class="flex flex-col"
+				target={externalUrl ? '_blank' : undefined}
+				rel={externalUrl ? 'noopener noreferrer' : undefined}
+			>
 				<h2 class="text-2xl body-title">{product.name}</h2>
 			</a>
 
@@ -55,12 +68,28 @@
 				<span class="font-semibold">{t('product.vatExcluded')}</span>
 			</div>
 		</div>
-		<a href="/product/{product._id}" class="flex flex-col">
+		<a
+			href={productUrl}
+			class="flex flex-col"
+			target={externalUrl ? '_blank' : undefined}
+			rel={externalUrl ? 'noopener noreferrer' : undefined}
+		>
 			<p class="mt-2 max-w-[500px]">
 				{product.shortDescription}
 			</p>
 		</a>
-		{#if canAddToCart}
+		{#if externalUrl}
+			<div class="flex flex-row items-end justify-end">
+				<a
+					href={externalUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="btn cartPreview-mainCTA"
+				>
+					{t('product.cta.view')}
+				</a>
+			</div>
+		{:else if canAddToCart}
 			<div class="flex flex-row items-end justify-end">
 				<AddToCart {product} picture={pictures[0]} class="btn cartPreview-mainCTA" />
 			</div>

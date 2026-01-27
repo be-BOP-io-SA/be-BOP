@@ -80,7 +80,12 @@
 		/>
 	</div>
 	<div class="lg:hidden contents">
-		<svelte:component this={ScheduleWidgetMobile} {schedule} {pictures} class={className} />
+		<svelte:component
+			this={ScheduleWidgetMobile}
+			schedule={updatedSchedule}
+			{pictures}
+			class={className}
+		/>
 	</div>
 {:else}
 	<svelte:component

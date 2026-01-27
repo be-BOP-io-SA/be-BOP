@@ -1,6 +1,7 @@
 import { collections, withTransaction } from '$lib/server/database';
 import { addOrderPayment, onOrderPaymentFailed, paymentMethodExpiration } from '$lib/server/orders';
-import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
+import { paymentMethods, ALL_PAYMENT_METHODS } from '$lib/server/payment-methods.js';
+import { typedInclude } from '$lib/utils/typedIncludes';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 
@@ -42,11 +43,17 @@ export const actions = {
 		const formData = await request.formData();
 		const parsed = z
 			.object({
-				method: z.enum(methods as [PaymentMethod, ...PaymentMethod[]])
+				method: z.enum(ALL_PAYMENT_METHODS),
+				posSubtype: z.string().nullable().optional()
 			})
 			.parse({
-				method: formData.get('method')
+				method: formData.get('method'),
+				posSubtype: formData.get('posSubtype')
 			});
+
+		if (!typedInclude(methods, parsed.method)) {
+			throw error(400, 'Payment method not available for this order');
+		}
 
 		await withTransaction(async (session) => {
 			await onOrderPaymentFailed(order, payment, 'canceled', {
@@ -56,7 +63,9 @@ export const actions = {
 
 			await addOrderPayment(order, parsed.method, payment.currencySnapshot.main.price, {
 				expiresAt: paymentMethodExpiration(parsed.method),
-				session
+				session,
+				...(parsed.method === 'point-of-sale' &&
+					parsed.posSubtype && { posSubtype: parsed.posSubtype })
 			});
 		});
 		throw redirect(303, `/order/${order._id}`);

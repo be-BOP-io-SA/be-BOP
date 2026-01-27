@@ -1,38 +1,30 @@
 import { adminPrefix } from '$lib/server/admin';
 import { collections } from '$lib/server/database';
 import { ALL_PAYMENT_PROCESSORS } from '$lib/server/payment-methods.js';
-import { runtimeConfig } from '$lib/server/runtime-config';
+import { ObjectId } from 'mongodb';
+import { runtimeConfig, defaultConfig } from '$lib/server/runtime-config';
 import type { Tag } from '$lib/types/Tag';
+import type { TagGroup } from '$lib/types/TagGroup';
 import { set } from '$lib/utils/set';
 import { error, redirect } from '@sveltejs/kit';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
+import { persistConfigElement } from '$lib/server/utils/persistConfig';
+import type { Actions } from './$types';
 
-async function persistConfigElement<K extends keyof typeof runtimeConfig>(
-	key: K,
-	value: (typeof runtimeConfig)[K]
-) {
-	await collections.runtimeConfig.updateOne(
-		{
-			_id: key
-		},
-		{
-			$set: {
-				data: value,
-				updatedAt: new Date()
-			}
-		},
-		{
-			upsert: true
-		}
-	);
+interface RawTagGroup {
+	_id: string;
+	name: string;
+	tagIds: string[];
+	createdAt?: string | Date;
+	updatedAt?: string | Date;
 }
 
 export const load = async ({}) => {
-	const tags = await collections.tags
-		.find({})
-		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
-		.toArray();
+	const [tags, tagGroups] = await Promise.all([
+		collections.tags.find({}).project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 }).toArray(),
+		collections.tagGroups.find({}).sort({ order: 1 }).toArray()
+	]);
 	const supportedTapToPayProviders = ['not-used', 'stripe'] as const;
 	const tapToPayProviders: { provider: string; displayName: string; available: boolean }[] =
 		supportedTapToPayProviders.map((provider) => {
@@ -52,10 +44,27 @@ export const load = async ({}) => {
 		});
 	return {
 		tags: tags.filter((tag) => tag._id !== 'pos-favorite'),
+		tagGroups: tagGroups.map(
+			(g): TagGroup => ({
+				_id: g._id,
+				name: g.name,
+				tagIds: g.tagIds,
+				order: g.order,
+				createdAt: g.createdAt,
+				updatedAt: g.updatedAt
+			})
+		),
 		posTouchTag: runtimeConfig.posTouchTag,
+		posTabGroups: runtimeConfig.posTabGroups,
+		posPoolEmptyIcon: runtimeConfig.posPoolEmptyIcon,
+		posPoolOccupiedIcon: runtimeConfig.posPoolOccupiedIcon,
+		defaultEmptyPoolIcon: defaultConfig.posPoolEmptyIcon,
+		defaultFullPoolIcon: defaultConfig.posPoolOccupiedIcon,
+		posUseSelectForTags: runtimeConfig.posUseSelectForTags,
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
 		posDisplayOrderQrAfterPayment: runtimeConfig.posDisplayOrderQrAfterPayment,
 		posQrCodeAfterPayment: runtimeConfig.posQrCodeAfterPayment,
+		posSession: runtimeConfig.posSession,
 		tapToPay: {
 			providers: tapToPayProviders,
 			currentProcessor: runtimeConfig.posTapToPay.processor,
@@ -64,28 +73,69 @@ export const load = async ({}) => {
 	};
 };
 
-export const actions = {
-	default: async function ({ request }) {
+export const actions: Actions = {
+	default: async ({ request }) => {
 		const formData = await request.formData();
 		const json: JsonObject = {};
 		for (const [key, value] of formData) {
 			set(json, key, value);
 		}
+
+		const posTabGroupsString = formData.get('posTabGroups');
+		if (!posTabGroupsString) {
+			throw error(400, 'No posTabGroups provided');
+		}
+		const posTabGroups = JSON.parse(String(posTabGroupsString));
+
 		const posTouchTagString = formData.get('posTouchTag');
 		if (!posTouchTagString) {
 			throw error(400, 'No posTouchTag provided');
 		}
 		const posTouchTag = JSON.parse(String(posTouchTagString));
+
+		const tagGroupsString = formData.get('tagGroups');
+		const tagGroupsParsed = tagGroupsString
+			? JSON.parse(String(tagGroupsString))
+					.filter((group: { name: string }) => group.name.trim() !== '')
+					.map((group: RawTagGroup, index: number) => ({ ...group, order: index }))
+			: [];
+
 		const result = z
 			.object({
 				posDisplayOrderQrAfterPayment: z.boolean({ coerce: true }),
 				posPrefillTermOfUse: z.boolean({ coerce: true }),
+				posUseSelectForTags: z.boolean({ coerce: true }),
+				posTabGroups: z
+					.object({
+						name: z.string().min(1).max(100),
+						tabs: z
+							.object({
+								label: z.string().min(1).max(100).optional(),
+								color: z.string().min(1).max(100).optional()
+							})
+							.array()
+					})
+					.array(),
 				posTouchTag: z.string().array(),
-				tapToPayOnActivationUrl: z.string(),
-				tapToPayProvider: z.string()
+				posPoolEmptyIcon: z.string().optional(),
+				posPoolOccupiedIcon: z.string().optional(),
+				tapToPayOnActivationUrl: z.string().trim().optional(),
+				tapToPayProvider: z.string().optional(),
+				posSession: z
+					.object({
+						enabled: z.boolean({ coerce: true }).default(false),
+						allowXTicketEditing: z.boolean({ coerce: true }).default(false),
+						cashDeltaJustificationMandatory: z.boolean({ coerce: true }).default(false)
+					})
+					.default({
+						enabled: false,
+						allowXTicketEditing: false,
+						cashDeltaJustificationMandatory: false
+					})
 			})
 			.parse({
 				...json,
+				posTabGroups,
 				posTouchTag
 			});
 		const posTapToPay = {
@@ -116,10 +166,39 @@ export const actions = {
 		runtimeConfig.posDisplayOrderQrAfterPayment = result.posDisplayOrderQrAfterPayment;
 		await persistConfigElement('posTouchTag', result.posTouchTag);
 		runtimeConfig.posTouchTag = result.posTouchTag;
+		await persistConfigElement('posTabGroups', result.posTabGroups);
+		runtimeConfig.posTabGroups = result.posTabGroups;
+		const posPoolEmptyIcon = result.posPoolEmptyIcon === '' ? undefined : result.posPoolEmptyIcon;
+		const posPoolOccupiedIcon =
+			result.posPoolOccupiedIcon === '' ? undefined : result.posPoolOccupiedIcon;
+		await persistConfigElement('posPoolEmptyIcon', posPoolEmptyIcon);
+		runtimeConfig.posPoolEmptyIcon = posPoolEmptyIcon;
+		await persistConfigElement('posPoolOccupiedIcon', posPoolOccupiedIcon);
+		runtimeConfig.posPoolOccupiedIcon = posPoolOccupiedIcon;
+		await persistConfigElement('posUseSelectForTags', result.posUseSelectForTags);
+		runtimeConfig.posUseSelectForTags = result.posUseSelectForTags;
 		await persistConfigElement('posQrCodeAfterPayment', posQrCodeAfterPayment);
 		runtimeConfig.posQrCodeAfterPayment = posQrCodeAfterPayment;
 		await persistConfigElement('posTapToPay', posTapToPay);
 		runtimeConfig.posTapToPay = posTapToPay;
+		await persistConfigElement('posSession', result.posSession);
+		runtimeConfig.posSession = result.posSession;
+
+		await collections.tagGroups.deleteMany({});
+		if (tagGroupsParsed.length > 0) {
+			const groupsToInsert = tagGroupsParsed.map((group: RawTagGroup & { order: number }) => ({
+				_id: group._id.startsWith('temp-') ? new ObjectId().toHexString() : group._id,
+				name: group.name,
+				tagIds: group.tagIds,
+				order: group.order,
+				createdAt: group._id.startsWith('temp-')
+					? new Date()
+					: new Date(group.createdAt ?? new Date()),
+				updatedAt: new Date()
+			}));
+			await collections.tagGroups.insertMany(groupsToInsert);
+		}
+
 		throw redirect(303, `${adminPrefix()}/pos`);
 	}
 };

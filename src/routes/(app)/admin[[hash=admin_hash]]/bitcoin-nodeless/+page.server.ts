@@ -1,31 +1,57 @@
 import {
 	bip84Address,
 	isBitcoinNodelessConfigured,
-	isZPubValid
+	isZPubValid,
+	isAddressUsed
 } from '$lib/server/bitcoin-nodeless.js';
 import { collections } from '$lib/server/database.js';
 import { defaultConfig, runtimeConfig } from '$lib/server/runtime-config';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { Actions } from './$types';
+import { set } from '$lib/utils/set';
+import type { JsonObject } from 'type-fest';
 
 export async function load() {
-	const nextAddresses = isBitcoinNodelessConfigured()
-		? Array.from({ length: 10 }, (_, i) => i).map((i) =>
-				bip84Address(
-					runtimeConfig.bitcoinNodeless.publicKey,
-					runtimeConfig.bitcoinNodeless.derivationIndex + i
-				)
-		  )
-		: [];
+	if (!isBitcoinNodelessConfigured()) {
+		return {
+			bitcoinNodeless: runtimeConfig.bitcoinNodeless,
+			nextAddresses: [],
+			hasAlreadyUsedNextAddresses: false
+		};
+	}
+
+	const ADDRESS_CHECK_TIMEOUT_MS = 3000;
+
+	const nextAddresses = await Promise.all(
+		Array.from({ length: 5 }, async (_, i) => {
+			const index = runtimeConfig.bitcoinNodeless.derivationIndex + i;
+			const address = bip84Address(runtimeConfig.bitcoinNodeless.publicKey, index);
+
+			const isUsed = await Promise.race([
+				isAddressUsed(address),
+				new Promise<false>((resolve) => setTimeout(() => resolve(false), ADDRESS_CHECK_TIMEOUT_MS))
+			]).catch(() => false);
+
+			return { address, isUsed, index };
+		})
+	);
+
 	return {
 		bitcoinNodeless: runtimeConfig.bitcoinNodeless,
-		nextAddresses
+		nextAddresses,
+		hasAlreadyUsedNextAddresses: nextAddresses.some((addr) => addr.isUsed)
 	};
 }
 
-export const actions = {
+export const actions: Actions = {
 	async initialize({ request }) {
 		const formData = await request.formData();
+		const json: JsonObject = {};
+
+		for (const [key, value] of formData) {
+			set(json, key, value);
+		}
 
 		const parsed = z
 			.object({
@@ -36,9 +62,10 @@ export const actions = {
 					.regex(
 						/^(zpub|vpub)/,
 						'Public key must start with zpub (mainnet) or vpub (testnet) in accordance with BIP84'
-					)
+					),
+				skipUsedAddresses: z.boolean({ coerce: true }).default(false)
 			})
-			.parse(Object.fromEntries(formData));
+			.parse(json);
 
 		if (!isZPubValid(parsed.publicKey)) {
 			throw error(400, 'Invalid public key');
@@ -65,20 +92,28 @@ export const actions = {
 	},
 	async update({ request }) {
 		const formData = await request.formData();
+		const json: JsonObject = {};
+
+		for (const [key, value] of formData) {
+			set(json, key, value);
+		}
 
 		const parsed = z
 			.object({
-				mempoolUrl: z.string().url()
+				mempoolUrl: z.string().url(),
+				skipUsedAddresses: z.boolean({ coerce: true }).default(false)
 			})
-			.parse(Object.fromEntries(formData));
+			.parse(json);
 
 		runtimeConfig.bitcoinNodeless.mempoolUrl = parsed.mempoolUrl;
+		runtimeConfig.bitcoinNodeless.skipUsedAddresses = parsed.skipUsedAddresses;
 
 		await collections.runtimeConfig.updateOne(
 			{ _id: 'bitcoinNodeless' },
 			{
 				$set: {
 					'data.mempoolUrl': parsed.mempoolUrl,
+					'data.skipUsedAddresses': parsed.skipUsedAddresses,
 					updatedAt: new Date()
 				}
 			}

@@ -27,15 +27,18 @@
 	} from 'date-fns';
 	import { useI18n } from '$lib/i18n';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
-	import { FRACTION_DIGITS_PER_CURRENCY, CURRENCY_UNIT } from '$lib/types/Currency.js';
+	import {
+		FRACTION_DIGITS_PER_CURRENCY,
+		CURRENCY_UNIT,
+		computePriceForDisplay
+	} from '$lib/types/Currency.js';
 	import { serializeSchema } from '$lib/utils/jsonLd.js';
 	import type { Product as SchemaOrgProduct, WithContext } from 'schema-dts';
 	import ScheduleWidgetCalendar from '$lib/components/ScheduleWidget/ScheduleWidgetCalendar.svelte';
-	import { productToScheduleId } from '$lib/types/Schedule.js';
-	import type { Day } from '$lib/types/Schedule.js';
+	import { productToScheduleId, dayList } from '$lib/types/Schedule.js';
 	import { toZonedTime } from 'date-fns-tz';
 	import { RangeList } from '$lib/utils/range-list.js';
-	import { vatRate } from '$lib/types/Country';
+	import { vatMultiplier } from '$lib/utils/vat';
 
 	export let data;
 
@@ -86,23 +89,37 @@
 		});
 	let deposit = 'partial';
 
+	const vatRate = data.vatRate;
+	const vatMult = data.displayVatIncludedInProduct ? vatMultiplier(vatRate) : 1;
+
 	const PWYWCurrency =
 		data.currencies.main === 'BTC' &&
 		toCurrency('BTC', data.product.price.amount, data.product.price.currency) < 0.01
 			? 'SAT'
 			: data.currencies.main;
-	const PWYWMinimum = toCurrency(
-		PWYWCurrency,
-		data.product.price.amount,
-		data.product.price.currency
+	const PWYWMinimum = computePriceForDisplay(
+		toCurrency(PWYWCurrency, data.product.price.amount, data.product.price.currency) * vatMult,
+		PWYWCurrency
 	);
 	const PWYWRecommended = data.product.recommendedPWYWAmount
-		? toCurrency(PWYWCurrency, data.product.recommendedPWYWAmount, data.product.price.currency)
-		: 0;
+		? computePriceForDisplay(
+				toCurrency(PWYWCurrency, data.product.recommendedPWYWAmount, data.product.price.currency) *
+					vatMult,
+				PWYWCurrency
+		  )
+		: null;
 	const PWYWMaximum = data.product.maximumPrice
-		? toCurrency(PWYWCurrency, data.product.maximumPrice.amount, data.product.maximumPrice.currency)
-		: Infinity;
-	let customAmount = Math.max(PWYWRecommended, PWYWMinimum);
+		? computePriceForDisplay(
+				toCurrency(
+					PWYWCurrency,
+					data.product.maximumPrice.amount,
+					data.product.maximumPrice.currency
+				) * vatMult,
+				PWYWCurrency
+		  )
+		: null;
+
+	let customAmount = Math.max(PWYWRecommended?.amount ?? 0, PWYWMinimum.amount);
 
 	$: currentPicture =
 		data.pictures.find((picture) => picture._id === $page.url.searchParams.get('picture')) ??
@@ -124,7 +141,7 @@
 
 	function computeFreeIntervals(date: Date, events: Array<{ beginsAt: Date; endsAt?: Date }>) {
 		const now = new Date();
-		const weekDay = format(date, 'eeee').toLowerCase() as Day;
+		const weekDay = dayList[(date.getDay() + 6) % 7];
 		const spec = data.product.bookingSpec;
 
 		if (!spec) {
@@ -143,8 +160,8 @@
 
 		const start = new Date(format(date, 'yyyy-MM-dd') + ' ' + specForDay.start);
 		let end = new Date(format(date, 'yyyy-MM-dd') + ' ' + specForDay.end);
-		if (specForDay.end === '00:00') {
-			end = addDays(end, 1);
+		if (specForDay.end === '00:00' || specForDay.end === '23:59') {
+			end = addDays(new Date(format(date, 'yyyy-MM-dd') + ' 00:00'), 1);
 		}
 
 		const relevantEvents = events
@@ -166,7 +183,17 @@
 			end: new Date(range[1])
 		}));
 
-		return freeIntervals; // Added return statement to return the computed free intervals
+		if (isSameDay(date, now)) {
+			const is24HourSlot = spec.slotMinutes === 1440;
+
+			if (is24HourSlot) {
+				return freeIntervals;
+			}
+
+			return freeIntervals.filter((interval) => interval.end > now);
+		}
+
+		return freeIntervals;
 	}
 
 	function computeDurations(date: Date, events: Array<{ beginsAt: Date; endsAt?: Date }>) {
@@ -201,6 +228,7 @@
 		durationMinutes: number,
 		events: Array<{ beginsAt: Date; endsAt?: Date }>
 	): Array<{ date: string; time: string }> {
+		const now = new Date();
 		const spec = data.product.bookingSpec;
 
 		if (!spec) {
@@ -215,6 +243,8 @@
 			return [];
 		}
 
+		const is24HourSlot = spec.slotMinutes === 1440;
+
 		const times = intervals.flatMap((interval) => {
 			const start = interval.start;
 			const end = subMinutes(interval.end, durationMinutes);
@@ -223,7 +253,9 @@
 			let currentTime = start;
 
 			while (currentTime <= end) {
-				timeSlots.push(currentTime);
+				if (is24HourSlot || currentTime > now) {
+					timeSlots.push(currentTime);
+				}
 				currentTime = addMinutes(currentTime, spec.slotMinutes);
 			}
 
@@ -311,13 +343,6 @@
 	$: if (data.product.hasVariations) {
 		customAmount = productPriceWithVariations(data.product, selectedVariations);
 	}
-	const country = data.vatSingleCountry ? data.vatCountry : data.countryCode ?? data.vatCountry;
-	const vatProfile = data.product.vatProfileId
-		? data.vatProfiles.find(
-				(profile) => profile._id.toString() === data.product.vatProfileId?.toString()
-		  )
-		: undefined;
-	const rate = vatProfile?.rates[country] ?? vatRate(country);
 </script>
 
 <svelte:head>
@@ -369,8 +394,8 @@
 			leaderboards={data.productCMSBefore.leaderboards}
 			schedules={data.productCMSBefore.schedules}
 			class={data.product.mobile?.hideContentBefore || data.hideCmsZonesOnMobile
-				? 'hidden lg:block'
-				: ''}
+				? 'prose max-w-full hidden lg:block'
+				: 'prose max-w-full'}
 		/>
 	{/if}
 
@@ -400,7 +425,7 @@
 				<!-- Getting this right with rounded borders on both chrome & FF is painful, chrome NEEDs overflow-hidden -->
 				<div
 					class="aspect-video w-full flex overflow-if-child-hovered-lg {isZoomed
-						? 'overflow-visible'
+						? 'overflow-visible relative z-50'
 						: 'overflow-hidden'} overflow-hidden px-4 group"
 				>
 					<Picture
@@ -458,8 +483,8 @@
 										: ''}"
 									short={!!data.discount}
 									amount={(data.product.hasVariations
-										? customAmount * (1 + rate / 100)
-										: data.product.price.amount * (1 + rate / 100)) *
+										? customAmount * vatMultiplier(vatRate)
+										: data.product.price.amount * vatMultiplier(vatRate)) *
 										(data.product.bookingSpec
 											? durationMinutes / data.product.bookingSpec.slotMinutes
 											: 1)}
@@ -471,8 +496,8 @@
 										class="text-2xl lg:text-4xl truncate max-w-full"
 										short
 										amount={(data.product.hasVariations
-											? customAmount * (1 + rate / 100)
-											: data.product.price.amount * (1 + rate / 100)) *
+											? customAmount * vatMultiplier(vatRate)
+											: data.product.price.amount * vatMultiplier(vatRate)) *
 											(data.product.bookingSpec
 												? durationMinutes / data.product.bookingSpec.slotMinutes
 												: 1) *
@@ -484,8 +509,8 @@
 							<PriceTag
 								currency={data.product.price.currency}
 								amount={(data.product.hasVariations
-									? customAmount * (1 + rate / 100)
-									: data.product.price.amount * (1 + rate / 100)) *
+									? customAmount * vatMultiplier(vatRate)
+									: data.product.price.amount * vatMultiplier(vatRate)) *
 									(data.product.bookingSpec
 										? durationMinutes / data.product.bookingSpec.slotMinutes
 										: 1) *
@@ -496,7 +521,7 @@
 								class="text-xl"
 							/>
 						</div>
-						<span>{t('product.vatIncluded')} ({t('cart.vat')} {rate}%)</span>
+						<span>{t('product.vatIncluded')} ({t('cart.vat')} {vatRate}%)</span>
 						<div class="max-md:flex max-md:flex-row max-md:justify-between">
 							<div class="flex gap-4">
 								<PriceTag
@@ -704,8 +729,8 @@
 										<input
 											class="form-input"
 											type="number"
-											min={PWYWMinimum}
-											max={PWYWMaximum}
+											min={PWYWMinimum.amount}
+											max={PWYWMaximum?.amount}
 											name="customPriceAmount"
 											bind:value={customAmount}
 											bind:this={PWYWInput}
@@ -783,18 +808,29 @@
 
 									<label class="form-label">
 										{t('product.booking.time')}
-										<select class="form-input" bind:value={time} name="time">
-											{#each times as time}
-												<option value={time.date}>
-													<!-- todo: handle timezone here maybe -->
-													{new Date(
-														selectedDate.toJSON().slice(0, 11) + time.time
-													).toLocaleTimeString($locale, {
-														hour: 'numeric',
-														minute: 'numeric'
-													})}
-												</option>
-											{/each}
+										<select
+											class="form-input"
+											bind:value={time}
+											name="time"
+											disabled={!times.length}
+										>
+											{#if !times.length}
+												<option value="" disabled selected
+													>No available time slots for this date</option
+												>
+											{:else}
+												{#each times as time}
+													<option value={time.date}>
+														<!-- todo: handle timezone here maybe -->
+														{new Date(
+															selectedDate.toJSON().slice(0, 11) + time.time
+														).toLocaleTimeString($locale, {
+															hour: 'numeric',
+															minute: 'numeric'
+														})}
+													</option>
+												{/each}
+											{/if}
 										</select>
 									</label>
 								{/if}
@@ -994,8 +1030,8 @@
 			leaderboards={data.productCMSAfter.leaderboards}
 			schedules={data.productCMSAfter.schedules}
 			class={data.product.mobile?.hideContentAfter || data.hideCmsZonesOnMobile
-				? 'hidden lg:block'
-				: ''}
+				? 'prose max-w-full hidden lg:block'
+				: 'prose max-w-full'}
 		/>
 	{/if}
 </main>
@@ -1005,6 +1041,8 @@
 	@media (min-width: 1024px) {
 		.overflow-if-child-hovered-lg:has(:hover) {
 			overflow: visible;
+			position: relative;
+			z-index: 50;
 		}
 	}
 </style>

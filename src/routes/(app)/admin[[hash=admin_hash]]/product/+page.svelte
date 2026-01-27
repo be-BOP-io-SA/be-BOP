@@ -4,6 +4,7 @@
 	import { page } from '$app/stores';
 	import { PRODUCT_PAGINATION_LIMIT } from '$lib/types/Product.js';
 	import { upperFirst } from '$lib/utils/upperFirst.js';
+	import Select from 'svelte-select';
 	export let data;
 
 	let eshopVisible = data.productActionSettings.eShop.visible;
@@ -14,6 +15,13 @@
 	let retailBasket = data.productActionSettings.retail.canBeAddedToBasket;
 	let nostrBasket = data.productActionSettings.nostr.canBeAddedToBasket;
 	let next = 0;
+
+	const tagsForSelect = data.tags.map((tag) => ({
+		value: tag._id,
+		label: tag.name
+	}));
+	const selectedTagId = $page.url.searchParams.get('tagId');
+	let selectedTag = tagsForSelect.find((tag) => tag.value === selectedTagId) ?? null;
 
 	$: picturesByProduct = Object.fromEntries(
 		[...data.pictures].reverse().map((picture) => [picture.productId, picture])
@@ -160,6 +168,18 @@
 					>
 				{/each}
 			</select>
+		</label>
+		<label class="form-label w-[15em]">
+			Product Tag
+			<Select
+				items={tagsForSelect}
+				searchable={true}
+				placeholder="Select a tag"
+				clearable={true}
+				bind:value={selectedTag}
+				class="form-input"
+			/>
+			<input type="hidden" name="tagId" value={selectedTag?.value ?? ''} />
 		</label>
 		<label class="form-label w-auto mt-8 flex flex-row">
 			<input type="submit" value="🔍" class="btn body-mainCTA" on:click={() => (next = 0)} />

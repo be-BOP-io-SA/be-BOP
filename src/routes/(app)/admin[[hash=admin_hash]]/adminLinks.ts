@@ -104,6 +104,10 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/oauth',
 				label: 'OAuth Providers'
+			},
+			{
+				href: '/admin/s3',
+				label: 'S3 Storage'
 			}
 		]
 	},
@@ -145,6 +149,10 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/lnd',
 				label: 'Lightning LND node'
+			},
+			{
+				href: '/admin/pos-payments',
+				label: 'PoS Payments'
 			}
 		]
 	},
@@ -167,6 +175,10 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/nostr',
 				label: 'NostR'
+			},
+			{
+				href: '/admin/smtp',
+				label: 'SMTP'
 			},
 			{
 				href: '/admin/email',

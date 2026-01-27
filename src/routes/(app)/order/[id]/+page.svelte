@@ -1,41 +1,31 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { page } from '$app/stores';
-	import OrderSummary from '$lib/components/OrderSummary.svelte';
-	import PriceTag from '$lib/components/PriceTag.svelte';
-	import Trans from '$lib/components/Trans.svelte';
-	import IconCopy from '~icons/ant-design/copy-outlined';
-	import IconCheckmark from '~icons/ant-design/check-outlined';
-	import { useI18n } from '$lib/i18n';
-	import {
-		bitcoinPaymentQrCodeString,
-		FAKE_ORDER_INVOICE_NUMBER,
-		lightningPaymentQrCodeString,
-		orderAmountWithNoPaymentsCreated
-	} from '$lib/types/Order';
-	import { UrlDependency } from '$lib/types/UrlDependency';
-	import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
-	import { differenceInMinutes } from 'date-fns';
+	import { navigating, page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import IconSumupWide from '$lib/components/icons/IconSumupWide.svelte';
-	import CmsDesign from '$lib/components/CmsDesign.svelte';
+	import OrderSummary from '$lib/components/OrderSummary.svelte';
+	import Trans from '$lib/components/Trans.svelte';
 	import Picture from '$lib/components/Picture.svelte';
-	import IconStripe from '$lib/components/icons/IconStripe.svelte';
+	import OrderLabelComponent from '$lib/components/OrderLabelComponent.svelte';
+	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import IconDownloadWindow from '$lib/components/icons/IconDownloadWindow.svelte';
 	import IconExternalNewWindowOpen from '$lib/components/icons/IconExternalNewWindowOpen.svelte';
-	import OrderLabelComponent from '$lib/components/OrderLabelComponent.svelte';
-	import Spinner from '$lib/components/Spinner.svelte';
-	import { browser } from '$app/environment';
+	import PaymentItem from '$lib/components/Order/PaymentItem.svelte';
+	import PaymentActions from '$lib/components/Order/PaymentActions.svelte';
+	import PaymentForm from '$lib/components/Order/PaymentForm.svelte';
+	import { useI18n } from '$lib/i18n';
+	import { FAKE_ORDER_INVOICE_NUMBER, orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
+	import { UrlDependency } from '$lib/types/UrlDependency';
+	import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 
-	let currentDate = new Date();
 	export let data;
 
 	let count = 0;
-	let copiedPaymentAddress = -1;
 
 	onMount(() => {
 		const interval = setInterval(() => {
-			currentDate = new Date();
+			if ($navigating) {
+				return;
+			}
 
 			if (
 				data.order.status === 'pending' ||
@@ -58,16 +48,18 @@
 	let receiptReady: Record<string, boolean> = Object.fromEntries(
 		data.order.payments.map((payment) => [payment.id, false])
 	);
-	let ticketIframe: HTMLIFrameElement | null = null;
-	let ticketReady = false;
+	let ticketIFrame: Record<string, HTMLIFrameElement | null> = Object.fromEntries(
+		data.order.payments.map((payment) => [payment.id, null])
+	);
+	let ticketReady: Record<string, boolean> = Object.fromEntries(
+		data.order.payments.map((payment) => [payment.id, false])
+	);
+	let ticketsIframe: HTMLIFrameElement | null = null;
+	let ticketsReady = false;
 
-	$: remainingAmount = orderAmountWithNoPaymentsCreated(data.order);
-	let disableInfoChange = true;
-	function confirmCancel(event: Event) {
-		if (!confirm(t('order.confirmCancel'))) {
-			event.preventDefault();
-		}
-	}
+	$: remainingAmount = orderAmountWithNoPaymentsCreated(data.order, {
+		ignorePendingPayments: true
+	});
 	function confirmCancelOrder(event: Event) {
 		if (!confirm(t('pos.cancelOrderMessage'))) {
 			event.preventDefault();
@@ -76,65 +68,69 @@
 
 	let tickets = data.order.items.flatMap((item) => item.tickets ?? []);
 	let ticketNumbers = Object.fromEntries(tickets.map((ticket, i) => [ticket, i + 1]));
-	let openPaymentMethodChange = false;
-	let filteredPaymentMethods = data.paymentMethods.filter((pm) =>
-		['card', 'bitcoin', 'lightning', 'paypal'].includes(pm)
-	);
 	$: labelById = data.labels
 		? Object.fromEntries(data.labels.map((label) => [label._id, label]))
 		: undefined;
 
-	function isMobile() {
-		return browser && window.matchMedia('(max-width: 767px)').matches;
-	}
 	const roleIsStaff = !!data.roleId && data.roleId !== CUSTOMER_ROLE_ID;
-	const orderStaffActionBaseUrl = data.hasPosOptions
+	const orderStaffActionBaseUrl = data.posMode
 		? `/pos/order/${data.order._id}`
 		: `/admin/order/${data.order._id}`;
 </script>
 
-<main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
-	{#if data.cmsOrderTop && data.cmsOrderTopData}
-		<CmsDesign
-			challenges={data.cmsOrderTopData.challenges}
-			tokens={data.cmsOrderTopData.tokens}
-			sliders={data.cmsOrderTopData.sliders}
-			products={data.cmsOrderTopData.products}
-			pictures={data.cmsOrderTopData.pictures}
-			tags={data.cmsOrderTopData.tags}
-			digitalFiles={data.cmsOrderTopData.digitalFiles}
-			hasPosOptions={data.hasPosOptions}
-			specifications={data.cmsOrderTopData.specifications}
-			contactForms={data.cmsOrderTopData.contactForms}
-			pageName={data.cmsOrderTop.title}
-			websiteLink={data.websiteLink}
-			brandName={data.brandName}
-			sessionEmail={data.email}
-			countdowns={data.cmsOrderTopData.countdowns}
-			galleries={data.cmsOrderTopData.galleries}
-			leaderboards={data.cmsOrderTopData.leaderboards}
-			schedules={data.cmsOrderTopData.schedules}
-			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
-		/>
-	{/if}
+<main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan" class:pos-mode={data.posMode}>
+	<!-- ==================== CMS TOP SECTION ==================== -->
+	<div class="cms-section-top">
+		{#if data.cmsOrderTop && data.cmsOrderTopData}
+			<CmsDesign
+				challenges={data.cmsOrderTopData.challenges}
+				tokens={data.cmsOrderTopData.tokens}
+				sliders={data.cmsOrderTopData.sliders}
+				products={data.cmsOrderTopData.products}
+				pictures={data.cmsOrderTopData.pictures}
+				tags={data.cmsOrderTopData.tags}
+				digitalFiles={data.cmsOrderTopData.digitalFiles}
+				hasPosOptions={data.hasPosOptions}
+				specifications={data.cmsOrderTopData.specifications}
+				contactForms={data.cmsOrderTopData.contactForms}
+				pageName={data.cmsOrderTop.title}
+				websiteLink={data.websiteLink}
+				brandName={data.brandName}
+				sessionEmail={data.email}
+				countdowns={data.cmsOrderTopData.countdowns}
+				galleries={data.cmsOrderTopData.galleries}
+				leaderboards={data.cmsOrderTopData.leaderboards}
+				schedules={data.cmsOrderTopData.schedules}
+				class={data.hideCmsZonesOnMobile
+					? 'prose max-w-full hidden lg:contents'
+					: 'prose max-w-full'}
+			/>
+		{/if}
+	</div>
+
+	<!-- ==================== MAIN CONTAINER ==================== -->
 	<div
 		class="w-full rounded-xl body-mainPlan border-gray-300 lg:p-6 p-2 lg:grid lg:grid-cols-3 sm:flex-wrap gap-2 flex-col-reverse"
 	>
+		<!-- Back to cart link (only in headless display mode) -->
 		<div
 			class="flex justify-start {$page.url.searchParams.get('display') === 'headless'
 				? ''
 				: 'hidden'}"
 		>
-			<a href="/pos/touch" class="body-hyperlink hover:underline"
-				>&lt;&lt;{t('checkout.backToCart')}</a
-			>
+			<a href="/pos/touch" class="body-hyperlink hover:underline">
+				&lt;&lt;{t('checkout.backToCart')}
+			</a>
 		</div>
+
+		<!-- ==================== LEFT COLUMN  ==================== -->
 		<div class="col-span-2 flex flex-col gap-2">
 			<h1 class="text-3xl body-title">
 				{t('order.singleTitle', { number: data.order.number })}
 			</h1>
+
 			{#if roleIsStaff}
-				<div class="flex flex-row gap-1">
+				<div class="order-labels flex flex-row gap-1">
 					{#if data.order.orderLabelIds?.length && labelById}
 						{#each data.order.orderLabelIds as labelId}
 							<OrderLabelComponent orderLabel={labelById[labelId]} class="text-xs" />
@@ -143,489 +139,100 @@
 					<a
 						href="/admin/order/{data.order._id}/label"
 						class="bg-gray-200 px-2 rounded-full"
-						title="add label">+</a
+						title="add label"
 					>
+						+
+					</a>
 				</div>
 			{/if}
+
 			{#if data.order.notifications?.paymentStatus?.npub}
 				<p>
 					{t('order.paymentStatusNpub')}:
 					<span class="font-mono break-all break-words body-secondaryText">
-						{data.order.notifications.paymentStatus.npub}</span
-					>
+						{data.order.notifications.paymentStatus.npub}
+					</span>
 				</p>
 			{/if}
+
 			{#if data.order.status !== 'expired' && data.order.status !== 'canceled'}
-				<div>
-					<Trans key="order.linkReminder"
-						><a
+				<div class="order-link">
+					<Trans key="order.linkReminder">
+						<a
 							class="underline body-hyperlink break-all break-words body-secondaryText"
 							href={$page.url.href}
-							slot="0">{$page.url.href}</a
-						></Trans
-					>
+							slot="0"
+						>
+							{$page.url.href}
+						</a>
+					</Trans>
 				</div>
 			{/if}
 
-			{#each data.order.payments as payment, i}
-				<details class="border border-gray-300 rounded-xl p-4" open={payment.status === 'pending'}>
-					<summary class="lg:text-xl cursor-pointer">
-						<!-- Extra span to keep the "arrow" for the details -->
-						<span class="items-center inline-flex gap-2"
-							>{t(`checkout.paymentMethod.${payment.method}`)} - <PriceTag
-								inline
-								class="break-words {payment.status === 'paid'
-									? 'text-green-500'
-									: 'body-secondaryText'} "
-								amount={payment.price.amount}
-								currency={payment.price.currency}
-							/> - {t(`order.paymentStatus.${payment.status}`)}</span
-						>
-					</summary>
-					<div class="flex flex-col gap-2 mt-2">
-						{#if payment.method !== 'point-of-sale'}
-							<ul>
-								{#if payment.status === 'pending'}
-									<li>
-										{#if payment.method === 'card'}
-											<a
-												href="/order/{data.order._id}/payment/{payment.id}/pay"
-												class="body-hyperlink"
-											>
-												<span>{t('order.paymentLink')}</span>
-												{#if payment.processor === 'sumup'}
-													<IconSumupWide
-														class="h-12 {data.overwriteCreditCardSvgColor
-															? 'order-creditCard-svg'
-															: ''} "
-													/>
-												{:else if payment.processor === 'stripe'}
-													<IconStripe class="h-12" />
-												{:else if payment.processor === 'paypal'}
-													<img
-														src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_200x51.png"
-														alt="PayPal"
-														class="h-12"
-													/>
-												{/if}
-											</a>
-										{:else if payment.method === 'paypal'}
-											<a
-												href="/order/{data.order._id}/payment/{payment.id}/pay"
-												class="body-hyperlink"
-											>
-												<span>{t('order.paymentLinkGeneric')}</span>
-												<img
-													src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_200x51.png"
-													alt="PayPal"
-													class="h-12"
-												/>
-											</a>
-										{:else if payment.method === 'bank-transfer'}
-											{#if data.sellerIdentity?.bank?.accountHolder}
-												<p>
-													{t('order.paymentAccountHolder')}:
-													<span class="break-words body-secondaryText break-all">
-														{data.sellerIdentity?.bank?.accountHolder}
-													</span>
-												</p>
-											{/if}
-											{#if data.sellerIdentity?.bank?.accountHolderAddress}
-												<p>
-													{t('order.paymentAccountHolderAddress')}:
-													<span class="break-words body-secondaryText break-all">
-														{data.sellerIdentity?.bank?.accountHolderAddress}
-													</span>
-												</p>
-											{/if}
-											<p>
-												{t('order.paymentIban')}:
-												<code class="break-words body-secondaryText break-all">
-													{data.sellerIdentity?.bank?.iban.replace(/.{4}(?=.)/g, '$& ')}
-												</code>
-											</p>
-											<p>
-												{t('order.paymentBic')}:
-												<code class="break-words body-secondaryText break-all">
-													{data.sellerIdentity?.bank?.bic}
-												</code>
-											</p>
-										{:else}
-											{t('order.paymentAddress')}:
-											<code class="break-words body-secondaryText break-all">{payment.address}</code
-											>
-											<button
-												class="inline-block body-secondaryText"
-												type="button"
-												title={t('order.copyAddress')}
-												on:click={() => {
-													window.navigator.clipboard.writeText(payment.address ?? '');
-													copiedPaymentAddress = i;
-												}}
-											>
-												{#if copiedPaymentAddress === i}
-													<IconCheckmark class="inline-block mb-1" />
-													{t('general.copied')}
-												{:else}
-													<IconCopy class="inline-block mb-1" />
-												{/if}
-											</button>
-										{/if}
-									</li>
-								{/if}
-								{#if payment.expiresAt && (payment.status === 'pending' || payment.status === 'failed')}
-									<li>
-										{t('order.timeRemaining', {
-											minutes: differenceInMinutes(payment.expiresAt, currentDate)
-										})}
-									</li>
-								{/if}
-								{#if payment.status === 'paid' && payment.paidAt}
-									<li>
-										{t('order.paymentPaidAt', {
-											date: payment.paidAt.toLocaleDateString($locale)
-										})}
-									</li>
-								{/if}
-								{#if payment.status === 'failed' && !roleIsStaff}
-									<br />
-									{t('order.paymentCBFailed')}
-									<form
-										action="/order/{data.order._id}/payment/{payment.id}?/replaceMethod"
-										method="post"
-										class="contents"
-									>
-										<div class="flex flex-wrap gap-2">
-											<label class="form-label">
-												{t('order.addPayment.amount')}
-												<input
-													class="form-input"
-													type="number"
-													name="amount"
-													min="0"
-													step="any"
-													max={payment.currencySnapshot.main.price.amount}
-													value={payment.currencySnapshot.main.price.amount}
-													disabled
-												/>
-											</label>
-											<label class="form-label">
-												{t('order.addPayment.currency')}
-												<select name="currency" class="form-input" disabled>
-													<option value={payment.currencySnapshot.main.price.currency}
-														>{payment.currencySnapshot.main.price.currency}}</option
-													>
-												</select>
-											</label>
-											<label class="form-label">
-												<span>{t('checkout.payment.method')}</span>
-												<select name="method" class="form-input">
-													{#each filteredPaymentMethods as paymentMethod}
-														<option value={paymentMethod}
-															>{t(`checkout.paymentMethod.${paymentMethod}`)}</option
-														>
-													{/each}
-												</select>
-											</label><br />
-											<button type="submit" class="btn btn-blue self-end"
-												>{t('order.newPaymentAttempt.cta')}</button
-											>
-										</div>
-									</form>
-								{/if}
-							</ul>
-						{/if}
+			<!-- ========== PAYMENTS SECTION ========== -->
+			{#each data.order.payments as payment}
+				<PaymentItem
+					{payment}
+					orderId={data.order._id}
+					posMode={data.posMode}
+					hideCreditCardQrCode={data.hideCreditCardQrCode}
+					sellerIdentity={data.sellerIdentity}
+					posSubtypes={data.posSubtypes}
+				>
+					<PaymentActions
+						{payment}
+						orderId={data.order._id}
+						{orderStaffActionBaseUrl}
+						{roleIsStaff}
+						paymentMethods={data.paymentMethods}
+						posSubtypes={data.posSubtypes}
+						posMode={data.posMode}
+						tapToPayConfigured={data.tapToPay.configured}
+						tapToPayInUseByOtherOrder={data.tapToPay.inUseByOtherOrder}
+						printReceipt={() => receiptIFrame[payment.id]?.contentWindow?.print()}
+						printTicket={() => ticketIFrame[payment.id]?.contentWindow?.print()}
+						receiptReady={receiptReady[payment.id]}
+						ticketReady={ticketReady[payment.id]}
+					/>
+				</PaymentItem>
 
-						{#if payment.status !== 'paid'}
-							<button
-								class="body-hyperlink self-start"
-								type="button"
-								disabled={!receiptReady[payment.id]}
-								on:click={() => receiptIFrame[payment.id]?.contentWindow?.print()}
-								>{t('order.receipt.createProforma')}</button
-							>
-							<iframe
-								src={isMobile() && data.hasPosOptions
-									? `/order/${data.order._id}/payment/${payment.id}/ticket`
-									: `/order/${data.order._id}/payment/${payment.id}/receipt`}
-								style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
-								title=""
-								on:load={() => (receiptReady = { ...receiptReady, [payment.id]: true })}
-								bind:this={receiptIFrame[payment.id]}
-							/>
-						{/if}
-						{#if payment.status === 'paid' && payment.invoice?.number}
-							<button
-								class="btn btn-black self-start"
-								type="button"
-								disabled={!receiptReady[payment.id]}
-								on:click={() => receiptIFrame[payment.id]?.contentWindow?.print()}
-								>{t('order.receipt.create')}</button
-							>
-							{#if payment.invoice.number !== FAKE_ORDER_INVOICE_NUMBER}
-								<iframe
-									src={isMobile() && data.hasPosOptions
-										? `/order/${data.order._id}/payment/${payment.id}/ticket`
-										: `/order/${data.order._id}/payment/${payment.id}/receipt`}
-									style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
-									title=""
-									on:load={() => (receiptReady = { ...receiptReady, [payment.id]: true })}
-									bind:this={receiptIFrame[payment.id]}
-								/>
-							{/if}
-						{/if}
-
-						{#if payment.status === 'pending'}
-							{#if payment.method === 'lightning'}
-								<a href={lightningPaymentQrCodeString(payment.address ?? '')}>
-									<img
-										src="{$page.url.pathname}/payment/{payment.id}/qrcode"
-										class="w-96 h-96"
-										alt="QR code"
-									/></a
-								>
-							{/if}
-							{#if payment.method === 'card' && !data.hideCreditCardQrCode}
-								<img
-									src="{$page.url.pathname}/payment/{payment.id}/qrcode"
-									class="w-96 h-96"
-									alt="QR code"
-								/>
-							{/if}
-							{#if payment.method === 'bitcoin' && payment.address}
-								<span class="body-hyperlink font-light italic">{t('order.clickQR')}</span>
-								<a
-									href={bitcoinPaymentQrCodeString(
-										payment.address,
-										payment.price.amount,
-										payment.price.currency
-									)}
-								>
-									<img
-										src="{$page.url.pathname}/payment/{payment.id}/qrcode"
-										class="w-96 h-96"
-										alt="QR code"
-									/>
-								</a>
-							{/if}
-							{#if payment.method !== 'point-of-sale'}
-								{t('order.payToComplete')}
-							{/if}
-							{#if payment.method === 'bitcoin'}
-								{t('order.payToCompleteBitcoin', { count: payment.confirmationBlocksRequired })}
-							{/if}
-
-							{#if payment.method === 'bank-transfer'}
-								{#if data.sellerIdentity?.contact.email}
-									<a
-										href="mailto:{data.sellerIdentity.contact.email}"
-										class="btn btn-black self-start"
-									>
-										{t('order.informSeller')}
-									</a>
-								{/if}
-							{/if}
-
-							{#if roleIsStaff}
-								{@const tapToPayInProgress =
-									payment.posTapToPay && payment.posTapToPay.expiresAt > new Date()}
-								{#if tapToPayInProgress}
-									<form
-										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/cancelTapToPay"
-										method="post"
-										id="cancelTapToPayForm"
-										class="flex flex-col flex-wrap gap-2"
-									>
-										<button type="submit" class="btn btn-green whitespace-nowrap w-min" disabled>
-											{'Tap to pay'}
-										</button>
-										{t('pos.tapToPay.inProgress')}
-										<Spinner class="w-36" />
-									</form>
-								{:else}
-									<form
-										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/cancel"
-										method="post"
-										id="cancelForm"
-									></form>
-									<form
-										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/tapToPay"
-										method="post"
-										id="tapToPayForm"
-									></form>
-									<form
-										action="{orderStaffActionBaseUrl}/payment/{payment.id}?/confirm"
-										method="post"
-										class="flex flex-wrap gap-2"
-									>
-										{#if payment.method === 'bank-transfer'}
-											<input
-												class="form-input w-auto"
-												type="text"
-												name="bankTransferNumber"
-												required
-												placeholder="bank transfer number"
-											/>
-										{/if}
-										{#if payment.method === 'point-of-sale'}
-											<input
-												class="form-input grow mx-2"
-												type="text"
-												name="detail"
-												required
-												placeholder="Detail (card transaction ID, or point-of-sale payment method)"
-											/>
-										{/if}
-
-										<button
-											type="submit"
-											class="btn btn-red"
-											on:click={confirmCancel}
-											form="cancelForm"
-										>
-											{t('pos.cta.cancelOrder')}
-										</button>
-										{#if payment.method === 'point-of-sale' || payment.method === 'bank-transfer'}
-											<button type="submit" class="btn btn-black">
-												{t('pos.cta.markOrderPaid')}
-											</button>
-										{/if}
-										{#if payment.method === 'point-of-sale'}
-											{#if data.tapToPay.inUseByOtherOrder}
-												<p class="text-red-500 w-full">
-													{t('pos.tapToPay.inUseByOtherOrder')}
-												</p>
-											{:else if data.tapToPay.configured}
-												<button
-													type="submit"
-													form="tapToPayForm"
-													class="btn btn-green"
-													on:click={() =>
-														data.tapToPay.onActivationUrl &&
-														window.open(
-															data.tapToPay.onActivationUrl,
-															'_blank',
-															'noopener,noreferrer'
-														)}
-												>
-													{'Tap to pay'}
-												</button>
-											{/if}
-										{/if}
-									</form>
-								{/if}
-								<div class="flex flex-wrap gap-2">
-									{#if tapToPayInProgress}
-										<button
-											type="submit"
-											class="btn btn-red whitespace-nowrap"
-											form="cancelTapToPayForm"
-										>
-											{t('pos.cta.cancelTapToPay')}
-										</button>
-									{/if}
-									<button
-										type="button"
-										class="btn btn-red"
-										form="replacePaymentForm"
-										on:click={() => {
-											openPaymentMethodChange = !openPaymentMethodChange;
-										}}
-									>
-										{openPaymentMethodChange
-											? t('pos.cta.cancelReplacement')
-											: t('pos.cta.replacePayment')}
-									</button>
-									{#if openPaymentMethodChange}
-										<form
-											action="/order/{data.order._id}/payment/{payment.id}?/replaceMethod"
-											method="post"
-											class="contents"
-										>
-											<div class="flex flex-wrap gap-2">
-												<label class="form-label">
-													{t('order.addPayment.amount')}
-													<input
-														class="form-input"
-														type="number"
-														name="amount"
-														min="0"
-														step="any"
-														max={payment.currencySnapshot.main.price.amount}
-														value={payment.currencySnapshot.main.price.amount}
-														disabled
-													/>
-												</label>
-												<label class="form-label">
-													{t('order.addPayment.currency')}
-													<select name="currency" class="form-input" disabled>
-														<option value={payment.currencySnapshot.main.price.currency}
-															>{payment.currencySnapshot.main.price.currency}</option
-														>
-													</select>
-												</label>
-												<label class="form-label">
-													<span>{t('checkout.payment.method')}</span>
-													<select name="method" class="form-input">
-														{#each data.paymentMethods as paymentMethod}
-															<option value={paymentMethod}
-																>{t(`checkout.paymentMethod.${paymentMethod}`)}</option
-															>
-														{/each}
-													</select>
-												</label><br />
-												<button type="submit" class="btn btn-blue self-end"
-													>{t('pos.cta.resendPaymentMethod')}</button
-												>
-											</div>
-										</form>
-									{/if}
-								</div>
-							{/if}
-						{/if}
-
-						{#if (payment.method === 'point-of-sale' || payment.method === 'bank-transfer') && roleIsStaff && payment.status === 'paid'}
-							<form
-								action="{orderStaffActionBaseUrl}/payment/{payment.id}?/updatePaymentDetail"
-								method="post"
-								class="contents"
-							>
-								<input
-									class="form-input w-auto"
-									type="text"
-									name="paymentDetail"
-									disabled={disableInfoChange}
-									placeholder="bank transfer number / Detail (card transaction ID, or point-of-sale payment method)"
-									value={payment.bankTransferNumber ?? payment.detail}
-									required
-								/>
-								<div class="flex gap-2">
-									<button type="submit" class="btn btn-blue" disabled={disableInfoChange}
-										>{t('pos.cta.updatePaymentInfo')}</button
-									>
-									<label class="checkbox-label">
-										<input class="form-checkbox" type="checkbox" bind:checked={disableInfoChange} />
-										🔐
-									</label>
-								</div>
-							</form>
-						{/if}
-					</div>
-				</details>
+				<!-- Hidden iframes for receipt/invoice printing -->
+				{#if payment.status !== 'paid' || (payment.invoice?.number && payment.invoice.number !== FAKE_ORDER_INVOICE_NUMBER)}
+					<iframe
+						src="/order/{data.order._id}/payment/{payment.id}/receipt"
+						style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
+						title=""
+						on:load={() => (receiptReady = { ...receiptReady, [payment.id]: true })}
+						bind:this={receiptIFrame[payment.id]}
+					/>
+					{#if roleIsStaff}
+						<iframe
+							src="/order/{data.order._id}/payment/{payment.id}/ticket"
+							style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
+							title=""
+							on:load={() => (ticketReady = { ...ticketReady, [payment.id]: true })}
+							bind:this={ticketIFrame[payment.id]}
+						/>
+					{/if}
+				{/if}
 			{/each}
 
-			{#if data.order.status === 'paid'}
-				<p>
-					<Trans key="order.paymentStatus.paidTemplate"
-						><span class="text-green-500" let:translation slot="0">{translation}</span></Trans
-					>
-				</p>
-			{:else if data.order.status === 'expired'}
-				<p>{t('order.paymentStatus.expiredTemplate')}</p>
-			{:else if data.order.status === 'canceled'}
-				<p class="font-bold">{t('order.paymentStatus.canceledTemplate')}</p>
-			{/if}
+			<!-- ========== ORDER STATUS MESSAGE ========== -->
+			<div class="order-status-message">
+				{#if data.order.status === 'paid'}
+					<p>
+						<Trans key="order.paymentStatus.paidTemplate">
+							<span class="text-green-500" let:translation slot="0">{translation}</span>
+						</Trans>
+					</p>
+				{:else if data.order.status === 'expired'}
+					<p>{t('order.paymentStatus.expiredTemplate')}</p>
+				{:else if data.order.status === 'canceled'}
+					<p class="font-bold">{t('order.paymentStatus.canceledTemplate')}</p>
+				{/if}
+			</div>
 
+			<!-- ========== TICKETS SECTION ========== -->
 			{#if data.order.items.some((item) => item.tickets?.length)}
 				<h2 class="text-2xl">{t('order.tickets.title')}</h2>
 
@@ -633,15 +240,15 @@
 					src="/order/{data.order._id}/tickets"
 					style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
 					title=""
-					on:load={() => (ticketReady = true)}
-					bind:this={ticketIframe}
+					on:load={() => (ticketsReady = true)}
+					bind:this={ticketsIframe}
 				/>
 
 				<p>
 					<button
 						class="body-hyperlink self-start"
-						disabled={!ticketReady}
-						on:click={() => ticketIframe?.contentWindow?.print()}
+						disabled={!ticketsReady}
+						on:click={() => ticketsIframe?.contentWindow?.print()}
 					>
 						{t('order.tickets.printAll')}
 					</button>
@@ -670,6 +277,8 @@
 					{/if}
 				{/each}
 			{/if}
+
+			<!-- ========== DIGITAL FILES SECTION ========== -->
 			{#if data.digitalFiles.length}
 				<h2 class="text-2xl">{t('product.digitalFiles.title')}</h2>
 				<ul>
@@ -677,9 +286,9 @@
 						<li class="flex flex-row gap-2">
 							<IconDownloadWindow class="mt-1 body-hyperlink" />
 							{#if digitalFile.link}
-								<a href={digitalFile.link} class="body-hyperlink hover:underline" target="_blank"
-									>{digitalFile.name}</a
-								>
+								<a href={digitalFile.link} class="body-hyperlink hover:underline" target="_blank">
+									{digitalFile.name}
+								</a>
 							{:else}
 								{digitalFile.name}
 							{/if}
@@ -687,6 +296,8 @@
 					{/each}
 				</ul>
 			{/if}
+
+			<!-- ========== EXTERNAL RESOURCES SECTION ========== -->
 			{#if data.order.items.flatMap((item) => item.product.externalResources || []).length}
 				<h2 class="text-2xl">{t('order.externalResources.title')}</h2>
 				<ul>
@@ -697,8 +308,10 @@
 								<a
 									href={externalResource?.href}
 									class="body-hyperlink hover:underline"
-									target="_blank">{externalResource?.label}</a
+									target="_blank"
 								>
+									{externalResource?.label}
+								</a>
 							{:else}
 								{externalResource?.label}
 							{/if}
@@ -706,17 +319,23 @@
 					{/each}
 				</ul>
 			{/if}
+
+			<!-- ========== ADDITIONAL INFO ========== -->
+
 			{#if data.order.vatFree}
 				<p>{t('order.vatFree', { reason: data.order.vatFree.reason })}</p>
 			{/if}
-			<p class="text-base">
-				<Trans key="order.createdAt"
-					><time
+
+			<p class="order-created-date text-base">
+				<Trans key="order.createdAt">
+					<time
 						datetime={data.order.createdAt.toJSON()}
 						title={data.order.createdAt.toLocaleString($locale)}
-						slot="0">{data.order.createdAt.toLocaleString($locale)}</time
-					></Trans
-				>
+						slot="0"
+					>
+						{data.order.createdAt.toLocaleString($locale)}
+					</time>
+				</Trans>
 			</p>
 
 			{#if data.order.shippingAddress}
@@ -727,8 +346,9 @@
 					</p>
 				</div>
 			{/if}
+
 			{#if data.order.user}
-				<div>
+				<div class="contact-address">
 					{t('order.contactAddress.title')}:
 					{#if data.order.user.email}
 						<p class="body-secondaryText whitespace-pre-line">
@@ -750,65 +370,45 @@
 				</div>
 			{/if}
 
+			<!-- ========== ADD PAYMENT SECTION (Staff Only) ========== -->
 			{#if data.order.status === 'pending' && remainingAmount && roleIsStaff}
-				<form action="{orderStaffActionBaseUrl}?/cancel" method="post" id="cancelOrderForm"></form>
-				<form action="{orderStaffActionBaseUrl}?/addPayment" method="post" class="contents">
-					<div class="flex flex-wrap gap-2">
-						<label class="form-label">
-							{t('order.addPayment.amount')}
-							<input
-								class="form-input"
-								type="number"
-								name="amount"
-								min="0"
-								step="any"
-								max={remainingAmount}
-								value={remainingAmount}
-								required
-							/>
-						</label>
-						<label class="form-label">
-							{t('order.addPayment.currency')}
-							<select name="currency" class="form-input" disabled>
-								<option value={data.order.currencySnapshot.main.totalPrice.currency}
-									>{data.order.currencySnapshot.main.totalPrice.currency}</option
-								>
-							</select>
-						</label>
-						<label class="form-label">
-							<span>{t('checkout.payment.method')}</span>
-							<select name="method" class="form-input">
-								{#each data.paymentMethods as paymentMethod}
-									<option value={paymentMethod}
-										>{t(`checkout.paymentMethod.${paymentMethod}`)}</option
-									>
-								{/each}
-							</select>
-						</label><br />
-						<button type="submit" class="btn btn-blue self-end">{t('order.addPayment.cta')}</button>
-						<button
-							type="submit"
-							class="btn btn-red"
-							on:click={confirmCancelOrder}
-							form="cancelOrderForm"
-						>
+				<div class="border border-gray-300 rounded-xl p-4 add-payment-section">
+					<h3 class="text-xl mb-2">{t('order.addPayment.title')}</h3>
+
+					<PaymentForm
+						action="{orderStaffActionBaseUrl}?/addPayment"
+						mode="add"
+						paymentMethods={data.paymentMethods}
+						posSubtypes={data.posSubtypes}
+						maxAmount={remainingAmount}
+						posMode={data.posMode}
+					/>
+
+					<form action="{orderStaffActionBaseUrl}?/cancel" method="post" id="cancelOrderForm">
+						<button type="submit" class="btn btn-red mt-2" on:click={confirmCancelOrder}>
 							{t('pos.cta.cancelMultiPayOrder')}
 						</button>
-					</div>
-				</form>
+					</form>
+				</div>
 			{/if}
 
+			<!-- ========== STAFF ONLY SECTION ========== -->
 			{#if roleIsStaff}
 				{#if data.order.payments.length > 1 && data.order.status !== 'expired' && data.order.status !== 'canceled'}
-					{#if data.order.status === 'paid'}
-						<a class="btn bg-green-600 text-white self-start" href="/order/{data.order._id}/summary"
-							>{t('order.receiptFullyPaid')}</a
-						>
-					{:else}
-						<a class="btn btn-blue self-start" href="/order/{data.order._id}/summary"
-							>{t('order.receiptPending')}</a
-						>
-					{/if}
+					<div class="multi-payment-receipt">
+						{#if data.order.status === 'paid'}
+							<a
+								class="btn bg-green-600 text-white self-start"
+								href="/order/{data.order._id}/summary"
+							>
+								{t('order.receiptFullyPaid')}
+							</a>
+						{:else}
+							<a class="btn btn-blue self-start" href="/order/{data.order._id}/summary">
+								{t('order.receiptPending')}
+							</a>
+						{/if}
+					</div>
 				{/if}
 
 				<form action="{orderStaffActionBaseUrl}?/saveNote" method="post" class="contents">
@@ -817,53 +417,114 @@
 							<div class="p-4 flex flex-col gap-3">
 								<label class="form-label text-2xl">
 									{t('order.note.label')}
-
 									<textarea name="noteContent" cols="30" rows="2" class="form-input" />
 								</label>
 							</div>
 						</article>
+
 						<div class="flex flex-wrap gap-3 justify-between">
-							<button type="submit" class="btn lg:w-auto w-full btn-blue self-start"
-								>{t('order.note.saveText')}</button
+							<button type="submit" class="btn lg:w-auto w-full btn-blue self-start">
+								{t('order.note.saveText')}
+							</button>
+							<a
+								href="/order/{data.order._id}/notes"
+								class="btn lg:w-auto w-full btn-gray self-end"
 							>
-							<a href="/order/{data.order._id}/notes" class="btn lg:w-auto w-full btn-gray self-end"
-								>{t('order.note.seeText')}</a
-							>
+								{t('order.note.seeText')}
+							</a>
+							{#if data.order.orderTabSlug}
+								{#if data.splitMode}
+									<a
+										href="/pos/touch/tab/{data.order.orderTabSlug}/split?mode={data.splitMode}"
+										class="btn lg:w-auto w-full btn-black self-end"
+									>
+										{t('pos.split.continueSplit', { mode: data.splitMode })}
+									</a>
+								{/if}
+								<a
+									href="/pos/touch/tab/{data.order.orderTabSlug}"
+									class="btn lg:w-auto w-full btn-gray self-end"
+								>
+									@@Back to order tab
+								</a>
+							{/if}
 						</div>
 					</section>
 				</form>
 			{/if}
 		</div>
+		<!-- END: LEFT COLUMN -->
 
+		<!-- ==================== RIGHT COLUMN (1/3 width) ==================== -->
 		<div class="mt-6">
-			<OrderSummary
-				class="sticky top-4 -mr-2 -mt-2"
-				order={data.order}
-				orderPriceInfo={data.priceInfoProbablyIncorrectBuyOkayForDisplay}
-			/>
+			<OrderSummary class="sticky top-4 -mr-2 -mt-2" order={data.order} />
 		</div>
 	</div>
-	{#if data.cmsOrderBottom && data.cmsOrderBottomData}
-		<CmsDesign
-			challenges={data.cmsOrderBottomData.challenges}
-			tokens={data.cmsOrderBottomData.tokens}
-			sliders={data.cmsOrderBottomData.sliders}
-			products={data.cmsOrderBottomData.products}
-			pictures={data.cmsOrderBottomData.pictures}
-			tags={data.cmsOrderBottomData.tags}
-			digitalFiles={data.cmsOrderBottomData.digitalFiles}
-			hasPosOptions={data.hasPosOptions}
-			specifications={data.cmsOrderBottomData.specifications}
-			contactForms={data.cmsOrderBottomData.contactForms}
-			pageName={data.cmsOrderBottom.title}
-			websiteLink={data.websiteLink}
-			brandName={data.brandName}
-			sessionEmail={data.email}
-			countdowns={data.cmsOrderBottomData.countdowns}
-			galleries={data.cmsOrderBottomData.galleries}
-			leaderboards={data.cmsOrderBottomData.leaderboards}
-			schedules={data.cmsOrderBottomData.schedules}
-			class={data.hideCmsZonesOnMobile ? 'hidden lg:contents' : ''}
-		/>
-	{/if}
+	<!-- END: MAIN CONTAINER -->
+
+	<!-- ==================== CMS BOTTOM SECTION ==================== -->
+	<div class="cms-section-bottom">
+		{#if data.cmsOrderBottom && data.cmsOrderBottomData}
+			<CmsDesign
+				challenges={data.cmsOrderBottomData.challenges}
+				tokens={data.cmsOrderBottomData.tokens}
+				sliders={data.cmsOrderBottomData.sliders}
+				products={data.cmsOrderBottomData.products}
+				pictures={data.cmsOrderBottomData.pictures}
+				tags={data.cmsOrderBottomData.tags}
+				digitalFiles={data.cmsOrderBottomData.digitalFiles}
+				hasPosOptions={data.hasPosOptions}
+				specifications={data.cmsOrderBottomData.specifications}
+				contactForms={data.cmsOrderBottomData.contactForms}
+				pageName={data.cmsOrderBottom.title}
+				websiteLink={data.websiteLink}
+				brandName={data.brandName}
+				sessionEmail={data.email}
+				countdowns={data.cmsOrderBottomData.countdowns}
+				galleries={data.cmsOrderBottomData.galleries}
+				leaderboards={data.cmsOrderBottomData.leaderboards}
+				schedules={data.cmsOrderBottomData.schedules}
+				class={data.hideCmsZonesOnMobile
+					? 'prose max-w-full hidden lg:contents'
+					: 'prose max-w-full'}
+			/>
+		{/if}
+	</div>
 </main>
+
+<style>
+	/* ==================== POS MODE STYLES ==================== */
+	/* Applied when data.posMode = true (adds .pos-mode class to main) */
+
+	/* Hide non-essential elements in POS mode */
+	:global(.pos-mode .cms-section-top),
+	:global(.pos-mode .cms-section-bottom),
+	:global(.pos-mode .order-labels),
+	:global(.pos-mode .order-link),
+	:global(.pos-mode .order-status-message),
+	:global(.pos-mode .payment-details-list),
+	:global(.pos-mode .payment-instruction),
+	:global(.pos-mode .order-created-date),
+	:global(.pos-mode .contact-address),
+	:global(.pos-mode .mt-6),
+	:global(.pos-mode .multi-payment-receipt),
+	:global(.pos-mode .add-payment-section) {
+		display: none !important;
+	}
+
+	/* Show only last payment in split payments (POS) */
+	:global(.pos-mode .payment-item:not(:last-of-type)) {
+		display: none !important;
+	}
+
+	:global(.pos-mode) {
+		padding-top: 1rem;
+		padding-bottom: 1.5rem;
+	}
+
+	:global(.pos-grid) {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.5rem;
+	}
+</style>

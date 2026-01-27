@@ -1,8 +1,8 @@
-# Initialiser votre beBOP
+# Initialiser votre be-BOP
 
 Résumé rapide et imparfait avant une documentation plus propre
 
-Une fois votre beBOP installé (n'oubliez pas le readme.md) :
+Une fois votre be-BOP installé (n'oubliez pas le readme.md) :
 
 ## Compte uper-admin
 
@@ -16,7 +16,7 @@ Une fois votre beBOP installé (n'oubliez pas le readme.md) :
 Allez dans /admin/config, allez dans "Admin hash", définissez un hash, et sauvegardez.
 Désormais, l'adresse du backoffice est /admin-yourhash
 
-### Faites passer votre beBOP en mode maintenance
+### Faites passer votre be-BOP en mode maintenance
 
 Allez dans /admin/config, cochez "Activer le mode maintenance".
 Vous pouvez indiquer n'importe quel IPv4 séparé par des virgules pour autoriser l'accès au front-office.
@@ -24,11 +24,11 @@ Le back-office sera toujours ouvert.
 
 ### Définissez vos devises
 Allez dans /admin/config :
-- la devise principale est utilisée pour être affichée sur les pages du beBOP et sur les factures
-- la deuxième devise est optionnelle et est utilisée pour être affichée sur les pages du beBOP
+- la devise principale est utilisée pour être affichée sur les pages du be-BOP et sur les factures
+- la deuxième devise est optionnelle et est utilisée pour être affichée sur les pages du be-BOP
 - la devise de référence du prix est la devise par défaut dans laquelle vous créerez votre prix, mais vous pourrez la modifier produit par produit.
   - en cliquant sur le bouton rouge et en confirmant, les devises de vos produits seront remplacées par la sélection choisie, mais le prix ne sera pas mis à jour.
-- La monnaie de compte permet à un beBOP entièrement en BTC d'enregistrer le taux de change du Bitcoin au moment de la commande.
+- La monnaie de compte permet à un be-BOP entièrement en BTC d'enregistrer le taux de change du Bitcoin au moment de la commande.
 
 ### Timing
 
@@ -46,7 +46,7 @@ etc
 
 ### Expiration de la commande
 
-"Définir le délai de paiement souhaité (en minutes)" permet d'annuler une commande sur le système beBOP si la transaction n'a pas été suffisamment payée ou vérifiée.
+"Définir le délai de paiement souhaité (en minutes)" permet d'annuler une commande sur le système be-BOP si la transaction n'a pas été suffisamment payée ou vérifiée.
 Cette option n'est valable que pour le Bitcoin-onchain, le Lightning et les cartes de crédit par sum up.
 Un temps trop court vous obligera à avoir une cible de bloc de confirmation onchain courte / nulle.
 Un délai trop long bloquera le stock de vos produits pendant que la commande est en attente.

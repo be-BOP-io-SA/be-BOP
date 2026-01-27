@@ -1,4 +1,4 @@
-import { ORIGIN } from '$env/static/private';
+import { ORIGIN } from '$lib/server/env-config';
 import type { Cookies } from '@sveltejs/kit';
 import { addYears } from 'date-fns';
 

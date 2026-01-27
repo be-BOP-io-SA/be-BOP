@@ -1,9 +1,20 @@
 import { collections } from '$lib/server/database.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
-import { redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { z } from 'zod';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
+import {
+	addToOrderTab,
+	checkoutOrderTab,
+	getOrCreateOrderTab,
+	hasSharesPaymentStarted,
+	removeFromOrderTab,
+	removeOrderTab
+} from '$lib/server/orderTab';
+import { removeUserCarts } from '$lib/server/cart';
+import { getCurrentPosSession } from '$lib/server/pos-sessions';
+import { runtimeConfig } from '$lib/server/runtime-config';
 
 export const load = async (event) => {
 	const lastOrders = await collections.orders
@@ -16,6 +27,8 @@ export const load = async (event) => {
 	const session = await collections.sessions.findOne({
 		sessionId: event.locals.sessionId
 	});
+
+	const currentPosSession = runtimeConfig.posSession.enabled ? await getCurrentPosSession() : null;
 
 	return {
 		orders: lastOrders.map((order) => ({
@@ -36,11 +49,89 @@ export const load = async (event) => {
 			status: order.status
 		})),
 		countryCode: event.locals.countryCode,
-		sessionPos: session?.pos
+		sessionPos: session?.pos,
+		posSession: runtimeConfig.posSession,
+		currentSession: currentPosSession
+			? {
+					_id: currentPosSession._id.toString(),
+					status: currentPosSession.status,
+					openedAt: currentPosSession.openedAt,
+					openedBy:
+						currentPosSession.openedBy.userAlias ||
+						currentPosSession.openedBy.userLogin ||
+						currentPosSession.openedBy.userId
+			  }
+			: null
 	};
 };
 
 export const actions: Actions = {
+	addToTab: async ({ request }) => {
+		const formData = await request.formData();
+		const { tabSlug, productId } = z
+			.object({
+				tabSlug: z.string().min(1).max(100),
+				productId: z.string().min(1).max(100)
+			})
+			.parse({
+				tabSlug: formData.get('tabSlug'),
+				productId: formData.get('productId')
+			});
+		const result = await addToOrderTab({ tabSlug, productId });
+		if (!result.success) {
+			return fail(400, { error: result.error, maxQuantity: result.maxQuantity });
+		}
+	},
+	removeFromTab: async ({ request }) => {
+		const formData = await request.formData();
+		const { tabSlug, tabItemId } = z
+			.object({
+				tabSlug: z.string().min(1).max(100),
+				tabItemId: z.string().min(1).max(100)
+			})
+			.parse({
+				tabSlug: formData.get('tabSlug'),
+				tabItemId: formData.get('tabItemId')
+			});
+
+		const orderTab = await getOrCreateOrderTab({ slug: tabSlug });
+		if (await hasSharesPaymentStarted(orderTab._id)) {
+			return fail(403, { error: 'sharesPaymentStarted' });
+		}
+
+		await removeFromOrderTab({ tabSlug, tabItemId });
+	},
+	removeTab: async ({ request }) => {
+		const formData = await request.formData();
+		const { tabSlug } = z
+			.object({
+				tabSlug: z.string().min(1).max(100)
+			})
+			.parse({
+				tabSlug: formData.get('tabSlug')
+			});
+
+		const orderTab = await getOrCreateOrderTab({ slug: tabSlug });
+		if (await hasSharesPaymentStarted(orderTab._id)) {
+			return fail(403, { error: 'sharesPaymentStarted' });
+		}
+
+		await removeOrderTab({ tabSlug });
+	},
+	checkoutTab: async ({ request, locals }) => {
+		const formData = await request.formData();
+		const { tabSlug } = z
+			.object({
+				tabSlug: z.string().min(1).max(100)
+			})
+			.parse({
+				tabSlug: formData.get('tabSlug')
+			});
+		const user = userIdentifier(locals);
+		await removeUserCarts(user);
+		await checkoutOrderTab({ slug: tabSlug, user });
+		throw redirect(303, '/checkout');
+	},
 	overwrite: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const country = z

@@ -1,14 +1,16 @@
 import { addToCartInDb } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
+import { loadProductWithResolvedStock, resolveStockProduct } from '$lib/server/product';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import { DEFAULT_MAX_QUANTITY_PER_ORDER, type Product } from '$lib/types/Product';
+import { computeVatRate, extractVat } from '$lib/utils/vat';
 import { productToScheduleId, type ScheduleEvent } from '$lib/types/Schedule';
 import { set } from '$lib/utils/set';
 import { sum } from '$lib/utils/sum';
-import { UserIdentifier } from '$lib/types/UserIdentifier';
+import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { RequestEvent } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { subDays } from 'date-fns';
@@ -80,6 +82,7 @@ async function fetchProduct(
 	| 'hideDiscountExpiration'
 	| 'bookingSpec'
 	| 'vatProfileId'
+	| 'stockReference'
 > | null> {
 	return collections.products.findOne<ReturnType<Awaited<typeof fetchProduct>>>(
 		{ _id: productId },
@@ -128,7 +131,8 @@ async function fetchProduct(
 				hideDiscountExpiration: 1,
 				shipping: 1,
 				bookingSpec: 1,
-				vatProfileId: 1
+				vatProfileId: 1,
+				stockReference: 1
 			}
 		}
 	);
@@ -181,6 +185,12 @@ export const load = async ({ params, parent, locals }) => {
 	) {
 		throw redirect(303, '/');
 	}
+
+	const resolved = product.stockReference?.productId ? await resolveStockProduct(productId) : null;
+	if (resolved?.stock) {
+		product.stock = resolved.stock;
+	}
+
 	const [pictures, userSubscriptions, schedule, scheduleEvents, parentData] = await Promise.all([
 		fetchProductPictures(productId),
 		fetchUserSubscriptions(userIdentifier(locals)),
@@ -205,10 +215,20 @@ export const load = async ({ params, parent, locals }) => {
 				userSubscriptions.map((sub) => sub.productId)
 		  )
 		: null;
+
+	const vatRate = computeVatRate({
+		productVatProfileId: product.vatProfileId,
+		vatProfiles: parentData.vatProfiles,
+		bebopCountry: runtimeConfig.vatCountry,
+		userCountry: locals.countryCode,
+		vatSingleCountry: runtimeConfig.vatSingleCountry
+	});
+
 	return {
 		product: { ...product, vatProfileId: product.vatProfileId?.toString() },
 		pictures,
 		discount,
+		vatRate,
 		scheduleEvents: [
 			...scheduleEvents,
 			...(schedule?.events ?? [])
@@ -231,9 +251,7 @@ export const load = async ({ params, parent, locals }) => {
 };
 
 async function addToCart({ params, request, locals }: RequestEvent) {
-	const product = await collections.products.findOne({
-		alias: params.id
-	});
+	const product = await loadProductWithResolvedStock(params.id);
 
 	if (!product) {
 		throw error(404, 'Product not found');
@@ -285,6 +303,22 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 					currency: customPriceCurrency
 			  }
 			: undefined;
+
+	// For PWYW products with VAT-included display: extract VAT from entered price
+	if (customPrice && product.payWhatYouWant && runtimeConfig.displayVatIncludedInProduct) {
+		const vatProfiles = await collections.vatProfiles.find().toArray();
+		const rate = computeVatRate({
+			productVatProfileId: product.vatProfileId,
+			vatProfiles,
+			bebopCountry: runtimeConfig.vatCountry,
+			userCountry: locals.countryCode,
+			vatSingleCountry: runtimeConfig.vatSingleCountry
+		});
+
+		// Extract VAT: entered price is WITH VAT, we need to store WITHOUT VAT
+		customPrice.amount = extractVat(customPrice.amount, rate);
+	}
+
 	const user = userIdentifier(locals);
 	await addToCartInDb(product, quantity, {
 		user: user,

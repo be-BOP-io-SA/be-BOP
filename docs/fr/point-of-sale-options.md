@@ -2,7 +2,7 @@
 
 ## Introduction
 
-beBOP vous permet à la fois d'interagir avec votre communauté sur internet, mais également d'être utilisé comme logiciel de caisse (en stand ou magasin).
+be-BOP vous permet à la fois d'interagir avec votre communauté sur internet, mais également d'être utilisé comme logiciel de caisse (en stand ou magasin).
 
 POS : Point Of Sale (point de vente, pour avoir un comportement de caisse de magasin)
 
@@ -17,13 +17,13 @@ L'utilisation du compte POS permet également d'avoir un affichage client pour a
 
 Le rôle point-of-sale est configuré par défaut dans le module /admin/arm :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/33f053f0-2788-420d-a0a1-78a7b63a83a2)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/33f053f0-2788-420d-a0a1-78a7b63a83a2)
 
 ## Connexion au compte POS
 
-Une fois attribué à un profil, la personne possédant les accès POS doit se rendre sur la page d'identification dans l'administration (/admin/login , où /admin est la chaîne sécurisée configurée par le propriétaire du beBOP (voir [back-office-access.md](back-office-access.md) ) puis s'identifier.
+Une fois attribué à un profil, la personne possédant les accès POS doit se rendre sur la page d'identification dans l'administration (/admin/login , où /admin est la chaîne sécurisée configurée par le propriétaire du be-BOP (voir [back-office-access.md](back-office-access.md) ) puis s'identifier.
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/0e0f9eef-69cd-4c88-9402-3ed1fd3167e5)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/0e0f9eef-69cd-4c88-9402-3ed1fd3167e5)
 
 (Dans le cas d'un magasin, il est préférable de choisir un temps de maintien de connexion de "1 day", pour éviter les déconnexions en pleine session de vente)
 
@@ -31,7 +31,7 @@ Une fois attribué à un profil, la personne possédant les accès POS doit se r
 
 Une fois connecté, l'utilisateur POS renvoie vers l'URL /pos :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/5adbfc75-9f68-43d7-8b3e-41f62c69f191)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/5adbfc75-9f68-43d7-8b3e-41f62c69f191)
 
 La session /pos/session renvoie vers l'affichage côté client (voir après "Affichage client").
 L'affichage des dernières transactions permet d'assurer le SAV en cas de demande client.
@@ -41,7 +41,7 @@ Si le compte POS a été configuré ainsi dans l'ARM, il peut mauellement accéd
 
 Les produits accessibles au compte POS sont ceux qui sont configurés ainsi dans le product canal selector ( [Retail (POS logged seat)](Retail (POS logged seat)) ) :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/3532db97-ed8a-4b02-aca1-15952874db22)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/3532db97-ed8a-4b02-aca1-15952874db22)
 
 Les options activées dans la colonne "Retail (POS logged seat)" s'appliqueront exclusivement au compte POS.
 
@@ -60,13 +60,13 @@ Dans le cas où les articles que vous vendez disposent d'un code-barre (type ISB
 
 Au panier, le compte POS dispose d'une option pas affichée chez un utilisateur lambda : en allant directement sur la page panier (/cart), le compte POS dispose d'un champ permettant de renseigner un alias (manuellement, ou via une douchette USB).
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/b8fcbe75-20ad-4294-be26-d89b8d511f3b)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/b8fcbe75-20ad-4294-be26-d89b8d511f3b)
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/de6a9a3d-6dd5-48dd-97b3-c78cbcc65673)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/de6a9a3d-6dd5-48dd-97b3-c78cbcc65673)
 
 Après validation via "entrée" :__
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/15b641e4-62ea-4a6b-9971-853933aa7a91)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/15b641e4-62ea-4a6b-9971-853933aa7a91)
 
 Le champ "Alias" est viré pour permettre de scanner l'article suivant plus rapidement.
 
@@ -82,7 +82,7 @@ En cas d'erreur d'ajout panier, l'erreur sera notifiée et le champ Alias sera v
   - "Cannot order more than 2 of product: Cheap" (pour l'instant nous avons un bug avec ce contrôle, l'article est ajouté et le message est affiché après refresh panier, et la validation du panier renvoie vers /cart avec le message d'erreur)
 - Article à livraison interdite dans votre pays de destination : l'article est ajouté mais le message "La livraison n'est pas disponible dans votre pays pour certains articles de votre panier." est affiché en bas de panier
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/376b83c9-29fd-485a-8b5d-dccfa1f97813)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/376b83c9-29fd-485a-8b5d-dccfa1f97813)
 
 A noter qu'en cas d'ajout d'article prix libre (PWYW) via alias, le montant du produit sera le montant minimum configuré sur le produit.
 
@@ -90,7 +90,7 @@ A noter qu'en cas d'ajout d'article prix libre (PWYW) via alias, le montant du p
 
 Le compte POS dispose d'options supplémentaires :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/f5ee032d-80ab-4ce9-b7d8-69fa778071c4)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/f5ee032d-80ab-4ce9-b7d8-69fa778071c4)
 
 ### Livraison
 
@@ -102,15 +102,15 @@ Le formulaire d'adresse est optionnel, tant qu'un pays (selon de la boutique) es
 Par défaut, toute commande avec des articles ayant une contrepartie physique sont considérées comme en livraison.
 L'administrateur (ou toute autre personne avec accès en écriture à /admin/config ) peut activer cette option dans /admin/config/delivery (voir [delivery-management.md](delivery-management.md) ).
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/812301c5-99c6-4bcb-8976-474fd15c22d4)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/812301c5-99c6-4bcb-8976-474fd15c22d4)
 
 Si l'option "Allow voiding delivery fees on POS sale" est activée, cette option sera disponible sur la page /checkout pour le compte POS :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/02e50a5e-e60e-4648-85e8-78026d07b4cc)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/02e50a5e-e60e-4648-85e8-78026d07b4cc)
 
 En cas d'activation de l'option, une justification obligatoire sera à renseignée, pour suivi managérial :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/13d841c0-0d41-47b2-a25d-b5e3015b3873)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/13d841c0-0d41-47b2-a25d-b5e3015b3873)
 
 La somme (frais de port + tva liée) sera déduite à la page suivante (les prix de la page /checkout ne sont pas encore mis à jour en temps réel en fonction des options POS appliquée).
 
@@ -118,9 +118,9 @@ La somme (frais de port + tva liée) sera déduite à la page suivante (les prix
 
 Le compte POS permet d'utiliser :
 - les paiements classiques proposés sur le site qui ont été activés et sont éligibles ( [payment-management.md](payment-management.md ) pour l'ensemble des produits du panier 
-- le paiement Point of Sale, qui inclut tout paiement extérieur au système beBOP
+- le paiement Point of Sale, qui inclut tout paiement extérieur au système be-BOP
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/23185560-a3bf-4aab-8268-dd93fbbea47c)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/23185560-a3bf-4aab-8268-dd93fbbea47c)
 
 En cas d'activation de "Utiliser plusieurs modes de paiement", le choix du paiement n'est plus nécessaire (voir "Spécificités de la commande (/order)" ci-après).
 
@@ -134,11 +134,11 @@ En cas d'utilisation du mode de paiement "Point of sale" (paiement unique), le m
 Un compte POS peut choisir de facturer sans TVA à un client (par exemple, en France, à une clientèle professionnelle).
 ⚖️ Votre loi locale doit autoriser l'utilisation de cette option, dont vous êtes responsable.
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/7936ed4a-8d80-4e4d-bd1a-0090348236d8)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/7936ed4a-8d80-4e4d-bd1a-0090348236d8)
 
 En cas d'activation de l'option, une justification obligatoire sera à renseignée, pour suivi managérial :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/f5187336-265e-4b6b-ad2b-8a637b6e46de)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/f5187336-265e-4b6b-ad2b-8a637b6e46de)
 
 La somme (TVA globale) sera déduite à la page suivante (les prix de la page /checkout ne sont pas encore mis à jour en temps réel en fonction des options POS appliquée).
 
@@ -146,15 +146,15 @@ La somme (TVA globale) sera déduite à la page suivante (les prix de la page /c
 
 Un compte POS peut choisir d'appliquer une réduction à un client :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/d0b86f91-5b8b-4059-b909-a4b43cd55abb)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/d0b86f91-5b8b-4059-b909-a4b43cd55abb)
 
 En cas d'activation de l'option, une justification obligatoire sera à renseignée, pour suivi managérial :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/92e8c899-f1bd-4afa-ab0f-54e26180324f)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/92e8c899-f1bd-4afa-ab0f-54e26180324f)
 
 Il faut également choisir le type de réduction :
 - en %age (un message d'erreur sera affiché en cas d'entrée invalide, ou de réduction de 100%)
-- en montant correspondance à la devise principale du beBOP ( voir [currency-management.md](currency-management.md) ) (un message d'erreur sera affiché en cas d'entrée invalide, ou de réduction de correspondant au total de la commande)
+- en montant correspondance à la devise principale du be-BOP ( voir [currency-management.md](currency-management.md) ) (un message d'erreur sera affiché en cas d'entrée invalide, ou de réduction de correspondant au total de la commande)
 
 ⚖️ Votre loi locale doit autoriser l'utilisation de cette option et ses montants maximum, dont vous êtes responsable (par exemple : loi du prix unique en France)
 
@@ -196,7 +196,7 @@ La personne achetant en magasin n'aura évidemment pas le temps de consulter ces
 
 Si l'option "Display newsletter + commercial prospection option (disabled by default)" a été activée dans /admin/config (voir [KYC.md](KYC.md) ), ce formulaire sera affiché au /checkout :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/43b728b3-a201-443b-aaa3-d1ff81043819)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/43b728b3-a201-443b-aaa3-d1ff81043819)
 
 Ces options ne sont à activer que 1/ si le client vous laisse son adresse email ou sa npub Nostr 2/ vous lui posez la question et obtenez formellement son accord, en lui précisant les incidences de chaque option.
 Activer ces options sans obtenir l'aval explicite du client est de votre responsabilité, et la plupart du temps hors-la-loi (en plus d'être un manque de respect intégral sur la récolte de donnée personnelle de client à usage commercial sans son accord).
@@ -205,7 +205,7 @@ Activer ces options sans obtenir l'aval explicite du client est de votre respons
 
 ### Paiement Point of Sale
 
-En attendant la création de sous-types de paiement Point of Sale, le paiement Point of Sale inclut tous les paiements hors-beBOP :
+En attendant la création de sous-types de paiement Point of Sale, le paiement Point of Sale inclut tous les paiements hors-be-BOP :
 - l'utilisation d'un TPE physique (nous ne faisons pas encore de réconciliation automatique avec les TPE Sum UP, même si le compte du site et le compte du TPE sont partagés)
 - cash
 - chèque (pour les pays qui l'utilisent encore)
@@ -215,7 +215,7 @@ En attendant la création de sous-types de paiement Point of Sale, le paiement P
 
 Le compte POS dispose donc d'une validation (ou annulation) manuelle de la commande, avec un justificatif obligatoire :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/9df68cc3-aaac-42b4-9ecc-84a764faa97b)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/9df68cc3-aaac-42b4-9ecc-84a764faa97b)
 
 Le détail est stocké dans l'objet commande et doit permettre la réconciliation comptable plus facilement.
 
@@ -226,29 +226,29 @@ Ainsi, vous pouvez y indiquer :
 - "Sum Up : transaction XXX"
 
 Pour récupérer le n° de transaction Sum Up lors d'un paiement TPE physique, vous pouvez le trouver ici dans l'appli liée au TPE en consultant la transaction :
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/72e820aa-5782-4f5d-ab5a-ffbfc163cd55)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/72e820aa-5782-4f5d-ab5a-ffbfc163cd55)
 
 Une fois l'encaissement réalisé, vous pouvez renseigner et valider le champ et accéder à la facture :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/cd33e420-456a-43fb-bd00-dfd1628d3bb9)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/cd33e420-456a-43fb-bd00-dfd1628d3bb9)
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/e99ab058-f739-47f7-8082-0c5580c7fc08)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/e99ab058-f739-47f7-8082-0c5580c7fc08)
 
-💡 Si vous souhaitez exporter la facture en PDF, vous pouvez choisir en destination d'impression "Enregistrer au format PDF" (beBOP ne permet nativement pas la génération d'un document PDF pour le moment)
+💡 Si vous souhaitez exporter la facture en PDF, vous pouvez choisir en destination d'impression "Enregistrer au format PDF" (be-BOP ne permet nativement pas la génération d'un document PDF pour le moment)
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/92822dc4-291f-4acd-9bd2-726ef3cab469)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/92822dc4-291f-4acd-9bd2-726ef3cab469)
 
 💡 Si vous imprimez la facture et ne voulez pas des libellés liés au navigateur à l'impression, vous pouvez désactiver l'option "En-tête et pieds de page" dans les Options des paramètres d'impression
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/dd41316b-8d1a-4fff-8782-7752dc921609)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/dd41316b-8d1a-4fff-8782-7752dc921609)
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/f923a91b-fe26-42ad-9a17-a40dbf028f76)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/f923a91b-fe26-42ad-9a17-a40dbf028f76)
 
 ### Paiement multiple
 
 Si vous avez choisi cette option au /checkout :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/7c2fcf01-adf5-46d4-9188-1dc3a8e5b216)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/7c2fcf01-adf5-46d4-9188-1dc3a8e5b216)
 
 Vous pourrez utiliser la fonction "Envoyer un appel à paiement" pour scinder en plusieurs paiements.
 
@@ -256,25 +256,25 @@ Imaginons que sur cette commande, 30€ sont payés en carte bleue via TPE, 20�
 
 1/ Encaisser les 30€ en carte bleue via TPE puis valider le paiement
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/cff968d5-8256-44b4-ad76-9ae0f17dd207)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/cff968d5-8256-44b4-ad76-9ae0f17dd207)
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/f658ca90-4369-479a-a292-1f870f65023f)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/f658ca90-4369-479a-a292-1f870f65023f)
 
 Puis les 20€ en Lightning :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/e1e31ff7-1b16-4c03-a57b-f0955e652e7d)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/e1e31ff7-1b16-4c03-a57b-f0955e652e7d)
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/2d5b22b5-8f01-4391-aa1d-4df9d4694195)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/2d5b22b5-8f01-4391-aa1d-4df9d4694195)
 
 Et enfin, une fois la transaction validée, le reste en cash :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/51b9a402-11df-4ec7-90f0-1ae8beee4558)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/51b9a402-11df-4ec7-90f0-1ae8beee4558)
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/e5bf9423-deab-43a0-a0b3-1504cdd6153f)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/e5bf9423-deab-43a0-a0b3-1504cdd6153f)
 
 Une fois le montant complet atteint, la commande sera notée comme "validée"
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/331e9423-b47a-4bf2-b184-53c020ea0b6c)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/331e9423-b47a-4bf2-b184-53c020ea0b6c)
 
 ## Affichage côté client
 
@@ -290,70 +290,70 @@ Cela peut être au choix :
 
 Lorsqu'un panier est vide et qu'une commande n'est pas en attente, un écran d'attente et d'accueil sera affiché :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/fe5bec3d-295e-4cdf-8ebc-d79a6ce1e62e)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/fe5bec3d-295e-4cdf-8ebc-d79a6ce1e62e)
 
 Dès qu'un article est ajouté au panier depuis le poste de caisse, l'affichage se met à jour et montre son panier à la personne qui achète :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/1fd03a7b-e7bb-4820-9725-7c12115732d2)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/1fd03a7b-e7bb-4820-9725-7c12115732d2)
 
 ### Lors d'un paiement Lightning
 
 Le QR Code est affiché pour scan et paiement.
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/e1e2933b-876b-442c-8964-24bba4390488)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/e1e2933b-876b-442c-8964-24bba4390488)
 
 ### Lors d'un paiement Bitcoin on-chain
 
 (Nous déconseillons l'usage du paiement on-chain en magasin, sauf si vous avez un faible nombre de vérifications, ou si vous avez le temps d'occuper votre client 15 minutes avec un café le temps que les validations se fassent)
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/b7efdde9-8049-43d3-a1c4-83579908b8d7)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/b7efdde9-8049-43d3-a1c4-83579908b8d7)
 
 ### Lors d'un paiement carte bancaire Sum Up hors TPE
 
 Si votre TPE physique est en panne, votre client peut scanner un QR Code avec son téléphone pour avoir un formulaire de CB sur son propre appareil (ce qui est plus pratique que de lui faire taper ses informations de CB sur votre PC de caisse...).
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/15a3bd1a-26c9-4ac3-b10b-1bd713544157)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/15a3bd1a-26c9-4ac3-b10b-1bd713544157)
 
 ### Lorsqu'un paiement Lightning / Bitcoin on-chain / CB Sum Up par QR Code est validé
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/43f192a5-30ab-44bd-87f3-c60c1d5fad14)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/43f192a5-30ab-44bd-87f3-c60c1d5fad14)
 
-L'affichage revient ensuite vers l'affichage d'accueil / attente, avec le message de bienvenue et le logo du beBOP.
+L'affichage revient ensuite vers l'affichage d'accueil / attente, avec le message de bienvenue et le logo du be-BOP.
 
 ### Lorsqu'un paiement Point of Sale est réalisé
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/2e30fcac-32b1-4b11-ae6f-3f28e0a8abcd)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/2e30fcac-32b1-4b11-ae6f-3f28e0a8abcd)
 
 Une fois la commande validée manuellement en caisse :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/bece3fd9-e599-4a11-b4ab-5a1f62c6055c)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/bece3fd9-e599-4a11-b4ab-5a1f62c6055c)
 
 Et enfin, l'écran d'accueil / d'attente :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/9f155163-4d06-4d66-a2b8-f029a3d9884c)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/9f155163-4d06-4d66-a2b8-f029a3d9884c)
 
 ### En cas de paiement multiple en caisse :
 
 Tant qu'aucune saisie n'a été faite :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/f2800284-3858-4a42-a4d8-c86cce0b08e4)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/f2800284-3858-4a42-a4d8-c86cce0b08e4)
 
 Si j'effectue un premier paiement (Point of sale, pour cash) :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/806f8042-2fae-4c01-a3b8-f4e23123f0fb)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/806f8042-2fae-4c01-a3b8-f4e23123f0fb)
 
 Au lieu d'avoir la page de confirmation, on retourne sur la page avec le reste à payer qui a été mis à jour :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/f2472cdb-40a4-412f-a66e-39d9b80d7ba4)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/f2472cdb-40a4-412f-a66e-39d9b80d7ba4)
 
 Et continuer avec les paiements suivants (ici Lightning) :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/fdde5aad-cd65-4953-ae29-a46a79e018a7)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/fdde5aad-cd65-4953-ae29-a46a79e018a7)
 
 Une fois l'intégralité de la commande payée :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/50b230b7-a539-40f4-98ff-244ef46e0bb7)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/50b230b7-a539-40f4-98ff-244ef46e0bb7)
 
 Et enfin, l'écran d'accueil / d'attente :
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/9f155163-4d06-4d66-a2b8-f029a3d9884c)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/9f155163-4d06-4d66-a2b8-f029a3d9884c)

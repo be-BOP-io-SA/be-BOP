@@ -23,6 +23,7 @@
 		title: string;
 		shortDescription: string;
 		fullScreen: boolean;
+		displayRawContent?: boolean;
 		hideFromSEO?: boolean | undefined;
 		metas?: {
 			name: string;
@@ -30,6 +31,12 @@
 		}[];
 	};
 	export let products: CmsProduct[];
+	export let externalProducts: Array<
+		import('$lib/components/ProductWidget/ProductWidgetProduct').ProductWidgetProduct & {
+			externalUrl: string;
+			pictures: import('$lib/types/Picture').Picture[];
+		}
+	> = [];
 	export let pictures: CmsPicture[];
 	export let challenges: CmsChallenge[];
 	export let tokens: CmsTokens;
@@ -66,6 +73,7 @@
 {#if cmsPage.fullScreen}
 	<CmsDesign
 		{products}
+		{externalProducts}
 		{pictures}
 		{challenges}
 		{tokens}
@@ -83,7 +91,7 @@
 		{galleries}
 		{leaderboards}
 		{schedules}
-		class="body body-mainPlan"
+		class={cmsPage.displayRawContent ? '' : 'prose max-w-full body body-mainPlan'}
 	/>
 {:else}
 	<main class="mx-auto max-w-7xl px-6">
@@ -94,6 +102,7 @@
 		{/if}
 		<CmsDesign
 			{products}
+			{externalProducts}
 			{pictures}
 			{challenges}
 			{tokens}
@@ -111,7 +120,7 @@
 			{galleries}
 			{leaderboards}
 			{schedules}
-			class="body"
+			class={cmsPage.displayRawContent ? '' : 'prose max-w-full body'}
 		/>
 	</main>
 {/if}

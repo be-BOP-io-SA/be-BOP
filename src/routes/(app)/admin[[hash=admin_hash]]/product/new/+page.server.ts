@@ -1,15 +1,20 @@
 import { collections, withTransaction } from '$lib/server/database';
 import { generatePicture } from '$lib/server/picture';
+import {
+	getProductsWithStock,
+	validateStockReference,
+	cleanVariationLabels
+} from '$lib/server/product';
 import type { Actions } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { ObjectId } from 'mongodb';
-import { ORIGIN, S3_BUCKET } from '$env/static/private';
+import { ORIGIN, S3_BUCKET } from '$lib/server/env-config';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Product } from '$lib/types/Product';
 import { Kind } from 'nostr-tools';
 import { parsePriceAmount } from '$lib/types/Currency';
-import { s3ProductPrefix, s3client } from '$lib/server/s3';
+import { s3ProductPrefix, getS3Client } from '$lib/server/s3';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { productBaseSchema } from '../product-schema';
@@ -29,6 +34,7 @@ export const load = async ({ url }) => {
 		.find({})
 		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
 		.toArray();
+	const productsWithStock = await getProductsWithStock();
 	if (productId) {
 		const product = await collections.products.findOne({ _id: productId });
 
@@ -49,12 +55,14 @@ export const load = async ({ url }) => {
 				pictures,
 				digitalFiles,
 				tags,
+				productsWithStock,
 				currency: runtimeConfig.priceReferenceCurrency
 			};
 		}
 	}
 	return {
-		tags
+		tags,
+		productsWithStock
 	};
 };
 
@@ -109,32 +117,23 @@ export const actions: Actions = {
 		if (!parsed.free && !parsed.payWhatYouWant && parsed.priceAmount === '0') {
 			parsed.free = true;
 		}
-		const cleanedVariationLabels: {
-			names: Record<string, string>;
-			values: Record<string, Record<string, string>>;
-		} = {
-			names: {},
-			values: {}
-		};
-		for (const key in parsed.variationLabels?.names) {
-			const nameValue = parsed.variationLabels.names[key];
+		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
 
-			if (nameValue.trim() !== '') {
-				cleanedVariationLabels.names[key] = nameValue;
+		// Validate stock reference if provided
+		if (parsed.stockReferenceProductId) {
+			const validation = await validateStockReference(parsed.slug, parsed.stockReferenceProductId);
+
+			if (!validation.valid) {
+				console.warn(
+					`Stock reference validation failed: ` +
+						`product=${parsed.slug}, ` +
+						`reference=${parsed.stockReferenceProductId}, ` +
+						`reason=${validation.error}`
+				);
+				throw error(400, validation.error || 'Invalid stock reference');
 			}
 		}
-		for (const key in parsed.variationLabels?.values) {
-			const valueEntries = parsed.variationLabels.values[key];
-			cleanedVariationLabels.values[key] = {};
-			for (const valueKey in valueEntries) {
-				if (valueEntries[valueKey].trim() !== '') {
-					cleanedVariationLabels.values[key][valueKey] = valueEntries[valueKey];
-				}
-			}
-			if (Object.keys(cleanedVariationLabels.values[key]).length === 0) {
-				delete cleanedVariationLabels.values[key];
-			}
-		}
+
 		await generatePicture(parsed.pictureIds[0], {
 			productId: parsed.slug,
 			cb: async (session) => {
@@ -182,6 +181,11 @@ export const actions: Actions = {
 							requireSpecificDeliveryFee: parsed.requireSpecificDeliveryFee,
 							...(parsed.stock !== undefined && {
 								stock: { total: parsed.stock, available: parsed.stock, reserved: 0 }
+							}),
+							...(parsed.stockReferenceProductId && {
+								stockReference: {
+									productId: parsed.stockReferenceProductId
+								}
 							}),
 							...(parsed.depositPercentage !== undefined && {
 								deposit: {
@@ -336,32 +340,8 @@ export const actions: Actions = {
 			...variation,
 			price: Math.max(parsePriceAmount(variation.price, parsed.priceCurrency), 0)
 		}));
-		const cleanedVariationLabels: {
-			names: Record<string, string>;
-			values: Record<string, Record<string, string>>;
-		} = {
-			names: {},
-			values: {}
-		};
-		for (const key in parsed.variationLabels?.names) {
-			const nameValue = parsed.variationLabels.names[key];
+		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
 
-			if (nameValue.trim() !== '') {
-				cleanedVariationLabels.names[key] = nameValue;
-			}
-		}
-		for (const key in parsed.variationLabels?.values) {
-			const valueEntries = parsed.variationLabels.values[key];
-			cleanedVariationLabels.values[key] = {};
-			for (const valueKey in valueEntries) {
-				if (valueEntries[valueKey].trim() !== '') {
-					cleanedVariationLabels.values[key][valueKey] = valueEntries[valueKey];
-				}
-			}
-			if (Object.keys(cleanedVariationLabels.values[key]).length === 0) {
-				delete cleanedVariationLabels.values[key];
-			}
-		}
 		await withTransaction(async (session) => {
 			await collections.products.insertOne(
 				{
@@ -511,7 +491,7 @@ export const actions: Actions = {
 				};
 
 				insertedS3Keys.push(pictureToInsert.storage.original.key);
-				await s3client.send(
+				await getS3Client().send(
 					new CopyObjectCommand({
 						Bucket: S3_BUCKET,
 						CopySource: `/${S3_BUCKET}/${picture.storage.original.key}`,
@@ -522,7 +502,7 @@ export const actions: Actions = {
 				let formatIndex = 0;
 				for (const format of picture.storage.formats) {
 					insertedS3Keys.push(format.key);
-					await s3client.send(
+					await getS3Client().send(
 						new CopyObjectCommand({
 							Bucket: S3_BUCKET,
 							CopySource: `/${S3_BUCKET}/${format.key}`,
@@ -548,7 +528,7 @@ export const actions: Actions = {
 				};
 
 				insertedS3Keys.push(digitalFileToInsert.storage.key);
-				await s3client.send(
+				await getS3Client().send(
 					new CopyObjectCommand({
 						Bucket: S3_BUCKET,
 						CopySource: `/${S3_BUCKET}/${file.storage.key}`,
@@ -559,7 +539,7 @@ export const actions: Actions = {
 				await collections.digitalFiles.insertOne(digitalFileToInsert, { session });
 			}
 		}).catch((err) => {
-			s3client
+			getS3Client()
 				.send(
 					new DeleteObjectsCommand({
 						Bucket: S3_BUCKET,

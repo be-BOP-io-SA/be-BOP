@@ -22,15 +22,15 @@ Les contenus sont affichés de cette façon (ici, avec l'utilisation d'un tag [P
 
 /cart
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/394ac0e9-2b27-477f-b081-66dab57abb69)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/394ac0e9-2b27-477f-b081-66dab57abb69)
 
 /checkout
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/ecca6d51-10e5-448e-8df6-62481851ff08)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/ecca6d51-10e5-448e-8df6-62481851ff08)
 
 /order
 
-![image](https://github.com/B2Bitcoin/beBOP/assets/50206014/c1c82aae-4de2-484f-9187-31082bcf8ba4)
+![image](https://github.com/be-BOP-io-SA/be-BOP/assets/50206014/c1c82aae-4de2-484f-9187-31082bcf8ba4)
 
 Tous les contenus CMS peuvent être utilisés (slider, image de remerciement, formulaire de contact sur la page /checkout, etc).
 

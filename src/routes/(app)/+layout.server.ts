@@ -1,4 +1,4 @@
-import { ORIGIN } from '$env/static/private';
+import { ORIGIN } from '$lib/server/env-config';
 import { adminPrefix } from '$lib/server/admin.js';
 import { getCartFromDb } from '$lib/server/cart.js';
 import { cmsFromContent } from '$lib/server/cms.js';
@@ -17,8 +17,8 @@ import type { VatProfile } from '$lib/types/VatProfile.js';
 import { groupBy } from '$lib/utils/group-by';
 import { error, redirect } from '@sveltejs/kit';
 import type { PickDeep, SetRequired } from 'type-fest';
-import { UserIdentifier } from '$lib/types/UserIdentifier';
-import { Cart } from '$lib/types/Cart';
+import type { UserIdentifier } from '$lib/types/UserIdentifier';
+import type { Cart } from '$lib/types/Cart';
 import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 import { UNDERLYING_CURRENCY } from '$lib/types/Currency';
 import { isAlpha2CountryCode } from '$lib/types/Country';
@@ -97,6 +97,7 @@ export async function load(params) {
 							| 'name'
 							| 'price'
 							| 'shortDescription'
+							| 'tagIds'
 							| 'type'
 							| 'availableDate'
 							| 'shipping'
@@ -108,6 +109,7 @@ export async function load(params) {
 							| 'standalone'
 							| 'maxQuantityPerOrder'
 							| 'stock'
+							| 'stockReference'
 							| 'isTicket'
 							| 'vatProfileId'
 							| 'paymentMethods'
@@ -121,6 +123,7 @@ export async function load(params) {
 						shortDescription: {
 							$ifNull: [`$translations.${locals.language}.shortDescription`, '$shortDescription']
 						},
+						tagIds: 1,
 						type: 1,
 						shipping: 1,
 						availableDate: 1,
@@ -132,6 +135,7 @@ export async function load(params) {
 						standalone: 1,
 						maxQuantityPerOrder: 1,
 						stock: 1,
+						stockReference: 1,
 						vatProfileId: 1,
 						paymentMethods: 1,
 						'bookingSpec.slotMinutes': 1,
@@ -345,6 +349,7 @@ export async function load(params) {
 		logoPictureDark,
 		logo: runtimeConfig.logo,
 		footerLogoId: runtimeConfig.footerLogoId,
+		ticketLogoId: runtimeConfig.ticketLogoId,
 		footerPicture,
 		usersDarkDefaultTheme: runtimeConfig.usersDarkDefaultTheme,
 		employeesDarkefaulTheme: runtimeConfig.employeesDarkDefaultTheme,
