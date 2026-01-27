@@ -8,6 +8,7 @@ import { adminPrefix } from '$lib/server/admin';
 import { redirect } from '@sveltejs/kit';
 import { generatePicture } from '$lib/server/picture';
 import { CMSPage } from '$lib/types/CmsPage';
+import { generateId } from '$lib/utils/generateId';
 
 export async function load() {
 	const pictures = await collections.pictures
@@ -74,6 +75,15 @@ export const actions: Actions = {
 				categoryPictures: z.string().trim().min(1).max(500).array().min(1).optional()
 			})
 			.parse(json);
+		// Ensure all categories have a slug (backfill empty slugs from label)
+		if (parsed.categories) {
+			for (const category of parsed.categories) {
+				if (!category.slug) {
+					category.slug = generateId(category.label, true).toLowerCase();
+				}
+			}
+		}
+
 		const oldCategorySlug = new Set(
 			runtimeConfig.customerTouchInterface?.categories?.map((category) => category.slug) || []
 		);
