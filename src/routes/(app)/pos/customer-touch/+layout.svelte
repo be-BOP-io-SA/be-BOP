@@ -133,7 +133,7 @@
 			{/if}
 		</div>
 	</div>
-	<div class="flex-1 min-h-0 flex flex-col body-mainPlan">
+	<div class="flex-1 min-h-0 body-mainPlan">
 		<slot />
 	</div>
 </main>

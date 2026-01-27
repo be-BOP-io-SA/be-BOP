@@ -28,7 +28,7 @@
 	});
 </script>
 
-<div class="mx-auto max-w-7xl px-2 flex-1 min-h-0 flex flex-col overflow-hidden">
+<div class="mx-auto max-w-7xl px-2 h-full flex flex-col overflow-hidden">
 	<button
 		class="shrink-0 self-start text-gray-800 font-semibold text-lg flex items-center mb-4"
 		on:click={() => history.back()}
