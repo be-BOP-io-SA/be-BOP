@@ -61,6 +61,8 @@ export const load = async ({}) => {
 		posMidTicketTopBlankLines: runtimeConfig.posMidTicketTopBlankLines,
 		defaultEmptyPoolIcon: defaultConfig.posPoolEmptyIcon,
 		defaultFullPoolIcon: defaultConfig.posPoolOccupiedIcon,
+		posProductsPerPage: runtimeConfig.posProductsPerPage,
+		posMobileBreakpoint: runtimeConfig.posMobileBreakpoint,
 		posUseSelectForTags: runtimeConfig.posUseSelectForTags,
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
 		posDisplayOrderQrAfterPayment: runtimeConfig.posDisplayOrderQrAfterPayment,
@@ -105,6 +107,8 @@ export const actions: Actions = {
 			.object({
 				posDisplayOrderQrAfterPayment: z.boolean({ coerce: true }),
 				posPrefillTermOfUse: z.boolean({ coerce: true }),
+				posProductsPerPage: z.number({ coerce: true }).min(0).default(0),
+				posMobileBreakpoint: z.number({ coerce: true }).min(500).max(1500).default(1024),
 				posUseSelectForTags: z.boolean({ coerce: true }),
 				posTabGroups: z
 					.object({
@@ -181,6 +185,10 @@ export const actions: Actions = {
 		runtimeConfig.posPoolOccupiedIcon = posPoolOccupiedIcon;
 		await persistConfigElement('posMidTicketTopBlankLines', result.posMidTicketTopBlankLines);
 		runtimeConfig.posMidTicketTopBlankLines = result.posMidTicketTopBlankLines;
+		await persistConfigElement('posProductsPerPage', result.posProductsPerPage);
+		runtimeConfig.posProductsPerPage = result.posProductsPerPage;
+		await persistConfigElement('posMobileBreakpoint', result.posMobileBreakpoint);
+		runtimeConfig.posMobileBreakpoint = result.posMobileBreakpoint;
 		await persistConfigElement('posUseSelectForTags', result.posUseSelectForTags);
 		runtimeConfig.posUseSelectForTags = result.posUseSelectForTags;
 		await persistConfigElement('posQrCodeAfterPayment', posQrCodeAfterPayment);

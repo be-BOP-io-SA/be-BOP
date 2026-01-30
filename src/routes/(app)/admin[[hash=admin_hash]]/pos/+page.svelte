@@ -326,6 +326,33 @@
 		/>
 	</label>
 
+	<label class="form-label">
+		Products per page in POS Touch
+		<small class="text-gray-600">Set to 0 for automatic calculation based on screen size</small>
+		<input
+			type="number"
+			name="posProductsPerPage"
+			class="form-input"
+			min="0"
+			value={data.posProductsPerPage ?? 0}
+		/>
+	</label>
+
+	<label class="form-label">
+		Mobile breakpoint (px)
+		<small class="text-gray-600"
+			>Screen width below which mobile layout is used (500-1500, default: 1024)</small
+		>
+		<input
+			type="number"
+			name="posMobileBreakpoint"
+			class="form-input max-w-[10rem]"
+			min="500"
+			max="1500"
+			value={data.posMobileBreakpoint ?? 1024}
+		/>
+	</label>
+
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Tabs management

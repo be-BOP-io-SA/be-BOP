@@ -162,6 +162,7 @@ export const load = async ({ depends, locals, params }) => {
 	return {
 		orderTab,
 		tabSlug,
+		posMobileBreakpoint: runtimeConfig.posMobileBreakpoint ?? 1024,
 		sharesOrder: sharesOrderData,
 		availablePaymentMethods: methods,
 		paymentSubtypes: posSubtypes.map((s) => ({

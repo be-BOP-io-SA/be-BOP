@@ -170,6 +170,8 @@ export const load = async ({ locals, depends, params }) => {
 		posPoolOccupiedIcon: runtimeConfig.posPoolOccupiedIcon ?? defaultConfig.posPoolOccupiedIcon,
 		allOrderTabs: pojo(allOrderTabs),
 		tabSlug,
+		posProductsPerPage: runtimeConfig.posProductsPerPage ?? 0,
+		posMobileBreakpoint: runtimeConfig.posMobileBreakpoint ?? 1024,
 		posUseSelectForTags: runtimeConfig.posUseSelectForTags,
 		printTags: pojo(printTags),
 		tagGroups: tagGroupsData.groups,
