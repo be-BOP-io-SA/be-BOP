@@ -58,3 +58,48 @@
 .touchScreen-action-delete {
 	background-color: var(--touchScreen-action-delete-backgroundColor);
 }
+.touchScreen-product-cta h2 {
+	font-size: 24px !important;
+}
+
+.pos-mobile .touchScreen-product-cta h2 {
+	font-size: 14px !important;
+}
+
+/* Mobile panel toggle buttons: hidden by default, visible when .pos-mobile */
+.mobile-panel-toggle {
+	display: none;
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	background-color: #4a5568;
+	color: white;
+	padding: 1rem 0.5rem;
+	font-size: 1.5rem;
+	z-index: 10;
+	border: none;
+	cursor: pointer;
+}
+
+.pos-mobile .mobile-panel-toggle {
+	display: block;
+}
+
+.mobile-panel-toggle-left {
+	left: 0;
+	border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.mobile-panel-toggle-right {
+	right: 0;
+	border-radius: 0.5rem 0 0 0.5rem;
+}
+
+/* Line clamp for product names */
+.line-clamp-2 {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

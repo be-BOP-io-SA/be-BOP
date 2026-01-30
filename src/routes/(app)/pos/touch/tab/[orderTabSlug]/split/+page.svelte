@@ -11,6 +11,8 @@
 	import type { PaymentMethod } from '$lib/server/payment-methods';
 	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
+	import { onMount } from 'svelte';
+	import { swipe } from '$lib/utils/swipe';
 	import PosPaymentMethodSelector, {
 		type PaymentOption
 	} from '$lib/components/PosPaymentMethodSelector.svelte';
@@ -154,7 +156,32 @@
 	let rightPannel: 'menu' | 'split-items' | 'split-shares' =
 		modeParam === 'items' ? 'split-items' : modeParam === 'shares' ? 'split-shares' : 'menu';
 
+	let isMobile = false;
+	let isPortrait = false;
+	let mobilePanel: 'pool' | 'payment' = 'pool';
+
+	function checkMobileView() {
+		if (typeof window !== 'undefined') {
+			isMobile = window.innerWidth < data.posMobileBreakpoint;
+			isPortrait = isMobile && window.innerHeight > window.innerWidth;
+			if (!isMobile) {
+				mobilePanel = 'pool';
+			}
+		}
+	}
+
+	onMount(() => {
+		checkMobileView();
+		window.addEventListener('resize', checkMobileView);
+		return () => window.removeEventListener('resize', checkMobileView);
+	});
+
 	let fromCashInAll = false;
+	$: itemizeDisabled = !!data.sharesOrder?.payments.some(
+		(p) => p.splitMode === 'shares' && p.isPaid
+	);
+	$: showRightPanel =
+		!isMobile || (rightPannel === 'menu' ? !isPortrait : mobilePanel === 'payment');
 
 	$: if (isPoolFullyPaid && rightPannel === 'menu') {
 		rightPannel = 'split-items';
@@ -267,394 +294,475 @@
 	}
 </script>
 
-<div class="flex flex-col h-screen justify-between">
-	<main class="mb-auto flex-grow min-h-min overflow-y-auto">
-		<div class="grid grid-cols-2 gap-4 h-full">
-			<div class="touchScreen-ticket-menu flex flex-col justify-between p-3 h-full overflow-y-auto">
-				{#if poolTotals}
-					<div>
-						<h3 class="font-semibold text-3xl">{t('pos.split.pool')}</h3>
-						{#each tab.items as item, i}
-							{@const displayData = getItemDisplayData(
-								item,
-								i,
-								tabItemsPriceInfo,
-								item.originalQuantity ?? item.quantity
-							)}
-
-							<PosSplitItemRow {item} {...displayData} showInternalNote={false} controls="none" />
-						{/each}
-					</div>
-					<PosSplitTotalSection
-						totalExcl={poolTotals.excl}
-						totalIncl={tab.discount && tab.discount.percentage > 0
-							? poolTotals.incl * (1 - tab.discount.percentage / 100)
-							: poolTotals.incl}
-						currency={poolCurrency}
-						vatRates={poolVatRates}
-						totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
-							? poolTotals.incl
-							: undefined}
-						discountPercentage={tab.discount?.percentage}
-					/>
-				{:else if tab.items.length}
-					<div>
-						<h3 class="font-semibold text-3xl">
-							{t('pos.split.tabHeader', { slug: tab.slug })}
-						</h3>
-						{#each tab.items as item, i}
-							{@const remainingQty = item.quantity - (splitTabQuantities[i] || 0)}
-							{@const displayData = getItemDisplayData(item, i, tabItemsPriceInfo, remainingQty)}
-							{@const allMovedToCart = remainingQty === 0}
-
-							<PosSplitItemRow
-								{item}
-								{...displayData}
-								controls={rightPannel === 'split-items' && !isPoolFullyPaid
-									? 'move-to-cart'
-									: 'none'}
-								isComplete={allMovedToCart}
-								onMoveOne={() => moveOneToCart(i)}
-								onMoveAll={() => moveAllToCart(i)}
-							/>
-						{/each}
-					</div>
-					<PosSplitTotalSection
-						totalExcl={tabItemsPriceInfo.partialPrice}
-						totalIncl={tab.discount && tab.discount.percentage > 0
-							? tabItemsPriceInfo.partialPriceWithVat * (1 - tab.discount.percentage / 100)
-							: tabItemsPriceInfo.partialPriceWithVat}
-						currency={tabItemsPriceInfo.currency}
-						vatRates={tabItemsPriceInfo.vat.map((vat) => vat.rate)}
-						totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
-							? tabItemsPriceInfo.partialPriceWithVat
-							: undefined}
-						discountPercentage={tab.discount?.percentage}
-					/>
-				{:else}
-					<p>{t('cart.empty')}</p>
-				{/if}
-			</div>
-			<div
-				class="h-full {rightPannel === 'split-items'
-					? 'bg-blue-50'
-					: rightPannel === 'split-shares'
-					? 'bg-yellow-50'
-					: ''}"
-			>
-				{#if rightPannel === 'menu'}
-					<div class="flex flex-col h-full gap-4">
+<div
+	class="flex flex-col h-screen justify-between"
+	class:pos-mobile={isMobile}
+	use:swipe={{
+		enabled: isMobile && rightPannel !== 'menu',
+		onSwipeRight: () => mobilePanel === 'payment' && (mobilePanel = 'pool'),
+		onSwipeLeft: () => mobilePanel === 'pool' && (mobilePanel = 'payment')
+	}}
+>
+	<main class="mb-auto flex-grow min-h-0 overflow-y-auto">
+		<div
+			class="grid {isMobile && (rightPannel !== 'menu' || isPortrait)
+				? 'grid-cols-1'
+				: 'grid-cols-2'} grid-rows-[minmax(0,1fr)] gap-4 h-full"
+		>
+			{#if !isMobile || rightPannel === 'menu' || mobilePanel === 'pool'}
+				<div class="touchScreen-ticket-menu flex flex-col justify-between p-3 h-full relative">
+					{#if isMobile && rightPannel !== 'menu'}
 						<button
-							class="flex-1 bg-green-800 hover:bg-green-900 text-white font-bold py-2 px-4 text-6xl"
-							on:click={() => ((fromCashInAll = true), (rightPannel = 'split-shares'))}
+							class="mobile-panel-toggle mobile-panel-toggle-right"
+							on:click={() => (mobilePanel = 'payment')}
+							aria-label="Show payment"
 						>
-							{t('pos.split.cashIn')}<br />({t('pos.split.all')})
+							&lt;
 						</button>
-						<button
-							class="flex-1 bg-yellow-800 hover:bg-yellow-900 text-white font-bold py-2 px-4 text-6xl"
-							on:click={() => ((fromCashInAll = false), (rightPannel = 'split-shares'))}
-						>
-							{t('pos.split.split')}<br />({t('pos.split.shares')})
-						</button>
-						<button
-							class="flex-1 py-2 px-4 text-6xl font-bold disabled:cursor-not-allowed disabled:text-gray-700 {data.sharesOrder?.payments.some(
-								(p) => p.splitMode === 'shares' && p.isPaid
-							)
-								? 'bg-gray-400'
-								: 'bg-blue-800 hover:bg-blue-900 text-white'}"
-							on:click={() => (rightPannel = 'split-items')}
-							disabled={data.sharesOrder?.payments.some(
-								(p) => p.splitMode === 'shares' && p.isPaid
-							)}
-						>
-							{t('pos.split.split')}<br />({t('pos.split.itemize')})
-							{#if data.sharesOrder?.payments.some((p) => p.splitMode === 'shares' && p.isPaid)}
-								<div class="text-sm mt-2" style="color: #864D0F;">
-									<span class="text-2xl">⚠️</span>
-									{t('pos.split.completeSharesFirst')}
-								</div>
-							{/if}
-						</button>
-					</div>
-				{:else if rightPannel === 'split-items'}
-					<div
-						class="touchScreen-ticket-menu flex flex-col justify-between p-3 h-full overflow-y-auto"
-					>
-						<div>
-							<h3 class="font-semibold text-3xl">
-								{isPoolFullyPaid
-									? t('pos.split.poolRemainingToPay')
-									: t('pos.split.tabToPayNow', { slug: tab.slug })}
-							</h3>
-							{#each splitTabItems as item, i}
-								{@const qtyInCart = splitTabQuantities[i] || 0}
-								{#if isPoolFullyPaid || qtyInCart > 0}
-									{@const displayData = getItemDisplayData(
-										item,
-										i,
-										splitTabPriceInfo,
-										isPoolFullyPaid ? 0 : qtyInCart
-									)}
+					{/if}
+					{#if poolTotals}
+						<div class="flex-1 overflow-y-auto min-h-0">
+							<h3 class="font-semibold text-3xl">{t('pos.split.pool')}</h3>
+							{#each tab.items as item, i}
+								{@const displayData = getItemDisplayData(
+									item,
+									i,
+									tabItemsPriceInfo,
+									item.originalQuantity ?? item.quantity
+								)}
 
-									<PosSplitItemRow
-										{item}
-										{...displayData}
-										controls={isPoolFullyPaid ? 'none' : 'return-to-pool'}
-										isComplete={isPoolFullyPaid}
-										onReturnOne={() => returnOneToPool(i)}
-										onReturnAll={() => returnAllToPool(i)}
-									/>
-								{/if}
+								<PosSplitItemRow {item} {...displayData} showInternalNote={false} controls="none" />
 							{/each}
 						</div>
-						<PosSplitTotalSection
-							totalExcl={splitTabPriceInfo.partialPrice}
-							totalIncl={splitTabPriceInfo.partialPriceWithVat}
-							currency={splitTabPriceInfo.currency}
-							vatRates={splitTabPriceInfo.vat.map((vat) => vat.rate)}
-						/>
+						<div class="shrink-0">
+							<PosSplitTotalSection
+								totalExcl={poolTotals.excl}
+								totalIncl={tab.discount && tab.discount.percentage > 0
+									? poolTotals.incl * (1 - tab.discount.percentage / 100)
+									: poolTotals.incl}
+								currency={poolCurrency}
+								vatRates={poolVatRates}
+								totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
+									? poolTotals.incl
+									: undefined}
+								discountPercentage={tab.discount?.percentage}
+							/>
+						</div>
+					{:else if tab.items.length}
+						<div class="flex-1 overflow-y-auto min-h-0">
+							<h3 class="font-semibold text-3xl">
+								{t('pos.split.tabHeader', { slug: tab.slug })}
+							</h3>
+							{#each tab.items as item, i}
+								{@const remainingQty = item.quantity - (splitTabQuantities[i] || 0)}
+								{@const displayData = getItemDisplayData(item, i, tabItemsPriceInfo, remainingQty)}
+								{@const allMovedToCart = remainingQty === 0}
 
-						<!-- Payment method selector (hidden when pool is fully paid) -->
-						{#if !isPoolFullyPaid}
-							<div class="mt-6">
+								<PosSplitItemRow
+									{item}
+									{...displayData}
+									controls={rightPannel === 'split-items' && !isPoolFullyPaid
+										? 'move-to-cart'
+										: 'none'}
+									isComplete={allMovedToCart}
+									onMoveOne={() => moveOneToCart(i)}
+									onMoveAll={() => moveAllToCart(i)}
+								/>
+							{/each}
+						</div>
+						<div class="shrink-0">
+							<PosSplitTotalSection
+								totalExcl={tabItemsPriceInfo.partialPrice}
+								totalIncl={tab.discount && tab.discount.percentage > 0
+									? tabItemsPriceInfo.partialPriceWithVat * (1 - tab.discount.percentage / 100)
+									: tabItemsPriceInfo.partialPriceWithVat}
+								currency={tabItemsPriceInfo.currency}
+								vatRates={tabItemsPriceInfo.vat.map((vat) => vat.rate)}
+								totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
+									? tabItemsPriceInfo.partialPriceWithVat
+									: undefined}
+								discountPercentage={tab.discount?.percentage}
+							/>
+						</div>
+					{:else}
+						<p>{t('cart.empty')}</p>
+					{/if}
+				</div>
+			{/if}
+			{#if showRightPanel}
+				<div
+					class="h-full relative {rightPannel === 'split-items'
+						? 'bg-blue-50'
+						: rightPannel === 'split-shares'
+						? 'bg-yellow-50'
+						: ''}"
+				>
+					{#if isMobile && rightPannel !== 'menu'}
+						<button
+							class="mobile-panel-toggle mobile-panel-toggle-left"
+							on:click={() => (mobilePanel = 'pool')}
+							aria-label="Show pool"
+						>
+							&gt;
+						</button>
+					{/if}
+					{#if rightPannel === 'menu'}
+						<div
+							class="flex {isPortrait ? 'flex-row' : 'flex-col h-full'} {isMobile
+								? 'gap-2'
+								: 'gap-4'}"
+						>
+							<button
+								class="flex-1 bg-green-800 hover:bg-green-900 text-white font-bold py-2 px-4 {isPortrait
+									? 'text-xl'
+									: 'text-6xl'}"
+								on:click={() => ((fromCashInAll = true), (rightPannel = 'split-shares'))}
+							>
+								{t('pos.split.cashIn')}<br />({t('pos.split.all')})
+							</button>
+							<button
+								class="flex-1 bg-yellow-800 hover:bg-yellow-900 text-white font-bold py-2 px-4 {isPortrait
+									? 'text-xl'
+									: 'text-6xl'}"
+								on:click={() => ((fromCashInAll = false), (rightPannel = 'split-shares'))}
+							>
+								{t('pos.split.split')}<br />({t('pos.split.shares')})
+							</button>
+							<button
+								class="flex-1 py-2 px-4 {isPortrait
+									? 'text-xl'
+									: 'text-6xl'} font-bold disabled:cursor-not-allowed disabled:text-gray-700 {itemizeDisabled
+									? 'bg-gray-400'
+									: 'bg-blue-800 hover:bg-blue-900 text-white'}"
+								on:click={() => (rightPannel = 'split-items')}
+								disabled={itemizeDisabled}
+							>
+								{t('pos.split.split')}<br />({t('pos.split.itemize')})
+								{#if itemizeDisabled}
+									<div class="text-sm mt-2" style="color: #864D0F;">
+										<span class="text-2xl">⚠️</span>
+										{t('pos.split.completeSharesFirst')}
+									</div>
+								{/if}
+							</button>
+						</div>
+					{:else if rightPannel === 'split-items'}
+						<div
+							class="touchScreen-ticket-menu flex flex-col justify-between p-3 h-full overflow-y-auto"
+						>
+							<div>
+								<h3 class="font-semibold text-3xl">
+									{isPoolFullyPaid
+										? t('pos.split.poolRemainingToPay')
+										: t('pos.split.tabToPayNow', { slug: tab.slug })}
+								</h3>
+								{#each splitTabItems as item, i}
+									{@const qtyInCart = splitTabQuantities[i] || 0}
+									{#if isPoolFullyPaid || qtyInCart > 0}
+										{@const displayData = getItemDisplayData(
+											item,
+											i,
+											splitTabPriceInfo,
+											isPoolFullyPaid ? 0 : qtyInCart
+										)}
+
+										<PosSplitItemRow
+											{item}
+											{...displayData}
+											controls={isPoolFullyPaid ? 'none' : 'return-to-pool'}
+											isComplete={isPoolFullyPaid}
+											onReturnOne={() => returnOneToPool(i)}
+											onReturnAll={() => returnAllToPool(i)}
+										/>
+									{/if}
+								{/each}
+							</div>
+							<PosSplitTotalSection
+								totalExcl={splitTabPriceInfo.partialPrice}
+								totalIncl={splitTabPriceInfo.partialPriceWithVat}
+								currency={splitTabPriceInfo.currency}
+								vatRates={splitTabPriceInfo.vat.map((vat) => vat.rate)}
+							/>
+
+							<!-- Payment method selector (hidden when pool is fully paid) -->
+							{#if !isPoolFullyPaid}
+								<div class="mt-6">
+									<PosPaymentMethodSelector
+										{paymentOptions}
+										bind:selectedIndex={selectedPaymentIndex}
+									/>
+								</div>
+							{/if}
+						</div>
+					{:else if rightPannel === 'split-shares'}
+						<div class="flex flex-col h-full gap-4 p-4 overflow-y-auto">
+							{#if !data.sharesOrder?.isFullyPaid}
 								<PosPaymentMethodSelector
 									{paymentOptions}
 									bind:selectedIndex={selectedPaymentIndex}
 								/>
-							</div>
-						{/if}
-					</div>
-				{:else if rightPannel === 'split-shares'}
-					<div class="flex flex-col h-full gap-4 p-4 overflow-y-auto">
-						{#if !data.sharesOrder?.isFullyPaid}
-							<PosPaymentMethodSelector
-								{paymentOptions}
-								bind:selectedIndex={selectedPaymentIndex}
-							/>
 
-							<div class="grid grid-cols-3 gap-3">
-								{#each Array.from({ length: POS_SPLIT_SHARES_MAX_NUMS }, (_, i) => i + 1) as num}
-									<form
-										method="POST"
-										action="?/checkoutTabPartial"
-										use:enhance={handlePaymentSubmit}
-									>
-										<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
-										{#if selectedPayment?.subtype}
-											<input type="hidden" name="subtype" value={selectedPayment.subtype} />
-										{/if}
-										{#if num === 1}
-											<input type="hidden" name="mode" value="custom-amount" />
-											<input
-												type="hidden"
-												name="customAmount"
-												value={data.sharesOrder?._id
-													? data.sharesOrder.remainingToPay
-													: tabItemsPriceInfo.partialPriceWithVat}
-											/>
-										{:else}
-											<input type="hidden" name="mode" value="equal" />
-											<input type="hidden" name="shares" value={num} />
-										{/if}
-										<button
-											type="submit"
-											disabled={submitting}
-											class="{num === 1 && fromCashInAll
-												? 'bg-green-800'
-												: 'bg-yellow-800'} text-white font-bold text-4xl p-4 rounded w-full disabled:opacity-50"
+								<div class="grid grid-cols-3 gap-3">
+									{#each Array.from({ length: POS_SPLIT_SHARES_MAX_NUMS }, (_, i) => i + 1) as num}
+										<form
+											method="POST"
+											action="?/checkoutTabPartial"
+											use:enhance={handlePaymentSubmit}
 										>
-											{num}
-										</button>
-									</form>
-								{/each}
-							</div>
+											<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
+											{#if selectedPayment?.subtype}
+												<input type="hidden" name="subtype" value={selectedPayment.subtype} />
+											{/if}
+											{#if num === 1}
+												<input type="hidden" name="mode" value="custom-amount" />
+												<input
+													type="hidden"
+													name="customAmount"
+													value={data.sharesOrder?._id
+														? data.sharesOrder.remainingToPay
+														: tabItemsPriceInfo.partialPriceWithVat}
+												/>
+											{:else}
+												<input type="hidden" name="mode" value="equal" />
+												<input type="hidden" name="shares" value={num} />
+											{/if}
+											<button
+												type="submit"
+												disabled={submitting}
+												class="{num === 1 && fromCashInAll
+													? 'bg-green-800'
+													: 'bg-yellow-800'} text-white font-bold text-4xl p-4 rounded w-full disabled:opacity-50"
+											>
+												{num}
+											</button>
+										</form>
+									{/each}
+								</div>
 
-							<form method="POST" action="?/checkoutTabPartial" use:enhance={handlePaymentSubmit}>
-								<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
-								{#if selectedPayment?.subtype}
-									<input type="hidden" name="subtype" value={selectedPayment.subtype} />
-								{/if}
-								<input type="hidden" name="mode" value="custom-amount" />
-								<input
-									type="hidden"
-									name="customAmount"
-									value={data.sharesOrder?._id
-										? data.sharesOrder.remainingToPay
-										: originalTabTotalWithVat -
-										  toCurrency(
-												UNDERLYING_CURRENCY,
-												data.sharesOrder?.totalAlreadyPaid ?? 0,
-												poolCurrency
-										  )}
-								/>
+								<form method="POST" action="?/checkoutTabPartial" use:enhance={handlePaymentSubmit}>
+									<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
+									{#if selectedPayment?.subtype}
+										<input type="hidden" name="subtype" value={selectedPayment.subtype} />
+									{/if}
+									<input type="hidden" name="mode" value="custom-amount" />
+									<input
+										type="hidden"
+										name="customAmount"
+										value={data.sharesOrder?._id
+											? data.sharesOrder.remainingToPay
+											: originalTabTotalWithVat -
+											  toCurrency(
+													UNDERLYING_CURRENCY,
+													data.sharesOrder?.totalAlreadyPaid ?? 0,
+													poolCurrency
+											  )}
+									/>
+									<button
+										type="submit"
+										disabled={submitting}
+										class="w-full bg-green-800 text-white font-bold py-4 text-3xl rounded disabled:opacity-50"
+									>
+										{t('pos.split.payRemaining') || 'Pay Remaining'}
+									</button>
+								</form>
+
 								<button
-									type="submit"
-									disabled={submitting}
-									class="w-full bg-green-800 text-white font-bold py-4 text-3xl rounded disabled:opacity-50"
+									class="w-full bg-yellow-800 text-white font-bold py-4 text-3xl rounded"
+									on:click={() => (showCustomShares = !showCustomShares)}
 								>
-									{t('pos.split.payRemaining') || 'Pay Remaining'}
+									{t('pos.split.enterNumberOfParts')}
 								</button>
-							</form>
 
-							<button
-								class="w-full bg-yellow-800 text-white font-bold py-4 text-3xl rounded"
-								on:click={() => (showCustomShares = !showCustomShares)}
-							>
-								{t('pos.split.enterNumberOfParts')}
-							</button>
-
-							{#if showCustomShares}
-								<div class="flex gap-2">
-									<input
-										type="number"
-										bind:value={sharesInput}
-										min="2"
-										class="flex-1 text-3xl p-2 border rounded"
-									/>
-									<form
-										method="POST"
-										action="?/checkoutTabPartial"
-										use:enhance={handlePaymentSubmit}
-										on:submit={() => (showCustomShares = false)}
-									>
-										<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
-										{#if selectedPayment?.subtype}
-											<input type="hidden" name="subtype" value={selectedPayment.subtype} />
-										{/if}
-										<input type="hidden" name="mode" value="equal" />
-										<input type="hidden" name="shares" bind:value={sharesInput} />
-										<button
-											type="submit"
-											disabled={submitting}
-											class="bg-green-800 text-white px-8 text-3xl rounded disabled:opacity-50"
+								{#if showCustomShares}
+									<div class="flex gap-2">
+										<input
+											type="number"
+											bind:value={sharesInput}
+											min="2"
+											class="flex-1 text-3xl p-2 border rounded"
+										/>
+										<form
+											method="POST"
+											action="?/checkoutTabPartial"
+											use:enhance={handlePaymentSubmit}
+											on:submit={() => (showCustomShares = false)}
 										>
-											{t('pos.split.ok')}
-										</button>
-									</form>
-								</div>
+											<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
+											{#if selectedPayment?.subtype}
+												<input type="hidden" name="subtype" value={selectedPayment.subtype} />
+											{/if}
+											<input type="hidden" name="mode" value="equal" />
+											<input type="hidden" name="shares" bind:value={sharesInput} />
+											<button
+												type="submit"
+												disabled={submitting}
+												class="bg-green-800 text-white px-8 text-3xl rounded disabled:opacity-50"
+											>
+												{t('pos.split.ok')}
+											</button>
+										</form>
+									</div>
+								{/if}
+
+								<button
+									class="w-full bg-yellow-800 text-white font-bold py-4 text-3xl rounded"
+									on:click={() => (showCustomAmount = !showCustomAmount)}
+								>
+									{t('pos.split.manualAmount')}
+								</button>
+
+								{#if showCustomAmount}
+									<div class="flex gap-2">
+										<input
+											type="number"
+											bind:value={customAmountInput}
+											min="0"
+											max={tabItemsPriceInfo.partialPriceWithVat}
+											step="0.01"
+											class="flex-1 text-3xl p-2 border rounded"
+										/>
+										<form
+											method="POST"
+											action="?/checkoutTabPartial"
+											use:enhance={handlePaymentSubmit}
+											on:submit={() => (showCustomAmount = false)}
+										>
+											<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
+											{#if selectedPayment?.subtype}
+												<input type="hidden" name="subtype" value={selectedPayment.subtype} />
+											{/if}
+											<input type="hidden" name="mode" value="custom-amount" />
+											<input type="hidden" name="customAmount" bind:value={customAmountInput} />
+											<button
+												type="submit"
+												disabled={submitting}
+												class="bg-green-800 text-white px-8 text-3xl rounded disabled:opacity-50"
+											>
+												{t('pos.split.ok')}
+											</button>
+										</form>
+									</div>
+								{/if}
 							{/if}
 
-							<button
-								class="w-full bg-yellow-800 text-white font-bold py-4 text-3xl rounded"
-								on:click={() => (showCustomAmount = !showCustomAmount)}
-							>
-								{t('pos.split.manualAmount')}
-							</button>
-
-							{#if showCustomAmount}
-								<div class="flex gap-2">
-									<input
-										type="number"
-										bind:value={customAmountInput}
-										min="0"
-										max={tabItemsPriceInfo.partialPriceWithVat}
-										step="0.01"
-										class="flex-1 text-3xl p-2 border rounded"
-									/>
-									<form
-										method="POST"
-										action="?/checkoutTabPartial"
-										use:enhance={handlePaymentSubmit}
-										on:submit={() => (showCustomAmount = false)}
-									>
-										<input type="hidden" name="paymentMethod" value={selectedPayment?.method} />
-										{#if selectedPayment?.subtype}
-											<input type="hidden" name="subtype" value={selectedPayment.subtype} />
-										{/if}
-										<input type="hidden" name="mode" value="custom-amount" />
-										<input type="hidden" name="customAmount" bind:value={customAmountInput} />
-										<button
-											type="submit"
-											disabled={submitting}
-											class="bg-green-800 text-white px-8 text-3xl rounded disabled:opacity-50"
-										>
-											{t('pos.split.ok')}
-										</button>
-									</form>
-								</div>
-							{/if}
-						{/if}
-
-						{#if data.sharesOrder}
-							<div class="bg-gray-100 p-6 rounded-lg space-y-3">
-								<div class="text-3xl font-semibold">{t('pos.split.totalAlreadyPaid')}</div>
-								{#if tab.discount && tab.discount.percentage > 0}
-									<!-- Show strikethrough undiscounted price -->
-									<div class="text-3xl font-bold line-through text-gray-500">
+							{#if data.sharesOrder}
+								<div class="bg-gray-100 p-6 rounded-lg space-y-3">
+									<div class="text-3xl font-semibold">{t('pos.split.totalAlreadyPaid')}</div>
+									{#if tab.discount && tab.discount.percentage > 0}
+										<!-- Show strikethrough undiscounted price -->
+										<div class="text-3xl font-bold line-through text-gray-500">
+											<PriceTag
+												amount={originalTabTotalWithVat}
+												currency={UNDERLYING_CURRENCY}
+												main
+											/>
+										</div>
+									{/if}
+									<div class="text-4xl font-bold">
 										<PriceTag
-											amount={originalTabTotalWithVat}
-											currency={UNDERLYING_CURRENCY}
+											amount={data.sharesOrder.totalAlreadyPaid}
+											currency={data.sharesOrder.currency}
 											main
 										/>
 									</div>
-								{/if}
-								<div class="text-4xl font-bold">
-									<PriceTag
-										amount={data.sharesOrder.totalAlreadyPaid}
-										currency={data.sharesOrder.currency}
-										main
-									/>
+
+									<div class="border-t-2 border-gray-300 my-3"></div>
+
+									{#if data.sharesOrder.isFullyPaid}
+										<div class="text-4xl font-bold text-green-600">{t('pos.split.allPaid')} ✅</div>
+									{:else}
+										{@const remaining =
+											data.sharesOrder.remainingToPay ??
+											originalTabTotalWithVat -
+												toCurrency(
+													UNDERLYING_CURRENCY,
+													data.sharesOrder.totalAlreadyPaid,
+													data.sharesOrder.currency
+												)}
+										<div class="text-3xl font-semibold">{t('pos.split.remainingToPay')}</div>
+										<div class="text-4xl font-bold text-red-600">
+											<PriceTag
+												amount={remaining}
+												currency={data.sharesOrder.remainingToPay !== null
+													? data.sharesOrder.currency
+													: UNDERLYING_CURRENCY}
+												main
+											/>
+										</div>
+									{/if}
 								</div>
+							{/if}
 
-								<div class="border-t-2 border-gray-300 my-3"></div>
+							{#if data.sharesOrder?.payments && data.sharesOrder.payments.length > 0}
+								{@const itemsPayments = data.sharesOrder.payments.filter(
+									(p) => p.splitMode === 'items'
+								)}
+								{@const sharesPayments = data.sharesOrder.payments.filter(
+									(p) => p.splitMode === 'shares'
+								)}
 
-								{#if data.sharesOrder.isFullyPaid}
-									<div class="text-4xl font-bold text-green-600">{t('pos.split.allPaid')} ✅</div>
-								{:else}
-									{@const remaining =
-										data.sharesOrder.remainingToPay ??
-										originalTabTotalWithVat -
-											toCurrency(
-												UNDERLYING_CURRENCY,
-												data.sharesOrder.totalAlreadyPaid,
-												data.sharesOrder.currency
-											)}
-									<div class="text-3xl font-semibold">{t('pos.split.remainingToPay')}</div>
-									<div class="text-4xl font-bold text-red-600">
-										<PriceTag
-											amount={remaining}
-											currency={data.sharesOrder.remainingToPay !== null
-												? data.sharesOrder.currency
-												: UNDERLYING_CURRENCY}
-											main
-										/>
-									</div>
-								{/if}
-							</div>
-						{/if}
+								<PosPaymentsList
+									payments={itemsPayments}
+									title="Split by items"
+									bgClass="bg-white border-2 border-blue-300"
+									returnTo={`/pos/touch/tab/${tabSlug}/split?mode=shares`}
+								/>
 
-						{#if data.sharesOrder?.payments && data.sharesOrder.payments.length > 0}
-							{@const itemsPayments = data.sharesOrder.payments.filter(
-								(p) => p.splitMode === 'items'
-							)}
-							{@const sharesPayments = data.sharesOrder.payments.filter(
-								(p) => p.splitMode === 'shares'
-							)}
-
-							<PosPaymentsList
-								payments={itemsPayments}
-								title="Split by items"
-								bgClass="bg-white border-2 border-blue-300"
-								returnTo={`/pos/touch/tab/${tabSlug}/split?mode=shares`}
-							/>
-
-							<PosPaymentsList
-								payments={sharesPayments}
-								title="Split by shares"
-								bgClass="bg-gray-100"
-								returnTo={`/pos/touch/tab/${tabSlug}/split?mode=shares`}
-							/>
-						{/if}
-					</div>
-				{/if}
-			</div>
+								<PosPaymentsList
+									payments={sharesPayments}
+									title="Split by shares"
+									bgClass="bg-gray-100"
+									returnTo={`/pos/touch/tab/${tabSlug}/split?mode=shares`}
+								/>
+							{/if}
+						</div>
+					{/if}
+				</div>
+			{/if}
 		</div>
 	</main>
+	{#if isPortrait && rightPannel === 'menu'}
+		<div class="shrink-0 px-2 py-1">
+			<div class="flex flex-row gap-2">
+				<button
+					class="flex-1 bg-green-800 hover:bg-green-900 text-white font-bold py-2 px-4 text-xl"
+					on:click={() => (
+						(fromCashInAll = true), (rightPannel = 'split-shares'), (mobilePanel = 'payment')
+					)}
+				>
+					{t('pos.split.cashIn')}<br />({t('pos.split.all')})
+				</button>
+				<button
+					class="flex-1 bg-yellow-800 hover:bg-yellow-900 text-white font-bold py-2 px-4 text-xl"
+					on:click={() => (
+						(fromCashInAll = false), (rightPannel = 'split-shares'), (mobilePanel = 'payment')
+					)}
+				>
+					{t('pos.split.split')}<br />({t('pos.split.shares')})
+				</button>
+				<button
+					class="flex-1 py-2 px-4 text-xl font-bold disabled:cursor-not-allowed disabled:text-gray-700 {itemizeDisabled
+						? 'bg-gray-400'
+						: 'bg-blue-800 hover:bg-blue-900 text-white'}"
+					on:click={() => (rightPannel = 'split-items')}
+					disabled={itemizeDisabled}
+				>
+					{t('pos.split.split')}<br />({t('pos.split.itemize')})
+				</button>
+			</div>
+		</div>
+	{/if}
 	<footer class="shrink-0">
-		<div class="grid grid-cols-2 gap-4 mt-2">
+		<div
+			class="grid {isMobile && rightPannel !== 'menu' ? 'grid-cols-1' : 'grid-cols-2'} {isMobile
+				? 'gap-2 mt-1'
+				: 'gap-4 mt-2'}"
+		>
 			{#if isPoolFullyPaid}
 				<button
-					class="bg-blue-800 hover:bg-blue-900 uppercase text-3xl text-white p-4 text-center"
+					class="bg-blue-800 hover:bg-blue-900 uppercase {isMobile
+						? 'text-xl p-2'
+						: 'text-3xl p-4'} text-white text-center"
 					on:click={handlePrintGlobalTicket}
 				>
 					{t('pos.split.globalTicket')}
@@ -662,27 +770,35 @@
 				<form method="POST" action="?/closePool" use:enhance>
 					<button
 						type="submit"
-						class="bg-green-800 hover:bg-green-900 uppercase text-3xl text-white p-4 text-center w-full"
+						class="bg-green-800 hover:bg-green-900 uppercase {isMobile
+							? 'text-xl p-2'
+							: 'text-3xl p-4'} text-white text-center w-full"
 					>
 						{t('pos.split.closePool')}
 					</button>
 				</form>
 			{:else if rightPannel === 'menu'}
 				<a
-					class="touchScreen-action-cancel uppercase text-3xl text-white p-4 text-center"
+					class="touchScreen-action-cancel uppercase {isMobile
+						? 'text-xl p-2'
+						: 'text-3xl p-4'} text-white text-center"
 					href="/pos/touch/tab/{tabSlug}"
 				>
 					{t('pos.split.return')}
 				</a>
 				<button
-					class="bg-green-800 hover:bg-green-900 uppercase text-3xl text-white p-4 text-center"
+					class="bg-green-800 hover:bg-green-900 uppercase {isMobile
+						? 'text-xl p-2'
+						: 'text-3xl p-4'} text-white text-center"
 					on:click={handlePrintGlobalTicket}
 				>
 					{t('pos.split.globalTicket')}
 				</button>
 			{:else}
 				<button
-					class="touchScreen-action-cancel uppercase text-3xl text-white p-4 text-center"
+					class="touchScreen-action-cancel uppercase {isMobile
+						? 'text-xl p-2'
+						: 'text-3xl p-4'} text-white text-center"
 					on:click={() => (rightPannel = 'menu')}
 				>
 					{t('pos.split.return')}
@@ -702,8 +818,10 @@
 					{/if}
 					<button
 						type="submit"
-						class="uppercase text-3xl p-4 text-center w-full {splitTabPriceInfo.partialPriceWithVat >
-							0 || selectedPayment?.method === 'free'
+						class="uppercase {isMobile
+							? 'text-xl p-2'
+							: 'text-3xl p-4'} text-center w-full {splitTabPriceInfo.partialPriceWithVat > 0 ||
+						selectedPayment?.method === 'free'
 							? 'touchScreen-action-cta'
 							: 'bg-gray-400 text-white cursor-not-allowed'} disabled:opacity-50"
 						disabled={submitting ||

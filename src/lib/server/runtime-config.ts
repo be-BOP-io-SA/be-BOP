@@ -246,6 +246,8 @@ const baseConfig = {
 	posPoolEmptyIcon: '✅' as string | undefined,
 	posPoolOccupiedIcon: '⏳' as string | undefined,
 	posMidTicketTopBlankLines: 3,
+	posProductsPerPage: 0,
+	posMobileBreakpoint: 1024,
 	posUseSelectForTags: false,
 	posPrefillTermOfUse: false,
 	posTapToPay: {

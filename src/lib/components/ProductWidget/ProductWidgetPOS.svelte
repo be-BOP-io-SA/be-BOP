@@ -10,6 +10,10 @@
 	export let pictures: Picture[] | [];
 	export let product: Pick<Product, 'name' | '_id' | 'price' | 'stock'>;
 	export let tabSlug: string;
+	export let priceWithVat = 0;
+	export let currency = product.price.currency;
+	export let quantityInCart = 0;
+	export let isMobile = false;
 	let loading = false;
 	let className = '';
 	export { className as class };
@@ -45,16 +49,24 @@
 	<input type="hidden" name="tabSlug" value={tabSlug} />
 	<input type="hidden" name="productId" value={product._id} />
 	<button type="submit" disabled={!hasStock || loading}>
-		<div class="touchScreen-product-cta flex flex-row {className} max-h-[4em]">
-			<div>
-				<PictureComponent
-					picture={pictures[0]}
-					class="object-contain h-24 w-24"
-					style="object-fit: cover;"
-				/>
+		<div class="touchScreen-product-cta flex flex-col {className}">
+			<div class="relative {isMobile ? '' : 'flex flex-row'}">
+				<div class={isMobile ? 'w-full h-24 overflow-hidden' : 'shrink-0 w-24 h-24'}>
+					<PictureComponent picture={pictures[0]} class="w-full h-full object-cover" />
+				</div>
+				<div
+					class={isMobile
+						? 'absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2'
+						: 'static bg-none bg-transparent h-auto p-3 pt-0 pl-1 items-start text-left flex-1 min-w-0'}
+				>
+					<h2 class="line-clamp-2 break-words {isMobile ? 'font-bold text-white' : 'font-normal'}">
+						{product.name}
+					</h2>
+				</div>
 			</div>
-			<div class="p-3 flex items-start text-left">
-				<h2 class="text-3xl break-all break-words">{product.name}</h2>
+			<div class="flex justify-between items-center px-2 py-0.5 bg-black/40 text-base">
+				<span class="font-semibold text-white">{priceWithVat.toFixed(2)} {currency}</span>
+				<span class="font-bold text-white">x {quantityInCart}</span>
 			</div>
 		</div>
 	</button>

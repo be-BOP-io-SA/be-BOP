@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<meta name="viewport" content="width=1024" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
 </svelte:head>
 <main class="top-0 bottom-0 right-0 left-0 bg-white">
 	<slot />

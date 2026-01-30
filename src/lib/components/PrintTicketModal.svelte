@@ -63,7 +63,7 @@
 	>
 		<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 		<div
-			class="bg-white p-4 rounded-lg min-w-[800px] max-w-[90%] max-h-[90vh] shadow-lg flex flex-col"
+			class="bg-white p-4 rounded-lg w-[95vw] md:w-auto md:min-w-[800px] max-w-[90%] max-h-[90vh] shadow-lg flex flex-col"
 			on:click|stopPropagation
 			on:keydown|stopPropagation
 			role="dialog"
@@ -148,7 +148,7 @@
 						</div>
 					</div>
 				{:else if activeTab === 'history'}
-					<div class="max-h-[500px] overflow-y-auto">
+					<div class="max-h-[500px] overflow-y-auto overflow-x-auto">
 						{#if printHistory.length === 0}
 							<p class="text-center text-gray-500 py-8 text-xl">No print history available</p>
 						{:else}
