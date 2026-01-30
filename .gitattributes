@@ -1,4 +1,2 @@
 # Auto detect text files and perform LF normalization
 * text=auto
-assets/*.csv filter=lfs diff=lfs merge=lfs -text
-assets/*.CSV filter=lfs diff=lfs merge=lfs -text

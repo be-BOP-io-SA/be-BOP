@@ -42,4 +42,4 @@ jobs:
         run: |
           zip -r build.zip build
           scp -P ${{ vars.SSH_PORT }} build.zip ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}:${{ vars.SSH_FOLDER }}/build.zip
-          ssh -p ${{ vars.SSH_PORT }} ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} "hostnamectl && git lfs install && cd ${{ vars.SSH_FOLDER }} && git remote prune origin && git fetch && git checkout $GITHUB_SHA && pnpm install && unzip -o build.zip && pm2 reload ${{ vars.PM2_APP_NAME }} && cd build && find . -mtime +30 -type f -delete"
+          ssh -p ${{ vars.SSH_PORT }} ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} "hostnamectl && cd ${{ vars.SSH_FOLDER }} && git remote prune origin && git fetch && git checkout $GITHUB_SHA && pnpm install && unzip -o build.zip && pm2 reload ${{ vars.PM2_APP_NAME }} && cd build && find . -mtime +30 -type f -delete"

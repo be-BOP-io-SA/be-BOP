@@ -10,6 +10,10 @@ node_modules
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# GeoIP assets downloaded at release time
+assets/IP2LOCATION-LITE-DB1.CSV
+assets/IP2LOCATION-LITE-DB1.IPV6.CSV
+
 # Copied in vite.config.ts
 static/tinymce
 lib/utils/timeZoneOffset.ts
