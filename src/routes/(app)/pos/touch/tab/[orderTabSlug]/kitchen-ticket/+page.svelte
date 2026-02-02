@@ -11,4 +11,5 @@
 	showBebopLogo={data.showBebopLogo}
 	showOnScreen={true}
 	showGroupHeaders={true}
+	topBlankLines={data.topBlankLines}
 />

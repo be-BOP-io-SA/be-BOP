@@ -303,6 +303,19 @@
 		<input type="text" name="posPoolEmptyIcon" class="form-input" bind:value={posPoolEmptyIcon} />
 	</label>
 
+	<label class="form-label">
+		{t('pos.midTicket.topBlankLines')}
+		<small class="text-gray-600">{t('pos.midTicket.topBlankLinesHint')}</small>
+		<input
+			type="number"
+			name="posMidTicketTopBlankLines"
+			class="form-input max-w-[10rem]"
+			min="0"
+			max="20"
+			value={data.posMidTicketTopBlankLines}
+		/>
+	</label>
+
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Tabs management
