@@ -12,7 +12,7 @@ import { pojo } from '$lib/server/pojo';
 import { OrderTab, OrderTabItem, OrderTabPoolStatus } from '$lib/types/OrderTab';
 import type { Picture } from '$lib/types/Picture.js';
 import type { Product } from '$lib/types/Product';
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import { UrlDependency } from '$lib/types/UrlDependency.js';
 import { ObjectId } from 'mongodb';
@@ -175,7 +175,8 @@ export const load = async ({ locals, depends, params }) => {
 		tagGroups: tagGroupsData.groups,
 		posTouchScreenTags: tagGroupsData.tags,
 		printTagsMap,
-		itemRemovalBlocked
+		itemRemovalBlocked,
+		posLockItemsAfterMidTicket: runtimeConfig.posSession.lockItemsAfterMidTicket
 	};
 };
 
@@ -208,6 +209,14 @@ export const actions = {
 
 		if (await hasSharesPaymentStarted(orderTab._id)) {
 			throw error(403, 'sharesPaymentStarted');
+		}
+
+		if (runtimeConfig.posSession.lockItemsAfterMidTicket) {
+			const item = orderTab.items.find((i) => i._id.equals(new ObjectId(tabItemId)));
+			const printedQuantity = item?.printedQuantity ?? 0;
+			if (item && printedQuantity > 0 && quantity < printedQuantity) {
+				return fail(403, { error: 'cannotReduceBelowPrintedQuantity', min: printedQuantity });
+			}
 		}
 
 		let res;
@@ -458,7 +467,6 @@ export const actions = {
 
 				const itemToMove = sourceTab.items[0];
 
-				// Validate sufficient quantity
 				if (itemToMove.quantity < quantity) {
 					throw error(
 						400,
@@ -466,14 +474,22 @@ export const actions = {
 					);
 				}
 
-				// Decrement source
+				// unprinted items move first
+				const printedQty = itemToMove.printedQuantity ?? 0;
+				const movedPrintedQty = Math.max(0, printedQty - itemToMove.quantity + quantity);
+
 				await collections.orderTabs.updateOne(
 					{ slug: from, 'items._id': id },
-					{ $inc: { 'items.$.quantity': -quantity }, $set: { updatedAt: new Date() } },
+					{
+						$inc: {
+							'items.$.quantity': -quantity,
+							...(movedPrintedQty && { 'items.$.printedQuantity': -movedPrintedQty })
+						},
+						$set: { updatedAt: new Date() }
+					},
 					{ session }
 				);
 
-				// Find matching in target
 				const targetTab = await collections.orderTabs.findOne(
 					{ slug: to },
 					{ projection: { items: 1 }, session }
@@ -486,13 +502,25 @@ export const actions = {
 							JSON.stringify(itemToMove.chosenVariations ?? {})
 				);
 
-				// Increment or push
 				await collections.orderTabs.updateOne(
 					{ slug: to, ...(matchingItem && { 'items._id': matchingItem._id }) },
 					matchingItem
-						? { $inc: { 'items.$.quantity': quantity }, $set: { updatedAt: new Date() } }
+						? {
+								$inc: {
+									'items.$.quantity': quantity,
+									...(movedPrintedQty && { 'items.$.printedQuantity': movedPrintedQty })
+								},
+								$set: { updatedAt: new Date() }
+						  }
 						: {
-								$push: { items: { ...itemToMove, _id: new ObjectId(), quantity } },
+								$push: {
+									items: {
+										...itemToMove,
+										_id: new ObjectId(),
+										quantity,
+										...(movedPrintedQty && { printedQuantity: movedPrintedQty })
+									}
+								},
 								$set: { updatedAt: new Date() }
 						  },
 					{ session }
@@ -515,7 +543,17 @@ export const actions = {
 					const merged = tab.items.reduce((m, i) => {
 						const k = `${i.productId}:${JSON.stringify(i.chosenVariations ?? {})}`;
 						const p = m.get(k);
-						return m.set(k, p ? { ...p, quantity: p.quantity + i.quantity } : i);
+						return m.set(
+							k,
+							p
+								? {
+										...p,
+										quantity: p.quantity + i.quantity,
+										printedQuantity:
+											(p.printedQuantity ?? 0) + (i.printedQuantity ?? 0) || undefined
+								  }
+								: i
+						);
 					}, new Map());
 
 					// Merge + cleanup in one update

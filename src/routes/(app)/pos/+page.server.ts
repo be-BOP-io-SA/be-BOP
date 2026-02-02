@@ -99,6 +99,13 @@ export const actions: Actions = {
 			return fail(403, { error: 'sharesPaymentStarted' });
 		}
 
+		if (runtimeConfig.posSession.lockItemsAfterMidTicket) {
+			const item = orderTab.items.find((i) => i._id.toString() === tabItemId);
+			if (item && (item.printedQuantity ?? 0) > 0) {
+				return fail(403, { error: 'itemPrintedCannotDelete' });
+			}
+		}
+
 		await removeFromOrderTab({ tabSlug, tabItemId });
 	},
 	removeTab: async ({ request }) => {
@@ -114,6 +121,12 @@ export const actions: Actions = {
 		const orderTab = await getOrCreateOrderTab({ slug: tabSlug });
 		if (await hasSharesPaymentStarted(orderTab._id)) {
 			return fail(403, { error: 'sharesPaymentStarted' });
+		}
+
+		if (runtimeConfig.posSession.lockItemsAfterMidTicket) {
+			if (orderTab.items.some((i) => (i.printedQuantity ?? 0) > 0)) {
+				return fail(403, { error: 'poolHasPrintedItems' });
+			}
 		}
 
 		await removeOrderTab({ tabSlug });

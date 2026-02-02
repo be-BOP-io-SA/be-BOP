@@ -279,7 +279,8 @@ const baseConfig = {
 	posSession: {
 		enabled: false,
 		allowXTicketEditing: false,
-		cashDeltaJustificationMandatory: false
+		cashDeltaJustificationMandatory: false,
+		lockItemsAfterMidTicket: true
 	},
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,

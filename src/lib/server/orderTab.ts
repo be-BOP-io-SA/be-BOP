@@ -321,9 +321,16 @@ export async function handleOrderTabAfterPayment({
 			.map((item) => {
 				const tabItem = orderTab?.items.find((i) => item._id && i._id.equals(item._id));
 				const currentQuantity = tabItem?.quantity || 0;
+				const currentPrintedQuantity = tabItem?.printedQuantity ?? 0;
+				const printedQuantityDecrement = Math.min(item.quantity, currentPrintedQuantity);
 
 				const updateFields: Record<string, unknown> = {
-					$inc: { 'items.$.quantity': -item.quantity }
+					$inc: {
+						'items.$.quantity': -item.quantity,
+						...(printedQuantityDecrement > 0 && {
+							'items.$.printedQuantity': -printedQuantityDecrement
+						})
+					}
 				};
 
 				if (currentQuantity === item.quantity) {

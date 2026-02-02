@@ -712,7 +712,10 @@
 			"notDeveloped": "Ainda não desenvolvido",
 			"confirmDeleteLastItem": "Quer eliminar a última linha do carrinho?",
 			"confirmDeleteAllItems": "Quer eliminar todas as linhas do carrinho?",
-			"maxQuantityReached": "Quantidade máxima por encomenda atingida ({max})"
+			"maxQuantityReached": "Quantidade máxima por encomenda atingida ({max})",
+			"itemPrintedCannotDelete": "Este artigo foi impresso num ticket de cozinha e não pode ser eliminado",
+			"itemPrintedCannotReduce": "Não é possível reduzir a quantidade abaixo da quantidade impressa: {min}",
+			"poolHasPrintedItems": "Este pool contém artigos impressos e não pode ser eliminado"
 		},
 		"itemEdit": {
 			"quantity": "Quantidade",
