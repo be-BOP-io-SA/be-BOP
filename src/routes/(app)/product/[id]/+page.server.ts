@@ -1,7 +1,7 @@
 import { addToCartInDb } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
-import { loadProductWithResolvedStock, resolveStockProduct } from '$lib/server/product';
+import { applyResolvedStock, resolveStockProduct } from '$lib/server/product';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
@@ -251,11 +251,11 @@ export const load = async ({ params, parent, locals }) => {
 };
 
 async function addToCart({ params, request, locals }: RequestEvent) {
-	const product = await loadProductWithResolvedStock(params.id);
-
-	if (!product) {
+	const productDoc = await collections.products.findOne({ alias: params.id });
+	if (!productDoc) {
 		throw error(404, 'Product not found');
 	}
+	const product = await applyResolvedStock(productDoc);
 
 	const formData = await request.formData();
 
