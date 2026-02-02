@@ -8,6 +8,7 @@
 		product: { name: string; maxQuantityPerOrder?: number };
 	};
 	export let onClose: (_: { note?: string; quantity?: number }) => Promise<void>;
+	export let errorMessage = '';
 
 	let note = item.internalNote?.value || '';
 	let quantity = item.quantity;
@@ -173,6 +174,12 @@
 				></textarea>
 			</div>
 		</div>
+
+		{#if errorMessage}
+			<div class="bg-red-100 border-2 border-red-400 p-3 mx-6 rounded">
+				<p class="text-red-600 text-xl text-center font-bold">{errorMessage}</p>
+			</div>
+		{/if}
 
 		<!-- Footer -->
 		<div class="px-6 py-4 border-t border-gray-200 grid grid-cols-2 gap-4">

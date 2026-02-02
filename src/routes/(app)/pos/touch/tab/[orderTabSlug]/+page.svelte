@@ -65,18 +65,21 @@
 	$: currentPage = Math.floor(next / posProductPagination) + 1;
 
 	let itemToEditIndex: number | undefined = undefined;
+	let itemEditError = '';
 
 	function openEditItemDialog(itemIndex: number) {
 		if (data.itemRemovalBlocked) {
 			alert(t('pos.split.completeSharesFirst'));
 			return;
 		}
+		itemEditError = '';
 		itemToEditIndex = itemIndex;
 	}
 
 	async function concludeEditItem(payload: { note?: string; quantity?: number }) {
 		if (itemToEditIndex === undefined || Object.keys(payload).length === 0) {
 			itemToEditIndex = undefined;
+			itemEditError = '';
 			return;
 		}
 		const form = formNotes.at(itemToEditIndex);
@@ -93,7 +96,6 @@
 			}
 			form.requestSubmit();
 		}
-		itemToEditIndex = undefined;
 	}
 
 	let formNotes: HTMLFormElement[] = [];
@@ -393,10 +395,22 @@
 								bind:this={formNotes[i]}
 								action="?/updateOrderTabItem"
 								use:enhance={() => {
+									itemEditError = '';
 									return async ({ result }) => {
-										if (result.type === 'error') {
-											return await applyAction(result);
+										if (result.type === 'failure') {
+											const d = result.data;
+											itemEditError =
+												d?.error === 'cannotReduceBelowPrintedQuantity'
+													? t('pos.touch.itemPrintedCannotReduce', { min: String(d.min) })
+													: String(d?.error ?? 'Error');
+											return;
 										}
+										if (result.type === 'error') {
+											itemEditError = result.error?.message ?? 'Error';
+											return;
+										}
+										itemEditError = '';
+										itemToEditIndex = undefined;
 										await invalidate(UrlDependency.orderTab(tabSlug));
 									};
 								}}
@@ -896,6 +910,16 @@
 								alert(t('pos.split.completeSharesFirst'));
 								return;
 							}
+							const lastItem = items[items.length - 1];
+							if (
+								data.posLockItemsAfterMidTicket &&
+								lastItem &&
+								(lastItem.printedQuantity ?? 0) > 0
+							) {
+								e.preventDefault();
+								alert(t('pos.touch.itemPrintedCannotDelete'));
+								return;
+							}
 							warningMessage = t('pos.touch.confirmDeleteLastItem');
 						}}>❎</button
 					>
@@ -907,6 +931,14 @@
 							if (data.itemRemovalBlocked) {
 								e.preventDefault();
 								alert(t('pos.split.completeSharesFirst'));
+								return;
+							}
+							if (
+								data.posLockItemsAfterMidTicket &&
+								items.some((i) => (i.printedQuantity ?? 0) > 0)
+							) {
+								e.preventDefault();
+								alert(t('pos.touch.poolHasPrintedItems'));
 								return;
 							}
 							warningMessage = t('pos.touch.confirmDeleteAllItems');
@@ -945,5 +977,9 @@
 
 <!-- Item Edit Dialog -->
 {#if itemToEditIndex !== undefined && itemToEditIndex >= 0}
-	<ItemEditDialog item={items[itemToEditIndex]} onClose={concludeEditItem} />
+	<ItemEditDialog
+		item={items[itemToEditIndex]}
+		onClose={concludeEditItem}
+		errorMessage={itemEditError}
+	/>
 {/if}

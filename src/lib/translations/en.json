@@ -685,7 +685,10 @@
 			"notDeveloped": "Not developed yet",
 			"confirmDeleteLastItem": "Do you want to delete the last cart line?",
 			"confirmDeleteAllItems": "Do you want to delete all cart lines?",
-			"maxQuantityReached": "Maximum quantity per order reached ({max})"
+			"maxQuantityReached": "Maximum quantity per order reached ({max})",
+			"itemPrintedCannotDelete": "This item has been printed on a kitchen ticket and cannot be deleted",
+			"itemPrintedCannotReduce": "Cannot reduce quantity below printed amount: {min}",
+			"poolHasPrintedItems": "This pool contains printed items and cannot be deleted"
 		},
 		"itemEdit": {
 			"quantity": "Quantity",

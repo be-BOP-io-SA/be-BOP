@@ -711,7 +711,10 @@
 			"notDeveloped": "Nog niet ontwikkeld",
 			"confirmDeleteLastItem": "Wil je de laatste winkelwagen regel verwijderen?",
 			"confirmDeleteAllItems": "Wil je alle winkelwagen regels verwijderen?",
-			"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})"
+			"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})",
+			"itemPrintedCannotDelete": "Dit artikel is afgedrukt op een keukenbon en kan niet worden verwijderd",
+			"itemPrintedCannotReduce": "De hoeveelheid kan niet worden verminderd onder de afgedrukte hoeveelheid: {min}",
+			"poolHasPrintedItems": "Deze pool bevat afgedrukte artikelen en kan niet worden verwijderd"
 		},
 		"itemEdit": {
 			"quantity": "Hoeveelheid",

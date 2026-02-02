@@ -127,12 +127,14 @@ export const actions: Actions = {
 					.object({
 						enabled: z.boolean({ coerce: true }).default(false),
 						allowXTicketEditing: z.boolean({ coerce: true }).default(false),
-						cashDeltaJustificationMandatory: z.boolean({ coerce: true }).default(false)
+						cashDeltaJustificationMandatory: z.boolean({ coerce: true }).default(false),
+						lockItemsAfterMidTicket: z.boolean({ coerce: true }).default(true)
 					})
 					.default({
 						enabled: false,
 						allowXTicketEditing: false,
-						cashDeltaJustificationMandatory: false
+						cashDeltaJustificationMandatory: false,
+						lockItemsAfterMidTicket: true
 					})
 			})
 			.parse({

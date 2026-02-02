@@ -712,7 +712,10 @@
 			"notDeveloped": "Noch nicht entwickelt",
 			"confirmDeleteLastItem": "Möchten Sie die letzte Warenkorb-Zeile löschen?",
 			"confirmDeleteAllItems": "Möchten Sie alle Warenkorb-Zeilen löschen?",
-			"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})"
+			"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})",
+			"itemPrintedCannotDelete": "Dieser Artikel wurde auf einem Küchenbon gedruckt und kann nicht gelöscht werden",
+			"itemPrintedCannotReduce": "Die Menge kann nicht unter die gedruckte Menge reduziert werden: {min}",
+			"poolHasPrintedItems": "Dieser Pool enthält gedruckte Artikel und kann nicht gelöscht werden"
 		},
 		"itemEdit": {
 			"quantity": "Menge",

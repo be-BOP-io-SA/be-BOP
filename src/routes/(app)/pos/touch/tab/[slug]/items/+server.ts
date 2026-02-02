@@ -19,6 +19,7 @@ type HydratedItem = {
 	_id: string;
 	product: ProductProjection;
 	quantity: number;
+	printedQuantity?: number;
 	internalNote?: {
 		value: string;
 		updatedAt: Date;
@@ -55,6 +56,7 @@ async function hydratedOrderItems(
 				_id: item._id.toString(),
 				product: { ...product, vatProfileId: product.vatProfileId?.toString() },
 				quantity: item.quantity,
+				printedQuantity: item.printedQuantity,
 				internalNote: item.internalNote && {
 					value: item.internalNote.value,
 					updatedAt: item.internalNote.updatedAt

@@ -208,6 +208,16 @@
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
+			name="posSession.lockItemsAfterMidTicket"
+			class="form-checkbox"
+			checked={data.posSession.lockItemsAfterMidTicket}
+		/>
+		Forbid item deletion / qty reduction, after mid-ticket print
+	</label>
+
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
 			name="posUseSelectForTags"
 			class="form-checkbox"
 			bind:checked={posUseSelectForTags}
