@@ -713,7 +713,7 @@
 			"shares": "shares",
 			"itemize": "itemize",
 			"return": "Return",
-			"continueSplit": "Continue split ({mode})",
+			"continueSplit": "Continue",
 			"paySelected": "Pay selected",
 			"includingVatIncluded": "Including (VAT included):",
 			"tagProducts": "Tag \"{name}\" products",
@@ -733,6 +733,11 @@
 			"beforeDiscount": "BEFORE DISCOUNT",
 			"afterDiscount": "AFTER DISCOUNT"
 		},
+		"receipt": {
+			"ticket": "Receipt (ticket)",
+			"invoice": "Invoice (A4)"
+		},
+		"staffNotes": "Staff notes",
 		"btn": {
 			"add": "Add",
 			"cancel": "Cancel",

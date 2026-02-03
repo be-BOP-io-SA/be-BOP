@@ -76,7 +76,7 @@ export const actions = {
 			}
 		);
 
-		throw redirect(303, `/order/${order._id}`);
+		throw redirect(303, request.headers.get('referer') || `/order/${order._id}`);
 	},
 	saveNote: async function ({ params, request, locals }) {
 		const data = await request.formData();
@@ -105,7 +105,7 @@ export const actions = {
 				}
 			}
 		);
-		throw redirect(303, `/order/${params.id}/notes`);
+		throw redirect(303, request.headers.get('referer') || `/order/${params.id}/notes`);
 	},
 	cancel: async ({ params, request }) => {
 		const order = await collections.orders.findOneAndUpdate(

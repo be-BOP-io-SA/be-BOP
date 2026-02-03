@@ -204,8 +204,15 @@ export const actions = {
 		if (payment.status !== 'paid') {
 			throw error(400, 'Payment is not paid');
 		}
+
+		let required = true;
+		if (payment.method === 'point-of-sale' && payment.posSubtype) {
+			const subtype = await collections.posPaymentSubtypes.findOne({ slug: payment.posSubtype });
+			required = subtype?.paymentDetailRequired ?? false;
+		}
+
 		const formData = await request.formData();
-		const informationUpdate = z.object({ paymentDetail: paymentDetailSchema(true) }).parse({
+		const informationUpdate = z.object({ paymentDetail: paymentDetailSchema(required) }).parse({
 			paymentDetail: formData.get('paymentDetail')
 		});
 

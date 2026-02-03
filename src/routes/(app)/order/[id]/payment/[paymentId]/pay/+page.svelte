@@ -182,7 +182,10 @@
 
 	let paymentLoading = false;
 	let stripeLoading = true;
-	$: orderPath = '/order/' + $page.params.id;
+	$: returnTo = $page.url.searchParams.get('returnTo');
+	$: orderPath = returnTo
+		? `/order/${$page.params.id}?returnTo=${encodeURIComponent(returnTo)}`
+		: `/order/${$page.params.id}`;
 
 	function mountSumUpCard() {
 		// Should always be true due to backend validation, doing this for TS

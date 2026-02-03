@@ -740,7 +740,7 @@
 			"shares": "parts",
 			"itemize": "détailler",
 			"return": "Retour",
-			"continueSplit": "Continuer division ({mode})",
+			"continueSplit": "Continuer",
 			"paySelected": "Payer la sélection",
 			"includingVatIncluded": "Dont (TTC):",
 			"tagProducts": "Produits \"{name}\"",
@@ -760,6 +760,11 @@
 			"beforeDiscount": "AVANT REMISE",
 			"afterDiscount": "APRÈS REMISE"
 		},
+		"receipt": {
+			"ticket": "Reçu (ticket)",
+			"invoice": "Facture (A4)"
+		},
+		"staffNotes": "Notes du personnel",
 		"discount": {
 			"title": "Remise",
 			"noDiscount": "Pas de remise",

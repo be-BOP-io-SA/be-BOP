@@ -739,7 +739,7 @@
 			"shares": "partes",
 			"itemize": "detallar",
 			"return": "Volver",
-			"continueSplit": "Continuar división ({mode})",
+			"continueSplit": "Continuar",
 			"paySelected": "Pagar selección",
 			"includingVatIncluded": "Incluyendo (IVA incluido):",
 			"tagProducts": "Productos \"{name}\"",
@@ -759,6 +759,11 @@
 			"beforeDiscount": "ANTES DEL DESCUENTO",
 			"afterDiscount": "DESPUÉS DEL DESCUENTO"
 		},
+		"receipt": {
+			"ticket": "Recibo (ticket)",
+			"invoice": "Factura (A4)"
+		},
+		"staffNotes": "Notas del personal",
 		"discount": {
 			"title": "Descuento",
 			"noDiscount": "Sin descuento",

@@ -6,13 +6,15 @@
 
 	export let payment: SerializedOrderPayment;
 	export let orderId: string;
+	export let returnTo: string | undefined = undefined;
+
+	$: payUrl = returnTo
+		? `/order/${orderId}/payment/${payment.id}/pay?returnTo=${encodeURIComponent(returnTo)}`
+		: `/order/${orderId}/payment/${payment.id}/pay`;
 </script>
 
 {#if payment.status === 'pending'}
-	<a
-		href="/order/{orderId}/payment/{payment.id}/pay"
-		class="paypal-payment-link body-hyperlink flex items-center gap-2"
-	>
+	<a href={payUrl} class="paypal-payment-link body-hyperlink flex items-center gap-2">
 		<img
 			src="https://www.paypalobjects.com/webstatic/mktg/Logo/pp-logo-200px.png"
 			alt="PayPal"
