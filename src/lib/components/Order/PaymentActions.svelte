@@ -59,7 +59,7 @@
 			disabled={!receiptReady}
 			on:click={printReceipt}
 		>
-			Print receipt (A4)
+			{posMode ? t('pos.receipt.invoice') : 'Print receipt (A4)'}
 		</button>
 		<button
 			class="body-hyperlink self-start"
@@ -67,7 +67,7 @@
 			disabled={!ticketReady}
 			on:click={printTicket}
 		>
-			Print receipt (ticket)
+			{posMode ? t('pos.receipt.ticket') : 'Print receipt (ticket)'}
 		</button>
 	{/if}
 
@@ -89,7 +89,7 @@
 			disabled={!receiptReady}
 			on:click={printReceipt}
 		>
-			Print receipt (A4)
+			{posMode ? t('pos.receipt.invoice') : 'Print receipt (A4)'}
 		</button>
 		<button
 			class="btn btn-black self-start"
@@ -97,7 +97,7 @@
 			disabled={!ticketReady}
 			on:click={printTicket}
 		>
-			Print receipt (ticket)
+			{posMode ? t('pos.receipt.ticket') : 'Print receipt (ticket)'}
 		</button>
 	{/if}
 
@@ -357,8 +357,10 @@
 			<input
 				class="form-input"
 				type="text"
-				name={payment.method === 'bank-transfer' ? 'bankTransferNumber' : 'detail'}
-				value={payment.method === 'bank-transfer' ? payment.bankTransferNumber : payment.detail}
+				name="paymentDetail"
+				value={payment.method === 'bank-transfer'
+					? payment.bankTransferNumber ?? ''
+					: payment.detail ?? ''}
 				disabled={disableInfoChange}
 			/>
 			<button type="submit" class="btn btn-blue" disabled={disableInfoChange}>

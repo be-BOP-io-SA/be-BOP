@@ -739,7 +739,7 @@
 			"shares": "delen",
 			"itemize": "specificeren",
 			"return": "Terug",
-			"continueSplit": "Verdeel voortzetten ({mode})",
+			"continueSplit": "Doorgaan",
 			"paySelected": "Selectie betalen",
 			"includingVatIncluded": "Waarvan (BTW inbegrepen):",
 			"tagProducts": "Producten \"{name}\"",
@@ -759,6 +759,11 @@
 			"beforeDiscount": "VOOR KORTING",
 			"afterDiscount": "NA KORTING"
 		},
+		"receipt": {
+			"ticket": "Bon (ticket)",
+			"invoice": "Factuur (A4)"
+		},
+		"staffNotes": "Personeelsnotities",
 		"discount": {
 			"title": "Korting",
 			"noDiscount": "Geen korting",

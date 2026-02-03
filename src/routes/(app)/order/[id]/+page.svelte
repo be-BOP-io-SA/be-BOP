@@ -169,53 +169,81 @@
 				</div>
 			{/if}
 
+			<!-- ========== POS MODE: Receipt buttons above payment details ========== -->
+			{#if data.posMode && data.order.payments.length > 0}
+				{@const lastPayment = data.order.payments[data.order.payments.length - 1]}
+				{#if lastPayment.status === 'paid' || (lastPayment.invoice?.number && lastPayment.invoice.number !== FAKE_ORDER_INVOICE_NUMBER)}
+					<div class="pos-receipt-buttons flex flex-row gap-1">
+						<button
+							class="btn btn-black flex-1 text-base px-3 py-2 whitespace-nowrap"
+							type="button"
+							disabled={!ticketReady[lastPayment.id]}
+							on:click={() => ticketIFrame[lastPayment.id]?.contentWindow?.print()}
+						>
+							{t('pos.receipt.ticket')}
+						</button>
+						<button
+							class="btn btn-black flex-1 text-base px-3 py-2 whitespace-nowrap"
+							type="button"
+							disabled={!receiptReady[lastPayment.id]}
+							on:click={() => receiptIFrame[lastPayment.id]?.contentWindow?.print()}
+						>
+							{t('pos.receipt.invoice')}
+						</button>
+					</div>
+				{/if}
+			{/if}
+
 			<!-- ========== PAYMENTS SECTION ========== -->
-			{#each data.order.payments as payment}
-				<PaymentItem
-					{payment}
-					orderId={data.order._id}
-					posMode={data.posMode}
-					hideCreditCardQrCode={data.hideCreditCardQrCode}
-					sellerIdentity={data.sellerIdentity}
-					posSubtypes={data.posSubtypes}
-				>
-					<PaymentActions
+			<div class="payments-section">
+				{#each data.order.payments as payment}
+					<PaymentItem
 						{payment}
 						orderId={data.order._id}
-						{orderStaffActionBaseUrl}
-						{roleIsStaff}
-						paymentMethods={data.paymentMethods}
-						posSubtypes={data.posSubtypes}
 						posMode={data.posMode}
-						tapToPayConfigured={data.tapToPay.configured}
-						tapToPayInUseByOtherOrder={data.tapToPay.inUseByOtherOrder}
-						printReceipt={() => receiptIFrame[payment.id]?.contentWindow?.print()}
-						printTicket={() => ticketIFrame[payment.id]?.contentWindow?.print()}
-						receiptReady={receiptReady[payment.id]}
-						ticketReady={ticketReady[payment.id]}
-					/>
-				</PaymentItem>
+						hideCreditCardQrCode={data.hideCreditCardQrCode}
+						sellerIdentity={data.sellerIdentity}
+						posSubtypes={data.posSubtypes}
+						returnTo={data.returnTo}
+					>
+						<PaymentActions
+							{payment}
+							orderId={data.order._id}
+							{orderStaffActionBaseUrl}
+							{roleIsStaff}
+							paymentMethods={data.paymentMethods}
+							posSubtypes={data.posSubtypes}
+							posMode={data.posMode}
+							tapToPayConfigured={data.tapToPay.configured}
+							tapToPayInUseByOtherOrder={data.tapToPay.inUseByOtherOrder}
+							printReceipt={() => receiptIFrame[payment.id]?.contentWindow?.print()}
+							printTicket={() => ticketIFrame[payment.id]?.contentWindow?.print()}
+							receiptReady={receiptReady[payment.id]}
+							ticketReady={ticketReady[payment.id]}
+						/>
+					</PaymentItem>
 
-				<!-- Hidden iframes for receipt/invoice printing -->
-				{#if payment.status !== 'paid' || (payment.invoice?.number && payment.invoice.number !== FAKE_ORDER_INVOICE_NUMBER)}
-					<iframe
-						src="/order/{data.order._id}/payment/{payment.id}/receipt"
-						style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
-						title=""
-						on:load={() => (receiptReady = { ...receiptReady, [payment.id]: true })}
-						bind:this={receiptIFrame[payment.id]}
-					/>
-					{#if roleIsStaff}
+					<!-- Hidden iframes for receipt/invoice printing -->
+					{#if payment.status !== 'paid' || (payment.invoice?.number && payment.invoice.number !== FAKE_ORDER_INVOICE_NUMBER)}
 						<iframe
-							src="/order/{data.order._id}/payment/{payment.id}/ticket"
+							src="/order/{data.order._id}/payment/{payment.id}/receipt"
 							style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
 							title=""
-							on:load={() => (ticketReady = { ...ticketReady, [payment.id]: true })}
-							bind:this={ticketIFrame[payment.id]}
+							on:load={() => (receiptReady = { ...receiptReady, [payment.id]: true })}
+							bind:this={receiptIFrame[payment.id]}
 						/>
+						{#if roleIsStaff}
+							<iframe
+								src="/order/{data.order._id}/payment/{payment.id}/ticket"
+								style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
+								title=""
+								on:load={() => (ticketReady = { ...ticketReady, [payment.id]: true })}
+								bind:this={ticketIFrame[payment.id]}
+							/>
+						{/if}
 					{/if}
-				{/if}
-			{/each}
+				{/each}
+			</div>
 
 			<!-- ========== ORDER STATUS MESSAGE ========== -->
 			<div class="order-status-message">
@@ -411,46 +439,103 @@
 					</div>
 				{/if}
 
-				<form action="{orderStaffActionBaseUrl}?/saveNote" method="post" class="contents">
-					<section class="gap-4 flex flex-col">
-						<article class="rounded border border-gray-300 overflow-hidden flex flex-col">
-							<div class="p-4 flex flex-col gap-3">
-								<label class="form-label text-2xl">
-									{t('order.note.label')}
-									<textarea name="noteContent" cols="30" rows="2" class="form-input" />
-								</label>
-							</div>
-						</article>
+				<!-- POS MODE: "Continue"  -->
+				{#if data.posMode && data.order.orderTabSlug}
+					<a
+						href={data.splitMode
+							? `/pos/touch/tab/${data.order.orderTabSlug}/split?mode=${data.splitMode}`
+							: `/pos/touch/tab/${data.order.orderTabSlug}`}
+						class="btn btn-black w-full text-center text-2xl py-4"
+					>
+						{data.splitMode ? t('pos.split.continueSplit') : t('pos.split.return')}
+					</a>
+				{/if}
 
-						<div class="flex flex-wrap gap-3 justify-between">
-							<button type="submit" class="btn lg:w-auto w-full btn-blue self-start">
-								{t('order.note.saveText')}
-							</button>
-							<a
-								href="/order/{data.order._id}/notes"
-								class="btn lg:w-auto w-full btn-gray self-end"
-							>
-								{t('order.note.seeText')}
-							</a>
-							{#if data.order.orderTabSlug}
-								{#if data.splitMode}
-									<a
-										href="/pos/touch/tab/{data.order.orderTabSlug}/split?mode={data.splitMode}"
-										class="btn lg:w-auto w-full btn-black self-end"
-									>
-										{t('pos.split.continueSplit', { mode: data.splitMode })}
-									</a>
-								{/if}
+				<!-- POS MODE: Notes  -->
+				{#if data.posMode}
+					<details class="pos-notes-details rounded border border-gray-300 p-4">
+						<summary class="cursor-pointer text-xl">
+							{t('pos.staffNotes')}
+						</summary>
+						<form action="{orderStaffActionBaseUrl}?/saveNote" method="post" class="contents">
+							<section class="gap-4 flex flex-col mt-4">
+								<article class="rounded border border-gray-300 overflow-hidden flex flex-col">
+									<div class="p-4 flex flex-col gap-3">
+										<label class="form-label text-2xl">
+											{t('order.note.label')}
+											<textarea name="noteContent" cols="30" rows="2" class="form-input" />
+										</label>
+									</div>
+								</article>
+
+								<button type="submit" class="btn w-full btn-blue">
+									{t('order.note.saveText')}
+								</button>
+							</section>
+						</form>
+
+						<!-- Existing notes  -->
+						{#if data.order.notes.length > 0}
+							<div class="flex flex-col gap-3 mt-4 pt-4 border-t border-gray-200">
+								{#each [...data.order.notes].reverse() as note}
+									<div class="text-sm">
+										<div class="text-gray-600">
+											{note.isSystem
+												? t('order.note.authorSystem')
+												: note.isEmployee
+												? t('order.note.author', { alias: note.alias })
+												: t('order.note.authorCustomer')}
+											<span class="ml-2">{note.createdAt.toLocaleString($locale)}</span>
+										</div>
+										<div class="mt-1 p-2 bg-gray-50 rounded">{note.content}</div>
+									</div>
+								{/each}
+							</div>
+						{/if}
+					</details>
+				{:else}
+					<!-- Non-POS mode: original notes layout -->
+					<form action="{orderStaffActionBaseUrl}?/saveNote" method="post" class="contents">
+						<section class="gap-4 flex flex-col">
+							<article class="rounded border border-gray-300 overflow-hidden flex flex-col">
+								<div class="p-4 flex flex-col gap-3">
+									<label class="form-label text-2xl">
+										{t('order.note.label')}
+										<textarea name="noteContent" cols="30" rows="2" class="form-input" />
+									</label>
+								</div>
+							</article>
+
+							<div class="flex flex-wrap gap-3 justify-between">
+								<button type="submit" class="btn lg:w-auto w-full btn-blue self-start">
+									{t('order.note.saveText')}
+								</button>
 								<a
-									href="/pos/touch/tab/{data.order.orderTabSlug}"
+									href="/order/{data.order._id}/notes"
 									class="btn lg:w-auto w-full btn-gray self-end"
 								>
-									@@Back to order tab
+									{t('order.note.seeText')}
 								</a>
-							{/if}
-						</div>
-					</section>
-				</form>
+								{#if data.order.orderTabSlug}
+									{#if data.splitMode}
+										<a
+											href="/pos/touch/tab/{data.order.orderTabSlug}/split?mode={data.splitMode}"
+											class="btn lg:w-auto w-full btn-black self-end"
+										>
+											{t('pos.split.continueSplit')}
+										</a>
+									{/if}
+									<a
+										href="/pos/touch/tab/{data.order.orderTabSlug}"
+										class="btn lg:w-auto w-full btn-gray self-end"
+									>
+										@@Back to order tab
+									</a>
+								{/if}
+							</div>
+						</section>
+					</form>
+				{/if}
 			{/if}
 		</div>
 		<!-- END: LEFT COLUMN -->
@@ -508,7 +593,8 @@
 	:global(.pos-mode .contact-address),
 	:global(.pos-mode .mt-6),
 	:global(.pos-mode .multi-payment-receipt),
-	:global(.pos-mode .add-payment-section) {
+	:global(.pos-mode .add-payment-section),
+	:global(.pos-mode .receipt-buttons) {
 		display: none !important;
 	}
 

@@ -740,7 +740,7 @@
 			"shares": "Anteile",
 			"itemize": "aufschlüsseln",
 			"return": "Zurück",
-			"continueSplit": "Aufteilung fortsetzen ({mode})",
+			"continueSplit": "Weiter",
 			"paySelected": "Auswahl bezahlen",
 			"includingVatIncluded": "Davon (inkl. MwSt):",
 			"tagProducts": "Produkte \"{name}\"",
@@ -760,6 +760,11 @@
 			"beforeDiscount": "VOR RABATT",
 			"afterDiscount": "NACH RABATT"
 		},
+		"receipt": {
+			"ticket": "Beleg (Ticket)",
+			"invoice": "Rechnung (A4)"
+		},
+		"staffNotes": "Mitarbeiternotizen",
 		"discount": {
 			"title": "Rabatt",
 			"noDiscount": "Kein Rabatt",

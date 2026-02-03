@@ -68,6 +68,6 @@ export const actions = {
 					parsed.posSubtype && { posSubtype: parsed.posSubtype })
 			});
 		});
-		throw redirect(303, `/order/${order._id}`);
+		throw redirect(303, request.headers.get('referer') || `/order/${order._id}`);
 	}
 };
