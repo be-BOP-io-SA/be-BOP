@@ -1228,6 +1228,20 @@ export async function createOrder(
 			);
 		}
 
+		const posDiscount = params.cart?.orderTabId
+			? (
+					await collections.orderTabs.findOne(
+						{ _id: params.cart.orderTabId },
+						{ projection: { discount: 1 } }
+					)
+			  )?.discount
+			: undefined;
+
+		// if discount is tag-based
+		const posDiscountTagName = posDiscount?.tagId
+			? (await collections.tags.findOne({ _id: posDiscount.tagId }))?.name
+			: undefined;
+
 		await withTransaction(async (session) => {
 			const order: Order = {
 				_id: orderId,
@@ -1502,13 +1516,25 @@ export async function createOrder(
 					...(items.some((item) => item.discountPercentage)
 						? [
 								{
-									content: `Discount applied: ${items
+									content: `Discount applied${
+										posDiscount
+											? ` (${posDiscount.percentage}% ${
+													posDiscountTagName ? `"${posDiscountTagName}"` : 'for ALL'
+											  })`
+											: ''
+									}: ${items
 										.filter((item) => item.discountPercentage)
 										.map(
 											(item) =>
 												`${item.product.name} (${item.product._id}): ${item.discountPercentage}%`
 										)
-										.join(', ')} because of subscription ${usedSubIds.join(', ')}`,
+										.join(', ')}${
+										posDiscount?.motive
+											? ` (motive: ${posDiscount.motive})`
+											: usedSubIds.length
+											? ` because of subscription ${usedSubIds.join(', ')}`
+											: ''
+									}`,
 									createdAt: new Date(),
 									role: null
 								}
