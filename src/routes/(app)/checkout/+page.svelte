@@ -115,7 +115,16 @@
 	);
 	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
 
-	$: isFreeOfCharge = addDiscount && discountType === 'percentage' && discountAmount === 100;
+	$: isFreeOfCharge =
+		addDiscount &&
+		((discountType === 'percentage' && discountAmount === 100) ||
+			(discountType === 'fiat' &&
+				discountAmount >=
+					toCurrency(
+						data.currencies.main,
+						priceInfoWithoutDiscount.totalPriceWithVat,
+						UNDERLYING_CURRENCY
+					)));
 
 	$: possiblyOutOfBoundsDiscount =
 		addDiscount && discountType
@@ -1117,6 +1126,13 @@
 							step="any"
 							bind:value={discountAmount}
 							min="0"
+							max={discountType === 'percentage'
+								? 100
+								: toCurrency(
+										data.currencies.main,
+										priceInfoWithoutDiscount.totalPriceWithVat,
+										UNDERLYING_CURRENCY
+									)}
 							required
 						/>
 
