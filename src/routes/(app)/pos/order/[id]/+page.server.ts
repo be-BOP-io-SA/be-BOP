@@ -60,5 +60,11 @@ export const actions = {
 
 		// @ts-expect-error different route but compatible
 		return cancel(event);
+	},
+	forwardReceipt: async function (event) {
+		const forwardReceipt = adminOrderActions.forwardReceipt;
+
+		// @ts-expect-error different route but compatible
+		return forwardReceipt(event);
 	}
 };

@@ -582,6 +582,12 @@
 			"vatFreeReason": "Vat exempted: {reason}",
 			"peopleCount": "Number of people"
 		},
+		"forwardReceipt": {
+			"cancel": "Cancel",
+			"send": "Send",
+			"success": "Receipt forwarded!",
+			"title": "Forward receipt"
+		},
 		"receiptFullyPaid": "Generate receipt(fully paid)",
 		"receiptPending": "Generate receipt(pending payment)",
 		"related": {

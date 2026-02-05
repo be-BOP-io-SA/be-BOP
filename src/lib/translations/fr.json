@@ -582,6 +582,12 @@
 			"vatFreeReason": "Exempt de TVA: {reason}",
 			"peopleCount": "Nombre de personnes"
 		},
+		"forwardReceipt": {
+			"cancel": "Annuler",
+			"send": "Envoyer",
+			"success": "Reçu transféré !",
+			"title": "Transférer le reçu"
+		},
 		"receiptFullyPaid": "Générer un reçu (entièrement payé)",
 		"receiptPending": "Générer un reçu (en attente de paiement)",
 		"related": {
