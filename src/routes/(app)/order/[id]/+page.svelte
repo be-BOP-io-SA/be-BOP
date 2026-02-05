@@ -230,7 +230,11 @@
 								<button type="submit" class="btn btn-black">
 									{t('order.forwardReceipt.send')}
 								</button>
-								<button type="button" class="btn btn-gray" on:click={() => (posForwardReceiptOpen = false)}>
+								<button
+									type="button"
+									class="btn btn-gray"
+									on:click={() => (posForwardReceiptOpen = false)}
+								>
 									{t('order.forwardReceipt.cancel')}
 								</button>
 							</div>
