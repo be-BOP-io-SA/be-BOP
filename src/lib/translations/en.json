@@ -785,7 +785,10 @@
 		"midTicket": {
 			"title": "Kitchen/Mid-Ticket Settings",
 			"topBlankLines": "Number of blank lines at the top of mid-ticket (for clamping)",
-			"topBlankLinesHint": "Default: 0"
+			"topBlankLinesHint": "Default: 0",
+			"printedAt": "Printed on {date} at {time}",
+			"poolFirstItemAdded": "Table opened on {date} at {time}",
+			"orderCreatedAt": "Order created on {date} at {time}"
 		}
 	},
 	"product": {

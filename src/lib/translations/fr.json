@@ -785,7 +785,10 @@
 		"midTicket": {
 			"title": "Paramètres ticket cuisine/intermédiaire",
 			"topBlankLines": "Nombre de lignes vides en haut du ticket (pour le pince-ticket)",
-			"topBlankLinesHint": "Par défaut : 0"
+			"topBlankLinesHint": "Par défaut : 0",
+			"printedAt": "Imprimé le {date} à {time}",
+			"poolFirstItemAdded": "Table ouverte le {date} à {time}",
+			"orderCreatedAt": "Commande créée le {date} à {time}"
 		}
 	},
 	"product": {

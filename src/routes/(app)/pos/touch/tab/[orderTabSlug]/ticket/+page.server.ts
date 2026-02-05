@@ -96,6 +96,7 @@ export async function load({ locals, params }) {
 		layoutReset: true,
 		poolLabel,
 		generatedAt: new Date(),
+		poolOpenedAt: tab.poolOpenedAt,
 		tagGroups: [
 			{
 				tagNames: [],

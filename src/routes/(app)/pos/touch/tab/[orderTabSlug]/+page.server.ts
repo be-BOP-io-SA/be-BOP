@@ -231,6 +231,11 @@ export const actions = {
 					}
 				}
 			);
+			// Clear poolOpenedAt if pool is now empty
+			await collections.orderTabs.updateOne(
+				{ slug: tabSlug, items: { $size: 0 } },
+				{ $unset: { poolOpenedAt: '' } }
+			);
 		} else {
 			res = await collections.orderTabs.updateOne(
 				{ slug: tabSlug },
@@ -570,6 +575,17 @@ export const actions = {
 						{ session }
 					);
 				})
+			);
+
+			// Clear poolOpenedAt for pools that became empty
+			await Promise.all(
+				affectedSlugs.map((slug) =>
+					collections.orderTabs.updateOne(
+						{ slug, items: { $size: 0 } },
+						{ $unset: { poolOpenedAt: '' } },
+						{ session }
+					)
+				)
 			);
 		});
 	}
