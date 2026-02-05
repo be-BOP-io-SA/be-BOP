@@ -729,8 +729,8 @@
 		},
 		"split": {
 			"notAvailableYet": "Noch nicht verfügbar",
-			"tabHeader": "Tab {slug}",
-			"tabToPayNow": "Tab {slug} (jetzt zu bezahlen)",
+			"tabHeader": "Tab {poolLabel}",
+			"tabToPayNow": "Tab {poolLabel} (jetzt zu bezahlen)",
 			"pool": "POOL",
 			"poolRemainingToPay": "POOL (noch zu bezahlen)",
 			"exclVat": "ohne MwSt",

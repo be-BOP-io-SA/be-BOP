@@ -728,8 +728,8 @@
 		},
 		"split": {
 			"notAvailableYet": "Aún no disponible",
-			"tabHeader": "Pestaña {slug}",
-			"tabToPayNow": "Pestaña {slug} (a pagar ahora)",
+			"tabHeader": "Pestaña {poolLabel}",
+			"tabToPayNow": "Pestaña {poolLabel} (a pagar ahora)",
 			"pool": "POOL",
 			"poolRemainingToPay": "POOL (pendiente de pago)",
 			"exclVat": "sin IVA",

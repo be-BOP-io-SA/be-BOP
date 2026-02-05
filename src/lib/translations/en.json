@@ -702,8 +702,8 @@
 		},
 		"split": {
 			"notAvailableYet": "Not available yet",
-			"tabHeader": "Tab {slug}",
-			"tabToPayNow": "Tab {slug} (to pay now)",
+			"tabHeader": "Tab {poolLabel}",
+			"tabToPayNow": "Tab {poolLabel} (to pay now)",
 			"pool": "POOL",
 			"poolRemainingToPay": "POOL (remaining to be paid)",
 			"exclVat": "excl. VAT",

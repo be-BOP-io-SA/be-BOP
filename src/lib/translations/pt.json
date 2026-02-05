@@ -729,8 +729,8 @@
 		},
 		"split": {
 			"notAvailableYet": "Ainda não disponível",
-			"tabHeader": "Separador {slug}",
-			"tabToPayNow": "Separador {slug} (a pagar agora)",
+			"tabHeader": "Separador {poolLabel}",
+			"tabToPayNow": "Separador {poolLabel} (a pagar agora)",
 			"pool": "POOL",
 			"poolRemainingToPay": "POOL (a pagar)",
 			"exclVat": "sem IVA",

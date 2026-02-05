@@ -728,8 +728,8 @@
 		},
 		"split": {
 			"notAvailableYet": "Nog niet beschikbaar",
-			"tabHeader": "Tab {slug}",
-			"tabToPayNow": "Tab {slug} (nu te betalen)",
+			"tabHeader": "Tab {poolLabel}",
+			"tabToPayNow": "Tab {poolLabel} (nu te betalen)",
 			"pool": "POOL",
 			"poolRemainingToPay": "POOL (nog te betalen)",
 			"exclVat": "excl. BTW",
