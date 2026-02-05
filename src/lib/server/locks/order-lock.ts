@@ -21,6 +21,11 @@ import { differenceInMinutes } from 'date-fns';
 import { z } from 'zod';
 import { getSatoshiReceivedNodeless } from '../bitcoin-nodeless';
 import { trimSuffix } from '$lib/utils/trimSuffix';
+import {
+	trackMempoolAddress,
+	isMempoolWsConnected,
+	untrackMempoolAddress
+} from './mempool-websocket';
 import type { Order } from '$lib/types/Order';
 import { ObjectId } from 'mongodb';
 import { lastSuccessfulPaymentIntents } from '../stripe';
@@ -132,6 +137,27 @@ async function maintainOrders() {
 						try {
 							let satReceived = 0;
 							if (payment.processor === 'bitcoin-nodeless') {
+								if (!payment.address || !payment.expiresAt) {
+									throw new Error('Bitcoin nodeless payment missing required address or expiresAt');
+								}
+
+								trackMempoolAddress(
+									payment.address,
+									order._id,
+									payment._id,
+									order.createdAt,
+									payment.expiresAt
+								);
+
+								if (isMempoolWsConnected()) {
+									if (payment.expiresAt < new Date()) {
+										untrackMempoolAddress(payment.address);
+										order = await onOrderPaymentFailed(order, payment, 'expired');
+									}
+									break;
+								}
+
+								// fallback: HTTP polling when WS is not connected
 								if (
 									!runtimeConfigUpdatedAt['bitcoinBlockHeight'] ||
 									differenceInMinutes(new Date(), runtimeConfigUpdatedAt['bitcoinBlockHeight']) >= 1
@@ -139,15 +165,7 @@ async function maintainOrders() {
 									await updateBitcoinBlockHeight();
 								}
 
-								if (!payment.address) {
-									throw new Error('Missing address on bitcoin order');
-								}
-
 								const nConfirmations = getConfirmationBlocks(payment.price);
-
-								if (!payment.address || !payment.expiresAt) {
-									throw new Error('Bitcoin nodeless payment missing required address or expiresAt');
-								}
 
 								const received = await getSatoshiReceivedNodeless(
 									payment.address,
@@ -191,11 +209,17 @@ async function maintainOrders() {
 								}));
 							}
 							if (satReceived >= toSatoshis(payment.price.amount, payment.price.currency)) {
+								if (payment.processor === 'bitcoin-nodeless' && payment.address) {
+									untrackMempoolAddress(payment.address);
+								}
 								order = await onOrderPayment(order, payment, {
 									amount: satReceived,
 									currency: 'SAT'
 								});
 							} else if (payment.expiresAt && payment.expiresAt < new Date()) {
+								if (payment.processor === 'bitcoin-nodeless' && payment.address) {
+									untrackMempoolAddress(payment.address);
+								}
 								order = await onOrderPaymentFailed(order, payment, 'expired');
 							}
 						} catch (err) {
@@ -551,7 +575,8 @@ async function maintainOrders() {
 			}
 		}
 
-		await setTimeout(2_000);
+		// for: non-nodeless payments + fallback when WS disconnected
+		await setTimeout(10_000);
 	}
 }
 
