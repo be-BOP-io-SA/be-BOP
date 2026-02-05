@@ -717,6 +717,7 @@
 			"itemize": "itemize",
 			"return": "Return",
 			"continueSplit": "Continue",
+			"skipForNow": "Skip for now",
 			"paySelected": "Pay selected",
 			"includingVatIncluded": "Including (VAT included):",
 			"tagProducts": "Tag \"{name}\" products",
