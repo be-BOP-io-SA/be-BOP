@@ -1,6 +1,7 @@
 import { collections } from '$lib/server/database';
 import { getOrCreateOrderTab } from '$lib/server/orderTab';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { vatRate } from '$lib/types/Country';
 import { UNDERLYING_CURRENCY, type Currency } from '$lib/types/Currency';
 import { resolvePoolLabel } from '$lib/types/PosTabGroup';
 import { ObjectId } from 'mongodb';
@@ -37,11 +38,14 @@ export async function load({ locals, params }) {
 
 	const bebopCountry = runtimeConfig.vatCountry;
 	function getVatRate(vatProfileId?: string): number {
-		if (!vatProfileId || !bebopCountry) {
+		if (!bebopCountry) {
 			return 0;
 		}
+		if (!vatProfileId) {
+			return vatRate(bebopCountry);
+		}
 		const profile = vatProfileById.get(vatProfileId);
-		return profile?.rates?.[bebopCountry] ?? 0;
+		return profile?.rates?.[bebopCountry] ?? vatRate(bebopCountry);
 	}
 
 	const itemsForTicket = tab.items
