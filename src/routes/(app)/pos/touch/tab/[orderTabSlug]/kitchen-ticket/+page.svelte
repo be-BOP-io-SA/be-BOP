@@ -12,4 +12,5 @@
 	showOnScreen={true}
 	showGroupHeaders={true}
 	topBlankLines={data.topBlankLines}
+	firstItemAddedAt={data.firstItemAddedAt}
 />

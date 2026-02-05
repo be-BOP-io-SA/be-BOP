@@ -94,6 +94,7 @@ export async function load({ locals, params }) {
 		layoutReset: true,
 		poolLabel,
 		generatedAt: new Date(),
+		firstItemAddedAt: tab.firstItemAddedAt,
 		tagGroups: [
 			{
 				tagNames: [],

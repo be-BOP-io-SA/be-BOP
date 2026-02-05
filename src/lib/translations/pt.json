@@ -785,7 +785,10 @@
 		"midTicket": {
 			"title": "Configurações de ticket de cozinha/intermediário",
 			"topBlankLines": "Número de linhas em branco no topo do ticket (para fixação)",
-			"topBlankLinesHint": "Padrão: 0"
+			"topBlankLinesHint": "Padrão: 0",
+			"printedAt": "Impresso em {date} às {time}",
+			"poolFirstItemAdded": "Mesa aberta em {date} às {time}",
+			"orderCreatedAt": "Pedido criado em {date} às {time}"
 		}
 	},
 	"product": {

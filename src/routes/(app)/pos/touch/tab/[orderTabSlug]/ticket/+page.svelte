@@ -13,4 +13,5 @@
 	companyLogoUrl={data.companyLogoUrl}
 	showBebopLogo={data.showBebopLogo}
 	showOnScreen={true}
+	firstItemAddedAt={data.firstItemAddedAt}
 />

@@ -784,7 +784,10 @@
 		"midTicket": {
 			"title": "Configuración de ticket de cocina/intermedio",
 			"topBlankLines": "Número de líneas en blanco en la parte superior del ticket (para sujeción)",
-			"topBlankLinesHint": "Por defecto: 0"
+			"topBlankLinesHint": "Por defecto: 0",
+			"printedAt": "Impreso el {date} a las {time}",
+			"poolFirstItemAdded": "Mesa abierta el {date} a las {time}",
+			"orderCreatedAt": "Pedido creado el {date} a las {time}"
 		},
 		"useSelectForTags": "Usar menú desplegable para etiquetas"
 	},
