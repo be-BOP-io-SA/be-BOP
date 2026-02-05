@@ -11,6 +11,7 @@
 	import IconExternalNewWindowOpen from '$lib/components/icons/IconExternalNewWindowOpen.svelte';
 	import PaymentItem from '$lib/components/Order/PaymentItem.svelte';
 	import PaymentActions from '$lib/components/Order/PaymentActions.svelte';
+	import ForwardReceiptForm from '$lib/components/Order/ForwardReceiptForm.svelte';
 	import PaymentForm from '$lib/components/Order/PaymentForm.svelte';
 	import { useI18n } from '$lib/i18n';
 	import { FAKE_ORDER_INVOICE_NUMBER, orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
@@ -195,6 +196,12 @@
 							{t('pos.receipt.invoice')}
 						</button>
 					</div>
+				{/if}
+				{#if roleIsStaff && data.order.status === 'paid'}
+					<ForwardReceiptForm
+						actionUrl="{orderStaffActionBaseUrl}?/forwardReceipt"
+						paymentId={lastPayment.id}
+					/>
 				{/if}
 			{/if}
 
