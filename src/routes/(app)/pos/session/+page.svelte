@@ -4,10 +4,11 @@
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import CheckCircleOutlined from '~icons/ant-design/check-circle-outlined';
 	import { onMount } from 'svelte';
-	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
+	import { UNDERLYING_CURRENCY, type Currency } from '$lib/types/Currency.js';
 	import { useI18n } from '$lib/i18n';
 	import { orderRemainingToPay } from '$lib/types/Order.js';
 	import Trans from '$lib/components/Trans.svelte';
+	import { computePriceInfo } from '$lib/cart.js';
 
 	interface CustomEventSource {
 		onerror?: ((this: CustomEventSource, ev: Event) => unknown) | null;
@@ -77,7 +78,17 @@
 			cleanUpServerEvents();
 		};
 	});
-	$: priceInfo = data.cart.priceInfo;
+	$: priceConfig = {
+		bebopCountry: data.vatCountry,
+		deliveryFees: { amount: 0, currency: UNDERLYING_CURRENCY as Currency },
+		freeProductUnits: {},
+		userCountry: data.countryCode,
+		vatExempted: data.vatExempted,
+		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
+		vatSingleCountry: data.vatSingleCountry,
+		vatProfiles: data.vatProfiles
+	};
+	$: priceInfo = computePriceInfo(formattedCart, priceConfig);
 
 	const { t, locale, countryName } = useI18n();
 </script>
