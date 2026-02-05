@@ -743,6 +743,7 @@
 			"itemize": "specificeren",
 			"return": "Terug",
 			"continueSplit": "Doorgaan",
+			"skipForNow": "Voorlopig overslaan",
 			"paySelected": "Selectie betalen",
 			"includingVatIncluded": "Waarvan (BTW inbegrepen):",
 			"tagProducts": "Producten \"{name}\"",

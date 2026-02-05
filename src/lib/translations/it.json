@@ -743,6 +743,7 @@
 			"itemize": "dettagliare",
 			"return": "Indietro",
 			"continueSplit": "Continua",
+			"skipForNow": "Salta per ora",
 			"paySelected": "Paga selezionati",
 			"includingVatIncluded": "Di cui (IVA inclusa):",
 			"tagProducts": "Prodotti \"{name}\"",

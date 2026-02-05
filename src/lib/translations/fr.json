@@ -744,6 +744,7 @@
 			"itemize": "détailler",
 			"return": "Retour",
 			"continueSplit": "Continuer",
+			"skipForNow": "Passer pour l'instant",
 			"paySelected": "Payer la sélection",
 			"includingVatIncluded": "Dont (TTC):",
 			"tagProducts": "Produits \"{name}\"",
