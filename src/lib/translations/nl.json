@@ -582,6 +582,12 @@
 			"vatFreeReason": "Vrijgesteld van btw: {reason}",
 			"peopleCount": "Aantal personen"
 		},
+		"forwardReceipt": {
+			"cancel": "Annuleren",
+			"send": "Verzenden",
+			"success": "Bon doorgestuurd!",
+			"title": "Bon doorsturen"
+		},
 		"receiptFullyPaid": "Bon genereren (volledig betaald)",
 		"receiptPending": "Ontvangst genereren (betaling in behandeling)",
 		"related": {

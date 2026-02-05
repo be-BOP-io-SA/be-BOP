@@ -582,6 +582,12 @@
 			"vatFreeReason": "MwSt.-befreit: {reason}",
 			"peopleCount": "Anzahl der Personen"
 		},
+		"forwardReceipt": {
+			"cancel": "Abbrechen",
+			"send": "Senden",
+			"success": "Quittung weitergeleitet!",
+			"title": "Quittung weiterleiten"
+		},
 		"receiptFullyPaid": "Quittung erstellen (vollständig bezahlt)",
 		"receiptPending": "Quittung erstellen (ausstehende Zahlung)",
 		"related": {
