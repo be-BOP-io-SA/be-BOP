@@ -35,6 +35,7 @@ import type { Session } from '$lib/types/Session';
 import type { Migration } from '$lib/types/Migration';
 import type { Tag } from '$lib/types/Tag';
 import type { TagGroup } from '$lib/types/TagGroup';
+import type { TagFamily } from '$lib/types/TagFamily';
 import type { Slider } from '$lib/types/slider';
 import { building } from '$app/environment';
 import type { Theme } from '$lib/types/Theme';
@@ -101,6 +102,7 @@ const genCollection = () => ({
 	migrations: db.collection<Migration>('migrations'),
 	tags: db.collection<Tag>('tags'),
 	tagGroups: db.collection<TagGroup>('tagGroups'),
+	tagFamilies: db.collection<TagFamily>('tagFamilies'),
 	sliders: db.collection<Slider>('sliders'),
 	themes: db.collection<Theme>('themes'),
 	personalInfo: db.collection<PersonalInfo>('personalInfo'),
