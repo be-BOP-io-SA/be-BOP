@@ -582,6 +582,12 @@
 			"vatFreeReason": "Isento de IVA: {reason}",
 			"peopleCount": "Número de pessoas"
 		},
+		"forwardReceipt": {
+			"cancel": "Cancelar",
+			"send": "Enviar",
+			"success": "Recibo encaminhado!",
+			"title": "Encaminhar recibo"
+		},
 		"receiptFullyPaid": "Gerar recibo (totalmente pago)",
 		"receiptPending": "Gerar recibo (pagamento pendente)",
 		"related": {
