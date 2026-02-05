@@ -29,7 +29,7 @@ import {
 	productPriceWithVariations,
 	type Product
 } from '$lib/types/Product';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import {
 	currentWallet,
@@ -486,6 +486,30 @@ export async function onOrderPaymentFailed(
 	order = ret.value;
 
 	return order;
+}
+
+export async function cancelPayment(
+	params: { id: string; paymentId: string },
+	redirectUrl: string
+): Promise<never> {
+	const order = await collections.orders.findOne({ _id: params.id });
+
+	if (!order) {
+		throw error(404, 'Order not found');
+	}
+
+	const payment = order.payments.find((p) => p._id.equals(params.paymentId));
+
+	if (!payment) {
+		throw error(404, 'Payment not found');
+	}
+
+	if (payment.status !== 'pending') {
+		throw error(400, 'Payment is not pending');
+	}
+
+	await onOrderPaymentFailed(order, payment, 'canceled');
+	throw redirect(303, redirectUrl);
 }
 
 export async function lastInvoiceNumber(): Promise<number | undefined> {
