@@ -179,24 +179,12 @@ export const actions = {
 		}
 
 		if (address.startsWith('npub')) {
-			// Nostr DM: fetch ticket HTML and extract <pre> text content
-			const ticketUrl = `${ORIGIN}/order/${order._id}/payment/${paymentId}/ticket`;
-			const res = await fetch(ticketUrl);
-			let ticketText = `Order #${order.number} receipt: ${ORIGIN}/order/${order._id}`;
-			if (res.ok) {
-				const html = await res.text();
-				const preMatch = html.match(/<pre[^>]*>([\s\S]*?)<\/pre>/);
-				if (preMatch) {
-					ticketText = preMatch[1] + `\n\n${ORIGIN}/order/${order._id}`;
-				}
-			}
-
 			await collections.nostrNotifications.insertOne({
 				_id: new ObjectId(),
 				createdAt: new Date(),
 				updatedAt: new Date(),
 				kind: Kind.EncryptedDirectMessage,
-				content: ticketText,
+				content: `Order #${order.number} receipt: ${ORIGIN}/order/${order._id}`,
 				dest: address
 			});
 		} else {
