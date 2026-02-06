@@ -17,6 +17,7 @@ import { orderRemainingToPay } from '$lib/types/Order';
 import { CURRENCY_UNIT } from '$lib/types/Currency';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
+import { resolvePoolLabel } from '$lib/types/PosTabGroup';
 
 type Locale = App.Locals['language'];
 type ProductProjection = ProductForPriceInfo & { name: string };
@@ -102,6 +103,8 @@ export const load = async ({ depends, locals, params }) => {
 		clearAbandonedCartsAndOrdersFromTab(tab)
 	]);
 
+	const poolLabel = resolvePoolLabel(runtimeConfig.posTabGroups, tabSlug);
+
 	const sellerIdentity = runtimeConfig.sellerIdentity;
 
 	depends(UrlDependency.orderTab(tabSlug));
@@ -162,6 +165,7 @@ export const load = async ({ depends, locals, params }) => {
 	return {
 		orderTab,
 		tabSlug,
+		poolLabel,
 		posMobileBreakpoint: runtimeConfig.posMobileBreakpoint ?? 1024,
 		sharesOrder: sharesOrderData,
 		availablePaymentMethods: methods,

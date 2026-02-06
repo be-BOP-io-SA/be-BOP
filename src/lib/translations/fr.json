@@ -729,8 +729,8 @@
 		},
 		"split": {
 			"notAvailableYet": "Pas encore disponible",
-			"tabHeader": "Onglet {slug}",
-			"tabToPayNow": "Onglet {slug} (à payer maintenant)",
+			"tabHeader": "Onglet {poolLabel}",
+			"tabToPayNow": "Onglet {poolLabel} (à payer maintenant)",
 			"pool": "POOL",
 			"poolRemainingToPay": "POOL (reste à payer)",
 			"exclVat": "HT",

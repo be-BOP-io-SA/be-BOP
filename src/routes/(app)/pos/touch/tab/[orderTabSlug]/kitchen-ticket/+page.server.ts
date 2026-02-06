@@ -1,14 +1,12 @@
 import { collections } from '$lib/server/database';
 import { buildTagGroupsForPrint, getOrCreateOrderTab } from '$lib/server/orderTab';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { resolvePoolLabel } from '$lib/types/PosTabGroup';
 
 export async function load({ locals, params, url }) {
 	const tab = await getOrCreateOrderTab({ slug: params.orderTabSlug });
 
-	const poolLabel = params.orderTabSlug
-		.split('-')
-		.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-		.join(' ');
+	const poolLabel = resolvePoolLabel(runtimeConfig.posTabGroups, params.orderTabSlug);
 
 	const mode = (url.searchParams.get('mode') ?? 'all') as 'all' | 'newlyOrdered';
 	const tagFilter = url.searchParams.get('tagFilter');

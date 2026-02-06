@@ -728,8 +728,8 @@
 		},
 		"split": {
 			"notAvailableYet": "Non ancora disponibile",
-			"tabHeader": "Scheda {slug}",
-			"tabToPayNow": "Scheda {slug} (da pagare ora)",
+			"tabHeader": "Scheda {poolLabel}",
+			"tabToPayNow": "Scheda {poolLabel} (da pagare ora)",
 			"pool": "POOL",
 			"poolRemainingToPay": "POOL (da pagare)",
 			"exclVat": "esclusa IVA",

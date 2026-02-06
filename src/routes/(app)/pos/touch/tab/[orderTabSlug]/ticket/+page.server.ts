@@ -2,6 +2,7 @@ import { collections } from '$lib/server/database';
 import { getOrCreateOrderTab } from '$lib/server/orderTab';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { UNDERLYING_CURRENCY, type Currency } from '$lib/types/Currency';
+import { resolvePoolLabel } from '$lib/types/PosTabGroup';
 import { ObjectId } from 'mongodb';
 
 export async function load({ locals, params }) {
@@ -82,10 +83,7 @@ export async function load({ locals, params }) {
 		productById.get(tab.items[0].productId.toString())?.price.currency) ??
 		UNDERLYING_CURRENCY) as Currency;
 
-	const poolLabel = params.orderTabSlug
-		.split('-')
-		.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-		.join(' ');
+	const poolLabel = resolvePoolLabel(runtimeConfig.posTabGroups, params.orderTabSlug);
 
 	const sellerIdentity = runtimeConfig.sellerIdentity;
 	const companyLogoId = runtimeConfig.ticketLogoId || runtimeConfig.logo?.pictureId;

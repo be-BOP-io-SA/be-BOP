@@ -351,7 +351,7 @@
 					{:else if tab.items.length}
 						<div class="flex-1 overflow-y-auto min-h-0">
 							<h3 class="font-semibold text-3xl">
-								{t('pos.split.tabHeader', { slug: tab.slug })}
+								{t('pos.split.tabHeader', { poolLabel: data.poolLabel })}
 							</h3>
 							{#each tab.items as item, i}
 								{@const remainingQty = item.quantity - (splitTabQuantities[i] || 0)}
@@ -454,7 +454,7 @@
 								<h3 class="font-semibold text-3xl">
 									{isPoolFullyPaid
 										? t('pos.split.poolRemainingToPay')
-										: t('pos.split.tabToPayNow', { slug: tab.slug })}
+										: t('pos.split.tabToPayNow', { poolLabel: data.poolLabel })}
 								</h3>
 								{#each splitTabItems as item, i}
 									{@const qtyInCart = splitTabQuantities[i] || 0}
