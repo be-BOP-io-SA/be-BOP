@@ -60,6 +60,9 @@
 	$: remainingAmount = orderAmountWithNoPaymentsCreated(data.order, {
 		ignorePendingPayments: true
 	});
+	$: lastPayment = data.order.payments[data.order.payments.length - 1];
+	$: showContinue = !lastPayment || lastPayment.status === 'paid';
+
 	function confirmCancelOrder(event: Event) {
 		if (!confirm(t('pos.cancelOrderMessage'))) {
 			event.preventDefault();
@@ -439,8 +442,8 @@
 					</div>
 				{/if}
 
-				<!-- POS MODE: "Continue"  -->
-				{#if data.posMode && data.order.orderTabSlug}
+				<!-- POS MODE: "Continue" - only show when last payment is paid -->
+				{#if data.posMode && data.order.orderTabSlug && showContinue}
 					<a
 						href={data.splitMode
 							? `/pos/touch/tab/${data.order.orderTabSlug}/split?mode=${data.splitMode}`
@@ -517,7 +520,7 @@
 									{t('order.note.seeText')}
 								</a>
 								{#if data.order.orderTabSlug}
-									{#if data.splitMode}
+									{#if data.splitMode && showContinue}
 										<a
 											href="/pos/touch/tab/{data.order.orderTabSlug}/split?mode={data.splitMode}"
 											class="btn lg:w-auto w-full btn-black self-end"
