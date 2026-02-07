@@ -20,6 +20,7 @@ export async function load({ locals, params, url }) {
 			layoutReset: true,
 			poolLabel: historyEntry?.poolLabel ?? poolLabel,
 			generatedAt: new Date(),
+			firstItemAddedAt: tab.firstItemAddedAt,
 			tagGroups: historyEntry?.tagGroups ?? [],
 			showBebopLogo: false,
 			topBlankLines: runtimeConfig.posMidTicketTopBlankLines
@@ -66,6 +67,7 @@ export async function load({ locals, params, url }) {
 		layoutReset: true,
 		poolLabel,
 		generatedAt: new Date(),
+		firstItemAddedAt: tab.firstItemAddedAt,
 		tagGroups,
 		showBebopLogo: false,
 		topBlankLines: runtimeConfig.posMidTicketTopBlankLines

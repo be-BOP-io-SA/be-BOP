@@ -784,7 +784,10 @@
 		"midTicket": {
 			"title": "Keuken-/tussenbon instellingen",
 			"topBlankLines": "Aantal lege regels bovenaan de bon (voor klemmen)",
-			"topBlankLinesHint": "Standaard: 0"
+			"topBlankLinesHint": "Standaard: 0",
+			"printedAt": "Afgedrukt op {date} om {time}",
+			"poolFirstItemAdded": "Tafel geopend op {date} om {time}",
+			"orderCreatedAt": "Bestelling aangemaakt op {date} om {time}"
 		},
 		"useSelectForTags": "Gebruik dropdown voor tags"
 	},

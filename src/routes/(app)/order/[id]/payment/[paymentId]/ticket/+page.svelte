@@ -16,4 +16,6 @@
 	showGroupHeaders={true}
 	sharesInfo={data.sharesInfo}
 	peopleCount={data.peopleCount}
+	firstItemAddedAt={data.firstItemAddedAt}
+	orderCreatedAt={data.orderCreatedAt}
 />

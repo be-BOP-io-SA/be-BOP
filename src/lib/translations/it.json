@@ -784,7 +784,10 @@
 		"midTicket": {
 			"title": "Impostazioni ticket cucina/intermedio",
 			"topBlankLines": "Numero di righe vuote in cima al ticket (per il fissaggio)",
-			"topBlankLinesHint": "Predefinito: 0"
+			"topBlankLinesHint": "Predefinito: 0",
+			"printedAt": "Stampato il {date} alle {time}",
+			"poolFirstItemAdded": "Tavolo aperto il {date} alle {time}",
+			"orderCreatedAt": "Ordine creato il {date} alle {time}"
 		},
 		"useSelectForTags": "Usa menu a tendina per i tag"
 	},

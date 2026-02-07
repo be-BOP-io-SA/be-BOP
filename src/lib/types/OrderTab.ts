@@ -29,6 +29,7 @@ export interface OrderTab extends Timestamps {
 		motive?: string;
 	};
 	peopleCountFromPosUi?: number;
+	firstItemAddedAt?: Date;
 }
 
 export interface OrderTabPoolStatus {
