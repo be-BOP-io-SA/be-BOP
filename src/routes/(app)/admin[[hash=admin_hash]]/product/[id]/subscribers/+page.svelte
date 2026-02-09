@@ -87,8 +87,7 @@
 			paidUntil: subscription.paidUntil.toLocaleString($locale, dateTimeFormat),
 			cancelled,
 			nostr: subscription.user?.npub ?? '',
-			email: subscription.user?.email ?? '',
-			originalSubscription: subscription
+			email: subscription.user?.email ?? ''
 		};
 	});
 

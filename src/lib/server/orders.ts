@@ -22,6 +22,7 @@ import {
 	subSeconds
 } from 'date-fns';
 import { runtimeConfig } from './runtime-config';
+import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import { freeProductsForUser, generateSubscriptionNumber } from './subscriptions';
 import {
 	checkProductVariationsIntegrity,
@@ -2228,11 +2229,16 @@ function addDiscountFreeProducts(
 	}
 }
 
-const subscriptionDuration: Duration = {
-	hour: { hours: 1 },
-	day: { days: 1 },
-	month: { months: 1 }
-}[runtimeConfig.subscriptionDuration] satisfies Duration;
+function getSubscriptionDuration(): Duration {
+	const durations: Record<SubscriptionDuration, Duration> = {
+		hour: { hours: 1 },
+		day: { days: 1 },
+		week: { weeks: 1 },
+		month: { months: 1 },
+		year: { years: 1 }
+	};
+	return durations[runtimeConfig.subscriptionDuration as SubscriptionDuration];
+}
 
 async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSession) {
 	const subscriptionProducts = order.items.filter((item) => item.product.type === 'subscription');
@@ -2261,7 +2267,7 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, updatedFreeProductsById);
 			}
-			const newPaidUntil = add(max([existing.paidUntil, new Date()]), subscriptionDuration);
+			const newPaidUntil = add(max([existing.paidUntil, new Date()]), getSubscriptionDuration());
 
 			const archivedNotifications = existing.notifications.map((notif) => ({
 				...notif,
@@ -2317,7 +2323,7 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 					number: await generateSubscriptionNumber(),
 					user: order.user,
 					productId: subscription.product._id,
-					paidUntil: add(new Date(), subscriptionDuration),
+					paidUntil: add(new Date(), getSubscriptionDuration()),
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					notifications: [],

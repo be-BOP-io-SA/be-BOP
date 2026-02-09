@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
 import type { Currency } from '$lib/types/Currency';
+import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import type { DeliveryFees } from '$lib/types/DeliveryFees';
 import { currencies } from '$lib/stores/currencies';
 import {
@@ -71,7 +72,7 @@ const baseConfig = {
 	lightningQrCodeDescription: 'brand' as 'orderUrl' | 'brand' | 'brandAndOrderNumber' | 'none',
 	maintenanceIps: '',
 	brandName: 'My be-BOP',
-	subscriptionDuration: 'month' as 'month' | 'day' | 'hour',
+	subscriptionDuration: 'month' satisfies SubscriptionDuration,
 	subscriptionReminderSeconds: 24 * 60 * 60,
 	reserveStockInMinutes: 20,
 	confirmationBlocksThresholds: {
