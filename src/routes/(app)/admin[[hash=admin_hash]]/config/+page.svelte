@@ -5,6 +5,7 @@
 	import IconDownArrow from '~icons/ant-design/arrow-down-outlined';
 
 	import { CURRENCIES } from '$lib/types/Currency';
+	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 	import { formatDistance } from 'date-fns';
 	import { exchangeRate } from '$lib/stores/exchangeRate';
 	import { useI18n } from '$lib/i18n.js';
@@ -499,7 +500,7 @@
 			class="form-input max-w-[25rem]"
 			value={data.subscriptionDuration}
 		>
-			{#each ['month', 'day', 'hour'] as duration}
+			{#each SUBSCRIPTION_DURATIONS as duration}
 				<option value={duration}>{duration}</option>
 			{/each}
 		</select>
