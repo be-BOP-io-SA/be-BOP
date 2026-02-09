@@ -115,16 +115,7 @@
 	);
 	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
 
-	$: isFreeOfCharge =
-		addDiscount &&
-		((discountType === 'percentage' && discountAmount === 100) ||
-			(discountType === 'fiat' &&
-				discountAmount >=
-					toCurrency(
-						data.currencies.main,
-						priceInfoWithoutDiscount.totalPriceWithVat,
-						UNDERLYING_CURRENCY
-					)));
+	$: isFreeOfCharge = addDiscount && discountType === 'percentage' && discountAmount === 100;
 
 	$: possiblyOutOfBoundsDiscount =
 		addDiscount && discountType
@@ -217,7 +208,9 @@
 		return [...tagEntries, ...otherEntry];
 	})();
 
-	$: nothingToPay = priceInfo.totalPriceWithVat === 0 || isFreeOfCharge;
+	$: nothingToPay =
+		isFreeOfCharge ||
+		toCurrency(data.currencies.main, priceInfo.totalPriceWithVat, priceInfo.currency) <= 0;
 	$: paymentMethods = nothingToPay
 		? ['free']
 		: data.paymentMethods.filter(
@@ -231,12 +224,14 @@
 	$: isDiscountValid =
 		isFreeOfCharge ||
 		(discountType === 'fiat' &&
-			discountAmount <=
+			(discountAmount <=
 				toCurrency(
 					data.currencies.main,
 					priceInfoWithoutDiscount.totalPriceWithVat,
 					UNDERLYING_CURRENCY
-				)) ||
+				) ||
+				toCurrency(UNDERLYING_CURRENCY, discountAmount, data.currencies.main) <=
+					priceInfoWithoutDiscount.totalPriceWithVat)) ||
 		(discountType === 'percentage' && discountAmount <= 100);
 	let showBillingInfo = false;
 	let isProfessionalOrder = false;
@@ -1126,13 +1121,7 @@
 							step="any"
 							bind:value={discountAmount}
 							min="0"
-							max={discountType === 'percentage'
-								? 100
-								: toCurrency(
-										data.currencies.main,
-										priceInfoWithoutDiscount.totalPriceWithVat,
-										UNDERLYING_CURRENCY
-									)}
+							max={discountType === 'percentage' ? 100 : undefined}
 							required
 						/>
 

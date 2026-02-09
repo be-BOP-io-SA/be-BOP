@@ -981,7 +981,10 @@ export async function createOrder(
 		throw error(400, 'Missing billing address for deliveryless order');
 	}
 
-	if (paymentMethod === 'free' && totalSatoshis !== 0) {
+	if (
+		paymentMethod === 'free' &&
+		toCurrency(runtimeConfig.mainCurrency, totalSatoshis, 'SAT') > 0
+	) {
 		throw error(400, "You can't use free payment method on this order");
 	}
 
