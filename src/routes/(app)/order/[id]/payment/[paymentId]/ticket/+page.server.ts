@@ -1,4 +1,5 @@
 import { error } from '@sveltejs/kit';
+import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { fetchOrderForUser } from '../../../fetchOrderForUser.js';
 import { orderItemPrice } from '$lib/types/Order.js';
@@ -121,6 +122,13 @@ export async function load({ params }) {
 	const companyLogoId = runtimeConfig.ticketLogoId || runtimeConfig.logo?.pictureId;
 	const companyLogoUrl = companyLogoId ? `/picture/raw/${companyLogoId}/format/128` : undefined;
 
+	const orderTab = order.orderTabSlug
+		? await collections.orderTabs.findOne(
+				{ slug: order.orderTabSlug },
+				{ projection: { poolOpenedAt: 1 } }
+		  )
+		: null;
+
 	return {
 		order,
 		payment,
@@ -130,6 +138,8 @@ export async function load({ params }) {
 		companyInfo,
 		companyLogoUrl,
 		sharesInfo,
-		peopleCount: order.peopleCountFromPosUi
+		peopleCount: order.peopleCountFromPosUi,
+		orderCreatedAt: order.createdAt,
+		poolOpenedAt: orderTab?.poolOpenedAt
 	};
 }

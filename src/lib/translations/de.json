@@ -785,7 +785,10 @@
 		"midTicket": {
 			"title": "Küchen-/Zwischenticket-Einstellungen",
 			"topBlankLines": "Anzahl der Leerzeilen oben auf dem Ticket (zum Einspannen)",
-			"topBlankLinesHint": "Standard: 0"
+			"topBlankLinesHint": "Standard: 0",
+			"printedAt": "Gedruckt am {date} um {time}",
+			"poolFirstItemAdded": "Tisch eröffnet am {date} um {time}",
+			"orderCreatedAt": "Bestellung erstellt am {date} um {time}"
 		}
 	},
 	"product": {

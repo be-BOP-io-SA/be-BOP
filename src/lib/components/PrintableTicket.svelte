@@ -61,6 +61,9 @@
 	// Number of blank lines at top of each kitchen ticket section (for clamping)
 	export let topBlankLines = 0;
 
+	export let poolOpenedAt: Date | undefined = undefined;
+	export let orderCreatedAt: Date | undefined = undefined;
+
 	// ESC/POS Command Constants
 	const ESC = {
 		// Text formatting
@@ -330,7 +333,6 @@
 
 		// Ticket header
 		if (isCustomerReceipt && priceInfo) {
-			lines.push('');
 			if (useEscPos) {
 				lines.push(ESC.DOUBLE_WIDTH + centerText(`TICKET "${poolLabel}"`, 16) + ESC.NORMAL);
 			} else {
@@ -338,7 +340,14 @@
 			}
 
 			if (generatedAt) {
-				lines.push(centerText(format(generatedAt, 'dd/MM/yyyy HH:mm')));
+				lines.push(
+					centerText(
+						t('pos.midTicket.printedAt', {
+							date: format(generatedAt, 'dd/MM/yyyy'),
+							time: format(generatedAt, 'HH:mm:ss')
+						})
+					)
+				);
 			}
 
 			lines.push(separator('-'));
@@ -565,16 +574,29 @@
 
 				lines.push(separator('═'));
 				if (useEscPos) {
-					lines.push(ESC.DOUBLE_HEIGHT + bold(centerText(`TICKET ${poolLabel.toUpperCase()}`, 16)));
+					lines.push(ESC.DOUBLE_HEIGHT + bold(centerText(`TICKET "${poolLabel}"`, 16)));
 					if (generatedAt) {
 						lines.push(
-							ESC.DOUBLE_WIDTH + centerText(format(generatedAt, 'HH:mm'), 16) + ESC.NORMAL
+							ESC.NORMAL +
+								centerText(
+									t('pos.midTicket.printedAt', {
+										date: format(generatedAt, 'dd/MM/yyyy'),
+										time: format(generatedAt, 'HH:mm:ss')
+									})
+								)
 						);
 					}
 				} else {
-					lines.push(centerText(`TICKET ${poolLabel.toUpperCase()}`));
+					lines.push(centerText(`TICKET "${poolLabel}"`));
 					if (generatedAt) {
-						lines.push(centerText(format(generatedAt, 'HH:mm')));
+						lines.push(
+							centerText(
+								t('pos.midTicket.printedAt', {
+									date: format(generatedAt, 'dd/MM/yyyy'),
+									time: format(generatedAt, 'HH:mm:ss')
+								})
+							)
+						);
 					}
 				}
 				lines.push(separator('═'));
@@ -659,6 +681,14 @@
 		.printable .ticket-header-centered .company-name {
 			font-weight: bold;
 			font-size: 12px;
+		}
+
+		/* Date/time information */
+		.printable .ticket-dates {
+			font-size: 9px;
+			line-height: 1.4;
+			margin-bottom: 2mm;
+			padding-left: 5px;
 		}
 
 		/* Be-Bop footer */
@@ -780,6 +810,28 @@
 				{/if}
 			</div>
 		{/if}
+	{/if}
+
+	<!-- Date/time information -->
+	{#if poolOpenedAt || orderCreatedAt}
+		<div class="ticket-dates">
+			{#if poolOpenedAt}
+				<div>
+					{t('pos.midTicket.poolFirstItemAdded', {
+						date: format(poolOpenedAt, 'dd/MM/yyyy'),
+						time: format(poolOpenedAt, 'HH:mm:ss')
+					})}
+				</div>
+			{/if}
+			{#if orderCreatedAt}
+				<div>
+					{t('pos.midTicket.orderCreatedAt', {
+						date: format(orderCreatedAt, 'dd/MM/yyyy'),
+						time: format(orderCreatedAt, 'HH:mm:ss')
+					})}
+				</div>
+			{/if}
+		</div>
 	{/if}
 
 	<!-- Ticket content -->
