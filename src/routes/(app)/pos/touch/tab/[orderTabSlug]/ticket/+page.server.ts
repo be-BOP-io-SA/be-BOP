@@ -2,8 +2,9 @@ import { collections } from '$lib/server/database';
 import { getOrCreateOrderTab } from '$lib/server/orderTab';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { vatRate } from '$lib/types/Country';
-import { UNDERLYING_CURRENCY, type Currency } from '$lib/types/Currency';
+import type { Currency } from '$lib/types/Currency';
 import { resolvePoolLabel } from '$lib/types/PosTabGroup';
+import { toCurrency } from '$lib/utils/toCurrency';
 import { ObjectId } from 'mongodb';
 
 export async function load({ locals, params }) {
@@ -14,13 +15,15 @@ export async function load({ locals, params }) {
 		.project<{
 			_id: string;
 			name: string;
-			price: { amount: number; currency: string };
+			price: { amount: number; currency: Currency };
 			vatProfileId?: string;
+			tagIds?: string[];
 		}>({
 			_id: 1,
 			name: { $ifNull: [`$translations.${locals.language}.name`, '$name'] },
 			price: 1,
-			vatProfileId: { $toString: '$vatProfileId' }
+			vatProfileId: { $toString: '$vatProfileId' },
+			tagIds: 1
 		})
 		.toArray();
 
@@ -48,6 +51,16 @@ export async function load({ locals, params }) {
 		return profile?.rates?.[bebopCountry] ?? vatRate(bebopCountry);
 	}
 
+	const discountTagId = tab.discount?.tagId;
+	const discountTagDoc = discountTagId
+		? await collections.tags.findOne({ _id: discountTagId }, { projection: { name: 1 } })
+		: null;
+	if (discountTagId && !discountTagDoc) {
+		console.warn(`Discount tag ${discountTagId} not found (may have been deleted)`);
+	}
+	const discountTagLabel = discountTagDoc?.name || discountTagId || '';
+
+	const mainCurrency = runtimeConfig.mainCurrency;
 	const itemsForTicket = tab.items
 		.map((item) => {
 			const product = productById.get(item.productId.toString());
@@ -55,37 +68,56 @@ export async function load({ locals, params }) {
 				return null;
 			}
 			const quantity = item.originalQuantity ?? item.quantity;
-			const unitPrice = product.price.amount;
+			const totalExcl = toCurrency(
+				mainCurrency,
+				product.price.amount * quantity,
+				product.price.currency
+			);
 			const vatRate = getVatRate(product.vatProfileId);
+			const totalIncl = totalExcl * (1 + vatRate / 100);
 			return {
 				name: product.name,
 				quantity,
-				unitPrice,
-				totalExcl: unitPrice * quantity,
-				vatRate
+				totalExcl,
+				totalIncl,
+				vatRate,
+				matchesDiscountTag: discountTagId ? (product.tagIds ?? []).includes(discountTagId) : true
 			};
 		})
 		.filter((item): item is NonNullable<typeof item> => item !== null);
 
 	const totalExclVat = itemsForTicket.reduce((sum, item) => sum + item.totalExcl, 0);
+	const totalInclVat = itemsForTicket.reduce((sum, item) => sum + item.totalIncl, 0);
 
 	const vatByRate = new Map<number, number>();
 	itemsForTicket.forEach((item) => {
-		const vatAmount = item.totalExcl * (item.vatRate / 100);
+		const vatAmount = item.totalIncl - item.totalExcl;
 		vatByRate.set(item.vatRate, (vatByRate.get(item.vatRate) ?? 0) + vatAmount);
 	});
 
-	const totalVat = Array.from(vatByRate.values()).reduce((sum, v) => sum + v, 0);
-	const totalInclVat = totalExclVat + totalVat;
-
 	const discount = tab.discount;
 	const hasDiscount = discount && discount.percentage > 0;
-	const discountMultiplier = hasDiscount ? 1 - discount.percentage / 100 : 1;
-	const totalAfterDiscount = totalInclVat * discountMultiplier;
 
-	const currency = ((tab.items[0] &&
-		productById.get(tab.items[0].productId.toString())?.price.currency) ??
-		UNDERLYING_CURRENCY) as Currency;
+	let totalAfterDiscount = totalInclVat;
+	if (hasDiscount) {
+		const discountableIncl = itemsForTicket
+			.filter((item) => item.matchesDiscountTag)
+			.reduce((sum, item) => sum + item.totalIncl, 0);
+		totalAfterDiscount = Math.max(0, totalInclVat - discountableIncl * (discount.percentage / 100));
+	}
+
+	const itemGroups =
+		hasDiscount && discountTagId
+			? [
+					{
+						tagNames: [discountTagLabel],
+						items: itemsForTicket.filter((i) => i.matchesDiscountTag)
+					},
+					{ tagNames: [] as string[], items: itemsForTicket.filter((i) => !i.matchesDiscountTag) }
+			  ].filter((g) => g.items.length > 0)
+			: [{ tagNames: [] as string[], items: itemsForTicket }];
+
+	const currency = mainCurrency;
 
 	const poolLabel = resolvePoolLabel(runtimeConfig.posTabGroups, params.orderTabSlug);
 
@@ -97,22 +129,22 @@ export async function load({ locals, params }) {
 		poolLabel,
 		generatedAt: new Date(),
 		poolOpenedAt: tab.poolOpenedAt,
-		tagGroups: [
-			{
-				tagNames: [],
-				items: itemsForTicket.map((item) => ({
-					product: { name: item.name },
-					quantity: item.quantity,
-					variations: [],
-					notes: []
-				}))
-			}
-		],
+		tagGroups: itemGroups.map((group) => ({
+			tagNames: group.tagNames,
+			items: group.items.map((item) => ({
+				product: { name: item.name },
+				quantity: item.quantity,
+				variations: [],
+				notes: []
+			}))
+		})),
 		priceInfo: {
-			itemPrices: itemsForTicket.map((item) => ({
-				amount: item.totalExcl,
-				currency
-			})),
+			itemPrices: itemGroups.flatMap((group) =>
+				group.items.map((item) => ({
+					amount: item.totalExcl,
+					currency
+				}))
+			),
 			total: totalAfterDiscount,
 			totalExclVat,
 			vatBreakdown: Array.from(vatByRate.entries())
