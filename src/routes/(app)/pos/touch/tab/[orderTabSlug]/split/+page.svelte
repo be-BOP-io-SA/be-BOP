@@ -145,6 +145,19 @@
 	}));
 	$: originalQuantitiesPriceInfo = computePriceInfo(itemsWithOriginalQuantities, priceConfig);
 	$: originalTabTotalWithVat = originalQuantitiesPriceInfo.partialPriceWithVat;
+	$: originalTabTotalWithVatBeforeDiscount = computePriceInfo(
+		itemsWithOriginalQuantities.map((item) => ({ ...item, discountPercentage: undefined })),
+		priceConfig
+	).partialPriceWithVat;
+
+	$: tabItemsWithoutDiscount = tab.items.map((item) => ({
+		...item,
+		discountPercentage: undefined
+	}));
+	$: tabTotalInclBeforeDiscount = computePriceInfo(
+		tabItemsWithoutDiscount,
+		priceConfig
+	).partialPriceWithVat;
 
 	$: poolTotals =
 		isPoolFullyPaid && hasOriginalQuantities
@@ -250,14 +263,15 @@
 	function computePoolTotals(priceInfo: typeof tabItemsPriceInfo) {
 		return priceInfo.perItem.reduce(
 			(acc, perItem, i) => {
-				const itemVat = perItem.amount * (priceInfo.vatRates[i] / 100);
+				const vatRate = priceInfo.vatRates[i] / 100;
 				return {
 					excl: acc.excl + perItem.amount,
-					vat: acc.vat + itemVat,
-					incl: acc.incl + perItem.amount + itemVat
+					vat: acc.vat + perItem.amount * vatRate,
+					incl: acc.incl + perItem.amount * (1 + vatRate),
+					inclBeforeDiscount: acc.inclBeforeDiscount + perItem.amountWithoutDiscount * (1 + vatRate)
 				};
 			},
-			{ excl: 0, vat: 0, incl: 0 }
+			{ excl: 0, vat: 0, incl: 0, inclBeforeDiscount: 0 }
 		);
 	}
 
@@ -348,13 +362,11 @@
 						<div class="shrink-0">
 							<PosSplitTotalSection
 								totalExcl={poolTotals.excl}
-								totalIncl={tab.discount && tab.discount.percentage > 0
-									? poolTotals.incl * (1 - tab.discount.percentage / 100)
-									: poolTotals.incl}
+								totalIncl={poolTotals.incl}
 								currency={poolCurrency}
 								vatRates={poolVatRates}
 								totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
-									? poolTotals.incl
+									? poolTotals.inclBeforeDiscount
 									: undefined}
 								discountPercentage={tab.discount?.percentage}
 							/>
@@ -384,13 +396,11 @@
 						<div class="shrink-0">
 							<PosSplitTotalSection
 								totalExcl={tabItemsPriceInfo.partialPrice}
-								totalIncl={tab.discount && tab.discount.percentage > 0
-									? tabItemsPriceInfo.partialPriceWithVat * (1 - tab.discount.percentage / 100)
-									: tabItemsPriceInfo.partialPriceWithVat}
+								totalIncl={tabItemsPriceInfo.partialPriceWithVat}
 								currency={tabItemsPriceInfo.currency}
 								vatRates={tabItemsPriceInfo.vat.map((vat) => vat.rate)}
 								totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
-									? tabItemsPriceInfo.partialPriceWithVat
+									? tabTotalInclBeforeDiscount
 									: undefined}
 								discountPercentage={tab.discount?.percentage}
 							/>
@@ -663,7 +673,7 @@
 										<!-- Show strikethrough undiscounted price -->
 										<div class="text-3xl font-bold line-through text-gray-500">
 											<PriceTag
-												amount={originalTabTotalWithVat}
+												amount={originalTabTotalWithVatBeforeDiscount}
 												currency={UNDERLYING_CURRENCY}
 												main
 											/>
