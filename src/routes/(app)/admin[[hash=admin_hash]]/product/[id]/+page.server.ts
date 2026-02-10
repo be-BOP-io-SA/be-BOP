@@ -314,6 +314,20 @@ export const actions: Actions = {
 	},
 
 	delete: async ({ params }) => {
+		// Check if product is in any open pool
+		const poolsWithProduct = await collections.orderTabs.countDocuments({
+			'items.productId': params.id
+		});
+
+		if (poolsWithProduct > 0) {
+			throw error(
+				400,
+				`Cannot delete product. It is present in ${poolsWithProduct} open pool${
+					poolsWithProduct > 1 ? 's' : ''
+				}. Please remove the product from all pools first.`
+			);
+		}
+
 		// Check if other products reference this product's stock
 		const dependentProducts = await collections.products.countDocuments({
 			'stockReference.productId': params.id
