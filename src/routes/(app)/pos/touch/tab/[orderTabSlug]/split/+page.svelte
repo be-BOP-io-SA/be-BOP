@@ -85,8 +85,8 @@
 	// - Shares mode: entire tab total is 0 (all items are free) OR 100% discount applied
 	$: hasSelectedItems = splitTabQuantities.some((qty) => qty > 0);
 	$: showFreeOnlyForItems = hasSelectedItems && splitTabPriceInfo.partialPriceWithVat === 0;
-	// Check if pool has 100% discount (without tagId = applies to all items)
-	$: isFullPoolDiscount = tab.discount?.percentage === 100 && !tab.discount?.tagId;
+	// Check if every item has 100% discount (tag-aware: only matching items get discountPercentage)
+	$: isFullPoolDiscount = tab.items.every((item) => item.discountPercentage === 100);
 	$: showFreeOnlyForShares = tabItemsPriceInfo.partialPriceWithVat === 0 || isFullPoolDiscount;
 
 	$: paymentOptionsForItems = buildPaymentOptions(
@@ -337,15 +337,9 @@
 						<div class="shrink-0">
 							<PosSplitTotalSection
 								totalExcl={poolTotals.excl}
-								totalIncl={tab.discount && tab.discount.percentage > 0
-									? poolTotals.incl * (1 - tab.discount.percentage / 100)
-									: poolTotals.incl}
+								totalIncl={poolTotals.incl}
 								currency={poolCurrency}
 								vatRates={poolVatRates}
-								totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
-									? poolTotals.incl
-									: undefined}
-								discountPercentage={tab.discount?.percentage}
 							/>
 						</div>
 					{:else if tab.items.length}
@@ -373,15 +367,9 @@
 						<div class="shrink-0">
 							<PosSplitTotalSection
 								totalExcl={tabItemsPriceInfo.partialPrice}
-								totalIncl={tab.discount && tab.discount.percentage > 0
-									? tabItemsPriceInfo.partialPriceWithVat * (1 - tab.discount.percentage / 100)
-									: tabItemsPriceInfo.partialPriceWithVat}
+								totalIncl={tabItemsPriceInfo.partialPriceWithVat}
 								currency={tabItemsPriceInfo.currency}
 								vatRates={tabItemsPriceInfo.vat.map((vat) => vat.rate)}
-								totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
-									? tabItemsPriceInfo.partialPriceWithVat
-									: undefined}
-								discountPercentage={tab.discount?.percentage}
 							/>
 						</div>
 					{:else}
@@ -648,7 +636,7 @@
 							{#if data.sharesOrder}
 								<div class="bg-gray-100 p-6 rounded-lg space-y-3">
 									<div class="text-3xl font-semibold">{t('pos.split.totalAlreadyPaid')}</div>
-									{#if tab.discount && tab.discount.percentage > 0}
+									{#if tab.items.some((item) => item.discountPercentage)}
 										<!-- Show strikethrough undiscounted price -->
 										<div class="text-3xl font-bold line-through text-gray-500">
 											<PriceTag

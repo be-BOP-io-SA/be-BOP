@@ -27,8 +27,9 @@ type HydratedTabItem = {
 		value: string;
 		updatedAt: Date;
 	};
-	product: Omit<ProductProjection, 'vatProfileId'> & { vatProfileId?: string };
+	product: Omit<ProductProjection, 'vatProfileId'> & { vatProfileId?: string; tagIds?: string[] };
 	quantity: number;
+	discountPercentage?: number;
 	originalQuantity?: number;
 	tabItemId: string;
 	orderId?: string;
@@ -46,6 +47,7 @@ async function hydratedOrderItems(
 			_id: 1,
 			name: { $ifNull: [`$translations.${locale}.name`, '$name'] },
 			price: 1,
+			tagIds: 1,
 			shortDescription: {
 				$ifNull: [`$translations.${locale}.shortDescription`, '$shortDescription']
 			},
@@ -77,9 +79,19 @@ async function hydratedOrderItems(
 }
 
 async function getHydratedOrderTab(locale: Locale, tab: OrderTab) {
+	const items = await hydratedOrderItems(locale, tab.items);
+
+	if (tab.discount && tab.discount.percentage > 0) {
+		for (const item of items) {
+			if (!tab.discount.tagId || item.product.tagIds?.includes(tab.discount.tagId)) {
+				item.discountPercentage = tab.discount.percentage;
+			}
+		}
+	}
+
 	return {
 		slug: tab.slug,
-		items: await hydratedOrderItems(locale, tab.items),
+		items,
 		discount: tab.discount
 	};
 }
