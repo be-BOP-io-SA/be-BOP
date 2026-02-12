@@ -655,6 +655,8 @@
 		"label": {
 			"amount": "Bedrag",
 			"currency": "Valuta",
+			"currencyCodeHelp": "Vind uw valutacode",
+			"currencyCodeHelpUrl": "https://nl.wikipedia.org/wiki/ISO_4217",
 			"method": "Methode",
 			"subtype": "Type"
 		},
