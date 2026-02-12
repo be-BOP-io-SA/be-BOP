@@ -1,6 +1,9 @@
 <script lang="ts">
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
-	import { CURRENCIES } from '$lib/types/Currency';
+	import { sortCurrenciesDefault } from '$lib/types/Currency';
+	import Select from 'svelte-select';
+	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
+	import { currencies } from '$lib/stores/currencies';
 
 	export let data;
 
@@ -8,6 +11,14 @@
 
 	if (thresholds.thresholds.length === 0) {
 		thresholds.thresholds = [{ minAmount: 0, maxAmount: 0, confirmationBlocks: 0 }];
+	}
+
+	// Currency options for Select component (sorted: main → secondary → BTC/SAT → fiat A-Z)
+	const sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
+	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+	let selectedCurrency = allCurrenciesOptions.find((c) => c.value === thresholds.currency) || null;
+	$: if (selectedCurrency) {
+		thresholds.currency = selectedCurrency.value;
 	}
 
 	function checkTresholds(event: Event) {
@@ -38,12 +49,15 @@
 
 	<form method="post" class="flex flex-col gap-4" on:submit={checkTresholds}>
 		<label class="form-label">
-			Currency
-			<select class="form-input" name="currency" bind:value={thresholds.currency}>
-				{#each CURRENCIES as currency}
-					<option value={currency} selected={currency === thresholds.currency}>{currency}</option>
-				{/each}
-			</select>
+			<CurrencyLabel label="Currency" />
+			<Select
+				items={allCurrenciesOptions}
+				searchable={true}
+				clearable={false}
+				bind:value={selectedCurrency}
+				class="form-input"
+			/>
+			<input type="hidden" name="currency" value={selectedCurrency?.value || ''} required />
 		</label>
 
 		<label class="form-label">

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import {
-		CURRENCIES,
 		CURRENCY_UNIT,
 		computePriceForStorage,
-		readStoredPrice
+		readStoredPrice,
+		sortCurrenciesForProduct
 	} from '$lib/types/Currency';
 	import {
 		DEFAULT_MAX_QUANTITY_PER_ORDER,
@@ -15,8 +15,10 @@
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import type { WithId } from 'mongodb';
 	import { MultiSelect } from 'svelte-multiselect';
+	import Select from 'svelte-select';
 	import type { LayoutServerData } from '../../routes/(app)/$types';
 	import DeliveryFeesSelector from './DeliveryFeesSelector.svelte';
+	import CurrencyLabel from './CurrencyLabel.svelte';
 	import Editor from '@tinymce/tinymce-svelte';
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 	import {
@@ -115,6 +117,19 @@
 	let displayVATCalculator = false;
 	let priceAmountVATIncluded = product.price.amount;
 	let vatRate = 0;
+
+	// Currency options for Select component (sorted: priceRef → main → secondary → BTC/SAT → fiat A-Z)
+	const sortedCurrencies = sortCurrenciesForProduct(
+		$currencies.priceReference,
+		$currencies.main,
+		$currencies.secondary
+	);
+	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+	let selectedCurrency =
+		allCurrenciesOptions.find((c) => c.value === product.price.currency) || null;
+	$: if (selectedCurrency) {
+		product.price.currency = selectedCurrency.value;
+	}
 	$: product.price = computePriceForStorage(
 		(100 * priceAmountVATIncluded) / (100 + vatRate),
 		product.price.currency
@@ -413,17 +428,16 @@
 					</label>
 
 					<label class="w-full">
-						<span class="text-red-500">*</span> Price currency
-						<select
-							name="priceCurrency"
+						<CurrencyLabel label="Price currency" />
+						<Select
+							items={allCurrenciesOptions}
+							searchable={true}
+							clearable={false}
+							bind:value={selectedCurrency}
+							on:change={() => priceAmountElement?.setCustomValidity('')}
 							class="form-input"
-							bind:value={product.price.currency}
-							on:input={() => priceAmountElement?.setCustomValidity('')}
-						>
-							{#each CURRENCIES as currency}
-								<option value={currency}>{currency}</option>
-							{/each}
-						</select>
+						/>
+						<input type="hidden" name="priceCurrency" value={selectedCurrency?.value || ''} />
 					</label>
 				</div>
 
@@ -689,7 +703,7 @@
 									bind:value={product.price.currency}
 									disabled
 								>
-									{#each CURRENCIES as currency}
+									{#each sortedCurrencies as currency}
 										<option value={currency}>{currency}</option>
 									{/each}
 								</select>
@@ -730,7 +744,7 @@
 										bind:value={product.price.currency}
 										disabled
 									>
-										{#each CURRENCIES as currency}
+										{#each sortedCurrencies as currency}
 											<option value={currency}>{currency}</option>
 										{/each}
 									</select>

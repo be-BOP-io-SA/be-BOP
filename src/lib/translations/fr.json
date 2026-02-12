@@ -644,6 +644,8 @@
 		"label": {
 			"amount": "Montant",
 			"currency": "Devise",
+			"currencyCodeHelp": "Trouvez le code de votre devise",
+			"currencyCodeHelpUrl": "https://fr.wikipedia.org/wiki/ISO_4217#Liste_triée_par_nom_d'unité_monétaire",
 			"method": "Méthode",
 			"subtype": "Type"
 		},

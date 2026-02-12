@@ -4,13 +4,15 @@
 	import IconUpArrow from '~icons/ant-design/arrow-up-outlined';
 	import IconDownArrow from '~icons/ant-design/arrow-down-outlined';
 
-	import { CURRENCIES } from '$lib/types/Currency';
+	import { sortCurrenciesForConfig } from '$lib/types/Currency';
 	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 	import { formatDistance } from 'date-fns';
 	import { exchangeRate } from '$lib/stores/exchangeRate';
 	import { useI18n } from '$lib/i18n.js';
+	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import MultiSelect from 'svelte-multiselect';
+	import Select from 'svelte-select';
 	import ProcessorSelector from '$lib/components/ProcessorSelector.svelte';
 	export let data;
 	export let form;
@@ -20,6 +22,29 @@
 	let priceReferenceCurrency = data.currencies.priceReference;
 	let hasCartLimitProductLine = !!data.cartMaxSeparateItems;
 	let hasPhysicalCartMinAmount = !!data.physicalCartMinAmount;
+
+	// Currency options for Select components (sorted: BTC/SAT → fiat A-Z)
+	// Exclude SAT for main/secondary/accounting
+	const sortedCurrencies = sortCurrenciesForConfig();
+	const currenciesWithoutSat = sortedCurrencies
+		.filter((c) => c !== 'SAT')
+		.map((c) => ({ value: c, label: c }));
+	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+
+	// Selected values for Select components
+	let selectedMainCurrency =
+		currenciesWithoutSat.find((c) => c.value === data.currencies.main) || null;
+	let selectedSecondaryCurrency = data.currencies.secondary
+		? currenciesWithoutSat.find((c) => c.value === data.currencies.secondary)
+		: null;
+	let selectedPriceReferenceCurrency =
+		allCurrenciesOptions.find((c) => c.value === data.currencies.priceReference) || null;
+	let selectedAccountingCurrency = data.accountingCurrency
+		? currenciesWithoutSat.find((c) => c.value === data.accountingCurrency)
+		: null;
+
+	$: priceReferenceCurrency =
+		selectedPriceReferenceCurrency?.value || data.currencies.priceReference;
 	async function onOverwrite(event: Event) {
 		if (!confirm('Do you want to overwrite current product currencies with this one?')) {
 			event.preventDefault();
@@ -80,40 +105,45 @@
 <form method="post" action="?/update" class="flex flex-col gap-6">
 	<h2 class="text-2xl">Currencies</h2>
 	<label class="form-label">
-		Main currency
-		<select name="mainCurrency" class="form-input max-w-[25rem]">
-			{#each CURRENCIES.filter((c) => c !== 'SAT') as currency}
-				<option value={currency} selected={data.currencies.main === currency}>{currency}</option>
-			{/each}
-		</select>
+		<CurrencyLabel label="Main currency" />
+		<Select
+			items={currenciesWithoutSat}
+			searchable={true}
+			clearable={false}
+			bind:value={selectedMainCurrency}
+			class="form-input max-w-[25rem]"
+		/>
+		<input type="hidden" name="mainCurrency" value={selectedMainCurrency?.value || ''} />
 	</label>
 
 	<label class="form-label">
-		Secondary currency
-		<select name="secondaryCurrency" class="form-input max-w-[25rem]">
-			<option value="" selected={!data.currencies.secondary} />
-			{#each CURRENCIES.filter((c) => c !== 'SAT') as currency}
-				<option value={currency} selected={data.currencies.secondary === currency}>
-					{currency}
-				</option>
-			{/each}
-		</select>
+		<CurrencyLabel label="Secondary currency" />
+		<Select
+			items={currenciesWithoutSat}
+			searchable={true}
+			clearable={true}
+			placeholder="Select a currency"
+			bind:value={selectedSecondaryCurrency}
+			class="form-input max-w-[25rem]"
+		/>
+		<input type="hidden" name="secondaryCurrency" value={selectedSecondaryCurrency?.value || ''} />
 	</label>
 
 	<label class="form-label">
-		Price reference currency (to avoid exchange rate fluctuations)
+		<CurrencyLabel label="Price reference currency (to avoid exchange rate fluctuations)" />
 		<div class="flex gap-2">
-			<select
-				name="priceReferenceCurrency"
-				bind:value={priceReferenceCurrency}
+			<Select
+				items={allCurrenciesOptions}
+				searchable={true}
+				clearable={false}
+				bind:value={selectedPriceReferenceCurrency}
 				class="form-input max-w-[25rem]"
-			>
-				{#each CURRENCIES as currency}
-					<option value={currency}>
-						{currency}
-					</option>
-				{/each}
-			</select>
+			/>
+			<input
+				type="hidden"
+				name="priceReferenceCurrency"
+				value={selectedPriceReferenceCurrency?.value || ''}
+			/>
 			<button type="submit" class="btn btn-red self-start" form="overwrite">
 				<IconRefresh />
 			</button>
@@ -121,15 +151,20 @@
 	</label>
 
 	<label class="form-label">
-		Accounting currency
-		<select name="accountingCurrency" class="form-input max-w-[25rem]">
-			<option value="" selected={!data.accountingCurrency} />
-			{#each CURRENCIES.filter((c) => c !== 'SAT') as currency}
-				<option value={currency} selected={data.accountingCurrency === currency}>
-					{currency}
-				</option>
-			{/each}
-		</select>
+		<CurrencyLabel label="Accounting currency" />
+		<Select
+			items={currenciesWithoutSat}
+			searchable={true}
+			clearable={true}
+			placeholder="Select a currency"
+			bind:value={selectedAccountingCurrency}
+			class="form-input max-w-[25rem]"
+		/>
+		<input
+			type="hidden"
+			name="accountingCurrency"
+			value={selectedAccountingCurrency?.value || ''}
+		/>
 		<p class="text-sm">
 			Payment amounts will also be stored in this currency. Useful for a full-crypto shop but you
 			still want to keep track of fiat values at time of payment.

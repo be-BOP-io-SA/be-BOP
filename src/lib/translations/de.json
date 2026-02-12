@@ -644,6 +644,8 @@
 		"label": {
 			"amount": "Betrag",
 			"currency": "Währung",
+			"currencyCodeHelp": "Finden Sie Ihren Währungscode",
+			"currencyCodeHelpUrl": "https://de.wikipedia.org/wiki/ISO_4217#Listen_der_Währungscodes",
 			"method": "Methode",
 			"subtype": "Typ"
 		},
