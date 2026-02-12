@@ -28,9 +28,9 @@ export function convertAmountToCurrencyForStorage(
 		return computePriceForStorage(amount, targetCurrency);
 	}
 
-	const rates = get(exchangeRate);
-	const fromRate = fromCurrency === 'BTC' ? 1 : rates[fromCurrency as keyof typeof rates];
-	const toRate = targetCurrency === 'BTC' ? 1 : rates[targetCurrency as keyof typeof rates];
+	const rates: Record<string, number> = get(exchangeRate);
+	const fromRate = fromCurrency === 'BTC' ? 1 : rates[fromCurrency];
+	const toRate = targetCurrency === 'BTC' ? 1 : rates[targetCurrency];
 
 	// If exchange rates not available yet, return amount as-is (rates fetched from API)
 	if (fromRate === undefined || toRate === undefined) {

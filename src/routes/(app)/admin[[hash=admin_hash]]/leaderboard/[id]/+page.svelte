@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { sortCurrenciesDefault } from '$lib/types/Currency.js';
+	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency.js';
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { MultiSelect } from 'svelte-multiselect';
@@ -25,8 +25,8 @@
 	let progressChanged = false;
 
 	// Currency options for Select components (sorted: main → secondary → BTC/SAT → fiat A-Z)
-	const sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
-	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+	const sortedCurrencies = sortCurrencies($currencies.main, $currencies.secondary);
+	const allCurrenciesOptions = currenciesToSelectOptions(sortedCurrencies);
 	let selectedCurrencies: Record<number, { value: string; label: string } | null> = {};
 	$: {
 		for (let i = 0; i < data.leaderboard.progress.length; i++) {

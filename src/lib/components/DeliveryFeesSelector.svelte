@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { CountryAlpha2 } from '$lib/types/Country';
-	import { sortCurrenciesDefault, type Currency } from '$lib/types/Currency';
+	import { sortCurrencies, currenciesToSelectOptions, type Currency } from '$lib/types/Currency';
 	import { typedEntries } from '$lib/utils/typedEntries';
 	import type { DeliveryFees } from '$lib/types/DeliveryFees';
 	import { useI18n } from '$lib/i18n';
@@ -17,8 +17,8 @@
 	const { countryName, sortedCountryCodes } = useI18n();
 
 	// Currency options for Select components (sorted: main → secondary → BTC/SAT → fiat A-Z)
-	const sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
-	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+	const sortedCurrencies = sortCurrencies($currencies.main, $currencies.secondary);
+	const allCurrenciesOptions = currenciesToSelectOptions(sortedCurrencies);
 
 	// Track selected currencies for each country
 	let selectedCurrencies: Record<string, { value: Currency; label: string } | null> = {};

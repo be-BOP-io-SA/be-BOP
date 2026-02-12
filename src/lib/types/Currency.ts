@@ -48,6 +48,7 @@ export const CURRENCIES = [
 	'DZD',
 	'EEK',
 	'EGP',
+	'ERN',
 	'ETB',
 	'EUR',
 	'FJD',
@@ -165,6 +166,7 @@ export const CURRENCIES = [
 	'XCD',
 	'XDR',
 	'XOF',
+	'XPF',
 	'YER',
 	'ZAR',
 	'ZMK',
@@ -222,6 +224,7 @@ export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 	DZD: 2,
 	EEK: 2,
 	EGP: 2,
+	ERN: 2,
 	ETB: 2,
 	EUR: 2,
 	FJD: 2,
@@ -339,6 +342,7 @@ export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 	XCD: 2,
 	XDR: 2,
 	XOF: 2,
+	XPF: 2,
 	YER: 2,
 	ZAR: 2,
 	ZMK: 2,
@@ -353,347 +357,13 @@ export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
  *
  * Display precision remains FRACTION_DIGITS_PER_CURRENCY (2 for most currencies).
  */
-const STORAGE_FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
-	BTC: 8,
-	SAT: 0,
-	AED: 4,
-	AFN: 4,
-	ALL: 4,
-	AMD: 4,
-	ANG: 4,
-	AOA: 4,
-	ARS: 4,
-	AUD: 4,
-	AWG: 4,
-	AZN: 4,
-	BAM: 4,
-	BBD: 4,
-	BDT: 4,
-	BGN: 4,
-	BHD: 4,
-	BIF: 4,
-	BMD: 4,
-	BND: 4,
-	BOB: 4,
-	BRL: 4,
-	BSD: 4,
-	BTN: 4,
-	BWP: 4,
-	BYN: 4,
-	BYR: 4,
-	BZD: 4,
-	CAD: 4,
-	CDF: 4,
-	CHF: 4,
-	CLF: 4,
-	CLP: 4,
-	CNY: 4,
-	COP: 4,
-	CRC: 4,
-	CUC: 4,
-	CUP: 4,
-	CVE: 4,
-	CZK: 4,
-	DJF: 4,
-	DKK: 4,
-	DOP: 4,
-	DZD: 4,
-	EEK: 4,
-	EGP: 4,
-	ETB: 4,
-	EUR: 4,
-	FJD: 4,
-	FKP: 4,
-	GBP: 4,
-	GEL: 4,
-	GHS: 4,
-	GIP: 4,
-	GMD: 4,
-	GNF: 4,
-	GTQ: 4,
-	GYD: 4,
-	HKD: 4,
-	HNL: 4,
-	HRK: 4,
-	HTG: 4,
-	HUF: 4,
-	IDR: 4,
-	ILS: 4,
-	INR: 4,
-	IQD: 4,
-	IRR: 4,
-	ISK: 4,
-	JMD: 4,
-	JOD: 4,
-	JPY: 4,
-	KES: 4,
-	KGS: 4,
-	KHR: 4,
-	KMF: 4,
-	KPW: 4,
-	KRW: 4,
-	KWD: 4,
-	KYD: 4,
-	KZT: 4,
-	LAK: 4,
-	LBP: 4,
-	LKR: 4,
-	LRD: 4,
-	LSL: 4,
-	LTL: 4,
-	LVL: 4,
-	LYD: 4,
-	MAD: 4,
-	MDL: 4,
-	MGA: 4,
-	MKD: 4,
-	MMK: 4,
-	MNT: 4,
-	MOP: 4,
-	MRO: 4,
-	MRU: 4,
-	MUR: 4,
-	MVR: 4,
-	MWK: 4,
-	MXN: 4,
-	MYR: 4,
-	MZN: 4,
-	NAD: 4,
-	NGN: 4,
-	NIO: 4,
-	NOK: 4,
-	NPR: 4,
-	NZD: 4,
-	OMR: 4,
-	PAB: 4,
-	PEN: 4,
-	PGK: 4,
-	PHP: 4,
-	PKR: 4,
-	PLN: 4,
-	PYG: 4,
-	QAR: 4,
-	RON: 4,
-	RSD: 4,
-	RUB: 4,
-	RWF: 4,
-	SAR: 4,
-	SBD: 4,
-	SCR: 4,
-	SDG: 4,
-	SEK: 4,
-	SGD: 4,
-	SHP: 4,
-	SKK: 4,
-	SLL: 4,
-	SOS: 4,
-	SRD: 4,
-	SSP: 4,
-	STD: 4,
-	SVC: 4,
-	SYP: 4,
-	SZL: 4,
-	THB: 4,
-	TJS: 4,
-	TMM: 4,
-	TMT: 4,
-	TND: 4,
-	TOP: 4,
-	TRY: 4,
-	TTD: 4,
-	TWD: 4,
-	TZS: 4,
-	UAH: 4,
-	UGX: 4,
-	USD: 4,
-	UYU: 4,
-	UZS: 4,
-	VEF: 4,
-	VES: 4,
-	VND: 4,
-	VUV: 4,
-	WST: 4,
-	XAF: 4,
-	XCD: 4,
-	XDR: 4,
-	XOF: 4,
-	YER: 4,
-	ZAR: 4,
-	ZMK: 4,
-	ZMW: 4,
-	ZWD: 4
-}) satisfies Record<Currency, number>;
+const STORAGE_FRACTION_DIGITS_PER_CURRENCY = Object.freeze(
+	Object.fromEntries(CURRENCIES.map((c) => [c, c === 'BTC' ? 8 : c === 'SAT' ? 0 : 4]))
+) as Record<Currency, number>;
 
-export const CURRENCY_UNIT = Object.freeze({
-	BTC: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BTC),
-	SAT: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SAT),
-	AED: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.AED),
-	AFN: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.AFN),
-	ALL: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.ALL),
-	AMD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.AMD),
-	ANG: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.ANG),
-	AOA: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.AOA),
-	ARS: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.ARS),
-	AUD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.AUD),
-	AWG: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.AWG),
-	AZN: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.AZN),
-	BAM: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BAM),
-	BBD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BBD),
-	BDT: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BDT),
-	BGN: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BGN),
-	BHD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BHD),
-	BIF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BIF),
-	BMD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BMD),
-	BND: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BND),
-	BOB: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BOB),
-	BRL: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BRL),
-	BSD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BSD),
-	BTN: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BTN),
-	BWP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BWP),
-	BYN: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BYN),
-	BYR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BYR),
-	BZD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.BZD),
-	CAD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CAD),
-	CDF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CDF),
-	CHF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CHF),
-	CLF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CLF),
-	CLP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CLP),
-	CNY: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CNY),
-	COP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.COP),
-	CRC: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CRC),
-	CUC: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CUC),
-	CUP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CUP),
-	CVE: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CVE),
-	CZK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CZK),
-	DJF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.DJF),
-	DKK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.DKK),
-	DOP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.DOP),
-	DZD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.DZD),
-	EEK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.EEK),
-	EGP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.EGP),
-	ETB: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.ETB),
-	EUR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.EUR),
-	FJD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.FJD),
-	FKP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.FKP),
-	GBP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.GBP),
-	GEL: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.GEL),
-	GHS: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.GHS),
-	GIP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.GIP),
-	GMD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.GMD),
-	GNF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.GNF),
-	GTQ: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.GTQ),
-	GYD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.GYD),
-	HKD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.HKD),
-	HNL: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.HNL),
-	HRK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.HRK),
-	HTG: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.HTG),
-	HUF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.HUF),
-	IDR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.IDR),
-	ILS: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.ILS),
-	INR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.INR),
-	IQD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.IQD),
-	IRR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.IRR),
-	ISK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.ISK),
-	JMD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.JMD),
-	JOD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.JOD),
-	JPY: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.JPY),
-	KES: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.KES),
-	KGS: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.KGS),
-	KHR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.KHR),
-	KMF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.KMF),
-	KPW: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.KPW),
-	KRW: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.KRW),
-	KWD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.KWD),
-	KYD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.KYD),
-	KZT: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.KZT),
-	LAK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.LAK),
-	LBP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.LBP),
-	LKR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.LKR),
-	LRD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.LRD),
-	LSL: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.LSL),
-	LTL: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.LTL),
-	LVL: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.LVL),
-	LYD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.LYD),
-	MAD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MAD),
-	MDL: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MDL),
-	MGA: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MGA),
-	MKD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MKD),
-	MMK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MMK),
-	MNT: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MNT),
-	MOP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MOP),
-	MRO: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MRO),
-	MRU: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MRU),
-	MUR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MUR),
-	MVR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MVR),
-	MWK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MWK),
-	MXN: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MXN),
-	MYR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MYR),
-	MZN: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MZN),
-	NAD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.NAD),
-	NGN: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.NGN),
-	NIO: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.NIO),
-	NOK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.NOK),
-	NPR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.NPR),
-	NZD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.NZD),
-	OMR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.OMR),
-	PAB: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.PAB),
-	PEN: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.PEN),
-	PGK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.PGK),
-	PHP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.PHP),
-	PKR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.PKR),
-	PLN: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.PLN),
-	PYG: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.PYG),
-	QAR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.QAR),
-	RON: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.RON),
-	RSD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.RSD),
-	RUB: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.RUB),
-	RWF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.RWF),
-	SAR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SAR),
-	SBD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SBD),
-	SCR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SCR),
-	SDG: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SDG),
-	SEK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SEK),
-	SGD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SGD),
-	SHP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SHP),
-	SKK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SKK),
-	SLL: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SLL),
-	SOS: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SOS),
-	SRD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SRD),
-	SSP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SSP),
-	STD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.STD),
-	SVC: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SVC),
-	SYP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SYP),
-	SZL: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.SZL),
-	THB: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.THB),
-	TJS: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.TJS),
-	TMM: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.TMM),
-	TMT: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.TMT),
-	TND: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.TND),
-	TOP: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.TOP),
-	TRY: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.TRY),
-	TTD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.TTD),
-	TWD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.TWD),
-	TZS: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.TZS),
-	UAH: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.UAH),
-	UGX: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.UGX),
-	USD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.USD),
-	UYU: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.UYU),
-	UZS: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.UZS),
-	VEF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.VEF),
-	VES: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.VES),
-	VND: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.VND),
-	VUV: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.VUV),
-	WST: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.WST),
-	XAF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.XAF),
-	XCD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.XCD),
-	XDR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.XDR),
-	XOF: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.XOF),
-	YER: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.YER),
-	ZAR: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.ZAR),
-	ZMK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.ZMK),
-	ZMW: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.ZMW),
-	ZWD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.ZWD)
-}) satisfies Record<Currency, number>;
+export const CURRENCY_UNIT = Object.freeze(
+	Object.fromEntries(CURRENCIES.map((c) => [c, Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY[c])]))
+) as Record<Currency, number>;
 
 export function parsePriceAmount(amount: string, currency: Currency): number {
 	// Use storage precision (4 decimals for fiat, 8 for BTC) instead of display precision
@@ -785,79 +455,19 @@ export const UNDERLYING_CURRENCY = 'SAT';
 // Crypto currencies (BTC, SAT)
 const CRYPTO_CURRENCIES: Currency[] = ['BTC', 'SAT'];
 
-/**
- * Sort currencies for product form:
- * priceReference → main → secondary → BTC/SAT → fiat A-Z
- */
-export function sortCurrenciesForProduct(
-	priceReference: Currency | undefined,
-	main: Currency | undefined,
-	secondary: Currency | null | undefined
-): Currency[] {
-	const priority: Currency[] = [];
-
-	if (priceReference) {
-		priority.push(priceReference);
-	}
-	if (main && !priority.includes(main)) {
-		priority.push(main);
-	}
-	if (secondary && !priority.includes(secondary)) {
-		priority.push(secondary);
-	}
-
-	// Add BTC/SAT if not already included
-	for (const crypto of CRYPTO_CURRENCIES) {
-		if (!priority.includes(crypto)) {
-			priority.push(crypto);
-		}
-	}
-
-	// Add remaining fiat currencies A-Z
-	const remaining = CURRENCIES.filter(
-		(c) => !priority.includes(c) && !CRYPTO_CURRENCIES.includes(c)
+export function sortCurrencies(...prioritized: (Currency | null | undefined)[]): Currency[] {
+	const priority = [...prioritized.filter((c): c is Currency => !!c), ...CRYPTO_CURRENCIES].filter(
+		(c, i, arr) => arr.indexOf(c) === i
 	);
 
-	return [...priority, ...remaining];
+	return [
+		...priority,
+		...CURRENCIES.filter((c) => !priority.includes(c) && !CRYPTO_CURRENCIES.includes(c))
+	];
 }
 
-/**
- * Sort currencies for /admin/config:
- * BTC/SAT → fiat A-Z
- */
-export function sortCurrenciesForConfig(): Currency[] {
-	const fiat = CURRENCIES.filter((c) => !CRYPTO_CURRENCIES.includes(c));
-	return [...CRYPTO_CURRENCIES, ...fiat];
-}
-
-/**
- * Sort currencies for general use (widgets, leaderboard, challenge, etc.):
- * main → secondary → BTC/SAT → fiat A-Z
- */
-export function sortCurrenciesDefault(
-	main: Currency | undefined,
-	secondary: Currency | null | undefined
-): Currency[] {
-	const priority: Currency[] = [];
-
-	if (main) {
-		priority.push(main);
-	}
-	if (secondary && !priority.includes(secondary)) {
-		priority.push(secondary);
-	}
-
-	// Add BTC/SAT if not already included
-	for (const crypto of CRYPTO_CURRENCIES) {
-		if (!priority.includes(crypto)) {
-			priority.push(crypto);
-		}
-	}
-
-	// Add remaining fiat currencies A-Z
-	const remaining = CURRENCIES.filter(
-		(c) => !priority.includes(c) && !CRYPTO_CURRENCIES.includes(c)
-	);
-
-	return [...priority, ...remaining];
+export function currenciesToSelectOptions(
+	currencies: Currency[]
+): { value: Currency; label: string }[] {
+	return currencies.map((c) => ({ value: c, label: c }));
 }

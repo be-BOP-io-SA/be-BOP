@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { sortCurrenciesDefault } from '$lib/types/Currency.js';
+	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency.js';
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addDays, addMonths } from 'date-fns';
@@ -16,8 +16,8 @@
 	let endsAtElement: HTMLInputElement;
 
 	// Currency options for Select component (sorted: main → secondary → BTC/SAT → fiat A-Z)
-	const sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
-	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+	const sortedCurrencies = sortCurrencies($currencies.main, $currencies.secondary);
+	const allCurrenciesOptions = currenciesToSelectOptions(sortedCurrencies);
 	let selectedCurrency = allCurrenciesOptions[0] || null;
 
 	function checkForm(event: SubmitEvent) {

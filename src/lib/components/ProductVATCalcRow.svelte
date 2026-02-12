@@ -3,7 +3,8 @@
 		SATOSHIS_PER_BTC,
 		computePriceForStorage,
 		FRACTION_DIGITS_PER_CURRENCY,
-		sortCurrenciesForProduct
+		sortCurrencies,
+		currenciesToSelectOptions
 	} from '$lib/types/Currency';
 	import type { Price } from '$lib/types/Order';
 	import Select from 'svelte-select';
@@ -20,12 +21,12 @@
 	let currency = initialPrice.currency;
 
 	// Currency options for Select component (sorted: priceRef → main → secondary → BTC/SAT → fiat A-Z)
-	const sortedCurrencies = sortCurrenciesForProduct(
+	const sortedCurrencies = sortCurrencies(
 		$currencies.priceReference,
 		$currencies.main,
 		$currencies.secondary
 	);
-	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+	const allCurrenciesOptions = currenciesToSelectOptions(sortedCurrencies);
 	let selectedCurrency = allCurrenciesOptions.find((c) => c.value === currency) || null;
 	$: if (selectedCurrency) {
 		currency = selectedCurrency.value;

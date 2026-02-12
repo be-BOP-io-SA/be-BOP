@@ -3,7 +3,8 @@
 		CURRENCY_UNIT,
 		computePriceForStorage,
 		readStoredPrice,
-		sortCurrenciesForProduct
+		sortCurrencies,
+		currenciesToSelectOptions
 	} from '$lib/types/Currency';
 	import {
 		DEFAULT_MAX_QUANTITY_PER_ORDER,
@@ -119,12 +120,12 @@
 	let vatRate = 0;
 
 	// Currency options for Select component (sorted: priceRef → main → secondary → BTC/SAT → fiat A-Z)
-	const sortedCurrencies = sortCurrenciesForProduct(
+	const sortedCurrencies = sortCurrencies(
 		$currencies.priceReference,
 		$currencies.main,
 		$currencies.secondary
 	);
-	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+	const allCurrenciesOptions = currenciesToSelectOptions(sortedCurrencies);
 	let selectedCurrency =
 		allCurrenciesOptions.find((c) => c.value === product.price.currency) || null;
 	$: if (selectedCurrency) {

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
-	import { sortCurrenciesDefault } from '$lib/types/Currency';
+	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency';
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
@@ -14,8 +14,8 @@
 	}
 
 	// Currency options for Select component (sorted: main → secondary → BTC/SAT → fiat A-Z)
-	const sortedCurrencies = sortCurrenciesDefault($currencies.main, $currencies.secondary);
-	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+	const sortedCurrencies = sortCurrencies($currencies.main, $currencies.secondary);
+	const allCurrenciesOptions = currenciesToSelectOptions(sortedCurrencies);
 	let selectedCurrency = allCurrenciesOptions.find((c) => c.value === thresholds.currency) || null;
 	$: if (selectedCurrency) {
 		thresholds.currency = selectedCurrency.value;

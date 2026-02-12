@@ -1,49 +1,38 @@
 <script lang="ts">
-	import { sortCurrenciesDefault, type Currency } from '$lib/types/Currency';
+	import { sortCurrencies, currenciesToSelectOptions, type Currency } from '$lib/types/Currency';
 	import { toCurrency } from '$lib/utils/toCurrency';
 	import { currencies } from '$lib/stores/currencies';
 	import { sellerIdentity } from '$lib/stores/sellerIdentity';
 	import { getCurrencyFromCountry } from '$lib/types/Country';
 	import Select from 'svelte-select';
-	import { get } from 'svelte/store';
 
-	// Get initial values from stores
-	const initialCurrencies = get(currencies);
-	const initialSellerIdentity = get(sellerIdentity);
+	$: sortedCurrencies = sortCurrencies($currencies.main, $currencies.secondary);
+	$: currencyOptions = currenciesToSelectOptions(sortedCurrencies);
 
-	// Currency options sorted: main → secondary → BTC/SAT → fiat A-Z
-	const sortedCurrencies = sortCurrenciesDefault(
-		initialCurrencies.main,
-		initialCurrencies.secondary
-	);
-	const currencyOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
-
-	// Compute default second currency
 	function getDefaultSecondCurrency(): Currency {
-		if (initialCurrencies.secondary) {
-			return initialCurrencies.secondary;
+		if ($currencies.secondary) {
+			return $currencies.secondary;
 		}
-		if (initialCurrencies.main !== 'BTC') {
+		if ($currencies.main !== 'BTC') {
 			return 'BTC';
 		}
 		const countryCurrency = getCurrencyFromCountry(
-			initialSellerIdentity?.address?.country as Parameters<typeof getCurrencyFromCountry>[0]
+			$sellerIdentity?.address?.country as Parameters<typeof getCurrencyFromCountry>[0]
 		);
 		if (countryCurrency) {
-			return countryCurrency as Currency;
+			return countryCurrency;
 		}
 		return 'USD';
 	}
 
-	// Initialize selected values
 	let selectedFirstCurrency =
-		currencyOptions.find((c) => c.value === initialCurrencies.main) || currencyOptions[0];
+		currencyOptions.find((c) => c.value === $currencies.main) || currencyOptions[0];
 	let selectedSecondCurrency =
 		currencyOptions.find((c) => c.value === getDefaultSecondCurrency()) || currencyOptions[1];
 
 	let firstCurrencyAmount = 1;
 
-	$: firstCurrency = selectedFirstCurrency?.value || initialCurrencies.main;
+	$: firstCurrency = selectedFirstCurrency?.value || $currencies.main;
 	$: secondCurrency = selectedSecondCurrency?.value || 'BTC';
 	$: secondCurrencyAmount = toCurrency(secondCurrency, firstCurrencyAmount, firstCurrency);
 </script>

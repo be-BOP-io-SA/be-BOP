@@ -4,7 +4,7 @@
 	import IconUpArrow from '~icons/ant-design/arrow-up-outlined';
 	import IconDownArrow from '~icons/ant-design/arrow-down-outlined';
 
-	import { sortCurrenciesForConfig } from '$lib/types/Currency';
+	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency';
 	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 	import { formatDistance } from 'date-fns';
 	import { exchangeRate } from '$lib/stores/exchangeRate';
@@ -25,11 +25,11 @@
 
 	// Currency options for Select components (sorted: BTC/SAT → fiat A-Z)
 	// Exclude SAT for main/secondary/accounting
-	const sortedCurrencies = sortCurrenciesForConfig();
-	const currenciesWithoutSat = sortedCurrencies
-		.filter((c) => c !== 'SAT')
-		.map((c) => ({ value: c, label: c }));
-	const allCurrenciesOptions = sortedCurrencies.map((c) => ({ value: c, label: c }));
+	const sortedCurrencies = sortCurrencies();
+	const currenciesWithoutSat = currenciesToSelectOptions(
+		sortedCurrencies.filter((c) => c !== 'SAT')
+	);
+	const allCurrenciesOptions = currenciesToSelectOptions(sortedCurrencies);
 
 	// Selected values for Select components
 	let selectedMainCurrency =

@@ -1,6 +1,7 @@
 // Gotten from https://gist.githubusercontent.com/tadast/8827699/raw/f5cac3d42d16b78348610fc4ec301e9234f82821/countries_codes_and_coordinates.csv
 
 import type { IterableElement } from 'type-fest';
+import type { Currency } from './Currency';
 
 export const COUNTRY_ALPHA2S = new Set([
 	'AD',
@@ -497,7 +498,7 @@ export function isAlpha2CountryCode(countryCode: string | undefined): countryCod
 }
 
 // Country to currency mapping (ISO 4217)
-export const COUNTRY_TO_CURRENCY: Record<CountryAlpha2, string> = {
+export const COUNTRY_TO_CURRENCY: Record<CountryAlpha2, Currency> = {
 	AD: 'EUR',
 	AE: 'AED',
 	AF: 'AFN',
@@ -749,7 +750,7 @@ export const COUNTRY_TO_CURRENCY: Record<CountryAlpha2, string> = {
 	ZW: 'ZWD'
 };
 
-export function getCurrencyFromCountry(country: CountryAlpha2 | undefined): string | undefined {
+export function getCurrencyFromCountry(country: CountryAlpha2 | undefined): Currency | undefined {
 	if (!country) {
 		return undefined;
 	}
