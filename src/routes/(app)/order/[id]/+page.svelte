@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import { navigating, page } from '$app/stores';
 	import { onMount } from 'svelte';
@@ -12,6 +11,7 @@
 	import IconExternalNewWindowOpen from '$lib/components/icons/IconExternalNewWindowOpen.svelte';
 	import PaymentItem from '$lib/components/Order/PaymentItem.svelte';
 	import PaymentActions from '$lib/components/Order/PaymentActions.svelte';
+	import ForwardReceiptForm from '$lib/components/Order/ForwardReceiptForm.svelte';
 	import PaymentForm from '$lib/components/Order/PaymentForm.svelte';
 	import { useI18n } from '$lib/i18n';
 	import { FAKE_ORDER_INVOICE_NUMBER, orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
@@ -77,9 +77,6 @@
 	const orderStaffActionBaseUrl = data.posMode
 		? `/pos/order/${data.order._id}`
 		: `/admin/order/${data.order._id}`;
-
-	let posForwardReceiptOpen = false;
-	let posForwardReceiptSuccess = false;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan" class:pos-mode={data.posMode}>
@@ -197,57 +194,10 @@
 					</div>
 				{/if}
 				{#if roleIsStaff && data.order.status === 'paid'}
-					{#if posForwardReceiptSuccess}
-						<p class="text-green-500">{t('order.forwardReceipt.success')}</p>
-					{:else if posForwardReceiptOpen}
-						<form
-							action="{orderStaffActionBaseUrl}?/forwardReceipt"
-							method="post"
-							class="flex flex-col gap-2"
-							use:enhance={() => {
-								return async ({ result }) => {
-									if (result.type === 'success') {
-										posForwardReceiptOpen = false;
-										posForwardReceiptSuccess = true;
-									}
-								};
-							}}
-						>
-							<input type="hidden" name="paymentId" value={lastPayment.id} />
-							<label class="form-label body-secondaryText">
-								{t('login.authenticate.inputLabel')}
-								<input
-									class="form-input"
-									type="text"
-									name="address"
-									placeholder="test@example.com"
-									required
-									pattern="^(?!nsec).*"
-									title={t('login.nsecBlockTitle')}
-								/>
-							</label>
-							<div class="flex gap-2">
-								<button type="submit" class="btn btn-black">
-									{t('order.forwardReceipt.send')}
-								</button>
-								<button
-									type="button"
-									class="btn btn-gray"
-									on:click={() => (posForwardReceiptOpen = false)}
-								>
-									{t('order.forwardReceipt.cancel')}
-								</button>
-							</div>
-						</form>
-					{:else}
-						<button
-							class="body-hyperlink self-start"
-							type="button"
-							on:click={() => (posForwardReceiptOpen = true)}
-						>
-							{t('order.forwardReceipt.title')}
-						</button>
-					{/if}
+					<ForwardReceiptForm
+						actionUrl="{orderStaffActionBaseUrl}?/forwardReceipt"
+						paymentId={lastPayment.id}
+					/>
 				{/if}
 			{/if}
 
