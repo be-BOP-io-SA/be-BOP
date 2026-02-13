@@ -381,6 +381,8 @@
 			};
 
 			let lastGroupKey = '';
+			const hasTagGroupHeaders = !showGroupHeaders && tagGroups.length > 1;
+
 			if (!showGroupHeaders) {
 				lines.push('');
 				renderTableHeader();
@@ -398,6 +400,15 @@
 					lines.push(separator('-'));
 					renderTableHeader();
 					lastGroupKey = groupKey;
+				} else if (hasTagGroupHeaders && groupKey !== lastGroupKey) {
+					if (lastGroupKey !== '') {
+						lines.push(separator('·'));
+					}
+					lines.push(
+						centerText((groupKey || t('pos.split.otherProducts')).toUpperCase()),
+						separator('·')
+					);
+					lastGroupKey = groupKey;
 				}
 
 				renderItem(item);
@@ -407,7 +418,8 @@
 			lines.push(separator('─'));
 
 			if (hasDiscount) {
-				const discountMultiplier = 1 - discountPercentageSafe / 100;
+				const discountMultiplier =
+					totalBeforeDiscountSafe > 0 ? priceInfo.total / totalBeforeDiscountSafe : 1;
 
 				// --- BEFORE DISCOUNT ---
 				lines.push(centerText(ticketLabels.beforeDiscount));
@@ -449,10 +461,29 @@
 
 				// --- AFTER DISCOUNT ---
 				lines.push(separator('─'));
-				lines.push(
-					centerText(`${ticketLabels.afterDiscount} (-${discountPercentageSafe.toFixed(0)}%)`)
-				);
-				lines.push(separator('─'));
+
+				if (tagGroups.length > 1) {
+					lines.push(centerText(ticketLabels.afterDiscount), separator('─'));
+					tagGroups.forEach((group) => {
+						const label = (group.tagNames[0] || t('pos.split.otherProducts')).toUpperCase();
+						lines.push(
+							tableRow([
+								{ text: label, width: 0.7, align: 'LEFT' },
+								{
+									text: `-${(group.tagNames.length ? discountPercentageSafe : 0).toFixed(2)}%`,
+									width: 0.3,
+									align: 'RIGHT'
+								}
+							])
+						);
+					});
+					lines.push(separator('·'));
+				} else {
+					lines.push(
+						centerText(`${ticketLabels.afterDiscount} (-${discountPercentageSafe.toFixed(0)}%)`),
+						separator('─')
+					);
+				}
 
 				// excl. VAT (after discount)
 				lines.push(
