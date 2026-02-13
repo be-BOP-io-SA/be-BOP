@@ -744,6 +744,7 @@
 			"itemize": "aufschlüsseln",
 			"return": "Zurück",
 			"continueSplit": "Weiter",
+			"skipForNow": "Vorerst überspringen",
 			"paySelected": "Auswahl bezahlen",
 			"includingVatIncluded": "Davon (inkl. MwSt):",
 			"tagProducts": "Produkte \"{name}\"",
