@@ -35,16 +35,7 @@ jobs:
           zip -r ./be-BOP-release.zip "$RELEASE_NAME"
           rm -fr "$RELEASE_NAME"
           cd ..
-      - name: Upload artifact (PR)
-        if: github.ref != 'refs/heads/main'
-        uses: mmkal/artifact.ci/upload@main
-        with:
-          name: be-BOP-release
-          path: release/
-          artifactci-visibility: public
-          artifactci-mode: eager
-      - name: Upload artifact (main)
-        if: github.ref == 'refs/heads/main'
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: be-BOP-release
