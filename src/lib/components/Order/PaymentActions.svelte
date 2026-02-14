@@ -2,6 +2,7 @@
 	import type { SerializedOrderPayment } from '$lib/types/Order';
 	import { useI18n } from '$lib/i18n';
 	import PaymentForm from './PaymentForm.svelte';
+	import ForwardReceiptForm from './ForwardReceiptForm.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 
 	const { t } = useI18n();
@@ -99,6 +100,13 @@
 		>
 			{posMode ? t('pos.receipt.ticket') : 'Print receipt (ticket)'}
 		</button>
+	{/if}
+
+	{#if payment.status === 'paid' && roleIsStaff}
+		<ForwardReceiptForm
+			actionUrl="{orderStaffActionBaseUrl}?/forwardReceipt"
+			paymentId={payment.id}
+		/>
 	{/if}
 
 	{#if showInvoice && !roleIsStaff}
