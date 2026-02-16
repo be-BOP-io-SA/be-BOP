@@ -9,6 +9,7 @@
 	import { orderRemainingToPay } from '$lib/types/Order.js';
 	import Trans from '$lib/components/Trans.svelte';
 	import { computePriceInfo } from '$lib/cart.js';
+	import { invalidate } from '$app/navigation';
 
 	interface CustomEventSource {
 		onerror?: ((this: CustomEventSource, ev: Event) => unknown) | null;
@@ -22,7 +23,7 @@
 		: 5_000;
 
 	let eventSourceInstance: CustomEventSource | void | null = null;
-	let formattedCart = data.formattedCart;
+	$: formattedCart = data.formattedCart;
 	let order = data.order;
 
 	$: view =
@@ -39,9 +40,9 @@
 			onmessage(ev) {
 				if (ev.data) {
 					try {
-						const { eventType, cart: sseCart, order: sseOrder } = JSON.parse(ev.data);
+						const { eventType, order: sseOrder } = JSON.parse(ev.data);
 						if (eventType === 'cart') {
-							formattedCart = sseCart;
+							invalidate('data:pos-session-cart');
 						} else if (eventType === 'order') {
 							order = sseOrder;
 							clearTimeout(currentTimeout);

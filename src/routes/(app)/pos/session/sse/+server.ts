@@ -3,7 +3,7 @@ import type { Cart } from '$lib/types/Cart.js';
 import type { Order } from '$lib/types/Order.js';
 import { error } from '@sveltejs/kit';
 import type { ChangeStream, ChangeStreamDocument, ObjectId } from 'mongodb';
-import { formatCart, formatOrder } from '../formatCartOrder.js';
+import { formatOrder } from '../formatCartOrder.js';
 
 export async function GET({ locals }) {
 	const userId = locals.user?._id;
@@ -68,13 +68,9 @@ export async function GET({ locals }) {
 			ownCartId = ownCart._id;
 		}
 		try {
-			const formattedCart = await formatCart(ownCart || null, locals);
 			await writer?.ready;
-			await writer?.write(
-				`data: ${JSON.stringify({ eventType: 'cart', cart: formattedCart })}\n\n`
-			);
-		} catch (error) {
-			// Error writing to the client, assume it has disconnected
+			await writer?.write(`data: ${JSON.stringify({ eventType: 'cart' })}\n\n`);
+		} catch {
 			cleanup();
 		}
 	});
@@ -125,17 +121,16 @@ export async function GET({ locals }) {
 
 	writer?.ready
 		.then(async () => {
+			// Cart: just get ID for delete tracking. Client already has data from load()
 			const cart = await collections.carts.findOne(
 				{ 'user.userId': userId },
-				{ sort: { createdAt: -1 } }
+				{ sort: { createdAt: -1 }, projection: { _id: 1 } }
 			);
-			if (cart) {
-				ownCartId = cart._id;
-			}
-			const formattedCart = await formatCart(cart, locals);
+			ownCartId = cart?._id ?? null;
 
-			writer?.write(`data: ${JSON.stringify({ eventType: 'cart', cart: formattedCart })}\n\n`);
+			await writer?.write(`data: ${JSON.stringify({ eventType: 'cart' })}\n\n`);
 
+			// Order: keep initial push (client displays order directly from SSE data)
 			const order = await collections.orders.findOne(
 				{ 'user.userId': userId },
 				{ sort: { createdAt: -1 } }
