@@ -16,6 +16,7 @@
 	import PosPaymentMethodSelector, {
 		type PaymentOption
 	} from '$lib/components/PosPaymentMethodSelector.svelte';
+	import { connectPoolSSE } from '$lib/utils/pool-sse';
 
 	const { t } = useI18n();
 
@@ -170,10 +171,19 @@
 		}
 	}
 
+	let sseAbort: AbortController | null = null;
+
 	onMount(() => {
 		checkMobileView();
 		window.addEventListener('resize', checkMobileView);
-		return () => window.removeEventListener('resize', checkMobileView);
+
+		sseAbort = new AbortController();
+		connectPoolSSE(tabSlug, sseAbort.signal);
+
+		return () => {
+			sseAbort?.abort();
+			window.removeEventListener('resize', checkMobileView);
+		};
 	});
 
 	let fromCashInAll = false;
