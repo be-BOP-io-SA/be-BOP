@@ -10,12 +10,14 @@
 	import { PAYMENT_METHOD_EMOJI } from '$lib/types/Order';
 	import type { PaymentMethod } from '$lib/server/payment-methods';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
 	import { swipe } from '$lib/utils/swipe';
 	import PosPaymentMethodSelector, {
 		type PaymentOption
 	} from '$lib/components/PosPaymentMethodSelector.svelte';
+	import { connectPoolSSE } from '$lib/utils/pool-sse';
 
 	const { t } = useI18n();
 
@@ -170,10 +172,19 @@
 		}
 	}
 
+	let sseAbort: AbortController | null = null;
+
 	onMount(() => {
 		checkMobileView();
 		window.addEventListener('resize', checkMobileView);
-		return () => window.removeEventListener('resize', checkMobileView);
+
+		sseAbort = new AbortController();
+		connectPoolSSE(tabSlug, sseAbort.signal);
+
+		return () => {
+			sseAbort?.abort();
+			window.removeEventListener('resize', checkMobileView);
+		};
 	});
 
 	let fromCashInAll = false;
@@ -767,7 +778,18 @@
 				>
 					{t('pos.split.globalTicket')}
 				</button>
-				<form method="POST" action="?/closePool" use:enhance>
+				<form
+					method="POST"
+					action="?/closePool"
+					use:enhance={() => {
+						sseAbort?.abort();
+						return async ({ result }) => {
+							if (result.type === 'redirect') {
+								await goto(result.location, { replaceState: true });
+							}
+						};
+					}}
+				>
 					<button
 						type="submit"
 						class="bg-green-800 hover:bg-green-900 uppercase {isMobile

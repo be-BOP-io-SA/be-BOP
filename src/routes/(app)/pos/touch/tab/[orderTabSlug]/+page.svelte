@@ -23,9 +23,29 @@
 	import type { PrintHistoryEntry } from '$lib/types/PrintHistoryEntry';
 	import MoveItemsModal from '$lib/components/MoveItemsModal.svelte';
 	import { z } from 'zod';
+	import { connectPoolSSE } from '$lib/utils/pool-sse';
+	import { browser } from '$app/environment';
 
 	export let data;
 	$: tabSlug = data.tabSlug;
+
+	let sseAbort: AbortController | null = null;
+	let sseCurrentSlug: string | null = null;
+
+	function switchPoolSSE(slug: string) {
+		if (sseCurrentSlug === slug) {
+			return;
+		}
+		sseAbort?.abort();
+		sseCurrentSlug = slug;
+		sseAbort = new AbortController();
+		connectPoolSSE(slug, sseAbort.signal);
+	}
+
+	$: if (browser) {
+		switchPoolSSE(tabSlug);
+	}
+
 	$: next = Number($page.url.searchParams.get('skip')) || 0;
 	$: picturesByProduct = groupBy(
 		data.pictures.filter(
@@ -160,6 +180,8 @@
 		window.addEventListener('resize', updatePaginationLimit);
 
 		return () => {
+			sseAbort?.abort();
+			sseCurrentSlug = null;
 			window.removeEventListener('resize', updatePaginationLimit);
 			window.removeEventListener('resize', checkMobileView);
 		};
