@@ -225,6 +225,10 @@ const baseConfig = {
 	swissBitcoinPay: {
 		apiKey: ''
 	},
+	taler: {
+		backendUrl: '',
+		backendApiKey: ''
+	},
 	bity: {
 		clientId: ''
 	},
