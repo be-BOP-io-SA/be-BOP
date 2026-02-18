@@ -150,7 +150,8 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 				payment.method === 'bitcoin' ? getConfirmationBlocks(payment.price) : 0,
 			...(payment.bankTransferNumber && { bankTransferNumber: payment.bankTransferNumber }),
 			...(payment.detail && { detail: payment.detail }),
-			...(payment.cashbackAmount && { cashbackAmount: payment.cashbackAmount })
+			...(payment.cashbackAmount && { cashbackAmount: payment.cashbackAmount }),
+			...(payment.talerOrderStatusUrl && { talerOrderStatusUrl: payment.talerOrderStatusUrl })
 		})),
 		items: order.items.map((item) => ({
 			quantity: item.quantity,
