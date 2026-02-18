@@ -765,6 +765,8 @@
 		"label": {
 			"amount": "Amount",
 			"currency": "Currency",
+			"currencyCodeHelp": "Find your currency code",
+			"currencyCodeHelpUrl": "https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes",
 			"method": "Method",
 			"subtype": "Type"
 		},
