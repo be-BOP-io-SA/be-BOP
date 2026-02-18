@@ -23,7 +23,12 @@ export async function GET({ params, url }) {
 		throw error(404, 'Payment not found');
 	}
 
-	if (payment.method !== 'bitcoin' && payment.method !== 'lightning' && payment.method !== 'card') {
+	if (
+		payment.method !== 'bitcoin' &&
+		payment.method !== 'lightning' &&
+		payment.method !== 'card' &&
+		payment.method !== 'taler'
+	) {
 		throw error(400, 'Invalid payment method for QR Code generation');
 	}
 

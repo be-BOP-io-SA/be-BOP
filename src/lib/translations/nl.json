@@ -122,6 +122,7 @@
 			"free": "Niets te betalen (gratis winkelwagen)",
 			"lightning": "Bliksem",
 			"paypal": "Paypal",
+			"taler": "Taler",
 			"point-of-sale": "Verkooppunt",
 			"unavailable": "Geen betaalmethoden beschikbaar."
 		},
@@ -516,6 +517,7 @@
 			"free": "Niets betaald",
 			"lightning": "Betaald met: Lightning-transactie (1 {paymentCurrency} = {exchangeRate} {mainCurrency} op het moment van de bestelling)",
 			"paypal": "Betaald met: paypal",
+			"taler": "Betaald met: Taler",
 			"point-of-sale": "Betaald in de winkel"
 		},
 		"paidWithSummary": {
@@ -524,7 +526,8 @@
 			"card": "Betaald met: bankkaart",
 			"free": "Niets betaald",
 			"lightning": "Betaald met: Lightning-transactie",
-			"point-of-sale": "Betaald in de winkel"
+			"point-of-sale": "Betaald in de winkel",
+			"taler": "Betaald met: Taler"
 		},
 		"payToComplete": "Betaal om de bestelling af te ronden.",
 		"payToCompleteBitcoin": {
