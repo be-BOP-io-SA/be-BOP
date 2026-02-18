@@ -122,6 +122,7 @@
 			"free": "Nada a pagar (carrinho gratuito)",
 			"lightning": "Lightning",
 			"paypal": "Paypal",
+			"gnu-taler": "GNU Taler",
 			"point-of-sale": "Ponto de venda",
 			"unavailable": "Nenhum método de pagamento disponível."
 		},

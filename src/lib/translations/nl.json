@@ -122,6 +122,7 @@
 			"free": "Niets te betalen (gratis winkelwagen)",
 			"lightning": "Bliksem",
 			"paypal": "Paypal",
+			"gnu-taler": "GNU Taler",
 			"point-of-sale": "Verkooppunt",
 			"unavailable": "Geen betaalmethoden beschikbaar."
 		},

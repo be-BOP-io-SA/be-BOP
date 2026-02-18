@@ -122,6 +122,7 @@
 			"free": "Nada que pagar (lista de compras de gratis)",
 			"lightning": "Lightning",
 			"paypal": "Paypal",
+			"gnu-taler": "GNU Taler",
 			"point-of-sale": "Punto de venta",
 			"unavailable": "No hay métodos de pago disponibles."
 		},
