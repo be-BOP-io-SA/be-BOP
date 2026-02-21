@@ -70,7 +70,10 @@ export async function openPosSession(params: {
 export async function calculateDailyIncomes(session: PosSession): Promise<PosSessionIncome[]> {
 	const orders = await collections.orders
 		.find({
-			createdAt: { $gte: session.openedAt },
+			createdAt: {
+				$gte: session.openedAt,
+				...(session.closedAt && { $lte: session.closedAt })
+			},
 			status: 'paid'
 		})
 		.toArray();
@@ -132,7 +135,10 @@ export async function calculateTotalCashback(
 ): Promise<{ amount: number; currency: Currency }> {
 	const orders = await collections.orders
 		.find({
-			createdAt: { $gte: session.openedAt },
+			createdAt: {
+				$gte: session.openedAt,
+				...(session.closedAt && { $lte: session.closedAt })
+			},
 			status: 'paid',
 			'payments.cashbackAmount': { $exists: true }
 		})
