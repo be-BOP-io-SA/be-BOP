@@ -218,56 +218,112 @@ pnpm run copy-db-s3
 
 ## Local development
 
-### Running the app
+### Prerequisites
 
-Install pnpm, for example with `sudo corepack enable` if you're on linux/mac.
+- Node.js 18+
+- pnpm (install with `sudo corepack enable`)
+- Git LFS (`git lfs install`)
 
-Then:
-
-```
+```bash
 pnpm install
 pnpm dev
 ```
 
-### Configuring the Object Storage
+be-BOP requires a MongoDB replica set and an S3-compatible object storage. There are two ways to set them up:
 
-Many cloud-hosted object storages like AWS S3 or Scaleway have free tiers that are more than enough for local development.
+### Option A: Cloud services (minimal setup)
 
-You can also use [MinIO](https://min.io/docs/minio/container/index.html):
+The fastest way to get started — use cloud-hosted MongoDB, and either a cloud S3 or a single local MinIO container:
 
-```
+1. **MongoDB:** Get a free tier on [MongoDB Atlas](https://www.mongodb.com/atlas/database). A free M0 cluster is more than enough for development.
+2. **S3-compatible storage** — pick one:
+   - **Quickest local option:** Run a single MinIO container (see below) — this is the only Docker container you'll need
+   - [AWS S3](https://aws.amazon.com/s3/) free tier
+   - [Scaleway Object Storage](https://www.scaleway.com/en/object-storage/) free tier
+   - Or any other S3-compatible service
+
+To run MinIO locally:
+
+```bash
 mkdir -p ${HOME}/minio/data
 
-docker run \
+docker run -d \
    -p 9000:9000 \
    -p 9090:9090 \
-   --user $(id -u):$(id -g) \
-   --name minio1 \
+   --name minio \
    -e "MINIO_ROOT_USER=ROOTUSER" \
    -e "MINIO_ROOT_PASSWORD=CHANGEME123" \
    -v ${HOME}/minio/data:/data \
    quay.io/minio/minio server /data --console-address ":9090"
 ```
 
-Then go on http://127.0.0.1:9090/access-keys and create an access key. Copy the "Access Key" and "Secret Key" safely.
+MinIO console will be available at http://127.0.0.1:9090. The S3 bucket will be created automatically by be-BOP on first run.
 
-In your `.env.local` file, add the following:
+Add to your `.env.local`:
 
-```dotenv
-S3_BUCKET="bebop" # Or another bucket name of your choice
-S3_KEY_ID=<Access key> #for example: uY2vtFFX7vBVucEs
-S3_KEY_SECRET=<Secret Key> #for example: GhNSZXUMiZsJl6LTvSCWPW0ZbCwHVL17
-S3_ENDPOINT_URL=http://127.0.0.1:9000
+```bash
+# MongoDB Atlas
+MONGODB_URL="mongodb+srv://<user>:<password>@<cluster>.mongodb.net/..."
+MONGODB_DB="bebop"
+
+# Your app URL
+ORIGIN="http://localhost:5173"
+
+# MinIO (local) — or replace with your cloud S3 credentials
+S3_BUCKET="bebop"
+S3_ENDPOINT_URL="http://127.0.0.1:9000"
+PUBLIC_S3_ENDPOINT_URL="http://127.0.0.1:9000"
 S3_REGION="localhost"
+S3_KEY_ID="ROOTUSER"
+S3_KEY_SECRET="CHANGEME123"
+
+# Mock emails in development
+SMTP_FAKE="true"
 ```
 
-Then restart `pnpm dev`. The bucket will be created automatically.
+Run `pnpm dev` and you're ready to go.
 
-### Configuring MongoDB
+### Option B: Docker Compose (fully local)
 
-The simplest way is to get a free tier on [MongoDB Atlas](https://www.mongodb.com/atlas/database).
+Run both MongoDB and MinIO locally using Docker Compose — no cloud accounts needed:
 
-Alternatively, you need to configure a local MongoDB with ReplicaSet enabled. ReplicaSet is needed for change streams and ACID transactions.
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
+
+This starts a MongoDB replica set (port 27017) and MinIO (ports 9000, 9090). No be-BOP container — you run the app with `pnpm dev`.
+
+Add to your `.env.local`:
+
+```bash
+MONGODB_URL=mongodb://localhost:27017
+MONGODB_DIRECT_CONNECTION=true
+MONGODB_DB="bebop"
+ORIGIN="http://localhost:5173"
+S3_BUCKET="bebop"
+S3_ENDPOINT_URL="http://localhost:9000"
+PUBLIC_S3_ENDPOINT_URL="http://localhost:9000"
+S3_REGION="localhost"
+S3_KEY_ID="minio"
+S3_KEY_SECRET="minio123"
+SMTP_FAKE="true"
+```
+
+> **Note:** `MONGODB_DIRECT_CONNECTION=true` is required when connecting to a MongoDB replica set running inside Docker from the host machine.
+
+Helper commands:
+
+```bash
+docker compose -f docker-compose.dev.yml ps       # See running containers
+docker compose -f docker-compose.dev.yml logs -f   # View logs
+docker compose -f docker-compose.dev.yml down      # Stop containers
+```
+
+To add personal services like [mongo-express](https://github.com/mongo-express/mongo-express) or [mailhog](https://github.com/mailhog/MailHog), you can either add them directly to your local `docker-compose.dev.yml` (changes will show in `git diff`), or create a separate `docker-compose.override.yml` (gitignored) and run both with:
+
+```bash
+docker compose -f docker-compose.dev.yml -f docker-compose.override.yml up -d
+```
 
 ### Configuring plausible
 
