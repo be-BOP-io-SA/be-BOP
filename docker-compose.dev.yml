@@ -1,0 +1,43 @@
+# Local development infrastructure
+# Starts MongoDB and MinIO only (no be-BOP container — use pnpm dev instead)
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.dev.yml down
+services:
+  mongo:
+    image: mongo:6.0.9
+    hostname: mongodb
+    command: --replSet rs0 --bind_ip_all
+    mem_limit: '5g'
+    mem_reservation: '3g'
+    healthcheck:
+      test: test $$(mongosh --quiet --eval 'try {rs.status().ok} catch(e) {rs.initiate().ok}') -eq 1
+      interval: 5s
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+  minio:
+    image: quay.io/minio/minio:latest
+    hostname: minio
+    ports:
+      - "9000:9000"
+      - "9090:9090"
+    environment:
+      MINIO_ROOT_USER: ${S3_KEY_ID:-minio}
+      MINIO_ROOT_PASSWORD: ${S3_KEY_SECRET:-minio123}
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9090"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+volumes:
+  mongo-data:
+  minio-data:

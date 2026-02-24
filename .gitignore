@@ -13,3 +13,4 @@ vite.config.ts.timestamp-*
 # Copied in vite.config.ts
 static/tinymce
 lib/utils/timeZoneOffset.ts
+docker-compose.override.yml
