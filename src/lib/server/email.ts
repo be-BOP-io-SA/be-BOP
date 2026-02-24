@@ -1,4 +1,10 @@
-import { createTestAccount, createTransport, type Transporter } from 'nodemailer';
+import {
+	createTestAccount,
+	createTransport,
+	getTestMessageUrl,
+	type Transporter
+} from 'nodemailer';
+import { dev } from '$app/environment';
 import { ORIGIN } from '$lib/server/env-config';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { htmlToText } from 'html-to-text';
@@ -82,6 +88,10 @@ export async function sendEmail(params: {
 	});
 
 	console.log(`✅ Email sent [${params.subject}] → ${params.to}`, res);
+
+	if (dev && runtimeConfig.smtp.fake) {
+		console.log(`📬 Preview URL: ${getTestMessageUrl(res)}`);
+	}
 }
 
 export async function queueEmail(
