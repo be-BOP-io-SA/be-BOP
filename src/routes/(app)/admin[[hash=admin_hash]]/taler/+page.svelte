@@ -4,7 +4,7 @@
 	export let data;
 </script>
 
-<h1 class="text-3xl">GNU Taler</h1>
+<h1 class="text-3xl">Taler</h1>
 
 <form class="contents" method="post" action="?/save">
 	<label class="form-label">

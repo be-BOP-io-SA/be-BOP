@@ -17,7 +17,8 @@ export const defaultExchangeRate = {
 	NGN: 27_000_000,
 	TZS: 75_000_000,
 	MAD: 320_000,
-	CZK: 700_000
+	CZK: 700_000,
+	KUDOS: 30_000
 };
 
 export type ExchangeRate = typeof defaultExchangeRate;

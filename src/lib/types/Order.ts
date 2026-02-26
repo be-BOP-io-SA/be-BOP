@@ -401,7 +401,8 @@ export const PAYMENT_METHOD_EMOJI: Record<PaymentMethod, string> = {
 	'point-of-sale': '🛒',
 	lightning: '⚡',
 	bitcoin: '₿',
-	free: '🆓'
+	free: '🆓',
+	taler: '🅣' // maybe 🪙 (taler = old silver coin, but also resembles cash)
 };
 
 export const ORDER_PAGINATION_LIMIT = 50;

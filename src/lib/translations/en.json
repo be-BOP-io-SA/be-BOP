@@ -122,7 +122,7 @@
 			"free": "Nothing to pay (free cart)",
 			"lightning": "Lightning",
 			"paypal": "Paypal",
-			"gnu-taler": "GNU Taler",
+			"taler": "Taler",
 			"point-of-sale": "Point of sale",
 			"unavailable": "No payment methods available."
 		},
@@ -511,6 +511,7 @@
 			"free": "Paid Nothing",
 			"lightning": "Paid with: Lightning transaction (1 {paymentCurrency} = {exchangeRate} {mainCurrency} at the time of the order)",
 			"paypal": "Paid with: paypal",
+			"taler": "Paid with: Taler",
 			"point-of-sale": "Paid in store"
 		},
 		"paidWithSummary": {

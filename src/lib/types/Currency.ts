@@ -17,7 +17,8 @@ export const CURRENCIES = [
 	'NGN',
 	'TZS',
 	'MAD',
-	'CZK'
+	'CZK',
+	'KUDOS'
 ] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
@@ -39,7 +40,8 @@ export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 	NGN: 2,
 	TZS: 2,
 	MAD: 2,
-	CZK: 2
+	CZK: 2,
+	KUDOS: 2
 }) satisfies Record<Currency, number>;
 
 /**
@@ -65,7 +67,8 @@ const STORAGE_FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 	NGN: 4,
 	TZS: 4,
 	MAD: 4,
-	CZK: 4
+	CZK: 4,
+	KUDOS: 4
 }) satisfies Record<Currency, number>;
 
 export const CURRENCY_UNIT = Object.freeze({
@@ -84,7 +87,8 @@ export const CURRENCY_UNIT = Object.freeze({
 	NGN: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.NGN),
 	TZS: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.TZS),
 	MAD: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.MAD),
-	CZK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CZK)
+	CZK: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.CZK),
+	KUDOS: Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY.KUDOS)
 }) satisfies Record<Currency, number>;
 
 export function parsePriceAmount(amount: string, currency: Currency): number {

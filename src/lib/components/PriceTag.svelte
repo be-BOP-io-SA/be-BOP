@@ -44,6 +44,10 @@
 		if (!force && actualCurrency === 'SAT' && actualAmount >= 1_000_000) {
 			return [actualAmount / SATOSHIS_PER_BTC, 'BTC'] as const;
 		}
+		// toLocaleString does not understand the KUDOS currency, so we force 'CHF' display
+		if (actualCurrency === 'KUDOS') {
+			return [actualAmount, 'CHF'];
+		}
 		return [actualAmount, actualCurrency || 'BTC'] as const;
 	})() as [number, Currency];
 

@@ -147,8 +147,8 @@ export const adminLinks: AdminLinks = [
 				label: 'Lightning LND node'
 			},
 			{
-				href: '/admin/gnu-taler',
-				label: 'GNU Taler'
+				href: '/admin/taler',
+				label: 'Taler'
 			},
 			{
 				href: '/admin/pos-payments',

@@ -227,7 +227,8 @@ const baseConfig = {
 	},
 	taler: {
 		backendUrl: '',
-		backendApiKey: ''
+		backendApiKey: '',
+		currency: 'CHF' as Currency
 	},
 	bity: {
 		clientId: ''
@@ -351,6 +352,12 @@ Amount: {{amount}} {{currency}}</p>`,
 			default: true as boolean
 		},
 		'order.payment.pending.paypal': {
+			subject: 'Order #{{orderNumber}}',
+			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
+<p>Please pay using this link: <a href="{{paymentLink}}">{{paymentLink}}</a></p>`,
+			default: true as boolean
+		},
+		'order.payment.pending.taler': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
 <p>Please pay using this link: <a href="{{paymentLink}}">{{paymentLink}}</a></p>`,
