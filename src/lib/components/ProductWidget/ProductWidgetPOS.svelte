@@ -59,7 +59,11 @@
 						? 'absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2'
 						: 'static bg-none bg-transparent h-auto p-3 pt-0 pl-1 items-start text-left flex-1 min-w-0'}
 				>
-					<h2 class="line-clamp-2 break-words {isMobile ? 'font-bold text-white' : 'font-normal'}">
+					<h2
+						class="line-clamp-2 break-words text-center w-full {isMobile
+							? 'font-bold text-white'
+							: 'font-normal'}"
+					>
 						{product.name}
 					</h2>
 				</div>
