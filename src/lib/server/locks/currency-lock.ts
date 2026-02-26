@@ -46,6 +46,9 @@ async function maintainExchangeRate() {
 					const number = Math.floor(+rates[currency]);
 					if (!isNaN(number)) {
 						currentExchangeRates[currency] = number;
+						if (currency === 'CHF') {
+							currentExchangeRates['KUDOS'] = number;
+						}
 					}
 				}
 			}

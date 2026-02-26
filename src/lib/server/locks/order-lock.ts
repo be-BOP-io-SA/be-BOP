@@ -16,6 +16,7 @@ import { sbpGetCheckoutStatus } from '../swiss-bitcoin-pay';
 import { CURRENCIES, CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { isPaypalEnabled, paypalGetCheckout } from '../paypal';
+import { isTalerEnabled } from '../taler';
 import { isStripeEnabled } from '../stripe';
 import { differenceInMinutes } from 'date-fns';
 import { z } from 'zod';
@@ -215,6 +216,7 @@ async function maintainOrders() {
 								case 'bitcoind':
 								case 'stripe':
 								case 'paypal':
+								case 'taler':
 								case 'bitcoin-nodeless':
 									throw new Error(
 										`Unsupported processor ${payment.processor} for lightning payments`
@@ -486,6 +488,32 @@ async function maintainOrders() {
 						} catch (err) {
 							console.error(inspect(err, { depth: 10 }));
 						}
+					case 'taler':
+						try {
+							if (!isTalerEnabled()) {
+								throw new Error('Missing Taler credentials');
+							}
+
+							// 	if (!payment.checkoutId) {
+							// 		throw new Error('Missing checkout ID on PayPal order');
+							// 	}
+
+							// 	const checkout = await paypalGetCheckout(payment.checkoutId);
+
+							// 	if (checkout.status === 'COMPLETED') {
+							// 		order = await onOrderPayment(order, payment, {
+							// 			amount: Number(checkout.purchase_units[0].amount.value),
+							// 			currency: checkout.purchase_units[0].amount.currency_code
+							// 		});
+							// 	} else if (payment.expiresAt && payment.expiresAt < new Date()) {
+							// 		order = await onOrderPaymentFailed(order, payment, 'expired');
+							// 	} else if (checkout.status === 'VOIDED') {
+							// 		order = await onOrderPaymentFailed(order, payment, 'failed');
+							// 	}
+						} catch (err) {
+							console.error(inspect(err, { depth: 10 }));
+						}
+						break;
 					case 'point-of-sale':
 						try {
 							if (payment.posTapToPay && payment.posTapToPay.expiresAt > new Date()) {
@@ -511,6 +539,7 @@ async function maintainOrders() {
 										break;
 									case 'btcpay-server':
 									case 'paypal':
+									case 'taler':
 									case 'phoenixd':
 									case 'sumup':
 									case 'bitcoind':

@@ -6,7 +6,7 @@ import { runtimeConfig } from './runtime-config';
 import { isSumupEnabled } from './sumup';
 import { isStripeEnabled } from './stripe';
 import { isPaypalEnabled } from './paypal';
-import { isGnuTalerEnabled } from './gnu-taler';
+import { isTalerEnabled } from './taler';
 import { isBitcoinNodelessConfigured } from './bitcoin-nodeless';
 import { isSwissBitcoinPayConfigured } from './swiss-bitcoin-pay';
 import { isBtcpayServerConfigured } from './btcpay-server';
@@ -19,7 +19,7 @@ export const ALL_PAYMENT_METHODS = [
 	'point-of-sale',
 	'free',
 	'paypal',
-	'gnu-taler'
+	'taler'
 ] as const;
 export type PaymentMethod = (typeof ALL_PAYMENT_METHODS)[number];
 
@@ -33,7 +33,7 @@ export const ALL_PAYMENT_PROCESSORS = [
 	'stripe',
 	'sumup',
 	'swiss-bitcoin-pay',
-	'gnu-taler'
+	'taler'
 ] as const;
 export type PaymentProcessor = (typeof ALL_PAYMENT_PROCESSORS)[number];
 
@@ -58,8 +58,8 @@ export const paymentMethods = (opts?: {
 							return isSumupEnabled() || isStripeEnabled();
 						case 'paypal':
 							return isPaypalEnabled();
-						case 'gnu-taler':
-							return isGnuTalerEnabled();
+						case 'taler':
+							return isTalerEnabled();
 						case 'bank-transfer':
 							return runtimeConfig.sellerIdentity?.bank;
 						case 'bitcoin':
