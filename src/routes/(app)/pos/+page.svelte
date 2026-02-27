@@ -87,6 +87,16 @@
 					{/if}
 					<a href="/pos/closing" class="btn btn-green"> Close the PoS & generate Z ticket </a>
 				</div>
+				{#if data.nonEmptyPoolLabels.length > 0}
+					<p class="text-red-600 font-semibold mt-3">
+						{t('pos.nonEmptyPoolsWarning')}
+					</p>
+					<ul class="text-red-600 text-sm ml-4 list-disc">
+						{#each data.nonEmptyPoolLabels as label}
+							<li>{label}</li>
+						{/each}
+					</ul>
+				{/if}
 			{:else}
 				<p class="text-sm text-gray-600 mb-3">
 					No active POS session. Start your day by opening the POS.

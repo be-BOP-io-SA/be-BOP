@@ -15,6 +15,7 @@ import {
 import { removeUserCarts } from '$lib/server/cart';
 import { getCurrentPosSession } from '$lib/server/pos-sessions';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { resolvePoolLabel } from '$lib/types/PosTabGroup';
 
 export const load = async (event) => {
 	const lastOrders = await collections.orders
@@ -29,6 +30,14 @@ export const load = async (event) => {
 	});
 
 	const currentPosSession = runtimeConfig.posSession.enabled ? await getCurrentPosSession() : null;
+
+	const nonEmptyPoolSlugs = currentPosSession
+		? (
+				await collections.orderTabs
+					.find({ 'items.0': { $exists: true } }, { projection: { slug: 1 } })
+					.toArray()
+		  ).map((tab) => tab.slug)
+		: [];
 
 	return {
 		orders: lastOrders.map((order) => ({
@@ -61,7 +70,10 @@ export const load = async (event) => {
 						currentPosSession.openedBy.userLogin ||
 						currentPosSession.openedBy.userId
 			  }
-			: null
+			: null,
+		nonEmptyPoolLabels: nonEmptyPoolSlugs.map((slug) =>
+			resolvePoolLabel(runtimeConfig.posTabGroups, slug)
+		)
 	};
 };
 

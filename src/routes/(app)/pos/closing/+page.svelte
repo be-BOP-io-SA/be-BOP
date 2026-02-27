@@ -1,5 +1,8 @@
 <script lang="ts">
 	import IconWarning from '~icons/ant-design/warning-outlined';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 
@@ -27,6 +30,17 @@
 		<h2 class="text-xl font-bold mb-4">
 			Hello {data.user?.alias || data.user?.login || 'User'}!
 		</h2>
+
+		{#if data.nonEmptyPoolLabels.length > 0}
+			<p class="text-red-600 font-semibold mb-2">
+				{t('pos.nonEmptyPoolsWarning')}
+			</p>
+			<ul class="text-red-600 text-sm ml-4 list-disc mb-4">
+				{#each data.nonEmptyPoolLabels as label}
+					<li>{label}</li>
+				{/each}
+			</ul>
+		{/if}
 
 		<div class="space-y-4">
 			<!-- Daily Incomes -->
