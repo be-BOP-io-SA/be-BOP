@@ -95,6 +95,8 @@ export async function load({ url }) {
 		})),
 		beginsAt,
 		endsAt,
+		beginsAtStr: url.searchParams.get('beginsAt'),
+		endsAtStr: url.searchParams.get('endsAt'),
 		paymentMethods: methods,
 		paymentMethod,
 		employees: nonCustomers.map((user) => ({

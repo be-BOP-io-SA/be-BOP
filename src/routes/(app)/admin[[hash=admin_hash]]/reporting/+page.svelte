@@ -35,12 +35,21 @@
 			label: employee
 		})) ?? [];
 
-	$: beginsAt = startOfDay(data.beginsAt);
-	$: endsAt = endOfDay(data.endsAt);
+	$: beginsAt = data.beginsAtStr ? new Date(data.beginsAtStr) : startOfDay(data.beginsAt);
+	$: endsAt = data.endsAtStr
+		? (() => {
+				const d = new Date(data.endsAtStr);
+				d.setSeconds(59, 999);
+				return d;
+		  })()
+		: endOfDay(data.endsAt);
 
-	function dateString(date: Date) {
+	function dateTimeLocalString(date: Date) {
 		return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date
 			.getDate()
+			.toString()
+			.padStart(2, '0')}T${date.getHours().toString().padStart(2, '0')}:${date
+			.getMinutes()
 			.toString()
 			.padStart(2, '0')}`;
 	}
@@ -282,13 +291,23 @@
 	<div class="col-span-3">
 		<label class="form-label">
 			BeginsAt
-			<input class="form-input" name="beginsAt" type="date" value={dateString(beginsAt)} />
+			<input
+				class="form-input"
+				type="datetime-local"
+				name="beginsAt"
+				value={dateTimeLocalString(beginsAt)}
+			/>
 		</label>
 	</div>
 	<div class="col-span-3">
 		<label class="form-label">
 			EndsAt
-			<input class="form-input" type="date" name="endsAt" value={dateString(endsAt)} />
+			<input
+				class="form-input"
+				type="datetime-local"
+				name="endsAt"
+				value={dateTimeLocalString(endsAt)}
+			/>
 		</label>
 	</div>
 	<div class="col-span-2">
