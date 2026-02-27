@@ -508,11 +508,18 @@ async function maintainOrders() {
 							if (talerOrder === 'not_found') {
 								order = await onOrderPaymentFailed(order, payment, 'failed');
 							} else if (talerOrder.order_status === 'paid') {
-								const currency = (talerOrder.deposit_total?.split(':')[0] ||
-									runtimeConfig.mainCurrency) as Currency;
+								let currency = talerOrder.deposit_total?.split(':')[0];
+
+								if (currency === 'KUDOS' || !currency) {
+									currency = runtimeConfig.taler.currency;
+								}
+
 								const amount = Number(talerOrder.deposit_total?.split(':')[1]);
 
-								order = await onOrderPayment(order, payment, { amount, currency });
+								order = await onOrderPayment(order, payment, {
+									amount,
+									currency: currency as Currency
+								});
 							} else if (payment.expiresAt && payment.expiresAt < new Date()) {
 								order = await onOrderPaymentFailed(order, payment, 'expired');
 							}
