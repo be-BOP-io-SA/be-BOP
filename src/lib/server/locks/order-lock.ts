@@ -13,10 +13,15 @@ import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { btcpayGetLnInvoice } from '../btcpay-server';
 import { phoenixdLookupInvoice } from '../phoenixd';
 import { sbpGetCheckoutStatus } from '../swiss-bitcoin-pay';
-import { CURRENCIES, CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+import {
+	CURRENCIES,
+	Currency,
+	CURRENCY_UNIT,
+	FRACTION_DIGITS_PER_CURRENCY
+} from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { isPaypalEnabled, paypalGetCheckout } from '../paypal';
-import { isTalerEnabled } from '../taler';
+import { isTalerEnabled, talerGetOrder } from '../taler';
 import { isStripeEnabled } from '../stripe';
 import { differenceInMinutes } from 'date-fns';
 import { z } from 'zod';
@@ -494,22 +499,23 @@ async function maintainOrders() {
 								throw new Error('Missing Taler credentials');
 							}
 
-							// 	if (!payment.checkoutId) {
-							// 		throw new Error('Missing checkout ID on PayPal order');
-							// 	}
+							if (!payment.checkoutId) {
+								throw new Error('Missing checkout ID on Taler order');
+							}
 
-							// 	const checkout = await paypalGetCheckout(payment.checkoutId);
+							const talerOrder = await talerGetOrder(payment.checkoutId);
 
-							// 	if (checkout.status === 'COMPLETED') {
-							// 		order = await onOrderPayment(order, payment, {
-							// 			amount: Number(checkout.purchase_units[0].amount.value),
-							// 			currency: checkout.purchase_units[0].amount.currency_code
-							// 		});
-							// 	} else if (payment.expiresAt && payment.expiresAt < new Date()) {
-							// 		order = await onOrderPaymentFailed(order, payment, 'expired');
-							// 	} else if (checkout.status === 'VOIDED') {
-							// 		order = await onOrderPaymentFailed(order, payment, 'failed');
-							// 	}
+							if (talerOrder === 'not_found') {
+								order = await onOrderPaymentFailed(order, payment, 'failed');
+							} else if (talerOrder.order_status === 'paid') {
+								const currency = (talerOrder.deposit_total?.split(':')[0] ||
+									runtimeConfig.mainCurrency) as Currency;
+								const amount = Number(talerOrder.deposit_total?.split(':')[1]);
+
+								order = await onOrderPayment(order, payment, { amount, currency });
+							} else if (payment.expiresAt && payment.expiresAt < new Date()) {
+								order = await onOrderPaymentFailed(order, payment, 'expired');
+							}
 						} catch (err) {
 							console.error(inspect(err, { depth: 10 }));
 						}

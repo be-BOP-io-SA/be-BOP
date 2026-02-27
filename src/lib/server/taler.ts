@@ -7,49 +7,39 @@ export function isTalerEnabled() {
 }
 
 export interface TalerOrder {
-	taler_pay_uri: string;
+	// only for `unpaid`
+	taler_pay_uri?: string;
 	order_status_url: string;
-	order_status: 'unpaid' | 'paid' | 'pending';
+	order_status: 'unpaid' | 'paid' | 'claimed' | 'not_found';
 	total_amount: string;
 	summary: string;
 	creation_time: {
 		t_s: number;
 	};
+	// only for "paid" orders
+	deposit_total?: string;
 }
 
-// export async function paypalGetCheckout(checkoutId: string): Promise<PaypalCheckout> {
-// 	const response = await fetch(`${paypalApiOrigin()}/v2/checkout/orders/${checkoutId}`, {
-// 		headers: {
-// 			Authorization: `Bearer ${await paypalAccessToken()}`
-// 		}
-// 	});
+export async function talerGetOrder(orderId: string): Promise<TalerOrder | 'not_found'> {
+	const response = await fetch(`${runtimeConfig.taler.backendUrl}/private/orders/${orderId}`, {
+		method: 'GET',
+		headers: {
+			Authorization: `Bearer ${runtimeConfig.taler.backendApiKey}`,
+			'Content-Type': 'application/json'
+		}
+	});
 
-// 	if (!response.ok) {
-// 		throw new Error(`Failed to get PayPal order: ${response.status} ${response.statusText}`);
-// 	}
+	if (response.status === 404) {
+		// Order not found, probably expired
+		return 'not_found';
+	}
 
-// 	const checkout: PaypalCheckout = await response.json();
+	if (!response.ok) {
+		throw new Error(`Failed to get Taler order: ${response.status} ${response.statusText}`);
+	}
+	const order: TalerOrder = await response.json();
 
-// 	// Automatically execute payment if approved
-// 	if (checkout.status === 'APPROVED') {
-// 		const captureResponse = await fetch(
-// 			paypalApiOrigin() + '/v2/checkout/orders/' + checkoutId + '/capture',
-// 			{
-// 				method: 'POST',
-// 				headers: {
-// 					Authorization: 'Bearer ' + (await paypalAccessToken()),
-// 					'Content-Type': 'application/json'
-// 				}
-// 			}
-// 		);
+	console.log({ order });
 
-// 		if (!captureResponse.ok) {
-// 			console.error(captureResponse.status, await captureResponse.text());
-// 			throw new Error('Failed to capture PayPal payment for checkout ' + checkoutId);
-// 		}
-
-// 		checkout.status = 'COMPLETED';
-// 	}
-
-// 	return checkout;
-// }
+	return order;
+}

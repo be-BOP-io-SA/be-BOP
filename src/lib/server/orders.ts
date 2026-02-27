@@ -2117,7 +2117,11 @@ async function generateTalerPaymentInfo(params: {
 			order: {
 				order_id: params.paymentId,
 				amount: `${runtimeConfig.taler.currency}:${amount}`,
-				summary: `${runtimeConfig.sellerIdentity?.businessName} - Order #${params.orderNumber}`
+				summary: `${runtimeConfig.sellerIdentity?.businessName} - Order #${params.orderNumber}`,
+				// default expiration for orders is 5 minutes
+				pay_deadline: {
+					t_s: Math.floor(Date.now() / 1000) + runtimeConfig.desiredPaymentTimeout * 60
+				}
 			}
 		})
 	});
