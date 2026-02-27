@@ -676,6 +676,7 @@
 		},
 		"sessionLink": "Session point de vente",
 		"sessionTouchLink": "Session point de vente - écran tactile",
+		"touchSessionRequired": "Si vous souhaitez utiliser l'interface tactile du point de vente, veuillez ouvrir une session",
 		"tapToPay": {
 			"inProgress": "Le paiement sera validé automatiquement quand la transaction externe sera enregistrée et validée.",
 			"inUseByOtherOrder": "L'encaissement tap-to-pay est désactivé car une autre commande est en cours avec ce mode d'encaissement. Vous pouvez encaisser manuellement et indiquer ensuite le numéro de transaction dans ce champ."

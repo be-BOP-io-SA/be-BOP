@@ -283,7 +283,8 @@ const baseConfig = {
 		enabled: false,
 		allowXTicketEditing: false,
 		cashDeltaJustificationMandatory: false,
-		lockItemsAfterMidTicket: true
+		lockItemsAfterMidTicket: true,
+		forbidTouchWhenSessionClosed: true
 	},
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,

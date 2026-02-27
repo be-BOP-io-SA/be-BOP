@@ -16,6 +16,7 @@ import { createOrder, addOrderPayment } from '$lib/server/orders';
 import { orderRemainingToPay } from '$lib/types/Order';
 import { CURRENCY_UNIT } from '$lib/types/Currency';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { getCurrentPosSession } from '$lib/server/pos-sessions';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
 import { resolvePoolLabel } from '$lib/types/PosTabGroup';
 
@@ -104,6 +105,10 @@ async function getHydratedOrderTab(locale: Locale, tab: OrderTab) {
 }
 
 export const load = async ({ depends, locals, params }) => {
+	if (runtimeConfig.posSession.forbidTouchWhenSessionClosed && !(await getCurrentPosSession())) {
+		throw redirect(303, '/pos?errorMessage=pos-touch-session-required');
+	}
+
 	const tabSlug = params.orderTabSlug;
 	const tab = await getOrCreateOrderTab({ slug: tabSlug });
 
@@ -219,6 +224,9 @@ const sharePaymentSchema = z.discriminatedUnion('mode', [
 
 export const actions = {
 	checkoutTabPartial: async ({ request, locals, params }) => {
+		if (runtimeConfig.posSession.forbidTouchWhenSessionClosed && !(await getCurrentPosSession())) {
+			throw redirect(303, '/pos?errorMessage=pos-touch-session-required');
+		}
 		const formData = await request.formData();
 		const user = userIdentifier(locals);
 
@@ -353,6 +361,9 @@ export const actions = {
 	},
 
 	closePool: async ({ params }) => {
+		if (runtimeConfig.posSession.forbidTouchWhenSessionClosed && !(await getCurrentPosSession())) {
+			throw redirect(303, '/pos?errorMessage=pos-touch-session-required');
+		}
 		const { concludeOrderTab } = await import('$lib/server/orderTab');
 		await concludeOrderTab({ slug: params.orderTabSlug });
 		throw redirect(303, `/pos/touch/tab/${params.orderTabSlug}`);

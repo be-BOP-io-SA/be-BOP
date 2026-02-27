@@ -12,11 +12,12 @@ import { pojo } from '$lib/server/pojo';
 import { OrderTab, OrderTabItem, OrderTabPoolStatus } from '$lib/types/OrderTab';
 import type { Picture } from '$lib/types/Picture.js';
 import type { Product } from '$lib/types/Product';
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { UrlDependency } from '$lib/types/UrlDependency.js';
 import { ObjectId } from 'mongodb';
 import { runtimeConfig, defaultConfig } from '$lib/server/runtime-config.js';
+import { getCurrentPosSession } from '$lib/server/pos-sessions';
 
 type ProductProjection = Pick<
 	Product,
@@ -122,6 +123,10 @@ async function getHydratedOrderTab(locale: Locale, tabSlug: string) {
 }
 
 export const load = async ({ locals, depends, params }) => {
+	if (runtimeConfig.posSession.forbidTouchWhenSessionClosed && !(await getCurrentPosSession())) {
+		throw redirect(303, '/pos?errorMessage=pos-touch-session-required');
+	}
+
 	const tabSlug = params.orderTabSlug;
 	depends(UrlDependency.orderTab(tabSlug));
 
@@ -200,6 +205,9 @@ function parseUpdateOrderTabItemReq(formData: FormData) {
 
 export const actions = {
 	updateOrderTabItem: async ({ locals, request }) => {
+		if (runtimeConfig.posSession.forbidTouchWhenSessionClosed && !(await getCurrentPosSession())) {
+			throw redirect(303, '/pos?errorMessage=pos-touch-session-required');
+		}
 		const { note, quantity, tabSlug, tabItemId } = parseUpdateOrderTabItemReq(
 			await request.formData()
 		);
@@ -398,6 +406,9 @@ export const actions = {
 		);
 	},
 	updateDiscount: async ({ request, params }) => {
+		if (runtimeConfig.posSession.forbidTouchWhenSessionClosed && !(await getCurrentPosSession())) {
+			throw redirect(303, '/pos?errorMessage=pos-touch-session-required');
+		}
 		const formData = await request.formData();
 		const discountJson = formData.get('discount');
 
