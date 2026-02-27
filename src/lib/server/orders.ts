@@ -85,7 +85,7 @@ import { toZonedTime } from 'date-fns-tz';
 import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import { btcpayCreateLnInvoice, isBtcpayServerConfigured } from './btcpay-server';
-import { TalerOrder } from './taler';
+import { isDemoMerchantBackend, TalerOrder } from './taler';
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
 	const other = await collections.orders.findOne({
@@ -2098,14 +2098,13 @@ async function generateTalerPaymentInfo(params: {
 	address: string;
 	processor: PaymentProcessor;
 }> {
-	console.log({ params });
 	const amount = toCurrency(
 		runtimeConfig.taler.currency,
 		params.toPay.amount,
 		params.toPay.currency
 	).toFixed(FRACTION_DIGITS_PER_CURRENCY[runtimeConfig.taler.currency]);
 
-	console.log({ amount: `${runtimeConfig.taler.currency}:${amount}` });
+	const talerCurrency = isDemoMerchantBackend() ? 'KUDOS' : runtimeConfig.taler.currency;
 
 	const response = await fetch(`${runtimeConfig.taler.backendUrl}/private/orders`, {
 		method: 'POST',
@@ -2116,9 +2115,9 @@ async function generateTalerPaymentInfo(params: {
 		body: JSON.stringify({
 			order: {
 				order_id: params.paymentId,
-				amount: `${runtimeConfig.taler.currency}:${amount}`,
+				amount: `${talerCurrency}:${amount}`,
 				summary: `${runtimeConfig.sellerIdentity?.businessName} - Order #${params.orderNumber}`,
-				// default expiration for orders is 5 minutes
+				// default Taler expiration for orders is 5 minutes, we override with be-BOP's default
 				pay_deadline: {
 					t_s: Math.floor(Date.now() / 1000) + runtimeConfig.desiredPaymentTimeout * 60
 				}
