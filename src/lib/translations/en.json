@@ -649,6 +649,7 @@
 		},
 		"sessionLink": "POS session",
 		"sessionTouchLink": "POS session - touch screen",
+		"nonEmptyPoolsWarning": "Warning: there are non-empty pools. Please process them properly before closing your PoS Session.",
 		"useSelectForTags": "Use select menu for product tag selection",
 		"tapToPay": {
 			"inProgress": "The payment will be automatically validated once the external transaction is recorded and validated.",
