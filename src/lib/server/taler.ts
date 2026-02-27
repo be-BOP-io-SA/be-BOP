@@ -6,6 +6,11 @@ export function isTalerEnabled() {
 	return !!runtimeConfig.taler.backendUrl && !!runtimeConfig.taler.backendApiKey;
 }
 
+// test if we need to use KUDOS
+export function isDemoMerchantBackend() {
+	return runtimeConfig.taler?.backendUrl?.startsWith('https://backend.demo.taler.net');
+}
+
 export interface TalerOrder {
 	// only for `unpaid`
 	taler_pay_uri?: string;
@@ -38,8 +43,6 @@ export async function talerGetOrder(orderId: string): Promise<TalerOrder | 'not_
 		throw new Error(`Failed to get Taler order: ${response.status} ${response.statusText}`);
 	}
 	const order: TalerOrder = await response.json();
-
-	console.log({ order });
 
 	return order;
 }
