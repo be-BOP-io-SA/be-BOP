@@ -676,6 +676,7 @@
 		},
 		"sessionLink": "Session point de vente",
 		"sessionTouchLink": "Session point de vente - écran tactile",
+		"nonEmptyPoolsWarning": "Attention : il y a des tables non vides. Veuillez les traiter correctement avant de fermer votre session PoS.",
 		"tapToPay": {
 			"inProgress": "Le paiement sera validé automatiquement quand la transaction externe sera enregistrée et validée.",
 			"inUseByOtherOrder": "L'encaissement tap-to-pay est désactivé car une autre commande est en cours avec ce mode d'encaissement. Vous pouvez encaisser manuellement et indiquer ensuite le numéro de transaction dans ce champ."

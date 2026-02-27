@@ -676,6 +676,7 @@
 		},
 		"sessionLink": "POS-Sitzung",
 		"sessionTouchLink": "POS-Sitzung - Touchscreen",
+		"nonEmptyPoolsWarning": "Achtung: Es gibt nicht leere Tische. Bitte verarbeiten Sie diese ordnungsgemäß, bevor Sie Ihre POS-Sitzung schließen.",
 		"tapToPay": {
 			"inProgress": "Die Zahlung wird automatisch bestätigt, sobald die externe Transaktion erfasst und bestätigt wurde.",
 			"inUseByOtherOrder": "Die Tap-to-Pay-Zahlung ist deaktiviert, da eine andere Bestellung diesen Zahlungsmodus verwendet. Sie können die Zahlung manuell entgegennehmen und anschließend die Transaktionsnummer in dieses Feld eintragen."
