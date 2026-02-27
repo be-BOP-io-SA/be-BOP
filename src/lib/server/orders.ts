@@ -664,9 +664,6 @@ export async function createOrder(
 					`Product ${item.product.name} is a booking, please provide booking time and duration`
 				);
 			}
-			if (item.booking.start <= new Date()) {
-				throw error(400, `Product ${item.product.name} booking start time is in the past`);
-			}
 			if (item.booking.end <= item.booking.start) {
 				throw error(400, `Product ${item.product.name} booking end time is before start time`);
 			}

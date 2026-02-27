@@ -22,17 +22,23 @@ import type { Cart } from '$lib/types/Cart';
 import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 import { UNDERLYING_CURRENCY } from '$lib/types/Currency';
 import { isAlpha2CountryCode } from '$lib/types/Country';
+import { startOfDay } from 'date-fns';
 
 async function getCartAndRemoveSomeItems(userIdentifier: UserIdentifier): Promise<Cart> {
 	const cartInDb = await getCartFromDb({ user: userIdentifier });
+
+	const now = new Date();
+
 	const itemsAfterRemoval = cartInDb.items.filter((item) => {
-		if (item.booking && item.booking.start < new Date()) {
-			// Booking starts in the past, remove from cart.
-			return false;
+		if (!item.booking || item.booking.start >= now) {
+			return true;
 		}
-		return true;
+		const durationMs = item.booking.end.getTime() - item.booking.start.getTime();
+		const is24h = durationMs === 24 * 60 * 60 * 1000;
+		return is24h && startOfDay(item.booking.start) >= startOfDay(now);
 	});
-	if (itemsAfterRemoval !== cartInDb.items) {
+
+	if (itemsAfterRemoval.length !== cartInDb.items.length) {
 		await collections.carts.updateOne(
 			{ _id: cartInDb._id },
 			{ $set: { items: itemsAfterRemoval } }
