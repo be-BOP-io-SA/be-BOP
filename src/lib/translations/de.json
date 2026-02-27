@@ -422,6 +422,12 @@
 		"personalInformation": "Persönliche Informationen"
 	},
 	"login": {
+		"error": {
+			"invalidEmail": "Ungültige E-Mail-Adresse",
+			"invalidNpub": "Ungültige Nostr-npub-Adresse",
+			"invalidContactAddress": "Ihre Kontaktadresse ist ungültig (geben Sie entweder eine korrekte E-Mail-Adresse oder einen Nostr-npub ein)",
+			"invalidOrExpiredToken": "Ungültiger oder abgelaufener Token"
+		},
 		"authenticate": {
 			"ctaCancelLabel": "Zurück",
 			"ctaLabel": "Bestätigen",

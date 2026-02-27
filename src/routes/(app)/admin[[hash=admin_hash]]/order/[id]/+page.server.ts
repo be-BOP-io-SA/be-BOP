@@ -2,7 +2,7 @@ import { adminPrefix } from '$lib/server/admin';
 import { collections } from '$lib/server/database';
 import { queueEmail } from '$lib/server/email';
 import { ORIGIN } from '$lib/server/env-config';
-import { zodNpub } from '$lib/server/nostr';
+import { validateEmailOrNpub } from '$lib/server/nostr';
 import { addOrderPayment } from '$lib/server/orders';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
 import { rateLimit } from '$lib/server/rateLimit';
@@ -10,7 +10,7 @@ import { userIdentifier } from '$lib/server/user';
 import { parsePriceAmount } from '$lib/types/Currency.js';
 import { orderAmountWithNoPaymentsCreated as orderAmountWithNoPayments } from '$lib/types/Order.js';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { Kind } from 'nostr-tools';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
@@ -163,13 +163,16 @@ export const actions = {
 		}
 
 		const formData = await request.formData();
-		const { address, paymentId } = z
+		const addressResult = validateEmailOrNpub(formData.get('address'));
+		if ('error' in addressResult) {
+			return fail(400, { error: addressResult.error });
+		}
+		const address = addressResult.address;
+		const { paymentId } = z
 			.object({
-				address: z.union([z.string().email(), zodNpub()]),
 				paymentId: z.string().min(1)
 			})
 			.parse({
-				address: formData.get('address'),
 				paymentId: formData.get('paymentId')
 			});
 
