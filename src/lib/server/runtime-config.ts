@@ -121,7 +121,7 @@ const baseConfig = {
 	cartPreviewInteractive: false,
 	vatExempted: false,
 	vatExemptionReason: '',
-	vatSingleCountry: false,
+	vatSingleCountry: true,
 	vatCountry: 'FR' satisfies CountryAlpha2 as CountryAlpha2,
 	vatNullOutsideSellerCountry: false,
 	displayVatIncludedInProduct: false,
