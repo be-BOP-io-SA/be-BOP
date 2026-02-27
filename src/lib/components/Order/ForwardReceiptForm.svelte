@@ -9,6 +9,7 @@
 
 	let isOpen = false;
 	let isSuccess = false;
+	let errorKey = '';
 </script>
 
 {#if isSuccess}
@@ -19,10 +20,13 @@
 		method="post"
 		class="flex flex-col gap-2"
 		use:enhance={() => {
+			errorKey = '';
 			return async ({ result, update }) => {
 				if (result.type === 'success') {
 					isOpen = false;
 					isSuccess = true;
+				} else if (result.type === 'failure' && result.data?.error) {
+					errorKey = String(result.data.error);
 				} else {
 					await update();
 				}
@@ -30,6 +34,9 @@
 		}}
 	>
 		<input type="hidden" name="paymentId" value={paymentId} />
+		{#if errorKey}
+			<p class="text-red-500">{t('login.error.' + errorKey)}</p>
+		{/if}
 		<label class="form-label body-secondaryText">
 			{t('login.authenticate.inputLabel')}
 			<input

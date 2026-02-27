@@ -59,6 +59,32 @@ export function zodNpub() {
 		});
 }
 
+/**
+ * Validates a string as either a valid email or a valid npub address.
+ * Returns `{ address }` on success, or `{ error }` with a specific error key:
+ * - 'invalidEmail' if the input contains '@' but is not a valid email
+ * - 'invalidNpub' if the input starts with 'npub' but is not a valid npub
+ * - 'invalidContactAddress' otherwise
+ */
+export function validateEmailOrNpub(input: unknown): { address: string } | { error: string } {
+	if (typeof input !== 'string' || !input.trim()) {
+		return { error: 'invalidContactAddress' };
+	}
+	const trimmed = input.trim();
+
+	if (trimmed.includes('@')) {
+		const result = z.string().email().safeParse(trimmed);
+		return result.success ? { address: trimmed } : { error: 'invalidEmail' };
+	}
+
+	if (trimmed.startsWith('npub')) {
+		const result = zodNpub().safeParse(trimmed);
+		return result.success ? { address: result.data } : { error: 'invalidNpub' };
+	}
+
+	return { error: 'invalidContactAddress' };
+}
+
 export function zodNsec() {
 	return z
 		.string()

@@ -1,7 +1,7 @@
 import { collections } from '$lib/server/database';
-import { zodNpub } from '$lib/server/nostr';
+import { validateEmailOrNpub } from '$lib/server/nostr';
 import { userQuery } from '$lib/server/user';
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
 export const load = async ({ params }) => {
@@ -24,13 +24,16 @@ export const actions = {
 	addSubscription: async function ({ request }) {
 		const data = await request.formData();
 
-		const { address, scheduleId } = z
+		const addressResult = validateEmailOrNpub(data.get('address'));
+		if ('error' in addressResult) {
+			return fail(400, { error: addressResult.error });
+		}
+		const address = addressResult.address;
+		const { scheduleId } = z
 			.object({
-				address: z.union([z.string().email(), zodNpub()]),
-				scheduleId: z.string().min(1) // Ensure it's not empty
+				scheduleId: z.string().min(1)
 			})
 			.parse({
-				address: data.get('address'),
 				scheduleId: data.get('scheduleId')
 			});
 		const personalInfo = await collections.personalInfo.findOne(

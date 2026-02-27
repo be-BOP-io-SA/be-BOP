@@ -422,6 +422,12 @@
 		"personalInformation": "Information Personnelle"
 	},
 	"login": {
+		"error": {
+			"invalidEmail": "Adresse email invalide",
+			"invalidNpub": "Adresse Nostr npub invalide",
+			"invalidContactAddress": "Votre adresse de contact est invalide (saisissez une adresse email correcte ou un npub Nostr)",
+			"invalidOrExpiredToken": "Jeton invalide ou expiré"
+		},
 		"authenticate": {
 			"ctaCancelLabel": "Retour",
 			"ctaLabel": "Valider",

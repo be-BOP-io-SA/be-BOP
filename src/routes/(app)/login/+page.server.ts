@@ -15,7 +15,7 @@ import {
 	TWITTER_ID,
 	TWITTER_SECRET
 } from '$lib/server/env-config';
-import { zodNpub } from '$lib/server/nostr.js';
+import { validateEmailOrNpub } from '$lib/server/nostr.js';
 import { renewSessionId } from '$lib/server/user.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
 
@@ -73,13 +73,11 @@ export const load = async ({ url }) => {
 export const actions = {
 	sendLink: async function ({ request, locals }) {
 		const data = await request.formData();
-		const { address } = z
-			.object({
-				address: z.union([z.string().email(), zodNpub()])
-			})
-			.parse({
-				address: data.get('address')
-			});
+		const result = validateEmailOrNpub(data.get('address'));
+		if ('error' in result) {
+			return fail(400, { error: result.error });
+		}
+		const address = result.address;
 
 		rateLimit(locals.clientIp, 'email', 5, { minutes: 5 });
 
@@ -91,7 +89,7 @@ export const actions = {
 		let dontCatch = false;
 
 		if (!token) {
-			return fail(400, { error: 'Invalid or expired token' });
+			return fail(400, { error: 'invalidOrExpiredToken' });
 		}
 		try {
 			const authLink = await jwtVerify(
@@ -133,7 +131,7 @@ export const actions = {
 			if (dontCatch) {
 				throw err;
 			}
-			return fail(400, { error: 'Invalid or expired token' });
+			return fail(400, { error: 'invalidOrExpiredToken' });
 		}
 	},
 	clearEmail: async function ({ locals }) {
