@@ -67,6 +67,9 @@ export const load = async (event) => {
 
 export const actions: Actions = {
 	addToTab: async ({ request }) => {
+		if (runtimeConfig.posSession.forbidTouchWhenSessionClosed && !(await getCurrentPosSession())) {
+			throw redirect(303, '/pos?errorMessage=pos-touch-session-required');
+		}
 		const formData = await request.formData();
 		const { tabSlug, productId } = z
 			.object({
@@ -83,6 +86,9 @@ export const actions: Actions = {
 		}
 	},
 	removeFromTab: async ({ request }) => {
+		if (runtimeConfig.posSession.forbidTouchWhenSessionClosed && !(await getCurrentPosSession())) {
+			throw redirect(303, '/pos?errorMessage=pos-touch-session-required');
+		}
 		const formData = await request.formData();
 		const { tabSlug, tabItemId } = z
 			.object({
@@ -109,6 +115,9 @@ export const actions: Actions = {
 		await removeFromOrderTab({ tabSlug, tabItemId });
 	},
 	removeTab: async ({ request }) => {
+		if (runtimeConfig.posSession.forbidTouchWhenSessionClosed && !(await getCurrentPosSession())) {
+			throw redirect(303, '/pos?errorMessage=pos-touch-session-required');
+		}
 		const formData = await request.formData();
 		const { tabSlug } = z
 			.object({
@@ -132,6 +141,9 @@ export const actions: Actions = {
 		await removeOrderTab({ tabSlug });
 	},
 	checkoutTab: async ({ request, locals }) => {
+		if (runtimeConfig.posSession.forbidTouchWhenSessionClosed && !(await getCurrentPosSession())) {
+			throw redirect(303, '/pos?errorMessage=pos-touch-session-required');
+		}
 		const formData = await request.formData();
 		const { tabSlug } = z
 			.object({

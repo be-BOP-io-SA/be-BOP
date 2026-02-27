@@ -676,6 +676,7 @@
 		},
 		"sessionLink": "Bezit",
 		"sessionTouchLink": "POS-sessie - touchscreen",
+		"touchSessionRequired": "Als u de POS-touchscreen-interface wilt gebruiken, open dan een sessie",
 		"tapToPay": {
 			"inProgress": "De betaling wordt automatisch gevalideerd zodra de externe transactie is geregistreerd en gevalideerd.",
 			"inUseByOtherOrder": "Tap-to-pay is uitgeschakeld omdat er al een andere bestelling bezig is met deze betaalmethode. U kunt handmatig afrekenen en daarna het transactie­nummer in dit veld invullen."

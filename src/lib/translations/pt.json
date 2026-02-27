@@ -676,6 +676,7 @@
 		},
 		"sessionLink": "Sessão POS",
 		"sessionTouchLink": "Sessão POS - ecrã tátil",
+		"touchSessionRequired": "Se pretende usar a interface tátil do POS, por favor abra uma sessão",
 		"tapToPay": {
 			"inProgress": "O pagamento será validado automaticamente quando a transação externa for registrada e validada.",
 			"inUseByOtherOrder": "O pagamento via tap-to-pay está desativado porque há outro pedido em andamento usando este método. Você pode cobrar manualmente e depois inserir o número da transação neste campo."

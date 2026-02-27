@@ -676,6 +676,7 @@
 		},
 		"sessionLink": "Sessione POS",
 		"sessionTouchLink": "Sessione POS - touch screen",
+		"touchSessionRequired": "Se vuoi usare l'interfaccia touchscreen del POS, apri una sessione",
 		"tapToPay": {
 			"inProgress": "Il pagamento sarà convalidato automaticamente quando la transazione esterna sarà registrata e convalidata.",
 			"inUseByOtherOrder": "Il pagamento tap-to-pay è disattivato perché un altro ordine è in corso con questo metodo di pagamento. Puoi incassare manualmente e poi inserire il numero di transazione in questo campo."

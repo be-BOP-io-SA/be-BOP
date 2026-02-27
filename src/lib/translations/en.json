@@ -649,6 +649,7 @@
 		},
 		"sessionLink": "POS session",
 		"sessionTouchLink": "POS session - touch screen",
+		"touchSessionRequired": "If you want to use PoS touchscreen interface, please open session",
 		"useSelectForTags": "Use select menu for product tag selection",
 		"tapToPay": {
 			"inProgress": "The payment will be automatically validated once the external transaction is recorded and validated.",
