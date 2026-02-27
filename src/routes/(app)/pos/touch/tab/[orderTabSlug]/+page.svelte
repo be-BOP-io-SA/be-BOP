@@ -1122,12 +1122,22 @@
 		<!-- eslint-disable-next-line svelte/no-dupe-else-if-blocks -->
 		{#if rightPanel === 'products'}
 			<div class="grid {isMobile ? 'grid-cols-2 gap-2 mt-1' : 'grid-cols-3 gap-4 mt-2'}">
-				<a
-					class="touchScreen-action-cta {isMobile ? 'text-xl p-2' : 'text-3xl p-4'} text-center"
-					href="/pos/touch/tab/{tabSlug}/split"
-				>
-					{t('pos.touch.pay')}
-				</a>
+				{#if items.length > 0}
+					<a
+						class="touchScreen-action-cta {isMobile ? 'text-xl p-2' : 'text-3xl p-4'} text-center"
+						href="/pos/touch/tab/{tabSlug}/split"
+					>
+						{t('pos.touch.pay')}
+					</a>
+				{:else}
+					<span
+						class="touchScreen-action-cta {isMobile
+							? 'text-xl p-2'
+							: 'text-3xl p-4'} text-center opacity-50 cursor-not-allowed"
+					>
+						{t('pos.touch.pay')}
+					</span>
+				{/if}
 				<form
 					method="post"
 					class="{isMobile ? '' : 'col-span-2'} grid grid-cols-2 {isMobile ? 'gap-2' : 'gap-4'}"
