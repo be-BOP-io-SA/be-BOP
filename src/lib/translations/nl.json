@@ -422,6 +422,12 @@
 		"personalInformation": "Persoonlijke informatie"
 	},
 	"login": {
+		"error": {
+			"invalidEmail": "Ongeldig e-mailadres",
+			"invalidNpub": "Ongeldig Nostr npub-adres",
+			"invalidContactAddress": "Uw contactadres is ongeldig (vul een correct e-mailadres of een Nostr npub in)",
+			"invalidOrExpiredToken": "Ongeldige of verlopen token"
+		},
 		"authenticate": {
 			"ctaCancelLabel": "Rug",
 			"ctaLabel": "Bevestigen",
