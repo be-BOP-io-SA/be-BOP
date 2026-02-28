@@ -114,6 +114,10 @@
 			"method": "Betalingsmiddel",
 			"title": "Betaling"
 		},
+		"taler": {
+			"link": "Taler-link",
+			"merchantBackendLink": "Bestelling bekijken in het merchant backend"
+		},
 		"paymentMethod": {
 			"bank-transfer": "overschrijving",
 			"bitcoin": "Onchain",

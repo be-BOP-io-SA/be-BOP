@@ -20,7 +20,9 @@
 
 	<!-- Taler QR -->
 	{#if payment.method === 'taler'}
-		<img src="{$page.url.pathname}/payment/{payment.id}/qrcode" class="w-96 h-96" alt="QR code" />
+		<a href={payment.talerOrderStatusUrl ?? payment.address ?? ''}>
+			<img src="{$page.url.pathname}/payment/{payment.id}/qrcode" class="w-96 h-96" alt="QR code" />
+		</a>
 	{/if}
 
 	<!-- Card QR (if not hidden) -->

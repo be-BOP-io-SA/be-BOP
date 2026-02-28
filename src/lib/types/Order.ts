@@ -148,6 +148,10 @@ export interface OrderPayment {
 		transaction_code?: string;
 		txid?: string;
 	}>;
+	/**
+	 * For Taler transactions
+	 */
+	talerOrderStatusUrl?: string;
 
 	/**
 	 * The invoice number, set when the order is paid.

@@ -114,6 +114,10 @@
 			"method": "Método de pago",
 			"title": "Pago"
 		},
+		"taler": {
+			"link": "Enlace Taler",
+			"merchantBackendLink": "Ver pedido en el merchant backend"
+		},
 		"paymentMethod": {
 			"bank-transfer": "Transferencia bancaria",
 			"bitcoin": "Onchain",

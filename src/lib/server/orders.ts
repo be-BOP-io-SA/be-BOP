@@ -2097,6 +2097,7 @@ async function generateTalerPaymentInfo(params: {
 	meta: unknown;
 	address: string;
 	processor: PaymentProcessor;
+	talerOrderStatusUrl: string;
 }> {
 	const amount = toCurrency(
 		runtimeConfig.taler.currency,
@@ -2152,6 +2153,7 @@ async function generateTalerPaymentInfo(params: {
 		checkoutId: params.paymentId.toString(),
 		meta: order,
 		address: order.taler_pay_uri,
+		talerOrderStatusUrl: order.order_status_url,
 		processor: 'taler'
 	};
 }
