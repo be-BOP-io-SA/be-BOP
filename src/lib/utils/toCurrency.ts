@@ -15,10 +15,20 @@ export function toCurrency(
 		);
 	}
 
-	const bitcoinAmount = fromCurrency === 'BTC' ? amount : amount / get(exchangeRate)[fromCurrency];
+	const rates: Record<string, number> = get(exchangeRate);
+	const fromRate = fromCurrency === 'BTC' ? 1 : rates[fromCurrency];
+	const toRate = targetCurrency === 'BTC' ? 1 : rates[targetCurrency];
 
-	const ret =
-		targetCurrency === 'BTC' ? bitcoinAmount : bitcoinAmount * get(exchangeRate)[targetCurrency];
+	// If exchange rates not available yet, return amount as-is (rates fetched from API)
+	if (fromRate === undefined || toRate === undefined) {
+		return (
+			Math.round(amount * Math.pow(10, FRACTION_DIGITS_PER_CURRENCY[targetCurrency])) /
+			Math.pow(10, FRACTION_DIGITS_PER_CURRENCY[targetCurrency])
+		);
+	}
+
+	const bitcoinAmount = fromCurrency === 'BTC' ? amount : amount / fromRate;
+	const ret = targetCurrency === 'BTC' ? bitcoinAmount : bitcoinAmount * toRate;
 
 	return (
 		Math.round(ret * Math.pow(10, FRACTION_DIGITS_PER_CURRENCY[targetCurrency])) /

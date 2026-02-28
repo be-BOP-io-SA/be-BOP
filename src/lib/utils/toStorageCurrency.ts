@@ -28,11 +28,18 @@ export function convertAmountToCurrencyForStorage(
 		return computePriceForStorage(amount, targetCurrency);
 	}
 
-	// Convert through BTC as intermediate currency
-	const bitcoinAmount = fromCurrency === 'BTC' ? amount : amount / get(exchangeRate)[fromCurrency];
+	const rates: Record<string, number> = get(exchangeRate);
+	const fromRate = fromCurrency === 'BTC' ? 1 : rates[fromCurrency];
+	const toRate = targetCurrency === 'BTC' ? 1 : rates[targetCurrency];
 
-	const converted =
-		targetCurrency === 'BTC' ? bitcoinAmount : bitcoinAmount * get(exchangeRate)[targetCurrency];
+	// If exchange rates not available yet, return amount as-is (rates fetched from API)
+	if (fromRate === undefined || toRate === undefined) {
+		return computePriceForStorage(amount, targetCurrency);
+	}
+
+	// Convert through BTC as intermediate currency
+	const bitcoinAmount = fromCurrency === 'BTC' ? amount : amount / fromRate;
+	const converted = targetCurrency === 'BTC' ? bitcoinAmount : bitcoinAmount * toRate;
 
 	// Use existing function instead of duplicating rounding logic
 	return computePriceForStorage(converted, targetCurrency);

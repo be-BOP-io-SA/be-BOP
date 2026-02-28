@@ -1,7 +1,22 @@
 <script lang="ts">
-	import { CURRENCIES } from '$lib/types/Currency';
+	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency';
+	import Select from 'svelte-select';
+	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
+	import { currencies } from '$lib/stores/currencies';
 
 	export let data;
+
+	// PayPal supports all fiat currencies (no BTC/SAT)
+	// Sort: main → secondary → fiat A-Z (excluding crypto)
+	const sortedCurrencies = sortCurrencies($currencies.main, $currencies.secondary);
+	const currenciesWithoutCrypto = currenciesToSelectOptions(
+		sortedCurrencies.filter((c) => c !== 'BTC' && c !== 'SAT')
+	);
+	let selectedCurrency =
+		currenciesWithoutCrypto.find((c) => c.value === data.paypal.currency) || null;
+	$: if (selectedCurrency) {
+		data.paypal.currency = selectedCurrency.value;
+	}
 </script>
 
 <h1 class="text-3xl">Paypal</h1>
@@ -29,12 +44,15 @@
 	</label>
 
 	<label class="form-label">
-		Currency
-		<select class="form-input" name="currency" bind:value={data.paypal.currency} required>
-			{#each CURRENCIES.filter((c) => c !== 'BTC' && c !== 'SAT') as currency}
-				<option value={currency}>{currency}</option>
-			{/each}
-		</select>
+		<CurrencyLabel label="Currency" />
+		<Select
+			items={currenciesWithoutCrypto}
+			searchable={true}
+			clearable={false}
+			bind:value={selectedCurrency}
+			class="form-input"
+		/>
+		<input type="hidden" name="currency" value={selectedCurrency?.value || ''} required />
 	</label>
 
 	<div class="flex justify-between">

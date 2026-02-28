@@ -650,6 +650,8 @@
 		"label": {
 			"amount": "Importo",
 			"currency": "Valuta",
+			"currencyCodeHelp": "Trova il codice della tua valuta",
+			"currencyCodeHelpUrl": "https://it.wikipedia.org/wiki/ISO_4217#Codici_attivi",
 			"method": "Metodo",
 			"subtype": "Tipo"
 		},

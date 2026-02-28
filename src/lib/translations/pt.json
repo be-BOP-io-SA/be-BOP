@@ -650,6 +650,8 @@
 		"label": {
 			"amount": "Valor",
 			"currency": "Moeda",
+			"currencyCodeHelp": "Encontre o código da sua moeda",
+			"currencyCodeHelpUrl": "https://pt.wikipedia.org/wiki/ISO_4217",
 			"method": "Método",
 			"subtype": "Tipo"
 		},
