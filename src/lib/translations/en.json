@@ -812,7 +812,13 @@
 				"other": "{count} minutes"
 			},
 			"time": "Time of day",
-			"timezone": "Time zone: {timeZone}"
+			"timezone": "Time zone: {timeZone}",
+			"selectDateRange": "Select start and end dates (click twice to select a range)",
+			"selectedDate": "Selected: {date}",
+			"selectedRange": "Selected: {start} to {end} ({days} days)",
+			"selectedRangeWithAvailable": "{totalDays} days selected, {availableDays} days available: {dates}",
+			"noAvailableDays": "No available days in selected range",
+			"maxRangeExceeded": "Maximum selection is 31 days"
 		},
 		"checkBackLater": "Please check back later",
 		"cta": {

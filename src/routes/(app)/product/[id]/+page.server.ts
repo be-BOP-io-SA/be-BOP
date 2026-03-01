@@ -13,7 +13,7 @@ import { sum } from '$lib/utils/sum';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { RequestEvent } from './$types';
 import { error, redirect } from '@sveltejs/kit';
-import { subDays } from 'date-fns';
+import { subDays, parseISO, isValid } from 'date-fns';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
@@ -271,7 +271,8 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		deposit,
 		chosenVariations,
 		time,
-		durationMinutes
+		durationMinutes,
+		bookedDates
 	} = z
 		.object({
 			quantity: z
@@ -288,7 +289,18 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			deposit: z.enum(['partial', 'full']).optional(),
 			chosenVariations: z.record(z.string(), z.string()).optional(),
 			time: z.date({ coerce: true }).optional(),
-			durationMinutes: z.number({ coerce: true }).int().min(1).optional()
+			durationMinutes: z.number({ coerce: true }).int().min(1).optional(),
+			bookedDates: z
+				.string()
+				.optional()
+				.transform((val) =>
+					val
+						? val
+								.split(',')
+								.map((d) => parseISO(d))
+								.filter(isValid)
+						: undefined
+				)
 		})
 		.parse(json);
 
@@ -330,7 +342,8 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			? {
 					booking: {
 						time,
-						durationMinutes: durationMinutes
+						durationMinutes: durationMinutes,
+						bookedDates
 					}
 			  }
 			: undefined)
