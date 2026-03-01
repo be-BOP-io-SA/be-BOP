@@ -11,7 +11,8 @@
  *   node scripts/retro-z-ticket.mjs
  */
 
-import { MongoClient, ObjectId } from 'mongodb';
+import mongodb from 'mongodb';
+const { MongoClient, ObjectId } = mongodb;
 import * as readline from 'node:readline';
 
 // ─── FRACTION DIGITS (mirrors src/lib/types/Currency.ts) ───────────────────
