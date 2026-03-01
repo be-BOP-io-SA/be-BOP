@@ -13,9 +13,15 @@ import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { btcpayGetLnInvoice } from '../btcpay-server';
 import { phoenixdLookupInvoice } from '../phoenixd';
 import { sbpGetCheckoutStatus } from '../swiss-bitcoin-pay';
-import { CURRENCIES, CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+import {
+	CURRENCIES,
+	Currency,
+	CURRENCY_UNIT,
+	FRACTION_DIGITS_PER_CURRENCY
+} from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { isPaypalEnabled, paypalGetCheckout } from '../paypal';
+import { isTalerEnabled, talerGetOrder } from '../taler';
 import { isStripeEnabled } from '../stripe';
 import { differenceInMinutes } from 'date-fns';
 import { z } from 'zod';
@@ -215,6 +221,7 @@ async function maintainOrders() {
 								case 'bitcoind':
 								case 'stripe':
 								case 'paypal':
+								case 'taler':
 								case 'bitcoin-nodeless':
 									throw new Error(
 										`Unsupported processor ${payment.processor} for lightning payments`
@@ -486,6 +493,40 @@ async function maintainOrders() {
 						} catch (err) {
 							console.error(inspect(err, { depth: 10 }));
 						}
+					case 'taler':
+						try {
+							if (!isTalerEnabled()) {
+								throw new Error('Missing Taler credentials');
+							}
+
+							if (!payment.checkoutId) {
+								throw new Error('Missing checkout ID on Taler order');
+							}
+
+							const talerOrder = await talerGetOrder(payment.checkoutId);
+
+							if (talerOrder === 'not_found') {
+								order = await onOrderPaymentFailed(order, payment, 'failed');
+							} else if (talerOrder.order_status === 'paid') {
+								let currency = talerOrder.deposit_total?.split(':')[0];
+
+								if (currency === 'KUDOS' || !currency) {
+									currency = runtimeConfig.taler.currency;
+								}
+
+								const amount = Number(talerOrder.deposit_total?.split(':')[1]);
+
+								order = await onOrderPayment(order, payment, {
+									amount,
+									currency: currency as Currency
+								});
+							} else if (payment.expiresAt && payment.expiresAt < new Date()) {
+								order = await onOrderPaymentFailed(order, payment, 'expired');
+							}
+						} catch (err) {
+							console.error(inspect(err, { depth: 10 }));
+						}
+						break;
 					case 'point-of-sale':
 						try {
 							if (payment.posTapToPay && payment.posTapToPay.expiresAt > new Date()) {
@@ -511,6 +552,7 @@ async function maintainOrders() {
 										break;
 									case 'btcpay-server':
 									case 'paypal':
+									case 'taler':
 									case 'phoenixd':
 									case 'sumup':
 									case 'bitcoind':

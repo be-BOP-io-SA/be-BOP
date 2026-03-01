@@ -7,6 +7,7 @@
 	import BankTransferPayment from './BankTransferPayment.svelte';
 	import PointOfSalePayment from './PointOfSalePayment.svelte';
 	import PayPalPayment from './PayPalPayment.svelte';
+	import TalerPayment from './TalerPayment.svelte';
 	import PaymentQRCodes from './PaymentQRCodes.svelte';
 
 	import { useI18n } from '$lib/i18n';
@@ -30,7 +31,8 @@
 		lightning: LightningPayment,
 		'bank-transfer': BankTransferPayment,
 		'point-of-sale': PointOfSalePayment,
-		paypal: PayPalPayment
+		paypal: PayPalPayment,
+		taler: TalerPayment
 	};
 </script>
 

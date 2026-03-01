@@ -85,6 +85,7 @@ import { toZonedTime } from 'date-fns-tz';
 import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import { btcpayCreateLnInvoice, isBtcpayServerConfigured } from './btcpay-server';
+import { isDemoMerchantBackend, TalerOrder } from './taler';
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
 	const other = await collections.orders.findOne({
@@ -1858,6 +1859,8 @@ async function generatePaymentInfo(params: {
 			return await generateCardPaymentInfo(params);
 		case 'paypal':
 			return await generatePaypalPaymentInfo(params);
+		case 'taler':
+			return await generateTalerPaymentInfo(params);
 	}
 }
 
@@ -2084,6 +2087,77 @@ async function generatePaypalPaymentInfo(params: {
 	};
 }
 
+async function generateTalerPaymentInfo(params: {
+	orderId: string;
+	orderNumber: number;
+	toPay: Price;
+	paymentId: ObjectId;
+}): Promise<{
+	checkoutId: string;
+	meta: unknown;
+	address: string;
+	processor: PaymentProcessor;
+	talerOrderStatusUrl: string;
+}> {
+	const amount = toCurrency(
+		runtimeConfig.taler.currency,
+		params.toPay.amount,
+		params.toPay.currency
+	).toFixed(FRACTION_DIGITS_PER_CURRENCY[runtimeConfig.taler.currency]);
+
+	const talerCurrency = isDemoMerchantBackend() ? 'KUDOS' : runtimeConfig.taler.currency;
+
+	const response = await fetch(`${runtimeConfig.taler.backendUrl}/private/orders`, {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${runtimeConfig.taler.backendApiKey}`,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			order: {
+				order_id: params.paymentId,
+				amount: `${talerCurrency}:${amount}`,
+				summary: `${runtimeConfig.sellerIdentity?.businessName} - Order #${params.orderNumber}`,
+				// default Taler expiration for orders is 5 minutes, we override with be-BOP's default
+				pay_deadline: {
+					t_s: Math.floor(Date.now() / 1000) + runtimeConfig.desiredPaymentTimeout * 60
+				}
+			}
+		})
+	});
+
+	if (!response.ok) {
+		console.error(await response.text());
+		throw error(402, 'Taler order creation failed');
+	}
+
+	const order_response = await fetch(
+		`${runtimeConfig.taler.backendUrl}/private/orders/${params.paymentId}`,
+		{
+			method: 'GET',
+			headers: {
+				Authorization: `Bearer ${runtimeConfig.taler.backendApiKey}`,
+				'Content-Type': 'application/json'
+			}
+		}
+	);
+
+	const order: TalerOrder = await order_response.json();
+
+	if (!order.taler_pay_uri) {
+		console.error('no taler_pay_uri', order);
+		throw error(402, 'Taler order creation failed');
+	}
+
+	return {
+		checkoutId: params.paymentId.toString(),
+		meta: order,
+		address: order.taler_pay_uri,
+		talerOrderStatusUrl: order.order_status_url,
+		processor: 'taler'
+	};
+}
+
 export function paymentMethodExpiration(
 	paymentMethod: PaymentMethod,
 	opts?: { paymentTimeout?: number }
@@ -2133,6 +2207,11 @@ function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
 			return {
 				amount: toCurrency(runtimeConfig.paypal.currency, price.amount, price.currency),
 				currency: runtimeConfig.paypal.currency
+			};
+		case 'taler':
+			return {
+				amount: toCurrency(runtimeConfig.taler.currency, price.amount, price.currency),
+				currency: runtimeConfig.taler.currency
 			};
 		case 'bitcoin':
 			return {

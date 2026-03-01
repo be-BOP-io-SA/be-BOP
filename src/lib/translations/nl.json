@@ -114,6 +114,10 @@
 			"method": "Betalingsmiddel",
 			"title": "Betaling"
 		},
+		"taler": {
+			"link": "Taler-link",
+			"merchantBackendLink": "Bestelling bekijken in het merchant backend"
+		},
 		"paymentMethod": {
 			"bank-transfer": "overschrijving",
 			"bitcoin": "Onchain",
@@ -122,6 +126,7 @@
 			"free": "Niets te betalen (gratis winkelwagen)",
 			"lightning": "Bliksem",
 			"paypal": "Paypal",
+			"taler": "Taler",
 			"point-of-sale": "Verkooppunt",
 			"unavailable": "Geen betaalmethoden beschikbaar."
 		},
@@ -510,6 +515,7 @@
 			"free": "Niets betaald",
 			"lightning": "Betaald met: Lightning-transactie (1 {paymentCurrency} = {exchangeRate} {mainCurrency} op het moment van de bestelling)",
 			"paypal": "Betaald met: paypal",
+			"taler": "Betaald met: Taler",
 			"point-of-sale": "Betaald in de winkel"
 		},
 		"paidWithSummary": {

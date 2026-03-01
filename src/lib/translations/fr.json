@@ -114,6 +114,10 @@
 			"method": "Mode de paiement",
 			"title": "Paiement"
 		},
+		"taler": {
+			"link": "Lien Taler",
+			"merchantBackendLink": "Voir la commande sur le merchant backend"
+		},
 		"paymentMethod": {
 			"bank-transfer": "Virement bancaire",
 			"bitcoin": "BTC on-chain",
@@ -122,6 +126,7 @@
 			"free": "Rien à payer (panier gratuit)",
 			"lightning": "Lightning",
 			"paypal": "Paypal",
+			"taler": "Taler",
 			"point-of-sale": "Point of sale",
 			"unavailable": "Aucun mode de paiement disponible."
 		},
@@ -510,6 +515,7 @@
 			"free": "N'a rien payé",
 			"lightning": "Payé avec : Transaction Lightning (1 {paymentCurrency} = {exchangeRate} {mainCurrency} au moment de la commande)",
 			"paypal": "Payé avec: paypal",
+			"taler": "Payé avec: Taler",
 			"point-of-sale": "Payé en magasin"
 		},
 		"paidWithSummary": {
