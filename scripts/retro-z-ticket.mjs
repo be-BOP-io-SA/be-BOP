@@ -12,6 +12,8 @@
  */
 
 import mongodb from 'mongodb';
+import { execSync } from 'node:child_process';
+
 const { MongoClient, ObjectId } = mongodb;
 import * as readline from 'node:readline';
 
@@ -93,7 +95,24 @@ console.log('');
 
 // ── Step 1: Database connection ─────────────────────────────────────────
 console.log('── Database connection ──');
-const mongoUrl = await ask('MongoDB URL', process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017');
+
+function getDefaultMongoUrl() {
+	if (process.env.MONGODB_URL) return process.env.MONGODB_URL;
+	// Try to resolve the mongo container IP from Docker
+	try {
+		const ip = execSync(
+			"docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' be-bop-mongo-1",
+			{ encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
+		).trim();
+		if (ip) {
+			console.log(`  Auto-detected MongoDB container IP: ${ip}`);
+			return `mongodb://${ip}:27017`;
+		}
+	} catch {}
+	return 'mongodb://127.0.0.1:27017';
+}
+
+const mongoUrl = await ask('MongoDB URL', getDefaultMongoUrl());
 const dbName   = await ask('Database name', process.env.MONGODB_DB || 'bebop');
 
 console.log(`\nConnecting to ${mongoUrl} / ${dbName}...`);
