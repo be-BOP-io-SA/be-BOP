@@ -8,7 +8,7 @@ import type { Filter } from 'mongodb';
 import { z } from 'zod';
 
 export async function load({ url, locals }) {
-	const methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
+	const methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions, includePOS: true });
 
 	const querySchema = z.object({
 		skip: z.number({ coerce: true }).int().min(0).optional().default(0),
@@ -19,7 +19,8 @@ export async function load({ url, locals }) {
 		email: z.string().optional(),
 		label: z.string().optional(),
 		npub: z.string().optional(),
-		employeeAlias: z.string().optional()
+		employeeAlias: z.string().optional(),
+		posSubtype: z.string().optional()
 	});
 
 	const searchParams = Object.fromEntries(url.searchParams.entries());
@@ -33,7 +34,8 @@ export async function load({ url, locals }) {
 		email,
 		npub,
 		label,
-		employeeAlias
+		employeeAlias,
+		posSubtype
 	} = result;
 
 	const query: Filter<Order> = {};
@@ -46,6 +48,9 @@ export async function load({ url, locals }) {
 	}
 	if (paymentMethod) {
 		query['payments.method'] = paymentMethod;
+	}
+	if (posSubtype) {
+		query['payments.posSubtype'] = posSubtype;
 	}
 	if (country) {
 		query['shippingAddress.country'] = country;
@@ -72,6 +77,10 @@ export async function load({ url, locals }) {
 		.sort({ createdAt: -1 })
 		.toArray();
 	const labels = await collections.labels.find({}).toArray();
+	const posSubtypes = await collections.posPaymentSubtypes
+		.find({})
+		.sort({ sortOrder: 1 })
+		.toArray();
 	const nonCustomers = await collections.users
 		.find({ roleId: { $ne: CUSTOMER_ROLE_ID } })
 		.sort({ _id: 1 })
@@ -100,6 +109,8 @@ export async function load({ url, locals }) {
 		employees: nonCustomers.map((user) => ({
 			_id: user._id.toString(),
 			alias: user.alias
-		}))
+		})),
+		posSubtype,
+		posSubtypes: posSubtypes.map((s) => ({ slug: s.slug, name: s.name }))
 	};
 }
