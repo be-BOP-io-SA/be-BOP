@@ -6,6 +6,7 @@
 
 	export let data;
 	let next = 0;
+	let selectedPaymentMethod = $page.url.searchParams.get('paymentMethod') ?? '';
 
 	const { t, countryName, sortedCountryCodes } = useI18n();
 </script>
@@ -34,18 +35,36 @@
 		</label>
 		<label class="form-label w-[15em]">
 			Payment Mean
-			<select name="paymentMethod" class="form-input" disabled={data.paymentMethods.length === 0}>
-				<option></option>
+			<select
+				name="paymentMethod"
+				class="form-input"
+				disabled={data.paymentMethods.length === 0}
+				bind:value={selectedPaymentMethod}
+			>
+				<option value=""></option>
 				{#each data.paymentMethods as paymentMethod}
-					<option
-						value={paymentMethod}
-						selected={$page.url.searchParams.get('paymentMethod') === paymentMethod}
-					>
+					<option value={paymentMethod}>
 						{t('checkout.paymentMethod.' + paymentMethod)}
 					</option>
 				{/each}
 			</select>
 		</label>
+		{#if selectedPaymentMethod === 'point-of-sale' && data.posSubtypes?.length}
+			<label class="form-label w-[15em]">
+				PoS Subtype
+				<select name="posSubtype" class="form-input">
+					<option value="">All subtypes</option>
+					{#each data.posSubtypes as subtype}
+						<option
+							value={subtype.slug}
+							selected={$page.url.searchParams.get('posSubtype') === subtype.slug}
+						>
+							{subtype.name}
+						</option>
+					{/each}
+				</select>
+			</label>
+		{/if}
 		<label class="form-label w-[15em]">
 			Country
 			<select name="country" class="form-input">
