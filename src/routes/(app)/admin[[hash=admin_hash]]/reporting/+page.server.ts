@@ -15,14 +15,15 @@ export async function load({ url }) {
 		endsAt: z.date({ coerce: true }).default(new Date()),
 		paymentMethod: z.enum(['' as const, ...methods]).optional(),
 		employeesAlias: z.string().array(),
-		tagId: z.string().optional()
+		tagId: z.string().optional(),
+		posSubtype: z.string().optional()
 	});
 	const queryParams = Object.fromEntries(url.searchParams.entries());
 	const result = querySchema.parse({
 		...queryParams,
 		employeesAlias: url.searchParams.getAll('employeesAlias')
 	});
-	const { beginsAt, endsAt, paymentMethod, employeesAlias, tagId } = result;
+	const { beginsAt, endsAt, paymentMethod, employeesAlias, tagId, posSubtype } = result;
 	const aliasFilter = [];
 	if (employeesAlias.includes('System')) {
 		aliasFilter.push({ 'user.userAlias': { $exists: false } });
@@ -43,6 +44,7 @@ export async function load({ url }) {
 				$lt: addDays(endsAt, 1)
 			},
 			...(paymentMethod && { 'payments.method': paymentMethod }),
+			...(posSubtype && { 'payments.posSubtype': posSubtype }),
 			...(aliasFilter.length > 0 && { $or: aliasFilter }),
 			...tagFilter
 		})
@@ -97,6 +99,7 @@ export async function load({ url }) {
 		endsAt,
 		paymentMethods: methods,
 		paymentMethod,
+		posSubtype,
 		employees: nonCustomers.map((user) => ({
 			_id: user._id.toString(),
 			alias: user.alias

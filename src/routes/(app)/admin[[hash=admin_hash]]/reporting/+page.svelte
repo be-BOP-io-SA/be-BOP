@@ -25,6 +25,7 @@
 	let includeCanceled = false;
 	let includePartiallyPaid = false;
 	let filterByTag = !!data.tagId;
+	let selectedPaymentMethod = data.paymentMethod ?? '';
 	let html = '';
 	let loadedHtml = false;
 	let htmlStatus = '';
@@ -294,16 +295,36 @@
 	<div class="col-span-2">
 		<label class="form-label">
 			Payment Mean
-			<select name="paymentMethod" class="form-input" disabled={data.paymentMethods.length === 0}>
-				<option></option>
+			<select
+				name="paymentMethod"
+				class="form-input"
+				disabled={data.paymentMethods.length === 0}
+				bind:value={selectedPaymentMethod}
+			>
+				<option value=""></option>
 				{#each data.paymentMethods as paymentMethod}
-					<option value={paymentMethod} selected={data.paymentMethod === paymentMethod}>
+					<option value={paymentMethod}>
 						{t('checkout.paymentMethod.' + paymentMethod)}
 					</option>
 				{/each}
 			</select>
 		</label>
 	</div>
+	{#if selectedPaymentMethod === 'point-of-sale' && data.posSubtypes?.length}
+		<div class="col-span-2">
+			<label class="form-label">
+				PoS Subtype
+				<select name="posSubtype" class="form-input">
+					<option value="">All subtypes</option>
+					{#each data.posSubtypes as subtype}
+						<option value={subtype.slug} selected={data.posSubtype === subtype.slug}>
+							{subtype.name}
+						</option>
+					{/each}
+				</select>
+			</label>
+		</div>
+	{/if}
 	<div class="col-span-3">
 		<label class="form-label">
 			Employee alias
