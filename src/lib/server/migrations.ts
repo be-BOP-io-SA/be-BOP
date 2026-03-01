@@ -595,6 +595,17 @@ const migrations = [
 		}
 	},
 	{
+		_id: new ObjectId('684af38a6fbd314f44a84f88'),
+		name: 'Set standalone for products with hasVariations',
+		run: async (session: ClientSession) => {
+			await collections.products.updateMany(
+				{ hasVariations: true, standalone: { $ne: true } },
+				{ $set: { standalone: true } },
+				{ session }
+			);
+		}
+	},
+	{
 		_id: new ObjectId('68e52126bf9841f187344d14'),
 		name: 'Create default PoS payment subtype: Cash',
 		run: async (session: ClientSession) => {

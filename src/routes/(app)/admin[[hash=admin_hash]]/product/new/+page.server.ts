@@ -29,7 +29,6 @@ import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 
 export const load = async ({ url }) => {
 	const productId = url.searchParams.get('duplicate_from');
-
 	const tags = await collections.tags
 		.find({})
 		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
@@ -117,6 +116,9 @@ export const actions: Actions = {
 		if (!parsed.free && !parsed.payWhatYouWant && parsed.priceAmount === '0') {
 			parsed.free = true;
 		}
+		const validVariations = variationsParsedPrice.filter(
+			(variation) => variation.name && variation.value
+		);
 		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
 
 		// Validate stock reference if provided
@@ -172,7 +174,7 @@ export const actions: Actions = {
 										currency: parsed.priceCurrency
 									}
 								}),
-							standalone: parsed.payWhatYouWant || parsed.standalone,
+							standalone: parsed.payWhatYouWant || parsed.hasVariations || parsed.standalone,
 							free: parsed.free,
 							bookingSpec: parsed.bookingSpec,
 							displayShortDescription: parsed.displayShortDescription,
@@ -221,16 +223,10 @@ export const actions: Actions = {
 							externalResources: parsed.externalResources?.filter(
 								(externalResourceLink) => externalResourceLink.label && externalResourceLink.href
 							),
-							...(parsed.standalone && { hasVariations: parsed.hasVariations }),
-							...(parsed.standalone &&
-								parsed.hasVariations && {
-									variations: variationsParsedPrice.filter(
-										(variation) => variation.name && variation.value
-									)
-								}),
-							...(parsed.standalone &&
-								parsed.hasVariations &&
-								parsed.variationLabels && {
+							hasVariations: parsed.hasVariations,
+							...(validVariations.length > 0 && { variations: validVariations }),
+							...(parsed.variationLabels &&
+								Object.keys(cleanedVariationLabels.names).length > 0 && {
 									variationLabels: cleanedVariationLabels
 								}),
 							...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
@@ -340,6 +336,9 @@ export const actions: Actions = {
 			...variation,
 			price: Math.max(parsePriceAmount(variation.price, parsed.priceCurrency), 0)
 		}));
+		const validVariations = variationsParsedPrice.filter(
+			(variation) => variation.name && variation.value
+		);
 		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
 
 		await withTransaction(async (session) => {
@@ -377,7 +376,7 @@ export const actions: Actions = {
 								currency: parsed.priceCurrency
 							}
 						}),
-					standalone: parsed.standalone,
+					standalone: parsed.payWhatYouWant || parsed.hasVariations || parsed.standalone,
 					free: parsed.free,
 					...(parsed.stock !== undefined && {
 						stock: { total: parsed.stock, available: parsed.stock, reserved: 0 }
@@ -415,16 +414,10 @@ export const actions: Actions = {
 					tagIds: product.tagIds,
 					cta: product.cta,
 					externalResources: product.externalResources,
-					...(parsed.standalone && { hasVariations: parsed.hasVariations }),
-					...(parsed.standalone &&
-						parsed.hasVariations && {
-							variations: variationsParsedPrice.filter(
-								(variation) => variation.name && variation.value
-							)
-						}),
-					...(parsed.standalone &&
-						parsed.hasVariations &&
-						parsed.variationLabels && {
+					hasVariations: parsed.hasVariations,
+					...(validVariations.length > 0 && { variations: validVariations }),
+					...(parsed.variationLabels &&
+						Object.keys(cleanedVariationLabels.names).length > 0 && {
 							variationLabels: cleanedVariationLabels
 						}),
 					hasSellDisclaimer: parsed.hasSellDisclaimer,
