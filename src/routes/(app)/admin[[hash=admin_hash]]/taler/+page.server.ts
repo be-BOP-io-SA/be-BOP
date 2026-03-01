@@ -13,7 +13,10 @@ export const actions = {
 	save: async function ({ request }) {
 		const taler = z
 			.object({
-				backendUrl: z.string().min(1),
+				backendUrl: z
+					.string()
+					.min(1)
+					.transform((url) => url.replace(/\/+$/, '')),
 				backendApiKey: z.string().min(1),
 				currency: z.enum(
 					CURRENCIES.filter((c) => c !== 'BTC' && c !== 'SAT') as [Currency, ...Currency[]]
