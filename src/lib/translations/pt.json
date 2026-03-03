@@ -889,8 +889,14 @@
 		},
 		"initiallyCreated": "Criado inicialmente: ",
 		"paidUntil": "Pago até: ",
+		"expiresOn": "Expira em",
+		"lastOrder": "Ver última encomenda",
+		"lastPayment": "Último pagamento",
+		"listTitle": "As suas subscrições",
+		"noSubscriptions": "Ainda não tem subscrições.",
 		"singleTitle": "Subscrição #{number}",
 		"status": {
+			"active": "ativo",
 			"expired": "expirado"
 		}
 	},

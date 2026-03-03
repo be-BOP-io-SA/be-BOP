@@ -889,8 +889,14 @@
 		},
 		"initiallyCreated": "Oorspronkelijk gemaakt: <0></0>",
 		"paidUntil": "Betaald tot: <0></0>",
+		"expiresOn": "Verloopt op",
+		"lastOrder": "Laatste bestelling bekijken",
+		"lastPayment": "Laatste betaling",
+		"listTitle": "Uw abonnementen",
+		"noSubscriptions": "U heeft nog geen abonnementen.",
 		"singleTitle": "Abonnement #{number}",
 		"status": {
+			"active": "actief",
 			"expired": "verlopen"
 		}
 	},
