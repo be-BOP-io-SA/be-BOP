@@ -13,7 +13,7 @@ import {
 	removeOrderTab
 } from '$lib/server/orderTab';
 import { removeUserCarts } from '$lib/server/cart';
-import { getCurrentPosSession } from '$lib/server/pos-sessions';
+import { getCurrentPosSession, requireOpenPosSession } from '$lib/server/pos-sessions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { resolvePoolLabel } from '$lib/types/PosTabGroup';
 
@@ -79,6 +79,7 @@ export const load = async (event) => {
 
 export const actions: Actions = {
 	addToTab: async ({ request }) => {
+		await requireOpenPosSession();
 		const formData = await request.formData();
 		const { tabSlug, productId } = z
 			.object({
@@ -95,6 +96,7 @@ export const actions: Actions = {
 		}
 	},
 	removeFromTab: async ({ request }) => {
+		await requireOpenPosSession();
 		const formData = await request.formData();
 		const { tabSlug, tabItemId } = z
 			.object({
@@ -121,6 +123,7 @@ export const actions: Actions = {
 		await removeFromOrderTab({ tabSlug, tabItemId });
 	},
 	removeTab: async ({ request }) => {
+		await requireOpenPosSession();
 		const formData = await request.formData();
 		const { tabSlug } = z
 			.object({
@@ -144,6 +147,7 @@ export const actions: Actions = {
 		await removeOrderTab({ tabSlug });
 	},
 	checkoutTab: async ({ request, locals }) => {
+		await requireOpenPosSession();
 		const formData = await request.formData();
 		const { tabSlug } = z
 			.object({
