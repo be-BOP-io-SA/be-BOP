@@ -2,7 +2,7 @@ import { collections } from './database';
 import { runtimeConfig } from './runtime-config';
 import type { PosSession, PosSessionUser, PosSessionIncome } from '$lib/types/PosSession';
 import { ObjectId } from 'mongodb';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { Currency } from '$lib/types/Currency';
 import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import { queueEmail } from './email';
@@ -10,6 +10,12 @@ import type { PaymentMethod } from './payment-methods';
 
 export async function getCurrentPosSession(): Promise<PosSession | null> {
 	return await collections.posSessions.findOne({ status: 'active' }, { sort: { openedAt: -1 } });
+}
+
+export async function requireOpenPosSession(): Promise<void> {
+	if (runtimeConfig.posSession.forbidTouchWhenSessionClosed && !(await getCurrentPosSession())) {
+		throw redirect(303, '/pos?errorMessage=pos-touch-session-required');
+	}
 }
 
 export async function getLastClosedSession(): Promise<PosSession | null> {

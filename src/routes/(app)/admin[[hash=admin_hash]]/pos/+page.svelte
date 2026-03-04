@@ -96,6 +96,16 @@
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
+			name="posSession.forbidTouchWhenSessionClosed"
+			class="form-checkbox"
+			bind:checked={posSession.forbidTouchWhenSessionClosed}
+		/>
+		Forbid use of /pos/touch when PoS Session is not opened
+	</label>
+
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
 			name="posSession.enabled"
 			class="form-checkbox"
 			bind:checked={posSession.enabled}
