@@ -157,7 +157,10 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 			booking: item.booking
 				? {
 						start: item.booking.start,
-						end: item.booking.end
+						end: item.booking.end,
+						...(item.booking.bookedDates?.length && {
+							bookedDates: item.booking.bookedDates
+						})
 				  }
 				: undefined,
 			product: {
