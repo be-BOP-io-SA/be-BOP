@@ -147,6 +147,10 @@ export const adminLinks: AdminLinks = [
 				label: 'Lightning LND node'
 			},
 			{
+				href: '/admin/taler',
+				label: 'Taler'
+			},
+			{
 				href: '/admin/pos-payments',
 				label: 'PoS Payments'
 			}
