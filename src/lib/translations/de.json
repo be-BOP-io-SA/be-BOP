@@ -897,8 +897,14 @@
 		},
 		"initiallyCreated": "Ursprünglich erstellt: ",
 		"paidUntil": "Bezahlt bis: ",
+		"expiresOn": "Läuft ab am",
+		"lastOrder": "Letzte Bestellung anzeigen",
+		"lastPayment": "Letzte Zahlung",
+		"listTitle": "Ihre Abonnements",
+		"noSubscriptions": "Sie haben noch keine Abonnements.",
 		"singleTitle": "Abonnement #{number}",
 		"status": {
+			"active": "aktiv",
 			"expired": "abgelaufen"
 		}
 	},
