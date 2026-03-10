@@ -915,7 +915,7 @@
 		"boughtAt": "Gekocht op {date} om {time}",
 		"burn": "Markeer het ticket als gebruikt",
 		"print": "Afdrukken",
-		"scanned": "🔥 Dit ticket is gescand le {date} à {time} en is niet meer geldig",
+		"scanned": "🔥 Dit ticket is gescand op {date} om {time} en is niet meer geldig",
 		"unburn": "Markeer het ticket als ongebruikt"
 	},
 	"widget": {
