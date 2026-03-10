@@ -907,7 +907,7 @@
 		"boughtAt": "Bought {date} at {time}",
 		"burn": "Mark ticket as used",
 		"print": "Print",
-		"scanned": "🔥 This ticket has been scanned le {date} à {time} and is not valid anymore",
+		"scanned": "🔥 This ticket has been scanned on {date} at {time} and is not valid anymore",
 		"unburn": "Mark ticket as unused"
 	},
 	"widget": {
