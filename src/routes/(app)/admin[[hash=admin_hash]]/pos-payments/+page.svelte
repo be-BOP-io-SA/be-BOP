@@ -3,6 +3,8 @@
 	import { invalidateAll } from '$app/navigation';
 	import type { ActionData, PageData } from './$types';
 	import { generateId } from '$lib/utils/generateId';
+	import IconUpArrow from '~icons/ant-design/arrow-up-outlined';
+	import IconDownArrow from '~icons/ant-design/arrow-down-outlined';
 
 	export let data: PageData;
 	export let form: ActionData;
@@ -19,6 +21,34 @@
 	}
 
 	$: tapToPayUrlDisabled = !selectedProcessor;
+
+	let sortedSubtypes = [...data.subtypes];
+	let orderChanged = false;
+
+	$: {
+		sortedSubtypes = [...data.subtypes];
+		orderChanged = false;
+	}
+
+	function moveUp(index: number) {
+		if (index === 0) {
+			return;
+		}
+		const arr = [...sortedSubtypes];
+		[arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+		sortedSubtypes = arr;
+		orderChanged = true;
+	}
+
+	function moveDown(index: number) {
+		if (index >= sortedSubtypes.length - 1) {
+			return;
+		}
+		const arr = [...sortedSubtypes];
+		[arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
+		sortedSubtypes = arr;
+		orderChanged = true;
+	}
 
 	function resetForm() {
 		showCreateForm = false;
@@ -53,11 +83,11 @@
 	<section>
 		<h2 class="text-2xl mb-4">Existing Subtypes</h2>
 
-		{#if data.subtypes.length === 0}
+		{#if sortedSubtypes.length === 0}
 			<p class="text-gray-500">No subtypes configured yet. Create your first one below!</p>
 		{:else}
 			<div class="flex flex-col gap-4">
-				{#each data.subtypes as subtype}
+				{#each sortedSubtypes as subtype, i (subtype._id)}
 					<div
 						class="border rounded-lg p-4 flex justify-between items-start {subtype.disabled
 							? 'bg-gray-50 opacity-60'
@@ -94,47 +124,70 @@
 							{/if}
 						</div>
 
-						<div class="flex gap-2 ml-4">
-							<button
-								type="button"
-								class="btn btn-sm"
-								on:click={() => {
-									editingSubtype = subtype;
-									showCreateForm = false;
-									nameInput = subtype.name;
-									selectedProcessor = subtype.tapToPay?.processor || '';
-									urlInput = subtype.tapToPay?.onActivationUrl || '';
-								}}
-							>
-								Edit
-							</button>
-
-							<form
-								method="post"
-								action="?/delete"
-								use:enhance={() => {
-									return async ({ result }) => {
-										await applyAction(result);
-										if (result.type === 'success') {
-											await invalidateAll();
-										}
-									};
-								}}
-							>
-								<input type="hidden" name="id" value={subtype._id.toString()} />
+						<div class="flex flex-col gap-2 ml-4">
+							<div class="flex gap-2">
 								<button
-									type="submit"
-									class="btn btn-sm btn-danger"
-									disabled={subtype.slug === 'cash'}
-									on:click={(e) => {
-										if (!confirm(`Delete "${subtype.name}"?\n\nThis action cannot be undone.`)) {
-											e.preventDefault();
-										}
+									type="button"
+									class="btn btn-sm"
+									on:click={() => {
+										editingSubtype = subtype;
+										showCreateForm = false;
+										nameInput = subtype.name;
+										selectedProcessor = subtype.tapToPay?.processor || '';
+										urlInput = subtype.tapToPay?.onActivationUrl || '';
 									}}
 								>
-									Delete
+									Edit
 								</button>
-							</form>
+
+								<form
+									method="post"
+									action="?/delete"
+									use:enhance={() => {
+										return async ({ result }) => {
+											await applyAction(result);
+											if (result.type === 'success') {
+												await invalidateAll();
+											}
+										};
+									}}
+								>
+									<input type="hidden" name="id" value={subtype._id.toString()} />
+									<button
+										type="submit"
+										class="btn btn-sm btn-danger"
+										disabled={subtype.slug === 'cash'}
+										on:click={(e) => {
+											if (!confirm(`Delete "${subtype.name}"?\n\nThis action cannot be undone.`)) {
+												e.preventDefault();
+											}
+										}}
+									>
+										Delete
+									</button>
+								</form>
+							</div>
+
+							<div class="flex gap-2 justify-center">
+								<button
+									type="button"
+									class="btn btn-sm"
+									class:invisible={i === 0}
+									title="Move up"
+									on:click={() => moveUp(i)}
+								>
+									<IconUpArrow />
+								</button>
+								<button
+									type="button"
+									class="btn btn-sm"
+									class:invisible={i === sortedSubtypes.length - 1}
+									title="Move down"
+									on:click={() => moveDown(i)}
+								>
+									<IconDownArrow />
+								</button>
+							</div>
 						</div>
 					</div>
 				{/each}
@@ -144,9 +197,30 @@
 
 	<!-- Create/Edit Form Toggle -->
 	{#if !showCreateForm && !editingSubtype}
-		<button type="button" class="btn btn-black self-start" on:click={() => (showCreateForm = true)}>
-			+ Create New Subtype
-		</button>
+		<div class="flex gap-2 self-start">
+			<button type="button" class="btn btn-black" on:click={() => (showCreateForm = true)}>
+				+ Create New Subtype
+			</button>
+			<form
+				method="post"
+				action="?/saveSortOrder"
+				use:enhance={() => {
+					return async ({ result }) => {
+						await applyAction(result);
+						if (result.type === 'success') {
+							await invalidateAll();
+						}
+					};
+				}}
+			>
+				{#each sortedSubtypes as subtype}
+					<input type="hidden" name="ids" value={subtype._id.toString()} />
+				{/each}
+				<button type="submit" class="btn btn-black" disabled={!orderChanged}>
+					Save sorting order
+				</button>
+			</form>
+		</div>
 	{/if}
 
 	<!-- Create/Edit Form -->
