@@ -610,6 +610,7 @@
 		"shippingAddress": {
 			"title": "Morada de envio"
 		},
+		"noOrdersYet": "Ainda não há encomendas",
 		"singleTitle": "Encomenda #{number}",
 		"summary": {
 			"fullyPaid": {

@@ -610,6 +610,7 @@
 		"shippingAddress": {
 			"title": "Shipping address"
 		},
+		"noOrdersYet": "No orders yet",
 		"singleTitle": "Order #{number}",
 		"summary": {
 			"fullyPaid": {

@@ -610,6 +610,7 @@
 		"shippingAddress": {
 			"title": "Dirección de envío"
 		},
+		"noOrdersYet": "Aún no hay pedidos",
 		"singleTitle": "Pedido #{number}",
 		"summary": {
 			"fullyPaid": {
