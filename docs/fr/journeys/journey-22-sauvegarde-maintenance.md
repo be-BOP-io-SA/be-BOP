@@ -6,25 +6,11 @@ Ce guide vous accompagne dans la sauvegarde de vos donnees, la restauration depu
 
 ## 1. Creer une sauvegarde de la base de donnees [A107]
 
-Rendez-vous sur **Admin** > **Config** > **Backup**.
-
-- Cliquez sur le bouton de sauvegarde pour generer un fichier de sauvegarde de votre base de donnees.
-- Deux options sont disponibles :
-  - **Full backup** : Sauvegarde complete de l'ensemble des donnees (produits, commandes, configuration, pages CMS, etc.).
-  - **Products only** : Sauvegarde uniquement des donnees produits.
-- Le fichier de sauvegarde est telecharge automatiquement une fois genere.
-
-> Il est recommande d'effectuer des sauvegardes regulieres, en particulier avant toute mise a jour ou modification importante de la configuration.
+> **Cette fonctionnalité est actuellement désactivée.** La sauvegarde via l'interface admin n'est pas disponible pour le moment. Utilisez les outils de sauvegarde MongoDB (mongodump/mongorestore) directement pour sauvegarder et restaurer vos données.
 
 ## 2. Restaurer une sauvegarde [A108]
 
-Rendez-vous sur **Admin** > **Config** > **Backup**.
-
-- Cliquez sur le bouton d'importation pour restaurer une sauvegarde.
-- Selectionnez le fichier de sauvegarde a importer depuis votre ordinateur.
-- Confirmez la restauration. Les donnees actuelles seront remplacees par celles contenues dans le fichier de sauvegarde.
-
-> Attention : la restauration ecrase les donnees existantes. Assurez-vous de disposer d'une sauvegarde recente avant de proceder.
+> **Cette fonctionnalité est actuellement désactivée.** Voir la section ci-dessus.
 
 ## 3. Activer le mode de maintenance [A53]
 

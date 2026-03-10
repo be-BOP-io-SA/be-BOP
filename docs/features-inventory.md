@@ -182,8 +182,8 @@
 | A104 | Send test emails | `/admin/email` |
 | A105 | Configure Nostr (relay, publishing) | `/admin/nostr` |
 | A106 | View sales reports & analytics | `/admin/reporting` |
-| A107 | Create database backup (full or products-only) | `/admin/backup/create` |
-| A108 | Import database backup | `/admin/backup/import` |
+| A107 | ~~Create database backup (full or products-only)~~ *(disabled)* | `/admin/backup/create` |
+| A108 | ~~Import database backup~~ *(disabled)* | `/admin/backup/import` |
 | A109 | Create tags (name, slug, family, title, CTAs) | `/admin/tags` |
 | A110 | Create image sliders | `/admin/slider` |
 | A111 | Create product specifications | `/admin/specification` |
