@@ -9,6 +9,7 @@
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import IconDownloadWindow from '$lib/components/icons/IconDownloadWindow.svelte';
 	import IconExternalNewWindowOpen from '$lib/components/icons/IconExternalNewWindowOpen.svelte';
+	import IconQrCode from '$lib/components/icons/IconQrCode.svelte';
 	import PaymentItem from '$lib/components/Order/PaymentItem.svelte';
 	import PaymentActions from '$lib/components/Order/PaymentActions.svelte';
 	import ForwardReceiptForm from '$lib/components/Order/ForwardReceiptForm.svelte';
@@ -283,19 +284,22 @@
 					bind:this={ticketsIframe}
 				/>
 
-				<p>
+				<div class="flex flex-col gap-1">
 					<button
-						class="body-hyperlink self-start"
+						class="body-hyperlink self-start inline-flex items-center gap-1"
 						disabled={!ticketsReady}
 						on:click={() => ticketsIframe?.contentWindow?.print()}
 					>
-						{t('order.tickets.printAll')}
+						🖨 {t('order.tickets.printAll')}
 					</button>
-					-
-					<a href="/order/{data.order._id}/tickets" class="body-hyperlink hover:underline">
+					<a
+						href="/order/{data.order._id}/tickets"
+						class="body-hyperlink hover:underline inline-flex items-center gap-1"
+					>
+						<IconQrCode />
 						{t('order.tickets.seeAll')}
 					</a>
-				</p>
+				</div>
 
 				{#each data.order.items as item}
 					{#if item.tickets?.length}
@@ -309,7 +313,11 @@
 						</h3>
 
 						{#each item.tickets as ticket}
-							<a href="/ticket/{ticket}" class="body-hyperlink hover:underline">
+							<a
+								href="/ticket/{ticket}"
+								class="body-hyperlink hover:underline inline-flex items-center gap-1"
+							>
+								<IconQrCode />
 								{t('order.tickets.ticket', { number: ticketNumbers[ticket] })}
 							</a>
 						{/each}
@@ -558,6 +566,15 @@
 		<!-- ==================== RIGHT COLUMN (1/3 width) ==================== -->
 		<div class="mt-6">
 			<OrderSummary class="sticky top-4 -mr-2 -mt-2" order={data.order} />
+			{#if data.order.items.some((item) => item.tickets?.length)}
+				<a
+					href="/order/{data.order._id}/tickets"
+					class="sticky top-[calc(100vh-4rem)] mt-2 flex items-center gap-2 body-hyperlink hover:underline text-lg"
+				>
+					<IconQrCode class="text-2xl" />
+					{t('order.tickets.title')}
+				</a>
+			{/if}
 		</div>
 	</div>
 	<!-- END: MAIN CONTAINER -->
