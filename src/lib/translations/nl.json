@@ -610,6 +610,7 @@
 		"shippingAddress": {
 			"title": "Afleveradres"
 		},
+		"noOrdersYet": "Nog geen bestellingen",
 		"singleTitle": "Volgorde #{number}",
 		"summary": {
 			"fullyPaid": {
