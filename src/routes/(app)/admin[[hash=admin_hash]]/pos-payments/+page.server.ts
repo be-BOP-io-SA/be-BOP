@@ -193,6 +193,22 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
+	saveSortOrder: async ({ request }) => {
+		const formData = await request.formData();
+		const ids = z.array(z.string().min(1)).min(1).parse(formData.getAll('ids').map(String));
+
+		await collections.posPaymentSubtypes.bulkWrite(
+			ids.map((id, index) => ({
+				updateOne: {
+					filter: { _id: new ObjectId(id) },
+					update: { $set: { sortOrder: index, updatedAt: new Date() } }
+				}
+			}))
+		);
+
+		return { success: true };
+	},
+
 	delete: async ({ request }) => {
 		const formData = await request.formData();
 		const id = String(formData.get('id'));
