@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { generateId } from '$lib/utils/generateId';
-	import { upperFirst } from '$lib/utils/upperFirst';
 	import PictureComponent from '$lib/components/Picture.svelte';
 
 	export let data;
@@ -91,9 +90,10 @@
 	<div class="flex flex-col gap-4 w-[20em]">
 		<label class="form-label">
 			Tag family
-			<select class="form-input" name="family" value={data.tag.family}>
-				{#each ['creators', 'events', 'retailers', 'temporal'] as family}
-					<option value={family}>{upperFirst(family)}</option>
+			<select class="form-input" name="family" value={data.tag.family || ''}>
+				<option value="">No family</option>
+				{#each data.families as family}
+					<option value={family._id}>{family.name}</option>
 				{/each}
 			</select>
 		</label>
