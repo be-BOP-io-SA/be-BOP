@@ -21,6 +21,7 @@
 	import { slide } from 'svelte/transition';
 	import { exchangeRate } from '$lib/stores/exchangeRate';
 	import { currencies } from '$lib/stores/currencies';
+	import { sellerIdentity } from '$lib/stores/sellerIdentity';
 	import { useI18n } from '$lib/i18n';
 	import IconModeLight from '$lib/components/icons/IconModeLight.svelte';
 	import IconModeDark from '$lib/components/icons/IconModeDark.svelte';
@@ -53,9 +54,11 @@
 
 	$exchangeRate = data.exchangeRate;
 	$currencies = data.currencies;
+	$sellerIdentity = data.sellerIdentity ?? undefined;
 
 	$: $exchangeRate = data.exchangeRate;
 	$: $currencies = data.currencies;
+	$: $sellerIdentity = data.sellerIdentity ?? undefined;
 
 	$: items = data.cart.items;
 	$: deliveryFees =
