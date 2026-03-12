@@ -96,14 +96,6 @@
 		{} as Record<string, number>
 	);
 
-	$: catalogVatRate = computeVatRate({
-		productVatProfileId: undefined,
-		vatProfiles: data.vatProfiles,
-		bebopCountry: data.vatCountry,
-		userCountry: data.countryCode,
-		vatSingleCountry: data.vatSingleCountry
-	});
-
 	$: totalItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
 	let itemToEditIndex: number | undefined = undefined;
@@ -717,7 +709,16 @@
 											{tabSlug}
 											{isMobile}
 											pictures={picturesByProduct[product._id] ?? []}
-											priceWithVat={applyVat(product.price.amount, catalogVatRate)}
+											priceWithVat={applyVat(
+												product.price.amount,
+												computeVatRate({
+													productVatProfileId: product.vatProfileId,
+													vatProfiles: data.vatProfiles,
+													bebopCountry: data.vatCountry,
+													userCountry: data.countryCode,
+													vatSingleCountry: data.vatSingleCountry
+												})
+											)}
 											currency={product.price.currency}
 											quantityInCart={quantityByProductId[product._id] ?? 0}
 										/>
