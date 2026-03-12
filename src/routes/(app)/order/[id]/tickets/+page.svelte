@@ -46,7 +46,13 @@
 			<img src="/ticket/{ticket.ticketId}/qrcode" alt="QR code" class="h-96 w-96" />
 
 			{#if ticket.scanned}
-				<p>{t('ticket.scanned')}</p>
+				{@const scannedDate = new Date(ticket.scanned.at)}
+				<p>
+					{t('ticket.scanned', {
+						date: scannedDate.toLocaleDateString(),
+						time: scannedDate.toLocaleTimeString()
+					})}
+				</p>
 			{/if}
 		</article>
 	{/each}
