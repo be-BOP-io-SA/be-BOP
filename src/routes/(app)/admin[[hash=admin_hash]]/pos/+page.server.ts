@@ -132,15 +132,15 @@ export const actions: Actions = {
 						enabled: z.boolean({ coerce: true }).default(false),
 						allowXTicketEditing: z.boolean({ coerce: true }).default(false),
 						cashDeltaJustificationMandatory: z.boolean({ coerce: true }).default(false),
-						lockItemsAfterMidTicket: z.boolean({ coerce: true }).default(true),
-						forbidTouchWhenSessionClosed: z.boolean({ coerce: true }).default(true)
+						lockItemsAfterMidTicket: z.boolean({ coerce: true }).default(false),
+						forbidTouchWhenSessionClosed: z.boolean({ coerce: true }).default(false)
 					})
 					.default({
 						enabled: false,
 						allowXTicketEditing: false,
 						cashDeltaJustificationMandatory: false,
-						lockItemsAfterMidTicket: true,
-						forbidTouchWhenSessionClosed: true
+						lockItemsAfterMidTicket: false,
+						forbidTouchWhenSessionClosed: false
 					})
 			})
 			.parse({

@@ -220,7 +220,7 @@
 			type="checkbox"
 			name="posSession.lockItemsAfterMidTicket"
 			class="form-checkbox"
-			checked={data.posSession.lockItemsAfterMidTicket}
+			bind:checked={posSession.lockItemsAfterMidTicket}
 		/>
 		Forbid item deletion / qty reduction, after mid-ticket print
 	</label>
