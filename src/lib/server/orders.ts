@@ -77,8 +77,10 @@ import {
 	productToScheduleId,
 	scheduleToProductId,
 	timeToMinutes,
+	type BookingSummary,
 	type Schedule,
-	type ScheduleEvent
+	type ScheduleEvent,
+	type ScheduleEventBooked
 } from '$lib/types/Schedule';
 import { isEmptyObject } from '$lib/utils/is-empty-object';
 import { binaryFindAround } from '$lib/utils/binary-find';
@@ -86,6 +88,7 @@ import { toZonedTime } from 'date-fns-tz';
 import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import { btcpayCreateLnInvoice, isBtcpayServerConfigured } from './btcpay-server';
+import { pojo } from './pojo';
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
 	const other = await collections.orders.findOne({
@@ -2764,4 +2767,21 @@ async function btcpayServerCreateInvoice(params: {
 	} catch (err) {
 		throw error(402, `Failed to create BTCPay Server Invoice: ${err}`);
 	}
+}
+
+export async function enrichWithOrderNumbers(
+	events: ScheduleEventBooked[]
+): Promise<BookingSummary[]> {
+	const orderIds = [...new Set(events.map((e) => e.orderId))];
+	const orders = orderIds.length
+		? await collections.orders
+				.find({ _id: { $in: orderIds } })
+				.project<Pick<Order, '_id' | 'number'>>({ _id: 1, number: 1 })
+				.toArray()
+		: [];
+	const orderMap = new Map(orders.map((o) => [o._id, o.number]));
+	return events.map((e) => ({
+		...pojo(e),
+		orderNumber: orderMap.get(e.orderId)
+	}));
 }
