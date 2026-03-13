@@ -40,6 +40,8 @@
 	scanned={data.scanned}
 	vatProfiles={data.vatProfiles}
 	availablePaymentMethods={data.availablePaymentMethods}
+	currentBookings={data.currentBookings}
+	upcomingBookings={data.upcomingBookings}
 />
 
 <h2 class="text-2xl my-4">Photos</h2>
