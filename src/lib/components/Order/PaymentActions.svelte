@@ -20,8 +20,6 @@
 	export let tapToPayInUseByOtherOrder = false;
 	export let printReceipt: () => void;
 	export let printTicket: () => void;
-	export let receiptReady = false;
-	export let ticketReady = false;
 
 	let openPaymentMethodChange = false;
 	let openCashbackSection = false;
@@ -54,50 +52,25 @@
 <!-- Receipt buttons -->
 <div class="receipt-buttons flex flex-col gap-1">
 	{#if showProforma && roleIsStaff}
-		<button
-			class="body-hyperlink self-start"
-			type="button"
-			disabled={!receiptReady}
-			on:click={printReceipt}
-		>
+		<button class="body-hyperlink self-start" type="button" on:click={printReceipt}>
 			{posMode ? t('pos.receipt.invoice') : 'Print receipt (A4)'}
 		</button>
-		<button
-			class="body-hyperlink self-start"
-			type="button"
-			disabled={!ticketReady}
-			on:click={printTicket}
-		>
+		<button class="body-hyperlink self-start" type="button" on:click={printTicket}>
 			{posMode ? t('pos.receipt.ticket') : 'Print receipt (ticket)'}
 		</button>
 	{/if}
 
 	{#if showProforma && !roleIsStaff}
-		<button
-			class="body-hyperlink self-start"
-			type="button"
-			disabled={!receiptReady}
-			on:click={printReceipt}
-		>
+		<button class="body-hyperlink self-start" type="button" on:click={printReceipt}>
 			{t('order.receipt.createProforma')}
 		</button>
 	{/if}
 
 	{#if showInvoice && roleIsStaff}
-		<button
-			class="btn btn-black self-start"
-			type="button"
-			disabled={!receiptReady}
-			on:click={printReceipt}
-		>
+		<button class="btn btn-black self-start" type="button" on:click={printReceipt}>
 			{posMode ? t('pos.receipt.invoice') : 'Print receipt (A4)'}
 		</button>
-		<button
-			class="btn btn-black self-start"
-			type="button"
-			disabled={!ticketReady}
-			on:click={printTicket}
-		>
+		<button class="btn btn-black self-start" type="button" on:click={printTicket}>
 			{posMode ? t('pos.receipt.ticket') : 'Print receipt (ticket)'}
 		</button>
 	{/if}
@@ -110,12 +83,7 @@
 	{/if}
 
 	{#if showInvoice && !roleIsStaff}
-		<button
-			class="btn btn-black self-start"
-			type="button"
-			disabled={!receiptReady}
-			on:click={printReceipt}
-		>
+		<button class="btn btn-black self-start" type="button" on:click={printReceipt}>
 			{t('order.receipt.create')}
 		</button>
 	{/if}
