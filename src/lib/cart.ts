@@ -24,7 +24,7 @@ export type ProductForPriceInfo = {
 };
 
 export type ItemForPriceInfo = {
-	booking?: { start: Date; end: Date };
+	booking?: { start: Date; end: Date; bookedDates?: Date[] };
 	customPrice?: Price;
 	depositPercentage?: number;
 	discountPercentage?: number;
@@ -54,8 +54,9 @@ export function priceToBillForItem(
 			throw new Error('Item is a booking slot, but product is missing booking spec.');
 		}
 		unitsToAccount =
+			item.booking.bookedDates?.length ??
 			differenceInMinutes(item.booking.end, item.booking.start) /
-			item.product.bookingSpec.slotMinutes;
+				item.product.bookingSpec.slotMinutes;
 	} else {
 		unitsToAccount = item.quantity;
 	}
