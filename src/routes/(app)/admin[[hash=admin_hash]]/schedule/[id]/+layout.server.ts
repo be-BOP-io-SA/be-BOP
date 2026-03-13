@@ -7,7 +7,16 @@ export const load = async ({ params }) => {
 	if (!schedule) {
 		throw error(404, 'schedule not found');
 	}
+	const productSlug = params.id.startsWith('product:') ? params.id.slice('product:'.length) : null;
+	const isBookingSchedule = productSlug
+		? !!(await collections.products.findOne(
+				{ _id: productSlug, bookingSpec: { $exists: true } },
+				{ projection: { _id: 1 } }
+		  ))
+		: false;
+
 	return {
-		schedule
+		schedule,
+		isBookingSchedule
 	};
 };
