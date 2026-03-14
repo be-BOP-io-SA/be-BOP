@@ -323,5 +323,51 @@
 		/>
 		Hide every CMS additional zone on mobile (product, cart, checkout and order page)
 	</label>
+	<h2 class="text-2xl">Full width display</h2>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="displayFullWidthHeader"
+			class="form-checkbox"
+			checked={data.displayFullWidthHeader}
+		/>
+		Display full width header
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="displayFullWidthNavbar"
+			class="form-checkbox"
+			checked={data.displayFullWidthNavbar}
+		/>
+		Display full width navigation bar
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="displayFullWidthFooter"
+			class="form-checkbox"
+			checked={data.displayFullWidthFooter}
+		/>
+		Display full width footer
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="displayFullWidthProductPages"
+			class="form-checkbox"
+			checked={data.displayFullWidthProductPages}
+		/>
+		Display full width product pages
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="displayFullWidthCmsPages"
+			class="form-checkbox"
+			checked={data.displayFullWidthCmsPages}
+		/>
+		Display full width CMS pages
+	</label>
 	<button class="btn btn-black self-start" type="submit">Update</button>
 </form>
