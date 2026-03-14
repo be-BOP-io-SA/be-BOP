@@ -9,6 +9,7 @@ import { conflictingTapToPayOrder } from '$lib/server/orders';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
+import { isStripeEnabled } from '$lib/server/stripe.js';
 import type { OrderLabel } from '$lib/types/OrderLabel.js';
 
 export async function load({ params, depends, locals, url }) {
@@ -138,7 +139,11 @@ export async function load({ params, depends, locals, url }) {
 		overwriteCreditCardSvgColor: runtimeConfig.overwriteCreditCardSvgColor,
 		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode,
 		labels,
-		returnTo: returnTo ?? undefined
+		returnTo: returnTo ?? undefined,
+		stripePublicKey:
+			isStripeEnabled() && runtimeConfig.stripe.embedPaymentForm
+				? runtimeConfig.stripe.publicKey
+				: null
 	};
 }
 
