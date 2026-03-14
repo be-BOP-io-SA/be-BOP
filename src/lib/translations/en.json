@@ -122,6 +122,7 @@
 			"free": "Nothing to pay (free cart)",
 			"lightning": "Lightning",
 			"paypal": "Paypal",
+			"taler": "Taler",
 			"point-of-sale": "Point of sale",
 			"unavailable": "No payment methods available."
 		},
@@ -516,6 +517,7 @@
 			"free": "Paid Nothing",
 			"lightning": "Paid with: Lightning transaction (1 {paymentCurrency} = {exchangeRate} {mainCurrency} at the time of the order)",
 			"paypal": "Paid with: paypal",
+			"taler": "Paid with: Taler",
 			"point-of-sale": "Paid in store"
 		},
 		"paidWithSummary": {
@@ -524,7 +526,8 @@
 			"card": "Paid with: bank card",
 			"free": "Paid Nothing",
 			"lightning": "Paid with: Lightning transaction",
-			"point-of-sale": "Paid in store"
+			"point-of-sale": "Paid in store",
+			"taler": "Paid with: Taler"
 		},
 		"payToComplete": "Pay to complete the order.",
 		"payToCompleteBitcoin": {
@@ -633,7 +636,7 @@
 	"pos": {
 		"adminInterface": "Admin interface",
 		"applyGiftDiscount": "As a POS user I apply a <0>gift discount</0>",
-		"cancelOrderMessage": "Are you sure you want to cnacel the entire order ?",
+		"cancelOrderMessage": "Are you sure you want to cancel the entire order ?",
 		"cta": {
 			"cancelMultiPayOrder": "Cancel order",
 			"cancelOrder": "Cancel",

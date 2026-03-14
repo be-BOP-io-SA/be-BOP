@@ -44,6 +44,7 @@
 		if (!force && actualCurrency === 'SAT' && actualAmount >= 1_000_000) {
 			return [actualAmount / SATOSHIS_PER_BTC, 'BTC'] as const;
 		}
+
 		return [actualAmount, actualCurrency || 'BTC'] as const;
 	})() as [number, Currency];
 
