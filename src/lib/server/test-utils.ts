@@ -1,7 +1,8 @@
 import { env } from '$env/dynamic/private';
 import { UserIdentifier } from '$lib/types/UserIdentifier';
 import { collections, connectPromise, createIndexes, db } from './database';
-import { refreshPromise } from './runtime-config';
+import { refreshPromise, runtimeConfig } from './runtime-config';
+import { SATOSHIS_PER_BTC } from '$lib/types/Currency';
 import { addDays, subDays } from 'date-fns';
 
 export async function cleanDb() {
@@ -15,6 +16,14 @@ export async function cleanDb() {
 	await refreshPromise;
 	await db.dropDatabase();
 	await createIndexes();
+
+	// Seed exchange rates for tests since defaultExchangeRate is now dynamic
+	Object.assign(runtimeConfig.exchangeRate, {
+		SAT: SATOSHIS_PER_BTC,
+		EUR: 30_000,
+		CHF: 30_000,
+		USD: 30_000
+	});
 }
 
 export async function createPaidSubscription(subscriptionProductId: string, user: UserIdentifier) {
