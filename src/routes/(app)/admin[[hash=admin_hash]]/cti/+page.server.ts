@@ -1,0 +1,139 @@
+import { runtimeConfig } from '$lib/server/runtime-config';
+import type { JsonObject } from 'type-fest';
+import type { Actions } from './$types';
+import { set } from '$lib/utils/set';
+import { z } from 'zod';
+import { collections } from '$lib/server/database';
+import { adminPrefix } from '$lib/server/admin';
+import { redirect } from '@sveltejs/kit';
+import { generatePicture } from '$lib/server/picture';
+import { CMSPage } from '$lib/types/CmsPage';
+import { generateId } from '$lib/utils/generateId';
+
+export async function load() {
+	const pictures = await collections.pictures
+		.find({ ctiCategorySlug: { $exists: true } }) // Checks if the field exists
+		.sort({ createdAt: 1 })
+		.toArray();
+	const cmsPages = collections.cmsPages
+		.find({})
+		.project<Pick<CMSPage, '_id'>>({
+			_id: 1
+		})
+		.toArray();
+	const tags = await collections.tags
+		.find({})
+		.project<{ _id: string; name: string }>({
+			_id: 1,
+			name: 1
+		})
+		.toArray();
+	return {
+		enableCustomerTouchInterface: runtimeConfig.enableCustomerTouchInterface,
+		cti: runtimeConfig.customerTouchInterface,
+		pictures,
+		cmsPages,
+		tags
+	};
+}
+
+export const actions: Actions = {
+	update: async ({ request }) => {
+		const formData = await request.formData();
+		const json: JsonObject = {};
+		for (const [key, value] of formData) {
+			set(json, key, value);
+		}
+
+		const categorySchema = z.object({
+			slug: z.string(),
+			cmsSlug: z.string(),
+			label: z.string(),
+			isArchived: z.boolean({ coerce: true }),
+			isCmsOnly: z.boolean({ coerce: true }).optional(),
+			position: z.coerce.number().default(0),
+			tagId: z.string().optional()
+		});
+		const parsed = z
+			.object({
+				categories: z.array(categorySchema).optional(),
+				enableCustomerLogin: z.boolean({ coerce: true }),
+				helpRequestNpub: z.string().optional(),
+				helpRequestCooldownSeconds: z.number({ coerce: true }).int().min(10).optional(),
+				timeoutDroppedSeconds: z.number({ coerce: true }).int().min(5).optional(),
+				timeoutNostrSeconds: z.number({ coerce: true }).int().min(10),
+				welcomeCmsSlug: z.string().optional()
+			})
+			.parse(json);
+		const parsedCti = z
+			.object({
+				enableCustomerTouchInterface: z.boolean({ coerce: true })
+			})
+			.parse(json);
+		const parsedPicture = z
+			.object({
+				categoryPictures: z.string().trim().min(1).max(500).array().min(1).optional()
+			})
+			.parse(json);
+		// Ensure all categories have a slug (backfill empty slugs from label)
+		if (parsed.categories) {
+			for (const category of parsed.categories) {
+				if (!category.slug) {
+					category.slug = generateId(category.label, true).toLowerCase();
+				}
+			}
+		}
+
+		const oldCategorySlug = new Set(
+			runtimeConfig.customerTouchInterface?.categories?.map((category) => category.slug) || []
+		);
+		const newCategorySlug = parsed.categories
+			? parsed.categories.filter((category) => !oldCategorySlug.has(category.slug))
+			: [];
+
+		if (parsedPicture.categoryPictures && newCategorySlug.length) {
+			await Promise.all(
+				parsedPicture.categoryPictures.map(async (categoryPicture, index) => {
+					await generatePicture(categoryPicture, {
+						ctiCategorySlug: newCategorySlug[index].slug
+					});
+				})
+			);
+		}
+		await collections.runtimeConfig.updateOne(
+			{
+				_id: 'enableCustomerTouchInterface'
+			},
+			{
+				$set: {
+					data: parsedCti.enableCustomerTouchInterface,
+					updatedAt: new Date()
+				}
+			},
+			{
+				upsert: true
+			}
+		);
+		runtimeConfig.enableCustomerTouchInterface = parsedCti.enableCustomerTouchInterface;
+
+		if (parsedCti.enableCustomerTouchInterface) {
+			await collections.runtimeConfig.updateOne(
+				{
+					_id: 'customerTouchInterface'
+				},
+				{
+					$set: {
+						data: parsed,
+						updatedAt: new Date()
+					}
+				},
+				{
+					upsert: true
+				}
+			);
+			runtimeConfig.customerTouchInterface = parsed;
+		}
+
+		throw redirect(303, `${adminPrefix()}/cti`);
+	}
+};

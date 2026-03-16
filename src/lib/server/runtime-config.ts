@@ -46,6 +46,7 @@ import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import { merge } from '$lib/utils/merge';
+import { CustomerTouchInterface } from '$lib/types/CustomerTouchInterface';
 import { typedEntries } from '$lib/utils/typedEntries';
 import { deepEquals } from '$lib/utils/deep-equals';
 import { deepClone } from '$lib/utils/deep-clone';
@@ -191,6 +192,8 @@ const baseConfig = {
 	mainThemeId: '',
 	sellerIdentity: null as SellerIdentity | null,
 	shopInformation: null as SellerIdentity | null,
+	enableCustomerTouchInterface: false,
+	customerTouchInterface: null as CustomerTouchInterface | null,
 	sumUp: {
 		apiKey: '',
 		merchantCode: '',

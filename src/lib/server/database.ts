@@ -50,6 +50,7 @@ import type { Ticket } from '$lib/types/Ticket';
 import type { OrderLabel } from '$lib/types/OrderLabel';
 import type { ScheduleEventBooked, Schedule } from '$lib/types/Schedule';
 import type { Leaderboard } from '$lib/types/Leaderboard';
+import { CtiOrderNotification } from '$lib/types/CtiOrderNotification';
 import type { OrderTab } from '$lib/types/OrderTab';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import type { PosSession } from '$lib/types/PosSession';
@@ -95,6 +96,7 @@ const genCollection = () => ({
 	cmsPages: db.collection<CMSPage>('cmsPages'),
 	challenges: db.collection<Challenge>('challenges'),
 	leaderboards: db.collection<Leaderboard>('leaderboards'),
+	ctiOrderNotifications: db.collection<CtiOrderNotification>('ctiNotifications'),
 	roles: db.collection<Role>('roles'),
 	users: db.collection<User>('users'),
 	discounts: db.collection<Discount>('discounts'),
