@@ -209,7 +209,8 @@ const baseConfig = {
 		publicKey: '',
 		/** sk_... */
 		secretKey: '',
-		currency: 'EUR' as Currency
+		currency: 'EUR' as Currency,
+		embedPaymentForm: false
 	},
 	btcpayServer: {
 		apiKey: '',

@@ -58,6 +58,16 @@
 		<input type="hidden" name="currency" value={selectedCurrency?.value || ''} required />
 	</label>
 
+	<label class="checkbox-label">
+		<input
+			class="form-checkbox"
+			type="checkbox"
+			name="embedPaymentForm"
+			bind:checked={data.stripe.embedPaymentForm}
+		/>
+		Include payment form in order page
+	</label>
+
 	<div class="flex justify-between">
 		<button class="btn btn-black" type="submit">Save</button>
 		<button class="btn btn-red" type="submit" form="delete-form">Reset</button>

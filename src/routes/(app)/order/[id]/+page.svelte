@@ -217,6 +217,7 @@
 						sellerIdentity={data.sellerIdentity}
 						posSubtypes={data.posSubtypes}
 						returnTo={data.returnTo}
+						stripePublicKey={data.stripePublicKey}
 					>
 						<PaymentActions
 							{payment}
