@@ -5,6 +5,7 @@ import { CURRENCIES } from '$lib/types/Currency';
 import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { typedKeys } from '$lib/utils/typedKeys.js';
+import { fetchAndSaveExchangeRates } from '$lib/server/locks/currency-lock';
 import { adminPrefix } from '$lib/server/admin';
 import { z } from 'zod';
 import { redirect } from '@sveltejs/kit';
@@ -161,8 +162,13 @@ export const actions = {
 			cartMaxSeparateItems: result.cartMaxSeparateItems || null
 		};
 
+		let currencySettingChanged = false;
+
 		for (const key of typedKeys(runtimeConfigUpdates)) {
 			if (runtimeConfig[key] !== runtimeConfigUpdates[key]) {
+				if (key === 'mainCurrency' || key === 'secondaryCurrency' || key === 'accountingCurrency') {
+					currencySettingChanged = true;
+				}
 				runtimeConfig[key] = runtimeConfigUpdates[key] as never;
 				await collections.runtimeConfig.updateOne(
 					{ _id: key },
@@ -172,6 +178,14 @@ export const actions = {
 					},
 					{ upsert: true }
 				);
+			}
+		}
+
+		if (currencySettingChanged) {
+			try {
+				await fetchAndSaveExchangeRates();
+			} catch (err) {
+				console.error('Failed to refresh exchange rates after currency change:', err);
 			}
 		}
 

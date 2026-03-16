@@ -611,12 +611,6 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 		}
 	}
 
-	for (const currency of typedKeys(defaultConfig.exchangeRate)) {
-		if (!(currency in runtimeConfig.exchangeRate)) {
-			runtimeConfig.exchangeRate[currency] = defaultConfig.exchangeRate[currency];
-		}
-	}
-
 	exchangeRate.set(runtimeConfig.exchangeRate);
 
 	currencies.set({
