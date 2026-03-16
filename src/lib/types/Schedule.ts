@@ -38,6 +38,10 @@ export interface ScheduleEventBooked extends SetRequired<ScheduleEvent, 'endsAt'
 	orderCreated: boolean;
 }
 
+export type BookingSummary = Pick<ScheduleEventBooked, 'beginsAt' | 'endsAt' | 'orderId'> & {
+	orderNumber?: number;
+};
+
 export const defaultSchedule = {
 	pastEventDelay: 60,
 	displayPastEvents: false,

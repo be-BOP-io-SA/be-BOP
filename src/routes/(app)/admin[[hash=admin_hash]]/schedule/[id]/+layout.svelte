@@ -9,6 +9,10 @@
 	tabs={[
 		{ href: `${data.adminPrefix}/schedule/${$page.params.id}`, name: 'Edit schedule' },
 		{
+			href: `${data.adminPrefix}/schedule/${$page.params.id}/system-events`,
+			name: 'System events'
+		},
+		{
 			href: `#`,
 			name: 'Translations'
 		}
