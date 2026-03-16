@@ -19,6 +19,7 @@ import { adminPrefix } from '$lib/server/admin';
 import { AnyBulkWriteOperation, ObjectId } from 'mongodb';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
+import { pojo } from '$lib/server/pojo';
 import type { Picture } from '$lib/types/Picture';
 
 export const load = async ({ params }) => {
@@ -35,11 +36,45 @@ export const load = async ({ params }) => {
 		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
 		.toArray();
 	const productsWithStock = await getProductsWithStock();
-	const [reserved, sold, scanned] = await Promise.all([
+	const now = new Date();
+	const scheduleId = productToScheduleId(params.id);
+
+	const [reserved, sold, scanned, currentBookings, upcomingBookings] = await Promise.all([
 		amountOfStockReserved(params.id),
 		amountOfProductSold(params.id),
-		collections.tickets.countDocuments({ productId: params.id, scanned: { $exists: true } })
+		collections.tickets.countDocuments({ productId: params.id, scanned: { $exists: true } }),
+		collections.scheduleEvents
+			.find({
+				scheduleId,
+				status: 'confirmed',
+				beginsAt: { $lt: now },
+				endsAt: { $gt: now }
+			})
+			.sort({ beginsAt: 1 })
+			.toArray(),
+		collections.scheduleEvents
+			.find({
+				scheduleId,
+				status: 'confirmed',
+				beginsAt: { $gte: now }
+			})
+			.sort({ beginsAt: 1 })
+			.limit(5)
+			.toArray()
 	]);
+
+	const allBookings = [...currentBookings, ...upcomingBookings];
+	const orderIds = [...new Set(allBookings.map((e) => e.orderId))];
+	const orders = await collections.orders
+		.find({ _id: { $in: orderIds } })
+		.project<{ _id: string; number: number }>({ _id: 1, number: 1 })
+		.toArray();
+	const orderMap = new Map(orders.map((o) => [o._id, o.number]));
+
+	const withOrderNumber = (e: (typeof allBookings)[0]) => ({
+		...pojo(e),
+		orderNumber: orderMap.get(e.orderId)
+	});
 
 	return {
 		pictures,
@@ -48,7 +83,9 @@ export const load = async ({ params }) => {
 		productsWithStock,
 		reserved,
 		sold,
-		scanned
+		scanned,
+		currentBookings: currentBookings.map(withOrderNumber),
+		upcomingBookings: upcomingBookings.map(withOrderNumber)
 	};
 };
 

@@ -52,6 +52,32 @@
 	export let defaultActionSettings: ProductActionSettings;
 	export let availablePaymentMethods: PaymentMethod[];
 	export let productsWithStock: { _id: string; name: string }[] = [];
+	export let currentBookings: Array<{
+		beginsAt: Date;
+		endsAt: Date;
+		orderId: string;
+		orderNumber?: number;
+	}> = [];
+	export let upcomingBookings: Array<{
+		beginsAt: Date;
+		endsAt: Date;
+		orderId: string;
+		orderNumber?: number;
+	}> = [];
+
+	function formatDuration(beginsAt: Date, endsAt: Date) {
+		const minutes = Math.round((new Date(endsAt).getTime() - new Date(beginsAt).getTime()) / 60000);
+		if (minutes >= 1440) {
+			const days = Math.round(minutes / 1440);
+			return `${days}d`;
+		}
+		if (minutes >= 60) {
+			const hours = Math.floor(minutes / 60);
+			const rem = minutes % 60;
+			return rem ? `${hours}h${rem}m` : `${hours}h`;
+		}
+		return `${minutes}m`;
+	}
 	export let product: WithId<PojoObject<Product>> = {
 		_id: '',
 		payWhatYouWant: false,
@@ -1269,6 +1295,40 @@
 										</svg>
 									</a>
 								</div>
+								{#if currentBookings.length > 0}
+									<div class="mt-3">
+										<p class="text-sm font-medium text-gray-700">⌚ Current bookings:</p>
+										<ul class="text-sm mt-1 space-y-1">
+											{#each currentBookings as booking}
+												<li>
+													{new Date(booking.beginsAt).toLocaleString()} &rarr;
+													{new Date(booking.endsAt).toLocaleString()}
+													({formatDuration(booking.beginsAt, booking.endsAt)}) &mdash;
+													<a href="/order/{booking.orderId}" class="text-blue-600 hover:underline">
+														#{booking.orderNumber}
+													</a>
+												</li>
+											{/each}
+										</ul>
+									</div>
+								{/if}
+								{#if upcomingBookings.length > 0}
+									<div class="mt-3">
+										<p class="text-sm font-medium text-gray-700">Upcoming bookings (next 5):</p>
+										<ul class="text-sm mt-1 space-y-1">
+											{#each upcomingBookings as booking}
+												<li>
+													{new Date(booking.beginsAt).toLocaleString()} &rarr;
+													{new Date(booking.endsAt).toLocaleString()}
+													({formatDuration(booking.beginsAt, booking.endsAt)}) &mdash;
+													<a href="/order/{booking.orderId}" class="text-blue-600 hover:underline">
+														#{booking.orderNumber}
+													</a>
+												</li>
+											{/each}
+										</ul>
+									</div>
+								{/if}
 							{/if}
 						</div>
 					{/if}
