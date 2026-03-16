@@ -145,7 +145,11 @@
 		<slot />
 	{:else}
 		<header class="header items-center flex h-[100px] print:hidden" class:hidden={hideHeaderFooter}>
-			<div class="mx-auto max-w-7xl flex items-center gap-6 px-6 grow">
+			<div
+				class="{data.displayFullWidthHeader
+					? 'px-10 w-full'
+					: 'mx-auto max-w-7xl px-6'} flex items-center gap-6 grow"
+			>
 				<a class="flex items-center gap-4" href="/">
 					{#if data.logoPicture}
 						<Picture class="dark:hidden {logoClass}" picture={data.logoPicture} />
@@ -207,7 +211,11 @@
 			</nav>
 		{/if}
 		<header class="navbar h-[66px] items-center flex print:hidden" class:hidden={hideHeaderFooter}>
-			<div class="mx-auto max-w-7xl flex items-center gap-6 px-6 grow">
+			<div
+				class="{data.displayFullWidthNavbar
+					? 'px-10 w-full'
+					: 'mx-auto max-w-7xl px-6'} flex items-center gap-6 grow"
+			>
 				<nav class="flex gap-6 font-light items-center">
 					<button
 						class="inline-flex flex-col justify-center {data.notResponsive ||
@@ -560,7 +568,9 @@
 
 		<footer class="footer h-auto items-center flex print:hidden" class:hidden={hideHeaderFooter}>
 			<div
-				class="mx-auto max-w-7xl px-6 py-6 items-start justify-between gap-y-8 w-full grid grid-cols-1 lg:flex lg:flex-wrap gap-4"
+				class="{data.displayFullWidthFooter
+					? 'px-10 w-full'
+					: 'mx-auto max-w-7xl px-6'} py-6 items-start justify-between gap-y-8 w-full grid grid-cols-1 lg:flex lg:flex-wrap gap-4"
 			>
 				{#if data.displayCompanyInfo && data.sellerIdentity}
 					<div>
