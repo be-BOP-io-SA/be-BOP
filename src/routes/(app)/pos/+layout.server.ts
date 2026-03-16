@@ -7,21 +7,35 @@ async function getProductsToDisplay(params: {
 	query: Record<string, unknown>;
 	language?: string;
 }): Promise<
-	Pick<Product, '_id' | 'price' | 'name' | 'preorder' | 'availableDate' | 'tagIds' | 'stock'>[]
+	Pick<
+		Product,
+		'_id' | 'price' | 'name' | 'preorder' | 'availableDate' | 'tagIds' | 'stock' | 'vatProfileId'
+	>[]
 > {
 	return collections.products
 		.find({
 			...params.query
 		})
 		.project<
-			Pick<Product, '_id' | 'price' | 'name' | 'preorder' | 'availableDate' | 'tagIds' | 'stock'>
+			Pick<
+				Product,
+				| '_id'
+				| 'price'
+				| 'name'
+				| 'preorder'
+				| 'availableDate'
+				| 'tagIds'
+				| 'stock'
+				| 'vatProfileId'
+			>
 		>({
 			price: 1,
 			preorder: 1,
 			name: params.language ? { $ifNull: [`$translations.${params.language}.name`, '$name'] } : 1,
 			availableDate: 1,
 			tagIds: 1,
-			stock: 1
+			stock: 1,
+			vatProfileId: 1
 		})
 		.sort({ createdAt: 1 })
 		.toArray();
@@ -45,7 +59,7 @@ export const load = async ({ locals }) => {
 	return {
 		layoutReset: true,
 		pictures,
-		products,
+		products: products.map((p) => ({ ...p, vatProfileId: p.vatProfileId?.toString() })),
 		tags,
 		posUseSelectForTags: runtimeConfig.posUseSelectForTags
 	};
