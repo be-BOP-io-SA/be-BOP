@@ -122,6 +122,7 @@
 			"free": "Nichts zu bezahlen (kostenloser Warenkorb)",
 			"lightning": "Lightning",
 			"paypal": "Paypal",
+			"taler": "Taler",
 			"point-of-sale": "Point of Sale",
 			"unavailable": "Keine Zahlungsmethoden verfügbar."
 		},
@@ -516,6 +517,7 @@
 			"free": "Nichts bezahlt",
 			"lightning": "Bezahlt mit: Lightning-Transaktion (1 {paymentCurrency} = {exchangeRate} {mainCurrency} zum Zeitpunkt der Bestellung)",
 			"paypal": "Bezahlt mit: Paypal",
+			"taler": "Bezahlt mit: Taler",
 			"point-of-sale": "Im Geschäft bezahlt"
 		},
 		"paidWithSummary": {
@@ -524,7 +526,8 @@
 			"card": "Bezahlt mit: Bankkarte",
 			"free": "Nichts bezahlt",
 			"lightning": "Bezahlt mit: Lightning-Transaktion",
-			"point-of-sale": "Im Geschäft bezahlt"
+			"point-of-sale": "Im Geschäft bezahlt",
+			"taler": "Bezahlt mit: Taler"
 		},
 		"payToComplete": "Bezahlen Sie, um die Bestellung abzuschließen.",
 		"payToCompleteBitcoin": {
