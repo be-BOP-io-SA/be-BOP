@@ -17,7 +17,8 @@ export const actions = {
 				secretKey: z.string().startsWith('sk_'),
 				currency: z.enum(
 					CURRENCIES.filter((c) => c !== 'BTC' && c !== 'SAT') as [Currency, ...Currency[]]
-				)
+				),
+				embedPaymentForm: z.boolean({ coerce: true }).default(false)
 			})
 			.parse(Object.fromEntries(await request.formData()));
 
@@ -46,7 +47,8 @@ export const actions = {
 		runtimeConfig.stripe = {
 			secretKey: '',
 			publicKey: '',
-			currency: 'EUR'
+			currency: 'EUR',
+			embedPaymentForm: false
 		};
 	}
 };

@@ -21,6 +21,7 @@
 	export let sellerIdentity: SellerIdentity | null | undefined = undefined;
 	export let posSubtypes: Array<{ slug: string; name: string }> | undefined = undefined;
 	export let returnTo: string | undefined = undefined;
+	export let stripePublicKey: string | null = null;
 
 	// Registry of dynamic components
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -69,6 +70,7 @@
 				{sellerIdentity}
 				{posMode}
 				{returnTo}
+				{stripePublicKey}
 			/>
 		{:else if payment.method === 'point-of-sale'}
 			<PointOfSalePayment />
