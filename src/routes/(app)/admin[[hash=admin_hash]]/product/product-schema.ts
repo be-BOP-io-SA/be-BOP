@@ -190,7 +190,9 @@ export const productBaseSchema = () => ({
 				price: z
 					.string()
 					.regex(/^\d+(\.\d+)?$/)
-					.default('0')
+					.default('0'),
+				nameLabel: z.string().trim().optional(),
+				valueLabel: z.string().trim().optional()
 			})
 		)
 		.optional()
