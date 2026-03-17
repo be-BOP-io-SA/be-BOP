@@ -51,16 +51,20 @@ async function parseForm(request: Request) {
 
 async function simpleListTest(s3: typeof runtimeConfig.s3) {
 	try {
-		const { S3Client, ListBucketsCommand } = await import('@aws-sdk/client-s3');
+		const { S3Client, ListBucketsCommand, HeadBucketCommand } = await import('@aws-sdk/client-s3');
 		const client = new S3Client({
 			region: s3.region || 'us-east-1' /* “Harmless” region for providers who don't care */,
 			endpoint: s3.endpointUrl,
 			credentials: {
 				accessKeyId: s3.keyId,
 				secretAccessKey: s3.keySecret
-			}
+			},
+			forcePathStyle: true
 		});
 		await client.send(new ListBucketsCommand({}));
+		if (s3.bucket) {
+			await client.send(new HeadBucketCommand({ Bucket: s3.bucket }));
+		}
 		return { testResult: { success: true, message: 'S3 connection successful!' } };
 	} catch (error) {
 		return {
