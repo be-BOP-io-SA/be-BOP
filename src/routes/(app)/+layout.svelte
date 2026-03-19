@@ -178,7 +178,7 @@
 				</nav>
 				<button
 					class="inline-flex flex-col justify-center {data.notResponsive ||
-					!data.links.topbar.length
+					(!data.links.topbar.length && !(data.mergeMobileMenus && data.links.navbar.length))
 						? 'hidden'
 						: 'lg:hidden'} cursor-pointer text-4xl transition header-tab"
 					class:rotate-90={topMenuOpen}
@@ -191,7 +191,9 @@
 		{#if topMenuOpen}
 			<nav
 				transition:slide
-				class="header print:hidden header-tab flex flex-col lg:hidden text-[22px] font-semibold border-x-0 border-b-0 border-opacity-25 border-t-1 border-white px-10 py-4"
+				class="header print:hidden header-tab flex flex-col lg:hidden text-[22px] font-semibold border-x-0 border-b-0 border-opacity-25 border-t-1 border-white px-10 py-4{data.mergeMobileMenus
+					? ' text-right'
+					: ''}"
 				class:hidden={hideHeaderFooter}
 			>
 				{#each data.links.topbar as link}
@@ -204,6 +206,19 @@
 						data-sveltekit-preload-data="off">{link.label}</a
 					>
 				{/each}
+				{#if data.mergeMobileMenus && data.links.navbar.length}
+					<br />
+					{#each data.links.navbar as link}
+						<a
+							class="py-4 font-light"
+							href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
+								? link.href
+								: `/${link.href}`}
+							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
+							data-sveltekit-preload-data="off">{link.label}</a
+						>
+					{/each}
+				{/if}
 			</nav>
 		{/if}
 		<header class="navbar h-[66px] items-center flex print:hidden" class:hidden={hideHeaderFooter}>
@@ -211,7 +226,8 @@
 				<nav class="flex gap-6 font-light items-center">
 					<button
 						class="inline-flex flex-col justify-center {data.notResponsive ||
-						!data.links.navbar.length
+						!data.links.navbar.length ||
+						data.mergeMobileMenus
 							? 'hidden'
 							: 'lg:hidden'} cursor-pointer text-2xl transition"
 						class:rotate-90={navMenuOpen}
@@ -498,7 +514,7 @@
 				</div>
 			</div>
 		</header>
-		{#if navMenuOpen}
+		{#if navMenuOpen && !data.mergeMobileMenus}
 			<nav
 				transition:slide
 				class="navbar print:hidden header-tab font-light flex flex-col lg:hidden border-x-0 border-b-0 border-opacity-25 border-t-1 border-white px-4 pb-3"
