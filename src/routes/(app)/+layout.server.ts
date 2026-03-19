@@ -393,6 +393,7 @@ export async function load(params) {
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
 		hideCartInToolbar: runtimeConfig.hideCartInToolbar,
 		hideCmsZonesOnMobile: runtimeConfig.hideCmsZonesOnMobile,
+		mergeMobileMenus: runtimeConfig.mergeMobileMenus,
 		hideThemeSelectorInToolbar: runtimeConfig.hideThemeSelectorInToolbar,
 		notResponsive: runtimeConfig.viewportFor === 'no-one' ? true : false,
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,
