@@ -30,7 +30,7 @@
 		"cta": {
 			"checkout": "Pagar",
 			"discardItem": "Descartar",
-			"view": "Lista de compras"
+			"view": "Al carrito"
 		},
 		"empty": "La lista de compras está vacía",
 		"fillProductAlias": "Rellenar alias de producto",
