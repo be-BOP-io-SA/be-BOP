@@ -1,4 +1,4 @@
-import { S3_BUCKET } from '$lib/server/env-config';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database';
 import { getPublicS3DownloadLink, getS3Client } from '$lib/server/s3';
@@ -33,7 +33,9 @@ export const actions = {
 		await collections.digitalFiles.deleteOne({ _id: params.id });
 
 		await getS3Client()
-			.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: digitalFile.storage.key }))
+			.send(
+				new DeleteObjectCommand({ Bucket: runtimeConfig.s3.bucket, Key: digitalFile.storage.key })
+			)
 			.catch(console.error);
 		if (digitalFile.productId) {
 			throw redirect(303, `${adminPrefix()}/product/${digitalFile.productId}`);
