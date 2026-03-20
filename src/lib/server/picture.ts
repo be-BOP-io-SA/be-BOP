@@ -10,7 +10,7 @@ import {
 	getS3Client
 } from './s3';
 import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { S3_BUCKET } from '$lib/server/env-config';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import * as mimeTypes from 'mime-types';
 import type { ImageData, Picture, TagType } from '../types/Picture';
 import type { SetRequired } from 'type-fest';
@@ -58,7 +58,7 @@ export async function generatePicture(
 	await getS3Client()
 		.deleteObject({
 			Key: pendingPicture.storage.original.key,
-			Bucket: S3_BUCKET
+			Bucket: runtimeConfig.s3.bucket
 		})
 		.catch();
 
@@ -106,7 +106,7 @@ export async function generatePicture(
 
 	await getS3Client().send(
 		new PutObjectCommand({
-			Bucket: S3_BUCKET,
+			Bucket: runtimeConfig.s3.bucket,
 			Key: path,
 			Body: buffer,
 			ContentType: mime
@@ -129,7 +129,7 @@ export async function generatePicture(
 			const buffer = await image.toFormat('webp').toBuffer();
 			await getS3Client().send(
 				new PutObjectCommand({
-					Bucket: S3_BUCKET,
+					Bucket: runtimeConfig.s3.bucket,
 					Key: key,
 					Body: buffer,
 					ContentType: 'image/webp'
@@ -163,7 +163,7 @@ export async function generatePicture(
 				const key = `${pathPrefix}${_id}-${newWidth}x${newHeight}.webp`;
 				await getS3Client().send(
 					new PutObjectCommand({
-						Bucket: S3_BUCKET,
+						Bucket: runtimeConfig.s3.bucket,
 						Key: key,
 						Body: buffer,
 						ContentType: 'image/webp'
@@ -216,7 +216,7 @@ export async function generatePicture(
 		// Remove uploaded files
 		for (const key of uploadedKeys) {
 			getS3Client()
-				.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: key }))
+				.send(new DeleteObjectCommand({ Bucket: runtimeConfig.s3.bucket, Key: key }))
 				.catch();
 		}
 		throw err;
@@ -232,12 +232,17 @@ export async function deletePicture(pictureId: Picture['_id']) {
 
 	for (const format of res.value.storage.formats) {
 		await getS3Client()
-			.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: format.key }))
+			.send(new DeleteObjectCommand({ Bucket: runtimeConfig.s3.bucket, Key: format.key }))
 			.catch(console.error);
 	}
 
 	await getS3Client()
-		.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: res.value.storage.original.key }))
+		.send(
+			new DeleteObjectCommand({
+				Bucket: runtimeConfig.s3.bucket,
+				Key: res.value.storage.original.key
+			})
+		)
 		.catch(console.error);
 }
 

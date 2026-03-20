@@ -9,7 +9,7 @@ import type { Actions } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { ObjectId } from 'mongodb';
-import { ORIGIN, S3_BUCKET } from '$lib/server/env-config';
+import { ORIGIN } from '$lib/server/env-config';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Product } from '$lib/types/Product';
 import { Kind } from 'nostr-tools';
@@ -493,8 +493,8 @@ export const actions: Actions = {
 				insertedS3Keys.push(pictureToInsert.storage.original.key);
 				await getS3Client().send(
 					new CopyObjectCommand({
-						Bucket: S3_BUCKET,
-						CopySource: `/${S3_BUCKET}/${picture.storage.original.key}`,
+						Bucket: runtimeConfig.s3.bucket,
+						CopySource: `/${runtimeConfig.s3.bucket}/${picture.storage.original.key}`,
 						Key: pictureToInsert.storage.original.key
 					})
 				);
@@ -504,8 +504,8 @@ export const actions: Actions = {
 					insertedS3Keys.push(format.key);
 					await getS3Client().send(
 						new CopyObjectCommand({
-							Bucket: S3_BUCKET,
-							CopySource: `/${S3_BUCKET}/${format.key}`,
+							Bucket: runtimeConfig.s3.bucket,
+							CopySource: `/${runtimeConfig.s3.bucket}/${format.key}`,
 							Key: pictureToInsert.storage.formats[formatIndex++].key
 						})
 					);
@@ -530,8 +530,8 @@ export const actions: Actions = {
 				insertedS3Keys.push(digitalFileToInsert.storage.key);
 				await getS3Client().send(
 					new CopyObjectCommand({
-						Bucket: S3_BUCKET,
-						CopySource: `/${S3_BUCKET}/${file.storage.key}`,
+						Bucket: runtimeConfig.s3.bucket,
+						CopySource: `/${runtimeConfig.s3.bucket}/${file.storage.key}`,
 						Key: digitalFileToInsert.storage.key
 					})
 				);
@@ -542,7 +542,7 @@ export const actions: Actions = {
 			getS3Client()
 				.send(
 					new DeleteObjectsCommand({
-						Bucket: S3_BUCKET,
+						Bucket: runtimeConfig.s3.bucket,
 						Delete: {
 							Objects: insertedS3Keys.map((key) => ({ Key: key }))
 						}

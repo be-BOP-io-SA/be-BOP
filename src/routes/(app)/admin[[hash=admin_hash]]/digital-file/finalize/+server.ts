@@ -1,4 +1,4 @@
-import { S3_BUCKET } from '$lib/server/env-config';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import { collections, withTransaction } from '$lib/server/database';
 import { getS3Client } from '$lib/server/s3';
 import { error } from '@sveltejs/kit';
@@ -20,7 +20,7 @@ export async function POST({ request }) {
 	}
 
 	const info = await getS3Client().headObject({
-		Bucket: S3_BUCKET,
+		Bucket: runtimeConfig.s3.bucket,
 		Key: pendingFile.storage.key
 	});
 

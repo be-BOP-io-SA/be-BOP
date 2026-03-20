@@ -1,4 +1,4 @@
-import { S3_BUCKET } from '$lib/server/env-config';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import { collections } from '$lib/server/database';
 import { getPublicS3Client, secureLink } from '$lib/server/s3';
 import { generateId } from '$lib/utils/generateId';
@@ -26,7 +26,7 @@ export async function POST({ request }) {
 		await getSignedUrl(
 			getPublicS3Client(),
 			new PutObjectCommand({
-				Bucket: S3_BUCKET,
+				Bucket: runtimeConfig.s3.bucket,
 				Key: key,
 				...(contentType ? { ContentType: contentType } : {}),
 				ContentLength: body.fileSize
