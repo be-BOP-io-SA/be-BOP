@@ -260,6 +260,7 @@ const baseConfig = {
 	hideShopBankOnReceipt: false,
 	hideShopBankOnTicket: false,
 	hideCmsZonesOnMobile: false,
+	mergeMobileMenus: false,
 	copyOrderEmailsToAdmin: true,
 	usersDarkDefaultTheme: false,
 	employeesDarkDefaultTheme: false,

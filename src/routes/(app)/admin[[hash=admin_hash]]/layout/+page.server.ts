@@ -33,6 +33,7 @@ export const actions = {
 				disableZoomProductPicture: z.boolean({ coerce: true }),
 				viewportFor: z.enum(['no-one', 'employee', 'visitors', 'everyone']).optional(),
 				hideCmsZonesOnMobile: z.boolean({ coerce: true }),
+				mergeMobileMenus: z.boolean({ coerce: true }),
 				visitorDarkLightMode: z.enum(['light', 'dark', 'system']),
 				employeeDarkLightMode: z.enum(['light', 'dark', 'system'])
 			})

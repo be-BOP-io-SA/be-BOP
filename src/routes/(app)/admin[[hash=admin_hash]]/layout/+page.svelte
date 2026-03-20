@@ -323,5 +323,14 @@
 		/>
 		Hide every CMS additional zone on mobile (product, cart, checkout and order page)
 	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="mergeMobileMenus"
+			class="form-checkbox"
+			checked={data.mergeMobileMenus}
+		/>
+		Merge topbar and navbar entries on the same burger menu on mobile
+	</label>
 	<button class="btn btn-black self-start" type="submit">Update</button>
 </form>
