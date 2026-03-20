@@ -1,8 +1,9 @@
 import { fail } from '@sveltejs/kit';
 import * as devalue from 'devalue';
 import type { Challenge } from '$lib/types/Challenge.js';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { S3_REGION, S3_KEY_ID, S3_KEY_SECRET, S3_BUCKET, SMTP_USER } from '$lib/server/env-config';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { SMTP_USER } from '$lib/server/env-config';
+import { getS3Client } from '$lib/server/s3';
 import type { Picture } from '$lib/types/Picture';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import { sendEmail } from '$lib/server/email.js';
@@ -188,14 +189,6 @@ async function handleDigitalFileImport(
 }
 
 async function uploadFileToS3(imageUrl: URL | RequestInfo | undefined, s3Key: string) {
-	const s3Client = new S3Client({
-		region: S3_REGION,
-		credentials: {
-			accessKeyId: S3_KEY_ID,
-			secretAccessKey: S3_KEY_SECRET
-		}
-	});
-
 	try {
 		const response = await fetch(imageUrl ? imageUrl : '');
 		const contentType = response.headers.get('content-type') || undefined;
@@ -209,13 +202,13 @@ async function uploadFileToS3(imageUrl: URL | RequestInfo | undefined, s3Key: st
 		const uint8ArrayBuffer = new Uint8Array(arrayBuffer);
 
 		const params = {
-			Bucket: S3_BUCKET,
+			Bucket: runtimeConfig.s3.bucket,
 			Key: s3Key,
 			Body: uint8ArrayBuffer,
 			ContentType: contentType
 		};
 
-		await s3Client.send(new PutObjectCommand(params));
+		await getS3Client().send(new PutObjectCommand(params));
 
 		return true;
 	} catch (error) {

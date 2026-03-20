@@ -4,7 +4,7 @@ import { collections } from '../database';
 import { processClosed } from '../process';
 import { setTimeout } from 'node:timers/promises';
 import { getS3Client } from '../s3';
-import { S3_BUCKET } from '$lib/server/env-config';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import { ObjectId } from 'mongodb';
 
 const lock = new Lock('cleanup');
@@ -29,7 +29,7 @@ async function cleanup() {
 			for (const file of expiredFiles) {
 				await getS3Client()
 					.deleteObject({
-						Bucket: S3_BUCKET,
+						Bucket: runtimeConfig.s3.bucket,
 						Key: file.storage.key
 					})
 					.catch();
@@ -55,7 +55,7 @@ async function cleanup() {
 			for (const picture of expiredPictures) {
 				await getS3Client()
 					.deleteObject({
-						Bucket: S3_BUCKET,
+						Bucket: runtimeConfig.s3.bucket,
 						Key: picture.storage.original.key
 					})
 					.catch();
@@ -63,7 +63,7 @@ async function cleanup() {
 				for (const format of picture.storage.formats) {
 					await getS3Client()
 						.deleteObject({
-							Bucket: S3_BUCKET,
+							Bucket: runtimeConfig.s3.bucket,
 							Key: format.key
 						})
 						.catch();
