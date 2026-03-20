@@ -16,12 +16,15 @@ import { createOrder, addOrderPayment } from '$lib/server/orders';
 import { orderRemainingToPay } from '$lib/types/Order';
 import { CURRENCY_UNIT } from '$lib/types/Currency';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { requireOpenPosSession } from '$lib/server/pos-sessions';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
+import { resolvePoolLabel } from '$lib/types/PosTabGroup';
 
 type Locale = App.Locals['language'];
-type ProductProjection = ProductForPriceInfo & { name: string };
+type ProductProjection = ProductForPriceInfo & { name: string; tagIds?: string[] };
 
 type HydratedTabItem = {
+	discountPercentage?: number;
 	internalNote?: {
 		value: string;
 		updatedAt: Date;
@@ -51,7 +54,8 @@ async function hydratedOrderItems(
 			vatProfileId: 1,
 			variationLabels: {
 				$ifNull: [`$translations.${locale}.variationLabels`, '$variationLabels']
-			}
+			},
+			tagIds: 1
 		})
 		.toArray();
 	const productById = new Map(products.map((p) => [p._id, p]));
@@ -75,15 +79,34 @@ async function hydratedOrderItems(
 		.filter((item): item is NonNullable<typeof item> => item !== undefined);
 }
 
+function applyDiscountPercentage(
+	item: HydratedTabItem,
+	percentage: number | undefined,
+	tagId: string | undefined
+): HydratedTabItem {
+	if (!percentage || percentage <= 0) {
+		return item;
+	}
+	if (tagId && !(item.product.tagIds ?? []).includes(tagId)) {
+		return item;
+	}
+	return { ...item, discountPercentage: percentage };
+}
+
 async function getHydratedOrderTab(locale: Locale, tab: OrderTab) {
+	const items = await hydratedOrderItems(locale, tab.items);
+	const { percentage, tagId } = tab.discount ?? {};
+
 	return {
 		slug: tab.slug,
-		items: await hydratedOrderItems(locale, tab.items),
+		items: items.map((item) => applyDiscountPercentage(item, percentage, tagId)),
 		discount: tab.discount
 	};
 }
 
 export const load = async ({ depends, locals, params }) => {
+	await requireOpenPosSession();
+
 	const tabSlug = params.orderTabSlug;
 	const tab = await getOrCreateOrderTab({ slug: tabSlug });
 
@@ -101,6 +124,8 @@ export const load = async ({ depends, locals, params }) => {
 			.toArray(),
 		clearAbandonedCartsAndOrdersFromTab(tab)
 	]);
+
+	const poolLabel = resolvePoolLabel(runtimeConfig.posTabGroups, tabSlug);
 
 	const sellerIdentity = runtimeConfig.sellerIdentity;
 
@@ -162,6 +187,8 @@ export const load = async ({ depends, locals, params }) => {
 	return {
 		orderTab,
 		tabSlug,
+		poolLabel,
+		posMobileBreakpoint: runtimeConfig.posMobileBreakpoint ?? 1024,
 		sharesOrder: sharesOrderData,
 		availablePaymentMethods: methods,
 		paymentSubtypes: posSubtypes.map((s) => ({
@@ -195,6 +222,7 @@ const sharePaymentSchema = z.discriminatedUnion('mode', [
 
 export const actions = {
 	checkoutTabPartial: async ({ request, locals, params }) => {
+		await requireOpenPosSession();
 		const formData = await request.formData();
 		const user = userIdentifier(locals);
 
@@ -329,6 +357,7 @@ export const actions = {
 	},
 
 	closePool: async ({ params }) => {
+		await requireOpenPosSession();
 		const { concludeOrderTab } = await import('$lib/server/orderTab');
 		await concludeOrderTab({ slug: params.orderTabSlug });
 		throw redirect(303, `/pos/touch/tab/${params.orderTabSlug}`);

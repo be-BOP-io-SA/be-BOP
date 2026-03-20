@@ -72,6 +72,7 @@ export const productBaseSchema = () => ({
 				.int()
 				.min(1)
 				.max(24 * 60),
+			maxBookableDays: z.number({ coerce: true }).int().min(0).default(0),
 			schedule: z.object({
 				timezone: z.enum(Intl.supportedValuesOf('timeZone') as [string, ...string[]]),
 				monday: z

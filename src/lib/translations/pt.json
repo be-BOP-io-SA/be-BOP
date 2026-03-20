@@ -474,6 +474,12 @@
 		"personalInformation": "Informação pessoal"
 	},
 	"login": {
+		"error": {
+			"invalidEmail": "Endereço de email inválido",
+			"invalidNpub": "Endereço Nostr npub inválido",
+			"invalidContactAddress": "O seu endereço de contacto é inválido (preencha um endereço de email correto ou um npub Nostr)",
+			"invalidOrExpiredToken": "Token inválido ou expirado"
+		},
 		"authenticate": {
 			"ctaCancelLabel": "Voltar",
 			"ctaLabel": "Confirmar",
@@ -634,6 +640,12 @@
 			"vatFreeReason": "Isento de IVA: {reason}",
 			"peopleCount": "Número de pessoas"
 		},
+		"forwardReceipt": {
+			"cancel": "Cancelar",
+			"send": "Enviar",
+			"success": "Recibo encaminhado!",
+			"title": "Encaminhar recibo"
+		},
 		"receiptFullyPaid": "Gerar recibo (totalmente pago)",
 		"receiptPending": "Gerar recibo (pagamento pendente)",
 		"related": {
@@ -650,6 +662,7 @@
 		"shippingAddress": {
 			"title": "Morada de envio"
 		},
+		"noOrdersYet": "Ainda não há encomendas",
 		"singleTitle": "Encomenda #{number}",
 		"summary": {
 			"fullyPaid": {
@@ -696,6 +709,8 @@
 		"label": {
 			"amount": "Valor",
 			"currency": "Moeda",
+			"currencyCodeHelp": "Encontre o código da sua moeda",
+			"currencyCodeHelpUrl": "https://pt.wikipedia.org/wiki/ISO_4217",
 			"method": "Método",
 			"subtype": "Tipo"
 		},
@@ -728,6 +743,8 @@
 		},
 		"sessionLink": "Sessão POS",
 		"sessionTouchLink": "Sessão POS - ecrã tátil",
+		"nonEmptyPoolsWarning": "Aviso: existem mesas não vazias. Por favor, processe-as corretamente antes de fechar a sua sessão PoS.",
+		"touchSessionRequired": "Se pretende usar a interface tátil do POS, por favor abra uma sessão",
 		"tapToPay": {
 			"inProgress": "O pagamento será validado automaticamente quando a transação externa for registrada e validada.",
 			"inUseByOtherOrder": "O pagamento via tap-to-pay está desativado porque há outro pedido em andamento usando este método. Você pode cobrar manualmente e depois inserir o número da transação neste campo."
@@ -764,7 +781,10 @@
 			"notDeveloped": "Ainda não desenvolvido",
 			"confirmDeleteLastItem": "Quer eliminar a última linha do carrinho?",
 			"confirmDeleteAllItems": "Quer eliminar todas as linhas do carrinho?",
-			"maxQuantityReached": "Quantidade máxima por encomenda atingida ({max})"
+			"maxQuantityReached": "Quantidade máxima por encomenda atingida ({max})",
+			"itemPrintedCannotDelete": "Este artigo foi impresso num ticket de cozinha e não pode ser eliminado",
+			"itemPrintedCannotReduce": "Não é possível reduzir a quantidade abaixo da quantidade impressa: {min}",
+			"poolHasPrintedItems": "Este pool contém artigos impressos e não pode ser eliminado"
 		},
 		"itemEdit": {
 			"quantity": "Quantidade",
@@ -778,8 +798,8 @@
 		},
 		"split": {
 			"notAvailableYet": "Ainda não disponível",
-			"tabHeader": "Separador {slug}",
-			"tabToPayNow": "Separador {slug} (a pagar agora)",
+			"tabHeader": "Separador {poolLabel}",
+			"tabToPayNow": "Separador {poolLabel} (a pagar agora)",
 			"pool": "POOL",
 			"poolRemainingToPay": "POOL (a pagar)",
 			"exclVat": "sem IVA",
@@ -792,7 +812,8 @@
 			"shares": "partes",
 			"itemize": "detalhar",
 			"return": "Voltar",
-			"continueSplit": "Continuar divisão ({mode})",
+			"continueSplit": "Continuar",
+			"skipForNow": "Pular por agora",
 			"paySelected": "Pagar selecionados",
 			"includingVatIncluded": "Incluindo (IVA incluído):",
 			"tagProducts": "Produtos \"{name}\"",
@@ -812,6 +833,11 @@
 			"beforeDiscount": "ANTES DO DESCONTO",
 			"afterDiscount": "APÓS O DESCONTO"
 		},
+		"receipt": {
+			"ticket": "Recibo (ticket)",
+			"invoice": "Fatura (A4)"
+		},
+		"staffNotes": "Notas da equipe",
 		"discount": {
 			"title": "Desconto",
 			"noDiscount": "Sem desconto",
@@ -829,7 +855,10 @@
 		"midTicket": {
 			"title": "Configurações de ticket de cozinha/intermediário",
 			"topBlankLines": "Número de linhas em branco no topo do ticket (para fixação)",
-			"topBlankLinesHint": "Padrão: 0"
+			"topBlankLinesHint": "Padrão: 0",
+			"printedAt": "Impresso em {date} às {time}",
+			"poolFirstItemAdded": "Mesa aberta em {date} às {time}",
+			"orderCreatedAt": "Pedido criado em {date} às {time}"
 		}
 	},
 	"product": {
@@ -923,8 +952,14 @@
 		},
 		"initiallyCreated": "Criado inicialmente: ",
 		"paidUntil": "Pago até: ",
+		"expiresOn": "Expira em",
+		"lastOrder": "Ver última encomenda",
+		"lastPayment": "Último pagamento",
+		"listTitle": "As suas subscrições",
+		"noSubscriptions": "Ainda não tem subscrições.",
 		"singleTitle": "Subscrição #{number}",
 		"status": {
+			"active": "ativo",
 			"expired": "expirado"
 		}
 	},

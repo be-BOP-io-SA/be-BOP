@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
 import type { Currency } from '$lib/types/Currency';
+import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import type { DeliveryFees } from '$lib/types/DeliveryFees';
 import { currencies } from '$lib/stores/currencies';
 import {
@@ -72,7 +73,7 @@ const baseConfig = {
 	lightningQrCodeDescription: 'brand' as 'orderUrl' | 'brand' | 'brandAndOrderNumber' | 'none',
 	maintenanceIps: '',
 	brandName: 'My be-BOP',
-	subscriptionDuration: 'month' as 'month' | 'day' | 'hour',
+	subscriptionDuration: 'month' satisfies SubscriptionDuration,
 	subscriptionReminderSeconds: 24 * 60 * 60,
 	reserveStockInMinutes: 20,
 	confirmationBlocksThresholds: {
@@ -121,7 +122,7 @@ const baseConfig = {
 	cartPreviewInteractive: false,
 	vatExempted: false,
 	vatExemptionReason: '',
-	vatSingleCountry: false,
+	vatSingleCountry: true,
 	vatCountry: 'FR' satisfies CountryAlpha2 as CountryAlpha2,
 	vatNullOutsideSellerCountry: false,
 	displayVatIncludedInProduct: false,
@@ -249,6 +250,8 @@ const baseConfig = {
 	posPoolEmptyIcon: '✅' as string | undefined,
 	posPoolOccupiedIcon: '⏳' as string | undefined,
 	posMidTicketTopBlankLines: 3,
+	posProductsPerPage: 0,
+	posMobileBreakpoint: 1024,
 	posUseSelectForTags: false,
 	posPrefillTermOfUse: false,
 	posTapToPay: {
@@ -282,7 +285,9 @@ const baseConfig = {
 	posSession: {
 		enabled: false,
 		allowXTicketEditing: false,
-		cashDeltaJustificationMandatory: false
+		cashDeltaJustificationMandatory: false,
+		lockItemsAfterMidTicket: true,
+		forbidTouchWhenSessionClosed: true
 	},
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,
@@ -606,12 +611,6 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 	for (const templateKey of typedKeys(defaultConfig.emailTemplates)) {
 		if (!(templateKey in runtimeConfig.emailTemplates)) {
 			runtimeConfig.emailTemplates[templateKey] = defaultConfig.emailTemplates[templateKey];
-		}
-	}
-
-	for (const currency of typedKeys(defaultConfig.exchangeRate)) {
-		if (!(currency in runtimeConfig.exchangeRate)) {
-			runtimeConfig.exchangeRate[currency] = defaultConfig.exchangeRate[currency];
 		}
 	}
 

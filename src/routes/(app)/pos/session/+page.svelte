@@ -4,10 +4,12 @@
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import CheckCircleOutlined from '~icons/ant-design/check-circle-outlined';
 	import { onMount } from 'svelte';
-	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
+	import { UNDERLYING_CURRENCY, type Currency } from '$lib/types/Currency.js';
 	import { useI18n } from '$lib/i18n';
 	import { orderRemainingToPay } from '$lib/types/Order.js';
 	import Trans from '$lib/components/Trans.svelte';
+	import { computePriceInfo } from '$lib/cart.js';
+	import { invalidate } from '$app/navigation';
 
 	interface CustomEventSource {
 		onerror?: ((this: CustomEventSource, ev: Event) => unknown) | null;
@@ -21,7 +23,7 @@
 		: 5_000;
 
 	let eventSourceInstance: CustomEventSource | void | null = null;
-	let formattedCart = data.formattedCart;
+	$: formattedCart = data.formattedCart;
 	let order = data.order;
 
 	$: view =
@@ -38,9 +40,9 @@
 			onmessage(ev) {
 				if (ev.data) {
 					try {
-						const { eventType, cart: sseCart, order: sseOrder } = JSON.parse(ev.data);
+						const { eventType, order: sseOrder } = JSON.parse(ev.data);
 						if (eventType === 'cart') {
-							formattedCart = sseCart;
+							invalidate('data:pos-session-cart');
 						} else if (eventType === 'order') {
 							order = sseOrder;
 							clearTimeout(currentTimeout);
@@ -77,7 +79,17 @@
 			cleanUpServerEvents();
 		};
 	});
-	$: priceInfo = data.cart.priceInfo;
+	$: priceConfig = {
+		bebopCountry: data.vatCountry,
+		deliveryFees: { amount: 0, currency: UNDERLYING_CURRENCY as Currency },
+		freeProductUnits: {},
+		userCountry: data.countryCode,
+		vatExempted: data.vatExempted,
+		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
+		vatSingleCountry: data.vatSingleCountry,
+		vatProfiles: data.vatProfiles
+	};
+	$: priceInfo = computePriceInfo(formattedCart, priceConfig);
 
 	const { t, locale, countryName } = useI18n();
 </script>

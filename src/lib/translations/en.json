@@ -486,6 +486,12 @@
 		"personalInformation": "Personal Information"
 	},
 	"login": {
+		"error": {
+			"invalidEmail": "Invalid email address",
+			"invalidNpub": "Invalid Nostr npub address",
+			"invalidContactAddress": "Your contact address is invalid (fill either a correct email address or a Nostr npub)",
+			"invalidOrExpiredToken": "Invalid or expired token"
+		},
 		"authenticate": {
 			"ctaCancelLabel": "Back",
 			"ctaLabel": "Confirm",
@@ -646,6 +652,12 @@
 			"vatFreeReason": "Vat exempted: {reason}",
 			"peopleCount": "Number of people"
 		},
+		"forwardReceipt": {
+			"cancel": "Cancel",
+			"send": "Send",
+			"success": "Receipt forwarded!",
+			"title": "Forward receipt"
+		},
 		"receiptFullyPaid": "Generate receipt(fully paid)",
 		"receiptPending": "Generate receipt(pending payment)",
 		"related": {
@@ -662,6 +674,7 @@
 		"shippingAddress": {
 			"title": "Shipping address"
 		},
+		"noOrdersYet": "No orders yet",
 		"singleTitle": "Order #{number}",
 		"summary": {
 			"fullyPaid": {
@@ -713,6 +726,8 @@
 		},
 		"sessionLink": "POS session",
 		"sessionTouchLink": "POS session - touch screen",
+		"nonEmptyPoolsWarning": "Warning: there are non-empty pools. Please process them properly before closing your PoS Session.",
+		"touchSessionRequired": "If you want to use PoS touchscreen interface, please open session",
 		"useSelectForTags": "Use select menu for product tag selection",
 		"tapToPay": {
 			"inProgress": "The payment will be automatically validated once the external transaction is recorded and validated.",
@@ -749,7 +764,10 @@
 			"notDeveloped": "Not developed yet",
 			"confirmDeleteLastItem": "Do you want to delete the last cart line?",
 			"confirmDeleteAllItems": "Do you want to delete all cart lines?",
-			"maxQuantityReached": "Maximum quantity per order reached ({max})"
+			"maxQuantityReached": "Maximum quantity per order reached ({max})",
+			"itemPrintedCannotDelete": "This item has been printed on a kitchen ticket and cannot be deleted",
+			"itemPrintedCannotReduce": "Cannot reduce quantity below printed amount: {min}",
+			"poolHasPrintedItems": "This pool contains printed items and cannot be deleted"
 		},
 		"itemEdit": {
 			"quantity": "Quantity",
@@ -763,8 +781,8 @@
 		},
 		"split": {
 			"notAvailableYet": "Not available yet",
-			"tabHeader": "Tab {slug}",
-			"tabToPayNow": "Tab {slug} (to pay now)",
+			"tabHeader": "Tab {poolLabel}",
+			"tabToPayNow": "Tab {poolLabel} (to pay now)",
 			"pool": "POOL",
 			"poolRemainingToPay": "POOL (remaining to be paid)",
 			"exclVat": "excl. VAT",
@@ -777,7 +795,8 @@
 			"shares": "shares",
 			"itemize": "itemize",
 			"return": "Return",
-			"continueSplit": "Continue split ({mode})",
+			"continueSplit": "Continue",
+			"skipForNow": "Skip for now",
 			"paySelected": "Pay selected",
 			"includingVatIncluded": "Including (VAT included):",
 			"tagProducts": "Tag \"{name}\" products",
@@ -797,6 +816,11 @@
 			"beforeDiscount": "BEFORE DISCOUNT",
 			"afterDiscount": "AFTER DISCOUNT"
 		},
+		"receipt": {
+			"ticket": "Receipt (ticket)",
+			"invoice": "Invoice (A4)"
+		},
+		"staffNotes": "Staff notes",
 		"btn": {
 			"add": "Add",
 			"cancel": "Cancel",
@@ -821,6 +845,8 @@
 		"label": {
 			"amount": "Amount",
 			"currency": "Currency",
+			"currencyCodeHelp": "Find your currency code",
+			"currencyCodeHelpUrl": "https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes",
 			"method": "Method",
 			"subtype": "Type"
 		},
@@ -841,7 +867,10 @@
 		"midTicket": {
 			"title": "Kitchen/Mid-Ticket Settings",
 			"topBlankLines": "Number of blank lines at the top of mid-ticket (for clamping)",
-			"topBlankLinesHint": "Default: 0"
+			"topBlankLinesHint": "Default: 0",
+			"printedAt": "Printed on {date} at {time}",
+			"poolFirstItemAdded": "Table opened on {date} at {time}",
+			"orderCreatedAt": "Order created on {date} at {time}"
 		}
 	},
 	"product": {
@@ -858,7 +887,14 @@
 				"other": "{count} minutes"
 			},
 			"time": "Time of day",
-			"timezone": "Time zone: {timeZone}"
+			"timezone": "Time zone: {timeZone}",
+			"selectDateRange": "Select start and end dates (click twice to select a range)",
+			"selectedDate": "Selected: {date}",
+			"selectedRange": "Selected: {start} to {end} ({days} days)",
+			"selectedRangeWithAvailable": "{totalDays} days selected, {availableDays} days available: {dates}",
+			"noAvailableDays": "No available days in selected range",
+			"maxRangeExceeded": "Maximum selection is {days} days",
+			"maxRangeInfo": "Maximum booking period: {days} days"
 		},
 		"checkBackLater": "Please check back later",
 		"cta": {
@@ -935,8 +971,14 @@
 		},
 		"initiallyCreated": "Initially created: <0></0>",
 		"paidUntil": "Paid until: <0></0>",
+		"expiresOn": "Expires on",
+		"lastOrder": "View last order",
+		"lastPayment": "Last payment",
+		"listTitle": "Your subscriptions",
+		"noSubscriptions": "You have no subscriptions yet.",
 		"singleTitle": "Subscription #{number}",
 		"status": {
+			"active": "active",
 			"expired": "expired"
 		}
 	},
@@ -944,7 +986,7 @@
 		"boughtAt": "Bought {date} at {time}",
 		"burn": "Mark ticket as used",
 		"print": "Print",
-		"scanned": "🔥 This ticket has been scanned le {date} à {time} and is not valid anymore",
+		"scanned": "🔥 This ticket has been scanned on {date} at {time} and is not valid anymore",
 		"unburn": "Mark ticket as unused"
 	},
 	"widget": {

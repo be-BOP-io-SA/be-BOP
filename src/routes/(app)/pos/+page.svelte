@@ -1,6 +1,7 @@
 <script lang="ts">
 	import OrdersList from '$lib/components/OrdersList.svelte';
 	import { useI18n } from '$lib/i18n';
+	import { page } from '$app/stores';
 	import { isToday, isYesterday, format, formatDistance } from 'date-fns';
 	import IconWarning from '~icons/ant-design/warning-outlined';
 
@@ -39,6 +40,11 @@
 	<meta name="viewport" content="width=1000" />
 </svelte:head>
 <main class="max-w-7xl p-4 flex flex-col gap-4">
+	{#if $page.url.searchParams.get('errorMessage') === 'pos-touch-session-required'}
+		<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+			{t('pos.touchSessionRequired')}
+		</div>
+	{/if}
 	<a href="/pos/session" class="body-hyperlink hover:underline">{t('pos.sessionLink')}</a>
 	<a href="/pos/touch" class="body-hyperlink hover:underline">{t('pos.sessionTouchLink')}</a>
 	{#if data.posSession.enabled}
@@ -90,6 +96,16 @@
 					{/if}
 					<a href="/pos/closing" class="btn btn-green"> Close the PoS & generate Z ticket </a>
 				</div>
+				{#if data.nonEmptyPoolLabels.length > 0}
+					<p class="text-red-600 font-semibold mt-3">
+						{t('pos.nonEmptyPoolsWarning')}
+					</p>
+					<ul class="text-red-600 text-sm ml-4 list-disc">
+						{#each data.nonEmptyPoolLabels as label}
+							<li>{label}</li>
+						{/each}
+					</ul>
+				{/if}
 			{:else}
 				<p class="text-sm text-gray-600 mb-3">
 					No active POS session. Start your day by opening the POS.

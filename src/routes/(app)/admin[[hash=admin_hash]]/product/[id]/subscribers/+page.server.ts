@@ -1,5 +1,4 @@
 import { collections } from '$lib/server/database';
-import { pojo } from '$lib/server/pojo';
 import { error, fail } from '@sveltejs/kit';
 import { userQuery } from '$lib/server/user';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
@@ -17,11 +16,15 @@ export const load = async ({ params }) => {
 	}
 
 	return {
-		product: pojo(product),
 		subscriptions: subscriptions.map((subscription) => ({
-			...pojo(subscription),
-			user: pojo(subscription.user),
-			notifications: subscription.notifications.map(pojo)
+			_id: subscription._id,
+			paidUntil: subscription.paidUntil,
+			updatedAt: subscription.updatedAt,
+			cancelledAt: subscription.cancelledAt,
+			user: {
+				email: subscription.user.email,
+				npub: subscription.user.npub
+			}
 		}))
 	};
 };

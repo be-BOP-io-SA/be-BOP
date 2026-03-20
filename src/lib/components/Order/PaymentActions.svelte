@@ -2,6 +2,7 @@
 	import type { SerializedOrderPayment } from '$lib/types/Order';
 	import { useI18n } from '$lib/i18n';
 	import PaymentForm from './PaymentForm.svelte';
+	import ForwardReceiptForm from './ForwardReceiptForm.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 
 	const { t } = useI18n();
@@ -59,7 +60,7 @@
 			disabled={!receiptReady}
 			on:click={printReceipt}
 		>
-			Print receipt (A4)
+			{posMode ? t('pos.receipt.invoice') : 'Print receipt (A4)'}
 		</button>
 		<button
 			class="body-hyperlink self-start"
@@ -67,7 +68,7 @@
 			disabled={!ticketReady}
 			on:click={printTicket}
 		>
-			Print receipt (ticket)
+			{posMode ? t('pos.receipt.ticket') : 'Print receipt (ticket)'}
 		</button>
 	{/if}
 
@@ -89,7 +90,7 @@
 			disabled={!receiptReady}
 			on:click={printReceipt}
 		>
-			Print receipt (A4)
+			{posMode ? t('pos.receipt.invoice') : 'Print receipt (A4)'}
 		</button>
 		<button
 			class="btn btn-black self-start"
@@ -97,8 +98,15 @@
 			disabled={!ticketReady}
 			on:click={printTicket}
 		>
-			Print receipt (ticket)
+			{posMode ? t('pos.receipt.ticket') : 'Print receipt (ticket)'}
 		</button>
+	{/if}
+
+	{#if payment.status === 'paid' && roleIsStaff}
+		<ForwardReceiptForm
+			actionUrl="{orderStaffActionBaseUrl}?/forwardReceipt"
+			paymentId={payment.id}
+		/>
 	{/if}
 
 	{#if showInvoice && !roleIsStaff}
@@ -357,8 +365,10 @@
 			<input
 				class="form-input"
 				type="text"
-				name={payment.method === 'bank-transfer' ? 'bankTransferNumber' : 'detail'}
-				value={payment.method === 'bank-transfer' ? payment.bankTransferNumber : payment.detail}
+				name="paymentDetail"
+				value={payment.method === 'bank-transfer'
+					? payment.bankTransferNumber ?? ''
+					: payment.detail ?? ''}
 				disabled={disableInfoChange}
 			/>
 			<button type="submit" class="btn btn-blue" disabled={disableInfoChange}>

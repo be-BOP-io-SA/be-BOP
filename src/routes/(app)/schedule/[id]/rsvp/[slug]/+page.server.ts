@@ -1,14 +1,13 @@
 import { SMTP_USER } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import { queueEmail } from '$lib/server/email';
-import { zodNpub } from '$lib/server/nostr';
+import { validateEmailOrNpub } from '$lib/server/nostr';
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { format } from 'date-fns';
 import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';
-import { z } from 'zod';
 
 export const load = async ({ params }) => {
 	const schedule = await collections.schedules.findOne({ _id: params.id });
@@ -39,13 +38,11 @@ export const actions = {
 
 		const data = await request.formData();
 
-		const { address } = z
-			.object({
-				address: z.union([z.string().email(), zodNpub()])
-			})
-			.parse({
-				address: data.get('address')
-			});
+		const result = validateEmailOrNpub(data.get('address'));
+		if ('error' in result) {
+			return fail(400, { error: result.error });
+		}
+		const address = result.address;
 		rateLimit(locals.clientIp, 'email', 5, { minutes: 5 });
 
 		if (eventSchedule.rsvp && eventSchedule.rsvp.target.includes('@')) {

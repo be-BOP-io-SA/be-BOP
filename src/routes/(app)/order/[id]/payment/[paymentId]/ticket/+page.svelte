@@ -16,4 +16,6 @@
 	showGroupHeaders={true}
 	sharesInfo={data.sharesInfo}
 	peopleCount={data.peopleCount}
+	poolOpenedAt={data.poolOpenedAt}
+	orderCreatedAt={data.orderCreatedAt}
 />

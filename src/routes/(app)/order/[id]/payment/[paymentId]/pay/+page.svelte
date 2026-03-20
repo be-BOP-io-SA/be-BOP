@@ -183,11 +183,13 @@
 	let paymentLoading = false;
 	let stripeLoading = true;
 	let originPayment = $page.url.searchParams.get('origin');
-
+	$: returnTo = $page.url.searchParams.get('returnTo');
 	$: orderPath =
 		originPayment === 'customer-touch'
 			? '/pos/customer-touch/payment/' + $page.params.id
-			: '/order/' + $page.params.id;
+			: returnTo
+				? `/order/${$page.params.id}?returnTo=${encodeURIComponent(returnTo)}`
+				: `/order/${$page.params.id}`;
 
 	function mountSumUpCard() {
 		// Should always be true due to backend validation, doing this for TS

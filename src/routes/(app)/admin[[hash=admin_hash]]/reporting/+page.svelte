@@ -25,6 +25,7 @@
 	let includeCanceled = false;
 	let includePartiallyPaid = false;
 	let filterByTag = !!data.tagId;
+	let selectedPaymentMethod = data.paymentMethod ?? '';
 	let html = '';
 	let loadedHtml = false;
 	let htmlStatus = '';
@@ -35,12 +36,21 @@
 			label: employee
 		})) ?? [];
 
-	$: beginsAt = startOfDay(data.beginsAt);
-	$: endsAt = endOfDay(data.endsAt);
+	$: beginsAt = data.beginsAtStr ? new Date(data.beginsAtStr) : startOfDay(data.beginsAt);
+	$: endsAt = data.endsAtStr
+		? (() => {
+				const d = new Date(data.endsAtStr);
+				d.setSeconds(59, 999);
+				return d;
+		  })()
+		: endOfDay(data.endsAt);
 
-	function dateString(date: Date) {
+	function dateTimeLocalString(date: Date) {
 		return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date
 			.getDate()
+			.toString()
+			.padStart(2, '0')}T${date.getHours().toString().padStart(2, '0')}:${date
+			.getMinutes()
 			.toString()
 			.padStart(2, '0')}`;
 	}
@@ -50,6 +60,18 @@
 		(order) => order.createdAt >= beginsAt && order.createdAt <= endsAt
 	);
 	$: paidOrders = orders.filter((order) => order.status === 'paid');
+	$: paymentMatchesFilter = (payment: { method: string; posSubtype?: string }) => {
+		if (!data.paymentMethod) {
+			return true;
+		}
+		if (payment.method !== data.paymentMethod) {
+			return false;
+		}
+		if (data.posSubtype && payment.posSubtype !== data.posSubtype) {
+			return false;
+		}
+		return true;
+	};
 	$: orderFiltered = orders.filter(
 		(order) =>
 			order.status === 'paid' ||
@@ -158,27 +180,23 @@
 		return productQuantities;
 	}
 	function quantityOfPaymentMean(orders: typeof paidOrders) {
-		const paymentMeanQuantities: Record<string, { quantity: number; total: number }> = {};
-		const paymentMeanDetails: Record<string, Price[]> = {};
-
-		for (const order of orders) {
-			for (const payment of order.payments) {
+		const grouped = orders
+			.flatMap((order) => order.payments.filter(paymentMatchesFilter))
+			.reduce<Record<string, Price[]>>((acc, payment) => {
 				const key =
 					payment.method === 'point-of-sale' && payment.posSubtype
 						? `${payment.method}:${payment.posSubtype}`
 						: payment.method;
-				paymentMeanDetails[key] ??= [];
-				paymentMeanDetails[key].push(payment.currencySnapshot.main.price);
-				paymentMeanQuantities[key] ??= { quantity: 0, total: 0 };
-				paymentMeanQuantities[key].quantity += 1;
-			}
-		}
+				(acc[key] ??= []).push(payment.currencySnapshot.main.price);
+				return acc;
+			}, {});
 
-		for (const [method, details] of Object.entries(paymentMeanDetails)) {
-			paymentMeanQuantities[method].total = sumCurrency(data.currencies.main, details);
-		}
-
-		return paymentMeanQuantities;
+		return Object.fromEntries(
+			Object.entries(grouped).map(([method, prices]) => [
+				method,
+				{ quantity: prices.length, total: sumCurrency(data.currencies.main, prices) }
+			])
+		);
 	}
 	function fetchProductById(productId: string) {
 		for (const order of paidOrders) {
@@ -282,28 +300,58 @@
 	<div class="col-span-3">
 		<label class="form-label">
 			BeginsAt
-			<input class="form-input" name="beginsAt" type="date" value={dateString(beginsAt)} />
+			<input
+				class="form-input"
+				type="datetime-local"
+				name="beginsAt"
+				value={dateTimeLocalString(beginsAt)}
+			/>
 		</label>
 	</div>
 	<div class="col-span-3">
 		<label class="form-label">
 			EndsAt
-			<input class="form-input" type="date" name="endsAt" value={dateString(endsAt)} />
+			<input
+				class="form-input"
+				type="datetime-local"
+				name="endsAt"
+				value={dateTimeLocalString(endsAt)}
+			/>
 		</label>
 	</div>
 	<div class="col-span-2">
 		<label class="form-label">
 			Payment Mean
-			<select name="paymentMethod" class="form-input" disabled={data.paymentMethods.length === 0}>
-				<option></option>
+			<select
+				name="paymentMethod"
+				class="form-input"
+				disabled={data.paymentMethods.length === 0}
+				bind:value={selectedPaymentMethod}
+			>
+				<option value=""></option>
 				{#each data.paymentMethods as paymentMethod}
-					<option value={paymentMethod} selected={data.paymentMethod === paymentMethod}>
+					<option value={paymentMethod}>
 						{t('checkout.paymentMethod.' + paymentMethod)}
 					</option>
 				{/each}
 			</select>
 		</label>
 	</div>
+	{#if selectedPaymentMethod === 'point-of-sale' && data.posSubtypes?.length}
+		<div class="col-span-2">
+			<label class="form-label">
+				PoS Subtype
+				<select name="posSubtype" class="form-input">
+					<option value="">All subtypes</option>
+					{#each data.posSubtypes as subtype}
+						<option value={subtype.slug} selected={data.posSubtype === subtype.slug}>
+							{subtype.name}
+						</option>
+					{/each}
+				</select>
+			</label>
+		</div>
+	{/if}
 	<div class="col-span-3">
 		<label class="form-label">
 			Employee alias
@@ -570,7 +618,7 @@
 				<tbody>
 					<!-- Order rows -->
 					{#each orders.filter((order) => order.status === 'paid' || (includePartiallyPaid && order.payments.some((payment) => payment.status === 'paid')) || (includeExpired && order.payments.some((payment) => payment.status === 'expired'))) as order}
-						{#each order.payments as payment}
+						{#each order.payments.filter(paymentMatchesFilter) as payment}
 							<tr class="hover:bg-gray-100 whitespace-nowrap">
 								<td class="border border-gray-300 px-4 py-2">{order.number}</td>
 								<td class="border border-gray-300 px-4 py-2"

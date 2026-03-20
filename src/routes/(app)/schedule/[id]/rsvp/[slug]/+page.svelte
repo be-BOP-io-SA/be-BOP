@@ -24,6 +24,9 @@
 		</label>
 		<input class="form-input" type="hidden" name="scheduleId" value={data.schedule._id} />
 
+		{#if form?.error}
+			<p class="text-red-500">{t('login.error.' + form.error)}</p>
+		{/if}
 		{#if form?.success}
 			<p class="text-green-500">{t('schedule.rsvp.succesfulNotifyMessage')}</p>
 		{/if}

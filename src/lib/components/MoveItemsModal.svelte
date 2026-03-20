@@ -8,9 +8,27 @@
 	import { invalidate } from '$app/navigation';
 	import { UrlDependency } from '$lib/types/UrlDependency';
 	import { enhance } from '$app/forms';
+	import { swipe } from '$lib/utils/swipe';
+	import { onMount } from 'svelte';
 	import type { Price } from '$lib/types/Order';
 
 	const { t } = useI18n();
+
+	let isMobile = false;
+	let mobilePanel: 'left' | 'right' = 'left';
+
+	function checkMobileView() {
+		isMobile = window.innerWidth < mobileBreakpoint;
+		if (!isMobile) {
+			mobilePanel = 'left';
+		}
+	}
+
+	onMount(() => {
+		checkMobileView();
+		window.addEventListener('resize', checkMobileView);
+		return () => window.removeEventListener('resize', checkMobileView);
+	});
 
 	type HydratedItem = {
 		_id: string;
@@ -35,6 +53,7 @@
 	export let emptyIcon: string | undefined = '✅';
 	export let occupiedIcon: string | undefined = '⏳';
 	export let onClose: () => void;
+	export let mobileBreakpoint = 1024;
 
 	// State for tab selection
 	let leftTabSlug: string;
@@ -206,119 +225,176 @@
 
 {#if isOpen}
 	<div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-		<div class="bg-white w-full h-full flex flex-col">
+		<div
+			class="bg-white w-full h-full flex flex-col"
+			class:pos-mobile={isMobile}
+			use:swipe={{
+				enabled: isMobile,
+				onSwipeLeft: () => (mobilePanel = 'right'),
+				onSwipeRight: () => (mobilePanel = 'left')
+			}}
+		>
 			<!-- Header with dropdowns -->
 			<header class="bg-gray-800">
-				<div class="grid grid-cols-2 gap-4">
-					<PoolDropdown
-						pools={availableTabs}
-						selectedSlug={leftTabSlug}
-						{allOrderTabs}
-						{emptyIcon}
-						{occupiedIcon}
-						disabledSlugs={[rightTabSlug]}
-						onSelect={(slug) => handleTabChange('left', slug)}
-					/>
-					<PoolDropdown
-						pools={availableTabs}
-						selectedSlug={rightTabSlug}
-						{allOrderTabs}
-						{emptyIcon}
-						{occupiedIcon}
-						disabledSlugs={[leftTabSlug]}
-						onSelect={(slug) => handleTabChange('right', slug)}
-					/>
-				</div>
+				{#if isMobile}
+					{#if mobilePanel === 'left'}
+						<PoolDropdown
+							pools={availableTabs}
+							selectedSlug={leftTabSlug}
+							{allOrderTabs}
+							{emptyIcon}
+							{occupiedIcon}
+							disabledSlugs={[rightTabSlug]}
+							onSelect={(slug) => handleTabChange('left', slug)}
+						/>
+					{:else}
+						<PoolDropdown
+							pools={availableTabs}
+							selectedSlug={rightTabSlug}
+							{allOrderTabs}
+							{emptyIcon}
+							{occupiedIcon}
+							disabledSlugs={[leftTabSlug]}
+							onSelect={(slug) => handleTabChange('right', slug)}
+						/>
+					{/if}
+				{:else}
+					<div class="grid grid-cols-2 gap-4">
+						<PoolDropdown
+							pools={availableTabs}
+							selectedSlug={leftTabSlug}
+							{allOrderTabs}
+							{emptyIcon}
+							{occupiedIcon}
+							disabledSlugs={[rightTabSlug]}
+							onSelect={(slug) => handleTabChange('left', slug)}
+						/>
+						<PoolDropdown
+							pools={availableTabs}
+							selectedSlug={rightTabSlug}
+							{allOrderTabs}
+							{emptyIcon}
+							{occupiedIcon}
+							disabledSlugs={[leftTabSlug]}
+							onSelect={(slug) => handleTabChange('right', slug)}
+						/>
+					</div>
+				{/if}
 			</header>
 
-			<!-- Main content: 2-panel layout -->
-			<main class="flex-grow overflow-y-auto">
-				<div class="grid grid-cols-2 gap-4 h-full">
-					<!-- Left panel -->
-					<div class="flex flex-col justify-between p-3 h-full overflow-y-auto bg-gray-50">
-						<div>
-							<h3 class="font-semibold text-3xl mb-4">
-								{availableTabs.find((tab) => tab.slug === leftTabSlug)?.name ?? leftTabSlug}
-							</h3>
-							{#each displayLeftItemsGrouped as item}
-								{@const itemId = item.itemIds[0]}
-								{@const displayQty = item.displayQty}
-								{@const priceInfo = {
-									amount: (item.product?.price?.amount ?? 0) * displayQty,
-									currency: item.product?.price?.currency ?? UNDERLYING_CURRENCY
-								}}
+			<!-- Main content -->
+			<main class="flex-grow overflow-y-auto relative">
+				{#if isMobile}
+					<button
+						class="mobile-panel-toggle mobile-panel-toggle-left"
+						on:click={() => (mobilePanel = 'left')}
+						aria-label="Show left pool"
+						style:display={mobilePanel === 'right' ? 'block' : 'none'}
+					>
+						&lt;
+					</button>
+					<button
+						class="mobile-panel-toggle mobile-panel-toggle-right"
+						on:click={() => (mobilePanel = 'right')}
+						aria-label="Show right pool"
+						style:display={mobilePanel === 'left' ? 'block' : 'none'}
+					>
+						&gt;
+					</button>
+				{/if}
 
-								<PosSplitItemRow
-									{item}
-									quantity={displayQty}
-									{priceInfo}
-									vatRate={8.1}
-									controls="move-to-cart"
-									isComplete={displayQty === 0}
-									onMoveOne={() => moveOne(itemId, leftTabSlug, rightTabSlug)}
-									onMoveAll={() => {
-										item.itemIds.forEach((id) => moveAll(id, leftTabSlug, rightTabSlug));
+				<div class="grid {isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4 h-full">
+					<!-- Left panel -->
+					{#if !isMobile || mobilePanel === 'left'}
+						<div class="flex flex-col justify-between p-3 h-full overflow-y-auto bg-gray-50">
+							<div>
+								<h3 class="font-semibold {isMobile ? 'text-xl mb-2' : 'text-3xl mb-4'}">
+									{availableTabs.find((tab) => tab.slug === leftTabSlug)?.name ?? leftTabSlug}
+								</h3>
+								{#each displayLeftItemsGrouped as item}
+									{@const itemId = item.itemIds[0]}
+									{@const displayQty = item.displayQty}
+									{@const priceInfo = {
+										amount: (item.product?.price?.amount ?? 0) * displayQty,
+										currency: item.product?.price?.currency ?? UNDERLYING_CURRENCY
 									}}
-								/>
-							{/each}
+
+									<PosSplitItemRow
+										{item}
+										quantity={displayQty}
+										{priceInfo}
+										vatRate={8.1}
+										controls="move-to-cart"
+										isComplete={displayQty === 0}
+										onMoveOne={() => moveOne(itemId, leftTabSlug, rightTabSlug)}
+										onMoveAll={() => {
+											item.itemIds.forEach((id) => moveAll(id, leftTabSlug, rightTabSlug));
+										}}
+									/>
+								{/each}
+							</div>
+							<PosSplitTotalSection
+								totalExcl={leftTabPriceInfo.partialPrice}
+								totalIncl={leftTabPriceInfo.partialPriceWithVat}
+								currency={leftTabPriceInfo.currency}
+								vatRates={leftTabPriceInfo.vat.map((vat) => vat.rate)}
+							/>
 						</div>
-						<PosSplitTotalSection
-							totalExcl={leftTabPriceInfo.partialPrice}
-							totalIncl={leftTabPriceInfo.partialPriceWithVat}
-							currency={leftTabPriceInfo.currency}
-							vatRates={leftTabPriceInfo.vat.map((vat) => vat.rate)}
-						/>
-					</div>
+					{/if}
 
 					<!-- Right panel -->
-					<div class="flex flex-col justify-between p-3 h-full overflow-y-auto bg-blue-50">
-						<div>
-							<h3 class="font-semibold text-3xl mb-4">
-								{availableTabs.find((tab) => tab.slug === rightTabSlug)?.name ?? rightTabSlug}
-							</h3>
-							{#each displayRightItemsGrouped as item}
-								{@const itemId = item.itemIds[0]}
-								{@const displayQty = item.displayQty}
-								{@const priceInfo = {
-									amount: (item.product?.price?.amount ?? 0) * displayQty,
-									currency: item.product?.price?.currency ?? UNDERLYING_CURRENCY
-								}}
-
-								<PosSplitItemRow
-									{item}
-									quantity={displayQty}
-									{priceInfo}
-									vatRate={8.1}
-									controls="return-to-pool"
-									onReturnOne={() => moveOne(itemId, rightTabSlug, leftTabSlug)}
-									onReturnAll={() => {
-										item.itemIds.forEach((id) => moveAll(id, rightTabSlug, leftTabSlug));
+					{#if !isMobile || mobilePanel === 'right'}
+						<div class="flex flex-col justify-between p-3 h-full overflow-y-auto bg-blue-50">
+							<div>
+								<h3 class="font-semibold {isMobile ? 'text-xl mb-2' : 'text-3xl mb-4'}">
+									{availableTabs.find((tab) => tab.slug === rightTabSlug)?.name ?? rightTabSlug}
+								</h3>
+								{#each displayRightItemsGrouped as item}
+									{@const itemId = item.itemIds[0]}
+									{@const displayQty = item.displayQty}
+									{@const priceInfo = {
+										amount: (item.product?.price?.amount ?? 0) * displayQty,
+										currency: item.product?.price?.currency ?? UNDERLYING_CURRENCY
 									}}
-								/>
-							{/each}
+
+									<PosSplitItemRow
+										{item}
+										quantity={displayQty}
+										{priceInfo}
+										vatRate={8.1}
+										controls="return-to-pool"
+										onReturnOne={() => moveOne(itemId, rightTabSlug, leftTabSlug)}
+										onReturnAll={() => {
+											item.itemIds.forEach((id) => moveAll(id, rightTabSlug, leftTabSlug));
+										}}
+									/>
+								{/each}
+							</div>
+							<PosSplitTotalSection
+								totalExcl={rightTabPriceInfo.partialPrice}
+								totalIncl={rightTabPriceInfo.partialPriceWithVat}
+								currency={rightTabPriceInfo.currency}
+								vatRates={rightTabPriceInfo.vat.map((vat) => vat.rate)}
+							/>
 						</div>
-						<PosSplitTotalSection
-							totalExcl={rightTabPriceInfo.partialPrice}
-							totalIncl={rightTabPriceInfo.partialPriceWithVat}
-							currency={rightTabPriceInfo.currency}
-							vatRates={rightTabPriceInfo.vat.map((vat) => vat.rate)}
-						/>
-					</div>
+					{/if}
 				</div>
 			</main>
 
 			<!-- Footer: Cancel + Save -->
-			<footer class="bg-gray-100 p-4">
+			<footer class="bg-gray-100 {isMobile ? 'p-2' : 'p-4'}">
 				{#if saveError}
 					<div class="bg-red-100 border-2 border-red-400 p-3 rounded mb-4 text-center">
 						<p class="text-red-600 text-xl">{saveError}</p>
 					</div>
 				{/if}
 
-				<div class="grid grid-cols-2 gap-4">
+				<div class="grid grid-cols-2 {isMobile ? 'gap-2' : 'gap-4'}">
 					<button
 						type="button"
-						class="bg-gray-600 hover:bg-gray-700 text-white text-3xl p-4 rounded uppercase"
+						class="bg-gray-600 hover:bg-gray-700 text-white {isMobile
+							? 'text-xl p-2'
+							: 'text-3xl p-4'} rounded uppercase"
 						on:click={onClose}
 					>
 						{t('pos.touch.cancel')}
@@ -349,7 +425,9 @@
 						<input type="hidden" name="moves" value={movesJson} />
 						<button
 							type="submit"
-							class="bg-green-600 hover:bg-green-700 text-white text-3xl p-4 rounded uppercase w-full"
+							class="bg-green-600 hover:bg-green-700 text-white {isMobile
+								? 'text-xl p-2'
+								: 'text-3xl p-4'} rounded uppercase w-full"
 							disabled={pendingMoves.size === 0}
 						>
 							{t('pos.touch.save')}

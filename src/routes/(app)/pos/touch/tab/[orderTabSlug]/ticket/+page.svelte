@@ -13,4 +13,5 @@
 	companyLogoUrl={data.companyLogoUrl}
 	showBebopLogo={data.showBebopLogo}
 	showOnScreen={true}
+	poolOpenedAt={data.poolOpenedAt}
 />

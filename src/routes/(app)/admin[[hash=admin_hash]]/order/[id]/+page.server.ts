@@ -1,12 +1,18 @@
 import { adminPrefix } from '$lib/server/admin';
 import { collections } from '$lib/server/database';
+import { queueEmail } from '$lib/server/email';
+import { ORIGIN } from '$lib/server/env-config';
+import { validateEmailOrNpub } from '$lib/server/nostr';
 import { addOrderPayment } from '$lib/server/orders';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
+import { rateLimit } from '$lib/server/rateLimit';
 import { userIdentifier } from '$lib/server/user';
 import { parsePriceAmount } from '$lib/types/Currency.js';
 import { orderAmountWithNoPaymentsCreated as orderAmountWithNoPayments } from '$lib/types/Order.js';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
+import { Kind } from 'nostr-tools';
+import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 export const actions = {
@@ -76,7 +82,7 @@ export const actions = {
 			}
 		);
 
-		throw redirect(303, `/order/${order._id}`);
+		throw redirect(303, request.headers.get('referer') || `/order/${order._id}`);
 	},
 	saveNote: async function ({ params, request, locals }) {
 		const data = await request.formData();
@@ -105,7 +111,7 @@ export const actions = {
 				}
 			}
 		);
-		throw redirect(303, `/order/${params.id}/notes`);
+		throw redirect(303, request.headers.get('referer') || `/order/${params.id}/notes`);
 	},
 	cancel: async ({ params, request }) => {
 		const order = await collections.orders.findOneAndUpdate(
@@ -143,5 +149,55 @@ export const actions = {
 		}
 
 		throw redirect(303, request.headers.get('referer') || `${adminPrefix()}/order`);
+	},
+	forwardReceipt: async ({ params, request, locals }) => {
+		rateLimit(locals.clientIp, 'forwardReceipt', 5, { minutes: 5 });
+
+		const order = await collections.orders.findOne({ _id: params.id });
+		if (!order) {
+			throw error(404, 'Order not found');
+		}
+
+		if (order.status !== 'paid') {
+			throw error(400, 'Order is not paid');
+		}
+
+		const formData = await request.formData();
+		const addressResult = validateEmailOrNpub(formData.get('address'));
+		if ('error' in addressResult) {
+			return fail(400, { error: addressResult.error });
+		}
+		const address = addressResult.address;
+		const { paymentId } = z
+			.object({
+				paymentId: z.string().min(1)
+			})
+			.parse({
+				paymentId: formData.get('paymentId')
+			});
+
+		const payment = order.payments.find((p) => p._id.toString() === paymentId);
+		if (!payment) {
+			throw error(404, 'Payment not found');
+		}
+
+		if (address.startsWith('npub')) {
+			await collections.nostrNotifications.insertOne({
+				_id: new ObjectId(),
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				kind: Kind.EncryptedDirectMessage,
+				content: `Order #${order.number} receipt: ${ORIGIN}/order/${order._id}`,
+				dest: address
+			});
+		} else {
+			// Email: queue order.paid template
+			await queueEmail(address, 'order.paid', {
+				orderNumber: order.number.toString(),
+				orderLink: `${ORIGIN}/order/${order._id}`
+			});
+		}
+
+		return { forwardReceiptSuccess: true };
 	}
 };

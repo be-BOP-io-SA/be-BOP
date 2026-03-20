@@ -1,4 +1,5 @@
 import { collections } from '$lib/server/database';
+import { cancelPayment } from '$lib/server/orders';
 import { error } from '@sveltejs/kit';
 import { actions as adminOrderActions } from '../../../../../admin[[hash=admin_hash]]/order/[id]/payment/[paymentId]/+page.server';
 import { adminPrefix } from '$lib/server/admin';
@@ -41,9 +42,14 @@ export const actions = {
 		const { id, paymentId } = event.params;
 		const order = await collections.orders.findOne({ _id: id });
 		throwIfPosAccountCannotManageOrder(order, paymentId, event.locals.user);
-		const cancel = adminOrderActions.cancel;
-		// @ts-expect-error different route but compatible
-		return cancel(event);
+
+		const redirectUrl = order?.orderTabSlug
+			? order.splitMode
+				? `/pos/touch/tab/${order.orderTabSlug}/split?mode=${order.splitMode}`
+				: `/pos/touch/tab/${order.orderTabSlug}`
+			: event.request.headers.get('referer') || '/pos';
+
+		return cancelPayment(event.params, redirectUrl);
 	},
 
 	cancelTapToPay: async (event) => {

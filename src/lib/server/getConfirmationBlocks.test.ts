@@ -7,6 +7,8 @@ describe('getConfirmationBlocks', () => {
 	let oldConfig: typeof runtimeConfig.confirmationBlocksThresholds;
 	beforeAll(() => {
 		oldConfig = runtimeConfig.confirmationBlocksThresholds;
+		// Seed exchange rate for CHF since defaultExchangeRate is now dynamic
+		runtimeConfig.exchangeRate.CHF = 30_000;
 		runtimeConfig.confirmationBlocksThresholds = {
 			currency: 'CHF',
 			defaultBlocks: 1,

@@ -237,6 +237,8 @@ export async function addToOrderTab(params: {
 		};
 	}
 
+	const wasEmpty = orderTab.items.length === 0;
+
 	if (existingItem) {
 		existingItem.quantity = newQuantity;
 		if (existingItem.originalQuantity !== undefined) {
@@ -252,7 +254,15 @@ export async function addToOrderTab(params: {
 		});
 	}
 
-	await collections.orderTabs.updateOne({ _id: orderTab._id }, { $set: { items: orderTab.items } });
+	await collections.orderTabs.updateOne(
+		{ _id: orderTab._id },
+		{
+			$set: {
+				items: orderTab.items,
+				...(wasEmpty && { poolOpenedAt: new Date() })
+			}
+		}
+	);
 	return { success: true };
 }
 
@@ -266,6 +276,12 @@ export async function removeFromOrderTab(params: {
 	await collections.orderTabs.updateOne(
 		{ slug: params.tabSlug },
 		{ $pull: { items: { _id: new ObjectId(params.tabItemId) } } }
+	);
+
+	// Clear poolOpenedAt if pool is now empty
+	await collections.orderTabs.updateOne(
+		{ slug: params.tabSlug, items: { $size: 0 } },
+		{ $unset: { poolOpenedAt: '' } }
 	);
 }
 
@@ -321,9 +337,16 @@ export async function handleOrderTabAfterPayment({
 			.map((item) => {
 				const tabItem = orderTab?.items.find((i) => item._id && i._id.equals(item._id));
 				const currentQuantity = tabItem?.quantity || 0;
+				const currentPrintedQuantity = tabItem?.printedQuantity ?? 0;
+				const printedQuantityDecrement = Math.min(item.quantity, currentPrintedQuantity);
 
 				const updateFields: Record<string, unknown> = {
-					$inc: { 'items.$.quantity': -item.quantity }
+					$inc: {
+						'items.$.quantity': -item.quantity,
+						...(printedQuantityDecrement > 0 && {
+							'items.$.printedQuantity': -printedQuantityDecrement
+						})
+					}
 				};
 
 				if (currentQuantity === item.quantity) {

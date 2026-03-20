@@ -65,6 +65,8 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 		 * Number of minutes for the price of the product.
 		 */
 		slotMinutes: number;
+		/** Maximum number of calendar days selectable in a date range booking. 0 or undefined = unlimited. */
+		maxBookableDays?: number;
 		schedule: {
 			timezone: string; // eg "Europe/Berlin"
 			monday: {

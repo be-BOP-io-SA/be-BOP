@@ -479,6 +479,12 @@
 		"personalInformation": "Persoonlijke informatie"
 	},
 	"login": {
+		"error": {
+			"invalidEmail": "Ongeldig e-mailadres",
+			"invalidNpub": "Ongeldig Nostr npub-adres",
+			"invalidContactAddress": "Uw contactadres is ongeldig (vul een correct e-mailadres of een Nostr npub in)",
+			"invalidOrExpiredToken": "Ongeldige of verlopen token"
+		},
 		"authenticate": {
 			"ctaCancelLabel": "Rug",
 			"ctaLabel": "Bevestigen",
@@ -639,6 +645,12 @@
 			"vatFreeReason": "Vrijgesteld van btw: {reason}",
 			"peopleCount": "Aantal personen"
 		},
+		"forwardReceipt": {
+			"cancel": "Annuleren",
+			"send": "Verzenden",
+			"success": "Bon doorgestuurd!",
+			"title": "Bon doorsturen"
+		},
 		"receiptFullyPaid": "Bon genereren (volledig betaald)",
 		"receiptPending": "Ontvangst genereren (betaling in behandeling)",
 		"related": {
@@ -655,6 +667,7 @@
 		"shippingAddress": {
 			"title": "Afleveradres"
 		},
+		"noOrdersYet": "Nog geen bestellingen",
 		"singleTitle": "Volgorde #{number}",
 		"summary": {
 			"fullyPaid": {
@@ -712,6 +725,8 @@
 		"label": {
 			"amount": "Bedrag",
 			"currency": "Valuta",
+			"currencyCodeHelp": "Vind uw valutacode",
+			"currencyCodeHelpUrl": "https://nl.wikipedia.org/wiki/ISO_4217",
 			"method": "Methode",
 			"subtype": "Type"
 		},
@@ -733,6 +748,8 @@
 		},
 		"sessionLink": "Bezit",
 		"sessionTouchLink": "POS-sessie - touchscreen",
+		"nonEmptyPoolsWarning": "Waarschuwing: er zijn niet-lege tafels. Verwerk deze correct voordat u uw POS-sessie sluit.",
+		"touchSessionRequired": "Als u de POS-touchscreen-interface wilt gebruiken, open dan een sessie",
 		"tapToPay": {
 			"inProgress": "De betaling wordt automatisch gevalideerd zodra de externe transactie is geregistreerd en gevalideerd.",
 			"inUseByOtherOrder": "Tap-to-pay is uitgeschakeld omdat er al een andere bestelling bezig is met deze betaalmethode. U kunt handmatig afrekenen en daarna het transactie­nummer in dit veld invullen."
@@ -768,7 +785,10 @@
 			"notDeveloped": "Nog niet ontwikkeld",
 			"confirmDeleteLastItem": "Wil je de laatste winkelwagen regel verwijderen?",
 			"confirmDeleteAllItems": "Wil je alle winkelwagen regels verwijderen?",
-			"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})"
+			"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})",
+			"itemPrintedCannotDelete": "Dit artikel is afgedrukt op een keukenbon en kan niet worden verwijderd",
+			"itemPrintedCannotReduce": "De hoeveelheid kan niet worden verminderd onder de afgedrukte hoeveelheid: {min}",
+			"poolHasPrintedItems": "Deze pool bevat afgedrukte artikelen en kan niet worden verwijderd"
 		},
 		"itemEdit": {
 			"quantity": "Hoeveelheid",
@@ -782,8 +802,8 @@
 		},
 		"split": {
 			"notAvailableYet": "Nog niet beschikbaar",
-			"tabHeader": "Tab {slug}",
-			"tabToPayNow": "Tab {slug} (nu te betalen)",
+			"tabHeader": "Tab {poolLabel}",
+			"tabToPayNow": "Tab {poolLabel} (nu te betalen)",
 			"pool": "POOL",
 			"poolRemainingToPay": "POOL (nog te betalen)",
 			"exclVat": "excl. BTW",
@@ -796,7 +816,8 @@
 			"shares": "delen",
 			"itemize": "specificeren",
 			"return": "Terug",
-			"continueSplit": "Verdeel voortzetten ({mode})",
+			"continueSplit": "Doorgaan",
+			"skipForNow": "Voorlopig overslaan",
 			"paySelected": "Selectie betalen",
 			"includingVatIncluded": "Waarvan (BTW inbegrepen):",
 			"tagProducts": "Producten \"{name}\"",
@@ -816,6 +837,11 @@
 			"beforeDiscount": "VOOR KORTING",
 			"afterDiscount": "NA KORTING"
 		},
+		"receipt": {
+			"ticket": "Bon (ticket)",
+			"invoice": "Factuur (A4)"
+		},
+		"staffNotes": "Personeelsnotities",
 		"discount": {
 			"title": "Korting",
 			"noDiscount": "Geen korting",
@@ -833,7 +859,10 @@
 		"midTicket": {
 			"title": "Keuken-/tussenbon instellingen",
 			"topBlankLines": "Aantal lege regels bovenaan de bon (voor klemmen)",
-			"topBlankLinesHint": "Standaard: 0"
+			"topBlankLinesHint": "Standaard: 0",
+			"printedAt": "Afgedrukt op {date} om {time}",
+			"poolFirstItemAdded": "Tafel geopend op {date} om {time}",
+			"orderCreatedAt": "Bestelling aangemaakt op {date} om {time}"
 		},
 		"useSelectForTags": "Gebruik dropdown voor tags"
 	},
@@ -928,8 +957,14 @@
 		},
 		"initiallyCreated": "Oorspronkelijk gemaakt: <0></0>",
 		"paidUntil": "Betaald tot: <0></0>",
+		"expiresOn": "Verloopt op",
+		"lastOrder": "Laatste bestelling bekijken",
+		"lastPayment": "Laatste betaling",
+		"listTitle": "Uw abonnementen",
+		"noSubscriptions": "U heeft nog geen abonnementen.",
 		"singleTitle": "Abonnement #{number}",
 		"status": {
+			"active": "actief",
 			"expired": "verlopen"
 		}
 	},
@@ -937,7 +972,7 @@
 		"boughtAt": "Gekocht op {date} om {time}",
 		"burn": "Markeer het ticket als gebruikt",
 		"print": "Afdrukken",
-		"scanned": "🔥 Dit ticket is gescand le {date} à {time} en is niet meer geldig",
+		"scanned": "🔥 Dit ticket is gescand op {date} om {time} en is niet meer geldig",
 		"unburn": "Markeer het ticket als ongebruikt"
 	},
 	"widget": {

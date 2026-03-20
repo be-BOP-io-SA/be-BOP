@@ -11,24 +11,26 @@ import { collections, withTransaction } from './database';
 import {
 	Duration,
 	add,
+	addDays,
 	addHours,
 	addMinutes,
 	differenceInMinutes,
 	differenceInSeconds,
-	endOfDay,
+	eachDayOfInterval,
 	isSameDay,
 	max,
 	startOfDay,
 	subSeconds
 } from 'date-fns';
 import { runtimeConfig } from './runtime-config';
+import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import { freeProductsForUser, generateSubscriptionNumber } from './subscriptions';
 import {
 	checkProductVariationsIntegrity,
 	productPriceWithVariations,
 	type Product
 } from '$lib/types/Product';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import {
 	currentWallet,
@@ -487,6 +489,30 @@ export async function onOrderPaymentFailed(
 	return order;
 }
 
+export async function cancelPayment(
+	params: { id: string; paymentId: string },
+	redirectUrl: string
+): Promise<never> {
+	const order = await collections.orders.findOne({ _id: params.id });
+
+	if (!order) {
+		throw error(404, 'Order not found');
+	}
+
+	const payment = order.payments.find((p) => p._id.equals(params.paymentId));
+
+	if (!payment) {
+		throw error(404, 'Payment not found');
+	}
+
+	if (payment.status !== 'pending') {
+		throw error(400, 'Payment is not pending');
+	}
+
+	await onOrderPaymentFailed(order, payment, 'canceled');
+	throw redirect(303, redirectUrl);
+}
+
 export async function lastInvoiceNumber(): Promise<number | undefined> {
 	return (
 		await collections.orders
@@ -639,13 +665,12 @@ export async function createOrder(
 					`Product ${item.product.name} is a booking, please provide booking time and duration`
 				);
 			}
-			if (item.booking.start <= new Date()) {
-				throw error(400, `Product ${item.product.name} booking start time is in the past`);
-			}
 			if (item.booking.end <= item.booking.start) {
 				throw error(400, `Product ${item.product.name} booking end time is before start time`);
 			}
-			const durationMinutes = differenceInMinutes(item.booking.end, item.booking.start);
+			const durationMinutes = item.booking.bookedDates?.length
+				? item.booking.bookedDates.length * item.product.bookingSpec.slotMinutes
+				: differenceInMinutes(item.booking.end, item.booking.start);
 
 			if (durationMinutes < item.product.bookingSpec.slotMinutes) {
 				throw error(
@@ -956,7 +981,10 @@ export async function createOrder(
 		throw error(400, 'Missing billing address for deliveryless order');
 	}
 
-	if (paymentMethod === 'free' && totalSatoshis !== 0) {
+	if (
+		paymentMethod === 'free' &&
+		toCurrency(runtimeConfig.mainCurrency, totalSatoshis, 'SAT') > 0
+	) {
 		throw error(400, "You can't use free payment method on this order");
 	}
 
@@ -994,7 +1022,8 @@ export async function createOrder(
 							_id: item.booking._id,
 							productId: item.product._id,
 							start: item.booking.start,
-							end: item.booking.end as Date | null
+							end: item.booking.end as Date | null,
+							bookedDates: item.booking.bookedDates
 					  }
 					: undefined
 			)
@@ -1045,44 +1074,62 @@ export async function createOrder(
 				}
 				const startDay = startOfDay(startTime);
 				const endTime = toZonedTime(time.end, bookingSpec.schedule.timezone);
-				const endDay = endOfDay(subSeconds(endTime, 1)); // Sub-seconds to allow booking until midnight
+				const endDay = startOfDay(subSeconds(endTime, 1)); // Use startOfDay for comparison, sub-seconds to handle midnight
 
-				if (!isSameDay(startDay, endDay)) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range must be on the same day`
+				const getDayOfWeek = (date: Date) => dayList[(date.getDay() + 6) % 7];
+
+				if (is24HourSlot) {
+					const daysToValidate = time.bookedDates?.length
+						? time.bookedDates.map((d) => startOfDay(toZonedTime(d, bookingSpec.schedule.timezone)))
+						: eachDayOfInterval({ start: startDay, end: endDay });
+					const unavailable = daysToValidate.find(
+						(day) => !bookingSpec.schedule[getDayOfWeek(day)]
 					);
-				}
+					if (unavailable) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} is not available on ${getDayOfWeek(
+								unavailable
+							)}`
+						);
+					}
+				} else {
+					if (!isSameDay(startDay, endDay)) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range must be on the same day`
+						);
+					}
 
-				const dayOfWeek = dayList[(startDay.getDay() + 6) % 7];
+					const dayOfWeek = getDayOfWeek(startDay);
+					const daySpec = bookingSpec.schedule[dayOfWeek];
 
-				const daySpec = bookingSpec.schedule[dayOfWeek];
+					if (!daySpec) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range is not available on ${dayOfWeek}`
+						);
+					}
 
-				if (!daySpec) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range is not available on ${dayOfWeek}`
-					);
-				}
+					const minutesStart = startTime.getMinutes() + startTime.getHours() * 60;
+					const minutesEnd = endTime.getMinutes() + endTime.getHours() * 60;
 
-				const minutesStart = startTime.getMinutes() + startTime.getHours() * 60;
-				const minutesEnd = endTime.getMinutes() + endTime.getHours() * 60;
-
-				if (minutesStart < timeToMinutes(daySpec.start)) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range starts (${minutesToTime(
-							minutesStart
-						)}) before the scheduled opening time (${daySpec.start})`
-					);
-				}
-				if (minutesEnd > (daySpec.end === '00:00' ? timeToMinutes(daySpec.end) : 24 * 60)) {
-					throw error(
-						400,
-						`Product ${productById[productId].name} booking time range ends (${minutesToTime(
-							minutesEnd
-						)}) after the schedule closing time (${daySpec.end})`
-					);
+					if (minutesStart < timeToMinutes(daySpec.start)) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range starts (${minutesToTime(
+								minutesStart
+							)}) before the scheduled opening time (${daySpec.start})`
+						);
+					}
+					if (minutesEnd > (daySpec.end === '00:00' ? timeToMinutes(daySpec.end) : 24 * 60)) {
+						throw error(
+							400,
+							`Product ${productById[productId].name} booking time range ends (${minutesToTime(
+								minutesEnd
+							)}) after the schedule closing time (${daySpec.end})`
+						);
+					}
 				}
 			}
 		}
@@ -1160,20 +1207,47 @@ export async function createOrder(
 			}
 		}
 
+		const createScheduleEvent = (
+			productId: string,
+			eventId: ObjectId,
+			beginsAt: Date,
+			endsAt: Date,
+			slugSuffix = ''
+		) => ({
+			_id: eventId,
+			title: '#' + orderNumber + ' - ' + productById[productId].name,
+			slug: productId + '-' + orderNumber + slugSuffix,
+			beginsAt,
+			endsAt,
+			scheduleId: productToScheduleId(productId),
+			orderId: orderId,
+			status: 'pending' as const,
+			orderCreated: false
+		});
+
 		await collections.scheduleEvents.insertMany(
 			Object.entries(bookingTimesPerProduct).flatMap(([productId, bookings]) =>
-				bookings.map((booking) => ({
-					_id: booking._id,
-					title: '#' + orderNumber + ' - ' + productById[productId].name,
-					slug: productId + '-' + orderNumber,
-					beginsAt: booking.start,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					endsAt: booking.end!,
-					scheduleId: productToScheduleId(productId),
-					orderId: orderId,
-					status: 'pending',
-					orderCreated: false
-				}))
+				bookings.flatMap((booking) =>
+					booking.bookedDates?.length
+						? booking.bookedDates.map((date, index) =>
+								createScheduleEvent(
+									productId,
+									index === 0 ? booking._id : new ObjectId(),
+									date,
+									addDays(date, 1),
+									index > 0 ? '-' + index : ''
+								)
+						  )
+						: [
+								createScheduleEvent(
+									productId,
+									booking._id,
+									booking.start,
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									booking.end!
+								)
+						  ]
+				)
 			)
 		);
 	}
@@ -1188,6 +1262,7 @@ export async function createOrder(
 						.find({
 							scheduleId: productToScheduleId(productId),
 							status: { $in: ['pending', 'confirmed'] },
+							orderId: { $ne: orderId },
 							...(lastTime.end && {
 								beginsAt: {
 									$lt: lastTime.end
@@ -1200,10 +1275,7 @@ export async function createOrder(
 								{
 									endsAt: { $gt: times[0].start }
 								}
-							],
-							_id: {
-								$nin: times.map((t) => t._id)
-							}
+							]
 						})
 						.project<{
 							_id: Schedule['_id'];
@@ -1228,6 +1300,20 @@ export async function createOrder(
 			);
 		}
 
+		const posDiscount = params.cart?.orderTabId
+			? (
+					await collections.orderTabs.findOne(
+						{ _id: params.cart.orderTabId },
+						{ projection: { discount: 1 } }
+					)
+			  )?.discount
+			: undefined;
+
+		// if discount is tag-based
+		const posDiscountTagName = posDiscount?.tagId
+			? (await collections.tags.findOne({ _id: posDiscount.tagId }))?.name
+			: undefined;
+
 		await withTransaction(async (session) => {
 			const order: Order = {
 				_id: orderId,
@@ -1249,7 +1335,12 @@ export async function createOrder(
 					freeProductSources: item.freeProductSources,
 					...(item.product.bookingSpec &&
 						item.booking && {
-							booking: { start: item.booking.start, end: item.booking.end, _id: item.booking._id }
+							booking: {
+								start: item.booking.start,
+								end: item.booking.end,
+								_id: item.booking._id,
+								...(item.booking.bookedDates?.length && { bookedDates: item.booking.bookedDates })
+							}
 						}),
 					vatRate: priceInfo.vatRates[i],
 					currencySnapshot: {
@@ -1502,13 +1593,25 @@ export async function createOrder(
 					...(items.some((item) => item.discountPercentage)
 						? [
 								{
-									content: `Discount applied: ${items
+									content: `Discount applied${
+										posDiscount
+											? ` (${posDiscount.percentage}% ${
+													posDiscountTagName ? `"${posDiscountTagName}"` : 'for ALL'
+											  })`
+											: ''
+									}: ${items
 										.filter((item) => item.discountPercentage)
 										.map(
 											(item) =>
 												`${item.product.name} (${item.product._id}): ${item.discountPercentage}%`
 										)
-										.join(', ')} because of subscription ${usedSubIds.join(', ')}`,
+										.join(', ')}${
+										posDiscount?.motive
+											? ` (motive: ${posDiscount.motive})`
+											: usedSubIds.length
+											? ` because of subscription ${usedSubIds.join(', ')}`
+											: ''
+									}`,
 									createdAt: new Date(),
 									role: null
 								}
@@ -1600,9 +1703,7 @@ export async function createOrder(
 	} catch (e) {
 		if (!isEmptyObject(bookingTimesPerProduct)) {
 			await collections.scheduleEvents.deleteMany({
-				_id: {
-					$in: Object.values(bookingTimesPerProduct).flatMap((times) => times.map((t) => t._id))
-				}
+				orderId: orderId
 			});
 		}
 		throw e;
@@ -2228,11 +2329,16 @@ function addDiscountFreeProducts(
 	}
 }
 
-const subscriptionDuration: Duration = {
-	hour: { hours: 1 },
-	day: { days: 1 },
-	month: { months: 1 }
-}[runtimeConfig.subscriptionDuration] satisfies Duration;
+function getSubscriptionDuration(): Duration {
+	const durations: Record<SubscriptionDuration, Duration> = {
+		hour: { hours: 1 },
+		day: { days: 1 },
+		week: { weeks: 1 },
+		month: { months: 1 },
+		year: { years: 1 }
+	};
+	return durations[runtimeConfig.subscriptionDuration as SubscriptionDuration];
+}
 
 async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSession) {
 	const subscriptionProducts = order.items.filter((item) => item.product.type === 'subscription');
@@ -2261,7 +2367,7 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, updatedFreeProductsById);
 			}
-			const newPaidUntil = add(max([existing.paidUntil, new Date()]), subscriptionDuration);
+			const newPaidUntil = add(max([existing.paidUntil, new Date()]), getSubscriptionDuration());
 
 			const archivedNotifications = existing.notifications.map((notif) => ({
 				...notif,
@@ -2317,7 +2423,7 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 					number: await generateSubscriptionNumber(),
 					user: order.user,
 					productId: subscription.product._id,
-					paidUntil: add(new Date(), subscriptionDuration),
+					paidUntil: add(new Date(), getSubscriptionDuration()),
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					notifications: [],
@@ -2334,12 +2440,15 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 		await handleOrderTabAfterPayment({ order, session });
 	}
 
-	if (order.items.some((item) => item.product.type === 'subscription')) {
+	if (order.items.some((item) => item.booking)) {
 		await collections.scheduleEvents.updateMany(
 			{ orderId: order._id },
 			{ $set: { status: 'confirmed' } },
 			{ session }
 		);
+	}
+
+	if (order.items.some((item) => item.product.type === 'subscription')) {
 		await applyOrderSubscriptionsDiscounts(order, session);
 	}
 
@@ -2547,29 +2656,46 @@ function compareBookingsAndThrow(
 	productName: string,
 	withOld: boolean
 ): (
-	a: {
-		start: Date;
-		end?: Date | null;
-	},
-	b: { start: Date; end?: Date | null }
+	a: { start: Date; end?: Date | null; bookedDates?: Date[] },
+	b: { start: Date; end?: Date | null; bookedDates?: Date[] }
 ) => number {
 	return (a, b) => {
-		if (
-			a.start.getTime() <= b.start.getTime() &&
-			(a.end?.getTime() ?? Infinity) > b.start.getTime()
-		) {
-			throw error(
-				400,
-				`Product ${productName} has overlapping bookings ${
-					!withOld ? 'in your order' : 'with an existing booking'
-				}`
-			);
-		}
+		const timeRangeOverlaps = (s1: number, e1: number, s2: number, e2: number) =>
+			s1 < e2 && e1 > s2;
 
-		if (
-			b.start.getTime() <= a.start.getTime() &&
-			(b.end?.getTime() ?? Infinity) > a.start.getTime()
-		) {
+		const datesOverlapRange = (dates: Date[], rangeStart: number, rangeEnd: number) =>
+			dates.some((d) => {
+				const dayStart = d.getTime();
+				const dayEnd = addDays(d, 1).getTime();
+				return timeRangeOverlaps(dayStart, dayEnd, rangeStart, rangeEnd);
+			});
+
+		const aDates = a.bookedDates;
+		const bDates = b.bookedDates;
+
+		const hasOverlap = (() => {
+			if (aDates?.length && bDates?.length) {
+				const aDayStarts = aDates.map((d) => d.getTime());
+				return bDates.some((d) => aDayStarts.includes(d.getTime()));
+			}
+
+			if (aDates?.length) {
+				return datesOverlapRange(aDates, b.start.getTime(), b.end?.getTime() ?? Infinity);
+			}
+
+			if (bDates?.length) {
+				return datesOverlapRange(bDates, a.start.getTime(), a.end?.getTime() ?? Infinity);
+			}
+
+			return timeRangeOverlaps(
+				a.start.getTime(),
+				a.end?.getTime() ?? Infinity,
+				b.start.getTime(),
+				b.end?.getTime() ?? Infinity
+			);
+		})();
+
+		if (hasOverlap) {
 			throw error(
 				400,
 				`Product ${productName} has overlapping bookings ${

@@ -480,6 +480,12 @@
 		"personalInformation": "Information Personnelle"
 	},
 	"login": {
+		"error": {
+			"invalidEmail": "Adresse email invalide",
+			"invalidNpub": "Adresse Nostr npub invalide",
+			"invalidContactAddress": "Votre adresse de contact est invalide (saisissez une adresse email correcte ou un npub Nostr)",
+			"invalidOrExpiredToken": "Jeton invalide ou expiré"
+		},
 		"authenticate": {
 			"ctaCancelLabel": "Retour",
 			"ctaLabel": "Valider",
@@ -640,6 +646,12 @@
 			"vatFreeReason": "Exempt de TVA: {reason}",
 			"peopleCount": "Nombre de personnes"
 		},
+		"forwardReceipt": {
+			"cancel": "Annuler",
+			"send": "Envoyer",
+			"success": "Reçu transféré !",
+			"title": "Transférer le reçu"
+		},
 		"receiptFullyPaid": "Générer un reçu (entièrement payé)",
 		"receiptPending": "Générer un reçu (en attente de paiement)",
 		"related": {
@@ -656,6 +668,7 @@
 		"shippingAddress": {
 			"title": "Adresse de livraison"
 		},
+		"noOrdersYet": "Aucune commande pour le moment",
 		"singleTitle": "Commande #{number}",
 		"summary": {
 			"fullyPaid": {
@@ -702,6 +715,8 @@
 		"label": {
 			"amount": "Montant",
 			"currency": "Devise",
+			"currencyCodeHelp": "Trouvez le code de votre devise",
+			"currencyCodeHelpUrl": "https://fr.wikipedia.org/wiki/ISO_4217#Liste_triée_par_nom_d'unité_monétaire",
 			"method": "Méthode",
 			"subtype": "Type"
 		},
@@ -734,6 +749,8 @@
 		},
 		"sessionLink": "Session point de vente",
 		"sessionTouchLink": "Session point de vente - écran tactile",
+		"nonEmptyPoolsWarning": "Attention : il y a des tables non vides. Veuillez les traiter correctement avant de fermer votre session PoS.",
+		"touchSessionRequired": "Si vous souhaitez utiliser l'interface tactile du point de vente, veuillez ouvrir une session",
 		"tapToPay": {
 			"inProgress": "Le paiement sera validé automatiquement quand la transaction externe sera enregistrée et validée.",
 			"inUseByOtherOrder": "L'encaissement tap-to-pay est désactivé car une autre commande est en cours avec ce mode d'encaissement. Vous pouvez encaisser manuellement et indiquer ensuite le numéro de transaction dans ce champ."
@@ -770,7 +787,10 @@
 			"notDeveloped": "Pas encore développé",
 			"confirmDeleteLastItem": "Voulez-vous supprimer la dernière ligne du panier ?",
 			"confirmDeleteAllItems": "Voulez-vous supprimer toutes les lignes du panier ?",
-			"maxQuantityReached": "Quantité maximale par commande atteinte ({max})"
+			"maxQuantityReached": "Quantité maximale par commande atteinte ({max})",
+			"itemPrintedCannotDelete": "Cet article a été imprimé sur un ticket cuisine et ne peut pas être supprimé",
+			"itemPrintedCannotReduce": "Impossible de réduire la quantité en dessous de la quantité imprimée : {min}",
+			"poolHasPrintedItems": "Ce pool contient des articles imprimés et ne peut pas être supprimé"
 		},
 		"itemEdit": {
 			"quantity": "Quantité",
@@ -784,8 +804,8 @@
 		},
 		"split": {
 			"notAvailableYet": "Pas encore disponible",
-			"tabHeader": "Onglet {slug}",
-			"tabToPayNow": "Onglet {slug} (à payer maintenant)",
+			"tabHeader": "Onglet {poolLabel}",
+			"tabToPayNow": "Onglet {poolLabel} (à payer maintenant)",
 			"pool": "POOL",
 			"poolRemainingToPay": "POOL (reste à payer)",
 			"exclVat": "HT",
@@ -798,7 +818,8 @@
 			"shares": "parts",
 			"itemize": "détailler",
 			"return": "Retour",
-			"continueSplit": "Continuer division ({mode})",
+			"continueSplit": "Continuer",
+			"skipForNow": "Passer pour l'instant",
 			"paySelected": "Payer la sélection",
 			"includingVatIncluded": "Dont (TTC):",
 			"tagProducts": "Produits \"{name}\"",
@@ -818,6 +839,11 @@
 			"beforeDiscount": "AVANT REMISE",
 			"afterDiscount": "APRÈS REMISE"
 		},
+		"receipt": {
+			"ticket": "Reçu (ticket)",
+			"invoice": "Facture (A4)"
+		},
+		"staffNotes": "Notes du personnel",
 		"discount": {
 			"title": "Remise",
 			"noDiscount": "Pas de remise",
@@ -835,7 +861,10 @@
 		"midTicket": {
 			"title": "Paramètres ticket cuisine/intermédiaire",
 			"topBlankLines": "Nombre de lignes vides en haut du ticket (pour le pince-ticket)",
-			"topBlankLinesHint": "Par défaut : 0"
+			"topBlankLinesHint": "Par défaut : 0",
+			"printedAt": "Imprimé le {date} à {time}",
+			"poolFirstItemAdded": "Table ouverte le {date} à {time}",
+			"orderCreatedAt": "Commande créée le {date} à {time}"
 		}
 	},
 	"product": {
@@ -929,8 +958,14 @@
 		},
 		"initiallyCreated": "Créé initialement : <0></0>",
 		"paidUntil": "Payé jusqu'au : <0></0>",
+		"expiresOn": "Expire le",
+		"lastOrder": "Voir dernière commande",
+		"lastPayment": "Dernier paiement",
+		"listTitle": "Vos abonnements",
+		"noSubscriptions": "Vous n'avez pas encore d'abonnements.",
 		"singleTitle": "Abonnement #{number}",
 		"status": {
+			"active": "actif",
 			"expired": "expiré"
 		}
 	},

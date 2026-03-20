@@ -88,12 +88,12 @@
 	<!-- bg-[#310d40] and text-white are added directly to avoid race condition with touch.css loading -->
 	<button
 		type="button"
-		class="touchScreen-category-cta bg-[#310d40] text-white w-full flex items-center justify-between text-3xl px-6 min-h-[4.25rem]"
+		class="touchScreen-category-cta bg-[#310d40] text-white w-full flex items-center justify-between text-xl lg:text-3xl px-3 lg:px-6 min-h-[2.25rem] lg:min-h-[4.25rem]"
 		on:click={toggleDropdown}
 	>
 		<span class="uppercase">{currentLabel}</span>
 		<svg
-			class="w-8 h-8 transition-transform {isOpen ? 'rotate-180' : ''}"
+			class="w-5 h-5 lg:w-8 lg:h-8 transition-transform {isOpen ? 'rotate-180' : ''}"
 			xmlns="http://www.w3.org/2000/svg"
 			fill="none"
 			viewBox="0 0 24 24"
@@ -128,7 +128,7 @@
 			{#if showBackButton}
 				<button
 					type="button"
-					class="w-full text-left px-6 py-4 text-2xl font-medium uppercase border-b border-gray-300 bg-gray-50 hover:bg-gray-100"
+					class="w-full text-left px-3 lg:px-6 py-2 lg:py-4 text-lg lg:text-2xl font-medium uppercase border-b border-gray-300 bg-gray-50 hover:bg-gray-100"
 					on:click={clearSelection}
 					role="menuitem"
 				>
@@ -139,7 +139,7 @@
 			{#each options as option, idx}
 				<button
 					type="button"
-					class="w-full text-left px-6 py-4 text-2xl font-medium uppercase border-b border-gray-200 transition-colors hover:bg-gray-100 hover:text-purple-600 {option.id ===
+					class="w-full text-left px-3 lg:px-6 py-2 lg:py-4 text-lg lg:text-2xl font-medium uppercase border-b border-gray-200 transition-colors hover:bg-gray-100 hover:text-purple-600 {option.id ===
 					currentFilter
 						? 'bg-purple-100 text-purple-600 font-bold'
 						: 'text-gray-900'}"

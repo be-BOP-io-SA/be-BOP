@@ -20,6 +20,7 @@
 	export let hideCreditCardQrCode: boolean | undefined = undefined;
 	export let sellerIdentity: SellerIdentity | null | undefined = undefined;
 	export let posSubtypes: Array<{ slug: string; name: string }> | undefined = undefined;
+	export let returnTo: string | undefined = undefined;
 
 	// Registry of dynamic components
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,9 +36,9 @@
 
 <details
 	class="payment-item border border-gray-300 rounded-xl p-4"
-	open={posMode || payment.status === 'pending'}
+	open={payment.status === 'pending'}
 >
-	<summary class="lg:text-xl cursor-pointer">
+	<summary class="{posMode ? 'text-xl' : 'lg:text-xl'} cursor-pointer">
 		<span class="items-center inline-flex gap-2">
 			{t(`checkout.paymentMethod.${payment.method}`)}
 
@@ -67,6 +68,7 @@
 				{orderId}
 				{sellerIdentity}
 				{posMode}
+				{returnTo}
 			/>
 		{:else if payment.method === 'point-of-sale'}
 			<PointOfSalePayment />

@@ -128,6 +128,6 @@
 			{/if}
 		</li>
 	{:else}
-		<li>No orders yet</li>
+		<li>{t('order.noOrdersYet')}</li>
 	{/each}
 </ul>

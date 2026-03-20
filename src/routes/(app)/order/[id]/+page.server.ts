@@ -137,7 +137,8 @@ export async function load({ params, depends, locals, url }) {
 		}),
 		overwriteCreditCardSvgColor: runtimeConfig.overwriteCreditCardSvgColor,
 		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode,
-		labels
+		labels,
+		returnTo: returnTo ?? undefined
 	};
 }
 

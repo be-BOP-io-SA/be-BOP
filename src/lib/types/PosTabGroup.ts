@@ -31,3 +31,16 @@ export function sluggifyTab(
 		.replace(/[^a-z0-9]+/g, '-')
 		.replace(/^-|-$/g, '');
 }
+
+export function resolvePoolLabel(posTabGroups: PosTabGroup[], tabSlug: string): string {
+	return (
+		posTabGroups
+			.flatMap((group, g) =>
+				group.tabs.map((tab, i) => ({
+					slug: sluggifyTab(posTabGroups, g, i),
+					label: tab.label ?? `${group.name} ${i + 1}`
+				}))
+			)
+			.find(({ slug }) => slug === tabSlug)?.label ?? tabSlug
+	);
+}
