@@ -54,6 +54,7 @@ import type { OrderTab } from '$lib/types/OrderTab';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import type { PosSession } from '$lib/types/PosSession';
 import type { PendingZap } from '$lib/types/PendingZap';
+import type { AccountingLog } from '$lib/types/AccountingLog';
 
 // Bigger than the default 10, helpful with MongoDB errors
 Error.stackTraceLimit = 100;
@@ -118,6 +119,8 @@ const genCollection = () => ({
 	posPaymentSubtypes: db.collection<PosPaymentSubtype>('posPaymentSubtypes'),
 	posSessions: db.collection<PosSession>('posSessions'),
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
+
+	accountingLogs: db.collection<AccountingLog>('accountingLogs'),
 
 	errors: db.collection<unknown & { _id: ObjectId; url: string; method: string }>('errors')
 });
@@ -228,7 +231,10 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.posSessions, { closedAt: -1 }],
 	[collections.orderTabs, { slug: 1 }, { unique: true }],
 	[collections.pendingZaps, { processedAt: 1 }],
-	[collections.pendingZaps, { invoiceId: 1 }, { unique: true }]
+	[collections.pendingZaps, { invoiceId: 1 }, { unique: true }],
+	[collections.accountingLogs, { createdAt: 1 }],
+	[collections.accountingLogs, { eventType: 1, createdAt: 1 }],
+	[collections.accountingLogs, { objectId: 1, objectType: 1 }]
 ];
 
 export async function createIndexes() {

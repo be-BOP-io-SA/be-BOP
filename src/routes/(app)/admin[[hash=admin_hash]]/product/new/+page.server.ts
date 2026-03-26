@@ -31,6 +31,7 @@ import { pojo } from '$lib/server/pojo';
 import { zodSlug } from '$lib/server/zod';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
+import { logProductCreationEvents } from '$lib/server/accounting-log';
 
 export const load = async ({ url }) => {
 	const productId = url.searchParams.get('duplicate_from');
@@ -72,7 +73,7 @@ export const load = async ({ url }) => {
 };
 
 export const actions: Actions = {
-	add: async ({ request }) => {
+	add: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const json: JsonObject = {};
 
@@ -299,10 +300,19 @@ export const actions: Actions = {
 
 		onProductCreated({ _id: parsed.slug, name: parsed.name });
 
+		await logProductCreationEvents(
+			parsed.slug,
+			priceAmount,
+			parsed.priceCurrency,
+			parsed.vatProfileId,
+			parsed.stock,
+			locals
+		);
+
 		throw redirect(303, `${adminPrefix()}/product/${parsed.slug}`);
 	},
 
-	duplicate: async ({ request }) => {
+	duplicate: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const json: JsonObject = {};
 
@@ -565,6 +575,15 @@ export const actions: Actions = {
 		});
 
 		onProductCreated({ _id: parsed.slug, name: parsed.name });
+
+		await logProductCreationEvents(
+			parsed.slug,
+			parseFloat(parsed.priceAmount),
+			parsed.priceCurrency,
+			parsed.vatProfileId,
+			parsed.stock,
+			locals
+		);
 
 		throw redirect(303, `${adminPrefix()}/product/${parsed.slug}`);
 	}
