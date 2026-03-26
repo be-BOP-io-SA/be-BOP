@@ -7,9 +7,10 @@ import { set } from '$lib/utils/set';
 import { ObjectId } from 'mongodb';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
+import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
 
 export const actions = {
-	saveProfile: async function ({ request }) {
+	saveProfile: async function ({ request, locals }) {
 		const formData = await request.formData();
 		const json: JsonObject = {};
 		for (const [key, value] of formData) {
@@ -32,6 +33,8 @@ export const actions = {
 			.parse(json);
 
 		const objectId = params.profileId === 'new' ? new ObjectId() : new ObjectId(params.profileId);
+		const existing =
+			params.profileId !== 'new' ? await collections.vatProfiles.findOne({ _id: objectId }) : null;
 
 		await collections.vatProfiles.updateOne(
 			{
@@ -53,10 +56,19 @@ export const actions = {
 			}
 		);
 
+		await logAccountingEvent({
+			eventType: existing ? 'vatProfileUpdate' : 'vatProfileCreation',
+			before: existing ? { name: existing.name, rates: existing.rates } : null,
+			after: { name: params.name, rates: params.rates },
+			objectId: objectId.toString(),
+			objectType: 'vatProfile',
+			...employeeFromLocals(locals)
+		});
+
 		throw redirect(303, `${adminPrefix()}/config/vat/${objectId}`);
 	},
 
-	deleteProfile: async function ({ request }) {
+	deleteProfile: async function ({ request, locals }) {
 		const formData = await request.formData();
 		const params = z
 			.object({
@@ -64,9 +76,24 @@ export const actions = {
 			})
 			.parse(Object.fromEntries(formData));
 
+		const profileToDelete = await collections.vatProfiles.findOne({
+			_id: new ObjectId(params.profileId)
+		});
+
 		await collections.vatProfiles.deleteOne({
 			_id: new ObjectId(params.profileId)
 		});
+
+		if (profileToDelete && params.profileId) {
+			await logAccountingEvent({
+				eventType: 'vatProfileDeletion',
+				before: { name: profileToDelete.name, rates: profileToDelete.rates },
+				after: null,
+				objectId: params.profileId,
+				objectType: 'vatProfile',
+				...employeeFromLocals(locals)
+			});
+		}
 
 		throw redirect(303, `${adminPrefix()}/config/vat`);
 	}

@@ -71,6 +71,7 @@ import { toZonedTime } from 'date-fns-tz';
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import { resolveProcessor } from './sdk/pp';
 import { pojo } from './pojo';
+import { logAccountingEvent } from './accounting-log';
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
 	const other = await collections.orders.findOne({
@@ -144,6 +145,10 @@ export async function onOrderPayment(
 	}
 
 	const paidAt = new Date();
+	// For free payments, onOrderPayment is called twice (addOrderPayment + createOrder).
+	// This guard prevents duplicate audit log entries but does not fix the double-call itself.
+	// TODO: remove after fixing the double-call bug
+	const alreadyPaid = !!payment.paidAt;
 
 	payment.status = 'paid'; // for isOrderFullyPaid
 	payment.paidAt = paidAt;
@@ -381,6 +386,48 @@ export async function onOrderPayment(
 		order = ret.value;
 		if (order.status === 'paid') {
 			await updateAfterOrderPaid(order, session);
+		}
+
+		if (order.vat?.length && !alreadyPaid) {
+			await logAccountingEvent(
+				{
+					eventType: 'paymentDone',
+					before: { status: 'pending' },
+					after: {
+						status: 'paid',
+						method: payment.method,
+						paymentId: payment._id.toString(),
+						invoiceNumber,
+						received,
+						vat: order.vat,
+						...(order.discount && { discount: order.discount }),
+						...(order.currencySnapshot?.main?.discount && {
+							discountAmount: order.currencySnapshot.main.discount
+						})
+					},
+					objectId: order._id.toString(),
+					objectType: 'order'
+				},
+				session
+			);
+
+			if (isOrderFullyPaid(order)) {
+				await logAccountingEvent(
+					{
+						eventType: 'orderPaid',
+						before: { status: 'pending' },
+						after: {
+							status: 'paid',
+							invoiceNumber,
+							paymentsCount: order.payments.length,
+							totalPrice: order.currencySnapshot?.main?.totalPrice
+						},
+						objectId: order._id.toString(),
+						objectType: 'order'
+					},
+					session
+				);
+			}
 		}
 
 		return ret.value;
@@ -1944,6 +1991,31 @@ export async function addOrderPayment(
 		{ session: opts?.session }
 	);
 
+	if (order.vat?.length) {
+		await logAccountingEvent(
+			{
+				eventType: 'paymentCall',
+				before: null,
+				after: {
+					method: paymentMethod,
+					paymentId: payment._id.toString(),
+					vat: order.vat,
+					totalPrice: order.currencySnapshot?.main?.totalPrice,
+					...(order.discount && { discount: order.discount }),
+					...(order.currencySnapshot?.main?.discount && {
+						discountAmount: order.currencySnapshot.main.discount
+					})
+				},
+				objectId: order._id.toString(),
+				objectType: 'order',
+				...(order.user?.userId && {
+					employee: { userId: order.user.userId, alias: order.user.userAlias }
+				})
+			},
+			opts?.session
+		);
+	}
+
 	// free payments creating as 'paid'
 	if (isFreePayment) {
 		order.payments.push(payment);
@@ -2279,7 +2351,7 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 	for (const item of order.items.filter((item) => item.product.stock)) {
 		const productIdToDecrement = item.product.stockReference?.productId || item.product._id;
 
-		await collections.products.updateOne(
+		const result = await collections.products.findOneAndUpdate(
 			{
 				_id: productIdToDecrement
 			},
@@ -2287,7 +2359,24 @@ export async function updateAfterOrderPaid(order: Order, session: ClientSession)
 				$inc: { 'stock.total': -item.quantity, 'stock.available': -item.quantity },
 				$set: { updatedAt: new Date() }
 			},
-			{ session }
+			{ session, returnDocument: 'before' }
+		);
+
+		const beforeTotal = result.value?.stock?.total ?? null;
+
+		await logAccountingEvent(
+			{
+				eventType: 'stockDeduction',
+				before: { total: beforeTotal },
+				after: {
+					total: (beforeTotal ?? 0) - item.quantity,
+					quantityDeducted: item.quantity,
+					orderId: order._id.toString()
+				},
+				objectId: productIdToDecrement,
+				objectType: 'product'
+			},
+			session
 		);
 	}
 }
