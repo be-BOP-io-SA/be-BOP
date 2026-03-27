@@ -557,6 +557,9 @@
 			"pending": "pendiente"
 		},
 		"paymentStatusNpub": "Clave pública de Nostr para el estado del pago",
+		"cleanPersonalData": "Eliminar mis datos personales",
+		"cleanPersonalDataConfirm": "ADVERTENCIA: Esta acción eliminará permanentemente sus datos personales de este pedido, incluyendo las direcciones de envío y facturación.\n\nHaga esto solo DESPUÉS de que su pedido haya sido entregado y haya recibido sus artículos.\n\nEsta acción no se puede deshacer. ¿Continuar?",
+		"cleanPersonalDataSuccess": "Sus datos personales han sido eliminados de este pedido exitosamente.",
 		"receipt": {
 			"accountHolder": "Titular de la cuenta",
 			"accountHolderAddress": "Dirección",

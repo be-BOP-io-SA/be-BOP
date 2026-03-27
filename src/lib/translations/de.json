@@ -557,6 +557,9 @@
 			"pending": "ausstehend"
 		},
 		"paymentStatusNpub": "Öffentlicher Nostr-Schlüssel für den Zahlungsstatus",
+		"cleanPersonalData": "Meine persönlichen Daten löschen",
+		"cleanPersonalDataConfirm": "WARNUNG: Dadurch werden Ihre persönlichen Daten aus dieser Bestellung unwiderruflich entfernt, einschließlich Liefer- und Rechnungsadressen.\n\nTun Sie dies erst, NACHDEM Ihre Bestellung geliefert wurde und Sie Ihre Artikel erhalten haben.\n\nDiese Aktion kann nicht rückgängig gemacht werden. Fortfahren?",
+		"cleanPersonalDataSuccess": "Ihre persönlichen Daten wurden erfolgreich aus dieser Bestellung entfernt.",
 		"receipt": {
 			"accountHolder": "Kontoinhaber",
 			"accountHolderAddress": "Adresse",

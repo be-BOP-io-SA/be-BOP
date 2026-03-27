@@ -1,3 +1,5 @@
+import { ORDER_PAYMENT_STATUSES, type OrderPaymentStatus } from '$lib/types/Order';
+import { DELAY_MULTIPLIERS } from '$lib/utils/delayMultipliers';
 import { ORIGIN } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
@@ -7,8 +9,9 @@ import { toCurrency } from '$lib/utils/toCurrency';
 import { typedKeys } from '$lib/utils/typedKeys.js';
 import { fetchAndSaveExchangeRates } from '$lib/server/locks/currency-lock';
 import { adminPrefix } from '$lib/server/admin';
+import { persistConfigElement } from '$lib/server/utils/persistConfig';
 import { z } from 'zod';
-import { redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import {
 	paymentMethods,
 	type PaymentMethod,
@@ -71,7 +74,8 @@ export async function load(event) {
 		lndConfigured: isLndConfigured(),
 		phoenixdConfigured: isPhoenixdConfigured(),
 		swissBitcoinPayConfigured: isSwissBitcoinPayConfigured(),
-		btcpayServerConfigured: isBtcpayServerConfigured()
+		btcpayServerConfigured: isBtcpayServerConfigured(),
+		dataCleanup: runtimeConfig.dataCleanup
 	};
 }
 
@@ -231,6 +235,36 @@ export const actions = {
 				},
 				{ upsert: true }
 			);
+		}
+
+		const cleanupDelayValue = Math.max(
+			0,
+			Number(formData.get('dataCleanup.scheduled.delayValue')) || 0
+		);
+		const cleanupDelayUnit = String(formData.get('dataCleanup.scheduled.delayUnit') || 'days');
+		if (!(cleanupDelayUnit in DELAY_MULTIPLIERS)) {
+			throw error(400, 'Invalid delay unit');
+		}
+		const cleanupDelaySeconds = cleanupDelayValue * DELAY_MULTIPLIERS[cleanupDelayUnit];
+
+		const dataCleanup = {
+			onOrderExpireOrCancel: formData.get('dataCleanup.onOrderExpireOrCancel') === 'on',
+			allowUserManualCleanup: formData.get('dataCleanup.allowUserManualCleanup') === 'on',
+			scheduled: {
+				enabled: formData.get('dataCleanup.scheduled.enabled') === 'on',
+				delaySeconds: cleanupDelaySeconds,
+				orderStatuses: formData
+					.getAll('dataCleanup.scheduled.orderStatuses')
+					.map(String)
+					.filter((s): s is OrderPaymentStatus =>
+						(ORDER_PAYMENT_STATUSES as readonly string[]).includes(s)
+					)
+			}
+		};
+
+		if (JSON.stringify(runtimeConfig.dataCleanup) !== JSON.stringify(dataCleanup)) {
+			runtimeConfig.dataCleanup = dataCleanup;
+			await persistConfigElement('dataCleanup', dataCleanup);
 		}
 
 		if (oldAdminHash !== result.adminHash) {

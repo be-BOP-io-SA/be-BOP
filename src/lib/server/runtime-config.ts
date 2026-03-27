@@ -44,6 +44,7 @@ import {
 } from '$lib/translations';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
+import type { OrderPaymentStatus } from '$lib/types/Order';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import { merge } from '$lib/utils/merge';
 import { typedEntries } from '$lib/utils/typedEntries';
@@ -268,6 +269,15 @@ const baseConfig = {
 	displayCompanyInfo: false,
 	displayMainShopInfo: false,
 	disableNostrBotIntro: false,
+	dataCleanup: {
+		onOrderExpireOrCancel: false,
+		allowUserManualCleanup: false,
+		scheduled: {
+			enabled: false,
+			delaySeconds: 0,
+			orderStatuses: [] as OrderPaymentStatus[]
+		}
+	},
 	hideFromSearchEngines: false,
 	telemetry: null as null | {
 		enabled: boolean;

@@ -557,6 +557,9 @@
 			"pending": "en attente"
 		},
 		"paymentStatusNpub": "Clé publique Nostr pour le statut de paiement",
+		"cleanPersonalData": "Supprimer mes données personnelles",
+		"cleanPersonalDataConfirm": "ATTENTION : Cette action supprimera définitivement vos données personnelles de cette commande, y compris les adresses de livraison et de facturation.\n\nNe faites cela qu'APRÈS la livraison de votre commande et la réception de vos articles.\n\nCette action est irréversible. Continuer ?",
+		"cleanPersonalDataSuccess": "Vos données personnelles ont été supprimées de cette commande avec succès.",
 		"receipt": {
 			"accountHolder": "Titulaire",
 			"accountHolderAddress": "Adresse",

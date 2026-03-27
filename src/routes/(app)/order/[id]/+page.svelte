@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
+	import { enhance } from '$app/forms';
 	import { navigating, page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import OrderSummary from '$lib/components/OrderSummary.svelte';
@@ -20,6 +21,7 @@
 	import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 
 	export let data;
+	export let form;
 
 	let count = 0;
 
@@ -557,6 +559,25 @@
 						</section>
 					</form>
 				{/if}
+			{/if}
+
+			{#if data.canCleanPersonalData && !data.order.dataAnonymized}
+				<form
+					method="POST"
+					action="?/cleanPersonalData"
+					use:enhance={({ cancel }) => {
+						if (!confirm(t('order.cleanPersonalDataConfirm'))) {
+							cancel();
+							return;
+						}
+					}}
+				>
+					<button type="submit" class="btn btn-red w-full mt-4">
+						{t('order.cleanPersonalData')}
+					</button>
+				</form>
+			{:else if form?.success}
+				<p class="text-green-500 mt-4">{t('order.cleanPersonalDataSuccess')}</p>
 			{/if}
 		</div>
 		<!-- END: LEFT COLUMN -->

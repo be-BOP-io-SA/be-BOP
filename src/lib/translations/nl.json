@@ -557,6 +557,9 @@
 			"pending": "in behandeling"
 		},
 		"paymentStatusNpub": "Nostr openbaar adres voor betalingsstatus",
+		"cleanPersonalData": "Mijn persoonlijke gegevens verwijderen",
+		"cleanPersonalDataConfirm": "WAARSCHUWING: Dit verwijdert permanent uw persoonlijke gegevens uit deze bestelling, inclusief verzend- en factuuradressen.\n\nDoe dit alleen NADAT uw bestelling is bezorgd en u uw artikelen heeft ontvangen.\n\nDeze actie kan niet ongedaan worden gemaakt. Doorgaan?",
+		"cleanPersonalDataSuccess": "Uw persoonlijke gegevens zijn succesvol uit deze bestelling verwijderd.",
 		"receipt": {
 			"accountHolder": "Rekeninghouder",
 			"accountHolderAddress": "Adres",
