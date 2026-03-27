@@ -6,6 +6,7 @@ import { setTimeout } from 'node:timers/promises';
 import { getS3Client } from '../s3';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { ObjectId } from 'mongodb';
+import { anonymizeOrderData } from '../orders';
 
 const lock = new Lock('cleanup');
 
@@ -109,6 +110,47 @@ async function cleanup() {
 			}
 		} catch (err) {
 			console.error('Error during cleanup schedules', err);
+		}
+
+		try {
+			const { dataCleanup } = runtimeConfig;
+			if (dataCleanup.scheduled.enabled && dataCleanup.scheduled.delaySeconds > 0) {
+				const cutoffDate = new Date(Date.now() - dataCleanup.scheduled.delaySeconds * 1000);
+
+				const { orderStatuses } = dataCleanup.scheduled;
+
+				if (orderStatuses.length) {
+					const ordersToClean = await collections.orders
+						.find({
+							status: { $in: orderStatuses },
+							dataAnonymized: { $ne: true },
+							createdAt: { $lt: cutoffDate }
+						})
+						.project({ _id: 1 })
+						.limit(50)
+						.toArray();
+
+					for (const order of ordersToClean) {
+						await anonymizeOrderData(order._id);
+					}
+
+					if (ordersToClean.length) {
+						console.log(`Data cleanup: anonymized ${ordersToClean.length} orders`);
+					}
+				}
+
+				const deleteResult = await collections.personalInfo.deleteMany({
+					$or: [
+						{ updatedAt: { $lt: cutoffDate } },
+						{ updatedAt: { $exists: false }, createdAt: { $lt: cutoffDate } }
+					]
+				});
+				if (deleteResult.deletedCount) {
+					console.log(`Data cleanup: deleted ${deleteResult.deletedCount} personalInfo records`);
+				}
+			}
+		} catch (err) {
+			console.error('Error during data cleanup:', err);
 		}
 
 		await setTimeout(5_000);

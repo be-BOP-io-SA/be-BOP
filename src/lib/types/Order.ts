@@ -16,7 +16,8 @@ import { toBitcoins } from '$lib/utils/toBitcoins';
 import type { ScheduleEventBooked } from './Schedule';
 import type { PickDeep } from 'type-fest';
 
-export type OrderPaymentStatus = 'pending' | 'paid' | 'expired' | 'canceled' | 'failed';
+export const ORDER_PAYMENT_STATUSES = ['pending', 'paid', 'expired', 'canceled', 'failed'] as const;
+export type OrderPaymentStatus = (typeof ORDER_PAYMENT_STATUSES)[number];
 
 export type DiscountType = 'fiat' | 'percentage';
 
@@ -337,6 +338,7 @@ export interface Order extends Timestamps {
 		acceptedExportationAndVATObligation?: boolean;
 	};
 	orderLabelIds?: OrderLabel['_id'][];
+	dataAnonymized?: boolean;
 }
 interface SimplifiedOrderPayment {
 	id: string;

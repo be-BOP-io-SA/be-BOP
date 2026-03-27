@@ -557,6 +557,9 @@
 			"pending": "In sospeso"
 		},
 		"paymentStatusNpub": "Indirizzo pubblico Nostr per lo stato del pagamento",
+		"cleanPersonalData": "Cancella i miei dati personali",
+		"cleanPersonalDataConfirm": "ATTENZIONE: Questa azione rimuoverà permanentemente i tuoi dati personali da questo ordine, inclusi gli indirizzi di spedizione e fatturazione.\n\nEsegui questa operazione solo DOPO che il tuo ordine è stato consegnato e hai ricevuto i tuoi articoli.\n\nQuesta azione non può essere annullata. Continuare?",
+		"cleanPersonalDataSuccess": "I tuoi dati personali sono stati rimossi con successo da questo ordine.",
 		"receipt": {
 			"accountHolder": "Intestatario dell'account",
 			"accountHolderAddress": "Indirizzo",

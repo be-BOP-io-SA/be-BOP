@@ -1,11 +1,12 @@
 import { collections } from '$lib/server/database';
 import { UrlDependency } from '$lib/types/UrlDependency';
-import { redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { fetchOrderForUser } from './fetchOrderForUser.js';
 import { getPublicS3DownloadLink } from '$lib/server/s3.js';
 import { uniqBy } from '$lib/utils/uniqBy.js';
 import { cmsFromContent } from '$lib/server/cms.js';
-import { conflictingTapToPayOrder } from '$lib/server/orders';
+import { anonymizeOrderData, conflictingTapToPayOrder } from '$lib/server/orders';
+import { userIdentifier, userQuery } from '$lib/server/user';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
@@ -138,7 +139,10 @@ export async function load({ params, depends, locals, url }) {
 		overwriteCreditCardSvgColor: runtimeConfig.overwriteCreditCardSvgColor,
 		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode,
 		labels,
-		returnTo: returnTo ?? undefined
+		returnTo: returnTo ?? undefined,
+		allowManualCleanup: runtimeConfig.dataCleanup.allowUserManualCleanup,
+		canCleanPersonalData:
+			runtimeConfig.dataCleanup.allowUserManualCleanup && !!(locals.email || locals.npub)
 	};
 }
 
@@ -157,5 +161,22 @@ export const actions = {
 		);
 
 		throw redirect(303, request.headers.get('referer') || '/');
+	},
+	cleanPersonalData: async function ({ params, locals }) {
+		if (!runtimeConfig.dataCleanup.allowUserManualCleanup) {
+			throw error(403, 'Data cleanup is not enabled');
+		}
+
+		const order = await collections.orders.findOne({
+			_id: params.id,
+			...userQuery(userIdentifier(locals)),
+			dataAnonymized: { $ne: true }
+		});
+		if (!order) {
+			throw error(404, 'Order not found or already cleaned');
+		}
+
+		const cleaned = await anonymizeOrderData(order._id);
+		return { success: cleaned };
 	}
 };

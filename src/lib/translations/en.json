@@ -557,6 +557,9 @@
 			"pending": "pending"
 		},
 		"paymentStatusNpub": "Nostr public key for payment status",
+		"cleanPersonalData": "Clean my personal data",
+		"cleanPersonalDataConfirm": "WARNING: This will permanently remove your personal data from this order, including shipping and billing addresses.\n\nOnly do this AFTER your order has been delivered and you have received your items.\n\nThis action cannot be undone. Continue?",
+		"cleanPersonalDataSuccess": "Your personal data has been successfully removed from this order.",
 		"receipt": {
 			"accountHolder": "Account holder",
 			"accountHolderAddress": "Address",

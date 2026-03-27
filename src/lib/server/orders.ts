@@ -466,6 +466,17 @@ export async function onOrderPaymentFailed(
 			}
 		);
 	}
+	if (
+		runtimeConfig.dataCleanup.onOrderExpireOrCancel &&
+		order.status !== ret.value.status &&
+		(ret.value.status === 'canceled' || ret.value.status === 'expired')
+	) {
+		try {
+			await anonymizeOrderData(order._id);
+		} catch (err) {
+			console.error('Failed to anonymize order data:', order._id, err);
+		}
+	}
 	order = ret.value;
 
 	return order;
@@ -493,6 +504,54 @@ export async function cancelPayment(
 
 	await onOrderPaymentFailed(order, payment, 'canceled');
 	throw redirect(303, redirectUrl);
+}
+
+export async function anonymizeOrderData(orderId: string): Promise<boolean> {
+	const order = await collections.orders.findOne(
+		{ _id: orderId, dataAnonymized: { $ne: true } },
+		{ projection: { shippingAddress: 1, billingAddress: 1 } }
+	);
+	if (!order) {
+		return false;
+	}
+
+	const $set: Record<string, unknown> = {
+		dataAnonymized: true,
+		updatedAt: new Date()
+	};
+	if (order.shippingAddress) {
+		$set.shippingAddress = {
+			country: order.shippingAddress.country,
+			zip: order.shippingAddress.zip
+		};
+	}
+	if (order.billingAddress) {
+		$set.billingAddress = { country: order.billingAddress.country, zip: order.billingAddress.zip };
+	}
+
+	const result = await collections.orders.updateOne(
+		{ _id: orderId, dataAnonymized: { $ne: true } },
+		{
+			$set,
+			$unset: {
+				clientIp: 1,
+				notes: 1,
+				'user.userId': 1,
+				'user.email': 1,
+				'user.npub': 1,
+				'user.secondaryEmails': 1,
+				'user.ssoIds': 1,
+				'user.sessionId': 1,
+				'user.userLogin': 1,
+				'user.userAlias': 1,
+				'user.userRoleId': 1,
+				'user.userHasPosOptions': 1,
+				'notifications.paymentStatus.npub': 1,
+				'notifications.paymentStatus.email': 1
+			}
+		}
+	);
+	return result.modifiedCount > 0;
 }
 
 export async function lastInvoiceNumber(): Promise<number | undefined> {

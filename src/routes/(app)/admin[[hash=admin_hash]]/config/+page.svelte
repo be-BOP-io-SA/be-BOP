@@ -6,6 +6,9 @@
 
 	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency';
 	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
+	import { ORDER_PAYMENT_STATUSES } from '$lib/types/Order';
+	import { DELAY_MULTIPLIERS } from '$lib/utils/delayMultipliers';
+	import { typedInclude } from '$lib/utils/typedIncludes';
 	import { formatDistance } from 'date-fns';
 	import { exchangeRate } from '$lib/stores/exchangeRate';
 	import { useI18n } from '$lib/i18n.js';
@@ -22,6 +25,19 @@
 	let priceReferenceCurrency = data.currencies.priceReference;
 	let hasCartLimitProductLine = !!data.cartMaxSeparateItems;
 	let hasPhysicalCartMinAmount = !!data.physicalCartMinAmount;
+
+	let dataCleanupOnExpire = data.dataCleanup.onOrderExpireOrCancel;
+	let dataCleanupManual = data.dataCleanup.allowUserManualCleanup;
+	let dataCleanupScheduled = data.dataCleanup.scheduled.enabled;
+	const storedSeconds = data.dataCleanup.scheduled.delaySeconds;
+	const defaultUnit =
+		Object.entries(DELAY_MULTIPLIERS)
+			.reverse()
+			.find(([, mult]) => storedSeconds > 0 && storedSeconds % mult === 0)?.[0] ?? 'days';
+	let cleanupDelayUnit = storedSeconds > 0 ? defaultUnit : 'years';
+	let cleanupDelayValue =
+		storedSeconds > 0 ? storedSeconds / (DELAY_MULTIPLIERS[defaultUnit] ?? 86400) : 2;
+	let cleanupStatuses = data.dataCleanup.scheduled.orderStatuses;
 
 	// Currency options for Select components (sorted: BTC/SAT → fiat A-Z)
 	// Exclude SAT for main/secondary/accounting
@@ -48,6 +64,26 @@
 	async function onOverwrite(event: Event) {
 		if (!confirm('Do you want to overwrite current product currencies with this one?')) {
 			event.preventDefault();
+		}
+	}
+
+	function confirmUpdate(e: Event) {
+		if (dataCleanupScheduled && cleanupDelayValue > 0) {
+			const formData = new FormData(e.target as HTMLFormElement);
+			const statuses = formData.getAll('dataCleanup.scheduled.orderStatuses').map(String);
+			if (statuses.length > 0) {
+				const multiplier = DELAY_MULTIPLIERS[cleanupDelayUnit] ?? 86400;
+				const cutoffDate = new Date(Date.now() - cleanupDelayValue * multiplier * 1000);
+				if (
+					!confirm(
+						`Are you sure? It will delete personal data for every order with status [${statuses.join(
+							', '
+						)}] older than ${cutoffDate.toLocaleDateString($locale)}. This cannot be undone.`
+					)
+				) {
+					e.preventDefault();
+				}
+			}
 		}
 	}
 
@@ -102,7 +138,7 @@
 	<input type="hidden" value={priceReferenceCurrency} name="priceReferenceCurrency" />
 </form>
 
-<form method="post" action="?/update" class="flex flex-col gap-6">
+<form method="post" action="?/update" class="flex flex-col gap-6" on:submit={confirmUpdate}>
 	<h2 class="text-2xl">Currencies</h2>
 	<label class="form-label">
 		<CurrencyLabel label="Main currency" />
@@ -714,6 +750,81 @@
 			value={data.analyticsScriptSnippet}
 		/>
 	</label>
+	<h2 class="text-2xl font-semibold mt-8">Customer Data Cleaning</h2>
+	<p class="text-sm text-gray-500 mb-2">
+		Configure how customer personal data is cleaned for law compliance (GDPR, etc.). You are
+		responsible for checking your local regulations.
+	</p>
+
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="dataCleanup.onOrderExpireOrCancel"
+			class="form-checkbox"
+			bind:checked={dataCleanupOnExpire}
+		/>
+		Auto-clean personal data when order expires or is cancelled
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="dataCleanup.allowUserManualCleanup"
+			class="form-checkbox"
+			bind:checked={dataCleanupManual}
+		/>
+		Allow customers to request cleanup of their personal data
+	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="dataCleanup.scheduled.enabled"
+			class="form-checkbox"
+			bind:checked={dataCleanupScheduled}
+		/>
+		Enable scheduled auto-cleanup of personal data
+	</label>
+	{#if dataCleanupScheduled}
+		<label class="form-label">
+			Cleanup delay
+			<div class="flex gap-2 items-center">
+				<input
+					type="number"
+					min="1"
+					step="1"
+					name="dataCleanup.scheduled.delayValue"
+					bind:value={cleanupDelayValue}
+					class="form-input w-24"
+				/>
+				<select
+					name="dataCleanup.scheduled.delayUnit"
+					bind:value={cleanupDelayUnit}
+					class="form-input"
+				>
+					<option value="hours">Hours</option>
+					<option value="days">Days</option>
+					<option value="weeks">Weeks</option>
+					<option value="months">Months</option>
+					<option value="years">Years</option>
+				</select>
+			</div>
+		</label>
+		<fieldset class="mt-2">
+			<legend class="form-label">Order statuses to clean</legend>
+			{#each ORDER_PAYMENT_STATUSES as status}
+				<label class="inline-flex items-center mr-4">
+					<input
+						type="checkbox"
+						name="dataCleanup.scheduled.orderStatuses"
+						value={status}
+						checked={typedInclude(cleanupStatuses, status)}
+						class="form-checkbox"
+					/>
+					<span class="ml-1">{status}</span>
+				</label>
+			{/each}
+		</fieldset>
+	{/if}
+
 	<input type="submit" value="Update" class="btn body-mainCTA self-start" />
 </form>
 

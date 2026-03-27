@@ -557,6 +557,9 @@
 			"pending": "pendente"
 		},
 		"paymentStatusNpub": "Chave pública Nostr para estado do pagamento",
+		"cleanPersonalData": "Limpar os meus dados pessoais",
+		"cleanPersonalDataConfirm": "AVISO: Esta ação removerá permanentemente os seus dados pessoais deste pedido, incluindo endereços de envio e faturação.\n\nFaça isto apenas APÓS o seu pedido ter sido entregue e ter recebido os seus artigos.\n\nEsta ação não pode ser desfeita. Continuar?",
+		"cleanPersonalDataSuccess": "Os seus dados pessoais foram removidos deste pedido com sucesso.",
 		"receipt": {
 			"accountHolder": "Titular da conta",
 			"accountHolderAddress": "Morada",
