@@ -37,6 +37,13 @@ export interface ProductTranslatableFields {
 	};
 }
 
+export interface MerchantBankDetails {
+	iban: string;
+	bic?: string;
+	accountHolder?: string;
+	accountHolderAddress?: string;
+}
+
 export interface Product extends Timestamps, ProductTranslatableFields {
 	_id: string;
 	alias: string[];
@@ -128,6 +135,14 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	 * The product can only be bought with the specified payment methods
 	 */
 	paymentMethods?: PaymentMethod[];
+	/**
+	 * Per-product payment credentials for marketplace scenarios (Phase 1).
+	 * If set and cart contains only this product, these credentials override global ones.
+	 */
+	merchantCredentials?: {
+		swissBitcoinPayApiKey?: string;
+		bank?: MerchantBankDetails;
+	};
 	mobile?: {
 		hideContentBefore: boolean;
 		hideContentAfter: boolean;

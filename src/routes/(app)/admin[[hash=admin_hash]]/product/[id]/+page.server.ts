@@ -222,6 +222,25 @@ export const actions: Actions = {
 						...(parsed.restrictPaymentMethods && {
 							paymentMethods: parsed.paymentMethods ?? []
 						}),
+						...(parsed.hasMerchantCredentials && {
+							merchantCredentials: {
+								...(parsed.merchantSwissBitcoinPayApiKey && {
+									swissBitcoinPayApiKey: parsed.merchantSwissBitcoinPayApiKey
+								}),
+								...(parsed.merchantBankIban && {
+									bank: {
+										iban: parsed.merchantBankIban,
+										...(parsed.merchantBankBic && { bic: parsed.merchantBankBic }),
+										...(parsed.merchantBankAccountHolder && {
+											accountHolder: parsed.merchantBankAccountHolder
+										}),
+										...(parsed.merchantBankAccountHolderAddress && {
+											accountHolderAddress: parsed.merchantBankAccountHolderAddress
+										})
+									}
+								})
+							}
+						}),
 						hasVariations,
 						...(hasVariations && {
 							variations: variationsParsedPrice.filter(
@@ -255,6 +274,7 @@ export const actions: Actions = {
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
+						...(!parsed.hasMerchantCredentials && { merchantCredentials: '' }),
 						...(!hasVariations && { variations: '', variationLabels: '' }),
 						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),
 						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' }),

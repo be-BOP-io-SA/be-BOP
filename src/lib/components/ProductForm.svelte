@@ -91,6 +91,7 @@
 
 	let paymentMethods = product.paymentMethods || [...availablePaymentMethods];
 	let restrictPaymentMethods = !!product.paymentMethods;
+	let hasMerchantCredentials = !!product.merchantCredentials;
 	let vatProfileId = product.vatProfileId || '';
 	let formElement: HTMLFormElement;
 	let priceAmountElement: HTMLInputElement;
@@ -816,6 +817,58 @@
 						{/each}
 					</div>
 				{/if}
+
+				<label class="checkbox-label">
+					<input
+						class="form-checkbox"
+						type="checkbox"
+						bind:checked={hasMerchantCredentials}
+						name="hasMerchantCredentials"
+					/>
+					Merchant payment credentials (marketplace)
+				</label>
+
+				<fieldset disabled={!hasMerchantCredentials} hidden={!hasMerchantCredentials}>
+					<div class="bg-blue-50 p-4 rounded-lg space-y-3">
+						<p class="text-sm font-medium text-gray-700">Swiss Bitcoin Pay:</p>
+						<input
+							type="password"
+							name="merchantSwissBitcoinPayApiKey"
+							value={product.merchantCredentials?.swissBitcoinPayApiKey ?? ''}
+							placeholder="API Key"
+							class="form-input w-full"
+						/>
+						<p class="text-sm font-medium text-gray-700 mt-3">Bank Transfer:</p>
+						<input
+							type="text"
+							name="merchantBankIban"
+							value={product.merchantCredentials?.bank?.iban ?? ''}
+							placeholder="IBAN"
+							class="form-input w-full"
+						/>
+						<input
+							type="text"
+							name="merchantBankBic"
+							value={product.merchantCredentials?.bank?.bic ?? ''}
+							placeholder="BIC/SWIFT"
+							class="form-input w-full"
+						/>
+						<input
+							type="text"
+							name="merchantBankAccountHolder"
+							value={product.merchantCredentials?.bank?.accountHolder ?? ''}
+							placeholder="Account Holder"
+							class="form-input w-full"
+						/>
+						<input
+							type="text"
+							name="merchantBankAccountHolderAddress"
+							value={product.merchantCredentials?.bank?.accountHolderAddress ?? ''}
+							placeholder="Account Holder Address"
+							class="form-input w-full"
+						/>
+					</div>
+				</fieldset>
 
 				<label class="checkbox-label">
 					<input

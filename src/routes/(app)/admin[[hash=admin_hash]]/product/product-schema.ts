@@ -209,5 +209,11 @@ export const productBaseSchema = () => ({
 	sellDisclaimerTitle: z.string().trim().max(60).optional(),
 	sellDisclaimerReason: z.string().trim().max(10_000).optional(),
 	hideFromSEO: z.boolean({ coerce: true }).default(false),
-	hideDiscountExpiration: z.boolean({ coerce: true }).default(false)
+	hideDiscountExpiration: z.boolean({ coerce: true }).default(false),
+	hasMerchantCredentials: z.boolean({ coerce: true }).default(false),
+	merchantSwissBitcoinPayApiKey: z.string().trim().min(1).optional(),
+	merchantBankIban: z.string().trim().min(1).optional(),
+	merchantBankBic: z.string().trim().min(1).optional(),
+	merchantBankAccountHolder: z.string().trim().min(1).optional(),
+	merchantBankAccountHolderAddress: z.string().trim().min(1).optional()
 });

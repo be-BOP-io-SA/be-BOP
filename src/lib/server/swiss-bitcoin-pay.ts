@@ -54,8 +54,12 @@ export interface CheckoutStatus {
 	redirectAfterPaid?: string;
 }
 
-export async function sbpCreateCheckout(request: CheckoutRequest): Promise<CheckoutResponse> {
-	if (!isSwissBitcoinPayConfigured()) {
+export async function sbpCreateCheckout(
+	request: CheckoutRequest,
+	opts?: { apiKey?: string }
+): Promise<CheckoutResponse> {
+	const apiKey = opts?.apiKey ?? runtimeConfig.swissBitcoinPay.apiKey;
+	if (!apiKey) {
 		throw new Error('Swiss Bitcoin Pay is not enabled');
 	}
 
@@ -63,10 +67,11 @@ export async function sbpCreateCheckout(request: CheckoutRequest): Promise<Check
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			'api-key': runtimeConfig.swissBitcoinPay.apiKey,
+			'api-key': apiKey,
 			'user-agent': `be-BOP`
 		},
-		body: JSON.stringify(request)
+		body: JSON.stringify(request),
+		signal: AbortSignal.timeout(15_000)
 	});
 
 	if (!response.ok) {
@@ -77,7 +82,8 @@ export async function sbpCreateCheckout(request: CheckoutRequest): Promise<Check
 
 export async function sbpGetCheckoutStatus(id: string): Promise<CheckoutStatus> {
 	const response = await fetch(`${apiUrl()}/checkout/${id}`, {
-		method: 'GET'
+		method: 'GET',
+		signal: AbortSignal.timeout(15_000)
 	});
 
 	if (!response.ok) {
