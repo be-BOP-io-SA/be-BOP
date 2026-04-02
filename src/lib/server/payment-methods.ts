@@ -1,14 +1,6 @@
 import { env } from '$env/dynamic/private';
-import { isBitcoinConfigured as isBitcoindConfigured } from './bitcoind';
-import { isLndConfigured } from './lnd';
-import { isPhoenixdConfigured } from './phoenixd';
 import { runtimeConfig } from './runtime-config';
-import { isSumupEnabled } from './sumup';
-import { isStripeEnabled } from './stripe';
-import { isPaypalEnabled } from './paypal';
-import { isBitcoinNodelessConfigured } from './bitcoin-nodeless';
-import { isSwissBitcoinPayConfigured } from './swiss-bitcoin-pay';
-import { isBtcpayServerConfigured } from './btcpay-server';
+import { getProcessorsForMethod } from './sdk/pp';
 
 export const ALL_PAYMENT_METHODS = [
 	'card',
@@ -52,20 +44,12 @@ export const paymentMethods = (opts?: {
 					}
 					switch (method) {
 						case 'card':
-							return isSumupEnabled() || isStripeEnabled();
 						case 'paypal':
-							return isPaypalEnabled();
+						case 'bitcoin':
+						case 'lightning':
+							return getProcessorsForMethod(method).some((pp) => pp.isEnabled());
 						case 'bank-transfer':
 							return runtimeConfig.sellerIdentity?.bank;
-						case 'bitcoin':
-							return isBitcoindConfigured || isBitcoinNodelessConfigured();
-						case 'lightning':
-							return (
-								isSwissBitcoinPayConfigured() ||
-								isBtcpayServerConfigured() ||
-								isLndConfigured() ||
-								isPhoenixdConfigured()
-							);
 						case 'point-of-sale':
 							return opts?.hasPosOptions || opts?.includePOS;
 						case 'free':

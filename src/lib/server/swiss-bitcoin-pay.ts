@@ -11,6 +11,7 @@ export interface CheckoutRequest {
 	description?: string;
 	amount: number;
 	unit?: string;
+	delay?: number;
 	onChain?: boolean;
 	webhook?: {
 		url: string;

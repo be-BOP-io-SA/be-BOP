@@ -1,10 +1,11 @@
 // @ts-expect-error no types
 import bip84 from 'bip84';
-import { runtimeConfig } from './runtime-config';
+import { runtimeConfig, runtimeConfigUpdatedAt } from './runtime-config';
 import { z } from 'zod';
 import { sum } from '$lib/utils/sum';
 import { trimSuffix } from '$lib/utils/trimSuffix';
 import { persistConfigElement } from './utils/persistConfig';
+import { collections } from './database';
 
 export function isBitcoinNodelessConfigured(): boolean {
 	return (
@@ -163,5 +164,43 @@ export async function isAddressUsed(address: string): Promise<boolean> {
 		return (data.chain_stats?.tx_count ?? 0) > 0;
 	} catch {
 		return false;
+	}
+}
+
+export async function updateBitcoinBlockHeight(): Promise<void> {
+	try {
+		const resp = await fetch(
+			new URL(trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + '/api/blocks/tip/height')
+		);
+
+		if (resp.ok) {
+			const blockHeight = z.number().parse(await resp.json());
+
+			if (runtimeConfig.bitcoinBlockHeight !== blockHeight) {
+				console.log('Updating bitcoin block height to', blockHeight);
+				runtimeConfig.bitcoinBlockHeight = blockHeight;
+				runtimeConfigUpdatedAt['bitcoinBlockHeight'] = new Date();
+
+				await collections.runtimeConfig.updateOne(
+					{
+						_id: 'bitcoinBlockHeight'
+					},
+					{
+						$set: {
+							data: blockHeight,
+							updatedAt: new Date()
+						}
+					},
+					{
+						upsert: true
+					}
+				);
+			}
+		}
+	} catch (err) {
+		console.error(
+			'Failed to update bitcoin block height:',
+			err instanceof Error ? err.message : err
+		);
 	}
 }

@@ -15,7 +15,6 @@ import {
 	addHours,
 	addMinutes,
 	differenceInMinutes,
-	differenceInSeconds,
 	eachDayOfInterval,
 	isSameDay,
 	max,
@@ -32,19 +31,12 @@ import {
 } from '$lib/types/Product';
 import { error, redirect } from '@sveltejs/kit';
 import { toSatoshis } from '$lib/utils/toSatoshis';
-import {
-	currentWallet,
-	getNewAddress,
-	isBitcoinConfigured as isBitcoindConfigured,
-	orderAddressLabel
-} from './bitcoind';
-import { isLndConfigured, lndCreateInvoice } from './lnd';
 import { ORIGIN } from '$lib/server/env-config';
 import { isEmailConfigured, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
 import { type Cart } from '$lib/types/Cart';
 import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
-import { CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
+import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { refreshAvailableStockInDb } from './product';
 import { checkCartItems } from './cart';
@@ -59,16 +51,7 @@ import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { LanguageKey } from '$lib/translations';
 import { filterNullish } from '$lib/utils/fillterNullish';
-import { toUrlEncoded } from '$lib/utils/toUrlEncoded';
-import { isPhoenixdConfigured, phoenixdCreateInvoice } from './phoenixd';
-import { isSumupEnabled } from './sumup';
-import { isStripeEnabled } from './stripe';
-import { isPaypalEnabled, paypalAccessToken, paypalApiOrigin } from './paypal';
-import {
-	bip84Address,
-	generateDerivationIndex,
-	isBitcoinNodelessConfigured
-} from './bitcoin-nodeless';
+import { isPhoenixdConfigured } from './phoenixd';
 import type { Discount } from '$lib/types/Discount';
 import { groupByNonPartial } from '$lib/utils/group-by';
 import {
@@ -83,9 +66,8 @@ import {
 import { isEmptyObject } from '$lib/utils/is-empty-object';
 import { binaryFindAround } from '$lib/utils/binary-find';
 import { toZonedTime } from 'date-fns-tz';
-import { isSwissBitcoinPayConfigured, sbpCreateCheckout } from './swiss-bitcoin-pay';
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
-import { btcpayCreateLnInvoice, isBtcpayServerConfigured } from './btcpay-server';
+import { resolveProcessor } from './sdk/pp';
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
 	const other = await collections.orders.findOne({
@@ -1728,407 +1710,33 @@ async function generatePaymentInfo(params: {
 	meta?: unknown;
 	processor?: PaymentProcessor;
 }> {
+	// SDK branch — handles bitcoin, lightning, card, paypal
+	const pp = resolveProcessor(params.method);
+	if (pp) {
+		try {
+			const result = await pp.createPayment({
+				orderId: params.orderId,
+				orderNumber: params.orderNumber,
+				paymentId: params.paymentId.toHexString(),
+				toPay: params.toPay,
+				expiresAt: params.expiresAt
+			});
+			return { ...result, processor: pp.meta.processor };
+		} catch (err) {
+			throw error(402, err instanceof Error ? err.message : 'Payment creation failed');
+		}
+	}
+
+	// Fallback for methods without SDK: point-of-sale, free, bank-transfer
 	switch (params.method) {
-		case 'bitcoin': {
-			const preference = runtimeConfig.paymentProcessorPreferences?.bitcoin;
-			const hardcodedPriority: PaymentProcessor[] = ['bitcoin-nodeless', 'bitcoind'];
-
-			const availability: Partial<Record<PaymentProcessor, boolean>> = {
-				'bitcoin-nodeless': isBitcoinNodelessConfigured(),
-				bitcoind: isBitcoindConfigured
-			};
-
-			const generators: Partial<
-				Record<
-					PaymentProcessor,
-					() => Promise<{
-						address?: string;
-						wallet?: string;
-						label?: string;
-						invoiceId?: string;
-						checkoutId?: string;
-						meta?: unknown;
-						processor?: PaymentProcessor;
-					}>
-				>
-			> = {
-				'bitcoin-nodeless': async () => ({
-					address: bip84Address(
-						runtimeConfig.bitcoinNodeless.publicKey,
-						await generateDerivationIndex()
-					),
-					processor: 'bitcoin-nodeless'
-				}),
-				bitcoind: async () => ({
-					address: await getNewAddress(orderAddressLabel(params.orderId, params.paymentId)),
-					wallet: await currentWallet(),
-					label: orderAddressLabel(params.orderId, params.paymentId),
-					processor: 'bitcoind'
-				})
-			};
-
-			const orderedProcessors =
-				preference && availability[preference]
-					? [preference, ...hardcodedPriority.filter((p) => p !== preference)]
-					: hardcodedPriority;
-
-			for (const processor of orderedProcessors) {
-				if (availability[processor]) {
-					const generator = generators[processor];
-					if (generator) {
-						return await generator();
-					}
-				}
-			}
-
-			throw new Error('No bitcoin payment processors available.');
-		}
-		case 'lightning': {
-			const label = (() => {
-				switch (runtimeConfig.lightningQrCodeDescription) {
-					case 'brand':
-						return runtimeConfig.brandName;
-					case 'orderUrl':
-						return `${ORIGIN}/order/${params.orderId}`;
-					case 'brandAndOrderNumber':
-						return `${runtimeConfig.brandName} - Order #${params.orderNumber.toLocaleString('en')}`;
-					default:
-						return '';
-				}
-			})();
-			const satoshis = toSatoshis(params.toPay.amount, params.toPay.currency);
-			const preference = runtimeConfig.paymentProcessorPreferences?.lightning;
-			const hardcodedPriority: PaymentProcessor[] = [
-				'swiss-bitcoin-pay',
-				'btcpay-server',
-				'phoenixd',
-				'lnd'
-			];
-
-			const availability: Partial<Record<PaymentProcessor, boolean>> = {
-				'swiss-bitcoin-pay': isSwissBitcoinPayConfigured(),
-				'btcpay-server': isBtcpayServerConfigured(),
-				phoenixd: isPhoenixdConfigured(),
-				lnd: isLndConfigured()
-			};
-
-			const generators: Partial<
-				Record<
-					PaymentProcessor,
-					() => Promise<{
-						address?: string;
-						wallet?: string;
-						label?: string;
-						invoiceId?: string;
-						checkoutId?: string;
-						meta?: unknown;
-						processor?: PaymentProcessor;
-					}>
-				>
-			> = {
-				'swiss-bitcoin-pay': async () => {
-					const invoice = await swissBitcoinPayCreateInvoice({
-						label,
-						orderId: `${params.orderNumber}`,
-						expiresAt: params.expiresAt,
-						toPay: {
-							amount: satoshis,
-							currency: 'SAT'
-						}
-					});
-					return {
-						address: invoice.payment_address,
-						invoiceId: invoice.invoiceId,
-						processor: 'swiss-bitcoin-pay'
-					};
-				},
-				'btcpay-server': async () => {
-					const invoice = await btcpayServerCreateInvoice({
-						label,
-						expiresAt: params.expiresAt,
-						amountInSats: satoshis
-					});
-					return {
-						address: invoice.payment_address,
-						invoiceId: invoice.invoiceId,
-						processor: 'btcpay-server'
-					};
-				},
-				phoenixd: async () => {
-					const invoice = await phoenixdCreateInvoice(satoshis, label, params.orderId);
-					return {
-						address: invoice.payment_address,
-						invoiceId: invoice.r_hash,
-						processor: 'phoenixd'
-					};
-				},
-				lnd: async () => {
-					const invoice = await lndCreateInvoice(satoshis, {
-						...(params.expiresAt && {
-							expireAfterSeconds: differenceInSeconds(params.expiresAt, new Date())
-						}),
-						label
-					});
-					return {
-						address: invoice.payment_request,
-						invoiceId: invoice.r_hash,
-						processor: 'lnd'
-					};
-				}
-			};
-
-			const orderedProcessors =
-				preference && availability[preference]
-					? [preference, ...hardcodedPriority.filter((p) => p !== preference)]
-					: hardcodedPriority;
-
-			for (const processor of orderedProcessors) {
-				if (availability[processor]) {
-					const generator = generators[processor];
-					if (generator) {
-						return await generator();
-					}
-				}
-			}
-
-			throw new Error('No lightning payment processors available.');
-		}
-		case 'point-of-sale': {
-		}
-		case 'free': {
+		case 'point-of-sale':
+		case 'free':
 			return {};
-		}
-		case 'bank-transfer': {
+		case 'bank-transfer':
 			return { address: runtimeConfig.sellerIdentity?.bank?.iban };
-		}
-		case 'card':
-			return await generateCardPaymentInfo(params);
-		case 'paypal':
-			return await generatePaypalPaymentInfo(params);
+		default:
+			throw error(402, `No payment processor available for method ${params.method}`);
 	}
-}
-
-async function generateCardPaymentInfo(params: {
-	orderId: string;
-	orderNumber: number;
-	toPay: Price;
-	paymentId: ObjectId;
-	expiresAt?: Date;
-}): Promise<{
-	checkoutId: string;
-	meta: unknown;
-	address: string;
-	processor: PaymentProcessor;
-	clientSecret?: string;
-}> {
-	const preference = runtimeConfig.paymentProcessorPreferences?.card;
-	const hardcodedPriority: PaymentProcessor[] = ['sumup', 'stripe'];
-
-	const availability: Partial<Record<PaymentProcessor, boolean>> = {
-		sumup: isSumupEnabled(),
-		stripe: isStripeEnabled()
-	};
-
-	const generators: Partial<
-		Record<
-			PaymentProcessor,
-			() => Promise<{
-				checkoutId: string;
-				meta: unknown;
-				address: string;
-				processor: PaymentProcessor;
-				clientSecret?: string;
-			}>
-		>
-	> = {
-		sumup: async () => {
-			const resp = await fetch('https://api.sumup.com/v0.1/checkouts', {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${runtimeConfig.sumUp.apiKey}`,
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					amount: toCurrency(
-						runtimeConfig.sumUp.currency,
-						params.toPay.amount,
-						params.toPay.currency
-					),
-					currency: runtimeConfig.sumUp.currency,
-					checkout_reference: params.orderId + '-' + params.paymentId,
-					merchant_code: runtimeConfig.sumUp.merchantCode,
-					redirect_url: `${ORIGIN}/order/${params.orderId}`,
-					description: 'Order ' + params.orderNumber,
-					...(params.expiresAt && {
-						valid_until: params.expiresAt.toISOString()
-					})
-				}),
-				...{ autoSelectFamily: true }
-			});
-
-			if (!resp.ok) {
-				console.error(await resp.text());
-				throw error(402, 'Sumup checkout creation failed');
-			}
-
-			const json = await resp.json();
-			const checkoutId = json.id;
-
-			if (!checkoutId || typeof checkoutId !== 'string') {
-				console.error('no checkout id', json);
-				throw error(402, 'Sumup checkout creation failed');
-			}
-
-			return {
-				checkoutId,
-				meta: json,
-				address: `${ORIGIN}/order/${params.orderId}/payment/${params.paymentId}/pay`,
-				processor: 'sumup'
-			};
-		},
-		stripe: async () => {
-			const response = await fetch('https://api.stripe.com/v1/payment_intents', {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${runtimeConfig.stripe.secretKey}`,
-					'Content-Type': 'application/x-www-form-urlencoded'
-				},
-				body: toUrlEncoded({
-					amount: Math.round(
-						toCurrency(runtimeConfig.stripe.currency, params.toPay.amount, params.toPay.currency) /
-							CURRENCY_UNIT[runtimeConfig.stripe.currency]
-					),
-					currency: runtimeConfig.stripe.currency.toLowerCase(),
-					automatic_payment_methods: {
-						enabled: true
-					},
-					metadata: {
-						orderId: params.orderId,
-						paymentId: params.paymentId.toHexString()
-					},
-					description: 'Order ' + params.orderNumber
-				})
-			});
-
-			if (!response.ok) {
-				console.error(await response.text());
-				throw error(402, 'Stripe payment intent creation failed');
-			}
-
-			const json = await response.json();
-			const clientSecret = json.client_secret;
-
-			if (!clientSecret || typeof clientSecret !== 'string') {
-				console.error('no client secret', json);
-				throw error(402, 'Stripe payment intent creation failed');
-			}
-
-			const paymentId = json.id;
-
-			if (!paymentId || typeof paymentId !== 'string') {
-				console.error('no payment id', json);
-				throw error(402, 'Stripe payment intent creation failed');
-			}
-
-			return {
-				checkoutId: paymentId,
-				clientSecret,
-				meta: json,
-				address: `${ORIGIN}/order/${params.orderId}/payment/${params.paymentId}/pay`,
-				processor: 'stripe'
-			};
-		}
-	};
-
-	const orderedProcessors =
-		preference && availability[preference]
-			? [preference, ...hardcodedPriority.filter((p) => p !== preference)]
-			: hardcodedPriority;
-
-	for (const processor of orderedProcessors) {
-		if (availability[processor]) {
-			const generator = generators[processor];
-			if (generator) {
-				return await generator();
-			}
-		}
-	}
-
-	throw error(402, 'No card payment processor configured');
-}
-
-async function generatePaypalPaymentInfo(params: {
-	orderId: string;
-	orderNumber: number;
-	toPay: Price;
-	paymentId: ObjectId;
-}): Promise<{
-	checkoutId: string;
-	meta: unknown;
-	address: string;
-	processor: PaymentProcessor;
-}> {
-	const response = await fetch(`${paypalApiOrigin()}/v2/checkout/orders`, {
-		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${await paypalAccessToken()}`,
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify({
-			intent: 'CAPTURE',
-			purchase_units: [
-				{
-					amount: {
-						currency_code: runtimeConfig.paypal.currency,
-						value: toCurrency(
-							runtimeConfig.paypal.currency,
-							params.toPay.amount,
-							params.toPay.currency
-						).toFixed(FRACTION_DIGITS_PER_CURRENCY[runtimeConfig.paypal.currency])
-					},
-					description: 'Order ' + params.orderNumber
-				}
-			],
-			application_context: {
-				user_action: 'PAY_NOW',
-				// No need to fill shipping information through PayPal
-				shipping_preference: 'NO_SHIPPING',
-				return_url: `${ORIGIN}/order/${params.orderId}`,
-				cancel_url: `${ORIGIN}/order/${params.orderId}?paymentId=${params.paymentId}&cancel=true`
-			}
-		})
-	});
-
-	if (!response.ok) {
-		console.error(await response.text());
-		throw error(402, 'PayPal checkout creation failed');
-	}
-
-	const json: {
-		id: string;
-		links: Array<{ rel: string; href: string }>;
-	} = await response.json();
-
-	const checkoutId = json.id;
-
-	if (!checkoutId || typeof checkoutId !== 'string') {
-		console.error('no checkout id', json);
-		throw error(402, 'PayPal checkout creation failed');
-	}
-
-	const approveLink = json.links.find((link) => link.rel === 'approve');
-
-	if (!approveLink) {
-		console.error('no approve link', json);
-		throw error(402, 'PayPal checkout creation failed');
-	}
-
-	return {
-		checkoutId,
-		meta: json,
-		address: approveLink.href,
-		processor: 'paypal'
-	};
 }
 
 export function paymentMethodExpiration(
@@ -2145,6 +1753,12 @@ export function paymentMethodExpiration(
 }
 
 function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
+	const pp = resolveProcessor(paymentMethod);
+	if (pp) {
+		return pp.paymentPrice(price);
+	}
+
+	// Non-SDK methods use mainCurrency
 	switch (paymentMethod) {
 		case 'point-of-sale':
 		case 'free':
@@ -2153,44 +1767,8 @@ function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
 				amount: toCurrency(runtimeConfig.mainCurrency, price.amount, price.currency),
 				currency: runtimeConfig.mainCurrency
 			};
-		case 'card':
-			if (isSumupEnabled()) {
-				return {
-					amount: toCurrency(runtimeConfig.sumUp.currency, price.amount, price.currency),
-					currency: runtimeConfig.sumUp.currency
-				};
-			}
-
-			if (isStripeEnabled()) {
-				return {
-					amount: toCurrency(runtimeConfig.stripe.currency, price.amount, price.currency),
-					currency: runtimeConfig.stripe.currency
-				};
-			}
-
-			if (isPaypalEnabled()) {
-				return {
-					amount: toCurrency(runtimeConfig.paypal.currency, price.amount, price.currency),
-					currency: runtimeConfig.paypal.currency
-				};
-			}
-
-			throw error(402, 'No card payment processor configured');
-		case 'paypal':
-			return {
-				amount: toCurrency(runtimeConfig.paypal.currency, price.amount, price.currency),
-				currency: runtimeConfig.paypal.currency
-			};
-		case 'bitcoin':
-			return {
-				amount: toCurrency('BTC', price.amount, price.currency),
-				currency: 'BTC'
-			};
-		case 'lightning':
-			return {
-				amount: toCurrency('SAT', price.amount, price.currency),
-				currency: 'SAT'
-			};
+		default:
+			throw error(402, `No payment processor configured for method ${paymentMethod}`);
 	}
 }
 
@@ -2706,62 +2284,4 @@ function compareBookingsAndThrow(
 
 		return a.start.getTime() - b.start.getTime();
 	};
-}
-
-async function swissBitcoinPayCreateInvoice(params: {
-	label: string;
-	orderId: string;
-	toPay: Price;
-	expiresAt?: Date;
-}): Promise<{
-	payment_address: string;
-	invoiceId: string;
-}> {
-	const accountingNote = `Order #${params.orderId}`;
-	const device = runtimeConfig.brandName;
-	try {
-		const checkout = await sbpCreateCheckout({
-			title: params.label,
-			description: accountingNote,
-			amount: params.toPay.amount,
-			unit: params.toPay.currency === 'SAT' ? 'sat' : params.toPay.currency,
-			extra: {
-				customDevice: device
-			},
-			...(params.expiresAt === undefined
-				? {}
-				: { delay: differenceInMinutes(params.expiresAt, new Date()) })
-		});
-		const payment_address = checkout.pr;
-		const invoiceId = checkout.id;
-		return { payment_address, invoiceId };
-	} catch (err) {
-		throw error(402, `Failed to create Swiss Bitcoin Pay Invoice: ${err}`);
-	}
-}
-
-async function btcpayServerCreateInvoice(params: {
-	label: string;
-	amountInSats: number;
-	expiresAt?: Date;
-}): Promise<{
-	payment_address: string;
-	invoiceId: string;
-}> {
-	try {
-		const invoice = await btcpayCreateLnInvoice({
-			amount: `${params.amountInSats * 1000}`,
-			description: params.label,
-			...(params.expiresAt === undefined
-				? {}
-				: {
-						expiry: differenceInSeconds(params.expiresAt, new Date())
-				  })
-		});
-		const payment_address = invoice.BOLT11;
-		const invoiceId = invoice.id;
-		return { payment_address, invoiceId };
-	} catch (err) {
-		throw error(402, `Failed to create BTCPay Server Invoice: ${err}`);
-	}
 }
