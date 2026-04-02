@@ -380,7 +380,7 @@ export async function loadDiskWallets() {
 
 export type BitcoinTransaction = Awaited<ReturnType<typeof listTransactions>>[number];
 
-export function orderAddressLabel(orderId: string, paymentId: ObjectId) {
+export function orderAddressLabel(orderId: string, paymentId: string | ObjectId) {
 	return `order:${orderId}:${paymentId}`;
 }
 

@@ -7,6 +7,7 @@ import { SvelteKitAuth } from '@auth/sveltekit';
 import { flatten } from 'flat';
 import { adminPrefix as _adminPrefix } from '$lib/server/admin';
 import '$lib/server/locks';
+import '$lib/server/sdk/pp-registry';
 import { refreshPromise, runtimeConfig } from '$lib/server/runtime-config';
 import type { CMSPage } from '$lib/types/CmsPage';
 import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
