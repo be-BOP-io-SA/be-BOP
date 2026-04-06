@@ -187,5 +187,7 @@
 			This is completely optional. It will be printed on the top-right corner of the invoice.
 		</p>
 	</label>
-	<button type="submit" class="btn btn-black self-start">Update</button>
+	<div>
+		<button type="submit" class="btn btn-black self-start">Update</button>
+	</div>
 </form>

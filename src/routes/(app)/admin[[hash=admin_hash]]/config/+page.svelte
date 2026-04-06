@@ -825,7 +825,9 @@
 		</fieldset>
 	{/if}
 
-	<input type="submit" value="Update" class="btn body-mainCTA self-start" />
+	<div>
+		<input type="submit" value="Update" class="btn body-mainCTA self-start" />
+	</div>
 </form>
 
 <p>

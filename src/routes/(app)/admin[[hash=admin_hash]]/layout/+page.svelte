@@ -378,5 +378,7 @@
 		/>
 		Merge topbar and navbar entries on the same burger menu on mobile
 	</label>
-	<button class="btn btn-black self-start" type="submit">Update</button>
+	<div>
+		<button class="btn btn-black self-start" type="submit">Update</button>
+	</div>
 </form>
