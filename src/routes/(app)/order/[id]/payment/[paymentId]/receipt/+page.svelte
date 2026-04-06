@@ -85,6 +85,23 @@
 			? fixCurrencyRounding(totalWithoutDiscountNoTax.amount - totalNoTax.amount, currency)
 			: 0
 	};
+
+	// Per-item discount (POS per-item discounts applied to individual items)
+	const perItemDiscountNoTax = {
+		currency,
+		amount: fixCurrencyRounding(
+			data.order.items.reduce((sum, item) => {
+				if (!item.discountPercentage) {
+					return sum;
+				}
+				const undiscountedUnit =
+					item.currencySnapshot.main.customPrice?.amount ?? item.currencySnapshot.main.price.amount;
+				const paidQty = item.quantity - (item.freeQuantity ?? 0);
+				return sum + undiscountedUnit * paidQty * (item.discountPercentage / 100);
+			}, 0),
+			currency
+		)
+	};
 </script>
 
 <div class="break-after-page w-full flex flex-col">
@@ -212,7 +229,27 @@
 						{item.freeQuantity ? '+' + item.freeQuantity : ''}</td
 					>
 					<td class="text-center border border-white px-2">
-						<PriceTag amount={unitPrice} currency={priceCurrency} inline />
+						{#if item.discountPercentage}
+							{@const originalUnitPrice =
+								item.currencySnapshot.main.customPrice?.amount ??
+								item.currencySnapshot.main.price.amount}
+							<div class="flex flex-col items-center gap-0.5">
+								<span class="text-xs text-red-600 font-bold"
+									>-{Number.isInteger(item.discountPercentage)
+										? item.discountPercentage
+										: item.discountPercentage.toFixed(1)}%</span
+								>
+								<PriceTag
+									amount={originalUnitPrice}
+									currency={priceCurrency}
+									inline
+									class="line-through text-gray-500 text-sm"
+								/>
+								<PriceTag amount={unitPrice} currency={priceCurrency} inline />
+							</div>
+						{:else}
+							<PriceTag amount={unitPrice} currency={priceCurrency} inline />
+						{/if}
 					</td>
 					<td class="text-center border border-white px-2">{vatRate}%</td>
 					<td class="text-center border border-white px-2">
@@ -244,6 +281,18 @@
 				<td class="border border-white px-2 text-right">{t('order.receipt.discountExcVat')}</td>
 				<td class="border border-white px-2 text-right whitespace-nowrap">
 					<PriceTag amount={-discountNoTax.amount} currency={discountNoTax.currency} inline />
+				</td>
+			</tr>
+		{/if}
+		{#if perItemDiscountNoTax.amount > 0}
+			<tr style:background-color="#e7e6e6">
+				<td class="border border-white px-2 text-right">{t('order.receipt.discountExcVat')}</td>
+				<td class="border border-white px-2 text-right whitespace-nowrap">
+					<PriceTag
+						amount={-perItemDiscountNoTax.amount}
+						currency={perItemDiscountNoTax.currency}
+						inline
+					/>
 				</td>
 			</tr>
 		{/if}

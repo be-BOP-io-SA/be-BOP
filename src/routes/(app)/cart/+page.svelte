@@ -17,8 +17,11 @@
 	import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { formatBookedDates } from '$lib/utils/formatBookedDates.js';
+	import CartItemDiscountPanel from '$lib/components/CartItemDiscountPanel.svelte';
 
 	export let data;
+
+	let discountPanelIndex = -1;
 
 	let actionCount = 0;
 
@@ -204,12 +207,31 @@
 								</p>
 							{/if}
 							<div class="grow" />
-							<div class="flex flex-row lg:gap-2">
+							<div class="flex flex-row flex-wrap lg:gap-2 gap-1">
 								<ProductType
 									product={item.product}
 									depositPercentage={item.depositPercentage}
 									hasDigitalFiles={item.digitalFilesCount >= 1}
 								/>
+								{#if data.hasPosOptions}
+									<button
+										type="button"
+										class="text-sm px-2 py-0.5 rounded-full border {item.discountPercentage
+											? 'bg-blue-500 border-blue-500 text-white'
+											: 'border-blue-400 text-blue-600 hover:bg-blue-50'}"
+										on:click={() => {
+											discountPanelIndex = discountPanelIndex === i ? -1 : i;
+										}}
+									>
+										{#if item.discountPercentage}
+											{Number.isInteger(item.discountPercentage)
+												? item.discountPercentage
+												: item.discountPercentage.toFixed(1)}%
+										{:else}
+											{t('cart.discount.button')}
+										{/if}
+									</button>
+								{/if}
 							</div>
 							<button
 								formaction="/cart/{item.product._id}/?/remove"
@@ -225,12 +247,28 @@
 						</div>
 
 						<div class="flex flex-col items-end justify-center lg:mb-0 mb-4">
-							<div class="flex gap-2">
+							{#if item.discountPercentage}
+								<span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
+									-{Number.isInteger(item.discountPercentage)
+										? item.discountPercentage
+										: item.discountPercentage.toFixed(1)}%
+								</span>
+							{/if}
+							<div class="flex gap-2 items-baseline">
+								{#if item.discountPercentage}
+									<PriceTag
+										amount={price.amountWithoutDiscount * toDepositFactor}
+										currency={price.currency}
+										main
+										class="text-2xl truncate line-through text-gray-500"
+									/>
+								{/if}
 								<PriceTag
-									amount={price.amountWithoutDiscount * toDepositFactor}
+									amount={(item.discountPercentage ? price.amount : price.amountWithoutDiscount) *
+										toDepositFactor}
 									currency={price.currency}
 									main
-									class="text-2xl truncate {item.discountPercentage ? 'line-through' : ''}"
+									class="text-2xl truncate font-bold"
 								>
 									{#if item.depositPercentage}
 										{(item.depositPercentage / 100).toLocaleString($locale, {
@@ -238,14 +276,6 @@
 										})}
 									{/if}
 								</PriceTag>
-								{#if item.discountPercentage}
-									<PriceTag
-										amount={price.amount * toDepositFactor}
-										currency={price.currency}
-										class="text-2xl truncate "
-										main
-									/>
-								{/if}
 							</div>
 							<PriceTag
 								class="text-base truncate"
@@ -256,6 +286,21 @@
 							<span class="font-semibold">{t('cart.vat')} {priceInfo.vatRates[i]}%</span>
 						</div>
 					</form>
+
+					{#if discountPanelIndex === i && data.hasPosOptions}
+						<div class="col-span-4">
+							<CartItemDiscountPanel
+								productName={item.product.name}
+								productPrice={price.amountWithoutDiscount}
+								productCurrency={price.currency}
+								currentDiscount={item.discountPercentage}
+								currentJustification={item.discountJustification}
+								lineId={item._id}
+								productId={item.product._id}
+								on:cancel={() => (discountPanelIndex = -1)}
+							/>
+						</div>
+					{/if}
 
 					{#if errorMessage && errorProductId === item.product._id}
 						<p class="text-red-600 col-span-4">{errorMessage}</p>

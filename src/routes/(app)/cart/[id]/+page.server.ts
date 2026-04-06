@@ -165,6 +165,58 @@ export const actions = {
 
 		throw redirect(303, request.headers.get('referer') || '/cart');
 	},
+	setDiscount: async ({ locals, params, request }) => {
+		if (!locals.user?.hasPosOptions) {
+			throw error(403, 'Only POS users can set per-item discounts');
+		}
+
+		const cart = await collections.carts.findOne(userQuery(userIdentifier(locals)));
+		if (!cart) {
+			throw error(404, 'No cart found');
+		}
+
+		const formData = await request.formData();
+		const { discountPercentage, justification, lineId } = z
+			.object({
+				discountPercentage: z.coerce.number().min(0).max(100),
+				justification: z.string().max(500).optional(),
+				lineId: z.string().optional()
+			})
+			.refine(
+				(data) =>
+					data.discountPercentage === 0 ||
+					(!!data.justification && data.justification.trim().length > 0),
+				{ message: 'Justification is required when applying a discount', path: ['justification'] }
+			)
+			.parse(Object.fromEntries(formData));
+
+		const filter = lineId
+			? { _id: cart._id, 'items._id': lineId }
+			: { _id: cart._id, 'items.productId': params.id };
+
+		const res = await collections.carts.updateOne(
+			filter,
+			discountPercentage > 0
+				? {
+						$set: {
+							'items.$.discountPercentage': discountPercentage,
+							...(justification ? { 'items.$.discountJustification': justification } : {}),
+							updatedAt: new Date()
+						},
+						...(!justification ? { $unset: { 'items.$.discountJustification': '' } } : {})
+				  }
+				: {
+						$unset: {
+							'items.$.discountPercentage': 1,
+							'items.$.discountJustification': 1
+						},
+						$set: { updatedAt: new Date() }
+				  }
+		);
+		if (!res.matchedCount) {
+			throw error(404, 'This product is not in the cart');
+		}
+	},
 	addNote: async ({ locals, params, request }) => {
 		const cart = await collections.carts.findOne(userQuery(userIdentifier(locals)));
 

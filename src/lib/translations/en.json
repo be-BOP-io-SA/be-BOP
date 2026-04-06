@@ -32,6 +32,19 @@
 			"discardItem": "Discard",
 			"view": "View cart"
 		},
+		"discount": {
+			"button": "% Discount",
+			"noDiscount": "No discount",
+			"title": "Discount — {productName}",
+			"customPercent": "Custom %",
+			"customAmount": "Custom amount ({currency})",
+			"justification": "Justification",
+			"justificationPlaceholder": "Reason for the discount...",
+			"cancel": "Cancel",
+			"validate": "Validate",
+			"customPercentPlaceholder": "e.g. 15",
+			"customAmountPlaceholder": "e.g. 5.00"
+		},
 		"empty": "Cart is empty",
 		"fillProductAlias": "Fill product alias",
 		"items": "Products",

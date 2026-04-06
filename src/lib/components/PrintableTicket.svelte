@@ -14,6 +14,7 @@
 		items: Array<{
 			product: Pick<Product, 'name'>;
 			quantity: number;
+			discountPercentage?: number;
 			variations: Array<{ text: string; count: number }>;
 			notes: string[];
 		}>;
@@ -28,6 +29,9 @@
 				currency: Currency;
 				totalBeforeDiscount?: number;
 				discountPercentage?: number;
+				isPerItemDiscount?: boolean;
+				undiscountedExclVat?: number;
+				undiscountedVatBreakdown?: Array<{ rate: number; amount: number }>;
 		  }
 		| undefined = undefined;
 
@@ -377,6 +381,22 @@
 					])
 				);
 
+				if (item.discountPercentage) {
+					const pctStr = Number.isInteger(item.discountPercentage)
+						? `${item.discountPercentage}`
+						: item.discountPercentage.toFixed(1);
+					lines.push(
+						tableRow([
+							{ text: '', width: 0.15 },
+							{
+								text: `  ${ticketLabels.discount}: -${pctStr}%`,
+								width: 0.85,
+								align: 'LEFT'
+							}
+						])
+					);
+				}
+
 				renderVariationsAndNotes(item, lines);
 			};
 
@@ -421,6 +441,21 @@
 				const discountMultiplier =
 					totalBeforeDiscountSafe > 0 ? priceInfo.total / totalBeforeDiscountSafe : 1;
 
+				const beforeExclVat =
+					priceInfo.isPerItemDiscount && priceInfo.undiscountedExclVat !== undefined
+						? priceInfo.undiscountedExclVat
+						: priceInfo.totalExclVat;
+				const beforeVatBreakdown =
+					priceInfo.isPerItemDiscount && priceInfo.undiscountedVatBreakdown
+						? priceInfo.undiscountedVatBreakdown
+						: priceInfo.vatBreakdown;
+				const afterExclVat = priceInfo.isPerItemDiscount
+					? priceInfo.totalExclVat
+					: priceInfo.totalExclVat * discountMultiplier;
+				const afterVatBreakdown = priceInfo.isPerItemDiscount
+					? priceInfo.vatBreakdown
+					: priceInfo.vatBreakdown.map((v) => ({ ...v, amount: v.amount * discountMultiplier }));
+
 				// --- BEFORE DISCOUNT ---
 				lines.push(centerText(ticketLabels.beforeDiscount));
 				lines.push(separator('─'));
@@ -430,7 +465,7 @@
 					tableRow([
 						{ text: ticketLabels.exclVat, width: 0.7, align: 'LEFT' },
 						{
-							text: formatPrice(priceInfo.totalExclVat, priceInfo.currency),
+							text: formatPrice(beforeExclVat, priceInfo.currency),
 							width: 0.3,
 							align: 'RIGHT'
 						}
@@ -438,7 +473,7 @@
 				);
 
 				// Each VAT rate (before discount)
-				priceInfo.vatBreakdown.forEach((vat) => {
+				beforeVatBreakdown.forEach((vat) => {
 					lines.push(
 						tableRow([
 							{ text: `+ VAT ${vat.rate.toFixed(1)}%`, width: 0.7, align: 'LEFT' },
@@ -462,7 +497,9 @@
 				// --- AFTER DISCOUNT ---
 				lines.push(separator('─'));
 
-				if (tagGroups.length > 1) {
+				if (priceInfo.isPerItemDiscount) {
+					lines.push(centerText(ticketLabels.afterDiscount), separator('─'));
+				} else if (tagGroups.length > 1) {
 					lines.push(centerText(ticketLabels.afterDiscount), separator('─'));
 					tagGroups.forEach((group) => {
 						const label = (group.tagNames[0] || t('pos.split.otherProducts')).toUpperCase();
@@ -490,7 +527,7 @@
 					tableRow([
 						{ text: ticketLabels.exclVat, width: 0.7, align: 'LEFT' },
 						{
-							text: formatPrice(priceInfo.totalExclVat * discountMultiplier, priceInfo.currency),
+							text: formatPrice(afterExclVat, priceInfo.currency),
 							width: 0.3,
 							align: 'RIGHT'
 						}
@@ -498,12 +535,12 @@
 				);
 
 				// Each VAT rate (after discount)
-				priceInfo.vatBreakdown.forEach((vat) => {
+				afterVatBreakdown.forEach((vat) => {
 					lines.push(
 						tableRow([
 							{ text: `+ VAT ${vat.rate.toFixed(1)}%`, width: 0.7, align: 'LEFT' },
 							{
-								text: formatPrice(vat.amount * discountMultiplier, priceInfo.currency),
+								text: formatPrice(vat.amount, priceInfo.currency),
 								width: 0.3,
 								align: 'RIGHT'
 							}
