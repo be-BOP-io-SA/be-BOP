@@ -148,6 +148,11 @@
 
 			<div class="flex flex-col ml-auto items-end justify-center">
 				{#if item.discountPercentage}
+					<span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
+						-{Number.isInteger(item.discountPercentage)
+							? item.discountPercentage
+							: item.discountPercentage.toFixed(1)}%
+					</span>
 					<PriceTag
 						class="text-2xl truncate line-through"
 						amount={orderItemPriceUndiscounted(item, 'main')}

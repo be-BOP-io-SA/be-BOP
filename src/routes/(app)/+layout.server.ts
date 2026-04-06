@@ -274,7 +274,13 @@ export async function load(params) {
 								updatedAt: item.internalNote?.updatedAt
 						  }
 						: undefined,
-				discountPercentage: discountByProductId.get(item.productId) ?? wholeDiscount
+				// Discount priority: POS per-item (0) > subscription (1) > whole catalog (2)
+				discountPercentage:
+					item.discountPercentage ?? discountByProductId.get(item.productId) ?? wholeDiscount,
+				discountJustification:
+					item.discountJustification && params.locals.user?.hasPosOptions
+						? item.discountJustification
+						: undefined
 			};
 		})
 		.filter((x) => x !== undefined);
