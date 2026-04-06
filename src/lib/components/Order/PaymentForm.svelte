@@ -37,6 +37,7 @@
 		{amountLabel}
 		<input
 			type="number"
+			step="0.01"
 			name="amount"
 			class="form-input"
 			value={amount}
