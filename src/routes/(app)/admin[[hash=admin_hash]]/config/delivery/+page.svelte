@@ -104,5 +104,7 @@
 		vatRate={deliveryVatRate}
 	/>
 
-	<button type="submit" class="btn btn-black self-start"> Save config </button>
+	<div>
+		<button type="submit" class="btn btn-black self-start"> Save config </button>
+	</div>
 </form>

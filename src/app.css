@@ -233,6 +233,29 @@
 		@apply mb-4 p-4 bg-red-50 border border-red-200 rounded max-h-60 overflow-y-auto;
 	}
 
+	/* Admin panel: sticky action buttons at bottom of viewport.
+	   Scoped to forms whose direct parent is the admin <main> (or a nested page-local <main>,
+	   e.g. /admin/config/vat) to avoid matching forms nested inside banner/widget components. */
+	:is(main.body-mainPlan:not(.no-sticky-actions), main.body-mainPlan:not(.no-sticky-actions) main)
+		> form
+		> div:has(input[type='submit'], button[type='submit'], button[formaction]) {
+		position: sticky;
+		bottom: 0;
+		z-index: 10;
+		background-color: var(--body-mainPlan-backgroundColor);
+		padding-block: 0.75rem;
+		border-top: 1px solid rgba(0, 0, 0, 0.1);
+	}
+
+	:is(main.body-mainPlan:not(.no-sticky-actions), main.body-mainPlan:not(.no-sticky-actions) main)
+		> form
+		> fieldset
+		> div:last-child:has(input[type='submit'], button[type='submit'], button[formaction]) {
+		position: sticky;
+		bottom: 0;
+		z-index: 10;
+	}
+
 	.admin-table {
 		@apply border border-gray-300 divide-y divide-gray-300 border-collapse;
 	}
