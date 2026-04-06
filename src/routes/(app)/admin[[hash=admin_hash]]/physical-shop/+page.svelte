@@ -157,5 +157,7 @@
 		</p>
 	</label>
 
-	<button type="submit" class="btn btn-black self-start">Update</button>
+	<div>
+		<button type="submit" class="btn btn-black self-start">Update</button>
+	</div>
 </form>

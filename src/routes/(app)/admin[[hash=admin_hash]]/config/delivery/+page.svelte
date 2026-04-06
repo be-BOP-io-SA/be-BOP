@@ -68,5 +68,7 @@
 
 	<DeliveryFeesSelector {deliveryFees} defaultCurrency={data.currencies.priceReference} />
 
-	<button type="submit" class="btn btn-black self-start"> Save config </button>
+	<div>
+		<button type="submit" class="btn btn-black self-start"> Save config </button>
+	</div>
 </form>
