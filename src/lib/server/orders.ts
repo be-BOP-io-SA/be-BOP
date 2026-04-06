@@ -57,6 +57,7 @@ import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import type { CountryAlpha2 } from '$lib/types/Country';
+import type { SellerIdentity } from '$lib/types/SellerIdentity';
 import type { LanguageKey } from '$lib/translations';
 import { filterNullish } from '$lib/utils/fillterNullish';
 import { toUrlEncoded } from '$lib/utils/toUrlEncoded';
@@ -1322,7 +1323,7 @@ export async function createOrder(
 				createdAt: new Date(),
 				updatedAt: new Date(),
 				status: 'pending',
-				sellerIdentity: runtimeConfig.sellerIdentity,
+				sellerIdentity: buildOrderSellerIdentity(items, runtimeConfig.sellerIdentity),
 				items: items.map((item, i) => ({
 					_id: item._id,
 					quantity: item.quantity,
@@ -1712,6 +1713,77 @@ export async function createOrder(
 	return orderId;
 }
 
+/**
+ * Determines per-product merchant payment credential overrides.
+ * Returns overrides only when the order contains a single unique product
+ * that has merchantCredentials set. In Phase 2, this will be extended
+ * to group items by merchant for split payments.
+ */
+function getMerchantPaymentOverrides(items: Array<{ product: Product }>):
+	| {
+			swissBitcoinPayApiKey?: string;
+			bankIban?: string;
+	  }
+	| undefined {
+	const uniqueProductIds = [...new Set(items.map((i) => i.product._id))];
+	if (uniqueProductIds.length !== 1) {
+		return undefined;
+	}
+
+	const creds = items[0].product.merchantCredentials;
+	if (!creds) {
+		return undefined;
+	}
+
+	return {
+		...(creds.swissBitcoinPayApiKey && {
+			swissBitcoinPayApiKey: creds.swissBitcoinPayApiKey
+		}),
+		...(creds.bank && {
+			bankIban: creds.bank.iban
+		})
+	};
+}
+
+/**
+ * Builds order-level sellerIdentity, merging per-product merchant bank details
+ * when a single-product order has merchantCredentials.bank set.
+ * Falls back to global sellerIdentity when no product override exists.
+ */
+function buildOrderSellerIdentity(
+	items: Array<{ product: Product }>,
+	globalIdentity: SellerIdentity | undefined | null
+): SellerIdentity | null {
+	const uniqueProductIds = [...new Set(items.map((i) => i.product._id))];
+	const merchantBankOverride =
+		uniqueProductIds.length === 1 ? items[0].product.merchantCredentials?.bank : undefined;
+
+	if (!merchantBankOverride) {
+		return globalIdentity ?? null;
+	}
+
+	const bic = merchantBankOverride.bic ?? globalIdentity?.bank?.bic ?? '';
+	if (!bic) {
+		console.warn(
+			`Order for product "${items[0].product._id}" has merchantCredentials.bank without BIC, and no global BIC fallback`
+		);
+	}
+
+	return {
+		...(globalIdentity ?? ({} as SellerIdentity)),
+		bank: {
+			iban: merchantBankOverride.iban,
+			bic,
+			...(merchantBankOverride.accountHolder && {
+				accountHolder: merchantBankOverride.accountHolder
+			}),
+			...(merchantBankOverride.accountHolderAddress && {
+				accountHolderAddress: merchantBankOverride.accountHolderAddress
+			})
+		}
+	};
+}
+
 async function generatePaymentInfo(params: {
 	method: PaymentMethod;
 	orderId: string;
@@ -1719,6 +1791,14 @@ async function generatePaymentInfo(params: {
 	toPay: Price;
 	paymentId: ObjectId;
 	expiresAt?: Date;
+	/**
+	 * Per-product merchant payment credential overrides (Phase 1: single-product only).
+	 * In Phase 2, this will support per-group overrides for mixed-merchant carts.
+	 */
+	overrides?: {
+		swissBitcoinPayApiKey?: string;
+		bankIban?: string;
+	};
 }): Promise<{
 	address?: string;
 	wallet?: string;
@@ -1797,6 +1877,30 @@ async function generatePaymentInfo(params: {
 				}
 			})();
 			const satoshis = toSatoshis(params.toPay.amount, params.toPay.currency);
+
+			// If product has custom SBP key, force SBP as processor
+			if (params.overrides?.swissBitcoinPayApiKey) {
+				try {
+					const invoice = await swissBitcoinPayCreateInvoice({
+						label,
+						orderId: `${params.orderNumber}`,
+						expiresAt: params.expiresAt,
+						toPay: { amount: satoshis, currency: 'SAT' },
+						apiKey: params.overrides.swissBitcoinPayApiKey
+					});
+					return {
+						address: invoice.payment_address,
+						invoiceId: invoice.invoiceId,
+						processor: 'swiss-bitcoin-pay' satisfies PaymentProcessor
+					};
+				} catch (err) {
+					throw error(
+						402,
+						`Failed to create Swiss Bitcoin Pay invoice with per-product API key: ${err}`
+					);
+				}
+			}
+
 			const preference = runtimeConfig.paymentProcessorPreferences?.lightning;
 			const hardcodedPriority: PaymentProcessor[] = [
 				'swiss-bitcoin-pay',
@@ -1899,7 +2003,7 @@ async function generatePaymentInfo(params: {
 			return {};
 		}
 		case 'bank-transfer': {
-			return { address: runtimeConfig.sellerIdentity?.bank?.iban };
+			return { address: params.overrides?.bankIban ?? runtimeConfig.sellerIdentity?.bank?.iban };
 		}
 		case 'card':
 			return await generateCardPaymentInfo(params);
@@ -2245,6 +2349,8 @@ export async function addOrderPayment(
 	const isFreePayment = paymentMethod === 'free';
 	const paidAt = isFreePayment ? new Date() : undefined;
 
+	const paymentCredentialOverrides = getMerchantPaymentOverrides(order.items);
+
 	const payment: OrderPayment = {
 		_id: paymentId,
 		status: isFreePayment ? 'paid' : 'pending',
@@ -2289,7 +2395,8 @@ export async function addOrderPayment(
 			orderNumber: order.number,
 			toPay: priceToPay,
 			paymentId,
-			expiresAt: expiresAt ?? undefined
+			expiresAt: expiresAt ?? undefined,
+			overrides: paymentCredentialOverrides
 		})),
 		createdAt: new Date()
 	};
@@ -2713,6 +2820,7 @@ async function swissBitcoinPayCreateInvoice(params: {
 	orderId: string;
 	toPay: Price;
 	expiresAt?: Date;
+	apiKey?: string;
 }): Promise<{
 	payment_address: string;
 	invoiceId: string;
@@ -2720,18 +2828,21 @@ async function swissBitcoinPayCreateInvoice(params: {
 	const accountingNote = `Order #${params.orderId}`;
 	const device = runtimeConfig.brandName;
 	try {
-		const checkout = await sbpCreateCheckout({
-			title: params.label,
-			description: accountingNote,
-			amount: params.toPay.amount,
-			unit: params.toPay.currency === 'SAT' ? 'sat' : params.toPay.currency,
-			extra: {
-				customDevice: device
+		const checkout = await sbpCreateCheckout(
+			{
+				title: params.label,
+				description: accountingNote,
+				amount: params.toPay.amount,
+				unit: params.toPay.currency === 'SAT' ? 'sat' : params.toPay.currency,
+				extra: {
+					customDevice: device
+				},
+				...(params.expiresAt === undefined
+					? {}
+					: { delay: differenceInMinutes(params.expiresAt, new Date()) })
 			},
-			...(params.expiresAt === undefined
-				? {}
-				: { delay: differenceInMinutes(params.expiresAt, new Date()) })
-		});
+			params.apiKey ? { apiKey: params.apiKey } : undefined
+		);
 		const payment_address = checkout.pr;
 		const invoiceId = checkout.id;
 		return { payment_address, invoiceId };

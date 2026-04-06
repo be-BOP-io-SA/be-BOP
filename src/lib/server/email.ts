@@ -105,13 +105,14 @@ export async function queueEmail(
 ): Promise<void> {
 	console.log(`📧 Queueing email: ${templateKey} → ${to}`);
 
+	// Defaults first, then ...vars so callers can override iban/bic with per-order values
 	const lowerVars = mapKeys(
 		{
-			...vars,
+			iban: runtimeConfig.sellerIdentity?.bank?.iban,
+			bic: runtimeConfig.sellerIdentity?.bank?.bic,
 			websiteLink: ORIGIN,
 			brandName: runtimeConfig.brandName,
-			iban: runtimeConfig.sellerIdentity?.bank?.iban,
-			bic: runtimeConfig.sellerIdentity?.bank?.bic
+			...vars
 		},
 		(key) => key.toLowerCase()
 	);

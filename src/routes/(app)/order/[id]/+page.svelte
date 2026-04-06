@@ -214,7 +214,7 @@
 						orderId={data.order._id}
 						posMode={data.posMode}
 						hideCreditCardQrCode={data.hideCreditCardQrCode}
-						sellerIdentity={data.sellerIdentity}
+						sellerIdentity={data.order.sellerIdentity ?? data.sellerIdentity}
 						posSubtypes={data.posSubtypes}
 						returnTo={data.returnTo}
 					>

@@ -236,7 +236,9 @@ async function handleOrderNotification(order: Order): Promise<void> {
 							maximumFractionDigits: FRACTION_DIGITS_PER_CURRENCY[payment.price.currency],
 							minimumFractionDigits: FRACTION_DIGITS_PER_CURRENCY[payment.price.currency]
 						}),
-						currency: payment.price.currency
+						currency: payment.price.currency,
+						iban: order.sellerIdentity?.bank?.iban,
+						bic: order.sellerIdentity?.bank?.bic
 					};
 					if (email) {
 						await queueEmail(email, templateKey, vars, {
