@@ -1,5 +1,7 @@
 // @ts-expect-error no types
 import bip84 from 'bip84';
+import bs58check from 'bs58check';
+import { ChangeChain, buildBip48P2wshAddress } from 'bip48-multisig';
 import { runtimeConfig, runtimeConfigUpdatedAt } from './runtime-config';
 import { z } from 'zod';
 import { sum } from '$lib/utils/sum';
@@ -7,24 +9,76 @@ import { trimSuffix } from '$lib/utils/trimSuffix';
 import { persistConfigElement } from './utils/persistConfig';
 import { collections } from './database';
 
-export function isBitcoinNodelessConfigured(): boolean {
-	return (
-		!!runtimeConfig.bitcoinNodeless.publicKey &&
-		isZPubValid(runtimeConfig.bitcoinNodeless.publicKey)
-	);
+// SLIP-132 version bytes. See https://github.com/satoshilabs/slips/blob/master/slip-0132.md
+const SLIP132_XPUB = Buffer.from('0488b21e', 'hex');
+const SLIP132_TPUB = Buffer.from('043587cf', 'hex');
+const SLIP132_ZPUB = Buffer.from('04b24746', 'hex');
+const SLIP132_VPUB = Buffer.from('045f1cf6', 'hex');
+
+const MAINNET_XPUB_PREFIXES: readonly string[] = ['xpub', 'ypub', 'zpub', 'Ypub', 'Zpub'];
+const TESTNET_XPUB_PREFIXES: readonly string[] = ['tpub', 'upub', 'vpub', 'Upub', 'Vpub'];
+
+function reencodeExtendedKey(key: string, targetVersion: Buffer): string {
+	const decoded: Uint8Array = bs58check.decode(key);
+	const out = new Uint8Array(decoded.length);
+	out.set(targetVersion, 0);
+	out.set(decoded.slice(4), 4);
+	return bs58check.encode(out);
 }
 
-export function bip84Address(zpub: string, index: number): string {
-	return new bip84.fromZPub(zpub).getAddress(index);
+// Normalize single-sig SLIP-132 input (xpub/zpub/tpub/vpub) to the zpub/vpub form
+// that the `bip84` library strictly requires.
+function normalizeExtendedKey(key: string): string {
+	const prefix = key.slice(0, 4);
+	if (prefix === 'zpub' || prefix === 'vpub') {
+		return key;
+	}
+	const target = prefix === 'xpub' ? SLIP132_ZPUB : prefix === 'tpub' ? SLIP132_VPUB : null;
+	if (!target) {
+		throw new Error(`Unsupported extended key prefix: ${prefix}`);
+	}
+	return reencodeExtendedKey(key, target);
+}
+
+// Pre-normalize to xpub/tpub — bip48-multisig's own normalizer throws on non-neutral
+// prefixes due to a broken bs58check import.
+function normalizeToNeutralPub(key: string): string {
+	const prefix = key.slice(0, 4);
+	if (prefix === 'xpub' || prefix === 'tpub') {
+		return key;
+	}
+	if (MAINNET_XPUB_PREFIXES.includes(prefix)) {
+		return reencodeExtendedKey(key, SLIP132_XPUB);
+	}
+	if (TESTNET_XPUB_PREFIXES.includes(prefix)) {
+		return reencodeExtendedKey(key, SLIP132_TPUB);
+	}
+	throw new Error(`Unsupported extended key prefix: ${prefix}`);
+}
+
+export function isBitcoinNodelessConfigured(): boolean {
+	const config = runtimeConfig.bitcoinNodeless;
+	if (config.format === 'bip48') {
+		return (
+			(config.xpubs?.length ?? 0) >= 2 &&
+			(config.m ?? 0) >= 1 &&
+			(config.m ?? 0) <= (config.xpubs?.length ?? 0)
+		);
+	}
+	return !!config.publicKey && isZPubValid(config.publicKey);
+}
+
+export function bip84Address(key: string, index: number): string {
+	return new bip84.fromZPub(normalizeExtendedKey(key)).getAddress(index);
 }
 
 // export function bip84PublicKey(zpub: string, index: number): string {
 // 	return new bip84.fromZPub(zpub).getPublicKey(index);
 // }
 
-export function isZPubValid(zpub: string): boolean {
+export function isZPubValid(key: string): boolean {
 	try {
-		new bip84.fromZPub(zpub).getAddress(0);
+		bip84Address(key, 0);
 		return true;
 	} catch (err) {
 		console.error(err);
@@ -32,12 +86,48 @@ export function isZPubValid(zpub: string): boolean {
 	}
 }
 
+// Throws on unknown prefix — a silent testnet fallback would mis-derive tb1 addresses from mainnet keys.
+function detectNetworkFromXpubs(xpubs: string[]): 'mainnet' | 'testnet' {
+	const prefix = xpubs[0]?.slice(0, 4) ?? '';
+	if (MAINNET_XPUB_PREFIXES.includes(prefix)) {
+		return 'mainnet';
+	}
+	if (TESTNET_XPUB_PREFIXES.includes(prefix)) {
+		return 'testnet';
+	}
+	throw new Error(`Cannot determine Bitcoin network from xpub prefix: ${prefix}`);
+}
+
+export function bip48Address(m: number, xpubs: string[], index: number): string {
+	const neutralXpubs = xpubs.map(normalizeToNeutralPub);
+	const network = detectNetworkFromXpubs(neutralXpubs);
+	const result = buildBip48P2wshAddress({
+		m,
+		xpubs: neutralXpubs,
+		change: ChangeChain.External,
+		index,
+		network
+	});
+	return result.address;
+}
+
+export function generateNodelessAddress(index: number): string {
+	const config = runtimeConfig.bitcoinNodeless;
+	if (config.format === 'bip48') {
+		if (!config.m || !config.xpubs?.length) {
+			throw new Error('BIP-48 configuration incomplete: m and xpubs are required');
+		}
+		return bip48Address(config.m, config.xpubs, index);
+	}
+	return bip84Address(config.publicKey, index);
+}
+
 export async function generateDerivationIndex(): Promise<number> {
 	let index = runtimeConfig.bitcoinNodeless.derivationIndex;
 
 	if (runtimeConfig.bitcoinNodeless.skipUsedAddresses) {
 		for (let attempts = 0; attempts < 10; attempts++) {
-			const address = bip84Address(runtimeConfig.bitcoinNodeless.publicKey, index);
+			const address = generateNodelessAddress(index);
 			const isUsed = await isAddressUsed(address).catch((err) => {
 				console.warn(`Failed to check if address ${address} is used:`, err);
 				return false;

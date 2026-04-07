@@ -1,11 +1,11 @@
 import {
 	isBitcoinNodelessConfigured,
-	bip84Address,
+	generateNodelessAddress,
 	generateDerivationIndex,
 	getSatoshiReceivedNodeless,
 	updateBitcoinBlockHeight
 } from '$lib/server/bitcoin-nodeless';
-import { runtimeConfig, runtimeConfigUpdatedAt } from '$lib/server/runtime-config';
+import { runtimeConfigUpdatedAt } from '$lib/server/runtime-config';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { differenceInMinutes } from 'date-fns';
@@ -27,10 +27,7 @@ export default {
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
-		const address = bip84Address(
-			runtimeConfig.bitcoinNodeless.publicKey,
-			await generateDerivationIndex()
-		);
+		const address = generateNodelessAddress(await generateDerivationIndex());
 		return { address, processor: 'bitcoin-nodeless' };
 	},
 
