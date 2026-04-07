@@ -199,10 +199,19 @@ const baseConfig = {
 	},
 	bitcoinNodeless: {
 		mempoolUrl: 'https://mempool.space',
-		format: 'bip84' as const,
+		format: 'bip84' as 'bip84' | 'bip48',
 		publicKey: '',
 		derivationIndex: 0,
 		skipUsedAddresses: true
+	} as {
+		mempoolUrl: string;
+		format: 'bip84' | 'bip48';
+		publicKey: string;
+		derivationIndex: number;
+		skipUsedAddresses: boolean;
+		m?: number;
+		xpubs?: string[];
+		derivationPath?: string;
 	},
 	bitcoinBlockHeight: 0,
 	stripe: {

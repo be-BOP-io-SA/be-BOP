@@ -36,9 +36,15 @@ dependencies:
   bech32:
     specifier: ^2.0.0
     version: 2.0.0
+  bip48-multisig:
+    specifier: ^0.1.0
+    version: 0.1.0
   bip84:
     specifier: ^0.2.9
     version: 0.2.9
+  bs58check:
+    specifier: ^4.0.0
+    version: 4.0.0
   date-fns:
     specifier: ^3.6.0
     version: 3.6.0(patch_hash=wsglen72mvliwnhurznyj5erze)
@@ -2298,6 +2304,10 @@ packages:
     resolution: {integrity: sha512-FuwxlW4H5kh37X/oW59pwTzzTKRzfrrQwhmyspRM7swOEZcHtDZSCt45U6oKgtuFE+WYPblePMVIPR4RZrh/hw==}
     dev: false
 
+  /base-x@5.0.1:
+    resolution: {integrity: sha512-M7uio8Zt++eg3jPj+rHMfCC+IuygQHHCOU+IYsVtik6FWjuYpVt/+MRKcgsAMHh8mMFAwnB+Bs+mTrFiXjMzKg==}
+    dev: false
+
   /base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
     dev: false
@@ -2334,6 +2344,18 @@ packages:
     resolution: {integrity: sha512-c9kiwdk45Do5GL0vJMe7tS95VjCii65mYAH7DfWl3uW8AVzXKQVUm64i3hzVybBDMp9r7j9iNxR85+ul8MdN/A==}
     dependencies:
       '@noble/hashes': 1.3.0
+    dev: false
+
+  /bip48-multisig@0.1.0:
+    resolution: {integrity: sha512-OgWaHPb3y4TtO2nhng4S+6JlmP8kgJoHesTYI2JsJvXXUt83YfaYxiafGV0qNuzKYA5Q2KW9hgXnDraAt+NYTw==}
+    engines: {node: '>=18'}
+    dependencies:
+      '@bitcoinerlab/secp256k1': 1.1.1
+      bip32: 4.0.0
+      bip39: 3.1.0
+      bitcoinjs-lib: 6.1.6
+      bs58check: 3.0.1
+      tiny-secp256k1: 2.2.4
     dev: false
 
   /bip84@0.2.9:
@@ -2413,6 +2435,12 @@ packages:
       base-x: 4.0.0
     dev: false
 
+  /bs58@6.0.0:
+    resolution: {integrity: sha512-PD0wEnEYg6ijszw/u8s+iI3H17cTymlrwkKhDhPZq+Sokl3AU4htyBFTjAeNAlCCmg0f53g6ih3jATyCKftTfw==}
+    dependencies:
+      base-x: 5.0.1
+    dev: false
+
   /bs58check@2.1.2:
     resolution: {integrity: sha512-0TS1jicxdU09dwJMNZtVAfzPi6Q6QeN0pM1Fkzrjn+XYHvzMKPU3pHVpva+769iNVSfIYWf7LJ6WR+BuuMf8cA==}
     dependencies:
@@ -2426,6 +2454,13 @@ packages:
     dependencies:
       '@noble/hashes': 1.3.0
       bs58: 5.0.0
+    dev: false
+
+  /bs58check@4.0.0:
+    resolution: {integrity: sha512-FsGDOnFg9aVI9erdriULkd/JjEWONV/lQE5aYziB5PoBsXRind56lh8doIZIc9X4HoxT5x4bLjMWN1/NB8Zp5g==}
+    dependencies:
+      '@noble/hashes': 1.3.0
+      bs58: 6.0.0
     dev: false
 
   /bson@5.2.0:
@@ -4917,6 +4952,13 @@ packages:
       globalyzer: 0.1.0
       globrex: 0.1.2
 
+  /tiny-secp256k1@2.2.4:
+    resolution: {integrity: sha512-FoDTcToPqZE454Q04hH9o2EhxWsm7pOSpicyHkgTwKhdKWdsTUuqfP5MLq3g+VjAtl2vSx6JpXGdwA2qpYkI0Q==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      uint8array-tools: 0.0.7
+    dev: false
+
   /tinybench@2.5.1:
     resolution: {integrity: sha512-65NKvSuAVDP/n4CqH+a9w2kTlLReS9vhsAP06MWx+/89nMinJyB2icyl58RIcqCmIggpojIGeuJGhjU1aGMBSg==}
     dev: true
@@ -5058,6 +5100,11 @@ packages:
   /ufo@1.3.2:
     resolution: {integrity: sha512-o+ORpgGwaYQXgqGDwd+hkS4PuZ3QnmqMMxRuajK/a38L6fTpcE5GPIfrf+L/KemFzfUpeUQc1rRS1iDBozvnFA==}
     dev: true
+
+  /uint8array-tools@0.0.7:
+    resolution: {integrity: sha512-vrrNZJiusLWoFWBqz5Y5KMCgP9W9hnjZHzZiZRT8oNAkq3d5Z5Oe76jAvVVSRh4U8GGR90N2X1dWtrhvx6L8UQ==}
+    engines: {node: '>=14.0.0'}
+    dev: false
 
   /undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
