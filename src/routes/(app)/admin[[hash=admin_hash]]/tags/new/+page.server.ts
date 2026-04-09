@@ -10,7 +10,10 @@ import type { TagType } from '$lib/types/Picture';
 import { adminPrefix } from '$lib/server/admin';
 import { zodSlug } from '$lib/server/zod';
 
-export const load = async () => {};
+export const load = async () => {
+	const families = await collections.tagFamilies.find({}).sort({ order: 1 }).toArray();
+	return { families };
+};
 
 export const actions: Actions = {
 	default: async ({ request }) => {
@@ -25,7 +28,7 @@ export const actions: Actions = {
 				name: z.string().trim().min(1).max(MAX_NAME_LIMIT),
 				content: z.string().trim().max(10_000),
 				shortContent: z.string().trim().max(1_000),
-				family: z.enum(['creators', 'events', 'retailers', 'temporal']),
+				family: z.string().optional(),
 				widgetUseOnly: z.boolean({ coerce: true }).default(false),
 				productTagging: z.boolean({ coerce: true }).default(false),
 				useLightDark: z.boolean({ coerce: true }).default(false),

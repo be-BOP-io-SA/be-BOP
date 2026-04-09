@@ -20,7 +20,7 @@ export interface TagTranslatableFields {
 export interface Tag extends Timestamps, TagTranslatableFields {
 	_id: string;
 	name: string;
-	family: 'creators' | 'events' | 'retailers' | 'temporal';
+	family?: string;
 	widgetUseOnly: boolean;
 	productTagging: boolean;
 	useLightDark: boolean;
