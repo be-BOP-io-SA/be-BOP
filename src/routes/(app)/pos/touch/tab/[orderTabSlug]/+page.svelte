@@ -17,6 +17,7 @@
 	import { computePriceInfo } from '$lib/cart.js';
 	import { UNDERLYING_CURRENCY, type Currency } from '$lib/types/Currency.js';
 	import { applyVat, computeVatRate } from '$lib/utils/vat';
+	import { toCurrency } from '$lib/utils/toCurrency';
 	import { sluggifyTab } from '$lib/types/PosTabGroup.js';
 	import PrintTicketModal from '$lib/components/PrintTicketModal.svelte';
 	import type { PrintTicketOptions } from '$lib/types/PrintTicketOptions';
@@ -95,14 +96,6 @@
 		},
 		{} as Record<string, number>
 	);
-
-	$: catalogVatRate = computeVatRate({
-		productVatProfileId: undefined,
-		vatProfiles: data.vatProfiles,
-		bebopCountry: data.vatCountry,
-		userCountry: data.countryCode,
-		vatSingleCountry: data.vatSingleCountry
-	});
 
 	$: totalItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -717,8 +710,21 @@
 											{tabSlug}
 											{isMobile}
 											pictures={picturesByProduct[product._id] ?? []}
-											priceWithVat={applyVat(product.price.amount, catalogVatRate)}
-											currency={product.price.currency}
+											priceWithVat={applyVat(
+												toCurrency(
+													data.currencies.main,
+													product.price.amount,
+													product.price.currency
+												),
+												computeVatRate({
+													productVatProfileId: product.vatProfileId,
+													vatProfiles: data.vatProfiles,
+													bebopCountry: data.vatCountry,
+													userCountry: data.countryCode,
+													vatSingleCountry: data.vatSingleCountry
+												})
+											)}
+											currency={data.currencies.main}
 											quantityInCart={quantityByProductId[product._id] ?? 0}
 										/>
 									{/if}
