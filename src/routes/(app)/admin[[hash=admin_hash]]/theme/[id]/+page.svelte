@@ -11,6 +11,10 @@
 
 <h1 class="text-3xl">Edit theme</h1>
 
+<form method="post" action="?/apply" class="mb-4">
+	<button type="submit" class="btn btn-blue">Apply this theme</button>
+</form>
+
 <form method="post" class="flex flex-col gap-4" action="?/update">
 	<ThemeForm theme={data.theme} />
 	<div class="flex flex-row gap-4">
