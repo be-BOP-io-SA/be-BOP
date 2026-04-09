@@ -6,6 +6,7 @@ import { collections } from '$lib/server/database';
 import { adminPrefix } from '$lib/server/admin';
 import { themeFormStructure } from '$lib/types/Theme';
 import { increaseThemeChangeNumber, themeValidator, type ThemeData } from '$lib/server/theme';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import { ObjectId } from 'mongodb';
 import { get } from '$lib/utils/get';
 
@@ -25,6 +26,16 @@ export async function load({ params }) {
 }
 
 export const actions: Actions = {
+	apply: async ({ params }) => {
+		const themeId = params.id;
+		await collections.runtimeConfig.updateOne(
+			{ _id: 'mainThemeId' },
+			{ $set: { data: themeId, updatedAt: new Date() } },
+			{ upsert: true }
+		);
+		runtimeConfig.mainThemeId = themeId;
+		await increaseThemeChangeNumber();
+	},
 	update: async ({ request, params }) => {
 		const formData = await request.formData();
 		const json: JsonObject = {};

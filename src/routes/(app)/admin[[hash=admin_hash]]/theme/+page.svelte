@@ -4,6 +4,7 @@
 
 <h1 class="text-3xl">Theme</h1>
 <a href="{data.adminPrefix}/theme/new" class="underline">Create a new theme</a>
+<a href="{data.adminPrefix}/theme/assist" class="underline">Create a new theme (with assistant)</a>
 
 <h2 class="text-2xl">Choose your theme</h2>
 <form method="post" class="flex flex-col gap-6">
