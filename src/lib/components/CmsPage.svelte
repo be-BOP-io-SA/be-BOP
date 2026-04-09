@@ -94,7 +94,7 @@
 		class={cmsPage.displayRawContent ? '' : 'prose max-w-full body body-mainPlan'}
 	/>
 {:else}
-	<main class="mx-auto max-w-7xl px-6">
+	<main class={$page.data.displayFullWidthCmsPages ? 'px-10 w-full' : 'mx-auto max-w-7xl px-6'}>
 		{#if cmsPage._id === 'error' && $page.url.pathname !== '/error'}
 			<div class="mt-4 p-2 border-2 border-red-500 rounded text-center text-red-500 font-bold">
 				{t('error.404', { invalidUrl: $page.url.pathname })}
