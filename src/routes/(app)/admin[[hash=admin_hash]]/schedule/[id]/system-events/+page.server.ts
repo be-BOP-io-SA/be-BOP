@@ -1,31 +1,29 @@
 import { error } from '@sveltejs/kit';
 import { collections } from '$lib/server/database';
 import { enrichWithOrderNumbers } from '$lib/server/orders';
+import type { Filter } from 'mongodb';
+import type { ScheduleEventBooked } from '$lib/types/Schedule';
 
-export const load = async ({ params, url }) => {
-	const productSlug = params.id.startsWith('product:') ? params.id.slice('product:'.length) : null;
-	const isBookingProduct = productSlug
-		? !!(await collections.products.findOne(
-				{ _id: productSlug, bookingSpec: { $exists: true } },
-				{ projection: { _id: 1 } }
-		  ))
-		: false;
-	if (!isBookingProduct) {
+export const load = async ({ params, url, parent }) => {
+	const { isBookingSchedule } = await parent();
+	if (!isBookingSchedule) {
 		throw error(404, 'System events are only available for booking schedules');
 	}
 
-	const from = url.searchParams.get('from');
-	const until = url.searchParams.get('until');
+	const fromRaw = url.searchParams.get('from');
+	const untilRaw = url.searchParams.get('until');
+	const from = fromRaw ? new Date(fromRaw) : null;
+	const until = untilRaw ? new Date(untilRaw) : null;
 
-	const filter: Record<string, unknown> = {
+	const filter: Filter<ScheduleEventBooked> = {
 		scheduleId: params.id,
 		status: 'confirmed'
 	};
 
-	if (from || until) {
+	if ((from && !isNaN(from.getTime())) || (until && !isNaN(until.getTime()))) {
 		filter.beginsAt = {
-			...(from ? { $gte: new Date(from) } : {}),
-			...(until ? { $lte: new Date(until) } : {})
+			...(from && !isNaN(from.getTime()) ? { $gte: from } : {}),
+			...(until && !isNaN(until.getTime()) ? { $lte: until } : {})
 		};
 	}
 
@@ -37,7 +35,7 @@ export const load = async ({ params, url }) => {
 
 	return {
 		bookings: await enrichWithOrderNumbers(scheduleEvents),
-		from,
-		until
+		from: fromRaw,
+		until: untilRaw
 	};
 };
