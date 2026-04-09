@@ -97,6 +97,19 @@
 		{} as Record<string, number>
 	);
 
+	function productPriceWithVat(product: (typeof data.products)[number]): number {
+		return applyVat(
+			toCurrency(data.currencies.main, product.price.amount, product.price.currency),
+			computeVatRate({
+				productVatProfileId: product.vatProfileId,
+				vatProfiles: data.vatProfiles,
+				bebopCountry: data.vatCountry,
+				userCountry: data.countryCode,
+				vatSingleCountry: data.vatSingleCountry
+			})
+		);
+	}
+
 	$: totalItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
 	let itemToEditIndex: number | undefined = undefined;
@@ -710,20 +723,7 @@
 											{tabSlug}
 											{isMobile}
 											pictures={picturesByProduct[product._id] ?? []}
-											priceWithVat={applyVat(
-												toCurrency(
-													data.currencies.main,
-													product.price.amount,
-													product.price.currency
-												),
-												computeVatRate({
-													productVatProfileId: product.vatProfileId,
-													vatProfiles: data.vatProfiles,
-													bebopCountry: data.vatCountry,
-													userCountry: data.countryCode,
-													vatSingleCountry: data.vatSingleCountry
-												})
-											)}
+											priceWithVat={productPriceWithVat(product)}
 											currency={data.currencies.main}
 											quantityInCart={quantityByProductId[product._id] ?? 0}
 										/>
