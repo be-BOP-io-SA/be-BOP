@@ -474,7 +474,11 @@
 	{/if}
 </svelte:head>
 
-<main class="mx-auto max-w-7xl py-10 px-6">
+<main
+	class="{$page.data.displayFullWidthProductPages
+		? 'px-10 w-full'
+		: 'mx-auto max-w-7xl px-6'} py-10"
+>
 	{#if data.productCMSBefore}
 		<CmsDesign
 			challenges={data.productCMSBefore.challenges}

@@ -268,6 +268,11 @@ const baseConfig = {
 	displayPoweredBy: false,
 	displayCompanyInfo: false,
 	displayMainShopInfo: false,
+	displayFullWidthHeader: false,
+	displayFullWidthNavbar: false,
+	displayFullWidthFooter: false,
+	displayFullWidthProductPages: false,
+	displayFullWidthCmsPages: false,
 	disableNostrBotIntro: false,
 	dataCleanup: {
 		onOrderExpireOrCancel: false,
