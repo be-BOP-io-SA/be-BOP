@@ -1,4 +1,4 @@
-export function formatDuration(beginsAt: Date, endsAt: Date): string {
+export function formatDuration(beginsAt: Date | string, endsAt: Date | string): string {
 	const minutes = Math.round((new Date(endsAt).getTime() - new Date(beginsAt).getTime()) / 60000);
 	if (minutes >= 1440) {
 		const days = Math.round(minutes / 1440);

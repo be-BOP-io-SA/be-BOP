@@ -6,7 +6,8 @@
 
 	let hidePast = false;
 
-	const now = new Date();
+	let now = new Date();
+	$: hidePast, (now = new Date());
 
 	$: filteredBookings = hidePast
 		? data.bookings.filter((b) => new Date(b.endsAt) >= now)

@@ -63,6 +63,11 @@ export const load = async ({ params }) => {
 			.toArray()
 	]);
 
+	const [enrichedCurrent, enrichedUpcoming] = await Promise.all([
+		enrichWithOrderNumbers(currentBookings),
+		enrichWithOrderNumbers(upcomingBookings)
+	]);
+
 	return {
 		pictures,
 		digitalFiles,
@@ -71,8 +76,8 @@ export const load = async ({ params }) => {
 		reserved,
 		sold,
 		scanned,
-		currentBookings: await enrichWithOrderNumbers(currentBookings),
-		upcomingBookings: await enrichWithOrderNumbers(upcomingBookings)
+		currentBookings: enrichedCurrent,
+		upcomingBookings: enrichedUpcoming
 	};
 };
 
