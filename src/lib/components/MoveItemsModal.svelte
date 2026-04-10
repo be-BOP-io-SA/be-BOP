@@ -337,7 +337,6 @@
 								totalExcl={leftTabPriceInfo.partialPrice}
 								totalIncl={leftTabPriceInfo.partialPriceWithVat}
 								currency={leftTabPriceInfo.currency}
-								vatRates={leftTabPriceInfo.vat.map((vat) => vat.rate)}
 							/>
 						</div>
 					{/if}
@@ -374,7 +373,6 @@
 								totalExcl={rightTabPriceInfo.partialPrice}
 								totalIncl={rightTabPriceInfo.partialPriceWithVat}
 								currency={rightTabPriceInfo.currency}
-								vatRates={rightTabPriceInfo.vat.map((vat) => vat.rate)}
 							/>
 						</div>
 					{/if}

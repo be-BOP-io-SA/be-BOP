@@ -6,7 +6,6 @@
 	export let totalExcl: number;
 	export let totalIncl: number;
 	export let currency: Currency;
-	export let vatRates: number[];
 	export let totalInclBeforeDiscount: number | undefined = undefined;
 	export let discountPercentage: number | undefined = undefined;
 
@@ -20,9 +19,7 @@
 		<PriceTag amount={totalExcl} {currency} main class="text-2xl" />
 		{#if totalInclBeforeDiscount && discountPercentage}
 			<div class="text-2xl">
-				{t('pos.split.inclVat', {
-					rates: vatRates.map((rate) => `${rate}%`).join(', ')
-				})}
+				{t('pos.split.inclVatShort')}
 			</div>
 			<PriceTag
 				amount={totalInclBeforeDiscount}
@@ -47,9 +44,7 @@
 			</div>
 		{:else}
 			<div class="text-2xl">
-				{t('pos.split.inclVat', {
-					rates: vatRates.map((rate) => `${rate}%`).join(', ')
-				})}
+				{t('pos.split.inclVatShort')}
 			</div>
 			<PriceTag amount={totalIncl} {currency} main class="text-2xl" />
 		{/if}
