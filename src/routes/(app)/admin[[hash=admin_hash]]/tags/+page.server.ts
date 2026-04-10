@@ -1,4 +1,4 @@
-import { collections } from '$lib/server/database';
+import { collections, withTransaction } from '$lib/server/database';
 import { z } from 'zod';
 import { generateId } from '$lib/utils/generateId';
 import type { Actions } from './$types';
@@ -48,35 +48,37 @@ export const actions: Actions = {
 		const existingFamilies = await collections.tagFamilies.find({}).toArray();
 		const existingMap = new Map(existingFamilies.map((f) => [f._id, f]));
 
-		// Delete all and re-insert
-		await collections.tagFamilies.deleteMany({});
+		// Compute slugs once for reuse in insert and orphan cleanup
+		const familiesToInsert = validatedFamilies.map((family) => {
+			const isNew = family._id.startsWith('temp-');
+			const slug = isNew ? generateId(family.name, false) : family._id;
+			const existing = existingMap.get(family._id);
 
-		if (validatedFamilies.length > 0) {
-			const familiesToInsert = validatedFamilies.map((family) => {
-				const isNew = family._id.startsWith('temp-');
-				const slug = isNew ? generateId(family.name, false) : family._id;
-				const existing = existingMap.get(family._id);
+			return {
+				_id: slug,
+				name: family.name.trim(),
+				order: family.order,
+				createdAt: isNew ? new Date() : existing?.createdAt ?? new Date(),
+				updatedAt: new Date()
+			};
+		});
 
-				return {
-					_id: slug,
-					name: family.name.trim(),
-					order: family.order,
-					createdAt: isNew ? new Date() : existing?.createdAt ?? new Date(),
-					updatedAt: new Date()
-				};
-			});
+		const remainingFamilyIds = familiesToInsert.map((f) => f._id);
 
-			await collections.tagFamilies.insertMany(familiesToInsert);
-		}
+		await withTransaction(async (session) => {
+			await collections.tagFamilies.deleteMany({}, { session });
 
-		// Clear family reference for tags whose family was deleted
-		const remainingFamilyIds = validatedFamilies.map((f) =>
-			f._id.startsWith('temp-') ? generateId(f.name, false) : f._id
-		);
-		await collections.tags.updateMany(
-			{ family: { $exists: true, $ne: '', $nin: remainingFamilyIds } },
-			{ $unset: { family: '' } }
-		);
+			if (familiesToInsert.length > 0) {
+				await collections.tagFamilies.insertMany(familiesToInsert, { session });
+			}
+
+			// Clear family reference for tags whose family was deleted
+			await collections.tags.updateMany(
+				{ family: { $exists: true, $ne: '', $nin: remainingFamilyIds } },
+				{ $unset: { family: '' } },
+				{ session }
+			);
+		});
 
 		return { success: true };
 	}
