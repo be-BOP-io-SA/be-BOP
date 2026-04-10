@@ -165,7 +165,6 @@
 			: null;
 
 	$: poolCurrency = tab.items[0]?.product.price.currency ?? UNDERLYING_CURRENCY;
-	$: poolVatRates = [...new Set(originalQuantitiesPriceInfo.vatRates)];
 
 	const modeParam = $page.url.searchParams.get('mode');
 	let rightPannel: 'menu' | 'split-items' | 'split-shares' =
@@ -364,7 +363,6 @@
 								totalExcl={poolTotals.excl}
 								totalIncl={poolTotals.incl}
 								currency={poolCurrency}
-								vatRates={poolVatRates}
 								totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
 									? poolTotals.inclBeforeDiscount
 									: undefined}
@@ -398,7 +396,6 @@
 								totalExcl={tabItemsPriceInfo.partialPrice}
 								totalIncl={tabItemsPriceInfo.partialPriceWithVat}
 								currency={tabItemsPriceInfo.currency}
-								vatRates={tabItemsPriceInfo.vat.map((vat) => vat.rate)}
 								totalInclBeforeDiscount={tab.discount && tab.discount.percentage > 0
 									? tabTotalInclBeforeDiscount
 									: undefined}
@@ -502,7 +499,6 @@
 								totalExcl={splitTabPriceInfo.partialPrice}
 								totalIncl={splitTabPriceInfo.partialPriceWithVat}
 								currency={splitTabPriceInfo.currency}
-								vatRates={splitTabPriceInfo.vat.map((vat) => vat.rate)}
 							/>
 
 							<!-- Payment method selector (hidden when pool is fully paid) -->

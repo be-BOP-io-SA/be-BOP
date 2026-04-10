@@ -590,7 +590,7 @@
 									main
 									class="text-base sm:text-lg md:text-xl lg:text-2xl text-right"
 								/>
-								{#each priceInfo.vat as vat}
+								{#each priceInfo.vat.filter((v) => v.partialPrice.amount > 0) as vat}
 									<span class="whitespace-nowrap">{t('pos.touch.vatBreakdown')} {vat.rate}%</span>
 									<PriceTag
 										amount={vat.partialPrice.amount}
