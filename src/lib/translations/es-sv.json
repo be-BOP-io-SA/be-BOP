@@ -123,6 +123,7 @@
 			"lightning": "Lightning",
 			"paypal": "Paypal",
 			"point-of-sale": "Punto de venta",
+			"taler": "Taler",
 			"unavailable": "No hay métodos de pago disponibles."
 		},
 		"paymentStatus": "Estado del pago",
@@ -516,7 +517,8 @@
 			"free": "No se pagó nada",
 			"lightning": "Pagado con: transacción Lightning (1 {paymentCurrency} = {exchangeRate} {mainCurrency} al momento del pedido)",
 			"paypal": "Pagado con: paypal",
-			"point-of-sale": "Pagado en tienda"
+			"point-of-sale": "Pagado en tienda",
+			"taler": "Pagado con: Taler"
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Pagado con: transferencia bancaria verificada",
@@ -524,7 +526,8 @@
 			"card": "Pagado con: tarjeta bancaria",
 			"free": "No se pagó nada",
 			"lightning": "Pagado con: transacción Lightning",
-			"point-of-sale": "Pagado en tienda"
+			"point-of-sale": "Pagado en tienda",
+			"taler": "Pagado con: Taler"
 		},
 		"payToComplete": "Pagar para completar el pedido.",
 		"payToCompleteBitcoin": {

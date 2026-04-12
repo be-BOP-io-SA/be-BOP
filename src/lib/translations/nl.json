@@ -123,6 +123,7 @@
 			"lightning": "Bliksem",
 			"paypal": "Paypal",
 			"point-of-sale": "Verkooppunt",
+			"taler": "Taler",
 			"unavailable": "Geen betaalmethoden beschikbaar."
 		},
 		"paymentStatus": "Betalingsstatus",
@@ -516,7 +517,8 @@
 			"free": "Niets betaald",
 			"lightning": "Betaald met: Lightning-transactie (1 {paymentCurrency} = {exchangeRate} {mainCurrency} op het moment van de bestelling)",
 			"paypal": "Betaald met: paypal",
-			"point-of-sale": "Betaald in de winkel"
+			"point-of-sale": "Betaald in de winkel",
+			"taler": "Betaald met: Taler"
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Betaald met: geverifieerde bankoverschrijving",
@@ -524,7 +526,8 @@
 			"card": "Betaald met: bankkaart",
 			"free": "Niets betaald",
 			"lightning": "Betaald met: Lightning-transactie",
-			"point-of-sale": "Betaald in de winkel"
+			"point-of-sale": "Betaald in de winkel",
+			"taler": "Betaald met: Taler"
 		},
 		"payToComplete": "Betaal om de bestelling af te ronden.",
 		"payToCompleteBitcoin": {

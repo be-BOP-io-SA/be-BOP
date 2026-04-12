@@ -10,10 +10,24 @@
 	export let hideCreditCardQrCode: boolean | undefined = undefined;
 </script>
 
+<!-- Taler wallet browser extension auto-detects payments via this meta tag -->
+<svelte:head>
+	{#if payment.status === 'pending' && payment.method === 'taler' && payment.address}
+		<meta name="taler-support" content={payment.address} />
+	{/if}
+</svelte:head>
+
 {#if payment.status === 'pending'}
 	<!-- Lightning QR -->
 	{#if payment.method === 'lightning'}
 		<a href={lightningPaymentQrCodeString(payment.address ?? '')}>
+			<img src="{$page.url.pathname}/payment/{payment.id}/qrcode" class="w-96 h-96" alt="QR code" />
+		</a>
+	{/if}
+
+	<!-- Taler QR -->
+	{#if payment.method === 'taler'}
+		<a href={payment.address ?? ''}>
 			<img src="{$page.url.pathname}/payment/{payment.id}/qrcode" class="w-96 h-96" alt="QR code" />
 		</a>
 	{/if}
