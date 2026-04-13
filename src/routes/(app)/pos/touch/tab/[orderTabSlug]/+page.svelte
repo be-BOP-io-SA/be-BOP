@@ -98,15 +98,17 @@
 	);
 
 	function productPriceWithVat(product: (typeof data.products)[number]): number {
-		return applyVat(
-			toCurrency(data.currencies.main, product.price.amount, product.price.currency),
-			computeVatRate({
-				productVatProfileId: product.vatProfileId,
-				vatProfiles: data.vatProfiles,
-				bebopCountry: data.vatCountry,
-				userCountry: data.countryCode,
-				vatSingleCountry: data.vatSingleCountry
-			})
+		const rate = computeVatRate({
+			productVatProfileId: product.vatProfileId,
+			vatProfiles: data.vatProfiles,
+			bebopCountry: data.vatCountry,
+			userCountry: data.countryCode,
+			vatSingleCountry: data.vatSingleCountry
+		});
+		return toCurrency(
+			data.currencies.main,
+			applyVat(product.price.amount, rate),
+			product.price.currency
 		);
 	}
 
