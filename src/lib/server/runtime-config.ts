@@ -288,6 +288,9 @@ const baseConfig = {
 			orderStatuses: [] as OrderPaymentStatus[]
 		}
 	},
+	tutorialPolicy: {
+		employeeTutorialMode: 'optional' as 'mandatory' | 'optional' | 'disabled'
+	},
 	hideFromSearchEngines: false,
 	telemetry: null as null | {
 		enabled: boolean;

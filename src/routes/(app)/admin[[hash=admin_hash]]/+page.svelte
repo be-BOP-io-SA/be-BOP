@@ -2,9 +2,16 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/stores';
 	import TelemetryBanner from '$lib/components/TelemetryBanner.svelte';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	$: lang = new URL($page.url).searchParams.get('lang') || 'en';
+
+	function startOnboardingTutorial() {
+		window.dispatchEvent(new CustomEvent('tutorial:request-start'));
+	}
 </script>
 
 <div class="flex flex-col gap-4">
@@ -79,6 +86,10 @@
 			<button>>>> Check for more</button>
 		{/if}
 	</div>
+
+	<button class="btn btn-primary w-fit" on:click={startOnboardingTutorial}>
+		{t('tutorial.common.startPrompt.start')}
+	</button>
 
 	<h1 class="text-xl" id="doc">Documentation</h1>
 

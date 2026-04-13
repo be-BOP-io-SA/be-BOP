@@ -4,6 +4,7 @@ import { collections } from '$lib/server/database.js';
 import { isLndConfigured } from '$lib/server/lnd.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { DEFAULT_TUTORIAL_ID } from '$lib/types/Tutorial';
 
 const DEFAULT_CMS_PAGES = [
 	'home',
@@ -73,12 +74,46 @@ export async function load({ locals }) {
 	/**
 	 * Warning: do not send sensitive data here, it will be sent to the client on /admin/login!
 	 */
+	// Load tutorial data for logged-in users
+	let activeTutorial = null;
+	let tutorialProgress = null;
+	try {
+		if (locals.user?._id) {
+			const tutorial = await collections.tutorials.findOne({
+				_id: DEFAULT_TUTORIAL_ID
+			});
+			if (tutorial) {
+				activeTutorial = {
+					...tutorial,
+					createdAt: tutorial.createdAt?.toISOString?.() ?? tutorial.createdAt,
+					updatedAt: tutorial.updatedAt?.toISOString?.() ?? tutorial.updatedAt
+				};
+			}
+			if (activeTutorial) {
+				const progress = await collections.tutorialProgress.findOne({
+					tutorialId: activeTutorial._id
+				});
+				if (progress) {
+					tutorialProgress = {
+						tutorialId: progress.tutorialId,
+						tutorialVersion: progress.tutorialVersion
+					};
+				}
+			}
+		}
+	} catch (e) {
+		console.error('Error loading tutorial data:', e);
+	}
+
 	return {
 		productActionSettings: runtimeConfig.productActionSettings,
 		availablePaymentMethods: paymentMethods({ includePOS: true }),
 		role: locals.user?.roleId ? collections.roles.findOne({ _id: locals.user.roleId }) : null,
 		adminPrefix: adminPrefix(),
 		isBitcoinConfigured,
-		isLndConfigured: isLndConfigured()
+		isLndConfigured: isLndConfigured(),
+		tutorialPolicy: runtimeConfig.tutorialPolicy,
+		activeTutorial,
+		tutorialProgress
 	};
 }

@@ -6,6 +6,8 @@
 	import { isAllowedOnPage } from '$lib/types/Role';
 	import { adminLinks as adminLinksImported } from './adminLinks.js';
 	import { POS_ROLE_ID } from '$lib/types/User.js';
+	import 'shepherd.js/dist/css/shepherd.css';
+	import { TutorialProvider } from '$lib/components/tutorial';
 
 	export let data;
 
@@ -165,6 +167,12 @@
 <svelte:head>
 	<meta name="viewport" content="width=1000" />
 </svelte:head>
-<main class="p-4 flex flex-col gap-4 body-mainPlan {$page.data.bodyClass || ''}">
-	<slot />
-</main>
+<TutorialProvider
+	tutorial={data.activeTutorial}
+	progress={data.tutorialProgress}
+	adminPrefix={data.adminPrefix}
+>
+	<main class="p-4 flex flex-col gap-4 body-mainPlan {$page.data.bodyClass || ''}">
+		<slot />
+	</main>
+</TutorialProvider>

@@ -3,6 +3,7 @@ import { collections, withTransaction } from './database';
 import { marked } from 'marked';
 import { env } from '$env/dynamic/private';
 import type { OrderPayment } from '$lib/types/Order';
+import { seedTutorials } from './tutorials/seed';
 import { Lock } from './lock';
 import { ORIGIN } from '$lib/server/env-config';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
@@ -729,5 +730,13 @@ export async function runMigrations() {
 
 	while ((await collections.migrations.countDocuments()) < migrations.length) {
 		await new Promise((resolve) => setTimeout(resolve, 1000));
+	}
+
+	// Seed tutorials after migrations (runs every startup to handle version updates)
+	try {
+		await seedTutorials();
+		console.log('Tutorials seeded successfully');
+	} catch (e) {
+		console.error('Error seeding tutorials:', e);
 	}
 }
