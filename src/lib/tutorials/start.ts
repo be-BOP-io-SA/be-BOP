@@ -1,5 +1,5 @@
 import { parseCourse } from './parse';
-import type { Course } from './types';
+import type { Course, CourseStepButton } from './types';
 
 const rawCourses = import.meta.glob('./courses/*.md', {
 	query: '?raw',
@@ -24,10 +24,27 @@ function loadCourse(id: string): Course | undefined {
 	return undefined;
 }
 
-export async function startTour(id: string): Promise<void> {
+function matchesCurrentPage(stepPage: string): boolean {
+	const normalized = window.location.pathname.replace(/^\/admin(-[^/]+)?/, '/admin');
+	return normalized === stepPage;
+}
+
+export async function startTour(id: string, fromStepId?: string): Promise<void> {
 	const course = loadCourse(id);
 	if (!course) {
 		console.warn(`Tutorial "${id}" not found`);
+		return;
+	}
+
+	// Filter steps to current page only
+	let pageSteps = course.steps.filter((s) => !s.page || matchesCurrentPage(s.page));
+	if (fromStepId) {
+		const idx = pageSteps.findIndex((s) => s.id === fromStepId);
+		if (idx !== -1) {
+			pageSteps = pageSteps.slice(idx);
+		}
+	}
+	if (pageSteps.length === 0) {
 		return;
 	}
 
@@ -38,23 +55,157 @@ export async function startTour(id: string): Promise<void> {
 		useModalOverlay: true,
 		defaultStepOptions: {
 			cancelIcon: { enabled: true },
-			scrollTo: true
+			scrollTo: false
 		}
 	});
 
-	for (let i = 0; i < course.steps.length; i++) {
-		const step = course.steps[i];
-		tour.addStep({
+	function resolveAction(action: CourseStepButton['action']): () => void {
+		switch (action) {
+			case 'next':
+				return () => tour.next();
+			case 'back':
+				return () => tour.back();
+			case 'complete':
+				return () => tour.complete();
+			case 'cancel':
+				return () => tour.cancel();
+			default:
+				if (action.startsWith('show:')) {
+					const stepId = action.slice(5);
+					return () => tour.show(stepId);
+				}
+				if (action.startsWith('goto:')) {
+					const url = action.slice(5);
+					return () => {
+						tour.complete();
+						const adminMatch = window.location.pathname.match(/^\/admin(-[^/]+)?/);
+						const adminPrefix = adminMatch ? adminMatch[0] : '/admin';
+						window.location.href = url.replace(/^\/admin/, adminPrefix);
+					};
+				}
+				if (action.startsWith('clickAndStore:')) {
+					const payload = action.slice(14);
+					const sepIdx = payload.lastIndexOf('|');
+					const selector = payload.slice(0, sepIdx);
+					const storageValue = payload.slice(sepIdx + 1);
+					return () => {
+						sessionStorage.setItem('tutorial_progress', storageValue);
+						tour.complete();
+						const el = document.querySelector(selector) as HTMLElement;
+						if (el) {
+							el.click();
+						}
+					};
+				}
+				return () => tour.next();
+		}
+	}
+
+	for (let i = 0; i < pageSteps.length; i++) {
+		const step = pageSteps[i];
+		const stepButtons = step.buttons
+			? step.buttons
+			: [
+					...(i > 0 ? [{ text: 'Back (b)', action: 'back' as const, key: 'b' }] : []),
+					i < pageSteps.length - 1
+						? { text: 'Next (n)', action: 'next' as const, key: 'n' }
+						: { text: 'Done (d)', action: 'complete' as const, key: 'd' }
+			  ];
+
+		const disabledKeys = new Set<string>();
+		const keyMap = new Map<string, () => void>();
+		const resolvedButtons = stepButtons.map((btn) => {
+			const action = resolveAction(btn.action);
+			if (btn.key) {
+				keyMap.set(btn.key.toLowerCase(), action);
+			}
+			return { text: btn.text, action };
+		});
+
+		const shepherdStep = tour.addStep({
 			id: step.id,
 			text: step.text,
 			attachTo: step.attachTo,
-			buttons: [
-				...(i > 0 ? [{ text: 'Back', action: tour.back }] : []),
-				i < course.steps.length - 1
-					? { text: 'Next', action: tour.next }
-					: { text: 'Done', action: tour.complete }
-			]
+			buttons: resolvedButtons
 		});
+
+		// Smart scroll: only scroll if element is below top 30% of viewport
+		if (step.attachTo?.element) {
+			const selector = step.attachTo.element;
+			shepherdStep.on('show', () => {
+				const el = document.querySelector(selector);
+				if (el) {
+					const rect = el.getBoundingClientRect();
+					if (rect.top > window.innerHeight * 0.3 || rect.top < 0) {
+						el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					}
+				}
+			});
+		}
+
+		if (keyMap.size > 0) {
+			const handler = (e: KeyboardEvent) => {
+				const tag = (e.target as HTMLElement)?.tagName;
+				if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+					return;
+				}
+				if (disabledKeys.has(e.key.toLowerCase())) {
+					e.preventDefault();
+					return;
+				}
+				const fn = keyMap.get(e.key.toLowerCase());
+				if (fn) {
+					e.preventDefault();
+					fn();
+				}
+			};
+			shepherdStep.on('show', () => document.addEventListener('keydown', handler));
+			shepherdStep.on('hide', () => document.removeEventListener('keydown', handler));
+		}
+
+		// Handle enableWhen: disable button until condition is met
+		const buttonsWithEnableWhen = stepButtons.filter((btn) => btn.enableWhen);
+		if (buttonsWithEnableWhen.length > 0) {
+			shepherdStep.on('show', () => {
+				const stepEl = shepherdStep.getElement();
+				if (!stepEl) {
+					return;
+				}
+				const footerBtns = stepEl.querySelectorAll('.shepherd-footer button');
+				stepButtons.forEach((btn, btnIdx) => {
+					if (!btn.enableWhen) {
+						return;
+					}
+					const input = document.querySelector(btn.enableWhen.selector) as HTMLInputElement;
+					const targetBtn = footerBtns[btnIdx] as HTMLButtonElement;
+					if (!input || !targetBtn) {
+						return;
+					}
+					const minLen = btn.enableWhen.minLength ? Number(btn.enableWhen.minLength) : 0;
+					const pattern = btn.enableWhen.pattern
+						? new RegExp(btn.enableWhen.pattern as string)
+						: null;
+					const check = () => {
+						let disabled = minLen > 0 && input.value.length < minLen;
+						if (!disabled && pattern) {
+							disabled = !pattern.test(input.value);
+						}
+						targetBtn.disabled = disabled;
+						targetBtn.style.opacity = disabled ? '0.5' : '1';
+						if (btn.key) {
+							if (disabled) {
+								disabledKeys.add(btn.key.toLowerCase());
+							} else {
+								disabledKeys.delete(btn.key.toLowerCase());
+							}
+						}
+					};
+					check();
+					input.addEventListener('input', check);
+					shepherdStep.on('hide', () => input.removeEventListener('input', check));
+				});
+			});
+		}
 	}
 
 	tour.start();
