@@ -2,7 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { beforeNavigate, afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import Shepherd from 'shepherd.js';
+	import type ShepherdType from 'shepherd.js';
 	import { tutorialStore } from '$lib/stores/tutorial';
 	import { useI18n } from '$lib/i18n';
 	import type { SerializedTutorial } from '$lib/types/Tutorial';
@@ -13,7 +13,8 @@
 	export let adminPrefix = '/admin';
 
 	const { t } = useI18n();
-	let tour: Shepherd.Tour | null = null;
+	let Shepherd: typeof ShepherdType | null = null;
+	let tour: ShepherdType.Tour | null = null;
 	let isNavigating = false;
 	let pendingStepIndex: number | null = null;
 	let isShowingStep = false; // Guard against concurrent calls
@@ -113,7 +114,7 @@
 	}
 
 	function initializeTour() {
-		if (!tutorial) {
+		if (!tutorial || !Shepherd) {
 			return;
 		}
 
@@ -547,19 +548,24 @@
 		window.addEventListener('tutorial:request-start', handleRequestStart as EventListener);
 		window.addEventListener('beforeunload', handleBeforeUnload);
 
-		// Try to restore tutorial state (e.g., after page reload from form submission)
-		if (tutorial) {
-			const restoredStepIndex = tutorialStore.initialize(tutorial);
-			console.log('[Tutorial] Initialize returned:', restoredStepIndex);
-			if (restoredStepIndex >= 0) {
-				console.log('[Tutorial] Restoring tutorial after page reload to step', restoredStepIndex);
-				initializeTour();
-				// Use setTimeout to let the page render first
-				setTimeout(() => {
-					showCurrentStep();
-				}, 200);
+		// Dynamically import Shepherd.js (browser-only — keeps SSR clean)
+		import('shepherd.js').then((module) => {
+			Shepherd = module.default;
+
+			// Try to restore tutorial state (e.g., after page reload from form submission)
+			if (tutorial) {
+				const restoredStepIndex = tutorialStore.initialize(tutorial);
+				console.log('[Tutorial] Initialize returned:', restoredStepIndex);
+				if (restoredStepIndex >= 0) {
+					console.log('[Tutorial] Restoring tutorial after page reload to step', restoredStepIndex);
+					initializeTour();
+					// Use setTimeout to let the page render first
+					setTimeout(() => {
+						showCurrentStep();
+					}, 200);
+				}
 			}
-		}
+		});
 
 		return () => {
 			window.removeEventListener('tutorial:request-start', handleRequestStart as EventListener);
