@@ -12,17 +12,33 @@ type PopperPlacement =
 	| 'left-start'
 	| 'left-end';
 
+export interface CourseStepButton {
+	text: string;
+	action:
+		| 'next'
+		| 'back'
+		| 'complete'
+		| 'cancel'
+		| `show:${string}`
+		| `goto:${string}`
+		| `clickAndStore:${string}`;
+	key?: string;
+	enableWhen?: {
+		selector: string;
+		minLength?: number;
+		pattern?: string;
+	};
+}
+
 export interface CourseStep {
 	id: string;
 	text: string;
+	page?: string;
 	attachTo?: {
 		element: string;
 		on?: PopperPlacement;
 	};
-	buttons?: Array<{
-		text: string;
-		action: string;
-	}>;
+	buttons?: CourseStepButton[];
 }
 
 export interface Course {
