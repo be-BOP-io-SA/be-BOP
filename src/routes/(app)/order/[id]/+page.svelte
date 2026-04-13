@@ -561,7 +561,7 @@
 				{/if}
 			{/if}
 
-			{#if data.canCleanPersonalData && !data.order.dataAnonymized}
+			{#if data.canCleanPersonalData && !data.order.dataAnonymized && !data.posMode}
 				<form
 					method="POST"
 					action="?/cleanPersonalData"
