@@ -728,7 +728,7 @@ steps:
       on: bottom
     buttons:
       - text: 'Next (n)'
-        action: 'clickAndStore:a[href$="/config"]|hasDoneIdentity'
+        action: 'goto:/admin/config?tutorial=onboarding|hasDoneIdentity'
         key: n
   # --- /admin/config currencies step (reached via hasDoneIdentity) ---
   - id: config-currencies
