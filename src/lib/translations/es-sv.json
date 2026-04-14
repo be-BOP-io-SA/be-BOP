@@ -44,7 +44,7 @@
 	"cart": {
 		"cta": {
 			"checkout": "Pagar",
-			"discardItem": "Descartar",
+			"discardItem": "Quitar",
 			"view": "Al carrito"
 		},
 		"discount": {
@@ -59,6 +59,15 @@
 			"validate": "Validar",
 			"customPercentPlaceholder": "p. ej. 15",
 			"customAmountPlaceholder": "p. ej. 5.00"
+		},
+		"promo": {
+			"question": "¿Tenés un código promocional?",
+			"placeholder": "Código promocional",
+			"apply": "Aplicar",
+			"applied": "Código {code} aplicado a tu carrito",
+			"remove": "¿Remover mi código promocional?",
+			"invalid": "Código promocional no encontrado o no aplicable a tu pedido.",
+			"rateLimited": "Demasiados intentos fallidos. Por favor intentá más tarde."
 		},
 		"empty": "La lista de compras está vacía",
 		"fillProductAlias": "Rellenar alias de producto",
@@ -908,6 +917,7 @@
 		},
 		"variationPriceLabel": "Precio de variación",
 		"vatExcluded": "No incluye IVA",
+		"vatExcludedEstimate": "Precio estimado sin impuestos",
 		"vatIncluded": "Precio estimado con IVA incluido"
 	},
 	"schedule": {
