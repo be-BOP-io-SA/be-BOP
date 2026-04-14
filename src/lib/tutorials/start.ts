@@ -83,6 +83,20 @@ export async function startTour(id: string, fromStepId?: string): Promise<void> 
 						window.location.href = url.replace(/^\/admin/, adminPrefix);
 					};
 				}
+				if (action.startsWith('branch:')) {
+					const payload = action.slice(7);
+					const parts = payload.split('|');
+					const selector = parts[0];
+					const ifPresent = parts[1];
+					const ifAbsent = parts[2];
+					return () => {
+						if (document.querySelector(selector)) {
+							tour.show(ifPresent);
+						} else {
+							tour.show(ifAbsent);
+						}
+					};
+				}
 				if (action.startsWith('clickAndStore:')) {
 					const payload = action.slice(14);
 					const sepIdx = payload.lastIndexOf('|');
@@ -185,10 +199,15 @@ export async function startTour(id: string, fromStepId?: string): Promise<void> 
 					const pattern = btn.enableWhen.pattern
 						? new RegExp(btn.enableWhen.pattern as string)
 						: null;
+					const requireChecked =
+						btn.enableWhen.checked === true || (btn.enableWhen.checked as unknown) === 'true';
 					const check = () => {
 						let disabled = minLen > 0 && input.value.length < minLen;
 						if (!disabled && pattern) {
 							disabled = !pattern.test(input.value);
+						}
+						if (!disabled && requireChecked) {
+							disabled = !input.checked;
 						}
 						targetBtn.disabled = disabled;
 						targetBtn.style.opacity = disabled ? '0.5' : '1';
@@ -201,8 +220,9 @@ export async function startTour(id: string, fromStepId?: string): Promise<void> 
 						}
 					};
 					check();
-					input.addEventListener('input', check);
-					shepherdStep.on('hide', () => input.removeEventListener('input', check));
+					const evt = requireChecked ? 'change' : 'input';
+					input.addEventListener(evt, check);
+					shepherdStep.on('hide', () => input.removeEventListener(evt, check));
 				});
 			});
 		}

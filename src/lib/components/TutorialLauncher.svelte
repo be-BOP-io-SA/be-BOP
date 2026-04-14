@@ -8,7 +8,9 @@
 
 	const progressMap: Record<string, { course: string; step: string }> = {
 		adminHashDone: { course: 'onboarding', step: 'config-done' },
-		armUserSaved: { course: 'onboarding', step: 'arm-nostr-intro' }
+		armUserSaved: { course: 'onboarding', step: 'arm-nostr-intro' },
+		hasSetNsec: { course: 'onboarding', step: 'nostr-nsec-info' },
+		unsetNostrIntro: { course: 'onboarding', step: 'nostr-to-identity' }
 	};
 
 	onMount(() => {

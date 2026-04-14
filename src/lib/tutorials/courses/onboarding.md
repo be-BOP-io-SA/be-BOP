@@ -314,11 +314,161 @@ steps:
       element: 'a[href="#Node Management"]'
       on: bottom
     buttons:
+      - text: 'Next (n)'
+        action: 'goto:/admin/nostr?tutorial=onboarding'
+        key: n
+  # --- /admin/nostr page steps ---
+  - id: nostr-welcome
+    page: /admin/nostr
+    attachTo:
+      element: 'h1.text-3xl'
+      on: bottom
+    buttons:
+      - text: 'Next (n)'
+        action: 'branch:button.btn-red[formaction="?/delete"]:not([disabled])|nostr-already-set|nostr-setup-intro'
+        key: n
+  - id: nostr-setup-intro
+    page: /admin/nostr
+    attachTo:
+      element: 'form[action="?/updatePrivateKey"]'
+      on: top
+  - id: nostr-nsec-warning
+    page: /admin/nostr
+    attachTo:
+      element: 'form[action="?/updatePrivateKey"]'
+      on: top
+  - id: nostr-nsec-safe
+    page: /admin/nostr
+    attachTo:
+      element: 'form[action="?/updatePrivateKey"]'
+      on: top
+  - id: nostr-has-nsec
+    page: /admin/nostr
+    attachTo:
+      element: 'form[action="?/updatePrivateKey"]'
+      on: top
+    buttons:
+      - text: 'Back (b)'
+        action: back
+        key: b
+      - text: 'No (n)'
+        action: 'show:nostr-generate-cta'
+        key: n
+      - text: 'Yes (y)'
+        action: 'show:nostr-fill-nsec'
+        key: y
+  - id: nostr-fill-nsec
+    page: /admin/nostr
+    attachTo:
+      element: 'input[name="privateKey"]'
+      on: bottom
+    buttons:
+      - text: 'Back (b)'
+        action: 'show:nostr-has-nsec'
+        key: b
+      - text: 'Next (n)'
+        action: next
+        key: n
+        enableWhen:
+          selector: 'input[name="privateKey"]'
+          pattern: '^nsec1[a-z0-9]{58}$'
+  - id: nostr-save-nsec
+    page: /admin/nostr
+    attachTo:
+      element: 'form[action="?/updatePrivateKey"] button.btn-black'
+      on: top
+    buttons:
+      - text: 'No (n)'
+        action: back
+        key: n
+      - text: 'Save (s)'
+        action: 'clickAndStore:form[action="?/updatePrivateKey"] button.btn-black|hasSetNsec'
+        key: s
+  - id: nostr-generate-cta
+    page: /admin/nostr
+    attachTo:
+      element: 'form[action="?/updatePrivateKey"] button.btn-gray'
+      on: top
+    buttons:
+      - text: 'Back (b)'
+        action: 'show:nostr-has-nsec'
+        key: b
+      - text: 'Save (s)'
+        action: 'clickAndStore:form[action="?/updatePrivateKey"] button.btn-gray|hasSetNsec'
+        key: s
+  - id: nostr-already-set
+    page: /admin/nostr
+    attachTo:
+      element: 'input[name="privateKey"]'
+      on: bottom
+  - id: nostr-nsec-info
+    page: /admin/nostr
+    attachTo:
+      element: 'input[name="privateKey"]'
+      on: bottom
+  - id: nostr-npub-info
+    page: /admin/nostr
+    attachTo:
+      element: 'main p.break-words'
+      on: bottom
+  - id: nostr-certify
+    page: /admin/nostr
+    attachTo:
+      element: 'form[action="?/certify"] button'
+      on: bottom
+  - id: nostr-relays-intro
+    page: /admin/nostr
+    attachTo:
+      element: 'form[action="?/updateRelays"] ul'
+      on: top
+  - id: nostr-relay-input
+    page: /admin/nostr
+    attachTo:
+      element: 'form[action="?/updateRelays"] input[name="relays"]'
+      on: bottom
+  - id: nostr-relay-delete
+    page: /admin/nostr
+    attachTo:
+      element: 'form[action="?/updateRelays"] ul li:first-child button'
+      on: bottom
+  - id: nostr-disable-intro
+    page: /admin/nostr
+    attachTo:
+      element: 'input[name="disableNostrBotIntro"]'
+      on: bottom
+    buttons:
       - text: 'Back (b)'
         action: back
         key: b
       - text: 'Next (n)'
-        action: 'goto:/admin/nostr?tutorial=onboarding'
+        action: next
+        key: n
+        enableWhen:
+          selector: 'input[name="disableNostrBotIntro"]'
+          checked: true
+  - id: nostr-save-settings
+    page: /admin/nostr
+    attachTo:
+      element: 'form[action="?/disableIntro"] button[type="submit"]'
+      on: top
+    buttons:
+      - text: 'Back (b)'
+        action: back
+        key: b
+      - text: 'Save (s)'
+        action: 'clickAndStore:form[action="?/disableIntro"] button[type="submit"]|unsetNostrIntro'
+        key: s
+  - id: nostr-to-identity
+    page: /admin/nostr
+    attachTo:
+      element: 'header.navbar a[href="#Settings"]'
+      on: bottom
+    buttons:
+      - text: 'Back (b)'
+        action: back
+        key: b
+      - text: 'Next (n)'
+        action: 'goto:/admin/identity?tutorial=onboarding'
         key: n
 ---
 
@@ -512,7 +662,7 @@ It's important to be able to recover your password.
 
 ## arm-npub
 
-You can also fill a npub. It's a Nostr address. Nostr is free and can be launched automatically with be-BOP, without any provider, like email.
+You can also fill a npub. It's a Nostr address. Nostr is free and can be launched automatically with be-BOP, without any provider, unlike email.
 
 ## arm-save
 
@@ -521,3 +671,75 @@ You can now save your super-admin user profile.
 ## arm-nostr-intro
 
 Now that's done, let's be sure you'll be able to recover your password from Nostr!
+
+## nostr-welcome
+
+Welcome to Nostr settings!
+
+## nostr-setup-intro
+
+Let's generate your be-BOP nsec.
+
+## nostr-nsec-warning
+
+Nsec is your Nostr private key and acts as both login and password. Never share it with anyone, nor with an application you're unsure about!
+
+## nostr-nsec-safe
+
+Once generated, it should be kept on a safe & private location.
+
+## nostr-has-nsec
+
+Do you already have a Nostr nsec?
+
+## nostr-fill-nsec
+
+Fill your nsec here please.
+
+## nostr-save-nsec
+
+You can now save your nsec.
+
+## nostr-generate-cta
+
+be-BOP will generate your Nostr account.
+
+## nostr-already-set
+
+Your Nostr account is already set!
+
+## nostr-nsec-info
+
+This is your private key.
+
+## nostr-npub-info
+
+This is your npub, your public identity.
+
+## nostr-certify
+
+With this, you'll be able to sync your be-BOP shop with its NostR account. Let's keep that for later once shop informations will be filled.
+
+## nostr-relays-intro
+
+This is your current relay list.
+
+## nostr-relay-input
+
+Here you can set new relays with `wss://yourrelayinformation.address`.
+
+## nostr-relay-delete
+
+Here you can delete a relay if you have connexion issues.
+
+## nostr-disable-intro
+
+Once this option is enabled, anyone messaging your Nostr address will have an automatic answer. Let's keep it disabled for now.
+
+## nostr-save-settings
+
+Save settings.
+
+## nostr-to-identity
+
+Let's now set your shop identity.
