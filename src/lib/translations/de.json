@@ -44,7 +44,7 @@
 	"cart": {
 		"cta": {
 			"checkout": "Zur Kasse",
-			"discardItem": "Verwerfen",
+			"discardItem": "Entfernen",
 			"view": "Warenkorb anzeigen"
 		},
 		"discount": {
@@ -59,6 +59,15 @@
 			"validate": "Bestätigen",
 			"customPercentPlaceholder": "z. B. 15",
 			"customAmountPlaceholder": "z. B. 5,00"
+		},
+		"promo": {
+			"question": "Haben Sie einen Gutscheincode?",
+			"placeholder": "Gutscheincode",
+			"apply": "Anwenden",
+			"applied": "Code {code} wurde auf Ihren Warenkorb angewendet",
+			"remove": "Meinen Gutscheincode entfernen?",
+			"invalid": "Gutscheincode nicht gefunden oder nicht auf Ihre Bestellung anwendbar.",
+			"rateLimited": "Zu viele fehlgeschlagene Versuche. Bitte versuchen Sie es später erneut."
 		},
 		"empty": "Der Warenkorb ist leer",
 		"fillProductAlias": "Produkt-Alias ausfüllen",
@@ -906,6 +915,7 @@
 		},
 		"variationPriceLabel": "Variationspreis",
 		"vatExcluded": "Ohne MwSt.",
+		"vatExcludedEstimate": "Geschätzter Preis ohne Steuer",
 		"vatIncluded": "Geschätzter Preis einschließlich Steuer"
 	},
 	"schedule": {
