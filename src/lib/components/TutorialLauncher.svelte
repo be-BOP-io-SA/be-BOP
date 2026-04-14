@@ -16,6 +16,26 @@
 	};
 
 	onMount(() => {
+		const progress = sessionStorage.getItem('tutorial_progress');
+		if (progress) {
+			sessionStorage.removeItem('tutorial_progress');
+			const target = progressMap[progress];
+			if (target) {
+				launched = target.course;
+				startTour(target.course, target.step);
+				if ($page.url.searchParams.has('tutorial')) {
+					const clean = new URL($page.url);
+					clean.searchParams.delete('tutorial');
+					goto(clean.pathname + clean.search, {
+						replaceState: true,
+						noScroll: true,
+						keepFocus: true
+					});
+				}
+				return;
+			}
+		}
+
 		const id = $page.url.searchParams.get('tutorial');
 		if (id && launched !== id) {
 			launched = id;
@@ -23,16 +43,6 @@
 			const clean = new URL($page.url);
 			clean.searchParams.delete('tutorial');
 			goto(clean.pathname + clean.search, { replaceState: true, noScroll: true, keepFocus: true });
-			return;
-		}
-
-		const progress = sessionStorage.getItem('tutorial_progress');
-		if (progress) {
-			sessionStorage.removeItem('tutorial_progress');
-			const target = progressMap[progress];
-			if (target) {
-				startTour(target.course, target.step);
-			}
 		}
 	});
 </script>
