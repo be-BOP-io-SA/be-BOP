@@ -21,12 +21,14 @@ export interface CourseStepButton {
 		| 'cancel'
 		| `show:${string}`
 		| `goto:${string}`
-		| `clickAndStore:${string}`;
+		| `clickAndStore:${string}`
+		| `branch:${string}`;
 	key?: string;
 	enableWhen?: {
 		selector: string;
 		minLength?: number;
 		pattern?: string;
+		checked?: boolean;
 	};
 }
 
