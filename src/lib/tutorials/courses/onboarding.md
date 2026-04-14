@@ -468,7 +468,7 @@ steps:
   - id: nostr-to-identity
     page: /admin/nostr
     attachTo:
-      element: 'header.navbar a[href="#Settings"]'
+      element: 'a[href="#Settings"]'
       on: bottom
     buttons:
       - text: 'Next (n)'
@@ -724,11 +724,11 @@ steps:
   - id: identity-to-currencies
     page: /admin/identity
     attachTo:
-      element: 'header.navbar a[href="#Settings"]'
+      element: 'a[href="#Settings"]'
       on: bottom
     buttons:
       - text: 'Next (n)'
-        action: 'clickAndStore:header.navbar a[href$="/config"]|hasDoneIdentity'
+        action: 'clickAndStore:a[href$="/config"]|hasDoneIdentity'
         key: n
   # --- /admin/config currencies step (reached via hasDoneIdentity) ---
   - id: config-currencies
