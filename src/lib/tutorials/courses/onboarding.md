@@ -215,7 +215,7 @@ steps:
   - id: arm-intro
     page: /admin/arm
     attachTo:
-      element: h1
+      element: 'h1.text-3xl'
       on: bottom
   - id: arm-roles
     page: /admin/arm
@@ -273,7 +273,7 @@ steps:
         key: n
         enableWhen:
           selector: 'input[name="alias"]'
-          minLength: 3
+          minLength: 1
   - id: arm-email
     page: /admin/arm
     attachTo:
@@ -452,7 +452,7 @@ steps:
         key: n
         enableWhen:
           selector: 'input[name="disableNostrBotIntro"]'
-          unchecked: true
+          checked: true
   - id: nostr-save-settings
     page: /admin/nostr
     attachTo:
