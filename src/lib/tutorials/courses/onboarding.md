@@ -839,9 +839,9 @@ steps:
     buttons:
       - text: 'Back'
         action: back
-      - text: "Not registered for VAT"
+      - text: 'Not registered for VAT'
         action: 'show:config-vat-not-reg-enable'
-      - text: "VAT rate of my business country"
+      - text: 'VAT rate of my business country'
         action: 'show:config-vat-single-check'
       - text: "VAT rate of the customer's country"
         action: 'show:config-vat-customer-disable'
