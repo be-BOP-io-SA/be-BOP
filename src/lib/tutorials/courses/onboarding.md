@@ -401,6 +401,13 @@ steps:
     attachTo:
       element: 'input[name="privateKey"]'
       on: bottom
+    buttons:
+      - text: 'Back (b)'
+        action: 'show:nostr-welcome'
+        key: b
+      - text: 'Next (n)'
+        action: 'show:nostr-nsec-info'
+        key: n
   - id: nostr-nsec-info
     page: /admin/nostr
     attachTo:
@@ -424,7 +431,7 @@ steps:
   - id: nostr-relay-input
     page: /admin/nostr
     attachTo:
-      element: 'form[action="?/updateRelays"] input[name="relays"]'
+      element: 'form[action="?/updateRelays"] input[type="text"][name="relays"]'
       on: bottom
   - id: nostr-relay-delete
     page: /admin/nostr
@@ -445,7 +452,7 @@ steps:
         key: n
         enableWhen:
           selector: 'input[name="disableNostrBotIntro"]'
-          checked: true
+          unchecked: true
   - id: nostr-save-settings
     page: /admin/nostr
     attachTo:
@@ -710,7 +717,7 @@ Your Nostr account is already set!
 
 ## nostr-nsec-info
 
-This is your private key.
+This is your private key. Don't share to anyone nor to untrusty application. It's both your login and your password for Nostr.
 
 ## nostr-npub-info
 
