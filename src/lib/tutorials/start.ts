@@ -76,8 +76,14 @@ export async function startTour(id: string, fromStepId?: string): Promise<void> 
 					return () => tour.show(stepId);
 				}
 				if (action.startsWith('goto:')) {
-					const url = action.slice(5);
+					const payload = action.slice(5);
+					const sepIdx = payload.lastIndexOf('|');
+					const url = sepIdx === -1 ? payload : payload.slice(0, sepIdx);
+					const marker = sepIdx === -1 ? null : payload.slice(sepIdx + 1);
 					return () => {
+						if (marker) {
+							sessionStorage.setItem('tutorial_progress', marker);
+						}
 						tour.complete();
 						const adminMatch = window.location.pathname.match(/^\/admin(-[^/]+)?/);
 						const adminPrefix = adminMatch ? adminMatch[0] : '/admin';
