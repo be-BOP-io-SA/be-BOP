@@ -730,16 +730,219 @@ steps:
       - text: 'Next (n)'
         action: 'goto:/admin/config?tutorial=onboarding|hasDoneIdentity'
         key: n
-  # --- /admin/config currencies step (reached via hasDoneIdentity) ---
+  # --- /admin/config currencies + VAT steps (reached via hasDoneIdentity) ---
   - id: config-currencies
     page: /admin/config
     attachTo:
       element: 'form[action="?/update"] h2.text-2xl:first-of-type'
       on: bottom
     buttons:
+      - text: 'Next (n)'
+        action: next
+        key: n
+  - id: config-main-currency
+    page: /admin/config
+    attachTo:
+      element: 'label:has(input[name="mainCurrency"])'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+  - id: config-secondary-currency
+    page: /admin/config
+    attachTo:
+      element: 'label:has(input[name="secondaryCurrency"])'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+  - id: config-price-ref
+    page: /admin/config
+    attachTo:
+      element: 'label:has(input[name="priceReferenceCurrency"])'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+  - id: config-accounting
+    page: /admin/config
+    attachTo:
+      element: 'label:has(input[name="accountingCurrency"])'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+  - id: config-vat-intro
+    page: /admin/config
+    attachTo:
+      element: 'form[action="?/update"] > h2.text-2xl:nth-of-type(6)'
+      on: bottom
+    buttons:
+      - text: 'Back (b)'
+        action: back
+        key: b
+      - text: 'Next (n)'
+        action: next
+        key: n
+  - id: config-vat-display-q
+    page: /admin/config
+    attachTo:
+      element: 'label:has(input[name="displayVatIncludedInProduct"])'
+      on: bottom
+    buttons:
+      - text: 'Back (b)'
+        action: back
+        key: b
+      - text: 'Included (i)'
+        action: 'show:config-vat-display-included'
+        key: i
+      - text: 'Excluded (e)'
+        action: 'show:config-vat-display-excluded'
+        key: e
+  - id: config-vat-display-included
+    page: /admin/config
+    attachTo:
+      element: 'label:has(input[name="displayVatIncludedInProduct"])'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: 'show:config-vat-display-q'
+      - text: 'Next'
+        action: 'show:config-vat-regime-q'
+        enableWhen:
+          selector: 'input[name="displayVatIncludedInProduct"]'
+          checked: true
+  - id: config-vat-display-excluded
+    page: /admin/config
+    attachTo:
+      element: 'label:has(input[name="displayVatIncludedInProduct"])'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: 'show:config-vat-display-q'
+      - text: 'Next'
+        action: 'show:config-vat-regime-q'
+        enableWhen:
+          selector: 'input[name="displayVatIncludedInProduct"]'
+          unchecked: true
+  - id: config-vat-regime-q
+    page: /admin/config
+    classes: vat-regime-grid
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: "Not registered for VAT"
+        action: 'show:config-vat-not-reg-enable'
+      - text: "VAT rate of my business country"
+        action: 'show:config-vat-single-check'
+      - text: "VAT rate of the customer's country"
+        action: 'show:config-vat-customer-disable'
+      - text: "I don't know"
+        action: 'show:config-vat-idk'
+  - id: config-vat-idk
+    page: /admin/config
+    buttons:
+      - text: 'Back (b)'
+        action: 'show:config-vat-regime-q'
+        key: b
       - text: 'Done (d)'
         action: complete
         key: d
+  - id: config-vat-not-reg-enable
+    page: /admin/config
+    attachTo:
+      element: 'label:has(input[name="vatExempted"])'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: 'show:config-vat-regime-q'
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="vatExempted"]'
+          checked: true
+  - id: config-vat-reason
+    page: /admin/config
+    attachTo:
+      element: 'input[name="vatExemptionReason"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: 'show:config-vat-save'
+        enableWhen:
+          selector: 'input[name="vatExemptionReason"]'
+          minLength: 3
+  - id: config-vat-single-check
+    page: /admin/config
+    attachTo:
+      element: 'label:has(input[name="vatSingleCountry"])'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: 'show:config-vat-regime-q'
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="vatSingleCountry"]'
+          checked: true
+  - id: config-vat-country
+    page: /admin/config
+    attachTo:
+      element: 'select[name="vatCountry"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: 'show:config-vat-save'
+  - id: config-vat-customer-disable
+    page: /admin/config
+    attachTo:
+      element: 'label:has(input[name="vatExempted"])'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: 'show:config-vat-regime-q'
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="vatExempted"]'
+          unchecked: true
+  - id: config-vat-customer-single
+    page: /admin/config
+    attachTo:
+      element: 'label:has(input[name="vatSingleCountry"])'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="vatSingleCountry"]'
+          unchecked: true
+  - id: config-vat-save
+    page: /admin/config
+    attachTo:
+      element: 'input[type="submit"][value="Update"]'
+      on: top
+    buttons:
+      - text: 'Back (b)'
+        action: back
+        key: b
+      - text: 'Save (s)'
+        action: 'clickAndStore:input[type="submit"][value="Update"]|onboardingDone'
+        key: s
 ---
 
 ## welcome
@@ -1097,3 +1300,71 @@ Next step: let's choose your currencies and VAT behavior 🙂
 ## config-currencies
 
 be-BOP uses up to 4 different currencies.
+
+## config-main-currency
+
+Main currency is the first currency displayed on your shop, products, cart, checkout, etc.
+
+## config-secondary-currency
+
+If you have international customers, or if you sell with both bitcoin and fiat, this'll allow you to have a 2nd display currency, with automatic refresh rate.
+
+## config-price-ref
+
+This one will be the default currency for your product prices. It's useful to calculate your product price automatically if, for example, you sell in EUR but your production costs are in dollar: you can set a product price in USD that'll be displayed in EUR with automatic conversion.
+
+## config-accounting
+
+Last but not least, accounting currency will be used to store your sales in a particular currency of your accounting system. It's not useful if you do everything only with main currency, but if you have a bitcoin-only store, accounting currency will allow to snapshot the exchange rate at the time of the invoice for law compliance reasons.
+
+## config-vat-intro
+
+This is where you set VAT for your shop.
+
+## config-vat-display-q
+
+Do you want to display prices VAT included or excluded?
+
+## config-vat-display-included
+
+You can check the option here if not already done.
+
+## config-vat-display-excluded
+
+You can uncheck the option here if not already done.
+
+## config-vat-regime-q
+
+What is your business VAT regime?
+
+## config-vat-idk
+
+This is highly problematic and risky for you. Before making any sale, it's better to check with a lawyer or an accountant to help you to know this.
+
+## config-vat-not-reg-enable
+
+Enable this option, then we'll jump on VAT exemption law compliant text.
+
+## config-vat-reason
+
+Fill in here your VAT exemption reason; it'll be displayed on invoices. Search, and ask an accountant or a lawyer if you're unsure.
+
+## config-vat-single-check
+
+Perfect. You can enable this option, if not already done.
+
+## config-vat-country
+
+Please select your business country here.
+
+## config-vat-customer-disable
+
+Make sure this option is unchecked.
+
+## config-vat-customer-single
+
+Make sure this option is unchecked.
+
+## config-vat-save
+
+Let's save this VAT configuration and we'll be done!
