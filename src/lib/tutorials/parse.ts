@@ -159,6 +159,7 @@ export function parseCourse(raw: string): Course {
 			page?: string;
 			attachTo?: CourseStep['attachTo'];
 			buttons?: CourseStep['buttons'];
+			classes?: string;
 		}[]
 	).map((s) => {
 		const body = bodyMap.get(s.id);
@@ -170,7 +171,8 @@ export function parseCourse(raw: string): Course {
 			text: marked.parse(body, { async: false }) as string,
 			...(s.page && { page: s.page }),
 			...(s.attachTo && { attachTo: s.attachTo }),
-			...(s.buttons && { buttons: s.buttons })
+			...(s.buttons && { buttons: s.buttons }),
+			...(s.classes && { classes: s.classes })
 		};
 	});
 

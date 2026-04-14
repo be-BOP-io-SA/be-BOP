@@ -52,6 +52,25 @@ export async function startTour(id: string, fromStepId?: string): Promise<void> 
 	const { default: Shepherd } = await import('shepherd.js');
 	await import('shepherd.js/dist/css/shepherd.css');
 
+	if (!document.getElementById('tutorial-extra-styles')) {
+		const style = document.createElement('style');
+		style.id = 'tutorial-extra-styles';
+		style.textContent = `
+			.shepherd-element.vat-regime-grid .shepherd-footer {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 8px;
+			}
+			.shepherd-element.vat-regime-grid .shepherd-footer .shepherd-button {
+				font-size: 1rem;
+				padding: 10px 14px;
+				white-space: normal;
+				line-height: 1.3;
+			}
+		`;
+		document.head.appendChild(style);
+	}
+
 	const tour = new Shepherd.Tour({
 		useModalOverlay: true,
 		defaultStepOptions: {
@@ -147,7 +166,8 @@ export async function startTour(id: string, fromStepId?: string): Promise<void> 
 			id: step.id,
 			text: step.text,
 			attachTo: step.attachTo,
-			buttons: resolvedButtons
+			buttons: resolvedButtons,
+			...(step.classes && { classes: step.classes })
 		}) as Step;
 
 		// Smart scroll: only scroll if element is below top 30% of viewport

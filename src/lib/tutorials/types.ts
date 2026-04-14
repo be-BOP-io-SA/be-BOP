@@ -42,6 +42,7 @@ export interface CourseStep {
 		on?: PopperPlacement;
 	};
 	buttons?: CourseStepButton[];
+	classes?: string;
 }
 
 export interface Course {
