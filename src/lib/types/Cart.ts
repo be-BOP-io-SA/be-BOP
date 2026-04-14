@@ -29,6 +29,7 @@ export interface Cart extends Timestamps {
 		reservedUntil?: Date;
 		depositPercentage?: number;
 		discountPercentage?: number;
+		discountJustification?: string;
 		internalNote?: { value: string; updatedAt: Date; updatedById?: User['_id'] };
 		chosenVariations?: Record<string, string>;
 	}>;

@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { fetchOrderForUser } from '../../../fetchOrderForUser.js';
-import { orderItemPrice } from '$lib/types/Order.js';
+import { orderItemPrice, orderItemPriceUndiscounted } from '$lib/types/Order.js';
 
 export async function load({ params }) {
 	const order = await fetchOrderForUser(params.id);
@@ -35,30 +35,39 @@ export async function load({ params }) {
 
 	const currency = order.currencySnapshot.main.totalPrice.currency;
 
-	// group items by VAT rate + calculate totals
-	const { itemsByRate, totalExclVat, vatByRate } = relevantItems.reduce(
-		(acc, item) => {
-			const rate = item.vatRate ?? 0;
-			const itemTotal = orderItemPrice(item, 'main'); // excl. VAT
-			const vatAmount = (itemTotal * rate) / 100;
+	// group items by VAT rate + calculate totals (discounted + undiscounted in one pass)
+	const { itemsByRate, totalExclVat, vatByRate, undiscountedExclVat, undiscountedVatByRate } =
+		relevantItems.reduce(
+			(acc, item) => {
+				const rate = item.vatRate ?? 0;
+				const itemTotal = orderItemPrice(item, 'main');
+				const itemUndiscounted = orderItemPriceUndiscounted(item, 'main');
 
-			const rateItems = acc.itemsByRate.get(rate) ?? [];
-			rateItems.push(item);
-			acc.itemsByRate.set(rate, rateItems);
-			acc.totalExclVat += itemTotal;
-			acc.vatByRate.set(rate, (acc.vatByRate.get(rate) ?? 0) + vatAmount);
+				const rateItems = acc.itemsByRate.get(rate) ?? [];
+				rateItems.push(item);
+				acc.itemsByRate.set(rate, rateItems);
+				acc.totalExclVat += itemTotal;
+				acc.vatByRate.set(rate, (acc.vatByRate.get(rate) ?? 0) + (itemTotal * rate) / 100);
+				acc.undiscountedExclVat += itemUndiscounted;
+				acc.undiscountedVatByRate.set(
+					rate,
+					(acc.undiscountedVatByRate.get(rate) ?? 0) + (itemUndiscounted * rate) / 100
+				);
 
-			return acc;
-		},
-		{
-			itemsByRate: new Map<number, typeof relevantItems>(),
-			totalExclVat: 0,
-			vatByRate: new Map<number, number>()
-		}
-	);
+				return acc;
+			},
+			{
+				itemsByRate: new Map<number, typeof relevantItems>(),
+				totalExclVat: 0,
+				vatByRate: new Map<number, number>(),
+				undiscountedExclVat: 0,
+				undiscountedVatByRate: new Map<number, number>()
+			}
+		);
 
 	const totalVat = Array.from(vatByRate.values()).reduce((sum, v) => sum + v, 0);
 	const totalInclVat = totalExclVat + totalVat;
+	const hasPerItemDiscounts = undiscountedExclVat > totalExclVat;
 
 	// VAT tagGroups
 	const tagGroups = Array.from(itemsByRate.entries())
@@ -68,6 +77,7 @@ export async function load({ params }) {
 			items: items.map((item) => ({
 				product: { name: item.product.name },
 				quantity: item.quantity,
+				discountPercentage: item.discountPercentage,
 				variations: item.chosenVariations
 					? [{ text: Object.values(item.chosenVariations).join(' '), count: item.quantity }]
 					: [],
@@ -106,6 +116,18 @@ export async function load({ params }) {
 						(order.currencySnapshot.main.discount.amount /
 							(totalInclVat + order.currencySnapshot.main.discount.amount)) *
 						100
+			  }
+			: hasPerItemDiscounts
+			? {
+					totalBeforeDiscount:
+						undiscountedExclVat +
+						Array.from(undiscountedVatByRate.values()).reduce((s, v) => s + v, 0),
+					discountPercentage: ((undiscountedExclVat - totalExclVat) / undiscountedExclVat) * 100,
+					isPerItemDiscount: true,
+					undiscountedExclVat,
+					undiscountedVatBreakdown: Array.from(undiscountedVatByRate.entries()).map(
+						([rate, amount]) => ({ rate, amount })
+					)
 			  }
 			: {})
 	};

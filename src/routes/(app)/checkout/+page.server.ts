@@ -499,6 +499,10 @@ export const actions = {
 					}),
 					...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
 					depositPercentage: item.depositPercentage,
+					...(item.discountPercentage !== undefined &&
+						item.discountPercentage > 0 && {
+							discountPercentage: item.discountPercentage
+						}),
 					...(item.booking && {
 						booking: {
 							...item.booking,
