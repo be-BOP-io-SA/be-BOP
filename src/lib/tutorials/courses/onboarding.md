@@ -325,7 +325,7 @@ steps:
       on: bottom
     buttons:
       - text: 'Next (n)'
-        action: 'branch:button.btn-red[formaction="?/delete"]:not([disabled])|nostr-already-set|nostr-setup-intro'
+        action: 'branch:input[name="privateKey"][disabled]|nostr-already-set|nostr-setup-intro'
         key: n
   - id: nostr-setup-intro
     page: /admin/nostr
