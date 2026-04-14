@@ -471,9 +471,6 @@ steps:
       element: 'header.navbar a[href="#Settings"]'
       on: bottom
     buttons:
-      - text: 'Back (b)'
-        action: back
-        key: b
       - text: 'Next (n)'
         action: 'goto:/admin/identity?tutorial=onboarding'
         key: n
