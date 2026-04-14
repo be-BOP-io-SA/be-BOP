@@ -224,7 +224,8 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 						login: user.login ? user.login : '',
 						roleId: user.roleId,
 						alias: user.alias,
-						hasPosOptions: user.hasPosOptions
+						hasPosOptions: user.hasPosOptions,
+						recoveryEmail: user.recovery?.email
 					};
 				}
 			}

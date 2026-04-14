@@ -206,6 +206,11 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 		{ wholeCatalog: 1, beginsAt: 1 },
 		{ partialFilterExpression: { wholeCatalog: true } }
 	],
+	[
+		collections.discounts,
+		{ promoCode: 1, beginsAt: 1 },
+		{ partialFilterExpression: { promoCode: { $exists: true } } }
+	],
 	[collections.personalInfo, { 'user.userId': 1 }],
 	[collections.personalInfo, { 'user.sessionId': 1 }],
 	[collections.personalInfo, { 'user.npub': 1 }],

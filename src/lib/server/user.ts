@@ -67,7 +67,8 @@ export function userIdentifier(locals: App.Locals): UserIdentifier {
 		userLogin: locals.user?.login,
 		userRoleId: locals.user?.roleId,
 		userAlias: locals.user?.alias,
-		userHasPosOptions: locals.user?.hasPosOptions
+		userHasPosOptions: locals.user?.hasPosOptions,
+		userRecoveryEmail: locals.user?.recoveryEmail
 	};
 }
 
