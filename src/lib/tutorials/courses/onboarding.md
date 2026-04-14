@@ -717,7 +717,7 @@ Your Nostr account is already set!
 
 ## nostr-nsec-info
 
-This is your private key. Don't share to anyone nor to untrusty application. It's both your login and your password for Nostr.
+This is your private key. Don't share to anyone nor to untrusty application. It acts as both your login and your password for Nostr.
 
 ## nostr-npub-info
 
