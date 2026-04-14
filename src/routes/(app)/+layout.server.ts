@@ -22,6 +22,13 @@ import type { Cart } from '$lib/types/Cart';
 import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 import { UNDERLYING_CURRENCY } from '$lib/types/Currency';
 import { isAlpha2CountryCode } from '$lib/types/Country';
+import {
+	collectUserAddresses,
+	getActivePercentageDiscounts,
+	isAuthenticated,
+	selectBestDiscount,
+	webChannelForUser
+} from '$lib/server/discount';
 
 async function getCartAndRemoveSomeItems(userIdentifier: UserIdentifier): Promise<Cart> {
 	const cartInDb = await getCartFromDb({ user: userIdentifier });
@@ -173,79 +180,41 @@ export async function load(params) {
 			: []
 	]);
 
-	const discounts = paidSubs.length
-		? await collections.discounts
-				.aggregate<{
-					_id: Product['_id'] | null;
-					discountPercent: number;
-				}>([
-					{
-						$match: {
-							$or: [
-								{ wholeCatalog: true },
-								{ productIds: { $in: cart.items.map((p) => p.productId) } }
-							],
-							subscriptionIds: { $in: paidSubs.map((sub) => sub.productId) },
-							beginsAt: {
-								$lt: new Date()
-							},
-							mode: 'percentage',
-							$and: [
-								{
-									$or: [
-										{
-											endsAt: { $gt: new Date() }
-										},
-										{
-											endsAt: null
-										}
-									]
-								}
-							]
-						}
-					},
-					{
-						$sort: {
-							percentage: -1
-						}
-					},
-					{
-						$project: {
-							productIds: 1,
-							percentage: 1,
-							_id: 0
-						}
-					},
-					{
-						$unwind: {
-							path: '$productIds',
-							preserveNullAndEmptyArrays: true
-						}
-					},
-					{
-						$group: {
-							_id: { $ifNull: ['$productIds', null] },
-							discountPercent: { $first: '$percentage' }
-						}
-					}
-				])
-				.toArray()
-		: [];
-
 	const productById = new Map(products.map((p) => [p._id, p]));
 	const productPicturesById = new Map(productPictures.map((p) => [p.productId, p]));
 	const digitalFilesByProductId = groupBy(digitalFiles, (df) => df.productId);
-	const wholeDiscount = discounts.find((d) => d._id === null)?.discountPercent;
-	const discountByProductId = new Map(
-		discounts
-			.filter((d) => d._id !== null)
-			.map((d) => [
-				d._id,
-				wholeDiscount !== undefined && wholeDiscount > d.discountPercent
-					? wholeDiscount
-					: d.discountPercent
-			])
-	);
+
+	// Pick the best applicable auto discount based on current cart conditions
+	const activeDiscounts = cart.items.length ? await getActivePercentageDiscounts() : [];
+	const bestAutoDiscount = activeDiscounts.length
+		? selectBestDiscount(
+				activeDiscounts,
+				cart.items
+					.map((item) => {
+						const p = productById.get(item.productId);
+						return p
+							? {
+									product: p,
+									quantity: item.quantity,
+									...(item.customPrice && { customPrice: item.customPrice })
+							  }
+							: undefined;
+					})
+					.filter((x) => x !== undefined),
+				{
+					userSubscriptionIds: paidSubs.map((s) => s.productId),
+					promoCode: cart.promoCode,
+					channel: webChannelForUser(params.locals.user?.hasPosOptions),
+					userContactAddresses: collectUserAddresses(user),
+					cartItems: cart.items.map((item) => ({
+						productId: item.productId,
+						quantity: item.quantity,
+						tagIds: productById.get(item.productId)?.tagIds
+					})),
+					isLoggedIn: isAuthenticated(user)
+				}
+		  )
+		: null;
 
 	const cartItems = cart.items
 		.map((item) => {
@@ -274,9 +243,9 @@ export async function load(params) {
 								updatedAt: item.internalNote?.updatedAt
 						  }
 						: undefined,
-				// Discount priority: POS per-item (0) > subscription (1) > whole catalog (2)
+				// Manual discount (set on cart by POS staff) overrides automatic discount
 				discountPercentage:
-					item.discountPercentage ?? discountByProductId.get(item.productId) ?? wholeDiscount,
+					item.discountPercentage ?? bestAutoDiscount?.discountByProduct.get(item.productId),
 				discountJustification:
 					item.discountJustification && params.locals.user?.hasPosOptions
 						? item.discountJustification
@@ -391,7 +360,8 @@ export async function load(params) {
 		cart: {
 			items: cartItems,
 			freeProductUnits: cartFreeProductUnits,
-			priceInfo: cartPriceInfo
+			priceInfo: cartPriceInfo,
+			promoCode: cart.promoCode
 		},
 		confirmationBlocksThresholds: runtimeConfig.confirmationBlocksThresholds,
 		cartMaxSeparateItems: runtimeConfig.cartMaxSeparateItems,

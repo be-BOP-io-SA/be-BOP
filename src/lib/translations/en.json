@@ -29,7 +29,7 @@
 	"cart": {
 		"cta": {
 			"checkout": "Checkout",
-			"discardItem": "Discard",
+			"discardItem": "Remove",
 			"view": "View cart"
 		},
 		"discount": {
@@ -44,6 +44,15 @@
 			"validate": "Validate",
 			"customPercentPlaceholder": "e.g. 15",
 			"customAmountPlaceholder": "e.g. 5.00"
+		},
+		"promo": {
+			"question": "Got a promo code?",
+			"placeholder": "Promo code",
+			"apply": "Apply",
+			"applied": "Code {code} applied to your cart",
+			"remove": "Remove my promo code?",
+			"invalid": "Promo code not found or not applicable to your order.",
+			"rateLimited": "Too many failed promo code attempts. Please try again later."
 		},
 		"empty": "Cart is empty",
 		"fillProductAlias": "Fill product alias",
@@ -895,6 +904,7 @@
 		},
 		"variationPriceLabel": "Variation Price",
 		"vatExcluded": "VAT excluded",
+		"vatExcludedEstimate": "Estimated price excluding tax",
 		"vatIncluded": "Estimated price including tax"
 	},
 	"schedule": {

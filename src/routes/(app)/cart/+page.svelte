@@ -7,6 +7,7 @@
 	import ProductType from '$lib/components/ProductType.svelte';
 	import Trans from '$lib/components/Trans.svelte';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
+	import IconTrash from '$lib/components/icons/IconTrash.svelte';
 	import { useI18n } from '$lib/i18n';
 	import { computeDeliveryFees } from '$lib/cart';
 	import { isAlpha2CountryCode } from '$lib/types/Country.js';
@@ -22,6 +23,8 @@
 	export let data;
 
 	let discountPanelIndex = -1;
+	let promoError = false;
+	let promoRateLimited = false;
 
 	let actionCount = 0;
 
@@ -120,8 +123,8 @@
 
 		{#if items.length && priceInfo}
 			<div
-				class="lg:grid gap-x-4 gap-y-6 overflow-hidden"
-				style="grid-template-columns: auto 1fr auto auto"
+				class="lg:grid lg:items-start gap-x-4 gap-y-6 overflow-hidden"
+				style="grid-template-columns: auto 1fr auto"
 			>
 				{#each items as item, i}
 					{@const price = priceInfo.perItem[i]}
@@ -166,19 +169,74 @@
 						{#if item.depositPercentage ?? undefined !== undefined}
 							<input type="hidden" name="depositPercentage" value={item.depositPercentage} />
 						{/if}
-						<a
-							href="/product/{item.product._id}"
-							class="w-[138px] h-[138px] min-w-[138px] min-h-[138px] rounded flex items-center"
-						>
-							{#if item.picture}
-								<Picture
-									picture={item.picture}
-									class="mx-auto rounded h-full object-contain"
-									sizes="138px"
-								/>
-							{/if}
+						<!-- Mobile-only title (lg+: shown inside info column instead) -->
+						<a href="/product/{item.product._id}" class="block mb-4 lg:hidden">
+							<h2 class="text-2xl">
+								{item.chosenVariations
+									? item.product.name +
+									  ' - ' +
+									  Object.entries(item.chosenVariations)
+											.map(([key, value]) => item.product.variationLabels?.values[key][value])
+											.join(' - ')
+									: item.product.name}
+							</h2>
 						</a>
-						<div class="flex flex-col lg:gap-2">
+
+						<!-- Mobile: flex row (image + tags). Desktop: contents → image alone in grid col 1 -->
+						<div class="flex gap-4 lg:contents">
+							<a
+								href="/product/{item.product._id}"
+								class="w-[138px] h-[138px] min-w-[138px] min-h-[138px] rounded block shrink-0"
+							>
+								{#if item.picture}
+									<Picture
+										picture={item.picture}
+										class="mx-auto rounded h-full object-contain object-top"
+										sizes="138px"
+									/>
+								{/if}
+							</a>
+							<!-- Mobile-only tags column next to image (trash + CartQuantity on top) -->
+							<div class="flex flex-col flex-wrap gap-2 self-center lg:hidden">
+								<div class="flex items-center gap-3">
+									{#if !oneMaxPerLine(item.product)}
+										<CartQuantity {item} />
+									{/if}
+									<button
+										formaction="/cart/{item.product._id}/?/remove"
+										class="text-red-600 hover:underline"
+										aria-label={t('cart.cta.discardItem')}
+									>
+										<IconTrash class="w-5 h-5" />
+									</button>
+								</div>
+								<ProductType
+									product={item.product}
+									depositPercentage={item.depositPercentage}
+									hasDigitalFiles={item.digitalFilesCount >= 1}
+								/>
+								{#if data.hasPosOptions}
+									<button
+										type="button"
+										class="text-sm px-2 py-0.5 rounded-full border self-start {item.discountPercentage
+											? 'bg-blue-500 border-blue-500 text-white'
+											: 'border-blue-400 text-blue-600 hover:bg-blue-50'}"
+										on:click={() => {
+											discountPanelIndex = discountPanelIndex === i ? -1 : i;
+										}}
+									>
+										{#if item.discountPercentage}
+											{Number.isInteger(item.discountPercentage)
+												? item.discountPercentage
+												: item.discountPercentage.toFixed(1)}%
+										{:else}
+											{t('cart.discount.button')}
+										{/if}
+									</button>
+								{/if}
+							</div>
+						</div>
+						<div class="hidden lg:flex flex-col lg:gap-2">
 							<a href="/product/{item.product._id}">
 								<h2 class="text-2xl">
 									{item.chosenVariations
@@ -190,7 +248,7 @@
 										: item.product.name}
 								</h2>
 							</a>
-							<p class="text-sm hidden lg:contents">{item.product.shortDescription}</p>
+							<p class="text-sm">{item.product.shortDescription}</p>
 							{#if item.booking}
 								<p>
 									{#if item.booking.bookedDates?.length}
@@ -206,7 +264,6 @@
 									{/if}
 								</p>
 							{/if}
-							<div class="grow" />
 							<div class="flex flex-row flex-wrap lg:gap-2 gap-1">
 								<ProductType
 									product={item.product}
@@ -233,50 +290,49 @@
 									</button>
 								{/if}
 							</div>
-							<button
-								formaction="/cart/{item.product._id}/?/remove"
-								class="mt-auto mr-auto hover:underline body-hyperlink text-base font-light"
-							>
-								{t('cart.cta.discardItem')}
-							</button>
-						</div>
-						<div class="self-center">
-							{#if !oneMaxPerLine(item.product)}
-								<CartQuantity {item} />
-							{/if}
 						</div>
 
-						<div class="flex flex-col items-end justify-center lg:mb-0 mb-4">
+						<div class="flex flex-col items-end gap-2 lg:mb-0 mb-4">
+							<div class="hidden lg:flex items-center gap-3">
+								<button
+									formaction="/cart/{item.product._id}/?/remove"
+									class="text-red-600 hover:underline flex items-center gap-1 text-sm font-light"
+								>
+									<IconTrash class="w-4 h-4" />
+									{t('cart.cta.discardItem')}
+								</button>
+								{#if !oneMaxPerLine(item.product)}
+									<CartQuantity {item} />
+								{/if}
+							</div>
 							{#if item.discountPercentage}
-								<span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
-									-{Number.isInteger(item.discountPercentage)
-										? item.discountPercentage
-										: item.discountPercentage.toFixed(1)}%
-								</span>
-							{/if}
-							<div class="flex gap-2 items-baseline">
-								{#if item.discountPercentage}
+								<div class="flex gap-2 items-center">
 									<PriceTag
 										amount={price.amountWithoutDiscount * toDepositFactor}
 										currency={price.currency}
 										main
-										class="text-2xl truncate line-through text-gray-500"
+										class="text-lg truncate line-through text-gray-500"
 									/>
+									<span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
+										-{Number.isInteger(item.discountPercentage)
+											? item.discountPercentage
+											: item.discountPercentage.toFixed(1)}%
+									</span>
+								</div>
+							{/if}
+							<PriceTag
+								amount={(item.discountPercentage ? price.amount : price.amountWithoutDiscount) *
+									toDepositFactor}
+								currency={price.currency}
+								main
+								class="text-2xl truncate font-bold"
+							>
+								{#if item.depositPercentage}
+									{(item.depositPercentage / 100).toLocaleString($locale, {
+										style: 'percent'
+									})}
 								{/if}
-								<PriceTag
-									amount={(item.discountPercentage ? price.amount : price.amountWithoutDiscount) *
-										toDepositFactor}
-									currency={price.currency}
-									main
-									class="text-2xl truncate font-bold"
-								>
-									{#if item.depositPercentage}
-										{(item.depositPercentage / 100).toLocaleString($locale, {
-											style: 'percent'
-										})}
-									{/if}
-								</PriceTag>
-							</div>
+							</PriceTag>
 							<PriceTag
 								class="text-base truncate"
 								amount={price.amount * toDepositFactor}
@@ -288,7 +344,7 @@
 					</form>
 
 					{#if discountPanelIndex === i && data.hasPosOptions}
-						<div class="col-span-4">
+						<div class="col-span-3">
 							<CartItemDiscountPanel
 								productName={item.product.name}
 								productPrice={price.amountWithoutDiscount}
@@ -303,10 +359,10 @@
 					{/if}
 
 					{#if errorMessage && errorProductId === item.product._id}
-						<p class="text-red-600 col-span-4">{errorMessage}</p>
+						<p class="text-red-600 col-span-3">{errorMessage}</p>
 					{/if}
 
-					<div class="border-b border-gray-300 col-span-4" />
+					<div class="border-b border-gray-300 col-span-3 my-4 lg:my-0" />
 				{/each}
 			</div>
 			{#if deliveryFees}
@@ -422,6 +478,59 @@
 					<p class="text-red-500 font-light">{t('cart.minimumPhysicalAmountText')}</p>
 				{/if}
 			</div>
+			{#if data.hasPromoDiscounts}
+				<div class="flex flex-col items-end border-b border-gray-300 pb-4 mb-4 gap-2">
+					{#if data.appliedPromoCode}
+						<div class="flex items-center gap-2">
+							<span class="text-base"
+								>{t('cart.promo.applied', { code: data.appliedPromoCode })}</span
+							>
+							<form method="post" action="?/removePromoCode" use:enhance>
+								<button type="submit" class="text-sm hover:underline body-hyperlink"
+									>{t('cart.promo.remove')} 🗑️</button
+								>
+							</form>
+						</div>
+					{:else}
+						<form
+							method="post"
+							action="?/applyPromoCode"
+							class="flex items-center gap-2"
+							use:enhance={() => {
+								promoError = false;
+								promoRateLimited = false;
+								return async ({ result, update }) => {
+									if (result.type === 'failure') {
+										if (result.status === 429) {
+											promoRateLimited = true;
+										} else {
+											promoError = true;
+										}
+									}
+									await update();
+								};
+							}}
+						>
+							<span class="text-base">{t('cart.promo.question')}</span>
+							<input
+								type="text"
+								name="promoCode"
+								class="form-input w-48"
+								placeholder={t('cart.promo.placeholder')}
+								required
+							/>
+							<button type="submit" class="btn body-mainCTA text-sm">{t('cart.promo.apply')}</button
+							>
+						</form>
+						{#if promoError}
+							<p class="text-red-600 text-sm">{t('cart.promo.invalid')}</p>
+						{/if}
+						{#if promoRateLimited}
+							<p class="text-red-600 text-sm">{t('cart.promo.rateLimited')}</p>
+						{/if}
+					{/if}
+				</div>
+			{/if}
 			<form action="/checkout" class="flex justify-end">
 				<button
 					class="btn body-cta body-mainCTA"

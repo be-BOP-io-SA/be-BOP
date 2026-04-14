@@ -1,11 +1,14 @@
 import { checkCartItems } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections, withTransaction } from '$lib/server/database';
+import { findActivePromoDiscount, hasAnyActivePromoDiscount } from '$lib/server/discount';
 import { applyResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
+import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
+import { z } from 'zod';
 
 export async function load({ parent, locals }) {
 	if (
@@ -89,11 +92,22 @@ export async function load({ parent, locals }) {
 		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
 			? 'employee'
 			: undefined;
+
+	// Only show promo input if any active discount actually uses a promo code
+	const hasPromoDiscounts = await hasAnyActivePromoDiscount();
+
+	// Get the applied promo code from the cart in DB
+	const cartInDb = await collections.carts.findOne(userQuery(userIdentifier(locals)), {
+		projection: { promoCode: 1 }
+	});
+
 	return {
 		cart: {
 			...parentData.cart,
 			items: cartItemsWithResolvedStock
 		},
+		hasPromoDiscounts,
+		appliedPromoCode: cartInDb?.promoCode,
 		...(cmsBasketTop && {
 			cmsBasketTop,
 			cmsBasketTopData: cmsFromContent(
@@ -121,6 +135,46 @@ export async function load({ parent, locals }) {
 	};
 }
 export const actions = {
+	applyPromoCode: async ({ request, locals }) => {
+		try {
+			rateLimit(locals.clientIp, 'promo-code', 20, { hours: 3 });
+		} catch (e) {
+			// rateLimit only throws SvelteKit error(429, ...) — log abuse and return form fail
+			const status = (e as { status?: unknown })?.status;
+			if (status === 429) {
+				console.warn('Promo code rate limit hit', { clientIp: locals.clientIp });
+				return fail(429, { promoRateLimited: true });
+			}
+			throw e;
+		}
+
+		const formData = await request.formData();
+		const parsed = z.string().min(1).max(50).safeParse(formData.get('promoCode'));
+		if (!parsed.success) {
+			console.warn('Invalid promo code payload', { clientIp: locals.clientIp });
+			return fail(400, { promoError: true });
+		}
+
+		const exists = await findActivePromoDiscount(parsed.data);
+		if (!exists) {
+			return fail(400, { promoError: true });
+		}
+
+		await collections.carts.updateOne(userQuery(userIdentifier(locals)), {
+			$set: { promoCode: parsed.data, updatedAt: new Date() }
+		});
+
+		return { promoSuccess: true, promoCode: parsed.data };
+	},
+
+	removePromoCode: async ({ locals }) => {
+		await collections.carts.updateOne(userQuery(userIdentifier(locals)), {
+			$unset: { promoCode: '' },
+			$set: { updatedAt: new Date() }
+		});
+		return { promoRemoved: true };
+	},
+
 	removeAll: async ({ locals, request }) => {
 		const cart = await collections.carts.findOne(userQuery(userIdentifier(locals)));
 		if (!cart) {

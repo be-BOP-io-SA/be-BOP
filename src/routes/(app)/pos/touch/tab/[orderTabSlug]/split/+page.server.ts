@@ -314,6 +314,7 @@ export const actions = {
 					userVatCountry: runtimeConfig.vatCountry,
 					shippingAddress: null,
 					cart,
+					channel: 'pos-touch',
 					peopleCountFromPosUi: orderTab.peopleCountFromPosUi
 				});
 

@@ -53,6 +53,12 @@ import type { LanguageKey } from '$lib/translations';
 import { filterNullish } from '$lib/utils/fillterNullish';
 import { isPhoenixdConfigured } from './phoenixd';
 import type { Discount } from '$lib/types/Discount';
+import {
+	collectUserAddresses,
+	getActivePercentageDiscounts,
+	isAuthenticated,
+	selectBestDiscount
+} from './discount';
 import { groupByNonPartial } from '$lib/utils/group-by';
 import {
 	dayList,
@@ -660,6 +666,8 @@ export async function createOrder(
 		posSubtype?: string;
 		peopleCountFromPosUi?: number;
 		session?: ClientSession;
+		promoCode?: string;
+		channel?: import('$lib/types/Discount').DiscountChannel;
 	}
 ): Promise<Order['_id']> {
 	const npubAddress = params.notifications?.paymentStatus?.npub;
@@ -777,93 +785,34 @@ export async function createOrder(
 			paidUntil: { $gt: new Date() }
 		})
 		.toArray();
-	const discounts = paidSubs.length
-		? await collections.discounts
-				.aggregate<{
-					_id: Product['_id'] | null;
-					discountPercent: number;
-					subscriptionIds: Discount['subscriptionIds'];
-				}>([
-					{
-						$match: {
-							$or: [
-								{ wholeCatalog: true },
-								{ productIds: { $in: items.map((p) => p.product._id) } }
-							],
-							subscriptionIds: { $in: paidSubs.map((sub) => sub.productId) },
-							beginsAt: {
-								$lt: new Date()
-							},
-							mode: 'percentage',
-							$and: [
-								{
-									$or: [
-										{
-											endsAt: { $gt: new Date() }
-										},
-										{
-											endsAt: null
-										}
-									]
-								}
-							]
-						}
-					},
-					{
-						$sort: {
-							percentage: -1
-						}
-					},
-					{
-						$project: {
-							productIds: 1,
-							percentage: 1,
-							subscriptionIds: 1,
-							_id: 0
-						}
-					},
-					{
-						$unwind: {
-							path: '$productIds',
-							preserveNullAndEmptyArrays: true
-						}
-					},
-					{
-						$unwind: {
-							path: '$subscriptionIds',
-							preserveNullAndEmptyArrays: false
-						}
-					},
-					{
-						$group: {
-							_id: { $ifNull: ['$productIds', null] },
-							discountPercent: { $first: '$percentage' },
-							subscriptionIds: { $addToSet: '$subscriptionIds' }
-						}
-					}
-				])
-				.toArray()
+	// Pick the best applicable auto discount based on the order's conditions
+	const activeDiscounts = await getActivePercentageDiscounts();
+	const bestAutoDiscount = selectBestDiscount(activeDiscounts, items, {
+		userSubscriptionIds: paidSubs.map((s) => s.productId),
+		promoCode: params.promoCode,
+		channel: params.channel,
+		paymentMethod: paymentMethod ?? undefined,
+		deliveryCountry: params.userVatCountry,
+		billingCountry: params.billingAddress?.country,
+		userContactAddresses: collectUserAddresses(params.user),
+		cartItems: items.map((i) => ({
+			productId: i.product._id,
+			quantity: i.quantity,
+			tagIds: i.product.tagIds
+		})),
+		isLoggedIn: isAuthenticated(params.user)
+	});
+
+	const bestDiscountSubIds = bestAutoDiscount?.discount.subscriptionIds;
+	const usedSubIds = bestDiscountSubIds?.length
+		? paidSubs
+				.filter((sub) => bestDiscountSubIds.includes(sub.productId))
+				.map((sub) => sub.productId)
 		: [];
 
-	const wholeDiscount = discounts.find((d) => d._id === null)?.discountPercent;
-	const discountByProductId = new Map(
-		discounts
-			.filter((d) => d._id !== null)
-			.map((d) => [
-				d._id,
-				wholeDiscount !== undefined && wholeDiscount > d.discountPercent
-					? wholeDiscount
-					: d.discountPercent
-			])
-	);
-
-	const discountSubIds = new Set(discounts.flatMap((d) => d.subscriptionIds));
-	const usedSubIds = paidSubs
-		.filter((sub) => discountSubIds.has(sub.productId))
-		.map((sub) => sub.productId);
-
 	for (const item of items) {
-		item.discountPercentage ??= discountByProductId.get(item.product._id) ?? wholeDiscount;
+		// POS per-item manual discount has highest priority — preserve it via ??=
+		item.discountPercentage ??= bestAutoDiscount?.discountByProduct.get(item.product._id);
 	}
 	const priceInfo = computePriceInfo(items, {
 		bebopCountry: runtimeConfig.vatCountry,
