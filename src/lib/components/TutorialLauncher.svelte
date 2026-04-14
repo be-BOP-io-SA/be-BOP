@@ -10,7 +10,9 @@
 		adminHashDone: { course: 'onboarding', step: 'config-done' },
 		armUserSaved: { course: 'onboarding', step: 'arm-nostr-intro' },
 		hasSetNsec: { course: 'onboarding', step: 'nostr-nsec-info' },
-		unsetNostrIntro: { course: 'onboarding', step: 'nostr-to-identity' }
+		unsetNostrIntro: { course: 'onboarding', step: 'nostr-to-identity' },
+		savedIdentity: { course: 'onboarding', step: 'identity-to-currencies' },
+		hasDoneIdentity: { course: 'onboarding', step: 'config-currencies' }
 	};
 
 	onMount(() => {
