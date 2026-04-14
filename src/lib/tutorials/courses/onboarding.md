@@ -474,6 +474,272 @@ steps:
       - text: 'Next (n)'
         action: 'goto:/admin/identity?tutorial=onboarding'
         key: n
+  # --- /admin/identity page steps ---
+  - id: identity-welcome
+    page: /admin/identity
+    attachTo:
+      element: 'h1.text-3xl'
+      on: bottom
+    buttons:
+      - text: 'Next (n)'
+        action: next
+        key: n
+  - id: identity-business-name
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="businessName"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="businessName"]'
+          minLength: 3
+  - id: identity-vat
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="vatNumber"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Skip'
+        action: next
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="vatNumber"]'
+          minLength: 3
+  - id: identity-address-intro
+    page: /admin/identity
+    attachTo:
+      element: 'form.contents h2.text-2xl:nth-of-type(2)'
+      on: bottom
+    buttons:
+      - text: 'Back (b)'
+        action: back
+        key: b
+      - text: 'Next (n)'
+        action: next
+        key: n
+  - id: identity-street
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="address.street"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Skip'
+        action: next
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="address.street"]'
+          minLength: 3
+  - id: identity-country
+    page: /admin/identity
+    attachTo:
+      element: 'select[name="address.country"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+  - id: identity-state
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="address.state"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Skip'
+        action: next
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="address.state"]'
+          minLength: 3
+  - id: identity-city
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="address.city"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="address.city"]'
+          minLength: 3
+  - id: identity-zip
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="address.zip"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="address.zip"]'
+          minLength: 1
+  - id: identity-email
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="contact.email"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="contact.email"]'
+          pattern: '.+@.+\..+'
+  - id: identity-phone
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="contact.phone"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Skip'
+        action: next
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="contact.phone"]'
+          pattern: '^[0-9+\- ]{3,}$'
+  - id: identity-bank-q
+    page: /admin/identity
+    buttons:
+      - text: 'Back (b)'
+        action: back
+        key: b
+      - text: 'No (n)'
+        action: 'show:identity-invoice-q'
+        key: n
+      - text: 'Yes (y)'
+        action: next
+        key: y
+  - id: identity-bank-holder
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="bank.accountHolder"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: 'show:identity-bank-q'
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="bank.accountHolder"]'
+          minLength: 3
+  - id: identity-bank-holder-address
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="bank.accountHolderAddress"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="bank.accountHolderAddress"]'
+          minLength: 3
+  - id: identity-iban
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="bank.iban"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="bank.iban"]'
+          minLength: 3
+  - id: identity-bic
+    page: /admin/identity
+    attachTo:
+      element: 'input[name="bank.bic"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'input[name="bank.bic"]'
+          minLength: 3
+  - id: identity-invoice-q
+    page: /admin/identity
+    buttons:
+      - text: 'Back (b)'
+        action: back
+        key: b
+      - text: 'No (n)'
+        action: 'show:identity-save'
+        key: n
+      - text: 'Yes (y)'
+        action: next
+        key: y
+  - id: identity-issuer
+    page: /admin/identity
+    attachTo:
+      element: 'textarea[name="invoice.issuerInfo"]'
+      on: bottom
+    buttons:
+      - text: 'Back'
+        action: back
+      - text: 'Skip'
+        action: 'show:identity-save'
+      - text: 'Next'
+        action: next
+        enableWhen:
+          selector: 'textarea[name="invoice.issuerInfo"]'
+          minLength: 3
+  - id: identity-save
+    page: /admin/identity
+    attachTo:
+      element: 'form.contents button.btn-black[type="submit"]'
+      on: top
+    buttons:
+      - text: 'Back (b)'
+        action: back
+        key: b
+      - text: 'Save (s)'
+        action: 'clickAndStore:form.contents button.btn-black[type="submit"]|savedIdentity'
+        key: s
+  - id: identity-to-currencies
+    page: /admin/identity
+    attachTo:
+      element: 'header.navbar a[href="#Settings"]'
+      on: bottom
+    buttons:
+      - text: 'Next (n)'
+        action: 'clickAndStore:header.navbar a[href$="/config"]|hasDoneIdentity'
+        key: n
+  # --- /admin/config currencies step (reached via hasDoneIdentity) ---
+  - id: config-currencies
+    page: /admin/config
+    attachTo:
+      element: 'form[action="?/update"] h2.text-2xl:first-of-type'
+      on: bottom
+    buttons:
+      - text: 'Done (d)'
+        action: complete
+        key: d
 ---
 
 ## welcome
@@ -747,3 +1013,87 @@ Save settings.
 ## nostr-to-identity
 
 Let's now set your shop identity.
+
+## identity-welcome
+
+Here we gonna fill your mandatory shop informations. Those will be used for invoices, among other things.
+
+## identity-business-name
+
+Please fill your official company name.
+
+## identity-vat
+
+Now fill your VAT number. You can skip if your business doesn't have one.
+
+## identity-address-intro
+
+We'll now set your business official address.
+
+## identity-street
+
+Fill the street.
+
+## identity-country
+
+Choose your country.
+
+## identity-state
+
+Fill your country or region if applicable, otherwise, skip.
+
+## identity-city
+
+Fill your city.
+
+## identity-zip
+
+Fill zipcode.
+
+## identity-email
+
+Fill in your business email address. Disclaimer: this email will be displayed as contact in footer if enabled, and will be used to send orders notifications if enabled.
+
+## identity-phone
+
+You can also fill a phone number to be displayed on footer if enabled.
+
+## identity-bank-q
+
+Do you have a professional bank account, and will you accept bank transfers with your be-BOP?
+
+## identity-bank-holder
+
+Fill in your bank account holder name.
+
+## identity-bank-holder-address
+
+Fill in your bank account postal address.
+
+## identity-iban
+
+Please fill your professional bank account IBAN number.
+
+## identity-bic
+
+Please fill in your professional bank BIC.
+
+## identity-invoice-q
+
+Do you address invoices for another company, or in partnership with?
+
+## identity-issuer
+
+Please fill the company name, address and contact if relevant.
+
+## identity-save
+
+Perfect! Let's save everything.
+
+## identity-to-currencies
+
+Next step: let's choose your currencies and VAT behavior 🙂
+
+## config-currencies
+
+be-BOP uses up to 4 different currencies.
