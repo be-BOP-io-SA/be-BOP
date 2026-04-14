@@ -29,6 +29,7 @@ export interface CourseStepButton {
 		minLength?: number;
 		pattern?: string;
 		checked?: boolean;
+		unchecked?: boolean;
 	};
 }
 

@@ -1,3 +1,4 @@
+import type { Step } from 'shepherd.js';
 import { parseCourse } from './parse';
 import type { Course, CourseStepButton } from './types';
 
@@ -141,7 +142,7 @@ export async function startTour(id: string, fromStepId?: string): Promise<void> 
 			text: step.text,
 			attachTo: step.attachTo,
 			buttons: resolvedButtons
-		});
+		}) as Step;
 
 		// Smart scroll: only scroll if element is below top 30% of viewport
 		if (step.attachTo?.element) {
@@ -201,6 +202,8 @@ export async function startTour(id: string, fromStepId?: string): Promise<void> 
 						: null;
 					const requireChecked =
 						btn.enableWhen.checked === true || (btn.enableWhen.checked as unknown) === 'true';
+					const requireUnchecked =
+						btn.enableWhen.unchecked === true || (btn.enableWhen.unchecked as unknown) === 'true';
 					const check = () => {
 						let disabled = minLen > 0 && input.value.length < minLen;
 						if (!disabled && pattern) {
@@ -208,6 +211,9 @@ export async function startTour(id: string, fromStepId?: string): Promise<void> 
 						}
 						if (!disabled && requireChecked) {
 							disabled = !input.checked;
+						}
+						if (!disabled && requireUnchecked) {
+							disabled = input.checked;
 						}
 						targetBtn.disabled = disabled;
 						targetBtn.style.opacity = disabled ? '0.5' : '1';
@@ -220,7 +226,7 @@ export async function startTour(id: string, fromStepId?: string): Promise<void> 
 						}
 					};
 					check();
-					const evt = requireChecked ? 'change' : 'input';
+					const evt = requireChecked || requireUnchecked ? 'change' : 'input';
 					input.addEventListener(evt, check);
 					shepherdStep.on('hide', () => input.removeEventListener(evt, check));
 				});
