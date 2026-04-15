@@ -32,6 +32,19 @@
 			"discardItem": "Descartar",
 			"view": "Al carrito"
 		},
+		"discount": {
+			"button": "% Descuento",
+			"noDiscount": "Sin descuento",
+			"title": "Descuento — {productName}",
+			"customPercent": "% personalizado",
+			"customAmount": "Monto personalizado ({currency})",
+			"justification": "Justificación",
+			"justificationPlaceholder": "Motivo del descuento...",
+			"cancel": "Cancelar",
+			"validate": "Validar",
+			"customPercentPlaceholder": "p. ej. 15",
+			"customAmountPlaceholder": "p. ej. 5.00"
+		},
 		"empty": "La lista de compras está vacía",
 		"fillProductAlias": "Rellenar alias de producto",
 		"items": "Productos",

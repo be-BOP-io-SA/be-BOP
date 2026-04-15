@@ -32,6 +32,19 @@
 			"discardItem": "Togli",
 			"view": "Guarda il carrello"
 		},
+		"discount": {
+			"button": "% Sconto",
+			"noDiscount": "Nessuno sconto",
+			"title": "Sconto — {productName}",
+			"customPercent": "% personalizzato",
+			"customAmount": "Importo personalizzato ({currency})",
+			"justification": "Motivazione",
+			"justificationPlaceholder": "Motivo dello sconto...",
+			"cancel": "Annulla",
+			"validate": "Conferma",
+			"customPercentPlaceholder": "es. 15",
+			"customAmountPlaceholder": "es. 5,00"
+		},
 		"empty": "Il cartello è vuoto",
 		"fillProductAlias": "Compila l'alias del prodotto",
 		"items": "Prodotti",

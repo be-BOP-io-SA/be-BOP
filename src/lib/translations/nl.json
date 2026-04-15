@@ -32,6 +32,19 @@
 			"discardItem": "Weggooien",
 			"view": "Bekijk winkelwagen"
 		},
+		"discount": {
+			"button": "% Korting",
+			"noDiscount": "Geen korting",
+			"title": "Korting — {productName}",
+			"customPercent": "Aangepast %",
+			"customAmount": "Aangepast bedrag ({currency})",
+			"justification": "Rechtvaardiging",
+			"justificationPlaceholder": "Reden voor de korting...",
+			"cancel": "Annuleren",
+			"validate": "Bevestigen",
+			"customPercentPlaceholder": "bijv. 15",
+			"customAmountPlaceholder": "bijv. 5,00"
+		},
 		"empty": "Winkelwagen is leeg",
 		"fillProductAlias": "Productalias invullen",
 		"items": "Producten",
