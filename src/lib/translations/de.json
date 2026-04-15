@@ -32,6 +32,19 @@
 			"discardItem": "Verwerfen",
 			"view": "Warenkorb anzeigen"
 		},
+		"discount": {
+			"button": "% Rabatt",
+			"noDiscount": "Kein Rabatt",
+			"title": "Rabatt — {productName}",
+			"customPercent": "Benutzerdefinierte %",
+			"customAmount": "Benutzerdefinierter Betrag ({currency})",
+			"justification": "Begründung",
+			"justificationPlaceholder": "Grund für den Rabatt...",
+			"cancel": "Abbrechen",
+			"validate": "Bestätigen",
+			"customPercentPlaceholder": "z. B. 15",
+			"customAmountPlaceholder": "z. B. 5,00"
+		},
 		"empty": "Der Warenkorb ist leer",
 		"fillProductAlias": "Produkt-Alias ausfüllen",
 		"items": "Produkte",

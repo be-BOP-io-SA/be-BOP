@@ -32,6 +32,19 @@
 			"discardItem": "Supprimer",
 			"view": "Voir le panier"
 		},
+		"discount": {
+			"button": "% Remise",
+			"noDiscount": "Aucune remise",
+			"title": "Remise — {productName}",
+			"customPercent": "% personnalisé",
+			"customAmount": "Montant personnalisé ({currency})",
+			"justification": "Justification",
+			"justificationPlaceholder": "Raison de la remise...",
+			"cancel": "Annuler",
+			"validate": "Valider",
+			"customPercentPlaceholder": "par ex. 15",
+			"customAmountPlaceholder": "par ex. 5,00"
+		},
 		"empty": "Le panier est vide",
 		"fillProductAlias": "Remplir l'alias du produit",
 		"items": "Produits",
