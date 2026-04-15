@@ -51,10 +51,10 @@ function parseArray(
 ): { arr: Record<string, unknown>[]; nextIndex: number } {
 	const arr: Record<string, unknown>[] = [];
 	let i = startIndex;
-	const arrayIndent = lines[i].match(/^(\s*)/)![1].length;
+	const arrayIndent = (lines[i].match(/^(\s*)/)?.[1] ?? '').length;
 
 	while (i < lines.length && lines[i].match(/^\s+-\s/)) {
-		const lineIndent = lines[i].match(/^(\s*)/)![1].length;
+		const lineIndent = (lines[i].match(/^(\s*)/)?.[1] ?? '').length;
 		if (lineIndent !== arrayIndent) {
 			break;
 		}
@@ -63,7 +63,7 @@ function parseArray(
 		if (itemMatch) {
 			obj[itemMatch[1]] = stripQuotes(itemMatch[2].trim());
 		}
-		const itemIndent = lines[i].match(/^(\s*)-/)![1].length + 2;
+		const itemIndent = (lines[i].match(/^(\s*)-/)?.[1] ?? '').length + 2;
 		i++;
 
 		while (i < lines.length) {
@@ -71,7 +71,7 @@ function parseArray(
 			if (!propLine.trim() || propLine.match(/^\s*-\s/) || !propLine.match(/^\s/)) {
 				break;
 			}
-			const currentIndent = propLine.match(/^(\s*)/)![1].length;
+			const currentIndent = (propLine.match(/^(\s*)/)?.[1] ?? '').length;
 			if (currentIndent < itemIndent) {
 				break;
 			}
@@ -92,7 +92,7 @@ function parseArray(
 						const nested: Record<string, string> = {};
 						while (i < lines.length) {
 							const nestedLine = lines[i];
-							const nestedIndent = nestedLine.match(/^(\s*)/)![1].length;
+							const nestedIndent = (nestedLine.match(/^(\s*)/)?.[1] ?? '').length;
 							if (nestedIndent <= currentIndent || !nestedLine.trim()) {
 								break;
 							}
