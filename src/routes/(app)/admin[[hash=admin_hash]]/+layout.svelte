@@ -37,7 +37,7 @@
 	function updateSectionNameFromUrl() {
 		sectionName = findSectionByHref(decodeURIComponent($page.url.pathname)) || '';
 	}
-	$: (updateSectionNameFromUrl(), $page.url.pathname);
+	$: updateSectionNameFromUrl(), $page.url.pathname;
 </script>
 
 {#if !isLoginPage}
