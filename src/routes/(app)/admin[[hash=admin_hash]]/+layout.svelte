@@ -6,6 +6,7 @@
 	import { isAllowedOnPage } from '$lib/types/Role';
 	import { adminLinks as adminLinksImported } from './adminLinks.js';
 	import { POS_ROLE_ID } from '$lib/types/User.js';
+	import TutorialLauncher from '$lib/components/TutorialLauncher.svelte';
 
 	export let data;
 
@@ -167,4 +168,5 @@
 </svelte:head>
 <main class="p-4 flex flex-col gap-4 body-mainPlan {$page.data.bodyClass || ''}">
 	<slot />
+	<TutorialLauncher />
 </main>
