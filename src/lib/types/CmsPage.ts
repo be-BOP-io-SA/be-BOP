@@ -1,6 +1,8 @@
 import type { LanguageKey } from '$lib/translations';
 import type { Timestamps } from './Timestamps';
 
+export type CMSContentMode = 'wysiwyg' | 'rawHtml' | 'markdown';
+
 export interface CMSPageTranslatableFields {
 	title: string;
 	shortDescription: string;
@@ -17,6 +19,9 @@ export interface CMSPage extends Timestamps, CMSPageTranslatableFields {
 	hasMobileContent?: boolean;
 	hasEmployeeContent?: boolean;
 	displayRawContent?: boolean;
+	contentMode?: CMSContentMode;
+	mobileContentMode?: CMSContentMode;
+	employeeContentMode?: CMSContentMode;
 	metas?: {
 		name: string;
 		content: string;

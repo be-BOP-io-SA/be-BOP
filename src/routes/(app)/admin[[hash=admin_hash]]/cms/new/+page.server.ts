@@ -26,7 +26,9 @@ export const actions = {
 			hasMobileContent,
 			mobileContent,
 			hasEmployeeContent,
-			displayRawContent,
+			contentMode,
+			mobileContentMode,
+			employeeContentMode,
 			employeeContent,
 			metas
 		} = z
@@ -40,7 +42,9 @@ export const actions = {
 				hasMobileContent: z.boolean({ coerce: true }),
 				mobileContent: z.string().max(MAX_CONTENT_LIMIT).optional(),
 				hasEmployeeContent: z.boolean({ coerce: true }),
-				displayRawContent: z.boolean({ coerce: true }).default(false),
+				contentMode: z.enum(['wysiwyg', 'rawHtml', 'markdown']).default('wysiwyg'),
+				mobileContentMode: z.enum(['wysiwyg', 'rawHtml', 'markdown']).default('wysiwyg'),
+				employeeContentMode: z.enum(['wysiwyg', 'rawHtml', 'markdown']).default('wysiwyg'),
 				employeeContent: z.string().max(MAX_CONTENT_LIMIT).optional(),
 				metas: z
 					.array(z.object({ name: z.string().trim(), content: z.string().trim() }))
@@ -73,7 +77,9 @@ export const actions = {
 			...(metas.length && { metas: metas.filter((meta) => meta.name && meta.content) }),
 			createdAt: new Date(),
 			updatedAt: new Date(),
-			displayRawContent
+			contentMode,
+			mobileContentMode,
+			employeeContentMode
 		});
 
 		throw redirect(303, `${adminPrefix()}/cms/${slug}`);

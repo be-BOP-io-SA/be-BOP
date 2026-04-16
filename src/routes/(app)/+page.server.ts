@@ -20,6 +20,10 @@ export const load = async ({ locals, url }) => {
 				fullScreen: 1,
 				hasEmployeeContent: 1,
 				hasMobileContent: 1,
+				contentMode: 1,
+				mobileContentMode: 1,
+				employeeContentMode: 1,
+				displayRawContent: 1,
 				maintenanceDisplay: 1,
 				mobileContent: {
 					$ifNull: [`$translations.${locals.language}.mobileContent`, '$mobileContent']
@@ -55,6 +59,9 @@ export const load = async ({ locals, url }) => {
 				desktopContent: cmsPage.content,
 				mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
 				employeeContent: (cmsPage.hasEmployeeContent && cmsPage.employeeContent) || undefined,
+				desktopMode: cmsPage.contentMode,
+				mobileMode: cmsPage.mobileContentMode,
+				employeeMode: cmsPage.employeeContentMode,
 				forceContentVersion,
 				forceUnsanitizedContent: cmsPage.displayRawContent
 			},

@@ -33,7 +33,9 @@ export const actions = {
 			hasMobileContent,
 			mobileContent,
 			hasEmployeeContent,
-			displayRawContent,
+			contentMode,
+			mobileContentMode,
+			employeeContentMode,
 			employeeContent,
 			metas
 		} = z
@@ -45,7 +47,9 @@ export const actions = {
 				desktopDisplayOnly: z.boolean({ coerce: true }),
 				hasMobileContent: z.boolean({ coerce: true }),
 				hasEmployeeContent: z.boolean({ coerce: true }),
-				displayRawContent: z.boolean({ coerce: true }).default(false),
+				contentMode: z.enum(['wysiwyg', 'rawHtml', 'markdown']).default('wysiwyg'),
+				mobileContentMode: z.enum(['wysiwyg', 'rawHtml', 'markdown']).default('wysiwyg'),
+				employeeContentMode: z.enum(['wysiwyg', 'rawHtml', 'markdown']).default('wysiwyg'),
 				metas: z
 					.array(
 						z.object({
@@ -75,7 +79,9 @@ export const actions = {
 					hasEmployeeContent,
 					...(hasEmployeeContent && { employeeContent }),
 					...(metas.length && { metas: metas.filter((meta) => meta.name && meta.content) }),
-					displayRawContent,
+					contentMode,
+					mobileContentMode,
+					employeeContentMode,
 					updatedAt: new Date()
 				},
 				$unset: {

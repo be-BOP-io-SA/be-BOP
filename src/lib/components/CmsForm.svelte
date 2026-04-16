@@ -5,7 +5,7 @@
 		TINYMCE_PLUGINS,
 		TINYMCE_TOOLBAR
 	} from '../../routes/(app)/admin[[hash=admin_hash]]/cms/tinymce-plugins';
-	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
+	import { MAX_CONTENT_LIMIT, type CMSContentMode } from '$lib/types/CmsPage';
 	import { generateId } from '$lib/utils/generateId';
 
 	export let cmsPage: {
@@ -17,6 +17,9 @@
 		hasMobileContent?: boolean;
 		hasEmployeeContent?: boolean;
 		displayRawContent?: boolean;
+		contentMode?: CMSContentMode;
+		mobileContentMode?: CMSContentMode;
+		employeeContentMode?: CMSContentMode;
 		maintenanceDisplay: boolean;
 		content: string;
 		mobileContent?: string;
@@ -26,6 +29,13 @@
 			content: string;
 		}[];
 	} | null;
+
+	function initMode(m: CMSContentMode | undefined, legacyRaw: boolean | undefined): CMSContentMode {
+		if (m === 'wysiwyg' || m === 'rawHtml' || m === 'markdown') {
+			return m;
+		}
+		return legacyRaw ? 'rawHtml' : 'wysiwyg';
+	}
 
 	export let slug = cmsPage?._id || '';
 	let pageContent = cmsPage?.content || '';
@@ -37,13 +47,20 @@
 	let hasCustomMeta = !!cmsPage?.metas?.length;
 	let hasMobileContent = cmsPage?.hasMobileContent || false;
 	let hasEmployeeContent = cmsPage?.hasEmployeeContent || false;
-	let advancedHtmlEdition = cmsPage?.displayRawContent || false;
+	let contentMode: CMSContentMode = initMode(cmsPage?.contentMode, cmsPage?.displayRawContent);
+	let mobileContentMode: CMSContentMode = initMode(
+		cmsPage?.mobileContentMode,
+		cmsPage?.displayRawContent
+	);
+	let employeeContentMode: CMSContentMode = initMode(
+		cmsPage?.employeeContentMode,
+		cmsPage?.displayRawContent
+	);
 	let mobileContent = cmsPage?.mobileContent || '';
 	let employeeContent = cmsPage?.employeeContent || '';
 	let slugElement: HTMLInputElement;
 	let formElement: HTMLFormElement;
 	let showTips = false;
-	let displayRawHTML = false;
 
 	function confirmDelete(event: Event) {
 		if (!confirm('Would you like to delete this CMS page?')) {
@@ -53,11 +70,10 @@
 	let metas = cmsPage?.metas;
 	let cmsMetaLine = cmsPage?.metas?.length ?? 2;
 
-	$: if (advancedHtmlEdition) {
-		displayRawHTML = true;
-	} else {
-		displayRawHTML = false;
-	}
+	$: anyRawOrMarkdown =
+		contentMode !== 'wysiwyg' ||
+		mobileContentMode !== 'wysiwyg' ||
+		employeeContentMode !== 'wysiwyg';
 
 	const slugRegex = /^(?!admin$)(?!admin-)[a-z0-9-]+$/;
 	function validateSlug(event: SubmitEvent) {
@@ -187,16 +203,7 @@
 			>Add custom meta balise
 		</button>
 	{/if}
-	<label class="checkbox-label">
-		<input
-			type="checkbox"
-			name="displayRawContent"
-			bind:checked={advancedHtmlEdition}
-			class="form-checkbox"
-		/>
-		Use advanced HTML edition
-	</label>
-	{#if advancedHtmlEdition}
+	{#if anyRawOrMarkdown}
 		<p class="text-red-500">
 			Warning: use at your own risk, only if you're a Jedi of web or a be-BOP McGyver. Never use on
 			an already existing CMS page, otherwise, you'll risk losing your CMS content.
@@ -204,7 +211,12 @@
 	{/if}
 	<label class="block w-full mt-4">
 		Content
-		{#if !advancedHtmlEdition}
+		<select bind:value={contentMode} name="contentMode" class="form-input block w-fit my-2">
+			<option value="wysiwyg">WYSIWYG (TinyMCE)</option>
+			<option value="rawHtml">Raw HTML</option>
+			<option value="markdown">Markdown</option>
+		</select>
+		{#if contentMode === 'wysiwyg'}
 			<Editor
 				scriptSrc="/tinymce/tinymce.js"
 				bind:value={pageContent}
@@ -298,28 +310,14 @@
 				</li>
 			</ul>
 		{/if}
-		<label class="checkbox-label">
-			<input
-				type="checkbox"
-				name="displayRawHTML"
-				bind:checked={displayRawHTML}
-				disabled={advancedHtmlEdition}
-				class="form-checkbox"
-			/>
-			Display raw HTML
-		</label>
-		{#if displayRawHTML}
-			Raw HTML
-		{/if}
-
 		<textarea
-			style="display:{displayRawHTML ? 'block' : 'none'};"
+			style="display:{contentMode === 'wysiwyg' ? 'none' : 'block'};"
 			name="content"
 			cols="30"
 			rows="10"
 			maxlength={MAX_CONTENT_LIMIT}
-			placeholder="HTML content"
-			class="form-input block w-full"
+			placeholder={contentMode === 'markdown' ? 'Markdown content' : 'HTML content'}
+			class="form-input block w-full {contentMode === 'markdown' ? 'font-mono' : ''}"
 			bind:value={pageContent}
 		/>
 	</label>
@@ -336,7 +334,16 @@
 	{#if hasMobileContent}
 		<label class="block w-full mt-4">
 			Substitution content
-			{#if !advancedHtmlEdition}
+			<select
+				bind:value={mobileContentMode}
+				name="mobileContentMode"
+				class="form-input block w-fit my-2"
+			>
+				<option value="wysiwyg">WYSIWYG (TinyMCE)</option>
+				<option value="rawHtml">Raw HTML</option>
+				<option value="markdown">Markdown</option>
+			</select>
+			{#if mobileContentMode === 'wysiwyg'}
 				<Editor
 					scriptSrc="/tinymce/tinymce.js"
 					bind:value={mobileContent}
@@ -344,15 +351,14 @@
 				/>
 			{/if}
 
-			Raw HTML
-
 			<textarea
+				style="display:{mobileContentMode === 'wysiwyg' ? 'none' : 'block'};"
 				name="mobileContent"
 				cols="30"
 				rows="10"
 				maxlength={MAX_CONTENT_LIMIT}
-				placeholder="HTML content"
-				class="form-input block w-full"
+				placeholder={mobileContentMode === 'markdown' ? 'Markdown content' : 'HTML content'}
+				class="form-input block w-full {mobileContentMode === 'markdown' ? 'font-mono' : ''}"
 				bind:value={mobileContent}
 			/>
 		</label>
@@ -369,7 +375,16 @@
 	{#if hasEmployeeContent}
 		<label class="block w-full mt-4">
 			Employee content
-			{#if !advancedHtmlEdition}
+			<select
+				bind:value={employeeContentMode}
+				name="employeeContentMode"
+				class="form-input block w-fit my-2"
+			>
+				<option value="wysiwyg">WYSIWYG (TinyMCE)</option>
+				<option value="rawHtml">Raw HTML</option>
+				<option value="markdown">Markdown</option>
+			</select>
+			{#if employeeContentMode === 'wysiwyg'}
 				<Editor
 					scriptSrc="/tinymce/tinymce.js"
 					bind:value={employeeContent}
@@ -377,15 +392,14 @@
 				/>
 			{/if}
 
-			Raw HTML
-
 			<textarea
+				style="display:{employeeContentMode === 'wysiwyg' ? 'none' : 'block'};"
 				name="employeeContent"
 				cols="30"
 				rows="10"
 				maxlength={MAX_CONTENT_LIMIT}
-				placeholder="HTML content"
-				class="form-input block w-full"
+				placeholder={employeeContentMode === 'markdown' ? 'Markdown content' : 'HTML content'}
+				class="form-input block w-full {employeeContentMode === 'markdown' ? 'font-mono' : ''}"
 				bind:value={employeeContent}
 			/>
 		</label>

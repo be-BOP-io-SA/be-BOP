@@ -7,6 +7,8 @@ import { trimPrefix } from '$lib/utils/trimPrefix';
 import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
 import DOMPurify from 'dompurify';
+import { marked } from 'marked';
+import type { CMSContentMode } from '$lib/types/CmsPage';
 import { collections } from './database';
 import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import type { PickDeep } from 'type-fest';
@@ -229,12 +231,18 @@ export async function cmsFromContent(
 		desktopContent,
 		mobileContent,
 		employeeContent,
+		desktopMode,
+		mobileMode,
+		employeeMode,
 		forceContentVersion,
 		forceUnsanitizedContent
 	}: {
 		desktopContent: string;
 		employeeContent?: string;
 		mobileContent?: string;
+		desktopMode?: CMSContentMode;
+		mobileMode?: CMSContentMode;
+		employeeMode?: CMSContentMode;
 		forceContentVersion?: 'desktop' | 'mobile' | 'employee';
 		forceUnsanitizedContent?: boolean;
 	},
@@ -299,7 +307,16 @@ export async function cmsFromContent(
 
 	const index = 0;
 
-	const processMatches = (token: TokenObject[], content: string, index: number) => {
+	const processMatches = (
+		token: TokenObject[],
+		content: string,
+		index: number,
+		mode?: CMSContentMode
+	) => {
+		const renderChunk = (chunk: string) => {
+			const base = trimPrefix(trimSuffix(chunk, '<p>'), '</p>');
+			return mode === 'markdown' ? marked(base) : base;
+		};
 		const matches = [
 			...matchAndSort(content, PRODUCT_WIDGET_REGEX, 'productWidget'),
 			...matchAndSort(content, CHALLENGE_WIDGET_REGEX, 'challengeWidget'),
@@ -317,7 +334,7 @@ export async function cmsFromContent(
 			...matchAndSort(content, SCHEDULE_WIDGET_REGEX, 'scheduleWidget')
 		].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
 		for (const match of matches) {
-			const html = trimPrefix(trimSuffix(content.slice(index, match.index), '<p>'), '</p>');
+			const html = renderChunk(content.slice(index, match.index));
 			const displayUnsanitizedContent = ALLOW_JS_INJECTION === 'true' || forceUnsanitizedContent;
 			token.push({
 				type: 'html',
@@ -487,9 +504,10 @@ export async function cmsFromContent(
 			}
 			index = match.index + match[0].length;
 		}
+		const tail = trimPrefix(content.slice(index), '</p>');
 		token.push({
 			type: 'html',
-			raw: trimPrefix(content.slice(index), '</p>')
+			raw: mode === 'markdown' ? marked(tail) : tail
 		});
 	};
 
@@ -502,16 +520,16 @@ export async function cmsFromContent(
 	};
 
 	if (forceContentVersion === 'desktop' && desktopContent) {
-		processMatches(tokens.desktop, desktopContent, index);
+		processMatches(tokens.desktop, desktopContent, index, desktopMode);
 	} else if (forceContentVersion === 'employee' && employeeContent) {
-		processMatches(tokens.desktop, employeeContent, index);
+		processMatches(tokens.desktop, employeeContent, index, employeeMode);
 	} else if (forceContentVersion === 'mobile' && mobileContent) {
-		processMatches(tokens.desktop, mobileContent, index);
+		processMatches(tokens.desktop, mobileContent, index, mobileMode);
 	} else {
-		processMatches(tokens.desktop, desktopContent, index);
+		processMatches(tokens.desktop, desktopContent, index, desktopMode);
 		if (mobileContent?.length) {
 			tokens.mobile = [];
-			processMatches(tokens.mobile, mobileContent, index);
+			processMatches(tokens.mobile, mobileContent, index, mobileMode);
 		}
 	}
 
