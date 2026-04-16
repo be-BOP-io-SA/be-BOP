@@ -32,6 +32,13 @@
 		</a>
 	{/if}
 
+	<!-- OSB redirect link -->
+	{#if payment.method === 'osb' && payment.address}
+		<a href={payment.address} class="btn btn-primary" target="_blank" rel="noopener">
+			{t('checkout.paymentMethod.osb')}
+		</a>
+	{/if}
+
 	<!-- Card QR (if not hidden) -->
 	{#if payment.method === 'card' && !hideCreditCardQrCode}
 		<img src="{$page.url.pathname}/payment/{payment.id}/qrcode" class="w-96 h-96" alt="QR code" />

@@ -151,6 +151,10 @@ export const adminLinks: AdminLinks = [
 				label: 'Taler'
 			},
 			{
+				href: '/admin/osb',
+				label: 'OSB'
+			},
+			{
 				href: '/admin/pos-payments',
 				label: 'PoS Payments'
 			}
