@@ -10,7 +10,8 @@ export const ALL_PAYMENT_METHODS = [
 	'point-of-sale',
 	'free',
 	'paypal',
-	'taler'
+	'taler',
+	'osb'
 ] as const;
 export type PaymentMethod = (typeof ALL_PAYMENT_METHODS)[number];
 
@@ -24,7 +25,8 @@ export const ALL_PAYMENT_PROCESSORS = [
 	'stripe',
 	'sumup',
 	'swiss-bitcoin-pay',
-	'taler'
+	'taler',
+	'osb'
 ] as const;
 export type PaymentProcessor = (typeof ALL_PAYMENT_PROCESSORS)[number];
 
@@ -50,6 +52,7 @@ export const paymentMethods = (opts?: {
 						case 'bitcoin':
 						case 'lightning':
 						case 'taler':
+						case 'osb':
 							return getProcessorsForMethod(method).some((pp) => pp.isEnabled());
 						case 'bank-transfer':
 							return runtimeConfig.sellerIdentity?.bank;
