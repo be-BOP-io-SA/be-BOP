@@ -8,6 +8,7 @@ import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import { collections } from '$lib/server/database';
 import { getNostrKeys, isNostrConfigured } from '$lib/server/nostr';
+import { recordInvalidZap } from '$lib/server/nostr-debug';
 import { validateEvent, verifySignature } from 'nostr-tools';
 
 const ZAP_REQUEST_KIND = 9734;
@@ -36,28 +37,49 @@ function validateZapRequest(nostrParam: string): ZapRequestValidation {
 
 		// Must be kind 9734
 		if (event.kind !== ZAP_REQUEST_KIND) {
-			return { valid: false, error: `Invalid kind ${event.kind}, expected ${ZAP_REQUEST_KIND}` };
+			return {
+				valid: false,
+				error: `Invalid kind ${event.kind}, expected ${ZAP_REQUEST_KIND}`,
+				senderPubkey: event.pubkey,
+				decodedRequest
+			};
 		}
 
 		// Validate event signature
 		if (!validateEvent(event) || !verifySignature(event)) {
-			return { valid: false, error: 'Invalid event signature' };
+			return {
+				valid: false,
+				error: 'Invalid event signature',
+				senderPubkey: event.pubkey,
+				decodedRequest
+			};
 		}
 
 		// Must have 'p' tag (receiver)
 		const pTag = event.tags.find((t: string[]) => t[0] === 'p');
 		if (!pTag?.[1]) {
-			return { valid: false, error: 'Missing p tag' };
+			return {
+				valid: false,
+				error: 'Missing p tag',
+				senderPubkey: event.pubkey,
+				decodedRequest
+			};
 		}
+
+		const eTag = event.tags.find((t: string[]) => t[0] === 'e');
 
 		// Verify 'p' tag matches our pubkey
 		const { pubKeyHex } = getNostrKeys();
 		if (pTag[1] !== pubKeyHex) {
-			return { valid: false, error: 'Zap recipient does not match' };
+			return {
+				valid: false,
+				error: 'Zap recipient does not match',
+				receiverPubkey: pTag[1],
+				senderPubkey: event.pubkey,
+				eventId: eTag?.[1],
+				decodedRequest
+			};
 		}
-
-		// Extract optional 'e' tag (event being zapped)
-		const eTag = event.tags.find((t: string[]) => t[0] === 'e');
 
 		return {
 			valid: true,
@@ -67,7 +89,7 @@ function validateZapRequest(nostrParam: string): ZapRequestValidation {
 			decodedRequest
 		};
 	} catch {
-		return { valid: false, error: 'Failed to parse zap request' };
+		return { valid: false, error: 'Failed to parse zap request', decodedRequest: nostrParam };
 	}
 }
 
@@ -142,6 +164,14 @@ export const GET = async ({ url }) => {
 			}
 		} else if (!validation.valid) {
 			console.warn('Invalid zap request:', validation.error);
+			recordInvalidZap({
+				error: validation.error ?? 'unknown',
+				pTag: validation.receiverPubkey,
+				expectedPubkey: getNostrKeys().pubKeyHex,
+				eventId: validation.eventId,
+				senderPubkey: validation.senderPubkey,
+				rawNostrParam: nostr
+			});
 		}
 	}
 
