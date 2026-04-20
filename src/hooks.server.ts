@@ -1,3 +1,5 @@
+import { installRuntimeLogCapture } from '$lib/server/runtime-logs';
+installRuntimeLogCapture();
 import { ZodError } from 'zod';
 import { type HandleServerError, type Handle, error, redirect } from '@sveltejs/kit';
 import { collections } from '$lib/server/database';

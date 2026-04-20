@@ -8,7 +8,6 @@ import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import { collections } from '$lib/server/database';
 import { getNostrKeys, isNostrConfigured } from '$lib/server/nostr';
-import { recordInvalidZap } from '$lib/server/nostr-debug';
 import { validateEvent, verifySignature } from 'nostr-tools';
 
 const ZAP_REQUEST_KIND = 9734;
@@ -163,9 +162,7 @@ export const GET = async ({ url }) => {
 				console.error('Failed to save pending zap:', err);
 			}
 		} else if (!validation.valid) {
-			console.warn('Invalid zap request:', validation.error);
-			recordInvalidZap({
-				error: validation.error ?? 'unknown',
+			console.warn('Invalid zap request:', validation.error, {
 				pTag: validation.receiverPubkey,
 				expectedPubkey: getNostrKeys().pubKeyHex,
 				eventId: validation.eventId,
