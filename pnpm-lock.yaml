@@ -4,6 +4,9 @@ patchedDependencies:
   date-fns@3.6.0:
     hash: wsglen72mvliwnhurznyj5erze
     path: patches/date-fns@3.6.0.patch
+  nostr-relaypool@0.6.28:
+    hash: yivktc2sx2wjczvdsu5tmfgdhy
+    path: patches/nostr-relaypool@0.6.28.patch
 
 dependencies:
   '@auth/core':
@@ -95,7 +98,7 @@ dependencies:
     version: 6.9.3
   nostr-relaypool:
     specifier: ^0.6.28
-    version: 0.6.28(ws@8.14.2)
+    version: 0.6.28(patch_hash=yivktc2sx2wjczvdsu5tmfgdhy)(ws@8.14.2)
   nostr-tools:
     specifier: ^1.11.1
     version: 1.11.1
@@ -3897,7 +3900,7 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /nostr-relaypool@0.6.28(ws@8.14.2):
+  /nostr-relaypool@0.6.28(patch_hash=yivktc2sx2wjczvdsu5tmfgdhy)(ws@8.14.2):
     resolution: {integrity: sha512-kyLChBunf6IB2O3MSPHBe9iSokBGyqZHvAJXZ5+eh9C4znAu7iY8L/yh0V4Ta/P9TtzDna3QTEgFWVan4m0vBA==}
     dependencies:
       '@jest/source-map': 29.4.3
@@ -3907,6 +3910,7 @@ packages:
     transitivePeerDependencies:
       - ws
     dev: false
+    patched: true
 
   /nostr-tools@1.11.1:
     resolution: {integrity: sha512-b8BpCiD3wxjBZwrn0wc+CkVj6/7s4sQxp+Az7UkCG80mJu7xTspZsOoUP/geBNwZVYETzEwj+CPBvW8WIP8mBQ==}
