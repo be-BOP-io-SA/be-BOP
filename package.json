@@ -100,7 +100,8 @@
 	},
 	"pnpm": {
 		"patchedDependencies": {
-			"date-fns@3.6.0": "patches/date-fns@3.6.0.patch"
+			"date-fns@3.6.0": "patches/date-fns@3.6.0.patch",
+			"nostr-relaypool@0.6.28": "patches/nostr-relaypool@0.6.28.patch"
 		}
 	}
 }

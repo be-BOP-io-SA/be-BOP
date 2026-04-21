@@ -1,0 +1,46 @@
+diff --git a/lib/nostr-relaypool.esm.js b/lib/nostr-relaypool.esm.js
+index 210ae4b7d2858d7dea6f5bfa85cb4bc863a5e60d..e55572478cac63b9d9a4e18ea869647768fb9966 100644
+--- a/lib/nostr-relaypool.esm.js
++++ b/lib/nostr-relaypool.esm.js
+@@ -135,7 +135,8 @@ var RelayC = class {
+   reconnectTimeout = 0;
+   #reconnect() {
+     setTimeout(() => {
+-      this.reconnectTimeout = Math.max(2e3, this.reconnectTimeout * 3);
++      const base = Math.min(6e5, Math.max(2e3, this.reconnectTimeout * 3));
++      this.reconnectTimeout = Math.floor(base * (0.75 + Math.random() * 0.5));
+       console.log(
+         this.url,
+         "reconnecting after " + this.reconnectTimeout / 1e3 + "s"
+@@ -233,6 +234,7 @@ var RelayC = class {
+       this.resolveClose();
+       return;
+     }
++    this.reconnectTimeout = 0;
+     for (const subid in this.openSubs) {
+       if (this.logging) {
+         console.log("REQ", this.url, subid, ...this.openSubs[subid].filters);
+diff --git a/relay.ts b/relay.ts
+index 3f06b05162da6c42f881a265db8899eab10786b8..c64a8944e7d5bcdfe793a8b1ec89f99ca101dcce 100644
+--- a/relay.ts
++++ b/relay.ts
+@@ -126,7 +126,8 @@ class RelayC {
+   reconnectTimeout: number = 0;
+   #reconnect() {
+     setTimeout(() => {
+-      this.reconnectTimeout = Math.max(2000, this.reconnectTimeout * 3);
++      const base = Math.min(600000, Math.max(2000, this.reconnectTimeout * 3));
++      this.reconnectTimeout = Math.floor(base * (0.75 + Math.random() * 0.5));
+       console.log(
+         this.url,
+         "reconnecting after " + this.reconnectTimeout / 1000 + "s"
+@@ -229,8 +230,7 @@ class RelayC {
+       this.resolveClose();
+       return;
+     }
+-    // console.log("#onopen setting reconnectTimeout to 0");
+-    // this.reconnectTimeout = 0;
++    this.reconnectTimeout = 0;
+     // TODO: Send ephereal messages after subscription, permament before
+     for (const subid in this.openSubs) {
+       if (this.logging) {
