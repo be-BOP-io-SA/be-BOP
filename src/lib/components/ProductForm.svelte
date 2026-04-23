@@ -1732,17 +1732,16 @@
 									Edit as raw HTML
 								</label>
 
-								{#if displayRawHTMLBefore}
-									<textarea
-										name="contentBefore"
-										cols="30"
-										rows="8"
-										maxlength={MAX_CONTENT_LIMIT}
-										placeholder="HTML content"
-										class="form-input block w-full mt-2"
-										bind:value={product.contentBefore}
-									/>
-								{/if}
+								<textarea
+									style="display:{displayRawHTMLBefore ? 'block' : 'none'};"
+									name="contentBefore"
+									cols="30"
+									rows="8"
+									maxlength={MAX_CONTENT_LIMIT}
+									placeholder="HTML content"
+									class="form-input block w-full mt-2"
+									bind:value={product.contentBefore}
+								/>
 							</div>
 
 							<div class="bg-gray-50 p-4 rounded-lg">
@@ -1783,17 +1782,16 @@
 									Edit as raw HTML
 								</label>
 
-								{#if displayRawHTMLAfter}
-									<textarea
-										name="contentAfter"
-										cols="30"
-										rows="8"
-										maxlength={MAX_CONTENT_LIMIT}
-										placeholder="HTML content"
-										class="form-input block w-full mt-2"
-										bind:value={product.contentAfter}
-									/>
-								{/if}
+								<textarea
+									style="display:{displayRawHTMLAfter ? 'block' : 'none'};"
+									name="contentAfter"
+									cols="30"
+									rows="8"
+									maxlength={MAX_CONTENT_LIMIT}
+									placeholder="HTML content"
+									class="form-input block w-full mt-2"
+									bind:value={product.contentAfter}
+								/>
 							</div>
 						</div>
 					</div>
