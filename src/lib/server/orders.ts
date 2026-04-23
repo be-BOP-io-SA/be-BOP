@@ -89,11 +89,11 @@ export async function conflictingTapToPayOrder(orderId: string): Promise<string 
 	return null;
 }
 
-async function generateOrderNumber(): Promise<number> {
+async function generateOrderNumber(session?: ClientSession): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(
 		{ _id: 'orderNumber' },
 		{ $inc: { data: 1 as never } },
-		{ upsert: true, returnDocument: 'after' }
+		{ upsert: true, returnDocument: 'after', session }
 	);
 
 	if (!res.value) {
@@ -932,7 +932,6 @@ export async function createOrder(
 	const totalSatoshis = toSatoshis(priceInfo.totalPriceWithVat, priceInfo.currency);
 	const partialSatoshis = toSatoshis(priceInfo.partialPriceWithVat, priceInfo.currency);
 
-	const orderNumber = await generateOrderNumber();
 	const orderId = crypto.randomUUID();
 
 	let discount: {
@@ -944,27 +943,6 @@ export async function createOrder(
 			currency: params.discount.type === 'fiat' ? runtimeConfig.mainCurrency : 'SAT',
 			amount: params.discount.type === 'fiat' ? params?.discount?.amount : priceInfo.discount
 		};
-
-		await collections.emailNotifications.insertOne({
-			_id: new ObjectId(),
-			createdAt: new Date(),
-			updatedAt: new Date(),
-			subject: 'NEW DISCOUNT',
-			htmlContent: `A discount of ${params?.discount?.amount}${
-				params.discount.type === 'fiat' ? runtimeConfig.mainCurrency : '%'
-			} (${toCurrency(
-				'SAT',
-				priceInfo.discount,
-				priceInfo.currency
-			)} SAT) has been applied to the <a href="${ORIGIN}/order/${orderId}">order ${orderNumber}</a> (${toCurrency(
-				runtimeConfig.mainCurrency,
-				totalSatoshis,
-				'SAT'
-			)}${runtimeConfig.mainCurrency}). The discount was applied by ${
-				params.user.userLogin
-			}. Justification: ${params?.discount?.justification ?? '-'} `,
-			dest: runtimeConfig.sellerIdentity?.contact.email || SMTP_USER
-		});
 	}
 
 	const subscriptions = items.filter((item) => item.product.type === 'subscription');
@@ -1250,77 +1228,124 @@ export async function createOrder(
 				);
 			}
 		}
-
-		const createScheduleEvent = (
-			productId: string,
-			eventId: ObjectId,
-			beginsAt: Date,
-			endsAt: Date,
-			slugSuffix = ''
-		) => ({
-			_id: eventId,
-			title: '#' + orderNumber + ' - ' + productById[productId].name,
-			slug: productId + '-' + orderNumber + slugSuffix,
-			beginsAt,
-			endsAt,
-			scheduleId: productToScheduleId(productId),
-			orderId: orderId,
-			status: 'pending' as const,
-			orderCreated: false
-		});
-
-		await collections.scheduleEvents.insertMany(
-			Object.entries(bookingTimesPerProduct).flatMap(([productId, bookings]) =>
-				bookings.flatMap((booking) =>
-					booking.bookedDates?.length
-						? booking.bookedDates.map((date, index) =>
-								createScheduleEvent(
-									productId,
-									index === 0 ? booking._id : new ObjectId(),
-									date,
-									addDays(date, 1),
-									index > 0 ? '-' + index : ''
-								)
-						  )
-						: [
-								createScheduleEvent(
-									productId,
-									booking._id,
-									booking.start,
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									booking.end!
-								)
-						  ]
-				)
-			)
-		);
 	}
 
-	try {
+	const posDiscount = params.cart?.orderTabId
+		? (
+				await collections.orderTabs.findOne(
+					{ _id: params.cart.orderTabId },
+					{ projection: { discount: 1 } }
+				)
+		  )?.discount
+		: undefined;
+
+	// if discount is tag-based
+	const posDiscountTagName = posDiscount?.tagId
+		? (await collections.tags.findOne({ _id: posDiscount.tagId }))?.name
+		: undefined;
+
+	await withTransaction(async (session) => {
+		const orderNumber = await generateOrderNumber(session);
+
+		if (discount && params.discount && params.user.userHasPosOptions) {
+			await collections.emailNotifications.insertOne(
+				{
+					_id: new ObjectId(),
+					createdAt: new Date(),
+					updatedAt: new Date(),
+					subject: 'NEW DISCOUNT',
+					htmlContent: `A discount of ${params?.discount?.amount}${
+						params.discount.type === 'fiat' ? runtimeConfig.mainCurrency : '%'
+					} (${toCurrency(
+						'SAT',
+						priceInfo.discount,
+						priceInfo.currency
+					)} SAT) has been applied to the <a href="${ORIGIN}/order/${orderId}">order ${orderNumber}</a> (${toCurrency(
+						runtimeConfig.mainCurrency,
+						totalSatoshis,
+						'SAT'
+					)}${runtimeConfig.mainCurrency}). The discount was applied by ${
+						params.user.userLogin
+					}. Justification: ${params?.discount?.justification ?? '-'} `,
+					dest: runtimeConfig.sellerIdentity?.contact.email || SMTP_USER
+				},
+				{ session }
+			);
+		}
+
 		if (!isEmptyObject(bookingTimesPerProduct)) {
-			// Refetch events to check for conflicts. If so, we'll throw, and it will delete the inserted events
+			const createScheduleEvent = (
+				productId: string,
+				eventId: ObjectId,
+				beginsAt: Date,
+				endsAt: Date,
+				slugSuffix = ''
+			) => ({
+				_id: eventId,
+				title: '#' + orderNumber + ' - ' + productById[productId].name,
+				slug: productId + '-' + orderNumber + slugSuffix,
+				beginsAt,
+				endsAt,
+				scheduleId: productToScheduleId(productId),
+				orderId: orderId,
+				status: 'pending' as const,
+				orderCreated: false
+			});
+
+			await collections.scheduleEvents.insertMany(
+				Object.entries(bookingTimesPerProduct).flatMap(([productId, bookings]) =>
+					bookings.flatMap((booking) =>
+						booking.bookedDates?.length
+							? booking.bookedDates.map((date, index) =>
+									createScheduleEvent(
+										productId,
+										index === 0 ? booking._id : new ObjectId(),
+										date,
+										addDays(date, 1),
+										index > 0 ? '-' + index : ''
+									)
+							  )
+							: [
+									createScheduleEvent(
+										productId,
+										booking._id,
+										booking.start,
+										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+										booking.end!
+									)
+							  ]
+					)
+				),
+				{ session }
+			);
+
+			// Refetch events to check for conflicts. If so, we'll throw, and the
+			// transaction rollback will remove the scheduleEvents we just inserted.
 			await Promise.all(
 				Object.entries(bookingTimesPerProduct).map(async ([productId, times]) => {
 					const lastTime = times[times.length - 1];
 					const events = await collections.scheduleEvents
-						.find({
-							scheduleId: productToScheduleId(productId),
-							status: { $in: ['pending', 'confirmed'] },
-							orderId: { $ne: orderId },
-							...(lastTime.end && {
-								beginsAt: {
-									$lt: lastTime.end
-								}
-							}),
-							$or: [
-								{
-									endsAt: { $exists: false }
-								},
-								{
-									endsAt: { $gt: times[0].start }
-								}
-							]
-						})
+						.find(
+							{
+								scheduleId: productToScheduleId(productId),
+								status: { $in: ['pending', 'confirmed'] },
+								orderId: { $ne: orderId },
+								...(lastTime.end && {
+									beginsAt: {
+										$lt: lastTime.end
+									}
+								}),
+								$or: [
+									{
+										endsAt: { $exists: false }
+									},
+									{
+										endsAt: { $gt: times[0].start }
+									}
+								]
+							},
+							{ session }
+						)
 						.project<{
 							_id: Schedule['_id'];
 							isNew: boolean;
@@ -1344,414 +1369,391 @@ export async function createOrder(
 			);
 		}
 
-		const posDiscount = params.cart?.orderTabId
-			? (
-					await collections.orderTabs.findOne(
-						{ _id: params.cart.orderTabId },
-						{ projection: { discount: 1 } }
-					)
-			  )?.discount
-			: undefined;
-
-		// if discount is tag-based
-		const posDiscountTagName = posDiscount?.tagId
-			? (await collections.tags.findOne({ _id: posDiscount.tagId }))?.name
-			: undefined;
-
-		await withTransaction(async (session) => {
-			const order: Order = {
-				_id: orderId,
-				locale: params.locale,
-				number: orderNumber,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				status: 'pending',
-				sellerIdentity: runtimeConfig.sellerIdentity,
-				items: items.map((item, i) => ({
-					_id: item._id,
-					quantity: item.quantity,
-					product: item.product,
-					customPrice: item.customPrice,
-					chosenVariations: item.chosenVariations,
-					depositPercentage: item.depositPercentage,
-					discountPercentage: item.discountPercentage,
-					freeQuantity: priceInfo.perItem[i].usedFreeUnits,
-					freeProductSources: item.freeProductSources,
-					...(item.product.bookingSpec &&
-						item.booking && {
-							booking: {
-								start: item.booking.start,
-								end: item.booking.end,
-								_id: item.booking._id,
-								...(item.booking.bookedDates?.length && { bookedDates: item.booking.bookedDates })
-							}
-						}),
-					vatRate: priceInfo.vatRates[i],
-					currencySnapshot: {
-						main: {
-							price: convertAmountToCurrencyForStorage(
-								runtimeConfig.mainCurrency,
-								item.product.price.amount,
-								item.product.price.currency
-							),
-							...(item.customPrice && {
-								customPrice: convertAmountToCurrencyForStorage(
-									runtimeConfig.mainCurrency,
-									item.customPrice.amount,
-									item.customPrice.currency
-								)
-							})
-						},
-						...(runtimeConfig.secondaryCurrency && {
-							secondary: {
-								price: convertAmountToCurrencyForStorage(
-									runtimeConfig.secondaryCurrency,
-									item.product.price.amount,
-									item.product.price.currency
-								),
-								...(item.customPrice && {
-									customPrice: convertAmountToCurrencyForStorage(
-										runtimeConfig.secondaryCurrency,
-										item.customPrice.amount,
-										item.customPrice.currency
-									)
-								})
-							}
-						}),
-						...(runtimeConfig.accountingCurrency && {
-							accounting: {
-								price: convertAmountToCurrencyForStorage(
-									runtimeConfig.accountingCurrency,
-									item.product.price.amount,
-									item.product.price.currency
-								),
-								...(item.customPrice && {
-									customPrice: convertAmountToCurrencyForStorage(
-										runtimeConfig.accountingCurrency,
-										item.customPrice.amount,
-										item.customPrice.currency
-									)
-								})
-							}
-						}),
-						priceReference: {
-							price: convertAmountToCurrencyForStorage(
-								runtimeConfig.priceReferenceCurrency,
-								item.product.price.amount,
-								item.product.price.currency
-							),
-							...(item.customPrice && {
-								customPrice: convertAmountToCurrencyForStorage(
-									runtimeConfig.priceReferenceCurrency,
-									item.customPrice.amount,
-									item.customPrice.currency
-								)
-							})
-						}
-					}
-				})),
-				...(params.shippingAddress && { shippingAddress: params.shippingAddress }),
-				...(billingAddress && { billingAddress: billingAddress }),
-				...(priceInfo.vat.length && { vat: priceInfo.vat }),
-				...(shippingPrice
-					? {
-							shippingPrice
-					  }
-					: undefined),
-				payments: [],
-				notifications: {
-					paymentStatus: {
-						...(npubAddress && { npub: npubAddress }),
-						...(email && { email })
-					}
-				},
-				user: {
-					...params.user,
-					// In case the user didn't authenticate with an email/npub but only added them as notification address
-					// We still add them add orders for the specified email/npub
-					// Mini-downside: if the user put a dummy npub / email, the owner of the npub / email will be able to see the order
-					...(!params.user.email && email && { email }),
-					...(!params.user.npub && npubAddress && { npub: npubAddress })
-				},
-				...(vatExemptedReason && {
-					vatFree: {
-						reason: vatExemptedReason
-					}
-				}),
-				...(discount &&
-					params.discount && {
-						discount: {
-							price: discount,
-							justification: params.discount.justification,
-							type: params.discount.type
+		const order: Order = {
+			_id: orderId,
+			locale: params.locale,
+			number: orderNumber,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+			status: 'pending',
+			sellerIdentity: runtimeConfig.sellerIdentity,
+			items: items.map((item, i) => ({
+				_id: item._id,
+				quantity: item.quantity,
+				product: item.product,
+				customPrice: item.customPrice,
+				chosenVariations: item.chosenVariations,
+				depositPercentage: item.depositPercentage,
+				discountPercentage: item.discountPercentage,
+				freeQuantity: priceInfo.perItem[i].usedFreeUnits,
+				freeProductSources: item.freeProductSources,
+				...(item.product.bookingSpec &&
+					item.booking && {
+						booking: {
+							start: item.booking.start,
+							end: item.booking.end,
+							_id: item.booking._id,
+							...(item.booking.bookedDates?.length && { bookedDates: item.booking.bookedDates })
 						}
 					}),
-				...(params.clientIp && { clientIp: params.clientIp }),
+				vatRate: priceInfo.vatRates[i],
 				currencySnapshot: {
 					main: {
-						totalPrice: {
-							amount: toCurrency(runtimeConfig.mainCurrency, totalSatoshis, 'SAT'),
-							currency: runtimeConfig.mainCurrency
-						},
-						...(shippingPrice && {
-							shippingPrice: {
-								amount: toCurrency(
-									runtimeConfig.mainCurrency,
-									shippingPrice.amount,
-									shippingPrice.currency
-								),
-								currency: runtimeConfig.mainCurrency
-							}
-						}),
-						...(priceInfo.totalVat && {
-							vat: priceInfo.vat.map(({ price }) => ({
-								amount: toCurrency(runtimeConfig.mainCurrency, price.amount, price.currency),
-								currency: runtimeConfig.mainCurrency
-							}))
-						}),
-						...(discount && {
-							discount: {
-								amount: toCurrency(runtimeConfig.mainCurrency, discount.amount, discount.currency),
-								currency: runtimeConfig.mainCurrency
-							}
+						price: convertAmountToCurrencyForStorage(
+							runtimeConfig.mainCurrency,
+							item.product.price.amount,
+							item.product.price.currency
+						),
+						...(item.customPrice && {
+							customPrice: convertAmountToCurrencyForStorage(
+								runtimeConfig.mainCurrency,
+								item.customPrice.amount,
+								item.customPrice.currency
+							)
 						})
 					},
 					...(runtimeConfig.secondaryCurrency && {
 						secondary: {
-							totalPrice: {
-								amount: toCurrency(runtimeConfig.secondaryCurrency, totalSatoshis, 'SAT'),
-								currency: runtimeConfig.secondaryCurrency
-							},
-							...(shippingPrice && {
-								shippingPrice: {
-									amount: toCurrency(
-										runtimeConfig.secondaryCurrency,
-										shippingPrice.amount,
-										shippingPrice.currency
-									),
-									currency: runtimeConfig.secondaryCurrency
-								}
-							}),
-							...(priceInfo.totalVat && {
-								vat: priceInfo.vat.map(({ price }) => ({
-									amount: toCurrency(
-										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-										runtimeConfig.secondaryCurrency!,
-										price.amount,
-										price.currency
-									),
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									currency: runtimeConfig.secondaryCurrency!
-								}))
-							}),
-							...(discount && {
-								discount: {
-									amount: toCurrency(
-										runtimeConfig.secondaryCurrency,
-										discount.amount,
-										discount.currency
-									),
-									currency: runtimeConfig.secondaryCurrency
-								}
+							price: convertAmountToCurrencyForStorage(
+								runtimeConfig.secondaryCurrency,
+								item.product.price.amount,
+								item.product.price.currency
+							),
+							...(item.customPrice && {
+								customPrice: convertAmountToCurrencyForStorage(
+									runtimeConfig.secondaryCurrency,
+									item.customPrice.amount,
+									item.customPrice.currency
+								)
 							})
 						}
 					}),
 					...(runtimeConfig.accountingCurrency && {
 						accounting: {
-							totalPrice: {
-								amount: toCurrency(runtimeConfig.accountingCurrency, totalSatoshis, 'SAT'),
-								currency: runtimeConfig.accountingCurrency
-							},
-							...(shippingPrice && {
-								shippingPrice: {
-									amount: toCurrency(
-										runtimeConfig.accountingCurrency,
-										shippingPrice.amount,
-										shippingPrice.currency
-									),
-									currency: runtimeConfig.accountingCurrency
-								}
-							}),
-							...(priceInfo.totalVat && {
-								vat: priceInfo.vat.map(({ price }) => ({
-									amount: toCurrency(
-										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-										runtimeConfig.accountingCurrency!,
-										price.amount,
-										price.currency
-									),
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									currency: runtimeConfig.accountingCurrency!
-								}))
-							}),
-							...(discount && {
-								discount: {
-									amount: toCurrency(
-										runtimeConfig.accountingCurrency,
-										discount.amount,
-										discount.currency
-									),
-									currency: runtimeConfig.accountingCurrency
-								}
+							price: convertAmountToCurrencyForStorage(
+								runtimeConfig.accountingCurrency,
+								item.product.price.amount,
+								item.product.price.currency
+							),
+							...(item.customPrice && {
+								customPrice: convertAmountToCurrencyForStorage(
+									runtimeConfig.accountingCurrency,
+									item.customPrice.amount,
+									item.customPrice.currency
+								)
 							})
 						}
 					}),
 					priceReference: {
+						price: convertAmountToCurrencyForStorage(
+							runtimeConfig.priceReferenceCurrency,
+							item.product.price.amount,
+							item.product.price.currency
+						),
+						...(item.customPrice && {
+							customPrice: convertAmountToCurrencyForStorage(
+								runtimeConfig.priceReferenceCurrency,
+								item.customPrice.amount,
+								item.customPrice.currency
+							)
+						})
+					}
+				}
+			})),
+			...(params.shippingAddress && { shippingAddress: params.shippingAddress }),
+			...(billingAddress && { billingAddress: billingAddress }),
+			...(priceInfo.vat.length && { vat: priceInfo.vat }),
+			...(shippingPrice
+				? {
+						shippingPrice
+				  }
+				: undefined),
+			payments: [],
+			notifications: {
+				paymentStatus: {
+					...(npubAddress && { npub: npubAddress }),
+					...(email && { email })
+				}
+			},
+			user: {
+				...params.user,
+				// In case the user didn't authenticate with an email/npub but only added them as notification address
+				// We still add them add orders for the specified email/npub
+				// Mini-downside: if the user put a dummy npub / email, the owner of the npub / email will be able to see the order
+				...(!params.user.email && email && { email }),
+				...(!params.user.npub && npubAddress && { npub: npubAddress })
+			},
+			...(vatExemptedReason && {
+				vatFree: {
+					reason: vatExemptedReason
+				}
+			}),
+			...(discount &&
+				params.discount && {
+					discount: {
+						price: discount,
+						justification: params.discount.justification,
+						type: params.discount.type
+					}
+				}),
+			...(params.clientIp && { clientIp: params.clientIp }),
+			currencySnapshot: {
+				main: {
+					totalPrice: {
+						amount: toCurrency(runtimeConfig.mainCurrency, totalSatoshis, 'SAT'),
+						currency: runtimeConfig.mainCurrency
+					},
+					...(shippingPrice && {
+						shippingPrice: {
+							amount: toCurrency(
+								runtimeConfig.mainCurrency,
+								shippingPrice.amount,
+								shippingPrice.currency
+							),
+							currency: runtimeConfig.mainCurrency
+						}
+					}),
+					...(priceInfo.totalVat && {
+						vat: priceInfo.vat.map(({ price }) => ({
+							amount: toCurrency(runtimeConfig.mainCurrency, price.amount, price.currency),
+							currency: runtimeConfig.mainCurrency
+						}))
+					}),
+					...(discount && {
+						discount: {
+							amount: toCurrency(runtimeConfig.mainCurrency, discount.amount, discount.currency),
+							currency: runtimeConfig.mainCurrency
+						}
+					})
+				},
+				...(runtimeConfig.secondaryCurrency && {
+					secondary: {
 						totalPrice: {
-							amount: toCurrency(runtimeConfig.priceReferenceCurrency, totalSatoshis, 'SAT'),
-							currency: runtimeConfig.priceReferenceCurrency
+							amount: toCurrency(runtimeConfig.secondaryCurrency, totalSatoshis, 'SAT'),
+							currency: runtimeConfig.secondaryCurrency
 						},
 						...(shippingPrice && {
 							shippingPrice: {
 								amount: toCurrency(
-									runtimeConfig.priceReferenceCurrency,
+									runtimeConfig.secondaryCurrency,
 									shippingPrice.amount,
 									shippingPrice.currency
 								),
-								currency: runtimeConfig.priceReferenceCurrency
+								currency: runtimeConfig.secondaryCurrency
 							}
 						}),
 						...(priceInfo.totalVat && {
 							vat: priceInfo.vat.map(({ price }) => ({
 								amount: toCurrency(
-									runtimeConfig.priceReferenceCurrency,
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									runtimeConfig.secondaryCurrency!,
 									price.amount,
 									price.currency
 								),
-								currency: runtimeConfig.priceReferenceCurrency
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								currency: runtimeConfig.secondaryCurrency!
 							}))
 						}),
 						...(discount && {
 							discount: {
 								amount: toCurrency(
-									runtimeConfig.priceReferenceCurrency,
+									runtimeConfig.secondaryCurrency,
 									discount.amount,
 									discount.currency
 								),
-								currency: runtimeConfig.priceReferenceCurrency
+								currency: runtimeConfig.secondaryCurrency
 							}
 						})
 					}
-				},
-				notes: [
-					...(items.some((item) => item.discountPercentage)
-						? [
-								{
-									content: `Discount applied${
-										posDiscount
-											? ` (${posDiscount.percentage}% ${
-													posDiscountTagName ? `"${posDiscountTagName}"` : 'for ALL'
-											  })`
-											: ''
-									}: ${items
-										.filter((item) => item.discountPercentage)
-										.map(
-											(item) =>
-												`${item.product.name} (${item.product._id}): ${item.discountPercentage}%`
-										)
-										.join(', ')}${
-										posDiscount?.motive
-											? ` (motive: ${posDiscount.motive})`
-											: usedSubIds.length
-											? ` because of subscription ${usedSubIds.join(', ')}`
-											: ''
-									}`,
-									createdAt: new Date(),
-									role: null
-								}
-						  ]
-						: []),
-					...(params.note
-						? [
-								{
-									content: params.note,
-									createdAt: new Date(),
-									role: params.user.userRoleId || CUSTOMER_ROLE_ID,
-									...(params.user && { userId: params.user.userId }),
-									...(npubAddress && { npub: npubAddress }),
-									...(email && { email })
-								}
-						  ]
-						: [])
-				],
-				...(params.receiptNote && { receiptNote: params.receiptNote }),
-				...(params.reasonOfferDeliveryFees && {
-					deliveryFeesFree: {
-						reason: params.reasonOfferDeliveryFees
+				}),
+				...(runtimeConfig.accountingCurrency && {
+					accounting: {
+						totalPrice: {
+							amount: toCurrency(runtimeConfig.accountingCurrency, totalSatoshis, 'SAT'),
+							currency: runtimeConfig.accountingCurrency
+						},
+						...(shippingPrice && {
+							shippingPrice: {
+								amount: toCurrency(
+									runtimeConfig.accountingCurrency,
+									shippingPrice.amount,
+									shippingPrice.currency
+								),
+								currency: runtimeConfig.accountingCurrency
+							}
+						}),
+						...(priceInfo.totalVat && {
+							vat: priceInfo.vat.map(({ price }) => ({
+								amount: toCurrency(
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									runtimeConfig.accountingCurrency!,
+									price.amount,
+									price.currency
+								),
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								currency: runtimeConfig.accountingCurrency!
+							}))
+						}),
+						...(discount && {
+							discount: {
+								amount: toCurrency(
+									runtimeConfig.accountingCurrency,
+									discount.amount,
+									discount.currency
+								),
+								currency: runtimeConfig.accountingCurrency
+							}
+						})
 					}
 				}),
-				...(params.engagements && { engagements: params.engagements }),
-				...(params.onLocation !== undefined && { onLocation: params.onLocation }),
-				...(params.cart?.orderTabSlug && {
-					orderTabSlug: params.cart.orderTabSlug,
-					orderTabId: params.cart.orderTabId,
-					cartId: params.cart._id,
-					splitMode: params.cart.splitMode
-				}),
-				...(params.peopleCountFromPosUi !== undefined && {
-					peopleCountFromPosUi: params.peopleCountFromPosUi
-				})
-			};
-			await collections.orders.insertOne(order, { session });
+				priceReference: {
+					totalPrice: {
+						amount: toCurrency(runtimeConfig.priceReferenceCurrency, totalSatoshis, 'SAT'),
+						currency: runtimeConfig.priceReferenceCurrency
+					},
+					...(shippingPrice && {
+						shippingPrice: {
+							amount: toCurrency(
+								runtimeConfig.priceReferenceCurrency,
+								shippingPrice.amount,
+								shippingPrice.currency
+							),
+							currency: runtimeConfig.priceReferenceCurrency
+						}
+					}),
+					...(priceInfo.totalVat && {
+						vat: priceInfo.vat.map(({ price }) => ({
+							amount: toCurrency(
+								runtimeConfig.priceReferenceCurrency,
+								price.amount,
+								price.currency
+							),
+							currency: runtimeConfig.priceReferenceCurrency
+						}))
+					}),
+					...(discount && {
+						discount: {
+							amount: toCurrency(
+								runtimeConfig.priceReferenceCurrency,
+								discount.amount,
+								discount.currency
+							),
+							currency: runtimeConfig.priceReferenceCurrency
+						}
+					})
+				}
+			},
+			notes: [
+				...(items.some((item) => item.discountPercentage)
+					? [
+							{
+								content: `Discount applied${
+									posDiscount
+										? ` (${posDiscount.percentage}% ${
+												posDiscountTagName ? `"${posDiscountTagName}"` : 'for ALL'
+										  })`
+										: ''
+								}: ${items
+									.filter((item) => item.discountPercentage)
+									.map(
+										(item) =>
+											`${item.product.name} (${item.product._id}): ${item.discountPercentage}%`
+									)
+									.join(', ')}${
+									posDiscount?.motive
+										? ` (motive: ${posDiscount.motive})`
+										: usedSubIds.length
+										? ` because of subscription ${usedSubIds.join(', ')}`
+										: ''
+								}`,
+								createdAt: new Date(),
+								role: null
+							}
+					  ]
+					: []),
+				...(params.note
+					? [
+							{
+								content: params.note,
+								createdAt: new Date(),
+								role: params.user.userRoleId || CUSTOMER_ROLE_ID,
+								...(params.user && { userId: params.user.userId }),
+								...(npubAddress && { npub: npubAddress }),
+								...(email && { email })
+							}
+					  ]
+					: [])
+			],
+			...(params.receiptNote && { receiptNote: params.receiptNote }),
+			...(params.reasonOfferDeliveryFees && {
+				deliveryFeesFree: {
+					reason: params.reasonOfferDeliveryFees
+				}
+			}),
+			...(params.engagements && { engagements: params.engagements }),
+			...(params.onLocation !== undefined && { onLocation: params.onLocation }),
+			...(params.cart?.orderTabSlug && {
+				orderTabSlug: params.cart.orderTabSlug,
+				orderTabId: params.cart.orderTabId,
+				cartId: params.cart._id,
+				splitMode: params.cart.splitMode
+			}),
+			...(params.peopleCountFromPosUi !== undefined && {
+				peopleCountFromPosUi: params.peopleCountFromPosUi
+			})
+		};
+		await collections.orders.insertOne(order, { session });
 
-			let orderPayment: OrderPayment | undefined = undefined;
-			if (paymentMethod) {
-				const expiresAt = paymentMethodExpiration(paymentMethod, {
-					paymentTimeout: params.paymentTimeOut
-				});
+		let orderPayment: OrderPayment | undefined = undefined;
+		if (paymentMethod) {
+			const expiresAt = paymentMethodExpiration(paymentMethod, {
+				paymentTimeout: params.paymentTimeOut
+			});
 
-				orderPayment = await addOrderPayment(
-					order,
-					paymentMethod,
-					{ currency: 'SAT', amount: partialSatoshis },
+			orderPayment = await addOrderPayment(
+				order,
+				paymentMethod,
+				{ currency: 'SAT', amount: partialSatoshis },
+				{
+					session,
+					expiresAt,
+					...(paymentMethod === 'point-of-sale' &&
+						params.posSubtype && { posSubtype: params.posSubtype })
+				}
+			);
+			order.payments.push(orderPayment);
+		}
+
+		if (params.cart) {
+			// This is completely unrelated to the process of creating an order, but
+			// inserted here because there's no separation between the implementation of
+			// creating an order and the business process of creating an order.
+			// Unfortunately, the author cannot address this due to time constraints.
+			if (order.orderTabSlug) {
+				await collections.orderTabs.updateMany(
+					{ slug: order.orderTabSlug },
 					{
-						session,
-						expiresAt,
-						...(paymentMethod === 'point-of-sale' &&
-							params.posSubtype && { posSubtype: params.posSubtype })
+						$unset: { 'items.$[elem].cartId': 1 }
+					},
+					{
+						arrayFilters: [{ 'elem.cartId': params.cart._id }],
+						session
 					}
 				);
-				order.payments.push(orderPayment);
 			}
-
-			if (params.cart) {
-				// This is completely unrelated to the process of creating an order, but
-				// inserted here because there's no separation between the implementation of
-				// creating an order and the business process of creating an order.
-				// Unfortunately, the author cannot address this due to time constraints.
-				if (order.orderTabSlug) {
-					await collections.orderTabs.updateMany(
-						{ slug: order.orderTabSlug },
-						{
-							$unset: { 'items.$[elem].cartId': 1 }
-						},
-						{
-							arrayFilters: [{ 'elem.cartId': params.cart._id }],
-							session
-						}
-					);
-				}
-				/** Also delete "old" carts with partial user info */
-				await collections.carts.deleteMany(userQuery(params.cart.user), { session });
-			}
-
-			for (const product of products) {
-				if (product.stock) {
-					await refreshAvailableStockInDb(product._id, session);
-				}
-			}
-			if (orderPayment?.method === 'free') {
-				await onOrderPayment(order, orderPayment, orderPayment.price, { providedSession: session });
-			}
-		});
-	} catch (e) {
-		if (!isEmptyObject(bookingTimesPerProduct)) {
-			await collections.scheduleEvents.deleteMany({
-				orderId: orderId
-			});
+			/** Also delete "old" carts with partial user info */
+			await collections.carts.deleteMany(userQuery(params.cart.user), { session });
 		}
-		throw e;
-	}
+
+		for (const product of products) {
+			if (product.stock) {
+				await refreshAvailableStockInDb(product._id, session);
+			}
+		}
+		if (orderPayment?.method === 'free') {
+			await onOrderPayment(order, orderPayment, orderPayment.price, { providedSession: session });
+		}
+	});
 
 	return orderId;
 }
