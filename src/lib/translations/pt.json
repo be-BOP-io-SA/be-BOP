@@ -137,6 +137,7 @@
 			"paypal": "Paypal",
 			"point-of-sale": "Ponto de venda",
 			"taler": "Taler",
+			"osb": "OSB (Cartão bancário)",
 			"unavailable": "Nenhum método de pagamento disponível."
 		},
 		"paymentStatus": "Estado do pagamento",
@@ -531,7 +532,8 @@
 			"lightning": "Pago com: transação Lightning (1 {paymentCurrency} = {exchangeRate} {mainCurrency} no momento da encomenda)",
 			"paypal": "Pago com: paypal",
 			"point-of-sale": "Pago na loja",
-			"taler": "Pago com: Taler"
+			"taler": "Pago com: Taler",
+			"osb": "Pago com: cartão bancário OSB"
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Pago com: transferência bancária verificada",
@@ -540,7 +542,8 @@
 			"free": "Pago nada",
 			"lightning": "Pago com: transação Lightning",
 			"point-of-sale": "Pago na loja",
-			"taler": "Pago com: Taler"
+			"taler": "Pago com: Taler",
+			"osb": "Pago com: OSB"
 		},
 		"payToComplete": "Pague para completar a encomenda.",
 		"payToCompleteBitcoin": {

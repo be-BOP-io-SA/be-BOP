@@ -84,6 +84,7 @@ async function handleTapToPayCheck(
 			case 'swiss-bitcoin-pay':
 			case 'bitcoin-nodeless':
 			case 'taler':
+			case 'osb':
 				throw new Error(
 					`Tap-to-pay payment ${payment._id} requests processor ` +
 						`${payment.processor}, but Tap-to-pay using this processor is ` +

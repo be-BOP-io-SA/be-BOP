@@ -137,6 +137,7 @@
 			"paypal": "Paypal",
 			"point-of-sale": "Verkooppunt",
 			"taler": "Taler",
+			"osb": "OSB (Bankkaart)",
 			"unavailable": "Geen betaalmethoden beschikbaar."
 		},
 		"paymentStatus": "Betalingsstatus",
@@ -531,7 +532,8 @@
 			"lightning": "Betaald met: Lightning-transactie (1 {paymentCurrency} = {exchangeRate} {mainCurrency} op het moment van de bestelling)",
 			"paypal": "Betaald met: paypal",
 			"point-of-sale": "Betaald in de winkel",
-			"taler": "Betaald met: Taler"
+			"taler": "Betaald met: Taler",
+			"osb": "Betaald met: OSB-bankkaart"
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Betaald met: geverifieerde bankoverschrijving",
@@ -540,7 +542,8 @@
 			"free": "Niets betaald",
 			"lightning": "Betaald met: Lightning-transactie",
 			"point-of-sale": "Betaald in de winkel",
-			"taler": "Betaald met: Taler"
+			"taler": "Betaald met: Taler",
+			"osb": "Betaald met: OSB"
 		},
 		"payToComplete": "Betaal om de bestelling af te ronden.",
 		"payToCompleteBitcoin": {

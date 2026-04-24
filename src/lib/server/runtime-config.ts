@@ -240,6 +240,11 @@ const baseConfig = {
 		backendApiKey: '',
 		currency: 'CHF' as Currency
 	},
+	osb: {
+		shopId: '',
+		password: '',
+		hmacKey: ''
+	},
 	bity: {
 		clientId: ''
 	},
@@ -384,6 +389,12 @@ Amount: {{amount}} {{currency}}</p>`,
 			default: true as boolean
 		},
 		'order.payment.pending.taler': {
+			subject: 'Order #{{orderNumber}}',
+			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
+<p>Please pay using this link: <a href="{{paymentLink}}">{{paymentLink}}</a></p>`,
+			default: true as boolean
+		},
+		'order.payment.pending.osb': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
 <p>Please pay using this link: <a href="{{paymentLink}}">{{paymentLink}}</a></p>`,
