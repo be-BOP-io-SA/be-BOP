@@ -272,6 +272,13 @@ const baseConfig = {
 	hideCmsZonesOnMobile: false,
 	mergeMobileMenus: false,
 	copyOrderEmailsToAdmin: true,
+	/**
+	 * Test feature (no admin UI yet): list of npubs that will receive a Nostr DM
+	 * "Order #N was fully paid, total amount X.XX CCY" each time an order
+	 * transitions to fully paid. Configure via direct MongoDB write to the
+	 * `runtimeConfig` collection. Empty array disables the feature.
+	 */
+	orderFullyPaidNotificationNpubs: [] as string[],
 	usersDarkDefaultTheme: false,
 	employeesDarkDefaultTheme: false,
 	displayPoweredBy: false,
