@@ -369,7 +369,8 @@
 	$: freeProductsAvailable = data.freeProductsAvailable;
 
 	let PWYWInput: HTMLInputElement | null = null;
-	let acceptRestriction = data.product.hasSellDisclaimer ? false : true;
+	let acceptRestriction =
+		data.product.hasSellDisclaimer && data.product.sellDisclaimer ? false : true;
 	// For 24-hour slots, check if date(s) selected; for hourly slots, check if durations available
 	$: wrongDay = data.product.bookingSpec
 		? is24HourSlot
@@ -982,6 +983,21 @@
 							{#if errorMessage}
 								<p class="text-red-500">{errorMessage}</p>
 							{/if}
+							{#if data.product.hasSellDisclaimer && data.product.sellDisclaimer && amountAvailable > 0 && !(data.cartMaxSeparateItems && data.cart.items.length === data.cartMaxSeparateItems)}
+								<p class="text-xl font-bold">{data.product.sellDisclaimer.title}</p>
+								<p>{data.product.sellDisclaimer.reason}</p>
+								<label class="checkbox-labe col-span-3">
+									<input
+										type="checkbox"
+										class="form-checkbox"
+										form="checkout"
+										name="acceptRestriction"
+										bind:checked={acceptRestriction}
+										required
+									/>
+									{t('ageWarning.agreement')}
+								</label>
+							{/if}
 							{#if amountAvailable === 0}
 								<p class="text-red-500">
 									<span class="font-bold">{t('product.outOfStock')}</span>
@@ -993,21 +1009,6 @@
 									{t('cart.reachedMaxPerLine')}
 								</p>
 							{:else if data.showCheckoutButton}
-								{#if data.product.hasSellDisclaimer && data.product.sellDisclaimer}
-									<p class="text-xl font-bold">{data.product.sellDisclaimer.title}</p>
-									<p>{data.product.sellDisclaimer.reason}</p>
-									<label class="checkbox-labe col-span-3">
-										<input
-											type="checkbox"
-											class="form-checkbox"
-											form="checkout"
-											name="acceptRestriction"
-											bind:checked={acceptRestriction}
-											required
-										/>
-										{t('ageWarning.agreement')}
-									</label>
-								{/if}
 								{@const cannotOrderPhysicalProduct = data.product.shipping
 									? !!data.physicalCartMinAmount &&
 									  data.product.price.amount * quantity <=
