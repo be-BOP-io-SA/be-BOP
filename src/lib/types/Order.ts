@@ -196,6 +196,13 @@ export interface Order extends Timestamps {
 	number: number;
 	locale: LanguageKey;
 
+	/**
+	 * be-BOP version (git commit SHA from PUBLIC_VERSION) at the time the order was created.
+	 * Useful for post-mortem diagnosis if something goes wrong with a saved order.
+	 * Optional for backwards compatibility with orders created before this field existed.
+	 */
+	bebopVersion?: string;
+
 	items: Array<{
 		/**
 		 * Unique identifier for a line in the order.
