@@ -99,7 +99,7 @@ export const GET = async ({ url }) => {
 				.min(1)
 				.max(SATOSHIS_PER_BTC * 1000),
 			metadata: z.string(),
-			comment: z.string().default('Zap !'),
+			comment: z.string().max(280).optional(),
 			nostr: z.string().optional() // NIP-57: URL-encoded zap request event
 		})
 		.parse(Object.fromEntries(url.searchParams));
@@ -118,7 +118,13 @@ export const GET = async ({ url }) => {
 				descriptionHash: await crypto.subtle.digest('SHA-256', new TextEncoder().encode(metadata)),
 				milliSatoshis: true
 		  })
-		: await phoenixdCreateInvoice(amount / 1000, comment, new ObjectId().toString());
+		: await phoenixdCreateInvoice(amount / 1000, comment ?? 'Zap !', new ObjectId().toString());
+
+	// LUD-12: comment is not embedded in the invoice — would clash with the LUD-06
+	// description_hash. Log it so shop ops can correlate with the payment hash.
+	if (comment) {
+		console.log('LNURL-pay comment received', { paymentHash: invoice.r_hash, comment });
+	}
 
 	// NIP-57: Save pending zap if nostr parameter is provided
 	if (nostr && isNostrConfigured()) {
