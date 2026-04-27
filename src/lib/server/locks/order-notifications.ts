@@ -4,8 +4,10 @@ import {
 	type ChangeStreamDocument,
 	Timestamp,
 	MongoServerError,
-	ChangeStream
+	ChangeStream,
+	type ClientSession
 } from 'mongodb';
+import { z } from 'zod';
 import { collections, withTransaction } from '../database';
 import { Lock } from '../lock';
 import { ORIGIN } from '$lib/server/env-config';
@@ -260,6 +262,10 @@ async function handleOrderNotification(order: Order): Promise<void> {
 				}
 				//#endregion
 
+				if (payment.status === 'paid' && isOrderFullyPaid(order)) {
+					await notifyAdminsOrderFullyPaidViaNostr(order, payment, session);
+				}
+
 				await collections.orders.updateOne(
 					{
 						_id: order._id,
@@ -282,4 +288,60 @@ async function handleOrderNotification(order: Order): Promise<void> {
 	} finally {
 		processingIds.delete(order._id.toString());
 	}
+}
+
+const npubSchema = z.string().startsWith('npub1', 'Invalid npub format');
+
+/**
+ * Sends a Nostr DM to every configured admin npub when an order transitions to
+ * fully paid. Idempotent across the payments loop: if the order was already
+ * fully paid before `payment` flipped to 'paid', no DM is sent — that earlier
+ * payment is the one that completed the order.
+ */
+async function notifyAdminsOrderFullyPaidViaNostr(
+	order: Order,
+	payment: Order['payments'][number],
+	session: ClientSession
+): Promise<void> {
+	const wasAlreadyFullyPaid = isOrderFullyPaid({
+		...order,
+		payments: order.payments.filter((p) => !p._id.equals(payment._id))
+	});
+	if (wasAlreadyFullyPaid) {
+		return;
+	}
+
+	const validNpubs = runtimeConfig.orderFullyPaidNotificationNpubs.filter((npub) => {
+		const result = npubSchema.safeParse(npub);
+		if (!result.success) {
+			console.warn(`Skipping invalid npub in orderFullyPaidNotificationNpubs: ${npub}`);
+		}
+		return result.success;
+	});
+	if (validNpubs.length === 0) {
+		return;
+	}
+
+	const total = order.currencySnapshot.main.totalPrice;
+	const formatted = total.amount.toLocaleString(order.locale || 'en', {
+		maximumFractionDigits: FRACTION_DIGITS_PER_CURRENCY[total.currency],
+		minimumFractionDigits: FRACTION_DIGITS_PER_CURRENCY[total.currency]
+	});
+	const content = `Order #${order.number} was fully paid, total amount ${formatted} ${total.currency}`;
+
+	await Promise.all(
+		validNpubs.map((dest) =>
+			collections.nostrNotifications.insertOne(
+				{
+					_id: new ObjectId(),
+					createdAt: new Date(),
+					kind: Kind.EncryptedDirectMessage,
+					updatedAt: new Date(),
+					content,
+					dest
+				},
+				{ session }
+			)
+		)
+	);
 }
