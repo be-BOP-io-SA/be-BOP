@@ -32,6 +32,7 @@ import {
 import { error, redirect } from '@sveltejs/kit';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { ORIGIN } from '$lib/server/env-config';
+import { PUBLIC_VERSION } from '$env/static/public';
 import { isEmailConfigured, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
 import { type Cart } from '$lib/types/Cart';
@@ -1373,6 +1374,7 @@ export async function createOrder(
 			_id: orderId,
 			locale: params.locale,
 			number: orderNumber,
+			bebopVersion: PUBLIC_VERSION,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 			status: 'pending',
