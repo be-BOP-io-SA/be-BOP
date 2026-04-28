@@ -183,6 +183,10 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/email',
 				label: 'Emails'
+			},
+			{
+				href: '/admin/migration',
+				label: 'Migration'
 			}
 		]
 	},
