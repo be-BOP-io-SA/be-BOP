@@ -166,6 +166,10 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/reporting',
 				label: 'Reporting'
+			},
+			{
+				href: '/admin/sales-logs',
+				label: 'Sales Logs'
 			}
 		]
 	},

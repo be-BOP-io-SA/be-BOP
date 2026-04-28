@@ -21,6 +21,7 @@ import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintErr
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 import { enrichWithOrderNumbers } from '$lib/server/orders';
 import type { Picture } from '$lib/types/Picture';
+import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
 
 export const load = async ({ params }) => {
 	const pictures = await collections.pictures
@@ -82,7 +83,7 @@ export const load = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	update: async ({ request, params }) => {
+	update: async ({ request, params, locals }) => {
 		const formData = await request.formData();
 		const json: JsonObject = {};
 
@@ -317,6 +318,40 @@ export const actions: Actions = {
 			} else {
 				throw err;
 			}
+		}
+
+		if (product.price.amount !== priceAmount || product.price.currency !== priceCurrency) {
+			await logAccountingEvent({
+				eventType: 'productPriceUpdate',
+				before: product.price,
+				after: { amount: priceAmount, currency: priceCurrency },
+				objectId: params.id,
+				objectType: 'product',
+				...employeeFromLocals(locals)
+			});
+		}
+
+		const newVatProfileId = parsed.vatProfileId || undefined;
+		if (product.vatProfileId?.toString() !== newVatProfileId) {
+			await logAccountingEvent({
+				eventType: 'productVatUpdate',
+				before: product.vatProfileId?.toString() ?? null,
+				after: newVatProfileId ?? null,
+				objectId: params.id,
+				objectType: 'product',
+				...employeeFromLocals(locals)
+			});
+		}
+
+		if (parsed.stock !== undefined && product.stock?.total !== parsed.stock) {
+			await logAccountingEvent({
+				eventType: 'stockUpdate',
+				before: { total: product.stock?.total ?? null },
+				after: { total: parsed.stock },
+				objectId: params.id,
+				objectType: 'product',
+				...employeeFromLocals(locals)
+			});
 		}
 
 		return {};

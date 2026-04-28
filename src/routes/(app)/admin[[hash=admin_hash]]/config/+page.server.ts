@@ -25,6 +25,16 @@ import { isLndConfigured } from '$lib/server/lnd';
 import { isPhoenixdConfigured } from '$lib/server/phoenixd';
 import { isSwissBitcoinPayConfigured } from '$lib/server/swiss-bitcoin-pay';
 import { isBtcpayServerConfigured } from '$lib/server/btcpay-server';
+import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
+
+const VAT_SETTING_KEYS = new Set([
+	'vatExempted',
+	'vatCountry',
+	'vatSingleCountry',
+	'vatNullOutsideSellerCountry',
+	'displayVatIncludedInProduct',
+	'vatExemptionReason'
+]);
 
 export async function load(event) {
 	return {
@@ -80,7 +90,7 @@ export async function load(event) {
 }
 
 export const actions = {
-	update: async function ({ request }) {
+	update: async function ({ request, locals }) {
 		const formData = await request.formData();
 		const oldAdminHash = runtimeConfig.adminHash;
 
@@ -170,6 +180,16 @@ export const actions = {
 
 		for (const key of typedKeys(runtimeConfigUpdates)) {
 			if (runtimeConfig[key] !== runtimeConfigUpdates[key]) {
+				if (VAT_SETTING_KEYS.has(key)) {
+					await logAccountingEvent({
+						eventType: 'vatSettingsUpdate',
+						before: runtimeConfig[key],
+						after: runtimeConfigUpdates[key],
+						objectId: key,
+						objectType: 'setting',
+						...employeeFromLocals(locals)
+					});
+				}
 				if (key === 'mainCurrency' || key === 'secondaryCurrency' || key === 'accountingCurrency') {
 					currencySettingChanged = true;
 				}
