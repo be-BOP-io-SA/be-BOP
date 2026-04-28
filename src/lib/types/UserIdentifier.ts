@@ -15,4 +15,5 @@ export interface UserIdentifier {
 	userRoleId?: string;
 	userAlias?: string;
 	userHasPosOptions?: boolean;
+	userRecoveryEmail?: string;
 }

@@ -646,9 +646,15 @@ const commands: Record<
 				},
 				userVatCountry: undefined,
 				shippingAddress: null,
+				channel: 'nostr-bot',
 				cart
 			}).catch(async (e) => {
-				console.error(e);
+				console.error('Nostr-bot createOrder failed', {
+					senderNpub,
+					paymentMethod,
+					itemCount: items.length,
+					error: e
+				});
 				await send(e.message);
 				return;
 			});

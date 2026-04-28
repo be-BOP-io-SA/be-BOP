@@ -437,6 +437,8 @@
 	$: finalPrice = unitPrice * discountMultiplier;
 	$: finalPriceWithVat = unitPriceWithVat * discountMultiplier;
 
+	let showExclTax = false;
+
 	// Schedule calendar config
 	const calendarSchedule = {
 		_id: productToScheduleId(data.product._id),
@@ -579,22 +581,38 @@
 			>
 				<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
 				{#if data.displayVatIncludedInProduct}
-					<div class="flex-row gap-2 lg:flex-col lg:items-start items-center justify-between">
-						<div class="max-md:flex max-md:flex-row max-md:justify-between">
-							<div class="flex gap-4">
+					<div class="flex flex-col gap-1 lg:items-start">
+						<!-- svelte-ignore a11y-click-events-have-key-events -->
+						<!-- svelte-ignore a11y-no-static-element-interactions -->
+						<div
+							class="flex flex-col gap-1 cursor-pointer"
+							on:click={() => (showExclTax = !showExclTax)}
+						>
+							<span class="text-sm"
+								>{t('product.vatIncluded')} ({t('cart.vat')}
+								{vatRate}%)
+								<span class="text-gray-400 text-xs ml-1">{showExclTax ? '▲' : '▼'}</span></span
+							>
+							<div class="flex items-center gap-2">
 								<PriceTag
 									currency={data.product.price.currency}
-									class="text-2xl lg:text-4xl truncate max-w-full {data.discount
-										? 'line-through'
-										: ''}"
+									class={data.discount?.mode === 'percentage'
+										? 'text-xl lg:text-2xl line-through text-gray-400'
+										: 'text-2xl lg:text-3xl'}
 									short={!!data.discount}
 									amount={unitPriceWithVat}
 									main
 								/>
 								{#if data.discount?.mode === 'percentage'}
+									{#if data.discount.showBadge !== false}
+										<span
+											class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+											>-{data.discount.percentage}%</span
+										>
+									{/if}
 									<PriceTag
 										currency={data.product.price.currency}
-										class="text-2xl lg:text-4xl truncate max-w-full"
+										class="text-2xl lg:text-3xl"
 										short
 										amount={finalPriceWithVat}
 										main
@@ -603,28 +621,37 @@
 							</div>
 							<PriceTag
 								currency={data.product.price.currency}
-								amount={finalPriceWithVat}
+								amount={data.discount?.mode === 'percentage' ? finalPriceWithVat : unitPriceWithVat}
 								secondary
-								class="text-xl"
+								class="text-base"
 							/>
 						</div>
-						<span>{t('product.vatIncluded')} ({t('cart.vat')} {vatRate}%)</span>
-						<div class="max-md:flex max-md:flex-row max-md:justify-between">
-							<div class="flex gap-4">
+
+						{#if showExclTax}
+							<hr class="border-gray-400 mt-2 w-full" />
+							<span class="text-sm mt-1"
+								>{t('product.vatExcludedEstimate')} ({t('cart.vat')} {vatRate}%)</span
+							>
+							<div class="flex items-center gap-2">
 								<PriceTag
 									currency={data.product.price.currency}
-									class="text-md font-semibold truncate max-w-full {data.discount
-										? 'line-through'
-										: ''}"
+									class={data.discount?.mode === 'percentage'
+										? 'text-base line-through text-gray-400'
+										: 'text-lg'}
 									short={!!data.discount}
 									amount={unitPrice}
 									main
 								/>
-								<span class="font-semibold lg:contents hidden">{t('product.vatExcluded')}</span>
 								{#if data.discount?.mode === 'percentage'}
+									{#if data.discount.showBadge !== false}
+										<span
+											class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+											>-{data.discount.percentage}%</span
+										>
+									{/if}
 									<PriceTag
 										currency={data.product.price.currency}
-										class="text-2xl lg:text-4xl truncate max-w-full"
+										class="text-lg"
 										short
 										amount={finalPrice}
 										main
@@ -633,26 +660,31 @@
 							</div>
 							<PriceTag
 								currency={data.product.price.currency}
-								amount={finalPrice}
+								amount={data.discount?.mode === 'percentage' ? finalPrice : unitPrice}
 								secondary
-								class="text-md"
+								class="text-sm"
 							/>
-						</div>
-						<span class="font-semibold contents lg:hidden">{t('product.vatExcluded')}</span>
+						{/if}
 					</div>
 				{:else}
-					<div class="flex gap-2 lg:flex-col lg:items-start items-center justify-between">
-						<div class="flex gap-4">
+					{@const showStrikeThrough =
+						data.discount?.mode === 'percentage' && data.discount.showBadge !== false}
+					<div class="flex flex-col gap-1 lg:items-start">
+						<div class="flex items-baseline gap-3">
 							<PriceTag
 								currency={data.product.price.currency}
-								class="text-2xl lg:text-4xl truncate max-w-full {data.discount
-									? 'line-through'
+								class="text-2xl lg:text-4xl truncate max-w-full {showStrikeThrough
+									? 'line-through text-gray-400'
 									: ''}"
-								short={!!data.discount}
+								short={showStrikeThrough}
 								amount={unitPrice}
 								main
 							/>
-							{#if data.discount?.mode === 'percentage'}
+							{#if showStrikeThrough}
+								<span
+									class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+									>-{data.discount?.mode === 'percentage' ? data.discount.percentage : 0}%</span
+								>
 								<PriceTag
 									currency={data.product.price.currency}
 									class="text-2xl lg:text-4xl truncate max-w-full"
@@ -664,11 +696,11 @@
 						</div>
 						<PriceTag
 							currency={data.product.price.currency}
-							amount={finalPrice}
+							amount={showStrikeThrough ? finalPrice : unitPrice}
 							secondary
-							class="text-xl"
+							class="text-base"
 						/>
-						<span class="font-semibold">{t('product.vatExcluded')}</span>
+						<span class="font-semibold text-sm">{t('product.vatExcluded')}</span>
 					</div>
 				{/if}
 
@@ -687,7 +719,7 @@
 					</h3>
 				{/if}
 
-				{#if data.discount && data.discount.mode === 'percentage' && !data.product.hideDiscountExpiration}
+				{#if data.discount && data.discount.mode === 'percentage' && !data.product.hideDiscountExpiration && data.discount.showExpirationBanner}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
 						{#if timeDifference === null}

@@ -10,6 +10,13 @@ import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
 import { applyResolvedStock } from '$lib/server/product.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
+import {
+	collectUserAddresses,
+	getActivePercentageDiscounts,
+	isAuthenticated,
+	selectBestDiscount,
+	webChannelForUser
+} from '$lib/server/discount';
 import { zodNpub } from '$lib/server/nostr.js';
 import type { JsonObject } from 'type-fest';
 import { rateLimit } from '$lib/server/rateLimit.js';
@@ -85,17 +92,74 @@ export async function load({ parent, locals }) {
 		)
 	]);
 
-	let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
-
-	for (const item of parentData.cart.items ?? []) {
-		if (item.product.paymentMethods) {
-			methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
-		}
-	}
+	const initialMethods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
+	// Each item with explicit paymentMethods narrows the available methods (intersection)
+	const methods = (parentData.cart.items ?? []).reduce(
+		(acc, item) =>
+			item.product.paymentMethods
+				? acc.filter((m) => item.product.paymentMethods?.includes(m))
+				: acc,
+		initialMethods
+	);
 	const forceContentVersion =
 		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
 			? 'employee'
 			: undefined;
+
+	// Precompute auto discount per payment method so the frontend can switch live
+	const activeDiscounts = await getActivePercentageDiscounts();
+	const paidSubs = await collections.paidSubscriptions
+		.find({ ...userQuery(userIdentifier(locals)), paidUntil: { $gt: new Date() } })
+		.toArray();
+	const user = userIdentifier(locals);
+	const discountItemsForEval = cartItemsWithResolvedStock.map((i) => ({
+		product: i.product,
+		quantity: i.quantity,
+		...(i.customPrice && { customPrice: i.customPrice })
+	}));
+	const baseDiscountContext = {
+		userSubscriptionIds: paidSubs.map((s) => s.productId),
+		promoCode: parentData.cart.promoCode,
+		channel: webChannelForUser(locals.user?.hasPosOptions),
+		userContactAddresses: collectUserAddresses(user),
+		cartItems: cartItemsWithResolvedStock.map((i) => ({
+			productId: i.product._id,
+			quantity: i.quantity,
+			tagIds: i.product.tagIds
+		})),
+		isLoggedIn: isAuthenticated(user)
+	};
+	// Countries that can influence discount eligibility, split by condition axis.
+	// Any other country produces the same result (condition fails), so we only vary these.
+	// '' sentinel = "country not relevant to this axis".
+	const relevantShipCountries = [
+		...new Set(activeDiscounts.flatMap((d) => (d.deliveryCountry ? [d.deliveryCountry] : [])))
+	];
+	const relevantBillCountries = [
+		...new Set(activeDiscounts.flatMap((d) => (d.billingCountry ? [d.billingCountry] : [])))
+	];
+	const shipKeys: Array<CountryAlpha2 | ''> = ['', ...relevantShipCountries];
+	const billKeys: Array<CountryAlpha2 | ''> = ['', ...relevantBillCountries];
+
+	// Key format: `${ship}|${bill}|${method}`. Frontend normalizes each chosen country to ''
+	// unless it appears in the corresponding relevant list, then looks up the precomputed best.
+	const discountByContext: Record<string, Record<string, number>> = Object.fromEntries(
+		shipKeys.flatMap((ship) =>
+			billKeys.flatMap((bill) =>
+				methods.flatMap((method) => {
+					const best = selectBestDiscount(activeDiscounts, discountItemsForEval, {
+						...baseDiscountContext,
+						...(ship && { deliveryCountry: ship }),
+						...(bill && { billingCountry: bill }),
+						paymentMethod: method
+					});
+					return best
+						? [[`${ship}|${bill}|${method}`, Object.fromEntries(best.discountByProduct)]]
+						: [];
+				})
+			)
+		)
+	);
 
 	const posSubtypes = await collections.posPaymentSubtypes
 		.find({ disabled: { $ne: true } })
@@ -112,6 +176,9 @@ export async function load({ parent, locals }) {
 
 	return {
 		paymentMethods: methods,
+		discountByContext,
+		relevantShipCountries,
+		relevantBillCountries,
 		reportingTags,
 		emailsEnabled: isEmailConfigured(),
 		collectIPOnDeliverylessOrders: runtimeConfig.collectIPOnDeliverylessOrders,
@@ -522,6 +589,8 @@ export const actions = {
 						}
 					},
 					cart,
+					promoCode: cart.promoCode,
+					channel: webChannelForUser(locals.user?.hasPosOptions),
 					shippingAddress: shippingInfo?.shipping,
 					billingAddress: billingInfo?.billing || shippingInfo?.shipping,
 					userVatCountry: vatCountry,

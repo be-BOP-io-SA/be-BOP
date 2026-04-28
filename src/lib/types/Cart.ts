@@ -33,6 +33,7 @@ export interface Cart extends Timestamps {
 		internalNote?: { value: string; updatedAt: Date; updatedById?: User['_id'] };
 		chosenVariations?: Record<string, string>;
 	}>;
+	promoCode?: string;
 	orderTabSlug?: string;
 	orderTabId?: ObjectId;
 	splitMode?: 'items' | 'shares';

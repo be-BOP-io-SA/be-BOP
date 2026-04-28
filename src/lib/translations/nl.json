@@ -29,7 +29,7 @@
 	"cart": {
 		"cta": {
 			"checkout": "Uitchecken",
-			"discardItem": "Weggooien",
+			"discardItem": "Verwijderen",
 			"view": "Bekijk winkelwagen"
 		},
 		"discount": {
@@ -44,6 +44,15 @@
 			"validate": "Bevestigen",
 			"customPercentPlaceholder": "bijv. 15",
 			"customAmountPlaceholder": "bijv. 5,00"
+		},
+		"promo": {
+			"question": "Heb je een promocode?",
+			"placeholder": "Promocode",
+			"apply": "Toepassen",
+			"applied": "Code {code} toegepast op je winkelwagen",
+			"remove": "Mijn promocode verwijderen?",
+			"invalid": "Promocode niet gevonden of niet toepasbaar op je bestelling.",
+			"rateLimited": "Te veel mislukte pogingen. Probeer het later opnieuw."
 		},
 		"empty": "Winkelwagen is leeg",
 		"fillProductAlias": "Productalias invullen",
@@ -888,6 +897,7 @@
 		},
 		"variationPriceLabel": "Variatie Prijs",
 		"vatExcluded": "Exclusief BTW",
+		"vatExcludedEstimate": "Geschatte prijs excl. btw",
 		"vatIncluded": "Geschatte prijs inclusief belasting"
 	},
 	"schedule": {

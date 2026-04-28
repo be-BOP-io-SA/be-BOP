@@ -16,33 +16,62 @@ import { error, redirect } from '@sveltejs/kit';
 import { subDays, parseISO, isValid } from 'date-fns';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
+import {
+	collectUserAddresses,
+	discountTargetsProduct,
+	evaluateDiscountConditions,
+	getActivePercentageDiscounts,
+	isAuthenticated
+} from '$lib/server/discount';
+import type { Discount } from '$lib/types/Discount';
 
-async function fetchApplicableDiscount(productId: string, userSubscriptionIds: string[]) {
-	return collections.discounts.findOne(
+async function fetchApplicableDiscount(
+	productId: string,
+	productTagIds: string[],
+	userSubscriptionIds: string[],
+	user?: UserIdentifier | null
+) {
+	// 1. Existing: subscription-based lookup. Discount applies if product matches by id, by tag,
+	//    or the discount targets the whole catalog.
+	const productTargetMatch = [
+		{ wholeCatalog: true },
+		{ productIds: productId },
+		...(productTagIds.length ? [{ requiredTagIds: { $in: productTagIds } }] : [])
+	];
+	const subscriptionDiscount = await collections.discounts.findOne(
 		{
-			$or: [{ wholeCatalog: true }, { productIds: productId }],
-			subscriptionIds: { $in: userSubscriptionIds },
-			beginsAt: {
-				$lt: new Date()
-			},
-			mode: 'percentage',
 			$and: [
-				{
-					$or: [
-						{
-							endsAt: { $gt: new Date() }
-						},
-						{
-							endsAt: null
-						}
-					]
-				}
-			]
+				{ $or: productTargetMatch },
+				{ $or: [{ endsAt: { $gt: new Date() } }, { endsAt: null }] }
+			],
+			subscriptionIds: { $in: userSubscriptionIds.length ? userSubscriptionIds : ['__none__'] },
+			beginsAt: { $lt: new Date() },
+			mode: 'percentage'
 		},
-		{
-			sort: { percentage: -1 }
-		}
+		{ sort: { percentage: -1 } }
 	);
+
+	if (subscriptionDiscount) {
+		return subscriptionDiscount;
+	}
+
+	// 2. Auto discounts (condition-based, no subscription needed)
+	const activeDiscounts = await getActivePercentageDiscounts();
+	const applicable = activeDiscounts
+		.filter((d) => discountTargetsProduct(d, { _id: productId, tagIds: productTagIds }))
+		.filter((d) =>
+			evaluateDiscountConditions(d, {
+				userSubscriptionIds,
+				channel: 'web',
+				cartItems: [{ productId, quantity: 1, tagIds: productTagIds }],
+				userContactAddresses: collectUserAddresses(user),
+				isLoggedIn: isAuthenticated(user)
+			})
+		)
+		.filter((d): d is Extract<Discount, { mode: 'percentage' }> => d.mode === 'percentage')
+		.sort((a, b) => b.percentage - a.percentage);
+
+	return applicable[0] ?? null;
 }
 
 async function fetchProduct(
@@ -83,6 +112,7 @@ async function fetchProduct(
 	| 'bookingSpec'
 	| 'vatProfileId'
 	| 'stockReference'
+	| 'tagIds'
 > | null> {
 	return collections.products.findOne<ReturnType<Awaited<typeof fetchProduct>>>(
 		{ _id: productId },
@@ -132,7 +162,8 @@ async function fetchProduct(
 				shipping: 1,
 				bookingSpec: 1,
 				vatProfileId: 1,
-				stockReference: 1
+				stockReference: 1,
+				tagIds: 1
 			}
 		}
 	);
@@ -209,12 +240,12 @@ export const load = async ({ params, parent, locals }) => {
 		.filter((idAndCount) => idAndCount[0] === productId)
 		.reduce((acc, idAndCount) => acc + idAndCount[1], 0);
 	const freeProductsAvailable = totalFreeProducts - freeProductsInCart;
-	const discount = userSubscriptions.length
-		? await fetchApplicableDiscount(
-				productId,
-				userSubscriptions.map((sub) => sub.productId)
-		  )
-		: null;
+	const discount = await fetchApplicableDiscount(
+		productId,
+		product.tagIds ?? [],
+		userSubscriptions.map((sub) => sub.productId),
+		userIdentifier(locals)
+	);
 
 	const vatRate = computeVatRate({
 		productVatProfileId: product.vatProfileId,

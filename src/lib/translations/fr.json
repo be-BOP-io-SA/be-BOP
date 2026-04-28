@@ -29,7 +29,7 @@
 	"cart": {
 		"cta": {
 			"checkout": "Commander",
-			"discardItem": "Supprimer",
+			"discardItem": "Retirer",
 			"view": "Voir le panier"
 		},
 		"discount": {
@@ -44,6 +44,15 @@
 			"validate": "Valider",
 			"customPercentPlaceholder": "par ex. 15",
 			"customAmountPlaceholder": "par ex. 5,00"
+		},
+		"promo": {
+			"question": "Un code promotionnel ?",
+			"placeholder": "Code promotionnel",
+			"apply": "Appliquer",
+			"applied": "Code {code} appliqué à votre panier",
+			"remove": "Supprimer mon code promotionnel ?",
+			"invalid": "Code promotionnel inexistant ou non-applicable à votre commande.",
+			"rateLimited": "Trop de tentatives échouées. Veuillez réessayer plus tard."
 		},
 		"empty": "Le panier est vide",
 		"fillProductAlias": "Remplir l'alias du produit",
@@ -888,6 +897,7 @@
 		},
 		"variationPriceLabel": "Variation de prix",
 		"vatExcluded": "Hors TVA",
+		"vatExcludedEstimate": "Prix estimé hors TVA",
 		"vatIncluded": "Prix TTC estimé"
 	},
 	"schedule": {

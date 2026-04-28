@@ -25,6 +25,7 @@ declare global {
 				role?: Role;
 				alias?: string;
 				hasPosOptions?: boolean;
+				recoveryEmail?: string;
 			};
 			email?: string;
 			npub?: string;

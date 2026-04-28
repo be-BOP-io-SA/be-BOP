@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import CartQuantity from '$lib/components/CartQuantity.svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import { bech32 } from 'bech32';
@@ -27,6 +26,7 @@
 		(data.personalInfoConnected?.address?.country ?? data.countryCode) || data.vatCountry || 'FR';
 	const digitalCountry = data.countryCode || data.vatCountry || 'FR';
 	let country = defaultShippingCountry;
+	let billingCountry = defaultShippingCountry;
 
 	let isFreeVat = false;
 	let addDiscount = false;
@@ -108,6 +108,29 @@
 		: paymentMethods[0];
 
 	$: items = data.cart.items;
+	// Live discount preview: payment method, shipping country, and billing country feed into a
+	// context key that maps to the best auto-discount precomputed on the server.
+	// Manual POS per-item discount (marked by discountJustification) always wins over auto.
+	$: billingVisible =
+		showBillingInfo || (isDigital && data.isBillingAddressMandatory) || isProfessionalOrder;
+	// When billing section is hidden, billing falls back to shipping (matches orders.ts submit logic)
+	$: effectiveBillingCountry = billingVisible ? billingCountry : country;
+	$: shipKey = data.relevantShipCountries?.includes(country) ? country : '';
+	$: billKey = data.relevantBillCountries?.includes(effectiveBillingCountry)
+		? effectiveBillingCountry
+		: '';
+	$: contextDiscountMap = paymentMethod
+		? data.discountByContext?.[`${shipKey}|${billKey}|${paymentMethod}`]
+		: undefined;
+	$: effectiveItems = items.map((item) => {
+		const isPosManual = !!item.discountJustification;
+		if (isPosManual) {
+			return item;
+		}
+		const dynamicDiscount = contextDiscountMap?.[item.product._id];
+		const discountPercentage = dynamicDiscount ?? item.discountPercentage;
+		return discountPercentage !== undefined ? { ...item, discountPercentage } : item;
+	});
 	$: orderDeliveryFees = computeDeliveryFees(
 		UNDERLYING_CURRENCY,
 		country,
@@ -128,28 +151,34 @@
 
 	// A PoS operator may apply different discounts, such as on-site promotions or free delivery;
 	// thus, the price info is computed from scratch to reflect the correct value.
-	// Compute price WITHOUT discount for validation purposes
+	// Shared VAT config — duplicating it across 3 computePriceInfo calls causes drift bugs.
+	// deliveryFees stays inline so contextual typing keeps the Currency literal.
+	$: vatBaseConfig = {
+		bebopCountry: data.vatCountry,
+		freeProductUnits: data.cart.freeProductUnits,
+		userCountry: isDigital ? digitalCountry : country,
+		vatExempted: data.vatExempted,
+		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
+		vatSingleCountry: data.vatSingleCountry,
+		vatProfiles: data.vatProfiles
+	};
+	// Without discount — for validation purposes
 	$: priceInfoWithoutDiscount = computePriceInfo(items, {
-		bebopCountry: data.vatCountry,
+		...vatBaseConfig,
 		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
-		discount: undefined,
-		freeProductUnits: data.cart.freeProductUnits,
-		userCountry: isDigital ? digitalCountry : country,
-		vatExempted: data.vatExempted,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatProfiles: data.vatProfiles
+		discount: undefined
 	});
-	$: priceInfo = computePriceInfo(items, {
-		bebopCountry: data.vatCountry,
+	// basePriceInfo: used by nothingToPay/paymentMethods filter (breaks reactive cycle)
+	$: basePriceInfo = computePriceInfo(items, {
+		...vatBaseConfig,
 		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
-		discount: possiblyOutOfBoundsDiscount,
-		freeProductUnits: data.cart.freeProductUnits,
-		userCountry: isDigital ? digitalCountry : country,
-		vatExempted: data.vatExempted,
-		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
-		vatSingleCountry: data.vatSingleCountry,
-		vatProfiles: data.vatProfiles
+		discount: possiblyOutOfBoundsDiscount
+	});
+	// priceInfo: used for display with dynamic discount from payment method
+	$: priceInfo = computePriceInfo(effectiveItems, {
+		...vatBaseConfig,
+		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		discount: possiblyOutOfBoundsDiscount
 	});
 	$: isDigital = items.every((item) => !item.product.shipping);
 
@@ -211,14 +240,14 @@
 
 	$: nothingToPay =
 		isFreeOfCharge ||
-		toCurrency(data.currencies.main, priceInfo.totalPriceWithVat, priceInfo.currency) <= 0;
+		toCurrency(data.currencies.main, basePriceInfo.totalPriceWithVat, basePriceInfo.currency) <= 0;
 	$: paymentMethods = nothingToPay
 		? ['free']
 		: data.paymentMethods.filter(
 				(method) =>
 					method !== 'free' &&
 					(method === 'bitcoin'
-						? toCurrency('SAT', priceInfo.partialPriceWithVat, priceInfo.currency) >=
+						? toCurrency('SAT', basePriceInfo.partialPriceWithVat, basePriceInfo.currency) >=
 						  MIN_SATOSHIS_FOR_BITCOIN_PAYMENT
 						: true)
 		  );
@@ -485,12 +514,7 @@
 
 					<label class="form-label col-span-3">
 						{t('address.country')}
-						<select
-							name="billing.country"
-							class="form-input"
-							required
-							value={defaultShippingCountry}
-						>
+						<select name="billing.country" class="form-input" required bind:value={billingCountry}>
 							{#each sortedCountryCodes() as code}
 								<option value={code}>{countryName(code)}</option>
 							{/each}
@@ -730,7 +754,7 @@
 					>
 					<p>{t('checkout.numProducts', { count: data.cart.items.length ?? 0 })}</p>
 				</div>
-				{#each items as item, i}
+				{#each effectiveItems as item, i}
 					{@const price = priceInfo.perItem[i]}
 					<form
 						method="POST"
@@ -769,7 +793,9 @@
 									  Object.entries(item.chosenVariations)
 											.map(([key, value]) => item.product.variationLabels?.values[key][value])
 											.join(' - ')
-									: item.product.name}
+									: item.product.name}{#if item.quantity > 1 && !item.product.bookingSpec}<span
+										class="text-gray-500 ml-1">× {item.quantity}</span
+									>{/if}
 							</h3>
 						</a>
 
@@ -809,44 +835,36 @@
 											}).formatRange(item.booking.start, item.booking.end)}
 										{/if}
 									</p>
-								{:else}
-									<div>
-										{#if 0}
-											<CartQuantity {item} sm />
-										{:else if item.quantity > 1}
-											{t('cart.quantity')}: {item.quantity}
-										{/if}
-									</div>
 								{/if}
 							</div>
 
 							<div class="flex flex-col ml-auto items-end justify-center">
-								<div class="flex gap-2 items-center">
-									{#if item.discountPercentage}
+								{#if item.discountPercentage}
+									<div class="flex gap-2 items-center">
+										<PriceTag
+											class="text-lg truncate line-through text-gray-500"
+											amount={(price.amountWithoutDiscount * (item.depositPercentage ?? 100)) / 100}
+											currency={price.currency}
+											main
+										/>
 										<span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
 											-{Number.isInteger(item.discountPercentage)
 												? item.discountPercentage
 												: item.discountPercentage.toFixed(1)}%
 										</span>
-										<PriceTag
-											class="text-2xl truncate line-through"
-											amount={(price.amountWithoutDiscount * (item.depositPercentage ?? 100)) / 100}
-											currency={price.currency}
-											main
-										/>
-									{/if}
-									<PriceTag
-										class="text-2xl truncate"
-										amount={(price.amount * (item.depositPercentage ?? 100)) / 100}
-										currency={price.currency}
-										main
-										>{item.depositPercentage
-											? `(${(item.depositPercentage / 100).toLocaleString($locale, {
-													style: 'percent'
-											  })})`
-											: ''}</PriceTag
-									>
-								</div>
+									</div>
+								{/if}
+								<PriceTag
+									class="text-2xl truncate"
+									amount={(price.amount * (item.depositPercentage ?? 100)) / 100}
+									currency={price.currency}
+									main
+									>{item.depositPercentage
+										? `(${(item.depositPercentage / 100).toLocaleString($locale, {
+												style: 'percent'
+										  })})`
+										: ''}</PriceTag
+								>
 								<PriceTag
 									amount={(price.amount * (item.depositPercentage ?? 100)) / 100}
 									currency={price.currency}
