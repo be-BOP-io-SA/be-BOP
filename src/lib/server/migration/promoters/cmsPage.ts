@@ -32,11 +32,19 @@ export const cmsPagePromoter: MigrationPromoter = {
 
 		const id = await pickAvailableId(normalized.slug ?? '');
 		const now = new Date();
+		const rawContent = normalized.content ?? '';
+		// Wrap WordPress-imported content under `.wp-imported` so the scoped
+		// WP block CSS (built from @wordpress/block-library, see
+		// scripts/build-wp-imported-css.mjs) can style it without polluting
+		// the rest of the be-BOP page.
+		const wrappedContent = rawContent
+			? `<div class="wp-imported">\n${rawContent}\n</div>`
+			: '';
 		const cmsPage: CMSPage = {
 			_id: id,
 			title: normalized.title ?? id,
 			shortDescription: normalized.excerpt ?? '',
-			content: normalized.content ?? '',
+			content: wrappedContent,
 			fullScreen: false,
 			maintenanceDisplay: false,
 			createdAt: now,
