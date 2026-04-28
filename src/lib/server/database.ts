@@ -54,6 +54,9 @@ import type { OrderTab } from '$lib/types/OrderTab';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import type { PosSession } from '$lib/types/PosSession';
 import type { PendingZap } from '$lib/types/PendingZap';
+import type { MigrationJob } from '$lib/types/MigrationJob';
+import type { MigrationStagedObject } from '$lib/types/MigrationStagedObject';
+import type { MigrationSource } from '$lib/types/MigrationSource';
 
 // Bigger than the default 10, helpful with MongoDB errors
 Error.stackTraceLimit = 100;
@@ -118,6 +121,9 @@ const genCollection = () => ({
 	posPaymentSubtypes: db.collection<PosPaymentSubtype>('posPaymentSubtypes'),
 	posSessions: db.collection<PosSession>('posSessions'),
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
+	migrationSources: db.collection<MigrationSource>('migration.sources'),
+	migrationJobs: db.collection<MigrationJob>('migration.jobs'),
+	migrationStagedObjects: db.collection<MigrationStagedObject>('migration.stagedObjects'),
 
 	errors: db.collection<unknown & { _id: ObjectId; url: string; method: string }>('errors')
 });
@@ -228,7 +234,12 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.posSessions, { closedAt: -1 }],
 	[collections.orderTabs, { slug: 1 }, { unique: true }],
 	[collections.pendingZaps, { processedAt: 1 }],
-	[collections.pendingZaps, { invoiceId: 1 }, { unique: true }]
+	[collections.pendingZaps, { invoiceId: 1 }, { unique: true }],
+	[collections.migrationSources, { createdAt: -1 }],
+	[collections.migrationSources, { connectorId: 1, label: 1 }, { unique: true }],
+	[collections.migrationJobs, { createdAt: -1 }],
+	[collections.migrationStagedObjects, { jobId: 1, type: 1 }],
+	[collections.migrationStagedObjects, { jobId: 1, source: 1, sourceId: 1 }, { unique: true }]
 ];
 
 export async function createIndexes() {
