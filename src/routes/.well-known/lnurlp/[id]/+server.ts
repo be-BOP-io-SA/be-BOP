@@ -75,9 +75,10 @@ export const GET = async ({ params, url }) => {
 			callback: `${url.origin}/lightning/pay?metadata=${encodeURIComponent(jwt)}`,
 			tag: 'payRequest',
 			// values in millisatoshis
-			minSendable: 1,
+			minSendable: 1000,
 			maxSendable: SATOSHIS_PER_BTC * 1000,
 			metadata,
+			commentAllowed: 280,
 			// NIP-57 Zaps
 			...(isNostrConfigured() && {
 				allowsNostr: true,
