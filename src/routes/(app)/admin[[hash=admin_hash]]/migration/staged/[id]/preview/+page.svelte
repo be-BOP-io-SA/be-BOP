@@ -1,0 +1,70 @@
+<script lang="ts">
+	export let data;
+
+	$: normalized = (data.staged.normalized ?? {}) as Record<string, unknown>;
+
+	function asString(v: unknown): string {
+		return typeof v === 'string' ? v : '';
+	}
+</script>
+
+<svelte:head>
+	<title>
+		Migration preview — {data.staged.type}
+		{data.staged.sourceId}
+	</title>
+</svelte:head>
+
+<main class="mx-auto max-w-4xl py-8 px-6">
+	<div class="text-sm text-gray-500 mb-4 border-b pb-2">
+		<strong>Migration preview</strong> — type
+		<span class="font-mono">{data.staged.type}</span> •
+		<span class="font-mono">{data.staged.sourceId}</span>
+		(this is a draft preview — not promoted yet)
+	</div>
+
+	{#if data.staged.type === 'cmsPage'}
+		<article>
+			<h1 class="text-4xl mb-2">{asString(normalized.title) || '(untitled)'}</h1>
+			{#if normalized.slug}
+				<p class="text-sm text-gray-500 mb-4">slug: {normalized.slug}</p>
+			{/if}
+			{#if normalized.excerpt}
+				<p class="text-lg italic mb-6">
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+					{@html asString(normalized.excerpt)}
+				</p>
+			{/if}
+			<div class="prose max-w-none">
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				{@html asString(normalized.content)}
+			</div>
+		</article>
+	{:else if data.staged.type === 'orphan' || !data.staged.normalized}
+		<p class="text-gray-500 italic">
+			This object has no normalized payload (orphan or unprocessed). Raw source dump below.
+		</p>
+		<pre class="text-xs bg-gray-100 p-3 overflow-auto mt-4">{JSON.stringify(
+				data.staged.raw,
+				null,
+				2
+			)}</pre>
+	{:else}
+		<p class="text-gray-500 italic">
+			No specialized preview for type
+			<span class="font-mono">{data.staged.type}</span> yet — showing normalized fields.
+		</p>
+		<table class="w-full mt-4">
+			<tbody>
+				{#each Object.entries(normalized) as [key, value]}
+					<tr class="border-b">
+						<td class="align-top font-semibold pr-4 py-2 w-48">{key}</td>
+						<td class="font-mono whitespace-pre-wrap break-words text-sm py-2">
+							{typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	{/if}
+</main>
