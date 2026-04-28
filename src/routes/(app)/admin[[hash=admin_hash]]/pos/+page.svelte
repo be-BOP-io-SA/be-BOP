@@ -370,5 +370,7 @@
 	</label>
 	<input type="hidden" name="posTabGroups" bind:value={serializedTabGroups} />
 
-	<input type="submit" value="Update" class="btn btn-blue self-start" />
+	<div>
+		<input type="submit" value="Update" class="btn btn-blue self-start" />
+	</div>
 </form>
