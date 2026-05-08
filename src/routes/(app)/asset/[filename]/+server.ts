@@ -3,8 +3,16 @@ import { createHash } from 'crypto';
 import fs from 'fs';
 import { join } from 'path';
 
+const assetDir = join(rootDir, 'src/lib/assets');
+const allowedAssets: ReadonlySet<string> = new Set(
+	fs.readdirSync(assetDir).filter((name) => fs.statSync(join(assetDir, name)).isFile())
+);
+
 export async function GET({ params, request }) {
-	const assetDir = join(rootDir, 'src/lib/assets');
+	if (!allowedAssets.has(params.filename)) {
+		return new Response('Asset not found', { status: 404 });
+	}
+
 	const filePath = join(assetDir, params.filename);
 
 	try {
