@@ -18,6 +18,7 @@ import {
 import { validateEmailOrNpub } from '$lib/server/nostr.js';
 import { renewSessionId } from '$lib/server/user.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
+import { SESSION_COOKIE_NAME } from '$lib/server/cookies';
 
 export const load = async ({ url }) => {
 	const token = url.searchParams.get('token');
@@ -172,7 +173,7 @@ export const actions = {
 		await collections.sessions.deleteOne({ sessionId: event.locals.sessionId });
 
 		event.locals.sessionId = crypto.randomUUID();
-		event.cookies.delete('bootik-session', {
+		event.cookies.delete(SESSION_COOKIE_NAME, {
 			path: '/'
 		});
 	}

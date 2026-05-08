@@ -40,7 +40,7 @@ import {
 } from '$lib/translations';
 import { addTranslations } from '$lib/i18n';
 import { filterNullish } from '$lib/utils/fillterNullish';
-import { refreshSessionCookie } from '$lib/server/cookies';
+import { refreshSessionCookie, SESSION_COOKIE_NAME } from '$lib/server/cookies';
 import { renewSessionId } from '$lib/server/user';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { rateLimit } from '$lib/server/rateLimit';
@@ -181,7 +181,7 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	const token = event.cookies.get('bootik-session');
+	const token = event.cookies.get(SESSION_COOKIE_NAME);
 
 	const secretSessionId = token || crypto.randomUUID();
 	event.locals.sessionId = await sha256(secretSessionId);
