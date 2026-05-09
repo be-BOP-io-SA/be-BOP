@@ -26,6 +26,21 @@
 		"agreement": "I have read the access conditions, fulfill them and respect them",
 		"navigate": "Continue browsing"
 	},
+	"booking": {
+		"exportIcal": "Export iCal",
+		"listTitle": "Your bookings",
+		"noBookings": "You have no bookings yet.",
+		"noUpcoming": "No upcoming bookings.",
+		"showCanceled": "Show canceled bookings",
+		"showPast": "Show past bookings",
+		"sort": {
+			"dateAsc": "Booking date (oldest first)",
+			"dateDesc": "Booking date (newest first)",
+			"label": "Sort by",
+			"orderNumberAsc": "Order number (ascending)",
+			"orderNumberDesc": "Order number (descending)"
+		}
+	},
 	"cart": {
 		"cta": {
 			"checkout": "Checkout",

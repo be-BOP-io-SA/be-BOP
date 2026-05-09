@@ -26,6 +26,21 @@
 		"agreement": "Li e cumpro as condições de acesso e respeito-as",
 		"navigate": "Continuar a navegar"
 	},
+	"booking": {
+		"exportIcal": "Exportar iCal",
+		"listTitle": "As suas reservas",
+		"noBookings": "Ainda não tem reservas.",
+		"noUpcoming": "Sem reservas próximas.",
+		"showCanceled": "Mostrar reservas canceladas",
+		"showPast": "Mostrar reservas passadas",
+		"sort": {
+			"dateAsc": "Data da reserva (mais antigas primeiro)",
+			"dateDesc": "Data da reserva (mais recentes primeiro)",
+			"label": "Ordenar por",
+			"orderNumberAsc": "Número da encomenda (ascendente)",
+			"orderNumberDesc": "Número da encomenda (descendente)"
+		}
+	},
 	"cart": {
 		"cta": {
 			"checkout": "Finalizar compra",

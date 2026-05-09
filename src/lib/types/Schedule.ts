@@ -109,6 +109,11 @@ export function scheduleToProductId(scheduleId: string) {
 	return match[1] as Product['_id'];
 }
 
+export function tryScheduleToProductId(scheduleId: string): Product['_id'] | null {
+	const match = scheduleId.match(/product:(.+)/);
+	return match ? (match[1] as Product['_id']) : null;
+}
+
 export function minutesToTime(minutes: number) {
 	const hours = Math.floor(minutes / 60);
 	const remainingMinutes = minutes % 60;

@@ -26,6 +26,21 @@
 		"agreement": "J'ai pris connaissance des conditions d'accès, les remplis et les respecte.",
 		"navigate": "Continuer la navigation"
 	},
+	"booking": {
+		"exportIcal": "Exporter iCal",
+		"listTitle": "Vos réservations",
+		"noBookings": "Vous n'avez pas encore de réservations.",
+		"noUpcoming": "Aucune réservation à venir.",
+		"showCanceled": "Afficher les réservations annulées",
+		"showPast": "Afficher les réservations passées",
+		"sort": {
+			"dateAsc": "Date de réservation (les plus anciennes d'abord)",
+			"dateDesc": "Date de réservation (les plus récentes d'abord)",
+			"label": "Trier par",
+			"orderNumberAsc": "Numéro de commande (croissant)",
+			"orderNumberDesc": "Numéro de commande (décroissant)"
+		}
+	},
 	"cart": {
 		"cta": {
 			"checkout": "Commander",
