@@ -26,6 +26,21 @@
 		"agreement": "Ich habe die Zugangsbedingungen gelesen, erfülle sie und respektiere sie",
 		"navigate": "Weiter stöbern"
 	},
+	"booking": {
+		"exportIcal": "iCal exportieren",
+		"listTitle": "Ihre Buchungen",
+		"noBookings": "Sie haben noch keine Buchungen.",
+		"noUpcoming": "Keine anstehenden Buchungen.",
+		"showCanceled": "Stornierte Buchungen anzeigen",
+		"showPast": "Vergangene Buchungen anzeigen",
+		"sort": {
+			"dateAsc": "Buchungsdatum (älteste zuerst)",
+			"dateDesc": "Buchungsdatum (neueste zuerst)",
+			"label": "Sortieren nach",
+			"orderNumberAsc": "Bestellnummer (aufsteigend)",
+			"orderNumberDesc": "Bestellnummer (absteigend)"
+		}
+	},
 	"cart": {
 		"cta": {
 			"checkout": "Zur Kasse",

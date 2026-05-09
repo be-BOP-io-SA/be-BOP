@@ -26,6 +26,21 @@
 		"agreement": "Ik heb de toegangsvoorwaarden gelezen, voldoe eraan en respecteer ze",
 		"navigate": "Vervolg de navigatie"
 	},
+	"booking": {
+		"exportIcal": "iCal exporteren",
+		"listTitle": "Uw boekingen",
+		"noBookings": "U heeft nog geen boekingen.",
+		"noUpcoming": "Geen aankomende boekingen.",
+		"showCanceled": "Geannuleerde boekingen tonen",
+		"showPast": "Voorbije boekingen tonen",
+		"sort": {
+			"dateAsc": "Boekingsdatum (oudste eerst)",
+			"dateDesc": "Boekingsdatum (nieuwste eerst)",
+			"label": "Sorteren op",
+			"orderNumberAsc": "Bestelnummer (oplopend)",
+			"orderNumberDesc": "Bestelnummer (aflopend)"
+		}
+	},
 	"cart": {
 		"cta": {
 			"checkout": "Uitchecken",
