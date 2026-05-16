@@ -303,6 +303,8 @@ export async function load(params) {
 			amount: deliveryFees || 0,
 			currency: UNDERLYING_CURRENCY
 		},
+		deliveryFeesVatProfileId: runtimeConfig.deliveryFees.vatProfileId,
+		deliveryFeesVatIncluded: runtimeConfig.deliveryFees.vatIncludedReference,
 		freeProductUnits: cartFreeProductUnits,
 		userCountry: locals.countryCode,
 		vatExempted: runtimeConfig.vatExempted,

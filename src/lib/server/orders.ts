@@ -868,6 +868,8 @@ export async function createOrder(
 	const priceInfo = computePriceInfo(items, {
 		bebopCountry: runtimeConfig.vatCountry,
 		deliveryFees: shippingPrice,
+		deliveryFeesVatProfileId: runtimeConfig.deliveryFees.vatProfileId,
+		deliveryFeesVatIncluded: runtimeConfig.deliveryFees.vatIncludedReference,
 		discount: discountInfo,
 		freeProductUnits: await freeProductsForUser(
 			params.user,

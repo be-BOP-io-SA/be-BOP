@@ -2,7 +2,6 @@
 	import {
 		CURRENCY_UNIT,
 		computePriceForStorage,
-		readStoredPrice,
 		sortCurrencies,
 		currenciesToSelectOptions
 	} from '$lib/types/Currency';
@@ -20,6 +19,7 @@
 	import type { LayoutServerData } from '../../routes/(app)/$types';
 	import DeliveryFeesSelector from './DeliveryFeesSelector.svelte';
 	import CurrencyLabel from './CurrencyLabel.svelte';
+	import PriceFieldsWithVat from './PriceFieldsWithVat.svelte';
 	import Editor from '@tinymce/tinymce-svelte';
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 	import {
@@ -32,12 +32,14 @@
 	import type { ProductActionSettings } from '$lib/types/ProductActionSettings';
 	import { preUploadPicture } from '$lib/types/Picture';
 	import { currencies } from '$lib/stores/currencies';
+	import { page } from '$app/stores';
 	import type { PojoObject } from '$lib/server/pojo';
 	import type { PaymentMethod } from '$lib/server/payment-methods';
 	import { useI18n } from '$lib/i18n';
 	import { typedFromEntries } from '$lib/utils/typedFromEntries';
 	import { type Day, dayList, productToScheduleId, type BookingSummary } from '$lib/types/Schedule';
 	import { formatDuration } from '$lib/utils/formatDuration';
+	import { computeVatRate } from '$lib/utils/vat';
 
 	const { t } = useI18n();
 
@@ -97,7 +99,6 @@
 	let restrictPaymentMethods = !!product.paymentMethods;
 	let vatProfileId = product.vatProfileId || '';
 	let formElement: HTMLFormElement;
-	let priceAmountElement: HTMLInputElement;
 	let variationInput: HTMLInputElement[] = [];
 	let disableDateChange = !isNew;
 	let displayPreorderCustomText = !!product.customPreorderText;
@@ -119,9 +120,8 @@
 		: 3;
 	let displayRawHTMLBefore = false;
 	let displayRawHTMLAfter = false;
-	let displayVATCalculator = false;
-	let priceAmountVATIncluded = product.price.amount;
-	let vatRate = 0;
+
+	let priceVatExcluded = product.price.amount;
 
 	// Currency options for Select component (sorted: priceRef → main → secondary → BTC/SAT → fiat A-Z)
 	const sortedCurrencies = sortCurrencies(
@@ -132,14 +132,23 @@
 	const allCurrenciesOptions = currenciesToSelectOptions(sortedCurrencies);
 	let selectedCurrency =
 		allCurrenciesOptions.find((c) => c.value === product.price.currency) || null;
+	let currency: import('$lib/types/Currency').Currency = product.price.currency;
 	$: if (selectedCurrency) {
-		product.price.currency = selectedCurrency.value;
+		currency = selectedCurrency.value;
 	}
-	$: product.price = computePriceForStorage(
-		(100 * priceAmountVATIncluded) / (100 + vatRate),
-		product.price.currency
-	);
-	$: displayPrecision = readStoredPrice(product.price).precision;
+
+	$: vatRate = computeVatRate({
+		productVatProfileId: vatProfileId || undefined,
+		vatProfiles,
+		bebopCountry: $page.data.vatCountry,
+		userCountry: $page.data.vatCountry,
+		vatSingleCountry: true
+	});
+	$: vatProfileLabel =
+		vatProfiles.find((p) => p._id === vatProfileId)?.name ?? 'No custom VAT profile';
+
+	$: product.price = computePriceForStorage(priceVatExcluded, currency);
+
 	if (product._id && isNew) {
 		product.name = product.name + ' (duplicate)';
 		product._id = generateId(product.name, false);
@@ -163,30 +172,34 @@
 		});
 		//--- end
 
+		const priceAmountInput = formElement.querySelector<HTMLInputElement>(
+			'input[name="priceAmount"]'
+		);
 		try {
 			if (
-				priceAmountElement.value &&
-				+priceAmountElement.value < CURRENCY_UNIT[product.price.currency] &&
+				priceAmountInput &&
+				priceAmountInput.value &&
+				+priceAmountInput.value < CURRENCY_UNIT[product.price.currency] &&
 				!product.payWhatYouWant &&
 				!product.free
 			) {
 				if (
-					parseInt(priceAmountElement.value) === 0 &&
+					parseInt(priceAmountInput.value) === 0 &&
 					!confirm('Do you want to save this product as free product? (current price == 0)')
 				) {
-					priceAmountElement.setCustomValidity(
+					priceAmountInput.setCustomValidity(
 						'Price must be greater than or equal to ' +
 							CURRENCY_UNIT[product.price.currency] +
 							' ' +
 							product.price.currency +
 							' or might be free'
 					);
-					priceAmountElement.reportValidity();
+					priceAmountInput.reportValidity();
 					event.preventDefault();
 					return;
 				}
-			} else {
-				priceAmountElement.setCustomValidity('');
+			} else if (priceAmountInput) {
+				priceAmountInput.setCustomValidity('');
 			}
 
 			const seen = new Set<string>();
@@ -413,82 +426,17 @@
 					{/if}
 				</label>
 
-				<div class="gap-4 flex flex-col md:flex-row">
-					<label class="w-full">
-						<span class="text-red-500">*</span> Price amount (VAT excluded)
-						<input
-							class="form-input"
-							type="number"
-							name="priceAmount"
-							placeholder="0.00"
-							step="any"
-							disabled={product.free}
-							value={product.price.amount
-								.toLocaleString('en', { maximumFractionDigits: 8 })
-								.replace(/,/g, '')}
-							bind:this={priceAmountElement}
-							on:input={() => priceAmountElement?.setCustomValidity('')}
-							required
-						/>
-					</label>
-
-					<label class="w-full">
-						<CurrencyLabel label="Price currency" />
-						<Select
-							items={allCurrenciesOptions}
-							searchable={true}
-							clearable={false}
-							bind:value={selectedCurrency}
-							on:change={() => priceAmountElement?.setCustomValidity('')}
-							class="form-input"
-						/>
-						<input type="hidden" name="priceCurrency" value={selectedCurrency?.value || ''} />
-					</label>
-				</div>
-
-				<!-- svelte-ignore a11y-invalid-attribute -->
-				<a
-					href="#"
-					class="text-blue-600 hover:text-blue-800 underline text-sm"
-					on:click|preventDefault={() => (displayVATCalculator = !displayVATCalculator)}
-				>
-					{displayVATCalculator ? 'Hide VAT calculator' : 'Show VAT calculator'}
-				</a>
-
-				{#if displayVATCalculator}
-					<div class="bg-gray-50 p-4 rounded-lg">
-						<div class="gap-4 flex flex-col md:flex-row">
-							<label class="w-full">
-								Price amount (VAT included)
-								<input
-									class="form-input"
-									type="number"
-									bind:value={priceAmountVATIncluded}
-									step="any"
-								/>
-							</label>
-							<label class="w-full">
-								VAT rate (%)
-								<input class="form-input" type="number" bind:value={vatRate} step="any" />
-							</label>
-							<label class="w-full">
-								Price amount (VAT excluded)
-								<input
-									class="form-input"
-									type="number"
-									value={product.price.amount
-										.toLocaleString('en', {
-											maximumFractionDigits: displayPrecision,
-											minimumFractionDigits: 0
-										})
-										.replace(/,/g, '')}
-									step="any"
-									readonly
-								/>
-							</label>
-						</div>
-					</div>
-				{/if}
+				<label class="w-full block">
+					<CurrencyLabel label="Price currency" />
+					<Select
+						items={allCurrenciesOptions}
+						searchable={true}
+						clearable={false}
+						bind:value={selectedCurrency}
+						class="form-input"
+					/>
+					<input type="hidden" name="priceCurrency" value={selectedCurrency?.value || ''} />
+				</label>
 
 				{#if vatProfiles.length}
 					<label class="form-label">
@@ -501,6 +449,14 @@
 						</select>
 					</label>
 				{/if}
+
+				<PriceFieldsWithVat
+					bind:priceVatExcluded
+					{currency}
+					{vatRate}
+					{vatProfileLabel}
+					disabled={product.free}
+				/>
 
 				{#if isNew && !duplicateFromId}
 					<label class="form-label">
@@ -650,13 +606,7 @@
 			</summary>
 			<div class="p-4 pt-0 space-y-4">
 				<label class="checkbox-label">
-					<input
-						class="form-checkbox"
-						type="checkbox"
-						bind:checked={product.free}
-						on:input={() => priceAmountElement?.setCustomValidity('')}
-						name="free"
-					/>
+					<input class="form-checkbox" type="checkbox" bind:checked={product.free} name="free" />
 					This is a free product
 				</label>
 
@@ -665,7 +615,6 @@
 						class="form-checkbox"
 						type="checkbox"
 						bind:checked={product.standalone}
-						on:input={() => priceAmountElement?.setCustomValidity('')}
 						name="standalone"
 						disabled={product.payWhatYouWant}
 					/>
@@ -677,7 +626,6 @@
 						class="form-checkbox"
 						type="checkbox"
 						bind:checked={product.payWhatYouWant}
-						on:input={() => priceAmountElement?.setCustomValidity('')}
 						name="payWhatYouWant"
 						disabled={product.type === 'subscription'}
 					/>
@@ -1814,14 +1762,7 @@
 		<!-- Form Actions -->
 		<div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
 			<div class="flex flex-wrap justify-between gap-3">
-				<button
-					type="submit"
-					class="btn btn-blue px-8 py-3 font-medium"
-					on:click={() => {
-						priceAmountElement?.setCustomValidity('');
-					}}
-					disabled={submitting}
-				>
+				<button type="submit" class="btn btn-blue px-8 py-3 font-medium" disabled={submitting}>
 					{#if submitting}
 						<svg
 							class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"

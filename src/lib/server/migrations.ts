@@ -6,6 +6,7 @@ import type { OrderPayment } from '$lib/types/Order';
 import { Lock } from './lock';
 import { ORIGIN } from '$lib/server/env-config';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
+import { CURRENCIES, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 
 const migrations = [
 	{
@@ -670,6 +671,29 @@ const migrations = [
 					createdAt: new Date(),
 					updatedAt: new Date()
 				})),
+				{ session }
+			);
+		}
+	},
+	{
+		_id: new ObjectId('6a0f4880e92e590e85af2535'),
+		name: 'Round product prices to integer for zero-decimal currencies (issue #2535)',
+		run: async (session: ClientSession) => {
+			// SAT excluded: crypto unit, already integer.
+			const ZERO_DECIMAL_CURRENCIES = CURRENCIES.filter(
+				(c) => FRACTION_DIGITS_PER_CURRENCY[c] === 0 && c !== 'SAT'
+			);
+
+			await collections.products.updateMany(
+				{ 'price.currency': { $in: ZERO_DECIMAL_CURRENCIES } },
+				[
+					{
+						$set: {
+							'price.amount': { $round: ['$price.amount', 0] },
+							'price.precision': 0
+						}
+					}
+				],
 				{ session }
 			);
 		}

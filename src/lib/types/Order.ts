@@ -28,13 +28,14 @@ export type Price = {
 	 * Number of decimal places for storing this price.
 	 *
 	 * **Optional for backwards compatibility** - when undefined, defaults to
-	 * FRACTION_DIGITS_PER_CURRENCY (2 for fiat, 8 for BTC).
+	 * FRACTION_DIGITS_PER_CURRENCY (per ISO 4217).
 	 *
 	 * New prices saved with storage precision will have this set to
-	 * STORAGE_FRACTION_DIGITS_PER_CURRENCY (4 for fiat, 8 for BTC).
+	 * STORAGE_FRACTION_DIGITS_PER_CURRENCY (8 for fiat & BTC, 0 for SAT).
 	 *
-	 * This allows storing precise base prices (e.g., 4.6253 CHF) that result
-	 * in round numbers after VAT calculation (e.g., 5.00 CHF with 8.1% VAT).
+	 * This allows storing precise base prices (e.g., 17.24137931 XPF HT) that
+	 * result in a clean round-trip when input was a VAT-included value
+	 * (e.g., 20 XPF TTC at 16% VAT).
 	 *
 	 * @example
 	 * // Old price from DB (no precision field):
@@ -42,7 +43,7 @@ export type Price = {
 	 *
 	 * @example
 	 * // New price from DB (with precision):
-	 * { amount: 4.6253, currency: 'CHF', precision: 4 }
+	 * { amount: 17.24137931, currency: 'XPF', precision: 8 }
 	 */
 	precision?: number;
 };

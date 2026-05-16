@@ -144,6 +144,8 @@ const baseConfig = {
 		applyFlatFeeToEachItem: false,
 		onlyPayHighest: false,
 		allowFreeForPOS: false,
+		vatIncludedReference: false,
+		vatProfileId: null as string | null,
 		deliveryFees: {
 			default: {
 				amount: 0,

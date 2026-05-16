@@ -13,7 +13,12 @@ import { ORIGIN } from '$lib/server/env-config';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Product } from '$lib/types/Product';
 import { Kind } from 'nostr-tools';
-import { parsePriceAmount } from '$lib/types/Currency';
+import {
+	FRACTION_DIGITS_PER_CURRENCY,
+	computePriceForStorage,
+	parsePriceAmount
+} from '$lib/types/Currency';
+import { hasMoreDecimalsThanCurrency } from '$lib/utils/currency-validation';
 import { s3ProductPrefix, getS3Client } from '$lib/server/s3';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
@@ -98,6 +103,19 @@ export const actions: Actions = {
 			? 0
 			: parsePriceAmount(parsed.priceAmount, parsed.priceCurrency);
 
+		// Re-check decimal mismatch server-side (direct API calls bypass the form).
+		if (!parsed.free && parsed.priceAmountVatIncluded) {
+			const ttc = parsePriceAmount(parsed.priceAmountVatIncluded, parsed.priceCurrency);
+			if (hasMoreDecimalsThanCurrency(ttc, parsed.priceCurrency)) {
+				throw error(
+					400,
+					`${parsed.priceCurrency} currency has ${
+						FRACTION_DIGITS_PER_CURRENCY[parsed.priceCurrency]
+					} decimal. Price (VAT included) cannot have more.`
+				);
+			}
+		}
+
 		if (parsed.type !== 'resource') {
 			delete parsed.availableDate;
 		}
@@ -148,10 +166,7 @@ export const actions: Actions = {
 							shortDescription: parsed.shortDescription.replaceAll('\r', ''),
 							name: parsed.name,
 							isTicket: parsed.isTicket,
-							price: {
-								currency: parsed.priceCurrency,
-								amount: priceAmount
-							},
+							price: computePriceForStorage(priceAmount, parsed.priceCurrency),
 							hideDiscountExpiration: parsed.hideDiscountExpiration,
 							type: parsed.type,
 							availableDate: parsed.availableDate || undefined,
@@ -354,10 +369,7 @@ export const actions: Actions = {
 					shortDescription: parsed.shortDescription.replaceAll('\r', ''),
 					name: parsed.name,
 					isTicket: parsed.isTicket,
-					price: {
-						currency: parsed.priceCurrency,
-						amount: parseFloat(parsed.priceAmount)
-					},
+					price: computePriceForStorage(parseFloat(parsed.priceAmount), parsed.priceCurrency),
 					type: product.type,
 					availableDate: parsed.availableDate || undefined,
 					preorder: parsed.preorder,

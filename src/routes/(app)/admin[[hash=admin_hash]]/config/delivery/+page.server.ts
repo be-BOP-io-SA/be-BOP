@@ -4,6 +4,7 @@ import { set } from '$lib/utils/set';
 import { z } from 'zod';
 import { collections } from '$lib/server/database';
 import { deliveryFeesSchema } from './schema';
+import { zodObjectId } from '$lib/server/zod';
 
 export const actions = {
 	default: async function ({ request }) {
@@ -20,7 +21,12 @@ export const actions = {
 				onlyPayHighest: z.boolean({ coerce: true }),
 				applyFlatFeeToEachItem: z.boolean({ coerce: true }),
 				deliveryFees: deliveryFeesSchema.default({}),
-				allowFreeForPOS: z.boolean({ coerce: true })
+				allowFreeForPOS: z.boolean({ coerce: true }),
+				vatIncludedReference: z.boolean({ coerce: true }).default(false),
+				vatProfileId: zodObjectId()
+					.or(z.literal(''))
+					.optional()
+					.transform((s) => s || null)
 			})
 			.parse(json);
 

@@ -182,7 +182,7 @@ export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 	BDT: 2,
 	BGN: 2,
 	BHD: 2,
-	BIF: 2,
+	BIF: 0,
 	BMD: 2,
 	BND: 2,
 	BOB: 2,
@@ -195,14 +195,14 @@ export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 	CAD: 2,
 	CDF: 2,
 	CHF: 2,
-	CLP: 2,
+	CLP: 0,
 	CNY: 2,
 	COP: 2,
 	CRC: 2,
 	CUP: 2,
 	CVE: 2,
 	CZK: 2,
-	DJF: 2,
+	DJF: 0,
 	DKK: 2,
 	DOP: 2,
 	DZD: 2,
@@ -217,7 +217,7 @@ export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 	GHS: 2,
 	GIP: 2,
 	GMD: 2,
-	GNF: 2,
+	GNF: 0,
 	GTQ: 2,
 	GYD: 2,
 	HKD: 2,
@@ -230,15 +230,15 @@ export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 	INR: 2,
 	IQD: 2,
 	IRR: 2,
-	ISK: 2,
+	ISK: 0,
 	JMD: 2,
 	JOD: 2,
-	JPY: 2,
+	JPY: 0,
 	KES: 2,
 	KGS: 2,
 	KHR: 2,
-	KMF: 2,
-	KRW: 2,
+	KMF: 0,
+	KRW: 0,
 	KWD: 2,
 	KYD: 2,
 	KZT: 2,
@@ -277,12 +277,12 @@ export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 	PHP: 2,
 	PKR: 2,
 	PLN: 2,
-	PYG: 2,
+	PYG: 0,
 	QAR: 2,
 	RON: 2,
 	RSD: 2,
 	RUB: 2,
-	RWF: 2,
+	RWF: 0,
 	SAR: 2,
 	SBD: 2,
 	SCR: 2,
@@ -305,18 +305,18 @@ export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 	TWD: 2,
 	TZS: 2,
 	UAH: 2,
-	UGX: 2,
+	UGX: 0,
 	USD: 2,
 	UYU: 2,
 	UZS: 2,
 	VES: 2,
 	VND: 2,
-	VUV: 2,
+	VUV: 0,
 	WST: 2,
-	XAF: 2,
+	XAF: 0,
 	XCD: 2,
-	XOF: 2,
-	XPF: 2,
+	XOF: 0,
+	XPF: 0,
 	YER: 2,
 	ZAR: 2,
 	ZMK: 2,
@@ -326,13 +326,14 @@ export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 
 /**
  * Maximum number of decimal places for storing prices WITHOUT VAT.
- * This allows merchants to set precise base prices that result in round
- * numbers after VAT calculation (e.g., 4.6253 CHF → 5.00 CHF with 8.1% VAT).
+ * 8 decimals for fiat allows merchants to enter a clean VAT-included price
+ * and store the resulting VAT-excluded base with enough precision to round-trip
+ * exactly (e.g., 20 XPF TTC → store HT 17.24137931 → display TTC back as 20).
  *
- * Display precision remains FRACTION_DIGITS_PER_CURRENCY (2 for most currencies).
+ * Display precision remains FRACTION_DIGITS_PER_CURRENCY (per ISO 4217).
  */
 const STORAGE_FRACTION_DIGITS_PER_CURRENCY = Object.freeze(
-	Object.fromEntries(CURRENCIES.map((c) => [c, c === 'BTC' ? 8 : c === 'SAT' ? 0 : 4]))
+	Object.fromEntries(CURRENCIES.map((c) => [c, c === 'SAT' ? 0 : 8]))
 ) as Record<Currency, number>;
 
 export const CURRENCY_UNIT = Object.freeze(
@@ -340,7 +341,7 @@ export const CURRENCY_UNIT = Object.freeze(
 ) as Record<Currency, number>;
 
 export function parsePriceAmount(amount: string, currency: Currency): number {
-	// Use storage precision (4 decimals for fiat, 8 for BTC) instead of display precision
+	// Use storage precision (8 decimals for fiat & BTC, 0 for SAT) instead of display precision
 	const storageDecimals = STORAGE_FRACTION_DIGITS_PER_CURRENCY[currency];
 	const priceAmount =
 		(parseFloat(amount) * Math.pow(10, storageDecimals)) / Math.pow(10, storageDecimals);
@@ -354,13 +355,15 @@ export function parsePriceAmount(amount: string, currency: Currency): number {
 
 /**
  * Compute price for storage in database with full precision.
- * Uses STORAGE_FRACTION_DIGITS_PER_CURRENCY (4 decimals for fiat, 8 for BTC).
+ * Uses STORAGE_FRACTION_DIGITS_PER_CURRENCY (8 decimals for fiat & BTC, 0 for SAT).
  *
- * Use this when saving prices to preserve full precision for VAT calculations.
+ * Use this when saving prices to preserve full precision for VAT calculations
+ * and clean round-trip with VAT-included input
+ * (e.g., 20 XPF TTC → store HT 17.24137931 → display TTC back as 20).
  *
  * @example
- * computePriceForStorage(4.6253, 'CHF')
- * // Returns: { amount: 4.6253, currency: 'CHF', precision: 4 }
+ * computePriceForStorage(17.24137931, 'XPF')
+ * // Returns: { amount: 17.24137931, currency: 'XPF', precision: 8 }
  */
 export function computePriceForStorage(amount: string | number, currency: Currency): Price {
 	const precision = STORAGE_FRACTION_DIGITS_PER_CURRENCY[currency];

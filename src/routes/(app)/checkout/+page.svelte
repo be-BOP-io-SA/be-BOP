@@ -9,6 +9,7 @@
 	import { typedInclude } from '$lib/utils/typedIncludes';
 	import ProductType from '$lib/components/ProductType.svelte';
 	import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
+	import { computeVatRate, extractVat } from '$lib/utils/vat';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
@@ -116,6 +117,18 @@
 	);
 	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
 
+	// Display delivery HT (not the raw TTC) so the breakdown sums up to Total.
+	$: deliveryFeesVatRate = computeVatRate({
+		productVatProfileId: data.deliveryFees.vatProfileId ?? undefined,
+		vatProfiles: data.vatProfiles,
+		bebopCountry: data.vatCountry,
+		userCountry: isDigital ? digitalCountry : country,
+		vatSingleCountry: data.vatSingleCountry
+	});
+	$: deliveryFeesToDisplay = data.deliveryFees.vatIncludedReference
+		? extractVat(deliveryFeesToBill, deliveryFeesVatRate)
+		: deliveryFeesToBill;
+
 	$: isFreeOfCharge = addDiscount && discountType === 'percentage' && discountAmount === 100;
 
 	$: possiblyOutOfBoundsDiscount =
@@ -132,6 +145,8 @@
 	$: priceInfoWithoutDiscount = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
 		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		deliveryFeesVatProfileId: data.deliveryFees.vatProfileId,
+		deliveryFeesVatIncluded: data.deliveryFees.vatIncludedReference,
 		discount: undefined,
 		freeProductUnits: data.cart.freeProductUnits,
 		userCountry: isDigital ? digitalCountry : country,
@@ -143,6 +158,8 @@
 	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
 		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		deliveryFeesVatProfileId: data.deliveryFees.vatProfileId,
+		deliveryFeesVatIncluded: data.deliveryFees.vatIncludedReference,
 		discount: possiblyOutOfBoundsDiscount,
 		freeProductUnits: data.cart.freeProductUnits,
 		userCountry: isDigital ? digitalCountry : country,
@@ -866,12 +883,12 @@
 						<div class="flex flex-col ml-auto items-end justify-center">
 							<PriceTag
 								class="text-2xl truncate"
-								amount={deliveryFeesToBill}
+								amount={deliveryFeesToDisplay}
 								currency={UNDERLYING_CURRENCY}
 								main
 							/>
 							<PriceTag
-								amount={deliveryFeesToBill}
+								amount={deliveryFeesToDisplay}
 								currency={UNDERLYING_CURRENCY}
 								class="text-base truncate"
 								secondary
