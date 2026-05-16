@@ -3,7 +3,13 @@ import { error, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { z } from 'zod';
 import { deletePicture } from '$lib/server/picture';
-import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
+import {
+	CURRENCIES,
+	FRACTION_DIGITS_PER_CURRENCY,
+	computePriceForStorage,
+	parsePriceAmount
+} from '$lib/types/Currency';
+import { hasMoreDecimalsThanCurrency } from '$lib/utils/currency-validation';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { productBaseSchema } from '../product-schema';
@@ -140,6 +146,18 @@ export const actions: Actions = {
 		if (!parsed.free && !parsed.payWhatYouWant && parsed.priceAmount === '0') {
 			parsed.free = true;
 		}
+
+		// Re-check decimal mismatch server-side (direct API calls bypass the form).
+		if (!parsed.free && parsed.priceAmountVatIncluded) {
+			const ttc = parsePriceAmount(parsed.priceAmountVatIncluded, priceCurrency);
+			if (hasMoreDecimalsThanCurrency(ttc, priceCurrency)) {
+				throw error(
+					400,
+					`${priceCurrency} currency has ${FRACTION_DIGITS_PER_CURRENCY[priceCurrency]} decimal. ` +
+						`Price (VAT included) cannot have more.`
+				);
+			}
+		}
 		const variationsParsedPrice = parsed.variations.map((variation) => ({
 			...variation,
 			price: Math.max(parsePriceAmount(variation.price, parsed.priceCurrency), 0)
@@ -174,10 +192,7 @@ export const actions: Actions = {
 						alias: parsed.alias ? [params.id, parsed.alias] : [params.id],
 						description: parsed.description,
 						shortDescription: parsed.shortDescription,
-						price: {
-							amount: priceAmount,
-							currency: priceCurrency
-						},
+						price: computePriceForStorage(priceAmount, priceCurrency),
 						...(parsed.availableDate && { availableDate: parsed.availableDate }),
 						shipping: parsed.shipping,
 						displayShortDescription: parsed.displayShortDescription,

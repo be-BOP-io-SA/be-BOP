@@ -1,11 +1,11 @@
 import { currencies } from '$lib/stores/currencies';
-import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
+import { fixCurrencyRounding, roundDownToCurrency } from '$lib/utils/fixCurrencyRounding';
 import { sum } from '$lib/utils/sum';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import type { RuntimeConfig } from './server/runtime-config';
 import { type CountryAlpha2 } from './types/Country';
-import { computeVatRate } from './utils/vat';
+import { computeVatRate, extractVat } from './utils/vat';
 import { UNDERLYING_CURRENCY, type Currency } from './types/Currency';
 import type { DiscountType, Price } from './types/Order';
 import type { Product } from './types/Product';
@@ -267,6 +267,79 @@ function ensureDiscountWithinBounds(discount: CartDiscount, cartTotal: number): 
 	}
 }
 
+/** Resolve delivery fees as a VAT-excluded (HT) Price, back-extracting from TTC if needed. */
+function computeDeliveryFeesHt(params: {
+	deliveryFees: Price;
+	deliveryFeesVatProfileId?: string | null;
+	deliveryFeesVatIncluded?: boolean;
+	bebopCountry: CountryAlpha2 | undefined;
+	userCountry: CountryAlpha2 | undefined;
+	vatSingleCountry: boolean;
+	vatProfiles: Array<{
+		_id: string | ObjectId;
+		rates: Partial<Record<CountryAlpha2, number>>;
+	}>;
+}): Price {
+	if (!params.deliveryFeesVatIncluded) {
+		return params.deliveryFees;
+	}
+	const rate = computeVatRate({
+		productVatProfileId: params.deliveryFeesVatProfileId ?? undefined,
+		vatProfiles: params.vatProfiles,
+		bebopCountry: params.bebopCountry,
+		userCountry: params.userCountry,
+		vatSingleCountry: params.vatSingleCountry
+	});
+	return {
+		amount: extractVat(params.deliveryFees.amount, rate),
+		currency: params.deliveryFees.currency
+	};
+}
+
+/** Percentage discounts round DOWN — a smaller-than-stated discount can be illegal. */
+function applyCartDiscount(params: {
+	discount: CartDiscount;
+	totalPriceWithVat: number;
+	partialPriceWithVat: number;
+}): { totalPriceWithVat: number; partialPriceWithVat: number; discountAmount: number } {
+	const discount = ensureDiscountWithinBounds(params.discount, params.totalPriceWithVat);
+	const oldTotalPriceWithVat = params.totalPriceWithVat;
+	let totalPriceWithVat: number;
+	if (discount.type === 'percentage') {
+		const main = get(currencies).main;
+		const totalInMain = toCurrency(
+			main,
+			Math.max((oldTotalPriceWithVat * (100 - discount.amount)) / 100, 0),
+			UNDERLYING_CURRENCY
+		);
+		totalPriceWithVat = toCurrency(
+			UNDERLYING_CURRENCY,
+			roundDownToCurrency(totalInMain, main),
+			main
+		);
+	} else {
+		totalPriceWithVat = Math.max(
+			sumCurrency(UNDERLYING_CURRENCY, [
+				{ amount: oldTotalPriceWithVat, currency: UNDERLYING_CURRENCY },
+				{ amount: -discount.amount, currency: get(currencies).main }
+			]),
+			0
+		);
+	}
+	const discountAmount = oldTotalPriceWithVat - totalPriceWithVat;
+	let partialPriceWithVat = params.partialPriceWithVat;
+	if (discountAmount) {
+		partialPriceWithVat = fixCurrencyRounding(
+			Math.max(
+				partialPriceWithVat - (discountAmount * partialPriceWithVat) / oldTotalPriceWithVat,
+				0
+			),
+			UNDERLYING_CURRENCY
+		);
+	}
+	return { totalPriceWithVat, partialPriceWithVat, discountAmount };
+}
+
 /**
  * Computes different prices for cart-like objects.
  *
@@ -280,6 +353,10 @@ export function computePriceInfo(
 	params: {
 		bebopCountry: CountryAlpha2 | undefined;
 		deliveryFees: Price;
+		/** null = shop standard VAT; otherwise a VAT profile id (hex ObjectId string). */
+		deliveryFeesVatProfileId?: string | null;
+		/** true = `deliveryFees.amount` is VAT-included (TTC). */
+		deliveryFeesVatIncluded?: boolean;
 		discount?: CartDiscount;
 		freeProductUnits: Record<string, number>;
 		userCountry: CountryAlpha2 | undefined;
@@ -296,8 +373,20 @@ export function computePriceInfo(
 	const isPhysicalVatExempted =
 		params.vatNullOutsideSellerCountry && params.bebopCountry !== params.userCountry;
 	const singleVatCountry = params.vatSingleCountry && !!params.bebopCountry;
-	const cartPrice = computeCartPrice(items, {
+
+	// Resolve HT before computeCartPrice so subtotal and VAT use the same base.
+	const deliveryFeesHt = computeDeliveryFeesHt({
 		deliveryFees: params.deliveryFees,
+		deliveryFeesVatProfileId: params.deliveryFeesVatProfileId,
+		deliveryFeesVatIncluded: params.deliveryFeesVatIncluded,
+		bebopCountry: params.bebopCountry,
+		userCountry: params.userCountry,
+		vatSingleCountry: params.vatSingleCountry,
+		vatProfiles: params.vatProfiles
+	});
+
+	const cartPrice = computeCartPrice(items, {
+		deliveryFees: deliveryFeesHt,
 		freeUnits
 	});
 	const { partialAmount: partialPrice, totalAmount: totalPrice } = cartPrice.cart;
@@ -308,7 +397,11 @@ export function computePriceInfo(
 	});
 	const deliveryFeeVat = computeVatForItem(
 		{
-			product: { shipping: true, price: params.deliveryFees },
+			product: {
+				shipping: true,
+				price: deliveryFeesHt,
+				vatProfileId: params.deliveryFeesVatProfileId ?? undefined
+			},
 			quantity: 1
 		},
 		{ ...params, freeUnits: 0, isPhysicalVatExempted }
@@ -328,32 +421,14 @@ export function computePriceInfo(
 	let discountAmount = 0;
 
 	if (params.discount) {
-		const discount = ensureDiscountWithinBounds(params.discount, totalPriceWithVat);
-		const oldTotalPriceWithVat = totalPriceWithVat;
-		if (discount.type === 'percentage') {
-			totalPriceWithVat = fixCurrencyRounding(
-				Math.max((totalPriceWithVat * (100 - discount.amount)) / 100, 0),
-				UNDERLYING_CURRENCY
-			);
-		} else {
-			totalPriceWithVat = Math.max(
-				sumCurrency(UNDERLYING_CURRENCY, [
-					{ amount: totalPriceWithVat, currency: UNDERLYING_CURRENCY },
-					{ amount: -discount.amount, currency: get(currencies).main }
-				]),
-				0
-			);
-		}
-		discountAmount = oldTotalPriceWithVat - totalPriceWithVat;
-		if (discountAmount) {
-			partialPriceWithVat = fixCurrencyRounding(
-				Math.max(
-					partialPriceWithVat - (discountAmount * partialPriceWithVat) / oldTotalPriceWithVat,
-					0
-				),
-				UNDERLYING_CURRENCY
-			);
-		}
+		const discounted = applyCartDiscount({
+			discount: params.discount,
+			totalPriceWithVat,
+			partialPriceWithVat
+		});
+		totalPriceWithVat = discounted.totalPriceWithVat;
+		partialPriceWithVat = discounted.partialPriceWithVat;
+		discountAmount = discounted.discountAmount;
 	}
 
 	// Round final prices to display precision (2 decimals for fiat)
@@ -399,6 +474,12 @@ export function computePriceInfo(
 				partialPrice: vatItem.partialPrice
 			});
 		}
+	}
+
+	// Round each VAT rate once — never sum line-level rounded values.
+	for (const v of reducedVat) {
+		v.price.amount = fixCurrencyRounding(v.price.amount, v.price.currency);
+		v.partialPrice.amount = fixCurrencyRounding(v.partialPrice.amount, v.partialPrice.currency);
 	}
 
 	return {

@@ -1,6 +1,5 @@
 import type { LanguageKey } from '$lib/translations';
 import type { ObjectId } from 'mongodb';
-import type { Currency } from './Currency';
 import type { DeliveryFees } from './DeliveryFees';
 import type { Price } from './Order';
 import type { ProductActionSettings } from './ProductActionSettings';
@@ -40,10 +39,7 @@ export interface ProductTranslatableFields {
 export interface Product extends Timestamps, ProductTranslatableFields {
 	_id: string;
 	alias: string[];
-	price: {
-		amount: number;
-		currency: Currency;
-	};
+	price: Price;
 	stock?: {
 		available: number;
 		total: number;

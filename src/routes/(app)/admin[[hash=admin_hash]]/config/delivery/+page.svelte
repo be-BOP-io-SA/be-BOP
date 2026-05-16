@@ -1,5 +1,6 @@
 <script lang="ts">
 	import DeliveryFeesSelector from '$lib/components/DeliveryFeesSelector.svelte';
+	import { computeVatRate } from '$lib/utils/vat';
 
 	export let data;
 	export let form;
@@ -7,8 +8,18 @@
 	let mode: 'flatFee' | 'perItem' = data.deliveryFees.mode;
 	let onlyPayHighest = data.deliveryFees.onlyPayHighest;
 	let applyFlatFeeToEachItem = data.deliveryFees.applyFlatFeeToEachItem;
+	let vatIncludedReference = data.deliveryFees.vatIncludedReference ?? false;
+	let vatProfileId = data.deliveryFees.vatProfileId ?? '';
 
 	let deliveryFees = data.deliveryFees.deliveryFees || {};
+
+	$: deliveryVatRate = computeVatRate({
+		productVatProfileId: vatProfileId || undefined,
+		vatProfiles: data.vatProfiles,
+		bebopCountry: data.vatCountry,
+		userCountry: data.vatCountry,
+		vatSingleCountry: true
+	});
 </script>
 
 {#if form?.success}
@@ -66,7 +77,32 @@
 		</label>
 	{/if}
 
-	<DeliveryFeesSelector {deliveryFees} defaultCurrency={data.currencies.priceReference} />
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			class="form-checkbox"
+			name="vatIncludedReference"
+			bind:checked={vatIncludedReference}
+		/>
+		Use delivery fees price reference as VAT included price instead of VAT excluded
+	</label>
+
+	<label class="form-label">
+		VAT profile for delivery fees
+		<select name="vatProfileId" class="form-input" bind:value={vatProfileId}>
+			<option value="">Use shop standard VAT</option>
+			{#each data.vatProfiles as profile}
+				<option value={profile._id}>{profile.name}</option>
+			{/each}
+		</select>
+	</label>
+
+	<DeliveryFeesSelector
+		{deliveryFees}
+		defaultCurrency={data.currencies.priceReference}
+		{vatIncludedReference}
+		vatRate={deliveryVatRate}
+	/>
 
 	<button type="submit" class="btn btn-black self-start"> Save config </button>
 </form>

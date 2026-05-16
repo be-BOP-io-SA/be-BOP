@@ -7,10 +7,16 @@
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
+	import { applyVat, extractVat } from '$lib/utils/vat';
+	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 
 	export let deliveryFees: DeliveryFees = {};
 	export let defaultCurrency: Currency;
 	export let disabled = false;
+	// vatIncludedReference: entered amounts are TTC (true) or HT (false). vatRate (%): drives
+	// the helper-text showing the inverse value under each input; 0 hides it.
+	export let vatIncludedReference = false;
+	export let vatRate = 0;
 
 	let feeCountryToAdd: CountryAlpha2 | 'default' = 'default';
 
@@ -41,6 +47,17 @@
 	$: feeCountryToAdd = countriesWithNoFee.includes(feeCountryToAdd)
 		? feeCountryToAdd
 		: countriesWithNoFee[0];
+
+	function onAmountInput(country: CountryAlpha2 | 'default', event: Event) {
+		const fee = deliveryFees[country];
+		if (!fee) {
+			return;
+		}
+		const input = event.target as HTMLInputElement;
+		const parsed = parseFloat(input.value);
+		fee.amount = isNaN(parsed) ? 0 : parsed;
+		deliveryFees = deliveryFees;
+	}
 </script>
 
 {#if countriesWithNoFee.length}
@@ -74,7 +91,7 @@
 		</h3>
 		<div class="gap-4 flex flex-col md:flex-row">
 			<label class="w-full">
-				Amount
+				Amount {vatIncludedReference ? '(VAT included)' : '(VAT excluded)'}
 				<input
 					class="form-input"
 					type="number"
@@ -85,8 +102,23 @@
 					value={deliveryFee?.amount
 						.toLocaleString('en', { maximumFractionDigits: 8 })
 						.replace(/,/g, '')}
+					on:input={(e) => onAmountInput(country, e)}
 					required
 				/>
+				{#if vatRate > 0 && deliveryFee && selectedCurrencies[country]}
+					{@const selectedCurrency = selectedCurrencies[country]?.value}
+					{#if selectedCurrency}
+						<small class="text-gray-500 block mt-1">
+							{#if vatIncludedReference}
+								= {fixCurrencyRounding(extractVat(deliveryFee.amount, vatRate), selectedCurrency)}
+								{selectedCurrency} (VAT excluded)
+							{:else}
+								= {fixCurrencyRounding(applyVat(deliveryFee.amount, vatRate), selectedCurrency)}
+								{selectedCurrency} (VAT included)
+							{/if}
+						</small>
+					{/if}
+				{/if}
 			</label>
 
 			<label class="w-full">
