@@ -124,6 +124,7 @@ export async function load(params) {
 							| 'shipping'
 							| 'preorder'
 							| 'deliveryFees'
+							| 'deliveryZones'
 							| 'applyDeliveryFeesOnlyOnce'
 							| 'requireSpecificDeliveryFee'
 							| 'payWhatYouWant'
@@ -152,6 +153,7 @@ export async function load(params) {
 						availableDate: 1,
 						preorder: 1,
 						deliveryFees: 1,
+						deliveryZones: 1,
 						applyDeliveryFeesOnlyOnce: 1,
 						requireSpecificDeliveryFee: 1,
 						payWhatYouWant: 1,
