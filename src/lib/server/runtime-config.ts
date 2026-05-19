@@ -4,7 +4,7 @@ import { collections } from './database';
 import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
 import type { Currency } from '$lib/types/Currency';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
-import type { DeliveryFees } from '$lib/types/DeliveryFees';
+import type { DeliveryFees, DeliveryZone } from '$lib/types/DeliveryFees';
 import { currencies } from '$lib/stores/currencies';
 import {
 	NOSTR_PRIVATE_KEY,
@@ -149,7 +149,8 @@ const baseConfig = {
 				amount: 0,
 				currency: 'EUR'
 			}
-		} satisfies DeliveryFees as DeliveryFees
+		} satisfies DeliveryFees as DeliveryFees,
+		deliveryZones: [] as DeliveryZone[]
 	},
 	specialRolesCreated: {
 		[TICKET_CHECKER_ROLE_ID]: false

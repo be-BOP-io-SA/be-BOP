@@ -1351,6 +1351,7 @@
 							{#if globalDeliveryFees.mode === 'perItem'}
 								<DeliveryFeesSelector
 									bind:deliveryFees={product.deliveryFees}
+									bind:deliveryZones={product.deliveryZones}
 									defaultCurrency={product.price.currency}
 								/>
 
