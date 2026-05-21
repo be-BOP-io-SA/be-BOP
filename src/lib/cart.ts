@@ -426,6 +426,7 @@ export function computeDeliveryFees(
 			Product,
 			| 'price'
 			| 'deliveryFees'
+			| 'defaultBlacklist'
 			| 'applyDeliveryFeesOnlyOnce'
 			| 'shipping'
 			| 'requireSpecificDeliveryFee'
@@ -441,7 +442,11 @@ export function computeDeliveryFees(
 	}
 
 	if (deliveryFeesConfig.mode === 'flatFee' && !deliveryFeesConfig.applyFlatFeeToEachItem) {
-		const cfg = deliveryFeesConfig.deliveryFees[country] || deliveryFeesConfig.deliveryFees.default;
+		const cfg =
+			deliveryFeesConfig.deliveryFees[country] ||
+			(deliveryFeesConfig.defaultBlacklist?.includes(country)
+				? undefined
+				: deliveryFeesConfig.deliveryFees.default);
 
 		if (!cfg) {
 			return NaN;
@@ -453,14 +458,19 @@ export function computeDeliveryFees(
 	const fees = items.map(({ product, quantity }) => {
 		const cfg = (() => {
 			const defaultConfig =
-				deliveryFeesConfig.deliveryFees[country] || deliveryFeesConfig.deliveryFees.default;
+				deliveryFeesConfig.deliveryFees[country] ||
+				(deliveryFeesConfig.defaultBlacklist?.includes(country)
+					? undefined
+					: deliveryFeesConfig.deliveryFees.default);
 			if (deliveryFeesConfig.mode === 'flatFee') {
 				return defaultConfig;
 			}
 
-			let cfg = product.deliveryFees?.[country] || product.deliveryFees?.default;
+			let cfg =
+				product.deliveryFees?.[country] ||
+				(product.defaultBlacklist?.includes(country) ? undefined : product.deliveryFees?.default);
 
-			if (!product.requireSpecificDeliveryFee) {
+			if (!product.requireSpecificDeliveryFee && !product.defaultBlacklist?.includes(country)) {
 				cfg ||= defaultConfig;
 			}
 
