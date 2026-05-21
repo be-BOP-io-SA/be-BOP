@@ -1,5 +1,6 @@
 import type { LanguageKey } from '$lib/translations';
 import type { ObjectId } from 'mongodb';
+import type { CountryAlpha2 } from './Country';
 import type { Currency } from './Currency';
 import type { DeliveryFees } from './DeliveryFees';
 import type { Price } from './Order';
@@ -57,6 +58,7 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	type: 'subscription' | 'resource' | 'donation';
 	shipping: boolean;
 	deliveryFees?: DeliveryFees;
+	defaultBlacklist?: CountryAlpha2[];
 	requireSpecificDeliveryFee?: boolean;
 	applyDeliveryFeesOnlyOnce?: boolean;
 	isTicket: boolean;

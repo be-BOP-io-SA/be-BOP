@@ -9,6 +9,7 @@
 	import { currencies } from '$lib/stores/currencies';
 
 	export let deliveryFees: DeliveryFees = {};
+	export let defaultBlacklist: CountryAlpha2[] = [];
 	export let defaultCurrency: Currency;
 	export let disabled = false;
 
@@ -36,11 +37,39 @@
 	}
 
 	$: countriesWithNoFee = ['default' as const, ...sortedCountryCodes()].filter(
-		(country) => !deliveryFees[country]
+		(country) =>
+			!deliveryFees[country] &&
+			(country === 'default' || !blacklistSelection.some((option) => option.value === country))
 	);
 	$: feeCountryToAdd = countriesWithNoFee.includes(feeCountryToAdd)
 		? feeCountryToAdd
 		: countriesWithNoFee[0];
+
+	// Stable ref: svelte-select re-emits `value` on every `items` ref change → infinite loop
+	let blacklistOptions: Array<{ value: CountryAlpha2; label: string }> = [];
+	let blacklistOptionsSignature: string | null = null;
+	$: {
+		const used = Object.keys(deliveryFees)
+			.filter((c) => c !== 'default')
+			.sort();
+		const signature = used.join(',');
+		if (signature !== blacklistOptionsSignature) {
+			blacklistOptionsSignature = signature;
+			const usedSet = new Set(used);
+			blacklistOptions = sortedCountryCodes()
+				.filter((c) => !usedSet.has(c))
+				.map((c) => ({ value: c, label: countryName(c) }));
+		}
+	}
+
+	// Seeded once: a reactive backfill would re-add a chip the user just removed
+	let blacklistSelection: Array<{ value: CountryAlpha2; label: string }> = (
+		defaultBlacklist ?? []
+	).map((c) => ({ value: c, label: countryName(c) }));
+	// svelte-select clears the last chip to undefined, not [] — normalise
+	$: if (!blacklistSelection) {
+		blacklistSelection = [];
+	}
 </script>
 
 {#if countriesWithNoFee.length}
@@ -106,6 +135,22 @@
 				/>
 			</label>
 		</div>
+		{#if country === 'default'}
+			<div class="w-full">
+				Forbid delivery in these countries
+				<Select
+					items={blacklistOptions}
+					multiple
+					searchable={true}
+					bind:value={blacklistSelection}
+					{disabled}
+					class="form-input"
+				/>
+			</div>
+			{#each blacklistSelection as c, i (c.value)}
+				<input type="hidden" name="defaultBlacklist[{i}]" value={c.value} />
+			{/each}
+		{/if}
 		<button
 			type="button"
 			class="text-red-500 underline text-left"

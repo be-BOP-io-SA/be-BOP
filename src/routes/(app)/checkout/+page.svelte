@@ -115,6 +115,8 @@
 		data.deliveryFees
 	);
 	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
+	// Order is blocked elsewhere when this is NaN; feed 0 so the summary isn't all €NaN
+	$: deliveryFeesForPriceInfo = isNaN(deliveryFeesToBill) ? 0 : deliveryFeesToBill;
 
 	$: isFreeOfCharge = addDiscount && discountType === 'percentage' && discountAmount === 100;
 
@@ -131,7 +133,7 @@
 	// Compute price WITHOUT discount for validation purposes
 	$: priceInfoWithoutDiscount = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		deliveryFees: { amount: deliveryFeesForPriceInfo, currency: UNDERLYING_CURRENCY },
 		discount: undefined,
 		freeProductUnits: data.cart.freeProductUnits,
 		userCountry: isDigital ? digitalCountry : country,
@@ -142,7 +144,7 @@
 	});
 	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		deliveryFees: { amount: deliveryFeesForPriceInfo, currency: UNDERLYING_CURRENCY },
 		discount: possiblyOutOfBoundsDiscount,
 		freeProductUnits: data.cart.freeProductUnits,
 		userCountry: isDigital ? digitalCountry : country,

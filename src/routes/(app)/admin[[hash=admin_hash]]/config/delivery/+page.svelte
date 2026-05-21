@@ -9,6 +9,7 @@
 	let applyFlatFeeToEachItem = data.deliveryFees.applyFlatFeeToEachItem;
 
 	let deliveryFees = data.deliveryFees.deliveryFees || {};
+	let defaultBlacklist = data.deliveryFees.defaultBlacklist ?? [];
 </script>
 
 {#if form?.success}
@@ -66,7 +67,11 @@
 		</label>
 	{/if}
 
-	<DeliveryFeesSelector {deliveryFees} defaultCurrency={data.currencies.priceReference} />
+	<DeliveryFeesSelector
+		{deliveryFees}
+		{defaultBlacklist}
+		defaultCurrency={data.currencies.priceReference}
+	/>
 
 	<button type="submit" class="btn btn-black self-start"> Save config </button>
 </form>

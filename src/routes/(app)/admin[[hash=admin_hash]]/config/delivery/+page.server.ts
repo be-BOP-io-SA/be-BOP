@@ -3,7 +3,7 @@ import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { z } from 'zod';
 import { collections } from '$lib/server/database';
-import { deliveryFeesSchema } from './schema';
+import { defaultBlacklistSchema, deliveryFeesSchema } from './schema';
 
 export const actions = {
 	default: async function ({ request }) {
@@ -20,6 +20,7 @@ export const actions = {
 				onlyPayHighest: z.boolean({ coerce: true }),
 				applyFlatFeeToEachItem: z.boolean({ coerce: true }),
 				deliveryFees: deliveryFeesSchema.default({}),
+				defaultBlacklist: defaultBlacklistSchema.default([]),
 				allowFreeForPOS: z.boolean({ coerce: true })
 			})
 			.parse(json);
