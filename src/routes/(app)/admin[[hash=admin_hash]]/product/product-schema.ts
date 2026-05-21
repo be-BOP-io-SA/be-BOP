@@ -1,7 +1,11 @@
 import { CURRENCIES } from '$lib/types/Currency';
 import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 import { z } from 'zod';
-import { deliveryFeesSchema, deliveryZonesSchema } from '../config/delivery/schema';
+import {
+	defaultBlacklistSchema,
+	deliveryFeesSchema,
+	deliveryZonesSchema
+} from '../config/delivery/schema';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 import { zodObjectId } from '$lib/server/zod';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
@@ -27,6 +31,7 @@ export const productBaseSchema = () => ({
 	displayShortDescription: z.boolean({ coerce: true }).default(false),
 	deliveryFees: deliveryFeesSchema.optional(),
 	deliveryZones: deliveryZonesSchema.optional(),
+	defaultBlacklist: defaultBlacklistSchema.optional(),
 	restrictPaymentMethods: z.boolean({ coerce: true }).default(false),
 	paymentMethods: z
 		.array(z.enum(paymentMethods({ includePOS: true }) as [PaymentMethod, ...PaymentMethod[]]))

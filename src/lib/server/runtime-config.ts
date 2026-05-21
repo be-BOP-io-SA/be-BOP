@@ -152,7 +152,8 @@ const baseConfig = {
 				currency: 'EUR'
 			}
 		} satisfies DeliveryFees as DeliveryFees,
-		deliveryZones: [] as DeliveryZone[]
+		deliveryZones: [] as DeliveryZone[],
+		defaultBlacklist: [] as CountryAlpha2[]
 	},
 	specialRolesCreated: {
 		[TICKET_CHECKER_ROLE_ID]: false

@@ -253,6 +253,11 @@
 				errorMessage = result.error.message;
 				return;
 			}
+			if (result.type === 'failure') {
+				const data = result.data as { error?: string } | undefined;
+				errorMessage = data?.error ?? 'Save failed.';
+				return;
+			}
 
 			applyAction(result);
 		} finally {
@@ -1300,7 +1305,9 @@
 								<DeliveryFeesSelector
 									bind:deliveryFees={product.deliveryFees}
 									bind:deliveryZones={product.deliveryZones}
+									defaultBlacklist={product.defaultBlacklist}
 									defaultCurrency={product.price.currency}
+									globalZones={globalDeliveryFees.deliveryZones}
 								/>
 
 								<label class="checkbox-label">

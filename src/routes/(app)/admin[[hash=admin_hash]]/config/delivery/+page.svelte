@@ -1,6 +1,7 @@
 <script lang="ts">
 	import DeliveryFeesSelector from '$lib/components/DeliveryFeesSelector.svelte';
 	import { computeVatRate } from '$lib/utils/vat';
+	import { enhance } from '$app/forms';
 
 	export let data;
 	export let form;
@@ -13,6 +14,7 @@
 
 	let deliveryFees = data.deliveryFees.deliveryFees || {};
 	let deliveryZones = data.deliveryFees.deliveryZones ?? [];
+	let defaultBlacklist = data.deliveryFees.defaultBlacklist ?? [];
 
 	$: deliveryVatRate = computeVatRate({
 		productVatProfileId: vatProfileId || undefined,
@@ -27,9 +29,19 @@
 	<p class="alert-success">Values updated</p>
 {/if}
 
+{#if form?.error}
+	<p class="alert-error">{form.error}</p>
+{/if}
+
 <h1 class="text-3xl">Delivery fees config</h1>
 
-<form method="post" class="flex flex-col gap-4">
+<form
+	method="post"
+	use:enhance={() =>
+		async ({ update }) =>
+			update({ reset: false })}
+	class="flex flex-col gap-4"
+>
 	<label class="checkbox-label">
 		<input type="radio" bind:group={mode} class="form-radio" name="mode" value="flatFee" />
 		Flat fee
@@ -101,6 +113,7 @@
 	<DeliveryFeesSelector
 		{deliveryFees}
 		{deliveryZones}
+		{defaultBlacklist}
 		defaultCurrency={data.currencies.priceReference}
 		{vatIncludedReference}
 		vatRate={deliveryVatRate}

@@ -503,14 +503,22 @@ export function computePriceInfo(
 function resolveDeliveryFee(
 	deliveryFees: DeliveryFees,
 	deliveryZones: DeliveryZone[] | undefined,
+	defaultBlacklist: CountryAlpha2[] | undefined,
 	country: CountryAlpha2
 ): { amount: number; currency: Currency } | undefined {
-	const zone = deliveryZones?.find((z) => z.countries.includes(country));
-	return (
-		deliveryFees[country] ??
-		(zone && { amount: zone.amount, currency: zone.currency }) ??
-		deliveryFees.default
-	);
+	const explicit = deliveryFees[country];
+	if (explicit) {
+		return explicit;
+	}
+	// Disabled zones are kept as importable templates only — skip them in resolution.
+	const zone = deliveryZones?.find((z) => z.enabled !== false && z.countries.includes(country));
+	if (zone) {
+		return { amount: zone.amount, currency: zone.currency };
+	}
+	if (defaultBlacklist?.includes(country)) {
+		return undefined;
+	}
+	return deliveryFees.default;
 }
 
 export function computeDeliveryFees(
@@ -522,6 +530,7 @@ export function computeDeliveryFees(
 			| 'price'
 			| 'deliveryFees'
 			| 'deliveryZones'
+			| 'defaultBlacklist'
 			| 'applyDeliveryFeesOnlyOnce'
 			| 'shipping'
 			| 'requireSpecificDeliveryFee'
@@ -540,6 +549,7 @@ export function computeDeliveryFees(
 		const cfg = resolveDeliveryFee(
 			deliveryFeesConfig.deliveryFees,
 			deliveryFeesConfig.deliveryZones,
+			deliveryFeesConfig.defaultBlacklist,
 			country
 		);
 
@@ -555,15 +565,21 @@ export function computeDeliveryFees(
 			const defaultConfig = resolveDeliveryFee(
 				deliveryFeesConfig.deliveryFees,
 				deliveryFeesConfig.deliveryZones,
+				deliveryFeesConfig.defaultBlacklist,
 				country
 			);
 			if (deliveryFeesConfig.mode === 'flatFee') {
 				return defaultConfig;
 			}
 
-			let cfg = resolveDeliveryFee(product.deliveryFees ?? {}, product.deliveryZones, country);
+			let cfg = resolveDeliveryFee(
+				product.deliveryFees ?? {},
+				product.deliveryZones,
+				product.defaultBlacklist,
+				country
+			);
 
-			if (!product.requireSpecificDeliveryFee) {
+			if (!product.requireSpecificDeliveryFee && !product.defaultBlacklist?.includes(country)) {
 				cfg ||= defaultConfig;
 			}
 
