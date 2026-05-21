@@ -124,6 +124,7 @@ export async function load(params) {
 							| 'shipping'
 							| 'preorder'
 							| 'deliveryFees'
+							| 'defaultBlacklist'
 							| 'applyDeliveryFeesOnlyOnce'
 							| 'requireSpecificDeliveryFee'
 							| 'payWhatYouWant'
@@ -152,6 +153,7 @@ export async function load(params) {
 						availableDate: 1,
 						preorder: 1,
 						deliveryFees: 1,
+						defaultBlacklist: 1,
 						applyDeliveryFeesOnlyOnce: 1,
 						requireSpecificDeliveryFee: 1,
 						payWhatYouWant: 1,
@@ -170,7 +172,9 @@ export async function load(params) {
 						variationFamilies: 1
 					})
 					.map((p) =>
-						runtimeConfig.deliveryFees.mode !== 'perItem' ? { ...p, deliveryFees: undefined } : p
+						runtimeConfig.deliveryFees.mode !== 'perItem'
+							? { ...p, deliveryFees: undefined, defaultBlacklist: undefined }
+							: p
 					)
 					.toArray()
 			: [],

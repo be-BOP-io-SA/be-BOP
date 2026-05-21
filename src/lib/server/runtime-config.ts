@@ -180,7 +180,8 @@ const baseConfig = {
 				amount: 0,
 				currency: 'EUR'
 			}
-		} satisfies DeliveryFees as DeliveryFees
+		} satisfies DeliveryFees as DeliveryFees,
+		defaultBlacklist: [] as CountryAlpha2[]
 	},
 	specialRolesCreated: {
 		[TICKET_CHECKER_ROLE_ID]: false
