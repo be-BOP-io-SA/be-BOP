@@ -6,7 +6,7 @@ import {
 	cleanVariationLabels
 } from '$lib/server/product';
 import type { Actions } from './$types';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { ObjectId } from 'mongodb';
 import { ORIGIN } from '$lib/server/env-config';
@@ -81,7 +81,7 @@ export const actions: Actions = {
 		}
 		json.paymentMethods = formData.getAll('paymentMethods')?.map(String);
 
-		const parsed = z
+		const parseResult = z
 			.object({
 				slug: zodSlug(),
 				pictureIds: z.string().trim().min(1).max(500).array().min(1),
@@ -89,11 +89,25 @@ export const actions: Actions = {
 				tagIds: z.string().array(),
 				...productBaseSchema()
 			})
-			.parse({
+			.safeParse({
 				...json,
 				availableDate: formData.get('availableDate') || undefined,
 				tagIds: JSON.parse(String(formData.get('tagIds'))).map((x: { value: string }) => x.value)
 			});
+
+		// Return a friendly error instead of throwing a 422 page that wipes the admin's edits.
+		if (!parseResult.success) {
+			const hasZoneIssue = parseResult.error.issues.some(
+				(issue) => issue.path[0] === 'deliveryZones'
+			);
+			return fail(422, {
+				error: hasZoneIssue
+					? 'Each delivery zone needs a name and at least one country. Complete or remove empty zones before saving.'
+					: `Could not save product: ${parseResult.error.issues[0]?.message ?? 'invalid input'}`
+			});
+		}
+
+		const parsed = parseResult.data;
 
 		if (await collections.products.countDocuments({ _id: parsed.slug })) {
 			throw error(409, 'Product with same slug already exists');
@@ -193,6 +207,9 @@ export const actions: Actions = {
 							displayShortDescription: parsed.displayShortDescription,
 							...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
 							...(parsed.deliveryZones?.length && { deliveryZones: parsed.deliveryZones }),
+							...(parsed.defaultBlacklist?.length && {
+								defaultBlacklist: parsed.defaultBlacklist
+							}),
 							applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
 							requireSpecificDeliveryFee: parsed.requireSpecificDeliveryFee,
 							...(parsed.stock !== undefined && {

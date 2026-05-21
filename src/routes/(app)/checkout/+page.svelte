@@ -115,7 +115,14 @@
 		items,
 		data.deliveryFees
 	);
+	$: itemDeliverable = items.map(
+		(item) =>
+			!item.product.shipping ||
+			!isNaN(computeDeliveryFees(UNDERLYING_CURRENCY, country, [item], data.deliveryFees))
+	);
 	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
+	// Order is blocked elsewhere when this is NaN; feed 0 so the summary isn't all €NaN
+	$: deliveryFeesForPriceInfo = isNaN(deliveryFeesToBill) ? 0 : deliveryFeesToBill;
 
 	// Display delivery HT (not the raw TTC) so the breakdown sums up to Total.
 	$: deliveryFeesVatRate = computeVatRate({
@@ -144,7 +151,7 @@
 	// Compute price WITHOUT discount for validation purposes
 	$: priceInfoWithoutDiscount = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		deliveryFees: { amount: deliveryFeesForPriceInfo, currency: UNDERLYING_CURRENCY },
 		deliveryFeesVatProfileId: data.deliveryFees.vatProfileId,
 		deliveryFeesVatIncluded: data.deliveryFees.vatIncludedReference,
 		discount: undefined,
@@ -157,7 +164,7 @@
 	});
 	$: priceInfo = computePriceInfo(items, {
 		bebopCountry: data.vatCountry,
-		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		deliveryFees: { amount: deliveryFeesForPriceInfo, currency: UNDERLYING_CURRENCY },
 		deliveryFeesVatProfileId: data.deliveryFees.vatProfileId,
 		deliveryFeesVatIncluded: data.deliveryFees.vatIncludedReference,
 		discount: possiblyOutOfBoundsDiscount,
@@ -789,6 +796,9 @@
 									: item.product.name}
 							</h3>
 						</a>
+						{#if !itemDeliverable[i]}
+							<p class="text-red-600 text-sm">⚠️ {t('checkout.itemNotDeliverable')}</p>
+						{/if}
 
 						<div class="flex flex-row gap-2">
 							<a

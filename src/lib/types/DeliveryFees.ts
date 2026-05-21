@@ -10,4 +10,6 @@ export interface DeliveryZone {
 	countries: CountryAlpha2[];
 	amount: number;
 	currency: Currency;
+	// Absent = enabled (backward compat with zones created before this field existed).
+	enabled?: boolean;
 }

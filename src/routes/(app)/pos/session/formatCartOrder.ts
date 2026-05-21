@@ -23,6 +23,7 @@ type FormattedCartItem = {
 			| 'maxQuantityPerOrder'
 			| 'deliveryFees'
 			| 'deliveryZones'
+			| 'defaultBlacklist'
 			| 'price'
 			| 'shortDescription'
 			| 'type'
@@ -65,6 +66,7 @@ export async function formatCart(
 					| 'preorder'
 					| 'deliveryFees'
 					| 'deliveryZones'
+					| 'defaultBlacklist'
 					| 'applyDeliveryFeesOnlyOnce'
 					| 'requireSpecificDeliveryFee'
 					| 'payWhatYouWant'
@@ -89,6 +91,7 @@ export async function formatCart(
 						preorder: 1,
 						deliveryFees: 1,
 						deliveryZones: 1,
+						defaultBlacklist: 1,
 						applyDeliveryFeesOnlyOnce: 1,
 						requireSpecificDeliveryFee: 1,
 						payWhatYouWant: 1,
@@ -119,6 +122,7 @@ export async function formatCart(
 				const productDoc = productById[item.productId];
 				if (runtimeConfig.deliveryFees.mode !== 'perItem') {
 					delete productDoc.deliveryFees;
+					delete productDoc.defaultBlacklist;
 				}
 				return {
 					product: pojo(productDoc),
