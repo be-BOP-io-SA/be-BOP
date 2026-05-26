@@ -860,7 +860,12 @@
 				"other": "{count} minutes"
 			},
 			"time": "Heure de la journée",
-			"timezone": "Fuseau horaire: {timeZone}"
+			"timezone": "Fuseau horaire: {timeZone}",
+			"selectDateRange": "Sélectionnez les dates de début et de fin (cliquez deux fois pour sélectionner une plage)",
+			"selectedDate": "Sélectionné: {date}",
+			"selectedRangeWithAvailable": "{totalDays} jours sélectionnés, {availableDays} jours disponibles: {dates}",
+			"noAvailableDays": "Aucun jour disponible dans la plage sélectionnée",
+			"maxRangeInfo": "Période de réservation maximale: {days} jours"
 		},
 		"checkBackLater": "Veuillez revenir plus tard",
 		"cta": {

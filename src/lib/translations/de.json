@@ -860,7 +860,12 @@
 				"other": "{count} Minuten"
 			},
 			"time": "Tageszeit",
-			"timezone": "Zeitzone: {timeZone}"
+			"timezone": "Zeitzone: {timeZone}",
+			"selectDateRange": "Start- und Enddatum auswählen (zweimal klicken, um einen Bereich auszuwählen)",
+			"selectedDate": "Ausgewählt: {date}",
+			"selectedRangeWithAvailable": "{totalDays} Tage ausgewählt, {availableDays} Tage verfügbar: {dates}",
+			"noAvailableDays": "Keine verfügbaren Tage im ausgewählten Bereich",
+			"maxRangeInfo": "Maximaler Buchungszeitraum: {days} Tage"
 		},
 		"checkBackLater": "Bitte schauen Sie später wieder vorbei",
 		"cta": {

@@ -860,7 +860,12 @@
 				"other": "{count} minuten"
 			},
 			"time": "Tijd van de dag",
-			"timezone": "Tijdzone: {timeZone}"
+			"timezone": "Tijdzone: {timeZone}",
+			"selectDateRange": "Selecteer begin- en einddatum (klik twee keer om een bereik te selecteren)",
+			"selectedDate": "Geselecteerd: {date}",
+			"selectedRangeWithAvailable": "{totalDays} dagen geselecteerd, {availableDays} dagen beschikbaar: {dates}",
+			"noAvailableDays": "Geen beschikbare dagen in het geselecteerde bereik",
+			"maxRangeInfo": "Maximale boekingsperiode: {days} dagen"
 		},
 		"checkBackLater": "Kom later nog eens terug",
 		"cta": {
