@@ -1,13 +1,13 @@
 <script lang="ts">
 	export let data;
 
-	let eshopVisible = false;
-	let retailVisible = false;
-	let nostrVisible = false;
-	let googleShoppingVisible = false;
-	let eshopBasket = false;
-	let retailBasket = false;
-	let nostrBasket = false;
+	let eshopVisible = data.productActionSettings.eShop.visible;
+	let retailVisible = data.productActionSettings.retail.visible;
+	let nostrVisible = data.productActionSettings.nostr.visible;
+	let googleShoppingVisible = data.productActionSettings.googleShopping.visible;
+	let eshopBasket = data.productActionSettings.eShop.canBeAddedToBasket;
+	let retailBasket = data.productActionSettings.retail.canBeAddedToBasket;
+	let nostrBasket = data.productActionSettings.nostr.canBeAddedToBasket;
 
 	let selected: Record<string, boolean> = {};
 
