@@ -40,7 +40,12 @@
 					<input type="checkbox" bind:checked={eshopVisible} name="eshopVisible" class="rounded" />
 				</td>
 				<td class="py-2 px-4 border-r border-gray-300 text-center">
-					<input type="checkbox" bind:checked={retailVisible} name="retailVisible" class="rounded" />
+					<input
+						type="checkbox"
+						bind:checked={retailVisible}
+						name="retailVisible"
+						class="rounded"
+					/>
 				</td>
 				<td class="py-2 px-4 border-r border-gray-300 text-center">
 					<input
