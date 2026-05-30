@@ -6,6 +6,7 @@
 	import { sum } from '$lib/utils/sum.js';
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
 	import { toCurrency } from '$lib/utils/toCurrency';
+	import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 	import { endOfDay, startOfDay } from 'date-fns';
 	import MultiSelect from 'svelte-multiselect';
 
@@ -138,6 +139,30 @@
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
+	}
+	async function downloadAllOrdersJson() {
+		const ids = orderFiltered.map((order) => order._id);
+		if (ids.length === 0) {
+			alert('No orders to export');
+			return;
+		}
+		const resp = await fetch('/admin/orders/json', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ ids })
+		});
+		if (!resp.ok) {
+			alert('Error while downloading orders JSON');
+			return;
+		}
+		const url = URL.createObjectURL(await resp.blob());
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = 'orders.json';
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
 	}
 	function exportcsv(tableElement: HTMLTableElement, filename: string) {
 		const table = tableElement;
@@ -422,6 +447,15 @@
 				>
 					📊 CSV
 				</button>
+				{#if data.role?._id === SUPER_ADMIN_ROLE_ID}
+					<button
+						on:click={downloadAllOrdersJson}
+						class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+						title="Download all displayed orders as JSON (super-admin)"
+					>
+						🧾 JSON
+					</button>
+				{/if}
 				<button
 					disabled={!!htmlStatus || isLoading}
 					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
