@@ -486,6 +486,15 @@ export const actions = {
 			);
 		}
 		rateLimit(locals.clientIp, 'email', 10, { minutes: 1 });
+		const { deliveryMethod } = z
+			.object({
+				deliveryMethod: z
+					.string()
+					.trim()
+					.optional()
+					.transform((value) => value || undefined)
+			})
+			.parse({ deliveryMethod: formData.get('deliveryMethod') ?? undefined });
 		let orderId = '';
 		await withTransaction(async (session) => {
 			orderId = await createOrder(
@@ -524,6 +533,7 @@ export const actions = {
 					cart,
 					shippingAddress: shippingInfo?.shipping,
 					billingAddress: billingInfo?.billing || shippingInfo?.shipping,
+					...(deliveryMethod && { deliveryMethod }),
 					userVatCountry: vatCountry,
 					...(locals.user?.hasPosOptions && isFreeVat && { reasonFreeVat }),
 					...(locals.user?.hasPosOptions &&

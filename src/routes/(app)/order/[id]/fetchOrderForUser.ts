@@ -206,6 +206,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 			amount: order.shippingPrice.amount,
 			currency: order.shippingPrice.currency
 		},
+		deliveryMethod: order.deliveryMethod,
 		sellerIdentity: order.sellerIdentity,
 		vat: order.vat?.map((item) => ({
 			country: item.country,

@@ -8,7 +8,7 @@
 	import { typedValues } from '$lib/utils/typedValues';
 	import { typedInclude } from '$lib/utils/typedIncludes';
 	import ProductType from '$lib/components/ProductType.svelte';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
+	import { computeDeliveryFees, computePriceInfo, resolveFeeEntry } from '$lib/cart';
 	import { computeVatRate, extractVat } from '$lib/utils/vat';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
@@ -28,6 +28,7 @@
 		(data.personalInfoConnected?.address?.country ?? data.countryCode) || data.vatCountry || 'FR';
 	const digitalCountry = data.countryCode || data.vatCountry || 'FR';
 	let country = defaultShippingCountry;
+	let selectedMethod = 'Default';
 
 	let isFreeVat = false;
 	let addDiscount = false;
@@ -109,11 +110,23 @@
 		: paymentMethods[0];
 
 	$: items = data.cart.items;
+	$: feeEntry = resolveFeeEntry(
+		data.deliveryFees.deliveryFees,
+		data.deliveryFees.deliveryZones,
+		data.deliveryFees.defaultBlacklist,
+		country
+	);
+	$: availableMethods = ['Default', ...(feeEntry?.methods?.map((method) => method.label) ?? [])];
+	$: if (!availableMethods.includes(selectedMethod)) {
+		selectedMethod = 'Default';
+	}
+	$: selectedMethodParam = selectedMethod === 'Default' ? undefined : selectedMethod;
 	$: orderDeliveryFees = computeDeliveryFees(
 		UNDERLYING_CURRENCY,
 		country,
 		items,
-		data.deliveryFees
+		data.deliveryFees,
+		selectedMethodParam
 	);
 	$: itemDeliverable = items.map(
 		(item) =>
@@ -567,6 +580,24 @@
 							<input type="text" class="form-input" name="billing.vatNumber" />
 						</label>
 					{/if}
+				</section>
+			{/if}
+
+			{#if !isDigital && availableMethods.length > 1}
+				<section class="gap-4 flex flex-col">
+					<h2 class="font-light text-2xl">{t('checkout.deliveryMethod')}</h2>
+					<select
+						name="deliveryMethod"
+						form="checkout"
+						class="form-input"
+						bind:value={selectedMethod}
+					>
+						{#each availableMethods as method}
+							<option value={method}
+								>{method === 'Default' ? t('checkout.deliveryMethodDefault') : method}</option
+							>
+						{/each}
+					</select>
 				</section>
 			{/if}
 

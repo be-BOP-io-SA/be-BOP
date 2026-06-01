@@ -114,6 +114,8 @@
 			"submit": "Proceder"
 		},
 		"deliveryFees": "Gastos de envío",
+		"deliveryMethod": "Método de envío",
+		"deliveryMethodDefault": "Modo predeterminado",
 		"deliveryFeesEstimationTooltip": "Esta es una estimación, las tarifas definitivas se procesarán al seleccionar el país de entrega.",
 		"differentBillingAddress": "La dirección de envío y facturación son diferentes",
 		"digitalNoShippingNeeded": "Todos los productos en la lista de compras son digitales. No necesitas proporcionar información de envío.",

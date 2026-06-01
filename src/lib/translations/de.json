@@ -114,6 +114,8 @@
 			"submit": "Weiter"
 		},
 		"deliveryFees": "Versandkosten",
+		"deliveryMethod": "Versandart",
+		"deliveryMethodDefault": "Standardmodus",
 		"deliveryFeesEstimationTooltip": "Dies ist eine Schätzung, die endgültigen Gebühren werden bei Auswahl des Lieferlandes berechnet.",
 		"differentBillingAddress": "Meine Lieferadresse und meine Rechnungsadresse sind unterschiedlich",
 		"digitalNoShippingNeeded": "Alle Produkte in Ihrem Warenkorb sind digitale Produkte. Sie müssen keine Versandinformationen angeben.",

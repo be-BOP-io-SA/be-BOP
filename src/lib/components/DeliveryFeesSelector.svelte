@@ -7,6 +7,7 @@
 	import { onMount } from 'svelte';
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
+	import DeliveryMethodRows from '$lib/components/DeliveryMethodRows.svelte';
 	import { currencies } from '$lib/stores/currencies';
 	import { applyVat, extractVat } from '$lib/utils/vat';
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
@@ -237,10 +238,13 @@
 			if (!countryToAdd) {
 				return;
 			}
-			deliveryFees[countryToAdd] = structuredClone(deliveryFees.default) || {
+			const base = structuredClone(deliveryFees.default) ?? {
 				amount: 0,
 				currency: defaultCurrency
 			};
+			// New country starts with only the base Default tariff — don't inherit default's methods.
+			delete base.methods;
+			deliveryFees[countryToAdd] = base;
 			highlightAdded('fee:' + countryToAdd);
 		}}
 		class="body-hyperlink underline"
@@ -304,6 +308,10 @@
 		<h3 class="text-xl">Other countries</h3>
 		<div class="gap-4 flex flex-col md:flex-row">
 			<label class="w-full">
+				Delivery method
+				<input class="form-input bg-gray-100" type="text" value="Default" disabled />
+			</label>
+			<label class="w-full">
 				Amount {vatIncludedReference ? '(VAT included)' : '(VAT excluded)'}
 				<input
 					class="form-input"
@@ -356,7 +364,20 @@
 					value={selectedCurrencies['default']?.value || ''}
 				/>
 			</label>
+			<div class="flex flex-col">
+				<span class="invisible" aria-hidden="true">.</span>
+				<span class="invisible text-xl leading-none px-1 py-2">🗑</span>
+			</div>
 		</div>
+		<DeliveryMethodRows
+			fieldPrefix="deliveryFees[default]"
+			methods={deliveryFees.default.methods}
+			currencyOptions={allCurrenciesOptions}
+			{defaultCurrency}
+			{disabled}
+			{vatRate}
+			{vatIncludedReference}
+		/>
 		<div class="w-full">
 			Forbid delivery in these countries
 			<Select
@@ -401,6 +422,10 @@
 		</label>
 		<div class="gap-4 flex flex-col md:flex-row">
 			<label class="w-full">
+				Delivery method
+				<input class="form-input bg-gray-100" type="text" value="Default" disabled />
+			</label>
+			<label class="w-full">
 				Amount
 				<input
 					class="form-input"
@@ -430,7 +455,20 @@
 					value={zoneCurrencies[i]?.value || ''}
 				/>
 			</label>
+			<div class="flex flex-col">
+				<span class="invisible" aria-hidden="true">.</span>
+				<span class="invisible text-xl leading-none px-1 py-2">🗑</span>
+			</div>
 		</div>
+		<DeliveryMethodRows
+			fieldPrefix="deliveryZones[{i}]"
+			methods={zone.methods}
+			currencyOptions={allCurrenciesOptions}
+			{defaultCurrency}
+			{disabled}
+			{vatRate}
+			{vatIncludedReference}
+		/>
 		<label class="checkbox-label">
 			<input
 				type="checkbox"
@@ -473,6 +511,10 @@
 	<div class="flex flex-col gap-2" class:newly-added={recentlyAdded.has('fee:' + country)}>
 		<h3 class="text-xl">{countryName(country)}</h3>
 		<div class="gap-4 flex flex-col md:flex-row">
+			<label class="w-full">
+				Delivery method
+				<input class="form-input bg-gray-100" type="text" value="Default" disabled />
+			</label>
 			<label class="w-full">
 				Amount {vatIncludedReference ? '(VAT included)' : '(VAT excluded)'}
 				<input
@@ -520,7 +562,22 @@
 					value={selectedCurrencies[country]?.value || ''}
 				/>
 			</label>
+			<div class="flex flex-col">
+				<span class="invisible" aria-hidden="true">.</span>
+				<span class="invisible text-xl leading-none px-1 py-2">🗑</span>
+			</div>
 		</div>
+		{#if deliveryFee}
+			<DeliveryMethodRows
+				fieldPrefix="deliveryFees[{country}]"
+				methods={deliveryFee.methods}
+				currencyOptions={allCurrenciesOptions}
+				{defaultCurrency}
+				{disabled}
+				{vatRate}
+				{vatIncludedReference}
+			/>
+		{/if}
 		<button
 			type="button"
 			class="text-red-500 underline text-left"

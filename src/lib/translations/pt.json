@@ -114,6 +114,8 @@
 			"submit": "Avançar"
 		},
 		"deliveryFees": "Taxas de envio",
+		"deliveryMethod": "Método de envio",
+		"deliveryMethodDefault": "Modo padrão",
 		"deliveryFeesEstimationTooltip": "Isto é uma estimativa, as taxas definitivas serão processadas na seleção do país de entrega.",
 		"differentBillingAddress": "A minha morada de envio e a minha morada de faturação são diferentes",
 		"digitalNoShippingNeeded": "Todos os produtos no seu carrinho são produtos digitais. Não precisa de fornecer nenhuma informação de envio.",
