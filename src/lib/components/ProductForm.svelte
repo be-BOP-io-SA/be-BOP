@@ -1302,6 +1302,20 @@
 					{#if product.shipping && (globalDeliveryFees.mode === 'perItem' || globalDeliveryFees.applyFlatFeeToEachItem)}
 						<div class="bg-green-50 p-4 rounded-lg space-y-4">
 							{#if globalDeliveryFees.mode === 'perItem'}
+								<button
+									type="button"
+									class="body-hyperlink underline self-start"
+									on:click={() => {
+										product.deliveryFees = structuredClone(globalDeliveryFees.deliveryFees ?? {});
+										product.deliveryZones = structuredClone(globalDeliveryFees.deliveryZones ?? []);
+										product.defaultBlacklist = structuredClone(
+											globalDeliveryFees.defaultBlacklist ?? []
+										);
+										product = product;
+									}}
+								>
+									Fill delivery configuration from general settings
+								</button>
 								<DeliveryFeesSelector
 									bind:deliveryFees={product.deliveryFees}
 									bind:deliveryZones={product.deliveryZones}

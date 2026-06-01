@@ -21,7 +21,10 @@
 
 	let classNames = '';
 	export { classNames as class };
-	export let order: Pick<Order, 'shippingPrice' | 'vat' | 'discount' | 'currencySnapshot'> & {
+	export let order: Pick<
+		Order,
+		'shippingPrice' | 'deliveryMethod' | 'vat' | 'discount' | 'currencySnapshot'
+	> & {
 		items: Array<
 			Pick<
 				Order['items'][0],
@@ -181,9 +184,11 @@
 		<div class="border-b border-gray-300 col-span-4" />
 	{/each}
 
-	{#if order.shippingPrice?.amount}
+	{#if order.shippingPrice?.amount || order.deliveryMethod}
 		<div class="flex justify-between items-center">
-			<h3 class="text-base">{t('checkout.deliveryFees')}</h3>
+			<h3 class="text-base">
+				{t('checkout.deliveryFees')}{order.deliveryMethod ? ` — ${order.deliveryMethod}` : ''}
+			</h3>
 
 			<div class="flex flex-col ml-auto items-end justify-center">
 				{#if order.currencySnapshot.main.shippingPrice}

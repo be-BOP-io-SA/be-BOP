@@ -36,7 +36,12 @@ import { PUBLIC_VERSION } from '$env/static/public';
 import { isEmailConfigured, queueEmail } from './email';
 import { sum } from '$lib/utils/sum';
 import { type Cart } from '$lib/types/Cart';
-import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
+import {
+	computeDeliveryFees,
+	computePriceInfo,
+	resolveDeliveryMethodLabel,
+	resolveFeeEntry
+} from '$lib/cart';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { refreshAvailableStockInDb } from './product';
@@ -640,6 +645,7 @@ export async function createOrder(
 		userVatCountry: CountryAlpha2 | undefined;
 		shippingAddress: Order['shippingAddress'] | null;
 		billingAddress?: Order['billingAddress'] | null;
+		deliveryMethod?: string;
 		reasonFreeVat?: string;
 		reasonOfferDeliveryFees?: string;
 		discount?: {
@@ -740,6 +746,7 @@ export async function createOrder(
 		currency: runtimeConfig.mainCurrency,
 		amount: 0
 	};
+	let deliveryMethodLabel: string | undefined;
 
 	if (!isDigital) {
 		if (!params.shippingAddress) {
@@ -751,13 +758,26 @@ export async function createOrder(
 					runtimeConfig.mainCurrency,
 					country,
 					items,
-					runtimeConfig.deliveryFees
+					runtimeConfig.deliveryFees,
+					params.deliveryMethod
 				);
 			}
 
 			if (isNaN(shippingPrice.amount)) {
 				throw error(400, 'Some products are not available in your country');
 			}
+
+			// Persist only a label that matches a real method; unmatched/Default is dropped
+			// (computeDeliveryFees already fell back to the Default tariff above).
+			deliveryMethodLabel = resolveDeliveryMethodLabel(
+				resolveFeeEntry(
+					runtimeConfig.deliveryFees.deliveryFees,
+					runtimeConfig.deliveryFees.deliveryZones,
+					runtimeConfig.deliveryFees.defaultBlacklist,
+					country
+				),
+				params.deliveryMethod
+			);
 		}
 	}
 
@@ -1472,6 +1492,7 @@ export async function createOrder(
 						shippingPrice
 				  }
 				: undefined),
+			...(deliveryMethodLabel && { deliveryMethod: deliveryMethodLabel }),
 			payments: [],
 			notifications: {
 				paymentStatus: {

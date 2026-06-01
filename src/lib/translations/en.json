@@ -115,6 +115,8 @@
 		},
 		"deliveryFees": "Delivery fees",
 		"deliveryFeesEstimationTooltip": "This is an estimation, definitive fees will be processed on delivery country selection.",
+		"deliveryMethod": "Delivery method",
+		"deliveryMethodDefault": "Default mode",
 		"differentBillingAddress": "My shipping address and my billing address are different",
 		"digitalNoShippingNeeded": "All products in your cart are digital products. You don't need to provide any shipping information.",
 		"invalidNpub": "Invalid Nostr public key",

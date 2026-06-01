@@ -10,8 +10,9 @@ import {
 	TEST_DIGITAL_PRODUCT_UNLIMITED,
 	TEST_PHYSICAL_PRODUCT
 } from './seed/product';
-import { computePriceInfo } from '$lib/cart';
+import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 import { toCurrency } from '$lib/utils/toCurrency';
+import type { RuntimeConfig } from './runtime-config';
 
 describe('cart', () => {
 	beforeEach(async () => {
@@ -105,6 +106,113 @@ describe('cart', () => {
 				}
 			)
 		).resolves.toBeDefined();
+	});
+
+	describe('computeDeliveryFees', () => {
+		const EUR = 'EUR' as const;
+		const shippingItem = {
+			product: { price: { amount: 10, currency: EUR }, shipping: true },
+			quantity: 1
+		};
+		const baseConfig: RuntimeConfig['deliveryFees'] = {
+			mode: 'flatFee',
+			applyFlatFeeToEachItem: false,
+			onlyPayHighest: false,
+			allowFreeForPOS: false,
+			vatIncludedReference: false,
+			vatProfileId: null,
+			deliveryFees: {},
+			deliveryZones: [],
+			defaultBlacklist: []
+		};
+		const withCountryMethods = {
+			...baseConfig,
+			deliveryFees: {
+				FR: { amount: 8, currency: EUR, methods: [{ label: 'Express', amount: 20, currency: EUR }] }
+			}
+		} satisfies RuntimeConfig['deliveryFees'];
+
+		it('uses the base Default tariff when no method is selected', () => {
+			expect(computeDeliveryFees(EUR, 'FR', [shippingItem], withCountryMethods)).toBe(8);
+		});
+
+		it('uses the selected named method tariff', () => {
+			expect(computeDeliveryFees(EUR, 'FR', [shippingItem], withCountryMethods, 'Express')).toBe(
+				20
+			);
+		});
+
+		it('matches the method label case-insensitively (trim + lowercase)', () => {
+			expect(computeDeliveryFees(EUR, 'FR', [shippingItem], withCountryMethods, '  eXPRess ')).toBe(
+				20
+			);
+		});
+
+		it('falls back to the Default tariff when the selected method is unknown', () => {
+			expect(
+				computeDeliveryFees(EUR, 'FR', [shippingItem], withCountryMethods, 'Nonexistent')
+			).toBe(8);
+		});
+
+		it('resolves methods from an enabled zone', () => {
+			const config = {
+				...baseConfig,
+				deliveryZones: [
+					{
+						name: 'EU',
+						countries: ['FR' as const],
+						amount: 10,
+						currency: EUR,
+						enabled: true,
+						methods: [{ label: 'Express', amount: 30, currency: EUR }]
+					}
+				]
+			} satisfies RuntimeConfig['deliveryFees'];
+			expect(computeDeliveryFees(EUR, 'FR', [shippingItem], config, 'Express')).toBe(30);
+			expect(computeDeliveryFees(EUR, 'FR', [shippingItem], config)).toBe(10);
+		});
+
+		it('supports a zero-priced method', () => {
+			const config = {
+				...baseConfig,
+				deliveryFees: {
+					FR: { amount: 8, currency: EUR, methods: [{ label: 'Pickup', amount: 0, currency: EUR }] }
+				}
+			} satisfies RuntimeConfig['deliveryFees'];
+			expect(computeDeliveryFees(EUR, 'FR', [shippingItem], config, 'Pickup')).toBe(0);
+		});
+
+		it('applies the selected method in perItem mode (product overrides the same label)', () => {
+			const config = {
+				...baseConfig,
+				mode: 'perItem',
+				deliveryFees: { FR: { amount: 8, currency: EUR } }
+			} satisfies RuntimeConfig['deliveryFees'];
+			const item = {
+				product: {
+					price: { amount: 10, currency: EUR },
+					shipping: true,
+					deliveryFees: {
+						FR: {
+							amount: 15,
+							currency: EUR,
+							methods: [{ label: 'Express', amount: 50, currency: EUR }]
+						}
+					}
+				},
+				quantity: 1
+			};
+			expect(computeDeliveryFees(EUR, 'FR', [item], config, 'Express')).toBe(50);
+		});
+
+		it('returns NaN for a blacklisted country', () => {
+			const config = {
+				...baseConfig,
+				deliveryFees: { default: { amount: 8, currency: EUR } },
+				defaultBlacklist: ['FR' as const]
+			} satisfies RuntimeConfig['deliveryFees'];
+			expect(computeDeliveryFees(EUR, 'FR', [shippingItem], config, 'Express')).toBeNaN();
+		});
 	});
 
 	describe('computePriceInfo', () => {

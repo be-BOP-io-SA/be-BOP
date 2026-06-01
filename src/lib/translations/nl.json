@@ -114,6 +114,8 @@
 			"submit": "Doorgaan"
 		},
 		"deliveryFees": "Bezorgkosten",
+		"deliveryMethod": "Verzendmethode",
+		"deliveryMethodDefault": "Standaardmodus",
 		"deliveryFeesEstimationTooltip": "Dit is een schatting. De definitieve kosten worden verwerkt bij de keuze van het land van levering.",
 		"differentBillingAddress": "Mijn verzendadres en mijn factuuradres zijn verschillend",
 		"digitalNoShippingNeeded": "Alle producten in uw winkelwagen zijn digitale producten. \nU hoeft geen verzendgegevens op te geven.",

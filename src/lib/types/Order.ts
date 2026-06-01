@@ -265,6 +265,7 @@ export interface Order extends Timestamps {
 		amount: number;
 		currency: Currency;
 	};
+	deliveryMethod?: string;
 
 	vat?: Array<{
 		price: Price;
