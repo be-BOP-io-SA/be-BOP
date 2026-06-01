@@ -264,15 +264,21 @@
 	</table>
 
 	<table class="mt-4 border-collapse">
-		{#if data.order.shippingPrice && data.order.currencySnapshot.main.shippingPrice?.amount}
+		{#if data.order.shippingPrice && (data.order.currencySnapshot.main.shippingPrice?.amount || data.order.deliveryMethod)}
 			<tr style:background-color="#e7e6e6">
-				<td class="border border-white px-2 text-right">{t('checkout.deliveryFees')}</td>
+				<td class="border border-white px-2 text-right"
+					>{t('checkout.deliveryFees')}{data.order.deliveryMethod
+						? ` — ${data.order.deliveryMethod}`
+						: ''}</td
+				>
 				<td class="border border-white px-2 text-right whitespace-nowrap">
-					<PriceTag
-						amount={data.order.currencySnapshot.main.shippingPrice.amount}
-						currency={data.order.currencySnapshot.main.shippingPrice.currency}
-						inline
-					/>
+					{#if data.order.currencySnapshot.main.shippingPrice?.amount}
+						<PriceTag
+							amount={data.order.currencySnapshot.main.shippingPrice.amount}
+							currency={data.order.currencySnapshot.main.shippingPrice.currency}
+							inline
+						/>
+					{/if}
 				</td>
 			</tr>
 		{/if}

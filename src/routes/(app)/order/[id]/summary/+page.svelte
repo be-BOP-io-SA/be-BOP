@@ -168,7 +168,11 @@
 	</tr>
 	{#if data.order.shippingPrice && data.order.currencySnapshot.main.shippingPrice}
 		<tr style:background-color="#e7e6e6">
-			<td class="border border-white px-2 text-right">{t('checkout.deliveryFees')}</td>
+			<td class="border border-white px-2 text-right"
+				>{t('checkout.deliveryFees')}{data.order.deliveryMethod
+					? ` — ${data.order.deliveryMethod}`
+					: ''}</td
+			>
 			<td class="border border-white px-2 text-right whitespace-nowrap">
 				<PriceTag
 					amount={data.order.currencySnapshot.main.shippingPrice.amount}

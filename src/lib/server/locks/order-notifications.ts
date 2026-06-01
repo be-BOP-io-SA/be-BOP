@@ -244,7 +244,8 @@ async function handleOrderNotification(order: Order): Promise<void> {
 							maximumFractionDigits: FRACTION_DIGITS_PER_CURRENCY[payment.price.currency],
 							minimumFractionDigits: FRACTION_DIGITS_PER_CURRENCY[payment.price.currency]
 						}),
-						currency: payment.price.currency
+						currency: payment.price.currency,
+						deliveryMethod: order.deliveryMethod ?? ''
 					};
 					if (email) {
 						await queueEmail(email, templateKey, vars, {

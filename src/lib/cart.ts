@@ -4,7 +4,12 @@ import { sum } from '$lib/utils/sum';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import type { RuntimeConfig } from './server/runtime-config';
-import type { DeliveryFees, DeliveryZone } from './types/DeliveryFees';
+import {
+	normalizeMethod,
+	type DeliveryFees,
+	type DeliveryMethod,
+	type DeliveryZone
+} from './types/DeliveryFees';
 import { type CountryAlpha2 } from './types/Country';
 import { computeVatRate, extractVat } from './utils/vat';
 import { UNDERLYING_CURRENCY, type Currency } from './types/Currency';
@@ -500,12 +505,38 @@ export function computePriceInfo(
 	};
 }
 
-function resolveDeliveryFee(
+function pickMethodFee(
+	fee: { amount: number; currency: Currency; methods?: DeliveryMethod[] },
+	selectedMethod: string | undefined
+): { amount: number; currency: Currency } {
+	if (selectedMethod && fee.methods?.length) {
+		const target = normalizeMethod(selectedMethod);
+		const matched = fee.methods.find((method) => normalizeMethod(method.label) === target);
+		if (matched) {
+			return { amount: matched.amount, currency: matched.currency };
+		}
+	}
+	return { amount: fee.amount, currency: fee.currency };
+}
+
+export function resolveDeliveryMethodLabel(
+	entry: { methods?: DeliveryMethod[] } | undefined,
+	selectedMethod: string | undefined
+): string | undefined {
+	if (!selectedMethod || normalizeMethod(selectedMethod) === 'default') {
+		return undefined;
+	}
+	const target = normalizeMethod(selectedMethod);
+	return entry?.methods?.find((method) => normalizeMethod(method.label) === target)?.label;
+}
+
+// Exported so the checkout client lists the same delivery methods the server will charge.
+export function resolveFeeEntry(
 	deliveryFees: DeliveryFees,
 	deliveryZones: DeliveryZone[] | undefined,
 	defaultBlacklist: CountryAlpha2[] | undefined,
 	country: CountryAlpha2
-): { amount: number; currency: Currency } | undefined {
+): { amount: number; currency: Currency; methods?: DeliveryMethod[] } | undefined {
 	const explicit = deliveryFees[country];
 	if (explicit) {
 		return explicit;
@@ -513,12 +544,23 @@ function resolveDeliveryFee(
 	// Disabled zones are kept as importable templates only — skip them in resolution.
 	const zone = deliveryZones?.find((z) => z.enabled !== false && z.countries.includes(country));
 	if (zone) {
-		return { amount: zone.amount, currency: zone.currency };
+		return zone;
 	}
 	if (defaultBlacklist?.includes(country)) {
 		return undefined;
 	}
 	return deliveryFees.default;
+}
+
+function resolveDeliveryFee(
+	deliveryFees: DeliveryFees,
+	deliveryZones: DeliveryZone[] | undefined,
+	defaultBlacklist: CountryAlpha2[] | undefined,
+	country: CountryAlpha2,
+	selectedMethod?: string
+): { amount: number; currency: Currency } | undefined {
+	const entry = resolveFeeEntry(deliveryFees, deliveryZones, defaultBlacklist, country);
+	return entry ? pickMethodFee(entry, selectedMethod) : undefined;
 }
 
 export function computeDeliveryFees(
@@ -537,8 +579,9 @@ export function computeDeliveryFees(
 		>;
 		quantity: number;
 	}>,
-	deliveryFeesConfig: RuntimeConfig['deliveryFees']
-) {
+	deliveryFeesConfig: RuntimeConfig['deliveryFees'],
+	selectedMethod?: string
+): number {
 	items = items.filter(({ product }) => product.shipping);
 
 	if (!items.length) {
@@ -550,7 +593,8 @@ export function computeDeliveryFees(
 			deliveryFeesConfig.deliveryFees,
 			deliveryFeesConfig.deliveryZones,
 			deliveryFeesConfig.defaultBlacklist,
-			country
+			country,
+			selectedMethod
 		);
 
 		if (!cfg) {
@@ -566,7 +610,8 @@ export function computeDeliveryFees(
 				deliveryFeesConfig.deliveryFees,
 				deliveryFeesConfig.deliveryZones,
 				deliveryFeesConfig.defaultBlacklist,
-				country
+				country,
+				selectedMethod
 			);
 			if (deliveryFeesConfig.mode === 'flatFee') {
 				return defaultConfig;
@@ -576,7 +621,8 @@ export function computeDeliveryFees(
 				product.deliveryFees ?? {},
 				product.deliveryZones,
 				product.defaultBlacklist,
-				country
+				country,
+				selectedMethod
 			);
 
 			if (!product.requireSpecificDeliveryFee && !product.defaultBlacklist?.includes(country)) {

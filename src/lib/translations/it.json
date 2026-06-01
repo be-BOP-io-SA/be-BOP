@@ -114,6 +114,8 @@
 			"submit": "Procedi"
 		},
 		"deliveryFees": "Spede di fatturazione",
+		"deliveryMethod": "Metodo di spedizione",
+		"deliveryMethodDefault": "Modalità predefinita",
 		"deliveryFeesEstimationTooltip": "Questa è una stima, le spede finali saranno calcolate dopo la selezione del paese di spedizione.",
 		"differentBillingAddress": "Il mio indirizzo di spedizione e quello di fatturazione sono differenti",
 		"digitalNoShippingNeeded": "Tutti i prodotti nel vostro carrello sono prodotti digitali. Non è richiesta nessuna informazione di spedizione.",

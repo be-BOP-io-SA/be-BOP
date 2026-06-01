@@ -114,6 +114,8 @@
 			"submit": "Payer"
 		},
 		"deliveryFees": "Participation forfaitaire aux frais de port",
+		"deliveryMethod": "Mode d'expédition",
+		"deliveryMethodDefault": "Mode par défaut",
 		"deliveryFeesEstimationTooltip": "Ceci est une estimation, le montant définitif sera décidé par votre pays de livraison.",
 		"differentBillingAddress": "Mon adresse de livraison et mon adresse de facturation sont différentes",
 		"digitalNoShippingNeeded": "Tous les produits de votre panier sont des produits numériques. \nVous n'avez pas besoin de fournir d'adresse de livraison.",
