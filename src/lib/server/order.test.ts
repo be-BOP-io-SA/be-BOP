@@ -1,14 +1,16 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanDb, createDiscount, createPaidSubscription } from './test-utils';
 import { collections } from './database';
 import {
 	TEST_DIGITAL_PRODUCT,
 	TEST_DIGITAL_PRODUCT_UNLIMITED,
 	TEST_DISCOUNTED_PRODUCT,
+	TEST_PHYSICAL_PRODUCT,
 	TEST_SUBSCRIPTION_PRODUCT
 } from './seed/product';
 import { addOrderPayment, createOrder, lastInvoiceNumber, onOrderPayment } from './orders';
 import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
+import { runtimeConfig } from './runtime-config';
 
 describe('order', () => {
 	beforeEach(async () => {
@@ -265,5 +267,75 @@ describe('order', () => {
 		expect(order?.payments[0].method).toBe('free');
 		expect(order?.items[0].discountPercentage).toBe(100);
 		expect(order?.currencySnapshot.main.totalPrice.amount).toBe(0);
+	});
+
+	describe('free delivery threshold', () => {
+		let savedDeliveryFees: typeof runtimeConfig.deliveryFees;
+
+		beforeEach(async () => {
+			await collections.products.insertOne(TEST_PHYSICAL_PRODUCT);
+			savedDeliveryFees = runtimeConfig.deliveryFees;
+			runtimeConfig.deliveryFees = {
+				mode: 'flatFee',
+				applyFlatFeeToEachItem: false,
+				onlyPayHighest: false,
+				allowFreeForPOS: false,
+				vatIncludedReference: false,
+				vatProfileId: null,
+				freeDeliveryThresholdEnabled: true,
+				freeDeliveryThreshold: 50, // EUR; physical product is 100 EUR > 50 → free
+				showRemainingForFreeDelivery: true,
+				deliveryFees: { default: { amount: 10, currency: 'EUR' } },
+				deliveryZones: [],
+				defaultBlacklist: []
+			};
+		});
+
+		afterEach(() => {
+			runtimeConfig.deliveryFees = savedDeliveryFees;
+		});
+
+		const physicalOrderParams = {
+			locale: 'en' as const,
+			user: { sessionId: 'test-session-id' },
+			shippingAddress: {
+				firstName: 'Test',
+				lastName: 'Buyer',
+				address: '1 rue de Test',
+				city: 'Paris',
+				zip: '75001',
+				country: 'FR' as const
+			},
+			userVatCountry: 'FR' as const
+		};
+
+		it('zeroes delivery and records the reason when the cart exceeds the threshold', async () => {
+			const orderId = await createOrder(
+				[{ product: TEST_PHYSICAL_PRODUCT, quantity: 1 }],
+				'point-of-sale',
+				physicalOrderParams
+			);
+
+			const order = await collections.orders.findOne({ _id: orderId });
+			expect(order?.shippingPrice?.amount).toBe(0);
+			expect(order?.deliveryFeesFree?.reason).toBe('free-delivery-threshold');
+		});
+
+		it('charges delivery and records no reason when the feature is disabled', async () => {
+			runtimeConfig.deliveryFees = {
+				...runtimeConfig.deliveryFees,
+				freeDeliveryThresholdEnabled: false
+			};
+
+			const orderId = await createOrder(
+				[{ product: TEST_PHYSICAL_PRODUCT, quantity: 1 }],
+				'point-of-sale',
+				physicalOrderParams
+			);
+
+			const order = await collections.orders.findOne({ _id: orderId });
+			expect(order?.shippingPrice?.amount).toBeGreaterThan(0);
+			expect(order?.deliveryFeesFree).toBeUndefined();
+		});
 	});
 });

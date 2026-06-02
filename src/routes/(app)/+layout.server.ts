@@ -19,7 +19,7 @@ import { error, redirect } from '@sveltejs/kit';
 import type { PickDeep, SetRequired } from 'type-fest';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { Cart } from '$lib/types/Cart';
-import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
+import { computeDeliveryFees, computePriceInfo, freeDeliveryThresholdInfo } from '$lib/cart';
 import { UNDERLYING_CURRENCY } from '$lib/types/Currency';
 import { isAlpha2CountryCode } from '$lib/types/Country';
 import {
@@ -263,7 +263,7 @@ export async function load(params) {
 		user,
 		cartItems.map((item) => item.product._id)
 	);
-	const deliveryFees =
+	const rawDeliveryFees =
 		locals.countryCode && isAlpha2CountryCode(locals.countryCode)
 			? computeDeliveryFees(
 					UNDERLYING_CURRENCY,
@@ -272,6 +272,30 @@ export async function load(params) {
 					runtimeConfig.deliveryFees
 			  )
 			: NaN;
+
+	const freeDelivery =
+		runtimeConfig.deliveryFees.freeDeliveryThresholdEnabled &&
+		cartItems.some((item) => item.product.shipping)
+			? freeDeliveryThresholdInfo({
+					cartTotalWithVat: computePriceInfo(cartItems, {
+						bebopCountry: runtimeConfig.vatCountry,
+						deliveryFees: { amount: 0, currency: UNDERLYING_CURRENCY },
+						deliveryFeesVatProfileId: runtimeConfig.deliveryFees.vatProfileId,
+						deliveryFeesVatIncluded: runtimeConfig.deliveryFees.vatIncludedReference,
+						freeProductUnits: cartFreeProductUnits,
+						userCountry: locals.countryCode,
+						vatExempted: runtimeConfig.vatExempted,
+						vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
+						vatSingleCountry: runtimeConfig.vatSingleCountry,
+						vatProfiles
+					}).totalPriceWithVat,
+					enabled: true,
+					threshold: runtimeConfig.deliveryFees.freeDeliveryThreshold,
+					mainCurrency: runtimeConfig.mainCurrency
+			  })
+			: { reached: false, remaining: 0 };
+
+	const deliveryFees = freeDelivery.reached && !isNaN(rawDeliveryFees) ? 0 : rawDeliveryFees;
 	const cartPriceInfo = computePriceInfo(cartItems, {
 		bebopCountry: runtimeConfig.vatCountry,
 		deliveryFees: {
@@ -369,7 +393,12 @@ export async function load(params) {
 			items: cartItems,
 			freeProductUnits: cartFreeProductUnits,
 			priceInfo: cartPriceInfo,
-			promoCode: cart.promoCode
+			promoCode: cart.promoCode,
+			freeDelivery: {
+				reached: freeDelivery.reached,
+				remaining: freeDelivery.remaining,
+				showRemaining: runtimeConfig.deliveryFees.showRemainingForFreeDelivery ?? true
+			}
 		},
 		confirmationBlocksThresholds: runtimeConfig.confirmationBlocksThresholds,
 		cartMaxSeparateItems: runtimeConfig.cartMaxSeparateItems,

@@ -26,6 +26,10 @@ export const actions = {
 				defaultBlacklist: defaultBlacklistSchema.default([]),
 				allowFreeForPOS: z.boolean({ coerce: true }),
 				vatIncludedReference: z.boolean({ coerce: true }).default(false),
+				// Save replaces the whole deliveryFees object, so new fields must be in this schema.
+				freeDeliveryThresholdEnabled: z.boolean({ coerce: true }).default(false),
+				freeDeliveryThreshold: z.number({ coerce: true }).min(0).default(0),
+				showRemainingForFreeDelivery: z.boolean({ coerce: true }).default(true),
 				vatProfileId: zodObjectId()
 					.or(z.literal(''))
 					.optional()

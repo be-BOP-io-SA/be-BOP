@@ -146,6 +146,9 @@ const baseConfig = {
 		allowFreeForPOS: false,
 		vatIncludedReference: false,
 		vatProfileId: null as string | null,
+		freeDeliveryThresholdEnabled: false,
+		freeDeliveryThreshold: 0, // in main currency, VAT included; <= 0 means "no threshold"
+		showRemainingForFreeDelivery: true,
 		deliveryFees: {
 			default: {
 				amount: 0,

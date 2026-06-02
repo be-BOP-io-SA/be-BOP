@@ -648,3 +648,29 @@ export function computeDeliveryFees(
 
 	return deliveryFeesConfig.onlyPayHighest ? Math.max(...fees) : sum(fees);
 }
+
+/**
+ * Free delivery when the cart subtotal (VAT incl., discounts incl., delivery excl.)
+ * STRICTLY exceeds the threshold; equality keeps the normal rulesets. Compared in
+ * UNDERLYING_CURRENCY (integer SAT), so the threshold is converted there.
+ *
+ * @param cartTotalWithVat subtotal in UNDERLYING_CURRENCY, delivery excluded
+ * @returns reached — delivery should be free (callers must still guard a NaN fee);
+ *          remaining — amount left to reach it, in UNDERLYING_CURRENCY
+ */
+export function freeDeliveryThresholdInfo(params: {
+	cartTotalWithVat: number;
+	enabled: boolean | undefined;
+	threshold: number | null | undefined;
+	mainCurrency: Currency;
+}): { reached: boolean; remaining: number } {
+	const threshold = params.threshold ?? 0;
+	if (!params.enabled || threshold <= 0) {
+		return { reached: false, remaining: 0 };
+	}
+	const thresholdUnderlying = toCurrency(UNDERLYING_CURRENCY, threshold, params.mainCurrency);
+	if (params.cartTotalWithVat > thresholdUnderlying) {
+		return { reached: true, remaining: 0 };
+	}
+	return { reached: false, remaining: thresholdUnderlying - params.cartTotalWithVat };
+}

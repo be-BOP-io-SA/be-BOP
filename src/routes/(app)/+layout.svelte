@@ -61,10 +61,12 @@
 	$: $sellerIdentity = data.sellerIdentity ?? undefined;
 
 	$: items = data.cart.items;
-	$: deliveryFees =
+	$: rawDeliveryFees =
 		data.countryCode && isAlpha2CountryCode(data.countryCode)
 			? computeDeliveryFees(UNDERLYING_CURRENCY, data.countryCode, items, data.deliveryFees)
 			: NaN;
+	$: deliveryFees =
+		data.cart.freeDelivery?.reached && !isNaN(rawDeliveryFees) ? 0 : rawDeliveryFees;
 	$: priceInfo = data.cart.priceInfo;
 	$: totalItems = sum(items.map((item) => item.quantity) ?? []);
 

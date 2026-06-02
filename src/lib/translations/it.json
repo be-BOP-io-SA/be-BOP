@@ -133,6 +133,9 @@
 		"multiplePaymentMethods": "Usa differenti metodi di pagamento",
 		"multiplePaymentMethodsHelpText": "Potrete decidere il vostro tipo di pagamento alla prossima tappa.",
 		"noDeliveryInCountry": "La spedizione non è disponibile nel vostro paese per alcuni articoli presenti nel carrello.",
+		"freeDelivery": "Spedizione gratuita",
+		"freeDeliveryRemaining": "Aggiungi <0></0> per ottenere la spedizione gratuita",
+		"freeDeliveryReached": "La spedizione è gratuita perché il tuo ordine supera <0></0>",
 		"note": {
 			"label": "Lascia un messaggio per il venditore",
 			"title": "Messaggio"
