@@ -39,6 +39,7 @@ import { type Cart } from '$lib/types/Cart';
 import {
 	computeDeliveryFees,
 	computePriceInfo,
+	freeDeliveryThresholdInfo,
 	resolveDeliveryMethodLabel,
 	resolveFeeEntry
 } from '$lib/cart';
@@ -755,6 +756,8 @@ export async function createOrder(
 		amount: 0
 	};
 	let deliveryMethodLabel: string | undefined;
+	// Persisted on the order when delivery is free (POS offer or threshold).
+	let freeDeliveryReason: string | undefined = params.reasonOfferDeliveryFees;
 
 	if (!isDigital) {
 		if (!params.shippingAddress) {
@@ -835,16 +838,56 @@ export async function createOrder(
 		// POS per-item manual discount has highest priority — preserve it via ??=
 		item.discountPercentage ??= bestAutoDiscount?.discountByProduct.get(item.product._id);
 	}
+
+	// Hoisted: reused by the threshold check and the final computePriceInfo (one DB read).
+	const freeProductUnits = await freeProductsForUser(
+		params.user,
+		items.map((item) => item.product._id)
+	);
+
+	// Overrides all delivery rulesets; must run AFTER the per-item discount loop so
+	// promo/auto discounts land in the subtotal.
+	if (
+		!isDigital &&
+		!params.reasonOfferDeliveryFees &&
+		!isNaN(shippingPrice.amount) &&
+		shippingPrice.amount > 0 &&
+		runtimeConfig.deliveryFees.freeDeliveryThresholdEnabled
+	) {
+		const subtotalNoDelivery = computePriceInfo(items, {
+			bebopCountry: runtimeConfig.vatCountry,
+			deliveryFees: { amount: 0, currency: runtimeConfig.mainCurrency },
+			deliveryFeesVatProfileId: runtimeConfig.deliveryFees.vatProfileId,
+			deliveryFeesVatIncluded: runtimeConfig.deliveryFees.vatIncludedReference,
+			discount: discountInfo,
+			freeProductUnits,
+			userCountry: params.userVatCountry,
+			vatExempted,
+			vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
+			vatProfiles,
+			vatSingleCountry: runtimeConfig.vatSingleCountry
+		}).totalPriceWithVat;
+
+		if (
+			freeDeliveryThresholdInfo({
+				cartTotalWithVat: subtotalNoDelivery,
+				enabled: runtimeConfig.deliveryFees.freeDeliveryThresholdEnabled,
+				threshold: runtimeConfig.deliveryFees.freeDeliveryThreshold,
+				mainCurrency: runtimeConfig.mainCurrency
+			}).reached
+		) {
+			shippingPrice.amount = 0;
+			freeDeliveryReason = 'free-delivery-threshold';
+		}
+	}
+
 	const priceInfo = computePriceInfo(items, {
 		bebopCountry: runtimeConfig.vatCountry,
 		deliveryFees: shippingPrice,
 		deliveryFeesVatProfileId: runtimeConfig.deliveryFees.vatProfileId,
 		deliveryFeesVatIncluded: runtimeConfig.deliveryFees.vatIncludedReference,
 		discount: discountInfo,
-		freeProductUnits: await freeProductsForUser(
-			params.user,
-			items.map((item) => item.product._id)
-		),
+		freeProductUnits,
 		userCountry: params.userVatCountry,
 		vatExempted,
 		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
@@ -1659,9 +1702,9 @@ export async function createOrder(
 					: [])
 			],
 			...(params.receiptNote && { receiptNote: params.receiptNote }),
-			...(params.reasonOfferDeliveryFees && {
+			...(freeDeliveryReason && {
 				deliveryFeesFree: {
-					reason: params.reasonOfferDeliveryFees
+					reason: freeDeliveryReason
 				}
 			}),
 			...(params.engagements && { engagements: params.engagements }),

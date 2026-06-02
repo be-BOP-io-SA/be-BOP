@@ -23,7 +23,12 @@
 	export { classNames as class };
 	export let order: Pick<
 		Order,
-		'shippingPrice' | 'deliveryMethod' | 'vat' | 'discount' | 'currencySnapshot'
+		| 'shippingPrice'
+		| 'deliveryMethod'
+		| 'vat'
+		| 'discount'
+		| 'currencySnapshot'
+		| 'deliveryFeesFree'
 	> & {
 		items: Array<
 			Pick<
@@ -184,27 +189,31 @@
 		<div class="border-b border-gray-300 col-span-4" />
 	{/each}
 
-	{#if order.shippingPrice?.amount || order.deliveryMethod}
+	{#if order.shippingPrice?.amount || order.deliveryMethod || order.deliveryFeesFree}
 		<div class="flex justify-between items-center">
 			<h3 class="text-base">
 				{t('checkout.deliveryFees')}{order.deliveryMethod ? ` — ${order.deliveryMethod}` : ''}
 			</h3>
 
 			<div class="flex flex-col ml-auto items-end justify-center">
-				{#if order.currencySnapshot.main.shippingPrice}
-					<PriceTag
-						class="text-2xl truncate"
-						amount={order.currencySnapshot.main.shippingPrice.amount}
-						currency={order.currencySnapshot.main.shippingPrice.currency}
-					/>
-				{/if}
-				{#if order.currencySnapshot.secondary?.shippingPrice}
-					<PriceTag
-						amount={order.currencySnapshot.secondary.shippingPrice.amount}
-						currency={order.currencySnapshot.secondary.shippingPrice.currency}
-						class="text-base truncate"
-						secondary
-					/>
+				{#if order.deliveryFeesFree && !order.shippingPrice?.amount}
+					<span class="text-2xl truncate">{t('checkout.freeDelivery')}</span>
+				{:else}
+					{#if order.currencySnapshot.main.shippingPrice}
+						<PriceTag
+							class="text-2xl truncate"
+							amount={order.currencySnapshot.main.shippingPrice.amount}
+							currency={order.currencySnapshot.main.shippingPrice.currency}
+						/>
+					{/if}
+					{#if order.currencySnapshot.secondary?.shippingPrice}
+						<PriceTag
+							amount={order.currencySnapshot.secondary.shippingPrice.amount}
+							currency={order.currencySnapshot.secondary.shippingPrice.currency}
+							class="text-base truncate"
+							secondary
+						/>
+					{/if}
 				{/if}
 			</div>
 		</div>

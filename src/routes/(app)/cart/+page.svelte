@@ -32,10 +32,14 @@
 	let errorProductId = '';
 
 	$: items = data.cart?.items ?? [];
-	$: deliveryFees =
+	$: rawDeliveryFees =
 		data.countryCode && isAlpha2CountryCode(data.countryCode)
 			? computeDeliveryFees(UNDERLYING_CURRENCY, data.countryCode, items, data.deliveryFees)
 			: NaN;
+	// Preserve NaN (undeliverable country) so the noDeliveryInCountry message still fires.
+	$: deliveryFees =
+		data.cart?.freeDelivery?.reached && !isNaN(rawDeliveryFees) ? 0 : rawDeliveryFees;
+	$: freeByThreshold = !!data.cart?.freeDelivery?.reached && !isNaN(rawDeliveryFees);
 	$: priceInfo = data.cart?.priceInfo;
 	let alias = '';
 	let formAlias: HTMLInputElement;
@@ -371,30 +375,59 @@
 					<div class="border-b border-gray-300 col-span-3 my-4 lg:my-0" />
 				{/each}
 			</div>
-			{#if deliveryFees}
-				<div class="flex justify-end border-b border-gray-300 pb-6 gap-6">
-					<div class="flex flex-wrap items-center gap-2">
-						<h3 class="text-base">{t('checkout.deliveryFees')}</h3>
-						<div title={t('checkout.deliveryFeesEstimationTooltip')} class="cursor-pointer">
-							<IconInfo />
+			{#if deliveryFees > 0 || freeByThreshold}
+				<div class="border-b border-gray-300 pb-6">
+					<div class="flex justify-end gap-6">
+						<div class="flex flex-wrap items-center gap-2">
+							<h3 class="text-base">{t('checkout.deliveryFees')}</h3>
+							<div title={t('checkout.deliveryFeesEstimationTooltip')} class="cursor-pointer">
+								<IconInfo />
+							</div>
+						</div>
+						<div class="flex flex-col items-end {freeByThreshold ? 'text-blue-600' : ''}">
+							<PriceTag
+								class="text-2xl truncate"
+								amount={deliveryFees}
+								currency={UNDERLYING_CURRENCY}
+								main
+							/>
+							<PriceTag
+								amount={deliveryFees}
+								currency={UNDERLYING_CURRENCY}
+								class="text-base truncate"
+								secondary
+							/>
 						</div>
 					</div>
-					<div class="flex flex-col items-end">
-						<PriceTag
-							class="text-2xl truncate"
-							amount={deliveryFees}
-							currency={UNDERLYING_CURRENCY}
-							main
-						/>
-						<PriceTag
-							amount={deliveryFees}
-							currency={UNDERLYING_CURRENCY}
-							class="text-base truncate"
-							secondary
-						/>
-					</div>
+					{#if data.cart?.freeDelivery?.showRemaining && !isDigital}
+						{#if freeByThreshold}
+							<div class="alert-info mt-4 text-right">
+								<Trans key="checkout.freeDeliveryReached">
+									<PriceTag
+										slot="0"
+										amount={data.deliveryFees.freeDeliveryThreshold ?? 0}
+										currency={data.currencies.main}
+										main
+										inline
+									/>
+								</Trans>
+							</div>
+						{:else if data.cart.freeDelivery.remaining > 0}
+							<div class="alert-info mt-4 text-right">
+								<Trans key="checkout.freeDeliveryRemaining">
+									<PriceTag
+										slot="0"
+										amount={data.cart.freeDelivery.remaining}
+										currency={UNDERLYING_CURRENCY}
+										main
+										inline
+									/>
+								</Trans>
+							</div>
+						{/if}
+					{/if}
 				</div>
-			{:else if isNaN(deliveryFees)}
+			{:else if isNaN(rawDeliveryFees)}
 				<div class="alert-error mt-3">
 					{t('checkout.noDeliveryInCountry')}
 				</div>

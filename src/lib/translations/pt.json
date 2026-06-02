@@ -133,6 +133,9 @@
 		"multiplePaymentMethods": "Usar vários métodos de pagamento",
 		"multiplePaymentMethodsHelpText": "Pode definir os métodos de pagamento no próximo passo.",
 		"noDeliveryInCountry": "A entrega não está disponível no seu país para alguns dos artigos do seu carrinho.",
+		"freeDelivery": "Entrega grátis",
+		"freeDeliveryRemaining": "Adicione <0></0> para obter entrega grátis",
+		"freeDeliveryReached": "A entrega é grátis porque o seu pedido excede <0></0>",
 		"note": {
 			"label": "Deixe uma nota para o comerciante",
 			"title": "Nota"

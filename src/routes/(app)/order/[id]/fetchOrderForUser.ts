@@ -220,6 +220,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		billingAddress: order.billingAddress,
 		notifications: order.notifications,
 		vatFree: order.vatFree,
+		deliveryFeesFree: order.deliveryFeesFree,
 		discount: order.discount,
 		currencySnapshot: order.currencySnapshot,
 		status: order.status,

@@ -10,7 +10,7 @@ import {
 	TEST_DIGITAL_PRODUCT_UNLIMITED,
 	TEST_PHYSICAL_PRODUCT
 } from './seed/product';
-import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
+import { computeDeliveryFees, computePriceInfo, freeDeliveryThresholdInfo } from '$lib/cart';
 import { toCurrency } from '$lib/utils/toCurrency';
 import type { RuntimeConfig } from './runtime-config';
 
@@ -121,6 +121,9 @@ describe('cart', () => {
 			allowFreeForPOS: false,
 			vatIncludedReference: false,
 			vatProfileId: null,
+			freeDeliveryThresholdEnabled: false,
+			freeDeliveryThreshold: 0,
+			showRemainingForFreeDelivery: true,
 			deliveryFees: {},
 			deliveryZones: [],
 			defaultBlacklist: []
@@ -312,5 +315,51 @@ describe('cart', () => {
 				});
 			});
 		});
+	});
+});
+
+describe('freeDeliveryThresholdInfo', () => {
+	// mainCurrency = SAT (= UNDERLYING_CURRENCY) avoids exchange-rate setup: no conversion.
+	const base = { enabled: true, mainCurrency: 'SAT' as const };
+
+	it('is free when the cart strictly exceeds the threshold', () => {
+		expect(freeDeliveryThresholdInfo({ ...base, cartTotalWithVat: 100, threshold: 50 })).toEqual({
+			reached: true,
+			remaining: 0
+		});
+	});
+
+	it('keeps normal rules when the cart equals the threshold (strict >)', () => {
+		expect(freeDeliveryThresholdInfo({ ...base, cartTotalWithVat: 50, threshold: 50 })).toEqual({
+			reached: false,
+			remaining: 0
+		});
+	});
+
+	it('reports the remaining amount when below the threshold', () => {
+		expect(freeDeliveryThresholdInfo({ ...base, cartTotalWithVat: 30, threshold: 50 })).toEqual({
+			reached: false,
+			remaining: 20
+		});
+	});
+
+	it('is disabled when the feature flag is off', () => {
+		expect(
+			freeDeliveryThresholdInfo({ ...base, enabled: false, cartTotalWithVat: 100, threshold: 50 })
+		).toEqual({ reached: false, remaining: 0 });
+	});
+
+	it('is disabled when the threshold is 0 / null / undefined', () => {
+		expect(freeDeliveryThresholdInfo({ ...base, cartTotalWithVat: 100, threshold: 0 })).toEqual({
+			reached: false,
+			remaining: 0
+		});
+		expect(freeDeliveryThresholdInfo({ ...base, cartTotalWithVat: 100, threshold: null })).toEqual({
+			reached: false,
+			remaining: 0
+		});
+		expect(
+			freeDeliveryThresholdInfo({ ...base, cartTotalWithVat: 100, threshold: undefined })
+		).toEqual({ reached: false, remaining: 0 });
 	});
 });

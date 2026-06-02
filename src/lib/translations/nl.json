@@ -133,6 +133,9 @@
 		"multiplePaymentMethods": "Maak gebruik van meerdere betaalmethoden",
 		"multiplePaymentMethodsHelpText": "Bij de volgende stap kunt u de betaalmethoden instellen.",
 		"noDeliveryInCountry": "Voor sommige artikelen in uw winkelwagentje is bezorging in uw land niet mogelijk.",
+		"freeDelivery": "Gratis verzending",
+		"freeDeliveryRemaining": "Voeg <0></0> meer toe voor gratis verzending",
+		"freeDeliveryReached": "Verzending is gratis omdat je bestelling meer dan <0></0> bedraagt",
 		"note": {
 			"label": "Laat een briefje achter voor de verkoper",
 			"title": "Opmerking"

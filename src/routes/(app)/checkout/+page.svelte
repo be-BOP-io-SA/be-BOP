@@ -7,7 +7,12 @@
 	import { typedValues } from '$lib/utils/typedValues';
 	import { typedInclude } from '$lib/utils/typedIncludes';
 	import ProductType from '$lib/components/ProductType.svelte';
-	import { computeDeliveryFees, computePriceInfo, resolveFeeEntry } from '$lib/cart';
+	import {
+		computeDeliveryFees,
+		computePriceInfo,
+		freeDeliveryThresholdInfo,
+		resolveFeeEntry
+	} from '$lib/cart';
 	import { computeVatRate, extractVat } from '$lib/utils/vat';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
@@ -156,7 +161,23 @@
 			!item.product.shipping ||
 			!isNaN(computeDeliveryFees(UNDERLYING_CURRENCY, country, [item], data.deliveryFees))
 	);
-	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
+	$: cartSubtotalNoDelivery = computePriceInfo(items, {
+		...vatBaseConfig,
+		deliveryFees: { amount: 0, currency: UNDERLYING_CURRENCY },
+		discount: possiblyOutOfBoundsDiscount
+	}).totalPriceWithVat;
+	$: freeDelivery = freeDeliveryThresholdInfo({
+		cartTotalWithVat: cartSubtotalNoDelivery,
+		enabled: data.deliveryFees.freeDeliveryThresholdEnabled,
+		threshold: data.deliveryFees.freeDeliveryThreshold,
+		mainCurrency: data.currencies.main
+	});
+	// Preserve NaN (undeliverable country) so the noDeliveryInCountry branch still fires
+	$: deliveryFeesToBill =
+		offerDeliveryFees || (freeDelivery.reached && !isNaN(orderDeliveryFees))
+			? 0
+			: orderDeliveryFees;
+	$: freeByThreshold = freeDelivery.reached && !isNaN(orderDeliveryFees);
 	// Order is blocked elsewhere when this is NaN; feed 0 so the summary isn't all €NaN
 	$: deliveryFeesForPriceInfo = isNaN(deliveryFeesToBill) ? 0 : deliveryFeesToBill;
 
@@ -934,10 +955,14 @@
 					<div class="border-b border-gray-300 col-span-4" />
 				{/each}
 
-				{#if deliveryFeesToBill}
+				{#if deliveryFeesToBill > 0 || freeByThreshold}
 					<div class="flex justify-between items-center">
 						<h3 class="text-base">{t('checkout.deliveryFees')}</h3>
-						<div class="flex flex-col ml-auto items-end justify-center">
+						<div
+							class="flex flex-col ml-auto items-end justify-center {freeByThreshold
+								? 'text-blue-600'
+								: ''}"
+						>
 							<PriceTag
 								class="text-2xl truncate"
 								amount={deliveryFeesToDisplay}
@@ -952,6 +977,33 @@
 							/>
 						</div>
 					</div>
+					{#if data.deliveryFees.showRemainingForFreeDelivery && !isDigital}
+						{#if freeByThreshold}
+							<div class="alert-info col-span-4">
+								<Trans key="checkout.freeDeliveryReached">
+									<PriceTag
+										slot="0"
+										amount={data.deliveryFees.freeDeliveryThreshold ?? 0}
+										currency={data.currencies.main}
+										main
+										inline
+									/>
+								</Trans>
+							</div>
+						{:else if freeDelivery.remaining > 0}
+							<div class="alert-info col-span-4">
+								<Trans key="checkout.freeDeliveryRemaining">
+									<PriceTag
+										slot="0"
+										amount={freeDelivery.remaining}
+										currency={UNDERLYING_CURRENCY}
+										main
+										inline
+									/>
+								</Trans>
+							</div>
+						{/if}
+					{/if}
 					<div class="border-b border-gray-300 col-span-4" />
 				{:else if isNaN(deliveryFeesToBill)}
 					<div class="alert-error mt-3">
@@ -1267,7 +1319,7 @@
 							/>
 							{t('pos.offerDeliveryFees')}
 						</label>
-						{#if orderDeliveryFees !== deliveryFeesToBill}
+						{#if offerDeliveryFees}
 							<label class="form-label col-span-3" style={displayToTheUser ? '' : 'display: none;'}>
 								{t('pos.discountJustification')}
 								<input

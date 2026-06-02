@@ -133,6 +133,9 @@
 		"multiplePaymentMethods": "Use several payment methods",
 		"multiplePaymentMethodsHelpText": "You can set payment methods at the next step.",
 		"noDeliveryInCountry": "Delivery is not available in your country for some of the items of your cart.",
+		"freeDelivery": "Free delivery",
+		"freeDeliveryRemaining": "Add <0></0> more to get free delivery",
+		"freeDeliveryReached": "Delivery is free because your order exceeds <0></0>",
 		"itemNotDeliverable": "Cannot be delivered to your country",
 		"note": {
 			"label": "Leave a note for merchant",

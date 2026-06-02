@@ -110,6 +110,40 @@
 		</select>
 	</label>
 
+	<h2 class="text-2xl">Free delivery threshold</h2>
+
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			class="form-checkbox"
+			name="freeDeliveryThresholdEnabled"
+			checked={data.deliveryFees.freeDeliveryThresholdEnabled}
+		/>
+		Enable free delivery above a cart amount threshold
+	</label>
+
+	<label class="form-label">
+		Threshold amount (VAT included, in {data.currencies.main})
+		<input
+			type="number"
+			min="0"
+			step="any"
+			class="form-input"
+			name="freeDeliveryThreshold"
+			value={data.deliveryFees.freeDeliveryThreshold ?? 0}
+		/>
+	</label>
+
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			class="form-checkbox"
+			name="showRemainingForFreeDelivery"
+			checked={data.deliveryFees.showRemainingForFreeDelivery ?? true}
+		/>
+		Show customers the amount remaining to reach free delivery
+	</label>
+
 	<DeliveryFeesSelector
 		{deliveryFees}
 		{deliveryZones}
