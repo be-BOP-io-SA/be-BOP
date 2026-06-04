@@ -2,6 +2,7 @@ import { addToCartInDb } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
 import { applyResolvedStock, resolveStockProduct } from '$lib/server/product';
+import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
@@ -113,6 +114,7 @@ async function fetchProduct(
 	| 'vatProfileId'
 	| 'stockReference'
 	| 'tagIds'
+	| 'subscriptionDuration'
 > | null> {
 	return collections.products.findOne<ReturnType<Awaited<typeof fetchProduct>>>(
 		{ _id: productId },
@@ -163,7 +165,8 @@ async function fetchProduct(
 				bookingSpec: 1,
 				vatProfileId: 1,
 				stockReference: 1,
-				tagIds: 1
+				tagIds: 1,
+				subscriptionDuration: 1
 			}
 		}
 	);
@@ -256,7 +259,13 @@ export const load = async ({ params, parent, locals }) => {
 	});
 
 	return {
-		product: { ...product, vatProfileId: product.vatProfileId?.toString() },
+		product: {
+			...product,
+			vatProfileId: product.vatProfileId?.toString(),
+			...(product.type === 'subscription' && {
+				subscriptionDuration: resolveSubscriptionDuration(product)
+			})
+		},
 		pictures,
 		discount,
 		vatRate,

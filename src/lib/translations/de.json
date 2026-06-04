@@ -945,6 +945,13 @@
 		"preorderText": "Dies ist eine Vorbestellung, Ihr Produkt wird am {date} verfügbar sein",
 		"pricePlaceholder": "Preis",
 		"seeInCabinet": "In Meinem Schrank ansehen",
+		"subscriptionDuration": {
+			"hour": "Verlängert sich jede Stunde",
+			"day": "Verlängert sich jeden Tag",
+			"week": "Verlängert sich jede Woche",
+			"month": "Verlängert sich jeden Monat",
+			"year": "Verlängert sich jedes Jahr"
+		},
 		"type": {
 			"deposit": "Auf Anzahlung",
 			"digitalResource": "Digitale Ressource",

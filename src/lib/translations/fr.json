@@ -945,6 +945,13 @@
 		"preorderText": "En précommande, disponible le {date}",
 		"pricePlaceholder": "Prix",
 		"seeInCabinet": "Voir dans MonCabinet",
+		"subscriptionDuration": {
+			"hour": "Renouvelé chaque heure",
+			"day": "Renouvelé chaque jour",
+			"week": "Renouvelé chaque semaine",
+			"month": "Renouvelé chaque mois",
+			"year": "Renouvelé chaque année"
+		},
 		"type": {
 			"deposit": "Sur acompte",
 			"digitalResource": "Ressource numérique",

@@ -945,6 +945,13 @@
 		"preorderText": "Dit is een voorbestelling. Uw product is beschikbaar op {date}",
 		"pricePlaceholder": "Prijs",
 		"seeInCabinet": "Zie in MijnKabinet",
+		"subscriptionDuration": {
+			"hour": "Verlengt elk uur",
+			"day": "Verlengt elke dag",
+			"week": "Verlengt elke week",
+			"month": "Verlengt elke maand",
+			"year": "Verlengt elk jaar"
+		},
 		"type": {
 			"deposit": "Op borg",
 			"digitalResource": "Digitale hulpbron",

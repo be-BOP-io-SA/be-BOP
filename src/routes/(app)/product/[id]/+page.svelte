@@ -3,6 +3,7 @@
 	import { marked } from 'marked';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
+	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import { applyAction, enhance } from '$app/forms';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { productAddedToCart } from '$lib/stores/productAddedToCart';
@@ -704,6 +705,10 @@
 						/>
 						<span class="font-semibold text-sm">{t('product.vatExcluded')}</span>
 					</div>
+				{/if}
+
+				{#if data.product.type === 'subscription' && data.product.subscriptionDuration}
+					<SubscriptionDurationLabel duration={data.product.subscriptionDuration} />
 				{/if}
 
 				{#if freeProductsAvailable}
