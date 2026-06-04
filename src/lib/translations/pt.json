@@ -945,6 +945,13 @@
 		"preorderText": "Isto é uma pré-encomenda, o seu produto estará disponível em {date}",
 		"pricePlaceholder": "Preço",
 		"seeInCabinet": "Ver no Meu Armário",
+		"subscriptionDuration": {
+			"hour": "Renova a cada hora",
+			"day": "Renova a cada dia",
+			"week": "Renova a cada semana",
+			"month": "Renova a cada mês",
+			"year": "Renova a cada ano"
+		},
 		"type": {
 			"deposit": "Sob depósito",
 			"digitalResource": "Recurso Digital",

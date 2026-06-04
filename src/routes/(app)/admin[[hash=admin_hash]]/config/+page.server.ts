@@ -4,7 +4,6 @@ import { ORIGIN } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { CURRENCIES } from '$lib/types/Currency';
-import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { typedKeys } from '$lib/utils/typedKeys.js';
 import { fetchAndSaveExchangeRates } from '$lib/server/locks/currency-lock';
@@ -43,7 +42,6 @@ export async function load(event) {
 		maintenanceIps: runtimeConfig.maintenanceIps,
 		checkoutButtonOnProductPage: runtimeConfig.checkoutButtonOnProductPage,
 		discovery: runtimeConfig.discovery,
-		subscriptionDuration: runtimeConfig.subscriptionDuration,
 		subscriptionReminderSeconds: runtimeConfig.subscriptionReminderSeconds,
 		vatExemptionReason: runtimeConfig.vatExemptionReason,
 		desiredPaymentTimeout: runtimeConfig.desiredPaymentTimeout,
@@ -106,7 +104,6 @@ export const actions = {
 				copyOrderEmailsToAdmin: z.boolean({ coerce: true }),
 				hideShopBankOnReceipt: z.boolean({ coerce: true }),
 				hideShopBankOnTicket: z.boolean({ coerce: true }),
-				subscriptionDuration: z.enum(SUBSCRIPTION_DURATIONS),
 				mainCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1).filter((c) => c !== 'SAT')]),
 				secondaryCurrency: z
 					.enum([CURRENCIES[0], ...CURRENCIES.slice(1).filter((c) => c !== 'SAT'), ''])

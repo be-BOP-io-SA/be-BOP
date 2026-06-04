@@ -945,6 +945,13 @@
 		"preorderText": "Esta es una preorden, el producto estará disponible el {date}",
 		"pricePlaceholder": "Precio",
 		"seeInCabinet": "Ver en el cabinet",
+		"subscriptionDuration": {
+			"hour": "Se renueva cada hora",
+			"day": "Se renueva cada día",
+			"week": "Se renueva cada semana",
+			"month": "Se renueva cada mes",
+			"year": "Se renueva cada año"
+		},
 		"type": {
 			"deposit": "En depósito",
 			"digitalResource": "Recurso digital",

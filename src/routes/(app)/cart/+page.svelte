@@ -7,6 +7,7 @@
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import ProductType from '$lib/components/ProductType.svelte';
+	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import Trans from '$lib/components/Trans.svelte';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
@@ -305,6 +306,9 @@
 									</button>
 								{/if}
 							</div>
+							{#if item.product.type === 'subscription' && item.product.subscriptionDuration}
+								<SubscriptionDurationLabel duration={item.product.subscriptionDuration} />
+							{/if}
 						</div>
 
 						<div class="flex flex-col items-end gap-2 lg:mb-0 mb-4">

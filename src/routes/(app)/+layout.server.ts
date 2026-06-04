@@ -6,7 +6,7 @@ import { collections } from '$lib/server/database';
 import { picturesForProducts } from '$lib/server/picture.js';
 import { pojo } from '$lib/server/pojo.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { freeProductsForUser } from '$lib/server/subscriptions';
+import { freeProductsForUser, resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import { userQuery } from '$lib/server/user.js';
 import { userIdentifier } from '$lib/server/user.js';
@@ -127,6 +127,7 @@ export async function load(params) {
 							| 'paymentMethods'
 							| 'variationLabels'
 							| 'bookingSpec.slotMinutes'
+							| 'subscriptionDuration'
 						>
 					>({
 						_id: 1,
@@ -152,6 +153,7 @@ export async function load(params) {
 						paymentMethods: 1,
 						'bookingSpec.slotMinutes': 1,
 						isTicket: 1,
+						subscriptionDuration: 1,
 						variationLabels: {
 							$ifNull: [`$translations.${locals.language}.variationLabels`, '$variationLabels']
 						}
@@ -228,7 +230,12 @@ export async function load(params) {
 
 			return {
 				_id: item._id,
-				product: pojo(productDoc),
+				product: {
+					...pojo(productDoc),
+					...(productDoc.type === 'subscription' && {
+						subscriptionDuration: resolveSubscriptionDuration(productDoc)
+					})
+				},
 				picture: productPictureDoc,
 				booking: item.booking,
 				digitalFilesCount: digitalFilesDoc?.length ?? 0,

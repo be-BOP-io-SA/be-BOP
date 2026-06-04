@@ -947,6 +947,13 @@
 		"preorderText": "This is a preorder, your product will be available on {date}",
 		"pricePlaceholder": "Price",
 		"seeInCabinet": "See in MyCabinet",
+		"subscriptionDuration": {
+			"hour": "Renews every hour",
+			"day": "Renews every day",
+			"week": "Renews every week",
+			"month": "Renews every month",
+			"year": "Renews every year"
+		},
 		"type": {
 			"deposit": "On deposit",
 			"digitalResource": "Digital Resource",

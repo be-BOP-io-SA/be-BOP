@@ -5,7 +5,6 @@
 	import IconDownArrow from '~icons/ant-design/arrow-down-outlined';
 
 	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency';
-	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 	import { ORDER_PAYMENT_STATUSES } from '$lib/types/Order';
 	import { DELAY_MULTIPLIERS } from '$lib/utils/delayMultipliers';
 	import { typedInclude } from '$lib/utils/typedIncludes';
@@ -577,18 +576,9 @@
 	/>
 
 	<h2 class="text-2xl">Timing</h2>
-	<label class="form-label">
-		Subscription duration
-		<select
-			name="subscriptionDuration"
-			class="form-input max-w-[25rem]"
-			value={data.subscriptionDuration}
-		>
-			{#each SUBSCRIPTION_DURATIONS as duration}
-				<option value={duration}>{duration}</option>
-			{/each}
-		</select>
-	</label>
+	<p class="text-sm text-gray-600 bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+		Subscription duration moved in product settings for greater flexibility.
+	</p>
 	<label class="form-label">
 		Subscription reminder
 		<select
