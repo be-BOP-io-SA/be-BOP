@@ -1,5 +1,6 @@
 import { CURRENCIES } from '$lib/types/Currency';
 import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
+import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 import { z } from 'zod';
 import { deliveryFeesSchema } from '../config/delivery/schema';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
@@ -166,6 +167,7 @@ export const productBaseSchema = () => ({
 	depositPercentage: z.number({ coerce: true }).int().min(0).max(100).optional(),
 	enforceDeposit: z.boolean({ coerce: true }).default(false),
 	vatProfileId: zodObjectId().or(z.literal('')).optional(),
+	subscriptionDuration: z.enum(SUBSCRIPTION_DURATIONS).or(z.literal('')).optional(),
 	cta: z
 		.array(
 			z.object({

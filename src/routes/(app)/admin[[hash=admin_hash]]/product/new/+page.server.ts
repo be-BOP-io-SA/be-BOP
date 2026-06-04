@@ -249,6 +249,9 @@ export const actions: Actions = {
 									variationLabels: cleanedVariationLabels
 								}),
 							...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
+							...(parsed.subscriptionDuration && {
+								subscriptionDuration: parsed.subscriptionDuration
+							}),
 							hasSellDisclaimer: parsed.hasSellDisclaimer,
 							...(parsed.hasSellDisclaimer &&
 								parsed.sellDisclaimerTitle &&
@@ -449,6 +452,9 @@ export const actions: Actions = {
 							}
 						}),
 					...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
+					...(parsed.subscriptionDuration && {
+						subscriptionDuration: parsed.subscriptionDuration
+					}),
 					hideFromSEO: parsed.hideFromSEO,
 					translations: product.translations
 				},

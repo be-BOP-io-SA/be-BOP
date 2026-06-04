@@ -1,5 +1,6 @@
 import { collections } from '$lib/server/database';
 import { createOrder } from '$lib/server/orders';
+import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userQuery } from '$lib/server/user.js';
 import { error, redirect } from '@sveltejs/kit';
@@ -22,7 +23,8 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		{
 			projection: {
 				_id: 1,
-				name: { $ifNull: [`$translations.${locals.language}.name`, '$name'] }
+				name: { $ifNull: [`$translations.${locals.language}.name`, '$name'] },
+				subscriptionDuration: 1
 			}
 		}
 	);
@@ -53,7 +55,8 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		},
 		product: {
 			_id: product._id,
-			name: product.name
+			name: product.name,
+			subscriptionDuration: resolveSubscriptionDuration(product)
 		},
 		picture: picture ?? undefined,
 		canRenew: canRenewAfter < new Date()

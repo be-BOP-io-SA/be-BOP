@@ -263,6 +263,9 @@ export const actions: Actions = {
 						},
 						updatedAt: new Date(),
 						...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
+						...(parsed.subscriptionDuration && {
+							subscriptionDuration: parsed.subscriptionDuration
+						}),
 						...(parsed.restrictPaymentMethods && {
 							paymentMethods: parsed.paymentMethods ?? []
 						}),
@@ -298,6 +301,7 @@ export const actions: Actions = {
 						...(!parsed.maxQuantityPerOrder && { maxQuantityPerOrder: '' }),
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
+						...(!parsed.subscriptionDuration && { subscriptionDuration: '' }),
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
 						...(!hasVariations && { variations: '', variationLabels: '' }),
 						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),

@@ -5,6 +5,7 @@
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import ProductType from '$lib/components/ProductType.svelte';
+	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import Trans from '$lib/components/Trans.svelte';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { useI18n } from '$lib/i18n';
@@ -233,6 +234,9 @@
 									</button>
 								{/if}
 							</div>
+							{#if item.product.type === 'subscription' && item.product.subscriptionDuration}
+								<SubscriptionDurationLabel duration={item.product.subscriptionDuration} />
+							{/if}
 							<button
 								formaction="/cart/{item.product._id}/?/remove"
 								class="mt-auto mr-auto hover:underline body-hyperlink text-base font-light"

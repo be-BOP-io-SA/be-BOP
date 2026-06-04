@@ -7,6 +7,7 @@ import { Lock } from './lock';
 import { ORIGIN } from '$lib/server/env-config';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import { CURRENCIES, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 
 const migrations = [
 	{
@@ -694,6 +695,22 @@ const migrations = [
 						}
 					}
 				],
+				{ session }
+			);
+		}
+	},
+	{
+		_id: new ObjectId('6b1f4880e92e590e85af2388'),
+		name: 'Move subscription duration to product level (issue #2388)',
+		run: async (session: ClientSession) => {
+			const config = await collections.runtimeConfig.findOne(
+				{ _id: 'subscriptionDuration' },
+				{ session }
+			);
+			const globalDuration = (config?.data as SubscriptionDuration) ?? 'month';
+			await collections.products.updateMany(
+				{ type: 'subscription', subscriptionDuration: { $exists: false } },
+				{ $set: { subscriptionDuration: globalDuration } },
 				{ session }
 			);
 		}

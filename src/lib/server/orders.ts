@@ -23,7 +23,11 @@ import {
 } from 'date-fns';
 import { runtimeConfig } from './runtime-config';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
-import { freeProductsForUser, generateSubscriptionNumber } from './subscriptions';
+import {
+	freeProductsForUser,
+	generateSubscriptionNumber,
+	resolveSubscriptionDuration
+} from './subscriptions';
 import {
 	checkProductVariationsIntegrity,
 	productPriceWithVariations,
@@ -1975,7 +1979,7 @@ function addDiscountFreeProducts(
 	}
 }
 
-function getSubscriptionDuration(): Duration {
+function getSubscriptionDuration(product: { subscriptionDuration?: SubscriptionDuration }): Duration {
 	const durations: Record<SubscriptionDuration, Duration> = {
 		hour: { hours: 1 },
 		day: { days: 1 },
@@ -1983,7 +1987,7 @@ function getSubscriptionDuration(): Duration {
 		month: { months: 1 },
 		year: { years: 1 }
 	};
-	return durations[runtimeConfig.subscriptionDuration as SubscriptionDuration];
+	return durations[resolveSubscriptionDuration(product)];
 }
 
 async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSession) {
@@ -2013,7 +2017,10 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, updatedFreeProductsById);
 			}
-			const newPaidUntil = add(max([existing.paidUntil, new Date()]), getSubscriptionDuration());
+			const newPaidUntil = add(
+				max([existing.paidUntil, new Date()]),
+				getSubscriptionDuration(subscription.product)
+			);
 
 			const archivedNotifications = existing.notifications.map((notif) => ({
 				...notif,
@@ -2069,7 +2076,7 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 					number: await generateSubscriptionNumber(),
 					user: order.user,
 					productId: subscription.product._id,
-					paidUntil: add(new Date(), getSubscriptionDuration()),
+					paidUntil: add(new Date(), getSubscriptionDuration(subscription.product)),
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					notifications: [],
