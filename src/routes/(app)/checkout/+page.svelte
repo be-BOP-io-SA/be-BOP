@@ -8,6 +8,7 @@
 	import { typedValues } from '$lib/utils/typedValues';
 	import { typedInclude } from '$lib/utils/typedIncludes';
 	import ProductType from '$lib/components/ProductType.svelte';
+	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 	import { computeVatRate, extractVat } from '$lib/utils/vat';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
@@ -789,6 +790,10 @@
 									: item.product.name}
 							</h3>
 						</a>
+
+						{#if item.product.type === 'subscription' && item.product.subscriptionDuration}
+							<SubscriptionDurationLabel duration={item.product.subscriptionDuration} class="mb-1" />
+						{/if}
 
 						<div class="flex flex-row gap-2">
 							<a

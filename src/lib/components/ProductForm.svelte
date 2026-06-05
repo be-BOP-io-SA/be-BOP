@@ -40,6 +40,7 @@
 	import { type Day, dayList, productToScheduleId, type BookingSummary } from '$lib/types/Schedule';
 	import { formatDuration } from '$lib/utils/formatDuration';
 	import { computeVatRate } from '$lib/utils/vat';
+	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 
 	const { t } = useI18n();
 
@@ -323,6 +324,9 @@
 
 	$: if (product.type === 'subscription') {
 		product.payWhatYouWant = false;
+		if (!product.subscriptionDuration) {
+			product.subscriptionDuration = 'month';
+		}
 	}
 
 	$: if (product.payWhatYouWant) {
@@ -425,6 +429,21 @@
 						<p class="text-sm text-gray-500 mt-1">Cannot be changed after creation</p>
 					{/if}
 				</label>
+
+				{#if product.type === 'subscription'}
+					<label class="form-label">
+						Subscription duration
+						<select
+							name="subscriptionDuration"
+							class="form-input max-w-[25rem]"
+							bind:value={product.subscriptionDuration}
+						>
+							{#each SUBSCRIPTION_DURATIONS as duration}
+								<option value={duration}>{duration}</option>
+							{/each}
+						</select>
+					</label>
+				{/if}
 
 				<label class="w-full block">
 					<CurrencyLabel label="Price currency" />

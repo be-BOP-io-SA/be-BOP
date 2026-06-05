@@ -1,7 +1,16 @@
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
+import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import { collections } from './database';
+import { runtimeConfig } from './runtime-config';
 import { userQuery } from './user';
+
+/** Shared resolver so order renewal and customer display never compute the fallback differently. */
+export function resolveSubscriptionDuration(product: {
+	subscriptionDuration?: SubscriptionDuration;
+}): SubscriptionDuration {
+	return (product.subscriptionDuration ?? runtimeConfig.subscriptionDuration) as SubscriptionDuration;
+}
 
 export async function freeProductsForUser(
 	user: UserIdentifier,
