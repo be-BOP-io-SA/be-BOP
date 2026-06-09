@@ -17,6 +17,8 @@ export interface PaidSubscription extends Timestamps {
 
 	paidUntil: Date;
 
+	trialUntil?: Date;
+
 	notifications: Array<{
 		type: 'reminder' | 'expiration';
 		createdAt: Date;

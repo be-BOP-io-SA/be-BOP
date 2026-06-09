@@ -237,6 +237,21 @@
 							{#if item.product.type === 'subscription' && item.product.subscriptionDuration}
 								<SubscriptionDurationLabel duration={item.product.subscriptionDuration} />
 							{/if}
+							{#if item.freeTrial && item.product.freeTrialDays}
+								<div class="flex flex-wrap items-center gap-1 text-sm">
+									<span class="font-semibold text-green-700">
+										🎁 {t('product.freeTrial.label', { days: item.product.freeTrialDays })}
+									</span>
+									<span class="text-gray-600">· {t('product.freeTrial.afterTrial')}</span>
+									<PriceTag
+										inline
+										main
+										amount={item.product.price.amount}
+										currency={item.product.price.currency}
+										class="text-gray-600"
+									/>
+								</div>
+							{/if}
 							<button
 								formaction="/cart/{item.product._id}/?/remove"
 								class="mt-auto mr-auto hover:underline body-hyperlink text-base font-light"

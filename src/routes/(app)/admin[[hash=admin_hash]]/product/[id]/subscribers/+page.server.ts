@@ -19,6 +19,7 @@ export const load = async ({ params }) => {
 		subscriptions: subscriptions.map((subscription) => ({
 			_id: subscription._id,
 			paidUntil: subscription.paidUntil,
+			trialUntil: subscription.trialUntil,
 			updatedAt: subscription.updatedAt,
 			cancelledAt: subscription.cancelledAt,
 			user: {

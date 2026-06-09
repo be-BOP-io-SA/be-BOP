@@ -59,7 +59,7 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 			subscriptionDuration: resolveSubscriptionDuration(product)
 		},
 		picture: picture ?? undefined,
-		canRenew: canRenewAfter < new Date()
+		canRenew: !!subscription.trialUntil || canRenewAfter < new Date()
 	};
 }
 
@@ -71,6 +71,10 @@ export const actions: Actions = {
 
 		if (!subscription) {
 			throw error(404, 'Subscription not found');
+		}
+
+		if (subscription.trialUntil) {
+			throw redirect(303, `/product/${subscription.productId}`);
 		}
 
 		const product = await collections.products.findOne({

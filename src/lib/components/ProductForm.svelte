@@ -329,6 +329,11 @@
 		}
 	}
 
+	let freeTrialEnabled = (product.freeTrialDays ?? 0) > 0;
+	$: if (product.type !== 'subscription') {
+		freeTrialEnabled = false;
+	}
+
 	$: if (product.payWhatYouWant) {
 		product.standalone = true;
 	}
@@ -443,6 +448,30 @@
 							{/each}
 						</select>
 					</label>
+
+					<label class="checkbox-label">
+						<input
+							class="form-checkbox"
+							type="checkbox"
+							bind:checked={freeTrialEnabled}
+							on:change={() =>
+								(product.freeTrialDays = freeTrialEnabled ? product.freeTrialDays || 7 : undefined)}
+						/>
+						Enable free trial
+					</label>
+					{#if freeTrialEnabled}
+						<label class="form-label">
+							Trial duration (days)
+							<input
+								type="number"
+								name="freeTrialDays"
+								class="form-input max-w-[25rem]"
+								min="1"
+								max="365"
+								bind:value={product.freeTrialDays}
+							/>
+						</label>
+					{/if}
 				{/if}
 
 				<label class="w-full block">

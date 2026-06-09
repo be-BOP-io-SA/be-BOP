@@ -266,6 +266,7 @@ export const actions: Actions = {
 						...(parsed.subscriptionDuration && {
 							subscriptionDuration: parsed.subscriptionDuration
 						}),
+						...(parsed.freeTrialDays && { freeTrialDays: parsed.freeTrialDays }),
 						...(parsed.restrictPaymentMethods && {
 							paymentMethods: parsed.paymentMethods ?? []
 						}),
@@ -302,6 +303,7 @@ export const actions: Actions = {
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
 						...(!parsed.subscriptionDuration && { subscriptionDuration: '' }),
+						...(!parsed.freeTrialDays && { freeTrialDays: '' }),
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
 						...(!hasVariations && { variations: '', variationLabels: '' }),
 						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),

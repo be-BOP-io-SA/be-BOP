@@ -121,6 +121,7 @@ export async function load(params) {
 							| 'variationLabels'
 							| 'bookingSpec.slotMinutes'
 							| 'subscriptionDuration'
+							| 'freeTrialDays'
 						>
 					>({
 						_id: 1,
@@ -147,6 +148,7 @@ export async function load(params) {
 						'bookingSpec.slotMinutes': 1,
 						isTicket: 1,
 						subscriptionDuration: 1,
+						freeTrialDays: 1,
 						variationLabels: {
 							$ifNull: [`$translations.${locals.language}.variationLabels`, '$variationLabels']
 						}
@@ -236,6 +238,23 @@ export async function load(params) {
 
 	const productById = new Map(products.map((p) => [p._id, p]));
 	const productPicturesById = new Map(productPictures.map((p) => [p.productId, p]));
+
+	const trialProductIdsInCart = products
+		.filter((p) => p.type === 'subscription' && (p.freeTrialDays ?? 0) > 0)
+		.map((p) => p._id);
+	const priorSubProductIds = trialProductIdsInCart.length
+		? new Set(
+				(
+					await collections.paidSubscriptions
+						.find({ ...userQuery(user), productId: { $in: trialProductIdsInCart } })
+						.project<{ productId: string }>({ productId: 1, _id: 0 })
+						.toArray()
+				).map((s) => s.productId)
+		  )
+		: new Set<string>();
+	const trialEligibleProductIds = new Set(
+		trialProductIdsInCart.filter((id) => !priorSubProductIds.has(id))
+	);
 	const digitalFilesByProductId = groupBy(digitalFiles, (df) => df.productId);
 	const wholeDiscount = discounts.find((d) => d._id === null)?.discountPercent;
 	const discountByProductId = new Map(
@@ -271,7 +290,9 @@ export async function load(params) {
 				booking: item.booking,
 				digitalFilesCount: digitalFilesDoc?.length ?? 0,
 				quantity: item.quantity,
-				...(item.customPrice && { customPrice: item.customPrice }),
+				...(trialEligibleProductIds.has(item.productId)
+					? { customPrice: { amount: 0, currency: productDoc.price.currency }, freeTrial: true }
+					: { freeTrial: false, ...(item.customPrice && { customPrice: item.customPrice }) }),
 				...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
 				depositPercentage: item.depositPercentage,
 				internalNote:

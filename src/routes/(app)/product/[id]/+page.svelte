@@ -678,6 +678,12 @@
 					<SubscriptionDurationLabel duration={data.product.subscriptionDuration} />
 				{/if}
 
+				{#if data.freeTrialEligible && data.product.freeTrialDays}
+					<p class="inline-flex items-center gap-1 text-sm font-semibold text-green-700">
+						🎁 {t('product.freeTrial.label', { days: data.product.freeTrialDays })}
+					</p>
+				{/if}
+
 				{#if freeProductsAvailable}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">

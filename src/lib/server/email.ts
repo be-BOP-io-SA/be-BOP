@@ -130,10 +130,10 @@ export async function queueEmail(
 					bcc: opts.bcc
 				}),
 			subject: template.subject.replace(/{{([^}]+)}}/g, (match, p1) => {
-				return lowerVars[p1.toLowerCase()] || match;
+				return lowerVars[p1.toLowerCase()] ?? match;
 			}),
 			htmlContent: template.html.replace(/{{([^}]+)}}/g, (match, p1) => {
-				return lowerVars[p1.toLowerCase()] || match;
+				return lowerVars[p1.toLowerCase()] ?? match;
 			})
 		},
 		{

@@ -900,6 +900,10 @@
 		"preorderText": "This is a preorder, your product will be available on {date}",
 		"pricePlaceholder": "Price",
 		"seeInCabinet": "See in MyCabinet",
+		"freeTrial": {
+			"label": "{days}-day free trial",
+			"afterTrial": "then"
+		},
 		"subscriptionDuration": {
 			"hour": "Renews every hour",
 			"day": "Renews every day",

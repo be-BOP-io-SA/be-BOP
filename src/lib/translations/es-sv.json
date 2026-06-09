@@ -893,6 +893,10 @@
 		"preorderText": "Esta es una preorden, el producto estará disponible el {date}",
 		"pricePlaceholder": "Precio",
 		"seeInCabinet": "Ver en el cabinet",
+		"freeTrial": {
+			"label": "Prueba gratuita de {days} días",
+			"afterTrial": "luego"
+		},
 		"subscriptionDuration": {
 			"hour": "Se renueva cada hora",
 			"day": "Se renueva cada día",

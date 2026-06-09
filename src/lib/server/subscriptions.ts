@@ -1,15 +1,36 @@
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
+import type { WithId } from 'mongodb';
 import { collections } from './database';
 import { runtimeConfig } from './runtime-config';
 import { userQuery } from './user';
 
-/** Shared resolver so order renewal and customer display never compute the fallback differently. */
 export function resolveSubscriptionDuration(product: {
 	subscriptionDuration?: SubscriptionDuration;
 }): SubscriptionDuration {
-	return (product.subscriptionDuration ?? runtimeConfig.subscriptionDuration) as SubscriptionDuration;
+	return (product.subscriptionDuration ??
+		runtimeConfig.subscriptionDuration) as SubscriptionDuration;
+}
+
+export function userSubscriptionForProduct(
+	user: UserIdentifier,
+	productId: string
+): Promise<WithId<PaidSubscription> | null> {
+	return collections.paidSubscriptions.findOne({ ...userQuery(user), productId });
+}
+
+export async function isEligibleForFreeTrial(
+	user: UserIdentifier,
+	product: { _id: string; freeTrialDays?: number }
+): Promise<boolean> {
+	if (!((product.freeTrialDays ?? 0) > 0)) {
+		return false;
+	}
+	if (!user.email && !user.npub) {
+		return false;
+	}
+	return !(await userSubscriptionForProduct(user, product._id));
 }
 
 export async function freeProductsForUser(

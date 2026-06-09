@@ -26,7 +26,8 @@ import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import {
 	freeProductsForUser,
 	generateSubscriptionNumber,
-	resolveSubscriptionDuration
+	resolveSubscriptionDuration,
+	userSubscriptionForProduct
 } from './subscriptions';
 import {
 	checkProductVariationsIntegrity,
@@ -968,12 +969,9 @@ export async function createOrder(
 			);
 		}
 
-		const existingSubscription = await collections.paidSubscriptions.findOne({
-			...userQuery(params.user),
-			productId: product._id
-		});
+		const existingSubscription = await userSubscriptionForProduct(params.user, product._id);
 
-		if (existingSubscription) {
+		if (existingSubscription && !existingSubscription.trialUntil) {
 			if (
 				subSeconds(existingSubscription.paidUntil, runtimeConfig.subscriptionReminderSeconds) >
 				new Date()
@@ -1979,7 +1977,9 @@ function addDiscountFreeProducts(
 	}
 }
 
-function getSubscriptionDuration(product: { subscriptionDuration?: SubscriptionDuration }): Duration {
+function getSubscriptionDuration(product: {
+	subscriptionDuration?: SubscriptionDuration;
+}): Duration {
 	const durations: Record<SubscriptionDuration, Duration> = {
 		hour: { hours: 1 },
 		day: { days: 1 },
@@ -1993,10 +1993,13 @@ function getSubscriptionDuration(product: { subscriptionDuration?: SubscriptionD
 async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSession) {
 	const subscriptionProducts = order.items.filter((item) => item.product.type === 'subscription');
 	const existingSubscriptions = await collections.paidSubscriptions
-		.find({
-			...userQuery(order.user),
-			productId: { $in: order.items.map((item) => item.product._id) }
-		})
+		.find(
+			{
+				...userQuery(order.user),
+				productId: { $in: order.items.map((item) => item.product._id) }
+			},
+			{ session }
+		)
 		.toArray();
 	const discounts = await collections.discounts
 		.find({
@@ -2012,7 +2015,12 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 		const existing = existingSubscriptions.find(
 			(sub) => sub.productId === subscription.product._id
 		);
+		const trialDays = subscription.product.freeTrialDays ?? 0;
+		const isTrial = trialDays > 0 && subscription.customPrice?.amount === 0;
 		if (existing) {
+			if (isTrial) {
+				continue;
+			}
 			const updatedFreeProductsById = structuredClone(existing.freeProductsById ?? {});
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, updatedFreeProductsById);
@@ -2043,7 +2051,7 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 							notificationHistory: { $each: archivedNotifications }
 						}
 					}),
-					$unset: { cancelledAt: 1 }
+					$unset: { cancelledAt: 1, trialUntil: 1 }
 				},
 				{ session }
 			);
@@ -2070,13 +2078,18 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, freeProductsById);
 			}
+			const paidUntil = add(
+				new Date(),
+				isTrial ? { days: trialDays } : getSubscriptionDuration(subscription.product)
+			);
 			await collections.paidSubscriptions.insertOne(
 				{
 					_id: crypto.randomUUID(),
 					number: await generateSubscriptionNumber(),
 					user: order.user,
 					productId: subscription.product._id,
-					paidUntil: add(new Date(), getSubscriptionDuration(subscription.product)),
+					paidUntil,
+					...(isTrial && { trialUntil: paidUntil }),
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					notifications: [],

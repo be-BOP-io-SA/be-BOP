@@ -77,7 +77,12 @@
 
 	// Process subscription data for display and export
 	$: tableData = data.subscriptions.map((subscription) => {
-		const status = subscription.paidUntil > new Date() ? 'active' : 'expired';
+		const status =
+			subscription.trialUntil && subscription.trialUntil > new Date()
+				? 'trial'
+				: subscription.paidUntil > new Date()
+				? 'active'
+				: 'expired';
 		const cancelled = subscription.cancelledAt ? 'Yes' : 'No';
 
 		return {
@@ -444,7 +449,9 @@
 						<span class="font-mono text-xs">{row.id}</span>
 					</td>
 					<td class="data-table-cell">
-						{#if row.status === 'active'}
+						{#if row.status === 'trial'}
+							<span class="text-blue-700 font-semibold">trial</span>
+						{:else if row.status === 'active'}
 							<span class="text-green-700 font-semibold">active</span>
 						{:else}
 							<span class="text-red-700">expired</span>

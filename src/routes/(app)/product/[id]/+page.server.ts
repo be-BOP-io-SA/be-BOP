@@ -2,7 +2,7 @@ import { addToCartInDb } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
 import { applyResolvedStock, resolveStockProduct } from '$lib/server/product';
-import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
+import { resolveSubscriptionDuration, userSubscriptionForProduct } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
@@ -85,6 +85,7 @@ async function fetchProduct(
 	| 'vatProfileId'
 	| 'stockReference'
 	| 'subscriptionDuration'
+	| 'freeTrialDays'
 > | null> {
 	return collections.products.findOne<ReturnType<Awaited<typeof fetchProduct>>>(
 		{ _id: productId },
@@ -135,7 +136,8 @@ async function fetchProduct(
 				bookingSpec: 1,
 				vatProfileId: 1,
 				stockReference: 1,
-				subscriptionDuration: 1
+				subscriptionDuration: 1,
+				freeTrialDays: 1
 			}
 		}
 	);
@@ -227,6 +229,11 @@ export const load = async ({ params, parent, locals }) => {
 		vatSingleCountry: runtimeConfig.vatSingleCountry
 	});
 
+	const freeTrialEligible =
+		product.type === 'subscription' && (product.freeTrialDays ?? 0) > 0
+			? !(await userSubscriptionForProduct(userIdentifier(locals), product._id))
+			: false;
+
 	return {
 		product: {
 			...product,
@@ -235,6 +242,7 @@ export const load = async ({ params, parent, locals }) => {
 				subscriptionDuration: resolveSubscriptionDuration(product)
 			})
 		},
+		freeTrialEligible,
 		pictures,
 		discount,
 		vatRate,

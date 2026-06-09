@@ -80,7 +80,9 @@ async function notifySubscriptionReminderViaNostr(subscription: PaidSubscription
 				_id: notifId,
 				kind: Kind.EncryptedDirectMessage,
 				dest: userNpub,
-				content: `Your subscription #${subscription.number} is going to expire ${formatDistance(
+				content: `${
+					subscription.trialUntil ? 'Your free trial is ending. ' : ''
+				}Your subscription #${subscription.number} is going to expire ${formatDistance(
 					subscription.paidUntil,
 					new Date(),
 					{
@@ -132,7 +134,10 @@ async function notifySubscriptionReminderViaEmail(subscription: PaidSubscription
 				expirationTime: formatDistance(subscription.paidUntil, new Date(), {
 					addSuffix: true
 				}),
-				subscriptionLink: `${ORIGIN}/subscription/${subscription._id}`
+				subscriptionLink: `${ORIGIN}/subscription/${subscription._id}`,
+				trialNotice: subscription.trialUntil
+					? '<p><strong>Your free trial is ending.</strong> Subscribe now to keep access to your subscription.</p>'
+					: ''
 			},
 			{ session }
 		);
@@ -172,7 +177,11 @@ async function notifySubscriptionEndedViaNostr(subscription: PaidSubscription) {
 				_id: notifId,
 				kind: Kind.EncryptedDirectMessage,
 				dest: userNpub,
-				content: `Your subscription #${subscription.number} expired. Renew here if you wish: ${ORIGIN}/subscription/${subscription._id}`,
+				content: `${
+					subscription.trialUntil ? 'Your free trial has ended. ' : ''
+				}Your subscription #${
+					subscription.number
+				} expired. Renew here if you wish: ${ORIGIN}/subscription/${subscription._id}`,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			},
@@ -214,7 +223,10 @@ async function notifySubscriptionEndedViaEmail(subscription: PaidSubscription) {
 			'subscription.ended',
 			{
 				subscriptionNumber: subscription.number.toString(),
-				subscriptionLink: `${ORIGIN}/subscription/${subscription._id}`
+				subscriptionLink: `${ORIGIN}/subscription/${subscription._id}`,
+				trialNotice: subscription.trialUntil
+					? '<p><strong>Your free trial has ended.</strong> Subscribe to continue using your subscription.</p>'
+					: ''
 			},
 			{ session }
 		);

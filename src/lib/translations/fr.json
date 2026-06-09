@@ -893,6 +893,10 @@
 		"preorderText": "En précommande, disponible le {date}",
 		"pricePlaceholder": "Prix",
 		"seeInCabinet": "Voir dans MonCabinet",
+		"freeTrial": {
+			"label": "Essai gratuit de {days} jours",
+			"afterTrial": "puis"
+		},
 		"subscriptionDuration": {
 			"hour": "Renouvelé chaque heure",
 			"day": "Renouvelé chaque jour",

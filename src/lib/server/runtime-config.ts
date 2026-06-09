@@ -490,6 +490,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 		'subscription.reminder': {
 			subject: 'Your subscription #{{subscriptionNumber}} is expiring soon',
 			html: `<p>Dear customer,</p>
+{{trialNotice}}
 <p>Your subscription #{{subscriptionNumber}} is going to expire {{expirationTime}}.</p>
 <p>To continue enjoying our services, please renew your subscription by following this link:</p>
 <p><a href="{{subscriptionLink}}">{{subscriptionLink}}</a></p>
@@ -500,6 +501,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 		'subscription.ended': {
 			subject: 'Your subscription #{{subscriptionNumber}} has expired',
 			html: `<p>Dear customer,</p>
+{{trialNotice}}
 <p>Your subscription #{{subscriptionNumber}} has expired.</p>
 <p>If you wish to renew your subscription, please follow this link:</p>
 <p><a href="{{subscriptionLink}}">{{subscriptionLink}}</a></p>

@@ -252,6 +252,7 @@ export const actions: Actions = {
 							...(parsed.subscriptionDuration && {
 								subscriptionDuration: parsed.subscriptionDuration
 							}),
+							...(parsed.freeTrialDays && { freeTrialDays: parsed.freeTrialDays }),
 							hasSellDisclaimer: parsed.hasSellDisclaimer,
 							...(parsed.hasSellDisclaimer &&
 								parsed.sellDisclaimerTitle &&
@@ -455,6 +456,7 @@ export const actions: Actions = {
 					...(parsed.subscriptionDuration && {
 						subscriptionDuration: parsed.subscriptionDuration
 					}),
+					...(parsed.freeTrialDays && { freeTrialDays: parsed.freeTrialDays }),
 					hideFromSEO: parsed.hideFromSEO,
 					translations: product.translations
 				},

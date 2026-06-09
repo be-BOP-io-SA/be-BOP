@@ -7,6 +7,7 @@ import { createOrder } from '$lib/server/orders';
 import { isEmailConfigured } from '$lib/server/email';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
+import { isEligibleForFreeTrial } from '$lib/server/subscriptions';
 import { applyResolvedStock } from '$lib/server/product.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
@@ -485,6 +486,27 @@ export const actions = {
 				'You must acknowledge that you are only paying a deposit and will have to pay the rest later'
 			);
 		}
+		const trialProductIds = new Set<string>();
+		if (!locals.user?.hasPosOptions) {
+			const effectiveUser = {
+				...userIdentifier(locals),
+				...(email && { email }),
+				...(npubAddress && { npub: npubAddress })
+			};
+			for (const product of products) {
+				if (
+					product.type === 'subscription' &&
+					(await isEligibleForFreeTrial(effectiveUser, product))
+				) {
+					trialProductIds.add(product._id);
+				}
+			}
+		}
+		const effectivePaymentMethod =
+			trialProductIds.size > 0 && cart.items.every((item) => trialProductIds.has(item.productId))
+				? 'free'
+				: paymentMethod;
+
 		rateLimit(locals.clientIp, 'email', 10, { minutes: 1 });
 		let orderId = '';
 		await withTransaction(async (session) => {
@@ -494,9 +516,14 @@ export const actions = {
 					_id: item._id && ObjectId.isValid(item._id) ? new ObjectId(item._id) : undefined,
 					quantity: item.quantity,
 					product: byId[item.productId],
-					...(item.customPrice && {
-						customPrice: { amount: item.customPrice.amount, currency: item.customPrice.currency }
-					}),
+					...(trialProductIds.has(item.productId)
+						? { customPrice: { amount: 0, currency: byId[item.productId].price.currency } }
+						: item.customPrice && {
+								customPrice: {
+									amount: item.customPrice.amount,
+									currency: item.customPrice.currency
+								}
+						  }),
 					...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
 					depositPercentage: item.depositPercentage,
 					...(item.discountPercentage !== undefined &&
@@ -510,7 +537,7 @@ export const actions = {
 						}
 					})
 				})),
-				paymentMethod,
+				effectivePaymentMethod,
 				{
 					locale: locals.language,
 					user: userIdentifier(locals),

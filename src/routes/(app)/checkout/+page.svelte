@@ -792,7 +792,26 @@
 						</a>
 
 						{#if item.product.type === 'subscription' && item.product.subscriptionDuration}
-							<SubscriptionDurationLabel duration={item.product.subscriptionDuration} class="mb-1" />
+							<SubscriptionDurationLabel
+								duration={item.product.subscriptionDuration}
+								class="mb-1"
+							/>
+						{/if}
+
+						{#if item.freeTrial && item.product.freeTrialDays}
+							<div class="mb-1 flex flex-wrap items-center gap-1 text-sm">
+								<span class="font-semibold text-green-700">
+									🎁 {t('product.freeTrial.label', { days: item.product.freeTrialDays })}
+								</span>
+								<span class="text-gray-600">· {t('product.freeTrial.afterTrial')}</span>
+								<PriceTag
+									inline
+									main
+									amount={item.product.price.amount}
+									currency={item.product.price.currency}
+									class="text-gray-600"
+								/>
+							</div>
 						{/if}
 
 						<div class="flex flex-row gap-2">
