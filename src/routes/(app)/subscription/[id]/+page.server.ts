@@ -1,8 +1,10 @@
 import { collections } from '$lib/server/database';
 import { createOrder } from '$lib/server/orders';
+import { paymentMethods } from '$lib/server/payment-methods';
 import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userQuery } from '$lib/server/user.js';
+import { typedInclude } from '$lib/utils/typedIncludes';
 import { error, redirect } from '@sveltejs/kit';
 import { subHours, subSeconds } from 'date-fns';
 import type { Actions } from './$types';
@@ -24,7 +26,8 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 			projection: {
 				_id: 1,
 				name: { $ifNull: [`$translations.${locals.language}.name`, '$name'] },
-				subscriptionDuration: 1
+				subscriptionDuration: 1,
+				paymentMethods: 1
 			}
 		}
 	);
@@ -45,6 +48,22 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		runtimeConfig.subscriptionReminderSeconds
 	);
 
+	const lastOrder = await collections.orders.findOne(
+		{
+			'items.product._id': product._id,
+			'payments.status': 'paid',
+			...userQuery(subscription.user)
+		},
+		{ sort: { createdAt: -1 } }
+	);
+	const lastPaymentMethod = lastOrder?.payments.find((payment) => payment.status === 'paid')
+		?.method;
+
+	let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
+	if (product.paymentMethods) {
+		methods = methods.filter((method) => product.paymentMethods?.includes(method));
+	}
+
 	return {
 		subscription: {
 			createdAt: subscription.createdAt,
@@ -59,12 +78,14 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 			subscriptionDuration: resolveSubscriptionDuration(product)
 		},
 		picture: picture ?? undefined,
-		canRenew: !!subscription.trialUntil || canRenewAfter < new Date()
+		canRenew: !!subscription.trialUntil || canRenewAfter < new Date(),
+		paymentMethods: methods,
+		lastPaymentMethod
 	};
 }
 
 export const actions: Actions = {
-	renew: async ({ params, locals }) => {
+	renew: async ({ params, locals, request }) => {
 		const subscription = await collections.paidSubscriptions.findOne({
 			_id: params.id
 		});
@@ -130,6 +151,15 @@ export const actions: Actions = {
 			throw redirect(303, `/order/${existingPendingOrder._id}`);
 		}
 
+		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
+		if (product.paymentMethods) {
+			methods = methods.filter((method) => product.paymentMethods?.includes(method));
+		}
+		const submittedMethod = (await request.formData()).get('paymentMethod');
+		const paymentMethod = typedInclude(methods, submittedMethod)
+			? submittedMethod
+			: paidPayment.method;
+
 		const orderId = await createOrder(
 			[
 				{
@@ -137,7 +167,7 @@ export const actions: Actions = {
 					product
 				}
 			],
-			paidPayment.method,
+			paymentMethod,
 			{
 				locale: locals.language,
 				user: subscription.user,

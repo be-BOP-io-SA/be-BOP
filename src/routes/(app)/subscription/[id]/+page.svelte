@@ -3,10 +3,17 @@
 	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import Trans from '$lib/components/Trans.svelte';
 	import { useI18n } from '$lib/i18n';
+	import { typedInclude } from '$lib/utils/typedIncludes';
 
 	const { t, locale } = useI18n();
 
 	export let data;
+
+	let paymentMethod = data.lastPaymentMethod;
+	$: paymentMethod =
+		paymentMethod && typedInclude(data.paymentMethods, paymentMethod)
+			? paymentMethod
+			: data.paymentMethods[0];
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 flex flex-col gap-4 items-start">
@@ -49,7 +56,17 @@
 
 	<SubscriptionDurationLabel duration={data.product.subscriptionDuration} />
 
-	<form action="?/renew" method="post">
+	<form action="?/renew" method="post" class="flex flex-col gap-3 items-start">
+		{#if data.paymentMethods.length}
+			<label class="form-label">
+				{t('checkout.payment.method')}
+				<select name="paymentMethod" class="form-input" bind:value={paymentMethod}>
+					{#each data.paymentMethods as method}
+						<option value={method}>{t('checkout.paymentMethod.' + method)}</option>
+					{/each}
+				</select>
+			</label>
+		{/if}
 		<button
 			class="btn btn-black"
 			disabled={!data.canRenew}
