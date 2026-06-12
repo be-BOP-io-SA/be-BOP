@@ -70,23 +70,23 @@ You can also set the following environment variables to allow SSO. Set your redi
 
 ```shell
 pnpm run build
-node --enable-source-maps --import ./scripts/env-override-preimport.mjs build/index.js
+./start.sh
 
 # If behind a reverse proxy, you can use the following config:
-# ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 node --import ./scripts/env-override-preimport.mjs build/index.js
+# ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 ./start.sh
 ```
 
-The `--import ./scripts/env-override-preimport.mjs` flag enables the `ALLOW_ENV_OVERRIDE` feature (admin-uploaded MongoDB switch from `/admin/be-bop`). It is a no-op when the flag is unset. Requires Node 20+ (or 18.20+). You can drop the flag entirely if you do not need this feature.
+`start.sh` is the universal launcher (shipped at the root of every release artifact). It wraps `node build/index.js` with the right flags, including the pre-import shim for the `ALLOW_ENV_OVERRIDE` feature when the shim is present. Always invoke be-BOP through `start.sh` from your supervisor (systemd ExecStart, pm2 start, etc.) — that way future releases can change their launch flags without requiring a supervisor-side update. Requires Node 20+ (or 18.20+) when the override feature is active.
 
 You can set the `PORT` environment variable to change from the default 3000 port to another port.
 
 You can also use [pm2](https://pm2.keymetrics.io/docs/usage/quick-start/) to manage your node application, and run it on multiple cores.
 
 ```shell
-NODE_OPTIONS="--enable-source-maps --import ./scripts/env-override-preimport.mjs" pm2 start --name bebop --update-env build/index.js
+pm2 start --name bebop --update-env ./start.sh
 
 # If behind a reverse proxy, you can use the following config:
-# NODE_OPTIONS="--enable-source-maps --import ./scripts/env-override-preimport.mjs" ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 pm2 start --name bebop --update-env build/index.js
+# ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 pm2 start --name bebop --update-env ./start.sh
 ```
 
 Note: for uploading large payloads you may want to set the `BODY_SIZE_LIMIT=20000000` environment variable to allow 20MB payloads for example. It should not be needed for normal usage.

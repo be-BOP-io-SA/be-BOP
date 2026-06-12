@@ -46,6 +46,8 @@ cp -r ./assets "$OUTPUT_DIR/$ARTIFACT_NAME/assets"
 cp -r ./docs "$OUTPUT_DIR/$ARTIFACT_NAME/docs"
 mkdir -p "$OUTPUT_DIR/$ARTIFACT_NAME/scripts"
 cp ./scripts/env-override-preimport.mjs "$OUTPUT_DIR/$ARTIFACT_NAME/scripts/env-override-preimport.mjs"
+cp ./start.sh "$OUTPUT_DIR/$ARTIFACT_NAME/start.sh"
+chmod +x "$OUTPUT_DIR/$ARTIFACT_NAME/start.sh"
 
 echo "✅ Release artifact created successfully!"
 echo "📁 Directory: $OUTPUT_DIR/$ARTIFACT_NAME"
