@@ -346,6 +346,11 @@ const baseConfig = {
 		keyId: '',
 		keySecret: ''
 	},
+	/**
+	 * Set by `env-override.ts` at boot when an override attempt fails. Cleared by
+	 * the Save / Delete actions on `/admin/be-bop`. See ALLOW_ENV_OVERRIDE.
+	 */
+	envOverrideFailed: null as { at: Date; reason: string } | null,
 	emailTemplates: {
 		passwordReset: {
 			subject: 'Password reset',
