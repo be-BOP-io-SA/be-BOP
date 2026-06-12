@@ -99,6 +99,9 @@
 				if (!data.isLndConfigured && link.href === `${data.adminPrefix}/lnd`) {
 					return false;
 				}
+				if (!data.allowEnvOverride && link.href === `${data.adminPrefix}/be-bop`) {
+					return false;
+				}
 				if (data.role && !isAllowedOnPage(data.role, link.href, 'read')) {
 					return false;
 				}

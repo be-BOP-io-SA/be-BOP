@@ -123,9 +123,8 @@
 			</li>
 			<li>Comments start with <code>#</code>. Blank lines are ignored.</li>
 			<li>
-				Save the file and upload it below. When you are ready, click <em>Restart be-BOP</em> in the
-				section above. On next boot, the override will be applied if the target connection is
-				reachable.
+				Save the file and upload it below. When you are ready, click <em>Restart be-BOP</em> in the section
+				above. On next boot, the override will be applied if the target connection is reachable.
 			</li>
 			<li>
 				If the override fails to apply, be-BOP starts normally and shows a warning on this page. You
