@@ -12,6 +12,16 @@
 
 <h1 class="text-3xl">Installation be-BOP</h1>
 
+<div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">
+	<p class="font-semibold">Current MongoDB connection</p>
+	<p class="mt-1">
+		Host: <code>{data.currentMongoHost}</code>
+	</p>
+	<p>
+		Database: <code>{data.currentMongoDb}</code>
+	</p>
+</div>
+
 {#if data.failedFlag}
 	<div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
 		<h3 class="text-sm font-medium text-red-800">Last env override attempt failed</h3>
