@@ -1,4 +1,4 @@
-import { ALLOW_ENV_OVERRIDE } from '$lib/server/env-config';
+import { ALLOW_ENV_OVERRIDE, MONGODB_URL, MONGODB_DB } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import { getS3Client } from '$lib/server/s3';
 import { runtimeConfig } from '$lib/server/runtime-config';
@@ -32,6 +32,16 @@ function guardOrThrow(locals: App.Locals): void {
 
 function s3Configured(): boolean {
 	return !!(runtimeConfig.s3.bucket && runtimeConfig.s3.keyId && runtimeConfig.s3.keySecret);
+}
+
+// Strips credentials and path/query, returns just the host[:port] (or +srv cluster name) — used
+// by the admin UI to confirm which MongoDB target is currently in use.
+function mongoHostFromUrl(url: string | undefined): string {
+	if (!url) {
+		return '(not set)';
+	}
+	const m = url.match(/^mongodb(?:\+srv)?:\/\/(?:[^@]*@)?([^/?]+)/i);
+	return m ? m[1] : '(unrecognized)';
 }
 
 async function overrideFileExists(): Promise<boolean> {
@@ -77,7 +87,9 @@ export async function load({ locals }) {
 		overrideFileExists: await overrideFileExists(),
 		failedFlag: runtimeConfig.envOverrideFailed,
 		allowedKeys: [...OVERRIDE_ALLOWED_KEYS] as string[],
-		rollbackMaxStep: ROLLBACK_MAX_STEP
+		rollbackMaxStep: ROLLBACK_MAX_STEP,
+		currentMongoHost: mongoHostFromUrl(MONGODB_URL),
+		currentMongoDb: MONGODB_DB || 'bebop'
 	};
 }
 
