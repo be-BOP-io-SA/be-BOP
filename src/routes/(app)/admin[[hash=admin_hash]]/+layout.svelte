@@ -97,6 +97,9 @@
 							if (!data.isLndConfigured && link.href === `${data.adminPrefix}/lnd`) {
 								return false;
 							}
+							if (!data.allowEnvOverride && link.href === `${data.adminPrefix}/be-bop`) {
+								return false;
+							}
 							return true;
 						})
 						.filter((l) => (data.role ? isAllowedOnPage(data.role, l.href, 'read') : true)) as link}
