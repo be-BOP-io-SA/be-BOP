@@ -11,7 +11,7 @@
 		"format": "prettier --write",
 		"lint": "eslint",
 		"preview": "vite preview --port 5012",
-		"run-production": "node build/index.js",
+		"run-production": "node --import ./scripts/env-override-preimport.mjs build/index.js",
 		"test": "playwright test",
 		"test:unit": "vitest --no-threads"
 	},
