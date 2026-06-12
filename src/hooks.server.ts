@@ -1,6 +1,3 @@
-// Must come first: applies env overrides from S3 (gated by ALLOW_ENV_OVERRIDE)
-// before any other module captures MONGODB_URL.
-import '$lib/server/env-override';
 import { ZodError } from 'zod';
 import { type HandleServerError, type Handle, error, redirect } from '@sveltejs/kit';
 import { collections } from '$lib/server/database';

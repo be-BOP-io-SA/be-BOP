@@ -278,24 +278,26 @@ redirect URL to `https://<your-domain>/api/callback/<provider>`, where
 
 ```shell
 pnpm run build
-node --enable-source-maps build/index.js
+node --enable-source-maps --import ./scripts/env-override-preimport.mjs build/index.js
 ```
+
+The `--import ./scripts/env-override-preimport.mjs` flag enables the `ALLOW_ENV_OVERRIDE` feature (admin-uploaded MongoDB switch from `/admin/be-bop`). It is a no-op when the flag is unset. Requires Node 20+ (or 18.20+). You can drop the flag entirely if you do not need this feature.
 
 Behind a reverse proxy, add the headers described in
 [Reverse proxy](#reverse-proxy):
 
 ```shell
-ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 node build/index.js
+ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 node --import ./scripts/env-override-preimport.mjs build/index.js
 ```
 
 You can also use [pm2](https://pm2.keymetrics.io/docs/usage/quick-start/) to
 manage the process and run it on multiple cores:
 
 ```shell
-NODE_OPTIONS=--enable-source-maps pm2 start --name bebop --update-env build/index.js
+NODE_OPTIONS="--enable-source-maps --import ./scripts/env-override-preimport.mjs" pm2 start --name bebop --update-env build/index.js
 
 # behind a reverse proxy
-NODE_OPTIONS=--enable-source-maps ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 pm2 start --name bebop --update-env build/index.js
+NODE_OPTIONS="--enable-source-maps --import ./scripts/env-override-preimport.mjs" ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 pm2 start --name bebop --update-env build/index.js
 ```
 
 ### Docker
