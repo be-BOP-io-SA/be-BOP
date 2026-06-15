@@ -111,9 +111,9 @@
 		},
 		"errors": {
 			"title": "Die folgenden Artikel konnten nicht hinzugefügt werden:",
-			"keepPartial": "Warenkorb so belassen",
-			"clearAll": "Gesamten Warenkorb leeren",
-			"rollbackNew": "Hinzufügungen aus dem Link rückgängig machen",
+			"keepPartial": "Ignorieren",
+			"clearAll": "Warenkorb leeren",
+			"rollbackNew": "Abbrechen",
 			"reasonNotFound": "Produkt nicht gefunden",
 			"reasonGeneric": "Kann nicht hinzugefügt werden",
 			"reasonVariationRequired": "Erfordert eine Variantenauswahl",
