@@ -111,9 +111,9 @@
 		},
 		"errors": {
 			"title": "Los siguientes productos no fueron agregados:",
-			"keepPartial": "Dejar el carrito como está",
-			"clearAll": "Vaciar todo el carrito",
-			"rollbackNew": "Cancelar las adiciones del enlace",
+			"keepPartial": "Ignorar",
+			"clearAll": "Vaciar carrito",
+			"rollbackNew": "Cancelar",
 			"reasonNotFound": "Producto inexistente",
 			"reasonGeneric": "No se puede agregar",
 			"reasonVariationRequired": "Requiere una elección de variante",

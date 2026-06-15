@@ -111,9 +111,9 @@
 		},
 		"errors": {
 			"title": "The following items could not be added:",
-			"keepPartial": "Keep the cart as is",
-			"clearAll": "Empty the whole cart",
-			"rollbackNew": "Undo additions from the link",
+			"keepPartial": "Ignore",
+			"clearAll": "Empty cart",
+			"rollbackNew": "Cancel",
 			"reasonNotFound": "Product not found",
 			"reasonGeneric": "Cannot be added",
 			"reasonVariationRequired": "Requires a variation choice",

@@ -39,11 +39,15 @@ export type CartFromUrlState =
 	| { mode: 'invalidUrl' };
 
 function parsePairsFrom(slugs: string[], qtys: string[]): SlugQty[] | null {
-	if (!slugs.length || slugs.length !== qtys.length) return null;
+	if (!slugs.length || slugs.length !== qtys.length) {
+		return null;
+	}
 	const out: SlugQty[] = [];
 	for (let i = 0; i < slugs.length; i++) {
 		const q = parseInt(qtys[i], 10);
-		if (!Number.isFinite(q) || q < 1) return null;
+		if (!Number.isFinite(q) || q < 1) {
+			return null;
+		}
 		out.push({ slug: slugs[i], quantity: q });
 	}
 	return out;
@@ -58,23 +62,30 @@ function isEmployeeFromLocals(locals: App.Locals): boolean {
 }
 
 function mapAddError(slug: string, message: string, product: ProductBadge | null): AddError {
-	if (message === "Product can't be added to basket ")
+	if (message === "Product can't be added to basket ") {
 		return { slug, key: 'product.notForSale', product };
-	if (message === 'Product is out of stock') return { slug, key: 'product.outOfStock', product };
-	if (message === 'Cart has too many items')
+	}
+	if (message === 'Product is out of stock') {
+		return { slug, key: 'product.outOfStock', product };
+	}
+	if (message === 'Cart has too many items') {
 		return { slug, key: 'cart.reachedMaxPerLine', product };
-	if (message === 'error matching on variations choice')
+	}
+	if (message === 'error matching on variations choice') {
 		return { slug, key: 'cartFromUrl.errors.reasonVariationRequired', product };
-	if (message === 'Product is a booking, please provide booking time and duration')
+	}
+	if (message === 'Product is a booking, please provide booking time and duration') {
 		return { slug, key: 'cartFromUrl.errors.reasonBookingRequired', product };
+	}
 	const m = message.match(/You can only order (\d+) of this product/);
-	if (m)
+	if (m) {
 		return {
 			slug,
 			key: 'pos.cart.maxQuantityReached',
 			params: { max: Number(m[1]) },
 			product
 		};
+	}
 	return { slug, key: 'cartFromUrl.errors.reasonGeneric', product };
 }
 
@@ -91,7 +102,9 @@ async function resolveProductsBySlug(
 	const bySlug = new Map<string, Product>();
 	for (const slug of slugs) {
 		const product = products.find((p) => p.alias.includes(slug));
-		if (product) bySlug.set(slug, product);
+		if (product) {
+			bySlug.set(slug, product);
+		}
 	}
 	return bySlug;
 }
@@ -107,7 +120,9 @@ async function buildBadges(
 	const badges = new Map<string, ProductBadge>();
 	for (const slug of slugs) {
 		const product = productsBySlug.get(slug);
-		if (!product) continue;
+		if (!product) {
+			continue;
+		}
 		const name =
 			product.translations?.[language as keyof typeof product.translations]?.name ?? product.name;
 		badges.set(slug, {
@@ -378,11 +393,17 @@ export const actions = {
 	},
 
 	addFromUrl: async ({ request, locals }) => {
-		if (!runtimeConfig.allowCartFromUrl) throw redirect(303, '/cart');
+		if (!runtimeConfig.allowCartFromUrl) {
+			throw redirect(303, '/cart');
+		}
 		const pairs = parsePairsFromForm(await request.formData());
-		if (!pairs) return fail(400, { cartFromUrl: { mode: 'invalidUrl' as const } });
+		if (!pairs) {
+			return fail(400, { cartFromUrl: { mode: 'invalidUrl' as const } });
+		}
 		const { errors, snapshot } = await runAddAttempt(pairs, locals, { clearFirst: false });
-		if (errors.length === 0) throw redirect(303, '/cart?createdFromUrl=1');
+		if (errors.length === 0) {
+			throw redirect(303, '/cart?createdFromUrl=1');
+		}
 		return fail(400, {
 			cartFromUrl: {
 				mode: 'errors' as const,
@@ -393,11 +414,17 @@ export const actions = {
 	},
 
 	replaceFromUrl: async ({ request, locals }) => {
-		if (!runtimeConfig.allowCartFromUrl) throw redirect(303, '/cart');
+		if (!runtimeConfig.allowCartFromUrl) {
+			throw redirect(303, '/cart');
+		}
 		const pairs = parsePairsFromForm(await request.formData());
-		if (!pairs) return fail(400, { cartFromUrl: { mode: 'invalidUrl' as const } });
+		if (!pairs) {
+			return fail(400, { cartFromUrl: { mode: 'invalidUrl' as const } });
+		}
 		const { errors, snapshot } = await runAddAttempt(pairs, locals, { clearFirst: true });
-		if (errors.length === 0) throw redirect(303, '/cart?createdFromUrl=1');
+		if (errors.length === 0) {
+			throw redirect(303, '/cart?createdFromUrl=1');
+		}
 		return fail(400, {
 			cartFromUrl: {
 				mode: 'errors' as const,
@@ -408,11 +435,17 @@ export const actions = {
 	},
 
 	mergeFromUrl: async ({ request, locals }) => {
-		if (!runtimeConfig.allowCartFromUrl) throw redirect(303, '/cart');
+		if (!runtimeConfig.allowCartFromUrl) {
+			throw redirect(303, '/cart');
+		}
 		const pairs = parsePairsFromForm(await request.formData());
-		if (!pairs) return fail(400, { cartFromUrl: { mode: 'invalidUrl' as const } });
+		if (!pairs) {
+			return fail(400, { cartFromUrl: { mode: 'invalidUrl' as const } });
+		}
 		const { errors, snapshot } = await runAddAttempt(pairs, locals, { clearFirst: false });
-		if (errors.length === 0) throw redirect(303, '/cart?createdFromUrl=1');
+		if (errors.length === 0) {
+			throw redirect(303, '/cart?createdFromUrl=1');
+		}
 		return fail(400, {
 			cartFromUrl: {
 				mode: 'errors' as const,
@@ -423,7 +456,9 @@ export const actions = {
 	},
 
 	clearAll: async ({ locals }) => {
-		if (!runtimeConfig.allowCartFromUrl) throw redirect(303, '/cart');
+		if (!runtimeConfig.allowCartFromUrl) {
+			throw redirect(303, '/cart');
+		}
 		const user = userIdentifier(locals);
 		const cart = await getCartFromDb({ user });
 		await withTransaction(async (session) => {
@@ -441,7 +476,9 @@ export const actions = {
 	},
 
 	rollbackNew: async ({ request, locals }) => {
-		if (!runtimeConfig.allowCartFromUrl) throw redirect(303, '/cart');
+		if (!runtimeConfig.allowCartFromUrl) {
+			throw redirect(303, '/cart');
+		}
 		const fd = await request.formData();
 		const raw = String(fd.get('snapshot') ?? '[]');
 		let snapshotItems: Cart['items'];

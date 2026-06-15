@@ -111,9 +111,9 @@
 		},
 		"errors": {
 			"title": "Les produits suivants n'ont pas été ajoutés :",
-			"keepPartial": "Garder le panier en l'état",
-			"clearAll": "Vider tout le panier",
-			"rollbackNew": "Annuler les ajouts depuis le lien",
+			"keepPartial": "Ignorer",
+			"clearAll": "Vider panier",
+			"rollbackNew": "Annuler",
 			"reasonNotFound": "Produit inexistant",
 			"reasonGeneric": "Ajout impossible",
 			"reasonVariationRequired": "Requiert un choix de variation",

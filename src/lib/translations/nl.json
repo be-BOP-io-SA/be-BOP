@@ -111,9 +111,9 @@
 		},
 		"errors": {
 			"title": "De volgende producten konden niet worden toegevoegd:",
-			"keepPartial": "Winkelwagen ongewijzigd laten",
-			"clearAll": "Hele winkelwagen leegmaken",
-			"rollbackNew": "Toevoegingen vanaf de link ongedaan maken",
+			"keepPartial": "Negeren",
+			"clearAll": "Winkelwagen legen",
+			"rollbackNew": "Annuleren",
 			"reasonNotFound": "Product niet gevonden",
 			"reasonGeneric": "Kan niet worden toegevoegd",
 			"reasonVariationRequired": "Vereist een variantkeuze",
