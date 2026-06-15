@@ -60,8 +60,7 @@ function isEmployeeFromLocals(locals: App.Locals): boolean {
 function mapAddError(slug: string, message: string, product: ProductBadge | null): AddError {
 	if (message === "Product can't be added to basket ")
 		return { slug, key: 'product.notForSale', product };
-	if (message === 'Product is out of stock')
-		return { slug, key: 'product.outOfStock', product };
+	if (message === 'Product is out of stock') return { slug, key: 'product.outOfStock', product };
 	if (message === 'Cart has too many items')
 		return { slug, key: 'cart.reachedMaxPerLine', product };
 	if (message === 'error matching on variations choice')
@@ -109,7 +108,8 @@ async function buildBadges(
 	for (const slug of slugs) {
 		const product = productsBySlug.get(slug);
 		if (!product) continue;
-		const name = product.translations?.[language as keyof typeof product.translations]?.name ?? product.name;
+		const name =
+			product.translations?.[language as keyof typeof product.translations]?.name ?? product.name;
 		badges.set(slug, {
 			slug,
 			name,
@@ -158,7 +158,7 @@ async function attemptAddAll(
 		} catch (e) {
 			const msg =
 				typeof e === 'object' && e && 'body' in e
-					? ((e as { body?: { message?: string } }).body?.message ?? '')
+					? (e as { body?: { message?: string } }).body?.message ?? ''
 					: '';
 			errors.push(mapAddError(slug, msg, badge));
 		}
@@ -279,7 +279,10 @@ export async function load({ parent, locals, url }) {
 	});
 
 	let cartFromUrl: CartFromUrlState | undefined;
-	if (runtimeConfig.allowCartFromUrl && (url.searchParams.has('slug') || url.searchParams.has('qty'))) {
+	if (
+		runtimeConfig.allowCartFromUrl &&
+		(url.searchParams.has('slug') || url.searchParams.has('qty'))
+	) {
 		const pairs = parsePairsFromUrl(url);
 		if (!pairs) {
 			cartFromUrl = { mode: 'invalidUrl' };

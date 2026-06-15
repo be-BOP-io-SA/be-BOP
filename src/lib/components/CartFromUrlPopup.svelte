@@ -41,11 +41,7 @@
 	<div
 		class="bg-white shadow-[0_0_0_4px_rgba(0,0,0,0.8)] w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-auto flex flex-col relative"
 	>
-		<a
-			href="/cart"
-			class="absolute top-2 right-2 p-2 z-10"
-			aria-label={t('cartFromUrl.close')}
-		>
+		<a href="/cart" class="absolute top-2 right-2 p-2 z-10" aria-label={t('cartFromUrl.close')}>
 			<IconCross />
 		</a>
 
