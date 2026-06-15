@@ -91,6 +91,37 @@
 		"vatRate": "IVA per {country}",
 		"vatSellerCountry": "Il paese è quello del venditore."
 	},
+	"cartFromUrl": {
+		"close": "Chiudi",
+		"proposedItems": "Articoli dal link condiviso",
+		"banner": {
+			"created": "Il tuo carrello è stato aggiornato dal link condiviso."
+		},
+		"confirm": {
+			"title": "Aggiungere questi articoli al tuo carrello?",
+			"cta": "Aggiungi al mio carrello",
+			"cancel": "Annulla"
+		},
+		"reconcile": {
+			"title": "Carrello esistente rilevato",
+			"description": "Hai già articoli nel tuo carrello. Cosa vuoi fare con gli articoli del link condiviso?",
+			"replace": "Sostituisci il mio carrello",
+			"merge": "Unisci con il mio carrello",
+			"keep": "Mantieni il mio carrello attuale"
+		},
+		"errors": {
+			"title": "I seguenti prodotti non sono stati aggiunti:",
+			"keepPartial": "Lascia il carrello così com'è",
+			"clearAll": "Svuota tutto il carrello",
+			"rollbackNew": "Annulla le aggiunte dal link",
+			"reasonNotFound": "Prodotto inesistente",
+			"reasonGeneric": "Aggiunta impossibile",
+			"reasonVariationRequired": "Richiede una scelta di variante",
+			"reasonBookingRequired": "Richiede uno slot di prenotazione",
+			"invalidUrl": "Parametri URL non validi",
+			"invalidUrlDescription": "Il link condiviso è malformato. Chiedi al mittente un link valido."
+		}
+	},
 	"challenge": {
 		"beginsAt": "Inizia tra {days} giorni",
 		"ended": "Finito !",

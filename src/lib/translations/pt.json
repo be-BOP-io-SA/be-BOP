@@ -91,6 +91,37 @@
 		"vatRate": "Taxa de IVA para {country}",
 		"vatSellerCountry": "O país é o país do vendedor."
 	},
+	"cartFromUrl": {
+		"close": "Fechar",
+		"proposedItems": "Artigos do link partilhado",
+		"banner": {
+			"created": "O seu carrinho foi atualizado a partir do link partilhado."
+		},
+		"confirm": {
+			"title": "Adicionar estes artigos ao seu carrinho?",
+			"cta": "Adicionar ao meu carrinho",
+			"cancel": "Cancelar"
+		},
+		"reconcile": {
+			"title": "Carrinho existente detetado",
+			"description": "Já tem artigos no seu carrinho. O que deseja fazer com os artigos do link partilhado?",
+			"replace": "Substituir o meu carrinho",
+			"merge": "Juntar ao meu carrinho",
+			"keep": "Manter o meu carrinho atual"
+		},
+		"errors": {
+			"title": "Os seguintes produtos não foram adicionados:",
+			"keepPartial": "Manter o carrinho como está",
+			"clearAll": "Esvaziar todo o carrinho",
+			"rollbackNew": "Anular as adições do link",
+			"reasonNotFound": "Produto inexistente",
+			"reasonGeneric": "Adição impossível",
+			"reasonVariationRequired": "Requer uma escolha de variante",
+			"reasonBookingRequired": "Requer uma reserva de horário",
+			"invalidUrl": "Parâmetros de URL inválidos",
+			"invalidUrlDescription": "O link partilhado está mal formado. Peça ao remetente um link válido."
+		}
+	},
 	"challenge": {
 		"beginsAt": "Começa em {days} dias",
 		"ended": "Terminou!",

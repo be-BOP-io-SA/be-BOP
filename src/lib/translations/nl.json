@@ -91,6 +91,37 @@
 		"vatRate": "Btw-tarief voor {country}",
 		"vatSellerCountry": "Het land is het land van de verkoper."
 	},
+	"cartFromUrl": {
+		"close": "Sluiten",
+		"proposedItems": "Artikelen uit de gedeelde link",
+		"banner": {
+			"created": "Uw winkelwagen is bijgewerkt vanaf de gedeelde link."
+		},
+		"confirm": {
+			"title": "Deze artikelen aan uw winkelwagen toevoegen?",
+			"cta": "Toevoegen aan mijn winkelwagen",
+			"cancel": "Annuleren"
+		},
+		"reconcile": {
+			"title": "Bestaande winkelwagen gedetecteerd",
+			"description": "U heeft al artikelen in uw winkelwagen. Wat wilt u doen met de artikelen uit de gedeelde link?",
+			"replace": "Mijn winkelwagen vervangen",
+			"merge": "Samenvoegen met mijn winkelwagen",
+			"keep": "Mijn huidige winkelwagen behouden"
+		},
+		"errors": {
+			"title": "De volgende producten konden niet worden toegevoegd:",
+			"keepPartial": "Winkelwagen ongewijzigd laten",
+			"clearAll": "Hele winkelwagen leegmaken",
+			"rollbackNew": "Toevoegingen vanaf de link ongedaan maken",
+			"reasonNotFound": "Product niet gevonden",
+			"reasonGeneric": "Kan niet worden toegevoegd",
+			"reasonVariationRequired": "Vereist een variantkeuze",
+			"reasonBookingRequired": "Vereist een boekingsslot",
+			"invalidUrl": "Ongeldige URL-parameters",
+			"invalidUrlDescription": "De gedeelde link is misvormd. Vraag de afzender om een geldige link."
+		}
+	},
 	"challenge": {
 		"beginsAt": "Begint over {days} dagen",
 		"ended": "Afgerond !",

@@ -263,6 +263,15 @@
 		/>
 		Remove product price on pop-in when adding to Cart
 	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="allowCartFromUrl"
+			class="form-checkbox"
+			checked={data.allowCartFromUrl}
+		/>
+		Allow cart creation through shared URL (/cart?slug=…&qty=…)
+	</label>
 	<h2 class="text-2xl">Checkout</h2>
 
 	<label class="checkbox-label">

@@ -91,6 +91,37 @@
 		"vatRate": "MwSt.-Satz für {country}",
 		"vatSellerCountry": "Das Land ist das Land des Verkäufers."
 	},
+	"cartFromUrl": {
+		"close": "Schließen",
+		"proposedItems": "Artikel aus dem geteilten Link",
+		"banner": {
+			"created": "Ihr Warenkorb wurde über den geteilten Link aktualisiert."
+		},
+		"confirm": {
+			"title": "Diese Artikel zum Warenkorb hinzufügen?",
+			"cta": "Zum Warenkorb hinzufügen",
+			"cancel": "Abbrechen"
+		},
+		"reconcile": {
+			"title": "Bestehender Warenkorb erkannt",
+			"description": "Sie haben bereits Artikel in Ihrem Warenkorb. Was möchten Sie mit den Artikeln aus dem geteilten Link tun?",
+			"replace": "Meinen Warenkorb ersetzen",
+			"merge": "Mit meinem Warenkorb zusammenführen",
+			"keep": "Meinen aktuellen Warenkorb behalten"
+		},
+		"errors": {
+			"title": "Die folgenden Artikel konnten nicht hinzugefügt werden:",
+			"keepPartial": "Warenkorb so belassen",
+			"clearAll": "Gesamten Warenkorb leeren",
+			"rollbackNew": "Hinzufügungen aus dem Link rückgängig machen",
+			"reasonNotFound": "Produkt nicht gefunden",
+			"reasonGeneric": "Kann nicht hinzugefügt werden",
+			"reasonVariationRequired": "Erfordert eine Variantenauswahl",
+			"reasonBookingRequired": "Erfordert einen Buchungstermin",
+			"invalidUrl": "Ungültige URL-Parameter",
+			"invalidUrlDescription": "Der geteilte Link ist fehlerhaft. Bitte fragen Sie den Absender nach einem gültigen Link."
+		}
+	},
 	"challenge": {
 		"beginsAt": "Beginnt in {days} Tagen",
 		"ended": "Beendet!",

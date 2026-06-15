@@ -91,6 +91,37 @@
 		"vatRate": "Tasa de IVA para {country}",
 		"vatSellerCountry": "El país es el del vendedor."
 	},
+	"cartFromUrl": {
+		"close": "Cerrar",
+		"proposedItems": "Artículos del enlace compartido",
+		"banner": {
+			"created": "Tu carrito ha sido actualizado desde el enlace compartido."
+		},
+		"confirm": {
+			"title": "¿Agregar estos artículos a tu carrito?",
+			"cta": "Agregar a mi carrito",
+			"cancel": "Cancelar"
+		},
+		"reconcile": {
+			"title": "Carrito existente detectado",
+			"description": "Ya tienes artículos en tu carrito. ¿Qué deseas hacer con los artículos del enlace compartido?",
+			"replace": "Reemplazar mi carrito",
+			"merge": "Combinar con mi carrito",
+			"keep": "Mantener mi carrito actual"
+		},
+		"errors": {
+			"title": "Los siguientes productos no fueron agregados:",
+			"keepPartial": "Dejar el carrito como está",
+			"clearAll": "Vaciar todo el carrito",
+			"rollbackNew": "Cancelar las adiciones del enlace",
+			"reasonNotFound": "Producto inexistente",
+			"reasonGeneric": "No se puede agregar",
+			"reasonVariationRequired": "Requiere una elección de variante",
+			"reasonBookingRequired": "Requiere un horario de reserva",
+			"invalidUrl": "Parámetros de URL inválidos",
+			"invalidUrlDescription": "El enlace compartido está mal formado. Pide al remitente un enlace válido."
+		}
+	},
 	"challenge": {
 		"beginsAt": "Comienza en {days} días",
 		"ended": "¡Terminado!",

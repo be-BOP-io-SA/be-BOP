@@ -91,6 +91,37 @@
 		"vatRate": "VAT rate for {country}",
 		"vatSellerCountry": "The country is the seller's country."
 	},
+	"cartFromUrl": {
+		"close": "Close",
+		"proposedItems": "Items from the shared link",
+		"banner": {
+			"created": "Your cart has been updated from the shared link."
+		},
+		"confirm": {
+			"title": "Add these items to your cart?",
+			"cta": "Add to my cart",
+			"cancel": "Cancel"
+		},
+		"reconcile": {
+			"title": "Existing cart detected",
+			"description": "You already have items in your cart. What would you like to do with the items from the shared link?",
+			"replace": "Replace my cart",
+			"merge": "Merge with my cart",
+			"keep": "Keep my current cart"
+		},
+		"errors": {
+			"title": "The following items could not be added:",
+			"keepPartial": "Keep the cart as is",
+			"clearAll": "Empty the whole cart",
+			"rollbackNew": "Undo additions from the link",
+			"reasonNotFound": "Product not found",
+			"reasonGeneric": "Cannot be added",
+			"reasonVariationRequired": "Requires a variation choice",
+			"reasonBookingRequired": "Requires a booking slot",
+			"invalidUrl": "Invalid URL parameters",
+			"invalidUrlDescription": "The shared link is malformed. Please ask the sender for a valid link."
+		}
+	},
 	"challenge": {
 		"beginsAt": "Begins in {days} days",
 		"ended": "Finished !",

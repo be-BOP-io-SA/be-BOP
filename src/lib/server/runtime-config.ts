@@ -120,6 +120,7 @@ const baseConfig = {
 	viewportContentWidth: 1000,
 	socialNetworkIcons: [] as Array<{ name: string; svg: string; href: string }>,
 	cartPreviewInteractive: false,
+	allowCartFromUrl: false,
 	vatExempted: false,
 	vatExemptionReason: '',
 	vatSingleCountry: true,
