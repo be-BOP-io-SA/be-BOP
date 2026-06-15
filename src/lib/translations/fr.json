@@ -91,6 +91,37 @@
 		"vatRate": "Taux de TVA : {country}",
 		"vatSellerCountry": "La TVA est celle du pays du vendeur."
 	},
+	"cartFromUrl": {
+		"close": "Fermer",
+		"proposedItems": "Articles du lien partagé",
+		"banner": {
+			"created": "Votre panier a été mis à jour depuis le lien partagé."
+		},
+		"confirm": {
+			"title": "Ajouter ces articles à votre panier ?",
+			"cta": "Ajouter à mon panier",
+			"cancel": "Annuler"
+		},
+		"reconcile": {
+			"title": "Panier existant détecté",
+			"description": "Vous avez déjà des articles dans votre panier. Que souhaitez-vous faire avec les articles du lien partagé ?",
+			"replace": "Remplacer mon panier",
+			"merge": "Fusionner avec mon panier",
+			"keep": "Conserver mon panier actuel"
+		},
+		"errors": {
+			"title": "Les produits suivants n'ont pas été ajoutés :",
+			"keepPartial": "Garder le panier en l'état",
+			"clearAll": "Vider tout le panier",
+			"rollbackNew": "Annuler les ajouts depuis le lien",
+			"reasonNotFound": "Produit inexistant",
+			"reasonGeneric": "Ajout impossible",
+			"reasonVariationRequired": "Requiert un choix de variation",
+			"reasonBookingRequired": "Requiert un créneau de réservation",
+			"invalidUrl": "Paramètres d'URL invalides",
+			"invalidUrlDescription": "Le lien partagé est mal formé. Demandez à l'expéditeur un lien valide."
+		}
+	},
 	"challenge": {
 		"beginsAt": "Débute dans {days} jours",
 		"ended": "Terminé !",

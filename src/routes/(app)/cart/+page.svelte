@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
 	import { goto, invalidate } from '$app/navigation';
+	import { page } from '$app/stores';
+	import CartFromUrlPopup from '$lib/components/CartFromUrlPopup.svelte';
 	import CartQuantity from '$lib/components/CartQuantity.svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
@@ -21,6 +23,7 @@
 	import CartItemDiscountPanel from '$lib/components/CartItemDiscountPanel.svelte';
 
 	export let data;
+	export let form;
 
 	let discountPanelIndex = -1;
 	let promoError = false;
@@ -76,6 +79,11 @@
 	{/if}
 	<div class="w-full rounded-xl p-6 flex flex-col gap-6 body-mainPlan border-gray-300">
 		<h1 class="page-title body-title">{t('cart.items')}</h1>
+		{#if $page.url.searchParams.get('createdFromUrl')}
+			<div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded">
+				{t('cartFromUrl.banner.created')}
+			</div>
+		{/if}
 		{#if data.roleId && data.roleId !== CUSTOMER_ROLE_ID}
 			<form
 				action="/product/{alias}?/addToCart"
@@ -576,3 +584,9 @@
 		/>
 	{/if}
 </main>
+
+{#if form?.cartFromUrl}
+	<CartFromUrlPopup state={form.cartFromUrl} />
+{:else if data.cartFromUrl}
+	<CartFromUrlPopup state={data.cartFromUrl} />
+{/if}
