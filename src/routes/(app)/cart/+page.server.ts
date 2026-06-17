@@ -338,16 +338,24 @@ export async function load({ parent, locals, url }) {
 		} else {
 			const slugs = pairs.map((p) => p.slug);
 			const productsBySlug = await resolveProductsBySlug(slugs, locals);
-			const badges = await buildBadges(slugs, productsBySlug, locals.language);
-			const requested: RequestedItem[] = pairs.map(({ slug, quantity }) => ({
-				slug,
-				quantity,
-				product: badges.get(slug) ?? null
-			}));
-			cartFromUrl = {
-				mode: parentData.cart.items.length === 0 ? 'confirm' : 'reconcile',
-				requested
-			};
+			// Silently drop unknown slugs so they neither pollute the popup nor get
+			// submitted on confirm. If nothing valid remains, fall back to invalidUrl.
+			const validPairs = pairs.filter((p) => productsBySlug.has(p.slug));
+			if (validPairs.length === 0) {
+				cartFromUrl = { mode: 'invalidUrl' };
+			} else {
+				const validSlugs = validPairs.map((p) => p.slug);
+				const badges = await buildBadges(validSlugs, productsBySlug, locals.language);
+				const requested: RequestedItem[] = validPairs.map(({ slug, quantity }) => ({
+					slug,
+					quantity,
+					product: badges.get(slug) ?? null
+				}));
+				cartFromUrl = {
+					mode: parentData.cart.items.length === 0 ? 'confirm' : 'reconcile',
+					requested
+				};
+			}
 		}
 	}
 
