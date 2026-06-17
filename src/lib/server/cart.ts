@@ -275,10 +275,12 @@ export async function addToCartInDb(
 		}
 		existingItem.reservedUntil = addMinutes(new Date(), runtimeConfig.reserveStockInMinutes);
 	} else {
-		if (totalQuantityInCart() + quantity > availableAmount) {
-			cartError('MAX_PER_ORDER', `You can only order ${availableAmount} of this product`, {
-				max: availableAmount
-			});
+		const max = Math.min(
+			product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER,
+			availableAmount
+		);
+		if (totalQuantityInCart() + quantity > max) {
+			cartError('MAX_PER_ORDER', `You can only order ${max} of this product`, { max });
 		}
 		cart.items.push({
 			_id: crypto.randomUUID(),
