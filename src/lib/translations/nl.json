@@ -89,7 +89,8 @@
 		"vatIpCountryText": "Het land wordt bepaald aan de hand van gegevens van {link}",
 		"vatNullOutsideSellerCountry": "Importbelastingen moeten bij levering door de klant aan de douane worden betaald.",
 		"vatRate": "Btw-tarief voor {country}",
-		"vatSellerCountry": "Het land is het land van de verkoper."
+		"vatSellerCountry": "Het land is het land van de verkoper.",
+		"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})"
 	},
 	"cartFromUrl": {
 		"close": "Sluiten",

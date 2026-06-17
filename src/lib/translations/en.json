@@ -89,7 +89,8 @@
 		"vatIpCountryText": "The country is determined through data from {link}",
 		"vatNullOutsideSellerCountry": "Import taxes must be paid by the customer to customs upon delivery.",
 		"vatRate": "VAT rate for {country}",
-		"vatSellerCountry": "The country is the seller's country."
+		"vatSellerCountry": "The country is the seller's country.",
+		"maxQuantityReached": "Maximum quantity per order reached ({max})"
 	},
 	"cartFromUrl": {
 		"close": "Close",
