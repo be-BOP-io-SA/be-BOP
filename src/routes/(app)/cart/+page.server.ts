@@ -87,7 +87,7 @@ function mapAddError(slug: string, body: AddErrorBody, product: ProductBadge | n
 		case 'MAX_PER_ORDER':
 			return {
 				slug,
-				key: 'pos.cart.maxQuantityReached',
+				key: 'cart.maxQuantityReached',
 				...(body.params && { params: body.params }),
 				product
 			};

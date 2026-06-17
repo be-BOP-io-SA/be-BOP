@@ -89,7 +89,8 @@
 		"vatIpCountryText": "Das Land wird anhand von Daten von {link} ermittelt",
 		"vatNullOutsideSellerCountry": "Einfuhrsteuern müssen vom Kunden bei Lieferung an den Zoll entrichtet werden.",
 		"vatRate": "MwSt.-Satz für {country}",
-		"vatSellerCountry": "Das Land ist das Land des Verkäufers."
+		"vatSellerCountry": "Das Land ist das Land des Verkäufers.",
+		"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})"
 	},
 	"cartFromUrl": {
 		"close": "Schließen",

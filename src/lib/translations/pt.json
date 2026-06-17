@@ -89,7 +89,8 @@
 		"vatIpCountryText": "O país é determinado através de dados de {link}",
 		"vatNullOutsideSellerCountry": "Os impostos de importação devem ser pagos pelo cliente à alfândega no momento da entrega.",
 		"vatRate": "Taxa de IVA para {country}",
-		"vatSellerCountry": "O país é o país do vendedor."
+		"vatSellerCountry": "O país é o país do vendedor.",
+		"maxQuantityReached": "Quantidade máxima por encomenda atingida ({max})"
 	},
 	"cartFromUrl": {
 		"close": "Fechar",

@@ -89,7 +89,8 @@
 		"vatIpCountryText": "Déterminé par votre adresse IP et grâce aux données de {link}",
 		"vatNullOutsideSellerCountry": "La TVA sur les produits physiques devra être acquitée par le client aux douanes lors de la livraison",
 		"vatRate": "Taux de TVA : {country}",
-		"vatSellerCountry": "La TVA est celle du pays du vendeur."
+		"vatSellerCountry": "La TVA est celle du pays du vendeur.",
+		"maxQuantityReached": "Quantité maximale par commande atteinte ({max})"
 	},
 	"cartFromUrl": {
 		"close": "Fermer",
