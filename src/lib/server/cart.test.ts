@@ -1,7 +1,8 @@
 import { describe, beforeEach, it, expect, assert } from 'vitest';
 import { collections } from './database';
 import { cleanDb } from './test-utils';
-import { addToCartInDb } from './cart';
+import { ObjectId } from 'mongodb';
+import { addToCartInDb, restoreFromPendingSnapshot } from './cart';
 import { createOrder } from './orders';
 import { HttpError_1 } from '@sveltejs/kit';
 import {
@@ -105,6 +106,103 @@ describe('cart', () => {
 				}
 			)
 		).resolves.toBeDefined();
+	});
+
+	describe('typed error codes', () => {
+		it('throws OUT_OF_STOCK with body.code when overshooting available stock', async () => {
+			try {
+				await addToCartInDb(TEST_DIGITAL_PRODUCT, TEST_PRODUCT_STOCK + 1, {
+					user: { sessionId: 'codes-1' },
+					mode: 'eshop'
+				});
+				expect.fail('should have thrown');
+			} catch (e) {
+				const body = (e as { body?: { code?: string; params?: Record<string, unknown> } }).body;
+				expect(body?.code).toBe('MAX_PER_ORDER');
+				expect(body?.params).toEqual({ max: TEST_PRODUCT_STOCK });
+			}
+		});
+
+		it('throws OUT_OF_STOCK with body.code when no stock at all is reservable', async () => {
+			await addToCartInDb(TEST_DIGITAL_PRODUCT, TEST_PRODUCT_STOCK, {
+				user: { sessionId: 'reserver' },
+				mode: 'eshop'
+			});
+			try {
+				await addToCartInDb(TEST_DIGITAL_PRODUCT, 1, {
+					user: { sessionId: 'codes-2' },
+					mode: 'eshop'
+				});
+				expect.fail('should have thrown');
+			} catch (e) {
+				const body = (e as { body?: { code?: string } }).body;
+				expect(body?.code).toBe('OUT_OF_STOCK');
+			}
+		});
+	});
+
+	describe('restoreFromPendingSnapshot', () => {
+		it('rejects a forged snapshot id and leaves the cart untouched', async () => {
+			const cartId = new ObjectId();
+			const initialItems = [
+				{
+					_id: 'line-1',
+					productId: TEST_DIGITAL_PRODUCT._id,
+					quantity: 5,
+					customPrice: { amount: 1, currency: 'EUR' as const }
+				}
+			];
+			await collections.carts.insertOne({
+				_id: cartId,
+				user: { sessionId: 'rb-1' },
+				items: initialItems,
+				pendingSnapshot: {
+					id: '11111111-1111-4111-8111-111111111111',
+					items: [{ _id: 'old-line', productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+					createdAt: new Date()
+				},
+				createdAt: new Date(),
+				updatedAt: new Date()
+			});
+
+			const cart = await collections.carts.findOne({ _id: cartId });
+			assert(cart, 'inserted cart');
+			const result = await restoreFromPendingSnapshot(cart, 'ffffffff-ffff-4fff-8fff-ffffffffffff');
+			expect(result.restored).toBe(false);
+
+			const after = await collections.carts.findOne({ _id: cartId });
+			expect(after?.items).toEqual(initialItems);
+			expect(after?.pendingSnapshot?.id).toBe('11111111-1111-4111-8111-111111111111');
+		});
+
+		it('restores items and clears the snapshot when the id matches', async () => {
+			const cartId = new ObjectId();
+			const snapshotId = '22222222-2222-4222-8222-222222222222';
+			const snapshotItems = [
+				{ _id: 'snap-line', productId: TEST_DIGITAL_PRODUCT._id, quantity: 2 }
+			];
+			await collections.carts.insertOne({
+				_id: cartId,
+				user: { sessionId: 'rb-2' },
+				items: [{ _id: 'new-line', productId: TEST_DIGITAL_PRODUCT._id, quantity: 7 }],
+				pendingSnapshot: {
+					id: snapshotId,
+					items: snapshotItems,
+					createdAt: new Date()
+				},
+				createdAt: new Date(),
+				updatedAt: new Date()
+			});
+
+			const cart = await collections.carts.findOne({ _id: cartId });
+			assert(cart, 'inserted cart');
+			const result = await restoreFromPendingSnapshot(cart, snapshotId);
+			expect(result.restored).toBe(true);
+
+			const after = await collections.carts.findOne({ _id: cartId });
+			expect(after?.items).toEqual(snapshotItems);
+			expect(after?.pendingSnapshot).toBeUndefined();
+		});
 	});
 
 	describe('computePriceInfo', () => {

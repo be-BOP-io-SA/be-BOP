@@ -37,4 +37,15 @@ export interface Cart extends Timestamps {
 	orderTabSlug?: string;
 	orderTabId?: ObjectId;
 	splitMode?: 'items' | 'shares';
+
+	/**
+	 * Server-side snapshot of cart items captured right before a cart-from-URL
+	 * mutation (add/replace/merge). Consumed by the rollbackNew action so the
+	 * undo never trusts client-supplied data.
+	 */
+	pendingSnapshot?: {
+		id: string;
+		items: Cart['items'];
+		createdAt: Date;
+	};
 }

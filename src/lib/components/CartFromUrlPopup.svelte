@@ -25,7 +25,7 @@
 	export let state:
 		| { mode: 'confirm'; requested: RequestedItem[] }
 		| { mode: 'reconcile'; requested: RequestedItem[] }
-		| { mode: 'errors'; errors: AddError[]; snapshot: string }
+		| { mode: 'errors'; errors: AddError[]; snapshotId: string }
 		| { mode: 'invalidUrl' };
 
 	const { t } = useI18n();
@@ -205,7 +205,7 @@
 					</button>
 				</form>
 				<form method="POST" action="?/rollbackNew">
-					<input type="hidden" name="snapshot" value={state.snapshot} />
+					<input type="hidden" name="snapshotId" value={state.snapshotId} />
 					<button type="submit" class="btn w-full body-mainCTA">
 						{t('cartFromUrl.errors.rollbackNew')}
 					</button>
