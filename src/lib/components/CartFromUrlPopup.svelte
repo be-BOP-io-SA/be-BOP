@@ -83,7 +83,7 @@
 			<div
 				class="px-4 sm:px-6 py-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3"
 			>
-				<a href="/cart" class="btn w-full body-secondaryCTA text-center">
+				<a href="/cart" class="btn w-full body-secondaryCTA text-center !h-auto min-h-10 py-2">
 					{t('cartFromUrl.confirm.cancel')}
 				</a>
 				<form method="POST" action="?/addFromUrl" class="contents">
@@ -91,7 +91,7 @@
 						<input type="hidden" name="slug" value={item.slug} />
 						<input type="hidden" name="qty" value={item.quantity} />
 					{/each}
-					<button type="submit" class="btn w-full body-mainCTA">
+					<button type="submit" class="btn w-full body-mainCTA !h-auto min-h-10 py-2 text-center">
 						{t('cartFromUrl.confirm.cta')}
 					</button>
 				</form>
@@ -143,7 +143,7 @@
 						<input type="hidden" name="slug" value={item.slug} />
 						<input type="hidden" name="qty" value={item.quantity} />
 					{/each}
-					<button type="submit" class="btn w-full body-mainCTA">
+					<button type="submit" class="btn w-full body-mainCTA !h-auto min-h-10 py-2 text-center">
 						{t('cartFromUrl.reconcile.replace')}
 					</button>
 				</form>
@@ -152,11 +152,11 @@
 						<input type="hidden" name="slug" value={item.slug} />
 						<input type="hidden" name="qty" value={item.quantity} />
 					{/each}
-					<button type="submit" class="btn w-full body-mainCTA">
+					<button type="submit" class="btn w-full body-mainCTA !h-auto min-h-10 py-2 text-center">
 						{t('cartFromUrl.reconcile.merge')}
 					</button>
 				</form>
-				<a href="/cart" class="btn w-full body-secondaryCTA text-center">
+				<a href="/cart" class="btn w-full body-secondaryCTA text-center !h-auto min-h-10 py-2">
 					{t('cartFromUrl.reconcile.keep')}
 				</a>
 			</div>
@@ -196,17 +196,17 @@
 			<div
 				class="px-4 sm:px-6 py-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3"
 			>
-				<a href="/cart" class="btn w-full body-secondaryCTA text-center">
+				<a href="/cart" class="btn w-full body-secondaryCTA text-center !h-auto min-h-10 py-2">
 					{t('cartFromUrl.errors.keepPartial')}
 				</a>
 				<form method="POST" action="?/clearAll" class="contents">
-					<button type="submit" class="btn w-full body-mainCTA">
+					<button type="submit" class="btn w-full body-mainCTA !h-auto min-h-10 py-2 text-center">
 						{t('cartFromUrl.errors.clearAll')}
 					</button>
 				</form>
 				<form method="POST" action="?/rollbackNew" class="contents">
 					<input type="hidden" name="snapshotId" value={state.snapshotId} />
-					<button type="submit" class="btn w-full body-mainCTA">
+					<button type="submit" class="btn w-full body-mainCTA !h-auto min-h-10 py-2 text-center">
 						{t('cartFromUrl.errors.rollbackNew')}
 					</button>
 				</form>
