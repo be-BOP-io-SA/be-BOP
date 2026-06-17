@@ -86,7 +86,7 @@
 				<a href="/cart" class="btn w-full body-secondaryCTA text-center">
 					{t('cartFromUrl.confirm.cancel')}
 				</a>
-				<form method="POST" action="?/addFromUrl">
+				<form method="POST" action="?/addFromUrl" class="contents">
 					{#each state.requested as item}
 						<input type="hidden" name="slug" value={item.slug} />
 						<input type="hidden" name="qty" value={item.quantity} />
@@ -138,7 +138,7 @@
 			<div
 				class="px-4 sm:px-6 py-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3"
 			>
-				<form method="POST" action="?/replaceFromUrl">
+				<form method="POST" action="?/replaceFromUrl" class="contents">
 					{#each state.requested as item}
 						<input type="hidden" name="slug" value={item.slug} />
 						<input type="hidden" name="qty" value={item.quantity} />
@@ -147,7 +147,7 @@
 						{t('cartFromUrl.reconcile.replace')}
 					</button>
 				</form>
-				<form method="POST" action="?/mergeFromUrl">
+				<form method="POST" action="?/mergeFromUrl" class="contents">
 					{#each state.requested as item}
 						<input type="hidden" name="slug" value={item.slug} />
 						<input type="hidden" name="qty" value={item.quantity} />
@@ -199,12 +199,12 @@
 				<a href="/cart" class="btn w-full body-secondaryCTA text-center">
 					{t('cartFromUrl.errors.keepPartial')}
 				</a>
-				<form method="POST" action="?/clearAll">
+				<form method="POST" action="?/clearAll" class="contents">
 					<button type="submit" class="btn w-full body-mainCTA">
 						{t('cartFromUrl.errors.clearAll')}
 					</button>
 				</form>
-				<form method="POST" action="?/rollbackNew">
+				<form method="POST" action="?/rollbackNew" class="contents">
 					<input type="hidden" name="snapshotId" value={state.snapshotId} />
 					<button type="submit" class="btn w-full body-mainCTA">
 						{t('cartFromUrl.errors.rollbackNew')}
