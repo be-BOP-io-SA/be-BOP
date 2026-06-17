@@ -1,4 +1,10 @@
-import { addToCartInDb, checkCartItems, getCartFromDb } from '$lib/server/cart';
+import {
+	addToCartInDb,
+	checkCartItems,
+	getCartFromDb,
+	restoreFromPendingSnapshot,
+	type CartErrorCode
+} from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections, withTransaction } from '$lib/server/database';
 import { findActivePromoDiscount, hasAnyActivePromoDiscount } from '$lib/server/discount';
@@ -7,7 +13,6 @@ import { applyResolvedStock, refreshAvailableStockInDb } from '$lib/server/produ
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
-import type { Cart } from '$lib/types/Cart';
 import type { Picture } from '$lib/types/Picture';
 import type { Product } from '$lib/types/Product';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
@@ -35,8 +40,14 @@ type RequestedItem = {
 export type CartFromUrlState =
 	| { mode: 'confirm'; requested: RequestedItem[] }
 	| { mode: 'reconcile'; requested: RequestedItem[] }
-	| { mode: 'errors'; errors: AddError[]; snapshot: string }
+	| { mode: 'errors'; errors: AddError[]; snapshotId: string }
 	| { mode: 'invalidUrl' };
+
+type AddErrorBody = {
+	code?: CartErrorCode;
+	message?: string;
+	params?: Record<string, string | number>;
+};
 
 function parsePairsFrom(slugs: string[], qtys: string[]): SlugQty[] | null {
 	if (!slugs.length || slugs.length !== qtys.length) {
@@ -61,32 +72,28 @@ function isEmployeeFromLocals(locals: App.Locals): boolean {
 	return locals.user?.roleId !== undefined && locals.user.roleId !== CUSTOMER_ROLE_ID;
 }
 
-function mapAddError(slug: string, message: string, product: ProductBadge | null): AddError {
-	if (message === "Product can't be added to basket ") {
-		return { slug, key: 'product.notForSale', product };
+function mapAddError(slug: string, body: AddErrorBody, product: ProductBadge | null): AddError {
+	switch (body.code) {
+		case 'NOT_FOR_SALE':
+			return { slug, key: 'product.notForSale', product };
+		case 'OUT_OF_STOCK':
+			return { slug, key: 'product.outOfStock', product };
+		case 'MAX_ITEMS_REACHED':
+			return { slug, key: 'cart.reachedMaxPerLine', product };
+		case 'VARIATION_INVALID':
+			return { slug, key: 'cartFromUrl.errors.reasonVariationRequired', product };
+		case 'BOOKING_INFO_REQUIRED':
+			return { slug, key: 'cartFromUrl.errors.reasonBookingRequired', product };
+		case 'MAX_PER_ORDER':
+			return {
+				slug,
+				key: 'pos.cart.maxQuantityReached',
+				...(body.params && { params: body.params }),
+				product
+			};
+		default:
+			return { slug, key: 'cartFromUrl.errors.reasonGeneric', product };
 	}
-	if (message === 'Product is out of stock') {
-		return { slug, key: 'product.outOfStock', product };
-	}
-	if (message === 'Cart has too many items') {
-		return { slug, key: 'cart.reachedMaxPerLine', product };
-	}
-	if (message === 'error matching on variations choice') {
-		return { slug, key: 'cartFromUrl.errors.reasonVariationRequired', product };
-	}
-	if (message === 'Product is a booking, please provide booking time and duration') {
-		return { slug, key: 'cartFromUrl.errors.reasonBookingRequired', product };
-	}
-	const m = message.match(/You can only order (\d+) of this product/);
-	if (m) {
-		return {
-			slug,
-			key: 'pos.cart.maxQuantityReached',
-			params: { max: Number(m[1]) },
-			product
-		};
-	}
-	return { slug, key: 'cartFromUrl.errors.reasonGeneric', product };
 }
 
 async function resolveProductsBySlug(
@@ -171,11 +178,9 @@ async function attemptAddAll(
 				await addToCartInDb(product, quantity, { user, mode });
 			}
 		} catch (e) {
-			const msg =
-				typeof e === 'object' && e && 'body' in e
-					? (e as { body?: { message?: string } }).body?.message ?? ''
-					: '';
-			errors.push(mapAddError(slug, msg, badge));
+			const body =
+				typeof e === 'object' && e && 'body' in e ? (e as { body?: AddErrorBody }).body ?? {} : {};
+			errors.push(mapAddError(slug, body, badge));
 		}
 	}
 	return errors;
@@ -185,21 +190,50 @@ async function runAddAttempt(
 	pairs: SlugQty[],
 	locals: App.Locals,
 	opts: { clearFirst: boolean }
-): Promise<{ errors: AddError[]; snapshot: Cart['items'] }> {
+): Promise<{ errors: AddError[]; snapshotId: string }> {
 	const user = userIdentifier(locals);
 	const cartBefore = await getCartFromDb({ user });
-	const snapshot = cartBefore.items.map((i) => ({ ...i }));
+	const snapshotItems = cartBefore.items.map((i) => ({ ...i }));
+	const snapshotId = crypto.randomUUID();
+
 	if (opts.clearFirst && cartBefore.items.length > 0) {
-		await collections.carts.updateOne(
-			{ _id: cartBefore._id },
-			{ $set: { items: [], updatedAt: new Date() } }
-		);
+		const productIds = cartBefore.items.map((i) => i.productId);
+		await withTransaction(async (session) => {
+			await collections.carts.updateOne(
+				{ _id: cartBefore._id },
+				{ $set: { items: [], updatedAt: new Date() } },
+				{ session }
+			);
+			for (const productId of productIds) {
+				await refreshAvailableStockInDb(productId, session);
+			}
+		});
 	}
+
 	const slugs = pairs.map((p) => p.slug);
 	const productsBySlug = await resolveProductsBySlug(slugs, locals);
 	const badges = await buildBadges(slugs, productsBySlug, locals.language);
 	const errors = await attemptAddAll(pairs, locals, productsBySlug, badges);
-	return { errors, snapshot };
+
+	// Persist the snapshot ONLY when something went wrong: it's the only path that
+	// can lead to a rollback. The client never sees the items — just the id.
+	if (errors.length > 0) {
+		await collections.carts.updateOne(
+			{ _id: cartBefore._id },
+			{
+				$set: {
+					pendingSnapshot: {
+						id: snapshotId,
+						items: snapshotItems,
+						createdAt: new Date()
+					},
+					updatedAt: new Date()
+				}
+			}
+		);
+	}
+
+	return { errors, snapshotId };
 }
 
 export async function load({ parent, locals, url }) {
@@ -400,7 +434,7 @@ export const actions = {
 		if (!pairs) {
 			return fail(400, { cartFromUrl: { mode: 'invalidUrl' as const } });
 		}
-		const { errors, snapshot } = await runAddAttempt(pairs, locals, { clearFirst: false });
+		const { errors, snapshotId } = await runAddAttempt(pairs, locals, { clearFirst: false });
 		if (errors.length === 0) {
 			throw redirect(303, '/cart?createdFromUrl=1');
 		}
@@ -408,7 +442,7 @@ export const actions = {
 			cartFromUrl: {
 				mode: 'errors' as const,
 				errors,
-				snapshot: JSON.stringify(snapshot)
+				snapshotId
 			}
 		});
 	},
@@ -421,7 +455,7 @@ export const actions = {
 		if (!pairs) {
 			return fail(400, { cartFromUrl: { mode: 'invalidUrl' as const } });
 		}
-		const { errors, snapshot } = await runAddAttempt(pairs, locals, { clearFirst: true });
+		const { errors, snapshotId } = await runAddAttempt(pairs, locals, { clearFirst: true });
 		if (errors.length === 0) {
 			throw redirect(303, '/cart?createdFromUrl=1');
 		}
@@ -429,7 +463,7 @@ export const actions = {
 			cartFromUrl: {
 				mode: 'errors' as const,
 				errors,
-				snapshot: JSON.stringify(snapshot)
+				snapshotId
 			}
 		});
 	},
@@ -442,7 +476,7 @@ export const actions = {
 		if (!pairs) {
 			return fail(400, { cartFromUrl: { mode: 'invalidUrl' as const } });
 		}
-		const { errors, snapshot } = await runAddAttempt(pairs, locals, { clearFirst: false });
+		const { errors, snapshotId } = await runAddAttempt(pairs, locals, { clearFirst: false });
 		if (errors.length === 0) {
 			throw redirect(303, '/cart?createdFromUrl=1');
 		}
@@ -450,7 +484,7 @@ export const actions = {
 			cartFromUrl: {
 				mode: 'errors' as const,
 				errors,
-				snapshot: JSON.stringify(snapshot)
+				snapshotId
 			}
 		});
 	},
@@ -480,29 +514,13 @@ export const actions = {
 			throw redirect(303, '/cart');
 		}
 		const fd = await request.formData();
-		const raw = String(fd.get('snapshot') ?? '[]');
-		let snapshotItems: Cart['items'];
-		try {
-			snapshotItems = JSON.parse(raw);
-		} catch {
+		const snapshotIdParsed = z.string().uuid().safeParse(fd.get('snapshotId'));
+		if (!snapshotIdParsed.success) {
 			throw redirect(303, '/cart');
 		}
 		const user = userIdentifier(locals);
 		const cart = await getCartFromDb({ user });
-		await withTransaction(async (session) => {
-			const allProductIds = new Set([
-				...cart.items.map((i) => i.productId),
-				...snapshotItems.map((i) => i.productId)
-			]);
-			await collections.carts.updateOne(
-				{ _id: cart._id },
-				{ $set: { items: snapshotItems, updatedAt: new Date() } },
-				{ session }
-			);
-			for (const productId of allProductIds) {
-				await refreshAvailableStockInDb(productId, session);
-			}
-		});
+		await restoreFromPendingSnapshot(cart, snapshotIdParsed.data);
 		throw redirect(303, '/cart');
 	},
 
