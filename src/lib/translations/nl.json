@@ -113,6 +113,9 @@
 		}
 	},
 	"checkout": {
+		"additionalFields": {
+			"title": "Aanvullende informatie"
+		},
 		"agreeIpCollect": "Ik ga akkoord met het verzamelen van mijn IP-adres (<0>waarom?</0>)",
 		"agreeNullVatForeigner": "Ik begrijp dat ik bij levering BTW moet betalen (<0>waarom?</0>)",
 		"agreeOnlyDeposit": "Ik ga ermee akkoord dat ik het restant in de toekomst moet betalen (<0>waarom?</0>)",
@@ -503,6 +506,9 @@
 		"allowSellerContact": "Sta ons toe u commerciële verzoeken te sturen"
 	},
 	"order": {
+		"additionalFields": {
+			"title": "Aanvullende informatie"
+		},
 		"addPayment": {
 			"amount": "Te betalen bedrag",
 			"cta": "Stuur een oproep voor betaling",

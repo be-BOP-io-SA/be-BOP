@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
+	import CheckoutFieldInput from '$lib/components/CheckoutFieldInput.svelte';
 	import { bech32 } from 'bech32';
 	import { typedValues } from '$lib/utils/typedValues';
 	import { typedInclude } from '$lib/utils/typedIncludes';
@@ -737,6 +738,20 @@
 					</article>
 				{/each}
 			</section>
+			{#if data.checkoutFields?.length}
+				<section class="gap-4 flex flex-col">
+					<article class="rounded border border-gray-300 overflow-hidden flex flex-col">
+						<div class="pl-4 py-2 body-mainPlan border-b border-gray-300 text-xl font-light">
+							{t('checkout.additionalFields.title')}
+						</div>
+						<div class="p-4 flex flex-col gap-4">
+							{#each data.checkoutFields as field (field.slug)}
+								<CheckoutFieldInput {field} />
+							{/each}
+						</div>
+					</article>
+				</section>
+			{/if}
 			<section class="gap-4 flex flex-col">
 				<article class="rounded border border-gray-300 overflow-hidden flex flex-col">
 					<div class="pl-4 py-2 body-mainPlan border-b border-gray-300 text-xl font-light">

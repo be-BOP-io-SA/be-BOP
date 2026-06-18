@@ -231,6 +231,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 				alias: note.userAlias
 			})) || [],
 		receiptNote: order.receiptNote,
+		customCheckoutFields: order.customCheckoutFields,
 		user: {
 			npub: order.user.npub,
 			email: order.user.email,

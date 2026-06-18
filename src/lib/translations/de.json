@@ -113,6 +113,9 @@
 		}
 	},
 	"checkout": {
+		"additionalFields": {
+			"title": "Zusätzliche Informationen"
+		},
 		"agreeIpCollect": "Ich stimme der Erfassung meiner IP-Adresse zu (warum?)",
 		"agreeNullVatForeigner": "Ich verstehe, dass ich die Mehrwertsteuer bei Lieferung bezahlen muss (warum?)",
 		"agreeOnlyDeposit": "Ich stimme zu, dass ich den Restbetrag in der Zukunft bezahlen muss (warum?)",
@@ -503,6 +506,9 @@
 		"allowSellerContact": "Erlauben Sie uns, Ihnen kommerzielle Anfragen zu senden"
 	},
 	"order": {
+		"additionalFields": {
+			"title": "Zusätzliche Informationen"
+		},
 		"addPayment": {
 			"amount": "Zahlungsbetrag",
 			"cta": "Zahlungsaufforderung senden",

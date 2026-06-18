@@ -15,6 +15,7 @@ import type { OrderLabel } from './OrderLabel';
 import { toBitcoins } from '$lib/utils/toBitcoins';
 import type { ScheduleEventBooked } from './Schedule';
 import type { PickDeep } from 'type-fest';
+import type { CheckoutFieldType } from './CheckoutFieldConfig';
 
 export const ORDER_PAYMENT_STATUSES = ['pending', 'paid', 'expired', 'canceled', 'failed'] as const;
 export type OrderPaymentStatus = (typeof ORDER_PAYMENT_STATUSES)[number];
@@ -61,6 +62,17 @@ export interface Note {
 	role: string | null;
 	content: string;
 	createdAt: Date;
+}
+
+export interface CollectedCheckoutField {
+	fieldId: string;
+	slug: string;
+	name: string;
+	label: string;
+	type: CheckoutFieldType;
+	value?: string;
+	address?: OrderAddress;
+	isPersonalData?: boolean;
 }
 
 export interface OrderPayment {
@@ -338,6 +350,7 @@ export interface Order extends Timestamps {
 	clientIp?: string;
 	notes?: Note[];
 	receiptNote?: string;
+	customCheckoutFields?: CollectedCheckoutField[];
 	onLocation?: boolean;
 	engagements?: {
 		acceptedTermsOfUse?: boolean;

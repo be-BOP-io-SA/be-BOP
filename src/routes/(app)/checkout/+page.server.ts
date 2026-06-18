@@ -25,6 +25,11 @@ import { omit } from '$lib/utils/omit.js';
 import { set } from '$lib/utils/set';
 import { ObjectId } from 'mongodb';
 import type { Tag } from '$lib/types/Tag';
+import {
+	collectCheckoutFieldValues,
+	loadEnabledCheckoutFields,
+	toDisplayDTO
+} from '$lib/server/checkoutFields';
 
 export async function load({ parent, locals }) {
 	const parentData = await parent();
@@ -174,6 +179,8 @@ export async function load({ parent, locals }) {
 				.toArray()
 		: [];
 
+	const checkoutFields = (await loadEnabledCheckoutFields()).map(toDisplayDTO);
+
 	return {
 		paymentMethods: methods,
 		discountByContext,
@@ -200,6 +207,7 @@ export async function load({ parent, locals }) {
 			slug: subtype.slug,
 			name: subtype.name
 		})),
+		checkoutFields,
 		...(cmsCheckoutTop && {
 			cmsCheckoutTop,
 			cmsCheckoutTopData: cmsFromContent(
@@ -552,6 +560,9 @@ export const actions = {
 				'You must acknowledge that you are only paying a deposit and will have to pay the rest later'
 			);
 		}
+		const enabledCheckoutFields = await loadEnabledCheckoutFields();
+		const customCheckoutFields = collectCheckoutFieldValues(enabledCheckoutFields, json);
+
 		rateLimit(locals.clientIp, 'email', 10, { minutes: 1 });
 		let orderId = '';
 		await withTransaction(async (session) => {
@@ -606,6 +617,7 @@ export const actions = {
 							}
 						}),
 					...(note && { note: note.noteContent }),
+					...(customCheckoutFields.length && { customCheckoutFields }),
 					...(agreements.allowCollectIP && { clientIp: locals.clientIp }),
 					...(locals.user?.hasPosOptions &&
 						runtimeConfig.deliveryFees.allowFreeForPOS &&

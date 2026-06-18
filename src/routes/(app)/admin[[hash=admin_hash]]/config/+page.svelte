@@ -265,6 +265,10 @@
 	</label>
 	<h2 class="text-2xl">Checkout</h2>
 
+	<a href="{data.adminPrefix}/config/checkout-fields" class="underline">
+		Set checkout additional fields
+	</a>
+
 	<label class="checkbox-label">
 		<input
 			type="checkbox"

@@ -4,7 +4,8 @@ import {
 	type Order,
 	type OrderPayment,
 	type Price,
-	type OrderPaymentStatus
+	type OrderPaymentStatus,
+	type CollectedCheckoutField
 } from '$lib/types/Order';
 import { ClientSession, ObjectId, type WithId } from 'mongodb';
 import { collections, withTransaction } from './database';
@@ -566,7 +567,7 @@ export async function cancelPayment(
 export async function anonymizeOrderData(orderId: string): Promise<boolean> {
 	const order = await collections.orders.findOne(
 		{ _id: orderId, dataAnonymized: { $ne: true } },
-		{ projection: { shippingAddress: 1, billingAddress: 1 } }
+		{ projection: { shippingAddress: 1, billingAddress: 1, customCheckoutFields: 1 } }
 	);
 	if (!order) {
 		return false;
@@ -584,6 +585,27 @@ export async function anonymizeOrderData(orderId: string): Promise<boolean> {
 	}
 	if (order.billingAddress) {
 		$set.billingAddress = { country: order.billingAddress.country, zip: order.billingAddress.zip };
+	}
+	if (order.customCheckoutFields?.some((f) => f.isPersonalData)) {
+		$set.customCheckoutFields = order.customCheckoutFields.map((f) => {
+			if (!f.isPersonalData) {
+				return f;
+			}
+			const cleaned: Record<string, unknown> = {
+				fieldId: f.fieldId,
+				slug: f.slug,
+				name: f.name,
+				label: f.label,
+				type: f.type,
+				isPersonalData: true
+			};
+			if (f.address) {
+				cleaned.address = { country: f.address.country, zip: f.address.zip };
+			} else {
+				cleaned.value = '';
+			}
+			return cleaned;
+		});
 	}
 
 	const result = await collections.orders.updateOne(
@@ -703,6 +725,7 @@ export async function createOrder(
 		clientIp?: string;
 		note?: string;
 		receiptNote?: string;
+		customCheckoutFields?: CollectedCheckoutField[];
 		engagements?: {
 			acceptedTermsOfUse?: boolean;
 			acceptedIPCollect?: boolean;
@@ -1685,6 +1708,9 @@ export async function createOrder(
 					: [])
 			],
 			...(params.receiptNote && { receiptNote: params.receiptNote }),
+			...(params.customCheckoutFields?.length && {
+				customCheckoutFields: params.customCheckoutFields
+			}),
 			...(params.reasonOfferDeliveryFees && {
 				deliveryFeesFree: {
 					reason: params.reasonOfferDeliveryFees
