@@ -69,6 +69,7 @@
 			countdowns={data.cmsBasketTopData.countdowns}
 			galleries={data.cmsBasketTopData.galleries}
 			leaderboards={data.cmsBasketTopData.leaderboards}
+			searchlists={data.cmsBasketTopData.searchlists}
 			schedules={data.cmsBasketTopData.schedules}
 			class={data.hideCmsZonesOnMobile ? 'prose max-w-full hidden lg:contents' : 'prose max-w-full'}
 		/>
@@ -569,6 +570,7 @@
 			countdowns={data.cmsBasketBottomData.countdowns}
 			galleries={data.cmsBasketBottomData.galleries}
 			leaderboards={data.cmsBasketBottomData.leaderboards}
+			searchlists={data.cmsBasketBottomData.searchlists}
 			schedules={data.cmsBasketBottomData.schedules}
 			class={data.hideCmsZonesOnMobile ? 'prose max-w-full hidden lg:contents' : 'prose max-w-full'}
 		/>

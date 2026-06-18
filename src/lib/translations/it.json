@@ -946,6 +946,51 @@
 		"subscribeCTA": "Iscriviti",
 		"uniqueDateText": "- Da {beginTime}"
 	},
+	"searchlist": {
+		"searchbar": {
+			"label": "Ricerca",
+			"placeholder": "Cerca un prodotto per nome",
+			"submit": "Cerca",
+			"reset": "Reimposta"
+		},
+		"sort": {
+			"label": "Ordina per",
+			"options": {
+				"alphaAsc": "Alfabetico (A → Z)",
+				"alphaDesc": "Alfabetico (Z → A)",
+				"priceAsc": "Prezzo (crescente)",
+				"priceDesc": "Prezzo (decrescente)",
+				"createdAsc": "Meno recenti prima",
+				"createdDesc": "Più recenti prima"
+			}
+		},
+		"filters": {
+			"price": {
+				"minLabel": "Prezzo minimo",
+				"maxLabel": "Prezzo massimo"
+			},
+			"stock": {
+				"label": "Solo disponibili"
+			},
+			"tag": {
+				"label": "Tag"
+			}
+		},
+		"view": {
+			"grid": "Vista a griglia",
+			"list": "Vista a lista"
+		},
+		"pagination": {
+			"loadMore": "Carica altro",
+			"prev": "Precedente",
+			"next": "Successivo"
+		},
+		"empty": {
+			"title": "Nessun prodotto corrisponde alla tua ricerca.",
+			"reset": "Reimposta"
+		},
+		"disabledNotice": "Questa searchlist è disattivata e non è visibile al pubblico."
+	},
 	"subscription": {
 		"associated": {
 			"npub": "Associato a npub: {npub}",

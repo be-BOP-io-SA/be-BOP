@@ -948,6 +948,51 @@
 		"subscribeCTA": "Subscribe",
 		"uniqueDateText": " - from {beginTime}"
 	},
+	"searchlist": {
+		"searchbar": {
+			"label": "Search",
+			"placeholder": "Search product by name",
+			"submit": "Search",
+			"reset": "Reset"
+		},
+		"sort": {
+			"label": "Sort by",
+			"options": {
+				"alphaAsc": "Alphabetical (A → Z)",
+				"alphaDesc": "Alphabetical (Z → A)",
+				"priceAsc": "Price (low → high)",
+				"priceDesc": "Price (high → low)",
+				"createdAsc": "Oldest first",
+				"createdDesc": "Newest first"
+			}
+		},
+		"filters": {
+			"price": {
+				"minLabel": "Min price",
+				"maxLabel": "Max price"
+			},
+			"stock": {
+				"label": "In stock only"
+			},
+			"tag": {
+				"label": "Tag"
+			}
+		},
+		"view": {
+			"grid": "Grid view",
+			"list": "List view"
+		},
+		"pagination": {
+			"loadMore": "Load more",
+			"prev": "Previous",
+			"next": "Next"
+		},
+		"empty": {
+			"title": "No products match your search.",
+			"reset": "Reset"
+		},
+		"disabledNotice": "This searchlist is disabled and not visible to the public."
+	},
 	"subscription": {
 		"associated": {
 			"title": "Associated to:",
