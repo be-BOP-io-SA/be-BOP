@@ -946,6 +946,51 @@
 		"subscribeCTA": "Abonneren",
 		"uniqueDateText": "- van {beginTime}"
 	},
+	"searchlist": {
+		"searchbar": {
+			"label": "Zoeken",
+			"placeholder": "Zoek een product op naam",
+			"submit": "Zoeken",
+			"reset": "Resetten"
+		},
+		"sort": {
+			"label": "Sorteren op",
+			"options": {
+				"alphaAsc": "Alfabetisch (A → Z)",
+				"alphaDesc": "Alfabetisch (Z → A)",
+				"priceAsc": "Prijs (oplopend)",
+				"priceDesc": "Prijs (aflopend)",
+				"createdAsc": "Oudste eerst",
+				"createdDesc": "Nieuwste eerst"
+			}
+		},
+		"filters": {
+			"price": {
+				"minLabel": "Minimumprijs",
+				"maxLabel": "Maximumprijs"
+			},
+			"stock": {
+				"label": "Alleen op voorraad"
+			},
+			"tag": {
+				"label": "Tag"
+			}
+		},
+		"view": {
+			"grid": "Rasterweergave",
+			"list": "Lijstweergave"
+		},
+		"pagination": {
+			"loadMore": "Meer laden",
+			"prev": "Vorige",
+			"next": "Volgende"
+		},
+		"empty": {
+			"title": "Geen producten komen overeen met uw zoekopdracht.",
+			"reset": "Resetten"
+		},
+		"disabledNotice": "Deze searchlist is uitgeschakeld en niet zichtbaar voor het publiek."
+	},
 	"subscription": {
 		"associated": {
 			"npub": "Geassocieerd met npub: {npub}",

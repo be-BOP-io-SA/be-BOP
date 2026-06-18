@@ -946,6 +946,51 @@
 		"subscribeCTA": "Subscrever",
 		"uniqueDateText": " - a partir das {beginTime}"
 	},
+	"searchlist": {
+		"searchbar": {
+			"label": "Pesquisa",
+			"placeholder": "Pesquisar produto por nome",
+			"submit": "Pesquisar",
+			"reset": "Repor"
+		},
+		"sort": {
+			"label": "Ordenar por",
+			"options": {
+				"alphaAsc": "Alfabético (A → Z)",
+				"alphaDesc": "Alfabético (Z → A)",
+				"priceAsc": "Preço (crescente)",
+				"priceDesc": "Preço (decrescente)",
+				"createdAsc": "Mais antigos primeiro",
+				"createdDesc": "Mais recentes primeiro"
+			}
+		},
+		"filters": {
+			"price": {
+				"minLabel": "Preço mínimo",
+				"maxLabel": "Preço máximo"
+			},
+			"stock": {
+				"label": "Apenas em stock"
+			},
+			"tag": {
+				"label": "Tag"
+			}
+		},
+		"view": {
+			"grid": "Vista em grelha",
+			"list": "Vista em lista"
+		},
+		"pagination": {
+			"loadMore": "Carregar mais",
+			"prev": "Anterior",
+			"next": "Seguinte"
+		},
+		"empty": {
+			"title": "Nenhum produto corresponde à sua pesquisa.",
+			"reset": "Repor"
+		},
+		"disabledNotice": "Esta searchlist está desativada e não é visível para o público."
+	},
 	"subscription": {
 		"associated": {
 			"title": "Associado a:",

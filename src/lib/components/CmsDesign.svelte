@@ -19,7 +19,8 @@
 		CmsCountdown,
 		CmsGallery,
 		CmsLeaderboard,
-		CmsSchedule
+		CmsSchedule,
+		CmsSearchlist
 	} from '$lib/server/cms';
 	import SpecificationWidget from './SpecificationWidget.svelte';
 	import ContactForm from './ContactForm.svelte';
@@ -30,6 +31,7 @@
 	import LeaderBoardWidget from './LeaderBoardWidget.svelte';
 	import CurrencyCalculator from './CurrencyCalculator.svelte';
 	import ScheduleWidget from './ScheduleWidget.svelte';
+	import Searchlist from './Searchlist.svelte';
 	import { groupBy } from '$lib/utils/group-by';
 	import { get } from '$lib/utils/get';
 
@@ -57,6 +59,7 @@
 	export let galleries: CmsGallery[];
 	export let leaderboards: CmsLeaderboard[];
 	export let schedules: CmsSchedule[];
+	export let searchlists: CmsSearchlist[] = [];
 
 	let classNames = '';
 	export { classNames as class };
@@ -86,6 +89,7 @@
 	$: sliderById = Object.fromEntries(sliders.map((slider) => [slider._id, slider]));
 	$: tagById = Object.fromEntries(tags.map((tag) => [tag._id, tag]));
 	$: scheduleById = Object.fromEntries(schedules.map((schedule) => [schedule._id, schedule]));
+	$: searchlistById = Object.fromEntries(searchlists.map((s) => [s._id, s]));
 
 	$: picturesByTag = groupBy(
 		pictures.filter((picture): picture is SetRequired<Picture, 'tag'> => !!picture.tag),
@@ -268,6 +272,22 @@
 					pictures={picturesBySchedule[token.slug] ?? []}
 					displayOption={token.display}
 					class="not-prose my-5"
+				/>
+			{:else if token.type === 'searchlistWidget' && searchlistById[token.slug]}
+				<Searchlist
+					class="not-prose my-5"
+					searchlist={searchlistById[token.slug]}
+					state={searchlistById[token.slug].state}
+					products={searchlistById[token.slug].products}
+					picturesByProductId={searchlistById[token.slug].picturesByProductId}
+					digitalFilesByProductId={searchlistById[token.slug].digitalFilesByProductId}
+					hasPosOptions={!!hasPosOptions}
+					total={searchlistById[token.slug].total}
+					totalPages={searchlistById[token.slug].totalPages}
+					basePath={searchlistById[token.slug].basePath}
+					allowedTags={searchlistById[token.slug].allowedTags}
+					displayVatIncluded={searchlistById[token.slug].displayVatIncluded}
+					embedded={true}
 				/>
 			{:else if token.type === 'html'}
 				<div class="my-5">

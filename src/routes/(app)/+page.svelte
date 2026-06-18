@@ -25,6 +25,7 @@
 		countdowns={data.cmsData.countdowns}
 		galleries={data.cmsData.galleries}
 		leaderboards={data.cmsData.leaderboards}
+		searchlists={data.cmsData.searchlists}
 		schedules={data.cmsData.schedules}
 	/>
 {:else}

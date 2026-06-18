@@ -8,6 +8,92 @@ import { ORIGIN } from '$lib/server/env-config';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import { CURRENCIES, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 
+async function ensureDefaultSearchlist(session?: ClientSession): Promise<void> {
+	const existing = await collections.searchlists.findOne({ _id: 'default' }, { session });
+	if (existing) {
+		return;
+	}
+	const now = new Date();
+	await collections.searchlists.insertOne(
+		{
+			_id: 'default',
+			name: 'default',
+			displayWidgetName: false,
+			hideSearchbar: true,
+			prefillSearchterm: false,
+			hideSearchterm: false,
+			searchTargets: {
+				title: true,
+				shortDescription: true,
+				longDescription: true,
+				productTags: false,
+				productVariation: false,
+				productCustomCta: false,
+				productCmsBefore: false,
+				productCmsAfter: false
+			},
+			filters: {
+				price: { enabled: false },
+				stock: { enabled: false, defaultChecked: false },
+				tags: { enabled: false, allowedTagIds: [] }
+			},
+			sort: {
+				displayed: false,
+				options: ['alphaAsc', 'alphaDesc', 'priceAsc', 'priceDesc', 'createdAsc', 'createdDesc'],
+				default: 'alphaAsc'
+			},
+			view: { default: 'grid', hideToggle: true },
+			pagination: { mode: 'loadMore', perPage: 12 },
+			createdAt: now,
+			updatedAt: now
+		},
+		{ session }
+	);
+}
+
+async function ensureSearchSearchlist(session?: ClientSession): Promise<void> {
+	const existing = await collections.searchlists.findOne({ _id: 'search' }, { session });
+	if (existing) {
+		return;
+	}
+	const now = new Date();
+	await collections.searchlists.insertOne(
+		{
+			_id: 'search',
+			name: 'Recherche',
+			displayWidgetName: false,
+			hideSearchbar: false,
+			prefillSearchterm: false,
+			hideSearchterm: false,
+			searchTargets: {
+				title: true,
+				shortDescription: true,
+				longDescription: true,
+				productTags: false,
+				productVariation: false,
+				productCustomCta: false,
+				productCmsBefore: false,
+				productCmsAfter: false
+			},
+			filters: {
+				price: { enabled: true },
+				stock: { enabled: true, defaultChecked: false },
+				tags: { enabled: false, allowedTagIds: [] }
+			},
+			sort: {
+				displayed: true,
+				options: ['alphaAsc', 'alphaDesc', 'priceAsc', 'priceDesc', 'createdAsc', 'createdDesc'],
+				default: 'alphaAsc'
+			},
+			view: { default: 'grid', hideToggle: false },
+			pagination: { mode: 'loadMore', perPage: 12 },
+			createdAt: now,
+			updatedAt: now
+		},
+		{ session }
+	);
+}
+
 const migrations = [
 	{
 		_id: new ObjectId('65281201e92e590e858af6cb'),
@@ -697,6 +783,52 @@ const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('660d1e8a2f1e0c0001787001'),
+		name: 'Seed default searchlist (issue #1787)',
+		run: async (session: ClientSession) => {
+			await ensureDefaultSearchlist(session);
+		}
+	},
+	{
+		_id: new ObjectId('660d1e8a2f1e0c0001787002'),
+		name: 'Backfill displayWidgetName + hideSearchbar on default searchlist (issue #1787)',
+		run: async (session: ClientSession) => {
+			await collections.searchlists.updateMany(
+				{ displayWidgetName: { $exists: false } },
+				{ $set: { displayWidgetName: false, updatedAt: new Date() } },
+				{ session }
+			);
+			await collections.searchlists.updateOne(
+				{ _id: 'default' },
+				{ $set: { hideSearchbar: true, updatedAt: new Date() } },
+				{ session }
+			);
+		}
+	},
+	{
+		_id: new ObjectId('660d1e8a2f1e0c0001787003'),
+		name: 'Backfill filters.tags on searchlists (issue #1787)',
+		run: async (session: ClientSession) => {
+			await collections.searchlists.updateMany(
+				{ 'filters.tags': { $exists: false } },
+				{
+					$set: {
+						'filters.tags': { enabled: false, allowedTagIds: [] },
+						updatedAt: new Date()
+					}
+				},
+				{ session }
+			);
+		}
+	},
+	{
+		_id: new ObjectId('660d1e8a2f1e0c0001787004'),
+		name: 'Seed search searchlist (issue #1787)',
+		run: async (session: ClientSession) => {
+			await ensureSearchSearchlist(session);
+		}
 	}
 ];
 
@@ -754,4 +886,10 @@ export async function runMigrations() {
 	while ((await collections.migrations.countDocuments()) < migrations.length) {
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 	}
+
+	// Idempotent on every startup: ensure the built-in searchlists exist.
+	// Re-creates them if they were deleted (the admin UI blocks deletion,
+	// but a manual Mongo delete still happens).
+	await ensureDefaultSearchlist();
+	await ensureSearchSearchlist();
 }

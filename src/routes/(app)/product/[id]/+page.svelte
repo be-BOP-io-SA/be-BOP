@@ -501,6 +501,7 @@
 			countdowns={data.productCMSBefore.countdowns}
 			galleries={data.productCMSBefore.galleries}
 			leaderboards={data.productCMSBefore.leaderboards}
+			searchlists={data.productCMSBefore.searchlists}
 			schedules={data.productCMSBefore.schedules}
 			class={data.product.mobile?.hideContentBefore || data.hideCmsZonesOnMobile
 				? 'prose max-w-full hidden lg:block'
@@ -1142,6 +1143,7 @@
 			countdowns={data.productCMSAfter.countdowns}
 			galleries={data.productCMSAfter.galleries}
 			leaderboards={data.productCMSAfter.leaderboards}
+			searchlists={data.productCMSAfter.searchlists}
 			schedules={data.productCMSAfter.schedules}
 			class={data.product.mobile?.hideContentAfter || data.hideCmsZonesOnMobile
 				? 'prose max-w-full hidden lg:block'
