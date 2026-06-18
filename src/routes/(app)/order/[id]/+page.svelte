@@ -417,6 +417,22 @@
 				</div>
 			{/if}
 
+			{#if data.order.customCheckoutFields?.length}
+				<div>
+					{t('order.additionalFields.title')}:
+					{#each data.order.customCheckoutFields as field}
+						<p class="body-secondaryText whitespace-pre-line">
+							<strong>{field.isPersonalData ? '🛡️ ' : ''}{field.label}:</strong>
+							{#if field.type === 'address' && field.address}
+								{textAddress(field.address)}
+							{:else}
+								{field.value ?? ''}
+							{/if}
+						</p>
+					{/each}
+				</div>
+			{/if}
+
 			<!-- ========== ADD PAYMENT SECTION (Staff Only) ========== -->
 			{#if data.order.status === 'pending' && remainingAmount && roleIsStaff}
 				<div class="border border-gray-300 rounded-xl p-4 add-payment-section">

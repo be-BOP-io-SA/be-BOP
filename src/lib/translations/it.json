@@ -113,6 +113,9 @@
 		}
 	},
 	"checkout": {
+		"additionalFields": {
+			"title": "Informazioni aggiuntive"
+		},
 		"agreeIpCollect": "Acconsento alla raccolta del mio indirizzo IP(<0>why?</0>)",
 		"agreeNullVatForeigner": "Capisco che dovrò pagare l'IVA alla ricezione (<0>why?</0>)",
 		"agreeOnlyDeposit": "Accetto che dovrò pagare il resto in futuro (<0>why?</0>)",
@@ -503,6 +506,9 @@
 		"allowSellerContact": "Consentici di inviarti comunicazioni commerciali."
 	},
 	"order": {
+		"additionalFields": {
+			"title": "Informazioni aggiuntive"
+		},
 		"addPayment": {
 			"amount": "Somma del pagamento",
 			"cta": "Invia una chiamata per il pagamento",

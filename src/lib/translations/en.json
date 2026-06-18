@@ -131,6 +131,9 @@
 		"multiplePaymentMethods": "Use several payment methods",
 		"multiplePaymentMethodsHelpText": "You can set payment methods at the next step.",
 		"noDeliveryInCountry": "Delivery is not available in your country for some of the items of your cart.",
+		"additionalFields": {
+			"title": "Additional information"
+		},
 		"note": {
 			"label": "Leave a note for merchant",
 			"title": "Note"
@@ -514,6 +517,9 @@
 		"backToOrder": "<< Back to order",
 		"clickQR": "Click on the QR code to pay with your wallet",
 		"confirmCancel": "Are you sure ? If this is your only pending payment and there is no paid payment on the order, the order will be cancelled. In case of mistake, first create a payment, then delete this one.",
+		"additionalFields": {
+			"title": "Additional information"
+		},
 		"contactAddress": {
 			"title": "Contact address"
 		},
