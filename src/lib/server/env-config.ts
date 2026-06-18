@@ -5,6 +5,8 @@ import * as staticPublicEnv from '$env/static/public';
 
 export const ALLOW_BITCOIN_RPC =
 	dynPrivateEnv.ALLOW_BITCOIN_RPC ?? staticPrivateEnv.ALLOW_BITCOIN_RPC;
+export const ALLOW_ENV_OVERRIDE =
+	dynPrivateEnv.ALLOW_ENV_OVERRIDE ?? staticPrivateEnv.ALLOW_ENV_OVERRIDE;
 export const ALLOW_DUMPING_WALLET =
 	dynPrivateEnv.ALLOW_DUMPING_WALLET ?? staticPrivateEnv.ALLOW_DUMPING_WALLET;
 export const ALLOW_JS_INJECTION =
