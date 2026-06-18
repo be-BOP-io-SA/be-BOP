@@ -3,8 +3,9 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { error } from '@sveltejs/kit';
 import type { PosSession } from '$lib/types/PosSession';
 import type { Filter } from 'mongodb';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ url }: { url: URL }) => {
+export const load: PageServerLoad = async ({ url }) => {
 	if (!runtimeConfig.posSession.enabled) {
 		throw error(403, 'POS sessions are not enabled');
 	}

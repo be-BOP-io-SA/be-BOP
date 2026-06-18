@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 // We use undici instead of native fetch to be able to accept self-signed certificates
-import { Agent, fetch } from 'undici';
+import { Agent, fetch, type Response } from 'undici';
 import {
 	LND_MACAROON_PATH,
 	LND_MACAROON_VALUE,
@@ -15,7 +15,7 @@ if (LND_MACAROON_PATH && LND_MACAROON_VALUE) {
 	throw new Error('Cannot specify both LND_MACAROON_PATH and LND_MACAROON_VALUE');
 }
 
-export function isLndConfigured() {
+export function isLndConfigured(): boolean {
 	return !!LND_REST_URL;
 }
 
@@ -64,7 +64,7 @@ const dispatcher =
 export function lndRpc(
 	path: string,
 	options: { method?: string; headers?: Record<string, string>; body?: string } = {}
-) {
+): Promise<Response> {
 	if (!isLndConfigured()) {
 		throw error(500, 'LND Rest is not configured');
 	}
@@ -80,7 +80,14 @@ export function lndRpc(
 	});
 }
 
-export async function lndListChannels() {
+export async function lndListChannels(): Promise<
+	Array<{
+		capacity: number;
+		chan_id: number;
+		local_balance: number;
+		remote_balance: number;
+	}>
+> {
 	const response = await lndRpc('/v1/channels');
 
 	if (!response.ok) {
@@ -102,7 +109,7 @@ export async function lndListChannels() {
 		.parse(json).channels;
 }
 
-export async function lndWalletBalance() {
+export async function lndWalletBalance(): Promise<number> {
 	const response = await lndRpc('/v1/balance/blockchain');
 
 	if (!response.ok) {
@@ -117,7 +124,17 @@ export async function lndWalletBalance() {
 		})
 		.parse(json).total_balance;
 }
-export async function lndGetInfo() {
+export async function lndGetInfo(): Promise<{
+	alias: string;
+	testnet: boolean;
+	num_peers: number;
+	num_pending_channels: number;
+	num_active_channels: number;
+	num_inactive_channels: number;
+	synced_to_chain: boolean;
+	synced_to_graph: boolean;
+	uris: string[];
+}> {
 	const response = await lndRpc('/v1/getinfo');
 
 	if (!response.ok) {
@@ -141,7 +158,7 @@ export async function lndGetInfo() {
 		.parse(json);
 }
 
-export async function lndChannelsBalance() {
+export async function lndChannelsBalance(): Promise<number> {
 	const response = await lndRpc('/v1/balance/channels');
 
 	if (!response.ok) {
@@ -152,7 +169,7 @@ export async function lndChannelsBalance() {
 	return z.object({ balance: z.number({ coerce: true }).int() }).parse(json).balance;
 }
 
-export async function lndAutopilotActive() {
+export async function lndAutopilotActive(): Promise<boolean> {
 	const response = await lndRpc('/v2/autopilot/status');
 
 	if (!response.ok) {
@@ -163,7 +180,7 @@ export async function lndAutopilotActive() {
 	return z.object({ active: z.boolean() }).parse(json).active;
 }
 
-export async function lndActivateAutopilot() {
+export async function lndActivateAutopilot(): Promise<void> {
 	const response = await lndRpc('/v2/autopilot/modify', {
 		method: 'POST',
 		body: JSON.stringify({ enable: true })
@@ -185,7 +202,7 @@ export async function lndCreateInvoice(
 		milliSatoshis?: boolean;
 		descriptionHash?: ArrayBuffer;
 	}
-) {
+): Promise<{ payment_request: string; r_hash: string; payment_addr: string }> {
 	const response = await lndRpc('/v1/invoices', {
 		method: 'POST',
 		body: JSON.stringify({
@@ -208,7 +225,12 @@ export async function lndCreateInvoice(
 		.parse(json);
 }
 
-export async function lndLookupInvoice(invoiceId: string) {
+export async function lndLookupInvoice(invoiceId: string): Promise<{
+	amt_paid_sat: number;
+	state: 'SETTLED' | 'CANCELED' | 'ACCEPTED' | 'OPEN';
+	settled_at: Date | undefined;
+	preimage: string | undefined;
+}> {
 	const response = await lndRpc(`/v1/invoice/${Buffer.from(invoiceId, 'base64').toString('hex')}`);
 
 	if (!response.ok) {
@@ -232,7 +254,14 @@ export async function lndLookupInvoice(invoiceId: string) {
 	};
 }
 
-export async function lndListInvoices() {
+export async function lndListInvoices(): Promise<
+	Array<{
+		r_hash: string;
+		amt_paid_sat: number;
+		state: 'SETTLED' | 'CANCELED' | 'ACCEPTED' | 'OPEN';
+		settled_at: Date | undefined;
+	}>
+> {
 	const response = await lndRpc('/v1/invoices');
 
 	if (!response.ok) {

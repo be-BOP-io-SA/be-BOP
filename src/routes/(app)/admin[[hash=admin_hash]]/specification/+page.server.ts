@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
 import type { Specification } from '$lib/types/Specification';
+import type { PageServerLoad } from './$types';
 
-export function load() {
+export const load: PageServerLoad = () => {
 	return {
 		specifications: collections.specifications
 			.find({})
@@ -12,4 +13,4 @@ export function load() {
 			.sort({ updatedAt: -1 })
 			.toArray()
 	};
-}
+};

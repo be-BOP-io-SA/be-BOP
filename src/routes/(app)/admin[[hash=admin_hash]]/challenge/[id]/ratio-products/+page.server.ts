@@ -1,8 +1,9 @@
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { collections } from '$lib/server/database.js';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, params }) {
 		const formData = await request.formData();
 		const json: JsonObject = {};

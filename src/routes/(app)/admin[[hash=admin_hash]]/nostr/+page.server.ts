@@ -21,12 +21,13 @@ import { uniqBy } from '$lib/utils/uniqBy';
 import { NOSTR_PROTOCOL_VERSION } from '$lib/server/locks/handle-messages';
 import { isPhoenixdConfigured, phoenixdLnAddress } from '$lib/server/phoenixd';
 import { persistConfigElement } from '$lib/server/utils/persistConfig.js';
+import type { Actions, PageServerLoad } from './$types';
 
 function settingsEnforcedByEnvVars(): boolean {
 	return !!NOSTR_PRIVATE_KEY;
 }
 
-export function load() {
+export const load: PageServerLoad = () => {
 	const { privKey, pubKey } = isNostrConfigured() ? getNostrKeys() : {};
 	return {
 		disableNostrBotIntro: runtimeConfig.disableNostrBotIntro,
@@ -42,9 +43,9 @@ export function load() {
 			.toArray(),
 		settingsEnforcedByEnvVars: settingsEnforcedByEnvVars()
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	certify: async () => {
 		const domainName = new URL(ORIGIN).hostname;
 

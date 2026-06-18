@@ -5,7 +5,7 @@ import { refreshPromise, runtimeConfig } from './runtime-config';
 import { SATOSHIS_PER_BTC } from '$lib/types/Currency';
 import { addDays, subDays } from 'date-fns';
 
-export async function cleanDb() {
+export async function cleanDb(): Promise<void> {
 	if (!env.VITEST) {
 		throw new Error('cleanDb is only available in test mode');
 	}
@@ -26,7 +26,10 @@ export async function cleanDb() {
 	});
 }
 
-export async function createPaidSubscription(subscriptionProductId: string, user: UserIdentifier) {
+export async function createPaidSubscription(
+	subscriptionProductId: string,
+	user: UserIdentifier
+): Promise<void> {
 	if (!(await collections.products.findOne({ _id: subscriptionProductId, type: 'subscription' }))) {
 		throw new Error(`Subscription product not found in database: ${subscriptionProductId}`);
 	}
@@ -46,7 +49,7 @@ export async function createDiscount(params: {
 	discountedProductId: string;
 	subscriptionProductId: string;
 	percentage: number;
-}) {
+}): Promise<void> {
 	const { discountedProductId, subscriptionProductId, percentage } = params;
 	if (!(await collections.products.findOne({ _id: discountedProductId, type: 'resource' }))) {
 		throw new Error(`Product to discount not found in database: ${discountedProductId}`);

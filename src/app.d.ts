@@ -40,7 +40,9 @@ declare global {
 			acceptAgeLimitation?: boolean;
 			language: LanguageKey;
 		}
-		// interface PageData {}
+		interface PageData {
+			session?: import('@auth/core/types').Session | null;
+		}
 		// interface Platform {}
 	}
 }

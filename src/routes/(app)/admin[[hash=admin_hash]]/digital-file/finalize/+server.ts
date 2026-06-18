@@ -3,8 +3,9 @@ import { collections, withTransaction } from '$lib/server/database';
 import { getS3Client } from '$lib/server/s3';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { RequestHandler } from './$types';
 
-export async function POST({ request }) {
+export const POST: RequestHandler = async ({ request }) => {
 	const { digitalFileId } = z
 		.object({
 			digitalFileId: z.string()
@@ -46,4 +47,4 @@ export async function POST({ request }) {
 	});
 
 	return new Response();
-}
+};

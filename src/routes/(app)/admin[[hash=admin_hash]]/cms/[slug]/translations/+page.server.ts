@@ -4,8 +4,9 @@ import { mapObject } from '$lib/utils/mapObject.js';
 import { z } from 'zod';
 import { locales, type LanguageKey } from '$lib/translations/index.js';
 import { collections } from '$lib/server/database.js';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, params }) {
 		const json: JsonObject = {};
 

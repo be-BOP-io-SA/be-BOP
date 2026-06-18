@@ -1,8 +1,9 @@
 import { collections } from '$lib/server/database';
 import { cmsFromContent } from '$lib/server/cms';
 import { omit } from '$lib/utils/omit';
+import type { LayoutServerLoad } from './$types';
 
-export const load = async ({ params, locals }) => {
+export const load: LayoutServerLoad = async ({ params, locals }) => {
 	const product = await collections.products.countDocuments({ _id: params.id });
 
 	if (!product) {

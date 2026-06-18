@@ -2,15 +2,16 @@ import { collections } from '$lib/server/database.js';
 import { defaultConfig, runtimeConfig, type EmailTemplateKey } from '$lib/server/runtime-config';
 import { typedKeys } from '$lib/utils/typedKeys.js';
 import { z } from 'zod';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		defaultTemplates: defaultConfig.emailTemplates,
 		templates: runtimeConfig.emailTemplates
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ request }) {
 		const parsed = z
 			.object({

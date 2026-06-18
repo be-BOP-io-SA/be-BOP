@@ -5,8 +5,9 @@ import { paymentMethods, ALL_PAYMENT_METHODS } from '$lib/server/payment-methods
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	replaceMethod: async ({ params, request, locals }) => {
 		const order = await collections.orders.findOne({
 			_id: params.id

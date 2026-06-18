@@ -1,8 +1,9 @@
 import { collections } from '$lib/server/database';
 import { pojo } from '$lib/server/pojo.js';
 import { error } from '@sveltejs/kit';
+import type { LayoutServerLoad } from './$types';
 
-export const load = async ({ params }) => {
+export const load: LayoutServerLoad = async ({ params }) => {
 	const product = await collections.products.findOne({ _id: params.id });
 
 	if (!product) {

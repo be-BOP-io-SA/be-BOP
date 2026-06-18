@@ -3,8 +3,12 @@ import { picturesForProducts } from '$lib/server/picture.js';
 import type { Product } from '$lib/types/Product';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export async function load({ locals }) {
+export async function fetchCatalog(locals: App.Locals): Promise<{
+	products: Pick<Product, '_id' | 'price' | 'name'>[];
+	pictures: Awaited<ReturnType<typeof picturesForProducts>>;
+}> {
 	if (locals?.user?.roleId === CUSTOMER_ROLE_ID || !locals.user?.roleId) {
 		throw error(403, 'You are not allowed to access this page.');
 	}
@@ -28,3 +32,5 @@ export async function load({ locals }) {
 		pictures: await picturesForProducts(productIds)
 	};
 }
+
+export const load: PageServerLoad = ({ locals }) => fetchCatalog(locals);

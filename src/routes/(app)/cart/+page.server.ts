@@ -9,8 +9,9 @@ import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load({ parent, locals }) {
+export const load: PageServerLoad = async ({ parent, locals }) => {
 	if (
 		runtimeConfig.hideCartInToolbar &&
 		(locals.user?.roleId === undefined || locals.user.roleId === CUSTOMER_ROLE_ID)
@@ -133,8 +134,8 @@ export async function load({ parent, locals }) {
 			)
 		})
 	};
-}
-export const actions = {
+};
+export const actions: Actions = {
 	applyPromoCode: async ({ request, locals }) => {
 		try {
 			rateLimit(locals.clientIp, 'promo-code', 20, { hours: 3 });

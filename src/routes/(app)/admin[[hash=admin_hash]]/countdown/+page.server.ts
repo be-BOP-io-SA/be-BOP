@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
 import type { Countdown } from '$lib/types/Countdown';
+import type { PageServerLoad } from './$types';
 
-export function load() {
+export const load: PageServerLoad = () => {
 	return {
 		countdowns: collections.countdowns
 			.find({})
@@ -12,4 +13,4 @@ export function load() {
 			.sort({ updatedAt: -1 })
 			.toArray()
 	};
-}
+};

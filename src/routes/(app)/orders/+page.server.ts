@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
 import { userIdentifier, userQuery } from '$lib/server/user';
+import type { PageServerLoad } from './$types';
 
-export async function load({ locals }) {
+export const load: PageServerLoad = async ({ locals }) => {
 	const orders = await collections.orders
 		.find(userQuery(userIdentifier(locals)))
 		.limit(100)
@@ -27,4 +28,4 @@ export async function load({ locals }) {
 			currencySnapshot: order.currencySnapshot
 		}))
 	};
-}
+};

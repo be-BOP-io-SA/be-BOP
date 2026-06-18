@@ -2,8 +2,9 @@ import { collections } from '$lib/server/database.js';
 import type { OrderTab } from '$lib/types/OrderTab.js';
 import { error } from '@sveltejs/kit';
 import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
+import type { RequestHandler } from './$types';
 
-export async function GET({ locals }) {
+export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.user) {
 		throw error(401, 'Unauthorized');
 	}
@@ -45,4 +46,4 @@ export async function GET({ locals }) {
 			'X-Accel-Buffering': 'no'
 		}
 	});
-}
+};

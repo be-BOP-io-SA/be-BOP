@@ -13,8 +13,9 @@ import {
 } from '$lib/types/User.js';
 import { adminPrefix } from '$lib/server/admin.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.user) {
 		throw redirect(
 			303,
@@ -27,7 +28,7 @@ export const load = async ({ locals }) => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ locals, request, cookies }) {
 		rateLimit(locals.clientIp, 'login', 10, { minutes: 5 });
 

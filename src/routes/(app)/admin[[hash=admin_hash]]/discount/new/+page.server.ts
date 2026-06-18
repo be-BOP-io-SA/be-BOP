@@ -1,5 +1,5 @@
 import { collections } from '$lib/server/database';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { MAX_NAME_LIMIT, type Product } from '$lib/types/Product';
@@ -10,7 +10,7 @@ import type { Tag } from '$lib/types/Tag';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
 import { parseDiscountConditionFields } from '$lib/server/discount';
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const [subscriptions, products, tags] = await Promise.all([
 		collections.products
 			.find({ type: 'subscription' })

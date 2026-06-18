@@ -131,7 +131,21 @@ export async function formatCart(
 	return [];
 }
 
-export function formatOrder(order: Order) {
+export function formatOrder(order: Order): {
+	_id: Order['_id'];
+	number: Order['number'];
+	payments: {
+		id: string;
+		price: Order['payments'][number]['currencySnapshot']['main']['price'];
+		status: Order['payments'][number]['status'];
+		method: Order['payments'][number]['method'];
+		currencySnapshot: Order['payments'][number]['currencySnapshot'];
+	}[];
+	currencySnapshot: Order['currencySnapshot'];
+	status: Order['status'];
+	vat: Order['vat'];
+	totalPrice: Order['currencySnapshot']['main']['totalPrice'];
+} | null {
 	if (order.status !== 'pending' && differenceInSeconds(new Date(), order.updatedAt) > 5) {
 		return null;
 	}

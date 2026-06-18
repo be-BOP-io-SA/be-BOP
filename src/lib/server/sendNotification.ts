@@ -15,7 +15,7 @@ import { PUBLIC_VERSION } from '$env/static/public';
 export async function sendResetPasswordNotification(
 	user: User,
 	opts?: { alternateEmail?: string }
-) {
+): Promise<{ email: string | undefined; npub: string | undefined }> {
 	let email = user.recovery?.email;
 	const npub = user.recovery?.npub;
 
@@ -73,7 +73,10 @@ If you didn't ask for this password reset procedure, please ignore this message 
 	};
 }
 
-export async function sendAuthentificationlink(session: { email?: string; npub?: string }) {
+export async function sendAuthentificationlink(session: {
+	email?: string;
+	npub?: string;
+}): Promise<void> {
 	if (session.npub) {
 		const jwt = await new SignJWT({ npub: session.npub })
 			.setExpirationTime('1h')
@@ -110,7 +113,7 @@ ${runtimeConfig.brandName} team`;
 
 const BEACON_TARGET_NPUB = 'npub1vqwvj93sezl4c0a4a55ppgejqa37p5g63l3pmzph2asfpha2flxs2dgcz4';
 
-export async function queueTelemetryBeaconMessage() {
+export async function queueTelemetryBeaconMessage(): Promise<boolean> {
 	if (!isNostrConfigured()) {
 		console.warn('Telemetry beacon: shop has no Nostr key configured, skipping');
 		return false;

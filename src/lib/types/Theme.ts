@@ -8,6 +8,9 @@ export type Theme = Timestamps & {
 	name: string;
 } & ThemeData;
 
+/** Light/dark colour scheme preference selected by a visitor or employee. */
+export type ThemeMode = 'light' | 'dark' | 'system';
+
 export const themeFormStructure = {
 	header: {
 		label: 'Top bar',

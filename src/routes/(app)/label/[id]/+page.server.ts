@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
 import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const label = await collections.labels.findOne(
 		{ _id: params.id },
 		{

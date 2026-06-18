@@ -7,7 +7,7 @@ import { fixCurrencyRounding } from './fixCurrencyRounding';
 /**
  * Sum currencies, using the priceReferenceCurrency as intermediary if needed
  */
-export function sumCurrency(to: Currency, items: Price[]) {
+export function sumCurrency(to: Currency, items: Price[]): number {
 	if (items.every((item) => item.currency === to)) {
 		return fixCurrencyRounding(sum(items.map((item) => item.amount)), to);
 	}

@@ -700,7 +700,7 @@ const migrations = [
 	}
 ];
 
-export async function runMigrations() {
+export async function runMigrations(): Promise<void> {
 	if (env.VITEST) {
 		return;
 	}

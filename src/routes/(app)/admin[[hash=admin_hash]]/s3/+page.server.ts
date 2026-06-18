@@ -11,6 +11,7 @@ import { resetS3Clients } from '$lib/server/s3.js';
 import { z } from 'zod';
 import type { Actions, RequestEvent } from '@sveltejs/kit';
 import { persistConfigElement } from '$lib/server/utils/persistConfig';
+import type { PageServerLoad } from './$types';
 
 function projectSettingsForFrontend(base: typeof runtimeConfig.s3) {
 	const { keySecret, ...config } = { ...base, keySecretIsSet: false };
@@ -29,12 +30,12 @@ function settingsEnforcedByEnvVars(): boolean {
 	);
 }
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		s3: projectSettingsForFrontend(runtimeConfig.s3),
 		settingsEnforcedByEnvVars: settingsEnforcedByEnvVars()
 	};
-}
+};
 
 async function parseForm(request: Request) {
 	return z

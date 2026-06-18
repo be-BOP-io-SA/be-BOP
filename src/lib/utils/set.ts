@@ -3,8 +3,7 @@ import type { Paths } from 'type-fest';
 export function set<T extends object, K extends Paths<T> | string>(
 	obj: T,
 	key: K,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	value: any // K extends string ? Get<T, K> : never
+	value: unknown // K extends string ? Get<T, K> : never
 ): void {
 	if (typeof key !== 'string') {
 		throw new TypeError('Expected a string as the key.');

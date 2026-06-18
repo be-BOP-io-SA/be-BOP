@@ -7,8 +7,9 @@ import {
 	MAX_NAME_LIMIT,
 	MAX_SHORT_DESCRIPTION_LIMIT
 } from '$lib/types/Product';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ request, params }) {
 		const countdown = await collections.countdowns.findOne({
 			_id: params.id

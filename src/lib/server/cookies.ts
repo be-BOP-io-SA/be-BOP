@@ -5,7 +5,7 @@ import { addYears } from 'date-fns';
 
 export const SESSION_COOKIE_NAME = env.BOOTIK_SESSION_COOKIE_NAME || 'bootik-session';
 
-export function refreshSessionCookie(cookies: Cookies, secretSessionId: string) {
+export function refreshSessionCookie(cookies: Cookies, secretSessionId: string): void {
 	cookies.set(SESSION_COOKIE_NAME, secretSessionId, {
 		path: '/',
 		sameSite: 'lax',

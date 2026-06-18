@@ -4,8 +4,9 @@ import { z } from 'zod';
 import { locales, type LanguageKey } from '$lib/translations/index.js';
 import { collections } from '$lib/server/database.js';
 import { MAX_NAME_LIMIT } from '$lib/types/Product';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, params }) {
 		const json: JsonObject = {};
 

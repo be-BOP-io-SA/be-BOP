@@ -1,4 +1,4 @@
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
@@ -10,7 +10,7 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { ObjectId } from 'mongodb';
 import { get } from '$lib/utils/get';
 
-export async function load({ params }) {
+export const load: PageServerLoad = async ({ params }) => {
 	const theme = await collections.themes.findOne({ _id: new ObjectId(params.id) });
 
 	if (!theme) {
@@ -23,7 +23,7 @@ export async function load({ params }) {
 			_id: theme._id.toString()
 		}
 	};
-}
+};
 
 export const actions: Actions = {
 	apply: async ({ params }) => {

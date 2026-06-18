@@ -11,7 +11,7 @@ import { refreshSessionCookie } from './cookies';
 
 export const BCRYPT_SALT_ROUNDS = 10;
 
-export async function createSuperAdminUserInDb(login: string, password: string) {
+export async function createSuperAdminUserInDb(login: string, password: string): Promise<void> {
 	if (runtimeConfig.isAdminCreated) {
 		return;
 	}
@@ -72,7 +72,9 @@ export function userIdentifier(locals: App.Locals): UserIdentifier {
 	};
 }
 
-export function userQuery(user: UserIdentifier) {
+export function userQuery(
+	user: UserIdentifier
+): { $or: Record<string, unknown>[] } | { 'user.never': string } {
 	const emails = [...(user.email ? [user.email] : []), ...(user.secondaryEmails ?? [])];
 	const ret = {
 		$or: [
@@ -114,7 +116,7 @@ export function userQuery(user: UserIdentifier) {
 /**
  * To prevent session fixation attacks
  */
-export async function renewSessionId(locals: App.Locals, cookies: Cookies) {
+export async function renewSessionId(locals: App.Locals, cookies: Cookies): Promise<void> {
 	const newSecretSessionId = crypto.randomUUID();
 	const newSessionId = await sha256(newSecretSessionId);
 

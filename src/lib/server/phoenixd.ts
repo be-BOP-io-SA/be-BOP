@@ -4,7 +4,7 @@ import { PHOENIXD_ENDPOINT_URL, PHOENIXD_HTTP_PASSWORD } from './env-config';
 import { runtimeConfig } from './runtime-config';
 import { persistConfigElement } from './utils/persistConfig';
 
-export const isPhoenixdConfigured = () =>
+export const isPhoenixdConfigured = (): boolean =>
 	runtimeConfig.phoenixd.enabled && !!runtimeConfig.phoenixd.password;
 
 export async function phoenixdInfo(): Promise<{
@@ -77,7 +77,7 @@ export async function phoenixdDetected(url?: string): Promise<boolean> {
 	]);
 }
 
-export async function attemptAutoconfigurePhoenixd() {
+export async function attemptAutoconfigurePhoenixd(): Promise<void> {
 	if (PHOENIXD_ENDPOINT_URL && PHOENIXD_HTTP_PASSWORD) {
 		if (
 			PHOENIXD_ENDPOINT_URL === runtimeConfig.phoenixd.url &&
@@ -159,7 +159,17 @@ export async function phoenixdCreateInvoice(
 	};
 }
 
-export async function phoenixdLookupInvoice(paymentHash: string) {
+export async function phoenixdLookupInvoice(paymentHash: string): Promise<{
+	address: string;
+	feesSat: number;
+	receivedSat: number;
+	isPaid: boolean;
+	preimage: string;
+	createdAt: Date;
+	completedAt: Date | null;
+	externalId: string | undefined;
+	description: string | undefined;
+}> {
 	const res = await fetch(`${runtimeConfig.phoenixd.url}/payments/incoming/${paymentHash}`, {
 		headers: {
 			Authorization: `Basic ${Buffer.from(`:${runtimeConfig.phoenixd.password}`).toString(
@@ -202,7 +212,17 @@ export async function phoenixdLookupInvoice(paymentHash: string) {
 	};
 }
 
-export async function phoenixdPayInvoice(paymentRequest: string, amountSat?: number) {
+export async function phoenixdPayInvoice(
+	paymentRequest: string,
+	amountSat?: number
+): Promise<{
+	recipientAmountSat: number;
+	routingFeeSat: number;
+	paymentId: string;
+	paymentHash: string;
+	paymentPreimage: string;
+	reason?: string;
+}> {
 	const res = await fetch(`${runtimeConfig.phoenixd.url}/payinvoice`, {
 		method: 'POST',
 		headers: {
@@ -239,7 +259,11 @@ export async function phoenixdPayInvoice(paymentRequest: string, amountSat?: num
 	return json;
 }
 
-export async function phoenixdSendOnChain(amountSat: number, address: string, feeVbSat: number) {
+export async function phoenixdSendOnChain(
+	amountSat: number,
+	address: string,
+	feeVbSat: number
+): Promise<{ transactionId: string }> {
 	const res = await fetch(`${runtimeConfig.phoenixd.url}/sendtoaddress`, {
 		method: 'POST',
 		headers: {

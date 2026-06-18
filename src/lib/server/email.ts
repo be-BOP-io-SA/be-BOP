@@ -13,7 +13,7 @@ import { collections } from './database';
 import { ClientSession, ObjectId } from 'mongodb';
 import { mapKeys } from '$lib/utils/mapKeys';
 
-export function isEmailConfigured() {
+export function isEmailConfigured(): string | number | boolean {
 	return (
 		(runtimeConfig.smtp.host &&
 			runtimeConfig.smtp.port &&
@@ -25,7 +25,7 @@ export function isEmailConfigured() {
 
 let _transporter: Transporter<SMTPTransport.SentMessageInfo> | null;
 
-export async function resetTransporter() {
+export async function resetTransporter(): Promise<void> {
 	_transporter = null;
 	await getTransporter();
 }
@@ -70,7 +70,7 @@ export async function sendEmail(params: {
 	subject: string;
 	html: string;
 	bcc?: string;
-}) {
+}): Promise<void> {
 	const transporter = await getTransporter();
 
 	const res = await transporter.sendMail({

@@ -7,8 +7,9 @@ import { CUSTOMER_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ params, request, locals }) {
 		const user = await collections.users.findOne({ _id: new ObjectId(params.id) });
 		const data = await request.formData();

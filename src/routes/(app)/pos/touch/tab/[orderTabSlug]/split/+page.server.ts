@@ -19,6 +19,7 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { requireOpenPosSession } from '$lib/server/pos-sessions';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
 import { resolvePoolLabel } from '$lib/types/PosTabGroup';
+import type { PageServerLoad, Actions } from './$types';
 
 type Locale = App.Locals['language'];
 type ProductProjection = ProductForPriceInfo & { name: string; tagIds?: string[] };
@@ -104,7 +105,7 @@ async function getHydratedOrderTab(locale: Locale, tab: OrderTab) {
 	};
 }
 
-export const load = async ({ depends, locals, params }) => {
+export const load: PageServerLoad = async ({ depends, locals, params }) => {
 	await requireOpenPosSession();
 
 	const tabSlug = params.orderTabSlug;
@@ -220,7 +221,7 @@ const sharePaymentSchema = z.discriminatedUnion('mode', [
 	})
 ]);
 
-export const actions = {
+export const actions: Actions = {
 	checkoutTabPartial: async ({ request, locals, params }) => {
 		await requireOpenPosSession();
 		const formData = await request.formData();

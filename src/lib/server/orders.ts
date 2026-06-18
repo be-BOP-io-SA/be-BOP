@@ -1806,7 +1806,7 @@ async function generatePaymentInfo(params: {
 export function paymentMethodExpiration(
 	paymentMethod: PaymentMethod,
 	opts?: { paymentTimeout?: number }
-) {
+): Date | undefined {
 	return paymentMethod === 'point-of-sale' || paymentMethod === 'bank-transfer'
 		? undefined
 		: paymentMethod === 'lightning' &&
@@ -1850,7 +1850,7 @@ export async function addOrderPayment(
 		posSubtype?: string;
 		ignorePendingPayments?: boolean;
 	}
-) {
+): Promise<OrderPayment> {
 	if (order.status !== 'pending') {
 		throw error(400, 'Order is not pending');
 	}
@@ -2102,7 +2102,7 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 	}
 }
 
-export async function updateAfterOrderPaid(order: Order, session: ClientSession) {
+export async function updateAfterOrderPaid(order: Order, session: ClientSession): Promise<void> {
 	if (order.orderTabSlug) {
 		await handleOrderTabAfterPayment({ order, session });
 	}

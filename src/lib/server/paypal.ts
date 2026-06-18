@@ -2,11 +2,11 @@ import { addSeconds } from 'date-fns';
 import { runtimeConfig } from './runtime-config';
 import type { Currency } from '$lib/types/Currency';
 
-export function isPaypalEnabled() {
+export function isPaypalEnabled(): boolean {
 	return !!runtimeConfig.paypal.clientId && !!runtimeConfig.paypal.secret;
 }
 
-export const paypalApiOrigin = () =>
+export const paypalApiOrigin = (): string =>
 	runtimeConfig.paypal.sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api.paypal.com';
 
 let cachedToken: string | null = null;

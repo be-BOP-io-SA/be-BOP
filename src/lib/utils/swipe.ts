@@ -6,7 +6,10 @@ type SwipeParams = {
 	enabled?: boolean;
 };
 
-export function swipe(node: HTMLElement, params: SwipeParams) {
+export function swipe(
+	node: HTMLElement,
+	params: SwipeParams
+): { update(newParams: SwipeParams): void; destroy(): void } {
 	let touchStartX = 0;
 
 	function handleTouchStart(e: TouchEvent) {

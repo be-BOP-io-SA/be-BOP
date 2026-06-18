@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product.js';
+	import type { ThemeMode } from '$lib/types/Theme';
 	import { upperFirst } from '$lib/utils/upperFirst.js';
 
 	export let data;
@@ -10,8 +11,8 @@
 	let linkLine = data.links.topbar.length || 2;
 	let footerLinkLine = data.links.footer.length || 2;
 	let socialLinkLine = data.links.socialNetworkIcons.length || 2;
-	let visitorDarkLightMode: 'light' | 'dark' | 'system' = data.visitorDarkLightMode;
-	let employeeDarkLightMode: 'light' | 'dark' | 'system' = data.employeeDarkLightMode;
+	let visitorDarkLightMode: ThemeMode = data.visitorDarkLightMode;
+	let employeeDarkLightMode: ThemeMode = data.employeeDarkLightMode;
 </script>
 
 <form method="post" class="flex flex-col gap-4">

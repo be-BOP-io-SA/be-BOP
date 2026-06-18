@@ -1,13 +1,14 @@
 import { browser } from '$app/environment';
+import type { ThemeMode } from '$lib/types/Theme';
 import { writable } from 'svelte/store';
 
 const initialValue = browser
-	? (window.localStorage.getItem('theme') as 'light' | 'dark' | 'system') ??
-	  (document.documentElement.dataset.theme as 'light' | 'dark' | 'system') ??
+	? (window.localStorage.getItem('theme') as ThemeMode) ??
+	  (document.documentElement.dataset.theme as ThemeMode) ??
 	  'light'
 	: 'light';
 
-const theme = writable<'light' | 'dark' | 'system'>(initialValue);
+const theme = writable<ThemeMode>(initialValue);
 
 theme.subscribe((value) => {
 	if (!browser) {

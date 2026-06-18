@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
 import type { CMSPage } from '$lib/types/CmsPage';
+import type { PageServerLoad } from './$types';
 
-export function load({ locals }) {
+export const load: PageServerLoad = ({ locals }) => {
 	return {
 		cmsPages: collections.cmsPages
 			.find({})
@@ -14,4 +15,4 @@ export function load({ locals }) {
 			.sort({ updatedAt: -1 })
 			.toArray()
 	};
-}
+};

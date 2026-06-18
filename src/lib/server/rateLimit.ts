@@ -17,7 +17,12 @@ const rateLimitCache = new Map<string, Record<string, Date[]>>();
 /**
  * Note that rate limiting cache is cleared every hour and not persisted across deploys.
  */
-export function rateLimit(ip: string | undefined, key: string, max: number, duration: Duration) {
+export function rateLimit(
+	ip: string | undefined,
+	key: string,
+	max: number,
+	duration: Duration
+): void {
 	if (!ip) {
 		return;
 	}

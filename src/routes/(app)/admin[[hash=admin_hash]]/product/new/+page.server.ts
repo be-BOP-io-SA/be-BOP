@@ -5,7 +5,7 @@ import {
 	validateStockReference,
 	cleanVariationLabels
 } from '$lib/server/product';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { ObjectId } from 'mongodb';
@@ -33,7 +33,7 @@ import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintErr
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 import { logProductCreationEvents } from '$lib/server/accounting-log';
 
-export const load = async ({ url }) => {
+export const load: PageServerLoad = async ({ url }) => {
 	const productId = url.searchParams.get('duplicate_from');
 
 	const tags = await collections.tags

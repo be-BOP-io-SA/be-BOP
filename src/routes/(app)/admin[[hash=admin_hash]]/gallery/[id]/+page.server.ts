@@ -1,6 +1,6 @@
 import { collections } from '$lib/server/database';
 import { error, redirect } from '@sveltejs/kit';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { z } from 'zod';
 import { MAX_NAME_LIMIT } from '$lib/types/Product';
 import type { JsonObject } from 'type-fest';
@@ -9,7 +9,7 @@ import { adminPrefix } from '$lib/server/admin';
 import { deletePicture, generatePicture } from '$lib/server/picture';
 import { zodSlug } from '$lib/server/zod';
 
-export const load = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const pictures = await collections.pictures
 		.find({ galleryId: params.id })
 		.sort({ createdAt: 1 })

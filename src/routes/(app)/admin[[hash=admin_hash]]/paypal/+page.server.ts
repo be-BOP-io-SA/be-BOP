@@ -2,14 +2,15 @@ import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { CURRENCIES, type Currency } from '$lib/types/Currency.js';
 import { z } from 'zod';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		paypal: runtimeConfig.paypal
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	save: async function ({ request }) {
 		const paypal = z
 			.object({

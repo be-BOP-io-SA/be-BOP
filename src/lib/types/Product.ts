@@ -162,13 +162,13 @@ export function isPreorder(
 
 export function oneMaxPerLine(
 	p: PickDeep<Product, 'standalone' | 'type' | 'bookingSpec.slotMinutes'>
-) {
+): boolean | { slotMinutes: number } | undefined {
 	return p.standalone || p.type === 'subscription' || p.bookingSpec;
 }
 export function productPriceWithVariations(
 	product: Pick<Product, 'name' | '_id' | 'price' | 'variations'>,
 	chosenVariations: Record<string, string> | undefined
-) {
+): number {
 	const variationPriceArray: Price[] = chosenVariations
 		? Object.entries(chosenVariations).map((variation) => ({
 				amount:
@@ -185,7 +185,7 @@ export function productPriceWithVariations(
 export function checkProductVariationsIntegrity(
 	product: Pick<Product, 'name' | '_id' | 'price' | 'variations'>,
 	chosenVariations: Record<string, string> | undefined
-) {
+): boolean {
 	const variationNamesInDB = [...new Set(product.variations?.map((vari) => vari.name))];
 	const chosenVariationNames = Object.keys(chosenVariations ?? {});
 	const allVariationsChosen =

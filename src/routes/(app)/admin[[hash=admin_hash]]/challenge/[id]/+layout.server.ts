@@ -3,8 +3,9 @@ import type { Order } from '$lib/types/Order';
 import type { Product } from '$lib/types/Product';
 import { error } from '@sveltejs/kit';
 import type { Filter } from 'mongodb';
+import type { LayoutServerLoad } from './$types';
 
-export async function load({ params }) {
+export const load: LayoutServerLoad = async ({ params }) => {
 	const challenge = await collections.challenges.findOne({
 		_id: params.id
 	});
@@ -54,4 +55,4 @@ export async function load({ params }) {
 			currencySnapshot: order.currencySnapshot
 		}))
 	};
-}
+};

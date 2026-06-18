@@ -11,7 +11,7 @@ import { collections } from './database';
 import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import type { PickDeep } from 'type-fest';
 import type { Specification } from '$lib/types/Specification';
-import type { Tag } from '$lib/types/Tag';
+import type { TagWidgetTag } from '$lib/types/Tag';
 import type { ContactForm } from '$lib/types/ContactForm';
 import type { Countdown } from '$lib/types/Countdown';
 import type { Gallery } from '$lib/types/Gallery';
@@ -224,21 +224,36 @@ type TokenObject =
 			raw: string;
 	  };
 
-export async function cmsFromContent(
+export type CmsFromContentInput = {
+	desktopContent: string;
+	employeeContent?: string;
+	mobileContent?: string;
+	forceContentVersion?: 'desktop' | 'mobile' | 'employee';
+	forceUnsanitizedContent?: boolean;
+};
+
+type CmsFromContentLocals = Partial<
+	PickDeep<App.Locals, 'user.hasPosOptions' | 'language' | 'email' | 'sso'>
+>;
+
+export type CmsData = Awaited<ReturnType<typeof cmsFromContentImpl>>;
+
+export function cmsFromContent(
+	input: CmsFromContentInput,
+	locals: CmsFromContentLocals
+): Promise<CmsData> {
+	return cmsFromContentImpl(input, locals);
+}
+
+async function cmsFromContentImpl(
 	{
 		desktopContent,
 		mobileContent,
 		employeeContent,
 		forceContentVersion,
 		forceUnsanitizedContent
-	}: {
-		desktopContent: string;
-		employeeContent?: string;
-		mobileContent?: string;
-		forceContentVersion?: 'desktop' | 'mobile' | 'employee';
-		forceUnsanitizedContent?: boolean;
-	},
-	locals: Partial<PickDeep<App.Locals, 'user.hasPosOptions' | 'language' | 'email' | 'sso'>>
+	}: CmsFromContentInput,
+	locals: CmsFromContentLocals
 ) {
 	/**
 	 * Matches product widget syntax in CMS content:
@@ -649,9 +664,7 @@ export async function cmsFromContent(
 					.find({
 						_id: { $in: [...tagSlugs] }
 					})
-					.project<
-						Pick<Tag, '_id' | 'name' | 'title' | 'subtitle' | 'content' | 'shortContent' | 'cta'>
-					>({
+					.project<TagWidgetTag>({
 						name: 1,
 						title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] },
 						subtitle: { $ifNull: [`$translations.${locals.language}.subtitle`, '$subtitle'] },

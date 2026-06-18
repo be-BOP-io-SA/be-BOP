@@ -7,8 +7,9 @@ import { SignJWT } from 'jose';
 import sharp from 'sharp';
 import { error } from '@sveltejs/kit';
 import { getNostrKeys, isNostrConfigured } from '$lib/server/nostr';
+import type { RequestHandler } from './$types';
 
-export const OPTIONS = () => {
+export const OPTIONS: RequestHandler = () => {
 	return new Response(null, {
 		headers: {
 			'access-control-allow-origin': '*',
@@ -18,7 +19,7 @@ export const OPTIONS = () => {
 	});
 };
 
-export const GET = async ({ params, url }) => {
+export const GET: RequestHandler = async ({ params, url }) => {
 	if (!isLndConfigured() && !runtimeConfig.phoenixd.lnAddress) {
 		throw error(400, 'Lighting is not configured');
 	}

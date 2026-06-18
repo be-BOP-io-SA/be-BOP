@@ -15,8 +15,9 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Order } from '$lib/types/Order.js';
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	const wallets = await listWallets();
 
 	const transactions = wallets.length ? await listTransactions() : [];
@@ -44,9 +45,9 @@ export async function load() {
 		bip84Xpub: BIP84_XPUB,
 		rpc: ALLOW_BITCOIN_RPC === 'true' || ALLOW_BITCOIN_RPC === '1'
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	createWallet: async function ({ request }) {
 		const wallets = await listWallets();
 

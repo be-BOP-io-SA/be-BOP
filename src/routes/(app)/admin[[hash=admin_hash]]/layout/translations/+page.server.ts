@@ -6,8 +6,9 @@ import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { layoutTranslatableSchema } from '../layout-schema';
 import { collections } from '$lib/server/database';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		config: typedFromEntries(
 			locales.map((locale) => [locale, runtimeConfig[`translations.${locale}.config`]] as const)
@@ -21,9 +22,9 @@ export async function load() {
 			websiteShortDescription: runtimeConfig.websiteShortDescription
 		}
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 

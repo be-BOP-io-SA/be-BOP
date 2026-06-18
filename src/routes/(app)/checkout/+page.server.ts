@@ -25,8 +25,9 @@ import { omit } from '$lib/utils/omit.js';
 import { set } from '$lib/utils/set';
 import { ObjectId } from 'mongodb';
 import type { Tag } from '$lib/types/Tag';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load({ parent, locals }) {
+export const load: PageServerLoad = async ({ parent, locals }) => {
 	const parentData = await parent();
 
 	const cartItemsWithResolvedStock = await Promise.all(
@@ -228,9 +229,9 @@ export async function load({ parent, locals }) {
 		defaultOnLocation: runtimeConfig.defaultOnLocation,
 		desiredPaymentTimeout: runtimeConfig.desiredPaymentTimeout
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	default: async ({ request, locals, url }) => {
 		const cart = await getCartFromDb({ user: userIdentifier(locals) });
 

@@ -14,8 +14,9 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { Kind } from 'nostr-tools';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	addPayment: async ({ params, request, locals }) => {
 		const order = await collections.orders.findOne({
 			_id: params.id

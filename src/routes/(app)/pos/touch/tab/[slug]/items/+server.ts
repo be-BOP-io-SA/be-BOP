@@ -4,6 +4,7 @@ import { pojo } from '$lib/server/pojo';
 import type { OrderTab } from '$lib/types/OrderTab';
 import type { Price } from '$lib/types/Order';
 import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 type Locale = App.Locals['language'];
 
@@ -66,7 +67,7 @@ async function hydratedOrderItems(
 		.filter((item): item is NonNullable<typeof item> => item !== undefined);
 }
 
-export const GET = async ({ params, locals }) => {
+export const GET: RequestHandler = async ({ params, locals }) => {
 	const tab = await getOrCreateOrderTab({ slug: params.slug });
 	const items = await hydratedOrderItems(locals.language, tab.items);
 	return json(pojo(items));

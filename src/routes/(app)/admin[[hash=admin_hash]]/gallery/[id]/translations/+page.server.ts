@@ -5,8 +5,9 @@ import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { mapObject } from '$lib/utils/mapObject.js';
 import { galleryTranslatableSchema } from '../gallery-schema';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, params }) {
 		const json: JsonObject = {};
 		for (const [key, value] of await request.formData()) {

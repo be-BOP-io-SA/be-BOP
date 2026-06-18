@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
 import type { OrderLabel } from '$lib/types/OrderLabel';
+import type { PageServerLoad } from './$types';
 
-export function load() {
+export const load: PageServerLoad = () => {
 	return {
 		labels: collections.labels
 			.find({})
@@ -12,4 +13,4 @@ export function load() {
 			.sort({ updatedAt: -1 })
 			.toArray()
 	};
-}
+};

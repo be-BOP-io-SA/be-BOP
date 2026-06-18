@@ -11,7 +11,7 @@ import { productToScheduleId, type ScheduleEvent } from '$lib/types/Schedule';
 import { set } from '$lib/utils/set';
 import { sum } from '$lib/utils/sum';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
-import type { RequestEvent } from './$types';
+import type { RequestEvent, PageServerLoad, Actions } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { subDays, parseISO, isValid } from 'date-fns';
 import type { JsonObject } from 'type-fest';
@@ -203,7 +203,7 @@ async function fetchProductScheduleEvents(productId: string) {
 		.toArray();
 }
 
-export const load = async ({ params, parent, locals }) => {
+export const load: PageServerLoad = async ({ params, parent, locals }) => {
 	const productId = params.id;
 	const product = await fetchProduct(productId, locals.language);
 	if (!product) {
@@ -381,7 +381,7 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 	});
 }
 
-export const actions = {
+export const actions: Actions = {
 	buy: async (params) => {
 		await addToCart(params);
 

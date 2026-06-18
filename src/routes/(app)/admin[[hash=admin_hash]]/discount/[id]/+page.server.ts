@@ -8,8 +8,9 @@ import { z } from 'zod';
 import { parseDiscountConditionFields } from '$lib/server/discount';
 import type { UpdateFilter } from 'mongodb';
 import type { Discount } from '$lib/types/Discount';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load({ params }) {
+export const load: PageServerLoad = async ({ params }) => {
 	const discount = await collections.discounts.findOne({
 		_id: params.id
 	});
@@ -47,9 +48,9 @@ export async function load({ params }) {
 		tags,
 		countries: [...COUNTRY_ALPHA2S] as CountryAlpha2[]
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ request, params }) {
 		const discount = await collections.discounts.findOne({
 			_id: params.id

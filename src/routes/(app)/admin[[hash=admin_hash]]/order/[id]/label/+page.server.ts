@@ -5,8 +5,9 @@ import { error, redirect } from '@sveltejs/kit';
 import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const labels = await collections.labels
 		.find({})
 		.project<Pick<OrderLabel, '_id' | 'name'>>({ _id: 1, name: 1 })
@@ -23,7 +24,7 @@ export const load = async ({ params }) => {
 		orderLabelIds: order.orderLabelIds
 	};
 };
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, params }) {
 		const order = await collections.orders.findOne({ _id: params.id });
 		if (!order) {

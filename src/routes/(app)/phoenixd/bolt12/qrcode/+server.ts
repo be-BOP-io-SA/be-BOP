@@ -1,7 +1,8 @@
 import { runtimeConfig } from '$lib/server/runtime-config';
 import qrcode from 'qrcode';
+import type { RequestHandler } from './$types';
 
-export async function GET({}) {
+export const GET: RequestHandler = async ({}) => {
 	try {
 		const bolt12Address = runtimeConfig.phoenixd.bolt12Address;
 
@@ -19,4 +20,4 @@ export async function GET({}) {
 			status: 500
 		});
 	}
-}
+};

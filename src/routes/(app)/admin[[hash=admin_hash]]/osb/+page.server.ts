@@ -1,14 +1,15 @@
 import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { z } from 'zod';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		osb: runtimeConfig.osb
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	save: async function ({ request }) {
 		const osb = z
 			.object({

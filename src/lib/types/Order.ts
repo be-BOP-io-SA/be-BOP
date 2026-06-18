@@ -21,6 +21,12 @@ export type OrderPaymentStatus = (typeof ORDER_PAYMENT_STATUSES)[number];
 
 export type DiscountType = 'fiat' | 'percentage';
 
+/**
+ * Which currency slot of a {@link Price} snapshot a computation targets.
+ * Mirrors the keys of `currencySnapshot` on orders and order items.
+ */
+export type CurrencyType = 'main' | 'priceReference' | 'secondary' | 'accounting';
+
 export type Price = {
 	amount: number;
 	currency: Currency;
@@ -420,13 +426,30 @@ export const PAYMENT_METHOD_EMOJI: Record<PaymentMethod, string> = {
 export const ORDER_PAGINATION_LIMIT = 50;
 export const MIN_SATOSHIS_FOR_BITCOIN_PAYMENT = 10_000;
 
+type DateVars<T extends string> = {
+	[P in
+		| `${T}Year`
+		| `${T}Month`
+		| `${T}Week`
+		| `${T}WeekOfMonth`
+		| `${T}DayOfWeek`
+		| `${T}DayOfMonth`]: string;
+};
+
 export function invoiceNumberVariables(
 	order: Pick<Order, 'number' | 'createdAt'> & { payments: { id: string }[] },
 	payment: Pick<OrderPayment, 'createdAt' | 'paidAt' | 'status'> & {
 		id: string;
 		invoice?: { number: number };
 	}
-) {
+): {
+	orderNumber: number;
+	paymentIndex: number;
+	invoiceNumber: string | undefined;
+} & Partial<DateVars<'order'>> &
+	Partial<DateVars<'payment'>> &
+	Partial<DateVars<'paymentPaid'>> &
+	Partial<DateVars<'paymentDynamic'>> {
 	const dates = {
 		order: order.createdAt,
 		payment: payment.createdAt,
@@ -434,18 +457,7 @@ export function invoiceNumberVariables(
 		paymentPaidOrCreated: payment.paidAt ?? payment.createdAt
 	};
 
-	function dateVars<T extends string>(
-		prefix: T,
-		date: Date
-	): {
-		[P in
-			| `${T}Year`
-			| `${T}Month`
-			| `${T}Week`
-			| `${T}WeekOfMonth`
-			| `${T}DayOfWeek`
-			| `${T}DayOfMonth`]: string;
-	} {
+	function dateVars<T extends string>(prefix: T, date: Date): DateVars<T> {
 		return {
 			[`${prefix}Year`]: date.getFullYear().toString(),
 			[`${prefix}Month`]: String(date.getMonth() + 1).padStart(2, '0'),
@@ -453,15 +465,7 @@ export function invoiceNumberVariables(
 			[`${prefix}WeekOfMonth`]: getWeekOfMonth(date).toString(),
 			[`${prefix}DayOfWeek`]: (date.getDay() + 1).toString(),
 			[`${prefix}DayOfMonth`]: date.getDate().toString().padStart(2, '0')
-		} as {
-			[P in
-				| `${T}Year`
-				| `${T}Month`
-				| `${T}Week`
-				| `${T}WeekOfMonth`
-				| `${T}DayOfWeek`
-				| `${T}DayOfMonth`]: string;
-		};
+		} as DateVars<T>;
 	}
 
 	return {
@@ -479,13 +483,13 @@ export function bitcoinPaymentQrCodeString(
 	paymentAddress: string,
 	paymentAmount: number,
 	paymentCurrency: Currency
-) {
+): string {
 	return `bitcoin:${paymentAddress}?amount=${toBitcoins(paymentAmount, paymentCurrency)
 		.toLocaleString('en-US', { maximumFractionDigits: 8 })
 		.replaceAll(',', '')}`;
 }
 
-export function lightningPaymentQrCodeString(paymentAddress: string) {
+export function lightningPaymentQrCodeString(paymentAddress: string): string {
 	return `lightning:${paymentAddress}`;
 }
 
@@ -503,8 +507,8 @@ export type OrderItemInfoNeededForFinalPrice = PickDeep<
 
 export function orderItemPrice(
 	item: OrderItemInfoNeededForFinalPrice,
-	currency: 'main' | 'priceReference' | 'secondary' | 'accounting'
-) {
+	currency: CurrencyType
+): number {
 	return (
 		orderItemPriceUndiscounted(item, currency) *
 		(item.discountPercentage ? (100 - item.discountPercentage) / 100 : 1)
@@ -513,8 +517,8 @@ export function orderItemPrice(
 
 export function orderIndividualItemPrice(
 	item: Pick<Order['items'][0], 'currencySnapshot' | 'discountPercentage'>,
-	currency: 'main' | 'priceReference' | 'secondary' | 'accounting'
-) {
+	currency: CurrencyType
+): number {
 	const currencySnapshot = item.currencySnapshot[currency];
 	if (!currencySnapshot) {
 		throw new Error(`Currency snapshot ${currency} not found`);
@@ -527,8 +531,8 @@ export function orderIndividualItemPrice(
 
 export function orderItemPriceUndiscounted(
 	item: OrderItemInfoNeededForFinalPrice,
-	currency: 'main' | 'priceReference' | 'secondary' | 'accounting'
-) {
+	currency: CurrencyType
+): number {
 	const currencySnapshot = item.currencySnapshot[currency];
 	if (!currencySnapshot) {
 		throw new Error(`Currency snapshot ${currency} not found`);

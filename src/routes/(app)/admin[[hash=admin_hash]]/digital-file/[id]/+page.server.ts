@@ -4,8 +4,9 @@ import { collections } from '$lib/server/database';
 import { getPublicS3DownloadLink, getS3Client } from '$lib/server/s3';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { error, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load({ params }) {
+export const load: PageServerLoad = async ({ params }) => {
 	const digitalFile = await collections.digitalFiles.findOne({
 		_id: params.id
 	});
@@ -20,9 +21,9 @@ export async function load({ params }) {
 		digitalFile,
 		downloadLink
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	delete: async function ({ params }) {
 		const digitalFile = await collections.digitalFiles.findOne({ _id: params.id });
 
@@ -43,12 +44,12 @@ export const actions = {
 			throw redirect(303, `${adminPrefix()}/digital-file`);
 		}
 	},
-	update: async function (input) {
-		const formData = await input.request.formData();
+	update: async function ({ request, params }) {
+		const formData = await request.formData();
 		const name = String(formData.get('name'));
 
 		await collections.digitalFiles.updateOne(
-			{ _id: input.params.id },
+			{ _id: params.id },
 			{
 				$set: {
 					name,
