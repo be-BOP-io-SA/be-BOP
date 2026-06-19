@@ -18,6 +18,7 @@
 	import PriceChartLayer from './PriceChartLayer.svelte';
 	import { useI18n } from '$lib/i18n';
 	import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+	import { browser } from '$app/environment';
 
 	export let productId: string;
 	export let currency = '';
@@ -30,22 +31,28 @@
 	let history: PriceHistoryData | null = null;
 	let loading = false;
 	let errored = false;
-	let loadedFor = '';
+	let loadedKey = '';
 
-	$: if (active && productId && loadedFor !== productId && !loading) {
-		void load(productId);
+	// Fetch only in the browser (never during SSR) and only while active — so the
+	// modal loads on open, not on page load. Refetch when the range changes so the
+	// server bounds the (heavy) orders query to the selected window.
+	$: fetchKey = `${productId}|${range}`;
+	$: if (browser && active && productId && loadedKey !== fetchKey && !loading) {
+		void load(fetchKey);
 	}
 
-	async function load(id: string) {
+	async function load(key: string) {
 		loading = true;
 		errored = false;
 		try {
-			const res = await fetch(`/product/${encodeURIComponent(id)}/price-history`);
+			const res = await fetch(
+				`/product/${encodeURIComponent(productId)}/price-history?range=${range}`
+			);
 			if (!res.ok) {
 				throw new Error(String(res.status));
 			}
 			history = await res.json();
-			loadedFor = id;
+			loadedKey = key;
 		} catch {
 			errored = true;
 		} finally {
@@ -88,7 +95,8 @@
 		return within;
 	}
 	$: catView = windowed(catVals, true);
-	$: paidView = windowed(paidVals, false);
+	// Paid points are already bounded to the range server-side.
+	$: paidView = paidVals;
 
 	function domain(...sets: Array<Array<{ x: number; y: number }>>): [number, number] {
 		const ys = sets.flat().map((p) => p.y);
@@ -140,11 +148,7 @@
 </div>
 
 <div class="pt-5">
-	{#if loading}
-		<p class="py-16 text-center text-sm text-gray-400">{t('priceCalendar.loading')}</p>
-	{:else if errored}
-		<p class="py-16 text-center text-sm text-red-500">{t('priceCalendar.error')}</p>
-	{:else if history}
+	{#if history}
 		<div class="mb-3 flex justify-end gap-1">
 			{#each RANGES as r}
 				<button
@@ -243,5 +247,23 @@
 				<span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full" style="background:{PAID_COLOR}" /> {t('priceCalendar.averagePaid')}</span>
 			</div>
 		{/if}
+	{:else if loading}
+		<!-- Placeholder chart mockup while the first load is in flight. -->
+		<div class="animate-pulse">
+			<div class="h-60 w-full rounded-xl border border-gray-100 bg-gray-50 p-4">
+				<div class="flex h-full items-end gap-1.5">
+					{#each Array(16) as _, i}
+						<div class="flex-1 rounded-sm bg-gray-200" style="height:{25 + ((i * 53) % 60)}%" />
+					{/each}
+				</div>
+			</div>
+			<div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+				{#each Array(3) as _}
+					<div class="h-[76px] rounded-xl border border-gray-100 bg-gray-50" />
+				{/each}
+			</div>
+		</div>
+	{:else if errored}
+		<p class="py-16 text-center text-sm text-red-500">{t('priceCalendar.error')}</p>
 	{/if}
 </div>

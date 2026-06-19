@@ -241,12 +241,18 @@ async function loadPriceFacts(
 }
 
 /** Loads real paid sales of a product (effective unit price, in the site currency). */
-async function loadPaidSales(productId: string, target: Currency): Promise<PaidSale[]> {
-	// Project only what the average-paid computation needs — order documents carry a
-	// lot of unrelated data (addresses, notes, custom fields…) we never read here.
+async function loadPaidSales(
+	productId: string,
+	target: Currency,
+	since: Date | null
+): Promise<PaidSale[]> {
+	// Bound the query to the requested window so a popular product never loads its
+	// entire paid-order history. Project only what the computation needs.
+	const paidMatch = since ? { status: 'paid', paidAt: { $gte: since } } : { status: 'paid' };
+	const sinceMs = since ? since.getTime() : null;
 	const orders = await collections.orders
 		.find(
-			{ 'items.product._id': productId, payments: { $elemMatch: { status: 'paid' } } },
+			{ 'items.product._id': productId, payments: { $elemMatch: paidMatch } },
 			{
 				projection: {
 					'items.product._id': 1,
@@ -265,7 +271,7 @@ async function loadPaidSales(productId: string, target: Currency): Promise<PaidS
 	for (const order of orders) {
 		const paidPayment = order.payments.find((p) => p.status === 'paid' && p.paidAt);
 		const paidAt = paidPayment?.paidAt ?? order.updatedAt;
-		if (!paidAt) {
+		if (!paidAt || (sinceMs !== null && paidAt.getTime() < sinceMs)) {
 			continue;
 		}
 		for (const item of order.items) {
@@ -289,14 +295,17 @@ async function loadPaidSales(productId: string, target: Currency): Promise<PaidS
 
 export async function getProductPriceHistory(
 	productId: string,
-	productCurrency: Currency
+	productCurrency: Currency,
+	windowDays: number | null = null
 ): Promise<PriceHistory> {
 	const now = Date.now();
 	// Everything is displayed in the product's own currency.
 	const target = productCurrency;
+	// Bound the (heavy) paid-orders query to the requested window; null = all history.
+	const since = windowDays && windowDays > 0 ? subDays(new Date(now), windowDays) : null;
 	const [{ segments, windows }, sales] = await Promise.all([
 		loadPriceFacts(productId, target),
-		loadPaidSales(productId, target)
+		loadPaidSales(productId, target, since)
 	]);
 
 	const digits = FRACTION_DIGITS_PER_CURRENCY[target] ?? 2;
