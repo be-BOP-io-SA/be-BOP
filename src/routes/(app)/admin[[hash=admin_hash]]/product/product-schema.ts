@@ -168,6 +168,16 @@ export const productBaseSchema = () => ({
 	enforceDeposit: z.boolean({ coerce: true }).default(false),
 	vatProfileId: zodObjectId().or(z.literal('')).optional(),
 	subscriptionDuration: z.enum(SUBSCRIPTION_DURATIONS).or(z.literal('')).optional(),
+	subscriptionReminderSeconds: z
+		.union([
+			z.literal(''),
+			z
+				.number({ coerce: true })
+				.int()
+				.min(0)
+				.max(24 * 60 * 60 * 7)
+		])
+		.optional(),
 	cta: z
 		.array(
 			z.object({

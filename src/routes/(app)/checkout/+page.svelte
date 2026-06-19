@@ -831,7 +831,10 @@
 						</a>
 
 						{#if item.product.type === 'subscription' && item.product.subscriptionDuration}
-							<SubscriptionDurationLabel duration={item.product.subscriptionDuration} class="mb-1" />
+							<SubscriptionDurationLabel
+								duration={item.product.subscriptionDuration}
+								class="mb-1"
+							/>
 						{/if}
 
 						<div class="flex flex-row gap-2">

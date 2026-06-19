@@ -53,6 +53,7 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	maxQuantityPerOrder?: number;
 	type: 'subscription' | 'resource' | 'donation';
 	subscriptionDuration?: SubscriptionDuration;
+	subscriptionReminderSeconds?: number;
 	shipping: boolean;
 	deliveryFees?: DeliveryFees;
 	requireSpecificDeliveryFee?: boolean;

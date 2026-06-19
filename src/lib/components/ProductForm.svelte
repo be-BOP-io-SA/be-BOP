@@ -39,6 +39,7 @@
 	import { typedFromEntries } from '$lib/utils/typedFromEntries';
 	import { type Day, dayList, productToScheduleId, type BookingSummary } from '$lib/types/Schedule';
 	import { formatDuration } from '$lib/utils/formatDuration';
+	import { formatDistance } from 'date-fns';
 	import { computeVatRate } from '$lib/utils/vat';
 	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 
@@ -99,6 +100,8 @@
 	let paymentMethods = product.paymentMethods || [...availablePaymentMethods];
 	let restrictPaymentMethods = !!product.paymentMethods;
 	let vatProfileId = product.vatProfileId || '';
+	let subscriptionDuration = product.subscriptionDuration || '';
+	let subscriptionReminderSeconds: number | '' = product.subscriptionReminderSeconds || '';
 	let formElement: HTMLFormElement;
 	let variationInput: HTMLInputElement[] = [];
 	let disableDateChange = !isNew;
@@ -324,9 +327,6 @@
 
 	$: if (product.type === 'subscription') {
 		product.payWhatYouWant = false;
-		if (!product.subscriptionDuration) {
-			product.subscriptionDuration = 'month';
-		}
 	}
 
 	$: if (product.payWhatYouWant) {
@@ -436,10 +436,26 @@
 						<select
 							name="subscriptionDuration"
 							class="form-input max-w-[25rem]"
-							bind:value={product.subscriptionDuration}
+							bind:value={subscriptionDuration}
 						>
+							<option value="">Default (shop-wide)</option>
 							{#each SUBSCRIPTION_DURATIONS as duration}
 								<option value={duration}>{duration}</option>
+							{/each}
+						</select>
+					</label>
+					<label class="form-label">
+						Subscription reminder
+						<select
+							name="subscriptionReminderSeconds"
+							class="form-input max-w-[25rem]"
+							bind:value={subscriptionReminderSeconds}
+						>
+							<option value="">Default (shop-wide)</option>
+							{#each [86400 * 7, 86400 * 3, 86400, 3600, 5 * 60] as seconds}
+								<option value={seconds}
+									>{formatDistance(0, seconds * 1000)} before the end of the subscription</option
+								>
 							{/each}
 						</select>
 					</label>

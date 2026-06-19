@@ -267,6 +267,9 @@ export const actions: Actions = {
 						...(parsed.subscriptionDuration && {
 							subscriptionDuration: parsed.subscriptionDuration
 						}),
+						...(typeof parsed.subscriptionReminderSeconds === 'number' && {
+							subscriptionReminderSeconds: parsed.subscriptionReminderSeconds
+						}),
 						...(parsed.restrictPaymentMethods && {
 							paymentMethods: parsed.paymentMethods ?? []
 						}),
@@ -303,6 +306,9 @@ export const actions: Actions = {
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
 						...(!parsed.subscriptionDuration && { subscriptionDuration: '' }),
+						...(typeof parsed.subscriptionReminderSeconds !== 'number' && {
+							subscriptionReminderSeconds: ''
+						}),
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
 						...(!hasVariations && { variations: '', variationLabels: '' }),
 						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),

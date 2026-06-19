@@ -7,9 +7,21 @@ import { userQuery } from './user';
 
 /** Shared resolver so order renewal and customer display never compute the fallback differently. */
 export function resolveSubscriptionDuration(product: {
-	subscriptionDuration?: SubscriptionDuration;
+	subscriptionDuration?: SubscriptionDuration | '';
 }): SubscriptionDuration {
-	return (product.subscriptionDuration ?? runtimeConfig.subscriptionDuration) as SubscriptionDuration;
+	// `||` not `??`: an empty-string snapshot (legacy data, or in-flight UI state)
+	// must also fall through to the global, otherwise durations[''] is undefined
+	// and add(date, undefined) breaks renewal.
+	return (product.subscriptionDuration ||
+		runtimeConfig.subscriptionDuration) as SubscriptionDuration;
+}
+
+/** Shared resolver so renewal eligibility, /subscription canRenew and the
+ * reminder cron all read the same value for a given product. */
+export function resolveSubscriptionReminderSeconds(product: {
+	subscriptionReminderSeconds?: number;
+}): number {
+	return product.subscriptionReminderSeconds || runtimeConfig.subscriptionReminderSeconds;
 }
 
 export async function freeProductsForUser(

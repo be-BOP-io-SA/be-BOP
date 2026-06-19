@@ -13,6 +13,7 @@
 	import { useI18n } from '$lib/i18n.js';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
+	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 	import MultiSelect from 'svelte-multiselect';
 	import Select from 'svelte-select';
 	import ProcessorSelector from '$lib/components/ProcessorSelector.svelte';
@@ -576,9 +577,21 @@
 	/>
 
 	<h2 class="text-2xl">Timing</h2>
-	<p class="text-sm text-gray-600 bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
-		Subscription duration moved in product settings for greater flexibility.
-	</p>
+	<label class="form-label">
+		Default subscription duration
+		<select
+			name="subscriptionDuration"
+			value={data.subscriptionDuration}
+			class="form-input max-w-[25rem]"
+		>
+			{#each SUBSCRIPTION_DURATIONS as duration}
+				<option value={duration}>{duration}</option>
+			{/each}
+		</select>
+		<p class="text-sm">
+			Used for subscription products set to "Default (shop-wide)" and for legacy snapshots.
+		</p>
+	</label>
 	<label class="form-label">
 		Subscription reminder
 		<select
