@@ -246,7 +246,9 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.pendingZaps, { invoiceId: 1 }, { unique: true }],
 	[collections.accountingLogs, { createdAt: 1 }],
 	[collections.accountingLogs, { eventType: 1, createdAt: 1 }],
-	[collections.accountingLogs, { objectId: 1, objectType: 1 }]
+	[collections.accountingLogs, { objectId: 1, objectType: 1 }],
+	// Price calendar (issue #2504): look up public-discount events by target product.
+	[collections.accountingLogs, { eventType: 1, 'after.productIds': 1 }]
 ];
 
 export async function createIndexes() {
