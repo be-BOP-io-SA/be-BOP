@@ -242,8 +242,23 @@ async function loadPriceFacts(
 
 /** Loads real paid sales of a product (effective unit price, in the site currency). */
 async function loadPaidSales(productId: string, target: Currency): Promise<PaidSale[]> {
+	// Project only what the average-paid computation needs — order documents carry a
+	// lot of unrelated data (addresses, notes, custom fields…) we never read here.
 	const orders = await collections.orders
-		.find({ 'items.product._id': productId, payments: { $elemMatch: { status: 'paid' } } })
+		.find(
+			{ 'items.product._id': productId, payments: { $elemMatch: { status: 'paid' } } },
+			{
+				projection: {
+					'items.product._id': 1,
+					'items.quantity': 1,
+					'items.discountPercentage': 1,
+					'items.currencySnapshot.main': 1,
+					'payments.status': 1,
+					'payments.paidAt': 1,
+					updatedAt: 1
+				}
+			}
+		)
 		.toArray();
 
 	const sales: PaidSale[] = [];
