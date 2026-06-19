@@ -112,7 +112,11 @@
 	$: tipDate = hoverTime === null ? '' : fmtDate(hoverTime);
 	$: tipW =
 		Math.ceil(
-			Math.max(estWidth(tipDate, 5.6), 0, ...hoverItems.map((h) => 15 + estWidth(fmtPrice(h.pt.y), 6.4)))
+			Math.max(
+				estWidth(tipDate, 5.6),
+				0,
+				...hoverItems.map((h) => 15 + estWidth(fmtPrice(h.pt.y), 6.4))
+			)
 		) +
 		TIP_PADX * 2;
 	$: tipH = TIP_PADY * 2 + TIP_LINE * (1 + hoverItems.length);
@@ -129,12 +133,23 @@
 		y2={$yScale(ty)}
 		class="stroke-gray-300 [stroke-dasharray:2_3]"
 	/>
-	<text x="-8" y={$yScale(ty)} dy="0.32em" text-anchor="end" class="fill-gray-600 text-[11px] tabular-nums">{fmtPrice(ty)}</text>
+	<text
+		x="-8"
+		y={$yScale(ty)}
+		dy="0.32em"
+		text-anchor="end"
+		class="fill-gray-600 text-[11px] tabular-nums">{fmtPrice(ty)}</text
+	>
 {/each}
 
 <!-- X labels -->
 {#each xTicks as tx}
-	<text x={$xScale(tx)} y={$height + 16} text-anchor="middle" class="fill-gray-600 text-[11px] tabular-nums">{fmtDate(tx)}</text>
+	<text
+		x={$xScale(tx)}
+		y={$height + 16}
+		text-anchor="middle"
+		class="fill-gray-600 text-[11px] tabular-nums">{fmtDate(tx)}</text
+	>
 {/each}
 
 <!-- Series: area fills first, then lines on top -->
@@ -162,9 +177,22 @@
 <!-- Hover guide, dots and tooltip -->
 {#if hoverX !== null && hoverItems.length}
 	<g style="pointer-events:none">
-		<line x1={hoverX} x2={hoverX} y1="0" y2={$height} class="stroke-gray-550 [stroke-dasharray:3_3]" />
+		<line
+			x1={hoverX}
+			x2={hoverX}
+			y1="0"
+			y2={$height}
+			class="stroke-gray-550 [stroke-dasharray:3_3]"
+		/>
 		{#each hoverItems as h}
-			<circle cx={$xScale(h.pt.x)} cy={$yScale(h.pt.y)} r="3.5" fill={h.color} stroke="#fff" stroke-width="1.5" />
+			<circle
+				cx={$xScale(h.pt.x)}
+				cy={$yScale(h.pt.y)}
+				r="3.5"
+				fill={h.color}
+				stroke="#fff"
+				stroke-width="1.5"
+			/>
 		{/each}
 		<g transform="translate({tooltipX},4)">
 			<rect width={tipW} height={tipH} rx="7" class="fill-gray-850 opacity-90" />
@@ -176,7 +204,7 @@
 			>
 			{#each hoverItems as h, i}
 				{@const cy = TIP_PADY + TIP_LINE * (i + 1) + TIP_LINE / 2}
-				<circle cx={TIP_PADX + 3} cy={cy} r="3.5" fill={h.color} />
+				<circle cx={TIP_PADX + 3} {cy} r="3.5" fill={h.color} />
 				<text
 					x={TIP_PADX + 14}
 					y={cy}
