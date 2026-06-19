@@ -607,7 +607,7 @@
 								{vatRate}%)
 								<span class="text-gray-400 text-xs ml-1">{showExclTax ? '▲' : '▼'}</span></span
 							>
-							<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+							<!-- svelte-ignore a11y-click-events-have-key-events -->
 							<div
 								class="flex items-center gap-2"
 								class:cursor-pointer={priceCalendarEnabled}
@@ -654,7 +654,7 @@
 							<span class="text-sm mt-1"
 								>{t('product.vatExcludedEstimate')} ({t('cart.vat')} {vatRate}%)</span
 							>
-							<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+							<!-- svelte-ignore a11y-click-events-have-key-events -->
 							<div
 								class="flex items-center gap-2"
 								class:cursor-pointer={priceCalendarEnabled}
@@ -700,7 +700,7 @@
 					{@const showStrikeThrough =
 						data.discount?.mode === 'percentage' && data.discount.showBadge !== false}
 					<div class="flex flex-col gap-1 lg:items-start">
-						<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<div
 							class="flex items-baseline gap-3"
 							class:cursor-pointer={priceCalendarEnabled}

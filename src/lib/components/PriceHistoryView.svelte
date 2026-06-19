@@ -261,13 +261,13 @@
 		<div class="animate-pulse">
 			<div class="h-60 w-full rounded-xl border border-gray-100 bg-gray-50 p-4">
 				<div class="flex h-full items-end gap-1.5">
-					{#each Array.from({ length: 16 }) as _, i}
+					{#each [...Array(16).keys()] as i}
 						<div class="flex-1 rounded-sm bg-gray-200" style="height:{25 + ((i * 53) % 60)}%" />
 					{/each}
 				</div>
 			</div>
 			<div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-				{#each Array.from({ length: 3 }) as _, i (i)}
+				{#each [...Array(3).keys()] as i (i)}
 					<div class="h-[76px] rounded-xl border border-gray-100 bg-gray-50" />
 				{/each}
 			</div>
