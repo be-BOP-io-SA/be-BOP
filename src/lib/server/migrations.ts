@@ -95,7 +95,7 @@ async function ensureSearchSearchlist(session?: ClientSession): Promise<void> {
 	);
 }
 
-const migrations = [
+export const migrations = [
 	{
 		_id: new ObjectId('65281201e92e590e858af6cb'),
 		name: 'Migrate CMS page content from Markdown to HTML',

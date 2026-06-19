@@ -25,6 +25,7 @@ import { isPhoenixdConfigured } from '$lib/server/phoenixd';
 import { isSwissBitcoinPayConfigured } from '$lib/server/swiss-bitcoin-pay';
 import { isBtcpayServerConfigured } from '$lib/server/btcpay-server';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
+import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 
 const VAT_SETTING_KEYS = new Set([
 	'vatExempted',
@@ -42,6 +43,7 @@ export async function load(event) {
 		maintenanceIps: runtimeConfig.maintenanceIps,
 		checkoutButtonOnProductPage: runtimeConfig.checkoutButtonOnProductPage,
 		discovery: runtimeConfig.discovery,
+		subscriptionDuration: runtimeConfig.subscriptionDuration,
 		subscriptionReminderSeconds: runtimeConfig.subscriptionReminderSeconds,
 		vatExemptionReason: runtimeConfig.vatExemptionReason,
 		desiredPaymentTimeout: runtimeConfig.desiredPaymentTimeout,
@@ -118,6 +120,7 @@ export const actions = {
 				vatNullOutsideSellerCountry: z.boolean({ coerce: true }),
 				displayVatIncludedInProduct: z.boolean({ coerce: true }),
 				vatCountry: z.string().default(runtimeConfig.vatCountry),
+				subscriptionDuration: z.enum(SUBSCRIPTION_DURATIONS),
 				subscriptionReminderSeconds: z
 					.number({ coerce: true })
 					.int()

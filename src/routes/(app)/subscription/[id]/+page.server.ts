@@ -1,6 +1,9 @@
 import { collections } from '$lib/server/database';
 import { createOrder } from '$lib/server/orders';
-import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
+import {
+	resolveSubscriptionDuration,
+	resolveSubscriptionReminderSeconds
+} from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userQuery } from '$lib/server/user.js';
 import { error, redirect } from '@sveltejs/kit';
@@ -24,7 +27,8 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 			projection: {
 				_id: 1,
 				name: { $ifNull: [`$translations.${locals.language}.name`, '$name'] },
-				subscriptionDuration: 1
+				subscriptionDuration: 1,
+				subscriptionReminderSeconds: 1
 			}
 		}
 	);
@@ -42,7 +46,7 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 
 	const canRenewAfter = subSeconds(
 		subscription.paidUntil,
-		runtimeConfig.subscriptionReminderSeconds
+		resolveSubscriptionReminderSeconds(product)
 	);
 
 	return {

@@ -27,7 +27,8 @@ import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import {
 	freeProductsForUser,
 	generateSubscriptionNumber,
-	resolveSubscriptionDuration
+	resolveSubscriptionDuration,
+	resolveSubscriptionReminderSeconds
 } from './subscriptions';
 import {
 	checkProductVariationsIntegrity,
@@ -994,7 +995,7 @@ export async function createOrder(
 
 		if (existingSubscription) {
 			if (
-				subSeconds(existingSubscription.paidUntil, runtimeConfig.subscriptionReminderSeconds) >
+				subSeconds(existingSubscription.paidUntil, resolveSubscriptionReminderSeconds(product)) >
 				new Date()
 			) {
 				throw error(
@@ -2026,7 +2027,9 @@ function addDiscountFreeProducts(
 	}
 }
 
-function getSubscriptionDuration(product: { subscriptionDuration?: SubscriptionDuration }): Duration {
+function getSubscriptionDuration(product: {
+	subscriptionDuration?: SubscriptionDuration;
+}): Duration {
 	const durations: Record<SubscriptionDuration, Duration> = {
 		hour: { hours: 1 },
 		day: { days: 1 },
