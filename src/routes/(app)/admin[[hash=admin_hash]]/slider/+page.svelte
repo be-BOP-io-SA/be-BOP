@@ -1,6 +1,12 @@
 <script lang="ts">
+	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+
 	export let data;
 </script>
+
+{#if !data.s3IsConfigured}
+	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
+{/if}
 
 <a href="/admin/slider/new" class="underline block">Add slider</a>
 

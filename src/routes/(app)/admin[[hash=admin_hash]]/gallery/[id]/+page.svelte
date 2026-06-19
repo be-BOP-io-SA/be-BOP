@@ -4,6 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { applyAction, deserialize } from '$app/forms';
 	import { preUploadPicture } from '$lib/types/Picture.js';
+	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 
 	export let data;
 	let name = data.gallery.name;
@@ -51,6 +52,10 @@
 		}
 	}
 </script>
+
+{#if !data.s3IsConfigured}
+	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
+{/if}
 
 <form method="post" class="flex flex-col gap-4" action="?/update" bind:this={formElement}>
 	<label class="form-label">
