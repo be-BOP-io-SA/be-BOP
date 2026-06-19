@@ -1,4 +1,24 @@
 {
+	"priceCalendar": {
+		"openTitle": "Storico prezzi",
+		"tabHistory": "Storico prezzi",
+		"tabPaid": "Prezzo medio pagato",
+		"current": "Attuale",
+		"min30": "Min. (30g)",
+		"max30": "Max. (30g)",
+		"vsPrevious": "vs prec.",
+		"since": "dal {date}",
+		"meanLabel": "Prezzo effettivo medio pagato:",
+		"belowCatalogue": "{pct}% sotto il prezzo di listino",
+		"catalogue": "Prezzo di listino",
+		"averagePaid": "Prezzo medio pagato",
+		"loading": "Caricamento…",
+		"error": "Impossibile caricare lo storico prezzi.",
+		"noHistory": "Nessuno storico prezzi.",
+		"noSales": "Nessuna vendita pagata da mostrare.",
+		"close": "Chiudi",
+		"exportCsv": "Esporta in CSV"
+	},
 	"address": {
 		"address": "Indirizzo",
 		"city": "Città",

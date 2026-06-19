@@ -91,6 +91,7 @@ async function fetchProduct(
 	| 'shipping'
 	| 'displayShortDescription'
 	| 'payWhatYouWant'
+	| 'free'
 	| 'standalone'
 	| 'maxQuantityPerOrder'
 	| 'stock'
@@ -133,6 +134,7 @@ async function fetchProduct(
 				type: 1,
 				displayShortDescription: 1,
 				payWhatYouWant: 1,
+				free: 1,
 				standalone: 1,
 				maxQuantityPerOrder: 1,
 				stock: 1,

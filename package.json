@@ -81,6 +81,7 @@
 		"jose": "^6.0.10",
 		"jsdom": "^22.1.0",
 		"jsonc-parser": "^3.2.1",
+		"layercake": "^8",
 		"marked": "^4.3.0",
 		"mime-types": "^2.1.35",
 		"mongodb": "^5.2.0",

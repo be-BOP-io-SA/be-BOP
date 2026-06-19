@@ -7,6 +7,7 @@ import { Lock } from './lock';
 import { ORIGIN } from '$lib/server/env-config';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import { CURRENCIES, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
 
 async function ensureDefaultSearchlist(session?: ClientSession): Promise<void> {
 	const existing = await collections.searchlists.findOne({ _id: 'default' }, { session });
@@ -828,6 +829,40 @@ const migrations = [
 		name: 'Seed search searchlist (issue #1787)',
 		run: async (session: ClientSession) => {
 			await ensureSearchSearchlist(session);
+		}
+	},
+	{
+		_id: new ObjectId('000000000000000000002504'),
+		name: 'Backfill public discount price history (issue #2504)',
+		run: async (session: ClientSession) => {
+			const discounts = await collections.discounts
+				.find({ mode: 'percentage' }, { session })
+				.toArray();
+			for (const discount of discounts) {
+				if (!isPublicZeroCriteriaDiscount(discount)) {
+					continue;
+				}
+				// Idempotent: skip discounts already represented in the price calendar.
+				const already = await collections.accountingLogs.findOne(
+					{ eventType: 'discountPublicPriceChange', objectId: discount._id },
+					{ session }
+				);
+				if (already) {
+					continue;
+				}
+				await collections.accountingLogs.insertOne(
+					{
+						_id: new ObjectId(),
+						eventType: 'discountPublicPriceChange',
+						objectType: 'discount',
+						objectId: discount._id,
+						before: null,
+						after: publicDiscountPriceSnapshot(discount),
+						createdAt: discount.createdAt ?? new Date()
+					},
+					{ session }
+				);
+			}
 		}
 	}
 ];

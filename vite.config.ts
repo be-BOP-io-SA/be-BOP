@@ -43,6 +43,11 @@ export default defineConfig(({ command }) => {
 		],
 		test: {
 			include: ['src/**/*.{test,spec}.{js,ts}']
+		},
+		// LayerCake ships uncompiled .svelte files; let Vite transform them for SSR
+		// instead of Node trying to import the raw .svelte (ERR_UNKNOWN_FILE_EXTENSION).
+		ssr: {
+			noExternal: ['layercake']
 		}
 	};
 });

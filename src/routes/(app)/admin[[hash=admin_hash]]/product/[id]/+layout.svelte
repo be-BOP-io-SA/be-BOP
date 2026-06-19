@@ -9,6 +9,14 @@
 	tabs={[
 		{ href: `${data.adminPrefix}/product/${data.product._id}`, name: 'Edit a product' },
 		{ href: `${data.adminPrefix}/product/${data.product._id}/translations`, name: 'Translations' },
+		...(!data.product.payWhatYouWant && !data.product.free && !data.product.bookingSpec
+			? [
+					{
+						href: `${data.adminPrefix}/product/${data.product._id}/price-history`,
+						name: 'Price History'
+					}
+			  ]
+			: []),
 		...(data.product.type === 'subscription'
 			? [
 					{

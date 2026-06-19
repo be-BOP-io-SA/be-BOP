@@ -5,7 +5,7 @@ import type { Tag } from '$lib/types/Tag';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
-import { parseDiscountConditionFields } from '$lib/server/discount';
+import { logPublicDiscountPriceChange, parseDiscountConditionFields } from '$lib/server/discount';
 import type { UpdateFilter } from 'mongodb';
 import type { Discount } from '$lib/types/Discount';
 
@@ -50,7 +50,7 @@ export async function load({ params }) {
 }
 
 export const actions = {
-	update: async function ({ request, params }) {
+	update: async function ({ request, params, locals }) {
 		const discount = await collections.discounts.findOne({
 			_id: params.id
 		});
@@ -173,6 +173,10 @@ export const actions = {
 				}
 			);
 		}
+
+		// Record public-price impact for the product price calendar (issue #2504).
+		const updated = await collections.discounts.findOne({ _id: discount._id });
+		await logPublicDiscountPriceChange(discount, updated, locals);
 	},
 
 	updateSubscriptionsWithMissingDiscounts: async function ({ params }) {
@@ -223,10 +227,14 @@ export const actions = {
 		);
 	},
 
-	delete: async function ({ params }) {
+	delete: async function ({ params, locals }) {
+		const discount = await collections.discounts.findOne({ _id: params.id });
 		await collections.discounts.deleteOne({
 			_id: params.id
 		});
+		if (discount) {
+			await logPublicDiscountPriceChange(discount, null, locals);
+		}
 
 		throw redirect(303, `${adminPrefix()}/discount`);
 	}

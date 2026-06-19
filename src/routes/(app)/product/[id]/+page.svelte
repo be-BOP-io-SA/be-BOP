@@ -3,6 +3,7 @@
 	import { marked } from 'marked';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
+	import PriceCalendarModal from '$lib/components/PriceCalendarModal.svelte';
 	import { applyAction, enhance } from '$app/forms';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { productAddedToCart } from '$lib/stores/productAddedToCart';
@@ -42,6 +43,16 @@
 	import { RangeList } from '$lib/utils/range-list.js';
 	import { vatMultiplier } from '$lib/utils/vat';
 	import { formatBookedDates } from '$lib/utils/formatBookedDates';
+
+	let showPriceCalendar = false;
+	// The price calendar is meaningless for products without a fixed catalogue price.
+	$: priceCalendarEnabled =
+		!data.product.payWhatYouWant && !data.product.free && !data.product.bookingSpec;
+	function openPriceCalendar() {
+		if (priceCalendarEnabled) {
+			showPriceCalendar = true;
+		}
+	}
 
 	const FULL_DAY_MINUTES = 1440;
 
@@ -595,7 +606,14 @@
 								{vatRate}%)
 								<span class="text-gray-400 text-xs ml-1">{showExclTax ? '▲' : '▼'}</span></span
 							>
-							<div class="flex items-center gap-2">
+							<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+								<div
+									class="flex items-center gap-2" class:cursor-pointer={priceCalendarEnabled}
+									role="button"
+									tabindex="0"
+									title={t('priceCalendar.openTitle')}
+									on:click|stopPropagation={openPriceCalendar}
+								>
 								<PriceTag
 									currency={data.product.price.currency}
 									class={data.discount?.mode === 'percentage'
@@ -634,7 +652,14 @@
 							<span class="text-sm mt-1"
 								>{t('product.vatExcludedEstimate')} ({t('cart.vat')} {vatRate}%)</span
 							>
-							<div class="flex items-center gap-2">
+							<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+								<div
+									class="flex items-center gap-2" class:cursor-pointer={priceCalendarEnabled}
+									role="button"
+									tabindex="0"
+									title={t('priceCalendar.openTitle')}
+									on:click|stopPropagation={openPriceCalendar}
+								>
 								<PriceTag
 									currency={data.product.price.currency}
 									class={data.discount?.mode === 'percentage'
@@ -672,7 +697,14 @@
 					{@const showStrikeThrough =
 						data.discount?.mode === 'percentage' && data.discount.showBadge !== false}
 					<div class="flex flex-col gap-1 lg:items-start">
-						<div class="flex items-baseline gap-3">
+						<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+							<div
+								class="flex items-baseline gap-3" class:cursor-pointer={priceCalendarEnabled}
+								role="button"
+								tabindex="0"
+								title={t('priceCalendar.openTitle')}
+								on:click|stopPropagation={openPriceCalendar}
+							>
 							<PriceTag
 								currency={data.product.price.currency}
 								class="text-2xl lg:text-4xl truncate max-w-full {showStrikeThrough
@@ -705,6 +737,14 @@
 						<span class="font-semibold text-sm">{t('product.vatExcluded')}</span>
 					</div>
 				{/if}
+
+				<PriceCalendarModal
+					open={showPriceCalendar}
+					productId={data.product._id}
+					productName={data.product.name}
+					currency={data.product.price.currency}
+					onClose={() => (showPriceCalendar = false)}
+				/>
 
 				{#if freeProductsAvailable}
 					<hr class="border-gray-300" />
