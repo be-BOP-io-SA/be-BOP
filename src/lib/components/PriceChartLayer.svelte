@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
 	import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+	import type { Readable } from 'svelte/store';
 
 	type XY = { x: number; y: number };
+	type Scale = ((value: number) => number) & {
+		ticks?: (count?: number) => number[];
+		range?: () => number[];
+		invert?: (value: number) => number;
+	};
 
 	/** One series to draw. x = epoch ms, y = price. */
 	export let series: Array<{
@@ -17,10 +23,10 @@
 
 	// LayerCake context (d3 scales as Svelte stores).
 	const { xScale, yScale, height, padding } = getContext<{
-		xScale: any;
-		yScale: any;
-		height: any;
-		padding: any;
+		xScale: Readable<Scale>;
+		yScale: Readable<Scale>;
+		height: Readable<number>;
+		padding: Readable<{ top: number; right: number; bottom: number; left: number }>;
 	}>('LayerCake');
 
 	const digits = (c: string) =>
@@ -29,7 +35,7 @@
 	const fmtDate = (t: number) =>
 		new Date(t).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: '2-digit' });
 
-	function linePath(values: XY[], step: boolean, xs: any, ys: any): string {
+	function linePath(values: XY[], step: boolean, xs: Scale, ys: Scale): string {
 		if (!values.length) {
 			return '';
 		}
@@ -44,7 +50,7 @@
 		return d;
 	}
 
-	function areaPath(values: XY[], step: boolean, xs: any, ys: any, base: number): string {
+	function areaPath(values: XY[], step: boolean, xs: Scale, ys: Scale, base: number): string {
 		if (!values.length) {
 			return '';
 		}
@@ -163,7 +169,7 @@
 {/each}
 
 <!-- Interaction surface (on top to capture the mouse) -->
-<!-- svelte-ignore a11y-no-static-element-interactions a11y-mouse-events-have-key-events -->
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <rect
 	x="0"
 	y="0"
