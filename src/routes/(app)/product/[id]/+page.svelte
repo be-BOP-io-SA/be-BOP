@@ -4,6 +4,7 @@
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import PriceCalendarModal from '$lib/components/PriceCalendarModal.svelte';
+	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import { applyAction, enhance } from '$app/forms';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { productAddedToCart } from '$lib/stores/productAddedToCart';
@@ -745,6 +746,10 @@
 					currency={data.product.price.currency}
 					onClose={() => (showPriceCalendar = false)}
 				/>
+
+				{#if data.product.type === 'subscription' && data.product.subscriptionDuration}
+					<SubscriptionDurationLabel duration={data.product.subscriptionDuration} />
+				{/if}
 
 				{#if freeProductsAvailable}
 					<hr class="border-gray-300" />

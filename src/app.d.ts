@@ -13,6 +13,8 @@ declare global {
 	namespace App {
 		interface Error {
 			status?: number;
+			code?: string;
+			params?: Record<string, string | number>;
 		}
 		interface Locals {
 			status?: number;

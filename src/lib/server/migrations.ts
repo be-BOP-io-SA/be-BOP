@@ -8,6 +8,7 @@ import { ORIGIN } from '$lib/server/env-config';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import { CURRENCIES, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
+import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 
 async function ensureDefaultSearchlist(session?: ClientSession): Promise<void> {
 	const existing = await collections.searchlists.findOne({ _id: 'default' }, { session });
@@ -95,7 +96,7 @@ async function ensureSearchSearchlist(session?: ClientSession): Promise<void> {
 	);
 }
 
-const migrations = [
+export const migrations = [
 	{
 		_id: new ObjectId('65281201e92e590e858af6cb'),
 		name: 'Migrate CMS page content from Markdown to HTML',
@@ -863,6 +864,22 @@ const migrations = [
 					{ session }
 				);
 			}
+		}
+	},
+	{
+		_id: new ObjectId('6b1f4880e92e590e85af2388'),
+		name: 'Move subscription duration to product level (issue #2388)',
+		run: async (session: ClientSession) => {
+			const config = await collections.runtimeConfig.findOne(
+				{ _id: 'subscriptionDuration' },
+				{ session }
+			);
+			const globalDuration = (config?.data as SubscriptionDuration) ?? 'month';
+			await collections.products.updateMany(
+				{ type: 'subscription', subscriptionDuration: { $exists: false } },
+				{ $set: { subscriptionDuration: globalDuration } },
+				{ session }
+			);
 		}
 	}
 ];

@@ -4,7 +4,6 @@ import { ORIGIN } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { CURRENCIES } from '$lib/types/Currency';
-import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { typedKeys } from '$lib/utils/typedKeys.js';
 import { fetchAndSaveExchangeRates } from '$lib/server/locks/currency-lock';
@@ -26,6 +25,7 @@ import { isPhoenixdConfigured } from '$lib/server/phoenixd';
 import { isSwissBitcoinPayConfigured } from '$lib/server/swiss-bitcoin-pay';
 import { isBtcpayServerConfigured } from '$lib/server/btcpay-server';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
+import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 
 const VAT_SETTING_KEYS = new Set([
 	'vatExempted',
@@ -65,6 +65,7 @@ export async function load(event) {
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
 		defaultOnLocation: runtimeConfig.defaultOnLocation,
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,
+		allowCartFromUrl: runtimeConfig.allowCartFromUrl,
 		removeBebopLogoPOS: runtimeConfig.removeBebopLogoPOS,
 		overwriteCreditCardSvgColor: runtimeConfig.overwriteCreditCardSvgColor,
 		hideShopBankOnReceipt: runtimeConfig.hideShopBankOnReceipt,
@@ -105,7 +106,6 @@ export const actions = {
 				copyOrderEmailsToAdmin: z.boolean({ coerce: true }),
 				hideShopBankOnReceipt: z.boolean({ coerce: true }),
 				hideShopBankOnTicket: z.boolean({ coerce: true }),
-				subscriptionDuration: z.enum(SUBSCRIPTION_DURATIONS),
 				mainCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1).filter((c) => c !== 'SAT')]),
 				secondaryCurrency: z
 					.enum([CURRENCIES[0], ...CURRENCIES.slice(1).filter((c) => c !== 'SAT'), ''])
@@ -120,6 +120,7 @@ export const actions = {
 				vatNullOutsideSellerCountry: z.boolean({ coerce: true }),
 				displayVatIncludedInProduct: z.boolean({ coerce: true }),
 				vatCountry: z.string().default(runtimeConfig.vatCountry),
+				subscriptionDuration: z.enum(SUBSCRIPTION_DURATIONS),
 				subscriptionReminderSeconds: z
 					.number({ coerce: true })
 					.int()
@@ -147,6 +148,7 @@ export const actions = {
 				contactModes: z.string().array(),
 				contactModesForceOption: z.boolean({ coerce: true }),
 				cartPreviewInteractive: z.boolean({ coerce: true }),
+				allowCartFromUrl: z.boolean({ coerce: true }),
 				removeBebopLogoPOS: z.boolean({ coerce: true }),
 				hideCreditCardQrCode: z.boolean({ coerce: true }),
 				overwriteCreditCardSvgColor: z.boolean({ coerce: true }),

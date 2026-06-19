@@ -108,7 +108,39 @@
 		"vatIpCountryText": "El país se determina a través los datos de {link}",
 		"vatNullOutsideSellerCountry": "Los impuestos de importación deben ser pagados por el cliente en la aduana al momento de la entrega.",
 		"vatRate": "Tasa de IVA para {country}",
-		"vatSellerCountry": "El país es el del vendedor."
+		"vatSellerCountry": "El país es el del vendedor.",
+		"maxQuantityReached": "Cantidad máxima por pedido alcanzada ({max})"
+	},
+	"cartFromUrl": {
+		"close": "Cerrar",
+		"proposedItems": "Artículos del enlace compartido",
+		"banner": {
+			"created": "Tu carrito ha sido actualizado desde el enlace compartido."
+		},
+		"confirm": {
+			"title": "¿Agregar estos artículos a tu carrito?",
+			"cta": "Agregar a mi carrito",
+			"cancel": "Cancelar"
+		},
+		"reconcile": {
+			"title": "Carrito existente detectado",
+			"description": "Ya tienes artículos en tu carrito. ¿Qué deseas hacer con los artículos del enlace compartido?",
+			"replace": "Reemplazar mi carrito",
+			"merge": "Combinar con mi carrito",
+			"keep": "Mantener mi carrito actual"
+		},
+		"errors": {
+			"title": "Los siguientes productos no fueron agregados:",
+			"keepPartial": "Ignorar",
+			"clearAll": "Vaciar carrito",
+			"rollbackNew": "Cancelar",
+			"reasonNotFound": "Producto inexistente",
+			"reasonGeneric": "No se puede agregar",
+			"reasonVariationRequired": "Requiere una elección de variante",
+			"reasonBookingRequired": "Requiere un horario de reserva",
+			"invalidUrl": "Parámetros de URL inválidos",
+			"invalidUrlDescription": "El enlace compartido está mal formado. Pide al remitente un enlace válido."
+		}
 	},
 	"challenge": {
 		"beginsAt": "Comienza en {days} días",
@@ -932,6 +964,13 @@
 		"preorderText": "Esta es una preorden, el producto estará disponible el {date}",
 		"pricePlaceholder": "Precio",
 		"seeInCabinet": "Ver en el cabinet",
+		"subscriptionDuration": {
+			"hour": "Se renueva cada hora",
+			"day": "Se renueva cada día",
+			"week": "Se renueva cada semana",
+			"month": "Se renueva cada mes",
+			"year": "Se renueva cada año"
+		},
 		"type": {
 			"deposit": "En depósito",
 			"digitalResource": "Recurso digital",

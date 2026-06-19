@@ -108,7 +108,39 @@
 		"vatIpCountryText": "Das Land wird anhand von Daten von {link} ermittelt",
 		"vatNullOutsideSellerCountry": "Einfuhrsteuern müssen vom Kunden bei Lieferung an den Zoll entrichtet werden.",
 		"vatRate": "MwSt.-Satz für {country}",
-		"vatSellerCountry": "Das Land ist das Land des Verkäufers."
+		"vatSellerCountry": "Das Land ist das Land des Verkäufers.",
+		"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})"
+	},
+	"cartFromUrl": {
+		"close": "Schließen",
+		"proposedItems": "Artikel aus dem geteilten Link",
+		"banner": {
+			"created": "Ihr Warenkorb wurde über den geteilten Link aktualisiert."
+		},
+		"confirm": {
+			"title": "Diese Artikel zum Warenkorb hinzufügen?",
+			"cta": "Zum Warenkorb hinzufügen",
+			"cancel": "Abbrechen"
+		},
+		"reconcile": {
+			"title": "Bestehender Warenkorb erkannt",
+			"description": "Sie haben bereits Artikel in Ihrem Warenkorb. Was möchten Sie mit den Artikeln aus dem geteilten Link tun?",
+			"replace": "Meinen Warenkorb ersetzen",
+			"merge": "Mit meinem Warenkorb zusammenführen",
+			"keep": "Meinen aktuellen Warenkorb behalten"
+		},
+		"errors": {
+			"title": "Die folgenden Artikel konnten nicht hinzugefügt werden:",
+			"keepPartial": "Ignorieren",
+			"clearAll": "Warenkorb leeren",
+			"rollbackNew": "Abbrechen",
+			"reasonNotFound": "Produkt nicht gefunden",
+			"reasonGeneric": "Kann nicht hinzugefügt werden",
+			"reasonVariationRequired": "Erfordert eine Variantenauswahl",
+			"reasonBookingRequired": "Erfordert einen Buchungstermin",
+			"invalidUrl": "Ungültige URL-Parameter",
+			"invalidUrlDescription": "Der geteilte Link ist fehlerhaft. Bitte fragen Sie den Absender nach einem gültigen Link."
+		}
 	},
 	"challenge": {
 		"beginsAt": "Beginnt in {days} Tagen",
@@ -932,6 +964,13 @@
 		"preorderText": "Dies ist eine Vorbestellung, Ihr Produkt wird am {date} verfügbar sein",
 		"pricePlaceholder": "Preis",
 		"seeInCabinet": "In Meinem Schrank ansehen",
+		"subscriptionDuration": {
+			"hour": "Verlängert sich jede Stunde",
+			"day": "Verlängert sich jeden Tag",
+			"week": "Verlängert sich jede Woche",
+			"month": "Verlängert sich jeden Monat",
+			"year": "Verlängert sich jedes Jahr"
+		},
 		"type": {
 			"deposit": "Auf Anzahlung",
 			"digitalResource": "Digitale Ressource",
