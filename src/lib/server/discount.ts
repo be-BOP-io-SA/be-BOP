@@ -429,10 +429,11 @@ export async function logPublicDiscountPriceChange(
 		before && isPublicZeroCriteriaDiscount(before) ? publicDiscountPriceSnapshot(before) : null;
 	const afterSnap =
 		after && isPublicZeroCriteriaDiscount(after) ? publicDiscountPriceSnapshot(after) : null;
-	if (!beforeSnap && !afterSnap) {
+	const source = after ?? before;
+	if ((!beforeSnap && !afterSnap) || !source) {
 		return;
 	}
-	const discountId = (after ?? before)!._id;
+	const discountId = source._id;
 	await logAccountingEvent(
 		{
 			eventType: 'discountPublicPriceChange',
