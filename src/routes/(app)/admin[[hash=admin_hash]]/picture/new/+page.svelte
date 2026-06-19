@@ -3,6 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { TAGTYPES, preUploadPicture } from '$lib/types/Picture.js';
+	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 
 	export let data;
 
@@ -67,6 +68,10 @@
 </script>
 
 <h1 class="text-3xl">Add a picture</h1>
+
+{#if !data.s3IsConfigured}
+	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
+{/if}
 
 <form
 	method="post"

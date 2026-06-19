@@ -3,6 +3,7 @@
 	import { typedKeys } from '$lib/utils/typedKeys.js';
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
 	import type { TagFamily } from '$lib/types/TagFamily';
+	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 
 	export let data;
 
@@ -96,6 +97,10 @@
 	};
 	const tagsMap = new Map(data.tags.map((tag) => [tag._id, tag]));
 </script>
+
+{#if !data.s3IsConfigured}
+	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
+{/if}
 
 <a href="{data.adminPrefix}/tags/new" class="underline block mb-4">Create new tag</a>
 

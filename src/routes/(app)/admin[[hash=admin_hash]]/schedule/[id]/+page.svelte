@@ -9,6 +9,7 @@
 	import { browser } from '$app/environment';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
+	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 
 	export let data;
 
@@ -144,6 +145,10 @@
 </script>
 
 <h1 class="text-3xl">Edit a schedule</h1>
+
+{#if !data.s3IsConfigured}
+	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
+{/if}
 
 <form
 	method="post"

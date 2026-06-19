@@ -1,6 +1,7 @@
 <script lang="ts">
 	import PictureComponent from '$lib/components/Picture.svelte';
 	import ProductForm from '$lib/components/ProductForm.svelte';
+	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 
 	export let data;
 
@@ -27,6 +28,10 @@
 			});
 	}
 </script>
+
+{#if !data.s3IsConfigured}
+	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
+{/if}
 
 <ProductForm
 	globalDeliveryFees={data.deliveryFees}
