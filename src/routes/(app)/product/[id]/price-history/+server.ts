@@ -35,8 +35,7 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 	const isCsv = url.searchParams.get('format') === 'csv';
 	if (isCsv) {
 		// CSV export is for staff (employees/admins) only — for auditors.
-		const isStaff =
-			locals.user?.roleId !== undefined && locals.user.roleId !== CUSTOMER_ROLE_ID;
+		const isStaff = locals.user?.roleId !== undefined && locals.user.roleId !== CUSTOMER_ROLE_ID;
 		if (!isStaff) {
 			throw error(403, 'Forbidden');
 		}

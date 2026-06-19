@@ -13,7 +13,10 @@
 
 {#if open}
 	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions a11y-no-noninteractive-element-interactions -->
-	<div class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4" on:click={onClose}>
+	<div
+		class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4"
+		on:click={onClose}
+	>
 		<div
 			class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
 			role="dialog"
@@ -23,7 +26,14 @@
 			<!-- Header -->
 			<div class="flex items-center gap-3 border-b border-gray-100 px-5 py-4">
 				<span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<svg
+						width="18"
+						height="18"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
 						<circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
 					</svg>
 				</span>
@@ -34,7 +44,14 @@
 					aria-label={t('priceCalendar.close')}
 					on:click={onClose}
 				>
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<svg
+						width="18"
+						height="18"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
 						<path d="M6 6l12 12M18 6L6 18" />
 					</svg>
 				</button>
