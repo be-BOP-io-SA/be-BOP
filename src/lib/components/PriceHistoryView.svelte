@@ -95,7 +95,9 @@
 	const fmt = (v: number | null | undefined) =>
 		v === null || v === undefined
 			? '—'
-			: `${cur} ${v.toFixed(FRACTION_DIGITS_PER_CURRENCY[cur as keyof typeof FRACTION_DIGITS_PER_CURRENCY] ?? 2)}`;
+			: `${cur} ${v.toFixed(
+					FRACTION_DIGITS_PER_CURRENCY[cur as keyof typeof FRACTION_DIGITS_PER_CURRENCY] ?? 2
+			  )}`;
 	const fmtDate = (iso: string) =>
 		new Date(iso).toLocaleDateString($locale, { day: '2-digit', month: 'short' });
 	const fmtPct = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(1)} %`;
@@ -165,36 +167,54 @@
 					<p class="text-xs uppercase tracking-wide text-gray-400">{t('priceCalendar.current')}</p>
 					<p class="mt-1 text-xl font-semibold text-gray-900">{fmt(history.catalogue.current)}</p>
 					{#if history.catalogue.deltaPct !== null}
-						<p class="mt-1 text-xs font-medium {history.catalogue.deltaPct >= 0 ? 'text-red-500' : 'text-green-600'}">
-							{history.catalogue.deltaPct >= 0 ? '▲' : '▼'} {fmtPct(history.catalogue.deltaPct)} {t('priceCalendar.vsPrevious')}
+						<p
+							class="mt-1 text-xs font-medium {history.catalogue.deltaPct >= 0
+								? 'text-red-500'
+								: 'text-green-600'}"
+						>
+							{history.catalogue.deltaPct >= 0 ? '▲' : '▼'}
+							{fmtPct(history.catalogue.deltaPct)}
+							{t('priceCalendar.vsPrevious')}
 						</p>
 					{/if}
 				</div>
 				<div class="rounded-xl border border-gray-100 p-4">
 					<p class="text-xs uppercase tracking-wide text-gray-400">{t('priceCalendar.min30')}</p>
-					<p class="mt-1 text-xl font-semibold text-gray-900">{fmt(history.catalogue.min30?.price)}</p>
+					<p class="mt-1 text-xl font-semibold text-gray-900">
+						{fmt(history.catalogue.min30?.price)}
+					</p>
 					{#if history.catalogue.min30}
 						<p class="mt-1 text-xs text-gray-400">{fmtDate(history.catalogue.min30.date)}</p>
 					{/if}
 				</div>
 				<div class="rounded-xl border border-gray-100 p-4">
 					<p class="text-xs uppercase tracking-wide text-gray-400">{t('priceCalendar.max30')}</p>
-					<p class="mt-1 text-xl font-semibold text-gray-900">{fmt(history.catalogue.max30?.price)}</p>
+					<p class="mt-1 text-xl font-semibold text-gray-900">
+						{fmt(history.catalogue.max30?.price)}
+					</p>
 					{#if history.catalogue.max30}
-						<p class="mt-1 text-xs text-gray-400">{t('priceCalendar.since', { date: fmtDate(history.catalogue.max30.date) })}</p>
+						<p class="mt-1 text-xs text-gray-400">
+							{t('priceCalendar.since', { date: fmtDate(history.catalogue.max30.date) })}
+						</p>
 					{/if}
 				</div>
 			</div>
 		{:else}
 			<div class="mb-4 flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-				<span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 font-semibold text-white">%</span>
+				<span
+					class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 font-semibold text-white"
+					>%</span
+				>
 				<div>
 					<p class="text-sm text-gray-700">
-						{t('priceCalendar.meanLabel')} <span class="font-semibold text-gray-900">{fmt(history.paid.mean)}</span>
+						{t('priceCalendar.meanLabel')}
+						<span class="font-semibold text-gray-900">{fmt(history.paid.mean)}</span>
 					</p>
 					{#if history.paid.pctBelowCatalogue !== null}
 						<p class="text-xs text-gray-500">
-							{t('priceCalendar.belowCatalogue', { pct: `−${history.paid.pctBelowCatalogue.toFixed(1)}` })}
+							{t('priceCalendar.belowCatalogue', {
+								pct: `−${history.paid.pctBelowCatalogue.toFixed(1)}`
+							})}
 						</p>
 					{/if}
 				</div>
@@ -226,8 +246,14 @@
 			</div>
 
 			<div class="mt-3 flex items-center gap-5 text-xs text-gray-500">
-				<span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full" style="background:{CAT_COLOR}" /> {t('priceCalendar.catalogue')}</span>
-				<span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full" style="background:{PAID_COLOR}" /> {t('priceCalendar.averagePaid')}</span>
+				<span class="flex items-center gap-1.5"
+					><span class="h-2.5 w-2.5 rounded-full" style="background:{CAT_COLOR}" />
+					{t('priceCalendar.catalogue')}</span
+				>
+				<span class="flex items-center gap-1.5"
+					><span class="h-2.5 w-2.5 rounded-full" style="background:{PAID_COLOR}" />
+					{t('priceCalendar.averagePaid')}</span
+				>
 			</div>
 		{/if}
 	{:else if loading}

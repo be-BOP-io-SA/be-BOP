@@ -61,7 +61,10 @@ describe('isPublicZeroCriteriaDiscount', () => {
 		['billingCountry', { billingCountry: 'FR' }],
 		['contactAddresses', { contactAddresses: ['a@b.com'] }],
 		['requiredTagIds', { requiredTagIds: ['t1'] }],
-		['productCombinations', { productCombinations: [{ products: [{ productId: 'p', quantity: 1 }] }] }]
+		[
+			'productCombinations',
+			{ productCombinations: [{ products: [{ productId: 'p', quantity: 1 }] }] }
+		]
 	])('is false when %s is set', (_label, override) => {
 		expect(isPublicZeroCriteriaDiscount(discount(override))).toBe(false);
 	});
