@@ -124,6 +124,24 @@ describe('buildCatalogue with a public discount window', () => {
 	});
 });
 
+describe('buildCatalogue windowing (sinceMs)', () => {
+	const segments: BaseSegment[] = [
+		{ from: daysAgo(40), amount: 17.9 },
+		{ from: daysAgo(22), amount: 18.9 }
+	];
+
+	it('bounds the returned points to the window but keeps full-history KPIs', () => {
+		const res = buildCatalogue(segments, [], NOW, 2, daysAgo(10));
+		// KPIs are still computed over the full history.
+		expect(res.deltaPct).toBe(5.59);
+		expect(res.min30?.price).toBe(17.9);
+		// Points are limited to the window and anchored at its edge (price in effect then).
+		expect(res.points.every((p) => Date.parse(p.t) >= daysAgo(10))).toBe(true);
+		expect(res.points[0].price).toBe(18.9);
+		expect(res.points.map((p) => p.price)).not.toContain(17.9);
+	});
+});
+
 describe('currency precision (priceDigits)', () => {
 	it('keeps sub-unit prices instead of rounding them to zero', () => {
 		const segments: BaseSegment[] = [{ from: daysAgo(5), amount: 0.00037066 }];

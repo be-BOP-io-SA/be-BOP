@@ -12,7 +12,6 @@
 		"belowCatalogue": "{pct}% below catalogue price",
 		"catalogue": "Catalogue price",
 		"averagePaid": "Average price paid",
-		"loading": "Loading…",
 		"error": "Unable to load price history.",
 		"noHistory": "No price history yet.",
 		"noSales": "No paid sales to display.",

@@ -92,32 +92,33 @@ export function buildCatalogue(
 	segments: BaseSegment[],
 	windows: PublicDiscountWindow[],
 	now: number,
-	priceDigits = 2
+	priceDigits = 2,
+	sinceMs: number | null = null
 ): CatalogueHistory {
 	const firstAt = segments.length
 		? segments.reduce((min, s) => Math.min(min, s.from), segments[0].from)
 		: null;
 
-	const points: PricePoint[] = [];
+	const allPoints: PricePoint[] = [];
 	if (firstAt !== null) {
 		let prev: number | null = null;
 		for (let t = startOfDay(new Date(firstAt)).getTime(); t <= now; t += DAY_MS) {
 			const price = catalogueValueAt(segments, windows, t, priceDigits);
 			if (price !== null && price !== prev) {
-				points.push({ t: new Date(t).toISOString(), price });
+				allPoints.push({ t: new Date(t).toISOString(), price });
 				prev = price;
 			}
 		}
 		const nowPrice = catalogueValueAt(segments, windows, now, priceDigits);
 		if (nowPrice !== null) {
-			points.push({ t: new Date(now).toISOString(), price: nowPrice });
+			allPoints.push({ t: new Date(now).toISOString(), price: nowPrice });
 		}
 	}
 
 	const current = catalogueValueAt(segments, windows, now, priceDigits);
 
 	let deltaPct: number | null = null;
-	const distinct = points.filter((p, i, arr) => i === 0 || p.price !== arr[i - 1].price);
+	const distinct = allPoints.filter((p, i, arr) => i === 0 || p.price !== arr[i - 1].price);
 	if (distinct.length >= 2 && current !== null) {
 		const prevPrice = distinct[distinct.length - 2].price;
 		if (prevPrice) {
@@ -142,6 +143,18 @@ export function buildCatalogue(
 				max30 = { price, date };
 			}
 		}
+	}
+
+	// Bound the returned series to the requested window (KPIs above stay full-history),
+	// anchored at the window edge so the line starts with the price in effect then.
+	let points = allPoints;
+	if (sinceMs !== null && firstAt !== null) {
+		const within = allPoints.filter((p) => Date.parse(p.t) >= sinceMs);
+		const anchor = catalogueValueAt(segments, windows, sinceMs, priceDigits);
+		points =
+			anchor !== null && (within.length === 0 || Date.parse(within[0].t) > sinceMs)
+				? [{ t: new Date(sinceMs).toISOString(), price: anchor }, ...within]
+				: within;
 	}
 
 	return { points, current, deltaPct, min30, max30 };
@@ -309,7 +322,7 @@ export async function getProductPriceHistory(
 	]);
 
 	const digits = FRACTION_DIGITS_PER_CURRENCY[target] ?? 2;
-	const catalogue = buildCatalogue(segments, windows, now, digits);
+	const catalogue = buildCatalogue(segments, windows, now, digits, since ? since.getTime() : null);
 	const paid = buildPaid(sales, catalogue.current, now, digits);
 
 	return { currency: target, catalogue, paid };

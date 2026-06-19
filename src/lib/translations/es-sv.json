@@ -12,7 +12,6 @@
 		"belowCatalogue": "{pct}% bajo el precio de catálogo",
 		"catalogue": "Precio de catálogo",
 		"averagePaid": "Precio promedio pagado",
-		"loading": "Cargando…",
 		"error": "No se pudo cargar el historial de precios.",
 		"noHistory": "Aún no hay historial de precios.",
 		"noSales": "No hay ventas pagadas para mostrar.",
