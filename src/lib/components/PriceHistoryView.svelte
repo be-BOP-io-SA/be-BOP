@@ -68,34 +68,17 @@
 	$: catVals = toXY(history?.catalogue.points);
 	$: paidVals = toXY(history?.paid.points);
 
-	// Time-range selector — windows the chart instead of cramming the whole history.
-	const DAY = 86_400_000;
+	// Time-range selector. The server bounds BOTH series to the selected range, so
+	// there is no client-side windowing — the range only drives the refetch above.
 	const RANGES = [
-		{ key: '1m', label: '1M', days: 30 },
-		{ key: '1y', label: '1Y', days: 365 },
-		{ key: '5y', label: '5Y', days: 1825 },
-		{ key: 'all', label: 'All', days: null }
+		{ key: '1m', label: '1M' },
+		{ key: '1y', label: '1Y' },
+		{ key: '5y', label: '5Y' },
+		{ key: 'all', label: 'All' }
 	] as const;
 	let range: (typeof RANGES)[number]['key'] = '1m';
 
-	function windowed(values: XY[], step: boolean): XY[] {
-		const days = RANGES.find((r) => r.key === range)?.days ?? null;
-		if (days === null || !values.length) {
-			return values;
-		}
-		const cutoff = Date.now() - days * DAY;
-		const within = values.filter((v) => v.x >= cutoff);
-		if (step) {
-			// Keep the line anchored at the window edge with the price in effect then.
-			const before = values.filter((v) => v.x < cutoff).at(-1);
-			if (before && (within.length === 0 || within[0].x > cutoff)) {
-				return [{ x: cutoff, y: before.y }, ...within];
-			}
-		}
-		return within;
-	}
-	$: catView = windowed(catVals, true);
-	// Paid points are already bounded to the range server-side.
+	$: catView = catVals;
 	$: paidView = paidVals;
 
 	function domain(...sets: Array<Array<{ x: number; y: number }>>): [number, number] {
@@ -252,13 +235,13 @@
 		<div class="animate-pulse">
 			<div class="h-60 w-full rounded-xl border border-gray-100 bg-gray-50 p-4">
 				<div class="flex h-full items-end gap-1.5">
-					{#each Array(16) as _, i}
+					{#each Array.from({ length: 16 }) as _, i}
 						<div class="flex-1 rounded-sm bg-gray-200" style="height:{25 + ((i * 53) % 60)}%" />
 					{/each}
 				</div>
 			</div>
 			<div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-				{#each Array(3) as _}
+				{#each Array.from({ length: 3 }) as _, i (i)}
 					<div class="h-[76px] rounded-xl border border-gray-100 bg-gray-50" />
 				{/each}
 			</div>

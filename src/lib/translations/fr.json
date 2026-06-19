@@ -12,7 +12,6 @@
 		"belowCatalogue": "{pct} % sous le prix catalogue",
 		"catalogue": "Prix catalogue",
 		"averagePaid": "Prix moyen payé",
-		"loading": "Chargement…",
 		"error": "Impossible de charger l'historique.",
 		"noHistory": "Pas encore d'historique de prix.",
 		"noSales": "Aucune vente payée à afficher.",
