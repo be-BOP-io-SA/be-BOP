@@ -1,4 +1,24 @@
 {
+	"priceCalendar": {
+		"openTitle": "Preisverlauf",
+		"tabHistory": "Preisverlauf",
+		"tabPaid": "Durchschnittlich gezahlter Preis",
+		"current": "Aktuell",
+		"min30": "Min. (30T)",
+		"max30": "Max. (30T)",
+		"vsPrevious": "vs. vorher",
+		"since": "seit {date}",
+		"meanLabel": "Effektiver Durchschnittspreis:",
+		"belowCatalogue": "{pct}% unter Katalogpreis",
+		"catalogue": "Katalogpreis",
+		"averagePaid": "Durchschnittlich gezahlt",
+		"loading": "Laden…",
+		"error": "Preisverlauf konnte nicht geladen werden.",
+		"noHistory": "Noch kein Preisverlauf.",
+		"noSales": "Keine bezahlten Verkäufe anzuzeigen.",
+		"close": "Schließen",
+		"exportCsv": "Als CSV exportieren"
+	},
 	"address": {
 		"address": "Adresse",
 		"city": "Stadt",
