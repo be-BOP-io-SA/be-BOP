@@ -51,6 +51,17 @@ import { typedEntries } from '$lib/utils/typedEntries';
 import { deepEquals } from '$lib/utils/deep-equals';
 import { deepClone } from '$lib/utils/deep-clone';
 
+/**
+ * Shape of a seeded per-locale layout override. The link arrays are typed as optional so
+ * the assignment in `/admin/layout/translations` (which spreads a Partial of the schema)
+ * stays compatible with the intersection type of `runtimeConfig['translations.<locale>.config']`.
+ */
+type LayoutLinkOverride = {
+	topbarLinks?: Array<{ label: string; href: string }>;
+	navbarLinks?: Array<{ label: string; href: string }>;
+	footerLinks?: Array<{ label: string; href: string }>;
+};
+
 const baseConfig = {
 	adminHash: '',
 	adminWelcomMessage: '',
@@ -72,7 +83,7 @@ const baseConfig = {
 	noProBilling: false,
 	lightningQrCodeDescription: 'brand' as 'orderUrl' | 'brand' | 'brandAndOrderNumber' | 'none',
 	maintenanceIps: '',
-	brandName: 'My be-BOP',
+	brandName: 'Mon be-BOP',
 	subscriptionDuration: 'month' satisfies SubscriptionDuration,
 	subscriptionReminderSeconds: 24 * 60 * 60,
 	reserveStockInMinutes: 20,
@@ -102,18 +113,16 @@ const baseConfig = {
 	authLinkJwtSigningKey: '',
 	ssoSecret: '',
 	topbarLinks: [
-		{ label: 'Blog', href: '/blog' },
-		{ label: 'Store', href: '/store' },
-		{ label: 'Admin', href: '/admin' }
+		{ label: 'Session', href: '/login' },
+		{ label: 'Recherche', href: '/searchlist/search' }
 	],
 	navbarLinks: [
-		{ label: 'Challenges', href: '/challenges' },
-		{ label: 'Rewards', href: '/rewards' },
-		{ label: 'Orders', href: '/orders' }
+		{ label: 'Bienvenue', href: '/home' },
+		{ label: 'Catalogue', href: '/searchlist/default' }
 	],
 	footerLinks: [
-		{ label: 'Terms of Service', href: '/terms' },
-		{ label: 'Privacy Policy', href: '/privacy' }
+		{ label: 'CGVUs', href: '/terms' },
+		{ label: 'Vie privée et confidentialité', href: '/privacy' }
 	],
 
 	viewportFor: 'everyone' as 'employee' | 'no-one' | 'visitors' | 'everyone',
@@ -255,8 +264,8 @@ const baseConfig = {
 		privateKey: ''
 	},
 	nostrRelays: ['wss://nostr.wine', 'wss://nos.lol', 'wss://relay.snort.social'],
-	visitorDarkLightMode: 'system' as 'light' | 'dark' | 'system',
-	employeeDarkLightMode: 'system' as 'light' | 'dark' | 'system',
+	visitorDarkLightMode: 'light' as 'light' | 'dark' | 'system',
+	employeeDarkLightMode: 'light' as 'light' | 'dark' | 'system',
 	removeBebopLogoPOS: false,
 	contactModes: ['email', 'nostr'],
 	contactModesForceOption: false,
@@ -278,7 +287,7 @@ const baseConfig = {
 	hideShopBankOnReceipt: false,
 	hideShopBankOnTicket: false,
 	hideCmsZonesOnMobile: false,
-	mergeMobileMenus: false,
+	mergeMobileMenus: true,
 	copyOrderEmailsToAdmin: true,
 	/**
 	 * Test feature (no admin UI yet): list of npubs that will receive a Nostr DM
@@ -289,8 +298,8 @@ const baseConfig = {
 	orderFullyPaidNotificationNpubs: [] as string[],
 	usersDarkDefaultTheme: false,
 	employeesDarkDefaultTheme: false,
-	displayPoweredBy: false,
-	displayCompanyInfo: false,
+	displayPoweredBy: true,
+	displayCompanyInfo: true,
 	displayMainShopInfo: false,
 	displayFullWidthHeader: false,
 	displayFullWidthNavbar: false,
@@ -329,8 +338,8 @@ const baseConfig = {
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,
 	physicalCartMinAmount: null as null | number,
-	websiteTitle: 'My be-BOP',
-	websiteShortDescription: 'My be-BOP store description',
+	websiteTitle: 'Mon be-BOP - sur le web',
+	websiteShortDescription: 'La description de mon be-BOP',
 	smtp: {
 		host: '',
 		port: 587,
@@ -517,7 +526,95 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 <p>Best regards,<br/>{{brandName}}</p>`,
 			default: true as boolean
 		}
-	}
+	},
+	/**
+	 * Default per-locale overrides for the navigation link arrays. The fallback (no override)
+	 * is the French content carried by `topbarLinks` / `navbarLinks` / `footerLinks` above.
+	 */
+	'translations.en.config': {
+		topbarLinks: [
+			{ label: 'Sign in', href: '/login' },
+			{ label: 'Search', href: '/searchlist/search' }
+		],
+		navbarLinks: [
+			{ label: 'Welcome', href: '/home' },
+			{ label: 'Catalog', href: '/searchlist/default' }
+		],
+		footerLinks: [
+			{ label: 'Terms', href: '/terms' },
+			{ label: 'Privacy', href: '/privacy' }
+		]
+	} as LayoutLinkOverride,
+	'translations.de.config': {
+		topbarLinks: [
+			{ label: 'Anmelden', href: '/login' },
+			{ label: 'Suche', href: '/searchlist/search' }
+		],
+		navbarLinks: [
+			{ label: 'Willkommen', href: '/home' },
+			{ label: 'Katalog', href: '/searchlist/default' }
+		],
+		footerLinks: [
+			{ label: 'AGB', href: '/terms' },
+			{ label: 'Datenschutz', href: '/privacy' }
+		]
+	} as LayoutLinkOverride,
+	'translations.es-sv.config': {
+		topbarLinks: [
+			{ label: 'Iniciar sesión', href: '/login' },
+			{ label: 'Buscar', href: '/searchlist/search' }
+		],
+		navbarLinks: [
+			{ label: 'Bienvenido', href: '/home' },
+			{ label: 'Catálogo', href: '/searchlist/default' }
+		],
+		footerLinks: [
+			{ label: 'Términos', href: '/terms' },
+			{ label: 'Privacidad', href: '/privacy' }
+		]
+	} as LayoutLinkOverride,
+	'translations.it.config': {
+		topbarLinks: [
+			{ label: 'Accedi', href: '/login' },
+			{ label: 'Cerca', href: '/searchlist/search' }
+		],
+		navbarLinks: [
+			{ label: 'Benvenuti', href: '/home' },
+			{ label: 'Catalogo', href: '/searchlist/default' }
+		],
+		footerLinks: [
+			{ label: 'Termini', href: '/terms' },
+			{ label: 'Privacy', href: '/privacy' }
+		]
+	} as LayoutLinkOverride,
+	'translations.nl.config': {
+		topbarLinks: [
+			{ label: 'Inloggen', href: '/login' },
+			{ label: 'Zoeken', href: '/searchlist/search' }
+		],
+		navbarLinks: [
+			{ label: 'Welkom', href: '/home' },
+			{ label: 'Catalogus', href: '/searchlist/default' }
+		],
+		footerLinks: [
+			{ label: 'Voorwaarden', href: '/terms' },
+			{ label: 'Privacybeleid', href: '/privacy' }
+		]
+	} as LayoutLinkOverride,
+	'translations.pt.config': {
+		topbarLinks: [
+			{ label: 'Entrar', href: '/login' },
+			{ label: 'Pesquisar', href: '/searchlist/search' }
+		],
+		navbarLinks: [
+			{ label: 'Bem-vindo', href: '/home' },
+			{ label: 'Catálogo', href: '/searchlist/default' }
+		],
+		footerLinks: [
+			{ label: 'Termos', href: '/terms' },
+			{ label: 'Privacidade', href: '/privacy' }
+		]
+	} as LayoutLinkOverride
 };
 
 export const defaultConfig = Object.freeze(baseConfig);
