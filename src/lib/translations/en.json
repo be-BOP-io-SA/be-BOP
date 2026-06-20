@@ -167,6 +167,7 @@
 		"multiplePaymentMethods": "Use several payment methods",
 		"multiplePaymentMethodsHelpText": "You can set payment methods at the next step.",
 		"noDeliveryInCountry": "Delivery is not available in your country for some of the items of your cart.",
+		"paymentGenerationFailed": "We couldn't initiate your payment. Please try again in a few moments, or contact the shop owner if the problem persists.",
 		"additionalFields": {
 			"title": "Additional information"
 		},

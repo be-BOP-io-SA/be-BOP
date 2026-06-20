@@ -22,6 +22,7 @@
 	import { formatBookedDates } from '$lib/utils/formatBookedDates.js';
 
 	export let data;
+	export let form;
 	let submitting = false;
 
 	let actionCount = 0;
@@ -82,27 +83,28 @@
 
 	function checkForm(event: SubmitEvent) {
 		submitting = true;
-		try {
-			for (const input of typedValues(npubInputs)) {
-				if (!input) {
-					continue;
-				}
-
-				input.value = trimPrefix(input.value.trim(), 'nostr:');
-				if (
-					input.value &&
-					(!input.value.startsWith('npub1') || bech32.decodeUnsafe(input.value)?.prefix !== 'npub')
-				) {
-					input.setCustomValidity(t('checkout.invalidNpub'));
-					input.reportValidity();
-
-					event.preventDefault();
-					return;
-				}
+		for (const input of typedValues(npubInputs)) {
+			if (!input) {
+				continue;
 			}
-		} finally {
-			submitting = false;
+
+			input.value = trimPrefix(input.value.trim(), 'nostr:');
+			if (
+				input.value &&
+				(!input.value.startsWith('npub1') || bech32.decodeUnsafe(input.value)?.prefix !== 'npub')
+			) {
+				input.setCustomValidity(t('checkout.invalidNpub'));
+				input.reportValidity();
+
+				event.preventDefault();
+				// Validation failed → the form is NOT being submitted, re-enable the button.
+				submitting = false;
+				return;
+			}
 		}
+		// Validation passed → the browser is submitting to the server now; keep `submitting`
+		// true so the "Payer" button stays disabled until the server response triggers a
+		// navigation (success) or a re-render with `form?.paymentGenerationFailed` (failure).
 	}
 
 	let paymentMethod: (typeof paymentMethods)[0] | undefined = undefined;
@@ -328,6 +330,11 @@
 	>
 		<form id="checkout" method="post" class="col-span-2 flex gap-4 flex-col" on:submit={checkForm}>
 			<h1 class="page-title body-title">{t('checkout.title')}</h1>
+			{#if form?.paymentGenerationFailed}
+				<div class="alert-error">
+					{t('checkout.paymentGenerationFailed')}
+				</div>
+			{/if}
 			<section class="gap-4 grid grid-cols-6">
 				<h2 class="font-light text-2xl col-span-6">{t('checkout.shipmentInfo')}</h2>
 				{#if isDigital}

@@ -26,6 +26,7 @@
 	const POS_SPLIT_SHARES_MAX_NUMS = 9;
 
 	export let data;
+	export let form;
 	const tabSlug = data.tabSlug;
 	$: tab = data.orderTab;
 
@@ -328,6 +329,11 @@
 	}}
 >
 	<main class="mb-auto flex-grow min-h-0 overflow-y-auto">
+		{#if form?.paymentGenerationFailed}
+			<div class="alert-error m-2">
+				{t('checkout.paymentGenerationFailed')}
+			</div>
+		{/if}
 		<div
 			class="grid {isMobile && (rightPannel !== 'menu' || isPortrait)
 				? 'grid-cols-1'
