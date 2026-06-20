@@ -115,7 +115,7 @@
 		</label>
 	</div>
 	<OrdersList orders={data.orders} adminPrefix={data.adminPrefix} orderLabels={data.labels} />
-	<div class="flex gap-2">
+	<div class="no-sticky flex gap-2">
 		<input type="hidden" value={next} name="skip" />
 		{#if Number($page.url.searchParams.get('skip'))}
 			<button

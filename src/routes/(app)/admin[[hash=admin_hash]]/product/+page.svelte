@@ -192,7 +192,7 @@
 		{/each}
 	</div>
 
-	<div class="flex flex-row mx-auto mt-4 gap-4">
+	<div class="no-sticky flex flex-row mx-auto mt-4 gap-4">
 		<input type="hidden" value={next} name="skip" />
 		{#if Number($page.url.searchParams.get('skip'))}
 			<button
