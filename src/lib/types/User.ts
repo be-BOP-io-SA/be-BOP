@@ -21,6 +21,10 @@ export interface User extends Timestamps {
 	};
 	hasPosOptions?: boolean;
 	alias?: string;
+	// Per-user preferences. Designed to host other sub-objects later (employee selfcare).
+	userSettings?: {
+		backOfficeBookmarks?: string[];
+	};
 }
 
 export const SUPER_ADMIN_ROLE_ID = 'super-admin';

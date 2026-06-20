@@ -16,10 +16,7 @@ import { rateLimit } from '$lib/server/rateLimit.js';
 
 export const load = async ({ locals }) => {
 	if (locals.user) {
-		throw redirect(
-			303,
-			locals.user.hasPosOptions || locals.user.roleId === POS_ROLE_ID ? '/pos' : `/admin`
-		);
+		throw redirect(303, locals.user.roleId === POS_ROLE_ID ? '/pos' : `/admin`);
 	}
 
 	return {
@@ -97,7 +94,7 @@ export const actions = {
 
 		await renewSessionId(locals, cookies);
 
-		if (user.hasPosOptions || user.roleId === POS_ROLE_ID) {
+		if (user.roleId === POS_ROLE_ID) {
 			throw redirect(303, `/pos`);
 		}
 
