@@ -64,6 +64,11 @@ type LayoutLinkOverride = {
 
 const baseConfig = {
 	adminHash: '',
+	/**
+	 * Canonical admin entry hrefs disabled by the deployment (e.g. ['/admin/sumup']).
+	 * Edited by the hoster (mongosh today) — no in-app UI.
+	 */
+	disabledAdminEntries: [] as string[],
 	adminWelcomMessage: '',
 	isAdminCreated: false,
 	exchangeRate: defaultExchangeRate,

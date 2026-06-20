@@ -81,6 +81,15 @@ export async function load({ locals }) {
 		adminPrefix: adminPrefix(),
 		isBitcoinConfigured,
 		isLndConfigured: isLndConfigured(),
-		s3IsConfigured: !!s3IsConfigured()
+		s3IsConfigured: !!s3IsConfigured(),
+		disabledAdminEntries: runtimeConfig.disabledAdminEntries,
+		backOfficeBookmarks: locals.user
+			? collections.users
+					.findOne(
+						{ _id: locals.user._id },
+						{ projection: { 'userSettings.backOfficeBookmarks': 1 } }
+					)
+					.then((u) => u?.userSettings?.backOfficeBookmarks ?? [])
+			: []
 	};
 }

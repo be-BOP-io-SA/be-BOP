@@ -14,3 +14,6 @@ vite.config.ts.timestamp-*
 static/tinymce
 lib/utils/timeZoneOffset.ts
 docker-compose.override.yml
+
+# Claude scratch / notes (not for commit)
+.bebop-notes.md
