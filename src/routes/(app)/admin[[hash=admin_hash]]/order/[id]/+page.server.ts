@@ -3,7 +3,11 @@ import { collections } from '$lib/server/database';
 import { queueEmail } from '$lib/server/email';
 import { ORIGIN } from '$lib/server/env-config';
 import { validateEmailOrNpub } from '$lib/server/nostr';
-import { addOrderPayment } from '$lib/server/orders';
+import {
+	addOrderPayment,
+	notifySuperAdminPaymentFailure,
+	PaymentGenerationError
+} from '$lib/server/orders';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
 import { rateLimit } from '$lib/server/rateLimit';
 import { userIdentifier } from '$lib/server/user';
@@ -68,19 +72,32 @@ export const actions = {
 			throw error(400, 'Amount is greater than the remaining amount to pay');
 		}
 
-		await addOrderPayment(
-			order,
-			parsed.method,
-			{
-				amount,
-				currency: order.currencySnapshot.main.totalPrice.currency
-			},
-			{
-				expiresAt: null,
-				...(parsed.method === 'point-of-sale' &&
-					parsed.posSubtype && { posSubtype: parsed.posSubtype })
+		try {
+			await addOrderPayment(
+				order,
+				parsed.method,
+				{
+					amount,
+					currency: order.currencySnapshot.main.totalPrice.currency
+				},
+				{
+					expiresAt: null,
+					...(parsed.method === 'point-of-sale' &&
+						parsed.posSubtype && { posSubtype: parsed.posSubtype })
+				}
+			);
+		} catch (err) {
+			if (err instanceof PaymentGenerationError) {
+				console.error('PaymentGenerationError on staff addPayment:', err.method, err.reason);
+				await notifySuperAdminPaymentFailure({
+					method: err.method,
+					context: 'staff "add payment" action on existing order',
+					orderId: order._id
+				});
+				return fail(400, { paymentGenerationFailed: true });
 			}
-		);
+			throw err;
+		}
 
 		throw redirect(303, request.headers.get('referer') || `/order/${order._id}`);
 	},

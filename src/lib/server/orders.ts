@@ -1789,6 +1789,77 @@ export async function createOrder(
 	return orderId;
 }
 
+/**
+ * Thrown when a payment record cannot be created/initialised against a PSP.
+ * Caller routes catch it and surface a friendly banner instead of a 402 error page.
+ *
+ * TODO(#2546): classify the cause so the UI can vary the wording.
+ * `kind` should become one of:
+ *  - 'transient' (PSP 5xx, timeout, ECONNREFUSED, 429) → "try again later"
+ *  - 'config' (401/403/400 from PSP, invalid credentials, bad amount) → "contact the shop"
+ *  - 'unknown' (anything else, fallback transient)
+ * Done generically for now since the inner errors aren't typed enough to discriminate safely.
+ */
+export class PaymentGenerationError extends Error {
+	readonly method: PaymentMethod;
+	readonly reason: string;
+	constructor(method: PaymentMethod, reason: string, cause?: unknown) {
+		super(`Payment generation failed for method ${method}: ${reason}`);
+		this.name = 'PaymentGenerationError';
+		this.method = method;
+		this.reason = reason;
+		if (cause) {
+			(this as { cause?: unknown }).cause = cause;
+		}
+	}
+}
+
+/**
+ * Notifies the super-admin (shop owner) that a payment couldn't be initiated against a PSP.
+ *
+ * Pattern lifted from the existing "NEW DISCOUNT" notification at the top of `createOrder`:
+ * insert a row directly into `emailNotifications` with hardcoded HTML, no template lookup.
+ *
+ * Important — we deliberately do NOT include the raw provider error in the email body.
+ * Several PSPs echo back the submitted credential in their error responses (e.g. Stripe
+ * "Invalid API Key provided: sk_..."), and the email can be intercepted, forwarded,
+ * indexed by webmail providers or shared in a multi-recipient inbox. The shopowner
+ * gets enough information here (method, context, order link) to know where to look; the
+ * raw error is still printed to the server logs via the route-level `console.error`.
+ *
+ * TODO(#2546): templatise this once we have a proper admin-managed template for it. Should be
+ * folded into the broader email-notifications rework drafted in PR #1979 — that PR introduces
+ * a generic notification pipeline that will absorb this hardcoded insert as well as the discount
+ * one above.
+ */
+export async function notifySuperAdminPaymentFailure(params: {
+	method: PaymentMethod;
+	context: string;
+	orderId?: string;
+}): Promise<void> {
+	const dest = runtimeConfig.sellerIdentity?.contact.email || SMTP_USER;
+	if (!dest) {
+		return;
+	}
+	const orderLine = params.orderId
+		? `<p>Order: <a href="${ORIGIN}/order/${params.orderId}">${params.orderId}</a></p>`
+		: '';
+	await collections.emailNotifications.insertOne({
+		_id: new ObjectId(),
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		subject: 'PAYMENT GENERATION FAILED',
+		htmlContent:
+			`<p>A payment could not be initiated.</p>` +
+			`<p>Context: ${params.context}</p>` +
+			`<p>Method: ${params.method}</p>` +
+			orderLine +
+			`<p>Please review the configuration of the corresponding payment processor in /admin. ` +
+			`The provider error message is available in the server logs.</p>`,
+		dest
+	});
+}
+
 async function generatePaymentInfo(params: {
 	method: PaymentMethod;
 	orderId: string;
@@ -1818,7 +1889,11 @@ async function generatePaymentInfo(params: {
 			});
 			return { ...result, processor: pp.meta.processor };
 		} catch (err) {
-			throw error(402, err instanceof Error ? err.message : 'Payment creation failed');
+			throw new PaymentGenerationError(
+				params.method,
+				err instanceof Error ? err.message : 'Payment creation failed',
+				err
+			);
 		}
 	}
 
@@ -1830,7 +1905,10 @@ async function generatePaymentInfo(params: {
 		case 'bank-transfer':
 			return { address: runtimeConfig.sellerIdentity?.bank?.iban };
 		default:
-			throw error(402, `No payment processor available for method ${params.method}`);
+			throw new PaymentGenerationError(
+				params.method,
+				`No payment processor available for method ${params.method}`
+			);
 	}
 }
 
@@ -1863,7 +1941,10 @@ function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
 				currency: runtimeConfig.mainCurrency
 			};
 		default:
-			throw error(402, `No payment processor configured for method ${paymentMethod}`);
+			throw new PaymentGenerationError(
+				paymentMethod,
+				`No payment processor configured for method ${paymentMethod}`
+			);
 	}
 }
 

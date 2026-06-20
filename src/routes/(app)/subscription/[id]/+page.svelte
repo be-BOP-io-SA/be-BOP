@@ -7,12 +7,19 @@
 	const { t, locale } = useI18n();
 
 	export let data;
+	export let form;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 flex flex-col gap-4 items-start">
 	<h1 class="text-3xl">
 		{t('subscription.singleTitle', { number: data.subscription.number })}
 	</h1>
+
+	{#if form?.paymentGenerationFailed}
+		<div class="alert-error">
+			{t('checkout.paymentGenerationFailed')}
+		</div>
+	{/if}
 
 	<ProductItem product={data.product} picture={data.picture} />
 

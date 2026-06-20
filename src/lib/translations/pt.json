@@ -170,6 +170,7 @@
 		"multiplePaymentMethods": "Usar vários métodos de pagamento",
 		"multiplePaymentMethodsHelpText": "Pode definir os métodos de pagamento no próximo passo.",
 		"noDeliveryInCountry": "A entrega não está disponível no seu país para alguns dos artigos do seu carrinho.",
+		"paymentGenerationFailed": "Não foi possível iniciar o pagamento. Por favor, tente novamente dentro de alguns instantes, ou contacte o vendedor da loja se o problema persistir.",
 		"note": {
 			"label": "Deixe uma nota para o comerciante",
 			"title": "Nota"

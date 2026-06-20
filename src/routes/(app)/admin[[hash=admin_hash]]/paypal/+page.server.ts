@@ -1,6 +1,8 @@
 import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { CURRENCIES, type Currency } from '$lib/types/Currency.js';
+import { rateLimit } from '$lib/server/rateLimit';
+import { testProcessorConnection } from '$lib/server/sdk/test-connection';
 import { z } from 'zod';
 
 export async function load() {
@@ -50,5 +52,9 @@ export const actions = {
 			currency: 'EUR',
 			sandbox: false
 		};
+	},
+	testConnection: async function ({ locals }) {
+		rateLimit(locals.clientIp, 'pp.test.paypal', 5, { minutes: 1 });
+		return await testProcessorConnection('paypal');
 	}
 };
