@@ -55,7 +55,9 @@
 				amount={payment.price.amount}
 				currency={payment.price.currency}
 			/>
-			- {t(`order.paymentStatus.${payment.status}`)}
+			- {payment.status === 'pending' && payment.awaitingConfirmation
+					? t('order.paymentStatus.awaitingConfirmation')
+					: t(`order.paymentStatus.${payment.status}`)}
 		</span>
 	</summary>
 
