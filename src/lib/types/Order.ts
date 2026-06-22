@@ -172,6 +172,19 @@ export interface OrderPayment {
 	};
 
 	lastStatusNotified?: OrderPaymentStatus;
+	/**
+	 * Onchain bitcoin only: a full-amount TX has been detected but is not yet confirmed
+	 * to the required threshold. Keeps the order from expiring while funds are in flight
+	 * and lets the buyer see "received, awaiting confirmation".
+	 */
+	awaitingConfirmation?: boolean;
+	/**
+	 * Onchain bitcoin only: when a previously-seen full-amount TX disappeared from the
+	 * mempool *after* the order's expiry deadline. Starts a short grace window so an RBF
+	 * replacement (or a lagging mempool backend) can reappear before the order expires.
+	 * Cleared as soon as the TX is seen again.
+	 */
+	mempoolMissingSince?: Date;
 	bankTransferNumber?: string;
 	detail?: string;
 	cashbackAmount?: Price;

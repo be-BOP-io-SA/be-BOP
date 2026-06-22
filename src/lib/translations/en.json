@@ -613,6 +613,11 @@
 			"other": "Payment will be confirmed after {count} confirmations.",
 			"zero": "Payment will be confirmed without waiting for confirmations."
 		},
+		"awaitingConfirmationBitcoin": {
+			"one": "Payment received — waiting for 1 confirmation.",
+			"other": "Payment received — waiting for {count} confirmations.",
+			"zero": "Payment received — confirming."
+		},
 		"paymentAccountHolder": "Account holder",
 		"paymentAccountHolderAddress": "Address",
 		"paymentAddress": "Payment address",
@@ -626,6 +631,7 @@
 		"paymentLinkGeneric": "Click here to pay with",
 		"paymentPaidAt": "Payment done on {date}",
 		"paymentStatus": {
+			"awaitingConfirmation": "received, awaiting confirmation",
 			"canceled": "canceled",
 			"canceledTemplate": "Order canceled!",
 			"expired": "expired",

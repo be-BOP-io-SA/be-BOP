@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { bip84Address, bip48Address } from './bitcoin-nodeless';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { bip84Address, bip48Address, getSatoshiReceivedNodeless } from './bitcoin-nodeless';
+import { runtimeConfig } from './runtime-config';
 
 describe('bitcoin-nodeless', () => {
 	it('should derivate public key', () => {
@@ -121,5 +122,85 @@ describe('bitcoin-nodeless', () => {
 			expect(fromVpub).toBe(fromTpub);
 			expect(fromVpub).toMatch(/^tb1q/);
 		});
+	});
+});
+
+describe('getSatoshiReceivedNodeless', () => {
+	const ADDRESS = 'bc1qrw2swpufzdx9gy4aewv5q45e53stcf95ker0p7';
+	const BLOCK_HEIGHT = 100;
+	const orderCreatedAt = new Date('2026-06-01T00:00:00Z');
+	const AMOUNT = 100_000;
+
+	const secs = (d: Date) => Math.floor(d.getTime() / 1000);
+
+	// One inbound TX paying AMOUNT to ADDRESS. `blockHeight`/`blockTime` omitted → mempool.
+	function makeTx(opts: { blockHeight?: number; blockTime?: Date; amount?: number } = {}) {
+		const confirmed = opts.blockHeight !== undefined && opts.blockTime !== undefined;
+		return {
+			txid: `tx-${opts.blockHeight ?? 'mempool'}-${opts.blockTime?.getTime() ?? 0}`,
+			status: confirmed
+				? { confirmed: true, block_height: opts.blockHeight, block_time: secs(opts.blockTime ?? orderCreatedAt) }
+				: { confirmed: false },
+			vout: [{ scriptpubkey_address: ADDRESS, value: opts.amount ?? AMOUNT }]
+		};
+	}
+
+	function mockFetchTxs(txs: unknown[]) {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => ({ ok: true, status: 200, statusText: 'OK', json: async () => txs }))
+		);
+	}
+
+	beforeEach(() => {
+		runtimeConfig.bitcoinBlockHeight = BLOCK_HEIGHT;
+		runtimeConfig.bitcoinNodeless = {
+			...runtimeConfig.bitcoinNodeless,
+			mempoolUrl: 'https://mempool.example'
+		};
+	});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it('counts a full-amount mempool TX as pending, not received', async () => {
+		mockFetchTxs([makeTx()]); // unconfirmed
+		const res = await getSatoshiReceivedNodeless(ADDRESS, 1, orderCreatedAt);
+		expect(res.satReceived).toBe(0);
+		expect(res.pendingSatReceived).toBe(AMOUNT);
+		expect(res.transactions).toHaveLength(0);
+	});
+
+	it('counts a confirmed-but-too-shallow TX as pending, not received', async () => {
+		// block_height 100 with current tip 100 = 1 confirmation, threshold needs 3
+		mockFetchTxs([makeTx({ blockHeight: 100, blockTime: new Date('2026-06-01T01:00:00Z') })]);
+		const res = await getSatoshiReceivedNodeless(ADDRESS, 3, orderCreatedAt);
+		expect(res.satReceived).toBe(0);
+		expect(res.pendingSatReceived).toBe(AMOUNT);
+	});
+
+	it('counts a threshold-confirmed TX as received even when mined after the expiry window', async () => {
+		// Regression guard: the old upper time-bound dropped TXs confirmed late.
+		mockFetchTxs([makeTx({ blockHeight: 98, blockTime: new Date('2027-01-01T00:00:00Z') })]);
+		const res = await getSatoshiReceivedNodeless(ADDRESS, 3, orderCreatedAt);
+		expect(res.satReceived).toBe(AMOUNT);
+		expect(res.pendingSatReceived).toBe(0);
+		expect(res.transactions).toHaveLength(1);
+	});
+
+	it('ignores TXs mined before the order was created', async () => {
+		mockFetchTxs([makeTx({ blockHeight: 50, blockTime: new Date('2026-05-01T00:00:00Z') })]);
+		const res = await getSatoshiReceivedNodeless(ADDRESS, 3, orderCreatedAt);
+		expect(res.satReceived).toBe(0);
+		expect(res.pendingSatReceived).toBe(0);
+		expect(res.transactions).toHaveLength(0);
+	});
+
+	it('counts a mempool TX as received when threshold is 0', async () => {
+		mockFetchTxs([makeTx()]); // unconfirmed
+		const res = await getSatoshiReceivedNodeless(ADDRESS, 0, orderCreatedAt);
+		expect(res.satReceived).toBe(AMOUNT);
+		expect(res.pendingSatReceived).toBe(0);
 	});
 });

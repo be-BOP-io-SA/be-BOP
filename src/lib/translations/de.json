@@ -613,6 +613,11 @@
 			"other": "Die Zahlung wird nach {count} Bestätigungen bestätigt.",
 			"zero": "Die Zahlung wird ohne Wartezeit auf Bestätigungen bestätigt."
 		},
+		"awaitingConfirmationBitcoin": {
+			"one": "Zahlung empfangen — warte auf 1 Bestätigung.",
+			"other": "Zahlung empfangen — warte auf {count} Bestätigungen.",
+			"zero": "Zahlung empfangen — wird bestätigt."
+		},
 		"paymentAccountHolder": "Kontoinhaber",
 		"paymentAccountHolderAddress": "Adresse",
 		"paymentAddress": "Zahlungsadresse",
@@ -626,6 +631,7 @@
 		"paymentLinkGeneric": "Klicken Sie hier, um mit zu bezahlen",
 		"paymentPaidAt": "Zahlung erfolgt am {date}",
 		"paymentStatus": {
+			"awaitingConfirmation": "empfangen, wartet auf Bestätigung",
 			"canceled": "storniert",
 			"canceledTemplate": "Bestellung storniert!",
 			"expired": "abgelaufen",

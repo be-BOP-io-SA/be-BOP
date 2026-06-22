@@ -613,6 +613,11 @@
 			"other": "Il pagamento sarà confermato dopo {count} conferme.",
 			"zero": "Il pagamento sarà effettuato senza aspettare la conferma."
 		},
+		"awaitingConfirmationBitcoin": {
+			"one": "Pagamento ricevuto — in attesa di 1 conferma.",
+			"other": "Pagamento ricevuto — in attesa di {count} conferme.",
+			"zero": "Pagamento ricevuto — conferma in corso."
+		},
 		"paymentAccountHolder": "Intestatario dell'account",
 		"paymentAccountHolderAddress": "Indirizzo",
 		"paymentAddress": "Indirizzo di fatturazione",
@@ -626,6 +631,7 @@
 		"paymentLinkGeneric": "Clicca qui per pagare con",
 		"paymentPaidAt": "Pagamento effetuato il {date}",
 		"paymentStatus": {
+			"awaitingConfirmation": "ricevuto, in attesa di conferma",
 			"canceled": "Annullato",
 			"canceledTemplate": "Ordine annullato canceled!",
 			"expired": "Scaduto",
