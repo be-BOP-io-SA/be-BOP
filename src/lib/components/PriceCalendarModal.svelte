@@ -7,6 +7,10 @@
 	export let productName: string;
 	export let currency = '';
 	export let onClose: () => void = () => {};
+	export let showHistory = true;
+	export let showPaid = false;
+	export let vatMult = 1;
+	export let adminOrderHref = '';
 
 	const { t } = useI18n();
 </script>
@@ -58,7 +62,15 @@
 			</div>
 
 			<div class="flex-1 overflow-y-auto px-5 pb-5">
-				<PriceHistoryView {productId} {currency} active={open} />
+				<PriceHistoryView
+					{productId}
+					{currency}
+					active={open}
+					{showHistory}
+					{showPaid}
+					{vatMult}
+					{adminOrderHref}
+				/>
 			</div>
 
 			<!-- Footer -->
