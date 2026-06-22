@@ -69,6 +69,10 @@
 			"invalid": "Código promocional não encontrado ou não aplicável ao seu pedido.",
 			"rateLimited": "Muitas tentativas falhadas. Por favor, tente novamente mais tarde."
 		},
+		"share": {
+			"button": "Partilhar o meu carrinho",
+			"copied": "Link copiado"
+		},
 		"empty": "O carrinho está vazio",
 		"fillProductAlias": "Preencher o alias do produto",
 		"items": "Produtos",

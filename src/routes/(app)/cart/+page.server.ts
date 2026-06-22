@@ -366,6 +366,7 @@ export async function load({ parent, locals, url }) {
 		},
 		hasPromoDiscounts,
 		appliedPromoCode: cartInDb?.promoCode,
+		allowCartFromUrl: runtimeConfig.allowCartFromUrl,
 		...(cartFromUrl && { cartFromUrl }),
 		...(cmsBasketTop && {
 			cmsBasketTop,
