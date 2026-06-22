@@ -16,7 +16,8 @@
 		"noHistory": "Pas encore d'historique de prix.",
 		"noSales": "Aucune vente payée à afficher.",
 		"close": "Fermer",
-		"exportCsv": "Exporter en CSV"
+		"exportCsv": "Exporter en CSV",
+		"viewOrders": "Voir les commandes"
 	},
 	"address": {
 		"address": "Adresse",

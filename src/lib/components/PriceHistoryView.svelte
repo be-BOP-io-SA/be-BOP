@@ -24,10 +24,14 @@
 	export let currency = '';
 	/** When false, the component does not fetch (used by the modal while closed). */
 	export let active = true;
+	export let showHistory = true;
+	export let showPaid = false;
+	export let vatMult = 1;
+	export let adminOrderHref = '';
 
 	const { t, locale } = useI18n();
 
-	let tab: 'history' | 'paid' = 'history';
+	let tab: 'history' | 'paid' = showHistory ? 'history' : 'paid';
 	let history: PriceHistoryData | null = null;
 	let loading = false;
 	let errored = false;
@@ -65,7 +69,7 @@
 	$: cur = history?.currency || currency;
 	const toXY = (pts: PriceHistoryPoint[] = []): XY[] =>
 		pts.map((p) => ({ x: Date.parse(p.t), y: p.price }));
-	$: catVals = toXY(history?.catalogue.points);
+	$: catVals = toXY(history?.catalogue.points).map((p) => ({ ...p, y: p.y * vatMult }));
 	$: paidVals = toXY(history?.paid.points);
 
 	// Time-range selector. The server bounds BOTH series to the selected range, so
@@ -98,6 +102,8 @@
 			: `${cur} ${v.toFixed(
 					FRACTION_DIGITS_PER_CURRENCY[cur as keyof typeof FRACTION_DIGITS_PER_CURRENCY] ?? 2
 			  )}`;
+	const fmtCat = (v: number | null | undefined) =>
+		fmt(v !== null && v !== undefined ? v * vatMult : v);
 	const fmtDate = (iso: string) =>
 		new Date(iso).toLocaleDateString($locale, { day: '2-digit', month: 'short' });
 	const fmtPct = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(1)} %`;
@@ -112,24 +118,28 @@
 
 <!-- Sub-tabs -->
 <div class="flex gap-6 border-b border-gray-100">
-	<button
-		type="button"
-		class="-mb-px border-b-2 py-3 text-sm font-medium {tab === 'history'
-			? 'border-blue-500 text-blue-600'
-			: 'border-transparent text-gray-500 hover:text-gray-700'}"
-		on:click={() => (tab = 'history')}
-	>
-		{t('priceCalendar.tabHistory')}
-	</button>
-	<button
-		type="button"
-		class="-mb-px border-b-2 py-3 text-sm font-medium {tab === 'paid'
-			? 'border-blue-500 text-blue-600'
-			: 'border-transparent text-gray-500 hover:text-gray-700'}"
-		on:click={() => (tab = 'paid')}
-	>
-		{t('priceCalendar.tabPaid')}
-	</button>
+	{#if showHistory}
+		<button
+			type="button"
+			class="-mb-px border-b-2 py-3 text-sm font-medium {tab === 'history'
+				? 'border-blue-500 text-blue-600'
+				: 'border-transparent text-gray-500 hover:text-gray-700'}"
+			on:click={() => (tab = 'history')}
+		>
+			{t('priceCalendar.tabHistory')}
+		</button>
+	{/if}
+	{#if showPaid}
+		<button
+			type="button"
+			class="-mb-px border-b-2 py-3 text-sm font-medium {tab === 'paid'
+				? 'border-blue-500 text-blue-600'
+				: 'border-transparent text-gray-500 hover:text-gray-700'}"
+			on:click={() => (tab = 'paid')}
+		>
+			{t('priceCalendar.tabPaid')}
+		</button>
+	{/if}
 </div>
 
 <div class="pt-5">
@@ -165,7 +175,7 @@
 			<div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
 				<div class="rounded-xl border border-gray-100 p-4">
 					<p class="text-xs uppercase tracking-wide text-gray-400">{t('priceCalendar.current')}</p>
-					<p class="mt-1 text-xl font-semibold text-gray-900">{fmt(history.catalogue.current)}</p>
+					<p class="mt-1 text-xl font-semibold text-gray-900">{fmtCat(history.catalogue.current)}</p>
 					{#if history.catalogue.deltaPct !== null}
 						<p
 							class="mt-1 text-xs font-medium {history.catalogue.deltaPct >= 0
@@ -181,7 +191,7 @@
 				<div class="rounded-xl border border-gray-100 p-4">
 					<p class="text-xs uppercase tracking-wide text-gray-400">{t('priceCalendar.min30')}</p>
 					<p class="mt-1 text-xl font-semibold text-gray-900">
-						{fmt(history.catalogue.min30?.price)}
+						{fmtCat(history.catalogue.min30?.price)}
 					</p>
 					{#if history.catalogue.min30}
 						<p class="mt-1 text-xs text-gray-400">{fmtDate(history.catalogue.min30.date)}</p>
@@ -190,7 +200,7 @@
 				<div class="rounded-xl border border-gray-100 p-4">
 					<p class="text-xs uppercase tracking-wide text-gray-400">{t('priceCalendar.max30')}</p>
 					<p class="mt-1 text-xl font-semibold text-gray-900">
-						{fmt(history.catalogue.max30?.price)}
+						{fmtCat(history.catalogue.max30?.price)}
 					</p>
 					{#if history.catalogue.max30}
 						<p class="mt-1 text-xs text-gray-400">
@@ -219,6 +229,13 @@
 					{/if}
 				</div>
 			</div>
+			{#if adminOrderHref}
+				<div class="mb-3">
+					<a href={adminOrderHref} class="text-xs text-blue-600 underline"
+						>{t('priceCalendar.viewOrders')}</a
+					>
+				</div>
+			{/if}
 
 			<div class="h-60 w-full rounded-xl border border-gray-100 p-2">
 				{#if paidView.length || catView.length}

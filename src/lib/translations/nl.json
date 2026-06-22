@@ -16,7 +16,8 @@
 		"noHistory": "Nog geen prijsgeschiedenis.",
 		"noSales": "Geen betaalde verkopen om weer te geven.",
 		"close": "Sluiten",
-		"exportCsv": "Exporteren naar CSV"
+		"exportCsv": "Exporteren naar CSV",
+		"viewOrders": "Bestellingen bekijken"
 	},
 	"address": {
 		"address": "Adres",

@@ -16,6 +16,7 @@
 		oneMaxPerLine,
 		productPriceWithVariations
 	} from '$lib/types/Product';
+	import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 	import { toCurrency } from '$lib/utils/toCurrency';
 	import {
 		addDays,
@@ -49,8 +50,12 @@
 	// The price calendar is meaningless for products without a fixed catalogue price.
 	$: priceCalendarEnabled =
 		!data.product.payWhatYouWant && !data.product.free && !data.product.bookingSpec;
+	$: isLoggedIn = !!(data.userId || data.email || data.npub || data.sso?.length);
+	$: isEmployee = !!data.roleId && data.roleId !== CUSTOMER_ROLE_ID;
+	// Guests see Price history; employees see Average price paid; regular logged-in customers see neither.
+	$: priceCalendarVisible = priceCalendarEnabled && (!isLoggedIn || isEmployee);
 	function openPriceCalendar() {
-		if (priceCalendarEnabled) {
+		if (priceCalendarVisible) {
 			showPriceCalendar = true;
 		}
 	}
@@ -610,7 +615,7 @@
 							<!-- svelte-ignore a11y-click-events-have-key-events -->
 							<div
 								class="flex items-center gap-2"
-								class:cursor-pointer={priceCalendarEnabled}
+								class:cursor-pointer={priceCalendarVisible}
 								role="button"
 								tabindex="0"
 								title={t('priceCalendar.openTitle')}
@@ -657,7 +662,7 @@
 							<!-- svelte-ignore a11y-click-events-have-key-events -->
 							<div
 								class="flex items-center gap-2"
-								class:cursor-pointer={priceCalendarEnabled}
+								class:cursor-pointer={priceCalendarVisible}
 								role="button"
 								tabindex="0"
 								title={t('priceCalendar.openTitle')}
@@ -703,7 +708,7 @@
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<div
 							class="flex items-baseline gap-3"
-							class:cursor-pointer={priceCalendarEnabled}
+							class:cursor-pointer={priceCalendarVisible}
 							role="button"
 							tabindex="0"
 							title={t('priceCalendar.openTitle')}
@@ -748,6 +753,12 @@
 					productName={data.product.name}
 					currency={data.product.price.currency}
 					onClose={() => (showPriceCalendar = false)}
+					showHistory={!isLoggedIn}
+					showPaid={isEmployee}
+					{vatMult}
+					adminOrderHref={isEmployee && data.product.alias?.[0]
+						? `${data.adminPrefix}/order?productAlias=${data.product.alias[0]}`
+						: ''}
 				/>
 
 				{#if data.product.type === 'subscription' && data.product.subscriptionDuration}

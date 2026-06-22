@@ -4,6 +4,7 @@ import { collections } from '$lib/server/database';
 import { applyResolvedStock, resolveStockProduct } from '$lib/server/product';
 import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { adminPrefix as getAdminPrefix } from '$lib/server/admin';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import { DEFAULT_MAX_QUANTITY_PER_ORDER, type Product } from '$lib/types/Product';
@@ -116,6 +117,7 @@ async function fetchProduct(
 	| 'stockReference'
 	| 'tagIds'
 	| 'subscriptionDuration'
+	| 'alias'
 > | null> {
 	return collections.products.findOne<ReturnType<Awaited<typeof fetchProduct>>>(
 		{ _id: productId },
@@ -168,7 +170,8 @@ async function fetchProduct(
 				vatProfileId: 1,
 				stockReference: 1,
 				tagIds: 1,
-				subscriptionDuration: 1
+				subscriptionDuration: 1,
+				alias: 1
 			}
 		}
 	);
@@ -288,7 +291,8 @@ export const load = async ({ params, parent, locals }) => {
 		}),
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
 		websiteShortDescription: product.shortDescription,
-		freeProductsAvailable
+		freeProductsAvailable,
+		adminPrefix: getAdminPrefix()
 	};
 };
 
