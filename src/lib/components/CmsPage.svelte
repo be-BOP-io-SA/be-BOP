@@ -14,7 +14,8 @@
 		CmsCountdown,
 		CmsGallery,
 		CmsLeaderboard,
-		CmsSchedule
+		CmsSchedule,
+		CmsSearchlist
 	} from '$lib/server/cms';
 	import CmsDesign from './CmsDesign.svelte';
 
@@ -54,6 +55,7 @@
 	export let galleries: CmsGallery[];
 	export let leaderboards: CmsLeaderboard[];
 	export let schedules: CmsSchedule[];
+	export let searchlists: CmsSearchlist[] = [];
 
 	const { t } = useI18n();
 </script>
@@ -90,6 +92,7 @@
 		{countdowns}
 		{galleries}
 		{leaderboards}
+		{searchlists}
 		{schedules}
 		class={cmsPage.displayRawContent ? '' : 'prose max-w-full body body-mainPlan'}
 	/>
@@ -119,6 +122,7 @@
 			{countdowns}
 			{galleries}
 			{leaderboards}
+			{searchlists}
 			{schedules}
 			class={cmsPage.displayRawContent ? '' : 'prose max-w-full body'}
 		/>

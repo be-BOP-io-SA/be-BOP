@@ -69,6 +69,10 @@
 			"invalid": "Promo code not found or not applicable to your order.",
 			"rateLimited": "Too many failed promo code attempts. Please try again later."
 		},
+		"share": {
+			"button": "Share my cart",
+			"copied": "Link copied"
+		},
 		"empty": "Cart is empty",
 		"fillProductAlias": "Fill product alias",
 		"items": "Products",
@@ -89,7 +93,39 @@
 		"vatIpCountryText": "The country is determined through data from {link}",
 		"vatNullOutsideSellerCountry": "Import taxes must be paid by the customer to customs upon delivery.",
 		"vatRate": "VAT rate for {country}",
-		"vatSellerCountry": "The country is the seller's country."
+		"vatSellerCountry": "The country is the seller's country.",
+		"maxQuantityReached": "Maximum quantity per order reached ({max})"
+	},
+	"cartFromUrl": {
+		"close": "Close",
+		"proposedItems": "Items from the shared link",
+		"banner": {
+			"created": "Your cart has been updated from the shared link."
+		},
+		"confirm": {
+			"title": "Add these items to your cart?",
+			"cta": "Add to my cart",
+			"cancel": "Cancel"
+		},
+		"reconcile": {
+			"title": "Existing cart detected",
+			"description": "You already have items in your cart. What would you like to do with the items from the shared link?",
+			"replace": "Replace my cart",
+			"merge": "Merge with my cart",
+			"keep": "Keep my current cart"
+		},
+		"errors": {
+			"title": "The following items could not be added:",
+			"keepPartial": "Ignore",
+			"clearAll": "Empty cart",
+			"rollbackNew": "Cancel",
+			"reasonNotFound": "Product not found",
+			"reasonGeneric": "Cannot be added",
+			"reasonVariationRequired": "Requires a variation choice",
+			"reasonBookingRequired": "Requires a booking slot",
+			"invalidUrl": "Invalid URL parameters",
+			"invalidUrlDescription": "The shared link is malformed. Please ask the sender for a valid link."
+		}
 	},
 	"challenge": {
 		"beginsAt": "Begins in {days} days",
@@ -131,6 +167,9 @@
 		"multiplePaymentMethods": "Use several payment methods",
 		"multiplePaymentMethodsHelpText": "You can set payment methods at the next step.",
 		"noDeliveryInCountry": "Delivery is not available in your country for some of the items of your cart.",
+		"additionalFields": {
+			"title": "Additional information"
+		},
 		"note": {
 			"label": "Leave a note for merchant",
 			"title": "Note"
@@ -514,6 +553,9 @@
 		"backToOrder": "<< Back to order",
 		"clickQR": "Click on the QR code to pay with your wallet",
 		"confirmCancel": "Are you sure ? If this is your only pending payment and there is no paid payment on the order, the order will be cancelled. In case of mistake, first create a payment, then delete this one.",
+		"additionalFields": {
+			"title": "Additional information"
+		},
 		"contactAddress": {
 			"title": "Contact address"
 		},
@@ -909,6 +951,13 @@
 		"preorderText": "This is a preorder, your product will be available on {date}",
 		"pricePlaceholder": "Price",
 		"seeInCabinet": "See in MyCabinet",
+		"subscriptionDuration": {
+			"hour": "Renews every hour",
+			"day": "Renews every day",
+			"week": "Renews every week",
+			"month": "Renews every month",
+			"year": "Renews every year"
+		},
 		"type": {
 			"deposit": "On deposit",
 			"digitalResource": "Digital Resource",
@@ -941,6 +990,51 @@
 		},
 		"subscribeCTA": "Subscribe",
 		"uniqueDateText": " - from {beginTime}"
+	},
+	"searchlist": {
+		"searchbar": {
+			"label": "Search",
+			"placeholder": "Search product by name",
+			"submit": "Search",
+			"reset": "Reset"
+		},
+		"sort": {
+			"label": "Sort by",
+			"options": {
+				"alphaAsc": "Alphabetical (A → Z)",
+				"alphaDesc": "Alphabetical (Z → A)",
+				"priceAsc": "Price (low → high)",
+				"priceDesc": "Price (high → low)",
+				"createdAsc": "Oldest first",
+				"createdDesc": "Newest first"
+			}
+		},
+		"filters": {
+			"price": {
+				"minLabel": "Min price",
+				"maxLabel": "Max price"
+			},
+			"stock": {
+				"label": "In stock only"
+			},
+			"tag": {
+				"label": "Tag"
+			}
+		},
+		"view": {
+			"grid": "Grid view",
+			"list": "List view"
+		},
+		"pagination": {
+			"loadMore": "Load more",
+			"prev": "Previous",
+			"next": "Next"
+		},
+		"empty": {
+			"title": "No products match your search.",
+			"reset": "Reset"
+		},
+		"disabledNotice": "This searchlist is disabled and not visible to the public."
 	},
 	"subscription": {
 		"associated": {

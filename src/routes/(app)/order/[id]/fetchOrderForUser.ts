@@ -233,6 +233,7 @@ async function fetchOrderForUserImpl(orderId: string, params?: { userRoleId?: st
 				alias: note.userAlias
 			})) || [],
 		receiptNote: order.receiptNote,
+		customCheckoutFields: order.customCheckoutFields,
 		user: {
 			npub: order.user.npub,
 			email: order.user.email,

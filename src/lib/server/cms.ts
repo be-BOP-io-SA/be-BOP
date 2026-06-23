@@ -2,6 +2,7 @@ import type { Challenge } from '$lib/types/Challenge';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import type { Product } from '$lib/types/Product';
 import type { Picture } from '$lib/types/Picture';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { Currency } from '$lib/types/Currency';
 import { trimPrefix } from '$lib/utils/trimPrefix';
 import { trimSuffix } from '$lib/utils/trimSuffix';
@@ -11,7 +12,7 @@ import { collections } from './database';
 import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import type { PickDeep } from 'type-fest';
 import type { Specification } from '$lib/types/Specification';
-import type { TagWidgetTag } from '$lib/types/Tag';
+import type { Tag, TagWidgetTag } from '$lib/types/Tag';
 import type { ContactForm } from '$lib/types/ContactForm';
 import type { Countdown } from '$lib/types/Countdown';
 import type { Gallery } from '$lib/types/Gallery';
@@ -21,6 +22,9 @@ import { groupBy } from '$lib/utils/group-by';
 import { subMinutes } from 'date-fns';
 import { z } from 'zod';
 import type { ProductWidgetProduct } from '$lib/components/ProductWidget/ProductWidgetProduct';
+import { readUrlState, searchProducts, type VatContext, type SearchlistLocals } from './searchlist';
+import { runtimeConfig } from './runtime-config';
+import type { VatProfile } from '$lib/types/VatProfile';
 export type ExternalProductData = ProductWidgetProduct & {
 	externalUrl: string;
 	pictures: Picture[];
@@ -222,6 +226,11 @@ type TokenObject =
 			slug: string;
 			display: string | undefined;
 			raw: string;
+	  }
+	| {
+			type: 'searchlistWidget';
+			slug: string;
+			raw: string;
 	  };
 
 export type CmsFromContentInput = {
@@ -232,9 +241,10 @@ export type CmsFromContentInput = {
 	forceUnsanitizedContent?: boolean;
 };
 
-type CmsFromContentLocals = Partial<
-	PickDeep<App.Locals, 'user.hasPosOptions' | 'language' | 'email' | 'sso'>
->;
+type CmsFromContentLocals = Pick<App.Locals, 'language'> &
+	Partial<
+		PickDeep<App.Locals, 'user.hasPosOptions' | 'user.roleId' | 'email' | 'sso' | 'countryCode'>
+	>;
 
 export type CmsData = Awaited<ReturnType<typeof cmsFromContentImpl>>;
 
@@ -288,6 +298,7 @@ async function cmsFromContentImpl(
 	const CURRENCY_CALCULATOR_WIDGET_REGEX = /\[CurrencyCalculator=(?<slug>[a-z0-9-]+)\]/giu;
 	const SCHEDULE_WIDGET_REGEX =
 		/\[Schedule=(?<slug>[\p{L}\d_:-]+)(?:[?\s]display=(?<display>(main|main-light|list|calendar)))?\]/giu;
+	const SEARCHLIST_WIDGET_REGEX = /\[Searchlist=(?<slug>[a-z0-9-]+)\]/giu;
 
 	const productSlugs = new Set<string>();
 	const externalProductUrls = new Set<string>();
@@ -304,6 +315,7 @@ async function cmsFromContentImpl(
 	const qrCodeSlugs = new Set<string>();
 	const currencyCalculatorSlugs = new Set<string>();
 	const scheduleSlugs = new Set<string>();
+	const searchlistSlugs = new Set<string>();
 
 	function matchAndSort(content: string, regex: RegExp, type: string) {
 		const regexMatches = [...content.matchAll(regex)];
@@ -329,7 +341,8 @@ async function cmsFromContentImpl(
 			...matchAndSort(content, LEADERBOARD_WIDGET_REGEX, 'leaderboardWidget'),
 			...matchAndSort(content, QRCODE_REGEX, 'qrCode'),
 			...matchAndSort(content, CURRENCY_CALCULATOR_WIDGET_REGEX, 'currencyCalculatorWidget'),
-			...matchAndSort(content, SCHEDULE_WIDGET_REGEX, 'scheduleWidget')
+			...matchAndSort(content, SCHEDULE_WIDGET_REGEX, 'scheduleWidget'),
+			...matchAndSort(content, SEARCHLIST_WIDGET_REGEX, 'searchlistWidget')
 		].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
 		for (const match of matches) {
 			const html = trimPrefix(trimSuffix(content.slice(index, match.index), '<p>'), '</p>');
@@ -498,6 +511,14 @@ async function cmsFromContentImpl(
 							raw: match[0]
 						});
 						break;
+					case 'searchlistWidget':
+						searchlistSlugs.add(match.groups.slug);
+						token.push({
+							type: 'searchlistWidget',
+							slug: match.groups.slug,
+							raw: match[0]
+						});
+						break;
 				}
 			}
 			index = match.index + match[0].length;
@@ -571,7 +592,8 @@ async function cmsFromContentImpl(
 		contactForms,
 		countdowns,
 		galleries,
-		schedules
+		schedules,
+		searchlists
 	] = await Promise.all([
 		tagProductsSlugs.size > 0 || productSlugs.size > 0 || allProductsLead.length > 0
 			? collections.products
@@ -747,7 +769,8 @@ async function cmsFromContentImpl(
 						_id: { $in: [...scheduleSlugs] }
 					})
 					.toArray()
-			: []
+			: [],
+		buildSearchlistViews([...searchlistSlugs], locals)
 	]);
 
 	const pictureConditions = {
@@ -809,6 +832,7 @@ async function cmsFromContentImpl(
 		countdowns,
 		galleries,
 		leaderboards,
+		searchlists,
 		schedules: schedules.map((schedule) => ({
 			...schedule,
 			events: [...schedule.events, ...(scheduleEventsById[schedule._id] ?? [])].filter((event) =>
@@ -823,6 +847,92 @@ async function cmsFromContentImpl(
 	};
 }
 
+async function buildSearchlistViews(searchlistSlugs: string[], locals: SearchlistLocals) {
+	if (searchlistSlugs.length === 0) {
+		return [];
+	}
+
+	const isEmployee = locals.user?.roleId !== undefined && locals.user.roleId !== CUSTOMER_ROLE_ID;
+	const visibilityFilter = isEmployee ? {} : { disabled: { $ne: true } };
+
+	const [searchlists, vatProfiles] = await Promise.all([
+		collections.searchlists.find({ _id: { $in: searchlistSlugs }, ...visibilityFilter }).toArray(),
+		collections.vatProfiles
+			.find({})
+			.project<Pick<VatProfile, '_id' | 'rates'>>({ _id: 1, rates: 1 })
+			.map((p) => ({ _id: p._id.toString(), rates: p.rates }))
+			.toArray()
+	]);
+
+	const vatContext: VatContext = {
+		vatProfiles,
+		bebopCountry: runtimeConfig.vatCountry,
+		userCountry: locals.countryCode,
+		vatSingleCountry: runtimeConfig.vatSingleCountry,
+		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
+	};
+
+	return Promise.all(
+		searchlists.map(async (sl) => {
+			const state = readUrlState(new URL('http://x/'), sl);
+			state.page = 1;
+			const { products, total, totalPages } = await searchProducts(sl, state, locals, vatContext);
+
+			const productIds = products.map((p) => p._id);
+			const [slPictures, slDigitalFiles, slAllowedTags] = await Promise.all([
+				productIds.length > 0
+					? collections.pictures
+							.find({ productId: { $in: productIds } })
+							.sort({ order: 1, createdAt: 1 })
+							.toArray()
+					: Promise.resolve([] as Picture[]),
+				productIds.length > 0
+					? collections.digitalFiles
+							.find({ productId: { $in: productIds } })
+							.project<{ productId: string }>({ productId: 1, _id: 0 })
+							.toArray()
+					: Promise.resolve([] as Array<{ productId: string }>),
+				sl.filters.tags?.enabled && (sl.filters.tags.allowedTagIds?.length ?? 0) > 0
+					? collections.tags
+							.find({ _id: { $in: sl.filters.tags.allowedTagIds } })
+							.project<Pick<Tag, '_id' | 'name'>>({
+								_id: 1,
+								name: { $ifNull: [`$translations.${locals.language}.name`, '$name'] }
+							})
+							.toArray()
+					: Promise.resolve([] as Array<Pick<Tag, '_id' | 'name'>>)
+			]);
+
+			const picturesByProductId: Record<string, Picture[]> = {};
+			for (const pic of slPictures) {
+				if (!pic.productId) {
+					continue;
+				}
+				(picturesByProductId[pic.productId] ||= []).push(pic);
+			}
+			const digitalFilesByProductId: Record<string, boolean> = {};
+			for (const df of slDigitalFiles) {
+				if (df.productId) {
+					digitalFilesByProductId[df.productId] = true;
+				}
+			}
+
+			return {
+				...sl,
+				state,
+				products,
+				picturesByProductId,
+				digitalFilesByProductId,
+				total,
+				totalPages,
+				allowedTags: slAllowedTags,
+				basePath: `/searchlist/${sl._id}`,
+				displayVatIncluded: vatContext.displayVatIncluded
+			};
+		})
+	);
+}
+
 export type CmsTokens = Awaited<ReturnType<typeof cmsFromContent>>['tokens'];
 export type CmsProduct = Awaited<ReturnType<typeof cmsFromContent>>['products'][number];
 export type CmsChallenge = Awaited<ReturnType<typeof cmsFromContent>>['challenges'][number];
@@ -830,6 +940,7 @@ export type CmsSlider = Awaited<ReturnType<typeof cmsFromContent>>['sliders'][nu
 export type CmsTag = Awaited<ReturnType<typeof cmsFromContent>>['tags'][number];
 export type CmsPicture = Awaited<ReturnType<typeof cmsFromContent>>['pictures'][number];
 export type CmsDigitalFile = Awaited<ReturnType<typeof cmsFromContent>>['digitalFiles'][number];
+export type CmsSearchlist = Awaited<ReturnType<typeof cmsFromContent>>['searchlists'][number];
 export type CmsSpecification = Awaited<ReturnType<typeof cmsFromContent>>['specifications'][number];
 export type CmsContactForm = Awaited<ReturnType<typeof cmsFromContent>>['contactForms'][number];
 export type CmsCountdown = Awaited<ReturnType<typeof cmsFromContent>>['countdowns'][number];

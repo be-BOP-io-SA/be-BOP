@@ -3,6 +3,7 @@
 	import { marked } from 'marked';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
+	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import { applyAction, enhance } from '$app/forms';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { productAddedToCart } from '$lib/stores/productAddedToCart';
@@ -501,6 +502,7 @@
 			countdowns={data.productCMSBefore.countdowns}
 			galleries={data.productCMSBefore.galleries}
 			leaderboards={data.productCMSBefore.leaderboards}
+			searchlists={data.productCMSBefore.searchlists}
 			schedules={data.productCMSBefore.schedules}
 			class={data.product.mobile?.hideContentBefore || data.hideCmsZonesOnMobile
 				? 'prose max-w-full hidden lg:block'
@@ -703,6 +705,10 @@
 						/>
 						<span class="font-semibold text-sm">{t('product.vatExcluded')}</span>
 					</div>
+				{/if}
+
+				{#if data.product.type === 'subscription' && data.product.subscriptionDuration}
+					<SubscriptionDurationLabel duration={data.product.subscriptionDuration} />
 				{/if}
 
 				{#if freeProductsAvailable}
@@ -1142,6 +1148,7 @@
 			countdowns={data.productCMSAfter.countdowns}
 			galleries={data.productCMSAfter.galleries}
 			leaderboards={data.productCMSAfter.leaderboards}
+			searchlists={data.productCMSAfter.searchlists}
 			schedules={data.productCMSAfter.schedules}
 			class={data.product.mobile?.hideContentAfter || data.hideCmsZonesOnMobile
 				? 'prose max-w-full hidden lg:block'

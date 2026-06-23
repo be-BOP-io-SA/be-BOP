@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ProductItem from '$lib/components/ProductItem.svelte';
+	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import Trans from '$lib/components/Trans.svelte';
 	import { useI18n } from '$lib/i18n';
 
@@ -45,6 +46,8 @@
 			<span class="text-red-500">({t('subscription.status.expired')})</span>
 		{/if}
 	</p>
+
+	<SubscriptionDurationLabel duration={data.product.subscriptionDuration} />
 
 	<form action="?/renew" method="post">
 		<button

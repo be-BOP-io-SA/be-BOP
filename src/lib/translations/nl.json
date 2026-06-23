@@ -69,6 +69,10 @@
 			"invalid": "Promocode niet gevonden of niet toepasbaar op je bestelling.",
 			"rateLimited": "Te veel mislukte pogingen. Probeer het later opnieuw."
 		},
+		"share": {
+			"button": "Mijn winkelwagen delen",
+			"copied": "Link gekopieerd"
+		},
 		"empty": "Winkelwagen is leeg",
 		"fillProductAlias": "Productalias invullen",
 		"items": "Producten",
@@ -89,7 +93,39 @@
 		"vatIpCountryText": "Het land wordt bepaald aan de hand van gegevens van {link}",
 		"vatNullOutsideSellerCountry": "Importbelastingen moeten bij levering door de klant aan de douane worden betaald.",
 		"vatRate": "Btw-tarief voor {country}",
-		"vatSellerCountry": "Het land is het land van de verkoper."
+		"vatSellerCountry": "Het land is het land van de verkoper.",
+		"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})"
+	},
+	"cartFromUrl": {
+		"close": "Sluiten",
+		"proposedItems": "Artikelen uit de gedeelde link",
+		"banner": {
+			"created": "Uw winkelwagen is bijgewerkt vanaf de gedeelde link."
+		},
+		"confirm": {
+			"title": "Deze artikelen aan uw winkelwagen toevoegen?",
+			"cta": "Toevoegen aan mijn winkelwagen",
+			"cancel": "Annuleren"
+		},
+		"reconcile": {
+			"title": "Bestaande winkelwagen gedetecteerd",
+			"description": "U heeft al artikelen in uw winkelwagen. Wat wilt u doen met de artikelen uit de gedeelde link?",
+			"replace": "Mijn winkelwagen vervangen",
+			"merge": "Samenvoegen met mijn winkelwagen",
+			"keep": "Mijn huidige winkelwagen behouden"
+		},
+		"errors": {
+			"title": "De volgende producten konden niet worden toegevoegd:",
+			"keepPartial": "Negeren",
+			"clearAll": "Winkelwagen legen",
+			"rollbackNew": "Annuleren",
+			"reasonNotFound": "Product niet gevonden",
+			"reasonGeneric": "Kan niet worden toegevoegd",
+			"reasonVariationRequired": "Vereist een variantkeuze",
+			"reasonBookingRequired": "Vereist een boekingsslot",
+			"invalidUrl": "Ongeldige URL-parameters",
+			"invalidUrlDescription": "De gedeelde link is misvormd. Vraag de afzender om een geldige link."
+		}
 	},
 	"challenge": {
 		"beginsAt": "Begint over {days} dagen",
@@ -113,6 +149,9 @@
 		}
 	},
 	"checkout": {
+		"additionalFields": {
+			"title": "Aanvullende informatie"
+		},
 		"agreeIpCollect": "Ik ga akkoord met het verzamelen van mijn IP-adres (<0>waarom?</0>)",
 		"agreeNullVatForeigner": "Ik begrijp dat ik bij levering BTW moet betalen (<0>waarom?</0>)",
 		"agreeOnlyDeposit": "Ik ga ermee akkoord dat ik het restant in de toekomst moet betalen (<0>waarom?</0>)",
@@ -503,6 +542,9 @@
 		"allowSellerContact": "Sta ons toe u commerciële verzoeken te sturen"
 	},
 	"order": {
+		"additionalFields": {
+			"title": "Aanvullende informatie"
+		},
 		"addPayment": {
 			"amount": "Te betalen bedrag",
 			"cta": "Stuur een oproep voor betaling",
@@ -907,6 +949,13 @@
 		"preorderText": "Dit is een voorbestelling. Uw product is beschikbaar op {date}",
 		"pricePlaceholder": "Prijs",
 		"seeInCabinet": "Zie in MijnKabinet",
+		"subscriptionDuration": {
+			"hour": "Verlengt elk uur",
+			"day": "Verlengt elke dag",
+			"week": "Verlengt elke week",
+			"month": "Verlengt elke maand",
+			"year": "Verlengt elk jaar"
+		},
 		"type": {
 			"deposit": "Op borg",
 			"digitalResource": "Digitale hulpbron",
@@ -939,6 +988,51 @@
 		},
 		"subscribeCTA": "Abonneren",
 		"uniqueDateText": "- van {beginTime}"
+	},
+	"searchlist": {
+		"searchbar": {
+			"label": "Zoeken",
+			"placeholder": "Zoek een product op naam",
+			"submit": "Zoeken",
+			"reset": "Resetten"
+		},
+		"sort": {
+			"label": "Sorteren op",
+			"options": {
+				"alphaAsc": "Alfabetisch (A → Z)",
+				"alphaDesc": "Alfabetisch (Z → A)",
+				"priceAsc": "Prijs (oplopend)",
+				"priceDesc": "Prijs (aflopend)",
+				"createdAsc": "Oudste eerst",
+				"createdDesc": "Nieuwste eerst"
+			}
+		},
+		"filters": {
+			"price": {
+				"minLabel": "Minimumprijs",
+				"maxLabel": "Maximumprijs"
+			},
+			"stock": {
+				"label": "Alleen op voorraad"
+			},
+			"tag": {
+				"label": "Tag"
+			}
+		},
+		"view": {
+			"grid": "Rasterweergave",
+			"list": "Lijstweergave"
+		},
+		"pagination": {
+			"loadMore": "Meer laden",
+			"prev": "Vorige",
+			"next": "Volgende"
+		},
+		"empty": {
+			"title": "Geen producten komen overeen met uw zoekopdracht.",
+			"reset": "Resetten"
+		},
+		"disabledNotice": "Deze searchlist is uitgeschakeld en niet zichtbaar voor het publiek."
 	},
 	"subscription": {
 		"associated": {

@@ -232,6 +232,10 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/leaderboard',
 				label: 'Leaderboards'
+			},
+			{
+				href: '/admin/searchlist',
+				label: 'Searchlists'
 			}
 		]
 	}

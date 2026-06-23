@@ -45,6 +45,7 @@ import type { Specification } from '$lib/types/Specification';
 import type { ContactForm } from '$lib/types/ContactForm';
 import type { Countdown } from '$lib/types/Countdown';
 import type { Gallery } from '$lib/types/Gallery';
+import type { Searchlist } from '$lib/types/Searchlist';
 import type { VatProfile } from '$lib/types/VatProfile';
 import type { Ticket } from '$lib/types/Ticket';
 import type { OrderLabel } from '$lib/types/OrderLabel';
@@ -52,6 +53,7 @@ import type { ScheduleEventBooked, Schedule } from '$lib/types/Schedule';
 import type { Leaderboard } from '$lib/types/Leaderboard';
 import type { OrderTab } from '$lib/types/OrderTab';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
+import type { CheckoutFieldConfig } from '$lib/types/CheckoutFieldConfig';
 import type { PosSession } from '$lib/types/PosSession';
 import type { PendingZap } from '$lib/types/PendingZap';
 import type { AccountingLog } from '$lib/types/AccountingLog';
@@ -111,12 +113,14 @@ const genCollection = () => ({
 	contactForms: db.collection<ContactForm>('contactForms'),
 	countdowns: db.collection<Countdown>('countdowns'),
 	galleries: db.collection<Gallery>('galleries'),
+	searchlists: db.collection<Searchlist>('searchlists'),
 	vatProfiles: db.collection<VatProfile>('vatProfiles'),
 	tickets: db.collection<Ticket>('tickets'),
 	labels: db.collection<OrderLabel>('labels'),
 	schedules: db.collection<Schedule>('schedules'),
 	scheduleEvents: db.collection<ScheduleEventBooked>('schedule.events'),
 	posPaymentSubtypes: db.collection<PosPaymentSubtype>('posPaymentSubtypes'),
+	checkoutFieldConfigs: db.collection<CheckoutFieldConfig>('checkoutFieldConfigs'),
 	posSessions: db.collection<PosSession>('posSessions'),
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
 
@@ -232,6 +236,9 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.posPaymentSubtypes, { slug: 1 }, { unique: true }],
 	[collections.posPaymentSubtypes, { sortOrder: 1 }],
 	[collections.posPaymentSubtypes, { disabled: 1 }],
+	[collections.checkoutFieldConfigs, { slug: 1 }, { unique: true }],
+	[collections.checkoutFieldConfigs, { sortOrder: 1 }],
+	[collections.checkoutFieldConfigs, { disabled: 1 }],
 	[collections.posSessions, { status: 1, openedAt: -1 }],
 	[collections.posSessions, { closedAt: -1 }],
 	[collections.orderTabs, { slug: 1 }, { unique: true }],

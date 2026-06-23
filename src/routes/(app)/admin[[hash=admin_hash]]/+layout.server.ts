@@ -4,6 +4,7 @@ import { collections } from '$lib/server/database.js';
 import { isLndConfigured } from '$lib/server/lnd.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { s3IsConfigured } from '$lib/server/s3.js';
 import type { LayoutServerLoad } from './$types';
 
 const DEFAULT_CMS_PAGES = [
@@ -80,6 +81,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		role: locals.user?.roleId ? collections.roles.findOne({ _id: locals.user.roleId }) : null,
 		adminPrefix: adminPrefix(),
 		isBitcoinConfigured,
-		isLndConfigured: isLndConfigured()
+		isLndConfigured: isLndConfigured(),
+		s3IsConfigured: !!s3IsConfigured()
 	};
 };

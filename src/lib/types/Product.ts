@@ -8,6 +8,7 @@ import type { Timestamps } from './Timestamps';
 import type { PaymentMethod } from '$lib/server/payment-methods';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import type { PickDeep } from 'type-fest';
+import type { SubscriptionDuration } from './SubscriptionDuration';
 
 export interface ProductTranslatableFields {
 	name: string;
@@ -51,6 +52,8 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	vatProfileId?: ObjectId;
 	maxQuantityPerOrder?: number;
 	type: 'subscription' | 'resource' | 'donation';
+	subscriptionDuration?: SubscriptionDuration;
+	subscriptionReminderSeconds?: number;
 	shipping: boolean;
 	deliveryFees?: DeliveryFees;
 	requireSpecificDeliveryFee?: boolean;

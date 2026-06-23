@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ProductItem from '$lib/components/ProductItem.svelte';
+	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { downloadFile } from '$lib/utils/downloadFile.js';
 	import { page } from '$app/stores';
 	import { PRODUCT_PAGINATION_LIMIT } from '$lib/types/Product.js';
@@ -44,6 +45,10 @@
 		downloadFile(blob, 'backup.json');
 	}
 </script>
+
+{#if !data.s3IsConfigured}
+	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
+{/if}
 
 <a href="{data.adminPrefix}/product/new" class="underline block">Add product</a>
 <a href="{data.adminPrefix}/product/prices" class="underline block">Products price</a>
@@ -192,7 +197,7 @@
 		{/each}
 	</div>
 
-	<div class="flex flex-row mx-auto mt-4 gap-4">
+	<div class="no-sticky flex flex-row mx-auto mt-4 gap-4">
 		<input type="hidden" value={next} name="skip" />
 		{#if Number($page.url.searchParams.get('skip'))}
 			<button

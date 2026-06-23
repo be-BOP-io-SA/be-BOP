@@ -4,6 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { preUploadPicture } from '$lib/types/Picture.js';
 	import { page } from '$app/stores';
+	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 
 	export let data;
 	let pageId = $page.url.searchParams.get('id') || null;
@@ -60,6 +61,10 @@
 </script>
 
 <h1 class="text-3xl">Add a tag</h1>
+
+{#if !data.s3IsConfigured}
+	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
+{/if}
 
 <form
 	method="post"

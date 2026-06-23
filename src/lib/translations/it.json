@@ -69,6 +69,10 @@
 			"invalid": "Codice promozionale non trovato o non applicabile al tuo ordine.",
 			"rateLimited": "Troppi tentativi falliti. Riprova più tardi."
 		},
+		"share": {
+			"button": "Condividi il mio carrello",
+			"copied": "Link copiato"
+		},
 		"empty": "Il cartello è vuoto",
 		"fillProductAlias": "Compila l'alias del prodotto",
 		"items": "Prodotti",
@@ -89,7 +93,39 @@
 		"vatIpCountryText": "Il paese è determinato dai dati di {link}",
 		"vatNullOutsideSellerCountry": "Le tasse d'importazione devono essere pagate dal cliente alla ricezione.",
 		"vatRate": "IVA per {country}",
-		"vatSellerCountry": "Il paese è quello del venditore."
+		"vatSellerCountry": "Il paese è quello del venditore.",
+		"maxQuantityReached": "Quantità massima per ordine raggiunta ({max})"
+	},
+	"cartFromUrl": {
+		"close": "Chiudi",
+		"proposedItems": "Articoli dal link condiviso",
+		"banner": {
+			"created": "Il tuo carrello è stato aggiornato dal link condiviso."
+		},
+		"confirm": {
+			"title": "Aggiungere questi articoli al tuo carrello?",
+			"cta": "Aggiungi al mio carrello",
+			"cancel": "Annulla"
+		},
+		"reconcile": {
+			"title": "Carrello esistente rilevato",
+			"description": "Hai già articoli nel tuo carrello. Cosa vuoi fare con gli articoli del link condiviso?",
+			"replace": "Sostituisci il mio carrello",
+			"merge": "Unisci con il mio carrello",
+			"keep": "Mantieni il mio carrello attuale"
+		},
+		"errors": {
+			"title": "I seguenti prodotti non sono stati aggiunti:",
+			"keepPartial": "Ignora",
+			"clearAll": "Svuota carrello",
+			"rollbackNew": "Annulla",
+			"reasonNotFound": "Prodotto inesistente",
+			"reasonGeneric": "Aggiunta impossibile",
+			"reasonVariationRequired": "Richiede una scelta di variante",
+			"reasonBookingRequired": "Richiede uno slot di prenotazione",
+			"invalidUrl": "Parametri URL non validi",
+			"invalidUrlDescription": "Il link condiviso è malformato. Chiedi al mittente un link valido."
+		}
 	},
 	"challenge": {
 		"beginsAt": "Inizia tra {days} giorni",
@@ -113,6 +149,9 @@
 		}
 	},
 	"checkout": {
+		"additionalFields": {
+			"title": "Informazioni aggiuntive"
+		},
 		"agreeIpCollect": "Acconsento alla raccolta del mio indirizzo IP(<0>why?</0>)",
 		"agreeNullVatForeigner": "Capisco che dovrò pagare l'IVA alla ricezione (<0>why?</0>)",
 		"agreeOnlyDeposit": "Accetto che dovrò pagare il resto in futuro (<0>why?</0>)",
@@ -503,6 +542,9 @@
 		"allowSellerContact": "Consentici di inviarti comunicazioni commerciali."
 	},
 	"order": {
+		"additionalFields": {
+			"title": "Informazioni aggiuntive"
+		},
 		"addPayment": {
 			"amount": "Somma del pagamento",
 			"cta": "Invia una chiamata per il pagamento",
@@ -907,6 +949,13 @@
 		"preorderText": "Questo è un preordine, il tuo prodotto sarà disponibile il  {date}",
 		"pricePlaceholder": "Prezzo",
 		"seeInCabinet": "Vedi in MyCabinet",
+		"subscriptionDuration": {
+			"hour": "Si rinnova ogni ora",
+			"day": "Si rinnova ogni giorno",
+			"week": "Si rinnova ogni settimana",
+			"month": "Si rinnova ogni mese",
+			"year": "Si rinnova ogni anno"
+		},
 		"type": {
 			"deposit": "In deposito",
 			"digitalResource": "Risorse digitali",
@@ -939,6 +988,51 @@
 		},
 		"subscribeCTA": "Iscriviti",
 		"uniqueDateText": "- Da {beginTime}"
+	},
+	"searchlist": {
+		"searchbar": {
+			"label": "Ricerca",
+			"placeholder": "Cerca un prodotto per nome",
+			"submit": "Cerca",
+			"reset": "Reimposta"
+		},
+		"sort": {
+			"label": "Ordina per",
+			"options": {
+				"alphaAsc": "Alfabetico (A → Z)",
+				"alphaDesc": "Alfabetico (Z → A)",
+				"priceAsc": "Prezzo (crescente)",
+				"priceDesc": "Prezzo (decrescente)",
+				"createdAsc": "Meno recenti prima",
+				"createdDesc": "Più recenti prima"
+			}
+		},
+		"filters": {
+			"price": {
+				"minLabel": "Prezzo minimo",
+				"maxLabel": "Prezzo massimo"
+			},
+			"stock": {
+				"label": "Solo disponibili"
+			},
+			"tag": {
+				"label": "Tag"
+			}
+		},
+		"view": {
+			"grid": "Vista a griglia",
+			"list": "Vista a lista"
+		},
+		"pagination": {
+			"loadMore": "Carica altro",
+			"prev": "Precedente",
+			"next": "Successivo"
+		},
+		"empty": {
+			"title": "Nessun prodotto corrisponde alla tua ricerca.",
+			"reset": "Reimposta"
+		},
+		"disabledNotice": "Questa searchlist è disattivata e non è visibile al pubblico."
 	},
 	"subscription": {
 		"associated": {

@@ -5,7 +5,6 @@
 	import IconDownArrow from '~icons/ant-design/arrow-down-outlined';
 
 	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency';
-	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 	import { ORDER_PAYMENT_STATUSES } from '$lib/types/Order';
 	import { DELAY_MULTIPLIERS } from '$lib/utils/delayMultipliers';
 	import { typedInclude } from '$lib/utils/typedIncludes';
@@ -14,6 +13,7 @@
 	import { useI18n } from '$lib/i18n.js';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
+	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 	import MultiSelect from 'svelte-multiselect';
 	import Select from 'svelte-select';
 	import ProcessorSelector from '$lib/components/ProcessorSelector.svelte';
@@ -67,23 +67,64 @@
 		}
 	}
 
+	// Snapshot initial auto-clean control values so confirmUpdate only triggers when the
+	// admin actually modified an auto-clean field (issue #2604).
+	const initialAutoclean = {
+		onOrderExpireOrCancel: dataCleanupOnExpire,
+		allowUserManualCleanup: dataCleanupManual,
+		scheduledEnabled: dataCleanupScheduled,
+		delayValue: cleanupDelayValue,
+		delayUnit: cleanupDelayUnit,
+		orderStatuses: [...cleanupStatuses].sort().join(',')
+	};
+
+	function autocleanChanged(currentStatuses: string[]) {
+		if (dataCleanupOnExpire !== initialAutoclean.onOrderExpireOrCancel) {
+			return true;
+		}
+		if (dataCleanupManual !== initialAutoclean.allowUserManualCleanup) {
+			return true;
+		}
+		if (dataCleanupScheduled !== initialAutoclean.scheduledEnabled) {
+			return true;
+		}
+		if (cleanupDelayValue !== initialAutoclean.delayValue) {
+			return true;
+		}
+		if (cleanupDelayUnit !== initialAutoclean.delayUnit) {
+			return true;
+		}
+		// Status checkboxes only render when scheduled is on; if it's off both initially
+		// and now, currentStatuses is always [] (DOM-empty) and would falsely mismatch a
+		// stale non-empty initialAutoclean.orderStatuses.
+		if (
+			(initialAutoclean.scheduledEnabled || dataCleanupScheduled) &&
+			currentStatuses.slice().sort().join(',') !== initialAutoclean.orderStatuses
+		) {
+			return true;
+		}
+		return false;
+	}
+
 	function confirmUpdate(e: Event) {
-		if (dataCleanupScheduled && cleanupDelayValue > 0) {
-			const formData = new FormData(e.target as HTMLFormElement);
-			const statuses = formData.getAll('dataCleanup.scheduled.orderStatuses').map(String);
-			if (statuses.length > 0) {
-				const multiplier = DELAY_MULTIPLIERS[cleanupDelayUnit] ?? 86400;
-				const cutoffDate = new Date(Date.now() - cleanupDelayValue * multiplier * 1000);
-				if (
-					!confirm(
-						`Are you sure? It will delete personal data for every order with status [${statuses.join(
-							', '
-						)}] older than ${cutoffDate.toLocaleDateString($locale)}. This cannot be undone.`
-					)
-				) {
-					e.preventDefault();
-				}
-			}
+		const formData = new FormData(e.target as HTMLFormElement);
+		const statuses = formData.getAll('dataCleanup.scheduled.orderStatuses').map(String);
+		if (!autocleanChanged(statuses)) {
+			return;
+		}
+		const dangerous = dataCleanupScheduled && cleanupDelayValue > 0 && statuses.length > 0;
+		let message: string;
+		if (dangerous) {
+			const multiplier = DELAY_MULTIPLIERS[cleanupDelayUnit] ?? 86400;
+			const cutoffDate = new Date(Date.now() - cleanupDelayValue * multiplier * 1000);
+			message = `Are you sure? It will delete personal data for every order with status [${statuses.join(
+				', '
+			)}] older than ${cutoffDate.toLocaleDateString($locale)}. This cannot be undone.`;
+		} else {
+			message = 'Auto-clean settings have been modified. Confirm?';
+		}
+		if (!confirm(message)) {
+			e.preventDefault();
 		}
 	}
 
@@ -263,7 +304,20 @@
 		/>
 		Remove product price on pop-in when adding to Cart
 	</label>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="allowCartFromUrl"
+			class="form-checkbox"
+			checked={data.allowCartFromUrl}
+		/>
+		Allow cart creation through shared URL (/cart?slug=…&qty=…)
+	</label>
 	<h2 class="text-2xl">Checkout</h2>
+
+	<a href="{data.adminPrefix}/config/checkout-fields" class="underline">
+		Set checkout additional fields
+	</a>
 
 	<label class="checkbox-label">
 		<input
@@ -565,16 +619,19 @@
 
 	<h2 class="text-2xl">Timing</h2>
 	<label class="form-label">
-		Subscription duration
+		Default subscription duration
 		<select
 			name="subscriptionDuration"
-			class="form-input max-w-[25rem]"
 			value={data.subscriptionDuration}
+			class="form-input max-w-[25rem]"
 		>
 			{#each SUBSCRIPTION_DURATIONS as duration}
 				<option value={duration}>{duration}</option>
 			{/each}
 		</select>
+		<p class="text-sm">
+			Used for subscription products set to "Default (shop-wide)" and for legacy snapshots.
+		</p>
 	</label>
 	<label class="form-label">
 		Subscription reminder

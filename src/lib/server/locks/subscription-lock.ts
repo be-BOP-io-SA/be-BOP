@@ -1,14 +1,34 @@
-import { addSeconds, formatDistance } from 'date-fns';
+import { addSeconds, formatDistance, subSeconds } from 'date-fns';
 import { collections, withTransaction } from '../database';
 import { Lock } from '../lock';
 import { processClosed } from '../process';
 import { setTimeout } from 'node:timers/promises';
-import { refreshPromise, runtimeConfig } from '../runtime-config';
+import { refreshPromise } from '../runtime-config';
 import { type FindCursor, ObjectId } from 'mongodb';
 import { ORIGIN } from '$lib/server/env-config';
 import { Kind } from 'nostr-tools';
 import { queueEmail } from '../email';
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
+import { resolveSubscriptionReminderSeconds } from '../subscriptions';
+
+/** Per-product reminder is capped at the same 7 days as the global (see
+ * admin/config and product-schema), so this window always catches every
+ * candidate before we gate against the per-subscription resolved value. */
+const MAX_REMINDER_SECONDS = 24 * 60 * 60 * 7;
+
+async function isSubscriptionDueForReminder(
+	subscription: PaidSubscription,
+	now: Date
+): Promise<boolean> {
+	const product = await collections.products.findOne(
+		{ _id: subscription.productId },
+		{ projection: { subscriptionReminderSeconds: 1 } }
+	);
+	if (!product) {
+		return false;
+	}
+	return subSeconds(subscription.paidUntil, resolveSubscriptionReminderSeconds(product)) <= now;
+}
 
 const lock = new Lock('paid-subscriptions');
 
@@ -249,16 +269,20 @@ async function maintainLock() {
 
 		try {
 			const now = new Date();
-			const reminderWindow = addSeconds(now, runtimeConfig.subscriptionReminderSeconds);
+			const reminderWindow = addSeconds(now, MAX_REMINDER_SECONDS);
 
 			const subscriptionsToRemindNostr = getSubscriptionsToRemindViaNostr(now, reminderWindow);
 			for await (const subscription of subscriptionsToRemindNostr) {
-				await notifySubscriptionReminderViaNostr(subscription);
+				if (await isSubscriptionDueForReminder(subscription, now)) {
+					await notifySubscriptionReminderViaNostr(subscription);
+				}
 			}
 
 			const subscriptionsToRemindEmail = getSubscriptionsToRemindViaEmail(now, reminderWindow);
 			for await (const subscription of subscriptionsToRemindEmail) {
-				await notifySubscriptionReminderViaEmail(subscription);
+				if (await isSubscriptionDueForReminder(subscription, now)) {
+					await notifySubscriptionReminderViaEmail(subscription);
+				}
 			}
 		} catch (err) {
 			console.error(err);

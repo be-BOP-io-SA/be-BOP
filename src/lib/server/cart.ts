@@ -19,6 +19,62 @@ import { toCurrency } from '$lib/utils/toCurrency';
 import { sum } from '$lib/utils/sum';
 import { deepEquals } from '$lib/utils/deep-equals';
 
+export const CART_ERROR_CODES = [
+	'NOT_FOR_SALE',
+	'NOT_PWYW',
+	'BOOKING_INFO_REQUIRED',
+	'MAX_PRICE_EXCEEDED',
+	'SUBSCRIPTION_CUSTOM_PRICE',
+	'NOT_PREORDER',
+	'MAX_ITEMS_REACHED',
+	'OUT_OF_STOCK',
+	'STANDALONE_QTY_ONE',
+	'VARIATION_INVALID',
+	'MAX_PER_ORDER'
+] as const;
+export type CartErrorCode = (typeof CART_ERROR_CODES)[number];
+
+function cartError(
+	code: CartErrorCode,
+	message: string,
+	params?: Record<string, string | number>
+): never {
+	throw error(400, { code, message, ...(params && { params }) });
+}
+
+/**
+ * Re-applies a server-side cart snapshot atomically and releases any reserved
+ * stock for items that were dropped or kept. Returns false when the snapshot
+ * id does not match — protects against forged ids from the client.
+ */
+export async function restoreFromPendingSnapshot(
+	cart: Cart,
+	snapshotId: string
+): Promise<{ restored: boolean }> {
+	if (cart.pendingSnapshot?.id !== snapshotId) {
+		return { restored: false };
+	}
+	const restoredItems = cart.pendingSnapshot.items;
+	const allProductIds = new Set<string>([
+		...cart.items.map((i) => i.productId),
+		...restoredItems.map((i) => i.productId)
+	]);
+	await withTransaction(async (session) => {
+		await collections.carts.updateOne(
+			{ _id: cart._id, 'pendingSnapshot.id': snapshotId },
+			{
+				$set: { items: restoredItems, updatedAt: new Date() },
+				$unset: { pendingSnapshot: '' }
+			},
+			{ session }
+		);
+		for (const productId of allProductIds) {
+			await refreshAvailableStockInDb(productId, session);
+		}
+	});
+	return { restored: true };
+}
+
 export async function getCartFromDb(params: { user: UserIdentifier }): Promise<Cart> {
 	let res = await collections.carts.findOne(userQuery(params.user), { sort: { _id: -1 } });
 
@@ -112,15 +168,18 @@ export async function addToCartInDb(
 	}
 ): Promise<Cart> {
 	if (!canAddToCart(product, params.user, params.mode)) {
-		throw error(400, "Product can't be added to basket ");
+		cartError('NOT_FOR_SALE', "Product can't be added to basket ");
 	}
 
 	if (params.customPrice && !product.payWhatYouWant) {
-		throw error(400, 'Product is not pay what you want');
+		cartError('NOT_PWYW', 'Product is not pay what you want');
 	}
 
 	if (product.bookingSpec && !params.booking) {
-		throw error(400, 'Product is a booking, please provide booking time and duration');
+		cartError(
+			'BOOKING_INFO_REQUIRED',
+			'Product is a booking, please provide booking time and duration'
+		);
 	}
 
 	if (
@@ -133,14 +192,15 @@ export async function addToCartInDb(
 			product.maximumPrice.currency
 		) < params.customPrice.amount
 	) {
-		throw error(
-			400,
-			`Product price must be less than ${product.maximumPrice.amount} ${product.maximumPrice.currency}`
+		cartError(
+			'MAX_PRICE_EXCEEDED',
+			`Product price must be less than ${product.maximumPrice.amount} ${product.maximumPrice.currency}`,
+			{ max: product.maximumPrice.amount, currency: product.maximumPrice.currency }
 		);
 	}
 
 	if (params.customPrice && product.type === 'subscription') {
-		throw error(400, 'Product is a subscription, cannot set custom price');
+		cartError('SUBSCRIPTION_CUSTOM_PRICE', 'Product is a subscription, cannot set custom price');
 	}
 
 	if (quantity < 0) {
@@ -148,7 +208,7 @@ export async function addToCartInDb(
 	}
 
 	if (product.availableDate && !product.preorder && product.availableDate > new Date()) {
-		throw error(400, 'Product is not available for preorder');
+		cartError('NOT_PREORDER', 'Product is not available for preorder');
 	}
 
 	const depositPercentage = product.deposit?.enforce
@@ -162,7 +222,7 @@ export async function addToCartInDb(
 		runtimeConfig.cartMaxSeparateItems &&
 		cart.items.length >= runtimeConfig.cartMaxSeparateItems
 	) {
-		throw error(400, 'Cart has too many items');
+		cartError('MAX_ITEMS_REACHED', 'Cart has too many items');
 	}
 	const existingItem = findItemInCart(cart, product._id, params.lineId, depositPercentage);
 
@@ -172,12 +232,12 @@ export async function addToCartInDb(
 	const availableAmount = await computeAvailableAmount(product, cart);
 
 	if (availableAmount <= 0) {
-		throw error(400, 'Product is out of stock');
+		cartError('OUT_OF_STOCK', 'Product is out of stock');
 	}
 
 	if (product.standalone || product.bookingSpec) {
 		if (quantity !== 1) {
-			throw error(400, 'You can only order one of this product');
+			cartError('STANDALONE_QTY_ONE', 'You can only order one of this product');
 		}
 	}
 
@@ -195,7 +255,7 @@ export async function addToCartInDb(
 			currency: product.price.currency
 		};
 	} else if (product.variations?.length) {
-		throw error(400, 'error matching on variations choice');
+		cartError('VARIATION_INVALID', 'error matching on variations choice');
 	}
 
 	if (existingItem && !product.standalone && !product.bookingSpec) {
@@ -207,7 +267,7 @@ export async function addToCartInDb(
 		);
 
 		if (totalQuantityInCart() > max) {
-			throw error(400, `You can only order ${max} of this product`);
+			cartError('MAX_PER_ORDER', `You can only order ${max} of this product`, { max });
 		}
 
 		if (product.type === 'subscription') {
@@ -215,8 +275,12 @@ export async function addToCartInDb(
 		}
 		existingItem.reservedUntil = addMinutes(new Date(), runtimeConfig.reserveStockInMinutes);
 	} else {
-		if (totalQuantityInCart() + quantity > availableAmount) {
-			throw error(400, `You can only order ${availableAmount} of this product`);
+		const max = Math.min(
+			product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER,
+			availableAmount
+		);
+		if (totalQuantityInCart() + quantity > max) {
+			cartError('MAX_PER_ORDER', `You can only order ${max} of this product`, { max });
 		}
 		cart.items.push({
 			_id: crypto.randomUUID(),

@@ -250,6 +250,12 @@ export const actions: Actions = {
 									variationLabels: cleanedVariationLabels
 								}),
 							...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
+							...(parsed.subscriptionDuration && {
+								subscriptionDuration: parsed.subscriptionDuration
+							}),
+							...(typeof parsed.subscriptionReminderSeconds === 'number' && {
+								subscriptionReminderSeconds: parsed.subscriptionReminderSeconds
+							}),
 							hasSellDisclaimer: parsed.hasSellDisclaimer,
 							...(parsed.hasSellDisclaimer &&
 								parsed.sellDisclaimerTitle &&
@@ -459,6 +465,12 @@ export const actions: Actions = {
 							}
 						}),
 					...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
+					...(parsed.subscriptionDuration && {
+						subscriptionDuration: parsed.subscriptionDuration
+					}),
+					...(typeof parsed.subscriptionReminderSeconds === 'number' && {
+						subscriptionReminderSeconds: parsed.subscriptionReminderSeconds
+					}),
 					hideFromSEO: parsed.hideFromSEO,
 					translations: product.translations
 				},

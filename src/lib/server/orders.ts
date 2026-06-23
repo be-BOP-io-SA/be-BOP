@@ -4,7 +4,8 @@ import {
 	type Order,
 	type OrderPayment,
 	type Price,
-	type OrderPaymentStatus
+	type OrderPaymentStatus,
+	type CollectedCheckoutField
 } from '$lib/types/Order';
 import { ClientSession, ObjectId, type WithId } from 'mongodb';
 import { collections, withTransaction } from './database';
@@ -23,7 +24,12 @@ import {
 } from 'date-fns';
 import { runtimeConfig } from './runtime-config';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
-import { freeProductsForUser, generateSubscriptionNumber } from './subscriptions';
+import {
+	freeProductsForUser,
+	generateSubscriptionNumber,
+	resolveSubscriptionDuration,
+	resolveSubscriptionReminderSeconds
+} from './subscriptions';
 import {
 	checkProductVariationsIntegrity,
 	productPriceWithVariations,
@@ -566,7 +572,7 @@ export async function cancelPayment(
 export async function anonymizeOrderData(orderId: string): Promise<boolean> {
 	const order = await collections.orders.findOne(
 		{ _id: orderId, dataAnonymized: { $ne: true } },
-		{ projection: { shippingAddress: 1, billingAddress: 1 } }
+		{ projection: { shippingAddress: 1, billingAddress: 1, customCheckoutFields: 1 } }
 	);
 	if (!order) {
 		return false;
@@ -584,6 +590,27 @@ export async function anonymizeOrderData(orderId: string): Promise<boolean> {
 	}
 	if (order.billingAddress) {
 		$set.billingAddress = { country: order.billingAddress.country, zip: order.billingAddress.zip };
+	}
+	if (order.customCheckoutFields?.some((f) => f.isPersonalData)) {
+		$set.customCheckoutFields = order.customCheckoutFields.map((f) => {
+			if (!f.isPersonalData) {
+				return f;
+			}
+			const cleaned: Record<string, unknown> = {
+				fieldId: f.fieldId,
+				slug: f.slug,
+				name: f.name,
+				label: f.label,
+				type: f.type,
+				isPersonalData: true
+			};
+			if (f.address) {
+				cleaned.address = { country: f.address.country, zip: f.address.zip };
+			} else {
+				cleaned.value = '';
+			}
+			return cleaned;
+		});
 	}
 
 	const result = await collections.orders.updateOne(
@@ -703,6 +730,7 @@ export async function createOrder(
 		clientIp?: string;
 		note?: string;
 		receiptNote?: string;
+		customCheckoutFields?: CollectedCheckoutField[];
 		engagements?: {
 			acceptedTermsOfUse?: boolean;
 			acceptedIPCollect?: boolean;
@@ -967,7 +995,7 @@ export async function createOrder(
 
 		if (existingSubscription) {
 			if (
-				subSeconds(existingSubscription.paidUntil, runtimeConfig.subscriptionReminderSeconds) >
+				subSeconds(existingSubscription.paidUntil, resolveSubscriptionReminderSeconds(product)) >
 				new Date()
 			) {
 				throw error(
@@ -1685,6 +1713,9 @@ export async function createOrder(
 					: [])
 			],
 			...(params.receiptNote && { receiptNote: params.receiptNote }),
+			...(params.customCheckoutFields?.length && {
+				customCheckoutFields: params.customCheckoutFields
+			}),
 			...(params.reasonOfferDeliveryFees && {
 				deliveryFeesFree: {
 					reason: params.reasonOfferDeliveryFees
@@ -1996,7 +2027,9 @@ function addDiscountFreeProducts(
 	}
 }
 
-function getSubscriptionDuration(): Duration {
+function getSubscriptionDuration(product: {
+	subscriptionDuration?: SubscriptionDuration;
+}): Duration {
 	const durations: Record<SubscriptionDuration, Duration> = {
 		hour: { hours: 1 },
 		day: { days: 1 },
@@ -2004,7 +2037,7 @@ function getSubscriptionDuration(): Duration {
 		month: { months: 1 },
 		year: { years: 1 }
 	};
-	return durations[runtimeConfig.subscriptionDuration as SubscriptionDuration];
+	return durations[resolveSubscriptionDuration(product)];
 }
 
 async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSession) {
@@ -2034,7 +2067,10 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, updatedFreeProductsById);
 			}
-			const newPaidUntil = add(max([existing.paidUntil, new Date()]), getSubscriptionDuration());
+			const newPaidUntil = add(
+				max([existing.paidUntil, new Date()]),
+				getSubscriptionDuration(subscription.product)
+			);
 
 			const archivedNotifications = existing.notifications.map((notif) => ({
 				...notif,
@@ -2090,7 +2126,7 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 					number: await generateSubscriptionNumber(),
 					user: order.user,
 					productId: subscription.product._id,
-					paidUntil: add(new Date(), getSubscriptionDuration()),
+					paidUntil: add(new Date(), getSubscriptionDuration(subscription.product)),
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					notifications: [],
