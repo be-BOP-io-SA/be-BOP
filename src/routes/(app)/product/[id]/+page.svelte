@@ -642,7 +642,14 @@
 										class="ml-1 shrink-0 text-gray-500 hover:text-blue-500 transition-colors"
 										aria-label={t('priceCalendar.openTitle')}
 										on:click|stopPropagation={openPriceCalendar}
-									><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button
+										><svg
+											width="18"
+											height="18"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg
+										></button
 									>
 								{/if}
 							</div>
@@ -726,7 +733,14 @@
 									class="ml-1 self-center shrink-0 text-gray-500 hover:text-blue-500 transition-colors"
 									aria-label={t('priceCalendar.openTitle')}
 									on:click={openPriceCalendar}
-								><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button
+									><svg
+										width="18"
+										height="18"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg
+									></button
 								>
 							{/if}
 						</div>
