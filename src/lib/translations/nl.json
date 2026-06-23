@@ -89,6 +89,10 @@
 			"invalid": "Promocode niet gevonden of niet toepasbaar op je bestelling.",
 			"rateLimited": "Te veel mislukte pogingen. Probeer het later opnieuw."
 		},
+		"share": {
+			"button": "Mijn winkelwagen delen",
+			"copied": "Link gekopieerd"
+		},
 		"empty": "Winkelwagen is leeg",
 		"fillProductAlias": "Productalias invullen",
 		"items": "Producten",

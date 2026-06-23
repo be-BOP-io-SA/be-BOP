@@ -22,6 +22,7 @@
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { formatBookedDates } from '$lib/utils/formatBookedDates.js';
 	import CartItemDiscountPanel from '$lib/components/CartItemDiscountPanel.svelte';
+	import { onDestroy } from 'svelte';
 
 	export let data;
 	export let form;
@@ -51,6 +52,32 @@
 			? priceInfo.partialPriceWithVat >=
 			  toCurrency(priceInfo.currency, data.physicalCartMinAmount, data.currencies.main)
 			: true;
+
+	// PR #2595 rejects items requiring a variation pick or a booking slot, so we strip
+	// them from the share URL up front instead of letting them surface in the Errors
+	// popin on the receiving side.
+	$: shareableItems = items.filter((item) => !item.chosenVariations && !item.booking);
+	$: shareableItemsCount = shareableItems.length;
+	let shareCopied = false;
+	let shareCopyTimer: ReturnType<typeof setTimeout> | undefined;
+	async function shareCart() {
+		const url = new URL('/cart', window.location.origin);
+		for (const item of shareableItems) {
+			url.searchParams.append('slug', item.product._id);
+			url.searchParams.append('qty', String(item.quantity));
+		}
+		try {
+			await navigator.clipboard.writeText(url.toString());
+			shareCopied = true;
+			clearTimeout(shareCopyTimer);
+			shareCopyTimer = setTimeout(() => {
+				shareCopied = false;
+			}, 2000);
+		} catch (e) {
+			console.error('Clipboard write failed', e);
+		}
+	}
+	onDestroy(() => clearTimeout(shareCopyTimer));
 </script>
 
 <main class="mx-auto max-w-7xl flex flex-col gap-2 px-6 py-10 body-mainPlan">
@@ -79,7 +106,15 @@
 		/>
 	{/if}
 	<div class="w-full rounded-xl p-6 flex flex-col gap-6 body-mainPlan border-gray-300">
-		<h1 class="page-title body-title">{t('cart.items')}</h1>
+		<div class="flex items-center justify-between gap-4 flex-wrap">
+			<h1 class="page-title body-title">{t('cart.items')}</h1>
+			{#if data.allowCartFromUrl && shareableItemsCount > 0}
+				<button type="button" on:click={shareCart} class="text-sm hover:underline body-hyperlink">
+					{shareCopied ? t('cart.share.copied') : t('cart.share.button')}
+					{shareCopied ? '☑️' : '📋'}
+				</button>
+			{/if}
+		</div>
 		{#if $page.url.searchParams.get('createdFromUrl')}
 			<div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded">
 				{t('cartFromUrl.banner.created')}

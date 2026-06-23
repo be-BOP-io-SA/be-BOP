@@ -6,6 +6,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import Select from 'svelte-select';
+	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 
 	export let data;
 
@@ -77,6 +78,10 @@
 </script>
 
 <h1 class="text-3xl">Add a schedule</h1>
+
+{#if !data.s3IsConfigured}
+	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
+{/if}
 
 <form
 	method="post"

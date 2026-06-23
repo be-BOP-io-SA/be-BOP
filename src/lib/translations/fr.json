@@ -89,6 +89,10 @@
 			"invalid": "Code promotionnel inexistant ou non-applicable à votre commande.",
 			"rateLimited": "Trop de tentatives échouées. Veuillez réessayer plus tard."
 		},
+		"share": {
+			"button": "Partager mon panier",
+			"copied": "Lien copié"
+		},
 		"empty": "Le panier est vide",
 		"fillProductAlias": "Remplir l'alias du produit",
 		"items": "Produits",

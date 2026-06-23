@@ -67,23 +67,64 @@
 		}
 	}
 
+	// Snapshot initial auto-clean control values so confirmUpdate only triggers when the
+	// admin actually modified an auto-clean field (issue #2604).
+	const initialAutoclean = {
+		onOrderExpireOrCancel: dataCleanupOnExpire,
+		allowUserManualCleanup: dataCleanupManual,
+		scheduledEnabled: dataCleanupScheduled,
+		delayValue: cleanupDelayValue,
+		delayUnit: cleanupDelayUnit,
+		orderStatuses: [...cleanupStatuses].sort().join(',')
+	};
+
+	function autocleanChanged(currentStatuses: string[]) {
+		if (dataCleanupOnExpire !== initialAutoclean.onOrderExpireOrCancel) {
+			return true;
+		}
+		if (dataCleanupManual !== initialAutoclean.allowUserManualCleanup) {
+			return true;
+		}
+		if (dataCleanupScheduled !== initialAutoclean.scheduledEnabled) {
+			return true;
+		}
+		if (cleanupDelayValue !== initialAutoclean.delayValue) {
+			return true;
+		}
+		if (cleanupDelayUnit !== initialAutoclean.delayUnit) {
+			return true;
+		}
+		// Status checkboxes only render when scheduled is on; if it's off both initially
+		// and now, currentStatuses is always [] (DOM-empty) and would falsely mismatch a
+		// stale non-empty initialAutoclean.orderStatuses.
+		if (
+			(initialAutoclean.scheduledEnabled || dataCleanupScheduled) &&
+			currentStatuses.slice().sort().join(',') !== initialAutoclean.orderStatuses
+		) {
+			return true;
+		}
+		return false;
+	}
+
 	function confirmUpdate(e: Event) {
-		if (dataCleanupScheduled && cleanupDelayValue > 0) {
-			const formData = new FormData(e.target as HTMLFormElement);
-			const statuses = formData.getAll('dataCleanup.scheduled.orderStatuses').map(String);
-			if (statuses.length > 0) {
-				const multiplier = DELAY_MULTIPLIERS[cleanupDelayUnit] ?? 86400;
-				const cutoffDate = new Date(Date.now() - cleanupDelayValue * multiplier * 1000);
-				if (
-					!confirm(
-						`Are you sure? It will delete personal data for every order with status [${statuses.join(
-							', '
-						)}] older than ${cutoffDate.toLocaleDateString($locale)}. This cannot be undone.`
-					)
-				) {
-					e.preventDefault();
-				}
-			}
+		const formData = new FormData(e.target as HTMLFormElement);
+		const statuses = formData.getAll('dataCleanup.scheduled.orderStatuses').map(String);
+		if (!autocleanChanged(statuses)) {
+			return;
+		}
+		const dangerous = dataCleanupScheduled && cleanupDelayValue > 0 && statuses.length > 0;
+		let message: string;
+		if (dangerous) {
+			const multiplier = DELAY_MULTIPLIERS[cleanupDelayUnit] ?? 86400;
+			const cutoffDate = new Date(Date.now() - cleanupDelayValue * multiplier * 1000);
+			message = `Are you sure? It will delete personal data for every order with status [${statuses.join(
+				', '
+			)}] older than ${cutoffDate.toLocaleDateString($locale)}. This cannot be undone.`;
+		} else {
+			message = 'Auto-clean settings have been modified. Confirm?';
+		}
+		if (!confirm(message)) {
+			e.preventDefault();
 		}
 	}
 

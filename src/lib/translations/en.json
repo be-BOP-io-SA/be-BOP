@@ -89,6 +89,10 @@
 			"invalid": "Promo code not found or not applicable to your order.",
 			"rateLimited": "Too many failed promo code attempts. Please try again later."
 		},
+		"share": {
+			"button": "Share my cart",
+			"copied": "Link copied"
+		},
 		"empty": "Cart is empty",
 		"fillProductAlias": "Fill product alias",
 		"items": "Products",
