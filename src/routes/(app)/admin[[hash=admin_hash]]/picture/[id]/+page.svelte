@@ -1,9 +1,14 @@
 <script lang="ts">
 	import Picture from '$lib/components/Picture.svelte';
+	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 
 	export let data;
 	let darkPicture = 'light';
 </script>
+
+{#if !data.s3IsConfigured}
+	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
+{/if}
 
 <form method="post" action="?/update" class="flex flex-col gap-4">
 	{#if data.picture.productId}

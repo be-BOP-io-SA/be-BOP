@@ -238,7 +238,7 @@
 	   e.g. /admin/config/vat) to avoid matching forms nested inside banner/widget components. */
 	:is(main.body-mainPlan:not(.no-sticky-actions), main.body-mainPlan:not(.no-sticky-actions) main)
 		> form
-		> div:has(input[type='submit'], button[type='submit'], button[formaction]) {
+		> div:not(.no-sticky):has(input[type='submit'], button[type='submit'], button[formaction]) {
 		position: sticky;
 		bottom: 0;
 		z-index: 10;
@@ -250,7 +250,7 @@
 	:is(main.body-mainPlan:not(.no-sticky-actions), main.body-mainPlan:not(.no-sticky-actions) main)
 		> form
 		> fieldset
-		> div:last-child:has(input[type='submit'], button[type='submit'], button[formaction]) {
+		> div:last-child:not(.no-sticky):has(input[type='submit'], button[type='submit'], button[formaction]) {
 		position: sticky;
 		bottom: 0;
 		z-index: 10;

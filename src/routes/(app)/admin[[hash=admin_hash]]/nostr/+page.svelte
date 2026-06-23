@@ -7,6 +7,7 @@
 	let nsecInputEl: HTMLInputElement;
 	let readOnlyForm = data.settingsEnforcedByEnvVars;
 	let writeNsecDisabled = !!data.nostr.privateKey || readOnlyForm;
+	let showNsec = false;
 
 	let relays = data.nostrRelays;
 	let displayPublicMessages = true;
@@ -78,16 +79,28 @@
 <form action="?/updatePrivateKey" method="post" class="flex flex-col gap-4 mb-6">
 	<label class="form-label">
 		Private Key (nsec format)
-		<input
-			bind:this={nsecInputEl}
-			type="password"
-			class="form-input"
-			name="privateKey"
-			bind:value={data.nostr.privateKey}
-			disabled={writeNsecDisabled}
-			required
-			placeholder="nsec1..."
-		/>
+		<div class="flex gap-2 items-center">
+			<input
+				bind:this={nsecInputEl}
+				type={showNsec ? 'text' : 'password'}
+				class="form-input flex-1"
+				name="privateKey"
+				value={data.nostr.privateKey ?? ''}
+				on:input={(e) => (data.nostr.privateKey = e.currentTarget.value)}
+				disabled={writeNsecDisabled}
+				required
+				placeholder="nsec1..."
+			/>
+			<button
+				type="button"
+				class="btn btn-gray"
+				on:click={() => (showNsec = !showNsec)}
+				title={showNsec ? 'Hide private key' : 'Show private key'}
+				aria-label={showNsec ? 'Hide private key' : 'Show private key'}
+			>
+				{showNsec ? '🙈' : '👁️'}
+			</button>
+		</div>
 	</label>
 	<div class="flex justify-between items-center mt-6">
 		<div class="flex gap-3">
