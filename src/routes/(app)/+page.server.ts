@@ -1,5 +1,5 @@
 import { collections } from '$lib/server/database';
-import { fetchCatalog } from './catalog/+page.server';
+import { fetchCatalog } from '$lib/server/catalog';
 import { cmsFromContent } from '$lib/server/cms';
 import { redirect } from '@sveltejs/kit';
 import { addYears } from 'date-fns';
