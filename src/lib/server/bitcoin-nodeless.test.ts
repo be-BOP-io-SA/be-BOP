@@ -139,7 +139,11 @@ describe('getSatoshiReceivedNodeless', () => {
 		return {
 			txid: `tx-${opts.blockHeight ?? 'mempool'}-${opts.blockTime?.getTime() ?? 0}`,
 			status: confirmed
-				? { confirmed: true, block_height: opts.blockHeight, block_time: secs(opts.blockTime ?? orderCreatedAt) }
+				? {
+						confirmed: true,
+						block_height: opts.blockHeight,
+						block_time: secs(opts.blockTime ?? orderCreatedAt)
+				  }
 				: { confirmed: false },
 			vout: [{ scriptpubkey_address: ADDRESS, value: opts.amount ?? AMOUNT }]
 		};

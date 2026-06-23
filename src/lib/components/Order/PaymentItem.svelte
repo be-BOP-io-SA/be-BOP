@@ -56,8 +56,8 @@
 				currency={payment.price.currency}
 			/>
 			- {payment.status === 'pending' && payment.awaitingConfirmation
-					? t('order.paymentStatus.awaitingConfirmation')
-					: t(`order.paymentStatus.${payment.status}`)}
+				? t('order.paymentStatus.awaitingConfirmation')
+				: t(`order.paymentStatus.${payment.status}`)}
 		</span>
 	</summary>
 
