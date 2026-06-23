@@ -1,6 +1,7 @@
 import { collections } from '$lib/server/database';
 import { getProductPriceHistory } from '$lib/server/price-history';
 import { rateLimit } from '$lib/server/rateLimit';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
@@ -13,10 +14,16 @@ const RANGE_DAYS: Record<string, number | null> = {
 };
 
 function escapeCSV(value: string): string {
-	return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+	// Prefix formula-trigger characters to prevent spreadsheet injection.
+	const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
+	return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
 export const GET: RequestHandler = async ({ params, locals, url }) => {
+	if (!runtimeConfig.priceHistoryEnabled) {
+		throw error(404, 'Price history is disabled');
+	}
+
 	// Public read endpoint — keep it cheap to abuse.
 	rateLimit(locals.clientIp, 'price-history', 60, { minutes: 1 });
 
@@ -32,20 +39,16 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		throw error(404, 'Price history not available for this product');
 	}
 
+	const isStaff = locals.user?.roleId !== undefined && locals.user.roleId !== CUSTOMER_ROLE_ID;
 	const isCsv = url.searchParams.get('format') === 'csv';
-	if (isCsv) {
-		// CSV export is for staff (employees/admins) only — for auditors.
-		const isStaff = locals.user?.roleId !== undefined && locals.user.roleId !== CUSTOMER_ROLE_ID;
-		if (!isStaff) {
-			throw error(403, 'Forbidden');
-		}
+	if (isCsv && !isStaff) {
+		throw error(403, 'Forbidden');
 	}
 
 	// JSON charts are bounded to the selected window (default 1 month) to limit how
 	// many orders are scanned; the CSV export covers the full history for auditors.
 	const rangeParam = url.searchParams.get('range') ?? '1m';
 	const windowDays = isCsv ? null : rangeParam in RANGE_DAYS ? RANGE_DAYS[rangeParam] : 30;
-
 	const history = await getProductPriceHistory(params.id, product.price.currency, windowDays);
 
 	if (isCsv) {
@@ -67,5 +70,10 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		});
 	}
 
-	return json(history);
+	// Gate average-paid aggregate to staff — it's business-sensitive.
+	const payload = isStaff
+		? history
+		: { ...history, paid: { points: [], mean: null, pctBelowCatalogue: null } };
+
+	return json(payload, { headers: { 'Cache-Control': 'public, max-age=60' } });
 };
