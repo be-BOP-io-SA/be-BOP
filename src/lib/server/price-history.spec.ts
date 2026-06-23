@@ -142,6 +142,22 @@ describe('buildCatalogue windowing (sinceMs)', () => {
 	});
 });
 
+describe('buildCatalogue with an edited discount (two sequential windows)', () => {
+	it('uses the original percentage before the edit and the new one after', () => {
+		const segments: BaseSegment[] = [{ from: daysAgo(60), amount: 20 }];
+		// loadPriceFacts now emits one window per event version, clipped to its validity period.
+		const windows: PublicDiscountWindow[] = [
+			{ percentage: 25, beginsAt: daysAgo(40), endsAt: daysAgo(20) }, // pre-edit
+			{ percentage: 30, beginsAt: daysAgo(20), endsAt: null } // post-edit
+		];
+		const res = buildCatalogue(segments, windows, NOW);
+		const prices = res.points.map((p) => p.price);
+		expect(prices).toContain(15); // 20 * 0.75, pre-edit period
+		expect(prices).toContain(14); // 20 * 0.70, post-edit period
+		expect(prices).toContain(20); // base before the discount began
+	});
+});
+
 describe('currency precision (priceDigits)', () => {
 	it('keeps sub-unit prices instead of rounding them to zero', () => {
 		const segments: BaseSegment[] = [{ from: daysAgo(5), amount: 0.00037066 }];

@@ -96,7 +96,8 @@
 	// --- Hover tooltip ---------------------------------------------------------
 	let hoverX: number | null = null; // plot-space x in pixels
 	function onMove(event: MouseEvent) {
-		const px = event.offsetX - $padding.left;
+		const rect = (event.currentTarget as SVGRectElement).getBoundingClientRect();
+		const px = event.clientX - rect.left;
 		hoverX = px >= 0 && px <= xRangeMax ? px : null;
 	}
 	function onLeave() {
