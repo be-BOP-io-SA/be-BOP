@@ -290,6 +290,7 @@ export const load = async ({ params, parent, locals }) => {
 			productCMSAfter: cmsFromContent({ desktopContent: product.contentAfter }, locals)
 		}),
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
+		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		websiteShortDescription: product.shortDescription,
 		freeProductsAvailable,
 		adminPrefix: getAdminPrefix()

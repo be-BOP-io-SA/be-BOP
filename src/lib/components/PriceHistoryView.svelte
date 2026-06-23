@@ -82,9 +82,6 @@
 	] as const;
 	let range: (typeof RANGES)[number]['key'] = '1m';
 
-	$: catView = catVals;
-	$: paidView = paidVals;
-
 	function domain(...sets: Array<Array<{ x: number; y: number }>>): [number, number] {
 		const ys = sets.flat().map((p) => p.y);
 		if (!ys.length) {
@@ -157,13 +154,13 @@
 		</div>
 		{#if tab === 'history'}
 			<div class="h-60 w-full rounded-xl border border-gray-100 p-2">
-				{#if catView.length}
-					<LayerCake padding={PADDING} x={getX} y={getY} yDomain={domain(catView)} data={catView}>
+				{#if catVals.length}
+					<LayerCake padding={PADDING} x={getX} y={getY} yDomain={domain(catVals)} data={catVals}>
 						<Svg>
 							<PriceChartLayer
 								currency={cur}
 								locale={$locale}
-								series={[{ id: 'cat', color: CAT_COLOR, step: true, area: true, values: catView }]}
+								series={[{ id: 'cat', color: CAT_COLOR, step: true, area: true, values: catVals }]}
 							/>
 						</Svg>
 					</LayerCake>
@@ -238,21 +235,21 @@
 			{/if}
 
 			<div class="h-60 w-full rounded-xl border border-gray-100 p-2">
-				{#if paidView.length || catView.length}
+				{#if paidVals.length || catVals.length}
 					<LayerCake
 						padding={PADDING}
 						x={getX}
 						y={getY}
-						yDomain={domain(catView, paidView)}
-						data={[...catView, ...paidView]}
+						yDomain={domain(catVals, paidVals)}
+						data={[...catVals, ...paidVals]}
 					>
 						<Svg>
 							<PriceChartLayer
 								currency={cur}
 								locale={$locale}
 								series={[
-									{ id: 'cat', color: CAT_COLOR, step: true, area: false, values: catView },
-									{ id: 'paid', color: PAID_COLOR, step: false, area: true, values: paidView }
+									{ id: 'cat', color: CAT_COLOR, step: true, area: false, values: catVals },
+									{ id: 'paid', color: PAID_COLOR, step: false, area: true, values: paidVals }
 								]}
 							/>
 						</Svg>

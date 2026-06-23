@@ -15,17 +15,20 @@
 	const { t } = useI18n();
 </script>
 
+<svelte:window on:keydown={(e) => { if (open && e.key === 'Escape') onClose(); }} />
+
 {#if open}
-	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions a11y-no-noninteractive-element-interactions -->
-	<div
-		class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4"
-		on:click={onClose}
-	>
+	<div class="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+		<button
+			type="button"
+			class="absolute inset-0 bg-black/50"
+			aria-label={t('priceCalendar.close')}
+			on:click={onClose}
+		/>
 		<div
-			class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+			class="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
 			role="dialog"
 			aria-modal="true"
-			on:click|stopPropagation
 		>
 			<!-- Header -->
 			<div class="flex items-center gap-3 border-b border-gray-100 px-5 py-4">

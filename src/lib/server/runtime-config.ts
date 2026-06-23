@@ -192,6 +192,7 @@ const baseConfig = {
 			canBeAddedToBasket: true
 		}
 	} satisfies ProductActionSettings as ProductActionSettings,
+	priceHistoryEnabled: true,
 	mainThemeId: '',
 	sellerIdentity: null as SellerIdentity | null,
 	shopInformation: null as SellerIdentity | null,

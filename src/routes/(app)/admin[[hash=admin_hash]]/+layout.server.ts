@@ -75,6 +75,7 @@ export async function load({ locals }) {
 	 */
 	return {
 		productActionSettings: runtimeConfig.productActionSettings,
+		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		availablePaymentMethods: paymentMethods({ includePOS: true }),
 		role: locals.user?.roleId ? collections.roles.findOne({ _id: locals.user.roleId }) : null,
 		adminPrefix: adminPrefix(),

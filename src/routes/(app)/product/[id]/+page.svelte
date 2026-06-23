@@ -52,8 +52,8 @@
 		!data.product.payWhatYouWant && !data.product.free && !data.product.bookingSpec;
 	$: isLoggedIn = !!(data.userId || data.email || data.npub || data.sso?.length);
 	$: isEmployee = !!data.roleId && data.roleId !== CUSTOMER_ROLE_ID;
-	// Guests see Price history; employees see Average price paid; regular logged-in customers see neither.
-	$: priceCalendarVisible = priceCalendarEnabled && (!isLoggedIn || isEmployee);
+	// All users can see price history (law compliance); only staff see the average-paid tab.
+	$: priceCalendarVisible = priceCalendarEnabled && data.priceHistoryEnabled !== false;
 	function openPriceCalendar() {
 		if (priceCalendarVisible) {
 			showPriceCalendar = true;
@@ -612,15 +612,7 @@
 								{vatRate}%)
 								<span class="text-gray-400 text-xs ml-1">{showExclTax ? '▲' : '▼'}</span></span
 							>
-							<!-- svelte-ignore a11y-click-events-have-key-events -->
-							<div
-								class="flex items-center gap-2"
-								class:cursor-pointer={priceCalendarVisible}
-								role="button"
-								tabindex="0"
-								title={t('priceCalendar.openTitle')}
-								on:click|stopPropagation={openPriceCalendar}
-							>
+							<div class="flex items-center gap-2">
 								<PriceTag
 									currency={data.product.price.currency}
 									class={data.discount?.mode === 'percentage'
@@ -645,6 +637,15 @@
 										main
 									/>
 								{/if}
+								{#if priceCalendarVisible}
+									<button
+										type="button"
+										class="ml-1 shrink-0 text-gray-500 hover:text-blue-500 transition-colors"
+										aria-label={t('priceCalendar.openTitle')}
+										on:click|stopPropagation={openPriceCalendar}
+									><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button
+									>
+								{/if}
 							</div>
 							<PriceTag
 								currency={data.product.price.currency}
@@ -659,15 +660,7 @@
 							<span class="text-sm mt-1"
 								>{t('product.vatExcludedEstimate')} ({t('cart.vat')} {vatRate}%)</span
 							>
-							<!-- svelte-ignore a11y-click-events-have-key-events -->
-							<div
-								class="flex items-center gap-2"
-								class:cursor-pointer={priceCalendarVisible}
-								role="button"
-								tabindex="0"
-								title={t('priceCalendar.openTitle')}
-								on:click|stopPropagation={openPriceCalendar}
-							>
+							<div class="flex items-center gap-2">
 								<PriceTag
 									currency={data.product.price.currency}
 									class={data.discount?.mode === 'percentage'
@@ -705,15 +698,7 @@
 					{@const showStrikeThrough =
 						data.discount?.mode === 'percentage' && data.discount.showBadge !== false}
 					<div class="flex flex-col gap-1 lg:items-start">
-						<!-- svelte-ignore a11y-click-events-have-key-events -->
-						<div
-							class="flex items-baseline gap-3"
-							class:cursor-pointer={priceCalendarVisible}
-							role="button"
-							tabindex="0"
-							title={t('priceCalendar.openTitle')}
-							on:click|stopPropagation={openPriceCalendar}
-						>
+						<div class="flex items-baseline gap-3">
 							<PriceTag
 								currency={data.product.price.currency}
 								class="text-2xl lg:text-4xl truncate max-w-full {showStrikeThrough
@@ -736,6 +721,15 @@
 									main
 								/>
 							{/if}
+							{#if priceCalendarVisible}
+								<button
+									type="button"
+									class="ml-1 self-center shrink-0 text-gray-500 hover:text-blue-500 transition-colors"
+									aria-label={t('priceCalendar.openTitle')}
+									on:click={openPriceCalendar}
+								><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button
+								>
+							{/if}
 						</div>
 						<PriceTag
 							currency={data.product.price.currency}
@@ -753,7 +747,7 @@
 					productName={data.product.name}
 					currency={data.product.price.currency}
 					onClose={() => (showPriceCalendar = false)}
-					showHistory={!isLoggedIn}
+					showHistory={true}
 					showPaid={isEmployee}
 					{vatMult}
 					adminOrderHref={isEmployee && data.product.alias?.[0]

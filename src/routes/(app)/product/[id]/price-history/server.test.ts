@@ -7,6 +7,9 @@ vi.mock('$lib/server/database', () => ({
 	collections: { products: { findOne: (...args: unknown[]) => findOne(...args) } }
 }));
 vi.mock('$lib/server/rateLimit', () => ({ rateLimit: vi.fn() }));
+vi.mock('$lib/server/runtime-config', () => ({
+	runtimeConfig: { priceHistoryEnabled: true }
+}));
 vi.mock('$lib/server/price-history', () => ({
 	getProductPriceHistory: vi.fn(async () => ({
 		currency: 'CHF',

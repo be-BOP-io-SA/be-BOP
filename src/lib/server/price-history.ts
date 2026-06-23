@@ -37,7 +37,6 @@ export interface PaidHistory {
 	pctBelowCatalogue: number | null;
 }
 
-const DAY_MS = 86_400_000;
 // Prices are rounded to the currency's fraction digits (BTC needs 8, not 2);
 // percentages stay at 2 decimals.
 const round = (n: number, d: number) => Math.round(n * 10 ** d) / 10 ** d;
@@ -95,27 +94,36 @@ export function buildCatalogue(
 	priceDigits = 2,
 	sinceMs: number | null = null
 ): CatalogueHistory {
-	const firstAt = segments.length
-		? segments.reduce((min, s) => Math.min(min, s.from), segments[0].from)
-		: null;
-
-	const allPoints: PricePoint[] = [];
-	if (firstAt !== null) {
-		let prev: number | null = null;
-		for (let t = startOfDay(new Date(firstAt)).getTime(); t <= now; t += DAY_MS) {
-			const price = catalogueValueAt(segments, windows, t, priceDigits);
-			if (price !== null && price !== prev) {
-				allPoints.push({ t: new Date(t).toISOString(), price });
-				prev = price;
-			}
-		}
-		const nowPrice = catalogueValueAt(segments, windows, now, priceDigits);
-		if (nowPrice !== null) {
-			allPoints.push({ t: new Date(now).toISOString(), price: nowPrice });
-		}
+	if (!segments.length) {
+		return { points: [], current: null, deltaPct: null, min30: null, max30: null };
 	}
 
+	const firstAt = segments.reduce((min, s) => Math.min(min, s.from), segments[0].from);
+	const windowStart30 = subDays(new Date(now), 30).getTime();
+
+	// Collect only the timestamps where the effective price can change — segment
+	// boundaries and discount window edges — instead of sampling every day.
+	const changeTs = new Set<number>();
+	for (const s of segments) changeTs.add(s.from);
+	for (const w of windows) {
+		changeTs.add(w.beginsAt);
+		if (w.endsAt !== null) changeTs.add(w.endsAt);
+	}
+	const sorted = [...changeTs].filter((t) => t >= firstAt && t < now).sort((a, b) => a - b);
+
+	const allPoints: PricePoint[] = [];
+	let prev: number | null = null;
+	for (const t of sorted) {
+		const price = catalogueValueAt(segments, windows, t, priceDigits);
+		if (price !== null && price !== prev) {
+			allPoints.push({ t: new Date(t).toISOString(), price });
+			prev = price;
+		}
+	}
 	const current = catalogueValueAt(segments, windows, now, priceDigits);
+	if (current !== null) {
+		allPoints.push({ t: new Date(now).toISOString(), price: current });
+	}
 
 	let deltaPct: number | null = null;
 	const distinct = allPoints.filter((p, i, arr) => i === 0 || p.price !== arr[i - 1].price);
@@ -128,27 +136,21 @@ export function buildCatalogue(
 
 	let min30: CatalogueHistory['min30'] = null;
 	let max30: CatalogueHistory['max30'] = null;
-	if (firstAt !== null) {
-		const windowStart = subDays(new Date(now), 30).getTime();
-		for (let t = Math.max(windowStart, firstAt); t <= now; t += DAY_MS) {
-			const price = catalogueValueAt(segments, windows, t, priceDigits);
-			if (price === null) {
-				continue;
-			}
-			const date = new Date(t).toISOString();
-			if (!min30 || price < min30.price) {
-				min30 = { price, date };
-			}
-			if (!max30 || price >= max30.price) {
-				max30 = { price, date };
-			}
-		}
+	const kpiTs = [...new Set([windowStart30, ...changeTs, now])]
+		.filter((t) => t >= Math.max(windowStart30, firstAt) && t <= now)
+		.sort((a, b) => a - b);
+	for (const t of kpiTs) {
+		const price = catalogueValueAt(segments, windows, t, priceDigits);
+		if (price === null) continue;
+		const date = new Date(t).toISOString();
+		if (!min30 || price < min30.price) min30 = { price, date };
+		if (!max30 || price >= max30.price) max30 = { price, date };
 	}
 
 	// Bound the returned series to the requested window (KPIs above stay full-history),
 	// anchored at the window edge so the line starts with the price in effect then.
 	let points = allPoints;
-	if (sinceMs !== null && firstAt !== null) {
+	if (sinceMs !== null) {
 		const within = allPoints.filter((p) => Date.parse(p.t) >= sinceMs);
 		const anchor = catalogueValueAt(segments, windows, sinceMs, priceDigits);
 		points =
@@ -230,22 +232,47 @@ async function loadPriceFacts(
 		.sort({ createdAt: 1 })
 		.toArray();
 
-	const latestByDiscount = new Map<string, (typeof discLogs)[number]>();
+	// Group events by discount id (already sorted by createdAt from DB).
+	// Each edit creates a new event; build one window per version, clipped to
+	// that version's validity period so edits don't overwrite prior history.
+	const eventsByDiscount = new Map<string, typeof discLogs>();
 	for (const log of discLogs) {
-		latestByDiscount.set(log.objectId, log);
+		const group = eventsByDiscount.get(log.objectId) ?? [];
+		group.push(log);
+		eventsByDiscount.set(log.objectId, group);
 	}
 	const windows: PublicDiscountWindow[] = [];
-	for (const log of latestByDiscount.values()) {
-		const after = log.after as {
-			percentage?: number;
-			beginsAt?: string | Date;
-			endsAt?: string | Date | null;
-		} | null;
-		if (after && typeof after.percentage === 'number' && after.beginsAt) {
+	for (const events of eventsByDiscount.values()) {
+		for (let i = 0; i < events.length; i++) {
+			const log = events[i];
+			const nextLog = events[i + 1];
+			const after = log.after as {
+				percentage?: number;
+				beginsAt?: string | Date;
+				endsAt?: string | Date | null;
+			} | null;
+			if (!after || typeof after.percentage !== 'number' || !after.beginsAt) {
+				continue;
+			}
+			const editedAt = log.createdAt.getTime();
+			const nextEditAt = nextLog ? nextLog.createdAt.getTime() : null;
+			const scheduledBegins = new Date(after.beginsAt).getTime();
+			const scheduledEnds = after.endsAt ? new Date(after.endsAt).getTime() : null;
+			// Clip the discount's scheduled window to this event's validity period.
+			const effectiveBegins = Math.max(editedAt, scheduledBegins);
+			const effectiveEnds =
+				nextEditAt !== null
+					? scheduledEnds !== null
+						? Math.min(nextEditAt, scheduledEnds)
+						: nextEditAt
+					: scheduledEnds;
+			if (effectiveEnds !== null && effectiveEnds <= effectiveBegins) {
+				continue;
+			}
 			windows.push({
 				percentage: after.percentage,
-				beginsAt: new Date(after.beginsAt).getTime(),
-				endsAt: after.endsAt ? new Date(after.endsAt).getTime() : null
+				beginsAt: effectiveBegins,
+				endsAt: effectiveEnds
 			});
 		}
 	}
