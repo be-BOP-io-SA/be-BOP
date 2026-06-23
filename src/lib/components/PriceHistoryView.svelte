@@ -172,7 +172,9 @@
 			<div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
 				<div class="rounded-xl border border-gray-100 p-4">
 					<p class="text-xs uppercase tracking-wide text-gray-400">{t('priceCalendar.current')}</p>
-					<p class="mt-1 text-xl font-semibold text-gray-900">{fmtCat(history.catalogue.current)}</p>
+					<p class="mt-1 text-xl font-semibold text-gray-900">
+						{fmtCat(history.catalogue.current)}
+					</p>
 					{#if history.catalogue.deltaPct !== null}
 						<p
 							class="mt-1 text-xs font-medium {history.catalogue.deltaPct >= 0
