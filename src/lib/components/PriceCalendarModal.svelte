@@ -15,7 +15,7 @@
 	const { t } = useI18n();
 </script>
 
-<svelte:window on:keydown={(e) => { if (open && e.key === 'Escape') onClose(); }} />
+<svelte:window on:keydown={(e) => { if (open && e.key === 'Escape') {onClose();} }} />
 
 {#if open}
 	<div class="fixed inset-0 z-[1000] flex items-center justify-center p-4">
