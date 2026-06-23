@@ -23,7 +23,11 @@ describe('PPBitcoinNodeless.checkPayment', () => {
 		return {
 			txid: `tx-${opts.blockHeight ?? 'mempool'}`,
 			status: confirmed
-				? { confirmed: true, block_height: opts.blockHeight, block_time: secs(opts.blockTime ?? ORDER_CREATED_AT) }
+				? {
+						confirmed: true,
+						block_height: opts.blockHeight,
+						block_time: secs(opts.blockTime ?? ORDER_CREATED_AT)
+				  }
 				: { confirmed: false },
 			vout: [{ scriptpubkey_address: ADDRESS, value: AMOUNT }]
 		};

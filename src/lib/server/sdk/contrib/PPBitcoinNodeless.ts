@@ -81,7 +81,12 @@ export default {
 
 		if (seenNow) {
 			// Funds committed and awaiting confirmation — hold the order, clear any grace timer.
-			return { status: 'pending', awaitingConfirmation: true, mempoolMissingSince: null, transactions };
+			return {
+				status: 'pending',
+				awaitingConfirmation: true,
+				mempoolMissingSince: null,
+				transactions
+			};
 		}
 
 		const now = new Date();
@@ -104,6 +109,11 @@ export default {
 		}
 
 		// Still within the deadline and no full-amount TX in the mempool: plain pending.
-		return { status: 'pending', awaitingConfirmation: false, mempoolMissingSince: null, transactions };
+		return {
+			status: 'pending',
+			awaitingConfirmation: false,
+			mempoolMissingSince: null,
+			transactions
+		};
 	}
 } satisfies PaymentProcessorDefinition;
