@@ -22,11 +22,10 @@
 	export let locale = 'fr';
 
 	// LayerCake context (d3 scales as Svelte stores).
-	const { xScale, yScale, height, padding } = getContext<{
+	const { xScale, yScale, height } = getContext<{
 		xScale: Readable<Scale>;
 		yScale: Readable<Scale>;
 		height: Readable<number>;
-		padding: Readable<{ top: number; right: number; bottom: number; left: number }>;
 	}>('LayerCake');
 
 	const digits = (c: string) =>
