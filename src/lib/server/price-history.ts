@@ -104,10 +104,10 @@ export function buildCatalogue(
 	// Collect only the timestamps where the effective price can change — segment
 	// boundaries and discount window edges — instead of sampling every day.
 	const changeTs = new Set<number>();
-	for (const s of segments) changeTs.add(s.from);
+	for (const s of segments) {changeTs.add(s.from);}
 	for (const w of windows) {
 		changeTs.add(w.beginsAt);
-		if (w.endsAt !== null) changeTs.add(w.endsAt);
+		if (w.endsAt !== null) {changeTs.add(w.endsAt);}
 	}
 	const sorted = [...changeTs].filter((t) => t >= firstAt && t < now).sort((a, b) => a - b);
 
@@ -141,10 +141,10 @@ export function buildCatalogue(
 		.sort((a, b) => a - b);
 	for (const t of kpiTs) {
 		const price = catalogueValueAt(segments, windows, t, priceDigits);
-		if (price === null) continue;
+		if (price === null) {continue;}
 		const date = new Date(t).toISOString();
-		if (!min30 || price < min30.price) min30 = { price, date };
-		if (!max30 || price >= max30.price) max30 = { price, date };
+		if (!min30 || price < min30.price) {min30 = { price, date };}
+		if (!max30 || price >= max30.price) {max30 = { price, date };}
 	}
 
 	// Bound the returned series to the requested window (KPIs above stay full-history),

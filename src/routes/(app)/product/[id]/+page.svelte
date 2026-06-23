@@ -50,7 +50,6 @@
 	// The price calendar is meaningless for products without a fixed catalogue price.
 	$: priceCalendarEnabled =
 		!data.product.payWhatYouWant && !data.product.free && !data.product.bookingSpec;
-	$: isLoggedIn = !!(data.userId || data.email || data.npub || data.sso?.length);
 	$: isEmployee = !!data.roleId && data.roleId !== CUSTOMER_ROLE_ID;
 	// All users can see price history (law compliance); only staff see the average-paid tab.
 	$: priceCalendarVisible = priceCalendarEnabled && data.priceHistoryEnabled !== false;
