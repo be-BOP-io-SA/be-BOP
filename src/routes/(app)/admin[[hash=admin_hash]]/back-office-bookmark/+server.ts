@@ -14,7 +14,7 @@ export const POST = async ({ request, locals }) => {
 		.object({
 			href: z.string().refine((v) => validHrefs.has(v), 'Unknown admin entry')
 		})
-		.parse(JSON.parse(await request.text()));
+		.parse(await request.json());
 
 	const user = await collections.users.findOne(
 		{ _id: locals.user._id },
