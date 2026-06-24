@@ -10,10 +10,17 @@
 	import { page } from '$app/stores';
 	import { setContext } from 'svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import CookieConsentBanner from '$lib/components/CookieConsentBanner.svelte';
+	import { cookieConsentVisible } from '$lib/stores/cookieConsentVisible';
 
 	export let data;
 
 	setContext('language', data.language);
+
+	// Show the banner when an analytics snippet is configured AND the visitor either hasn't made
+	// a choice yet OR explicitly re-opened it via the 🍪 buttons.
+	$: showCookieConsent =
+		data.analyticsSnippetConfigured && (data.analyticsConsent === null || $cookieConsentVisible);
 </script>
 
 <svelte:head>
@@ -43,3 +50,10 @@
 </svelte:head>
 
 <slot class="body body-mainPlan" />
+
+{#if showCookieConsent}
+	<CookieConsentBanner
+		hostnames={data.analyticsHostnames}
+		hasPrivacyPage={data.analyticsHasPrivacyPage}
+	/>
+{/if}

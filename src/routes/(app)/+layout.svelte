@@ -21,6 +21,7 @@
 	import { slide } from 'svelte/transition';
 	import { exchangeRate } from '$lib/stores/exchangeRate';
 	import { currencies } from '$lib/stores/currencies';
+	import { cookieConsentVisible } from '$lib/stores/cookieConsentVisible';
 	import { sellerIdentity } from '$lib/stores/sellerIdentity';
 	import { useI18n } from '$lib/i18n';
 	import IconModeLight from '$lib/components/icons/IconModeLight.svelte';
@@ -654,12 +655,21 @@
 							>
 						{/each}
 					</div>
-					<div class="flex flex-row gap-1">
+					<div class="flex flex-row gap-1 items-center">
 						{#each data.links.socialNetworkIcons as icon}
 							<a href={icon.href} target="_blank"
 								><img src="data:image/svg+xml;utf8, {icon.svg}" alt={icon.name} /></a
 							>
 						{/each}
+						{#if data.analyticsSnippetConfigured}
+							<button
+								type="button"
+								class="text-2xl leading-none"
+								on:click={() => cookieConsentVisible.set(true)}
+								aria-label={t('cookieConsent.reopenAria')}
+								title={t('cookieConsent.reopenAria')}>🍪</button
+							>
+						{/if}
 					</div>
 				</div>
 

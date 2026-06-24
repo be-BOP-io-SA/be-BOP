@@ -1097,5 +1097,17 @@
 			"checkboxLabel": "Enable beacon signal to be-BOP.io nostr-bot to share your shop existence",
 			"infoBlock": "This setting controls whether your shop sends periodic signals to be-BOP.io. We value privacy: only your shop URL and be-BOP software version are shared. No personal or customer data is transmitted. This helps us with debugging and shows us that the be-BOP community is growing."
 		}
+	},
+	"cookieConsent": {
+		"banner": {
+			"ariaLabel": "Cookie consent",
+			"dataSentTo": "Your visit data is sent to: {hostnames}",
+			"dataSentToFallback": "This site uses analytics tracking.",
+			"accept": "Accept",
+			"deny": "Deny",
+			"learnMore": "Learn more"
+		},
+		"reopenAria": "Cookie preferences",
+		"reopenIdentity": "Manage cookie preferences"
 	}
 }
