@@ -4,8 +4,9 @@ import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { redirect } from '@sveltejs/kit';
 import { error } from 'console';
 import { z } from 'zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
 		const parsed = z

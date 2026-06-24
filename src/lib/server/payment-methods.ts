@@ -35,7 +35,7 @@ export const paymentMethods = (opts?: {
 	includePOS?: boolean;
 	includeDisabled?: boolean;
 	totalSatoshis?: number;
-}) =>
+}): PaymentMethod[] =>
 	env.VITEST
 		? [...ALL_PAYMENT_METHODS]
 		: [...new Set([...runtimeConfig.paymentMethods.order, ...ALL_PAYMENT_METHODS])].filter(

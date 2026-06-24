@@ -2,13 +2,14 @@ import { rootDir } from '$lib/server/root-dir';
 import { createHash } from 'crypto';
 import fs from 'fs';
 import { join } from 'path';
+import type { RequestHandler } from './$types';
 
 const assetDir = join(rootDir, 'src/lib/assets');
 const allowedAssets: ReadonlySet<string> = new Set(
 	fs.readdirSync(assetDir).filter((name) => fs.statSync(join(assetDir, name)).isFile())
 );
 
-export async function GET({ params, request }) {
+export const GET: RequestHandler = async ({ params, request }) => {
 	if (!allowedAssets.has(params.filename)) {
 		return new Response('Asset not found', { status: 404 });
 	}
@@ -43,4 +44,4 @@ export async function GET({ params, request }) {
 		console.error('Error serving asset:', err);
 		return new Response('Asset not found or server error', { status: 404 });
 	}
-}
+};

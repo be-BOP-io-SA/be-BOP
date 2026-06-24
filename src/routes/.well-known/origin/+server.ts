@@ -1,6 +1,7 @@
 import { env } from '$env/dynamic/private';
+import type { RequestHandler } from './$types';
 
-export const GET = ({ request, url }) => {
+export const GET: RequestHandler = ({ request, url }) => {
 	return new Response(
 		JSON.stringify(
 			{

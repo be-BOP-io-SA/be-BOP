@@ -7,8 +7,9 @@ import { error } from '@sveltejs/kit';
 import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
+import type { Actions, PageServerLoad } from './$types';
 
-export function load({ locals }) {
+export const load: PageServerLoad = ({ locals }) => {
 	// Until https://github.com/be-BOP-io-SA/be-BOP/issues/220
 	if (locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
 		throw error(403, 'Forbidden. Only Super Admin can access this page !');
@@ -17,9 +18,9 @@ export function load({ locals }) {
 	return {
 		shopInformation: runtimeConfig.shopInformation
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	default: async ({ request, locals }) => {
 		// Until https://github.com/be-BOP-io-SA/be-BOP/issues/220
 		if (locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {

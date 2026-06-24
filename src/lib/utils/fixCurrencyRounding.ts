@@ -1,7 +1,7 @@
 import { FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
 import { toCurrency } from './toCurrency';
 
-export function fixCurrencyRounding(amount: number, currency: Currency) {
+export function fixCurrencyRounding(amount: number, currency: Currency): number {
 	return toCurrency(currency, amount, currency);
 }
 

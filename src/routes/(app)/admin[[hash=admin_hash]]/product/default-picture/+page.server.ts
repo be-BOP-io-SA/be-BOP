@@ -5,8 +5,9 @@ import { join } from 'path';
 import sharp from 'sharp';
 import { rootDir } from '$lib/server/root-dir';
 import { adminPrefix } from '$lib/server/admin';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
 		const file = formData.get('file');

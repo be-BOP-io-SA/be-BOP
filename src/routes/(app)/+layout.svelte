@@ -26,6 +26,7 @@
 	import IconModeLight from '$lib/components/icons/IconModeLight.svelte';
 	import IconModeDark from '$lib/components/icons/IconModeDark.svelte';
 	import theme from '$lib/stores/theme';
+	import type { ThemeMode } from '$lib/types/Theme';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency';
 	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
@@ -130,7 +131,7 @@
 	];
 
 	function setTheme(value: string) {
-		$theme = value as 'light' | 'dark' | 'system';
+		$theme = value as ThemeMode;
 		localStorage.setItem('theme', value);
 		open = false;
 	}

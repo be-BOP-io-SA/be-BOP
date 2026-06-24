@@ -1,4 +1,4 @@
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { collections } from '$lib/server/database';
 import { fail } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
@@ -77,7 +77,7 @@ function fieldDocFields(parsed: z.infer<typeof fieldSchema>, options: string[] |
 	};
 }
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const fieldsRaw = await collections.checkoutFieldConfigs
 		.find({})
 		.sort({ sortOrder: 1 })

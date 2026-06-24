@@ -1,8 +1,9 @@
 import { error } from '@sveltejs/kit';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { fetchOrderForUser } from '../../../fetchOrderForUser.js';
+import type { PageServerLoad } from './$types';
 
-export async function load({ params }) {
+export const load: PageServerLoad = async ({ params }) => {
 	const order = await fetchOrderForUser(params.id);
 	if (!order) {
 		throw error(404, 'Order not found');
@@ -32,4 +33,4 @@ export async function load({ params }) {
 		sellerIdentity: (order.sellerIdentity || runtimeConfig.sellerIdentity)!,
 		hideShopBankOnReceipt: runtimeConfig.hideShopBankOnReceipt
 	};
-}
+};

@@ -1,3 +1,4 @@
+import type { LayoutServerLoad } from './$types';
 import { ORIGIN } from '$lib/server/env-config';
 import { adminPrefix } from '$lib/server/admin.js';
 import { getCartFromDb } from '$lib/server/cart.js';
@@ -53,7 +54,7 @@ async function getCartAndRemoveSomeItems(userIdentifier: UserIdentifier): Promis
 	return { ...cartInDb, items: itemsAfterRemoval };
 }
 
-export async function load(params) {
+export const load: LayoutServerLoad = async (params) => {
 	if (!runtimeConfig.isAdminCreated) {
 		if (params.locals.user) {
 			throw error(
@@ -394,4 +395,4 @@ export async function load(params) {
 		}),
 		sessionAcceptAgeLimitation: locals.acceptAgeLimitation
 	};
-}
+};

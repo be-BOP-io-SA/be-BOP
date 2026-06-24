@@ -2,10 +2,11 @@ import { collections } from '$lib/server/database';
 import type { Order } from '$lib/types/Order';
 import { tryScheduleToProductId } from '$lib/types/Schedule';
 import { userIdentifier, userQuery } from '$lib/server/user';
+import type { PageServerLoad } from './$types';
 
 const BOOKING_LIST_LIMIT = 500;
 
-export async function load({ locals }) {
+export const load: PageServerLoad = async ({ locals }) => {
 	const userQ = userQuery(userIdentifier(locals));
 
 	const orders = await collections.orders
@@ -61,4 +62,4 @@ export async function load({ locals }) {
 			};
 		})
 	};
-}
+};

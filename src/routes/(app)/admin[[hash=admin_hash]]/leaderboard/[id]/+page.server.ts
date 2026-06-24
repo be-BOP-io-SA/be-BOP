@@ -6,8 +6,9 @@ import { error, redirect } from '@sveltejs/kit';
 import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load({ params }) {
+export const load: PageServerLoad = async ({ params }) => {
 	const leaderboard = await collections.leaderboards.findOne({
 		_id: params.id
 	});
@@ -29,9 +30,9 @@ export async function load({ params }) {
 		endsAt,
 		products
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ request, params }) {
 		const leaderboard = await collections.leaderboards.findOne({
 			_id: params.id

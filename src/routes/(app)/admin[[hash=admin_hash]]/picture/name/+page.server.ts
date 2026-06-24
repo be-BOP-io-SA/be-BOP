@@ -2,12 +2,13 @@ import { collections } from '$lib/server/database';
 import { z } from 'zod';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
-export const load = async () => {
+import type { Actions, PageServerLoad } from './$types';
+export const load: PageServerLoad = async () => {
 	return {
 		pictures: await collections.pictures.find().toArray()
 	};
 };
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 

@@ -10,8 +10,9 @@ import { JSDOM } from 'jsdom';
 import DOMPurify from 'dompurify';
 import { collections } from './database';
 import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
+import type { PickDeep } from 'type-fest';
 import type { Specification } from '$lib/types/Specification';
-import type { Tag } from '$lib/types/Tag';
+import type { Tag, TagWidgetTag } from '$lib/types/Tag';
 import type { ContactForm } from '$lib/types/ContactForm';
 import type { Countdown } from '$lib/types/Countdown';
 import type { Gallery } from '$lib/types/Gallery';
@@ -21,7 +22,7 @@ import { groupBy } from '$lib/utils/group-by';
 import { subMinutes } from 'date-fns';
 import { z } from 'zod';
 import type { ProductWidgetProduct } from '$lib/components/ProductWidget/ProductWidgetProduct';
-import { readUrlState, searchProducts, type VatContext } from './searchlist';
+import { readUrlState, searchProducts, type VatContext, type SearchlistLocals } from './searchlist';
 import { runtimeConfig } from './runtime-config';
 import type { VatProfile } from '$lib/types/VatProfile';
 export type ExternalProductData = ProductWidgetProduct & {
@@ -232,21 +233,37 @@ type TokenObject =
 			raw: string;
 	  };
 
-export async function cmsFromContent(
+export type CmsFromContentInput = {
+	desktopContent: string;
+	employeeContent?: string;
+	mobileContent?: string;
+	forceContentVersion?: 'desktop' | 'mobile' | 'employee';
+	forceUnsanitizedContent?: boolean;
+};
+
+type CmsFromContentLocals = Pick<App.Locals, 'language'> &
+	Partial<
+		PickDeep<App.Locals, 'user.hasPosOptions' | 'user.roleId' | 'email' | 'sso' | 'countryCode'>
+	>;
+
+export type CmsData = Awaited<ReturnType<typeof cmsFromContentImpl>>;
+
+export function cmsFromContent(
+	input: CmsFromContentInput,
+	locals: CmsFromContentLocals
+): Promise<CmsData> {
+	return cmsFromContentImpl(input, locals);
+}
+
+async function cmsFromContentImpl(
 	{
 		desktopContent,
 		mobileContent,
 		employeeContent,
 		forceContentVersion,
 		forceUnsanitizedContent
-	}: {
-		desktopContent: string;
-		employeeContent?: string;
-		mobileContent?: string;
-		forceContentVersion?: 'desktop' | 'mobile' | 'employee';
-		forceUnsanitizedContent?: boolean;
-	},
-	locals: App.Locals
+	}: CmsFromContentInput,
+	locals: CmsFromContentLocals
 ) {
 	/**
 	 * Matches product widget syntax in CMS content:
@@ -669,9 +686,7 @@ export async function cmsFromContent(
 					.find({
 						_id: { $in: [...tagSlugs] }
 					})
-					.project<
-						Pick<Tag, '_id' | 'name' | 'title' | 'subtitle' | 'content' | 'shortContent' | 'cta'>
-					>({
+					.project<TagWidgetTag>({
 						name: 1,
 						title: { $ifNull: [`$translations.${locals.language}.title`, '$title'] },
 						subtitle: { $ifNull: [`$translations.${locals.language}.subtitle`, '$subtitle'] },
@@ -832,7 +847,7 @@ export async function cmsFromContent(
 	};
 }
 
-async function buildSearchlistViews(searchlistSlugs: string[], locals: App.Locals) {
+async function buildSearchlistViews(searchlistSlugs: string[], locals: SearchlistLocals) {
 	if (searchlistSlugs.length === 0) {
 		return [];
 	}

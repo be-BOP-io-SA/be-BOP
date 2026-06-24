@@ -1,6 +1,6 @@
 import { collections } from '$lib/server/database';
 import { error, redirect } from '@sveltejs/kit';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { z } from 'zod';
 import { deletePicture } from '$lib/server/picture';
 import {
@@ -29,7 +29,7 @@ import { enrichWithOrderNumbers } from '$lib/server/orders';
 import type { Picture } from '$lib/types/Picture';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
 
-export const load = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const pictures = await collections.pictures
 		.find({ productId: params.id })
 		.sort({ order: 1, createdAt: 1 })

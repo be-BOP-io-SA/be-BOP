@@ -7,8 +7,9 @@ import type { VatProfile } from '$lib/types/VatProfile';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { rateLimit } from '$lib/server/rateLimit';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ params, url, locals }) => {
+export const load: PageServerLoad = async ({ params, url, locals }) => {
 	// hooks.server.ts only rate-limits mutating methods (POST/PUT/PATCH/DELETE);
 	// the searchlist GET is otherwise unprotected against scraping / regex-scan abuse.
 	rateLimit(locals.clientIp, 'searchlist', 120, { minutes: 1 });

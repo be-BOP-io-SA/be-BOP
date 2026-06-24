@@ -12,9 +12,9 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { userQuery } from '$lib/server/user.js';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { subHours, subSeconds } from 'date-fns';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load({ params, locals }: { params: { id: string }; locals: App.Locals }) {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const subscription = await collections.paidSubscriptions.findOne({
 		_id: params.id
 	});
@@ -69,7 +69,7 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		picture: picture ?? undefined,
 		canRenew: canRenewAfter < new Date()
 	};
-}
+};
 
 export const actions: Actions = {
 	renew: async ({ params, locals }) => {

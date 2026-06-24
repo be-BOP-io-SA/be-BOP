@@ -1,12 +1,22 @@
 import { collections } from '$lib/server/database';
-import { load as catalogLoad } from './catalog/+page.server';
+import { fetchCatalog } from '$lib/server/catalog';
 import { cmsFromContent } from '$lib/server/cms';
 import { redirect } from '@sveltejs/kit';
 import { addYears } from 'date-fns';
 import { omit } from '$lib/utils/omit';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import type { Actions, PageServerLoadEvent } from './$types';
 
-export const load = async ({ locals, url }) => {
+// Private impl with a typed param and inferred (concrete) return so `data.catalog` stays
+// typed for the page component. Annotating `load: PageServerLoad` directly would widen the
+// return to the generic output shape and lose the concrete `catalog` type.
+// The inferred return type is intentionally not annotated: this load returns a
+// discriminated union ({ catalog } | { cmsPage, cmsData, layoutReset }) whose concrete
+// shape must reach the page component. Annotating it (or widening via `: PageServerLoad`)
+// collapses `data.catalog`/`data.cmsPage` to the generic output shape and breaks the
+// component's typed props. The projected `cmsPage` shape can't be named cleanly either.
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+async function loadImpl({ locals, url }: PageServerLoadEvent) {
 	const cmsPage = await collections.cmsPages.findOne(
 		{
 			_id: 'home'
@@ -34,8 +44,7 @@ export const load = async ({ locals, url }) => {
 
 	if (!cmsPage) {
 		return {
-			// @ts-expect-error only locals is needed
-			catalog: catalogLoad({ locals })
+			catalog: await fetchCatalog(locals)
 		};
 	}
 
@@ -62,9 +71,11 @@ export const load = async ({ locals, url }) => {
 		),
 		layoutReset: cmsPage.fullScreen
 	};
-};
+}
 
-export const actions = {
+export const load = loadImpl;
+
+export const actions: Actions = {
 	navigate: async ({ locals, request }) => {
 		const formData = await request.formData();
 		let redirectTo = formData.get('redirectTo')?.toString() || '/';

@@ -7,8 +7,9 @@ import { typedEntries } from '$lib/utils/typedEntries.js';
 import { typedFromEntries } from '$lib/utils/typedFromEntries.js';
 import { z } from 'zod';
 import { error } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		defaultLanguage: runtimeConfig.defaultLanguage,
 		customTranslationKeys: runtimeConfig.languages.map((locale) => ({
@@ -16,9 +17,9 @@ export async function load() {
 			keys: runtimeConfig[`translations.${locale}`] || {}
 		}))
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	languages: async ({ request }) => {
 		const formData = await request.formData();
 

@@ -3,8 +3,9 @@ import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { redirect } from '@sveltejs/kit';
 import * as client from 'openid-client';
+import type { RequestHandler } from './$types';
 
-export const GET = async ({ params, fetch, locals, url, cookies }) => {
+export const GET: RequestHandler = async ({ params, fetch, locals, url, cookies }) => {
 	rateLimit(locals.clientIp, 'oauth', 10, { minutes: 5 });
 
 	const oauth = runtimeConfig.oauth.find((o) => o.slug === params.slug && o.enabled);

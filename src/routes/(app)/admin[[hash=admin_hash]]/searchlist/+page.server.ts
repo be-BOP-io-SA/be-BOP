@@ -1,6 +1,7 @@
 import { collections } from '$lib/server/database';
+import type { PageServerLoad } from './$types';
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const searchlists = await collections.searchlists
 		.find({})
 		.sort({ updatedAt: -1 })

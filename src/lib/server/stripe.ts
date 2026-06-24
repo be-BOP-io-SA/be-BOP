@@ -1,6 +1,6 @@
 import { runtimeConfig } from './runtime-config';
 
-export const isStripeEnabled = () =>
+export const isStripeEnabled = (): boolean =>
 	!!runtimeConfig.stripe.publicKey && !!runtimeConfig.stripe.secretKey;
 
 export async function lastSuccessfulPaymentIntents(): Promise<StripePaymentIntentObject[]> {

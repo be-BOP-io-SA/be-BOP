@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Picture } from '$lib/types/Picture';
-	import type { Tag } from '$lib/types/Tag';
+	import type { TagWidgetTag } from '$lib/types/Tag';
 	import { typedInclude } from '$lib/utils/typedIncludes';
 	import { typedKeys } from '$lib/utils/typedKeys';
 	import TagWidgetVariation1 from './TagWidget/TagWidgetVariation1.svelte';
@@ -17,10 +17,7 @@
 
 	let className = '';
 	export { className as class };
-	export let tag: Pick<
-		Tag,
-		'_id' | 'name' | 'title' | 'subtitle' | 'content' | 'shortContent' | 'cta'
-	>;
+	export let tag: TagWidgetTag;
 	export let pictures: Picture[];
 	export let displayOption = 'var-1';
 	export let titleCase: Extract<CmsToken, { type: 'tagWidget' }>['titleCase'] = 'upper';

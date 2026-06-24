@@ -1,7 +1,7 @@
 import { collections } from '$lib/server/database.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { fail, redirect } from '@sveltejs/kit';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { z } from 'zod';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
 import {
@@ -17,7 +17,7 @@ import { getCurrentPosSession, requireOpenPosSession } from '$lib/server/pos-ses
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { resolvePoolLabel } from '$lib/types/PosTabGroup';
 
-export const load = async (event) => {
+export const load: PageServerLoad = async (event) => {
 	const lastOrders = await collections.orders
 		.find({
 			...userQuery(userIdentifier(event.locals))

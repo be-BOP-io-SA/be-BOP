@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { orderItemPrice, orderItemPriceUndiscounted } from './Order';
-import type { OrderItemInfoNeededForFinalPrice } from './Order';
+import type { CurrencyType, OrderItemInfoNeededForFinalPrice } from './Order';
 
 describe('Order item price calculations', () => {
 	// Mock order with various item configurations
@@ -183,10 +183,7 @@ describe('Order item price calculations', () => {
 		it('should throw error for missing currency snapshot', () => {
 			const item = items[0];
 			expect(() =>
-				orderItemPriceUndiscounted(
-					item,
-					'nonexistent' as unknown as 'main' | 'priceReference' | 'secondary' | 'accounting'
-				)
+				orderItemPriceUndiscounted(item, 'nonexistent' as unknown as CurrencyType)
 			).toThrow('Currency snapshot nonexistent not found');
 		});
 	});

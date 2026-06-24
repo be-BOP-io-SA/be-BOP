@@ -5,6 +5,7 @@ import { actions as adminOrderActions } from '../../../../../admin[[hash=admin_h
 import { adminPrefix } from '$lib/server/admin';
 import { isAllowedOnPage } from '$lib/types/Role';
 import type { Order } from '$lib/types/Order';
+import type { Actions } from './$types';
 
 function throwIfPosAccountCannotManageOrder(
 	order: Order | null,
@@ -28,7 +29,7 @@ function throwIfPosAccountCannotManageOrder(
 	}
 }
 
-export const actions = {
+export const actions: Actions = {
 	confirm: async (event) => {
 		const { id, paymentId } = event.params;
 		const order = await collections.orders.findOne({ _id: id });

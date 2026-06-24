@@ -10,9 +10,11 @@ import { FAKE_ORDER_INVOICE_NUMBER } from '$lib/types/Order';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error } from '@sveltejs/kit';
 
-export type FetchOrderResult = Awaited<ReturnType<typeof fetchOrderForUser>>;
+export type FetchOrderResult = Awaited<ReturnType<typeof fetchOrderForUserImpl>>;
 
-export async function fetchOrderForUser(orderId: string, params?: { userRoleId?: string }) {
+// Private impl with an inferred (concrete) return type; the exported boundary below
+// re-exposes it with an explicit type without circularly referencing itself.
+async function fetchOrderForUserImpl(orderId: string, params?: { userRoleId?: string }) {
 	const order = await collections.orders.findOne({
 		_id: orderId
 	});
@@ -243,4 +245,11 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		dataAnonymized: order.dataAnonymized,
 		...(params?.userRoleId !== CUSTOMER_ROLE_ID && { orderLabelIds: order.orderLabelIds })
 	};
+}
+
+export function fetchOrderForUser(
+	orderId: string,
+	params?: { userRoleId?: string }
+): Promise<FetchOrderResult> {
+	return fetchOrderForUserImpl(orderId, params);
 }

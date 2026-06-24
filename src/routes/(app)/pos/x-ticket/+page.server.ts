@@ -1,8 +1,9 @@
 import { generateXTicket, getCurrentPosSession } from '$lib/server/pos-sessions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals }) => {
 	if (!runtimeConfig.posSession.allowXTicketEditing) {
 		throw error(403, 'X ticket editing is not enabled');
 	}

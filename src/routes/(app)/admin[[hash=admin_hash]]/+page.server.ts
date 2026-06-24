@@ -8,8 +8,9 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { rootDir } from '$lib/server/root-dir.js';
 import { enableTelemetry, disableTelemetry } from '$lib/server/telemetry-helpers';
 import { isNostrConfigured } from '$lib/server/nostr';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load({ url, locals }) {
+export const load: PageServerLoad = async ({ url, locals }) => {
 	if (!locals.user) {
 		throw redirect(303, `${adminPrefix()}/login`);
 	}
@@ -63,11 +64,11 @@ export async function load({ url, locals }) {
 		console.error(`Error reading files from docs/${result.lang}`, err);
 		throw error(404, `Unable to load documentation files for "${result.lang}"`);
 	}
-}
+};
 
 const TELEMETRY_CHOICES = ['accept', 'decline', 'hide'] as const;
 
-export const actions = {
+export const actions: Actions = {
 	telemetry: async ({ request }) => {
 		const formData = await request.formData();
 

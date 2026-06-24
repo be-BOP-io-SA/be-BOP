@@ -5,8 +5,9 @@ import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { DEFAULT_MAX_QUANTITY_PER_ORDER } from '$lib/types/Product.js';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	remove: async ({ locals, params, request }) => {
 		const cart = await collections.carts.findOne(userQuery(userIdentifier(locals)));
 

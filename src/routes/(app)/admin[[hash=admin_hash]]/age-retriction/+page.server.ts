@@ -1,10 +1,11 @@
 import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { z } from 'zod';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load() {}
+export const load: PageServerLoad = async () => {};
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ request }) {
 		const formData = await request.formData();
 

@@ -1,8 +1,9 @@
 import { openPosSession, getLastClosedSession } from '$lib/server/pos-sessions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { error, redirect } from '@sveltejs/kit';
+import type { PageServerLoad, Actions } from './$types';
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	if (!runtimeConfig.posSession.enabled) {
 		throw error(403, 'POS sessions are not enabled');
 	}
@@ -15,7 +16,7 @@ export const load = async () => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	default: async ({ request, locals }) => {
 		if (!locals.user) {
 			throw error(401, 'Unauthorized');

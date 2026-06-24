@@ -6,8 +6,9 @@ import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import * as mimeTypes from 'mime-types';
 import { z } from 'zod';
+import type { RequestHandler } from './$types';
 
-export async function POST({ request }) {
+export const POST: RequestHandler = async ({ request }) => {
 	const body = z
 		.object({
 			fileSize: z.number().int().min(1).max(20_000_000),
@@ -55,4 +56,4 @@ export async function POST({ request }) {
 	return new Response(JSON.stringify({ uploadUrl: presignedUrl, pictureId }), {
 		headers: { 'Content-Type': 'application/json' }
 	});
-}
+};

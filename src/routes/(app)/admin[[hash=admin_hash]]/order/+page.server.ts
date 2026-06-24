@@ -6,8 +6,9 @@ import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 
 import type { Filter } from 'mongodb';
 import { z } from 'zod';
+import type { PageServerLoad } from './$types';
 
-export async function load({ url, locals }) {
+export const load: PageServerLoad = async ({ url, locals }) => {
 	const methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions, includePOS: true });
 
 	const querySchema = z.object({
@@ -113,4 +114,4 @@ export async function load({ url, locals }) {
 		posSubtype,
 		posSubtypes: posSubtypes.map((s) => ({ slug: s.slug, name: s.name }))
 	};
-}
+};

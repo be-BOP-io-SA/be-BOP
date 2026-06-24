@@ -18,6 +18,7 @@ import type { Product } from '$lib/types/Product';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { PageServerLoad, Actions } from './$types';
 
 type SlugQty = { slug: string; quantity: number };
 type ProductBadge = {
@@ -236,7 +237,7 @@ async function runAddAttempt(
 	return { errors, snapshotId };
 }
 
-export async function load({ parent, locals, url }) {
+export const load: PageServerLoad = async ({ parent, locals, url }) => {
 	if (
 		runtimeConfig.hideCartInToolbar &&
 		(locals.user?.roleId === undefined || locals.user.roleId === CUSTOMER_ROLE_ID)
@@ -393,8 +394,8 @@ export async function load({ parent, locals, url }) {
 			)
 		})
 	};
-}
-export const actions = {
+};
+export const actions: Actions = {
 	applyPromoCode: async ({ request, locals }) => {
 		try {
 			rateLimit(locals.clientIp, 'promo-code', 20, { hours: 3 });

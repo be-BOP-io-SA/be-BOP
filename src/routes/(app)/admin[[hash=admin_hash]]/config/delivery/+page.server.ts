@@ -5,8 +5,9 @@ import { z } from 'zod';
 import { collections } from '$lib/server/database';
 import { deliveryFeesSchema } from './schema';
 import { zodObjectId } from '$lib/server/zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 

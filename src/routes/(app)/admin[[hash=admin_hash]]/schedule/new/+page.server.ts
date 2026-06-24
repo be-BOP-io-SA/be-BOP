@@ -1,5 +1,5 @@
 import { collections } from '$lib/server/database';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
@@ -10,7 +10,7 @@ import { set } from '$lib/utils/set';
 import { generateId } from '$lib/utils/generateId';
 import { generatePicture } from '$lib/server/picture';
 
-export const load = async () => {};
+export const load: PageServerLoad = async () => {};
 
 export const actions: Actions = {
 	default: async ({ request }) => {

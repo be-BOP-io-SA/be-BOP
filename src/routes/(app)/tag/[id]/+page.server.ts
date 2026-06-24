@@ -1,11 +1,10 @@
 import { collections } from '$lib/server/database';
-import type { Tag } from '$lib/types/Tag';
+import type { TagWidgetTag } from '$lib/types/Tag';
 import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ params }) => {
-	const tag = await collections.tags.findOne<
-		Pick<Tag, '_id' | 'name' | 'title' | 'subtitle' | 'content' | 'shortContent' | 'cta'>
-	>(
+export const load: PageServerLoad = async ({ params }) => {
+	const tag = await collections.tags.findOne<TagWidgetTag>(
 		{ _id: params.id },
 		{
 			projection: {

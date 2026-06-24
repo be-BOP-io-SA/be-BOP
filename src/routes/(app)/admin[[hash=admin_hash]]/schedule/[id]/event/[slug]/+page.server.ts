@@ -7,8 +7,9 @@ import { exportToICS } from '$lib/types/Schedule.js';
 import { error } from '@sveltejs/kit';
 import { addMinutes, format } from 'date-fns';
 import { z } from 'zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	creatTicket: async function ({ request, params }) {
 		const schedule = await collections.schedules.findOne({ _id: params.id });
 		if (!schedule) {

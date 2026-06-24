@@ -9,6 +9,7 @@ import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import { CURRENCIES, type Currency } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
+import type { Actions, RequestEvent } from './$types';
 
 const PAYMENT_DETAIL_MAX_LENGTH = 100;
 
@@ -17,7 +18,7 @@ const paymentDetailSchema = (required: boolean) =>
 		? z.string().trim().min(1).max(PAYMENT_DETAIL_MAX_LENGTH)
 		: z.string().trim().max(PAYMENT_DETAIL_MAX_LENGTH).optional();
 
-export const actions = {
+export const actions: Actions = {
 	confirm: async ({ params, request }) => {
 		const order = await collections.orders.findOne({
 			_id: params.id
@@ -80,7 +81,7 @@ export const actions = {
 		return cancelPayment(params, request.headers.get('referer') || `${adminPrefix()}/order`);
 	},
 
-	cancelTapToPay: async ({ params, request }) => {
+	cancelTapToPay: async ({ params, request }: RequestEvent) => {
 		const order = await collections.orders.findOne({
 			_id: params.id
 		});
@@ -104,7 +105,7 @@ export const actions = {
 		throw redirect(303, request.headers.get('referer') || `${adminPrefix()}/order`);
 	},
 
-	tapToPay: async (event) => {
+	tapToPay: async (event: RequestEvent) => {
 		const { params, request } = event;
 
 		const order = await collections.orders.findOne({
@@ -164,7 +165,7 @@ export const actions = {
 			throw redirect(303, request.headers.get('referer') || `${adminPrefix()}/order`);
 		}
 	},
-	updatePaymentDetail: async ({ params, request, locals }) => {
+	updatePaymentDetail: async ({ params, request, locals }: RequestEvent) => {
 		const order = await collections.orders.findOne({
 			_id: params.id
 		});

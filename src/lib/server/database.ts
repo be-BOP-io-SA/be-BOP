@@ -249,7 +249,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.accountingLogs, { objectId: 1, objectType: 1 }]
 ];
 
-export async function createIndexes() {
+export async function createIndexes(): Promise<void> {
 	await Promise.all(
 		indexes.map(async ([collection, index, options]) => {
 			try {

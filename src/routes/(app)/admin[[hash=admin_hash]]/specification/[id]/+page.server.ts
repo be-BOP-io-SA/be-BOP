@@ -3,8 +3,9 @@ import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { adminPrefix } from '$lib/server/admin';
 import { specificationTranslatableSchema } from './specification-schema';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ request, params }) {
 		const specification = await collections.specifications.findOne({
 			_id: params.id

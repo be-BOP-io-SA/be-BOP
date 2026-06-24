@@ -1,4 +1,4 @@
-export function getScheduleTimezone(schedule: { timezone?: string }) {
+export function getScheduleTimezone(schedule: { timezone?: string }): string {
 	return schedule.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 export function offsetFromUTC(timeZone: string): number {

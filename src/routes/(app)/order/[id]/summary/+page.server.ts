@@ -2,8 +2,9 @@ import { error, redirect } from '@sveltejs/kit';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { fetchOrderForUser } from '../fetchOrderForUser';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import type { PageServerLoad } from './$types';
 
-export async function load({ params, locals }) {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const order = await fetchOrderForUser(params.id);
 	if (!locals.user) {
 		throw redirect(303, '/admin/login');
@@ -24,4 +25,4 @@ export async function load({ params, locals }) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		sellerIdentity: (order.sellerIdentity || runtimeConfig.sellerIdentity)!
 	};
-}
+};

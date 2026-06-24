@@ -1,6 +1,6 @@
 import { collections } from '$lib/server/database';
 import { error, redirect } from '@sveltejs/kit';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { z } from 'zod';
 import { MAX_NAME_LIMIT } from '$lib/types/Product';
 import type { JsonObject } from 'type-fest';
@@ -9,7 +9,7 @@ import { adminPrefix } from '$lib/server/admin';
 import { deletePicture } from '$lib/server/picture';
 import { tagTranslatableSchema } from './tag-schema';
 
-export const load = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const [pictures, families] = await Promise.all([
 		collections.pictures.find({ 'tag._id': params.id }).sort({ createdAt: 1 }).toArray(),
 		collections.tagFamilies.find({}).sort({ order: 1 }).toArray()

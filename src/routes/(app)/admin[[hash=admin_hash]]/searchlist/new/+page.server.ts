@@ -11,8 +11,9 @@ import {
 	SEARCH_TARGET_KEYS,
 	type SearchTargetKey
 } from '$lib/types/Searchlist';
+import type { PageServerLoad } from './$types';
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const tags = await collections.tags
 		.find({})
 		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })

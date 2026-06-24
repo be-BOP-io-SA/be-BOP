@@ -9,7 +9,7 @@ import { collections } from '$lib/server/database.js';
 import { defaultConfig, runtimeConfig } from '$lib/server/runtime-config';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
-import type { Actions } from './$types';
+import type { PageServerLoad, Actions } from './$types';
 import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 
@@ -30,7 +30,7 @@ function zodIssuesToFieldErrors(issues: z.ZodIssue[]): FieldErrors {
 	);
 }
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	if (!isBitcoinNodelessConfigured()) {
 		return {
 			bitcoinNodeless: runtimeConfig.bitcoinNodeless,
@@ -60,7 +60,7 @@ export async function load() {
 		nextAddresses,
 		hasAlreadyUsedNextAddresses: nextAddresses.some((addr) => addr.isUsed)
 	};
-}
+};
 
 export const actions: Actions = {
 	async initialize({ request }) {

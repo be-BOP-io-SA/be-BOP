@@ -2,7 +2,7 @@ import { collections } from '$lib/server/database';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { set } from '$lib/utils/set';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { pojo } from '$lib/server/pojo';
 import { type Product, PRODUCT_PAGINATION_LIMIT } from '$lib/types/Product';
@@ -11,7 +11,7 @@ import type { Filter } from 'mongodb';
 import { escapeForRegex } from '$lib/utils/escapeForRegex';
 import type { Tag } from '$lib/types/Tag';
 
-export const load = async ({ url }) => {
+export const load: PageServerLoad = async ({ url }) => {
 	const querySchema = z.object({
 		skip: z.number({ coerce: true }).int().min(0).optional().default(0),
 		productId: z.string().optional(),

@@ -3,8 +3,9 @@ import { error, redirect } from '@sveltejs/kit';
 import { fetchOrderForUser } from '../../../fetchOrderForUser.js';
 import { isStripeEnabled } from '$lib/server/stripe.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
+import type { PageServerLoad } from './$types';
 
-export async function load({ params, depends }) {
+export const load: PageServerLoad = async ({ params, depends }) => {
 	const order = await fetchOrderForUser(params.id);
 
 	depends(UrlDependency.Order);
@@ -38,4 +39,4 @@ export async function load({ params, depends }) {
 		payment,
 		stripePublicKey: isStripeEnabled() ? runtimeConfig.stripe.publicKey : null
 	};
-}
+};
