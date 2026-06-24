@@ -54,6 +54,10 @@
 <a href="{data.adminPrefix}/product/prices" class="underline block">Products price</a>
 <a href="{data.adminPrefix}/product/alias" class="underline block">Products aliases</a>
 <a href="{data.adminPrefix}/product/tags" class="underline block">Products tags</a>
+<a href="{data.adminPrefix}/product/action-settings" class="underline block"
+	>Product action settings</a
+>
+<a href="{data.adminPrefix}/product/seo" class="underline block">Product SEO options</a>
 <a href="{data.adminPrefix}/product/default-picture" class="underline block"
 	>Products default picture</a
 >
