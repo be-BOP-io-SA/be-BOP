@@ -57,6 +57,49 @@
 	--eventCalendar-color: #000000;
 }
 
+html:root.dark {
+	--header-backgroundColor: #161b22;
+	--header-shopName-color: #ffffff;
+	--header-tab-color: #ffffff;
+	--header-activeTab-textDecoration-color: #ffffff;
+	--navbar-backgroundColor: #1c2128;
+	--navbar-color: #c9d1d9;
+	--navbar-searchInput-backgroundColor: #0d1117;
+	--footer-backgroundColor: #161b22;
+	--footer-color: #8b949e;
+	--cartPreview-backgroundColor: #0d1117;
+	--cartPreview-color: #ffffff;
+	--cartPreview-mainCTA-backgroundColor: #ffffff;
+	--cartPreview-mainCTA-color: #0d1117;
+	--cartPreview-secondaryCTA-backgroundColor: #30363d;
+	--cartPreview-secondaryCTA-color: #ffffff;
+	--body-mainPlan-backgroundColor: #0d1117;
+	--body-secondPlan-backgroundColor: #161b22;
+	--body-title-color: #ffffff;
+	--body-text-color: #ffffff;
+	--body-secondaryText-color: #c9d1d9;
+	--body-mainCTA-backgroundColor: #ffffff;
+	--body-mainCTA-color: #0d1117;
+	--body-secondaryCTA-backgroundColor: #30363d;
+	--body-secondaryCTA-color: #ffffff;
+	--body-hyperlink-color: #58a6ff;
+	--tagWidget-main-backgroundColor: #1c2128;
+	--tagWidget-transparent-backgroundColor: #0d1117;
+	--tagWidget-secondary-backgroundColor: #161b22;
+	--tagWidget-cta-backgroundColor: #3f83f8;
+	--tagWidget-cta-color: #ffffff;
+	--tagWidget-color: #ffffff;
+	--tagWidget-hyperlink-color: #58a6ff;
+	--order-creditCard-svg-color: #58a6ff;
+	--eventCalendar-main-backgroundColor: #161b22;
+	--eventCalendar-navCTA-backgroundColor: #30363d;
+	--eventCalendar-hasEvent-backgroundColor: #fa8c25;
+	--eventCalendar-hasEvent-color: #0d1117;
+	--eventCalendar-currentDate-backgroundColor: #3e67ed;
+	--eventCalendar-currentDate-color: #ffffff;
+	--eventCalendar-color: #ffffff;
+}
+
 @layer base {
 	html {
 		@apply h-full;
