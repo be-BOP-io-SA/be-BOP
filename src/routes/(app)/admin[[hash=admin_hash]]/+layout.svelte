@@ -247,6 +247,8 @@
 			{#if data.hasPosOptions || data.roleId === POS_ROLE_ID}
 				<a
 					href="/pos"
+					target="pos"
+					rel="noopener"
 					data-sveltekit-preload-data="off"
 					class="font-bold text-green-700 mt-2 flex items-center gap-2 -mx-2 px-2 py-0.5 rounded hover:underline"
 					class:bg-green-200={$page.url.pathname.startsWith('/pos')}
