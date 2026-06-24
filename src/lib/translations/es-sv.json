@@ -1099,7 +1099,7 @@
 	"cookieConsent": {
 		"banner": {
 			"ariaLabel": "Consentimiento de cookies",
-			"dataSentTo": "Sus datos de visita se envían a: {hostnames}",
+			"dataSentTo": "Algunos de sus datos de visita se envían a: {hostnames}",
 			"dataSentToFallback": "Este sitio utiliza una herramienta de medición de audiencia.",
 			"accept": "Aceptar",
 			"deny": "Rechazar",

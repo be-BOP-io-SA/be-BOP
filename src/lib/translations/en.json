@@ -1101,7 +1101,7 @@
 	"cookieConsent": {
 		"banner": {
 			"ariaLabel": "Cookie consent",
-			"dataSentTo": "Your visit data is sent to: {hostnames}",
+			"dataSentTo": "Some of your visit data is sent to: {hostnames}",
 			"dataSentToFallback": "This site uses analytics tracking.",
 			"accept": "Accept",
 			"deny": "Deny",
