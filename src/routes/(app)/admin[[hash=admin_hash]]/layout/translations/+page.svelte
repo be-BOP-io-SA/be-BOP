@@ -98,7 +98,7 @@
 					name="topbarLinks[{i}].href"
 					class="form-input"
 					placeholder={data.defaultConfig.topbarLinks[i]?.href ?? ''}
-					value={link.href}
+					value={link.href || data.defaultConfig.topbarLinks[i]?.href || ''}
 				/>
 			</label>
 		</div>
@@ -127,7 +127,7 @@
 					type="text"
 					name="navbarLinks[{i}].href"
 					class="form-input"
-					value={link.href}
+					value={link.href || data.defaultConfig.navbarLinks[i]?.href || ''}
 					placeholder={data.defaultConfig.navbarLinks[i]?.href ?? ''}
 				/>
 			</label>
@@ -157,7 +157,7 @@
 					type="text"
 					name="footerLinks[{i}].href"
 					class="form-input"
-					value={link.href}
+					value={link.href || data.defaultConfig.footerLinks[i]?.href || ''}
 					placeholder={data.defaultConfig.footerLinks[i]?.href ?? ''}
 				/>
 			</label>
