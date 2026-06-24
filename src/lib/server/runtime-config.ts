@@ -544,7 +544,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 			{ label: 'Terms', href: '/terms' },
 			{ label: 'Privacy', href: '/privacy' }
 		]
-	} as LayoutLinkOverride,
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.de.config': {
 		topbarLinks: [
 			{ label: 'Anmelden', href: '/login' },
@@ -558,7 +558,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 			{ label: 'AGB', href: '/terms' },
 			{ label: 'Datenschutz', href: '/privacy' }
 		]
-	} as LayoutLinkOverride,
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.es-sv.config': {
 		topbarLinks: [
 			{ label: 'Iniciar sesión', href: '/login' },
@@ -572,7 +572,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 			{ label: 'Términos', href: '/terms' },
 			{ label: 'Privacidad', href: '/privacy' }
 		]
-	} as LayoutLinkOverride,
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.it.config': {
 		topbarLinks: [
 			{ label: 'Accedi', href: '/login' },
@@ -586,7 +586,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 			{ label: 'Termini', href: '/terms' },
 			{ label: 'Privacy', href: '/privacy' }
 		]
-	} as LayoutLinkOverride,
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.nl.config': {
 		topbarLinks: [
 			{ label: 'Inloggen', href: '/login' },
@@ -600,7 +600,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 			{ label: 'Voorwaarden', href: '/terms' },
 			{ label: 'Privacybeleid', href: '/privacy' }
 		]
-	} as LayoutLinkOverride,
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.pt.config': {
 		topbarLinks: [
 			{ label: 'Entrar', href: '/login' },
@@ -614,7 +614,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 			{ label: 'Termos', href: '/terms' },
 			{ label: 'Privacidade', href: '/privacy' }
 		]
-	} as LayoutLinkOverride
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride
 };
 
 export const defaultConfig = Object.freeze(baseConfig);
