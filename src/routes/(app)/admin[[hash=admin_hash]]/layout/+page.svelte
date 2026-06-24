@@ -25,14 +25,15 @@
 		}))
 	];
 	const presetKeys = Object.keys(socialIconPresets) as SocialIconPresetKey[];
-	// Per-row preset selection. `custom` = leave the SVG textarea alone (default).
-	let socialPresetSelections: Array<'custom' | SocialIconPresetKey> = socialIcons.map(
-		() => 'custom'
+	// Per-row preset selection. Empty string = nothing picked yet (the "Choose platform"
+	// placeholder), `custom` = the operator explicitly opted for raw-SVG paste.
+	let socialPresetSelections: Array<'' | 'custom' | SocialIconPresetKey> = socialIcons.map(
+		() => ''
 	);
 
 	function addSocialIconLine() {
 		socialIcons = [...socialIcons, { name: '', svg: '', href: '' }];
-		socialPresetSelections = [...socialPresetSelections, 'custom'];
+		socialPresetSelections = [...socialPresetSelections, ''];
 	}
 
 	function removeSocialIconLine(index: number) {
@@ -41,9 +42,9 @@
 	}
 
 	function applyPreset(i: number, rawKey: string) {
-		const key = rawKey as 'custom' | SocialIconPresetKey;
+		const key = rawKey as '' | 'custom' | SocialIconPresetKey;
 		socialPresetSelections[i] = key;
-		if (key === 'custom') {
+		if (key === '' || key === 'custom') {
 			return;
 		}
 		const preset = socialIconPresets[key];
@@ -296,7 +297,8 @@
 					value={socialPresetSelections[i]}
 					on:change={(e) => applyPreset(i, e.currentTarget.value)}
 				>
-					<option value="custom">Custom (paste SVG below)</option>
+					<option value="" disabled hidden>Choose platform</option>
+					<option value="custom">Custom</option>
 					{#each presetKeys as key}
 						<option value={key}>{socialIconPresets[key].name}</option>
 					{/each}
