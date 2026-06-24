@@ -190,6 +190,7 @@
 		"multiplePaymentMethods": "Usa differenti metodi di pagamento",
 		"multiplePaymentMethodsHelpText": "Potrete decidere il vostro tipo di pagamento alla prossima tappa.",
 		"noDeliveryInCountry": "La spedizione non è disponibile nel vostro paese per alcuni articoli presenti nel carrello.",
+		"paymentGenerationFailed": "Non è stato possibile avviare il pagamento. Si prega di riprovare tra qualche istante, o di contattare il negoziante se il problema persiste.",
 		"note": {
 			"label": "Lascia un messaggio per il venditore",
 			"title": "Messaggio"

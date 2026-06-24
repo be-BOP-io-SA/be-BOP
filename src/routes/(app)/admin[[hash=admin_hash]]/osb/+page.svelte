@@ -1,5 +1,12 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+
 	export let data;
+	export let form;
+
+	let testInFlight = false;
+	let testCooldownUntil = 0;
+	$: testDisabled = testInFlight || Date.now() < testCooldownUntil;
 </script>
 
 <h1 class="text-3xl">OSB</h1>
@@ -28,3 +35,26 @@
 	</div>
 </form>
 <form class="contents" method="post" action="?/delete" id="delete-form"></form>
+
+<form
+	method="post"
+	action="?/testConnection"
+	use:enhance={() => {
+		testInFlight = true;
+		return async ({ update }) => {
+			await update({ reset: false });
+			testInFlight = false;
+			testCooldownUntil = Date.now() + 10_000;
+		};
+	}}
+	class="flex flex-col gap-2"
+>
+	<button class="btn btn-blue self-start" type="submit" disabled={testDisabled}>
+		{testInFlight ? 'Testing…' : 'Test connection'}
+	</button>
+	{#if form?.ok}
+		<div class="alert-success">Connection successful. OSB credentials are working.</div>
+	{:else if form?.reason}
+		<div class="alert-error">Connection failed: {form.reason}</div>
+	{/if}
+</form>

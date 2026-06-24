@@ -190,6 +190,7 @@
 		"multiplePaymentMethods": "Mehrere Zahlungsmethoden verwenden",
 		"multiplePaymentMethodsHelpText": "Sie können Zahlungsmethoden im nächsten Schritt festlegen.",
 		"noDeliveryInCountry": "Die Lieferung ist in Ihrem Land für einige Artikel in Ihrem Warenkorb nicht möglich.",
+		"paymentGenerationFailed": "Die Zahlung konnte nicht initiiert werden. Bitte versuchen Sie es in wenigen Augenblicken erneut, oder kontaktieren Sie den Shop-Betreiber, falls das Problem weiterhin besteht.",
 		"note": {
 			"label": "Hinterlassen Sie eine Nachricht für den Händler",
 			"title": "Notiz"

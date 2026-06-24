@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { SerializedOrderPayment } from '$lib/types/Order';
 	import { useI18n } from '$lib/i18n';
+	import { enhance } from '$app/forms';
 
 	const { t } = useI18n();
 
@@ -31,7 +32,7 @@
 			: t('pos.cta.resendPaymentMethod');
 </script>
 
-<form {action} method="post" class="flex flex-col gap-2">
+<form {action} method="post" class="flex flex-col gap-2" use:enhance>
 	<!-- Amount input -->
 	<label>
 		{amountLabel}

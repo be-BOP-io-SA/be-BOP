@@ -3,8 +3,14 @@
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
+	import { enhance } from '$app/forms';
 
 	export let data;
+	export let form;
+
+	let testInFlight = false;
+	let testCooldownUntil = 0;
+	$: testDisabled = testInFlight || Date.now() < testCooldownUntil;
 
 	// Stripe supports all fiat currencies (no BTC/SAT)
 	// Sort: main → secondary → fiat A-Z (excluding crypto)
@@ -64,3 +70,27 @@
 	</div>
 </form>
 <form class="contents" method="post" action="?/delete" id="delete-form"></form>
+
+<form
+	method="post"
+	action="?/testConnection"
+	use:enhance={() => {
+		testInFlight = true;
+		return async ({ update }) => {
+			await update({ reset: false });
+			testInFlight = false;
+			// 10s debounce to throttle accidental hammering on top of the server-side rateLimit.
+			testCooldownUntil = Date.now() + 10_000;
+		};
+	}}
+	class="flex flex-col gap-2"
+>
+	<button class="btn btn-blue self-start" type="submit" disabled={testDisabled}>
+		{testInFlight ? 'Testing…' : 'Test connection'}
+	</button>
+	{#if form?.ok}
+		<div class="alert-success">Connection successful. Stripe credentials are working.</div>
+	{:else if form?.reason}
+		<div class="alert-error">Connection failed: {form.reason}</div>
+	{/if}
+</form>

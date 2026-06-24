@@ -190,6 +190,7 @@
 		"multiplePaymentMethods": "Usar varios métodos de pago",
 		"multiplePaymentMethodsHelpText": "Puedes configurar métodos de pago en el siguiente paso.",
 		"noDeliveryInCountry": "La entrega no está disponible en tu país para algunos de los artículos de la lista de compras.",
+		"paymentGenerationFailed": "No pudimos iniciar el pago. Por favor, inténtalo de nuevo en unos instantes o contacta con la tienda si el problema persiste.",
 		"note": {
 			"label": "Dejar una nota para el comerciante",
 			"title": "Nota"

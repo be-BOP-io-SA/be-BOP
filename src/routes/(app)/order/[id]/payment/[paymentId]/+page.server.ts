@@ -1,9 +1,15 @@
 import { collections, withTransaction } from '$lib/server/database';
-import { addOrderPayment, onOrderPaymentFailed, paymentMethodExpiration } from '$lib/server/orders';
+import {
+	addOrderPayment,
+	notifySuperAdminPaymentFailure,
+	onOrderPaymentFailed,
+	paymentMethodExpiration,
+	PaymentGenerationError
+} from '$lib/server/orders';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
 import { paymentMethods, ALL_PAYMENT_METHODS } from '$lib/server/payment-methods.js';
 import { typedInclude } from '$lib/utils/typedIncludes';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 
 export const actions = {
@@ -56,38 +62,51 @@ export const actions = {
 			throw error(400, 'Payment method not available for this order');
 		}
 
-		await withTransaction(async (session) => {
-			await logAccountingEvent(
-				{
-					eventType: 'paymentReplace',
-					before: {
-						method: payment.method,
-						paymentId: payment._id.toString(),
-						status: payment.status
+		try {
+			await withTransaction(async (session) => {
+				await logAccountingEvent(
+					{
+						eventType: 'paymentReplace',
+						before: {
+							method: payment.method,
+							paymentId: payment._id.toString(),
+							status: payment.status
+						},
+						after: {
+							method: parsed.method,
+							price: payment.currencySnapshot.main.price
+						},
+						objectId: order._id.toString(),
+						objectType: 'order',
+						...employeeFromLocals(locals)
 					},
-					after: {
-						method: parsed.method,
-						price: payment.currencySnapshot.main.price
-					},
-					objectId: order._id.toString(),
-					objectType: 'order',
-					...employeeFromLocals(locals)
-				},
-				session
-			);
+					session
+				);
 
-			await onOrderPaymentFailed(order, payment, 'canceled', {
-				preserveOrderStatus: true,
-				session
-			});
+				await onOrderPaymentFailed(order, payment, 'canceled', {
+					preserveOrderStatus: true,
+					session
+				});
 
-			await addOrderPayment(order, parsed.method, payment.currencySnapshot.main.price, {
-				expiresAt: paymentMethodExpiration(parsed.method),
-				session,
-				...(parsed.method === 'point-of-sale' &&
-					parsed.posSubtype && { posSubtype: parsed.posSubtype })
+				await addOrderPayment(order, parsed.method, payment.currencySnapshot.main.price, {
+					expiresAt: paymentMethodExpiration(parsed.method),
+					session,
+					...(parsed.method === 'point-of-sale' &&
+						parsed.posSubtype && { posSubtype: parsed.posSubtype })
+				});
 			});
-		});
+		} catch (err) {
+			if (err instanceof PaymentGenerationError) {
+				console.error('PaymentGenerationError on replaceMethod:', err.method, err.reason);
+				await notifySuperAdminPaymentFailure({
+					method: err.method,
+					context: 'customer payment retry / method replacement',
+					orderId: order._id
+				});
+				return fail(400, { paymentGenerationFailed: true });
+			}
+			throw err;
+		}
 		throw redirect(303, request.headers.get('referer') || `/order/${order._id}`);
 	}
 };

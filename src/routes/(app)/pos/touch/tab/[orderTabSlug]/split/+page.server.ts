@@ -12,7 +12,12 @@ import { removeUserCarts } from '$lib/server/cart';
 import { userIdentifier } from '$lib/server/user';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { z } from 'zod';
-import { createOrder, addOrderPayment } from '$lib/server/orders';
+import {
+	createOrder,
+	addOrderPayment,
+	notifySuperAdminPaymentFailure,
+	PaymentGenerationError
+} from '$lib/server/orders';
 import { orderRemainingToPay } from '$lib/types/Order';
 import { CURRENCY_UNIT } from '$lib/types/Currency';
 import { runtimeConfig } from '$lib/server/runtime-config';
@@ -336,18 +341,31 @@ export const actions = {
 					? Math.min(paymentParams.data.customAmount, remainingToPay)
 					: order.currencySnapshot.main.totalPrice.amount;
 
-			await addOrderPayment(
-				order,
-				selectedMethod,
-				{
-					amount: amountToPay,
-					currency: order.currencySnapshot.main.totalPrice.currency
-				},
-				{
-					ignorePendingPayments: true,
-					...(selectedSubtype && { posSubtype: selectedSubtype })
+			try {
+				await addOrderPayment(
+					order,
+					selectedMethod,
+					{
+						amount: amountToPay,
+						currency: order.currencySnapshot.main.totalPrice.currency
+					},
+					{
+						ignorePendingPayments: true,
+						...(selectedSubtype && { posSubtype: selectedSubtype })
+					}
+				);
+			} catch (err) {
+				if (err instanceof PaymentGenerationError) {
+					console.error('PaymentGenerationError on POS split addPayment:', err.method, err.reason);
+					await notifySuperAdminPaymentFailure({
+						method: err.method,
+						context: 'POS split — addPayment',
+						orderId: order._id
+					});
+					return fail(400, { paymentGenerationFailed: true });
 				}
-			);
+				throw err;
+			}
 
 			const returnUrl = `/pos/touch/tab/${params.orderTabSlug}/split?mode=${splitMode}`;
 			throw redirect(303, `/order/${order._id}?returnTo=${encodeURIComponent(returnUrl)}`);

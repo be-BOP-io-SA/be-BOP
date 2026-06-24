@@ -1,12 +1,16 @@
 import { collections } from '$lib/server/database';
-import { createOrder } from '$lib/server/orders';
+import {
+	createOrder,
+	notifySuperAdminPaymentFailure,
+	PaymentGenerationError
+} from '$lib/server/orders';
 import {
 	resolveSubscriptionDuration,
 	resolveSubscriptionReminderSeconds
 } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userQuery } from '$lib/server/user.js';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { subHours, subSeconds } from 'date-fns';
 import type { Actions } from './$types';
 
@@ -130,31 +134,44 @@ export const actions: Actions = {
 			throw redirect(303, `/order/${existingPendingOrder._id}`);
 		}
 
-		const orderId = await createOrder(
-			[
+		let orderId: string;
+		try {
+			orderId = await createOrder(
+				[
+					{
+						quantity: 1,
+						product
+					}
+				],
+				paidPayment.method,
 				{
-					quantity: 1,
-					product
-				}
-			],
-			paidPayment.method,
-			{
-				locale: locals.language,
-				user: subscription.user,
-				shippingAddress: lastOrder.shippingAddress,
-				userVatCountry:
-					lastOrder.shippingAddress?.country ||
-					locals.countryCode ||
-					runtimeConfig.vatCountry ||
-					undefined,
-				notifications: {
-					paymentStatus: {
-						...(subscription.user.email && { email: subscription.user.email }),
-						...(subscription.user.npub && { npub: subscription.user.npub })
+					locale: locals.language,
+					user: subscription.user,
+					shippingAddress: lastOrder.shippingAddress,
+					userVatCountry:
+						lastOrder.shippingAddress?.country ||
+						locals.countryCode ||
+						runtimeConfig.vatCountry ||
+						undefined,
+					notifications: {
+						paymentStatus: {
+							...(subscription.user.email && { email: subscription.user.email }),
+							...(subscription.user.npub && { npub: subscription.user.npub })
+						}
 					}
 				}
+			);
+		} catch (err) {
+			if (err instanceof PaymentGenerationError) {
+				console.error('PaymentGenerationError on subscription renewal:', err.method, err.reason);
+				await notifySuperAdminPaymentFailure({
+					method: err.method,
+					context: 'subscription renewal'
+				});
+				return fail(400, { paymentGenerationFailed: true });
 			}
-		);
+			throw err;
+		}
 
 		throw redirect(303, `/order/${orderId}`);
 	}

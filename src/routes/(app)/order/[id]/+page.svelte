@@ -21,7 +21,9 @@
 	import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 
 	export let data;
-	export let form;
+	// `form` carries action results from this page's own actions AND from staff actions
+	// posted to /admin/order/[id] or /pos/order/[id] via `use:enhance` in PaymentForm.
+	export let form: { success?: boolean; paymentGenerationFailed?: boolean } | null = null;
 
 	let count = 0;
 
@@ -136,6 +138,12 @@
 			<h1 class="text-3xl body-title">
 				{t('order.singleTitle', { number: data.order.number })}
 			</h1>
+
+			{#if form?.paymentGenerationFailed}
+				<div class="alert-error">
+					{t('checkout.paymentGenerationFailed')}
+				</div>
+			{/if}
 
 			{#if roleIsStaff}
 				<div class="order-labels flex flex-row gap-1">

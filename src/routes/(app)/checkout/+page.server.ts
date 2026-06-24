@@ -1,9 +1,13 @@
 import { collections, withTransaction } from '$lib/server/database';
 import { paymentMethods } from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
-import { createOrder } from '$lib/server/orders';
+import {
+	createOrder,
+	notifySuperAdminPaymentFailure,
+	PaymentGenerationError
+} from '$lib/server/orders';
 import { isEmailConfigured } from '$lib/server/email';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
@@ -565,80 +569,99 @@ export const actions = {
 
 		rateLimit(locals.clientIp, 'email', 10, { minutes: 1 });
 		let orderId = '';
-		await withTransaction(async (session) => {
-			orderId = await createOrder(
-				cart.items.map((item) => ({
-					// Workaround since the type item._id of the cart item is not ObjectId
-					_id: item._id && ObjectId.isValid(item._id) ? new ObjectId(item._id) : undefined,
-					quantity: item.quantity,
-					product: byId[item.productId],
-					...(item.customPrice && {
-						customPrice: { amount: item.customPrice.amount, currency: item.customPrice.currency }
-					}),
-					...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
-					depositPercentage: item.depositPercentage,
-					...(item.discountPercentage !== undefined &&
-						item.discountPercentage > 0 && {
-							discountPercentage: item.discountPercentage
-						}),
-					...(item.booking && {
-						booking: {
-							...item.booking,
-							_id: new ObjectId()
-						}
-					})
-				})),
-				paymentMethod,
-				{
-					locale: locals.language,
-					user: userIdentifier(locals),
-					...(posSubtype && { posSubtype }),
-					notifications: {
-						paymentStatus: {
-							npub: npubAddress,
-							email
-						}
-					},
-					cart,
-					promoCode: cart.promoCode,
-					channel: webChannelForUser(locals.user?.hasPosOptions),
-					shippingAddress: shippingInfo?.shipping,
-					billingAddress: billingInfo?.billing || shippingInfo?.shipping,
-					userVatCountry: vatCountry,
-					...(locals.user?.hasPosOptions && isFreeVat && { reasonFreeVat }),
-					...(locals.user?.hasPosOptions &&
-						discountAmount &&
-						discountType &&
-						discountJustification && {
-							discount: {
-								amount: discountAmount,
-								type: discountType,
-								justification: discountJustification
+		try {
+			await withTransaction(async (session) => {
+				orderId = await createOrder(
+					cart.items.map((item) => ({
+						// Workaround since the type item._id of the cart item is not ObjectId
+						_id: item._id && ObjectId.isValid(item._id) ? new ObjectId(item._id) : undefined,
+						quantity: item.quantity,
+						product: byId[item.productId],
+						...(item.customPrice && {
+							customPrice: {
+								amount: item.customPrice.amount,
+								currency: item.customPrice.currency
 							}
 						}),
-					...(note && { note: note.noteContent }),
-					...(customCheckoutFields.length && { customCheckoutFields }),
-					...(agreements.allowCollectIP && { clientIp: locals.clientIp }),
-					...(locals.user?.hasPosOptions &&
-						runtimeConfig.deliveryFees.allowFreeForPOS &&
-						offerDeliveryFees && { reasonOfferDeliveryFees }),
-					...(receiptNote && { receiptNote: receiptNote.receiptNoteContent }),
-					engagements: {
-						...(agreements.allowCollectIP && { acceptedIPCollect: agreements.allowCollectIP }),
-						...(agreements.teecees && { acceptedTermsOfUse: agreements.teecees }),
-						...(agreements.isOnlyDeposit && {
-							acceptedDepositConditionsAndFullPayment: agreements.isOnlyDeposit
-						}),
-						...(agreements.isVATNullForeigner && {
-							acceptedExportationAndVATObligation: agreements.isVATNullForeigner
+						...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
+						depositPercentage: item.depositPercentage,
+						...(item.discountPercentage !== undefined &&
+							item.discountPercentage > 0 && {
+								discountPercentage: item.discountPercentage
+							}),
+						...(item.booking && {
+							booking: {
+								...item.booking,
+								_id: new ObjectId()
+							}
 						})
-					},
-					...(physicalFullyPaid && { onLocation: physicalFullyPaid.onLocation }),
-					...(desiredPayment.paymentTimeOut && { paymentTimeOut: desiredPayment.paymentTimeOut }),
-					session
-				}
-			);
-		});
+					})),
+					paymentMethod,
+					{
+						locale: locals.language,
+						user: userIdentifier(locals),
+						...(posSubtype && { posSubtype }),
+						notifications: {
+							paymentStatus: {
+								npub: npubAddress,
+								email
+							}
+						},
+						cart,
+						promoCode: cart.promoCode,
+						channel: webChannelForUser(locals.user?.hasPosOptions),
+						shippingAddress: shippingInfo?.shipping,
+						billingAddress: billingInfo?.billing || shippingInfo?.shipping,
+						userVatCountry: vatCountry,
+						...(locals.user?.hasPosOptions && isFreeVat && { reasonFreeVat }),
+						...(locals.user?.hasPosOptions &&
+							discountAmount &&
+							discountType &&
+							discountJustification && {
+								discount: {
+									amount: discountAmount,
+									type: discountType,
+									justification: discountJustification
+								}
+							}),
+						...(note && { note: note.noteContent }),
+						...(customCheckoutFields.length && { customCheckoutFields }),
+						...(agreements.allowCollectIP && { clientIp: locals.clientIp }),
+						...(locals.user?.hasPosOptions &&
+							runtimeConfig.deliveryFees.allowFreeForPOS &&
+							offerDeliveryFees && { reasonOfferDeliveryFees }),
+						...(receiptNote && { receiptNote: receiptNote.receiptNoteContent }),
+						engagements: {
+							...(agreements.allowCollectIP && {
+								acceptedIPCollect: agreements.allowCollectIP
+							}),
+							...(agreements.teecees && { acceptedTermsOfUse: agreements.teecees }),
+							...(agreements.isOnlyDeposit && {
+								acceptedDepositConditionsAndFullPayment: agreements.isOnlyDeposit
+							}),
+							...(agreements.isVATNullForeigner && {
+								acceptedExportationAndVATObligation: agreements.isVATNullForeigner
+							})
+						},
+						...(physicalFullyPaid && { onLocation: physicalFullyPaid.onLocation }),
+						...(desiredPayment.paymentTimeOut && {
+							paymentTimeOut: desiredPayment.paymentTimeOut
+						}),
+						session
+					}
+				);
+			});
+		} catch (err) {
+			if (err instanceof PaymentGenerationError) {
+				console.error('PaymentGenerationError on /checkout:', err.method, err.reason);
+				await notifySuperAdminPaymentFailure({
+					method: err.method,
+					context: 'e-shop checkout (cart submission)'
+				});
+				return fail(400, { paymentGenerationFailed: true });
+			}
+			throw err;
+		}
 		const displayHeadless =
 			url.searchParams.get('display') === 'headless' ? '?display=headless' : '';
 		throw redirect(303, `/order/${orderId}${displayHeadless}`);

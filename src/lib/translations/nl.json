@@ -190,6 +190,7 @@
 		"multiplePaymentMethods": "Maak gebruik van meerdere betaalmethoden",
 		"multiplePaymentMethodsHelpText": "Bij de volgende stap kunt u de betaalmethoden instellen.",
 		"noDeliveryInCountry": "Voor sommige artikelen in uw winkelwagentje is bezorging in uw land niet mogelijk.",
+		"paymentGenerationFailed": "De betaling kon niet worden gestart. Probeer het binnen enkele ogenblikken opnieuw, of neem contact op met de verkoper als het probleem aanhoudt.",
 		"note": {
 			"label": "Laat een briefje achter voor de verkoper",
 			"title": "Opmerking"
