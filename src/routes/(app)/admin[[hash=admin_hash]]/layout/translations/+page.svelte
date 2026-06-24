@@ -7,24 +7,27 @@
 	let language: LanguageKey = 'fr';
 
 	type LinkRow = { label: string; href: string };
-	// For each kind of link, pre-create one row per entry that exists in the main config so the
-	// translator sees the original (label + href) as placeholders next to an empty input — plus
-	// any translation row that exists beyond the main count, plus one trailing empty row that
-	// lets the operator add a translation-only entry that has no counterpart in main.
-	function buildRows(
+	// Pre-create one row per entry that exists in the main config so the translator sees the
+	// original (label + href) as placeholders next to an empty input. `+ Add link` buttons let
+	// the operator stack translation-only entries that have no counterpart in main.
+	let topbarExtra = 0;
+	let navbarExtra = 0;
+	let footerExtra = 0;
+	function baseCount(
 		main: ReadonlyArray<LinkRow> | undefined,
 		translated: ReadonlyArray<LinkRow> | undefined
-	): LinkRow[] {
-		const mainLen = main?.length ?? 0;
-		const translatedLen = translated?.length ?? 0;
-		const baseCount = Math.max(mainLen, translatedLen);
-		const rows: LinkRow[] = [];
-		for (let i = 0; i < baseCount; i++) {
-			rows.push(translated?.[i] ?? { label: '', href: '' });
-		}
-		rows.push({ label: '', href: '' });
-		return rows;
+	): number {
+		return Math.max(main?.length ?? 0, translated?.length ?? 0);
 	}
+	function buildRows(translated: ReadonlyArray<LinkRow> | undefined, count: number): LinkRow[] {
+		return Array.from({ length: count }, (_, i) => translated?.[i] ?? { label: '', href: '' });
+	}
+	$: topbarCount =
+		baseCount(data.defaultConfig.topbarLinks, data.config?.[language]?.topbarLinks) + topbarExtra;
+	$: navbarCount =
+		baseCount(data.defaultConfig.navbarLinks, data.config?.[language]?.navbarLinks) + navbarExtra;
+	$: footerCount =
+		baseCount(data.defaultConfig.footerLinks, data.config?.[language]?.footerLinks) + footerExtra;
 </script>
 
 <form method="post" class="contents">
@@ -76,7 +79,7 @@
 
 	<h2 class="text-2xl">Top bar links</h2>
 
-	{#each buildRows(data.defaultConfig.topbarLinks, data.config?.[language]?.topbarLinks) as link, i}
+	{#each buildRows(data.config?.[language]?.topbarLinks, topbarCount) as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
 				Text
@@ -100,10 +103,13 @@
 			</label>
 		</div>
 	{/each}
+	<button class="btn body-mainCTA self-start" on:click={() => (topbarExtra += 1)} type="button"
+		>Add top bar link</button
+	>
 
 	<h2 class="text-2xl">Nav bar links</h2>
 
-	{#each buildRows(data.defaultConfig.navbarLinks, data.config?.[language]?.navbarLinks) as link, i}
+	{#each buildRows(data.config?.[language]?.navbarLinks, navbarCount) as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
 				Text
@@ -127,10 +133,13 @@
 			</label>
 		</div>
 	{/each}
+	<button class="btn body-mainCTA self-start" on:click={() => (navbarExtra += 1)} type="button"
+		>Add nav bar link</button
+	>
 
 	<h2 class="text-2xl">Footer links</h2>
 
-	{#each buildRows(data.defaultConfig.footerLinks, data.config?.[language]?.footerLinks) as link, i}
+	{#each buildRows(data.config?.[language]?.footerLinks, footerCount) as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
 				Text
@@ -154,6 +163,9 @@
 			</label>
 		</div>
 	{/each}
+	<button class="btn body-mainCTA self-start" on:click={() => (footerExtra += 1)} type="button"
+		>Add footer link</button
+	>
 
 	<button class="btn btn-black self-start" type="submit">Save</button>
 </form>
