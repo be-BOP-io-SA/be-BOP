@@ -1,5 +1,8 @@
 import { runtimeConfig, runtimeConfigUpdatedAt } from '$lib/server/runtime-config';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { getCookieConsent } from '$lib/server/cookies';
+import { extractAnalyticsHostnames } from '$lib/server/analytics-hostnames';
+import { collections } from '$lib/server/database';
 
 export async function load(event) {
 	const viewportWidth = (() => {
@@ -21,8 +24,24 @@ export async function load(event) {
 		}
 	})();
 
+	const analyticsSnippet = runtimeConfig.analyticsScriptSnippet;
+	const analyticsConsent = getCookieConsent(event.cookies);
+	const analyticsSnippetConfigured = !!analyticsSnippet;
+	const analyticsHostnames = analyticsSnippetConfigured
+		? extractAnalyticsHostnames(analyticsSnippet)
+		: [];
+	const hasPrivacyPage = analyticsSnippetConfigured
+		? !!(await collections.cmsPages.findOne({ _id: 'privacy' }, { projection: { _id: 1 } }))
+		: false;
+
 	return {
-		analyticsScriptSnippet: runtimeConfig.analyticsScriptSnippet,
+		// Only emit the raw snippet when the visitor has accepted — this is what the root layout
+		// renders into <head>, so deny / no-choice means no script is even fetched.
+		analyticsScriptSnippet: analyticsConsent === 'accepted' ? analyticsSnippet : '',
+		analyticsSnippetConfigured,
+		analyticsConsent,
+		analyticsHostnames,
+		analyticsHasPrivacyPage: hasPrivacyPage,
 		language: event.locals.language,
 		themeChangeNumber: runtimeConfig.themeChangeNumber,
 		enUpdatedAt: runtimeConfigUpdatedAt[`translations.en`] ?? new Date(0),
