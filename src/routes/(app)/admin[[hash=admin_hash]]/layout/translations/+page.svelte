@@ -5,6 +5,26 @@
 	export let data;
 
 	let language: LanguageKey = 'fr';
+
+	type LinkRow = { label: string; href: string };
+	// For each kind of link, pre-create one row per entry that exists in the main config so the
+	// translator sees the original (label + href) as placeholders next to an empty input — plus
+	// any translation row that exists beyond the main count, plus one trailing empty row that
+	// lets the operator add a translation-only entry that has no counterpart in main.
+	function buildRows(
+		main: ReadonlyArray<LinkRow> | undefined,
+		translated: ReadonlyArray<LinkRow> | undefined
+	): LinkRow[] {
+		const mainLen = main?.length ?? 0;
+		const translatedLen = translated?.length ?? 0;
+		const baseCount = Math.max(mainLen, translatedLen);
+		const rows: LinkRow[] = [];
+		for (let i = 0; i < baseCount; i++) {
+			rows.push(translated?.[i] ?? { label: '', href: '' });
+		}
+		rows.push({ label: '', href: '' });
+		return rows;
+	}
 </script>
 
 <form method="post" class="contents">
@@ -56,7 +76,7 @@
 
 	<h2 class="text-2xl">Top bar links</h2>
 
-	{#each [...(data.config?.[language]?.topbarLinks ?? []), { href: '', label: '' }] as link, i}
+	{#each buildRows(data.defaultConfig.topbarLinks, data.config?.[language]?.topbarLinks) as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
 				Text
@@ -83,7 +103,7 @@
 
 	<h2 class="text-2xl">Nav bar links</h2>
 
-	{#each [...(data.config?.[language]?.navbarLinks ?? []), { href: '', label: '' }] as link, i}
+	{#each buildRows(data.defaultConfig.navbarLinks, data.config?.[language]?.navbarLinks) as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
 				Text
@@ -110,7 +130,7 @@
 
 	<h2 class="text-2xl">Footer links</h2>
 
-	{#each [...(data.config?.[language]?.footerLinks ?? []), { href: '', label: '' }] as link, i}
+	{#each buildRows(data.defaultConfig.footerLinks, data.config?.[language]?.footerLinks) as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
 				Text
