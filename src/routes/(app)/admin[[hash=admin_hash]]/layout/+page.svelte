@@ -24,11 +24,14 @@
 			href: ''
 		}))
 	];
-	const presetKeys = Object.keys(socialIconPresets) as SocialIconPresetKey[];
+	const presetKeys = (Object.keys(socialIconPresets) as SocialIconPresetKey[]).sort((a, b) =>
+		socialIconPresets[a].name.localeCompare(socialIconPresets[b].name)
+	);
 	// Per-row preset selection. Empty string = nothing picked yet (the "Choose platform"
-	// placeholder), `custom` = the operator explicitly opted for raw-SVG paste.
+	// placeholder), `custom` = the operator explicitly opted for raw-SVG paste. Rows that load
+	// with an SVG already saved default to `custom` so the textarea stays editable.
 	let socialPresetSelections: Array<'' | 'custom' | SocialIconPresetKey> = socialIcons.map(
-		() => ''
+		(icon) => (icon.svg ? 'custom' : '')
 	);
 
 	function addSocialIconLine() {
@@ -321,6 +324,7 @@
 					rows="5"
 					maxlength="10000"
 					class="form-input"
+					readonly={socialPresetSelections[i] !== 'custom'}
 					bind:value={icon.svg}
 				/>
 			</label>
