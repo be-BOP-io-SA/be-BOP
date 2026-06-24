@@ -169,15 +169,20 @@
 				{/if}
 			</div>
 
-			<div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-				<div class="rounded-xl border border-gray-100 p-4">
-					<p class="text-xs uppercase tracking-wide text-gray-400">{t('priceCalendar.current')}</p>
-					<p class="mt-1 text-xl font-semibold text-gray-900">
+			<div class="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
+				<div class="rounded-xl border border-gray-100 p-2.5 sm:p-4">
+					<p class="truncate text-[10px] uppercase tracking-wide text-gray-400 sm:text-xs">
+						{t('priceCalendar.current')}
+					</p>
+					<p
+						class="mt-0.5 whitespace-nowrap text-sm font-semibold text-gray-900 sm:mt-1 sm:text-xl"
+					>
 						{fmtCat(history.catalogue.current)}
 					</p>
 					{#if history.catalogue.deltaPct !== null}
 						<p
-							class="mt-1 text-xs font-medium {history.catalogue.deltaPct >= 0
+							class="mt-0.5 text-[10px] font-medium sm:mt-1 sm:text-xs {history.catalogue
+								.deltaPct >= 0
 								? 'text-red-500'
 								: 'text-green-600'}"
 						>
@@ -187,22 +192,32 @@
 						</p>
 					{/if}
 				</div>
-				<div class="rounded-xl border border-gray-100 p-4">
-					<p class="text-xs uppercase tracking-wide text-gray-400">{t('priceCalendar.min30')}</p>
-					<p class="mt-1 text-xl font-semibold text-gray-900">
+				<div class="rounded-xl border border-gray-100 p-2.5 sm:p-4">
+					<p class="truncate text-[10px] uppercase tracking-wide text-gray-400 sm:text-xs">
+						{t('priceCalendar.min30')}
+					</p>
+					<p
+						class="mt-0.5 whitespace-nowrap text-sm font-semibold text-gray-900 sm:mt-1 sm:text-xl"
+					>
 						{fmtCat(history.catalogue.min30?.price)}
 					</p>
 					{#if history.catalogue.min30}
-						<p class="mt-1 text-xs text-gray-400">{fmtDate(history.catalogue.min30.date)}</p>
+						<p class="mt-0.5 truncate text-[10px] text-gray-400 sm:mt-1 sm:text-xs">
+							{fmtDate(history.catalogue.min30.date)}
+						</p>
 					{/if}
 				</div>
-				<div class="rounded-xl border border-gray-100 p-4">
-					<p class="text-xs uppercase tracking-wide text-gray-400">{t('priceCalendar.max30')}</p>
-					<p class="mt-1 text-xl font-semibold text-gray-900">
+				<div class="rounded-xl border border-gray-100 p-2.5 sm:p-4">
+					<p class="truncate text-[10px] uppercase tracking-wide text-gray-400 sm:text-xs">
+						{t('priceCalendar.max30')}
+					</p>
+					<p
+						class="mt-0.5 whitespace-nowrap text-sm font-semibold text-gray-900 sm:mt-1 sm:text-xl"
+					>
 						{fmtCat(history.catalogue.max30?.price)}
 					</p>
 					{#if history.catalogue.max30}
-						<p class="mt-1 text-xs text-gray-400">
+						<p class="mt-0.5 truncate text-[10px] text-gray-400 sm:mt-1 sm:text-xs">
 							{t('priceCalendar.since', { date: fmtDate(history.catalogue.max30.date) })}
 						</p>
 					{/if}
@@ -282,9 +297,9 @@
 					{/each}
 				</div>
 			</div>
-			<div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+			<div class="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
 				{#each [...Array(3).keys()] as i (i)}
-					<div class="h-[76px] rounded-xl border border-gray-100 bg-gray-50" />
+					<div class="h-[64px] rounded-xl border border-gray-100 bg-gray-50 sm:h-[76px]" />
 				{/each}
 			</div>
 		</div>

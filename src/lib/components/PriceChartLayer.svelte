@@ -22,9 +22,10 @@
 	export let locale = 'fr';
 
 	// LayerCake context (d3 scales as Svelte stores).
-	const { xScale, yScale, height } = getContext<{
+	const { xScale, yScale, width, height } = getContext<{
 		xScale: Readable<Scale>;
 		yScale: Readable<Scale>;
+		width: Readable<number>;
 		height: Readable<number>;
 	}>('LayerCake');
 
@@ -89,7 +90,10 @@
 		fill: s.area ? areaPath(s.values, s.step, $xScale, $yScale, $height) : ''
 	}));
 	$: yTicks = $yScale && $yScale.ticks ? $yScale.ticks(4) : [];
-	$: xTicks = $xScale && $xScale.ticks ? $xScale.ticks(5) : [];
+	// Fit the number of X labels to the available width so dates never overlap on
+	// narrow (mobile / low-res) screens — each label needs ~80px to breathe.
+	$: xTickCount = Math.max(2, Math.min(5, Math.floor(($width || 0) / 80)));
+	$: xTicks = $xScale && $xScale.ticks ? $xScale.ticks(xTickCount) : [];
 	$: xRangeMax = $xScale && $xScale.range ? $xScale.range()[1] : 0;
 
 	// --- Hover tooltip ---------------------------------------------------------
