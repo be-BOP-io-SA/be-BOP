@@ -179,8 +179,8 @@
 			<a
 				href={data.adminPrefix}
 				data-sveltekit-preload-data="off"
-				class="flex items-center gap-2 text-sm py-0.5"
-				class:underline={$page.url.pathname === data.adminPrefix}
+				class="flex items-center gap-2 text-sm py-0.5 hover:underline"
+				class:font-bold={$page.url.pathname === data.adminPrefix}
 			>
 				<span aria-hidden="true">🏠</span>
 				Home
@@ -228,8 +228,8 @@
 										<a
 											href={link.href}
 											data-sveltekit-preload-data="off"
-											class="flex-1 text-sm py-0.5"
-											class:underline={$page.url.pathname.startsWith(link.href)}
+											class="flex-1 text-sm py-0.5 hover:underline"
+											class:font-bold={$page.url.pathname.startsWith(link.href)}
 											class:italic={data.role && !isAllowedOnPage(data.role, link.href, 'write')}
 											class:opacity-70={data.role &&
 												!isAllowedOnPage(data.role, link.href, 'write')}
@@ -248,9 +248,10 @@
 				<a
 					href="/pos"
 					data-sveltekit-preload-data="off"
-					class="font-bold text-green-700 mt-2"
-					class:underline={$page.url.pathname.startsWith('/pos')}
+					class="font-bold text-green-700 mt-2 flex items-center gap-2 px-2 py-0.5 rounded hover:underline"
+					class:bg-green-200={$page.url.pathname.startsWith('/pos')}
 				>
+					<span aria-hidden="true">🧾</span>
 					POS session
 				</a>
 			{/if}
