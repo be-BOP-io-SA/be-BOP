@@ -141,14 +141,14 @@
 		x2={xRangeMax}
 		y1={$yScale(ty)}
 		y2={$yScale(ty)}
-		class="stroke-gray-300 [stroke-dasharray:2_3]"
+		class="stroke-gray-300 [stroke-dasharray:2_3] dark:stroke-gray-700"
 	/>
 	<text
 		x="-8"
 		y={$yScale(ty)}
 		dy="0.32em"
 		text-anchor="end"
-		class="fill-gray-600 text-[11px] tabular-nums">{fmtPrice(ty)}</text
+		class="fill-gray-600 text-[11px] tabular-nums dark:fill-gray-400">{fmtPrice(ty)}</text
 	>
 {/each}
 
@@ -158,7 +158,7 @@
 		x={$xScale(tx)}
 		y={$height + 16}
 		text-anchor="middle"
-		class="fill-gray-600 text-[11px] tabular-nums">{fmtDate(tx)}</text
+		class="fill-gray-600 text-[11px] tabular-nums dark:fill-gray-400">{fmtDate(tx)}</text
 	>
 {/each}
 
@@ -205,7 +205,7 @@
 			/>
 		{/each}
 		<g transform="translate({tooltipX},4)">
-			<rect width={tipW} height={tipH} rx="7" class="fill-gray-850 opacity-90" />
+			<rect width={tipW} height={tipH} rx="7" class="fill-gray-850 opacity-90 dark:fill-gray-700" />
 			<text
 				x={TIP_PADX}
 				y={TIP_PADY + TIP_LINE / 2}

@@ -32,13 +32,15 @@
 			on:click={onClose}
 		/>
 		<div
-			class="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+			class="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-850"
 			role="dialog"
 			aria-modal="true"
 		>
 			<!-- Header -->
-			<div class="flex items-center gap-3 border-b border-gray-100 px-5 py-4">
-				<span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+			<div class="flex items-center gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+				<span
+					class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-500 dark:bg-gray-800"
+				>
 					<svg
 						width="18"
 						height="18"
@@ -50,10 +52,12 @@
 						<circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
 					</svg>
 				</span>
-				<h2 class="flex-1 truncate text-lg font-semibold text-gray-900">{productName}</h2>
+				<h2 class="flex-1 truncate text-lg font-semibold text-gray-850 dark:text-white">
+					{productName}
+				</h2>
 				<button
 					type="button"
-					class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100"
+					class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
 					aria-label={t('priceCalendar.close')}
 					on:click={onClose}
 				>
@@ -83,7 +87,7 @@
 			</div>
 
 			<!-- Footer -->
-			<div class="flex justify-end border-t border-gray-100 px-5 py-4">
+			<div class="flex justify-end border-t border-gray-100 px-5 py-4 dark:border-gray-800">
 				<button
 					type="button"
 					class="rounded-lg bg-blue-500 px-5 py-2 text-sm font-medium text-white hover:bg-blue-600"

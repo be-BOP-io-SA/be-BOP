@@ -113,14 +113,23 @@
 	const PAID_COLOR = '#f59e0b';
 </script>
 
+<!--
+	Theming note: this card uses an explicit light palette (bg-white + gray text) with
+	`dark:` overrides for the .dark theme. Every text element MUST carry a resolvable
+	color — the project's tailwind.config.js replaces the gray scale and defines NO
+	`gray-500`/`gray-900`, so those utilities emit no rule and the element silently
+	inherits the dynamic `--body-text-color`, which is light in dark mode → unreadable
+	light-on-white. Stick to defined shades (…-850 is the darkest) and pair each with a
+	`dark:` variant.
+-->
 <!-- Sub-tabs -->
-<div class="flex gap-6 border-b border-gray-100">
+<div class="flex gap-6 border-b border-gray-100 dark:border-gray-800">
 	{#if showHistory}
 		<button
 			type="button"
 			class="-mb-px border-b-2 py-3 text-sm font-medium {tab === 'history'
-				? 'border-blue-500 text-blue-600'
-				: 'border-transparent text-gray-500 hover:text-gray-700'}"
+				? 'border-blue-500 text-blue-600 dark:text-blue-400'
+				: 'border-transparent text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}"
 			on:click={() => (tab = 'history')}
 		>
 			{t('priceCalendar.tabHistory')}
@@ -130,8 +139,8 @@
 		<button
 			type="button"
 			class="-mb-px border-b-2 py-3 text-sm font-medium {tab === 'paid'
-				? 'border-blue-500 text-blue-600'
-				: 'border-transparent text-gray-500 hover:text-gray-700'}"
+				? 'border-blue-500 text-blue-600 dark:text-blue-400'
+				: 'border-transparent text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}"
 			on:click={() => (tab = 'paid')}
 		>
 			{t('priceCalendar.tabPaid')}
@@ -147,13 +156,13 @@
 					type="button"
 					class="rounded-md px-2.5 py-1 text-xs font-medium {range === r.key
 						? 'bg-blue-500 text-white'
-						: 'bg-gray-100 text-gray-600 hover:bg-gray-200'}"
+						: 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'}"
 					on:click={() => (range = r.key)}>{r.label}</button
 				>
 			{/each}
 		</div>
 		{#if tab === 'history'}
-			<div class="h-60 w-full rounded-xl border border-gray-100 p-2">
+			<div class="h-60 w-full rounded-xl border border-gray-100 p-2 dark:border-gray-800">
 				{#if catVals.length}
 					<LayerCake padding={PADDING} x={getX} y={getY} yDomain={domain(catVals)} data={catVals}>
 						<Svg>
@@ -170,12 +179,12 @@
 			</div>
 
 			<div class="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-				<div class="rounded-xl border border-gray-100 p-2.5 sm:p-4">
+				<div class="rounded-xl border border-gray-100 p-2.5 dark:border-gray-800 sm:p-4">
 					<p class="truncate text-[10px] uppercase tracking-wide text-gray-400 sm:text-xs">
 						{t('priceCalendar.current')}
 					</p>
 					<p
-						class="mt-0.5 whitespace-nowrap text-sm font-semibold text-gray-900 sm:mt-1 sm:text-xl"
+						class="mt-0.5 whitespace-nowrap text-sm font-semibold text-gray-850 dark:text-white sm:mt-1 sm:text-xl"
 					>
 						{fmtCat(history.catalogue.current)}
 					</p>
@@ -192,12 +201,12 @@
 						</p>
 					{/if}
 				</div>
-				<div class="rounded-xl border border-gray-100 p-2.5 sm:p-4">
+				<div class="rounded-xl border border-gray-100 p-2.5 dark:border-gray-800 sm:p-4">
 					<p class="truncate text-[10px] uppercase tracking-wide text-gray-400 sm:text-xs">
 						{t('priceCalendar.min30')}
 					</p>
 					<p
-						class="mt-0.5 whitespace-nowrap text-sm font-semibold text-gray-900 sm:mt-1 sm:text-xl"
+						class="mt-0.5 whitespace-nowrap text-sm font-semibold text-gray-850 dark:text-white sm:mt-1 sm:text-xl"
 					>
 						{fmtCat(history.catalogue.min30?.price)}
 					</p>
@@ -207,12 +216,12 @@
 						</p>
 					{/if}
 				</div>
-				<div class="rounded-xl border border-gray-100 p-2.5 sm:p-4">
+				<div class="rounded-xl border border-gray-100 p-2.5 dark:border-gray-800 sm:p-4">
 					<p class="truncate text-[10px] uppercase tracking-wide text-gray-400 sm:text-xs">
 						{t('priceCalendar.max30')}
 					</p>
 					<p
-						class="mt-0.5 whitespace-nowrap text-sm font-semibold text-gray-900 sm:mt-1 sm:text-xl"
+						class="mt-0.5 whitespace-nowrap text-sm font-semibold text-gray-850 dark:text-white sm:mt-1 sm:text-xl"
 					>
 						{fmtCat(history.catalogue.max30?.price)}
 					</p>
@@ -224,18 +233,21 @@
 				</div>
 			</div>
 		{:else}
-			<div class="mb-4 flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+			<div
+				class="mb-4 flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 p-4 dark:border-gray-800 dark:bg-gray-800/40"
+			>
 				<span
 					class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 font-semibold text-white"
 					>%</span
 				>
 				<div>
-					<p class="text-sm text-gray-700">
+					<p class="text-sm text-gray-700 dark:text-gray-200">
 						{t('priceCalendar.meanLabel')}
-						<span class="font-semibold text-gray-900">{fmt(history.paid.mean)}</span>
+						<span class="font-semibold text-gray-850 dark:text-white">{fmt(history.paid.mean)}</span
+						>
 					</p>
 					{#if history.paid.pctBelowCatalogue !== null}
-						<p class="text-xs text-gray-500">
+						<p class="text-xs text-gray-600 dark:text-gray-400">
 							{t('priceCalendar.belowCatalogue', {
 								pct: `−${history.paid.pctBelowCatalogue.toFixed(1)}`
 							})}
@@ -245,13 +257,13 @@
 			</div>
 			{#if adminOrderHref}
 				<div class="mb-3">
-					<a href={adminOrderHref} class="text-xs text-blue-600 underline"
+					<a href={adminOrderHref} class="text-xs text-blue-600 underline dark:text-blue-400"
 						>{t('priceCalendar.viewOrders')}</a
 					>
 				</div>
 			{/if}
 
-			<div class="h-60 w-full rounded-xl border border-gray-100 p-2">
+			<div class="h-60 w-full rounded-xl border border-gray-100 p-2 dark:border-gray-800">
 				{#if paidVals.length || catVals.length}
 					<LayerCake
 						padding={PADDING}
@@ -276,7 +288,7 @@
 				{/if}
 			</div>
 
-			<div class="mt-3 flex items-center gap-5 text-xs text-gray-500">
+			<div class="mt-3 flex items-center gap-5 text-xs text-gray-600 dark:text-gray-400">
 				<span class="flex items-center gap-1.5"
 					><span class="h-2.5 w-2.5 rounded-full" style="background:{CAT_COLOR}" />
 					{t('priceCalendar.catalogue')}</span
@@ -290,16 +302,23 @@
 	{:else if loading}
 		<!-- Placeholder chart mockup while the first load is in flight. -->
 		<div class="animate-pulse">
-			<div class="h-60 w-full rounded-xl border border-gray-100 bg-gray-50 p-4">
+			<div
+				class="h-60 w-full rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-850"
+			>
 				<div class="flex h-full items-end gap-1.5">
 					{#each [...Array(16).keys()] as i}
-						<div class="flex-1 rounded-sm bg-gray-200" style="height:{25 + ((i * 53) % 60)}%" />
+						<div
+							class="flex-1 rounded-sm bg-gray-200 dark:bg-gray-700"
+							style="height:{25 + ((i * 53) % 60)}%"
+						/>
 					{/each}
 				</div>
 			</div>
 			<div class="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
 				{#each [...Array(3).keys()] as i (i)}
-					<div class="h-[64px] rounded-xl border border-gray-100 bg-gray-50 sm:h-[76px]" />
+					<div
+						class="h-[64px] rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-850 sm:h-[76px]"
+					/>
 				{/each}
 			</div>
 		</div>
