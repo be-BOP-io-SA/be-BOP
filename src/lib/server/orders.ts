@@ -477,7 +477,12 @@ export async function onOrderPaymentFailed(
 					})
 			},
 			$unset: {
-				'payments.$.posTapToPay': 1
+				'payments.$.posTapToPay': 1,
+				// If an onchain TX left the mempool without being mined, the payment
+				// expires as if it was never seen — drop the "awaiting confirmation" mark
+				// and the RBF grace timer.
+				'payments.$.awaitingConfirmation': 1,
+				'payments.$.mempoolMissingSince': 1
 			}
 		},
 		{ returnDocument: 'after', session: opts?.session }

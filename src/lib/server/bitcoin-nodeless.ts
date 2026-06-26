@@ -159,10 +159,15 @@ export async function generateDerivationIndex(): Promise<number> {
 export async function getSatoshiReceivedNodeless(
 	address: string,
 	confirmations: number,
-	orderCreatedAt: Date,
-	orderExpiresAt: Date
+	orderCreatedAt: Date
 ): Promise<{
 	satReceived: number;
+	/**
+	 * Funds received from address-paying TXs that are detected but NOT yet confirmed
+	 * to the required threshold (mempool 0-conf, or confirmed but too shallow). Used to
+	 * keep an order `pending` while a payment is in flight instead of expiring it.
+	 */
+	pendingSatReceived: number;
 	transactions: Array<{
 		currency: 'SAT';
 		amount: number;
@@ -200,29 +205,17 @@ export async function getSatoshiReceivedNodeless(
 		)
 		.parse(json);
 
-	const transactions = res
+	// Relevant = TXs paying our (single-use) address, not predating the order.
+	// We intentionally do NOT reject TXs confirmed after `orderExpiresAt`: a payment
+	// broadcast before expiry but mined late (slow blocks) must still count as paid.
+	const relevant = res
 		.filter((tx) => {
-			if (confirmations > 0) {
-				if (
-					!tx.status.block_height ||
-					tx.status.block_height > runtimeConfig.bitcoinBlockHeight - confirmations + 1
-				) {
-					return false;
-				}
-			}
-
 			if (tx.status.confirmed && tx.status.block_time) {
 				const txTime = new Date(tx.status.block_time * 1000);
-
 				if (txTime < orderCreatedAt) {
 					return false;
 				}
-
-				if (txTime > orderExpiresAt) {
-					return false;
-				}
 			}
-
 			return true;
 		})
 		.filter((tx) => tx.vout.some((vout) => vout.scriptpubkey_address === address))
@@ -231,13 +224,22 @@ export async function getSatoshiReceivedNodeless(
 			amount: sum(
 				tx.vout.filter((vout) => vout.scriptpubkey_address === address).map((vout) => vout.value)
 			),
-			id: tx.txid
+			id: tx.txid,
+			// Confirmed to the required depth? (confirmations === 0 → accept unconfirmed)
+			confirmed:
+				confirmations <= 0 ||
+				(!!tx.status.block_height &&
+					tx.status.block_height <= runtimeConfig.bitcoinBlockHeight - confirmations + 1)
 		}));
 
-	const total = sum(transactions.map((tx) => tx.amount));
+	// `transactions` keeps its existing meaning: threshold-confirmed received funds.
+	const transactions = relevant
+		.filter((tx) => tx.confirmed)
+		.map(({ currency, amount, id }) => ({ currency, amount, id }));
 
 	return {
-		satReceived: total,
+		satReceived: sum(transactions.map((tx) => tx.amount)),
+		pendingSatReceived: sum(relevant.filter((tx) => !tx.confirmed).map((tx) => tx.amount)),
 		transactions
 	};
 }

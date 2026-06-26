@@ -618,6 +618,11 @@
 			"other": "De betaling wordt bevestigd na {count} bevestigingen.",
 			"zero": "De betaling wordt bevestigd zonder op bevestigingen te wachten."
 		},
+		"awaitingConfirmationBitcoin": {
+			"one": "Betaling ontvangen — wachten op 1 bevestiging.",
+			"other": "Betaling ontvangen — wachten op {count} bevestigingen.",
+			"zero": "Betaling ontvangen — bevestigen."
+		},
 		"paymentAccountHolder": "Rekeninghouder",
 		"paymentAccountHolderAddress": "Adres",
 		"paymentAddress": "Betaal adres",
@@ -631,6 +636,7 @@
 		"paymentLinkGeneric": "Klik hier om mee te betalen",
 		"paymentPaidAt": "Betaling gedaan op {date}",
 		"paymentStatus": {
+			"awaitingConfirmation": "ontvangen, wacht op bevestiging",
 			"canceled": "geannuleerd",
 			"canceledTemplate": "Bestelling geannuleerd!",
 			"expired": "verlopen",

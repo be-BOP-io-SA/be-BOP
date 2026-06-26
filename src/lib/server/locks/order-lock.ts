@@ -163,6 +163,36 @@ async function maintainOrders() {
 								if (result.transactions) {
 									payment.transactions = result.transactions;
 								}
+								// Persist the "awaiting confirmation" flag (onchain funds detected
+								// but not yet confirmed) so the buyer-facing order page can show it.
+								// Only write on change — this loop runs every 2s.
+								{
+									const awaitingConfirmation = result.awaitingConfirmation ?? false;
+									const missingSince = result.mempoolMissingSince ?? null;
+									const awaitingChanged =
+										(payment.awaitingConfirmation ?? false) !== awaitingConfirmation;
+									const missingChanged =
+										(payment.mempoolMissingSince?.getTime() ?? null) !==
+										(missingSince?.getTime() ?? null);
+									if (awaitingChanged || missingChanged) {
+										await collections.orders.updateOne(
+											{ _id: order._id, 'payments._id': payment._id },
+											missingSince
+												? {
+														$set: {
+															'payments.$.awaitingConfirmation': awaitingConfirmation,
+															'payments.$.mempoolMissingSince': missingSince
+														}
+												  }
+												: {
+														$set: { 'payments.$.awaitingConfirmation': awaitingConfirmation },
+														$unset: { 'payments.$.mempoolMissingSince': 1 }
+												  }
+										);
+										payment.awaitingConfirmation = awaitingConfirmation;
+										payment.mempoolMissingSince = missingSince ?? undefined;
+									}
+								}
 								break;
 							default:
 								result.status satisfies never;

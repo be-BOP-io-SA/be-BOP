@@ -618,6 +618,11 @@
 			"other": "El pago sera confirmado después de {count} confirmaciones.",
 			"zero": "El pago sera confirmado inmediatamente."
 		},
+		"awaitingConfirmationBitcoin": {
+			"one": "Pago recibido — esperando 1 confirmación.",
+			"other": "Pago recibido — esperando {count} confirmaciones.",
+			"zero": "Pago recibido — confirmando."
+		},
 		"paymentAccountHolder": "Titular de la cuenta",
 		"paymentAccountHolderAddress": "Dirección",
 		"paymentAddress": "Dirección de pago",
@@ -631,6 +636,7 @@
 		"paymentLinkGeneric": "Haga clic aquí para pagar con",
 		"paymentPaidAt": "Pago realizado el {date}",
 		"paymentStatus": {
+			"awaitingConfirmation": "recibido, esperando confirmación",
 			"canceled": "cancelado",
 			"canceledTemplate": "¡Pedido cancelado!",
 			"expired": "expirado",

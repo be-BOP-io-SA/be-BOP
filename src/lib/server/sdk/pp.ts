@@ -34,6 +34,16 @@ export interface CreatePaymentResult {
 
 export interface CheckPaymentResult {
 	status: 'paid' | 'pending' | 'expired' | 'failed' | 'canceled';
+	/**
+	 * For onchain payments: a full-amount TX is detected but not yet confirmed to the
+	 * required threshold. Surfaced to the buyer as "received, awaiting confirmation".
+	 */
+	awaitingConfirmation?: boolean;
+	/**
+	 * For onchain payments: the persisted start of the post-expiry grace window (see
+	 * `OrderPayment.mempoolMissingSince`). `null` means "clear it". Persisted by the worker.
+	 */
+	mempoolMissingSince?: Date | null;
 	received?: Price;
 	transactions?: Array<{
 		id: string;

@@ -57,9 +57,15 @@
 	<!-- Payment instruction text -->
 	{#if payment.method !== 'point-of-sale'}
 		<div class="payment-instruction">
-			<p>{t('order.payToComplete')}</p>
-			{#if payment.method === 'bitcoin'}
-				<p>{t('order.payToCompleteBitcoin', { count: payment.confirmationBlocksRequired })}</p>
+			{#if payment.method === 'bitcoin' && payment.awaitingConfirmation}
+				<p class="text-green-600">
+					{t('order.awaitingConfirmationBitcoin', { count: payment.confirmationBlocksRequired })}
+				</p>
+			{:else}
+				<p>{t('order.payToComplete')}</p>
+				{#if payment.method === 'bitcoin'}
+					<p>{t('order.payToCompleteBitcoin', { count: payment.confirmationBlocksRequired })}</p>
+				{/if}
 			{/if}
 		</div>
 	{/if}
