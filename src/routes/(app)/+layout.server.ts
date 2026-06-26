@@ -30,6 +30,25 @@ import {
 	webChannelForUser
 } from '$lib/server/discount';
 
+/**
+ * Per-entry merge of a per-language link override with the main config. The translation page
+ * pads the saved array to match the main length, with `{ label: '', href: '' }` placeholders
+ * for rows the translator left blank — this helper falls back to the corresponding main entry
+ * for any such placeholder, so partial translations don't blank out untranslated links.
+ */
+function mergeLocalizedLinks(
+	translated: ReadonlyArray<{ label: string; href: string }> | undefined,
+	main: ReadonlyArray<{ label: string; href: string }>
+): Array<{ label: string; href: string }> {
+	if (!translated) {
+		return [...main];
+	}
+	return main.map((m, i) => {
+		const t = translated[i];
+		return t && t.label && t.href ? t : m;
+	});
+}
+
 async function getCartAndRemoveSomeItems(userIdentifier: UserIdentifier): Promise<Cart> {
 	const cartInDb = await getCartFromDb({ user: userIdentifier });
 
@@ -351,15 +370,18 @@ export async function load(params) {
 		viewportContentWidth: runtimeConfig.viewportContentWidth,
 		viewportFor: runtimeConfig.viewportFor,
 		links: {
-			footer:
-				runtimeConfig[`translations.${locals.language}.config`]?.footerLinks ??
-				runtimeConfig.footerLinks,
-			navbar:
-				runtimeConfig[`translations.${locals.language}.config`]?.navbarLinks ??
-				runtimeConfig.navbarLinks,
-			topbar:
-				runtimeConfig[`translations.${locals.language}.config`]?.topbarLinks ??
-				runtimeConfig.topbarLinks,
+			footer: mergeLocalizedLinks(
+				runtimeConfig[`translations.${locals.language}.config`]?.footerLinks,
+				runtimeConfig.footerLinks
+			),
+			navbar: mergeLocalizedLinks(
+				runtimeConfig[`translations.${locals.language}.config`]?.navbarLinks,
+				runtimeConfig.navbarLinks
+			),
+			topbar: mergeLocalizedLinks(
+				runtimeConfig[`translations.${locals.language}.config`]?.topbarLinks,
+				runtimeConfig.topbarLinks
+			),
 			socialNetworkIcons: runtimeConfig.socialNetworkIcons
 		},
 		visitorDarkLightMode: runtimeConfig.visitorDarkLightMode,
