@@ -295,17 +295,33 @@
 		<div class="flex gap-4">
 			<label class="form-label">
 				Preset
-				<select
-					class="form-input"
-					value={socialPresetSelections[i]}
-					on:change={(e) => applyPreset(i, e.currentTarget.value)}
-				>
-					<option value="" disabled hidden>Choose platform</option>
-					<option value="custom">Custom</option>
-					{#each presetKeys as key}
-						<option value={key}>{socialIconPresets[key].name}</option>
-					{/each}
-				</select>
+				<div class="flex items-center gap-2">
+					<select
+						class="form-input flex-1"
+						value={socialPresetSelections[i]}
+						on:change={(e) => applyPreset(i, e.currentTarget.value)}
+					>
+						<option value="" disabled hidden>Choose platform</option>
+						<option value="custom">Custom</option>
+						{#each presetKeys as key}
+							<option value={key}>{socialIconPresets[key].name}</option>
+						{/each}
+					</select>
+					<!-- Live preview. Dark background because preset / typical custom SVGs ship
+					     with `fill="white"`; see lib/social-icon-presets.ts for the rationale and
+					     the deferred currentColor migration. -->
+					<span
+						class="inline-flex items-center justify-center w-10 h-10 rounded bg-gray-800 shrink-0 overflow-hidden"
+						aria-hidden="true"
+					>
+						{#if icon.svg}
+							<!-- SVG comes from runtimeConfig (admin-controlled), same trust level as
+							     the storefront footer that already injects the same string. -->
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+							{@html icon.svg}
+						{/if}
+					</span>
+				</div>
 			</label>
 			<label class="form-label">
 				Name
