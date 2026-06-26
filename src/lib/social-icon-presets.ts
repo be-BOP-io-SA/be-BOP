@@ -3,9 +3,19 @@
  * dropdown and the SVG + default name are written into the icon row. Selecting `custom` (the
  * default) lets the operator paste a raw SVG as before.
  *
- * SVG fills are hardcoded to `white` to match the historical convention on shops that render
- * social icons on a dark header background; operators who need a different colour can switch
- * to `custom` and tweak the SVG.
+ * SVG fills are hardcoded to `white` on purpose:
+ *  - The storefront footer still renders each icon as `<img src="data:image/svg+xml;utf8, …">`,
+ *    a cross-document context where the SVG cannot inherit the surrounding text colour. CSS
+ *    `currentColor` does NOT work inside an `<img>` data URI — the icons would render with the
+ *    default black fill and disappear on dark backgrounds.
+ *  - Existing custom SVGs already saved by operators are also typically hardcoded white, so
+ *    swapping all presets to `currentColor` while leaving the custom ones untouched would mean
+ *    icons that look right today suddenly stop matching their newly themed siblings.
+ *
+ * TODO: revisit when we migrate the footer rendering from `<img>` to inline `{@html icon.svg}`.
+ * That migration needs a backward-compat story for already-saved custom SVGs (e.g. an opt-in
+ * "themable" flag per icon, or a one-off migration that pre-transforms known fills) before we
+ * can flip the presets to `currentColor`.
  */
 
 export type SocialIconPresetKey =
