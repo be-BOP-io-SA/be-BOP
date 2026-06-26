@@ -103,6 +103,11 @@
 		>
 	</label>
 
+	<p class="text-sm text-gray-600 mt-4">
+		Links themselves are managed in <a href="../layout" class="body-hyperlink underline">Layout</a>;
+		here you only translate the existing labels and (optionally) override the URLs per language.
+	</p>
+
 	<h2 class="text-2xl">Top bar links</h2>
 
 	{#each topbarRows as row, i}
