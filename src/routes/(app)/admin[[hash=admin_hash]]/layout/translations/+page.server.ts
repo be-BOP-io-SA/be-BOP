@@ -60,13 +60,17 @@ export const actions = {
 
 		const { language, ...rest } = result.data;
 
-		// Drop link rows where label or href is empty — covers untranslated rows whose URL was
-		// pre-filled by the form but whose label stayed blank. Without this, the prefill would
-		// silently persist the main URL as a per-language translation snapshot.
+		// Replace incomplete link rows by empty placeholders instead of filtering them out, so
+		// the saved array stays positionally aligned with the main config. Filtering would
+		// produce a dense array where translated[i] no longer matches main[i] after a partial,
+		// non-contiguous translation; the storefront merge (`(app)/+layout.server.ts`) falls
+		// back to main on empty entries.
 		for (const linkKey of ['topbarLinks', 'navbarLinks', 'footerLinks'] as const) {
 			const arr = rest[linkKey];
 			if (arr) {
-				rest[linkKey] = arr.filter((row) => row.href && row.label);
+				rest[linkKey] = arr.map((row) =>
+					row.href && row.label ? row : { label: '', href: '' }
+				);
 			}
 		}
 
