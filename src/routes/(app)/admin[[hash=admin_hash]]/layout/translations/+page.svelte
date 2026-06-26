@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { applyAction, enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import { languageNames, type LanguageKey } from '$lib/translations/index.js';
 	import { MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 
 	export let data;
 
 	let language: LanguageKey = 'fr';
+	let errorMessage = '';
+	let savedNotice = '';
 
 	type LinkRow = { label: string; href: string; isTranslated: boolean };
 	// Render one row per entry configured in the main config (strict 1:1) — no add / no delete.
@@ -26,7 +30,33 @@
 	$: footerRows = buildRows(data.defaultConfig.footerLinks, data.config?.[language]?.footerLinks);
 </script>
 
-<form method="post" class="contents">
+<form
+	method="post"
+	class="contents"
+	use:enhance={() => {
+		errorMessage = '';
+		savedNotice = '';
+		return async ({ result }) => {
+			if (result.type === 'failure') {
+				errorMessage =
+					(result.data?.errorMessage as string | undefined) ?? 'Save failed.';
+				return;
+			}
+			if (result.type === 'success') {
+				savedNotice = 'Saved.';
+				await invalidateAll();
+				return;
+			}
+			await applyAction(result);
+		};
+	}}
+>
+	{#if errorMessage}
+		<p class="alert-error" role="alert">{errorMessage}</p>
+	{/if}
+	{#if savedNotice}
+		<p class="alert-success" role="status">{savedNotice}</p>
+	{/if}
 	<label class="form-label">
 		Select Language
 
