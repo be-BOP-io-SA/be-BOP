@@ -26,6 +26,7 @@ import { AnyBulkWriteOperation, ObjectId } from 'mongodb';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 import { enrichWithOrderNumbers } from '$lib/server/orders';
+import { isPaidOrderWebhookEnabled } from '$lib/server/order-paid-webhook';
 import type { Picture } from '$lib/types/Picture';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
 
@@ -123,6 +124,10 @@ export const actions: Actions = {
 				availableDate: formData.get('availableDate') || undefined,
 				tagIds: JSON.parse(String(formData.get('tagIds'))).map((x: { value: string }) => x.value)
 			});
+
+		if (parsed.paidOrderWebhook && !isPaidOrderWebhookEnabled()) {
+			throw error(403, 'Paid-order webhook feature is disabled');
+		}
 
 		if (product.type !== 'resource') {
 			delete parsed.availableDate;
@@ -294,7 +299,8 @@ export const actions: Actions = {
 							stockReference: {
 								productId: parsed.stockReferenceProductId
 							}
-						})
+						}),
+						...(parsed.paidOrderWebhook && { paidOrderWebhook: parsed.paidOrderWebhook })
 					},
 					$unset: {
 						...(!parsed.customPreorderText && { customPreorderText: '' }),
@@ -314,7 +320,8 @@ export const actions: Actions = {
 						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),
 						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' }),
 						...(!parsed.bookingSpec && { bookingSpec: '' }),
-						...(!parsed.hasMaximumPrice && { maximumPrice: '' })
+						...(!parsed.hasMaximumPrice && { maximumPrice: '' }),
+						...(!parsed.paidOrderWebhook && { paidOrderWebhook: '' })
 					}
 				}
 			);

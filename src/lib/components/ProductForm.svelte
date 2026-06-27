@@ -59,6 +59,7 @@
 	export let productsWithStock: { _id: string; name: string }[] = [];
 	export let currentBookings: BookingSummary[] = [];
 	export let upcomingBookings: BookingSummary[] = [];
+	export let allowPaidOrderWebhook = false;
 
 	export let product: WithId<PojoObject<Product>> = {
 		_id: '',
@@ -265,6 +266,9 @@
 	}
 	let hasMaximumPrice = !!product.maximumPrice;
 	let hasBooking = !!product.bookingSpec;
+	let hasPaidOrderWebhook = !!product.paidOrderWebhook;
+	let paidOrderWebhookApiRoute = product.paidOrderWebhook?.apiRoute ?? '';
+	let paidOrderWebhookSecret = product.paidOrderWebhook?.secret ?? '';
 	let existingScheduleId =
 		!!product.bookingSpec && !isNew ? productToScheduleId(product._id) : undefined;
 	let availableDateStr = product.availableDate?.toJSON().slice(0, 10);
@@ -1810,6 +1814,42 @@
 								/>
 							</div>
 						</div>
+					</div>
+				{/if}
+
+				{#if allowPaidOrderWebhook}
+					<div>
+						<h4 class="text-lg font-medium text-gray-900 mb-3">Paid-order webhook</h4>
+						<label class="checkbox-label">
+							<input type="checkbox" bind:checked={hasPaidOrderWebhook} class="form-checkbox" />
+							This will trigger an API call once order is paid
+						</label>
+						{#if hasPaidOrderWebhook}
+							<div class="space-y-2 pl-6 mt-2">
+								<label class="form-label">
+									API route
+									<input
+										type="url"
+										name="paidOrderWebhook.apiRoute"
+										class="form-input"
+										placeholder="https://example.com/webhooks/order-paid"
+										bind:value={paidOrderWebhookApiRoute}
+										required
+									/>
+								</label>
+								<label class="form-label">
+									Shared secret
+									<input
+										type="text"
+										name="paidOrderWebhook.secret"
+										class="form-input"
+										placeholder="Used by the receiver to verify the HMAC-SHA256 signature"
+										bind:value={paidOrderWebhookSecret}
+										required
+									/>
+								</label>
+							</div>
+						{/if}
 					</div>
 				{/if}
 			</div>

@@ -10,6 +10,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { ObjectId } from 'mongodb';
 import { ORIGIN } from '$lib/server/env-config';
+import { isPaidOrderWebhookEnabled } from '$lib/server/order-paid-webhook';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Product } from '$lib/types/Product';
 import { Kind } from 'nostr-tools';
@@ -98,6 +99,10 @@ export const actions: Actions = {
 
 		if (await collections.products.countDocuments({ _id: parsed.slug })) {
 			throw error(409, 'Product with same slug already exists');
+		}
+
+		if (parsed.paidOrderWebhook && !isPaidOrderWebhookEnabled()) {
+			throw error(403, 'Paid-order webhook feature is disabled');
 		}
 
 		const priceAmount = parsed.free
@@ -215,6 +220,7 @@ export const actions: Actions = {
 							...(parsed.restrictPaymentMethods && {
 								paymentMethods: parsed.paymentMethods ?? []
 							}),
+							...(parsed.paidOrderWebhook && { paidOrderWebhook: parsed.paidOrderWebhook }),
 							actionSettings: {
 								eShop: {
 									visible: parsed.eshopVisible,
@@ -353,6 +359,10 @@ export const actions: Actions = {
 			throw error(409, 'Product with same slug already exists');
 		}
 
+		if (parsed.paidOrderWebhook && !isPaidOrderWebhookEnabled()) {
+			throw error(403, 'Paid-order webhook feature is disabled');
+		}
+
 		if (!parsed.availableDate) {
 			parsed.preorder = false;
 		}
@@ -440,6 +450,7 @@ export const actions: Actions = {
 					...(parsed.restrictPaymentMethods && {
 						paymentMethods: parsed.paymentMethods ?? []
 					}),
+					...(parsed.paidOrderWebhook && { paidOrderWebhook: parsed.paidOrderWebhook }),
 					tagIds: product.tagIds,
 					cta: product.cta,
 					externalResources: product.externalResources,

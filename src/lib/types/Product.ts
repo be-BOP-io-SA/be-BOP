@@ -153,6 +153,16 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 		beginsAt: Date;
 		endsAt: Date;
 	};
+	/**
+	 * Optional outbound webhook fired once the order containing this product transitions to
+	 * paid. Receiver verifies the request via an HMAC-SHA256 signature of the raw body using
+	 * `secret` as the key, transmitted in `X-Webhook-Signature: sha256=<hex>`. Fire-and-forget:
+	 * a network or 5xx failure is logged but not retried (issue #2646 is a PoC).
+	 */
+	paidOrderWebhook?: {
+		apiRoute: string;
+		secret: string;
+	};
 }
 
 export type BasicProductFrontend = Pick<Product, '_id' | 'price' | 'name' | 'variationLabels'>;
