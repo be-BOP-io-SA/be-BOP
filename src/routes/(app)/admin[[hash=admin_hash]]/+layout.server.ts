@@ -2,6 +2,7 @@ import { adminPrefix } from '$lib/server/admin.js';
 import { isBitcoinConfigured } from '$lib/server/bitcoind';
 import { collections } from '$lib/server/database.js';
 import { isLndConfigured } from '$lib/server/lnd.js';
+import { isPaidOrderWebhookEnabled } from '$lib/server/order-paid-webhook';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { s3IsConfigured } from '$lib/server/s3.js';
@@ -81,6 +82,7 @@ export async function load({ locals }) {
 		adminPrefix: adminPrefix(),
 		isBitcoinConfigured,
 		isLndConfigured: isLndConfigured(),
+		allowPaidOrderWebhook: isPaidOrderWebhookEnabled(),
 		s3IsConfigured: !!s3IsConfigured(),
 		disabledAdminEntries: runtimeConfig.disabledAdminEntries,
 		backOfficeBookmarks: locals.user

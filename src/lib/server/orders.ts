@@ -9,6 +9,7 @@ import {
 } from '$lib/types/Order';
 import { ClientSession, ObjectId, type WithId } from 'mongodb';
 import { collections, withTransaction } from './database';
+import { firePaidOrderWebhooks } from './order-paid-webhook';
 import {
 	Duration,
 	add,
@@ -163,6 +164,9 @@ export async function onOrderPayment(
 	// `paymentDone` audit log in that case so a subsequent retry (e.g. re-processing the same
 	// paid payment) doesn't double-record the event.
 	const alreadyPaid = !!payment.paidAt;
+	// Capture whether the order was already paid before this call so we only fire the
+	// per-product paid-order webhook on the first pending→paid transition.
+	const wasPaidBefore = order.status === 'paid';
 
 	payment.status = 'paid'; // for isOrderFullyPaid
 	payment.paidAt = paidAt;
@@ -446,7 +450,18 @@ export async function onOrderPayment(
 
 		return ret.value;
 	};
-	return params?.providedSession ? await fn(params.providedSession) : await withTransaction(fn);
+	const updated = params?.providedSession
+		? await fn(params.providedSession)
+		: await withTransaction(fn);
+
+	// Fire-and-forget per-product paid-order webhook (issue #2646). After the transaction so a
+	// network failure can never roll back the paid status; only on the first transition so
+	// re-processing an already-paid order doesn't double-fire.
+	if (!wasPaidBefore && updated.status === 'paid') {
+		void firePaidOrderWebhooks(updated);
+	}
+
+	return updated;
 }
 
 export async function onOrderPaymentFailed(
