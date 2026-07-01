@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
-	import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+	import { formatCurrencyAmount } from '$lib/utils/formatCurrencyAmount';
 	import type { Readable } from 'svelte/store';
 
 	type XY = { x: number; y: number };
@@ -20,6 +20,13 @@
 	}> = [];
 	export let currency: string;
 	export let locale = 'fr';
+	/**
+	 * Bindable: the left gutter (px) the Y-axis labels actually need. Reported up so the parent
+	 * sizes `padding.left` to the real tick strings — fiat is short, BTC's decimals are wide —
+	 * without a hard-coded value that over- or under-shoots. Ticks depend on the domain, not on
+	 * padding, so this feeds back stably (no layout loop).
+	 */
+	export let leftPad = 56;
 
 	// LayerCake context (d3 scales as Svelte stores).
 	const { xScale, yScale, width, height } = getContext<{
@@ -29,9 +36,7 @@
 		height: Readable<number>;
 	}>('LayerCake');
 
-	const digits = (c: string) =>
-		FRACTION_DIGITS_PER_CURRENCY[c as keyof typeof FRACTION_DIGITS_PER_CURRENCY] ?? 2;
-	const fmtPrice = (v: number) => `${currency} ${v.toFixed(digits(currency))}`;
+	const fmtPrice = (v: number) => `${currency} ${formatCurrencyAmount(v, currency)}`;
 	const fmtDate = (t: number) =>
 		new Date(t).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: '2-digit' });
 
@@ -90,6 +95,12 @@
 		fill: s.area ? areaPath(s.values, s.step, $xScale, $yScale, $height) : ''
 	}));
 	$: yTicks = $yScale && $yScale.ticks ? $yScale.ticks(4) : [];
+	// Width the widest Y-axis label needs: ~6.5px per tabular char at 11px + the 8px label
+	// offset. Measured from the rendered tick strings, not the raw domain, so it tracks what's
+	// actually drawn (nice rounded ticks) rather than a long full-precision value.
+	$: leftPad = yTicks.length
+		? Math.max(48, Math.ceil(Math.max(...yTicks.map((t) => fmtPrice(t).length)) * 6.5) + 10)
+		: 56;
 	// Fit the number of X labels to the available width so dates never overlap on
 	// narrow (mobile / low-res) screens — each label needs ~80px to breathe.
 	$: xTickCount = Math.max(2, Math.min(5, Math.floor(($width || 0) / 80)));

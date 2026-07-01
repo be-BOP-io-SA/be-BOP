@@ -58,7 +58,7 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 				['catalogue', p.t, String(p.price), history.currency].map(escapeCSV).join(',')
 			),
 			...history.paid.points.map((p) =>
-				['average_paid', p.t, String(p.price), history.currency].map(escapeCSV).join(',')
+				['average_paid', p.t, String(p.price), history.paid.currency].map(escapeCSV).join(',')
 			)
 		];
 		const csv = [header, ...rows].join('\n');
@@ -70,10 +70,20 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		});
 	}
 
-	// Gate average-paid aggregate to staff — it's business-sensitive.
+	// Gate average-paid aggregate to staff — it's business-sensitive. Keep the currency so the
+	// client shape stays stable; blank out the actual figures.
 	const payload = isStaff
 		? history
-		: { ...history, paid: { points: [], mean: null, pctBelowCatalogue: null } };
+		: {
+				...history,
+				paid: {
+					currency: history.paid.currency,
+					points: [],
+					listPoints: [],
+					mean: null,
+					pctBelowCatalogue: null
+				}
+		  };
 
 	return json(payload, { headers: { 'Cache-Control': 'public, max-age=60' } });
 };
