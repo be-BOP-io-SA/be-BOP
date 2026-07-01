@@ -1,5 +1,6 @@
 import { subDays, startOfDay } from 'date-fns';
 import { collections } from './database';
+import { runtimeConfig } from './runtime-config';
 import { orderIndividualItemPrice } from '$lib/types/Order';
 import { FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
@@ -29,13 +30,28 @@ export interface CatalogueHistory {
 }
 
 export interface PaidHistory {
-	/** One point per day with at least one paid sale (quantity-weighted unit price). */
+	/**
+	 * Currency the paid tab is expressed in: the accounting currency (or the main currency when
+	 * no accounting currency is configured). Everything here comes from the orders' own
+	 * currency snapshots, so no exchange rate is ever fabricated.
+	 */
+	currency: Currency;
+	/** One point per day with at least one paid sale (quantity-weighted effective unit price). */
 	points: PricePoint[];
+	/**
+	 * Catalogue/list price as snapshotted on each sale (quantity-weighted per day). Drawn as the
+	 * comparison overlay on the paid tab — a real snapshot, unlike the product-currency catalogue
+	 * on the history tab which cannot be converted historically.
+	 */
+	listPoints: PricePoint[];
 	/** Quantity-weighted mean effective unit price over the rolling 30-day window. */
 	mean: number | null;
-	/** How far the mean sits below the current catalogue price, in percent. */
+	/** How far the mean sits below the snapshotted list price, in percent. */
 	pctBelowCatalogue: number | null;
 }
+
+/** {@link buildPaid} output before the currency label is attached by {@link getProductPriceHistory}. */
+export type PaidSeries = Omit<PaidHistory, 'currency'>;
 
 // Prices are rounded to the currency's fraction digits (BTC needs 8, not 2);
 // percentages stay at 2 decimals.
@@ -53,7 +69,10 @@ export interface PublicDiscountWindow {
 }
 export interface PaidSale {
 	paidAt: number;
-	unit: number;
+	/** Effective unit price actually paid (incl. custom price + discount), in the paid currency. */
+	effUnit: number;
+	/** Catalogue/list unit price as snapshotted at sale time, in the paid currency. */
+	listUnit: number;
 	qty: number;
 }
 
@@ -172,39 +191,45 @@ export function buildCatalogue(
 	return { points, current, deltaPct, min30, max30 };
 }
 
-/** Build the daily average-paid series + KPIs from real paid sales. */
-export function buildPaid(
-	sales: PaidSale[],
-	currentCatalogue: number | null,
-	now: number,
-	priceDigits = 2
-): PaidHistory {
+/**
+ * Build the daily average-paid series, the snapshotted list-price overlay, and KPIs from real
+ * paid sales. Both the effective price and the list price come from the same order snapshots,
+ * so the "% below catalogue" compares like with like (no exchange rate is fabricated).
+ */
+export function buildPaid(sales: PaidSale[], now: number, priceDigits = 2): PaidSeries {
 	const windowStart = subDays(new Date(now), 30).getTime();
-	const dayBuckets = new Map<string, { sum: number; qty: number }>();
-	let windowSum = 0;
+	const dayBuckets = new Map<string, { effSum: number; listSum: number; qty: number }>();
+	let effWindowSum = 0;
+	let listWindowSum = 0;
 	let windowQty = 0;
 
 	for (const sale of sales) {
 		const key = startOfDay(new Date(sale.paidAt)).toISOString();
-		const bucket = dayBuckets.get(key) ?? { sum: 0, qty: 0 };
-		bucket.sum += sale.unit * sale.qty;
+		const bucket = dayBuckets.get(key) ?? { effSum: 0, listSum: 0, qty: 0 };
+		bucket.effSum += sale.effUnit * sale.qty;
+		bucket.listSum += sale.listUnit * sale.qty;
 		bucket.qty += sale.qty;
 		dayBuckets.set(key, bucket);
 		if (sale.paidAt >= windowStart) {
-			windowSum += sale.unit * sale.qty;
+			effWindowSum += sale.effUnit * sale.qty;
+			listWindowSum += sale.listUnit * sale.qty;
 			windowQty += sale.qty;
 		}
 	}
 
-	const points: PricePoint[] = [...dayBuckets.entries()]
-		.map(([t, b]) => ({ t, price: round(b.sum / b.qty, priceDigits) }))
-		.sort((a, b) => a.t.localeCompare(b.t));
+	const sorted = [...dayBuckets.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+	const points: PricePoint[] = sorted.map(([t, b]) => ({ t, price: round(b.effSum / b.qty, priceDigits) }));
+	const listPoints: PricePoint[] = sorted.map(([t, b]) => ({
+		t,
+		price: round(b.listSum / b.qty, priceDigits)
+	}));
 
-	const mean = windowQty > 0 ? round(windowSum / windowQty, priceDigits) : null;
+	const mean = windowQty > 0 ? round(effWindowSum / windowQty, priceDigits) : null;
+	const meanList = windowQty > 0 ? round(listWindowSum / windowQty, priceDigits) : null;
 	const pctBelowCatalogue =
-		mean !== null && currentCatalogue ? round2((1 - mean / currentCatalogue) * 100) : null;
+		mean !== null && meanList ? round2((1 - mean / meanList) * 100) : null;
 
-	return { points, mean, pctBelowCatalogue };
+	return { points, listPoints, mean, pctBelowCatalogue };
 }
 
 /**
@@ -290,10 +315,16 @@ async function loadPriceFacts(
 	return { segments, windows };
 }
 
-/** Loads real paid sales of a product (effective unit price, in the site currency). */
+/**
+ * Loads real paid sales of a product from the orders' currency snapshots, in the paid currency
+ * (accounting when configured, otherwise main). Reads the effective price and the catalogue/list
+ * price straight from the snapshot the order captured at sale time — no exchange rate is applied,
+ * so the paid tab never fabricates a BTC→EUR conversion the way a current-rate view would.
+ */
 async function loadPaidSales(
 	productId: string,
 	target: Currency,
+	useAccounting: boolean,
 	since: Date | null
 ): Promise<PaidSale[]> {
 	// Bound the query to the requested window so a popular product never loads its
@@ -309,6 +340,7 @@ async function loadPaidSales(
 					'items.quantity': 1,
 					'items.discountPercentage': 1,
 					'items.currencySnapshot.main': 1,
+					'items.currencySnapshot.accounting': 1,
 					'payments.status': 1,
 					'payments.paidAt': 1,
 					updatedAt: 1
@@ -317,6 +349,7 @@ async function loadPaidSales(
 		)
 		.toArray();
 
+	const snapKey = useAccounting ? 'accounting' : 'main';
 	const sales: PaidSale[] = [];
 	for (const order of orders) {
 		const paidPayment = order.payments.find((p) => p.status === 'paid' && p.paidAt);
@@ -328,15 +361,21 @@ async function loadPaidSales(
 			if (item.product?._id !== productId) {
 				continue;
 			}
+			// Skip items without a snapshot faithfully denominated in the paid currency (e.g. orders
+			// predating the accounting currency). Including them would mix currencies on one axis.
+			const snapshot = item.currencySnapshot[snapKey];
+			if (!snapshot || snapshot.price.currency !== target) {
+				continue;
+			}
 			try {
-				const from = item.currencySnapshot.main.price.currency;
 				sales.push({
 					paidAt: paidAt.getTime(),
-					unit: toCurrency(target, orderIndividualItemPrice(item, 'main'), from),
+					effUnit: orderIndividualItemPrice(item, snapKey),
+					listUnit: snapshot.price.amount,
 					qty: item.quantity ?? 1
 				});
 			} catch {
-				// Item without a main-currency snapshot — skip it.
+				// Malformed snapshot — skip it.
 			}
 		}
 	}
@@ -349,18 +388,28 @@ export async function getProductPriceHistory(
 	windowDays: number | null = null
 ): Promise<PriceHistory> {
 	const now = Date.now();
-	// Everything is displayed in the product's own currency.
-	const target = productCurrency;
+	// Catalogue (history tab): the product's own currency, as defined & saved in the price logs.
+	// Paid tab: the accounting currency (or main when none is configured — the standard
+	// `accounting ?? main` fallback), taken from order snapshots so nothing is FX-converted.
+	const paidCurrency = runtimeConfig.accountingCurrency ?? runtimeConfig.mainCurrency;
+	const useAccounting = runtimeConfig.accountingCurrency !== null;
 	// Bound the (heavy) paid-orders query to the requested window; null = all history.
 	const since = windowDays && windowDays > 0 ? subDays(new Date(now), windowDays) : null;
 	const [{ segments, windows }, sales] = await Promise.all([
-		loadPriceFacts(productId, target),
-		loadPaidSales(productId, target, since)
+		loadPriceFacts(productId, productCurrency),
+		loadPaidSales(productId, paidCurrency, useAccounting, since)
 	]);
 
-	const digits = FRACTION_DIGITS_PER_CURRENCY[target] ?? 2;
-	const catalogue = buildCatalogue(segments, windows, now, digits, since ? since.getTime() : null);
-	const paid = buildPaid(sales, catalogue.current, now, digits);
+	const catDigits = FRACTION_DIGITS_PER_CURRENCY[productCurrency] ?? 2;
+	const catalogue = buildCatalogue(
+		segments,
+		windows,
+		now,
+		catDigits,
+		since ? since.getTime() : null
+	);
+	const paidDigits = FRACTION_DIGITS_PER_CURRENCY[paidCurrency] ?? 2;
+	const paid: PaidHistory = { currency: paidCurrency, ...buildPaid(sales, now, paidDigits) };
 
-	return { currency: target, catalogue, paid };
+	return { currency: productCurrency, catalogue, paid };
 }

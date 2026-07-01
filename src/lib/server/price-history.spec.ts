@@ -77,31 +77,42 @@ describe('buildCatalogue', () => {
 });
 
 describe('buildPaid', () => {
-	it('computes quantity-weighted daily points and a 30-day mean', () => {
+	it('computes quantity-weighted daily effective + list points and a 30-day mean', () => {
 		const sales: PaidSale[] = [
-			// Same day, different quantities -> weighted average 13.5
-			{ paidAt: daysAgo(5), unit: 15, qty: 1 },
-			{ paidAt: daysAgo(5), unit: 13, qty: 3 },
-			// Another day -> 16
-			{ paidAt: daysAgo(3), unit: 16, qty: 2 },
+			// Same day, different quantities -> weighted effective average 13.5, list 18
+			{ paidAt: daysAgo(5), effUnit: 15, listUnit: 18, qty: 1 },
+			{ paidAt: daysAgo(5), effUnit: 13, listUnit: 18, qty: 3 },
+			// Another day -> effective 16, list 18
+			{ paidAt: daysAgo(3), effUnit: 16, listUnit: 18, qty: 2 },
 			// Outside the 30-day window: counts in points, not in the mean.
-			{ paidAt: daysAgo(40), unit: 10, qty: 1 }
+			{ paidAt: daysAgo(40), effUnit: 10, listUnit: 12, qty: 1 }
 		];
-		const res = buildPaid(sales, 18, NOW);
+		const res = buildPaid(sales, NOW);
 
 		// 3 distinct days, sorted ascending.
 		expect(res.points).toHaveLength(3);
 		expect(res.points.map((p) => p.price)).toEqual([10, 13.5, 16]);
+		// The list overlay is the snapshotted catalogue price per day.
+		expect(res.listPoints.map((p) => p.price)).toEqual([12, 18, 18]);
 
-		// Mean over window: (15*1 + 13*3 + 16*2) / (1+3+2) = 86/6 = 14.33
+		// Effective mean over window: (15*1 + 13*3 + 16*2) / (1+3+2) = 86/6 = 14.33
 		expect(res.mean).toBe(14.33);
-		// (1 - 14.33/18) * 100 = 20.39
+		// vs. the snapshotted list mean (18) over the same window: (1 - 14.33/18) * 100 = 20.39
 		expect(res.pctBelowCatalogue).toBe(20.39);
 	});
 
+	it('derives % below catalogue from the snapshotted list price, not an external value', () => {
+		// Effective == list on every sale -> paid exactly the catalogue price -> 0% below.
+		const sales: PaidSale[] = [{ paidAt: daysAgo(2), effUnit: 20, listUnit: 20, qty: 1 }];
+		const res = buildPaid(sales, NOW);
+		expect(res.mean).toBe(20);
+		expect(res.pctBelowCatalogue).toBe(0);
+	});
+
 	it('returns null mean when there are no sales', () => {
-		const res = buildPaid([], 18, NOW);
+		const res = buildPaid([], NOW);
 		expect(res.points).toEqual([]);
+		expect(res.listPoints).toEqual([]);
 		expect(res.mean).toBeNull();
 		expect(res.pctBelowCatalogue).toBeNull();
 	});
