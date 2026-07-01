@@ -2,7 +2,6 @@ import { runtimeConfig, runtimeConfigUpdatedAt } from '$lib/server/runtime-confi
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { getCookieConsent } from '$lib/server/cookies';
 import { extractAnalyticsHostnames } from '$lib/server/analytics-hostnames';
-import { collections } from '$lib/server/database';
 
 export async function load(event) {
 	const viewportWidth = (() => {
@@ -30,9 +29,6 @@ export async function load(event) {
 	const analyticsHostnames = analyticsSnippetConfigured
 		? extractAnalyticsHostnames(analyticsSnippet)
 		: [];
-	const hasPrivacyPage = analyticsSnippetConfigured
-		? !!(await collections.cmsPages.findOne({ _id: 'privacy' }, { projection: { _id: 1 } }))
-		: false;
 
 	return {
 		// Only emit the raw snippet when the visitor has accepted — this is what the root layout
@@ -41,7 +37,6 @@ export async function load(event) {
 		analyticsSnippetConfigured,
 		analyticsConsent,
 		analyticsHostnames,
-		analyticsHasPrivacyPage: hasPrivacyPage,
 		language: event.locals.language,
 		themeChangeNumber: runtimeConfig.themeChangeNumber,
 		enUpdatedAt: runtimeConfigUpdatedAt[`translations.en`] ?? new Date(0),

@@ -31,10 +31,6 @@ export function setCookieConsent(cookies: Cookies, value: CookieConsentValue) {
 	});
 }
 
-export function clearCookieConsent(cookies: Cookies) {
-	cookies.delete(COOKIE_CONSENT_COOKIE_NAME, { path: '/' });
-}
-
 export function getCookieConsent(cookies: Cookies): CookieConsentValue | null {
 	const v = cookies.get(COOKIE_CONSENT_COOKIE_NAME);
 	return v === 'accepted' || v === 'denied' ? v : null;

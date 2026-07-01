@@ -1,9 +1,9 @@
 import { json, error } from '@sveltejs/kit';
 import { z } from 'zod';
-import { clearCookieConsent, setCookieConsent } from '$lib/server/cookies';
+import { setCookieConsent } from '$lib/server/cookies';
 
 const bodySchema = z.object({
-	value: z.enum(['accepted', 'denied', 'reset'])
+	value: z.enum(['accepted', 'denied'])
 });
 
 export const POST = async ({ request, cookies }) => {
@@ -13,10 +13,6 @@ export const POST = async ({ request, cookies }) => {
 	} catch {
 		throw error(400, 'Invalid consent payload');
 	}
-	if (parsed.value === 'reset') {
-		clearCookieConsent(cookies);
-	} else {
-		setCookieConsent(cookies, parsed.value);
-	}
+	setCookieConsent(cookies, parsed.value);
 	return json({ ok: true });
 };
