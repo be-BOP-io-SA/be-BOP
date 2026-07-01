@@ -5,6 +5,8 @@ import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import { error } from '@sveltejs/kit';
 import { ALL_PAYMENT_METHODS, type PaymentMethod } from './payment-methods';
 import { collections } from './database';
+import { employeeFromLocals, logAccountingEvent } from './accounting-log';
+import type { ClientSession, ObjectId } from 'mongodb';
 
 const ALL_DISCOUNT_CHANNELS: readonly DiscountChannel[] = [
 	'web',
@@ -371,4 +373,76 @@ export function collectUserAddresses(user?: UserIdentifier | null): string[] {
 		...(loginAsEmail ? [loginAsEmail] : []),
 		...(user.userRecoveryEmail ? [user.userRecoveryEmail] : [])
 	];
+}
+
+/**
+ * A "public 0-criteria" percentage discount applies to everyone with no targeting
+ * conditions, so per issue #2504 it counts as a nominal change of the public price
+ * (indistinguishable from editing the base price in the product price calendar).
+ */
+export function isPublicZeroCriteriaDiscount(
+	d: Discount
+): d is Extract<Discount, { mode: 'percentage' }> {
+	if (d.mode !== 'percentage') {
+		return false;
+	}
+	// Must actually target products (whole catalog or an explicit list).
+	if (!d.wholeCatalog && !d.productIds?.length) {
+		return false;
+	}
+	return (
+		!d.subscriptionIds?.length &&
+		!d.promoCode &&
+		!d.channels?.length &&
+		!d.paymentMethods?.length &&
+		!d.deliveryCountry &&
+		!d.billingCountry &&
+		!d.contactAddresses?.length &&
+		!d.requiredTagIds?.length &&
+		!d.productCombinations?.length
+	);
+}
+
+/** Snapshot stored in the accounting log to reconstruct the public price timeline. */
+export function publicDiscountPriceSnapshot(d: Extract<Discount, { mode: 'percentage' }>) {
+	return {
+		percentage: d.percentage,
+		beginsAt: d.beginsAt,
+		endsAt: d.endsAt,
+		wholeCatalog: d.wholeCatalog,
+		productIds: d.productIds ?? []
+	};
+}
+
+/**
+ * Append an immutable accounting event whenever a public 0-criteria discount is
+ * created/edited/deleted (issue #2504). No-op unless the before or after state
+ * qualifies, so ordinary targeted discounts never touch the price calendar.
+ */
+export async function logPublicDiscountPriceChange(
+	before: Discount | null,
+	after: Discount | null,
+	locals: { user?: { _id: ObjectId; alias?: string } },
+	session?: ClientSession
+): Promise<void> {
+	const beforeSnap =
+		before && isPublicZeroCriteriaDiscount(before) ? publicDiscountPriceSnapshot(before) : null;
+	const afterSnap =
+		after && isPublicZeroCriteriaDiscount(after) ? publicDiscountPriceSnapshot(after) : null;
+	const source = after ?? before;
+	if ((!beforeSnap && !afterSnap) || !source) {
+		return;
+	}
+	const discountId = source._id;
+	await logAccountingEvent(
+		{
+			eventType: 'discountPublicPriceChange',
+			objectType: 'discount',
+			objectId: discountId,
+			before: beforeSnap,
+			after: afterSnap,
+			...employeeFromLocals(locals)
+		},
+		session
+	);
 }

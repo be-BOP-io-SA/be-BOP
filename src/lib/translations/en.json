@@ -1,4 +1,24 @@
 {
+	"priceCalendar": {
+		"openTitle": "Price history",
+		"tabHistory": "Price history",
+		"tabPaid": "Average price paid",
+		"current": "Current",
+		"min30": "Min. (30d)",
+		"max30": "Max. (30d)",
+		"vsPrevious": "vs prev.",
+		"since": "since {date}",
+		"meanLabel": "Average effective price paid:",
+		"belowCatalogue": "{pct}% below catalogue price",
+		"catalogue": "Catalogue price",
+		"averagePaid": "Average price paid",
+		"error": "Unable to load price history.",
+		"noHistory": "No price history yet.",
+		"noSales": "No paid sales to display.",
+		"close": "Close",
+		"exportCsv": "Export to CSV",
+		"viewOrders": "View orders"
+	},
 	"address": {
 		"address": "Address",
 		"city": "City",

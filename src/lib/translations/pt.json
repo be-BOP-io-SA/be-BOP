@@ -1,4 +1,24 @@
 {
+	"priceCalendar": {
+		"openTitle": "Histórico de preços",
+		"tabHistory": "Histórico de preços",
+		"tabPaid": "Preço médio pago",
+		"current": "Atual",
+		"min30": "Mín. (30d)",
+		"max30": "Máx. (30d)",
+		"vsPrevious": "vs ant.",
+		"since": "desde {date}",
+		"meanLabel": "Preço médio efetivo pago:",
+		"belowCatalogue": "{pct}% abaixo do preço de catálogo",
+		"catalogue": "Preço de catálogo",
+		"averagePaid": "Preço médio pago",
+		"error": "Não foi possível carregar o histórico de preços.",
+		"noHistory": "Ainda sem histórico de preços.",
+		"noSales": "Nenhuma venda paga para exibir.",
+		"close": "Fechar",
+		"exportCsv": "Exportar para CSV",
+		"viewOrders": "Ver pedidos"
+	},
 	"address": {
 		"address": "Endereço",
 		"city": "Cidade",

@@ -3,6 +3,7 @@
 	import { marked } from 'marked';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
+	import PriceCalendarModal from '$lib/components/PriceCalendarModal.svelte';
 	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import { applyAction, enhance } from '$app/forms';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
@@ -15,6 +16,7 @@
 		oneMaxPerLine,
 		productPriceWithVariations
 	} from '$lib/types/Product';
+	import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 	import { toCurrency } from '$lib/utils/toCurrency';
 	import {
 		addDays,
@@ -48,6 +50,19 @@
 		sameDayBookingStatus,
 		toShopTzCalendarDayInstant
 	} from '$lib/utils/sameDayBooking';
+
+	let showPriceCalendar = false;
+	// The price calendar is meaningless for products without a fixed catalogue price.
+	$: priceCalendarEnabled =
+		!data.product.payWhatYouWant && !data.product.free && !data.product.bookingSpec;
+	$: isEmployee = !!data.roleId && data.roleId !== CUSTOMER_ROLE_ID;
+	// All users can see price history (law compliance); only staff see the average-paid tab.
+	$: priceCalendarVisible = priceCalendarEnabled && data.priceHistoryEnabled !== false;
+	function openPriceCalendar() {
+		if (priceCalendarVisible) {
+			showPriceCalendar = true;
+		}
+	}
 
 	const FULL_DAY_MINUTES = 1440;
 
@@ -659,6 +674,22 @@
 										main
 									/>
 								{/if}
+								{#if priceCalendarVisible}
+									<button
+										type="button"
+										class="ml-1 shrink-0 text-gray-500 hover:text-blue-500 transition-colors"
+										aria-label={t('priceCalendar.openTitle')}
+										on:click|stopPropagation={openPriceCalendar}
+										><svg
+											width="18"
+											height="18"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg
+										></button
+									>
+								{/if}
 							</div>
 							<PriceTag
 								currency={data.product.price.currency}
@@ -734,6 +765,22 @@
 									main
 								/>
 							{/if}
+							{#if priceCalendarVisible}
+								<button
+									type="button"
+									class="ml-1 self-center shrink-0 text-gray-500 hover:text-blue-500 transition-colors"
+									aria-label={t('priceCalendar.openTitle')}
+									on:click={openPriceCalendar}
+									><svg
+										width="18"
+										height="18"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg
+									></button
+								>
+							{/if}
 						</div>
 						<PriceTag
 							currency={data.product.price.currency}
@@ -744,6 +791,20 @@
 						<span class="font-semibold text-sm">{t('product.vatExcluded')}</span>
 					</div>
 				{/if}
+
+				<PriceCalendarModal
+					open={showPriceCalendar}
+					productId={data.product._id}
+					productName={data.product.name}
+					currency={data.product.price.currency}
+					onClose={() => (showPriceCalendar = false)}
+					showHistory={true}
+					showPaid={isEmployee}
+					{vatMult}
+					adminOrderHref={isEmployee && data.product.alias?.[0]
+						? `${data.adminPrefix}/order?productAlias=${data.product.alias[0]}`
+						: ''}
+				/>
 
 				{#if data.product.type === 'subscription' && data.product.subscriptionDuration}
 					<SubscriptionDurationLabel duration={data.product.subscriptionDuration} />

@@ -425,6 +425,17 @@
 			/>
 		</label>
 	{/if}
+	<h2 class="text-2xl">Products</h2>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="priceHistoryEnabled"
+			class="form-checkbox"
+			checked={data.priceHistoryEnabled}
+		/>
+		Enable price history
+	</label>
+
 	<h2 class="text-2xl">Order</h2>
 	<label class="checkbox-label">
 		<input

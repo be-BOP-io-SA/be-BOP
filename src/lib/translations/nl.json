@@ -1,4 +1,24 @@
 {
+	"priceCalendar": {
+		"openTitle": "Prijsgeschiedenis",
+		"tabHistory": "Prijsgeschiedenis",
+		"tabPaid": "Gemiddeld betaalde prijs",
+		"current": "Huidig",
+		"min30": "Min. (30d)",
+		"max30": "Max. (30d)",
+		"vsPrevious": "t.o.v. vorige",
+		"since": "sinds {date}",
+		"meanLabel": "Gemiddeld effectief betaalde prijs:",
+		"belowCatalogue": "{pct}% onder catalogusprijs",
+		"catalogue": "Catalogusprijs",
+		"averagePaid": "Gemiddeld betaald",
+		"error": "Prijsgeschiedenis kon niet worden geladen.",
+		"noHistory": "Nog geen prijsgeschiedenis.",
+		"noSales": "Geen betaalde verkopen om weer te geven.",
+		"close": "Sluiten",
+		"exportCsv": "Exporteren naar CSV",
+		"viewOrders": "Bestellingen bekijken"
+	},
 	"address": {
 		"address": "Adres",
 		"city": "Stad",
