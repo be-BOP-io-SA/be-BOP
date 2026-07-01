@@ -297,6 +297,11 @@
 			sunday: null
 		}
 	};
+	// Default the same-day cutoff hour whenever the operator turns the option on, so the bound
+	// `<input type="time">` has a value to display from the first reactive cycle.
+	$: if (bookingSpec.allowSameDayBooking && !bookingSpec.sameDayBookingMaxHour) {
+		bookingSpec.sameDayBookingMaxHour = '14:00';
+	}
 	let days = typedFromEntries(
 		dayList.map((day) => [
 			day,
@@ -1163,14 +1168,42 @@
 						<div class="bg-indigo-50 p-4 rounded-lg space-y-4">
 							<label class="form-label">
 								Booking slot duration
-								<select name="bookingSpec.slotMinutes" class="form-input">
+								<select
+									name="bookingSpec.slotMinutes"
+									class="form-input"
+									bind:value={bookingSpec.slotMinutes}
+								>
 									{#each bookingSpecSlotOptions as { value, label }}
-										<option {value} selected={product.bookingSpec?.slotMinutes === value}>
+										<option {value}>
 											{label}
 										</option>
 									{/each}
 								</select>
 							</label>
+
+							{#if bookingSpec.slotMinutes === 60 * 24}
+								<label class="form-label flex-row gap-2 items-center">
+									<input
+										type="checkbox"
+										name="bookingSpec.allowSameDayBooking"
+										bind:checked={bookingSpec.allowSameDayBooking}
+									/>
+									<span>Allow booking on same day</span>
+								</label>
+
+								{#if bookingSpec.allowSameDayBooking}
+									<label class="form-label">
+										Max hour for same-day booking (schedule timezone)
+										<input
+											type="time"
+											name="bookingSpec.sameDayBookingMaxHour"
+											class="form-input"
+											bind:value={bookingSpec.sameDayBookingMaxHour}
+											required
+										/>
+									</label>
+								{/if}
+							{/if}
 
 							<label class="form-label">
 								Timezone
