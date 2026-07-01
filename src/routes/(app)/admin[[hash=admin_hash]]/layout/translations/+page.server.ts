@@ -6,6 +6,7 @@ import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { layoutTranslatableSchema } from '../layout-schema';
 import { collections } from '$lib/server/database';
+import { fail } from '@sveltejs/kit';
 
 export async function load() {
 	return {
@@ -29,20 +30,49 @@ export const actions = {
 
 		const json: JsonObject = {};
 
+		// Always set, even empty values — link rows need both `label` and `href` present (even
+		// blank) so the schema doesn't complain about missing keys on untranslated rows. Top-level
+		// optional scalars (brandName / title / description) get their empty values stripped
+		// below so their `.min(1)` constraint is only checked when the operator actually filled
+		// the field in.
 		for (const [key, value] of formData) {
-			if (value) {
-				set(json, key, value);
+			set(json, key, value);
+		}
+		for (const k of ['brandName', 'websiteTitle', 'websiteShortDescription'] as const) {
+			if (json[k] === '') {
+				delete json[k];
 			}
 		}
 
-		const parsed = z
+		const result = z
 			.object({
 				language: z.enum(locales as [LanguageKey, ...LanguageKey[]]),
 				...layoutTranslatableSchema
 			})
-			.parse(json);
+			.safeParse(json);
 
-		const { language, ...rest } = parsed;
+		if (!result.success) {
+			const errorMessage = result.error.errors
+				.map((e) => `${e.path.join('.') || '(root)'}: ${e.message}`)
+				.join('; ');
+			return fail(422, { errorMessage });
+		}
+
+		const { language, ...rest } = result.data;
+
+		// Replace incomplete link rows by empty placeholders instead of filtering them out, so
+		// the saved array stays positionally aligned with the main config. Filtering would
+		// produce a dense array where translated[i] no longer matches main[i] after a partial,
+		// non-contiguous translation; the storefront merge (`(app)/+layout.server.ts`) falls
+		// back to main on empty entries.
+		for (const linkKey of ['topbarLinks', 'navbarLinks', 'footerLinks'] as const) {
+			const arr = rest[linkKey];
+			if (arr) {
+				rest[linkKey] = arr.map((row) =>
+					row.href && row.label ? row : { label: '', href: '' }
+				);
+			}
+		}
 
 		await collections.runtimeConfig.updateOne(
 			{
@@ -63,5 +93,6 @@ export const actions = {
 		);
 
 		runtimeConfig[`translations.${language}.config`] = rest;
+		return { success: true };
 	}
 };

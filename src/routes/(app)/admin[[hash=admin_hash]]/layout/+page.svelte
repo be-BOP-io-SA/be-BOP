@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product.js';
 	import { upperFirst } from '$lib/utils/upperFirst.js';
+	import { socialIconPresets, type SocialIconPresetKey } from '$lib/social-icon-presets';
 
 	export let data;
 	let viewportContentWidth = data.viewportContentWidth;
@@ -9,9 +10,54 @@
 	let navbarLinkLine = data.links.navbar.length || 2;
 	let linkLine = data.links.topbar.length || 2;
 	let footerLinkLine = data.links.footer.length || 2;
-	let socialLinkLine = data.links.socialNetworkIcons.length || 2;
 	let visitorDarkLightMode: 'light' | 'dark' | 'system' = data.visitorDarkLightMode;
 	let employeeDarkLightMode: 'light' | 'dark' | 'system' = data.employeeDarkLightMode;
+
+	// Stable working copy bound to the row inputs. We keep at least 2 empty rows when nothing is
+	// configured, matching the prior UX where the page always offered editable slots up front.
+	const initialSocialMinRows = Math.max(data.links.socialNetworkIcons.length, 2);
+	let socialIcons: Array<{ name: string; svg: string; href: string }> = [
+		...data.links.socialNetworkIcons.map((i) => ({ ...i })),
+		...Array.from({ length: initialSocialMinRows - data.links.socialNetworkIcons.length }, () => ({
+			name: '',
+			svg: '',
+			href: ''
+		}))
+	];
+	const presetKeys = (Object.keys(socialIconPresets) as SocialIconPresetKey[]).sort((a, b) =>
+		socialIconPresets[a].name.localeCompare(socialIconPresets[b].name)
+	);
+	// Per-row preset selection. Empty string = nothing picked yet (the "Choose platform"
+	// placeholder), `custom` = the operator explicitly opted for raw-SVG paste. Rows that load
+	// with an SVG already saved default to `custom` so the textarea stays editable.
+	let socialPresetSelections: Array<'' | 'custom' | SocialIconPresetKey> = socialIcons.map(
+		(icon) => (icon.svg ? 'custom' : '')
+	);
+
+	function addSocialIconLine() {
+		socialIcons = [...socialIcons, { name: '', svg: '', href: '' }];
+		socialPresetSelections = [...socialPresetSelections, ''];
+	}
+
+	function removeSocialIconLine(index: number) {
+		socialIcons = socialIcons.filter((_, i) => i !== index);
+		socialPresetSelections = socialPresetSelections.filter((_, i) => i !== index);
+	}
+
+	function applyPreset(i: number, rawKey: string) {
+		const key = rawKey as '' | 'custom' | SocialIconPresetKey;
+		socialPresetSelections[i] = key;
+		if (key === '' || key === 'custom') {
+			return;
+		}
+		const preset = socialIconPresets[key];
+		socialIcons[i] = {
+			name: socialIcons[i].name || preset.name,
+			svg: preset.svg,
+			href: socialIcons[i].href
+		};
+		socialIcons = socialIcons;
+	}
 </script>
 
 <form method="post" class="flex flex-col gap-4">
@@ -245,15 +291,45 @@
 
 	<h3 class="text-xl">Links</h3>
 
-	{#each [...data.links.socialNetworkIcons, ...Array(socialLinkLine).fill( { name: '', svg: '', href: '' } )].slice(0, socialLinkLine) as icon, i}
+	{#each socialIcons as icon, i (i)}
 		<div class="flex gap-4">
+			<label class="form-label">
+				Preset
+				<div class="flex items-center gap-2">
+					<select
+						class="form-input flex-1"
+						value={socialPresetSelections[i]}
+						on:change={(e) => applyPreset(i, e.currentTarget.value)}
+					>
+						<option value="" disabled hidden>Choose platform</option>
+						<option value="custom">Custom</option>
+						{#each presetKeys as key}
+							<option value={key}>{socialIconPresets[key].name}</option>
+						{/each}
+					</select>
+					<!-- Live preview. Dark background because preset / typical custom SVGs ship
+					     with `fill="white"`; see lib/social-icon-presets.ts for the rationale and
+					     the deferred currentColor migration. -->
+					<span
+						class="inline-flex items-center justify-center w-10 h-10 rounded bg-gray-800 shrink-0 overflow-hidden"
+						aria-hidden="true"
+					>
+						{#if icon.svg}
+							<!-- SVG comes from runtimeConfig (admin-controlled), same trust level as
+							     the storefront footer that already injects the same string. -->
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+							{@html icon.svg}
+						{/if}
+					</span>
+				</div>
+			</label>
 			<label class="form-label">
 				Name
 				<input
 					type="text"
 					name="socialNetworkIcons[{i}].name"
 					class="form-input"
-					value={icon.name}
+					bind:value={icon.name}
 				/>
 			</label>
 			<label class="form-label">
@@ -264,7 +340,8 @@
 					rows="5"
 					maxlength="10000"
 					class="form-input"
-					value={icon.svg}
+					readonly={socialPresetSelections[i] !== 'custom'}
+					bind:value={icon.svg}
 				/>
 			</label>
 			<label class="form-label">
@@ -273,22 +350,15 @@
 					type="text"
 					name="socialNetworkIcons[{i}].href"
 					class="form-input"
-					value={icon.href}
+					bind:value={icon.href}
 				/>
 			</label>
-			<button
-				type="button"
-				class="self-start mt-10"
-				on:click={() => {
-					(data.links.socialNetworkIcons = data.links.socialNetworkIcons.filter(
-						(li) => icon.href !== li.href && icon.name !== li.name && icon.svg !== li.svg
-					)),
-						(socialLinkLine -= 1);
-				}}>🗑️</button
+			<button type="button" class="self-start mt-10" on:click={() => removeSocialIconLine(i)}
+				>🗑️</button
 			>
 		</div>
 	{/each}
-	<button class="btn body-mainCTA self-start" on:click={() => (socialLinkLine += 1)} type="button"
+	<button class="btn body-mainCTA self-start" on:click={addSocialIconLine} type="button"
 		>Add social network link
 	</button>
 	<h2 class="text-2xl">Mobile Display</h2>
