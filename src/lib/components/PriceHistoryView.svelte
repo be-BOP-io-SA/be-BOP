@@ -9,7 +9,13 @@
 			min30: { price: number; date: string } | null;
 			max30: { price: number; date: string } | null;
 		};
-		paid: { points: PriceHistoryPoint[]; mean: number | null; pctBelowCatalogue: number | null };
+		paid: {
+			currency: string;
+			points: PriceHistoryPoint[];
+			listPoints: PriceHistoryPoint[];
+			mean: number | null;
+			pctBelowCatalogue: number | null;
+		};
 	};
 </script>
 
@@ -17,7 +23,7 @@
 	import { LayerCake, Svg } from 'layercake';
 	import PriceChartLayer from './PriceChartLayer.svelte';
 	import { useI18n } from '$lib/i18n';
-	import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+	import { formatCurrencyAmount } from '$lib/utils/formatCurrencyAmount';
 	import { browser } from '$app/environment';
 
 	export let productId: string;
@@ -67,10 +73,15 @@
 	type XY = { x: number; y: number };
 
 	$: cur = history?.currency || currency;
+	// The paid tab is expressed in the accounting currency (from order snapshots), which may
+	// differ from the product/catalogue currency shown on the history tab.
+	$: paidCur = history?.paid.currency || cur;
 	const toXY = (pts: PriceHistoryPoint[] = []): XY[] =>
 		pts.map((p) => ({ x: Date.parse(p.t), y: p.price }));
 	$: catVals = toXY(history?.catalogue.points).map((p) => ({ ...p, y: p.y * vatMult }));
 	$: paidVals = toXY(history?.paid.points);
+	// Snapshotted catalogue/list price overlay for the paid tab (accounting currency).
+	$: listVals = toXY(history?.paid.listPoints);
 
 	// Time-range selector. The server bounds BOTH series to the selected range, so
 	// there is no client-side windowing — the range only drives the refetch above.
@@ -94,13 +105,12 @@
 	}
 
 	const fmt = (v: number | null | undefined) =>
-		v === null || v === undefined
-			? '—'
-			: `${cur} ${v.toFixed(
-					FRACTION_DIGITS_PER_CURRENCY[cur as keyof typeof FRACTION_DIGITS_PER_CURRENCY] ?? 2
-			  )}`;
+		v === null || v === undefined ? '—' : `${cur} ${formatCurrencyAmount(v, cur)}`;
 	const fmtCat = (v: number | null | undefined) =>
 		fmt(v !== null && v !== undefined ? v * vatMult : v);
+	// Paid-tab values are already in the accounting currency — no VAT multiplier, its own currency.
+	const fmtPaid = (v: number | null | undefined) =>
+		v === null || v === undefined ? '—' : `${paidCur} ${formatCurrencyAmount(v, paidCur)}`;
 	const fmtDate = (iso: string) =>
 		new Date(iso).toLocaleDateString($locale, { day: '2-digit', month: 'short' });
 	const fmtPct = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(1)} %`;
@@ -108,7 +118,14 @@
 	const getX = (d: { x: number; y: number }) => d.x;
 	const getY = (d: { x: number; y: number }) => d.y;
 
-	const PADDING = { top: 8, right: 14, bottom: 26, left: 56 };
+	// Left gutter is sized to the widest Y-axis label the chart actually renders (reported back
+	// by PriceChartLayer via bind:leftPad): BTC's 8-decimal amounts need far more room than fiat,
+	// and a fixed width either clips them or wastes space. Per tab, since either can be crypto.
+	const PADDING_BASE = { top: 8, right: 14, bottom: 26 };
+	let histLeftPad = 56;
+	let paidLeftPad = 56;
+	$: histPadding = { ...PADDING_BASE, left: histLeftPad };
+	$: paidPadding = { ...PADDING_BASE, left: paidLeftPad };
 	const CAT_COLOR = '#3b82f6';
 	const PAID_COLOR = '#f59e0b';
 </script>
@@ -164,9 +181,10 @@
 		{#if tab === 'history'}
 			<div class="h-60 w-full rounded-xl border border-gray-100 p-2 dark:border-gray-800">
 				{#if catVals.length}
-					<LayerCake padding={PADDING} x={getX} y={getY} yDomain={domain(catVals)} data={catVals}>
+					<LayerCake padding={histPadding} x={getX} y={getY} yDomain={domain(catVals)} data={catVals}>
 						<Svg>
 							<PriceChartLayer
+								bind:leftPad={histLeftPad}
 								currency={cur}
 								locale={$locale}
 								series={[{ id: 'cat', color: CAT_COLOR, step: true, area: true, values: catVals }]}
@@ -243,7 +261,8 @@
 				<div>
 					<p class="text-sm text-gray-700 dark:text-gray-200">
 						{t('priceCalendar.meanLabel')}
-						<span class="font-semibold text-gray-850 dark:text-white">{fmt(history.paid.mean)}</span
+						<span class="font-semibold text-gray-850 dark:text-white"
+							>{fmtPaid(history.paid.mean)}</span
 						>
 					</p>
 					{#if history.paid.pctBelowCatalogue !== null}
@@ -264,20 +283,21 @@
 			{/if}
 
 			<div class="h-60 w-full rounded-xl border border-gray-100 p-2 dark:border-gray-800">
-				{#if paidVals.length || catVals.length}
+				{#if paidVals.length || listVals.length}
 					<LayerCake
-						padding={PADDING}
+						padding={paidPadding}
 						x={getX}
 						y={getY}
-						yDomain={domain(catVals, paidVals)}
-						data={[...catVals, ...paidVals]}
+						yDomain={domain(listVals, paidVals)}
+						data={[...listVals, ...paidVals]}
 					>
 						<Svg>
 							<PriceChartLayer
-								currency={cur}
+								bind:leftPad={paidLeftPad}
+								currency={paidCur}
 								locale={$locale}
 								series={[
-									{ id: 'cat', color: CAT_COLOR, step: true, area: false, values: catVals },
+									{ id: 'cat', color: CAT_COLOR, step: true, area: false, values: listVals },
 									{ id: 'paid', color: PAID_COLOR, step: false, area: true, values: paidVals }
 								]}
 							/>
