@@ -66,6 +66,16 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 		slotMinutes: number;
 		/** Maximum number of calendar days selectable in a date range booking. 0 or undefined = unlimited. */
 		maxBookableDays?: number;
+		/**
+		 * Whether the customer can book the current day. Only honored when slotMinutes is a full day
+		 * (24h). Defaults to false: today is not selectable. When true, see sameDayBookingMaxHour.
+		 */
+		allowSameDayBooking?: boolean;
+		/**
+		 * HH:mm cutoff (in the schedule's timezone) past which today is no longer bookable, when
+		 * allowSameDayBooking is true. Defaults to "14:00".
+		 */
+		sameDayBookingMaxHour?: string;
 		schedule: {
 			timezone: string; // eg "Europe/Berlin"
 			monday: {

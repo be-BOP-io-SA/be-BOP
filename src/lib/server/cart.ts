@@ -14,6 +14,7 @@ import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import { userQuery } from './user';
 import { removeEmpty } from '$lib/utils/removeEmpty';
 import { addDays, addMinutes } from 'date-fns';
+import { isSameDayInShopTz, sameDayBookingStatus } from '$lib/utils/sameDayBooking';
 import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { sum } from '$lib/utils/sum';
@@ -23,6 +24,8 @@ export const CART_ERROR_CODES = [
 	'NOT_FOR_SALE',
 	'NOT_PWYW',
 	'BOOKING_INFO_REQUIRED',
+	'BOOKING_SAME_DAY_DISABLED',
+	'BOOKING_SAME_DAY_CUTOFF_PASSED',
 	'MAX_PRICE_EXCEEDED',
 	'SUBSCRIPTION_CUSTOM_PRICE',
 	'NOT_PREORDER',
@@ -180,6 +183,33 @@ export async function addToCartInDb(
 			'BOOKING_INFO_REQUIRED',
 			'Product is a booking, please provide booking time and duration'
 		);
+	}
+
+	// Same-day rule for 24h-slot bookings. Defense in depth — the date picker already greys out
+	// today, but a direct POST (curl, Nostr, stale tab) could still bypass the client check.
+	// All comparisons happen in the shop's timezone via the shared helper.
+	if (product.bookingSpec && params.booking) {
+		const spec = product.bookingSpec;
+		const now = new Date();
+		const tz = spec.schedule.timezone;
+		const datesToCheck = params.booking.bookedDates?.length
+			? params.booking.bookedDates
+			: [params.booking.time];
+		const includesToday = datesToCheck.some((d) => isSameDayInShopTz(d, now, tz));
+		if (includesToday) {
+			const status = sameDayBookingStatus(spec, now);
+			if (status === 'disabled') {
+				cartError('BOOKING_SAME_DAY_DISABLED', 'Same-day booking is not allowed for this product');
+			}
+			if (status === 'cutoffPassed') {
+				const maxHour = spec.sameDayBookingMaxHour ?? '14:00';
+				cartError(
+					'BOOKING_SAME_DAY_CUTOFF_PASSED',
+					`Same-day booking cutoff (${maxHour}) has passed`,
+					{ maxHour }
+				);
+			}
+		}
 	}
 
 	if (

@@ -43,6 +43,11 @@
 	import { RangeList } from '$lib/utils/range-list.js';
 	import { vatMultiplier } from '$lib/utils/vat';
 	import { formatBookedDates } from '$lib/utils/formatBookedDates';
+	import {
+		isSameDayInShopTz,
+		sameDayBookingStatus,
+		toShopTzCalendarDayInstant
+	} from '$lib/utils/sameDayBooking';
 
 	const FULL_DAY_MINUTES = 1440;
 
@@ -53,16 +58,34 @@
 	let errorMessage = '';
 	let currentTime = Date.now();
 	const is24HourSlotInit = data.product.bookingSpec?.slotMinutes === FULL_DAY_MINUTES;
-	const searchStart = startOfDay(is24HourSlotInit ? new Date() : addDays(new Date(), 1));
-	const initialDate =
-		eachDayOfInterval({ start: searchStart, end: addDays(searchStart, 60) }).find(
-			(day) => computeDurations(day, data.scheduleEvents).length > 0
-		) ?? searchStart;
-	let selectedDate = initialDate;
+
+	// Computed up front (not reactive) because the day-finder below relies on it via
+	// computeDurations()/computeFreeIntervals() during script initialisation. The cutoff
+	// transition mid-session is intentionally left to the server: a stale tab past the cutoff
+	// will get a typed cartError when the visitor submits, displayed inline via the existing
+	// red banner.
+	const sameDayBlockedReason = data.product.bookingSpec
+		? sameDayBookingStatus(data.product.bookingSpec)
+		: null;
+
+	function findFirstAvailableDate(evts: Array<{ beginsAt: Date; endsAt?: Date }>): Date | null {
+		const searchStart = startOfDay(is24HourSlotInit ? new Date() : addDays(new Date(), 1));
+		return (
+			eachDayOfInterval({ start: searchStart, end: addDays(searchStart, 60) }).find(
+				(day) => computeDurations(day, evts).length > 0
+			) ?? null
+		);
+	}
+
+	// Cart-aware: a slot already in the customer's cart counts as occupied here too, so the
+	// preselection does not land on a day the customer just blocked themselves.
+	const initialEvents = mergeScheduledAndCartEvents(data.scheduleEvents, data.cart);
+	const initialDate: Date | null = findFirstAvailableDate(initialEvents);
+	let selectedDate: Date | null = initialDate;
 	let selectedEndDate: Date | null = is24HourSlotInit ? initialDate : null;
 	let time = '';
 	let durationMinutes = data.product.bookingSpec?.slotMinutes || 0;
-	const { t, locale, formatDistanceLocale } = useI18n();
+	const { t, te, locale, formatDistanceLocale } = useI18n();
 
 	$: is24HourSlot = data.product.bookingSpec?.slotMinutes === FULL_DAY_MINUTES;
 
@@ -76,16 +99,23 @@
 		);
 	}
 
-	$: availableDatesInRange = is24HourSlot
-		? getAvailableDatesInRange(selectedDate, selectedEndDate, events)
-		: [];
+	$: availableDatesInRange =
+		is24HourSlot && selectedDate
+			? getAvailableDatesInRange(selectedDate, selectedEndDate, events)
+			: [];
 
 	$: if (is24HourSlot && selectedDate && data.product.bookingSpec) {
 		durationMinutes = availableDatesInRange.length * data.product.bookingSpec.slotMinutes;
-		time = selectedDate.toISOString();
+		// Encode the picked day as shop-tz midnight so the server reads the same calendar day
+		// the visitor saw on the calendar, regardless of the browser timezone.
+		time = toShopTzCalendarDayInstant(
+			selectedDate,
+			data.product.bookingSpec.schedule.timezone
+		).toISOString();
 	}
 
-	$: selectedRangeDays = selectedEndDate ? differenceInDays(selectedEndDate, selectedDate) + 1 : 1;
+	$: selectedRangeDays =
+		selectedDate && selectedEndDate ? differenceInDays(selectedEndDate, selectedDate) + 1 : 1;
 
 	function mergeScheduledAndCartEvents(
 		scheduledEvents: typeof data.scheduleEvents,
@@ -110,8 +140,8 @@
 
 	$: events = mergeScheduledAndCartEvents(data.scheduleEvents, data.cart);
 
-	$: durations = computeDurations(selectedDate, events);
-	$: times = computeTimes(selectedDate, durationMinutes, events);
+	$: durations = selectedDate ? computeDurations(selectedDate, events) : [];
+	$: times = selectedDate ? computeTimes(selectedDate, durationMinutes, events) : [];
 
 	// For hourly slots, clamp duration to max available. Skip for 24h slots (range-based duration)
 	$: if (
@@ -222,7 +252,15 @@
 			return [];
 		}
 
-		if (!isSameDay(date, now) && date < now) {
+		const tz = spec.schedule.timezone;
+		const isToday = isSameDayInShopTz(date, now, tz);
+
+		if (!isToday && date < now) {
+			return [];
+		}
+
+		// Today is bookable only when the admin has opted in AND the cutoff hour has not passed.
+		if (isToday && sameDayBlockedReason) {
 			return [];
 		}
 
@@ -248,7 +286,7 @@
 			end: new Date(range[1])
 		}));
 
-		if (isSameDay(date, now)) {
+		if (isToday) {
 			if (is24HourSlot) {
 				return freeIntervals;
 			}
@@ -798,7 +836,12 @@
 								loading = false;
 
 								if (result.type === 'error') {
-									errorMessage = result.error.message;
+									const code = result.error.code;
+									const params = result.error.params ?? {};
+									errorMessage =
+										code && te(`cart.error.${code}`)
+											? t(`cart.error.${code}`, params)
+											: result.error.message;
 									return;
 								}
 
@@ -812,10 +855,14 @@
 									: 1;
 								await invalidate(UrlDependency.Cart);
 								addToCart(priceMultiplier);
-								// Reset selection for 24h slot mode after adding to cart
+								// Reset selection for 24h slot mode after adding to cart. Re-run the
+								// "first available day" search so we don't drop the customer back on today
+								// (or yesterday's slot) when same-day booking is forbidden or fully booked.
+								// Leaves the calendar unpreselected if no slot is available within the window.
 								if (is24HourSlot) {
-									selectedDate = startOfDay(new Date());
-									selectedEndDate = startOfDay(new Date());
+									const next = findFirstAvailableDate(events);
+									selectedDate = next;
+									selectedEndDate = next;
 								}
 								document.body.scrollIntoView();
 							};
@@ -885,6 +932,17 @@
 									<p class="text-sm text-gray-600 mb-2">
 										{t('product.booking.selectDateRange')}
 									</p>
+									{#if sameDayBlockedReason === 'cutoffPassed'}
+										<p class="text-sm text-gray-500 mb-2">
+											{t('product.booking.sameDay.cutoffPassed', {
+												maxHour: data.product.bookingSpec?.sameDayBookingMaxHour ?? '14:00'
+											})}
+										</p>
+									{:else if sameDayBlockedReason === 'disabled'}
+										<p class="text-sm text-gray-500 mb-2">
+											{t('product.booking.sameDay.disabled')}
+										</p>
+									{/if}
 									<ScheduleWidgetCalendar
 										schedule={calendarSchedule}
 										bind:selectedDate
@@ -932,7 +990,16 @@
 									<input
 										type="hidden"
 										name="bookedDates"
-										value={availableDatesInRange.map((d) => d.toISOString()).join(',')}
+										value={availableDatesInRange
+											.map((d) =>
+												data.product.bookingSpec
+													? toShopTzCalendarDayInstant(
+															d,
+															data.product.bookingSpec.schedule.timezone
+													  ).toISOString()
+													: d.toISOString()
+											)
+											.join(',')}
 									/>
 								{:else}
 									<!-- Hourly booking mode: single date + duration + time -->
@@ -979,7 +1046,7 @@
 													<option value="" disabled selected
 														>No available time slots for this date</option
 													>
-												{:else}
+												{:else if selectedDate}
 													{#each times as time}
 														<option value={time.date}>
 															<!-- todo: handle timezone here maybe -->
