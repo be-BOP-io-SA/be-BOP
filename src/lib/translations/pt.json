@@ -94,7 +94,11 @@
 		"vatNullOutsideSellerCountry": "Os impostos de importação devem ser pagos pelo cliente à alfândega no momento da entrega.",
 		"vatRate": "Taxa de IVA para {country}",
 		"vatSellerCountry": "O país é o país do vendedor.",
-		"maxQuantityReached": "Quantidade máxima por encomenda atingida ({max})"
+		"maxQuantityReached": "Quantidade máxima por encomenda atingida ({max})",
+		"error": {
+			"BOOKING_SAME_DAY_DISABLED": "As reservas para hoje não estão disponíveis para este produto.",
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "As reservas para hoje já não são possíveis após as {maxHour}."
+		}
 	},
 	"cartFromUrl": {
 		"close": "Fechar",
@@ -917,7 +921,11 @@
 			"selectedDate": "Selecionado: {date}",
 			"selectedRangeWithAvailable": "{totalDays} dias selecionados, {availableDays} dias disponíveis: {dates}",
 			"noAvailableDays": "Nenhum dia disponível no intervalo selecionado",
-			"maxRangeInfo": "Período máximo de reserva: {days} dias"
+			"maxRangeInfo": "Período máximo de reserva: {days} dias",
+			"sameDay": {
+				"disabled": "As reservas para hoje não estão disponíveis para este produto.",
+				"cutoffPassed": "As reservas para hoje já não são possíveis após as {maxHour}."
+			}
 		},
 		"checkBackLater": "Por favor, volte a verificar mais tarde",
 		"cta": {

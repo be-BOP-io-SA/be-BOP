@@ -1,9 +1,23 @@
+import type { ComponentType } from 'svelte';
+import IconShop from '~icons/ant-design/shop-outlined';
+import IconSetting from '~icons/ant-design/setting-outlined';
+import IconWallet from '~icons/ant-design/wallet-outlined';
+import IconTransaction from '~icons/ant-design/transaction-outlined';
+import IconCluster from '~icons/ant-design/cluster-outlined';
+import IconDeploymentUnit from '~icons/ant-design/deployment-unit-outlined';
+
 type AdminLinks = Array<{
 	section: string;
+	icon: ComponentType;
 	links: Array<{
 		href: string;
 		label: string;
 		hidden?: boolean;
+		/**
+		 * Hide from the sidebar for non-super-admin users.
+		 * Backend access is governed by role.permissions (handled by isAllowedOnPage).
+		 */
+		superAdminOnly?: boolean;
 		/**
 		 * Specific endpoints that we want to add explicit roles for.
 		 */
@@ -14,6 +28,7 @@ type AdminLinks = Array<{
 export const adminLinks: AdminLinks = [
 	{
 		section: 'Merch',
+		icon: IconShop,
 		links: [
 			{
 				href: '/admin/layout',
@@ -64,6 +79,7 @@ export const adminLinks: AdminLinks = [
 	},
 	{
 		section: 'Settings',
+		icon: IconSetting,
 		links: [
 			{
 				href: '/admin/config',
@@ -79,11 +95,13 @@ export const adminLinks: AdminLinks = [
 			},
 			{
 				href: '/admin/identity',
-				label: 'Identity'
+				label: 'Identity',
+				superAdminOnly: true
 			},
 			{
 				href: '/admin/physical-shop',
-				label: 'Physical Shop'
+				label: 'Physical Shop',
+				superAdminOnly: true
 			},
 			{
 				href: '/admin/template',
@@ -109,6 +127,7 @@ export const adminLinks: AdminLinks = [
 	},
 	{
 		section: 'Payment Settings',
+		icon: IconWallet,
 		links: [
 			{
 				href: '/admin/bitcoin-nodeless',
@@ -162,6 +181,7 @@ export const adminLinks: AdminLinks = [
 	},
 	{
 		section: 'Transaction',
+		icon: IconTransaction,
 		links: [
 			{
 				href: '/admin/order',
@@ -179,6 +199,7 @@ export const adminLinks: AdminLinks = [
 	},
 	{
 		section: 'Node Management',
+		icon: IconCluster,
 		links: [
 			{
 				href: '/admin/nostr',
@@ -196,6 +217,7 @@ export const adminLinks: AdminLinks = [
 	},
 	{
 		section: 'Widgets',
+		icon: IconDeploymentUnit,
 		links: [
 			{
 				href: '/admin/challenge',

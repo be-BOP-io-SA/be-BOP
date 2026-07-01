@@ -94,7 +94,11 @@
 		"vatNullOutsideSellerCountry": "Importbelastingen moeten bij levering door de klant aan de douane worden betaald.",
 		"vatRate": "Btw-tarief voor {country}",
 		"vatSellerCountry": "Het land is het land van de verkoper.",
-		"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})"
+		"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})",
+		"error": {
+			"BOOKING_SAME_DAY_DISABLED": "Boekingen voor vandaag zijn niet beschikbaar voor dit product.",
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Boekingen voor vandaag zijn niet meer mogelijk na {maxHour}."
+		}
 	},
 	"cartFromUrl": {
 		"close": "Sluiten",
@@ -917,7 +921,11 @@
 			"selectedDate": "Geselecteerd: {date}",
 			"selectedRangeWithAvailable": "{totalDays} dagen geselecteerd, {availableDays} dagen beschikbaar: {dates}",
 			"noAvailableDays": "Geen beschikbare dagen in het geselecteerde bereik",
-			"maxRangeInfo": "Maximale boekingsperiode: {days} dagen"
+			"maxRangeInfo": "Maximale boekingsperiode: {days} dagen",
+			"sameDay": {
+				"disabled": "Boekingen voor vandaag zijn niet beschikbaar voor dit product.",
+				"cutoffPassed": "Boekingen voor vandaag zijn niet meer mogelijk na {maxHour}."
+			}
 		},
 		"checkBackLater": "Kom later nog eens terug",
 		"cta": {

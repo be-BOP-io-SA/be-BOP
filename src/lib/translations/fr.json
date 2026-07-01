@@ -94,7 +94,11 @@
 		"vatNullOutsideSellerCountry": "La TVA sur les produits physiques devra être acquitée par le client aux douanes lors de la livraison",
 		"vatRate": "Taux de TVA : {country}",
 		"vatSellerCountry": "La TVA est celle du pays du vendeur.",
-		"maxQuantityReached": "Quantité maximale par commande atteinte ({max})"
+		"maxQuantityReached": "Quantité maximale par commande atteinte ({max})",
+		"error": {
+			"BOOKING_SAME_DAY_DISABLED": "Les réservations pour aujourd'hui ne sont pas disponibles pour ce produit.",
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Les réservations pour aujourd'hui ne sont plus possibles passé {maxHour}."
+		}
 	},
 	"cartFromUrl": {
 		"close": "Fermer",
@@ -917,7 +921,11 @@
 			"selectedDate": "Sélectionné: {date}",
 			"selectedRangeWithAvailable": "{totalDays} jours sélectionnés, {availableDays} jours disponibles: {dates}",
 			"noAvailableDays": "Aucun jour disponible dans la plage sélectionnée",
-			"maxRangeInfo": "Période de réservation maximale: {days} jours"
+			"maxRangeInfo": "Période de réservation maximale: {days} jours",
+			"sameDay": {
+				"disabled": "Les réservations pour aujourd'hui ne sont pas disponibles pour ce produit.",
+				"cutoffPassed": "Les réservations pour aujourd'hui ne sont plus possibles passé {maxHour}."
+			}
 		},
 		"checkBackLater": "Veuillez revenir plus tard",
 		"cta": {

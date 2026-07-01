@@ -94,7 +94,11 @@
 		"vatNullOutsideSellerCountry": "Einfuhrsteuern müssen vom Kunden bei Lieferung an den Zoll entrichtet werden.",
 		"vatRate": "MwSt.-Satz für {country}",
 		"vatSellerCountry": "Das Land ist das Land des Verkäufers.",
-		"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})"
+		"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})",
+		"error": {
+			"BOOKING_SAME_DAY_DISABLED": "Buchungen für heute sind für dieses Produkt nicht verfügbar.",
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Buchungen für heute sind nach {maxHour} nicht mehr möglich."
+		}
 	},
 	"cartFromUrl": {
 		"close": "Schließen",
@@ -917,7 +921,11 @@
 			"selectedDate": "Ausgewählt: {date}",
 			"selectedRangeWithAvailable": "{totalDays} Tage ausgewählt, {availableDays} Tage verfügbar: {dates}",
 			"noAvailableDays": "Keine verfügbaren Tage im ausgewählten Bereich",
-			"maxRangeInfo": "Maximaler Buchungszeitraum: {days} Tage"
+			"maxRangeInfo": "Maximaler Buchungszeitraum: {days} Tage",
+			"sameDay": {
+				"disabled": "Buchungen für heute sind für dieses Produkt nicht verfügbar.",
+				"cutoffPassed": "Buchungen für heute sind nach {maxHour} nicht mehr möglich."
+			}
 		},
 		"checkBackLater": "Bitte schauen Sie später wieder vorbei",
 		"cta": {

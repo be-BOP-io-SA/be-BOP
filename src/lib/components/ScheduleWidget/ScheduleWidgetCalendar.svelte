@@ -28,7 +28,11 @@
 	>;
 	let className = '';
 	export let isDayDisabled: (date: Date) => boolean = () => false;
-	export let selectedDate = new Date();
+	// Type is nullable so consumers that need a "nothing preselected" state can pass `null`
+	// explicitly (booking product page). Default stays `new Date()` so other consumers — notably
+	// the public ScheduleWidget calendar display — keep their "today preselected" behaviour
+	// without needing to bind the prop.
+	export let selectedDate: Date | null = new Date();
 	export let rangeMode = false;
 	export let selectedEndDate: Date | null = null;
 	export let maxRangeDays = 0;
@@ -39,6 +43,24 @@
 	let currentDate = new Date();
 	let days: Date[] = [];
 	let weekDays: string[] = [];
+
+	// Keep the displayed month in sync with the externally-controlled `selectedDate`. Without
+	// this, a preselection in another month (or a click on a spillover day at the grid edge)
+	// would stay on the original page with the selection rendered as a greyed "other-month"
+	// cell — confusing the customer and hiding any selection that falls on a month that has
+	// no spillover at the page edges.
+	let prevSelectedDate: Date | null = null;
+	$: if (selectedDate !== prevSelectedDate) {
+		prevSelectedDate = selectedDate;
+		if (
+			selectedDate &&
+			(selectedDate.getMonth() !== currentDate.getMonth() ||
+				selectedDate.getFullYear() !== currentDate.getFullYear())
+		) {
+			currentDate = startOfMonth(selectedDate);
+			generateCalendar();
+		}
+	}
 
 	let scheduleEventByDay: Record<string, ScheduleEvent[]> = {};
 	for (const event of schedule.events) {
@@ -187,7 +209,7 @@
 					{isEventDay(day) ? 'eventCalendar-hasEvent font-bold' : ''}
 					{isStart || isEnd ? 'ring-2 ring-black' : ''}
 					{inRange ? (disabled ? 'bg-gray-100' : 'bg-blue-100') : ''}
-					{disabled || isOtherMonth ? 'text-gray-300' : ''}
+					{disabled ? 'text-gray-300' : isOtherMonth ? 'text-gray-500' : ''}
 					{inRange && disabled ? 'text-gray-400' : ''}
 					{disabled ? 'cursor-not-allowed' : 'hover:bg-gray-100 cursor-pointer'}"
 				style="background-color:{customColorEvents.length === 1

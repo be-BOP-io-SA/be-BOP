@@ -94,7 +94,11 @@
 		"vatNullOutsideSellerCountry": "Import taxes must be paid by the customer to customs upon delivery.",
 		"vatRate": "VAT rate for {country}",
 		"vatSellerCountry": "The country is the seller's country.",
-		"maxQuantityReached": "Maximum quantity per order reached ({max})"
+		"maxQuantityReached": "Maximum quantity per order reached ({max})",
+		"error": {
+			"BOOKING_SAME_DAY_DISABLED": "Bookings for today are not available for this product.",
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Bookings for today are no longer possible past {maxHour}."
+		}
 	},
 	"cartFromUrl": {
 		"close": "Close",
@@ -919,7 +923,11 @@
 			"selectedRangeWithAvailable": "{totalDays} days selected, {availableDays} days available: {dates}",
 			"noAvailableDays": "No available days in selected range",
 			"maxRangeExceeded": "Maximum selection is {days} days",
-			"maxRangeInfo": "Maximum booking period: {days} days"
+			"maxRangeInfo": "Maximum booking period: {days} days",
+			"sameDay": {
+				"disabled": "Bookings for today are not available for this product.",
+				"cutoffPassed": "Bookings for today are no longer possible past {maxHour}."
+			}
 		},
 		"checkBackLater": "Please check back later",
 		"cta": {
