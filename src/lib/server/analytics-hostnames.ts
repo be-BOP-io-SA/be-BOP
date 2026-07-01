@@ -10,14 +10,16 @@ export function extractAnalyticsHostnames(snippet: string | undefined | null): s
 	if (!snippet) {
 		return [];
 	}
-	const matches = snippet.match(/https?:\/\/[a-zA-Z0-9.\-]+/g);
+	// Also match protocol-relative URLs (//host/…) — a common vendor snippet form.
+	const matches = snippet.match(/(?:https?:)?\/\/[a-zA-Z0-9.\-]+/g);
 	if (!matches) {
 		return [];
 	}
 	const hostnames = new Set<string>();
 	for (const m of matches) {
 		try {
-			hostnames.add(new URL(m).hostname);
+			const url = m.startsWith('//') ? `https:${m}` : m;
+			hostnames.add(new URL(url).hostname);
 		} catch {
 			// ignore malformed URLs
 		}

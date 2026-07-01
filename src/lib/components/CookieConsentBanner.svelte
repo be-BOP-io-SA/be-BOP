@@ -1,10 +1,8 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
 	import { useI18n } from '$lib/i18n';
 	import { cookieConsentVisible } from '$lib/stores/cookieConsentVisible';
 
 	export let hostnames: string[] = [];
-	export let hasPrivacyPage = false;
 
 	const { t } = useI18n();
 	let loading = false;
@@ -18,13 +16,18 @@
 				body: JSON.stringify({ value })
 			});
 			cookieConsentVisible.set(false);
-			await invalidateAll();
+			location.reload();
 		} finally {
 			loading = false;
 		}
 	}
 </script>
 
+<!--
+	A11y follow-up (issue #2650): role="dialog" + aria-live="polite" without focus management
+	is a broken compromise. Deferred because most be-BOPs won't configure analytics and the
+	banner never appears — will be revisited when a high-traffic tenant with analytics needs it.
+-->
 <aside
 	class="fixed inset-x-0 bottom-0 z-50 body-secondPlan border-t border-gray-300 shadow-lg print:hidden"
 	role="dialog"
@@ -38,16 +41,14 @@
 			{:else}
 				<p>{t('cookieConsent.banner.dataSentToFallback')}</p>
 			{/if}
-			{#if hasPrivacyPage}
-				<a class="body-hyperlink underline text-sm" href="/privacy"
-					>{t('cookieConsent.banner.learnMore')}</a
-				>
-			{/if}
+			<a class="body-hyperlink underline text-sm" href="/privacy"
+				>{t('cookieConsent.banner.learnMore')}</a
+			>
 		</div>
 		<div class="flex gap-2">
 			<button
 				type="button"
-				class="btn body-secondaryCTA"
+				class="btn body-mainCTA"
 				disabled={loading}
 				on:click={() => decide('denied')}>{t('cookieConsent.banner.deny')}</button
 			>

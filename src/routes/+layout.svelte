@@ -18,9 +18,14 @@
 	setContext('language', data.language);
 
 	// Show the banner when an analytics snippet is configured AND the visitor either hasn't made
-	// a choice yet OR explicitly re-opened it via the 🍪 buttons.
+	// a choice yet OR explicitly re-opened it via the 🍪 buttons. Backoffice paths (/admin, /pos)
+	// are excluded — staff/cashier UI shouldn't get a visitor-facing GDPR banner.
+	$: isBackoffice =
+		$page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/pos');
 	$: showCookieConsent =
-		data.analyticsSnippetConfigured && (data.analyticsConsent === null || $cookieConsentVisible);
+		data.analyticsSnippetConfigured &&
+		!isBackoffice &&
+		(data.analyticsConsent === null || $cookieConsentVisible);
 </script>
 
 <svelte:head>
@@ -52,8 +57,5 @@
 <slot class="body body-mainPlan" />
 
 {#if showCookieConsent}
-	<CookieConsentBanner
-		hostnames={data.analyticsHostnames}
-		hasPrivacyPage={data.analyticsHasPrivacyPage}
-	/>
+	<CookieConsentBanner hostnames={data.analyticsHostnames} />
 {/if}
