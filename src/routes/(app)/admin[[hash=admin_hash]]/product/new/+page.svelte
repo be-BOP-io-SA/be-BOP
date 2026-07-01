@@ -23,6 +23,7 @@
 	defaultActionSettings={data.productActionSettings}
 	vatProfiles={data.vatProfiles}
 	availablePaymentMethods={data.availablePaymentMethods}
+	allowPaidOrderWebhook={data.allowPaidOrderWebhook}
 />
 
 {#if data.pictures?.length}
