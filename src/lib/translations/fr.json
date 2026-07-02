@@ -1071,6 +1071,13 @@
 		"lastPayment": "Dernier paiement",
 		"listTitle": "Vos abonnements",
 		"noSubscriptions": "Vous n'avez pas encore d'abonnements.",
+		"nextBilling": "Prochaine facturation : {amount} {currency}",
+		"payment": {
+			"currentMethod": "Le renouvellement utilisera {method}",
+			"previousUnavailable": "Le précédent mode de paiement ({method}) ne peut plus être utilisé pour ce renouvellement. Choisissez-en un autre ci-dessous.",
+			"chooseMethod": "Mode de paiement",
+			"change": "Changer de mode de paiement"
+		},
 		"singleTitle": "Abonnement #{number}",
 		"status": {
 			"active": "actif",
