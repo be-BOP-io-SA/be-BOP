@@ -72,35 +72,41 @@
 	</p>
 
 	<form action="?/renew" method="post" class="flex flex-col gap-3 items-start w-full max-w-md">
-		{#if data.payment.lastPaidMethod && data.payment.lastPaidMethodStillEligible && !changingMethod}
-			<p class="text-sm text-gray-600">
-				{t('subscription.payment.currentMethod', {
-					method: t('checkout.paymentMethod.' + data.payment.lastPaidMethod)
-				})}
-			</p>
-			<button
-				type="button"
-				class="text-sm underline text-gray-700"
-				on:click={() => (changingMethod = true)}
-			>
-				{t('subscription.payment.change')}
-			</button>
-		{:else}
-			{#if data.payment.lastPaidMethod && !data.payment.lastPaidMethodStillEligible}
-				<p class="text-sm text-orange-700">
-					{t('subscription.payment.previousUnavailable', {
+		{#if data.canRenew}
+			{#if data.payment.lastPaidMethod && data.payment.lastPaidMethodStillEligible && !changingMethod}
+				<p class="text-sm text-gray-600">
+					{t('subscription.payment.currentMethod', {
 						method: t('checkout.paymentMethod.' + data.payment.lastPaidMethod)
 					})}
 				</p>
+				<button
+					type="button"
+					class="text-sm underline text-gray-700"
+					on:click={() => (changingMethod = true)}
+				>
+					{t('subscription.payment.change')}
+				</button>
+			{:else}
+				{#if data.payment.lastPaidMethod && !data.payment.lastPaidMethodStillEligible}
+					<p class="text-sm text-orange-700">
+						{t('subscription.payment.previousUnavailable', {
+							method: t('checkout.paymentMethod.' + data.payment.lastPaidMethod)
+						})}
+					</p>
+				{/if}
+				<PaymentMethodSelector
+					methods={data.payment.eligibleMethods}
+					bind:value={chosenMethod}
+					posSubtypes={data.payment.posSubtypes}
+				/>
 			{/if}
-			<PaymentMethodSelector
-				methods={data.payment.eligibleMethods}
-				bind:value={chosenMethod}
-				posSubtypes={data.payment.posSubtypes}
-			/>
-		{/if}
 
-		{#if !data.canRenew}
+			<button
+				class="btn btn-black"
+				disabled={(!data.payment.lastPaidMethodStillEligible && !chosenMethod) ||
+					(changingMethod && !chosenMethod)}>{t('subscription.cta.renew')}</button
+			>
+		{:else}
 			<p class="text-sm text-gray-600">
 				<Trans key="subscription.canRenewFrom"
 					><time datetime={data.canRenewAfter.toJSON()} slot="0"
@@ -109,13 +115,5 @@
 				>
 			</p>
 		{/if}
-
-		<button
-			class="btn btn-black"
-			disabled={!data.canRenew ||
-				(!data.payment.lastPaidMethodStillEligible && !chosenMethod) ||
-				(changingMethod && !chosenMethod)}
-			title={data.canRenew ? '' : t('subscription.cantRenew')}>{t('subscription.cta.renew')}</button
-		>
 	</form>
 </main>
