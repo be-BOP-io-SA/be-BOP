@@ -1072,6 +1072,7 @@
 		"listTitle": "Vos abonnements",
 		"noSubscriptions": "Vous n'avez pas encore d'abonnements.",
 		"nextBilling": "Prochaine facturation : {amount} {currency}",
+		"canRenewFrom": "Vous pourrez renouveler à partir du <0></0>.",
 		"payment": {
 			"currentMethod": "Le renouvellement utilisera {method}",
 			"previousUnavailable": "Le précédent mode de paiement ({method}) ne peut plus être utilisé pour ce renouvellement. Choisissez-en un autre ci-dessous.",

@@ -82,6 +82,18 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		: initialMethods;
 	const lastPaidMethodStillEligible = !!lastPaidMethod && eligibleMethods.includes(lastPaidMethod);
 
+	// The shared PaymentMethodSelector renders a POS subtype dropdown whenever `point-of-sale`
+	// is chosen, so ship the same list the checkout page uses. Cheap enough to fetch even when
+	// POS isn't in the eligible methods (the selector hides the dropdown in that case).
+	const posSubtypes = eligibleMethods.includes('point-of-sale')
+		? (
+				await collections.posPaymentSubtypes
+					.find({ disabled: { $ne: true } })
+					.sort({ sortOrder: 1 })
+					.toArray()
+		  ).map((s) => ({ slug: s.slug, name: s.name }))
+		: [];
+
 	const picture = await collections.pictures.findOne(
 		{
 			productId: product._id
@@ -117,6 +129,7 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		},
 		picture: picture ?? undefined,
 		canRenew: canRenewAfter < new Date(),
+		canRenewAfter,
 		nextBilling: {
 			amount: nextBillingAmount,
 			currency: nextBillingCurrency
@@ -124,7 +137,8 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		payment: {
 			lastPaidMethod,
 			lastPaidMethodStillEligible,
-			eligibleMethods
+			eligibleMethods,
+			posSubtypes
 		}
 	};
 }
@@ -200,7 +214,8 @@ export const actions: Actions = {
 		const submitted = Object.fromEntries(await request.formData());
 		const parsed = z
 			.object({
-				paymentMethod: z.enum([eligibleMethods[0], ...eligibleMethods.slice(1)]).optional()
+				paymentMethod: z.enum([eligibleMethods[0], ...eligibleMethods.slice(1)]).optional(),
+				posSubtype: z.string().optional()
 			})
 			.safeParse(submitted);
 		if (!parsed.success) {
@@ -214,6 +229,10 @@ export const actions: Actions = {
 		if (!chosenMethod) {
 			throw error(400, 'A payment method must be chosen to renew this subscription');
 		}
+		const chosenPosSubtype =
+			chosenMethod === 'point-of-sale' && parsed.data.posSubtype
+				? parsed.data.posSubtype
+				: undefined;
 
 		const existingPendingOrder = await collections.orders.findOne(
 			{
@@ -246,6 +265,7 @@ export const actions: Actions = {
 					user: subscription.user,
 					shippingAddress: lastOrder.shippingAddress,
 					billingAddress: lastOrder.billingAddress ?? lastOrder.shippingAddress ?? undefined,
+					...(chosenPosSubtype && { posSubtype: chosenPosSubtype }),
 					userVatCountry:
 						lastOrder.shippingAddress?.country ||
 						locals.countryCode ||
