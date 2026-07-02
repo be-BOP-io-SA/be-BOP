@@ -160,9 +160,9 @@ export async function onOrderPayment(
 	}
 
 	const paidAt = new Date();
-	// For free payments, onOrderPayment is called twice (addOrderPayment + createOrder).
-	// This guard prevents duplicate audit log entries but does not fix the double-call itself.
-	// TODO: remove after fixing the double-call bug
+	// Free payments arrive here with `paidAt` already stamped by addOrderPayment; skip the
+	// `paymentDone` audit log in that case so a subsequent retry (e.g. re-processing the same
+	// paid payment) doesn't double-record the event.
 	const alreadyPaid = !!payment.paidAt;
 
 	payment.status = 'paid'; // for isOrderFullyPaid
@@ -1827,9 +1827,6 @@ export async function createOrder(
 			if (product.stock) {
 				await refreshAvailableStockInDb(product._id, session);
 			}
-		}
-		if (orderPayment?.method === 'free') {
-			await onOrderPayment(order, orderPayment, orderPayment.price, { providedSession: session });
 		}
 	});
 
