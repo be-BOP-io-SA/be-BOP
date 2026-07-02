@@ -1103,5 +1103,17 @@
 			"checkboxLabel": "Beacon-signaal naar be-BOP.io Nostr-bot inschakelen om het bestaan van uw winkel te delen",
 			"infoBlock": "Deze instelling bepaalt of uw winkel periodieke signalen naar be-BOP.io verzendt. We waarderen privacy: alleen uw winkel-URL en de be-BOP-softwareversie worden gedeeld. Er worden geen persoonlijke gegevens of klantgegevens verzonden. Dit helpt ons bij het debuggen en laat ons zien dat de be-BOP-gemeenschap groeit."
 		}
+	},
+	"cookieConsent": {
+		"banner": {
+			"ariaLabel": "Cookietoestemming",
+			"dataSentTo": "Sommige van uw bezoekgegevens worden verzonden naar: {hostnames}",
+			"dataSentToFallback": "Deze site gebruikt een analysetool.",
+			"accept": "Accepteren",
+			"deny": "Weigeren",
+			"learnMore": "Meer informatie"
+		},
+		"reopenAria": "Cookievoorkeuren",
+		"reopenIdentity": "Cookievoorkeuren beheren"
 	}
 }

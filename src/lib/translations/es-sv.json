@@ -1103,5 +1103,17 @@
 			"checkboxLabel": "Activar señal beacon al bot Nostr de be-BOP.io para compartir la existencia de tu tienda",
 			"infoBlock": "Esta configuración controla si tu tienda envía señales periódicas a be-BOP.io. Valoramos la privacidad: solo se comparten la URL de tu tienda y la versión del software be-BOP. No se transmite ninguna información personal o de clientes. Esto nos ayuda con la depuración y nos muestra que la comunidad be-BOP está creciendo."
 		}
+	},
+	"cookieConsent": {
+		"banner": {
+			"ariaLabel": "Consentimiento de cookies",
+			"dataSentTo": "Algunos de sus datos de visita se envían a: {hostnames}",
+			"dataSentToFallback": "Este sitio utiliza una herramienta de medición de audiencia.",
+			"accept": "Aceptar",
+			"deny": "Rechazar",
+			"learnMore": "Más información"
+		},
+		"reopenAria": "Preferencias de cookies",
+		"reopenIdentity": "Gestionar mis preferencias de cookies"
 	}
 }

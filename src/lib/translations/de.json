@@ -1103,5 +1103,17 @@
 			"checkboxLabel": "Beacon-Signal an be-BOP.io Nostr-Bot aktivieren, um die Existenz Ihres Shops zu teilen",
 			"infoBlock": "Diese Einstellung steuert, ob Ihr Shop regelmäßige Signale an be-BOP.io sendet. Wir legen Wert auf Datenschutz: Es werden nur Ihre Shop-URL und die be-BOP-Softwareversion weitergegeben. Keine persönlichen Daten oder Kundendaten werden übertragen. Dies hilft uns beim Debuggen und zeigt uns, dass die be-BOP-Community wächst."
 		}
+	},
+	"cookieConsent": {
+		"banner": {
+			"ariaLabel": "Cookie-Einwilligung",
+			"dataSentTo": "Einige Ihrer Besuchsdaten werden gesendet an: {hostnames}",
+			"dataSentToFallback": "Diese Website verwendet ein Analysetool.",
+			"accept": "Akzeptieren",
+			"deny": "Ablehnen",
+			"learnMore": "Mehr erfahren"
+		},
+		"reopenAria": "Cookie-Einstellungen",
+		"reopenIdentity": "Cookie-Einstellungen verwalten"
 	}
 }
