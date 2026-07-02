@@ -176,16 +176,18 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		postScheduleStart = start;
 	}
 
-	// Order history for this subscription. Bound by `createdAt >= subscription.createdAt` so a
-	// prior cancelled subscription for the same product doesn't leak into the current one's
-	// history. Ordered oldest → newest so the first phase's funding order shows up on top.
+	// Order history for this subscription. `createdAt >= subscription.createdAt - 60s` keeps a
+	// prior cancelled subscription's orders out (those are typically hours+ away) while giving
+	// enough slack for the initial-purchase order that is inserted a few ms *before* the
+	// subscription record in the same `onOrderPayment` transaction. Ordered oldest → newest so
+	// the first phase's funding order shows up on top.
 	const paidOrders = await collections.orders
 		.find(
 			{
 				'items.product._id': subscription.productId,
 				'payments.status': 'paid',
 				...userQuery(subscription.user),
-				createdAt: { $gte: subscription.createdAt }
+				createdAt: { $gte: subSeconds(subscription.createdAt, 60) }
 			},
 			{
 				sort: { createdAt: 1 },
