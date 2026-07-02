@@ -256,6 +256,10 @@ export const actions: Actions = {
 							...(typeof parsed.subscriptionReminderSeconds === 'number' && {
 								subscriptionReminderSeconds: parsed.subscriptionReminderSeconds
 							}),
+							...(parsed.type === 'subscription' &&
+								parsed.pricingSchedule.length > 0 && {
+									pricingSchedule: parsed.pricingSchedule
+								}),
 							hasSellDisclaimer: parsed.hasSellDisclaimer,
 							...(parsed.hasSellDisclaimer &&
 								parsed.sellDisclaimerTitle &&
@@ -471,6 +475,10 @@ export const actions: Actions = {
 					...(typeof parsed.subscriptionReminderSeconds === 'number' && {
 						subscriptionReminderSeconds: parsed.subscriptionReminderSeconds
 					}),
+					...(product.type === 'subscription' &&
+						parsed.pricingSchedule.length > 0 && {
+							pricingSchedule: parsed.pricingSchedule
+						}),
 					hideFromSEO: parsed.hideFromSEO,
 					translations: product.translations
 				},
