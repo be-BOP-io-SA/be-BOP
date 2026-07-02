@@ -965,6 +965,17 @@
 			"month": "Renouvelé chaque mois",
 			"year": "Renouvelé chaque année"
 		},
+		"pricingSchedule": {
+			"intro": "Cette souscription possède plusieurs phases de facturation :",
+			"then": "puis"
+		},
+		"pricingScheduleUnit": {
+			"hour": { "one": "heure", "other": "heures" },
+			"day": { "one": "jour", "other": "jours" },
+			"week": { "one": "semaine", "other": "semaines" },
+			"month": { "one": "mois", "other": "mois" },
+			"year": { "one": "an", "other": "ans" }
+		},
 		"type": {
 			"deposit": "Sur acompte",
 			"digitalResource": "Ressource numérique",

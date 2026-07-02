@@ -967,6 +967,17 @@
 			"month": "Renews every month",
 			"year": "Renews every year"
 		},
+		"pricingSchedule": {
+			"intro": "This subscription has multiple billing phases:",
+			"then": "then"
+		},
+		"pricingScheduleUnit": {
+			"hour": { "one": "hour", "other": "hours" },
+			"day": { "one": "day", "other": "days" },
+			"week": { "one": "week", "other": "weeks" },
+			"month": { "one": "month", "other": "months" },
+			"year": { "one": "year", "other": "years" }
+		},
 		"type": {
 			"deposit": "On deposit",
 			"digitalResource": "Digital Resource",

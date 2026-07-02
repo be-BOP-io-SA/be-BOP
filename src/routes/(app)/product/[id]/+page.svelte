@@ -749,6 +749,25 @@
 					<SubscriptionDurationLabel duration={data.product.subscriptionDuration} />
 				{/if}
 
+				{#if data.product.type === 'subscription' && data.product.pricingSchedule?.length && data.product.subscriptionDuration}
+					<span class="inline-flex items-center gap-1 text-sm text-gray-600">
+						{t('product.pricingSchedule.intro')}<br />
+						{#each data.product.pricingSchedule as phase, i}
+							- {i === 0 ? '' : t('product.pricingSchedule.then') + ' '}{phase.value}
+							{t('product.pricingScheduleUnit.' + phase.unit, { count: phase.value })} : {phase.priceAmount}
+							{data.product.price.currency} / {t('product.pricingScheduleUnit.' + phase.unit, {
+								count: 1
+							})}<br />
+						{/each}
+						- {t('product.pricingSchedule.then')}
+						{data.product.price.amount}
+						{data.product.price.currency} / {t(
+							'product.pricingScheduleUnit.' + data.product.subscriptionDuration,
+							{ count: 1 }
+						)}
+					</span>
+				{/if}
+
 				{#if freeProductsAvailable}
 					<hr class="border-gray-300" />
 					<h3 class="text-[22px]">
