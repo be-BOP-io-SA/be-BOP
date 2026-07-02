@@ -20,11 +20,12 @@ async function isSubscriptionDueForReminder(
 	subscription: PaidSubscription,
 	now: Date
 ): Promise<boolean> {
-	// While the schedule still has phases to bill, the reminder offset comes from the current
-	// phase's snapshot. Past-schedule (or legacy subscriptions with no snapshot) fall back to
-	// the product-level reminder.
-	const activePhase =
-		subscription.pricingScheduleSnapshot?.phases[subscription.pricingScheduleCursor ?? 0];
+	// The cursor points at the phase to bill on the *next* renewal, so the phase that funded
+	// the *current* period (up to paidUntil) is at `cursor - 1`. Its reminder offset is what
+	// counts for "how long before paidUntil to warn the customer". Past-schedule (or legacy
+	// subscriptions with no snapshot) fall back to the product-level reminder.
+	const currentPhaseIndex = (subscription.pricingScheduleCursor ?? 0) - 1;
+	const activePhase = subscription.pricingScheduleSnapshot?.phases[currentPhaseIndex];
 	if (activePhase) {
 		const reminderSeconds = subscriptionUnitToSeconds(
 			activePhase.reminderValue,
