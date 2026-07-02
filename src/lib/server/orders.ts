@@ -2289,8 +2289,11 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 
 			// Fresh subscriber: if the product carries a schedule, snapshot it and bill phase 0.
 			// The cursor is set to 1 because phase 0 was just paid by this very order.
+			// Read the extension from the snapshot rather than the product config: the snapshot
+			// is expanded into unit cycles (a "3 months" phase becomes 3 monthly entries), so
+			// phase 0 always covers a single billing cycle.
 			const snapshot = buildPricingScheduleSnapshot(subscription.product);
-			const firstPhase = subscription.product.pricingSchedule?.[0];
+			const firstPhase = snapshot?.phases[0];
 			const extension = firstPhase
 				? pricingPhaseDuration(firstPhase.value, firstPhase.unit)
 				: getSubscriptionDuration(subscription.product);
