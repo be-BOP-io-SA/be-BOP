@@ -8,6 +8,12 @@
 
 	export let data;
 	export let form;
+
+	let changingMethod = !data.payment.lastPaidMethodStillEligible;
+	let chosenMethod: string =
+		data.payment.lastPaidMethodStillEligible && data.payment.lastPaidMethod
+			? data.payment.lastPaidMethod
+			: '';
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 flex flex-col gap-4 items-start">
@@ -56,10 +62,51 @@
 
 	<SubscriptionDurationLabel duration={data.product.subscriptionDuration} />
 
-	<form action="?/renew" method="post">
+	<p class="text-sm text-gray-600">
+		{t('subscription.nextBilling', {
+			amount: data.nextBilling.amount,
+			currency: data.nextBilling.currency
+		})}
+	</p>
+
+	<form action="?/renew" method="post" class="flex flex-col gap-3 items-start">
+		{#if data.payment.lastPaidMethod && data.payment.lastPaidMethodStillEligible && !changingMethod}
+			<p class="text-sm text-gray-600">
+				{t('subscription.payment.currentMethod', {
+					method: t('checkout.paymentMethod.' + data.payment.lastPaidMethod)
+				})}
+			</p>
+			<button
+				type="button"
+				class="text-sm underline text-gray-700"
+				on:click={() => (changingMethod = true)}
+			>
+				{t('subscription.payment.change')}
+			</button>
+		{:else}
+			{#if data.payment.lastPaidMethod && !data.payment.lastPaidMethodStillEligible}
+				<p class="text-sm text-orange-700">
+					{t('subscription.payment.previousUnavailable', {
+						method: t('checkout.paymentMethod.' + data.payment.lastPaidMethod)
+					})}
+				</p>
+			{/if}
+			<fieldset class="flex flex-col gap-1">
+				<legend class="text-sm font-medium">{t('subscription.payment.chooseMethod')}</legend>
+				{#each data.payment.eligibleMethods as method}
+					<label class="flex items-center gap-2 text-sm">
+						<input type="radio" name="paymentMethod" value={method} bind:group={chosenMethod} />
+						{t('checkout.paymentMethod.' + method)}
+					</label>
+				{/each}
+			</fieldset>
+		{/if}
+
 		<button
 			class="btn btn-black"
-			disabled={!data.canRenew}
+			disabled={!data.canRenew ||
+				(!data.payment.lastPaidMethodStillEligible && !chosenMethod) ||
+				(changingMethod && !chosenMethod)}
 			title={data.canRenew ? '' : t('subscription.cantRenew')}>{t('subscription.cta.renew')}</button
 		>
 	</form>
