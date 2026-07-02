@@ -53,7 +53,10 @@ export async function freeProductsForUser(
 
 /**
  * Builds the snapshot stored on `PaidSubscription` at first payment for a product with a
- * schedule. Captures both the phases and the currency at that moment.
+ * schedule. Each configured phase `{ value: N, unit, priceAmount, … }` is expanded into N
+ * unit cycles `{ value: 1, unit, priceAmount, … }`, so the runtime bills one cycle per
+ * renewal (e.g. a "3 months at 21 CHF" phase becomes 3 monthly billings of 21 CHF).
+ * The cursor on the subscription therefore always points at a single billing cycle.
  */
 export function buildPricingScheduleSnapshot(
 	product: Pick<Product, 'pricingSchedule' | 'price'>
@@ -63,7 +66,15 @@ export function buildPricingScheduleSnapshot(
 	}
 	return {
 		currency: product.price.currency,
-		phases: product.pricingSchedule.map((p) => ({ ...p }))
+		phases: product.pricingSchedule.flatMap((p) =>
+			Array.from({ length: p.value }, () => ({
+				value: 1,
+				unit: p.unit,
+				priceAmount: p.priceAmount,
+				reminderValue: p.reminderValue,
+				reminderUnit: p.reminderUnit
+			}))
+		)
 	};
 }
 
