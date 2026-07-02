@@ -116,4 +116,56 @@
 			</p>
 		{/if}
 	</form>
+
+	{#if data.upcomingPhases.length || data.snapshot}
+		<section class="w-full max-w-md flex flex-col gap-1">
+			<h2 class="text-lg font-medium">{t('subscription.upcomingPhases.title')}</h2>
+			<ul class="text-sm text-gray-700 flex flex-col gap-1">
+				{#each data.upcomingPhases as phase}
+					<li>
+						- {t('subscription.upcomingPhases.range', {
+							start: new Date(phase.start).toLocaleDateString($locale),
+							end: new Date(phase.end).toLocaleDateString($locale)
+						})} : {phase.amount === 0
+							? t('subscription.amountFree')
+							: `${phase.amount} ${phase.currency}`}
+					</li>
+				{/each}
+				<li>
+					- {t('subscription.upcomingPhases.after', {
+						start: new Date(data.postScheduleStart).toLocaleDateString($locale)
+					})} : {data.product.priceAmount === 0
+						? t('subscription.amountFree')
+						: `${data.product.priceAmount} ${data.product.priceCurrency}`}
+				</li>
+			</ul>
+		</section>
+	{/if}
+
+	{#if data.orderHistory.length}
+		<section class="w-full max-w-md flex flex-col gap-1">
+			<h2 class="text-lg font-medium">{t('subscription.orderHistory.title')}</h2>
+			<ul class="text-sm text-gray-700 flex flex-col gap-1">
+				{#each data.orderHistory as order}
+					<li>
+						- <a href="/order/{order._id}" target="_blank" rel="noreferrer" class="underline"
+							>#{order.number}</a
+						>
+						- {order.amount === 0
+							? t('subscription.amountFree')
+							: `${order.amount} ${order.currency}`}
+						{#if order.paidPaymentId}
+							-
+							<a
+								href="/order/{order._id}/payment/{order.paidPaymentId}/receipt"
+								target="_blank"
+								rel="noreferrer"
+								class="underline">{t('subscription.orderHistory.downloadInvoice')}</a
+							>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
 </main>
