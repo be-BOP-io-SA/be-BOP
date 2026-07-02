@@ -49,11 +49,14 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		{ sort: { createdAt: 1 } }
 	);
 
-	// While the schedule still has phases to bill, honour the current phase's reminder.
+	// The cursor points at the phase to bill on the *next* renewal, so the phase that funded
+	// the *current* period sits at `cursor - 1`. Its reminder offset is what canRenew must
+	// use so the "renew" button appears at the same moment the reminder email is sent.
 	// Past-schedule, cancelled or legacy subs fall back to the product-level reminder.
+	const currentPhaseIndex = (subscription.pricingScheduleCursor ?? 0) - 1;
 	const activePhase = subscription.cancelledAt
 		? undefined
-		: subscription.pricingScheduleSnapshot?.phases[subscription.pricingScheduleCursor ?? 0];
+		: subscription.pricingScheduleSnapshot?.phases[currentPhaseIndex];
 	const canRenewReminderSeconds = activePhase
 		? subscriptionUnitToSeconds(activePhase.reminderValue, activePhase.reminderUnit)
 		: resolveSubscriptionReminderSeconds(product);
