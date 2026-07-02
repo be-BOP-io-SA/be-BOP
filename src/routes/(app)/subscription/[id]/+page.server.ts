@@ -139,7 +139,13 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 	// share the same (unit, priceAmount) come from a single configured phase — collapse them
 	// back into date ranges so the customer sees "du 09/07 au 09/10 : 21 CHF" instead of three
 	// identical monthly lines.
-	const upcomingPhases: Array<{ start: Date; end: Date; amount: number; currency: string }> = [];
+	const upcomingPhases: Array<{
+		start: Date;
+		end: Date;
+		amount: number;
+		currency: string;
+		unit: SubscriptionDuration;
+	}> = [];
 	let postScheduleStart = subscription.paidUntil;
 	if (subscription.pricingScheduleSnapshot) {
 		const phases = subscription.pricingScheduleSnapshot.phases;
@@ -157,7 +163,13 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 			}
 			const cyclesInRun = runEnd - i + 1;
 			const end = add(start, phaseDurationObj(cyclesInRun, phases[i].unit));
-			upcomingPhases.push({ start, end, amount: phases[i].priceAmount, currency });
+			upcomingPhases.push({
+				start,
+				end,
+				amount: phases[i].priceAmount,
+				currency,
+				unit: phases[i].unit
+			});
 			start = end;
 			i = runEnd + 1;
 		}
