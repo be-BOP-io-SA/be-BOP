@@ -1,8 +1,10 @@
 <script lang="ts">
+	import PaymentMethodSelector from '$lib/components/PaymentMethodSelector.svelte';
 	import ProductItem from '$lib/components/ProductItem.svelte';
 	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import Trans from '$lib/components/Trans.svelte';
 	import { useI18n } from '$lib/i18n';
+	import type { PaymentMethod } from '$lib/server/payment-methods';
 
 	const { t, locale } = useI18n();
 
@@ -10,7 +12,7 @@
 	export let form;
 
 	let changingMethod = !data.payment.lastPaidMethodStillEligible;
-	let chosenMethod: string =
+	let chosenMethod: PaymentMethod | '' =
 		data.payment.lastPaidMethodStillEligible && data.payment.lastPaidMethod
 			? data.payment.lastPaidMethod
 			: '';
@@ -69,7 +71,7 @@
 		})}
 	</p>
 
-	<form action="?/renew" method="post" class="flex flex-col gap-3 items-start">
+	<form action="?/renew" method="post" class="flex flex-col gap-3 items-start w-full max-w-md">
 		{#if data.payment.lastPaidMethod && data.payment.lastPaidMethodStillEligible && !changingMethod}
 			<p class="text-sm text-gray-600">
 				{t('subscription.payment.currentMethod', {
@@ -91,15 +93,21 @@
 					})}
 				</p>
 			{/if}
-			<fieldset class="flex flex-col gap-1">
-				<legend class="text-sm font-medium">{t('subscription.payment.chooseMethod')}</legend>
-				{#each data.payment.eligibleMethods as method}
-					<label class="flex items-center gap-2 text-sm">
-						<input type="radio" name="paymentMethod" value={method} bind:group={chosenMethod} />
-						{t('checkout.paymentMethod.' + method)}
-					</label>
-				{/each}
-			</fieldset>
+			<PaymentMethodSelector
+				methods={data.payment.eligibleMethods}
+				bind:value={chosenMethod}
+				posSubtypes={data.payment.posSubtypes}
+			/>
+		{/if}
+
+		{#if !data.canRenew}
+			<p class="text-sm text-gray-600">
+				<Trans key="subscription.canRenewFrom"
+					><time datetime={data.canRenewAfter.toJSON()} slot="0"
+						>{new Date(data.canRenewAfter).toLocaleString($locale)}</time
+					></Trans
+				>
+			</p>
 		{/if}
 
 		<button
