@@ -183,6 +183,18 @@ export const productBaseSchema = () => ({
 				.max(24 * 60 * 60 * 7)
 		])
 		.optional(),
+	pricingSchedule: z
+		.array(
+			z.object({
+				value: z.number({ coerce: true }).int().min(1),
+				unit: z.enum(SUBSCRIPTION_DURATIONS),
+				priceAmount: z.number({ coerce: true }).min(0),
+				reminderValue: z.number({ coerce: true }).int().min(0),
+				reminderUnit: z.enum(SUBSCRIPTION_DURATIONS)
+			})
+		)
+		.optional()
+		.default([]),
 	cta: z
 		.array(
 			z.object({

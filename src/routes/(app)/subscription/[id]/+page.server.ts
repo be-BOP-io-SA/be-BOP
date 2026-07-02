@@ -6,7 +6,8 @@ import {
 } from '$lib/server/orders';
 import {
 	resolveSubscriptionDuration,
-	resolveSubscriptionReminderSeconds
+	resolveSubscriptionReminderSeconds,
+	subscriptionUnitToSeconds
 } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userQuery } from '$lib/server/user.js';
@@ -48,10 +49,15 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		{ sort: { createdAt: 1 } }
 	);
 
-	const canRenewAfter = subSeconds(
-		subscription.paidUntil,
-		resolveSubscriptionReminderSeconds(product)
-	);
+	// While the schedule still has phases to bill, honour the current phase's reminder.
+	// Past-schedule, cancelled or legacy subs fall back to the product-level reminder.
+	const activePhase = subscription.cancelledAt
+		? undefined
+		: subscription.pricingScheduleSnapshot?.phases[subscription.pricingScheduleCursor ?? 0];
+	const canRenewReminderSeconds = activePhase
+		? subscriptionUnitToSeconds(activePhase.reminderValue, activePhase.reminderUnit)
+		: resolveSubscriptionReminderSeconds(product);
+	const canRenewAfter = subSeconds(subscription.paidUntil, canRenewReminderSeconds);
 
 	return {
 		subscription: {

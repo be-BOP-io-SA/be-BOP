@@ -9,7 +9,7 @@ import { ORIGIN } from '$lib/server/env-config';
 import { Kind } from 'nostr-tools';
 import { queueEmail } from '../email';
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
-import { resolveSubscriptionReminderSeconds } from '../subscriptions';
+import { resolveSubscriptionReminderSeconds, subscriptionUnitToSeconds } from '../subscriptions';
 
 /** Per-product reminder is capped at the same 7 days as the global (see
  * admin/config and product-schema), so this window always catches every
@@ -20,6 +20,21 @@ async function isSubscriptionDueForReminder(
 	subscription: PaidSubscription,
 	now: Date
 ): Promise<boolean> {
+	// While the schedule still has phases to bill, the reminder offset comes from the current
+	// phase's snapshot. Past-schedule (or legacy subscriptions with no snapshot) fall back to
+	// the product-level reminder.
+	const activePhase =
+		subscription.pricingScheduleSnapshot?.phases[subscription.pricingScheduleCursor ?? 0];
+	if (activePhase) {
+		const reminderSeconds = subscriptionUnitToSeconds(
+			activePhase.reminderValue,
+			activePhase.reminderUnit
+		);
+		if (reminderSeconds === 0) {
+			return false;
+		}
+		return subSeconds(subscription.paidUntil, reminderSeconds) <= now;
+	}
 	const product = await collections.products.findOne(
 		{ _id: subscription.productId },
 		{ projection: { subscriptionReminderSeconds: 1 } }

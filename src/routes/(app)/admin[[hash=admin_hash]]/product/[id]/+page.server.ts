@@ -270,6 +270,10 @@ export const actions: Actions = {
 						...(typeof parsed.subscriptionReminderSeconds === 'number' && {
 							subscriptionReminderSeconds: parsed.subscriptionReminderSeconds
 						}),
+						...(product.type === 'subscription' &&
+							parsed.pricingSchedule.length > 0 && {
+								pricingSchedule: parsed.pricingSchedule
+							}),
 						...(parsed.restrictPaymentMethods && {
 							paymentMethods: parsed.paymentMethods ?? []
 						}),
@@ -308,6 +312,9 @@ export const actions: Actions = {
 						...(!parsed.subscriptionDuration && { subscriptionDuration: '' }),
 						...(typeof parsed.subscriptionReminderSeconds !== 'number' && {
 							subscriptionReminderSeconds: ''
+						}),
+						...((product.type !== 'subscription' || parsed.pricingSchedule.length === 0) && {
+							pricingSchedule: ''
 						}),
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
 						...(!hasVariations && { variations: '', variationLabels: '' }),
