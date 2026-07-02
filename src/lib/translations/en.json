@@ -967,6 +967,17 @@
 			"month": "Renews every month",
 			"year": "Renews every year"
 		},
+		"pricingSchedule": {
+			"intro": "This subscription has multiple billing phases:",
+			"then": "then"
+		},
+		"pricingScheduleUnit": {
+			"hour": { "one": "hour", "other": "hours" },
+			"day": { "one": "day", "other": "days" },
+			"week": { "one": "week", "other": "weeks" },
+			"month": { "one": "month", "other": "months" },
+			"year": { "one": "year", "other": "years" }
+		},
 		"type": {
 			"deposit": "On deposit",
 			"digitalResource": "Digital Resource",
@@ -1062,6 +1073,24 @@
 		"lastPayment": "Last payment",
 		"listTitle": "Your subscriptions",
 		"noSubscriptions": "You have no subscriptions yet.",
+		"nextBilling": "Next billing: {amount} {currency}",
+		"canRenewFrom": "You'll be able to renew from <0></0>.",
+		"amountFree": "Free",
+		"upcomingPhases": {
+			"title": "Upcoming phases",
+			"range": "from {start} to {end}",
+			"after": "from {start}"
+		},
+		"orderHistory": {
+			"title": "Order history",
+			"downloadInvoice": "Download invoice"
+		},
+		"payment": {
+			"currentMethod": "Renewal will use {method}",
+			"previousUnavailable": "The previous payment method ({method}) can't be used for the next renewal. Choose another one below.",
+			"chooseMethod": "Payment method",
+			"change": "Change payment method"
+		},
 		"singleTitle": "Subscription #{number}",
 		"status": {
 			"active": "active",

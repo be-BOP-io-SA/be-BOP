@@ -25,10 +25,12 @@ import {
 import { runtimeConfig } from './runtime-config';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import {
+	buildPricingScheduleSnapshot,
 	freeProductsForUser,
 	generateSubscriptionNumber,
 	resolveSubscriptionDuration,
-	resolveSubscriptionReminderSeconds
+	resolveSubscriptionReminderSeconds,
+	subscriptionUnitToSeconds
 } from './subscriptions';
 import {
 	checkProductVariationsIntegrity,
@@ -158,9 +160,9 @@ export async function onOrderPayment(
 	}
 
 	const paidAt = new Date();
-	// For free payments, onOrderPayment is called twice (addOrderPayment + createOrder).
-	// This guard prevents duplicate audit log entries but does not fix the double-call itself.
-	// TODO: remove after fixing the double-call bug
+	// Free payments arrive here with `paidAt` already stamped by addOrderPayment; skip the
+	// `paymentDone` audit log in that case so a subsequent retry (e.g. re-processing the same
+	// paid payment) doesn't double-record the event.
 	const alreadyPaid = !!payment.paidAt;
 
 	payment.status = 'paid'; // for isOrderFullyPaid
@@ -890,6 +892,40 @@ export async function createOrder(
 		// POS per-item manual discount has highest priority — preserve it via ??=
 		item.discountPercentage ??= bestAutoDiscount?.discountByProduct.get(item.product._id);
 	}
+
+	// Subscription pricing schedule: override the billed amount with the current phase price
+	// so `computePriceInfo` and downstream totals reflect it. The active phase comes from the
+	// existing subscription's snapshot (renewal path); otherwise the product's own schedule
+	// kicks in at initial purchase. Legacy subs and products without a schedule are unaffected.
+	for (const item of items) {
+		if (item.product.type !== 'subscription') {
+			continue;
+		}
+		const existing = await collections.paidSubscriptions.findOne(
+			{ ...userQuery(params.user), productId: item.product._id },
+			{
+				projection: { pricingScheduleSnapshot: 1, pricingScheduleCursor: 1 },
+				session: params.session
+			}
+		);
+		if (existing?.pricingScheduleSnapshot && !existing.cancelledAt) {
+			const cursor = existing.pricingScheduleCursor ?? 0;
+			const phase = existing.pricingScheduleSnapshot.phases[cursor];
+			if (phase) {
+				item.customPrice = {
+					amount: phase.priceAmount,
+					currency: existing.pricingScheduleSnapshot.currency
+				};
+			}
+		} else if (!existing && item.product.pricingSchedule?.length) {
+			const phase = item.product.pricingSchedule[0];
+			item.customPrice = {
+				amount: phase.priceAmount,
+				currency: item.product.price.currency
+			};
+		}
+	}
+
 	const priceInfo = computePriceInfo(items, {
 		bebopCountry: runtimeConfig.vatCountry,
 		deliveryFees: shippingPrice,
@@ -988,16 +1024,27 @@ export async function createOrder(
 			);
 		}
 
-		const existingSubscription = await collections.paidSubscriptions.findOne({
-			...userQuery(params.user),
-			productId: product._id
-		});
+		const existingSubscription = await collections.paidSubscriptions.findOne(
+			{
+				...userQuery(params.user),
+				productId: product._id
+			},
+			{ session: params.session }
+		);
 
 		if (existingSubscription) {
-			if (
-				subSeconds(existingSubscription.paidUntil, resolveSubscriptionReminderSeconds(product)) >
-				new Date()
-			) {
+			// Renewal is due when we cross the current-phase reminder offset (from snapshot) or
+			// the product-level reminder (post-schedule, cancelled or legacy).
+			const activePhase = existingSubscription.cancelledAt
+				? undefined
+				: existingSubscription.pricingScheduleSnapshot?.phases[
+						existingSubscription.pricingScheduleCursor ?? 0
+				  ];
+			const reminderSeconds = activePhase
+				? subscriptionUnitToSeconds(activePhase.reminderValue, activePhase.reminderUnit)
+				: resolveSubscriptionReminderSeconds(product);
+
+			if (subSeconds(existingSubscription.paidUntil, reminderSeconds) > new Date()) {
 				throw error(
 					400,
 					'You already have an active subscription for this product: ' +
@@ -1781,9 +1828,6 @@ export async function createOrder(
 				await refreshAvailableStockInDb(product._id, session);
 			}
 		}
-		if (orderPayment?.method === 'free') {
-			await onOrderPayment(order, orderPayment, orderPayment.price, { providedSession: session });
-		}
 	});
 
 	return orderId;
@@ -2121,20 +2165,41 @@ function getSubscriptionDuration(product: {
 	return durations[resolveSubscriptionDuration(product)];
 }
 
+function pricingPhaseDuration(value: number, unit: SubscriptionDuration): Duration {
+	switch (unit) {
+		case 'hour':
+			return { hours: value };
+		case 'day':
+			return { days: value };
+		case 'week':
+			return { weeks: value };
+		case 'month':
+			return { months: value };
+		case 'year':
+			return { years: value };
+	}
+}
+
 async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSession) {
 	const subscriptionProducts = order.items.filter((item) => item.product.type === 'subscription');
 	const existingSubscriptions = await collections.paidSubscriptions
-		.find({
-			...userQuery(order.user),
-			productId: { $in: order.items.map((item) => item.product._id) }
-		})
+		.find(
+			{
+				...userQuery(order.user),
+				productId: { $in: order.items.map((item) => item.product._id) }
+			},
+			{ session }
+		)
 		.toArray();
 	const discounts = await collections.discounts
-		.find({
-			subscriptionIds: {
-				$in: subscriptionProducts.map((sub) => sub.product._id)
-			}
-		})
+		.find(
+			{
+				subscriptionIds: {
+					$in: subscriptionProducts.map((sub) => sub.product._id)
+				}
+			},
+			{ session }
+		)
 		.toArray();
 	for (const subscription of subscriptionProducts) {
 		const discountsForSubscription = discounts.filter((discount) =>
@@ -2148,10 +2213,19 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, updatedFreeProductsById);
 			}
-			const newPaidUntil = add(
-				max([existing.paidUntil, new Date()]),
-				getSubscriptionDuration(subscription.product)
-			);
+
+			// Advance through the snapshot when this subscription still has phases to consume
+			// AND was not cancelled. Cancellation burns the schedule: on re-activation, billing
+			// reverts to the product's normal cycle and the snapshot is cleared so the phases
+			// don't resume on future renewals. Legacy subs (no snapshot) fall through naturally.
+			const currentCursor = existing.pricingScheduleCursor ?? 0;
+			const activePhase = existing.cancelledAt
+				? undefined
+				: existing.pricingScheduleSnapshot?.phases[currentCursor];
+			const extension = activePhase
+				? pricingPhaseDuration(activePhase.value, activePhase.unit)
+				: getSubscriptionDuration(subscription.product);
+			const newPaidUntil = add(max([existing.paidUntil, new Date()]), extension);
 
 			const archivedNotifications = existing.notifications.map((notif) => ({
 				...notif,
@@ -2165,6 +2239,11 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 						paidUntil: newPaidUntil,
 						updatedAt: new Date(),
 						notifications: [],
+						...(activePhase && {
+							pricingScheduleCursor: currentCursor + 1,
+							[`pricingScheduleSnapshot.phases.${currentCursor}.status`]: 'paid',
+							[`pricingScheduleSnapshot.phases.${currentCursor}.orderId`]: order._id
+						}),
 						...(Object.keys(updatedFreeProductsById).length !== 0 && {
 							freeProductsById: updatedFreeProductsById
 						})
@@ -2174,7 +2253,14 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 							notificationHistory: { $each: archivedNotifications }
 						}
 					}),
-					$unset: { cancelledAt: 1 }
+					$unset: {
+						cancelledAt: 1,
+						...(existing.cancelledAt &&
+							existing.pricingScheduleSnapshot && {
+								pricingScheduleSnapshot: 1,
+								pricingScheduleCursor: 1
+							})
+					}
 				},
 				{ session }
 			);
@@ -2201,16 +2287,34 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, freeProductsById);
 			}
+
+			// Fresh subscriber: if the product carries a schedule, snapshot it and bill phase 0.
+			// The cursor is set to 1 because phase 0 was just paid by this very order.
+			// Read the extension from the snapshot rather than the product config: the snapshot
+			// is expanded into unit cycles (a "3 months" phase becomes 3 monthly entries), so
+			// phase 0 always covers a single billing cycle.
+			const snapshot = buildPricingScheduleSnapshot(subscription.product);
+			const firstPhase = snapshot?.phases[0];
+			const extension = firstPhase
+				? pricingPhaseDuration(firstPhase.value, firstPhase.unit)
+				: getSubscriptionDuration(subscription.product);
+			// Phase 0 is paid by this very order; stamp it directly on the snapshot so a customer
+			// visiting the subscription can trace the first cycle back to the funding order.
+			if (snapshot) {
+				snapshot.phases[0] = { ...snapshot.phases[0], status: 'paid', orderId: order._id };
+			}
+
 			await collections.paidSubscriptions.insertOne(
 				{
 					_id: crypto.randomUUID(),
 					number: await generateSubscriptionNumber(),
 					user: order.user,
 					productId: subscription.product._id,
-					paidUntil: add(new Date(), getSubscriptionDuration(subscription.product)),
+					paidUntil: add(new Date(), extension),
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					notifications: [],
+					...(snapshot && { pricingScheduleSnapshot: snapshot, pricingScheduleCursor: 1 }),
 					...(Object.keys(freeProductsById).length !== 0 && { freeProductsById })
 				},
 				{ session }

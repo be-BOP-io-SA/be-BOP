@@ -115,6 +115,7 @@ async function fetchProduct(
 	| 'stockReference'
 	| 'tagIds'
 	| 'subscriptionDuration'
+	| 'pricingSchedule'
 > | null> {
 	return collections.products.findOne<ReturnType<Awaited<typeof fetchProduct>>>(
 		{ _id: productId },
@@ -166,7 +167,8 @@ async function fetchProduct(
 				vatProfileId: 1,
 				stockReference: 1,
 				tagIds: 1,
-				subscriptionDuration: 1
+				subscriptionDuration: 1,
+				pricingSchedule: 1
 			}
 		}
 	);

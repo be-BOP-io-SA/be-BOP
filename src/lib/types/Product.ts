@@ -54,6 +54,13 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	type: 'subscription' | 'resource' | 'donation';
 	subscriptionDuration?: SubscriptionDuration;
 	subscriptionReminderSeconds?: number;
+	pricingSchedule?: Array<{
+		value: number;
+		unit: SubscriptionDuration;
+		priceAmount: number;
+		reminderValue: number;
+		reminderUnit: SubscriptionDuration;
+	}>;
 	shipping: boolean;
 	deliveryFees?: DeliveryFees;
 	requireSpecificDeliveryFee?: boolean;

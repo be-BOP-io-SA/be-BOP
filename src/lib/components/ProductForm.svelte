@@ -102,6 +102,27 @@
 	let vatProfileId = product.vatProfileId || '';
 	let subscriptionDuration = product.subscriptionDuration || '';
 	let subscriptionReminderSeconds: number | '' = product.subscriptionReminderSeconds || '';
+	let pricingSchedule: NonNullable<Product['pricingSchedule']> = (
+		product.pricingSchedule ?? []
+	).map((p) => ({ ...p }));
+	function addPricingPhase() {
+		pricingSchedule = [
+			...pricingSchedule,
+			{ value: 1, unit: 'month', priceAmount: 0, reminderValue: 7, reminderUnit: 'day' }
+		];
+	}
+	function removePricingPhase(i: number) {
+		pricingSchedule = pricingSchedule.filter((_, idx) => idx !== i);
+	}
+	function movePricingPhase(i: number, dir: -1 | 1) {
+		const j = i + dir;
+		if (j < 0 || j >= pricingSchedule.length) {
+			return;
+		}
+		const copy = [...pricingSchedule];
+		[copy[i], copy[j]] = [copy[j], copy[i]];
+		pricingSchedule = copy;
+	}
 	let formElement: HTMLFormElement;
 	let variationInput: HTMLInputElement[] = [];
 	let disableDateChange = !isNew;
@@ -947,6 +968,122 @@
 							type="button"
 						>
 							Add variation
+						</button>
+					</div>
+				{/if}
+
+				{#if product.type === 'subscription'}
+					<div class="border-t border-gray-200 pt-4">
+						<h3 class="text-lg font-semibold">Pricing phases (promotional schedule)</h3>
+						<p class="text-sm text-gray-600 mt-1 mb-3">
+							Optional. Each phase is billed as a separate period at a fixed VAT-excluded price. The
+							first phase is billed at initial purchase, then one phase per renewal. Once the
+							schedule is exhausted, the subscription reverts to the base price and duration set
+							above. Each buyer identity (email or npub) can benefit from the schedule only once for
+							this product.
+						</p>
+
+						{#each pricingSchedule as phase, i}
+							<div class="border border-gray-300 rounded p-3 mb-2">
+								<div class="flex items-center justify-between mb-2">
+									<span class="font-semibold">Phase {i + 1}</span>
+									<div class="flex gap-1">
+										<button
+											type="button"
+											class="btn btn-gray"
+											disabled={i === 0}
+											on:click={() => movePricingPhase(i, -1)}
+											title="Move up">↑</button
+										>
+										<button
+											type="button"
+											class="btn btn-gray"
+											disabled={i === pricingSchedule.length - 1}
+											on:click={() => movePricingPhase(i, 1)}
+											title="Move down">↓</button
+										>
+										<button
+											type="button"
+											class="btn btn-red"
+											on:click={() => removePricingPhase(i)}
+											title="Delete">🗑</button
+										>
+									</div>
+								</div>
+
+								<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+									<label class="form-label">
+										Duration
+										<div class="flex gap-1">
+											<input
+												type="number"
+												min="1"
+												step="1"
+												class="form-input w-20"
+												name="pricingSchedule[{i}].value"
+												bind:value={phase.value}
+												required
+											/>
+											<select
+												class="form-input"
+												name="pricingSchedule[{i}].unit"
+												bind:value={phase.unit}
+												required
+											>
+												{#each SUBSCRIPTION_DURATIONS as d}
+													<option value={d}>{d}</option>
+												{/each}
+											</select>
+										</div>
+									</label>
+
+									<label class="form-label">
+										Price (VAT excluded)
+										<input
+											type="number"
+											min="0"
+											step="any"
+											class="form-input"
+											name="pricingSchedule[{i}].priceAmount"
+											bind:value={phase.priceAmount}
+											required
+										/>
+										<span class="text-xs text-gray-500 mt-1 block">
+											Free trial = 0. Currency inherited from the product.
+										</span>
+									</label>
+
+									<label class="form-label">
+										Reminder before end
+										<div class="flex gap-1">
+											<input
+												type="number"
+												min="0"
+												step="1"
+												class="form-input w-20"
+												name="pricingSchedule[{i}].reminderValue"
+												bind:value={phase.reminderValue}
+												required
+											/>
+											<select
+												class="form-input"
+												name="pricingSchedule[{i}].reminderUnit"
+												bind:value={phase.reminderUnit}
+												required
+											>
+												{#each SUBSCRIPTION_DURATIONS as d}
+													<option value={d}>{d}</option>
+												{/each}
+											</select>
+										</div>
+										<span class="text-xs text-gray-500 mt-1 block">0 = no reminder</span>
+									</label>
+								</div>
+							</div>
+						{/each}
+
+						<button type="button" class="btn btn-black" on:click={addPricingPhase}>
+							+ Add phase
 						</button>
 					</div>
 				{/if}

@@ -288,6 +288,24 @@ export async function addToCartInDb(
 		cartError('VARIATION_INVALID', 'error matching on variations choice');
 	}
 
+	// Subscription pricing schedule: when a fresh purchase (no prior subscription for this
+	// buyer identity) hits a product with a schedule, price the cart line at phase 1 so cart,
+	// checkout and order totals all agree. Renewals never come through addToCart — they call
+	// createOrder directly, which resolves the phase from the subscription snapshot there.
+	if (product.type === 'subscription' && product.pricingSchedule?.length) {
+		const existingSub = await collections.paidSubscriptions.findOne(
+			{ ...userQuery(params.user), productId: product._id },
+			{ projection: { _id: 1 } }
+		);
+		if (!existingSub) {
+			const phase = product.pricingSchedule[0];
+			params.customPrice = {
+				amount: phase.priceAmount,
+				currency: product.price.currency
+			};
+		}
+	}
+
 	if (existingItem && !product.standalone && !product.bookingSpec) {
 		existingItem.quantity = params.totalQuantity ? quantity : existingItem.quantity + quantity;
 
@@ -302,6 +320,9 @@ export async function addToCartInDb(
 
 		if (product.type === 'subscription') {
 			existingItem.quantity = 1;
+			if (params.customPrice) {
+				existingItem.customPrice = params.customPrice;
+			}
 		}
 		existingItem.reservedUntil = addMinutes(new Date(), runtimeConfig.reserveStockInMinutes);
 	} else {
