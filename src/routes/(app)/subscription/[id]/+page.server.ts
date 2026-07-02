@@ -157,6 +157,7 @@ export const actions: Actions = {
 					locale: locals.language,
 					user: subscription.user,
 					shippingAddress: lastOrder.shippingAddress,
+					billingAddress: lastOrder.billingAddress ?? lastOrder.shippingAddress ?? undefined,
 					userVatCountry:
 						lastOrder.shippingAddress?.country ||
 						locals.countryCode ||
