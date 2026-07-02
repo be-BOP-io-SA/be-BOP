@@ -2239,7 +2239,11 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 						paidUntil: newPaidUntil,
 						updatedAt: new Date(),
 						notifications: [],
-						...(activePhase && { pricingScheduleCursor: currentCursor + 1 }),
+						...(activePhase && {
+							pricingScheduleCursor: currentCursor + 1,
+							[`pricingScheduleSnapshot.phases.${currentCursor}.status`]: 'paid',
+							[`pricingScheduleSnapshot.phases.${currentCursor}.orderId`]: order._id
+						}),
 						...(Object.keys(updatedFreeProductsById).length !== 0 && {
 							freeProductsById: updatedFreeProductsById
 						})
@@ -2294,6 +2298,11 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			const extension = firstPhase
 				? pricingPhaseDuration(firstPhase.value, firstPhase.unit)
 				: getSubscriptionDuration(subscription.product);
+			// Phase 0 is paid by this very order; stamp it directly on the snapshot so a customer
+			// visiting the subscription can trace the first cycle back to the funding order.
+			if (snapshot) {
+				snapshot.phases[0] = { ...snapshot.phases[0], status: 'paid', orderId: order._id };
+			}
 
 			await collections.paidSubscriptions.insertOne(
 				{

@@ -14,9 +14,30 @@ import { userQuery } from '$lib/server/user.js';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { error, fail, redirect } from '@sveltejs/kit';
-import { subHours, subSeconds } from 'date-fns';
+import { add, subHours, subSeconds } from 'date-fns';
 import { z } from 'zod';
 import type { Actions } from './$types';
+import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
+
+/**
+ * Local mirror of orders.ts::pricingPhaseDuration for calendar-accurate date arithmetic on
+ * upcoming phase ranges (`date-fns/add` handles month/year wrap-around correctly, whereas a
+ * plain seconds delta would drift on 30/31-day months and leap years).
+ */
+function phaseDurationObj(value: number, unit: SubscriptionDuration) {
+	switch (unit) {
+		case 'hour':
+			return { hours: value };
+		case 'day':
+			return { days: value };
+		case 'week':
+			return { weeks: value };
+		case 'month':
+			return { months: value };
+		case 'year':
+			return { years: value };
+	}
+}
 
 export async function load({ params, locals }: { params: { id: string }; locals: App.Locals }) {
 	const subscription = await collections.paidSubscriptions.findOne({
@@ -114,6 +135,63 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		: resolveSubscriptionReminderSeconds(product);
 	const canRenewAfter = subSeconds(subscription.paidUntil, canRenewReminderSeconds);
 
+	// Build the "prochaines phases" panel: consecutive un-billed cycles in the snapshot that
+	// share the same (unit, priceAmount) come from a single configured phase — collapse them
+	// back into date ranges so the customer sees "du 09/07 au 09/10 : 21 CHF" instead of three
+	// identical monthly lines.
+	const upcomingPhases: Array<{ start: Date; end: Date; amount: number; currency: string }> = [];
+	let postScheduleStart = subscription.paidUntil;
+	if (subscription.pricingScheduleSnapshot) {
+		const phases = subscription.pricingScheduleSnapshot.phases;
+		const currency = subscription.pricingScheduleSnapshot.currency;
+		let i = subscription.pricingScheduleCursor ?? 0;
+		let start = subscription.paidUntil;
+		while (i < phases.length) {
+			let runEnd = i;
+			while (
+				runEnd + 1 < phases.length &&
+				phases[runEnd + 1].unit === phases[i].unit &&
+				phases[runEnd + 1].priceAmount === phases[i].priceAmount
+			) {
+				runEnd++;
+			}
+			const cyclesInRun = runEnd - i + 1;
+			const end = add(start, phaseDurationObj(cyclesInRun, phases[i].unit));
+			upcomingPhases.push({ start, end, amount: phases[i].priceAmount, currency });
+			start = end;
+			i = runEnd + 1;
+		}
+		postScheduleStart = start;
+	}
+
+	// Order history for this subscription. Bound by `createdAt >= subscription.createdAt` so a
+	// prior cancelled subscription for the same product doesn't leak into the current one's
+	// history. Ordered oldest → newest so the first phase's funding order shows up on top.
+	const paidOrders = await collections.orders
+		.find(
+			{
+				'items.product._id': subscription.productId,
+				'payments.status': 'paid',
+				...userQuery(subscription.user),
+				createdAt: { $gte: subscription.createdAt }
+			},
+			{
+				sort: { createdAt: 1 },
+				projection: { _id: 1, number: 1, currencySnapshot: 1, payments: 1 }
+			}
+		)
+		.toArray();
+	const orderHistory = paidOrders.map((order) => {
+		const paidPayment = order.payments.find((p) => p.status === 'paid');
+		return {
+			_id: order._id,
+			number: order.number,
+			amount: order.currencySnapshot?.main?.totalPrice?.amount ?? 0,
+			currency: order.currencySnapshot?.main?.totalPrice?.currency ?? '',
+			paidPaymentId: paidPayment?._id.toString()
+		};
+	});
+
 	return {
 		subscription: {
 			createdAt: subscription.createdAt,
@@ -125,11 +203,18 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		product: {
 			_id: product._id,
 			name: product.name,
-			subscriptionDuration: resolveSubscriptionDuration(product)
+			subscriptionDuration: resolveSubscriptionDuration(product),
+			priceAmount: product.price.amount,
+			priceCurrency: product.price.currency
 		},
 		picture: picture ?? undefined,
 		canRenew: canRenewAfter < new Date(),
 		canRenewAfter,
+		snapshot: subscription.pricingScheduleSnapshot,
+		cursor: subscription.pricingScheduleCursor ?? 0,
+		upcomingPhases,
+		postScheduleStart,
+		orderHistory,
 		nextBilling: {
 			amount: nextBillingAmount,
 			currency: nextBillingCurrency

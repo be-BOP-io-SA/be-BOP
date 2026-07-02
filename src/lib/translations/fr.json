@@ -1073,6 +1073,16 @@
 		"noSubscriptions": "Vous n'avez pas encore d'abonnements.",
 		"nextBilling": "Prochaine facturation : {amount} {currency}",
 		"canRenewFrom": "Vous pourrez renouveler à partir du <0></0>.",
+		"amountFree": "Gratuit",
+		"upcomingPhases": {
+			"title": "Prochaines phases",
+			"range": "du {start} au {end}",
+			"after": "à partir du {start}"
+		},
+		"orderHistory": {
+			"title": "Historique des commandes",
+			"downloadInvoice": "Télécharger la facture"
+		},
 		"payment": {
 			"currentMethod": "Le renouvellement utilisera {method}",
 			"previousUnavailable": "Le précédent mode de paiement ({method}) ne peut plus être utilisé pour ce renouvellement. Choisissez-en un autre ci-dessous.",

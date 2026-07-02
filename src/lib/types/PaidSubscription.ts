@@ -50,6 +50,14 @@ export interface PaidSubscription extends Timestamps {
 			priceAmount: number;
 			reminderValue: number;
 			reminderUnit: SubscriptionDuration;
+			/**
+			 * Absence = still due (pending). Set to `paid` when the order that funded the phase
+			 * settles; kept together with `orderId` so the customer can trace each billing back
+			 * to the order that paid it (and, later on, so the reminder cron can distinguish a
+			 * legitimately-past-schedule sub from one whose renewal simply hasn't happened yet).
+			 */
+			status?: 'paid';
+			orderId?: string;
 		}>;
 	};
 

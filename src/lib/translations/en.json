@@ -1075,6 +1075,16 @@
 		"noSubscriptions": "You have no subscriptions yet.",
 		"nextBilling": "Next billing: {amount} {currency}",
 		"canRenewFrom": "You'll be able to renew from <0></0>.",
+		"amountFree": "Free",
+		"upcomingPhases": {
+			"title": "Upcoming phases",
+			"range": "from {start} to {end}",
+			"after": "from {start}"
+		},
+		"orderHistory": {
+			"title": "Order history",
+			"downloadInvoice": "Download invoice"
+		},
 		"payment": {
 			"currentMethod": "Renewal will use {method}",
 			"previousUnavailable": "The previous payment method ({method}) can't be used for the next renewal. Choose another one below.",
