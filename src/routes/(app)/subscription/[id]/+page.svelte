@@ -128,7 +128,10 @@
 							end: new Date(phase.end).toLocaleDateString($locale)
 						})} : {phase.amount === 0
 							? t('subscription.amountFree')
-							: `${phase.amount} ${phase.currency}`}
+							: `${phase.amount} ${phase.currency} / ${t(
+									'product.pricingScheduleUnit.' + phase.unit,
+									{ count: 1 }
+							  )}`}
 					</li>
 				{/each}
 				<li>
@@ -136,7 +139,10 @@
 						start: new Date(data.postScheduleStart).toLocaleDateString($locale)
 					})} : {data.product.priceAmount === 0
 						? t('subscription.amountFree')
-						: `${data.product.priceAmount} ${data.product.priceCurrency}`}
+						: `${data.product.priceAmount} ${data.product.priceCurrency} / ${t(
+								'product.pricingScheduleUnit.' + data.product.subscriptionDuration,
+								{ count: 1 }
+						  )}`}
 				</li>
 			</ul>
 		</section>
