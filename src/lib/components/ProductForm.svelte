@@ -102,9 +102,9 @@
 	let vatProfileId = product.vatProfileId || '';
 	let subscriptionDuration = product.subscriptionDuration || '';
 	let subscriptionReminderSeconds: number | '' = product.subscriptionReminderSeconds || '';
-	let pricingSchedule: NonNullable<Product['pricingSchedule']> = (product.pricingSchedule ?? []).map(
-		(p) => ({ ...p })
-	);
+	let pricingSchedule: NonNullable<Product['pricingSchedule']> = (
+		product.pricingSchedule ?? []
+	).map((p) => ({ ...p }));
 	function addPricingPhase() {
 		pricingSchedule = [
 			...pricingSchedule,
@@ -489,11 +489,11 @@
 					<div class="border-t border-gray-200 pt-4">
 						<h3 class="text-lg font-semibold">Pricing phases (promotional schedule)</h3>
 						<p class="text-sm text-gray-600 mt-1 mb-3">
-							Optional. Each phase is billed as a separate period at a fixed VAT-excluded price.
-							The first phase is billed at initial purchase, then one phase per renewal. Once the
+							Optional. Each phase is billed as a separate period at a fixed VAT-excluded price. The
+							first phase is billed at initial purchase, then one phase per renewal. Once the
 							schedule is exhausted, the subscription reverts to the base price and duration set
-							above. Each buyer identity (email or npub) can benefit from the schedule only once
-							for this product.
+							above. Each buyer identity (email or npub) can benefit from the schedule only once for
+							this product.
 						</p>
 
 						{#each pricingSchedule as phase, i}
