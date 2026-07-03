@@ -1183,6 +1183,10 @@
 		"instructionsPlaceholder": "Comment les clients doivent payer, et comment vous joindre pour confirmer le paiement.",
 		"add": "Ajouter un moyen de paiement",
 		"remove": "Supprimer",
+		"untitled": "Moyen de paiement {number}",
+		"empty": "Aucun moyen de paiement personnalisé pour l'instant. Ajoutez-en un pour le proposer au paiement.",
+		"moveUp": "Monter",
+		"moveDown": "Descendre",
 		"save": "Enregistrer",
 		"saved": "Enregistré"
 	}
