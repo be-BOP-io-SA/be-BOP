@@ -55,12 +55,15 @@
 
 <form method="post" class="flex flex-col gap-4 mt-6" bind:this={formEl} use:enhance>
 	<!-- Submit the whole list as one JSON field: robust to add/remove/reorder (no index-named
-	     fields that can go stale on a keyed each). -->
+	     fields that can go stale on a keyed each). Fully-empty rows (e.g. a just-added, untouched
+	     one) are never submitted, so they aren't saved. -->
 	<input
 		type="hidden"
 		name="methods"
 		value={JSON.stringify(
-			methods.map((m) => ({ id: m.id, label: m.label, instructions: m.instructions }))
+			methods
+				.filter((m) => m.label.trim().length > 0 || m.instructions.trim().length > 0)
+				.map((m) => ({ id: m.id, label: m.label, instructions: m.instructions }))
 		)}
 	/>
 
