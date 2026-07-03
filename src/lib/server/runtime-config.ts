@@ -83,11 +83,13 @@ const baseConfig = {
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
 	/**
-	 * Generic manual/asynchronous payment method: the admin gives it a label and free-text
-	 * instructions, the customer is shown the instructions with no QR, and an admin validates the
-	 * payment manually.
+	 * Generic manual/asynchronous payment methods: the admin defines any number of them, each with
+	 * a label and free-text instructions. The customer is shown the chosen method's instructions
+	 * with no QR, and an admin validates the payment manually. The shared `'custom'` payment method
+	 * is available whenever at least one is configured; each order payment references the chosen one
+	 * by `customPaymentMethodId`.
 	 */
-	customPaymentMethod: { enabled: false, label: '', instructions: '' },
+	customPaymentMethods: [] as Array<{ id: string; label: string; instructions: string }>,
 	subscriptionNumber: 0,
 	themeChangeNumber: 0,
 	isMaintenance: false,

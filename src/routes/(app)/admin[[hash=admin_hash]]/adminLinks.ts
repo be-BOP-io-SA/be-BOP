@@ -179,7 +179,7 @@ export const adminLinks: AdminLinks = [
 			},
 			{
 				href: '/admin/config/payment',
-				label: 'Custom payment method'
+				label: 'Custom payment methods'
 			}
 		]
 	},

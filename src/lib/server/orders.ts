@@ -773,6 +773,7 @@ export async function createOrder(
 		onLocation?: boolean;
 		paymentTimeOut?: number;
 		posSubtype?: string;
+		customPaymentMethodId?: string;
 		peopleCountFromPosUi?: number;
 		session?: ClientSession;
 		promoCode?: string;
@@ -1823,7 +1824,11 @@ export async function createOrder(
 					session,
 					expiresAt,
 					...(paymentMethod === 'point-of-sale' &&
-						params.posSubtype && { posSubtype: params.posSubtype })
+						params.posSubtype && { posSubtype: params.posSubtype }),
+					...(paymentMethod === 'custom' &&
+						params.customPaymentMethodId && {
+							customPaymentMethodId: params.customPaymentMethodId
+						})
 				}
 			);
 			order.payments.push(orderPayment);
@@ -2035,6 +2040,7 @@ export async function addOrderPayment(
 		expiresAt?: Date | null;
 		session?: ClientSession;
 		posSubtype?: string;
+		customPaymentMethodId?: string;
 		ignorePendingPayments?: boolean;
 	}
 ) {
@@ -2081,6 +2087,8 @@ export async function addOrderPayment(
 		method: paymentMethod,
 		price: paymentPrice(paymentMethod, priceToPay),
 		...(paymentMethod === 'point-of-sale' && opts?.posSubtype && { posSubtype: opts.posSubtype }),
+		...(paymentMethod === 'custom' &&
+			opts?.customPaymentMethodId && { customPaymentMethodId: opts.customPaymentMethodId }),
 		currencySnapshot: {
 			main: {
 				price: {

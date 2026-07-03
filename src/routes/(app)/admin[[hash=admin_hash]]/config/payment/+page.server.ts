@@ -1,9 +1,12 @@
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { collections } from '$lib/server/database';
+import { set } from '$lib/utils/set';
+import { z } from 'zod';
+import type { JsonObject } from 'type-fest';
 
 export function load() {
 	return {
-		customPaymentMethod: runtimeConfig.customPaymentMethod
+		customPaymentMethods: runtimeConfig.customPaymentMethods
 	};
 }
 
@@ -11,21 +14,44 @@ export const actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 
-		const customPaymentMethod = {
-			enabled: formData.get('customPaymentMethodEnabled') === 'on',
-			label: String(formData.get('customPaymentMethodLabel') ?? ''),
-			instructions: String(formData.get('customPaymentMethodInstructions') ?? '')
-		};
+		const json: JsonObject = {};
+		for (const [key, value] of formData) {
+			set(json, key, value);
+		}
+
+		const parsed = z
+			.object({
+				customPaymentMethods: z
+					.array(
+						z.object({
+							id: z.string().trim().optional(),
+							label: z.string().trim(),
+							instructions: z.string()
+						})
+					)
+					.default([])
+			})
+			.parse(json);
+
+		// Drop empty rows (no label); keep stable ids, mint one for new rows so existing orders that
+		// reference a method by id keep resolving.
+		const customPaymentMethods = parsed.customPaymentMethods
+			.filter((method) => method.label.length > 0)
+			.map((method) => ({
+				id: method.id || crypto.randomUUID(),
+				label: method.label,
+				instructions: method.instructions
+			}));
 
 		await collections.runtimeConfig.updateOne(
-			{ _id: 'customPaymentMethod' },
+			{ _id: 'customPaymentMethods' },
 			{
-				$set: { data: customPaymentMethod, updatedAt: new Date() },
+				$set: { data: customPaymentMethods, updatedAt: new Date() },
 				$setOnInsert: { createdAt: new Date() }
 			},
 			{ upsert: true }
 		);
-		runtimeConfig.customPaymentMethod = customPaymentMethod;
+		runtimeConfig.customPaymentMethods = customPaymentMethods;
 
 		return { success: true };
 	}

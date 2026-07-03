@@ -1,5 +1,5 @@
 import { collections, withTransaction } from '$lib/server/database';
-import { paymentMethods } from '$lib/server/payment-methods';
+import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -187,6 +187,10 @@ export async function load({ parent, locals }) {
 
 	return {
 		paymentMethods: methods,
+		customPaymentMethods: runtimeConfig.customPaymentMethods.map(({ id, label }) => ({
+			id,
+			label
+		})),
 		discountByContext,
 		relevantShipCountries,
 		relevantBillCountries,
@@ -406,13 +410,26 @@ export const actions = {
 					.parse(Object.fromEntries(formData)).multiplePaymentMethods
 			: false;
 
-		const paymentMethod = multiplePaymentMethods
-			? null
-			: z
-					.object({
-						paymentMethod: z.enum([methods[0], ...methods.slice(1)])
-					})
-					.parse(Object.fromEntries(formData)).paymentMethod;
+		// A custom payment method is submitted as `custom:<id>`; map it back to method 'custom' plus
+		// the chosen customPaymentMethodId. Everything else is a plain PaymentMethod enum value.
+		const rawPaymentMethod = String(formData.get('paymentMethod') ?? '');
+		let paymentMethod: PaymentMethod | null;
+		let customPaymentMethodId: string | undefined;
+		if (multiplePaymentMethods) {
+			paymentMethod = null;
+		} else if (rawPaymentMethod.startsWith('custom:')) {
+			const id = rawPaymentMethod.slice('custom:'.length);
+			if (
+				!methods.includes('custom') ||
+				!runtimeConfig.customPaymentMethods.some((m) => m.id === id)
+			) {
+				throw error(400, 'Invalid payment method');
+			}
+			paymentMethod = 'custom';
+			customPaymentMethodId = id;
+		} else {
+			paymentMethod = z.enum([methods[0], ...methods.slice(1)]).parse(rawPaymentMethod);
+		}
 
 		const posSubtype =
 			paymentMethod === 'point-of-sale'
@@ -601,6 +618,7 @@ export const actions = {
 						locale: locals.language,
 						user: userIdentifier(locals),
 						...(posSubtype && { posSubtype }),
+						...(customPaymentMethodId && { customPaymentMethodId }),
 						notifications: {
 							paymentStatus: {
 								npub: npubAddress,

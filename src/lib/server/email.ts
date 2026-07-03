@@ -111,9 +111,7 @@ export async function queueEmail(
 			websiteLink: ORIGIN,
 			brandName: runtimeConfig.brandName,
 			iban: runtimeConfig.sellerIdentity?.bank?.iban,
-			bic: runtimeConfig.sellerIdentity?.bank?.bic,
-			customPaymentLabel: runtimeConfig.customPaymentMethod?.label,
-			customPaymentInstructions: runtimeConfig.customPaymentMethod?.instructions
+			bic: runtimeConfig.sellerIdentity?.bank?.bic
 		},
 		(key) => key.toLowerCase()
 	);

@@ -151,6 +151,9 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 			awaitingConfirmation: payment.awaitingConfirmation ?? false,
 			...(payment.bankTransferNumber && { bankTransferNumber: payment.bankTransferNumber }),
 			...(payment.detail && { detail: payment.detail }),
+			...(payment.customPaymentMethodId && {
+				customPaymentMethodId: payment.customPaymentMethodId
+			}),
 			...(payment.cashbackAmount && { cashbackAmount: payment.cashbackAmount })
 		})),
 		items: order.items.map((item) => ({
