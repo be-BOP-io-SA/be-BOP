@@ -217,6 +217,7 @@
 		},
 		"paymentMethod": {
 			"bank-transfer": "overschrijving",
+			"custom": "Aangepaste betaling",
 			"bitcoin": "Onchain",
 			"card": "Kredietkaart",
 			"cash": "Contant geld",
@@ -617,6 +618,7 @@
 		"paidAt": "Betaald op <0></0>",
 		"paidWith": {
 			"bank-transfer": "Betaald met: geverifieerde bankoverschrijving",
+			"custom": "Betaald met: aangepaste betaalmethode",
 			"bitcoin": "Betaald met: Bitcoin on-chain betaling (1 {paymentCurrency} = {exchangeRate} {mainCurrency} op het moment van de bestelling)",
 			"card": "Betaald met: bankkaart",
 			"free": "Niets betaald",
@@ -628,6 +630,7 @@
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Betaald met: geverifieerde bankoverschrijving",
+			"custom": "Betaald met: aangepaste betaalmethode",
 			"bitcoin": "Betaald met: Bitcoin on-chain betaling",
 			"card": "Betaald met: bankkaart",
 			"free": "Niets betaald",
@@ -1141,5 +1144,24 @@
 		},
 		"reopenAria": "Cookievoorkeuren",
 		"reopenIdentity": "Cookievoorkeuren beheren"
+	},
+	"customPaymentMethod": {
+		"title": "Aangepaste betaalmethoden",
+		"help": "Definieer een willekeurig aantal generieke handmatige betaalmethoden, elk met een label en vrije-tekstinstructies die klanten vertellen hoe ze moeten betalen. Klanten zien de instructies van de gekozen methode zonder QR-code, en u valideert elke betaling handmatig vanaf de bestelpagina.",
+		"label": "Label (zichtbaar voor klanten)",
+		"labelPlaceholder": "Naam van de betaalmethode",
+		"instructions": "Instructies (zichtbaar voor klanten)",
+		"instructionsPlaceholder": "Hoe klanten moeten betalen en hoe ze u kunnen bereiken zodat u de betaling kunt bevestigen.",
+		"add": "Betaalmethode toevoegen",
+		"remove": "Verwijderen",
+		"untitled": "Betaalmethode {number}",
+		"empty": "Nog geen aangepaste betaalmethoden. Voeg er een toe om deze bij het afrekenen aan te bieden.",
+		"moveUp": "Omhoog",
+		"moveDown": "Omlaag",
+		"save": "Opslaan",
+		"saved": "Opgeslagen",
+		"errorLabelRequired": "Elke betaalmethode heeft een label nodig.",
+		"removeConfirm": "Deze methode verwijderen?",
+		"cancel": "Annuleren"
 	}
 }

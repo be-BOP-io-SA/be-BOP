@@ -217,6 +217,7 @@
 		},
 		"paymentMethod": {
 			"bank-transfer": "Transferencia bancaria",
+			"custom": "Pago personalizado",
 			"bitcoin": "Onchain",
 			"card": "Tarjeta de crédito",
 			"cash": "Efectivo",
@@ -617,6 +618,7 @@
 		"paidAt": "Pagado el <0></0>",
 		"paidWith": {
 			"bank-transfer": "Pagado con: transferencia bancaria verificada",
+			"custom": "Pagado con: método de pago personalizado",
 			"bitcoin": "Pagado con: pago en Bitcoin (1 {paymentCurrency} = {exchangeRate} {mainCurrency} al momento del pedido)",
 			"card": "Pagado con: tarjeta bancaria",
 			"free": "No se pagó nada",
@@ -628,6 +630,7 @@
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Pagado con: transferencia bancaria verificada",
+			"custom": "Pagado con: método de pago personalizado",
 			"bitcoin": "Pagado con: transferencia de Bitcoin",
 			"card": "Pagado con: tarjeta bancaria",
 			"free": "No se pagó nada",
@@ -1141,5 +1144,24 @@
 		},
 		"reopenAria": "Preferencias de cookies",
 		"reopenIdentity": "Gestionar mis preferencias de cookies"
+	},
+	"customPaymentMethod": {
+		"title": "Métodos de pago personalizados",
+		"help": "Defina cualquier número de métodos de pago manuales genéricos, cada uno con una etiqueta e instrucciones de texto libre que indiquen a los clientes cómo pagar. Los clientes ven las instrucciones del método elegido sin código QR, y usted valida cada pago manualmente desde la página del pedido.",
+		"label": "Etiqueta (visible para los clientes)",
+		"labelPlaceholder": "Nombre del método de pago",
+		"instructions": "Instrucciones (visibles para los clientes)",
+		"instructionsPlaceholder": "Cómo deben pagar los clientes y cómo contactarle para que pueda confirmar el pago.",
+		"add": "Agregar un método de pago",
+		"remove": "Eliminar",
+		"untitled": "Método de pago {number}",
+		"empty": "Aún no hay métodos de pago personalizados. Agregue uno para ofrecerlo en el pago.",
+		"moveUp": "Subir",
+		"moveDown": "Bajar",
+		"save": "Guardar",
+		"saved": "Guardado",
+		"errorLabelRequired": "Cada método de pago necesita una etiqueta.",
+		"removeConfirm": "¿Eliminar este método?",
+		"cancel": "Cancelar"
 	}
 }
