@@ -1181,6 +1181,8 @@
 		"label": "Libellé (affiché aux clients)",
 		"labelPlaceholder": "Nom du moyen de paiement",
 		"instructions": "Instructions (affichées aux clients)",
-		"instructionsPlaceholder": "Comment les clients doivent payer, et comment vous joindre pour confirmer le paiement."
+		"instructionsPlaceholder": "Comment les clients doivent payer, et comment vous joindre pour confirmer le paiement.",
+		"save": "Enregistrer",
+		"saved": "Enregistré"
 	}
 }
