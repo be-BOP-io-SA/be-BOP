@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { useI18n } from '$lib/i18n';
 	import { cookieConsentVisible } from '$lib/stores/cookieConsentVisible';
 
@@ -52,6 +53,12 @@
 				};
 				injectAnalyticsSnippet(analyticsScriptSnippet ?? '');
 			}
+			// Re-run the root layout loader so `data.analyticsConsent` flips from `null` to
+			// `'accepted' | 'denied'`. Without this the banner would stay visible — the display
+			// gate reads `data.analyticsConsent === null || $cookieConsentVisible`, and clearing
+			// only the store leaves the first branch true. `<svelte:head>` also re-renders the
+			// snippet as inert text; scripts are already executing via `injectAnalyticsSnippet`.
+			await invalidateAll();
 		} finally {
 			loading = false;
 		}
