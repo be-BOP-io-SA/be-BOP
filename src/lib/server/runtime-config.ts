@@ -334,7 +334,7 @@ const baseConfig = {
 		removeBebobLogo: false
 	},
 	posSession: {
-		enabled: false,
+		enabled: true,
 		allowXTicketEditing: false,
 		cashDeltaJustificationMandatory: false,
 		lockItemsAfterMidTicket: true,
