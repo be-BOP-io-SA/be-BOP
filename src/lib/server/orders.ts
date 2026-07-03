@@ -87,7 +87,7 @@ import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import { resolveProcessor } from './sdk/pp';
 import { pojo } from './pojo';
 import { logAccountingEvent } from './accounting-log';
-import { orderVatAccountingSnapshot } from './orderVatSnapshot';
+import { orderCurrencyAmounts, orderVatAccountingSnapshot } from './orderVatSnapshot';
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
 	const other = await collections.orders.findOne({
@@ -424,7 +424,7 @@ export async function onOrderPayment(
 						vat: orderVatAccountingSnapshot(order),
 						...(order.discount && { discount: order.discount }),
 						...(order.currencySnapshot?.main?.discount && {
-							discountAmount: order.currencySnapshot.main.discount
+							discountAmount: orderCurrencyAmounts(order, (entry) => entry.discount)
 						})
 					},
 					objectId: order._id.toString(),
@@ -2138,10 +2138,10 @@ export async function addOrderPayment(
 					method: paymentMethod,
 					paymentId: payment._id.toString(),
 					vat: orderVatAccountingSnapshot(order),
-					totalPrice: order.currencySnapshot?.main?.totalPrice,
+					totalPrice: orderCurrencyAmounts(order, (entry) => entry.totalPrice),
 					...(order.discount && { discount: order.discount }),
 					...(order.currencySnapshot?.main?.discount && {
-						discountAmount: order.currencySnapshot.main.discount
+						discountAmount: orderCurrencyAmounts(order, (entry) => entry.discount)
 					})
 				},
 				objectId: order._id.toString(),
