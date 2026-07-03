@@ -9,6 +9,14 @@
 	export let required = true;
 
 	const { t } = useI18n();
+
+	// Same pattern as checkout: auto-select the first eligible method when the parent seeds an
+	// unusable value (`''` on first mount, or a method that just dropped off the eligible list
+	// because the shop disabled it, etc.). Keeps POS operators one click ahead — they hit the
+	// screen already primed on their default method.
+	$: if (methods.length > 0 && !methods.includes(value as PaymentMethod)) {
+		value = methods[0];
+	}
 </script>
 
 <label class="form-label col-span-6">
