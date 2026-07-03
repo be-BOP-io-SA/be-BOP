@@ -9,7 +9,7 @@ import { ORIGIN } from '$lib/server/env-config';
 import { Kind } from 'nostr-tools';
 import { queueEmail } from '../email';
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
-import { resolveSubscriptionReminderSeconds, subscriptionUnitToSeconds } from '../subscriptions';
+import { currentFundingReminderSeconds } from '../subscriptions';
 
 /** Per-product reminder is capped at the same 7 days as the global (see
  * admin/config and product-schema), so this window always catches every
@@ -20,22 +20,6 @@ async function isSubscriptionDueForReminder(
 	subscription: PaidSubscription,
 	now: Date
 ): Promise<boolean> {
-	// The cursor points at the phase to bill on the *next* renewal, so the phase that funded
-	// the *current* period (up to paidUntil) is at `cursor - 1`. Its reminder offset is what
-	// counts for "how long before paidUntil to warn the customer". Past-schedule (or legacy
-	// subscriptions with no snapshot) fall back to the product-level reminder.
-	const currentPhaseIndex = (subscription.pricingScheduleCursor ?? 0) - 1;
-	const activePhase = subscription.pricingScheduleSnapshot?.phases[currentPhaseIndex];
-	if (activePhase) {
-		const reminderSeconds = subscriptionUnitToSeconds(
-			activePhase.reminderValue,
-			activePhase.reminderUnit
-		);
-		if (reminderSeconds === 0) {
-			return false;
-		}
-		return subSeconds(subscription.paidUntil, reminderSeconds) <= now;
-	}
 	const product = await collections.products.findOne(
 		{ _id: subscription.productId },
 		{ projection: { subscriptionReminderSeconds: 1 } }
@@ -43,7 +27,11 @@ async function isSubscriptionDueForReminder(
 	if (!product) {
 		return false;
 	}
-	return subSeconds(subscription.paidUntil, resolveSubscriptionReminderSeconds(product)) <= now;
+	const reminderSeconds = currentFundingReminderSeconds(subscription, product);
+	if (reminderSeconds === 0) {
+		return false;
+	}
+	return subSeconds(subscription.paidUntil, reminderSeconds) <= now;
 }
 
 const lock = new Lock('paid-subscriptions');

@@ -5,9 +5,8 @@ import {
 	PaymentGenerationError
 } from '$lib/server/orders';
 import {
-	resolveSubscriptionDuration,
-	resolveSubscriptionReminderSeconds,
-	subscriptionUnitToSeconds
+	currentFundingReminderSeconds,
+	resolveSubscriptionDuration
 } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userQuery } from '$lib/server/user.js';
@@ -122,18 +121,10 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		{ sort: { createdAt: 1 } }
 	);
 
-	// The cursor points at the phase to bill on the *next* renewal, so the phase that funded
-	// the *current* period sits at `cursor - 1`. Its reminder offset is what canRenew must
-	// use so the "renew" button appears at the same moment the reminder email is sent.
-	// Past-schedule, cancelled or legacy subs fall back to the product-level reminder.
-	const currentPhaseIndex = (subscription.pricingScheduleCursor ?? 0) - 1;
-	const activePhase = subscription.cancelledAt
-		? undefined
-		: subscription.pricingScheduleSnapshot?.phases[currentPhaseIndex];
-	const canRenewReminderSeconds = activePhase
-		? subscriptionUnitToSeconds(activePhase.reminderValue, activePhase.reminderUnit)
-		: resolveSubscriptionReminderSeconds(product);
-	const canRenewAfter = subSeconds(subscription.paidUntil, canRenewReminderSeconds);
+	const canRenewAfter = subSeconds(
+		subscription.paidUntil,
+		currentFundingReminderSeconds(subscription, product)
+	);
 
 	// Build the "prochaines phases" panel: consecutive un-billed cycles in the snapshot that
 	// share the same (unit, priceAmount) come from a single configured phase — collapse them
