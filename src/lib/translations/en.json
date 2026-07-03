@@ -1190,6 +1190,9 @@
 		"moveUp": "Move up",
 		"moveDown": "Move down",
 		"save": "Save",
-		"saved": "Saved"
+		"saved": "Saved",
+		"errorLabelRequired": "Every payment method needs a label.",
+		"removeConfirm": "Remove this method?",
+		"cancel": "Cancel"
 	}
 }

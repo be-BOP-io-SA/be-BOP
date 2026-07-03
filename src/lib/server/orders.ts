@@ -2080,6 +2080,21 @@ export async function addOrderPayment(
 	const isFreePayment = paymentMethod === 'free';
 	const paidAt = isFreePayment ? new Date() : undefined;
 
+	// Snapshot the chosen custom method so later config edits/removals don't change this order.
+	const customPaymentMethod =
+		paymentMethod === 'custom' && opts?.customPaymentMethodId
+			? (() => {
+					const chosen = runtimeConfig.customPaymentMethods.find(
+						(m) => m.id === opts.customPaymentMethodId
+					);
+					return {
+						id: opts.customPaymentMethodId,
+						label: chosen?.label ?? '',
+						instructions: chosen?.instructions ?? ''
+					};
+			  })()
+			: undefined;
+
 	const payment: OrderPayment = {
 		_id: paymentId,
 		status: isFreePayment ? 'paid' : 'pending',
@@ -2087,8 +2102,7 @@ export async function addOrderPayment(
 		method: paymentMethod,
 		price: paymentPrice(paymentMethod, priceToPay),
 		...(paymentMethod === 'point-of-sale' && opts?.posSubtype && { posSubtype: opts.posSubtype }),
-		...(paymentMethod === 'custom' &&
-			opts?.customPaymentMethodId && { customPaymentMethodId: opts.customPaymentMethodId }),
+		...(customPaymentMethod && { customPaymentMethod }),
 		currencySnapshot: {
 			main: {
 				price: {
