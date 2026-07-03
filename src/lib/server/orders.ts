@@ -87,6 +87,7 @@ import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import { resolveProcessor } from './sdk/pp';
 import { pojo } from './pojo';
 import { logAccountingEvent } from './accounting-log';
+import { orderVatAccountingSnapshot } from './orderVatSnapshot';
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
 	const other = await collections.orders.findOne({
@@ -420,7 +421,7 @@ export async function onOrderPayment(
 						paymentId: payment._id.toString(),
 						invoiceNumber,
 						received,
-						vat: order.vat,
+						vat: orderVatAccountingSnapshot(order),
 						...(order.discount && { discount: order.discount }),
 						...(order.currencySnapshot?.main?.discount && {
 							discountAmount: order.currencySnapshot.main.discount
@@ -1559,7 +1560,11 @@ export async function createOrder(
 			})),
 			...(params.shippingAddress && { shippingAddress: params.shippingAddress }),
 			...(billingAddress && { billingAddress: billingAddress }),
-			...(priceInfo.vat.length && { vat: priceInfo.vat }),
+			...(priceInfo.vat.length && {
+				// Store only the per-rate breakdown; amounts are snapshotted per configured currency
+				// in currencySnapshot.*.vat (issue #2492), never in the internal SAT unit.
+				vat: priceInfo.vat.map(({ rate, country }) => ({ rate, country }))
+			}),
 			...(shippingPrice
 				? {
 						shippingPrice
@@ -2132,7 +2137,7 @@ export async function addOrderPayment(
 				after: {
 					method: paymentMethod,
 					paymentId: payment._id.toString(),
-					vat: order.vat,
+					vat: orderVatAccountingSnapshot(order),
 					totalPrice: order.currencySnapshot?.main?.totalPrice,
 					...(order.discount && { discount: order.discount }),
 					...(order.currencySnapshot?.main?.discount && {

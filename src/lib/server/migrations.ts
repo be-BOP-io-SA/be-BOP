@@ -1,8 +1,8 @@
-import { ClientSession, ObjectId } from 'mongodb';
+import { ClientSession, ObjectId, type Filter } from 'mongodb';
 import { collections, withTransaction } from './database';
 import { marked } from 'marked';
 import { env } from '$env/dynamic/private';
-import type { OrderPayment } from '$lib/types/Order';
+import type { Order, OrderPayment } from '$lib/types/Order';
 import { Lock } from './lock';
 import { ORIGIN } from '$lib/server/env-config';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
@@ -923,6 +923,23 @@ export const migrations = [
 						{ session }
 					);
 				}
+			}
+		}
+	},
+	{
+		_id: new ObjectId('6b1f4880e92e590e85af2492'),
+		name: 'Drop single-currency (SAT) amount from order.vat; amounts live in currencySnapshot (issue #2492)',
+		run: async (session: ClientSession) => {
+			// Old orders stored order.vat[].price/partialPrice in the internal SAT unit. The correct
+			// per-currency amounts are already frozen in currencySnapshot.*.vat, so we only need to
+			// reduce each entry to its {rate, country} breakdown — no rate lookup required.
+			const cursor = collections.orders.find({ 'vat.price': { $exists: true } } as Filter<Order>, {
+				projection: { vat: 1 },
+				session
+			});
+			for await (const order of cursor) {
+				const vat = (order.vat ?? []).map(({ rate, country }) => ({ rate, country }));
+				await collections.orders.updateOne({ _id: order._id }, { $set: { vat } }, { session });
 			}
 		}
 	}
