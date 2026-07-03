@@ -1188,6 +1188,9 @@
 		"moveUp": "Monter",
 		"moveDown": "Descendre",
 		"save": "Enregistrer",
-		"saved": "Enregistré"
+		"saved": "Enregistré",
+		"errorLabelRequired": "Chaque moyen de paiement doit avoir un libellé.",
+		"removeConfirm": "Supprimer ce moyen ?",
+		"cancel": "Annuler"
 	}
 }

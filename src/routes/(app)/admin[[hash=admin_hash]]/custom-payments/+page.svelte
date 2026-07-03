@@ -14,12 +14,16 @@
 	let nextKey = 0;
 	let methods = data.customPaymentMethods.map((m) => ({ ...m, _key: nextKey++ }));
 
+	// _key of the row currently asking for delete confirmation, or null.
+	let confirmingKey: number | null = null;
+
 	function addMethod() {
 		methods = [...methods, { id: '', label: '', instructions: '', _key: nextKey++ }];
 	}
 
 	function removeMethod(index: number) {
 		methods = methods.filter((_, i) => i !== index);
+		confirmingKey = null;
 	}
 
 	function move(index: number, delta: number) {
@@ -39,6 +43,9 @@
 {#if form?.success}
 	<div class="alert alert-success mt-4">{t('customPaymentMethod.saved')}</div>
 {/if}
+{#if form?.error === 'labelRequired'}
+	<div class="alert-error mt-4">{t('customPaymentMethod.errorLabelRequired')}</div>
+{/if}
 
 <form method="post" class="flex flex-col gap-4 mt-6">
 	{#if methods.length === 0}
@@ -55,32 +62,46 @@
 				<span class="text-lg font-medium text-gray-900 grow truncate">
 					{method.label || t('customPaymentMethod.untitled', { number: (i + 1).toString() })}
 				</span>
-				<button
-					type="button"
-					class="p-1 text-gray-400 hover:text-gray-700 disabled:opacity-30"
-					title={t('customPaymentMethod.moveUp')}
-					disabled={i === 0}
-					on:click={() => move(i, -1)}
-				>
-					<IconUpArrow />
-				</button>
-				<button
-					type="button"
-					class="p-1 text-gray-400 hover:text-gray-700 disabled:opacity-30"
-					title={t('customPaymentMethod.moveDown')}
-					disabled={i === methods.length - 1}
-					on:click={() => move(i, 1)}
-				>
-					<IconDownArrow />
-				</button>
-				<button
-					type="button"
-					class="p-1 text-red-400 hover:text-red-600"
-					title={t('customPaymentMethod.remove')}
-					on:click={() => removeMethod(i)}
-				>
-					<IconTrash />
-				</button>
+				{#if confirmingKey === method._key}
+					<span class="text-sm text-gray-600">{t('customPaymentMethod.removeConfirm')}</span>
+					<button type="button" class="btn btn-red btn-sm" on:click={() => removeMethod(i)}>
+						{t('customPaymentMethod.remove')}
+					</button>
+					<button
+						type="button"
+						class="btn body-secondaryCTA btn-sm"
+						on:click={() => (confirmingKey = null)}
+					>
+						{t('customPaymentMethod.cancel')}
+					</button>
+				{:else}
+					<button
+						type="button"
+						class="p-1 text-gray-400 hover:text-gray-700 disabled:opacity-30"
+						title={t('customPaymentMethod.moveUp')}
+						disabled={i === 0}
+						on:click={() => move(i, -1)}
+					>
+						<IconUpArrow />
+					</button>
+					<button
+						type="button"
+						class="p-1 text-gray-400 hover:text-gray-700 disabled:opacity-30"
+						title={t('customPaymentMethod.moveDown')}
+						disabled={i === methods.length - 1}
+						on:click={() => move(i, 1)}
+					>
+						<IconDownArrow />
+					</button>
+					<button
+						type="button"
+						class="p-1 text-red-400 hover:text-red-600"
+						title={t('customPaymentMethod.remove')}
+						on:click={() => (confirmingKey = method._key)}
+					>
+						<IconTrash />
+					</button>
+				{/if}
 			</div>
 
 			<label class="form-label">

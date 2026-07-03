@@ -248,10 +248,8 @@ async function handleOrderNotification(order: Order): Promise<void> {
 							minimumFractionDigits: FRACTION_DIGITS_PER_CURRENCY[payment.price.currency]
 						}),
 						currency: payment.price.currency,
-						// Instructions of the chosen custom payment method, for the pending.custom template.
-						customPaymentInstructions:
-							runtimeConfig.customPaymentMethods.find((m) => m.id === payment.customPaymentMethodId)
-								?.instructions ?? ''
+						// Instructions snapshotted on the payment, for the pending.custom template.
+						customPaymentInstructions: payment.customPaymentMethod?.instructions ?? ''
 					};
 					if (email) {
 						await queueEmail(email, templateKey, vars, {

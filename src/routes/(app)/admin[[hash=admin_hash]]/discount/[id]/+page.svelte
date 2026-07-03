@@ -224,7 +224,7 @@
 
 		<fieldset class="form-label">
 			<legend>Payment method</legend>
-			{#each ['lightning', 'bank-transfer', 'point-of-sale', 'card', 'bitcoin', 'paypal'] as pm}
+			{#each ['lightning', 'bank-transfer', 'point-of-sale', 'card', 'bitcoin', 'paypal', 'custom'] as pm}
 				<label class="checkbox-label">
 					<input
 						type="checkbox"

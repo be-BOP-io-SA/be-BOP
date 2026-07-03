@@ -103,11 +103,6 @@ export async function load({ params, depends, locals, url }) {
 		paymentMethods: methods,
 		tapToPay,
 		posSubtypes,
-		customPaymentMethods: runtimeConfig.customPaymentMethods.map(({ id, label, instructions }) => ({
-			id,
-			label,
-			instructions
-		})),
 		posMode: posMode,
 		hasPosOptions: locals.user?.hasPosOptions,
 		digitalFiles: Promise.all(
