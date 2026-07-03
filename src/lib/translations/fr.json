@@ -1175,13 +1175,14 @@
 		"reopenIdentity": "Gérer mes préférences de cookies"
 	},
 	"customPaymentMethod": {
-		"title": "Moyen de paiement personnalisé",
-		"help": "Un moyen de paiement manuel générique : donnez-lui un libellé et des instructions en texte libre expliquant aux clients comment payer. Les clients voient les instructions sans QR code, et vous validez chaque paiement manuellement depuis la page de commande.",
-		"enable": "Activer le moyen de paiement personnalisé",
+		"title": "Moyens de paiement personnalisés",
+		"help": "Définissez autant de moyens de paiement manuels génériques que nécessaire, chacun avec un libellé et des instructions en texte libre expliquant aux clients comment payer. Les clients voient les instructions du moyen choisi sans QR code, et vous validez chaque paiement manuellement depuis la page de commande.",
 		"label": "Libellé (affiché aux clients)",
 		"labelPlaceholder": "Nom du moyen de paiement",
 		"instructions": "Instructions (affichées aux clients)",
 		"instructionsPlaceholder": "Comment les clients doivent payer, et comment vous joindre pour confirmer le paiement.",
+		"add": "Ajouter un moyen de paiement",
+		"remove": "Supprimer",
 		"save": "Enregistrer",
 		"saved": "Enregistré"
 	}

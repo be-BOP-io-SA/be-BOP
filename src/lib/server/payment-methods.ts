@@ -58,7 +58,7 @@ export const paymentMethods = (opts?: {
 						case 'bank-transfer':
 							return runtimeConfig.sellerIdentity?.bank;
 						case 'custom':
-							return runtimeConfig.customPaymentMethod?.enabled;
+							return runtimeConfig.customPaymentMethods.length > 0;
 						case 'point-of-sale':
 							return opts?.hasPosOptions || opts?.includePOS;
 						case 'free':

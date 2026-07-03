@@ -188,6 +188,8 @@ export interface OrderPayment {
 	bankTransferNumber?: string;
 	detail?: string;
 	cashbackAmount?: Price;
+	/** When method is 'custom', which configured custom payment method was chosen. */
+	customPaymentMethodId?: string;
 }
 
 export type SerializedOrderPayment = Omit<OrderPayment, '_id'> & {

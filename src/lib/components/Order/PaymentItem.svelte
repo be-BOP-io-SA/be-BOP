@@ -22,7 +22,15 @@
 	export let sellerIdentity: SellerIdentity | null | undefined = undefined;
 	export let posSubtypes: Array<{ slug: string; name: string }> | undefined = undefined;
 	export let returnTo: string | undefined = undefined;
-	export let customPaymentMethod: { label?: string; instructions?: string } | undefined = undefined;
+	export let customPaymentMethods:
+		| Array<{ id: string; label?: string; instructions?: string }>
+		| undefined = undefined;
+
+	// Resolve the specific custom method chosen on this payment.
+	$: customPaymentMethod =
+		payment.method === 'custom'
+			? customPaymentMethods?.find((m) => m.id === payment.customPaymentMethodId)
+			: undefined;
 
 	// Registry of dynamic components
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

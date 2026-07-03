@@ -6,7 +6,6 @@
 	import CheckoutFieldInput from '$lib/components/CheckoutFieldInput.svelte';
 	import { bech32 } from 'bech32';
 	import { typedValues } from '$lib/utils/typedValues';
-	import { typedInclude } from '$lib/utils/typedIncludes';
 	import ProductType from '$lib/components/ProductType.svelte';
 	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
@@ -107,10 +106,18 @@
 		// navigation (success) or a re-render with `form?.paymentGenerationFailed` (failure).
 	}
 
-	let paymentMethod: (typeof paymentMethods)[0] | undefined = undefined;
-	$: paymentMethod = typedInclude(paymentMethods, paymentMethod)
+	// The selected option value: a plain PaymentMethod, or `custom:<id>` for a custom method.
+	let paymentMethod: string | undefined = undefined;
+	$: paymentOptions = paymentMethods.flatMap((method) =>
+		method === 'custom'
+			? (data.customPaymentMethods ?? []).map((m) => ({ value: `custom:${m.id}`, label: m.label }))
+			: [{ value: method, label: t('checkout.paymentMethod.' + method) }]
+	);
+	$: paymentMethod = paymentOptions.some((option) => option.value === paymentMethod)
 		? paymentMethod
-		: paymentMethods[0];
+		: paymentOptions[0]?.value;
+	// The underlying PaymentMethod, for logic that keys on the method (discounts, POS, …).
+	$: baseMethod = paymentMethod?.startsWith('custom:') ? 'custom' : paymentMethod;
 
 	$: items = data.cart.items;
 	// Live discount preview: payment method, shipping country, and billing country feed into a
@@ -124,8 +131,8 @@
 	$: billKey = data.relevantBillCountries?.includes(effectiveBillingCountry)
 		? effectiveBillingCountry
 		: '';
-	$: contextDiscountMap = paymentMethod
-		? data.discountByContext?.[`${shipKey}|${billKey}|${paymentMethod}`]
+	$: contextDiscountMap = baseMethod
+		? data.discountByContext?.[`${shipKey}|${billKey}|${baseMethod}`]
 		: undefined;
 	$: effectiveItems = items.map((item) => {
 		const isPosManual = !!item.discountJustification;
@@ -620,21 +627,21 @@
 								name="paymentMethod"
 								class="form-input"
 								bind:value={paymentMethod}
-								disabled={paymentMethods.length === 0}
+								disabled={paymentOptions.length === 0}
 								required
 							>
-								{#each paymentMethods as paymentMethod}
-									<option value={paymentMethod}>
-										{t('checkout.paymentMethod.' + paymentMethod)}
+								{#each paymentOptions as option}
+									<option value={option.value}>
+										{option.label}
 									</option>
 								{/each}
 							</select>
-							{#if paymentMethods.length === 0}
+							{#if paymentOptions.length === 0}
 								<p class="text-red-400">{t('checkout.paymentMethod.unavailable')}</p>
 							{/if}
 						</div>
 					</label>
-					{#if paymentMethod === 'point-of-sale' && data.posSubtypes?.length}
+					{#if baseMethod === 'point-of-sale' && data.posSubtypes?.length}
 						<label class="form-label col-span-6">
 							<span>Payment Type</span>
 							<select name="posSubtype" class="form-input" required>
@@ -647,7 +654,7 @@
 						</label>
 					{/if}
 				{/if}
-				{#if data.hasPosOptions && paymentMethod !== 'point-of-sale' && paymentMethod !== 'bank-transfer'}
+				{#if data.hasPosOptions && baseMethod !== 'point-of-sale' && baseMethod !== 'bank-transfer'}
 					<label class="checkbox-label">
 						<input
 							type="checkbox"
