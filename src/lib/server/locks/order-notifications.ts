@@ -217,6 +217,9 @@ async function handleOrderNotification(order: Order): Promise<void> {
 							case 'osb':
 								templateKey = 'order.payment.pending.osb';
 								break;
+							case 'custom':
+								templateKey = 'order.payment.pending.custom';
+								break;
 							case 'point-of-sale':
 							case 'free':
 								// no email

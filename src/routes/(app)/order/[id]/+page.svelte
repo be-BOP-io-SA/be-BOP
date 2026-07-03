@@ -227,6 +227,7 @@
 						sellerIdentity={data.sellerIdentity}
 						posSubtypes={data.posSubtypes}
 						returnTo={data.returnTo}
+						customPaymentMethod={data.customPaymentMethod}
 					>
 						<PaymentActions
 							{payment}

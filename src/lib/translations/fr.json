@@ -217,6 +217,7 @@
 		},
 		"paymentMethod": {
 			"bank-transfer": "Virement bancaire",
+			"custom": "Paiement personnalisé",
 			"bitcoin": "BTC on-chain",
 			"card": "Carte bancaire",
 			"cash": "Espèces",
@@ -617,6 +618,7 @@
 		"paidAt": "Date de paiement : <0></0>",
 		"paidWith": {
 			"bank-transfer": "Payé avec : virement bancaire vérifié",
+			"custom": "Payé avec : moyen de paiement personnalisé",
 			"bitcoin": "Payé avec : Paiement Bitcoin on-chain (1 {paymentCurrency} = {exchangeRate} {mainCurrency} au moment de la commande)",
 			"card": "Payé avec : carte bancaire",
 			"free": "N'a rien payé",
@@ -628,6 +630,7 @@
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Payé avec : virement bancaire vérifié",
+			"custom": "Payé avec : moyen de paiement personnalisé",
 			"bitcoin": "Payé avec : Paiement Bitcoin on-chain",
 			"card": "Payé avec : carte bancaire",
 			"free": "N'a rien payé",

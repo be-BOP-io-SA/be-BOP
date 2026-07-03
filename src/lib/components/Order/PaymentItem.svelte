@@ -7,6 +7,7 @@
 	import BankTransferPayment from './BankTransferPayment.svelte';
 	import PointOfSalePayment from './PointOfSalePayment.svelte';
 	import PayPalPayment from './PayPalPayment.svelte';
+	import CustomPayment from './CustomPayment.svelte';
 	import PaymentQRCodes from './PaymentQRCodes.svelte';
 
 	import { useI18n } from '$lib/i18n';
@@ -21,6 +22,7 @@
 	export let sellerIdentity: SellerIdentity | null | undefined = undefined;
 	export let posSubtypes: Array<{ slug: string; name: string }> | undefined = undefined;
 	export let returnTo: string | undefined = undefined;
+	export let customPaymentMethod: { label?: string; instructions?: string } | undefined = undefined;
 
 	// Registry of dynamic components
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,7 +32,8 @@
 		lightning: LightningPayment,
 		'bank-transfer': BankTransferPayment,
 		'point-of-sale': PointOfSalePayment,
-		paypal: PayPalPayment
+		paypal: PayPalPayment,
+		custom: CustomPayment
 	};
 </script>
 
@@ -40,7 +43,9 @@
 >
 	<summary class="{posMode ? 'text-xl' : 'lg:text-xl'} cursor-pointer">
 		<span class="items-center inline-flex gap-2">
-			{t(`checkout.paymentMethod.${payment.method}`)}
+			{payment.method === 'custom' && customPaymentMethod?.label
+				? customPaymentMethod.label
+				: t(`checkout.paymentMethod.${payment.method}`)}
 
 			{#if payment.method === 'point-of-sale' && payment.posSubtype}
 				{@const subtype = posSubtypes?.find((s) => s.slug === payment.posSubtype)}
@@ -71,6 +76,7 @@
 				{sellerIdentity}
 				{posMode}
 				{returnTo}
+				{customPaymentMethod}
 			/>
 		{:else if payment.method === 'point-of-sale'}
 			<PointOfSalePayment />
