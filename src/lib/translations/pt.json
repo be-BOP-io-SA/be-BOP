@@ -217,6 +217,7 @@
 		},
 		"paymentMethod": {
 			"bank-transfer": "Transferência bancária",
+			"custom": "Pagamento personalizado",
 			"bitcoin": "Onchain",
 			"card": "Cartão de crédito",
 			"cash": "Dinheiro",
@@ -617,6 +618,7 @@
 		"paidAt": "Pago em ",
 		"paidWith": {
 			"bank-transfer": "Pago com: transferência bancária verificada",
+			"custom": "Pago com: método de pagamento personalizado",
 			"bitcoin": "Pago com: pagamento Bitcoin on-chain (1 {paymentCurrency} = {exchangeRate} {mainCurrency} no momento da encomenda)",
 			"card": "Pago com: cartão bancário",
 			"free": "Pago nada",
@@ -628,6 +630,7 @@
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Pago com: transferência bancária verificada",
+			"custom": "Pago com: método de pagamento personalizado",
 			"bitcoin": "Pago com: pagamento Bitcoin on-chain",
 			"card": "Pago com: cartão bancário",
 			"free": "Pago nada",
@@ -1141,5 +1144,24 @@
 		},
 		"reopenAria": "Preferências de cookies",
 		"reopenIdentity": "Gerir as minhas preferências de cookies"
+	},
+	"customPaymentMethod": {
+		"title": "Métodos de pagamento personalizados",
+		"help": "Defina qualquer número de métodos de pagamento manuais genéricos, cada um com um rótulo e instruções em texto livre que indicam aos clientes como pagar. Os clientes veem as instruções do método escolhido sem código QR, e você valida cada pagamento manualmente na página do pedido.",
+		"label": "Rótulo (visível para os clientes)",
+		"labelPlaceholder": "Nome do método de pagamento",
+		"instructions": "Instruções (visíveis para os clientes)",
+		"instructionsPlaceholder": "Como os clientes devem pagar e como contactá-lo para poder confirmar o pagamento.",
+		"add": "Adicionar um método de pagamento",
+		"remove": "Remover",
+		"untitled": "Método de pagamento {number}",
+		"empty": "Ainda não há métodos de pagamento personalizados. Adicione um para oferecê-lo no checkout.",
+		"moveUp": "Mover para cima",
+		"moveDown": "Mover para baixo",
+		"save": "Guardar",
+		"saved": "Guardado",
+		"errorLabelRequired": "Cada método de pagamento precisa de um rótulo.",
+		"removeConfirm": "Remover este método?",
+		"cancel": "Cancelar"
 	}
 }

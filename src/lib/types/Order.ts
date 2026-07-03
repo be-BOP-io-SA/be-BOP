@@ -387,6 +387,8 @@ interface SimplifiedOrderPayment {
 	id: string;
 	method: PaymentMethod;
 	status: OrderPaymentStatus;
+	/** For method 'custom', the chosen method's snapshotted label (for display). */
+	customPaymentMethod?: { label: string };
 }
 interface SimplifiedOrderNotes {
 	content: string;

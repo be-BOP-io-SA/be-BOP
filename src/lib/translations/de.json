@@ -217,6 +217,7 @@
 		},
 		"paymentMethod": {
 			"bank-transfer": "Banküberweisung",
+			"custom": "Benutzerdefinierte Zahlung",
 			"bitcoin": "Onchain",
 			"card": "Kreditkarte",
 			"cash": "Bargeld",
@@ -617,6 +618,7 @@
 		"paidAt": "Bezahlt am ",
 		"paidWith": {
 			"bank-transfer": "Bezahlt mit: verifizierter Banküberweisung",
+			"custom": "Bezahlt mit: benutzerdefinierte Zahlungsmethode",
 			"bitcoin": "Bezahlt mit: Bitcoin On-Chain-Zahlung (1 {paymentCurrency} = {exchangeRate} {mainCurrency} zum Zeitpunkt der Bestellung)",
 			"card": "Bezahlt mit: Bankkarte",
 			"free": "Nichts bezahlt",
@@ -628,6 +630,7 @@
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Bezahlt mit: verifizierter Banküberweisung",
+			"custom": "Bezahlt mit: benutzerdefinierte Zahlungsmethode",
 			"bitcoin": "Bezahlt mit: Bitcoin On-Chain-Zahlung",
 			"card": "Bezahlt mit: Bankkarte",
 			"free": "Nichts bezahlt",
@@ -1141,5 +1144,24 @@
 		},
 		"reopenAria": "Cookie-Einstellungen",
 		"reopenIdentity": "Cookie-Einstellungen verwalten"
+	},
+	"customPaymentMethod": {
+		"title": "Benutzerdefinierte Zahlungsmethoden",
+		"help": "Definieren Sie beliebig viele generische manuelle Zahlungsmethoden, jeweils mit einer Bezeichnung und einer frei formulierten Anleitung, wie Kunden bezahlen sollen. Kunden sehen die Anleitung der gewählten Methode ohne QR-Code, und Sie bestätigen jede Zahlung manuell auf der Bestellseite.",
+		"label": "Bezeichnung (für Kunden sichtbar)",
+		"labelPlaceholder": "Name der Zahlungsmethode",
+		"instructions": "Anleitung (für Kunden sichtbar)",
+		"instructionsPlaceholder": "Wie Kunden bezahlen sollen und wie sie Sie erreichen, damit Sie die Zahlung bestätigen können.",
+		"add": "Zahlungsmethode hinzufügen",
+		"remove": "Entfernen",
+		"untitled": "Zahlungsmethode {number}",
+		"empty": "Noch keine benutzerdefinierten Zahlungsmethoden. Fügen Sie eine hinzu, um sie an der Kasse anzubieten.",
+		"moveUp": "Nach oben",
+		"moveDown": "Nach unten",
+		"save": "Speichern",
+		"saved": "Gespeichert",
+		"errorLabelRequired": "Jede Zahlungsmethode benötigt eine Bezeichnung.",
+		"removeConfirm": "Diese Methode entfernen?",
+		"cancel": "Abbrechen"
 	}
 }
