@@ -17,11 +17,19 @@
 
 	setContext('language', data.language);
 
-	// Show the banner when an analytics snippet is configured AND the visitor either hasn't made
-	// a choice yet OR explicitly re-opened it via the 🍪 buttons. Backoffice paths (/admin, /pos)
-	// are excluded — staff/cashier UI shouldn't get a visitor-facing GDPR banner.
+	// Show the banner when an analytics snippet is configured AND the visitor either hasn't
+	// made a choice yet OR explicitly re-opened it via the 🍪 buttons. Backoffice paths
+	// (/admin, /admin/*, /admin-<hash>/*, /pos, /pos/*) are excluded — staff/cashier UI
+	// shouldn't get a visitor-facing GDPR banner. Segment matching (not bare prefix) so a
+	// storefront CMS slug like /positions or /possibilities keeps receiving the banner.
+	// `/admin-*` is safe against CMS-slug collisions: `zodSlug()` in `$lib/server/zod` blocks
+	// any slug that equals `admin` or starts with `admin-`.
 	$: isBackoffice =
-		$page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/pos');
+		$page.url.pathname === '/admin' ||
+		$page.url.pathname.startsWith('/admin/') ||
+		$page.url.pathname.startsWith('/admin-') ||
+		$page.url.pathname === '/pos' ||
+		$page.url.pathname.startsWith('/pos/');
 	$: showCookieConsent =
 		data.analyticsSnippetConfigured &&
 		!isBackoffice &&
