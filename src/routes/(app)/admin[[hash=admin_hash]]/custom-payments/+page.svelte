@@ -48,6 +48,16 @@
 {/if}
 
 <form method="post" class="flex flex-col gap-4 mt-6">
+	<!-- Submit the whole list as one JSON field: robust to add/remove/reorder (no index-named
+	     fields that can go stale on a keyed each). -->
+	<input
+		type="hidden"
+		name="methods"
+		value={JSON.stringify(
+			methods.map((m) => ({ id: m.id, label: m.label, instructions: m.instructions }))
+		)}
+	/>
+
 	{#if methods.length === 0}
 		<p class="text-gray-500 italic border border-dashed border-gray-300 rounded-lg p-6 text-center">
 			{t('customPaymentMethod.empty')}
@@ -56,8 +66,6 @@
 
 	{#each methods as method, i (method._key)}
 		<fieldset class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-3">
-			<input type="hidden" name="customPaymentMethods[{i}].id" value={method.id} />
-
 			<div class="flex items-center gap-2">
 				<span class="text-lg font-medium text-gray-900 grow truncate">
 					{method.label || t('customPaymentMethod.untitled', { number: (i + 1).toString() })}
@@ -108,7 +116,6 @@
 				{t('customPaymentMethod.label')}
 				<input
 					type="text"
-					name="customPaymentMethods[{i}].label"
 					class="form-input"
 					bind:value={method.label}
 					placeholder={t('customPaymentMethod.labelPlaceholder')}
@@ -118,7 +125,6 @@
 			<label class="form-label">
 				{t('customPaymentMethod.instructions')}
 				<textarea
-					name="customPaymentMethods[{i}].instructions"
 					class="form-input"
 					rows="4"
 					bind:value={method.instructions}
