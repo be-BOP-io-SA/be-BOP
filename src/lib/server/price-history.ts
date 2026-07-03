@@ -218,7 +218,10 @@ export function buildPaid(sales: PaidSale[], now: number, priceDigits = 2): Paid
 	}
 
 	const sorted = [...dayBuckets.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-	const points: PricePoint[] = sorted.map(([t, b]) => ({ t, price: round(b.effSum / b.qty, priceDigits) }));
+	const points: PricePoint[] = sorted.map(([t, b]) => ({
+		t,
+		price: round(b.effSum / b.qty, priceDigits)
+	}));
 	const listPoints: PricePoint[] = sorted.map(([t, b]) => ({
 		t,
 		price: round(b.listSum / b.qty, priceDigits)
@@ -226,8 +229,7 @@ export function buildPaid(sales: PaidSale[], now: number, priceDigits = 2): Paid
 
 	const mean = windowQty > 0 ? round(effWindowSum / windowQty, priceDigits) : null;
 	const meanList = windowQty > 0 ? round(listWindowSum / windowQty, priceDigits) : null;
-	const pctBelowCatalogue =
-		mean !== null && meanList ? round2((1 - mean / meanList) * 100) : null;
+	const pctBelowCatalogue = mean !== null && meanList ? round2((1 - mean / meanList) * 100) : null;
 
 	return { points, listPoints, mean, pctBelowCatalogue };
 }
