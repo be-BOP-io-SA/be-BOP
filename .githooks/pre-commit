@@ -1,0 +1,17 @@
+#!/bin/sh
+# Block commits whose staged files aren't Prettier-clean, matching the CI format check.
+# Bypass with `git commit --no-verify` if you really need to.
+
+# Collect staged, still-present files that Prettier handles.
+files=$(git diff --cached --name-only --diff-filter=ACMR \
+	-- '*.ts' '*.js' '*.svelte' '*.json' '*.css' '*.html' '*.md')
+
+[ -z "$files" ] && exit 0
+
+# NUL-delimited to survive paths with (parens) and [brackets].
+if ! printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 npx prettier --check; then
+	echo
+	echo "✖ Prettier found unformatted staged files."
+	echo "  Fix with: npx prettier --write <files>   (then git add + recommit)"
+	exit 1
+fi

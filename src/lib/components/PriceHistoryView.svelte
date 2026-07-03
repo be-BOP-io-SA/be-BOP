@@ -181,7 +181,13 @@
 		{#if tab === 'history'}
 			<div class="h-60 w-full rounded-xl border border-gray-100 p-2 dark:border-gray-800">
 				{#if catVals.length}
-					<LayerCake padding={histPadding} x={getX} y={getY} yDomain={domain(catVals)} data={catVals}>
+					<LayerCake
+						padding={histPadding}
+						x={getX}
+						y={getY}
+						yDomain={domain(catVals)}
+						data={catVals}
+					>
 						<Svg>
 							<PriceChartLayer
 								bind:leftPad={histLeftPad}
