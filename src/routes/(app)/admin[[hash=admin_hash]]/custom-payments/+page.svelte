@@ -58,8 +58,15 @@
 	class="flex flex-col gap-4 mt-6"
 	bind:this={formEl}
 	use:enhance={() => {
-		// Don't reset the form on success — that would blank the bind:value inputs until a reload.
-		return async ({ update }) => update({ reset: false });
+		return async ({ result, update }) => {
+			// Don't reset the form (that blanks the bind:value inputs); instead re-sync the local list
+			// from the freshly-saved data so empty/removed rows disappear and new rows get their id.
+			await update({ reset: false });
+			if (result.type === 'success') {
+				methods = data.customPaymentMethods.map((m) => ({ ...m, _key: nextKey++ }));
+				confirmingKey = null;
+			}
+		};
 	}}
 >
 	<!-- Submit the whole list as one JSON field: robust to add/remove/reorder (no index-named
