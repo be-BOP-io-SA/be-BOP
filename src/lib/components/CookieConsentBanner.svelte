@@ -7,16 +7,51 @@
 	const { t } = useI18n();
 	let loading = false;
 
+	/**
+	 * Injects the raw analytics snippet returned by `/cookie-consent` into the current page
+	 * without a full reload. The snippet is HTML (potentially `<script>`, `<link>`, `<meta>`,
+	 * `<noscript>`), so we parse it via `DOMParser` and re-create each `<script>` — assigning
+	 * `.innerHTML` to a container does *not* execute inline `<script>` per the HTML spec.
+	 */
+	function injectAnalyticsSnippet(snippet: string) {
+		if (!snippet) {
+			return;
+		}
+		const doc = new DOMParser().parseFromString(snippet, 'text/html');
+		const nodes = [...doc.head.childNodes, ...doc.body.childNodes];
+		for (const node of nodes) {
+			if (node.nodeType !== Node.ELEMENT_NODE) {
+				continue;
+			}
+			const el = node as Element;
+			if (el.tagName === 'SCRIPT') {
+				const script = document.createElement('script');
+				for (const attr of Array.from(el.attributes)) {
+					script.setAttribute(attr.name, attr.value);
+				}
+				script.text = el.textContent ?? '';
+				document.head.appendChild(script);
+			} else {
+				document.head.appendChild(el.cloneNode(true));
+			}
+		}
+	}
+
 	async function decide(value: 'accepted' | 'denied') {
 		loading = true;
 		try {
-			await fetch('/cookie-consent', {
+			const res = await fetch('/cookie-consent', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ value })
 			});
 			cookieConsentVisible.set(false);
-			location.reload();
+			if (value === 'accepted') {
+				const { analyticsScriptSnippet } = (await res.json()) as {
+					analyticsScriptSnippet?: string;
+				};
+				injectAnalyticsSnippet(analyticsScriptSnippet ?? '');
+			}
 		} finally {
 			loading = false;
 		}

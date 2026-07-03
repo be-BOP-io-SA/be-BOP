@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { setCookieConsent } from '$lib/server/cookies';
+import { runtimeConfig } from '$lib/server/runtime-config';
 
 const bodySchema = z.object({
 	value: z.enum(['accepted', 'denied'])
@@ -14,5 +15,12 @@ export const POST = async ({ request, cookies }) => {
 		throw error(400, 'Invalid consent payload');
 	}
 	setCookieConsent(cookies, parsed.value);
-	return json({ ok: true });
+	// Return the raw snippet on accept so the client can inject it in place without a full
+	// page reload. The `+layout.server.ts` load gates the same field on the cookie value, so
+	// a later refresh stays consistent (snippet still emitted only when accepted).
+	return json({
+		ok: true,
+		analyticsScriptSnippet:
+			parsed.value === 'accepted' ? runtimeConfig.analyticsScriptSnippet || '' : ''
+	});
 };
