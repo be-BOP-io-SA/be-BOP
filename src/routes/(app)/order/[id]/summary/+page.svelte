@@ -224,7 +224,9 @@
 				amount={payment.currencySnapshot.main.price.amount}
 				currency={payment.currencySnapshot.main.price.currency}
 				inline
-			/> - {t('order.paidWithSummary.' + payment.method)} - {t(
+			/> - {payment.method === 'custom' && payment.customPaymentMethod?.label
+				? t('order.paidWithSummary.customNamed', { label: payment.customPaymentMethod.label })
+				: t('order.paidWithSummary.' + payment.method)} - {t(
 				`order.paymentStatus.${payment.status}`
 			)}
 		</div>

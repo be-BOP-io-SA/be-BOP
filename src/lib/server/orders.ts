@@ -418,6 +418,12 @@ export async function onOrderPayment(
 					after: {
 						status: 'paid',
 						method: payment.method,
+						...(payment.customPaymentMethod && {
+							customPaymentMethod: {
+								id: payment.customPaymentMethod.id,
+								label: payment.customPaymentMethod.label
+							}
+						}),
 						paymentId: payment._id.toString(),
 						invoiceNumber,
 						received,
@@ -2162,6 +2168,12 @@ export async function addOrderPayment(
 				before: null,
 				after: {
 					method: paymentMethod,
+					...(payment.customPaymentMethod && {
+						customPaymentMethod: {
+							id: payment.customPaymentMethod.id,
+							label: payment.customPaymentMethod.label
+						}
+					}),
 					paymentId: payment._id.toString(),
 					vat: orderVatAccountingSnapshot(order),
 					totalPrice: orderCurrencyAmounts(order, (entry) => entry.totalPrice),
