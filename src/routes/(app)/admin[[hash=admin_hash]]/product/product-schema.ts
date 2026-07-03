@@ -1,6 +1,8 @@
 import { CURRENCIES } from '$lib/types/Currency';
 import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
-import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
+import { SUBSCRIPTION_DURATIONS, subscriptionUnitToSeconds } from '$lib/types/SubscriptionDuration';
+
+const MAX_PHASE_REMINDER_SECONDS = 7 * 24 * 60 * 60;
 import { z } from 'zod';
 import { deliveryFeesSchema } from '../config/delivery/schema';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
@@ -185,13 +187,27 @@ export const productBaseSchema = () => ({
 		.optional(),
 	pricingSchedule: z
 		.array(
-			z.object({
-				value: z.number({ coerce: true }).int().min(1),
-				unit: z.enum(SUBSCRIPTION_DURATIONS),
-				priceAmount: z.number({ coerce: true }).min(0),
-				reminderValue: z.number({ coerce: true }).int().min(0),
-				reminderUnit: z.enum(SUBSCRIPTION_DURATIONS)
-			})
+			z
+				.object({
+					value: z.number({ coerce: true }).int().min(1),
+					unit: z.enum(SUBSCRIPTION_DURATIONS),
+					priceAmount: z.number({ coerce: true }).min(0),
+					reminderValue: z.number({ coerce: true }).int().min(0),
+					reminderUnit: z.enum(SUBSCRIPTION_DURATIONS)
+				})
+				.refine(
+					(phase) => {
+						const reminderSeconds = subscriptionUnitToSeconds(
+							phase.reminderValue,
+							phase.reminderUnit
+						);
+						const cycleSeconds = subscriptionUnitToSeconds(1, phase.unit);
+						return reminderSeconds <= Math.min(MAX_PHASE_REMINDER_SECONDS, cycleSeconds);
+					},
+					{
+						message: 'Phase reminder must be at most 7 days and not exceed the phase cycle duration'
+					}
+				)
 		)
 		.optional()
 		.default([]),

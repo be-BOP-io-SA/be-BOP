@@ -1,7 +1,10 @@
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import type { Product } from '$lib/types/Product';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
-import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
+import {
+	subscriptionUnitToSeconds,
+	type SubscriptionDuration
+} from '$lib/types/SubscriptionDuration';
 import { collections } from './database';
 import { runtimeConfig } from './runtime-config';
 import { userQuery } from './user';
@@ -78,24 +81,7 @@ export function buildPricingScheduleSnapshot(
 	};
 }
 
-/**
- * Converts a `value + unit` couple (from a phase or reminder) into a plain number of
- * seconds. Used both to extend `paidUntil` at renewal and to compute reminder offsets.
- */
-export function subscriptionUnitToSeconds(value: number, unit: SubscriptionDuration): number {
-	switch (unit) {
-		case 'year':
-			return value * 365 * 24 * 60 * 60;
-		case 'month':
-			return value * 30 * 24 * 60 * 60;
-		case 'week':
-			return value * 7 * 24 * 60 * 60;
-		case 'day':
-			return value * 24 * 60 * 60;
-		case 'hour':
-			return value * 60 * 60;
-	}
-}
+export { subscriptionUnitToSeconds };
 
 export async function generateSubscriptionNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(
