@@ -584,7 +584,8 @@
 		{/each}
 	</div>
 
-	<a href="{data.adminPrefix}/config/payment" class="underline">{t('customPaymentMethod.title')}</a>
+	<a href="{data.adminPrefix}/custom-payments" class="underline">{t('customPaymentMethod.title')}</a
+	>
 
 	<h2 class="text-2xl">Payment processor preferences</h2>
 	<p class="text-sm mb-4">

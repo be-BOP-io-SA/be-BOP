@@ -1185,6 +1185,10 @@
 		"instructionsPlaceholder": "How customers should pay, and how to reach you so you can confirm the payment.",
 		"add": "Add a payment method",
 		"remove": "Remove",
+		"untitled": "Payment method {number}",
+		"empty": "No custom payment methods yet. Add one to offer it at checkout.",
+		"moveUp": "Move up",
+		"moveDown": "Move down",
 		"save": "Save",
 		"saved": "Saved"
 	}
