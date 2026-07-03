@@ -2233,8 +2233,14 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 						paidUntil: newPaidUntil,
 						updatedAt: new Date(),
 						notifications: [],
+						// Cursor advances on *every* renewal (in-schedule or post-schedule) so a
+						// past-schedule subscription lets `cursor - 1` overshoot `phases.length`,
+						// at which point `currentFundingReminderSeconds` falls back to the
+						// product-level reminder as documented. Skip when the sub is being
+						// reactivated from `cancelledAt`, because the cursor is `$unset` below
+						// and MongoDB rejects a $set/$unset collision on the same key.
+						...(!existing.cancelledAt && { pricingScheduleCursor: currentCursor + 1 }),
 						...(activePhase && {
-							pricingScheduleCursor: currentCursor + 1,
 							[`pricingScheduleSnapshot.phases.${currentCursor}.status`]: 'paid',
 							[`pricingScheduleSnapshot.phases.${currentCursor}.orderId`]: order._id
 						}),
