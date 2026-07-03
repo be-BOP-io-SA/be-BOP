@@ -210,10 +210,6 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		sellerIdentity: order.sellerIdentity,
 		vat: order.vat?.map((item) => ({
 			country: item.country,
-			price: {
-				amount: item.price.amount,
-				currency: item.price.currency
-			},
 			rate: item.rate
 		})),
 		shippingAddress: order.shippingAddress,

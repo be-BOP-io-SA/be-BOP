@@ -291,8 +291,12 @@ export interface Order extends Timestamps {
 		currency: Currency;
 	};
 
+	/**
+	 * Per-rate VAT breakdown metadata. The monetary amounts live in
+	 * `currencySnapshot.{main,priceReference,secondary,accounting}.vat[]` (index-aligned),
+	 * snapshotted in every configured currency — see issue #2492.
+	 */
 	vat?: Array<{
-		price: Price;
 		rate: number;
 		country: CountryAlpha2;
 	}>;
