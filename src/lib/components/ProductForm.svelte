@@ -1032,6 +1032,7 @@
 												min="1"
 												step="1"
 												class="form-input w-20"
+												max="10"
 												name="pricingSchedule[{i}].value"
 												bind:value={phase.value}
 												required
@@ -1095,7 +1096,12 @@
 							</div>
 						{/each}
 
-						<button type="button" class="btn btn-black" on:click={addPricingPhase}>
+						<button
+							type="button"
+							class="btn btn-black"
+							on:click={addPricingPhase}
+							disabled={pricingSchedule.length >= 10}
+						>
 							+ Add phase
 						</button>
 					</div>
