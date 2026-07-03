@@ -53,7 +53,15 @@
 	<div class="alert-error mt-4">{t('customPaymentMethod.errorLabelRequired')}</div>
 {/if}
 
-<form method="post" class="flex flex-col gap-4 mt-6" bind:this={formEl} use:enhance>
+<form
+	method="post"
+	class="flex flex-col gap-4 mt-6"
+	bind:this={formEl}
+	use:enhance={() => {
+		// Don't reset the form on success — that would blank the bind:value inputs until a reload.
+		return async ({ update }) => update({ reset: false });
+	}}
+>
 	<!-- Submit the whole list as one JSON field: robust to add/remove/reorder (no index-named
 	     fields that can go stale on a keyed each). Fully-empty rows (e.g. a just-added, untouched
 	     one) are never submitted, so they aren't saved. -->
