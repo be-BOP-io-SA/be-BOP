@@ -217,6 +217,7 @@
 		},
 		"paymentMethod": {
 			"bank-transfer": "Bank transfer",
+			"custom": "Custom payment",
 			"bitcoin": "Onchain",
 			"card": "Credit card",
 			"cash": "Cash",
@@ -617,6 +618,7 @@
 		"paidAt": "Paid at <0></0>",
 		"paidWith": {
 			"bank-transfer": "Paid with: verified bank transfer",
+			"custom": "Paid with: custom payment method",
 			"bitcoin": "Paid with: Bitcoin on-chain payment (1 {paymentCurrency} = {exchangeRate} {mainCurrency} at the time of the order)",
 			"card": "Paid with: bank card",
 			"free": "Paid Nothing",
@@ -628,6 +630,7 @@
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Paid with: verified bank transfer",
+			"custom": "Paid with: custom payment method",
 			"bitcoin": "Paid with: Bitcoin on-chain payment",
 			"card": "Paid with: bank card",
 			"free": "Paid Nothing",

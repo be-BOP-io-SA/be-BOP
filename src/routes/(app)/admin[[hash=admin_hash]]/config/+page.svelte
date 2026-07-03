@@ -584,6 +584,42 @@
 		{/each}
 	</div>
 
+	<h2 class="text-2xl">Custom payment method</h2>
+	<p class="text-sm mb-2">
+		A generic manual / asynchronous payment method (issue #2259): give it a label and free-text
+		instructions (e.g. how to send Monero and reach you on Signal). The customer sees the
+		instructions with no QR, and you validate the payment manually from the order page.
+	</p>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="customPaymentMethodEnabled"
+			class="form-checkbox"
+			checked={data.customPaymentMethod.enabled}
+		/>
+		Enable custom payment method
+	</label>
+	<label class="form-label">
+		Label (shown to the customer)
+		<input
+			type="text"
+			name="customPaymentMethodLabel"
+			class="form-input"
+			value={data.customPaymentMethod.label}
+			placeholder="e.g. Monero"
+		/>
+	</label>
+	<label class="form-label">
+		Instructions (shown to the customer)
+		<textarea
+			name="customPaymentMethodInstructions"
+			class="form-input"
+			rows="4"
+			placeholder="e.g. Send the amount in XMR to <address>, then message us on Signal at ..."
+			>{data.customPaymentMethod.instructions}</textarea
+		>
+	</label>
+
 	<h2 class="text-2xl">Payment processor preferences</h2>
 	<p class="text-sm mb-4">
 		Choose which processor to use first. If it fails, the system will automatically try the next

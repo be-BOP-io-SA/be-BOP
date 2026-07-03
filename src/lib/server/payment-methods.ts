@@ -11,7 +11,8 @@ export const ALL_PAYMENT_METHODS = [
 	'free',
 	'paypal',
 	'taler',
-	'osb'
+	'osb',
+	'custom'
 ] as const;
 export type PaymentMethod = (typeof ALL_PAYMENT_METHODS)[number];
 
@@ -56,6 +57,8 @@ export const paymentMethods = (opts?: {
 							return getProcessorsForMethod(method).some((pp) => pp.isEnabled());
 						case 'bank-transfer':
 							return runtimeConfig.sellerIdentity?.bank;
+						case 'custom':
+							return runtimeConfig.customPaymentMethod?.enabled;
 						case 'point-of-sale':
 							return opts?.hasPosOptions || opts?.includePOS;
 						case 'free':

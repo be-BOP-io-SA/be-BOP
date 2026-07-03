@@ -82,6 +82,12 @@ const baseConfig = {
 	orderNumber: 0,
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
+	/**
+	 * Generic manual/asynchronous payment method (issue #2259): the admin gives it a label and
+	 * free-text instructions (e.g. "Send X XMR to … then message us on Signal"), the customer is
+	 * shown the instructions with no QR, and an admin validates the payment manually.
+	 */
+	customPaymentMethod: { enabled: false, label: '', instructions: '' },
 	subscriptionNumber: 0,
 	themeChangeNumber: 0,
 	isMaintenance: false,
@@ -400,6 +406,13 @@ const baseConfig = {
 <p>IBAN: {{iban}}<br/>
 BIC: {{bic}}<br/>
 Amount: {{amount}} {{currency}}</p>`,
+			default: true as boolean
+		},
+		'order.payment.pending.custom': {
+			subject: 'Order #{{orderNumber}}',
+			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
+<p>Amount: {{amount}} {{currency}}</p>
+<p>{{customPaymentInstructions}}</p>`,
 			default: true as boolean
 		},
 		'order.payment.pending.paypal': {

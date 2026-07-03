@@ -1968,10 +1968,11 @@ async function generatePaymentInfo(params: {
 		}
 	}
 
-	// Fallback for methods without SDK: point-of-sale, free, bank-transfer
+	// Fallback for methods without SDK: point-of-sale, free, bank-transfer, custom
 	switch (params.method) {
 		case 'point-of-sale':
 		case 'free':
+		case 'custom':
 			return {};
 		case 'bank-transfer':
 			return { address: runtimeConfig.sellerIdentity?.bank?.iban };
@@ -1987,7 +1988,9 @@ export function paymentMethodExpiration(
 	paymentMethod: PaymentMethod,
 	opts?: { paymentTimeout?: number }
 ) {
-	return paymentMethod === 'point-of-sale' || paymentMethod === 'bank-transfer'
+	return paymentMethod === 'point-of-sale' ||
+		paymentMethod === 'bank-transfer' ||
+		paymentMethod === 'custom'
 		? undefined
 		: paymentMethod === 'lightning' &&
 		  isPhoenixdConfigured() &&
@@ -2007,6 +2010,7 @@ function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
 		case 'point-of-sale':
 		case 'free':
 		case 'bank-transfer':
+		case 'custom':
 			return {
 				amount: toCurrency(runtimeConfig.mainCurrency, price.amount, price.currency),
 				currency: runtimeConfig.mainCurrency

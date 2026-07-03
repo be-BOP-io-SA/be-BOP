@@ -444,7 +444,8 @@ export const PAYMENT_METHOD_EMOJI: Record<PaymentMethod, string> = {
 	bitcoin: '₿',
 	free: '🆓',
 	taler: '🅣',
-	osb: '🇵🇫'
+	osb: '🇵🇫',
+	custom: '🧾'
 };
 
 export const ORDER_PAGINATION_LIMIT = 50;
