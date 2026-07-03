@@ -1,9 +1,7 @@
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { collections } from '$lib/server/database';
-import { set } from '$lib/utils/set';
 import { z } from 'zod';
 import { fail } from '@sveltejs/kit';
-import type { JsonObject } from 'type-fest';
 
 export function load() {
 	return {
@@ -15,28 +13,27 @@ export const actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 
-		const json: JsonObject = {};
-		for (const [key, value] of formData) {
-			set(json, key, value);
+		// The page submits the whole list as one JSON field (robust to add/remove/reorder).
+		let raw: unknown = [];
+		try {
+			raw = JSON.parse(String(formData.get('methods') ?? '[]'));
+		} catch {
+			raw = [];
 		}
 
 		const parsed = z
-			.object({
-				customPaymentMethods: z
-					.array(
-						z.object({
-							id: z.string().trim().optional(),
-							label: z.string().trim(),
-							instructions: z.string()
-						})
-					)
-					.default([])
-			})
-			.parse(json);
+			.array(
+				z.object({
+					id: z.string().trim().optional(),
+					label: z.string().trim(),
+					instructions: z.string()
+				})
+			)
+			.parse(raw);
 
 		// Discard fully-empty rows (added then left blank), but reject a row that has instructions with
 		// no label rather than silently dropping the admin's work.
-		const rows = parsed.customPaymentMethods.filter(
+		const rows = parsed.filter(
 			(method) => method.label.length > 0 || method.instructions.length > 0
 		);
 		if (rows.some((method) => method.label.length === 0)) {
