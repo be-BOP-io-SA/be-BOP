@@ -189,7 +189,7 @@ export const productBaseSchema = () => ({
 		.array(
 			z
 				.object({
-					value: z.number({ coerce: true }).int().min(1),
+					value: z.number({ coerce: true }).int().min(1).max(10),
 					unit: z.enum(SUBSCRIPTION_DURATIONS),
 					priceAmount: z.number({ coerce: true }).min(0),
 					reminderValue: z.number({ coerce: true }).int().min(0),
@@ -209,6 +209,7 @@ export const productBaseSchema = () => ({
 					}
 				)
 		)
+		.max(10)
 		.optional()
 		.default([]),
 	cta: z
