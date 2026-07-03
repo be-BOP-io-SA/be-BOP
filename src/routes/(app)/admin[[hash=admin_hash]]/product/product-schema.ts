@@ -193,7 +193,10 @@ export const productBaseSchema = () => ({
 					unit: z.enum(SUBSCRIPTION_DURATIONS),
 					priceAmount: z.number({ coerce: true }).min(0),
 					reminderValue: z.number({ coerce: true }).int().min(0),
-					reminderUnit: z.enum(SUBSCRIPTION_DURATIONS)
+					// `week`, `month`, `year` never yield a legal reminder under the 7-day cap
+					// (their smallest value already exceeds it), so we don't offer them at all.
+					// Coherent vocabulary: the dropdown mirrors what the cap actually allows.
+					reminderUnit: z.enum(['day', 'hour'])
 				})
 				.refine(
 					(phase) => {
