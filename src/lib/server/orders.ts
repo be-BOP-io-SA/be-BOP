@@ -26,11 +26,10 @@ import { runtimeConfig } from './runtime-config';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import {
 	buildPricingScheduleSnapshot,
+	currentFundingReminderSeconds,
 	freeProductsForUser,
 	generateSubscriptionNumber,
-	resolveSubscriptionDuration,
-	resolveSubscriptionReminderSeconds,
-	subscriptionUnitToSeconds
+	resolveSubscriptionDuration
 } from './subscriptions';
 import {
 	checkProductVariationsIntegrity,
@@ -1038,17 +1037,7 @@ export async function createOrder(
 		);
 
 		if (existingSubscription) {
-			// Renewal is due when we cross the current-phase reminder offset (from snapshot) or
-			// the product-level reminder (post-schedule, cancelled or legacy).
-			const activePhase = existingSubscription.cancelledAt
-				? undefined
-				: existingSubscription.pricingScheduleSnapshot?.phases[
-						existingSubscription.pricingScheduleCursor ?? 0
-				  ];
-			const reminderSeconds = activePhase
-				? subscriptionUnitToSeconds(activePhase.reminderValue, activePhase.reminderUnit)
-				: resolveSubscriptionReminderSeconds(product);
-
+			const reminderSeconds = currentFundingReminderSeconds(existingSubscription, product);
 			if (subSeconds(existingSubscription.paidUntil, reminderSeconds) > new Date()) {
 				throw error(
 					400,

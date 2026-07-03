@@ -28,6 +28,33 @@ export function resolveSubscriptionReminderSeconds(product: {
 	return product.subscriptionReminderSeconds || runtimeConfig.subscriptionReminderSeconds;
 }
 
+/**
+ * Single source of truth for "how long before paidUntil should we start allowing renewal /
+ * sending the reminder email / letting `createOrder` accept the retry?". Cursor points at the
+ * *next* phase to bill, so the phase that funded the current period sits at `cursor - 1` in
+ * the snapshot; cancelled, legacy (no snapshot), and past-schedule subs fall back to the
+ * product-level offset. All three consumers (cron in subscription-lock.ts, canRenew in the
+ * /subscription/{id} loader, the renewal gate in orders.ts) must call this — computing
+ * "current phase" independently is what let the offsets drift previously.
+ */
+export function currentFundingReminderSeconds(
+	subscription: Pick<
+		PaidSubscription,
+		'pricingScheduleSnapshot' | 'pricingScheduleCursor' | 'cancelledAt'
+	>,
+	product: { subscriptionReminderSeconds?: number }
+): number {
+	if (subscription.cancelledAt) {
+		return resolveSubscriptionReminderSeconds(product);
+	}
+	const currentPhaseIndex = (subscription.pricingScheduleCursor ?? 0) - 1;
+	const phase = subscription.pricingScheduleSnapshot?.phases[currentPhaseIndex];
+	if (!phase) {
+		return resolveSubscriptionReminderSeconds(product);
+	}
+	return subscriptionUnitToSeconds(phase.reminderValue, phase.reminderUnit);
+}
+
 export async function freeProductsForUser(
 	user: UserIdentifier,
 	products: string[]
