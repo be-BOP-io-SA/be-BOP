@@ -120,11 +120,11 @@ html:root.dark {
 	}
 
 	.btn {
-		@apply rounded-lg border-0 cursor-pointer px-4 h-10 text-xl flex items-center justify-center font-btn;
+		@apply rounded-lg border-0 cursor-pointer px-4 py-2 min-h-[2.5rem] text-xl flex items-center justify-center text-center font-btn;
 	}
 
 	.btn-xl {
-		@apply h-[60px] text-2xl;
+		@apply min-h-[60px] text-2xl;
 	}
 
 	.btn-red {
