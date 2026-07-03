@@ -584,37 +584,7 @@
 		{/each}
 	</div>
 
-	<h2 class="text-2xl">{t('customPaymentMethod.title')}</h2>
-	<p class="text-sm mb-2">{t('customPaymentMethod.help')}</p>
-	<label class="checkbox-label">
-		<input
-			type="checkbox"
-			name="customPaymentMethodEnabled"
-			class="form-checkbox"
-			checked={data.customPaymentMethod.enabled}
-		/>
-		{t('customPaymentMethod.enable')}
-	</label>
-	<label class="form-label">
-		{t('customPaymentMethod.label')}
-		<input
-			type="text"
-			name="customPaymentMethodLabel"
-			class="form-input"
-			value={data.customPaymentMethod.label}
-			placeholder={t('customPaymentMethod.labelPlaceholder')}
-		/>
-	</label>
-	<label class="form-label">
-		{t('customPaymentMethod.instructions')}
-		<textarea
-			name="customPaymentMethodInstructions"
-			class="form-input"
-			rows="4"
-			placeholder={t('customPaymentMethod.instructionsPlaceholder')}
-			>{data.customPaymentMethod.instructions}</textarea
-		>
-	</label>
+	<a href="{data.adminPrefix}/config/payment" class="underline">{t('customPaymentMethod.title')}</a>
 
 	<h2 class="text-2xl">Payment processor preferences</h2>
 	<p class="text-sm mb-4">

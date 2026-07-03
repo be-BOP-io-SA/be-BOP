@@ -1183,6 +1183,8 @@
 		"label": "Label (shown to customers)",
 		"labelPlaceholder": "Payment method name",
 		"instructions": "Instructions (shown to customers)",
-		"instructionsPlaceholder": "How customers should pay, and how to reach you so you can confirm the payment."
+		"instructionsPlaceholder": "How customers should pay, and how to reach you so you can confirm the payment.",
+		"save": "Save",
+		"saved": "Saved"
 	}
 }

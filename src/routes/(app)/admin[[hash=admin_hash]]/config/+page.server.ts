@@ -51,7 +51,6 @@ export async function load(event) {
 		reserveStockInMinutes: runtimeConfig.reserveStockInMinutes,
 		allPaymentMethods: paymentMethods({ includeDisabled: true, includePOS: true }),
 		disabledPaymentMethods: runtimeConfig.paymentMethods.disabled,
-		customPaymentMethod: runtimeConfig.customPaymentMethod,
 		origin: ORIGIN,
 		analyticsScriptSnippet: runtimeConfig.analyticsScriptSnippet,
 		adminHash: runtimeConfig.adminHash,
@@ -231,27 +230,6 @@ export const actions = {
 				{ _id: 'paymentMethods' },
 				{
 					$set: { data: newPaymentMethods, updatedAt: new Date() },
-					$setOnInsert: { createdAt: new Date() }
-				},
-				{ upsert: true }
-			);
-		}
-
-		// Custom manual/asynchronous payment method — read straight from the form so these fields
-		// never enter the generic runtimeConfig persistence loop above.
-		const newCustomPaymentMethod = {
-			enabled: formData.get('customPaymentMethodEnabled') === 'on',
-			label: String(formData.get('customPaymentMethodLabel') ?? ''),
-			instructions: String(formData.get('customPaymentMethodInstructions') ?? '')
-		};
-		if (
-			JSON.stringify(runtimeConfig.customPaymentMethod) !== JSON.stringify(newCustomPaymentMethod)
-		) {
-			runtimeConfig.customPaymentMethod = newCustomPaymentMethod;
-			await collections.runtimeConfig.updateOne(
-				{ _id: 'customPaymentMethod' },
-				{
-					$set: { data: newCustomPaymentMethod, updatedAt: new Date() },
 					$setOnInsert: { createdAt: new Date() }
 				},
 				{ upsert: true }
