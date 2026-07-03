@@ -624,7 +624,7 @@
 			"card": "Paid with: bank card",
 			"free": "Paid Nothing",
 			"lightning": "Paid with: Lightning transaction (1 {paymentCurrency} = {exchangeRate} {mainCurrency} at the time of the order)",
-			"paypal": "Paid with: paypal",
+			"paypal": "Paid with: PayPal",
 			"point-of-sale": "Paid in store",
 			"taler": "Paid with: Taler",
 			"osb": "Paid with: OSB bank card"
@@ -637,6 +637,7 @@
 			"card": "Paid with: bank card",
 			"free": "Paid Nothing",
 			"lightning": "Paid with: Lightning transaction",
+			"paypal": "Paid with: PayPal",
 			"point-of-sale": "Paid in store",
 			"taler": "Paid with: Taler",
 			"osb": "Paid with: OSB"
