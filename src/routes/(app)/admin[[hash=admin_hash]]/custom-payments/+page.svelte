@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n';
+	import { enhance } from '$app/forms';
+	import { tick } from 'svelte';
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
 	import IconUpArrow from '~icons/ant-design/arrow-up-outlined';
 	import IconDownArrow from '~icons/ant-design/arrow-down-outlined';
@@ -16,14 +18,18 @@
 
 	// _key of the row currently asking for delete confirmation, or null.
 	let confirmingKey: number | null = null;
+	let formEl: HTMLFormElement;
 
 	function addMethod() {
 		methods = [...methods, { id: '', label: '', instructions: '', _key: nextKey++ }];
 	}
 
-	function removeMethod(index: number) {
+	// Deletion persists immediately (submit the updated list) instead of waiting for Save.
+	async function removeMethod(index: number) {
 		methods = methods.filter((_, i) => i !== index);
 		confirmingKey = null;
+		await tick(); // let the hidden `methods` JSON field reflect the new list before submitting
+		formEl.requestSubmit();
 	}
 
 	function move(index: number, delta: number) {
@@ -47,7 +53,7 @@
 	<div class="alert-error mt-4">{t('customPaymentMethod.errorLabelRequired')}</div>
 {/if}
 
-<form method="post" class="flex flex-col gap-4 mt-6">
+<form method="post" class="flex flex-col gap-4 mt-6" bind:this={formEl} use:enhance>
 	<!-- Submit the whole list as one JSON field: robust to add/remove/reorder (no index-named
 	     fields that can go stale on a keyed each). -->
 	<input
@@ -57,6 +63,10 @@
 			methods.map((m) => ({ id: m.id, label: m.label, instructions: m.instructions }))
 		)}
 	/>
+
+	<button type="button" class="btn body-secondaryCTA self-start" on:click={addMethod}>
+		+ {t('customPaymentMethod.add')}
+	</button>
 
 	{#if methods.length === 0}
 		<p class="text-gray-500 italic border border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -133,10 +143,6 @@
 			</label>
 		</fieldset>
 	{/each}
-
-	<button type="button" class="btn body-secondaryCTA self-start" on:click={addMethod}>
-		+ {t('customPaymentMethod.add')}
-	</button>
 
 	<div class="border-t border-gray-200 pt-4">
 		<button type="submit" class="btn body-mainCTA">{t('customPaymentMethod.save')}</button>
