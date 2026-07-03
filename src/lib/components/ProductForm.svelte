@@ -41,7 +41,12 @@
 	import { formatDuration } from '$lib/utils/formatDuration';
 	import { formatDistance } from 'date-fns';
 	import { computeVatRate } from '$lib/utils/vat';
-	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
+	import {
+		SUBSCRIPTION_DURATIONS,
+		subscriptionUnitToSeconds
+	} from '$lib/types/SubscriptionDuration';
+
+	const MAX_PHASE_REMINDER_SECONDS = 7 * 24 * 60 * 60;
 
 	const { t } = useI18n();
 
@@ -984,6 +989,13 @@
 						</p>
 
 						{#each pricingSchedule as phase, i}
+							{@const maxReminderSeconds = Math.min(
+								MAX_PHASE_REMINDER_SECONDS,
+								subscriptionUnitToSeconds(1, phase.unit)
+							)}
+							{@const maxReminderValue = Math.floor(
+								maxReminderSeconds / subscriptionUnitToSeconds(1, phase.reminderUnit)
+							)}
 							<div class="border border-gray-300 rounded p-3 mb-2">
 								<div class="flex items-center justify-between mb-2">
 									<span class="font-semibold">Phase {i + 1}</span>
@@ -1061,6 +1073,7 @@
 												min="0"
 												step="1"
 												class="form-input w-20"
+												max={maxReminderValue}
 												name="pricingSchedule[{i}].reminderValue"
 												bind:value={phase.reminderValue}
 												required
