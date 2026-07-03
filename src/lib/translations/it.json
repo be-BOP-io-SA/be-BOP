@@ -620,11 +620,11 @@
 			"bank-transfer": "Pagato con: bonifico bancario verificato",
 			"custom": "Pagato con: metodo di pagamento personalizzato",
 			"customNamed": "Pagato con: {label}",
-			"bitcoin": "Pagato con: pagamento Bitcoin sulla blockchain (1 {paymentCurrency} = {exchangeRate} {mainCurrency} al momento dell'ordine",
+			"bitcoin": "Pagato con: pagamento Bitcoin sulla blockchain (1 {paymentCurrency} = {exchangeRate} {mainCurrency} al momento dell'ordine)",
 			"card": "Pagato con: carta bancaria",
 			"free": "Nessun pagamento",
 			"lightning": "Pagato con: transazione Lightning (1 {paymentCurrency} = {exchangeRate} {mainCurrency} al momento dell'ordine)",
-			"paypal": "Pagato con:  paypal",
+			"paypal": "Pagato con: PayPal",
 			"point-of-sale": "Pagato in magazzino",
 			"taler": "Pagato con: Taler",
 			"osb": "Pagato con: carta bancaria OSB"
@@ -637,6 +637,7 @@
 			"card": "Pagato con: carta bancaria",
 			"free": "Nessun pagamento",
 			"lightning": "Pagato con: transazione Lightning",
+			"paypal": "Pagato con: PayPal",
 			"point-of-sale": "Pagato in magazzino",
 			"taler": "Pagato con: Taler",
 			"osb": "Pagato con: OSB"

@@ -624,7 +624,7 @@
 			"card": "Payé avec : carte bancaire",
 			"free": "N'a rien payé",
 			"lightning": "Payé avec : Transaction Lightning (1 {paymentCurrency} = {exchangeRate} {mainCurrency} au moment de la commande)",
-			"paypal": "Payé avec: paypal",
+			"paypal": "Payé avec : PayPal",
 			"point-of-sale": "Payé en magasin",
 			"taler": "Payé avec : Taler",
 			"osb": "Payé avec : carte bancaire OSB"
@@ -637,6 +637,7 @@
 			"card": "Payé avec : carte bancaire",
 			"free": "N'a rien payé",
 			"lightning": "Payé avec : Transaction Lightning",
+			"paypal": "Payé avec : PayPal",
 			"point-of-sale": "Payé en magasin",
 			"taler": "Payé avec : Taler",
 			"osb": "Payé avec : OSB"

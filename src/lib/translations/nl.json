@@ -624,7 +624,7 @@
 			"card": "Betaald met: bankkaart",
 			"free": "Niets betaald",
 			"lightning": "Betaald met: Lightning-transactie (1 {paymentCurrency} = {exchangeRate} {mainCurrency} op het moment van de bestelling)",
-			"paypal": "Betaald met: paypal",
+			"paypal": "Betaald met: PayPal",
 			"point-of-sale": "Betaald in de winkel",
 			"taler": "Betaald met: Taler",
 			"osb": "Betaald met: OSB-bankkaart"
@@ -637,6 +637,7 @@
 			"card": "Betaald met: bankkaart",
 			"free": "Niets betaald",
 			"lightning": "Betaald met: Lightning-transactie",
+			"paypal": "Betaald met: PayPal",
 			"point-of-sale": "Betaald in de winkel",
 			"taler": "Betaald met: Taler",
 			"osb": "Betaald met: OSB"
