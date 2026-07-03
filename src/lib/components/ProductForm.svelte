@@ -1085,7 +1085,7 @@
 												bind:value={phase.reminderUnit}
 												required
 											>
-												{#each SUBSCRIPTION_DURATIONS as d}
+												{#each ['day', 'hour'] as d}
 													<option value={d}>{d}</option>
 												{/each}
 											</select>
