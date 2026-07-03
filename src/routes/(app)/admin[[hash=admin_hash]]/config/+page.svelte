@@ -584,12 +584,8 @@
 		{/each}
 	</div>
 
-	<h2 class="text-2xl">Custom payment method</h2>
-	<p class="text-sm mb-2">
-		A generic manual / asynchronous payment method (issue #2259): give it a label and free-text
-		instructions (e.g. how to send Monero and reach you on Signal). The customer sees the
-		instructions with no QR, and you validate the payment manually from the order page.
-	</p>
+	<h2 class="text-2xl">{t('customPaymentMethod.title')}</h2>
+	<p class="text-sm mb-2">{t('customPaymentMethod.help')}</p>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
@@ -597,25 +593,25 @@
 			class="form-checkbox"
 			checked={data.customPaymentMethod.enabled}
 		/>
-		Enable custom payment method
+		{t('customPaymentMethod.enable')}
 	</label>
 	<label class="form-label">
-		Label (shown to the customer)
+		{t('customPaymentMethod.label')}
 		<input
 			type="text"
 			name="customPaymentMethodLabel"
 			class="form-input"
 			value={data.customPaymentMethod.label}
-			placeholder="e.g. Monero"
+			placeholder={t('customPaymentMethod.labelPlaceholder')}
 		/>
 	</label>
 	<label class="form-label">
-		Instructions (shown to the customer)
+		{t('customPaymentMethod.instructions')}
 		<textarea
 			name="customPaymentMethodInstructions"
 			class="form-input"
 			rows="4"
-			placeholder="e.g. Send the amount in XMR to <address>, then message us on Signal at ..."
+			placeholder={t('customPaymentMethod.instructionsPlaceholder')}
 			>{data.customPaymentMethod.instructions}</textarea
 		>
 	</label>

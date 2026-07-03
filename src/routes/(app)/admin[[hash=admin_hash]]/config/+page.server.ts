@@ -237,8 +237,8 @@ export const actions = {
 			);
 		}
 
-		// Custom manual/asynchronous payment method (issue #2259) — read straight from the form so
-		// these fields never enter the generic runtimeConfig persistence loop above.
+		// Custom manual/asynchronous payment method — read straight from the form so these fields
+		// never enter the generic runtimeConfig persistence loop above.
 		const newCustomPaymentMethod = {
 			enabled: formData.get('customPaymentMethodEnabled') === 'on',
 			label: String(formData.get('customPaymentMethodLabel') ?? ''),

@@ -1175,5 +1175,14 @@
 		},
 		"reopenAria": "Cookie preferences",
 		"reopenIdentity": "Manage cookie preferences"
+	},
+	"customPaymentMethod": {
+		"title": "Custom payment method",
+		"help": "A generic manual payment method: give it a label and free-text instructions telling customers how to pay. Customers see the instructions with no QR code, and you validate each payment manually from the order page.",
+		"enable": "Enable custom payment method",
+		"label": "Label (shown to customers)",
+		"labelPlaceholder": "Payment method name",
+		"instructions": "Instructions (shown to customers)",
+		"instructionsPlaceholder": "How customers should pay, and how to reach you so you can confirm the payment."
 	}
 }
