@@ -9,6 +9,7 @@ import {
 } from './seed/product';
 import { addOrderPayment, createOrder, lastInvoiceNumber, onOrderPayment } from './orders';
 import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
+import { runtimeConfig } from './runtime-config';
 
 describe('order', () => {
 	beforeEach(async () => {
@@ -55,6 +56,19 @@ describe('order', () => {
 			expect(order?.currencySnapshot?.main.totalReceived).toBeDefined();
 			expect(order?.currencySnapshot?.priceReference.totalReceived).toBeDefined();
 			expect(order?.currencySnapshot?.secondary?.totalReceived).toBeDefined();
+
+			// Issue #2492: order.vat holds only the {rate, country} breakdown — never a monetary
+			// amount, and never the internal SAT unit. Amounts live in currencySnapshot.*.vat, in a
+			// real (main) currency. Guarded so it also holds for VAT-free orders.
+			for (const entry of order?.vat ?? []) {
+				expect(entry).not.toHaveProperty('price');
+				expect(entry).not.toHaveProperty('partialPrice');
+				expect(entry).toMatchObject({ rate: expect.any(Number), country: expect.any(String) });
+			}
+			for (const amount of order?.currencySnapshot?.main.vat ?? []) {
+				expect(amount.currency).not.toBe('SAT');
+				expect(amount.currency).toBe(runtimeConfig.mainCurrency);
+			}
 		});
 
 		it('should increase the invoice number each time', async () => {

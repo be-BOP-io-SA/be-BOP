@@ -1,18 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import { orderVatAccountingSnapshot } from './orderVatSnapshot';
+import { orderCurrencyAmounts, orderVatAccountingSnapshot } from './orderVatSnapshot';
 import type { Order } from '$lib/types/Order';
 
 // Minimal order carrying only what the snapshot reads. Mirrors the issue #2492 scenario:
 // main/accounting in EUR, priceReference in CHF, secondary in BTC — and NEVER SAT.
-function makeOrder(overrides: Partial<Order['currencySnapshot']> = {}): Order {
+function makeOrder(): Order {
 	const currencySnapshot = {
 		main: {
 			totalPrice: { amount: 7.24, currency: 'EUR' },
-			vat: [{ amount: 0.54, currency: 'EUR' }]
+			vat: [{ amount: 0.54, currency: 'EUR' }],
+			discount: { amount: 1, currency: 'EUR' }
 		},
 		priceReference: {
 			totalPrice: { amount: 6.66, currency: 'CHF' },
-			vat: [{ amount: 0.5, currency: 'CHF' }]
+			vat: [{ amount: 0.5, currency: 'CHF' }],
+			discount: { amount: 0.92, currency: 'CHF' }
 		},
 		secondary: {
 			totalPrice: { amount: 0.00012, currency: 'BTC' },
@@ -21,8 +23,7 @@ function makeOrder(overrides: Partial<Order['currencySnapshot']> = {}): Order {
 		accounting: {
 			totalPrice: { amount: 7.24, currency: 'EUR' },
 			vat: [{ amount: 0.54, currency: 'EUR' }]
-		},
-		...overrides
+		}
 	} as Order['currencySnapshot'];
 
 	return {
@@ -41,7 +42,6 @@ describe('orderVatAccountingSnapshot', () => {
 		expect(snap.secondary).toEqual([{ amount: 0.0000089, currency: 'BTC' }]);
 		expect(snap.accounting).toEqual([{ amount: 0.54, currency: 'EUR' }]);
 
-		// No amount is ever expressed in the internal SAT unit.
 		const currencies = [snap.main, snap.priceReference, snap.secondary, snap.accounting]
 			.flat()
 			.map((p) => p?.currency);
@@ -57,8 +57,45 @@ describe('orderVatAccountingSnapshot', () => {
 
 		expect(snap).not.toHaveProperty('secondary');
 		expect(snap).not.toHaveProperty('accounting');
-		// main and priceReference are always present.
 		expect(snap.main).toBeDefined();
 		expect(snap.priceReference).toBeDefined();
+	});
+
+	it('reports no rate rows when there are no per-currency VAT amounts', () => {
+		const order = makeOrder();
+		// Rate rows present but no snapshotted amounts (e.g. a zero-total-VAT order).
+		delete (order.currencySnapshot.main as { vat?: unknown }).vat;
+		delete (order.currencySnapshot.priceReference as { vat?: unknown }).vat;
+		delete (order.currencySnapshot.secondary as { vat?: unknown }).vat;
+		delete (order.currencySnapshot.accounting as { vat?: unknown }).vat;
+
+		const snap = orderVatAccountingSnapshot(order);
+
+		expect(snap.rates).toEqual([]);
+		expect(snap).not.toHaveProperty('main');
+		expect(snap).not.toHaveProperty('priceReference');
+	});
+});
+
+describe('orderCurrencyAmounts', () => {
+	it('projects a field across every configured currency', () => {
+		const totals = orderCurrencyAmounts(makeOrder(), (entry) => entry.totalPrice);
+
+		expect(totals).toEqual({
+			main: { amount: 7.24, currency: 'EUR' },
+			priceReference: { amount: 6.66, currency: 'CHF' },
+			secondary: { amount: 0.00012, currency: 'BTC' },
+			accounting: { amount: 7.24, currency: 'EUR' }
+		});
+	});
+
+	it('omits currencies where the field is absent (e.g. no discount)', () => {
+		// secondary/accounting in makeOrder() carry no discount.
+		const discounts = orderCurrencyAmounts(makeOrder(), (entry) => entry.discount);
+
+		expect(discounts).toEqual({
+			main: { amount: 1, currency: 'EUR' },
+			priceReference: { amount: 0.92, currency: 'CHF' }
+		});
 	});
 });
