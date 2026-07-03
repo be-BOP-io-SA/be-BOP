@@ -18,6 +18,7 @@
 	import Select from 'svelte-select';
 	import type { LayoutServerData } from '../../routes/(app)/$types';
 	import DeliveryFeesSelector from './DeliveryFeesSelector.svelte';
+	import ProductActionSettingsCards from './ProductActionSettingsCards.svelte';
 	import CurrencyLabel from './CurrencyLabel.svelte';
 	import PriceFieldsWithVat from './PriceFieldsWithVat.svelte';
 	import Editor from '@tinymce/tinymce-svelte';
@@ -1644,84 +1645,15 @@
 
 				<div>
 					<h4 class="text-lg font-medium text-gray-900 mb-3">Action Settings</h4>
-					<div class="overflow-x-auto">
-						<table class="w-full border border-gray-300 divide-y divide-gray-300 text-sm">
-							<thead class="bg-gray-100">
-								<tr>
-									<th class="py-3 px-4 text-left font-medium text-gray-700">Action</th>
-									<th class="py-3 px-4 text-center font-medium text-gray-700">E-shop</th>
-									<th class="py-3 px-4 text-center font-medium text-gray-700">Retail (POS)</th>
-									<th class="py-3 px-4 text-center font-medium text-gray-700">Google Shopping</th>
-									<th class="py-3 px-4 text-center font-medium text-gray-700">Nostr-bot</th>
-								</tr>
-							</thead>
-							<tbody class="divide-y divide-gray-200">
-								<tr>
-									<td class="py-3 px-4 font-medium text-gray-700">Product is visible</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.eShop.visible}
-											name="eshopVisible"
-											class="form-checkbox"
-										/>
-									</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.retail.visible}
-											name="retailVisible"
-											class="form-checkbox"
-										/>
-									</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.googleShopping.visible}
-											name="googleShoppingVisible"
-											class="form-checkbox"
-										/>
-									</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.nostr.visible}
-											name="nostrVisible"
-											class="form-checkbox"
-										/>
-									</td>
-								</tr>
-								<tr>
-									<td class="py-3 px-4 font-medium text-gray-700">Can be added to basket</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.eShop.canBeAddedToBasket}
-											name="eshopBasket"
-											class="form-checkbox"
-										/>
-									</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.retail.canBeAddedToBasket}
-											name="retailBasket"
-											class="form-checkbox"
-										/>
-									</td>
-									<td class="py-3 px-4 text-center text-gray-400">—</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.nostr.canBeAddedToBasket}
-											name="nostrBasket"
-											class="form-checkbox"
-										/>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+					<ProductActionSettingsCards
+						bind:eshopVisible={product.actionSettings.eShop.visible}
+						bind:retailVisible={product.actionSettings.retail.visible}
+						bind:googleShoppingVisible={product.actionSettings.googleShopping.visible}
+						bind:nostrVisible={product.actionSettings.nostr.visible}
+						bind:eshopBasket={product.actionSettings.eShop.canBeAddedToBasket}
+						bind:retailBasket={product.actionSettings.retail.canBeAddedToBasket}
+						bind:nostrBasket={product.actionSettings.nostr.canBeAddedToBasket}
+					/>
 				</div>
 			</div>
 		</details>
