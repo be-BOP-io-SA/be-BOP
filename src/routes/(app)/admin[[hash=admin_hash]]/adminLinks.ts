@@ -176,6 +176,10 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/pos-payments',
 				label: 'PoS Payments'
+			},
+			{
+				href: '/admin/config/payment',
+				label: 'Custom payment method'
 			}
 		]
 	},
