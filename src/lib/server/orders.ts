@@ -2226,20 +2226,29 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 				forPaidUntil: existing.paidUntil
 			}));
 
+			// Optimistic filter on cursor: two racing renewals both read `currentCursor`, so we
+			// require the write-time cursor to still match what we read. If a concurrent renewal
+			// won, `modifiedCount === 0` and the assert below throws — the second payment gets
+			// surfaced as a failed renewal instead of silently corrupting the schedule state.
+			// Only applied to scheduled, non-cancelled subs: legacy subs have no cursor to gate
+			// on, and cancelled reactivations `$unset` the cursor below (no read-modify-write).
+			const guardCursor = !!existing.pricingScheduleSnapshot && !existing.cancelledAt;
 			const result = await collections.paidSubscriptions.updateOne(
-				{ _id: existing._id },
+				{
+					_id: existing._id,
+					...(guardCursor && { pricingScheduleCursor: currentCursor })
+				},
 				{
 					$set: {
 						paidUntil: newPaidUntil,
 						updatedAt: new Date(),
 						notifications: [],
-						// Cursor advances on *every* renewal (in-schedule or post-schedule) so a
-						// past-schedule subscription lets `cursor - 1` overshoot `phases.length`,
-						// at which point `currentFundingReminderSeconds` falls back to the
-						// product-level reminder as documented. Skip when the sub is being
-						// reactivated from `cancelledAt`, because the cursor is `$unset` below
-						// and MongoDB rejects a $set/$unset collision on the same key.
-						...(!existing.cancelledAt && { pricingScheduleCursor: currentCursor + 1 }),
+						// Cursor advances on *every* schedule-carrying renewal (in-schedule or
+						// past-schedule) so `cursor - 1` overshoots `phases.length` for exhausted
+						// subs, at which point `currentFundingReminderSeconds` falls back to the
+						// product-level reminder as documented. Skip on legacy no-schedule subs
+						// (nothing to advance) and on cancelled reactivations (`$unset` below).
+						...(guardCursor && { pricingScheduleCursor: currentCursor + 1 }),
 						...(activePhase && {
 							[`pricingScheduleSnapshot.phases.${currentCursor}.status`]: 'paid',
 							[`pricingScheduleSnapshot.phases.${currentCursor}.orderId`]: order._id

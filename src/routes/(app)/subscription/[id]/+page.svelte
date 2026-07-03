@@ -16,6 +16,7 @@
 		data.payment.lastPaidMethodStillEligible && data.payment.lastPaidMethod
 			? data.payment.lastPaidMethod
 			: '';
+	let submitting = false;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 flex flex-col gap-4 items-start">
@@ -71,7 +72,12 @@
 		})}
 	</p>
 
-	<form action="?/renew" method="post" class="flex flex-col gap-3 items-start w-full max-w-md">
+	<form
+		action="?/renew"
+		method="post"
+		class="flex flex-col gap-3 items-start w-full max-w-md"
+		on:submit={() => (submitting = true)}
+	>
 		{#if data.canRenew}
 			{#if data.payment.lastPaidMethod && data.payment.lastPaidMethodStillEligible && !changingMethod}
 				<p class="text-sm text-gray-600">
@@ -103,7 +109,8 @@
 
 			<button
 				class="btn btn-black"
-				disabled={(!data.payment.lastPaidMethodStillEligible && !chosenMethod) ||
+				disabled={submitting ||
+					(!data.payment.lastPaidMethodStillEligible && !chosenMethod) ||
 					(changingMethod && !chosenMethod)}>{t('subscription.cta.renew')}</button
 			>
 		{:else}
