@@ -83,9 +83,9 @@ const baseConfig = {
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
 	/**
-	 * Generic manual/asynchronous payment method (issue #2259): the admin gives it a label and
-	 * free-text instructions (e.g. "Send X XMR to … then message us on Signal"), the customer is
-	 * shown the instructions with no QR, and an admin validates the payment manually.
+	 * Generic manual/asynchronous payment method: the admin gives it a label and free-text
+	 * instructions, the customer is shown the instructions with no QR, and an admin validates the
+	 * payment manually.
 	 */
 	customPaymentMethod: { enabled: false, label: '', instructions: '' },
 	subscriptionNumber: 0,

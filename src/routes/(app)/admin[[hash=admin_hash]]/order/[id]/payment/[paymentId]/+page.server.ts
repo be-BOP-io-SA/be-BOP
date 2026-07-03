@@ -54,7 +54,7 @@ export const actions = {
 				.object({ detail: paymentDetailSchema(required) })
 				.parse({ detail: formData.get('detail') });
 		} else if (payment.method === 'custom') {
-			// Optional free-text reference for the manual custom payment (issue #2259).
+			// Optional free-text reference for the manual custom payment.
 			posInfo = z
 				.object({ detail: paymentDetailSchema(false) })
 				.parse({ detail: formData.get('detail') });
