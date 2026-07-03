@@ -619,6 +619,7 @@
 		"paidWith": {
 			"bank-transfer": "Pagado con: transferencia bancaria verificada",
 			"custom": "Pagado con: método de pago personalizado",
+			"customNamed": "Pagado con: {label}",
 			"bitcoin": "Pagado con: pago en Bitcoin (1 {paymentCurrency} = {exchangeRate} {mainCurrency} al momento del pedido)",
 			"card": "Pagado con: tarjeta bancaria",
 			"free": "No se pagó nada",
@@ -631,6 +632,7 @@
 		"paidWithSummary": {
 			"bank-transfer": "Pagado con: transferencia bancaria verificada",
 			"custom": "Pagado con: método de pago personalizado",
+			"customNamed": "Pagado con: {label}",
 			"bitcoin": "Pagado con: transferencia de Bitcoin",
 			"card": "Pagado con: tarjeta bancaria",
 			"free": "No se pagó nada",

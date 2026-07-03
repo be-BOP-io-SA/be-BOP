@@ -619,6 +619,7 @@
 		"paidWith": {
 			"bank-transfer": "Betaald met: geverifieerde bankoverschrijving",
 			"custom": "Betaald met: aangepaste betaalmethode",
+			"customNamed": "Betaald met: {label}",
 			"bitcoin": "Betaald met: Bitcoin on-chain betaling (1 {paymentCurrency} = {exchangeRate} {mainCurrency} op het moment van de bestelling)",
 			"card": "Betaald met: bankkaart",
 			"free": "Niets betaald",
@@ -631,6 +632,7 @@
 		"paidWithSummary": {
 			"bank-transfer": "Betaald met: geverifieerde bankoverschrijving",
 			"custom": "Betaald met: aangepaste betaalmethode",
+			"customNamed": "Betaald met: {label}",
 			"bitcoin": "Betaald met: Bitcoin on-chain betaling",
 			"card": "Betaald met: bankkaart",
 			"free": "Niets betaald",

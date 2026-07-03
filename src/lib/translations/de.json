@@ -619,6 +619,7 @@
 		"paidWith": {
 			"bank-transfer": "Bezahlt mit: verifizierter Banküberweisung",
 			"custom": "Bezahlt mit: benutzerdefinierte Zahlungsmethode",
+			"customNamed": "Bezahlt mit: {label}",
 			"bitcoin": "Bezahlt mit: Bitcoin On-Chain-Zahlung (1 {paymentCurrency} = {exchangeRate} {mainCurrency} zum Zeitpunkt der Bestellung)",
 			"card": "Bezahlt mit: Bankkarte",
 			"free": "Nichts bezahlt",
@@ -631,6 +632,7 @@
 		"paidWithSummary": {
 			"bank-transfer": "Bezahlt mit: verifizierter Banküberweisung",
 			"custom": "Bezahlt mit: benutzerdefinierte Zahlungsmethode",
+			"customNamed": "Bezahlt mit: {label}",
 			"bitcoin": "Bezahlt mit: Bitcoin On-Chain-Zahlung",
 			"card": "Bezahlt mit: Bankkarte",
 			"free": "Nichts bezahlt",
