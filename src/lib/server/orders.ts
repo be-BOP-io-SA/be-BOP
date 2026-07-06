@@ -151,6 +151,7 @@ export async function onOrderPayment(
 		tapToPay?: { expiresAt: Date };
 		providedSession?: ClientSession;
 		cashbackAmount?: Price;
+		firstPaidTransition?: boolean;
 	}
 ): Promise<Order> {
 	const invoiceNumber = ((await lastInvoiceNumber()) ?? 0) + 1;
@@ -459,10 +460,13 @@ export async function onOrderPayment(
 	// Fire-and-forget per-product paid-order webhook (issue #2646). After the transaction so a
 	// network failure can never roll back the paid status; `!alreadyPaid` fires exactly once per
 	// payment, so re-processing an already-paid order and the free-order double-call don't
-	// double-fire. `.catch()` is mandatory: the helper's product query and Promise.all sit outside
-	// its internal per-target try/catch, so a Mongo hiccup would otherwise be an unhandled
-	// rejection that crashes the process — after the payment is already committed.
-	if (!alreadyPaid && updated.status === 'paid') {
+	// double-fire. `firstPaidTransition` overrides the guard for free payments: `addOrderPayment`
+	// pre-stamps `paidAt` at creation for `paymentMethod === 'free'`, so `alreadyPaid` reads true
+	// on the very first call and the naked guard would swallow the webhook (issue #2647 review).
+	// `.catch()` is mandatory: the helper's product query and Promise.all sit outside its internal
+	// per-target try/catch, so a Mongo hiccup would otherwise be an unhandled rejection that
+	// crashes the process — after the payment is already committed.
+	if ((!alreadyPaid || params?.firstPaidTransition) && updated.status === 'paid') {
 		void firePaidOrderWebhooks(updated).catch((err) => {
 			console.error('[paidOrderWebhook] failed to fire for order', updated.number, err);
 		});
@@ -2148,7 +2152,10 @@ export async function addOrderPayment(
 	// free payments creating as 'paid'
 	if (isFreePayment) {
 		order.payments.push(payment);
-		await onOrderPayment(order, payment, payment.price, { providedSession: opts?.session });
+		await onOrderPayment(order, payment, payment.price, {
+			providedSession: opts?.session,
+			firstPaidTransition: true
+		});
 	}
 
 	return payment;
