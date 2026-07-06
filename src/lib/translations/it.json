@@ -14,6 +14,74 @@
 		"zipCode": "Codice d'avviamento postale"
 	},
 	"admin": {
+		"action": {
+			"save": "Salva",
+			"update": "Aggiorna",
+			"reset": "Reimposta"
+		},
+		"theme": {
+			"title": "Tema",
+			"createNew": "Crea un nuovo tema",
+			"createNewAssistant": "Crea un nuovo tema (con assistente)",
+			"choose": "Scegli il tuo tema",
+			"mainTheme": "Tema principale",
+			"defaultTheme": "Tema predefinito",
+			"hideSelector": "Nascondi il selettore di tema nella barra degli strumenti",
+			"listTitle": "Elenco temi"
+		},
+		"stripe": {
+			"secretKey": "Chiave segreta",
+			"publicKey": "Chiave pubblica",
+			"currency": "Valuta",
+			"testing": "Test in corso…",
+			"testConnection": "Prova connessione",
+			"testSuccess": "Connessione riuscita. Le credenziali Stripe funzionano.",
+			"testFailed": "Connessione fallita: {reason}"
+		},
+		"nav": {
+			"section": {
+				"merch": "Negozio",
+				"settings": "Impostazioni",
+				"payment-settings": "Pagamenti",
+				"transaction": "Transazioni",
+				"node-management": "Gestione nodi",
+				"widgets": "Widget"
+			},
+			"link": {
+				"layout": "Layout",
+				"products": "Prodotti",
+				"tickets": "Biglietti",
+				"pictures": "Immagini",
+				"discount": "Sconti",
+				"themes": "Temi",
+				"labels": "Etichette",
+				"files": "File",
+				"general": "Generale",
+				"languages": "Lingue",
+				"identity": "Identità",
+				"physical-shop": "Negozio fisico",
+				"templates": "Modelli",
+				"age-restriction": "Restrizione età",
+				"oauth-providers": "Provider OAuth",
+				"s3-storage": "Archiviazione S3",
+				"bitcoin-core-node": "Nodo Bitcoin Core",
+				"lightning-lnd-node": "Nodo LND Lightning",
+				"pos-payments": "Pagamenti PoS",
+				"orders": "Ordini",
+				"reporting": "Rapporti",
+				"sales-logs": "Registri vendite",
+				"emails": "Email",
+				"challenges": "Sfide",
+				"sliders": "Slider",
+				"specifications": "Specifiche",
+				"forms": "Moduli",
+				"countdowns": "Conto alla rovescia",
+				"galleries": "Gallerie",
+				"schedules": "Programmi",
+				"leaderboards": "Classifiche",
+				"searchlists": "Liste di ricerca"
+			}
+		},
 		"product": {
 			"stockReference": {
 				"label": "Riferimento allo stock di un altro prodotto (opzionale)",

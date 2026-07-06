@@ -1,5 +1,9 @@
 /**
- * This script checks that all translations have the same parameters as the English translations.
+ * This script checks that all translations have the same parameters as the English translations,
+ * and that every `admin.*` key present in English exists in all other locales (issue #878 — the
+ * admin i18n migration ships every migrated key in all 7 locales). The coverage check is scoped to
+ * `admin.*` on purpose: legacy non-admin namespaces rely on the English runtime fallback and would
+ * otherwise fail with thousands of pre-existing gaps.
  */
 
 import fs from 'fs';
@@ -76,6 +80,21 @@ for (const language of languages.filter((l) => l !== 'en')) {
 		}
 	}
 }
+
+// Coverage: every admin.* key present in English must exist in every other locale.
+const adminKeys = Object.keys(enTranslations).filter((key) => key.startsWith('admin.'));
+for (const language of languages.filter((l) => l !== 'en')) {
+	const flatTranslations = flatten(languageMap[language]);
+	for (const key of adminKeys) {
+		if (flatTranslations[key] === undefined) {
+			console.error(`Missing admin.* translation "${key}" in ${language}`);
+			failed = true;
+		}
+	}
+}
+console.log(
+	`Checked admin.* coverage: ${adminKeys.length} keys across ${languages.length} locales.`
+);
 
 if (failed) {
 	process.exit(1);

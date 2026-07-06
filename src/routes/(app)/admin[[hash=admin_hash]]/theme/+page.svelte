@@ -1,17 +1,22 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
-<h1 class="text-3xl">Theme</h1>
-<a href="{data.adminPrefix}/theme/new" class="underline">Create a new theme</a>
-<a href="{data.adminPrefix}/theme/assist" class="underline">Create a new theme (with assistant)</a>
+<h1 class="text-3xl">{t('admin.theme.title')}</h1>
+<a href="{data.adminPrefix}/theme/new" class="underline">{t('admin.theme.createNew')}</a>
+<a href="{data.adminPrefix}/theme/assist" class="underline">{t('admin.theme.createNewAssistant')}</a
+>
 
-<h2 class="text-2xl">Choose your theme</h2>
+<h2 class="text-2xl">{t('admin.theme.choose')}</h2>
 <form method="post" class="flex flex-col gap-6">
 	<label class="form-label">
-		Main theme
+		{t('admin.theme.mainTheme')}
 		<select name="mainTheme" class="form-input max-w-[25rem]" bind:value={data.themeId}>
-			<option value="">Default theme</option>
+			<option value="">{t('admin.theme.defaultTheme')}</option>
 			{#each data.themes as theme}
 				<option value={theme._id}>{theme.name}</option>
 			{/each}
@@ -25,13 +30,13 @@
 			class="form-checkbox"
 			checked={data.hideThemeSelectorInToolbar}
 		/>
-		Hide theme selector in toolbar
+		{t('admin.theme.hideSelector')}
 	</label>
-	<input type="submit" value="Update" class="btn btn-blue self-start" />
+	<input type="submit" value={t('admin.action.update')} class="btn btn-blue self-start" />
 </form>
 
 {#if data.themes.length}
-	<h2 class="text-2xl">Theme list :</h2>
+	<h2 class="text-2xl">{t('admin.theme.listTitle')}</h2>
 	{#each data.themes as theme}
 		<a href="{data.adminPrefix}/theme/{theme._id}" class="font-semibold underline">{theme.name}</a>
 	{/each}

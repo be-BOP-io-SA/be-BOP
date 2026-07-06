@@ -14,6 +14,74 @@
 		"zipCode": "Código postal"
 	},
 	"admin": {
+		"action": {
+			"save": "Guardar",
+			"update": "Actualizar",
+			"reset": "Restablecer"
+		},
+		"theme": {
+			"title": "Tema",
+			"createNew": "Crear un tema nuevo",
+			"createNewAssistant": "Crear un tema nuevo (con asistente)",
+			"choose": "Elige tu tema",
+			"mainTheme": "Tema principal",
+			"defaultTheme": "Tema predeterminado",
+			"hideSelector": "Ocultar el selector de tema en la barra de herramientas",
+			"listTitle": "Lista de temas"
+		},
+		"stripe": {
+			"secretKey": "Clave secreta",
+			"publicKey": "Clave pública",
+			"currency": "Moneda",
+			"testing": "Probando…",
+			"testConnection": "Probar conexión",
+			"testSuccess": "Conexión exitosa. Las credenciales de Stripe funcionan.",
+			"testFailed": "Conexión fallida: {reason}"
+		},
+		"nav": {
+			"section": {
+				"merch": "Tienda",
+				"settings": "Configuración",
+				"payment-settings": "Pagos",
+				"transaction": "Transacciones",
+				"node-management": "Gestión de nodos",
+				"widgets": "Widgets"
+			},
+			"link": {
+				"layout": "Diseño",
+				"products": "Productos",
+				"tickets": "Entradas",
+				"pictures": "Imágenes",
+				"discount": "Descuentos",
+				"themes": "Temas",
+				"labels": "Etiquetas",
+				"files": "Archivos",
+				"general": "General",
+				"languages": "Idiomas",
+				"identity": "Identidad",
+				"physical-shop": "Tienda física",
+				"templates": "Plantillas",
+				"age-restriction": "Restricción de edad",
+				"oauth-providers": "Proveedores OAuth",
+				"s3-storage": "Almacenamiento S3",
+				"bitcoin-core-node": "Nodo Bitcoin Core",
+				"lightning-lnd-node": "Nodo LND Lightning",
+				"pos-payments": "Pagos TPV",
+				"orders": "Pedidos",
+				"reporting": "Informes",
+				"sales-logs": "Registros de ventas",
+				"emails": "Correos",
+				"challenges": "Desafíos",
+				"sliders": "Carruseles",
+				"specifications": "Especificaciones",
+				"forms": "Formularios",
+				"countdowns": "Cuentas atrás",
+				"galleries": "Galerías",
+				"schedules": "Horarios",
+				"leaderboards": "Clasificaciones",
+				"searchlists": "Listas de búsqueda"
+			}
+		},
 		"product": {
 			"stockReference": {
 				"label": "Referenciar el stock de otro producto (opcional)",

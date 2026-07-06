@@ -14,6 +14,74 @@
 		"zipCode": "Postleitzahl"
 	},
 	"admin": {
+		"action": {
+			"save": "Speichern",
+			"update": "Aktualisieren",
+			"reset": "Zurücksetzen"
+		},
+		"theme": {
+			"title": "Theme",
+			"createNew": "Neues Theme erstellen",
+			"createNewAssistant": "Neues Theme erstellen (mit Assistent)",
+			"choose": "Theme auswählen",
+			"mainTheme": "Haupt-Theme",
+			"defaultTheme": "Standard-Theme",
+			"hideSelector": "Theme-Auswahl in der Symbolleiste ausblenden",
+			"listTitle": "Theme-Liste"
+		},
+		"stripe": {
+			"secretKey": "Geheimer Schlüssel",
+			"publicKey": "Öffentlicher Schlüssel",
+			"currency": "Währung",
+			"testing": "Wird getestet…",
+			"testConnection": "Verbindung testen",
+			"testSuccess": "Verbindung erfolgreich. Die Stripe-Zugangsdaten funktionieren.",
+			"testFailed": "Verbindung fehlgeschlagen: {reason}"
+		},
+		"nav": {
+			"section": {
+				"merch": "Shop",
+				"settings": "Einstellungen",
+				"payment-settings": "Zahlungen",
+				"transaction": "Transaktionen",
+				"node-management": "Node-Verwaltung",
+				"widgets": "Widgets"
+			},
+			"link": {
+				"layout": "Layout",
+				"products": "Produkte",
+				"tickets": "Tickets",
+				"pictures": "Bilder",
+				"discount": "Rabatte",
+				"themes": "Themes",
+				"labels": "Labels",
+				"files": "Dateien",
+				"general": "Allgemein",
+				"languages": "Sprachen",
+				"identity": "Identität",
+				"physical-shop": "Ladengeschäft",
+				"templates": "Vorlagen",
+				"age-restriction": "Altersbeschränkung",
+				"oauth-providers": "OAuth-Anbieter",
+				"s3-storage": "S3-Speicher",
+				"bitcoin-core-node": "Bitcoin-Core-Node",
+				"lightning-lnd-node": "Lightning-LND-Node",
+				"pos-payments": "POS-Zahlungen",
+				"orders": "Bestellungen",
+				"reporting": "Berichte",
+				"sales-logs": "Verkaufsprotokolle",
+				"emails": "E-Mails",
+				"challenges": "Challenges",
+				"sliders": "Slider",
+				"specifications": "Spezifikationen",
+				"forms": "Formulare",
+				"countdowns": "Countdowns",
+				"galleries": "Galerien",
+				"schedules": "Zeitpläne",
+				"leaderboards": "Ranglisten",
+				"searchlists": "Suchlisten"
+			}
+		},
 		"product": {
 			"stockReference": {
 				"label": "Auf Lagerbestand eines anderen Produkts verweisen (optional)",

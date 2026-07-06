@@ -10,8 +10,31 @@
 	import { isAllowedOnPage } from '$lib/types/Role';
 	import { adminLinks as adminLinksImported } from './adminLinks.js';
 	import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t, te } = useI18n();
+
+	// Nav labels/sections are i18n'd by deriving a key from the (English) source string:
+	// `admin.nav.link.<slug>` / `admin.nav.section.<slug>`. A translation is used when it exists in
+	// the current locale (or en); otherwise we fall back to the English source. Brand/technical
+	// entries (SumUp, Stripe, NostR…) simply have no key and stay as-is.
+	function navKey(kind: 'link' | 'section', source: string): string {
+		const slug = source
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '');
+		return `admin.nav.${kind}.${slug}`;
+	}
+	function navLabel(label: string): string {
+		const key = navKey('link', label);
+		return te(key) ? t(key) : label;
+	}
+	function navSection(section: string): string {
+		const key = navKey('section', section);
+		return te(key) ? t(key) : section;
+	}
 
 	let sidebarOpen = false;
 	let searchTerm = '';
@@ -80,7 +103,7 @@
 					return false;
 				}
 				if (trimmedSearch) {
-					return link.label.toLowerCase().includes(trimmedSearch);
+					return navLabel(link.label).toLowerCase().includes(trimmedSearch);
 				}
 				return true;
 			});
@@ -100,7 +123,7 @@
 					visibleLeaves: regularSections
 						.flatMap((s) => s.visibleLeaves)
 						.filter((l) => bookmarks.includes(l.canonicalHref))
-						.sort((a, b) => a.label.localeCompare(b.label))
+						.sort((a, b) => navLabel(a.label).localeCompare(navLabel(b.label)))
 			  }
 			: null;
 
@@ -200,7 +223,7 @@
 							on:click={() => toggleSection(section.section)}
 						>
 							<svelte:component this={section.icon} />
-							<span class="flex-1">{section.section}</span>
+							<span class="flex-1">{navSection(section.section)}</span>
 							{#if hasSearch || expandedSections.has(section.section)}
 								<IconChevronDown />
 							{:else}
@@ -234,7 +257,7 @@
 											class:opacity-70={data.role &&
 												!isAllowedOnPage(data.role, link.href, 'write')}
 										>
-											{link.label}
+											{navLabel(link.label)}
 										</a>
 									</div>
 								{/each}

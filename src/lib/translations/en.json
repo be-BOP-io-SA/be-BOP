@@ -14,6 +14,74 @@
 		"zipCode": "Zip code"
 	},
 	"admin": {
+		"action": {
+			"save": "Save",
+			"update": "Update",
+			"reset": "Reset"
+		},
+		"theme": {
+			"title": "Theme",
+			"createNew": "Create a new theme",
+			"createNewAssistant": "Create a new theme (with assistant)",
+			"choose": "Choose your theme",
+			"mainTheme": "Main theme",
+			"defaultTheme": "Default theme",
+			"hideSelector": "Hide theme selector in toolbar",
+			"listTitle": "Theme list"
+		},
+		"stripe": {
+			"secretKey": "Secret Key",
+			"publicKey": "Public Key",
+			"currency": "Currency",
+			"testing": "Testing…",
+			"testConnection": "Test connection",
+			"testSuccess": "Connection successful. Stripe credentials are working.",
+			"testFailed": "Connection failed: {reason}"
+		},
+		"nav": {
+			"section": {
+				"merch": "Merch",
+				"settings": "Settings",
+				"payment-settings": "Payment Settings",
+				"transaction": "Transaction",
+				"node-management": "Node Management",
+				"widgets": "Widgets"
+			},
+			"link": {
+				"layout": "Layout",
+				"products": "Products",
+				"tickets": "Tickets",
+				"pictures": "Pictures",
+				"discount": "Discount",
+				"themes": "Themes",
+				"labels": "Labels",
+				"files": "Files",
+				"general": "General",
+				"languages": "Languages",
+				"identity": "Identity",
+				"physical-shop": "Physical Shop",
+				"templates": "Templates",
+				"age-restriction": "Age restriction",
+				"oauth-providers": "OAuth Providers",
+				"s3-storage": "S3 Storage",
+				"bitcoin-core-node": "Bitcoin core node",
+				"lightning-lnd-node": "Lightning LND node",
+				"pos-payments": "PoS Payments",
+				"orders": "Orders",
+				"reporting": "Reporting",
+				"sales-logs": "Sales Logs",
+				"emails": "Emails",
+				"challenges": "Challenges",
+				"sliders": "Sliders",
+				"specifications": "Specifications",
+				"forms": "Forms",
+				"countdowns": "Countdowns",
+				"galleries": "Galleries",
+				"schedules": "Schedules",
+				"leaderboards": "Leaderboards",
+				"searchlists": "Searchlists"
+			}
+		},
 		"product": {
 			"stockReference": {
 				"label": "Reference another product's stock (optional)",

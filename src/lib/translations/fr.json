@@ -14,6 +14,74 @@
 		"zipCode": "Code postal"
 	},
 	"admin": {
+		"action": {
+			"save": "Enregistrer",
+			"update": "Mettre à jour",
+			"reset": "Réinitialiser"
+		},
+		"theme": {
+			"title": "Thème",
+			"createNew": "Créer un nouveau thème",
+			"createNewAssistant": "Créer un nouveau thème (avec assistant)",
+			"choose": "Choisissez votre thème",
+			"mainTheme": "Thème principal",
+			"defaultTheme": "Thème par défaut",
+			"hideSelector": "Masquer le sélecteur de thème dans la barre d'outils",
+			"listTitle": "Liste des thèmes"
+		},
+		"stripe": {
+			"secretKey": "Clé secrète",
+			"publicKey": "Clé publique",
+			"currency": "Devise",
+			"testing": "Test en cours…",
+			"testConnection": "Tester la connexion",
+			"testSuccess": "Connexion réussie. Les identifiants Stripe fonctionnent.",
+			"testFailed": "Échec de la connexion : {reason}"
+		},
+		"nav": {
+			"section": {
+				"merch": "Boutique",
+				"settings": "Paramètres",
+				"payment-settings": "Paiements",
+				"transaction": "Transactions",
+				"node-management": "Gestion des nœuds",
+				"widgets": "Widgets"
+			},
+			"link": {
+				"layout": "Mise en page",
+				"products": "Produits",
+				"tickets": "Billets",
+				"pictures": "Images",
+				"discount": "Remises",
+				"themes": "Thèmes",
+				"labels": "Étiquettes",
+				"files": "Fichiers",
+				"general": "Général",
+				"languages": "Langues",
+				"identity": "Identité",
+				"physical-shop": "Boutique physique",
+				"templates": "Modèles",
+				"age-restriction": "Restriction d'âge",
+				"oauth-providers": "Fournisseurs OAuth",
+				"s3-storage": "Stockage S3",
+				"bitcoin-core-node": "Nœud Bitcoin Core",
+				"lightning-lnd-node": "Nœud LND Lightning",
+				"pos-payments": "Paiements PoS",
+				"orders": "Commandes",
+				"reporting": "Rapports",
+				"sales-logs": "Journaux de ventes",
+				"emails": "E-mails",
+				"challenges": "Défis",
+				"sliders": "Carrousels",
+				"specifications": "Spécifications",
+				"forms": "Formulaires",
+				"countdowns": "Comptes à rebours",
+				"galleries": "Galeries",
+				"schedules": "Agendas",
+				"leaderboards": "Classements",
+				"searchlists": "Listes de recherche"
+			}
+		},
 		"product": {
 			"stockReference": {
 				"label": "Référencer le stock d'un autre produit (optionnel)",

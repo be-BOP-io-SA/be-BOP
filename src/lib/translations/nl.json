@@ -14,6 +14,74 @@
 		"zipCode": "Postcode"
 	},
 	"admin": {
+		"action": {
+			"save": "Opslaan",
+			"update": "Bijwerken",
+			"reset": "Resetten"
+		},
+		"theme": {
+			"title": "Thema",
+			"createNew": "Nieuw thema maken",
+			"createNewAssistant": "Nieuw thema maken (met assistent)",
+			"choose": "Kies je thema",
+			"mainTheme": "Hoofdthema",
+			"defaultTheme": "Standaardthema",
+			"hideSelector": "Themakiezer in werkbalk verbergen",
+			"listTitle": "Themalijst"
+		},
+		"stripe": {
+			"secretKey": "Geheime sleutel",
+			"publicKey": "Openbare sleutel",
+			"currency": "Valuta",
+			"testing": "Testen…",
+			"testConnection": "Verbinding testen",
+			"testSuccess": "Verbinding geslaagd. De Stripe-inloggegevens werken.",
+			"testFailed": "Verbinding mislukt: {reason}"
+		},
+		"nav": {
+			"section": {
+				"merch": "Winkel",
+				"settings": "Instellingen",
+				"payment-settings": "Betalingen",
+				"transaction": "Transacties",
+				"node-management": "Nodebeheer",
+				"widgets": "Widgets"
+			},
+			"link": {
+				"layout": "Lay-out",
+				"products": "Producten",
+				"tickets": "Tickets",
+				"pictures": "Afbeeldingen",
+				"discount": "Kortingen",
+				"themes": "Thema's",
+				"labels": "Labels",
+				"files": "Bestanden",
+				"general": "Algemeen",
+				"languages": "Talen",
+				"identity": "Identiteit",
+				"physical-shop": "Fysieke winkel",
+				"templates": "Sjablonen",
+				"age-restriction": "Leeftijdsbeperking",
+				"oauth-providers": "OAuth-providers",
+				"s3-storage": "S3-opslag",
+				"bitcoin-core-node": "Bitcoin-core-node",
+				"lightning-lnd-node": "Lightning-LND-node",
+				"pos-payments": "POS-betalingen",
+				"orders": "Bestellingen",
+				"reporting": "Rapportage",
+				"sales-logs": "Verkooplogs",
+				"emails": "E-mails",
+				"challenges": "Uitdagingen",
+				"sliders": "Sliders",
+				"specifications": "Specificaties",
+				"forms": "Formulieren",
+				"countdowns": "Aftellers",
+				"galleries": "Galerijen",
+				"schedules": "Roosters",
+				"leaderboards": "Scoreborden",
+				"searchlists": "Zoeklijsten"
+			}
+		},
 		"product": {
 			"stockReference": {
 				"label": "Verwijzing naar voorraad van ander product (optioneel)",
