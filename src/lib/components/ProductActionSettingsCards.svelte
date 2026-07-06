@@ -9,7 +9,9 @@
 </script>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-	<div class="border border-gray-300 rounded p-3 bg-white flex flex-col gap-2">
+	<div
+		class="border border-gray-300 dark:border-gray-700 rounded p-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 flex flex-col gap-2"
+	>
 		<h4 class="font-semibold text-sm">Eshop (anyone)</h4>
 		<label class="checkbox-label text-sm">
 			<input
@@ -25,7 +27,9 @@
 			Can be added to basket
 		</label>
 	</div>
-	<div class="border border-gray-300 rounded p-3 bg-white flex flex-col gap-2">
+	<div
+		class="border border-gray-300 dark:border-gray-700 rounded p-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 flex flex-col gap-2"
+	>
 		<h4 class="font-semibold text-sm">Retail (POS logged seat)</h4>
 		<label class="checkbox-label text-sm">
 			<input
@@ -46,7 +50,9 @@
 			Can be added to basket
 		</label>
 	</div>
-	<div class="border border-gray-300 rounded p-3 bg-white flex flex-col gap-2">
+	<div
+		class="border border-gray-300 dark:border-gray-700 rounded p-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 flex flex-col gap-2"
+	>
 		<h4 class="font-semibold text-sm">Google Shopping</h4>
 		<label class="checkbox-label text-sm">
 			<input
@@ -58,7 +64,9 @@
 			Product is visible
 		</label>
 	</div>
-	<div class="border border-gray-300 rounded p-3 bg-white flex flex-col gap-2">
+	<div
+		class="border border-gray-300 dark:border-gray-700 rounded p-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 flex flex-col gap-2"
+	>
 		<h4 class="font-semibold text-sm">Nostr-bot</h4>
 		<label class="checkbox-label text-sm">
 			<input
