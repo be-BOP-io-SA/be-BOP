@@ -44,9 +44,7 @@
 		return async ({ result }) => {
 			if (result.type === 'failure') {
 				errorMessage =
-					typeof result.data?.errorMessage === 'string'
-						? result.data.errorMessage
-						: 'Save failed.';
+					typeof result.data?.errorMessage === 'string' ? result.data.errorMessage : 'Save failed.';
 				return;
 			}
 			if (result.type === 'success') {

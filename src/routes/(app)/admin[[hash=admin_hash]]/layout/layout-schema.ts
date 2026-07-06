@@ -10,12 +10,30 @@ export const layoutTranslatableSchema = {
 	// Optional here because newly-added main links submit an empty id — the /admin/layout action
 	// generates one. Translation rows always carry the main link's id.
 	topbarLinks: z
-		.array(z.object({ id: z.string().trim().optional().default(''), href: z.string().trim(), label: z.string().trim() }))
+		.array(
+			z.object({
+				id: z.string().trim().optional().default(''),
+				href: z.string().trim(),
+				label: z.string().trim()
+			})
+		)
 		.optional(),
 	footerLinks: z
-		.array(z.object({ id: z.string().trim().optional().default(''), href: z.string().trim(), label: z.string().trim() }))
+		.array(
+			z.object({
+				id: z.string().trim().optional().default(''),
+				href: z.string().trim(),
+				label: z.string().trim()
+			})
+		)
 		.optional(),
 	navbarLinks: z
-		.array(z.object({ id: z.string().trim().optional().default(''), href: z.string().trim(), label: z.string().trim() }))
+		.array(
+			z.object({
+				id: z.string().trim().optional().default(''),
+				href: z.string().trim(),
+				label: z.string().trim()
+			})
+		)
 		.optional()
 };
