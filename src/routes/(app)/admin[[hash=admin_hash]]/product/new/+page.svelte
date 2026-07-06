@@ -2,11 +2,14 @@
 	import PictureComponent from '$lib/components/Picture.svelte';
 	import ProductForm from '$lib/components/ProductForm.svelte';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
-<h1 class="text-3xl">Add a product</h1>
+<h1 class="text-3xl">{t('admin.product.addProductTitle')}</h1>
 
 {#if !data.s3IsConfigured}
 	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
@@ -26,7 +29,7 @@
 />
 
 {#if data.pictures?.length}
-	<h2 class="text-2xl my-4">Photos</h2>
+	<h2 class="text-2xl my-4">{t('admin.product.photos')}</h2>
 
 	<div class="flex flex-row flex-wrap gap-6 mt-6">
 		{#each data.pictures as picture}
@@ -41,7 +44,7 @@
 {/if}
 
 {#if data.digitalFiles?.length}
-	<h2 class="text-2xl my-4">Digital Files</h2>
+	<h2 class="text-2xl my-4">{t('admin.product.digitalFiles')}</h2>
 
 	<div class="flex flex-row flex-wrap gap-6 mt-6">
 		{#each data.digitalFiles as digitalFile}

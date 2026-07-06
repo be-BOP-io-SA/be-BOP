@@ -1,10 +1,16 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
-<a href="{data.adminPrefix}/leaderboard/new" class="underline block">Add leaderboard</a>
+<a href="{data.adminPrefix}/leaderboard/new" class="underline block"
+	>{t('admin.leaderboard.addLeaderboard')}</a
+>
 
-<h1 class="text-3xl">List of leaderboards</h1>
+<h1 class="text-3xl">{t('admin.leaderboard.listTitle')}</h1>
 <ul>
 	{#each data.leaderboards as leaderboard}
 		<li>
@@ -12,9 +18,11 @@
 				{leaderboard.name}
 			</a>
 			-
-			<span class="text-gray-550">[Leaderboard={leaderboard._id}]</span>
+			<span class="text-gray-550"
+				>[{t('admin.leaderboard.leaderboardLabel', { id: leaderboard._id })}]</span
+			>
 		</li>
 	{:else}
-		No leaderboards yet
+		{t('admin.leaderboard.noLeaderboards')}
 	{/each}
 </ul>

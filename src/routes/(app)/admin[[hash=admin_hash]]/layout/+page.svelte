@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product.js';
 	import { upperFirst } from '$lib/utils/upperFirst.js';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	let viewportContentWidth = data.viewportContentWidth;
@@ -15,7 +18,7 @@
 </script>
 
 <form method="post" class="flex flex-col gap-4">
-	<h3 class="text-xl">Visitor default dark/light mode</h3>
+	<h3 class="text-xl">{t('admin.layout.visitorDefaultDarkLightMode')}</h3>
 	<label class="checkbox-label">
 		<input
 			type="radio"
@@ -24,7 +27,7 @@
 			name="visitorDarkLightMode"
 			value="light"
 		/>
-		Use light mode by default for users
+		{t('admin.layout.useLightModeForUsers')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -34,7 +37,7 @@
 			name="visitorDarkLightMode"
 			value="dark"
 		/>
-		Use Dark mode by default for users
+		{t('admin.layout.useDarkModeForUsers')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -44,9 +47,9 @@
 			name="visitorDarkLightMode"
 			value="system"
 		/>
-		Use Dark/light mode corresponding to browser / OS by default for users
+		{t('admin.layout.useSystemModeForUsers')}
 	</label>
-	<h3 class="text-xl">Employee default dark/light mode</h3>
+	<h3 class="text-xl">{t('admin.layout.employeeDefaultDarkLightMode')}</h3>
 	<label class="checkbox-label">
 		<input
 			type="radio"
@@ -55,7 +58,7 @@
 			name="employeeDarkLightMode"
 			value="light"
 		/>
-		Use light mode by default for employee
+		{t('admin.layout.useLightModeForEmployee')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -65,7 +68,7 @@
 			name="employeeDarkLightMode"
 			value="dark"
 		/>
-		Use Dark mode by default for employee
+		{t('admin.layout.useDarkModeForEmployee')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -75,10 +78,10 @@
 			name="employeeDarkLightMode"
 			value="system"
 		/>
-		Use Dark/light mode corresponding to browser / OS by default for employee
+		{t('admin.layout.useSystemModeForEmployee')}
 	</label>
 
-	<h2 class="text-2xl">Product</h2>
+	<h2 class="text-2xl">{t('admin.layout.product')}</h2>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
@@ -86,56 +89,56 @@
 			class="form-checkbox"
 			checked={data.disableZoomProductPicture}
 		/>
-		Disable zoom on product pictures.
+		{t('admin.layout.disableZoomProductPictures')}
 	</label>
-	<h2 class="text-2xl">Top bar</h2>
+	<h2 class="text-2xl">{t('admin.layout.topBar')}</h2>
 
 	<label class="form-label">
-		Brand name
+		{t('admin.layout.brandName')}
 		<input type="text" name="brandName" class="form-input" value={data.brandName} />
 	</label>
 
 	<p>
-		To change the logo, go to <a
-			href="{data.adminPrefix}/picture"
-			class="body-hyperlink hover:underline">pictures</a
-		>, add a picture, and set it as logo
+		{t('admin.layout.changeLogoPrefix')}
+		<a href="{data.adminPrefix}/picture" class="body-hyperlink hover:underline"
+			>{t('admin.layout.pictures')}</a
+		>{t('admin.layout.changeLogoSuffix')}
 	</p>
 	<p>
-		To change the favicon, go to <a
-			href="{data.adminPrefix}/picture"
-			class="body-hyperlink hover:underline">pictures</a
-		>, add a picture, and set it as favicon
+		{t('admin.layout.changeFaviconPrefix')}
+		<a href="{data.adminPrefix}/picture" class="body-hyperlink hover:underline"
+			>{t('admin.layout.pictures')}</a
+		>{t('admin.layout.changeFaviconSuffix')}
 	</p>
 	<label class="form-label">
-		Website title
+		{t('admin.layout.websiteTitle')}
 		<input type="text" name="websiteTitle" class="form-input" value={data.websiteTitle} />
 	</label>
 
 	<label class="form-label">
-		Website description
+		{t('admin.layout.websiteDescription')}
 		<textarea
 			name="websiteShortDescription"
 			cols="30"
 			rows="2"
 			required
-			placeholder="Shown in social media previews"
+			placeholder={t('admin.layout.shownInSocialMediaPreviews')}
 			maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 			class="form-input block w-full"
 			value={data.websiteShortDescription}
 		/>
 	</label>
 
-	<h3 class="text-xl">Links</h3>
+	<h3 class="text-xl">{t('admin.layout.links')}</h3>
 
 	{#each [...data.links.topbar, ...Array(linkLine).fill( { href: '', label: '' } )].slice(0, linkLine) as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.layout.text')}
 				<input type="text" name="topbarLinks[{i}].label" class="form-input" value={link.label} />
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.layout.url')}
 				<input type="text" name="topbarLinks[{i}].href" class="form-input" value={link.href} />
 			</label>
 			<button
@@ -151,21 +154,21 @@
 		</div>
 	{/each}
 	<button class="btn body-mainCTA self-start" on:click={() => (linkLine += 1)} type="button"
-		>Add topbar link
+		>{t('admin.layout.addTopbarLink')}
 	</button>
 
-	<h2 class="text-2xl">Nav bar</h2>
+	<h2 class="text-2xl">{t('admin.layout.navBar')}</h2>
 
-	<h3 class="text-xl">Links</h3>
+	<h3 class="text-xl">{t('admin.layout.links')}</h3>
 
 	{#each [...data.links.navbar, ...Array(navbarLinkLine).fill( { href: '', label: '' } )].slice(0, navbarLinkLine) as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.layout.text')}
 				<input type="text" name="navbarLinks[{i}].label" class="form-input" value={link.label} />
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.layout.url')}
 				<input type="text" name="navbarLinks[{i}].href" class="form-input" value={link.href} />
 			</label>
 			<button
@@ -181,10 +184,10 @@
 		</div>
 	{/each}
 	<button class="btn body-mainCTA self-start" on:click={() => (navbarLinkLine += 1)} type="button"
-		>Add navbar link
+		>{t('admin.layout.addNavbarLink')}
 	</button>
 
-	<h2 class="text-2xl">Footer</h2>
+	<h2 class="text-2xl">{t('admin.layout.footer')}</h2>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
@@ -192,7 +195,7 @@
 			class="form-checkbox"
 			checked={data.displayPoweredBy}
 		/>
-		Display "Powered by be-BOP"
+		{t('admin.layout.displayPoweredBy')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -201,7 +204,7 @@
 			class="form-checkbox"
 			checked={data.displayCompanyInfo}
 		/>
-		Display company identity & company contact
+		{t('admin.layout.displayCompanyInfo')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -210,19 +213,19 @@
 			class="form-checkbox"
 			checked={data.displayMainShopInfo}
 		/>
-		Display main shop informations
+		{t('admin.layout.displayMainShopInfo')}
 	</label>
 
-	<h3 class="text-xl">Links</h3>
+	<h3 class="text-xl">{t('admin.layout.links')}</h3>
 
 	{#each [...data.links.footer, ...Array(footerLinkLine).fill( { href: '', label: '' } )].slice(0, footerLinkLine) as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.layout.text')}
 				<input type="text" name="footerLinks[{i}].label" class="form-input" value={link.label} />
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.layout.url')}
 				<input type="text" name="footerLinks[{i}].href" class="form-input" value={link.href} />
 			</label>
 			<button
@@ -238,17 +241,17 @@
 		</div>
 	{/each}
 	<button class="btn body-mainCTA self-start" on:click={() => (footerLinkLine += 1)} type="button"
-		>Add footer link
+		>{t('admin.layout.addFooterLink')}
 	</button>
 
-	<h2 class="text-2xl">Social network icons</h2>
+	<h2 class="text-2xl">{t('admin.layout.socialNetworkIcons')}</h2>
 
-	<h3 class="text-xl">Links</h3>
+	<h3 class="text-xl">{t('admin.layout.links')}</h3>
 
 	{#each [...data.links.socialNetworkIcons, ...Array(socialLinkLine).fill( { name: '', svg: '', href: '' } )].slice(0, socialLinkLine) as icon, i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Name
+				{t('admin.layout.name')}
 				<input
 					type="text"
 					name="socialNetworkIcons[{i}].name"
@@ -257,7 +260,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				SVG
+				{t('admin.layout.svg')}
 				<textarea
 					name="socialNetworkIcons[{i}].svg"
 					cols="30"
@@ -268,7 +271,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.layout.url')}
 				<input
 					type="text"
 					name="socialNetworkIcons[{i}].href"
@@ -289,15 +292,15 @@
 		</div>
 	{/each}
 	<button class="btn body-mainCTA self-start" on:click={() => (socialLinkLine += 1)} type="button"
-		>Add social network link
+		>{t('admin.layout.addSocialNetworkLink')}
 	</button>
-	<h2 class="text-2xl">Mobile Display</h2>
-	<h2>Allow you to customize be-bop default behavior on mobile</h2>
-	<h2>Default configuration is:</h2>
+	<h2 class="text-2xl">{t('admin.layout.mobileDisplay')}</h2>
+	<h2>{t('admin.layout.mobileDisplayDescription')}</h2>
+	<h2>{t('admin.layout.defaultConfigurationIs')}</h2>
 	<code class="font-mono">meta name="viewport" content="width=1000"</code>
 
 	<label class="form-label">
-		Viewport width (default: 1000)
+		{t('admin.layout.viewportWidthDefault')}
 		<input
 			type="number"
 			name="viewportContentWidth"
@@ -307,7 +310,7 @@
 		/>
 	</label>
 	<label class="form-label">
-		Use content="width=device-width" for:
+		{t('admin.layout.useContentWidthDeviceWidthFor')}
 		<select class="form-input" name="viewportFor" required bind:value={viewportFor}>
 			{#each ['no-one', 'employee', 'visitors', 'everyone'] as value}
 				<option {value} selected={data.viewportFor === value}>{upperFirst(value)}</option>
@@ -321,9 +324,9 @@
 			class="form-checkbox"
 			checked={data.hideCmsZonesOnMobile}
 		/>
-		Hide every CMS additional zone on mobile (product, cart, checkout and order page)
+		{t('admin.layout.hideCmsZonesOnMobile')}
 	</label>
-	<h2 class="text-2xl">Full width display</h2>
+	<h2 class="text-2xl">{t('admin.layout.fullWidthDisplay')}</h2>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
@@ -331,7 +334,7 @@
 			class="form-checkbox"
 			checked={data.displayFullWidthHeader}
 		/>
-		Display full width header
+		{t('admin.layout.displayFullWidthHeader')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -340,7 +343,7 @@
 			class="form-checkbox"
 			checked={data.displayFullWidthNavbar}
 		/>
-		Display full width navigation bar
+		{t('admin.layout.displayFullWidthNavbar')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -349,7 +352,7 @@
 			class="form-checkbox"
 			checked={data.displayFullWidthFooter}
 		/>
-		Display full width footer
+		{t('admin.layout.displayFullWidthFooter')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -358,7 +361,7 @@
 			class="form-checkbox"
 			checked={data.displayFullWidthProductPages}
 		/>
-		Display full width product pages
+		{t('admin.layout.displayFullWidthProductPages')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -367,7 +370,7 @@
 			class="form-checkbox"
 			checked={data.displayFullWidthCmsPages}
 		/>
-		Display full width CMS pages
+		{t('admin.layout.displayFullWidthCmsPages')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -376,9 +379,9 @@
 			class="form-checkbox"
 			checked={data.mergeMobileMenus}
 		/>
-		Merge topbar and navbar entries on the same burger menu on mobile
+		{t('admin.layout.mergeMobileMenus')}
 	</label>
 	<div>
-		<button class="btn btn-black self-start" type="submit">Update</button>
+		<button class="btn btn-black self-start" type="submit">{t('admin.action.update')}</button>
 	</div>
 </form>

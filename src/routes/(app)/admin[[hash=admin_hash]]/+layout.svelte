@@ -169,7 +169,7 @@
 			<button
 				class="md:hidden fixed inset-0 bg-black bg-opacity-40 z-30"
 				on:click={() => (sidebarOpen = false)}
-				aria-label="Close menu"
+				aria-label={t('admin.nav.closeMenu')}
 				tabindex="-1"
 			/>
 		{/if}
@@ -180,10 +180,10 @@
 				: 'hidden md:flex'}"
 		>
 			<div class="flex items-center justify-between gap-2 font-bold text-xl">
-				<a class="hover:underline" href={data.adminPrefix}>Admin</a>
+				<a class="hover:underline" href={data.adminPrefix}>{t('admin.nav.brandHome')}</a>
 				<form action="{data.adminPrefix}/logout" method="post" class="contents">
 					<button type="submit">
-						<span class="sr-only">Log out</span>
+						<span class="sr-only">{t('admin.nav.logOut')}</span>
 						<IconLogout class="text-red-500" />
 					</button>
 				</form>
@@ -194,7 +194,7 @@
 				<input
 					type="search"
 					bind:value={searchTerm}
-					placeholder="Search…"
+					placeholder={t('admin.nav.searchPlaceholder')}
 					class="bg-transparent border-0 outline-none w-full p-0 text-sm focus:ring-0"
 				/>
 			</label>
@@ -206,12 +206,16 @@
 				class:font-bold={$page.url.pathname === data.adminPrefix}
 			>
 				<span aria-hidden="true">🏠</span>
-				Home
+				{t('admin.nav.home')}
 			</a>
 
 			<div class="flex gap-3 text-xs">
-				<button type="button" class="underline" on:click={expandAll}>Expand all</button>
-				<button type="button" class="underline" on:click={collapseAll}>Collapse all</button>
+				<button type="button" class="underline" on:click={expandAll}
+					>{t('admin.nav.expandAll')}</button
+				>
+				<button type="button" class="underline" on:click={collapseAll}
+					>{t('admin.nav.collapseAll')}</button
+				>
 			</div>
 
 			<nav class="flex flex-col gap-1">
@@ -239,8 +243,8 @@
 											class="text-yellow-700 leading-none"
 											on:click={() => toggleBookmark(link.canonicalHref)}
 											aria-label={bookmarks.includes(link.canonicalHref)
-												? 'Remove bookmark'
-												: 'Add bookmark'}
+												? t('admin.nav.removeBookmark')
+												: t('admin.nav.addBookmark')}
 										>
 											{#if bookmarks.includes(link.canonicalHref)}
 												<IconStarFilled />
@@ -276,7 +280,7 @@
 					class="font-bold text-green-700 mt-2 flex items-center gap-2 py-0.5 hover:underline"
 				>
 					<span aria-hidden="true">🧾</span>
-					POS session
+					{t('admin.nav.posSession')}
 				</a>
 			{/if}
 		</aside>
@@ -286,7 +290,7 @@
 				type="button"
 				class="md:hidden self-start bg-gray-400 text-gray-800 rounded p-2 text-2xl"
 				on:click={() => (sidebarOpen = !sidebarOpen)}
-				aria-label="Toggle admin menu"
+				aria-label={t('admin.nav.toggleMenu')}
 			>
 				<IconMenu />
 			</button>

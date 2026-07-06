@@ -143,7 +143,7 @@
 	async function downloadAllOrdersJson() {
 		const ids = orderFiltered.map((order) => order._id);
 		if (ids.length === 0) {
-			alert('No orders to export');
+			alert(t('admin.reporting.noOrdersToExport'));
 			return;
 		}
 		const resp = await fetch('/admin/orders/json', {
@@ -152,7 +152,7 @@
 			body: JSON.stringify({ ids })
 		});
 		if (!resp.ok) {
-			alert('Error while downloading orders JSON');
+			alert(t('admin.reporting.errorDownloadingOrdersJson'));
 			return;
 		}
 		const url = URL.createObjectURL(await resp.blob());
@@ -248,7 +248,7 @@
 		);
 
 		if (paymentCount === 0) {
-			alert('No paid orders to print');
+			alert(t('admin.reporting.noPaidOrdersToPrint'));
 			return;
 		}
 
@@ -256,13 +256,16 @@
 
 		for (const order of orderFiltered) {
 			for (const payment of order.payments.filter((payment) => payment.status === 'paid')) {
-				htmlStatus = `Preparing invoice ${index + 1}/${paymentCount}`;
+				htmlStatus = t('admin.reporting.preparingInvoice', {
+					current: index + 1,
+					total: paymentCount
+				});
 				index++;
 
 				const htmlResp = await fetch(`/order/${order._id}/payment/${payment.id}/receipt`);
 
 				if (!htmlResp.ok) {
-					alert('Error while fetching pdf');
+					alert(t('admin.reporting.errorFetchingPdf'));
 					return;
 				}
 				html += await htmlResp.text();
@@ -286,7 +289,7 @@
 	});
 </script>
 
-<h1 class="text-3xl">Reporting</h1>
+<h1 class="text-3xl">{t('admin.reporting.title')}</h1>
 <div class="gap-4 grid grid-cols-3">
 	<label class="col-span-3 checkbox-label">
 		<input
@@ -294,7 +297,8 @@
 			type="checkbox"
 			bind:checked={includePending}
 			on:click={() => (loadedHtml = false)}
-		/> include pending orders
+		/>
+		{t('admin.reporting.includePendingOrders')}
 	</label>
 	<label class="col-span-3 checkbox-label">
 		<input
@@ -302,7 +306,8 @@
 			type="checkbox"
 			bind:checked={includeExpired}
 			on:click={() => (loadedHtml = false)}
-		/> include expired orders
+		/>
+		{t('admin.reporting.includeExpiredOrders')}
 	</label>
 	<label class="col-span-3 checkbox-label">
 		<input
@@ -310,7 +315,8 @@
 			type="checkbox"
 			bind:checked={includeCanceled}
 			on:click={() => (loadedHtml = false)}
-		/> include canceled orders
+		/>
+		{t('admin.reporting.includeCanceledOrders')}
 	</label>
 	<label class="col-span-3 checkbox-label">
 		<input
@@ -318,13 +324,14 @@
 			type="checkbox"
 			bind:checked={includePartiallyPaid}
 			on:click={() => (loadedHtml = false)}
-		/> include partially paid orders
+		/>
+		{t('admin.reporting.includePartiallyPaidOrders')}
 	</label>
 </div>
 <form method="GET" class="grid grid-cols-12 gap-2 col-span-12" on:submit={() => (isLoading = true)}>
 	<div class="col-span-3">
 		<label class="form-label">
-			BeginsAt
+			{t('admin.reporting.beginsAt')}
 			<input
 				class="form-input"
 				type="datetime-local"
@@ -335,7 +342,7 @@
 	</div>
 	<div class="col-span-3">
 		<label class="form-label">
-			EndsAt
+			{t('admin.reporting.endsAt')}
 			<input
 				class="form-input"
 				type="datetime-local"
@@ -346,7 +353,7 @@
 	</div>
 	<div class="col-span-2">
 		<label class="form-label">
-			Payment Mean
+			{t('admin.reporting.paymentMean')}
 			<select
 				name="paymentMethod"
 				class="form-input"
@@ -365,9 +372,9 @@
 	{#if selectedPaymentMethod === 'point-of-sale' && data.posSubtypes?.length}
 		<div class="col-span-2">
 			<label class="form-label">
-				PoS Subtype
+				{t('admin.reporting.posSubtype')}
 				<select name="posSubtype" class="form-input">
-					<option value="">All subtypes</option>
+					<option value="">{t('admin.reporting.allSubtypes')}</option>
 					{#each data.posSubtypes as subtype}
 						<option value={subtype.slug} selected={data.posSubtype === subtype.slug}>
 							{subtype.name}
@@ -379,7 +386,7 @@
 	{/if}
 	<div class="col-span-3">
 		<label class="form-label">
-			Employee alias
+			{t('admin.reporting.employeeAlias')}
 			<MultiSelect
 				--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 				inputClass="form-input"
@@ -410,13 +417,13 @@
 				disabled={data.reportingTags.length === 0}
 				on:click={() => (loadedHtml = false)}
 			/>
-			Filter with product tag
+			{t('admin.reporting.filterWithProductTag')}
 		</label>
 		{#if data.reportingTags.length > 0}
 			<label class="form-label mt-2">
-				Select tag
+				{t('admin.reporting.selectTag')}
 				<select name="tagId" class="form-input" disabled={!filterByTag} value={data.tagId ?? ''}>
-					<option value="">Select a tag...</option>
+					<option value="">{t('admin.reporting.selectATag')}</option>
 					{#each data.reportingTags as tag}
 						<option value={tag._id} selected={data.tagId === tag._id}>
 							{tag.name}
@@ -426,8 +433,7 @@
 			</label>
 		{:else}
 			<p class="text-sm text-gray-600 mt-1">
-				No tags available for filtering. Tags must be enabled as "Available as filter for reporting"
-				in their settings to appear here.
+				{t('admin.reporting.noTagsAvailable')}
 			</p>
 		{/if}
 	</div>
@@ -438,12 +444,12 @@
 <div class="gap-4 grid grid-cols-12 mr-auto">
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Order detail</h1>
+			<h1 class="text-2xl font-bold">{t('admin.reporting.orderDetail')}</h1>
 			<div class="flex gap-2">
 				<button
 					on:click={() => exportcsv(tableOrder, 'order-detail.csv')}
 					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-					title="Export as CSV"
+					title={t('admin.reporting.exportAsCsv')}
 				>
 					📊 CSV
 				</button>
@@ -451,7 +457,7 @@
 					<button
 						on:click={downloadAllOrdersJson}
 						class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-						title="Download all displayed orders as JSON (super-admin)"
+						title={t('admin.reporting.downloadAllOrdersJson')}
 					>
 						🧾 JSON
 					</button>
@@ -460,9 +466,11 @@
 					disabled={!!htmlStatus || isLoading}
 					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 					on:click={loadedHtml ? () => iframePrint.contentWindow?.print() : exportPdf}
-					title={loadedHtml ? 'Print receipts' : 'Prepare PDF receipts'}
+					title={loadedHtml
+						? t('admin.reporting.printReceipts')
+						: t('admin.reporting.preparePdfReceipts')}
 				>
-					🖨️ {loadedHtml ? 'Print' : htmlStatus || 'PDF'}
+					🖨️ {loadedHtml ? t('admin.reporting.print') : htmlStatus || 'PDF'}
 				</button>
 			</div>
 		</div>
@@ -471,17 +479,17 @@
 			<table class="min-w-full table-auto border border-gray-300 bg-white" bind:this={tableOrder}>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Order ID</th>
-						<th class="border border-gray-300 px-4 py-2">Order URL</th>
-						<th class="border border-gray-300 px-4 py-2">Order Date</th>
-						<th class="border border-gray-300 px-4 py-2">Order Status</th>
-						<th class="border border-gray-300 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Amount</th>
-						<th class="border border-gray-300 px-4 py-2">Billing Country</th>
-						<th class="border border-gray-300 px-4 py-2">Billing Info</th>
-						<th class="border border-gray-300 px-4 py-2">Shipping Country</th>
-						<th class="border border-gray-300 px-4 py-2">Shipping Info</th>
-						<th class="border border-gray-300 px-4 py-2">Cart</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderId')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderUrl')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderDate')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderStatus')}</th>
+						<th class="border border-gray-300 py-2">{t('admin.reporting.currency')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.amount')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.billingCountry')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.billingInfo')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.shippingCountry')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.shippingInfo')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.cart')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -554,17 +562,17 @@
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">Product detail</h1>
+				<h1 class="text-2xl font-bold">{t('admin.reporting.productDetail')}</h1>
 				{#if data.tagId}
 					<p class="text-sm text-gray-600 mt-1">
-						Only showing products with the tag "{data.tagId}".
+						{t('admin.reporting.onlyShowingProductsWithTag', { tag: data.tagId })}
 					</p>
 				{/if}
 			</div>
 			<button
 				on:click={() => exportcsv(tableProduct, 'product-detail.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -573,15 +581,15 @@
 			<table class="min-w-full table-auto border border-gray-300 bg-white" bind:this={tableProduct}>
 				<thead class="bg-gray-200">
 					<tr>
-						<th class="border border-gray-300 px-4 py-2">Product URL</th>
-						<th class="border border-gray-300 px-4 py-2">Product Name</th>
-						<th class="border border-gray-300 px-4 py-2">Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">Deposit</th>
-						<th class="border border-gray-300 px-4 py-2">Order ID</th>
-						<th class="border border-gray-300 px-4 py-2">Order Date</th>
-						<th class="border border-gray-300 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Price</th>
-						<th class="border border-gray-300 px-4 py-2">Vat Rate</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.productUrl')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.productName')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.quantity')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.deposit')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderId')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderDate')}</th>
+						<th class="border border-gray-300 py-2">{t('admin.reporting.currency')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.price')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.vatRate')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -621,11 +629,11 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Payment Detail</h1>
+			<h1 class="text-2xl font-bold">{t('admin.reporting.paymentDetail')}</h1>
 			<button
 				on:click={() => exportcsv(tablePayment, 'payment-detail.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -634,19 +642,20 @@
 			<table class="min-w-full table-auto border border-gray-300 bg-white" bind:this={tablePayment}>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Order ID</th>
-						<th class="border border-gray-300 px-4 py-2">Invoice ID</th>
-						<th class="border border-gray-300 px-4 py-2">Payment Date</th>
-						<th class="border border-gray-300 px-4 py-2">Order Status</th>
-						<th class="border border-gray-300 px-4 py-2">Payment mean</th>
-						<th class="border border-gray-300 px-4 py-2">Payment Status</th>
-						<th class="border border-gray-300 px-4 py-2">Payment Info</th>
-						<th class="border border-gray-300 px-4 py-2">Invoice</th>
-						<th class="border border-gray-300 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Amount</th>
-						<th class="border border-gray-300 py-2">Cashed Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Cashed Amount</th>
-						<th class="border border-gray-300 px-4 py-2">Billing Country</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderId')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.invoiceId')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.paymentDate')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderStatus')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.paymentMeanLower')}</th
+						>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.paymentStatus')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.paymentInfo')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.invoice')}</th>
+						<th class="border border-gray-300 py-2">{t('admin.reporting.currency')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.amount')}</th>
+						<th class="border border-gray-300 py-2">{t('admin.reporting.cashedCurrency')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.cashedAmount')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.billingCountry')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -727,11 +736,11 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Order synthesis</h1>
+			<h1 class="text-2xl font-bold">{t('admin.reporting.orderSynthesis')}</h1>
 			<button
 				on:click={() => exportcsv(tableOrderSynthesis, 'orderSythesisExport.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -743,11 +752,11 @@
 			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Period</th>
-						<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">order Total</th>
-						<th class="border border-gray-300 px-4 py-2">Average Cart</th>
-						<th class="border border-gray-300 py-2">Currency</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderQuantity')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderTotal')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.averageCart')}</th>
+						<th class="border border-gray-300 py-2">{t('admin.reporting.currency')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -780,13 +789,12 @@
 		{#if data.tagId}
 			<div class="flex items-start justify-between mt-4 mb-4">
 				<p class="text-sm text-gray-600">
-					Synthesis for tag "{data.tagId}" only - order flat discount and shipping price are not
-					included, only the specific products with the tag are included.
+					{t('admin.reporting.synthesisForTag', { tag: data.tagId })}
 				</p>
 				<button
 					on:click={() => exportcsv(tableOrderSynthesisTag, 'orderSythesisExport.csv')}
 					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors ml-4"
-					title="Export tag synthesis as CSV"
+					title={t('admin.reporting.exportTagSynthesisAsCsv')}
 				>
 					📊 CSV
 				</button>
@@ -799,11 +807,11 @@
 				>
 					<thead class="bg-gray-200">
 						<tr class="whitespace-nowrap">
-							<th class="border border-gray-300 px-4 py-2">Period</th>
-							<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-							<th class="border border-gray-300 px-4 py-2">order Total</th>
-							<th class="border border-gray-300 px-4 py-2">Average Cart</th>
-							<th class="border border-gray-300 py-2">Currency</th>
+							<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+							<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderQuantity')}</th>
+							<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderTotal')}</th>
+							<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.averageCart')}</th>
+							<th class="border border-gray-300 py-2">{t('admin.reporting.currency')}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -837,17 +845,17 @@
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">Product synthesis</h1>
+				<h1 class="text-2xl font-bold">{t('admin.reporting.productSynthesis')}</h1>
 				{#if data.tagId}
 					<p class="text-sm text-gray-600 mt-1">
-						Only showing products with the tag "{data.tagId}".
+						{t('admin.reporting.onlyShowingProductsWithTag', { tag: data.tagId })}
 					</p>
 				{/if}
 			</div>
 			<button
 				on:click={() => exportcsv(tableProductSynthesis, 'orderItemsSythesisExport.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -859,12 +867,12 @@
 			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Period</th>
-						<th class="border border-gray-300 px-4 py-2">Product ID </th>
-						<th class="border border-gray-300 px-4 py-2">Product Name</th>
-						<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Total price</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.productId')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.productName')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderQuantity')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.currency')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.totalPrice')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -893,11 +901,11 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Payment synthesis</h1>
+			<h1 class="text-2xl font-bold">{t('admin.reporting.paymentSynthesis')}</h1>
 			<button
 				on:click={() => exportcsv(tablePaymentSynthesis, 'orderPaymentSythesis.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -909,12 +917,12 @@
 			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Period</th>
-						<th class="border border-gray-300 px-4 py-2">Payment Mean </th>
-						<th class="border border-gray-300 px-4 py-2">Payment Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">Total price</th>
-						<th class="border border-gray-300 px-4 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Average</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.paymentMean')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.paymentQuantity')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.totalPrice')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.currency')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.average')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -953,17 +961,17 @@
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">VAT Synthesis</h1>
+				<h1 class="text-2xl font-bold">{t('admin.reporting.vatSynthesis')}</h1>
 				{#if data.tagId}
 					<p class="text-sm text-gray-600 mt-1">
-						Only showing VAT for products with the tag "{data.tagId}".
+						{t('admin.reporting.onlyShowingVatForTag', { tag: data.tagId })}
 					</p>
 				{/if}
 			</div>
 			<button
 				on:click={() => exportcsv(tableVATSynthesis, 'vat-synthesis.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -975,11 +983,13 @@
 			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Period</th>
-						<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">VAT Total</th>
-						<th class="border border-gray-300 px-4 py-2">Average VAT per order</th>
-						<th class="border border-gray-300 py-2">Currency</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderQuantity')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.vatTotal')}</th>
+						<th class="border border-gray-300 px-4 py-2"
+							>{t('admin.reporting.averageVatPerOrder')}</th
+						>
+						<th class="border border-gray-300 py-2">{t('admin.reporting.currency')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -1013,11 +1023,11 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Delivery Fees</h1>
+			<h1 class="text-2xl font-bold">{t('admin.reporting.deliveryFees')}</h1>
 			<button
 				on:click={() => exportcsv(tableDeliveryFeesSynthesis, 'deliveryFeesSynthesisExport.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -1029,11 +1039,11 @@
 			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Period</th>
-						<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">order Fees Total</th>
-						<th class="border border-gray-300 px-4 py-2">Average Fees Cart</th>
-						<th class="border border-gray-300 py-2">Currency</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderQuantity')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderFeesTotal')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.averageFeesCart')}</th>
+						<th class="border border-gray-300 py-2">{t('admin.reporting.currency')}</th>
 					</tr>
 				</thead>
 				<tbody>

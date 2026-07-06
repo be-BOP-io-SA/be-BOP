@@ -4,6 +4,9 @@
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
 	import { enhance } from '$app/forms';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	export let form;
@@ -29,12 +32,12 @@
 
 <form class="contents" method="post" action="?/save">
 	<label class="form-label">
-		Client ID
+		{t('admin.paypal.clientId')}
 		<input class="form-input" type="text" name="clientId" value={data.paypal.clientId} required />
 	</label>
 
 	<label class="form-label">
-		Secret
+		{t('admin.paypal.secret')}
 		<input class="form-input" type="password" name="secret" value={data.paypal.secret} required />
 	</label>
 
@@ -46,11 +49,11 @@
 			bind:checked={data.paypal.sandbox}
 			value="true"
 		/>
-		Those credentials are for the sandbox environment
+		{t('admin.paypal.sandboxCredentials')}
 	</label>
 
 	<label class="form-label">
-		<CurrencyLabel label="Currency" />
+		<CurrencyLabel label={t('admin.paypal.currency')} />
 		<Select
 			items={currenciesWithoutCrypto}
 			searchable={true}

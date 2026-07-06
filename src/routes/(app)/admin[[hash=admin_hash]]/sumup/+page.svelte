@@ -4,6 +4,9 @@
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
 	import { enhance } from '$app/forms';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	export let form;
@@ -29,7 +32,7 @@
 
 <form class="contents" method="post" action="?/save">
 	<label class="form-label">
-		API Key
+		{t('admin.sumup.apiKey')}
 		<input
 			class="form-input"
 			type="password"
@@ -41,7 +44,7 @@
 	</label>
 
 	<label class="form-label">
-		Merchant Code
+		{t('admin.sumup.merchantCode')}
 		<input
 			class="form-input"
 			type="text"
@@ -53,7 +56,7 @@
 	</label>
 
 	<label class="form-label">
-		<CurrencyLabel label="Currency" />
+		<CurrencyLabel label={t('admin.sumup.currency')} />
 		<Select
 			items={currenciesWithoutCrypto}
 			searchable={true}

@@ -1,25 +1,30 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
+
 	export let data;
 
 	$: currentSelected = $page.params.vatProfile;
 </script>
 
 <main class="max-w-7xl mx-auto px-6 w-full flex flex-col gap-4">
-	<h1 class="text-3xl">Manage VAT profiles</h1>
+	<h1 class="text-3xl">{t('admin.config.manageVatProfiles')}</h1>
 	<p>
-		You can create VAT profiles, with custom vat rates for specific countries. It is useful for
-		products with specific VAT rates, like books in France and Switzerland.
+		{t('admin.config.vatProfilesHint')}
 	</p>
 
 	{#if currentSelected}
-		<a href="{data.adminPrefix}/config/vat" class="body-hyperlink">Create new profile</a>
+		<a href="{data.adminPrefix}/config/vat" class="body-hyperlink"
+			>{t('admin.config.createNewProfile')}</a
+		>
 	{/if}
 
-	<h2 class="text-2xl">VAT profiles</h2>
+	<h2 class="text-2xl">{t('admin.config.vatProfiles')}</h2>
 
 	{#if !data.vatProfiles.length}
-		<p>No profile created yet</p>
+		<p>{t('admin.config.noProfileCreatedYet')}</p>
 	{:else}
 		<ul class="ml-4 list-disc">
 			{#each data.vatProfiles as profile}

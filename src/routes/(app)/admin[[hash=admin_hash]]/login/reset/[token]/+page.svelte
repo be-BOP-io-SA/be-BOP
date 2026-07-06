@@ -26,7 +26,7 @@
 	}
 </script>
 
-<h1 class="text-2xl text-center">Password reset</h1>
+<h1 class="text-2xl text-center">{t('admin.login.resetTitle')}</h1>
 
 <div class="flex justify-center">
 	<IconStandBy class="text-green-500" />
@@ -43,7 +43,7 @@
 			class="form-input"
 			type="text"
 			name="login"
-			placeholder="Enter other admin login"
+			placeholder={t('admin.login.resetOtherLoginPlaceholder')}
 			value={data.user?.login}
 			disabled
 		/>
@@ -54,7 +54,7 @@
 			class="form-input"
 			type="password"
 			name="password"
-			placeholder="Enter new password"
+			placeholder={t('admin.login.resetNewPasswordPlaceholder')}
 			minlength="8"
 			bind:value={password}
 		/>
@@ -64,5 +64,9 @@
 			<p class="text-red-500">{errorMessage}</p>
 		{/if}
 	</div>
-	<input type="submit" class="btn btn-blue text-white self-center" value="Update" />
+	<input
+		type="submit"
+		class="btn btn-blue text-white self-center"
+		value={t('admin.action.update')}
+	/>
 </form>

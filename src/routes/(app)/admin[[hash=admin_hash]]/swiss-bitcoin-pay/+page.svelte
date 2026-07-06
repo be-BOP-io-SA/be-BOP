@@ -1,8 +1,11 @@
 <script lang="ts">
 	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
 	import { enhance } from '$app/forms';
+	import { useI18n } from '$lib/i18n';
 	export let data;
 	export let form;
+
+	const { t } = useI18n();
 
 	let testInFlight = false;
 	let testCooldownUntil = 0;
@@ -13,7 +16,7 @@
 
 <form class="contents" method="post" action="?/save">
 	<label class="form-label">
-		API Key
+		{t('admin.swissBitcoinPay.apiKey')}
 		<input class="form-input" type="password" name="apiKey" value={data.apiKey} required />
 	</label>
 
@@ -49,7 +52,7 @@
 	{/if}
 </form>
 
-<h2 class="text-2xl">Invoices</h2>
+<h2 class="text-2xl">{t('admin.swissBitcoinPay.invoices')}</h2>
 
 <SetLightningQrCodeDescription
 	bind:invoiceDescription={data.lightningInvoiceDescription}

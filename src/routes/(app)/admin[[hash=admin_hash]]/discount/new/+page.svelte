@@ -8,7 +8,7 @@
 	import ProductCombinationRow from '$lib/components/ProductCombinationRow.svelte';
 
 	export let data;
-	const { countryName } = useI18n();
+	const { t, countryName } = useI18n();
 	$: sortedCountries = [...data.countries].sort((a, b) =>
 		countryName(a).localeCompare(countryName(b))
 	);
@@ -24,7 +24,7 @@
 	let combinations: Array<{ products: Array<{ productId: string; quantity: number }> }> = [];
 	function checkForm(event: SubmitEvent) {
 		if (endsAt && endsAt < beginsAt) {
-			endsAtElement.setCustomValidity('End date must be after beginning date');
+			endsAtElement.setCustomValidity(t('admin.discount.endDateMustBeAfterBeginningDate'));
 			endsAtElement.reportValidity();
 			event.preventDefault();
 			return;
@@ -34,22 +34,22 @@
 	}
 </script>
 
-<h1 class="text-3xl">Add a discount</h1>
+<h1 class="text-3xl">{t('admin.discount.addADiscount')}</h1>
 
 <form method="post" class="flex flex-col gap-4" on:submit={checkForm} use:enhance>
 	<label class="form-label">
-		Discount name
+		{t('admin.discount.discountName')}
 		<input
 			class="form-input"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="name"
-			placeholder="discount name"
+			placeholder={t('admin.discount.discountNamePlaceholder')}
 			required
 		/>
 	</label>
 	<label class="form-label">
-		Mode
+		{t('admin.discount.mode')}
 		<select name="mode" class="form-input" bind:value={mode}>
 			{#each ['percentage', 'freeProducts'] as modeDiscount}
 				<option value={modeDiscount}>{upperFirst(modeDiscount)}</option>
@@ -58,14 +58,14 @@
 	</label>
 	{#if mode === 'percentage'}
 		<label class="form-label">
-			Discount percentage
+			{t('admin.discount.discountPercentage')}
 			<input
 				class="form-input"
 				type="number"
 				min="1"
 				max="100"
 				name="percentage"
-				placeholder="discount percentage"
+				placeholder={t('admin.discount.discountPercentagePlaceholder')}
 				required
 			/>
 		</label>
@@ -74,17 +74,17 @@
 	{#if mode === 'percentage'}
 		<label class="checkbox-label">
 			<input type="checkbox" name="showBadge" class="form-checkbox" checked />
-			Show discount badge (-X%) on product page
+			{t('admin.discount.showBadge')}
 		</label>
 		<label class="checkbox-label">
 			<input type="checkbox" name="showExpirationBanner" class="form-checkbox" />
-			Show discount expiration reminder on product page
+			{t('admin.discount.showExpirationBanner')}
 		</label>
 	{/if}
 
 	<div class="flex flex-wrap gap-4">
 		<label class="form-label">
-			Beginning date
+			{t('admin.discount.beginningDate')}
 
 			<input
 				class="form-input"
@@ -97,7 +97,7 @@
 	</div>
 	<div class="flex flex-wrap gap-4">
 		<label class="form-label">
-			Ending date
+			{t('admin.discount.endingDate')}
 
 			<input
 				class="form-input"
@@ -112,8 +112,8 @@
 
 	{#if mode === 'percentage'}
 		<fieldset class="form-label">
-			<legend>Discount channel application</legend>
-			{#each [{ value: 'web', label: 'Web' }, { value: 'web-pos', label: 'Web with PoS privilege (/cart)' }, { value: 'pos-touch', label: 'Bar-restaurant PoS (/pos/touch)' }, { value: 'nostr-bot', label: 'Nostr-bot' }] as channel}
+			<legend>{t('admin.discount.channelApplication')}</legend>
+			{#each [{ value: 'web', label: t('admin.discount.channelWeb') }, { value: 'web-pos', label: t('admin.discount.channelWebPos') }, { value: 'pos-touch', label: t('admin.discount.channelPosTouch') }, { value: 'nostr-bot', label: 'Nostr-bot' }] as channel}
 				<label class="checkbox-label">
 					<input type="checkbox" name="channels" value={channel.value} class="form-checkbox" />
 					{channel.label}
@@ -124,7 +124,7 @@
 
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label"
-		>Required Subscription (optional)
+		>{t('admin.discount.requiredSubscription')} (optional)
 
 		<MultiSelect
 			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
@@ -135,24 +135,21 @@
 
 	{#if mode === 'percentage'}
 		<label class="form-label">
-			Required code (optional)
+			{t('admin.discount.requiredCode')}
 			<input
 				class="form-input"
 				type="text"
 				name="promoCode"
 				maxlength="50"
-				placeholder="Enter promocode chain"
+				placeholder={t('admin.discount.promoCodePlaceholder')}
 			/>
-			<span class="text-sm text-gray-500"
-				>Tip: use 8+ characters mixing letters, numbers and special characters (e.g. SPRING_2026X4!)
-				— short codes are easy to brute-force.</span
-			>
+			<span class="text-sm text-gray-500">{t('admin.discount.promoCodeTip')}</span>
 		</label>
 
 		<label class="form-label">
-			Required delivery country (optional)
+			{t('admin.discount.requiredDeliveryCountry')}
 			<select name="deliveryCountry" class="form-input">
-				<option value="none">None</option>
+				<option value="none">{t('admin.discount.none')}</option>
 				{#each sortedCountries as country}
 					<option value={country}>{countryName(country)}</option>
 				{/each}
@@ -160,9 +157,9 @@
 		</label>
 
 		<label class="form-label">
-			Required billing country (optional)
+			{t('admin.discount.requiredBillingCountry')}
 			<select name="billingCountry" class="form-input">
-				<option value="none">None</option>
+				<option value="none">{t('admin.discount.none')}</option>
 				{#each sortedCountries as country}
 					<option value={country}>{countryName(country)}</option>
 				{/each}
@@ -170,33 +167,33 @@
 		</label>
 
 		<fieldset class="form-label">
-			<legend>Payment method</legend>
+			<legend>{t('admin.discount.paymentMethod')}</legend>
 			{#each ['lightning', 'bank-transfer', 'point-of-sale', 'card', 'bitcoin', 'paypal'] as pm}
 				<label class="checkbox-label">
 					<input type="checkbox" name="paymentMethods" value={pm} class="form-checkbox" />
-					{pm}{pm === 'point-of-sale' ? ' (only for users with POS role)' : ''}
+					{pm}{pm === 'point-of-sale' ? ` ${t('admin.discount.posRoleOnly')}` : ''}
 				</label>
 			{/each}
 		</fieldset>
 
 		<label class="form-label">
-			Required contact address (optional)
+			{t('admin.discount.requiredContactAddress')}
 			<textarea
 				class="form-input"
 				name="contactAddresses"
 				rows="4"
-				placeholder="One address per line (email, npub, phone...)"
+				placeholder={t('admin.discount.contactAddressesPlaceholder')}
 			></textarea>
-			<span class="text-sm text-gray-500"
-				>Tip: use <code>npub*</code> to grant the discount to all Nostr-authenticated users.</span
-			>
+			<span class="text-sm text-gray-500">{t('admin.discount.contactAddressesTip')}</span>
 		</label>
 
 		<fieldset class="form-label">
-			<legend>Required product combination (optional)</legend>
+			<legend>{t('admin.discount.requiredProductCombination')}</legend>
 			{#each combinations as combo, comboIdx}
 				<div class="border rounded p-2 mb-2">
-					<h4 class="font-semibold">Combination {comboIdx + 1} Product</h4>
+					<h4 class="font-semibold">
+						{t('admin.discount.combinationProduct', { number: comboIdx + 1 })}
+					</h4>
 					{#each combo.products as product, prodIdx}
 						<ProductCombinationRow
 							{product}
@@ -218,7 +215,7 @@
 							combinations = combinations;
 						}}
 					>
-						+ Add product to combination
+						+ {t('admin.discount.addProductToCombination')}
 					</button>
 				</div>
 			{/each}
@@ -229,7 +226,7 @@
 					combinations = [...combinations, { products: [{ productId: '', quantity: 1 }] }];
 				}}
 			>
-				Add combination
+				{t('admin.discount.addCombination')}
 			</button>
 		</fieldset>
 	{/if}
@@ -241,12 +238,12 @@
 				class="form-checkbox"
 				bind:checked={wholeCatalog}
 			/>
-			The discount applies to the whole catalog (except free, subscription & PWYW products)
+			{t('admin.discount.appliesToWholeCatalog')}
 		</label>
 		{#if !wholeCatalog}
 			<!-- svelte-ignore a11y-label-has-associated-control -->
 			<label class="form-label"
-				>Products
+				>{t('admin.discount.products')}
 				<MultiSelect
 					--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 					name="productIds"
@@ -256,7 +253,7 @@
 			{#if data.tags.length}
 				<!-- svelte-ignore a11y-label-has-associated-control -->
 				<label class="form-label"
-					>Products with this tag (optional)
+					>{t('admin.discount.requiredTag')}
 					<MultiSelect
 						--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 						name="requiredTagIds"
@@ -271,8 +268,8 @@
 		<table class="justify-between gap-4">
 			<thead>
 				<tr>
-					<td>Product slug</td>
-					<td>Free copies quantity</td>
+					<td>{t('admin.discount.productSlug')}</td>
+					<td>{t('admin.discount.freeCopiesQuantity')}</td>
 					<td></td>
 				</tr>
 			</thead>
@@ -316,9 +313,13 @@
 			class="btn body-mainCTA self-start"
 			on:click={() => (productFreeLine += 1)}
 			type="button"
-			>Add product
+			>{t('admin.discount.addProduct')}
 		</button>
 	{/if}
 
-	<input type="submit" class="btn btn-blue self-start text-white" value="Submit" />
+	<input
+		type="submit"
+		class="btn btn-blue self-start text-white"
+		value={t('admin.discount.submit')}
+	/>
 </form>

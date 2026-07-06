@@ -93,7 +93,7 @@
 									type="text"
 									name="bankTransferNumber"
 									required
-									placeholder="bank transfer number"
+									placeholder={t('admin.ordersList.bankTransferNumberPlaceholder')}
 								/>
 							{/if}
 							{#if payment.method === 'point-of-sale'}
@@ -102,16 +102,18 @@
 									type="text"
 									name="detail"
 									required
-									placeholder="Detail (card transaction ID, or point-of-sale payment method)"
+									placeholder={t('admin.ordersList.detailPlaceholder')}
 								/>
 							{/if}
-							<button type="submit" class="btn btn-black whitespace-nowrap">Mark paid</button>
+							<button type="submit" class="btn btn-black whitespace-nowrap"
+								>{t('pos.cta.markOrderPaid')}</button
+							>
 						</form>
 						<form
 							action="{adminPrefix}/order/{order._id}/payment/{payment.id}?/cancel"
 							method="post"
 						>
-							<button type="submit" class="btn btn-red">Cancel</button>
+							<button type="submit" class="btn btn-red">{t('pos.cta.cancelOrder')}</button>
 						</form>
 					{/if}
 				{/each}
@@ -123,7 +125,7 @@
 				<a
 					href="{adminPrefix}/order/{order._id}/label"
 					class="bg-gray-200 px-2 rounded-full"
-					title="add label">+</a
+					title={t('admin.ordersList.addLabel')}>+</a
 				>
 			{/if}
 		</li>

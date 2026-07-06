@@ -2,8 +2,11 @@
 	import PictureComponent from '$lib/components/Picture.svelte';
 	import ProductForm from '$lib/components/ProductForm.svelte';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 
 	let canSaveOrder = false;
 
@@ -49,10 +52,10 @@
 	upcomingBookings={data.upcomingBookings}
 />
 
-<h2 class="text-2xl my-4">Photos</h2>
+<h2 class="text-2xl my-4">{t('admin.product.photos')}</h2>
 
 <a href="{data.adminPrefix}/picture/new?productId={data.product._id}" class="underline">
-	Add picture
+	{t('admin.product.addPicture')}
 </a>
 
 <div class="flex flex-row flex-wrap gap-6 mt-6">
@@ -68,14 +71,14 @@
 					<button
 						class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
 						on:click={() => movePicture(picture._id, 'left')}
-						aria-label="Move left"
+						aria-label={t('admin.product.moveLeft')}
 					>
 						←
 					</button>
 					<button
 						class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 ml-2"
 						on:click={() => movePicture(picture._id, 'right')}
-						aria-label="Move right"
+						aria-label={t('admin.product.moveRight')}
 					>
 						→
 					</button>
@@ -90,15 +93,15 @@
 		{#each data.pictures as picture}
 			<input type="hidden" name="pictureId" value={picture._id} />
 		{/each}
-		<button type="submit" class="btn btn-black mt-4"> Save order </button>
+		<button type="submit" class="btn btn-black mt-4"> {t('admin.product.saveOrder')} </button>
 	</form>
 {/if}
 
 {#if data.product.type !== 'donation'}
-	<h2 class="text-2xl my-4">Digital Files</h2>
+	<h2 class="text-2xl my-4">{t('admin.product.digitalFiles')}</h2>
 
 	<a href="{data.adminPrefix}/digital-file/new?productId={data.product._id}" class="underline">
-		Add digital file
+		{t('admin.product.addDigitalFile')}
 	</a>
 
 	<div class="flex flex-row flex-wrap gap-6 mt-6">

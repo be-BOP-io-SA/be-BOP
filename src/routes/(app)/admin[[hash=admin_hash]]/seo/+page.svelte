@@ -7,7 +7,7 @@
 	const { t } = useI18n();
 </script>
 
-<h1 class="text-2xl">SEO Config</h1>
+<h1 class="text-2xl">{t('admin.seo.title')}</h1>
 {#if form?.success}
 	<div class="alert alert-success">{form.success}</div>
 {/if}
@@ -19,7 +19,7 @@
 			class="form-checkbox"
 			checked={data.hideFromSearchEngines}
 		/>
-		Hide from search engines
+		{t('admin.seo.hideFromSearchEngines')}
 	</label>
 
 	<div class="flex flex-col gap-2">
@@ -37,5 +37,5 @@
 		</div>
 	</div>
 
-	<input type="submit" value="Update" class="btn body-mainCTA self-start" />
+	<input type="submit" value={t('admin.action.update')} class="btn body-mainCTA self-start" />
 </form>

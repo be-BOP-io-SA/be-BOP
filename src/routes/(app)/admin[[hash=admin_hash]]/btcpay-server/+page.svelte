@@ -1,5 +1,7 @@
 <script lang="ts">
 	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
+	import { useI18n } from '$lib/i18n';
+	const { t } = useI18n();
 	export let data;
 	let { serverUrl, storeId, apiKey } = data;
 
@@ -14,7 +16,7 @@
 
 <form class="contents" method="post" action="?/save">
 	<label class="form-label">
-		Server URL
+		{t('admin.btcpayServer.serverUrl')}
 		<input
 			class="form-input"
 			type="url"
@@ -25,7 +27,7 @@
 		/>
 	</label>
 	<label class="form-label">
-		Store ID
+		{t('admin.btcpayServer.storeId')}
 		<input
 			class="form-input"
 			type="text"
@@ -38,22 +40,22 @@
 	{#if storeSettingsUrl}
 		<div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-md">
 			<p class="text-yellow-800">
-				Please make sure to enable lightning in
+				{t('admin.btcpayServer.lightningWarningPrefix')}
 				<a
 					href={storeSettingsUrl}
 					class="body-hyperlink underline"
 					target="_blank"
 					rel="external noopener"
-					aria-label="Lightning settings in your BTCPay Server store"
+					aria-label={t('admin.btcpayServer.ariaLightningSettings')}
 				>
-					your store settings
+					{t('admin.btcpayServer.storeSettingsLink')}
 				</a>.
-				<br />If the link above does not work, check the provided Server URL and Store ID.
+				<br />{t('admin.btcpayServer.lightningLinkFallbackStore')}
 			</p>
 		</div>
 	{/if}
 	<label class="form-label">
-		API Key
+		{t('admin.btcpayServer.apiKey')}
 		<input
 			class="form-input"
 			type="password"
@@ -65,32 +67,35 @@
 		{#if accountSettingsUrl}
 			<div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-md">
 				<p class="text-yellow-800">
-					You can manage your API keys in
+					{t('admin.btcpayServer.apiKeyManagePrefix')}
 					<a
 						href={accountSettingsUrl}
 						class="body-hyperlink underline"
 						target="_blank"
 						rel="external noopener"
-						aria-label="Lightning settings in your BTCPay Server store"
+						aria-label={t('admin.btcpayServer.ariaLightningSettings')}
 					>
-						your account settings
+						{t('admin.btcpayServer.accountSettingsLink')}
 					</a>.
-					<br />Please make sure to include the <code>btcpay.store.cancreatelightninginvoice</code>
-					and <code>btcpay.store.canviewlightninginvoice</code> permissions.
-					<br />If the link above does not work, check the provided Server URL.
+					<br />{t('admin.btcpayServer.apiKeyPermissionsPrefix')}
+					<code>btcpay.store.cancreatelightninginvoice</code>
+					{t('admin.btcpayServer.apiKeyPermissionsMiddle')}
+					<code>btcpay.store.canviewlightninginvoice</code>
+					{t('admin.btcpayServer.apiKeyPermissionsSuffix')}
+					<br />{t('admin.btcpayServer.apiKeyLinkFallback')}
 				</p>
 			</div>
 		{/if}
 	</label>
 
 	<div class="flex justify-between">
-		<button class="btn btn-black" type="submit">Save</button>
-		<button class="btn btn-red" type="submit" form="delete-form">Reset</button>
+		<button class="btn btn-black" type="submit">{t('admin.action.save')}</button>
+		<button class="btn btn-red" type="submit" form="delete-form">{t('admin.action.reset')}</button>
 	</div>
 </form>
 <form class="contents" method="post" action="?/delete" id="delete-form"></form>
 
-<h2 class="text-2xl">Invoices</h2>
+<h2 class="text-2xl">{t('admin.btcpayServer.invoices')}</h2>
 
 <SetLightningQrCodeDescription
 	bind:invoiceDescription={data.lightningInvoiceDescription}

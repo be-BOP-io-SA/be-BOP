@@ -62,7 +62,7 @@
 	$: priceReferenceCurrency =
 		selectedPriceReferenceCurrency?.value || data.currencies.priceReference;
 	async function onOverwrite(event: Event) {
-		if (!confirm('Do you want to overwrite current product currencies with this one?')) {
+		if (!confirm(t('admin.config.overwriteCurrencyConfirm'))) {
 			event.preventDefault();
 		}
 	}
@@ -117,11 +117,12 @@
 		if (dangerous) {
 			const multiplier = DELAY_MULTIPLIERS[cleanupDelayUnit] ?? 86400;
 			const cutoffDate = new Date(Date.now() - cleanupDelayValue * multiplier * 1000);
-			message = `Are you sure? It will delete personal data for every order with status [${statuses.join(
-				', '
-			)}] older than ${cutoffDate.toLocaleDateString($locale)}. This cannot be undone.`;
+			message = t('admin.config.autocleanDangerousConfirm', {
+				statuses: statuses.join(', '),
+				date: cutoffDate.toLocaleDateString($locale)
+			});
 		} else {
-			message = 'Auto-clean settings have been modified. Confirm?';
+			message = t('admin.config.autocleanModifiedConfirm');
 		}
 		if (!confirm(message)) {
 			e.preventDefault();
@@ -167,22 +168,24 @@
 	let selectedLightningProcessor = data.preferredProcessorLightning;
 </script>
 
-<h1 class="text-3xl">General settings</h1>
+<h1 class="text-3xl">{t('admin.config.generalSettingsTitle')}</h1>
 
 {#if form?.success}
 	<div class="alert alert-success">{form.success}</div>
 {/if}
 
-<a href="{data.adminPrefix}/config/delivery" class="underline">Deliver fees</a>
+<a href="{data.adminPrefix}/config/delivery" class="underline"
+	>{t('admin.config.deliverFeesLink')}</a
+>
 
 <form method="post" id="overwrite" action="?/overwriteCurrency" on:submit={onOverwrite} use:enhance>
 	<input type="hidden" value={priceReferenceCurrency} name="priceReferenceCurrency" />
 </form>
 
 <form method="post" action="?/update" class="flex flex-col gap-6" on:submit={confirmUpdate}>
-	<h2 class="text-2xl">Currencies</h2>
+	<h2 class="text-2xl">{t('admin.config.currencies')}</h2>
 	<label class="form-label">
-		<CurrencyLabel label="Main currency" />
+		<CurrencyLabel label={t('admin.config.mainCurrency')} />
 		<Select
 			items={currenciesWithoutSat}
 			searchable={true}
@@ -194,12 +197,12 @@
 	</label>
 
 	<label class="form-label">
-		<CurrencyLabel label="Secondary currency" />
+		<CurrencyLabel label={t('admin.config.secondaryCurrency')} />
 		<Select
 			items={currenciesWithoutSat}
 			searchable={true}
 			clearable={true}
-			placeholder="Select a currency"
+			placeholder={t('admin.config.selectCurrency')}
 			bind:value={selectedSecondaryCurrency}
 			class="form-input max-w-[25rem]"
 		/>
@@ -207,7 +210,7 @@
 	</label>
 
 	<label class="form-label">
-		<CurrencyLabel label="Price reference currency (to avoid exchange rate fluctuations)" />
+		<CurrencyLabel label={t('admin.config.priceReferenceCurrency')} />
 		<div class="flex gap-2">
 			<Select
 				items={allCurrenciesOptions}
@@ -228,12 +231,12 @@
 	</label>
 
 	<label class="form-label">
-		<CurrencyLabel label="Accounting currency" />
+		<CurrencyLabel label={t('admin.config.accountingCurrency')} />
 		<Select
 			items={currenciesWithoutSat}
 			searchable={true}
 			clearable={true}
-			placeholder="Select a currency"
+			placeholder={t('admin.config.selectCurrency')}
 			bind:value={selectedAccountingCurrency}
 			class="form-input max-w-[25rem]"
 		/>
@@ -243,13 +246,13 @@
 			value={selectedAccountingCurrency?.value || ''}
 		/>
 		<p class="text-sm">
-			Payment amounts will also be stored in this currency. Useful for a full-crypto shop but you
-			still want to keep track of fiat values at time of payment.
+			{t('admin.config.accountingCurrencyHint')}
 		</p>
 	</label>
 
 	<div class="flex items-center gap-2">
-		Exchange Rate <div
+		{t('admin.config.exchangeRate')}
+		<div
 			class="contents"
 			title={Object.entries($exchangeRate)
 				.map(([k, v]) => `1 BTC = ${v.toLocaleString($locale)} ${k}`)
@@ -258,10 +261,10 @@
 			<IconInfo class="cursor-pointer"></IconInfo>
 		</div>
 	</div>
-	<h2 class="text-2xl">Notifications</h2>
+	<h2 class="text-2xl">{t('admin.config.notifications')}</h2>
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
-		Contact Modes
+		{t('admin.config.contactModes')}
 		<MultiSelect
 			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			options={['email', 'nostr'].map((contact) => ({
@@ -282,9 +285,9 @@
 			class="form-checkbox"
 			checked={data.contactModesForceOption}
 		/>
-		Force option display (email even if smtp config is not done, npub even if nsec config is not done)
+		{t('admin.config.forceOptionDisplay')}
 	</label>
-	<h2 class="text-2xl">Cart</h2>
+	<h2 class="text-2xl">{t('admin.config.cart')}</h2>
 
 	<label class="checkbox-label">
 		<input
@@ -293,7 +296,7 @@
 			class="form-checkbox"
 			checked={data.cartPreviewInteractive}
 		/>
-		Make cart preview interactive
+		{t('admin.config.cartPreviewInteractive')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -302,7 +305,7 @@
 			class="form-checkbox"
 			checked={data.removePopinProductPrice}
 		/>
-		Remove product price on pop-in when adding to Cart
+		{t('admin.config.removePopinProductPrice')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -311,12 +314,12 @@
 			class="form-checkbox"
 			checked={data.allowCartFromUrl}
 		/>
-		Allow cart creation through shared URL (/cart?slug=…&qty=…)
+		{t('admin.config.allowCartFromUrl')}
 	</label>
-	<h2 class="text-2xl">Checkout</h2>
+	<h2 class="text-2xl">{t('admin.config.checkout')}</h2>
 
 	<a href="{data.adminPrefix}/config/checkout-fields" class="underline">
-		Set checkout additional fields
+		{t('admin.config.setCheckoutAdditionalFields')}
 	</a>
 
 	<label class="checkbox-label">
@@ -326,7 +329,7 @@
 			class="form-checkbox"
 			checked={data.checkoutButtonOnProductPage}
 		/>
-		Show "checkout" button on product page
+		{t('admin.config.showCheckoutButtonOnProductPage')}
 	</label>
 
 	<label class="checkbox-label">
@@ -336,7 +339,7 @@
 			class="form-checkbox"
 			checked={data.displayNewsletterCommercialProspection}
 		/>
-		Display newsletter + commercial prospection option (disabled by default)
+		{t('admin.config.displayNewsletterCommercialProspection')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -345,7 +348,7 @@
 			class="form-checkbox"
 			checked={data.collectIPOnDeliverylessOrders}
 		/>
-		Request IP collection on deliveryless order
+		{t('admin.config.requestIpCollectionOnDeliverylessOrder')}
 	</label>
 
 	<label class="checkbox-label">
@@ -355,12 +358,12 @@
 			class="form-checkbox"
 			checked={data.isBillingAddressMandatory}
 		/>
-		Mandatory billing address
+		{t('admin.config.mandatoryBillingAddress')}
 	</label>
 
 	<label class="checkbox-label">
 		<input type="checkbox" name="noProBilling" class="form-checkbox" checked={data.noProBilling} />
-		Only allow non-business customers (no pro-billing option)
+		{t('admin.config.onlyAllowNonBusinessCustomers')}
 	</label>
 
 	<label class="checkbox-label">
@@ -370,12 +373,12 @@
 			class="form-checkbox"
 			bind:checked={hasCartLimitProductLine}
 		/>
-		Limit product line per cart (for law purpose and small business )
+		{t('admin.config.limitProductLinePerCart')}
 	</label>
 
 	{#if hasCartLimitProductLine}
 		<label class="form-label">
-			Set maximum product line per cart (minimum 1)
+			{t('admin.config.setMaximumProductLinePerCart')}
 			<input
 				type="number"
 				name="cartMaxSeparateItems"
@@ -392,7 +395,7 @@
 			class="form-checkbox"
 			checked={data.defaultOnLocation}
 		/>
-		Default enable "this is a fully-paid on-location physical order"
+		{t('admin.config.defaultEnableOnLocationOrder')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -401,7 +404,7 @@
 			class="form-checkbox"
 			checked={data.removeBebopLogoPOS}
 		/>
-		Remove be-BOP logo from POS QR code
+		{t('admin.config.removeBebopLogoFromPos')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -410,12 +413,12 @@
 			class="form-checkbox"
 			bind:checked={hasPhysicalCartMinAmount}
 		/>
-		Minimum cart amount for cart with physical
+		{t('admin.config.minCartAmountForPhysical')}
 	</label>
 
 	{#if hasPhysicalCartMinAmount}
 		<label class="form-label">
-			Set minimum cart amount for cart with physical (en {data.currencies.main})
+			{t('admin.config.setPhysicalCartMinAmount', { currency: data.currencies.main })}
 			<input
 				type="number"
 				name="physicalCartMinAmount"
@@ -425,7 +428,7 @@
 			/>
 		</label>
 	{/if}
-	<h2 class="text-2xl">Order</h2>
+	<h2 class="text-2xl">{t('admin.config.order')}</h2>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
@@ -433,7 +436,7 @@
 			class="form-checkbox"
 			checked={data.hideCreditCardQrCode}
 		/>
-		Don't display order URL qr code on order paid with credit card
+		{t('admin.config.hideCreditCardQrCode')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -442,11 +445,13 @@
 			class="form-checkbox"
 			checked={data.overwriteCreditCardSvgColor}
 		/>
-		Overwrite credit card payment processor SVG color with custom color
+		{t('admin.config.overwriteCreditCardSvgColor')}
 	</label>
 	<p>
-		Target color can be changed in <a href="/admin/theme" class="underline">theme</a>("Order" then
-		"Credit card svg fill color" in theme)
+		{t('admin.config.targetColorChangeIn')}
+		<a href="/admin/theme" class="underline">{t('admin.config.theme')}</a>{t(
+			'admin.config.themeOrderHint'
+		)}
 	</p>
 	<label class="checkbox-label">
 		<input
@@ -455,7 +460,7 @@
 			class="form-checkbox"
 			checked={data.hideShopBankOnReceipt}
 		/>
-		Don't display shop bank account information on receipt
+		{t('admin.config.hideShopBankOnReceipt')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -464,17 +469,17 @@
 			class="form-checkbox"
 			checked={data.hideShopBankOnTicket}
 		/>
-		Don't display shop bank account information on ticket
+		{t('admin.config.hideShopBankOnTicket')}
 	</label>
-	<h2 class="text-2xl">VAT</h2>
+	<h2 class="text-2xl">{t('admin.config.vat')}</h2>
 
 	<label class="checkbox-label">
 		<input type="checkbox" name="vatExempted" class="form-checkbox" bind:checked={vatExempted} />
-		Disable VAT for my be-BOP
+		{t('admin.config.disableVat')}
 	</label>
 	{#if vatExempted}
 		<label class="form-label">
-			VAT exemption reason (appears on the invoice)
+			{t('admin.config.vatExemptionReason')}
 
 			<input
 				type="text"
@@ -491,7 +496,7 @@
 				class="form-checkbox"
 				bind:checked={vatSingleCountry}
 			/>
-			Use VAT rate from seller's country
+			{t('admin.config.useVatRateFromSellerCountry')}
 		</label>
 		<label class="checkbox-label">
 			<input
@@ -500,7 +505,7 @@
 				class="form-checkbox"
 				bind:checked={data.vatNullOutsideSellerCountry}
 			/>
-			Make VAT = 0% for deliveries outside seller's country
+			{t('admin.config.vatZeroOutsideSellerCountry')}
 		</label>
 		<label class="checkbox-label">
 			<input
@@ -509,10 +514,10 @@
 				class="form-checkbox"
 				bind:checked={data.displayVatIncludedInProduct}
 			/>
-			Display VAT included estimated price in product page
+			{t('admin.config.displayVatIncludedInProduct')}
 		</label>
 		<label class="form-label">
-			Seller's country for VAT purposes
+			{t('admin.config.sellerCountryForVat')}
 			<select name="vatCountry" class="form-input">
 				{#each sortedCountryCodes() as countryCode}
 					<option value={countryCode} selected={data.vatCountry === countryCode}>
@@ -523,9 +528,11 @@
 		</label>
 	{/if}
 
-	<a href="{data.adminPrefix}/config/vat" class="underline">Manage custom VAT rates</a>
+	<a href="{data.adminPrefix}/config/vat" class="underline"
+		>{t('admin.config.manageCustomVatRates')}</a
+	>
 
-	<h2 class="text-2xl">Payment methods</h2>
+	<h2 class="text-2xl">{t('admin.config.paymentMethods')}</h2>
 
 	<div class="grid gap-4" style="grid-template-columns: max-content max-content max-content;">
 		{#each allPaymentMethods as paymentMethod, i (paymentMethod)}
@@ -538,11 +545,11 @@
 					checked={!data.disabledPaymentMethods.includes(paymentMethod)}
 				/>
 				{t('checkout.paymentMethod.' + paymentMethod)}
-				{paymentMethod === 'point-of-sale' ? ' (only for users with POS role)' : ''}
+				{paymentMethod === 'point-of-sale' ? t('admin.config.onlyForPosRole') : ''}
 			</label>
 			<button
 				type="button"
-				title="Move down"
+				title={t('admin.config.moveDown')}
 				class:invisible={i === allPaymentMethods.length - 1}
 				on:click={() => {
 					allPaymentMethods = [
@@ -557,7 +564,7 @@
 			</button>
 			<button
 				type="button"
-				title="Move up"
+				title={t('admin.config.moveUp')}
 				class:invisible={i === 0}
 				on:click={() => {
 					allPaymentMethods = [
@@ -573,14 +580,13 @@
 		{/each}
 	</div>
 
-	<h2 class="text-2xl">Payment processor preferences</h2>
+	<h2 class="text-2xl">{t('admin.config.paymentProcessorPreferences')}</h2>
 	<p class="text-sm mb-4">
-		Choose which processor to use first. If it fails, the system will automatically try the next
-		processor in the fallback chain.
+		{t('admin.config.paymentProcessorPreferencesHint')}
 	</p>
 
 	<ProcessorSelector
-		label="Preferred card processor"
+		label={t('admin.config.preferredCardProcessor')}
 		name="preferredProcessorCard"
 		availableProcessors={availableCardProcessors}
 		bind:selectedProcessor={selectedCardProcessor}
@@ -592,19 +598,19 @@
 	/>
 
 	<ProcessorSelector
-		label="Preferred Bitcoin on-chain processor"
+		label={t('admin.config.preferredBitcoinProcessor')}
 		name="preferredProcessorBitcoin"
 		availableProcessors={availableBitcoinProcessors}
 		bind:selectedProcessor={selectedBitcoinProcessor}
 		preferredProcessor={data.preferredProcessorBitcoin}
 		configLinks={[
 			{ href: `${data.adminPrefix}/bitcoin-nodeless`, name: 'Bitcoin Nodeless' },
-			{ href: '#', name: 'Bitcoind via environment variables' }
+			{ href: '#', name: t('admin.config.bitcoindViaEnvVars') }
 		]}
 	/>
 
 	<ProcessorSelector
-		label="Preferred Lightning processor"
+		label={t('admin.config.preferredLightningProcessor')}
 		name="preferredProcessorLightning"
 		availableProcessors={availableLightningProcessors}
 		bind:selectedProcessor={selectedLightningProcessor}
@@ -613,13 +619,13 @@
 			{ href: `${data.adminPrefix}/phoenixd`, name: 'PhoenixD' },
 			{ href: `${data.adminPrefix}/swiss-bitcoin-pay`, name: 'Swiss Bitcoin Pay' },
 			{ href: `${data.adminPrefix}/btcpay-server`, name: 'BTCPay Server' },
-			{ href: '#', name: 'LND via environment variables' }
+			{ href: '#', name: t('admin.config.lndViaEnvVars') }
 		]}
 	/>
 
-	<h2 class="text-2xl">Timing</h2>
+	<h2 class="text-2xl">{t('admin.config.timing')}</h2>
 	<label class="form-label">
-		Default subscription duration
+		{t('admin.config.defaultSubscriptionDuration')}
 		<select
 			name="subscriptionDuration"
 			value={data.subscriptionDuration}
@@ -630,11 +636,11 @@
 			{/each}
 		</select>
 		<p class="text-sm">
-			Used for subscription products set to "Default (shop-wide)" and for legacy snapshots.
+			{t('admin.config.subscriptionDurationHint')}
 		</p>
 	</label>
 	<label class="form-label">
-		Subscription reminder
+		{t('admin.config.subscriptionReminder')}
 		<select
 			name="subscriptionReminderSeconds"
 			value={data.subscriptionReminderSeconds}
@@ -642,14 +648,16 @@
 		>
 			{#each [86400 * 7, 86400 * 3, 86400, 3600, 5 * 60] as seconds}
 				<option value={seconds}
-					>{formatDistance(0, seconds * 1000)} before the end of the subscription</option
+					>{t('admin.config.beforeEndOfSubscription', {
+						duration: formatDistance(0, seconds * 1000)
+					})}</option
 				>
 			{/each}
 		</select>
 	</label>
 
 	<div class="form-label">
-		Confirmation blocks
+		{t('admin.config.confirmationBlocks')}
 
 		<input
 			type="number"
@@ -677,13 +685,13 @@
 		</div>
 
 		<a href="{data.adminPrefix}/config/confirmation-threshold" class="underline">
-			Manage confirmation thresholds
+			{t('admin.config.manageConfirmationThresholds')}
 		</a>
-		<p class="text-sm">You can set a different number of confirmations for different amounts.</p>
+		<p class="text-sm">{t('admin.config.confirmationThresholdsHint')}</p>
 	</div>
 
 	<label class="form-label">
-		Set desired timeout for payment (in minutes)
+		{t('admin.config.setPaymentTimeoutMinutes')}
 		<input
 			type="number"
 			min="0"
@@ -694,7 +702,7 @@
 		/>
 	</label>
 	<label class="form-label">
-		How much time a cart reserves the stock (in minutes)
+		{t('admin.config.cartReserveStockMinutes')}
 		<input
 			type="number"
 			min="0"
@@ -703,18 +711,21 @@
 			class="form-input max-w-[25rem]"
 			value={data.reserveStockInMinutes}
 		/>
-		<p class="text-sm">The cart's reservation is extended each time the cart is updated.</p>
+		<p class="text-sm">{t('admin.config.cartReservationExtendedHint')}</p>
 	</label>
-	<h2 class="text-2xl">Admin</h2>
-	<p>Configured site URL: <a href={data.origin} class="body-hyperlink">{data.origin}</a></p>
+	<h2 class="text-2xl">{t('admin.config.admin')}</h2>
+	<p>
+		{t('admin.config.configuredSiteUrl')}
+		<a href={data.origin} class="body-hyperlink">{data.origin}</a>
+	</p>
 
 	<label class="checkbox-label">
 		<input type="checkbox" name="discovery" class="form-checkbox" checked={data.discovery} />
-		Allow users to access list of all products (through NostR for example)
+		{t('admin.config.allowProductListAccess')}
 	</label>
 
 	<label class="form-label">
-		Admin hash
+		{t('admin.config.adminHash')}
 
 		<input
 			type="text"
@@ -725,7 +736,7 @@
 			pattern="[a-zA-Z0-9]+"
 		/>
 		<p class="text-sm">
-			This will change the admin url to
+			{t('admin.config.adminHashHint')}
 			<kbd class="px-2 py-1.5 text-xs font-semibold bg-gray-100 border border-gray-200 rounded-lg">
 				/admin-[hash]
 			</kbd>
@@ -740,8 +751,12 @@
 			checked={data.copyOrderEmailsToAdmin && !!data.sellerIdentity?.contact.email}
 			disabled={!data.sellerIdentity?.contact.email}
 		/>
-		Copy order emails to {data.sellerIdentity?.contact.email || '[no email address]'} (set in
-		<a href="{data.adminPrefix}/identity" class="body-hyperlink underline">identity</a> section)
+		{t('admin.config.copyOrderEmailsTo', {
+			email: data.sellerIdentity?.contact.email || t('admin.config.noEmailAddress')
+		})}
+		<a href="{data.adminPrefix}/identity" class="body-hyperlink underline"
+			>{t('admin.config.identity')}</a
+		>{t('admin.config.identitySectionSuffix')}
 	</label>
 
 	<label class="checkbox-label">
@@ -752,7 +767,7 @@
 			class="form-checkbox"
 			checked={data.disableLanguageSelector}
 		/>
-		Disable language selector
+		{t('admin.config.disableLanguageSelector')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -762,7 +777,7 @@
 			class="form-checkbox"
 			checked={data.hideCartInToolbar}
 		/>
-		Hide cart icon in toolbar
+		{t('admin.config.hideCartInToolbar')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -771,11 +786,11 @@
 			class="form-checkbox"
 			checked={data.isMaintenance}
 		/>
-		Enable maintenance mode
+		{t('admin.config.enableMaintenanceMode')}
 	</label>
 
 	<label class="form-label">
-		Maintenance IPs, comma-separated
+		{t('admin.config.maintenanceIps')}
 		<input
 			type="text"
 			class="form-input max-w-[25rem]"
@@ -784,33 +799,31 @@
 			value={data.maintenanceIps}
 		/>
 		<p class="text-sm">
-			Your IP is <code class="font-mono bg-link px-[2px] py-[1px] rounded text-white"
-				>{data.ip}</code
-			>
+			{t('admin.config.yourIpIs')}
+			<code class="font-mono bg-link px-[2px] py-[1px] rounded text-white">{data.ip}</code>
 			({countryName(data.countryCode || '-')})
 		</p>
 	</label>
 
 	<p>
-		Create a fullScreen CMS page with "maintenance" slug, to show maintenance page, by following
-		<a href="/admin/cms/new" class="body-hyperlink underline">this link</a>.
+		{t('admin.config.createMaintenancePagePrefix')}
+		<a href="/admin/cms/new" class="body-hyperlink underline">{t('admin.config.thisLink')}</a>.
 	</p>
 
 	<label class="form-label">
-		Analytic script snippet
+		{t('admin.config.analyticsScriptSnippet')}
 		<textarea
 			rows="5"
 			cols="30"
 			class="form-input max-w-[25rem]"
 			name="analyticsScriptSnippet"
-			placeholder="plausible script"
+			placeholder={t('admin.config.analyticsScriptPlaceholder')}
 			value={data.analyticsScriptSnippet}
 		/>
 	</label>
-	<h2 class="text-2xl font-semibold mt-8">Customer Data Cleaning</h2>
+	<h2 class="text-2xl font-semibold mt-8">{t('admin.config.customerDataCleaning')}</h2>
 	<p class="text-sm text-gray-500 mb-2">
-		Configure how customer personal data is cleaned for law compliance (GDPR, etc.). You are
-		responsible for checking your local regulations.
+		{t('admin.config.customerDataCleaningHint')}
 	</p>
 
 	<label class="checkbox-label">
@@ -820,7 +833,7 @@
 			class="form-checkbox"
 			bind:checked={dataCleanupOnExpire}
 		/>
-		Auto-clean personal data when order expires or is cancelled
+		{t('admin.config.autoCleanOnExpireOrCancel')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -829,7 +842,7 @@
 			class="form-checkbox"
 			bind:checked={dataCleanupManual}
 		/>
-		Allow customers to request cleanup of their personal data
+		{t('admin.config.allowManualCleanupRequest')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -838,11 +851,11 @@
 			class="form-checkbox"
 			bind:checked={dataCleanupScheduled}
 		/>
-		Enable scheduled auto-cleanup of personal data
+		{t('admin.config.enableScheduledCleanup')}
 	</label>
 	{#if dataCleanupScheduled}
 		<label class="form-label">
-			Cleanup delay
+			{t('admin.config.cleanupDelay')}
 			<div class="flex gap-2 items-center">
 				<input
 					type="number"
@@ -857,16 +870,16 @@
 					bind:value={cleanupDelayUnit}
 					class="form-input"
 				>
-					<option value="hours">Hours</option>
-					<option value="days">Days</option>
-					<option value="weeks">Weeks</option>
-					<option value="months">Months</option>
-					<option value="years">Years</option>
+					<option value="hours">{t('admin.config.hours')}</option>
+					<option value="days">{t('admin.config.days')}</option>
+					<option value="weeks">{t('admin.config.weeks')}</option>
+					<option value="months">{t('admin.config.months')}</option>
+					<option value="years">{t('admin.config.years')}</option>
 				</select>
 			</div>
 		</label>
 		<fieldset class="mt-2">
-			<legend class="form-label">Order statuses to clean</legend>
+			<legend class="form-label">{t('admin.config.orderStatusesToClean')}</legend>
 			{#each ORDER_PAYMENT_STATUSES as status}
 				<label class="inline-flex items-center mr-4">
 					<input
@@ -883,12 +896,12 @@
 	{/if}
 
 	<div>
-		<input type="submit" value="Update" class="btn body-mainCTA self-start" />
+		<input type="submit" value={t('admin.action.update')} class="btn body-mainCTA self-start" />
 	</div>
 </form>
 
 <p>
-	IP2Location LITE data available from <a href="https://lite.ip2location.com" class="text-blue">
-		https://lite.ip2location.com
-	</a> is used to determine your country from your IP.
+	{t('admin.config.ip2locationCreditPrefix')}
+	<a href="https://lite.ip2location.com" class="text-blue"> https://lite.ip2location.com </a>
+	{t('admin.config.ip2locationCreditSuffix')}
 </p>

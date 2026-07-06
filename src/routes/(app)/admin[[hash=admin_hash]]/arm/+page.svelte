@@ -6,6 +6,9 @@
 	import { applyAction, enhance } from '$app/forms';
 	import { MultiSelect } from 'svelte-multiselect';
 	import { defaultRoleOptions } from '$lib/types/Role';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 
@@ -24,26 +27,26 @@
 	}
 </script>
 
-<h1 class="text-3xl">Access Rights Management</h1>
+<h1 class="text-3xl">{t('admin.arm.title')}</h1>
 
 {#if successMessage}
 	<div class="alert alert-success">{successMessage}</div>
 {/if}
 
-<h2 class="text-2xl">Roles</h2>
+<h2 class="text-2xl">{t('admin.arm.roles')}</h2>
 
-<a href="{data.adminPrefix}/arm/role/new" class="underline">Create a role</a>
+<a href="{data.adminPrefix}/arm/role/new" class="underline">{t('admin.arm.createRole')}</a>
 
 <ul class="grid grid-cols-[auto_auto_auto_auto_auto__auto_min-content_min-content] gap-2">
 	<li class="contents">
-		<span>Role ID</span>
-		<span>Role name</span>
-		<span>POS</span>
-		<span>Write access</span>
-		<span>Read access</span>
-		<span>Forbidden access</span>
-		<span>Save</span>
-		<span>Delete</span>
+		<span>{t('admin.arm.roleId')}</span>
+		<span>{t('admin.arm.roleName')}</span>
+		<span>{t('admin.arm.pos')}</span>
+		<span>{t('admin.arm.writeAccess')}</span>
+		<span>{t('admin.arm.readAccess')}</span>
+		<span>{t('admin.arm.forbiddenAccess')}</span>
+		<span>{t('admin.action.save')}</span>
+		<span>{t('admin.arm.delete')}</span>
 	</li>
 	{#each data.roles as role}
 		<li class="contents">
@@ -58,7 +61,7 @@
 						}
 
 						if (action.searchParams.has('/update')) {
-							successMessage = 'Role updated: ' + role._id;
+							successMessage = t('admin.arm.roleUpdated', { id: role._id });
 							blurActiveElement();
 							window.location.reload();
 						} else {
@@ -106,7 +109,7 @@
 					allowUserOptions
 					disabled={role._id === SUPER_ADMIN_ROLE_ID}
 				/>
-				<button type="submit" class="btn btn-black self-start" title="Save">
+				<button type="submit" class="btn btn-black self-start" title={t('admin.action.save')}>
 					<IconSave />
 				</button>
 				<button
@@ -114,9 +117,9 @@
 					class="btn btn-red self-start"
 					formaction="{data.adminPrefix}/arm/role/{role._id}?/delete"
 					disabled={role._id === SUPER_ADMIN_ROLE_ID}
-					title="Delete role"
+					title={t('admin.arm.deleteRole')}
 					on:click={(e) => {
-						if (!confirm(`Are you sure you want to delete this role: ${role._id}?`)) {
+						if (!confirm(t('admin.arm.confirmDeleteRole', { id: role._id }))) {
 							e.preventDefault();
 						}
 					}}
@@ -128,29 +131,29 @@
 	{/each}
 </ul>
 
-<h2 class="text-2xl">Users</h2>
+<h2 class="text-2xl">{t('admin.arm.users')}</h2>
 {#if hasDuplicates(listEmail)}
-	<span class="text-red-500">Duplicated emails was found, please fix them before submit</span>
+	<span class="text-red-500">{t('admin.arm.duplicateEmails')}</span>
 {/if}
 {#if hasDuplicates(listNpub)}
-	<span class="text-red-500">Duplicated Npubs was found, please fix them before submit</span>
+	<span class="text-red-500">{t('admin.arm.duplicateNpubs')}</span>
 {/if}
-<a href="{data.adminPrefix}/arm/user/new" class="underline">Create a user</a>
+<a href="{data.adminPrefix}/arm/user/new" class="underline">{t('admin.arm.createUser')}</a>
 
 <ul
 	class="grid grid-cols-[auto_auto_auto_auto_auto_min-content_auto_min-content_min-content_min-content] gap-2"
 >
 	<li class="contents">
-		<span>Login</span>
-		<span>Alias</span>
-		<span>Recovery Email</span>
-		<span>Recovery Npub</span>
-		<span>Role</span>
-		<span>POS</span>
-		<span>Status</span>
-		<span>Save</span>
-		<span>Password</span>
-		<span>Delete</span>
+		<span>{t('admin.arm.login')}</span>
+		<span>{t('admin.arm.alias')}</span>
+		<span>{t('admin.arm.recoveryEmail')}</span>
+		<span>{t('admin.arm.recoveryNpub')}</span>
+		<span>{t('admin.arm.role')}</span>
+		<span>{t('admin.arm.pos')}</span>
+		<span>{t('admin.arm.status')}</span>
+		<span>{t('admin.action.save')}</span>
+		<span>{t('admin.arm.password')}</span>
+		<span>{t('admin.arm.delete')}</span>
 	</li>
 	{#each data.users as user, i}
 		<li class="contents">
@@ -165,12 +168,9 @@
 						}
 
 						if (action.searchParams.has('/resetPassword')) {
-							successMessage =
-								'Password reset for ' +
-								user.login +
-								', link to set new password sent to recovery address';
+							successMessage = t('admin.arm.passwordReset', { login: user.login });
 						} else if (action.searchParams.has('/update')) {
-							successMessage = 'Account updated: ' + user.login;
+							successMessage = t('admin.arm.accountUpdated', { login: user.login });
 							blurActiveElement();
 							window.location.reload();
 						} else {
@@ -229,13 +229,13 @@
 					disabled={data.roles.find((rol) => rol._id === user.roleId)?.hasPosOptions}
 				/>
 				<select class="form-input" disabled={user.roleId === SUPER_ADMIN_ROLE_ID} name="status">
-					<option value="enabled" selected={!user.disabled}>Enabled</option>
-					<option value="disabled" selected={!!user.disabled}>Disabled</option>
+					<option value="enabled" selected={!user.disabled}>{t('admin.arm.enabled')}</option>
+					<option value="disabled" selected={!!user.disabled}>{t('admin.arm.disabled')}</option>
 				</select>
 				<button
 					type="submit"
 					class="btn btn-black self-start"
-					title="Save"
+					title={t('admin.action.save')}
 					disabled={hasDuplicates(listEmail) || hasDuplicates(listNpub)}
 				>
 					<IconSave />
@@ -245,7 +245,7 @@
 					class="btn btn-red self-start"
 					formaction="{data.adminPrefix}/arm/user/{user._id}?/resetPassword"
 					disabled={user.roleId === SUPER_ADMIN_ROLE_ID}
-					title="Reset password"
+					title={t('admin.arm.resetPassword')}
 				>
 					<IconRefresh />
 				</button>
@@ -254,9 +254,9 @@
 					class="btn btn-red self-start"
 					formaction="{data.adminPrefix}/arm/user/{user._id}?/delete"
 					disabled={user.roleId === SUPER_ADMIN_ROLE_ID}
-					title="Delete account"
+					title={t('admin.arm.deleteAccount')}
 					on:click={(e) => {
-						if (!confirm(`Are you sure you want to delete this account: ${user.login}?`)) {
+						if (!confirm(t('admin.arm.confirmDeleteAccount', { login: user.login }))) {
 							e.preventDefault();
 						}
 					}}
@@ -268,7 +268,7 @@
 	{/each}
 </ul>
 
-<h2 class="text-2xl">Welcome message to employees</h2>
+<h2 class="text-2xl">{t('admin.arm.welcomeMessageTitle')}</h2>
 <form
 	action="{data.adminPrefix}/arm?/updateWelcomeMessage"
 	method="post"
@@ -279,7 +279,7 @@
 				return await applyAction(result);
 			}
 			if (action.searchParams.has('/updateWelcomeMessage')) {
-				successMessage = 'Welcom message to employee udated succesfully';
+				successMessage = t('admin.arm.welcomeMessageUpdated');
 			} else {
 				await applyAction(result);
 			}
@@ -287,16 +287,16 @@
 	}}
 >
 	<label class="form-label">
-		message
+		{t('admin.arm.message')}
 		<textarea
 			name="welcomMessage"
 			cols="30"
 			rows="8"
-			placeholder="Welcome message to employees"
+			placeholder={t('admin.arm.welcomeMessagePlaceholder')}
 			maxlength="4096"
 			class="form-input block w-full"
 			value={data.adminWelcomMessage}
 		/>
 	</label>
-	<button type="submit" class="btn body-mainCTA self-start"> Save text </button>
+	<button type="submit" class="btn body-mainCTA self-start"> {t('admin.arm.saveText')} </button>
 </form>

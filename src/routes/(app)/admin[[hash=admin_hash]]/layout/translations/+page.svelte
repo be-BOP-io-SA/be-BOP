@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { languageNames, type LanguageKey } from '$lib/translations/index.js';
 	import { MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 
 	let language: LanguageKey = 'fr';
 </script>
 
 <form method="post" class="contents">
 	<label class="form-label">
-		Select Language
+		{t('admin.layout.selectLanguage')}
 
 		<select bind:value={language} name="language" class="form-input">
 			{#each data.locales as locale}
@@ -19,7 +22,7 @@
 	</label>
 
 	<label class="form-label">
-		Brand name
+		{t('admin.layout.brandName')}
 		<input
 			type="text"
 			name="brandName"
@@ -30,7 +33,7 @@
 	</label>
 
 	<label class="form-label">
-		Website title
+		{t('admin.layout.websiteTitle')}
 		<input
 			type="text"
 			name="websiteTitle"
@@ -41,7 +44,7 @@
 	</label>
 
 	<label class="form-label">
-		Website description
+		{t('admin.layout.websiteDescription')}
 
 		<textarea
 			name="websiteShortDescription"
@@ -54,12 +57,12 @@
 		>
 	</label>
 
-	<h2 class="text-2xl">Top bar links</h2>
+	<h2 class="text-2xl">{t('admin.layout.topbarLinks')}</h2>
 
 	{#each [...(data.config?.[language]?.topbarLinks ?? []), { href: '', label: '' }] as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.layout.text')}
 				<input
 					type="text"
 					name="topbarLinks[{i}].label"
@@ -69,7 +72,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.layout.url')}
 				<input
 					type="text"
 					name="topbarLinks[{i}].href"
@@ -81,12 +84,12 @@
 		</div>
 	{/each}
 
-	<h2 class="text-2xl">Nav bar links</h2>
+	<h2 class="text-2xl">{t('admin.layout.navbarLinks')}</h2>
 
 	{#each [...(data.config?.[language]?.navbarLinks ?? []), { href: '', label: '' }] as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.layout.text')}
 				<input
 					type="text"
 					name="navbarLinks[{i}].label"
@@ -96,7 +99,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.layout.url')}
 				<input
 					type="text"
 					name="navbarLinks[{i}].href"
@@ -108,12 +111,12 @@
 		</div>
 	{/each}
 
-	<h2 class="text-2xl">Footer links</h2>
+	<h2 class="text-2xl">{t('admin.layout.footerLinks')}</h2>
 
 	{#each [...(data.config?.[language]?.footerLinks ?? []), { href: '', label: '' }] as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.layout.text')}
 				<input
 					type="text"
 					name="footerLinks[{i}].label"
@@ -123,7 +126,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.layout.url')}
 				<input
 					type="text"
 					name="footerLinks[{i}].href"
@@ -135,5 +138,5 @@
 		</div>
 	{/each}
 
-	<button class="btn btn-black self-start" type="submit">Save</button>
+	<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>
 </form>

@@ -1,19 +1,28 @@
 <script lang="ts">
 	import TabLinksHeader from '$lib/components/TabLinksHeader.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
 <!-- <h1 class="text-3xl">Edit a product</h1> -->
 <TabLinksHeader
 	tabs={[
-		{ href: `${data.adminPrefix}/product/${data.product._id}`, name: 'Edit a product' },
-		{ href: `${data.adminPrefix}/product/${data.product._id}/translations`, name: 'Translations' },
+		{
+			href: `${data.adminPrefix}/product/${data.product._id}`,
+			name: t('admin.product.editProductTab')
+		},
+		{
+			href: `${data.adminPrefix}/product/${data.product._id}/translations`,
+			name: t('admin.product.translationsTab')
+		},
 		...(data.product.type === 'subscription'
 			? [
 					{
 						href: `${data.adminPrefix}/product/${data.product._id}/subscribers`,
-						name: 'Subscribers'
+						name: t('admin.product.subscribersTab')
 					}
 			  ]
 			: [])

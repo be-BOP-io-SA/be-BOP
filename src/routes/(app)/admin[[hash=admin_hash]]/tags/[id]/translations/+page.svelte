@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { languageNames, type LanguageKey } from '$lib/translations';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 
@@ -8,7 +11,7 @@
 
 <form method="post" class="contents">
 	<label class="form-label">
-		Select Language
+		{t('admin.tags.selectLanguage')}
 
 		<select bind:value={language} name="language" class="form-input">
 			{#each data.locales as locale}
@@ -18,7 +21,7 @@
 	</label>
 
 	<label class="form-label">
-		Title
+		{t('admin.tags.title')}
 		<input
 			type="text"
 			name="title"
@@ -29,7 +32,7 @@
 	</label>
 
 	<label class="form-label">
-		Subtitle
+		{t('admin.tags.subtitle')}
 		<input
 			type="text"
 			name="subtitle"
@@ -40,7 +43,7 @@
 	</label>
 
 	<label class="form-label">
-		Short content
+		{t('admin.tags.shortContent')}
 		<textarea
 			name="shortContent"
 			cols="30"
@@ -51,7 +54,7 @@
 	</label>
 
 	<label class="form-label">
-		Full content
+		{t('admin.tags.fullContent')}
 
 		<textarea
 			name="content"
@@ -64,11 +67,11 @@
 		/>
 	</label>
 
-	<h3 class="text-xl">CTAs</h3>
+	<h3 class="text-xl">{t('admin.tags.ctas')}</h3>
 	{#each [0, 1, 2] as i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.tags.ctaText')}
 				<input
 					type="text"
 					name="cta[{i}].label"
@@ -78,7 +81,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.tags.ctaUrl')}
 				<input
 					type="text"
 					name="cta[{i}].href"
@@ -95,10 +98,10 @@
 					checked={data.tag.translations?.[language]?.cta?.[i]?.openNewTab ??
 						data.tag.cta[i]?.openNewTab}
 				/>
-				Open in new tab
+				{t('admin.tags.openInNewTab')}
 			</label>
 		</div>
 	{/each}
 
-	<button class="btn btn-black self-start" type="submit">Save</button>
+	<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>
 </form>
