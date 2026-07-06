@@ -15,6 +15,7 @@ import type { Product } from '$lib/types/Product';
 import { UrlDependency } from '$lib/types/UrlDependency';
 import type { VatProfile } from '$lib/types/VatProfile.js';
 import { groupBy } from '$lib/utils/group-by';
+import { mergeLocalizedById } from '$lib/utils/mergeLocalizedById';
 import { error, redirect } from '@sveltejs/kit';
 import type { PickDeep, SetRequired } from 'type-fest';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
@@ -36,27 +37,6 @@ import {
  * for rows the translator left blank — this helper falls back to the corresponding main entry
  * for any such placeholder, so partial translations don't blank out untranslated links.
  */
-function mergeLocalizedLinks(
-	translated: ReadonlyArray<{ id: string; label: string; href: string }> | undefined,
-	main: ReadonlyArray<{ id: string; label: string; href: string }>
-): Array<{ id: string; label: string; href: string }> {
-	if (!translated) {
-		return [...main];
-	}
-	// Match overrides by stable `id`, not array position: a language keeps translating the right
-	// link even after main links are reordered/inserted/removed in /admin/layout. Label and href
-	// fall back independently to the main config, so a partial translation (e.g. label only) works.
-	// `id` is preserved so the /admin/layout editor can round-trip it (the storefront ignores it).
-	return main.map((m) => {
-		const t = translated.find((x) => x.id === m.id);
-		return {
-			id: m.id,
-			label: t?.label || m.label,
-			href: t?.href || m.href
-		};
-	});
-}
-
 async function getCartAndRemoveSomeItems(userIdentifier: UserIdentifier): Promise<Cart> {
 	const cartInDb = await getCartFromDb({ user: userIdentifier });
 
@@ -378,17 +358,19 @@ export async function load(params) {
 		viewportContentWidth: runtimeConfig.viewportContentWidth,
 		viewportFor: runtimeConfig.viewportFor,
 		links: {
-			footer: mergeLocalizedLinks(
-				runtimeConfig[`translations.${locals.language}.config`]?.footerLinks,
-				runtimeConfig.footerLinks
+			// Resolve each localized nav array by stable link id (reorder/insert/delete safe, with
+			// per-field fallback to the main config). See $lib/utils/mergeLocalizedById.
+			footer: mergeLocalizedById(
+				runtimeConfig.footerLinks,
+				runtimeConfig[`translations.${locals.language}.config`]?.footerLinks
 			),
-			navbar: mergeLocalizedLinks(
-				runtimeConfig[`translations.${locals.language}.config`]?.navbarLinks,
-				runtimeConfig.navbarLinks
+			navbar: mergeLocalizedById(
+				runtimeConfig.navbarLinks,
+				runtimeConfig[`translations.${locals.language}.config`]?.navbarLinks
 			),
-			topbar: mergeLocalizedLinks(
-				runtimeConfig[`translations.${locals.language}.config`]?.topbarLinks,
-				runtimeConfig.topbarLinks
+			topbar: mergeLocalizedById(
+				runtimeConfig.topbarLinks,
+				runtimeConfig[`translations.${locals.language}.config`]?.topbarLinks
 			),
 			socialNetworkIcons: runtimeConfig.socialNetworkIcons
 		},
