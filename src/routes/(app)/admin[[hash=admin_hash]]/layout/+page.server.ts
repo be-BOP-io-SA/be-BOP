@@ -45,7 +45,13 @@ export const actions = {
 			.parse(json);
 
 		for (const linkKey of ['topbarLinks', 'navbarLinks', 'footerLinks'] as const) {
-			res[linkKey] = res[linkKey]?.filter((item) => item.href && item.label) ?? [];
+			// Drop blank rows, then stamp a stable id on every link — preserve an existing id,
+			// generate one for newly-added links (empty id from the form). Link translations key
+			// off this id, so it must survive edits/reordering.
+			res[linkKey] =
+				res[linkKey]
+					?.filter((item) => item.href && item.label)
+					.map((item) => ({ ...item, id: item.id || crypto.randomUUID() })) ?? [];
 		}
 		res.socialNetworkIcons = res.socialNetworkIcons?.filter(
 			(item) => item.href && item.svg && item.name
