@@ -48,7 +48,7 @@
 
 	const MAX_PHASE_REMINDER_SECONDS = 7 * 24 * 60 * 60;
 
-	const { t } = useI18n();
+	const { t, formatDistanceLocale } = useI18n();
 
 	export let tags: Pick<Tag, '_id' | 'name'>[];
 	export let isNew = false;
@@ -340,10 +340,10 @@
 		])
 	) as Record<Day, { start: string; end: string }>;
 	let bookingSpecSlotOptions = [
-		{ value: 15, label: '15 minutes' },
-		{ value: 30, label: '30 minutes' },
-		{ value: 60, label: '1 hour' },
-		{ value: 120, label: '2 hours' },
+		{ value: 15, label: t('admin.productForm.duration15Minutes') },
+		{ value: 30, label: t('admin.productForm.duration30Minutes') },
+		{ value: 60, label: t('admin.productForm.duration1Hour') },
+		{ value: 120, label: t('admin.productForm.duration2Hours') },
 		{ value: 60 * 24, label: t('admin.productForm.allDay') }
 	];
 	$: changedDate = availableDateStr !== product.availableDate?.toJSON().slice(0, 10);
@@ -469,29 +469,31 @@
 
 				{#if product.type === 'subscription'}
 					<label class="form-label">
-						Subscription duration
+						{t('admin.productForm.subscriptionDurationLabel')}
 						<select
 							name="subscriptionDuration"
 							class="form-input max-w-[25rem]"
 							bind:value={subscriptionDuration}
 						>
-							<option value="">Default (shop-wide)</option>
+							<option value="">{t('admin.productForm.defaultShopWide')}</option>
 							{#each SUBSCRIPTION_DURATIONS as duration}
 								<option value={duration}>{duration}</option>
 							{/each}
 						</select>
 					</label>
 					<label class="form-label">
-						Subscription reminder
+						{t('admin.productForm.subscriptionReminder')}
 						<select
 							name="subscriptionReminderSeconds"
 							class="form-input max-w-[25rem]"
 							bind:value={subscriptionReminderSeconds}
 						>
-							<option value="">Default (shop-wide)</option>
+							<option value="">{t('admin.productForm.defaultShopWide')}</option>
 							{#each [86400 * 7, 86400 * 3, 86400, 3600, 5 * 60] as seconds}
 								<option value={seconds}
-									>{formatDistance(0, seconds * 1000)} before the end of the subscription</option
+									>{t('admin.config.beforeEndOfSubscription', {
+										duration: formatDistance(0, seconds * 1000, { locale: formatDistanceLocale() })
+									})}</option
 								>
 							{/each}
 						</select>
@@ -716,7 +718,7 @@
 									class="form-input"
 									type="number"
 									name="recommendedPWYWAmount"
-									placeholder="Price"
+									placeholder={t('admin.productVatCalcRow.pricePlaceholder')}
 									step="any"
 									value={(product.recommendedPWYWAmount ?? 0)
 										.toLocaleString('en', { maximumFractionDigits: 8 })
@@ -755,7 +757,7 @@
 										class="form-input"
 										type="number"
 										name="maxPriceAmount"
-										placeholder="Price"
+										placeholder={t('admin.productVatCalcRow.pricePlaceholder')}
 										step="any"
 										min={product.price.amount}
 										value={product.maximumPrice?.amount
@@ -994,13 +996,9 @@
 
 				{#if product.type === 'subscription'}
 					<div class="border-t border-gray-200 pt-4">
-						<h3 class="text-lg font-semibold">Pricing phases (promotional schedule)</h3>
+						<h3 class="text-lg font-semibold">{t('admin.productForm.pricingPhasesTitle')}</h3>
 						<p class="text-sm text-gray-600 mt-1 mb-3">
-							Optional. Each phase is billed as a separate period at a fixed VAT-excluded price. The
-							first phase is billed at initial purchase, then one phase per renewal. Once the
-							schedule is exhausted, the subscription reverts to the base price and duration set
-							above. Each buyer identity (email or npub) can benefit from the schedule only once for
-							this product.
+							{t('admin.productForm.pricingPhasesHint')}
 						</p>
 
 						{#each pricingSchedule as phase, i}
@@ -1013,34 +1011,36 @@
 							)}
 							<div class="border border-gray-300 rounded p-3 mb-2">
 								<div class="flex items-center justify-between mb-2">
-									<span class="font-semibold">Phase {i + 1}</span>
+									<span class="font-semibold"
+										>{t('admin.productForm.phaseNumber', { number: i + 1 })}</span
+									>
 									<div class="flex gap-1">
 										<button
 											type="button"
 											class="btn btn-gray"
 											disabled={i === 0}
 											on:click={() => movePricingPhase(i, -1)}
-											title="Move up">↑</button
+											title={t('admin.productForm.movePhaseUp')}>↑</button
 										>
 										<button
 											type="button"
 											class="btn btn-gray"
 											disabled={i === pricingSchedule.length - 1}
 											on:click={() => movePricingPhase(i, 1)}
-											title="Move down">↓</button
+											title={t('admin.productForm.movePhaseDown')}>↓</button
 										>
 										<button
 											type="button"
 											class="btn btn-red"
 											on:click={() => removePricingPhase(i)}
-											title="Delete">🗑</button
+											title={t('admin.productForm.deletePhase')}>🗑</button
 										>
 									</div>
 								</div>
 
 								<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
 									<label class="form-label">
-										Duration
+										{t('admin.productForm.phaseDuration')}
 										<div class="flex gap-1">
 											<input
 												type="number"
@@ -1066,7 +1066,7 @@
 									</label>
 
 									<label class="form-label">
-										Price (VAT excluded)
+										{t('admin.productForm.phasePriceExcluded')}
 										<input
 											type="number"
 											min="0"
@@ -1077,12 +1077,12 @@
 											required
 										/>
 										<span class="text-xs text-gray-500 mt-1 block">
-											Free trial = 0. Currency inherited from the product.
+											{t('admin.productForm.phasePriceHint')}
 										</span>
 									</label>
 
 									<label class="form-label">
-										Reminder before end
+										{t('admin.productForm.phaseReminderBeforeEnd')}
 										<div class="flex gap-1">
 											<input
 												type="number"
@@ -1105,7 +1105,9 @@
 												{/each}
 											</select>
 										</div>
-										<span class="text-xs text-gray-500 mt-1 block">0 = no reminder</span>
+										<span class="text-xs text-gray-500 mt-1 block"
+											>{t('admin.productForm.phaseReminderHint')}</span
+										>
 									</label>
 								</div>
 							</div>
@@ -1117,7 +1119,7 @@
 							on:click={addPricingPhase}
 							disabled={pricingSchedule.length >= 10}
 						>
-							+ Add phase
+							+ {t('admin.productForm.addPhase')}
 						</button>
 					</div>
 				{/if}

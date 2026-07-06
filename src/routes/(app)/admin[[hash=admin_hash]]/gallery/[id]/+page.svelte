@@ -225,7 +225,7 @@
 		<input
 			type="submit"
 			class="btn btn-blue self-start text-white"
-			value="Update"
+			value={t('admin.action.update')}
 			disabled={submitting}
 			on:click|preventDefault={handleSubmit}
 		/>

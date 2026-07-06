@@ -20,7 +20,7 @@
 
 	let feeCountryToAdd: CountryAlpha2 | 'default' = 'default';
 
-	const { countryName, sortedCountryCodes } = useI18n();
+	const { countryName, sortedCountryCodes, t } = useI18n();
 
 	// Currency options for Select components (sorted: main → secondary → BTC/SAT → fiat A-Z)
 	const sortedCurrencies = sortCurrencies($currencies.main, $currencies.secondary);
@@ -97,7 +97,7 @@
 					type="number"
 					{disabled}
 					name="deliveryFees[{country}].amount"
-					placeholder="Price"
+					placeholder={t('admin.productVatCalcRow.pricePlaceholder')}
 					step="any"
 					value={deliveryFee?.amount
 						.toLocaleString('en', { maximumFractionDigits: 8 })

@@ -395,9 +395,9 @@
 						[
 							...data.employees.map((employee) => ({
 								value: employee.alias ?? 'System',
-								label: employee.alias ?? 'System'
+								label: employee.alias ?? t('admin.order.system')
 							})),
-							{ value: 'System', label: 'System' }
+							{ value: 'System', label: t('admin.order.system') }
 						].map((option) => [option.value, option])
 					).values()
 				]}

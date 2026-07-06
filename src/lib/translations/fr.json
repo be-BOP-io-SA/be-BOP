@@ -1246,7 +1246,7 @@
 			"setCheckoutAdditionalFields": "Définir des champs supplémentaires pour le paiement",
 			"defaultSubscriptionDuration": "Durée d'abonnement par défaut",
 			"subscriptionDurationHint": "Utilisé pour les produits d’abonnement réglés sur « Par défaut (à l’échelle de la boutique) » et pour les instantanés hérités.",
-			"analyticsScriptPlaceholder": "script plausible"
+			"analyticsScriptPlaceholder": "Collez votre script de tracking"
 		},
 		"oauth": {
 			"title": "Fournisseurs OAuth",
@@ -1746,7 +1746,26 @@
 			"pleaseUploadAPicture": "Veuillez télécharger une image",
 			"confirmDeleteProduct": "Souhaitez-vous supprimer ce produit ?",
 			"duplicateSuffix": " (copie)",
-			"allDay": "Toute la journée"
+			"allDay": "Toute la journée",
+			"subscriptionReminder": "Rappel d'abonnement",
+			"defaultShopWide": "Par défaut (à l’échelle de la boutique)",
+			"duration15Minutes": "15 minutes",
+			"duration30Minutes": "30 minutes",
+			"duration1Hour": "1 heure",
+			"duration2Hours": "2 heures",
+			"subscriptionDurationLabel": "Durée d'abonnement",
+			"pricingPhasesTitle": "Phases tarifaires (calendrier promotionnel)",
+			"pricingPhasesHint": "Facultatif. Chaque phase est facturée comme une période distincte à un prix fixe hors taxe. La première phase est facturée à l'achat initial, puis une phase par renouvellement. Une fois le calendrier épuisé, l'abonnement revient au prix et à la durée de base définis ci-dessus. Chaque identité d'acheteur (email ou npub) ne peut bénéficier du calendrier qu'une seule fois pour ce produit.",
+			"phaseNumber": "Phase {number}",
+			"movePhaseUp": "Déplacer vers le haut",
+			"movePhaseDown": "Déplacer vers le bas",
+			"deletePhase": "Supprimer",
+			"phaseDuration": "Durée",
+			"phasePriceExcluded": "Prix (HT)",
+			"phasePriceHint": "Essai gratuit = 0. Devise héritée du produit.",
+			"phaseReminderBeforeEnd": "Rappel avant la fin",
+			"phaseReminderHint": "0 = pas de rappel",
+			"addPhase": "Ajouter une phase"
 		},
 		"taler": {
 			"backendUrl": "URL du backend",
@@ -1829,7 +1848,8 @@
 			"viewMobile": "Voir 📱",
 			"view": "Voir",
 			"delete": "Supprimer",
-			"submit": "Envoyer"
+			"submit": "Envoyer",
+			"reservedMetaNameError": "Les mots « description » et « viewport » ne sont pas autorisés."
 		},
 		"schedule": {
 			"addSchedule": "Ajouter un horaire",
@@ -2056,6 +2076,14 @@
 			"vatForExcludedCalc": "TVA (pour le calcul du prix hors taxe)",
 			"priceAmount": "Montant du prix",
 			"pricePlaceholder": "Prix"
+		},
+		"processorSelector": {
+			"noProcessorsConfigured": "Aucun processeur configuré. Configurez-les dans l’onglet Paramètres de paiement ci-dessus",
+			"or": "ou",
+			"autoSystemPriority": "Auto (priorité système)",
+			"notConfigured": "non configuré",
+			"priority": "Priorité",
+			"systemPriority": "Priorité système"
 		}
 	},
 	"ageWarning": {

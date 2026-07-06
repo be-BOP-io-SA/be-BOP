@@ -1246,7 +1246,7 @@
 			"setCheckoutAdditionalFields": "Set checkout additional fields",
 			"defaultSubscriptionDuration": "Default subscription duration",
 			"subscriptionDurationHint": "Used for subscription products set to \"Default (shop-wide)\" and for legacy snapshots.",
-			"analyticsScriptPlaceholder": "plausible script"
+			"analyticsScriptPlaceholder": "Plausible script"
 		},
 		"oauth": {
 			"title": "OAuth Providers",
@@ -1746,7 +1746,26 @@
 			"pleaseUploadAPicture": "Please upload a picture",
 			"confirmDeleteProduct": "Would you like to delete this product?",
 			"duplicateSuffix": " (duplicate)",
-			"allDay": "All day"
+			"allDay": "All day",
+			"subscriptionReminder": "Subscription reminder",
+			"defaultShopWide": "Default (shop-wide)",
+			"duration15Minutes": "15 minutes",
+			"duration30Minutes": "30 minutes",
+			"duration1Hour": "1 hour",
+			"duration2Hours": "2 hours",
+			"subscriptionDurationLabel": "Subscription duration",
+			"pricingPhasesTitle": "Pricing phases (promotional schedule)",
+			"pricingPhasesHint": "Optional. Each phase is billed as a separate period at a fixed VAT-excluded price. The first phase is billed at initial purchase, then one phase per renewal. Once the schedule is exhausted, the subscription reverts to the base price and duration set above. Each buyer identity (email or npub) can benefit from the schedule only once for this product.",
+			"phaseNumber": "Phase {number}",
+			"movePhaseUp": "Move up",
+			"movePhaseDown": "Move down",
+			"deletePhase": "Delete",
+			"phaseDuration": "Duration",
+			"phasePriceExcluded": "Price (VAT excluded)",
+			"phasePriceHint": "Free trial = 0. Currency inherited from the product.",
+			"phaseReminderBeforeEnd": "Reminder before end",
+			"phaseReminderHint": "0 = no reminder",
+			"addPhase": "Add phase"
 		},
 		"taler": {
 			"backendUrl": "Backend URL",
@@ -1829,7 +1848,8 @@
 			"viewMobile": "View 📱",
 			"view": "View",
 			"delete": "Delete",
-			"submit": "Submit"
+			"submit": "Submit",
+			"reservedMetaNameError": "The words 'description' and 'viewport' are not allowed."
 		},
 		"schedule": {
 			"addSchedule": "Add schedule",
@@ -2056,6 +2076,14 @@
 			"vatForExcludedCalc": "VAT (for VAT excluded price calculation)",
 			"priceAmount": "Price amount",
 			"pricePlaceholder": "Price"
+		},
+		"processorSelector": {
+			"noProcessorsConfigured": "No processors configured. Configure them in the Payment Settings tab above",
+			"or": "or",
+			"autoSystemPriority": "Auto (system priority)",
+			"notConfigured": "not configured",
+			"priority": "Priority",
+			"systemPriority": "System priority"
 		}
 	},
 	"ageWarning": {

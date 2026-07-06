@@ -37,7 +37,7 @@
 
 	<Picture picture={data.picture} class="object-contain max-h-[500px] max-w-full" />
 	<div class="flex flex-wrap gap-4">
-		<input type="submit" value="Update" class="btn btn-black" />
+		<input type="submit" value={t('admin.action.update')} class="btn btn-black" />
 		<input type="hidden" name="darkPicture" bind:value={darkPicture} />
 		<label class="checkbox-label">
 			<input type="checkbox" name="isWide" class="form-checkbox" checked={data.logo.isWide} />

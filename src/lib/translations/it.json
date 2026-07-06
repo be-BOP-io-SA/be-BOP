@@ -1246,7 +1246,7 @@
 			"setCheckoutAdditionalFields": "Imposta campi aggiuntivi per il checkout",
 			"defaultSubscriptionDuration": "Durata predefinita dell'abbonamento",
 			"subscriptionDurationHint": "Usato per i prodotti in abbonamento impostati su \"Predefinito (a livello di negozio)\" e per gli snapshot legacy.",
-			"analyticsScriptPlaceholder": "script plausible"
+			"analyticsScriptPlaceholder": "script Plausible"
 		},
 		"oauth": {
 			"title": "Provider OAuth",
@@ -1746,7 +1746,26 @@
 			"pleaseUploadAPicture": "Carica un'immagine",
 			"confirmDeleteProduct": "Vuoi eliminare questo prodotto?",
 			"duplicateSuffix": " (duplicato)",
-			"allDay": "Tutto il giorno"
+			"allDay": "Tutto il giorno",
+			"subscriptionReminder": "Promemoria abbonamento",
+			"defaultShopWide": "Predefinito (a livello di negozio)",
+			"duration15Minutes": "15 minuti",
+			"duration30Minutes": "30 minuti",
+			"duration1Hour": "1 ora",
+			"duration2Hours": "2 ore",
+			"subscriptionDurationLabel": "Durata dell'abbonamento",
+			"pricingPhasesTitle": "Fasi tariffarie (programma promozionale)",
+			"pricingPhasesHint": "Facoltativo. Ogni fase viene fatturata come un periodo separato a un prezzo fisso IVA esclusa. La prima fase viene fatturata all'acquisto iniziale, poi una fase per ogni rinnovo. Una volta esaurito il programma, l'abbonamento torna al prezzo e alla durata di base impostati sopra. Ogni identità dell'acquirente (email o npub) può beneficiare del programma una sola volta per questo prodotto.",
+			"phaseNumber": "Fase {number}",
+			"movePhaseUp": "Sposta su",
+			"movePhaseDown": "Sposta giù",
+			"deletePhase": "Elimina",
+			"phaseDuration": "Durata",
+			"phasePriceExcluded": "Prezzo (IVA esclusa)",
+			"phasePriceHint": "Prova gratuita = 0. Valuta ereditata dal prodotto.",
+			"phaseReminderBeforeEnd": "Promemoria prima della fine",
+			"phaseReminderHint": "0 = nessun promemoria",
+			"addPhase": "Aggiungi fase"
 		},
 		"taler": {
 			"backendUrl": "URL del backend",
@@ -1829,7 +1848,8 @@
 			"viewMobile": "Visualizza 📱",
 			"view": "Visualizza",
 			"delete": "Elimina",
-			"submit": "Invia"
+			"submit": "Invia",
+			"reservedMetaNameError": "Le parole 'description' e 'viewport' non sono consentite."
 		},
 		"schedule": {
 			"addSchedule": "Aggiungi programma",
@@ -2056,6 +2076,14 @@
 			"vatForExcludedCalc": "IVA (per il calcolo del prezzo IVA esclusa)",
 			"priceAmount": "Importo del prezzo",
 			"pricePlaceholder": "Prezzo"
+		},
+		"processorSelector": {
+			"noProcessorsConfigured": "Nessun processore configurato. Configurali nella scheda Impostazioni di pagamento qui sopra",
+			"or": "o",
+			"autoSystemPriority": "Automatico (priorità di sistema)",
+			"notConfigured": "non configurato",
+			"priority": "Priorità",
+			"systemPriority": "Priorità di sistema"
 		}
 	},
 	"ageWarning": {

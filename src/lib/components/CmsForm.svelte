@@ -160,7 +160,7 @@
 						class="form-input"
 						value={meta.name}
 						pattern="^(?!.*\b(description|viewport)\b).*$"
-						title="Les mots 'description' et 'viewport' ne sont pas autorisés."
+						title={t('admin.cmsForm.reservedMetaNameError')}
 					/>
 				</label>
 				<label class="form-label">

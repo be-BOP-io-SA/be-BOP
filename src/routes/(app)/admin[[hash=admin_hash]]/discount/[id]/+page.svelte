@@ -388,7 +388,12 @@
 	{/if}
 	<div class="flex flex-row justify-between gap-2">
 		<div class="flex gap-2 w-min">
-			<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
+			<input
+				type="submit"
+				class="btn btn-blue text-white"
+				formaction="?/update"
+				value={t('admin.action.update')}
+			/>
 			<a href="/discounts/{data.discount._id}" class="btn body-mainCTA"
 				>{t('admin.discount.view')}</a
 			>

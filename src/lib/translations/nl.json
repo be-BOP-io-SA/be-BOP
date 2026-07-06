@@ -1246,7 +1246,7 @@
 			"setCheckoutAdditionalFields": "Extra afrekenvelden instellen",
 			"defaultSubscriptionDuration": "Standaard abonnementsduur",
 			"subscriptionDurationHint": "Gebruikt voor abonnementsproducten ingesteld op \"Standaard (winkelbreed)\" en voor verouderde snapshots.",
-			"analyticsScriptPlaceholder": "plausible-script"
+			"analyticsScriptPlaceholder": "Plausible-script"
 		},
 		"oauth": {
 			"title": "OAuth-providers",
@@ -1746,7 +1746,26 @@
 			"pleaseUploadAPicture": "Upload een afbeelding",
 			"confirmDeleteProduct": "Wilt u dit product verwijderen?",
 			"duplicateSuffix": " (duplicaat)",
-			"allDay": "Hele dag"
+			"allDay": "Hele dag",
+			"subscriptionReminder": "Abonnementsherinnering",
+			"defaultShopWide": "Standaard (winkelbreed)",
+			"duration15Minutes": "15 minuten",
+			"duration30Minutes": "30 minuten",
+			"duration1Hour": "1 uur",
+			"duration2Hours": "2 uur",
+			"subscriptionDurationLabel": "Abonnementsduur",
+			"pricingPhasesTitle": "Prijsfasen (promotieschema)",
+			"pricingPhasesHint": "Optioneel. Elke fase wordt gefactureerd als een aparte periode tegen een vaste prijs exclusief btw. De eerste fase wordt gefactureerd bij de eerste aankoop, daarna één fase per verlenging. Zodra het schema is uitgeput, keert het abonnement terug naar de hierboven ingestelde basisprijs en -duur. Elke koperidentiteit (e-mail of npub) kan slechts één keer van het schema profiteren voor dit product.",
+			"phaseNumber": "Fase {number}",
+			"movePhaseUp": "Omhoog verplaatsen",
+			"movePhaseDown": "Omlaag verplaatsen",
+			"deletePhase": "Verwijderen",
+			"phaseDuration": "Duur",
+			"phasePriceExcluded": "Prijs (excl. btw)",
+			"phasePriceHint": "Gratis proefperiode = 0. Valuta overgenomen van het product.",
+			"phaseReminderBeforeEnd": "Herinnering vóór einde",
+			"phaseReminderHint": "0 = geen herinnering",
+			"addPhase": "Fase toevoegen"
 		},
 		"taler": {
 			"backendUrl": "Backend-URL",
@@ -1829,7 +1848,8 @@
 			"viewMobile": "Bekijken 📱",
 			"view": "Bekijken",
 			"delete": "Verwijderen",
-			"submit": "Verzenden"
+			"submit": "Verzenden",
+			"reservedMetaNameError": "De woorden 'description' en 'viewport' zijn niet toegestaan."
 		},
 		"schedule": {
 			"addSchedule": "Schema toevoegen",
@@ -2056,6 +2076,14 @@
 			"vatForExcludedCalc": "Btw (voor de berekening van de prijs excl. btw)",
 			"priceAmount": "Prijsbedrag",
 			"pricePlaceholder": "Prijs"
+		},
+		"processorSelector": {
+			"noProcessorsConfigured": "Geen verwerkers geconfigureerd. Configureer ze in het tabblad Betalingsinstellingen hierboven",
+			"or": "of",
+			"autoSystemPriority": "Automatisch (systeemprioriteit)",
+			"notConfigured": "niet geconfigureerd",
+			"priority": "Prioriteit",
+			"systemPriority": "Systeemprioriteit"
 		}
 	},
 	"ageWarning": {

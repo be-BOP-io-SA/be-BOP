@@ -1746,7 +1746,26 @@
 			"pleaseUploadAPicture": "Bitte laden Sie ein Bild hoch",
 			"confirmDeleteProduct": "Möchten Sie dieses Produkt löschen?",
 			"duplicateSuffix": " (Duplikat)",
-			"allDay": "Ganztägig"
+			"allDay": "Ganztägig",
+			"subscriptionReminder": "Abonnement-Erinnerung",
+			"defaultShopWide": "Standard (shopweit)",
+			"duration15Minutes": "15 Minuten",
+			"duration30Minutes": "30 Minuten",
+			"duration1Hour": "1 Stunde",
+			"duration2Hours": "2 Stunden",
+			"subscriptionDurationLabel": "Abonnementdauer",
+			"pricingPhasesTitle": "Preisphasen (Aktionsplan)",
+			"pricingPhasesHint": "Optional. Jede Phase wird als separater Zeitraum zu einem festen Preis ohne MwSt. abgerechnet. Die erste Phase wird beim Erstkauf abgerechnet, danach eine Phase pro Verlängerung. Sobald der Plan ausgeschöpft ist, kehrt das Abonnement zum oben festgelegten Grundpreis und zur Grunddauer zurück. Jede Käuferidentität (E-Mail oder Npub) kann den Plan nur einmal für dieses Produkt in Anspruch nehmen.",
+			"phaseNumber": "Phase {number}",
+			"movePhaseUp": "Nach oben verschieben",
+			"movePhaseDown": "Nach unten verschieben",
+			"deletePhase": "Löschen",
+			"phaseDuration": "Dauer",
+			"phasePriceExcluded": "Preis (ohne MwSt.)",
+			"phasePriceHint": "Kostenlose Testphase = 0. Währung wird vom Produkt übernommen.",
+			"phaseReminderBeforeEnd": "Erinnerung vor Ablauf",
+			"phaseReminderHint": "0 = keine Erinnerung",
+			"addPhase": "Phase hinzufügen"
 		},
 		"taler": {
 			"backendUrl": "Backend-URL",
@@ -1829,7 +1848,8 @@
 			"viewMobile": "Ansehen 📱",
 			"view": "Ansehen",
 			"delete": "Löschen",
-			"submit": "Absenden"
+			"submit": "Absenden",
+			"reservedMetaNameError": "Die Wörter 'description' und 'viewport' sind nicht erlaubt."
 		},
 		"schedule": {
 			"addSchedule": "Zeitplan hinzufügen",
@@ -2056,6 +2076,14 @@
 			"vatForExcludedCalc": "MwSt. (für die Berechnung des Preises ohne MwSt.)",
 			"priceAmount": "Preisbetrag",
 			"pricePlaceholder": "Preis"
+		},
+		"processorSelector": {
+			"noProcessorsConfigured": "Keine Zahlungsanbieter konfiguriert. Konfigurieren Sie sie im obigen Tab Zahlungseinstellungen",
+			"or": "oder",
+			"autoSystemPriority": "Automatisch (Systempriorität)",
+			"notConfigured": "nicht konfiguriert",
+			"priority": "Priorität",
+			"systemPriority": "Systempriorität"
 		}
 	},
 	"ageWarning": {

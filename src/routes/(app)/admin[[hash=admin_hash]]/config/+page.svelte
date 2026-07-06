@@ -131,7 +131,7 @@
 
 	let allPaymentMethods = data.allPaymentMethods;
 
-	const { countryName, sortedCountryCodes, locale, t } = useI18n();
+	const { countryName, sortedCountryCodes, locale, t, formatDistanceLocale } = useI18n();
 	let selectedContactMode =
 		data.contactModes?.map((contact) => ({
 			value: contact,
@@ -649,7 +649,7 @@
 			{#each [86400 * 7, 86400 * 3, 86400, 3600, 5 * 60] as seconds}
 				<option value={seconds}
 					>{t('admin.config.beforeEndOfSubscription', {
-						duration: formatDistance(0, seconds * 1000)
+						duration: formatDistance(0, seconds * 1000, { locale: formatDistanceLocale() })
 					})}</option
 				>
 			{/each}
