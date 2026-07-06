@@ -5,34 +5,9 @@ import { isLndConfigured } from '$lib/server/lnd.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { s3IsConfigured } from '$lib/server/s3.js';
-
-const DEFAULT_CMS_PAGES = [
-	'home',
-	'terms',
-	'privacy',
-	'why-vat-customs',
-	'why-collect-ip',
-	'why-pay-remainder',
-	'maintenance',
-	'error',
-	'order-top',
-	'order-bottom',
-	'checkout-top',
-	'checkout-bottom',
-	'cart-top',
-	'cart-bottom',
-	'agewall'
-] as const;
+import { DEFAULT_CMS_PAGES, buildDefaultCmsPageFields } from '$lib/server/defaultCmsPages';
 
 const SEO_VISIBLE_PAGES = new Set(['home', 'privacy', 'terms']);
-const PAGES_WITHOUT_DEFAULT_TEXT = new Set([
-	'order-top',
-	'order-bottom',
-	'checkout-top',
-	'checkout-bottom',
-	'cart-top',
-	'cart-bottom'
-]);
 
 async function ensureDefaultCmsPages() {
 	// Check which pages already exist (single query)
@@ -52,10 +27,7 @@ async function ensureDefaultCmsPages() {
 	const now = new Date();
 	const pagesToCreate = missingPages.map((slug) => ({
 		_id: slug,
-		title: slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' '),
-		content: PAGES_WITHOUT_DEFAULT_TEXT.has(slug)
-			? ''
-			: '<p>This page is empty. Please edit it to add your content.</p>',
+		...buildDefaultCmsPageFields(slug),
 		shortDescription: '',
 		fullScreen: false,
 		maintenanceDisplay: false,

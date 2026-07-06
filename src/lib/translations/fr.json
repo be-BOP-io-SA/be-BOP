@@ -2254,6 +2254,28 @@
 		"tosAgree": "J'accepte les <0>conditions d'utilisation</0>",
 		"vatShippingAddress": "Le pays est déterminé par l'adresse de livraison"
 	},
+	"cms": {
+		"defaultPage": {
+			"title": {
+				"home": "Accueil",
+				"terms": "Conditions",
+				"privacy": "Confidentialité",
+				"whyVatCustoms": "Pourquoi la TVA douanière",
+				"whyCollectIp": "Pourquoi collecter l'IP",
+				"whyPayRemainder": "Pourquoi payer le solde",
+				"maintenance": "Maintenance",
+				"error": "Erreur",
+				"orderTop": "Haut de commande",
+				"orderBottom": "Bas de commande",
+				"checkoutTop": "Haut de paiement",
+				"checkoutBottom": "Bas de paiement",
+				"cartTop": "Haut de panier",
+				"cartBottom": "Bas de panier",
+				"agewall": "Mur d'âge"
+			},
+			"emptyContent": "<p>Cette page est vide. Veuillez la modifier pour ajouter votre contenu.</p>"
+		}
+	},
 	"contact": {
 		"form": {
 			"contactUs": "Contactez nous"

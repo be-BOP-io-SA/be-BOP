@@ -2254,6 +2254,28 @@
 		"tosAgree": "Ich stimme den Nutzungsbedingungen zu",
 		"vatShippingAddress": "Das Land wird durch die Lieferadresse bestimmt"
 	},
+	"cms": {
+		"defaultPage": {
+			"title": {
+				"home": "Startseite",
+				"terms": "Bedingungen",
+				"privacy": "Datenschutz",
+				"whyVatCustoms": "Warum MwSt. und Zoll",
+				"whyCollectIp": "Warum IP erfassen",
+				"whyPayRemainder": "Warum den Restbetrag zahlen",
+				"maintenance": "Wartung",
+				"error": "Fehler",
+				"orderTop": "Bestellung oben",
+				"orderBottom": "Bestellung unten",
+				"checkoutTop": "Checkout oben",
+				"checkoutBottom": "Checkout unten",
+				"cartTop": "Warenkorb oben",
+				"cartBottom": "Warenkorb unten",
+				"agewall": "Altersschranke"
+			},
+			"emptyContent": "<p>Diese Seite ist leer. Bitte bearbeiten Sie sie, um Ihren Inhalt hinzuzufügen.</p>"
+		}
+	},
 	"contact": {
 		"form": {
 			"contactUs": "Kontaktieren Sie uns"

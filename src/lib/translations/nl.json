@@ -2254,6 +2254,28 @@
 		"tosAgree": "Ik ga akkoord met de <0>servicevoorwaarden</0>",
 		"vatShippingAddress": "Het land wordt bepaald door het verzendadres"
 	},
+	"cms": {
+		"defaultPage": {
+			"title": {
+				"home": "Home",
+				"terms": "Voorwaarden",
+				"privacy": "Privacy",
+				"whyVatCustoms": "Waarom btw en douane",
+				"whyCollectIp": "Waarom IP verzamelen",
+				"whyPayRemainder": "Waarom het restbedrag betalen",
+				"maintenance": "Onderhoud",
+				"error": "Fout",
+				"orderTop": "Bovenkant bestelling",
+				"orderBottom": "Onderkant bestelling",
+				"checkoutTop": "Bovenkant afrekenen",
+				"checkoutBottom": "Onderkant afrekenen",
+				"cartTop": "Bovenkant winkelwagen",
+				"cartBottom": "Onderkant winkelwagen",
+				"agewall": "Leeftijdsmuur"
+			},
+			"emptyContent": "<p>Deze pagina is leeg. Bewerk deze om uw inhoud toe te voegen.</p>"
+		}
+	},
 	"contact": {
 		"form": {
 			"contactUs": "Neem contact met ons op"

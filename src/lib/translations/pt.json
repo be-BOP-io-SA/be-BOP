@@ -2254,6 +2254,28 @@
 		"tosAgree": "Concordo com os termos de serviço",
 		"vatShippingAddress": "O país é determinado pela morada de envio"
 	},
+	"cms": {
+		"defaultPage": {
+			"title": {
+				"home": "Início",
+				"terms": "Termos",
+				"privacy": "Privacidade",
+				"whyVatCustoms": "Porquê IVA e alfândega",
+				"whyCollectIp": "Porquê recolher o IP",
+				"whyPayRemainder": "Porquê pagar o remanescente",
+				"maintenance": "Manutenção",
+				"error": "Erro",
+				"orderTop": "Parte superior da encomenda",
+				"orderBottom": "Parte inferior da encomenda",
+				"checkoutTop": "Parte superior da finalização de compra",
+				"checkoutBottom": "Parte inferior da finalização de compra",
+				"cartTop": "Parte superior do carrinho",
+				"cartBottom": "Parte inferior do carrinho",
+				"agewall": "Barreira de idade"
+			},
+			"emptyContent": "<p>Esta página está vazia. Edite-a para adicionar o seu conteúdo.</p>"
+		}
+	},
 	"contact": {
 		"form": {
 			"contactUs": "Contacte-nos"

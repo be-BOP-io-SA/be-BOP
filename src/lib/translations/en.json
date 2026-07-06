@@ -2254,6 +2254,28 @@
 		"tosAgree": "I agree to the <0>terms of service</0>",
 		"vatShippingAddress": "The country is determined by the shipping address"
 	},
+	"cms": {
+		"defaultPage": {
+			"title": {
+				"home": "Home",
+				"terms": "Terms",
+				"privacy": "Privacy",
+				"whyVatCustoms": "Why vat customs",
+				"whyCollectIp": "Why collect ip",
+				"whyPayRemainder": "Why pay remainder",
+				"maintenance": "Maintenance",
+				"error": "Error",
+				"orderTop": "Order top",
+				"orderBottom": "Order bottom",
+				"checkoutTop": "Checkout top",
+				"checkoutBottom": "Checkout bottom",
+				"cartTop": "Cart top",
+				"cartBottom": "Cart bottom",
+				"agewall": "Agewall"
+			},
+			"emptyContent": "<p>This page is empty. Please edit it to add your content.</p>"
+		}
+	},
 	"contact": {
 		"form": {
 			"contactUs": "Contact us"
