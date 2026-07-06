@@ -1975,7 +1975,9 @@
 
 				{#if allowPaidOrderWebhook}
 					<div>
-						<h4 class="text-lg font-medium text-gray-900 mb-3">Paid-order webhook</h4>
+						<h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
+							Paid-order webhook
+						</h4>
 						<label class="checkbox-label">
 							<input type="checkbox" bind:checked={hasPaidOrderWebhook} class="form-checkbox" />
 							This will trigger an API call once order is paid
