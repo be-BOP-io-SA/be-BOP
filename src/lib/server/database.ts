@@ -284,7 +284,11 @@ export async function createIndexes() {
 	);
 }
 
-if (!building) {
+// Not under VITEST: there, `cleanDb()` calls `createIndexes()` explicitly (awaited) after each
+// `dropDatabase()`. This fire-and-forget on-'open' trigger would otherwise re-fire when the pool
+// reopens a connection and race the drop — "Cannot create collection … database is in the process
+// of being dropped" surfaces as an unhandled rejection that fails the whole test run.
+if (!building && !env.VITEST) {
 	client.on('open', () => {
 		createIndexes().catch(console.error);
 	});
