@@ -8,10 +8,18 @@ vi.mock('./env-config', async (importOriginal) => {
 	return { ...actual, ALLOW_PAID_ORDER_WEBHOOK: 'true' };
 });
 
+// Stub DNS so hostname targets resolve to a public IP (203.0.113.10 = TEST-NET-3, non-private)
+// without hitting the network; individual tests override with mockResolvedValueOnce.
+vi.mock('dns/promises', () => ({
+	lookup: vi.fn(async () => [{ address: '203.0.113.10', family: 4 }])
+}));
+
 import { createHmac } from 'crypto';
+import { lookup } from 'dns/promises';
 import { cleanDb } from './test-utils';
 import { collections } from './database';
 import { firePaidOrderWebhooks, stripPaidOrderWebhook } from './order-paid-webhook';
+import { assertPublicWebhookTarget, isPrivateIp, webhookApiRouteIssue } from './webhook-url-guard';
 import type { Order } from '$lib/types/Order';
 import type { Product } from '$lib/types/Product';
 
@@ -67,6 +75,59 @@ describe('stripPaidOrderWebhook', () => {
 	});
 });
 
+describe('webhook-url-guard', () => {
+	it('isPrivateIp flags private / loopback / link-local / metadata addresses', () => {
+		for (const ip of [
+			'127.0.0.1',
+			'10.0.0.5',
+			'172.16.0.1',
+			'192.168.1.1',
+			'169.254.169.254',
+			'100.64.0.1',
+			'::1',
+			'fe80::1',
+			'fd00::1',
+			'::ffff:127.0.0.1'
+		]) {
+			expect(isPrivateIp(ip), ip).toBe(true);
+		}
+		for (const ip of ['93.184.216.34', '8.8.8.8', '203.0.113.10', '2606:4700::1111']) {
+			expect(isPrivateIp(ip), ip).toBe(false);
+		}
+	});
+
+	it('webhookApiRouteIssue rejects non-https, localhost and private literal IPs', () => {
+		expect(webhookApiRouteIssue('http://example.com/hook')).toMatch(/https/);
+		expect(webhookApiRouteIssue('https://localhost/hook')).toMatch(/localhost|internal/);
+		expect(webhookApiRouteIssue('https://foo.local/hook')).toMatch(/localhost|internal/);
+		expect(webhookApiRouteIssue('https://127.0.0.1/hook')).toMatch(/private|loopback/);
+		expect(webhookApiRouteIssue('https://169.254.169.254/latest/meta-data')).toMatch(
+			/private|loopback/
+		);
+		expect(webhookApiRouteIssue('https://[::1]/hook')).toMatch(/private|loopback/);
+		expect(webhookApiRouteIssue('not a url')).toBe('Invalid URL');
+	});
+
+	it('webhookApiRouteIssue accepts a public https URL', () => {
+		expect(webhookApiRouteIssue('https://receiver.example.com/webhooks/order-paid')).toBeNull();
+	});
+
+	it('assertPublicWebhookTarget rejects a hostname that resolves to a private address (DNS rebinding)', async () => {
+		// dns.lookup is overloaded; the { all: true } form returns LookupAddress[] but vi.mocked
+		// resolves the single-address overload, so cast the array through `never`.
+		vi.mocked(lookup).mockResolvedValueOnce([{ address: '10.0.0.9', family: 4 }] as never);
+		await expect(assertPublicWebhookTarget('https://rebind.example.com/hook')).rejects.toThrow(
+			/private address/
+		);
+	});
+
+	it('assertPublicWebhookTarget resolves for a public host', async () => {
+		await expect(
+			assertPublicWebhookTarget('https://receiver.example.com/hook')
+		).resolves.toBeUndefined();
+	});
+});
+
 describe('firePaidOrderWebhooks', () => {
 	let fetchMock: ReturnType<typeof vi.fn>;
 
@@ -95,6 +156,7 @@ describe('firePaidOrderWebhooks', () => {
 		const [url, opts] = fetchMock.mock.calls[0];
 		expect(url).toBe('https://receiver.test/hook');
 		expect(opts.method).toBe('POST');
+		expect(opts.redirect).toBe('error');
 		expect(opts.headers['Content-Type']).toBe('application/json');
 
 		// Signature must be HMAC-SHA256(secret, rawBody) — the exact contract the receiver verifies.
@@ -124,6 +186,14 @@ describe('firePaidOrderWebhooks', () => {
 		await collections.products.insertOne({ _id: 'plain' } as unknown as Product);
 
 		await firePaidOrderWebhooks(makeOrder([{ product: { _id: 'plain' } }]));
+
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it('skips an unsafe target (SSRF guard) without firing — e.g. a legacy http/localhost hook', async () => {
+		await insertWebhookProduct('wh-product', 'http://localhost:8080/hook', 'legacy-secret-1234');
+
+		await firePaidOrderWebhooks(makeOrder([{ product: { _id: 'wh-product' } }]));
 
 		expect(fetchMock).not.toHaveBeenCalled();
 	});

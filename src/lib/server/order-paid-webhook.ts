@@ -1,6 +1,7 @@
 import { createHmac } from 'crypto';
 import { collections } from './database';
 import { ALLOW_PAID_ORDER_WEBHOOK } from './env-config';
+import { assertPublicWebhookTarget } from './webhook-url-guard';
 import type { Order } from '$lib/types/Order';
 
 function isPaidOrderWebhookEnabled(): boolean {
@@ -81,10 +82,22 @@ export async function firePaidOrderWebhooks(order: Order): Promise<void> {
 
 	await Promise.all(
 		targets.map(async ({ _id: productId, paidOrderWebhook: hook }) => {
+			// Defence-in-depth against SSRF: re-vet the target at fire time (catches products saved
+			// before this guard existed, and DNS rebinding) and refuse redirects to another host.
+			try {
+				await assertPublicWebhookTarget(hook.apiRoute);
+			} catch (err) {
+				console.error(
+					`[paidOrderWebhook] refusing unsafe target ${hook.apiRoute} for product ${productId} on order ${order.number}:`,
+					err
+				);
+				return;
+			}
 			const signature = 'sha256=' + createHmac('sha256', hook.secret).update(body).digest('hex');
 			try {
 				const res = await fetch(hook.apiRoute, {
 					method: 'POST',
+					redirect: 'error',
 					headers: {
 						'Content-Type': 'application/json',
 						'X-Webhook-Signature': signature

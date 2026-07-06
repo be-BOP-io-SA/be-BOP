@@ -2000,7 +2000,8 @@
 										autocomplete="off"
 										name="paidOrderWebhook.secret"
 										class="form-input"
-										placeholder="Used by the receiver to verify the HMAC-SHA256 signature"
+										minlength={16}
+										placeholder="HMAC-SHA256 key used by the receiver to verify the signature (min. 16 chars)"
 										bind:value={paidOrderWebhookSecret}
 										required
 									/>
