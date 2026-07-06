@@ -1996,7 +1996,8 @@
 								<label class="form-label">
 									Shared secret
 									<input
-										type="text"
+										type="password"
+										autocomplete="off"
 										name="paidOrderWebhook.secret"
 										class="form-input"
 										placeholder="Used by the receiver to verify the HMAC-SHA256 signature"

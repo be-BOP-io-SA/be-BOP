@@ -9,7 +9,7 @@ import {
 } from '$lib/types/Order';
 import { ClientSession, ObjectId, type WithId } from 'mongodb';
 import { collections, withTransaction } from './database';
-import { firePaidOrderWebhooks } from './order-paid-webhook';
+import { firePaidOrderWebhooks, stripPaidOrderWebhook } from './order-paid-webhook';
 import {
 	Duration,
 	add,
@@ -160,13 +160,15 @@ export async function onOrderPayment(
 	}
 
 	const paidAt = new Date();
-	// Free payments arrive here with `paidAt` already stamped by addOrderPayment; skip the
-	// `paymentDone` audit log in that case so a subsequent retry (e.g. re-processing the same
-	// paid payment) doesn't double-record the event.
+	// Free payments arrive here with `paidAt` already stamped by addOrderPayment (onOrderPayment
+	// is called twice: addOrderPayment + createOrder). `payment.paidAt` is unset only on the very
+	// first call for a given payment, so this is the reliable "first pending→paid transition"
+	// signal — it dedups the `paymentDone` audit log AND the outbound paid-order webhook below, so
+	// a retry (re-processing the same paid payment) doesn't double-record the event or double-fire
+	// the webhook. (`order.status` can't be used: onOrderPayment rebinds its local `order` from the
+	// DB result and never mutates the caller's copy, so it never observes the flip.)
+	// TODO: remove the double-call itself; this guard papers over it.
 	const alreadyPaid = !!payment.paidAt;
-	// Capture whether the order was already paid before this call so we only fire the
-	// per-product paid-order webhook on the first pending→paid transition.
-	const wasPaidBefore = order.status === 'paid';
 
 	payment.status = 'paid'; // for isOrderFullyPaid
 	payment.paidAt = paidAt;
@@ -455,10 +457,15 @@ export async function onOrderPayment(
 		: await withTransaction(fn);
 
 	// Fire-and-forget per-product paid-order webhook (issue #2646). After the transaction so a
-	// network failure can never roll back the paid status; only on the first transition so
-	// re-processing an already-paid order doesn't double-fire.
-	if (!wasPaidBefore && updated.status === 'paid') {
-		void firePaidOrderWebhooks(updated);
+	// network failure can never roll back the paid status; `!alreadyPaid` fires exactly once per
+	// payment, so re-processing an already-paid order and the free-order double-call don't
+	// double-fire. `.catch()` is mandatory: the helper's product query and Promise.all sit outside
+	// its internal per-target try/catch, so a Mongo hiccup would otherwise be an unhandled
+	// rejection that crashes the process — after the payment is already committed.
+	if (!alreadyPaid && updated.status === 'paid') {
+		void firePaidOrderWebhooks(updated).catch((err) => {
+			console.error('[paidOrderWebhook] failed to fire for order', updated.number, err);
+		});
 	}
 
 	return updated;
@@ -1464,7 +1471,9 @@ export async function createOrder(
 			items: items.map((item, i) => ({
 				_id: item._id,
 				quantity: item.quantity,
-				product: item.product,
+				// Strip the webhook config (shared secret) — orders are dumped verbatim by the admin
+				// JSON endpoint and live in plaintext Mongo; the fire path re-reads the live product.
+				product: stripPaidOrderWebhook(item.product),
 				customPrice: item.customPrice,
 				chosenVariations: item.chosenVariations,
 				depositPercentage: item.depositPercentage,

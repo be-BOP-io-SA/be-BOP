@@ -10,6 +10,22 @@ function isPaidOrderWebhookEnabled(): boolean {
 export { isPaidOrderWebhookEnabled };
 
 /**
+ * The webhook config (notably its shared `secret`) must never be persisted into an order document:
+ * the admin JSON endpoint dumps orders verbatim and they sit in plaintext Mongo. The fire path
+ * re-queries the *live* product for the freshest endpoint/secret, so dropping it from the order
+ * snapshot loses nothing. Returns a shallow copy with `paidOrderWebhook` removed (input untouched
+ * when the field is absent, so non-webhook products keep their identity).
+ */
+export function stripPaidOrderWebhook<T extends { paidOrderWebhook?: unknown }>(product: T): T {
+	if (!product.paidOrderWebhook) {
+		return product;
+	}
+	const copy = { ...product };
+	delete copy.paidOrderWebhook;
+	return copy;
+}
+
+/**
  * Per-product outbound webhook fired when an order transitions to paid (see issue #2646).
  *
  * Fire-and-forget on purpose (PoC scope): a network or 5xx failure is logged via console.error
