@@ -846,6 +846,85 @@ export const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('6b1f4880e92e590e85af2636'),
+		name: 'Backfill stable ids on layout links + re-key link translations (issue #2636)',
+		run: async (session: ClientSession) => {
+			const LINK_KEYS = ['topbarLinks', 'navbarLinks', 'footerLinks'] as const;
+			// Stable ids of the default (baseConfig) links, by position — used to re-key overrides
+			// on shops that never customized their main links (no runtimeConfig doc to read ids from).
+			const DEFAULT_IDS: Record<(typeof LINK_KEYS)[number], string[]> = {
+				topbarLinks: ['session', 'search'],
+				navbarLinks: ['home', 'catalog'],
+				footerLinks: ['terms', 'privacy']
+			};
+			type Link = { id?: string; label: string; href: string };
+
+			// 1. Backfill an id on every customized main link (docs the operator saved via
+			//    /admin/layout). Un-customized shops keep baseConfig defaults, which already ship
+			//    stable ids, so there is no DB doc to touch.
+			const mainIdsByKey: Record<string, string[]> = {};
+			for (const key of LINK_KEYS) {
+				const doc = await collections.runtimeConfig.findOne({ _id: key }, { session });
+				if (doc && Array.isArray(doc.data)) {
+					const links = (doc.data as Link[]).map((l) => ({
+						id: l.id || crypto.randomUUID(),
+						label: l.label,
+						href: l.href
+					}));
+					await collections.runtimeConfig.updateOne(
+						{ _id: key },
+						{ $set: { data: links, updatedAt: new Date() } },
+						{ session }
+					);
+					mainIdsByKey[key] = links.map((l) => l.id);
+				} else {
+					mainIdsByKey[key] = DEFAULT_IDS[key];
+				}
+			}
+
+			// 2. Re-key each locale's link overrides from array position to the main link id. The
+			//    stored overrides were positionally aligned with the main config, so position i maps
+			//    to mainIdsByKey[key][i]; entries beyond the main config (or fully empty) are dropped.
+			const configDocs = await collections.runtimeConfig.find({}, { session }).toArray();
+			for (const doc of configDocs) {
+				const docId = doc._id as string;
+				if (
+					typeof docId !== 'string' ||
+					!docId.startsWith('translations.') ||
+					!docId.endsWith('.config')
+				) {
+					continue;
+				}
+				const data = doc.data as Record<string, unknown> | null;
+				if (!data) {
+					continue;
+				}
+				let changed = false;
+				for (const key of LINK_KEYS) {
+					const arr = data[key];
+					if (Array.isArray(arr) && arr.some((e) => e && typeof e === 'object' && !('id' in e))) {
+						const mainIds = mainIdsByKey[key] ?? [];
+						data[key] = (arr as Link[])
+							.map((t, i) =>
+								mainIds[i] ? { id: mainIds[i], label: t.label ?? '', href: t.href ?? '' } : null
+							)
+							.filter((x): x is { id: string; label: string; href: string } =>
+								Boolean(x && (x.label || x.href))
+							);
+						changed = true;
+					}
+				}
+				if (changed) {
+					await collections.runtimeConfig.updateOne(
+						{ _id: doc._id },
+						{ $set: { data, updatedAt: new Date() } },
+						{ session }
+					);
+				}
+			}
+		}
 	}
 ];
 

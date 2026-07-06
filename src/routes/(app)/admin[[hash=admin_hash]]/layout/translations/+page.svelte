@@ -10,19 +10,24 @@
 	let errorMessage = '';
 	let savedNotice = '';
 
-	type LinkRow = { label: string; href: string; isTranslated: boolean };
-	// Render one row per entry configured in the main config (strict 1:1) — no add / no delete.
-	// Translated entries that go beyond main are ignored on display and dropped on the next save.
+	type LinkRow = { id: string; label: string; href: string; mainLabel: string; mainHref: string };
+	// One row per main-config link (strict 1:1 — links are added/removed in /admin/layout). Rows
+	// are keyed by the link's stable `id`, and the override is matched by id, so reordering main
+	// links never misaligns a translation. `value` holds the current translation; empty means
+	// untranslated — the main label/href shows as placeholder and is the storefront fallback.
 	function buildRows(
-		main: ReadonlyArray<{ label: string; href: string }> | undefined,
-		translated: ReadonlyArray<{ label: string; href: string }> | undefined
+		main: ReadonlyArray<{ id: string; label: string; href: string }> | undefined,
+		translated: ReadonlyArray<{ id: string; label: string; href: string }> | undefined
 	): LinkRow[] {
-		const count = main?.length ?? 0;
-		return Array.from({ length: count }, (_, i) => {
-			const t = translated?.[i];
-			return t
-				? { label: t.label, href: t.href, isTranslated: true }
-				: { label: '', href: '', isTranslated: false };
+		return (main ?? []).map((m) => {
+			const t = translated?.find((x) => x.id === m.id);
+			return {
+				id: m.id,
+				label: t?.label ?? '',
+				href: t?.href ?? '',
+				mainLabel: m.label,
+				mainHref: m.href
+			};
 		});
 	}
 	$: topbarRows = buildRows(data.defaultConfig.topbarLinks, data.config?.[language]?.topbarLinks);
@@ -39,7 +44,9 @@
 		return async ({ result }) => {
 			if (result.type === 'failure') {
 				errorMessage =
-					(result.data?.errorMessage as string | undefined) ?? 'Save failed.';
+					typeof result.data?.errorMessage === 'string'
+						? result.data.errorMessage
+						: 'Save failed.';
 				return;
 			}
 			if (result.type === 'success') {
@@ -112,12 +119,13 @@
 
 	{#each topbarRows as row, i}
 		<div class="flex gap-4">
+			<input type="hidden" name="topbarLinks[{i}].id" value={row.id} />
 			<label class="form-label">
 				Text
 				<input
 					type="text"
 					name="topbarLinks[{i}].label"
-					placeholder={data.defaultConfig.topbarLinks[i]?.label ?? ''}
+					placeholder={row.mainLabel}
 					class="form-input"
 					value={row.label}
 				/>
@@ -128,8 +136,8 @@
 					type="text"
 					name="topbarLinks[{i}].href"
 					class="form-input"
-					placeholder={data.defaultConfig.topbarLinks[i]?.href ?? ''}
-					value={row.isTranslated ? row.href : data.defaultConfig.topbarLinks[i]?.href ?? ''}
+					placeholder={row.mainHref}
+					value={row.href}
 				/>
 			</label>
 		</div>
@@ -139,6 +147,7 @@
 
 	{#each navbarRows as row, i}
 		<div class="flex gap-4">
+			<input type="hidden" name="navbarLinks[{i}].id" value={row.id} />
 			<label class="form-label">
 				Text
 				<input
@@ -146,7 +155,7 @@
 					name="navbarLinks[{i}].label"
 					class="form-input"
 					value={row.label}
-					placeholder={data.defaultConfig.navbarLinks[i]?.label ?? ''}
+					placeholder={row.mainLabel}
 				/>
 			</label>
 			<label class="form-label">
@@ -155,8 +164,8 @@
 					type="text"
 					name="navbarLinks[{i}].href"
 					class="form-input"
-					value={row.isTranslated ? row.href : data.defaultConfig.navbarLinks[i]?.href ?? ''}
-					placeholder={data.defaultConfig.navbarLinks[i]?.href ?? ''}
+					value={row.href}
+					placeholder={row.mainHref}
 				/>
 			</label>
 		</div>
@@ -166,6 +175,7 @@
 
 	{#each footerRows as row, i}
 		<div class="flex gap-4">
+			<input type="hidden" name="footerLinks[{i}].id" value={row.id} />
 			<label class="form-label">
 				Text
 				<input
@@ -173,7 +183,7 @@
 					name="footerLinks[{i}].label"
 					class="form-input"
 					value={row.label}
-					placeholder={data.defaultConfig.footerLinks[i]?.label ?? ''}
+					placeholder={row.mainLabel}
 				/>
 			</label>
 			<label class="form-label">
@@ -182,8 +192,8 @@
 					type="text"
 					name="footerLinks[{i}].href"
 					class="form-input"
-					value={row.isTranslated ? row.href : data.defaultConfig.footerLinks[i]?.href ?? ''}
-					placeholder={data.defaultConfig.footerLinks[i]?.href ?? ''}
+					value={row.href}
+					placeholder={row.mainHref}
 				/>
 			</label>
 		</div>

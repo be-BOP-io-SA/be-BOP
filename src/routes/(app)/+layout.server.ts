@@ -37,15 +37,23 @@ import {
  * for any such placeholder, so partial translations don't blank out untranslated links.
  */
 function mergeLocalizedLinks(
-	translated: ReadonlyArray<{ label: string; href: string }> | undefined,
-	main: ReadonlyArray<{ label: string; href: string }>
-): Array<{ label: string; href: string }> {
+	translated: ReadonlyArray<{ id: string; label: string; href: string }> | undefined,
+	main: ReadonlyArray<{ id: string; label: string; href: string }>
+): Array<{ id: string; label: string; href: string }> {
 	if (!translated) {
 		return [...main];
 	}
-	return main.map((m, i) => {
-		const t = translated[i];
-		return t && t.label && t.href ? t : m;
+	// Match overrides by stable `id`, not array position: a language keeps translating the right
+	// link even after main links are reordered/inserted/removed in /admin/layout. Label and href
+	// fall back independently to the main config, so a partial translation (e.g. label only) works.
+	// `id` is preserved so the /admin/layout editor can round-trip it (the storefront ignores it).
+	return main.map((m) => {
+		const t = translated.find((x) => x.id === m.id);
+		return {
+			id: m.id,
+			label: t?.label || m.label,
+			href: t?.href || m.href
+		};
 	});
 }
 

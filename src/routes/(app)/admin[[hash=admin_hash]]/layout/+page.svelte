@@ -174,8 +174,9 @@
 
 	<h3 class="text-xl">Links</h3>
 
-	{#each [...data.links.topbar, ...Array(linkLine).fill( { href: '', label: '' } )].slice(0, linkLine) as link, i}
+	{#each [...data.links.topbar, ...Array(linkLine).fill( { href: '', label: '', id: '' } )].slice(0, linkLine) as link, i}
 		<div class="flex gap-4">
+			<input type="hidden" name="topbarLinks[{i}].id" value={link.id ?? ''} />
 			<label class="form-label">
 				Text
 				<input type="text" name="topbarLinks[{i}].label" class="form-input" value={link.label} />
@@ -204,8 +205,9 @@
 
 	<h3 class="text-xl">Links</h3>
 
-	{#each [...data.links.navbar, ...Array(navbarLinkLine).fill( { href: '', label: '' } )].slice(0, navbarLinkLine) as link, i}
+	{#each [...data.links.navbar, ...Array(navbarLinkLine).fill( { href: '', label: '', id: '' } )].slice(0, navbarLinkLine) as link, i}
 		<div class="flex gap-4">
+			<input type="hidden" name="navbarLinks[{i}].id" value={link.id ?? ''} />
 			<label class="form-label">
 				Text
 				<input type="text" name="navbarLinks[{i}].label" class="form-input" value={link.label} />
@@ -261,8 +263,9 @@
 
 	<h3 class="text-xl">Links</h3>
 
-	{#each [...data.links.footer, ...Array(footerLinkLine).fill( { href: '', label: '' } )].slice(0, footerLinkLine) as link, i}
+	{#each [...data.links.footer, ...Array(footerLinkLine).fill( { href: '', label: '', id: '' } )].slice(0, footerLinkLine) as link, i}
 		<div class="flex gap-4">
+			<input type="hidden" name="footerLinks[{i}].id" value={link.id ?? ''} />
 			<label class="form-label">
 				Text
 				<input type="text" name="footerLinks[{i}].label" class="form-input" value={link.label} />

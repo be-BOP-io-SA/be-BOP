@@ -57,9 +57,9 @@ import { deepClone } from '$lib/utils/deep-clone';
  * stays compatible with the intersection type of `runtimeConfig['translations.<locale>.config']`.
  */
 type LayoutLinkOverride = {
-	topbarLinks?: Array<{ label: string; href: string }>;
-	navbarLinks?: Array<{ label: string; href: string }>;
-	footerLinks?: Array<{ label: string; href: string }>;
+	topbarLinks?: Array<{ id: string; label: string; href: string }>;
+	navbarLinks?: Array<{ id: string; label: string; href: string }>;
+	footerLinks?: Array<{ id: string; label: string; href: string }>;
 };
 
 const baseConfig = {
@@ -118,16 +118,16 @@ const baseConfig = {
 	authLinkJwtSigningKey: '',
 	ssoSecret: '',
 	topbarLinks: [
-		{ label: 'Session', href: '/login' },
-		{ label: 'Recherche', href: '/searchlist/search' }
+		{ label: 'Session', href: '/login', id: 'session' },
+		{ label: 'Recherche', href: '/searchlist/search', id: 'search' }
 	],
 	navbarLinks: [
-		{ label: 'Bienvenue', href: '/home' },
-		{ label: 'Catalogue', href: '/searchlist/default' }
+		{ label: 'Bienvenue', href: '/home', id: 'home' },
+		{ label: 'Catalogue', href: '/searchlist/default', id: 'catalog' }
 	],
 	footerLinks: [
-		{ label: 'CGVUs', href: '/terms' },
-		{ label: 'Vie privée et confidentialité', href: '/privacy' }
+		{ label: 'CGVUs', href: '/terms', id: 'terms' },
+		{ label: 'Vie privée et confidentialité', href: '/privacy', id: 'privacy' }
 	],
 
 	viewportFor: 'everyone' as 'employee' | 'no-one' | 'visitors' | 'everyone',
@@ -538,86 +538,86 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 	 */
 	'translations.en.config': {
 		topbarLinks: [
-			{ label: 'Sign in', href: '/login' },
-			{ label: 'Search', href: '/searchlist/search' }
+			{ label: 'Sign in', href: '/login', id: 'session' },
+			{ label: 'Search', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Welcome', href: '/home' },
-			{ label: 'Catalog', href: '/searchlist/default' }
+			{ label: 'Welcome', href: '/home', id: 'home' },
+			{ label: 'Catalog', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'Terms', href: '/terms' },
-			{ label: 'Privacy', href: '/privacy' }
+			{ label: 'Terms', href: '/terms', id: 'terms' },
+			{ label: 'Privacy', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.de.config': {
 		topbarLinks: [
-			{ label: 'Anmelden', href: '/login' },
-			{ label: 'Suche', href: '/searchlist/search' }
+			{ label: 'Anmelden', href: '/login', id: 'session' },
+			{ label: 'Suche', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Willkommen', href: '/home' },
-			{ label: 'Katalog', href: '/searchlist/default' }
+			{ label: 'Willkommen', href: '/home', id: 'home' },
+			{ label: 'Katalog', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'AGB', href: '/terms' },
-			{ label: 'Datenschutz', href: '/privacy' }
+			{ label: 'AGB', href: '/terms', id: 'terms' },
+			{ label: 'Datenschutz', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.es-sv.config': {
 		topbarLinks: [
-			{ label: 'Iniciar sesión', href: '/login' },
-			{ label: 'Buscar', href: '/searchlist/search' }
+			{ label: 'Iniciar sesión', href: '/login', id: 'session' },
+			{ label: 'Buscar', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Bienvenido', href: '/home' },
-			{ label: 'Catálogo', href: '/searchlist/default' }
+			{ label: 'Bienvenido', href: '/home', id: 'home' },
+			{ label: 'Catálogo', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'Términos', href: '/terms' },
-			{ label: 'Privacidad', href: '/privacy' }
+			{ label: 'Términos', href: '/terms', id: 'terms' },
+			{ label: 'Privacidad', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.it.config': {
 		topbarLinks: [
-			{ label: 'Accedi', href: '/login' },
-			{ label: 'Cerca', href: '/searchlist/search' }
+			{ label: 'Accedi', href: '/login', id: 'session' },
+			{ label: 'Cerca', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Benvenuti', href: '/home' },
-			{ label: 'Catalogo', href: '/searchlist/default' }
+			{ label: 'Benvenuti', href: '/home', id: 'home' },
+			{ label: 'Catalogo', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'Termini', href: '/terms' },
-			{ label: 'Privacy', href: '/privacy' }
+			{ label: 'Termini', href: '/terms', id: 'terms' },
+			{ label: 'Privacy', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.nl.config': {
 		topbarLinks: [
-			{ label: 'Inloggen', href: '/login' },
-			{ label: 'Zoeken', href: '/searchlist/search' }
+			{ label: 'Inloggen', href: '/login', id: 'session' },
+			{ label: 'Zoeken', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Welkom', href: '/home' },
-			{ label: 'Catalogus', href: '/searchlist/default' }
+			{ label: 'Welkom', href: '/home', id: 'home' },
+			{ label: 'Catalogus', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'Voorwaarden', href: '/terms' },
-			{ label: 'Privacybeleid', href: '/privacy' }
+			{ label: 'Voorwaarden', href: '/terms', id: 'terms' },
+			{ label: 'Privacybeleid', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.pt.config': {
 		topbarLinks: [
-			{ label: 'Entrar', href: '/login' },
-			{ label: 'Pesquisar', href: '/searchlist/search' }
+			{ label: 'Entrar', href: '/login', id: 'session' },
+			{ label: 'Pesquisar', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Bem-vindo', href: '/home' },
-			{ label: 'Catálogo', href: '/searchlist/default' }
+			{ label: 'Bem-vindo', href: '/home', id: 'home' },
+			{ label: 'Catálogo', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'Termos', href: '/terms' },
-			{ label: 'Privacidade', href: '/privacy' }
+			{ label: 'Termos', href: '/terms', id: 'terms' },
+			{ label: 'Privacidade', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride
 };

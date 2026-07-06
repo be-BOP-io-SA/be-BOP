@@ -60,17 +60,14 @@ export const actions = {
 
 		const { language, ...rest } = result.data;
 
-		// Replace incomplete link rows by empty placeholders instead of filtering them out, so
-		// the saved array stays positionally aligned with the main config. Filtering would
-		// produce a dense array where translated[i] no longer matches main[i] after a partial,
-		// non-contiguous translation; the storefront merge (`(app)/+layout.server.ts`) falls
-		// back to main on empty entries.
+		// Keep only rows the operator actually translated (label or href filled), each carrying its
+		// stable `id`. Resolution matches overrides by id (`(app)/+layout.server.ts`), so sparse /
+		// partial translations no longer need positional placeholders — untranslated rows are simply
+		// dropped and fall back to the main config on the storefront.
 		for (const linkKey of ['topbarLinks', 'navbarLinks', 'footerLinks'] as const) {
 			const arr = rest[linkKey];
 			if (arr) {
-				rest[linkKey] = arr.map((row) =>
-					row.href && row.label ? row : { label: '', href: '' }
-				);
+				rest[linkKey] = arr.filter((row) => row.id && (row.label || row.href));
 			}
 		}
 
