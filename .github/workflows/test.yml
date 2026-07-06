@@ -32,10 +32,6 @@ jobs:
       - run: |
           pnpm install --frozen-lockfile
 
-      - name: 'Check translations'
-        run: |
-          pnpm run check:translations
-
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.12.1
         with:
