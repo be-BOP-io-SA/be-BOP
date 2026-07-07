@@ -53,6 +53,11 @@ export const actions = {
 			posInfo = z
 				.object({ detail: paymentDetailSchema(required) })
 				.parse({ detail: formData.get('detail') });
+		} else if (payment.method === 'custom') {
+			// Optional free-text reference for the manual custom payment.
+			posInfo = z
+				.object({ detail: paymentDetailSchema(false) })
+				.parse({ detail: formData.get('detail') });
 		}
 
 		let cashbackInfo: { amount: number; currency: Currency } | undefined;
@@ -178,8 +183,12 @@ export const actions = {
 		if (!payment) {
 			throw error(404, 'Payment not found');
 		}
-		if (payment.method !== 'bank-transfer' && payment.method !== 'point-of-sale') {
-			throw error(400, 'Payment method must be bank transfer or point of sale');
+		if (
+			payment.method !== 'bank-transfer' &&
+			payment.method !== 'point-of-sale' &&
+			payment.method !== 'custom'
+		) {
+			throw error(400, 'Payment method must be bank transfer, point of sale or custom');
 		}
 
 		if (payment.status !== 'paid') {

@@ -246,7 +246,8 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.pendingZaps, { invoiceId: 1 }, { unique: true }],
 	[collections.accountingLogs, { createdAt: 1 }],
 	[collections.accountingLogs, { eventType: 1, createdAt: 1 }],
-	[collections.accountingLogs, { objectId: 1, objectType: 1 }]
+	[collections.accountingLogs, { objectId: 1, objectType: 1 }],
+	[collections.accountingLogs, { eventType: 1, 'after.productIds': 1 }]
 ];
 
 export async function createIndexes() {
@@ -284,7 +285,11 @@ export async function createIndexes() {
 	);
 }
 
-if (!building) {
+// Not under VITEST: there, `cleanDb()` calls `createIndexes()` explicitly (awaited) after each
+// `dropDatabase()`. This fire-and-forget on-'open' trigger would otherwise re-fire when the pool
+// reopens a connection and race the drop — "Cannot create collection … database is in the process
+// of being dropped" surfaces as an unhandled rejection that fails the whole test run.
+if (!building && !env.VITEST) {
 	client.on('open', () => {
 		createIndexes().catch(console.error);
 	});

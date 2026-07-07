@@ -8,7 +8,7 @@ import { adminPrefix } from '$lib/server/admin';
 import type { Discount } from '$lib/types/Discount';
 import type { Tag } from '$lib/types/Tag';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
-import { parseDiscountConditionFields } from '$lib/server/discount';
+import { logPublicDiscountPriceChange, parseDiscountConditionFields } from '$lib/server/discount';
 
 export const load = async () => {
 	const [subscriptions, products, tags] = await Promise.all([
@@ -39,7 +39,7 @@ export const load = async () => {
 };
 
 export const actions: Actions = {
-	default: async function ({ request }) {
+	default: async function ({ request, locals }) {
 		const formData = await request.formData();
 
 		const quantityPerProduct: Record<string, number> = Object.fromEntries(
@@ -108,6 +108,7 @@ export const actions: Actions = {
 			};
 
 			await collections.discounts.insertOne(percentageDiscount);
+			await logPublicDiscountPriceChange(null, percentageDiscount, locals);
 		}
 
 		if (baseData.mode === 'freeProducts') {

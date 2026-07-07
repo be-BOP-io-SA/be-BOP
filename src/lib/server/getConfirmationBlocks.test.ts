@@ -1,13 +1,20 @@
 import { describe, beforeAll, afterAll, it, expect } from 'vitest';
+import { get } from 'svelte/store';
 import { runtimeConfig } from './runtime-config';
 import { getConfirmationBlocks } from './getConfirmationBlocks';
 import { toBitcoins } from '$lib/utils/toBitcoins';
+import { exchangeRate, defaultExchangeRate } from '$lib/stores/exchangeRate';
 
 describe('getConfirmationBlocks', () => {
 	let oldConfig: typeof runtimeConfig.confirmationBlocksThresholds;
+	let oldRates: Parameters<typeof exchangeRate.set>[0];
 	beforeAll(() => {
 		oldConfig = runtimeConfig.confirmationBlocksThresholds;
-		// Seed exchange rate for CHF since defaultExchangeRate is now dynamic
+		// `toBitcoins` reads the `exchangeRate` *store* (not runtimeConfig), which is otherwise only
+		// synced by another test's cleanDb/refresh — seed it here so this suite is self-contained and
+		// order-independent, then restore it in afterAll.
+		oldRates = get(exchangeRate);
+		exchangeRate.set({ ...defaultExchangeRate, CHF: 30_000 });
 		runtimeConfig.exchangeRate.CHF = 30_000;
 		runtimeConfig.confirmationBlocksThresholds = {
 			currency: 'CHF',
@@ -52,5 +59,6 @@ describe('getConfirmationBlocks', () => {
 
 	afterAll(() => {
 		runtimeConfig.confirmationBlocksThresholds = oldConfig;
+		exchangeRate.set(oldRates);
 	});
 });

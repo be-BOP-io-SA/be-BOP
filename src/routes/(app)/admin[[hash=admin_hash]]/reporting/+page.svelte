@@ -211,6 +211,8 @@
 				const key =
 					payment.method === 'point-of-sale' && payment.posSubtype
 						? `${payment.method}:${payment.posSubtype}`
+						: payment.method === 'custom'
+						? `custom:${payment.customPaymentMethod?.label ?? ''}`
 						: payment.method;
 				(acc[key] ??= []).push(payment.currencySnapshot.main.price);
 				return acc;
@@ -928,10 +930,13 @@
 				<tbody>
 					<!-- Order rows -->
 					{#each Object.entries(quantityOfPaymentMean(paidOrders)).sort((a, b) => b[1].quantity - a[1].quantity) as [method, { quantity, total }]}
-						{@const [paymentMethod, posSubtypeSlug] = method.split(':')}
-						{@const subtype = posSubtypeSlug
-							? data.posSubtypes?.find((s) => s.slug === posSubtypeSlug)
-							: null}
+						{@const sepIdx = method.indexOf(':')}
+						{@const paymentMethod = sepIdx >= 0 ? method.slice(0, sepIdx) : method}
+						{@const rest = sepIdx >= 0 ? method.slice(sepIdx + 1) : ''}
+						{@const subtype =
+							paymentMethod === 'point-of-sale' && rest
+								? data.posSubtypes?.find((s) => s.slug === rest)
+								: null}
 						<tr class="hover:bg-gray-100 whitespace-nowrap">
 							<td class="border border-gray-300 px-4 py-2">
 								<time datetime={beginsAt.toISOString()}>
@@ -943,7 +948,7 @@
 								</time>
 							</td>
 							<td class="border border-gray-300 px-4 py-2"
-								>{paymentMethod}{#if subtype}
+								>{paymentMethod === 'custom' && rest ? rest : paymentMethod}{#if subtype}
 									({subtype.name}){/if}</td
 							>
 							<td class="border border-gray-300 px-4 py-2">{quantity}</td>

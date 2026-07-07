@@ -4,6 +4,7 @@ import { collections } from '$lib/server/database';
 import { applyResolvedStock, resolveStockProduct } from '$lib/server/product';
 import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { adminPrefix as getAdminPrefix } from '$lib/server/admin';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import { DEFAULT_MAX_QUANTITY_PER_ORDER, type Product } from '$lib/types/Product';
@@ -92,6 +93,7 @@ async function fetchProduct(
 	| 'shipping'
 	| 'displayShortDescription'
 	| 'payWhatYouWant'
+	| 'free'
 	| 'standalone'
 	| 'maxQuantityPerOrder'
 	| 'stock'
@@ -116,6 +118,7 @@ async function fetchProduct(
 	| 'tagIds'
 	| 'subscriptionDuration'
 	| 'pricingSchedule'
+	| 'alias'
 > | null> {
 	return collections.products.findOne<ReturnType<Awaited<typeof fetchProduct>>>(
 		{ _id: productId },
@@ -136,6 +139,7 @@ async function fetchProduct(
 				type: 1,
 				displayShortDescription: 1,
 				payWhatYouWant: 1,
+				free: 1,
 				standalone: 1,
 				maxQuantityPerOrder: 1,
 				stock: 1,
@@ -168,7 +172,8 @@ async function fetchProduct(
 				stockReference: 1,
 				tagIds: 1,
 				subscriptionDuration: 1,
-				pricingSchedule: 1
+				pricingSchedule: 1,
+				alias: 1
 			}
 		}
 	);
@@ -287,8 +292,10 @@ export const load = async ({ params, parent, locals }) => {
 			productCMSAfter: cmsFromContent({ desktopContent: product.contentAfter }, locals)
 		}),
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
+		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		websiteShortDescription: product.shortDescription,
-		freeProductsAvailable
+		freeProductsAvailable,
+		adminPrefix: getAdminPrefix()
 	};
 };
 

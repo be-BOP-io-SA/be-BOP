@@ -151,6 +151,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 			awaitingConfirmation: payment.awaitingConfirmation ?? false,
 			...(payment.bankTransferNumber && { bankTransferNumber: payment.bankTransferNumber }),
 			...(payment.detail && { detail: payment.detail }),
+			...(payment.customPaymentMethod && { customPaymentMethod: payment.customPaymentMethod }),
 			...(payment.cashbackAmount && { cashbackAmount: payment.cashbackAmount })
 		})),
 		items: order.items.map((item) => ({
@@ -210,10 +211,6 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		sellerIdentity: order.sellerIdentity,
 		vat: order.vat?.map((item) => ({
 			country: item.country,
-			price: {
-				amount: item.price.amount,
-				currency: item.price.currency
-			},
 			rate: item.rate
 		})),
 		shippingAddress: order.shippingAddress,

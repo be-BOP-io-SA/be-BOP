@@ -57,9 +57,9 @@ import { deepClone } from '$lib/utils/deep-clone';
  * stays compatible with the intersection type of `runtimeConfig['translations.<locale>.config']`.
  */
 type LayoutLinkOverride = {
-	topbarLinks?: Array<{ label: string; href: string }>;
-	navbarLinks?: Array<{ label: string; href: string }>;
-	footerLinks?: Array<{ label: string; href: string }>;
+	topbarLinks?: Array<{ id: string; label: string; href: string }>;
+	navbarLinks?: Array<{ id: string; label: string; href: string }>;
+	footerLinks?: Array<{ id: string; label: string; href: string }>;
 	// Per-locale website title (the browser `<title>`). Seeded so the title translates with the
 	// language out of the box; the storefront resolves it in `(app... root)/+layout.server.ts`.
 	websiteTitle?: string;
@@ -85,6 +85,14 @@ const baseConfig = {
 	orderNumber: 0,
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
+	/**
+	 * Generic manual/asynchronous payment methods: the admin defines any number of them, each with
+	 * a label and free-text instructions. The customer is shown the chosen method's instructions
+	 * with no QR, and an admin validates the payment manually. The shared `'custom'` payment method
+	 * is available whenever at least one is configured; each order payment references the chosen one
+	 * by `customPaymentMethodId`.
+	 */
+	customPaymentMethods: [] as Array<{ id: string; label: string; instructions: string }>,
 	subscriptionNumber: 0,
 	themeChangeNumber: 0,
 	isMaintenance: false,
@@ -121,16 +129,16 @@ const baseConfig = {
 	authLinkJwtSigningKey: '',
 	ssoSecret: '',
 	topbarLinks: [
-		{ label: 'Session', href: '/login' },
-		{ label: 'Recherche', href: '/searchlist/search' }
+		{ label: 'Session', href: '/login', id: 'session' },
+		{ label: 'Recherche', href: '/searchlist/search', id: 'search' }
 	],
 	navbarLinks: [
-		{ label: 'Bienvenue', href: '/home' },
-		{ label: 'Catalogue', href: '/searchlist/default' }
+		{ label: 'Bienvenue', href: '/home', id: 'home' },
+		{ label: 'Catalogue', href: '/searchlist/default', id: 'catalog' }
 	],
 	footerLinks: [
-		{ label: 'CGVUs', href: '/terms' },
-		{ label: 'Vie privée et confidentialité', href: '/privacy' }
+		{ label: 'CGVUs', href: '/terms', id: 'terms' },
+		{ label: 'Vie privée et confidentialité', href: '/privacy', id: 'privacy' }
 	],
 
 	viewportFor: 'everyone' as 'employee' | 'no-one' | 'visitors' | 'everyone',
@@ -209,6 +217,7 @@ const baseConfig = {
 			canBeAddedToBasket: true
 		}
 	} satisfies ProductActionSettings as ProductActionSettings,
+	priceHistoryEnabled: true,
 	mainThemeId: '',
 	sellerIdentity: null as SellerIdentity | null,
 	shopInformation: null as SellerIdentity | null,
@@ -337,7 +346,7 @@ const baseConfig = {
 		removeBebobLogo: false
 	},
 	posSession: {
-		enabled: false,
+		enabled: true,
 		allowXTicketEditing: false,
 		cashDeltaJustificationMandatory: false,
 		lockItemsAfterMidTicket: true,
@@ -402,6 +411,13 @@ const baseConfig = {
 <p>IBAN: {{iban}}<br/>
 BIC: {{bic}}<br/>
 Amount: {{amount}} {{currency}}</p>`,
+			default: true as boolean
+		},
+		'order.payment.pending.custom': {
+			subject: 'Order #{{orderNumber}}',
+			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
+<p>Amount: {{amount}} {{currency}}</p>
+<p>{{customPaymentInstructions}}</p>`,
 			default: true as boolean
 		},
 		'order.payment.pending.paypal': {
@@ -542,91 +558,91 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 	'translations.en.config': {
 		websiteTitle: 'My be-BOP shop',
 		topbarLinks: [
-			{ label: 'Sign in', href: '/login' },
-			{ label: 'Search', href: '/searchlist/search' }
+			{ label: 'Sign in', href: '/login', id: 'session' },
+			{ label: 'Search', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Welcome', href: '/home' },
-			{ label: 'Catalog', href: '/searchlist/default' }
+			{ label: 'Welcome', href: '/home', id: 'home' },
+			{ label: 'Catalog', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'Terms', href: '/terms' },
-			{ label: 'Privacy', href: '/privacy' }
+			{ label: 'Terms', href: '/terms', id: 'terms' },
+			{ label: 'Privacy', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.de.config': {
 		websiteTitle: 'Mein be-BOP-Shop',
 		topbarLinks: [
-			{ label: 'Anmelden', href: '/login' },
-			{ label: 'Suche', href: '/searchlist/search' }
+			{ label: 'Anmelden', href: '/login', id: 'session' },
+			{ label: 'Suche', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Willkommen', href: '/home' },
-			{ label: 'Katalog', href: '/searchlist/default' }
+			{ label: 'Willkommen', href: '/home', id: 'home' },
+			{ label: 'Katalog', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'AGB', href: '/terms' },
-			{ label: 'Datenschutz', href: '/privacy' }
+			{ label: 'AGB', href: '/terms', id: 'terms' },
+			{ label: 'Datenschutz', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.es-sv.config': {
 		websiteTitle: 'Mi tienda be-BOP',
 		topbarLinks: [
-			{ label: 'Iniciar sesión', href: '/login' },
-			{ label: 'Buscar', href: '/searchlist/search' }
+			{ label: 'Iniciar sesión', href: '/login', id: 'session' },
+			{ label: 'Buscar', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Bienvenido', href: '/home' },
-			{ label: 'Catálogo', href: '/searchlist/default' }
+			{ label: 'Bienvenido', href: '/home', id: 'home' },
+			{ label: 'Catálogo', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'Términos', href: '/terms' },
-			{ label: 'Privacidad', href: '/privacy' }
+			{ label: 'Términos', href: '/terms', id: 'terms' },
+			{ label: 'Privacidad', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.it.config': {
 		websiteTitle: 'Il mio negozio be-BOP',
 		topbarLinks: [
-			{ label: 'Accedi', href: '/login' },
-			{ label: 'Cerca', href: '/searchlist/search' }
+			{ label: 'Accedi', href: '/login', id: 'session' },
+			{ label: 'Cerca', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Benvenuti', href: '/home' },
-			{ label: 'Catalogo', href: '/searchlist/default' }
+			{ label: 'Benvenuti', href: '/home', id: 'home' },
+			{ label: 'Catalogo', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'Termini', href: '/terms' },
-			{ label: 'Privacy', href: '/privacy' }
+			{ label: 'Termini', href: '/terms', id: 'terms' },
+			{ label: 'Privacy', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.nl.config': {
 		websiteTitle: 'Mijn be-BOP-winkel',
 		topbarLinks: [
-			{ label: 'Inloggen', href: '/login' },
-			{ label: 'Zoeken', href: '/searchlist/search' }
+			{ label: 'Inloggen', href: '/login', id: 'session' },
+			{ label: 'Zoeken', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Welkom', href: '/home' },
-			{ label: 'Catalogus', href: '/searchlist/default' }
+			{ label: 'Welkom', href: '/home', id: 'home' },
+			{ label: 'Catalogus', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'Voorwaarden', href: '/terms' },
-			{ label: 'Privacybeleid', href: '/privacy' }
+			{ label: 'Voorwaarden', href: '/terms', id: 'terms' },
+			{ label: 'Privacybeleid', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.pt.config': {
 		websiteTitle: 'A minha loja be-BOP',
 		topbarLinks: [
-			{ label: 'Entrar', href: '/login' },
-			{ label: 'Pesquisar', href: '/searchlist/search' }
+			{ label: 'Entrar', href: '/login', id: 'session' },
+			{ label: 'Pesquisar', href: '/searchlist/search', id: 'search' }
 		],
 		navbarLinks: [
-			{ label: 'Bem-vindo', href: '/home' },
-			{ label: 'Catálogo', href: '/searchlist/default' }
+			{ label: 'Bem-vindo', href: '/home', id: 'home' },
+			{ label: 'Catálogo', href: '/searchlist/default', id: 'catalog' }
 		],
 		footerLinks: [
-			{ label: 'Termos', href: '/terms' },
-			{ label: 'Privacidade', href: '/privacy' }
+			{ label: 'Termos', href: '/terms', id: 'terms' },
+			{ label: 'Privacidade', href: '/privacy', id: 'privacy' }
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride
 };

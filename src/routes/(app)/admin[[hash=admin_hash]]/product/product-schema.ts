@@ -8,6 +8,7 @@ import { deliveryFeesSchema } from '../config/delivery/schema';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 import { zodObjectId } from '$lib/server/zod';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
+import { webhookApiRouteIssue } from '$lib/server/webhook-url-guard';
 
 export const productBaseSchema = () => ({
 	name: z.string().trim().min(1).max(MAX_NAME_LIMIT),
@@ -262,5 +263,23 @@ export const productBaseSchema = () => ({
 	sellDisclaimerTitle: z.string().trim().max(60).optional(),
 	sellDisclaimerReason: z.string().trim().max(10_000).optional(),
 	hideFromSEO: z.boolean({ coerce: true }).default(false),
-	hideDiscountExpiration: z.boolean({ coerce: true }).default(false)
+	hideDiscountExpiration: z.boolean({ coerce: true }).default(false),
+	paidOrderWebhook: z
+		.object({
+			apiRoute: z
+				.string()
+				.trim()
+				.url()
+				.max(2048)
+				.superRefine((val, ctx) => {
+					// Block SSRF/PII-cleartext targets at save time (https-only, no private/loopback host).
+					const issue = webhookApiRouteIssue(val);
+					if (issue) {
+						ctx.addIssue({ code: z.ZodIssueCode.custom, message: issue });
+					}
+				}),
+			// The secret is the HMAC key: a 1-char key makes forged signatures brute-forceable.
+			secret: z.string().trim().min(16).max(256)
+		})
+		.optional()
 });

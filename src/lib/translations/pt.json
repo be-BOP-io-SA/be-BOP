@@ -1,4 +1,24 @@
 {
+	"priceCalendar": {
+		"openTitle": "Histórico de preços",
+		"tabHistory": "Histórico de preços",
+		"tabPaid": "Preço médio pago",
+		"current": "Atual",
+		"min30": "Mín. (30d)",
+		"max30": "Máx. (30d)",
+		"vsPrevious": "vs ant.",
+		"since": "desde {date}",
+		"meanLabel": "Preço médio efetivo pago:",
+		"belowCatalogue": "{pct}% abaixo do preço de catálogo",
+		"catalogue": "Preço de catálogo",
+		"averagePaid": "Preço médio pago",
+		"error": "Não foi possível carregar o histórico de preços.",
+		"noHistory": "Ainda sem histórico de preços.",
+		"noSales": "Nenhuma venda paga para exibir.",
+		"close": "Fechar",
+		"exportCsv": "Exportar para CSV",
+		"viewOrders": "Ver pedidos"
+	},
 	"address": {
 		"address": "Endereço",
 		"city": "Cidade",
@@ -181,6 +201,7 @@
 			},
 			"editProductTab": "Editar um produto",
 			"translationsTab": "Traduções",
+			"priceHistoryTab": "Histórico de preços",
 			"subscribersTab": "Assinantes",
 			"photos": "Fotos",
 			"addPicture": "Adicionar imagem",
@@ -1008,8 +1029,11 @@
 			"orderLabelIds": "IDs de etiquetas da encomenda"
 		},
 		"layout": {
+			"title": "Layout",
 			"editLayout": "Editar layout",
 			"translations": "Traduções",
+			"translationsLinksNotePrefix": "Os próprios links são geridos em",
+			"translationsLinksNoteSuffix": "; aqui apenas traduz as etiquetas existentes e (opcionalmente) substitui os URLs por idioma.",
 			"visitorDefaultDarkLightMode": "Modo escuro/claro padrão para visitantes",
 			"useLightModeForUsers": "Usar o modo claro por padrão para os usuários",
 			"useDarkModeForUsers": "Usar o modo escuro por padrão para os usuários",
@@ -1042,6 +1066,9 @@
 			"displayMainShopInfo": "Exibir as informações principais da loja",
 			"addFooterLink": "Adicionar link ao rodapé",
 			"socialNetworkIcons": "Ícones de redes sociais",
+			"socialIconPreset": "Predefinição",
+			"chooseSocialPlatform": "Escolher plataforma",
+			"custom": "Personalizado",
 			"name": "Nome",
 			"svg": "SVG",
 			"addSocialNetworkLink": "Adicionar link de rede social",
@@ -1094,6 +1121,8 @@
 			"removeBebopLogoFromPos": "Remover o logotipo be-BOP do código QR do POS",
 			"minCartAmountForPhysical": "Valor mínimo do carrinho para carrinhos com produtos físicos",
 			"setMinCartAmountForPhysical": "Definir valor mínimo do carrinho para carrinhos com produtos físicos (em {currency})",
+			"products": "Produtos",
+			"enablePriceHistory": "Ativar histórico de preços",
 			"order": "Pedido",
 			"hideCreditCardQrCode": "Não exibir o código QR do URL do pedido em pedidos pagos com cartão de crédito",
 			"overwriteCreditCardSvgColor": "Substituir a cor SVG do processador de pagamento por cartão de crédito por uma cor personalizada",
@@ -1711,6 +1740,8 @@
 			"action": "Ação",
 			"eShop": "Loja online",
 			"retailPos": "Retalho (POS)",
+			"eshopCardTitle": "Loja online (qualquer pessoa)",
+			"retailCardTitle": "Retalho (caixa com sessão iniciada)",
 			"productIsVisible": "O produto é visível",
 			"canBeAddedToBasket": "Pode ser adicionado ao carrinho",
 			"advancedFeatures": "Funcionalidades avançadas",
@@ -2261,6 +2292,7 @@
 		},
 		"paymentMethod": {
 			"bank-transfer": "Transferência bancária",
+			"custom": "Pagamento personalizado",
 			"bitcoin": "Onchain",
 			"card": "Cartão de crédito",
 			"cash": "Dinheiro",
@@ -2683,21 +2715,26 @@
 		"paidAt": "Pago em ",
 		"paidWith": {
 			"bank-transfer": "Pago com: transferência bancária verificada",
+			"custom": "Pago com: método de pagamento personalizado",
+			"customNamed": "Pago com: {label}",
 			"bitcoin": "Pago com: pagamento Bitcoin on-chain (1 {paymentCurrency} = {exchangeRate} {mainCurrency} no momento da encomenda)",
 			"card": "Pago com: cartão bancário",
 			"free": "Pago nada",
 			"lightning": "Pago com: transação Lightning (1 {paymentCurrency} = {exchangeRate} {mainCurrency} no momento da encomenda)",
-			"paypal": "Pago com: paypal",
+			"paypal": "Pago com: PayPal",
 			"point-of-sale": "Pago na loja",
 			"taler": "Pago com: Taler",
 			"osb": "Pago com: cartão bancário OSB"
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Pago com: transferência bancária verificada",
+			"custom": "Pago com: método de pagamento personalizado",
+			"customNamed": "Pago com: {label}",
 			"bitcoin": "Pago com: pagamento Bitcoin on-chain",
 			"card": "Pago com: cartão bancário",
 			"free": "Pago nada",
 			"lightning": "Pago com: transação Lightning",
+			"paypal": "Pago com: PayPal",
 			"point-of-sale": "Pago na loja",
 			"taler": "Pago com: Taler",
 			"osb": "Pago com: OSB"
@@ -3195,5 +3232,36 @@
 			"checkboxLabel": "Ativar sinal beacon para o bot Nostr de be-BOP.io para partilhar a existência da sua loja",
 			"infoBlock": "Esta configuração controla se a sua loja envia sinais periódicos para be-BOP.io. Valorizamos a privacidade: apenas o URL da sua loja e a versão do software be-BOP são partilhados. Nenhum dado pessoal ou de clientes é transmitido. Isto ajuda-nos com a depuração e mostra-nos que a comunidade be-BOP está a crescer."
 		}
+	},
+	"cookieConsent": {
+		"banner": {
+			"ariaLabel": "Consentimento de cookies",
+			"dataSentTo": "Alguns dos seus dados de visita são enviados para: {hostnames}",
+			"dataSentToFallback": "Este site utiliza uma ferramenta de análise.",
+			"accept": "Aceitar",
+			"deny": "Recusar",
+			"learnMore": "Saber mais"
+		},
+		"reopenAria": "Preferências de cookies",
+		"reopenIdentity": "Gerir as minhas preferências de cookies"
+	},
+	"customPaymentMethod": {
+		"title": "Métodos de pagamento personalizados",
+		"help": "Defina qualquer número de métodos de pagamento manuais genéricos, cada um com um rótulo e instruções em texto livre que indicam aos clientes como pagar. Os clientes veem as instruções do método escolhido sem código QR, e você valida cada pagamento manualmente na página do pedido.",
+		"label": "Rótulo (visível para os clientes)",
+		"labelPlaceholder": "Nome do método de pagamento",
+		"instructions": "Instruções (visíveis para os clientes)",
+		"instructionsPlaceholder": "Como os clientes devem pagar e como contactá-lo para poder confirmar o pagamento.",
+		"add": "Adicionar um método de pagamento",
+		"remove": "Remover",
+		"untitled": "Método de pagamento {number}",
+		"empty": "Ainda não há métodos de pagamento personalizados. Adicione um para oferecê-lo no checkout.",
+		"moveUp": "Mover para cima",
+		"moveDown": "Mover para baixo",
+		"save": "Guardar",
+		"saved": "Guardado",
+		"errorLabelRequired": "Cada método de pagamento precisa de um rótulo.",
+		"removeConfirm": "Remover este método?",
+		"cancel": "Cancelar"
 	}
 }

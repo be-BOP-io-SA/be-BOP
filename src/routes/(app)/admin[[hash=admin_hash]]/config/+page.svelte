@@ -428,6 +428,17 @@
 			/>
 		</label>
 	{/if}
+	<h2 class="text-2xl">{t('admin.config.products')}</h2>
+	<label class="checkbox-label">
+		<input
+			type="checkbox"
+			name="priceHistoryEnabled"
+			class="form-checkbox"
+			checked={data.priceHistoryEnabled}
+		/>
+		{t('admin.config.enablePriceHistory')}
+	</label>
+
 	<h2 class="text-2xl">{t('admin.config.order')}</h2>
 	<label class="checkbox-label">
 		<input
@@ -579,6 +590,9 @@
 			</button>
 		{/each}
 	</div>
+
+	<a href="{data.adminPrefix}/custom-payments" class="underline">{t('customPaymentMethod.title')}</a
+	>
 
 	<h2 class="text-2xl">{t('admin.config.paymentProcessorPreferences')}</h2>
 	<p class="text-sm mb-4">

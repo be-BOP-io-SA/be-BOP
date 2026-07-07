@@ -217,6 +217,9 @@ async function handleOrderNotification(order: Order): Promise<void> {
 							case 'osb':
 								templateKey = 'order.payment.pending.osb';
 								break;
+							case 'custom':
+								templateKey = 'order.payment.pending.custom';
+								break;
 							case 'point-of-sale':
 							case 'free':
 								// no email
@@ -244,7 +247,9 @@ async function handleOrderNotification(order: Order): Promise<void> {
 							maximumFractionDigits: FRACTION_DIGITS_PER_CURRENCY[payment.price.currency],
 							minimumFractionDigits: FRACTION_DIGITS_PER_CURRENCY[payment.price.currency]
 						}),
-						currency: payment.price.currency
+						currency: payment.price.currency,
+						// Instructions snapshotted on the payment, for the pending.custom template.
+						customPaymentInstructions: payment.customPaymentMethod?.instructions ?? ''
 					};
 					if (email) {
 						await queueEmail(email, templateKey, vars, {

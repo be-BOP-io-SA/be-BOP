@@ -188,6 +188,11 @@ export interface OrderPayment {
 	bankTransferNumber?: string;
 	detail?: string;
 	cashbackAmount?: Price;
+	/**
+	 * When method is 'custom', a snapshot of the chosen custom payment method taken at order time,
+	 * so editing or removing it later doesn't change what this order shows the customer.
+	 */
+	customPaymentMethod?: { id: string; label: string; instructions: string };
 }
 
 export type SerializedOrderPayment = Omit<OrderPayment, '_id'> & {
@@ -291,8 +296,12 @@ export interface Order extends Timestamps {
 		currency: Currency;
 	};
 
+	/**
+	 * Per-rate VAT breakdown metadata. The monetary amounts live in
+	 * `currencySnapshot.{main,priceReference,secondary,accounting}.vat[]` (index-aligned),
+	 * snapshotted in every configured currency — see issue #2492.
+	 */
 	vat?: Array<{
-		price: Price;
 		rate: number;
 		country: CountryAlpha2;
 	}>;
@@ -378,6 +387,8 @@ interface SimplifiedOrderPayment {
 	id: string;
 	method: PaymentMethod;
 	status: OrderPaymentStatus;
+	/** For method 'custom', the chosen method's snapshotted label (for display). */
+	customPaymentMethod?: { label: string };
 }
 interface SimplifiedOrderNotes {
 	content: string;
@@ -440,7 +451,8 @@ export const PAYMENT_METHOD_EMOJI: Record<PaymentMethod, string> = {
 	bitcoin: '₿',
 	free: '🆓',
 	taler: '🅣',
-	osb: '🇵🇫'
+	osb: '🇵🇫',
+	custom: '🧾'
 };
 
 export const ORDER_PAGINATION_LIMIT = 50;

@@ -1,4 +1,24 @@
 {
+	"priceCalendar": {
+		"openTitle": "Historique du prix",
+		"tabHistory": "Historique du prix",
+		"tabPaid": "Prix moyen payé",
+		"current": "Actuel",
+		"min30": "Min. (30J)",
+		"max30": "Max. (30J)",
+		"vsPrevious": "vs préc.",
+		"since": "depuis {date}",
+		"meanLabel": "Prix effectif moyen payé :",
+		"belowCatalogue": "{pct} % sous le prix catalogue",
+		"catalogue": "Prix catalogue",
+		"averagePaid": "Prix moyen payé",
+		"error": "Impossible de charger l'historique.",
+		"noHistory": "Pas encore d'historique de prix.",
+		"noSales": "Aucune vente payée à afficher.",
+		"close": "Fermer",
+		"exportCsv": "Exporter en CSV",
+		"viewOrders": "Voir les commandes"
+	},
 	"address": {
 		"address": "Adresse",
 		"city": "Ville",
@@ -181,6 +201,7 @@
 			},
 			"editProductTab": "Modifier un produit",
 			"translationsTab": "Traductions",
+			"priceHistoryTab": "Historique des prix",
 			"subscribersTab": "Abonnés",
 			"photos": "Photos",
 			"addPicture": "Ajouter une image",
@@ -1008,8 +1029,11 @@
 			"orderLabelIds": "Identifiants d'étiquette de commande"
 		},
 		"layout": {
+			"title": "Mise en page",
 			"editLayout": "Modifier la mise en page",
 			"translations": "Traductions",
+			"translationsLinksNotePrefix": "Les liens eux-mêmes sont gérés dans",
+			"translationsLinksNoteSuffix": " ; ici, vous traduisez uniquement les libellés existants et (facultativement) remplacez les URL par langue.",
 			"visitorDefaultDarkLightMode": "Mode sombre/clair par défaut pour les visiteurs",
 			"useLightModeForUsers": "Utiliser le mode clair par défaut pour les utilisateurs",
 			"useDarkModeForUsers": "Utiliser le mode sombre par défaut pour les utilisateurs",
@@ -1042,6 +1066,9 @@
 			"displayMainShopInfo": "Afficher les informations principales de la boutique",
 			"addFooterLink": "Ajouter un lien au pied de page",
 			"socialNetworkIcons": "Icônes de réseaux sociaux",
+			"socialIconPreset": "Préréglage",
+			"chooseSocialPlatform": "Choisir une plateforme",
+			"custom": "Personnalisé",
 			"name": "Nom",
 			"svg": "SVG",
 			"addSocialNetworkLink": "Ajouter un lien de réseau social",
@@ -1094,6 +1121,8 @@
 			"removeBebopLogoFromPos": "Retirer le logo be-BOP du QR code POS",
 			"minCartAmountForPhysical": "Montant minimum du panier pour un panier avec produit physique",
 			"setMinCartAmountForPhysical": "Définir le montant minimum du panier pour un panier avec produit physique (en {currency})",
+			"products": "Produits",
+			"enablePriceHistory": "Activer l'historique des prix",
 			"order": "Commande",
 			"hideCreditCardQrCode": "Ne pas afficher le QR code de l'URL de commande pour les commandes payées par carte bancaire",
 			"overwriteCreditCardSvgColor": "Remplacer la couleur SVG du processeur de paiement carte bancaire par une couleur personnalisée",
@@ -1711,6 +1740,8 @@
 			"action": "Action",
 			"eShop": "Boutique en ligne",
 			"retailPos": "Vente au détail (PDV)",
+			"eshopCardTitle": "Boutique en ligne (n'importe qui)",
+			"retailCardTitle": "Vente au détail (poste de caisse connecté)",
 			"productIsVisible": "Le produit est visible",
 			"canBeAddedToBasket": "Peut être ajouté au panier",
 			"advancedFeatures": "Fonctionnalités avancées",
@@ -2261,6 +2292,7 @@
 		},
 		"paymentMethod": {
 			"bank-transfer": "Virement bancaire",
+			"custom": "Paiement personnalisé",
 			"bitcoin": "BTC on-chain",
 			"card": "Carte bancaire",
 			"cash": "Espèces",
@@ -2683,21 +2715,26 @@
 		"paidAt": "Date de paiement : <0></0>",
 		"paidWith": {
 			"bank-transfer": "Payé avec : virement bancaire vérifié",
+			"custom": "Payé avec : moyen de paiement personnalisé",
+			"customNamed": "Payé avec : {label}",
 			"bitcoin": "Payé avec : Paiement Bitcoin on-chain (1 {paymentCurrency} = {exchangeRate} {mainCurrency} au moment de la commande)",
 			"card": "Payé avec : carte bancaire",
 			"free": "N'a rien payé",
 			"lightning": "Payé avec : Transaction Lightning (1 {paymentCurrency} = {exchangeRate} {mainCurrency} au moment de la commande)",
-			"paypal": "Payé avec: paypal",
+			"paypal": "Payé avec : PayPal",
 			"point-of-sale": "Payé en magasin",
 			"taler": "Payé avec : Taler",
 			"osb": "Payé avec : carte bancaire OSB"
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Payé avec : virement bancaire vérifié",
+			"custom": "Payé avec : moyen de paiement personnalisé",
+			"customNamed": "Payé avec : {label}",
 			"bitcoin": "Payé avec : Paiement Bitcoin on-chain",
 			"card": "Payé avec : carte bancaire",
 			"free": "N'a rien payé",
 			"lightning": "Payé avec : Transaction Lightning",
+			"paypal": "Payé avec : PayPal",
 			"point-of-sale": "Payé en magasin",
 			"taler": "Payé avec : Taler",
 			"osb": "Payé avec : OSB"
@@ -3224,5 +3261,36 @@
 			"checkboxLabel": "Activer le signal beacon vers le nostr-bot be-BOP.io pour partager l'existence de votre boutique",
 			"infoBlock": "Ce paramètre contrôle si votre boutique envoie des signaux périodiques à be-BOP.io. Nous valorisons la vie privée : seuls l'URL de votre boutique et la version du logiciel be-BOP sont partagés. Aucune donnée personnelle ou client n'est transmise. Cela nous aide pour le débogage et nous montre que la communauté be-BOP grandit."
 		}
+	},
+	"cookieConsent": {
+		"banner": {
+			"ariaLabel": "Consentement aux cookies",
+			"dataSentTo": "Certaines de vos données de visite sont envoyées à : {hostnames}",
+			"dataSentToFallback": "Ce site utilise un outil de mesure d'audience.",
+			"accept": "Accepter",
+			"deny": "Refuser",
+			"learnMore": "En savoir plus"
+		},
+		"reopenAria": "Préférences de cookies",
+		"reopenIdentity": "Gérer mes préférences de cookies"
+	},
+	"customPaymentMethod": {
+		"title": "Moyens de paiement personnalisés",
+		"help": "Définissez autant de moyens de paiement manuels génériques que nécessaire, chacun avec un libellé et des instructions en texte libre expliquant aux clients comment payer. Les clients voient les instructions du moyen choisi sans QR code, et vous validez chaque paiement manuellement depuis la page de commande.",
+		"label": "Libellé (affiché aux clients)",
+		"labelPlaceholder": "Nom du moyen de paiement",
+		"instructions": "Instructions (affichées aux clients)",
+		"instructionsPlaceholder": "Comment les clients doivent payer, et comment vous joindre pour confirmer le paiement.",
+		"add": "Ajouter un moyen de paiement",
+		"remove": "Supprimer",
+		"untitled": "Moyen de paiement {number}",
+		"empty": "Aucun moyen de paiement personnalisé pour l'instant. Ajoutez-en un pour le proposer au paiement.",
+		"moveUp": "Monter",
+		"moveDown": "Descendre",
+		"save": "Enregistrer",
+		"saved": "Enregistré",
+		"errorLabelRequired": "Chaque moyen de paiement doit avoir un libellé.",
+		"removeConfirm": "Supprimer ce moyen ?",
+		"cancel": "Annuler"
 	}
 }

@@ -9,6 +9,7 @@ import {
 } from '$lib/types/Order';
 import { ClientSession, ObjectId, type WithId } from 'mongodb';
 import { collections, withTransaction } from './database';
+import { firePaidOrderWebhooks, stripPaidOrderWebhook } from './order-paid-webhook';
 import {
 	Duration,
 	add,
@@ -86,6 +87,7 @@ import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import { resolveProcessor } from './sdk/pp';
 import { pojo } from './pojo';
 import { logAccountingEvent } from './accounting-log';
+import { orderCurrencyAmounts, orderVatAccountingSnapshot } from './orderVatSnapshot';
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
 	const other = await collections.orders.findOne({
@@ -150,6 +152,7 @@ export async function onOrderPayment(
 		tapToPay?: { expiresAt: Date };
 		providedSession?: ClientSession;
 		cashbackAmount?: Price;
+		firstPaidTransition?: boolean;
 	}
 ): Promise<Order> {
 	const invoiceNumber = ((await lastInvoiceNumber()) ?? 0) + 1;
@@ -159,9 +162,14 @@ export async function onOrderPayment(
 	}
 
 	const paidAt = new Date();
-	// Free payments arrive here with `paidAt` already stamped by addOrderPayment; skip the
-	// `paymentDone` audit log in that case so a subsequent retry (e.g. re-processing the same
-	// paid payment) doesn't double-record the event.
+	// Free payments arrive here with `paidAt` already stamped by addOrderPayment (onOrderPayment
+	// is called twice: addOrderPayment + createOrder). `payment.paidAt` is unset only on the very
+	// first call for a given payment, so this is the reliable "first pending→paid transition"
+	// signal — it dedups the `paymentDone` audit log AND the outbound paid-order webhook below, so
+	// a retry (re-processing the same paid payment) doesn't double-record the event or double-fire
+	// the webhook. (`order.status` can't be used: onOrderPayment rebinds its local `order` from the
+	// DB result and never mutates the caller's copy, so it never observes the flip.)
+	// TODO: remove the double-call itself; this guard papers over it.
 	const alreadyPaid = !!payment.paidAt;
 
 	payment.status = 'paid'; // for isOrderFullyPaid
@@ -410,13 +418,19 @@ export async function onOrderPayment(
 					after: {
 						status: 'paid',
 						method: payment.method,
+						...(payment.customPaymentMethod && {
+							customPaymentMethod: {
+								id: payment.customPaymentMethod.id,
+								label: payment.customPaymentMethod.label
+							}
+						}),
 						paymentId: payment._id.toString(),
 						invoiceNumber,
 						received,
-						vat: order.vat,
+						vat: orderVatAccountingSnapshot(order),
 						...(order.discount && { discount: order.discount }),
 						...(order.currencySnapshot?.main?.discount && {
-							discountAmount: order.currencySnapshot.main.discount
+							discountAmount: orderCurrencyAmounts(order, (entry) => entry.discount)
 						})
 					},
 					objectId: order._id.toString(),
@@ -446,7 +460,26 @@ export async function onOrderPayment(
 
 		return ret.value;
 	};
-	return params?.providedSession ? await fn(params.providedSession) : await withTransaction(fn);
+	const updated = params?.providedSession
+		? await fn(params.providedSession)
+		: await withTransaction(fn);
+
+	// Fire-and-forget per-product paid-order webhook (issue #2646). After the transaction so a
+	// network failure can never roll back the paid status; `!alreadyPaid` fires exactly once per
+	// payment, so re-processing an already-paid order and the free-order double-call don't
+	// double-fire. `firstPaidTransition` overrides the guard for free payments: `addOrderPayment`
+	// pre-stamps `paidAt` at creation for `paymentMethod === 'free'`, so `alreadyPaid` reads true
+	// on the very first call and the naked guard would swallow the webhook (issue #2647 review).
+	// `.catch()` is mandatory: the helper's product query and Promise.all sit outside its internal
+	// per-target try/catch, so a Mongo hiccup would otherwise be an unhandled rejection that
+	// crashes the process — after the payment is already committed.
+	if ((!alreadyPaid || params?.firstPaidTransition) && updated.status === 'paid') {
+		void firePaidOrderWebhooks(updated).catch((err) => {
+			console.error('[paidOrderWebhook] failed to fire for order', updated.number, err);
+		});
+	}
+
+	return updated;
 }
 
 export async function onOrderPaymentFailed(
@@ -746,6 +779,7 @@ export async function createOrder(
 		onLocation?: boolean;
 		paymentTimeOut?: number;
 		posSubtype?: string;
+		customPaymentMethodId?: string;
 		peopleCountFromPosUi?: number;
 		session?: ClientSession;
 		promoCode?: string;
@@ -1449,7 +1483,9 @@ export async function createOrder(
 			items: items.map((item, i) => ({
 				_id: item._id,
 				quantity: item.quantity,
-				product: item.product,
+				// Strip the webhook config (shared secret) — orders are dumped verbatim by the admin
+				// JSON endpoint and live in plaintext Mongo; the fire path re-reads the live product.
+				product: stripPaidOrderWebhook(item.product),
 				customPrice: item.customPrice,
 				chosenVariations: item.chosenVariations,
 				depositPercentage: item.depositPercentage,
@@ -1531,7 +1567,11 @@ export async function createOrder(
 			})),
 			...(params.shippingAddress && { shippingAddress: params.shippingAddress }),
 			...(billingAddress && { billingAddress: billingAddress }),
-			...(priceInfo.vat.length && { vat: priceInfo.vat }),
+			...(priceInfo.vat.length && {
+				// Store only the per-rate breakdown; amounts are snapshotted per configured currency
+				// in currencySnapshot.*.vat (issue #2492), never in the internal SAT unit.
+				vat: priceInfo.vat.map(({ rate, country }) => ({ rate, country }))
+			}),
 			...(shippingPrice
 				? {
 						shippingPrice
@@ -1790,7 +1830,11 @@ export async function createOrder(
 					session,
 					expiresAt,
 					...(paymentMethod === 'point-of-sale' &&
-						params.posSubtype && { posSubtype: params.posSubtype })
+						params.posSubtype && { posSubtype: params.posSubtype }),
+					...(paymentMethod === 'custom' &&
+						params.customPaymentMethodId && {
+							customPaymentMethodId: params.customPaymentMethodId
+						})
 				}
 			);
 			order.payments.push(orderPayment);
@@ -1935,10 +1979,11 @@ async function generatePaymentInfo(params: {
 		}
 	}
 
-	// Fallback for methods without SDK: point-of-sale, free, bank-transfer
+	// Fallback for methods without SDK: point-of-sale, free, bank-transfer, custom
 	switch (params.method) {
 		case 'point-of-sale':
 		case 'free':
+		case 'custom':
 			return {};
 		case 'bank-transfer':
 			return { address: runtimeConfig.sellerIdentity?.bank?.iban };
@@ -1954,7 +1999,9 @@ export function paymentMethodExpiration(
 	paymentMethod: PaymentMethod,
 	opts?: { paymentTimeout?: number }
 ) {
-	return paymentMethod === 'point-of-sale' || paymentMethod === 'bank-transfer'
+	return paymentMethod === 'point-of-sale' ||
+		paymentMethod === 'bank-transfer' ||
+		paymentMethod === 'custom'
 		? undefined
 		: paymentMethod === 'lightning' &&
 		  isPhoenixdConfigured() &&
@@ -1974,6 +2021,7 @@ function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
 		case 'point-of-sale':
 		case 'free':
 		case 'bank-transfer':
+		case 'custom':
 			return {
 				amount: toCurrency(runtimeConfig.mainCurrency, price.amount, price.currency),
 				currency: runtimeConfig.mainCurrency
@@ -1998,6 +2046,7 @@ export async function addOrderPayment(
 		expiresAt?: Date | null;
 		session?: ClientSession;
 		posSubtype?: string;
+		customPaymentMethodId?: string;
 		ignorePendingPayments?: boolean;
 	}
 ) {
@@ -2037,6 +2086,21 @@ export async function addOrderPayment(
 	const isFreePayment = paymentMethod === 'free';
 	const paidAt = isFreePayment ? new Date() : undefined;
 
+	// Snapshot the chosen custom method so later config edits/removals don't change this order.
+	const customPaymentMethod =
+		paymentMethod === 'custom' && opts?.customPaymentMethodId
+			? (() => {
+					const chosen = runtimeConfig.customPaymentMethods.find(
+						(m) => m.id === opts.customPaymentMethodId
+					);
+					return {
+						id: opts.customPaymentMethodId,
+						label: chosen?.label ?? '',
+						instructions: chosen?.instructions ?? ''
+					};
+			  })()
+			: undefined;
+
 	const payment: OrderPayment = {
 		_id: paymentId,
 		status: isFreePayment ? 'paid' : 'pending',
@@ -2044,6 +2108,7 @@ export async function addOrderPayment(
 		method: paymentMethod,
 		price: paymentPrice(paymentMethod, priceToPay),
 		...(paymentMethod === 'point-of-sale' && opts?.posSubtype && { posSubtype: opts.posSubtype }),
+		...(customPaymentMethod && { customPaymentMethod }),
 		currencySnapshot: {
 			main: {
 				price: {
@@ -2103,12 +2168,18 @@ export async function addOrderPayment(
 				before: null,
 				after: {
 					method: paymentMethod,
+					...(payment.customPaymentMethod && {
+						customPaymentMethod: {
+							id: payment.customPaymentMethod.id,
+							label: payment.customPaymentMethod.label
+						}
+					}),
 					paymentId: payment._id.toString(),
-					vat: order.vat,
-					totalPrice: order.currencySnapshot?.main?.totalPrice,
+					vat: orderVatAccountingSnapshot(order),
+					totalPrice: orderCurrencyAmounts(order, (entry) => entry.totalPrice),
 					...(order.discount && { discount: order.discount }),
 					...(order.currencySnapshot?.main?.discount && {
-						discountAmount: order.currencySnapshot.main.discount
+						discountAmount: orderCurrencyAmounts(order, (entry) => entry.discount)
 					})
 				},
 				objectId: order._id.toString(),
@@ -2124,7 +2195,10 @@ export async function addOrderPayment(
 	// free payments creating as 'paid'
 	if (isFreePayment) {
 		order.payments.push(payment);
-		await onOrderPayment(order, payment, payment.price, { providedSession: opts?.session });
+		await onOrderPayment(order, payment, payment.price, {
+			providedSession: opts?.session,
+			firstPaidTransition: true
+		});
 	}
 
 	return payment;

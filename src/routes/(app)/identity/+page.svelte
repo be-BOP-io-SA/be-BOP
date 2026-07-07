@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n.js';
+	import { page } from '$app/stores';
+	import { cookieConsentVisible } from '$lib/stores/cookieConsentVisible';
 
 	export let data;
 
@@ -140,6 +142,16 @@
 						/>
 						{t('newsletter.allowPartnerContact')}
 					</label>
+				{/if}
+				{#if $page.data.analyticsSnippetConfigured}
+					<button
+						type="button"
+						class="col-span-3 self-start text-sm hover:underline body-hyperlink flex items-center gap-2"
+						on:click={() => cookieConsentVisible.set(true)}
+					>
+						<span class="text-xl leading-none" aria-hidden="true">🍪</span>
+						{t('cookieConsent.reopenIdentity')}
+					</button>
 				{/if}
 				<input
 					type="submit"
