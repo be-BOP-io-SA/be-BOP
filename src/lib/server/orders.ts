@@ -9,6 +9,7 @@ import {
 } from '$lib/types/Order';
 import { ClientSession, ObjectId, type WithId } from 'mongodb';
 import { collections, withTransaction } from './database';
+import { firePaidOrderWebhooks, stripPaidOrderWebhook } from './order-paid-webhook';
 import {
 	Duration,
 	add,
@@ -25,10 +26,11 @@ import {
 import { runtimeConfig } from './runtime-config';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import {
+	buildPricingScheduleSnapshot,
+	currentFundingReminderSeconds,
 	freeProductsForUser,
 	generateSubscriptionNumber,
-	resolveSubscriptionDuration,
-	resolveSubscriptionReminderSeconds
+	resolveSubscriptionDuration
 } from './subscriptions';
 import {
 	checkProductVariationsIntegrity,
@@ -85,6 +87,7 @@ import type { PaidSubscription } from '$lib/types/PaidSubscription';
 import { resolveProcessor } from './sdk/pp';
 import { pojo } from './pojo';
 import { logAccountingEvent } from './accounting-log';
+import { orderCurrencyAmounts, orderVatAccountingSnapshot } from './orderVatSnapshot';
 
 export async function conflictingTapToPayOrder(orderId: string): Promise<string | null> {
 	const other = await collections.orders.findOne({
@@ -149,6 +152,7 @@ export async function onOrderPayment(
 		tapToPay?: { expiresAt: Date };
 		providedSession?: ClientSession;
 		cashbackAmount?: Price;
+		firstPaidTransition?: boolean;
 	}
 ): Promise<Order> {
 	const invoiceNumber = ((await lastInvoiceNumber()) ?? 0) + 1;
@@ -158,9 +162,14 @@ export async function onOrderPayment(
 	}
 
 	const paidAt = new Date();
-	// For free payments, onOrderPayment is called twice (addOrderPayment + createOrder).
-	// This guard prevents duplicate audit log entries but does not fix the double-call itself.
-	// TODO: remove after fixing the double-call bug
+	// Free payments arrive here with `paidAt` already stamped by addOrderPayment (onOrderPayment
+	// is called twice: addOrderPayment + createOrder). `payment.paidAt` is unset only on the very
+	// first call for a given payment, so this is the reliable "first pending→paid transition"
+	// signal — it dedups the `paymentDone` audit log AND the outbound paid-order webhook below, so
+	// a retry (re-processing the same paid payment) doesn't double-record the event or double-fire
+	// the webhook. (`order.status` can't be used: onOrderPayment rebinds its local `order` from the
+	// DB result and never mutates the caller's copy, so it never observes the flip.)
+	// TODO: remove the double-call itself; this guard papers over it.
 	const alreadyPaid = !!payment.paidAt;
 
 	payment.status = 'paid'; // for isOrderFullyPaid
@@ -409,13 +418,19 @@ export async function onOrderPayment(
 					after: {
 						status: 'paid',
 						method: payment.method,
+						...(payment.customPaymentMethod && {
+							customPaymentMethod: {
+								id: payment.customPaymentMethod.id,
+								label: payment.customPaymentMethod.label
+							}
+						}),
 						paymentId: payment._id.toString(),
 						invoiceNumber,
 						received,
-						vat: order.vat,
+						vat: orderVatAccountingSnapshot(order),
 						...(order.discount && { discount: order.discount }),
 						...(order.currencySnapshot?.main?.discount && {
-							discountAmount: order.currencySnapshot.main.discount
+							discountAmount: orderCurrencyAmounts(order, (entry) => entry.discount)
 						})
 					},
 					objectId: order._id.toString(),
@@ -445,7 +460,26 @@ export async function onOrderPayment(
 
 		return ret.value;
 	};
-	return params?.providedSession ? await fn(params.providedSession) : await withTransaction(fn);
+	const updated = params?.providedSession
+		? await fn(params.providedSession)
+		: await withTransaction(fn);
+
+	// Fire-and-forget per-product paid-order webhook (issue #2646). After the transaction so a
+	// network failure can never roll back the paid status; `!alreadyPaid` fires exactly once per
+	// payment, so re-processing an already-paid order and the free-order double-call don't
+	// double-fire. `firstPaidTransition` overrides the guard for free payments: `addOrderPayment`
+	// pre-stamps `paidAt` at creation for `paymentMethod === 'free'`, so `alreadyPaid` reads true
+	// on the very first call and the naked guard would swallow the webhook (issue #2647 review).
+	// `.catch()` is mandatory: the helper's product query and Promise.all sit outside its internal
+	// per-target try/catch, so a Mongo hiccup would otherwise be an unhandled rejection that
+	// crashes the process — after the payment is already committed.
+	if ((!alreadyPaid || params?.firstPaidTransition) && updated.status === 'paid') {
+		void firePaidOrderWebhooks(updated).catch((err) => {
+			console.error('[paidOrderWebhook] failed to fire for order', updated.number, err);
+		});
+	}
+
+	return updated;
 }
 
 export async function onOrderPaymentFailed(
@@ -477,7 +511,12 @@ export async function onOrderPaymentFailed(
 					})
 			},
 			$unset: {
-				'payments.$.posTapToPay': 1
+				'payments.$.posTapToPay': 1,
+				// If an onchain TX left the mempool without being mined, the payment
+				// expires as if it was never seen — drop the "awaiting confirmation" mark
+				// and the RBF grace timer.
+				'payments.$.awaitingConfirmation': 1,
+				'payments.$.mempoolMissingSince': 1
 			}
 		},
 		{ returnDocument: 'after', session: opts?.session }
@@ -740,6 +779,7 @@ export async function createOrder(
 		onLocation?: boolean;
 		paymentTimeOut?: number;
 		posSubtype?: string;
+		customPaymentMethodId?: string;
 		peopleCountFromPosUi?: number;
 		session?: ClientSession;
 		promoCode?: string;
@@ -890,6 +930,40 @@ export async function createOrder(
 		// POS per-item manual discount has highest priority — preserve it via ??=
 		item.discountPercentage ??= bestAutoDiscount?.discountByProduct.get(item.product._id);
 	}
+
+	// Subscription pricing schedule: override the billed amount with the current phase price
+	// so `computePriceInfo` and downstream totals reflect it. The active phase comes from the
+	// existing subscription's snapshot (renewal path); otherwise the product's own schedule
+	// kicks in at initial purchase. Legacy subs and products without a schedule are unaffected.
+	for (const item of items) {
+		if (item.product.type !== 'subscription') {
+			continue;
+		}
+		const existing = await collections.paidSubscriptions.findOne(
+			{ ...userQuery(params.user), productId: item.product._id },
+			{
+				projection: { pricingScheduleSnapshot: 1, pricingScheduleCursor: 1 },
+				session: params.session
+			}
+		);
+		if (existing?.pricingScheduleSnapshot && !existing.cancelledAt) {
+			const cursor = existing.pricingScheduleCursor ?? 0;
+			const phase = existing.pricingScheduleSnapshot.phases[cursor];
+			if (phase) {
+				item.customPrice = {
+					amount: phase.priceAmount,
+					currency: existing.pricingScheduleSnapshot.currency
+				};
+			}
+		} else if (!existing && item.product.pricingSchedule?.length) {
+			const phase = item.product.pricingSchedule[0];
+			item.customPrice = {
+				amount: phase.priceAmount,
+				currency: item.product.price.currency
+			};
+		}
+	}
+
 	const priceInfo = computePriceInfo(items, {
 		bebopCountry: runtimeConfig.vatCountry,
 		deliveryFees: shippingPrice,
@@ -988,16 +1062,17 @@ export async function createOrder(
 			);
 		}
 
-		const existingSubscription = await collections.paidSubscriptions.findOne({
-			...userQuery(params.user),
-			productId: product._id
-		});
+		const existingSubscription = await collections.paidSubscriptions.findOne(
+			{
+				...userQuery(params.user),
+				productId: product._id
+			},
+			{ session: params.session }
+		);
 
 		if (existingSubscription) {
-			if (
-				subSeconds(existingSubscription.paidUntil, resolveSubscriptionReminderSeconds(product)) >
-				new Date()
-			) {
+			const reminderSeconds = currentFundingReminderSeconds(existingSubscription, product);
+			if (subSeconds(existingSubscription.paidUntil, reminderSeconds) > new Date()) {
 				throw error(
 					400,
 					'You already have an active subscription for this product: ' +
@@ -1408,7 +1483,9 @@ export async function createOrder(
 			items: items.map((item, i) => ({
 				_id: item._id,
 				quantity: item.quantity,
-				product: item.product,
+				// Strip the webhook config (shared secret) — orders are dumped verbatim by the admin
+				// JSON endpoint and live in plaintext Mongo; the fire path re-reads the live product.
+				product: stripPaidOrderWebhook(item.product),
 				customPrice: item.customPrice,
 				chosenVariations: item.chosenVariations,
 				depositPercentage: item.depositPercentage,
@@ -1490,7 +1567,11 @@ export async function createOrder(
 			})),
 			...(params.shippingAddress && { shippingAddress: params.shippingAddress }),
 			...(billingAddress && { billingAddress: billingAddress }),
-			...(priceInfo.vat.length && { vat: priceInfo.vat }),
+			...(priceInfo.vat.length && {
+				// Store only the per-rate breakdown; amounts are snapshotted per configured currency
+				// in currencySnapshot.*.vat (issue #2492), never in the internal SAT unit.
+				vat: priceInfo.vat.map(({ rate, country }) => ({ rate, country }))
+			}),
 			...(shippingPrice
 				? {
 						shippingPrice
@@ -1749,7 +1830,11 @@ export async function createOrder(
 					session,
 					expiresAt,
 					...(paymentMethod === 'point-of-sale' &&
-						params.posSubtype && { posSubtype: params.posSubtype })
+						params.posSubtype && { posSubtype: params.posSubtype }),
+					...(paymentMethod === 'custom' &&
+						params.customPaymentMethodId && {
+							customPaymentMethodId: params.customPaymentMethodId
+						})
 				}
 			);
 			order.payments.push(orderPayment);
@@ -1781,12 +1866,80 @@ export async function createOrder(
 				await refreshAvailableStockInDb(product._id, session);
 			}
 		}
-		if (orderPayment?.method === 'free') {
-			await onOrderPayment(order, orderPayment, orderPayment.price, { providedSession: session });
-		}
 	});
 
 	return orderId;
+}
+
+/**
+ * Thrown when a payment record cannot be created/initialised against a PSP.
+ * Caller routes catch it and surface a friendly banner instead of a 402 error page.
+ *
+ * TODO(#2546): classify the cause so the UI can vary the wording.
+ * `kind` should become one of:
+ *  - 'transient' (PSP 5xx, timeout, ECONNREFUSED, 429) → "try again later"
+ *  - 'config' (401/403/400 from PSP, invalid credentials, bad amount) → "contact the shop"
+ *  - 'unknown' (anything else, fallback transient)
+ * Done generically for now since the inner errors aren't typed enough to discriminate safely.
+ */
+export class PaymentGenerationError extends Error {
+	readonly method: PaymentMethod;
+	readonly reason: string;
+	constructor(method: PaymentMethod, reason: string, cause?: unknown) {
+		super(`Payment generation failed for method ${method}: ${reason}`);
+		this.name = 'PaymentGenerationError';
+		this.method = method;
+		this.reason = reason;
+		if (cause) {
+			(this as { cause?: unknown }).cause = cause;
+		}
+	}
+}
+
+/**
+ * Notifies the super-admin (shop owner) that a payment couldn't be initiated against a PSP.
+ *
+ * Pattern lifted from the existing "NEW DISCOUNT" notification at the top of `createOrder`:
+ * insert a row directly into `emailNotifications` with hardcoded HTML, no template lookup.
+ *
+ * Important — we deliberately do NOT include the raw provider error in the email body.
+ * Several PSPs echo back the submitted credential in their error responses (e.g. Stripe
+ * "Invalid API Key provided: sk_..."), and the email can be intercepted, forwarded,
+ * indexed by webmail providers or shared in a multi-recipient inbox. The shopowner
+ * gets enough information here (method, context, order link) to know where to look; the
+ * raw error is still printed to the server logs via the route-level `console.error`.
+ *
+ * TODO(#2546): templatise this once we have a proper admin-managed template for it. Should be
+ * folded into the broader email-notifications rework drafted in PR #1979 — that PR introduces
+ * a generic notification pipeline that will absorb this hardcoded insert as well as the discount
+ * one above.
+ */
+export async function notifySuperAdminPaymentFailure(params: {
+	method: PaymentMethod;
+	context: string;
+	orderId?: string;
+}): Promise<void> {
+	const dest = runtimeConfig.sellerIdentity?.contact.email || SMTP_USER;
+	if (!dest) {
+		return;
+	}
+	const orderLine = params.orderId
+		? `<p>Order: <a href="${ORIGIN}/order/${params.orderId}">${params.orderId}</a></p>`
+		: '';
+	await collections.emailNotifications.insertOne({
+		_id: new ObjectId(),
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		subject: 'PAYMENT GENERATION FAILED',
+		htmlContent:
+			`<p>A payment could not be initiated.</p>` +
+			`<p>Context: ${params.context}</p>` +
+			`<p>Method: ${params.method}</p>` +
+			orderLine +
+			`<p>Please review the configuration of the corresponding payment processor in /admin. ` +
+			`The provider error message is available in the server logs.</p>`,
+		dest
+	});
 }
 
 async function generatePaymentInfo(params: {
@@ -1818,19 +1971,27 @@ async function generatePaymentInfo(params: {
 			});
 			return { ...result, processor: pp.meta.processor };
 		} catch (err) {
-			throw error(402, err instanceof Error ? err.message : 'Payment creation failed');
+			throw new PaymentGenerationError(
+				params.method,
+				err instanceof Error ? err.message : 'Payment creation failed',
+				err
+			);
 		}
 	}
 
-	// Fallback for methods without SDK: point-of-sale, free, bank-transfer
+	// Fallback for methods without SDK: point-of-sale, free, bank-transfer, custom
 	switch (params.method) {
 		case 'point-of-sale':
 		case 'free':
+		case 'custom':
 			return {};
 		case 'bank-transfer':
 			return { address: runtimeConfig.sellerIdentity?.bank?.iban };
 		default:
-			throw error(402, `No payment processor available for method ${params.method}`);
+			throw new PaymentGenerationError(
+				params.method,
+				`No payment processor available for method ${params.method}`
+			);
 	}
 }
 
@@ -1838,7 +1999,9 @@ export function paymentMethodExpiration(
 	paymentMethod: PaymentMethod,
 	opts?: { paymentTimeout?: number }
 ): Date | undefined {
-	return paymentMethod === 'point-of-sale' || paymentMethod === 'bank-transfer'
+	return paymentMethod === 'point-of-sale' ||
+		paymentMethod === 'bank-transfer' ||
+		paymentMethod === 'custom'
 		? undefined
 		: paymentMethod === 'lightning' &&
 		  isPhoenixdConfigured() &&
@@ -1858,12 +2021,16 @@ function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
 		case 'point-of-sale':
 		case 'free':
 		case 'bank-transfer':
+		case 'custom':
 			return {
 				amount: toCurrency(runtimeConfig.mainCurrency, price.amount, price.currency),
 				currency: runtimeConfig.mainCurrency
 			};
 		default:
-			throw error(402, `No payment processor configured for method ${paymentMethod}`);
+			throw new PaymentGenerationError(
+				paymentMethod,
+				`No payment processor configured for method ${paymentMethod}`
+			);
 	}
 }
 
@@ -1879,6 +2046,7 @@ export async function addOrderPayment(
 		expiresAt?: Date | null;
 		session?: ClientSession;
 		posSubtype?: string;
+		customPaymentMethodId?: string;
 		ignorePendingPayments?: boolean;
 	}
 ): Promise<OrderPayment> {
@@ -1918,6 +2086,21 @@ export async function addOrderPayment(
 	const isFreePayment = paymentMethod === 'free';
 	const paidAt = isFreePayment ? new Date() : undefined;
 
+	// Snapshot the chosen custom method so later config edits/removals don't change this order.
+	const customPaymentMethod =
+		paymentMethod === 'custom' && opts?.customPaymentMethodId
+			? (() => {
+					const chosen = runtimeConfig.customPaymentMethods.find(
+						(m) => m.id === opts.customPaymentMethodId
+					);
+					return {
+						id: opts.customPaymentMethodId,
+						label: chosen?.label ?? '',
+						instructions: chosen?.instructions ?? ''
+					};
+			  })()
+			: undefined;
+
 	const payment: OrderPayment = {
 		_id: paymentId,
 		status: isFreePayment ? 'paid' : 'pending',
@@ -1925,6 +2108,7 @@ export async function addOrderPayment(
 		method: paymentMethod,
 		price: paymentPrice(paymentMethod, priceToPay),
 		...(paymentMethod === 'point-of-sale' && opts?.posSubtype && { posSubtype: opts.posSubtype }),
+		...(customPaymentMethod && { customPaymentMethod }),
 		currencySnapshot: {
 			main: {
 				price: {
@@ -1984,12 +2168,18 @@ export async function addOrderPayment(
 				before: null,
 				after: {
 					method: paymentMethod,
+					...(payment.customPaymentMethod && {
+						customPaymentMethod: {
+							id: payment.customPaymentMethod.id,
+							label: payment.customPaymentMethod.label
+						}
+					}),
 					paymentId: payment._id.toString(),
-					vat: order.vat,
-					totalPrice: order.currencySnapshot?.main?.totalPrice,
+					vat: orderVatAccountingSnapshot(order),
+					totalPrice: orderCurrencyAmounts(order, (entry) => entry.totalPrice),
 					...(order.discount && { discount: order.discount }),
 					...(order.currencySnapshot?.main?.discount && {
-						discountAmount: order.currencySnapshot.main.discount
+						discountAmount: orderCurrencyAmounts(order, (entry) => entry.discount)
 					})
 				},
 				objectId: order._id.toString(),
@@ -2005,7 +2195,10 @@ export async function addOrderPayment(
 	// free payments creating as 'paid'
 	if (isFreePayment) {
 		order.payments.push(payment);
-		await onOrderPayment(order, payment, payment.price, { providedSession: opts?.session });
+		await onOrderPayment(order, payment, payment.price, {
+			providedSession: opts?.session,
+			firstPaidTransition: true
+		});
 	}
 
 	return payment;
@@ -2040,20 +2233,41 @@ function getSubscriptionDuration(product: {
 	return durations[resolveSubscriptionDuration(product)];
 }
 
+function pricingPhaseDuration(value: number, unit: SubscriptionDuration): Duration {
+	switch (unit) {
+		case 'hour':
+			return { hours: value };
+		case 'day':
+			return { days: value };
+		case 'week':
+			return { weeks: value };
+		case 'month':
+			return { months: value };
+		case 'year':
+			return { years: value };
+	}
+}
+
 async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSession) {
 	const subscriptionProducts = order.items.filter((item) => item.product.type === 'subscription');
 	const existingSubscriptions = await collections.paidSubscriptions
-		.find({
-			...userQuery(order.user),
-			productId: { $in: order.items.map((item) => item.product._id) }
-		})
+		.find(
+			{
+				...userQuery(order.user),
+				productId: { $in: order.items.map((item) => item.product._id) }
+			},
+			{ session }
+		)
 		.toArray();
 	const discounts = await collections.discounts
-		.find({
-			subscriptionIds: {
-				$in: subscriptionProducts.map((sub) => sub.product._id)
-			}
-		})
+		.find(
+			{
+				subscriptionIds: {
+					$in: subscriptionProducts.map((sub) => sub.product._id)
+				}
+			},
+			{ session }
+		)
 		.toArray();
 	for (const subscription of subscriptionProducts) {
 		const discountsForSubscription = discounts.filter((discount) =>
@@ -2067,23 +2281,52 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, updatedFreeProductsById);
 			}
-			const newPaidUntil = add(
-				max([existing.paidUntil, new Date()]),
-				getSubscriptionDuration(subscription.product)
-			);
+
+			// Advance through the snapshot when this subscription still has phases to consume
+			// AND was not cancelled. Cancellation burns the schedule: on re-activation, billing
+			// reverts to the product's normal cycle and the snapshot is cleared so the phases
+			// don't resume on future renewals. Legacy subs (no snapshot) fall through naturally.
+			const currentCursor = existing.pricingScheduleCursor ?? 0;
+			const activePhase = existing.cancelledAt
+				? undefined
+				: existing.pricingScheduleSnapshot?.phases[currentCursor];
+			const extension = activePhase
+				? pricingPhaseDuration(activePhase.value, activePhase.unit)
+				: getSubscriptionDuration(subscription.product);
+			const newPaidUntil = add(max([existing.paidUntil, new Date()]), extension);
 
 			const archivedNotifications = existing.notifications.map((notif) => ({
 				...notif,
 				forPaidUntil: existing.paidUntil
 			}));
 
+			// Optimistic filter on cursor: two racing renewals both read `currentCursor`, so we
+			// require the write-time cursor to still match what we read. If a concurrent renewal
+			// won, `modifiedCount === 0` and the assert below throws — the second payment gets
+			// surfaced as a failed renewal instead of silently corrupting the schedule state.
+			// Only applied to scheduled, non-cancelled subs: legacy subs have no cursor to gate
+			// on, and cancelled reactivations `$unset` the cursor below (no read-modify-write).
+			const guardCursor = !!existing.pricingScheduleSnapshot && !existing.cancelledAt;
 			const result = await collections.paidSubscriptions.updateOne(
-				{ _id: existing._id },
+				{
+					_id: existing._id,
+					...(guardCursor && { pricingScheduleCursor: currentCursor })
+				},
 				{
 					$set: {
 						paidUntil: newPaidUntil,
 						updatedAt: new Date(),
 						notifications: [],
+						// Cursor advances on *every* schedule-carrying renewal (in-schedule or
+						// past-schedule) so `cursor - 1` overshoots `phases.length` for exhausted
+						// subs, at which point `currentFundingReminderSeconds` falls back to the
+						// product-level reminder as documented. Skip on legacy no-schedule subs
+						// (nothing to advance) and on cancelled reactivations (`$unset` below).
+						...(guardCursor && { pricingScheduleCursor: currentCursor + 1 }),
+						...(activePhase && {
+							[`pricingScheduleSnapshot.phases.${currentCursor}.status`]: 'paid',
+							[`pricingScheduleSnapshot.phases.${currentCursor}.orderId`]: order._id
+						}),
 						...(Object.keys(updatedFreeProductsById).length !== 0 && {
 							freeProductsById: updatedFreeProductsById
 						})
@@ -2093,7 +2336,14 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 							notificationHistory: { $each: archivedNotifications }
 						}
 					}),
-					$unset: { cancelledAt: 1 }
+					$unset: {
+						cancelledAt: 1,
+						...(existing.cancelledAt &&
+							existing.pricingScheduleSnapshot && {
+								pricingScheduleSnapshot: 1,
+								pricingScheduleCursor: 1
+							})
+					}
 				},
 				{ session }
 			);
@@ -2120,16 +2370,34 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 			for (const discount of discountsForSubscription) {
 				addDiscountFreeProducts(discount, freeProductsById);
 			}
+
+			// Fresh subscriber: if the product carries a schedule, snapshot it and bill phase 0.
+			// The cursor is set to 1 because phase 0 was just paid by this very order.
+			// Read the extension from the snapshot rather than the product config: the snapshot
+			// is expanded into unit cycles (a "3 months" phase becomes 3 monthly entries), so
+			// phase 0 always covers a single billing cycle.
+			const snapshot = buildPricingScheduleSnapshot(subscription.product);
+			const firstPhase = snapshot?.phases[0];
+			const extension = firstPhase
+				? pricingPhaseDuration(firstPhase.value, firstPhase.unit)
+				: getSubscriptionDuration(subscription.product);
+			// Phase 0 is paid by this very order; stamp it directly on the snapshot so a customer
+			// visiting the subscription can trace the first cycle back to the funding order.
+			if (snapshot) {
+				snapshot.phases[0] = { ...snapshot.phases[0], status: 'paid', orderId: order._id };
+			}
+
 			await collections.paidSubscriptions.insertOne(
 				{
 					_id: crypto.randomUUID(),
 					number: await generateSubscriptionNumber(),
 					user: order.user,
 					productId: subscription.product._id,
-					paidUntil: add(new Date(), getSubscriptionDuration(subscription.product)),
+					paidUntil: add(new Date(), extension),
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					notifications: [],
+					...(snapshot && { pricingScheduleSnapshot: snapshot, pricingScheduleCursor: 1 }),
 					...(Object.keys(freeProductsById).length !== 0 && { freeProductsById })
 				},
 				{ session }

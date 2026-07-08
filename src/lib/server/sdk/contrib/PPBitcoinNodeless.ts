@@ -18,6 +18,14 @@ import type {
 } from '../pp';
 import type { Order } from '$lib/types/Order';
 
+/**
+ * Once a full-amount TX has been seen in the mempool past the order's expiry deadline,
+ * keep the order alive for this long after the TX disappears. Rides out the brief gap of
+ * an RBF replacement (original evicted, replacement not yet propagated) or a lagging
+ * mempool backend, instead of expiring an order that is actively being paid.
+ */
+const MEMPOOL_DROP_GRACE_MS = 3 * 60 * 1000;
+
 export default {
 	meta: { processor: 'bitcoin-nodeless', method: 'bitcoin', emoji: '₿' },
 
@@ -54,20 +62,58 @@ export default {
 		const received = await getSatoshiReceivedNodeless(
 			payment.address,
 			nConfirmations,
-			order.createdAt,
-			payment.expiresAt
+			order.createdAt
 		);
 
-		if (received.satReceived >= toSatoshis(payment.price.amount, payment.price.currency)) {
+		const required = toSatoshis(payment.price.amount, payment.price.currency);
+
+		if (received.satReceived >= required) {
 			return {
 				status: 'paid',
 				received: { amount: received.satReceived, currency: 'SAT' },
 				transactions: received.transactions
 			};
 		}
-		if (payment.expiresAt < new Date()) {
+
+		const transactions = received.transactions;
+		// Is a full-amount TX present in the mempool right now (unconfirmed / too shallow)?
+		const seenNow = received.pendingSatReceived >= required;
+
+		if (seenNow) {
+			// Funds committed and awaiting confirmation — hold the order, clear any grace timer.
+			return {
+				status: 'pending',
+				awaitingConfirmation: true,
+				mempoolMissingSince: null,
+				transactions
+			};
+		}
+
+		const now = new Date();
+		if (payment.expiresAt < now) {
+			// Past the deadline with no TX in the mempool right now. If we had already seen a
+			// full-amount TX (RBF replacement may be in flight), ride out a short grace window
+			// before expiring; otherwise expire as if the TX was never seen.
+			if (payment.awaitingConfirmation) {
+				const missingSince = payment.mempoolMissingSince ?? now;
+				if (now.getTime() - missingSince.getTime() < MEMPOOL_DROP_GRACE_MS) {
+					return {
+						status: 'pending',
+						awaitingConfirmation: true,
+						mempoolMissingSince: missingSince,
+						transactions
+					};
+				}
+			}
 			return { status: 'expired' };
 		}
-		return { status: 'pending', transactions: received.transactions };
+
+		// Still within the deadline and no full-amount TX in the mempool: plain pending.
+		return {
+			status: 'pending',
+			awaitingConfirmation: false,
+			mempoolMissingSince: null,
+			transactions
+		};
 	}
 } satisfies PaymentProcessorDefinition;

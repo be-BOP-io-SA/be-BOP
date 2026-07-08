@@ -18,6 +18,7 @@
 	import Select from 'svelte-select';
 	import type { LayoutServerData } from '../../routes/(app)/$types';
 	import DeliveryFeesSelector from './DeliveryFeesSelector.svelte';
+	import ProductActionSettingsCards from './ProductActionSettingsCards.svelte';
 	import CurrencyLabel from './CurrencyLabel.svelte';
 	import PriceFieldsWithVat from './PriceFieldsWithVat.svelte';
 	import Editor from '@tinymce/tinymce-svelte';
@@ -41,7 +42,12 @@
 	import { formatDuration } from '$lib/utils/formatDuration';
 	import { formatDistance } from 'date-fns';
 	import { computeVatRate } from '$lib/utils/vat';
-	import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
+	import {
+		SUBSCRIPTION_DURATIONS,
+		subscriptionUnitToSeconds
+	} from '$lib/types/SubscriptionDuration';
+
+	const MAX_PHASE_REMINDER_SECONDS = 7 * 24 * 60 * 60;
 
 	const { t } = useI18n();
 
@@ -59,6 +65,7 @@
 	export let productsWithStock: { _id: string; name: string }[] = [];
 	export let currentBookings: BookingSummary[] = [];
 	export let upcomingBookings: BookingSummary[] = [];
+	export let allowPaidOrderWebhook = false;
 
 	export let product: WithId<PojoObject<Product>> = {
 		_id: '',
@@ -102,6 +109,27 @@
 	let vatProfileId = product.vatProfileId || '';
 	let subscriptionDuration = product.subscriptionDuration || '';
 	let subscriptionReminderSeconds: number | '' = product.subscriptionReminderSeconds || '';
+	let pricingSchedule: NonNullable<Product['pricingSchedule']> = (
+		product.pricingSchedule ?? []
+	).map((p) => ({ ...p }));
+	function addPricingPhase() {
+		pricingSchedule = [
+			...pricingSchedule,
+			{ value: 1, unit: 'month', priceAmount: 0, reminderValue: 7, reminderUnit: 'day' }
+		];
+	}
+	function removePricingPhase(i: number) {
+		pricingSchedule = pricingSchedule.filter((_, idx) => idx !== i);
+	}
+	function movePricingPhase(i: number, dir: -1 | 1) {
+		const j = i + dir;
+		if (j < 0 || j >= pricingSchedule.length) {
+			return;
+		}
+		const copy = [...pricingSchedule];
+		[copy[i], copy[j]] = [copy[j], copy[i]];
+		pricingSchedule = copy;
+	}
 	let formElement: HTMLFormElement;
 	let variationInput: HTMLInputElement[] = [];
 	let disableDateChange = !isNew;
@@ -265,6 +293,9 @@
 	}
 	let hasMaximumPrice = !!product.maximumPrice;
 	let hasBooking = !!product.bookingSpec;
+	let hasPaidOrderWebhook = !!product.paidOrderWebhook;
+	let paidOrderWebhookApiRoute = product.paidOrderWebhook?.apiRoute ?? '';
+	let paidOrderWebhookSecret = product.paidOrderWebhook?.secret ?? '';
 	let existingScheduleId =
 		!!product.bookingSpec && !isNew ? productToScheduleId(product._id) : undefined;
 	let availableDateStr = product.availableDate?.toJSON().slice(0, 10);
@@ -297,6 +328,11 @@
 			sunday: null
 		}
 	};
+	// Default the same-day cutoff hour whenever the operator turns the option on, so the bound
+	// `<input type="time">` has a value to display from the first reactive cycle.
+	$: if (bookingSpec.allowSameDayBooking && !bookingSpec.sameDayBookingMaxHour) {
+		bookingSpec.sameDayBookingMaxHour = '14:00';
+	}
 	let days = typedFromEntries(
 		dayList.map((day) => [
 			day,
@@ -945,6 +981,136 @@
 						</button>
 					</div>
 				{/if}
+
+				{#if product.type === 'subscription'}
+					<div class="border-t border-gray-200 pt-4">
+						<h3 class="text-lg font-semibold">Pricing phases (promotional schedule)</h3>
+						<p class="text-sm text-gray-600 mt-1 mb-3">
+							Optional. Each phase is billed as a separate period at a fixed VAT-excluded price. The
+							first phase is billed at initial purchase, then one phase per renewal. Once the
+							schedule is exhausted, the subscription reverts to the base price and duration set
+							above. Each buyer identity (email or npub) can benefit from the schedule only once for
+							this product.
+						</p>
+
+						{#each pricingSchedule as phase, i}
+							{@const maxReminderSeconds = Math.min(
+								MAX_PHASE_REMINDER_SECONDS,
+								subscriptionUnitToSeconds(1, phase.unit)
+							)}
+							{@const maxReminderValue = Math.floor(
+								maxReminderSeconds / subscriptionUnitToSeconds(1, phase.reminderUnit)
+							)}
+							<div class="border border-gray-300 rounded p-3 mb-2">
+								<div class="flex items-center justify-between mb-2">
+									<span class="font-semibold">Phase {i + 1}</span>
+									<div class="flex gap-1">
+										<button
+											type="button"
+											class="btn btn-gray"
+											disabled={i === 0}
+											on:click={() => movePricingPhase(i, -1)}
+											title="Move up">↑</button
+										>
+										<button
+											type="button"
+											class="btn btn-gray"
+											disabled={i === pricingSchedule.length - 1}
+											on:click={() => movePricingPhase(i, 1)}
+											title="Move down">↓</button
+										>
+										<button
+											type="button"
+											class="btn btn-red"
+											on:click={() => removePricingPhase(i)}
+											title="Delete">🗑</button
+										>
+									</div>
+								</div>
+
+								<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+									<label class="form-label">
+										Duration
+										<div class="flex gap-1">
+											<input
+												type="number"
+												min="1"
+												step="1"
+												class="form-input w-20"
+												max="10"
+												name="pricingSchedule[{i}].value"
+												bind:value={phase.value}
+												required
+											/>
+											<select
+												class="form-input"
+												name="pricingSchedule[{i}].unit"
+												bind:value={phase.unit}
+												required
+											>
+												{#each SUBSCRIPTION_DURATIONS as d}
+													<option value={d}>{d}</option>
+												{/each}
+											</select>
+										</div>
+									</label>
+
+									<label class="form-label">
+										Price (VAT excluded)
+										<input
+											type="number"
+											min="0"
+											step="any"
+											class="form-input"
+											name="pricingSchedule[{i}].priceAmount"
+											bind:value={phase.priceAmount}
+											required
+										/>
+										<span class="text-xs text-gray-500 mt-1 block">
+											Free trial = 0. Currency inherited from the product.
+										</span>
+									</label>
+
+									<label class="form-label">
+										Reminder before end
+										<div class="flex gap-1">
+											<input
+												type="number"
+												min="0"
+												step="1"
+												class="form-input w-20"
+												max={maxReminderValue}
+												name="pricingSchedule[{i}].reminderValue"
+												bind:value={phase.reminderValue}
+												required
+											/>
+											<select
+												class="form-input"
+												name="pricingSchedule[{i}].reminderUnit"
+												bind:value={phase.reminderUnit}
+												required
+											>
+												{#each ['day', 'hour'] as d}
+													<option value={d}>{d}</option>
+												{/each}
+											</select>
+										</div>
+										<span class="text-xs text-gray-500 mt-1 block">0 = no reminder</span>
+									</label>
+								</div>
+							</div>
+						{/each}
+
+						<button
+							type="button"
+							class="btn btn-black"
+							on:click={addPricingPhase}
+							disabled={pricingSchedule.length >= 10}
+						>
+							+ Add phase
+						</button>
+					</div>
+				{/if}
 			</div>
 		</details>
 
@@ -1163,14 +1329,42 @@
 						<div class="bg-indigo-50 p-4 rounded-lg space-y-4">
 							<label class="form-label">
 								Booking slot duration
-								<select name="bookingSpec.slotMinutes" class="form-input">
+								<select
+									name="bookingSpec.slotMinutes"
+									class="form-input"
+									bind:value={bookingSpec.slotMinutes}
+								>
 									{#each bookingSpecSlotOptions as { value, label }}
-										<option {value} selected={product.bookingSpec?.slotMinutes === value}>
+										<option {value}>
 											{label}
 										</option>
 									{/each}
 								</select>
 							</label>
+
+							{#if bookingSpec.slotMinutes === 60 * 24}
+								<label class="form-label flex-row gap-2 items-center">
+									<input
+										type="checkbox"
+										name="bookingSpec.allowSameDayBooking"
+										bind:checked={bookingSpec.allowSameDayBooking}
+									/>
+									<span>Allow booking on same day</span>
+								</label>
+
+								{#if bookingSpec.allowSameDayBooking}
+									<label class="form-label">
+										Max hour for same-day booking (schedule timezone)
+										<input
+											type="time"
+											name="bookingSpec.sameDayBookingMaxHour"
+											class="form-input"
+											bind:value={bookingSpec.sameDayBookingMaxHour}
+											required
+										/>
+									</label>
+								{/if}
+							{/if}
 
 							<label class="form-label">
 								Timezone
@@ -1455,84 +1649,15 @@
 
 				<div>
 					<h4 class="text-lg font-medium text-gray-900 mb-3">Action Settings</h4>
-					<div class="overflow-x-auto">
-						<table class="w-full border border-gray-300 divide-y divide-gray-300 text-sm">
-							<thead class="bg-gray-100">
-								<tr>
-									<th class="py-3 px-4 text-left font-medium text-gray-700">Action</th>
-									<th class="py-3 px-4 text-center font-medium text-gray-700">E-shop</th>
-									<th class="py-3 px-4 text-center font-medium text-gray-700">Retail (POS)</th>
-									<th class="py-3 px-4 text-center font-medium text-gray-700">Google Shopping</th>
-									<th class="py-3 px-4 text-center font-medium text-gray-700">Nostr-bot</th>
-								</tr>
-							</thead>
-							<tbody class="divide-y divide-gray-200">
-								<tr>
-									<td class="py-3 px-4 font-medium text-gray-700">Product is visible</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.eShop.visible}
-											name="eshopVisible"
-											class="form-checkbox"
-										/>
-									</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.retail.visible}
-											name="retailVisible"
-											class="form-checkbox"
-										/>
-									</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.googleShopping.visible}
-											name="googleShoppingVisible"
-											class="form-checkbox"
-										/>
-									</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.nostr.visible}
-											name="nostrVisible"
-											class="form-checkbox"
-										/>
-									</td>
-								</tr>
-								<tr>
-									<td class="py-3 px-4 font-medium text-gray-700">Can be added to basket</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.eShop.canBeAddedToBasket}
-											name="eshopBasket"
-											class="form-checkbox"
-										/>
-									</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.retail.canBeAddedToBasket}
-											name="retailBasket"
-											class="form-checkbox"
-										/>
-									</td>
-									<td class="py-3 px-4 text-center text-gray-400">—</td>
-									<td class="py-3 px-4 text-center">
-										<input
-											type="checkbox"
-											bind:checked={product.actionSettings.nostr.canBeAddedToBasket}
-											name="nostrBasket"
-											class="form-checkbox"
-										/>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+					<ProductActionSettingsCards
+						bind:eshopVisible={product.actionSettings.eShop.visible}
+						bind:retailVisible={product.actionSettings.retail.visible}
+						bind:googleShoppingVisible={product.actionSettings.googleShopping.visible}
+						bind:nostrVisible={product.actionSettings.nostr.visible}
+						bind:eshopBasket={product.actionSettings.eShop.canBeAddedToBasket}
+						bind:retailBasket={product.actionSettings.retail.canBeAddedToBasket}
+						bind:nostrBasket={product.actionSettings.nostr.canBeAddedToBasket}
+					/>
 				</div>
 			</div>
 		</details>
@@ -1777,6 +1902,46 @@
 								/>
 							</div>
 						</div>
+					</div>
+				{/if}
+
+				{#if allowPaidOrderWebhook}
+					<div>
+						<h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
+							Paid-order webhook
+						</h4>
+						<label class="checkbox-label">
+							<input type="checkbox" bind:checked={hasPaidOrderWebhook} class="form-checkbox" />
+							This will trigger an API call once order is paid
+						</label>
+						{#if hasPaidOrderWebhook}
+							<div class="space-y-2 pl-6 mt-2">
+								<label class="form-label">
+									API route
+									<input
+										type="url"
+										name="paidOrderWebhook.apiRoute"
+										class="form-input"
+										placeholder="https://example.com/webhooks/order-paid"
+										bind:value={paidOrderWebhookApiRoute}
+										required
+									/>
+								</label>
+								<label class="form-label">
+									Shared secret
+									<input
+										type="password"
+										autocomplete="off"
+										name="paidOrderWebhook.secret"
+										class="form-input"
+										minlength={16}
+										placeholder="HMAC-SHA256 key used by the receiver to verify the signature (min. 16 chars)"
+										bind:value={paidOrderWebhookSecret}
+										required
+									/>
+								</label>
+							</div>
+						{/if}
 					</div>
 				{/if}
 			</div>

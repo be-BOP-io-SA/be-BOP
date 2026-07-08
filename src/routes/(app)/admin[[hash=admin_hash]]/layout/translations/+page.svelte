@@ -1,13 +1,67 @@
 <script lang="ts">
+	import { applyAction, enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import { languageNames, type LanguageKey } from '$lib/translations/index.js';
 	import { MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 
 	export let data;
 
 	let language: LanguageKey = 'fr';
+	let errorMessage = '';
+	let savedNotice = '';
+
+	type LinkRow = { id: string; label: string; href: string; mainLabel: string; mainHref: string };
+	// One row per main-config link (strict 1:1 — links are added/removed in /admin/layout). Rows
+	// are keyed by the link's stable `id`, and the override is matched by id, so reordering main
+	// links never misaligns a translation. `value` holds the current translation; empty means
+	// untranslated — the main label/href shows as placeholder and is the storefront fallback.
+	function buildRows(
+		main: ReadonlyArray<{ id: string; label: string; href: string }> | undefined,
+		translated: ReadonlyArray<{ id: string; label: string; href: string }> | undefined
+	): LinkRow[] {
+		return (main ?? []).map((m) => {
+			const t = translated?.find((x) => x.id === m.id);
+			return {
+				id: m.id,
+				label: t?.label ?? '',
+				href: t?.href ?? '',
+				mainLabel: m.label,
+				mainHref: m.href
+			};
+		});
+	}
+	$: topbarRows = buildRows(data.defaultConfig.topbarLinks, data.config?.[language]?.topbarLinks);
+	$: navbarRows = buildRows(data.defaultConfig.navbarLinks, data.config?.[language]?.navbarLinks);
+	$: footerRows = buildRows(data.defaultConfig.footerLinks, data.config?.[language]?.footerLinks);
 </script>
 
-<form method="post" class="contents">
+<form
+	method="post"
+	class="contents"
+	use:enhance={() => {
+		errorMessage = '';
+		savedNotice = '';
+		return async ({ result }) => {
+			if (result.type === 'failure') {
+				errorMessage =
+					typeof result.data?.errorMessage === 'string' ? result.data.errorMessage : 'Save failed.';
+				return;
+			}
+			if (result.type === 'success') {
+				savedNotice = 'Saved.';
+				await invalidateAll();
+				return;
+			}
+			await applyAction(result);
+		};
+	}}
+>
+	{#if errorMessage}
+		<p class="alert-error" role="alert">{errorMessage}</p>
+	{/if}
+	{#if savedNotice}
+		<p class="alert-success" role="status">{savedNotice}</p>
+	{/if}
 	<label class="form-label">
 		Select Language
 
@@ -54,18 +108,24 @@
 		>
 	</label>
 
+	<p class="text-sm text-gray-600 mt-4">
+		Links themselves are managed in <a href="../layout" class="body-hyperlink underline">Layout</a>;
+		here you only translate the existing labels and (optionally) override the URLs per language.
+	</p>
+
 	<h2 class="text-2xl">Top bar links</h2>
 
-	{#each [...(data.config?.[language]?.topbarLinks ?? []), { href: '', label: '' }] as link, i}
+	{#each topbarRows as row, i}
 		<div class="flex gap-4">
+			<input type="hidden" name="topbarLinks[{i}].id" value={row.id} />
 			<label class="form-label">
 				Text
 				<input
 					type="text"
 					name="topbarLinks[{i}].label"
-					placeholder={data.defaultConfig.topbarLinks[i]?.label ?? ''}
+					placeholder={row.mainLabel}
 					class="form-input"
-					value={link.label}
+					value={row.label}
 				/>
 			</label>
 			<label class="form-label">
@@ -74,8 +134,8 @@
 					type="text"
 					name="topbarLinks[{i}].href"
 					class="form-input"
-					placeholder={data.defaultConfig.topbarLinks[i]?.href ?? ''}
-					value={link.href}
+					placeholder={row.mainHref}
+					value={row.href}
 				/>
 			</label>
 		</div>
@@ -83,16 +143,17 @@
 
 	<h2 class="text-2xl">Nav bar links</h2>
 
-	{#each [...(data.config?.[language]?.navbarLinks ?? []), { href: '', label: '' }] as link, i}
+	{#each navbarRows as row, i}
 		<div class="flex gap-4">
+			<input type="hidden" name="navbarLinks[{i}].id" value={row.id} />
 			<label class="form-label">
 				Text
 				<input
 					type="text"
 					name="navbarLinks[{i}].label"
 					class="form-input"
-					value={link.label}
-					placeholder={data.defaultConfig.navbarLinks[i]?.label ?? ''}
+					value={row.label}
+					placeholder={row.mainLabel}
 				/>
 			</label>
 			<label class="form-label">
@@ -101,8 +162,8 @@
 					type="text"
 					name="navbarLinks[{i}].href"
 					class="form-input"
-					value={link.href}
-					placeholder={data.defaultConfig.navbarLinks[i]?.href ?? ''}
+					value={row.href}
+					placeholder={row.mainHref}
 				/>
 			</label>
 		</div>
@@ -110,16 +171,17 @@
 
 	<h2 class="text-2xl">Footer links</h2>
 
-	{#each [...(data.config?.[language]?.footerLinks ?? []), { href: '', label: '' }] as link, i}
+	{#each footerRows as row, i}
 		<div class="flex gap-4">
+			<input type="hidden" name="footerLinks[{i}].id" value={row.id} />
 			<label class="form-label">
 				Text
 				<input
 					type="text"
 					name="footerLinks[{i}].label"
 					class="form-input"
-					value={link.label}
-					placeholder={data.defaultConfig.footerLinks[i]?.label ?? ''}
+					value={row.label}
+					placeholder={row.mainLabel}
 				/>
 			</label>
 			<label class="form-label">
@@ -128,8 +190,8 @@
 					type="text"
 					name="footerLinks[{i}].href"
 					class="form-input"
-					value={link.href}
-					placeholder={data.defaultConfig.footerLinks[i]?.href ?? ''}
+					value={row.href}
+					placeholder={row.mainHref}
 				/>
 			</label>
 		</div>

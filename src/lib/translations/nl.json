@@ -1,4 +1,24 @@
 {
+	"priceCalendar": {
+		"openTitle": "Prijsgeschiedenis",
+		"tabHistory": "Prijsgeschiedenis",
+		"tabPaid": "Gemiddeld betaalde prijs",
+		"current": "Huidig",
+		"min30": "Min. (30d)",
+		"max30": "Max. (30d)",
+		"vsPrevious": "t.o.v. vorige",
+		"since": "sinds {date}",
+		"meanLabel": "Gemiddeld effectief betaalde prijs:",
+		"belowCatalogue": "{pct}% onder catalogusprijs",
+		"catalogue": "Catalogusprijs",
+		"averagePaid": "Gemiddeld betaald",
+		"error": "Prijsgeschiedenis kon niet worden geladen.",
+		"noHistory": "Nog geen prijsgeschiedenis.",
+		"noSales": "Geen betaalde verkopen om weer te geven.",
+		"close": "Sluiten",
+		"exportCsv": "Exporteren naar CSV",
+		"viewOrders": "Bestellingen bekijken"
+	},
 	"address": {
 		"address": "Adres",
 		"city": "Stad",
@@ -94,7 +114,11 @@
 		"vatNullOutsideSellerCountry": "Importbelastingen moeten bij levering door de klant aan de douane worden betaald.",
 		"vatRate": "Btw-tarief voor {country}",
 		"vatSellerCountry": "Het land is het land van de verkoper.",
-		"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})"
+		"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})",
+		"error": {
+			"BOOKING_SAME_DAY_DISABLED": "Boekingen voor vandaag zijn niet beschikbaar voor dit product.",
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Boekingen voor vandaag zijn niet meer mogelijk na {maxHour}."
+		}
 	},
 	"cartFromUrl": {
 		"close": "Sluiten",
@@ -170,6 +194,7 @@
 		"multiplePaymentMethods": "Maak gebruik van meerdere betaalmethoden",
 		"multiplePaymentMethodsHelpText": "Bij de volgende stap kunt u de betaalmethoden instellen.",
 		"noDeliveryInCountry": "Voor sommige artikelen in uw winkelwagentje is bezorging in uw land niet mogelijk.",
+		"paymentGenerationFailed": "De betaling kon niet worden gestart. Probeer het binnen enkele ogenblikken opnieuw, of neem contact op met de verkoper als het probleem aanhoudt.",
 		"note": {
 			"label": "Laat een briefje achter voor de verkoper",
 			"title": "Opmerking"
@@ -192,6 +217,7 @@
 		},
 		"paymentMethod": {
 			"bank-transfer": "overschrijving",
+			"custom": "Aangepaste betaling",
 			"bitcoin": "Onchain",
 			"card": "Kredietkaart",
 			"cash": "Contant geld",
@@ -592,21 +618,26 @@
 		"paidAt": "Betaald op <0></0>",
 		"paidWith": {
 			"bank-transfer": "Betaald met: geverifieerde bankoverschrijving",
+			"custom": "Betaald met: aangepaste betaalmethode",
+			"customNamed": "Betaald met: {label}",
 			"bitcoin": "Betaald met: Bitcoin on-chain betaling (1 {paymentCurrency} = {exchangeRate} {mainCurrency} op het moment van de bestelling)",
 			"card": "Betaald met: bankkaart",
 			"free": "Niets betaald",
 			"lightning": "Betaald met: Lightning-transactie (1 {paymentCurrency} = {exchangeRate} {mainCurrency} op het moment van de bestelling)",
-			"paypal": "Betaald met: paypal",
+			"paypal": "Betaald met: PayPal",
 			"point-of-sale": "Betaald in de winkel",
 			"taler": "Betaald met: Taler",
 			"osb": "Betaald met: OSB-bankkaart"
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Betaald met: geverifieerde bankoverschrijving",
+			"custom": "Betaald met: aangepaste betaalmethode",
+			"customNamed": "Betaald met: {label}",
 			"bitcoin": "Betaald met: Bitcoin on-chain betaling",
 			"card": "Betaald met: bankkaart",
 			"free": "Niets betaald",
 			"lightning": "Betaald met: Lightning-transactie",
+			"paypal": "Betaald met: PayPal",
 			"point-of-sale": "Betaald in de winkel",
 			"taler": "Betaald met: Taler",
 			"osb": "Betaald met: OSB"
@@ -616,6 +647,11 @@
 			"one": "Na 1 bevestiging wordt de betaling bevestigd.",
 			"other": "De betaling wordt bevestigd na {count} bevestigingen.",
 			"zero": "De betaling wordt bevestigd zonder op bevestigingen te wachten."
+		},
+		"awaitingConfirmationBitcoin": {
+			"one": "Betaling ontvangen — wachten op 1 bevestiging.",
+			"other": "Betaling ontvangen — wachten op {count} bevestigingen.",
+			"zero": "Betaling ontvangen — bevestigen."
 		},
 		"paymentAccountHolder": "Rekeninghouder",
 		"paymentAccountHolderAddress": "Adres",
@@ -630,6 +666,7 @@
 		"paymentLinkGeneric": "Klik hier om mee te betalen",
 		"paymentPaidAt": "Betaling gedaan op {date}",
 		"paymentStatus": {
+			"awaitingConfirmation": "ontvangen, wacht op bevestiging",
 			"canceled": "geannuleerd",
 			"canceledTemplate": "Bestelling geannuleerd!",
 			"expired": "verlopen",
@@ -916,7 +953,11 @@
 			"selectedDate": "Geselecteerd: {date}",
 			"selectedRangeWithAvailable": "{totalDays} dagen geselecteerd, {availableDays} dagen beschikbaar: {dates}",
 			"noAvailableDays": "Geen beschikbare dagen in het geselecteerde bereik",
-			"maxRangeInfo": "Maximale boekingsperiode: {days} dagen"
+			"maxRangeInfo": "Maximale boekingsperiode: {days} dagen",
+			"sameDay": {
+				"disabled": "Boekingen voor vandaag zijn niet beschikbaar voor dit product.",
+				"cutoffPassed": "Boekingen voor vandaag zijn niet meer mogelijk na {maxHour}."
+			}
 		},
 		"checkBackLater": "Kom later nog eens terug",
 		"cta": {
@@ -1094,5 +1135,36 @@
 			"checkboxLabel": "Beacon-signaal naar be-BOP.io Nostr-bot inschakelen om het bestaan van uw winkel te delen",
 			"infoBlock": "Deze instelling bepaalt of uw winkel periodieke signalen naar be-BOP.io verzendt. We waarderen privacy: alleen uw winkel-URL en de be-BOP-softwareversie worden gedeeld. Er worden geen persoonlijke gegevens of klantgegevens verzonden. Dit helpt ons bij het debuggen en laat ons zien dat de be-BOP-gemeenschap groeit."
 		}
+	},
+	"cookieConsent": {
+		"banner": {
+			"ariaLabel": "Cookietoestemming",
+			"dataSentTo": "Sommige van uw bezoekgegevens worden verzonden naar: {hostnames}",
+			"dataSentToFallback": "Deze site gebruikt een analysetool.",
+			"accept": "Accepteren",
+			"deny": "Weigeren",
+			"learnMore": "Meer informatie"
+		},
+		"reopenAria": "Cookievoorkeuren",
+		"reopenIdentity": "Cookievoorkeuren beheren"
+	},
+	"customPaymentMethod": {
+		"title": "Aangepaste betaalmethoden",
+		"help": "Definieer een willekeurig aantal generieke handmatige betaalmethoden, elk met een label en vrije-tekstinstructies die klanten vertellen hoe ze moeten betalen. Klanten zien de instructies van de gekozen methode zonder QR-code, en u valideert elke betaling handmatig vanaf de bestelpagina.",
+		"label": "Label (zichtbaar voor klanten)",
+		"labelPlaceholder": "Naam van de betaalmethode",
+		"instructions": "Instructies (zichtbaar voor klanten)",
+		"instructionsPlaceholder": "Hoe klanten moeten betalen en hoe ze u kunnen bereiken zodat u de betaling kunt bevestigen.",
+		"add": "Betaalmethode toevoegen",
+		"remove": "Verwijderen",
+		"untitled": "Betaalmethode {number}",
+		"empty": "Nog geen aangepaste betaalmethoden. Voeg er een toe om deze bij het afrekenen aan te bieden.",
+		"moveUp": "Omhoog",
+		"moveDown": "Omlaag",
+		"save": "Opslaan",
+		"saved": "Opgeslagen",
+		"errorLabelRequired": "Elke betaalmethode heeft een label nodig.",
+		"removeConfirm": "Deze methode verwijderen?",
+		"cancel": "Annuleren"
 	}
 }

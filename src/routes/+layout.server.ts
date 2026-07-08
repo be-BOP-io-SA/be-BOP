@@ -1,6 +1,8 @@
 import { runtimeConfig, runtimeConfigUpdatedAt } from '$lib/server/runtime-config';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { LayoutServerLoad } from './$types';
+import { getCookieConsent } from '$lib/server/cookies';
+import { extractAnalyticsHostnames } from '$lib/server/analytics-hostnames';
 
 export const load: LayoutServerLoad = async (event) => {
 	const viewportWidth = (() => {
@@ -22,8 +24,20 @@ export const load: LayoutServerLoad = async (event) => {
 		}
 	})();
 
+	const analyticsSnippet = runtimeConfig.analyticsScriptSnippet;
+	const analyticsConsent = getCookieConsent(event.cookies);
+	const analyticsSnippetConfigured = !!analyticsSnippet;
+	const analyticsHostnames = analyticsSnippetConfigured
+		? extractAnalyticsHostnames(analyticsSnippet)
+		: [];
+
 	return {
-		analyticsScriptSnippet: runtimeConfig.analyticsScriptSnippet,
+		// Only emit the raw snippet when the visitor has accepted — this is what the root layout
+		// renders into <head>, so deny / no-choice means no script is even fetched.
+		analyticsScriptSnippet: analyticsConsent === 'accepted' ? analyticsSnippet : '',
+		analyticsSnippetConfigured,
+		analyticsConsent,
+		analyticsHostnames,
 		language: event.locals.language,
 		themeChangeNumber: runtimeConfig.themeChangeNumber,
 		enUpdatedAt: runtimeConfigUpdatedAt[`translations.en`] ?? new Date(0),

@@ -1,4 +1,24 @@
 {
+	"priceCalendar": {
+		"openTitle": "Historique du prix",
+		"tabHistory": "Historique du prix",
+		"tabPaid": "Prix moyen payé",
+		"current": "Actuel",
+		"min30": "Min. (30J)",
+		"max30": "Max. (30J)",
+		"vsPrevious": "vs préc.",
+		"since": "depuis {date}",
+		"meanLabel": "Prix effectif moyen payé :",
+		"belowCatalogue": "{pct} % sous le prix catalogue",
+		"catalogue": "Prix catalogue",
+		"averagePaid": "Prix moyen payé",
+		"error": "Impossible de charger l'historique.",
+		"noHistory": "Pas encore d'historique de prix.",
+		"noSales": "Aucune vente payée à afficher.",
+		"close": "Fermer",
+		"exportCsv": "Exporter en CSV",
+		"viewOrders": "Voir les commandes"
+	},
 	"address": {
 		"address": "Adresse",
 		"city": "Ville",
@@ -94,7 +114,11 @@
 		"vatNullOutsideSellerCountry": "La TVA sur les produits physiques devra être acquitée par le client aux douanes lors de la livraison",
 		"vatRate": "Taux de TVA : {country}",
 		"vatSellerCountry": "La TVA est celle du pays du vendeur.",
-		"maxQuantityReached": "Quantité maximale par commande atteinte ({max})"
+		"maxQuantityReached": "Quantité maximale par commande atteinte ({max})",
+		"error": {
+			"BOOKING_SAME_DAY_DISABLED": "Les réservations pour aujourd'hui ne sont pas disponibles pour ce produit.",
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Les réservations pour aujourd'hui ne sont plus possibles passé {maxHour}."
+		}
 	},
 	"cartFromUrl": {
 		"close": "Fermer",
@@ -170,6 +194,7 @@
 		"multiplePaymentMethods": "Utiliser plusieurs méthodes de paiements",
 		"multiplePaymentMethodsHelpText": "Vous pourrez définir les méthodes de paiement à l'étape suivante.",
 		"noDeliveryInCountry": "La livraison n'est pas disponible dans votre pays pour certains articles de votre panier.",
+		"paymentGenerationFailed": "Le paiement n'a pas pu être initié. Veuillez réessayer dans quelques instants, ou contactez le vendeur de la boutique si le problème persiste.",
 		"note": {
 			"label": "Laissez un message au vendeur",
 			"title": "Note"
@@ -192,6 +217,7 @@
 		},
 		"paymentMethod": {
 			"bank-transfer": "Virement bancaire",
+			"custom": "Paiement personnalisé",
 			"bitcoin": "BTC on-chain",
 			"card": "Carte bancaire",
 			"cash": "Espèces",
@@ -592,21 +618,26 @@
 		"paidAt": "Date de paiement : <0></0>",
 		"paidWith": {
 			"bank-transfer": "Payé avec : virement bancaire vérifié",
+			"custom": "Payé avec : moyen de paiement personnalisé",
+			"customNamed": "Payé avec : {label}",
 			"bitcoin": "Payé avec : Paiement Bitcoin on-chain (1 {paymentCurrency} = {exchangeRate} {mainCurrency} au moment de la commande)",
 			"card": "Payé avec : carte bancaire",
 			"free": "N'a rien payé",
 			"lightning": "Payé avec : Transaction Lightning (1 {paymentCurrency} = {exchangeRate} {mainCurrency} au moment de la commande)",
-			"paypal": "Payé avec: paypal",
+			"paypal": "Payé avec : PayPal",
 			"point-of-sale": "Payé en magasin",
 			"taler": "Payé avec : Taler",
 			"osb": "Payé avec : carte bancaire OSB"
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Payé avec : virement bancaire vérifié",
+			"custom": "Payé avec : moyen de paiement personnalisé",
+			"customNamed": "Payé avec : {label}",
 			"bitcoin": "Payé avec : Paiement Bitcoin on-chain",
 			"card": "Payé avec : carte bancaire",
 			"free": "N'a rien payé",
 			"lightning": "Payé avec : Transaction Lightning",
+			"paypal": "Payé avec : PayPal",
 			"point-of-sale": "Payé en magasin",
 			"taler": "Payé avec : Taler",
 			"osb": "Payé avec : OSB"
@@ -616,6 +647,11 @@
 			"one": "Le paiement sera validé après 1 confirmation.",
 			"other": "Le paiement sera validé après {count} confirmations.",
 			"zero": "Le paiement sera validé sans attendre les confirmations."
+		},
+		"awaitingConfirmationBitcoin": {
+			"one": "Paiement reçu — en attente d'1 confirmation.",
+			"other": "Paiement reçu — en attente de {count} confirmations.",
+			"zero": "Paiement reçu — confirmation en cours."
 		},
 		"paymentAccountHolder": "Titulaire du compte",
 		"paymentAccountHolderAddress": "Adresse",
@@ -630,6 +666,7 @@
 		"paymentLinkGeneric": "Cliquez ici pour payer avec",
 		"paymentPaidAt": "Paiement effectué le {date}",
 		"paymentStatus": {
+			"awaitingConfirmation": "reçu, en attente de confirmation",
 			"canceled": "annulé",
 			"canceledTemplate": "Votre commande a été annulée manuellement en back-office.",
 			"expired": "expiré",
@@ -916,7 +953,11 @@
 			"selectedDate": "Sélectionné: {date}",
 			"selectedRangeWithAvailable": "{totalDays} jours sélectionnés, {availableDays} jours disponibles: {dates}",
 			"noAvailableDays": "Aucun jour disponible dans la plage sélectionnée",
-			"maxRangeInfo": "Période de réservation maximale: {days} jours"
+			"maxRangeInfo": "Période de réservation maximale: {days} jours",
+			"sameDay": {
+				"disabled": "Les réservations pour aujourd'hui ne sont pas disponibles pour ce produit.",
+				"cutoffPassed": "Les réservations pour aujourd'hui ne sont plus possibles passé {maxHour}."
+			}
 		},
 		"checkBackLater": "Veuillez revenir plus tard",
 		"cta": {
@@ -955,6 +996,17 @@
 			"week": "Renouvelé chaque semaine",
 			"month": "Renouvelé chaque mois",
 			"year": "Renouvelé chaque année"
+		},
+		"pricingSchedule": {
+			"intro": "Cette souscription possède plusieurs phases de facturation :",
+			"then": "puis"
+		},
+		"pricingScheduleUnit": {
+			"hour": { "one": "heure", "other": "heures" },
+			"day": { "one": "jour", "other": "jours" },
+			"week": { "one": "semaine", "other": "semaines" },
+			"month": { "one": "mois", "other": "mois" },
+			"year": { "one": "an", "other": "ans" }
 		},
 		"type": {
 			"deposit": "Sur acompte",
@@ -1051,6 +1103,24 @@
 		"lastPayment": "Dernier paiement",
 		"listTitle": "Vos abonnements",
 		"noSubscriptions": "Vous n'avez pas encore d'abonnements.",
+		"nextBilling": "Prochaine facturation : {amount} {currency}",
+		"canRenewFrom": "Vous pourrez renouveler à partir du <0></0>.",
+		"amountFree": "Gratuit",
+		"upcomingPhases": {
+			"title": "Prochaines phases",
+			"range": "du {start} au {end}",
+			"after": "à partir du {start}"
+		},
+		"orderHistory": {
+			"title": "Historique des commandes",
+			"downloadInvoice": "Télécharger la facture"
+		},
+		"payment": {
+			"currentMethod": "Le renouvellement utilisera {method}",
+			"previousUnavailable": "Le précédent mode de paiement ({method}) ne peut plus être utilisé pour ce renouvellement. Choisissez-en un autre ci-dessous.",
+			"chooseMethod": "Mode de paiement",
+			"change": "Changer de mode de paiement"
+		},
 		"singleTitle": "Abonnement #{number}",
 		"status": {
 			"active": "actif",
@@ -1094,5 +1164,36 @@
 			"checkboxLabel": "Activer le signal beacon vers le nostr-bot be-BOP.io pour partager l'existence de votre boutique",
 			"infoBlock": "Ce paramètre contrôle si votre boutique envoie des signaux périodiques à be-BOP.io. Nous valorisons la vie privée : seuls l'URL de votre boutique et la version du logiciel be-BOP sont partagés. Aucune donnée personnelle ou client n'est transmise. Cela nous aide pour le débogage et nous montre que la communauté be-BOP grandit."
 		}
+	},
+	"cookieConsent": {
+		"banner": {
+			"ariaLabel": "Consentement aux cookies",
+			"dataSentTo": "Certaines de vos données de visite sont envoyées à : {hostnames}",
+			"dataSentToFallback": "Ce site utilise un outil de mesure d'audience.",
+			"accept": "Accepter",
+			"deny": "Refuser",
+			"learnMore": "En savoir plus"
+		},
+		"reopenAria": "Préférences de cookies",
+		"reopenIdentity": "Gérer mes préférences de cookies"
+	},
+	"customPaymentMethod": {
+		"title": "Moyens de paiement personnalisés",
+		"help": "Définissez autant de moyens de paiement manuels génériques que nécessaire, chacun avec un libellé et des instructions en texte libre expliquant aux clients comment payer. Les clients voient les instructions du moyen choisi sans QR code, et vous validez chaque paiement manuellement depuis la page de commande.",
+		"label": "Libellé (affiché aux clients)",
+		"labelPlaceholder": "Nom du moyen de paiement",
+		"instructions": "Instructions (affichées aux clients)",
+		"instructionsPlaceholder": "Comment les clients doivent payer, et comment vous joindre pour confirmer le paiement.",
+		"add": "Ajouter un moyen de paiement",
+		"remove": "Supprimer",
+		"untitled": "Moyen de paiement {number}",
+		"empty": "Aucun moyen de paiement personnalisé pour l'instant. Ajoutez-en un pour le proposer au paiement.",
+		"moveUp": "Monter",
+		"moveDown": "Descendre",
+		"save": "Enregistrer",
+		"saved": "Enregistré",
+		"errorLabelRequired": "Chaque moyen de paiement doit avoir un libellé.",
+		"removeConfirm": "Supprimer ce moyen ?",
+		"cancel": "Annuler"
 	}
 }

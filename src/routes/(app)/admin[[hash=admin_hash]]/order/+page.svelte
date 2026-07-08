@@ -13,7 +13,7 @@
 
 <h1 class="text-3xl">List of orders</h1>
 <form class="flex flex-col gap-2" method="GET">
-	<div class="gap-4 flex flex-col md:flex-row">
+	<div class="gap-4 flex flex-col md:flex-row md:flex-wrap">
 		<label class="form-label w-[15em]">
 			Search Order
 			<input

@@ -1,6 +1,10 @@
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
+import type { Product } from '$lib/types/Product';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
-import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
+import {
+	subscriptionUnitToSeconds,
+	type SubscriptionDuration
+} from '$lib/types/SubscriptionDuration';
 import { collections } from './database';
 import { runtimeConfig } from './runtime-config';
 import { userQuery } from './user';
@@ -22,6 +26,33 @@ export function resolveSubscriptionReminderSeconds(product: {
 	subscriptionReminderSeconds?: number;
 }): number {
 	return product.subscriptionReminderSeconds || runtimeConfig.subscriptionReminderSeconds;
+}
+
+/**
+ * Single source of truth for "how long before paidUntil should we start allowing renewal /
+ * sending the reminder email / letting `createOrder` accept the retry?". Cursor points at the
+ * *next* phase to bill, so the phase that funded the current period sits at `cursor - 1` in
+ * the snapshot; cancelled, legacy (no snapshot), and past-schedule subs fall back to the
+ * product-level offset. All three consumers (cron in subscription-lock.ts, canRenew in the
+ * /subscription/{id} loader, the renewal gate in orders.ts) must call this — computing
+ * "current phase" independently is what let the offsets drift previously.
+ */
+export function currentFundingReminderSeconds(
+	subscription: Pick<
+		PaidSubscription,
+		'pricingScheduleSnapshot' | 'pricingScheduleCursor' | 'cancelledAt'
+	>,
+	product: { subscriptionReminderSeconds?: number }
+): number {
+	if (subscription.cancelledAt) {
+		return resolveSubscriptionReminderSeconds(product);
+	}
+	const currentPhaseIndex = (subscription.pricingScheduleCursor ?? 0) - 1;
+	const phase = subscription.pricingScheduleSnapshot?.phases[currentPhaseIndex];
+	if (!phase) {
+		return resolveSubscriptionReminderSeconds(product);
+	}
+	return subscriptionUnitToSeconds(phase.reminderValue, phase.reminderUnit);
 }
 
 export async function freeProductsForUser(
@@ -49,6 +80,35 @@ export async function freeProductsForUser(
 		return acc;
 	}, {});
 }
+
+/**
+ * Builds the snapshot stored on `PaidSubscription` at first payment for a product with a
+ * schedule. Each configured phase `{ value: N, unit, priceAmount, … }` is expanded into N
+ * unit cycles `{ value: 1, unit, priceAmount, … }`, so the runtime bills one cycle per
+ * renewal (e.g. a "3 months at 21 CHF" phase becomes 3 monthly billings of 21 CHF).
+ * The cursor on the subscription therefore always points at a single billing cycle.
+ */
+export function buildPricingScheduleSnapshot(
+	product: Pick<Product, 'pricingSchedule' | 'price'>
+): PaidSubscription['pricingScheduleSnapshot'] {
+	if (!product.pricingSchedule?.length) {
+		return undefined;
+	}
+	return {
+		currency: product.price.currency,
+		phases: product.pricingSchedule.flatMap((p) =>
+			Array.from({ length: p.value }, () => ({
+				value: 1,
+				unit: p.unit,
+				priceAmount: p.priceAmount,
+				reminderValue: p.reminderValue,
+				reminderUnit: p.reminderUnit
+			}))
+		)
+	};
+}
+
+export { subscriptionUnitToSeconds };
 
 export async function generateSubscriptionNumber(): Promise<number> {
 	const res = await collections.runtimeConfig.findOneAndUpdate(

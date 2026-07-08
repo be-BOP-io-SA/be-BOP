@@ -1,11 +1,14 @@
 import { CURRENCIES } from '$lib/types/Currency';
 import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
-import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
+import { SUBSCRIPTION_DURATIONS, subscriptionUnitToSeconds } from '$lib/types/SubscriptionDuration';
+
+const MAX_PHASE_REMINDER_SECONDS = 7 * 24 * 60 * 60;
 import { z } from 'zod';
 import { deliveryFeesSchema } from '../config/delivery/schema';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 import { zodObjectId } from '$lib/server/zod';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
+import { webhookApiRouteIssue } from '$lib/server/webhook-url-guard';
 
 function productBaseSchemaFields() {
 	return {
@@ -79,6 +82,11 @@ function productBaseSchemaFields() {
 					.min(1)
 					.max(24 * 60),
 				maxBookableDays: z.number({ coerce: true }).int().min(0).default(0),
+				allowSameDayBooking: z.boolean({ coerce: true }).default(false),
+				sameDayBookingMaxHour: z
+					.string()
+					.regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/)
+					.default('14:00'),
 				schedule: z.object({
 					timezone: z.enum(Intl.supportedValuesOf('timeZone') as [string, ...string[]]),
 					monday: z
@@ -179,6 +187,37 @@ function productBaseSchemaFields() {
 					.max(24 * 60 * 60 * 7)
 			])
 			.optional(),
+		pricingSchedule: z
+			.array(
+				z
+					.object({
+						value: z.number({ coerce: true }).int().min(1).max(10),
+						unit: z.enum(SUBSCRIPTION_DURATIONS),
+						priceAmount: z.number({ coerce: true }).min(0),
+						reminderValue: z.number({ coerce: true }).int().min(0),
+						// `week`, `month`, `year` never yield a legal reminder under the 7-day cap
+						// (their smallest value already exceeds it), so we don't offer them at all.
+						// Coherent vocabulary: the dropdown mirrors what the cap actually allows.
+						reminderUnit: z.enum(['day', 'hour'])
+					})
+					.refine(
+						(phase) => {
+							const reminderSeconds = subscriptionUnitToSeconds(
+								phase.reminderValue,
+								phase.reminderUnit
+							);
+							const cycleSeconds = subscriptionUnitToSeconds(1, phase.unit);
+							return reminderSeconds <= Math.min(MAX_PHASE_REMINDER_SECONDS, cycleSeconds);
+						},
+						{
+							message:
+								'Phase reminder must be at most 7 days and not exceed the phase cycle duration'
+						}
+					)
+			)
+			.max(10)
+			.optional()
+			.default([]),
 		cta: z
 			.array(
 				z.object({
@@ -226,7 +265,25 @@ function productBaseSchemaFields() {
 		sellDisclaimerTitle: z.string().trim().max(60).optional(),
 		sellDisclaimerReason: z.string().trim().max(10_000).optional(),
 		hideFromSEO: z.boolean({ coerce: true }).default(false),
-		hideDiscountExpiration: z.boolean({ coerce: true }).default(false)
+		hideDiscountExpiration: z.boolean({ coerce: true }).default(false),
+		paidOrderWebhook: z
+			.object({
+				apiRoute: z
+					.string()
+					.trim()
+					.url()
+					.max(2048)
+					.superRefine((val, ctx) => {
+						// Block SSRF/PII-cleartext targets at save time (https-only, no private/loopback host).
+						const issue = webhookApiRouteIssue(val);
+						if (issue) {
+							ctx.addIssue({ code: z.ZodIssueCode.custom, message: issue });
+						}
+					}),
+				// The secret is the HMAC key: a 1-char key makes forged signatures brute-forceable.
+				secret: z.string().trim().min(16).max(256)
+			})
+			.optional()
 	};
 }
 

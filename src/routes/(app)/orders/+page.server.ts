@@ -15,7 +15,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 			payments: order.payments.map((payment) => ({
 				id: payment._id.toString(),
 				status: payment.status,
-				method: payment.method
+				method: payment.method,
+				...(payment.customPaymentMethod && {
+					customPaymentMethod: { label: payment.customPaymentMethod.label }
+				})
 			})),
 			number: order.number,
 			createdAt: order.createdAt,

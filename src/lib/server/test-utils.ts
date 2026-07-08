@@ -14,7 +14,14 @@ export async function cleanDb(): Promise<void> {
 	}
 	await connectPromise;
 	await refreshPromise;
-	await db.dropDatabase();
+	// Empty every collection instead of `db.dropDatabase()`. Dropping the database races background
+	// collection creation — the runtimeConfig change-stream `refresh()` (which seeds default roles /
+	// posPaymentSubtypes) and index creation — which throws "Cannot create collection … database is
+	// in the process of being dropped" (code 215) and "index '_id_' dropped" (code 175) as unhandled
+	// rejections that fail the whole run. Clearing documents gives each test the same clean slate
+	// without ever dropping a collection.
+	const cols = await db.collections();
+	await Promise.all(cols.map((c) => c.deleteMany({})));
 	await createIndexes();
 
 	// Seed exchange rates for tests since defaultExchangeRate is now dynamic

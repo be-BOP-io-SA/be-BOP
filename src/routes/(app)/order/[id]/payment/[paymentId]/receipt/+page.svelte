@@ -369,16 +369,20 @@
 	{/if}
 
 	<div class="mt-4">
-		{t('order.paidWith.' + data.payment.method, {
-			paymentCurrency: data.payment.price.currency,
-			mainCurrency: data.payment.currencySnapshot.accounting
-				? data.payment.currencySnapshot.accounting?.price.currency
-				: data.payment.currencySnapshot.main.price.currency,
-			exchangeRate:
-				(data.payment.currencySnapshot.accounting
-					? data.payment.currencySnapshot.accounting?.price.amount
-					: data.payment.currencySnapshot.main.price.amount) / data.payment.price.amount
-		})}
+		{#if data.payment.method === 'custom' && data.payment.customPaymentMethod?.label}
+			{t('order.paidWith.customNamed', { label: data.payment.customPaymentMethod.label })}
+		{:else}
+			{t('order.paidWith.' + data.payment.method, {
+				paymentCurrency: data.payment.price.currency,
+				mainCurrency: data.payment.currencySnapshot.accounting
+					? data.payment.currencySnapshot.accounting?.price.currency
+					: data.payment.currencySnapshot.main.price.currency,
+				exchangeRate:
+					(data.payment.currencySnapshot.accounting
+						? data.payment.currencySnapshot.accounting?.price.amount
+						: data.payment.currencySnapshot.main.price.amount) / data.payment.price.amount
+			})}
+		{/if}
 	</div>
 
 	<div class="mt-4">

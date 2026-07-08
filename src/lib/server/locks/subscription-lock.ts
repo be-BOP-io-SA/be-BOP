@@ -9,7 +9,7 @@ import { ORIGIN } from '$lib/server/env-config';
 import { Kind } from 'nostr-tools';
 import { queueEmail } from '../email';
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
-import { resolveSubscriptionReminderSeconds } from '../subscriptions';
+import { currentFundingReminderSeconds } from '../subscriptions';
 
 /** Per-product reminder is capped at the same 7 days as the global (see
  * admin/config and product-schema), so this window always catches every
@@ -27,7 +27,11 @@ async function isSubscriptionDueForReminder(
 	if (!product) {
 		return false;
 	}
-	return subSeconds(subscription.paidUntil, resolveSubscriptionReminderSeconds(product)) <= now;
+	const reminderSeconds = currentFundingReminderSeconds(subscription, product);
+	if (reminderSeconds === 0) {
+		return false;
+	}
+	return subSeconds(subscription.paidUntil, reminderSeconds) <= now;
 }
 
 const lock = new Lock('paid-subscriptions');

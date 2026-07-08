@@ -1,6 +1,8 @@
 import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { CURRENCIES, type Currency } from '$lib/types/Currency.js';
+import { rateLimit } from '$lib/server/rateLimit';
+import { testProcessorConnection } from '$lib/server/sdk/test-connection';
 import { z } from 'zod';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -49,5 +51,9 @@ export const actions: Actions = {
 			publicKey: '',
 			currency: 'EUR'
 		};
+	},
+	testConnection: async function ({ locals }) {
+		rateLimit(locals.clientIp, 'pp.test.stripe', 5, { minutes: 1 });
+		return await testProcessorConnection('stripe');
 	}
 };

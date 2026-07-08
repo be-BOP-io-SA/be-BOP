@@ -1,5 +1,7 @@
 import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { rateLimit } from '$lib/server/rateLimit';
+import { testProcessorConnection } from '$lib/server/sdk/test-connection';
 import { z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -46,5 +48,9 @@ export const actions: Actions = {
 			password: '',
 			hmacKey: ''
 		};
+	},
+	testConnection: async function ({ locals }) {
+		rateLimit(locals.clientIp, 'pp.test.osb', 5, { minutes: 1 });
+		return await testProcessorConnection('osb');
 	}
 };

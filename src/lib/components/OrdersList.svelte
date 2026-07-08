@@ -41,7 +41,10 @@
 				#{order.number.toLocaleString($locale)}
 			</a>
 			- {#each order.payments as payment}
-				<span title={t('checkout.paymentMethod.' + payment.method)}
+				<span
+					title={payment.method === 'custom' && payment.customPaymentMethod?.label
+						? payment.customPaymentMethod.label
+						: t('checkout.paymentMethod.' + payment.method)}
 					>{PAYMENT_METHOD_EMOJI[payment.method]}</span
 				>
 			{:else}
@@ -81,7 +84,7 @@
 			{/if}
 			{#if adminPrefix}
 				{#each order.payments as payment}
-					{#if payment.status === 'pending' && (payment.method === 'point-of-sale' || payment.method === 'bank-transfer')}
+					{#if payment.status === 'pending' && (payment.method === 'point-of-sale' || payment.method === 'bank-transfer' || payment.method === 'custom')}
 						<form
 							action="{adminPrefix}/order/{order._id}/payment/{payment.id}?/confirm"
 							method="post"

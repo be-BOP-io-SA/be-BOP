@@ -6,6 +6,7 @@ import { addYears } from 'date-fns';
 import { SvelteKitAuth } from '@auth/sveltekit';
 import { flatten } from 'flat';
 import { adminPrefix as _adminPrefix } from '$lib/server/admin';
+import { isAdminPathDisabled } from '$lib/server/admin-disabled';
 import '$lib/server/locks';
 import '$lib/server/sdk/pp-registry';
 import { refreshPromise, runtimeConfig } from '$lib/server/runtime-config';
@@ -274,7 +275,16 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 			throw error(403, 'Your role does not exist in DB.');
 		}
 
+		if (isAdminPathDisabled(event.url.pathname, runtimeConfig.disabledAdminEntries)) {
+			throw error(404, 'This admin section is disabled on this deployment.');
+		}
+
+		// User-self endpoints (per-user prefs) only need an admin login, no role permission.
+		const normalizedAdminPath = event.url.pathname.replace(/^\/admin-[a-zA-Z0-9]+/, '/admin');
+		const isUserSelfAdminEndpoint = normalizedAdminPath === '/admin/back-office-bookmark';
+
 		if (
+			!isUserSelfAdminEndpoint &&
 			!isAllowedOnPage(
 				event.locals.user.role,
 				event.url.pathname,

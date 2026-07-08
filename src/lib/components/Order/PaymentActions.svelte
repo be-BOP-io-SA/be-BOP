@@ -150,13 +150,13 @@
 					/>
 				{/if}
 
-				<!-- POS detail input -->
-				{#if payment.method === 'point-of-sale'}
+				<!-- POS / custom detail input -->
+				{#if payment.method === 'point-of-sale' || payment.method === 'custom'}
 					<input
 						class="form-input grow mx-2"
 						type="text"
 						name="detail"
-						required={detailRequired}
+						required={payment.method === 'point-of-sale' && detailRequired}
 						placeholder={posMode
 							? t('pos.input.detail')
 							: 'Detail (card transaction ID, or point-of-sale payment method)'}
@@ -192,8 +192,8 @@
 					{t(posMode ? 'pos.btn.cancel' : 'pos.cta.cancelOrder')}
 				</button>
 
-				<!-- Mark paid button (POS + bank-transfer only) -->
-				{#if payment.method === 'point-of-sale' || payment.method === 'bank-transfer'}
+				<!-- Mark paid button (POS + bank-transfer + custom) -->
+				{#if payment.method === 'point-of-sale' || payment.method === 'bank-transfer' || payment.method === 'custom'}
 					<button
 						type="submit"
 						class="btn btn-black"
@@ -323,8 +323,8 @@
 		{/if}
 	{/if}
 
-	<!-- Paid payment detail editor (staff only, POS + bank-transfer) -->
-	{#if payment.status === 'paid' && roleIsStaff && (payment.method === 'point-of-sale' || payment.method === 'bank-transfer')}
+	<!-- Paid payment detail editor (staff only, POS + bank-transfer + custom) -->
+	{#if payment.status === 'paid' && roleIsStaff && (payment.method === 'point-of-sale' || payment.method === 'bank-transfer' || payment.method === 'custom')}
 		<form
 			action="{orderStaffActionBaseUrl}/payment/{payment.id}?/updatePaymentDetail"
 			method="post"

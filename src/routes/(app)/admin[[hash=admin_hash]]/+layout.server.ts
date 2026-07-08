@@ -2,6 +2,7 @@ import { adminPrefix } from '$lib/server/admin.js';
 import { isBitcoinConfigured } from '$lib/server/bitcoind';
 import { collections } from '$lib/server/database.js';
 import { isLndConfigured } from '$lib/server/lnd.js';
+import { isPaidOrderWebhookEnabled } from '$lib/server/order-paid-webhook';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { s3IsConfigured } from '$lib/server/s3.js';
@@ -77,11 +78,22 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	 */
 	return {
 		productActionSettings: runtimeConfig.productActionSettings,
+		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		availablePaymentMethods: paymentMethods({ includePOS: true }),
 		role: locals.user?.roleId ? collections.roles.findOne({ _id: locals.user.roleId }) : null,
 		adminPrefix: adminPrefix(),
 		isBitcoinConfigured,
 		isLndConfigured: isLndConfigured(),
-		s3IsConfigured: !!s3IsConfigured()
+		allowPaidOrderWebhook: isPaidOrderWebhookEnabled(),
+		s3IsConfigured: !!s3IsConfigured(),
+		disabledAdminEntries: runtimeConfig.disabledAdminEntries,
+		backOfficeBookmarks: locals.user
+			? collections.users
+					.findOne(
+						{ _id: locals.user._id },
+						{ projection: { 'userSettings.backOfficeBookmarks': 1 } }
+					)
+					.then((u) => u?.userSettings?.backOfficeBookmarks ?? [])
+			: []
 	};
 };

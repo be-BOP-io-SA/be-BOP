@@ -55,6 +55,14 @@ export interface CheckoutStatus {
 	redirectAfterPaid?: string;
 }
 
+/**
+ * Swiss Bitcoin Pay's HTTP API can hang for several minutes on bad credentials or
+ * network blips — there is no SDK-level timeout. We enforce one here so the customer
+ * checkout (and the admin "test connection" button) fail fast instead of stalling
+ * behind a reverse-proxy 5xx (see #2546).
+ */
+const SBP_HTTP_TIMEOUT_MS = 15_000;
+
 export async function sbpCreateCheckout(request: CheckoutRequest): Promise<CheckoutResponse> {
 	if (!isSwissBitcoinPayConfigured()) {
 		throw new Error('Swiss Bitcoin Pay is not enabled');
@@ -67,7 +75,8 @@ export async function sbpCreateCheckout(request: CheckoutRequest): Promise<Check
 			'api-key': runtimeConfig.swissBitcoinPay.apiKey,
 			'user-agent': `be-BOP`
 		},
-		body: JSON.stringify(request)
+		body: JSON.stringify(request),
+		signal: AbortSignal.timeout(SBP_HTTP_TIMEOUT_MS)
 	});
 
 	if (!response.ok) {
@@ -78,7 +87,8 @@ export async function sbpCreateCheckout(request: CheckoutRequest): Promise<Check
 
 export async function sbpGetCheckoutStatus(id: string): Promise<CheckoutStatus> {
 	const response = await fetch(`${apiUrl()}/checkout/${id}`, {
-		method: 'GET'
+		method: 'GET',
+		signal: AbortSignal.timeout(SBP_HTTP_TIMEOUT_MS)
 	});
 
 	if (!response.ok) {

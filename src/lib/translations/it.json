@@ -1,4 +1,24 @@
 {
+	"priceCalendar": {
+		"openTitle": "Storico prezzi",
+		"tabHistory": "Storico prezzi",
+		"tabPaid": "Prezzo medio pagato",
+		"current": "Attuale",
+		"min30": "Min. (30g)",
+		"max30": "Max. (30g)",
+		"vsPrevious": "vs prec.",
+		"since": "dal {date}",
+		"meanLabel": "Prezzo effettivo medio pagato:",
+		"belowCatalogue": "{pct}% sotto il prezzo di listino",
+		"catalogue": "Prezzo di listino",
+		"averagePaid": "Prezzo medio pagato",
+		"error": "Impossibile caricare lo storico prezzi.",
+		"noHistory": "Nessuno storico prezzi.",
+		"noSales": "Nessuna vendita pagata da mostrare.",
+		"close": "Chiudi",
+		"exportCsv": "Esporta in CSV",
+		"viewOrders": "Visualizza ordini"
+	},
 	"address": {
 		"address": "Indirizzo",
 		"city": "Città",
@@ -94,7 +114,11 @@
 		"vatNullOutsideSellerCountry": "Le tasse d'importazione devono essere pagate dal cliente alla ricezione.",
 		"vatRate": "IVA per {country}",
 		"vatSellerCountry": "Il paese è quello del venditore.",
-		"maxQuantityReached": "Quantità massima per ordine raggiunta ({max})"
+		"maxQuantityReached": "Quantità massima per ordine raggiunta ({max})",
+		"error": {
+			"BOOKING_SAME_DAY_DISABLED": "Le prenotazioni per oggi non sono disponibili per questo prodotto.",
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Le prenotazioni per oggi non sono più possibili dopo le {maxHour}."
+		}
 	},
 	"cartFromUrl": {
 		"close": "Chiudi",
@@ -170,6 +194,7 @@
 		"multiplePaymentMethods": "Usa differenti metodi di pagamento",
 		"multiplePaymentMethodsHelpText": "Potrete decidere il vostro tipo di pagamento alla prossima tappa.",
 		"noDeliveryInCountry": "La spedizione non è disponibile nel vostro paese per alcuni articoli presenti nel carrello.",
+		"paymentGenerationFailed": "Non è stato possibile avviare il pagamento. Si prega di riprovare tra qualche istante, o di contattare il negoziante se il problema persiste.",
 		"note": {
 			"label": "Lascia un messaggio per il venditore",
 			"title": "Messaggio"
@@ -192,6 +217,7 @@
 		},
 		"paymentMethod": {
 			"bank-transfer": "Bonifico bancario",
+			"custom": "Pagamento personalizzato",
 			"bitcoin": "Onchain",
 			"card": "Carta di credito",
 			"cash": "Contanti",
@@ -592,21 +618,26 @@
 		"paidAt": "Pagato al <0></0>",
 		"paidWith": {
 			"bank-transfer": "Pagato con: bonifico bancario verificato",
-			"bitcoin": "Pagato con: pagamento Bitcoin sulla blockchain (1 {paymentCurrency} = {exchangeRate} {mainCurrency} al momento dell'ordine",
+			"custom": "Pagato con: metodo di pagamento personalizzato",
+			"customNamed": "Pagato con: {label}",
+			"bitcoin": "Pagato con: pagamento Bitcoin sulla blockchain (1 {paymentCurrency} = {exchangeRate} {mainCurrency} al momento dell'ordine)",
 			"card": "Pagato con: carta bancaria",
 			"free": "Nessun pagamento",
 			"lightning": "Pagato con: transazione Lightning (1 {paymentCurrency} = {exchangeRate} {mainCurrency} al momento dell'ordine)",
-			"paypal": "Pagato con:  paypal",
+			"paypal": "Pagato con: PayPal",
 			"point-of-sale": "Pagato in magazzino",
 			"taler": "Pagato con: Taler",
 			"osb": "Pagato con: carta bancaria OSB"
 		},
 		"paidWithSummary": {
 			"bank-transfer": "Pagato con: bonifico bancario verificato",
+			"custom": "Pagato con: metodo di pagamento personalizzato",
+			"customNamed": "Pagato con: {label}",
 			"bitcoin": "Pagato con: pagamento Bitcoin sulla blockchain",
 			"card": "Pagato con: carta bancaria",
 			"free": "Nessun pagamento",
 			"lightning": "Pagato con: transazione Lightning",
+			"paypal": "Pagato con: PayPal",
 			"point-of-sale": "Pagato in magazzino",
 			"taler": "Pagato con: Taler",
 			"osb": "Pagato con: OSB"
@@ -616,6 +647,11 @@
 			"one": "Il pagamento sarà confermato dopo 1 conferma.",
 			"other": "Il pagamento sarà confermato dopo {count} conferme.",
 			"zero": "Il pagamento sarà effettuato senza aspettare la conferma."
+		},
+		"awaitingConfirmationBitcoin": {
+			"one": "Pagamento ricevuto — in attesa di 1 conferma.",
+			"other": "Pagamento ricevuto — in attesa di {count} conferme.",
+			"zero": "Pagamento ricevuto — conferma in corso."
 		},
 		"paymentAccountHolder": "Intestatario dell'account",
 		"paymentAccountHolderAddress": "Indirizzo",
@@ -630,6 +666,7 @@
 		"paymentLinkGeneric": "Clicca qui per pagare con",
 		"paymentPaidAt": "Pagamento effetuato il {date}",
 		"paymentStatus": {
+			"awaitingConfirmation": "ricevuto, in attesa di conferma",
 			"canceled": "Annullato",
 			"canceledTemplate": "Ordine annullato canceled!",
 			"expired": "Scaduto",
@@ -916,7 +953,11 @@
 			"selectedDate": "Selezionato: {date}",
 			"selectedRangeWithAvailable": "{totalDays} giorni selezionati, {availableDays} giorni disponibili: {dates}",
 			"noAvailableDays": "Nessun giorno disponibile nell'intervallo selezionato",
-			"maxRangeInfo": "Periodo massimo di prenotazione: {days} giorni"
+			"maxRangeInfo": "Periodo massimo di prenotazione: {days} giorni",
+			"sameDay": {
+				"disabled": "Le prenotazioni per oggi non sono disponibili per questo prodotto.",
+				"cutoffPassed": "Le prenotazioni per oggi non sono più possibili dopo le {maxHour}."
+			}
 		},
 		"checkBackLater": "Ricontrolla tra un po'",
 		"cta": {
@@ -1094,5 +1135,36 @@
 			"checkboxLabel": "Abilita il segnale beacon verso il bot Nostr di be-BOP.io per condividere l'esistenza del tuo negozio",
 			"infoBlock": "Questa impostazione controlla se il tuo negozio invia segnali periodici a be-BOP.io. Diamo valore alla privacy: vengono condivisi solo l'URL del tuo negozio e la versione del software be-BOP. Non vengono trasmessi dati personali o dei clienti. Questo ci aiuta con il debug e ci mostra che la comunità be-BOP sta crescendo."
 		}
+	},
+	"cookieConsent": {
+		"banner": {
+			"ariaLabel": "Consenso ai cookie",
+			"dataSentTo": "Alcuni dei dati della tua visita vengono inviati a: {hostnames}",
+			"dataSentToFallback": "Questo sito utilizza uno strumento di analisi.",
+			"accept": "Accetta",
+			"deny": "Rifiuta",
+			"learnMore": "Scopri di più"
+		},
+		"reopenAria": "Preferenze cookie",
+		"reopenIdentity": "Gestisci le preferenze dei cookie"
+	},
+	"customPaymentMethod": {
+		"title": "Metodi di pagamento personalizzati",
+		"help": "Definisci un numero qualsiasi di metodi di pagamento manuali generici, ciascuno con un'etichetta e istruzioni in testo libero che spiegano ai clienti come pagare. I clienti vedono le istruzioni del metodo scelto senza codice QR e tu convalidi manualmente ogni pagamento dalla pagina dell'ordine.",
+		"label": "Etichetta (visibile ai clienti)",
+		"labelPlaceholder": "Nome del metodo di pagamento",
+		"instructions": "Istruzioni (visibili ai clienti)",
+		"instructionsPlaceholder": "Come i clienti devono pagare e come contattarti per confermare il pagamento.",
+		"add": "Aggiungi un metodo di pagamento",
+		"remove": "Rimuovi",
+		"untitled": "Metodo di pagamento {number}",
+		"empty": "Nessun metodo di pagamento personalizzato. Aggiungine uno per offrirlo al checkout.",
+		"moveUp": "Sposta su",
+		"moveDown": "Sposta giù",
+		"save": "Salva",
+		"saved": "Salvato",
+		"errorLabelRequired": "Ogni metodo di pagamento necessita di un'etichetta.",
+		"removeConfirm": "Rimuovere questo metodo?",
+		"cancel": "Annulla"
 	}
 }

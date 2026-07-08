@@ -52,8 +52,24 @@ import { typedEntries } from '$lib/utils/typedEntries';
 import { deepEquals } from '$lib/utils/deep-equals';
 import { deepClone } from '$lib/utils/deep-clone';
 
+/**
+ * Shape of a seeded per-locale layout override. The link arrays are typed as optional so
+ * the assignment in `/admin/layout/translations` (which spreads a Partial of the schema)
+ * stays compatible with the intersection type of `runtimeConfig['translations.<locale>.config']`.
+ */
+type LayoutLinkOverride = {
+	topbarLinks?: Array<{ id: string; label: string; href: string }>;
+	navbarLinks?: Array<{ id: string; label: string; href: string }>;
+	footerLinks?: Array<{ id: string; label: string; href: string }>;
+};
+
 const baseConfig = {
 	adminHash: '',
+	/**
+	 * Canonical admin entry hrefs disabled by the deployment (e.g. ['/admin/sumup']).
+	 * Edited by the hoster (mongosh today) — no in-app UI.
+	 */
+	disabledAdminEntries: [] as string[],
 	adminWelcomMessage: '',
 	isAdminCreated: false,
 	exchangeRate: defaultExchangeRate,
@@ -67,13 +83,21 @@ const baseConfig = {
 	orderNumber: 0,
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
+	/**
+	 * Generic manual/asynchronous payment methods: the admin defines any number of them, each with
+	 * a label and free-text instructions. The customer is shown the chosen method's instructions
+	 * with no QR, and an admin validates the payment manually. The shared `'custom'` payment method
+	 * is available whenever at least one is configured; each order payment references the chosen one
+	 * by `customPaymentMethodId`.
+	 */
+	customPaymentMethods: [] as Array<{ id: string; label: string; instructions: string }>,
 	subscriptionNumber: 0,
 	themeChangeNumber: 0,
 	isMaintenance: false,
 	noProBilling: false,
 	lightningQrCodeDescription: 'brand' as 'orderUrl' | 'brand' | 'brandAndOrderNumber' | 'none',
 	maintenanceIps: '',
-	brandName: 'My be-BOP',
+	brandName: 'Mon be-BOP',
 	subscriptionDuration: 'month' satisfies SubscriptionDuration,
 	subscriptionReminderSeconds: 24 * 60 * 60,
 	reserveStockInMinutes: 20,
@@ -103,18 +127,16 @@ const baseConfig = {
 	authLinkJwtSigningKey: '',
 	ssoSecret: '',
 	topbarLinks: [
-		{ label: 'Blog', href: '/blog' },
-		{ label: 'Store', href: '/store' },
-		{ label: 'Admin', href: '/admin' }
+		{ label: 'Session', href: '/login', id: 'session' },
+		{ label: 'Recherche', href: '/searchlist/search', id: 'search' }
 	],
 	navbarLinks: [
-		{ label: 'Challenges', href: '/challenges' },
-		{ label: 'Rewards', href: '/rewards' },
-		{ label: 'Orders', href: '/orders' }
+		{ label: 'Bienvenue', href: '/home', id: 'home' },
+		{ label: 'Catalogue', href: '/searchlist/default', id: 'catalog' }
 	],
 	footerLinks: [
-		{ label: 'Terms of Service', href: '/terms' },
-		{ label: 'Privacy Policy', href: '/privacy' }
+		{ label: 'CGVUs', href: '/terms', id: 'terms' },
+		{ label: 'Vie privée et confidentialité', href: '/privacy', id: 'privacy' }
 	],
 
 	viewportFor: 'everyone' as 'employee' | 'no-one' | 'visitors' | 'everyone',
@@ -193,6 +215,7 @@ const baseConfig = {
 			canBeAddedToBasket: true
 		}
 	} satisfies ProductActionSettings as ProductActionSettings,
+	priceHistoryEnabled: true,
 	mainThemeId: '',
 	sellerIdentity: null as SellerIdentity | null,
 	shopInformation: null as SellerIdentity | null,
@@ -256,8 +279,8 @@ const baseConfig = {
 		privateKey: ''
 	},
 	nostrRelays: ['wss://nostr.wine', 'wss://nos.lol', 'wss://relay.snort.social'],
-	visitorDarkLightMode: 'system' as ThemeMode,
-	employeeDarkLightMode: 'system' as ThemeMode,
+	visitorDarkLightMode: 'light' as ThemeMode,
+	employeeDarkLightMode: 'light' as ThemeMode,
 	removeBebopLogoPOS: false,
 	contactModes: ['email', 'nostr'],
 	contactModesForceOption: false,
@@ -279,7 +302,7 @@ const baseConfig = {
 	hideShopBankOnReceipt: false,
 	hideShopBankOnTicket: false,
 	hideCmsZonesOnMobile: false,
-	mergeMobileMenus: false,
+	mergeMobileMenus: true,
 	copyOrderEmailsToAdmin: true,
 	/**
 	 * Test feature (no admin UI yet): list of npubs that will receive a Nostr DM
@@ -290,8 +313,8 @@ const baseConfig = {
 	orderFullyPaidNotificationNpubs: [] as string[],
 	usersDarkDefaultTheme: false,
 	employeesDarkDefaultTheme: false,
-	displayPoweredBy: false,
-	displayCompanyInfo: false,
+	displayPoweredBy: true,
+	displayCompanyInfo: true,
 	displayMainShopInfo: false,
 	displayFullWidthHeader: false,
 	displayFullWidthNavbar: false,
@@ -321,7 +344,7 @@ const baseConfig = {
 		removeBebobLogo: false
 	},
 	posSession: {
-		enabled: false,
+		enabled: true,
 		allowXTicketEditing: false,
 		cashDeltaJustificationMandatory: false,
 		lockItemsAfterMidTicket: true,
@@ -330,8 +353,8 @@ const baseConfig = {
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,
 	physicalCartMinAmount: null as null | number,
-	websiteTitle: 'My be-BOP',
-	websiteShortDescription: 'My be-BOP store description',
+	websiteTitle: 'Mon be-BOP - sur le web',
+	websiteShortDescription: 'La description de mon be-BOP',
 	smtp: {
 		host: '',
 		port: 587,
@@ -386,6 +409,13 @@ const baseConfig = {
 <p>IBAN: {{iban}}<br/>
 BIC: {{bic}}<br/>
 Amount: {{amount}} {{currency}}</p>`,
+			default: true as boolean
+		},
+		'order.payment.pending.custom': {
+			subject: 'Order #{{orderNumber}}',
+			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
+<p>Amount: {{amount}} {{currency}}</p>
+<p>{{customPaymentInstructions}}</p>`,
 			default: true as boolean
 		},
 		'order.payment.pending.paypal': {
@@ -518,7 +548,95 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 <p>Best regards,<br/>{{brandName}}</p>`,
 			default: true as boolean
 		}
-	}
+	},
+	/**
+	 * Default per-locale overrides for the navigation link arrays. The fallback (no override)
+	 * is the French content carried by `topbarLinks` / `navbarLinks` / `footerLinks` above.
+	 */
+	'translations.en.config': {
+		topbarLinks: [
+			{ label: 'Sign in', href: '/login', id: 'session' },
+			{ label: 'Search', href: '/searchlist/search', id: 'search' }
+		],
+		navbarLinks: [
+			{ label: 'Welcome', href: '/home', id: 'home' },
+			{ label: 'Catalog', href: '/searchlist/default', id: 'catalog' }
+		],
+		footerLinks: [
+			{ label: 'Terms', href: '/terms', id: 'terms' },
+			{ label: 'Privacy', href: '/privacy', id: 'privacy' }
+		]
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
+	'translations.de.config': {
+		topbarLinks: [
+			{ label: 'Anmelden', href: '/login', id: 'session' },
+			{ label: 'Suche', href: '/searchlist/search', id: 'search' }
+		],
+		navbarLinks: [
+			{ label: 'Willkommen', href: '/home', id: 'home' },
+			{ label: 'Katalog', href: '/searchlist/default', id: 'catalog' }
+		],
+		footerLinks: [
+			{ label: 'AGB', href: '/terms', id: 'terms' },
+			{ label: 'Datenschutz', href: '/privacy', id: 'privacy' }
+		]
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
+	'translations.es-sv.config': {
+		topbarLinks: [
+			{ label: 'Iniciar sesión', href: '/login', id: 'session' },
+			{ label: 'Buscar', href: '/searchlist/search', id: 'search' }
+		],
+		navbarLinks: [
+			{ label: 'Bienvenido', href: '/home', id: 'home' },
+			{ label: 'Catálogo', href: '/searchlist/default', id: 'catalog' }
+		],
+		footerLinks: [
+			{ label: 'Términos', href: '/terms', id: 'terms' },
+			{ label: 'Privacidad', href: '/privacy', id: 'privacy' }
+		]
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
+	'translations.it.config': {
+		topbarLinks: [
+			{ label: 'Accedi', href: '/login', id: 'session' },
+			{ label: 'Cerca', href: '/searchlist/search', id: 'search' }
+		],
+		navbarLinks: [
+			{ label: 'Benvenuti', href: '/home', id: 'home' },
+			{ label: 'Catalogo', href: '/searchlist/default', id: 'catalog' }
+		],
+		footerLinks: [
+			{ label: 'Termini', href: '/terms', id: 'terms' },
+			{ label: 'Privacy', href: '/privacy', id: 'privacy' }
+		]
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
+	'translations.nl.config': {
+		topbarLinks: [
+			{ label: 'Inloggen', href: '/login', id: 'session' },
+			{ label: 'Zoeken', href: '/searchlist/search', id: 'search' }
+		],
+		navbarLinks: [
+			{ label: 'Welkom', href: '/home', id: 'home' },
+			{ label: 'Catalogus', href: '/searchlist/default', id: 'catalog' }
+		],
+		footerLinks: [
+			{ label: 'Voorwaarden', href: '/terms', id: 'terms' },
+			{ label: 'Privacybeleid', href: '/privacy', id: 'privacy' }
+		]
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
+	'translations.pt.config': {
+		topbarLinks: [
+			{ label: 'Entrar', href: '/login', id: 'session' },
+			{ label: 'Pesquisar', href: '/searchlist/search', id: 'search' }
+		],
+		navbarLinks: [
+			{ label: 'Bem-vindo', href: '/home', id: 'home' },
+			{ label: 'Catálogo', href: '/searchlist/default', id: 'catalog' }
+		],
+		footerLinks: [
+			{ label: 'Termos', href: '/terms', id: 'terms' },
+			{ label: 'Privacidade', href: '/privacy', id: 'privacy' }
+		]
+	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride
 };
 
 export const defaultConfig = Object.freeze(baseConfig);

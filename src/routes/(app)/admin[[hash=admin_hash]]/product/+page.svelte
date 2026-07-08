@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ProductActionSettingsCards from '$lib/components/ProductActionSettingsCards.svelte';
 	import ProductItem from '$lib/components/ProductItem.svelte';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { downloadFile } from '$lib/utils/downloadFile.js';
@@ -67,64 +68,22 @@
 
 <form method="post" class="flex flex-col gap-4" action="?/update">
 	<h3 class="text-xl">Default action settings</h3>
-	<table class="w-full border border-gray-300 divide-y divide-gray-300">
-		<thead class="bg-gray-200">
-			<tr>
-				<th class="py-2 px-4 border-r border-gray-300">Action</th>
-				<th class="py-2 px-4 border-r border-gray-300">Eshop (anyone)</th>
-				<th class="py-2 px-4 border-r border-gray-300">Retail (POS logged seat)</th>
-				<th class="py-2 px-4 border-r border-gray-300">Google Shopping</th>
-				<th class="py-2 px-4">Nostr-bot</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td class="py-2 px-4 border-r border-gray-300">Product is visible</td>
-				<td class="py-2 px-4 border-r border-gray-300 text-center">
-					<input type="checkbox" bind:checked={eshopVisible} name="eshopVisible" class="rounded" />
-				</td>
-				<td class="py-2 px-4 border-r border-gray-300 text-center">
-					<input
-						type="checkbox"
-						bind:checked={retailVisible}
-						name="retailVisible"
-						class="rounded"
-					/>
-				</td>
-				<td class="py-2 px-4 border-r border-gray-300 text-center">
-					<input
-						type="checkbox"
-						bind:checked={googleShoppingVisible}
-						name="googleShoppingVisible"
-						class="rounded"
-					/>
-				</td>
-				<td class="py-2 px-4 border-r border-gray-300 text-center">
-					<input type="checkbox" bind:checked={nostrVisible} name="nostrVisible" class="rounded" />
-				</td>
-			</tr>
-			<tr>
-				<td class="py-2 px-4 border border-gray-300">Product can be added to basket</td>
-				<td class="py-2 px-4 border border-gray-300 text-center">
-					<input type="checkbox" bind:checked={eshopBasket} name="eshopBasket" class="rounded" />
-				</td>
-				<td class="py-2 px-4 border border-gray-300 text-center">
-					<input type="checkbox" bind:checked={retailBasket} name="retailBasket" class="rounded" />
-				</td>
-				<td class="py-2 px-4 border border-gray-300 text-center" />
-				<td class="py-2 px-4 border border-gray-300 text-center">
-					<input type="checkbox" bind:checked={nostrBasket} name="nostrBasket" class="rounded" />
-				</td>
-			</tr>
-		</tbody>
-	</table>
+	<ProductActionSettingsCards
+		bind:eshopVisible
+		bind:retailVisible
+		bind:googleShoppingVisible
+		bind:nostrVisible
+		bind:eshopBasket
+		bind:retailBasket
+		bind:nostrBasket
+	/>
 	<button type="submit" class="btn btn-blue self-start">Update</button>
 </form>
 
 <h1 class="text-3xl">List of products</h1>
 
 <form class="flex flex-col" method="GET">
-	<div class="gap-4 flex flex-col md:flex-row mb-4">
+	<div class="gap-4 flex flex-col md:flex-row md:flex-wrap mb-4">
 		<label class="form-label w-[15em]">
 			Product Id
 			<input class="form-input" type="text" name="productId" placeholder="search product by id" />

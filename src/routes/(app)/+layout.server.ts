@@ -16,6 +16,7 @@ import type { Product } from '$lib/types/Product';
 import { UrlDependency } from '$lib/types/UrlDependency';
 import type { VatProfile } from '$lib/types/VatProfile.js';
 import { groupBy } from '$lib/utils/group-by';
+import { mergeLocalizedById } from '$lib/utils/mergeLocalizedById';
 import { error, redirect } from '@sveltejs/kit';
 import type { PickDeep, SetRequired } from 'type-fest';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
@@ -31,18 +32,26 @@ import {
 	webChannelForUser
 } from '$lib/server/discount';
 
+/**
+ * Per-entry merge of a per-language link override with the main config. The translation page
+ * pads the saved array to match the main length, with `{ label: '', href: '' }` placeholders
+ * for rows the translator left blank — this helper falls back to the corresponding main entry
+ * for any such placeholder, so partial translations don't blank out untranslated links.
+ */
 async function getCartAndRemoveSomeItems(userIdentifier: UserIdentifier): Promise<Cart> {
 	const cartInDb = await getCartFromDb({ user: userIdentifier });
 
 	const now = new Date();
 
 	const itemsAfterRemoval = cartInDb.items.filter((item) => {
-		if (!item.booking || item.booking.start >= now) {
+		if (!item.booking) {
 			return true;
 		}
-		const durationMs = item.booking.end.getTime() - item.booking.start.getTime();
-		const is24h = durationMs === 24 * 60 * 60 * 1000;
-		return is24h && item.booking.end > now;
+		// Future bookings stay. Past bookings (start in the past) only stay while their window
+		// has not ended yet — covers same-day single-slot bookings and multi-day ranges that
+		// include today. The previous version used an is24h === durationMs check that silently
+		// dropped any multi-day booking starting today.
+		return item.booking.start >= now || item.booking.end > now;
 	});
 
 	if (itemsAfterRemoval.length !== cartInDb.items.length) {
@@ -350,15 +359,20 @@ export const load: LayoutServerLoad = async (params) => {
 		viewportContentWidth: runtimeConfig.viewportContentWidth,
 		viewportFor: runtimeConfig.viewportFor,
 		links: {
-			footer:
-				runtimeConfig[`translations.${locals.language}.config`]?.footerLinks ??
+			// Resolve each localized nav array by stable link id (reorder/insert/delete safe, with
+			// per-field fallback to the main config). See $lib/utils/mergeLocalizedById.
+			footer: mergeLocalizedById(
 				runtimeConfig.footerLinks,
-			navbar:
-				runtimeConfig[`translations.${locals.language}.config`]?.navbarLinks ??
+				runtimeConfig[`translations.${locals.language}.config`]?.footerLinks
+			),
+			navbar: mergeLocalizedById(
 				runtimeConfig.navbarLinks,
-			topbar:
-				runtimeConfig[`translations.${locals.language}.config`]?.topbarLinks ??
+				runtimeConfig[`translations.${locals.language}.config`]?.navbarLinks
+			),
+			topbar: mergeLocalizedById(
 				runtimeConfig.topbarLinks,
+				runtimeConfig[`translations.${locals.language}.config`]?.topbarLinks
+			),
 			socialNetworkIcons: runtimeConfig.socialNetworkIcons
 		},
 		visitorDarkLightMode: runtimeConfig.visitorDarkLightMode,

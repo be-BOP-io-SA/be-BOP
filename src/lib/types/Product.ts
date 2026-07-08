@@ -54,6 +54,13 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	type: 'subscription' | 'resource' | 'donation';
 	subscriptionDuration?: SubscriptionDuration;
 	subscriptionReminderSeconds?: number;
+	pricingSchedule?: Array<{
+		value: number;
+		unit: SubscriptionDuration;
+		priceAmount: number;
+		reminderValue: number;
+		reminderUnit: SubscriptionDuration;
+	}>;
 	shipping: boolean;
 	deliveryFees?: DeliveryFees;
 	requireSpecificDeliveryFee?: boolean;
@@ -66,6 +73,16 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 		slotMinutes: number;
 		/** Maximum number of calendar days selectable in a date range booking. 0 or undefined = unlimited. */
 		maxBookableDays?: number;
+		/**
+		 * Whether the customer can book the current day. Only honored when slotMinutes is a full day
+		 * (24h). Defaults to false: today is not selectable. When true, see sameDayBookingMaxHour.
+		 */
+		allowSameDayBooking?: boolean;
+		/**
+		 * HH:mm cutoff (in the schedule's timezone) past which today is no longer bookable, when
+		 * allowSameDayBooking is true. Defaults to "14:00".
+		 */
+		sameDayBookingMaxHour?: string;
 		schedule: {
 			timezone: string; // eg "Europe/Berlin"
 			monday: {
@@ -142,6 +159,16 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	event?: {
 		beginsAt: Date;
 		endsAt: Date;
+	};
+	/**
+	 * Optional outbound webhook fired once the order containing this product transitions to
+	 * paid. Receiver verifies the request via an HMAC-SHA256 signature of the raw body using
+	 * `secret` as the key, transmitted in `X-Webhook-Signature: sha256=<hex>`. Fire-and-forget:
+	 * a network or 5xx failure is logged but not retried (issue #2646 is a PoC).
+	 */
+	paidOrderWebhook?: {
+		apiRoute: string;
+		secret: string;
 	};
 }
 

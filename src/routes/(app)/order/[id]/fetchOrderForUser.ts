@@ -150,8 +150,10 @@ async function fetchOrderForUserImpl(orderId: string, params?: { userRoleId?: st
 			currencySnapshot: payment.currencySnapshot,
 			confirmationBlocksRequired:
 				payment.method === 'bitcoin' ? getConfirmationBlocks(payment.price) : 0,
+			awaitingConfirmation: payment.awaitingConfirmation ?? false,
 			...(payment.bankTransferNumber && { bankTransferNumber: payment.bankTransferNumber }),
 			...(payment.detail && { detail: payment.detail }),
+			...(payment.customPaymentMethod && { customPaymentMethod: payment.customPaymentMethod }),
 			...(payment.cashbackAmount && { cashbackAmount: payment.cashbackAmount })
 		})),
 		items: order.items.map((item) => ({
@@ -211,10 +213,6 @@ async function fetchOrderForUserImpl(orderId: string, params?: { userRoleId?: st
 		sellerIdentity: order.sellerIdentity,
 		vat: order.vat?.map((item) => ({
 			country: item.country,
-			price: {
-				amount: item.price.amount,
-				currency: item.price.currency
-			},
 			rate: item.rate
 		})),
 		shippingAddress: order.shippingAddress,
