@@ -997,6 +997,17 @@
 			"month": "Renova a cada mês",
 			"year": "Renova a cada ano"
 		},
+		"pricingSchedule": {
+			"intro": "Esta assinatura tem várias fases de faturação:",
+			"then": "depois"
+		},
+		"pricingScheduleUnit": {
+			"hour": { "one": "hora", "other": "horas" },
+			"day": { "one": "dia", "other": "dias" },
+			"week": { "one": "semana", "other": "semanas" },
+			"month": { "one": "mês", "other": "meses" },
+			"year": { "one": "ano", "other": "anos" }
+		},
 		"type": {
 			"deposit": "Sob depósito",
 			"digitalResource": "Recurso Digital",

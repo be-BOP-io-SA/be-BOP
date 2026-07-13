@@ -997,6 +997,17 @@
 			"month": "Se renueva cada mes",
 			"year": "Se renueva cada año"
 		},
+		"pricingSchedule": {
+			"intro": "Esta suscripción tiene varias fases de facturación:",
+			"then": "luego"
+		},
+		"pricingScheduleUnit": {
+			"hour": { "one": "hora", "other": "horas" },
+			"day": { "one": "día", "other": "días" },
+			"week": { "one": "semana", "other": "semanas" },
+			"month": { "one": "mes", "other": "meses" },
+			"year": { "one": "año", "other": "años" }
+		},
 		"type": {
 			"deposit": "En depósito",
 			"digitalResource": "Recurso digital",

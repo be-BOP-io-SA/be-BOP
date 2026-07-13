@@ -997,6 +997,17 @@
 			"month": "Verlängert sich jeden Monat",
 			"year": "Verlängert sich jedes Jahr"
 		},
+		"pricingSchedule": {
+			"intro": "Dieses Abonnement hat mehrere Abrechnungsphasen:",
+			"then": "dann"
+		},
+		"pricingScheduleUnit": {
+			"hour": { "one": "Stunde", "other": "Stunden" },
+			"day": { "one": "Tag", "other": "Tage" },
+			"week": { "one": "Woche", "other": "Wochen" },
+			"month": { "one": "Monat", "other": "Monate" },
+			"year": { "one": "Jahr", "other": "Jahre" }
+		},
 		"type": {
 			"deposit": "Auf Anzahlung",
 			"digitalResource": "Digitale Ressource",

@@ -997,6 +997,17 @@
 			"month": "Si rinnova ogni mese",
 			"year": "Si rinnova ogni anno"
 		},
+		"pricingSchedule": {
+			"intro": "Questo abbonamento prevede più fasi di fatturazione:",
+			"then": "poi"
+		},
+		"pricingScheduleUnit": {
+			"hour": { "one": "ora", "other": "ore" },
+			"day": { "one": "giorno", "other": "giorni" },
+			"week": { "one": "settimana", "other": "settimane" },
+			"month": { "one": "mese", "other": "mesi" },
+			"year": { "one": "anno", "other": "anni" }
+		},
 		"type": {
 			"deposit": "In deposito",
 			"digitalResource": "Risorse digitali",

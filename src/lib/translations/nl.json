@@ -997,6 +997,17 @@
 			"month": "Verlengt elke maand",
 			"year": "Verlengt elk jaar"
 		},
+		"pricingSchedule": {
+			"intro": "Dit abonnement heeft meerdere factureringsfasen:",
+			"then": "dan"
+		},
+		"pricingScheduleUnit": {
+			"hour": { "one": "uur", "other": "uur" },
+			"day": { "one": "dag", "other": "dagen" },
+			"week": { "one": "week", "other": "weken" },
+			"month": { "one": "maand", "other": "maanden" },
+			"year": { "one": "jaar", "other": "jaar" }
+		},
 		"type": {
 			"deposit": "Op borg",
 			"digitalResource": "Digitale hulpbron",
