@@ -951,8 +951,10 @@
 			"timezone": "Zona horaria: {timeZone}",
 			"selectDateRange": "Seleccione las fechas de inicio y fin (haga clic dos veces para seleccionar un rango)",
 			"selectedDate": "Seleccionado: {date}",
+			"selectedRange": "Seleccionado: del {start} al {end} ({days} días)",
 			"selectedRangeWithAvailable": "{totalDays} días seleccionados, {availableDays} días disponibles: {dates}",
 			"noAvailableDays": "No hay días disponibles en el rango seleccionado",
+			"maxRangeExceeded": "La selección máxima es de {days} días",
 			"maxRangeInfo": "Período máximo de reserva: {days} días",
 			"sameDay": {
 				"disabled": "Las reservas para hoy no están disponibles para este producto.",
@@ -1103,6 +1105,24 @@
 		"lastPayment": "Último pago",
 		"listTitle": "Sus suscripciones",
 		"noSubscriptions": "Aún no tiene suscripciones.",
+		"nextBilling": "Próxima facturación: {amount} {currency}",
+		"canRenewFrom": "Podrá renovar a partir del <0></0>.",
+		"amountFree": "Gratis",
+		"upcomingPhases": {
+			"title": "Próximas fases",
+			"range": "del {start} al {end}",
+			"after": "a partir del {start}"
+		},
+		"orderHistory": {
+			"title": "Historial de pedidos",
+			"downloadInvoice": "Descargar factura"
+		},
+		"payment": {
+			"currentMethod": "La renovación utilizará {method}",
+			"previousUnavailable": "El método de pago anterior ({method}) no se puede utilizar para la próxima renovación. Elija otro a continuación.",
+			"chooseMethod": "Método de pago",
+			"change": "Cambiar método de pago"
+		},
 		"singleTitle": "Suscripción #{number}",
 		"status": {
 			"active": "activa",
