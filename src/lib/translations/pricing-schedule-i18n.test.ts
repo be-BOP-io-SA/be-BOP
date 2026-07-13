@@ -22,3 +22,41 @@ describe('subscription pricing schedule translations (#2670)', () => {
 		}
 	});
 });
+
+const SUBSCRIPTION_KEYS = [
+	'subscription.nextBilling',
+	'subscription.canRenewFrom',
+	'subscription.amountFree',
+	'subscription.upcomingPhases.title',
+	'subscription.upcomingPhases.range',
+	'subscription.upcomingPhases.after',
+	'subscription.orderHistory.title',
+	'subscription.orderHistory.downloadInvoice',
+	'subscription.payment.currentMethod',
+	'subscription.payment.previousUnavailable',
+	'subscription.payment.chooseMethod',
+	'subscription.payment.change'
+];
+
+describe('subscription upcoming-phases / payment translations (#2670)', () => {
+	it.each(locales)('%s has every subscription key', (locale) => {
+		const dict = languages[locale];
+		for (const key of SUBSCRIPTION_KEYS) {
+			expect(get(dict, key), `${locale}: ${key}`).toBeTruthy();
+		}
+	});
+});
+
+describe('multi-day booking range translations (#2670)', () => {
+	it.each(locales)('%s has product.booking.selectedRange/maxRangeExceeded', (locale) => {
+		const dict = languages[locale];
+		expect(
+			get(dict, 'product.booking.selectedRange'),
+			`${locale}: booking.selectedRange`
+		).toBeTruthy();
+		expect(
+			get(dict, 'product.booking.maxRangeExceeded'),
+			`${locale}: booking.maxRangeExceeded`
+		).toBeTruthy();
+	});
+});

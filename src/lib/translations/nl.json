@@ -951,8 +951,10 @@
 			"timezone": "Tijdzone: {timeZone}",
 			"selectDateRange": "Selecteer begin- en einddatum (klik twee keer om een bereik te selecteren)",
 			"selectedDate": "Geselecteerd: {date}",
+			"selectedRange": "Geselecteerd: van {start} tot {end} ({days} dagen)",
 			"selectedRangeWithAvailable": "{totalDays} dagen geselecteerd, {availableDays} dagen beschikbaar: {dates}",
 			"noAvailableDays": "Geen beschikbare dagen in het geselecteerde bereik",
+			"maxRangeExceeded": "De maximale selectie is {days} dagen",
 			"maxRangeInfo": "Maximale boekingsperiode: {days} dagen",
 			"sameDay": {
 				"disabled": "Boekingen voor vandaag zijn niet beschikbaar voor dit product.",
@@ -1103,6 +1105,24 @@
 		"lastPayment": "Laatste betaling",
 		"listTitle": "Uw abonnementen",
 		"noSubscriptions": "U heeft nog geen abonnementen.",
+		"nextBilling": "Volgende facturering: {amount} {currency}",
+		"canRenewFrom": "U kunt vanaf <0></0> verlengen.",
+		"amountFree": "Gratis",
+		"upcomingPhases": {
+			"title": "Komende fasen",
+			"range": "van {start} tot {end}",
+			"after": "vanaf {start}"
+		},
+		"orderHistory": {
+			"title": "Bestelgeschiedenis",
+			"downloadInvoice": "Factuur downloaden"
+		},
+		"payment": {
+			"currentMethod": "Bij verlenging wordt {method} gebruikt",
+			"previousUnavailable": "De vorige betaalmethode ({method}) kan niet worden gebruikt voor de volgende verlenging. Kies hieronder een andere.",
+			"chooseMethod": "Betaalmethode",
+			"change": "Betaalmethode wijzigen"
+		},
 		"singleTitle": "Abonnement #{number}",
 		"status": {
 			"active": "actief",

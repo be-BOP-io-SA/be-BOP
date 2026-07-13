@@ -951,8 +951,10 @@
 			"timezone": "Zeitzone: {timeZone}",
 			"selectDateRange": "Start- und Enddatum auswählen (zweimal klicken, um einen Bereich auszuwählen)",
 			"selectedDate": "Ausgewählt: {date}",
+			"selectedRange": "Ausgewählt: vom {start} bis {end} ({days} Tage)",
 			"selectedRangeWithAvailable": "{totalDays} Tage ausgewählt, {availableDays} Tage verfügbar: {dates}",
 			"noAvailableDays": "Keine verfügbaren Tage im ausgewählten Bereich",
+			"maxRangeExceeded": "Die maximale Auswahl beträgt {days} Tage",
 			"maxRangeInfo": "Maximaler Buchungszeitraum: {days} Tage",
 			"sameDay": {
 				"disabled": "Buchungen für heute sind für dieses Produkt nicht verfügbar.",
@@ -1103,6 +1105,24 @@
 		"lastPayment": "Letzte Zahlung",
 		"listTitle": "Ihre Abonnements",
 		"noSubscriptions": "Sie haben noch keine Abonnements.",
+		"nextBilling": "Nächste Abrechnung: {amount} {currency}",
+		"canRenewFrom": "Sie können ab <0></0> verlängern.",
+		"amountFree": "Kostenlos",
+		"upcomingPhases": {
+			"title": "Kommende Phasen",
+			"range": "vom {start} bis {end}",
+			"after": "ab {start}"
+		},
+		"orderHistory": {
+			"title": "Bestellverlauf",
+			"downloadInvoice": "Rechnung herunterladen"
+		},
+		"payment": {
+			"currentMethod": "Die Verlängerung erfolgt über {method}",
+			"previousUnavailable": "Die vorherige Zahlungsmethode ({method}) kann für die nächste Verlängerung nicht verwendet werden. Wählen Sie unten eine andere aus.",
+			"chooseMethod": "Zahlungsmethode",
+			"change": "Zahlungsmethode ändern"
+		},
 		"singleTitle": "Abonnement #{number}",
 		"status": {
 			"active": "aktiv",
