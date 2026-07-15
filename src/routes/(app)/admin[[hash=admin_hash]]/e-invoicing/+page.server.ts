@@ -7,7 +7,7 @@ import {
 import type { Filter } from 'mongodb';
 import { z } from 'zod';
 
-export const E_INVOICE_PAGINATION_LIMIT = 50;
+const E_INVOICE_PAGINATION_LIMIT = 50;
 
 export async function load({ url }) {
 	const querySchema = z.object({
