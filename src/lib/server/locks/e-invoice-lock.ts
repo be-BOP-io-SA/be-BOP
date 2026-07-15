@@ -103,12 +103,21 @@ async function watch(opts?: { requestChangesSince?: Timestamp }) {
 
 	try {
 		changeStream = collections.eInvoices
-			.watch([{ $match: { operationType: 'insert' } }], {
-				fullDocument: 'updateLookup',
-				...(opts?.requestChangesSince && {
-					startAtOperationTime: opts.requestChangesSince
-				})
-			})
+			.watch(
+				[
+					{
+						$match: {
+							$or: [{ operationType: 'insert' }, { operationType: 'update' }]
+						}
+					}
+				],
+				{
+					fullDocument: 'updateLookup',
+					...(opts?.requestChangesSince && {
+						startAtOperationTime: opts.requestChangesSince
+					})
+				}
+			)
 			.on('change', (ev) => handleChanges(ev).catch(console.error))
 			.once('error', async (err) => {
 				console.error('change stream error', err);
