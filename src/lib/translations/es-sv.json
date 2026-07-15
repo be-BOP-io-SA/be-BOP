@@ -504,6 +504,7 @@
 		}
 	},
 	"eInvoice": {
+		"download": "Descargar factura electrónica (Factur-X)",
 		"invoiceTitle": "Factura n.º {invoiceNumber}",
 		"issueDate": "Fecha de emisión",
 		"orderRef": "Pedido n.º {orderNumber} del {orderDate}",

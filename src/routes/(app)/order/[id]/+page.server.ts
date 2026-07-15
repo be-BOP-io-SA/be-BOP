@@ -97,8 +97,17 @@ export async function load({ params, depends, locals, url }) {
 	const returnTo = url.searchParams.get('returnTo');
 	const posMode = locals.user?.hasPosOptions && returnTo?.startsWith('/pos/touch');
 
+	// Payments whose Factur-X e-invoice is generated and downloadable
+	const eInvoicePaymentIds = (
+		await collections.eInvoices
+			.find({ orderId: order._id, 'generation.status': 'generated' })
+			.project<{ paymentId: string }>({ paymentId: 1 })
+			.toArray()
+	).map((einvoice) => einvoice.paymentId);
+
 	return {
 		order,
+		eInvoicePaymentIds,
 		splitMode: order.splitMode,
 		paymentMethods: methods,
 		tapToPay,

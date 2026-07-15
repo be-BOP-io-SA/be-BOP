@@ -20,6 +20,8 @@
 	export let tapToPayInUseByOtherOrder = false;
 	export let printReceipt: () => void;
 	export let printTicket: () => void;
+	/** Whether this payment's Factur-X e-invoice is generated and downloadable */
+	export let hasEInvoice = false;
 
 	let openPaymentMethodChange = false;
 	let openCashbackSection = false;
@@ -86,6 +88,16 @@
 		<button class="btn btn-black self-start" type="button" on:click={printReceipt}>
 			{t('order.receipt.create')}
 		</button>
+	{/if}
+
+	{#if showInvoice && hasEInvoice}
+		<a
+			class="btn btn-black self-start"
+			href="/order/{orderId}/payment/{payment.id}/e-invoice"
+			download
+		>
+			{t('eInvoice.download')}
+		</a>
 	{/if}
 </div>
 

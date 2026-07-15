@@ -240,6 +240,7 @@
 							tapToPayInUseByOtherOrder={data.tapToPay.inUseByOtherOrder}
 							printReceipt={() => receiptIFrame[payment.id]?.contentWindow?.print()}
 							printTicket={() => ticketIFrame[payment.id]?.contentWindow?.print()}
+							hasEInvoice={data.eInvoicePaymentIds.includes(payment.id)}
 						/>
 					</PaymentItem>
 
