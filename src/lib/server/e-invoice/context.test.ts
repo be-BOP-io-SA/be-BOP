@@ -284,11 +284,13 @@ describe('buildInvoiceContext', () => {
 		expect(ctx.totals.inclVat).toBe(100);
 	});
 
-	it('never labels pure rounding drift as a discount (no order.discount present)', () => {
+	it('folds rounding drift into the line amount instead of a document-level adjustment', () => {
 		// Regression: a precise 8-decimal base price (2.8279) rounds to 2.83 at
 		// line level, but the order snapshot's independently-rounded
 		// totalPrice(3.39) - vat(0.57) yields 2.82 excl. VAT — a 1-cent gap with
 		// no relation to any actual discount (order.discount is absent here).
+		// The invoice must not show a "Rounding" line for this: the residual is
+		// absorbed directly into the line's net amount.
 		const order = makeOrder({
 			items: [
 				{
@@ -316,10 +318,30 @@ describe('buildInvoiceContext', () => {
 			country: 'FR'
 		});
 
-		expect(ctx.lines[0].netAmount).toBe(2.83);
+		expect(ctx.lines[0].netAmount).toBe(2.82); // adjusted from the raw 2.83
+		expect(ctx.totals.lineNet).toBe(2.82);
 		expect(ctx.totals.exclVat).toBe(2.82);
 		expect(ctx.discount).toBe(0);
-		expect(ctx.rounding).toBeCloseTo(0.01, 2);
+		expect(ctx.rounding).toBe(0);
+	});
+
+	it('falls back to a rounding note only when there is no line to absorb the residual (zero items)', () => {
+		const order = makeOrder({ items: [] } as unknown as Partial<Order>);
+		order.currencySnapshot.accounting = {
+			totalPrice: { amount: 1.21, currency: 'EUR' },
+			vat: [{ amount: 0.2, currency: 'EUR' }]
+		};
+
+		const ctx = buildInvoiceContext({
+			order,
+			payment: makePayment(),
+			seller: makeSeller(),
+			country: 'FR'
+		});
+
+		expect(ctx.lines).toEqual([]);
+		expect(ctx.discount).toBe(0);
+		expect(ctx.rounding).toBeCloseTo(1.01, 2);
 	});
 
 	it('reports a VAT exemption as category E with the reason', () => {

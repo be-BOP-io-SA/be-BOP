@@ -345,7 +345,7 @@ export function buildInvoiceContext(params: {
 			vatRate: item.vatRate ?? 0
 		};
 	});
-	const lineNet = round(
+	let lineNet = round(
 		lines.reduce((total, line) => total + line.netAmount, 0),
 		currency
 	);
@@ -405,21 +405,39 @@ export function buildInvoiceContext(params: {
 			? { amount: shippingAmount, vatRate: vatBreakdown[0]?.rate ?? 0 }
 			: undefined;
 
-	// The gap between the line-level sum and the order's snapshotted excl-VAT
-	// total (lineNet + shipping - exclVat). When the order carries a real
-	// discount, this gap IS the excl-VAT discount amount — order.discount is
-	// stored incl-VAT (see receipt/+page.svelte's discountNoTax, computed the
-	// same way), so it can't be subtracted from lineNet directly; deriving it
-	// via this identity is how the rest of the app already does it. When there
-	// is NO discount, the gap is pure floating-point drift between the
-	// line-level rounding (unitPrice × qty → 2dp) and the order snapshot's
-	// independent totalPrice/vat rounding (e.g. a precise base price like
-	// 2.8279 rounds to 2.83 at line level but totalPrice - vat yields 2.82) —
-	// never a real discount, so it must not be labeled as one.
-	const gap = round(lineNet + shippingAmount - exclVat, currency);
 	const hasRealDiscount = !!orderSnapshot.discount;
-	const discount = hasRealDiscount ? gap : 0;
-	const rounding = hasRealDiscount ? 0 : gap;
+	let discount = 0;
+	let rounding = 0;
+
+	if (hasRealDiscount) {
+		// The gap between the line-level sum and the order's snapshotted excl-VAT
+		// total IS the excl-VAT discount amount here — order.discount is stored
+		// incl-VAT (see receipt/+page.svelte's discountNoTax, computed the same
+		// way), so it can't be subtracted from lineNet directly; deriving it via
+		// this identity is how the rest of the app already does it.
+		discount = round(lineNet + shippingAmount - exclVat, currency);
+	} else {
+		// No real discount: any gap between the line-level sum and the order
+		// snapshot is pure floating-point drift (e.g. a precise base price like
+		// 2.8279 rounds to 2.83 at line level, but the order's independently
+		// rounded totalPrice - vat yields 2.82) — never a real discount, and not
+		// worth a document-level "Rounding" line either. Fold it directly into
+		// the largest line's net amount instead, so lineNet matches the excl-VAT
+		// total exactly and the invoice needs no rounding adjustment at all —
+		// same technique already used below for the VAT-base residual.
+		const target = round(exclVat - shippingAmount, currency);
+		const residual = round(target - lineNet, currency);
+		if (residual !== 0 && lines.length) {
+			const largest = lines.reduce((a, b) => (b.netAmount > a.netAmount ? b : a));
+			largest.netAmount = round(largest.netAmount + residual, currency);
+			lineNet = target;
+		} else {
+			// No line to absorb the residual into (e.g. a zero-item order) —
+			// extremely rare; fall back to a document-level rounding note rather
+			// than silently losing a cent.
+			rounding = residual;
+		}
+	}
 
 	const prepaid = round(
 		(paymentSnapshot.previouslyPaid?.amount ?? 0) + paymentSnapshot.price.amount,
