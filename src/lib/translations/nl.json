@@ -29,6 +29,7 @@
 		"phone": "Telefoon",
 		"phoneCode": "Indien uw nummer niet uit hetzelfde land komt als het land van levering, voer dan de internationale code in.",
 		"phoneDisclaimer": "Deze informatie is optioneel, maar soms vereist door vervoerders. \nWij zullen u niet benaderen op dit nummer.",
+		"siren": "SIREN (Frans handelsregisternummer)",
 		"state": "Staat",
 		"vatNumber": "btw-nummer",
 		"zipCode": "Postcode"

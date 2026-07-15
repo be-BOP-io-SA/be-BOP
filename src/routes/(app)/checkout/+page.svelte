@@ -597,6 +597,20 @@
 							{t('address.vatNumber')}
 							<input type="text" class="form-input" name="billing.vatNumber" />
 						</label>
+
+						{#if billingCountry === 'FR'}
+							<label class="form-label col-span-3">
+								{t('address.siren')}
+								<input
+									type="text"
+									class="form-input"
+									name="billing.siren"
+									maxlength="9"
+									pattern={'\\d{9}'}
+									placeholder="123456789"
+								/>
+							</label>
+						{/if}
 					{/if}
 				</section>
 			{/if}

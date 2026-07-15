@@ -262,6 +262,29 @@ describe('buildInvoiceContext', () => {
 		]);
 	});
 
+	it('carries the buyer company identifiers (B2B: company name, VAT, SIREN)', () => {
+		const order = makeOrder();
+		order.billingAddress = {
+			...(order.billingAddress ?? ({} as NonNullable<Order['billingAddress']>)),
+			isCompany: true,
+			companyName: 'Client SARL',
+			vatNumber: 'FR98765432109',
+			siren: '987654321'
+		};
+		const ctx = buildInvoiceContext({
+			order,
+			payment: makePayment(),
+			seller: makeSeller()
+		});
+
+		expect(ctx.buyer).toMatchObject({
+			name: 'Client SARL',
+			isCompany: true,
+			vatNumber: 'FR98765432109',
+			siren: '987654321'
+		});
+	});
+
 	it('throws when the payment has no invoice number', () => {
 		const payment = makePayment({ invoice: undefined });
 		expect(() =>

@@ -348,6 +348,10 @@ export const actions = {
 							isCompany: z.boolean({ coerce: true }).default(false),
 							vatNumber: z.string().optional(),
 							companyName: z.string().optional(),
+							siren: z
+								.string()
+								.regex(/^\d{9}$/, 'SIREN must be 9 digits')
+								.optional(),
 							phone: z.string().optional()
 						})
 					})
@@ -545,6 +549,7 @@ export const actions = {
 			if (billingInfo?.billing) {
 				delete billingInfo.billing.companyName;
 				delete billingInfo.billing.vatNumber;
+				delete billingInfo.billing.siren;
 			}
 		}
 		const desiredPayment = z

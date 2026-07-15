@@ -29,6 +29,7 @@
 		"phone": "Téléphone",
 		"phoneCode": "Si votre numéro n'est pas du même pays que le pays de livraison, merci de renseigner l'indicatif international.",
 		"phoneDisclaimer": "Le numéro de téléphone est parfois demandé par les livreurs. Nous ne vous démarcherons pas sur ce numéro.",
+		"siren": "SIREN",
 		"state": "Canton / Région",
 		"vatNumber": "Numéro TVA",
 		"zipCode": "Code postal"

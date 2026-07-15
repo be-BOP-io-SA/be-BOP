@@ -29,6 +29,7 @@
 		"phone": "Teléfono",
 		"phoneCode": "Si su número no es del mismo país que el de entrega, por favor incluya el código internacional.",
 		"phoneDisclaimer": "Esta información es opcional pero a veces requerida por los transportistas. Este número no será utilizado para contactarle.",
+		"siren": "SIREN (registro mercantil francés)",
 		"state": "Departamento",
 		"vatNumber": "Número de IVA",
 		"zipCode": "Código postal"

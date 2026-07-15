@@ -215,6 +215,8 @@ export interface OrderAddress {
 	isCompany?: boolean;
 	companyName?: string;
 	vatNumber?: string;
+	/** French company registration number (9 digits), used for e-invoicing / PDP routing */
+	siren?: string;
 	phone?: string;
 }
 

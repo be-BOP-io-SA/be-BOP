@@ -153,6 +153,7 @@ function partyFromOrder(order: Order): EInvoiceParty {
 			name: name || order.user.email || 'Customer',
 			...(address.isCompany && { isCompany: true }),
 			...(address.vatNumber && { vatNumber: address.vatNumber }),
+			...(address.siren && { siren: address.siren }),
 			address: {
 				street: address.address,
 				zip: address.zip,

@@ -29,6 +29,7 @@
 		"phone": "Telefon",
 		"phoneCode": "Wenn Ihre Nummer nicht aus demselben Land wie das Lieferland stammt, geben Sie bitte die internationale Vorwahl ein.",
 		"phoneDisclaimer": "Diese Angabe ist optional, wird aber manchmal von Spediteuren benötigt. Wir werden Sie unter dieser Nummer nicht kontaktieren.",
+		"siren": "SIREN (französische Handelsregisternummer)",
 		"state": "Bundesland",
 		"vatNumber": "Umsatzsteuer-Identifikationsnummer",
 		"zipCode": "Postleitzahl"

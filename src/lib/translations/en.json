@@ -29,6 +29,7 @@
 		"phone": "Phone",
 		"phoneCode": "If your number is not from the same country as the country of delivery, please enter the international code.",
 		"phoneDisclaimer": "This information is optional but sometimes required by carriers. We will not approach you on this number.",
+		"siren": "SIREN (French company registration)",
 		"state": "State",
 		"vatNumber": "VAT number",
 		"zipCode": "Zip code"

@@ -79,6 +79,12 @@ describe('ciiXml', () => {
 		expect(ciiXml(makeContext())).toContain('<ram:ID schemeID="0002">123456789</ram:ID>');
 	});
 
+	it('serializes the buyer SIREN when captured at checkout (B2B)', () => {
+		const ctx = makeContext();
+		ctx.buyer = { ...ctx.buyer, isCompany: true, siren: '987654321' };
+		expect(ciiXml(ctx)).toContain('<ram:ID schemeID="0002">987654321</ram:ID>');
+	});
+
 	it('serializes VAT exemptions with their reason', () => {
 		const ctx = makeContext({
 			vatBreakdown: [

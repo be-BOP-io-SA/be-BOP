@@ -66,6 +66,7 @@
 			<h2 class="text-2xl">Buyer</h2>
 			<p>{einvoice.buyer.name}</p>
 			{#if einvoice.buyer.vatNumber}<p>VAT: {einvoice.buyer.vatNumber}</p>{/if}
+			{#if einvoice.buyer.siren}<p>SIREN: {einvoice.buyer.siren}</p>{/if}
 			{#if einvoice.buyer.address}
 				<p>{einvoice.buyer.address.street}</p>
 				<p>
