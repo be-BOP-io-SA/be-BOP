@@ -85,8 +85,8 @@ export async function generateEInvoice(einvoice: EInvoice): Promise<void> {
 				buyer: ctx.buyer,
 				lines: ctx.lines,
 				...(ctx.shipping && { shipping: ctx.shipping }),
-				allowance: ctx.allowance,
-				extraCharge: ctx.extraCharge,
+				discount: ctx.discount,
+				rounding: ctx.rounding,
 				totals: {
 					exclVat: ctx.totals.exclVat,
 					vat: ctx.totals.vat,

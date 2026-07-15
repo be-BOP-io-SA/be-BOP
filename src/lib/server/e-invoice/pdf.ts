@@ -195,14 +195,14 @@ export async function renderInvoicePdf(ctx: InvoiceContext): Promise<PDFDocument
 		text(cursor, value, { rightAlignAt: right, size: options?.bold ? 10 : FONT_SIZE });
 		newline(cursor);
 	};
-	if (ctx.allowance > 0) {
-		totalRow(t('eInvoice.discount'), money(-ctx.allowance, ctx.currency));
+	if (ctx.discount > 0) {
+		totalRow(t('eInvoice.discount'), money(-ctx.discount, ctx.currency));
 	}
 	if (ctx.shipping) {
 		totalRow(t('eInvoice.deliveryFees'), money(ctx.shipping.amount, ctx.currency));
 	}
-	if (ctx.extraCharge > 0) {
-		totalRow(t('eInvoice.rounding'), money(ctx.extraCharge, ctx.currency));
+	if (ctx.rounding !== 0) {
+		totalRow(t('eInvoice.rounding'), money(-ctx.rounding, ctx.currency));
 	}
 	totalRow(t('eInvoice.totalExclVat'), money(ctx.totals.exclVat, ctx.currency));
 	for (const vat of ctx.vatBreakdown) {

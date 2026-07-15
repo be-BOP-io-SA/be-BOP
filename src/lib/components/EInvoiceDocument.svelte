@@ -17,8 +17,8 @@
 	export let buyer: EInvoiceParty | undefined;
 	export let lines: EInvoiceLine[] | undefined;
 	export let shipping: { amount: number; vatRate: number } | undefined;
-	export let allowance: number | undefined;
-	export let extraCharge: number | undefined;
+	export let discount: number | undefined;
+	export let rounding: number | undefined;
 	export let vatBreakdown: Array<{ rate: number; country: CountryAlpha2; amount: number }> = [];
 	export let totals:
 		| { exclVat: number; vat: number; inclVat: number; prepaid: number; due: number }
@@ -140,11 +140,11 @@
 		<div class="flex justify-end">
 			<table class="w-full max-w-xs">
 				<tbody>
-					{#if allowance}
+					{#if discount}
 						<tr>
 							<td class="py-1 text-sm text-gray-600">Discount</td>
 							<td class="py-1 text-sm text-right tabular-nums">
-								<PriceTag amount={-allowance} {currency} inline gap="gap-1" />
+								<PriceTag amount={-discount} {currency} inline gap="gap-1" />
 							</td>
 						</tr>
 					{/if}
@@ -156,11 +156,11 @@
 							</td>
 						</tr>
 					{/if}
-					{#if extraCharge}
+					{#if rounding}
 						<tr>
 							<td class="py-1 text-sm text-gray-600">Rounding</td>
 							<td class="py-1 text-sm text-right tabular-nums">
-								<PriceTag amount={extraCharge} {currency} inline gap="gap-1" />
+								<PriceTag amount={-rounding} {currency} inline gap="gap-1" />
 							</td>
 						</tr>
 					{/if}

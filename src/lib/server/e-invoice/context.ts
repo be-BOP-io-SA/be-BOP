@@ -131,18 +131,21 @@ export interface InvoiceContext {
 	lines: InvoiceLine[];
 	/** Document-level charge (BG-21): delivery fees, excl. VAT */
 	shipping?: { amount: number; vatRate: number };
+	/** Document-level allowance (BG-20): the order's real discount, if any (>= 0) */
+	discount: number;
 	/**
-	 * Document-level allowance (BG-20): order discount + rounding drift between
-	 * line sums and the snapshotted totals, so BR-CO-13 stays exact. A negative
-	 * drift is folded into an extra charge instead.
+	 * Pure floating-point drift between the line-level rounding (unitPrice ×
+	 * quantity → 2dp) and the order-level snapshot rounding (totalPrice - vat,
+	 * each rounded independently) — NEVER a real discount. Forces BR-CO-13
+	 * exact (lineNet - discount - rounding + shipping = exclVat). Positive
+	 * shows as an extra allowance ("Rounding"), negative as an extra charge.
 	 */
-	allowance: number;
-	extraCharge: number;
+	rounding: number;
 	vatBreakdown: VatBreakdownEntry[];
 	totals: {
 		/** BT-106: sum of line net amounts */
 		lineNet: number;
-		/** BT-109 = lineNet - allowance + charges */
+		/** BT-109 = lineNet - discount - rounding + shipping */
 		exclVat: number;
 		/** BT-110 */
 		vat: number;
@@ -402,12 +405,21 @@ export function buildInvoiceContext(params: {
 			? { amount: shippingAmount, vatRate: vatBreakdown[0]?.rate ?? 0 }
 			: undefined;
 
-	// Force BR-CO-13 exact: lineNet - allowance + charges === exclVat. The
-	// allowance absorbs the order discount and any rounding drift; a negative
-	// value flips into an extra charge.
-	const drift = round(lineNet + shippingAmount - exclVat, currency);
-	const allowance = drift > 0 ? drift : 0;
-	const extraCharge = drift < 0 ? -drift : 0;
+	// The gap between the line-level sum and the order's snapshotted excl-VAT
+	// total (lineNet + shipping - exclVat). When the order carries a real
+	// discount, this gap IS the excl-VAT discount amount — order.discount is
+	// stored incl-VAT (see receipt/+page.svelte's discountNoTax, computed the
+	// same way), so it can't be subtracted from lineNet directly; deriving it
+	// via this identity is how the rest of the app already does it. When there
+	// is NO discount, the gap is pure floating-point drift between the
+	// line-level rounding (unitPrice × qty → 2dp) and the order snapshot's
+	// independent totalPrice/vat rounding (e.g. a precise base price like
+	// 2.8279 rounds to 2.83 at line level but totalPrice - vat yields 2.82) —
+	// never a real discount, so it must not be labeled as one.
+	const gap = round(lineNet + shippingAmount - exclVat, currency);
+	const hasRealDiscount = !!orderSnapshot.discount;
+	const discount = hasRealDiscount ? gap : 0;
+	const rounding = hasRealDiscount ? 0 : gap;
 
 	const prepaid = round(
 		(paymentSnapshot.previouslyPaid?.amount ?? 0) + paymentSnapshot.price.amount,
@@ -431,8 +443,8 @@ export function buildInvoiceContext(params: {
 		transactionCategory: transactionCategory(seller.address.country, buyerCountry),
 		lines,
 		shipping,
-		allowance,
-		extraCharge,
+		discount,
+		rounding,
 		vatBreakdown,
 		totals: { lineNet, exclVat, vat, inclVat, prepaid, due },
 		paidWith: buildPaidWith(payment, role, currency)

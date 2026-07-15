@@ -28,8 +28,8 @@ function makeContext(over?: Partial<InvoiceContext>): InvoiceContext {
 			email: 'jane@example.com'
 		},
 		lines: [{ name: 'T-shirt', quantity: 2, unitPrice: 50, netAmount: 100, vatRate: 20 }],
-		allowance: 0,
-		extraCharge: 0,
+		discount: 0,
+		rounding: 0,
 		vatBreakdown: [{ rate: 20, country: 'FR', amount: 20, base: 100, category: 'S' }],
 		totals: { lineNet: 100, exclVat: 100, vat: 20, inclVat: 120, prepaid: 80.25, due: 39.75 },
 		paidWith: {
@@ -134,7 +134,7 @@ describe('ciiXml', () => {
 	it('serializes shipping and discount as document-level allowance/charge', () => {
 		const ctx = makeContext({
 			shipping: { amount: 5, vatRate: 20 },
-			allowance: 10,
+			discount: 10,
 			totals: { lineNet: 105, exclVat: 100, vat: 20, inclVat: 120, prepaid: 120, due: 0 }
 		});
 		const xml = ciiXml(ctx);
@@ -142,6 +142,19 @@ describe('ciiXml', () => {
 		expect(xml).toContain('<udt:Indicator>true</udt:Indicator>');
 		expect(xml).toContain('<ram:AllowanceTotalAmount>10.00</ram:AllowanceTotalAmount>');
 		expect(xml).toContain('<ram:ChargeTotalAmount>5.00</ram:ChargeTotalAmount>');
+	});
+
+	it('serializes rounding drift under its own "Rounding" reason, never as Discount', () => {
+		const positive = makeContext({ discount: 0, rounding: 0.01 });
+		const posXml = ciiXml(positive);
+		expect(posXml).toContain('<ram:Reason>Rounding</ram:Reason>');
+		expect(posXml).not.toContain('<ram:Reason>Discount</ram:Reason>');
+		expect(posXml).toContain('<ram:AllowanceTotalAmount>0.01</ram:AllowanceTotalAmount>');
+
+		const negative = makeContext({ discount: 0, rounding: -0.01 });
+		const negXml = ciiXml(negative);
+		expect(negXml).toContain('<ram:Reason>Rounding</ram:Reason>');
+		expect(negXml).toContain('<ram:ChargeTotalAmount>0.01</ram:ChargeTotalAmount>');
 	});
 });
 

@@ -234,7 +234,13 @@ function lineXml(line: InvoiceContext['lines'][0], index: number, ctx: InvoiceCo
 export function ciiXml(ctx: InvoiceContext): string {
 	const note = paidWithNote(ctx.paidWith, ctx.currency);
 	const firstVat = ctx.vatBreakdown[0];
-	const chargeTotal = (ctx.shipping?.amount ?? 0) + ctx.extraCharge;
+	// ctx.rounding is pure floating-point drift, never a real discount — split
+	// by sign into its own "Rounding" allowance/charge, distinct from the
+	// order's actual discount.
+	const roundingAllowance = ctx.rounding > 0 ? ctx.rounding : 0;
+	const roundingCharge = ctx.rounding < 0 ? -ctx.rounding : 0;
+	const totalAllowance = ctx.discount + roundingAllowance;
+	const chargeTotal = (ctx.shipping?.amount ?? 0) + roundingCharge;
 	// BR-FR rules (French e-invoicing reform) on top of core EN16931 — only
 	// meaningful for country 'FR'.
 	const isFrance = ctx.country === 'FR';
@@ -291,14 +297,17 @@ export function ciiXml(ctx: InvoiceContext): string {
 		)}</ram:TypeCode>`,
 		'</ram:SpecifiedTradeSettlementPaymentMeans>',
 		...ctx.vatBreakdown.map(tradeTaxXml),
-		...(ctx.allowance > 0 && firstVat
-			? [allowanceChargeXml(false, ctx.allowance, 'Discount', firstVat)]
+		...(ctx.discount > 0 && firstVat
+			? [allowanceChargeXml(false, ctx.discount, 'Discount', firstVat)]
+			: []),
+		...(roundingAllowance > 0 && firstVat
+			? [allowanceChargeXml(false, roundingAllowance, 'Rounding', firstVat)]
 			: []),
 		...(ctx.shipping && firstVat
 			? [allowanceChargeXml(true, ctx.shipping.amount, 'Delivery fees', firstVat)]
 			: []),
-		...(ctx.extraCharge > 0 && firstVat
-			? [allowanceChargeXml(true, ctx.extraCharge, 'Rounding', firstVat)]
+		...(roundingCharge > 0 && firstVat
+			? [allowanceChargeXml(true, roundingCharge, 'Rounding', firstVat)]
 			: []),
 		'<ram:SpecifiedTradePaymentTerms>',
 		`<ram:DueDateDateTime><udt:DateTimeString format="102">${dateTime102(
@@ -308,7 +317,7 @@ export function ciiXml(ctx: InvoiceContext): string {
 		'<ram:SpecifiedTradeSettlementHeaderMonetarySummation>',
 		`<ram:LineTotalAmount>${amount(ctx.totals.lineNet)}</ram:LineTotalAmount>`,
 		`<ram:ChargeTotalAmount>${amount(chargeTotal)}</ram:ChargeTotalAmount>`,
-		`<ram:AllowanceTotalAmount>${amount(ctx.allowance)}</ram:AllowanceTotalAmount>`,
+		`<ram:AllowanceTotalAmount>${amount(totalAllowance)}</ram:AllowanceTotalAmount>`,
 		`<ram:TaxBasisTotalAmount>${amount(ctx.totals.exclVat)}</ram:TaxBasisTotalAmount>`,
 		`<ram:TaxTotalAmount currencyID="${ctx.currency}">${amount(
 			ctx.totals.vat

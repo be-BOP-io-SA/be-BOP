@@ -89,9 +89,10 @@ export interface EInvoice extends Timestamps {
 	lines?: EInvoiceLine[];
 	/** Document-level charge (BG-21): delivery fees, excl. VAT */
 	shipping?: { amount: number; vatRate: number };
-	/** Document-level allowance (BG-20): order discount + rounding drift */
-	allowance?: number;
-	extraCharge?: number;
+	/** Document-level allowance (BG-20): the order's real discount, if any (>= 0) */
+	discount?: number;
+	/** Pure rounding drift (never a real discount); positive = extra allowance, negative = extra charge */
+	rounding?: number;
 	totals?: {
 		exclVat: number;
 		vat: number;

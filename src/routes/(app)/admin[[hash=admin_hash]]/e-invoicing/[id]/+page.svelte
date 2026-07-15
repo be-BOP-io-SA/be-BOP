@@ -77,8 +77,8 @@
 		buyer={einvoice.buyer}
 		lines={einvoice.lines}
 		shipping={einvoice.shipping}
-		allowance={einvoice.allowance}
-		extraCharge={einvoice.extraCharge}
+		discount={einvoice.discount}
+		rounding={einvoice.rounding}
 		vatBreakdown={einvoice.vatBreakdown ?? []}
 		totals={einvoice.totals}
 		paidWith={einvoice.paidWith}

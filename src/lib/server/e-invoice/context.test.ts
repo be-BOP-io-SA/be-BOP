@@ -134,8 +134,8 @@ describe('buildInvoiceContext', () => {
 		expect(ctx.vatBreakdown).toEqual([
 			{ rate: 20, country: 'FR', amount: 20, base: 100, category: 'S' }
 		]);
-		expect(ctx.allowance).toBe(0);
-		expect(ctx.extraCharge).toBe(0);
+		expect(ctx.discount).toBe(0);
+		expect(ctx.rounding).toBe(0);
 		expect(ctx.seller.siren).toBe('123456789');
 		expect(ctx.buyer.name).toBe('Jane Doe');
 	});
@@ -259,7 +259,7 @@ describe('buildInvoiceContext', () => {
 		expect(ctx.paidWith.rate).toBeUndefined();
 	});
 
-	it('folds the order discount into the document allowance', () => {
+	it('reports a real order discount as `discount`, not `rounding`', () => {
 		const order = makeOrder();
 		// 120 EUR of items but 20 EUR order discount: total 100 incl. VAT
 		order.currencySnapshot.accounting = {
@@ -277,9 +277,49 @@ describe('buildInvoiceContext', () => {
 		// VAT scaled by the discount share: 20 * (1 - 20/120) = 16.67
 		expect(ctx.totals.vat).toBeCloseTo(16.67, 2);
 		expect(ctx.totals.exclVat).toBeCloseTo(83.33, 2);
-		// lineNet (100) + shipping (0) - exclVat = allowance
-		expect(ctx.allowance).toBeCloseTo(16.67, 2);
+		// lineNet (100) + shipping (0) - exclVat = the excl-VAT discount amount
+		// (order.discount itself is incl-VAT, so it can't be subtracted directly)
+		expect(ctx.discount).toBeCloseTo(16.67, 2);
+		expect(ctx.rounding).toBe(0);
 		expect(ctx.totals.inclVat).toBe(100);
+	});
+
+	it('never labels pure rounding drift as a discount (no order.discount present)', () => {
+		// Regression: a precise 8-decimal base price (2.8279) rounds to 2.83 at
+		// line level, but the order snapshot's independently-rounded
+		// totalPrice(3.39) - vat(0.57) yields 2.82 excl. VAT — a 1-cent gap with
+		// no relation to any actual discount (order.discount is absent here).
+		const order = makeOrder({
+			items: [
+				{
+					product: { name: 'Book' },
+					quantity: 1,
+					vatRate: 20,
+					currencySnapshot: {
+						main: { price: { amount: 0.00005, currency: 'BTC' } },
+						priceReference: { price: { amount: 5000, currency: 'SAT' } },
+						accounting: { price: { amount: 2.8279, currency: 'EUR' } }
+					}
+				}
+			],
+			vat: [{ rate: 20, country: 'FR' }]
+		} as unknown as Partial<Order>);
+		order.currencySnapshot.accounting = {
+			totalPrice: { amount: 3.39, currency: 'EUR' },
+			vat: [{ amount: 0.57, currency: 'EUR' }]
+		};
+
+		const ctx = buildInvoiceContext({
+			order,
+			payment: makePayment(),
+			seller: makeSeller(),
+			country: 'FR'
+		});
+
+		expect(ctx.lines[0].netAmount).toBe(2.83);
+		expect(ctx.totals.exclVat).toBe(2.82);
+		expect(ctx.discount).toBe(0);
+		expect(ctx.rounding).toBeCloseTo(0.01, 2);
 	});
 
 	it('reports a VAT exemption as category E with the reason', () => {
