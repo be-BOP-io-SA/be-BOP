@@ -173,6 +173,20 @@ function partyFromOrder(order: Order): EInvoiceParty {
 	};
 }
 
+/**
+ * Payment methods without a currency-specific processor: their price is
+ * stored in the shop's mainCurrency purely as a bookkeeping conversion (see
+ * paymentPrice() in orders.ts), not as the real currency that changed hands —
+ * e.g. a 'custom' payment labeled "Ethereum" still has price.currency ===
+ * mainCurrency (often BTC), which is not what the buyer actually paid with.
+ */
+const UNVERIFIED_SETTLEMENT_CURRENCY_METHODS: PaymentMethod[] = [
+	'point-of-sale',
+	'free',
+	'bank-transfer',
+	'custom'
+];
+
 function buildPaidWith(
 	payment: OrderPayment,
 	role: CurrencyRole,
@@ -192,6 +206,10 @@ function buildPaidWith(
 			? { amount: amount.amount / SATOSHIS_PER_BTC, currency: 'BTC' as Currency }
 			: { amount: amount.amount, currency: amount.currency };
 
+	const settlementCurrencyVerified = !UNVERIFIED_SETTLEMENT_CURRENCY_METHODS.includes(
+		payment.method
+	);
+
 	return {
 		method: payment.method,
 		...(payment.posSubtype && { posSubtype: payment.posSubtype }),
@@ -200,7 +218,8 @@ function buildPaidWith(
 		amount,
 		display,
 		fiatEquivalent: { amount: fiat.amount, currency: fiat.currency },
-		...(display.currency !== invoiceCurrency &&
+		...(settlementCurrencyVerified &&
+			display.currency !== invoiceCurrency &&
 			display.amount > 0 && {
 				rate: {
 					base: display.currency,

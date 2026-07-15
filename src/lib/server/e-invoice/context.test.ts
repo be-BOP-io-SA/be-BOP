@@ -182,6 +182,45 @@ describe('buildInvoiceContext', () => {
 		expect(ctx.paidWith.rate?.amount).toBeCloseTo(80.25 / 130, 6);
 	});
 
+	it('omits the rate for methods whose currency is an unverified bookkeeping conversion', () => {
+		// A 'custom' payment labeled "Ethereum": price/received are stored in the
+		// shop's mainCurrency (BTC) purely for internal bookkeeping — that is NOT
+		// proof the buyer actually paid in BTC, so no "Paid with BTC" claim.
+		const payment = makePayment({
+			method: 'custom',
+			customPaymentMethod: { id: 'eth', label: 'Ethereum', instructions: '' },
+			price: { amount: 0.00006, currency: 'BTC' },
+			received: { amount: 0.00006, currency: 'BTC' }
+		});
+		const ctx = buildInvoiceContext({
+			order: makeOrder(),
+			payment,
+			seller: makeSeller()
+		});
+
+		expect(ctx.paidWith.method).toBe('custom');
+		expect(ctx.paidWith.methodLabel).toBe('Ethereum');
+		expect(ctx.paidWith.rate).toBeUndefined();
+	});
+
+	it.each(['point-of-sale', 'free', 'bank-transfer'] as const)(
+		'omits the rate for %s payments even when currency differs from the invoice',
+		(method) => {
+			const payment = makePayment({
+				method,
+				price: { amount: 0.00006, currency: 'BTC' },
+				received: { amount: 0.00006, currency: 'BTC' }
+			});
+			const ctx = buildInvoiceContext({
+				order: makeOrder(),
+				payment,
+				seller: makeSeller()
+			});
+
+			expect(ctx.paidWith.rate).toBeUndefined();
+		}
+	);
+
 	it('omits the rate when the payment is in the invoice currency', () => {
 		const payment = makePayment({
 			method: 'card',
