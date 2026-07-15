@@ -1,15 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import type { InvoiceContext } from './context';
-import { ciiXml, paidWithNote, paymentMeansTypeCode } from './cii';
+import { billingModeCode, ciiXml, paidWithNote, paymentMeansTypeCode } from './cii';
 
 function makeContext(over?: Partial<InvoiceContext>): InvoiceContext {
 	return {
+		country: 'FR',
 		invoiceNumber: 42,
 		issueDate: new Date('2026-07-01T10:00:00Z'),
 		orderNumber: 7,
 		orderCreatedAt: new Date('2026-07-01T09:00:00Z'),
 		locale: 'en',
 		currency: 'EUR',
+		operationNature: 'goods',
+		transactionCategory: 'domestic',
 		seller: {
 			name: 'ACME SAS',
 			isCompany: true,
@@ -69,10 +72,32 @@ describe('ciiXml', () => {
 		expect(xml).toContain('1 BTC = 65003.08 EUR (rate at payment time)');
 	});
 
-	it('omits the note for same-currency payments', () => {
+	it('omits the crypto payment note for same-currency payments (French mandatory notes still present)', () => {
 		const ctx = makeContext();
 		delete ctx.paidWith.rate;
-		expect(ciiXml(ctx)).not.toContain('<ram:IncludedNote>');
+		const xml = ciiXml(ctx);
+		expect(xml).not.toContain('Paid with');
+		expect(xml).toContain('<ram:SubjectCode>PMT</ram:SubjectCode>');
+	});
+
+	it('adds the mandatory French legal mention notes (BR-FR-05)', () => {
+		const xml = ciiXml(makeContext());
+		expect(xml).toContain('<ram:SubjectCode>PMT</ram:SubjectCode>');
+		expect(xml).toContain('<ram:SubjectCode>PMD</ram:SubjectCode>');
+		expect(xml).toContain('<ram:SubjectCode>AAB</ram:SubjectCode>');
+	});
+
+	it('carries a non-empty ApplicableHeaderTradeDelivery (BR against empty elements)', () => {
+		const xml = ciiXml(makeContext());
+		expect(xml).not.toContain('<ram:ApplicableHeaderTradeDelivery/>');
+		expect(xml).toContain('<ram:ApplicableHeaderTradeDelivery>');
+		expect(xml).toContain('<ram:ActualDeliverySupplyChainEvent>');
+	});
+
+	it('sets the French billing-mode code (BT-23, BR-FR-08)', () => {
+		const xml = ciiXml(makeContext({ operationNature: 'goods', transactionCategory: 'domestic' }));
+		expect(xml).toContain('<ram:BusinessProcessSpecifiedDocumentContextParameter>');
+		expect(xml).toContain('<ram:ID>B1</ram:ID>');
 	});
 
 	it('serializes the seller legal registration (SIREN, scheme 0002)', () => {
@@ -155,5 +180,25 @@ describe('paidWithNote', () => {
 		});
 		expect(paidWithNote(fiat.paidWith, 'EUR')).toContain('130.00 CHF');
 		expect(paidWithNote(fiat.paidWith, 'EUR')).toContain('1 CHF = 0.92 EUR');
+	});
+});
+
+describe('billingModeCode', () => {
+	it('maps domestic goods/services/mixed', () => {
+		expect(billingModeCode('goods', 'domestic')).toBe('B1');
+		expect(billingModeCode('services', 'domestic')).toBe('S1');
+		expect(billingModeCode('mixed', 'domestic')).toBe('M1');
+	});
+
+	it('maps intra-EU goods/services/mixed', () => {
+		expect(billingModeCode('goods', 'intraEU')).toBe('B2');
+		expect(billingModeCode('services', 'intraEU')).toBe('S2');
+		expect(billingModeCode('mixed', 'intraEU')).toBe('M2');
+	});
+
+	it('maps export goods/services/mixed to documented codes', () => {
+		expect(billingModeCode('goods', 'export')).toBe('B7');
+		expect(billingModeCode('services', 'export')).toBe('S7');
+		expect(billingModeCode('mixed', 'export')).toBe('M8');
 	});
 });

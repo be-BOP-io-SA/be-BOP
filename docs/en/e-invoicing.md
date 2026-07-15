@@ -12,7 +12,7 @@ E-invoices are generated **asynchronously by a background worker**: confirming a
 
 1. **Seller identity** (`/admin/identity`):
    - Business name, address and **VAT number**
-   - The **Legal registration** block: **SIRET** (14 digits — the SIREN is derived from it), legal form (SAS, SARL…), RCS mention and share capital
+   - The **Legal registration** block: **SIRET** (14 digits — the SIREN is derived from it), legal form (SAS, SARL…), RCS mention and share capital. **Required** — generation fails (and retries) until it is set, since a French e-invoice without a seller SIREN is not legally valid (BR-FR-10).
 2. **A fiat currency**: the invoice must be expressed in a fiat currency (EUR for France). The generator picks the first fiat currency among the **accounting → secondary → main** currency roles. A shop configured only in BTC/SAT cannot generate e-invoices — configure an accounting or secondary fiat currency in `/admin/config`.
 
 The settings page shows warnings when any of these are missing.
@@ -55,6 +55,10 @@ Satoshi amounts are displayed as BTC. The same sentence is embedded in the XML a
 ### B2B buyers
 
 At checkout, professional orders capture the **company name** and **VAT number**; with a French billing country, the buyer's **SIREN** is also requested (used in the XML as the buyer's legal registration id, and later for transmission routing). All three appear on the invoice.
+
+### French legal mentions and billing-mode code
+
+Every French e-invoice automatically includes the mandatory Code de commerce mentions (late-payment recovery fee, late-payment penalty rate, early-payment discount policy — Art. L441-6/L441-10), and a "mode de facturation" code (BT-23) derived from whether the order contains physical goods or services (`Product.shipping`) and whether the buyer is in France, elsewhere in the EU, or outside it. These satisfy the reform's BR-FR business rules and require no configuration.
 
 ## Admin
 

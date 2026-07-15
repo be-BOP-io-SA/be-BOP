@@ -1,6 +1,6 @@
 import type { CountryAlpha2 } from '$lib/types/Country';
 import { isFiatCurrency, SATOSHIS_PER_BTC, type Currency } from '$lib/types/Currency';
-import type { EInvoiceParty } from '$lib/types/EInvoice';
+import type { EInvoiceCountry, EInvoiceParty } from '$lib/types/EInvoice';
 import {
 	orderIndividualItemPrice,
 	type Order,
@@ -13,6 +13,61 @@ import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 import type { LanguageKey } from '$lib/translations';
 
 type CurrencyRole = 'main' | 'priceReference' | 'secondary' | 'accounting';
+
+/** Whether the order contains physical goods, services, or both — protocol-agnostic
+ * fact derived from `Product.shipping` ("has a physical component that will be
+ * shipped"). Country-specific serializers (e.g. cii.ts for France) turn this
+ * into their own coded values. */
+export type OperationNature = 'goods' | 'services' | 'mixed';
+
+/** Seller/buyer country relationship, for cross-border VAT treatment. */
+export type TransactionCategory = 'domestic' | 'intraEU' | 'export';
+
+const EU_COUNTRIES: CountryAlpha2[] = [
+	'AT',
+	'BE',
+	'BG',
+	'HR',
+	'CY',
+	'CZ',
+	'DK',
+	'EE',
+	'FI',
+	'FR',
+	'DE',
+	'GR',
+	'HU',
+	'IE',
+	'IT',
+	'LV',
+	'LT',
+	'LU',
+	'MT',
+	'NL',
+	'PL',
+	'PT',
+	'RO',
+	'SK',
+	'SI',
+	'ES',
+	'SE'
+];
+
+function operationNature(order: Order): OperationNature {
+	const hasGoods = order.items.some((item) => item.product.shipping);
+	const hasServices = order.items.some((item) => !item.product.shipping);
+	return hasGoods && hasServices ? 'mixed' : hasGoods ? 'goods' : 'services';
+}
+
+function transactionCategory(
+	sellerCountry: CountryAlpha2,
+	buyerCountry: CountryAlpha2 | undefined
+): TransactionCategory {
+	if (!buyerCountry || buyerCountry === sellerCountry) {
+		return 'domestic';
+	}
+	return EU_COUNTRIES.includes(buyerCountry) ? 'intraEU' : 'export';
+}
 
 export interface InvoiceLine {
 	name: string;
@@ -60,6 +115,7 @@ export interface VatBreakdownEntry {
  * PDF layout so the two can never drift.
  */
 export interface InvoiceContext {
+	country: EInvoiceCountry;
 	invoiceNumber: number;
 	/** BT-2 */
 	issueDate: Date;
@@ -70,6 +126,8 @@ export interface InvoiceContext {
 	currency: Currency;
 	seller: EInvoiceParty;
 	buyer: EInvoiceParty;
+	operationNature: OperationNature;
+	transactionCategory: TransactionCategory;
 	lines: InvoiceLine[];
 	/** Document-level charge (BG-21): delivery fees, excl. VAT */
 	shipping?: { amount: number; vatRate: number };
@@ -243,11 +301,19 @@ export function buildInvoiceContext(params: {
 	order: Order;
 	payment: OrderPayment;
 	seller: SellerIdentity;
+	country: EInvoiceCountry;
 }): InvoiceContext {
-	const { order, payment, seller } = params;
+	const { order, payment, seller, country } = params;
 
 	if (!payment.invoice?.number) {
 		throw new Error('Payment has no invoice number');
+	}
+
+	const sellerParty = partyFromSeller(seller);
+	if (country === 'FR' && !sellerParty.siren) {
+		throw new Error(
+			'Seller SIRET is required for French e-invoicing (BR-FR-10) — set it in Admin → Identity'
+		);
 	}
 
 	const role = pickInvoiceCurrencyRole(order);
@@ -349,15 +415,20 @@ export function buildInvoiceContext(params: {
 	);
 	const due = round(paymentSnapshot.remainingToPay?.amount ?? inclVat - prepaid, currency);
 
+	const buyerCountry = order.billingAddress?.country ?? order.shippingAddress?.country;
+
 	return {
+		country,
 		invoiceNumber: payment.invoice.number,
 		issueDate: payment.invoice.createdAt ?? payment.paidAt ?? new Date(),
 		orderNumber: order.number,
 		orderCreatedAt: order.createdAt,
 		locale: order.locale,
 		currency,
-		seller: partyFromSeller(seller),
+		seller: sellerParty,
 		buyer: partyFromOrder(order),
+		operationNature: operationNature(order),
+		transactionCategory: transactionCategory(seller.address.country, buyerCountry),
 		lines,
 		shipping,
 		allowance,

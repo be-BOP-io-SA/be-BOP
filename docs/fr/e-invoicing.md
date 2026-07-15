@@ -12,7 +12,7 @@ Les factures électroniques sont générées **de manière asynchrone par un wor
 
 1. **Identité du vendeur** (`/admin/identity`) :
    - Raison sociale, adresse et **numéro de TVA**
-   - Le bloc **Legal registration** : **SIRET** (14 chiffres — le SIREN en est dérivé), forme juridique (SAS, SARL…), mention RCS et capital social
+   - Le bloc **Legal registration** : **SIRET** (14 chiffres — le SIREN en est dérivé), forme juridique (SAS, SARL…), mention RCS et capital social. **Obligatoire** — la génération échoue (et retente) tant qu'il n'est pas renseigné, une facture électronique française sans SIREN vendeur n'étant pas légalement valide (BR-FR-10).
 2. **Une devise fiat** : la facture doit être exprimée dans une devise fiat (EUR pour la France). Le générateur choisit la première devise fiat parmi les rôles **accounting → secondary → main**. Une boutique configurée uniquement en BTC/SAT ne peut pas générer de factures électroniques — configurez une devise de comptabilité ou secondaire fiat dans `/admin/config`.
 
 La page de réglages affiche des avertissements lorsqu'un de ces éléments manque.
@@ -55,6 +55,10 @@ Les montants en satoshis sont affichés en BTC. La même phrase est intégrée a
 ### Acheteurs B2B
 
 Au checkout, les commandes professionnelles capturent la **raison sociale** et le **numéro de TVA** ; avec un pays de facturation français, le **SIREN** de l'acheteur est également demandé (utilisé dans le XML comme identifiant légal de l'acheteur, et plus tard pour le routage de la transmission). Les trois figurent sur la facture.
+
+### Mentions légales françaises et code de mode de facturation
+
+Chaque facture électronique française inclut automatiquement les mentions obligatoires du Code de commerce (indemnité forfaitaire pour frais de recouvrement, taux des pénalités de retard, politique d'escompte — art. L441-6/L441-10), ainsi qu'un code de « mode de facturation » (BT-23) déterminé à partir de la nature de la commande (biens physiques ou services, via `Product.shipping`) et de la localisation de l'acheteur (France, reste de l'UE, ou hors UE). Ces éléments satisfont les règles métier BR-FR de la réforme sans configuration nécessaire.
 
 ## Administration
 

@@ -4,6 +4,9 @@ exports[`ciiXml > produces the expected EN16931 CII document (golden) 1`] = `
 "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
 <rsm:CrossIndustryInvoice xmlns:rsm=\\"urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100\\" xmlns:ram=\\"urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100\\" xmlns:udt=\\"urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100\\">
 <rsm:ExchangedDocumentContext>
+<ram:BusinessProcessSpecifiedDocumentContextParameter>
+<ram:ID>B1</ram:ID>
+</ram:BusinessProcessSpecifiedDocumentContextParameter>
 <ram:GuidelineSpecifiedDocumentContextParameter>
 <ram:ID>urn:cen.eu:en16931:2017</ram:ID>
 </ram:GuidelineSpecifiedDocumentContextParameter>
@@ -16,6 +19,18 @@ exports[`ciiXml > produces the expected EN16931 CII document (golden) 1`] = `
 </ram:IssueDateTime>
 <ram:IncludedNote>
 <ram:Content>Paid with BTC: 0.00123456 BTC (80.25 EUR) — 1 BTC = 65003.08 EUR (rate at payment time)</ram:Content>
+</ram:IncludedNote>
+<ram:IncludedNote>
+<ram:Content>En cas de retard de paiement, une indemnité forfaitaire pour frais de recouvrement de 40 € sera exigée (art. L441-10 et D441-5 du Code de commerce).</ram:Content>
+<ram:SubjectCode>PMT</ram:SubjectCode>
+</ram:IncludedNote>
+<ram:IncludedNote>
+<ram:Content>Taux des pénalités de retard : trois fois le taux d&apos;intérêt légal en vigueur.</ram:Content>
+<ram:SubjectCode>PMD</ram:SubjectCode>
+</ram:IncludedNote>
+<ram:IncludedNote>
+<ram:Content>Escompte pour paiement anticipé : néant.</ram:Content>
+<ram:SubjectCode>AAB</ram:SubjectCode>
 </ram:IncludedNote>
 </rsm:ExchangedDocument>
 <rsm:SupplyChainTradeTransaction>
@@ -80,7 +95,13 @@ exports[`ciiXml > produces the expected EN16931 CII document (golden) 1`] = `
 <ram:IssuerAssignedID>7</ram:IssuerAssignedID>
 </ram:BuyerOrderReferencedDocument>
 </ram:ApplicableHeaderTradeAgreement>
-<ram:ApplicableHeaderTradeDelivery/>
+<ram:ApplicableHeaderTradeDelivery>
+<ram:ActualDeliverySupplyChainEvent>
+<ram:OccurrenceDateTime>
+<udt:DateTimeString format=\\"102\\">20260701</udt:DateTimeString>
+</ram:OccurrenceDateTime>
+</ram:ActualDeliverySupplyChainEvent>
+</ram:ApplicableHeaderTradeDelivery>
 <ram:ApplicableHeaderTradeSettlement>
 <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
 <ram:SpecifiedTradeSettlementPaymentMeans>

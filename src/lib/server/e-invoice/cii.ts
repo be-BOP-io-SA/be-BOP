@@ -1,5 +1,11 @@
 import type { PaymentMethod } from '$lib/server/payment-methods';
-import type { InvoiceContext, PaidWith, VatBreakdownEntry } from './context';
+import type {
+	InvoiceContext,
+	OperationNature,
+	PaidWith,
+	TransactionCategory,
+	VatBreakdownEntry
+} from './context';
 
 /**
  * UN/CEFACT CII serializer for the EN16931 semantic model (the XML embedded in
@@ -69,6 +75,51 @@ export function paidWithNote(paidWith: PaidWith, invoiceCurrency: string): strin
 	)} ${paidWith.display.currency}`;
 	const equivalent = `${amount(paidWith.fiatEquivalent.amount)} ${invoiceCurrency}`;
 	return `Paid with ${paidWith.display.currency}: ${displayed} (${equivalent}) — ${rate} (rate at payment time)`;
+}
+
+/**
+ * French e-invoicing "mode de facturation" code (BT-23, BR-FR-08), chosen
+ * from the fixed list the reform's business rules accept. Only the domestic
+ * and intra-EU cases are confidently mapped from the DGFiP flux reference —
+ * export defaults to the closest documented code (B7/S7/M8) and should be
+ * verified against the official spec before relying on it for real non-EU
+ * exports.
+ */
+export function billingModeCode(nature: OperationNature, category: TransactionCategory): string {
+	if (category === 'domestic') {
+		return nature === 'goods' ? 'B1' : nature === 'services' ? 'S1' : 'M1';
+	}
+	if (category === 'intraEU') {
+		return nature === 'goods' ? 'B2' : nature === 'services' ? 'S2' : 'M2';
+	}
+	return nature === 'goods' ? 'B7' : nature === 'services' ? 'S7' : 'M8';
+}
+
+/**
+ * Mandatory French legal mentions (Code de commerce Art. L441-6/L441-10):
+ * late-payment recovery fee, late-payment penalty rate, and early-payment
+ * discount policy. BR-FR-05 only checks that a note with each SubjectCode
+ * exists, not its wording.
+ */
+function frenchMandatoryNotesXml(): string[] {
+	const notes: Array<{ code: string; content: string }> = [
+		{
+			code: 'PMT',
+			content:
+				'En cas de retard de paiement, une indemnité forfaitaire pour frais de recouvrement de 40 € sera exigée (art. L441-10 et D441-5 du Code de commerce).'
+		},
+		{
+			code: 'PMD',
+			content: "Taux des pénalités de retard : trois fois le taux d'intérêt légal en vigueur."
+		},
+		{ code: 'AAB', content: 'Escompte pour paiement anticipé : néant.' }
+	];
+	return notes.flatMap(({ code, content }) => [
+		'<ram:IncludedNote>',
+		`<ram:Content>${esc(content)}</ram:Content>`,
+		`<ram:SubjectCode>${code}</ram:SubjectCode>`,
+		'</ram:IncludedNote>'
+	]);
 }
 
 function partyXml(
@@ -184,11 +235,21 @@ export function ciiXml(ctx: InvoiceContext): string {
 	const note = paidWithNote(ctx.paidWith, ctx.currency);
 	const firstVat = ctx.vatBreakdown[0];
 	const chargeTotal = (ctx.shipping?.amount ?? 0) + ctx.extraCharge;
+	// BR-FR rules (French e-invoicing reform) on top of core EN16931 — only
+	// meaningful for country 'FR'.
+	const isFrance = ctx.country === 'FR';
 
 	return [
 		'<?xml version="1.0" encoding="UTF-8"?>',
 		'<rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">',
 		'<rsm:ExchangedDocumentContext>',
+		...(isFrance
+			? [
+					'<ram:BusinessProcessSpecifiedDocumentContextParameter>',
+					`<ram:ID>${billingModeCode(ctx.operationNature, ctx.transactionCategory)}</ram:ID>`,
+					'</ram:BusinessProcessSpecifiedDocumentContextParameter>'
+			  ]
+			: []),
 		'<ram:GuidelineSpecifiedDocumentContextParameter>',
 		'<ram:ID>urn:cen.eu:en16931:2017</ram:ID>',
 		'</ram:GuidelineSpecifiedDocumentContextParameter>',
@@ -203,6 +264,7 @@ export function ciiXml(ctx: InvoiceContext): string {
 		...(note
 			? ['<ram:IncludedNote>', `<ram:Content>${esc(note)}</ram:Content>`, '</ram:IncludedNote>']
 			: []),
+		...(isFrance ? frenchMandatoryNotesXml() : []),
 		'</rsm:ExchangedDocument>',
 		'<rsm:SupplyChainTradeTransaction>',
 		...ctx.lines.map((line, i) => lineXml(line, i, ctx)),
@@ -213,7 +275,13 @@ export function ciiXml(ctx: InvoiceContext): string {
 		`<ram:IssuerAssignedID>${ctx.orderNumber}</ram:IssuerAssignedID>`,
 		'</ram:BuyerOrderReferencedDocument>',
 		'</ram:ApplicableHeaderTradeAgreement>',
-		'<ram:ApplicableHeaderTradeDelivery/>',
+		'<ram:ApplicableHeaderTradeDelivery>',
+		'<ram:ActualDeliverySupplyChainEvent>',
+		'<ram:OccurrenceDateTime>',
+		`<udt:DateTimeString format="102">${dateTime102(ctx.issueDate)}</udt:DateTimeString>`,
+		'</ram:OccurrenceDateTime>',
+		'</ram:ActualDeliverySupplyChainEvent>',
+		'</ram:ApplicableHeaderTradeDelivery>',
 		'<ram:ApplicableHeaderTradeSettlement>',
 		`<ram:InvoiceCurrencyCode>${ctx.currency}</ram:InvoiceCurrencyCode>`,
 		'<ram:SpecifiedTradeSettlementPaymentMeans>',

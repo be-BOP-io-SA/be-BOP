@@ -49,7 +49,8 @@ export async function generateEInvoice(einvoice: EInvoice): Promise<void> {
 			ctx = buildInvoiceContext({
 				order,
 				payment,
-				seller: resolveSeller(order.sellerIdentity)
+				seller: resolveSeller(order.sellerIdentity),
+				country: einvoice.country
 			});
 			break;
 		default:

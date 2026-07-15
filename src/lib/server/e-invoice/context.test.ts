@@ -121,7 +121,8 @@ describe('buildInvoiceContext', () => {
 		const ctx = buildInvoiceContext({
 			order: makeOrder(),
 			payment: makePayment(),
-			seller: makeSeller()
+			seller: makeSeller(),
+			country: 'FR'
 		});
 
 		expect(ctx.currency).toBe('EUR');
@@ -143,7 +144,8 @@ describe('buildInvoiceContext', () => {
 		const ctx = buildInvoiceContext({
 			order: makeOrder(),
 			payment: makePayment(),
-			seller: makeSeller()
+			seller: makeSeller(),
+			country: 'FR'
 		});
 
 		expect(ctx.totals.prepaid).toBe(80.25);
@@ -154,7 +156,8 @@ describe('buildInvoiceContext', () => {
 		const ctx = buildInvoiceContext({
 			order: makeOrder(),
 			payment: makePayment(),
-			seller: makeSeller()
+			seller: makeSeller(),
+			country: 'FR'
 		});
 
 		expect(ctx.paidWith.amount).toEqual({ amount: 123456, currency: 'SAT' });
@@ -174,7 +177,8 @@ describe('buildInvoiceContext', () => {
 		const ctx = buildInvoiceContext({
 			order: makeOrder(),
 			payment,
-			seller: makeSeller()
+			seller: makeSeller(),
+			country: 'FR'
 		});
 
 		expect(ctx.paidWith.display).toEqual({ amount: 130, currency: 'CHF' });
@@ -195,7 +199,8 @@ describe('buildInvoiceContext', () => {
 		const ctx = buildInvoiceContext({
 			order: makeOrder(),
 			payment,
-			seller: makeSeller()
+			seller: makeSeller(),
+			country: 'FR'
 		});
 
 		expect(ctx.paidWith.method).toBe('custom');
@@ -214,7 +219,8 @@ describe('buildInvoiceContext', () => {
 			const ctx = buildInvoiceContext({
 				order: makeOrder(),
 				payment,
-				seller: makeSeller()
+				seller: makeSeller(),
+				country: 'FR'
 			});
 
 			expect(ctx.paidWith.rate).toBeUndefined();
@@ -230,7 +236,8 @@ describe('buildInvoiceContext', () => {
 		const ctx = buildInvoiceContext({
 			order: makeOrder(),
 			payment,
-			seller: makeSeller()
+			seller: makeSeller(),
+			country: 'FR'
 		});
 
 		expect(ctx.paidWith.rate).toBeUndefined();
@@ -245,7 +252,8 @@ describe('buildInvoiceContext', () => {
 		const ctx = buildInvoiceContext({
 			order: makeOrder(),
 			payment,
-			seller: makeSeller()
+			seller: makeSeller(),
+			country: 'FR'
 		});
 
 		expect(ctx.paidWith.rate).toBeUndefined();
@@ -262,7 +270,8 @@ describe('buildInvoiceContext', () => {
 		const ctx = buildInvoiceContext({
 			order,
 			payment: makePayment(),
-			seller: makeSeller()
+			seller: makeSeller(),
+			country: 'FR'
 		});
 
 		// VAT scaled by the discount share: 20 * (1 - 20/120) = 16.67
@@ -286,7 +295,8 @@ describe('buildInvoiceContext', () => {
 		const ctx = buildInvoiceContext({
 			order,
 			payment: makePayment(),
-			seller: makeSeller()
+			seller: makeSeller(),
+			country: 'FR'
 		});
 
 		expect(ctx.vatBreakdown).toEqual([
@@ -313,7 +323,8 @@ describe('buildInvoiceContext', () => {
 		const ctx = buildInvoiceContext({
 			order,
 			payment: makePayment(),
-			seller: makeSeller()
+			seller: makeSeller(),
+			country: 'FR'
 		});
 
 		expect(ctx.buyer).toMatchObject({
@@ -327,7 +338,72 @@ describe('buildInvoiceContext', () => {
 	it('throws when the payment has no invoice number', () => {
 		const payment = makePayment({ invoice: undefined });
 		expect(() =>
-			buildInvoiceContext({ order: makeOrder(), payment, seller: makeSeller() })
+			buildInvoiceContext({ order: makeOrder(), payment, seller: makeSeller(), country: 'FR' })
 		).toThrow(/invoice number/);
+	});
+
+	it('throws for France when the seller has no SIRET (BR-FR-10)', () => {
+		const seller = { ...makeSeller(), legal: undefined };
+		expect(() =>
+			buildInvoiceContext({ order: makeOrder(), payment: makePayment(), seller, country: 'FR' })
+		).toThrow(/SIRET/);
+	});
+
+	it('derives operation nature from Product.shipping', () => {
+		const goods = buildInvoiceContext({
+			order: makeOrder(),
+			payment: makePayment(),
+			seller: makeSeller(),
+			country: 'FR'
+		});
+		expect(goods.operationNature).toBe('services'); // fixture product has no `shipping` flag
+
+		const order = makeOrder();
+		order.items[0].product.shipping = true;
+		const ctx = buildInvoiceContext({
+			order,
+			payment: makePayment(),
+			seller: makeSeller(),
+			country: 'FR'
+		});
+		expect(ctx.operationNature).toBe('goods');
+	});
+
+	it('derives transaction category from seller vs buyer country', () => {
+		const domestic = buildInvoiceContext({
+			order: makeOrder(),
+			payment: makePayment(),
+			seller: makeSeller(),
+			country: 'FR'
+		});
+		expect(domestic.transactionCategory).toBe('domestic');
+
+		const intraEU = makeOrder();
+		intraEU.billingAddress = {
+			...intraEU.billingAddress,
+			country: 'DE'
+		} as Order['billingAddress'];
+		expect(
+			buildInvoiceContext({
+				order: intraEU,
+				payment: makePayment(),
+				seller: makeSeller(),
+				country: 'FR'
+			}).transactionCategory
+		).toBe('intraEU');
+
+		const exportOrder = makeOrder();
+		exportOrder.billingAddress = {
+			...exportOrder.billingAddress,
+			country: 'US'
+		} as Order['billingAddress'];
+		expect(
+			buildInvoiceContext({
+				order: exportOrder,
+				payment: makePayment(),
+				seller: makeSeller(),
+				country: 'FR'
+			}).transactionCategory
+		).toBe('export');
 	});
 });
