@@ -977,6 +977,36 @@ export const migrations = [
 				);
 			}
 		}
+	},
+	{
+		_id: new ObjectId('000000000000000000002259'),
+		name: 'Seed the invoiceNumber counter from the max existing payment invoice number',
+		run: async (session: ClientSession) => {
+			// Invoice numbers used to be allocated with a racy collection scan
+			// (lastInvoiceNumber() + 1). They now come from an atomic counter doc, like
+			// order numbers — seed it so the sequence continues without gaps or reuse.
+			// $setOnInsert keeps this idempotent if the counter already exists.
+			const [res] = await collections.orders
+				.aggregate<{ max: number }>(
+					[
+						{ $unwind: '$payments' },
+						{ $match: { 'payments.invoice.number': { $exists: true } } },
+						{ $group: { _id: null, max: { $max: '$payments.invoice.number' } } }
+					],
+					{ session }
+				)
+				.toArray();
+			await collections.runtimeConfig.updateOne(
+				{ _id: 'invoiceNumber' },
+				{
+					$setOnInsert: {
+						data: (res?.max ?? 0) as never,
+						updatedAt: new Date()
+					}
+				},
+				{ upsert: true, session }
+			);
+		}
 	}
 ];
 

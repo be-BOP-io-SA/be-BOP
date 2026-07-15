@@ -502,6 +502,34 @@
 			"ZW": "Zimbabwe"
 		}
 	},
+	"eInvoice": {
+		"invoiceTitle": "Fatura n.º {invoiceNumber}",
+		"issueDate": "Data de emissão",
+		"orderRef": "Encomenda n.º {orderNumber} de {orderDate}",
+		"seller": "Vendedor",
+		"buyer": "Comprador",
+		"vatNumber": "N.º de IVA",
+		"siret": "SIRET",
+		"item": "Artigo",
+		"quantity": "Qtd.",
+		"unitPriceExclVat": "Preço unitário s/ IVA",
+		"vatRate": "IVA %",
+		"lineTotal": "Total s/ IVA",
+		"totalExclVat": "Total s/ IVA",
+		"totalVat": "Total de IVA",
+		"totalInclVat": "Total c/ IVA",
+		"discount": "Desconto",
+		"deliveryFees": "Custos de envio",
+		"rounding": "Arredondamento",
+		"prepaid": "Montante pago",
+		"due": "Montante em dívida",
+		"payment": "Pagamento",
+		"paidWith": "Pago em {currency}: {amount}",
+		"rateAtPaymentTime": "1 {base} = {rate} {quote} (taxa no momento do pagamento)",
+		"paymentMethod": "Método de pagamento",
+		"paidAt": "Pago em {date}",
+		"vatExemption": "Isenção de IVA: {reason}"
+	},
 	"error": {
 		"404": "A página {invalidUrl} que solicitou não pôde ser encontrada. Por favor, verifique se o seu link está correto ou contacte a equipa do site para reportar o problema.",
 		"title": "Erro {status}"

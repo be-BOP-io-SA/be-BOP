@@ -98,6 +98,57 @@
 		</label>
 	</div>
 
+	<h2 class="text-2xl">Legal registration (e-invoicing)</h2>
+
+	<label class="form-label">
+		SIRET
+		<input
+			type="text"
+			name="legal.siret"
+			class="form-input max-w-[25rem]"
+			maxlength="14"
+			pattern={'\\d{14}'}
+			placeholder="14 digits"
+			value={id?.legal?.siret ?? ''}
+		/>
+		<p class="text-sm">Required for French e-invoicing (Factur-X). SIREN is derived from it.</p>
+	</label>
+
+	<div class="flex flex-wrap gap-2">
+		<label class="form-label">
+			Legal form
+			<input
+				type="text"
+				name="legal.legalForm"
+				class="form-input max-w-[25rem]"
+				placeholder="SAS, SARL, EI…"
+				value={id?.legal?.legalForm ?? ''}
+			/>
+		</label>
+
+		<label class="form-label">
+			Registration (RCS)
+			<input
+				type="text"
+				name="legal.rcs"
+				class="form-input max-w-[25rem]"
+				placeholder="RCS Paris"
+				value={id?.legal?.rcs ?? ''}
+			/>
+		</label>
+
+		<label class="form-label">
+			Share capital
+			<input
+				type="text"
+				name="legal.shareCapital"
+				class="form-input max-w-[25rem]"
+				placeholder="10 000 €"
+				value={id?.legal?.shareCapital ?? ''}
+			/>
+		</label>
+	</div>
+
 	<h2 class="text-2xl">Contact information</h2>
 
 	<label class="form-label">

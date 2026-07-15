@@ -198,6 +198,10 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/sales-logs',
 				label: 'Sales Logs'
+			},
+			{
+				href: '/admin/e-invoicing',
+				label: 'E-invoices'
 			}
 		]
 	},

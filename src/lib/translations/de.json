@@ -502,6 +502,34 @@
 			"ZW": "Simbabwe"
 		}
 	},
+	"eInvoice": {
+		"invoiceTitle": "Rechnung Nr. {invoiceNumber}",
+		"issueDate": "Rechnungsdatum",
+		"orderRef": "Bestellung Nr. {orderNumber} vom {orderDate}",
+		"seller": "Verkäufer",
+		"buyer": "Käufer",
+		"vatNumber": "USt-IdNr.",
+		"siret": "SIRET",
+		"item": "Artikel",
+		"quantity": "Menge",
+		"unitPriceExclVat": "Einzelpreis (netto)",
+		"vatRate": "MwSt. %",
+		"lineTotal": "Gesamt (netto)",
+		"totalExclVat": "Gesamt (netto)",
+		"totalVat": "MwSt. gesamt",
+		"totalInclVat": "Gesamt (brutto)",
+		"discount": "Rabatt",
+		"deliveryFees": "Versandkosten",
+		"rounding": "Rundung",
+		"prepaid": "Bezahlter Betrag",
+		"due": "Fälliger Betrag",
+		"payment": "Zahlung",
+		"paidWith": "Bezahlt in {currency}: {amount}",
+		"rateAtPaymentTime": "1 {base} = {rate} {quote} (Kurs zum Zahlungszeitpunkt)",
+		"paymentMethod": "Zahlungsart",
+		"paidAt": "Bezahlt am {date}",
+		"vatExemption": "MwSt.-Befreiung: {reason}"
+	},
 	"error": {
 		"404": "Die von Ihnen angeforderte Seite {invalidUrl} konnte nicht gefunden werden. Bitte überprüfen Sie, ob Ihr Link korrekt ist, oder kontaktieren Sie das Website-Team, um das Problem zu melden.",
 		"title": "Fehler {status}"

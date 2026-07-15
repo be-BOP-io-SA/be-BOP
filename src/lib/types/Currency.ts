@@ -430,7 +430,11 @@ export function readStoredPrice(storedPrice: Price): Price {
 export const UNDERLYING_CURRENCY = 'SAT';
 
 // Crypto currencies (BTC, SAT)
-const CRYPTO_CURRENCIES: Currency[] = ['BTC', 'SAT'];
+export const CRYPTO_CURRENCIES: Currency[] = ['BTC', 'SAT'];
+
+export function isFiatCurrency(currency: Currency): boolean {
+	return !CRYPTO_CURRENCIES.includes(currency);
+}
 
 export function sortCurrencies(...prioritized: (Currency | null | undefined)[]): Currency[] {
 	const priority = [...prioritized.filter((c): c is Currency => !!c), ...CRYPTO_CURRENCIES].filter(

@@ -502,6 +502,34 @@
 			"ZW": "Zimbabwe"
 		}
 	},
+	"eInvoice": {
+		"invoiceTitle": "Invoice n° {invoiceNumber}",
+		"issueDate": "Issue date",
+		"orderRef": "Order n° {orderNumber} of {orderDate}",
+		"seller": "Seller",
+		"buyer": "Buyer",
+		"vatNumber": "VAT number",
+		"siret": "SIRET",
+		"item": "Item",
+		"quantity": "Qty",
+		"unitPriceExclVat": "Unit price excl. VAT",
+		"vatRate": "VAT %",
+		"lineTotal": "Total excl. VAT",
+		"totalExclVat": "Total excl. VAT",
+		"totalVat": "Total VAT",
+		"totalInclVat": "Total incl. VAT",
+		"discount": "Discount",
+		"deliveryFees": "Delivery fees",
+		"rounding": "Rounding",
+		"prepaid": "Amount paid",
+		"due": "Amount due",
+		"payment": "Payment",
+		"paidWith": "Paid with {currency}: {amount}",
+		"rateAtPaymentTime": "1 {base} = {rate} {quote} (rate at payment time)",
+		"paymentMethod": "Payment method",
+		"paidAt": "Paid on {date}",
+		"vatExemption": "VAT exemption: {reason}"
+	},
 	"error": {
 		"404": "The page {invalidUrl} you requested could not be found. Please check that your link is correct or contact the site team to report the problem.",
 		"title": "Error {status}"
@@ -1004,11 +1032,26 @@
 			"then": "then"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "hour", "other": "hours" },
-			"day": { "one": "day", "other": "days" },
-			"week": { "one": "week", "other": "weeks" },
-			"month": { "one": "month", "other": "months" },
-			"year": { "one": "year", "other": "years" }
+			"hour": {
+				"one": "hour",
+				"other": "hours"
+			},
+			"day": {
+				"one": "day",
+				"other": "days"
+			},
+			"week": {
+				"one": "week",
+				"other": "weeks"
+			},
+			"month": {
+				"one": "month",
+				"other": "months"
+			},
+			"year": {
+				"one": "year",
+				"other": "years"
+			}
 		},
 		"type": {
 			"deposit": "On deposit",

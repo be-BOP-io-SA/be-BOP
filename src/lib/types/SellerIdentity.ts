@@ -24,6 +24,18 @@ export interface SellerIdentity {
 		accountHolderAddress?: string;
 	};
 
+	/** Legal registration identifiers, required for e-invoicing (EN16931 BT-30) */
+	legal?: {
+		/** 14 digits; SIREN is derived as the first 9 */
+		siret?: string;
+		/** e.g. "SAS", "SARL", "EI" */
+		legalForm?: string;
+		/** Registration mention, e.g. "RCS Paris" */
+		rcs?: string;
+		/** e.g. "10 000 €" */
+		shareCapital?: string;
+	};
+
 	invoice?: {
 		issuerInfo?: string;
 	};

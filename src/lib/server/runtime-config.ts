@@ -29,6 +29,7 @@ import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID, TICKET_CHECKER_ROLE_ID } from '$lib/t
 import { building } from '$app/environment';
 import { defaultPosTabGroups } from '$lib/types/PosTabGroup';
 import type { SellerIdentity } from '$lib/types/SellerIdentity';
+import type { EInvoiceCountry } from '$lib/types/EInvoice';
 import type { Tag } from '$lib/types/Tag';
 
 import { isUniqueConstraintError } from './utils/isUniqueConstraintError';
@@ -80,6 +81,8 @@ const baseConfig = {
 	priceReferenceCurrency: 'SAT' as Currency,
 	accountingCurrency: null as Currency | null,
 	orderNumber: 0,
+	/** Gapless sequential invoice-number counter (incremented atomically, like orderNumber) */
+	invoiceNumber: 0,
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
 	/**
@@ -218,6 +221,12 @@ const baseConfig = {
 	mainThemeId: '',
 	sellerIdentity: null as SellerIdentity | null,
 	shopInformation: null as SellerIdentity | null,
+	eInvoicing: {
+		enabled: false,
+		country: 'FR' satisfies EInvoiceCountry as EInvoiceCountry,
+		// PDP (Plateforme Agréée) adapter id, only 'none' is registered for now
+		platform: 'none'
+	},
 	sumUp: {
 		apiKey: '',
 		merchantCode: '',

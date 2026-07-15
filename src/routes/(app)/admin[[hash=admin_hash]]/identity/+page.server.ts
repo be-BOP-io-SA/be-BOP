@@ -58,6 +58,18 @@ export const actions = {
 						accountHolderAddress: z.string().min(1).max(500).trim().optional()
 					})
 					.optional(),
+				legal: z
+					.object({
+						siret: z
+							.string()
+							.trim()
+							.regex(/^\d{14}$/, 'SIRET must be 14 digits')
+							.optional(),
+						legalForm: z.string().min(1).max(100).trim().optional(),
+						rcs: z.string().min(1).max(100).trim().optional(),
+						shareCapital: z.string().min(1).max(100).trim().optional()
+					})
+					.optional(),
 				invoice: z
 					.object({
 						issuerInfo: z.string().min(1).max(500).trim().optional()

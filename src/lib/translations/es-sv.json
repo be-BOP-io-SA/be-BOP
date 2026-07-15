@@ -502,6 +502,34 @@
 			"ZW": "Zimbabue"
 		}
 	},
+	"eInvoice": {
+		"invoiceTitle": "Factura n.º {invoiceNumber}",
+		"issueDate": "Fecha de emisión",
+		"orderRef": "Pedido n.º {orderNumber} del {orderDate}",
+		"seller": "Vendedor",
+		"buyer": "Comprador",
+		"vatNumber": "N.º de IVA",
+		"siret": "SIRET",
+		"item": "Artículo",
+		"quantity": "Cant.",
+		"unitPriceExclVat": "Precio unitario sin IVA",
+		"vatRate": "IVA %",
+		"lineTotal": "Total sin IVA",
+		"totalExclVat": "Total sin IVA",
+		"totalVat": "Total IVA",
+		"totalInclVat": "Total con IVA",
+		"discount": "Descuento",
+		"deliveryFees": "Gastos de envío",
+		"rounding": "Redondeo",
+		"prepaid": "Importe pagado",
+		"due": "Importe pendiente",
+		"payment": "Pago",
+		"paidWith": "Pagado en {currency}: {amount}",
+		"rateAtPaymentTime": "1 {base} = {rate} {quote} (tipo de cambio en el momento del pago)",
+		"paymentMethod": "Método de pago",
+		"paidAt": "Pagado el {date}",
+		"vatExemption": "Exención de IVA: {reason}"
+	},
 	"error": {
 		"404": "La página {invalidUrl} que accedió no se encuentra. Por favor asegúrese que el enlace es correcto o contáctenos para informarnos del problema.",
 		"title": "Error {status}"

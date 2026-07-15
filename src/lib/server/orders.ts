@@ -49,6 +49,7 @@ import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { refreshAvailableStockInDb } from './product';
 import { checkCartItems } from './cart';
+import { createPendingEInvoice } from './e-invoice/enqueue';
 import { handleOrderTabAfterPayment } from './orderTab';
 import { userQuery } from './user';
 import { SMTP_USER } from '$lib/server/env-config';
@@ -120,6 +121,26 @@ async function generateOrderNumber(session?: ClientSession): Promise<number> {
 	return res.value.data as number;
 }
 
+/**
+ * Atomic, gapless invoice-number allocation (French anti-fraud requirement).
+ * Must be called inside the payment transaction so an aborted payment rolls the
+ * counter back with it. The counter is seeded from legacy invoice numbers by a
+ * migration; the unique index on `payments.invoice.number` stays as a backstop.
+ */
+async function generateInvoiceNumber(session: ClientSession): Promise<number> {
+	const res = await collections.runtimeConfig.findOneAndUpdate(
+		{ _id: 'invoiceNumber' },
+		{ $inc: { data: 1 as never } },
+		{ upsert: true, returnDocument: 'after', session }
+	);
+
+	if (!res.value) {
+		throw new Error('Failed to increment invoice number');
+	}
+
+	return res.value.data as number;
+}
+
 export function isOrderFullyPaid(order: Order, opts?: { includePendingOrders?: boolean }): boolean {
 	const unit = CURRENCY_UNIT[order.currencySnapshot.main.totalPrice.currency];
 	// Special case: no payments yet and order of 0.01€ => it's not fully paid
@@ -155,8 +176,6 @@ export async function onOrderPayment(
 		firstPaidTransition?: boolean;
 	}
 ): Promise<Order> {
-	const invoiceNumber = ((await lastInvoiceNumber()) ?? 0) + 1;
-
 	if (!order.payments.includes(payment)) {
 		throw new Error('Sync broken between order and payment');
 	}
@@ -175,14 +194,20 @@ export async function onOrderPayment(
 	payment.status = 'paid'; // for isOrderFullyPaid
 	payment.paidAt = paidAt;
 	const fn = async (session: ClientSession) => {
+		// Allocated inside the transaction so an abort rolls the counter back (gapless
+		// sequence). Idempotent: the free-payment double-call & retries keep the number
+		// already assigned to this payment instead of burning a new one.
+		const invoiceNumber = payment.invoice?.number ?? (await generateInvoiceNumber(session));
 		const ret = await collections.orders.findOneAndUpdate(
 			{ _id: order._id, 'payments._id': payment._id },
 			{
 				$set: {
-					'payments.$.invoice': {
-						number: invoiceNumber,
-						createdAt: new Date()
-					},
+					...(!payment.invoice && {
+						'payments.$.invoice': {
+							number: invoiceNumber,
+							createdAt: new Date()
+						}
+					}),
 					'payments.$.status': 'paid',
 					...(params?.bankTransferNumber && {
 						'payments.$.bankTransferNumber': params.bankTransferNumber
@@ -456,6 +481,15 @@ export async function onOrderPayment(
 					session
 				);
 			}
+		}
+
+		// Queue the e-invoice (Factur-X) for the background worker. Inserted with the
+		// session so the doc exists iff the payment commit succeeds. Unlike the
+		// accounting log above, NOT gated on order.vat — zero-VAT orders still get
+		// invoiced. `firstPaidTransition` overrides `alreadyPaid` for free payments
+		// (paidAt is pre-stamped on their very first call), same as the webhook below.
+		if ((!alreadyPaid || params?.firstPaidTransition) && runtimeConfig.eInvoicing.enabled) {
+			await createPendingEInvoice(order, payment, invoiceNumber, session);
 		}
 
 		return ret.value;

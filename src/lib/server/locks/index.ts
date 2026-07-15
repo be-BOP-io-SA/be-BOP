@@ -1,5 +1,6 @@
 import './cleanup-lock';
 import './currency-lock';
+import './e-invoice-lock';
 import './email-notifications';
 import './order-lock';
 import './order-notifications';

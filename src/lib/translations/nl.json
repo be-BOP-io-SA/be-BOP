@@ -502,6 +502,34 @@
 			"ZW": "Zimbabwe"
 		}
 	},
+	"eInvoice": {
+		"invoiceTitle": "Factuur nr. {invoiceNumber}",
+		"issueDate": "Factuurdatum",
+		"orderRef": "Bestelling nr. {orderNumber} van {orderDate}",
+		"seller": "Verkoper",
+		"buyer": "Koper",
+		"vatNumber": "Btw-nummer",
+		"siret": "SIRET",
+		"item": "Artikel",
+		"quantity": "Aantal",
+		"unitPriceExclVat": "Stukprijs excl. btw",
+		"vatRate": "Btw %",
+		"lineTotal": "Totaal excl. btw",
+		"totalExclVat": "Totaal excl. btw",
+		"totalVat": "Totaal btw",
+		"totalInclVat": "Totaal incl. btw",
+		"discount": "Korting",
+		"deliveryFees": "Verzendkosten",
+		"rounding": "Afronding",
+		"prepaid": "Betaald bedrag",
+		"due": "Verschuldigd bedrag",
+		"payment": "Betaling",
+		"paidWith": "Betaald in {currency}: {amount}",
+		"rateAtPaymentTime": "1 {base} = {rate} {quote} (koers op betaalmoment)",
+		"paymentMethod": "Betaalmethode",
+		"paidAt": "Betaald op {date}",
+		"vatExemption": "Btw-vrijstelling: {reason}"
+	},
 	"error": {
 		"404": "De door u opgevraagde pagina {invalidUrl} kon niet worden gevonden. \nControleer of uw link correct is of neem contact op met het siteteam om het probleem te melden.",
 		"title": "Fout {status}"

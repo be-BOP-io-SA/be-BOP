@@ -1,0 +1,271 @@
+import { describe, it, expect } from 'vitest';
+import { ObjectId } from 'mongodb';
+import type { Order, OrderPayment } from '$lib/types/Order';
+import type { SellerIdentity } from '$lib/types/SellerIdentity';
+import { buildInvoiceContext, pickInvoiceCurrencyRole } from './context';
+
+// Minimal order/payment fixtures carrying only what the mapper reads.
+// Scenario: main in BTC, accounting in EUR (the invoice currency), one 20%-VAT
+// item — paid in SAT.
+
+function makeSeller(): SellerIdentity {
+	return {
+		businessName: 'ACME SAS',
+		vatNumber: 'FR12345678901',
+		address: { street: '1 rue de la Paix', zip: '75002', city: 'Paris', country: 'FR' },
+		contact: { email: 'acme@example.com' },
+		legal: { siret: '12345678900011', legalForm: 'SAS' }
+	};
+}
+
+function makePayment(over?: Partial<OrderPayment>): OrderPayment {
+	return {
+		_id: new ObjectId(),
+		status: 'paid',
+		method: 'lightning',
+		price: { amount: 123456, currency: 'SAT' },
+		received: { amount: 123456, currency: 'SAT' },
+		paidAt: new Date('2026-07-01T10:00:00Z'),
+		invoice: { number: 42, createdAt: new Date('2026-07-01T10:00:00Z') },
+		currencySnapshot: {
+			main: {
+				price: { amount: 0.00123456, currency: 'BTC' }
+			},
+			priceReference: {
+				price: { amount: 123456, currency: 'SAT' }
+			},
+			accounting: {
+				price: { amount: 80.25, currency: 'EUR' },
+				previouslyPaid: { amount: 0, currency: 'EUR' },
+				remainingToPay: { amount: 39.75, currency: 'EUR' }
+			}
+		},
+		...over
+	} as OrderPayment;
+}
+
+function makeOrder(over?: Partial<Order>): Order {
+	return {
+		_id: 'order-uuid',
+		number: 7,
+		locale: 'en',
+		createdAt: new Date('2026-07-01T09:00:00Z'),
+		updatedAt: new Date('2026-07-01T09:00:00Z'),
+		items: [
+			{
+				product: { name: 'T-shirt' },
+				quantity: 2,
+				vatRate: 20,
+				currencySnapshot: {
+					main: { price: { amount: 0.0007716, currency: 'BTC' } },
+					priceReference: { price: { amount: 77160, currency: 'SAT' } },
+					accounting: { price: { amount: 50, currency: 'EUR' } }
+				}
+			}
+		],
+		vat: [{ rate: 20, country: 'FR' }],
+		currencySnapshot: {
+			main: {
+				totalPrice: { amount: 0.00184632, currency: 'BTC' },
+				vat: [{ amount: 0.00030772, currency: 'BTC' }]
+			},
+			priceReference: {
+				totalPrice: { amount: 184632, currency: 'SAT' },
+				vat: [{ amount: 30772, currency: 'SAT' }]
+			},
+			accounting: {
+				totalPrice: { amount: 120, currency: 'EUR' },
+				vat: [{ amount: 20, currency: 'EUR' }]
+			}
+		},
+		status: 'paid',
+		payments: [],
+		sellerIdentity: null,
+		billingAddress: {
+			firstName: 'Jane',
+			lastName: 'Doe',
+			address: '2 avenue des Champs',
+			city: 'Lyon',
+			zip: '69000',
+			country: 'FR'
+		},
+		notifications: { paymentStatus: { email: 'jane@example.com' } },
+		user: { email: 'jane@example.com' },
+		...over
+	} as unknown as Order;
+}
+
+describe('pickInvoiceCurrencyRole', () => {
+	it('prefers the accounting snapshot when fiat', () => {
+		expect(pickInvoiceCurrencyRole(makeOrder())).toBe('accounting');
+	});
+
+	it('falls back to secondary then main', () => {
+		const order = makeOrder();
+		delete (order.currencySnapshot as { accounting?: unknown }).accounting;
+		(order.currencySnapshot as { secondary?: unknown }).secondary = {
+			totalPrice: { amount: 110, currency: 'CHF' }
+		};
+		expect(pickInvoiceCurrencyRole(order)).toBe('secondary');
+	});
+
+	it('throws when only crypto roles are configured', () => {
+		const order = makeOrder();
+		delete (order.currencySnapshot as { accounting?: unknown }).accounting;
+		expect(() => pickInvoiceCurrencyRole(order)).toThrow(/fiat/);
+	});
+});
+
+describe('buildInvoiceContext', () => {
+	it('computes totals, lines and VAT breakdown in the fiat invoice currency', () => {
+		const ctx = buildInvoiceContext({
+			order: makeOrder(),
+			payment: makePayment(),
+			seller: makeSeller()
+		});
+
+		expect(ctx.currency).toBe('EUR');
+		expect(ctx.invoiceNumber).toBe(42);
+		expect(ctx.lines).toEqual([
+			{ name: 'T-shirt', quantity: 2, unitPrice: 50, netAmount: 100, vatRate: 20 }
+		]);
+		expect(ctx.totals).toMatchObject({ lineNet: 100, exclVat: 100, vat: 20, inclVat: 120 });
+		expect(ctx.vatBreakdown).toEqual([
+			{ rate: 20, country: 'FR', amount: 20, base: 100, category: 'S' }
+		]);
+		expect(ctx.allowance).toBe(0);
+		expect(ctx.extraCharge).toBe(0);
+		expect(ctx.seller.siren).toBe('123456789');
+		expect(ctx.buyer.name).toBe('Jane Doe');
+	});
+
+	it('computes prepaid/due from the payment snapshot (partial payment)', () => {
+		const ctx = buildInvoiceContext({
+			order: makeOrder(),
+			payment: makePayment(),
+			seller: makeSeller()
+		});
+
+		expect(ctx.totals.prepaid).toBe(80.25);
+		expect(ctx.totals.due).toBe(39.75);
+	});
+
+	it('normalizes SAT payments to BTC with a per-BTC rate', () => {
+		const ctx = buildInvoiceContext({
+			order: makeOrder(),
+			payment: makePayment(),
+			seller: makeSeller()
+		});
+
+		expect(ctx.paidWith.amount).toEqual({ amount: 123456, currency: 'SAT' });
+		expect(ctx.paidWith.display).toEqual({ amount: 0.00123456, currency: 'BTC' });
+		expect(ctx.paidWith.fiatEquivalent).toEqual({ amount: 80.25, currency: 'EUR' });
+		expect(ctx.paidWith.rate?.base).toBe('BTC');
+		expect(ctx.paidWith.rate?.quote).toBe('EUR');
+		expect(ctx.paidWith.rate?.amount).toBeCloseTo(80.25 / 0.00123456, 2);
+	});
+
+	it('keeps the rate for fiat payments in another currency', () => {
+		const payment = makePayment({
+			method: 'card',
+			price: { amount: 130, currency: 'CHF' },
+			received: { amount: 130, currency: 'CHF' }
+		});
+		const ctx = buildInvoiceContext({
+			order: makeOrder(),
+			payment,
+			seller: makeSeller()
+		});
+
+		expect(ctx.paidWith.display).toEqual({ amount: 130, currency: 'CHF' });
+		expect(ctx.paidWith.rate?.base).toBe('CHF');
+		expect(ctx.paidWith.rate?.amount).toBeCloseTo(80.25 / 130, 6);
+	});
+
+	it('omits the rate when the payment is in the invoice currency', () => {
+		const payment = makePayment({
+			method: 'card',
+			price: { amount: 120, currency: 'EUR' },
+			received: { amount: 120, currency: 'EUR' }
+		});
+		const ctx = buildInvoiceContext({
+			order: makeOrder(),
+			payment,
+			seller: makeSeller()
+		});
+
+		expect(ctx.paidWith.rate).toBeUndefined();
+	});
+
+	it('omits the rate for zero received amounts (free payment)', () => {
+		const payment = makePayment({
+			method: 'free',
+			price: { amount: 0, currency: 'SAT' },
+			received: { amount: 0, currency: 'SAT' }
+		});
+		const ctx = buildInvoiceContext({
+			order: makeOrder(),
+			payment,
+			seller: makeSeller()
+		});
+
+		expect(ctx.paidWith.rate).toBeUndefined();
+	});
+
+	it('folds the order discount into the document allowance', () => {
+		const order = makeOrder();
+		// 120 EUR of items but 20 EUR order discount: total 100 incl. VAT
+		order.currencySnapshot.accounting = {
+			totalPrice: { amount: 100, currency: 'EUR' },
+			vat: [{ amount: 20, currency: 'EUR' }],
+			discount: { amount: 20, currency: 'EUR' }
+		};
+		const ctx = buildInvoiceContext({
+			order,
+			payment: makePayment(),
+			seller: makeSeller()
+		});
+
+		// VAT scaled by the discount share: 20 * (1 - 20/120) = 16.67
+		expect(ctx.totals.vat).toBeCloseTo(16.67, 2);
+		expect(ctx.totals.exclVat).toBeCloseTo(83.33, 2);
+		// lineNet (100) + shipping (0) - exclVat = allowance
+		expect(ctx.allowance).toBeCloseTo(16.67, 2);
+		expect(ctx.totals.inclVat).toBe(100);
+	});
+
+	it('reports a VAT exemption as category E with the reason', () => {
+		const order = makeOrder({
+			vat: [],
+			vatFree: { reason: 'TVA non applicable, art. 293 B du CGI' }
+		} as Partial<Order>);
+		order.currencySnapshot.accounting = {
+			totalPrice: { amount: 100, currency: 'EUR' }
+		};
+		order.items[0].vatRate = 0;
+		order.items[0].currencySnapshot.accounting = { price: { amount: 50, currency: 'EUR' } };
+		const ctx = buildInvoiceContext({
+			order,
+			payment: makePayment(),
+			seller: makeSeller()
+		});
+
+		expect(ctx.vatBreakdown).toEqual([
+			{
+				rate: 0,
+				country: 'FR',
+				amount: 0,
+				base: 100,
+				category: 'E',
+				exemptionReason: 'TVA non applicable, art. 293 B du CGI'
+			}
+		]);
+	});
+
+	it('throws when the payment has no invoice number', () => {
+		const payment = makePayment({ invoice: undefined });
+		expect(() =>
+			buildInvoiceContext({ order: makeOrder(), payment, seller: makeSeller() })
+		).toThrow(/invoice number/);
+	});
+});

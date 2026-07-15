@@ -57,6 +57,7 @@ import type { CheckoutFieldConfig } from '$lib/types/CheckoutFieldConfig';
 import type { PosSession } from '$lib/types/PosSession';
 import type { PendingZap } from '$lib/types/PendingZap';
 import type { AccountingLog } from '$lib/types/AccountingLog';
+import type { EInvoice } from '$lib/types/EInvoice';
 
 // Bigger than the default 10, helpful with MongoDB errors
 Error.stackTraceLimit = 100;
@@ -125,6 +126,8 @@ const genCollection = () => ({
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
 
 	accountingLogs: db.collection<AccountingLog>('accountingLogs'),
+
+	eInvoices: db.collection<EInvoice>('einvoices'),
 
 	errors: db.collection<unknown & { _id: ObjectId; url: string; method: string }>('errors')
 });
@@ -247,7 +250,12 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.accountingLogs, { createdAt: 1 }],
 	[collections.accountingLogs, { eventType: 1, createdAt: 1 }],
 	[collections.accountingLogs, { objectId: 1, objectType: 1 }],
-	[collections.accountingLogs, { eventType: 1, 'after.productIds': 1 }]
+	[collections.accountingLogs, { eventType: 1, 'after.productIds': 1 }],
+	// Worker sweep for pending/retryable e-invoices
+	[collections.eInvoices, { 'generation.status': 1, 'generation.nextAttemptAt': 1 }],
+	[collections.eInvoices, { invoiceNumber: 1 }, { unique: true }],
+	[collections.eInvoices, { orderId: 1 }],
+	[collections.eInvoices, { createdAt: -1 }]
 ];
 
 export async function createIndexes() {

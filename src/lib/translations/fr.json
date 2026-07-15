@@ -502,6 +502,34 @@
 			"ZW": "Zimbabwe"
 		}
 	},
+	"eInvoice": {
+		"invoiceTitle": "Facture n° {invoiceNumber}",
+		"issueDate": "Date d'émission",
+		"orderRef": "Commande n° {orderNumber} du {orderDate}",
+		"seller": "Vendeur",
+		"buyer": "Acheteur",
+		"vatNumber": "N° TVA",
+		"siret": "SIRET",
+		"item": "Désignation",
+		"quantity": "Qté",
+		"unitPriceExclVat": "Prix unitaire HT",
+		"vatRate": "TVA %",
+		"lineTotal": "Total HT",
+		"totalExclVat": "Total HT",
+		"totalVat": "Total TVA",
+		"totalInclVat": "Total TTC",
+		"discount": "Remise",
+		"deliveryFees": "Frais de livraison",
+		"rounding": "Arrondi",
+		"prepaid": "Montant payé",
+		"due": "Reste à payer",
+		"payment": "Paiement",
+		"paidWith": "Payé en {currency} : {amount}",
+		"rateAtPaymentTime": "1 {base} = {rate} {quote} (taux au moment du paiement)",
+		"paymentMethod": "Moyen de paiement",
+		"paidAt": "Payé le {date}",
+		"vatExemption": "Exonération de TVA : {reason}"
+	},
 	"error": {
 		"404": "La page {invalidUrl} que vous avez demandée est introuvable. Veuillez vérifier que votre lien est correct ou contactez l'équipe du site pour leur signaler le problème. ",
 		"title": "Erreur {status}"
@@ -1002,11 +1030,26 @@
 			"then": "puis"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "heure", "other": "heures" },
-			"day": { "one": "jour", "other": "jours" },
-			"week": { "one": "semaine", "other": "semaines" },
-			"month": { "one": "mois", "other": "mois" },
-			"year": { "one": "an", "other": "ans" }
+			"hour": {
+				"one": "heure",
+				"other": "heures"
+			},
+			"day": {
+				"one": "jour",
+				"other": "jours"
+			},
+			"week": {
+				"one": "semaine",
+				"other": "semaines"
+			},
+			"month": {
+				"one": "mois",
+				"other": "mois"
+			},
+			"year": {
+				"one": "an",
+				"other": "ans"
+			}
 		},
 		"type": {
 			"deposit": "Sur acompte",
