@@ -78,8 +78,14 @@ export async function generateEInvoice(einvoice: EInvoice): Promise<void> {
 		{
 			$set: {
 				currency: ctx.currency,
+				issueDate: ctx.issueDate,
+				orderCreatedAt: ctx.orderCreatedAt,
 				seller: ctx.seller,
 				buyer: ctx.buyer,
+				lines: ctx.lines,
+				...(ctx.shipping && { shipping: ctx.shipping }),
+				allowance: ctx.allowance,
+				extraCharge: ctx.extraCharge,
 				totals: {
 					exclVat: ctx.totals.exclVat,
 					vat: ctx.totals.vat,
@@ -94,9 +100,12 @@ export async function generateEInvoice(einvoice: EInvoice): Promise<void> {
 				})),
 				paidWith: {
 					method: ctx.paidWith.method,
+					...(ctx.paidWith.posSubtype && { posSubtype: ctx.paidWith.posSubtype }),
+					...(ctx.paidWith.methodLabel && { methodLabel: ctx.paidWith.methodLabel }),
 					paidAt: ctx.paidWith.paidAt,
 					amount: ctx.paidWith.amount,
 					display: ctx.paidWith.display,
+					fiatEquivalent: ctx.paidWith.fiatEquivalent,
 					...(ctx.paidWith.rate && { rate: ctx.paidWith.rate })
 				},
 				artifacts,

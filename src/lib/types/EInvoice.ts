@@ -29,6 +29,16 @@ export const E_INVOICE_TRANSMISSION_STATUSES = [
 ] as const;
 export type EInvoiceTransmissionStatus = (typeof E_INVOICE_TRANSMISSION_STATUSES)[number];
 
+export interface EInvoiceLine {
+	name: string;
+	quantity: number;
+	/** Unit price excl. VAT, after per-item discount, in the invoice currency */
+	unitPrice: number;
+	/** Line net amount excl. VAT (unitPrice × quantity, rounded) */
+	netAmount: number;
+	vatRate: number;
+}
+
 export interface EInvoiceParty {
 	name: string;
 	isCompany?: boolean;
@@ -71,8 +81,17 @@ export interface EInvoice extends Timestamps {
 	// Written by the worker on successful generation (snapshot of the XML content)
 	/** Invoice currency (BT-5), always fiat */
 	currency?: Currency;
+	/** BT-2, when the invoice was legally issued */
+	issueDate?: Date;
+	orderCreatedAt?: Date;
 	seller?: EInvoiceParty;
 	buyer?: EInvoiceParty;
+	lines?: EInvoiceLine[];
+	/** Document-level charge (BG-21): delivery fees, excl. VAT */
+	shipping?: { amount: number; vatRate: number };
+	/** Document-level allowance (BG-20): order discount + rounding drift */
+	allowance?: number;
+	extraCharge?: number;
 	totals?: {
 		exclVat: number;
 		vat: number;
@@ -90,12 +109,19 @@ export interface EInvoice extends Timestamps {
 	 */
 	paidWith?: {
 		method: PaymentMethod;
+		/** For 'point-of-sale' payments, e.g. "cash" or "check" */
+		posSubtype?: string;
+		/** For method 'custom', the snapshotted label (e.g. "Ethereum") */
+		methodLabel?: string;
 		paidAt: Date;
 		/** Amount in the actual payment currency (e.g. 123456 SAT) */
 		amount: Price;
 		/** Same amount normalized for display (SAT → BTC) */
 		display: { amount: number; currency: Currency };
-		/** Rate at payment time; omitted when payment currency === invoice currency */
+		/** Value of the payment in the invoice currency at payment time */
+		fiatEquivalent: { amount: number; currency: Currency };
+		/** Rate at payment time; omitted when payment currency === invoice currency, or
+		 * when the settlement currency is an unverified bookkeeping conversion */
 		rate?: { base: Currency; quote: Currency; amount: number };
 	};
 

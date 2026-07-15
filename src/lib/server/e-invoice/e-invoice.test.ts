@@ -101,6 +101,12 @@ describe('e-invoice', () => {
 		expect(generated?.seller?.siren).toBe('123456789');
 		expect(generated?.totals?.inclVat).toBeGreaterThan(0);
 
+		// Snapshotted for the admin document view (regression: these used to be
+		// silently dropped even though the mapper already computed them)
+		expect(generated?.lines?.length).toBeGreaterThan(0);
+		expect(generated?.issueDate).toBeInstanceOf(Date);
+		expect(generated?.paidWith?.fiatEquivalent).toBeDefined();
+
 		// XML inline, references the invoice number and stays in the fiat currency
 		expect(generated?.artifacts?.xml.content).toContain(
 			`<ram:ID>${pending.invoiceNumber}</ram:ID>`

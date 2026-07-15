@@ -18,8 +18,14 @@ export async function load({ params }) {
 			country: einvoice.country,
 			format: einvoice.format,
 			currency: einvoice.currency,
+			issueDate: einvoice.issueDate,
+			orderCreatedAt: einvoice.orderCreatedAt,
 			seller: einvoice.seller,
 			buyer: einvoice.buyer,
+			lines: einvoice.lines,
+			shipping: einvoice.shipping,
+			allowance: einvoice.allowance,
+			extraCharge: einvoice.extraCharge,
 			totals: einvoice.totals,
 			vatBreakdown: einvoice.vatBreakdown,
 			paidWith: einvoice.paidWith,
@@ -40,13 +46,12 @@ export async function load({ params }) {
 }
 
 export const actions = {
+	// Also used to force-regenerate an already-generated invoice (e.g. after a
+	// bug fix or a seller identity correction) — not just to retry a failure.
 	retry: async ({ params }) => {
 		const einvoice = await collections.eInvoices.findOne({ _id: new ObjectId(params.id) });
 		if (!einvoice) {
 			throw error(404, 'E-invoice not found');
-		}
-		if (einvoice.generation.status !== 'failed') {
-			throw error(400, 'Only failed e-invoices can be retried');
 		}
 
 		const now = new Date();
@@ -59,12 +64,16 @@ export const actions = {
 					'generation.nextAttemptAt': now,
 					updatedAt: now
 				},
+				$unset: { 'generation.error': '' },
 				$push: {
 					statusHistory: {
 						at: now,
 						kind: 'generation' as const,
 						status: 'pending',
-						detail: 'Manual retry from admin'
+						detail:
+							einvoice.generation.status === 'generated'
+								? 'Manual regeneration from admin'
+								: 'Manual retry from admin'
 					}
 				}
 			}

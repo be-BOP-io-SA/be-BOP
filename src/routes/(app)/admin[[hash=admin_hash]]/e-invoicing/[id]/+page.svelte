@@ -1,169 +1,171 @@
 <script lang="ts">
+	import EInvoiceDocument from '$lib/components/EInvoiceDocument.svelte';
+
 	export let data;
 
 	$: einvoice = data.eInvoice;
 
 	function formatDate(date: Date) {
-		return date.toLocaleString('en');
+		return new Date(date).toLocaleString('en');
 	}
+
+	const GENERATION_BADGE: Record<string, string> = {
+		pending: 'bg-yellow-100 text-yellow-800',
+		generated: 'bg-green-100 text-green-800',
+		failed: 'bg-red-100 text-red-800'
+	};
+	const TRANSMISSION_BADGE: Record<string, string> = {
+		none: 'bg-gray-100 text-gray-600',
+		queued: 'bg-blue-100 text-blue-800',
+		submitted: 'bg-blue-100 text-blue-800',
+		accepted: 'bg-green-100 text-green-800',
+		rejected: 'bg-red-100 text-red-800',
+		error: 'bg-red-100 text-red-800'
+	};
 </script>
 
-<div class="flex justify-between items-center">
-	<h1 class="text-3xl">E-invoice n° {einvoice.invoiceNumber}</h1>
+<div class="flex justify-between items-center flex-wrap gap-4">
+	<div class="flex items-center gap-3 flex-wrap">
+		<h1 class="text-3xl">E-invoice n° {einvoice.invoiceNumber}</h1>
+		<span
+			class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {GENERATION_BADGE[
+				einvoice.generation.status
+			]}"
+		>
+			{einvoice.generation.status}
+		</span>
+		<span
+			class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {TRANSMISSION_BADGE[
+				einvoice.transmission.status
+			]}"
+		>
+			{einvoice.transmission.status}
+		</span>
+	</div>
 	<a href="{data.adminPrefix}/e-invoicing" class="btn btn-gray">Back to list</a>
 </div>
 
-<div class="flex flex-wrap gap-8">
-	<div>
-		<h2 class="text-2xl">Document</h2>
-		<p>
-			Order:
-			<a href="{data.adminPrefix}/order/{einvoice.orderId}" class="underline">
-				n° {einvoice.orderNumber}
-			</a>
-		</p>
-		<p>Country: {einvoice.country} · Format: {einvoice.format}</p>
-		<p>Created: {formatDate(einvoice.createdAt)}</p>
-		<p>
-			Generation: <span class="font-bold">{einvoice.generation.status}</span>
-			{#if einvoice.generation.attempts}
-				({einvoice.generation.attempts} attempts)
-			{/if}
-		</p>
-		{#if einvoice.generation.error}
-			<p class="text-red-600">Error: {einvoice.generation.error}</p>
-		{/if}
-		<p>
-			Transmission: <span class="font-bold">{einvoice.transmission.status}</span>
-			(platform: {einvoice.transmission.platform}){#if einvoice.transmission.externalId}
-				· external id: {einvoice.transmission.externalId}{/if}
-		</p>
-		{#if einvoice.generation.status === 'failed'}
-			<form method="post" action="?/retry">
-				<button type="submit" class="btn btn-red mt-2">Retry generation</button>
-			</form>
-		{/if}
-	</div>
-
-	{#if einvoice.seller}
-		<div>
-			<h2 class="text-2xl">Seller</h2>
-			<p>{einvoice.seller.name}</p>
-			{#if einvoice.seller.vatNumber}<p>VAT: {einvoice.seller.vatNumber}</p>{/if}
-			{#if einvoice.seller.siret}<p>SIRET: {einvoice.seller.siret}</p>{/if}
-			{#if einvoice.seller.address}
-				<p>{einvoice.seller.address.street}</p>
-				<p>
-					{einvoice.seller.address.zip}
-					{einvoice.seller.address.city}, {einvoice.seller.address.country}
-				</p>
-			{/if}
-		</div>
+<div class="flex flex-wrap gap-2">
+	{#if einvoice.artifacts}
+		<a href="{data.adminPrefix}/e-invoicing/{einvoice._id}/pdf" class="btn btn-black" download>
+			Download PDF
+		</a>
+		<a href="{data.adminPrefix}/e-invoicing/{einvoice._id}/xml" class="btn btn-gray" download>
+			Download XML
+		</a>
 	{/if}
-
-	{#if einvoice.buyer}
-		<div>
-			<h2 class="text-2xl">Buyer</h2>
-			<p>{einvoice.buyer.name}</p>
-			{#if einvoice.buyer.vatNumber}<p>VAT: {einvoice.buyer.vatNumber}</p>{/if}
-			{#if einvoice.buyer.siren}<p>SIREN: {einvoice.buyer.siren}</p>{/if}
-			{#if einvoice.buyer.address}
-				<p>{einvoice.buyer.address.street}</p>
-				<p>
-					{einvoice.buyer.address.zip}
-					{einvoice.buyer.address.city}, {einvoice.buyer.address.country}
-				</p>
-			{/if}
-			{#if einvoice.buyer.email}<p>{einvoice.buyer.email}</p>{/if}
-		</div>
+	{#if einvoice.generation.status !== 'pending'}
+		<form method="post" action="?/retry">
+			<button
+				type="submit"
+				class="btn {einvoice.generation.status === 'failed' ? 'btn-red' : 'btn-gray'}"
+			>
+				{einvoice.generation.status === 'failed' ? 'Retry generation' : 'Regenerate'}
+			</button>
+		</form>
 	{/if}
 </div>
 
-{#if einvoice.totals}
-	<h2 class="text-2xl">Totals</h2>
-	<table class="border border-gray-300 divide-y divide-gray-300 max-w-[30rem]">
-		<tbody class="divide-y divide-gray-300">
-			<tr>
-				<td class="py-1 px-2">Total excl. VAT</td>
-				<td class="py-1 px-2 text-right"
-					>{einvoice.totals.exclVat.toFixed(2)} {einvoice.currency}</td
-				>
-			</tr>
-			{#each einvoice.vatBreakdown ?? [] as vat}
-				<tr>
-					<td class="py-1 px-2">VAT {vat.rate}% ({vat.country})</td>
-					<td class="py-1 px-2 text-right">{vat.amount.toFixed(2)} {einvoice.currency}</td>
-				</tr>
-			{/each}
-			<tr class="font-bold">
-				<td class="py-1 px-2">Total incl. VAT</td>
-				<td class="py-1 px-2 text-right"
-					>{einvoice.totals.inclVat.toFixed(2)} {einvoice.currency}</td
-				>
-			</tr>
-			<tr>
-				<td class="py-1 px-2">Amount paid</td>
-				<td class="py-1 px-2 text-right"
-					>{einvoice.totals.prepaid.toFixed(2)} {einvoice.currency}</td
-				>
-			</tr>
-			<tr>
-				<td class="py-1 px-2">Amount due</td>
-				<td class="py-1 px-2 text-right">{einvoice.totals.due.toFixed(2)} {einvoice.currency}</td>
-			</tr>
-		</tbody>
-	</table>
-{/if}
+<div class="grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-6 items-start">
+	<EInvoiceDocument
+		invoiceNumber={einvoice.invoiceNumber}
+		issueDate={einvoice.issueDate}
+		orderNumber={einvoice.orderNumber}
+		orderCreatedAt={einvoice.orderCreatedAt}
+		currency={einvoice.currency}
+		seller={einvoice.seller}
+		buyer={einvoice.buyer}
+		lines={einvoice.lines}
+		shipping={einvoice.shipping}
+		allowance={einvoice.allowance}
+		extraCharge={einvoice.extraCharge}
+		vatBreakdown={einvoice.vatBreakdown ?? []}
+		totals={einvoice.totals}
+		paidWith={einvoice.paidWith}
+	/>
 
-{#if einvoice.paidWith}
-	<h2 class="text-2xl">Payment</h2>
-	<p>Method: {einvoice.paidWith.method} · Paid on {formatDate(einvoice.paidWith.paidAt)}</p>
-	{#if einvoice.paidWith.rate}
-		<p>
-			Paid with {einvoice.paidWith.display.currency}:
-			{einvoice.paidWith.display.amount.toFixed(
-				einvoice.paidWith.display.currency === 'BTC' ? 8 : 2
-			)}
-			{einvoice.paidWith.display.currency} — 1 {einvoice.paidWith.rate.base} = {einvoice.paidWith.rate.amount.toFixed(
-				2
-			)}
-			{einvoice.paidWith.rate.quote} (rate at payment time)
-		</p>
-	{/if}
-{/if}
+	<aside class="flex flex-col gap-4">
+		<div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex flex-col gap-2">
+			<span class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Order</span>
+			<a href="{data.adminPrefix}/order/{einvoice.orderId}" class="underline">
+				n° {einvoice.orderNumber}
+			</a>
+			<span class="text-sm text-gray-600">Country: {einvoice.country} · {einvoice.format}</span>
+			<span class="text-sm text-gray-600">Created: {formatDate(einvoice.createdAt)}</span>
+		</div>
 
-{#if einvoice.artifacts}
-	<h2 class="text-2xl">Artifacts</h2>
-	<p>
-		<a href="{data.adminPrefix}/e-invoicing/{einvoice._id}/pdf" class="underline">Download PDF</a>
-		({einvoice.artifacts.pdf.storage}, {(einvoice.artifacts.pdf.size / 1024).toFixed(1)} KB)
-		<span class="text-sm text-gray-500 break-all">sha256: {einvoice.artifacts.pdf.sha256}</span>
-	</p>
-	<p>
-		<a href="{data.adminPrefix}/e-invoicing/{einvoice._id}/xml" class="underline">Download XML</a>
-		({(einvoice.artifacts.xml.size / 1024).toFixed(1)} KB)
-		<span class="text-sm text-gray-500 break-all">sha256: {einvoice.artifacts.xml.sha256}</span>
-	</p>
-{/if}
+		{#if einvoice.generation.status === 'failed' && einvoice.generation.error}
+			<div class="border border-red-200 rounded-lg p-4 bg-red-50 flex flex-col gap-2">
+				<span class="text-sm font-semibold text-red-700 uppercase tracking-wide">Error</span>
+				<span class="text-sm text-red-700">{einvoice.generation.error}</span>
+				<span class="text-xs text-red-500">{einvoice.generation.attempts} attempts</span>
+			</div>
+		{/if}
 
-<h2 class="text-2xl">History</h2>
-<table class="border border-gray-300 divide-y divide-gray-300 max-w-[50rem]">
-	<thead class="bg-gray-200">
-		<tr>
-			<th class="py-1 px-2 text-left">Date</th>
-			<th class="py-1 px-2 text-left">Kind</th>
-			<th class="py-1 px-2 text-left">Status</th>
-			<th class="py-1 px-2 text-left">Detail</th>
-		</tr>
-	</thead>
-	<tbody class="divide-y divide-gray-300">
-		{#each einvoice.statusHistory as entry}
-			<tr>
-				<td class="py-1 px-2">{formatDate(entry.at)}</td>
-				<td class="py-1 px-2">{entry.kind}</td>
-				<td class="py-1 px-2">{entry.status}</td>
-				<td class="py-1 px-2">{entry.detail ?? ''}</td>
-			</tr>
-		{/each}
-	</tbody>
-</table>
+		{#if einvoice.transmission.status !== 'none'}
+			<div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex flex-col gap-2">
+				<span class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Transmission</span
+				>
+				<span class="text-sm text-gray-600">Platform: {einvoice.transmission.platform}</span>
+				{#if einvoice.transmission.externalId}
+					<span class="text-sm text-gray-600 break-all">
+						External id: {einvoice.transmission.externalId}
+					</span>
+				{/if}
+			</div>
+		{/if}
+
+		{#if einvoice.artifacts}
+			<div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex flex-col gap-2">
+				<span class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Artifacts</span>
+				<div class="flex flex-col gap-1">
+					<a
+						href="{data.adminPrefix}/e-invoicing/{einvoice._id}/pdf"
+						class="underline text-sm"
+						download
+					>
+						PDF ({(einvoice.artifacts.pdf.size / 1024).toFixed(1)} KB, {einvoice.artifacts.pdf
+							.storage})
+					</a>
+					<span class="text-xs text-gray-500 break-all font-mono">
+						{einvoice.artifacts.pdf.sha256}
+					</span>
+				</div>
+				<div class="flex flex-col gap-1">
+					<a
+						href="{data.adminPrefix}/e-invoicing/{einvoice._id}/xml"
+						class="underline text-sm"
+						download
+					>
+						XML ({(einvoice.artifacts.xml.size / 1024).toFixed(1)} KB)
+					</a>
+					<span class="text-xs text-gray-500 break-all font-mono">
+						{einvoice.artifacts.xml.sha256}
+					</span>
+				</div>
+			</div>
+		{/if}
+
+		<div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex flex-col gap-2">
+			<span class="text-sm font-semibold text-gray-700 uppercase tracking-wide">History</span>
+			<table class="admin-table w-full">
+				<thead class="admin-table-header">
+					<tr>
+						<th class="admin-table-th text-left text-xs">Date</th>
+						<th class="admin-table-th text-left text-xs">Kind</th>
+						<th class="admin-table-th text-left text-xs">Status</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-gray-300">
+					{#each einvoice.statusHistory as entry}
+						<tr>
+							<td class="admin-table-td text-xs">{formatDate(entry.at)}</td>
+							<td class="admin-table-td text-xs">{entry.kind}</td>
+							<td class="admin-table-td text-xs" title={entry.detail ?? ''}>{entry.status}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	</aside>
+</div>

@@ -103,9 +103,13 @@
 				<td class="py-2 px-2">{einvoice.transmissionStatus}</td>
 				<td class="py-2 px-2">
 					{#if einvoice.hasArtifacts}
-						<a href="{data.adminPrefix}/e-invoicing/{einvoice._id}/pdf" class="underline">PDF</a>
+						<a href="{data.adminPrefix}/e-invoicing/{einvoice._id}/pdf" class="underline" download
+							>PDF</a
+						>
 						·
-						<a href="{data.adminPrefix}/e-invoicing/{einvoice._id}/xml" class="underline">XML</a>
+						<a href="{data.adminPrefix}/e-invoicing/{einvoice._id}/xml" class="underline" download
+							>XML</a
+						>
 					{:else}
 						-
 					{/if}
