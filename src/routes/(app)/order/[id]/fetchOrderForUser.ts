@@ -144,6 +144,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 			checkoutId: payment.checkoutId,
 			clientSecret: payment.clientSecret,
 			invoice: payment.invoice,
+			servicesInvoice: payment.servicesInvoice,
 			price: payment.price,
 			currencySnapshot: payment.currencySnapshot,
 			confirmationBlocksRequired:

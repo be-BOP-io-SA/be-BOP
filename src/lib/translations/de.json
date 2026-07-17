@@ -505,6 +505,7 @@
 	},
 	"eInvoice": {
 		"download": "E-Rechnung herunterladen (Factur-X)",
+		"downloadServices": "E-Rechnung (Dienstleistungen) herunterladen (Factur-X)",
 		"invoiceTitle": "Rechnung Nr. {invoiceNumber}",
 		"issueDate": "Rechnungsdatum",
 		"orderRef": "Bestellung Nr. {orderNumber} vom {orderDate}",

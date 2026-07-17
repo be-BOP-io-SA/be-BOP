@@ -171,6 +171,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.orders, { 'items.product._id': 1, status: 1 }],
 	[collections.orders, { number: 1 }, { unique: true }],
 	[collections.orders, { 'payments.invoice.number': 1 }, { unique: true, sparse: true }],
+	[collections.orders, { 'payments.servicesInvoice.number': 1 }, { unique: true, sparse: true }],
 	[collections.orders, { 'payments.status': 1 }],
 	[collections.orders, { status: 1, 'payments.status': 1 }],
 	[collections.orders, { orderTabId: 1, status: 1 }, { sparse: true }],
@@ -254,6 +255,10 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	// Worker sweep for pending/retryable e-invoices
 	[collections.eInvoices, { 'generation.status': 1, 'generation.nextAttemptAt': 1 }],
 	[collections.eInvoices, { invoiceNumber: 1 }, { unique: true }],
+	// At most one e-invoice per (payment, category) — a mixed goods+services
+	// payment gets two (lineCategory 'goods'/'services'), everything else one
+	// (lineCategory unset, so this still dedups transaction retries as before).
+	[collections.eInvoices, { orderId: 1, paymentId: 1, lineCategory: 1 }, { unique: true }],
 	[collections.eInvoices, { orderId: 1 }],
 	[collections.eInvoices, { createdAt: -1 }]
 ];

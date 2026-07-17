@@ -241,6 +241,7 @@
 							printReceipt={() => receiptIFrame[payment.id]?.contentWindow?.print()}
 							printTicket={() => ticketIFrame[payment.id]?.contentWindow?.print()}
 							hasEInvoice={data.eInvoicePaymentIds.includes(payment.id)}
+							hasServicesEInvoice={data.eInvoiceServicesPaymentIds.includes(payment.id)}
 						/>
 					</PaymentItem>
 

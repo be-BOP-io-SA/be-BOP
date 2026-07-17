@@ -97,17 +97,25 @@ export async function load({ params, depends, locals, url }) {
 	const returnTo = url.searchParams.get('returnTo');
 	const posMode = locals.user?.hasPosOptions && returnTo?.startsWith('/pos/touch');
 
-	// Payments whose Factur-X e-invoice is generated and downloadable
-	const eInvoicePaymentIds = (
-		await collections.eInvoices
-			.find({ orderId: order._id, 'generation.status': 'generated' })
-			.project<{ paymentId: string }>({ paymentId: 1 })
-			.toArray()
-	).map((einvoice) => einvoice.paymentId);
+	// Payments whose Factur-X e-invoice is generated and downloadable. A mixed
+	// goods+services order has two (see buildSplitInvoiceContexts) — track the
+	// services one separately so the UI can offer both download links.
+	const generatedEInvoices = await collections.eInvoices
+		.find({ orderId: order._id, 'generation.status': 'generated' })
+		.project<{ paymentId: string; lineCategory?: 'goods' | 'services' }>({
+			paymentId: 1,
+			lineCategory: 1
+		})
+		.toArray();
+	const eInvoicePaymentIds = generatedEInvoices.map((einvoice) => einvoice.paymentId);
+	const eInvoiceServicesPaymentIds = generatedEInvoices
+		.filter((einvoice) => einvoice.lineCategory === 'services')
+		.map((einvoice) => einvoice.paymentId);
 
 	return {
 		order,
 		eInvoicePaymentIds,
+		eInvoiceServicesPaymentIds,
 		splitMode: order.splitMode,
 		paymentMethods: methods,
 		tapToPay,

@@ -61,7 +61,9 @@ export interface EInvoiceParty {
 }
 
 /**
- * One e-invoice per paid payment, aligned with `OrderPayment.invoice.number`.
+ * One e-invoice per paid payment, aligned with `OrderPayment.invoice.number` —
+ * except a payment whose order mixes goods and services, which gets two (see
+ * `lineCategory`).
  *
  * Inserted as a slim "pending" doc inside the payment transaction (see
  * createPendingEInvoice), then enriched by the e-invoice worker with the
@@ -74,8 +76,18 @@ export interface EInvoice extends Timestamps {
 	orderId: Order['_id'];
 	orderNumber: number;
 	paymentId: string;
-	/** BT-1, equals `payment.invoice.number` (gapless sequential) */
+	/**
+	 * BT-1, gapless sequential. Equals `payment.invoice.number`, except when
+	 * `lineCategory: 'services'`, where it equals `payment.servicesInvoice.number`.
+	 */
 	invoiceNumber: number;
+	/**
+	 * Which subset of the order's lines this document covers. Unset for the common
+	 * case (single invoice, all lines). Only 'goods'/'services' when the order mixes
+	 * both — e-reporting (AFNOR Z12-012) requires a single category per invoice, so
+	 * the payment gets two EInvoice documents instead of one mixed-mode invoice.
+	 */
+	lineCategory?: 'goods' | 'services';
 
 	country: EInvoiceCountry;
 	format: EInvoiceFormat;

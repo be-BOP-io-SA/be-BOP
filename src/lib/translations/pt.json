@@ -505,6 +505,7 @@
 	},
 	"eInvoice": {
 		"download": "Transferir fatura eletrónica (Factur-X)",
+		"downloadServices": "Transferir fatura eletrónica de serviços (Factur-X)",
 		"invoiceTitle": "Fatura n.º {invoiceNumber}",
 		"issueDate": "Data de emissão",
 		"orderRef": "Encomenda n.º {orderNumber} de {orderDate}",

@@ -505,6 +505,7 @@
 	},
 	"eInvoice": {
 		"download": "Télécharger la facture",
+		"downloadServices": "Télécharger la facture (services)",
 		"invoiceTitle": "Facture n° {invoiceNumber}",
 		"issueDate": "Date d'émission",
 		"orderRef": "Commande n° {orderNumber} du {orderDate}",

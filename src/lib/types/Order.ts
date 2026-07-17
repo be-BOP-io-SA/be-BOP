@@ -164,9 +164,16 @@ export interface OrderPayment {
 	}>;
 
 	/**
-	 * The invoice number, set when the order is paid.
+	 * The invoice number, set when the order is paid. When the order mixes goods and
+	 * services, this is the goods invoice (see `servicesInvoice`) — e-reporting (AFNOR
+	 * Z12-012) requires a single category per invoice, so a mixed order is split in two.
 	 */
 	invoice?: {
+		number: number;
+		createdAt: Date;
+	};
+	/** Services invoice number, only set for a mixed goods+services order (see `invoice`). */
+	servicesInvoice?: {
 		number: number;
 		createdAt: Date;
 	};

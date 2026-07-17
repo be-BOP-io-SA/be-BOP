@@ -22,6 +22,8 @@
 	export let printTicket: () => void;
 	/** Whether this payment's Factur-X e-invoice is generated and downloadable */
 	export let hasEInvoice = false;
+	/** Mixed goods+services orders get a second, services-only e-invoice */
+	export let hasServicesEInvoice = false;
 
 	let openPaymentMethodChange = false;
 	let openCashbackSection = false;
@@ -97,6 +99,15 @@
 			download
 		>
 			{t('eInvoice.download')}
+		</a>
+	{/if}
+	{#if showInvoice && hasServicesEInvoice}
+		<a
+			class="btn btn-black self-start"
+			href="/order/{orderId}/payment/{payment.id}/e-invoice?category=services"
+			download
+		>
+			{t('eInvoice.downloadServices')}
 		</a>
 	{/if}
 </div>

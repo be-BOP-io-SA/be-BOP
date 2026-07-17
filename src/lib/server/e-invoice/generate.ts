@@ -2,7 +2,7 @@ import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { EInvoice } from '$lib/types/EInvoice';
 import type { SellerIdentity } from '$lib/types/SellerIdentity';
-import { buildInvoiceContext, type InvoiceContext } from './context';
+import { buildInvoiceContext, buildSplitInvoiceContexts, type InvoiceContext } from './context';
 import { ciiXml } from './cii';
 import { renderInvoicePdf } from './pdf';
 import { packageFacturx } from './facturx';
@@ -45,14 +45,21 @@ export async function generateEInvoice(einvoice: EInvoice): Promise<void> {
 
 	let ctx: InvoiceContext;
 	switch (einvoice.country) {
-		case 'FR':
-			ctx = buildInvoiceContext({
+		case 'FR': {
+			const params = {
 				order,
 				payment,
 				seller: resolveSeller(order.sellerIdentity),
 				country: einvoice.country
-			});
+			};
+			// A mixed goods+services order is split into two invoices (see
+			// buildSplitInvoiceContexts); each EInvoice doc is generated
+			// independently by the worker and just picks its own half.
+			ctx = einvoice.lineCategory
+				? buildSplitInvoiceContexts(params)[einvoice.lineCategory]
+				: buildInvoiceContext(params);
 			break;
+		}
 		default:
 			einvoice.country satisfies never;
 			throw new Error(`Unsupported e-invoicing country: ${einvoice.country}`);

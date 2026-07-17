@@ -219,7 +219,10 @@
 							'order.receipt.proformaInvoiceNumber',
 							invoiceNumberVariables(data.order, payment)
 						)
-				  })} -
+				  })}
+			{#if payment.servicesInvoice}
+				(+ services invoice n° {payment.servicesInvoice.number})
+			{/if} -
 			<PriceTag
 				amount={payment.currencySnapshot.main.price.amount}
 				currency={payment.currencySnapshot.main.price.currency}

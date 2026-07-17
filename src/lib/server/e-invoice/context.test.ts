@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { ObjectId } from 'mongodb';
 import type { Order, OrderPayment } from '$lib/types/Order';
 import type { SellerIdentity } from '$lib/types/SellerIdentity';
-import { buildInvoiceContext, pickInvoiceCurrencyRole } from './context';
+import { buildInvoiceContext, buildSplitInvoiceContexts, pickInvoiceCurrencyRole } from './context';
 
 // Minimal order/payment fixtures carrying only what the mapper reads.
 // Scenario: main in BTC, accounting in EUR (the invoice currency), one 20%-VAT
@@ -94,6 +94,46 @@ function makeOrder(over?: Partial<Order>): Order {
 		user: { email: 'jane@example.com' },
 		...over
 	} as unknown as Order;
+}
+
+// Mixed goods+services fixtures: a 60 EUR physical Book + a 40 EUR digital
+// Credit Pack, both at 20% VAT — lineNet 100, vat 20, inclVat 120, matching
+// makeOrder()'s default accounting snapshot exactly (no discount/shipping).
+function makeMixedOrder(over?: Partial<Order>): Order {
+	return makeOrder({
+		items: [
+			{
+				product: { name: 'Book', shipping: true },
+				quantity: 1,
+				vatRate: 20,
+				currencySnapshot: {
+					main: { price: { amount: 0.00092, currency: 'BTC' } },
+					priceReference: { price: { amount: 92000, currency: 'SAT' } },
+					accounting: { price: { amount: 60, currency: 'EUR' } }
+				}
+			},
+			{
+				product: { name: 'Credit Pack 10' },
+				quantity: 1,
+				vatRate: 20,
+				currencySnapshot: {
+					main: { price: { amount: 0.00061, currency: 'BTC' } },
+					priceReference: { price: { amount: 61000, currency: 'SAT' } },
+					accounting: { price: { amount: 40, currency: 'EUR' } }
+				}
+			}
+		],
+		vat: [{ rate: 20, country: 'FR' }],
+		...over
+	} as unknown as Partial<Order>);
+}
+
+function makeMixedPayment(over?: Partial<OrderPayment>): OrderPayment {
+	return makePayment({
+		invoice: { number: 42, createdAt: new Date('2026-07-01T10:00:00Z') },
+		servicesInvoice: { number: 43, createdAt: new Date('2026-07-01T10:00:00Z') },
+		...over
+	});
 }
 
 describe('pickInvoiceCurrencyRole', () => {
@@ -490,5 +530,142 @@ describe('buildInvoiceContext', () => {
 				country: 'FR'
 			}).transactionCategory
 		).toBe('export');
+	});
+});
+
+describe('buildSplitInvoiceContexts', () => {
+	it('splits an even goods+services order (shared VAT rate, no discount/shipping)', () => {
+		const { goods, services } = buildSplitInvoiceContexts({
+			order: makeMixedOrder(),
+			payment: makeMixedPayment(),
+			seller: makeSeller(),
+			country: 'FR'
+		});
+
+		expect(goods.operationNature).toBe('goods');
+		expect(services.operationNature).toBe('services');
+		expect(goods.invoiceNumber).toBe(42);
+		expect(services.invoiceNumber).toBe(43);
+
+		expect(goods.lines).toEqual([
+			{ name: 'Book', quantity: 1, unitPrice: 60, netAmount: 60, vatRate: 20 }
+		]);
+		expect(services.lines).toEqual([
+			{ name: 'Credit Pack 10', quantity: 1, unitPrice: 40, netAmount: 40, vatRate: 20 }
+		]);
+
+		expect(goods.totals).toMatchObject({ lineNet: 60, exclVat: 60, vat: 12, inclVat: 72 });
+		expect(services.totals).toMatchObject({ lineNet: 40, exclVat: 40, vat: 8, inclVat: 48 });
+		expect(goods.discount).toBe(0);
+		expect(services.discount).toBe(0);
+		expect(goods.rounding).toBe(0);
+		expect(services.rounding).toBe(0);
+
+		expect(goods.vatBreakdown).toEqual([
+			{ rate: 20, country: 'FR', amount: 12, base: 60, category: 'S' }
+		]);
+		expect(services.vatBreakdown).toEqual([
+			{ rate: 20, country: 'FR', amount: 8, base: 40, category: 'S' }
+		]);
+
+		// Same physical payment described on both — never prorated.
+		expect(goods.paidWith).toEqual(services.paidWith);
+
+		// 80.25 prepaid / 39.75 due, split by each half's inclVat share (0.6/0.4).
+		expect(goods.totals.prepaid).toBeCloseTo(48.15, 2);
+		expect(services.totals.prepaid).toBeCloseTo(32.1, 2);
+		expect(goods.totals.due).toBeCloseTo(23.85, 2);
+		expect(services.totals.due).toBeCloseTo(15.9, 2);
+	});
+
+	it('reconciles exactly to the combined totals (BR-CO-13 per half + cross-doc sum)', () => {
+		const params = {
+			order: makeMixedOrder(),
+			payment: makeMixedPayment(),
+			seller: makeSeller(),
+			country: 'FR' as const
+		};
+		const combined = buildInvoiceContext(params);
+		const { goods, services } = buildSplitInvoiceContexts(params);
+
+		for (const ctx of [goods, services]) {
+			// BR-CO-13: lineNet - discount - rounding + shipping === exclVat
+			expect(
+				ctx.totals.lineNet - ctx.discount - ctx.rounding + (ctx.shipping?.amount ?? 0)
+			).toBeCloseTo(ctx.totals.exclVat, 2);
+			// Sibling identity: Σ vatBreakdown.base === exclVat
+			expect(ctx.vatBreakdown.reduce((total, row) => total + row.base, 0)).toBeCloseTo(
+				ctx.totals.exclVat,
+				2
+			);
+		}
+
+		expect(goods.totals.inclVat + services.totals.inclVat).toBeCloseTo(combined.totals.inclVat, 2);
+		expect(goods.totals.exclVat + services.totals.exclVat).toBeCloseTo(combined.totals.exclVat, 2);
+		expect(goods.totals.vat + services.totals.vat).toBeCloseTo(combined.totals.vat, 2);
+		expect(goods.totals.prepaid + services.totals.prepaid).toBeCloseTo(combined.totals.prepaid, 2);
+		expect(goods.totals.due + services.totals.due).toBeCloseTo(combined.totals.due, 2);
+	});
+
+	it('attributes shipping entirely to the goods half', () => {
+		const order = makeMixedOrder();
+		order.currencySnapshot.accounting = {
+			totalPrice: { amount: 130, currency: 'EUR' },
+			vat: [{ amount: 21.67, currency: 'EUR' }],
+			shippingPrice: { amount: 10, currency: 'EUR' }
+		};
+		const params = {
+			order,
+			payment: makeMixedPayment(),
+			seller: makeSeller(),
+			country: 'FR' as const
+		};
+		const combined = buildInvoiceContext(params);
+		const { goods, services } = buildSplitInvoiceContexts(params);
+
+		expect(goods.shipping).toEqual(combined.shipping);
+		expect(services.shipping).toBeUndefined();
+		expect(goods.totals.inclVat + services.totals.inclVat).toBeCloseTo(combined.totals.inclVat, 2);
+	});
+
+	it('splits a real order discount so both halves sum back exactly', () => {
+		const order = makeMixedOrder();
+		// 120 EUR of items, 20 EUR order discount: total 100 incl. VAT (same
+		// numbers as the single-invoice "reports a real order discount" test).
+		order.currencySnapshot.accounting = {
+			totalPrice: { amount: 100, currency: 'EUR' },
+			vat: [{ amount: 20, currency: 'EUR' }],
+			discount: { amount: 20, currency: 'EUR' }
+		};
+		const params = {
+			order,
+			payment: makeMixedPayment(),
+			seller: makeSeller(),
+			country: 'FR' as const
+		};
+		const combined = buildInvoiceContext(params);
+		const { goods, services } = buildSplitInvoiceContexts(params);
+
+		expect(goods.discount + services.discount).toBeCloseTo(combined.discount, 2);
+		expect(goods.discount).toBeGreaterThan(0);
+		expect(services.discount).toBeGreaterThan(0);
+		for (const ctx of [goods, services]) {
+			expect(
+				ctx.totals.lineNet - ctx.discount - ctx.rounding + (ctx.shipping?.amount ?? 0)
+			).toBeCloseTo(ctx.totals.exclVat, 2);
+		}
+		expect(goods.totals.inclVat + services.totals.inclVat).toBeCloseTo(combined.totals.inclVat, 2);
+	});
+
+	it('throws when the payment is missing its services invoice number', () => {
+		const payment = makeMixedPayment({ servicesInvoice: undefined });
+		expect(() =>
+			buildSplitInvoiceContexts({
+				order: makeMixedOrder(),
+				payment,
+				seller: makeSeller(),
+				country: 'FR'
+			})
+		).toThrow(/services invoice number/);
 	});
 });

@@ -15,7 +15,8 @@ export async function createPendingEInvoice(
 	order: Order,
 	payment: OrderPayment,
 	invoiceNumber: number,
-	session: ClientSession
+	session: ClientSession,
+	lineCategory?: 'goods' | 'services'
 ): Promise<void> {
 	const now = new Date();
 	await collections.eInvoices.insertOne(
@@ -25,6 +26,7 @@ export async function createPendingEInvoice(
 			orderNumber: order.number,
 			paymentId: payment._id.toString(),
 			invoiceNumber,
+			...(lineCategory && { lineCategory }),
 			country: runtimeConfig.eInvoicing.country,
 			format: 'factur-x',
 			generation: {

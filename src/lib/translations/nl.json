@@ -505,6 +505,7 @@
 	},
 	"eInvoice": {
 		"download": "E-factuur downloaden (Factur-X)",
+		"downloadServices": "E-factuur (diensten) downloaden (Factur-X)",
 		"invoiceTitle": "Factuur nr. {invoiceNumber}",
 		"issueDate": "Factuurdatum",
 		"orderRef": "Bestelling nr. {orderNumber} van {orderDate}",

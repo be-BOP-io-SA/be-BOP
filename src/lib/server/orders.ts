@@ -50,6 +50,7 @@ import { sumCurrency } from '$lib/utils/sumCurrency';
 import { refreshAvailableStockInDb } from './product';
 import { checkCartItems } from './cart';
 import { createPendingEInvoice } from './e-invoice/enqueue';
+import { operationNature } from './e-invoice/context';
 import { handleOrderTabAfterPayment } from './orderTab';
 import { userQuery } from './user';
 import { SMTP_USER } from '$lib/server/env-config';
@@ -198,6 +199,13 @@ export async function onOrderPayment(
 		// sequence). Idempotent: the free-payment double-call & retries keep the number
 		// already assigned to this payment instead of burning a new one.
 		const invoiceNumber = payment.invoice?.number ?? (await generateInvoiceNumber(session));
+		// A mixed goods+services order needs a second invoice number: e-reporting
+		// (AFNOR Z12-012) requires a single category per invoice, so the payment gets
+		// two invoices instead of one mixed-mode one (see buildSplitInvoiceContexts).
+		const mixed = operationNature(order) === 'mixed';
+		const servicesInvoiceNumber = mixed
+			? payment.servicesInvoice?.number ?? (await generateInvoiceNumber(session))
+			: undefined;
 		const ret = await collections.orders.findOneAndUpdate(
 			{ _id: order._id, 'payments._id': payment._id },
 			{
@@ -208,6 +216,13 @@ export async function onOrderPayment(
 							createdAt: new Date()
 						}
 					}),
+					...(mixed &&
+						!payment.servicesInvoice && {
+							'payments.$.servicesInvoice': {
+								number: servicesInvoiceNumber,
+								createdAt: new Date()
+							}
+						}),
 					'payments.$.status': 'paid',
 					...(params?.bankTransferNumber && {
 						'payments.$.bankTransferNumber': params.bankTransferNumber
@@ -489,7 +504,16 @@ export async function onOrderPayment(
 		// invoiced. `firstPaidTransition` overrides `alreadyPaid` for free payments
 		// (paidAt is pre-stamped on their very first call), same as the webhook below.
 		if ((!alreadyPaid || params?.firstPaidTransition) && runtimeConfig.eInvoicing.enabled) {
-			await createPendingEInvoice(order, payment, invoiceNumber, session);
+			await createPendingEInvoice(
+				order,
+				payment,
+				invoiceNumber,
+				session,
+				mixed ? 'goods' : undefined
+			);
+			if (mixed && servicesInvoiceNumber) {
+				await createPendingEInvoice(order, payment, servicesInvoiceNumber, session, 'services');
+			}
 		}
 
 		return ret.value;

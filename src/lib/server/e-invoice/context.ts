@@ -53,7 +53,7 @@ const EU_COUNTRIES: CountryAlpha2[] = [
 	'SE'
 ];
 
-function operationNature(order: Order): OperationNature {
+export function operationNature(order: Order): OperationNature {
 	const hasGoods = order.items.some((item) => item.product.shipping);
 	const hasServices = order.items.some((item) => !item.product.shipping);
 	return hasGoods && hasServices ? 'mixed' : hasGoods ? 'goods' : 'services';
@@ -479,4 +479,170 @@ export function buildInvoiceContext(params: {
 		totals: { lineNet, exclVat, vat, inclVat, prepaid, due },
 		paidWith
 	};
+}
+
+/**
+ * Split a mixed goods+services payment into two invoices — one covering only
+ * goods lines, one only service lines. Required because French B2C
+ * e-reporting (AFNOR Z12-012 Annex A) declares each transaction under a
+ * single category (goods `TLB1` vs services `TPS1`); a mixed (billing mode
+ * M1/M2/M8) invoice can't be classified for e-reporting and PDPs reject it,
+ * even though the CII XML itself is fully EN16931/BR-FR conformant.
+ *
+ * Builds the normal, fully-reconciled `InvoiceContext` once (reusing every
+ * validation and the snapshot-vs-lines reconciliation in buildInvoiceContext
+ * unchanged), then partitions its already-correct totals across the two
+ * categories. Every split step uses subtraction for the second category
+ * (never a second independent rounding), so both documents individually
+ * satisfy BR-CO-13 and the pair reconciles back to the combined totals
+ * exactly, to the cent — money is partitioned, never created or lost.
+ */
+export function buildSplitInvoiceContexts(params: {
+	order: Order;
+	payment: OrderPayment;
+	seller: SellerIdentity;
+	country: EInvoiceCountry;
+}): { goods: InvoiceContext; services: InvoiceContext } {
+	const { order, payment } = params;
+
+	if (!payment.servicesInvoice?.number) {
+		throw new Error('Payment is missing its services invoice number');
+	}
+
+	const combined = buildInvoiceContext(params);
+	const currency = combined.currency;
+
+	const isGoodsLine = order.items.map((item) => !!item.product.shipping);
+	const goodsLines = combined.lines.filter((_, i) => isGoodsLine[i]);
+	const servicesLines = combined.lines.filter((_, i) => !isGoodsLine[i]);
+	let goodsLineNet = round(
+		goodsLines.reduce((total, line) => total + line.netAmount, 0),
+		currency
+	);
+	let servicesLineNet = round(combined.totals.lineNet - goodsLineNet, currency);
+
+	const shippingAmount = combined.shipping?.amount ?? 0;
+	const shippingVatRate = combined.shipping?.vatRate;
+
+	const baseAtRate = (lines: InvoiceLine[], rate: number) =>
+		round(
+			lines
+				.filter((line) => line.vatRate === rate)
+				.reduce((total, line) => total + line.netAmount, 0),
+			currency
+		);
+
+	// Split each VAT-breakdown row by that rate's goods/services line-base ratio;
+	// shipping (goods only) is added to goods' share before splitting. Subtraction
+	// for the services half at every step keeps the pair summing exactly to the row.
+	const goodsVatBreakdown: VatBreakdownEntry[] = [];
+	const servicesVatBreakdown: VatBreakdownEntry[] = [];
+	for (const row of combined.vatBreakdown) {
+		const isShippingRow = shippingAmount > 0 && row.rate === shippingVatRate;
+		const nonShippingBase = round(row.base - (isShippingRow ? shippingAmount : 0), currency);
+		const goodsLineBase = baseAtRate(goodsLines, row.rate);
+		const servicesLineBase = baseAtRate(servicesLines, row.rate);
+		const lineBaseTotal = round(goodsLineBase + servicesLineBase, currency);
+		const goodsShare = lineBaseTotal > 0 ? goodsLineBase / lineBaseTotal : 0.5;
+
+		const goodsNonShippingBase = round(nonShippingBase * goodsShare, currency);
+		const goodsBase = round(goodsNonShippingBase + (isShippingRow ? shippingAmount : 0), currency);
+		const servicesBase = round(row.base - goodsBase, currency);
+		const goodsAmount = round(goodsBase * (row.rate / 100), currency);
+		const servicesAmount = round(row.amount - goodsAmount, currency);
+
+		goodsVatBreakdown.push({ ...row, base: goodsBase, amount: goodsAmount });
+		servicesVatBreakdown.push({ ...row, base: servicesBase, amount: servicesAmount });
+	}
+	// Never emit a same-rate row that's actually empty for this category (e.g. a
+	// rate that only appeared on the other category's lines).
+	const dropEmptyRows = (rows: VatBreakdownEntry[]) =>
+		rows.filter((row) => row.base !== 0 || row.amount !== 0);
+	const goodsVatRows = dropEmptyRows(goodsVatBreakdown);
+	const servicesVatRows = dropEmptyRows(servicesVatBreakdown);
+
+	const goodsExclVat = round(
+		goodsVatRows.reduce((total, row) => total + row.base, 0),
+		currency
+	);
+	const servicesExclVat = round(combined.totals.exclVat - goodsExclVat, currency);
+	const goodsVat = round(
+		goodsVatRows.reduce((total, row) => total + row.amount, 0),
+		currency
+	);
+	const servicesVat = round(combined.totals.vat - goodsVat, currency);
+	const goodsInclVat = round(goodsExclVat + goodsVat, currency);
+	const servicesInclVat = round(combined.totals.inclVat - goodsInclVat, currency);
+
+	// Discount (BG-20, display-only) via the same identity buildInvoiceContext uses,
+	// solved per category — algebraically guaranteed to sum back to combined.discount
+	// since lineNet and exclVat both partition exactly. When there's no real discount,
+	// fold any drift into each category's largest line instead (never label rounding
+	// drift as a Discount, and never expose a Rounding line — same philosophy as
+	// buildInvoiceContext's own no-discount branch).
+	let goodsDiscount = 0;
+	let servicesDiscount = 0;
+	if (combined.discount > 0) {
+		goodsDiscount = round(goodsLineNet + shippingAmount - goodsExclVat, currency);
+		servicesDiscount = round(servicesLineNet - servicesExclVat, currency);
+	} else {
+		const goodsTarget = round(goodsExclVat - shippingAmount, currency);
+		const goodsResidual = round(goodsTarget - goodsLineNet, currency);
+		if (goodsResidual !== 0 && goodsLines.length) {
+			const largest = goodsLines.reduce((a, b) => (b.netAmount > a.netAmount ? b : a));
+			largest.netAmount = round(largest.netAmount + goodsResidual, currency);
+			goodsLineNet = goodsTarget;
+		}
+		const servicesResidual = round(servicesExclVat - servicesLineNet, currency);
+		if (servicesResidual !== 0 && servicesLines.length) {
+			const largest = servicesLines.reduce((a, b) => (b.netAmount > a.netAmount ? b : a));
+			largest.netAmount = round(largest.netAmount + servicesResidual, currency);
+			servicesLineNet = servicesExclVat;
+		}
+	}
+
+	const inclVatShare = combined.totals.inclVat > 0 ? goodsInclVat / combined.totals.inclVat : 0.5;
+	const goodsPrepaid = round(combined.totals.prepaid * inclVatShare, currency);
+	const servicesPrepaid = round(combined.totals.prepaid - goodsPrepaid, currency);
+	const goodsDue = round(combined.totals.due * inclVatShare, currency);
+	const servicesDue = round(combined.totals.due - goodsDue, currency);
+
+	const goods: InvoiceContext = {
+		...combined,
+		operationNature: 'goods',
+		lines: goodsLines,
+		discount: goodsDiscount,
+		rounding: 0,
+		vatBreakdown: goodsVatRows,
+		totals: {
+			lineNet: goodsLineNet,
+			exclVat: goodsExclVat,
+			vat: goodsVat,
+			inclVat: goodsInclVat,
+			prepaid: goodsPrepaid,
+			due: goodsDue
+		}
+	};
+
+	const services: InvoiceContext = {
+		...combined,
+		operationNature: 'services',
+		invoiceNumber: payment.servicesInvoice.number,
+		issueDate: payment.servicesInvoice.createdAt ?? combined.issueDate,
+		lines: servicesLines,
+		shipping: undefined,
+		discount: servicesDiscount,
+		rounding: 0,
+		vatBreakdown: servicesVatRows,
+		totals: {
+			lineNet: servicesLineNet,
+			exclVat: servicesExclVat,
+			vat: servicesVat,
+			inclVat: servicesInclVat,
+			prepaid: servicesPrepaid,
+			due: servicesDue
+		}
+	};
+
+	return { goods, services };
 }
