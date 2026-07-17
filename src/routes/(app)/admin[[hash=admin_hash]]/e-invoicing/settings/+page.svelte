@@ -1,9 +1,17 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n.js';
+	import { enhance } from '$app/forms';
 
 	export let data;
+	export let form;
 
 	const { countryName } = useI18n();
+
+	let selectedPlatform = data.eInvoicing.platform;
+
+	let testInFlight = false;
+	let testCooldownUntil = 0;
+	$: testDisabled = testInFlight || Date.now() < testCooldownUntil;
 </script>
 
 <h1 class="text-3xl">E-invoicing settings</h1>
@@ -55,17 +63,16 @@
 
 	<label class="form-label max-w-[25rem]">
 		Transmission platform
-		<select name="platform" class="form-input">
+		<select name="platform" class="form-input" bind:value={selectedPlatform}>
 			{#each data.platforms as platform}
-				<option value={platform.id} selected={platform.id === data.eInvoicing.platform}>
+				<option value={platform.id}>
 					{platform.label}
 				</option>
 			{/each}
 		</select>
 		<p class="text-sm">
 			Invoices are generated and stored locally. To transmit them, select a platform adapter here
-			and configure its connection — e.g.
-			<a href="{data.adminPrefix}/e-invoicing/openapi-pdp" class="underline">OpenAPI PDP</a>.
+			and configure its connection below.
 		</p>
 	</label>
 
@@ -73,3 +80,103 @@
 		<button type="submit" class="btn btn-black self-start">Update</button>
 	</div>
 </form>
+
+{#if selectedPlatform === 'openapi'}
+	<h2 class="text-2xl">OpenAPI PDP connection</h2>
+
+	<p class="text-sm">
+		Connect to any accredited platform (PDP) exposing the common French e-invoicing OpenAPI shape
+		(OAuth2 client_credentials + `{'{apiVersion}'}/invoices`) — e.g. SUPER PDP's sandbox at
+		<code>https://api.superpdp.tech</code> with API version <code>v1.beta</code>.
+	</p>
+
+	<form class="contents" method="post" action="?/saveConnection" autocomplete="off">
+		<label class="form-label max-w-[25rem]">
+			Base URL
+			<input
+				class="form-input"
+				type="url"
+				name="baseUrl"
+				placeholder="https://api.superpdp.tech"
+				value={data.openApiPdp.baseUrl}
+				autocomplete="off"
+				required
+			/>
+		</label>
+
+		<label class="form-label max-w-[25rem]">
+			API path
+			<input
+				class="form-input"
+				type="text"
+				name="apiVersion"
+				placeholder="/v1.beta"
+				value={data.openApiPdp.apiVersion}
+				autocomplete="off"
+				required
+			/>
+			<p class="text-sm">
+				Subfolder appended to the base URL, e.g. "/v1.beta" or "v1" (leading/trailing slashes are
+				optional, either form works).
+			</p>
+		</label>
+
+		<label class="form-label max-w-[25rem]">
+			Client ID
+			<input
+				class="form-input"
+				type="text"
+				name="clientId"
+				value={data.openApiPdp.clientId}
+				autocomplete="off"
+				required
+			/>
+		</label>
+
+		<label class="form-label max-w-[25rem]">
+			Client secret
+			<input
+				class="form-input"
+				type="password"
+				name="clientSecret"
+				value={data.openApiPdp.clientSecret}
+				autocomplete="new-password"
+				required
+			/>
+		</label>
+
+		<div class="flex justify-between max-w-[25rem]">
+			<button class="btn btn-black" type="submit">Save</button>
+			<button class="btn btn-red" type="submit" form="delete-connection-form">Reset</button>
+		</div>
+	</form>
+	<form
+		class="contents"
+		method="post"
+		action="?/deleteConnection"
+		id="delete-connection-form"
+	></form>
+
+	<form
+		method="post"
+		action="?/testConnection"
+		use:enhance={() => {
+			testInFlight = true;
+			return async ({ update }) => {
+				await update({ reset: false });
+				testInFlight = false;
+				testCooldownUntil = Date.now() + 10_000;
+			};
+		}}
+		class="flex flex-col gap-2"
+	>
+		<button class="btn btn-blue self-start" type="submit" disabled={testDisabled}>
+			{testInFlight ? 'Testing…' : 'Test connection'}
+		</button>
+		{#if form?.ok}
+			<div class="alert-success">Connection successful. PDP credentials are working.</div>
+		{:else if form?.reason}
+			<div class="alert-error">Connection failed: {form.reason}</div>
+		{/if}
+	</form>
+{/if}

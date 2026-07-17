@@ -234,6 +234,8 @@ const baseConfig = {
 	},
 	openApiPdp: {
 		baseUrl: '',
+		// API path prefix, e.g. 'v1.beta' -> POST {baseUrl}/v1.beta/invoices
+		apiVersion: 'v1.beta',
 		clientId: '',
 		clientSecret: ''
 	},

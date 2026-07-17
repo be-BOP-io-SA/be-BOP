@@ -1,5 +1,7 @@
 import { collections } from '$lib/server/database';
 import { adminPrefix } from '$lib/server/admin';
+import { readPdfArtifact } from '$lib/server/e-invoice/storage';
+import { submitToTransmissionPlatform } from '$lib/server/e-invoice/generate';
 import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 
@@ -78,6 +80,24 @@ export const actions = {
 				}
 			}
 		);
+
+		throw redirect(303, `${adminPrefix()}/e-invoicing/${params.id}`);
+	},
+
+	// Re-submit the already-generated artifacts to the transmission platform,
+	// without regenerating them — for a transient PDP-side error (network,
+	// misconfiguration since fixed, etc.), not a document content problem.
+	resendTransmission: async ({ params }) => {
+		const einvoice = await collections.eInvoices.findOne({ _id: new ObjectId(params.id) });
+		if (!einvoice) {
+			throw error(404, 'E-invoice not found');
+		}
+		if (!einvoice.artifacts) {
+			throw error(400, 'E-invoice has no generated artifacts to resend');
+		}
+
+		const pdf = await readPdfArtifact(einvoice.artifacts);
+		await submitToTransmissionPlatform(einvoice._id, { pdf, xml: einvoice.artifacts.xml.content });
 
 		throw redirect(303, `${adminPrefix()}/e-invoicing/${params.id}`);
 	}

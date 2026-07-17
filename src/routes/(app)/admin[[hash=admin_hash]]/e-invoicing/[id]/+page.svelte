@@ -4,6 +4,9 @@
 	export let data;
 
 	$: einvoice = data.eInvoice;
+	$: lastTransmissionError = [...einvoice.statusHistory]
+		.reverse()
+		.find((entry) => entry.kind === 'transmission' && entry.status === 'error');
 
 	function formatDate(date: Date) {
 		return new Date(date).toLocaleString('en');
@@ -64,6 +67,11 @@
 			</button>
 		</form>
 	{/if}
+	{#if einvoice.transmission.status === 'error'}
+		<form method="post" action="?/resendTransmission">
+			<button type="submit" class="btn btn-red">Resend transmission</button>
+		</form>
+	{/if}
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-6 items-start">
@@ -110,6 +118,11 @@
 				{#if einvoice.transmission.externalId}
 					<span class="text-sm text-gray-600 break-all">
 						External id: {einvoice.transmission.externalId}
+					</span>
+				{/if}
+				{#if einvoice.transmission.status === 'error' && lastTransmissionError?.detail}
+					<span class="text-sm text-red-700 break-all">
+						{lastTransmissionError.detail}
 					</span>
 				{/if}
 			</div>

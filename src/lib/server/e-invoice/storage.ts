@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import { Binary, type ObjectId } from 'mongodb';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getS3Client, s3IsConfigured } from '$lib/server/s3';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { EInvoice } from '$lib/types/EInvoice';
@@ -55,4 +55,27 @@ export async function storeArtifacts(params: {
 	}
 
 	return artifacts;
+}
+
+/** Read the PDF bytes back, regardless of storage backend (inline or S3). */
+export async function readPdfArtifact(
+	artifacts: NonNullable<EInvoice['artifacts']>
+): Promise<Uint8Array> {
+	const pdf = artifacts.pdf;
+	if (pdf.storage === 'inline') {
+		if (!pdf.data) {
+			throw new Error('E-invoice PDF is marked inline but has no data');
+		}
+		return new Uint8Array(pdf.data.buffer);
+	}
+	if (!pdf.key) {
+		throw new Error('E-invoice PDF is marked s3 but has no key');
+	}
+	const object = await getS3Client().send(
+		new GetObjectCommand({ Bucket: runtimeConfig.s3.bucket, Key: pdf.key })
+	);
+	if (!object.Body) {
+		throw new Error('E-invoice PDF S3 object has no body');
+	}
+	return new Uint8Array(await object.Body.transformToByteArray());
 }
