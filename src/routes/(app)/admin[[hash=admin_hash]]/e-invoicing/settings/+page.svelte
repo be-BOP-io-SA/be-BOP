@@ -63,8 +63,9 @@
 			{/each}
 		</select>
 		<p class="text-sm">
-			Invoices are generated and stored locally. Transmission to an accredited platform (PDP) will
-			be available once a platform adapter is configured.
+			Invoices are generated and stored locally. To transmit them, select a platform adapter here
+			and configure its connection — e.g.
+			<a href="{data.adminPrefix}/e-invoicing/openapi-pdp" class="underline">OpenAPI PDP</a>.
 		</p>
 	</label>
 

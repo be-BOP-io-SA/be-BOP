@@ -144,6 +144,38 @@ describe('ciiXml', () => {
 		expect(xml).toContain('<ram:ChargeTotalAmount>5.00</ram:ChargeTotalAmount>');
 	});
 
+	it('serializes the payee IBAN/BIC for bank-transfer payments (BR-61)', () => {
+		const ctx = makeContext({
+			seller: {
+				name: 'ACME SAS',
+				isCompany: true,
+				vatNumber: 'FR12345678901',
+				siren: '123456789',
+				siret: '12345678900011',
+				address: { street: '1 rue de la Paix', zip: '75002', city: 'Paris', country: 'FR' },
+				email: 'acme@example.com',
+				bank: { iban: 'FR7630006000011234567890189', bic: 'AGRIFRPP' }
+			},
+			paidWith: {
+				method: 'bank-transfer',
+				paidAt: new Date('2026-07-01T10:00:00Z'),
+				amount: { amount: 120, currency: 'EUR' },
+				display: { amount: 120, currency: 'EUR' },
+				fiatEquivalent: { amount: 120, currency: 'EUR' }
+			}
+		});
+		const xml = ciiXml(ctx);
+		expect(xml).toContain('<ram:PayeePartyCreditorFinancialAccount>');
+		expect(xml).toContain('<ram:IBANID>FR7630006000011234567890189</ram:IBANID>');
+		expect(xml).toContain('<ram:PayeeSpecifiedCreditorFinancialInstitution>');
+		expect(xml).toContain('<ram:BICID>AGRIFRPP</ram:BICID>');
+	});
+
+	it('omits the payee account for non-bank-transfer payments', () => {
+		const xml = ciiXml(makeContext());
+		expect(xml).not.toContain('PayeePartyCreditorFinancialAccount');
+	});
+
 	it('serializes rounding drift under its own "Rounding" reason, never as Discount', () => {
 		const positive = makeContext({ discount: 0, rounding: 0.01 });
 		const posXml = ciiXml(positive);

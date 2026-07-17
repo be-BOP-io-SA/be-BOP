@@ -3,10 +3,9 @@ import type { EInvoice, EInvoiceCountry, EInvoiceTransmissionStatus } from '$lib
 /**
  * Transmission platform (French "Plateforme Agréée" / PDP) adapter interface.
  *
- * Only the no-op NullPlatform exists until an accredited platform API is
- * integrated; the EInvoice document already carries everything a real adapter
- * needs (externalId, transmission status, statusHistory), so plugging one in
- * requires no schema change.
+ * The EInvoice document carries everything an adapter needs (externalId,
+ * transmission status, statusHistory), so plugging one in requires no schema
+ * change. See platform/registry.ts for the registered adapters.
  */
 export interface EInvoicePlatform {
 	meta: {

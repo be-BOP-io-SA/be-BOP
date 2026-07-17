@@ -224,13 +224,18 @@ const baseConfig = {
 	eInvoicing: {
 		enabled: false,
 		country: 'FR' satisfies EInvoiceCountry as EInvoiceCountry,
-		// PDP (Plateforme Agréée) adapter id, only 'none' is registered for now
+		// PDP (Plateforme Agréée) adapter id, see platform/registry.ts
 		platform: 'none'
 	},
 	sumUp: {
 		apiKey: '',
 		merchantCode: '',
 		currency: 'EUR' as Currency
+	},
+	openApiPdp: {
+		baseUrl: '',
+		clientId: '',
+		clientSecret: ''
 	},
 	bitcoinNodeless: {
 		mempoolUrl: 'https://mempool.space',

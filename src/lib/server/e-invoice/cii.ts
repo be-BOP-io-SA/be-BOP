@@ -59,6 +59,29 @@ export function paymentMeansTypeCode(method: PaymentMethod, posSubtype?: string)
 }
 
 /**
+ * BT-84/BT-86: for a credit-transfer payment (BR-61), the payee's account
+ * identifier is mandatory. `buildInvoiceContext` already throws when the
+ * seller has no IBAN configured, so `ctx.seller.bank` is guaranteed here.
+ */
+function payeeFinancialAccountXml(ctx: InvoiceContext): string[] {
+	if (ctx.paidWith.method !== 'bank-transfer' || !ctx.seller.bank?.iban) {
+		return [];
+	}
+	return [
+		'<ram:PayeePartyCreditorFinancialAccount>',
+		`<ram:IBANID>${esc(ctx.seller.bank.iban)}</ram:IBANID>`,
+		'</ram:PayeePartyCreditorFinancialAccount>',
+		...(ctx.seller.bank.bic
+			? [
+					'<ram:PayeeSpecifiedCreditorFinancialInstitution>',
+					`<ram:BICID>${esc(ctx.seller.bank.bic)}</ram:BICID>`,
+					'</ram:PayeeSpecifiedCreditorFinancialInstitution>'
+			  ]
+			: [])
+	];
+}
+
+/**
  * BT-22 note describing the actual payment when it happened in another
  * currency (e.g. BTC/SAT): the structured amounts stay in the fiat invoice
  * currency to remain schema-valid, this note carries the crypto details.
@@ -295,6 +318,7 @@ export function ciiXml(ctx: InvoiceContext): string {
 			ctx.paidWith.method,
 			ctx.paidWith.posSubtype
 		)}</ram:TypeCode>`,
+		...payeeFinancialAccountXml(ctx),
 		'</ram:SpecifiedTradeSettlementPaymentMeans>',
 		...ctx.vatBreakdown.map(tradeTaxXml),
 		...(ctx.discount > 0 && firstVat

@@ -56,6 +56,8 @@ export interface EInvoiceParty {
 	};
 	email?: string;
 	phone?: string;
+	/** Seller's payment account (BT-84/BT-86), required when paid by credit transfer (BR-61) */
+	bank?: { iban: string; bic?: string };
 }
 
 /**

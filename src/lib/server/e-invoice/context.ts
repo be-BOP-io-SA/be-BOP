@@ -192,6 +192,9 @@ function partyFromSeller(seller: SellerIdentity): EInvoiceParty {
 			siren: seller.legal.siret.slice(0, 9)
 		}),
 		...(seller.legal?.legalForm && { legalForm: seller.legal.legalForm }),
+		...(seller.bank?.iban && {
+			bank: { iban: seller.bank.iban, ...(seller.bank.bic && { bic: seller.bank.bic }) }
+		}),
 		address: {
 			street: seller.address.street,
 			zip: seller.address.zip,
@@ -447,6 +450,15 @@ export function buildInvoiceContext(params: {
 
 	const buyerCountry = order.billingAddress?.country ?? order.shippingAddress?.country;
 
+	const paidWith = buildPaidWith(payment, role, currency);
+	// BR-61: a credit-transfer payment means (BT-81 code 30) requires the
+	// payee's account identifier (BT-84) to be present.
+	if (paidWith.method === 'bank-transfer' && !sellerParty.bank?.iban) {
+		throw new Error(
+			'Seller IBAN is required for bank-transfer invoices (BR-61) — set it in Admin → Identity'
+		);
+	}
+
 	return {
 		country,
 		invoiceNumber: payment.invoice.number,
@@ -465,6 +477,6 @@ export function buildInvoiceContext(params: {
 		rounding,
 		vatBreakdown,
 		totals: { lineNet, exclVat, vat, inclVat, prepaid, due },
-		paidWith: buildPaidWith(payment, role, currency)
+		paidWith
 	};
 }

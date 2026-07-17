@@ -2,8 +2,7 @@ import type { EInvoicePlatform } from '../types';
 
 /**
  * Default no-op platform: invoices are generated and stored but not
- * transmitted anywhere. This is the only valid choice until a real accredited
- * platform (PDP) adapter is implemented.
+ * transmitted anywhere.
  */
 export const NullPlatform: EInvoicePlatform = {
 	meta: {

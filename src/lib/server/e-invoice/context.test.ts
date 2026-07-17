@@ -14,7 +14,8 @@ function makeSeller(): SellerIdentity {
 		vatNumber: 'FR12345678901',
 		address: { street: '1 rue de la Paix', zip: '75002', city: 'Paris', country: 'FR' },
 		contact: { email: 'acme@example.com' },
-		legal: { siret: '12345678900011', legalForm: 'SAS' }
+		legal: { siret: '12345678900011', legalForm: 'SAS' },
+		bank: { iban: 'FR7630006000011234567890189', bic: 'AGRIFRPP' }
 	};
 }
 
@@ -226,6 +227,28 @@ describe('buildInvoiceContext', () => {
 			expect(ctx.paidWith.rate).toBeUndefined();
 		}
 	);
+
+	it('carries the seller IBAN/BIC for bank-transfer payments (BR-61)', () => {
+		const payment = makePayment({ method: 'bank-transfer' });
+		const ctx = buildInvoiceContext({
+			order: makeOrder(),
+			payment,
+			seller: makeSeller(),
+			country: 'FR'
+		});
+
+		expect(ctx.seller.bank).toEqual({ iban: 'FR7630006000011234567890189', bic: 'AGRIFRPP' });
+	});
+
+	it('throws when a bank-transfer payment has no seller IBAN configured (BR-61)', () => {
+		const payment = makePayment({ method: 'bank-transfer' });
+		const seller = makeSeller();
+		delete seller.bank;
+
+		expect(() =>
+			buildInvoiceContext({ order: makeOrder(), payment, seller, country: 'FR' })
+		).toThrow('Seller IBAN is required for bank-transfer invoices');
+	});
 
 	it('omits the rate when the payment is in the invoice currency', () => {
 		const payment = makePayment({

@@ -130,7 +130,7 @@ export async function generateEInvoice(einvoice: EInvoice): Promise<void> {
  * it's recorded as a transmission error and can be retried once real platform
  * reconciliation lands.
  */
-async function submitToTransmissionPlatform(
+export async function submitToTransmissionPlatform(
 	eInvoiceId: EInvoice['_id'],
 	artifacts: { pdf: Uint8Array; xml: string }
 ): Promise<void> {

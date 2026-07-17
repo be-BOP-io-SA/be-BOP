@@ -1,5 +1,6 @@
 import type { EInvoicePlatform } from './types';
 import { NullPlatform } from './contrib/NullPlatform';
+import { OpenApiPdp } from './contrib/OpenApiPdp';
 
 const platforms = new Map<string, EInvoicePlatform>();
 
@@ -16,3 +17,4 @@ export function listPlatforms(): EInvoicePlatform[] {
 }
 
 registerPlatform(NullPlatform);
+registerPlatform(OpenApiPdp);
