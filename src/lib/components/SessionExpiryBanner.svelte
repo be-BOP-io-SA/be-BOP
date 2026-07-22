@@ -73,7 +73,7 @@
 </script>
 
 {#if isExpired}
-	<div class="bg-red-600 text-white p-3" role="alert">
+	<div class="sticky top-0 z-40 bg-red-600 text-white p-3" role="alert">
 		<Trans key="admin.session.expiry.expired.message">
 			<a slot="0" href="{adminPrefix}/login" class="underline" let:translation>
 				{translation}
@@ -82,7 +82,10 @@
 		{t('admin.session.expiry.expired.configHint')}
 	</div>
 {:else if isWarning && !dismissed}
-	<div class="bg-yellow-300 text-black p-3 flex flex-wrap items-center gap-3" role="alert">
+	<div
+		class="sticky top-0 z-40 bg-yellow-300 text-black p-3 flex flex-wrap items-center gap-3"
+		role="alert"
+	>
 		<span>{t('admin.session.expiry.warning.message', { countdown })}</span>
 		<button type="button" on:click={extend} disabled={extending} class="btn body-mainCTA">
 			{t('admin.session.expiry.warning.extend')}
