@@ -2177,6 +2177,19 @@
 			"notConfigured": "não configurado",
 			"priority": "Prioridade",
 			"systemPriority": "Prioridade do sistema"
+		},
+		"session": {
+			"expiry": {
+				"warning": {
+					"message": "A sua sessão irá terminar em {countdown}",
+					"extend": "Prolongar",
+					"ignore": "Ignorar"
+				},
+				"expired": {
+					"message": "A sua sessão foi desconectada. As alterações não guardadas não serão registadas, por favor <0>volte a iniciar sessão</0>.",
+					"configHint": "Uma duração de sessão mais longa pode ser configurada no início de sessão."
+				}
+			}
 		}
 	},
 	"ageWarning": {
