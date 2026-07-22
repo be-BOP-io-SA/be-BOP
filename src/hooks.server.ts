@@ -228,6 +228,9 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 						hasPosOptions: user.hasPosOptions,
 						recoveryEmail: user.recovery?.email
 					};
+					if (session.expireUserAt) {
+						event.locals.expireUserAt = session.expireUserAt;
+					}
 				}
 			}
 		}
@@ -281,7 +284,9 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 
 		// User-self endpoints (per-user prefs) only need an admin login, no role permission.
 		const normalizedAdminPath = event.url.pathname.replace(/^\/admin-[a-zA-Z0-9]+/, '/admin');
-		const isUserSelfAdminEndpoint = normalizedAdminPath === '/admin/back-office-bookmark';
+		const isUserSelfAdminEndpoint =
+			normalizedAdminPath === '/admin/back-office-bookmark' ||
+			normalizedAdminPath === '/admin/session/extend';
 
 		if (
 			!isUserSelfAdminEndpoint &&
