@@ -31,6 +31,7 @@ declare global {
 			};
 			email?: string;
 			npub?: string;
+			expireUserAt?: Date;
 			sso?: Array<{
 				provider: string;
 				email?: string;

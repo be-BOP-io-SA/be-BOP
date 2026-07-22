@@ -11,6 +11,7 @@
 	import { adminLinks as adminLinksImported } from './adminLinks.js';
 	import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 	import { useI18n } from '$lib/i18n';
+	import SessionExpiryBanner from '$lib/components/SessionExpiryBanner.svelte';
 
 	export let data;
 
@@ -158,6 +159,10 @@
 		}
 	}
 </script>
+
+{#if !isLoginPage && data.expireUserAt}
+	<SessionExpiryBanner expireUserAt={data.expireUserAt} adminPrefix={data.adminPrefix} />
+{/if}
 
 {#if isLoginPage}
 	<main class="p-4 flex flex-col gap-4 body-mainPlan {$page.data.bodyClass || ''}">
