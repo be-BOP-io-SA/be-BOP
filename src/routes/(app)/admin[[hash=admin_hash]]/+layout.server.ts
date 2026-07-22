@@ -86,6 +86,7 @@ export async function load({ locals }) {
 		allowPaidOrderWebhook: isPaidOrderWebhookEnabled(),
 		s3IsConfigured: !!s3IsConfigured(),
 		disabledAdminEntries: runtimeConfig.disabledAdminEntries,
+		expireUserAt: locals.expireUserAt?.toISOString() ?? null,
 		backOfficeBookmarks: locals.user
 			? collections.users
 					.findOne(

@@ -40,6 +40,19 @@
 				"noReference": "-- Geen verwijzing (gebruik eigen voorraad) --",
 				"warning": "⚠️ Dit product verwijst naar de voorraad van een ander product. Voorraadwijzigingen zullen het gerefereerde product beïnvloeden."
 			}
+		},
+		"session": {
+			"expiry": {
+				"warning": {
+					"message": "Uw sessie eindigt over {countdown}",
+					"extend": "Verlengen",
+					"ignore": "Negeren"
+				},
+				"expired": {
+					"message": "Uw sessie is verbroken. Niet-opgeslagen wijzigingen zullen niet worden vastgelegd, gelieve <0>opnieuw in te loggen</0>.",
+					"configHint": "Een langere sessieduur kan worden geconfigureerd bij het inloggen."
+				}
+			}
 		}
 	},
 	"ageWarning": {

@@ -40,6 +40,19 @@
 				"noReference": "-- Keine Referenz (eigenen Lagerbestand verwenden) --",
 				"warning": "⚠️ Dieses Produkt verweist auf den Lagerbestand eines anderen Produkts. Lagerbestandsänderungen wirken sich auf das referenzierte Produkt aus."
 			}
+		},
+		"session": {
+			"expiry": {
+				"warning": {
+					"message": "Ihre Sitzung endet in {countdown}",
+					"extend": "Verlängern",
+					"ignore": "Ausblenden"
+				},
+				"expired": {
+					"message": "Ihre Sitzung wurde beendet. Ihre nicht gespeicherten Änderungen werden nicht übernommen, bitte <0>melden Sie sich erneut an</0>.",
+					"configHint": "Eine längere Sitzungsdauer kann beim Anmelden konfiguriert werden."
+				}
+			}
 		}
 	},
 	"ageWarning": {
