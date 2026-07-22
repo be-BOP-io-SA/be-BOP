@@ -84,12 +84,7 @@
 {:else if isWarning && !dismissed}
 	<div class="bg-yellow-300 text-black p-3 flex flex-wrap items-center gap-3" role="alert">
 		<span>{t('admin.session.expiry.warning.message', { countdown })}</span>
-		<button
-			type="button"
-			on:click={extend}
-			disabled={extending}
-			class="btn body-mainCTA"
-		>
+		<button type="button" on:click={extend} disabled={extending} class="btn body-mainCTA">
 			{t('admin.session.expiry.warning.extend')}
 		</button>
 		<button type="button" on:click={dismiss} class="underline">
