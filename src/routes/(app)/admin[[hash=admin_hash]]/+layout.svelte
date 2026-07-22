@@ -137,10 +137,6 @@
 	}
 </script>
 
-{#if !isLoginPage && data.expireUserAt}
-	<SessionExpiryBanner expireUserAt={data.expireUserAt} adminPrefix={data.adminPrefix} />
-{/if}
-
 {#if isLoginPage}
 	<main class="p-4 flex flex-col gap-4 body-mainPlan {$page.data.bodyClass || ''}">
 		<slot />
@@ -264,6 +260,9 @@
 		</aside>
 
 		<main class="flex-1 p-4 flex flex-col gap-4 body-mainPlan {$page.data.bodyClass || ''}">
+			{#if data.expireUserAt}
+				<SessionExpiryBanner expireUserAt={data.expireUserAt} adminPrefix={data.adminPrefix} />
+			{/if}
 			<button
 				type="button"
 				class="md:hidden self-start bg-gray-400 text-gray-800 rounded p-2 text-2xl"
