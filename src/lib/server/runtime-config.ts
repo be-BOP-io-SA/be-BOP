@@ -261,6 +261,14 @@ const baseConfig = {
 	swissBitcoinPay: {
 		apiKey: ''
 	},
+	blink: {
+		/** blink_... — when set, uses the API-key custodial GraphQL mode */
+		apiKey: '',
+		/** user@blink.sv — when set (and no apiKey), auto-detects custodial vs non-custodial (Spark) */
+		lnAddress: '',
+		/** Optional wallet id override for API-key mode; empty = account default wallet */
+		walletId: ''
+	},
 	taler: {
 		backendUrl: '',
 		backendApiKey: '',

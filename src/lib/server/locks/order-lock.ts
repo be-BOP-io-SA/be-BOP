@@ -75,6 +75,7 @@ async function handleTapToPayCheck(
 					});
 				}
 				break;
+			case 'blink':
 			case 'btcpay-server':
 			case 'paypal':
 			case 'phoenixd':
