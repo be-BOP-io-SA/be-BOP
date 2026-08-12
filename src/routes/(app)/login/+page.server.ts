@@ -22,6 +22,13 @@ import { SESSION_COOKIE_NAME } from '$lib/server/cookies';
 
 export const load = async ({ url }) => {
 	const token = url.searchParams.get('token');
+	const next = url.searchParams.get('next');
+
+	// HP-2026-08-12 (Peak Learn) : redirection post-authLink limitée à une
+	// allowlist stricte (jamais d'URL externe, jamais d'open redirect).
+	const SAFE_NEXT = ['/checkout', '/cart', '/orders', '/identity', '/login'];
+	const CART_NEXT_RE = /^\/cart\?slug=[a-z0-9][a-z0-9-]{0,119}&qty=\d+$/;
+	const safeNext = next && (SAFE_NEXT.includes(next) || CART_NEXT_RE.test(next)) ? next : '/login';
 
 	const base = {
 		canSso: {
@@ -35,7 +42,8 @@ export const load = async ({ url }) => {
 					name: o.name,
 					slug: o.slug
 				}))
-		}
+		},
+		next: safeNext
 	};
 
 	if (token) {
@@ -87,6 +95,10 @@ export const actions = {
 	},
 	validate: async function ({ url, locals, cookies }) {
 		const token = url.searchParams.get('token');
+		const next = url.searchParams.get('next');
+		const SAFE_NEXT = ['/checkout', '/cart', '/orders', '/identity', '/login'];
+		const CART_NEXT_RE = /^\/cart\?slug=[a-z0-9][a-z0-9-]{0,119}&qty=\d+$/;
+		const safeNext = next && (SAFE_NEXT.includes(next) || CART_NEXT_RE.test(next)) ? next : '/login';
 		let dontCatch = false;
 
 		if (!token) {
@@ -98,10 +110,12 @@ export const actions = {
 				Uint8Array.from(Buffer.from(runtimeConfig.authLinkJwtSigningKey))
 			);
 
-			const { npub, email } = z
+			const { npub, email, firstName, lastName } = z
 				.object({
 					npub: z.string().optional(),
-					email: z.string().optional()
+					email: z.string().optional(),
+					firstName: z.string().max(120).optional(),
+					lastName: z.string().max(120).optional()
 				})
 				.parse(authLink.payload);
 
@@ -124,10 +138,30 @@ export const actions = {
 					upsert: true
 				}
 			);
+
+			// HP-2026-08-12 (Peak Learn) : le JWT AuthLink émis par la plateforme
+			// peut porter prénom/nom (signés, jamais client). On matérialise un
+			// personalInfo rattaché à l'e-mail pour que le checkout be-BOP
+			// préremplisse nativement email + prénom + nom (mécanisme natif).
+			if (email && firstName && lastName) {
+				await collections.personalInfo.updateOne(
+					{ 'user.email': email },
+					{
+						$set: {
+							firstName,
+							lastName,
+							user: { email },
+							updatedAt: new Date()
+						},
+						$setOnInsert: { createdAt: new Date() }
+					},
+					{ upsert: true }
+				);
+			}
 			await renewSessionId(locals, cookies);
 
 			dontCatch = true;
-			throw redirect(303, '/login');
+			throw redirect(303, safeNext);
 		} catch (err) {
 			if (dontCatch) {
 				throw err;
