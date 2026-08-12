@@ -66,7 +66,7 @@
 		</div>
 	{/if}
 	{#if data.emailToLogin || data.npubToLogin}
-		<form method="post" action="?/validate&token={$page.url.searchParams.get('token')}">
+		<form method="post" action="?/validate&token={$page.url.searchParams.get('token')}&next={data.next}">
 			<button class="btn btn-blue text-white break-words break-all h-auto">
 				{t('login.cta.authenticateAs', { as: data.emailToLogin || data.npubToLogin })}
 			</button>
