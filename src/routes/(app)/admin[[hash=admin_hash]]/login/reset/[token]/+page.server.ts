@@ -52,9 +52,9 @@ export const actions = {
 				password: data.get('password')
 			});
 
-		// HP-2026-08-13 (review #2715) : fail-closed — un reset ne stocke
-		// jamais un mot de passe dont on n'a pas pu verifier qu'il n'est pas
-		// compromis (API HIBP injoignable => rejet).
+		// HP-2026-08-13 (review #2715) : fail-closed — a reset never stores
+		// a password whose breach status could not be verified
+		// (HIBP API unreachable => reject).
 		const pwnedTimes = await checkPasswordPwnedTimes(password);
 		if (pwnedTimes === null) {
 			throw error(503, 'Password breach check unavailable, please retry later');

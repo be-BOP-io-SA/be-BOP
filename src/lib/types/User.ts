@@ -44,17 +44,16 @@ export async function checkPasswordPwnedTimes(password: string): Promise<number 
 		.join('')
 		.toUpperCase();
 
-	// HP-2026-08-12 (Peak Learn) : fail-open controle. Le commentaire upstream
-	// "Don't block the user if the API is down" n'etait pas implemente : un
-	// fetch sans catch ni timeout transformait une API HIBP injoignable en
-	// erreur 500 bloquant le login admin (conteneur sans egress Internet).
-	// Desormais : timeout court (3s) + toute erreur reseau => null (indisponible).
+	// HP-2026-08-12 (Peak Learn) : controlled fail-open. The upstream comment
+	// "Don't block the user if the API is down" was not implemented: a fetch
+	// without catch or timeout turned an unreachable HIBP API into a 500 error
+	// blocking the admin login (container without Internet egress).
+	// Now: short timeout (3s) + any network error => null (unavailable).
 	//
-	// HP-2026-08-13 (review #2715) : `null` distingue "API injoignable" de
-	// "mot de passe non compromis" (0). Le login (fail-open) traite `null`
-	// comme non bloquant ; la creation/reset de mot de passe (fail-closed)
-	// doit rejeter sur `null` — on ne stocke jamais un mot de passe dont on
-	// n'a pas pu verifier qu'il n'est pas compromis.
+	// HP-2026-08-13 (review #2715) : `null` distinguishes "API unreachable"
+	// from "password not pwned" (0). Login (fail-open) treats `null` as
+	// non-blocking; password creation/reset (fail-closed) must reject on
+	// `null` — never store a password whose breach status could not be verified.
 	let pwnedPasswordResp: Response;
 	try {
 		pwnedPasswordResp = await fetch(`https://api.pwnedpasswords.com/range/${sha1Hex.slice(0, 5)}`, {
@@ -62,11 +61,11 @@ export async function checkPasswordPwnedTimes(password: string): Promise<number 
 			autoSelectFamily: true
 		} as unknown as RequestInit);
 	} catch {
-		// API injoignable (reseau coupe, timeout) : null = indisponible.
+		// API unreachable (network down, timeout) : null = unavailable.
 		return null;
 	}
 	if (!pwnedPasswordResp.ok) {
-		// API down (erreur HTTP) : null = indisponible.
+		// API down (HTTP error) : null = unavailable.
 		return null;
 	}
 	const pwnedPasswords = await pwnedPasswordResp.text().then((r) => r.split('\n'));

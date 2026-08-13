@@ -22,9 +22,9 @@ export async function createSuperAdminUserInDb(login: string, password: string) 
 
 	const pwnedTimes = await checkPasswordPwnedTimes(password);
 	if (pwnedTimes === null) {
-		// HP-2026-08-13 (review #2715) : fail-closed — on ne cree jamais un
-		// super-admin avec un mot de passe dont on n'a pas pu verifier qu'il
-		// n'est pas compromis (API HIBP injoignable).
+		// HP-2026-08-13 (review #2715) : fail-closed — never create a
+		// super-admin with a password whose breach status could not be
+		// verified (HIBP API unreachable).
 		throw error(503, 'Password breach check unavailable, please retry later');
 	}
 	if (pwnedTimes) {
