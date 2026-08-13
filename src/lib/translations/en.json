@@ -87,7 +87,11 @@
 			"corsOriginsLabel": "Allowed origins",
 			"corsOriginsHint": "One origin per line or comma-separated (e.g. https://partner.example).",
 			"corsSave": "Save CORS origins",
-			"corsSaved": "CORS origins updated."
+			"corsSaved": "CORS origins updated.",
+			"listIntro": "Machine-to-machine keys for the public HTTP API. Secrets are shown once.",
+			"keysSectionTitle": "Keys",
+			"keysSectionHelp": "Each key has scopes. Revoke a key from its detail page.",
+			"emptyHint": "Create a key so a till or partner can call /api/v1."
 		}
 	},
 	"ageWarning": {

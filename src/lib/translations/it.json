@@ -87,7 +87,11 @@
 			"corsOriginsLabel": "Origini consentite",
 			"corsOriginsHint": "Un'origine per riga o separate da virgola (es. https://partner.example).",
 			"corsSave": "Salva origini CORS",
-			"corsSaved": "Origini CORS aggiornate."
+			"corsSaved": "Origini CORS aggiornate.",
+			"listIntro": "Chiavi machine-to-machine per l'API HTTP pubblica. Il secret viene mostrato una sola volta.",
+			"keysSectionTitle": "Chiavi",
+			"keysSectionHelp": "Ogni chiave ha degli scope. La revoca si fa dalla pagina di dettaglio.",
+			"emptyHint": "Crea una chiave per far chiamare /api/v1 a una cassa o a un partner."
 		}
 	},
 	"ageWarning": {

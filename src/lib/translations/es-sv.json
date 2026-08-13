@@ -87,7 +87,11 @@
 			"corsOriginsLabel": "Orígenes permitidos",
 			"corsOriginsHint": "Un origen por línea o separados por comas (p. ej. https://partner.example).",
 			"corsSave": "Guardar orígenes CORS",
-			"corsSaved": "Orígenes CORS actualizados."
+			"corsSaved": "Orígenes CORS actualizados.",
+			"listIntro": "Claves machine-to-machine para la API HTTP publica. El secret se muestra una sola vez.",
+			"keysSectionTitle": "Claves",
+			"keysSectionHelp": "Cada clave tiene scopes. La revocacion se hace en la pagina de detalle.",
+			"emptyHint": "Cree una clave para que una caja o un socio llame a /api/v1."
 		}
 	},
 	"ageWarning": {
