@@ -36,7 +36,6 @@ const usableKey: ApiKey = {
 	keyHash: 'a'.repeat(64),
 	keyPrefix: 'bebop_ak_test_abcd1234',
 	scopes: ['orders:write'],
-	environment: 'test',
 	createdAt: new Date(),
 	updatedAt: new Date()
 };

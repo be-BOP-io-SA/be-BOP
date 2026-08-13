@@ -43,7 +43,6 @@ function call(opts?: { origin?: string; body?: unknown }) {
 			_id: new ObjectId(),
 			name: 't',
 			scopes: ['orders:write'] as const,
-			environment: 'test' as const,
 			keyPrefix: 'bebop_ak_test_abcd1234'
 		},
 		clientIp: '203.0.113.50'

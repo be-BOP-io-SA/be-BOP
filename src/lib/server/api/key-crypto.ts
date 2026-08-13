@@ -1,7 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
 /** Keep this module free of `$lib` aliases so CLI scripts can import it via relative path. */
-export type ApiKeySecretEnvironment = 'live' | 'test';
 
 const SECRET_RANDOM_BYTES = 32;
 
@@ -23,29 +22,23 @@ export function timingSafeEqualHex(a: string, b: string): boolean {
 	}
 }
 
-export function generateApiKeySecret(environment: ApiKeySecretEnvironment): string {
+export function generateApiKeySecret(): string {
 	const token = randomBytes(SECRET_RANDOM_BYTES).toString('base64url');
-	return `bebop_ak_${environment}_${token}`;
+	return `bebop_ak_${token}`;
 }
 
-/** Non-secret display / lookup prefix: scheme + env + first 8 chars of the random part. */
+/** Non-secret display / lookup prefix: scheme + first 8 chars of the random part. */
 export function apiKeyPrefixFromSecret(secret: string): string {
-	const parts = secret.split('_');
-	// bebop_ak_{env}_{token}
-	if (parts.length < 4) {
-		return secret.slice(0, 24);
+	const match = /^bebop_ak_([A-Za-z0-9_-]+)$/.exec(secret);
+	if (!match) {
+		return secret.slice(0, 16);
 	}
-	const env = parts[2];
-	const token = parts.slice(3).join('_');
-	return `bebop_ak_${env}_${token.slice(0, 8)}`;
+	return `bebop_ak_${match[1].slice(0, 8)}`;
 }
 
-export function parseApiKeySecret(
-	secret: string
-): { validFormat: true; environment: ApiKeySecretEnvironment } | { validFormat: false } {
-	const match = /^bebop_ak_(live|test)_([A-Za-z0-9_-]+)$/.exec(secret);
-	if (!match) {
+export function parseApiKeySecret(secret: string): { validFormat: true } | { validFormat: false } {
+	if (!/^bebop_ak_[A-Za-z0-9_-]+$/.test(secret)) {
 		return { validFormat: false };
 	}
-	return { environment: match[1] as ApiKeySecretEnvironment, validFormat: true };
+	return { validFormat: true };
 }

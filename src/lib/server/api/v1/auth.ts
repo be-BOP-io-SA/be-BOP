@@ -55,7 +55,6 @@ export async function authenticateApiV1(
 		_id: apiKey._id,
 		name: apiKey.name,
 		scopes: apiKey.scopes,
-		environment: apiKey.environment,
 		keyPrefix: apiKey.keyPrefix
 	};
 	event.locals.apiKey = authenticated;
