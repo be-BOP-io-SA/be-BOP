@@ -87,7 +87,11 @@
 			"corsOriginsLabel": "Erlaubte Origins",
 			"corsOriginsHint": "Eine Origin pro Zeile oder kommagetrennt (z. B. https://partner.example).",
 			"corsSave": "CORS-Origins speichern",
-			"corsSaved": "CORS-Origins aktualisiert."
+			"corsSaved": "CORS-Origins aktualisiert.",
+			"listIntro": "Machine-to-machine-Schlüssel für die öffentliche HTTP-API. Secrets werden nur einmal angezeigt.",
+			"keysSectionTitle": "Schlüssel",
+			"keysSectionHelp": "Jeder Schlüssel hat Scopes. Widerruf erfolgt auf der Detailseite.",
+			"emptyHint": "Erstellen Sie einen Schlüssel, damit eine Kasse oder ein Partner /api/v1 aufrufen kann."
 		}
 	},
 	"ageWarning": {

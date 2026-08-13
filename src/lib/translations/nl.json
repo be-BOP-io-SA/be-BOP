@@ -87,7 +87,11 @@
 			"corsOriginsLabel": "Toegestane origins",
 			"corsOriginsHint": "Eén origin per regel of kommagescheiden (bijv. https://partner.example).",
 			"corsSave": "CORS-origins opslaan",
-			"corsSaved": "CORS-origins bijgewerkt."
+			"corsSaved": "CORS-origins bijgewerkt.",
+			"listIntro": "Machine-to-machine-sleutels voor de publieke HTTP-API. Secrets worden een keer getoond.",
+			"keysSectionTitle": "Sleutels",
+			"keysSectionHelp": "Elke sleutel heeft scopes. Intrekken doe je op de detailpagina.",
+			"emptyHint": "Maak een sleutel zodat een kassa of partner /api/v1 kan aanroepen."
 		}
 	},
 	"ageWarning": {

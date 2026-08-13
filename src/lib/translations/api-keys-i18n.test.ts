@@ -16,7 +16,11 @@ const KEYS = [
 	'admin.apiKeys.corsOriginsLabel',
 	'admin.apiKeys.corsOriginsHint',
 	'admin.apiKeys.corsSave',
-	'admin.apiKeys.corsSaved'
+	'admin.apiKeys.corsSaved',
+	'admin.apiKeys.listIntro',
+	'admin.apiKeys.keysSectionTitle',
+	'admin.apiKeys.keysSectionHelp',
+	'admin.apiKeys.emptyHint'
 ];
 
 describe('admin api-keys scope hint translations', () => {
