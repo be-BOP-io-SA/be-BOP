@@ -48,7 +48,6 @@
 			"createTitle": "API-Schlüssel erstellen",
 			"name": "Name",
 			"namePlaceholder": "z. B. PoS-Kasse",
-			"environment": "Umgebung",
 			"scopes": "Scopes",
 			"expiresAt": "Läuft ab am",
 			"expiresAtHint": "Optional. Leer lassen für kein Ablaufdatum.",
@@ -79,9 +78,6 @@
 				"ordersRead": "Bestellungen lesen via GET /api/v1/orders und GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "Das Geheimnis wird nur einmal angezeigt. be-BOP speichert nur SHA-256(secret) — kein Pepper (technische Schuld: DB-Leck ermöglicht Offline-Brute-Force).",
-			"environmentHelp": "Nur kosmetisches Label (Test- vs. Live-Badge). Ändert weder Auth, Scopes noch Routing.",
-			"environmentBadgeLive": "live",
-			"environmentBadgeTest": "test",
 			"corsTitle": "API-v1-CORS-Origins",
 			"corsHelp": "Browser-Origin-Allowlist für /api/v1. Leer lassen, um allen Cross-Origin-Zugriff zu verweigern. Wildcards (*) sind nie erlaubt.",
 			"corsOriginsLabel": "Erlaubte Origins",

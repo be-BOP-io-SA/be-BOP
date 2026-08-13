@@ -49,10 +49,9 @@ describe.skipIf(!mongoAvailable)('API v1 e2e: key → catalog → POST order →
 	it('runs the Face A concentrator loop with uniqueKey', async () => {
 		const { apiKey, secret } = await createApiKey({
 			name: 'e2e-pos',
-			scopes: ['orders:write', 'catalog:read', 'orders:read'],
-			environment: 'test'
+			scopes: ['orders:write', 'catalog:read', 'orders:read']
 		});
-		expect(secret.startsWith('bebop_ak_test_')).toBe(true);
+		expect(secret.startsWith('bebop_ak_')).toBe(true);
 
 		const catalog = await listCatalogProducts({}, 'en');
 		expect(catalog.products.some((p) => p.id === TEST_DIGITAL_PRODUCT._id)).toBe(true);
@@ -63,7 +62,6 @@ describe.skipIf(!mongoAvailable)('API v1 e2e: key → catalog → POST order →
 			_id: apiKey._id,
 			name: apiKey.name,
 			scopes: apiKey.scopes,
-			environment: apiKey.environment,
 			keyPrefix: apiKey.keyPrefix
 		};
 		const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
@@ -103,14 +101,12 @@ describe.skipIf(!mongoAvailable)('API v1 e2e: key → catalog → POST order →
 	it('hides unpaid orders from the paid read', async () => {
 		const { apiKey } = await createApiKey({
 			name: 'e2e-unpaid',
-			scopes: ['orders:write', 'orders:read'],
-			environment: 'test'
+			scopes: ['orders:write', 'orders:read']
 		});
 		const auth: AuthenticatedApiKey = {
 			_id: apiKey._id,
 			name: apiKey.name,
 			scopes: apiKey.scopes,
-			environment: apiKey.environment,
 			keyPrefix: apiKey.keyPrefix
 		};
 		const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');

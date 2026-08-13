@@ -70,8 +70,7 @@ describe('api key create PRG + reveal one-shot', () => {
 				_id: id,
 				name: 'desk',
 				keyPrefix: 'bebop_ak_live_abcd1234',
-				scopes: ['orders:write'],
-				environment: 'live'
+				scopes: ['orders:write']
 			},
 			secret: 'bebop_ak_live_abcd1234secrettoken'
 		});
@@ -79,7 +78,6 @@ describe('api key create PRG + reveal one-shot', () => {
 		const { cookies, jar } = mockCookies();
 		const body = new FormData();
 		body.set('name', 'desk');
-		body.set('environment', 'live');
 		body.append('scopes', 'orders:write');
 		body.set('expiresAt', '2026-12-01T10:00:00.000Z');
 
@@ -142,7 +140,6 @@ describe('api key create PRG + reveal one-shot', () => {
 	it('create action rejects non-super-admin', async () => {
 		const body = new FormData();
 		body.set('name', 'x');
-		body.set('environment', 'live');
 		body.append('scopes', 'orders:write');
 
 		await expect(
