@@ -19,71 +19,77 @@
 	}
 </script>
 
-<a href="{data.adminPrefix}/api-keys" class="underline block mb-4"
-	>{t('admin.apiKeys.backToList')}</a
->
+<div class="flex flex-col gap-6 max-w-2xl">
+	<a href="{data.adminPrefix}/api-keys" class="underline body-hyperlink self-start">
+		{t('admin.apiKeys.backToList')}
+	</a>
 
-<h1 class="text-3xl">{data.key.name}</h1>
+	<header>
+		<h1 class="text-3xl">{data.key.name}</h1>
+	</header>
 
-<dl class="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 max-w-2xl">
-	<dt class="opacity-70">{t('admin.apiKeys.prefix')}</dt>
-	<dd class="font-mono">{data.key.keyPrefix}…</dd>
+	<section class="rounded-lg border border-gray-200 p-5">
+		<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+			<dt class="opacity-70">{t('admin.apiKeys.prefix')}</dt>
+			<dd class="font-mono">{data.key.keyPrefix}…</dd>
 
-	<dt class="opacity-70">{t('admin.apiKeys.environment')}</dt>
-	<dd>
-		<span
-			class="text-xs px-2 py-0.5 rounded border {data.key.environment === 'live'
-				? 'bg-emerald-50 text-emerald-900 border-emerald-300'
-				: 'bg-slate-100 text-slate-800 border-slate-300'}"
-		>
-			{data.key.environment === 'live'
-				? t('admin.apiKeys.environmentBadgeLive')
-				: t('admin.apiKeys.environmentBadgeTest')}
-		</span>
-		<span class="text-sm opacity-70 ml-2">{t('admin.apiKeys.environmentHelp')}</span>
-	</dd>
+			<dt class="opacity-70">{t('admin.apiKeys.environment')}</dt>
+			<dd>
+				<span
+					class="text-xs px-2 py-0.5 rounded border {data.key.environment === 'live'
+						? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+						: 'bg-slate-100 text-slate-800 border-slate-300'}"
+				>
+					{data.key.environment === 'live'
+						? t('admin.apiKeys.environmentBadgeLive')
+						: t('admin.apiKeys.environmentBadgeTest')}
+				</span>
+				<span class="text-sm opacity-70 ml-2">{t('admin.apiKeys.environmentHelp')}</span>
+			</dd>
 
-	<dt class="opacity-70">{t('admin.apiKeys.scopes')}</dt>
-	<dd class="font-mono">{data.key.scopes.join(', ')}</dd>
+			<dt class="opacity-70">{t('admin.apiKeys.scopes')}</dt>
+			<dd class="font-mono">{data.key.scopes.join(', ')}</dd>
 
-	<dt class="opacity-70">{t('admin.apiKeys.status')}</dt>
-	<dd>
-		{#if data.key.revokedAt}
-			<span class="text-red-600">{t('admin.apiKeys.statusRevoked')}</span>
-		{:else if data.key.expiresAt && new Date(data.key.expiresAt) <= new Date()}
-			<span class="text-orange-600">{t('admin.apiKeys.statusExpired')}</span>
-		{:else}
-			<span class="text-green-700">{t('admin.apiKeys.statusActive')}</span>
-		{/if}
-	</dd>
+			<dt class="opacity-70">{t('admin.apiKeys.status')}</dt>
+			<dd>
+				{#if data.key.revokedAt}
+					<span class="text-red-600">{t('admin.apiKeys.statusRevoked')}</span>
+				{:else if data.key.expiresAt && new Date(data.key.expiresAt) <= new Date()}
+					<span class="text-orange-600">{t('admin.apiKeys.statusExpired')}</span>
+				{:else}
+					<span class="text-green-700">{t('admin.apiKeys.statusActive')}</span>
+				{/if}
+			</dd>
 
-	<dt class="opacity-70">{t('admin.apiKeys.createdAt')}</dt>
-	<dd>{fmt(data.key.createdAt)}</dd>
+			<dt class="opacity-70">{t('admin.apiKeys.createdAt')}</dt>
+			<dd>{fmt(data.key.createdAt)}</dd>
 
-	<dt class="opacity-70">{t('admin.apiKeys.expiresAt')}</dt>
-	<dd>{fmt(data.key.expiresAt)}</dd>
+			<dt class="opacity-70">{t('admin.apiKeys.expiresAt')}</dt>
+			<dd>{fmt(data.key.expiresAt)}</dd>
 
-	<dt class="opacity-70">{t('admin.apiKeys.revokedAt')}</dt>
-	<dd>{fmt(data.key.revokedAt)}</dd>
+			<dt class="opacity-70">{t('admin.apiKeys.revokedAt')}</dt>
+			<dd>{fmt(data.key.revokedAt)}</dd>
 
-	<dt class="opacity-70">{t('admin.apiKeys.lastUsedAt')}</dt>
-	<dd>{fmt(data.key.lastUsedAt)}</dd>
+			<dt class="opacity-70">{t('admin.apiKeys.lastUsedAt')}</dt>
+			<dd>{fmt(data.key.lastUsedAt)}</dd>
 
-	<dt class="opacity-70">{t('admin.apiKeys.createdBy')}</dt>
-	<dd class="font-mono text-sm">{data.key.createdBy ?? '—'}</dd>
-</dl>
+			<dt class="opacity-70">{t('admin.apiKeys.createdBy')}</dt>
+			<dd class="font-mono text-sm">{data.key.createdBy ?? '—'}</dd>
+		</dl>
+	</section>
 
-{#if form?.alreadyRevoked}
-	<p class="mt-4 text-sm text-orange-600">{t('admin.apiKeys.statusRevoked')}</p>
-{/if}
+	{#if form?.alreadyRevoked}
+		<p class="text-sm text-orange-600">{t('admin.apiKeys.statusRevoked')}</p>
+	{/if}
 
-{#if !data.key.revokedAt}
-	<form method="post" action="?/revoke" class="mt-6">
-		<input
-			type="submit"
-			class="btn btn-red text-white"
-			value={t('admin.apiKeys.revoke')}
-			on:click={confirmRevoke}
-		/>
-	</form>
-{/if}
+	{#if !data.key.revokedAt}
+		<form method="post" action="?/revoke">
+			<input
+				type="submit"
+				class="btn btn-red text-white self-start w-auto text-base"
+				value={t('admin.apiKeys.revoke')}
+				on:click={confirmRevoke}
+			/>
+		</form>
+	{/if}
+</div>
