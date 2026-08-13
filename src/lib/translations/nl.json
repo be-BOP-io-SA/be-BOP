@@ -74,7 +74,9 @@
 			"revealTitle": "API-sleutel aangemaakt",
 			"secretAlreadyShown": "Dit geheim is al getoond en kan niet opnieuw worden weergegeven.",
 			"scopeHint": {
-				"ordersWrite": "Batch-schrijven van orders via POST /api/v1/orders."
+				"ordersWrite": "Batch-schrijven van orders via POST /api/v1/orders.",
+				"catalogRead": "Catalogus lezen via GET /api/v1/catalog/products.",
+				"ordersRead": "Betaalde orders lezen via GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "Het geheim wordt één keer getoond. be-BOP bewaart alleen SHA-256(secret) — geen pepper (technische schuld: DB-lek maakt offline brute-force mogelijk).",
 			"environmentHelp": "Alleen cosmetisch label (test- vs live-badge). Wijzigt auth, scopes of routing niet.",
@@ -1050,11 +1052,26 @@
 			"then": "dan"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "uur", "other": "uur" },
-			"day": { "one": "dag", "other": "dagen" },
-			"week": { "one": "week", "other": "weken" },
-			"month": { "one": "maand", "other": "maanden" },
-			"year": { "one": "jaar", "other": "jaar" }
+			"hour": {
+				"one": "uur",
+				"other": "uur"
+			},
+			"day": {
+				"one": "dag",
+				"other": "dagen"
+			},
+			"week": {
+				"one": "week",
+				"other": "weken"
+			},
+			"month": {
+				"one": "maand",
+				"other": "maanden"
+			},
+			"year": {
+				"one": "jaar",
+				"other": "jaar"
+			}
 		},
 		"type": {
 			"deposit": "Op borg",
@@ -1070,7 +1087,8 @@
 		"variationPriceLabel": "Variatie Prijs",
 		"vatExcluded": "Exclusief BTW",
 		"vatExcludedEstimate": "Geschatte prijs excl. btw",
-		"vatIncluded": "Geschatte prijs inclusief belasting"
+		"vatIncluded": "Geschatte prijs inclusief belasting",
+		"uniqueKeyLabel": "Unieke artikel-sleutel"
 	},
 	"schedule": {
 		"dateText": "- Van {beginTime} tot {endTime}",

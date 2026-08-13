@@ -601,6 +601,7 @@ export const actions = {
 							}
 						}),
 						...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
+						...(item.uniqueKey && { uniqueKey: item.uniqueKey }),
 						depositPercentage: item.depositPercentage,
 						...(item.discountPercentage !== undefined &&
 							item.discountPercentage > 0 && {

@@ -74,7 +74,9 @@
 			"revealTitle": "API-Schlüssel erstellt",
 			"secretAlreadyShown": "Dieses Geheimnis wurde bereits angezeigt und kann nicht erneut angezeigt werden.",
 			"scopeHint": {
-				"ordersWrite": "Stapel-Schreiben von Bestellungen via POST /api/v1/orders."
+				"ordersWrite": "Stapel-Schreiben von Bestellungen via POST /api/v1/orders.",
+				"catalogRead": "Katalog lesen via GET /api/v1/catalog/products.",
+				"ordersRead": "Bezahlte Bestellungen lesen via GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "Das Geheimnis wird nur einmal angezeigt. be-BOP speichert nur SHA-256(secret) — kein Pepper (technische Schuld: DB-Leck ermöglicht Offline-Brute-Force).",
 			"environmentHelp": "Nur kosmetisches Label (Test- vs. Live-Badge). Ändert weder Auth, Scopes noch Routing.",
@@ -1050,11 +1052,26 @@
 			"then": "dann"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "Stunde", "other": "Stunden" },
-			"day": { "one": "Tag", "other": "Tage" },
-			"week": { "one": "Woche", "other": "Wochen" },
-			"month": { "one": "Monat", "other": "Monate" },
-			"year": { "one": "Jahr", "other": "Jahre" }
+			"hour": {
+				"one": "Stunde",
+				"other": "Stunden"
+			},
+			"day": {
+				"one": "Tag",
+				"other": "Tage"
+			},
+			"week": {
+				"one": "Woche",
+				"other": "Wochen"
+			},
+			"month": {
+				"one": "Monat",
+				"other": "Monate"
+			},
+			"year": {
+				"one": "Jahr",
+				"other": "Jahre"
+			}
 		},
 		"type": {
 			"deposit": "Auf Anzahlung",
@@ -1070,7 +1087,8 @@
 		"variationPriceLabel": "Variationspreis",
 		"vatExcluded": "Ohne MwSt.",
 		"vatExcludedEstimate": "Geschätzter Preis ohne Steuer",
-		"vatIncluded": "Geschätzter Preis einschließlich Steuer"
+		"vatIncluded": "Geschätzter Preis einschließlich Steuer",
+		"uniqueKeyLabel": "Eindeutiger Artikel-Schlüssel"
 	},
 	"schedule": {
 		"dateText": " - von {beginTime} bis {endTime}",

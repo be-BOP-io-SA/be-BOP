@@ -4,6 +4,9 @@ import { get } from '../utils/get';
 
 const KEYS = [
 	'admin.apiKeys.scopeHint.ordersWrite',
+	'admin.apiKeys.scopeHint.catalogRead',
+	'admin.apiKeys.scopeHint.ordersRead',
+	'product.uniqueKeyLabel',
 	'admin.apiKeys.secretStorageNote',
 	'admin.apiKeys.environmentHelp',
 	'admin.apiKeys.environmentBadgeLive',
