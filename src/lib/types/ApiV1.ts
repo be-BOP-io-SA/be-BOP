@@ -4,7 +4,7 @@
  * without a server → types import inversion.
  */
 
-export const API_V1_SCOPES = ['orders:write'] as const;
+export const API_V1_SCOPES = ['orders:write', 'catalog:read', 'orders:read'] as const;
 export type ApiV1Scope = (typeof API_V1_SCOPES)[number];
 
 export const API_V1_WARNING_CODES = [
@@ -26,6 +26,7 @@ export const API_V1_ERROR_CODES = [
 	'FORBIDDEN',
 	'VALIDATION_ERROR',
 	'RATE_LIMITED',
+	'NOT_FOUND',
 	'NOT_IMPLEMENTED',
 	'INTERNAL_ERROR',
 	'MAINTENANCE'

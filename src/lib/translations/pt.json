@@ -2211,7 +2211,9 @@
 			"revealTitle": "Chave API criada",
 			"secretAlreadyShown": "Este segredo já foi mostrado e já não pode ser apresentado.",
 			"scopeHint": {
-				"ordersWrite": "Escrita em lote de encomendas via POST /api/v1/orders."
+				"ordersWrite": "Escrita em lote de encomendas via POST /api/v1/orders.",
+				"catalogRead": "Leitura do catálogo via GET /api/v1/catalog/products.",
+				"ordersRead": "Leitura de encomendas pagas via GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "O segredo é mostrado uma vez. be-BOP guarda apenas SHA-256(secret) — sem pepper (dívida técnica: fuga da BD permite brute-force offline).",
 			"environmentHelp": "Apenas etiqueta cosmética (badge test vs live). Não altera auth, scopes nem routing.",
@@ -3242,7 +3244,8 @@
 		"variationPriceLabel": "Preço da Variação",
 		"vatExcluded": "IVA excluído",
 		"vatExcludedEstimate": "Preço estimado sem impostos",
-		"vatIncluded": "Preço estimado, incluindo imposto"
+		"vatIncluded": "Preço estimado, incluindo imposto",
+		"uniqueKeyLabel": "Chave única do artigo"
 	},
 	"schedule": {
 		"dateText": " - de {beginTime} a {endTime}",
