@@ -140,3 +140,58 @@ export async function listPaidOrders(query: PaidOrdersQuery): Promise<{
 	const nextCursor = hasMore ? pageDocs[pageDocs.length - 1].orderId : null;
 	return { orders: pageDocs, page: { limit, nextCursor } };
 }
+
+export type OrderReadDto = PaidOrderDto & { status: string };
+
+/** Full orders:read DTO — includes unpaid rows; amountPaid may be zero. */
+export function toOrderReadDto(order: Order): OrderReadDto {
+	const currency = order.currencySnapshot.main.totalPrice.currency;
+	const amountPaid = paidAmount(order) ?? { amountMinor: 0, currency };
+	const lastPaid = [...order.payments].reverse().find((p) => p.status === 'paid' && p.paidAt);
+	return {
+		orderId: order._id,
+		number: order.number,
+		status: order.status,
+		createdAt: order.createdAt.toISOString(),
+		paidAt: lastPaid?.paidAt ? lastPaid.paidAt.toISOString() : null,
+		amountPaid,
+		items: order.items.map(toItemDto)
+	};
+}
+
+/** All orders for Face A (`orders:read`), including unpaid. */
+export async function listOrders(query: PaidOrdersQuery): Promise<{
+	orders: OrderReadDto[];
+	page: { limit: number; nextCursor: string | null };
+}> {
+	const limit = parseLimit(query.limit);
+	const since = parseIsoDate(query.since);
+	const until = parseIsoDate(query.until);
+
+	const filter: Record<string, unknown> = {};
+	const createdAt: Record<string, Date> = {};
+	if (since) {
+		createdAt.$gte = since;
+	}
+	if (until) {
+		createdAt.$lte = until;
+	}
+	if (Object.keys(createdAt).length) {
+		filter.createdAt = createdAt;
+	}
+	if (query.cursor) {
+		filter._id = { $lt: query.cursor };
+	}
+
+	const docs = await collections.orders
+		.find(filter)
+		.sort({ _id: -1 })
+		.limit(limit + 1)
+		.toArray();
+
+	const mapped = docs.map((doc) => toOrderReadDto(doc as Order));
+	const hasMore = mapped.length > limit;
+	const pageDocs = hasMore ? mapped.slice(0, limit) : mapped;
+	const nextCursor = hasMore ? pageDocs[pageDocs.length - 1].orderId : null;
+	return { orders: pageDocs, page: { limit, nextCursor } };
+}
