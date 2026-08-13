@@ -20,7 +20,14 @@ export async function createSuperAdminUserInDb(login: string, password: string) 
 		throw error(400, 'Password too short');
 	}
 
-	if (await checkPasswordPwnedTimes(password)) {
+	const pwnedTimes = await checkPasswordPwnedTimes(password);
+	if (pwnedTimes === null) {
+		// HP-2026-08-13 (review #2715) : fail-closed — on ne cree jamais un
+		// super-admin avec un mot de passe dont on n'a pas pu verifier qu'il
+		// n'est pas compromis (API HIBP injoignable).
+		throw error(503, 'Password breach check unavailable, please retry later');
+	}
+	if (pwnedTimes) {
 		throw error(400, 'Password has been pwned');
 	}
 

@@ -33,7 +33,7 @@ export const TICKET_CHECKER_ROLE_ID = 'ticket-checker';
 export const CUSTOMER_ROLE_ID = 'customer';
 export const MIN_PASSWORD_LENGTH = 8;
 
-export async function checkPasswordPwnedTimes(password: string): Promise<number> {
+export async function checkPasswordPwnedTimes(password: string): Promise<number | null> {
 	if (browser && !crypto?.subtle) {
 		// Don't block if the browser blocks the crypto API due to non-secure context
 		return 0;
@@ -48,31 +48,32 @@ export async function checkPasswordPwnedTimes(password: string): Promise<number>
 	// "Don't block the user if the API is down" n'etait pas implemente : un
 	// fetch sans catch ni timeout transformait une API HIBP injoignable en
 	// erreur 500 bloquant le login admin (conteneur sans egress Internet).
-	// Desormais : timeout court (3s) + toute erreur reseau => 0 (non bloquant).
+	// Desormais : timeout court (3s) + toute erreur reseau => null (indisponible).
+	//
+	// HP-2026-08-13 (review #2715) : `null` distingue "API injoignable" de
+	// "mot de passe non compromis" (0). Le login (fail-open) traite `null`
+	// comme non bloquant ; la creation/reset de mot de passe (fail-closed)
+	// doit rejeter sur `null` — on ne stocke jamais un mot de passe dont on
+	// n'a pas pu verifier qu'il n'est pas compromis.
 	let pwnedPasswordResp: Response;
 	try {
-		pwnedPasswordResp = await fetch(
-			`https://api.pwnedpasswords.com/range/${sha1Hex.slice(0, 5)}`,
-			{
-				signal: AbortSignal.timeout(3000),
-				autoSelectFamily: true
-			} as unknown as RequestInit
-		);
+		pwnedPasswordResp = await fetch(`https://api.pwnedpasswords.com/range/${sha1Hex.slice(0, 5)}`, {
+			signal: AbortSignal.timeout(3000),
+			autoSelectFamily: true
+		} as unknown as RequestInit);
 	} catch {
-		// API injoignable (reseau coupe, timeout) : ne bloque jamais le login.
-		return 0;
+		// API injoignable (reseau coupe, timeout) : null = indisponible.
+		return null;
 	}
 	if (!pwnedPasswordResp.ok) {
-		// Don't block the user if the API is down
-		return 0;
+		// API down (erreur HTTP) : null = indisponible.
+		return null;
 	}
-	if (pwnedPasswordResp.ok) {
-		const pwnedPasswords = await pwnedPasswordResp.text().then((r) => r.split('\n'));
-		const pwnedPassword = pwnedPasswords.find((line) => line.startsWith(sha1Hex.slice(5)));
+	const pwnedPasswords = await pwnedPasswordResp.text().then((r) => r.split('\n'));
+	const pwnedPassword = pwnedPasswords.find((line) => line.startsWith(sha1Hex.slice(5)));
 
-		if (pwnedPassword) {
-			return parseInt(pwnedPassword.split(':')[1]);
-		}
+	if (pwnedPassword) {
+		return parseInt(pwnedPassword.split(':')[1]);
 	}
 	return 0;
 }
