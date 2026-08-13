@@ -20,7 +20,6 @@ const apiKey: AuthenticatedApiKey = {
 	_id: new ObjectId(),
 	name: 'integration-key',
 	scopes: ['orders:write'],
-	environment: 'test',
 	keyPrefix: 'bebop_ak_test_intkey01'
 };
 

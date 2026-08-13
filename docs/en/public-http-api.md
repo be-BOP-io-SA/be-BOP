@@ -19,7 +19,7 @@ Interactive OpenAPI: [`/api/v1/docs`](/api/v1/docs) (schema at [`/api/v1/openapi
 
 1. Sign in as Super Admin.
 2. Open **Admin → API Keys**.
-3. Create a key: name (e.g. "Front desk till"), environment badge (`live` / `test` — cosmetic only), and scopes.
+3. Create a key: name (e.g. "Front desk till"), and scopes.
 4. Copy the secret immediately. It is shown once. be-BOP stores only `SHA-256(secret)`.
 5. Save CORS origins on the same page (one origin per line). Empty means no cross-origin browser access. `*` is never allowed.
 
