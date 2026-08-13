@@ -66,3 +66,28 @@ export type AuthenticatedApiKey = {
 	environment: import('./ApiKey').ApiKeyEnvironment;
 	keyPrefix: string;
 };
+
+/** Resource prefix of a scope (`orders:read` → `orders`). */
+export function scopeCategory(scope: string): string {
+	const i = scope.indexOf(':');
+	return i === -1 ? scope : scope.slice(0, i);
+}
+
+export type ScopeCategoryGroup = { category: string; scopes: string[] };
+
+/** Group Face A scopes by resource so read+write of the same prefix sit together. */
+export function groupScopesByCategory(scopes: readonly string[]): ScopeCategoryGroup[] {
+	const map = new Map<string, string[]>();
+	for (const scope of scopes) {
+		const category = scopeCategory(scope);
+		const list = map.get(category) ?? [];
+		list.push(scope);
+		map.set(category, list);
+	}
+	return [...map.entries()]
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([category, grouped]) => ({
+			category,
+			scopes: [...grouped].sort((a, b) => a.localeCompare(b))
+		}));
+}
