@@ -35,12 +35,10 @@ export const actions: Actions = {
 		const parsed = z
 			.object({
 				name: z.string().trim().min(1).max(200),
-				environment: z.enum(['live', 'test']),
 				scopes: z.array(z.enum(API_V1_SCOPES)).min(1)
 			})
 			.safeParse({
 				name: formData.get('name'),
-				environment: formData.get('environment') ?? 'live',
 				scopes: scopesRaw
 			});
 
@@ -51,7 +49,6 @@ export const actions: Actions = {
 		const { apiKey, secret } = await createApiKey({
 			name: parsed.data.name,
 			scopes: parsed.data.scopes as ApiV1Scope[],
-			environment: parsed.data.environment,
 			expiresAt: expiresParsed.value,
 			createdBy: locals.user?._id?.toString()
 		});
