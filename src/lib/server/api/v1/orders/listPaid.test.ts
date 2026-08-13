@@ -76,3 +76,13 @@ describe('toPaidOrderDto', () => {
 		expect(dto?.items[0].productId).toBe(TEST_DIGITAL_PRODUCT._id);
 	});
 });
+
+describe('toOrderReadDto', () => {
+	it('includes unpaid orders with zero amountPaid', async () => {
+		const { toOrderReadDto } = await import('./listPaid');
+		const dto = toOrderReadDto(makeOrder({ paid: false }));
+		expect(dto.status).toBe('pending');
+		expect(dto.amountPaid).toEqual({ amountMinor: 0, currency: 'EUR' });
+		expect(dto.paidAt).toBeNull();
+	});
+});

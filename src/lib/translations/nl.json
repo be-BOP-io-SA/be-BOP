@@ -76,7 +76,7 @@
 			"scopeHint": {
 				"ordersWrite": "Batch-schrijven van orders via POST /api/v1/orders.",
 				"catalogRead": "Catalogus lezen via GET /api/v1/catalog/products.",
-				"ordersRead": "Betaalde orders lezen via GET /api/v1/orders/paid."
+				"ordersRead": "Orders lezen via GET /api/v1/orders en GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "Het geheim wordt één keer getoond. be-BOP bewaart alleen SHA-256(secret) — geen pepper (technische schuld: DB-lek maakt offline brute-force mogelijk).",
 			"environmentHelp": "Alleen cosmetisch label (test- vs live-badge). Wijzigt auth, scopes of routing niet.",
@@ -91,7 +91,10 @@
 			"listIntro": "Machine-to-machine-sleutels voor de publieke HTTP-API. Secrets worden een keer getoond.",
 			"keysSectionTitle": "Sleutels",
 			"keysSectionHelp": "Elke sleutel heeft scopes. Intrekken doe je op de detailpagina.",
-			"emptyHint": "Maak een sleutel zodat een kassa of partner /api/v1 kan aanroepen."
+			"emptyHint": "Maak een sleutel zodat een kassa of partner /api/v1 kan aanroepen.",
+			"selectAll": "Alles selecteren",
+			"selectNone": "Niets selecteren",
+			"scopesHint": "Geef alleen wat nodig is. Read en write van dezelfde resource zitten in een categorie."
 		}
 	},
 	"ageWarning": {

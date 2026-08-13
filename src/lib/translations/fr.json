@@ -76,7 +76,7 @@
 			"scopeHint": {
 				"ordersWrite": "Écriture par lot via POST /api/v1/orders.",
 				"catalogRead": "Lecture du catalogue via GET /api/v1/catalog/products.",
-				"ordersRead": "Lecture des commandes payées via GET /api/v1/orders/paid."
+				"ordersRead": "Lire les commandes via GET /api/v1/orders et GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "Le secret n’est affiché qu’une fois. be-BOP ne stocke que SHA-256(secret) — pas de pepper (dette technique : une fuite DB permet le brute-force hors ligne).",
 			"environmentHelp": "Libellé cosmétique uniquement (badge test vs live). Ne change ni l’auth, ni les scopes, ni le routage.",
@@ -91,7 +91,10 @@
 			"listIntro": "Clés machine-à-machine pour l’API HTTP publique. Le secret n’est affiché qu’une fois.",
 			"keysSectionTitle": "Clés",
 			"keysSectionHelp": "Chaque clé a des scopes. La révocation se fait depuis la page de détail.",
-			"emptyHint": "Créez une clé pour qu’une caisse ou un partenaire appelle /api/v1."
+			"emptyHint": "Créez une clé pour qu’une caisse ou un partenaire appelle /api/v1.",
+			"selectAll": "Tout selectionner",
+			"selectNone": "Tout deselectionner",
+			"scopesHint": "N'accorder que le necessaire. Lecture et ecriture d'une meme ressource sont dans une categorie."
 		}
 	},
 	"ageWarning": {

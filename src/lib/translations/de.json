@@ -76,7 +76,7 @@
 			"scopeHint": {
 				"ordersWrite": "Stapel-Schreiben von Bestellungen via POST /api/v1/orders.",
 				"catalogRead": "Katalog lesen via GET /api/v1/catalog/products.",
-				"ordersRead": "Bezahlte Bestellungen lesen via GET /api/v1/orders/paid."
+				"ordersRead": "Bestellungen lesen via GET /api/v1/orders und GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "Das Geheimnis wird nur einmal angezeigt. be-BOP speichert nur SHA-256(secret) — kein Pepper (technische Schuld: DB-Leck ermöglicht Offline-Brute-Force).",
 			"environmentHelp": "Nur kosmetisches Label (Test- vs. Live-Badge). Ändert weder Auth, Scopes noch Routing.",
@@ -91,7 +91,10 @@
 			"listIntro": "Machine-to-machine-Schlüssel für die öffentliche HTTP-API. Secrets werden nur einmal angezeigt.",
 			"keysSectionTitle": "Schlüssel",
 			"keysSectionHelp": "Jeder Schlüssel hat Scopes. Widerruf erfolgt auf der Detailseite.",
-			"emptyHint": "Erstellen Sie einen Schlüssel, damit eine Kasse oder ein Partner /api/v1 aufrufen kann."
+			"emptyHint": "Erstellen Sie einen Schlüssel, damit eine Kasse oder ein Partner /api/v1 aufrufen kann.",
+			"selectAll": "Alle auswahlen",
+			"selectNone": "Keine auswahlen",
+			"scopesHint": "Nur das noetige vergeben. Read und Write derselben Ressource sitzen in einer Kategorie."
 		}
 	},
 	"ageWarning": {

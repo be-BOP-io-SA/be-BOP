@@ -76,7 +76,7 @@
 			"scopeHint": {
 				"ordersWrite": "Batch-write orders via POST /api/v1/orders.",
 				"catalogRead": "Read catalog via GET /api/v1/catalog/products.",
-				"ordersRead": "Read paid orders via GET /api/v1/orders/paid."
+				"ordersRead": "Read orders via GET /api/v1/orders and GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "The secret is shown once. be-BOP stores only SHA-256(secret) — no pepper (tech debt: DB leak enables offline brute-force).",
 			"environmentHelp": "Cosmetic label only (test vs live badge). It does not change auth, scopes, or routing.",
@@ -91,7 +91,10 @@
 			"listIntro": "Machine-to-machine keys for the public HTTP API. Secrets are shown once.",
 			"keysSectionTitle": "Keys",
 			"keysSectionHelp": "Each key has scopes. Revoke a key from its detail page.",
-			"emptyHint": "Create a key so a till or partner can call /api/v1."
+			"emptyHint": "Create a key so a till or partner can call /api/v1.",
+			"selectAll": "Select all",
+			"selectNone": "Select none",
+			"scopesHint": "Grant only what the partner needs. Read and write for the same resource sit in one category."
 		}
 	},
 	"ageWarning": {

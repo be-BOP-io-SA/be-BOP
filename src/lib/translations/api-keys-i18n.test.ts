@@ -20,7 +20,10 @@ const KEYS = [
 	'admin.apiKeys.listIntro',
 	'admin.apiKeys.keysSectionTitle',
 	'admin.apiKeys.keysSectionHelp',
-	'admin.apiKeys.emptyHint'
+	'admin.apiKeys.emptyHint',
+	'admin.apiKeys.selectAll',
+	'admin.apiKeys.selectNone',
+	'admin.apiKeys.scopesHint'
 ];
 
 describe('admin api-keys scope hint translations', () => {
