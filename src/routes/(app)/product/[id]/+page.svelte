@@ -70,6 +70,7 @@
 	export let data;
 
 	let quantity = 1;
+	let uniqueKey = data.uniqueKey ?? '';
 	let loading = false;
 	let errorMessage = '';
 	let currentTime = Date.now();
@@ -414,6 +415,7 @@
 			...(data.product.hasVariations && {
 				chosenVariations: selectedVariations
 			}),
+			...(uniqueKey && { uniqueKey }),
 			discountPercentage:
 				data.discount?.mode === 'percentage' ? data.discount?.percentage : undefined,
 			...(data.product.bookingSpec && {
@@ -982,6 +984,13 @@
 							{#if freeProductsAvailable}
 								<input type="hidden" name="freeQuantity" value={freeProductsAvailable} />
 							{/if}
+							{#if uniqueKey}
+								<input type="hidden" name="uniqueKey" value={uniqueKey} />
+								<p class="text-sm opacity-80">
+									{t('product.uniqueKeyLabel')}:
+									<span class="font-mono break-all">{uniqueKey}</span>
+								</p>
+							{/if}
 							{#if data.product.payWhatYouWant}
 								<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
 								<input type="hidden" name="customPriceCurrency" value={PWYWCurrency} />
@@ -1004,7 +1013,7 @@
 									</label>
 								</div>
 							{/if}
-							{#if data.product.standalone && data.product.hasVariations && data.product.variationLabels}
+							{#if data.product.hasVariations && data.product.variationLabels}
 								{#each Object.keys(data.product.variationLabels.values) as key}
 									<!-- A family hidden from the page but unset by the URL only gets this far under
 									     the "ignore" policy, which promises the dropdown back. -->

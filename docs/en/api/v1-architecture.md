@@ -47,7 +47,7 @@ Two HTTP faces (M2M `/api/v1` vs headless storefront): see [ADR: two API faces](
 ### Rules
 
 1. **`+server.ts` is boring** — auth scope, rate-limit key, `safeParse`, `writeBatch()`, `json()`. No product/stock/payment logic.
-2. **One use-case module per resource action** — e.g. `orders/writeBatch.ts`. Future catalog read (#2686) can add a use-case module without touching hooks — no stub route today.
+2. **One use-case module per resource action** — e.g. `orders/writeBatch.ts`, `catalog/listProducts.ts`, `orders/listPaid.ts`.
 3. **Domain stays canonical** — API adapts inbound DTOs to domain types; never fork VAT/FX/stock rules.
 4. **Errors are data** — per-order `failed` inside HTTP 200 batch; transport errors use `{ error: { code, message, details? } }`.
 
@@ -147,7 +147,7 @@ src/lib/types/ApiKey.ts
 - **Batch over chatty APIs** — 1–100 orders/request
 - **Idempotent retries** — safe PoS replays
 - **Versioned surface** — `/api/v1` only; breaking changes → `/api/v2`
-- **Future read APIs** — catalog read deferred to #2686 (same middleware/auth/RL ports when it lands; no stub route today)
+- **Read APIs** — `GET /api/v1/catalog/products` (`catalog:read`) and `GET /api/v1/orders/paid` (`orders:read`) share Face A middleware/auth/rate-limit.
 - **Two faces** — Face A `/api/v1` (API keys) must not be merged with Face B storefront session Bearer ([ADR](./adr-api-faces.md))
 
 ## Conditional requests / ETag (#2713)
