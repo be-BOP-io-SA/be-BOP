@@ -29,7 +29,6 @@ function call(opts?: { origin?: string; query?: string }) {
 			_id: new ObjectId(),
 			name: 't',
 			scopes: ['catalog:read'] as const,
-			environment: 'test' as const,
 			keyPrefix: 'bebop_ak_test_abcd1234'
 		},
 		clientIp: '203.0.113.50'
