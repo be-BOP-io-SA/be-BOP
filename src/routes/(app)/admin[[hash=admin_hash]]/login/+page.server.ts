@@ -55,9 +55,9 @@ export const actions = {
 			return fail(400, { login, incorrect: 'login' });
 		}
 
-		// HP-2026-08-13 (review #2715) : le login reste fail-open — `null`
-		// (API HIBP injoignable) ne bloque pas la connexion, seul un mot de
-		// passe effectivement compromis (nombre > 0) est rejete.
+		// HP-2026-08-13 (review #2715) : login stays fail-open — `null`
+		// (HIBP API unreachable) does not block the connection, only an
+		// actually pwned password (count > 0) is rejected.
 		const pwnedTimes = await checkPasswordPwnedTimes(password);
 		if (pwnedTimes) {
 			throw error(400, 'Password has been pwned');

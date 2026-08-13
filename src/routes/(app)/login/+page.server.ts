@@ -20,10 +20,10 @@ import { renewSessionId } from '$lib/server/user.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
 import { SESSION_COOKIE_NAME } from '$lib/server/cookies';
 
-// HP-2026-08-12 (Peak Learn) : redirection post-authLink limitée à une
-// allowlist stricte (jamais d'URL externe, jamais d'open redirect).
-// HP-2026-08-13 (review #2715) : extrait dans une fonction partagée
-// (load + validate) au lieu d'être dupliqué.
+// HP-2026-08-12 (Peak Learn) : post-authLink redirect restricted to a
+// strict allowlist (never an external URL, never an open redirect).
+// HP-2026-08-13 (review #2715) : extracted into a shared function
+// (load + validate) instead of being duplicated.
 const SAFE_NEXT = ['/checkout', '/cart', '/orders', '/identity', '/login'];
 const CART_NEXT_RE = /^\/cart\?slug=[a-z0-9][a-z0-9-]{0,119}&qty=\d+$/;
 function safeNext(next: string | null): string {
@@ -140,13 +140,14 @@ export const actions = {
 				}
 			);
 
-			// HP-2026-08-12 (Peak Learn) : le JWT AuthLink émis par la plateforme
-			// peut porter prénom/nom (signés, jamais client). On matérialise un
-			// personalInfo rattaché à l'e-mail pour que le checkout be-BOP
-			// préremplisse nativement email + prénom + nom (mécanisme natif).
-			// HP-2026-08-13 (review #2715) : $set ciblé sur firstName/lastName
-			// uniquement — `user: { email }` n'est posé qu'en $setOnInsert pour
-			// ne jamais écraser sessionId/userId/npub d'un personalInfo existant.
+			// HP-2026-08-12 (Peak Learn) : the AuthLink JWT issued by the
+			// platform may carry first/last name (signed, never client-side).
+			// We materialize a personalInfo linked to the email so the be-BOP
+			// checkout natively pre-fills email + first name + last name
+			// (native mechanism).
+			// HP-2026-08-13 (review #2715) : $set targeted on firstName/lastName
+			// only — `user: { email }` is set in $setOnInsert so an existing
+			// personalInfo never loses its sessionId/userId/npub.
 			if (email && firstName && lastName) {
 				await collections.personalInfo.updateOne(
 					{ 'user.email': email },
