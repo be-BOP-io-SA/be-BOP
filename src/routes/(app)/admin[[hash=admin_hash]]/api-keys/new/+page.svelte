@@ -13,7 +13,9 @@
 	);
 
 	const SCOPE_HINT_KEYS: Record<string, string> = {
-		'orders:write': 'admin.apiKeys.scopeHint.ordersWrite'
+		'orders:write': 'admin.apiKeys.scopeHint.ordersWrite',
+		'catalog:read': 'admin.apiKeys.scopeHint.catalogRead',
+		'orders:read': 'admin.apiKeys.scopeHint.ordersRead'
 	};
 
 	/** Convert datetime-local (browser local wall time) to ISO with zone before POST. */
