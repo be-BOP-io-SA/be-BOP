@@ -76,7 +76,7 @@
 			"scopeHint": {
 				"ordersWrite": "Scrittura ordini in batch via POST /api/v1/orders.",
 				"catalogRead": "Lettura catalogo via GET /api/v1/catalog/products.",
-				"ordersRead": "Lettura ordini pagati via GET /api/v1/orders/paid."
+				"ordersRead": "Leggi gli ordini via GET /api/v1/orders e GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "Il segreto viene mostrato una sola volta. be-BOP memorizza solo SHA-256(secret) — nessun pepper (debito tecnico: una fuga dal DB consente brute-force offline).",
 			"environmentHelp": "Solo etichetta cosmetica (badge test vs live). Non cambia auth, scope o routing.",
@@ -91,7 +91,10 @@
 			"listIntro": "Chiavi machine-to-machine per l'API HTTP pubblica. Il secret viene mostrato una sola volta.",
 			"keysSectionTitle": "Chiavi",
 			"keysSectionHelp": "Ogni chiave ha degli scope. La revoca si fa dalla pagina di dettaglio.",
-			"emptyHint": "Crea una chiave per far chiamare /api/v1 a una cassa o a un partner."
+			"emptyHint": "Crea una chiave per far chiamare /api/v1 a una cassa o a un partner.",
+			"selectAll": "Seleziona tutto",
+			"selectNone": "Seleziona niente",
+			"scopesHint": "Concedi solo il necessario. Read e write della stessa risorsa stanno in una categoria."
 		}
 	},
 	"ageWarning": {

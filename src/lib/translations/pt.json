@@ -76,7 +76,7 @@
 			"scopeHint": {
 				"ordersWrite": "Escrita em lote de encomendas via POST /api/v1/orders.",
 				"catalogRead": "Leitura do catálogo via GET /api/v1/catalog/products.",
-				"ordersRead": "Leitura de encomendas pagas via GET /api/v1/orders/paid."
+				"ordersRead": "Ler encomendas via GET /api/v1/orders e GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "O segredo é mostrado uma vez. be-BOP guarda apenas SHA-256(secret) — sem pepper (dívida técnica: fuga da BD permite brute-force offline).",
 			"environmentHelp": "Apenas etiqueta cosmética (badge test vs live). Não altera auth, scopes nem routing.",
@@ -91,7 +91,10 @@
 			"listIntro": "Chaves machine-to-machine para a API HTTP publica. O secret e mostrado so uma vez.",
 			"keysSectionTitle": "Chaves",
 			"keysSectionHelp": "Cada chave tem scopes. A revogacao faz-se na pagina de detalhe.",
-			"emptyHint": "Crie uma chave para um caixa ou parceiro chamar /api/v1."
+			"emptyHint": "Crie uma chave para um caixa ou parceiro chamar /api/v1.",
+			"selectAll": "Selecionar tudo",
+			"selectNone": "Selecionar nada",
+			"scopesHint": "Conceda so o necessario. Read e write do mesmo recurso ficam numa categoria."
 		}
 	},
 	"ageWarning": {
