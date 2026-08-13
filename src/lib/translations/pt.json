@@ -549,7 +549,8 @@
 		},
 		"nsecBlockTitle": "Nunca compartilhe seu NSEC! \nAqui, coloque seu npub apenas!",
 		"password": {
-			"pwned": "A sua palavra-passe não é segura, foi encontrada em {count} fugas de dados. Por favor, redefina a sua palavra-passe."
+			"pwned": "A sua palavra-passe não é segura, foi encontrada em {count} fugas de dados. Por favor, redefina a sua palavra-passe.",
+			"unavailable": "A verificação de vazamentos de senha está indisponível, tente novamente mais tarde."
 		},
 		"session": {
 			"email": "Email: {email}",

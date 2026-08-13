@@ -20,15 +20,19 @@ import { renewSessionId } from '$lib/server/user.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
 import { SESSION_COOKIE_NAME } from '$lib/server/cookies';
 
+// HP-2026-08-12 (Peak Learn) : redirection post-authLink limitée à une
+// allowlist stricte (jamais d'URL externe, jamais d'open redirect).
+// HP-2026-08-13 (review #2715) : extrait dans une fonction partagée
+// (load + validate) au lieu d'être dupliqué.
+const SAFE_NEXT = ['/checkout', '/cart', '/orders', '/identity', '/login'];
+const CART_NEXT_RE = /^\/cart\?slug=[a-z0-9][a-z0-9-]{0,119}&qty=\d+$/;
+function safeNext(next: string | null): string {
+	return next && (SAFE_NEXT.includes(next) || CART_NEXT_RE.test(next)) ? next : '/login';
+}
+
 export const load = async ({ url }) => {
 	const token = url.searchParams.get('token');
-	const next = url.searchParams.get('next');
-
-	// HP-2026-08-12 (Peak Learn) : redirection post-authLink limitée à une
-	// allowlist stricte (jamais d'URL externe, jamais d'open redirect).
-	const SAFE_NEXT = ['/checkout', '/cart', '/orders', '/identity', '/login'];
-	const CART_NEXT_RE = /^\/cart\?slug=[a-z0-9][a-z0-9-]{0,119}&qty=\d+$/;
-	const safeNext = next && (SAFE_NEXT.includes(next) || CART_NEXT_RE.test(next)) ? next : '/login';
+	const next = safeNext(url.searchParams.get('next'));
 
 	const base = {
 		canSso: {
@@ -43,7 +47,7 @@ export const load = async ({ url }) => {
 					slug: o.slug
 				}))
 		},
-		next: safeNext
+		next: next
 	};
 
 	if (token) {
@@ -95,10 +99,7 @@ export const actions = {
 	},
 	validate: async function ({ url, locals, cookies }) {
 		const token = url.searchParams.get('token');
-		const next = url.searchParams.get('next');
-		const SAFE_NEXT = ['/checkout', '/cart', '/orders', '/identity', '/login'];
-		const CART_NEXT_RE = /^\/cart\?slug=[a-z0-9][a-z0-9-]{0,119}&qty=\d+$/;
-		const safeNext = next && (SAFE_NEXT.includes(next) || CART_NEXT_RE.test(next)) ? next : '/login';
+		const next = safeNext(url.searchParams.get('next'));
 		let dontCatch = false;
 
 		if (!token) {
@@ -114,8 +115,8 @@ export const actions = {
 				.object({
 					npub: z.string().optional(),
 					email: z.string().optional(),
-					firstName: z.string().max(120).optional(),
-					lastName: z.string().max(120).optional()
+					firstName: z.string().trim().max(100).optional(),
+					lastName: z.string().trim().max(100).optional()
 				})
 				.parse(authLink.payload);
 
@@ -143,6 +144,9 @@ export const actions = {
 			// peut porter prénom/nom (signés, jamais client). On matérialise un
 			// personalInfo rattaché à l'e-mail pour que le checkout be-BOP
 			// préremplisse nativement email + prénom + nom (mécanisme natif).
+			// HP-2026-08-13 (review #2715) : $set ciblé sur firstName/lastName
+			// uniquement — `user: { email }` n'est posé qu'en $setOnInsert pour
+			// ne jamais écraser sessionId/userId/npub d'un personalInfo existant.
 			if (email && firstName && lastName) {
 				await collections.personalInfo.updateOne(
 					{ 'user.email': email },
@@ -150,10 +154,12 @@ export const actions = {
 						$set: {
 							firstName,
 							lastName,
-							user: { email },
 							updatedAt: new Date()
 						},
-						$setOnInsert: { createdAt: new Date() }
+						$setOnInsert: {
+							createdAt: new Date(),
+							user: { email }
+						}
 					},
 					{ upsert: true }
 				);
@@ -161,7 +167,7 @@ export const actions = {
 			await renewSessionId(locals, cookies);
 
 			dontCatch = true;
-			throw redirect(303, safeNext);
+			throw redirect(303, next);
 		} catch (err) {
 			if (dontCatch) {
 				throw err;

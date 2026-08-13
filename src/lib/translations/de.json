@@ -549,7 +549,8 @@
 		},
 		"nsecBlockTitle": "Teilen Sie NIEMALS Ihren NSEC hier, setzen Sie nur Ihren NPUB!",
 		"password": {
-			"pwned": "Ihr Passwort ist unsicher, es wurde in {count} Datenlecks gefunden. Bitte setzen Sie Ihr Passwort zurück."
+			"pwned": "Ihr Passwort ist unsicher, es wurde in {count} Datenlecks gefunden. Bitte setzen Sie Ihr Passwort zurück.",
+			"unavailable": "Die Prüfung auf geleakte Passwörter ist nicht verfügbar, bitte später erneut versuchen."
 		},
 		"session": {
 			"email": "E-Mail: {email}",
