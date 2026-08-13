@@ -74,7 +74,9 @@
 			"revealTitle": "Clave API creada",
 			"secretAlreadyShown": "Este secreto ya se mostró y ya no puede visualizarse.",
 			"scopeHint": {
-				"ordersWrite": "Escritura de pedidos por lote vía POST /api/v1/orders."
+				"ordersWrite": "Escritura de pedidos por lote vía POST /api/v1/orders.",
+				"catalogRead": "Lectura del catálogo vía GET /api/v1/catalog/products.",
+				"ordersRead": "Lectura de pedidos pagados vía GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "El secreto se muestra una sola vez. be-BOP solo almacena SHA-256(secret) — sin pepper (deuda técnica: una filtración de BD permite fuerza bruta offline).",
 			"environmentHelp": "Solo etiqueta cosmética (badge test vs live). No cambia auth, scopes ni enrutado.",
@@ -1050,11 +1052,26 @@
 			"then": "luego"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "hora", "other": "horas" },
-			"day": { "one": "día", "other": "días" },
-			"week": { "one": "semana", "other": "semanas" },
-			"month": { "one": "mes", "other": "meses" },
-			"year": { "one": "año", "other": "años" }
+			"hour": {
+				"one": "hora",
+				"other": "horas"
+			},
+			"day": {
+				"one": "día",
+				"other": "días"
+			},
+			"week": {
+				"one": "semana",
+				"other": "semanas"
+			},
+			"month": {
+				"one": "mes",
+				"other": "meses"
+			},
+			"year": {
+				"one": "año",
+				"other": "años"
+			}
 		},
 		"type": {
 			"deposit": "En depósito",
@@ -1070,7 +1087,8 @@
 		"variationPriceLabel": "Precio de variación",
 		"vatExcluded": "No incluye IVA",
 		"vatExcludedEstimate": "Precio estimado sin impuestos",
-		"vatIncluded": "Precio estimado con IVA incluido"
+		"vatIncluded": "Precio estimado con IVA incluido",
+		"uniqueKeyLabel": "Clave única del artículo"
 	},
 	"schedule": {
 		"dateText": " - De {beginTime} a {endTime}",
