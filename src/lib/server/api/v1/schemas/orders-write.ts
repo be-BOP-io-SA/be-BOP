@@ -25,7 +25,14 @@ const orderItemSchema = z
 		productId: z.string().trim().min(1).max(200),
 		quantity: z.number().int().positive().max(1_000_000),
 		customPrice: customPriceSchema.optional(),
-		chosenVariations: z.record(z.string(), z.string()).optional()
+		chosenVariations: z.record(z.string(), z.string()).optional(),
+		uniqueKey: z
+			.string()
+			.trim()
+			.min(1)
+			.max(128)
+			.regex(/^[A-Za-z0-9_-]+$/)
+			.optional()
 	})
 	.strict();
 
