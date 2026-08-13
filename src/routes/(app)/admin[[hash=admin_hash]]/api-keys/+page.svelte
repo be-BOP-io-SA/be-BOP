@@ -60,7 +60,6 @@
 						<tr class="border-b border-gray-200 opacity-70">
 							<th class="py-2 pr-3 font-medium">{t('admin.apiKeys.name')}</th>
 							<th class="py-2 pr-3 font-medium">{t('admin.apiKeys.prefix')}</th>
-							<th class="py-2 pr-3 font-medium">{t('admin.apiKeys.environment')}</th>
 							<th class="py-2 pr-3 font-medium">{t('admin.apiKeys.status')}</th>
 							<th class="py-2 font-medium">{t('admin.apiKeys.scopes')}</th>
 						</tr>
@@ -77,18 +76,6 @@
 									</a>
 								</td>
 								<td class="py-2.5 pr-3 font-mono text-xs opacity-80">{key.keyPrefix}…</td>
-								<td class="py-2.5 pr-3">
-									<span
-										class="text-xs px-2 py-0.5 rounded border {key.environment === 'live'
-											? 'bg-emerald-50 text-emerald-900 border-emerald-300'
-											: 'bg-slate-100 text-slate-800 border-slate-300'}"
-										title={t('admin.apiKeys.environmentHelp')}
-									>
-										{key.environment === 'live'
-											? t('admin.apiKeys.environmentBadgeLive')
-											: t('admin.apiKeys.environmentBadgeTest')}
-									</span>
-								</td>
 								<td class="py-2.5 pr-3 {statusClass(key)}">{statusLabel(key)}</td>
 								<td class="py-2.5 font-mono text-xs opacity-80">{key.scopes.join(', ')}</td>
 							</tr>

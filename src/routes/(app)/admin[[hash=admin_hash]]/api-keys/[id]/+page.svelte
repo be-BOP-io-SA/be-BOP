@@ -33,20 +33,6 @@
 			<dt class="opacity-70">{t('admin.apiKeys.prefix')}</dt>
 			<dd class="font-mono">{data.key.keyPrefix}…</dd>
 
-			<dt class="opacity-70">{t('admin.apiKeys.environment')}</dt>
-			<dd>
-				<span
-					class="text-xs px-2 py-0.5 rounded border {data.key.environment === 'live'
-						? 'bg-emerald-50 text-emerald-900 border-emerald-300'
-						: 'bg-slate-100 text-slate-800 border-slate-300'}"
-				>
-					{data.key.environment === 'live'
-						? t('admin.apiKeys.environmentBadgeLive')
-						: t('admin.apiKeys.environmentBadgeTest')}
-				</span>
-				<span class="text-sm opacity-70 ml-2">{t('admin.apiKeys.environmentHelp')}</span>
-			</dd>
-
 			<dt class="opacity-70">{t('admin.apiKeys.scopes')}</dt>
 			<dd class="font-mono">{data.key.scopes.join(', ')}</dd>
 

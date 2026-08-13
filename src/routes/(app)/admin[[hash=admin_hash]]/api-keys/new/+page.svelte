@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n.js';
+	import { groupScopesByCategory } from '$lib/types/ApiV1';
 
 	export let data;
 	export let form;
@@ -9,14 +10,31 @@
 	let expiresLocal = '';
 
 	let selectedScopes: Record<string, boolean> = Object.fromEntries(
-		data.scopes.map((scope: string) => [scope, scope === 'orders:write'])
+		data.scopes.map((scope: string) => [scope, false])
 	);
+
+	$: groups = groupScopesByCategory(data.scopes);
 
 	const SCOPE_HINT_KEYS: Record<string, string> = {
 		'orders:write': 'admin.apiKeys.scopeHint.ordersWrite',
 		'catalog:read': 'admin.apiKeys.scopeHint.catalogRead',
 		'orders:read': 'admin.apiKeys.scopeHint.ordersRead'
 	};
+
+	function setScopes(scopes: string[], value: boolean) {
+		selectedScopes = {
+			...selectedScopes,
+			...Object.fromEntries(scopes.map((scope) => [scope, value]))
+		};
+	}
+
+	function selectAll() {
+		setScopes(data.scopes, true);
+	}
+
+	function selectNone() {
+		setScopes(data.scopes, false);
+	}
 
 	/** Convert datetime-local (browser local wall time) to ISO with zone before POST. */
 	function onSubmit(event: Event) {
@@ -66,33 +84,61 @@
 			/>
 		</label>
 
-		<label class="form-label">
-			{t('admin.apiKeys.environment')}
-			<select class="form-input" name="environment" required>
-				<option value="live">{t('admin.apiKeys.environmentBadgeLive')}</option>
-				<option value="test">{t('admin.apiKeys.environmentBadgeTest')}</option>
-			</select>
-			<span class="text-sm opacity-70">{t('admin.apiKeys.environmentHelp')}</span>
-		</label>
-
-		<fieldset class="flex flex-col gap-3">
+		<fieldset class="flex flex-col gap-2">
 			<legend class="form-label">{t('admin.apiKeys.scopes')}</legend>
-			{#each data.scopes as scope}
-				<label class="flex flex-col gap-1">
-					<span class="flex items-center gap-2 flex-wrap">
-						<input
-							type="checkbox"
-							name="scopes"
-							value={scope}
-							bind:checked={selectedScopes[scope]}
-						/>
-						<span class="font-mono text-sm">{scope}</span>
-					</span>
-					{#if SCOPE_HINT_KEYS[scope]}
-						<span class="text-sm opacity-70 ml-6">{t(SCOPE_HINT_KEYS[scope])}</span>
-					{/if}
-				</label>
-			{/each}
+			<p class="text-sm opacity-70">{t('admin.apiKeys.scopesHint')}</p>
+			<div class="flex flex-wrap gap-2 text-sm">
+				<button type="button" class="underline body-hyperlink" on:click={selectAll}>
+					{t('admin.apiKeys.selectAll')}
+				</button>
+				<span class="opacity-40" aria-hidden="true">·</span>
+				<button type="button" class="underline body-hyperlink" on:click={selectNone}>
+					{t('admin.apiKeys.selectNone')}
+				</button>
+			</div>
+			<div
+				class="max-h-64 overflow-y-auto rounded-md border border-gray-200 p-3 flex flex-col gap-4"
+			>
+				{#each groups as group}
+					<div class="flex flex-col gap-2">
+						<div class="flex flex-wrap items-baseline justify-between gap-2">
+							<span class="font-mono text-sm font-medium">{group.category}</span>
+							<div class="flex gap-2 text-xs">
+								<button
+									type="button"
+									class="underline body-hyperlink"
+									on:click={() => setScopes(group.scopes, true)}
+								>
+									{t('admin.apiKeys.selectAll')}
+								</button>
+								<button
+									type="button"
+									class="underline body-hyperlink"
+									on:click={() => setScopes(group.scopes, false)}
+								>
+									{t('admin.apiKeys.selectNone')}
+								</button>
+							</div>
+						</div>
+						{#each group.scopes as scope}
+							<label class="flex flex-col gap-0.5">
+								<span class="flex items-center gap-2 flex-wrap">
+									<input
+										type="checkbox"
+										name="scopes"
+										value={scope}
+										bind:checked={selectedScopes[scope]}
+									/>
+									<span class="font-mono text-sm">{scope}</span>
+								</span>
+								{#if SCOPE_HINT_KEYS[scope]}
+									<span class="text-sm opacity-70 ml-6">{t(SCOPE_HINT_KEYS[scope])}</span>
+								{/if}
+							</label>
+						{/each}
+					</div>
+				{/each}
+			</div>
 		</fieldset>
 
 		<label class="form-label">
