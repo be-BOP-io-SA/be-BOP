@@ -23,7 +23,7 @@ Keep **two faces** with explicit boundaries:
 - Auth: **API keys only** (`Authorization: Bearer <api-key-secret>` **or** `X-Api-Key`). A Bearer token on `/api/v1` is **never** a user session — it is always an API key secret.
 - Money: **`amountMinor`** integers (no client `currencySnapshot`).
 - CORS: allowlist via admin runtime `apiV1.corsOrigins`, persisted in DB and never `*` on authenticated routes (no env fallback).
-- Maintenance: only public meta stays up (`GET` health / openapi.json / docs + `OPTIONS`). Authenticated routes return **503 `MAINTENANCE`**. Catalog read is deferred to #2686 (no stub).
+- Maintenance: only public meta stays up (`GET` health / openapi.json / docs + `OPTIONS`). Authenticated routes return **503 `MAINTENANCE`**. Catalog and paid-order reads are authenticated Face A GETs.
 
 ### Face B — Headless storefront (e.g. `/api` session Bearer)
 
@@ -33,7 +33,7 @@ Keep **two faces** with explicit boundaries:
 
 ## Consequences
 
-- Document Face A scopes (`orders:write`, …) separately from storefront permissions. Catalog read is deferred to #2686.
+- Document Face A scopes (`orders:write`, `catalog:read`, `orders:read`) separately from storefront permissions.
 - OpenAPI / Swagger under `/api/v1` describes Face A only.
 - Future headless work (#2616 and friends) must not silently share Face A auth or amount conventions.
 - Integrators reading `Authorization: Bearer` on `/api/v1` must send an API key secret; session tokens will 401.
