@@ -23,7 +23,7 @@ Public URLs (routes under `src/routes/api/v1/**`, outside the `(app)` group; pub
 - GET /api/v1/openapi.json
 - GET /api/v1/docs (Swagger UI)
 
-Catalog read is deferred to #2686 — no stub route in this surface.
+Catalog read: `GET /api/v1/catalog/products` (scope `catalog:read`). Paid-order read: `GET /api/v1/orders/paid` (scope `orders:read`).
 
 ## Authentication
 

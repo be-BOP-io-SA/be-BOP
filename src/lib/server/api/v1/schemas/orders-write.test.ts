@@ -19,6 +19,30 @@ describe('ordersWriteRequestSchema', () => {
 		expect(parsed.success).toBe(true);
 	});
 
+	it('accepts uniqueKey on items', () => {
+		const parsed = ordersWriteRequestSchema.safeParse({
+			orders: [
+				{
+					...validOrder,
+					items: [{ productId: 'artifact', quantity: 1, uniqueKey: 'kfdjsfeaz12845ND9xezj91820' }]
+				}
+			]
+		});
+		expect(parsed.success).toBe(true);
+	});
+
+	it('rejects uniqueKey with spaces (fail-closed)', () => {
+		const parsed = ordersWriteRequestSchema.safeParse({
+			orders: [
+				{
+					...validOrder,
+					items: [{ productId: 'artifact', quantity: 1, uniqueKey: 'not a key' }]
+				}
+			]
+		});
+		expect(parsed.success).toBe(false);
+	});
+
 	it('accepts customPrice in minor units', () => {
 		const parsed = ordersWriteRequestSchema.safeParse({
 			orders: [

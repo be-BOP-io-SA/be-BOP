@@ -2211,7 +2211,9 @@
 			"revealTitle": "API key created",
 			"secretAlreadyShown": "This secret was already shown and can no longer be displayed.",
 			"scopeHint": {
-				"ordersWrite": "Batch-write orders via POST /api/v1/orders."
+				"ordersWrite": "Batch-write orders via POST /api/v1/orders.",
+				"catalogRead": "Read catalog via GET /api/v1/catalog/products.",
+				"ordersRead": "Read paid orders via GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "The secret is shown once. be-BOP stores only SHA-256(secret) — no pepper (tech debt: DB leak enables offline brute-force).",
 			"environmentHelp": "Cosmetic label only (test vs live badge). It does not change auth, scopes, or routing.",
@@ -3242,7 +3244,8 @@
 		"variationPriceLabel": "Variation Price",
 		"vatExcluded": "VAT excluded",
 		"vatExcludedEstimate": "Estimated price excluding tax",
-		"vatIncluded": "Estimated price including tax"
+		"vatIncluded": "Estimated price including tax",
+		"uniqueKeyLabel": "Unique item key"
 	},
 	"schedule": {
 		"dateText": " - from {beginTime} to {endTime}",

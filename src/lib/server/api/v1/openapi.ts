@@ -41,6 +41,13 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 			chosenVariations: {
 				type: 'object',
 				additionalProperties: { type: 'string' }
+			},
+			uniqueKey: {
+				type: 'string',
+				minLength: 1,
+				maxLength: 128,
+				pattern: '^[A-Za-z0-9_-]+$',
+				description: 'Unique artifact secret from storefront ?key= (#2688).'
 			}
 		}
 	};
@@ -191,7 +198,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 	};
 
 	const scopeDescription =
-		'`orders:write` — POST /api/v1/orders batch write. Catalog read is deferred to #2686 (no stub route).';
+		'`orders:write` — POST /api/v1/orders. `catalog:read` — GET /api/v1/catalog/products. `orders:read` — GET /api/v1/orders/paid.';
 
 	const servers = opts?.serverUrl
 		? [{ url: opts.serverUrl, description: 'This deployment' }]
@@ -211,7 +218,8 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 		servers,
 		tags: [
 			{ name: 'health', description: 'Liveness / readiness' },
-			{ name: 'orders', description: 'Order write (batch)' },
+			{ name: 'catalog', description: 'Catalog read' },
+			{ name: 'orders', description: 'Order write (batch) and paid-order read' },
 			{ name: 'meta', description: 'API metadata' }
 		],
 		paths: {
@@ -267,6 +275,184 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					responses: {
 						'200': {
 							description: 'HTML Swagger UI pointing at /api/v1/openapi.json'
+						}
+					}
+				}
+			},
+			'/api/v1/catalog/products': {
+				get: {
+					tags: ['catalog'],
+					summary: 'List catalog products',
+					operationId: 'listCatalogProducts',
+					security: [{ BearerAuth: ['catalog:read'] }, { ApiKeyAuth: ['catalog:read'] }],
+					parameters: [
+						{
+							name: 'type',
+							in: 'query',
+							schema: { type: 'string', enum: ['resource', 'subscription', 'donation'] }
+						},
+						{
+							name: 'tags',
+							in: 'query',
+							schema: { type: 'string' },
+							description: 'Comma-separated tag ids'
+						},
+						{
+							name: 'limit',
+							in: 'query',
+							schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
+						},
+						{ name: 'cursor', in: 'query', schema: { type: 'string' } },
+						{
+							name: 'lang',
+							in: 'query',
+							schema: { type: 'string' },
+							description: 'Locale (en, fr, …)'
+						}
+					],
+					responses: {
+						'200': {
+							description: 'Catalog page',
+							content: {
+								'application/json': {
+									schema: { $ref: '#/components/schemas/CatalogListResponse' }
+								}
+							}
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'403': {
+							description: 'Missing required scope',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'429': {
+							description:
+								'Rate limited. Retry-After header = remaining seconds until the rate-limit window resets (ceil, minimum 1).',
+							headers: {
+								'Retry-After': {
+									description: 'Seconds to wait before retrying (remaining window).',
+									schema: { type: 'integer', minimum: 1 }
+								}
+							},
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'503': {
+							description: 'Maintenance',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'500': {
+							description: 'Internal error',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
+			'/api/v1/catalog/products/{id}': {
+				get: {
+					tags: ['catalog'],
+					summary: 'Get one catalog product',
+					operationId: 'getCatalogProduct',
+					security: [{ BearerAuth: ['catalog:read'] }, { ApiKeyAuth: ['catalog:read'] }],
+					parameters: [
+						{ name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+						{ name: 'lang', in: 'query', schema: { type: 'string' } }
+					],
+					responses: {
+						'200': {
+							description: 'Product',
+							content: {
+								'application/json': {
+									schema: { $ref: '#/components/schemas/CatalogProductResponse' }
+								}
+							}
+						},
+						'404': {
+							description: 'Product not found or not visible',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'403': {
+							description: 'Missing required scope',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'429': {
+							description:
+								'Rate limited. Retry-After header = remaining seconds until the rate-limit window resets (ceil, minimum 1).',
+							headers: {
+								'Retry-After': {
+									description: 'Seconds to wait before retrying (remaining window).',
+									schema: { type: 'integer', minimum: 1 }
+								}
+							},
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'503': {
+							description: 'Maintenance',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'500': {
+							description: 'Internal error',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
+			'/api/v1/orders/paid': {
+				get: {
+					tags: ['orders'],
+					summary: 'List paid orders (poll, not a webhook)',
+					operationId: 'listPaidOrders',
+					security: [{ BearerAuth: ['orders:read'] }, { ApiKeyAuth: ['orders:read'] }],
+					parameters: [
+						{ name: 'since', in: 'query', schema: { type: 'string', format: 'date-time' } },
+						{ name: 'until', in: 'query', schema: { type: 'string', format: 'date-time' } },
+						{
+							name: 'limit',
+							in: 'query',
+							schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
+						},
+						{ name: 'cursor', in: 'query', schema: { type: 'string' } }
+					],
+					responses: {
+						'200': {
+							description: 'Paid orders only. Unpaid rows are never returned.',
+							content: {
+								'application/json': {
+									schema: { $ref: '#/components/schemas/PaidOrdersResponse' }
+								}
+							}
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'403': {
+							description: 'Missing required scope',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'429': {
+							description:
+								'Rate limited. Retry-After header = remaining seconds until the rate-limit window resets (ceil, minimum 1).',
+							headers: {
+								'Retry-After': {
+									description: 'Seconds to wait before retrying (remaining window).',
+									schema: { type: 'integer', minimum: 1 }
+								}
+							},
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'503': {
+							description: 'Maintenance',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'500': {
+							description: 'Internal error',
+							content: { 'application/json': { schema: errorRef } }
 						}
 					}
 				}
@@ -358,7 +544,125 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 				ApiV1Warning,
 				OrderResult,
 				OrdersWriteResponse,
-				ErrorEnvelope
+				ErrorEnvelope,
+				CatalogProduct: {
+					type: 'object',
+					required: [
+						'id',
+						'alias',
+						'type',
+						'name',
+						'shortDescription',
+						'price',
+						'payWhatYouWant',
+						'shipping',
+						'tagIds',
+						'hasVariations'
+					],
+					properties: {
+						id: { type: 'string' },
+						alias: { type: 'array', items: { type: 'string' } },
+						type: { type: 'string', enum: ['resource', 'subscription', 'donation'] },
+						name: { type: 'string' },
+						shortDescription: { type: 'string' },
+						price: {
+							type: 'object',
+							required: ['amountMinor', 'currency'],
+							properties: {
+								amountMinor: { $ref: '#/components/schemas/AmountMinor' },
+								currency: { type: 'string', enum: currencyEnum }
+							}
+						},
+						payWhatYouWant: { type: 'boolean' },
+						shipping: { type: 'boolean' },
+						tagIds: { type: 'array', items: { type: 'string' } },
+						hasVariations: { type: 'boolean' },
+						stock: {
+							type: 'object',
+							properties: { available: { type: 'integer' } }
+						}
+					}
+				},
+				CatalogListResponse: {
+					type: 'object',
+					required: ['ok', 'language', 'products', 'page'],
+					properties: {
+						ok: { type: 'boolean' },
+						language: { type: 'string' },
+						products: { type: 'array', items: { $ref: '#/components/schemas/CatalogProduct' } },
+						page: {
+							type: 'object',
+							required: ['limit', 'nextCursor'],
+							properties: {
+								limit: { type: 'integer' },
+								nextCursor: { type: 'string', nullable: true }
+							}
+						}
+					}
+				},
+				CatalogProductResponse: {
+					type: 'object',
+					required: ['ok', 'language', 'product'],
+					properties: {
+						ok: { type: 'boolean' },
+						language: { type: 'string' },
+						product: { $ref: '#/components/schemas/CatalogProduct' }
+					}
+				},
+				PaidOrderItem: {
+					type: 'object',
+					required: ['productId', 'name', 'quantity', 'unitPrice'],
+					properties: {
+						productId: { type: 'string' },
+						name: { type: 'string' },
+						quantity: { type: 'integer' },
+						uniqueKey: { type: 'string' },
+						chosenVariations: { type: 'object', additionalProperties: { type: 'string' } },
+						unitPrice: {
+							type: 'object',
+							required: ['amountMinor', 'currency'],
+							properties: {
+								amountMinor: { $ref: '#/components/schemas/AmountMinor' },
+								currency: { type: 'string', enum: currencyEnum }
+							}
+						}
+					}
+				},
+				PaidOrder: {
+					type: 'object',
+					required: ['orderId', 'number', 'createdAt', 'amountPaid', 'items'],
+					properties: {
+						orderId: { type: 'string' },
+						number: { type: 'integer' },
+						createdAt: { type: 'string', format: 'date-time' },
+						paidAt: { type: 'string', format: 'date-time', nullable: true },
+						amountPaid: {
+							type: 'object',
+							required: ['amountMinor', 'currency'],
+							properties: {
+								amountMinor: { $ref: '#/components/schemas/AmountMinor' },
+								currency: { type: 'string', enum: currencyEnum }
+							}
+						},
+						items: { type: 'array', items: { $ref: '#/components/schemas/PaidOrderItem' } }
+					}
+				},
+				PaidOrdersResponse: {
+					type: 'object',
+					required: ['ok', 'orders', 'page'],
+					properties: {
+						ok: { type: 'boolean' },
+						orders: { type: 'array', items: { $ref: '#/components/schemas/PaidOrder' } },
+						page: {
+							type: 'object',
+							required: ['limit', 'nextCursor'],
+							properties: {
+								limit: { type: 'integer' },
+								nextCursor: { type: 'string', nullable: true }
+							}
+						}
+					}
+				}
 			},
 			securitySchemes: {
 				BearerAuth: {
