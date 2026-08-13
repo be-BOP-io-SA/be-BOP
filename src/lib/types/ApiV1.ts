@@ -63,7 +63,6 @@ export type AuthenticatedApiKey = {
 	_id: import('mongodb').ObjectId;
 	name: string;
 	scopes: ApiV1Scope[];
-	environment: import('./ApiKey').ApiKeyEnvironment;
 	keyPrefix: string;
 };
 
