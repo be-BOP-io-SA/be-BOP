@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { collections } from '$lib/server/database';
-import type { ApiKey, ApiKeyEnvironment } from '$lib/types/ApiKey';
+import type { ApiKey } from '$lib/types/ApiKey';
 import { API_V1_SCOPES, type ApiV1Scope } from '$lib/types/ApiV1';
 import {
 	apiKeyPrefixFromSecret,
@@ -31,13 +31,11 @@ function assertScopes(scopes: ApiV1Scope[]) {
 export async function createApiKey(opts: {
 	name: string;
 	scopes: ApiV1Scope[];
-	environment?: ApiKeyEnvironment;
 	expiresAt?: Date;
 	createdBy?: string;
 }): Promise<{ apiKey: ApiKey; secret: string }> {
-	const environment = opts.environment ?? 'live';
 	assertScopes(opts.scopes);
-	const secret = generateApiKeySecret(environment);
+	const secret = generateApiKeySecret();
 	const now = new Date();
 	const apiKey: ApiKey = {
 		_id: new ObjectId(),
@@ -45,7 +43,6 @@ export async function createApiKey(opts: {
 		keyHash: hashApiKeySecret(secret),
 		keyPrefix: apiKeyPrefixFromSecret(secret),
 		scopes: [...opts.scopes],
-		environment,
 		expiresAt: opts.expiresAt,
 		createdBy: opts.createdBy,
 		createdAt: now,
@@ -101,7 +98,6 @@ const API_KEY_PUBLIC_PROJECTION = {
 	name: 1,
 	keyPrefix: 1,
 	scopes: 1,
-	environment: 1,
 	expiresAt: 1,
 	revokedAt: 1,
 	lastUsedAt: 1,
@@ -137,7 +133,6 @@ export function serializeApiKeyPublic(k: ApiKeyPublic) {
 		name: k.name,
 		keyPrefix: k.keyPrefix,
 		scopes: k.scopes,
-		environment: k.environment,
 		expiresAt: k.expiresAt ?? null,
 		revokedAt: k.revokedAt ?? null,
 		lastUsedAt: k.lastUsedAt ?? null,
