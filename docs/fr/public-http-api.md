@@ -19,7 +19,7 @@ OpenAPI interactif : [`/api/v1/docs`](/api/v1/docs) (schéma [`/api/v1/openapi.j
 
 1. Se connecter en Super Admin.
 2. Ouvrir **Admin → API Keys**.
-3. Créer une clé : nom (ex. « Caisse entrée »), badge d’environnement (`live` / `test` — cosmétique), et scopes.
+3. Créer une clé : nom (ex. « Caisse entrée »), et scopes.
 4. Copier le secret immédiatement. Il n’est montré qu’une fois. be-BOP ne stocke que `SHA-256(secret)`.
 5. Enregistrer les origines CORS sur la même page (une par ligne). Vide = aucun accès navigateur cross-origin. `*` n’est jamais autorisé.
 

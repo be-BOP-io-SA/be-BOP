@@ -48,7 +48,6 @@
 			"createTitle": "Crea chiave API",
 			"name": "Nome",
 			"namePlaceholder": "es. cassa PoS",
-			"environment": "Ambiente",
 			"scopes": "Scopes",
 			"expiresAt": "Scade il",
 			"expiresAtHint": "Opzionale. Lasciare vuoto per nessuna scadenza.",
@@ -79,9 +78,6 @@
 				"ordersRead": "Leggi gli ordini via GET /api/v1/orders e GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "Il segreto viene mostrato una sola volta. be-BOP memorizza solo SHA-256(secret) — nessun pepper (debito tecnico: una fuga dal DB consente brute-force offline).",
-			"environmentHelp": "Solo etichetta cosmetica (badge test vs live). Non cambia auth, scope o routing.",
-			"environmentBadgeLive": "live",
-			"environmentBadgeTest": "test",
 			"corsTitle": "Origini CORS API v1",
 			"corsHelp": "Allowlist di Origin del browser per /api/v1. Lascia vuoto per negare ogni accesso cross-origin. I wildcard (*) non sono mai consentiti.",
 			"corsOriginsLabel": "Origini consentite",

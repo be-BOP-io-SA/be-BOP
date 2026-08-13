@@ -32,7 +32,7 @@ Provide one of:
 - Authorization header with Bearer scheme and the API secret
 - X-Api-Key header with the API secret
 
-Secrets look like bebop*ak*{live|test}\_{base64url}. Keys are created and revoked in the admin UI (Settings → API Keys, super-admin only). Required scope for this endpoint: orders:write.
+Secrets look like bebop*ak*{base64url}. Keys are created and revoked in the admin UI (Settings → API Keys, super-admin only). Required scope for this endpoint: orders:write.
 
 Machine-readable contract: GET /api/v1/openapi.json. Interactive viewer: GET /api/v1/docs (Swagger UI, CDN assets).
 

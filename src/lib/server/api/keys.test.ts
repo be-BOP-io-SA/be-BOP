@@ -11,14 +11,13 @@ import { ObjectId } from 'mongodb';
 import type { ApiKey } from '$lib/types/ApiKey';
 
 describe('api key helpers', () => {
-	it('generates secrets in bebop_ak_{env}_{base64url} form', () => {
-		const secret = generateApiKeySecret('live');
-		expect(secret.startsWith('bebop_ak_live_')).toBe(true);
+	it('generates secrets in bebop_ak_{base64url} form', () => {
+		const secret = generateApiKeySecret();
+		expect(secret.startsWith('bebop_ak_')).toBe(true);
+		expect(secret.startsWith('bebop_ak_live_')).toBe(false);
+		expect(secret.startsWith('bebop_ak_test_')).toBe(false);
 		const parsed = parseApiKeySecret(secret);
-		expect(parsed.validFormat).toBe(true);
-		if (parsed.validFormat) {
-			expect(parsed.environment).toBe('live');
-		}
+		expect(parsed).toEqual({ validFormat: true });
 	});
 
 	it('hashes deterministically with SHA-256 of the secret alone', () => {
@@ -38,33 +37,24 @@ describe('api key helpers', () => {
 	});
 
 	it('builds a stable non-secret prefix', () => {
-		const secret = 'bebop_ak_live_abcdefghijklmnop';
-		expect(apiKeyPrefixFromSecret(secret)).toBe('bebop_ak_live_abcdefgh');
+		const secret = 'bebop_ak_abcdefghijklmnop';
+		expect(apiKeyPrefixFromSecret(secret)).toBe('bebop_ak_abcdefgh');
 	});
 
-	it('rejects malformed secrets without inventing an environment', () => {
+	it('rejects malformed secrets', () => {
 		expect(parseApiKeySecret('not-a-key')).toEqual({ validFormat: false });
-		expect(parseApiKeySecret('bebop_ak_prod_xxx')).toEqual({ validFormat: false });
 		expect(parseApiKeySecret('')).toEqual({ validFormat: false });
-		expect(parseApiKeySecret('bebop_ak_live_')).toEqual({ validFormat: false });
-		expect(parseApiKeySecret('bebop_ak_live')).toEqual({ validFormat: false });
-		expect(parseApiKeySecret('bebop_ak_test_has space')).toEqual({ validFormat: false });
-		expect(parseApiKeySecret('BEBOP_AK_LIVE_abc')).toEqual({ validFormat: false });
-		// Must not invent { validFormat: true, environment: 'live' } for junk.
-		for (const junk of ['live', 'bebop_ak_', 'ak_live_xxx', 'bebop_ak_staging_x']) {
+		expect(parseApiKeySecret('bebop_ak_')).toEqual({ validFormat: false });
+		expect(parseApiKeySecret('bebop_ak_has space')).toEqual({ validFormat: false });
+		expect(parseApiKeySecret('BEBOP_AK_abc')).toEqual({ validFormat: false });
+		for (const junk of ['live', 'ak_xxx', 'bebop_ak']) {
 			expect(parseApiKeySecret(junk)).toEqual({ validFormat: false });
 		}
 	});
 
-	it('parses only live|test environments', () => {
-		expect(parseApiKeySecret('bebop_ak_test_abc123')).toEqual({
-			validFormat: true,
-			environment: 'test'
-		});
-		expect(parseApiKeySecret('bebop_ak_live_abc123')).toEqual({
-			validFormat: true,
-			environment: 'live'
-		});
+	it('parses bebop_ak_ plus a token', () => {
+		expect(parseApiKeySecret('bebop_ak_abc123')).toEqual({ validFormat: true });
+		expect(parseApiKeySecret('bebop_ak_AbC_-09')).toEqual({ validFormat: true });
 	});
 
 	it('isApiKeyUsable respects revoke and expiry', () => {
@@ -74,7 +64,6 @@ describe('api key helpers', () => {
 			keyHash: 'a'.repeat(64),
 			keyPrefix: 'bebop_ak_test_abcd1234',
 			scopes: ['orders:write'],
-			environment: 'test',
 			createdAt: new Date(),
 			updatedAt: new Date()
 		};
@@ -99,7 +88,6 @@ describe('apiKeyPublicProjection', () => {
 			name: 1,
 			keyPrefix: 1,
 			scopes: 1,
-			environment: 1,
 			expiresAt: 1,
 			revokedAt: 1,
 			lastUsedAt: 1,

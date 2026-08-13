@@ -30,7 +30,6 @@ describe('listApiKeys', () => {
 						name: 'desk',
 						keyPrefix: 'bebop_ak_live_abcd1234',
 						scopes: ['orders:write'],
-						environment: 'live',
 						createdAt: new Date(),
 						updatedAt: new Date()
 					}
@@ -51,7 +50,6 @@ describe('listApiKeys', () => {
 				'_id',
 				'createdAt',
 				'createdBy',
-				'environment',
 				'expiresAt',
 				'keyPrefix',
 				'lastUsedAt',

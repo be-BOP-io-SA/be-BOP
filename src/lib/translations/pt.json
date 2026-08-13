@@ -48,7 +48,6 @@
 			"createTitle": "Criar chave API",
 			"name": "Nome",
 			"namePlaceholder": "ex. caixa PoS",
-			"environment": "Ambiente",
 			"scopes": "Scopes",
 			"expiresAt": "Expira em",
 			"expiresAtHint": "Opcional. Deixe vazio para sem expiração.",
@@ -79,9 +78,6 @@
 				"ordersRead": "Ler encomendas via GET /api/v1/orders e GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "O segredo é mostrado uma vez. be-BOP guarda apenas SHA-256(secret) — sem pepper (dívida técnica: fuga da BD permite brute-force offline).",
-			"environmentHelp": "Apenas etiqueta cosmética (badge test vs live). Não altera auth, scopes nem routing.",
-			"environmentBadgeLive": "live",
-			"environmentBadgeTest": "test",
 			"corsTitle": "Origens CORS da API v1",
 			"corsHelp": "Lista de Origins do browser permitidas para /api/v1. Deixe vazio para negar todo o acesso cross-origin. Wildcards (*) nunca são permitidos.",
 			"corsOriginsLabel": "Origens permitidas",

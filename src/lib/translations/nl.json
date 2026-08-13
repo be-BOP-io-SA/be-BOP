@@ -48,7 +48,6 @@
 			"createTitle": "API-sleutel maken",
 			"name": "Naam",
 			"namePlaceholder": "bijv. PoS-kassa",
-			"environment": "Omgeving",
 			"scopes": "Scopes",
 			"expiresAt": "Verloopt op",
 			"expiresAtHint": "Optioneel. Leeg laten voor geen vervaldatum.",
@@ -79,9 +78,6 @@
 				"ordersRead": "Orders lezen via GET /api/v1/orders en GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "Het geheim wordt één keer getoond. be-BOP bewaart alleen SHA-256(secret) — geen pepper (technische schuld: DB-lek maakt offline brute-force mogelijk).",
-			"environmentHelp": "Alleen cosmetisch label (test- vs live-badge). Wijzigt auth, scopes of routing niet.",
-			"environmentBadgeLive": "live",
-			"environmentBadgeTest": "test",
 			"corsTitle": "API v1 CORS-origins",
 			"corsHelp": "Browser-Origin-allowlist voor /api/v1. Laat leeg om alle cross-origin toegang te weigeren. Wildcards (*) zijn nooit toegestaan.",
 			"corsOriginsLabel": "Toegestane origins",

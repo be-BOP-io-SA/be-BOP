@@ -48,7 +48,6 @@
 			"createTitle": "Create API key",
 			"name": "Name",
 			"namePlaceholder": "e.g. PoS front desk",
-			"environment": "Environment",
 			"scopes": "Scopes",
 			"expiresAt": "Expires at",
 			"expiresAtHint": "Optional. Leave empty for no expiry.",
@@ -79,9 +78,6 @@
 				"ordersRead": "Read orders via GET /api/v1/orders and GET /api/v1/orders/paid."
 			},
 			"secretStorageNote": "The secret is shown once. be-BOP stores only SHA-256(secret) — no pepper (tech debt: DB leak enables offline brute-force).",
-			"environmentHelp": "Cosmetic label only (test vs live badge). It does not change auth, scopes, or routing.",
-			"environmentBadgeLive": "live",
-			"environmentBadgeTest": "test",
 			"corsTitle": "API v1 CORS origins",
 			"corsHelp": "Browser Origin allowlist for /api/v1. Leave empty to deny all cross-origin access. Wildcards (*) are never allowed.",
 			"corsOriginsLabel": "Allowed origins",
