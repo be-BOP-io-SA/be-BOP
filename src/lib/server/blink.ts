@@ -100,8 +100,10 @@ export async function blinkResolveMode(): Promise<BlinkMode> {
 			accountKindCache.set(cacheKey, verdict);
 			return verdict;
 		}
-		// Ambiguous (rate-limit, transient) → assume spark for this call, don't cache.
-		return { mode: 'spark' };
+		// Ambiguous (rate-limit, transient) → do NOT fall back to Spark: a temporary GraphQL
+		// outage must not silently route a custodial merchant down the wrong poller. Fail the
+		// payment creation loudly so the merchant sees the connectivity problem.
+		throw new Error(`Could not resolve Blink account type: ${message}`);
 	}
 }
 
@@ -195,13 +197,32 @@ async function blinkCreateInvoiceOnBehalf(params: {
 }
 
 /**
- * Resolve the account default wallet for API-key mode (unless walletId is configured).
- * Rejects non-BTC wallets (be-BOP Blink support is BTC-only).
+ * Resolve the Blink wallet to use for API-key mode. Uses the configured `walletId` when set,
+ * otherwise the account default wallet. Either way the wallet's currency is verified and
+ * non-BTC wallets are rejected (be-BOP Blink support is BTC-only).
  */
 async function blinkResolveApiKeyWallet(): Promise<string> {
 	if (runtimeConfig.blink.walletId) {
-		return runtimeConfig.blink.walletId;
+		// A configured wallet id must still be a BTC wallet — verify rather than trust.
+		const query = `query WalletCurrency($walletId: WalletId!) {
+			me { defaultAccount { walletById(walletId: $walletId) { id walletCurrency } } }
+		}`;
+		const data = await blinkGraphql<{
+			me?: { defaultAccount?: { walletById?: { id?: string; walletCurrency?: string } } };
+		}>(
+			'https://api.blink.sv/graphql',
+			query,
+			{ walletId: runtimeConfig.blink.walletId },
+			runtimeConfig.blink.apiKey
+		);
+		const wallet = data?.me?.defaultAccount?.walletById;
+		if (!wallet?.id) {
+			throw new Error('Configured Blink wallet id could not be found on the account');
+		}
+		assertBtcWallet(wallet.walletCurrency);
+		return wallet.id;
 	}
+
 	const query = `query GetDefaultWallet {
 		me { defaultAccount { defaultWallet { id walletCurrency } } }
 	}`;
@@ -212,13 +233,17 @@ async function blinkResolveApiKeyWallet(): Promise<string> {
 	if (!wallet?.id) {
 		throw new Error('Could not resolve a default Blink wallet');
 	}
-	if (wallet.walletCurrency && wallet.walletCurrency !== 'BTC') {
+	assertBtcWallet(wallet.walletCurrency);
+	return wallet.id;
+}
+
+function assertBtcWallet(walletCurrency: string | undefined): void {
+	if (walletCurrency && walletCurrency !== 'BTC') {
 		throw new Error(
-			`Blink default wallet is ${wallet.walletCurrency}; be-BOP supports BTC wallets only. ` +
+			`Blink wallet is ${walletCurrency}; be-BOP supports BTC wallets only. ` +
 				`Set a BTC wallet id in the Blink admin settings.`
 		);
 	}
-	return wallet.id;
 }
 
 // --- Public create/check API used by the SDK adapter ---
@@ -345,13 +370,31 @@ async function sparkCreateInvoice(params: {
 
 	// The verify URL host serves LUD-21; derive the payment hash from it when present so we
 	// don't need a bolt11 decoder (matches the plugin's "verify key is authoritative" stance).
-	const verifyUrl = cb.verify;
-	const paymentHash = verifyUrl ? verifyUrl.split('/').pop() ?? '' : '';
-	if (!verifyUrl || !paymentHash) {
+	if (!cb.verify) {
 		throw new Error('LNURL-pay callback did not return a LUD-21 verify URL');
 	}
+	const paymentHash = extractPaymentHashFromVerifyUrl(cb.verify);
+	if (!paymentHash) {
+		throw new Error(`LUD-21 verify URL does not contain a valid payment hash: ${cb.verify}`);
+	}
 
-	return { paymentRequest: cb.pr, paymentHash, verifyUrl };
+	return { paymentRequest: cb.pr, paymentHash, verifyUrl: cb.verify };
+}
+
+/**
+ * Extract the payment hash from a LUD-21 verify URL (`{origin}/verify/{paymentHash}`).
+ * Parses the URL properly (tolerating trailing slashes) and requires a 64-char hex hash.
+ * Returns null when no valid hash is present.
+ */
+export function extractPaymentHashFromVerifyUrl(verifyUrl: string): string | null {
+	let pathname: string;
+	try {
+		pathname = new URL(verifyUrl).pathname;
+	} catch {
+		return null;
+	}
+	const lastSegment = pathname.split('/').filter(Boolean).pop();
+	return lastSegment && /^[0-9a-f]{64}$/i.test(lastSegment) ? lastSegment.toLowerCase() : null;
 }
 
 // --- Status checking ---
@@ -407,8 +450,8 @@ async function blinkCheckCustodialInvoice(paymentHash: string): Promise<BlinkInv
 }
 
 /**
- * Check a Spark invoice via its LUD-21 verify URL. Paid when `settled === true`.
- * Validates SHA256(preimage) === paymentHash when a preimage is returned (warn-only on mismatch).
+ * Check a Spark invoice via its LUD-21 verify URL. Paid only when `settled === true` AND a
+ * preimage is present whose SHA256 equals the payment hash (fail-closed on preimage).
  */
 async function blinkCheckSparkInvoice(
 	verifyUrl: string,
@@ -434,10 +477,17 @@ async function blinkCheckSparkInvoice(
 		return 'failed';
 	}
 	if (json.settled) {
-		if (json.preimage && !validatePreimage(json.preimage, paymentHash)) {
+		// Fail-closed: only mark paid when a preimage is present AND hashes to the payment hash.
+		// A `settled:true` without a matching preimage must never complete the order.
+		if (!json.preimage) {
+			console.warn(`Blink Spark invoice ${paymentHash} reported settled but returned no preimage`);
+			return 'pending';
+		}
+		if (!validatePreimage(json.preimage, paymentHash)) {
 			console.warn(
-				`Blink Spark invoice ${paymentHash} settled but preimage did not match payment hash`
+				`Blink Spark invoice ${paymentHash} reported settled but preimage did not match payment hash`
 			);
+			return 'pending';
 		}
 		return 'paid';
 	}

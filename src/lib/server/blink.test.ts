@@ -1,11 +1,14 @@
 import { createHash, randomBytes } from 'crypto';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+	blinkLookupInvoice,
+	extractPaymentHashFromVerifyUrl,
 	graphqlEndpointForDomain,
 	mapGraphqlInvoiceStatus,
 	parseLnAddress,
 	validatePreimage
 } from './blink';
+import { runtimeConfig } from './runtime-config';
 
 describe('blink', () => {
 	describe('parseLnAddress', () => {
@@ -73,6 +76,83 @@ describe('blink', () => {
 		it('rejects a malformed preimage', () => {
 			expect(validatePreimage('not-hex', 'a'.repeat(64))).toBe(false);
 			expect(validatePreimage('abcd', 'a'.repeat(64))).toBe(false);
+		});
+	});
+
+	describe('extractPaymentHashFromVerifyUrl', () => {
+		const HASH = 'a'.repeat(64);
+		it('extracts the hash from a standard verify URL', () => {
+			expect(extractPaymentHashFromVerifyUrl(`https://lnurl.blink.sv/verify/${HASH}`)).toBe(HASH);
+		});
+		it('tolerates a trailing slash and query string', () => {
+			expect(extractPaymentHashFromVerifyUrl(`https://lnurl.blink.sv/verify/${HASH}/`)).toBe(HASH);
+			expect(extractPaymentHashFromVerifyUrl(`https://lnurl.blink.sv/verify/${HASH}?x=1`)).toBe(
+				HASH
+			);
+		});
+		it('lowercases the hash', () => {
+			expect(
+				extractPaymentHashFromVerifyUrl(`https://lnurl.blink.sv/verify/${'A'.repeat(64)}`)
+			).toBe(HASH);
+		});
+		it('rejects a non-64-hex last segment', () => {
+			expect(extractPaymentHashFromVerifyUrl('https://lnurl.blink.sv/verify/abc')).toBeNull();
+			expect(extractPaymentHashFromVerifyUrl('https://lnurl.blink.sv/verify/')).toBeNull();
+			expect(extractPaymentHashFromVerifyUrl('https://lnurl.blink.sv/')).toBeNull();
+		});
+		it('rejects a non-URL', () => {
+			expect(extractPaymentHashFromVerifyUrl('not a url')).toBeNull();
+		});
+	});
+
+	describe('blinkLookupInvoice (spark, fail-closed preimage)', () => {
+		const preimage = randomBytes(32).toString('hex');
+		const paymentHash = createHash('sha256').update(Buffer.from(preimage, 'hex')).digest('hex');
+		const verifyUrl = `https://lnurl.blink.sv/verify/${paymentHash}`;
+
+		function mockVerify(body: unknown, ok = true, status = 200) {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async () => ({ ok, status, statusText: ok ? 'OK' : 'ERR', json: async () => body }))
+			);
+		}
+
+		beforeEach(() => {
+			runtimeConfig.blink = { apiKey: '', lnAddress: 'you@blink.sv', walletId: '' };
+		});
+
+		afterEach(() => {
+			vi.unstubAllGlobals();
+		});
+
+		it('marks paid only when settled with a matching preimage', async () => {
+			mockVerify({ status: 'OK', settled: true, preimage });
+			expect(await blinkLookupInvoice(paymentHash, verifyUrl)).toBe('paid');
+		});
+
+		it('does NOT mark paid when settled but preimage is missing', async () => {
+			mockVerify({ status: 'OK', settled: true });
+			expect(await blinkLookupInvoice(paymentHash, verifyUrl)).toBe('pending');
+		});
+
+		it('does NOT mark paid when settled but preimage mismatches', async () => {
+			mockVerify({ status: 'OK', settled: true, preimage: 'b'.repeat(64) });
+			expect(await blinkLookupInvoice(paymentHash, verifyUrl)).toBe('pending');
+		});
+
+		it('stays pending when not yet settled', async () => {
+			mockVerify({ status: 'OK', settled: false });
+			expect(await blinkLookupInvoice(paymentHash, verifyUrl)).toBe('pending');
+		});
+
+		it('maps status:ERROR to failed (stops polling)', async () => {
+			mockVerify({ status: 'ERROR', reason: 'unknown invoice' });
+			expect(await blinkLookupInvoice(paymentHash, verifyUrl)).toBe('failed');
+		});
+
+		it('treats a non-OK HTTP response as transient pending', async () => {
+			mockVerify({}, false, 500);
+			expect(await blinkLookupInvoice(paymentHash, verifyUrl)).toBe('pending');
 		});
 	});
 });
