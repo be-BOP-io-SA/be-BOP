@@ -1,6 +1,7 @@
 /**
- * HTTP conditional-request helpers (RFC 9110 spirit) for future Face A GET routes.
+ * HTTP conditional-request helpers (RFC 9110 spirit) for Face A GET routes.
  *
+ * Wired to the read routes (catalog list/detail, paid-orders poll) via `jsonWithETag`.
  * NOT wired to POST /api/v1/orders — batch writes use (apiKeyId, externalOrderId)
  * idempotency instead. See docs/en/api/v1-architecture.md (#2713).
  */
@@ -141,4 +142,28 @@ export function ifNoneMatchMatchesCurrent(
 		}
 	}
 	return false;
+}
+
+/**
+ * JSON 200 carrying a strong ETag of the exact serialized bytes, short-circuited to a
+ * bodyless 304 when If-None-Match already matches (RFC 9110 §13.1.2 / §15.4.5).
+ *
+ * `Cache-Control: private, no-cache` keeps per-API-key payloads out of shared caches while
+ * still letting a client store the representation and revalidate it with the validator.
+ * CORS headers are added afterwards by `apiV1Handler`, so they never feed the ETag.
+ */
+export function jsonWithETag(body: unknown, request: Request, headersInit?: HeadersInit): Response {
+	const payload = JSON.stringify(body);
+	const etag = buildStrongETag(payload);
+	const headers = new Headers(headersInit);
+	headers.set('ETag', etag);
+	headers.set('Cache-Control', 'private, no-cache');
+
+	if (ifNoneMatchMatchesCurrent(etag, request.headers.get('if-none-match'))) {
+		// 304 must not carry a body, and repeats the validator it would have sent on 200.
+		return new Response(null, { status: 304, headers });
+	}
+
+	headers.set('Content-Type', 'application/json');
+	return new Response(payload, { status: 200, headers });
 }

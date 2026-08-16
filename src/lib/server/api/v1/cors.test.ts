@@ -48,6 +48,13 @@ describe('api v1 cors', () => {
 		expect(headers.get('Access-Control-Allow-Origin')).not.toBe('*');
 	});
 
+	it('allows If-None-Match and exposes ETag so conditional GETs work cross-origin', () => {
+		const headers = new Headers();
+		applyApiV1CorsHeaders(headers, 'https://a.example', ['https://a.example']);
+		expect(headers.get('Access-Control-Allow-Headers')).toContain('If-None-Match');
+		expect(headers.get('Access-Control-Expose-Headers')).toContain('ETag');
+	});
+
 	it('sets no ACAO header when origin is not allowlisted', () => {
 		const headers = new Headers();
 		applyApiV1CorsHeaders(headers, 'https://evil.example', ['https://a.example']);
