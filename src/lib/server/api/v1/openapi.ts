@@ -206,6 +206,32 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 
 	const errorRef = { $ref: '#/components/schemas/ErrorEnvelope' };
 
+	// Conditional GETs (#2713, RFC 9110). Reads only — POST /api/v1/orders relies on
+	// (apiKeyId, externalOrderId) idempotency and takes no ETag precondition.
+	const ifNoneMatchParam = {
+		name: 'If-None-Match',
+		in: 'header',
+		required: false,
+		schema: { type: 'string' },
+		description:
+			'Strong entity-tag returned by a previous read. When it still matches, the server answers 304 with no body.'
+	};
+	const etagResponseHeaders = {
+		ETag: {
+			description:
+				'Strong validator (opaque SHA-256 of the JSON body). Replay it in If-None-Match.',
+			schema: { type: 'string' }
+		},
+		'Cache-Control': {
+			description: 'Always `private, no-cache` — per-API-key payloads must be revalidated.',
+			schema: { type: 'string' }
+		}
+	};
+	const notModifiedResponse = {
+		description: 'Not modified — the If-None-Match validator still matches. Body is empty.',
+		headers: etagResponseHeaders
+	};
+
 	return {
 		openapi: '3.0.3',
 		info: {
@@ -303,6 +329,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
 						},
 						{ name: 'cursor', in: 'query', schema: { type: 'string' } },
+						ifNoneMatchParam,
 						{
 							name: 'lang',
 							in: 'query',
@@ -313,12 +340,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					responses: {
 						'200': {
 							description: 'Catalog page',
+							headers: etagResponseHeaders,
 							content: {
 								'application/json': {
 									schema: { $ref: '#/components/schemas/CatalogListResponse' }
 								}
 							}
 						},
+						'304': notModifiedResponse,
 						'401': {
 							description: 'Missing or invalid API key',
 							content: { 'application/json': { schema: errorRef } }
@@ -357,17 +386,20 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					security: [{ BearerAuth: ['catalog:read'] }, { ApiKeyAuth: ['catalog:read'] }],
 					parameters: [
 						{ name: 'id', in: 'path', required: true, schema: { type: 'string' } },
-						{ name: 'lang', in: 'query', schema: { type: 'string' } }
+						{ name: 'lang', in: 'query', schema: { type: 'string' } },
+						ifNoneMatchParam
 					],
 					responses: {
 						'200': {
 							description: 'Product',
+							headers: etagResponseHeaders,
 							content: {
 								'application/json': {
 									schema: { $ref: '#/components/schemas/CatalogProductResponse' }
 								}
 							}
 						},
+						'304': notModifiedResponse,
 						'404': {
 							description: 'Product not found or not visible',
 							content: { 'application/json': { schema: errorRef } }
@@ -416,17 +448,20 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							in: 'query',
 							schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
 						},
-						{ name: 'cursor', in: 'query', schema: { type: 'string' } }
+						{ name: 'cursor', in: 'query', schema: { type: 'string' } },
+						ifNoneMatchParam
 					],
 					responses: {
 						'200': {
 							description: 'Paid orders only. Unpaid rows are never returned.',
+							headers: etagResponseHeaders,
 							content: {
 								'application/json': {
 									schema: { $ref: '#/components/schemas/PaidOrdersResponse' }
 								}
 							}
 						},
+						'304': notModifiedResponse,
 						'401': {
 							description: 'Missing or invalid API key',
 							content: { 'application/json': { schema: errorRef } }

@@ -19,10 +19,13 @@ vi.mock('$lib/server/runtime-config', () => ({
 
 import { GET } from './+server';
 
-function call(opts?: { origin?: string; query?: string }) {
+function call(opts?: { origin?: string; query?: string; ifNoneMatch?: string }) {
 	const headers = new Headers();
 	if (opts?.origin) {
 		headers.set('origin', opts.origin);
+	}
+	if (opts?.ifNoneMatch) {
+		headers.set('if-none-match', opts.ifNoneMatch);
 	}
 	const locals = {
 		apiKey: {
@@ -75,6 +78,31 @@ describe('GET /api/v1/catalog/products', () => {
 		expect(body.ok).toBe(true);
 		expect(body.products[0].id).toBe('espresso');
 		expect(res.headers.get('access-control-allow-origin')).toBe('https://allowed.example');
+	});
+
+	it('exposes a strong ETag and answers 304 on a matching If-None-Match', async () => {
+		const first = await call();
+		const etag = first.headers.get('etag');
+		expect(etag).toMatch(/^"[a-f0-9]{64}"$/);
+		expect(first.headers.get('cache-control')).toBe('private, no-cache');
+
+		const second = await call({ ifNoneMatch: etag as string });
+		expect(second.status).toBe(304);
+		expect(second.headers.get('etag')).toBe(etag);
+		await expect(second.text()).resolves.toBe('');
+	});
+
+	it('returns a fresh 200 + new ETag when the catalog changed', async () => {
+		const etag = (await call()).headers.get('etag');
+		listCatalogProducts.mockResolvedValueOnce({
+			products: [{ id: 'latte', name: 'Latte', alias: [], type: 'resource' }],
+			page: { limit: 20, nextCursor: null },
+			language: 'en'
+		});
+		const res = await call({ ifNoneMatch: etag as string });
+		expect(res.status).toBe(200);
+		expect(res.headers.get('etag')).not.toBe(etag);
+		await expect(res.json()).resolves.toMatchObject({ products: [{ id: 'latte' }] });
 	});
 
 	it('returns 401 without API key', async () => {
