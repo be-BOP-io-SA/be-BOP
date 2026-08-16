@@ -114,7 +114,7 @@ src/lib/server/api/
     cors.ts
     errors.ts
     openapi.ts
-    validators.ts              # ETag / If-Match helpers (not wired to writes yet)
+    validators.ts              # ETag / If-Match helpers (wired to GET reads, never to writes)
     schemas/orders-write.ts
     orders/
       writeBatch.ts
@@ -147,15 +147,21 @@ src/lib/types/ApiKey.ts
 - **Batch over chatty APIs** — 1–100 orders/request
 - **Idempotent retries** — safe PoS replays
 - **Versioned surface** — `/api/v1` only; breaking changes → `/api/v2`
-- **Read APIs** — `GET /api/v1/catalog/products` (`catalog:read`) and `GET /api/v1/orders/paid` (`orders:read`) share Face A middleware/auth/rate-limit.
+- **Read APIs** — `GET /api/v1/catalog/products` (`catalog:read`) and `GET /api/v1/orders/paid` (`orders:read`) share Face A middleware/auth/rate-limit. Both answer conditional GETs (`ETag` / `If-None-Match` → `304`).
 - **Two faces** — Face A `/api/v1` (API keys) must not be merged with Face B storefront session Bearer ([ADR](./adr-api-faces.md))
 
 ## Conditional requests / ETag (#2713)
 
-Helpers live in `src/lib/server/api/v1/validators.ts` (`buildStrongETag`, `parseIfMatch`, `parseIfNoneMatch`, match helpers) for RFC 9110-style strong validators.
+Helpers live in `src/lib/server/api/v1/validators.ts` (`buildStrongETag`, `parseIfMatch`, `parseIfNoneMatch`, match helpers) for RFC 9110-style strong validators. `jsonWithETag(body, request)` is the single entry point used by the read routes.
 
-- **Not wired** to `POST /api/v1/orders` (batch write has its own idempotency key; no ETag precondition).
-- Intended for future **GET** catalog / orders read routes (#2713 and follow-ups): opaque strong ETags + `If-None-Match` / `If-Match` preconditions.
+- **Wired** to every Face A read: `GET /api/v1/catalog/products`, `GET /api/v1/catalog/products/{id}`, `GET /api/v1/orders/paid`.
+  - The validator is an opaque strong ETag — SHA-256 of the exact serialized JSON body, so it changes iff the representation changes. CORS headers are added afterwards and never feed it.
+  - `If-None-Match` uses weak comparison (`*` and `W/` accepted, per §13.1.2); a match short-circuits to a bodyless `304` repeating the same `ETag`.
+  - Responses carry `Cache-Control: private, no-cache`: per-API-key payloads stay out of shared caches, while clients can still store and revalidate.
+  - Cross-origin callers need the header plumbing in `cors.ts` — `If-None-Match` in `Access-Control-Allow-Headers`, `ETag` in `Access-Control-Expose-Headers`.
+  - Value for a PoS polling `/orders/paid` on a short interval: unchanged pages cost a `304` with no body.
+- **Not wired** to `POST /api/v1/orders` (batch write has its own `(apiKeyId, externalOrderId)` idempotency key; no ETag precondition, no `If-Match`).
+- `ifMatchSatisfied` / `parseIfMatch` stay available but unused: no Face A route accepts a write precondition today.
 
 ## Testing strategy
 
@@ -170,7 +176,7 @@ Helpers live in `src/lib/server/api/v1/validators.ts` (`buildStrongETag`, `parse
 
 - Redis / distributed rate-limit store
 - GraphQL / #2616 full headless cart (Face B — keep separate from Face A)
-- [Wiring ETag validators to write routes](#conditional-requests--etag-2713) (explicit non-goal; see #2713 for reads)
+- [Wiring ETag validators to write routes](#conditional-requests--etag-2713) (explicit non-goal; reads are wired, `POST /api/v1/orders` stays on idempotency keys)
 - Replacing `createOrder` internals
 - Force-stock / upsert semantics
 - Heavy OpenAPI codegen deps (hand-maintained `openapi.ts` + CDN Swagger UI instead)
