@@ -1,5 +1,7 @@
 import { collections } from '$lib/server/database';
 import type { Order } from '$lib/types/Order';
+import type { Currency } from '$lib/types/Currency';
+import { toCurrency } from '$lib/utils/toCurrency';
 import { amountToMinor } from './money';
 
 const MAX_LIMIT = 100;
@@ -57,7 +59,9 @@ function paidAmount(order: Order): { amountMinor: number; currency: string } | n
 		if (snap.currency === currency) {
 			return sum + snap.amount;
 		}
-		return sum + snap.amount;
+		// A payment snapshot may be in another currency than the order total; converting is the
+		// whole point of labelling amountPaid with the order currency.
+		return sum + toCurrency(currency as Currency, snap.amount, snap.currency as Currency);
 	}, 0);
 	return { amountMinor: amountToMinor(amount, currency), currency };
 }
@@ -128,17 +132,20 @@ export async function listPaidOrders(query: PaidOrdersQuery): Promise<{
 		.limit(limit + 1)
 		.toArray();
 
-	const mapped: PaidOrderDto[] = [];
-	for (const doc of docs) {
+	// Page on `docs` (the +1 over-fetch), never on the mapped array: toPaidOrderDto drops rows,
+	// and a single drop on a full page would zero out nextCursor and strand the poller.
+	const hasMore = docs.length > limit;
+	const pageDocs = hasMore ? docs.slice(0, limit) : docs;
+	const orders: PaidOrderDto[] = [];
+	for (const doc of pageDocs) {
 		const dto = toPaidOrderDto(doc as Order);
 		if (dto) {
-			mapped.push(dto);
+			orders.push(dto);
 		}
 	}
-	const hasMore = mapped.length > limit;
-	const pageDocs = hasMore ? mapped.slice(0, limit) : mapped;
-	const nextCursor = hasMore ? pageDocs[pageDocs.length - 1].orderId : null;
-	return { orders: pageDocs, page: { limit, nextCursor } };
+	// Cursor follows the last row actually read, so a dropped row is skipped, not replayed.
+	const nextCursor = hasMore ? String(pageDocs[pageDocs.length - 1]._id) : null;
+	return { orders, page: { limit, nextCursor } };
 }
 
 export type OrderReadDto = PaidOrderDto & { status: string };
@@ -189,9 +196,9 @@ export async function listOrders(query: PaidOrdersQuery): Promise<{
 		.limit(limit + 1)
 		.toArray();
 
-	const mapped = docs.map((doc) => toOrderReadDto(doc as Order));
-	const hasMore = mapped.length > limit;
-	const pageDocs = hasMore ? mapped.slice(0, limit) : mapped;
-	const nextCursor = hasMore ? pageDocs[pageDocs.length - 1].orderId : null;
-	return { orders: pageDocs, page: { limit, nextCursor } };
+	const hasMore = docs.length > limit;
+	const pageDocs = hasMore ? docs.slice(0, limit) : docs;
+	const orders = pageDocs.map((doc) => toOrderReadDto(doc as Order));
+	const nextCursor = hasMore ? String(pageDocs[pageDocs.length - 1]._id) : null;
+	return { orders, page: { limit, nextCursor } };
 }
