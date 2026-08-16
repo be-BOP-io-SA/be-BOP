@@ -83,6 +83,48 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		runtimeConfig.vatExempted = true;
 	}, 60_000);
 
+	it('does not settle a zero-base-price variation product as free', async () => {
+		// Base price 0, the paid part lives entirely in the chosen variation. Summing the base
+		// price alone would read this as a zero total, pick paymentMethod 'free', and mark the
+		// order paid without any money moving.
+		const variationProduct = {
+			...TEST_DIGITAL_PRODUCT,
+			_id: 'variation-zero-base',
+			alias: ['variation-zero-base'],
+			price: { amount: 0, currency: 'EUR' as const },
+			payWhatYouWant: false,
+			variations: [{ name: 'size', value: 'XL', price: 10 }]
+		};
+		await collections.products.insertOne(variationProduct);
+
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				{
+					externalOrderId: 'variation-not-free-1',
+					currency: 'EUR' as const,
+					items: [
+						{ productId: variationProduct._id, quantity: 1, chosenVariations: { size: 'XL' } }
+					],
+					payment: {
+						method: 'point-of-sale' as const,
+						status: 'paid' as const,
+						amountMinor: amountToMinor(10, 'EUR'),
+						currency: 'EUR' as const
+					}
+				}
+			]
+		});
+
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order).toBeTruthy();
+		expect(order?.payments[0].method).not.toBe('free');
+		expect(order?.payments[0].method).toBe('point-of-sale');
+		// The variation surcharge must reach the order total, not just the item line.
+		expect(order?.currencySnapshot.main.totalPrice.amount).toBe(10);
+		expect(order?.items[0].currencySnapshot.main.customPrice?.amount).toBe(10);
+	});
+
 	it('creates a paid order from lines and marks payment paid', async () => {
 		const res = await writeBatch({
 			apiKey,
