@@ -37,7 +37,12 @@ export function applyApiV1CorsHeaders(
 	}
 	headers.set('Access-Control-Allow-Origin', origin);
 	headers.set('Vary', 'Origin');
-	headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Api-Key');
+	headers.set(
+		'Access-Control-Allow-Headers',
+		'Authorization, Content-Type, X-Api-Key, If-None-Match'
+	);
+	// Without this a cross-origin caller cannot read the validator it needs to send back.
+	headers.set('Access-Control-Expose-Headers', 'ETag, Retry-After');
 	headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
 	headers.set('Access-Control-Max-Age', '86400');
 }

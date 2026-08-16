@@ -3,6 +3,7 @@ import {
 	buildStrongETag,
 	ifMatchSatisfied,
 	ifNoneMatchMatchesCurrent,
+	jsonWithETag,
 	parseEntityTag,
 	parseIfMatch,
 	parseIfNoneMatch,
@@ -86,5 +87,52 @@ describe('ifMatchSatisfied / ifNoneMatchMatchesCurrent', () => {
 		expect(ifNoneMatchMatchesCurrent(current, weakEquivalent)).toBe(true);
 		expect(ifNoneMatchMatchesCurrent(current, '*')).toBe(true);
 		expect(ifNoneMatchMatchesCurrent(current, '"nope"')).toBe(false);
+	});
+});
+
+describe('jsonWithETag', () => {
+	const body = { ok: true, products: [{ id: 'espresso' }] };
+	const get = (headers?: HeadersInit) =>
+		new Request('http://localhost/api/v1/catalog/products', { method: 'GET', headers });
+
+	it('returns 200 with a strong ETag of the serialized body', async () => {
+		const res = jsonWithETag(body, get());
+		expect(res.status).toBe(200);
+		expect(res.headers.get('content-type')).toBe('application/json');
+		expect(res.headers.get('cache-control')).toBe('private, no-cache');
+		expect(res.headers.get('etag')).toBe(buildStrongETag(JSON.stringify(body)));
+		await expect(res.json()).resolves.toEqual(body);
+	});
+
+	it('returns a bodyless 304 carrying the same validator when If-None-Match matches', async () => {
+		const etag = jsonWithETag(body, get()).headers.get('etag');
+		expect(etag).toBeTruthy();
+		const res = jsonWithETag(body, get({ 'if-none-match': etag as string }));
+		expect(res.status).toBe(304);
+		expect(res.headers.get('etag')).toBe(etag);
+		expect(res.headers.get('cache-control')).toBe('private, no-cache');
+		await expect(res.text()).resolves.toBe('');
+	});
+
+	it('honours weak comparison and * for If-None-Match', () => {
+		const etag = buildStrongETag(JSON.stringify(body));
+		expect(jsonWithETag(body, get({ 'if-none-match': `W/${etag}` })).status).toBe(304);
+		expect(jsonWithETag(body, get({ 'if-none-match': '*' })).status).toBe(304);
+		expect(jsonWithETag(body, get({ 'if-none-match': `"stale", ${etag}` })).status).toBe(304);
+	});
+
+	it('returns 200 when the representation changed or the header is unusable', () => {
+		const stale = buildStrongETag(JSON.stringify({ ok: true, products: [] }));
+		expect(jsonWithETag(body, get({ 'if-none-match': stale })).status).toBe(200);
+		expect(jsonWithETag(body, get({ 'if-none-match': 'garbage' })).status).toBe(200);
+		expect(jsonWithETag(body, get({ 'if-none-match': '' })).status).toBe(200);
+	});
+
+	it('keeps extra headers on both 200 and 304', () => {
+		const etag = buildStrongETag(JSON.stringify(body));
+		const ok = jsonWithETag(body, get(), { 'X-Test': 'a' });
+		const notModified = jsonWithETag(body, get({ 'if-none-match': etag }), { 'X-Test': 'a' });
+		expect(ok.headers.get('x-test')).toBe('a');
+		expect(notModified.headers.get('x-test')).toBe('a');
 	});
 });
