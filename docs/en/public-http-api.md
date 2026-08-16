@@ -55,6 +55,21 @@ See [v1 orders write](./api/v1-orders-write.md). Batch, idempotent on `(apiKey, 
 
 Only orders with at least one **paid** payment. Payload includes product lines, optional `uniqueKey` (from storefront `?key=`), and the amount **actually paid**. This replaces a push webhook for partners that prefer to pull (issue #2689). The product-level paid webhook (#2646) is unrelated and not sufficient for this flow.
 
+## Conditional GETs (ETag)
+
+Every read (`/catalog/products`, `/catalog/products/{id}`, `/orders/paid`) returns a strong `ETag` over the JSON body plus `Cache-Control: private, no-cache`. Replay that value in `If-None-Match` and an unchanged representation answers `304 Not Modified` with no body — the cheap way to poll paid orders on a short interval.
+
+```
+GET /api/v1/orders/paid?since=2026-08-16T00:00:00Z
+→ 200  ETag: "9f2b…"
+
+GET /api/v1/orders/paid?since=2026-08-16T00:00:00Z
+If-None-Match: "9f2b…"
+→ 304  ETag: "9f2b…"   (empty body)
+```
+
+`304` still counts against the rate limit. Browser callers read `ETag` through `Access-Control-Expose-Headers`. Writes take no ETag precondition: `POST /api/v1/orders` is idempotent on `(apiKey, externalOrderId)` instead.
+
 ## Storefront unique key (`?key=`)
 
 `/product/{slug}?key=kfdjsfeaz12845ND9xezj91820` preselects a unique artifact secret. It is stored on the cart line and copied onto the order. Pay-what-you-want and light variations coexist with this secret. This is **not** an API key; it is a customer-facing product identifier.

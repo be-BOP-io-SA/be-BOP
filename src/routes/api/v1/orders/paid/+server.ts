@@ -1,7 +1,8 @@
-import { json, type RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from '@sveltejs/kit';
 import { apiV1Handler, apiV1OptionsHandler } from '$lib/server/api/v1/handler';
 import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
+import { jsonWithETag } from '$lib/server/api/v1/validators';
 import { listPaidOrders } from '$lib/server/api/v1/orders/listPaid';
 import { checkRateLimit } from '$lib/server/rateLimit';
 
@@ -29,9 +30,12 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		cursor: url.searchParams.get('cursor') ?? undefined
 	});
 
-	return json({
-		ok: true,
-		orders: result.orders,
-		page: result.page
-	});
+	return jsonWithETag(
+		{
+			ok: true,
+			orders: result.orders,
+			page: result.page
+		},
+		event.request
+	);
 });
