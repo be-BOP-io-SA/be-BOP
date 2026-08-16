@@ -1,8 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
 import type { Order } from '$lib/types/Order';
-import { toPaidOrderDto } from './listPaid';
+import { exchangeRate } from '$lib/stores/exchangeRate';
+
+const find = vi.fn();
+vi.mock('$lib/server/database', () => ({
+	collections: { orders: { find: (...args: unknown[]) => find(...args) } }
+}));
+
+import { listPaidOrders, toPaidOrderDto } from './listPaid';
 import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
+
+/** Mongo cursor stub: find().sort().limit().toArray() */
+function cursorOf(docs: unknown[]) {
+	return { sort: () => ({ limit: () => ({ toArray: async () => docs }) }) };
+}
 
 function makeOrder(opts: { paid: boolean; uniqueKey?: string }): Order {
 	const amount = 100;
@@ -84,5 +96,53 @@ describe('toOrderReadDto', () => {
 		expect(dto.status).toBe('pending');
 		expect(dto.amountPaid).toEqual({ amountMinor: 0, currency: 'EUR' });
 		expect(dto.paidAt).toBeNull();
+	});
+});
+
+describe('paidAmount currency conversion', () => {
+	beforeEach(() => {
+		exchangeRate.set({ BTC: 1, EUR: 30_000, USD: 60_000, CHF: 30_000, SAT: 100_000_000, ZAR: 0 });
+	});
+
+	it('converts a payment made in another currency into the order currency', () => {
+		const order = makeOrder({ paid: true });
+		// 100 USD at 60k USD/BTC is 50 EUR at 30k EUR/BTC.
+		order.payments[0].currencySnapshot.main.price = { amount: 100, currency: 'USD' };
+		const dto = toPaidOrderDto(order);
+		expect(dto?.amountPaid).toEqual({ amountMinor: 5000, currency: 'EUR' });
+	});
+
+	it('leaves same-currency payments untouched', () => {
+		const dto = toPaidOrderDto(makeOrder({ paid: true }));
+		expect(dto?.amountPaid).toEqual({ amountMinor: 10000, currency: 'EUR' });
+	});
+});
+
+describe('listPaidOrders pagination', () => {
+	beforeEach(() => {
+		find.mockReset();
+	});
+
+	it('derives hasMore from the query result, not from the mapped rows', async () => {
+		// limit 2 over-fetches 3; the middle row is unmappable and gets dropped.
+		const page = [
+			{ ...makeOrder({ paid: true }), _id: 'ord_c' },
+			{ ...makeOrder({ paid: false }), _id: 'ord_b' },
+			{ ...makeOrder({ paid: true }), _id: 'ord_a' }
+		];
+		find.mockReturnValue(cursorOf(page));
+
+		const res = await listPaidOrders({ limit: '2' });
+		// One row dropped, so a single order comes back — but a third row exists behind it and
+		// the cursor must still advance, otherwise the poller stops with orders unread.
+		expect(res.orders).toHaveLength(1);
+		expect(res.page.nextCursor).toBe('ord_b');
+	});
+
+	it('closes the page when the query returns no extra row', async () => {
+		find.mockReturnValue(cursorOf([{ ...makeOrder({ paid: true }), _id: 'ord_c' }]));
+		const res = await listPaidOrders({ limit: '2' });
+		expect(res.orders).toHaveLength(1);
+		expect(res.page.nextCursor).toBeNull();
 	});
 });
