@@ -19,7 +19,11 @@ vi.mock('$lib/server/runtime-config', () => ({
 
 import { GET } from './+server';
 
-function call() {
+function call(opts?: { ifNoneMatch?: string }) {
+	const headers = new Headers();
+	if (opts?.ifNoneMatch) {
+		headers.set('if-none-match', opts.ifNoneMatch);
+	}
 	const locals = {
 		apiKey: {
 			_id: new ObjectId(),
@@ -31,7 +35,7 @@ function call() {
 	};
 	const url = 'http://localhost/api/v1/orders/paid';
 	return GET({
-		request: new Request(url, { method: 'GET' }),
+		request: new Request(url, { method: 'GET', headers }),
 		url: new URL(url),
 		locals
 	} as unknown as Parameters<typeof GET>[0]);
@@ -62,5 +66,29 @@ describe('GET /api/v1/orders/paid', () => {
 		const res = await call();
 		expect(res.status).toBe(200);
 		await expect(res.json()).resolves.toMatchObject({ ok: true, orders: [] });
+	});
+
+	it('exposes a strong ETag and answers 304 on a matching If-None-Match', async () => {
+		const first = await call();
+		const etag = first.headers.get('etag');
+		expect(etag).toMatch(/^"[a-f0-9]{64}"$/);
+		expect(first.headers.get('cache-control')).toBe('private, no-cache');
+
+		const second = await call({ ifNoneMatch: etag as string });
+		expect(second.status).toBe(304);
+		expect(second.headers.get('etag')).toBe(etag);
+		await expect(second.text()).resolves.toBe('');
+	});
+
+	it('returns a fresh 200 + new ETag once a new paid order lands', async () => {
+		const etag = (await call()).headers.get('etag');
+		listPaidOrders.mockResolvedValueOnce({
+			orders: [{ id: 'order-1', status: 'paid' }],
+			page: { limit: 20, nextCursor: null }
+		});
+		const res = await call({ ifNoneMatch: etag as string });
+		expect(res.status).toBe(200);
+		expect(res.headers.get('etag')).not.toBe(etag);
+		await expect(res.json()).resolves.toMatchObject({ orders: [{ id: 'order-1' }] });
 	});
 });

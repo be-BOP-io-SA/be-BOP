@@ -56,6 +56,33 @@ describe('buildOpenApiDocument', () => {
 		]);
 	});
 
+	it('documents conditional GETs (ETag / If-None-Match / 304) on reads only', () => {
+		type LooseOperation = {
+			parameters?: Array<{ name: string }>;
+			responses: Record<string, { headers?: Record<string, unknown>; content?: unknown }>;
+		};
+		const paths = buildOpenApiDocument().paths as unknown as Record<
+			string,
+			Record<string, LooseOperation>
+		>;
+		for (const path of [
+			'/api/v1/catalog/products',
+			'/api/v1/catalog/products/{id}',
+			'/api/v1/orders/paid'
+		]) {
+			const op = paths[path].get;
+			expect(op.parameters?.some((param) => param.name === 'If-None-Match')).toBe(true);
+			expect(op.responses['200'].headers?.ETag).toBeTruthy();
+			expect(op.responses['304']).toBeTruthy();
+			expect(op.responses['304'].headers?.ETag).toBeTruthy();
+			expect(op.responses['304'].content).toBeUndefined();
+		}
+		// Writes stay on idempotency keys: no validator, no precondition.
+		const post = paths['/api/v1/orders'].post;
+		expect(post.responses['304']).toBeUndefined();
+		expect(post.responses['200'].headers).toBeUndefined();
+	});
+
 	it('strongly recommends externalPaymentId on OrderPayment and shows it in example', () => {
 		const doc = buildOpenApiDocument();
 		const payment = doc.components.schemas.OrderPayment;

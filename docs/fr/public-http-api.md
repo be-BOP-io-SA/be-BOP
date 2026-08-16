@@ -55,6 +55,21 @@ Voir [écriture commandes v1](./api/v1-orders-write.md). Lot, idempotent sur `(a
 
 Uniquement les commandes avec au moins un paiement **paid**. Le payload contient les lignes produit, l’éventuel `uniqueKey` (vitrine `?key=`), et le montant **réellement payé**. Ce n’est pas un webhook (issue #2689). Le webhook produit #2646 ne suffit pas pour ce flux.
 
+## GET conditionnels (ETag)
+
+Chaque lecture (`/catalog/products`, `/catalog/products/{id}`, `/orders/paid`) renvoie un `ETag` fort calculé sur le corps JSON, plus `Cache-Control: private, no-cache`. Renvoyez cette valeur dans `If-None-Match` : si la représentation n’a pas changé, la réponse est un `304 Not Modified` sans corps — la façon économique de poller les commandes payées à intervalle court.
+
+```
+GET /api/v1/orders/paid?since=2026-08-16T00:00:00Z
+→ 200  ETag: "9f2b…"
+
+GET /api/v1/orders/paid?since=2026-08-16T00:00:00Z
+If-None-Match: "9f2b…"
+→ 304  ETag: "9f2b…"   (corps vide)
+```
+
+Un `304` compte quand même dans la limite de débit. Les appels navigateur lisent l’`ETag` via `Access-Control-Expose-Headers`. Les écritures n’acceptent aucune précondition ETag : `POST /api/v1/orders` reste idempotent sur `(apiKey, externalOrderId)`.
+
 ## Clé unique vitrine (`?key=`)
 
 `/product/{slug}?key=kfdjsfeaz12845ND9xezj91820` présélectionne un secret d’artefact unique. Il est stocké sur la ligne panier puis copié sur la commande. Le pay-what-you-want et les variations légères cohabitent avec ce secret. Ce n’est **pas** une clé API ; c’est un identifiant produit côté client.
