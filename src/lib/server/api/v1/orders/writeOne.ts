@@ -17,6 +17,7 @@ import {
 	type OrderPaymentWrite,
 	type OrderWriteCommand
 } from '$lib/server/api/v1/schemas/orders-write';
+import { checkProductVariationsIntegrity, productPriceWithVariations } from '$lib/types/Product';
 import { amountToMinor, minorToPrice } from './money';
 import { mapCustomFields } from './mapCustomFields';
 import { mapDomainError } from './mapErrors';
@@ -347,10 +348,21 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 		// createOrder → addOrderPayment rejects point-of-sale when the line total is 0.
 		// Missing-product stubs may be priced at customPrice||0 (M5). Prefer 'free' for
 		// zero-total paid so the domain paid pipeline runs (stock/webhooks/accounting).
-		const provisionalMajor = lines.reduce(
-			(sum, line) => sum + (line.customPrice?.amount ?? line.product.price.amount) * line.quantity,
-			0
-		);
+		// Mirror what createOrder will actually charge: it overwrites customPrice with
+		// productPriceWithVariations for variation products. Summing the base price here would
+		// read a 0-base-price product with a paid variation as a zero total, flip paymentMethod
+		// to 'free', and auto-settle an order nobody paid.
+		const provisionalMajor = lines.reduce((sum, line) => {
+			const product = line.product;
+			const hasPricedVariations =
+				!!product.variations?.length &&
+				!product.payWhatYouWant &&
+				checkProductVariationsIntegrity(product, line.chosenVariations);
+			const unit = hasPricedVariations
+				? productPriceWithVariations(product, line.chosenVariations)
+				: line.customPrice?.amount ?? product.price.amount;
+			return sum + unit * line.quantity;
+		}, 0);
 		const isZeroTotal = provisionalMajor <= 0;
 		const multi = payments.length > 1 && !isZeroTotal;
 
