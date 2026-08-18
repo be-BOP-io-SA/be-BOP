@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { buildOpenApiDocument } from './openapi';
 
+/**
+ * Asserting a path is *absent* means indexing with a key the literal type does not have, which
+ * svelte-check rejects. Widen to a record for those lookups only.
+ */
+function documentedPaths(doc: ReturnType<typeof buildOpenApiDocument>): Record<string, unknown> {
+	return doc.paths as unknown as Record<string, unknown>;
+}
+
 describe('buildOpenApiDocument', () => {
 	it('returns OpenAPI 3 document with openapi field and core paths', () => {
 		const doc = buildOpenApiDocument({ serverUrl: 'https://shop.example' });
@@ -8,7 +16,7 @@ describe('buildOpenApiDocument', () => {
 		expect(doc.info.version).toBe('v1');
 		expect(doc.paths['/api/v1/health']).toBeTruthy();
 		expect(doc.paths['/api/v1/orders']).toBeTruthy();
-		expect(doc.paths['/api/v1/catalog/products']).toBeUndefined();
+		expect(documentedPaths(doc)['/api/v1/catalog/products']).toBeUndefined();
 		expect(doc.paths['/api/v1/openapi.json']).toBeTruthy();
 		expect(doc.paths['/api/v1/docs']).toBeTruthy();
 		expect(doc.components.securitySchemes.BearerAuth).toBeTruthy();
@@ -36,7 +44,7 @@ describe('buildOpenApiDocument', () => {
 	it('does not document catalog stub or catalog:read scope', () => {
 		const doc = buildOpenApiDocument();
 		expect(doc.tags.some((t) => t.name === 'catalog')).toBe(false);
-		expect(doc.paths['/api/v1/catalog/products']).toBeUndefined();
+		expect(documentedPaths(doc)['/api/v1/catalog/products']).toBeUndefined();
 		expect(doc.info.description).not.toMatch(/catalog:read/);
 		expect(doc.components.securitySchemes.BearerAuth.description).toMatch(/orders:write/);
 		expect(doc.components.securitySchemes.BearerAuth.description).not.toMatch(/catalog:read/);
