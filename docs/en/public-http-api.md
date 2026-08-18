@@ -53,7 +53,7 @@ See [v1 orders write](./api/v1-orders-write.md). Batch, idempotent on `(apiKey, 
 
 `GET /api/v1/orders/paid?since=…&until=…&limit=20&cursor=…`
 
-Only orders with at least one **paid** payment. Payload includes product lines, optional `uniqueKey` (from storefront `?key=`), and the amount **actually paid**. This replaces a push webhook for partners that prefer to pull (issue #2689). The product-level paid webhook (#2646) is unrelated and not sufficient for this flow.
+Only orders with at least one **paid** payment. Payload includes product lines, optional `uniqueKey` (from storefront `?key=`), and the amount **actually paid**. This replaces a push webhook for partners that prefer to pull (issue #2689). The product-level paid webhook (#2646) now carries the same per-line detail, but it is a push scoped to one product's own lines — it cannot serve a poller that needs every paid order in the shop.
 
 ## Conditional GETs (ETag)
 

@@ -53,7 +53,7 @@ Voir [écriture commandes v1](./api/v1-orders-write.md). Lot, idempotent sur `(a
 
 `GET /api/v1/orders/paid?since=…&until=…&limit=20&cursor=…`
 
-Uniquement les commandes avec au moins un paiement **paid**. Le payload contient les lignes produit, l’éventuel `uniqueKey` (vitrine `?key=`), et le montant **réellement payé**. Ce n’est pas un webhook (issue #2689). Le webhook produit #2646 ne suffit pas pour ce flux.
+Uniquement les commandes avec au moins un paiement **paid**. Le payload contient les lignes produit, l’éventuel `uniqueKey` (vitrine `?key=`), et le montant **réellement payé**. Ce n’est pas un webhook (issue #2689). Le webhook produit #2646 transporte désormais le même détail par ligne, mais c'est un push limité aux lignes de son propre produit : il ne peut pas servir un poller qui veut toutes les commandes payées de la boutique.
 
 ## GET conditionnels (ETag)
 
