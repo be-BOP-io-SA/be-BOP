@@ -146,3 +146,24 @@ describe('listPaidOrders pagination', () => {
 		expect(res.page.nextCursor).toBeNull();
 	});
 });
+
+describe('toItemDto discounts', () => {
+	it('reports the discounted unit price, not the raw snapshot price', () => {
+		const order = makeOrder({ paid: true });
+		order.items[0].discountPercentage = 25;
+		const dto = toPaidOrderDto(order);
+		// 100 EUR snapshot, 25% off -> 75 EUR per unit.
+		expect(dto?.items[0].unitPrice).toEqual({ amountMinor: 7500, currency: 'EUR' });
+	});
+
+	it('exposes freeQuantity so charged units can be derived, and omits it when zero', () => {
+		const order = makeOrder({ paid: true });
+		order.items[0].quantity = 3;
+		order.items[0].freeQuantity = 1;
+		const dto = toPaidOrderDto(order);
+		expect(dto?.items[0].quantity).toBe(3);
+		expect(dto?.items[0].freeQuantity).toBe(1);
+
+		expect(toPaidOrderDto(makeOrder({ paid: true }))?.items[0].freeQuantity).toBeUndefined();
+	});
+});
