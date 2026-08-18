@@ -151,7 +151,7 @@ describe('handleApiV1', () => {
 		expect(res.status).toBe(200);
 	});
 
-	it('rate-limits missing clientIp under fixed unknown-ip bucket', async () => {
+	it('skips the IP bucket when clientIp is unknown instead of pooling every caller', async () => {
 		checkRateLimit.mockReturnValue({ limited: false });
 		const resolve = vi.fn(async () => new Response('ok'));
 		const event = makeEvent({
@@ -163,7 +163,9 @@ describe('handleApiV1', () => {
 			throw new Error('no address');
 		};
 		await handleApiV1({ event: event as never, resolve: resolve as never });
-		expect(checkRateLimit).toHaveBeenCalledWith('unknown-ip', 'api.v1.ip', 120, { minutes: 1 });
+		// A shared 'unknown-ip' bucket would 429 the whole API shop-wide on a misconfigured proxy.
+		// The route below still requires an API key and applies its own per-key limit.
+		expect(checkRateLimit).not.toHaveBeenCalled();
 		expect(resolve).toHaveBeenCalled();
 	});
 	it('keeps GET /api/v1/openapi.json up during maintenance and skips IP RL', async () => {
