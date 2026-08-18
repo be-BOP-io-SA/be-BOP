@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { useI18n } from '$lib/i18n.js';
 	import { groupScopesByCategory } from '$lib/types/ApiV1';
 
@@ -8,6 +9,16 @@
 	const { t } = useI18n();
 
 	let expiresLocal = '';
+	/**
+	 * Browser UTC offset for the no-JS fallback. Filled on mount, never server-rendered: evaluating
+	 * getTimezoneOffset() during SSR sends the *server* offset and expires the key at the wrong
+	 * instant for any admin in another zone.
+	 */
+	let expiresOffsetMinutes = '';
+
+	onMount(() => {
+		expiresOffsetMinutes = String(new Date().getTimezoneOffset());
+	});
 
 	let selectedScopes: Record<string, boolean> = Object.fromEntries(
 		data.scopes.map((scope: string) => [scope, false])
@@ -151,12 +162,15 @@
 				bind:value={expiresLocal}
 			/>
 			<input type="hidden" name="expiresAt" value="" />
-			<input type="hidden" name="expiresAtOffsetMinutes" value={new Date().getTimezoneOffset()} />
+			<input type="hidden" name="expiresAtOffsetMinutes" bind:value={expiresOffsetMinutes} />
 			<span class="text-sm opacity-70">{t('admin.apiKeys.expiresAtHint')}</span>
 		</label>
 
 		{#if form?.error}
 			<p class="text-red-600">{t('admin.apiKeys.createError')}</p>
+			{#each form.error.formErrors ?? [] as formError}
+				<p class="text-red-600 text-sm">{formError}</p>
+			{/each}
 		{/if}
 
 		<input

@@ -50,6 +50,15 @@ function mockCookies(initial?: Record<string, string>) {
 	return { cookies, jar };
 }
 
+/** Always-valid expiry, so the suite does not rot the day a hard-coded date goes past. */
+function futureIso(): string {
+	return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function pastIso(): string {
+	return new Date(Date.now() - 60_000).toISOString();
+}
+
 describe('api key create PRG + reveal one-shot', () => {
 	beforeEach(() => {
 		createApiKey.mockReset();
@@ -79,7 +88,7 @@ describe('api key create PRG + reveal one-shot', () => {
 		const body = new FormData();
 		body.set('name', 'desk');
 		body.append('scopes', 'orders:write');
-		body.set('expiresAt', '2026-12-01T10:00:00.000Z');
+		body.set('expiresAt', futureIso());
 
 		let thrown: unknown;
 		try {
@@ -99,6 +108,26 @@ describe('api key create PRG + reveal one-shot', () => {
 		const red = thrown as { status: number; location: string };
 		expect(red.status).toBe(303);
 		expect(red.location).toBe('/admin/api-keys/new/reveal');
+	});
+
+	it('rejects an expiry in the past instead of minting a dead-on-arrival key', async () => {
+		const { cookies, jar } = mockCookies();
+		const body = new FormData();
+		body.set('name', 'desk');
+		body.append('scopes', 'orders:write');
+		body.set('expiresAt', pastIso());
+
+		const res = (await actions.createApiKey({
+			request: new Request('http://localhost/admin/api-keys/new', { method: 'POST', body }),
+			locals: { user: { roleId: SUPER_ADMIN_ROLE_ID, _id: new ObjectId() } },
+			cookies
+		} as never)) as { status: number; data: { error: { formErrors: string[] } } };
+
+		expect(res.status).toBe(400);
+		expect(res.data.error.formErrors[0]).toMatch(/future/i);
+		// No secret was generated, so nothing to reveal.
+		expect(createApiKey).not.toHaveBeenCalled();
+		expect(jar.has(API_KEY_REVEAL_COOKIE)).toBe(false);
 	});
 
 	it('reveal load consumes cookie once; second load reports already shown (no second create)', async () => {
