@@ -1,5 +1,5 @@
 import { collections } from '$lib/server/database';
-import type { Order } from '$lib/types/Order';
+import { orderIndividualItemPrice, type Order } from '$lib/types/Order';
 import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { amountToMinor } from './money';
@@ -20,7 +20,10 @@ export type PaidOrderItemDto = {
 	quantity: number;
 	uniqueKey?: string;
 	chosenVariations?: Record<string, string>;
+	/** Per-unit price after any line discount. Units actually charged = quantity - freeQuantity. */
 	unitPrice: { amountMinor: number; currency: string };
+	/** Units given away on the line (POS offer). Omitted when zero. */
+	freeQuantity?: number;
 };
 
 export type PaidOrderDto = {
@@ -68,16 +71,20 @@ function paidAmount(order: Order): { amountMinor: number; currency: string } | n
 
 function toItemDto(item: Order['items'][number]): PaidOrderItemDto {
 	const currency = item.currencySnapshot.main.price.currency;
-	const unit = item.currencySnapshot.main.customPrice ?? item.currencySnapshot.main.price;
+	// Raw snapshot prices ignore discountPercentage / freeQuantity, so sum(items) drifted above
+	// amountPaid on any discounted line. Report what was actually charged instead.
+	const unitAmount = orderIndividualItemPrice(item, 'main');
+	const freeQuantity = item.freeQuantity ?? 0;
 	return {
 		productId: item.product._id,
 		name: item.product.name,
 		quantity: item.quantity,
 		...(item.uniqueKey && { uniqueKey: item.uniqueKey }),
 		...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
+		...(freeQuantity > 0 && { freeQuantity }),
 		unitPrice: {
-			amountMinor: amountToMinor(unit.amount, unit.currency ?? currency),
-			currency: unit.currency ?? currency
+			amountMinor: amountToMinor(unitAmount, currency),
+			currency
 		}
 	};
 }
