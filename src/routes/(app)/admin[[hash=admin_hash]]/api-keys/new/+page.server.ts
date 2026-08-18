@@ -31,6 +31,13 @@ export const actions: Actions = {
 		if (!expiresParsed.ok) {
 			return fail(400, { error: { formErrors: [expiresParsed.message], fieldErrors: {} } });
 		}
+		// A past date parses fine, then isApiKeyUsable rejects the key on first use: the admin walks
+		// away from the reveal page holding a secret that never worked.
+		if (expiresParsed.value && expiresParsed.value.getTime() <= Date.now()) {
+			return fail(400, {
+				error: { formErrors: ['Expiration date must be in the future'], fieldErrors: {} }
+			});
+		}
 
 		const parsed = z
 			.object({
