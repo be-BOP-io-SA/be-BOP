@@ -53,8 +53,13 @@ export const handleApiV1: Handle = async ({ event, resolve }) => {
 
 	// IP safety net: skip public GETs and CORS preflights so monitors / docs / PoS preflights
 	// are not starved by the write-path bucket.
-	if (!isPublicReadGet && !isOptions) {
-		const limit = checkRateLimit(event.locals.clientIp ?? 'unknown-ip', 'api.v1.ip', 120, {
+	//
+	// Skipped as well when getClientAddress() gave us nothing (untrusted proxy setup): bucketing
+	// every caller under one 'unknown-ip' key would 429 the whole API after 120 req/min shop-wide.
+	// Nothing is left unprotected — every route below requires an API key and carries its own
+	// per-key limit; this bucket only exists to blunt pre-auth floods from a single address.
+	if (!isPublicReadGet && !isOptions && event.locals.clientIp) {
+		const limit = checkRateLimit(event.locals.clientIp, 'api.v1.ip', 120, {
 			minutes: 1
 		});
 		if (limit.limited) {

@@ -653,8 +653,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						quantity: { type: 'integer' },
 						uniqueKey: { type: 'string' },
 						chosenVariations: { type: 'object', additionalProperties: { type: 'string' } },
+						freeQuantity: {
+							type: 'integer',
+							description: 'Units given away on this line (POS offer). Absent when zero.'
+						},
 						unitPrice: {
 							type: 'object',
+							description:
+								'Per-unit price after any line discount. Charged units = quantity - freeQuantity.',
 							required: ['amountMinor', 'currency'],
 							properties: {
 								amountMinor: { $ref: '#/components/schemas/AmountMinor' },
