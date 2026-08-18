@@ -64,6 +64,14 @@ You can also set the following environment variables to allow SSO. Set your redi
 - `TWITTER_ID`
 - `TWITTER_SECRET`
 
+### Public HTTP API v1 (order write)
+
+No environment variable. The browser Origin allowlist lives in the database and is edited in Admin → API Keys → CORS origins (super-admin). Never use `*`; an empty allowlist denies browser cross-origin calls.
+
+See `docs/en/api/v1-orders-write.md`.
+
+Mongo indexes for `apiKeys` (and the rest of the schema) are created on application boot via `createIndexes()`.
+
 ## Production
 
 ### Running

@@ -331,6 +331,14 @@ const baseConfig = {
 		}
 	},
 	hideFromSearchEngines: false,
+	/**
+	 * Public HTTP API v1 runtime settings (admin-editable).
+	 * corsOrigins: browser Origin allowlist for /api/v1 (never "*").
+	 * Empty = no cross-origin access. Persisted in DB; edited in Admin -> API Keys.
+	 */
+	apiV1: {
+		corsOrigins: [] as string[]
+	},
 	telemetry: null as null | {
 		enabled: boolean;
 		nextPrompt: Date | null;

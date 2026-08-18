@@ -152,7 +152,7 @@
 	{#if mode === 'percentage'}
 		<fieldset class="form-label">
 			<legend>Discount channel application</legend>
-			{#each [{ value: 'web', label: 'Web' }, { value: 'web-pos', label: 'Web with PoS privilege (/cart)' }, { value: 'pos-touch', label: 'Bar-restaurant PoS (/pos/touch)' }, { value: 'nostr-bot', label: 'Nostr-bot' }] as channel}
+			{#each [{ value: 'web', label: 'Web' }, { value: 'web-pos', label: 'Web with PoS privilege (/cart)' }, { value: 'pos-touch', label: 'Bar-restaurant PoS (/pos/touch)' }, { value: 'nostr-bot', label: 'Nostr-bot' }, { value: 'api', label: 'Public API (/api/v1)' }] as channel}
 				<label class="checkbox-label">
 					<input
 						type="checkbox"
