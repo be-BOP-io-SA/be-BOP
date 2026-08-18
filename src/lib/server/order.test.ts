@@ -5,6 +5,7 @@ import {
 	TEST_DIGITAL_PRODUCT,
 	TEST_DIGITAL_PRODUCT_UNLIMITED,
 	TEST_DISCOUNTED_PRODUCT,
+	TEST_PHYSICAL_PRODUCT,
 	TEST_SUBSCRIPTION_PRODUCT
 } from './seed/product';
 import { addOrderPayment, createOrder, lastInvoiceNumber, onOrderPayment } from './orders';
@@ -18,7 +19,8 @@ describe('order', () => {
 			TEST_DIGITAL_PRODUCT,
 			TEST_DIGITAL_PRODUCT_UNLIMITED,
 			TEST_SUBSCRIPTION_PRODUCT,
-			TEST_DISCOUNTED_PRODUCT
+			TEST_DISCOUNTED_PRODUCT,
+			TEST_PHYSICAL_PRODUCT
 		]);
 	});
 
@@ -240,6 +242,57 @@ describe('order', () => {
 		order1 = await collections.orders.findOne({ _id: order1Id });
 		expect(await lastInvoiceNumber()).toBe(3);
 		expect(order1?.payments[1].invoice?.number).toBe(3);
+	});
+
+	it('allows onLocation createOrder without shippingAddress for a shippable product', async () => {
+		const orderId = await createOrder(
+			[
+				{
+					product: TEST_PHYSICAL_PRODUCT,
+					quantity: 1
+				}
+			],
+			'point-of-sale',
+			{
+				locale: 'en',
+				user: {
+					sessionId: 'test-session-id',
+					userHasPosOptions: true
+				},
+				shippingAddress: null,
+				onLocation: true,
+				userVatCountry: 'FR'
+			}
+		);
+
+		const order = await collections.orders.findOne({ _id: orderId });
+		expect(order).toBeTruthy();
+		expect(order?.onLocation).toBe(true);
+		expect(order?.shippingAddress).toBeUndefined();
+		expect(order?.items[0]?.product.shipping).toBe(true);
+	});
+
+	it('still requires shippingAddress for shippable products when not onLocation', async () => {
+		await expect(
+			createOrder(
+				[
+					{
+						product: TEST_PHYSICAL_PRODUCT,
+						quantity: 1
+					}
+				],
+				'point-of-sale',
+				{
+					locale: 'en',
+					user: {
+						sessionId: 'test-session-id',
+						userHasPosOptions: true
+					},
+					shippingAddress: null,
+					userVatCountry: 'FR'
+				}
+			)
+		).rejects.toMatchObject({ status: 400, body: { message: 'Shipping address is required' } });
 	});
 
 	it('should allow free method payment when only item is fully discounted due to an active subscription', async () => {

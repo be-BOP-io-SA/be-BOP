@@ -3,7 +3,7 @@ import type { CountryAlpha2 } from './Country';
 import type { Product } from './Product';
 import type { Timestamps } from './Timestamps';
 
-export type DiscountChannel = 'web' | 'web-pos' | 'pos-touch' | 'nostr-bot';
+export type DiscountChannel = 'web' | 'web-pos' | 'pos-touch' | 'nostr-bot' | 'api';
 
 export interface ProductCombination {
 	products: Array<{ productId: string; quantity: number }>;
