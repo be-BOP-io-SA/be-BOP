@@ -698,11 +698,24 @@ export async function createOrder(
 		onLocation?: boolean;
 		paymentTimeOut?: number;
 		posSubtype?: string;
+		/** Optional Face A / PoS stable payment id persisted on the first payment row. */
+		externalPaymentId?: string;
 		customPaymentMethodId?: string;
 		peopleCountFromPosUi?: number;
 		session?: ClientSession;
 		promoCode?: string;
 		channel?: import('$lib/types/Discount').DiscountChannel;
+		/**
+		 * When true, skip shop auto percentage discounts (Face A / external PoS already priced lines).
+		 * Manual `params.discount` (POS employee discount) is unaffected.
+		 */
+		skipAutoDiscounts?: boolean;
+		/** Public API idempotence (issue 2687) — set before insert so sparse unique index fires atomically. */
+		externalOrderId?: string;
+		externalSourceApiKeyId?: ObjectId;
+		orderLabelIds?: string[];
+		/** When provided, used as Order.createdAt at insert instead of new Date(). */
+		createdAt?: Date;
 	}
 ): Promise<Order['_id']> {
 	// Every channel creates orders through here, so none can forget a product's restriction.
@@ -819,9 +832,10 @@ export async function createOrder(
 	};
 
 	if (!isDigital) {
-		if (!params.shippingAddress) {
+		// onLocation (Face A PoS / pickup): do not require shippingAddress even for shippable SKUs.
+		if (!params.shippingAddress && !params.onLocation) {
 			throw error(400, 'Shipping address is required');
-		} else {
+		} else if (params.shippingAddress) {
 			const { country } = params.shippingAddress;
 			if (!params.reasonOfferDeliveryFees) {
 				shippingPrice.amount = computeDeliveryFees(
@@ -855,34 +869,38 @@ export async function createOrder(
 			paidUntil: { $gt: new Date() }
 		})
 		.toArray();
-	// Pick the best applicable auto discount based on the order's conditions
-	const activeDiscounts = await getActivePercentageDiscounts();
-	const bestAutoDiscount = selectBestDiscount(activeDiscounts, items, {
-		userSubscriptionIds: paidSubs.map((s) => s.productId),
-		promoCode: params.promoCode,
-		channel: params.channel,
-		paymentMethod: paymentMethod ?? undefined,
-		deliveryCountry: params.userVatCountry,
-		billingCountry: params.billingAddress?.country,
-		userContactAddresses: collectUserAddresses(params.user),
-		cartItems: items.map((i) => ({
-			productId: i.product._id,
-			quantity: i.quantity,
-			tagIds: i.product.tagIds
-		})),
-		isLoggedIn: isAuthenticated(params.user)
-	});
+	// Pick the best applicable auto discount based on the order's conditions.
+	// Face A / external API passes skipAutoDiscounts so PoS-priced totals are not rewritten.
+	let usedSubIds: string[] = [];
+	if (!params.skipAutoDiscounts) {
+		const activeDiscounts = await getActivePercentageDiscounts();
+		const bestAutoDiscount = selectBestDiscount(activeDiscounts, items, {
+			userSubscriptionIds: paidSubs.map((s) => s.productId),
+			promoCode: params.promoCode,
+			channel: params.channel,
+			paymentMethod: paymentMethod ?? undefined,
+			deliveryCountry: params.userVatCountry,
+			billingCountry: params.billingAddress?.country,
+			userContactAddresses: collectUserAddresses(params.user),
+			cartItems: items.map((i) => ({
+				productId: i.product._id,
+				quantity: i.quantity,
+				tagIds: i.product.tagIds
+			})),
+			isLoggedIn: isAuthenticated(params.user)
+		});
 
-	const bestDiscountSubIds = bestAutoDiscount?.discount.subscriptionIds;
-	const usedSubIds = bestDiscountSubIds?.length
-		? paidSubs
-				.filter((sub) => bestDiscountSubIds.includes(sub.productId))
-				.map((sub) => sub.productId)
-		: [];
+		const bestDiscountSubIds = bestAutoDiscount?.discount.subscriptionIds;
+		usedSubIds = bestDiscountSubIds?.length
+			? paidSubs
+					.filter((sub) => bestDiscountSubIds.includes(sub.productId))
+					.map((sub) => sub.productId)
+			: [];
 
-	for (const item of items) {
-		// POS per-item manual discount has highest priority — preserve it via ??=
-		item.discountPercentage ??= bestAutoDiscount?.discountByProduct.get(item.product._id);
+		for (const item of items) {
+			// POS per-item manual discount has highest priority — preserve it via ??=
+			item.discountPercentage ??= bestAutoDiscount?.discountByProduct.get(item.product._id);
+		}
 	}
 
 	// Subscription pricing schedule: override the billed amount with the current phase price
@@ -1446,7 +1464,7 @@ export async function createOrder(
 			locale: params.locale,
 			number: orderNumber,
 			bebopVersion: PUBLIC_VERSION,
-			createdAt: new Date(),
+			createdAt: params.createdAt ?? new Date(),
 			updatedAt: new Date(),
 			status: 'pending',
 			sellerIdentity: runtimeConfig.sellerIdentity,
@@ -1784,7 +1802,12 @@ export async function createOrder(
 			}),
 			...(params.peopleCountFromPosUi !== undefined && {
 				peopleCountFromPosUi: params.peopleCountFromPosUi
-			})
+			}),
+			...(params.externalOrderId && { externalOrderId: params.externalOrderId }),
+			...(params.externalSourceApiKeyId && {
+				externalSourceApiKeyId: params.externalSourceApiKeyId
+			}),
+			...(params.orderLabelIds?.length && { orderLabelIds: params.orderLabelIds })
 		};
 		await collections.orders.insertOne(order, { session });
 
@@ -1803,6 +1826,7 @@ export async function createOrder(
 					expiresAt,
 					...(paymentMethod === 'point-of-sale' &&
 						params.posSubtype && { posSubtype: params.posSubtype }),
+					...(params.externalPaymentId && { externalPaymentId: params.externalPaymentId }),
 					...(paymentMethod === 'custom' &&
 						params.customPaymentMethodId && {
 							customPaymentMethodId: params.customPaymentMethodId
@@ -1994,6 +2018,7 @@ export async function addOrderPayment(
 		expiresAt?: Date | null;
 		session?: ClientSession;
 		posSubtype?: string;
+		externalPaymentId?: string;
 		customPaymentMethodId?: string;
 		ignorePendingPayments?: boolean;
 	}
@@ -2064,6 +2089,7 @@ export async function addOrderPayment(
 		method: paymentMethod,
 		price: toPay,
 		...(paymentMethod === 'point-of-sale' && opts?.posSubtype && { posSubtype: opts.posSubtype }),
+		...(opts?.externalPaymentId && { externalPaymentId: opts.externalPaymentId }),
 		...(customPaymentMethod && { customPaymentMethod }),
 		currencySnapshot: paymentPriceSnapshot(bookCurrencies, priceToPay),
 		...(expiresAt && { expiresAt }),
