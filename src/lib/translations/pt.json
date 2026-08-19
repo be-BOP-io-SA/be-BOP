@@ -3060,8 +3060,10 @@
 			"timezone": "Fuso horário: {timeZone}",
 			"selectDateRange": "Selecione as datas de início e fim (clique duas vezes para selecionar um intervalo)",
 			"selectedDate": "Selecionado: {date}",
+			"selectedRange": "Selecionado: de {start} a {end} ({days} dias)",
 			"selectedRangeWithAvailable": "{totalDays} dias selecionados, {availableDays} dias disponíveis: {dates}",
 			"noAvailableDays": "Nenhum dia disponível no intervalo selecionado",
+			"maxRangeExceeded": "A seleção máxima é de {days} dias",
 			"maxRangeInfo": "Período máximo de reserva: {days} dias",
 			"sameDay": {
 				"disabled": "As reservas para hoje não estão disponíveis para este produto.",
@@ -3105,6 +3107,17 @@
 			"week": "Renova a cada semana",
 			"month": "Renova a cada mês",
 			"year": "Renova a cada ano"
+		},
+		"pricingSchedule": {
+			"intro": "Esta assinatura tem várias fases de faturação:",
+			"then": "depois"
+		},
+		"pricingScheduleUnit": {
+			"hour": { "one": "hora", "other": "horas" },
+			"day": { "one": "dia", "other": "dias" },
+			"week": { "one": "semana", "other": "semanas" },
+			"month": { "one": "mês", "other": "meses" },
+			"year": { "one": "ano", "other": "anos" }
 		},
 		"type": {
 			"deposit": "Sob depósito",
@@ -3201,6 +3214,24 @@
 		"lastPayment": "Último pagamento",
 		"listTitle": "As suas subscrições",
 		"noSubscriptions": "Ainda não tem subscrições.",
+		"nextBilling": "Próxima faturação: {amount} {currency}",
+		"canRenewFrom": "Poderá renovar a partir de <0></0>.",
+		"amountFree": "Grátis",
+		"upcomingPhases": {
+			"title": "Próximas fases",
+			"range": "de {start} a {end}",
+			"after": "a partir de {start}"
+		},
+		"orderHistory": {
+			"title": "Histórico de encomendas",
+			"downloadInvoice": "Transferir fatura"
+		},
+		"payment": {
+			"currentMethod": "A renovação utilizará {method}",
+			"previousUnavailable": "O método de pagamento anterior ({method}) não pode ser utilizado para a próxima renovação. Escolha outro abaixo.",
+			"chooseMethod": "Método de pagamento",
+			"change": "Alterar método de pagamento"
+		},
 		"singleTitle": "Subscrição #{number}",
 		"status": {
 			"active": "ativo",

@@ -3060,8 +3060,10 @@
 			"timezone": "Fuso orario: {timeZone}",
 			"selectDateRange": "Seleziona le date di inizio e fine (clicca due volte per selezionare un intervallo)",
 			"selectedDate": "Selezionato: {date}",
+			"selectedRange": "Selezionato: dal {start} al {end} ({days} giorni)",
 			"selectedRangeWithAvailable": "{totalDays} giorni selezionati, {availableDays} giorni disponibili: {dates}",
 			"noAvailableDays": "Nessun giorno disponibile nell'intervallo selezionato",
+			"maxRangeExceeded": "La selezione massima è di {days} giorni",
 			"maxRangeInfo": "Periodo massimo di prenotazione: {days} giorni",
 			"sameDay": {
 				"disabled": "Le prenotazioni per oggi non sono disponibili per questo prodotto.",
@@ -3105,6 +3107,17 @@
 			"week": "Si rinnova ogni settimana",
 			"month": "Si rinnova ogni mese",
 			"year": "Si rinnova ogni anno"
+		},
+		"pricingSchedule": {
+			"intro": "Questo abbonamento prevede più fasi di fatturazione:",
+			"then": "poi"
+		},
+		"pricingScheduleUnit": {
+			"hour": { "one": "ora", "other": "ore" },
+			"day": { "one": "giorno", "other": "giorni" },
+			"week": { "one": "settimana", "other": "settimane" },
+			"month": { "one": "mese", "other": "mesi" },
+			"year": { "one": "anno", "other": "anni" }
 		},
 		"type": {
 			"deposit": "In deposito",
@@ -3201,6 +3214,24 @@
 		"lastPayment": "Ultimo pagamento",
 		"listTitle": "I tuoi abbonamenti",
 		"noSubscriptions": "Non hai ancora abbonamenti.",
+		"nextBilling": "Prossima fatturazione: {amount} {currency}",
+		"canRenewFrom": "Potrai rinnovare a partire dal <0></0>.",
+		"amountFree": "Gratuito",
+		"upcomingPhases": {
+			"title": "Fasi successive",
+			"range": "dal {start} al {end}",
+			"after": "a partire dal {start}"
+		},
+		"orderHistory": {
+			"title": "Cronologia ordini",
+			"downloadInvoice": "Scarica fattura"
+		},
+		"payment": {
+			"currentMethod": "Il rinnovo utilizzerà {method}",
+			"previousUnavailable": "Il metodo di pagamento precedente ({method}) non può essere utilizzato per il prossimo rinnovo. Scegline un altro qui sotto.",
+			"chooseMethod": "Metodo di pagamento",
+			"change": "Cambia metodo di pagamento"
+		},
 		"singleTitle": "Abbonamento #{number}",
 		"status": {
 			"active": "attivo",

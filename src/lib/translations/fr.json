@@ -3060,8 +3060,10 @@
 			"timezone": "Fuseau horaire: {timeZone}",
 			"selectDateRange": "Sélectionnez les dates de début et de fin (cliquez deux fois pour sélectionner une plage)",
 			"selectedDate": "Sélectionné: {date}",
+			"selectedRange": "Sélectionné: du {start} au {end} ({days} jours)",
 			"selectedRangeWithAvailable": "{totalDays} jours sélectionnés, {availableDays} jours disponibles: {dates}",
 			"noAvailableDays": "Aucun jour disponible dans la plage sélectionnée",
+			"maxRangeExceeded": "La sélection maximale est de {days} jours",
 			"maxRangeInfo": "Période de réservation maximale: {days} jours",
 			"sameDay": {
 				"disabled": "Les réservations pour aujourd'hui ne sont pas disponibles pour ce produit.",
