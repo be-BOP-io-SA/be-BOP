@@ -2,7 +2,6 @@
 	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n';
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
-	import { upperFirst } from '$lib/utils/upperFirst.js';
 	import { addDays } from 'date-fns';
 	import { MultiSelect } from 'svelte-multiselect';
 	import ProductCombinationRow from '$lib/components/ProductCombinationRow.svelte';
@@ -52,7 +51,11 @@
 		{t('admin.discount.mode')}
 		<select name="mode" class="form-input" bind:value={mode}>
 			{#each ['percentage', 'freeProducts'] as modeDiscount}
-				<option value={modeDiscount}>{upperFirst(modeDiscount)}</option>
+				<option value={modeDiscount}
+					>{modeDiscount === 'percentage'
+						? t('admin.discount.modePercentage')
+						: t('admin.discount.modeFreeProducts')}</option
+				>
 			{/each}
 		</select>
 	</label>
@@ -124,7 +127,7 @@
 
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label"
-		>{t('admin.discount.requiredSubscription')} (optional)
+		>{t('admin.discount.requiredSubscription')}
 
 		<MultiSelect
 			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
