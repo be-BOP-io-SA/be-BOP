@@ -125,16 +125,18 @@
 		</fieldset>
 	{/if}
 
-	<!-- svelte-ignore a11y-label-has-associated-control -->
-	<label class="form-label"
-		>{t('admin.discount.requiredSubscription')}
+	{#if subscriptions.length}
+		<!-- svelte-ignore a11y-label-has-associated-control -->
+		<label class="form-label"
+			>{t('admin.discount.requiredSubscription')}
 
-		<MultiSelect
-			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
-			name="subscriptionIds"
-			options={subscriptions.map((p) => ({ label: p.name, value: p._id }))}
-		/>
-	</label>
+			<MultiSelect
+				--sms-options-bg="var(--body-mainPlan-backgroundColor)"
+				name="subscriptionIds"
+				options={subscriptions.map((p) => ({ label: p.name, value: p._id }))}
+			/>
+		</label>
+	{/if}
 
 	{#if mode === 'percentage'}
 		<label class="form-label">

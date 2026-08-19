@@ -170,19 +170,21 @@
 		</fieldset>
 	{/if}
 
-	<!-- svelte-ignore a11y-label-has-associated-control -->
-	<label class="form-label"
-		>{t('admin.discount.requiredSubscription')}
-		<MultiSelect
-			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
-			name="subscriptionIds"
-			options={subscriptions.map((p) => ({ label: p.name, value: p._id }))}
-			selected={(data.discount.subscriptionIds ?? []).map((p) => ({
-				value: p,
-				label: subscriptions.find((p2) => p2._id === p)?.name ?? p
-			}))}
-		/>
-	</label>
+	{#if subscriptions.length || data.discount.subscriptionIds?.length}
+		<!-- svelte-ignore a11y-label-has-associated-control -->
+		<label class="form-label"
+			>{t('admin.discount.requiredSubscription')}
+			<MultiSelect
+				--sms-options-bg="var(--body-mainPlan-backgroundColor)"
+				name="subscriptionIds"
+				options={subscriptions.map((p) => ({ label: p.name, value: p._id }))}
+				selected={(data.discount.subscriptionIds ?? []).map((p) => ({
+					value: p,
+					label: subscriptions.find((p2) => p2._id === p)?.name ?? p
+				}))}
+			/>
+		</label>
+	{/if}
 
 	{#if mode === 'percentage'}
 		<label class="form-label">
