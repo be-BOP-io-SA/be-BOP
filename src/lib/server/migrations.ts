@@ -14,6 +14,8 @@ import {
 	isUntouchedDefaultCmsPage
 } from '$lib/server/defaultCmsPages';
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
+import { defaultLanguageText } from './i18n-defaults';
+import { languages, type LanguageKey } from '$lib/translations';
 
 async function ensureDefaultSearchlist(session?: ClientSession): Promise<void> {
 	const existing = await collections.searchlists.findOne({ _id: 'default' }, { session });
@@ -698,11 +700,12 @@ export const migrations = [
 				return;
 			}
 
+			const language = await defaultLanguage(session);
 			const defaultSubtype: PosPaymentSubtype = {
 				_id: new ObjectId(),
 				slug: 'cash',
-				name: 'Cash',
-				description: 'Cash payments',
+				name: defaultLanguageText(language, 'admin.posPayments.defaultCashName'),
+				description: defaultLanguageText(language, 'admin.posPayments.defaultCashDescription'),
 				sortOrder: 1,
 				createdAt: new Date(),
 				updatedAt: new Date()
@@ -1010,8 +1013,37 @@ export const migrations = [
 				);
 			}
 		}
+	},
+	{
+		_id: new ObjectId('6b2a91c4e92e590e85af1120'),
+		name: 'Translate the untouched default PoS cash subtype (issue #878)',
+		run: async (session: ClientSession) => {
+			const language = await defaultLanguage(session);
+			const name = defaultLanguageText(language, 'admin.posPayments.defaultCashName');
+			const description = defaultLanguageText(language, 'admin.posPayments.defaultCashDescription');
+			if (name === 'Cash' && description === 'Cash payments') {
+				return;
+			}
+			// Only the untouched English default is rewritten: a shop that renamed its cash
+			// subtype keeps its own wording.
+			await collections.posPaymentSubtypes.updateOne(
+				{ slug: 'cash', name: 'Cash', description: 'Cash payments' },
+				{ $set: { name, description, updatedAt: new Date() } },
+				{ session }
+			);
+		}
 	}
 ];
+
+/**
+ * Migrations cannot import runtimeConfig: runtime-config.ts imports runMigrations, which
+ * would make the cycle. Read the shop language straight from its collection instead.
+ */
+async function defaultLanguage(session: ClientSession): Promise<LanguageKey> {
+	const doc = await collections.runtimeConfig.findOne({ _id: 'defaultLanguage' }, { session });
+	const value = doc?.data;
+	return typeof value === 'string' && value in languages ? (value as LanguageKey) : 'en';
+}
 
 export async function runMigrations() {
 	if (env.VITEST) {

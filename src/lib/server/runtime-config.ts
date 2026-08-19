@@ -50,6 +50,7 @@ import { merge } from '$lib/utils/merge';
 import { typedEntries } from '$lib/utils/typedEntries';
 import { deepEquals } from '$lib/utils/deep-equals';
 import { deepClone } from '$lib/utils/deep-clone';
+import { defaultLanguageText } from './i18n-defaults';
 
 /**
  * Shape of a seeded per-locale layout override. The link arrays are typed as optional so
@@ -873,8 +874,14 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 			.insertOne({
 				_id: new ObjectId(),
 				slug: 'cash',
-				name: 'Cash',
-				description: 'Cash payments',
+				name: defaultLanguageText(
+					runtimeConfig.defaultLanguage,
+					'admin.posPayments.defaultCashName'
+				),
+				description: defaultLanguageText(
+					runtimeConfig.defaultLanguage,
+					'admin.posPayments.defaultCashDescription'
+				),
 				sortOrder: 1,
 				createdAt: new Date(),
 				updatedAt: new Date()

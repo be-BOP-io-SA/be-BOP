@@ -26,11 +26,13 @@ export const load = async ({}) => {
 		collections.tagGroups.find({}).sort({ order: 1 }).toArray()
 	]);
 	const supportedTapToPayProviders = ['not-used', 'stripe'] as const;
-	const tapToPayProviders: { provider: string; displayName: string; available: boolean }[] =
+	// displayName is only for brand names, which stay literal in every locale. UI copy like
+	// "Not used" has no displayName and is resolved client-side through t() (issue #878).
+	const tapToPayProviders: { provider: string; displayName?: string; available: boolean }[] =
 		supportedTapToPayProviders.map((provider) => {
 			switch (provider) {
 				case 'not-used':
-					return { provider, displayName: 'Not used', available: true };
+					return { provider, available: true };
 				case 'stripe':
 					return {
 						provider,

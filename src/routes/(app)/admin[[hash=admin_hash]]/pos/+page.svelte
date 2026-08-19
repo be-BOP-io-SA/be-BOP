@@ -201,7 +201,7 @@
 					selected={data.tapToPay.currentProcessor === provider.provider}
 					disabled={!provider.available}
 				>
-					{provider.displayName}
+					{provider.displayName ?? t('admin.pos.tapToPayNotUsed')}
 				</option>
 			{/each}
 		</select>
