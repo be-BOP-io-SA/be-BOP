@@ -170,6 +170,8 @@
 				"s3-storage": "Almacenamiento S3",
 				"bitcoin-core-node": "Nodo Bitcoin Core",
 				"lightning-lnd-node": "Nodo LND Lightning",
+				"custom-payment-methods": "Métodos de pago personalizados",
+				"tags": "Etiquetas",
 				"pos-payments": "Pagos TPV",
 				"orders": "Pedidos",
 				"reporting": "Informes",
@@ -1583,6 +1585,17 @@
 			"productsPerPageHint": "Establecer en 0 para el cálculo automático según el tamaño de la pantalla",
 			"mobileBreakpoint": "Punto de ruptura móvil (px)",
 			"mobileBreakpointHint": "Ancho de pantalla por debajo del cual se usa el diseño móvil (500-1500, por defecto: 1024)",
+			"tabs": {
+				"groupNamePlaceholder": "Nombre del grupo",
+				"newGroupName": "Nuevo grupo",
+				"addGroup": "Agregar un grupo",
+				"deleteGroup": "Eliminar el grupo",
+				"labelPlaceholder": "Etiqueta",
+				"addTab": "Agregar una pestaña",
+				"deleteTab": "Eliminar",
+				"moveUp": "Subir",
+				"moveDown": "Bajar"
+			},
 			"tabsManagement": "Gestión de pestañas"
 		},
 		"slider": {

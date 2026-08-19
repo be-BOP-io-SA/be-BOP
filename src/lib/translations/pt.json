@@ -170,6 +170,8 @@
 				"s3-storage": "Armazenamento S3",
 				"bitcoin-core-node": "Nó Bitcoin Core",
 				"lightning-lnd-node": "Nó LND Lightning",
+				"custom-payment-methods": "Métodos de pagamento personalizados",
+				"tags": "Etiquetas",
 				"pos-payments": "Pagamentos PoS",
 				"orders": "Encomendas",
 				"reporting": "Relatórios",
@@ -1583,6 +1585,17 @@
 			"productsPerPageHint": "Defina como 0 para cálculo automático com base no tamanho do ecrã",
 			"mobileBreakpoint": "Ponto de quebra móvel (px)",
 			"mobileBreakpointHint": "Largura de ecrã abaixo da qual é utilizado o layout móvel (500-1500, padrão: 1024)",
+			"tabs": {
+				"groupNamePlaceholder": "Nome do grupo",
+				"newGroupName": "Novo grupo",
+				"addGroup": "Adicionar um grupo",
+				"deleteGroup": "Eliminar o grupo",
+				"labelPlaceholder": "Rótulo",
+				"addTab": "Adicionar um separador",
+				"deleteTab": "Eliminar",
+				"moveUp": "Subir",
+				"moveDown": "Descer"
+			},
 			"tabsManagement": "Gestão de separadores"
 		},
 		"slider": {

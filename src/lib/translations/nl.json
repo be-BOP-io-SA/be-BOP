@@ -170,6 +170,8 @@
 				"s3-storage": "S3-opslag",
 				"bitcoin-core-node": "Bitcoin-core-node",
 				"lightning-lnd-node": "Lightning-LND-node",
+				"custom-payment-methods": "Aangepaste betaalmethoden",
+				"tags": "Tags",
 				"pos-payments": "POS-betalingen",
 				"orders": "Bestellingen",
 				"reporting": "Rapportage",
@@ -1583,6 +1585,17 @@
 			"productsPerPageHint": "Stel in op 0 voor automatische berekening op basis van schermgrootte",
 			"mobileBreakpoint": "Mobiel breekpunt (px)",
 			"mobileBreakpointHint": "Schermbreedte waaronder de mobiele lay-out wordt gebruikt (500-1500, standaard: 1024)",
+			"tabs": {
+				"groupNamePlaceholder": "Groepsnaam",
+				"newGroupName": "Nieuwe groep",
+				"addGroup": "Groep toevoegen",
+				"deleteGroup": "Groep verwijderen",
+				"labelPlaceholder": "Naam",
+				"addTab": "Tabblad toevoegen",
+				"deleteTab": "Verwijderen",
+				"moveUp": "Omhoog",
+				"moveDown": "Omlaag"
+			},
 			"tabsManagement": "Tabbladbeheer"
 		},
 		"slider": {
