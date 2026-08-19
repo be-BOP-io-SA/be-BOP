@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { languageNames, type LanguageKey } from '$lib/translations';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 
@@ -8,7 +11,7 @@
 
 <form method="post" class="contents">
 	<label class="form-label">
-		Select Language
+		{t('admin.gallery.selectLanguage')}
 
 		<select bind:value={language} name="language" class="form-input">
 			{#each data.locales as locale}
@@ -17,9 +20,9 @@
 		</select>
 	</label>
 
-	<h3 class="text-xl">Principal Gallery</h3>
+	<h3 class="text-xl">{t('admin.gallery.principalGallery')}</h3>
 	<label class="form-label">
-		Gallery title
+		{t('admin.gallery.galleryTitle')}
 		<input
 			class="form-input"
 			type="text"
@@ -29,7 +32,7 @@
 		/>
 	</label>
 	<label class="form-label">
-		Gallery content
+		{t('admin.gallery.galleryContent')}
 		<textarea
 			name="principal.content"
 			placeholder={data.gallery.principal.content}
@@ -42,7 +45,7 @@
 	</label>
 	<div class="flex gap-4">
 		<label class="form-label">
-			Text
+			{t('admin.gallery.text')}
 			<input
 				type="text"
 				name="principal.cta.label"
@@ -54,7 +57,7 @@
 			/>
 		</label>
 		<label class="form-label">
-			Url
+			{t('admin.gallery.url')}
 			<input
 				type="text"
 				name="principal.cta.href"
@@ -73,14 +76,14 @@
 				checked={data.gallery.principal.cta.openNewTab ??
 					data.gallery.translations?.[language]?.principal?.cta?.openNewTab}
 			/>
-			Open in new tab
+			{t('admin.gallery.openInNewTab')}
 		</label>
 	</div>
 
-	<h3 class="text-xl">Secondary Gallery</h3>
+	<h3 class="text-xl">{t('admin.gallery.secondaryGallery')}</h3>
 	{#each [0, 1, 2] as i}
 		<label class="form-label">
-			Gallery subtitle {i + 1}
+			{t('admin.gallery.gallerySubtitle', { number: i + 1 })}
 			<input
 				class="form-input"
 				type="text"
@@ -91,7 +94,7 @@
 			/>
 		</label>
 		<label class="form-label">
-			Gallery subcontent {i + 1}
+			{t('admin.gallery.gallerySubcontent', { number: i + 1 })}
 			<textarea
 				name="secondary[{i}].content"
 				cols="30"
@@ -111,7 +114,7 @@
 
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.gallery.text')}
 				<input
 					type="text"
 					name="secondary[{i}].cta.label"
@@ -123,7 +126,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.gallery.url')}
 				<input
 					type="text"
 					name="secondary[{i}].cta.href"
@@ -142,10 +145,10 @@
 					checked={data.gallery.secondary[i]?.cta.openNewTab ??
 						data.gallery.translations?.[language]?.secondary?.[i]?.cta?.openNewTab}
 				/>
-				Open in new tab
+				{t('admin.gallery.openInNewTab')}
 			</label>
 		</div>
 	{/each}
 
-	<button class="btn btn-black self-start" type="submit">Save</button>
+	<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>
 </form>

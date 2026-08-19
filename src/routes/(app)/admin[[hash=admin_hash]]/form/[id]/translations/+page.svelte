@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { languageNames, type LanguageKey } from '$lib/translations/index.js';
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage.js';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
 
 	let language: LanguageKey = 'fr';
+
+	const { t } = useI18n();
 </script>
 
 <form method="post" class="contents">
 	<label class="form-label">
-		Select Language
+		{t('admin.form.selectLanguage')}
 
 		<select bind:value={language} name="language" class="form-input">
 			{#each data.locales as locale}
@@ -19,7 +22,7 @@
 	</label>
 	{#if data.contactForm.disclaimer}
 		<label class="form-label">
-			Disclaimer label
+			{t('admin.form.disclaimerLabel')}
 			<input
 				class="form-input block"
 				type="text"
@@ -29,7 +32,7 @@
 				value={data.contactForm.translations?.[language]?.disclaimer?.label ?? ''}
 			/>
 		</label>
-		Disclaimer Content
+		{t('admin.form.disclaimerContent')}
 		<label class="form-label">
 			<textarea
 				name="disclaimer.content"
@@ -42,7 +45,7 @@
 			/>
 		</label>
 		<label class="form-label">
-			Disclaimer checkbox label
+			{t('admin.form.disclaimerCheckboxLabel')}
 			<input
 				class="form-input block"
 				type="text"
@@ -54,7 +57,7 @@
 		</label>
 	{/if}
 	<label class="form-label">
-		Subject
+		{t('admin.form.subject')}
 		<input
 			class="form-input block"
 			type="text"
@@ -63,7 +66,7 @@
 			value={data.contactForm.translations?.[language]?.subject ?? ''}
 		/>
 	</label>
-	Content
+	{t('admin.form.content')}
 
 	<textarea
 		name="content"
@@ -75,5 +78,5 @@
 		class="form-input block w-full"
 	/>
 
-	<button class="btn btn-black self-start" type="submit">Save</button>
+	<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>
 </form>

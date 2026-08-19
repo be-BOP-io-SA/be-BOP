@@ -1,10 +1,16 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
-<h1 class="text-3xl">List of file with no associated product</h1>
+<h1 class="text-3xl">{t('admin.digitalFile.listTitle')}</h1>
 
-<a href="{data.adminPrefix}/digital-file/new" class="block underline">New file</a>
+<a href="{data.adminPrefix}/digital-file/new" class="block underline"
+	>{t('admin.digitalFile.newFile')}</a
+>
 
 <div class="flex flex-row flex-wrap gap-6">
 	{#each data.files as file}

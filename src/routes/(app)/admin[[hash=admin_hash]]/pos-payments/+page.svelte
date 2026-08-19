@@ -5,6 +5,9 @@
 	import { generateId } from '$lib/utils/generateId';
 	import IconUpArrow from '~icons/ant-design/arrow-up-outlined';
 	import IconDownArrow from '~icons/ant-design/arrow-down-outlined';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data: PageData;
 	export let form: ActionData;
@@ -60,10 +63,10 @@
 	}
 </script>
 
-<h1 class="text-3xl mb-4">PoS Payment Subtypes</h1>
+<h1 class="text-3xl mb-4">{t('admin.posPayments.title')}</h1>
 
 <p class="text-gray-600 mb-6">
-	Configure different types of point-of-sale payments (cash, check, terminals, etc.)
+	{t('admin.posPayments.description')}
 </p>
 
 {#if form?.error}
@@ -74,17 +77,17 @@
 
 {#if form?.success}
 	<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-		Operation successful!
+		{t('admin.posPayments.operationSuccessful')}
 	</div>
 {/if}
 
 <div class="flex flex-col gap-6">
 	<!-- Existing Subtypes List -->
 	<section>
-		<h2 class="text-2xl mb-4">Existing Subtypes</h2>
+		<h2 class="text-2xl mb-4">{t('admin.posPayments.existingSubtypes')}</h2>
 
 		{#if sortedSubtypes.length === 0}
-			<p class="text-gray-500">No subtypes configured yet. Create your first one below!</p>
+			<p class="text-gray-500">{t('admin.posPayments.noSubtypes')}</p>
 		{:else}
 			<div class="flex flex-col gap-4">
 				{#each sortedSubtypes as subtype, i (subtype._id)}
@@ -97,14 +100,19 @@
 							<div class="flex items-center gap-2">
 								<h3 class="font-bold text-lg">{subtype.name}</h3>
 								{#if subtype.slug === 'cash'}
-									<span class="text-xs bg-blue-600 text-white px-2 py-1 rounded">System</span>
+									<span class="text-xs bg-blue-600 text-white px-2 py-1 rounded"
+										>{t('admin.posPayments.systemBadge')}</span
+									>
 								{/if}
 								{#if subtype.disabled}
-									<span class="text-xs bg-gray-500 text-white px-2 py-1 rounded">Disabled</span>
+									<span class="text-xs bg-gray-500 text-white px-2 py-1 rounded"
+										>{t('admin.posPayments.disabledBadge')}</span
+									>
 								{/if}
 							</div>
 							<p class="text-sm text-gray-600">
-								Slug: <code class="bg-gray-100 px-1 rounded">{subtype.slug}</code>
+								{t('admin.posPayments.slugPrefix')}
+								<code class="bg-gray-100 px-1 rounded">{subtype.slug}</code>
 							</p>
 
 							{#if subtype.description}
@@ -113,12 +121,19 @@
 
 							{#if subtype.tapToPay}
 								<div class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-									<p class="text-sm font-semibold text-blue-900">🔗 Tap-to-pay enabled</p>
+									<p class="text-sm font-semibold text-blue-900">
+										{t('admin.posPayments.tapToPayEnabled')}
+									</p>
 									<p class="text-sm text-blue-800">
-										Processor: <strong>{subtype.tapToPay.processor}</strong>
+										{t('admin.posPayments.processorLabel')}
+										<strong>{subtype.tapToPay.processor}</strong>
 									</p>
 									{#if subtype.tapToPay.onActivationUrl}
-										<p class="text-sm text-blue-800">URL: {subtype.tapToPay.onActivationUrl}</p>
+										<p class="text-sm text-blue-800">
+											{t('admin.posPayments.tapToPayUrlLabel', {
+												url: subtype.tapToPay.onActivationUrl
+											})}
+										</p>
 									{/if}
 								</div>
 							{/if}
@@ -137,7 +152,7 @@
 										urlInput = subtype.tapToPay?.onActivationUrl || '';
 									}}
 								>
-									Edit
+									{t('admin.posPayments.edit')}
 								</button>
 
 								<form
@@ -158,12 +173,12 @@
 										class="btn btn-sm btn-danger"
 										disabled={subtype.slug === 'cash'}
 										on:click={(e) => {
-											if (!confirm(`Delete "${subtype.name}"?\n\nThis action cannot be undone.`)) {
+											if (!confirm(t('admin.posPayments.deleteConfirm', { name: subtype.name }))) {
 												e.preventDefault();
 											}
 										}}
 									>
-										Delete
+										{t('admin.posPayments.delete')}
 									</button>
 								</form>
 							</div>
@@ -173,7 +188,7 @@
 									type="button"
 									class="btn btn-sm"
 									class:invisible={i === 0}
-									title="Move up"
+									title={t('admin.posPayments.moveUp')}
 									on:click={() => moveUp(i)}
 								>
 									<IconUpArrow />
@@ -182,7 +197,7 @@
 									type="button"
 									class="btn btn-sm"
 									class:invisible={i === sortedSubtypes.length - 1}
-									title="Move down"
+									title={t('admin.posPayments.moveDown')}
 									on:click={() => moveDown(i)}
 								>
 									<IconDownArrow />
@@ -199,7 +214,7 @@
 	{#if !showCreateForm && !editingSubtype}
 		<div class="flex gap-2 self-start">
 			<button type="button" class="btn btn-black" on:click={() => (showCreateForm = true)}>
-				+ Create New Subtype
+				{t('admin.posPayments.createNewSubtype')}
 			</button>
 			<form
 				method="post"
@@ -217,7 +232,7 @@
 					<input type="hidden" name="ids" value={subtype._id.toString()} />
 				{/each}
 				<button type="submit" class="btn btn-black" disabled={!orderChanged}>
-					Save sorting order
+					{t('admin.posPayments.saveSortingOrder')}
 				</button>
 			</form>
 		</div>
@@ -240,7 +255,9 @@
 			}}
 		>
 			<h3 class="text-xl font-bold">
-				{editingSubtype ? `Edit "${editingSubtype.name}"` : 'Create New Subtype'}
+				{editingSubtype
+					? t('admin.posPayments.editSubtypeTitle', { name: editingSubtype.name })
+					: t('admin.posPayments.createSubtypeTitle')}
 			</h3>
 
 			{#if editingSubtype}
@@ -249,13 +266,13 @@
 
 			<!-- Display Name -->
 			<label class="form-label">
-				Display Name <span class="text-red-500">*</span>
+				{t('admin.posPayments.displayNameLabel')} <span class="text-red-500">*</span>
 				<input
 					type="text"
 					name="name"
 					class="form-input"
 					bind:value={nameInput}
-					placeholder="e.g. Cash, Check, External POS Terminal"
+					placeholder={t('admin.posPayments.namePlaceholder')}
 					required
 					disabled={editingSubtype?.slug === 'cash'}
 				/>
@@ -264,50 +281,50 @@
 			<!-- Slug (only for create) -->
 			{#if !editingSubtype}
 				<label class="form-label">
-					Slug <span class="text-red-500">*</span>
+					{t('admin.posPayments.slugFieldLabel')} <span class="text-red-500">*</span>
 					<input
 						type="text"
 						name="slug"
 						class="form-input"
 						bind:value={slugInput}
-						placeholder="e.g. cash, check, external-tpe"
+						placeholder={t('admin.posPayments.slugPlaceholder')}
 						pattern="[a-z0-9-]+"
-						title="Lowercase letters, numbers, and hyphens only"
+						title={t('admin.posPayments.slugPatternTitle')}
 						required
 					/>
 					<p class="text-xs text-gray-500 mt-1">
-						Unique identifier (lowercase, alphanumeric, hyphens). Cannot be changed after creation.
+						{t('admin.posPayments.slugHelp')}
 					</p>
 				</label>
 			{:else}
 				<div class="form-label">
-					Slug: <code class="bg-gray-200 px-2 py-1 rounded">{editingSubtype.slug}</code>
-					<p class="text-xs text-gray-500">Cannot be changed</p>
+					{t('admin.posPayments.slugPrefix')}
+					<code class="bg-gray-200 px-2 py-1 rounded">{editingSubtype.slug}</code>
+					<p class="text-xs text-gray-500">{t('admin.posPayments.slugCannotChange')}</p>
 				</div>
 			{/if}
 
 			<!-- Description -->
 			<label class="form-label">
-				Description (optional)
+				{t('admin.posPayments.descriptionLabel')}
 				<textarea
 					name="description"
 					class="form-input"
 					rows="2"
-					placeholder="Optional description for admin reference"
+					placeholder={t('admin.posPayments.descriptionPlaceholder')}
 					disabled={editingSubtype?.slug === 'cash'}>{editingSubtype?.description || ''}</textarea
 				>
 			</label>
 
 			<!-- Tap-to-pay Configuration -->
 			<hr class="my-2" />
-			<h4 class="text-lg font-semibold">Tap-to-pay Configuration (optional)</h4>
+			<h4 class="text-lg font-semibold">{t('admin.posPayments.tapToPayConfigTitle')}</h4>
 			<p class="text-sm text-gray-600">
-				Configure automatic payment reconciliation via external POS terminals (Stripe Terminal,
-				SumUp, etc.)
+				{t('admin.posPayments.tapToPayConfigDescription')}
 			</p>
 
 			<label class="form-label">
-				Tap-to-pay Processor
+				{t('admin.posPayments.tapToPayProcessorLabel')}
 				<select
 					name="tapToPayProcessor"
 					class="form-input"
@@ -319,32 +336,31 @@
 					}}
 					disabled={editingSubtype?.slug === 'cash'}
 				>
-					<option value="">Not used</option>
+					<option value="">{t('admin.posPayments.notUsed')}</option>
 					{#each data.availableProcessors as proc}
 						<option value={proc.processor} disabled={!proc.available}>
 							{proc.displayName}
-							{#if !proc.available}(not configured){/if}
+							{#if !proc.available}{t('admin.posPayments.notConfigured')}{/if}
 						</option>
 					{/each}
 				</select>
 				<p class="text-xs text-gray-500 mt-1">
-					Select a payment processor for automatic reconciliation. Configure processors in Payment
-					Settings.
+					{t('admin.posPayments.tapToPayProcessorHelp')}
 				</p>
 			</label>
 
 			<label class="form-label">
-				Tap-to-pay URL (optional)
+				{t('admin.posPayments.tapToPayUrlFieldLabel')}
 				<input
 					type="url"
 					name="tapToPayUrl"
 					class="form-input"
 					bind:value={urlInput}
-					placeholder="e.g. https://open.paynow-app.com"
+					placeholder={t('admin.posPayments.tapToPayUrlPlaceholder')}
 					disabled={tapToPayUrlDisabled || editingSubtype?.slug === 'cash'}
 				/>
 				<p class="text-xs text-gray-500 mt-1">
-					Deep link to open the payment terminal app (e.g. Paynow for Stripe)
+					{t('admin.posPayments.tapToPayUrlHelp')}
 				</p>
 			</label>
 
@@ -358,7 +374,7 @@
 						value="true"
 						checked={editingSubtype.paymentDetailRequired}
 					/>
-					<span>Make payment detail mandatory</span>
+					<span>{t('admin.posPayments.paymentDetailRequiredLabel')}</span>
 				</label>
 			{/if}
 
@@ -372,17 +388,19 @@
 						value="true"
 						checked={editingSubtype.disabled}
 					/>
-					<span>Disable this subtype (hide from selection)</span>
+					<span>{t('admin.posPayments.disableSubtypeLabel')}</span>
 				</label>
 			{/if}
 
 			<!-- Action Buttons -->
 			<div class="flex gap-2 mt-4">
 				<button type="submit" class="btn btn-black">
-					{editingSubtype ? 'Update' : 'Create'}
+					{editingSubtype ? t('admin.action.update') : t('admin.posPayments.create')}
 				</button>
 
-				<button type="button" class="btn" on:click={resetForm}> Cancel </button>
+				<button type="button" class="btn" on:click={resetForm}>
+					{t('admin.posPayments.cancel')}
+				</button>
 			</div>
 		</form>
 	{/if}

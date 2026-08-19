@@ -50,6 +50,7 @@ import { merge } from '$lib/utils/merge';
 import { typedEntries } from '$lib/utils/typedEntries';
 import { deepEquals } from '$lib/utils/deep-equals';
 import { deepClone } from '$lib/utils/deep-clone';
+import { defaultLanguageText } from './i18n-defaults';
 
 /**
  * Shape of a seeded per-locale layout override. The link arrays are typed as optional so
@@ -60,6 +61,9 @@ type LayoutLinkOverride = {
 	topbarLinks?: Array<{ id: string; label: string; href: string }>;
 	navbarLinks?: Array<{ id: string; label: string; href: string }>;
 	footerLinks?: Array<{ id: string; label: string; href: string }>;
+	// Per-locale website title (the browser `<title>`). Seeded so the title translates with the
+	// language out of the box; the storefront resolves it in `(app... root)/+layout.server.ts`.
+	websiteTitle?: string;
 };
 
 const baseConfig = {
@@ -360,7 +364,7 @@ const baseConfig = {
 	displayNewsletterCommercialProspection: false,
 	cartMaxSeparateItems: null as null | number,
 	physicalCartMinAmount: null as null | number,
-	websiteTitle: 'Mon be-BOP - sur le web',
+	websiteTitle: 'Ma boutique be-BOP',
 	websiteShortDescription: 'La description de mon be-BOP',
 	smtp: {
 		host: '',
@@ -561,6 +565,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 	 * is the French content carried by `topbarLinks` / `navbarLinks` / `footerLinks` above.
 	 */
 	'translations.en.config': {
+		websiteTitle: 'My be-BOP shop',
 		topbarLinks: [
 			{ label: 'Sign in', href: '/login', id: 'session' },
 			{ label: 'Search', href: '/searchlist/search', id: 'search' }
@@ -575,6 +580,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.de.config': {
+		websiteTitle: 'Mein be-BOP-Shop',
 		topbarLinks: [
 			{ label: 'Anmelden', href: '/login', id: 'session' },
 			{ label: 'Suche', href: '/searchlist/search', id: 'search' }
@@ -589,6 +595,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.es-sv.config': {
+		websiteTitle: 'Mi tienda be-BOP',
 		topbarLinks: [
 			{ label: 'Iniciar sesión', href: '/login', id: 'session' },
 			{ label: 'Buscar', href: '/searchlist/search', id: 'search' }
@@ -603,6 +610,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.it.config': {
+		websiteTitle: 'Il mio negozio be-BOP',
 		topbarLinks: [
 			{ label: 'Accedi', href: '/login', id: 'session' },
 			{ label: 'Cerca', href: '/searchlist/search', id: 'search' }
@@ -617,6 +625,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.nl.config': {
+		websiteTitle: 'Mijn be-BOP-winkel',
 		topbarLinks: [
 			{ label: 'Inloggen', href: '/login', id: 'session' },
 			{ label: 'Zoeken', href: '/searchlist/search', id: 'search' }
@@ -631,6 +640,7 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 		]
 	} satisfies Required<LayoutLinkOverride> as LayoutLinkOverride,
 	'translations.pt.config': {
+		websiteTitle: 'A minha loja be-BOP',
 		topbarLinks: [
 			{ label: 'Entrar', href: '/login', id: 'session' },
 			{ label: 'Pesquisar', href: '/searchlist/search', id: 'search' }
@@ -872,8 +882,14 @@ async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<
 			.insertOne({
 				_id: new ObjectId(),
 				slug: 'cash',
-				name: 'Cash',
-				description: 'Cash payments',
+				name: defaultLanguageText(
+					runtimeConfig.defaultLanguage,
+					'admin.posPayments.defaultCashName'
+				),
+				description: defaultLanguageText(
+					runtimeConfig.defaultLanguage,
+					'admin.posPayments.defaultCashDescription'
+				),
 				sortOrder: 1,
 				createdAt: new Date(),
 				updatedAt: new Date()

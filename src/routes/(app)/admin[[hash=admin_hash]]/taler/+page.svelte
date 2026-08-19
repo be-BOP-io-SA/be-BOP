@@ -3,6 +3,9 @@
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 
@@ -21,7 +24,7 @@
 
 <form class="contents" method="post" action="?/save">
 	<label class="form-label">
-		Backend URL
+		{t('admin.taler.backendUrl')}
 		<input
 			class="form-input"
 			type="text"
@@ -32,7 +35,7 @@
 	</label>
 
 	<label class="form-label">
-		Backend API Key
+		{t('admin.taler.backendApiKey')}
 		<input
 			class="form-input"
 			type="password"
@@ -43,7 +46,7 @@
 	</label>
 
 	<label class="form-label">
-		<CurrencyLabel label="Currency" />
+		<CurrencyLabel label={t('admin.taler.currency')} />
 		<Select
 			items={currenciesWithoutCrypto}
 			searchable={true}
@@ -55,8 +58,8 @@
 	</label>
 
 	<div class="flex justify-between">
-		<button class="btn btn-black" type="submit">Save</button>
-		<button class="btn btn-red" type="submit" form="delete-form">Reset</button>
+		<button class="btn btn-black" type="submit">{t('admin.action.save')}</button>
+		<button class="btn btn-red" type="submit" form="delete-form">{t('admin.action.reset')}</button>
 	</div>
 </form>
 <form class="contents" method="post" action="?/delete" id="delete-form"></form>

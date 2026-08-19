@@ -4,6 +4,9 @@
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 
@@ -25,7 +28,7 @@
 		const blocks = new Set(thresholds.thresholds.map((t) => t.confirmationBlocks));
 
 		if (blocks.size !== thresholds.thresholds.length) {
-			alert('You cannot have two thresholds with the same number of confirmation blocks');
+			alert(t('admin.config.duplicateConfirmationBlocksError'));
 			event.preventDefault();
 			return;
 		}
@@ -34,9 +37,7 @@
 
 		for (let i = 0; i < thresholds.thresholds.length - 1; i++) {
 			if (thresholds.thresholds[i].maxAmount > thresholds.thresholds[i + 1].minAmount) {
-				alert(
-					'You cannot have two thresholds with overlapping amounts. Please make sure that the maximum amount of a threshold is lower than or equal to the minimum amount of the next threshold.'
-				);
+				alert(t('admin.config.overlappingThresholdsError'));
 				event.preventDefault();
 				return;
 			}
@@ -45,11 +46,11 @@
 </script>
 
 <main class="max-w-7xl mx-auto px-6 w-full flex flex-col gap-4">
-	<h1 class="text-3xl">Manage confirmation thresholds</h1>
+	<h1 class="text-3xl">{t('admin.config.manageConfirmationThresholds')}</h1>
 
 	<form method="post" class="flex flex-col gap-4" on:submit={checkTresholds}>
 		<label class="form-label">
-			<CurrencyLabel label="Currency" />
+			<CurrencyLabel label={t('admin.config.currency')} />
 			<Select
 				items={allCurrenciesOptions}
 				searchable={true}
@@ -61,7 +62,7 @@
 		</label>
 
 		<label class="form-label">
-			Default confirmation blocks
+			{t('admin.config.defaultConfirmationBlocks')}
 			<input
 				type="number"
 				class="form-input"
@@ -71,9 +72,13 @@
 		</label>
 
 		<div class="grid grid-cols-[auto_auto_auto_min-content] gap-2">
-			<span class="form-label">Minimum amount ({thresholds.currency})</span>
-			<span class="form-label">Maximum amount ({thresholds.currency})</span>
-			<span class="form-label">Confirmation blocks</span>
+			<span class="form-label"
+				>{t('admin.config.minimumAmount', { currency: thresholds.currency })}</span
+			>
+			<span class="form-label"
+				>{t('admin.config.maximumAmount', { currency: thresholds.currency })}</span
+			>
+			<span class="form-label">{t('admin.config.confirmationBlocks')}</span>
 			<span />
 			{#each thresholds.thresholds as threshold, i}
 				<input
@@ -103,7 +108,7 @@
 						(thresholds.thresholds = thresholds.thresholds.filter((t) => t !== threshold))}
 				>
 					<IconTrash />
-					<span class="sr-only"> Delete threshold </span>
+					<span class="sr-only"> {t('admin.config.deleteThreshold')} </span>
 				</button>
 			{/each}
 		</div>
@@ -120,9 +125,9 @@
 					}
 				])}
 		>
-			Add confirmation threshold
+			{t('admin.config.addConfirmationThreshold')}
 		</button>
 
-		<button type="submit" class="btn body-mainCTA self-start">Save</button>
+		<button type="submit" class="btn body-mainCTA self-start">{t('admin.action.save')}</button>
 	</form>
 </main>

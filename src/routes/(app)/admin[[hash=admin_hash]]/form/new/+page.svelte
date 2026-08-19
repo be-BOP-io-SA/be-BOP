@@ -2,31 +2,35 @@
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
 	let title = '';
 	let slug = '';
 	let displayFrom = false;
 	let mandatoryAgreement = false;
+
+	const { t } = useI18n();
 </script>
 
-<h1 class="text-3xl">Add a contact form</h1>
+<h1 class="text-3xl">{t('admin.form.addAContactForm')}</h1>
 <p>
 	<kbd class="kbd body-secondaryCTA">{'{{websiteLink}}'}</kbd>,
 	<kbd class="kbd body-secondaryCTA">{'{{brandName}}'}</kbd>,
 	<kbd class="kbd body-secondaryCTA">{'{{pageLink}}'}</kbd>
-	and
-	<kbd class="kbd body-secondaryCTA">{'{{pageName}}'}</kbd> are always available in templates.
+	{t('admin.form.and')}
+	<kbd class="kbd body-secondaryCTA">{'{{pageName}}'}</kbd>
+	{t('admin.form.alwaysAvailableInTemplates')}
 </p>
 <form method="post" class="flex flex-col gap-4">
 	<label class="form-label">
-		Title
+		{t('admin.form.title')}
 		<input
 			class="form-input"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="title"
-			placeholder="title"
+			placeholder={t('admin.form.titlePlaceholder')}
 			bind:value={title}
 			on:change={() => (slug = generateId(title, true))}
 			on:input={() => (slug = generateId(title, true))}
@@ -35,25 +39,25 @@
 	</label>
 
 	<label class="form-label">
-		Slug
+		{t('admin.form.slug')}
 		<input
 			class="form-input block"
 			type="text"
 			name="slug"
-			placeholder="Slug"
+			placeholder={t('admin.form.slug')}
 			bind:value={slug}
-			title="Only lowercase letters, numbers and dashes are allowed"
+			title={t('admin.form.onlyLowercaseLettersNumbersDashes')}
 			required
 		/>
 	</label>
 
 	<label class="form-label">
-		target
+		{t('admin.form.target')}
 		<input
 			class="form-input block"
 			type="text"
 			name="target"
-			placeholder="Target"
+			placeholder={t('admin.form.targetPlaceholder')}
 			value={data.contactModes.includes('email') ? data.sellerIdentity?.contact.email || '' : ''}
 			required
 			pattern={data.contactModes.includes('email') && data.contactModes.includes('nostr')
@@ -71,12 +75,13 @@
 			type="checkbox"
 			name="displayFromField"
 			bind:checked={displayFrom}
-		/> Display From: field
+		/>
+		{t('admin.form.displayFromColonField')}
 	</label>
 	{#if displayFrom}
 		<label class="checkbox-label">
-			<input class="form-checkbox" type="checkbox" name="prefillWithSession" placeholder="From" /> Prefill
-			with session information
+			<input class="form-checkbox" type="checkbox" name="prefillWithSession" placeholder="From" />
+			{t('admin.form.prefillWithSessionInformation')}
 		</label>{/if}
 	<label class="checkbox-label">
 		<input
@@ -84,57 +89,64 @@
 			type="checkbox"
 			name="mandatoryAgreement"
 			bind:checked={mandatoryAgreement}
-		/> Add a warning to the form with mandatory agreement
+		/>
+		{t('admin.form.mandatoryAgreementWarning')}
 	</label>
 	{#if mandatoryAgreement}
 		<label class="form-label">
-			Disclaimer label
+			{t('admin.form.disclaimerLabel')}
 			<input
 				class="form-input block"
 				type="text"
 				name="disclaimer.label"
-				placeholder="Disclaimer label"
+				placeholder={t('admin.form.disclaimerLabel')}
 				required
 			/>
 		</label>
-		Disclaimer Content
+		{t('admin.form.disclaimerContent')}
 		<label class="form-label">
 			<textarea
 				name="disclaimer.content"
 				cols="30"
 				rows="5"
 				maxlength={MAX_CONTENT_LIMIT}
-				placeholder="message"
+				placeholder={t('admin.form.messagePlaceholder')}
 				class="form-input block w-full"
 			/>
 		</label>
 		<label class="form-label">
-			Disclaimer checkbox label
+			{t('admin.form.disclaimerCheckboxLabel')}
 			<input
 				class="form-input block"
 				type="text"
 				name="disclaimer.checkboxLabel"
-				placeholder="Disclaimer checkbox label"
+				placeholder={t('admin.form.disclaimerCheckboxLabel')}
 				required
 			/>
 		</label>
 	{/if}
 
 	<label class="form-label">
-		Subject
-		<input class="form-input block" type="text" name="subject" placeholder="Subject" required />
+		{t('admin.form.subject')}
+		<input
+			class="form-input block"
+			type="text"
+			name="subject"
+			placeholder={t('admin.form.subject')}
+			required
+		/>
 	</label>
 
-	Content
+	{t('admin.form.content')}
 	<label class="form-label">
 		<textarea
 			name="content"
 			cols="30"
 			rows="10"
 			maxlength={MAX_CONTENT_LIMIT}
-			placeholder="message"
+			placeholder={t('admin.form.messagePlaceholder')}
 			class="form-input block w-full"
 		/>
 	</label>
-	<input type="submit" class="btn btn-blue self-start text-white" value="Submit" />
+	<input type="submit" class="btn btn-blue self-start text-white" value={t('admin.form.submit')} />
 </form>

@@ -1,13 +1,16 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 
 	let errorMessage = '';
 	let loading = false;
 </script>
 
-<h1 class="text-3xl">Bulk Alias Change</h1>
+<h1 class="text-3xl">{t('admin.product.bulkAliasChangeTitle')}</h1>
 
 <form
 	class="flex flex-col gap-2"
@@ -29,17 +32,23 @@
 		<h2 class="text-2xl">{product.name}</h2>
 		<div class="gap-4 mx-4 flex flex-col md:flex-row">
 			<label class="w-full">
-				Current slug
-				<input class="form-input" type="text" placeholder="slug" value={product._id} disabled />
+				{t('admin.product.currentSlugLabel')}
+				<input
+					class="form-input"
+					type="text"
+					placeholder={t('admin.product.slugPlaceholder')}
+					value={product._id}
+					disabled
+				/>
 			</label>
 
 			<label class="w-full">
-				Alias
+				{t('admin.product.aliasLabel')}
 				<input
 					class="form-input"
 					type="text"
 					name="{product._id}.alias"
-					placeholder="alias"
+					placeholder={t('admin.product.aliasPlaceholder')}
 					value={product.alias?.[1] ?? ''}
 				/>
 			</label>
@@ -48,5 +57,7 @@
 	{#if errorMessage}
 		<span class="text-red-500">{errorMessage}</span>
 	{/if}
-	<button class="btn btn-black self-start mt-4" type="submit" disabled={loading}>Update</button>
+	<button class="btn btn-black self-start mt-4" type="submit" disabled={loading}
+		>{t('admin.action.update')}</button
+	>
 </form>

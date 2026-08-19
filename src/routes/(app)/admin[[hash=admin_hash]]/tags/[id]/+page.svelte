@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { generateId } from '$lib/utils/generateId';
 	import PictureComponent from '$lib/components/Picture.svelte';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	let name = data.tag.name;
 	let slug = data.tag._id;
 	function confirmDelete(event: Event) {
-		if (!confirm('Would you like to delete this tag?')) {
+		if (!confirm(t('admin.tags.confirmDeleteTag'))) {
 			event.preventDefault();
 		}
 	}
@@ -15,12 +18,12 @@
 
 <form method="post" class="flex flex-col gap-4" action="?/update">
 	<label class="form-label">
-		tag name
+		{t('admin.tags.tagNameLabel')}
 		<input
 			class="form-input"
 			type="text"
 			name="name"
-			placeholder="Tag name"
+			placeholder={t('admin.tags.tagNamePlaceholder')}
 			bind:value={name}
 			on:change={() => (slug = generateId(name, false))}
 			on:input={() => (slug = generateId(name, false))}
@@ -29,15 +32,15 @@
 	</label>
 
 	<label class="form-label">
-		Slug
+		{t('admin.tags.slug')}
 
 		<input
 			class="form-input block"
 			type="text"
 			name="slug"
-			placeholder="Slug"
+			placeholder={t('admin.tags.slug')}
 			bind:value={slug}
-			title="Only lowercase letters, numbers and dashes are allowed"
+			title={t('admin.tags.slugHint')}
 			required
 			disabled
 		/>
@@ -49,7 +52,7 @@
 			bind:checked={data.tag.widgetUseOnly}
 			name="widgetUseOnly"
 		/>
-		For widget use only
+		{t('admin.tags.forWidgetUseOnly')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -58,7 +61,7 @@
 			bind:checked={data.tag.productTagging}
 			name="productTagging"
 		/>
-		Available for product tagging
+		{t('admin.tags.availableForProductTagging')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -67,7 +70,7 @@
 			bind:checked={data.tag.useLightDark}
 			name="useLightDark"
 		/>
-		Use light/dark inverted mode
+		{t('admin.tags.useLightDarkInvertedMode')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -76,7 +79,7 @@
 			bind:checked={data.tag.reportingFilter}
 			name="reportingFilter"
 		/>
-		Available as filter for reporting
+		{t('admin.tags.availableAsFilterForReporting')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -85,13 +88,13 @@
 			bind:checked={data.tag.printReceiptFilter}
 			name="printReceiptFilter"
 		/>
-		Use tag for filter printed receipts
+		{t('admin.tags.useTagForFilterPrintedReceipts')}
 	</label>
 	<div class="flex flex-col gap-4 w-[20em]">
 		<label class="form-label">
-			Tag family
+			{t('admin.tags.tagFamilyLabel')}
 			<select class="form-input" name="family" value={data.tag.family || ''}>
-				<option value="">No family</option>
+				<option value="">{t('admin.tags.noFamily')}</option>
 				{#each data.families as family}
 					<option value={family._id}>{family.name}</option>
 				{/each}
@@ -100,27 +103,27 @@
 	</div>
 
 	<label class="form-label">
-		Tag title
+		{t('admin.tags.tagTitleLabel')}
 		<input
 			class="form-input"
 			type="text"
 			bind:value={data.tag.title}
 			name="title"
-			placeholder="Tag title"
+			placeholder={t('admin.tags.tagTitleLabel')}
 		/>
 	</label>
 	<label class="form-label">
-		Tag subtitle
+		{t('admin.tags.tagSubtitleLabel')}
 		<input
 			class="form-input"
 			type="text"
 			bind:value={data.tag.subtitle}
 			name="subtitle"
-			placeholder="Tag subtitle"
+			placeholder={t('admin.tags.tagSubtitleLabel')}
 		/>
 	</label>
 	<label class="form-label">
-		Short content
+		{t('admin.tags.shortContent')}
 		<textarea
 			name="shortContent"
 			bind:value={data.tag.shortContent}
@@ -130,7 +133,7 @@
 		/>
 	</label>
 	<label class="form-label">
-		Full content
+		{t('admin.tags.fullContent')}
 		<textarea
 			name="content"
 			bind:value={data.tag.content}
@@ -141,15 +144,15 @@
 		/>
 	</label>
 
-	<h3 class="text-xl">CTAs</h3>
+	<h3 class="text-xl">{t('admin.tags.ctas')}</h3>
 	{#each [...data.tag.cta, ...Array(tagCtaLines).fill( { label: '', href: '', openNewTab: false } )].slice(0, tagCtaLines) as cta, i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.tags.ctaText')}
 				<input type="text" name="cta[{i}].label" class="form-input" value={cta.label || ''} />
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.tags.ctaUrl')}
 				<input type="text" name="cta[{i}].href" class="form-input" value={cta.href || ''} />
 			</label>
 			<label class="checkbox-label mt-4">
@@ -159,7 +162,7 @@
 					name="cta[{i}].openNewTab"
 					checked={cta.openNewTab}
 				/>
-				Open in new tab
+				{t('admin.tags.openInNewTab')}
 			</label>
 			<button
 				type="button"
@@ -174,11 +177,11 @@
 		</div>
 	{/each}
 	<button class="btn body-mainCTA self-start" on:click={() => (tagCtaLines += 1)} type="button"
-		>Add CTAs
+		>{t('admin.tags.addCtas')}
 	</button>
 
 	<label class="form-label">
-		CSS override
+		{t('admin.tags.cssOverride')}
 		<textarea
 			name="cssOverride"
 			bind:value={data.tag.cssOveride}
@@ -189,8 +192,12 @@
 		/>
 	</label>
 	<div class="flex flex-row justify-between gap-2">
-		<input type="submit" class="btn btn-blue self-start text-white" value="Update" />
-		<a href="/tag/{data.tag._id}" class="btn body-mainCTA">View</a>
+		<input
+			type="submit"
+			class="btn btn-blue self-start text-white"
+			value={t('admin.action.update')}
+		/>
+		<a href="/tag/{data.tag._id}" class="btn body-mainCTA">{t('admin.tags.view')}</a>
 
 		<button
 			type="submit"
@@ -198,14 +205,16 @@
 			formaction="?/delete"
 			on:click={confirmDelete}
 		>
-			Delete
+			{t('admin.tags.delete')}
 		</button>
 	</div>
 </form>
 
-<h2 class="text-2xl my-4">Photos</h2>
+<h2 class="text-2xl my-4">{t('admin.tags.photos')}</h2>
 {#if data.pictures.length < 5}
-	<a href="/admin/picture/new?tagId={data.tag._id}" class="underline">Add picture</a>
+	<a href="/admin/picture/new?tagId={data.tag._id}" class="underline"
+		>{t('admin.tags.addPicture')}</a
+	>
 {/if}
 <div class="flex flex-row flex-wrap gap-6 mt-6">
 	{#each data.pictures as picture}

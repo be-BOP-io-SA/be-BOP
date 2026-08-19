@@ -8,9 +8,12 @@
 	} from '$lib/types/Searchlist';
 	import { currencies } from '$lib/stores/currencies';
 	import { CURRENCY_UNIT } from '$lib/types/Currency';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
 	const sl = data.searchlist;
+
+	const { t } = useI18n();
 
 	$: priceStep = CURRENCY_UNIT[$currencies.main];
 
@@ -46,17 +49,20 @@
 	let disabled = sl.disabled ?? false;
 </script>
 
-<h1 class="text-3xl">Edit searchlist — <span class="text-gray-550">[Searchlist={sl._id}]</span></h1>
+<h1 class="text-3xl">
+	{t('admin.searchlist.editTitle')}
+	<span class="text-gray-550">[Searchlist={sl._id}]</span>
+</h1>
 
 <form method="post" class="flex flex-col gap-4">
 	<label class="form-label">
-		Searchlist name
+		{t('admin.searchlist.name')}
 		<input class="form-input" type="text" name="name" bind:value={name} required maxlength="100" />
 	</label>
 
 	<label class="checkbox-label">
 		<input type="checkbox" class="form-checkbox" name="disabled" bind:checked={disabled} />
-		Disable this searchlist (returns 404 to the public, employees still see a banner)
+		{t('admin.searchlist.disableSearchlist')}
 	</label>
 
 	<label class="checkbox-label">
@@ -66,10 +72,10 @@
 			name="displayWidgetName"
 			bind:checked={displayWidgetName}
 		/>
-		Display widget name
+		{t('admin.searchlist.displayWidgetName')}
 	</label>
 
-	<h2 class="text-2xl">Search input</h2>
+	<h2 class="text-2xl">{t('admin.searchlist.searchInput')}</h2>
 
 	<label class="checkbox-label">
 		<input
@@ -78,7 +84,7 @@
 			name="hideSearchbar"
 			bind:checked={hideSearchbar}
 		/>
-		Hide searchbar
+		{t('admin.searchlist.hideSearchbar')}
 	</label>
 
 	<label class="checkbox-label">
@@ -88,12 +94,12 @@
 			name="prefillSearchterm"
 			bind:checked={prefillSearchterm}
 		/>
-		Prefill searchterm
+		{t('admin.searchlist.prefillSearchterm')}
 	</label>
 
 	{#if prefillSearchterm}
 		<label class="form-label">
-			Initial searchterm
+			{t('admin.searchlist.initialSearchterm')}
 			<input
 				class="form-input"
 				type="text"
@@ -109,11 +115,11 @@
 				name="hideSearchterm"
 				bind:checked={hideSearchterm}
 			/>
-			Hide searchterm (a new search will override it)
+			{t('admin.searchlist.hideSearchterm')}
 		</label>
 	{/if}
 
-	<h2 class="text-2xl">Search input target</h2>
+	<h2 class="text-2xl">{t('admin.searchlist.searchInputTarget')}</h2>
 	{#each SEARCH_TARGET_KEYS as key}
 		<label class="checkbox-label">
 			<input
@@ -125,20 +131,20 @@
 			/>
 			{key}
 			{#if key === 'productTags' || key === 'productVariation'}
-				<span class="text-gray-550">(not honored in V1)</span>
+				<span class="text-gray-550">{t('admin.searchlist.notHonoredInV1')}</span>
 			{/if}
 		</label>
 	{/each}
 
-	<h2 class="text-2xl">Filters</h2>
+	<h2 class="text-2xl">{t('admin.searchlist.filters')}</h2>
 	<label class="checkbox-label">
 		<input type="checkbox" class="form-checkbox" name="priceEnabled" bind:checked={priceEnabled} />
-		Price filter
+		{t('admin.searchlist.priceFilter')}
 	</label>
 	{#if priceEnabled}
 		<div class="flex gap-4 flex-wrap">
 			<label class="form-label">
-				Default min ({$currencies.main})
+				{t('admin.searchlist.defaultMin', { currency: $currencies.main })}
 				<input
 					class="form-input"
 					type="number"
@@ -150,7 +156,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Default max ({$currencies.main})
+				{t('admin.searchlist.defaultMax', { currency: $currencies.main })}
 				<input
 					class="form-input"
 					type="number"
@@ -166,7 +172,7 @@
 
 	<label class="checkbox-label">
 		<input type="checkbox" class="form-checkbox" name="stockEnabled" bind:checked={stockEnabled} />
-		Stock filter (in stock only)
+		{t('admin.searchlist.stockFilter')}
 	</label>
 	{#if stockEnabled}
 		<label class="checkbox-label">
@@ -176,18 +182,18 @@
 				name="stockDefaultChecked"
 				bind:checked={stockDefaultChecked}
 			/>
-			Default "in stock only" checked
+			{t('admin.searchlist.stockDefaultChecked')}
 		</label>
 	{/if}
 
 	<label class="checkbox-label">
 		<input type="checkbox" class="form-checkbox" name="tagsEnabled" bind:checked={tagsEnabled} />
-		Tag filter
+		{t('admin.searchlist.tagFilter')}
 	</label>
 	{#if tagsEnabled}
 		<!-- svelte-ignore a11y-label-has-associated-control -->
 		<label class="form-label">
-			Tags to expose
+			{t('admin.searchlist.tagsToExpose')}
 			<MultiSelect
 				--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 				name="allowedTagIds"
@@ -200,7 +206,7 @@
 		</label>
 	{/if}
 
-	<h2 class="text-2xl">Sort</h2>
+	<h2 class="text-2xl">{t('admin.searchlist.sort')}</h2>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
@@ -208,7 +214,7 @@
 			name="sortDisplayed"
 			bind:checked={sortDisplayed}
 		/>
-		Show "Sort by" select
+		{t('admin.searchlist.showSortBySelect')}
 	</label>
 	{#each SORT_KEYS as key}
 		<label class="checkbox-label">
@@ -223,7 +229,7 @@
 		</label>
 	{/each}
 	<label class="form-label">
-		Default sort
+		{t('admin.searchlist.defaultSort')}
 		<select class="form-input" name="sortDefault" bind:value={sortDefault}>
 			{#each SORT_KEYS as key}
 				<option value={key}>{key}</option>
@@ -231,9 +237,9 @@
 		</select>
 	</label>
 
-	<h2 class="text-2xl">View</h2>
+	<h2 class="text-2xl">{t('admin.searchlist.view')}</h2>
 	<label class="form-label">
-		Default view
+		{t('admin.searchlist.defaultView')}
 		<select class="form-input" name="viewDefault" bind:value={viewDefault}>
 			{#each VIEW_MODES as v}
 				<option value={v}>{v}</option>
@@ -247,12 +253,12 @@
 			name="viewHideToggle"
 			bind:checked={viewHideToggle}
 		/>
-		Hide view toggle (force the default view)
+		{t('admin.searchlist.hideViewToggle')}
 	</label>
 
-	<h2 class="text-2xl">Pagination</h2>
+	<h2 class="text-2xl">{t('admin.searchlist.pagination')}</h2>
 	<label class="form-label">
-		Mode
+		{t('admin.searchlist.mode')}
 		<select class="form-input" name="paginationMode" bind:value={paginationMode}>
 			{#each PAGINATION_MODES.filter((m) => m !== 'infinite') as m}
 				<option value={m}>{m}</option>
@@ -260,7 +266,7 @@
 		</select>
 	</label>
 	<label class="form-label">
-		Per page
+		{t('admin.searchlist.perPage')}
 		<input
 			class="form-input"
 			type="number"
@@ -273,17 +279,22 @@
 	</label>
 
 	<div class="flex flex-row justify-between gap-2">
-		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
-		<a href="/searchlist/{sl._id}" class="btn body-mainCTA">View</a>
+		<input
+			type="submit"
+			class="btn btn-blue text-white"
+			formaction="?/update"
+			value={t('admin.action.update')}
+		/>
+		<a href="/searchlist/{sl._id}" class="btn body-mainCTA">{t('admin.searchlist.viewAction')}</a>
 
 		{#if sl._id !== 'default' && sl._id !== 'search'}
 			<input
 				type="submit"
 				class="btn btn-red text-white ml-auto"
 				formaction="?/delete"
-				value="Delete"
+				value={t('admin.searchlist.deleteAction')}
 				on:click={(e) => {
-					if (!confirm('Delete this searchlist?')) {
+					if (!confirm(t('admin.searchlist.confirmDelete'))) {
 						e.preventDefault();
 					}
 				}}

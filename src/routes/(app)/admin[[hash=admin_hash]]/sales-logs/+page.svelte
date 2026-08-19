@@ -3,7 +3,7 @@
 
 	export let data;
 
-	const { locale } = useI18n();
+	const { locale, t } = useI18n();
 
 	$: fromStr = data.from.toISOString().slice(0, 16);
 	$: toStr = data.to.toISOString().slice(0, 16);
@@ -11,23 +11,32 @@
 	$: exportParams = `from=${data.from.toISOString()}&to=${data.to.toISOString()}`;
 </script>
 
-<h1 class="text-2xl font-semibold mb-4">Sales Logs (NF525)</h1>
+<h1 class="text-2xl font-semibold mb-4">{t('admin.salesLogs.title')}</h1>
 
 <form method="GET" class="flex flex-wrap gap-4 items-end mb-6">
 	<div>
-		<label class="block text-sm font-medium text-gray-700 mb-1" for="from">From</label>
+		<label class="block text-sm font-medium text-gray-700 mb-1" for="from"
+			>{t('admin.salesLogs.from')}</label
+		>
 		<input type="datetime-local" name="from" id="from" value={fromStr} class="form-input text-sm" />
 	</div>
 	<div>
-		<label class="block text-sm font-medium text-gray-700 mb-1" for="to">To</label>
+		<label class="block text-sm font-medium text-gray-700 mb-1" for="to"
+			>{t('admin.salesLogs.to')}</label
+		>
 		<input type="datetime-local" name="to" id="to" value={toStr} class="form-input text-sm" />
 	</div>
-	<button type="submit" class="btn btn-blue text-sm px-4 py-2">Filter</button>
+	<button type="submit" class="btn btn-blue text-sm px-4 py-2">{t('admin.salesLogs.filter')}</button
+	>
 </form>
 
 <div class="flex items-center justify-between mb-4">
 	<p class="text-sm text-gray-600">
-		Showing {data.logs.length}{data.totalCount > 500 ? ` of ${data.totalCount}` : ''} entries
+		{#if data.totalCount > 500}
+			{t('admin.salesLogs.showingEntriesOf', { count: data.logs.length, total: data.totalCount })}
+		{:else}
+			{t('admin.salesLogs.showingEntries', { count: data.logs.length })}
+		{/if}
 	</p>
 	<div class="flex gap-2">
 		<a
@@ -52,13 +61,27 @@
 		<table class="min-w-full table-auto border border-gray-300 bg-white text-sm">
 			<thead class="bg-gray-200">
 				<tr class="whitespace-nowrap">
-					<th class="border border-gray-300 px-3 py-2 text-left">Date</th>
-					<th class="border border-gray-300 px-3 py-2 text-left">Event</th>
-					<th class="border border-gray-300 px-3 py-2 text-left">Object</th>
-					<th class="border border-gray-300 px-3 py-2 text-left">Type</th>
-					<th class="border border-gray-300 px-3 py-2 text-left">Before</th>
-					<th class="border border-gray-300 px-3 py-2 text-left">After</th>
-					<th class="border border-gray-300 px-3 py-2 text-left">Employee</th>
+					<th class="border border-gray-300 px-3 py-2 text-left"
+						>{t('admin.salesLogs.columnDate')}</th
+					>
+					<th class="border border-gray-300 px-3 py-2 text-left"
+						>{t('admin.salesLogs.columnEvent')}</th
+					>
+					<th class="border border-gray-300 px-3 py-2 text-left"
+						>{t('admin.salesLogs.columnObject')}</th
+					>
+					<th class="border border-gray-300 px-3 py-2 text-left"
+						>{t('admin.salesLogs.columnType')}</th
+					>
+					<th class="border border-gray-300 px-3 py-2 text-left"
+						>{t('admin.salesLogs.columnBefore')}</th
+					>
+					<th class="border border-gray-300 px-3 py-2 text-left"
+						>{t('admin.salesLogs.columnAfter')}</th
+					>
+					<th class="border border-gray-300 px-3 py-2 text-left"
+						>{t('admin.salesLogs.columnEmployee')}</th
+					>
 				</tr>
 			</thead>
 			<tbody>
@@ -112,5 +135,5 @@
 		</table>
 	</div>
 {:else}
-	<p class="text-gray-500 text-center py-8">No entries found for the selected period.</p>
+	<p class="text-gray-500 text-center py-8">{t('admin.salesLogs.noEntries')}</p>
 {/if}

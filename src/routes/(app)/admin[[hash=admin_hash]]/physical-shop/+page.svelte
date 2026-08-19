@@ -8,16 +8,16 @@
 	let iban = id?.bank?.iban ?? '';
 	let bic = id?.bank?.bic ?? '';
 
-	const { sortedCountryCodes, countryName } = useI18n();
+	const { t, sortedCountryCodes, countryName } = useI18n();
 </script>
 
-<h1 class="text-3xl">Shop Information</h1>
+<h1 class="text-3xl">{t('admin.physicalShop.title')}</h1>
 
 <form class="contents" method="post">
-	<h2 class="text-2xl">Legal information</h2>
+	<h2 class="text-2xl">{t('admin.physicalShop.legalInformation')}</h2>
 
 	<label class="form-label">
-		Business name
+		{t('admin.physicalShop.businessName')}
 		<input
 			type="text"
 			name="businessName"
@@ -28,7 +28,7 @@
 	</label>
 
 	<label class="form-label">
-		VAT number
+		{t('admin.physicalShop.vatNumber')}
 		<input
 			type="text"
 			name="vatNumber"
@@ -37,10 +37,10 @@
 		/>
 	</label>
 
-	<h2 class="text-2xl">Company address</h2>
+	<h2 class="text-2xl">{t('admin.physicalShop.companyAddress')}</h2>
 
 	<label class="form-label">
-		Street
+		{t('admin.physicalShop.street')}
 		<input
 			type="text"
 			name="address.street"
@@ -51,7 +51,7 @@
 	</label>
 
 	<label class="form-label">
-		Country
+		{t('admin.physicalShop.country')}
 		<select name="address.country" class="form-input max-w-[25rem]">
 			{#each sortedCountryCodes() as countryCode}
 				<option value={countryCode} selected={countryCode === id?.address?.country}>
@@ -63,7 +63,7 @@
 
 	<div class="flex flex-wrap gap-2">
 		<label class="form-label">
-			State
+			{t('admin.physicalShop.state')}
 			<input
 				type="text"
 				name="address.state"
@@ -73,7 +73,7 @@
 		</label>
 
 		<label class="form-label">
-			City
+			{t('admin.physicalShop.city')}
 			<input
 				type="text"
 				name="address.city"
@@ -84,7 +84,7 @@
 		</label>
 
 		<label class="form-label">
-			ZIP code
+			{t('admin.physicalShop.zipCode')}
 			<input
 				type="text"
 				name="address.zip"
@@ -95,10 +95,10 @@
 		</label>
 	</div>
 
-	<h2 class="text-2xl">Contact information</h2>
+	<h2 class="text-2xl">{t('admin.physicalShop.contactInformation')}</h2>
 
 	<label class="form-label">
-		Email
+		{t('admin.physicalShop.email')}
 		<input
 			type="email"
 			name="contact.email"
@@ -109,7 +109,7 @@
 	</label>
 
 	<label class="form-label">
-		Phone
+		{t('admin.physicalShop.phone')}
 		<input
 			type="tel"
 			name="contact.phone"
@@ -118,10 +118,10 @@
 		/>
 	</label>
 
-	<h2 class="text-2xl">Bank account</h2>
+	<h2 class="text-2xl">{t('admin.physicalShop.bankAccount')}</h2>
 
 	<label class="form-label">
-		IBAN
+		{t('admin.physicalShop.iban')}
 		<input
 			type="text"
 			name="bank.iban"
@@ -132,7 +132,7 @@
 	</label>
 
 	<label class="form-label">
-		BIC
+		{t('admin.physicalShop.bic')}
 		<input
 			type="text"
 			name="bank.bic"
@@ -142,10 +142,10 @@
 		/>
 	</label>
 
-	<h2 class="text-2xl">Invoice Information</h2>
+	<h2 class="text-2xl">{t('admin.physicalShop.invoiceInformation')}</h2>
 
 	<label class="form-label">
-		Very-top-right issuer information
+		{t('admin.physicalShop.issuerInfo')}
 		<textarea
 			name="invoice.issuerInfo"
 			class="form-input max-w-[25rem]"
@@ -153,11 +153,11 @@
 			value={id?.invoice?.issuerInfo ?? ''}
 		/>
 		<p class="text-sm">
-			This is completely optional. It will be printed on the top-right corner of the invoice.
+			{t('admin.physicalShop.issuerInfoHint')}
 		</p>
 	</label>
 
 	<div>
-		<button type="submit" class="btn btn-black self-start">Update</button>
+		<button type="submit" class="btn btn-black self-start">{t('admin.action.update')}</button>
 	</div>
 </form>

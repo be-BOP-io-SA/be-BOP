@@ -1,19 +1,22 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
 	export let invoiceDescription: 'orderUrl' | 'brand' | 'brandAndOrderNumber' | 'none';
 	export let brandName: string;
 	export let showThirdPartyWarning: boolean;
+
+	const { t } = useI18n();
 </script>
 
 <p>
-	You can set the label that will be added to the QR code for each invoice. This can be useful to
-	identify the payment for the user, but it will also increase the size of the QR code.
+	{t('admin.lightningQrCode.description')}
 </p>
 
 {#if showThirdPartyWarning}
 	<div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-md">
 		<p class="text-yellow-800">
-			<strong>Warning:</strong> The label added to the QR code of the invoice will be communicated to
-			third parties when processing Lightning payments.
+			<strong>{t('admin.lightningQrCode.warningLabel')}</strong>
+			{t('admin.lightningQrCode.thirdPartyWarning')}
 		</p>
 	</div>
 {/if}
@@ -26,7 +29,8 @@
 			value="none"
 			class="form-radio"
 			bind:group={invoiceDescription}
-		/> No extra info in QR code
+		/>
+		{t('admin.lightningQrCode.noExtraInfo')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -36,7 +40,7 @@
 			class="form-radio"
 			bind:group={invoiceDescription}
 		/>
-		"{brandName}" added to QR code
+		{t('admin.lightningQrCode.brandAddedToQrCode', { brandName })}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -46,7 +50,7 @@
 			class="form-radio"
 			bind:group={invoiceDescription}
 		/>
-		"{brandName} - Order #X" added to QR code
+		{t('admin.lightningQrCode.brandAndOrderNumberAddedToQrCode', { brandName })}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -55,8 +59,9 @@
 			value="orderUrl"
 			class="form-radio"
 			bind:group={invoiceDescription}
-		/> Order URL added to QR code
+		/>
+		{t('admin.lightningQrCode.orderUrlAddedToQrCode')}
 	</label>
 
-	<button type="submit" class="btn btn-black mt-2">Update</button>
+	<button type="submit" class="btn btn-black mt-2">{t('admin.action.update')}</button>
 </form>

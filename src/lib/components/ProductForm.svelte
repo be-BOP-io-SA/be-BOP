@@ -49,7 +49,7 @@
 
 	const MAX_PHASE_REMINDER_SECONDS = 7 * 24 * 60 * 60;
 
-	const { t } = useI18n();
+	const { t, formatDistanceLocale } = useI18n();
 
 	export let tags: Pick<Tag, '_id' | 'name'>[];
 	export let isNew = false;
@@ -177,12 +177,13 @@
 		vatSingleCountry: true
 	});
 	$: vatProfileLabel =
-		vatProfiles.find((p) => p._id === vatProfileId)?.name ?? 'No custom VAT profile';
+		vatProfiles.find((p) => p._id === vatProfileId)?.name ??
+		t('admin.productForm.noCustomVatProfile');
 
 	$: product.price = computePriceForStorage(priceVatExcluded, currency);
 
 	if (product._id && isNew) {
-		product.name = product.name + ' (duplicate)';
+		product.name = product.name + t('admin.productForm.duplicateSuffix');
 		product._id = generateId(product.name, false);
 	}
 
@@ -217,14 +218,13 @@
 			) {
 				if (
 					parseInt(priceAmountInput.value) === 0 &&
-					!confirm('Do you want to save this product as free product? (current price == 0)')
+					!confirm(t('admin.productForm.confirmSaveAsFreeProduct'))
 				) {
 					priceAmountInput.setCustomValidity(
-						'Price must be greater than or equal to ' +
-							CURRENCY_UNIT[product.price.currency] +
-							' ' +
-							product.price.currency +
-							' or might be free'
+						t('admin.productForm.priceMustBeGreaterThanOrEqualTo', {
+							minimum: CURRENCY_UNIT[product.price.currency],
+							currency: product.price.currency
+						})
 					);
 					priceAmountInput.reportValidity();
 					event.preventDefault();
@@ -243,7 +243,9 @@
 				).toLowerCase();
 
 				if (seen.has(key)) {
-					variationInput[i].setCustomValidity(`Duplicate variations found ${key}`);
+					variationInput[i].setCustomValidity(
+						t('admin.productForm.duplicateVariationsFound', { key })
+					);
 					variationInput[i].reportValidity();
 					event.preventDefault();
 					return;
@@ -252,7 +254,7 @@
 			}
 			if (!duplicateFromId && isNew) {
 				if (!files) {
-					errorMessage = 'Please upload a picture';
+					errorMessage = t('admin.productForm.pleaseUploadAPicture');
 					return;
 				}
 				let index = 0;
@@ -343,11 +345,11 @@
 		])
 	) as Record<Day, { start: string; end: string }>;
 	let bookingSpecSlotOptions = [
-		{ value: 15, label: '15 minutes' },
-		{ value: 30, label: '30 minutes' },
-		{ value: 60, label: '1 hour' },
-		{ value: 120, label: '2 hours' },
-		{ value: 60 * 24, label: 'All day' }
+		{ value: 15, label: t('admin.productForm.duration15Minutes') },
+		{ value: 30, label: t('admin.productForm.duration30Minutes') },
+		{ value: 60, label: t('admin.productForm.duration1Hour') },
+		{ value: 120, label: t('admin.productForm.duration2Hours') },
+		{ value: 60 * 24, label: t('admin.productForm.allDay') }
 	];
 	$: changedDate = availableDateStr !== product.availableDate?.toJSON().slice(0, 10);
 	$: enablePreorder = availableDateStr && availableDateStr > new Date().toJSON().slice(0, 10);
@@ -381,7 +383,7 @@
 	}
 
 	function confirmDelete(event: Event) {
-		if (!confirm('Would you like to delete this product?')) {
+		if (!confirm(t('admin.productForm.confirmDeleteProduct'))) {
 			event.preventDefault();
 		}
 	}
@@ -425,18 +427,19 @@
 		<!-- Essential Information - Always Visible -->
 		<div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
 			<h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-				Essential Information
+				{t('admin.productForm.essentialInformation')}
 			</h2>
 
 			<div class="space-y-4">
 				<label class="w-full">
-					<span class="text-red-500">*</span> Product name
+					<span class="text-red-500">*</span>
+					{t('admin.productForm.productName')}
 					<input
 						class="form-input"
 						type="text"
 						maxlength={MAX_NAME_LIMIT}
 						name="name"
-						placeholder="Enter product name"
+						placeholder={t('admin.productForm.enterProductName')}
 						bind:value={product.name}
 						on:change={isNew ? () => (product._id = generateId(product.name, false)) : undefined}
 						on:input={isNew ? () => (product._id = generateId(product.name, false)) : undefined}
@@ -445,7 +448,8 @@
 				</label>
 
 				<label class="block w-full" class:text-gray-450={!isNew}>
-					<span class="text-red-500">*</span> Product type
+					<span class="text-red-500">*</span>
+					{t('admin.productForm.productType')}
 					<select
 						class="form-input"
 						class:text-gray-450={!isNew}
@@ -455,42 +459,46 @@
 						required
 					>
 						{#if isNew && !product.type}
-							<option value="" disabled selected>-- Select type --</option>
+							<option value="" disabled selected>{t('admin.productForm.selectType')}</option>
 						{/if}
 						{#each ['resource', 'subscription', 'donation'] as type}
 							<option value={type}>{upperFirst(type)}</option>
 						{/each}
 					</select>
 					{#if !isNew}
-						<p class="text-sm text-gray-500 mt-1">Cannot be changed after creation</p>
+						<p class="text-sm text-gray-500 mt-1">
+							{t('admin.productForm.cannotBeChangedAfterCreation')}
+						</p>
 					{/if}
 				</label>
 
 				{#if product.type === 'subscription'}
 					<label class="form-label">
-						Subscription duration
+						{t('admin.productForm.subscriptionDurationLabel')}
 						<select
 							name="subscriptionDuration"
 							class="form-input max-w-[25rem]"
 							bind:value={subscriptionDuration}
 						>
-							<option value="">Default (shop-wide)</option>
+							<option value="">{t('admin.productForm.defaultShopWide')}</option>
 							{#each SUBSCRIPTION_DURATIONS as duration}
 								<option value={duration}>{duration}</option>
 							{/each}
 						</select>
 					</label>
 					<label class="form-label">
-						Subscription reminder
+						{t('admin.productForm.subscriptionReminder')}
 						<select
 							name="subscriptionReminderSeconds"
 							class="form-input max-w-[25rem]"
 							bind:value={subscriptionReminderSeconds}
 						>
-							<option value="">Default (shop-wide)</option>
+							<option value="">{t('admin.productForm.defaultShopWide')}</option>
 							{#each [86400 * 7, 86400 * 3, 86400, 3600, 5 * 60] as seconds}
 								<option value={seconds}
-									>{formatDistance(0, seconds * 1000)} before the end of the subscription</option
+									>{t('admin.config.beforeEndOfSubscription', {
+										duration: formatDistance(0, seconds * 1000, { locale: formatDistanceLocale() })
+									})}</option
 								>
 							{/each}
 						</select>
@@ -498,7 +506,7 @@
 				{/if}
 
 				<label class="w-full block">
-					<CurrencyLabel label="Price currency" />
+					<CurrencyLabel label={t('admin.productForm.priceCurrency')} />
 					<Select
 						items={allCurrenciesOptions}
 						searchable={true}
@@ -511,9 +519,9 @@
 
 				{#if vatProfiles.length}
 					<label class="form-label">
-						VAT profile
+						{t('admin.productForm.vatProfile')}
 						<select name="vatProfileId" class="form-input" bind:value={vatProfileId}>
-							<option value="">No custom VAT profile</option>
+							<option value="">{t('admin.productForm.noCustomVatProfile')}</option>
 							{#each vatProfiles as profile}
 								<option value={profile._id}>{profile.name}</option>
 							{/each}
@@ -531,7 +539,8 @@
 
 				{#if isNew && !duplicateFromId}
 					<label class="form-label">
-						<span class="text-red-500">*</span> Product images
+						<span class="text-red-500">*</span>
+						{t('admin.productForm.productImages')}
 						<input
 							type="file"
 							accept="image/jpeg,image/png,image/webp"
@@ -541,7 +550,7 @@
 							multiple
 						/>
 						<p class="text-sm text-gray-500 mt-1">
-							Upload one or more product images (JPEG, PNG, WebP)
+							{t('admin.productForm.uploadProductImages')}
 						</p>
 					</label>
 				{/if}
@@ -566,34 +575,36 @@
 						d="M19 9l-7 7-7-7"
 					/>
 				</svg>
-				Basic Settings
+				{t('admin.productForm.basicSettings')}
 			</summary>
 			<div class="p-4 pt-0 space-y-4">
 				<div class="gap-4 flex flex-col md:flex-row">
 					<label class="form-label w-full" class:text-gray-450={!isNew}>
-						Slug
+						{t('admin.productForm.slug')}
 						<input
 							class="form-input"
 							class:text-gray-450={!isNew}
 							type="text"
 							name="slug"
-							placeholder="Slug"
+							placeholder={t('admin.productForm.slug')}
 							bind:value={product._id}
-							title="Only lowercase letters, numbers and dashes are allowed"
+							title={t('admin.productForm.slugTitle')}
 							required
 							disabled={!isNew}
 						/>
 						{#if !isNew}
-							<p class="text-sm text-gray-500 mt-1">Cannot be changed after creation</p>
+							<p class="text-sm text-gray-500 mt-1">
+								{t('admin.productForm.cannotBeChangedAfterCreation')}
+							</p>
 						{/if}
 					</label>
 					<label class="form-label w-full">
-						Alias
+						{t('admin.productForm.alias')}
 						<input
 							class="form-input"
 							type="text"
 							name="alias"
-							placeholder="Optional alias"
+							placeholder={t('admin.productForm.optionalAlias')}
 							step="any"
 							value={duplicateFromId ? '' : product.alias?.[1] ?? ''}
 						/>
@@ -601,7 +612,7 @@
 				</div>
 
 				<label class="form-label">
-					Short description
+					{t('admin.productForm.shortDescription')}
 					<textarea
 						name="shortDescription"
 						cols="30"
@@ -609,12 +620,12 @@
 						maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 						value={product.shortDescription}
 						class="form-input"
-						placeholder="Brief description of the product"
+						placeholder={t('admin.productForm.briefDescriptionPlaceholder')}
 					/>
 				</label>
 
 				<label class="form-label">
-					Description
+					{t('admin.productForm.description')}
 					<textarea
 						name="description"
 						cols="30"
@@ -622,13 +633,13 @@
 						maxlength="10000"
 						class="form-input"
 						value={product.description}
-						placeholder="Detailed product description"
+						placeholder={t('admin.productForm.detailedDescriptionPlaceholder')}
 					/>
 				</label>
 
 				<!-- svelte-ignore a11y-label-has-associated-control -->
 				<label class="form-label">
-					Product Tags
+					{t('admin.productForm.productTags')}
 					<MultiSelect
 						--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 						name="tagIds"
@@ -650,7 +661,7 @@
 						name="displayShortDescription"
 						bind:checked={product.displayShortDescription}
 					/>
-					Display the short description on product page
+					{t('admin.productForm.displayShortDescriptionOnProductPage')}
 				</label>
 			</div>
 		</details>
@@ -673,12 +684,12 @@
 						d="M19 9l-7 7-7-7"
 					/>
 				</svg>
-				Pricing Options
+				{t('admin.productForm.pricingOptions')}
 			</summary>
 			<div class="p-4 pt-0 space-y-4">
 				<label class="checkbox-label">
 					<input class="form-checkbox" type="checkbox" bind:checked={product.free} name="free" />
-					This is a free product
+					{t('admin.productForm.thisIsAFreeProduct')}
 				</label>
 
 				<label class="checkbox-label">
@@ -689,7 +700,7 @@
 						name="standalone"
 						disabled={product.payWhatYouWant}
 					/>
-					This is a standalone product
+					{t('admin.productForm.thisIsAStandaloneProduct')}
 				</label>
 
 				<label class="checkbox-label">
@@ -700,19 +711,19 @@
 						name="payWhatYouWant"
 						disabled={product.type === 'subscription'}
 					/>
-					This is a pay-what-you-want product
+					{t('admin.productForm.thisIsAPayWhatYouWantProduct')}
 				</label>
 
 				{#if product.payWhatYouWant}
 					<div class="bg-blue-50 p-4 rounded-lg space-y-3">
 						<div class="gap-4 flex flex-col md:flex-row">
 							<label class="w-full">
-								Recommended price amount
+								{t('admin.productForm.recommendedPriceAmount')}
 								<input
 									class="form-input"
 									type="number"
 									name="recommendedPWYWAmount"
-									placeholder="Price"
+									placeholder={t('admin.productVatCalcRow.pricePlaceholder')}
 									step="any"
 									value={(product.recommendedPWYWAmount ?? 0)
 										.toLocaleString('en', { maximumFractionDigits: 8 })
@@ -720,7 +731,7 @@
 								/>
 							</label>
 							<label class="w-full">
-								Recommended price currency
+								{t('admin.productForm.recommendedPriceCurrency')}
 								<select
 									name="maxPriceCurrency"
 									class="form-input"
@@ -741,17 +752,17 @@
 								name="hasMaximumPrice"
 								disabled={product.type === 'subscription'}
 							/>
-							This article has a maximum price
+							{t('admin.productForm.thisArticleHasAMaximumPrice')}
 						</label>
 						{#if hasMaximumPrice}
 							<div class="gap-4 flex flex-col md:flex-row">
 								<label class="w-full">
-									Maximum price amount
+									{t('admin.productForm.maximumPriceAmount')}
 									<input
 										class="form-input"
 										type="number"
 										name="maxPriceAmount"
-										placeholder="Price"
+										placeholder={t('admin.productVatCalcRow.pricePlaceholder')}
 										step="any"
 										min={product.price.amount}
 										value={product.maximumPrice?.amount
@@ -761,7 +772,7 @@
 									/>
 								</label>
 								<label class="w-full">
-									Price currency
+									{t('admin.productForm.priceCurrency')}
 									<select
 										name="maxPriceCurrency"
 										class="form-input"
@@ -780,18 +791,18 @@
 
 				<label class="checkbox-label">
 					<input class="form-checkbox" type="checkbox" bind:checked={allowDeposit} />
-					Allow partial deposit
+					{t('admin.productForm.allowPartialDeposit')}
 				</label>
 
 				{#if allowDeposit}
 					<div class="bg-green-50 p-4 rounded-lg space-y-3">
 						<label class="form-label">
-							Deposit percentage of total price
+							{t('admin.productForm.depositPercentageOfTotalPrice')}
 							<input
 								class="form-input"
 								type="number"
 								name="depositPercentage"
-								placeholder="Deposit"
+								placeholder={t('admin.productForm.deposit')}
 								step="1"
 								min="0"
 								max="100"
@@ -806,7 +817,7 @@
 								bind:checked={deposit.enforce}
 								name="enforceDeposit"
 							/>
-							Enforce deposit - prevent customer from paying the full price immediately
+							{t('admin.productForm.enforceDepositDescription')}
 						</label>
 					</div>
 				{/if}
@@ -818,12 +829,14 @@
 						bind:checked={restrictPaymentMethods}
 						name="restrictPaymentMethods"
 					/>
-					Restrict payment methods
+					{t('admin.productForm.restrictPaymentMethods')}
 				</label>
 
 				{#if restrictPaymentMethods}
 					<div class="bg-yellow-50 p-4 rounded-lg space-y-2">
-						<p class="text-sm font-medium text-gray-700">Allowed payment methods:</p>
+						<p class="text-sm font-medium text-gray-700">
+							{t('admin.productForm.allowedPaymentMethods')}
+						</p>
 						{#each availablePaymentMethods as method}
 							<label class="checkbox-label">
 								<input
@@ -834,7 +847,9 @@
 									checked={paymentMethods?.includes(method)}
 								/>
 								{t('checkout.paymentMethod.' + method)}
-								{method === 'point-of-sale' ? '(only available for POS employees)' : ''}
+								{method === 'point-of-sale'
+									? t('admin.productForm.onlyAvailableForPosEmployees')
+									: ''}
 							</label>
 						{/each}
 					</div>
@@ -848,21 +863,23 @@
 						name="hasVariations"
 						disabled={!product.standalone}
 					/>
-					Product has light variations (no stock difference)
+					{t('admin.productForm.productHasLightVariations')}
 				</label>
 
 				{#if product.hasVariations}
 					<div class="bg-purple-50 p-4 rounded-lg space-y-3">
-						<p class="text-sm font-medium text-gray-700">Product variations:</p>
+						<p class="text-sm font-medium text-gray-700">
+							{t('admin.productForm.productVariations')}
+						</p>
 						{#each [...(product.variations || []), ...Array(variationLines).fill( { name: '', value: '', price: 0 } )].slice(0, variationLines) as variation, i}
 							<div class="flex gap-4 items-end">
 								{#if variation.name && variation.value}
 									<label class="form-label flex-1">
-										Category Id
+										{t('admin.productForm.categoryId')}
 										<input disabled type="text" class="form-input" value={variation.name} />
 									</label>
 									<label class="form-label flex-1">
-										Category Name
+										{t('admin.productForm.categoryName')}
 										<input
 											type="text"
 											name="variationLabels.names[{variation.name}]"
@@ -874,7 +891,7 @@
 										/>
 									</label>
 									<label class="form-label flex-1">
-										Value
+										{t('admin.productForm.value')}
 										<input
 											type="text"
 											name="variationLabels.values[{variation.name}][{variation.value}]"
@@ -887,7 +904,7 @@
 									</label>
 								{:else}
 									<label class="form-label flex-1">
-										Category Name
+										{t('admin.productForm.categoryName')}
 										<input
 											type="text"
 											name="variationLabels.names[{(
@@ -897,11 +914,11 @@
 											class="form-input"
 											bind:value={variationLabelsNames[i]}
 											required={!!variationLabelsValues[i]}
-											placeholder="Category"
+											placeholder={t('admin.productForm.category')}
 										/>
 									</label>
 									<label class="form-label flex-1">
-										Value
+										{t('admin.productForm.value')}
 										<input
 											type="text"
 											name="variationLabels.values[{(
@@ -919,7 +936,7 @@
 											bind:this={variationInput[i]}
 											on:input={() => variationInput[i]?.setCustomValidity('')}
 											required={!!variationLabelsNames[i]}
-											placeholder="Value"
+											placeholder={t('admin.productForm.value')}
 										/>
 									</label>
 								{/if}
@@ -949,7 +966,7 @@
 												: (variationLabelsValues[i] || '').toLowerCase()}
 										/>
 									{/if}
-									Price difference
+									{t('admin.productForm.priceDifference')}
 									<input
 										type="number"
 										name="variations[{i}].price"
@@ -977,20 +994,16 @@
 							on:click={() => (variationLines += 1)}
 							type="button"
 						>
-							Add variation
+							{t('admin.productForm.addVariation')}
 						</button>
 					</div>
 				{/if}
 
 				{#if product.type === 'subscription'}
 					<div class="border-t border-gray-200 pt-4">
-						<h3 class="text-lg font-semibold">Pricing phases (promotional schedule)</h3>
+						<h3 class="text-lg font-semibold">{t('admin.productForm.pricingPhasesTitle')}</h3>
 						<p class="text-sm text-gray-600 mt-1 mb-3">
-							Optional. Each phase is billed as a separate period at a fixed VAT-excluded price. The
-							first phase is billed at initial purchase, then one phase per renewal. Once the
-							schedule is exhausted, the subscription reverts to the base price and duration set
-							above. Each buyer identity (email or npub) can benefit from the schedule only once for
-							this product.
+							{t('admin.productForm.pricingPhasesHint')}
 						</p>
 
 						{#each pricingSchedule as phase, i}
@@ -1003,34 +1016,36 @@
 							)}
 							<div class="border border-gray-300 rounded p-3 mb-2">
 								<div class="flex items-center justify-between mb-2">
-									<span class="font-semibold">Phase {i + 1}</span>
+									<span class="font-semibold"
+										>{t('admin.productForm.phaseNumber', { number: i + 1 })}</span
+									>
 									<div class="flex gap-1">
 										<button
 											type="button"
 											class="btn btn-gray"
 											disabled={i === 0}
 											on:click={() => movePricingPhase(i, -1)}
-											title="Move up">↑</button
+											title={t('admin.productForm.movePhaseUp')}>↑</button
 										>
 										<button
 											type="button"
 											class="btn btn-gray"
 											disabled={i === pricingSchedule.length - 1}
 											on:click={() => movePricingPhase(i, 1)}
-											title="Move down">↓</button
+											title={t('admin.productForm.movePhaseDown')}>↓</button
 										>
 										<button
 											type="button"
 											class="btn btn-red"
 											on:click={() => removePricingPhase(i)}
-											title="Delete">🗑</button
+											title={t('admin.productForm.deletePhase')}>🗑</button
 										>
 									</div>
 								</div>
 
 								<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
 									<label class="form-label">
-										Duration
+										{t('admin.productForm.phaseDuration')}
 										<div class="flex gap-1">
 											<input
 												type="number"
@@ -1056,7 +1071,7 @@
 									</label>
 
 									<label class="form-label">
-										Price (VAT excluded)
+										{t('admin.productForm.phasePriceExcluded')}
 										<input
 											type="number"
 											min="0"
@@ -1067,12 +1082,12 @@
 											required
 										/>
 										<span class="text-xs text-gray-500 mt-1 block">
-											Free trial = 0. Currency inherited from the product.
+											{t('admin.productForm.phasePriceHint')}
 										</span>
 									</label>
 
 									<label class="form-label">
-										Reminder before end
+										{t('admin.productForm.phaseReminderBeforeEnd')}
 										<div class="flex gap-1">
 											<input
 												type="number"
@@ -1095,7 +1110,9 @@
 												{/each}
 											</select>
 										</div>
-										<span class="text-xs text-gray-500 mt-1 block">0 = no reminder</span>
+										<span class="text-xs text-gray-500 mt-1 block"
+											>{t('admin.productForm.phaseReminderHint')}</span
+										>
 									</label>
 								</div>
 							</div>
@@ -1107,7 +1124,7 @@
 							on:click={addPricingPhase}
 							disabled={pricingSchedule.length >= 10}
 						>
-							+ Add phase
+							+ {t('admin.productForm.addPhase')}
 						</button>
 					</div>
 				{/if}
@@ -1132,13 +1149,13 @@
 						d="M19 9l-7 7-7-7"
 					/>
 				</svg>
-				Inventory & Stock
+				{t('admin.productForm.inventoryAndStock')}
 			</summary>
 			<div class="p-4 pt-0 space-y-4">
 				{#if product.type === 'resource'}
 					<div class="flex flex-wrap gap-4">
 						<label class="form-label">
-							Available date
+							{t('admin.productForm.availableDate')}
 							<input
 								class="form-input"
 								type="date"
@@ -1147,15 +1164,15 @@
 								bind:value={availableDateStr}
 							/>
 							<span class="text-sm text-gray-500 mt-1"
-								>Leave empty if available immediately. Press <kbd class="kbd body-secondaryCTA"
-									>backspace</kbd
-								> to remove.</span
+								>{t('admin.productForm.availableDateHintBefore')}
+								<kbd class="kbd body-secondaryCTA">{t('admin.productForm.backspace')}</kbd>
+								{t('admin.productForm.availableDateHintAfter')}</span
 							>
 						</label>
 						{#if !isNew}
 							<label class="checkbox-label">
 								<input class="form-checkbox" type="checkbox" bind:checked={disableDateChange} />
-								🔐 Lock date changes
+								🔐 {t('admin.productForm.lockDateChanges')}
 							</label>
 						{/if}
 					</div>
@@ -1171,7 +1188,7 @@
 								name="preorder"
 								disabled={!enablePreorder}
 							/>
-							Enable preorders before available date
+							{t('admin.productForm.enablePreordersBeforeAvailableDate')}
 						</label>
 
 						<label
@@ -1184,12 +1201,12 @@
 								name="displayCustomPreorderText"
 								disabled={!enablePreorder}
 							/>
-							Display custom text for preorder
+							{t('admin.productForm.displayCustomTextForPreorder')}
 						</label>
 
 						{#if displayPreorderCustomText}
 							<label class="form-label">
-								Preorder custom text
+								{t('admin.productForm.preorderCustomText')}
 								<textarea
 									name="customPreorderText"
 									required
@@ -1198,7 +1215,7 @@
 									maxlength="1000"
 									value={product?.customPreorderText ?? ''}
 									class="form-input"
-									placeholder="Custom preorder message"
+									placeholder={t('admin.productForm.customPreorderMessagePlaceholder')}
 								/>
 							</label>
 						{/if}
@@ -1206,18 +1223,18 @@
 
 					<label class="checkbox-label">
 						<input class="form-checkbox" type="checkbox" name="hasStock" bind:checked={hasStock} />
-						The product has a limited stock
+						{t('admin.productForm.theProductHasALimitedStock')}
 					</label>
 
 					{#if hasStock}
 						<div class="bg-orange-50 p-4 rounded-lg">
 							<label class="form-label">
-								Stock quantity
+								{t('admin.productForm.stockQuantity')}
 								<input
 									class="form-input"
 									type="number"
 									name="stock"
-									placeholder="Stock"
+									placeholder={t('admin.productForm.stock')}
 									step="1"
 									min="0"
 									value={product.stock?.total ?? 0}
@@ -1248,20 +1265,27 @@
 
 							{#if !isNew}
 								<div class="mt-3 text-sm text-gray-600">
-									<p><strong>Stock information:</strong></p>
+									<p><strong>{t('admin.productForm.stockInformation')}</strong></p>
 									<ul class="list-disc list-inside space-y-1">
-										<li>In pending orders/carts: <strong>{reserved}</strong></li>
+										<li>
+											{t('admin.productForm.inPendingOrdersCarts')} <strong>{reserved}</strong>
+										</li>
 										<li>
 											<a
 												href="{adminPrefix}/order?productAlias={product.alias?.[0]}"
 												class="underline text-blue-600"
 											>
-												Amount sold: <strong>{sold}</strong>
+												{t('admin.productForm.amountSold')} <strong>{sold}</strong>
 											</a>
 										</li>
 										{#if product.isTicket}
-											<li>Amount scanned: <strong>{scanned}</strong></li>
-											<li>Sold but not scanned: <strong>{sold - scanned}</strong></li>
+											<li>
+												{t('admin.productForm.amountScanned')} <strong>{scanned}</strong>
+											</li>
+											<li>
+												{t('admin.productForm.soldButNotScanned')}
+												<strong>{sold - scanned}</strong>
+											</li>
 										{/if}
 									</ul>
 								</div>
@@ -1272,12 +1296,12 @@
 
 				{#if product.type !== 'subscription'}
 					<label class="form-label">
-						Max quantity per order
+						{t('admin.productForm.maxQuantityPerOrder')}
 						<input
 							class="form-input"
 							type="number"
 							name="maxQuantityPerOrder"
-							placeholder="Max quantity per order"
+							placeholder={t('admin.productForm.maxQuantityPerOrder')}
 							step="1"
 							min="1"
 							value={product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER}
@@ -1307,7 +1331,7 @@
 							d="M19 9l-7 7-7-7"
 						/>
 					</svg>
-					Booking & Tickets
+					{t('admin.productForm.bookingAndTickets')}
 				</summary>
 				<div class="p-4 pt-0 space-y-4">
 					<label class="checkbox-label">
@@ -1317,18 +1341,18 @@
 							name="isTicket"
 							bind:checked={product.isTicket}
 						/>
-						The product is a ticket (e.g. for an event)
+						{t('admin.productForm.theProductIsATicket')}
 					</label>
 
 					<label class="checkbox-label">
 						<input class="form-checkbox" type="checkbox" bind:checked={hasBooking} />
-						The product is a booking slot
+						{t('admin.productForm.theProductIsABookingSlot')}
 					</label>
 
 					{#if hasBooking}
 						<div class="bg-indigo-50 p-4 rounded-lg space-y-4">
 							<label class="form-label">
-								Booking slot duration
+								{t('admin.productForm.bookingSlotDuration')}
 								<select
 									name="bookingSpec.slotMinutes"
 									class="form-input"
@@ -1349,12 +1373,12 @@
 										name="bookingSpec.allowSameDayBooking"
 										bind:checked={bookingSpec.allowSameDayBooking}
 									/>
-									<span>Allow booking on same day</span>
+									<span>{t('admin.productForm.allowSameDayBooking')}</span>
 								</label>
 
 								{#if bookingSpec.allowSameDayBooking}
 									<label class="form-label">
-										Max hour for same-day booking (schedule timezone)
+										{t('admin.productForm.maxHourSameDayBooking')}
 										<input
 											type="time"
 											name="bookingSpec.sameDayBookingMaxHour"
@@ -1367,7 +1391,7 @@
 							{/if}
 
 							<label class="form-label">
-								Timezone
+								{t('admin.productForm.timezone')}
 								<select name="bookingSpec.schedule.timezone" class="form-input">
 									<option value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
 										{Intl.DateTimeFormat().resolvedOptions().timeZone}
@@ -1379,7 +1403,7 @@
 							</label>
 
 							<label class="form-label">
-								Max bookable days (0 = unlimited)
+								{t('admin.productForm.maxBookableDays')}
 								<input
 									type="number"
 									name="bookingSpec.maxBookableDays"
@@ -1390,15 +1414,19 @@
 							</label>
 
 							<div>
-								<p class="text-sm font-medium text-gray-700 mb-2">Weekly schedule:</p>
+								<p class="text-sm font-medium text-gray-700 mb-2">
+									{t('admin.productForm.weeklySchedule')}
+								</p>
 								<div class="grid gap-2" style="grid-template-columns: min-content 1fr 1fr;">
-									<div class="text-sm font-medium text-gray-600">Day</div>
-									<div class="text-sm font-medium text-gray-600">Start</div>
-									<div class="text-sm font-medium text-gray-600">End</div>
+									<div class="text-sm font-medium text-gray-600">{t('admin.productForm.day')}</div>
+									<div class="text-sm font-medium text-gray-600">
+										{t('admin.productForm.start')}
+									</div>
+									<div class="text-sm font-medium text-gray-600">{t('admin.productForm.end')}</div>
 
 									{#each dayList as day}
 										<label class="form-label flex-row gap-2 items-center" for="{day}-start">
-											{day.charAt(0).toUpperCase() + day.slice(1)}
+											{t(`admin.productForm.dayName.${day}`)}
 										</label>
 
 										<input
@@ -1439,7 +1467,7 @@
 										target="_blank"
 										class="inline-flex items-center text-sm text-blue-600 hover:underline"
 									>
-										Edit associated schedule
+										{t('admin.productForm.editAssociatedSchedule')}
 										<svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path
 												stroke-linecap="round"
@@ -1452,7 +1480,9 @@
 								</div>
 								{#if currentBookings.length > 0}
 									<div class="mt-3">
-										<p class="text-sm font-medium text-gray-700">⌚ Current bookings:</p>
+										<p class="text-sm font-medium text-gray-700">
+											⌚ {t('admin.productForm.currentBookings')}
+										</p>
 										<ul class="text-sm mt-1 space-y-1">
 											{#each currentBookings as booking (booking.orderId + String(booking.beginsAt))}
 												<li>
@@ -1469,7 +1499,9 @@
 								{/if}
 								{#if upcomingBookings.length > 0}
 									<div class="mt-3">
-										<p class="text-sm font-medium text-gray-700">Upcoming bookings (next 5):</p>
+										<p class="text-sm font-medium text-gray-700">
+											{t('admin.productForm.upcomingBookingsNext5')}
+										</p>
 										<ul class="text-sm mt-1 space-y-1">
 											{#each upcomingBookings as booking (booking.orderId + String(booking.beginsAt))}
 												<li>
@@ -1510,7 +1542,7 @@
 							d="M19 9l-7 7-7-7"
 						/>
 					</svg>
-					Delivery & Shipping
+					{t('admin.productForm.deliveryAndShipping')}
 				</summary>
 				<div class="p-4 pt-0 space-y-4">
 					<label class="checkbox-label">
@@ -1520,7 +1552,7 @@
 							name="shipping"
 							bind:checked={product.shipping}
 						/>
-						The product has a physical component that will be shipped to the customer's address
+						{t('admin.productForm.productHasPhysicalComponent')}
 					</label>
 
 					{#if product.shipping && (globalDeliveryFees.mode === 'perItem' || globalDeliveryFees.applyFlatFeeToEachItem)}
@@ -1537,13 +1569,15 @@
 										name="requireSpecificDeliveryFee"
 										bind:checked={product.requireSpecificDeliveryFee}
 									/>
-									Prevent order if no specific delivery fee matches the customer's country
+									{t('admin.productForm.preventOrderIfNoSpecificDeliveryFee')}
 									<span class="text-sm text-gray-600">
-										(do not use <a
+										{t('admin.productForm.doNotUse')}
+										<a
 											href="{adminPrefix}/config/delivery"
 											class="text-blue-600 hover:underline"
-											target="_blank">globally defined fees</a
-										> as fallback)
+											target="_blank">{t('admin.productForm.globallyDefinedFees')}</a
+										>
+										{t('admin.productForm.asFallback')}
 									</span>
 								</label>
 							{/if}
@@ -1555,7 +1589,7 @@
 										name="applyDeliveryFeesOnlyOnce"
 										bind:checked={product.applyDeliveryFeesOnlyOnce}
 									/>
-									Apply delivery fee only once, even if the customer orders multiple items
+									{t('admin.productForm.applyDeliveryFeeOnlyOnce')}
 								</label>
 							{/if}
 						</div>
@@ -1582,7 +1616,7 @@
 						d="M19 9l-7 7-7-7"
 					/>
 				</svg>
-				Display Settings
+				{t('admin.productForm.displaySettings')}
 			</summary>
 			<div class="p-4 pt-0 space-y-4">
 				<label class="checkbox-label">
@@ -1592,25 +1626,25 @@
 						bind:checked={product.hasSellDisclaimer}
 						name="hasSellDisclaimer"
 					/>
-					Sell with disclaimer
+					{t('admin.productForm.sellWithDisclaimer')}
 				</label>
 
 				{#if product.hasSellDisclaimer}
 					<div class="bg-yellow-50 p-4 rounded-lg space-y-3">
 						<label class="form-label">
-							Disclaimer title
+							{t('admin.productForm.disclaimerTitle')}
 							<input
 								name="sellDisclaimerTitle"
 								type="text"
 								maxlength="60"
 								value={sellDisclaimerTitle}
 								class="form-input"
-								placeholder="Disclaimer title"
+								placeholder={t('admin.productForm.disclaimerTitle')}
 								required
 							/>
 						</label>
 						<label class="form-label">
-							Disclaimer description
+							{t('admin.productForm.disclaimerDescription')}
 							<textarea
 								name="sellDisclaimerReason"
 								cols="30"
@@ -1618,7 +1652,7 @@
 								maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 								value={sellDisclaimerReason}
 								class="form-input"
-								placeholder="Explain why the disclaimer is needed"
+								placeholder={t('admin.productForm.explainWhyDisclaimerNeeded')}
 								required
 							/>
 						</label>
@@ -1633,7 +1667,7 @@
 							checked={product.hideFromSEO}
 							class="form-checkbox"
 						/>
-						Hide this product from search engines
+						{t('admin.productForm.hideProductFromSearchEngines')}
 					</label>
 
 					<label class="checkbox-label">
@@ -1643,12 +1677,14 @@
 							checked={product.hideDiscountExpiration}
 							class="form-checkbox"
 						/>
-						Hide discount expiration date
+						{t('admin.productForm.hideDiscountExpirationDate')}
 					</label>
 				</div>
 
 				<div>
-					<h4 class="text-lg font-medium text-gray-900 mb-3">Action Settings</h4>
+					<h4 class="text-lg font-medium text-gray-900 mb-3">
+						{t('admin.productForm.actionSettings')}
+					</h4>
 					<ProductActionSettingsCards
 						bind:eshopVisible={product.actionSettings.eShop.visible}
 						bind:retailVisible={product.actionSettings.retail.visible}
@@ -1680,27 +1716,29 @@
 						d="M19 9l-7 7-7-7"
 					/>
 				</svg>
-				Advanced Features
+				{t('admin.productForm.advancedFeatures')}
 			</summary>
 			<div class="p-4 pt-0 space-y-6">
 				<div>
-					<h4 class="text-lg font-medium text-gray-900 mb-3">Custom Call-to-Action Buttons</h4>
+					<h4 class="text-lg font-medium text-gray-900 mb-3">
+						{t('admin.productForm.customCtaButtons')}
+					</h4>
 					<div class="space-y-3">
 						{#each [...(product.cta || []), ...Array(productCtaLines).fill( { href: '', label: '', fallback: false } )].slice(0, productCtaLines) as link, i}
 							<div class="flex gap-4 items-end p-3 bg-blue-50 rounded-lg">
 								<label class="form-label flex-1">
-									Button text
+									{t('admin.productForm.buttonText')}
 									<input
 										type="text"
 										name="cta[{i}].label"
 										class="form-input"
 										maxlength="60"
 										value={link.label}
-										placeholder="Button text"
+										placeholder={t('admin.productForm.buttonText')}
 									/>
 								</label>
 								<label class="form-label flex-1">
-									URL
+									{t('admin.productForm.url')}
 									<input
 										type="text"
 										name="cta[{i}].href"
@@ -1716,7 +1754,7 @@
 										name="cta[{i}].fallback"
 										checked={link.fallback}
 									/>
-									Show only when purchase isn't available
+									{t('admin.productForm.showOnlyWhenPurchaseIsNotAvailable')}
 								</label>
 								<button
 									type="button"
@@ -1733,32 +1771,34 @@
 							</div>
 						{/each}
 						<button class="btn body-mainCTA" on:click={() => (productCtaLines += 1)} type="button">
-							Add CTA Button
+							{t('admin.productForm.addCtaButton')}
 						</button>
 					</div>
 				</div>
 
 				<div>
-					<h4 class="text-lg font-medium text-gray-900 mb-3">External Resources</h4>
+					<h4 class="text-lg font-medium text-gray-900 mb-3">
+						{t('admin.productForm.externalResources')}
+					</h4>
 					<p class="text-sm text-gray-600 mb-3">
-						Digital files or links that will be available to customers after purchase
+						{t('admin.productForm.externalResourcesDescription')}
 					</p>
 					<div class="space-y-3">
 						{#each [...(product.externalResources || []), ...Array(externalResourcesLines).fill( { href: '', label: '' } )].slice(0, externalResourcesLines) as link, i}
 							<div class="flex gap-4 items-end p-3 bg-green-50 rounded-lg">
 								<label class="form-label flex-1">
-									Resource name
+									{t('admin.productForm.resourceName')}
 									<input
 										type="text"
 										name="externalResources[{i}].label"
 										class="form-input"
 										maxlength="60"
 										value={link.label}
-										placeholder="Resource name"
+										placeholder={t('admin.productForm.resourceName')}
 									/>
 								</label>
 								<label class="form-label flex-1">
-									URL
+									{t('admin.productForm.url')}
 									<input
 										type="text"
 										name="externalResources[{i}].href"
@@ -1788,23 +1828,24 @@
 							on:click={() => (externalResourcesLines += 1)}
 							type="button"
 						>
-							Add External Resource
+							{t('admin.productForm.addExternalResource')}
 						</button>
 					</div>
 				</div>
 
 				{#if !isNew}
 					<div>
-						<h4 class="text-lg font-medium text-gray-900 mb-3">CMS Content</h4>
+						<h4 class="text-lg font-medium text-gray-900 mb-3">
+							{t('admin.productForm.cmsContent')}
+						</h4>
 						<p class="text-sm text-gray-600 mb-4">
-							Add custom HTML content or widgets to be displayed before and after the product
-							information
+							{t('admin.productForm.cmsContentDescription')}
 						</p>
 
 						<div class="space-y-6">
 							<div class="bg-gray-50 p-4 rounded-lg">
 								<label class="form-label">
-									Content before product details
+									{t('admin.productForm.contentBeforeProductDetails')}
 									<label class="checkbox-label mt-2">
 										<input
 											class="form-checkbox"
@@ -1812,7 +1853,7 @@
 											name="hideContentBefore"
 											checked={product.mobile?.hideContentBefore}
 										/>
-										Hide on mobile devices
+										{t('admin.productForm.hideOnMobileDevices')}
 									</label>
 								</label>
 
@@ -1825,9 +1866,11 @@
 								</div>
 
 								<p class="text-sm text-gray-600 mt-2">
-									Tip: Add <code class="bg-gray-200 px-1 rounded"
+									{t('admin.productForm.tipAdd')}
+									<code class="bg-gray-200 px-1 rounded"
 										>[CurrencyCalculator=currency-calculator]</code
-									> to include a currency calculator widget
+									>
+									{t('admin.productForm.toIncludeCurrencyCalculatorWidget')}
 								</p>
 
 								<label class="checkbox-label mt-3">
@@ -1837,7 +1880,7 @@
 										bind:checked={displayRawHTMLBefore}
 										class="form-checkbox"
 									/>
-									Edit as raw HTML
+									{t('admin.productForm.editAsRawHtml')}
 								</label>
 
 								<textarea
@@ -1846,7 +1889,7 @@
 									cols="30"
 									rows="8"
 									maxlength={MAX_CONTENT_LIMIT}
-									placeholder="HTML content"
+									placeholder={t('admin.productForm.htmlContent')}
 									class="form-input block w-full mt-2"
 									bind:value={product.contentBefore}
 								/>
@@ -1854,7 +1897,7 @@
 
 							<div class="bg-gray-50 p-4 rounded-lg">
 								<label class="form-label">
-									Content after product details
+									{t('admin.productForm.contentAfterProductDetails')}
 									<label class="checkbox-label mt-2">
 										<input
 											class="form-checkbox"
@@ -1862,7 +1905,7 @@
 											name="hideContentAfter"
 											checked={product.mobile?.hideContentAfter}
 										/>
-										Hide on mobile devices
+										{t('admin.productForm.hideOnMobileDevices')}
 									</label>
 								</label>
 
@@ -1875,9 +1918,11 @@
 								</div>
 
 								<p class="text-sm text-gray-600 mt-2">
-									Tip: Add <code class="bg-gray-200 px-1 rounded"
+									{t('admin.productForm.tipAdd')}
+									<code class="bg-gray-200 px-1 rounded"
 										>[CurrencyCalculator=currency-calculator]</code
-									> to include a currency calculator widget
+									>
+									{t('admin.productForm.toIncludeCurrencyCalculatorWidget')}
 								</p>
 
 								<label class="checkbox-label mt-3">
@@ -1887,7 +1932,7 @@
 										bind:checked={displayRawHTMLAfter}
 										class="form-checkbox"
 									/>
-									Edit as raw HTML
+									{t('admin.productForm.editAsRawHtml')}
 								</label>
 
 								<textarea
@@ -1896,7 +1941,7 @@
 									cols="30"
 									rows="8"
 									maxlength={MAX_CONTENT_LIMIT}
-									placeholder="HTML content"
+									placeholder={t('admin.productForm.htmlContent')}
 									class="form-input block w-full mt-2"
 									bind:value={product.contentAfter}
 								/>
@@ -1908,16 +1953,16 @@
 				{#if allowPaidOrderWebhook}
 					<div>
 						<h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
-							Paid-order webhook
+							{t('admin.productForm.paidOrderWebhook')}
 						</h4>
 						<label class="checkbox-label">
 							<input type="checkbox" bind:checked={hasPaidOrderWebhook} class="form-checkbox" />
-							This will trigger an API call once order is paid
+							{t('admin.productForm.paidOrderWebhookHint')}
 						</label>
 						{#if hasPaidOrderWebhook}
 							<div class="space-y-2 pl-6 mt-2">
 								<label class="form-label">
-									API route
+									{t('admin.productForm.apiRoute')}
 									<input
 										type="url"
 										name="paidOrderWebhook.apiRoute"
@@ -1928,7 +1973,7 @@
 									/>
 								</label>
 								<label class="form-label">
-									Shared secret
+									{t('admin.productForm.sharedSecret')}
 									<input
 										type="password"
 										autocomplete="off"
@@ -1954,7 +1999,7 @@
 
 		{#if errorMessage}
 			<div class="bg-red-50 border border-red-200 rounded-lg p-4">
-				<p class="text-red-800 font-medium">Error</p>
+				<p class="text-red-800 font-medium">{t('admin.productForm.error')}</p>
 				<p class="text-red-700">{errorMessage}</p>
 			</div>
 		{/if}
@@ -1984,22 +2029,22 @@
 								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 							></path>
 						</svg>
-						{isNew ? 'Creating...' : 'Updating...'}
+						{isNew ? t('admin.productForm.creating') : t('admin.productForm.updating')}
 					{:else}
-						{isNew ? 'Create Product' : 'Update Product'}
+						{isNew ? t('admin.productForm.createProduct') : t('admin.productForm.updateProduct')}
 					{/if}
 				</button>
 
 				{#if !isNew}
 					<div class="flex gap-3">
 						<a href="/product/{product._id}" class="btn body-mainCTA px-6 py-3" target="_blank">
-							View Product
+							{t('admin.productForm.viewProduct')}
 						</a>
 						<a
 							href="{adminPrefix}/product/new?duplicate_from={product._id}"
 							class="btn body-mainCTA px-6 py-3"
 						>
-							Duplicate
+							{t('admin.productForm.duplicate')}
 						</a>
 						<button
 							type="submit"
@@ -2008,7 +2053,7 @@
 							on:click={confirmDelete}
 							disabled={submitting}
 						>
-							Delete Product
+							{t('admin.productForm.deleteProduct')}
 						</button>
 					</div>
 				{/if}

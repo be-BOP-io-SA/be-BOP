@@ -4,6 +4,9 @@
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
 	import { enhance } from '$app/forms';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	export let form;
@@ -29,12 +32,12 @@
 
 <form class="contents" method="post" action="?/save">
 	<label class="form-label">
-		Client ID
+		{t('admin.paypal.clientId')}
 		<input class="form-input" type="text" name="clientId" value={data.paypal.clientId} required />
 	</label>
 
 	<label class="form-label">
-		Secret
+		{t('admin.paypal.secret')}
 		<input class="form-input" type="password" name="secret" value={data.paypal.secret} required />
 	</label>
 
@@ -46,11 +49,11 @@
 			bind:checked={data.paypal.sandbox}
 			value="true"
 		/>
-		Those credentials are for the sandbox environment
+		{t('admin.paypal.sandboxCredentials')}
 	</label>
 
 	<label class="form-label">
-		<CurrencyLabel label="Currency" />
+		<CurrencyLabel label={t('admin.paypal.currency')} />
 		<Select
 			items={currenciesWithoutCrypto}
 			searchable={true}
@@ -62,8 +65,8 @@
 	</label>
 
 	<div class="flex justify-between">
-		<button class="btn btn-black" type="submit">Save</button>
-		<button class="btn btn-red" type="submit" form="delete-form">Reset</button>
+		<button class="btn btn-black" type="submit">{t('admin.action.save')}</button>
+		<button class="btn btn-red" type="submit" form="delete-form">{t('admin.action.reset')}</button>
 	</div>
 </form>
 <form class="contents" method="post" action="?/delete" id="delete-form"></form>
@@ -82,11 +85,11 @@
 	class="flex flex-col gap-2"
 >
 	<button class="btn btn-blue self-start" type="submit" disabled={testDisabled}>
-		{testInFlight ? 'Testing…' : 'Test connection'}
+		{testInFlight ? t('admin.action.testing') : t('admin.action.testConnection')}
 	</button>
 	{#if form?.ok}
-		<div class="alert-success">Connection successful. PayPal credentials are working.</div>
+		<div class="alert-success">{t('admin.action.testSuccess', { provider: 'PayPal' })}</div>
 	{:else if form?.reason}
-		<div class="alert-error">Connection failed: {form.reason}</div>
+		<div class="alert-error">{t('admin.action.testFailed', { reason: form.reason })}</div>
 	{/if}
 </form>

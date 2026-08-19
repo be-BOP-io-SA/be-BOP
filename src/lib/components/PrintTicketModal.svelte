@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
 	import type { Tag } from '$lib/types/Tag';
 	import type { PrintTicketOptions } from '$lib/types/PrintTicketOptions';
 	import type { PrintHistoryEntry } from '$lib/types/PrintHistoryEntry';
@@ -10,6 +11,8 @@
 	export let printHistory: PrintHistoryEntry[] = [];
 	export let onConfirm: (options: PrintTicketOptions) => void;
 	export let onCancel: () => void;
+
+	const { t } = useI18n();
 	export let onReprintFromHistory: (entry: PrintHistoryEntry, historyIndex: number) => void;
 
 	let activeTab: 'print' | 'history' = 'print';
@@ -70,7 +73,9 @@
 			tabindex="-1"
 		>
 			<h2 class="text-2xl font-bold mb-3 text-center">
-				PRINT TICKET{#if reversedHistory.length > 0}&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;{reversedHistory[0]
+				{t(
+					'pos.printTicket.title'
+				)}{#if reversedHistory.length > 0}&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;{reversedHistory[0]
 						.poolLabel}{/if}
 			</h2>
 
@@ -94,7 +99,7 @@
 				{#if activeTab === 'print'}
 					<div>
 						<div class="mb-4">
-							<div class="block font-bold mb-2 text-lg">PRINT MODE:</div>
+							<div class="block font-bold mb-2 text-lg">{t('pos.printTicket.mode')}</div>
 							<label
 								class="block my-2 text-lg"
 								class:opacity-50={!hasNewItems}
@@ -108,22 +113,24 @@
 									class="mr-3 w-5 h-5"
 									disabled={!hasNewItems}
 								/>
-								NEWLY ORDERED (DEFAULT)
+								{t('pos.printTicket.newlyOrdered')}
 							</label>
 							<label class="block my-2 cursor-pointer text-lg">
 								<input type="radio" bind:group={mode} value="all" class="mr-3 w-5 h-5" />
-								ALL ITEMS
+								{t('pos.printTicket.allItems')}
 							</label>
 						</div>
 
 						<div class="mb-4">
-							<label class="block font-bold mb-2 text-lg" for="tag-filter">TAG FILTER:</label>
+							<label class="block font-bold mb-2 text-lg" for="tag-filter"
+								>{t('pos.printTicket.tagFilter')}</label
+							>
 							<select
 								id="tag-filter"
 								bind:value={tagFilter}
 								class="w-full p-3 border-2 border-gray-300 rounded text-lg uppercase"
 							>
-								<option value="">All tags</option>
+								<option value="">{t('pos.printTicket.allTags')}</option>
 								{#each availableTags as tag}
 									<option value={tag._id}>{tag.name}</option>
 								{/each}
@@ -150,7 +157,7 @@
 				{:else if activeTab === 'history'}
 					<div class="max-h-[500px] overflow-y-auto overflow-x-auto">
 						{#if printHistory.length === 0}
-							<p class="text-center text-gray-500 py-8 text-xl">No print history available</p>
+							<p class="text-center text-gray-500 py-8 text-xl">{t('pos.printTicket.noHistory')}</p>
 						{:else}
 							<table class="w-full">
 								<thead class="bg-gray-100 sticky top-0">

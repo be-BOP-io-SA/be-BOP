@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { languageNames, type LanguageKey } from '$lib/translations/index.js';
 	import { MAX_DESCRIPTION_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 
 	let language: LanguageKey = 'fr';
 </script>
 
 <form method="post" class="contents">
 	<label class="form-label">
-		Select Language
+		{t('admin.product.selectLanguage')}
 
 		<select bind:value={language} name="language" class="form-input">
 			{#each data.locales as locale}
@@ -19,7 +22,7 @@
 	</label>
 
 	<label class="form-label">
-		Name
+		{t('admin.product.nameLabel')}
 		<input
 			type="text"
 			name="name"
@@ -30,7 +33,7 @@
 	</label>
 
 	<label class="form-label">
-		Description
+		{t('admin.product.descriptionLabel')}
 		<textarea
 			name="description"
 			class="form-input"
@@ -42,7 +45,7 @@
 	</label>
 
 	<label class="form-label">
-		Short Description
+		{t('admin.product.shortDescriptionLabel')}
 		<textarea
 			name="shortDescription"
 			class="form-input"
@@ -54,7 +57,7 @@
 	</label>
 
 	<label class="form-label">
-		Custom Preorder Text
+		{t('admin.product.customPreorderTextLabel')}
 		<input
 			type="text"
 			name="customPreorderText"
@@ -65,7 +68,7 @@
 	</label>
 
 	<label class="form-label">
-		Content Before
+		{t('admin.product.contentBeforeLabel')}
 		<textarea
 			class="form-input"
 			name="contentBefore"
@@ -75,7 +78,7 @@
 	</label>
 
 	<label class="form-label">
-		Content After
+		{t('admin.product.contentAfterLabel')}
 		<textarea
 			class="form-input"
 			name="contentAfter"
@@ -83,7 +86,7 @@
 			placeholder={data.product.contentAfter ?? ''}
 		/>
 	</label>
-	<h2 class="text-2xl">Variations</h2>
+	<h2 class="text-2xl">{t('admin.product.variationsTitle')}</h2>
 	{#each Object.keys(data.product.variationLabels?.values || []) as key}
 		<h3>{data.product.variationLabels?.names[key]}</h3>
 		{#each Object.entries(data.product.variationLabels?.values[key] || '[]') as [valueKey, valueLabel]}
@@ -107,12 +110,12 @@
 			name="variationLabels.names[{key}]"
 		/>
 	{/each}
-	<h2 class="text-2xl">CTA links</h2>
+	<h2 class="text-2xl">{t('admin.product.ctaLinksTitle')}</h2>
 
 	{#each [...(data.product.translations?.[language]?.cta || []), ...Array(3).fill( { href: '', label: '' } )].slice(0, 3) as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.product.textLabel')}
 				<input
 					type="text"
 					name="cta[{i}].label"
@@ -122,7 +125,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.product.urlLabel')}
 				<input
 					type="text"
 					name="cta[{i}].href"
@@ -133,12 +136,12 @@
 			</label>
 		</div>
 	{/each}
-	<h2 class="text-2xl">External Resource Hyperlinks</h2>
+	<h2 class="text-2xl">{t('admin.product.externalResourceHyperlinksTitle')}</h2>
 
 	{#each [...(data.product.translations?.[language]?.externalResources || []), ...Array(3).fill( { href: '', label: '' } )].slice(0, 3) as link, i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.product.textLabel')}
 				<input
 					type="text"
 					name="externalResources[{i}].label"
@@ -148,7 +151,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.product.urlLabel')}
 				<input
 					type="text"
 					name="externalResources[{i}].href"
@@ -162,7 +165,7 @@
 
 	{#if data.product.hasSellDisclaimer}
 		<label class="form-label">
-			Disclaimer title
+			{t('admin.product.disclaimerTitleLabel')}
 			<input
 				name="sellDisclaimer.title"
 				type="text"
@@ -173,7 +176,7 @@
 			/>
 		</label>
 		<label class="form-label">
-			Disclaimer description
+			{t('admin.product.disclaimerDescriptionLabel')}
 			<textarea
 				name="sellDisclaimer.reason"
 				cols="30"
@@ -185,5 +188,5 @@
 			/>
 		</label>
 	{/if}
-	<button class="btn btn-black self-start" type="submit">Save</button>
+	<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>
 </form>
