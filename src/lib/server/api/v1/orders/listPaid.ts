@@ -1,7 +1,14 @@
 import { collections } from '$lib/server/database';
-import { orderIndividualItemPrice, type Order } from '$lib/types/Order';
+import {
+	ORDER_PAYMENT_STATUSES,
+	orderIndividualItemPrice,
+	type Order,
+	type OrderPaymentStatus
+} from '$lib/types/Order';
 import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
+import { typedInclude } from '$lib/utils/typedIncludes';
+import type { ObjectId } from 'mongodb';
 import { amountToMinor } from './money';
 
 const MAX_LIMIT = 100;
@@ -12,7 +19,22 @@ export type PaidOrdersQuery = {
 	until?: string;
 	limit?: string;
 	cursor?: string;
+	/** Orders containing this product id on at least one line. */
+	productId?: string;
+	/** Order-level status (`pending`, `paid`, `expired`, `canceled`, `failed`). */
+	status?: string;
+	/** Exact order number. */
+	number?: string;
+	/** Orders carrying this order label id. */
+	label?: string;
+	/** Caller's own `externalOrderId`. Always scoped to `apiKeyId` — never cross-key. */
+	externalOrderId?: string;
+	/** `_id` of the API key making the call. Required to use `externalOrderId`. */
+	apiKeyId?: ObjectId;
 };
+
+/** A query parameter the caller got wrong. Routes map this to 400 VALIDATION_ERROR. */
+export type OrderQueryError = { field: string; message: string };
 
 export type PaidOrderItemDto = {
 	productId: string;
@@ -49,6 +71,85 @@ function parseIsoDate(raw: string | undefined): Date | undefined {
 	}
 	const d = new Date(raw);
 	return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+/**
+ * Build the Mongo filter shared by both order listings.
+ *
+ * Every criterion here is backed by an existing index on `orders` (see database.ts):
+ * `createdAt`, `{ 'items.product._id', status }`, `{ status, 'payments.status' }`,
+ * `number` (unique), `orderLabelIds` (sparse), `{ externalSourceApiKeyId, externalOrderId }`.
+ *
+ * Unlike `limit` and the date bounds — which fall back silently for backwards compatibility —
+ * a malformed filter is rejected. Dropping a filter silently widens the result set, and on an
+ * order listing that means handing back rows the caller never asked for.
+ */
+function buildOrderFilter(
+	query: PaidOrdersQuery
+): { filter: Record<string, unknown> } | { error: OrderQueryError } {
+	const filter: Record<string, unknown> = {};
+
+	const createdAt: Record<string, Date> = {};
+	const since = parseIsoDate(query.since);
+	const until = parseIsoDate(query.until);
+	if (since) {
+		createdAt.$gte = since;
+	}
+	if (until) {
+		createdAt.$lte = until;
+	}
+	if (Object.keys(createdAt).length) {
+		filter.createdAt = createdAt;
+	}
+
+	if (query.cursor) {
+		filter._id = { $lt: query.cursor };
+	}
+
+	if (query.productId) {
+		filter['items.product._id'] = query.productId;
+	}
+
+	if (query.status) {
+		if (!typedInclude(ORDER_PAYMENT_STATUSES, query.status)) {
+			return {
+				error: {
+					field: 'status',
+					message: `status must be one of: ${ORDER_PAYMENT_STATUSES.join(', ')}`
+				}
+			};
+		}
+		filter.status = query.status satisfies OrderPaymentStatus;
+	}
+
+	if (query.number !== undefined) {
+		const n = Number.parseInt(query.number, 10);
+		if (!Number.isSafeInteger(n) || n < 1 || String(n) !== query.number.trim()) {
+			return { error: { field: 'number', message: 'number must be a positive integer' } };
+		}
+		filter.number = n;
+	}
+
+	if (query.label) {
+		filter.orderLabelIds = query.label;
+	}
+
+	if (query.externalOrderId) {
+		// Without the key scope this would expose another integrator's order under a guessed
+		// reference — the uniqueness of externalOrderId is per API key, not global.
+		if (!query.apiKeyId) {
+			return {
+				error: {
+					field: 'externalOrderId',
+					message: 'externalOrderId lookup requires an authenticated API key'
+				}
+			};
+		}
+		filter.externalSourceApiKeyId = query.apiKeyId;
+		filter.externalOrderId = query.externalOrderId;
+	}
+
+	return { filter };
 }
 
 function paidAmount(order: Order): { amountMinor: number; currency: string } | null {
@@ -108,30 +209,20 @@ export function toPaidOrderDto(order: Order): PaidOrderDto | null {
 /**
  * Paid orders for Face A pollers (armband / #2689). Unpaid rows are never returned.
  */
-export async function listPaidOrders(query: PaidOrdersQuery): Promise<{
-	orders: PaidOrderDto[];
-	page: { limit: number; nextCursor: string | null };
-}> {
+export async function listPaidOrders(query: PaidOrdersQuery): Promise<
+	| {
+			orders: PaidOrderDto[];
+			page: { limit: number; nextCursor: string | null };
+	  }
+	| { error: OrderQueryError }
+> {
 	const limit = parseLimit(query.limit);
-	const since = parseIsoDate(query.since);
-	const until = parseIsoDate(query.until);
 
-	const filter: Record<string, unknown> = {
-		'payments.status': 'paid'
-	};
-	const createdAt: Record<string, Date> = {};
-	if (since) {
-		createdAt.$gte = since;
+	const built = buildOrderFilter(query);
+	if ('error' in built) {
+		return built;
 	}
-	if (until) {
-		createdAt.$lte = until;
-	}
-	if (Object.keys(createdAt).length) {
-		filter.createdAt = createdAt;
-	}
-	if (query.cursor) {
-		filter._id = { $lt: query.cursor };
-	}
+	const filter: Record<string, unknown> = { ...built.filter, 'payments.status': 'paid' };
 
 	const docs = await collections.orders
 		.find(filter)
@@ -174,28 +265,20 @@ export function toOrderReadDto(order: Order): OrderReadDto {
 }
 
 /** All orders for Face A (`orders:read`), including unpaid. */
-export async function listOrders(query: PaidOrdersQuery): Promise<{
-	orders: OrderReadDto[];
-	page: { limit: number; nextCursor: string | null };
-}> {
+export async function listOrders(query: PaidOrdersQuery): Promise<
+	| {
+			orders: OrderReadDto[];
+			page: { limit: number; nextCursor: string | null };
+	  }
+	| { error: OrderQueryError }
+> {
 	const limit = parseLimit(query.limit);
-	const since = parseIsoDate(query.since);
-	const until = parseIsoDate(query.until);
 
-	const filter: Record<string, unknown> = {};
-	const createdAt: Record<string, Date> = {};
-	if (since) {
-		createdAt.$gte = since;
+	const built = buildOrderFilter(query);
+	if ('error' in built) {
+		return built;
 	}
-	if (until) {
-		createdAt.$lte = until;
-	}
-	if (Object.keys(createdAt).length) {
-		filter.createdAt = createdAt;
-	}
-	if (query.cursor) {
-		filter._id = { $lt: query.cursor };
-	}
+	const filter = built.filter;
 
 	const docs = await collections.orders
 		.find(filter)
