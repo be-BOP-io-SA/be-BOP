@@ -16,6 +16,20 @@ function cursorOf(docs: unknown[]) {
 	return { sort: () => ({ limit: () => ({ toArray: async () => docs }) }) };
 }
 
+/** listPaidOrders returns a query error instead of throwing; most tests want the success branch. */
+async function listPaidOk(query: Parameters<typeof listPaidOrders>[0] = {}) {
+	const res = await listPaidOrders(query);
+	if ('error' in res) {
+		throw new Error(`unexpected query error on ${res.error.field}: ${res.error.message}`);
+	}
+	return res;
+}
+
+/** The filter Mongo was actually asked for on the last find() call. */
+function lastFilter(): Record<string, unknown> {
+	return find.mock.calls[find.mock.calls.length - 1][0] as Record<string, unknown>;
+}
+
 function makeOrder(opts: { paid: boolean; uniqueKey?: string }): Order {
 	const amount = 100;
 	return {
@@ -132,7 +146,7 @@ describe('listPaidOrders pagination', () => {
 		];
 		find.mockReturnValue(cursorOf(page));
 
-		const res = await listPaidOrders({ limit: '2' });
+		const res = await listPaidOk({ limit: '2' });
 		// One row dropped, so a single order comes back — but a third row exists behind it and
 		// the cursor must still advance, otherwise the poller stops with orders unread.
 		expect(res.orders).toHaveLength(1);
@@ -141,9 +155,82 @@ describe('listPaidOrders pagination', () => {
 
 	it('closes the page when the query returns no extra row', async () => {
 		find.mockReturnValue(cursorOf([{ ...makeOrder({ paid: true }), _id: 'ord_c' }]));
-		const res = await listPaidOrders({ limit: '2' });
+		const res = await listPaidOk({ limit: '2' });
 		expect(res.orders).toHaveLength(1);
 		expect(res.page.nextCursor).toBeNull();
+	});
+});
+
+describe('order filters', () => {
+	beforeEach(() => {
+		find.mockReset();
+		find.mockReturnValue(cursorOf([]));
+	});
+
+	it('filters on the product line, not on a top-level field', async () => {
+		await listPaidOk({ productId: 'cafe' });
+		expect(lastFilter()['items.product._id']).toBe('cafe');
+	});
+
+	it('keeps the paid constraint alongside any filter', async () => {
+		await listPaidOk({ productId: 'cafe' });
+		expect(lastFilter()['payments.status']).toBe('paid');
+	});
+
+	it('accepts a known order status', async () => {
+		await listPaidOk({ status: 'pending' });
+		expect(lastFilter().status).toBe('pending');
+	});
+
+	it('rejects an unknown status instead of ignoring it', async () => {
+		const res = await listPaidOrders({ status: 'shipped' });
+		expect('error' in res && res.error.field).toBe('status');
+		expect(find).not.toHaveBeenCalled();
+	});
+
+	it('coerces number and rejects anything that is not a positive integer', async () => {
+		await listPaidOk({ number: '42' });
+		expect(lastFilter().number).toBe(42);
+
+		for (const bad of ['0', '-1', '1.5', '12abc', 'abc']) {
+			const res = await listPaidOrders({ number: bad });
+			expect('error' in res && res.error.field).toBe('number');
+		}
+	});
+
+	it('scopes externalOrderId to the calling key', async () => {
+		const apiKeyId = new ObjectId();
+		await listPaidOk({ externalOrderId: 'pos-1', apiKeyId });
+		expect(lastFilter().externalOrderId).toBe('pos-1');
+		expect(lastFilter().externalSourceApiKeyId).toBe(apiKeyId);
+	});
+
+	it('refuses an externalOrderId lookup with no key rather than searching across keys', async () => {
+		const res = await listPaidOrders({ externalOrderId: 'pos-1' });
+		expect('error' in res && res.error.field).toBe('externalOrderId');
+		expect(find).not.toHaveBeenCalled();
+	});
+
+	it('filters on order labels', async () => {
+		await listPaidOk({ label: 'vip' });
+		expect(lastFilter().orderLabelIds).toBe('vip');
+	});
+
+	it('combines a filter with the cursor and the date window', async () => {
+		await listPaidOk({
+			productId: 'cafe',
+			cursor: 'ord_b',
+			since: '2026-08-01T00:00:00Z'
+		});
+		const filter = lastFilter();
+		expect(filter['items.product._id']).toBe('cafe');
+		expect(filter._id).toEqual({ $lt: 'ord_b' });
+		expect(filter.createdAt).toEqual({ $gte: new Date('2026-08-01T00:00:00Z') });
+	});
+
+	it('applies no filter when none is given', async () => {
+		await listPaidOk({});
+		expect(Object.keys(lastFilter())).toEqual(['payments.status']);
 	});
 });
 
