@@ -45,7 +45,7 @@
 			"submit": "Absenden"
 		},
 		"theme": {
-			"title": "Theme",
+			"title": "Design",
 			"createNew": "Neues Theme erstellen",
 			"createNewAssistant": "Neues Theme erstellen (mit Assistent)",
 			"choose": "Theme auswählen",
@@ -157,7 +157,7 @@
 				"tickets": "Tickets",
 				"pictures": "Bilder",
 				"discount": "Rabatte",
-				"themes": "Themes",
+				"themes": "Designs",
 				"labels": "Labels",
 				"files": "Dateien",
 				"general": "Allgemein",
@@ -177,7 +177,7 @@
 				"reporting": "Berichte",
 				"sales-logs": "Verkaufsprotokolle",
 				"emails": "E-Mails",
-				"challenges": "Challenges",
+				"challenges": "Herausforderungen",
 				"sliders": "Slider",
 				"specifications": "Spezifikationen",
 				"forms": "Formulare",

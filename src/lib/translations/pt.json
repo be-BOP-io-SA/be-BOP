@@ -347,7 +347,7 @@
 			"legalReason": "Motivo legal"
 		},
 		"backup": {
-			"title": "Backup",
+			"title": "Cópia de segurança",
 			"createLink": "Criar backup",
 			"importLink": "Importar backup",
 			"exportTitle": "Exportar dados",
@@ -1025,7 +1025,7 @@
 			"allSubtypes": "Todos os subtipos",
 			"country": "País",
 			"label": "Label",
-			"email": "Email",
+			"email": "E-mail",
 			"searchOrderByEmailPlaceholder": "procurar encomenda por email",
 			"npub": "Npub",
 			"searchOrderByNpubPlaceholder": "procurar encomenda por npub",
@@ -1062,7 +1062,7 @@
 			"websiteTitle": "Título do site",
 			"websiteDescription": "Descrição do site",
 			"shownInSocialMediaPreviews": "Exibido nas pré-visualizações de redes sociais",
-			"links": "Links",
+			"links": "Ligações",
 			"text": "Texto",
 			"url": "URL",
 			"addTopbarLink": "Adicionar link à barra superior",

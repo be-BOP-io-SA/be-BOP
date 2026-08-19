@@ -84,7 +84,7 @@
 				"credit-card-svg-fill-color": "Colore di riempimento SVG della carta di credito",
 				"current-date-background-color": "Colore di sfondo della data corrente",
 				"current-date-color": "Colore della data corrente",
-				"font": "Font",
+				"font": "Carattere",
 				"font-color": "Colore del font",
 				"has-event-date-background-color": "Colore di sfondo delle date con evento",
 				"has-event-date-color": "Colore delle date con evento",
@@ -1117,7 +1117,7 @@
 			"cart": "Carrello",
 			"cartPreviewInteractive": "Rendi interattiva l'anteprima del carrello",
 			"removePopinProductPrice": "Rimuovi il prezzo del prodotto nel pop-in quando si aggiunge al carrello",
-			"checkout": "Checkout",
+			"checkout": "Pagamento",
 			"showCheckoutButtonOnProductPage": "Mostra il pulsante \"checkout\" nella pagina del prodotto",
 			"displayNewsletterCommercialProspection": "Mostra l'opzione newsletter + prospezione commerciale (disabilitata per impostazione predefinita)",
 			"requestIpCollectionOnDeliverylessOrder": "Richiedi la raccolta dell'IP per gli ordini senza consegna",
@@ -1296,7 +1296,7 @@
 			"providerName": "Nome del provider",
 			"slug": "Slug",
 			"clientId": "ID cliente",
-			"clientSecret": "Client secret",
+			"clientSecret": "Segreto client",
 			"issuer": "Emittente",
 			"enableProvider": "Abilita questo provider",
 			"scope": "Ambito",
@@ -2337,7 +2337,7 @@
 			"label": "Aggiungi informazioni sulla fattura"
 		},
 		"shipmentInfo": "Informazioni di spedizione",
-		"title": "Checkout",
+		"title": "Pagamento",
 		"tosAgree": "Accetto i termini e le condizioni <0> termini e condizioni </0>",
 		"vatShippingAddress": "Il paese è determinato dall'indirizzo di spedizione "
 	},
@@ -2635,7 +2635,7 @@
 			"contact": "Contatto della ditta",
 			"identity": "Identità della ditta"
 		},
-		"poweredBy": "Powered by",
+		"poweredBy": "Realizzato con",
 		"shop": {
 			"info": "Il nostro negozio"
 		}
@@ -2645,7 +2645,7 @@
 	},
 	"identity": {
 		"cta": {
-			"update": "Update"
+			"update": "Aggiorna"
 		},
 		"personalInformation": "Informazioni personali"
 	},

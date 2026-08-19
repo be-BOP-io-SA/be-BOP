@@ -1296,7 +1296,7 @@
 			"providerName": "Naam van de provider",
 			"slug": "Slug",
 			"clientId": "Client-ID",
-			"clientSecret": "Client secret",
+			"clientSecret": "Clientgeheim",
 			"issuer": "Uitgever",
 			"enableProvider": "Deze provider inschakelen",
 			"scope": "Bereik",
@@ -2102,7 +2102,7 @@
 			"confirmDelete": "Deze zoeklijst verwijderen?"
 		},
 		"home": {
-			"title": "Back-office home",
+			"title": "Back-office startpagina",
 			"welcome": "Welkom in de be-BOP back-office! Vanaf hier kunt u uw be-BOP beheren, configureren en controleren.",
 			"adminWord": "Een woord van uw beheerder:",
 			"versionUpdates": "be-BOP-versie & updates",
@@ -2645,7 +2645,7 @@
 	},
 	"identity": {
 		"cta": {
-			"update": "Update"
+			"update": "Bijwerken"
 		},
 		"personalInformation": "Persoonlijke informatie"
 	},
@@ -2896,7 +2896,7 @@
 		"btn": {
 			"add": "Toevoegen",
 			"cancel": "Annuleren",
-			"cancelTap": "Stop Tap",
+			"cancelTap": "Tap stoppen",
 			"paid": "Betaald",
 			"replace": "Wijzigen ▾",
 			"replaceSubmit": "Wijzigen",
