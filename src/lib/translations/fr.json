@@ -154,7 +154,7 @@
 				"pictures": "Images",
 				"discount": "Remises",
 				"themes": "Thèmes",
-				"labels": "Étiquettes",
+				"labels": "Labels",
 				"files": "Fichiers",
 				"general": "Général",
 				"languages": "Langues",
@@ -190,7 +190,7 @@
 			"collapseAll": "Tout réduire",
 			"removeBookmark": "Retirer le favori",
 			"addBookmark": "Ajouter aux favoris",
-			"posSession": "Session PdV",
+			"posSession": "Session POS",
 			"toggleMenu": "Basculer le menu admin"
 		},
 		"product": {
@@ -469,7 +469,7 @@
 		"challenge": {
 			"addChallenge": "Ajouter un défi",
 			"listTitle": "Liste des défis",
-			"challengeIdTag": "[Défi={id}]",
+			"challengeIdTag": "[Challenge={id}]",
 			"noChallengesYet": "Aucun défi pour le moment",
 			"tabEdit": "Modifier le défi",
 			"tabRatioProduct": "Ratio / produit",
@@ -684,8 +684,8 @@
 			"showExpirationBanner": "Afficher un rappel d’expiration de la réduction sur la page produit",
 			"channelApplication": "Application du canal de réduction",
 			"channelWeb": "Web",
-			"channelWebPos": "Web avec privilège PdV (/cart)",
-			"channelPosTouch": "PdV bar-restaurant (/pos/touch)",
+			"channelWebPos": "Web avec privilège PoS (/cart)",
+			"channelPosTouch": "PoS bar-restaurant (/pos/touch)",
 			"requiredCode": "Code requis (facultatif)",
 			"promoCodePlaceholder": "Saisissez la chaîne du code promo",
 			"promoCodeTip": "Astuce : utilisez 8 caractères ou plus en mélangeant lettres, chiffres et caractères spéciaux (ex. SPRING_2026X4!) — les codes courts se devinent facilement par force brute.",
@@ -693,7 +693,7 @@
 			"requiredBillingCountry": "Pays de facturation requis (facultatif)",
 			"none": "Aucun",
 			"paymentMethod": "Méthode de paiement",
-			"posRoleOnly": "(uniquement pour les utilisateurs ayant le rôle PdV)",
+			"posRoleOnly": "(uniquement pour les utilisateurs ayant le rôle POS)",
 			"requiredContactAddress": "Adresse de contact requise (facultatif)",
 			"contactAddressesPlaceholder": "Une adresse par ligne (email, npub, téléphone...)",
 			"contactAddressesTip": "Astuce : utilisez npub* pour accorder la réduction à tous les utilisateurs authentifiés via Nostr.",
@@ -1013,10 +1013,10 @@
 			"productAlias": "Alias du produit",
 			"searchOrderByProductAliasPlaceholder": "rechercher une commande par alias de produit",
 			"paymentMean": "Moyen de paiement",
-			"posSubtype": "Sous-type PdV",
+			"posSubtype": "Sous-type PoS",
 			"allSubtypes": "Tous les sous-types",
 			"country": "Pays",
-			"label": "Étiquette",
+			"label": "Label",
 			"email": "E-mail",
 			"searchOrderByEmailPlaceholder": "rechercher une commande par e-mail",
 			"npub": "Npub",
@@ -1025,8 +1025,8 @@
 			"system": "Système",
 			"previous": "Précédent",
 			"next": "Suivant",
-			"orderLabelTitle": "Étiquette de commande",
-			"orderLabelIds": "Identifiants d'étiquette de commande"
+			"orderLabelTitle": "Label de commande",
+			"orderLabelIds": "Identifiants de label de commande"
 		},
 		"layout": {
 			"title": "Mise en page",
@@ -1333,7 +1333,7 @@
 			"delete": "Supprimer"
 		},
 		"posPayments": {
-			"title": "Sous-types de paiement PdV",
+			"title": "Sous-types de paiement PoS",
 			"description": "Configurez différents types de paiements en point de vente (espèces, chèque, terminaux, etc.)",
 			"operationSuccessful": "Opération réussie !",
 			"existingSubtypes": "Sous-types existants",
@@ -1354,7 +1354,7 @@
 			"editSubtypeTitle": "Modifier « {name} »",
 			"createSubtypeTitle": "Créer un nouveau sous-type",
 			"displayNameLabel": "Nom affiché",
-			"namePlaceholder": "ex. Espèces, Chèque, Terminal PdV externe",
+			"namePlaceholder": "ex. Espèces, Chèque, Terminal POS externe",
 			"slugFieldLabel": "Slug",
 			"slugPlaceholder": "ex. cash, check, external-tpe",
 			"slugPatternTitle": "Lettres minuscules, chiffres et tirets uniquement",
@@ -1363,7 +1363,7 @@
 			"descriptionLabel": "Description (facultatif)",
 			"descriptionPlaceholder": "Description facultative pour référence administrative",
 			"tapToPayConfigTitle": "Configuration du paiement sans contact (facultatif)",
-			"tapToPayConfigDescription": "Configurez le rapprochement automatique des paiements via des terminaux PdV externes (Stripe Terminal, SumUp, etc.)",
+			"tapToPayConfigDescription": "Configurez le rapprochement automatique des paiements via des terminaux POS externes (Stripe Terminal, SumUp, etc.)",
 			"tapToPayProcessorLabel": "Processeur de paiement sans contact",
 			"notUsed": "Non utilisé",
 			"notConfigured": "(non configuré)",
@@ -1483,7 +1483,7 @@
 			"endsAt": "Se termine le",
 			"paymentMean": "Moyen de paiement",
 			"paymentMeanLower": "Moyen de paiement",
-			"posSubtype": "Sous-type PdV",
+			"posSubtype": "Sous-type PoS",
 			"allSubtypes": "Tous les sous-types",
 			"employeeAlias": "Alias employé",
 			"filterWithProductTag": "Filtrer par étiquette produit",
@@ -1826,7 +1826,7 @@
 		"ordersList": {
 			"bankTransferNumberPlaceholder": "numéro de virement bancaire",
 			"detailPlaceholder": "Détail (identifiant de transaction carte, ou mode de paiement point de vente)",
-			"addLabel": "ajouter une étiquette"
+			"addLabel": "ajouter un label"
 		},
 		"template": {
 			"emails": "E-mails",

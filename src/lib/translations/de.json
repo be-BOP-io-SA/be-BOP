@@ -469,7 +469,7 @@
 		"challenge": {
 			"addChallenge": "Herausforderung hinzufügen",
 			"listTitle": "Liste der Herausforderungen",
-			"challengeIdTag": "[Herausforderung={id}]",
+			"challengeIdTag": "[Challenge={id}]",
 			"noChallengesYet": "Noch keine Herausforderungen",
 			"tabEdit": "Herausforderung bearbeiten",
 			"tabRatioProduct": "Verhältnis / Produkt",
@@ -1016,7 +1016,7 @@
 			"posSubtype": "PoS-Subtyp",
 			"allSubtypes": "Alle Subtypen",
 			"country": "Land",
-			"label": "Etikett",
+			"label": "Label",
 			"email": "E-Mail",
 			"searchOrderByEmailPlaceholder": "Bestellung nach E-Mail suchen",
 			"npub": "Npub",
@@ -1025,8 +1025,8 @@
 			"system": "System",
 			"previous": "Zurück",
 			"next": "Weiter",
-			"orderLabelTitle": "Bestelletikett",
-			"orderLabelIds": "Bestelletikett-IDs"
+			"orderLabelTitle": "Bestell-Label",
+			"orderLabelIds": "Bestell-Label-IDs"
 		},
 		"layout": {
 			"title": "Layout",

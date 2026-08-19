@@ -154,7 +154,7 @@
 				"pictures": "Imagens",
 				"discount": "Descontos",
 				"themes": "Temas",
-				"labels": "Etiquetas",
+				"labels": "Labels",
 				"files": "Ficheiros",
 				"general": "Geral",
 				"languages": "Idiomas",
@@ -166,7 +166,7 @@
 				"s3-storage": "Armazenamento S3",
 				"bitcoin-core-node": "Nó Bitcoin Core",
 				"lightning-lnd-node": "Nó LND Lightning",
-				"pos-payments": "Pagamentos PdV",
+				"pos-payments": "Pagamentos PoS",
 				"orders": "Encomendas",
 				"reporting": "Relatórios",
 				"sales-logs": "Registos de vendas",
@@ -190,7 +190,7 @@
 			"collapseAll": "Recolher tudo",
 			"removeBookmark": "Remover marcador",
 			"addBookmark": "Adicionar marcador",
-			"posSession": "Sessão de PdV",
+			"posSession": "Sessão de POS",
 			"toggleMenu": "Alternar menu de administração"
 		},
 		"product": {
@@ -469,7 +469,7 @@
 		"challenge": {
 			"addChallenge": "Adicionar desafio",
 			"listTitle": "Lista de desafios",
-			"challengeIdTag": "[Desafio={id}]",
+			"challengeIdTag": "[Challenge={id}]",
 			"noChallengesYet": "Ainda não há desafios",
 			"tabEdit": "Editar desafio",
 			"tabRatioProduct": "Proporção / produto",
@@ -502,7 +502,7 @@
 			"selectLanguage": "Selecionar idioma",
 			"addTitle": "Adicionar um desafio",
 			"submit": "Enviar",
-			"challengeId": "[Desafio={id}]",
+			"challengeId": "[Challenge={id}]",
 			"addChallengeTitle": "Adicionar um desafio",
 			"ratioValue": "Proporção ({ratio})",
 			"endDateAfterBeginningDate": "A data de término deve ser posterior à data de início",
@@ -684,8 +684,8 @@
 			"showExpirationBanner": "Mostrar um lembrete de expiração do desconto na página do produto",
 			"channelApplication": "Aplicação do canal de desconto",
 			"channelWeb": "Web",
-			"channelWebPos": "Web com privilégio de PdV (/cart)",
-			"channelPosTouch": "PdV bar-restaurante (/pos/touch)",
+			"channelWebPos": "Web com privilégio de PoS (/cart)",
+			"channelPosTouch": "PoS bar-restaurante (/pos/touch)",
 			"requiredCode": "Código necessário (opcional)",
 			"promoCodePlaceholder": "Introduza a cadeia do código promocional",
 			"promoCodeTip": "Dica: use 8+ caracteres misturando letras, números e caracteres especiais (ex. SPRING_2026X4!) — códigos curtos são fáceis de quebrar por força bruta.",
@@ -693,7 +693,7 @@
 			"requiredBillingCountry": "País de faturação necessário (opcional)",
 			"none": "Nenhum",
 			"paymentMethod": "Método de pagamento",
-			"posRoleOnly": "(apenas para utilizadores com função de PdV)",
+			"posRoleOnly": "(apenas para utilizadores com função de POS)",
 			"requiredContactAddress": "Endereço de contacto necessário (opcional)",
 			"contactAddressesPlaceholder": "Um endereço por linha (email, npub, telefone...)",
 			"contactAddressesTip": "Dica: use npub* para conceder o desconto a todos os utilizadores autenticados via Nostr.",
@@ -786,9 +786,9 @@
 			"createUserTitle": "Criar um utilizador"
 		},
 		"label": {
-			"addLabel": "Adicionar um rótulo",
-			"listOfLabel": "Lista de rótulos",
-			"noLabelYet": "Ainda não há rótulos",
+			"addLabel": "Adicionar um label",
+			"listOfLabel": "Lista de labels",
+			"noLabelYet": "Ainda não há labels",
 			"name": "Nome",
 			"namePlaceholder": "nome",
 			"slug": "Slug",
@@ -798,12 +798,12 @@
 			"icon": "Ícone",
 			"iconPlaceholder": "ícone svg ou emoji",
 			"submit": "Enviar",
-			"confirmDeleteLabel": "Deseja excluir este rótulo?",
+			"confirmDeleteLabel": "Deseja excluir este label?",
 			"content": "Conteúdo",
 			"view": "Ver",
 			"delete": "Excluir",
 			"selectLanguage": "Selecionar idioma",
-			"editLabelTab": "Editar rótulo",
+			"editLabelTab": "Editar label",
 			"translationsTab": "Traduções"
 		},
 		"lnd": {
@@ -1013,10 +1013,10 @@
 			"productAlias": "Alias do produto",
 			"searchOrderByProductAliasPlaceholder": "procurar encomenda por alias do produto",
 			"paymentMean": "Meio de pagamento",
-			"posSubtype": "Subtipo de PdV",
+			"posSubtype": "Subtipo de PoS",
 			"allSubtypes": "Todos os subtipos",
 			"country": "País",
-			"label": "Etiqueta",
+			"label": "Label",
 			"email": "Email",
 			"searchOrderByEmailPlaceholder": "procurar encomenda por email",
 			"npub": "Npub",
@@ -1025,8 +1025,8 @@
 			"system": "Sistema",
 			"previous": "Anterior",
 			"next": "Seguinte",
-			"orderLabelTitle": "Etiqueta da encomenda",
-			"orderLabelIds": "IDs de etiquetas da encomenda"
+			"orderLabelTitle": "Label da encomenda",
+			"orderLabelIds": "IDs de labels da encomenda"
 		},
 		"layout": {
 			"title": "Layout",
@@ -1333,7 +1333,7 @@
 			"delete": "Eliminar"
 		},
 		"posPayments": {
-			"title": "Subtipos de pagamento PdV",
+			"title": "Subtipos de pagamento PoS",
 			"description": "Configure diferentes tipos de pagamentos no ponto de venda (dinheiro, cheque, terminais, etc.)",
 			"operationSuccessful": "Operação bem-sucedida!",
 			"existingSubtypes": "Subtipos existentes",
@@ -1354,7 +1354,7 @@
 			"editSubtypeTitle": "Editar \"{name}\"",
 			"createSubtypeTitle": "Criar novo subtipo",
 			"displayNameLabel": "Nome de exibição",
-			"namePlaceholder": "ex. Dinheiro, Cheque, Terminal PdV externo",
+			"namePlaceholder": "ex. Dinheiro, Cheque, Terminal POS externo",
 			"slugFieldLabel": "Slug",
 			"slugPlaceholder": "ex. cash, check, external-tpe",
 			"slugPatternTitle": "Apenas letras minúsculas, números e hífens",
@@ -1363,7 +1363,7 @@
 			"descriptionLabel": "Descrição (opcional)",
 			"descriptionPlaceholder": "Descrição opcional para referência do administrador",
 			"tapToPayConfigTitle": "Configuração de tap-to-pay (opcional)",
-			"tapToPayConfigDescription": "Configure a reconciliação automática de pagamentos através de terminais PdV externos (Stripe Terminal, SumUp, etc.)",
+			"tapToPayConfigDescription": "Configure a reconciliação automática de pagamentos através de terminais POS externos (Stripe Terminal, SumUp, etc.)",
 			"tapToPayProcessorLabel": "Processador de tap-to-pay",
 			"notUsed": "Não utilizado",
 			"notConfigured": "(não configurado)",
@@ -1483,7 +1483,7 @@
 			"endsAt": "Termina em",
 			"paymentMean": "Meio de pagamento",
 			"paymentMeanLower": "Meio de pagamento",
-			"posSubtype": "Subtipo de PdV",
+			"posSubtype": "Subtipo de PoS",
 			"allSubtypes": "Todos os subtipos",
 			"employeeAlias": "Alias do funcionário",
 			"filterWithProductTag": "Filtrar por etiqueta de produto",
@@ -1826,7 +1826,7 @@
 		"ordersList": {
 			"bankTransferNumberPlaceholder": "número da transferência bancária",
 			"detailPlaceholder": "Detalhe (ID da transação do cartão, ou método de pagamento do ponto de venda)",
-			"addLabel": "adicionar etiqueta"
+			"addLabel": "adicionar label"
 		},
 		"template": {
 			"emails": "E-mails",

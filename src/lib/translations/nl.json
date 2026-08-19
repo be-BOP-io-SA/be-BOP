@@ -469,7 +469,7 @@
 		"challenge": {
 			"addChallenge": "Uitdaging toevoegen",
 			"listTitle": "Lijst met uitdagingen",
-			"challengeIdTag": "[Uitdaging={id}]",
+			"challengeIdTag": "[Challenge={id}]",
 			"noChallengesYet": "Nog geen uitdagingen",
 			"tabEdit": "Uitdaging bewerken",
 			"tabRatioProduct": "Verhouding / product",

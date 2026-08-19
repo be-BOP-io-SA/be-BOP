@@ -154,7 +154,7 @@
 				"pictures": "Immagini",
 				"discount": "Sconti",
 				"themes": "Temi",
-				"labels": "Etichette",
+				"labels": "Label",
 				"files": "File",
 				"general": "Generale",
 				"languages": "Lingue",
@@ -469,7 +469,7 @@
 		"challenge": {
 			"addChallenge": "Aggiungi sfida",
 			"listTitle": "Elenco delle sfide",
-			"challengeIdTag": "[Sfida={id}]",
+			"challengeIdTag": "[Challenge={id}]",
 			"noChallengesYet": "Nessuna sfida per il momento",
 			"tabEdit": "Modifica sfida",
 			"tabRatioProduct": "Rapporto / prodotto",
@@ -502,7 +502,7 @@
 			"selectLanguage": "Seleziona lingua",
 			"addTitle": "Aggiungi una sfida",
 			"submit": "Invia",
-			"challengeId": "[Sfida={id}]",
+			"challengeId": "[Challenge={id}]",
 			"addChallengeTitle": "Aggiungi una sfida",
 			"ratioValue": "Rapporto ({ratio})",
 			"endDateAfterBeginningDate": "La data di fine deve essere successiva alla data di inizio",
@@ -786,9 +786,9 @@
 			"createUserTitle": "Crea un utente"
 		},
 		"label": {
-			"addLabel": "Aggiungi un'etichetta",
-			"listOfLabel": "Elenco delle etichette",
-			"noLabelYet": "Nessuna etichetta ancora",
+			"addLabel": "Aggiungi un label",
+			"listOfLabel": "Elenco dei label",
+			"noLabelYet": "Nessun label ancora",
 			"name": "Nome",
 			"namePlaceholder": "nome",
 			"slug": "Slug",
@@ -798,12 +798,12 @@
 			"icon": "Icona",
 			"iconPlaceholder": "icona svg o emoji",
 			"submit": "Invia",
-			"confirmDeleteLabel": "Vuoi eliminare questa etichetta?",
+			"confirmDeleteLabel": "Vuoi eliminare questo label?",
 			"content": "Contenuto",
 			"view": "Visualizza",
 			"delete": "Elimina",
 			"selectLanguage": "Seleziona lingua",
-			"editLabelTab": "Modifica etichetta",
+			"editLabelTab": "Modifica label",
 			"translationsTab": "Traduzioni"
 		},
 		"lnd": {
@@ -1013,10 +1013,10 @@
 			"productAlias": "Alias del prodotto",
 			"searchOrderByProductAliasPlaceholder": "cerca ordine per alias del prodotto",
 			"paymentMean": "Metodo di pagamento",
-			"posSubtype": "Sottotipo PdV",
+			"posSubtype": "Sottotipo PoS",
 			"allSubtypes": "Tutti i sottotipi",
 			"country": "Paese",
-			"label": "Etichetta",
+			"label": "Label",
 			"email": "Email",
 			"searchOrderByEmailPlaceholder": "cerca ordine per email",
 			"npub": "Npub",
@@ -1025,8 +1025,8 @@
 			"system": "Sistema",
 			"previous": "Precedente",
 			"next": "Successivo",
-			"orderLabelTitle": "Etichetta ordine",
-			"orderLabelIds": "ID etichette ordine"
+			"orderLabelTitle": "Label ordine",
+			"orderLabelIds": "ID label ordine"
 		},
 		"layout": {
 			"title": "Layout",
@@ -1333,7 +1333,7 @@
 			"delete": "Elimina"
 		},
 		"posPayments": {
-			"title": "Sottotipi di pagamento PdV",
+			"title": "Sottotipi di pagamento PoS",
 			"description": "Configura diversi tipi di pagamenti al punto vendita (contanti, assegno, terminali, ecc.)",
 			"operationSuccessful": "Operazione riuscita!",
 			"existingSubtypes": "Sottotipi esistenti",
@@ -1354,7 +1354,7 @@
 			"editSubtypeTitle": "Modifica \"{name}\"",
 			"createSubtypeTitle": "Crea nuovo sottotipo",
 			"displayNameLabel": "Nome visualizzato",
-			"namePlaceholder": "es. Contanti, Assegno, Terminale PdV esterno",
+			"namePlaceholder": "es. Contanti, Assegno, Terminale POS esterno",
 			"slugFieldLabel": "Slug",
 			"slugPlaceholder": "es. cash, check, external-tpe",
 			"slugPatternTitle": "Solo lettere minuscole, numeri e trattini",
@@ -1363,7 +1363,7 @@
 			"descriptionLabel": "Descrizione (opzionale)",
 			"descriptionPlaceholder": "Descrizione facoltativa per riferimento amministrativo",
 			"tapToPayConfigTitle": "Configurazione tap-to-pay (opzionale)",
-			"tapToPayConfigDescription": "Configura la riconciliazione automatica dei pagamenti tramite terminali PdV esterni (Stripe Terminal, SumUp, ecc.)",
+			"tapToPayConfigDescription": "Configura la riconciliazione automatica dei pagamenti tramite terminali POS esterni (Stripe Terminal, SumUp, ecc.)",
 			"tapToPayProcessorLabel": "Processore tap-to-pay",
 			"notUsed": "Non utilizzato",
 			"notConfigured": "(non configurato)",
@@ -1826,7 +1826,7 @@
 		"ordersList": {
 			"bankTransferNumberPlaceholder": "numero del bonifico bancario",
 			"detailPlaceholder": "Dettaglio (ID transazione carta, o metodo di pagamento punto vendita)",
-			"addLabel": "aggiungi etichetta"
+			"addLabel": "aggiungi label"
 		},
 		"template": {
 			"emails": "Email",

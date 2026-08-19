@@ -154,7 +154,7 @@
 				"pictures": "Imágenes",
 				"discount": "Descuentos",
 				"themes": "Temas",
-				"labels": "Etiquetas",
+				"labels": "Labels",
 				"files": "Archivos",
 				"general": "General",
 				"languages": "Idiomas",
@@ -190,7 +190,7 @@
 			"collapseAll": "Contraer todo",
 			"removeBookmark": "Quitar marcador",
 			"addBookmark": "Añadir marcador",
-			"posSession": "Sesión de PdV",
+			"posSession": "Sesión de POS",
 			"toggleMenu": "Alternar menú de administración"
 		},
 		"product": {
@@ -469,7 +469,7 @@
 		"challenge": {
 			"addChallenge": "Agregar desafío",
 			"listTitle": "Lista de desafíos",
-			"challengeIdTag": "[Desafío={id}]",
+			"challengeIdTag": "[Challenge={id}]",
 			"noChallengesYet": "Todavía no hay desafíos",
 			"tabEdit": "Editar desafío",
 			"tabRatioProduct": "Ratio / producto",
@@ -502,7 +502,7 @@
 			"selectLanguage": "Seleccionar idioma",
 			"addTitle": "Agregar un desafío",
 			"submit": "Enviar",
-			"challengeId": "[Desafío={id}]",
+			"challengeId": "[Challenge={id}]",
 			"addChallengeTitle": "Añadir un desafío",
 			"ratioValue": "Ratio ({ratio})",
 			"endDateAfterBeginningDate": "La fecha de finalización debe ser posterior a la fecha de inicio",
@@ -684,8 +684,8 @@
 			"showExpirationBanner": "Mostrar un recordatorio de caducidad del descuento en la página del producto",
 			"channelApplication": "Aplicación del canal de descuento",
 			"channelWeb": "Web",
-			"channelWebPos": "Web con privilegio de PdV (/cart)",
-			"channelPosTouch": "PdV bar-restaurante (/pos/touch)",
+			"channelWebPos": "Web con privilegio de PoS (/cart)",
+			"channelPosTouch": "PoS bar-restaurante (/pos/touch)",
 			"requiredCode": "Código requerido (opcional)",
 			"promoCodePlaceholder": "Introduzca la cadena del código promocional",
 			"promoCodeTip": "Consejo: use 8 o más caracteres combinando letras, números y caracteres especiales (por ejemplo, SPRING_2026X4!): los códigos cortos son fáciles de descifrar por fuerza bruta.",
@@ -693,7 +693,7 @@
 			"requiredBillingCountry": "País de facturación requerido (opcional)",
 			"none": "Ninguno",
 			"paymentMethod": "Método de pago",
-			"posRoleOnly": "(solo para usuarios con rol de PdV)",
+			"posRoleOnly": "(solo para usuarios con rol de POS)",
 			"requiredContactAddress": "Dirección de contacto requerida (opcional)",
 			"contactAddressesPlaceholder": "Una dirección por línea (correo, npub, teléfono...)",
 			"contactAddressesTip": "Consejo: use npub* para conceder el descuento a todos los usuarios autenticados con Nostr.",
@@ -786,9 +786,9 @@
 			"createUserTitle": "Crear un usuario"
 		},
 		"label": {
-			"addLabel": "Agregar una etiqueta",
-			"listOfLabel": "Lista de etiquetas",
-			"noLabelYet": "Todavía no hay etiquetas",
+			"addLabel": "Agregar un label",
+			"listOfLabel": "Lista de labels",
+			"noLabelYet": "Todavía no hay labels",
 			"name": "Nombre",
 			"namePlaceholder": "nombre",
 			"slug": "Slug",
@@ -798,12 +798,12 @@
 			"icon": "Ícono",
 			"iconPlaceholder": "ícono svg o emoji",
 			"submit": "Enviar",
-			"confirmDeleteLabel": "¿Desea eliminar esta etiqueta?",
+			"confirmDeleteLabel": "¿Desea eliminar este label?",
 			"content": "Contenido",
 			"view": "Ver",
 			"delete": "Eliminar",
 			"selectLanguage": "Seleccionar idioma",
-			"editLabelTab": "Editar etiqueta",
+			"editLabelTab": "Editar label",
 			"translationsTab": "Traducciones"
 		},
 		"lnd": {
@@ -1013,10 +1013,10 @@
 			"productAlias": "Alias del producto",
 			"searchOrderByProductAliasPlaceholder": "buscar pedido por alias del producto",
 			"paymentMean": "Medio de pago",
-			"posSubtype": "Subtipo de PdV",
+			"posSubtype": "Subtipo de PoS",
 			"allSubtypes": "Todos los subtipos",
 			"country": "País",
-			"label": "Etiqueta",
+			"label": "Label",
 			"email": "Correo electrónico",
 			"searchOrderByEmailPlaceholder": "buscar pedido por correo electrónico",
 			"npub": "Npub",
@@ -1025,8 +1025,8 @@
 			"system": "Sistema",
 			"previous": "Anterior",
 			"next": "Siguiente",
-			"orderLabelTitle": "Etiqueta de pedido",
-			"orderLabelIds": "IDs de etiquetas de pedido"
+			"orderLabelTitle": "Label de pedido",
+			"orderLabelIds": "IDs de labels de pedido"
 		},
 		"layout": {
 			"title": "Diseño",
@@ -1333,7 +1333,7 @@
 			"delete": "Eliminar"
 		},
 		"posPayments": {
-			"title": "Subtipos de pago PdV",
+			"title": "Subtipos de pago PoS",
 			"description": "Configure diferentes tipos de pagos en el punto de venta (efectivo, cheque, terminales, etc.)",
 			"operationSuccessful": "¡Operación exitosa!",
 			"existingSubtypes": "Subtipos existentes",
@@ -1354,7 +1354,7 @@
 			"editSubtypeTitle": "Editar \"{name}\"",
 			"createSubtypeTitle": "Crear nuevo subtipo",
 			"displayNameLabel": "Nombre para mostrar",
-			"namePlaceholder": "ej. Efectivo, Cheque, Terminal PdV externo",
+			"namePlaceholder": "ej. Efectivo, Cheque, Terminal POS externo",
 			"slugFieldLabel": "Slug",
 			"slugPlaceholder": "ej. cash, check, external-tpe",
 			"slugPatternTitle": "Solo letras minúsculas, números y guiones",
@@ -1363,7 +1363,7 @@
 			"descriptionLabel": "Descripción (opcional)",
 			"descriptionPlaceholder": "Descripción opcional para referencia del administrador",
 			"tapToPayConfigTitle": "Configuración de pago sin contacto (opcional)",
-			"tapToPayConfigDescription": "Configure la conciliación automática de pagos a través de terminales PdV externos (Stripe Terminal, SumUp, etc.)",
+			"tapToPayConfigDescription": "Configure la conciliación automática de pagos a través de terminales POS externos (Stripe Terminal, SumUp, etc.)",
 			"tapToPayProcessorLabel": "Procesador de pago sin contacto",
 			"notUsed": "No utilizado",
 			"notConfigured": "(no configurado)",
@@ -1483,7 +1483,7 @@
 			"endsAt": "Termina el",
 			"paymentMean": "Método de pago",
 			"paymentMeanLower": "Método de pago",
-			"posSubtype": "Subtipo de PdV",
+			"posSubtype": "Subtipo de PoS",
 			"allSubtypes": "Todos los subtipos",
 			"employeeAlias": "Alias del empleado",
 			"filterWithProductTag": "Filtrar por etiqueta de producto",
@@ -1826,7 +1826,7 @@
 		"ordersList": {
 			"bankTransferNumberPlaceholder": "número de transferencia bancaria",
 			"detailPlaceholder": "Detalle (ID de transacción de tarjeta, o método de pago del punto de venta)",
-			"addLabel": "agregar etiqueta"
+			"addLabel": "agregar label"
 		},
 		"template": {
 			"emails": "Correos electrónicos",
