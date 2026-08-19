@@ -1026,7 +1026,7 @@
 			"ticket": "Ticket"
 		},
 		"variationPriceLabel": "Variatie Prijs",
-		"vatExcluded": "Exclusief BTW",
+		"vatExcluded": "Exclusief btw",
 		"vatExcludedEstimate": "Geschatte prijs excl. btw",
 		"vatIncluded": "Geschatte prijs inclusief belasting"
 	},
