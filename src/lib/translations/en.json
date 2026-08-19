@@ -34,6 +34,13 @@
 		"zipCode": "Zip code"
 	},
 	"admin": {
+		"deliveryFees": {
+			"addFeeOption": "Add fee option",
+			"amount": "Amount",
+			"remove": "Remove",
+			"vatIncluded": "VAT included",
+			"vatExcluded": "VAT excluded"
+		},
 		"action": {
 			"testConnection": "Test connection",
 			"testing": "Testing…",
@@ -1024,6 +1031,8 @@
 			"encryptedMessage": "Encrypted message"
 		},
 		"order": {
+			"view": "View",
+			"paymentNumber": "Payment {number}:",
 			"title": "List of orders",
 			"searchOrder": "Search Order",
 			"searchOrderByNumberPlaceholder": "search order by number",
@@ -1453,6 +1462,7 @@
 			"withdrawalSuccessful": "Withdrawal successful"
 		},
 		"s3": {
+			"notConfiguredWarning": "S3 storage is not configured. Configure it in <0>S3 settings</0> before uploading pictures.",
 			"title": "S3 Configuration",
 			"settingsConfiguredViaEnvVars": "S3 Settings Configured via Environment Variables",
 			"envVarsExplanation": "The S3 settings are currently controlled by your environment configuration, which takes precedence over the form bellow. To modify them, update or remove the following environment values (for example, in the be-BOP configuration file or your hosting provider’s settings), then restart be-BOP.",
@@ -1665,6 +1675,12 @@
 			"currency": "Currency"
 		},
 		"productForm": {
+			"allowSameDayBooking": "Allow booking on same day",
+			"maxHourSameDayBooking": "Max hour for same-day booking (schedule timezone)",
+			"paidOrderWebhook": "Paid-order webhook",
+			"paidOrderWebhookHint": "This will trigger an API call once order is paid",
+			"apiRoute": "API route",
+			"sharedSecret": "Shared secret",
 			"requiredQuantity": "Required quantity",
 			"requiredQuantityToTriggerDiscount": "Required quantity of this product to trigger the discount",
 			"essentialInformation": "Essential Information",
@@ -2284,6 +2300,7 @@
 		}
 	},
 	"checkout": {
+		"paymentType": "Payment Type",
 		"agreeIpCollect": "I agree to the collection of my IP address (<0>why?</0>)",
 		"agreeNullVatForeigner": "I understand that I will have to pay VAT upon delivery (<0>why?</0>)",
 		"agreeOnlyDeposit": "I agree that I need to pay the remainder in the future (<0>why?</0>)",
@@ -2701,6 +2718,7 @@
 		"allowSellerContact": "Allow us to send you commercial solicitations"
 	},
 	"order": {
+		"paymentPending": "pending",
 		"addPayment": {
 			"amount": "Payment amount",
 			"cta": "Send a call for payment",
@@ -2889,6 +2907,22 @@
 		"vatFree": "This order is free of VAT. Reason: {reason}"
 	},
 	"pos": {
+		"printTicket": {
+			"title": "PRINT TICKET",
+			"mode": "PRINT MODE:",
+			"newlyOrdered": "NEWLY ORDERED (DEFAULT)",
+			"allItems": "ALL ITEMS",
+			"tagFilter": "TAG FILTER:",
+			"allTags": "All tags",
+			"noHistory": "No print history available"
+		},
+		"zTicket": {
+			"sessionOpened": "Session opened:",
+			"sessionClosed": "Session closed:",
+			"print": "Print",
+			"copy": "Copy",
+			"copied": "Copied"
+		},
 		"adminInterface": "Admin interface",
 		"applyGiftDiscount": "As a POS user I apply a <0>gift discount</0>",
 		"cancelOrderMessage": "Are you sure you want to cnacel the entire order ?",
@@ -3263,6 +3297,7 @@
 		}
 	},
 	"ticket": {
+		"phonePrefix": "Tel:",
 		"boughtAt": "Bought {date} at {time}",
 		"burn": "Mark ticket as used",
 		"print": "Print",

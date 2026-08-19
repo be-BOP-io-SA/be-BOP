@@ -34,6 +34,13 @@
 		"zipCode": "Codice d'avviamento postale"
 	},
 	"admin": {
+		"deliveryFees": {
+			"addFeeOption": "Aggiungi un'opzione di tariffa",
+			"amount": "Importo",
+			"remove": "Rimuovi",
+			"vatIncluded": "IVA inclusa",
+			"vatExcluded": "IVA esclusa"
+		},
 		"action": {
 			"testConnection": "Prova la connessione",
 			"testing": "Test in corso…",
@@ -1024,6 +1031,8 @@
 			"encryptedMessage": "Messaggio crittografato"
 		},
 		"order": {
+			"view": "Visualizza",
+			"paymentNumber": "Pagamento {number}:",
 			"title": "Elenco degli ordini",
 			"searchOrder": "Cerca ordine",
 			"searchOrderByNumberPlaceholder": "cerca ordine per numero",
@@ -1453,6 +1462,7 @@
 			"withdrawalSuccessful": "Prelievo riuscito"
 		},
 		"s3": {
+			"notConfiguredWarning": "L'archiviazione S3 non è configurata. Configurala nelle <0>impostazioni S3</0> prima di caricare immagini.",
 			"title": "Configurazione S3",
 			"settingsConfiguredViaEnvVars": "Impostazioni S3 configurate tramite variabili d'ambiente",
 			"envVarsExplanation": "Le impostazioni S3 sono attualmente controllate dalla configurazione del tuo ambiente, che ha la precedenza sul modulo sottostante. Per modificarle, aggiorna o rimuovi i seguenti valori d'ambiente (ad esempio nel file di configurazione di be-BOP o nelle impostazioni del tuo provider di hosting), quindi riavvia be-BOP.",
@@ -1665,6 +1675,12 @@
 			"currency": "Valuta"
 		},
 		"productForm": {
+			"allowSameDayBooking": "Consenti la prenotazione lo stesso giorno",
+			"maxHourSameDayBooking": "Ora limite per la prenotazione lo stesso giorno (fuso orario del programma)",
+			"paidOrderWebhook": "Webhook per ordine pagato",
+			"paidOrderWebhookHint": "Attiverà una chiamata API non appena l'ordine è pagato",
+			"apiRoute": "Rotta API",
+			"sharedSecret": "Segreto condiviso",
 			"requiredQuantity": "Quantità richiesta",
 			"requiredQuantityToTriggerDiscount": "Quantità richiesta di questo prodotto per attivare lo sconto",
 			"essentialInformation": "Informazioni essenziali",
@@ -2284,6 +2300,7 @@
 		}
 	},
 	"checkout": {
+		"paymentType": "Tipo di pagamento",
 		"additionalFields": {
 			"title": "Informazioni aggiuntive"
 		},
@@ -2701,6 +2718,7 @@
 		"allowSellerContact": "Consentici di inviarti comunicazioni commerciali."
 	},
 	"order": {
+		"paymentPending": "in attesa",
 		"additionalFields": {
 			"title": "Informazioni aggiuntive"
 		},
@@ -2889,6 +2907,22 @@
 		"vatFree": "Questo ordine è esente da IVA. Ragione: {reason}"
 	},
 	"pos": {
+		"printTicket": {
+			"title": "STAMPA SCONTRINO",
+			"mode": "MODALITÀ DI STAMPA:",
+			"newlyOrdered": "APPENA ORDINATI (PREDEFINITO)",
+			"allItems": "TUTTI GLI ARTICOLI",
+			"tagFilter": "FILTRO PER TAG:",
+			"allTags": "Tutti i tag",
+			"noHistory": "Nessuna cronologia di stampa disponibile"
+		},
+		"zTicket": {
+			"sessionOpened": "Sessione aperta:",
+			"sessionClosed": "Sessione chiusa:",
+			"print": "Stampa",
+			"copy": "Copia",
+			"copied": "Copiato"
+		},
 		"adminInterface": "Interfaccia dell'amministratore",
 		"applyGiftDiscount": "Come utente POS applico uno <0>sconto regalo</0>.",
 		"btn": {
@@ -3263,6 +3297,7 @@
 		}
 	},
 	"ticket": {
+		"phonePrefix": "Tel.:",
 		"boughtAt": "Comprato {date} alle {time}",
 		"burn": "Indica il ticket come usato",
 		"print": "Stampa",

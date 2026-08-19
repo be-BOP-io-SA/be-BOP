@@ -34,6 +34,13 @@
 		"zipCode": "Code postal"
 	},
 	"admin": {
+		"deliveryFees": {
+			"addFeeOption": "Ajouter une option de frais",
+			"amount": "Montant",
+			"remove": "Supprimer",
+			"vatIncluded": "TVA incluse",
+			"vatExcluded": "Hors TVA"
+		},
 		"action": {
 			"testConnection": "Tester la connexion",
 			"testing": "Test en cours…",
@@ -1024,6 +1031,8 @@
 			"encryptedMessage": "Message chiffré"
 		},
 		"order": {
+			"view": "Voir",
+			"paymentNumber": "Paiement {number} :",
 			"title": "Liste des commandes",
 			"searchOrder": "Rechercher une commande",
 			"searchOrderByNumberPlaceholder": "rechercher une commande par numéro",
@@ -1453,6 +1462,7 @@
 			"withdrawalSuccessful": "Retrait réussi"
 		},
 		"s3": {
+			"notConfiguredWarning": "Le stockage S3 n'est pas configuré. Configurez-le dans les <0>paramètres S3</0> avant d'envoyer des images.",
 			"title": "Configuration S3",
 			"settingsConfiguredViaEnvVars": "Paramètres S3 configurés via des variables d'environnement",
 			"envVarsExplanation": "Les paramètres S3 sont actuellement contrôlés par votre configuration d'environnement, qui est prioritaire sur le formulaire ci-dessous. Pour les modifier, mettez à jour ou supprimez les valeurs d'environnement suivantes (par exemple dans le fichier de configuration de be-BOP ou dans les paramètres de votre hébergeur), puis redémarrez be-BOP.",
@@ -1665,6 +1675,12 @@
 			"currency": "Devise"
 		},
 		"productForm": {
+			"allowSameDayBooking": "Autoriser la réservation le jour même",
+			"maxHourSameDayBooking": "Heure limite pour une réservation le jour même (fuseau horaire de l'agenda)",
+			"paidOrderWebhook": "Webhook de commande payée",
+			"paidOrderWebhookHint": "Un appel API sera déclenché dès que la commande est payée",
+			"apiRoute": "Route API",
+			"sharedSecret": "Secret partagé",
 			"requiredQuantity": "Quantité requise",
 			"requiredQuantityToTriggerDiscount": "Quantité requise de ce produit pour déclencher la réduction",
 			"essentialInformation": "Informations essentielles",
@@ -2284,6 +2300,7 @@
 		}
 	},
 	"checkout": {
+		"paymentType": "Type de paiement",
 		"additionalFields": {
 			"title": "Informations complémentaires"
 		},
@@ -2701,6 +2718,7 @@
 		"allowSellerContact": "Nous autoriser à vous envoyer des sollicitations commerciales"
 	},
 	"order": {
+		"paymentPending": "en attente",
 		"additionalFields": {
 			"title": "Informations complémentaires"
 		},
@@ -2889,6 +2907,22 @@
 		"vatFree": "Cette commande n'est pas assujettie TVA. \nMotif : {reason}"
 	},
 	"pos": {
+		"printTicket": {
+			"title": "IMPRIMER LE TICKET",
+			"mode": "MODE D'IMPRESSION :",
+			"newlyOrdered": "NOUVELLEMENT COMMANDÉS (PAR DÉFAUT)",
+			"allItems": "TOUS LES ARTICLES",
+			"tagFilter": "FILTRE PAR ÉTIQUETTE :",
+			"allTags": "Toutes les étiquettes",
+			"noHistory": "Aucun historique d'impression disponible"
+		},
+		"zTicket": {
+			"sessionOpened": "Session ouverte :",
+			"sessionClosed": "Session fermée :",
+			"print": "Imprimer",
+			"copy": "Copier",
+			"copied": "Copié"
+		},
 		"adminInterface": "Interface d'administration",
 		"applyGiftDiscount": "En tant qu'utilisateur de point de vente, j'applique une <0>remise cadeau</0>",
 		"btn": {
@@ -3263,6 +3297,7 @@
 		}
 	},
 	"ticket": {
+		"phonePrefix": "Tél. :",
 		"boughtAt": "Acheté le {date} à {time}",
 		"burn": "Marquer le ticket comme utilisé",
 		"print": "Imprimer",

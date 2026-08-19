@@ -37,7 +37,7 @@
 </label>
 {#if value === 'point-of-sale' && posSubtypes?.length}
 	<label class="form-label col-span-6">
-		<span>Payment Type</span>
+		<span>{t('checkout.paymentType')}</span>
 		<select name="posSubtype" class="form-input" required>
 			{#each posSubtypes as subtype}
 				<option value={subtype.slug}>

@@ -34,6 +34,13 @@
 		"zipCode": "Postcode"
 	},
 	"admin": {
+		"deliveryFees": {
+			"addFeeOption": "Kostenoptie toevoegen",
+			"amount": "Bedrag",
+			"remove": "Verwijderen",
+			"vatIncluded": "inclusief btw",
+			"vatExcluded": "exclusief btw"
+		},
 		"action": {
 			"testConnection": "Verbinding testen",
 			"testing": "Bezig met testen…",
@@ -1024,6 +1031,8 @@
 			"encryptedMessage": "Versleuteld bericht"
 		},
 		"order": {
+			"view": "Bekijken",
+			"paymentNumber": "Betaling {number}:",
 			"title": "Lijst met bestellingen",
 			"searchOrder": "Bestelling zoeken",
 			"searchOrderByNumberPlaceholder": "bestelling zoeken op nummer",
@@ -1453,6 +1462,7 @@
 			"withdrawalSuccessful": "Opname geslaagd"
 		},
 		"s3": {
+			"notConfiguredWarning": "S3-opslag is niet geconfigureerd. Stel dit in bij de <0>S3-instellingen</0> voordat u afbeeldingen uploadt.",
 			"title": "S3-configuratie",
 			"settingsConfiguredViaEnvVars": "S3-instellingen geconfigureerd via omgevingsvariabelen",
 			"envVarsExplanation": "De S3-instellingen worden momenteel bepaald door uw omgevingsconfiguratie, die voorrang heeft op onderstaand formulier. Om ze te wijzigen, werkt u de volgende omgevingswaarden bij of verwijdert u ze (bijvoorbeeld in het be-BOP-configuratiebestand of de instellingen van uw hostingprovider) en start u be-BOP vervolgens opnieuw op.",
@@ -1665,6 +1675,12 @@
 			"currency": "Valuta"
 		},
 		"productForm": {
+			"allowSameDayBooking": "Reservering op dezelfde dag toestaan",
+			"maxHourSameDayBooking": "Uiterste tijd voor reservering op dezelfde dag (tijdzone van het schema)",
+			"paidOrderWebhook": "Webhook voor betaalde bestelling",
+			"paidOrderWebhookHint": "Dit activeert een API-aanroep zodra de bestelling is betaald",
+			"apiRoute": "API-route",
+			"sharedSecret": "Gedeeld geheim",
 			"requiredQuantity": "Vereiste hoeveelheid",
 			"requiredQuantityToTriggerDiscount": "Vereiste hoeveelheid van dit product om de korting te activeren",
 			"essentialInformation": "Essentiële informatie",
@@ -2284,6 +2300,7 @@
 		}
 	},
 	"checkout": {
+		"paymentType": "Betalingstype",
 		"additionalFields": {
 			"title": "Aanvullende informatie"
 		},
@@ -2701,6 +2718,7 @@
 		"allowSellerContact": "Sta ons toe u commerciële verzoeken te sturen"
 	},
 	"order": {
+		"paymentPending": "in behandeling",
 		"additionalFields": {
 			"title": "Aanvullende informatie"
 		},
@@ -2889,6 +2907,22 @@
 		"vatFree": "Deze bestelling is BTW vrij. \nReden: {reason}"
 	},
 	"pos": {
+		"printTicket": {
+			"title": "BON AFDRUKKEN",
+			"mode": "AFDRUKMODUS:",
+			"newlyOrdered": "NIEUW BESTELD (STANDAARD)",
+			"allItems": "ALLE ARTIKELEN",
+			"tagFilter": "TAGFILTER:",
+			"allTags": "Alle tags",
+			"noHistory": "Geen afdrukgeschiedenis beschikbaar"
+		},
+		"zTicket": {
+			"sessionOpened": "Sessie geopend:",
+			"sessionClosed": "Sessie gesloten:",
+			"print": "Afdrukken",
+			"copy": "Kopiëren",
+			"copied": "Gekopieerd"
+		},
 		"adminInterface": "Beheerinterface",
 		"applyGiftDiscount": "Als POS-gebruiker pas ik een <0>cadeaukorting</0> toe",
 		"cancelOrderMessage": "Weet je zeker dat je de hele bestelling wilt cnacel?",
@@ -3263,6 +3297,7 @@
 		}
 	},
 	"ticket": {
+		"phonePrefix": "Tel.:",
 		"boughtAt": "Gekocht op {date} om {time}",
 		"burn": "Markeer het ticket als gebruikt",
 		"print": "Afdrukken",

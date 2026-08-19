@@ -34,6 +34,13 @@
 		"zipCode": "Código postal"
 	},
 	"admin": {
+		"deliveryFees": {
+			"addFeeOption": "Adicionar uma opção de taxa",
+			"amount": "Montante",
+			"remove": "Remover",
+			"vatIncluded": "IVA incluído",
+			"vatExcluded": "IVA excluído"
+		},
 		"action": {
 			"testConnection": "Testar a ligação",
 			"testing": "A testar…",
@@ -1024,6 +1031,8 @@
 			"encryptedMessage": "Mensagem criptografada"
 		},
 		"order": {
+			"view": "Ver",
+			"paymentNumber": "Pagamento {number}:",
 			"title": "Lista de encomendas",
 			"searchOrder": "Procurar encomenda",
 			"searchOrderByNumberPlaceholder": "procurar encomenda por número",
@@ -1453,6 +1462,7 @@
 			"withdrawalSuccessful": "Levantamento bem-sucedido"
 		},
 		"s3": {
+			"notConfiguredWarning": "O armazenamento S3 não está configurado. Configure-o nas <0>definições S3</0> antes de carregar imagens.",
 			"title": "Configuração S3",
 			"settingsConfiguredViaEnvVars": "Configurações S3 definidas por variáveis de ambiente",
 			"envVarsExplanation": "As configurações S3 são atualmente controladas pela configuração do seu ambiente, que tem precedência sobre o formulário abaixo. Para modificá-las, atualize ou remova os seguintes valores de ambiente (por exemplo, no arquivo de configuração do be-BOP ou nas configurações do seu provedor de hospedagem) e depois reinicie o be-BOP.",
@@ -1665,6 +1675,12 @@
 			"currency": "Moeda"
 		},
 		"productForm": {
+			"allowSameDayBooking": "Permitir a reserva no próprio dia",
+			"maxHourSameDayBooking": "Hora limite para a reserva no próprio dia (fuso horário da agenda)",
+			"paidOrderWebhook": "Webhook de encomenda paga",
+			"paidOrderWebhookHint": "Irá desencadear uma chamada API assim que a encomenda for paga",
+			"apiRoute": "Rota API",
+			"sharedSecret": "Segredo partilhado",
 			"requiredQuantity": "Quantidade necessária",
 			"requiredQuantityToTriggerDiscount": "Quantidade necessária deste produto para ativar o desconto",
 			"essentialInformation": "Informações essenciais",
@@ -2284,6 +2300,7 @@
 		}
 	},
 	"checkout": {
+		"paymentType": "Tipo de pagamento",
 		"additionalFields": {
 			"title": "Informações adicionais"
 		},
@@ -2701,6 +2718,7 @@
 		"allowSellerContact": "Permitir que lhe enviemos solicitações comerciais"
 	},
 	"order": {
+		"paymentPending": "pendente",
 		"additionalFields": {
 			"title": "Informações adicionais"
 		},
@@ -2889,6 +2907,22 @@
 		"vatFree": "Esta encomenda está isenta de IVA. Motivo: {reason}"
 	},
 	"pos": {
+		"printTicket": {
+			"title": "IMPRIMIR O TALÃO",
+			"mode": "MODO DE IMPRESSÃO:",
+			"newlyOrdered": "RECÉM-ENCOMENDADOS (PREDEFINIÇÃO)",
+			"allItems": "TODOS OS ARTIGOS",
+			"tagFilter": "FILTRO POR ETIQUETA:",
+			"allTags": "Todas as etiquetas",
+			"noHistory": "Nenhum histórico de impressão disponível"
+		},
+		"zTicket": {
+			"sessionOpened": "Sessão aberta:",
+			"sessionClosed": "Sessão fechada:",
+			"print": "Imprimir",
+			"copy": "Copiar",
+			"copied": "Copiado"
+		},
 		"adminInterface": "Interface de administração",
 		"applyGiftDiscount": "Como utilizador POS, aplico um desconto de oferta",
 		"btn": {
@@ -3263,6 +3297,7 @@
 		}
 	},
 	"ticket": {
+		"phonePrefix": "Tel.:",
 		"boughtAt": "Comprado em {date} às {time}",
 		"burn": "Marcar bilhete como usado",
 		"print": "Imprimir",

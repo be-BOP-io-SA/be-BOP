@@ -1373,12 +1373,12 @@
 										name="bookingSpec.allowSameDayBooking"
 										bind:checked={bookingSpec.allowSameDayBooking}
 									/>
-									<span>Allow booking on same day</span>
+									<span>{t('admin.productForm.allowSameDayBooking')}</span>
 								</label>
 
 								{#if bookingSpec.allowSameDayBooking}
 									<label class="form-label">
-										Max hour for same-day booking (schedule timezone)
+										{t('admin.productForm.maxHourSameDayBooking')}
 										<input
 											type="time"
 											name="bookingSpec.sameDayBookingMaxHour"
@@ -1953,16 +1953,16 @@
 				{#if allowPaidOrderWebhook}
 					<div>
 						<h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
-							Paid-order webhook
+							{t('admin.productForm.paidOrderWebhook')}
 						</h4>
 						<label class="checkbox-label">
 							<input type="checkbox" bind:checked={hasPaidOrderWebhook} class="form-checkbox" />
-							This will trigger an API call once order is paid
+							{t('admin.productForm.paidOrderWebhookHint')}
 						</label>
 						{#if hasPaidOrderWebhook}
 							<div class="space-y-2 pl-6 mt-2">
 								<label class="form-label">
-									API route
+									{t('admin.productForm.apiRoute')}
 									<input
 										type="url"
 										name="paidOrderWebhook.apiRoute"
@@ -1973,7 +1973,7 @@
 									/>
 								</label>
 								<label class="form-label">
-									Shared secret
+									{t('admin.productForm.sharedSecret')}
 									<input
 										type="password"
 										autocomplete="off"

@@ -34,6 +34,13 @@
 		"zipCode": "Postleitzahl"
 	},
 	"admin": {
+		"deliveryFees": {
+			"addFeeOption": "Gebührenoption hinzufügen",
+			"amount": "Betrag",
+			"remove": "Entfernen",
+			"vatIncluded": "inkl. MwSt.",
+			"vatExcluded": "ohne MwSt."
+		},
 		"action": {
 			"testConnection": "Verbindung testen",
 			"testing": "Test läuft…",
@@ -1024,6 +1031,8 @@
 			"encryptedMessage": "Verschlüsselte Nachricht"
 		},
 		"order": {
+			"view": "Ansehen",
+			"paymentNumber": "Zahlung {number}:",
 			"title": "Liste der Bestellungen",
 			"searchOrder": "Bestellung suchen",
 			"searchOrderByNumberPlaceholder": "Bestellung nach Nummer suchen",
@@ -1453,6 +1462,7 @@
 			"withdrawalSuccessful": "Abhebung erfolgreich"
 		},
 		"s3": {
+			"notConfiguredWarning": "Der S3-Speicher ist nicht konfiguriert. Konfigurieren Sie ihn in den <0>S3-Einstellungen</0>, bevor Sie Bilder hochladen.",
 			"title": "S3-Konfiguration",
 			"settingsConfiguredViaEnvVars": "S3-Einstellungen über Umgebungsvariablen konfiguriert",
 			"envVarsExplanation": "Die S3-Einstellungen werden derzeit von Ihrer Umgebungskonfiguration gesteuert, die Vorrang vor dem untenstehenden Formular hat. Um sie zu ändern, aktualisieren oder entfernen Sie die folgenden Umgebungswerte (zum Beispiel in der be-BOP-Konfigurationsdatei oder den Einstellungen Ihres Hosting-Anbieters) und starten Sie be-BOP anschließend neu.",
@@ -1665,6 +1675,12 @@
 			"currency": "Währung"
 		},
 		"productForm": {
+			"allowSameDayBooking": "Buchung am selben Tag erlauben",
+			"maxHourSameDayBooking": "Späteste Uhrzeit für eine Buchung am selben Tag (Zeitzone des Zeitplans)",
+			"paidOrderWebhook": "Webhook für bezahlte Bestellungen",
+			"paidOrderWebhookHint": "Löst einen API-Aufruf aus, sobald die Bestellung bezahlt ist",
+			"apiRoute": "API-Route",
+			"sharedSecret": "Gemeinsames Geheimnis",
 			"requiredQuantity": "Erforderliche Menge",
 			"requiredQuantityToTriggerDiscount": "Erforderliche Menge dieses Produkts, um den Rabatt auszulösen",
 			"essentialInformation": "Wesentliche Informationen",
@@ -2284,6 +2300,7 @@
 		}
 	},
 	"checkout": {
+		"paymentType": "Zahlungsart",
 		"additionalFields": {
 			"title": "Zusätzliche Informationen"
 		},
@@ -2701,6 +2718,7 @@
 		"allowSellerContact": "Erlauben Sie uns, Ihnen kommerzielle Anfragen zu senden"
 	},
 	"order": {
+		"paymentPending": "ausstehend",
 		"additionalFields": {
 			"title": "Zusätzliche Informationen"
 		},
@@ -2889,6 +2907,22 @@
 		"vatFree": "Diese Bestellung ist mehrwertsteuerfrei. Grund: {reason}"
 	},
 	"pos": {
+		"printTicket": {
+			"title": "BON DRUCKEN",
+			"mode": "DRUCKMODUS:",
+			"newlyOrdered": "NEU BESTELLT (STANDARD)",
+			"allItems": "ALLE ARTIKEL",
+			"tagFilter": "TAG-FILTER:",
+			"allTags": "Alle Tags",
+			"noHistory": "Kein Druckverlauf verfügbar"
+		},
+		"zTicket": {
+			"sessionOpened": "Sitzung geöffnet:",
+			"sessionClosed": "Sitzung geschlossen:",
+			"print": "Drucken",
+			"copy": "Kopieren",
+			"copied": "Kopiert"
+		},
 		"adminInterface": "Admin-Oberfläche",
 		"applyGiftDiscount": "Als POS-Benutzer wende ich einen Geschenkrabatt an",
 		"btn": {
@@ -3263,6 +3297,7 @@
 		}
 	},
 	"ticket": {
+		"phonePrefix": "Tel.:",
 		"boughtAt": "Gekauft am {date} um {time}",
 		"burn": "Ticket als verwendet markieren",
 		"print": "Drucken",
