@@ -35,6 +35,10 @@
 	},
 	"admin": {
 		"action": {
+			"testConnection": "Probar la conexión",
+			"testing": "Probando…",
+			"testSuccess": "Conexión exitosa. Las credenciales de {provider} funcionan.",
+			"testFailed": "Error de conexión: {reason}",
 			"save": "Guardar",
 			"update": "Actualizar",
 			"reset": "Restablecer",
@@ -1886,6 +1890,11 @@
 			"reservedMetaNameError": "No se permiten las palabras 'description' y 'viewport'."
 		},
 		"schedule": {
+			"eventProductCta": {
+				"exportToCalendar": "Exportar al calendario",
+				"location": "Ubicación",
+				"moreInformation": "Más información"
+			},
 			"addSchedule": "Agregar horario",
 			"eventDefaultPicture": "Imagen predeterminada del evento",
 			"listTitle": "Lista de horarios",

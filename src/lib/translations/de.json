@@ -35,6 +35,10 @@
 	},
 	"admin": {
 		"action": {
+			"testConnection": "Verbindung testen",
+			"testing": "Test läuft…",
+			"testSuccess": "Verbindung erfolgreich. Die {provider}-Zugangsdaten funktionieren.",
+			"testFailed": "Verbindung fehlgeschlagen: {reason}",
 			"save": "Speichern",
 			"update": "Aktualisieren",
 			"reset": "Zurücksetzen",
@@ -1886,6 +1890,11 @@
 			"reservedMetaNameError": "Die Wörter 'description' und 'viewport' sind nicht erlaubt."
 		},
 		"schedule": {
+			"eventProductCta": {
+				"exportToCalendar": "Zum Kalender exportieren",
+				"location": "Ort",
+				"moreInformation": "Mehr Informationen"
+			},
 			"addSchedule": "Zeitplan hinzufügen",
 			"eventDefaultPicture": "Standardbild für Ereignisse",
 			"listTitle": "Liste der Zeitpläne",

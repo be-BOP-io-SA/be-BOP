@@ -21,8 +21,8 @@
 	</label>
 
 	<div class="flex justify-between">
-		<button class="btn btn-black" type="submit">Save</button>
-		<button class="btn btn-red" type="submit" form="delete-form">Reset</button>
+		<button class="btn btn-black" type="submit">{t('admin.action.save')}</button>
+		<button class="btn btn-red" type="submit" form="delete-form">{t('admin.action.reset')}</button>
 	</div>
 </form>
 <form class="contents" method="post" action="?/delete" id="delete-form"></form>
@@ -41,14 +41,14 @@
 	class="flex flex-col gap-2"
 >
 	<button class="btn btn-blue self-start" type="submit" disabled={testDisabled}>
-		{testInFlight ? 'Testing…' : 'Test connection'}
+		{testInFlight ? t('admin.action.testing') : t('admin.action.testConnection')}
 	</button>
 	{#if form?.ok}
 		<div class="alert-success">
-			Connection successful. Swiss Bitcoin Pay credentials are working.
+			{t('admin.action.testSuccess', { provider: 'Swiss Bitcoin Pay' })}
 		</div>
 	{:else if form?.reason}
-		<div class="alert-error">Connection failed: {form.reason}</div>
+		<div class="alert-error">{t('admin.action.testFailed', { reason: form.reason })}</div>
 	{/if}
 </form>
 

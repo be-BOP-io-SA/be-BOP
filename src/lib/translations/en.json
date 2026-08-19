@@ -35,6 +35,10 @@
 	},
 	"admin": {
 		"action": {
+			"testConnection": "Test connection",
+			"testing": "Testing…",
+			"testSuccess": "Connection successful. {provider} credentials are working.",
+			"testFailed": "Connection failed: {reason}",
 			"save": "Save",
 			"update": "Update",
 			"reset": "Reset",
@@ -1886,6 +1890,11 @@
 			"reservedMetaNameError": "The words 'description' and 'viewport' are not allowed."
 		},
 		"schedule": {
+			"eventProductCta": {
+				"exportToCalendar": "Export to calendar",
+				"location": "Location",
+				"moreInformation": "More information"
+			},
 			"addSchedule": "Add schedule",
 			"eventDefaultPicture": "Event default picture",
 			"listTitle": "List of Schedules",

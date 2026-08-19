@@ -35,6 +35,10 @@
 	},
 	"admin": {
 		"action": {
+			"testConnection": "Verbinding testen",
+			"testing": "Bezig met testen…",
+			"testSuccess": "Verbinding geslaagd. De {provider}-inloggegevens werken.",
+			"testFailed": "Verbinding mislukt: {reason}",
 			"save": "Opslaan",
 			"update": "Bijwerken",
 			"reset": "Resetten",
@@ -1886,6 +1890,11 @@
 			"reservedMetaNameError": "De woorden 'description' en 'viewport' zijn niet toegestaan."
 		},
 		"schedule": {
+			"eventProductCta": {
+				"exportToCalendar": "Naar agenda exporteren",
+				"location": "Locatie",
+				"moreInformation": "Meer informatie"
+			},
 			"addSchedule": "Schema toevoegen",
 			"eventDefaultPicture": "Standaardafbeelding evenement",
 			"listTitle": "Lijst met schema's",

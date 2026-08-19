@@ -4,6 +4,8 @@ import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError.js';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import { exportToICS } from '$lib/types/Schedule.js';
+import { defaultLanguageText } from '$lib/server/i18n-defaults';
+import type { LanguageKey } from '$lib/translations';
 import { error } from '@sveltejs/kit';
 import { addMinutes, format } from 'date-fns';
 import { z } from 'zod';
@@ -53,48 +55,39 @@ export const actions = {
 			? `${eventSchedule.title} – ${format(new Date(eventSchedule.beginsAt), 'PPP')}`
 			: eventSchedule.shortDescription || '';
 
-		const ctaLink: { label: string; href: string; fallback?: boolean; downloadLink?: string }[] =
-			[];
-		const ctaLinkFr: { label: string; href: string; fallback?: boolean; downloadLink?: string }[] =
-			[];
-		if (parsed.exportEventToCalendar) {
-			ctaLink.push({
-				label: 'Export to calendar',
-				href: exportToICS(eventSchedule, schedule.pastEventDelay),
-				fallback: false,
-				downloadLink: `${eventSchedule.title}.ics`
-			});
-			ctaLinkFr.push({
-				label: 'Exporter',
-				href: exportToICS(eventSchedule, schedule.pastEventDelay),
-				fallback: false,
-				downloadLink: `${eventSchedule.title}.ics`
-			});
-		}
-		if (parsed.locationUrlCta && eventSchedule.location?.link) {
-			ctaLink.push({
-				label: 'Location',
-				href: eventSchedule.location.link,
-				fallback: false
-			});
-			ctaLinkFr.push({
-				label: 'Place',
-				href: eventSchedule.location.link,
-				fallback: false
-			});
-		}
-		if (parsed.CTAForMoreInformation && eventSchedule.url) {
-			ctaLink.push({
-				label: 'More Information',
-				href: eventSchedule.url,
-				fallback: false
-			});
-			ctaLink.push({
-				label: "Plus d'info",
-				href: eventSchedule.url,
-				fallback: false
-			});
-		}
+		// One CTA list per language the shop has enabled, built from the dictionaries.
+		// This used to be a hardcoded English/French pair, and the "more information" CTA
+		// was pushed onto the English list twice instead of onto the French one (issue #878).
+		type EventCta = { label: string; href: string; fallback?: boolean; downloadLink?: string };
+		const ctaFor = (language: LanguageKey): EventCta[] => {
+			const cta: EventCta[] = [];
+			if (parsed.exportEventToCalendar) {
+				cta.push({
+					label: defaultLanguageText(language, 'admin.schedule.eventProductCta.exportToCalendar'),
+					href: exportToICS(eventSchedule, schedule.pastEventDelay),
+					fallback: false,
+					downloadLink: `${eventSchedule.title}.ics`
+				});
+			}
+			if (parsed.locationUrlCta && eventSchedule.location?.link) {
+				cta.push({
+					label: defaultLanguageText(language, 'admin.schedule.eventProductCta.location'),
+					href: eventSchedule.location.link,
+					fallback: false
+				});
+			}
+			if (parsed.CTAForMoreInformation && eventSchedule.url) {
+				cta.push({
+					label: defaultLanguageText(language, 'admin.schedule.eventProductCta.moreInformation'),
+					href: eventSchedule.url,
+					fallback: false
+				});
+			}
+			return cta.filter((entry) => entry.label && entry.href);
+		};
+		const ctaTranslations = Object.fromEntries(
+			runtimeConfig.languages.map((language) => [language, { cta: ctaFor(language) }])
+		);
 
 		await withTransaction(async (session) => {
 			await collections.pictures.updateOne(
@@ -134,7 +127,7 @@ export const actions = {
 						standalone: false,
 						payWhatYouWant: false,
 						hideDiscountExpiration: false,
-						cta: ctaLink.filter((ctaLink) => ctaLink.label && ctaLink.href),
+						cta: ctaFor(runtimeConfig.defaultLanguage),
 						actionSettings: {
 							eShop: {
 								visible: true,
@@ -157,14 +150,7 @@ export const actions = {
 							endsAt:
 								eventSchedule.endsAt || addMinutes(eventSchedule.beginsAt, schedule.pastEventDelay)
 						},
-						translations: {
-							en: {
-								cta: ctaLink
-							},
-							fr: {
-								cta: ctaLinkFr
-							}
-						}
+						translations: ctaTranslations
 					},
 					{ session }
 				);

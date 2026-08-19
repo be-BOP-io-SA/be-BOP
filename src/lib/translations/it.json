@@ -35,6 +35,10 @@
 	},
 	"admin": {
 		"action": {
+			"testConnection": "Prova la connessione",
+			"testing": "Test in corso…",
+			"testSuccess": "Connessione riuscita. Le credenziali {provider} funzionano.",
+			"testFailed": "Connessione non riuscita: {reason}",
 			"save": "Salva",
 			"update": "Aggiorna",
 			"reset": "Reimposta",
@@ -1886,6 +1890,11 @@
 			"reservedMetaNameError": "Le parole 'description' e 'viewport' non sono consentite."
 		},
 		"schedule": {
+			"eventProductCta": {
+				"exportToCalendar": "Esporta nel calendario",
+				"location": "Luogo",
+				"moreInformation": "Maggiori informazioni"
+			},
 			"addSchedule": "Aggiungi programma",
 			"eventDefaultPicture": "Immagine predefinita evento",
 			"listTitle": "Elenco dei programmi",

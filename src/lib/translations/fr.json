@@ -35,6 +35,10 @@
 	},
 	"admin": {
 		"action": {
+			"testConnection": "Tester la connexion",
+			"testing": "Test en cours…",
+			"testSuccess": "Connexion réussie. Les identifiants {provider} fonctionnent.",
+			"testFailed": "Échec de la connexion : {reason}",
 			"save": "Enregistrer",
 			"update": "Mettre à jour",
 			"reset": "Réinitialiser",
@@ -1886,6 +1890,11 @@
 			"reservedMetaNameError": "Les mots « description » et « viewport » ne sont pas autorisés."
 		},
 		"schedule": {
+			"eventProductCta": {
+				"exportToCalendar": "Exporter vers l'agenda",
+				"location": "Lieu",
+				"moreInformation": "Plus d'informations"
+			},
 			"addSchedule": "Ajouter un agenda",
 			"eventDefaultPicture": "Image par défaut des événements",
 			"listTitle": "Liste des agendas",
