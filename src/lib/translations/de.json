@@ -438,6 +438,15 @@
 			"includePermissionsSuffix": "enthalten sind.",
 			"checkServerUrl": "Wenn der obige Link nicht funktioniert, überprüfen Sie die angegebene Server-URL."
 		},
+		"blink": {
+			"intro": "Empfangen Sie Lightning-Zahlungen auf Ihrem Blink-Konto. Konfigurieren Sie <0>eine</0> der beiden folgenden Optionen. Eine Lightning-Adresse benötigt keinen API-Schlüssel und funktioniert sowohl für verwahrte Blink-Konten als auch für selbstverwahrte (Spark) Adressen. Es werden nur BTC-Wallets unterstützt.",
+			"option1Title": "Option 1 — Lightning-Adresse (ohne API-Schlüssel)",
+			"lnAddress": "Lightning-Adresse",
+			"option2Title": "Option 2 — API-Schlüssel (verwahrtes Konto)",
+			"apiKey": "API-Schlüssel",
+			"walletId": "Wallet-ID (optional — standardmäßig das Standard-BTC-Wallet Ihres Kontos)",
+			"invoices": "Rechnungen"
+		},
 		"bitcoinNodeless": {
 			"title": "Bitcoin nodeless",
 			"intro": "Geben Sie Ihre öffentlichen Schlüssel ein. be-BOP kann dann neue Adressen generieren und eingehende Gelder prüfen, aber Sie behalten die volle Kontrolle über die Gelder in Ihrer eigenen Wallet.",

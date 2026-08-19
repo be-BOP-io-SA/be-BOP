@@ -438,6 +438,15 @@
 			"includePermissionsSuffix": "permissions.",
 			"checkServerUrl": "If the link above does not work, check the provided Server URL."
 		},
+		"blink": {
+			"intro": "Receive Lightning payments into your Blink account. Configure <0>one</0> of the two options below. A Lightning address needs no API key and works for both custodial Blink accounts and self-custodial (Spark) addresses. Only BTC wallets are supported.",
+			"option1Title": "Option 1 — Lightning address (no API key)",
+			"lnAddress": "Lightning address",
+			"option2Title": "Option 2 — API key (custodial account)",
+			"apiKey": "API Key",
+			"walletId": "Wallet ID (optional — defaults to your account's default BTC wallet)",
+			"invoices": "Invoices"
+		},
 		"bitcoinNodeless": {
 			"title": "Bitcoin nodeless",
 			"intro": "Enter your public key(s). be-BOP will be able to generate new addresses and check funds received, but you have full control of the funds on your own wallet.",

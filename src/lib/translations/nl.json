@@ -438,6 +438,15 @@
 			"includePermissionsSuffix": "machtigingen opneemt.",
 			"checkServerUrl": "Als de bovenstaande link niet werkt, controleer dan de opgegeven server-URL."
 		},
+		"blink": {
+			"intro": "Ontvang Lightning-betalingen op uw Blink-account. Configureer <0>een</0> van de twee onderstaande opties. Een Lightning-adres heeft geen API-sleutel nodig en werkt zowel voor beheerde Blink-accounts als voor zelfbeheerde (Spark) adressen. Alleen BTC-wallets worden ondersteund.",
+			"option1Title": "Optie 1 — Lightning-adres (geen API-sleutel)",
+			"lnAddress": "Lightning-adres",
+			"option2Title": "Optie 2 — API-sleutel (beheerd account)",
+			"apiKey": "API-sleutel",
+			"walletId": "Wallet-ID (optioneel — standaard de standaard-BTC-wallet van uw account)",
+			"invoices": "Facturen"
+		},
 		"bitcoinNodeless": {
 			"title": "Bitcoin nodeless",
 			"intro": "Voer uw publieke sleutel(s) in. be-BOP kan nieuwe adressen genereren en ontvangen tegoeden controleren, maar u behoudt volledige controle over de tegoeden in uw eigen wallet.",

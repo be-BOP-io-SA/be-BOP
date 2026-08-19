@@ -157,7 +157,8 @@
 		{ name: 'swiss-bitcoin-pay' as const, configured: data.swissBitcoinPayConfigured },
 		{ name: 'btcpay-server' as const, configured: data.btcpayServerConfigured },
 		{ name: 'phoenixd' as const, configured: data.phoenixdConfigured },
-		{ name: 'lnd' as const, configured: data.lndConfigured }
+		{ name: 'lnd' as const, configured: data.lndConfigured },
+		{ name: 'blink' as const, configured: data.blinkConfigured }
 	]
 		.filter((p) => p.configured)
 		.map((p) => p.name);
@@ -633,6 +634,7 @@
 			{ href: `${data.adminPrefix}/phoenixd`, name: 'PhoenixD' },
 			{ href: `${data.adminPrefix}/swiss-bitcoin-pay`, name: 'Swiss Bitcoin Pay' },
 			{ href: `${data.adminPrefix}/btcpay-server`, name: 'BTCPay Server' },
+			{ href: `${data.adminPrefix}/blink`, name: 'Blink' },
 			{ href: '#', name: t('admin.config.lndViaEnvVars') }
 		]}
 	/>

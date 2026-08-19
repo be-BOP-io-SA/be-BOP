@@ -438,6 +438,15 @@
 			"includePermissionsSuffix": "seguenti.",
 			"checkServerUrl": "Se il link sopra non funziona, controlla l'URL del server fornito."
 		},
+		"blink": {
+			"intro": "Ricevi pagamenti Lightning sul tuo account Blink. Configura <0>una</0> delle due opzioni seguenti. Un indirizzo Lightning non richiede alcuna chiave API e funziona sia per gli account Blink in custodia sia per gli indirizzi auto-custoditi (Spark). Sono supportati solo i wallet BTC.",
+			"option1Title": "Opzione 1 — indirizzo Lightning (senza chiave API)",
+			"lnAddress": "Indirizzo Lightning",
+			"option2Title": "Opzione 2 — chiave API (account in custodia)",
+			"apiKey": "Chiave API",
+			"walletId": "ID wallet (facoltativo — per impostazione predefinita, il wallet BTC predefinito del tuo account)",
+			"invoices": "Fatture"
+		},
 		"bitcoinNodeless": {
 			"title": "Bitcoin nodeless",
 			"intro": "Inserisci la tua o le tue chiavi pubbliche. be-BOP potrà generare nuovi indirizzi e verificare i fondi ricevuti, ma tu mantieni il pieno controllo dei fondi nel tuo portafoglio.",
