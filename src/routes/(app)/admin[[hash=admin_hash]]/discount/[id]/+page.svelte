@@ -230,7 +230,9 @@
 						class="form-checkbox"
 						checked={data.discount.paymentMethods?.some((m) => m === pm)}
 					/>
-					{pm}{pm === 'point-of-sale' ? ` ${t('admin.discount.posRoleOnly')}` : ''}
+					{t(`checkout.paymentMethod.${pm}`)}{pm === 'point-of-sale'
+						? ` ${t('admin.discount.posRoleOnly')}`
+						: ''}
 				</label>
 			{/each}
 		</fieldset>

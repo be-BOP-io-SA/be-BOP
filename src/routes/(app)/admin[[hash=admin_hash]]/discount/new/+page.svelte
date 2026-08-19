@@ -171,7 +171,9 @@
 			{#each ['lightning', 'bank-transfer', 'point-of-sale', 'card', 'bitcoin', 'paypal', 'custom'] as pm}
 				<label class="checkbox-label">
 					<input type="checkbox" name="paymentMethods" value={pm} class="form-checkbox" />
-					{pm}{pm === 'point-of-sale' ? ` ${t('admin.discount.posRoleOnly')}` : ''}
+					{t(`checkout.paymentMethod.${pm}`)}{pm === 'point-of-sale'
+						? ` ${t('admin.discount.posRoleOnly')}`
+						: ''}
 				</label>
 			{/each}
 		</fieldset>
