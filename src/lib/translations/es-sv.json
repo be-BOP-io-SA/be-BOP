@@ -34,6 +34,9 @@
 		"zipCode": "Código postal"
 	},
 	"admin": {
+		"config": {
+			"hideVatMentionsWhenExempted": "Ocultar las menciones «No incluye IVA» en las páginas de producto y los widgets de producto"
+		},
 		"product": {
 			"stockReference": {
 				"label": "Referenciar el stock de otro producto (opcional)",
@@ -985,6 +988,7 @@
 		"freeWithSub": "Este producto es gratis con una suscripción mensual",
 		"freeWithTitle": "Gratis con \"xxxxx",
 		"horsTaxeShort": "sin IVA",
+		"vatIncludedShort": "IVA incl.",
 		"minimumForCurrency": "El monto mínimo para {currency} es {minimum}",
 		"nameYourPrice": "Pon tu precio ({currency})",
 		"notForSale": "Este producto no está en venta",

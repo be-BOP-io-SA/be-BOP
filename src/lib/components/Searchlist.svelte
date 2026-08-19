@@ -28,13 +28,13 @@
 	let className = '';
 	export { className as class };
 
+	const { t } = useI18n();
+
 	// #2679: VAT mention, hidden for VAT-exempt shops (see VatMention.svelte)
 	$: priceUnitLabel =
 		displayVatIncluded && !$page.data.hideVatMentions
-			? `${$currencies.main} TTC`
+			? `${$currencies.main} ${t('product.vatIncludedShort')}`
 			: $currencies.main;
-
-	const { t } = useI18n();
 
 	let qInput = state.q;
 	let pmin = state.pmin ?? '';

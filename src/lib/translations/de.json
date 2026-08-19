@@ -34,6 +34,9 @@
 		"zipCode": "Postleitzahl"
 	},
 	"admin": {
+		"config": {
+			"hideVatMentionsWhenExempted": "„Ohne MwSt.“-Hinweise auf Produktseiten und Produkt-Widgets ausblenden"
+		},
 		"product": {
 			"stockReference": {
 				"label": "Auf Lagerbestand eines anderen Produkts verweisen (optional)",
@@ -985,6 +988,7 @@
 		"freeWithSub": "Dieses Produkt ist kostenlos mit Ihrem monatlichen Abonnement erhältlich",
 		"freeWithTitle": "Kostenlos mit „xxxxx“",
 		"horsTaxeShort": "Netto",
+		"vatIncludedShort": "Brutto",
 		"minimumForCurrency": "Der Mindestbetrag für {currency} beträgt {minimum}",
 		"nameYourPrice": "Nennen Sie Ihren Preis ({currency})",
 		"notForSale": "Dieses Produkt steht nicht zum Verkauf",

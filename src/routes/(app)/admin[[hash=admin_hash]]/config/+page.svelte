@@ -501,7 +501,7 @@
 				class="form-checkbox"
 				checked={data.hideVatMentionsWhenExempted}
 			/>
-			Hide "VAT excluded" mentions on product pages and product widgets
+			{t('admin.config.hideVatMentionsWhenExempted')}
 		</label>
 	{:else}
 		<!-- #2679: keep the setting alive while the checkbox above is out of the DOM.
