@@ -6,6 +6,7 @@ import {
 	API_V1_SCOPES,
 	API_V1_WARNING_CODES
 } from '$lib/types/ApiV1';
+import { ORDER_PAYMENT_STATUSES } from '$lib/types/Order';
 
 /**
  * Hand-maintained OpenAPI 3.0 document aligned with Zod schemas in
@@ -216,6 +217,43 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 		description:
 			'Strong entity-tag returned by a previous read. When it still matches, the server answers 304 with no body.'
 	};
+	/**
+	 * Order filters. Each is backed by an existing index on `orders`; a malformed value is
+	 * rejected with 400 rather than dropped, so a filter never silently widens the result set.
+	 */
+	const orderFilterParams = [
+		{
+			name: 'productId',
+			in: 'query',
+			schema: { type: 'string' },
+			description: 'Orders containing this product id on at least one line.'
+		},
+		{
+			name: 'status',
+			in: 'query',
+			schema: { type: 'string', enum: [...ORDER_PAYMENT_STATUSES] },
+			description: 'Order-level status.'
+		},
+		{
+			name: 'number',
+			in: 'query',
+			schema: { type: 'integer', minimum: 1 },
+			description: 'Exact order number.'
+		},
+		{
+			name: 'label',
+			in: 'query',
+			schema: { type: 'string' },
+			description: 'Orders carrying this order label id.'
+		},
+		{
+			name: 'externalOrderId',
+			in: 'query',
+			schema: { type: 'string' },
+			description:
+				'Your own order reference. Always scoped to the calling API key — a reference issued by another key is never returned.'
+		}
+	];
 	const etagResponseHeaders = {
 		ETag: {
 			description:
@@ -449,6 +487,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
 						},
 						{ name: 'cursor', in: 'query', schema: { type: 'string' } },
+						...orderFilterParams,
 						ifNoneMatchParam
 					],
 					responses: {

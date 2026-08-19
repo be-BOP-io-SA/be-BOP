@@ -15,6 +15,15 @@ import type { AuthenticatedApiKey } from '$lib/types/ApiV1';
 const MONGO_UNAVAILABLE_MSG =
 	'Mongo not available — start docker compose -f docker-compose.dev.yml up -d mongo';
 
+/** listPaidOrders now returns a query error instead of throwing; tests want the success branch. */
+async function listPaidOk(query: Parameters<typeof listPaidOrders>[0] = {}) {
+	const res = await listPaidOrders(query);
+	if ('error' in res) {
+		throw new Error(`unexpected query error on ${res.error.field}: ${res.error.message}`);
+	}
+	return res;
+}
+
 async function isMongoAvailable(): Promise<boolean> {
 	const url = env.MONGODB_TEST_URL || 'mongodb://127.0.0.1:27017';
 	const probe = new MongoClient(url, {
@@ -91,7 +100,7 @@ describe.skipIf(!mongoAvailable)('API v1 e2e: key → catalog → POST order →
 		const orderId = written.results[0].orderId;
 		expect(orderId).toBeTruthy();
 
-		const paid = await listPaidOrders({});
+		const paid = await listPaidOk();
 		const found = paid.orders.find((o) => o.orderId === orderId);
 		expect(found).toBeTruthy();
 		expect(found?.amountPaid.amountMinor).toBe(amountMinor);
@@ -126,7 +135,7 @@ describe.skipIf(!mongoAvailable)('API v1 e2e: key → catalog → POST order →
 				}
 			]
 		});
-		const paid = await listPaidOrders({});
+		const paid = await listPaidOk();
 		expect(paid.orders).toHaveLength(0);
 	});
 
