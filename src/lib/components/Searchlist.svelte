@@ -9,6 +9,7 @@
 	import { SORT_KEYS, VIEW_MODES, type SortKey, type ViewMode } from '$lib/types/Searchlist';
 	import type { SearchlistUrlState } from '$lib/server/searchlist';
 	import { currencies } from '$lib/stores/currencies';
+	import { page } from '$app/stores';
 	import { CURRENCY_UNIT } from '$lib/types/Currency';
 
 	export let searchlist: Searchlist;
@@ -27,7 +28,11 @@
 	let className = '';
 	export { className as class };
 
-	$: priceUnitLabel = displayVatIncluded ? `${$currencies.main} TTC` : $currencies.main;
+	// #2679: VAT mention, hidden for VAT-exempt shops (see VatMention.svelte)
+	$: priceUnitLabel =
+		displayVatIncluded && !$page.data.hideVatMentions
+			? `${$currencies.main} TTC`
+			: $currencies.main;
 
 	const { t } = useI18n();
 
