@@ -5,11 +5,12 @@ import { fetchOrderForUser } from './fetchOrderForUser.js';
 import { getPublicS3DownloadLink } from '$lib/server/s3.js';
 import { uniqBy } from '$lib/utils/uniqBy.js';
 import { cmsFromContent } from '$lib/server/cms.js';
-import { anonymizeOrderData, conflictingTapToPayOrder } from '$lib/server/orders';
+import { anonymizeOrderData, conflictingTapToPayOrder, onOrderPayment } from '$lib/server/orders';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
+import { getProcessor } from '$lib/server/sdk/pp';
 import type { OrderLabel } from '$lib/types/OrderLabel.js';
 
 export async function load({ params, depends, locals, url }) {
@@ -178,5 +179,34 @@ export const actions = {
 
 		const cleaned = await anonymizeOrderData(order._id);
 		return { success: cleaned };
+	},
+	checkPayment: async function ({ params }) {
+		const order = await collections.orders.findOne({
+			_id: params.id,
+			status: 'pending'
+		});
+		if (!order) {
+			return { checked: false };
+		}
+
+		let updated = false;
+		for (const payment of order.payments.filter((p) => p.status === 'pending')) {
+			if (!payment.processor) continue;
+			const pp = getProcessor(payment.processor);
+			if (!pp || pp.meta.method !== payment.method || !pp.isEnabled()) continue;
+
+			try {
+				const result = await pp.checkPayment(payment, order);
+				if (result.status === 'paid' && result.received) {
+					await onOrderPayment(order, payment, result.received);
+					updated = true;
+					break;
+				}
+			} catch (err) {
+				console.error(`[CLINK] Manual check failed for payment ${payment._id}:`, err);
+			}
+		}
+
+		return { checked: true, updated };
 	}
 };

@@ -17,7 +17,7 @@ CLINK is a transport layer, not a Lightning backend. Invoice generation delegate
 
 - A **Nostr private key** configured in `.env.local` (nsec format)
 - Either a configured Lightning processor (e.g., Blink) or a Lightning.Pub HTTP endpoint
-- A Nostr relay for CLINK communication (e.g., `wss://strfry.shock.network`)
+- A Nostr relay for CLINK communication (default: `wss://strfry.shock.network`)
 
 ## Setup
 
@@ -32,11 +32,13 @@ NOSTR_PRIVATE_KEY="nsec1..."
 
 ### 2. Admin Configuration
 
-Navigate to **Admin > Config** and scroll to the **CLINK** section:
+Navigate to **Admin > CLINK**:
 
+- Toggle **Enable CLINK payments** to activate CLINK
 - **nOffer**: Your Lightning.Pub nOffer string (e.g., `noffer1...`). This identifies your merchant account to CLINK wallets.
-- **Relay**: The Nostr relay URL used for CLINK communication (e.g., `wss://strfry.shock.network`)
-- **Lightning.Pub HTTP Endpoint** (optional): If you want to use a specific Lightning.Pub instance for invoice generation, enter its HTTP URL here. Otherwise, the configured Lightning processor is used.
+- **Nostr relay URL**: The Nostr relay used for CLINK communication (default: `wss://strfry.shock.network`)
+- **Lightning.Pub endpoint URL** (optional): If you want to use a specific Lightning.Pub instance for invoice generation, enter its HTTP URL here. Otherwise, the configured Lightning processor is used.
+- Click **Save**, then **Test connection** to verify the relay and nOffer are working
 
 ### 3. Enable CLINK as Payment Method
 
@@ -68,18 +70,26 @@ Payment is detected exclusively via the **Nostr receipt** (second kind 21001 eve
 
 If the receipt is not received (e.g., relay issues), the payment will expire after the session timeout (2 hours). In practice, receipts arrive within seconds of payment.
 
+A **Check Payment Status** button is available on pending CLINK orders, allowing customers to manually trigger payment verification.
+
+### Startup Replay
+
+On server startup, be-BOP replays recent relay history to catch receipts that arrived while the server was down. It queries events from the oldest pending session's creation time (with a 5-minute buffer) and stays open for approximately 30 seconds to collect any missed receipts.
+
 ### Key Components
 
 - **nOffer**: A bech32-encoded merchant offer string containing the merchant's Nostr public key, relay URL, and offer ID
 - **NIP-44 Encryption**: End-to-end encryption for payment requests and responses
 - **Session Store**: Active CLINK sessions are persisted in MongoDB with a TTL index, surviving server restarts. An in-memory cache provides fast lookups.
-- **Persistent Listener**: A long-running Nostr subscription on the merchant's relay that handles both incoming payment requests and payment receipts, surviving relay reconnections
+- **Persistent Listener**: A long-running Nostr subscription on the merchant's relay that handles both incoming payment requests and payment receipts, surviving relay reconnections. The listener starts automatically on server boot.
+- **Dual Decryption**: Receipts from Lightning.Pub are encrypted with Lightning.Pub's key as sender. be-BOP attempts dual decryption — first assuming the event author as sender (customer payment requests), then falling back to Lightning.Pub's key (receipts).
 
 ### Security
 
 - **Relay SSRF Protection**: Relay URLs are validated against private/internal IP ranges before connecting
 - **BOLT11 Validation**: Invoices received from Lightning.Pub are validated for network match and amount consistency
 - **Signature Verification**: All incoming Nostr events are verified before processing
+- **Merchant Pubkey Filter**: Nostr subscription filters use the merchant's own public key (derived from `NOSTR_PRIVATE_KEY`), not Lightning.Pub's key
 
 ## Supported Wallets
 
@@ -112,7 +122,9 @@ Any Lightning wallet can pay the bolt11 QR code. For the CLINK Nostr flow, use a
 
 - Check that the relay is reachable from the server (SSRF protection may block internal URLs)
 - Verify Lightning.Pub is sending receipts to the correct relay
+- Use the **Check Payment Status** button on the order page to manually trigger verification
 - The session expires after 2 hours — if the receipt is delayed beyond that, the payment will not be confirmed
+- On server restart, the startup replay mechanism will catch recent missed receipts automatically
 
 ## Technical Details
 
@@ -120,7 +132,7 @@ Any Lightning wallet can pay the bolt11 QR code. For the CLINK Nostr flow, use a
 - **Encryption**: NIP-44 (version 2)
 - **Payment Detection**: Nostr receipt callback (second kind 21001 event)
 - **Session Storage**: MongoDB with TTL index (2 hours)
-- **Default Relays**: `wss://strfry.shock.network`, `wss://relay.shocknet.app`
+- **CLINK Relay URL**: `wss://strfry.shock.network` (configurable in Admin > CLINK)
 
 ## nDebit Settlement
 

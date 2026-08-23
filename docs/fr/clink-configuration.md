@@ -17,7 +17,7 @@ CLINK est une couche de transport, pas un backend Lightning. La génération des
 
 - Une **clé privée Nostr** configurée dans `.env.local` (format nsec)
 - Soit un processeur Lightning configuré (ex: Blink), soit un endpoint HTTP Lightning.Pub
-- Un relais Nostr pour la communication CLINK (ex: `wss://strfry.shock.network`)
+- Un relais Nostr pour la communication CLINK (par défaut: `wss://strfry.shock.network`)
 
 ## Configuration
 
@@ -32,11 +32,13 @@ NOSTR_PRIVATE_KEY="nsec1..."
 
 ### 2. Configuration Admin
 
-Naviguer vers **Admin > Config** et aller à la section **CLINK** :
+Naviguer vers **Admin > CLINK** :
 
+- Activer **Enable CLINK payments** pour activer CLINK
 - **nOffer** : Votre chaîne nOffer Lightning.Pub (ex: `noffer1...`). Cela identifie votre compte marchand aux portefeuilles CLINK.
-- **Relay** : L'URL du relais Nostr utilisé pour la communication CLINK (ex: `wss://strfry.shock.network`)
-- **Endpoint HTTP Lightning.Pub** (optionnel) : Si vous souhaitez utiliser une instance Lightning.Pub spécifique pour la génération de factures, entrez son URL HTTP ici. Sinon, le processeur Lightning configuré est utilisé.
+- **URL du relais Nostr** : Le relais Nostr utilisé pour la communication CLINK (par défaut: `wss://strfry.shock.network`)
+- **URL de l'endpoint Lightning.Pub** (optionnel) : Si vous souhaitez utiliser une instance Lightning.Pub spécifique pour la génération de factures, entrez son URL HTTP ici. Sinon, le processeur Lightning configuré est utilisé.
+- Cliquer sur **Save**, puis **Test connection** pour vérifier que le relais et le nOffer fonctionnent
 
 ### 3. Activer CLINK comme moyen de paiement
 
@@ -68,18 +70,26 @@ Le paiement est détecté exclusivement via le **reçu Nostr** (deuxième évén
 
 Si le reçu n'est pas reçu (ex: problème de relais), le paiement expirera après le délai de session (2 heures). En pratique, les reçus arrivent en quelques secondes après le paiement.
 
+Un bouton **Vérifier le statut du paiement** est disponible sur les commandes CLINK en attente, permettant au client de déclencher manuellement la vérification du paiement.
+
+### Rejeu au démarrage
+
+Au démarrage du serveur, be-BOP rejeu l'historique récent du relais pour récupérer les reçus qui sont arrivés pendant que le serveur était arrêté. Il interroge les événements depuis la création de la session en attente la plus ancienne (avec un tampon de 5 minutes) et reste ouvert pendant environ 30 secondes pour collecter les reçus manqués.
+
 ### Composants clés
 
 - **nOffer** : Une chaîne d'offre marchand encodée en bech32 contenant la clé publique Nostr du marchand, l'URL du relais et l'ID de l'offre
 - **Chiffrement NIP-44** : Chiffrement de bout en bout pour les requêtes et réponses de paiement
 - **Magasin de sessions** : Les sessions CLINK actives sont persistées dans MongoDB avec un index TTL, survivant aux redémarrages du serveur. Un cache en mémoire fournit des recherches rapides.
-- **Écouteur persistant** : Une subscription Nostr à long terme sur le relais du marchand qui gère à la fois les demandes de paiement entrantes et les reçus de paiement, survivant aux reconnexions du relais
+- **Écouteur persistant** : Une subscription Nostr à long terme sur le relais du marchand qui gère à la fois les demandes de paiement entrantes et les reçus de paiement, survivant aux reconnexions du relais. L'écouteur démarre automatiquement au démarrage du serveur.
+- **Double déchiffrement** : Les reçus de Lightning.Pub sont chiffrés avec la clé de Lightning.Pub comme expéditeur. be-BOP tente un double déchiffrement — d'abord en supposant l'auteur de l'événement comme expéditeur (demandes de paiement client), puis en utilisant la clé de Lightning.Pub (reçus).
 
 ### Sécurité
 
 - **Protection SSRF des relais** : Les URLs des relais sont validées contre les plages d'IP privées/internes avant la connexion
 - **Validation BOLT11** : Les factures reçues de Lightning.Pub sont validées pour la correspondance du réseau et la cohérence du montant
 - **Vérification des signatures** : Tous les événements Nostr entrants sont vérifiés avant traitement
+- **Filtre par clé publique marchand** : Les filtres d'abonnement Nostr utilisent la propre clé publique du marchand (dérivée de `NOSTR_PRIVATE_KEY`), pas la clé de Lightning.Pub
 
 ## Portefeuilles compatibles
 
@@ -112,7 +122,9 @@ Tout portefeuille Lightning peut payer le code QR bolt11. Pour le flux Nostr CLI
 
 - Vérifier que le relais est joignable depuis le serveur (la protection SSRF peut bloquer les URLs internes)
 - Vérifier que Lightning.Pub envoie les reçus au bon relais
+- Utiliser le bouton **Vérifier le statut du paiement** sur la page de commande pour déclenquer manuellement la vérification
 - La session expire après 2 heures — si le reçu est retardé au-delà de ce délai, le paiement ne sera pas confirmé
+- Au redémarrage du serveur, le mécanisme de rejeu au démarrage récupérera automatiquement les reçus manqués récents
 
 ## Détails techniques
 
@@ -120,7 +132,7 @@ Tout portefeuille Lightning peut payer le code QR bolt11. Pour le flux Nostr CLI
 - **Chiffrement** : NIP-44 (version 2)
 - **Détection du paiement** : Callback de reçu Nostr (deuxième événement kind 21001)
 - **Stockage des sessions** : MongoDB avec index TTL (2 heures)
-- **Relais par défaut** : `wss://strfry.shock.network`, `wss://relay.shocknet.app`
+- **URL du relais CLINK** : `wss://strfry.shock.network` (configurable dans Admin > CLINK)
 
 ## Règlement nDebit
 

@@ -314,7 +314,12 @@ export function clinkSubscribeToRelay(params: {
 
 				const request = JSON.parse(decrypted) as NofferData;
 
-				if (!request.offer) {
+				// Events from Lightning.Pub may be receipts (not payment requests) and
+				// won't have an `offer` field. Pass them through for the persistent
+				// listener to check against pending receipt callbacks.
+				const isFromLp =
+					params.lightningPubPubkey && evt.pubkey === params.lightningPubPubkey;
+				if (!request.offer && !isFromLp) {
 					console.warn('CLINK: Received request without offer field, ignoring');
 					return;
 				}
@@ -723,7 +728,8 @@ export async function clinkStartPersistentListener(): Promise<{ stop: () => void
 	}
 
 	const decoded = clinkDecodeNoffer(runtimeConfig.clink.nOffer);
-	const merchantPubkey = decoded.pubkey;
+	const lpPubkey = decoded.pubkey;
+	const merchantPubkey = getNostrKeys().pubKeyHex;
 	const relay = runtimeConfig.clink.relayUrl!;
 
 	// SSRF protection: reject relay URLs targeting private/internal networks
@@ -748,15 +754,35 @@ export async function clinkStartPersistentListener(): Promise<{ stop: () => void
 		relay,
 		merchantPubkey,
 		merchantPrivkey,
-		lightningPubPubkey: decoded.pubkey,
+		lightningPubPubkey: lpPubkey,
 		onEvent: (request, event) => {
 			// Check if this event is a receipt from Lightning.Pub (not a new payment request).
 			// Lightning.Pub's pubkey is embedded in the nOffer.
-			const lpPubkey = decoded.pubkey;
-			if (event.pubkey === lpPubkey && pendingReceiptCallbacks.has(request.offer)) {
-				const cb = pendingReceiptCallbacks.get(request.offer)!;
-				pendingReceiptCallbacks.delete(request.offer);
-				cb();
+			// Receipts from LP may not have an `offer` field — they are payment confirmations.
+			if (event.pubkey === lpPubkey) {
+				// Try matching by offer field first, then fall back to merchant's offer ID
+				const offerKey = request.offer || decoded.offer;
+				if (pendingReceiptCallbacks.has(offerKey)) {
+					console.log(`[CLINK] Receipt received for offer ${offerKey}`);
+					const cb = pendingReceiptCallbacks.get(offerKey)!;
+					pendingReceiptCallbacks.delete(offerKey);
+					cb();
+					return;
+				}
+				// Also persist paid status directly to MongoDB + in-memory for any pending sessions
+				const session = activeSessions.get(offerKey);
+				if (session && !session.paid) {
+					session.paid = true;
+					console.log(`[CLINK] Session ${offerKey} marked as paid via receipt`);
+					collections.clinkSessions
+						.updateOne(
+							{ offerId: offerKey, paid: false },
+							{ $set: { paid: true, updatedAt: new Date() } }
+						)
+						.catch((err) =>
+							console.error('[CLINK] Failed to persist paid status from receipt:', err)
+						);
+				}
 				return;
 			}
 
@@ -843,12 +869,13 @@ export async function clinkReplayMissedReceipts(): Promise<void> {
 	const replaySince = Math.floor(oldestPending[0].createdAt.getTime() / 1000) - 300;
 	const decoded = clinkDecodeNoffer(runtimeConfig.clink.nOffer);
 	const lpPubkey = decoded.pubkey;
+	const merchantPubkey = getNostrKeys().pubKeyHex;
 	const relay = runtimeConfig.clink.relayUrl!;
 
 	const pool = new SimplePool();
 	const filter = {
 		kinds: [CLINK_EVENT_KIND],
-		'#p': [decoded.pubkey],
+		'#p': [merchantPubkey],
 		since: replaySince
 	};
 

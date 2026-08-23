@@ -277,6 +277,15 @@
 					<p>{t('order.paymentStatus.expiredTemplate')}</p>
 				{:else if data.order.status === 'canceled'}
 					<p class="font-bold">{t('order.paymentStatus.canceledTemplate')}</p>
+				{:else if data.order.status === 'pending'}
+					<p>{t('order.payToComplete')}</p>
+					{#if data.order.payments.some((p) => p.processor === 'clink')}
+						<form method="post" action="?/checkPayment" use:enhance>
+							<button type="submit" class="btn btn-blue mt-2">
+								Check Payment Status
+							</button>
+						</form>
+					{/if}
 				{/if}
 			</div>
 

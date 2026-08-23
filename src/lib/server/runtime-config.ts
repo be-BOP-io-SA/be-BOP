@@ -275,7 +275,7 @@ const baseConfig = {
 		/** Merchant's noffer1... string (from Lightning.Pub or similar) */
 		nOffer: '',
 		/** Nostr relay URL for CLINK events */
-		relayUrl: 'wss://relay.shocknet.app',
+		relayUrl: 'wss://strfry.shock.network',
 		/** Optional Lightning.Pub HTTP endpoint for invoice generation.
 		 *  When empty, delegates to the configured default lightning processor. */
 		lightningPubEndpoint: '',

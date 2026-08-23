@@ -25,7 +25,7 @@ export const actions = {
 			.object({
 				enabled: z.boolean({ coerce: true }),
 				nOffer: z.string().trim().default(''),
-				relayUrl: z.string().trim().default('wss://relay.shocknet.app'),
+				relayUrl: z.string().trim().default('wss://strfry.shock.network'),
 				lightningPubEndpoint: z.string().trim().default(''),
 				lightningPubToken: z.string().trim().default('')
 			})
@@ -68,7 +68,7 @@ export const actions = {
 		runtimeConfig.clink = {
 			enabled: false,
 			nOffer: '',
-			relayUrl: 'wss://relay.shocknet.app',
+			relayUrl: 'wss://strfry.shock.network',
 			lightningPubEndpoint: '',
 			lightningPubToken: ''
 		};

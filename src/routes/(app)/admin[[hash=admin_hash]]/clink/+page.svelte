@@ -62,7 +62,7 @@
 			class="form-input"
 			type="url"
 			name="relayUrl"
-			placeholder="wss://relay.shocknet.app"
+			placeholder="wss://strfry.shock.network"
 			value={data.relayUrl}
 		/>
 		<span class="text-xs text-gray-500"
