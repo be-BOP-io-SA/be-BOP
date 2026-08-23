@@ -57,6 +57,7 @@ import type { CheckoutFieldConfig } from '$lib/types/CheckoutFieldConfig';
 import type { PosSession } from '$lib/types/PosSession';
 import type { PendingZap } from '$lib/types/PendingZap';
 import type { AccountingLog } from '$lib/types/AccountingLog';
+import type { ClinkSessionDoc } from '$lib/types/ClinkSession';
 
 // Bigger than the default 10, helpful with MongoDB errors
 Error.stackTraceLimit = 100;
@@ -125,6 +126,7 @@ const genCollection = () => ({
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
 
 	accountingLogs: db.collection<AccountingLog>('accountingLogs'),
+	clinkSessions: db.collection<ClinkSessionDoc>('clinkSessions'),
 
 	errors: db.collection<unknown & { _id: ObjectId; url: string; method: string }>('errors')
 });
@@ -247,7 +249,11 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.accountingLogs, { createdAt: 1 }],
 	[collections.accountingLogs, { eventType: 1, createdAt: 1 }],
 	[collections.accountingLogs, { objectId: 1, objectType: 1 }],
-	[collections.accountingLogs, { eventType: 1, 'after.productIds': 1 }]
+	[collections.accountingLogs, { eventType: 1, 'after.productIds': 1 }],
+	// CLINK sessions: TTL on expiresAt, unique on offerId, lookup by paid status
+	[collections.clinkSessions, { expiresAt: 1 }, { expireAfterSeconds: 0 }],
+	[collections.clinkSessions, { offerId: 1 }, { unique: true }],
+	[collections.clinkSessions, { paid: 1 }]
 ];
 
 export async function createIndexes() {
