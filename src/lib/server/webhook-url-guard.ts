@@ -90,3 +90,52 @@ export async function assertPublicWebhookTarget(rawUrl: string): Promise<void> {
 		}
 	}
 }
+
+/**
+ * Validate a Nostr relay URL for use as a backend WebSocket connection.
+ * Allows wss:// (and ws:// in non-production for local dev).
+ * Rejects private/loopback/link-local addresses to prevent SSRF.
+ */
+export function relayUrlIssue(rawUrl: string): string | null {
+	let url: URL;
+	try {
+		url = new URL(rawUrl);
+	} catch {
+		return 'Invalid relay URL';
+	}
+	if (url.protocol !== 'wss:' && url.protocol !== 'ws:') {
+		return 'Relay URL must use wss:// or ws://';
+	}
+	if (url.protocol === 'ws:' && process.env.NODE_ENV === 'production') {
+		return 'Relay URL must use wss:// in production';
+	}
+	const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+	if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local')) {
+		return 'Relay URL must not target localhost or the internal network';
+	}
+	if (isIP(host) && isPrivateIp(host)) {
+		return 'Relay URL must not target a private, loopback or link-local address';
+	}
+	return null;
+}
+
+/**
+ * Fire-time guard for relay URLs: re-runs static checks, then DNS-resolves and rejects
+ * private addresses. Throws with the reason when unsafe.
+ */
+export async function assertPublicRelayTarget(rawUrl: string): Promise<void> {
+	const issue = relayUrlIssue(rawUrl);
+	if (issue) {
+		throw new Error(issue);
+	}
+	const host = new URL(rawUrl).hostname.replace(/^\[|\]$/g, '');
+	if (isIP(host)) {
+		return;
+	}
+	const resolved = await lookup(host, { all: true });
+	for (const { address } of resolved) {
+		if (isPrivateIp(address)) {
+			throw new Error(`Relay host ${host} resolves to a private address (${address})`);
+		}
+	}
+}

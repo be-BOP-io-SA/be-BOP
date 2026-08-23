@@ -6,6 +6,7 @@ import PPBtcpayServer from './contrib/PPBtcpayServer';
 import PPPhoenixd from './contrib/PPPhoenixd';
 import PPLnd from './contrib/PPLnd';
 import PPBlink from './contrib/PPBlink';
+import PPClink from './contrib/PPClink';
 import PPBitcoinNodeless from './contrib/PPBitcoinNodeless';
 import PPBitcoind from './contrib/PPBitcoind';
 import PPPaypal from './contrib/PPPaypal';
@@ -18,12 +19,13 @@ import PPOsb from './contrib/PPOsb';
 registerProcessor(PPSumUp);
 registerProcessor(PPStripe);
 
-// lightning: swiss-bitcoin-pay → btcpay-server → phoenixd → lnd → blink
+// lightning: swiss-bitcoin-pay → btcpay-server → phoenixd → lnd → blink → clink
 registerProcessor(PPSwissBitcoinPay);
 registerProcessor(PPBtcpayServer);
 registerProcessor(PPPhoenixd);
 registerProcessor(PPLnd);
 registerProcessor(PPBlink);
+registerProcessor(PPClink);
 
 // bitcoin: bitcoin-nodeless → bitcoind
 registerProcessor(PPBitcoinNodeless);

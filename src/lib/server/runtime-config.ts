@@ -269,6 +269,19 @@ const baseConfig = {
 		/** Optional wallet id override for API-key mode; empty = account default wallet */
 		walletId: ''
 	},
+	clink: {
+		/** Whether CLINK is enabled */
+		enabled: false,
+		/** Merchant's noffer1... string (from Lightning.Pub or similar) */
+		nOffer: '',
+		/** Nostr relay URL for CLINK events */
+		relayUrl: 'wss://relay.shocknet.app',
+		/** Optional Lightning.Pub HTTP endpoint for invoice generation.
+		 *  When empty, delegates to the configured default lightning processor. */
+		lightningPubEndpoint: '',
+		/** Lightning.Pub auth token (if using Lightning.Pub HTTP endpoint) */
+		lightningPubToken: ''
+	},
 	taler: {
 		backendUrl: '',
 		backendApiKey: '',
