@@ -18,6 +18,7 @@ import { UrlDependency } from '$lib/types/UrlDependency.js';
 import { ObjectId } from 'mongodb';
 import { runtimeConfig, defaultConfig } from '$lib/server/runtime-config.js';
 import { requireOpenPosSession } from '$lib/server/pos-sessions';
+import type { PageServerLoad, Actions } from './$types';
 
 type ProductProjection = Pick<
 	Product,
@@ -122,7 +123,7 @@ async function getHydratedOrderTab(locale: Locale, tabSlug: string) {
 	return { ...tab, items };
 }
 
-export const load = async ({ locals, depends, params }) => {
+export const load: PageServerLoad = async ({ locals, depends, params }) => {
 	await requireOpenPosSession();
 
 	const tabSlug = params.orderTabSlug;
@@ -201,7 +202,7 @@ function parseUpdateOrderTabItemReq(formData: FormData) {
 		});
 }
 
-export const actions = {
+export const actions: Actions = {
 	updateOrderTabItem: async ({ locals, request }) => {
 		await requireOpenPosSession();
 		const { note, quantity, tabSlug, tabItemId } = parseUpdateOrderTabItemReq(

@@ -13,8 +13,9 @@ import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';
 import { format } from 'date-fns';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import type { PageServerLoad, Actions } from './$types';
 
-export const load = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const pictures = await collections.pictures
 		.find({ 'schedule._id': params.id })
 		.sort({ createdAt: 1 })
@@ -25,7 +26,7 @@ export const load = async ({ params }) => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ request, params }) {
 		const schedule = await collections.schedules.findOne({
 			_id: params.id

@@ -8,8 +8,9 @@ import { ObjectId } from 'mongodb';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	saveProfile: async function ({ request, locals }) {
 		const formData = await request.formData();
 		const json: JsonObject = {};

@@ -2,8 +2,9 @@ import { UrlDependency } from '$lib/types/UrlDependency';
 import { error, redirect } from '@sveltejs/kit';
 import { fetchOrderForUser } from '../fetchOrderForUser';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import type { PageServerLoad } from './$types';
 
-export async function load({ params, depends, locals }) {
+export const load: PageServerLoad = async ({ params, depends, locals }) => {
 	depends(UrlDependency.Order);
 	const order = await fetchOrderForUser(params.id);
 
@@ -17,4 +18,4 @@ export async function load({ params, depends, locals }) {
 	return {
 		order
 	};
-}
+};

@@ -2,8 +2,9 @@ import { ALLOW_DUMPING_WALLET } from '$lib/server/env-config';
 import { dumpWalletInfo } from '$lib/server/bitcoind';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { RequestHandler } from './$types';
 
-export const POST = async (params) => {
+export const POST: RequestHandler = async (params) => {
 	const { wallet } = z.object({ wallet: z.string() }).parse(await params.request.json());
 
 	if (ALLOW_DUMPING_WALLET !== 'true') {

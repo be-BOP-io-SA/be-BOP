@@ -4,8 +4,9 @@ import { CURRENCIES } from '$lib/types/Currency.js';
 import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 

@@ -1,11 +1,11 @@
 import { collections } from '$lib/server/database';
 import { error, redirect } from '@sveltejs/kit';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { deletePicture } from '$lib/server/picture';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { adminPrefix } from '$lib/server/admin';
 
-export const load = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const picture = await collections.pictures.findOne({ _id: params.id });
 
 	if (!picture) {

@@ -19,8 +19,9 @@ import { validateEmailOrNpub } from '$lib/server/nostr.js';
 import { renewSessionId } from '$lib/server/user.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
 import { SESSION_COOKIE_NAME } from '$lib/server/cookies';
+import type { PageServerLoad, Actions } from './$types';
 
-export const load = async ({ url }) => {
+export const load: PageServerLoad = async ({ url }) => {
 	const token = url.searchParams.get('token');
 
 	const base = {
@@ -71,7 +72,7 @@ export const load = async ({ url }) => {
 	return base;
 };
 
-export const actions = {
+export const actions: Actions = {
 	sendLink: async function ({ request, locals }) {
 		const data = await request.formData();
 		const result = validateEmailOrNpub(data.get('address'));

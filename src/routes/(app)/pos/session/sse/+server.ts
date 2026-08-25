@@ -4,8 +4,9 @@ import type { Order } from '$lib/types/Order.js';
 import { error } from '@sveltejs/kit';
 import type { ChangeStream, ChangeStreamDocument, ObjectId } from 'mongodb';
 import { formatOrder } from '../formatCartOrder.js';
+import type { RequestHandler } from './$types';
 
-export async function GET({ locals }) {
+export const GET: RequestHandler = async ({ locals }) => {
 	const userId = locals.user?._id;
 	if (!userId) {
 		throw error(401, 'Must be logged in');
@@ -144,4 +145,4 @@ export async function GET({ locals }) {
 		.catch(() => cleanup());
 
 	return response;
-}
+};

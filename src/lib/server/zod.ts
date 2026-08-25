@@ -1,11 +1,11 @@
 import { MAX_NAME_LIMIT } from '$lib/types/Product';
 import { z } from 'zod';
 
-export function zodObjectId() {
+export function zodObjectId(): z.ZodString {
 	return z.string().regex(/^[a-f0-9]{24}$/i);
 }
 
-export function zodSlug() {
+export function zodSlug(): z.ZodString {
 	return z
 		.string()
 		.trim()

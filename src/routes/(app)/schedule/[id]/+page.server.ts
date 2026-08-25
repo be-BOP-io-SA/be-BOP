@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
 import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const schedule = await collections.schedules.findOne({ _id: params.id });
 
 	if (!schedule) {

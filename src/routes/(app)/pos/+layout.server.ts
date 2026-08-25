@@ -2,6 +2,7 @@ import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Product } from '$lib/types/Product';
 import type { Tag } from '$lib/types/Tag';
+import type { LayoutServerLoad } from './$types';
 
 async function getProductsToDisplay(params: {
 	query: Record<string, unknown>;
@@ -41,7 +42,7 @@ async function getProductsToDisplay(params: {
 		.toArray();
 }
 
-export const load = async ({ locals }) => {
+export const load: LayoutServerLoad = async ({ locals }) => {
 	const products = await getProductsToDisplay({
 		language: locals.language,
 		query: locals.user?.hasPosOptions

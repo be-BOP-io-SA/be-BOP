@@ -250,7 +250,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.accountingLogs, { eventType: 1, 'after.productIds': 1 }]
 ];
 
-export async function createIndexes() {
+export async function createIndexes(): Promise<void> {
 	await Promise.all(
 		indexes.map(async ([collection, index, options]) => {
 			try {

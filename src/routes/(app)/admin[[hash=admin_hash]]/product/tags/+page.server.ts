@@ -5,8 +5,9 @@ import { set } from '$lib/utils/set';
 import { redirect } from '@sveltejs/kit';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const products = await collections.products
 		.find({})
 		.project<Pick<Product, '_id' | 'name' | 'tagIds'>>({
@@ -26,7 +27,7 @@ export const load = async () => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 

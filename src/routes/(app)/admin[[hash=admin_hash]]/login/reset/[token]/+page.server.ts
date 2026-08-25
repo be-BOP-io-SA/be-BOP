@@ -6,8 +6,9 @@ import { CUSTOMER_ROLE_ID, MIN_PASSWORD_LENGTH, type User } from '$lib/types/Use
 import type { SetRequired } from 'type-fest';
 import { BCRYPT_SALT_ROUNDS } from '$lib/server/user.js';
 import { adminPrefix } from '$lib/server/admin.js';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load({ params }) {
+export const load: PageServerLoad = async ({ params }) => {
 	const user = await collections.users.findOne<SetRequired<User, 'passwordReset'>>({
 		'passwordReset.token': params.token,
 		roleId: { $ne: CUSTOMER_ROLE_ID }
@@ -21,9 +22,9 @@ export async function load({ params }) {
 		throw error(400, 'Password reset token has expired');
 	}
 	return { user: { _id: user._id.toString(), login: user.login } };
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, params }) {
 		const user = await collections.users.findOne<SetRequired<User, 'passwordReset'>>({
 			'passwordReset.token': params.token,

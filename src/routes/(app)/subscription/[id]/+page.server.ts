@@ -15,7 +15,7 @@ import { toSatoshis } from '$lib/utils/toSatoshis';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { add, subHours, subSeconds } from 'date-fns';
 import { z } from 'zod';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 
 /**
@@ -38,7 +38,7 @@ function phaseDurationObj(value: number, unit: SubscriptionDuration) {
 	}
 }
 
-export async function load({ params, locals }: { params: { id: string }; locals: App.Locals }) {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const subscription = await collections.paidSubscriptions.findOne({
 		_id: params.id
 	});
@@ -231,7 +231,7 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 			posSubtypes
 		}
 	};
-}
+};
 
 export const actions: Actions = {
 	renew: async ({ params, locals, request }) => {

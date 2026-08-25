@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { collections } from '$lib/server/database';
 import { getNostrKeys, isNostrConfigured } from '$lib/server/nostr';
 import { validateEvent, verifySignature } from 'nostr-tools';
+import type { RequestHandler } from './$types';
 
 const ZAP_REQUEST_KIND = 9734;
 
@@ -71,7 +72,7 @@ function validateZapRequest(nostrParam: string): ZapRequestValidation {
 	}
 }
 
-export const OPTIONS = () => {
+export const OPTIONS: RequestHandler = () => {
 	return new Response(null, {
 		headers: {
 			'access-control-allow-origin': '*',
@@ -81,7 +82,7 @@ export const OPTIONS = () => {
 	});
 };
 
-export const GET = async ({ url }) => {
+export const GET: RequestHandler = async ({ url }) => {
 	if (!isLndConfigured() && !runtimeConfig.phoenixd.lnAddress) {
 		throw error(400, 'Lightning is not configured');
 	}

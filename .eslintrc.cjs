@@ -8,14 +8,29 @@ module.exports = {
 		'prettier'
 	],
 	plugins: ['svelte', '@typescript-eslint'],
-	// All because of `parserOptions.project`
-	ignorePatterns: ['*.cjs', '*.js', 'playwright.config.ts', 'scripts'],
+	// Root-only globs: these config files live at the repo root and aren't part of
+	// `parserOptions.project`. A bare `*.js`/`*.cjs` also matched nested paths such as
+	// the SvelteKit route directory `script/language/[lang].js`, silently excluding its
+	// `+server.ts` from linting.
+	ignorePatterns: ['/*.cjs', '/*.js', 'playwright.config.ts', 'scripts'],
 	overrides: [
 		{
 			files: ['*.svelte'],
 			parser: 'svelte-eslint-parser',
 			parserOptions: {
 				parser: '@typescript-eslint/parser'
+			}
+		},
+		{
+			// `.well-known` is a dot-folder, so TypeScript's `**` include wildcard skips it
+			// and these files aren't part of `tsconfig.json`. Parse them without the type
+			// project so they still get linted (type-aware rules are disabled here).
+			files: ['**/.well-known/**/*.ts'],
+			parserOptions: {
+				project: null
+			},
+			rules: {
+				'@typescript-eslint/switch-exhaustiveness-check': 'off'
 			}
 		}
 	],
@@ -36,6 +51,7 @@ module.exports = {
 		'@typescript-eslint/no-non-null-assertion': 'error',
 		'@typescript-eslint/no-unused-vars': 'error',
 		'@typescript-eslint/switch-exhaustiveness-check': 'error',
+		'@typescript-eslint/explicit-module-boundary-types': 'error',
 		curly: 'error'
 	},
 	env: {

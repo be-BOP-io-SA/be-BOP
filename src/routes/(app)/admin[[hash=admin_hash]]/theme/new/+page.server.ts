@@ -1,4 +1,4 @@
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { set } from '$lib/utils/set';
 import { collections } from '$lib/server/database';
@@ -8,7 +8,7 @@ import type { Timestamps } from '$lib/types/Timestamps';
 import { themeValidator } from '$lib/server/theme';
 import { ObjectId } from 'mongodb';
 
-export async function load() {}
+export const load: PageServerLoad = async () => {};
 
 export const actions: Actions = {
 	default: async ({ request }) => {

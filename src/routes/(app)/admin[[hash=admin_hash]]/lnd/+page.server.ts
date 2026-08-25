@@ -12,8 +12,9 @@ import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { updateLightningInvoiceDescription } from '$lib/server/actions.js';
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		info: lndGetInfo(),
 		lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
@@ -23,9 +24,9 @@ export async function load() {
 		autopilotActive: lndAutopilotActive(),
 		rpc: ALLOW_LND_RPC === 'true' || ALLOW_LND_RPC === '1'
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	activateAutopilot: async function () {
 		await lndActivateAutopilot();
 	},

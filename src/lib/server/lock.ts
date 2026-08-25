@@ -24,7 +24,7 @@ export class Lock {
 		}
 	}
 
-	destroy() {
+	destroy(): void {
 		this.destroyed = true;
 	}
 

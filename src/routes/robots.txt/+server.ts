@@ -1,6 +1,7 @@
 import { runtimeConfig } from '$lib/server/runtime-config';
+import type { RequestHandler } from './$types';
 
-export function GET() {
+export const GET: RequestHandler = () => {
 	if (runtimeConfig.hideFromSearchEngines) {
 		return new Response(
 			`User-agent: *
@@ -33,4 +34,4 @@ Disallow: /pos/
 			}
 		);
 	}
-}
+};

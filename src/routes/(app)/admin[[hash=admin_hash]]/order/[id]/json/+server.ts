@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
 import { error } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
-export const GET = async ({ params }) => {
+export const GET: RequestHandler = async ({ params }) => {
 	const order = await collections.orders.findOne({
 		_id: params.id
 	});

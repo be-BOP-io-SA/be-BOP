@@ -2,7 +2,7 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Price } from '$lib/types/Order';
 import { toSatoshis } from '../utils/toSatoshis';
 
-export function getConfirmationBlocks(price: Price) {
+export function getConfirmationBlocks(price: Price): number {
 	const orderAmountSats = toSatoshis(price.amount, price.currency);
 
 	let confirmationBlocks = runtimeConfig.confirmationBlocksThresholds.defaultBlocks;

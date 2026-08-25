@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database.js';
 import { error, redirect } from '@sveltejs/kit';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ params, locals, request }) {
 		const ticket = await collections.tickets.findOne({
 			ticketId: params.ticketId

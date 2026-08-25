@@ -3,8 +3,9 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { error, redirect } from '@sveltejs/kit';
 import { adminPrefix } from '$lib/server/admin';
 import { z } from 'zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	update: async ({ request, params }) => {
 		const formData = await request.formData();
 		const slug = params.id;

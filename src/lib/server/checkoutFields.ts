@@ -10,7 +10,7 @@ import type {
 } from '$lib/types/CheckoutFieldConfig';
 import type { CollectedCheckoutField } from '$lib/types/Order';
 
-export function loadEnabledCheckoutFields() {
+export function loadEnabledCheckoutFields(): Promise<CheckoutFieldConfig[]> {
 	return collections.checkoutFieldConfigs
 		.find({ disabled: { $ne: true } })
 		.sort({ sortOrder: 1 })

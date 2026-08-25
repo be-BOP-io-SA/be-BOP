@@ -1,9 +1,10 @@
 import { runtimeConfig, runtimeConfigUpdatedAt } from '$lib/server/runtime-config';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import type { LayoutServerLoad } from './$types';
 import { getCookieConsent } from '$lib/server/cookies';
 import { extractAnalyticsHostnames } from '$lib/server/analytics-hostnames';
 
-export async function load(event) {
+export const load: LayoutServerLoad = async (event) => {
 	const viewportWidth = (() => {
 		switch (runtimeConfig.viewportFor) {
 			case 'everyone':
@@ -56,4 +57,4 @@ export async function load(event) {
 		ageRestriction: runtimeConfig.ageRestriction,
 		bolt12Address: runtimeConfig.phoenixd.bolt12Address
 	};
-}
+};

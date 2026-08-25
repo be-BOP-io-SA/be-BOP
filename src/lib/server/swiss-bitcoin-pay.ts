@@ -2,7 +2,7 @@ import { runtimeConfig } from './runtime-config';
 
 const apiUrl = () => 'https://api.swiss-bitcoin-pay.ch';
 
-export function isSwissBitcoinPayConfigured() {
+export function isSwissBitcoinPayConfigured(): boolean {
 	return !!runtimeConfig.swissBitcoinPay?.apiKey;
 }
 

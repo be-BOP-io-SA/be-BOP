@@ -3,8 +3,9 @@ import { actions as adminOrderActions } from '../../../admin[[hash=admin_hash]]/
 import { collections } from '$lib/server/database';
 import { isAllowedOnPage } from '$lib/types/Role';
 import { adminPrefix } from '$lib/server/admin';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	addPayment: async function (event) {
 		const { id } = event.params;
 		const order = await collections.orders.findOne({ _id: id });

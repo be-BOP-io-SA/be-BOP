@@ -6,8 +6,9 @@ import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';
 import { z } from 'zod';
+import type { PageServerLoad, Actions } from './$types';
 
-export const load = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const contactForm = await collections.contactForms.findOne(
 		{ _id: params.id },
 		{
@@ -31,7 +32,7 @@ export const load = async ({ params, locals }) => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	sendEmail: async function ({ request, locals, params }) {
 		const contactForm = await collections.contactForms.findOne({ _id: params.id });
 		if (!contactForm) {

@@ -2,8 +2,9 @@ import { collections } from '$lib/server/database.js';
 import { picturesForProducts } from '$lib/server/picture.js';
 import type { Product } from '$lib/types/Product.js';
 import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export async function load({ params, locals }) {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const tickets = await collections.tickets
 		.find({ orderId: params.id }, { sort: { _id: 1 } })
 		.toArray();
@@ -33,4 +34,4 @@ export async function load({ params, locals }) {
 		pictures,
 		products
 	};
-}
+};

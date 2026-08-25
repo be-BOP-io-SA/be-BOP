@@ -10,7 +10,7 @@ import { error, redirect } from '@sveltejs/kit';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { persistConfigElement } from '$lib/server/utils/persistConfig';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 interface RawTagGroup {
 	_id: string;
@@ -20,7 +20,7 @@ interface RawTagGroup {
 	updatedAt?: string | Date;
 }
 
-export const load = async ({}) => {
+export const load: PageServerLoad = async () => {
 	const [tags, tagGroups] = await Promise.all([
 		collections.tags.find({}).project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 }).toArray(),
 		collections.tagGroups.find({}).sort({ order: 1 }).toArray()

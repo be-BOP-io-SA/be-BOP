@@ -4,14 +4,15 @@ import { CURRENCIES, type Currency } from '$lib/types/Currency.js';
 import { rateLimit } from '$lib/server/rateLimit';
 import { testProcessorConnection } from '$lib/server/sdk/test-connection';
 import { z } from 'zod';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		paypal: runtimeConfig.paypal
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	save: async function ({ request }) {
 		const paypal = z
 			.object({

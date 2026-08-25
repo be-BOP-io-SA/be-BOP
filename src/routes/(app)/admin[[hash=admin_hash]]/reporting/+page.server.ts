@@ -6,8 +6,9 @@ import { z } from 'zod';
 import { paymentMethods } from '$lib/server/payment-methods';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { Tag } from '$lib/types/Tag';
+import type { PageServerLoad } from './$types';
 
-export async function load({ url }) {
+export const load: PageServerLoad = async ({ url }) => {
 	const methods = paymentMethods({ includePOS: true });
 
 	const querySchema = z.object({
@@ -114,4 +115,4 @@ export async function load({ url }) {
 			name: subtype.name
 		}))
 	};
-}
+};

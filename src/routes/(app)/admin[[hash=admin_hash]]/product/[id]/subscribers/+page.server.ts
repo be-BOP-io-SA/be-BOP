@@ -2,10 +2,10 @@ import { collections } from '$lib/server/database';
 import { error, fail } from '@sveltejs/kit';
 import { userQuery } from '$lib/server/user';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { z } from 'zod';
 
-export const load = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const product = await collections.products.findOne({ _id: params.id });
 	const subscriptions = await collections.paidSubscriptions
 		.find({ productId: params.id })

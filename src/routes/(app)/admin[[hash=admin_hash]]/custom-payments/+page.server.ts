@@ -2,14 +2,15 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { collections } from '$lib/server/database';
 import { z } from 'zod';
 import { fail } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 
-export function load() {
+export const load: PageServerLoad = () => {
 	return {
 		customPaymentMethods: runtimeConfig.customPaymentMethods
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 

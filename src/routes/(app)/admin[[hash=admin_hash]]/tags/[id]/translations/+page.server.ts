@@ -6,8 +6,9 @@ import { tagTranslatableSchema } from '../tag-schema.js';
 import { mapObject } from '$lib/utils/mapObject.js';
 import { set } from '$lib/utils/set.js';
 import { omit } from '$lib/utils/omit.js';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, params }) {
 		const json: JsonObject = {};
 		for (const [key, value] of await request.formData()) {

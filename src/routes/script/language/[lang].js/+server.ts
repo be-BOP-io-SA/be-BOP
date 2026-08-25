@@ -8,6 +8,7 @@ import formatDistanceNl from 'date-fns/formatDistance/nl?raw';
 import formatDistanceEs from 'date-fns/formatDistance/es?raw';
 import formatDistanceDe from 'date-fns/formatDistance/de?raw';
 import formatDistancePt from 'date-fns/formatDistance/pt?raw';
+import type { RequestHandler } from './$types';
 
 const cache: Record<string, string> = {};
 const cachedAt: Record<string, number> = {};
@@ -22,7 +23,7 @@ const formatDistanceRawFiles: Record<LanguageKey, string> = {
 	pt: formatDistancePt
 };
 
-export const GET = async ({ params }) => {
+export const GET: RequestHandler = async ({ params }) => {
 	if (!typedInclude(locales, params.lang)) {
 		return new Response('Not found', { status: 404 });
 	}

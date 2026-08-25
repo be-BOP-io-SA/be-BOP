@@ -4,11 +4,12 @@ import type { DigitalFile } from '$lib/types/DigitalFile.js';
 import type { Picture } from '$lib/types/Picture.js';
 import * as devalue from 'devalue';
 import { ObjectId } from 'mongodb';
+import type { RequestHandler } from './$types';
 
 //maximum amount of time that is valid for presigned URLs
 const ONE_WEEK_IN_SECONDS = 7 * 24 * 3600;
 
-export const POST = async ({ request }) => {
+export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const { exportType } = JSON.parse(await request.text());
 
@@ -60,6 +61,7 @@ export const POST = async ({ request }) => {
 		});
 	} catch (error) {
 		console.error('An error occurred during export :', error);
+		return new Response('An error occurred during export', { status: 500 });
 	}
 };
 

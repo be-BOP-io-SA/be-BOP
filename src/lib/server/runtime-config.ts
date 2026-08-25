@@ -30,6 +30,7 @@ import { building } from '$app/environment';
 import { defaultPosTabGroups } from '$lib/types/PosTabGroup';
 import type { SellerIdentity } from '$lib/types/SellerIdentity';
 import type { Tag } from '$lib/types/Tag';
+import type { ThemeMode } from '$lib/types/Theme';
 
 import { isUniqueConstraintError } from './utils/isUniqueConstraintError';
 import { typedKeys } from '$lib/utils/typedKeys';
@@ -286,8 +287,8 @@ const baseConfig = {
 		privateKey: ''
 	},
 	nostrRelays: ['wss://nostr.wine', 'wss://nos.lol', 'wss://relay.snort.social'],
-	visitorDarkLightMode: 'light' as 'light' | 'dark' | 'system',
-	employeeDarkLightMode: 'light' as 'light' | 'dark' | 'system',
+	visitorDarkLightMode: 'light' as ThemeMode,
+	employeeDarkLightMode: 'light' as ThemeMode,
 	removeBebopLogoPOS: false,
 	contactModes: ['email', 'nostr'],
 	contactModesForceOption: false,
@@ -957,7 +958,7 @@ export const runtimeConfig = structuredClone({
 	...overridesFromEnvVars(baseConfig)
 }) as RuntimeConfig;
 
-export function resetConfig() {
+export function resetConfig(): void {
 	if (!import.meta.env.VITEST) {
 		throw new Error('resetConfig should only be used in tests');
 	}

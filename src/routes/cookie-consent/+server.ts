@@ -2,12 +2,13 @@ import { json, error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { setCookieConsent } from '$lib/server/cookies';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import type { RequestHandler } from './$types';
 
 const bodySchema = z.object({
 	value: z.enum(['accepted', 'denied'])
 });
 
-export const POST = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies }) => {
 	let parsed;
 	try {
 		parsed = bodySchema.parse(await request.json());

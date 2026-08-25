@@ -1,8 +1,9 @@
 import { error } from '@sveltejs/kit';
 import { collections } from '$lib/server/database';
 import type { Challenge } from '$lib/types/Challenge';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const challenge = await collections.challenges.findOne<
 		Pick<Challenge, '_id' | 'name' | 'goal' | 'progress' | 'endsAt' | 'mode' | 'beginsAt'>
 	>(

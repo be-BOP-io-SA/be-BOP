@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product.js';
+	import type { ThemeMode } from '$lib/types/Theme';
 	import { upperFirst } from '$lib/utils/upperFirst.js';
 	import { socialIconPresets, type SocialIconPresetKey } from '$lib/social-icon-presets';
 
@@ -10,8 +11,8 @@
 	let navbarLinkLine = data.links.navbar.length || 2;
 	let linkLine = data.links.topbar.length || 2;
 	let footerLinkLine = data.links.footer.length || 2;
-	let visitorDarkLightMode: 'light' | 'dark' | 'system' = data.visitorDarkLightMode;
-	let employeeDarkLightMode: 'light' | 'dark' | 'system' = data.employeeDarkLightMode;
+	let visitorDarkLightMode: ThemeMode = data.visitorDarkLightMode;
+	let employeeDarkLightMode: ThemeMode = data.employeeDarkLightMode;
 
 	// Stable working copy bound to the row inputs. We keep at least 2 empty rows when nothing is
 	// configured, matching the prior UX where the page always offered editable slots up front.

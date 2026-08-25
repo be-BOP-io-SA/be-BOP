@@ -404,7 +404,13 @@ export function isPublicZeroCriteriaDiscount(
 }
 
 /** Snapshot stored in the accounting log to reconstruct the public price timeline. */
-export function publicDiscountPriceSnapshot(d: Extract<Discount, { mode: 'percentage' }>) {
+export function publicDiscountPriceSnapshot(d: Extract<Discount, { mode: 'percentage' }>): {
+	percentage: number;
+	beginsAt: Date;
+	endsAt: Date | null;
+	wholeCatalog: boolean;
+	productIds: Discount['productIds'];
+} {
 	return {
 		percentage: d.percentage,
 		beginsAt: d.beginsAt,

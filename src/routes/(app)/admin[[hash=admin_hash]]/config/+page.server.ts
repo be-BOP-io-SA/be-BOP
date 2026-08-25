@@ -27,6 +27,7 @@ import { isBtcpayServerConfigured } from '$lib/server/btcpay-server';
 import { isBlinkConfigured } from '$lib/server/blink';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
 import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
+import type { PageServerLoad, Actions } from './$types';
 
 const VAT_SETTING_KEYS = new Set([
 	'vatExempted',
@@ -37,7 +38,7 @@ const VAT_SETTING_KEYS = new Set([
 	'vatExemptionReason'
 ]);
 
-export async function load(event) {
+export const load: PageServerLoad = async (event) => {
 	return {
 		ip: event.locals.clientIp,
 		isMaintenance: runtimeConfig.isMaintenance,
@@ -91,9 +92,9 @@ export async function load(event) {
 		blinkConfigured: isBlinkConfigured(),
 		dataCleanup: runtimeConfig.dataCleanup
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ request, locals }) {
 		const formData = await request.formData();
 		const oldAdminHash = runtimeConfig.adminHash;

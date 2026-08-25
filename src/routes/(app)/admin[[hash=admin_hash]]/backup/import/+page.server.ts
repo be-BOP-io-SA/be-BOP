@@ -11,12 +11,13 @@ import { z } from 'zod';
 import { collections, db } from '$lib/server/database.js';
 import { ObjectId } from 'mongodb';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
+import type { PageServerLoad, Actions } from './$types';
 
-export function load({ url }) {
+export const load: PageServerLoad = ({ url }) => {
 	return {
 		importType: url.searchParams.get('type')
 	};
-}
+};
 
 export type ImportTypeFilesTypes = 'basic' | 'checkWarn' | 'checkClean';
 
@@ -33,7 +34,7 @@ const IMPORT_TYPE_MAPPINGS = {
 	shopConfig: ['runtimeConfig']
 };
 
-export const actions = {
+export const actions: Actions = {
 	default: async ({ request }) => {
 		const {
 			fileToUpload,

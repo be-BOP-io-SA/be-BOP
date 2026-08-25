@@ -2,8 +2,9 @@ import { collections } from '$lib/server/database';
 import type { EmailNotification } from '$lib/types/EmailNotification';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		emails: collections.emailNotifications
 			.find({})
@@ -18,9 +19,9 @@ export async function load() {
 			.limit(100)
 			.toArray()
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request }) {
 		const { to, subject, body } = z
 			.object({

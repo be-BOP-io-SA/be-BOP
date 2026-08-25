@@ -10,8 +10,9 @@ import {
 	SEARCH_TARGET_KEYS,
 	type SearchTargetKey
 } from '$lib/types/Searchlist';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const searchlist = await collections.searchlists.findOne({ _id: params.id });
 	if (!searchlist) {
 		throw error(404, 'Searchlist not found');

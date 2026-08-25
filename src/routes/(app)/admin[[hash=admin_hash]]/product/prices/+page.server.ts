@@ -4,8 +4,9 @@ import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const products = await collections.products.find({}).toArray();
 
 	return {
@@ -17,7 +18,7 @@ export const load = async () => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, locals }) {
 		const formData = await request.formData();
 

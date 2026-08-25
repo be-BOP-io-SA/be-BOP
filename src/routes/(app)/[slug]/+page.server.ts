@@ -3,8 +3,9 @@ import { cmsFromContent } from '$lib/server/cms.js';
 import { error } from '@sveltejs/kit';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { omit } from '$lib/utils/omit';
+import type { PageServerLoad } from './$types';
 
-export async function load({ params, locals, url }) {
+export const load: PageServerLoad = async ({ params, locals, url }) => {
 	let cmsPage = await collections.cmsPages.findOne(
 		{
 			_id: params.slug
@@ -85,4 +86,4 @@ export async function load({ params, locals, url }) {
 		layoutReset: cmsPage.fullScreen,
 		websiteShortDescription: cmsPage.shortDescription
 	};
-}
+};

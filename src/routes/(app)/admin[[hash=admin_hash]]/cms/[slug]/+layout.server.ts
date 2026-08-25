@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database.js';
 import { error } from '@sveltejs/kit';
+import type { LayoutServerLoad } from './$types';
 
-export async function load({ params }) {
+export const load: LayoutServerLoad = async ({ params }) => {
 	const cmsPage = await collections.cmsPages.findOne({
 		_id: params.slug
 	});
@@ -13,4 +14,4 @@ export async function load({ params }) {
 	return {
 		cmsPage
 	};
-}
+};

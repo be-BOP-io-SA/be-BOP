@@ -120,7 +120,7 @@ export const themeValidator = z.object({
 
 export type ThemeData = z.infer<typeof themeValidator>;
 
-export async function increaseThemeChangeNumber() {
+export async function increaseThemeChangeNumber(): Promise<void> {
 	await collections.runtimeConfig.updateOne(
 		{
 			_id: 'themeChangeNumber'

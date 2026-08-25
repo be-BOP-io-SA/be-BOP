@@ -2,10 +2,11 @@ import { collections } from '$lib/server/database';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { adminLinks } from '../adminLinks';
+import type { RequestHandler } from './$types';
 
 const validHrefs = new Set(adminLinks.flatMap((s) => s.links.map((l) => l.href)));
 
-export const POST = async ({ request, locals }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) {
 		throw error(401, 'Not logged in');
 	}

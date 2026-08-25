@@ -3,8 +3,9 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { error } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { generateZTicketText } from '$lib/server/pos-sessions';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ params }: { params: { id: string } }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	if (!runtimeConfig.posSession.enabled) {
 		throw error(403, 'POS sessions are not enabled');
 	}

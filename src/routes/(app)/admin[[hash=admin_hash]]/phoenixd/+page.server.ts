@@ -16,8 +16,9 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { updateLightningInvoiceDescription } from '$lib/server/actions.js';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { Actions, PageServerLoad, RequestEvent } from './$types';
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const configManagedByEnvVars = !!PHOENIXD_ENDPOINT_URL && !!PHOENIXD_HTTP_PASSWORD;
 	if (!isPhoenixdConfigured()) {
 		const dockerIp = await Promise.race([
@@ -57,8 +58,8 @@ export const load = async () => {
 	}
 };
 
-export const actions = {
-	async detect(event) {
+export const actions: Actions = {
+	async detect(event: RequestEvent) {
 		const formData = Object.fromEntries(await event.request.formData());
 
 		const url = z.object({ url: z.string().url() }).parse(formData).url;
@@ -81,7 +82,7 @@ export const actions = {
 			});
 		}
 	},
-	async update(event) {
+	async update(event: RequestEvent) {
 		const parsed = z
 			.object({
 				password: z.string().min(1)
@@ -113,7 +114,7 @@ export const actions = {
 			{ upsert: true }
 		);
 	},
-	async withdraw(event) {
+	async withdraw(event: RequestEvent) {
 		const formData = Object.fromEntries(await event.request.formData());
 
 		const withdrawMode = z

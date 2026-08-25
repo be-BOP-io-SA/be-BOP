@@ -2,8 +2,9 @@ import { collections } from '$lib/server/database';
 import { buildTagGroupsForPrint, getOrCreateOrderTab } from '$lib/server/orderTab';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { resolvePoolLabel } from '$lib/types/PosTabGroup';
+import type { PageServerLoad } from './$types';
 
-export async function load({ locals, params, url }) {
+export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const tab = await getOrCreateOrderTab({ slug: params.orderTabSlug });
 
 	const poolLabel = resolvePoolLabel(runtimeConfig.posTabGroups, params.orderTabSlug);
@@ -72,4 +73,4 @@ export async function load({ locals, params, url }) {
 		showBebopLogo: false,
 		topBlankLines: runtimeConfig.posMidTicketTopBlankLines
 	};
-}
+};

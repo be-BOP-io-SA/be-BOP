@@ -69,7 +69,7 @@ export interface Schedule extends Timestamps, ScheduleTranslatableFields {
 	translations?: Partial<Record<LanguageKey, Partial<ScheduleTranslatableFields>>>;
 }
 
-export function exportToICS(event: ScheduleEvent, pastEventDelay: number) {
+export function exportToICS(event: ScheduleEvent, pastEventDelay: number): string {
 	const start = new Date(event.beginsAt).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 	const end = event.endsAt
 		? new Date(event.endsAt).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
@@ -97,11 +97,11 @@ END:VCALENDAR`;
 	return `data:text/calendar;base64,${base64Data}`;
 }
 
-export function productToScheduleId(productId: Product['_id']) {
+export function productToScheduleId(productId: Product['_id']): string {
 	return `product:${productId}`;
 }
 
-export function scheduleToProductId(scheduleId: string) {
+export function scheduleToProductId(scheduleId: string): Product['_id'] {
 	const match = scheduleId.match(/product:(.+)/);
 	if (!match) {
 		throw new Error('Invalid schedule ID for a schedule associated with a product');
@@ -114,13 +114,13 @@ export function tryScheduleToProductId(scheduleId: string): Product['_id'] | nul
 	return match ? (match[1] as Product['_id']) : null;
 }
 
-export function minutesToTime(minutes: number) {
+export function minutesToTime(minutes: number): string {
 	const hours = Math.floor(minutes / 60);
 	const remainingMinutes = minutes % 60;
 	return `${String(hours).padStart(2, '0')}:${String(remainingMinutes).padStart(2, '0')}`;
 }
 
-export function timeToMinutes(time: string) {
+export function timeToMinutes(time: string): number {
 	const [hours, minutes] = time.split(':').map(Number);
 	return hours * 60 + minutes;
 }

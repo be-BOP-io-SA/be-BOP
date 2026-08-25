@@ -6,6 +6,7 @@ import { isPaidOrderWebhookEnabled } from '$lib/server/order-paid-webhook';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { s3IsConfigured } from '$lib/server/s3.js';
+import type { LayoutServerLoad } from './$types';
 
 const DEFAULT_CMS_PAGES = [
 	'home',
@@ -68,7 +69,7 @@ async function ensureDefaultCmsPages() {
 	await collections.cmsPages.insertMany(pagesToCreate);
 }
 
-export async function load({ locals }) {
+export const load: LayoutServerLoad = async ({ locals }) => {
 	// Ensure default CMS pages exist on every admin access
 	await ensureDefaultCmsPages();
 
@@ -95,4 +96,4 @@ export async function load({ locals }) {
 					.then((u) => u?.userSettings?.backOfficeBookmarks ?? [])
 			: []
 	};
-}
+};

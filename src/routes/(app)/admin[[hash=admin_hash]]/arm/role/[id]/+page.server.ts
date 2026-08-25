@@ -3,8 +3,9 @@ import { collections } from '$lib/server/database.js';
 import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ params, request }) {
 		const roleId = params.id;
 

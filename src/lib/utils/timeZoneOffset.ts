@@ -1,4 +1,4 @@
-export function timeZoneOffset() {
+export function timeZoneOffset(): string {
 	const timezoneOffsetMinutes = new Date().getTimezoneOffset();
 
 	const offsetHours = Math.abs(Math.floor(timezoneOffsetMinutes / 60));

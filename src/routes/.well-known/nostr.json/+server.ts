@@ -1,8 +1,9 @@
 import { getNostrKeys, isNostrConfigured, nostrRelays } from '$lib/server/nostr';
 import { error } from '@sveltejs/kit';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import type { RequestHandler } from './$types';
 
-export const OPTIONS = () => {
+export const OPTIONS: RequestHandler = () => {
 	return new Response(null, {
 		headers: {
 			'access-control-allow-origin': '*',
@@ -12,7 +13,7 @@ export const OPTIONS = () => {
 	});
 };
 
-export const GET = () => {
+export const GET: RequestHandler = () => {
 	if (!isNostrConfigured()) {
 		throw error(404);
 	}

@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
+import type { PageLoad } from './$types';
 
-export async function load({ parent, params }) {
+export const load: PageLoad = async ({ parent, params }) => {
 	const parentData = await parent();
 
 	const slug = params.id;
@@ -15,4 +16,4 @@ export async function load({ parent, params }) {
 		provider: oauth,
 		bodyClass: 'max-w-7xl mx-auto'
 	};
-}
+};

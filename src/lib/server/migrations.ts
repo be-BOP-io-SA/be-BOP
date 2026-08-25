@@ -96,11 +96,17 @@ async function ensureSearchSearchlist(session?: ClientSession): Promise<void> {
 	);
 }
 
-export const migrations = [
+type Migration = {
+	_id: ObjectId;
+	name: string;
+	run: (session: ClientSession) => Promise<void>;
+};
+
+export const migrations: Migration[] = [
 	{
 		_id: new ObjectId('65281201e92e590e858af6cb'),
 		name: 'Migrate CMS page content from Markdown to HTML',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			for await (const page of collections.cmsPages.find()) {
 				await collections.cmsPages.updateOne(
 					{
@@ -119,7 +125,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('39811201e92e590e858af8ba'),
 		name: 'Adding actionSettings to products',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.products.updateMany(
 				{},
 				{
@@ -150,7 +156,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('653cbb1bd2af1254e82c928b'),
 		name: 'Change user.backupInfo to user.recovery',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.users.dropIndex('backupInfo.npub_1').catch(console.error);
 			await collections.users.dropIndex('backupInfo.email_1').catch(console.error);
 
@@ -170,7 +176,7 @@ export const migrations = [
 	{
 		name: 'Add tagIds to products',
 		_id: new ObjectId('653cbb1bd2af1254e82c928c'),
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.products.updateMany(
 				{
 					tagIds: { $exists: false }
@@ -187,7 +193,7 @@ export const migrations = [
 	{
 		name: 'Add amountsInOtherCurrencies to orders',
 		_id: new ObjectId('6567c2700000000000000000'),
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			for await (const order of collections.orders.find(
 				{ amountsInOtherCurrencies: { $exists: false } },
 				{ session }
@@ -282,7 +288,7 @@ export const migrations = [
 	{
 		name: 'Convert to multiple payments',
 		_id: new ObjectId('65713a19c783f535de973957'),
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			for await (const order of collections.orders.find(
 				{ payments: { $exists: false }, payment: { $exists: true } },
 				{ session }
@@ -337,7 +343,7 @@ export const migrations = [
 	{
 		name: 'Update payments currencySnapshot',
 		_id: new ObjectId('6577739b4feec6c5137a2202'),
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			for await (const order of collections.orders.find(
 				{ payments: { $exists: true } },
 				{ session }
@@ -379,7 +385,7 @@ export const migrations = [
 	{
 		name: 'Change bankTransfer to bank-transfer',
 		_id: new ObjectId('657f7c76602c2bc0ef4acef4'),
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			let count = 10;
 			while (count--) {
 				const result = await collections.orders.updateMany(
@@ -403,7 +409,7 @@ export const migrations = [
 	{
 		name: 'Convert VAT rate to array in orders',
 		_id: new ObjectId('65bd8fc40914f6a599ede07d'),
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.orders.updateMany(
 				{ 'vat.price.currency': { $type: 'string' } },
 				[
@@ -467,7 +473,7 @@ export const migrations = [
 	{
 		name: 'Add alias to products',
 		_id: new ObjectId('657dbb1bd2af2256e82c928c'),
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.products.updateMany(
 				{
 					alias: { $exists: false }
@@ -486,7 +492,7 @@ export const migrations = [
 	{
 		name: 'Move basket-top & basket-bottom to cart-top & cart-bottom',
 		_id: new ObjectId('65e0861038ba23d6e0eb8c32'),
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			const basketTop = await collections.cmsPages.findOneAndDelete(
 				{ _id: 'basket-top' },
 				{ session }
@@ -518,7 +524,7 @@ export const migrations = [
 	{
 		name: 'Remove user.** wildcard indexes',
 		_id: new ObjectId('662a83f6b30d34879b2bbc1f'),
-		run: async () => {
+		run: async (): Promise<void> => {
 			await collections.carts.dropIndex('user.**_1').catch(console.error);
 			await collections.paidSubscriptions.dropIndex('user.**_1').catch(console.error);
 			await collections.orders.dropIndex('user.**_1').catch(console.error);
@@ -528,14 +534,14 @@ export const migrations = [
 	{
 		name: 'Remove productId index',
 		_id: new ObjectId('668c423519c3d2f1ba38344e'),
-		run: async () => {
+		run: async (): Promise<void> => {
 			await collections.pictures.dropIndex('productId_1').catch(console.error);
 		}
 	},
 	{
 		_id: new ObjectId('669a90d18bc5aaf40c863b63'),
 		name: 'Adding actionSettings nostr to products and runtimeConfig',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.products.updateMany(
 				{},
 				{
@@ -565,7 +571,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('67fd2c1f33909ff6cd56839b'),
 		name: 'Replace plausibleScriptUrl with analyticsScriptSnippet',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			const old = await collections.runtimeConfig.findOne(
 				{ _id: 'plausibleScriptUrl' },
 				{ session }
@@ -592,7 +598,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('680751f0e6ba7ca6454423d0'),
 		name: 'Add mode to existing discounts',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.discounts.updateMany(
 				{ percentage: { $exists: true }, mode: { $exists: false } },
 				{ $set: { mode: 'percentage' } },
@@ -603,7 +609,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('68230a070000000000000000'),
 		name: 'Ensure payment processor is set on lightning payments',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.orders.updateMany(
 				{ payments: { $elemMatch: { method: 'lightning', processor: { $exists: false } } } },
 				{ $set: { 'payments.$.processor': 'lnd' } },
@@ -614,7 +620,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('68246400cd3efad54fa14bb3'),
 		name: 'Replace usersDarkDefaultTheme and employeesDarkDefaultTheme',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			// MIGRATION 1 — usersDarkDefaultTheme => visitorDarkLightMode
 			const oldVisitor = await collections.runtimeConfig.findOne(
 				{ _id: 'usersDarkDefaultTheme' },
@@ -664,7 +670,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('682df8048d5704e22e41212b'),
 		name: 'Add hasPosOptions to all user with roleID=point-of-sale',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.users.updateMany(
 				{ roleId: 'point-of-sale' },
 				{ $set: { hasPosOptions: true } },
@@ -675,7 +681,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('685e7b8042317d9719fb0b7b'),
 		name: 'Remove freeQuantity from cart items',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.carts.updateMany(
 				{},
 				{ $unset: { 'items.$[].freeQuantity': 1 } },
@@ -686,7 +692,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('68e52126bf9841f187344d14'),
 		name: 'Create default PoS payment subtype: Cash',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			const existingCount = await collections.posPaymentSubtypes.countDocuments({}, { session });
 			if (existingCount > 0) {
 				console.log('PoS payment subtypes already exist, skipping migration');
@@ -711,7 +717,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('67558e01e92e590e858af9cd'),
 		name: 'Create default tag group for existing POS configurations',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			const existingGroups = await collections.tagGroups.countDocuments({}, { session });
 			if (existingGroups > 0) {
 				return;
@@ -740,7 +746,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('679145a0e92e590e858af001'),
 		name: 'Seed default tag families',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			const existingCount = await collections.tagFamilies.countDocuments({}, { session });
 			if (existingCount > 0) {
 				return;
@@ -766,7 +772,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('6a0f4880e92e590e85af2535'),
 		name: 'Round product prices to integer for zero-decimal currencies (issue #2535)',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			// SAT excluded: crypto unit, already integer.
 			const ZERO_DECIMAL_CURRENCIES = CURRENCIES.filter(
 				(c) => FRACTION_DIGITS_PER_CURRENCY[c] === 0 && c !== 'SAT'
@@ -789,14 +795,14 @@ export const migrations = [
 	{
 		_id: new ObjectId('660d1e8a2f1e0c0001787001'),
 		name: 'Seed default searchlist (issue #1787)',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await ensureDefaultSearchlist(session);
 		}
 	},
 	{
 		_id: new ObjectId('660d1e8a2f1e0c0001787002'),
 		name: 'Backfill displayWidgetName + hideSearchbar on default searchlist (issue #1787)',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.searchlists.updateMany(
 				{ displayWidgetName: { $exists: false } },
 				{ $set: { displayWidgetName: false, updatedAt: new Date() } },
@@ -812,7 +818,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('660d1e8a2f1e0c0001787003'),
 		name: 'Backfill filters.tags on searchlists (issue #1787)',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await collections.searchlists.updateMany(
 				{ 'filters.tags': { $exists: false } },
 				{
@@ -828,14 +834,14 @@ export const migrations = [
 	{
 		_id: new ObjectId('660d1e8a2f1e0c0001787004'),
 		name: 'Seed search searchlist (issue #1787)',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			await ensureSearchSearchlist(session);
 		}
 	},
 	{
 		_id: new ObjectId('6b1f4880e92e590e85af2388'),
 		name: 'Move subscription duration to product level (issue #2388)',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			const config = await collections.runtimeConfig.findOne(
 				{ _id: 'subscriptionDuration' },
 				{ session }
@@ -851,7 +857,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('6b1f4880e92e590e85af2636'),
 		name: 'Backfill stable ids on layout links + re-key link translations (issue #2636)',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			const LINK_KEYS = ['topbarLinks', 'navbarLinks', 'footerLinks'] as const;
 			// Stable ids of the default (baseConfig) links, by position — used to re-key overrides
 			// on shops that never customized their main links (no runtimeConfig doc to read ids from).
@@ -930,7 +936,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('6b1f4880e92e590e85af2492'),
 		name: 'Drop single-currency (SAT) amount from order.vat; amounts live in currencySnapshot (issue #2492)',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			// Old orders stored order.vat[].price/partialPrice in the internal SAT unit. The correct
 			// per-currency amounts are already frozen in currencySnapshot.*.vat, so we only need to
 			// reduce each entry to its {rate, country} breakdown — no rate lookup required.
@@ -947,7 +953,7 @@ export const migrations = [
 	{
 		_id: new ObjectId('000000000000000000002504'),
 		name: 'Backfill public discount price history (issue #2504)',
-		run: async (session: ClientSession) => {
+		run: async (session: ClientSession): Promise<void> => {
 			const discounts = await collections.discounts
 				.find({ mode: 'percentage' }, { session })
 				.toArray();
@@ -980,7 +986,7 @@ export const migrations = [
 	}
 ];
 
-export async function runMigrations() {
+export async function runMigrations(): Promise<void> {
 	if (env.VITEST) {
 		return;
 	}

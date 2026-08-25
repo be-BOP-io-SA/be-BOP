@@ -11,9 +11,9 @@ import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { CURRENCIES } from '$lib/types/Currency';
 import { z } from 'zod';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load = async ({ locals }: { locals: App.Locals }) => {
+export const load: PageServerLoad = async ({ locals }) => {
 	const posSession = await getCurrentPosSession();
 
 	if (!posSession) {

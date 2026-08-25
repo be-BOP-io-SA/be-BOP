@@ -40,7 +40,9 @@ export function orderCurrencyAmounts<T>(
  *
  * Pure (Order type only, no DB) so it can be unit-tested without a database.
  */
-export function orderVatAccountingSnapshot(order: Order) {
+export function orderVatAccountingSnapshot(
+	order: Order
+): { rates: NonNullable<Order['vat']> } & Partial<Record<CurrencyRole, SnapshotEntry['vat']>> {
 	const amounts = orderCurrencyAmounts(order, (entry) => entry.vat);
 	return {
 		rates:

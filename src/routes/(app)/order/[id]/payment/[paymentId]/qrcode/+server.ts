@@ -6,12 +6,13 @@ import qrcode from 'qrcode';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { building } from '$app/environment';
+import type { RequestHandler } from './$types';
 
 const bebopLogoSvg = building ? '' : readFileSync(join(rootDir, 'assets/bebop-b.svg'), 'utf-8');
 
 const BEBOP_LOGO_RATIO = 0.2;
 
-export async function GET({ params, url }) {
+export const GET: RequestHandler = async ({ params, url }) => {
 	const order = await collections.orders.findOne({ _id: params.id });
 
 	if (!order) {
@@ -69,4 +70,4 @@ export async function GET({ params, url }) {
 		headers: { 'content-type': 'image/svg+xml' },
 		status: 200
 	});
-}
+};

@@ -14,6 +14,12 @@ import { runtimeConfig } from './runtime-config';
 import { CURRENCIES, CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import { computeVatRate } from '$lib/utils/vat';
+import type { PickDeep } from 'type-fest';
+
+// Only the locals fields searchlist rendering actually reads. Narrow on purpose so
+// callers without a full App.Locals (e.g. cmsFromContent) can drive a search.
+export type SearchlistLocals = Pick<App.Locals, 'language'> &
+	Partial<PickDeep<App.Locals, 'user.roleId' | 'countryCode'>>;
 
 export const MAX_SEARCH_TERM_LENGTH = 64;
 export const MAX_CUMULATIVE_PAGES = 100;
@@ -199,7 +205,7 @@ export type VatContext = {
 export async function searchProducts(
 	searchlist: Searchlist,
 	state: SearchlistUrlState,
-	locals: App.Locals,
+	locals: SearchlistLocals,
 	vat: VatContext
 ): Promise<SearchResult> {
 	const isEmployee = locals.user?.roleId !== undefined && locals.user.roleId !== CUSTOMER_ROLE_ID;

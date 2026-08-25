@@ -2,8 +2,9 @@ import { collections } from '$lib/server/database';
 import { redirect } from '@sveltejs/kit';
 import { formatCart, formatOrder } from './formatCartOrder.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ locals, depends }) => {
+export const load: PageServerLoad = async ({ locals, depends }) => {
 	if (!locals.user) {
 		throw redirect(303, '/admin/login');
 	}

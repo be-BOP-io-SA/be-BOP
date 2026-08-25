@@ -44,7 +44,11 @@ export type BitcoinCommand =
 	| 'getbalance'
 	| 'getblockchaininfo';
 
-export async function bitcoinRpc(command: BitcoinCommand, params: unknown[], wallet?: string) {
+export async function bitcoinRpc(
+	command: BitcoinCommand,
+	params: unknown[],
+	wallet?: string
+): Promise<Response> {
 	let url = BITCOIN_RPC_URL;
 
 	if (
@@ -95,7 +99,7 @@ export async function bitcoinRpc(command: BitcoinCommand, params: unknown[], wal
 	});
 }
 
-export async function listWallets() {
+export async function listWallets(): Promise<string[]> {
 	const response = await bitcoinRpc('listwallets', []);
 
 	if (!response.ok) {
@@ -107,12 +111,12 @@ export async function listWallets() {
 	return z.object({ result: z.string().array() }).parse(json).result;
 }
 
-export async function currentWallet() {
+export async function currentWallet(): Promise<string> {
 	const wallets = await listWallets();
 	return wallets.includes(runtimeConfig.bitcoinWallet) ? runtimeConfig.bitcoinWallet : wallets[0];
 }
 
-export async function createWallet(name: string) {
+export async function createWallet(name: string): Promise<string> {
 	const disablePrivateKeys = !!isBIP84Configured;
 	const response = await bitcoinRpc('createwallet', [
 		name,
@@ -172,7 +176,12 @@ export async function createWallet(name: string) {
 	return walletName;
 }
 
-export async function getDescriptorInfo(descriptor: string) {
+export async function getDescriptorInfo(descriptor: string): Promise<{
+	descriptor: string;
+	isrange: boolean;
+	issolvable: boolean;
+	hasprivatekeys: boolean;
+}> {
 	const response = await bitcoinRpc('getdescriptorinfo', [descriptor]);
 
 	if (!response.ok) {
@@ -205,7 +214,17 @@ export async function getNewAddress(label: string): Promise<string> {
 	return z.object({ result: z.string() }).parse(json).result;
 }
 
-export async function listTransactions(label?: string) {
+export type BitcoinTransaction = {
+	address: string;
+	category: 'send' | 'receive' | 'generate' | 'immature' | 'orphan';
+	label?: string;
+	fee?: number;
+	amount: number;
+	confirmations: number;
+	txid: string;
+};
+
+export async function listTransactions(label?: string): Promise<BitcoinTransaction[]> {
 	const response = await bitcoinRpc('listtransactions', [label || '*', 100, 0, true]);
 
 	if (!response.ok) {
@@ -231,7 +250,7 @@ export async function listTransactions(label?: string) {
 		.parse(json).result;
 }
 
-export async function getBalance(confirmations = 1) {
+export async function getBalance(confirmations = 1): Promise<number> {
 	const response = await bitcoinRpc('getbalance', ['*', confirmations]);
 
 	if (!response.ok) {
@@ -243,7 +262,7 @@ export async function getBalance(confirmations = 1) {
 	return z.object({ result: z.number() }).parse(json).result;
 }
 
-export async function getBlockchainInfo() {
+export async function getBlockchainInfo(): Promise<{ blocks: number; chain: string }> {
 	const response = await bitcoinRpc('getblockchaininfo', []);
 
 	if (!response.ok) {
@@ -256,7 +275,16 @@ export async function getBlockchainInfo() {
 		.result;
 }
 
-export async function listDescriptors(wallet: string) {
+export async function listDescriptors(wallet: string): Promise<{
+	descriptors: Array<{
+		desc: string;
+		timestamp: number;
+		active: boolean;
+		internal: boolean;
+		range: number[];
+		next: number;
+	}>;
+}> {
 	const response = await bitcoinRpc('listdescriptors', [true], wallet);
 
 	if (!response.ok) {
@@ -339,7 +367,7 @@ export async function dumpWalletInfo(wallet: string): Promise<{
 	};
 }
 
-export async function listDiskWallets() {
+export async function listDiskWallets(): Promise<Array<{ name: string }>> {
 	const response = await bitcoinRpc('listwalletdir', []);
 
 	if (!response.ok) {
@@ -353,7 +381,7 @@ export async function listDiskWallets() {
 		.parse(json).result.wallets;
 }
 
-export async function loadWallet(wallet: string) {
+export async function loadWallet(wallet: string): Promise<{ name: string; warning: string }> {
 	// true to load on startup / persist wallet
 	const response = await bitcoinRpc('loadwallet', [wallet, true]);
 
@@ -367,7 +395,7 @@ export async function loadWallet(wallet: string) {
 		.result;
 }
 
-export async function loadDiskWallets() {
+export async function loadDiskWallets(): Promise<void> {
 	const wallets = await listDiskWallets();
 	const loadedWallets = await listWallets();
 
@@ -378,9 +406,7 @@ export async function loadDiskWallets() {
 	}
 }
 
-export type BitcoinTransaction = Awaited<ReturnType<typeof listTransactions>>[number];
-
-export function orderAddressLabel(orderId: string, paymentId: string | ObjectId) {
+export function orderAddressLabel(orderId: string, paymentId: string | ObjectId): string {
 	return `order:${orderId}:${paymentId}`;
 }
 

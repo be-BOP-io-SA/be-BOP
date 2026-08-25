@@ -123,7 +123,10 @@ export async function amountOfStockReserved(
 	);
 }
 
-export async function refreshAvailableStockInDb(productId: string, session?: ClientSession) {
+export async function refreshAvailableStockInDb(
+	productId: string,
+	session?: ClientSession
+): Promise<void> {
 	const stockProduct = await resolveStockProduct(productId, session);
 
 	if (!stockProduct) {
@@ -265,7 +268,7 @@ export async function validateStockReference(
 	return { valid: true };
 }
 
-export async function getProductsWithStock() {
+export async function getProductsWithStock(): Promise<Pick<Product, '_id' | 'name'>[]> {
 	return collections.products
 		.find({
 			stock: { $exists: true },

@@ -1,6 +1,6 @@
 import { runtimeConfig } from './runtime-config';
 
-export function isBtcpayServerConfigured() {
+export function isBtcpayServerConfigured(): boolean {
 	const config = runtimeConfig.btcpayServer ?? {};
 	return !!config.apiKey && !!config.serverUrl && !!config.storeId;
 }

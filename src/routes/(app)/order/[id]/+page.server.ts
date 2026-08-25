@@ -11,8 +11,9 @@ import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import type { OrderLabel } from '$lib/types/OrderLabel.js';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load({ params, depends, locals, url }) {
+export const load: PageServerLoad = async ({ params, depends, locals, url }) => {
 	depends(UrlDependency.Order);
 
 	const order = await fetchOrderForUser(params.id, { userRoleId: locals.user?.roleId });
@@ -144,9 +145,9 @@ export async function load({ params, depends, locals, url }) {
 		canCleanPersonalData:
 			runtimeConfig.dataCleanup.allowUserManualCleanup && !!(locals.email || locals.npub)
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	cancel: async function ({ params, request }) {
 		await collections.orders.updateOne(
 			{

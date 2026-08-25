@@ -105,7 +105,7 @@ export async function orderTabNotEmptyAndFullyPaid({ slug }: { slug: string }): 
 	return orders.every((order) => order.status === 'paid');
 }
 
-export async function concludeOrderTab({ slug }: { slug: string }) {
+export async function concludeOrderTab({ slug }: { slug: string }): Promise<void> {
 	await collections.orderTabs.deleteOne({ slug });
 }
 
@@ -145,7 +145,7 @@ export async function checkoutOrderTab({
 	user,
 	splitMode,
 	itemQuantities
-}: CheckoutOrderTabParams) {
+}: CheckoutOrderTabParams): Promise<void> {
 	const orderTab = await getOrCreateOrderTab({ slug });
 
 	const poolDiscount = orderTab.discount;
@@ -295,7 +295,7 @@ export async function handleOrderTabAfterPayment({
 }: {
 	order: Order;
 	session?: ClientSession;
-}) {
+}): Promise<void> {
 	if (!order.orderTabSlug) {
 		return;
 	}
@@ -375,6 +375,22 @@ export async function handleOrderTabAfterPayment({
 	);
 }
 
+export type PrintTagGroup = {
+	tagNames: string[];
+	items: Array<{
+		product: { name: string };
+		quantity: number;
+		variations: Array<{ text: string; count: number }>;
+		notes: string[];
+	}>;
+};
+
+export type BuildTagGroupsForPrintResult = {
+	tagGroups: PrintTagGroup[];
+	uniqueTagNames: string[];
+	totalItemCount: number;
+};
+
 /**
  * Builds tagGroups for kitchen ticket printing from order tab items.
  * Used by both kitchen-ticket page and savePrintHistory action.
@@ -389,7 +405,7 @@ export function buildTagGroupsForPrint(
 	}>,
 	printTagsMap: Record<string, string>,
 	mode: 'all' | 'newlyOrdered' = 'all'
-) {
+): BuildTagGroupsForPrintResult {
 	// Map<tagKey, Map<productId, {name, qty, variations, notes}>>
 	const groups = new Map<
 		string,
