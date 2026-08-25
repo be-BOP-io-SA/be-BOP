@@ -19,8 +19,15 @@ export const load = async ({ locals, url }) => {
 				},
 				fullScreen: 1,
 				hasEmployeeContent: 1,
+				// Without this, `cmsPage.displayRawContent` below is always
+				// undefined and the home page is sanitized at `/` but not at
+				// `/home` — the <style> block of an advanced-HTML page is
+				// dropped on the site root only.
+				displayRawContent: 1,
 				hasMobileContent: 1,
+				hideFromSEO: 1,
 				maintenanceDisplay: 1,
+				metas: 1,
 				mobileContent: {
 					$ifNull: [`$translations.${locals.language}.mobileContent`, '$mobileContent']
 				},
@@ -60,7 +67,10 @@ export const load = async ({ locals, url }) => {
 			},
 			locals
 		),
-		layoutReset: cmsPage.fullScreen
+		layoutReset: cmsPage.fullScreen,
+		// `[slug]` does the same, so that the meta description of `/` is the
+		// one written on the home page rather than the shop-wide default.
+		websiteShortDescription: cmsPage.shortDescription
 	};
 };
 
