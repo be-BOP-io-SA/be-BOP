@@ -1,9 +1,9 @@
 name: deploy
 
+# Deploys are manual. Every merge to main used to ship straight to the
+# environment named by the DEFAULT_ENV variable, which left no room between
+# review and production.
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       environment:
