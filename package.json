@@ -65,7 +65,7 @@
 		"@fontsource/gloock": "^5.0.0",
 		"@fontsource/poppins": "^4.5.10",
 		"@microsoft/fetch-event-source": "^2.0.1",
-		"@shocknet/clink-sdk": "^1.6.1",
+		"@shocknet/clink-sdk": "1.6.1",
 		"@tinymce/tinymce-svelte": "^1.0.1",
 		"bcryptjs": "^2.4.3",
 		"bech32": "^2.0.0",
