@@ -62,15 +62,26 @@ function clinkDecrypt(ciphertext: string, privkeyHex: string, senderPubkeyHex: s
 // --- Session store (in-memory cache + MongoDB persistence) ---
 
 export interface ClinkSession {
-	offerId: string;
+	/** Unique session key — hash of bolt11 (per-invoice, not merchant-level) */
+	sessionKey: string;
 	paymentHash: string;
 	bolt11: string;
 	expiresAt: Date;
 	paid?: boolean;
+	/** Nostr event ID of the original payment request (used for receipt correlation) */
+	nostrEventId?: string;
 }
 
 /** Fast in-memory cache — synced with MongoDB */
 const activeSessions = new Map<string, ClinkSession>();
+
+/**
+ * Maps Nostr event ID → payment hash for receipt correlation.
+ * When LP sends an invoice response, we capture the #e tag (request event ID)
+ * and map it to the payment hash. When a receipt arrives with #e: [X],
+ * we look up X → paymentHash → session → mark as paid.
+ */
+const eventIdToPaymentHash = new Map<string, string>();
 
 /** Load pending (unpaid) sessions from MongoDB into the in-memory cache on startup */
 export async function clinkLoadPendingSessions(): Promise<void> {
@@ -79,13 +90,19 @@ export async function clinkLoadPendingSessions(): Promise<void> {
 			.find({ paid: false, expiresAt: { $gt: new Date() } })
 			.toArray();
 		for (const doc of pending) {
-			activeSessions.set(doc.offerId, {
-				offerId: doc.offerId,
+			const key = (doc.sessionKey as string) || doc.offerId;
+			if (!key) continue;
+			activeSessions.set(key, {
+				sessionKey: key,
 				paymentHash: doc.paymentHash,
 				bolt11: doc.bolt11,
 				expiresAt: doc.expiresAt,
-				paid: doc.paid
+				paid: doc.paid,
+				nostrEventId: doc.nostrEventId
 			});
+			if (doc.nostrEventId) {
+				eventIdToPaymentHash.set(doc.nostrEventId, doc.paymentHash);
+			}
 		}
 		console.log(`[CLINK] Loaded ${pending.length} pending sessions from database`);
 	} catch (err) {
@@ -93,44 +110,61 @@ export async function clinkLoadPendingSessions(): Promise<void> {
 	}
 }
 
-export function getClinkSession(offerId: string): ClinkSession | undefined {
-	return activeSessions.get(offerId);
+export function getClinkSession(sessionKey: string): ClinkSession | undefined {
+	return activeSessions.get(sessionKey);
+}
+
+/** Find session by payment hash (used by checkPayment via invoiceId) */
+export function getClinkSessionByPaymentHash(paymentHash: string): ClinkSession | undefined {
+	for (const session of activeSessions.values()) {
+		if (session.paymentHash === paymentHash) return session;
+	}
+	return undefined;
 }
 
 /** Persist session to both in-memory cache and MongoDB */
 export async function setClinkSession(session: ClinkSession): Promise<void> {
-	activeSessions.set(session.offerId, session);
+	activeSessions.set(session.sessionKey, session);
 	try {
 		await collections.clinkSessions.updateOne(
-			{ offerId: session.offerId },
+			{ sessionKey: session.sessionKey },
 			{
 				$set: {
 					paymentHash: session.paymentHash,
 					bolt11: session.bolt11,
 					expiresAt: session.expiresAt,
 					paid: session.paid ?? false,
+					nostrEventId: session.nostrEventId,
 					updatedAt: new Date()
 				},
 				$setOnInsert: {
-					offerId: session.offerId,
+					sessionKey: session.sessionKey,
 					createdAt: new Date()
 				}
 			},
 			{ upsert: true }
 		);
 	} catch (err) {
-		console.error(`[CLINK] Failed to persist session ${session.offerId}:`, err);
+		console.error(`[CLINK] Failed to persist session ${session.sessionKey}:`, err);
 	}
 }
 
 /** Remove session from both in-memory cache and MongoDB */
-export async function removeClinkSession(offerId: string): Promise<void> {
-	activeSessions.delete(offerId);
+export async function removeClinkSession(sessionKey: string): Promise<void> {
+	const session = activeSessions.get(sessionKey);
+	activeSessions.delete(sessionKey);
 	try {
-		await collections.clinkSessions.deleteOne({ offerId });
+		await collections.clinkSessions.deleteOne({ sessionKey });
 	} catch (err) {
-		console.error(`[CLINK] Failed to remove session ${offerId}:`, err);
+		console.error(`[CLINK] Failed to remove session ${sessionKey}:`, err);
 	}
+}
+
+// --- Session key generation ---
+
+/** Generate a unique per-invoice session key from the bolt11 string */
+function clinkSessionKey(bolt11: string): string {
+	return createHash('sha256').update(bolt11).digest('hex');
 }
 
 // --- nOffer decoding ---
@@ -278,7 +312,7 @@ export function clinkSubscribeToRelay(params: {
 	merchantPubkey: string;
 	merchantPrivkey: string;
 	lightningPubPubkey?: string;
-	onEvent: (request: NofferData, event: { id: string; pubkey: string; content: string }) => void;
+	onEvent: (request: NofferData | Record<string, unknown>, event: { id: string; pubkey: string; content: string; tags: string[][] }) => void;
 }): { unsub: () => void } {
 	const filter = {
 		kinds: [CLINK_EVENT_KIND],
@@ -287,7 +321,7 @@ export function clinkSubscribeToRelay(params: {
 	};
 
 	const sub = params.pool.subscribe([params.relay], filter, {
-		onevent: async (evt: { id: string; pubkey: string; content: string; sig?: string }) => {
+		onevent: async (evt: { id: string; pubkey: string; content: string; tags: string[][]; sig?: string }) => {
 			try {
 				if (!verifyEvent(evt as Parameters<typeof verifyEvent>[0])) {
 					console.warn('CLINK: Received event with invalid signature, ignoring');
@@ -324,7 +358,7 @@ export function clinkSubscribeToRelay(params: {
 					return;
 				}
 
-				params.onEvent(request, { id: evt.id, pubkey: evt.pubkey, content: evt.content });
+				params.onEvent(request, { id: evt.id, pubkey: evt.pubkey, content: evt.content, tags: evt.tags || [] });
 			} catch (err) {
 				console.error(
 					'CLINK: Failed to process incoming event:',
@@ -543,25 +577,20 @@ export async function clinkRequestInvoice(params: {
 
 	try {
 		const receiptCallback = params.onReceipt
-			? async () => {
+			? async (sessionKey: string) => {
 					// Persist the paid flag to MongoDB
 					try {
 						await collections.clinkSessions.updateOne(
-							{ offerId: decoded.offer },
+							{ sessionKey },
 							{ $set: { paid: true, updatedAt: new Date() } }
 						);
 					} catch (err) {
 						console.error('[CLINK] Failed to persist paid status:', err);
 					}
-					clinkUnregisterReceiptCallback(decoded.offer);
+					clinkUnregisterReceiptCallback(sessionKey);
 					params.onReceipt!();
 				}
 			: undefined;
-
-		// Register receipt callback with the persistent listener for relay-resilient receipt
-		if (receiptCallback) {
-			clinkRegisterReceiptCallback(decoded.offer, receiptCallback);
-		}
 
 		// Do NOT pass receiptCallback to sdk.Noffer() — the persistent listener handles
 		// receipts exclusively to avoid competing subscriptions that intercept each other's events.
@@ -582,8 +611,15 @@ export async function clinkRequestInvoice(params: {
 			});
 			if (!bolt11Check.valid) {
 				sdk.Stop();
-				clinkUnregisterReceiptCallback(decoded.offer);
 				throw new Error(`Invalid bolt11 from Lightning.Pub: ${bolt11Check.error}`);
+			}
+
+			// Generate per-invoice session key (hash of bolt11)
+			const sessionKey = clinkSessionKey(response.bolt11);
+
+			// Register receipt callback with the persistent listener, keyed by session key
+			if (receiptCallback) {
+				clinkRegisterReceiptCallback(sessionKey, () => receiptCallback(sessionKey));
 			}
 
 			// Always stop the SDK — receipt will be handled by the persistent listener
@@ -594,7 +630,6 @@ export async function clinkRequestInvoice(params: {
 		throw new Error(`Lightning.Pub returned error: ${response.error}${response.range ? ` (range: ${response.range.min}-${response.range.max})` : ''}`);
 	} catch (err) {
 		sdk.Stop();
-		clinkUnregisterReceiptCallback(decoded.offer);
 		throw err;
 	}
 }
@@ -660,7 +695,7 @@ export async function clinkHandlePaymentRequest(params: {
 
 	// Create invoice (or reuse pre-created one)
 	try {
-		const existing = activeSessions.get(params.offerId);
+		const existing = activeSessions.get(params.request.offer);
 		let invoice;
 		if (existing) {
 			// Reuse pre-created invoice from createPayment()
@@ -669,13 +704,35 @@ export async function clinkHandlePaymentRequest(params: {
 			invoice = await clinkCreateInvoice({ amountSat, memo: params.memo });
 		}
 
-		// Store session for checkPayment() lookup
-		activeSessions.set(params.offerId, {
-			offerId: params.offerId,
+		const sessionKey = clinkSessionKey(invoice.bolt11);
+
+		// Store session for checkPayment() lookup — keyed by per-invoice session key
+		const session: ClinkSession = {
+			sessionKey,
 			paymentHash: invoice.paymentHash,
 			bolt11: invoice.bolt11,
-			expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000)
+			expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+			nostrEventId: params.event.id
+		};
+		activeSessions.set(sessionKey, session);
+
+		// Register callback for receipt correlation via #e tag
+		clinkRegisterReceiptCallback(sessionKey, async () => {
+			session.paid = true;
+			try {
+				await collections.clinkSessions.updateOne(
+					{ sessionKey },
+					{ $set: { paid: true, updatedAt: new Date() } }
+				);
+			} catch (err) {
+				console.error('[CLINK] Failed to persist paid status:', err);
+			}
 		});
+
+		// Map event ID → payment hash for receipt correlation
+		if (params.event.id) {
+			eventIdToPaymentHash.set(params.event.id, invoice.paymentHash);
+		}
 
 		await respond({ bolt11: invoice.bolt11 });
 	} catch (err) {
@@ -756,44 +813,83 @@ export async function clinkStartPersistentListener(): Promise<{ stop: () => void
 		merchantPrivkey,
 		lightningPubPubkey: lpPubkey,
 		onEvent: (request, event) => {
-			// Check if this event is a receipt from Lightning.Pub (not a new payment request).
-			// Lightning.Pub's pubkey is embedded in the nOffer.
-			// Receipts from LP may not have an `offer` field — they are payment confirmations.
+			// Check if this event is from Lightning.Pub (receipt or invoice response).
 			if (event.pubkey === lpPubkey) {
-				// Try matching by offer field first, then fall back to merchant's offer ID
-				const offerKey = request.offer || decoded.offer;
-				if (pendingReceiptCallbacks.has(offerKey)) {
-					console.log(`[CLINK] Receipt received for offer ${offerKey}`);
-					const cb = pendingReceiptCallbacks.get(offerKey)!;
-					pendingReceiptCallbacks.delete(offerKey);
-					cb();
+				// Extract #e tag — points to the original payment request event ID
+				const reqEventId = event.tags.find((t) => t[0] === 'e')?.[1];
+
+				// If this is a receipt (res: 'ok'), match via #e tag → payment hash → session
+				if ('res' in request && request.res === 'ok' && reqEventId) {
+					const paymentHash = eventIdToPaymentHash.get(reqEventId);
+					if (paymentHash) {
+						for (const session of activeSessions.values()) {
+							if (session.paymentHash === paymentHash && !session.paid) {
+								session.paid = true;
+								console.log(
+									`[CLINK] Receipt received for session ${session.sessionKey} (via #e tag)`
+								);
+								collections.clinkSessions
+									.updateOne(
+										{ sessionKey: session.sessionKey, paid: false },
+										{ $set: { paid: true, updatedAt: new Date() } }
+									)
+									.catch((err) =>
+										console.error('[CLINK] Failed to persist paid status from receipt:', err)
+									);
+								if (pendingReceiptCallbacks.has(session.sessionKey)) {
+									const cb = pendingReceiptCallbacks.get(session.sessionKey)!;
+									pendingReceiptCallbacks.delete(session.sessionKey);
+									cb();
+								}
+								return;
+							}
+						}
+					}
+					// Fallback: try matching by offer field for backward compat
+					const offerKey = decoded.offer;
+					if (pendingReceiptCallbacks.has(offerKey)) {
+						console.log(`[CLINK] Receipt received for offer ${offerKey} (fallback)`);
+						const cb = pendingReceiptCallbacks.get(offerKey)!;
+						pendingReceiptCallbacks.delete(offerKey);
+						cb();
+						return;
+					}
 					return;
 				}
-				// Also persist paid status directly to MongoDB + in-memory for any pending sessions
-				const session = activeSessions.get(offerKey);
-				if (session && !session.paid) {
-					session.paid = true;
-					console.log(`[CLINK] Session ${offerKey} marked as paid via receipt`);
-					collections.clinkSessions
-						.updateOne(
-							{ offerId: offerKey, paid: false },
-							{ $set: { paid: true, updatedAt: new Date() } }
-						)
-						.catch((err) =>
-							console.error('[CLINK] Failed to persist paid status from receipt:', err)
-						);
+
+				// If this is an invoice response (has bolt11), capture the #e → paymentHash mapping
+				if ('bolt11' in request && typeof request.bolt11 === 'string' && reqEventId) {
+					try {
+						const sessionKey = clinkSessionKey(request.bolt11);
+						const session = activeSessions.get(sessionKey);
+						if (session) {
+							session.nostrEventId = reqEventId;
+							eventIdToPaymentHash.set(reqEventId, session.paymentHash);
+							collections.clinkSessions
+								.updateOne(
+									{ sessionKey },
+									{ $set: { nostrEventId: reqEventId, updatedAt: new Date() } }
+								)
+								.catch(() => {});
+						}
+					} catch {
+						// Ignore — not critical
+					}
+					return;
 				}
+
 				return;
 			}
 
+			const reqOffer = typeof request === 'object' && 'offer' in request ? String((request as Record<string, unknown>).offer) : decoded.offer;
 			clinkHandlePaymentRequest({
-				request,
+				request: request as NofferData,
 				event,
 				merchantPubkey,
 				merchantPrivkey,
 				pool,
 				relay,
-				offerId: request.offer,
+				offerId: reqOffer || decoded.offer,
 				memo: runtimeConfig.brandName || 'be-BOP payment'
 			}).catch((err) => {
 				console.error('CLINK: Error handling payment request:', err);
@@ -828,9 +924,9 @@ export function clinkStopAllListeners(): void {
 export async function clinkCleanupSessions(): Promise<void> {
 	const now = new Date();
 	// Clean in-memory cache
-	for (const [offerId, session] of activeSessions) {
+	for (const [key, session] of activeSessions) {
 		if (session.expiresAt < now) {
-			activeSessions.delete(offerId);
+			activeSessions.delete(key);
 		}
 	}
 	// Clean MongoDB (TTL index handles this, but belt-and-suspenders)
@@ -891,7 +987,7 @@ export async function clinkReplayMissedReceipts(): Promise<void> {
 		};
 
 		const sub = pool.subscribe([relay], filter, {
-			onevent: async (evt: { id: string; pubkey: string; content: string; sig?: string }) => {
+			onevent: async (evt: { id: string; pubkey: string; content: string; tags: string[][]; sig?: string }) => {
 				try {
 					if (!verifyEvent(evt as Parameters<typeof verifyEvent>[0])) return;
 
@@ -908,12 +1004,33 @@ export async function clinkReplayMissedReceipts(): Promise<void> {
 					}
 
 					const parsed = JSON.parse(decrypted);
-					const offerId = parsed.offer;
-					if (!offerId) return;
 
-					// Check if there's a pending receipt callback for this offer
-					if (pendingReceiptCallbacks.has(offerId)) {
-						console.log(`[CLINK] Replay: receipt for offer ${offerId}`);
+					// Match receipt via #e tag → payment hash → session
+					if (evt.pubkey === lpPubkey && parsed.res === 'ok') {
+						const reqEventId = (evt.tags || []).find((t) => t[0] === 'e')?.[1];
+						if (reqEventId) {
+							const paymentHash = eventIdToPaymentHash.get(reqEventId);
+							if (paymentHash) {
+								for (const session of activeSessions.values()) {
+									if (session.paymentHash === paymentHash && !session.paid) {
+										session.paid = true;
+										console.log(`[CLINK] Replay: receipt for session ${session.sessionKey}`);
+										if (pendingReceiptCallbacks.has(session.sessionKey)) {
+											const cb = pendingReceiptCallbacks.get(session.sessionKey)!;
+											pendingReceiptCallbacks.delete(session.sessionKey);
+											cb();
+										}
+										return;
+									}
+								}
+							}
+						}
+					}
+
+					// Fallback: match by offer field for backward compat
+					const offerId = parsed.offer;
+					if (offerId && pendingReceiptCallbacks.has(offerId)) {
+						console.log(`[CLINK] Replay: receipt for offer ${offerId} (fallback)`);
 						const cb = pendingReceiptCallbacks.get(offerId)!;
 						pendingReceiptCallbacks.delete(offerId);
 						cb();

@@ -1,9 +1,11 @@
+import { createHash } from 'crypto';
 import {
 	isClinkConfigured,
 	clinkDecodeNoffer,
 	clinkStartPersistentListener,
 	clinkRequestInvoice,
 	setClinkSession,
+	getClinkSessionByPaymentHash,
 	getClinkSession
 } from '$lib/server/clink';
 import { runtimeConfig } from '$lib/server/runtime-config';
@@ -54,27 +56,19 @@ export default {
 		const satoshis = toSatoshis(params.toPay.amount, params.toPay.currency);
 		const memo = lightningLabel(params.orderId, params.orderNumber);
 
-		// Decode the merchant's nOffer to get the offer ID for session tracking
-		const decoded = clinkDecodeNoffer(runtimeConfig.clink.nOffer);
-
 		// Start the persistent CLINK Nostr listener (reuses existing if already running)
 		await clinkStartPersistentListener();
 
 		// Request bolt11 from Lightning.Pub via CLINK kind 21001
 		// The onReceipt callback fires when Lightning.Pub confirms the invoice was paid
-		// (second kind 21001 event on the relay). The SDK keeps its subscription open
-		// until the receipt arrives.
+		// (second kind 21001 event on the relay). The persistent listener handles receipts.
 		let bolt11: string | null = null;
 		try {
 			const result = await clinkRequestInvoice({
 				amountSat: satoshis,
 				memo,
 				onReceipt: () => {
-					const session = getClinkSession(decoded.offer);
-					if (session) {
-						session.paid = true;
-						console.log(`CLINK: Session ${decoded.offer} marked as paid via receipt`);
-					}
+					console.log(`CLINK: Payment confirmed for session`);
 				}
 			});
 			bolt11 = result.bolt11;
@@ -83,24 +77,28 @@ export default {
 		}
 
 		if (bolt11) {
-			// Store session keyed by offerId for checkPayment lookup
+			// Generate per-invoice session key (hash of bolt11)
+			const sessionKey = createHash('sha256').update(bolt11).digest('hex');
+
+			// Store session keyed by per-invoice session key for checkPayment lookup
 			await setClinkSession({
-				offerId: decoded.offer,
-				paymentHash: '', // bolt11 preimage not available from CLINK response
+				sessionKey,
+				paymentHash: sessionKey, // same as sessionKey for consistency
 				bolt11,
 				expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000)
 			});
 			return {
 				address: bolt11,
-				invoiceId: decoded.offer,
+				invoiceId: sessionKey,
 				processor: 'clink'
 			};
 		}
 
 		// Fallback: return nOffer for CLINK wallets
+		const decoded = clinkDecodeNoffer(runtimeConfig.clink.nOffer);
 		return {
 			address: runtimeConfig.clink.nOffer,
-			invoiceId: decoded.offer,
+			invoiceId: `noffer-${decoded.offer}`,
 			processor: 'clink'
 		};
 	},
@@ -113,13 +111,11 @@ export default {
 			return { status: 'pending' };
 		}
 
-		const session = getClinkSession(payment.invoiceId);
+		// Look up session by invoiceId (per-invoice session key, hash of bolt11)
+		const session = getClinkSessionByPaymentHash(payment.invoiceId) ||
+			getClinkSession(payment.invoiceId);
 
 		if (session && session.bolt11) {
-			// Payment detection for CLINK-originated bolt11s relies solely on the
-			// Nostr receipt callback (onReceipt from Lightning.Pub). The underlying
-			// lightning processor cannot look up invoices it didn't create, so we
-			// don't delegate to it. If the receipt is missed, the payment expires.
 			if (session.paid) {
 				return {
 					status: 'paid',

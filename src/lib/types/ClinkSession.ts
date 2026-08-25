@@ -8,13 +8,13 @@ import type { Timestamps } from './Timestamps';
 export interface ClinkSessionDoc extends Timestamps {
 	_id: ObjectId;
 
-	/** Offer ID hex from the nOffer — unique session key */
-	offerId: string;
+	/** Per-invoice session key (hash of bolt11) — unique session key */
+	sessionKey: string;
 
 	/** BOLT11 invoice string from Lightning.Pub */
 	bolt11: string;
 
-	/** Payment hash (empty when not available from CLINK response) */
+	/** Payment hash */
 	paymentHash: string;
 
 	/** When the session expires (TTL index — MongoDB auto-deletes after this) */
@@ -22,4 +22,10 @@ export interface ClinkSessionDoc extends Timestamps {
 
 	/** Whether the Nostr receipt has been received confirming payment */
 	paid: boolean;
+
+	/** Nostr event ID of the original payment request (for receipt correlation via #e tag) */
+	nostrEventId?: string;
+
+	/** Legacy offer ID (kept for backward compat during transition) */
+	offerId?: string;
 }

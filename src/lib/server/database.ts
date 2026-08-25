@@ -250,9 +250,10 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.accountingLogs, { eventType: 1, createdAt: 1 }],
 	[collections.accountingLogs, { objectId: 1, objectType: 1 }],
 	[collections.accountingLogs, { eventType: 1, 'after.productIds': 1 }],
-	// CLINK sessions: TTL on expiresAt, unique on offerId, lookup by paid status
+	// CLINK sessions: TTL on expiresAt, unique on sessionKey, lookup by paid status, receipt correlation via nostrEventId
 	[collections.clinkSessions, { expiresAt: 1 }, { expireAfterSeconds: 0 }],
-	[collections.clinkSessions, { offerId: 1 }, { unique: true }],
+	[collections.clinkSessions, { sessionKey: 1 }, { unique: true }],
+	[collections.clinkSessions, { nostrEventId: 1 }, { sparse: true }],
 	[collections.clinkSessions, { paid: 1 }]
 ];
 
