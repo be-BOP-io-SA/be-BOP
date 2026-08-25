@@ -162,6 +162,10 @@ export const adminLinks: AdminLinks = [
 				label: 'Blink'
 			},
 			{
+				href: '/admin/clink',
+				label: 'CLINK'
+			},
+			{
 				href: '/admin/bitcoind',
 				label: 'Bitcoin core node'
 			},
