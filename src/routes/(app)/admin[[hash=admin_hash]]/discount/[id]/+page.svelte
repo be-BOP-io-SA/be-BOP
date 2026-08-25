@@ -392,7 +392,6 @@
 	<div class="flex flex-row justify-between gap-2">
 		<div class="flex gap-2 w-min">
 			<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
-			<a href="/discounts/{data.discount._id}" class="btn body-mainCTA">View</a>
 			<button
 				type="submit"
 				class="btn btn-green text-white ml-auto whitespace-nowrap"
