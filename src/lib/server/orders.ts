@@ -407,6 +407,15 @@ export async function onOrderPayment(
 
 		order = ret.value;
 		if (order.status === 'paid') {
+			// Nothing is owed anymore: no other attempt on this order may go through.
+			// `order` is replaced on each pass, so the payment is looked up again —
+			// `onOrderPaymentFailed` rejects a payment absent from the order it is given.
+			for (const { _id } of order.payments.filter((p) => p.status === 'pending')) {
+				const stale = order.payments.find((p) => p._id.equals(_id));
+				if (stale) {
+					order = await onOrderPaymentFailed(order, stale, 'canceled', { session });
+				}
+			}
 			await updateAfterOrderPaid(order, session);
 		}
 
