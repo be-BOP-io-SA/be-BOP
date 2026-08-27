@@ -1,6 +1,7 @@
 import type { LanguageKey } from '$lib/translations';
 import type { Product } from '$lib/types/Product';
 import { amountToMinor } from '../orders/money';
+import type { CatalogPictureDto } from './pictures';
 
 export type CatalogProductDto = {
 	id: string;
@@ -9,10 +10,20 @@ export type CatalogProductDto = {
 	name: string;
 	shortDescription: string;
 	price: { amountMinor: number; currency: string };
+	/**
+	 * VAT rate as a percentage, resolved against the shop's country. `price` excludes it: the
+	 * amount a customer pays is `price * (1 + vatRate / 100)`.
+	 */
+	vatRate: number;
 	payWhatYouWant: boolean;
 	shipping: boolean;
 	tagIds: string[];
 	hasVariations: boolean;
+	/**
+	 * Lowest-resolution picture be-BOP generated, as a link into be-BOP's own picture proxy.
+	 * Absent when the product has none.
+	 */
+	picture?: CatalogPictureDto;
 	variationLabels?: Product['variationLabels'];
 	variations?: Array<{
 		name: string;
@@ -33,7 +44,12 @@ function translated(
 	return (bag?.[field] || product[field] || '') as string;
 }
 
-export function toCatalogProductDto(product: Product, language: LanguageKey): CatalogProductDto {
+export function toCatalogProductDto(
+	product: Product,
+	language: LanguageKey,
+	picture?: CatalogPictureDto,
+	vatRate = 0
+): CatalogProductDto {
 	const currency = product.price.currency;
 	return {
 		id: product._id,
@@ -45,10 +61,12 @@ export function toCatalogProductDto(product: Product, language: LanguageKey): Ca
 			amountMinor: amountToMinor(product.price.amount, currency),
 			currency
 		},
+		vatRate,
 		payWhatYouWant: !!product.payWhatYouWant,
 		shipping: !!product.shipping,
 		tagIds: product.tagIds ?? [],
 		hasVariations: !!product.hasVariations,
+		...(picture && { picture }),
 		...(product.variationLabels && { variationLabels: product.variationLabels }),
 		...(product.variations?.length
 			? {
