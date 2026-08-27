@@ -5,7 +5,9 @@ import { GET } from './+server';
 
 describe('GET /api/v1/openapi.json', () => {
 	beforeEach(() => {
-		runtimeConfig.apiV1 = { corsOrigins: ['https://allowed.example'] };
+		runtimeConfig.apiV1 = {
+			corsOrigins: ['https://allowed.example']
+		};
 	});
 	it('returns 200 with openapi field and CORS when Origin allowlisted', async () => {
 		const res = await GET({

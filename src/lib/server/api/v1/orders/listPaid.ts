@@ -53,7 +53,10 @@ export type PaidOrderDto = {
 	number: number;
 	createdAt: string;
 	paidAt: string | null;
+	/** What was received, VAT included. */
 	amountPaid: { amountMinor: number; currency: string };
+	/** The VAT contained in `amountPaid`, one entry per rate. Absent when the order carries none. */
+	vat?: Array<{ rate: number; amountMinor: number }>;
 	items: PaidOrderItemDto[];
 };
 
@@ -152,12 +155,22 @@ function buildOrderFilter(
 	return { filter };
 }
 
-function paidAmount(order: Order): { amountMinor: number; currency: string } | null {
-	const paid = order.payments.filter((p) => p.status === 'paid');
+/**
+ * What was actually received on the order, in major units — the shape be-BOP stores and the PoS
+ * seam puts on the wire. `/api/v1` converts to minor at its DTO boundary.
+ */
+export function paidAmount(order: Order): { amount: number; currency: Currency } | null {
+	// A payment predating the per-currency snapshots (#2492) carries none. Those rows are common in
+	// any shop with history, and one of them must not take down a whole listing — so a payment
+	// without a main snapshot contributes nothing rather than throwing.
+	const paid = order.payments.filter((p) => p.status === 'paid' && p.currencySnapshot?.main?.price);
 	if (!paid.length) {
 		return null;
 	}
-	const currency = order.currencySnapshot.main.totalPrice.currency;
+	const currency = order.currencySnapshot?.main?.totalPrice?.currency as Currency | undefined;
+	if (!currency) {
+		return null;
+	}
 	const amount = paid.reduce((sum, p) => {
 		const snap = p.currencySnapshot.main.price;
 		if (snap.currency === currency) {
@@ -167,7 +180,27 @@ function paidAmount(order: Order): { amountMinor: number; currency: string } | n
 		// whole point of labelling amountPaid with the order currency.
 		return sum + toCurrency(currency as Currency, snap.amount, snap.currency as Currency);
 	}, 0);
-	return { amountMinor: amountToMinor(amount, currency), currency };
+	return { amount, currency };
+}
+
+/**
+ * The VAT contained in what was received, one entry per rate, in major units.
+ *
+ * Read from the snapshot taken at payment time rather than recomputed: a rate that changed since is
+ * not the rate that was charged. `order.vat` carries the rates and `currencySnapshot.main.vat` the
+ * amounts, index-aligned — a rate whose amount is missing is dropped rather than reported at zero.
+ */
+export function orderVatBreakdown(order: Order): Array<{ rate: number; amount: number }> {
+	const rates = order.vat ?? [];
+	const amounts = order.currencySnapshot?.main?.vat ?? [];
+	const rows: Array<{ rate: number; amount: number }> = [];
+	rates.forEach((entry, index) => {
+		const amount = amounts[index]?.amount;
+		if (amount !== undefined) {
+			rows.push({ rate: entry.rate, amount });
+		}
+	});
+	return rows;
 }
 
 function toItemDto(item: Order['items'][number]): PaidOrderItemDto {
@@ -191,17 +224,26 @@ function toItemDto(item: Order['items'][number]): PaidOrderItemDto {
 }
 
 export function toPaidOrderDto(order: Order): PaidOrderDto | null {
-	const amountPaid = paidAmount(order);
-	if (!amountPaid) {
+	const paid = paidAmount(order);
+	if (!paid) {
 		return null;
 	}
+	const amountPaid = {
+		amountMinor: amountToMinor(paid.amount, paid.currency),
+		currency: paid.currency
+	};
 	const lastPaid = [...order.payments].reverse().find((p) => p.status === 'paid' && p.paidAt);
+	const vat = orderVatBreakdown(order).map((row) => ({
+		rate: row.rate,
+		amountMinor: amountToMinor(row.amount, amountPaid.currency)
+	}));
 	return {
 		orderId: order._id,
 		number: order.number,
 		createdAt: order.createdAt.toISOString(),
 		paidAt: lastPaid?.paidAt ? lastPaid.paidAt.toISOString() : order.updatedAt.toISOString(),
 		amountPaid,
+		...(vat.length && { vat }),
 		items: order.items.map(toItemDto)
 	};
 }
@@ -251,8 +293,15 @@ export type OrderReadDto = PaidOrderDto & { status: string };
 /** Full orders:read DTO — includes unpaid rows; amountPaid may be zero. */
 export function toOrderReadDto(order: Order): OrderReadDto {
 	const currency = order.currencySnapshot.main.totalPrice.currency;
-	const amountPaid = paidAmount(order) ?? { amountMinor: 0, currency };
+	const paid = paidAmount(order);
+	const amountPaid = paid
+		? { amountMinor: amountToMinor(paid.amount, paid.currency), currency: paid.currency }
+		: { amountMinor: 0, currency };
 	const lastPaid = [...order.payments].reverse().find((p) => p.status === 'paid' && p.paidAt);
+	const vat = orderVatBreakdown(order).map((row) => ({
+		rate: row.rate,
+		amountMinor: amountToMinor(row.amount, amountPaid.currency)
+	}));
 	return {
 		orderId: order._id,
 		number: order.number,
@@ -260,6 +309,7 @@ export function toOrderReadDto(order: Order): OrderReadDto {
 		createdAt: order.createdAt.toISOString(),
 		paidAt: lastPaid?.paidAt ? lastPaid.paidAt.toISOString() : null,
 		amountPaid,
+		...(vat.length && { vat }),
 		items: order.items.map(toItemDto)
 	};
 }

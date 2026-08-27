@@ -176,6 +176,11 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.orders, { orderTabId: 1, status: 1 }, { sparse: true }],
 	[collections.orders, { orderTabId: 1, splitMode: 1, status: 1 }, { sparse: true }],
 	[collections.orders, { orderLabelIds: 1 }, { sparse: true }],
+	/**
+	 * Resume cursor of the paid-order SSE stream (/api/v1/orders/paid/stream): range scan on
+	 * `updatedAt` with `_id` as the intra-millisecond tiebreak, matching the stream's sort.
+	 */
+	[collections.orders, { updatedAt: 1, _id: 1 }],
 	[collections.digitalFiles, { productId: 1 }],
 	[collections.digitalFiles, { secret: 1 }, { unique: true, sparse: true }],
 	[collections.pendingDigitalFiles, { createdAt: 1 }],

@@ -1120,7 +1120,12 @@ export async function createOrder(
 	}
 	const billingAddress = params.billingAddress || params.shippingAddress;
 
-	if (runtimeConfig.isBillingAddressMandatory && !params.billingAddress) {
+	// A counter sale has no address form and no address to collect: the buyer is at the till, and the
+	// shop's own country is the one that applies. `/pos/touch` and `/api/v1` both create their orders
+	// without a billing address, so the mandatory-billing rule cannot reach them. `nostr-bot` is the
+	// third channel without a form, and refuses the whole checkout upfront instead.
+	const collectsBillingAddress = params.channel !== 'pos-touch' && params.channel !== 'api';
+	if (runtimeConfig.isBillingAddressMandatory && !params.billingAddress && collectsBillingAddress) {
 		throw error(400, 'Missing billing address for deliveryless order');
 	}
 
@@ -1132,17 +1137,18 @@ export async function createOrder(
 	}
 
 	for (const item of items) {
-		if (
-			item.product.variations?.length &&
-			!item.product.payWhatYouWant &&
-			checkProductVariationsIntegrity(item.product, item.chosenVariations)
-		) {
-			item.customPrice = {
+		if (item.product.variations?.length && !item.product.payWhatYouWant) {
+			if (!checkProductVariationsIntegrity(item.product, item.chosenVariations)) {
+				throw error(400, 'error matching on variations choice');
+			}
+			// Only when the caller priced nothing. A line that already carries a price was priced by
+			// whoever knows what was charged — the cart when the line was added, the till when it was
+			// rung up. This runs after the order total is computed, so overwriting it cannot correct
+			// the total: it only leaves the line contradicting the order it belongs to.
+			item.customPrice ??= {
 				amount: productPriceWithVariations(item.product, item.chosenVariations),
 				currency: item.product.price.currency
 			};
-		} else if (item.product.variations?.length && !item.product.payWhatYouWant) {
-			throw error(400, 'error matching on variations choice');
 		}
 	}
 	const physicalCartMinAmount = runtimeConfig.physicalCartMinAmount;

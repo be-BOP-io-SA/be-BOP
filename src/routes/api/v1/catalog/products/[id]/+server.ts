@@ -4,6 +4,7 @@ import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { jsonWithETag } from '$lib/server/api/v1/validators';
 import { getCatalogProduct, parseCatalogLanguage } from '$lib/server/api/v1/catalog/listProducts';
+import { parsePictureOptions } from '$lib/server/api/v1/catalog/pictureOptions';
 import { checkRateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { LanguageKey } from '$lib/translations';
@@ -30,8 +31,18 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 	);
 	// apiV1Handler hands back a generic RequestEvent, so params are Partial — the router
 	// never matches this route without an id, but narrow it instead of asserting.
+	const picture = parsePictureOptions(
+		event.url.searchParams.get('picture') ?? undefined,
+		event.url.searchParams.get('sizes') ?? undefined
+	);
+	if ('error' in picture) {
+		return apiError(400, 'VALIDATION_ERROR', picture.error.message, {
+			field: picture.error.field
+		});
+	}
+
 	const id = event.params.id;
-	const product = id ? await getCatalogProduct(id, language) : null;
+	const product = id ? await getCatalogProduct(id, language, picture.options) : null;
 	if (!product) {
 		return apiError(404, 'NOT_FOUND', 'Product not found');
 	}

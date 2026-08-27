@@ -32,7 +32,9 @@ describe('api v1 cors', () => {
 	});
 
 	it('reads allowlist from runtimeConfig.apiV1.corsOrigins', () => {
-		runtimeConfig.apiV1 = { corsOrigins: ['https://a.example', '*', 'https://b.example'] };
+		runtimeConfig.apiV1 = {
+			corsOrigins: ['https://a.example', '*', 'https://b.example']
+		};
 		expect(getApiV1AllowedOrigins()).toEqual(['https://a.example', 'https://b.example']);
 	});
 
@@ -69,7 +71,9 @@ describe('api v1 cors', () => {
 	});
 
 	it('OPTIONS preflight returns 204 and never echoes wildcard ACAO', () => {
-		runtimeConfig.apiV1 = { corsOrigins: ['https://allowed.example'] };
+		runtimeConfig.apiV1 = {
+			corsOrigins: ['https://allowed.example']
+		};
 		const denied = apiV1OptionsResponse(
 			new Request('http://localhost/api/v1/orders', {
 				method: 'OPTIONS',
