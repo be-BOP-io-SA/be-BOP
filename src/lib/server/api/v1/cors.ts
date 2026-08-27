@@ -39,7 +39,7 @@ export function applyApiV1CorsHeaders(
 	headers.set('Vary', 'Origin');
 	headers.set(
 		'Access-Control-Allow-Headers',
-		'Authorization, Content-Type, X-Api-Key, If-None-Match'
+		'Authorization, Content-Type, X-Api-Key, If-None-Match, Last-Event-ID'
 	);
 	// Without this a cross-origin caller cannot read the validator it needs to send back.
 	headers.set('Access-Control-Expose-Headers', 'ETag, Retry-After');
