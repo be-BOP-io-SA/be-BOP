@@ -57,6 +57,11 @@ function stubMissingProduct(
  * Unknown ids become shipping:false stubs named `Missing product {id}` with price customPrice||0,
  * plus a PRODUCT_MISSING warning (order still created — D1).
  */
+/** Prices are only comparable within one currency; a differing currency is itself a divergence. */
+function samePrice(a: Price, b: Price): boolean {
+	return a.currency === b.currency && Math.abs(a.amount - b.amount) < 1e-9;
+}
+
 export async function resolveProducts(
 	items: OrderWriteCommand['items'],
 	orderCurrency: Currency
@@ -86,7 +91,24 @@ export async function resolveProducts(
 						currency: existing.price.currency
 				  }
 				: undefined;
-		const customPrice = variationPrice ?? clientPrice;
+		// The till is authoritative: it records what was actually charged. A batch uploaded
+		// hours later must not be repriced by a catalogue that moved in between, and a
+		// discount applied at the counter has no other way to reach us. What be-BOP would
+		// have charged is reported as a warning rather than silently substituted.
+		const customPrice = clientPrice ?? variationPrice;
+		const expectedPrice = variationPrice ?? existing?.price;
+		if (clientPrice && expectedPrice && !samePrice(clientPrice, expectedPrice)) {
+			warnings.push({
+				code: 'PRICE_OVERRIDE',
+				message: `Price sent for ${item.productId} differs from the catalogue price`,
+				productId: item.productId,
+				details: {
+					sent: { amount: clientPrice.amount, currency: clientPrice.currency },
+					expected: { amount: expectedPrice.amount, currency: expectedPrice.currency },
+					...(variationPrice && { basis: 'variations' })
+				}
+			});
+		}
 		const missing = !existing;
 		if (missing) {
 			warnings.push({
