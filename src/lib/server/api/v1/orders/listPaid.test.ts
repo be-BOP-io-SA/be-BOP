@@ -8,7 +8,7 @@ vi.mock('$lib/server/database', () => ({
 	collections: { orders: { find: (...args: unknown[]) => find(...args) } }
 }));
 
-import { listPaidOrders, toPaidOrderDto } from './listPaid';
+import { listPaidOrders, orderVatBreakdown, paidAmount, toPaidOrderDto } from './listPaid';
 import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
 
 /** Mongo cursor stub: find().sort().limit().toArray() */
@@ -252,5 +252,115 @@ describe('toItemDto discounts', () => {
 		expect(dto?.items[0].freeQuantity).toBe(1);
 
 		expect(toPaidOrderDto(makeOrder({ paid: true }))?.items[0].freeQuantity).toBeUndefined();
+	});
+});
+
+describe('orderVatBreakdown', () => {
+	/** `order.vat` holds the rates, `currencySnapshot.main.vat` the amounts, index-aligned. */
+	function withVat(
+		rates: Array<{ rate: number; country: string }>,
+		amounts: Array<{ amount: number; currency: string }> | undefined
+	): Order {
+		const order = makeOrder({ paid: true });
+		return {
+			...order,
+			vat: rates,
+			currencySnapshot: {
+				...order.currencySnapshot,
+				main: { ...order.currencySnapshot.main, vat: amounts }
+			}
+		} as unknown as Order;
+	}
+
+	it('pairs each rate with the amount snapshotted at payment time', () => {
+		expect(
+			orderVatBreakdown(
+				withVat(
+					[
+						{ rate: 8.1, country: 'CH' },
+						{ rate: 2.6, country: 'CH' }
+					],
+					[
+						{ amount: 0.94, currency: 'CHF' },
+						{ amount: 0.13, currency: 'CHF' }
+					]
+				)
+			)
+		).toEqual([
+			{ rate: 8.1, amount: 0.94 },
+			{ rate: 2.6, amount: 0.13 }
+		]);
+	});
+
+	it('is empty for an order that carries no VAT', () => {
+		expect(orderVatBreakdown(makeOrder({ paid: true }))).toEqual([]);
+	});
+
+	it('is empty when the rates were recorded without their amounts', () => {
+		expect(orderVatBreakdown(withVat([{ rate: 8.1, country: 'CH' }], undefined))).toEqual([]);
+	});
+
+	it('drops a rate whose amount is missing rather than reporting it at zero', () => {
+		expect(
+			orderVatBreakdown(
+				withVat(
+					[
+						{ rate: 8.1, country: 'CH' },
+						{ rate: 2.6, country: 'CH' }
+					],
+					[{ amount: 0.94, currency: 'CHF' }]
+				)
+			)
+		).toEqual([{ rate: 8.1, amount: 0.94 }]);
+	});
+
+	it('reaches the paid-order DTO in minor units', () => {
+		const dto = toPaidOrderDto(
+			withVat([{ rate: 8.1, country: 'CH' }], [{ amount: 0.94, currency: 'CHF' }])
+		);
+		expect(dto?.vat).toEqual([{ rate: 8.1, amountMinor: 94 }]);
+	});
+
+	it('is omitted from the DTO entirely when there is no VAT', () => {
+		expect(toPaidOrderDto(makeOrder({ paid: true }))).not.toHaveProperty('vat');
+	});
+});
+
+describe('paidAmount on legacy rows', () => {
+	/** Payments predating the per-currency snapshots (#2492) carry none. */
+	function withoutPaymentSnapshot(order: Order): Order {
+		const payments = order.payments.map((payment) => {
+			const copy = { ...payment } as Record<string, unknown>;
+			delete copy.currencySnapshot;
+			return copy;
+		});
+		return { ...order, payments } as unknown as Order;
+	}
+
+	it('ignores a paid payment that carries no snapshot instead of throwing', () => {
+		// Measured at 41% of paid orders on a real shop: one such row must not take down a listing.
+		expect(() => paidAmount(withoutPaymentSnapshot(makeOrder({ paid: true })))).not.toThrow();
+	});
+
+	it('reports nothing when every paid payment lacks one', () => {
+		expect(paidAmount(withoutPaymentSnapshot(makeOrder({ paid: true })))).toBeNull();
+	});
+
+	it('sums only the payments that carry one', () => {
+		const order = makeOrder({ paid: true });
+		const legacy = { ...order.payments[0] } as Record<string, unknown>;
+		delete legacy.currencySnapshot;
+		const mixed = { ...order, payments: [legacy, order.payments[0]] } as unknown as Order;
+		expect(paidAmount(mixed)?.amount).toBe(paidAmount(order)?.amount);
+	});
+
+	it('reports nothing when the order itself carries no snapshot', () => {
+		const order = makeOrder({ paid: true }) as unknown as Record<string, unknown>;
+		delete order.currencySnapshot;
+		expect(paidAmount(order as unknown as Order)).toBeNull();
+	});
+
+	it('leaves the paid-order DTO null rather than half-built', () => {
+		expect(toPaidOrderDto(withoutPaymentSnapshot(makeOrder({ paid: true })))).toBeNull();
 	});
 });

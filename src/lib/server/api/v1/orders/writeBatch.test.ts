@@ -615,7 +615,8 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(order?.items[0]?.product.shipping).toBe(true);
 	});
 
-	it('P1: billing-address gate maps to DOMAIN_ERROR for API channel', async () => {
+	it('sells at the counter with mandatory billing on, as /pos/touch does', async () => {
+		// The rule targets the checkout form. A till has none, and the API is a till.
 		const prev = runtimeConfig.isBillingAddressMandatory;
 		runtimeConfig.isBillingAddressMandatory = true;
 		try {
@@ -623,9 +624,8 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 				apiKey,
 				orders: [paidCommand({ externalOrderId: 'billing-gate-1' })]
 			});
-			expect(res.results[0].status).toBe('failed');
-			expect(res.results[0].error?.code).toBe('DOMAIN_ERROR');
-			expect(await collections.orders.countDocuments({})).toBe(0);
+			expect(res.results[0].status).toBe('created');
+			expect(await collections.orders.countDocuments({})).toBe(1);
 		} finally {
 			runtimeConfig.isBillingAddressMandatory = prev;
 		}
