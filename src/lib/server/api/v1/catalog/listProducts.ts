@@ -2,6 +2,10 @@ import { collections } from '$lib/server/database';
 import { locales, type LanguageKey } from '$lib/translations';
 import type { Product } from '$lib/types/Product';
 import { toCatalogProductDto, type CatalogProductDto } from './dto';
+import { loadCatalogPictures } from './pictures';
+import { catalogVisibilityFilter } from '$lib/server/product-visibility';
+import { loadCatalogVatRates } from './vat';
+import type { PictureOptions } from './pictureOptions';
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 20;
@@ -13,6 +17,7 @@ export type CatalogListQuery = {
 	limit?: string;
 	cursor?: string;
 	lang?: string;
+	picture?: PictureOptions;
 };
 
 export type CatalogListResult = {
@@ -34,13 +39,6 @@ export function parseCatalogLanguage(raw: string | undefined, fallback: Language
 		return raw as LanguageKey;
 	}
 	return fallback;
-}
-
-/** Face A catalog: products visible on eShop or retail (PoS concentrator). */
-export function catalogVisibilityFilter(): Record<string, unknown> {
-	return {
-		$or: [{ 'actionSettings.eShop.visible': true }, { 'actionSettings.retail.visible': true }]
-	};
 }
 
 export async function listCatalogProducts(
@@ -78,7 +76,14 @@ export async function listCatalogProducts(
 
 	const hasMore = docs.length > limit;
 	const pageDocs = hasMore ? docs.slice(0, limit) : docs;
-	const products = pageDocs.map((p) => toCatalogProductDto(p as Product, language));
+	const pictures = await loadCatalogPictures(
+		pageDocs.map((p) => p._id),
+		query.picture
+	);
+	const vatRates = await loadCatalogVatRates(pageDocs as Product[]);
+	const products = pageDocs.map((p) =>
+		toCatalogProductDto(p as Product, language, pictures.get(p._id), vatRates.get(p._id))
+	);
 	const nextCursor = hasMore ? pageDocs[pageDocs.length - 1]._id : null;
 
 	return { products, page: { limit, nextCursor }, language };
@@ -86,7 +91,8 @@ export async function listCatalogProducts(
 
 export async function getCatalogProduct(
 	id: string,
-	language: LanguageKey
+	language: LanguageKey,
+	picture?: PictureOptions
 ): Promise<CatalogProductDto | null> {
 	const product = await collections.products.findOne({
 		$and: [catalogVisibilityFilter(), { $or: [{ _id: id }, { alias: id }] }]
@@ -94,5 +100,14 @@ export async function getCatalogProduct(
 	if (!product) {
 		return null;
 	}
-	return toCatalogProductDto(product as Product, language);
+	const pictures = await loadCatalogPictures([product._id], picture);
+	const vatRates = await loadCatalogVatRates([product as Product]);
+	return toCatalogProductDto(
+		product as Product,
+		language,
+		pictures.get(product._id),
+		vatRates.get(product._id)
+	);
 }
+
+export { catalogVisibilityFilter };
