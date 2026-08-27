@@ -5,7 +5,9 @@ import { GET } from './+server';
 
 describe('GET /api/v1/docs', () => {
 	beforeEach(() => {
-		runtimeConfig.apiV1 = { corsOrigins: ['https://allowed.example'] };
+		runtimeConfig.apiV1 = {
+			corsOrigins: ['https://allowed.example']
+		};
 	});
 	it('returns HTML Swagger UI pointing at openapi.json', async () => {
 		const res = await GET({
