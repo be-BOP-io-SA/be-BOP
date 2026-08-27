@@ -4,14 +4,37 @@
  * without a server → types import inversion.
  */
 
-export const API_V1_SCOPES = ['orders:write', 'catalog:read', 'orders:read'] as const;
+/**
+ * Two axes, neither implying the other.
+ *
+ * `pos:*` unlocks the point-of-sale surface and nothing else: the general `orders:read` returns
+ * every order including unpaid ones with their full lines, far more than a register needs.
+ *
+ * `*:stream` is separate from `*:read` because holding a Server-Sent Events connection open is a
+ * different privilege from reading a page: it occupies a connection slot and a share of the change
+ * stream for as long as it lasts. A credential that may poll is not automatically one that may
+ * camp on the server.
+ */
+export const API_V1_SCOPES = [
+	'orders:write',
+	'catalog:read',
+	'orders:read',
+	'orders:stream',
+	'pos:read',
+	'pos:write',
+	'pos:stream'
+] as const;
 export type ApiV1Scope = (typeof API_V1_SCOPES)[number];
 
 export const API_V1_WARNING_CODES = [
 	'PRODUCT_MISSING',
 	'AMOUNT_MISMATCH',
 	'POS_LABEL_UNKNOWN',
-	'PAYMENT_SYNC_FAILED'
+	'PAYMENT_SYNC_FAILED',
+	/** The till sent a price that differs from what be-BOP would have charged. */
+	'PRICE_OVERRIDE',
+	/** A replay of a known externalOrderId carried a different payload. */
+	'DUPLICATE_PAYLOAD_MISMATCH'
 ] as const;
 export type ApiV1WarningCode = (typeof API_V1_WARNING_CODES)[number];
 

@@ -5,7 +5,9 @@ import { apiV1Handler, apiV1OptionsHandler } from './handler';
 
 describe('apiV1Handler', () => {
 	beforeEach(() => {
-		runtimeConfig.apiV1 = { corsOrigins: ['https://allowed.example'] };
+		runtimeConfig.apiV1 = {
+			corsOrigins: ['https://allowed.example']
+		};
 	});
 
 	it('applies CORS headers on successful responses when Origin is allowlisted', async () => {
@@ -80,7 +82,9 @@ describe('apiV1Handler', () => {
 
 describe('apiV1OptionsHandler', () => {
 	beforeEach(() => {
-		runtimeConfig.apiV1 = { corsOrigins: ['https://allowed.example'] };
+		runtimeConfig.apiV1 = {
+			corsOrigins: ['https://allowed.example']
+		};
 	});
 
 	it('returns 204 with CORS when Origin allowlisted', async () => {
