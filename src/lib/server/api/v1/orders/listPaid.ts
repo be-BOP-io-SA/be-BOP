@@ -76,6 +76,16 @@ function parseIsoDate(raw: string | undefined): Date | undefined {
 	return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
+/** Strict positive-integer parse: rejects `+1`, `12abc`, `1.5` and anything out of safe range. */
+function parsePositiveInt(raw: string): number | null {
+	const trimmed = raw.trim();
+	const n = Number.parseInt(trimmed, 10);
+	if (!Number.isSafeInteger(n) || n < 1 || String(n) !== trimmed) {
+		return null;
+	}
+	return n;
+}
+
 /**
  * Build the Mongo filter shared by both order listings.
  *
@@ -105,8 +115,29 @@ function buildOrderFilter(
 		filter.createdAt = createdAt;
 	}
 
+	// `number` carries both the exact-match filter and the pagination cursor, because both listings
+	// are ordered by `number` descending. `_id` is a random UUID: sorting or paging on it yields an
+	// arbitrary order, not the newest-first the callers rely on.
+	const number: Record<string, number> = {};
+
 	if (query.cursor) {
-		filter._id = { $lt: query.cursor };
+		const c = parsePositiveInt(query.cursor);
+		if (c === null) {
+			return { error: { field: 'cursor', message: 'cursor must be a positive integer' } };
+		}
+		number.$lt = c;
+	}
+
+	if (query.number !== undefined) {
+		const n = parsePositiveInt(query.number);
+		if (n === null) {
+			return { error: { field: 'number', message: 'number must be a positive integer' } };
+		}
+		number.$eq = n;
+	}
+
+	if (Object.keys(number).length) {
+		filter.number = number;
 	}
 
 	if (query.productId) {
@@ -123,14 +154,6 @@ function buildOrderFilter(
 			};
 		}
 		filter.status = query.status satisfies OrderPaymentStatus;
-	}
-
-	if (query.number !== undefined) {
-		const n = Number.parseInt(query.number, 10);
-		if (!Number.isSafeInteger(n) || n < 1 || String(n) !== query.number.trim()) {
-			return { error: { field: 'number', message: 'number must be a positive integer' } };
-		}
-		filter.number = n;
 	}
 
 	if (query.label) {
@@ -268,7 +291,7 @@ export async function listPaidOrders(query: PaidOrdersQuery): Promise<
 
 	const docs = await collections.orders
 		.find(filter)
-		.sort({ _id: -1 })
+		.sort({ number: -1 })
 		.limit(limit + 1)
 		.toArray();
 
@@ -284,7 +307,7 @@ export async function listPaidOrders(query: PaidOrdersQuery): Promise<
 		}
 	}
 	// Cursor follows the last row actually read, so a dropped row is skipped, not replayed.
-	const nextCursor = hasMore ? String(pageDocs[pageDocs.length - 1]._id) : null;
+	const nextCursor = hasMore ? String(pageDocs[pageDocs.length - 1].number) : null;
 	return { orders, page: { limit, nextCursor } };
 }
 
@@ -332,13 +355,13 @@ export async function listOrders(query: PaidOrdersQuery): Promise<
 
 	const docs = await collections.orders
 		.find(filter)
-		.sort({ _id: -1 })
+		.sort({ number: -1 })
 		.limit(limit + 1)
 		.toArray();
 
 	const hasMore = docs.length > limit;
 	const pageDocs = hasMore ? docs.slice(0, limit) : docs;
 	const orders = pageDocs.map((doc) => toOrderReadDto(doc as Order));
-	const nextCursor = hasMore ? String(pageDocs[pageDocs.length - 1]._id) : null;
+	const nextCursor = hasMore ? String(pageDocs[pageDocs.length - 1].number) : null;
 	return { orders, page: { limit, nextCursor } };
 }

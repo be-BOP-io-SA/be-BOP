@@ -254,6 +254,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 				'Your own order reference. Always scoped to the calling API key — a reference issued by another key is never returned.'
 		}
 	];
+	const orderCursorParam = {
+		name: 'cursor',
+		in: 'query',
+		schema: { type: 'integer', minimum: 1 },
+		description:
+			'Pagination cursor. Replay `page.nextCursor` from the previous response — it is the order ' +
+			'number of the last row read, and the next page continues strictly below it.'
+	};
 	const etagResponseHeaders = {
 		ETag: {
 			description:
@@ -523,6 +531,9 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 				get: {
 					tags: ['orders'],
 					summary: 'List paid orders (poll; see /api/v1/orders/paid/stream for SSE)',
+					description:
+						'Ordered by order number, descending — most recent first. This is the only ordering ' +
+						'offered; page through it with `cursor`.',
 					operationId: 'listPaidOrders',
 					security: [{ BearerAuth: ['orders:read'] }, { ApiKeyAuth: ['orders:read'] }],
 					parameters: [
@@ -533,7 +544,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							in: 'query',
 							schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
 						},
-						{ name: 'cursor', in: 'query', schema: { type: 'string' } },
+						orderCursorParam,
 						...orderFilterParams,
 						ifNoneMatchParam
 					],
