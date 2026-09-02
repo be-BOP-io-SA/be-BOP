@@ -140,9 +140,9 @@ describe('listPaidOrders pagination', () => {
 	it('derives hasMore from the query result, not from the mapped rows', async () => {
 		// limit 2 over-fetches 3; the middle row is unmappable and gets dropped.
 		const page = [
-			{ ...makeOrder({ paid: true }), _id: 'ord_c' },
-			{ ...makeOrder({ paid: false }), _id: 'ord_b' },
-			{ ...makeOrder({ paid: true }), _id: 'ord_a' }
+			{ ...makeOrder({ paid: true }), number: 30 },
+			{ ...makeOrder({ paid: false }), number: 20 },
+			{ ...makeOrder({ paid: true }), number: 10 }
 		];
 		find.mockReturnValue(cursorOf(page));
 
@@ -150,11 +150,11 @@ describe('listPaidOrders pagination', () => {
 		// One row dropped, so a single order comes back — but a third row exists behind it and
 		// the cursor must still advance, otherwise the poller stops with orders unread.
 		expect(res.orders).toHaveLength(1);
-		expect(res.page.nextCursor).toBe('ord_b');
+		expect(res.page.nextCursor).toBe('20');
 	});
 
 	it('closes the page when the query returns no extra row', async () => {
-		find.mockReturnValue(cursorOf([{ ...makeOrder({ paid: true }), _id: 'ord_c' }]));
+		find.mockReturnValue(cursorOf([{ ...makeOrder({ paid: true }), number: 30 }]));
 		const res = await listPaidOk({ limit: '2' });
 		expect(res.orders).toHaveLength(1);
 		expect(res.page.nextCursor).toBeNull();
@@ -190,7 +190,7 @@ describe('order filters', () => {
 
 	it('coerces number and rejects anything that is not a positive integer', async () => {
 		await listPaidOk({ number: '42' });
-		expect(lastFilter().number).toBe(42);
+		expect(lastFilter().number).toEqual({ $eq: 42 });
 
 		for (const bad of ['0', '-1', '1.5', '12abc', 'abc']) {
 			const res = await listPaidOrders({ number: bad });
@@ -219,13 +219,20 @@ describe('order filters', () => {
 	it('combines a filter with the cursor and the date window', async () => {
 		await listPaidOk({
 			productId: 'cafe',
-			cursor: 'ord_b',
+			cursor: '20',
 			since: '2026-08-01T00:00:00Z'
 		});
 		const filter = lastFilter();
 		expect(filter['items.product._id']).toBe('cafe');
-		expect(filter._id).toEqual({ $lt: 'ord_b' });
+		expect(filter.number).toEqual({ $lt: 20 });
 		expect(filter.createdAt).toEqual({ $gte: new Date('2026-08-01T00:00:00Z') });
+	});
+
+	it('rejects a cursor that is not a positive integer', async () => {
+		for (const bad of ['ord_b', '0', '-1', '1.5', '12abc']) {
+			const res = await listPaidOrders({ cursor: bad });
+			expect('error' in res && res.error.field).toBe('cursor');
+		}
 	});
 
 	it('applies no filter when none is given', async () => {
