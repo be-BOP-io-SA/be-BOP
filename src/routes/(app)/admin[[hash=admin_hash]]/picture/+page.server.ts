@@ -7,7 +7,8 @@ export const load = async () => {
 				productId: { $exists: false },
 				slider: { $exists: false },
 				tag: { $exists: false },
-				schedule: { $exists: false }
+				schedule: { $exists: false },
+				ctiCategorySlug: { $exists: false }
 			})
 			.toArray()
 	};

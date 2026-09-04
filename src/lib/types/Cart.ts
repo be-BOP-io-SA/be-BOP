@@ -7,7 +7,8 @@ import type { User } from './User';
 export interface Cart extends Timestamps {
 	_id: ObjectId;
 	user: UserIdentifier;
-
+	origin?: 'touch-selfcare' | 'web' | 'employee' | 'point-of-sale';
+	target?: 'onsite' | 'take-away';
 	items: Array<{
 		/**
 		 * Unique identifier for the line in the cart.

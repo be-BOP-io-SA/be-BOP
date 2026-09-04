@@ -108,7 +108,6 @@ export class Lock {
 		}
 		while (!processClosed && !this.destroyed) {
 			await this.tryAcquire();
-
 			await setTimeout(5_000);
 		}
 

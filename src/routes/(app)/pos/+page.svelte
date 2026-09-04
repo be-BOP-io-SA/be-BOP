@@ -53,6 +53,9 @@
 	<a href="/admin" class="body-hyperlink hover:underline" target="_blank"
 		>{t('pos.adminInterface')}</a
 	>
+	<a href="/pos/customer-touch/welcome" class="body-hyperlink hover:underline"
+		>Customer Touch Screen</a
+	>
 
 	{#if data.posSession.enabled}
 		<div class="border border-gray-300 rounded-lg p-4 bg-white">
