@@ -7,7 +7,12 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { adminPrefix as getAdminPrefix } from '$lib/server/admin';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
-import { DEFAULT_MAX_QUANTITY_PER_ORDER, type Product } from '$lib/types/Product';
+import {
+	DEFAULT_MAX_QUANTITY_PER_ORDER,
+	resolveVariationsFromUrl,
+	type VariationUrlError,
+	type Product
+} from '$lib/types/Product';
 import { computeVatRate, extractVat } from '$lib/utils/vat';
 import { productToScheduleId, type ScheduleEvent } from '$lib/types/Schedule';
 import { set } from '$lib/utils/set';
@@ -107,6 +112,8 @@ async function fetchProduct(
 	| 'mobile'
 	| 'hasVariations'
 	| 'variations'
+	| 'variationFamilies'
+	| 'variationUrlPolicy'
 	| 'variationLabels'
 	| 'sellDisclaimer'
 	| 'hasSellDisclaimer'
@@ -157,6 +164,8 @@ async function fetchProduct(
 					$ifNull: [`$translations.${language}.variationLabels`, '$variationLabels']
 				},
 				variations: 1,
+				variationFamilies: 1,
+				variationUrlPolicy: 1,
 				maximumPrice: 1,
 				recommendedPWYWAmount: 1,
 				mobile: 1,
@@ -197,6 +206,18 @@ async function fetchProductSchedule(productId: string) {
 	return collections.schedules.findOne({ _id: productToScheduleId(productId) });
 }
 
+/** Plain-English like the other product-page errors; those are not translated either. */
+function variationUrlErrorMessage(error: VariationUrlError): string {
+	switch (error.reason) {
+		case 'unknownFamily':
+			return `This product has no "${error.family}" option.`;
+		case 'unknownValue':
+			return `"${error.value}" is not a valid ${error.family} for this product.`;
+		case 'missingHiddenFamily':
+			return `This product needs a ${error.family} to be set from the link you followed.`;
+	}
+}
+
 async function fetchProductScheduleEvents(productId: string) {
 	return collections.scheduleEvents
 		.find({
@@ -213,11 +234,24 @@ async function fetchProductScheduleEvents(productId: string) {
 		.toArray();
 }
 
-export const load = async ({ params, parent, locals }) => {
+export const load = async ({ params, url, parent, locals }) => {
 	const productId = params.id;
 	const product = await fetchProduct(productId, locals.language);
 	if (!product) {
 		throw error(404, 'Page not found');
+	}
+
+	// A variation can be settled by the URL — `?color=red` — instead of by a dropdown. That is
+	// the only way to set a family the shop hid from the page, which is what lets a value nobody
+	// should be able to pick from a list reach an order.
+	const { forced: forcedVariations, errors: variationErrors } = resolveVariationsFromUrl(
+		product,
+		url.searchParams
+	);
+	if (variationErrors.length && (product.variationUrlPolicy ?? 'error') !== 'ignore') {
+		// Refusing the page rather than falling back keeps the shop out of default-value and
+		// silent-substitution territory: a wrong link is wrong, and says so.
+		throw error(400, variationUrlErrorMessage(variationErrors[0]));
 	}
 	if (
 		locals.user?.hasPosOptions
@@ -266,6 +300,7 @@ export const load = async ({ params, parent, locals }) => {
 	});
 
 	return {
+		forcedVariations,
 		product: {
 			...product,
 			vatProfileId: product.vatProfileId?.toString(),

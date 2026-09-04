@@ -251,6 +251,16 @@ export const productBaseSchema = () => ({
 		)
 		.optional()
 		.default([]),
+	variationFamilies: z
+		.record(
+			z.string(),
+			z.object({
+				hiddenFromUI: z.boolean({ coerce: true }).default(false),
+				hiddenFromCustomer: z.boolean({ coerce: true }).default(false)
+			})
+		)
+		.optional(),
+	variationUrlPolicy: z.enum(['error', 'ignore']).default('error'),
 	variationLabels: z
 		.object({
 			names: z.record(z.string().trim(), z.string().trim()),
