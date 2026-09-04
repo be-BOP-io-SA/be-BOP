@@ -28,12 +28,43 @@ function makeOrder(
 	overrides: Partial<Order> = {}
 ): Order {
 	return {
+		_id: 'ord_4242',
 		number: 4242,
 		items,
 		notifications: { paymentStatus: { email: 'buyer@example.com', npub: null } },
 		customCheckoutFields: [],
 		...overrides
 	} as unknown as Order;
+}
+
+/** Priced line: `amount` is the per-unit snapshot, as stored on a real order. */
+function line(
+	productId: string,
+	opts: {
+		amount?: number;
+		quantity?: number;
+		uniqueKey?: string;
+		customPrice?: number;
+		discountPercentage?: number;
+		freeQuantity?: number;
+	} = {}
+) {
+	const price = { amount: opts.amount ?? 100, currency: 'EUR' };
+	return {
+		product: { _id: productId },
+		quantity: opts.quantity ?? 1,
+		...(opts.uniqueKey && { uniqueKey: opts.uniqueKey }),
+		...(opts.discountPercentage && { discountPercentage: opts.discountPercentage }),
+		...(opts.freeQuantity && { freeQuantity: opts.freeQuantity }),
+		currencySnapshot: {
+			main: {
+				price,
+				...(opts.customPrice !== undefined && {
+					customPrice: { amount: opts.customPrice, currency: 'EUR' }
+				})
+			}
+		}
+	};
 }
 
 async function insertWebhookProduct(id: string, apiRoute: string, secret: string) {
@@ -164,12 +195,84 @@ describe('firePaidOrderWebhooks', () => {
 		expect(opts.headers['X-Webhook-Signature']).toBe(expected);
 
 		const payload = JSON.parse(opts.body);
+		expect(payload.orderId).toBe('ord_4242');
 		expect(payload.orderNumber).toBe(4242);
 		expect(payload.contact).toEqual({ email: 'buyer@example.com', npub: null });
 		expect(payload.billingAddress).toEqual({ firstName: 'Jane', country: 'FR' });
 		expect(payload.customCheckoutFields).toEqual([
 			{ slug: 'company', label: 'Company', value: 'Acme' }
 		]);
+	});
+
+	it('reports each line with its uniqueKey and the amount actually paid', async () => {
+		await insertWebhookProduct('wh-product', 'https://receiver.test/hook', 'k');
+
+		await firePaidOrderWebhooks(
+			makeOrder([
+				line('wh-product', { uniqueKey: 'kfdjsfeaz12845ND9xezj91820', amount: 30 }),
+				line('wh-product', { amount: 30, quantity: 2 })
+			])
+		);
+
+		const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+		expect(payload.items).toEqual([
+			{
+				productId: 'wh-product',
+				quantity: 1,
+				uniqueKey: 'kfdjsfeaz12845ND9xezj91820',
+				amountPaid: { amount: 30, currency: 'EUR' }
+			},
+			{ productId: 'wh-product', quantity: 2, amountPaid: { amount: 60, currency: 'EUR' } }
+		]);
+	});
+
+	it('prices a line from what was charged: PWYW / variation, discount and free units', async () => {
+		await insertWebhookProduct('wh-product', 'https://receiver.test/hook', 'k');
+
+		await firePaidOrderWebhooks(
+			makeOrder([
+				// PWYW or variation surcharge lands in customPrice, not the catalogue price.
+				line('wh-product', { amount: 10, customPrice: 42 }),
+				// 3 units, 1 offered, 50% off the rest -> 2 * 100 * 0.5
+				line('wh-product', { amount: 100, quantity: 3, freeQuantity: 1, discountPercentage: 50 })
+			])
+		);
+
+		const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+		expect(payload.items[0].amountPaid).toEqual({ amount: 42, currency: 'EUR' });
+		expect(payload.items[1].amountPaid).toEqual({ amount: 100, currency: 'EUR' });
+	});
+
+	it('scopes items to the receiving product — a shared basket never leaks other sellers lines', async () => {
+		await insertWebhookProduct('seller-a', 'https://a.test/hook', 'ka');
+		await insertWebhookProduct('seller-b', 'https://b.test/hook', 'kb');
+
+		await firePaidOrderWebhooks(
+			makeOrder([
+				line('seller-a', { uniqueKey: 'key-a' }),
+				line('seller-b', { uniqueKey: 'key-b' })
+			])
+		);
+
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		for (const [url, opts] of fetchMock.mock.calls) {
+			const payload = JSON.parse(opts.body);
+			const mine = url === 'https://a.test/hook' ? 'seller-a' : 'seller-b';
+			const theirs = mine === 'seller-a' ? 'seller-b' : 'seller-a';
+			expect(payload.items.map((i: { productId: string }) => i.productId)).toEqual([mine]);
+			expect(opts.body).not.toContain(theirs);
+		}
+	});
+
+	it('omits amountPaid rather than throwing when a line has no currency snapshot', async () => {
+		await insertWebhookProduct('wh-product', 'https://receiver.test/hook', 'k');
+
+		await expect(
+			firePaidOrderWebhooks(makeOrder([{ product: { _id: 'wh-product' } }]))
+		).resolves.toBeUndefined();
+
+		const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+		expect(payload.items).toEqual([{ productId: 'wh-product' }]);
 	});
 
 	it('never sends the secret in the payload or reads the order snapshot', async () => {

@@ -40,6 +40,57 @@
 				"noReference": "-- Keine Referenz (eigenen Lagerbestand verwenden) --",
 				"warning": "⚠️ Dieses Produkt verweist auf den Lagerbestand eines anderen Produkts. Lagerbestandsänderungen wirken sich auf das referenzierte Produkt aus."
 			}
+		},
+		"apiKeys": {
+			"listTitle": "API-Schlüssel",
+			"add": "API-Schlüssel erstellen",
+			"empty": "Noch keine API-Schlüssel",
+			"createTitle": "API-Schlüssel erstellen",
+			"name": "Name",
+			"namePlaceholder": "z. B. PoS-Kasse",
+			"scopes": "Scopes",
+			"expiresAt": "Läuft ab am",
+			"expiresAtHint": "Optional. Leer lassen für kein Ablaufdatum.",
+			"create": "Erstellen",
+			"createError": "API-Schlüssel konnte nicht erstellt werden. Formular prüfen.",
+			"secretWarning": "Kopieren Sie dieses Geheimnis jetzt. Es wird nicht erneut angezeigt.",
+			"secret": "Geheimnis",
+			"prefix": "Präfix",
+			"copySecret": "Geheimnis kopieren",
+			"copied": "Kopiert",
+			"viewKey": "Schlüsseldetails anzeigen",
+			"backToList": "Zurück zu API-Schlüsseln",
+			"status": "Status",
+			"statusActive": "Aktiv",
+			"statusRevoked": "Widerrufen",
+			"statusExpired": "Abgelaufen",
+			"createdAt": "Erstellt am",
+			"revokedAt": "Widerrufen am",
+			"lastUsedAt": "Zuletzt verwendet",
+			"createdBy": "Erstellt von",
+			"revoke": "Schlüssel widerrufen",
+			"revokeConfirm": "Diesen API-Schlüssel widerrufen? Dies kann nicht rückgängig gemacht werden.",
+			"revealTitle": "API-Schlüssel erstellt",
+			"secretAlreadyShown": "Dieses Geheimnis wurde bereits angezeigt und kann nicht erneut angezeigt werden.",
+			"scopeHint": {
+				"ordersWrite": "Stapel-Schreiben von Bestellungen via POST /api/v1/orders.",
+				"catalogRead": "Katalog lesen via GET /api/v1/catalog/products.",
+				"ordersRead": "Bestellungen lesen via GET /api/v1/orders und GET /api/v1/orders/paid."
+			},
+			"secretStorageNote": "Das Geheimnis wird nur einmal angezeigt. be-BOP speichert nur SHA-256(secret) — kein Pepper (technische Schuld: DB-Leck ermöglicht Offline-Brute-Force).",
+			"corsTitle": "API-v1-CORS-Origins",
+			"corsHelp": "Browser-Origin-Allowlist für /api/v1. Leer lassen, um allen Cross-Origin-Zugriff zu verweigern. Wildcards (*) sind nie erlaubt.",
+			"corsOriginsLabel": "Erlaubte Origins",
+			"corsOriginsHint": "Eine Origin pro Zeile oder kommagetrennt (z. B. https://partner.example).",
+			"corsSave": "CORS-Origins speichern",
+			"corsSaved": "CORS-Origins aktualisiert.",
+			"listIntro": "Machine-to-machine-Schlüssel für die öffentliche HTTP-API. Secrets werden nur einmal angezeigt.",
+			"keysSectionTitle": "Schlüssel",
+			"keysSectionHelp": "Jeder Schlüssel hat Scopes. Widerruf erfolgt auf der Detailseite.",
+			"emptyHint": "Erstellen Sie einen Schlüssel, damit eine Kasse oder ein Partner /api/v1 aufrufen kann.",
+			"selectAll": "Alle auswahlen",
+			"selectNone": "Keine auswahlen",
+			"scopesHint": "Nur das noetige vergeben. Read und Write derselben Ressource sitzen in einer Kategorie."
 		}
 	},
 	"ageWarning": {
@@ -1004,11 +1055,26 @@
 			"then": "dann"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "Stunde", "other": "Stunden" },
-			"day": { "one": "Tag", "other": "Tage" },
-			"week": { "one": "Woche", "other": "Wochen" },
-			"month": { "one": "Monat", "other": "Monate" },
-			"year": { "one": "Jahr", "other": "Jahre" }
+			"hour": {
+				"one": "Stunde",
+				"other": "Stunden"
+			},
+			"day": {
+				"one": "Tag",
+				"other": "Tage"
+			},
+			"week": {
+				"one": "Woche",
+				"other": "Wochen"
+			},
+			"month": {
+				"one": "Monat",
+				"other": "Monate"
+			},
+			"year": {
+				"one": "Jahr",
+				"other": "Jahre"
+			}
 		},
 		"type": {
 			"deposit": "Auf Anzahlung",
@@ -1024,7 +1090,8 @@
 		"variationPriceLabel": "Variationspreis",
 		"vatExcluded": "Ohne MwSt.",
 		"vatExcludedEstimate": "Geschätzter Preis ohne Steuer",
-		"vatIncluded": "Geschätzter Preis einschließlich Steuer"
+		"vatIncluded": "Geschätzter Preis einschließlich Steuer",
+		"uniqueKeyLabel": "Eindeutiger Artikel-Schlüssel"
 	},
 	"schedule": {
 		"dateText": " - von {beginTime} bis {endTime}",

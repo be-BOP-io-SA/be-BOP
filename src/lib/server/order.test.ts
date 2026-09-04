@@ -1,15 +1,18 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanDb, createDiscount, createPaidSubscription } from './test-utils';
 import { collections } from './database';
 import {
 	TEST_DIGITAL_PRODUCT,
 	TEST_DIGITAL_PRODUCT_UNLIMITED,
 	TEST_DISCOUNTED_PRODUCT,
-	TEST_SUBSCRIPTION_PRODUCT
+	TEST_PHYSICAL_PRODUCT,
+	TEST_SUBSCRIPTION_PRODUCT,
+	TEST_VARIATION_PRODUCT
 } from './seed/product';
 import { addOrderPayment, createOrder, lastInvoiceNumber, onOrderPayment } from './orders';
-import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
+import { orderAmountWithNoPaymentsCreated, orderIndividualItemPrice } from '$lib/types/Order';
 import { runtimeConfig } from './runtime-config';
+import { toCurrency } from '$lib/utils/toCurrency';
 
 describe('order', () => {
 	beforeEach(async () => {
@@ -18,7 +21,9 @@ describe('order', () => {
 			TEST_DIGITAL_PRODUCT,
 			TEST_DIGITAL_PRODUCT_UNLIMITED,
 			TEST_SUBSCRIPTION_PRODUCT,
-			TEST_DISCOUNTED_PRODUCT
+			TEST_DISCOUNTED_PRODUCT,
+			TEST_PHYSICAL_PRODUCT,
+			TEST_VARIATION_PRODUCT
 		]);
 	});
 
@@ -240,6 +245,148 @@ describe('order', () => {
 		order1 = await collections.orders.findOne({ _id: order1Id });
 		expect(await lastInvoiceNumber()).toBe(3);
 		expect(order1?.payments[1].invoice?.number).toBe(3);
+	});
+
+	it('allows onLocation createOrder without shippingAddress for a shippable product', async () => {
+		const orderId = await createOrder(
+			[
+				{
+					product: TEST_PHYSICAL_PRODUCT,
+					quantity: 1
+				}
+			],
+			'point-of-sale',
+			{
+				locale: 'en',
+				user: {
+					sessionId: 'test-session-id',
+					userHasPosOptions: true
+				},
+				shippingAddress: null,
+				onLocation: true,
+				userVatCountry: 'FR'
+			}
+		);
+
+		const order = await collections.orders.findOne({ _id: orderId });
+		expect(order).toBeTruthy();
+		expect(order?.onLocation).toBe(true);
+		expect(order?.shippingAddress).toBeUndefined();
+		expect(order?.items[0]?.product.shipping).toBe(true);
+	});
+
+	it('still requires shippingAddress for shippable products when not onLocation', async () => {
+		await expect(
+			createOrder(
+				[
+					{
+						product: TEST_PHYSICAL_PRODUCT,
+						quantity: 1
+					}
+				],
+				'point-of-sale',
+				{
+					locale: 'en',
+					user: {
+						sessionId: 'test-session-id',
+						userHasPosOptions: true
+					},
+					shippingAddress: null,
+					userVatCountry: 'FR'
+				}
+			)
+		).rejects.toMatchObject({ status: 400, body: { message: 'Shipping address is required' } });
+	});
+
+	describe('variation pricing', () => {
+		function orderPint(customPrice?: { amount: number; currency: 'EUR' }) {
+			return createOrder(
+				[
+					{
+						product: TEST_VARIATION_PRODUCT,
+						quantity: 1,
+						chosenVariations: { Size: 'pint' },
+						...(customPrice && { customPrice })
+					}
+				],
+				'point-of-sale',
+				{
+					locale: 'en',
+					user: { sessionId: 'test-session-id', userHasPosOptions: true },
+					shippingAddress: null,
+					userVatCountry: 'FR'
+				}
+			);
+		}
+
+		/** Test shops do not all count in EUR, so expectations are stated in the main currency. */
+		function inMainCurrency(amountEur: number) {
+			return toCurrency(runtimeConfig.mainCurrency, amountEur, 'EUR');
+		}
+
+		/** The line price every reader computes — invoices, tickets, the API DTOs. */
+		async function linePrice(customPrice?: { amount: number; currency: 'EUR' }) {
+			const order = await collections.orders.findOne({ _id: await orderPint(customPrice) });
+			if (!order) {
+				throw new Error('order not found');
+			}
+			return orderIndividualItemPrice(order.items[0], 'main');
+		}
+
+		it('prices an unpriced line from the chosen variations', async () => {
+			expect(await linePrice()).toBe(inMainCurrency(150));
+		});
+
+		it('keeps the price the caller charged', async () => {
+			// The till rang up 120. Recomputing the catalogue's 150 leaves the line above its own
+			// order: the total is settled before this point and keeps what the caller charged.
+			expect(await linePrice({ amount: 120, currency: 'EUR' })).toBe(inMainCurrency(120));
+		});
+
+		it('still refuses variations that do not match the product', async () => {
+			await expect(
+				createOrder([{ product: TEST_VARIATION_PRODUCT, quantity: 1 }], 'point-of-sale', {
+					locale: 'en',
+					user: { sessionId: 'test-session-id', userHasPosOptions: true },
+					shippingAddress: null,
+					userVatCountry: 'FR'
+				})
+			).rejects.toMatchObject({
+				status: 400,
+				body: { message: 'error matching on variations choice' }
+			});
+		});
+	});
+
+	describe('isBillingAddressMandatory', () => {
+		function counterSale(channel: 'pos-touch' | 'api' | 'web' | undefined) {
+			return createOrder([{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }], 'point-of-sale', {
+				locale: 'en',
+				user: { sessionId: 'test-session-id', userHasPosOptions: true },
+				shippingAddress: null,
+				userVatCountry: 'FR',
+				...(channel && { channel })
+			});
+		}
+
+		beforeEach(() => {
+			runtimeConfig.isBillingAddressMandatory = true;
+		});
+
+		afterEach(() => {
+			runtimeConfig.isBillingAddressMandatory = false;
+		});
+
+		it.each(['pos-touch', 'api'] as const)('does not reach the %s counter', async (channel) => {
+			await expect(counterSale(channel)).resolves.toBeTruthy();
+		});
+
+		it.each(['web', undefined] as const)('still applies to %s', async (channel) => {
+			await expect(counterSale(channel)).rejects.toMatchObject({
+				status: 400,
+				body: { message: 'Missing billing address for deliveryless order' }
+			});
+		});
 	});
 
 	it('should allow free method payment when only item is fully discounted due to an active subscription', async () => {

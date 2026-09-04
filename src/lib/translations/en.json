@@ -40,6 +40,57 @@
 				"noReference": "-- No reference (use own stock) --",
 				"warning": "⚠️ This product references another product's stock. Stock changes will affect the referenced product."
 			}
+		},
+		"apiKeys": {
+			"listTitle": "API Keys",
+			"add": "Create API key",
+			"empty": "No API keys yet",
+			"createTitle": "Create API key",
+			"name": "Name",
+			"namePlaceholder": "e.g. PoS front desk",
+			"scopes": "Scopes",
+			"expiresAt": "Expires at",
+			"expiresAtHint": "Optional. Leave empty for no expiry.",
+			"create": "Create",
+			"createError": "Could not create API key. Check the form and try again.",
+			"secretWarning": "Copy this secret now. It will not be shown again.",
+			"secret": "Secret",
+			"prefix": "Prefix",
+			"copySecret": "Copy secret",
+			"copied": "Copied",
+			"viewKey": "View key details",
+			"backToList": "Back to API keys",
+			"status": "Status",
+			"statusActive": "Active",
+			"statusRevoked": "Revoked",
+			"statusExpired": "Expired",
+			"createdAt": "Created at",
+			"revokedAt": "Revoked at",
+			"lastUsedAt": "Last used at",
+			"createdBy": "Created by",
+			"revoke": "Revoke key",
+			"revokeConfirm": "Revoke this API key? This cannot be undone.",
+			"revealTitle": "API key created",
+			"secretAlreadyShown": "This secret was already shown and can no longer be displayed.",
+			"scopeHint": {
+				"ordersWrite": "Batch-write orders via POST /api/v1/orders.",
+				"catalogRead": "Read catalog via GET /api/v1/catalog/products.",
+				"ordersRead": "Read orders via GET /api/v1/orders and GET /api/v1/orders/paid."
+			},
+			"secretStorageNote": "The secret is shown once. be-BOP stores only SHA-256(secret) — no pepper (tech debt: DB leak enables offline brute-force).",
+			"corsTitle": "API v1 CORS origins",
+			"corsHelp": "Browser Origin allowlist for /api/v1. Leave empty to deny all cross-origin access. Wildcards (*) are never allowed.",
+			"corsOriginsLabel": "Allowed origins",
+			"corsOriginsHint": "One origin per line or comma-separated (e.g. https://partner.example).",
+			"corsSave": "Save CORS origins",
+			"corsSaved": "CORS origins updated.",
+			"listIntro": "Machine-to-machine keys for the public HTTP API. Secrets are shown once.",
+			"keysSectionTitle": "Keys",
+			"keysSectionHelp": "Each key has scopes. Revoke a key from its detail page.",
+			"emptyHint": "Create a key so a till or partner can call /api/v1.",
+			"selectAll": "Select all",
+			"selectNone": "Select none",
+			"scopesHint": "Grant only what the partner needs. Read and write for the same resource sit in one category."
 		}
 	},
 	"ageWarning": {
@@ -1004,11 +1055,26 @@
 			"then": "then"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "hour", "other": "hours" },
-			"day": { "one": "day", "other": "days" },
-			"week": { "one": "week", "other": "weeks" },
-			"month": { "one": "month", "other": "months" },
-			"year": { "one": "year", "other": "years" }
+			"hour": {
+				"one": "hour",
+				"other": "hours"
+			},
+			"day": {
+				"one": "day",
+				"other": "days"
+			},
+			"week": {
+				"one": "week",
+				"other": "weeks"
+			},
+			"month": {
+				"one": "month",
+				"other": "months"
+			},
+			"year": {
+				"one": "year",
+				"other": "years"
+			}
 		},
 		"type": {
 			"deposit": "On deposit",
@@ -1024,7 +1090,8 @@
 		"variationPriceLabel": "Variation Price",
 		"vatExcluded": "VAT excluded",
 		"vatExcludedEstimate": "Estimated price excluding tax",
-		"vatIncluded": "Estimated price including tax"
+		"vatIncluded": "Estimated price including tax",
+		"uniqueKeyLabel": "Unique item key"
 	},
 	"schedule": {
 		"dateText": " - from {beginTime} to {endTime}",

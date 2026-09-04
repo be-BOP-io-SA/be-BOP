@@ -40,6 +40,57 @@
 				"noReference": "-- Nessun riferimento (usa stock proprio) --",
 				"warning": "⚠️ Questo prodotto fa riferimento allo stock di un altro prodotto. Le modifiche allo stock influenzeranno il prodotto di riferimento."
 			}
+		},
+		"apiKeys": {
+			"listTitle": "Chiavi API",
+			"add": "Crea chiave API",
+			"empty": "Nessuna chiave API ancora",
+			"createTitle": "Crea chiave API",
+			"name": "Nome",
+			"namePlaceholder": "es. cassa PoS",
+			"scopes": "Scopes",
+			"expiresAt": "Scade il",
+			"expiresAtHint": "Opzionale. Lasciare vuoto per nessuna scadenza.",
+			"create": "Crea",
+			"createError": "Impossibile creare la chiave API. Controlla il modulo.",
+			"secretWarning": "Copia questo secret ora. Non verrà più mostrato.",
+			"secret": "Secret",
+			"prefix": "Prefisso",
+			"copySecret": "Copia secret",
+			"copied": "Copiato",
+			"viewKey": "Vedi dettagli chiave",
+			"backToList": "Torna alle chiavi API",
+			"status": "Stato",
+			"statusActive": "Attiva",
+			"statusRevoked": "Revocata",
+			"statusExpired": "Scaduta",
+			"createdAt": "Creata il",
+			"revokedAt": "Revocata il",
+			"lastUsedAt": "Ultimo utilizzo",
+			"createdBy": "Creata da",
+			"revoke": "Revoca chiave",
+			"revokeConfirm": "Revocare questa chiave API? Azione irreversibile.",
+			"revealTitle": "Chiave API creata",
+			"secretAlreadyShown": "Questo segreto è già stato mostrato e non può più essere visualizzato.",
+			"scopeHint": {
+				"ordersWrite": "Scrittura ordini in batch via POST /api/v1/orders.",
+				"catalogRead": "Lettura catalogo via GET /api/v1/catalog/products.",
+				"ordersRead": "Leggi gli ordini via GET /api/v1/orders e GET /api/v1/orders/paid."
+			},
+			"secretStorageNote": "Il segreto viene mostrato una sola volta. be-BOP memorizza solo SHA-256(secret) — nessun pepper (debito tecnico: una fuga dal DB consente brute-force offline).",
+			"corsTitle": "Origini CORS API v1",
+			"corsHelp": "Allowlist di Origin del browser per /api/v1. Lascia vuoto per negare ogni accesso cross-origin. I wildcard (*) non sono mai consentiti.",
+			"corsOriginsLabel": "Origini consentite",
+			"corsOriginsHint": "Un'origine per riga o separate da virgola (es. https://partner.example).",
+			"corsSave": "Salva origini CORS",
+			"corsSaved": "Origini CORS aggiornate.",
+			"listIntro": "Chiavi machine-to-machine per l'API HTTP pubblica. Il secret viene mostrato una sola volta.",
+			"keysSectionTitle": "Chiavi",
+			"keysSectionHelp": "Ogni chiave ha degli scope. La revoca si fa dalla pagina di dettaglio.",
+			"emptyHint": "Crea una chiave per far chiamare /api/v1 a una cassa o a un partner.",
+			"selectAll": "Seleziona tutto",
+			"selectNone": "Seleziona niente",
+			"scopesHint": "Concedi solo il necessario. Read e write della stessa risorsa stanno in una categoria."
 		}
 	},
 	"ageWarning": {
@@ -1004,11 +1055,26 @@
 			"then": "poi"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "ora", "other": "ore" },
-			"day": { "one": "giorno", "other": "giorni" },
-			"week": { "one": "settimana", "other": "settimane" },
-			"month": { "one": "mese", "other": "mesi" },
-			"year": { "one": "anno", "other": "anni" }
+			"hour": {
+				"one": "ora",
+				"other": "ore"
+			},
+			"day": {
+				"one": "giorno",
+				"other": "giorni"
+			},
+			"week": {
+				"one": "settimana",
+				"other": "settimane"
+			},
+			"month": {
+				"one": "mese",
+				"other": "mesi"
+			},
+			"year": {
+				"one": "anno",
+				"other": "anni"
+			}
 		},
 		"type": {
 			"deposit": "In deposito",
@@ -1024,7 +1090,8 @@
 		"variationPriceLabel": "Prezzo di variazione",
 		"vatExcluded": "IVA esclusa",
 		"vatExcludedEstimate": "Prezzo stimato IVA esclusa",
-		"vatIncluded": "Prezzo stimato inclusa l'imposta"
+		"vatIncluded": "Prezzo stimato inclusa l'imposta",
+		"uniqueKeyLabel": "Chiave univoca articolo"
 	},
 	"schedule": {
 		"dateText": "- Da {beginTime} a {endTime}",

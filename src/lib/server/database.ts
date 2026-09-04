@@ -57,6 +57,7 @@ import type { CheckoutFieldConfig } from '$lib/types/CheckoutFieldConfig';
 import type { PosSession } from '$lib/types/PosSession';
 import type { PendingZap } from '$lib/types/PendingZap';
 import type { AccountingLog } from '$lib/types/AccountingLog';
+import type { ApiKey } from '$lib/types/ApiKey';
 
 // Bigger than the default 10, helpful with MongoDB errors
 Error.stackTraceLimit = 100;
@@ -124,6 +125,8 @@ const genCollection = () => ({
 	posSessions: db.collection<PosSession>('posSessions'),
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
 
+	apiKeys: db.collection<ApiKey>('apiKeys'),
+
 	accountingLogs: db.collection<AccountingLog>('accountingLogs'),
 
 	errors: db.collection<unknown & { _id: ObjectId; url: string; method: string }>('errors')
@@ -173,6 +176,11 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.orders, { orderTabId: 1, status: 1 }, { sparse: true }],
 	[collections.orders, { orderTabId: 1, splitMode: 1, status: 1 }, { sparse: true }],
 	[collections.orders, { orderLabelIds: 1 }, { sparse: true }],
+	/**
+	 * Resume cursor of the paid-order SSE stream (/api/v1/orders/paid/stream): range scan on
+	 * `updatedAt` with `_id` as the intra-millisecond tiebreak, matching the stream's sort.
+	 */
+	[collections.orders, { updatedAt: 1, _id: 1 }],
 	[collections.digitalFiles, { productId: 1 }],
 	[collections.digitalFiles, { secret: 1 }, { unique: true, sparse: true }],
 	[collections.pendingDigitalFiles, { createdAt: 1 }],
@@ -247,7 +255,17 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.accountingLogs, { createdAt: 1 }],
 	[collections.accountingLogs, { eventType: 1, createdAt: 1 }],
 	[collections.accountingLogs, { objectId: 1, objectType: 1 }],
-	[collections.accountingLogs, { eventType: 1, 'after.productIds': 1 }]
+	[collections.accountingLogs, { eventType: 1, 'after.productIds': 1 }],
+	[collections.apiKeys, { keyHash: 1 }, { unique: true }],
+	[collections.apiKeys, { keyPrefix: 1 }, { unique: true }],
+	[collections.apiKeys, { expiresAt: 1 }, { sparse: true }],
+	[collections.apiKeys, { revokedAt: 1 }, { sparse: true }],
+	// Idempotence for /api/v1/orders (D2) — sparse so pre-API orders are unaffected
+	[
+		collections.orders,
+		{ externalSourceApiKeyId: 1, externalOrderId: 1 },
+		{ unique: true, sparse: true }
+	]
 ];
 
 export async function createIndexes() {

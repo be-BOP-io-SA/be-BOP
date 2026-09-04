@@ -40,6 +40,57 @@
 				"noReference": "-- Pas de référence (utiliser le stock propre) --",
 				"warning": "⚠️ Ce produit référence le stock d'un autre produit. Les modifications de stock affecteront le produit référencé."
 			}
+		},
+		"apiKeys": {
+			"listTitle": "Clés API",
+			"add": "Créer une clé API",
+			"empty": "Aucune clé API pour le moment",
+			"createTitle": "Créer une clé API",
+			"name": "Nom",
+			"namePlaceholder": "ex. caisse PoS",
+			"scopes": "Périmètres (scopes)",
+			"expiresAt": "Expire le",
+			"expiresAtHint": "Optionnel. Laisser vide pour aucune expiration.",
+			"create": "Créer",
+			"createError": "Impossible de créer la clé API. Vérifiez le formulaire.",
+			"secretWarning": "Copiez ce secret maintenant. Il ne sera plus affiché.",
+			"secret": "Secret",
+			"prefix": "Préfixe",
+			"copySecret": "Copier le secret",
+			"copied": "Copié",
+			"viewKey": "Voir le détail de la clé",
+			"backToList": "Retour aux clés API",
+			"status": "Statut",
+			"statusActive": "Active",
+			"statusRevoked": "Révoquée",
+			"statusExpired": "Expirée",
+			"createdAt": "Créée le",
+			"revokedAt": "Révoquée le",
+			"lastUsedAt": "Dernière utilisation",
+			"createdBy": "Créée par",
+			"revoke": "Révoquer la clé",
+			"revokeConfirm": "Révoquer cette clé API ? Action irréversible.",
+			"revealTitle": "Clé API créée",
+			"secretAlreadyShown": "Ce secret a déjà été affiché et ne peut plus l’être.",
+			"scopeHint": {
+				"ordersWrite": "Écriture par lot via POST /api/v1/orders.",
+				"catalogRead": "Lecture du catalogue via GET /api/v1/catalog/products.",
+				"ordersRead": "Lire les commandes via GET /api/v1/orders et GET /api/v1/orders/paid."
+			},
+			"secretStorageNote": "Le secret n’est affiché qu’une fois. be-BOP ne stocke que SHA-256(secret) — pas de pepper (dette technique : une fuite DB permet le brute-force hors ligne).",
+			"corsTitle": "Origines CORS API v1",
+			"corsHelp": "Liste d'origines navigateur autorisées pour /api/v1. Laissez vide pour refuser tout accès cross-origin. Les jokers (*) ne sont jamais autorisés.",
+			"corsOriginsLabel": "Origines autorisées",
+			"corsOriginsHint": "Une origine par ligne ou séparées par des virgules (ex. https://partenaire.example).",
+			"corsSave": "Enregistrer les origines CORS",
+			"corsSaved": "Origines CORS mises à jour.",
+			"listIntro": "Clés machine-à-machine pour l’API HTTP publique. Le secret n’est affiché qu’une fois.",
+			"keysSectionTitle": "Clés",
+			"keysSectionHelp": "Chaque clé a des scopes. La révocation se fait depuis la page de détail.",
+			"emptyHint": "Créez une clé pour qu’une caisse ou un partenaire appelle /api/v1.",
+			"selectAll": "Tout selectionner",
+			"selectNone": "Tout deselectionner",
+			"scopesHint": "N'accorder que le necessaire. Lecture et ecriture d'une meme ressource sont dans une categorie."
 		}
 	},
 	"ageWarning": {
@@ -1004,11 +1055,26 @@
 			"then": "puis"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "heure", "other": "heures" },
-			"day": { "one": "jour", "other": "jours" },
-			"week": { "one": "semaine", "other": "semaines" },
-			"month": { "one": "mois", "other": "mois" },
-			"year": { "one": "an", "other": "ans" }
+			"hour": {
+				"one": "heure",
+				"other": "heures"
+			},
+			"day": {
+				"one": "jour",
+				"other": "jours"
+			},
+			"week": {
+				"one": "semaine",
+				"other": "semaines"
+			},
+			"month": {
+				"one": "mois",
+				"other": "mois"
+			},
+			"year": {
+				"one": "an",
+				"other": "ans"
+			}
 		},
 		"type": {
 			"deposit": "Sur acompte",
@@ -1024,7 +1090,8 @@
 		"variationPriceLabel": "Variation de prix",
 		"vatExcluded": "Hors TVA",
 		"vatExcludedEstimate": "Prix estimé hors TVA",
-		"vatIncluded": "Prix TTC estimé"
+		"vatIncluded": "Prix TTC estimé",
+		"uniqueKeyLabel": "Clé unique de l'article"
 	},
 	"schedule": {
 		"dateText": "- de {beginTime} à {endTime}",
