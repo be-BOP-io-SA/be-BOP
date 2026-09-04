@@ -16,7 +16,9 @@
 		errorMessage = '';
 
 		const pwnedTimes = await checkPasswordPwnedTimes(password);
-		if (pwnedTimes) {
+		if (pwnedTimes === null) {
+			errorMessage = t('login.password.unavailable');
+		} else if (pwnedTimes) {
 			errorMessage = t('login.password.pwned', {
 				count: pwnedTimes.toLocaleString($locale)
 			});

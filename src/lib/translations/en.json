@@ -549,7 +549,8 @@
 		},
 		"nsecBlockTitle": "Never share your nsec here, put your npub only !",
 		"password": {
-			"pwned": "Your password is unsafe, it has been found in {count} data breaches. Please reset your password."
+			"pwned": "Your password is unsafe, it has been found in {count} data breaches. Please reset your password.",
+			"unavailable": "Password breach check is unavailable, please retry later."
 		},
 		"session": {
 			"email": "Email: {email}",

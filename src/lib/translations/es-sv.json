@@ -549,7 +549,8 @@
 		},
 		"nsecBlockTitle": "Nunca comparta su NSEC aquí, ¡solo su NPUB!",
 		"password": {
-			"pwned": "La contraseña no es segura, se ha encontrado en {count} filtraciones de datos. Por favor, actualice su contraseña."
+			"pwned": "La contraseña no es segura, se ha encontrado en {count} filtraciones de datos. Por favor, actualice su contraseña.",
+			"unavailable": "La verificación de filtraciones de contraseña no está disponible, inténtelo de nuevo más tarde."
 		},
 		"session": {
 			"email": "Correo electrónico: {email}",
