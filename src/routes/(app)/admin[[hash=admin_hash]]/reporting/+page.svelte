@@ -61,7 +61,11 @@
 		(order) => order.createdAt >= beginsAt && order.createdAt <= endsAt
 	);
 	$: paidOrders = orders.filter((order) => order.status === 'paid');
-	$: paymentMatchesFilter = (payment: { method: string; posSubtype?: string }) => {
+	$: paymentMatchesFilter = (payment: { method: string; posSubtype?: string; status: string }) => {
+		// Only payments that went through are money — the same rule the Z-ticket applies.
+		if (payment.status !== 'paid') {
+			return false;
+		}
 		if (!data.paymentMethod) {
 			return true;
 		}
