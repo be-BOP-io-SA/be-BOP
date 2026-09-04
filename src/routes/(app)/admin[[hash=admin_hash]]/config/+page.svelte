@@ -495,7 +495,23 @@
 				value={data.vatExemptionReason}
 			/>
 		</label>
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="hideVatMentionsWhenExempted"
+				class="form-checkbox"
+				checked={data.hideVatMentionsWhenExempted}
+			/>
+			{t('admin.config.hideVatMentionsWhenExempted')}
+		</label>
 	{:else}
+		<!-- #2679: keep the setting alive while the checkbox above is out of the DOM.
+		     Empty string, not "false": z.boolean({ coerce: true }) turns "false" into true. -->
+		<input
+			type="hidden"
+			name="hideVatMentionsWhenExempted"
+			value={data.hideVatMentionsWhenExempted ? 'true' : ''}
+		/>
 		<label class="checkbox-label">
 			<input
 				type="checkbox"

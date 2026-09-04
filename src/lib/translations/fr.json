@@ -34,6 +34,9 @@
 		"zipCode": "Code postal"
 	},
 	"admin": {
+		"config": {
+			"hideVatMentionsWhenExempted": "Masquer les mentions « Hors TVA » sur les pages produit et les widgets produit"
+		},
 		"product": {
 			"stockReference": {
 				"label": "Référencer le stock d'un autre produit (optionnel)",
@@ -985,6 +988,7 @@
 		"freeWithSub": "Ce produit est disponible gratuitement avec votre abonnement mensuel",
 		"freeWithTitle": "Gratuit avec \"xxxxx",
 		"horsTaxeShort": "HT",
+		"vatIncludedShort": "TTC",
 		"minimumForCurrency": "Le montant minimum en {currency} est {minimum}",
 		"nameYourPrice": "Choisissez votre prix ({currency})",
 		"notForSale": "Ce produit n'est pas disponible à la vente par cette plateforme, merci de nous contacter",

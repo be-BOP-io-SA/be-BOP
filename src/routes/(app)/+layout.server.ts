@@ -335,6 +335,8 @@ export async function load(params) {
 		vatCountry: runtimeConfig.vatCountry,
 		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
 		displayVatIncludedInProduct: runtimeConfig.displayVatIncludedInProduct,
+		// #2679: single derived flag for storefront VAT mentions (see VatMention.svelte)
+		hideVatMentions: runtimeConfig.vatExempted && runtimeConfig.hideVatMentionsWhenExempted,
 		currencies: {
 			main: runtimeConfig.mainCurrency,
 			secondary: runtimeConfig.secondaryCurrency,

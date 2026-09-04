@@ -34,6 +34,9 @@
 		"zipCode": "Zip code"
 	},
 	"admin": {
+		"config": {
+			"hideVatMentionsWhenExempted": "Hide \"VAT excluded\" mentions on product pages and product widgets"
+		},
 		"product": {
 			"stockReference": {
 				"label": "Reference another product's stock (optional)",
@@ -984,7 +987,8 @@
 		"freeProductDiscountTextSingular": "You have {available} free product",
 		"freeWithSub": "This product is available for free with your monthly subscription",
 		"freeWithTitle": "Free with \"xxxxx",
-		"horsTaxeShort": "HT",
+		"horsTaxeShort": "excl. VAT",
+		"vatIncludedShort": "incl. VAT",
 		"minimumForCurrency": "The minimum amount for {currency} is {minimum}",
 		"nameYourPrice": "Name your price ({currency})",
 		"notForSale": "This product is not available for sale",

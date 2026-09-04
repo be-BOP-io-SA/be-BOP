@@ -34,6 +34,9 @@
 		"zipCode": "Postcode"
 	},
 	"admin": {
+		"config": {
+			"hideVatMentionsWhenExempted": "Vermeldingen \"Exclusief btw\" verbergen op productpagina's en productwidgets"
+		},
 		"product": {
 			"stockReference": {
 				"label": "Verwijzing naar voorraad van ander product (optioneel)",
@@ -108,7 +111,7 @@
 			"remove": "Artikel uit winkelwagen verwijderen"
 		},
 		"total": "Totaal",
-		"vat": "VAT",
+		"vat": "btw",
 		"vatIpCountry": "Het land wordt bepaald aan de hand van gegevens van <0></0>",
 		"vatIpCountryText": "Het land wordt bepaald aan de hand van gegevens van {link}",
 		"vatNullOutsideSellerCountry": "Importbelastingen moeten bij levering door de klant aan de douane worden betaald.",
@@ -984,7 +987,8 @@
 		"freeProductDiscountTextSingular": "U hebt {available} gratis product",
 		"freeWithSub": "Dit product is gratis verkrijgbaar bij uw maandabonnement",
 		"freeWithTitle": "Gratis met \"xxxxx",
-		"horsTaxeShort": "HT",
+		"horsTaxeShort": "excl. btw",
+		"vatIncludedShort": "incl. btw",
 		"minimumForCurrency": "Het minimumbedrag voor {currency} is {minimum}",
 		"nameYourPrice": "Geef uw prijs een naam ({currency})",
 		"notForSale": "Dit product is niet te koop",
@@ -1022,7 +1026,7 @@
 			"ticket": "Ticket"
 		},
 		"variationPriceLabel": "Variatie Prijs",
-		"vatExcluded": "Exclusief BTW",
+		"vatExcluded": "Exclusief btw",
 		"vatExcludedEstimate": "Geschatte prijs excl. btw",
 		"vatIncluded": "Geschatte prijs inclusief belasting"
 	},

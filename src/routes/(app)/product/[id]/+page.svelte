@@ -45,6 +45,7 @@
 	import { RangeList } from '$lib/utils/range-list.js';
 	import { vatMultiplier } from '$lib/utils/vat';
 	import { formatBookedDates } from '$lib/utils/formatBookedDates';
+	import VatMention from '$lib/components/VatMention.svelte';
 	import {
 		isSameDayInShopTz,
 		sameDayBookingStatus,
@@ -180,7 +181,9 @@
 	let deposit = 'partial';
 
 	const vatRate = data.vatRate;
-	const vatMult = data.displayVatIncludedInProduct ? vatMultiplier(vatRate) : 1;
+	// #2679: a VAT-exempt shop hiding VAT mentions always uses the plain (VAT-less) display
+	const displayVatIncluded = data.displayVatIncludedInProduct && !data.hideVatMentions;
+	const vatMult = displayVatIncluded ? vatMultiplier(vatRate) : 1;
 
 	const PWYWCurrency =
 		data.currencies.main === 'BTC' &&
@@ -636,7 +639,7 @@
 				class="flex flex-col gap-2 border-gray-300 lg:border-l lg:border-b lg:rounded lg:pl-4 lg:pb-4 h-fit overflow-hidden"
 			>
 				<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
-				{#if data.displayVatIncludedInProduct}
+				{#if displayVatIncluded}
 					<div class="flex flex-col gap-1 lg:items-start">
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -788,7 +791,8 @@
 							secondary
 							class="text-base"
 						/>
-						<span class="font-semibold text-sm">{t('product.vatExcluded')}</span>
+						<!-- #2679: VAT mention, hidden for VAT-exempt shops (see VatMention.svelte) -->
+						<VatMention class="font-semibold text-sm" />
 					</div>
 				{/if}
 
