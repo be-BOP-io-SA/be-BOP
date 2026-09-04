@@ -988,6 +988,40 @@ export const migrations = [
 				);
 			}
 		}
+	},
+	{
+		_id: new ObjectId('68b9a4c17d2f4e0a3c5b1d90'),
+		name: 'Seed the invoice number counter from the invoices already issued',
+		run: async (session: ClientSession) => {
+			// Invoice numbers used to be derived by reading the highest one already stored (#2743).
+			// The counter has to start past that, or the first invoice issued after this migration
+			// would reuse a number the shop has already given out.
+			const highest = await collections.orders
+				.aggregate<{ payments: Array<{ invoice?: { number: number } }> }>(
+					[
+						{ $match: { 'payments.invoice.number': { $exists: true } } },
+						{ $sort: { 'payments.invoice.number': -1 } },
+						{ $limit: 1 },
+						{ $project: { 'payments.invoice.number': 1 } }
+					],
+					{ session }
+				)
+				.next();
+
+			const highestNumber = Math.max(
+				0,
+				...(highest?.payments ?? []).map((payment) => payment.invoice?.number ?? 0)
+			);
+
+			await collections.runtimeConfig.updateOne(
+				{ _id: 'invoiceNumber' },
+				{
+					$set: { data: highestNumber as never, updatedAt: new Date() },
+					$setOnInsert: { createdAt: new Date() }
+				},
+				{ upsert: true, session }
+			);
+		}
 	}
 ];
 
