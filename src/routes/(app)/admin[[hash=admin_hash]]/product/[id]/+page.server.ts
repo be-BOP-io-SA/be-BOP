@@ -18,7 +18,8 @@ import {
 	amountOfProductSold,
 	getProductsWithStock,
 	validateStockReference,
-	cleanVariationLabels
+	cleanVariationLabels,
+	cleanVariationFamilies
 } from '$lib/server/product';
 import type { Tag } from '$lib/types/Tag';
 import { adminPrefix } from '$lib/server/admin';
@@ -289,7 +290,12 @@ export const actions: Actions = {
 						...(hasVariations &&
 							validVariations.length > 0 && {
 								variations: validVariations,
-								variationLabels: cleanedVariationLabels
+								variationLabels: cleanedVariationLabels,
+								variationFamilies: cleanVariationFamilies(
+									parsed.variationFamilies,
+									validVariations
+								),
+								variationUrlPolicy: parsed.variationUrlPolicy
 							}),
 						hasSellDisclaimer: parsed.hasSellDisclaimer,
 						...(parsed.hasSellDisclaimer &&
@@ -332,7 +338,9 @@ export const actions: Actions = {
 						...(parsed.hasVariations &&
 							validVariations.length === 0 && {
 								variations: '',
-								variationLabels: ''
+								variationLabels: '',
+								variationFamilies: '',
+								variationUrlPolicy: ''
 							}),
 						...(!parsed.paidOrderWebhook && { paidOrderWebhook: '' })
 					}

@@ -9,7 +9,7 @@
 		orderItemPrice
 	} from '$lib/types/Order';
 	import type { Picture } from '$lib/types/Picture';
-	import type { Product } from '$lib/types/Product';
+	import { productLabelWithVariations, type Product } from '$lib/types/Product';
 	import PictureComponent from './Picture.svelte';
 	import PriceTag from './PriceTag.svelte';
 	import ProductType from './ProductType.svelte';
@@ -94,13 +94,7 @@
 	{#each order.items as item}
 		<a href="/product/{item.product._id}">
 			<h3 class="text-base">
-				{item.chosenVariations
-					? item.product.name +
-					  ' - ' +
-					  Object.entries(item.chosenVariations)
-							.map(([key, value]) => item.product.variationLabels?.values[key][value])
-							.join(' - ')
-					: item.product.name}
+				{productLabelWithVariations(item.product, item.chosenVariations)}
 			</h3>
 		</a>
 
