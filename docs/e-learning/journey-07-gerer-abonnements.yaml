@@ -1,0 +1,53 @@
+journey_id: "journey-07"
+title: "Manage subscriptions"
+persona: "customer"
+description: "View active subscriptions, renew them before expiry, and understand how subscription and promotional discounts are applied automatically."
+prerequisites:
+  - "An authenticated customer account"
+  - "At least one active or expired subscription"
+
+steps:
+  - id: "step-1"
+    feature_id: "C49"
+    title: "View subscription details"
+    description: "Navigate to your subscription page to see the subscription status, expiry date, and the linked product."
+    navigation: "/subscription/{id}"
+    ui_action: "scroll"
+    ui_target: "div.subscription-details"
+    tip: "The status shows whether your subscription is active, expiring soon, or expired."
+
+  - id: "step-2"
+    feature_id: "C50"
+    title: "Renew subscription"
+    description: "Click the Renew button to initiate a renewal payment and extend your subscription."
+    navigation: "/subscription/{id}"
+    ui_action: "click"
+    ui_target: "button.renew-subscription"
+    tip: "Renewing before expiry ensures uninterrupted access to subscription benefits."
+
+  - id: "step-3"
+    feature_id: "C50"
+    title: "Complete renewal payment"
+    description: "Follow the payment flow to complete the subscription renewal, selecting your preferred payment method."
+    navigation: "/checkout"
+    ui_action: "click"
+    ui_target: "div.payment-methods input[type='radio'], button.pay"
+    tip: "The renewal amount and duration depend on the subscription product configured by the shop owner."
+
+  - id: "step-4"
+    feature_id: "C66"
+    title: "Subscription discounts applied automatically"
+    description: "When you hold an active subscription that grants discounts, those discounts are applied automatically at cart and checkout. No manual action is required."
+    navigation: "/cart"
+    ui_action: null
+    ui_target: null
+    tip: "Look for a discount line item in your cart showing the subscription benefit. The discount is calculated before VAT."
+
+  - id: "step-5"
+    feature_id: "C67"
+    title: "Promotional discounts applied automatically"
+    description: "Time-limited promotional discounts set by the shop are applied automatically if they are currently active. No coupon code is needed."
+    navigation: "/cart"
+    ui_action: null
+    ui_target: null
+    tip: "Promotional discounts may stack with subscription discounts depending on the shop configuration. Check the cart total for the combined effect."
