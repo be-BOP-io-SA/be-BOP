@@ -1,4 +1,6 @@
 import { collections, withTransaction } from '$lib/server/database';
+import { buildProductWhitelist } from '$lib/server/saleLock';
+import { requiresAuthenticationToOrder } from '$lib/types/Product';
 import { generatePicture } from '$lib/server/picture';
 import {
 	getProductsWithStock,
@@ -35,6 +37,12 @@ import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 import { logProductCreationEvents } from '$lib/server/accounting-log';
 
 export const load = async ({ url }) => {
+	const subscriptionProducts = await collections.products
+		.find({ type: 'subscription' })
+		.project<{ _id: string; name: string }>({ _id: 1, name: 1 })
+		.sort({ name: 1 })
+		.toArray();
+
 	const productId = url.searchParams.get('duplicate_from');
 	const tags = await collections.tags
 		.find({})
@@ -62,13 +70,15 @@ export const load = async ({ url }) => {
 				digitalFiles,
 				tags,
 				productsWithStock,
+				subscriptionProducts,
 				currency: runtimeConfig.priceReferenceCurrency
 			};
 		}
 	}
 	return {
 		tags,
-		productsWithStock
+		productsWithStock,
+		subscriptionProducts
 	};
 };
 
@@ -81,6 +91,10 @@ export const actions: Actions = {
 			set(json, key, value);
 		}
 		json.paymentMethods = formData.getAll('paymentMethods')?.map(String);
+		// MultiSelect posts a JSON array of {value,label}, like the product tag picker.
+		json.whitelistSubscriptionProductIds = JSON.parse(
+			String(formData.get('whitelistSubscriptionProductIds') || '[]')
+		).map((x: { value: string }) => x.value);
 
 		const parsed = z
 			.object({
@@ -174,6 +188,11 @@ export const actions: Actions = {
 							shortDescription: parsed.shortDescription.replaceAll('\r', ''),
 							name: parsed.name,
 							isTicket: parsed.isTicket,
+							// Sale locks. A per-person cap only means something once we know who the person is, so
+							// filling it in turns the authentication lock on, the way variations force `standalone`.
+							requiresAuthentication: requiresAuthenticationToOrder(parsed),
+							...(parsed.maxQuantityPerUser && { maxQuantityPerUser: parsed.maxQuantityPerUser }),
+							...(buildProductWhitelist(parsed) && { whitelist: buildProductWhitelist(parsed) }),
 							price: computePriceForStorage(priceAmount, parsed.priceCurrency),
 							hideDiscountExpiration: parsed.hideDiscountExpiration,
 							type: parsed.type,
@@ -332,6 +351,10 @@ export const actions: Actions = {
 			set(json, key, value);
 		}
 		json.paymentMethods = formData.getAll('paymentMethods')?.map(String);
+		// MultiSelect posts a JSON array of {value,label}, like the product tag picker.
+		json.whitelistSubscriptionProductIds = JSON.parse(
+			String(formData.get('whitelistSubscriptionProductIds') || '[]')
+		).map((x: { value: string }) => x.value);
 
 		const { duplicateFromId } = z
 			.object({ duplicateFromId: z.string() })
@@ -398,6 +421,11 @@ export const actions: Actions = {
 					shortDescription: parsed.shortDescription.replaceAll('\r', ''),
 					name: parsed.name,
 					isTicket: parsed.isTicket,
+					// Sale locks. A per-person cap only means something once we know who the person is, so
+					// filling it in turns the authentication lock on, the way variations force `standalone`.
+					requiresAuthentication: requiresAuthenticationToOrder(parsed),
+					...(parsed.maxQuantityPerUser && { maxQuantityPerUser: parsed.maxQuantityPerUser }),
+					...(buildProductWhitelist(parsed) && { whitelist: buildProductWhitelist(parsed) }),
 					price: computePriceForStorage(parseFloat(parsed.priceAmount), parsed.priceCurrency),
 					type: product.type,
 					availableDate: parsed.availableDate || undefined,

@@ -1,4 +1,6 @@
 import { collections } from '$lib/server/database';
+import { buildProductWhitelist } from '$lib/server/saleLock';
+import { requiresAuthenticationToOrder } from '$lib/types/Product';
 import { error, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { z } from 'zod';
@@ -31,6 +33,12 @@ import type { Picture } from '$lib/types/Picture';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
 
 export const load = async ({ params }) => {
+	const subscriptionProducts = await collections.products
+		.find({ type: 'subscription' })
+		.project<{ _id: string; name: string }>({ _id: 1, name: 1 })
+		.sort({ name: 1 })
+		.toArray();
+
 	const pictures = await collections.pictures
 		.find({ productId: params.id })
 		.sort({ order: 1, createdAt: 1 })
@@ -81,6 +89,7 @@ export const load = async ({ params }) => {
 		digitalFiles,
 		tags,
 		productsWithStock,
+		subscriptionProducts,
 		reserved,
 		sold,
 		scanned,
@@ -98,6 +107,10 @@ export const actions: Actions = {
 			set(json, key, value);
 		}
 		json.paymentMethods = formData.getAll('paymentMethods')?.map(String);
+		// MultiSelect posts a JSON array of {value,label}, like the product tag picker.
+		json.whitelistSubscriptionProductIds = JSON.parse(
+			String(formData.get('whitelistSubscriptionProductIds') || '[]')
+		).map((x: { value: string }) => x.value);
 
 		const product = await collections.products.findOne({ _id: params.id });
 
@@ -198,6 +211,11 @@ export const actions: Actions = {
 					$set: {
 						name: parsed.name,
 						isTicket: parsed.isTicket,
+						// Sale locks. A per-person cap only means something once we know who the person is, so
+						// filling it in turns the authentication lock on, the way variations force `standalone`.
+						requiresAuthentication: requiresAuthenticationToOrder(parsed),
+						...(parsed.maxQuantityPerUser && { maxQuantityPerUser: parsed.maxQuantityPerUser }),
+						...(buildProductWhitelist(parsed) && { whitelist: buildProductWhitelist(parsed) }),
 						alias: parsed.alias ? [params.id, parsed.alias] : [params.id],
 						description: parsed.description,
 						shortDescription: parsed.shortDescription,
@@ -315,6 +333,10 @@ export const actions: Actions = {
 						...(parsed.stock === undefined && { stock: '' }),
 						...(!parsed.stockReferenceProductId && { stockReference: '' }),
 						...(!parsed.maxQuantityPerOrder && { maxQuantityPerOrder: '' }),
+						// Sale locks. Emptying a field has to remove it, not leave the old value in
+						// place: without these the cap and the whitelist could be set but never cleared.
+						...(!parsed.maxQuantityPerUser && { maxQuantityPerUser: '' }),
+						...(!buildProductWhitelist(parsed) && { whitelist: '' }),
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
 						...(!parsed.subscriptionDuration && { subscriptionDuration: '' }),

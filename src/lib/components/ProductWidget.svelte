@@ -22,7 +22,11 @@
 	export { className as class };
 	export let displayOption = 'img-0';
 	$: canAddToCart =
-		canBuy && (!product.availableDate || product.availableDate <= new Date() || !!product.preorder);
+		canBuy &&
+		!product.saleLocked &&
+		(!product.availableDate || product.availableDate <= new Date() || !!product.preorder);
+	// Locked for this visitor: the CTA takes them to the product page, where the reason is.
+	$: saleLockedHref = product.saleLocked ? `/product/${product._id}` : undefined;
 	const widgets = {
 		'img-0': {
 			component: ProductWidgetVariation0
@@ -69,6 +73,7 @@
 		{pictures}
 		{hasDigitalFiles}
 		{canAddToCart}
+		{saleLockedHref}
 		{externalUrl}
 		class={className}
 	/>

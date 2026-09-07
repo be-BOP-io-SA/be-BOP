@@ -51,6 +51,28 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	};
 	vatProfileId?: ObjectId;
 	maxQuantityPerOrder?: number;
+	/**
+	 * Sale locks — see `$lib/server/saleLock`. Each one, on its own, forbids some customers
+	 * from buying the product; all three are enforced at the same points.
+	 */
+	/** The customer must have an identified session — e-mail, nostr or SSO — to order. */
+	requiresAuthentication?: boolean;
+	/** Only the customers this list lets through may order. Absent means open to everyone. */
+	whitelist?: {
+		emails: string[];
+		npubs: string[];
+		/** Anyone holding an active subscription to one of these products is let through. */
+		subscriptionProductIds: string[];
+		allowEmployees: boolean;
+		/** Lets the counter ring the product up for a customer who is not on the list. */
+		allowPosOverride: boolean;
+	};
+	/**
+	 * How many units the same person may take across their whole history, not per order.
+	 * Unset leaves the product uncapped. Subscriptions ignore the stored value: they are
+	 * capped at one per person by a rule that predates this property.
+	 */
+	maxQuantityPerUser?: number;
 	type: 'subscription' | 'resource' | 'donation';
 	subscriptionDuration?: SubscriptionDuration;
 	subscriptionReminderSeconds?: number;
@@ -180,6 +202,38 @@ export const MAX_SHORT_DESCRIPTION_LIMIT = 160;
 export const MAX_DESCRIPTION_LIMIT = 10000;
 
 export const DEFAULT_MAX_QUANTITY_PER_ORDER = 10;
+
+/**
+ * A subscription has been capped at one per person and per product since long before
+ * `maxQuantityPerUser` existed, by the guard in `createOrder`. The property does not loosen
+ * that rule: on a subscription it is fixed here, shown read-only in the admin form, and any
+ * value stored on the document is ignored.
+ */
+export const MAX_QUANTITY_PER_USER_FOR_SUBSCRIPTION = 1;
+
+/**
+ * How many units of a product the same person may take in total, across their whole
+ * history — `undefined` when the product is uncapped.
+ */
+export function maxQuantityPerUser(
+	product: Pick<Product, 'type' | 'maxQuantityPerUser'>
+): number | undefined {
+	if (product.type === 'subscription') {
+		return MAX_QUANTITY_PER_USER_FOR_SUBSCRIPTION;
+	}
+	return product.maxQuantityPerUser;
+}
+
+/**
+ * Filling in a per-person cap only means something once we know who the person is, so it
+ * turns the authentication lock on by itself — in the admin form and again on save, the way
+ * variations force `standalone`.
+ */
+export function requiresAuthenticationToOrder(
+	product: Pick<Product, 'maxQuantityPerUser' | 'requiresAuthentication'>
+): boolean {
+	return !!product.requiresAuthentication || product.maxQuantityPerUser !== undefined;
+}
 export const POS_PRODUCT_PAGINATION = 10;
 export const PRODUCT_PAGINATION_LIMIT = 25;
 
