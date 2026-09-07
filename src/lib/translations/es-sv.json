@@ -81,7 +81,7 @@
 			"corsTitle": "Orígenes CORS API v1",
 			"corsHelp": "Lista de Origins del navegador permitidos para /api/v1. Déjelo vacío para denegar todo acceso cross-origin. Los comodines (*) nunca están permitidos.",
 			"corsOriginsLabel": "Orígenes permitidos",
-			"corsOriginsHint": "Un origen por línea o separados por comas (p. ej. https://partner.example).",
+			"corsOriginsHint": "Un origen por línea o separados por comas (p. ej. https://partner.example). Déjalo vacío para rechazar todos los orígenes de navegador, o escribe * para aceptarlos todos.",
 			"corsSave": "Guardar orígenes CORS",
 			"corsSaved": "Orígenes CORS actualizados.",
 			"listIntro": "Claves machine-to-machine para la API HTTP publica. El secret se muestra una sola vez.",

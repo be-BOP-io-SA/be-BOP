@@ -341,7 +341,7 @@ const baseConfig = {
 	hideFromSearchEngines: false,
 	/**
 	 * Public HTTP API v1 runtime settings (admin-editable).
-	 * corsOrigins: browser Origin allowlist for /api/v1 (never "*").
+	 * corsOrigins: browser Origin allowlist for /api/v1. "*" opens it to every origin.
 	 * Empty = no cross-origin access. Persisted in DB; edited in Admin -> API Keys.
 	 */
 	apiV1: {

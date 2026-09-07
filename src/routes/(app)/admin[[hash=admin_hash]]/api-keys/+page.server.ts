@@ -33,7 +33,7 @@ export const actions = {
 				corsOrigins: formData.get('corsOrigins') ?? ''
 			});
 
-		// Accept newline- and/or comma-separated origins; never keep "*".
+		// Accept newline- and/or comma-separated origins. A lone "*" opens every origin.
 		const corsOrigins = normalizeApiV1CorsOrigins(
 			parsed.corsOrigins
 				.split(/[\n,]+/)
