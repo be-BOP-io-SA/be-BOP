@@ -3,6 +3,7 @@ import { collections, withTransaction } from './database';
 import {
 	checkProductVariationsIntegrity,
 	DEFAULT_MAX_QUANTITY_PER_ORDER,
+	maxQuantityPerUser,
 	productPriceWithVariations,
 	type Product
 } from '$lib/types/Product';
@@ -19,6 +20,7 @@ import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { sum } from '$lib/utils/sum';
 import { deepEquals } from '$lib/utils/deep-equals';
+import { quantityAlreadyTakenByUser } from './maxQuantityPerUser';
 
 export const CART_ERROR_CODES = [
 	'NOT_FOR_SALE',
@@ -33,7 +35,8 @@ export const CART_ERROR_CODES = [
 	'OUT_OF_STOCK',
 	'STANDALONE_QTY_ONE',
 	'VARIATION_INVALID',
-	'MAX_PER_ORDER'
+	'MAX_PER_ORDER',
+	'MAX_PER_USER'
 ] as const;
 export type CartErrorCode = (typeof CART_ERROR_CODES)[number];
 
@@ -306,6 +309,21 @@ export async function addToCartInDb(
 		}
 	}
 
+	// Cap per person, across their whole history — what is already paid or awaiting payment
+	// leaves that much less room in the cart. Only queried when the product carries a cap,
+	// so uncapped products keep their current number of round-trips.
+	const maxPerUser = maxQuantityPerUser(product);
+	const alreadyTakenByUser =
+		maxPerUser === undefined ? 0 : await quantityAlreadyTakenByUser(product, params.user);
+	const failWhenOverUserCap = (quantityInCart: number) => {
+		if (maxPerUser !== undefined && quantityInCart + alreadyTakenByUser > maxPerUser) {
+			cartError('MAX_PER_USER', `You can only order ${maxPerUser} of this product in total`, {
+				max: maxPerUser,
+				alreadyTaken: alreadyTakenByUser
+			});
+		}
+	};
+
 	if (existingItem && !product.standalone && !product.bookingSpec) {
 		existingItem.quantity = params.totalQuantity ? quantity : existingItem.quantity + quantity;
 
@@ -317,6 +335,10 @@ export async function addToCartInDb(
 		if (totalQuantityInCart() > max) {
 			cartError('MAX_PER_ORDER', `You can only order ${max} of this product`, { max });
 		}
+
+		// A subscription line is clamped to 1 just below, whatever was asked, so 1 is what it
+		// weighs against the per-person cap.
+		failWhenOverUserCap(product.type === 'subscription' ? 1 : totalQuantityInCart());
 
 		if (product.type === 'subscription') {
 			existingItem.quantity = 1;
@@ -333,6 +355,7 @@ export async function addToCartInDb(
 		if (totalQuantityInCart() + quantity > max) {
 			cartError('MAX_PER_ORDER', `You can only order ${max} of this product`, { max });
 		}
+		failWhenOverUserCap(product.type === 'subscription' ? 1 : totalQuantityInCart() + quantity);
 		cart.items.push({
 			_id: crypto.randomUUID(),
 			productId: product._id,

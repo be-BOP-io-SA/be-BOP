@@ -91,6 +91,13 @@ function mapAddError(slug: string, body: AddErrorBody, product: ProductBadge | n
 				...(body.params && { params: body.params }),
 				product
 			};
+		case 'MAX_PER_USER':
+			return {
+				slug,
+				key: 'cart.maxQuantityPerUserReached',
+				...(body.params && { params: body.params }),
+				product
+			};
 		default:
 			return { slug, key: 'cartFromUrl.errors.reasonGeneric', product };
 	}

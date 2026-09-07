@@ -1087,7 +1087,7 @@ export async function createOrder(
 				{
 					...userQuery(params.user),
 					'items.product._id': product._id,
-					'payment.status': 'pending'
+					status: 'pending'
 				},
 				{ limit: 1 }
 			)

@@ -115,7 +115,9 @@
 		"vatRate": "Taux de TVA : {country}",
 		"vatSellerCountry": "La TVA est celle du pays du vendeur.",
 		"maxQuantityReached": "Quantité maximale par commande atteinte ({max})",
+		"maxQuantityPerUserReached": "Vous avez atteint le maximum commandable pour ce produit.",
 		"error": {
+			"MAX_PER_USER": "Vous avez atteint le maximum commandable pour ce produit.",
 			"BOOKING_SAME_DAY_DISABLED": "Les réservations pour aujourd'hui ne sont pas disponibles pour ce produit.",
 			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Les réservations pour aujourd'hui ne sont plus possibles passé {maxHour}."
 		}
@@ -989,6 +991,7 @@
 		"nameYourPrice": "Choisissez votre prix ({currency})",
 		"notForSale": "Ce produit n'est pas disponible à la vente par cette plateforme, merci de nous contacter",
 		"outOfStock": "En rupture de stock, merci de nous contacter",
+		"maxQuantityPerUserReached": "Vous avez atteint le maximum commandable pour ce produit.",
 		"preorderText": "En précommande, disponible le {date}",
 		"pricePlaceholder": "Prix",
 		"seeInCabinet": "Voir dans MonCabinet",

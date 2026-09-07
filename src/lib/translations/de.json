@@ -115,7 +115,9 @@
 		"vatRate": "MwSt.-Satz für {country}",
 		"vatSellerCountry": "Das Land ist das Land des Verkäufers.",
 		"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})",
+		"maxQuantityPerUserReached": "Sie haben die maximal bestellbare Menge für dieses Produkt erreicht.",
 		"error": {
+			"MAX_PER_USER": "Sie haben die maximal bestellbare Menge für dieses Produkt erreicht.",
 			"BOOKING_SAME_DAY_DISABLED": "Buchungen für heute sind für dieses Produkt nicht verfügbar.",
 			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Buchungen für heute sind nach {maxHour} nicht mehr möglich."
 		}
@@ -989,6 +991,7 @@
 		"nameYourPrice": "Nennen Sie Ihren Preis ({currency})",
 		"notForSale": "Dieses Produkt steht nicht zum Verkauf",
 		"outOfStock": "Nicht auf Lager",
+		"maxQuantityPerUserReached": "Sie haben die maximal bestellbare Menge für dieses Produkt erreicht.",
 		"preorderText": "Dies ist eine Vorbestellung, Ihr Produkt wird am {date} verfügbar sein",
 		"pricePlaceholder": "Preis",
 		"seeInCabinet": "In Meinem Schrank ansehen",

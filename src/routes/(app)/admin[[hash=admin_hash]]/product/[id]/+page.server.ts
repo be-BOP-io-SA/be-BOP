@@ -228,6 +228,7 @@ export const actions: Actions = {
 						applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
 						requireSpecificDeliveryFee: parsed.requireSpecificDeliveryFee,
 						...(parsed.maxQuantityPerOrder && { maxQuantityPerOrder: parsed.maxQuantityPerOrder }),
+						...(parsed.maxQuantityPerUser && { maxQuantityPerUser: parsed.maxQuantityPerUser }),
 						...(parsed.stock !== undefined && {
 							stock: {
 								total: parsed.stock,
@@ -315,6 +316,7 @@ export const actions: Actions = {
 						...(parsed.stock === undefined && { stock: '' }),
 						...(!parsed.stockReferenceProductId && { stockReference: '' }),
 						...(!parsed.maxQuantityPerOrder && { maxQuantityPerOrder: '' }),
+						...(!parsed.maxQuantityPerUser && { maxQuantityPerUser: '' }),
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),
 						...(!parsed.subscriptionDuration && { subscriptionDuration: '' }),

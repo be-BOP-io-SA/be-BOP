@@ -3,6 +3,7 @@ import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
 import { applyResolvedStock, resolveStockProduct } from '$lib/server/product';
 import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
+import { maxQuantityPerUserStatus } from '$lib/server/maxQuantityPerUser';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { adminPrefix as getAdminPrefix } from '$lib/server/admin';
 import { userIdentifier, userQuery } from '$lib/server/user';
@@ -96,6 +97,8 @@ async function fetchProduct(
 	| 'free'
 	| 'standalone'
 	| 'maxQuantityPerOrder'
+	| 'maxQuantityPerUser'
+	| 'subscriptionReminderSeconds'
 	| 'stock'
 	| 'actionSettings'
 	| 'contentBefore'
@@ -142,6 +145,8 @@ async function fetchProduct(
 				free: 1,
 				standalone: 1,
 				maxQuantityPerOrder: 1,
+				maxQuantityPerUser: 1,
+				subscriptionReminderSeconds: 1,
 				stock: 1,
 				actionSettings: 1,
 				contentBefore: {
@@ -232,13 +237,15 @@ export const load = async ({ params, parent, locals }) => {
 		product.stock = resolved.stock;
 	}
 
-	const [pictures, userSubscriptions, schedule, scheduleEvents, parentData] = await Promise.all([
-		fetchProductPictures(productId),
-		fetchUserSubscriptions(userIdentifier(locals)),
-		product.bookingSpec ? fetchProductSchedule(productId) : null,
-		product.bookingSpec ? fetchProductScheduleEvents(productId) : [],
-		parent()
-	]);
+	const [pictures, userSubscriptions, schedule, scheduleEvents, parentData, perUserLimit] =
+		await Promise.all([
+			fetchProductPictures(productId),
+			fetchUserSubscriptions(userIdentifier(locals)),
+			product.bookingSpec ? fetchProductSchedule(productId) : null,
+			product.bookingSpec ? fetchProductScheduleEvents(productId) : [],
+			parent(),
+			maxQuantityPerUserStatus(product, userIdentifier(locals))
+		]);
 	const totalFreeProducts = sum(
 		userSubscriptions.map((s) => s.freeProductsById?.[product._id]?.available ?? 0)
 	);
@@ -291,6 +298,20 @@ export const load = async ({ params, parent, locals }) => {
 		...(product.contentAfter && {
 			productCMSAfter: cmsFromContent({ desktopContent: product.contentAfter }, locals)
 		}),
+		// What the cart already holds counts too, so the CTA goes flat on the unit that would
+		// have been refused rather than one click later.
+		maxPerUser: perUserLimit && {
+			max: perUserLimit.max,
+			remaining: Math.max(
+				perUserLimit.remaining -
+					sum(
+						parentData.cart.items
+							.filter((item) => item.product._id === productId)
+							.map((item) => item.quantity)
+					),
+				0
+			)
+		},
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
 		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		websiteShortDescription: product.shortDescription,

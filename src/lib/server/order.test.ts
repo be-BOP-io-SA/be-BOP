@@ -280,4 +280,35 @@ describe('order', () => {
 		expect(order?.items[0].discountPercentage).toBe(100);
 		expect(order?.currencySnapshot.main.totalPrice.amount).toBe(0);
 	});
+
+	it('should refuse a second subscription order while a first one awaits payment', async () => {
+		const params = {
+			locale: 'en' as const,
+			user: {
+				sessionId: 'test-session-id'
+			},
+			notifications: {
+				paymentStatus: {
+					npub: 'test-npub'
+				}
+			},
+			userVatCountry: 'FR' as const,
+			shippingAddress: null
+		};
+
+		await createOrder(
+			[{ product: TEST_SUBSCRIPTION_PRODUCT, quantity: 1 }],
+			'point-of-sale',
+			params
+		);
+
+		await expect(
+			createOrder([{ product: TEST_SUBSCRIPTION_PRODUCT, quantity: 1 }], 'point-of-sale', params)
+		).rejects.toMatchObject({
+			status: 400,
+			body: {
+				message: expect.stringContaining('You already have a pending order for this product')
+			}
+		});
+	});
 });

@@ -58,6 +58,10 @@ Accessible via **Admin** > **Merch** > **Product**, cette section vous permet d'
   - [ ] **Enable preorders before available date** : Autorisez les précommandes.
   - [ ] **Display custom text instead of date for preorder** : Afficher un autre text à la place de la date de disponibilité.
 - **Max quantity per order** : Limite le nombre d’unités par commande.
+- **Maximum quantity for an unique user** : Limite le nombre d’unités qu’une même personne peut
+  acheter, toutes commandes confondues. Laissez vide pour ne pas plafonner. Les commandes en
+  attente de paiement sont comptées. Un abonnement est toujours limité à un par personne et par
+  produit.
 
   ![image](https://github.com/user-attachments/assets/146c241f-292f-4ef2-87a4-0a852cffbb58)
 

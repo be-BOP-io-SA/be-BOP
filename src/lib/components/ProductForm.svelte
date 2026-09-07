@@ -8,6 +8,7 @@
 	import {
 		DEFAULT_MAX_QUANTITY_PER_ORDER,
 		MAX_NAME_LIMIT,
+		MAX_QUANTITY_PER_USER_FOR_SUBSCRIPTION,
 		MAX_SHORT_DESCRIPTION_LIMIT,
 		type Product
 	} from '$lib/types/Product';
@@ -1400,6 +1401,28 @@
 							value={product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER}
 						/>
 					</label>
+
+					<label class="form-label">
+						Maximum quantity for an unique user
+						<input
+							class="form-input"
+							type="number"
+							name="maxQuantityPerUser"
+							placeholder="No limit"
+							step="1"
+							min="1"
+							value={product.maxQuantityPerUser ?? ''}
+						/>
+						<span class="text-sm text-gray-600">
+							Across all their orders, not per order. Leave empty for no limit. Orders awaiting
+							payment count towards it.
+						</span>
+					</label>
+				{:else}
+					<p class="text-sm text-gray-600">
+						Maximum quantity for an unique user: {MAX_QUANTITY_PER_USER_FOR_SUBSCRIPTION} — a subscription
+						is limited to one per person and per product.
+					</p>
 				{/if}
 			</div>
 			<input type="hidden" name="changedDate" value={changedDate} />

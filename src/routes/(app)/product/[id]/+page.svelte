@@ -217,10 +217,15 @@
 
 	$: isPreorder = isPreorderFn(data.product.availableDate, data.product.preorder);
 
+	// Kept out of `amountAvailable`: reaching one's personal cap is not being out of stock, and
+	// the two say different things to the customer.
+	$: maxPerUserReached = !!data.maxPerUser && data.maxPerUser.remaining <= 0;
+
 	$: amountAvailable = Math.max(
 		Math.min(
 			data.product.stock?.available ?? Infinity,
-			data.product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER
+			data.product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER,
+			data.maxPerUser?.remaining ?? Infinity
 		),
 		0
 	);
@@ -1183,7 +1188,14 @@
 									{t('ageWarning.agreement')}
 								</label>
 							{/if}
-							{#if amountAvailable === 0}
+							{#if maxPerUserReached}
+								<p class="text-red-500">
+									{t('product.maxQuantityPerUserReached')}
+								</p>
+								<button class="btn body-cta body-mainCTA" disabled>
+									{t(`product.cta.${verb}`)}
+								</button>
+							{:else if amountAvailable === 0}
 								<p class="text-red-500">
 									<span class="font-bold">{t('product.outOfStock')}</span>
 									<br />

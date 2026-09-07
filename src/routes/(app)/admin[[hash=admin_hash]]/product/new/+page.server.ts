@@ -219,6 +219,9 @@ export const actions: Actions = {
 							...(parsed.maxQuantityPerOrder && {
 								maxQuantityPerOrder: parsed.maxQuantityPerOrder
 							}),
+							...(parsed.maxQuantityPerUser && {
+								maxQuantityPerUser: parsed.maxQuantityPerUser
+							}),
 							...(parsed.restrictPaymentMethods && {
 								paymentMethods: parsed.paymentMethods ?? []
 							}),
@@ -431,6 +434,9 @@ export const actions: Actions = {
 					}),
 					...(parsed.maxQuantityPerOrder && {
 						maxQuantityPerOrder: parsed.maxQuantityPerOrder
+					}),
+					...(parsed.maxQuantityPerUser && {
+						maxQuantityPerUser: parsed.maxQuantityPerUser
 					}),
 					displayShortDescription: parsed.displayShortDescription,
 					actionSettings: {
