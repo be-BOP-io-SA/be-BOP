@@ -1183,7 +1183,15 @@
 									{t('ageWarning.agreement')}
 								</label>
 							{/if}
-							{#if amountAvailable === 0}
+							{#if data.loginRequired}
+								<p class="text-red-500">{t('product.loginRequired')}</p>
+								<button class="btn body-cta body-mainCTA" disabled>
+									{t(`product.cta.${verb}`)}
+								</button>
+								<a href="/login" class="btn body-cta body-secondaryCTA text-center">
+									{t('cart.loginRequiredCta')}
+								</a>
+							{:else if amountAvailable === 0}
 								<p class="text-red-500">
 									<span class="font-bold">{t('product.outOfStock')}</span>
 									<br />

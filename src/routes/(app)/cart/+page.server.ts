@@ -9,6 +9,7 @@ import { cmsFromContent } from '$lib/server/cms';
 import { collections, withTransaction } from '$lib/server/database';
 import { findActivePromoDiscount, hasAnyActivePromoDiscount } from '$lib/server/discount';
 import { picturesForProducts } from '$lib/server/picture';
+import { productsRequiringAuthentication } from '$lib/server/requiresAuthentication';
 import { applyResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
@@ -88,6 +89,13 @@ function mapAddError(slug: string, body: AddErrorBody, product: ProductBadge | n
 			return {
 				slug,
 				key: 'cart.maxQuantityReached',
+				...(body.params && { params: body.params }),
+				product
+			};
+		case 'LOGIN_REQUIRED':
+			return {
+				slug,
+				key: 'cart.loginRequired',
 				...(body.params && { params: body.params }),
 				product
 			};
@@ -254,20 +262,26 @@ export async function load({ parent, locals, url }) {
 		}))
 	);
 
+	// Products the customer cannot order until they log in. Computed apart from the message
+	// below so the page can render a banner with a link to /login rather than a bare line of
+	// red text, and disable checkout while it stands.
+	const loginRequiredFor = productsRequiringAuthentication(
+		parentData.cart.items,
+		userIdentifier(locals)
+	);
+
 	if (parentData.cart) {
 		try {
 			await checkCartItems(cartItemsWithResolvedStock, { user: userIdentifier(locals) });
 		} catch (err) {
-			if (
-				typeof err === 'object' &&
-				err &&
-				'body' in err &&
-				typeof err.body === 'object' &&
-				err.body &&
-				'message' in err.body &&
-				typeof err.body.message === 'string'
-			) {
-				return { errorMessage: err.body.message };
+			const body =
+				typeof err === 'object' && err && 'body' in err
+					? (err as { body?: AddErrorBody }).body
+					: undefined;
+			// LOGIN_REQUIRED is already carried by the banner; repeating it as an error line
+			// would say the same thing twice, in a worse form.
+			if (body?.code !== 'LOGIN_REQUIRED' && typeof body?.message === 'string') {
+				return { errorMessage: body.message, loginRequiredFor };
 			}
 		}
 	}
@@ -365,6 +379,7 @@ export async function load({ parent, locals, url }) {
 			items: cartItemsWithResolvedStock
 		},
 		hasPromoDiscounts,
+		loginRequiredFor,
 		appliedPromoCode: cartInDb?.promoCode,
 		allowCartFromUrl: runtimeConfig.allowCartFromUrl,
 		...(cartFromUrl && { cartFromUrl }),

@@ -89,6 +89,7 @@
 		hideDiscountExpiration: false,
 		stock: undefined,
 		maxQuantityPerOrder: DEFAULT_MAX_QUANTITY_PER_ORDER,
+		requiresAuthentication: false,
 		actionSettings: defaultActionSettings,
 		createdAt: new Date(),
 		updatedAt: new Date(),
@@ -792,6 +793,16 @@
 						disabled={product.type === 'subscription'}
 					/>
 					This is a pay-what-you-want product
+				</label>
+
+				<label class="checkbox-label">
+					<input
+						class="form-checkbox"
+						type="checkbox"
+						bind:checked={product.requiresAuthentication}
+						name="requiresAuthentication"
+					/>
+					Customer must be authenticated to order this product
 				</label>
 
 				{#if product.payWhatYouWant}

@@ -129,6 +129,7 @@ export async function load(params) {
 							| 'payWhatYouWant'
 							| 'standalone'
 							| 'maxQuantityPerOrder'
+							| 'requiresAuthentication'
 							| 'stock'
 							| 'stockReference'
 							| 'isTicket'
@@ -156,6 +157,7 @@ export async function load(params) {
 						payWhatYouWant: 1,
 						standalone: 1,
 						maxQuantityPerOrder: 1,
+						requiresAuthentication: 1,
 						stock: 1,
 						stockReference: 1,
 						vatProfileId: 1,

@@ -162,6 +162,16 @@
 				</div>
 			</form>
 		{/if}
+		{#if data.loginRequiredFor?.length}
+			<div class="border border-red-500 rounded p-4 flex flex-col gap-2">
+				<p class="text-red-500">
+					{t('cart.loginRequired', { products: data.loginRequiredFor.join(', ') })}
+				</p>
+				<a href="/login" class="btn body-cta body-mainCTA self-start"
+					>{t('cart.loginRequiredCta')}</a
+				>
+			</div>
+		{/if}
 		{#if errorMessage && !errorProductId}
 			<p class="text-red-500">{errorMessage}</p>
 		{/if}
@@ -588,7 +598,7 @@
 			<form action="/checkout" class="flex justify-end">
 				<button
 					class="btn body-cta body-mainCTA"
-					disabled={!physicalCartCanBeOrdered}
+					disabled={!physicalCartCanBeOrdered || !!data.loginRequiredFor?.length}
 					type="submit"
 				>
 					{t('cart.cta.checkout')}

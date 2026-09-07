@@ -115,7 +115,10 @@
 		"vatRate": "VAT rate for {country}",
 		"vatSellerCountry": "The country is the seller's country.",
 		"maxQuantityReached": "Maximum quantity per order reached ({max})",
+		"loginRequired": "You need to be logged in to order: {products}",
+		"loginRequiredCta": "Log in",
 		"error": {
+			"LOGIN_REQUIRED": "You need to be logged in to order this product.",
 			"BOOKING_SAME_DAY_DISABLED": "Bookings for today are not available for this product.",
 			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Bookings for today are no longer possible past {maxHour}."
 		}
@@ -989,6 +992,7 @@
 		"nameYourPrice": "Name your price ({currency})",
 		"notForSale": "This product is not available for sale",
 		"outOfStock": "Out of stock",
+		"loginRequired": "You need to be logged in to order this product.",
 		"preorderText": "This is a preorder, your product will be available on {date}",
 		"pricePlaceholder": "Price",
 		"seeInCabinet": "See in MyCabinet",

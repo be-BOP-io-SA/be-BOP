@@ -19,6 +19,7 @@ import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { sum } from '$lib/utils/sum';
 import { deepEquals } from '$lib/utils/deep-equals';
+import { productsRequiringAuthentication } from './requiresAuthentication';
 
 export const CART_ERROR_CODES = [
 	'NOT_FOR_SALE',
@@ -33,7 +34,8 @@ export const CART_ERROR_CODES = [
 	'OUT_OF_STOCK',
 	'STANDALONE_QTY_ONE',
 	'VARIATION_INVALID',
-	'MAX_PER_ORDER'
+	'MAX_PER_ORDER',
+	'LOGIN_REQUIRED'
 ] as const;
 export type CartErrorCode = (typeof CART_ERROR_CODES)[number];
 
@@ -172,6 +174,15 @@ export async function addToCartInDb(
 ) {
 	if (!canAddToCart(product, params.user, params.mode)) {
 		cartError('NOT_FOR_SALE', "Product can't be added to basket ");
+	}
+
+	// Refused at the door rather than at checkout: the product page greys its CTA out for the
+	// same reason, and letting the item in only to block the cart later would be a longer way
+	// of saying the same no.
+	if (productsRequiringAuthentication([{ product }], params.user).length) {
+		cartError('LOGIN_REQUIRED', 'Please log in to order: ' + product.name, {
+			products: product.name
+		});
 	}
 
 	if (params.customPrice && !product.payWhatYouWant) {
@@ -452,12 +463,24 @@ async function computeAvailableAmount(product: Product, cart: Cart): Promise<num
 export async function checkCartItems(
 	items: Array<{
 		quantity: number;
-		product: Pick<Product, 'stock' | '_id' | 'name' | 'maxQuantityPerOrder' | 'stockReference'>;
+		product: Pick<
+			Product,
+			'stock' | '_id' | 'name' | 'maxQuantityPerOrder' | 'stockReference' | 'requiresAuthentication'
+		>;
 	}>,
 	opts?: {
 		user?: UserIdentifier;
 	}
 ) {
+	// Placed first: an unidentified customer has nothing to gain from being told about stock
+	// or per-order caps before being told they need to log in at all.
+	const needAuthentication = productsRequiringAuthentication(items, opts?.user);
+	if (needAuthentication.length) {
+		cartError('LOGIN_REQUIRED', 'Please log in to order: ' + needAuthentication.join(', '), {
+			products: needAuthentication.join(', ')
+		});
+	}
+
 	const products = items.map((item) => item.product);
 	const productById = Object.fromEntries(products.map((product) => [product._id, product]));
 

@@ -115,7 +115,10 @@
 		"vatRate": "IVA per {country}",
 		"vatSellerCountry": "Il paese è quello del venditore.",
 		"maxQuantityReached": "Quantità massima per ordine raggiunta ({max})",
+		"loginRequired": "Devi accedere per ordinare: {products}",
+		"loginRequiredCta": "Accedi",
 		"error": {
+			"LOGIN_REQUIRED": "Devi accedere per ordinare questo prodotto.",
 			"BOOKING_SAME_DAY_DISABLED": "Le prenotazioni per oggi non sono disponibili per questo prodotto.",
 			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Le prenotazioni per oggi non sono più possibili dopo le {maxHour}."
 		}
@@ -989,6 +992,7 @@
 		"nameYourPrice": "Indica il tuo prezzo ({currency})",
 		"notForSale": "Questo prodotto non è disponibile alla vendita",
 		"outOfStock": "Esaurito",
+		"loginRequired": "Devi accedere per ordinare questo prodotto.",
 		"preorderText": "Questo è un preordine, il tuo prodotto sarà disponibile il  {date}",
 		"pricePlaceholder": "Prezzo",
 		"seeInCabinet": "Vedi in MyCabinet",

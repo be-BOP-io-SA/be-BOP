@@ -115,7 +115,10 @@
 		"vatRate": "MwSt.-Satz für {country}",
 		"vatSellerCountry": "Das Land ist das Land des Verkäufers.",
 		"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})",
+		"loginRequired": "Sie müssen angemeldet sein, um Folgendes zu bestellen: {products}",
+		"loginRequiredCta": "Anmelden",
 		"error": {
+			"LOGIN_REQUIRED": "Sie müssen angemeldet sein, um dieses Produkt zu bestellen.",
 			"BOOKING_SAME_DAY_DISABLED": "Buchungen für heute sind für dieses Produkt nicht verfügbar.",
 			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Buchungen für heute sind nach {maxHour} nicht mehr möglich."
 		}
@@ -989,6 +992,7 @@
 		"nameYourPrice": "Nennen Sie Ihren Preis ({currency})",
 		"notForSale": "Dieses Produkt steht nicht zum Verkauf",
 		"outOfStock": "Nicht auf Lager",
+		"loginRequired": "Sie müssen angemeldet sein, um dieses Produkt zu bestellen.",
 		"preorderText": "Dies ist eine Vorbestellung, Ihr Produkt wird am {date} verfügbar sein",
 		"pricePlaceholder": "Preis",
 		"seeInCabinet": "In Meinem Schrank ansehen",

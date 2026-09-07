@@ -115,7 +115,10 @@
 		"vatRate": "Btw-tarief voor {country}",
 		"vatSellerCountry": "Het land is het land van de verkoper.",
 		"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})",
+		"loginRequired": "U moet ingelogd zijn om te bestellen: {products}",
+		"loginRequiredCta": "Inloggen",
 		"error": {
+			"LOGIN_REQUIRED": "U moet ingelogd zijn om dit product te bestellen.",
 			"BOOKING_SAME_DAY_DISABLED": "Boekingen voor vandaag zijn niet beschikbaar voor dit product.",
 			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Boekingen voor vandaag zijn niet meer mogelijk na {maxHour}."
 		}
@@ -989,6 +992,7 @@
 		"nameYourPrice": "Geef uw prijs een naam ({currency})",
 		"notForSale": "Dit product is niet te koop",
 		"outOfStock": "Geen voorraad meer",
+		"loginRequired": "U moet ingelogd zijn om dit product te bestellen.",
 		"preorderText": "Dit is een voorbestelling. Uw product is beschikbaar op {date}",
 		"pricePlaceholder": "Prijs",
 		"seeInCabinet": "Zie in MijnKabinet",

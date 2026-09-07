@@ -51,6 +51,12 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	};
 	vatProfileId?: ObjectId;
 	maxQuantityPerOrder?: number;
+	/**
+	 * The customer must have an identified session — e-mail, nostr or SSO — before an order
+	 * holding this product can be placed. Adding to the cart stays open; it is the cart and
+	 * checkout validation that close.
+	 */
+	requiresAuthentication?: boolean;
 	type: 'subscription' | 'resource' | 'donation';
 	subscriptionDuration?: SubscriptionDuration;
 	subscriptionReminderSeconds?: number;

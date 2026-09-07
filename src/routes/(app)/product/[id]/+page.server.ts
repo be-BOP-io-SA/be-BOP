@@ -3,6 +3,7 @@ import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
 import { applyResolvedStock, resolveStockProduct } from '$lib/server/product';
 import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
+import { productsRequiringAuthentication } from '$lib/server/requiresAuthentication';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { adminPrefix as getAdminPrefix } from '$lib/server/admin';
 import { userIdentifier, userQuery } from '$lib/server/user';
@@ -96,6 +97,7 @@ async function fetchProduct(
 	| 'free'
 	| 'standalone'
 	| 'maxQuantityPerOrder'
+	| 'requiresAuthentication'
 	| 'stock'
 	| 'actionSettings'
 	| 'contentBefore'
@@ -142,6 +144,7 @@ async function fetchProduct(
 				free: 1,
 				standalone: 1,
 				maxQuantityPerOrder: 1,
+				requiresAuthentication: 1,
 				stock: 1,
 				actionSettings: 1,
 				contentBefore: {
@@ -291,6 +294,9 @@ export const load = async ({ params, parent, locals }) => {
 		...(product.contentAfter && {
 			productCMSAfter: cmsFromContent({ desktopContent: product.contentAfter }, locals)
 		}),
+		// Told here rather than after the click: the customer sees the wall before walking
+		// into it, and the same refusal is enforced server-side on add to cart.
+		loginRequired: !!productsRequiringAuthentication([{ product }], userIdentifier(locals)).length,
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
 		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		websiteShortDescription: product.shortDescription,

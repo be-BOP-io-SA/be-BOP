@@ -856,7 +856,11 @@ export async function createOrder(
 		}
 	}
 
-	await checkCartItems(items, params.cart);
+	// `params.cart` is absent on the paths that never go through a cart — subscription
+	// renewal, PoS tab split, Nostr — and only its `user` was ever read here. Passing the
+	// ordering identity instead keeps the same value on the cart path and gives those paths
+	// the identity they were silently missing.
+	await checkCartItems(items, { user: params.user });
 
 	const isDigital = products.every((product) => !product.shipping);
 	const shippingPrice = {
