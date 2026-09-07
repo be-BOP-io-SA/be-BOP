@@ -81,7 +81,7 @@
 			"corsTitle": "API v1 CORS-origins",
 			"corsHelp": "Browser-Origin-allowlist voor /api/v1. Laat leeg om alle cross-origin toegang te weigeren. Wildcards (*) zijn nooit toegestaan.",
 			"corsOriginsLabel": "Toegestane origins",
-			"corsOriginsHint": "Eén origin per regel of kommagescheiden (bijv. https://partner.example).",
+			"corsOriginsHint": "Eén origin per regel of gescheiden door komma's (bijv. https://partner.example). Laat leeg om elke browser-origin te weigeren, of vul * in om ze allemaal toe te staan.",
 			"corsSave": "CORS-origins opslaan",
 			"corsSaved": "CORS-origins bijgewerkt.",
 			"listIntro": "Machine-to-machine-sleutels voor de publieke HTTP-API. Secrets worden een keer getoond.",

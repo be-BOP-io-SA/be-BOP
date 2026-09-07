@@ -81,7 +81,7 @@
 			"corsTitle": "Origines CORS API v1",
 			"corsHelp": "Liste d'origines navigateur autorisées pour /api/v1. Laissez vide pour refuser tout accès cross-origin. Les jokers (*) ne sont jamais autorisés.",
 			"corsOriginsLabel": "Origines autorisées",
-			"corsOriginsHint": "Une origine par ligne ou séparées par des virgules (ex. https://partenaire.example).",
+			"corsOriginsHint": "Une origine par ligne ou séparées par des virgules (ex. https://partenaire.example). Laissez vide pour refuser toute origine navigateur, ou saisissez * pour toutes les accepter.",
 			"corsSave": "Enregistrer les origines CORS",
 			"corsSaved": "Origines CORS mises à jour.",
 			"listIntro": "Clés machine-à-machine pour l’API HTTP publique. Le secret n’est affiché qu’une fois.",
