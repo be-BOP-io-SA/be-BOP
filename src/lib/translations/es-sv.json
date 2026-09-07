@@ -3329,5 +3329,11 @@
 			},
 			"emptyContent": "<p>Esta página está vacía. Edítela para añadir su contenido.</p>"
 		}
+	},
+	"saleLock": {
+		"LOGIN_REQUIRED": "Debes iniciar sesión para pedir este producto.",
+		"NOT_WHITELISTED": "Este producto está reservado a determinados clientes.",
+		"MAX_PER_USER": "Has alcanzado el máximo que puedes pedir de este producto.",
+		"login": "Iniciar sesión"
 	}
 }
