@@ -11,6 +11,7 @@
 	export let product: ProductWidgetProduct;
 	export let hasDigitalFiles: boolean;
 	export let canAddToCart: boolean;
+	export let saleLockedHref: string | undefined = undefined;
 	export let externalUrl: string | undefined = undefined;
 
 	let className = '';
@@ -93,6 +94,10 @@
 			<div class="flex flex-row items-end justify-end">
 				<AddToCart {product} picture={pictures[0]} class="btn cartPreview-mainCTA" />
 			</div>
+		{:else if saleLockedHref}
+			<a href={saleLockedHref} class="btn cartPreview-mainCTA">
+				{t('product.cta.view')}
+			</a>
 		{/if}
 	</div>
 </div>

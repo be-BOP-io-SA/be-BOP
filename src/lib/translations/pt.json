@@ -2254,7 +2254,12 @@
 		"maxQuantityReached": "Quantidade máxima por encomenda atingida ({max})",
 		"error": {
 			"BOOKING_SAME_DAY_DISABLED": "As reservas para hoje não estão disponíveis para este produto.",
-			"BOOKING_SAME_DAY_CUTOFF_PASSED": "As reservas para hoje já não são possíveis após as {maxHour}."
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "As reservas para hoje já não são possíveis após as {maxHour}.",
+			"NOT_PWYW": "Este produto não aceita um preço livre.",
+			"NOT_PREORDER": "Este produto ainda não está disponível em pré-encomenda.",
+			"STANDALONE_QTY_ONE": "Só pode encomendar uma unidade deste produto de cada vez.",
+			"SUBSCRIPTION_CUSTOM_PRICE": "Uma subscrição não pode ser comprada a preço livre.",
+			"MAX_PRICE_EXCEEDED": "O preço introduzido excede o máximo de {max} {currency}."
 		}
 	},
 	"cartFromUrl": {
@@ -3391,5 +3396,11 @@
 			},
 			"emptyContent": "<p>Esta página está vazia. Edite-a para adicionar o seu conteúdo.</p>"
 		}
+	},
+	"saleLock": {
+		"LOGIN_REQUIRED": "Tem de iniciar sessão para encomendar este produto.",
+		"NOT_WHITELISTED": "Este produto está reservado a determinados clientes.",
+		"MAX_PER_USER": "Atingiu o máximo que pode encomendar deste produto.",
+		"login": "Iniciar sessão"
 	}
 }

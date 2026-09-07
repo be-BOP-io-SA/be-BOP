@@ -7,7 +7,7 @@ import {
 } from '$lib/types/SubscriptionDuration';
 import { collections } from './database';
 import { runtimeConfig } from './runtime-config';
-import { userQuery } from './user';
+import { identifiedUserQuery } from './user';
 
 /** Shared resolver so order renewal and customer display never compute the fallback differently. */
 export function resolveSubscriptionDuration(product: {
@@ -64,7 +64,7 @@ export async function freeProductsForUser(
 	}
 	const existingSubscriptions = await collections.paidSubscriptions
 		.find({
-			...userQuery(user),
+			...identifiedUserQuery(user),
 			$or: products.map((productId) => ({
 				[`freeProductsById.${productId}.available`]: { $gt: 0 }
 			})),

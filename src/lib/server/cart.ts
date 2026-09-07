@@ -8,7 +8,11 @@ import {
 } from '$lib/types/Product';
 import { error } from '@sveltejs/kit';
 import { runtimeConfig } from './runtime-config';
-import { amountOfStockReserved, refreshAvailableStockInDb } from './product';
+import {
+	amountOfStockReserved,
+	refreshAvailableStockInDb,
+	resolveAvailableAmounts
+} from './product';
 import type { Cart } from '$lib/types/Cart';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import { userQuery } from './user';
@@ -19,6 +23,13 @@ import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { sum } from '$lib/utils/sum';
 import { deepEquals } from '$lib/utils/deep-equals';
+import {
+	evaluateSaleLocks,
+	saleLockMessage,
+	SALE_LOCK_CODES,
+	type ProductWithSaleLocks,
+	type SaleLock
+} from './saleLock';
 
 export const CART_ERROR_CODES = [
 	'NOT_FOR_SALE',
@@ -33,7 +44,8 @@ export const CART_ERROR_CODES = [
 	'OUT_OF_STOCK',
 	'STANDALONE_QTY_ONE',
 	'VARIATION_INVALID',
-	'MAX_PER_ORDER'
+	'MAX_PER_ORDER',
+	...SALE_LOCK_CODES
 ] as const;
 export type CartErrorCode = (typeof CART_ERROR_CODES)[number];
 
@@ -259,6 +271,30 @@ export async function addToCartInDb(
 	const totalQuantityInCart = () =>
 		sum(cart.items.filter((item) => item.productId === product._id).map((item) => item.quantity));
 
+	// Sale locks, refused at the door. Every way into the cart lands here — the product page,
+	// a pre-configured cart link, the point-of-sale alias field, NostR — so none of them needs
+	// its own copy of the rules. Evaluated once the cart is known, because a per-person cap
+	// counts what already sits in it on top of what was already ordered.
+	const lockOnAdd = (
+		await evaluateSaleLocks([product], params.user, {
+			mode: params.mode,
+			// A subscription line is clamped to one unit whatever was asked, but a subscription is
+			// standalone: a second add makes a second line rather than merging. So what the cart
+			// already holds has to count, or the same subscription piles up in one order.
+			extraQuantityByProductId: {
+				[product._id]: product.type === 'subscription' ? 1 : quantity
+			},
+			quantityInCartByProductId: { [product._id]: totalQuantityInCart() },
+			availableByProductId: await resolveAvailableAmounts([product], params.user)
+		})
+	).get(product._id);
+	if (lockOnAdd?.length) {
+		// One code and its params travel on the error — the first reason, which is the most
+		// actionable. The message carries every reason; the pages read the evaluator directly
+		// and show them all.
+		cartError(lockOnAdd[0].code, saleLockMessage(lockOnAdd, product.name), lockOnAdd[0].params);
+	}
+
 	const availableAmount = await computeAvailableAmount(product, cart);
 
 	if (availableAmount <= 0) {
@@ -452,13 +488,43 @@ async function computeAvailableAmount(product: Product, cart: Cart): Promise<num
 export async function checkCartItems(
 	items: Array<{
 		quantity: number;
-		product: Pick<Product, 'stock' | '_id' | 'name' | 'maxQuantityPerOrder' | 'stockReference'>;
+		product: Pick<Product, 'stock' | '_id' | 'name' | 'maxQuantityPerOrder' | 'stockReference'> &
+			ProductWithSaleLocks;
 	}>,
 	opts?: {
 		user?: UserIdentifier;
 	}
 ) {
 	const products = items.map((item) => item.product);
+
+	// Sale locks, re-asked here and not only on the way in: a cart filled before the shop owner
+	// drew a list up, or before a subscription lapsed, would otherwise still check out. This
+	// function is what the cart page, the checkout page and order creation all call, so the
+	// three give the same answer.
+	//
+	// Additive: the stock, per-order and cart-size rules below are untouched and still apply.
+	if (opts?.user) {
+		const quantityInCart: Record<string, number> = {};
+		for (const item of items) {
+			quantityInCart[item.product._id] = (quantityInCart[item.product._id] ?? 0) + item.quantity;
+		}
+		const locks = await evaluateSaleLocks(products, opts.user, {
+			mode: opts.user.userHasPosOptions ? 'pos' : 'eshop',
+			// What sits in the cart is what is about to be ordered, so it counts towards a
+			// per-person cap alongside what was ordered before.
+			extraQuantityByProductId: quantityInCart,
+			availableByProductId: await resolveAvailableAmounts(products, opts.user)
+		});
+		const firstLocked = products.find((product) => locks.has(product._id));
+		if (firstLocked) {
+			const productLocks = locks.get(firstLocked._id) as SaleLock[];
+			cartError(productLocks[0].code, saleLockMessage(productLocks, firstLocked.name), {
+				...productLocks[0].params,
+				products: firstLocked.name
+			});
+		}
+	}
+
 	const productById = Object.fromEntries(products.map((product) => [product._id, product]));
 
 	// be careful, there can be multiple lines for the same product due to product.standalone
