@@ -13,14 +13,24 @@ describe('api v1 cors', () => {
 		runtimeConfig.apiV1 = { corsOrigins: [] };
 	});
 
-	it('drops wildcard entries from the allowlist', () => {
-		expect(normalizeApiV1CorsOrigins(['*', 'https://shop.example'])).toEqual([
-			'https://shop.example'
-		]);
-		expect(normalizeApiV1CorsOrigins(['*'])).toEqual([]);
-		expect(normalizeApiV1CorsOrigins(['*', ' https://a.example ', '', '*'])).toEqual([
-			'https://a.example'
-		]);
+	it('collapses to the wildcard, which makes any origin beside it meaningless', () => {
+		expect(normalizeApiV1CorsOrigins(['*', 'https://shop.example'])).toEqual(['*']);
+		expect(normalizeApiV1CorsOrigins(['*'])).toEqual(['*']);
+		expect(normalizeApiV1CorsOrigins(['*', ' https://a.example ', '', '*'])).toEqual(['*']);
+	});
+
+	it('answers every origin under the wildcard, and does not vary by origin', () => {
+		const allowed = normalizeApiV1CorsOrigins(['*']);
+		expect(resolveApiV1CorsOrigin('https://anyone.example', allowed)).toBe('*');
+		// Even a caller that sends no Origin at all — a preflight is still answered.
+		expect(resolveApiV1CorsOrigin(null, allowed)).toBe('*');
+
+		const headers = new Headers();
+		applyApiV1CorsHeaders(headers, 'https://anyone.example', allowed);
+		expect(headers.get('Access-Control-Allow-Origin')).toBe('*');
+		expect(headers.get('Vary')).toBeNull();
+		// The wildcard is only legal because nothing here is credentialed.
+		expect(headers.get('Access-Control-Allow-Credentials')).toBeNull();
 	});
 
 	it('treats empty / unset allowlist as deny-all', () => {
@@ -33,7 +43,7 @@ describe('api v1 cors', () => {
 
 	it('reads allowlist from runtimeConfig.apiV1.corsOrigins', () => {
 		runtimeConfig.apiV1 = {
-			corsOrigins: ['https://a.example', '*', 'https://b.example']
+			corsOrigins: ['https://a.example', 'https://b.example']
 		};
 		expect(getApiV1AllowedOrigins()).toEqual(['https://a.example', 'https://b.example']);
 	});
@@ -43,6 +53,7 @@ describe('api v1 cors', () => {
 		expect(resolveApiV1CorsOrigin('https://a.example', allowed)).toBe('https://a.example');
 		expect(resolveApiV1CorsOrigin('https://evil.example', allowed)).toBeNull();
 		expect(resolveApiV1CorsOrigin('*', allowed)).toBeNull();
+		expect(resolveApiV1CorsOrigin(null, allowed)).toBeNull();
 
 		const headers = new Headers();
 		applyApiV1CorsHeaders(headers, 'https://b.example', allowed);
