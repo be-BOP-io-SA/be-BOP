@@ -3329,5 +3329,11 @@
 			},
 			"emptyContent": "<p>Deze pagina is leeg. Bewerk deze om uw inhoud toe te voegen.</p>"
 		}
+	},
+	"saleLock": {
+		"LOGIN_REQUIRED": "U moet ingelogd zijn om dit product te bestellen.",
+		"NOT_WHITELISTED": "Dit product is voorbehouden aan bepaalde klanten.",
+		"MAX_PER_USER": "U hebt het maximum bereikt dat u van dit product kunt bestellen.",
+		"login": "Inloggen"
 	}
 }

@@ -3329,5 +3329,11 @@
 			},
 			"emptyContent": "<p>Questa pagina è vuota. Modificala per aggiungere i tuoi contenuti.</p>"
 		}
+	},
+	"saleLock": {
+		"LOGIN_REQUIRED": "Devi accedere per ordinare questo prodotto.",
+		"NOT_WHITELISTED": "Questo prodotto è riservato a determinati clienti.",
+		"MAX_PER_USER": "Hai raggiunto il massimo ordinabile per questo prodotto.",
+		"login": "Accedi"
 	}
 }

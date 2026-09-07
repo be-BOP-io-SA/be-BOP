@@ -3329,5 +3329,11 @@
 			},
 			"emptyContent": "<p>This page is empty. Please edit it to add your content.</p>"
 		}
+	},
+	"saleLock": {
+		"LOGIN_REQUIRED": "You need to be logged in to order this product.",
+		"NOT_WHITELISTED": "This product is reserved for selected customers.",
+		"MAX_PER_USER": "You have reached the maximum you can order for this product.",
+		"login": "Log in"
 	}
 }
