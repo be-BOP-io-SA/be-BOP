@@ -57,6 +57,13 @@ export type PaidOrderDto = {
 	amountPaid: { amountMinor: number; currency: string };
 	/** The VAT contained in `amountPaid`, one entry per rate. Absent when the order carries none. */
 	vat?: Array<{ rate: number; amountMinor: number }>;
+	/**
+	 * The reference given when the order was placed through the API. Without it a consumer that
+	 * credits on payment cannot tell its own orders apart, and credits them twice.
+	 */
+	externalOrderId?: string;
+	/** The custom checkout fields collected on the order. Absent when it carries none. */
+	customFields?: Array<{ slug: string; label: string; value?: string }>;
 	items: PaidOrderItemDto[];
 };
 
@@ -246,6 +253,19 @@ function toItemDto(item: Order['items'][number]): PaidOrderItemDto {
 	};
 }
 
+/** The reference and the checkout fields an integration needs to recognise the order. */
+function orderContext(order: Order) {
+	const customFields = (order.customCheckoutFields ?? []).map((field) => ({
+		slug: field.slug,
+		label: field.label,
+		...(field.value !== undefined && { value: field.value })
+	}));
+	return {
+		...(order.externalOrderId && { externalOrderId: order.externalOrderId }),
+		...(customFields.length && { customFields })
+	};
+}
+
 export function toPaidOrderDto(order: Order): PaidOrderDto | null {
 	const paid = paidAmount(order);
 	if (!paid) {
@@ -267,6 +287,7 @@ export function toPaidOrderDto(order: Order): PaidOrderDto | null {
 		paidAt: lastPaid?.paidAt ? lastPaid.paidAt.toISOString() : order.updatedAt.toISOString(),
 		amountPaid,
 		...(vat.length && { vat }),
+		...orderContext(order),
 		items: order.items.map(toItemDto)
 	};
 }
@@ -333,6 +354,7 @@ export function toOrderReadDto(order: Order): OrderReadDto {
 		paidAt: lastPaid?.paidAt ? lastPaid.paidAt.toISOString() : null,
 		amountPaid,
 		...(vat.length && { vat }),
+		...orderContext(order),
 		items: order.items.map(toItemDto)
 	};
 }
