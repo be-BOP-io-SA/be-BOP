@@ -21,6 +21,7 @@
 	isNew
 	duplicateFromId={data.product?._id}
 	tags={data.tags}
+	subscriptionProducts={data.subscriptionProducts ?? []}
 	productsWithStock={data.productsWithStock}
 	product={data.product ?? undefined}
 	defaultActionSettings={data.productActionSettings}
