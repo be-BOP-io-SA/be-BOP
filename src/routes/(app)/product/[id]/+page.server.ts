@@ -296,7 +296,8 @@ export const load = async ({ params, url, parent, locals }) => {
 		vatProfiles: parentData.vatProfiles,
 		bebopCountry: runtimeConfig.vatCountry,
 		userCountry: locals.countryCode,
-		vatSingleCountry: runtimeConfig.vatSingleCountry
+		vatSingleCountry: runtimeConfig.vatSingleCountry,
+		vatExempted: runtimeConfig.vatExempted
 	});
 
 	return {
@@ -408,7 +409,8 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			vatProfiles,
 			bebopCountry: runtimeConfig.vatCountry,
 			userCountry: locals.countryCode,
-			vatSingleCountry: runtimeConfig.vatSingleCountry
+			vatSingleCountry: runtimeConfig.vatSingleCountry,
+			vatExempted: runtimeConfig.vatExempted
 		});
 
 		// Extract VAT: entered price is WITH VAT, we need to store WITHOUT VAT
