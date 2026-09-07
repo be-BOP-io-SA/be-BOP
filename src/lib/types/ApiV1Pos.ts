@@ -21,8 +21,22 @@ export type PosPrice = {
  * No order is flagged as belonging to a particular integration. An integration that needs to act
  * on some orders and ignore the rest identifies them itself, by the tags their lines carry.
  */
+/** A checkout field the buyer filled in, as it reaches an integration. */
+export type PosCollectedField = {
+	slug: string;
+	label: string;
+	value?: string;
+};
+
 export type PosPaidOrderEvent = {
 	orderId: string;
+	/**
+	 * The reference given when the order was placed through the API. Without it an integration
+	 * that credits on payment cannot tell its own orders apart, and credits them twice.
+	 */
+	externalOrderId?: string;
+	/** The custom checkout fields collected on the order. Absent when it carries none. */
+	customFields?: PosCollectedField[];
 	/**
 	 * What was received, VAT included — the whole order, or the tagged line alone when the request
 	 * named a tag.
@@ -101,6 +115,8 @@ export type PosSaleStatus = (typeof POS_SALE_STATUSES)[number];
 export type PosSaleResult = {
 	externalOrderId: string;
 	status: PosSaleStatus;
+	/** The order this sale produced. Given plainly so a caller never has to parse `orderUrl`. */
+	orderId: string;
 	orderUrl: string;
 };
 
