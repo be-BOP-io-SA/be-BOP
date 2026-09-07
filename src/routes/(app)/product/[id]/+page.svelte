@@ -649,23 +649,30 @@
 								{vatRate}%)
 								<span class="text-gray-400 text-xs ml-1">{showExclTax ? '▲' : '▼'}</span></span
 							>
-							<div class="flex items-center gap-2">
-								<PriceTag
-									currency={data.product.price.currency}
-									class={data.discount?.mode === 'percentage'
-										? 'text-xl lg:text-2xl line-through text-gray-400'
-										: 'text-2xl lg:text-3xl'}
-									short={!!data.discount}
-									amount={unitPriceWithVat}
-									main
-								/>
-								{#if data.discount?.mode === 'percentage'}
-									{#if data.discount.showBadge !== false}
+							<!-- The struck price takes its own line: on a long amount it, the badge and the
+							     real price ran off the side of the card together. -->
+							<div class="flex flex-wrap items-center gap-2">
+								<div
+									class="flex items-center gap-2"
+									class:w-full={data.discount?.mode === 'percentage'}
+								>
+									<PriceTag
+										currency={data.product.price.currency}
+										class={data.discount?.mode === 'percentage'
+											? 'text-xl lg:text-2xl line-through text-gray-400'
+											: 'text-2xl lg:text-3xl'}
+										short={!!data.discount}
+										amount={unitPriceWithVat}
+										main
+									/>
+									{#if data.discount?.mode === 'percentage' && data.discount.showBadge !== false}
 										<span
 											class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
 											>-{data.discount.percentage}%</span
 										>
 									{/if}
+								</div>
+								{#if data.discount?.mode === 'percentage'}
 									<PriceTag
 										currency={data.product.price.currency}
 										class="text-2xl lg:text-3xl"
@@ -704,23 +711,30 @@
 							<span class="text-sm mt-1"
 								>{t('product.vatExcludedEstimate')} ({t('cart.vat')} {vatRate}%)</span
 							>
-							<div class="flex items-center gap-2">
-								<PriceTag
-									currency={data.product.price.currency}
-									class={data.discount?.mode === 'percentage'
-										? 'text-base line-through text-gray-400'
-										: 'text-lg'}
-									short={!!data.discount}
-									amount={unitPrice}
-									main
-								/>
-								{#if data.discount?.mode === 'percentage'}
-									{#if data.discount.showBadge !== false}
+							<!-- The struck price takes its own line: on a long amount it, the badge and the
+							     real price ran off the side of the card together. -->
+							<div class="flex flex-wrap items-center gap-2">
+								<div
+									class="flex items-center gap-2"
+									class:w-full={data.discount?.mode === 'percentage'}
+								>
+									<PriceTag
+										currency={data.product.price.currency}
+										class={data.discount?.mode === 'percentage'
+											? 'text-base line-through text-gray-400'
+											: 'text-lg'}
+										short={!!data.discount}
+										amount={unitPrice}
+										main
+									/>
+									{#if data.discount?.mode === 'percentage' && data.discount.showBadge !== false}
 										<span
 											class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
 											>-{data.discount.percentage}%</span
 										>
 									{/if}
+								</div>
+								{#if data.discount?.mode === 'percentage'}
 									<PriceTag
 										currency={data.product.price.currency}
 										class="text-lg"
@@ -742,21 +756,27 @@
 					{@const showStrikeThrough =
 						data.discount?.mode === 'percentage' && data.discount.showBadge !== false}
 					<div class="flex flex-col gap-1 lg:items-start">
-						<div class="flex items-baseline gap-3">
-							<PriceTag
-								currency={data.product.price.currency}
-								class="text-2xl lg:text-4xl truncate max-w-full {showStrikeThrough
-									? 'line-through text-gray-400'
-									: ''}"
-								short={showStrikeThrough}
-								amount={unitPrice}
-								main
-							/>
+						<!-- Same reason as above: the struck price gets its own line rather than sharing
+						     one with the badge and the real price. -->
+						<div class="flex flex-wrap items-baseline gap-3">
+							<div class="flex items-baseline gap-3" class:w-full={showStrikeThrough}>
+								<PriceTag
+									currency={data.product.price.currency}
+									class="text-2xl lg:text-4xl truncate max-w-full {showStrikeThrough
+										? 'line-through text-gray-400'
+										: ''}"
+									short={showStrikeThrough}
+									amount={unitPrice}
+									main
+								/>
+								{#if showStrikeThrough}
+									<span
+										class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+										>-{data.discount?.mode === 'percentage' ? data.discount.percentage : 0}%</span
+									>
+								{/if}
+							</div>
 							{#if showStrikeThrough}
-								<span
-									class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
-									>-{data.discount?.mode === 'percentage' ? data.discount.percentage : 0}%</span
-								>
 								<PriceTag
 									currency={data.product.price.currency}
 									class="text-2xl lg:text-4xl truncate max-w-full"
