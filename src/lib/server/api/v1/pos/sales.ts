@@ -145,6 +145,7 @@ export async function ingestPosSales(params: {
 		results.set(sale.externalOrderId, {
 			externalOrderId: sale.externalOrderId,
 			status: posSaleMatchesOrder(sale, existing) ? 'success' : 'conflict',
+			orderId: existing._id,
 			orderUrl: orderUrl(existing._id)
 		});
 	}
@@ -184,6 +185,7 @@ export async function ingestPosSales(params: {
 				externalOrderId: result.externalOrderId,
 				status: 'success',
 				// Guarded by the `refused` check above: every landed result carries an orderId.
+				orderId: result.orderId as string,
 				orderUrl: orderUrl(result.orderId as string)
 			});
 		}
