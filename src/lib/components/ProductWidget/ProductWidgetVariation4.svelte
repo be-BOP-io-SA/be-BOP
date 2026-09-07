@@ -11,6 +11,7 @@
 	export let product: ProductWidgetProduct;
 	export let hasDigitalFiles: boolean;
 	export let canAddToCart: boolean;
+	export let restrictedHref: string | undefined = undefined;
 	export let externalUrl: string | undefined = undefined;
 
 	let className = '';
@@ -83,6 +84,12 @@
 		{:else if canAddToCart}
 			<div class="flex flex-row items-end justify-end">
 				<AddToCart {product} picture={pictures[0]} class="btn cartPreview-mainCTA" />
+			</div>
+		{:else if restrictedHref}
+			<div class="flex flex-row items-end justify-end">
+				<a href={restrictedHref} class="btn cartPreview-mainCTA">
+					{t('product.cta.view')}
+				</a>
 			</div>
 		{/if}
 	</div>

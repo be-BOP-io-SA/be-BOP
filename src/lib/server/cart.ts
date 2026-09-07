@@ -9,6 +9,7 @@ import {
 import { error } from '@sveltejs/kit';
 import { runtimeConfig } from './runtime-config';
 import { amountOfStockReserved, refreshAvailableStockInDb } from './product';
+import { annotateProductsWithWhitelist, isProductAllowedForUser } from './productWhitelist';
 import type { Cart } from '$lib/types/Cart';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import { userQuery } from './user';
@@ -33,7 +34,8 @@ export const CART_ERROR_CODES = [
 	'OUT_OF_STOCK',
 	'STANDALONE_QTY_ONE',
 	'VARIATION_INVALID',
-	'MAX_PER_ORDER'
+	'MAX_PER_ORDER',
+	'NOT_WHITELISTED'
 ] as const;
 export type CartErrorCode = (typeof CART_ERROR_CODES)[number];
 
@@ -172,6 +174,15 @@ export async function addToCartInDb(
 ) {
 	if (!canAddToCart(product, params.user, params.mode)) {
 		cartError('NOT_FOR_SALE', "Product can't be added to basket ");
+	}
+
+	// Whitelisted products. Checked here rather than on the product page so that every way into
+	// the cart goes through it: the page, a pre-configured cart link, the POS alias field, NostR.
+	// A POS employee ringing up a walk-in customer can be allowed past it, per product.
+	if (product.whitelist && !(params.mode === 'pos' && product.whitelist.allowPosOverride)) {
+		if (!(await isProductAllowedForUser(product, params.user))) {
+			cartError('NOT_WHITELISTED', 'This product is reserved for selected customers');
+		}
 	}
 
 	if (params.customPrice && !product.payWhatYouWant) {
@@ -452,13 +463,37 @@ async function computeAvailableAmount(product: Product, cart: Cart): Promise<num
 export async function checkCartItems(
 	items: Array<{
 		quantity: number;
-		product: Pick<Product, 'stock' | '_id' | 'name' | 'maxQuantityPerOrder' | 'stockReference'>;
+		product: Pick<
+			Product,
+			'stock' | '_id' | 'name' | 'maxQuantityPerOrder' | 'stockReference' | 'whitelist'
+		>;
 	}>,
 	opts?: {
 		user?: UserIdentifier;
 	}
 ) {
 	const products = items.map((item) => item.product);
+
+	// Re-checked here, and not only on the way in: a cart filled before the shop owner drew the
+	// whitelist up, or before the customer's subscription lapsed, would otherwise still check
+	// out. Called from the cart page, the checkout page and order creation alike, so all three
+	// give the same answer. The subscription collection is queried once for the whole cart.
+	if (opts?.user) {
+		const user = opts.user;
+		const annotated = await annotateProductsWithWhitelist(products, user);
+		const refused = annotated.filter(
+			(product) =>
+				product.restricted && !(user.userHasPosOptions && product.whitelist?.allowPosOverride)
+		);
+		if (refused.length) {
+			cartError(
+				'NOT_WHITELISTED',
+				'This product is reserved for selected customers: ' +
+					refused.map((product) => product.name).join(', ')
+			);
+		}
+	}
+
 	const productById = Object.fromEntries(products.map((product) => [product._id, product]));
 
 	// be careful, there can be multiple lines for the same product due to product.standalone

@@ -50,6 +50,24 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 		productId: string;
 	};
 	vatProfileId?: ObjectId;
+	/**
+	 * When present, only whitelisted customers can order the product or add it to their cart.
+	 * The whitelist is the union of its sources: matching a single one is enough. Absent means
+	 * the product is open to everyone — an empty whitelist restricts it to nobody but employees
+	 * and the POS, if those two options say so.
+	 */
+	whitelist?: {
+		/** One contact e-mail per entry */
+		emails: string[];
+		/** One npub per entry */
+		npubs: string[];
+		/** Customers holding an active subscription to one of these products */
+		subscriptionProductIds: string[];
+		/** Every employee account, whatever its role, as opposed to plain customers */
+		allowEmployees: boolean;
+		/** A POS employee may add the product to a cart for a customer who is not whitelisted */
+		allowPosOverride: boolean;
+	};
 	maxQuantityPerOrder?: number;
 	type: 'subscription' | 'resource' | 'donation';
 	subscriptionDuration?: SubscriptionDuration;

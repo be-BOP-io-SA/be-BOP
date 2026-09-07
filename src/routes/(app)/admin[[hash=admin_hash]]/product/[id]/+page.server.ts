@@ -13,10 +13,12 @@ import { hasMoreDecimalsThanCurrency } from '$lib/utils/currency-validation';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { productBaseSchema } from '../product-schema';
+import { buildProductWhitelist } from '$lib/server/productWhitelist';
 import {
 	amountOfStockReserved,
 	amountOfProductSold,
 	getProductsWithStock,
+	getSubscriptionProducts,
 	validateStockReference,
 	cleanVariationLabels
 } from '$lib/server/product';
@@ -44,6 +46,7 @@ export const load = async ({ params }) => {
 		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
 		.toArray();
 	const productsWithStock = await getProductsWithStock();
+	const subscriptionProducts = await getSubscriptionProducts();
 	const now = new Date();
 	const scheduleId = productToScheduleId(params.id);
 
@@ -81,6 +84,7 @@ export const load = async ({ params }) => {
 		digitalFiles,
 		tags,
 		productsWithStock,
+		subscriptionProducts,
 		reserved,
 		sold,
 		scanned,
@@ -98,6 +102,11 @@ export const actions: Actions = {
 			set(json, key, value);
 		}
 		json.paymentMethods = formData.getAll('paymentMethods')?.map(String);
+		// MultiSelect posts a JSON array of {value,label}, like the product tag picker, not one
+		// form field per pick.
+		json.whitelistSubscriptionProductIds = JSON.parse(
+			String(formData.get('whitelistSubscriptionProductIds') || '[]')
+		).map((x: { value: string }) => x.value);
 
 		const product = await collections.products.findOne({ _id: params.id });
 
@@ -171,6 +180,7 @@ export const actions: Actions = {
 		const validVariations = variationsParsedPrice.filter(
 			(variation) => variation.name && variation.value
 		);
+		const whitelist = buildProductWhitelist(parsed);
 		const amountInCarts = await amountOfStockReserved(params.id);
 		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
 		const hasVariations =
@@ -306,6 +316,7 @@ export const actions: Actions = {
 								productId: parsed.stockReferenceProductId
 							}
 						}),
+						...(whitelist && { whitelist }),
 						...(parsed.paidOrderWebhook && { paidOrderWebhook: parsed.paidOrderWebhook })
 					},
 					$unset: {
@@ -314,6 +325,7 @@ export const actions: Actions = {
 						...(!parsed.deliveryFees && { deliveryFees: '' }),
 						...(parsed.stock === undefined && { stock: '' }),
 						...(!parsed.stockReferenceProductId && { stockReference: '' }),
+						...(!whitelist && { whitelist: '' }),
 						...(!parsed.maxQuantityPerOrder && { maxQuantityPerOrder: '' }),
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),

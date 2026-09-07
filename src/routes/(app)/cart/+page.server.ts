@@ -84,6 +84,8 @@ function mapAddError(slug: string, body: AddErrorBody, product: ProductBadge | n
 			return { slug, key: 'cartFromUrl.errors.reasonVariationRequired', product };
 		case 'BOOKING_INFO_REQUIRED':
 			return { slug, key: 'cartFromUrl.errors.reasonBookingRequired', product };
+		case 'NOT_WHITELISTED':
+			return { slug, key: 'product.whitelist.restricted', product };
 		case 'MAX_PER_ORDER':
 			return {
 				slug,

@@ -23,6 +23,8 @@ import { z } from 'zod';
 import type { ProductWidgetProduct } from '$lib/components/ProductWidget/ProductWidgetProduct';
 import { readUrlState, searchProducts, type VatContext } from './searchlist';
 import { runtimeConfig } from './runtime-config';
+import { annotateProductsWithWhitelist } from './productWhitelist';
+import { userIdentifier } from './user';
 import type { VatProfile } from '$lib/types/VatProfile';
 export type ExternalProductData = ProductWidgetProduct & {
 	externalUrl: string;
@@ -607,6 +609,7 @@ export async function cmsFromContent(
 							| 'payWhatYouWant'
 							| 'bookingSpec'
 							| 'hasVariations'
+							| 'whitelist'
 						>
 					>({
 						price: 1,
@@ -633,7 +636,8 @@ export async function cmsFromContent(
 						hasSellDisclaimer: 1,
 						payWhatYouWant: 1,
 						bookingSpec: 1,
-						hasVariations: 1
+						hasVariations: 1,
+						whitelist: 1
 					})
 					.toArray()
 			: [],
@@ -809,7 +813,7 @@ export async function cmsFromContent(
 		tokens,
 		challenges,
 		sliders,
-		products,
+		products: await annotateProductsWithWhitelist(products, userIdentifier(locals)),
 		externalProducts,
 		tags,
 		specifications,

@@ -22,7 +22,12 @@
 	export { className as class };
 	export let displayOption = 'img-0';
 	$: canAddToCart =
-		canBuy && (!product.availableDate || product.availableDate <= new Date() || !!product.preorder);
+		canBuy &&
+		!product.restricted &&
+		(!product.availableDate || product.availableDate <= new Date() || !!product.preorder);
+	// Whitelisted product the visitor does not match: the CTA takes them to the product page,
+	// which is where the restriction is explained.
+	$: restrictedHref = product.restricted ? `/product/${product._id}` : undefined;
 	const widgets = {
 		'img-0': {
 			component: ProductWidgetVariation0
@@ -69,6 +74,7 @@
 		{pictures}
 		{hasDigitalFiles}
 		{canAddToCart}
+		{restrictedHref}
 		{externalUrl}
 		class={className}
 	/>

@@ -63,6 +63,7 @@
 	export let defaultActionSettings: ProductActionSettings;
 	export let availablePaymentMethods: PaymentMethod[];
 	export let productsWithStock: { _id: string; name: string }[] = [];
+	export let subscriptionProducts: { _id: string; name: string }[] = [];
 	export let currentBookings: BookingSummary[] = [];
 	export let upcomingBookings: BookingSummary[] = [];
 	export let allowPaidOrderWebhook = false;
@@ -135,6 +136,7 @@
 	let disableDateChange = !isNew;
 	let displayPreorderCustomText = !!product.customPreorderText;
 	let hasStock = !!product.stock;
+	let hasWhitelist = !!product.whitelist;
 	let allowDeposit = !!product.deposit;
 	let submitting = false;
 	let sellDisclaimerTitle = product.sellDisclaimer?.title || '';
@@ -1775,6 +1777,91 @@
 						bind:retailBasket={product.actionSettings.retail.canBeAddedToBasket}
 						bind:nostrBasket={product.actionSettings.nostr.canBeAddedToBasket}
 					/>
+				</div>
+
+				<div>
+					<h4 class="text-lg font-medium text-gray-900 mb-3">Whitelist</h4>
+					<div class="space-y-4">
+						<label class="checkbox-label">
+							<input
+								class="form-checkbox"
+								type="checkbox"
+								name="hasWhitelist"
+								bind:checked={hasWhitelist}
+							/>
+							Restrict who can order this product
+						</label>
+
+						{#if hasWhitelist}
+							<p class="text-sm text-gray-600">
+								Anyone matching at least one of the sources below can order the product. Everyone
+								else sees the product page, with the order and add-to-cart buttons disabled. Leaving
+								every source empty closes the product to everyone.
+							</p>
+
+							<label class="form-label">
+								Allowed e-mail addresses
+								<textarea
+									class="form-input"
+									name="whitelistEmails"
+									rows="4"
+									placeholder="One e-mail address per line"
+									value={product.whitelist?.emails?.join('\n') ?? ''}
+								/>
+							</label>
+
+							<label class="form-label">
+								Allowed npubs
+								<textarea
+									class="form-input"
+									name="whitelistNpubs"
+									rows="4"
+									placeholder="One npub per line"
+									value={product.whitelist?.npubs?.join('\n') ?? ''}
+								/>
+							</label>
+
+							<!-- svelte-ignore a11y-label-has-associated-control -->
+							<label class="form-label">
+								Allow the active subscribers of
+								<MultiSelect
+									--sms-options-bg="var(--body-mainPlan-backgroundColor)"
+									name="whitelistSubscriptionProductIds"
+									options={subscriptionProducts.map((subscriptionProduct) => ({
+										value: subscriptionProduct._id,
+										label: subscriptionProduct.name
+									}))}
+									selected={product.whitelist?.subscriptionProductIds?.map((productId) => ({
+										value: productId,
+										label:
+											subscriptionProducts.find(
+												(subscriptionProduct) => subscriptionProduct._id === productId
+											)?.name ?? productId
+									})) ?? []}
+								/>
+							</label>
+
+							<label class="checkbox-label">
+								<input
+									class="form-checkbox"
+									type="checkbox"
+									name="whitelistAllowEmployees"
+									checked={product.whitelist?.allowEmployees ?? false}
+								/>
+								Allow every employee, whatever their role
+							</label>
+
+							<label class="checkbox-label">
+								<input
+									class="form-checkbox"
+									type="checkbox"
+									name="whitelistAllowPosOverride"
+									checked={product.whitelist?.allowPosOverride ?? false}
+								/>
+								Let a point-of-sale employee add it for a customer who is not whitelisted
+							</label>
+						{/if}
+					</div>
 				</div>
 			</div>
 		</details>

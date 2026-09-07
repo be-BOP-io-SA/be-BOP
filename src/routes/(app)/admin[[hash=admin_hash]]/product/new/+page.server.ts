@@ -2,6 +2,7 @@ import { collections, withTransaction } from '$lib/server/database';
 import { generatePicture } from '$lib/server/picture';
 import {
 	getProductsWithStock,
+	getSubscriptionProducts,
 	validateStockReference,
 	cleanVariationLabels
 } from '$lib/server/product';
@@ -24,6 +25,7 @@ import { s3ProductPrefix, getS3Client } from '$lib/server/s3';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { productBaseSchema } from '../product-schema';
+import { buildProductWhitelist } from '$lib/server/productWhitelist';
 import { generateId } from '$lib/utils/generateId';
 import { CopyObjectCommand, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import type { Tag } from '$lib/types/Tag';
@@ -41,6 +43,7 @@ export const load = async ({ url }) => {
 		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
 		.toArray();
 	const productsWithStock = await getProductsWithStock();
+	const subscriptionProducts = await getSubscriptionProducts();
 	if (productId) {
 		const product = await collections.products.findOne({ _id: productId });
 
@@ -62,13 +65,15 @@ export const load = async ({ url }) => {
 				digitalFiles,
 				tags,
 				productsWithStock,
+				subscriptionProducts,
 				currency: runtimeConfig.priceReferenceCurrency
 			};
 		}
 	}
 	return {
 		tags,
-		productsWithStock
+		productsWithStock,
+		subscriptionProducts
 	};
 };
 
@@ -81,6 +86,11 @@ export const actions: Actions = {
 			set(json, key, value);
 		}
 		json.paymentMethods = formData.getAll('paymentMethods')?.map(String);
+		// MultiSelect posts a JSON array of {value,label}, like the product tag picker, not one
+		// form field per pick.
+		json.whitelistSubscriptionProductIds = JSON.parse(
+			String(formData.get('whitelistSubscriptionProductIds') || '[]')
+		).map((x: { value: string }) => x.value);
 
 		const parsed = z
 			.object({
@@ -103,6 +113,8 @@ export const actions: Actions = {
 		if (parsed.paidOrderWebhook && !isPaidOrderWebhookEnabled()) {
 			throw error(403, 'Paid-order webhook feature is disabled');
 		}
+
+		const whitelist = buildProductWhitelist(parsed);
 
 		const priceAmount = parsed.free
 			? 0
@@ -210,6 +222,7 @@ export const actions: Actions = {
 									productId: parsed.stockReferenceProductId
 								}
 							}),
+							...(whitelist && { whitelist }),
 							...(parsed.depositPercentage !== undefined && {
 								deposit: {
 									percentage: parsed.depositPercentage,
@@ -332,6 +345,11 @@ export const actions: Actions = {
 			set(json, key, value);
 		}
 		json.paymentMethods = formData.getAll('paymentMethods')?.map(String);
+		// MultiSelect posts a JSON array of {value,label}, like the product tag picker, not one
+		// form field per pick.
+		json.whitelistSubscriptionProductIds = JSON.parse(
+			String(formData.get('whitelistSubscriptionProductIds') || '[]')
+		).map((x: { value: string }) => x.value);
 
 		const { duplicateFromId } = z
 			.object({ duplicateFromId: z.string() })
@@ -362,6 +380,8 @@ export const actions: Actions = {
 		if (parsed.paidOrderWebhook && !isPaidOrderWebhookEnabled()) {
 			throw error(403, 'Paid-order webhook feature is disabled');
 		}
+
+		const whitelist = buildProductWhitelist(parsed);
 
 		if (!parsed.availableDate) {
 			parsed.preorder = false;
@@ -454,6 +474,7 @@ export const actions: Actions = {
 						paymentMethods: parsed.paymentMethods ?? []
 					}),
 					...(parsed.paidOrderWebhook && { paidOrderWebhook: parsed.paidOrderWebhook }),
+					...(whitelist && { whitelist }),
 					tagIds: product.tagIds,
 					cta: product.cta,
 					externalResources: product.externalResources,

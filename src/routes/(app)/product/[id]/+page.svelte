@@ -229,6 +229,9 @@
 		? data.product.actionSettings.retail.canBeAddedToBasket
 		: data.product.actionSettings.eShop.canBeAddedToBasket;
 
+	// Whitelisted product the visitor does not match: the page stays readable, the CTAs don't work.
+	$: restricted = !data.whitelisted;
+
 	function getWeekDayFromDate(date: Date) {
 		return dayList[(date.getDay() + 6) % 7];
 	}
@@ -1183,7 +1186,14 @@
 									{t('ageWarning.agreement')}
 								</label>
 							{/if}
-							{#if amountAvailable === 0}
+							{#if restricted}
+								<p class="text-red-500">
+									{t('product.whitelist.restricted')}
+								</p>
+								<button class="btn body-cta body-mainCTA" disabled>
+									{t(`product.cta.${verb}`)}
+								</button>
+							{:else if amountAvailable === 0}
 								<p class="text-red-500">
 									<span class="font-bold">{t('product.outOfStock')}</span>
 									<br />

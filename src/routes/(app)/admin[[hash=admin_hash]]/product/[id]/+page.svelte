@@ -38,6 +38,7 @@
 	product={data.product}
 	tags={data.tags}
 	productsWithStock={data.productsWithStock}
+	subscriptionProducts={data.subscriptionProducts}
 	adminPrefix={data.adminPrefix}
 	reserved={data.reserved}
 	defaultActionSettings={data.productActionSettings}

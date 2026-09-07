@@ -988,6 +988,9 @@
 		"minimumForCurrency": "Le montant minimum en {currency} est {minimum}",
 		"nameYourPrice": "Choisissez votre prix ({currency})",
 		"notForSale": "Ce produit n'est pas disponible à la vente par cette plateforme, merci de nous contacter",
+		"whitelist": {
+			"restricted": "Ce produit est réservé à certains clients. Votre compte ne figure pas sur sa liste."
+		},
 		"outOfStock": "En rupture de stock, merci de nous contacter",
 		"preorderText": "En précommande, disponible le {date}",
 		"pricePlaceholder": "Prix",

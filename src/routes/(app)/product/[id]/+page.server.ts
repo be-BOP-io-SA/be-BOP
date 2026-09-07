@@ -1,4 +1,5 @@
 import { addToCartInDb } from '$lib/server/cart';
+import { isProductAllowedForUser } from '$lib/server/productWhitelist';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
 import { applyResolvedStock, resolveStockProduct } from '$lib/server/product';
@@ -115,6 +116,7 @@ async function fetchProduct(
 	| 'bookingSpec'
 	| 'vatProfileId'
 	| 'stockReference'
+	| 'whitelist'
 	| 'tagIds'
 	| 'subscriptionDuration'
 	| 'pricingSchedule'
@@ -170,6 +172,7 @@ async function fetchProduct(
 				bookingSpec: 1,
 				vatProfileId: 1,
 				stockReference: 1,
+				whitelist: 1,
 				tagIds: 1,
 				subscriptionDuration: 1,
 				pricingSchedule: 1,
@@ -239,6 +242,10 @@ export const load = async ({ params, parent, locals }) => {
 		product.bookingSpec ? fetchProductScheduleEvents(productId) : [],
 		parent()
 	]);
+	const whitelisted = await isProductAllowedForUser(product, userIdentifier(locals), {
+		activeSubscriptionProductIds: userSubscriptions.map((subscription) => subscription.productId)
+	});
+
 	const totalFreeProducts = sum(
 		userSubscriptions.map((s) => s.freeProductsById?.[product._id]?.available ?? 0)
 	);
@@ -295,6 +302,7 @@ export const load = async ({ params, parent, locals }) => {
 		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		websiteShortDescription: product.shortDescription,
 		freeProductsAvailable,
+		whitelisted,
 		adminPrefix: getAdminPrefix()
 	};
 };

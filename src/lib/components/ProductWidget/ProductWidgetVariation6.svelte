@@ -13,6 +13,7 @@
 	export let product: ProductWidgetProduct;
 	export let pictures: Picture[] | [];
 	export let canAddToCart: boolean;
+	export let restrictedHref: string | undefined = undefined;
 	export let externalUrl: string | undefined = undefined;
 
 	let pictureId = 0;
@@ -88,6 +89,12 @@
 							detailBtn={true}
 						/>
 					</div>
+				</div>
+			{:else if restrictedHref}
+				<div class="flex flex-row items-end justify-end">
+					<a href={restrictedHref} class="btn cartPreview-mainCTA">
+						{t('product.cta.view')}
+					</a>
 				</div>
 			{/if}
 		</div>

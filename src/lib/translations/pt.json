@@ -988,6 +988,9 @@
 		"minimumForCurrency": "O valor mínimo para {currency} é {minimum}",
 		"nameYourPrice": "Dê o seu preço ({currency})",
 		"notForSale": "Este produto não está disponível para venda",
+		"whitelist": {
+			"restricted": "Este produto é reservado a determinados clientes. A sua conta não está na lista."
+		},
 		"outOfStock": "Esgotado",
 		"preorderText": "Isto é uma pré-encomenda, o seu produto estará disponível em {date}",
 		"pricePlaceholder": "Preço",

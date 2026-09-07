@@ -17,4 +17,7 @@ export type ProductWidgetProduct = Pick<
 	| 'payWhatYouWant'
 	| 'bookingSpec'
 	| 'hasVariations'
->;
+> & {
+	/** Set by the server when the product carries a whitelist the visitor does not match */
+	restricted?: boolean;
+};

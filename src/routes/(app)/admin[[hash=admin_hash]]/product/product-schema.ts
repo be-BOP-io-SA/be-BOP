@@ -164,6 +164,12 @@ export const productBaseSchema = () => ({
 		.transform((val) => val || undefined)
 		.optional(),
 	maxQuantityPerOrder: z.number({ coerce: true }).int().min(1).optional(),
+	hasWhitelist: z.boolean({ coerce: true }).default(false),
+	whitelistEmails: z.string().default(''),
+	whitelistNpubs: z.string().default(''),
+	whitelistSubscriptionProductIds: z.string().array().default([]),
+	whitelistAllowEmployees: z.boolean({ coerce: true }).default(false),
+	whitelistAllowPosOverride: z.boolean({ coerce: true }).default(false),
 	eshopVisible: z.boolean({ coerce: true }).default(false),
 	retailVisible: z.boolean({ coerce: true }).default(false),
 	nostrVisible: z.boolean({ coerce: true }).default(false),

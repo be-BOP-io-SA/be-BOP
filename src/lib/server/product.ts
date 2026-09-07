@@ -276,6 +276,16 @@ export async function getProductsWithStock() {
 }
 
 /**
+ * Subscription products, to pick from when whitelisting a product to their active subscribers.
+ */
+export async function getSubscriptionProducts() {
+	return collections.products
+		.find({ type: 'subscription' })
+		.project<Pick<Product, '_id' | 'name'>>({ _id: 1, name: 1 })
+		.toArray();
+}
+
+/**
  * Apply resolved stock to already loaded product.
  * Does NOT load from DB - works with existing product object.
  *

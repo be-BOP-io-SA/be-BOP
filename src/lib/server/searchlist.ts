@@ -1,5 +1,7 @@
 import { ObjectId, type Document, type Filter } from 'mongodb';
 import { collections } from './database';
+import { annotateProductsWithWhitelist } from './productWhitelist';
+import { userIdentifier } from './user';
 import type {
 	Searchlist,
 	SearchTargetKey,
@@ -163,27 +165,30 @@ export function buildSearchOrClauses(
 	return clauses;
 }
 
+export type SearchProduct = Pick<
+	Product,
+	| '_id'
+	| 'name'
+	| 'shortDescription'
+	| 'price'
+	| 'shipping'
+	| 'preorder'
+	| 'availableDate'
+	| 'standalone'
+	| 'tagIds'
+	| 'stock'
+	| 'actionSettings'
+	| 'type'
+	| 'free'
+	| 'isTicket'
+	| 'payWhatYouWant'
+	| 'maxQuantityPerOrder'
+	| 'mobile'
+	| 'whitelist'
+>;
+
 export type SearchResult = {
-	products: Pick<
-		Product,
-		| '_id'
-		| 'name'
-		| 'shortDescription'
-		| 'price'
-		| 'shipping'
-		| 'preorder'
-		| 'availableDate'
-		| 'standalone'
-		| 'tagIds'
-		| 'stock'
-		| 'actionSettings'
-		| 'type'
-		| 'free'
-		| 'isTicket'
-		| 'payWhatYouWant'
-		| 'maxQuantityPerOrder'
-		| 'mobile'
-	>[];
+	products: Array<SearchProduct & { restricted: boolean }>;
 	total: number;
 	totalPages: number;
 };
@@ -339,7 +344,8 @@ export async function searchProducts(
 		isTicket: 1,
 		payWhatYouWant: 1,
 		maxQuantityPerOrder: 1,
-		mobile: 1
+		mobile: 1,
+		whitelist: 1
 	};
 
 	const pipeline: Document[] = [
@@ -370,7 +376,7 @@ export async function searchProducts(
 		}
 	});
 
-	type ProductHit = SearchResult['products'][number];
+	type ProductHit = SearchProduct;
 	type FacetResult = {
 		products: ProductHit[];
 		count: Array<{ total: number }>;
@@ -388,7 +394,7 @@ export async function searchProducts(
 	}
 
 	return {
-		products,
+		products: await annotateProductsWithWhitelist(products, userIdentifier(locals)),
 		total,
 		totalPages: Math.max(1, Math.ceil(total / perPage))
 	};
