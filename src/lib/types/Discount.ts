@@ -14,6 +14,15 @@ export type Discount = Timestamps & {
 	name: string;
 	/** If set, user must have at least one of these active subscriptions */
 	subscriptionIds?: string[];
+	/**
+	 * Accept a `subscriptionIds` subscription sitting in the cart as if it were already active,
+	 * so a customer can subscribe and buy the discounted product in one order (#2718).
+	 *
+	 * Off unless the shop turns it on: a membership discount that already exists means "paid-up
+	 * members only", and flipping that for every shop at once would start applying discounts on
+	 * a membership nobody has paid for yet.
+	 */
+	acceptSubscriptionInCart?: boolean;
 	/** Promo code (case-insensitive match). Percentage mode only */
 	promoCode?: string;
 	/** Sales channels where this discount applies */
