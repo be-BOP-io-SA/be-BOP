@@ -1,4 +1,5 @@
 import { addToCartInDb, findItemInCart, getCartFromDb, removeFromCartInDb } from '$lib/server/cart';
+import { isSaleLockError } from '$lib/server/saleLock';
 import { collections, withTransaction } from '$lib/server/database';
 import { loadProductWithResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
@@ -69,13 +70,20 @@ export const actions = {
 			})
 			.parse(Object.fromEntries(formData));
 
-		await addToCartInDb(product, quantity + 1, {
-			user: userIdentifier(locals),
-			mode: 'eshop',
-			totalQuantity: true,
-			deposit,
-			lineId
-		});
+		try {
+			await addToCartInDb(product, quantity + 1, {
+				user: userIdentifier(locals),
+				mode: 'eshop',
+				totalQuantity: true,
+				deposit,
+				lineId
+			});
+		} catch (err) {
+			// A sale lock is not an error page: the cart says why, in the customer's language.
+			if (!isSaleLockError(err)) {
+				throw err;
+			}
+		}
 
 		throw redirect(303, request.headers.get('referer') || '/cart');
 	},
@@ -154,13 +162,19 @@ export const actions = {
 				cart
 			});
 		} else {
-			await addToCartInDb(product, quantity, {
-				user: userIdentifier(locals),
-				mode,
-				lineId,
-				totalQuantity: true,
-				cart
-			});
+			try {
+				await addToCartInDb(product, quantity, {
+					user: userIdentifier(locals),
+					mode,
+					lineId,
+					totalQuantity: true,
+					cart
+				});
+			} catch (err) {
+				if (!isSaleLockError(err)) {
+					throw err;
+				}
+			}
 		}
 
 		throw redirect(303, request.headers.get('referer') || '/cart');
