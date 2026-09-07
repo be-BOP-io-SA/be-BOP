@@ -193,6 +193,7 @@ export type VatContext = {
 	bebopCountry: CountryAlpha2 | undefined;
 	userCountry: CountryAlpha2 | undefined;
 	vatSingleCountry: boolean;
+	vatExempted: boolean;
 	displayVatIncluded: boolean;
 };
 
@@ -256,7 +257,8 @@ export async function searchProducts(
 					vatProfiles: vat.vatProfiles,
 					bebopCountry: vat.bebopCountry,
 					userCountry: vat.userCountry,
-					vatSingleCountry: vat.vatSingleCountry
+					vatSingleCountry: vat.vatSingleCountry,
+					vatExempted: vat.vatExempted
 				});
 				const branches = vat.vatProfiles.map((vp) => ({
 					case: { $eq: ['$vatProfileId', new ObjectId(vp._id)] },
@@ -267,7 +269,8 @@ export async function searchProducts(
 							vatProfiles: vat.vatProfiles,
 							bebopCountry: vat.bebopCountry,
 							userCountry: vat.userCountry,
-							vatSingleCountry: vat.vatSingleCountry
+							vatSingleCountry: vat.vatSingleCountry,
+							vatExempted: vat.vatExempted
 						}) /
 							100
 				}));
