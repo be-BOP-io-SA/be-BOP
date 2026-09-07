@@ -924,6 +924,7 @@ async function buildSearchlistViews(searchlistSlugs: string[], locals: App.Local
 		bebopCountry: runtimeConfig.vatCountry,
 		userCountry: locals.countryCode,
 		vatSingleCountry: runtimeConfig.vatSingleCountry,
+		vatExempted: runtimeConfig.vatExempted,
 		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
 	};
 
