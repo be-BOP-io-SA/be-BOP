@@ -15,6 +15,23 @@ import { iteratePaidOrderBacklog, type PaidStreamCursor } from '../orders/paidSt
  * tag was named and no line carries it; or more than one does, which is refused rather than
  * resolved arbitrarily and logged so the shop can see it.
  */
+/**
+ * What an integration needs to recognise an order: the reference whoever placed it gave, and
+ * the checkout fields collected on it. Without them a consumer crediting on payment cannot tell
+ * its own orders apart and credits them twice.
+ */
+function orderContext(order: Order) {
+	const customFields = (order.customCheckoutFields ?? []).map((field) => ({
+		slug: field.slug,
+		label: field.label,
+		...(field.value !== undefined && { value: field.value })
+	}));
+	return {
+		...(order.externalOrderId && { externalOrderId: order.externalOrderId }),
+		...(customFields.length && { customFields })
+	};
+}
+
 export function toPosPaidOrderEvent(order: Order, tag?: string): PosPaidOrderEvent | null {
 	const paid = paidAmount(order);
 	if (!paid) {
@@ -36,7 +53,8 @@ export function toPosPaidOrderEvent(order: Order, tag?: string): PosPaidOrderEve
 			orderId: order._id,
 			amount: { amount: line.amount, currency: line.currency },
 			...(line.key && { key: line.key }),
-			...(line.vat && { vat: [line.vat] })
+			...(line.vat && { vat: [line.vat] }),
+			...orderContext(order)
 		};
 	}
 
@@ -44,7 +62,8 @@ export function toPosPaidOrderEvent(order: Order, tag?: string): PosPaidOrderEve
 	return {
 		orderId: order._id,
 		amount: { amount: paid.amount, currency: paid.currency },
-		...(vat.length && { vat })
+		...(vat.length && { vat }),
+		...orderContext(order)
 	};
 }
 
