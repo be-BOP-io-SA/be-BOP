@@ -199,7 +199,12 @@ describe('ingestPosSales', () => {
 		});
 		const res = await ingestOk({ apiKey, sales: [sale()] });
 		expect(res.results).toEqual([
-			{ externalOrderId: 'sale-1', status: 'success', orderUrl: 'https://shop.example/order/ord-1' }
+			{
+				externalOrderId: 'sale-1',
+				status: 'success',
+				orderId: 'ord-1',
+				orderUrl: 'https://shop.example/order/ord-1'
+			}
 		]);
 	});
 
@@ -223,6 +228,7 @@ describe('ingestPosSales', () => {
 		expect(res.results[0]).toEqual({
 			externalOrderId: 'sale-1',
 			status: 'success',
+			orderId: 'ord-1',
 			orderUrl: 'https://shop.example/order/ord-1'
 		});
 		expect(writeBatch).not.toHaveBeenCalled();
