@@ -4,6 +4,13 @@ import type { ObjectId } from 'mongodb';
 
 /**
  * Computes the VAT rate for a product considering custom VAT profiles
+ *
+ * Every rate the shop shows or bills goes through here — a product, a delivery fee, and
+ * whatever fee is added next. That is deliberate: the shop-wide exemption is settled once,
+ * at the top of this function, so a new kind of fee inherits it without anyone remembering to
+ * ask. Before that, "Disable VAT for my be-BOP" was honoured when the order was priced but not
+ * when a rate was shown, and a shop entering a VAT-included price had it divided by a tax it
+ * does not charge (#2649).
  */
 export function computeVatRate(params: {
 	productVatProfileId: string | ObjectId | undefined;
@@ -14,7 +21,13 @@ export function computeVatRate(params: {
 	bebopCountry: CountryAlpha2 | undefined;
 	userCountry: CountryAlpha2 | undefined;
 	vatSingleCountry: boolean;
+	/** "Disable VAT for my be-BOP". Nothing is taxed, whatever the country or profile says. */
+	vatExempted?: boolean;
 }): number {
+	if (params.vatExempted) {
+		return 0;
+	}
+
 	const country = params.vatSingleCountry
 		? params.bebopCountry
 		: params.userCountry ?? params.bebopCountry;
