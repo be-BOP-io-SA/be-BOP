@@ -72,6 +72,21 @@ export function userIdentifier(locals: App.Locals): UserIdentifier {
 	};
 }
 
+/**
+ * The same person, minus the browser session.
+ *
+ * `userQuery` matches on the session id too, which is what lets an anonymous visitor keep
+ * their own cart and orders. That is right for recognising someone's belongings, and wrong for
+ * granting them anything: a session that once served a subscriber keeps matching that
+ * subscription after they log out, or after somebody else logs in on the same browser — and
+ * the subscriber discount followed the session instead of the person.
+ *
+ * So: `userQuery` to find what is yours, this one to decide what you are entitled to.
+ */
+export function identifiedUserQuery(user: UserIdentifier) {
+	return userQuery({ ...user, sessionId: undefined });
+}
+
 export function userQuery(user: UserIdentifier) {
 	const emails = [...(user.email ? [user.email] : []), ...(user.secondaryEmails ?? [])];
 	const ret = {

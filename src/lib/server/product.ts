@@ -349,3 +349,38 @@ export function cleanVariationLabels(variationLabels?: {
 
 	return { names, values };
 }
+
+/**
+ * How many units of each product are still sellable, this visitor's own reservations excluded.
+ *
+ * One rule, one place. The product page used to read the cached `stock.available`, which counts
+ * everyone's reservations including the visitor's own, while the cart computed it live and
+ * excluded them — so a page could announce a rupture the cart would have accepted. Both now
+ * ask this.
+ *
+ * A product without stock is unlimited and simply absent from the result.
+ */
+export async function resolveAvailableAmounts(
+	products: Array<{
+		_id: string;
+		stock?: { available: number; total: number; reserved: number };
+		stockReference?: { productId: string };
+	}>,
+	user: UserIdentifier | undefined,
+	session?: ClientSession
+): Promise<Record<string, number>> {
+	const available: Record<string, number> = {};
+
+	for (const product of products) {
+		if (!product.stock) {
+			continue;
+		}
+		const reserved = await amountOfStockReserved(product.stockReference?.productId || product._id, {
+			...(user && { exclude: user }),
+			session
+		});
+		available[product._id] = Math.max(product.stock.total - reserved, 0);
+	}
+
+	return available;
+}
