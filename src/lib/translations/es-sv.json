@@ -40,6 +40,19 @@
 				"noReference": "-- Sin referencia (usar stock propio) --",
 				"warning": "⚠️ Este producto referencia el stock de otro producto. Los cambios de stock afectarán al producto referenciado."
 			}
+		},
+		"session": {
+			"expiry": {
+				"warning": {
+					"message": "Su sesión finalizará en {countdown}",
+					"extend": "Prolongar",
+					"ignore": "Ignorar"
+				},
+				"expired": {
+					"message": "Su sesión ha sido desconectada. Sus cambios no guardados no serán registrados, por favor <0>vuelva a iniciar sesión</0>.",
+					"configHint": "Puede configurar una duración de sesión más larga al iniciar sesión."
+				}
+			}
 		}
 	},
 	"ageWarning": {

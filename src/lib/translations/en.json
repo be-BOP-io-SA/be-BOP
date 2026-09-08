@@ -40,6 +40,19 @@
 				"noReference": "-- No reference (use own stock) --",
 				"warning": "⚠️ This product references another product's stock. Stock changes will affect the referenced product."
 			}
+		},
+		"session": {
+			"expiry": {
+				"warning": {
+					"message": "Your session will end in {countdown}",
+					"extend": "Extend",
+					"ignore": "Dismiss"
+				},
+				"expired": {
+					"message": "Your session has been disconnected. Any unsaved changes will not be recorded, please <0>log in again</0>.",
+					"configHint": "A longer session duration can be configured at login."
+				}
+			}
 		}
 	},
 	"ageWarning": {

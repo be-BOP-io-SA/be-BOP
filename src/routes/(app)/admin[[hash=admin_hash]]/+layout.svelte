@@ -10,6 +10,7 @@
 	import { isAllowedOnPage } from '$lib/types/Role';
 	import { adminLinks as adminLinksImported } from './adminLinks.js';
 	import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
+	import SessionExpiryBanner from '$lib/components/SessionExpiryBanner.svelte';
 
 	export let data;
 
@@ -259,6 +260,9 @@
 		</aside>
 
 		<main class="flex-1 p-4 flex flex-col gap-4 body-mainPlan {$page.data.bodyClass || ''}">
+			{#if data.expireUserAt}
+				<SessionExpiryBanner expireUserAt={data.expireUserAt} adminPrefix={data.adminPrefix} />
+			{/if}
 			<button
 				type="button"
 				class="md:hidden self-start bg-gray-400 text-gray-800 rounded p-2 text-2xl"
