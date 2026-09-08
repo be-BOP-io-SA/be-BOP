@@ -42,7 +42,11 @@ export default defineConfig(({ command }) => {
 			})
 		],
 		test: {
-			include: ['src/**/*.{test,spec}.{js,ts}']
+			include: ['src/**/*.{test,spec}.{js,ts}'],
+			// One database, shared by every suite that touches Mongo, and several of them wipe it
+			// clean between tests. Run in parallel, one file's cleanDb() empties the collection
+			// another has just seeded, and the failure lands on whichever file was unlucky.
+			poolOptions: { threads: { singleThread: true } }
 		},
 		// LayerCake ships uncompiled .svelte files; let Vite transform them for SSR
 		// instead of Node trying to import the raw .svelte (ERR_UNKNOWN_FILE_EXTENSION).

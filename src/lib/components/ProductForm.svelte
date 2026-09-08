@@ -411,6 +411,14 @@
 	 */
 	let variationLabelsNames: string[] = [];
 	let variationLabelsValues: string[] = [];
+	/**
+	 * The identifier of each existing variation, editable.
+	 *
+	 * It used to be resubmitted as stored, so a shop could read a bracelet code on screen, retype
+	 * it, save, and change nothing — the field it was typing into was the label. Changing it here
+	 * rewrites `variations[].value` and moves the label with it.
+	 */
+	let variationValueIds: string[] = (product.variations ?? []).map((v) => v.value);
 
 	function isNumber(value: string) {
 		return !isNaN(Number(value)) && value.trim() !== '';
@@ -1002,6 +1010,15 @@
 										<input disabled type="text" class="form-input" value={variation.name} />
 									</label>
 									<label class="form-label flex-1">
+										Value Id
+										<input
+											type="text"
+											class="form-input"
+											bind:value={variationValueIds[i]}
+											placeholder={variation.value}
+										/>
+									</label>
+									<label class="form-label flex-1">
 										Category Name
 										<input
 											type="text"
@@ -1017,7 +1034,8 @@
 										Value
 										<input
 											type="text"
-											name="variationLabels.values[{variation.name}][{variation.value}]"
+											name="variationLabels.values[{variation.name}][{variationValueIds[i] ||
+												variation.value}]"
 											class="form-input"
 											value={product.variationLabels?.values[variation.name]?.[variation.value]}
 											bind:this={variationInput[i]}
@@ -1065,7 +1083,11 @@
 								<label class="form-label">
 									{#if variation.name && variation.value}
 										<input type="hidden" name="variations[{i}].name" value={variation.name} />
-										<input type="hidden" name="variations[{i}].value" value={variation.value} />
+										<input
+											type="hidden"
+											name="variations[{i}].value"
+											value={variationValueIds[i] || variation.value}
+										/>
 									{:else}
 										<input
 											type="hidden"
