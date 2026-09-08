@@ -79,7 +79,7 @@
 			},
 			"secretStorageNote": "Het geheim wordt één keer getoond. be-BOP bewaart alleen SHA-256(secret) — geen pepper (technische schuld: DB-lek maakt offline brute-force mogelijk).",
 			"corsTitle": "API v1 CORS-origins",
-			"corsHelp": "Browser-Origin-allowlist voor /api/v1. Laat leeg om alle cross-origin toegang te weigeren. Wildcards (*) zijn nooit toegestaan.",
+			"corsHelp": "Browser-origins die /api/v1 mogen aanroepen. Laat leeg om elke cross-origin toegang te weigeren, of vul * in om ze allemaal toe te staan — hier veilig, omdat de API alleen via de X-API-Key-header authenticeert en nooit een cookie leest.",
 			"corsOriginsLabel": "Toegestane origins",
 			"corsOriginsHint": "Eén origin per regel of gescheiden door komma's (bijv. https://partner.example). Laat leeg om elke browser-origin te weigeren, of vul * in om ze allemaal toe te staan.",
 			"corsSave": "CORS-origins opslaan",

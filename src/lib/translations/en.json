@@ -79,7 +79,7 @@
 			},
 			"secretStorageNote": "The secret is shown once. be-BOP stores only SHA-256(secret) — no pepper (tech debt: DB leak enables offline brute-force).",
 			"corsTitle": "API v1 CORS origins",
-			"corsHelp": "Browser Origin allowlist for /api/v1. Leave empty to deny all cross-origin access. Wildcards (*) are never allowed.",
+			"corsHelp": "Browser origins allowed to call /api/v1. Leave empty to refuse every cross-origin call, or enter * to accept them all — safe here because the API authenticates on the X-API-Key header alone and never reads a cookie.",
 			"corsOriginsLabel": "Allowed origins",
 			"corsOriginsHint": "One origin per line or comma-separated (e.g. https://partner.example). Leave empty to refuse every browser origin, or enter * to accept them all.",
 			"corsSave": "Save CORS origins",

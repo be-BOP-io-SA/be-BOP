@@ -347,7 +347,12 @@ const baseConfig = {
 	 * Empty = no cross-origin access. Persisted in DB; edited in Admin -> API Keys.
 	 */
 	apiV1: {
-		corsOrigins: [] as string[]
+		// Open by default. This API authenticates on the X-API-Key header alone and never reads a
+		// cookie, so an origin allowlist closes nothing a key holder could not already do — while
+		// being unworkable for the callers it would apply to: local applications on changing
+		// networks, whose origin is a different localhost port on every machine. A shop that wants
+		// an allowlist still names its origins in Admin -> API Keys.
+		corsOrigins: ['*'] as string[]
 	},
 	telemetry: null as null | {
 		enabled: boolean;

@@ -79,7 +79,7 @@
 			},
 			"secretStorageNote": "Das Geheimnis wird nur einmal angezeigt. be-BOP speichert nur SHA-256(secret) — kein Pepper (technische Schuld: DB-Leck ermöglicht Offline-Brute-Force).",
 			"corsTitle": "API-v1-CORS-Origins",
-			"corsHelp": "Browser-Origin-Allowlist für /api/v1. Leer lassen, um allen Cross-Origin-Zugriff zu verweigern. Wildcards (*) sind nie erlaubt.",
+			"corsHelp": "Browser-Herkünfte, die /api/v1 aufrufen dürfen. Leer lassen, um jeden Cross-Origin-Zugriff abzulehnen, oder * eingeben, um alle zu akzeptieren — hier unbedenklich, da sich die API allein über den X-API-Key-Header authentifiziert und nie ein Cookie liest.",
 			"corsOriginsLabel": "Erlaubte Origins",
 			"corsOriginsHint": "Eine Herkunft pro Zeile oder durch Kommas getrennt (z. B. https://partner.example). Leer lassen, um jede Browser-Herkunft abzulehnen, oder * eingeben, um alle zu akzeptieren.",
 			"corsSave": "CORS-Origins speichern",
