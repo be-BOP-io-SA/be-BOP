@@ -8,7 +8,7 @@
 	import { applyAction, enhance } from '$app/forms';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { productAddedToCart } from '$lib/stores/productAddedToCart';
-	import { invalidate } from '$app/navigation';
+	import { invalidate, invalidateAll } from '$app/navigation';
 	import { UrlDependency } from '$lib/types/UrlDependency';
 	import {
 		DEFAULT_MAX_QUANTITY_PER_ORDER,
@@ -31,6 +31,7 @@
 		subMinutes
 	} from 'date-fns';
 	import { useI18n } from '$lib/i18n';
+	import { cartErrorKey } from '$lib/cartErrorKey';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import {
 		FRACTION_DIGITS_PER_CURRENCY,
@@ -217,10 +218,20 @@
 
 	$: isPreorder = isPreorderFn(data.product.availableDate, data.product.preorder);
 
+	// The server answers every reason the product cannot be added — login, whitelist, per-person
+	// cap, per-order cap, stock — in one list. The page states that list; it no longer holds a
+	// second copy of any of those rules.
+	$: quantityAlreadyInCart = data.cart.items
+		.filter((item) => item.product._id === data.product._id)
+		.reduce((total, item) => total + item.quantity, 0);
+
 	$: amountAvailable = Math.max(
 		Math.min(
-			data.product.stock?.available ?? Infinity,
-			data.product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER
+			(data.product.stock?.available ?? Infinity) - quantityAlreadyInCart,
+			(data.product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER) - quantityAlreadyInCart,
+			// What this person may still take. Offering more than this made the picker propose a
+			// quantity the cart was bound to refuse.
+			(data.maxPerUserRemaining ?? Infinity) - quantityAlreadyInCart
 		),
 		0
 	);
@@ -925,10 +936,17 @@
 								if (result.type === 'error') {
 									const code = result.error.code;
 									const params = result.error.params ?? {};
-									errorMessage =
-										code && te(`cart.error.${code}`)
-											? t(`cart.error.${code}`, params)
-											: result.error.message;
+									const key = code ? cartErrorKey(code) : undefined;
+									errorMessage = key && te(key) ? t(key, params) : result.error.message;
+									return;
+								}
+
+								// A sale lock comes back as a typed failure. Reloading is enough to state it: the
+								// page asks the evaluator on every load, so the reason appears and the button
+								// greys out on its own. What matters here is not announcing a product that never
+								// entered the cart.
+								if (result.type === 'failure') {
+									await invalidateAll();
 									return;
 								}
 
@@ -1190,7 +1208,24 @@
 									{t('ageWarning.agreement')}
 								</label>
 							{/if}
-							{#if amountAvailable === 0}
+							{#if data.saleLocks?.length}
+								{#each data.saleLocks as lock}
+									<p class="text-red-500">{t(cartErrorKey(lock.code), lock.params ?? {})}</p>
+								{/each}
+								<button class="btn body-cta body-mainCTA" disabled>
+									{t(`product.cta.${verb}`)}
+								</button>
+								{#if data.saleLocks.some((lock) => lock.code === 'LOGIN_REQUIRED')}
+									<a
+										href="/login"
+										target="_blank"
+										rel="noopener"
+										class="btn body-cta body-secondaryCTA text-center"
+									>
+										{t('saleLock.login')}
+									</a>
+								{/if}
+							{:else if amountAvailable === 0}
 								<p class="text-red-500">
 									<span class="font-bold">{t('product.outOfStock')}</span>
 									<br />

@@ -116,6 +116,11 @@
 		"vatSellerCountry": "Het land is het land van de verkoper.",
 		"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})",
 		"error": {
+			"NOT_PWYW": "Dit product accepteert geen vrije prijs.",
+			"NOT_PREORDER": "Dit product is nog niet beschikbaar voor pre-order.",
+			"STANDALONE_QTY_ONE": "U kunt slechts één exemplaar van dit product tegelijk bestellen.",
+			"SUBSCRIPTION_CUSTOM_PRICE": "Een abonnement kan niet tegen een vrije prijs worden gekocht.",
+			"MAX_PRICE_EXCEEDED": "De ingevoerde prijs ligt boven het maximum van {max} {currency}.",
 			"BOOKING_SAME_DAY_DISABLED": "Boekingen voor vandaag zijn niet beschikbaar voor dit product.",
 			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Boekingen voor vandaag zijn niet meer mogelijk na {maxHour}."
 		}
@@ -1197,5 +1202,11 @@
 		"errorLabelRequired": "Elke betaalmethode heeft een label nodig.",
 		"removeConfirm": "Deze methode verwijderen?",
 		"cancel": "Annuleren"
+	},
+	"saleLock": {
+		"LOGIN_REQUIRED": "U moet ingelogd zijn om dit product te bestellen.",
+		"NOT_WHITELISTED": "Dit product is voorbehouden aan bepaalde klanten.",
+		"MAX_PER_USER": "U hebt het maximum bereikt dat u van dit product kunt bestellen.",
+		"login": "Inloggen"
 	}
 }
