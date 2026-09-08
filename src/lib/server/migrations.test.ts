@@ -74,3 +74,63 @@ describe('migration #2492 — drop single-currency (SAT) amount from order.vat',
 		expect(after?.vat).toEqual([{ rate: 8.1, country: 'CH' }]);
 	});
 });
+
+function migrationVatArray() {
+	const migration = migrations.find((m) => m._id.equals(new ObjectId('65bd8fc40914f6a599ede07d')));
+	if (!migration) {
+		throw new Error('migration "Convert VAT rate to array in orders" not found');
+	}
+	return migration;
+}
+
+describe('migration — Convert VAT rate to array in orders', () => {
+	it('stores a scalar vatRate on each item, not an array', async () => {
+		await cleanDb();
+
+		const _id = 'legacy-order-vat-array';
+		await collections.orders.insertOne({
+			_id,
+			vat: { price: { amount: 100, currency: 'EUR' }, rate: 8.1, country: 'CH' },
+			items: [{ quantity: 1 }, { quantity: 2 }]
+		} as never);
+
+		await withTransaction((session) => migrationVatArray().run(session));
+
+		const migrated = await collections.orders.findOne({ _id });
+		expect(migrated?.vat).toEqual([
+			{ price: { amount: 100, currency: 'EUR' }, rate: 8.1, country: 'CH' }
+		]);
+		for (const item of migrated?.items ?? []) {
+			expect(item.vatRate).toBe(8.1);
+		}
+	});
+});
+
+function migrationVatRateArrayFix() {
+	const migration = migrations.find((m) => m._id.equals(new ObjectId('0295fdf30e394bdf3fc015b1')));
+	if (!migration) {
+		throw new Error('migration "Fix items.vatRate wrongly stored as an array" not found');
+	}
+	return migration;
+}
+
+describe('migration — Fix items.vatRate wrongly stored as an array', () => {
+	it('flattens an array vatRate back to its scalar value', async () => {
+		await cleanDb();
+
+		const _id = 'order-with-array-vat-rate';
+		await collections.orders.insertOne({
+			_id,
+			items: [
+				{ quantity: 1, vatRate: [8.1] },
+				{ quantity: 2, vatRate: 5.5 }
+			]
+		} as never);
+
+		await withTransaction((session) => migrationVatRateArrayFix().run(session));
+
+		const migrated = await collections.orders.findOne({ _id });
+		expect(migrated?.items[0].vatRate).toBe(8.1);
+		expect(migrated?.items[1].vatRate).toBe(5.5);
+	});
+});
