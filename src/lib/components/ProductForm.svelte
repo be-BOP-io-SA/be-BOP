@@ -1048,12 +1048,10 @@
 												(isNumber(variationLabelsNames[i]) ? 'name' : '') +
 													variationLabelsNames[i] || ''
 											).toLowerCase()}][{isNumber(variationLabelsValues[i])
-												? (
-														variationLabelsNames[i] +
-															(isNumber(variationLabelsNames[i]) ? '-' : '') +
-															variationLabelsValues[i] || ''
-												  ).toLowerCase()
-												: (variationLabelsValues[i] || '').toLowerCase()}]"
+												? variationLabelsNames[i] +
+														(isNumber(variationLabelsNames[i]) ? '-' : '') +
+														variationLabelsValues[i] || ''
+												: variationLabelsValues[i] || ''}]"
 											class="form-input"
 											bind:value={variationLabelsValues[i]}
 											bind:this={variationInput[i]}
@@ -1081,12 +1079,10 @@
 											type="hidden"
 											name="variations[{i}].value"
 											value={isNumber(variationLabelsValues[i])
-												? (
-														variationLabelsNames[i] +
-															(isNumber(variationLabelsNames[i]) ? '-' : '') +
-															variationLabelsValues[i] || ''
-												  ).toLowerCase()
-												: (variationLabelsValues[i] || '').toLowerCase()}
+												? variationLabelsNames[i] +
+														(isNumber(variationLabelsNames[i]) ? '-' : '') +
+														variationLabelsValues[i] || ''
+												: variationLabelsValues[i] || ''}
 										/>
 									{/if}
 									Price difference
