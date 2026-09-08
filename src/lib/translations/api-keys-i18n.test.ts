@@ -6,7 +6,6 @@ const KEYS = [
 	'admin.apiKeys.scopeHint.ordersWrite',
 	'admin.apiKeys.scopeHint.catalogRead',
 	'admin.apiKeys.scopeHint.ordersRead',
-	'product.uniqueKeyLabel',
 	'admin.apiKeys.secretStorageNote',
 	'admin.apiKeys.corsTitle',
 	'admin.apiKeys.corsHelp',
