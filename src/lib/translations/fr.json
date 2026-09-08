@@ -1090,8 +1090,7 @@
 		"variationPriceLabel": "Variation de prix",
 		"vatExcluded": "Hors TVA",
 		"vatExcludedEstimate": "Prix estimé hors TVA",
-		"vatIncluded": "Prix TTC estimé",
-		"uniqueKeyLabel": "Clé unique de l'article"
+		"vatIncluded": "Prix TTC estimé"
 	},
 	"schedule": {
 		"dateText": "- de {beginTime} à {endTime}",

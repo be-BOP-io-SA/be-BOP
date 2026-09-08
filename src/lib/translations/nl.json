@@ -1090,8 +1090,7 @@
 		"variationPriceLabel": "Variatie Prijs",
 		"vatExcluded": "Exclusief BTW",
 		"vatExcludedEstimate": "Geschatte prijs excl. btw",
-		"vatIncluded": "Geschatte prijs inclusief belasting",
-		"uniqueKeyLabel": "Unieke artikel-sleutel"
+		"vatIncluded": "Geschatte prijs inclusief belasting"
 	},
 	"schedule": {
 		"dateText": "- Van {beginTime} tot {endTime}",
