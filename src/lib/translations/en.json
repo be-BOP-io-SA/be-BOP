@@ -1090,8 +1090,7 @@
 		"variationPriceLabel": "Variation Price",
 		"vatExcluded": "VAT excluded",
 		"vatExcludedEstimate": "Estimated price excluding tax",
-		"vatIncluded": "Estimated price including tax",
-		"uniqueKeyLabel": "Unique item key"
+		"vatIncluded": "Estimated price including tax"
 	},
 	"schedule": {
 		"dateText": " - from {beginTime} to {endTime}",
