@@ -958,11 +958,9 @@
 								<input type="hidden" name="freeQuantity" value={freeProductsAvailable} />
 							{/if}
 							{#if uniqueKey}
+								<!-- Carried to the cart, never shown: the key identifies the artifact the link was
+								     made for, and the customer who follows that link has no use for reading it. -->
 								<input type="hidden" name="uniqueKey" value={uniqueKey} />
-								<p class="text-sm opacity-80">
-									{t('product.uniqueKeyLabel')}:
-									<span class="font-mono break-all">{uniqueKey}</span>
-								</p>
 							{/if}
 							{#if data.product.payWhatYouWant}
 								<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
