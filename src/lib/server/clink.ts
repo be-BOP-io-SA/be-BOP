@@ -1,9 +1,7 @@
 import { createHash } from 'crypto';
-import { z } from 'zod';
-import { getNostrKeys } from './nostr';
 import { runtimeConfig } from './runtime-config';
 import { relayUrlIssue } from './webhook-url-guard';
-import { collections } from './database';
+import { getNostrKeys } from './nostr';
 import {
 	ClinkSDK,
 	finalizeEvent,
@@ -16,19 +14,21 @@ import {
 } from '@shocknet/clink-sdk';
 
 /**
- * CLINK (Common Lightning Interface for Nostr Keys) — server-side protocol client.
+ * CLINK (Common Lightning Interface for Nostr Keys) — server-side transport client.
  *
- * Handles the merchant side of CLINK Offers:
- *   1. Decode merchant's nOffer string (from Lightning.Pub or similar)
- *   2. Subscribe to Nostr relays for incoming kind 21001 payment requests
- *   3. NIP-44 decrypt requests, validate amounts, generate invoices
- *   4. NIP-44 encrypt and publish kind 21001 responses with BOLT11 invoices
+ * CLINK is a TRANSPORT layer, not a payment backend. Invoices are created and
+ * settled by be-BOP's own configured Lightning processor (see clinkCreateInvoice).
+ * This module handles only the Nostr side:
+ *   1. Decode/validate the merchant's nOffer string
+ *   2. Subscribe to the relay for incoming kind 21001 payment requests
+ *   3. NIP-44 decrypt/validate requests, mint a bolt11 via the backend, respond
  *
- * Invoice generation delegates to the configured Lightning backend (processor or Lightning.Pub HTTP).
- * Settlement is detected by be-BOP's existing 2s order poller calling checkPayment().
+ * Settlement is NOT detected here. be-BOP's existing 2s order poller calls
+ * PPClink.checkPayment(), which re-dispatches to the underlying Lightning
+ * processor and queries the node by payment hash — stateless and multi-process
+ * safe, with no separate session collection or in-memory maps.
  */
 
-const CLINK_RELAY_TIMEOUT_MS = 15_000;
 const CLINK_EVENT_KIND = 21001;
 
 // --- Hex / Uint8Array helpers ---
@@ -41,12 +41,6 @@ function hexToBytes(hex: string): Uint8Array {
 	return bytes;
 }
 
-function bytesToHex(bytes: Uint8Array): string {
-	return Array.from(bytes)
-		.map((b) => b.toString(16).padStart(2, '0'))
-		.join('');
-}
-
 // --- NIP-44 helpers (nostr-tools 2.x uses conversation keys) ---
 
 function clinkEncrypt(plaintext: string, privkeyHex: string, pubkeyHex: string): string {
@@ -57,114 +51,6 @@ function clinkEncrypt(plaintext: string, privkeyHex: string, pubkeyHex: string):
 function clinkDecrypt(ciphertext: string, privkeyHex: string, senderPubkeyHex: string): string {
 	const convKey = nip44.getConversationKey(hexToBytes(privkeyHex), senderPubkeyHex);
 	return nip44.decrypt(ciphertext, convKey);
-}
-
-// --- Session store (in-memory cache + MongoDB persistence) ---
-
-export interface ClinkSession {
-	/** Unique session key — hash of bolt11 (per-invoice, not merchant-level) */
-	sessionKey: string;
-	paymentHash: string;
-	bolt11: string;
-	expiresAt: Date;
-	paid?: boolean;
-	/** Nostr event ID of the original payment request (used for receipt correlation) */
-	nostrEventId?: string;
-}
-
-/** Fast in-memory cache — synced with MongoDB */
-const activeSessions = new Map<string, ClinkSession>();
-
-/**
- * Maps Nostr event ID → payment hash for receipt correlation.
- * When LP sends an invoice response, we capture the #e tag (request event ID)
- * and map it to the payment hash. When a receipt arrives with #e: [X],
- * we look up X → paymentHash → session → mark as paid.
- */
-const eventIdToPaymentHash = new Map<string, string>();
-
-/** Load pending (unpaid) sessions from MongoDB into the in-memory cache on startup */
-export async function clinkLoadPendingSessions(): Promise<void> {
-	try {
-		const pending = await collections.clinkSessions
-			.find({ paid: false, expiresAt: { $gt: new Date() } })
-			.toArray();
-		for (const doc of pending) {
-			const key = (doc.sessionKey as string) || doc.offerId;
-			if (!key) continue;
-			activeSessions.set(key, {
-				sessionKey: key,
-				paymentHash: doc.paymentHash,
-				bolt11: doc.bolt11,
-				expiresAt: doc.expiresAt,
-				paid: doc.paid,
-				nostrEventId: doc.nostrEventId
-			});
-			if (doc.nostrEventId) {
-				eventIdToPaymentHash.set(doc.nostrEventId, doc.paymentHash);
-			}
-		}
-		console.log(`[CLINK] Loaded ${pending.length} pending sessions from database`);
-	} catch (err) {
-		console.error('[CLINK] Failed to load pending sessions:', err);
-	}
-}
-
-export function getClinkSession(sessionKey: string): ClinkSession | undefined {
-	return activeSessions.get(sessionKey);
-}
-
-/** Find session by payment hash (used by checkPayment via invoiceId) */
-export function getClinkSessionByPaymentHash(paymentHash: string): ClinkSession | undefined {
-	for (const session of activeSessions.values()) {
-		if (session.paymentHash === paymentHash) return session;
-	}
-	return undefined;
-}
-
-/** Persist session to both in-memory cache and MongoDB */
-export async function setClinkSession(session: ClinkSession): Promise<void> {
-	activeSessions.set(session.sessionKey, session);
-	try {
-		await collections.clinkSessions.updateOne(
-			{ sessionKey: session.sessionKey },
-			{
-				$set: {
-					paymentHash: session.paymentHash,
-					bolt11: session.bolt11,
-					expiresAt: session.expiresAt,
-					paid: session.paid ?? false,
-					nostrEventId: session.nostrEventId,
-					updatedAt: new Date()
-				},
-				$setOnInsert: {
-					sessionKey: session.sessionKey,
-					createdAt: new Date()
-				}
-			},
-			{ upsert: true }
-		);
-	} catch (err) {
-		console.error(`[CLINK] Failed to persist session ${session.sessionKey}:`, err);
-	}
-}
-
-/** Remove session from both in-memory cache and MongoDB */
-export async function removeClinkSession(sessionKey: string): Promise<void> {
-	const session = activeSessions.get(sessionKey);
-	activeSessions.delete(sessionKey);
-	try {
-		await collections.clinkSessions.deleteOne({ sessionKey });
-	} catch (err) {
-		console.error(`[CLINK] Failed to remove session ${sessionKey}:`, err);
-	}
-}
-
-// --- Session key generation ---
-
-/** Generate a unique per-invoice session key from the bolt11 string */
-function clinkSessionKey(bolt11: string): string {
-	return createHash('sha256').update(bolt11).digest('hex');
 }
 
 // --- nOffer decoding ---
@@ -217,10 +103,6 @@ export function isClinkConfigured(): boolean {
 	return !!(runtimeConfig.clink?.nOffer && runtimeConfig.clink?.relayUrl);
 }
 
-export function isLightningPubConfigured(): boolean {
-	return !!(runtimeConfig.clink?.lightningPubEndpoint && runtimeConfig.clink?.lightningPubToken);
-}
-
 // --- BOLT11 validation ---
 
 const BOLT11_NETWORKS: Record<string, string> = {
@@ -240,11 +122,6 @@ const BOLT11_MULTIPLIERS: Record<string, number> = {
 /**
  * Minimal BOLT11 decoder — extracts network, amount (in sats) and timestamp
  * from the human-readable part without a full bolt11 library.
- *
- * Format: ln{network}{amount}{multiplier}
- * - network: bc (mainnet), tb (testnet), bcrt (regtest)
- * - amount: decimal digits (optional — 0 means any amount)
- * - multiplier: m/u/n/p applied to BTC (optional — absent means sats)
  */
 export function decodeBolt11Light(
 	bolt11: string
@@ -268,8 +145,10 @@ export function decodeBolt11Light(
 }
 
 /**
- * Validate a bolt11 invoice received from Lightning.Pub.
- * Checks network match and amount consistency.
+ * Validate a bolt11 invoice returned by the backend.
+ * Fixed-price invoices must match the expected amount EXACTLY — no tolerance.
+ * This bolt11 was minted by our own backend for an exact amount, so any deviation
+ * indicates a backend error or a tampered response.
  */
 export function validateBolt11(
 	bolt11: string,
@@ -288,12 +167,11 @@ export function validateBolt11(
 	}
 
 	if (opts.expectedAmountSat !== undefined && decoded.amountSat > 0) {
-		// Allow 1% tolerance for rounding
-		const tolerance = Math.max(1, Math.floor(opts.expectedAmountSat * 0.01));
-		if (Math.abs(decoded.amountSat - opts.expectedAmountSat) > tolerance) {
+		// Exact match: the backend minted this invoice for the requested amount.
+		if (decoded.amountSat !== opts.expectedAmountSat) {
 			return {
 				valid: false,
-				error: `Amount mismatch: expected ~${opts.expectedAmountSat} sats, got ${decoded.amountSat} sats`
+				error: `Amount mismatch: expected ${opts.expectedAmountSat} sats, got ${decoded.amountSat} sats`
 			};
 		}
 	}
@@ -311,8 +189,10 @@ export function clinkSubscribeToRelay(params: {
 	relay: string;
 	merchantPubkey: string;
 	merchantPrivkey: string;
-	lightningPubPubkey?: string;
-	onEvent: (request: NofferData | Record<string, unknown>, event: { id: string; pubkey: string; content: string; tags: string[][] }) => void;
+	onEvent: (
+		request: NofferData,
+		event: { id: string; pubkey: string; content: string; tags: string[][] }
+	) => void;
 }): { unsub: () => void } {
 	const filter = {
 		kinds: [CLINK_EVENT_KIND],
@@ -321,44 +201,41 @@ export function clinkSubscribeToRelay(params: {
 	};
 
 	const sub = params.pool.subscribe([params.relay], filter, {
-		onevent: async (evt: { id: string; pubkey: string; content: string; tags: string[][]; sig?: string }) => {
+		onevent: async (evt: {
+			id: string;
+			pubkey: string;
+			content: string;
+			tags: string[][];
+			sig?: string;
+		}) => {
 			try {
 				if (!verifyEvent(evt as Parameters<typeof verifyEvent>[0])) {
 					console.warn('CLINK: Received event with invalid signature, ignoring');
 					return;
 				}
 
-				// Try to decrypt as a customer payment request first
-				let decrypted: string;
+				// Only customer payment requests are handled here. Events from the
+				// merchant's own pubkey (or unreadable ones) are ignored — settlement
+				// is verified against the node by the order poller, not via Nostr.
+				let request: NofferData;
 				try {
-					decrypted = clinkDecrypt(evt.content, params.merchantPrivkey, evt.pubkey);
+					request = JSON.parse(clinkDecrypt(evt.content, params.merchantPrivkey, evt.pubkey));
 				} catch {
-					// If that fails and we know the Lightning.Pub pubkey, try as a receipt
-					// (encrypted by Lightning.Pub, not the customer)
-					if (params.lightningPubPubkey && evt.pubkey === params.lightningPubPubkey) {
-						decrypted = clinkDecrypt(
-							evt.content,
-							params.merchantPrivkey,
-							params.lightningPubPubkey
-						);
-					} else {
-						throw new Error('Failed to decrypt event');
-					}
+					// Not a customer payment request (e.g. an LP receipt) — ignore.
+					return;
 				}
 
-				const request = JSON.parse(decrypted) as NofferData;
-
-				// Events from Lightning.Pub may be receipts (not payment requests) and
-				// won't have an `offer` field. Pass them through for the persistent
-				// listener to check against pending receipt callbacks.
-				const isFromLp =
-					params.lightningPubPubkey && evt.pubkey === params.lightningPubPubkey;
-				if (!request.offer && !isFromLp) {
+				if (!request.offer) {
 					console.warn('CLINK: Received request without offer field, ignoring');
 					return;
 				}
 
-				params.onEvent(request, { id: evt.id, pubkey: evt.pubkey, content: evt.content, tags: evt.tags || [] });
+				params.onEvent(request, {
+					id: evt.id,
+					pubkey: evt.pubkey,
+					content: evt.content,
+					tags: evt.tags || []
+				});
 			} catch (err) {
 				console.error(
 					'CLINK: Failed to process incoming event:',
@@ -402,7 +279,10 @@ export async function clinkSendResponse(params: {
 	};
 
 	const signedEvent = finalizeEvent(unsignedEvent, hexToBytes(params.senderPrivkey));
-	await params.pool.publish([params.relay], signedEvent as Parameters<typeof params.pool.publish>[1]);
+	await params.pool.publish(
+		[params.relay],
+		signedEvent as Parameters<typeof params.pool.publish>[1]
+	);
 }
 
 // --- CLINK error responses ---
@@ -459,62 +339,25 @@ export function clinkValidateAmount(
 
 // --- Invoice creation ---
 
+export interface ClinkInvoice {
+	bolt11: string;
+	paymentHash: string;
+	/** The be-BOP Lightning processor that created (and will settle) this invoice */
+	backendProcessor: string;
+}
+
 /**
- * Create a Lightning invoice via the configured backend.
- * Supports: Lightning.Pub HTTP endpoint or delegation to the default lightning processor.
+ * Create a Lightning invoice via be-BOP's own configured Lightning backend.
+ *
+ * CLINK is a transport only. Delegating to be-BOP's own processor (LND, Phoenixd,
+ * Blink…) yields a REAL payment hash and lets checkPayment reconcile against the
+ * node that actually received the sats (per the SDK registry pattern). This throws
+ * on failure rather than silently producing an unpayable order.
  */
 export async function clinkCreateInvoice(params: {
 	amountSat: number;
 	memo: string;
-}): Promise<{ bolt11: string; paymentHash: string }> {
-	if (isLightningPubConfigured()) {
-		return await clinkCreateInvoiceViaLightningPub(params);
-	}
-	return await clinkCreateInvoiceViaProcessor(params);
-}
-
-/**
- * Create invoice via Lightning.Pub HTTP API.
- */
-async function clinkCreateInvoiceViaLightningPub(params: {
-	amountSat: number;
-	memo: string;
-}): Promise<{ bolt11: string; paymentHash: string }> {
-	const endpoint = runtimeConfig.clink.lightningPubEndpoint!.replace(/\/$/, '');
-	const url = `${endpoint}/api/user/invoice/new`;
-
-	const resp = await fetch(url, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${runtimeConfig.clink.lightningPubToken}`
-		},
-		body: JSON.stringify({ amountSats: params.amountSat, memo: params.memo }),
-		signal: AbortSignal.timeout(CLINK_RELAY_TIMEOUT_MS)
-	});
-
-	if (!resp.ok) {
-		throw new Error(`Lightning.Pub invoice creation failed: ${resp.status} ${resp.statusText}`);
-	}
-
-	const json = z
-		.object({
-			invoice: z.string(),
-			payment_hash: z.string().optional()
-		})
-		.parse(await resp.json());
-
-	const paymentHash = json.payment_hash ?? createHash('sha256').update(json.invoice).digest('hex');
-	return { bolt11: json.invoice, paymentHash };
-}
-
-/**
- * Create invoice via be-BOP's configured lightning processor.
- */
-async function clinkCreateInvoiceViaProcessor(params: {
-	amountSat: number;
-	memo: string;
-}): Promise<{ bolt11: string; paymentHash: string }> {
+}): Promise<ClinkInvoice> {
 	const { getProcessorsForMethod } = await import('./sdk/pp');
 	const processors = getProcessorsForMethod('lightning').filter(
 		(pp) => pp.isEnabled() && pp.meta.processor !== 'clink'
@@ -522,9 +365,9 @@ async function clinkCreateInvoiceViaProcessor(params: {
 	if (!processors.length) {
 		throw new Error('No non-CLINK lightning processor configured for CLINK invoice generation');
 	}
-	const pp = processors[0];
+	const backend = processors[0];
 
-	const result = await pp.createPayment({
+	const result = await backend.createPayment({
 		orderId: `clink-${Date.now()}`,
 		orderNumber: 0,
 		paymentId: `clink-payment-${Date.now()}`,
@@ -537,107 +380,17 @@ async function clinkCreateInvoiceViaProcessor(params: {
 
 	return {
 		bolt11: result.address,
-		paymentHash: result.invoiceId ?? createHash('sha256').update(result.address).digest('hex')
+		paymentHash: result.invoiceId ?? createHash('sha256').update(result.address).digest('hex'),
+		backendProcessor: backend.meta.processor
 	};
-}
-
-/**
- * Request a bolt11 invoice from Lightning.Pub via CLINK kind 21001.
- *
- * The server acts as a CLINK client: it sends an Noffer request to the
- * merchant's pubkey (from the nOffer) via the nOffer's relay. Lightning.Pub
- * receives the request and responds with a bolt11 invoice.
- */
-export async function clinkRequestInvoice(params: {
-	amountSat: number;
-	memo: string;
-	onReceipt?: () => void;
-}): Promise<{ bolt11: string }> {
-	const decoded = clinkDecodeNoffer(runtimeConfig.clink.nOffer);
-	const keys = getNostrKeys();
-
-	// SSRF protection: reject relay URLs targeting private/internal networks
-	const relayIssue = relayUrlIssue(decoded.relay);
-	if (relayIssue) {
-		throw new Error(`Unsafe relay URL in nOffer: ${relayIssue}`);
-	}
-
-	const privKeyBytes = new Uint8Array(Buffer.from(keys.privKeyHex, 'hex'));
-
-	const pool = new SimplePool();
-	const sdk = new ClinkSDK(
-		{
-			privateKey: privKeyBytes,
-			relays: [decoded.relay],
-			toPubKey: decoded.pubkey,
-			defaultTimeoutSeconds: 30
-		},
-		pool
-	);
-
-	try {
-		const receiptCallback = params.onReceipt
-			? async (sessionKey: string) => {
-					// Persist the paid flag to MongoDB
-					try {
-						await collections.clinkSessions.updateOne(
-							{ sessionKey },
-							{ $set: { paid: true, updatedAt: new Date() } }
-						);
-					} catch (err) {
-						console.error('[CLINK] Failed to persist paid status:', err);
-					}
-					clinkUnregisterReceiptCallback(sessionKey);
-					params.onReceipt!();
-				}
-			: undefined;
-
-		// Do NOT pass receiptCallback to sdk.Noffer() — the persistent listener handles
-		// receipts exclusively to avoid competing subscriptions that intercept each other's events.
-		const response = await sdk.Noffer(
-			{
-				offer: decoded.offer,
-				amount_sats: params.amountSat,
-				description: params.memo
-			},
-			undefined,
-			30
-		);
-
-		if ('bolt11' in response) {
-			// Validate the bolt11 invoice from Lightning.Pub
-			const bolt11Check = validateBolt11(response.bolt11, {
-				expectedAmountSat: params.amountSat
-			});
-			if (!bolt11Check.valid) {
-				sdk.Stop();
-				throw new Error(`Invalid bolt11 from Lightning.Pub: ${bolt11Check.error}`);
-			}
-
-			// Generate per-invoice session key (hash of bolt11)
-			const sessionKey = clinkSessionKey(response.bolt11);
-
-			// Register receipt callback with the persistent listener, keyed by session key
-			if (receiptCallback) {
-				clinkRegisterReceiptCallback(sessionKey, () => receiptCallback(sessionKey));
-			}
-
-			// Always stop the SDK — receipt will be handled by the persistent listener
-			sdk.Stop();
-			return { bolt11: response.bolt11 };
-		}
-		sdk.Stop();
-		throw new Error(`Lightning.Pub returned error: ${response.error}${response.range ? ` (range: ${response.range.min}-${response.range.max})` : ''}`);
-	} catch (err) {
-		sdk.Stop();
-		throw err;
-	}
 }
 
 // --- Request handler ---
 
 /**
- * Process an incoming CLINK payment request.
+ * Process an incoming CLINK payment request (a CLINK wallet fetching a bolt11
+ * via the Nostr relay). Mints an invoice through the configured backend and
+ * responds with the bolt11. No session bookkeeping — settlement is via the node.
  */
 export async function clinkHandlePaymentRequest(params: {
 	request: NofferData;
@@ -646,7 +399,6 @@ export async function clinkHandlePaymentRequest(params: {
 	merchantPrivkey: string;
 	pool: AbstractSimplePool;
 	relay: string;
-	offerId: string;
 	memo: string;
 }): Promise<void> {
 	const respond = async (response: NofferResponse) => {
@@ -661,18 +413,20 @@ export async function clinkHandlePaymentRequest(params: {
 		});
 	};
 
-	// Validate offer ID
-	if (params.request.offer !== params.offerId) {
-		await respond(clinkErrorResponse(1, 'Invalid offer ID'));
-		return;
-	}
-
-	// Decode merchant's nOffer for pricing info
+	// Decode the merchant's nOffer for pricing + the canonical offer ID.
 	let decoded: DecodedNoffer;
 	try {
 		decoded = clinkDecodeNoffer(runtimeConfig.clink.nOffer);
 	} catch {
 		await respond(clinkErrorResponse(2, 'Server configuration error'));
+		return;
+	}
+
+	// Validate the request's offer against the merchant's CANONICAL offer from the
+	// nOffer — not against the request's own offer field (which would compare an
+	// input to itself and always pass).
+	if (params.request.offer !== decoded.offer) {
+		await respond(clinkErrorResponse(1, 'Invalid offer ID'));
 		return;
 	}
 
@@ -693,47 +447,10 @@ export async function clinkHandlePaymentRequest(params: {
 		return;
 	}
 
-	// Create invoice (or reuse pre-created one)
+	// Mint a bolt11 via the backend and hand it back over Nostr. The backend
+	// processor stored the invoice; settlement is re-checked by PPClink.checkPayment.
 	try {
-		const existing = activeSessions.get(params.request.offer);
-		let invoice;
-		if (existing) {
-			// Reuse pre-created invoice from createPayment()
-			invoice = { bolt11: existing.bolt11, paymentHash: existing.paymentHash };
-		} else {
-			invoice = await clinkCreateInvoice({ amountSat, memo: params.memo });
-		}
-
-		const sessionKey = clinkSessionKey(invoice.bolt11);
-
-		// Store session for checkPayment() lookup — keyed by per-invoice session key
-		const session: ClinkSession = {
-			sessionKey,
-			paymentHash: invoice.paymentHash,
-			bolt11: invoice.bolt11,
-			expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
-			nostrEventId: params.event.id
-		};
-		activeSessions.set(sessionKey, session);
-
-		// Register callback for receipt correlation via #e tag
-		clinkRegisterReceiptCallback(sessionKey, async () => {
-			session.paid = true;
-			try {
-				await collections.clinkSessions.updateOne(
-					{ sessionKey },
-					{ $set: { paid: true, updatedAt: new Date() } }
-				);
-			} catch (err) {
-				console.error('[CLINK] Failed to persist paid status:', err);
-			}
-		});
-
-		// Map event ID → payment hash for receipt correlation
-		if (params.event.id) {
-			eventIdToPaymentHash.set(params.event.id, invoice.paymentHash);
-		}
-
+		const invoice = await clinkCreateInvoice({ amountSat, memo: params.memo });
 		await respond({ bolt11: invoice.bolt11 });
 	} catch (err) {
 		console.error('CLINK: Failed to create invoice:', err instanceof Error ? err.message : err);
@@ -746,46 +463,20 @@ export async function clinkHandlePaymentRequest(params: {
 const activeListeners = new Map<string, { unsub: () => void; pool: AbstractSimplePool }>();
 
 /**
- * Persistent map of receipt callbacks keyed by offerId.
- * Survives relay reconnections — the persistent listener fires these when a
- * matching kind 21001 receipt arrives, instead of relying on the one-shot
- * SDK subscription inside clinkRequestInvoice().
- */
-const pendingReceiptCallbacks = new Map<string, () => void>();
-
-/** Register a receipt callback for a pending CLINK session */
-export function clinkRegisterReceiptCallback(offerId: string, callback: () => void): void {
-	pendingReceiptCallbacks.set(offerId, callback);
-}
-
-/** Unregister a receipt callback (e.g. after it fires or on cleanup) */
-export function clinkUnregisterReceiptCallback(offerId: string): void {
-	pendingReceiptCallbacks.delete(offerId);
-}
-
-/** Check if a receipt callback is registered for an offer */
-export function clinkHasReceiptCallback(offerId: string): boolean {
-	return pendingReceiptCallbacks.has(offerId);
-}
-
-/**
- * Start a persistent CLINK listener on the configured relay.
+ * Start a persistent CLINK listener on the configured relay, serving bolt11s to
+ * CLINK wallets. Idempotent: a listener per relay is reused. Settlement is NOT
+ * handled here — the order poller queries the node via PPClink.checkPayment.
  */
 export async function clinkStartPersistentListener(): Promise<{ stop: () => void }> {
 	if (!isClinkConfigured()) {
 		throw new Error('CLINK is not configured');
 	}
 
-	// Load pending sessions from MongoDB into the in-memory cache on startup
-	await clinkLoadPendingSessions();
-
 	const merchantPrivkey = getNostrKeys().privKeyHex;
 	if (!merchantPrivkey) {
 		throw new Error('Nostr private key not configured (required for CLINK)');
 	}
 
-	const decoded = clinkDecodeNoffer(runtimeConfig.clink.nOffer);
-	const lpPubkey = decoded.pubkey;
 	const merchantPubkey = getNostrKeys().pubKeyHex;
 	const relay = runtimeConfig.clink.relayUrl!;
 
@@ -811,85 +502,14 @@ export async function clinkStartPersistentListener(): Promise<{ stop: () => void
 		relay,
 		merchantPubkey,
 		merchantPrivkey,
-		lightningPubPubkey: lpPubkey,
 		onEvent: (request, event) => {
-			// Check if this event is from Lightning.Pub (receipt or invoice response).
-			if (event.pubkey === lpPubkey) {
-				// Extract #e tag — points to the original payment request event ID
-				const reqEventId = event.tags.find((t) => t[0] === 'e')?.[1];
-
-				// If this is a receipt (res: 'ok'), match via #e tag → payment hash → session
-				if ('res' in request && request.res === 'ok' && reqEventId) {
-					const paymentHash = eventIdToPaymentHash.get(reqEventId);
-					if (paymentHash) {
-						for (const session of activeSessions.values()) {
-							if (session.paymentHash === paymentHash && !session.paid) {
-								session.paid = true;
-								console.log(
-									`[CLINK] Receipt received for session ${session.sessionKey} (via #e tag)`
-								);
-								collections.clinkSessions
-									.updateOne(
-										{ sessionKey: session.sessionKey, paid: false },
-										{ $set: { paid: true, updatedAt: new Date() } }
-									)
-									.catch((err) =>
-										console.error('[CLINK] Failed to persist paid status from receipt:', err)
-									);
-								if (pendingReceiptCallbacks.has(session.sessionKey)) {
-									const cb = pendingReceiptCallbacks.get(session.sessionKey)!;
-									pendingReceiptCallbacks.delete(session.sessionKey);
-									cb();
-								}
-								return;
-							}
-						}
-					}
-					// Fallback: try matching by offer field for backward compat
-					const offerKey = decoded.offer;
-					if (pendingReceiptCallbacks.has(offerKey)) {
-						console.log(`[CLINK] Receipt received for offer ${offerKey} (fallback)`);
-						const cb = pendingReceiptCallbacks.get(offerKey)!;
-						pendingReceiptCallbacks.delete(offerKey);
-						cb();
-						return;
-					}
-					return;
-				}
-
-				// If this is an invoice response (has bolt11), capture the #e → paymentHash mapping
-				if ('bolt11' in request && typeof request.bolt11 === 'string' && reqEventId) {
-					try {
-						const sessionKey = clinkSessionKey(request.bolt11);
-						const session = activeSessions.get(sessionKey);
-						if (session) {
-							session.nostrEventId = reqEventId;
-							eventIdToPaymentHash.set(reqEventId, session.paymentHash);
-							collections.clinkSessions
-								.updateOne(
-									{ sessionKey },
-									{ $set: { nostrEventId: reqEventId, updatedAt: new Date() } }
-								)
-								.catch(() => {});
-						}
-					} catch {
-						// Ignore — not critical
-					}
-					return;
-				}
-
-				return;
-			}
-
-			const reqOffer = typeof request === 'object' && 'offer' in request ? String((request as Record<string, unknown>).offer) : decoded.offer;
 			clinkHandlePaymentRequest({
-				request: request as NofferData,
+				request,
 				event,
 				merchantPubkey,
 				merchantPrivkey,
 				pool,
 				relay,
-				offerId: reqOffer || decoded.offer,
 				memo: runtimeConfig.brandName || 'be-BOP payment'
 			}).catch((err) => {
 				console.error('CLINK: Error handling payment request:', err);
@@ -898,11 +518,6 @@ export async function clinkStartPersistentListener(): Promise<{ stop: () => void
 	});
 
 	activeListeners.set(relay, { unsub, pool });
-
-	// Replay missed receipts in background (non-blocking)
-	clinkReplayMissedReceipts().catch((err) => {
-		console.error('[CLINK] Replay failed:', err);
-	});
 
 	return {
 		stop: () => {
@@ -919,133 +534,4 @@ export function clinkStopAllListeners(): void {
 		listener.pool.destroy();
 	}
 	activeListeners.clear();
-}
-
-export async function clinkCleanupSessions(): Promise<void> {
-	const now = new Date();
-	// Clean in-memory cache
-	for (const [key, session] of activeSessions) {
-		if (session.expiresAt < now) {
-			activeSessions.delete(key);
-		}
-	}
-	// Clean MongoDB (TTL index handles this, but belt-and-suspenders)
-	try {
-		await collections.clinkSessions.deleteMany({ expiresAt: { $lt: now } });
-	} catch (err) {
-		console.error('[CLINK] Failed to cleanup expired sessions:', err);
-	}
-}
-
-/**
- * Replay missed receipts on startup.
- *
- * The persistent listener uses `since: now - 60`, which misses receipts that
- * arrived while the server was down. This function replays the relay with an
- * earlier `since` value (oldest pending session creation time) to catch them.
- *
- * Runs once at startup, stays open for 30s to collect events, then closes.
- */
-export async function clinkReplayMissedReceipts(): Promise<void> {
-	if (!isClinkConfigured()) return;
-
-	const merchantPrivkey = getNostrKeys().privKeyHex;
-	if (!merchantPrivkey) return;
-
-	// Find the oldest pending session to determine how far back to replay
-	const oldestPending = await collections.clinkSessions
-		.find({ paid: false, expiresAt: { $gt: new Date() } })
-		.sort({ createdAt: 1 })
-		.limit(1)
-		.toArray();
-
-	if (!oldestPending.length) return;
-
-	// Replay from 5 minutes before the oldest session (clock skew buffer)
-	const replaySince = Math.floor(oldestPending[0].createdAt.getTime() / 1000) - 300;
-	const decoded = clinkDecodeNoffer(runtimeConfig.clink.nOffer);
-	const lpPubkey = decoded.pubkey;
-	const merchantPubkey = getNostrKeys().pubKeyHex;
-	const relay = runtimeConfig.clink.relayUrl!;
-
-	const pool = new SimplePool();
-	const filter = {
-		kinds: [CLINK_EVENT_KIND],
-		'#p': [merchantPubkey],
-		since: replaySince
-	};
-
-	return new Promise((resolve) => {
-		let resolved = false;
-		const done = () => {
-			if (!resolved) {
-				resolved = true;
-				sub.close();
-				pool.destroy();
-				resolve();
-			}
-		};
-
-		const sub = pool.subscribe([relay], filter, {
-			onevent: async (evt: { id: string; pubkey: string; content: string; tags: string[][]; sig?: string }) => {
-				try {
-					if (!verifyEvent(evt as Parameters<typeof verifyEvent>[0])) return;
-
-					// Dual decryption: try customer key first, fall back to Lightning.Pub key
-					let decrypted: string;
-					try {
-						decrypted = clinkDecrypt(evt.content, merchantPrivkey, evt.pubkey);
-					} catch {
-						if (evt.pubkey === lpPubkey) {
-							decrypted = clinkDecrypt(evt.content, merchantPrivkey, lpPubkey);
-						} else {
-							return;
-						}
-					}
-
-					const parsed = JSON.parse(decrypted);
-
-					// Match receipt via #e tag → payment hash → session
-					if (evt.pubkey === lpPubkey && parsed.res === 'ok') {
-						const reqEventId = (evt.tags || []).find((t) => t[0] === 'e')?.[1];
-						if (reqEventId) {
-							const paymentHash = eventIdToPaymentHash.get(reqEventId);
-							if (paymentHash) {
-								for (const session of activeSessions.values()) {
-									if (session.paymentHash === paymentHash && !session.paid) {
-										session.paid = true;
-										console.log(`[CLINK] Replay: receipt for session ${session.sessionKey}`);
-										if (pendingReceiptCallbacks.has(session.sessionKey)) {
-											const cb = pendingReceiptCallbacks.get(session.sessionKey)!;
-											pendingReceiptCallbacks.delete(session.sessionKey);
-											cb();
-										}
-										return;
-									}
-								}
-							}
-						}
-					}
-
-					// Fallback: match by offer field for backward compat
-					const offerId = parsed.offer;
-					if (offerId && pendingReceiptCallbacks.has(offerId)) {
-						console.log(`[CLINK] Replay: receipt for offer ${offerId} (fallback)`);
-						const cb = pendingReceiptCallbacks.get(offerId)!;
-						pendingReceiptCallbacks.delete(offerId);
-						cb();
-					}
-				} catch {
-					// Ignore unparseable events during replay
-				}
-			}
-		});
-
-		// Stay open for 30s to collect events, then close
-		setTimeout(done, 30_000);
-	});
-}
-
-if (typeof setInterval !== 'undefined') {
-	setInterval(clinkCleanupSessions, 5 * 60 * 1000);
 }

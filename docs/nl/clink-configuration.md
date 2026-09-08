@@ -9,14 +9,14 @@ Wanneer een klant betaalt met CLINK:
 1. Er wordt direct bij het bestellen een **bolt11-factuur** aangemaakt en weergegeven als QR-code
 2. Elke Lightning-wallet kan de QR scannen en de bolt11 direct betalen
 3. CLINK-compatibele wallets kunnen ook het **nOffer** van de handelaar scannen en dezelfde bolt11 ontvangen via de Nostr-relay
-4. De betaling wordt bevestigd wanneer Lightning.Pub een ontvangstbewijs (tweede kind 21001-event) naar de handelaar stuurt
+4. De betaling wordt bevestigd door de Lightning-node van de geconfigureerde backend-processor te bevragen voor de factuur (via betalingshash)
 
-CLINK is een transportlaag, geen Lightning-backend. De factuurgenerating wordt gedelegeerd naar de geconfigureerde Lightning-processor (bijv. Blink) of een Lightning.Pub HTTP-endpoint.
+CLINK is **alleen een transportlaag**, geen Lightning-backend. De factuurgeneratie en afrekening worden gedelegeerd naar de eigen geconfigureerde Lightning-processor van be-BOP (LND, Blink, PhoenixD, enz.): dezelfde node die elk ander Lightning-payment zou dragen. Dit levert een echte betalingshash op en een gezaghebbende, node-gedreven `checkPayment()` die verifieert tegen de backend die de sats daadwerkelijk heeft ontvangen.
 
 ## Vereisten
 
 - Een **Nostr privaat sleutel** geconfigureerd in `.env.local` (nsec-formaat)
-- Of een geconfigureerde Lightning-processor (bijv. Blink) of een Lightning.Pub HTTP-endpoint
+- Een geconfigureerde en ingeschakelde Lightning-processor (bijv. Blink, LND, PhoenixD) gebruikt voor factuurgeneratie
 - Een Nostr-relay voor CLINK-communicatie (standaard: `wss://strfry.shock.network`)
 
 ## Setup
@@ -34,26 +34,23 @@ NOSTR_PRIVATE_KEY="nsec1..."
 
 Navigeer naar **Admin > CLINK**:
 
-- Schakel **Enable CLINK payments** in om CLINK te activeren
 - **nOffer**: Uw Lightning.Pub nOffer-tekenreeks (bijv. `noffer1...`). Identificeert uw handelaarsaccount bij CLINK-wallets.
 - **Nostr-relay-URL**: De Nostr-relay voor CLINK-communicatie (standaard: `wss://strfry.shock.network`)
-- **Lightning.Pub HTTP-endpoint** (optioneel): Als u een specifieke Lightning.Pub-instantie wilt gebruiken voor factuurgenerating, voert u hier de HTTP-URL in. Anders wordt de geconfigureerde Lightning-processor gebruikt.
 - Klik op **Save**, daarna op **Test connection** om te verifiëren dat de relay en nOffer goed werken
 
 ### 3. CLINK als betaalmethode inschakelen
 
-Op de pagina **Config**, onder **Betaalmethoden**, **Lightning** inschakelen en de standaard Lightning-processor instellen op **CLINK**.
+Op de pagina **Config**, onder **Betaalmethoden**, **Lightning** inschakelen en de standaard Lightning-processor instellen op **CLINK**. De onderliggende Lightning-backend (LND, Blink, PhoenixD…) moet ook geconfigureerd en ingeschakeld zijn.
 
 ## Hoe het werkt
 
 ### Betaalstroom
 
-1. **Klant plaatst bestelling** -> be-BOP stuurt een CLINK-verzoek (kind 21001) naar Lightning.Pub via de relay van de handelaar
-2. **Lightning.Pub antwoordt** -> Retourneert een bolt11-factuur voor het exacte bedrag
-3. **QR-code weergegeven** -> De bolt11-factuur wordt aan de klant getoond
-4. **Klant betaalt** -> Scant de QR met elke Lightning-wallet en betaalt
-5. **Ontvangstbewijs komt aan** -> Lightning.Pub stuurt een tweede kind 21001-event (ontvangstbewijs) naar de handelaar
-6. **Bestelling bevestigd** -> be-BOP ontvangt het ontvangstbewijs en markeert de bestelling als betaald
+1. **Klant plaatst bestelling** -> be-BOP delegeert de factuuraanmaak naar zijn geconfigureerde Lightning-processor, die een bolt11 met echte betalingshash uitgeeft
+2. **QR-code weergegeven** -> De bolt11-factuur wordt aan de klant getoond
+3. **CLINK-wallet-stroom** -> CLINK-compatibele wallets vragen de factuur in plaats daarvan op via Nostr (kind 21001); de bolt11 wordt versleuteld (NIP-44) teruggegeven
+4. **Klant betaalt** -> Scant de QR (of gebruikt zijn CLINK-wallet) met elke Lightning-wallet en betaalt
+5. **Bestelling bevestigd** -> De ordepoller van be-BOP roept `checkPayment()` aan, dat delegeert naar de Lightning-backend-processor en de node bevraagt voor de factuur via de echte betalingshash; de bestelling wordt als betaald gemarkeerd
 
 ### CLINK-protocol
 
@@ -61,33 +58,25 @@ Het CLINK-protocol gebruikt Nostr-event type 21001 met NIP-44-versleuteling:
 
 - **Verzoek** (klant -> server): De klant stuurt een versleuteld betaalverzoek met het bedrag
 - **Antwoord** (server -> klant): De server antwoordt met de versleutelde bolt11-factuur
-- **Ontvangstbewijs** (Lightning.Pub -> server): Na betaling stuurt Lightning.Pub een ontvangstbewijs dat de afwikkeling bevestigt
-- **Afname**: De klant betaalt de bolt11-factuur via standaard Lightning
+- **Afname**: De klant betaalt de bolt11-factuur via standaard Lightning; de Lightning-node van de handelaar detecteert de betaling
 
 ### Betalingsdetectie
 
-De betaling wordt uitsluitend gedetecteerd via het **Nostr-ontvangstbewijs** (tweede kind 21001-event van Lightning.Pub). be-BOP **delegeert de betalingsdetectie niet** naar de onderliggende Lightning-processor (Blink, LND, enz.) omdat deze processors facturen die door Lightning.Pub zijn aangemaakt niet kunnen opzoeken.
+De betaling wordt gedetecteerd door de Lightning-backend-processor zelf: `checkPayment()` verwijst door naar de processor die de factuur heeft aangemaakt (per betaling geregistreerd als `meta.backend`) en bevraagt die node voor de factuur via de betalingshash. Er is **geen afhankelijkheid van Nostr-ontvangstbewijzen**: de afrekening wordt geverifieerd tegen de node die de sats daadwerkelijk heeft ontvangen, waardoor de stroom stateless en meerprocessig veilig is.
 
-Als het ontvangstbewijs niet wordt ontvangen (bijv. relayproblemen), verloopt de betaling na de sessietijdslimiet (2 uur). In de praktijk komen ontvangstbewijzen binnen enkele seconden na betaling aan.
-
-Een knop **Betalingsstatus controleren** is beschikbaar op wachtende CLINK-bestellingen, waardoor klanten de betalingsverificatie handmatig kunnen activeren.
-
-### Opstart-replay
-
-Bij het opstarten van de server speelt be-BOP de recente relay-geschiedenis af om ontvangstbewijzen op te vangen die zijn aangekomen terwijl de server uit stond. Het vraagt events op vanaf de aanmaak van het oudste openstaande sessie (met een buffer van 5 minuten) en blijft ongeveer 30 seconden open om gemiste ontvangstbewijzen op te halen.
+Een knop **Betalingsstatus controleren** is beschikbaar op wachtende CLINK-bestellingen; deze start alleen deze node-gedreven controle opnieuw (de afrekening wordt door de ordepoller onder de orderlock toegepast).
 
 ### Belangrijkste componenten
 
 - **nOffer**: Een bech32-gecodeerde handelaarsaanbodtekenreeks met het Nostr publieke sleutel van de handelaar, de relay-URL en het aanbod-ID
 - **NIP-44-versleuteling**: End-to-end-versleuteling voor betaalverzoeken en -antwoorden
-- **Sessieopslag**: Actieve CLINK-sessies worden opgeslagen in MongoDB met een TTL-index, waardoor ze serverherstarts overleven. Een geheugencache zorgt voor snelle opzoekingen.
-- **Persistente listener**: Een langlopend Nostr-abonnement op de relay van de handelaar dat zowel inkomende betaalverzoeken als betalingsontvangsten afhandelt en relay-herconnecties overleeft. De listener start automatisch bij het opstarten van de server.
-- **Dubbele ontsleuteling**: Ontvangstbewijzen van Lightning.Pub worden versleuteld met de sleutel van Lightning.Pub als afzender. be-BOP probeert een dubbele ontsleuteling - eerst met de event-auteur als afzender (klant betaalverzoeken), dan met de sleutel van Lightning.Pub (ontvangstbewijzen).
+- **Factuuraanmaak**: Gedelegeerd naar de geconfigureerde Lightning-processor van be-BOP; maakt een echte factuur + betalingshash, zonder Nostr-uitwisseling
+- **Persistente listener**: Een langlopend Nostr-abonnement op de relay van de handelaar dat bolt11-facturen aan CLINK-wallets levert en relay-herconnecties overleeft. De listener start automatisch bij het opstarten van de server.
 
 ### Beveiliging
 
 - **Relay-SSRF-bescherming**: Relay-URL's worden gevalideerd tegen prive-/interne IP-bereiken voordat er verbinding wordt gemaakt
-- **BOLT11-validatie**: Facturen ontvangen van Lightning.Pub worden gevalideerd op netwerkmatching en bedragenconsistentie
+- **BOLT11-validatie**: Facturen moeten exact het verwachte bedrag (zonder tolerantie) en het juiste netwerk dragen
 - **Handtekeningverificatie**: Alle inkomende Nostr-events worden geverifieerd voordat ze worden verwerkt
 - **Handelaar Pubkey-filter**: Nostr-abonnementsfilters gebruiken het eigen publieke sleutel van de handelaar (afgeleid van `NOSTR_PRIVATE_KEY`), niet de sleutel van Lightning.Pub
 
@@ -103,7 +92,7 @@ Elke Lightning-wallet kan de bolt11-QR-code betalen. Voor de CLINK Nostr-stroom,
 
 ### Factuur niet aangemaakt
 
-- Controleer of een Lightning-processor is geconfigureerd en ingeschakeld (bijv. Blink), of dat een Lightning.Pub HTTP-endpoint is ingesteld
+- Controleer of een Lightning-processor is geconfigureerd en ingeschakeld (bijv. Blink, LND, PhoenixD)
 - Controleer of `NOSTR_PRIVATE_KEY` is ingesteld in `.env.local`
 - Controleer de serverlogs op CLINK-gerelateerde fouten
 
@@ -120,18 +109,16 @@ Elke Lightning-wallet kan de bolt11-QR-code betalen. Voor de CLINK Nostr-stroom,
 
 ### Betaling niet bevestigd
 
-- Controleer of de relay vanaf de server bereikbaar is (de SSRF-bescherming kan interne URL's blokkeren)
-- Controleer of Lightning.Pub ontvangstbewijzen naar de juiste relay stuurt
-- Gebruik de knop **Betalingsstatus controleren** op de bestellingspagina om de verificatie handmatig te activeren
-- De sessie verloopt na 2 uur -- als het ontvangstbewijs langer duurt, wordt de betaling niet bevestigd
-- Bij het opstarten van de server vangt het opstart-replaymechanisme automatisch de recente gemiste ontvangstbewijzen op
+- Controleer of de Lightning-backend-node bereikbaar is en dat de factuur erop is aangemaakt
+- Gebruik de knop **Betalingsstatus controleren** op de bestellingspagina om handmatig een node-query te activeren
+- De ordepoller controleert elke 2 seconden opnieuw; de afrekening wordt onder de orderlock toegepast
 
 ## Technische details
 
 - **Nostr-event type**: 21001
 - **Versleuteling**: NIP-44 (versie 2)
-- **Betalingsdetectie**: Nostr-ontvangstbewijs-callback (tweede kind 21001-event)
-- **Sessieopslag**: MongoDB met TTL-index (2 uur)
+- **Factuur-backend**: De geconfigureerde Lightning-processor van be-BOP (LND, Blink, PhoenixD…)
+- **Betalingsdetectie**: Node-gedreven opzoekactie via echte betalingshash, gedelegeerd naar de backend-processor van de factuur
 - **CLINK-relay-URL**: `wss://strfry.shock.network` (configureerbaar via Admin > CLINK)
 
 ## nDebit-afrekeningen

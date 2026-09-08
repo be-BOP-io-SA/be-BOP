@@ -1,16 +1,6 @@
-import { createHash } from 'crypto';
-import {
-	isClinkConfigured,
-	clinkDecodeNoffer,
-	clinkStartPersistentListener,
-	clinkRequestInvoice,
-	setClinkSession,
-	getClinkSessionByPaymentHash,
-	getClinkSession
-} from '$lib/server/clink';
-import { runtimeConfig } from '$lib/server/runtime-config';
+import { isClinkConfigured, clinkCreateInvoice } from '$lib/server/clink';
 import { toSatoshis } from '$lib/utils/toSatoshis';
-import { lightningPaymentPrice, lightningLabel } from '../pp';
+import { getProcessor, lightningPaymentPrice, lightningLabel } from '../pp';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -20,30 +10,29 @@ import type {
 import type { Order } from '$lib/types/Order';
 
 /**
- * CLINK Lightning processor.
+ * CLINK Lightning processor (transport over Nostr kind 21001 + NIP-44).
  *
- * Uses CLINK (Nostr kind 21001 + NIP-44) as a transport option alongside
- * standard bolt11 Lightning. At order time we eagerly create a bolt11 invoice
- * via the configured Lightning backend and serve it directly to the customer
- * as a QR code. Any Lightning wallet can pay it.
- *
- * Additionally we start a CLINK Nostr listener so CLINK-aware wallets that
- * scan the merchant's nOffer receive the same bolt11 via the Nostr relay.
+ * CLINK is a *transport* layer, not a payment backend. Invoices are created and
+ * settled by be-BOP's own configured Lightning processor (LND, Phoenixd, Blink…)
+ * — the same node that would back any other Lightning payment. This gives us a
+ * real payment hash and an authoritative, node-backed `checkPayment()` that
+ * reconciles against the backend that actually received the sats (matching the
+ * SDK registry pattern used by Blink/LND/Phoenixd/Taler/OSB from 96b3e59).
  *
  * Flow:
- *   1. createPayment() → creates bolt11, starts CLINK listener, returns bolt11 for QR
- *   2. Customer scans bolt11 QR → pays (standard Lightning)
- *      OR Customer scans nOffer with CLINK wallet → wallet gets bolt11 via Nostr → pays
- *   3. checkPayment() → delegates to underlying lightning processor
+ *   1. createPayment() → delegate to the underlying Lightning processor →
+ *      a real bolt11 + payment hash. The bolt11 is served to the customer as a
+ *      standard QR; the real payment hash is persisted in the order payment doc
+ *      (invoiceId) alongside the backend's processor name (meta.processorBackend).
+ *   2. Customer pays the bolt11 with any Lightning wallet (including CLINK-aware
+ *      ones that obtained it via the Nostr relay).
+ *   3. checkPayment() → delegate to the same underlying processor's checkPayment,
+ *      which queries the node for the invoice by payment hash. Stateless and
+ *      multi-process safe — no in-memory session store, no separate collection.
  *
- * nDebit Settlement Note:
- *   CLINK is a transport layer only — it does NOT mandate nDebit for settlement.
- *   Payment settlement is handled entirely by the merchant's default lightning
- *   processor (Blink, LND, Phoenixd, etc.) via the bolt11 invoice. The merchant
- *   receives sats on their existing lightning backend. No separate nDebit account
- *   or same-node settlement is required. If a merchant wants to use nDebit for
- *   same-node settlements (e.g. with ShockWallet), that is configured in their
- *   wallet, not in be-BOP.
+ * Settlement note: CLINK does NOT mandate nDebit. Settlement is handled by the
+ * merchant's default Lightning backend via the bolt11 invoice, exactly as with any
+ * other Lightning processor.
  */
 export default {
 	meta: { processor: 'clink', method: 'lightning', emoji: '⚡' },
@@ -56,77 +45,60 @@ export default {
 		const satoshis = toSatoshis(params.toPay.amount, params.toPay.currency);
 		const memo = lightningLabel(params.orderId, params.orderNumber);
 
-		// Start the persistent CLINK Nostr listener (reuses existing if already running)
-		await clinkStartPersistentListener();
+		// Delegate invoice creation to be-BOP's own Lightning backend. This throws on
+		// failure (relay/node down is NOT silently swallowed into a bare nOffer). If no
+		// backend is available, checkout fails loudly rather than leaving the customer
+		// with an unpayable order.
+		const invoice = await clinkCreateInvoice({ amountSat: satoshis, memo });
 
-		// Request bolt11 from Lightning.Pub via CLINK kind 21001
-		// The onReceipt callback fires when Lightning.Pub confirms the invoice was paid
-		// (second kind 21001 event on the relay). The persistent listener handles receipts.
-		let bolt11: string | null = null;
-		try {
-			const result = await clinkRequestInvoice({
-				amountSat: satoshis,
-				memo,
-				onReceipt: () => {
-					console.log(`CLINK: Payment confirmed for session`);
-				}
-			});
-			bolt11 = result.bolt11;
-		} catch (err) {
-			console.error('CLINK: Failed to request invoice from Lightning.Pub:', err);
-		}
-
-		if (bolt11) {
-			// Generate per-invoice session key (hash of bolt11)
-			const sessionKey = createHash('sha256').update(bolt11).digest('hex');
-
-			// Store session keyed by per-invoice session key for checkPayment lookup
-			await setClinkSession({
-				sessionKey,
-				paymentHash: sessionKey, // same as sessionKey for consistency
-				bolt11,
-				expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000)
-			});
-			return {
-				address: bolt11,
-				invoiceId: sessionKey,
-				processor: 'clink'
-			};
-		}
-
-		// Fallback: return nOffer for CLINK wallets
-		const decoded = clinkDecodeNoffer(runtimeConfig.clink.nOffer);
 		return {
-			address: runtimeConfig.clink.nOffer,
-			invoiceId: `noffer-${decoded.offer}`,
+			address: invoice.bolt11,
+			invoiceId: invoice.paymentHash,
+			// Which backend created/settles this invoice, so checkPayment can re-dispatch.
+			meta: { backend: invoice.backendProcessor },
 			processor: 'clink'
 		};
 	},
 
 	async checkPayment(
 		payment: Order['payments'][number],
-		order: Order // eslint-disable-line @typescript-eslint/no-unused-vars
+		_originalOrder: Order // eslint-disable-line @typescript-eslint/no-unused-vars
 	): Promise<CheckPaymentResult> {
 		if (!payment.invoiceId) {
-			return { status: 'pending' };
+			throw new Error('Missing invoice ID on clink payment');
 		}
 
-		// Look up session by invoiceId (per-invoice session key, hash of bolt11)
-		const session = getClinkSessionByPaymentHash(payment.invoiceId) ||
-			getClinkSession(payment.invoiceId);
+		// CLINK is a transport: settlement is verified by the backend that holds the sats.
+		// Re-dispatch to that backend's own checkPayment with a synthetic payment whose
+		// processor/invoiceId the backend understands (the real payment hash).
+		//
+		// `meta` is not part of OrderPayment's TS shape (it would send the Pojo mapped
+		// type into infinite recursion via `ObjectId extends unknown`), but createPayment
+		// results are spread into the persisted payment document, so the backend name
+		// IS present on stored CLINK payments.
+		const meta = (payment as Order['payments'][number] & { meta?: { backend?: string } }).meta;
+		const backendName = typeof meta?.backend === 'string' ? meta.backend : '';
 
-		if (session && session.bolt11) {
-			if (session.paid) {
-				return {
-					status: 'paid',
-					received: { amount: payment.price.amount, currency: 'SAT' }
-				};
-			}
+		// If the backend name wasn't persisted (older payments), fall back to the
+		// currently-configured default Lightning processor.
+		const backend =
+			(backendName && getProcessor(backendName)) ||
+			getProcessor('lnd') ||
+			getProcessor('phoenixd') ||
+			getProcessor('blink');
+
+		if (!backend) {
+			throw new Error('No Lightning backend available to settle CLINK payment');
 		}
 
-		if (payment.expiresAt && payment.expiresAt < new Date()) {
-			return { status: 'expired' };
-		}
-		return { status: 'pending' };
+		// Reuse the backend's checkPayment with the real payment hash.
+		return backend.checkPayment(
+			{
+				...payment,
+				processor: backend.meta.processor,
+				invoiceId: payment.invoiceId
+			} as Order['payments'][number],
+			_originalOrder
+		);
 	}
 } satisfies PaymentProcessorDefinition;

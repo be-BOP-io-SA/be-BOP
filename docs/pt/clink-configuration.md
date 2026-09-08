@@ -9,14 +9,14 @@ Quando um cliente paga com CLINK:
 1. Uma **fatura bolt11** e criada imediatamente no momento do pedido e exibida como codigo QR
 2. Qualquer carteira Lightning pode escanear e pagar a bolt11 diretamente
 3. Carteiras compatveis com CLINK tambem podem escanear o **nOffer** do comerciante e receber a mesma bolt11 via relay Nostr
-4. O pagamento e confirmado quando Lightning.Pub envia um recibo (segundo evento kind 21001) ao comerciante
+4. O pagamento e confirmado consultando o no Lightning do processador backend configurado para a fatura (via hash de pagamento)
 
-CLINK e uma camada de transporte, nao um backend Lightning. A geracao de faturas e delegada ao processador Lightning configurado (ex: Blink) ou a um endpoint HTTP Lightning.Pub.
+CLINK e **apenas uma camada de transporte**, nao um backend Lightning. A geracao de faturas e o settlement sao delegados ao proprio processador Lightning configurado do be-BOP (LND, Blink, PhoenixD, etc.): o mesmo no que suportaria qualquer outro pagamento Lightning. Isso produz um hash de pagamento real e um `checkPayment()` confiavel com base no no, que reconcilia contra o backend que realmente recebeu os sats.
 
 ## Pre-requisitos
 
 - Uma **chave privada Nostr** configurada em `.env.local` (formato nsec)
-- Um processador Lightning configurado (ex: Blink) ou um endpoint HTTP Lightning.Pub
+- Um processador Lightning configurado e habilitado (ex: Blink, LND, PhoenixD) usado para geracao de faturas
 - Um relay Nostr para comunicacao CLINK (padrao: `wss://strfry.shock.network`)
 
 ## Configuracao
@@ -34,26 +34,23 @@ NOSTR_PRIVATE_KEY="nsec1..."
 
 Navegar ate **Admin > CLINK**:
 
-- Ativar **Enable CLINK payments** para habilitar CLINK
 - **nOffer**: Sua string nOffer Lightning.Pub (ex: `noffer1...`). Identifica sua conta de comerciante para carteiras CLINK.
 - **URL do relay Nostr**: O relay Nostr utilizado para comunicacao CLINK (padrao: `wss://strfry.shock.network`)
-- **URL do endpoint HTTP Lightning.Pub** (opcional): Se voce deseja usar uma instancia especifica do Lightning.Pub para geracao de faturas, insira sua URL HTTP aqui. Caso contrario, o processador Lightning configurado e utilizado.
 - Clicar em **Save**, depois em **Test connection** para verificar que o relay e o nOffer estao funcionando corretamente
 
 ### 3. Ativar CLINK como metodo de pagamento
 
-Na pagina **Config**, sob **Metodos de pagamento**, ativar **Lightning** e definir o processador Lightning padrao como **CLINK**.
+Na pagina **Config**, sob **Metodos de pagamento**, ativar **Lightning** e definir o processador Lightning padrao como **CLINK**. O backend Lightning subjacente (LND, Blink, PhoenixD…) tambem deve estar configurado e habilitado.
 
 ## Como Funciona
 
 ### Fluxo de pagamento
 
-1. **Cliente faz o pedido** -> be-BOP envia uma requisicao CLINK (kind 21001) ao Lightning.Pub via o relay do comerciante
-2. **Lightning.Pub responde** -> Retorna uma fatura bolt11 pelo valor exato
-3. **Codigo QR exibido** -> A fatura bolt11 e apresentada ao cliente
-4. **Cliente paga** -> Escaneia o QR com qualquer carteira Lightning e paga
-5. **O recibo chega** -> Lightning.Pub envia um segundo evento kind 21001 (recibo de pagamento) ao comerciante
-6. **Pedido confirmado** -> be-BOP recebe o recibo e marca o pedido como pago
+1. **Cliente faz o pedido** -> be-BOP delega a criacao da fatura ao seu processador Lightning configurado, que emite uma bolt11 com hash de pagamento real
+2. **Codigo QR exibido** -> A fatura bolt11 e apresentada ao cliente
+3. **Fluxo da carteira CLINK** -> Carteiras compatveis com CLINK solicitam a fatura via Nostr (kind 21001); a bolt11 e retornada criptografada (NIP-44)
+4. **Cliente paga** -> Escaneia o QR (ou usa sua carteira CLINK) com qualquer carteira Lightning e paga
+5. **Pedido confirmado** -> O poller de pedidos do be-BOP chama `checkPayment()`, que delega ao processador Lightning backend e consulta o no pela fatura usando seu hash de pagamento real; o pedido e marcado como pago
 
 ### Protocolo CLINK
 
@@ -61,33 +58,25 @@ O protocolo CLINK utiliza o evento Nostr tipo 21001 com criptografia NIP-44:
 
 - **Requisicao** (cliente -> servidor): O cliente envia uma requisicao de pagamento criptografada com o valor
 - **Resposta** (servidor -> cliente): O servidor responde com a fatura bolt11 criptografada
-- **Recibo** (Lightning.Pub -> servidor): Apos o pagamento, Lightning.Pub envia um recibo confirmando o settlement
-- **Settlement**: O cliente paga a fatura bolt11 via Lightning padrao
+- **Settlement**: O cliente paga a fatura bolt11 via Lightning padrao; o no Lightning do comerciante detecta o pagamento
 
 ### Deteccao de pagamento
 
-O pagamento e detectado exclusivamente via o **recibo Nostr** (segundo evento kind 21001 do Lightning.Pub). be-BOP **nao delega** a deteccao de pagamento ao processador Lightning subjacente (Blink, LND, etc.) pois esses processadores nao podem buscar faturas criadas pelo Lightning.Pub.
+O pagamento e detectado pelo proprio processador Lightning backend: `checkPayment()` redireciona para o processador que criou a fatura (registrado por pagamento como `meta.backend`) e consulta aquele no pela fatura via hash de pagamento. **Nao ha dependencia de recibos Nostr**: o settlement e verificado contra o no que realmente recebeu os sats, tornando o fluxo sem estado (stateless) e seguro em multi-processo.
 
-Se o recibo nao for recebido (ex: problemas de relay), o pagamento expirara apos o timeout da sessao (2 horas). Na pratica, os recibos chegam em segundos apos o pagamento.
-
-Um botao **Verificar status do pagamento** esta disponivel nos pedidos CLINK pendentes, permitindo aos clientes ativar manualmente a verificacao do pagamento.
-
-### Replay na inicializacao
-
-Na inicializacao do servidor, be-BOP reproduz o historico recente do relay para capturar recibos que chegaram enquanto o servidor estava desligado. Consulta eventos desde a criacao da sessao pendente mais antiga (com um buffer de 5 minutos) e permanece aberto por aproximadamente 30 segundos para coletar recibos perdidos.
+Um botao **Verificar status do pagamento** esta disponivel nos pedidos CLINK pendentes; ele apenas reexecuta essa verificacao baseada no no (o settlement e aplicado pelo poller de pedidos sob o lock do pedido).
 
 ### Componentes principais
 
 - **nOffer**: Uma string de oferta do comerciante codificada em bech32 contendo a chave publica Nostr do comerciante, a URL do relay e o ID da oferta
 - **Criptografia NIP-44**: Criptografia de ponta a ponta para requisicoes e respostas de pagamento
-- **Armazenamento de sessoes**: As sessoes CLINK ativas sao persistidas em MongoDB com um indice TTL, sobrevivendo a reinicializacoes do servidor. Um cache em memoria fornece buscas rapidas.
-- **Ouvinte persistente**: Uma assinatura Nostr de longa duracao no relay do comerciante que lida tanto com requisicoes de pagamento entrantes quanto com recibos de pagamento, sobrevivendo a reconexoes do relay. Ouvinte inicia automaticamente na inicializacao do servidor.
-- **Descriptografia dual**: Os recibos do Lightning.Pub sao criptografados com a chave do Lightning.Pub como remetente. be-BOP tenta uma descriptografia dual - primeiro assumindo o autor do evento como remetente (requisicoes de pagamento do cliente), depois usando a chave do Lightning.Pub (recibos).
+- **Criacao de faturas**: Delegada ao processador Lightning configurado do be-BOP; cria uma fatura real + hash de pagamento, sem idas e voltas via Nostr
+- **Ouvinte persistente**: Uma assinatura Nostr de longa duracao no relay do comerciante que entrega bolt11s para carteiras CLINK, sobrevivendo a reconexoes do relay. Ouvinte inicia automaticamente na inicializacao do servidor.
 
 ### Seguranca
 
 - **Protecao SSRF do relay**: As URLs dos relays sao validadas contra faixas de IP privadas/internas antes de conectar
-- **Validacao BOLT11**: Faturas recebidas do Lightning.Pub sao validadas por correspondencia de rede e consistencia de valor
+- **Validacao BOLT11**: Faturas devem carregar exatamente o valor esperado (sem tolerancia) e a rede correspondente
 - **Verificacao de assinaturas**: Todos os eventos Nostr entrantes sao verificados antes do processamento
 - **Filtro por chave publica do comerciante**: Os filtros de assinatura Nostr usam a chave publica propria do comerciante (derivada de `NOSTR_PRIVATE_KEY`), nao a chave do Lightning.Pub
 
@@ -103,7 +92,7 @@ Qualquer carteira Lightning pode pagar o codigo QR bolt11. Para o fluxo Nostr CL
 
 ### Fatura nao criada
 
-- Verificar se um processador Lightning esta configurado e habilitado (ex: Blink), ou se um endpoint HTTP Lightning.Pub foi definido
+- Verificar se um processador Lightning esta configurado e habilitado (ex: Blink, LND, PhoenixD)
 - Verificar se `NOSTR_PRIVATE_KEY` esta definido em `.env.local`
 - Verificar os logs do servidor para erros relacionados a CLINK
 
@@ -120,18 +109,16 @@ Qualquer carteira Lightning pode pagar o codigo QR bolt11. Para o fluxo Nostr CL
 
 ### Pagamento nao confirmado
 
-- Verificar se o relay e acessivel pelo servidor (a protecao SSRF pode bloquear URLs internas)
-- Verificar se o Lightning.Pub envia recibos para o relay correto
-- Usar o botao **Verificar status do pagamento** na pagina do pedido para ativar manualmente a verificacao
-- A sessao expira apos 2 horas -- se o recibo se atrasar apos esse prazo, o pagamento nao sera confirmado
-- Na inicializacao do servidor, o mecanismo de replay captura automaticamente os recibos perdidos recentes
+- Verificar se o no Lightning backend esta acessivel e que a fatura foi criada nele
+- Usar o botao **Verificar status do pagamento** na pagina do pedido para ativar manualmente uma consulta ao no
+- O poller de pedidos reverifica a cada 2 segundos; o settlement e aplicado sob o lock do pedido
 
 ## Detalhes Tecnicos
 
 - **Tipo de evento Nostr**: 21001
 - **Criptografia**: NIP-44 (versao 2)
-- **Deteccao de pagamento**: Callback de recibo Nostr (segundo evento kind 21001)
-- **Armazenamento de sessoes**: MongoDB com indice TTL (2 horas)
+- **Backend de faturas**: O processador Lightning configurado do be-BOP (LND, Blink, PhoenixD…)
+- **Deteccao de pagamento**: Busca baseada no no usando hash de pagamento real, delegada ao processador backend da fatura
 - **URL do relay CLINK**: `wss://strfry.shock.network` (configuravel em Admin > CLINK)
 
 ## Settlement com nDebit

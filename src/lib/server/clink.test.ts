@@ -5,7 +5,6 @@ import {
 	clinkValidateAmount,
 	clinkErrorResponse,
 	isClinkConfigured,
-	isLightningPubConfigured,
 	decodeBolt11Light,
 	validateBolt11
 } from './clink';
@@ -165,11 +164,8 @@ describe('clink', () => {
 	describe('isClinkConfigured', () => {
 		beforeEach(() => {
 			runtimeConfig.clink = {
-				enabled: false,
 				nOffer: '',
-				relayUrl: 'wss://relay.shocknet.app',
-				lightningPubEndpoint: '',
-				lightningPubToken: ''
+				relayUrl: 'wss://relay.shocknet.app'
 			};
 		});
 
@@ -180,33 +176,6 @@ describe('clink', () => {
 		it('returns true when nOffer is set', () => {
 			runtimeConfig.clink.nOffer = 'noffer1test';
 			expect(isClinkConfigured()).toBe(true);
-		});
-	});
-
-	describe('isLightningPubConfigured', () => {
-		beforeEach(() => {
-			runtimeConfig.clink = {
-				enabled: false,
-				nOffer: '',
-				relayUrl: '',
-				lightningPubEndpoint: '',
-				lightningPubToken: ''
-			};
-		});
-
-		it('returns false when endpoint is empty', () => {
-			expect(isLightningPubConfigured()).toBe(false);
-		});
-
-		it('returns false when only endpoint is set', () => {
-			runtimeConfig.clink.lightningPubEndpoint = 'http://localhost:1776';
-			expect(isLightningPubConfigured()).toBe(false);
-		});
-
-		it('returns true when both endpoint and token are set', () => {
-			runtimeConfig.clink.lightningPubEndpoint = 'http://localhost:1776';
-			runtimeConfig.clink.lightningPubToken = 'test-token';
-			expect(isLightningPubConfigured()).toBe(true);
 		});
 	});
 
@@ -283,10 +252,12 @@ describe('clink', () => {
 			expect(result).toEqual({ valid: true });
 		});
 
-		it('accepts bolt11 within 1% tolerance', () => {
-			// 99 sats vs expected 100 — within tolerance
+		it('rejects bolt11 differing from expected amount (exact match)', () => {
+			// CLINK bolts mints invoices for an exact amount through its own backend;
+			// any deviation (e.g. 99 vs 100) indicates an error and is rejected.
 			const result = validateBolt11('lnbc99', { expectedAmountSat: 100 });
-			expect(result).toEqual({ valid: true });
+			expect(result.valid).toBe(false);
+			expect(result.error).toContain('Amount mismatch');
 		});
 
 		it('rejects bolt11 with wrong amount', () => {

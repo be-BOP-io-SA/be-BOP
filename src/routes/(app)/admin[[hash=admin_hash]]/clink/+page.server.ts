@@ -9,11 +9,8 @@ import { z } from 'zod';
 
 export async function load() {
 	return {
-		enabled: runtimeConfig.clink.enabled,
 		nOffer: runtimeConfig.clink.nOffer,
 		relayUrl: runtimeConfig.clink.relayUrl,
-		lightningPubEndpoint: runtimeConfig.clink.lightningPubEndpoint,
-		lightningPubToken: runtimeConfig.clink.lightningPubToken,
 		lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
 		brandName: runtimeConfig.brandName
 	};
@@ -23,17 +20,11 @@ export const actions = {
 	save: async function ({ request }) {
 		const clink = z
 			.object({
-				enabled: z.boolean({ coerce: true }),
 				nOffer: z.string().trim().default(''),
-				relayUrl: z.string().trim().default('wss://strfry.shock.network'),
-				lightningPubEndpoint: z.string().trim().default(''),
-				lightningPubToken: z.string().trim().default('')
+				relayUrl: z.string().trim().default('wss://strfry.shock.network')
 			})
-			.refine((v) => !v.enabled || v.nOffer, {
-				message: 'An nOffer string is required when CLINK is enabled'
-			})
-			.refine((v) => !v.enabled || v.relayUrl, {
-				message: 'A relay URL is required when CLINK is enabled'
+			.refine((v) => !v.nOffer || v.relayUrl, {
+				message: 'A relay URL is required when an nOffer is set'
 			})
 			.parse(Object.fromEntries(await request.formData()));
 
@@ -66,11 +57,8 @@ export const actions = {
 	delete: async function () {
 		await collections.runtimeConfig.deleteOne({ _id: 'clink' });
 		runtimeConfig.clink = {
-			enabled: false,
 			nOffer: '',
-			relayUrl: 'wss://strfry.shock.network',
-			lightningPubEndpoint: '',
-			lightningPubToken: ''
+			relayUrl: 'wss://strfry.shock.network'
 		};
 	},
 	updateLightningInvoiceDescription,

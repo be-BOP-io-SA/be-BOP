@@ -9,14 +9,14 @@ When a customer pays with CLINK:
 1. A **bolt11 invoice** is created immediately at order time and displayed as a QR code
 2. Any Lightning wallet can scan and pay the bolt11 directly
 3. CLINK-compatible wallets can also scan the merchant's **nOffer** and receive the same bolt11 via Nostr relay
-4. Payment is confirmed when Lightning.Pub sends a receipt (second kind 21001 event) to the merchant
+4. Settlement is detected by querying the Lightning node of the merchant's configured backend processor for the invoice (by payment hash)
 
-CLINK is a transport layer, not a Lightning backend. Invoice generation delegates to the configured Lightning processor (e.g., Blink) or a Lightning.Pub HTTP endpoint.
+CLINK is a **transport layer only**, not a Lightning backend. Invoice generation and settlement are delegated to be-BOP's own configured Lightning processor (LND, Blink, PhoenixD, etc.) — the same node that would back any other Lightning payment. This yields a real payment hash and an authoritative, node-backed `checkPayment()` that reconciles against the backend that actually received the sats.
 
 ## Prerequisites
 
 - A **Nostr private key** configured in `.env.local` (nsec format)
-- Either a configured Lightning processor (e.g., Blink) or a Lightning.Pub HTTP endpoint
+- A configured and enabled Lightning processor (e.g., Blink, LND, PhoenixD) used for invoice generation
 - A Nostr relay for CLINK communication (default: `wss://strfry.shock.network`)
 
 ## Setup
@@ -34,26 +34,23 @@ NOSTR_PRIVATE_KEY="nsec1..."
 
 Navigate to **Admin > CLINK**:
 
-- Toggle **Enable CLINK payments** to activate CLINK
 - **nOffer**: Your Lightning.Pub nOffer string (e.g., `noffer1...`). This identifies your merchant account to CLINK wallets.
 - **Nostr relay URL**: The Nostr relay used for CLINK communication (default: `wss://strfry.shock.network`)
-- **Lightning.Pub endpoint URL** (optional): If you want to use a specific Lightning.Pub instance for invoice generation, enter its HTTP URL here. Otherwise, the configured Lightning processor is used.
 - Click **Save**, then **Test connection** to verify the relay and nOffer are working
 
 ### 3. Enable CLINK as Payment Method
 
-In the **Config** page, under **Payment Methods**, enable **Lightning** and set the default Lightning processor to **CLINK**.
+In the **Config** page, under **Payment Methods**, enable **Lightning** and set the default Lightning processor to **CLINK**. The underlying Lightning backend (LND, Blink, PhoenixD…) must also be configured and enabled.
 
 ## How It Works
 
 ### Payment Flow
 
-1. **Customer places order** → be-BOP sends a CLINK request (kind 21001) to Lightning.Pub via the merchant's relay
-2. **Lightning.Pub responds** → Returns a bolt11 invoice for the exact amount
-3. **QR code displayed** → The bolt11 invoice QR is shown to the customer
-4. **Customer pays** → Scans the QR with any Lightning wallet and pays
-5. **Receipt arrives** → Lightning.Pub sends a second kind 21001 event (payment receipt) to the merchant
-6. **Order confirmed** → be-BOP receives the receipt and marks the order as paid
+1. **Customer places order** → be-BOP delegates invoice creation to its configured Lightning processor, which mints a bolt11 with a real payment hash
+2. **QR code displayed** → The bolt11 invoice QR is shown to the customer
+3. **CLINK wallet flow** → CLINK-compatible wallets instead request the invoice over Nostr (kind 21001); the bolt11 is returned encrypted (NIP-44)
+4. **Customer pays** → Scans the QR (or uses their CLINK wallet) with any Lightning wallet and pays
+5. **Order confirmed** → be-BOP's order poller calls `checkPayment()`, which delegates to the backend Lightning processor and queries the node for the invoice by its real payment hash; the order is marked paid
 
 ### CLINK Protocol
 
@@ -61,33 +58,25 @@ The CLINK protocol uses Nostr event kind 21001 with NIP-44 encryption:
 
 - **Request** (customer → server): Customer sends an encrypted payment request with the amount
 - **Response** (server → customer): Server responds with the encrypted bolt11 invoice
-- **Receipt** (Lightning.Pub → server): After payment, Lightning.Pub sends a receipt event confirming settlement
-- **Settlement**: Customer pays the bolt11 invoice via standard Lightning
+- **Settlement**: Customer pays the bolt11 invoice via standard Lightning; the merchant's Lightning node detects the payment
 
 ### Payment Detection
 
-Payment is detected exclusively via the **Nostr receipt** (second kind 21001 event from Lightning.Pub). be-BOP does NOT delegate payment detection to the underlying Lightning processor (Blink, LND, etc.) because those processors cannot look up invoices created by Lightning.Pub.
+Payment is detected by the backend Lightning processor itself: `checkPayment()` re-dispatches to the processor that created the invoice (recorded per-payment as `meta.backend`) and queries that node for the invoice by payment hash. There is **no dependency on Nostr receipts** — settlement is verified against the node that actually received the sats, so the flow is stateless and multi-process safe.
 
-If the receipt is not received (e.g., relay issues), the payment will expire after the session timeout (2 hours). In practice, receipts arrive within seconds of payment.
-
-A **Check Payment Status** button is available on pending CLINK orders, allowing customers to manually trigger payment verification.
-
-### Startup Replay
-
-On server startup, be-BOP replays recent relay history to catch receipts that arrived while the server was down. It queries events from the oldest pending session's creation time (with a 5-minute buffer) and stays open for approximately 30 seconds to collect any missed receipts.
+A **Check Payment Status** button is available on pending CLINK orders; it only re-runs this node-backed check (settlement is applied by the order poller under the order lock).
 
 ### Key Components
 
 - **nOffer**: A bech32-encoded merchant offer string containing the merchant's Nostr public key, relay URL, and offer ID
 - **NIP-44 Encryption**: End-to-end encryption for payment requests and responses
-- **Session Store**: Active CLINK sessions are persisted in MongoDB with a TTL index, surviving server restarts. An in-memory cache provides fast lookups.
-- **Persistent Listener**: A long-running Nostr subscription on the merchant's relay that handles both incoming payment requests and payment receipts, surviving relay reconnections. The listener starts automatically on server boot.
-- **Dual Decryption**: Receipts from Lightning.Pub are encrypted with Lightning.Pub's key as sender. be-BOP attempts dual decryption — first assuming the event author as sender (customer payment requests), then falling back to Lightning.Pub's key (receipts).
+- **Invoice creation**: Delegated to be-BOP's configured Lightning processor; creates a real invoice + payment hash, no Nostr round-trip
+- **Persistent Listener**: A long-running Nostr subscription on the merchant's relay that serves bolt11s to CLINK wallets, surviving relay reconnections. The listener starts automatically on server boot.
 
 ### Security
 
 - **Relay SSRF Protection**: Relay URLs are validated against private/internal IP ranges before connecting
-- **BOLT11 Validation**: Invoices received from Lightning.Pub are validated for network match and amount consistency
+- **BOLT11 Validation**: Invoices must carry the exact expected amount (no tolerance) and matching network
 - **Signature Verification**: All incoming Nostr events are verified before processing
 - **Merchant Pubkey Filter**: Nostr subscription filters use the merchant's own public key (derived from `NOSTR_PRIVATE_KEY`), not Lightning.Pub's key
 
@@ -103,7 +92,7 @@ Any Lightning wallet can pay the bolt11 QR code. For the CLINK Nostr flow, use a
 
 ### Invoice not created
 
-- Check that a Lightning processor is configured and enabled (e.g., Blink), or a Lightning.Pub HTTP endpoint is set
+- Check that a Lightning processor is configured and enabled (e.g., Blink, LND, PhoenixD)
 - Verify the `NOSTR_PRIVATE_KEY` is set in `.env.local`
 - Check the server logs for CLINK-related errors
 
@@ -120,18 +109,16 @@ Any Lightning wallet can pay the bolt11 QR code. For the CLINK Nostr flow, use a
 
 ### Payment not confirmed
 
-- Check that the relay is reachable from the server (SSRF protection may block internal URLs)
-- Verify Lightning.Pub is sending receipts to the correct relay
-- Use the **Check Payment Status** button on the order page to manually trigger verification
-- The session expires after 2 hours — if the receipt is delayed beyond that, the payment will not be confirmed
-- On server restart, the startup replay mechanism will catch recent missed receipts automatically
+- Check that the backend Lightning node is reachable and the invoice was created on it
+- Use the **Check Payment Status** button on the order page to manually trigger a node lookup
+- The order poller re-checks every 2 seconds; settlement is applied under the order lock
 
 ## Technical Details
 
 - **Nostr Event Kind**: 21001
 - **Encryption**: NIP-44 (version 2)
-- **Payment Detection**: Nostr receipt callback (second kind 21001 event)
-- **Session Storage**: MongoDB with TTL index (2 hours)
+- **Invoice backend**: be-BOP's configured Lightning processor (LND, Blink, PhoenixD…)
+- **Payment Detection**: Node-backed lookup by real payment hash, delegated to the invoice's backend processor
 - **CLINK Relay URL**: `wss://strfry.shock.network` (configurable in Admin > CLINK)
 
 ## nDebit Settlement

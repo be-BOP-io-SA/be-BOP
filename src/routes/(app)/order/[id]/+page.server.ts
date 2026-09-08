@@ -5,12 +5,13 @@ import { fetchOrderForUser } from './fetchOrderForUser.js';
 import { getPublicS3DownloadLink } from '$lib/server/s3.js';
 import { uniqBy } from '$lib/utils/uniqBy.js';
 import { cmsFromContent } from '$lib/server/cms.js';
-import { anonymizeOrderData, conflictingTapToPayOrder, onOrderPayment } from '$lib/server/orders';
+import { anonymizeOrderData, conflictingTapToPayOrder } from '$lib/server/orders';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import { getProcessor } from '$lib/server/sdk/pp';
+import { rateLimit } from '$lib/server/rateLimit';
 import type { OrderLabel } from '$lib/types/OrderLabel.js';
 
 export async function load({ params, depends, locals, url }) {
@@ -180,25 +181,33 @@ export const actions = {
 		const cleaned = await anonymizeOrderData(order._id);
 		return { success: cleaned };
 	},
-	checkPayment: async function ({ params }) {
+	checkPayment: async function ({ params, locals }) {
+		rateLimit(locals.clientIp, 'order.checkPayment', 10, { minutes: 1 });
+
+		// Only the owner of the order can trigger a check.
 		const order = await collections.orders.findOne({
 			_id: params.id,
-			status: 'pending'
+			status: 'pending',
+			...userQuery(userIdentifier(locals))
 		});
 		if (!order) {
 			return { checked: false };
 		}
 
+		// This action exists for the CLINK "Check Payment Status" button. It only
+		// re-runs the processor's checkPayment; settlement (onOrderPayment) is left
+		// to the order lock poller, so no order mutating happens outside that lock.
+		// Only CLINK payments (and matching method) are re-checked here to avoid
+		// interfering with other processors' polling/webhooks.
 		let updated = false;
 		for (const payment of order.payments.filter((p) => p.status === 'pending')) {
-			if (!payment.processor) continue;
+			if (payment.processor !== 'clink') continue;
 			const pp = getProcessor(payment.processor);
 			if (!pp || pp.meta.method !== payment.method || !pp.isEnabled()) continue;
 
 			try {
 				const result = await pp.checkPayment(payment, order);
-				if (result.status === 'paid' && result.received) {
-					await onOrderPayment(order, payment, result.received);
+				if (result.status === 'paid') {
 					updated = true;
 					break;
 				}
