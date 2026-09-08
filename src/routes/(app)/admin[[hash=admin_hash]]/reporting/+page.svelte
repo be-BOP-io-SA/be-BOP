@@ -739,7 +739,7 @@
 				</thead>
 				<tbody>
 					<!-- Order rows -->
-					{#each orders.filter((order) => order.status === 'paid' || (includePartiallyPaid && order.payments.some((payment) => payment.status === 'paid')) || (includeExpired && order.payments.some((payment) => payment.status === 'expired'))) as order}
+					{#each orderFiltered as order}
 						{#each order.payments.filter(paymentMatchesFilter) as payment}
 							<tr class="hover:bg-gray-100 whitespace-nowrap">
 								<td class="border border-gray-300 px-4 py-2">{order.number}</td>
