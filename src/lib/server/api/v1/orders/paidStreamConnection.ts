@@ -16,7 +16,7 @@ import {
  * one credential can serve several devices at once — every stream shares a single change stream, so
  * the cost of an extra connection is one in-memory listener.
  */
-const MAX_CONCURRENT_STREAMS_PER_KEY = 12;
+export const MAX_CONCURRENT_STREAMS_PER_KEY = 12;
 /** Live events waiting to be written out. Past this the client is too slow to keep up. */
 const MAX_PENDING_EVENTS = 1_000;
 /** Fingerprints retained for dedupe. Bounded so a stream open for weeks cannot grow unbounded. */
