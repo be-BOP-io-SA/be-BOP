@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
 import type { Order } from '$lib/types/Order';
+import { MAX_CONCURRENT_STREAMS_PER_KEY } from '$lib/server/api/v1/orders/paidStreamConnection';
 
 const requireApiKey = vi.fn();
 const checkRateLimit = vi.fn();
@@ -274,7 +275,7 @@ describe('GET /api/v1/orders/paid/stream', () => {
 	});
 
 	it('429s past the concurrent stream budget for one API key', async () => {
-		for (let i = 0; i < 4; i++) {
+		for (let i = 0; i < MAX_CONCURRENT_STREAMS_PER_KEY; i++) {
 			expect((await call()).status).toBe(200);
 		}
 		const res = await call();
@@ -283,7 +284,7 @@ describe('GET /api/v1/orders/paid/stream', () => {
 	});
 
 	it('frees the slot when a stream is aborted', async () => {
-		for (let i = 0; i < 4; i++) {
+		for (let i = 0; i < MAX_CONCURRENT_STREAMS_PER_KEY; i++) {
 			await call();
 		}
 		openConnections.pop()?.abort();
