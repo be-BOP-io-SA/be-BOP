@@ -158,7 +158,8 @@
 		vatProfiles: data.vatProfiles,
 		bebopCountry: data.vatCountry,
 		userCountry: isDigital ? digitalCountry : country,
-		vatSingleCountry: data.vatSingleCountry
+		vatSingleCountry: data.vatSingleCountry,
+		vatExempted: data.vatExempted
 	});
 	$: deliveryFeesToDisplay = data.deliveryFees.vatIncludedReference
 		? extractVat(deliveryFeesToBill, deliveryFeesVatRate)

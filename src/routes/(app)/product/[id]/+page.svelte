@@ -645,14 +645,19 @@
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<!-- svelte-ignore a11y-no-static-element-interactions -->
 						<div
-							class="flex flex-col gap-1 cursor-pointer"
-							on:click={() => (showExclTax = !showExclTax)}
+							class="flex flex-col gap-1"
+							class:cursor-pointer={!data.vatExempted}
+							on:click={() => (showExclTax = !data.vatExempted && !showExclTax)}
 						>
-							<span class="text-sm"
-								>{t('product.vatIncluded')} ({t('cart.vat')}
-								{vatRate}%)
-								<span class="text-gray-400 text-xs ml-1">{showExclTax ? '▲' : '▼'}</span></span
-							>
+							<!-- A shop with VAT turned off has nothing to say about it: no rate, no caption,
+							     and no toggle to a breakdown that would be empty. -->
+							{#if !data.vatExempted}
+								<span class="text-sm"
+									>{t('product.vatIncluded')} ({t('cart.vat')}
+									{vatRate}%)
+									<span class="text-gray-400 text-xs ml-1">{showExclTax ? '▲' : '▼'}</span></span
+								>
+							{/if}
 							<div class="flex items-center gap-2">
 								<PriceTag
 									currency={data.product.price.currency}
@@ -703,7 +708,7 @@
 							/>
 						</div>
 
-						{#if showExclTax}
+						{#if showExclTax && !data.vatExempted}
 							<hr class="border-gray-400 mt-2 w-full" />
 							<span class="text-sm mt-1"
 								>{t('product.vatExcludedEstimate')} ({t('cart.vat')} {vatRate}%)</span
@@ -792,7 +797,9 @@
 							secondary
 							class="text-base"
 						/>
-						<span class="font-semibold text-sm">{t('product.vatExcluded')}</span>
+						{#if !data.vatExempted}
+							<span class="font-semibold text-sm">{t('product.vatExcluded')}</span>
+						{/if}
 					</div>
 				{/if}
 
