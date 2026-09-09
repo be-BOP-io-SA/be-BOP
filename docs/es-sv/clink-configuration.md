@@ -45,7 +45,36 @@ Navegar a **Admin > CLINK**:
 - **Backend Lightning**: Elegir **Procesador Lightning de be-BOP** (LND, Blink, PhoenixD…) o **Nodo Lightning.Pub** — este ultimo tambien requiere su endpoint y token de API a continuacion.
 - Hacer clic en **Save**, luego en **Test connection** para verificar que el relay y el nOffer funcionan correctamente
 
-### 3. Activar CLINK como metodo de pago
+### 3. Obtener credenciales API de Lightning.Pub (autoalojado)
+
+**Ejecutando su propio nodo Lightning.Pub**: el nodo debe exponer la API HTTP. Configure estas variables en el entorno del propio nodo:
+
+```env
+ALLOW_HTTP_UPGRADE=true
+SERVICE_URL=https://your-node.example.com
+JWT_SECRET=<a-long-random-secret>
+```
+
+La cuenta del comerciante es su cuenta de billetera en ese nodo (por ejemplo, una Shock Wallet apuntando a el). Para generar y liquidar facturas, be-BOP necesita las **credenciales HTTP** de esa cuenta, que la billetera obtiene automaticamente y le muestra a traves de `POST /api/user/http_creds`. Con un token bearer de cuenta existente puede obtenerlas usted mismo:
+
+```sh
+curl https://your-node.example.com/api/user/http_creds \
+  -H "Authorization: Bearer <your-account-token>"
+```
+
+Respuesta:
+
+```json
+{ "url": "https://your-node.example.com", "token": "eyJ..." }
+```
+
+- Ingrese `url` como **endpoint de Lightning.Pub** y `token` como **token de Lightning.Pub** en **Admin > CLINK**.
+- be-BOP envia el token como `Authorization: Bearer <token>`, y puede verificar que el nodo es alcanzable con `GET /api/health`.
+- Un token con formato `pyro1...` funciona directamente si es lo que usa su billetera/cuenta.
+
+**Nodo bootstrap compartido**: esto solo funciona si el operador habilito `ALLOW_HTTP_UPGRADE`; de lo contrario, `GetHttpCreds` falla con `http upgrade not allowed` y el backend de Lightning.Pub no puede usarse en ese nodo — elija en su lugar el backend de **Procesador Lightning de be-BOP**.
+
+### 4. Activar CLINK como metodo de pago
 
 En la pagina **Config**, bajo **Metodos de pago**, activar **Lightning** y establecer el procesador Lightning predeterminado en **CLINK**. El backend seleccionado tambien debe estar configurado y habilitado: un procesador Lightning para el backend de procesador de be-BOP, o su endpoint + token de Lightning.Pub para el backend de Lightning.Pub.
 
@@ -106,6 +135,7 @@ Cualquier billetera Lightning puede pagar el codigo QR bolt11. Para el flujo Nos
 ### Factura no creada
 
 - Verificar que el backend seleccionado este configurado y habilitado: un procesador Lightning para el backend de procesador de be-BOP, o endpoint + token de Lightning.Pub para el backend de Lightning.Pub
+- Si usa el backend Lightning.Pub, confirmar que el nodo permite acceso a la API HTTP (`ALLOW_HTTP_UPGRADE=true` y `SERVICE_URL` configurados en el nodo); de lo contrario la generacion de facturas falla con `http upgrade not allowed`
 - Verificar que `NOSTR_PRIVATE_KEY` este configurado en `.env.local`
 - Revisar los logs del servidor para errores relacionados con CLINK
 

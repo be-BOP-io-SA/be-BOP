@@ -45,7 +45,36 @@ Zu **Admin > CLINK** navigieren:
 - **Lightning-Backend**: Waehlen Sie **be-BOP Lightning-Prozessor** (LND, Blink, PhoenixD...) oder **Lightning.Pub-Knoten** - Letzterer erfordert ausserdem seinen API-Endpoint und -Token unten.
 - Auf **Save** klicken, dann **Test connection** um zu pruefen, ob Relay und nOffer funktionieren
 
-### 3. CLINK als Zahlungsmethode aktivieren
+### 3. Lightning.Pub-API-Zugangsdaten beziehen (selbst gehostet)
+
+**Eigener Lightning.Pub-Knoten**: Der Knoten muss die HTTP-API bereitstellen. Setzen Sie diese Variablen in der Umgebung des Knotens selbst:
+
+```env
+ALLOW_HTTP_UPGRADE=true
+SERVICE_URL=https://your-node.example.com
+JWT_SECRET=<a-long-random-secret>
+```
+
+Das Haendlerkonto ist Ihr Wallet-Konto auf diesem Knoten (z.B. ein Shock Wallet, das darauf zeigt). Um Rechnungen zu minten und abzuwickeln, benoetigt be-BOP die **HTTP-Zugangsdaten** dieses Kontos, die das Wallet automatisch abruft und Ihnen ueber `POST /api/user/http_creds` anzeigt. Mit einem bestehenden Bearer-Token des Kontos koennen Sie diese auch selbst abrufen:
+
+```sh
+curl https://your-node.example.com/api/user/http_creds \
+  -H "Authorization: Bearer <your-account-token>"
+```
+
+Antwort:
+
+```json
+{ "url": "https://your-node.example.com", "token": "eyJ..." }
+```
+
+- Tragen Sie `url` als **Lightning.Pub-Endpoint** und `token` als **Lightning.Pub-Token** in **Admin > CLINK** ein.
+- sendet be-BOP das Token als `Authorization: Bearer <token>`, und Sie koennen pruefen, ob der Knoten erreichbar ist, mit `GET /api/health`.
+- Ein Token im Stil `pyro1...` funktioniert so, wie er ist, wenn Ihr Wallet/Konto diesen verwendet.
+
+**Geteilter Bootstrap-Knoten**: Dies funktioniert nur, wenn der Betreiber `ALLOW_HTTP_UPGRADE` aktiviert hat; andernfalls schlaegt `GetHttpCreds` mit `http upgrade not allowed` fehl, und das Lightning.Pub-Backend kann auf diesem Knoten nicht verwendet werden - waehlen Sie stattdessen das **be-BOP Lightning-Prozessor**-Backend.
+
+### 4. CLINK als Zahlungsmethode aktivieren
 
 Auf der Seite **Config** unter **Zahlungsmethoden** die Option **Lightning** aktivieren und den Standard-Lightning-Prozessor auf **CLINK** setzen. Das gewaehlte Backend muss ebenfalls konfiguriert und aktiviert sein: ein Lightning-Prozessor fuer das be-BOP-Prozessor-Backend oder Ihr Lightning.Pub-Endpoint + -Token fuer das Lightning.Pub-Backend.
 
@@ -106,6 +135,7 @@ Jedes Lightning-Wallet kann den bolt11-QR-Code bezahlen. Fuer den CLINK-Nostr-Ab
 ### Rechnung nicht erstellt
 
 - Pruefen Sie, ob das gewaehlte Backend konfiguriert und aktiviert ist: ein Lightning-Prozessor fuer das be-BOP-Prozessor-Backend oder Lightning.Pub-Endpoint + -Token fuer das Lightning.Pub-Backend
+- Wenn Sie das Lightning.Pub-Backend verwenden, pruefen Sie, ob der Knoten HTTP-API-Zugriff erlaubt (`ALLOW_HTTP_UPGRADE=true` und `SERVICE_URL` auf dem Knoten gesetzt); andernfalls schlaegt die Rechnungserstellung mit `http upgrade not allowed` fehl
 - Ueberpruefen Sie, ob `NOSTR_PRIVATE_KEY` in `.env.local` gesetzt ist
 - Pruefen Sie die Server-Logs auf CLINK-bezogene Fehler
 

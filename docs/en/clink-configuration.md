@@ -45,7 +45,36 @@ Navigate to **Admin > CLINK**:
 - **Lightning backend**: Choose **be-BOP Lightning processor** (LND, Blink, PhoenixD…) or **Lightning.Pub node** — the latter also requires its API endpoint and token below.
 - Click **Save**, then **Test connection** to verify the relay and nOffer are working
 
-### 3. Enable CLINK as Payment Method
+### 3. Obtain your Lightning.Pub API credentials (self-hosted)
+
+**Running your own Lightning.Pub node**: the node must expose the HTTP API. Set these on the node's own environment:
+
+```env
+ALLOW_HTTP_UPGRADE=true
+SERVICE_URL=https://your-node.example.com
+JWT_SECRET=<a-long-random-secret>
+```
+
+The merchant account is your wallet account on that node (e.g. a Shock Wallet pointed at it). To mint and settle invoices, be-BOP needs that account's **HTTP credentials**, which the wallet retrieves automatically and shows to you via `POST /api/user/http_creds`. With an existing account bearer token you can fetch them yourself:
+
+```sh
+curl https://your-node.example.com/api/user/http_creds \
+  -H "Authorization: Bearer <your-account-token>"
+```
+
+Response:
+
+```json
+{ "url": "https://your-node.example.com", "token": "eyJ..." }
+```
+
+- Enter `url` as **Lightning.Pub endpoint** and `token` as **Lightning.Pub token** in **Admin > CLINK**.
+- be-BOP sends the token as `Authorization: Bearer <token>`, and you can verify the node is reachable with `GET /api/health`.
+- A `pyro1...`-style token works as-is if that is what your wallet/account uses.
+
+**Shared bootstrap node**: this only works if the operator enabled `ALLOW_HTTP_UPGRADE`; otherwise `GetHttpCreds` fails with `http upgrade not allowed` and the Lightning.Pub backend cannot be used on that node — choose the **be-BOP Lightning processor** backend instead.
+
+### 4. Enable CLINK as Payment Method
 
 In the **Config** page, under **Payment Methods**, enable **Lightning** and set the default Lightning processor to **CLINK**. The selected backend must also be configured and enabled: a Lightning processor for the be-BOP processor backend, or your Lightning.Pub endpoint + token for the Lightning.Pub backend.
 
@@ -106,6 +135,7 @@ Any Lightning wallet can pay the bolt11 QR code. For the CLINK Nostr flow, use a
 ### Invoice not created
 
 - Check that the selected backend is configured and enabled: a Lightning processor for the be-BOP processor backend, or Lightning.Pub endpoint + token for the Lightning.Pub backend
+- If using the Lightning.Pub backend, confirm the node allows HTTP API access (`ALLOW_HTTP_UPGRADE=true` and `SERVICE_URL` set on the node); otherwise invoice minting fails with `http upgrade not allowed`
 - Verify the `NOSTR_PRIVATE_KEY` is set in `.env.local`
 - Check the server logs for CLINK-related errors
 

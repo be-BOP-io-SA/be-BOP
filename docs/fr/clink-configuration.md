@@ -45,7 +45,36 @@ Naviguer vers **Admin > CLINK** :
 - **Backend Lightning** : Choisir **Processeur Lightning be-BOP** (LND, Blink, PhoenixD…) ou **Nœud Lightning.Pub** — ce dernier nécessite également son endpoint API et son jeton ci-dessous.
 - Cliquer sur **Save**, puis **Test connection** pour vérifier que le relais et le nOffer fonctionnent
 
-### 3. Activer CLINK comme moyen de paiement
+### 3. Obtenir vos identifiants API Lightning.Pub (auto-hébergé)
+
+**Vous gérez votre propre nœud Lightning.Pub** : le nœud doit exposer l'API HTTP. Définissez ces variables dans l'environnement du nœud lui-même :
+
+```env
+ALLOW_HTTP_UPGRADE=true
+SERVICE_URL=https://your-node.example.com
+JWT_SECRET=<a-long-random-secret>
+```
+
+Le compte marchand est votre compte portefeuille sur ce nœud (ex: un Shock Wallet pointé dessus). Pour émettre et régler les factures, be-BOP a besoin des **identifiants HTTP** de ce compte, que le portefeuille récupère automatiquement et vous affiche via `POST /api/user/http_creds`. Avec un jeton de compte existant, vous pouvez les récupérer vous-même :
+
+```sh
+curl https://your-node.example.com/api/user/http_creds \
+  -H "Authorization: Bearer <your-account-token>"
+```
+
+Réponse :
+
+```json
+{ "url": "https://your-node.example.com", "token": "eyJ..." }
+```
+
+- Saisir `url` comme **endpoint Lightning.Pub** et `token` comme **jeton Lightning.Pub** dans **Admin > CLINK**.
+- be-BOP envoie le jeton sous forme `Authorization: Bearer <jeton>`, et vous pouvez vérifier que le nœud est accessible avec `GET /api/health`.
+- Un jeton de style `pyro1...` fonctionne tel quel si c'est celui utilisé par votre portefeuille/compte.
+
+**Nœud bootstrap partagé** : cela ne fonctionne que si l'opérateur a activé `ALLOW_HTTP_UPGRADE` ; sinon `GetHttpCreds` échoue avec `http upgrade not allowed` et le backend Lightning.Pub ne peut pas être utilisé sur ce nœud — choisissez plutôt le backend **processeur Lightning be-BOP**.
+
+### 4. Activer CLINK comme moyen de paiement
 
 Dans la page **Config**, sous **Moyens de paiement**, activer **Lightning** et définir le processeur Lightning par défaut sur **CLINK**. Le backend sélectionné doit également être configuré et activé : un processeur Lightning pour le backend processeur be-BOP, ou votre endpoint + jeton Lightning.Pub pour le backend Lightning.Pub.
 
@@ -106,6 +135,7 @@ Tout portefeuille Lightning peut payer le code QR bolt11. Pour le flux Nostr CLI
 ### Facture non créée
 
 - Vérifier que le backend sélectionné est configuré et activé : un processeur Lightning pour le backend processeur be-BOP, ou un endpoint + jeton Lightning.Pub pour le backend Lightning.Pub
+- Si le backend Lightning.Pub est utilisé, confirmer que le nœud autorise l'accès à l'API HTTP (`ALLOW_HTTP_UPGRADE=true` et `SERVICE_URL` défini sur le nœud) ; sinon la création de facture échoue avec `http upgrade not allowed`
 - Vérifier que `NOSTR_PRIVATE_KEY` est défini dans `.env.local`
 - Consulter les logs du serveur pour les erreurs liées à CLINK
 
