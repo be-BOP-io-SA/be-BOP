@@ -411,9 +411,66 @@
 	 */
 	let variationLabelsNames: string[] = [];
 	let variationLabelsValues: string[] = [];
+	/**
+	 * The identifier of each existing variation, editable.
+	 *
+	 * It used to be resubmitted as stored, so a shop could read a bracelet code on screen, retype
+	 * it, save, and change nothing — the field it was typing into was the label. Changing it here
+	 * rewrites `variations[].value` and moves the label with it.
+	 */
+	let variationValueIds: string[] = (product.variations ?? []).map((v) => v.value);
 
 	function isNumber(value: string) {
 		return !isNaN(Number(value)) && value.trim() !== '';
+	}
+
+	/**
+	 * Families the saved variations actually use, in the order they appear.
+	 *
+	 * Derived rather than stored: a family only exists because some variation carries its
+	 * name, so deleting the last variation of a family must retire the family with it.
+	 */
+	$: variationFamilies = [...new Set((product.variations ?? []).map((vari) => vari.name))].filter(
+		Boolean
+	);
+
+	/**
+	 * Link that lands on the product page with this variation already chosen.
+	 *
+	 * The value id is not the label the shop typed: a purely numeric value is prefixed with its
+	 * family name, because a key that looks like an array index would be reordered by the
+	 * browser. Typing `10` on a `load` family therefore stores `load10`, and nothing in this form
+	 * used to show it — so the link is offered ready-made rather than left to be guessed.
+	 */
+	function variationLink(variation: { name: string; value: string }): string {
+		const path = `/product/${product._id}?${encodeURIComponent(
+			variation.name
+		)}=${encodeURIComponent(variation.value)}`;
+
+		return typeof window === 'undefined' ? path : new URL(path, window.location.origin).href;
+	}
+
+	function variationLinkKey(variation: { name: string; value: string }): string {
+		return `${variation.name}:${variation.value}`;
+	}
+
+	function variationLinkTitle(variation: { name: string; value: string }): string {
+		return `Copy the link that preselects this variation — ${variationLink(variation)}`;
+	}
+
+	/** Which row last got copied, so its icon can acknowledge the click. */
+	let copiedVariationLink = '';
+
+	async function copyVariationLink(variation: { name: string; value: string }) {
+		try {
+			await navigator.clipboard.writeText(variationLink(variation));
+			copiedVariationLink = variationLinkKey(variation);
+			setTimeout(() => (copiedVariationLink = ''), 2000);
+		} catch {
+			// Clipboard access is denied outside a secure context, and a shop admin served over
+			// plain HTTP would otherwise get a button that silently does nothing.
+			prompt('Copy this link:', variationLink(variation));
+		}
 	}
 
 	/**
@@ -953,6 +1010,15 @@
 										<input disabled type="text" class="form-input" value={variation.name} />
 									</label>
 									<label class="form-label flex-1">
+										Value Id
+										<input
+											type="text"
+											class="form-input"
+											bind:value={variationValueIds[i]}
+											placeholder={variation.value}
+										/>
+									</label>
+									<label class="form-label flex-1">
 										Category Name
 										<input
 											type="text"
@@ -968,7 +1034,8 @@
 										Value
 										<input
 											type="text"
-											name="variationLabels.values[{variation.name}][{variation.value}]"
+											name="variationLabels.values[{variation.name}][{variationValueIds[i] ||
+												variation.value}]"
 											class="form-input"
 											value={product.variationLabels?.values[variation.name]?.[variation.value]}
 											bind:this={variationInput[i]}
@@ -999,12 +1066,10 @@
 												(isNumber(variationLabelsNames[i]) ? 'name' : '') +
 													variationLabelsNames[i] || ''
 											).toLowerCase()}][{isNumber(variationLabelsValues[i])
-												? (
-														variationLabelsNames[i] +
-															(isNumber(variationLabelsNames[i]) ? '-' : '') +
-															variationLabelsValues[i] || ''
-												  ).toLowerCase()
-												: (variationLabelsValues[i] || '').toLowerCase()}]"
+												? variationLabelsNames[i] +
+														(isNumber(variationLabelsNames[i]) ? '-' : '') +
+														variationLabelsValues[i] || ''
+												: variationLabelsValues[i] || ''}]"
 											class="form-input"
 											bind:value={variationLabelsValues[i]}
 											bind:this={variationInput[i]}
@@ -1018,7 +1083,11 @@
 								<label class="form-label">
 									{#if variation.name && variation.value}
 										<input type="hidden" name="variations[{i}].name" value={variation.name} />
-										<input type="hidden" name="variations[{i}].value" value={variation.value} />
+										<input
+											type="hidden"
+											name="variations[{i}].value"
+											value={variationValueIds[i] || variation.value}
+										/>
 									{:else}
 										<input
 											type="hidden"
@@ -1032,12 +1101,10 @@
 											type="hidden"
 											name="variations[{i}].value"
 											value={isNumber(variationLabelsValues[i])
-												? (
-														variationLabelsNames[i] +
-															(isNumber(variationLabelsNames[i]) ? '-' : '') +
-															variationLabelsValues[i] || ''
-												  ).toLowerCase()
-												: (variationLabelsValues[i] || '').toLowerCase()}
+												? variationLabelsNames[i] +
+														(isNumber(variationLabelsNames[i]) ? '-' : '') +
+														variationLabelsValues[i] || ''
+												: variationLabelsValues[i] || ''}
 										/>
 									{/if}
 									Price difference
@@ -1053,6 +1120,14 @@
 								</label>
 
 								{#if variation.name && variation.value}
+									<button
+										type="button"
+										class="px-2 py-2 hover:bg-blue-50 rounded-md"
+										on:click={() => copyVariationLink(variation)}
+										title={variationLinkTitle(variation)}
+									>
+										{copiedVariationLink === variationLinkKey(variation) ? '✅' : '🔗'}
+									</button>
 									<button
 										type="button"
 										class="px-2 py-2 hover:bg-green-50 rounded-md"
@@ -1097,6 +1172,53 @@
 							Add variation
 						</button>
 					</div>
+
+					{#if variationFamilies.length}
+						<div class="bg-purple-50 p-4 rounded-lg space-y-3">
+							<p class="text-sm font-medium text-gray-700">Variation families:</p>
+							<p class="text-sm text-gray-600">
+								A family hidden from the product page can only be set through the URL —
+								<code>/product/{product._id || 'slug'}?family=value</code> — which is how a value nobody
+								should be able to pick from a list gets onto an order.
+							</p>
+							{#each variationFamilies as family}
+								<div class="flex gap-4 items-center flex-wrap">
+									<span class="flex-1 font-medium"
+										>{product.variationLabels?.names[family] || family}</span
+									>
+									<label class="flex items-center gap-2">
+										<input
+											class="form-checkbox"
+											type="checkbox"
+											name="variationFamilies[{family}].hiddenFromUI"
+											checked={product.variationFamilies?.[family]?.hiddenFromUI}
+										/>
+										Hide from the product page
+									</label>
+									<label class="flex items-center gap-2">
+										<input
+											class="form-checkbox"
+											type="checkbox"
+											name="variationFamilies[{family}].hiddenFromCustomer"
+											checked={product.variationFamilies?.[family]?.hiddenFromCustomer}
+										/>
+										Hide from cart and order
+									</label>
+								</div>
+							{/each}
+							<label class="form-label">
+								When the URL asks for a variation that does not exist
+								<select name="variationUrlPolicy" class="form-input">
+									<option value="error" selected={product.variationUrlPolicy !== 'ignore'}>
+										Refuse the page
+									</option>
+									<option value="ignore" selected={product.variationUrlPolicy === 'ignore'}>
+										Ignore it and show the dropdown
+									</option>
+								</select>
+							</label>
+						</div>
+					{/if}
 				{/if}
 
 				{#if product.type === 'subscription'}

@@ -349,3 +349,33 @@ export function cleanVariationLabels(variationLabels?: {
 
 	return { names, values };
 }
+
+/**
+ * Keep only the family options whose family still has at least one variation, and only those
+ * that actually turn something on.
+ *
+ * The form posts a checkbox pair for every family it displayed. Storing the false ones would
+ * leave a record of families behind after their last variation is deleted, and the product
+ * page would then look up options for families that no longer exist.
+ */
+export function cleanVariationFamilies(
+	variationFamilies:
+		| Record<string, { hiddenFromUI?: boolean; hiddenFromCustomer?: boolean }>
+		| undefined,
+	variations: Array<{ name: string }>
+): Record<string, { hiddenFromUI?: boolean; hiddenFromCustomer?: boolean }> {
+	const known = new Set(variations.map((variation) => variation.name));
+
+	return Object.fromEntries(
+		Object.entries(variationFamilies ?? {})
+			.filter(([family]) => known.has(family))
+			.map(([family, options]) => [
+				family,
+				{
+					...(options.hiddenFromUI && { hiddenFromUI: true }),
+					...(options.hiddenFromCustomer && { hiddenFromCustomer: true })
+				}
+			])
+			.filter(([, options]) => Object.keys(options).length > 0)
+	);
+}
