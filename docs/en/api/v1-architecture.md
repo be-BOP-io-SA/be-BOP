@@ -299,7 +299,7 @@ Separate routes rather than content negotiation on one path. An `Accept` header 
 Both stream surfaces run on `openPaidOrderStream` (`orders/paidStreamConnection.ts`). The hard parts are not the payload: subscribing to the change-stream hub _before_ the backlog is read so nothing falls in the gap between snapshot and live edge, writing every frame through one serialized path so the cursor never goes backwards, keeping backpressure honest, and tearing down exactly once. Callers supply only the framing.
 
 - One Mongo change stream is shared by every connection (`paidStreamHub.ts`). A change stream is a server-side cursor; one per connected till would put the cost of the fleet on the database.
-- Four concurrent streams per API key, counted across both surfaces — two connections from one credential cost the same whichever route they came in by.
+- Twelve concurrent streams per API key, counted across both surfaces — two connections from one credential cost the same whichever route they came in by.
 - Delivery is at-least-once. A document touched again after payment comes back through the change stream, and a resume replays the tail of the window; consumers deduplicate on `orderId`.
 - Past a 1000-event backlog the connection closes rather than dropping frames silently, and the client reconnects from where it left off.
 - Resume is keyed on `updatedAt`, never on `_id`: an order `_id` is a crypto UUID, so it sorts at random and could never express "everything after this point". The PoS seam resumes by order id, which is resolved to that position (`findOrderCursor`).
