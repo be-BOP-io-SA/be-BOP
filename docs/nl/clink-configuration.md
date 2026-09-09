@@ -9,14 +9,20 @@ Wanneer een klant betaalt met CLINK:
 1. Er wordt direct bij het bestellen een **bolt11-factuur** aangemaakt en weergegeven als QR-code
 2. Elke Lightning-wallet kan de QR scannen en de bolt11 direct betalen
 3. CLINK-compatibele wallets kunnen ook het **nOffer** van de handelaar scannen en dezelfde bolt11 ontvangen via de Nostr-relay
-4. De betaling wordt bevestigd door de Lightning-node van de geconfigureerde backend-processor te bevragen voor de factuur (via betalingshash)
+4. De betaling wordt bevestigd door de geconfigureerde backend van de handelaar te bevragen — hun be-BOP Lightning-processor of hun Lightning.Pub-node — voor de factuur
 
-CLINK is **alleen een transportlaag**, geen Lightning-backend. De factuurgeneratie en afrekening worden gedelegeerd naar de eigen geconfigureerde Lightning-processor van be-BOP (LND, Blink, PhoenixD, enz.): dezelfde node die elk ander Lightning-payment zou dragen. Dit levert een echte betalingshash op en een gezaghebbende, node-gedreven `checkPayment()` die verifieert tegen de backend die de sats daadwerkelijk heeft ontvangen.
+CLINK is **alleen een transportlaag**, geen Lightning-backend. De backend die de bolt11-facturen aanmaakt en afwikkelt, wordt gekozen in **Admin > CLINK**:
+
+- **be-BOP Lightning-processor** (standaard): factuurgeneratie en afrekening worden gedelegeerd naar de eigen geconfigureerde Lightning-processor van be-BOP (LND, Blink, PhoenixD, enz.) — dezelfde node die elk ander Lightning-payment zou dragen.
+- **Lightning.Pub-node**: facturen worden aangemaakt door uw eigen Lightning.Pub-node via de HTTP-API (`POST /api/user/invoice/new`), en afrekening wordt opgevraagd bij dezelfde node (`POST /api/user/payment/state`).
+
+Beide opties leveren een echte betalingshash op en een node-gedreven `checkPayment()` die verifieert tegen de backend die de sats daadwerkelijk heeft ontvangen.
 
 ## Vereisten
 
 - Een **Nostr privaat sleutel** geconfigureerd in `.env.local` (nsec-formaat)
-- Een geconfigureerde en ingeschakelde Lightning-processor (bijv. Blink, LND, PhoenixD) gebruikt voor factuurgeneratie
+- Een geconfigureerde en ingeschakelde Lightning-processor (bijv. Blink, LND, PhoenixD) — vereist wanneer de **be-BOP-processor**-backend is geselecteerd
+- **OF** een Lightning.Pub **endpoint en token** voor uw eigen Lightning.Pub-node — vereist wanneer de **Lightning.Pub**-backend is geselecteerd
 - Een Nostr-relay voor CLINK-communicatie (standaard: `wss://strfry.shock.network`)
 
 ## Setup
@@ -36,21 +42,22 @@ Navigeer naar **Admin > CLINK**:
 
 - **nOffer**: Uw Lightning.Pub nOffer-tekenreeks (bijv. `noffer1...`). Identificeert uw handelaarsaccount bij CLINK-wallets.
 - **Nostr-relay-URL**: De Nostr-relay voor CLINK-communicatie (standaard: `wss://strfry.shock.network`)
+- **Lightning-backend**: Kies **be-BOP Lightning-processor** (LND, Blink, PhoenixD…) of **Lightning.Pub-node** — de laatste vereist ook het API-endpoint en -token hieronder.
 - Klik op **Save**, daarna op **Test connection** om te verifiëren dat de relay en nOffer goed werken
 
 ### 3. CLINK als betaalmethode inschakelen
 
-Op de pagina **Config**, onder **Betaalmethoden**, **Lightning** inschakelen en de standaard Lightning-processor instellen op **CLINK**. De onderliggende Lightning-backend (LND, Blink, PhoenixD…) moet ook geconfigureerd en ingeschakeld zijn.
+Op de pagina **Config**, onder **Betaalmethoden**, **Lightning** inschakelen en de standaard Lightning-processor instellen op **CLINK**. De geselecteerde backend moet ook geconfigureerd en ingeschakeld zijn: een Lightning-processor voor de be-BOP-processor-backend, of uw Lightning.Pub-endpoint + token voor de Lightning.Pub-backend.
 
 ## Hoe het werkt
 
 ### Betaalstroom
 
-1. **Klant plaatst bestelling** -> be-BOP delegeert de factuuraanmaak naar zijn geconfigureerde Lightning-processor, die een bolt11 met echte betalingshash uitgeeft
+1. **Klant plaatst bestelling** -> be-BOP maakt een bolt11 aan (met een echte betalingshash) op de geselecteerde backend — zijn geconfigureerde Lightning-processor of de Lightning.Pub-node
 2. **QR-code weergegeven** -> De bolt11-factuur wordt aan de klant getoond
 3. **CLINK-wallet-stroom** -> CLINK-compatibele wallets vragen de factuur in plaats daarvan op via Nostr (kind 21001); de bolt11 wordt versleuteld (NIP-44) teruggegeven
 4. **Klant betaalt** -> Scant de QR (of gebruikt zijn CLINK-wallet) met elke Lightning-wallet en betaalt
-5. **Bestelling bevestigd** -> De ordepoller van be-BOP roept `checkPayment()` aan, dat delegeert naar de Lightning-backend-processor en de node bevraagt voor de factuur via de echte betalingshash; de bestelling wordt als betaald gemarkeerd
+5. **Bestelling bevestigd** -> De ordepoller van be-BOP roept `checkPayment()` aan, dat de geselecteerde backend bevraagt voor de factuur via de echte betalingshash (de Lightning.Pub-node via `POST /api/user/payment/state`); de bestelling wordt als betaald gemarkeerd
 
 ### CLINK-protocol
 
@@ -62,7 +69,12 @@ Het CLINK-protocol gebruikt Nostr-event type 21001 met NIP-44-versleuteling:
 
 ### Betalingsdetectie
 
-De betaling wordt gedetecteerd door de Lightning-backend-processor zelf: `checkPayment()` verwijst door naar de processor die de factuur heeft aangemaakt (per betaling geregistreerd als `meta.backend`) en bevraagt die node voor de factuur via de betalingshash. Er is **geen afhankelijkheid van Nostr-ontvangstbewijzen**: de afrekening wordt geverifieerd tegen de node die de sats daadwerkelijk heeft ontvangen, waardoor de stroom stateless en meerprocessig veilig is.
+Betalingsdetectie is node-gedreven. `checkPayment()` verwijst door naar de backend die per betaling is geregistreerd (`meta.backend`):
+
+- **be-BOP-processor**: de backend-processor van de factuur bevraagt die node `checkPayment` voor de factuur via de betalingshash.
+- **Lightning.Pub**: de Lightning.Pub-node van de handelaar wordt bevraagd via `POST /api/user/payment/state` (met de opgeslagen bolt11); deze rapporteert het werkelijk ontvangen bedrag en het afwikkelingstijdstip — nooit een echo van het verwachte bedrag.
+
+Er is **geen afhankelijkheid van Nostr-ontvangstbewijzen**: de afrekening wordt geverifieerd tegen de node die de sats daadwerkelijk heeft ontvangen, waardoor de stroom stateless en meerprocessig veilig is.
 
 Een knop **Betalingsstatus controleren** is beschikbaar op wachtende CLINK-bestellingen; deze start alleen deze node-gedreven controle opnieuw (de afrekening wordt door de ordepoller onder de orderlock toegepast).
 
@@ -70,12 +82,13 @@ Een knop **Betalingsstatus controleren** is beschikbaar op wachtende CLINK-beste
 
 - **nOffer**: Een bech32-gecodeerde handelaarsaanbodtekenreeks met het Nostr publieke sleutel van de handelaar, de relay-URL en het aanbod-ID
 - **NIP-44-versleuteling**: End-to-end-versleuteling voor betaalverzoeken en -antwoorden
-- **Factuuraanmaak**: Gedelegeerd naar de geconfigureerde Lightning-processor van be-BOP; maakt een echte factuur + betalingshash, zonder Nostr-uitwisseling
+- **Factuuraanmaak**: Aangemaakt op de geselecteerde backend (de Lightning-processor van be-BOP of de HTTP-API van de Lightning.Pub-node) — een echte factuur + betalingshash, zonder Nostr-uitwisseling
 - **Persistente listener**: Een langlopend Nostr-abonnement op de relay van de handelaar dat bolt11-facturen aan CLINK-wallets levert en relay-herconnecties overleeft. De listener start automatisch bij het opstarten van de server.
 
 ### Beveiliging
 
 - **Relay-SSRF-bescherming**: Relay-URL's worden gevalideerd tegen prive-/interne IP-bereiken voordat er verbinding wordt gemaakt
+- **Lightning.Pub-endpoint SSRF-bescherming**: Het Lightning.Pub API-endpoint wordt gevalideerd tegen prive-/interne IP-bereiken voor elke aanmaak- en afwikkelingsoproep
 - **BOLT11-validatie**: Facturen moeten exact het verwachte bedrag (zonder tolerantie) en het juiste netwerk dragen
 - **Handtekeningverificatie**: Alle inkomende Nostr-events worden geverifieerd voordat ze worden verwerkt
 - **Handelaar Pubkey-filter**: Nostr-abonnementsfilters gebruiken het eigen publieke sleutel van de handelaar (afgeleid van `NOSTR_PRIVATE_KEY`), niet de sleutel van Lightning.Pub
@@ -92,7 +105,7 @@ Elke Lightning-wallet kan de bolt11-QR-code betalen. Voor de CLINK Nostr-stroom,
 
 ### Factuur niet aangemaakt
 
-- Controleer of een Lightning-processor is geconfigureerd en ingeschakeld (bijv. Blink, LND, PhoenixD)
+- Controleer of de geselecteerde backend is geconfigureerd en ingeschakeld: een Lightning-processor voor de be-BOP-processor-backend, of het Lightning.Pub-endpoint + token voor de Lightning.Pub-backend
 - Controleer of `NOSTR_PRIVATE_KEY` is ingesteld in `.env.local`
 - Controleer de serverlogs op CLINK-gerelateerde fouten
 
@@ -117,12 +130,12 @@ Elke Lightning-wallet kan de bolt11-QR-code betalen. Voor de CLINK Nostr-stroom,
 
 - **Nostr-event type**: 21001
 - **Versleuteling**: NIP-44 (versie 2)
-- **Factuur-backend**: De geconfigureerde Lightning-processor van be-BOP (LND, Blink, PhoenixD…)
-- **Betalingsdetectie**: Node-gedreven opzoekactie via echte betalingshash, gedelegeerd naar de backend-processor van de factuur
+- **Factuur-backend**: Selecteerbaar — de Lightning-processor van be-BOP (LND, Blink, PhoenixD…) of de Lightning.Pub-node van de handelaar via de HTTP-API
+- **Betalingsdetectie**: Node-gedreven opzoekactie via echte betalingshash — via de processor van de factuur, of via `POST /api/user/payment/state` op de Lightning.Pub-node
 - **CLINK-relay-URL**: `wss://strfry.shock.network` (configureerbaar via Admin > CLINK)
 
 ## nDebit-afrekeningen
 
-CLINK is **alleen een transportlaag** -- het **vereist geen nDebit** voor afrekeningen. Betalingsafrekeningen worden volledig afgehandeld door de standaard Lightning-processor van de handelaar (Blink, LND, Phoenixd, enz.) via de bolt11-factuur. De handelaar ontvangt sats op zijn bestaande Lightning-backend.
+CLINK is **alleen een transportlaag** -- het **vereist geen nDebit** voor afrekeningen. Betalingsafrekeningen worden volledig afgehandeld door de geselecteerde backend (de Lightning-processor van be-BOP of de Lightning.Pub-node) via de bolt11-factuur. De handelaar ontvangt sats op zijn bestaande Lightning-backend.
 
 Als een handelaar nDebit wil gebruiken voor node-afrekeningen (bijv. met ShockWallet), wordt dit geconfigureerd in zijn wallet, niet in be-BOP.

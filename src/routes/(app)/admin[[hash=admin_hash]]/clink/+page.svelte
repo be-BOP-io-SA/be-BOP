@@ -7,6 +7,7 @@
 	let testInFlight = false;
 	let testCooldownUntil = 0;
 	$: testDisabled = testInFlight || Date.now() < testCooldownUntil;
+	let backendChoice: 'lightning-pub' | 'processor' = data.backend;
 </script>
 
 <h1 class="text-3xl">CLINK</h1>
@@ -59,10 +60,64 @@
 	<h2 class="text-2xl mt-4">Lightning Backend</h2>
 
 	<p class="text-sm mb-2">
-		Invoices are created and settled by your configured default lightning processor (LND, Blink,
-		PhoenixD, etc.) — CLINK only transports the bolt11 to the customer over Nostr. That processor
-		must be enabled for CLINK payments to work.
+		Choose which node creates and settles the CLINK bolt11 invoices. CLINK only transports the
+		invoice to the customer over Nostr — the payment is always minted and settled by the backend you
+		select here.
 	</p>
+
+	<label class="checkbox-label">
+		<input
+			type="radio"
+			bind:group={backendChoice}
+			class="form-radio"
+			name="backend"
+			value="processor"
+		/>
+		<strong>be-BOP Lightning processor</strong> (LND, Phoenixd, Blink…) — invoices are minted and settled
+		by the Lightning processor configured in your other admin pages.
+	</label>
+
+	<label class="checkbox-label">
+		<input
+			type="radio"
+			bind:group={backendChoice}
+			class="form-radio"
+			name="backend"
+			value="lightning-pub"
+		/>
+		<strong>Lightning.Pub node</strong> — invoices are minted and settled by your own Lightning.Pub
+		node through its HTTP API (the node that powers your <code>noffer1...</code>).
+	</label>
+
+	{#if backendChoice === 'lightning-pub'}
+		<label class="form-label">
+			Lightning.Pub endpoint
+			<input
+				class="form-input font-mono text-sm"
+				type="url"
+				name="lightningPubEndpoint"
+				placeholder="https://..."
+				value={data.lightningPubEndpoint}
+			/>
+			<span class="text-xs text-gray-500"
+				>Base URL of your Lightning.Pub node's API (https). Required for the Lightning.Pub backend.</span
+			>
+		</label>
+
+		<label class="form-label">
+			Lightning.Pub token
+			<input
+				class="form-input font-mono text-sm"
+				type="password"
+				name="lightningPubToken"
+				placeholder="pyro1..."
+				value={data.lightningPubToken}
+			/>
+			<span class="text-xs text-gray-500"
+				>The API token of the Lightning.Pub account tied to your nOffer.</span
+			>
+		</label>
+	{/if}
 
 	<div class="flex justify-between">
 		<button class="btn btn-black" type="submit">Save</button>

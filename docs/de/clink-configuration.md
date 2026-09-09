@@ -9,14 +9,20 @@ Wenn ein Kunde mit CLINK bezahlt:
 1. Sofort bei Bestellung wird eine **bolt11-Rechnung** erstellt und als QR-Code angezeigt
 2. Jedes Lightning-Wallet kann den QR-Code scannen und die bolt11 direkt bezahlen
 3. CLINK-kompatible Wallets koennen auch das **nOffer** des Haendlers scannen und dieselbe bolt11 ueber den Nostr-Relay empfangen
-4. Die Zahlung wird bestaetigt, indem der Lightning-Knoten des konfigurierten Backend-Prozessors nach der Rechnung abgefragt wird (per Zahlungs-Hash)
+4. Die Zahlung wird bestaetigt, indem das konfigurierte Backend des Haendlers abgefragt wird - sein be-BOP-Lightning-Prozessor oder sein Lightning.Pub-Knoten - nach der Rechnung
 
-CLINK ist **nur eine Transportschicht**, kein Lightning-Backend. Die Rechnungserstellung und Abwicklung werden an den konfigurierten Lightning-Prozessor von be-BOP (LND, Blink, PhoenixD usw.) delegiert - denselben Knoten, der auch jedes andere Lightning-Payment tragen wuerde. Das ergibt einen echten Zahlungs-Hash und ein autoritatives, knotengestuetztes `checkPayment()`, das gegen den Backend-Knoten abgleicht, der die Sats tatsaechlich erhalten hat.
+CLINK ist **nur eine Transportschicht**, kein Lightning-Backend. Das Backend, das die bolt11-Rechnungen erstellt und abwickelt, wird unter **Admin > CLINK** gewaehlt:
+
+- **be-BOP Lightning-Prozessor** (Standard): Rechnungserstellung und -abwicklung werden an den konfigurierten Lightning-Prozessor von be-BOP delegiert (LND, Blink, PhoenixD usw.) - denselben Knoten, der auch jedes andere Lightning-Payment tragen wuerde.
+- **Lightning.Pub-Knoten**: Rechnungen werden von Ihrem eigenen Lightning.Pub-Knoten ueber dessen HTTP-API erstellt (`POST /api/user/invoice/new`), und die Abwicklung wird an demselben Knoten abgefragt (`POST /api/user/payment/state`).
+
+Beide Optionen ergeben einen echten Zahlungs-Hash und ein knotengestuetztes `checkPayment()`, das gegen das Backend abgleicht, das die Sats tatsaechlich erhalten hat.
 
 ## Voraussetzungen
 
 - Ein **Nostr-Privatschluessel** in `.env.local` (nsec-Format)
-- Ein konfigurierter und aktivierter Lightning-Prozessor (z.B. Blink, LND, PhoenixD) fuer die Rechnungserstellung
+- Ein konfigurierter und aktivierter Lightning-Prozessor (z.B. Blink, LND, PhoenixD) - erforderlich, wenn das **be-BOP-Prozessor**-Backend gewaehlt ist
+- **ODER** ein Lightning.Pub-**Endpoint und -Token** fuer Ihren eigenen Lightning.Pub-Knoten - erforderlich, wenn das **Lightning.Pub**-Backend gewaehlt ist
 - Ein Nostr-Relay fuer die CLINK-Kommunikation (Standard: `wss://strfry.shock.network`)
 
 ## Einrichtung
@@ -36,21 +42,22 @@ Zu **Admin > CLINK** navigieren:
 
 - **nOffer**: Ihre Lightning.Pub-nOffer-Zeichenkette (z.B. `noffer1...`). Identifiziert Ihr Haendlerkonto bei CLINK-Wallets.
 - **Nostr-Relay-URL**: Der Nostr-Relay fuer die CLINK-Kommunikation (Standard: `wss://strfry.shock.network`)
+- **Lightning-Backend**: Waehlen Sie **be-BOP Lightning-Prozessor** (LND, Blink, PhoenixD...) oder **Lightning.Pub-Knoten** - Letzterer erfordert ausserdem seinen API-Endpoint und -Token unten.
 - Auf **Save** klicken, dann **Test connection** um zu pruefen, ob Relay und nOffer funktionieren
 
 ### 3. CLINK als Zahlungsmethode aktivieren
 
-Auf der Seite **Config** unter **Zahlungsmethoden** die Option **Lightning** aktivieren und den Standard-Lightning-Prozessor auf **CLINK** setzen. Das Lightning-Backend (LND, Blink, PhoenixD usw.) muss ebenfalls konfiguriert und aktiviert sein.
+Auf der Seite **Config** unter **Zahlungsmethoden** die Option **Lightning** aktivieren und den Standard-Lightning-Prozessor auf **CLINK** setzen. Das gewaehlte Backend muss ebenfalls konfiguriert und aktiviert sein: ein Lightning-Prozessor fuer das be-BOP-Prozessor-Backend oder Ihr Lightning.Pub-Endpoint + -Token fuer das Lightning.Pub-Backend.
 
 ## Funktionsweise
 
 ### Zahlungsablauf
 
-1. **Kunde gibt Bestellung auf** -> be-BOP delegiert die Rechnungserstellung an seinen konfigurierten Lightning-Prozessor, der eine bolt11 mit echtem Zahlungs-Hash ausstellt
+1. **Kunde gibt Bestellung auf** -> be-BOP erstellt eine bolt11 (mit echtem Zahlungs-Hash) auf dem gewaehlten Backend - seinem konfigurierten Lightning-Prozessor oder dem Lightning.Pub-Knoten
 2. **QR-Code wird angezeigt** -> Die bolt11-Rechnung wird dem Kunden praesentiert
 3. **CLINK-Wallet-Ablauf** -> CLINK-kompatible Wallets fordern die Rechnung stattdessen ueber Nostr (kind 21001) an; die bolt11 wird verschluesselt (NIP-44) zurueckgegeben
 4. **Kunde bezahlt** -> Scanned den QR (oder benutzt sein CLINK-Wallet) mit jedem Lightning-Wallet und bezahlt
-5. **Bestellung bestaetigt** -> Der Bestell-Poller von be-BOP ruft `checkPayment()` auf, das an den Lightning-Backend-Prozessor delegiert und den Knoten nach der Rechnung per echtem Zahlungs-Hash abfragt; die Bestellung wird als bezahlt markiert
+5. **Bestellung bestaetigt** -> Der Bestell-Poller von be-BOP ruft `checkPayment()` auf, das das gewaehlte Backend nach der Rechnung per echtem Zahlungs-Hash abfragt (beim Lightning.Pub-Knoten ueber `POST /api/user/payment/state`); die Bestellung wird als bezahlt markiert
 
 ### CLINK-Protokoll
 
@@ -62,7 +69,12 @@ Das CLINK-Protokoll verwendet Nostr-Event-Typ 21001 mit NIP-44-Verschluesselung:
 
 ### Zahlungserkennung
 
-Die Zahlung wird vom Lightning-Backend-Prozessor selbst erkannt: `checkPayment()` reicht an den Prozessor weiter, der die Rechnung erstellt hat (pro Zahlung als `meta.backend` gespeichert), und fragt diesen Knoten nach der Rechnung per Zahlungs-Hash ab. Es gibt **keine Abhaengigkeit von Nostr-Belegen** - die Abwicklung wird gegen den Knoten geprueft, der die Sats tatsaechlich erhalten hat, sodass der Ablauf zustandslos und mehrprozesssicher ist.
+Die Zahlungserkennung ist knotengestuetzt. `checkPayment()` reicht an das pro Zahlung gespeicherte Backend weiter (`meta.backend`):
+
+- **be-BOP-Prozessor**: Der `checkPayment` des Backend-Prozessors der Rechnung fragt diesen Knoten nach der Rechnung per Zahlungs-Hash ab.
+- **Lightning.Pub**: Der Lightning.Pub-Knoten des Haendlers wird ueber `POST /api/user/payment/state` abgefragt (mit der gespeicherten bolt11); er meldet den tatsaechlich erhaltenen Betrag und den Abwicklungs-Zeitstempel - niemals ein Echo des erwarteten Betrags.
+
+Es gibt **keine Abhaengigkeit von Nostr-Belegen** - die Abwicklung wird gegen den Knoten geprueft, der die Sats tatsaechlich erhalten hat, sodass der Ablauf zustandslos und mehrprozesssicher ist.
 
 Eine Schaltflaeche **Zahlungsstatus pruefen** ist auf ausstehenden CLINK-Bestellungen verfuegbar; sie loest nur diese knotengestuetzte Pruefung erneut aus (die Abwicklung erfolgt durch den Bestell-Poller unter der Bestellsperre).
 
@@ -70,12 +82,13 @@ Eine Schaltflaeche **Zahlungsstatus pruefen** ist auf ausstehenden CLINK-Bestell
 
 - **nOffer**: Eine bech32-kodierte Haendler-Offerten-Zeichenkette mit der Nostr-Oeffentlichkeit des Haendlers, der Relay-URL und der Offer-ID
 - **NIP-44-Verschluesselung**: Ende-zu-Ende-Verschluesselung fuer Zahlungsanfragen und -antworten
-- **Rechnungserstellung**: Wird an den konfigurierten Lightning-Prozessor von be-BOP delegiert; erstellt eine echte Rechnung + Zahlungs-Hash ohne Nostr-Roundtrip
+- **Rechnungserstellung**: Wird auf dem gewaehlten Backend erstellt (dem Lightning-Prozessor von be-BOP oder der HTTP-API des Lightning.Pub-Knotens) - eine echte Rechnung + Zahlungs-Hash, ohne Nostr-Roundtrip
 - **Persistenter Listener**: Eine lang laufende Nostr-Subscription auf dem Relay des Haendlers, die bolt11-Rechnungen an CLINK-Wallets ausliefert und Relay-Wiederverbindungen ueberlebt. Der Listener startet automatisch beim Serverstart.
 
 ### Sicherheit
 
 - **Relay-SSRF-Schutz**: Relay-URLs werden vor der Verbindung auf private/interne IP-Bereiche geprueft
+- **Lightning.Pub-Endpoint-SSRF-Schutz**: Der Lightning.Pub-API-Endpoint wird vor jedem Mint- und Abwicklungs-Aufruf auf private/interne IP-Bereiche geprueft
 - **BOLT11-Validierung**: Rechnungen muessen exakt den erwarteten Betrag (ohne Toleranz) und das passende Netzwerk tragen
 - **Signaturverifikation**: Alle eingehenden Nostr-Events werden vor der Verarbeitung verifiziert
 - **Haendler-Pubkey-Filter**: Nostr-Subscription-Filter verwenden den oeffentlichen Schluessel des Haendlers (abgeleitet aus `NOSTR_PRIVATE_KEY`), nicht den Schluessel von Lightning.Pub
@@ -92,7 +105,7 @@ Jedes Lightning-Wallet kann den bolt11-QR-Code bezahlen. Fuer den CLINK-Nostr-Ab
 
 ### Rechnung nicht erstellt
 
-- Pruefen Sie, ob ein Lightning-Prozessor konfiguriert und aktiviert ist (z.B. Blink, LND, PhoenixD)
+- Pruefen Sie, ob das gewaehlte Backend konfiguriert und aktiviert ist: ein Lightning-Prozessor fuer das be-BOP-Prozessor-Backend oder Lightning.Pub-Endpoint + -Token fuer das Lightning.Pub-Backend
 - Ueberpruefen Sie, ob `NOSTR_PRIVATE_KEY` in `.env.local` gesetzt ist
 - Pruefen Sie die Server-Logs auf CLINK-bezogene Fehler
 
@@ -117,12 +130,12 @@ Jedes Lightning-Wallet kann den bolt11-QR-Code bezahlen. Fuer den CLINK-Nostr-Ab
 
 - **Nostr-Event-Typ**: 21001
 - **Verschluesselung**: NIP-44 (Version 2)
-- **Rechnungs-Backend**: Der konfigurierte Lightning-Prozessor von be-BOP (LND, Blink, PhoenixD usw.)
-- **Zahlungserkennung**: Knotengestuetzte Suche per echtem Zahlungs-Hash, delegiert an den Backend-Prozessor der Rechnung
+- **Rechnungs-Backend**: Auswaehlbar - der Lightning-Prozessor von be-BOP (LND, Blink, PhoenixD...) oder der Lightning.Pub-Knoten des Haendlers ueber dessen HTTP-API
+- **Zahlungserkennung**: Knotengestuetzte Suche per echtem Zahlungs-Hash - ueber den Prozessor der Rechnung oder ueber `POST /api/user/payment/state` am Lightning.Pub-Knoten
 - **CLINK-Relay-URL**: `wss://strfry.shock.network` (konfigurierbar unter Admin > CLINK)
 
 ## nDebit-Abwicklung
 
-CLINK ist **nur eine Transportschicht** - es **fordert kein nDebit** fuer die Abwicklung. Die Zahlungsabwicklung wird vollstaendig vom Standard-Lightning-Prozessor des Haendlers (Blink, LND, Phoenixd usw.) ueber die bolt11-Rechnung abgewickelt. Der Haendler empfaengt die Sats auf seinem bestehenden Lightning-Backend.
+CLINK ist **nur eine Transportschicht** - es **fordert kein nDebit** fuer die Abwicklung. Die Zahlungsabwicklung wird vollstaendig vom gewaehlten Backend (dem Lightning-Prozessor von be-BOP oder dem Lightning.Pub-Knoten) ueber die bolt11-Rechnung abgewickelt. Der Haendler empfaengt die Sats auf seinem bestehenden Lightning-Backend.
 
 Wenn ein Haendler nDebit fuer same-node-Abwicklungen verwenden moechte (z.B. mit ShockWallet), wird dies in seinem Wallet konfiguriert, nicht in be-BOP.

@@ -9,14 +9,20 @@ Quando un cliente paga con CLINK:
 1. Una **fattura bolt11** viene creata immediatamente al momento dell'ordine e mostrata come codice QR
 2. Qualsiasi wallet Lightning puo scansionare e pagare la bolt11 direttamente
 3. I wallet compatibili CLINK possono anche scansionare il **nOffer** del commerciante e ricevere la stessa bolt11 tramite il relay Nostr
-4. Il pagamento viene confermato interrogando il nodo Lightning del processore backend configurato per la fattura (tramite hash del pagamento)
+4. Il pagamento viene confermato interrogando il backend configurato del commerciante — il suo processore Lightning be-BOP o il suo nodo Lightning.Pub — per la fattura
 
-CLINK e **solo un layer di trasporto**, non un backend Lightning. La generazione delle fatture e il regolamento vengono delegati al processore Lightning proprio di be-BOP (LND, Blink, PhoenixD, ecc.): lo stesso nodo che supporterebbe qualsiasi altro pagamento Lightning. Questo produce un hash di pagamento reale e un `checkPayment()` autorevole basato sul nodo, che riconcilia contro il backend che ha effettivamente ricevuto i sats.
+CLINK e **solo un layer di trasporto**, non un backend Lightning. Il backend che conia e regola le fatture bolt11 viene scelto in **Admin > CLINK**:
+
+- **Processore Lightning be-BOP** (predefinito): la generazione delle fatture e il regolamento vengono delegati al processore Lightning proprio di be-BOP (LND, Blink, PhoenixD, ecc.): lo stesso nodo che supporterebbe qualsiasi altro pagamento Lightning.
+- **Nodo Lightning.Pub**: le fatture vengono coniate dal vostro nodo Lightning.Pub tramite la sua HTTP API (`POST /api/user/invoice/new`), e il regolamento viene interrogato dallo stesso nodo (`POST /api/user/payment/state`).
+
+Entrambe le opzioni producono un hash di pagamento reale e un `checkPayment()` basato sul nodo, che riconcilia contro il backend che ha effettivamente ricevuto i sats.
 
 ## Prerequisiti
 
 - Una **chiave privata Nostr** configurata in `.env.local` (formato nsec)
-- Un processore Lightning configurato e abilitato (es. Blink, LND, PhoenixD) utilizzato per la generazione delle fatture
+- Un processore Lightning configurato e abilitato (es. Blink, LND, PhoenixD) — richiesto quando e selezionato il backend **processore be-BOP**
+- **OPPURE** un **endpoint e token** Lightning.Pub per il vostro nodo Lightning.Pub — richiesto quando e selezionato il backend **Lightning.Pub**
 - Un relay Nostr per la comunicazione CLINK (predefinito: `wss://strfry.shock.network`)
 
 ## Configurazione
@@ -36,21 +42,22 @@ Navigare verso **Admin > CLINK**:
 
 - **nOffer**: La vostra stringa nOffer Lightning.Pub (es. `noffer1...`). Identifica il vostro account commerciante ai wallet CLINK.
 - **URL del relay Nostr**: Il relay Nostr utilizzato per la comunicazione CLINK (predefinito: `wss://strfry.shock.network`)
+- **Backend Lightning**: Scegliere **Processore Lightning be-BOP** (LND, Blink, PhoenixD…) o **Nodo Lightning.Pub** — quest'ultimo richiede anche il suo endpoint API e token qui sotto.
 - Fare clic su **Save**, poi su **Test connection** per verificare che il relay e il nOffer funzionino correttamente
 
 ### 3. Attivare CLINK come metodo di pagamento
 
-Nella pagina **Config**, sotto **Metodi di pagamento**, attivare **Lightning** e impostare il processore Lightning predefinito su **CLINK**. Anche il backend Lightning sottostante (LND, Blink, PhoenixD…) deve essere configurato e abilitato.
+Nella pagina **Config**, sotto **Metodi di pagamento**, attivare **Lightning** e impostare il processore Lightning predefinito su **CLINK**. Anche il backend selezionato deve essere configurato e abilitato: un processore Lightning per il backend processore be-BOP, oppure l'endpoint + token Lightning.Pub per il backend Lightning.Pub.
 
 ## Come funziona
 
 ### Flusso di pagamento
 
-1. **Il cliente effettua l'ordine** -> be-BOP delega la creazione della fattura al suo processore Lightning configurato, che emette una bolt11 con un hash di pagamento reale
+1. **Il cliente effettua l'ordine** -> be-BOP conia una bolt11 (con un hash di pagamento reale) sul backend selezionato — il suo processore Lightning configurato o il nodo Lightning.Pub
 2. **Codice QR mostrato** -> La fattura bolt11 viene presentata al cliente
 3. **Flusso wallet CLINK** -> I wallet compatibili CLINK richiedono invece la fattura via Nostr (kind 21001); la bolt11 viene restituita crittografata (NIP-44)
 4. **Il cliente paga** -> Scansiona il QR (o usa il suo wallet CLINK) con qualsiasi wallet Lightning e paga
-5. **Ordine confermato** -> Il poller degli ordini di be-BOP chiama `checkPayment()`, che delega al processore Lightning backend e interroga il nodo per la fattura usando il suo hash di pagamento reale; l'ordine viene segnato come pagato
+5. **Ordine confermato** -> Il poller degli ordini di be-BOP chiama `checkPayment()`, che interroga il backend selezionato per la fattura tramite il suo hash di pagamento reale (il nodo Lightning.Pub tramite `POST /api/user/payment/state`); l'ordine viene segnato come pagato
 
 ### Protocollo CLINK
 
@@ -62,7 +69,12 @@ Il protocollo CLINK utilizza l'evento Nostr tipo 21001 con crittografia NIP-44:
 
 ### Rilevamento del pagamento
 
-Il pagamento viene rilevato dal processore Lightning backend stesso: `checkPayment()` reindirizza al processore che ha creato la fattura (registrato per pagamento come `meta.backend`) e interroga quel nodo per la fattura tramite hash del pagamento. **Non c'e alcuna dipendenza dalle ricevute Nostr**: il regolamento viene verificato contro il nodo che ha effettivamente ricevuto i sats, quindi il flusso e stateless e sicuro in multi-processo.
+Il rilevamento del pagamento e basato sul nodo. `checkPayment()` reindirizza al backend registrato per pagamento (`meta.backend`):
+
+- **Processore be-BOP**: il processore backend della fattura interroga `checkPayment` quel nodo per la fattura tramite hash del pagamento.
+- **Lightning.Pub**: il nodo Lightning.Pub del commerciante viene interrogato tramite `POST /api/user/payment/state` (usando la bolt11 registrata); restituisce l'importo effettivamente ricevuto e il timestamp di regolamento — mai un eco dell'importo previsto.
+
+**Non c'e alcuna dipendenza dalle ricevute Nostr**: il regolamento viene verificato contro il nodo che ha effettivamente ricevuto i sats, quindi il flusso e stateless e sicuro in multi-processo.
 
 Un pulsante **Controlla stato del pagamento** e disponibile sugli ordini CLINK in sospeso; riavvia solo questo controllo basato sul nodo (il regolamento viene applicato dal poller degli ordini sotto il lock dell'ordine).
 
@@ -70,12 +82,13 @@ Un pulsante **Controlla stato del pagamento** e disponibile sugli ordini CLINK i
 
 - **nOffer**: Una stringa di offerta commerciante codificata in bech32 contenente la chiave pubblica Nostr del commerciante, l'URL del relay e l'ID dell'offerta
 - **Crittografia NIP-44**: Crittografia end-to-end per richieste e risposte di pagamento
-- **Creazione delle fatture**: Delegata al processore Lightning configurato di be-BOP; crea una fattura reale + hash di pagamento, senza andata e ritorno su Nostr
+- **Creazione delle fatture**: Coniata sul backend selezionato (il processore Lightning di be-BOP o l'HTTP API del nodo Lightning.Pub) — una fattura reale + hash di pagamento, senza andata e ritorno su Nostr
 - **Ascoltatore persistente**: Una sottoscrizione Nostr a lungo termine sul relay del commerciante che distribuisce le bolt11 ai wallet CLINK, sopravvivendo alle riconnessioni del relay. L'ascoltatore si avvia automaticamente all'avvio del server.
 
 ### Sicurezza
 
 - **Protezione SSRF del relay**: Gli URL dei relay vengono validati contro intervalli di IP privati/interni prima della connessione
+- **Protezione SSRF dell'endpoint Lightning.Pub**: L'endpoint API di Lightning.Pub viene validato contro intervalli di IP privati/interni prima di ogni chiamata di conia e regolamento
 - **Validazione BOLT11**: Le fatture devono riportare esattamente l'importo previsto (senza tolleranza) e la rete corrispondente
 - **Verifica delle firme**: Tutti gli eventi Nostr in entrata vengono verificati prima dell'elaborazione
 - **Filtro chiave pubblica commerciante**: I filtri di sottoscrizione Nostr utilizzano la chiave pubblica propria del commerciante (derivata da `NOSTR_PRIVATE_KEY`), non la chiave di Lightning.Pub
@@ -92,7 +105,7 @@ Qualsiasi wallet Lightning puo pagare il codice QR bolt11. Per il flusso Nostr C
 
 ### Fattura non creata
 
-- Verificare che un processore Lightning sia configurato e abilitato (es. Blink, LND, PhoenixD)
+- Verificare che il backend selezionato sia configurato e abilitato: un processore Lightning per il backend processore be-BOP, oppure endpoint + token Lightning.Pub per il backend Lightning.Pub
 - Verificare che `NOSTR_PRIVATE_KEY` sia impostato in `.env.local`
 - Controllare i log del server per errori relativi a CLINK
 
@@ -117,12 +130,12 @@ Qualsiasi wallet Lightning puo pagare il codice QR bolt11. Per il flusso Nostr C
 
 - **Tipo evento Nostr**: 21001
 - **Crittografia**: NIP-44 (versione 2)
-- **Backend delle fatture**: Il processore Lightning configurato di be-BOP (LND, Blink, PhoenixD…)
-- **Rilevamento pagamento**: Ricerca basata sul nodo tramite hash di pagamento reale, delegata al processore backend della fattura
+- **Backend delle fatture**: Selezionabile — il processore Lightning di be-BOP (LND, Blink, PhoenixD…) o il nodo Lightning.Pub del commerciante tramite la sua HTTP API
+- **Rilevamento pagamento**: Ricerca basata sul nodo tramite hash di pagamento reale — tramite il processore della fattura, o tramite `POST /api/user/payment/state` sul nodo Lightning.Pub
 - **URL relay CLINK**: `wss://strfry.shock.network` (configurabile in Admin > CLINK)
 
 ## Regolamento nDebit
 
-CLINK e **solo un layer di trasporto** -- **non richiede nDebit** per il regolamento. Il regolamento dei pagamenti e gestito interamente dal processore Lightning predefinito del commerciante (Blink, LND, Phoenixd, ecc.) tramite la fattura bolt11. Il commerciante riceve i sats sul suo backend Lightning esistente.
+CLINK e **solo un layer di trasporto** -- **non richiede nDebit** per il regolamento. Il regolamento dei pagamenti e gestito interamente dal backend selezionato (il processore Lightning di be-BOP o il nodo Lightning.Pub) tramite la fattura bolt11. Il commerciante riceve i sats sul suo backend Lightning esistente.
 
 Se un commerciante desidera utilizzare nDebit per i regolamenti tra nodi (es. con ShockWallet), questo viene configurato nel suo wallet, non in be-BOP.

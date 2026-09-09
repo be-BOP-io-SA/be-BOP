@@ -273,7 +273,17 @@ const baseConfig = {
 		/** Merchant's noffer1... string (from Lightning.Pub or similar) */
 		nOffer: '',
 		/** Nostr relay URL for CLINK events */
-		relayUrl: 'wss://strfry.shock.network'
+		relayUrl: 'wss://strfry.shock.network',
+		/**
+		 * Backend that mints and settles CLINK bolt11 invoices:
+		 * - 'processor' (default) = be-BOP's own configured Lightning processor (LND, Phoenixd, Blink…)
+		 * - 'lightning-pub' = the merchant's Lightning.Pub node via its HTTP API
+		 */
+		backend: 'processor' as 'lightning-pub' | 'processor',
+		/** Lightning.Pub API base URL — required when backend = 'lightning-pub' */
+		lightningPubEndpoint: '',
+		/** Lightning.Pub auth token — required when backend = 'lightning-pub' */
+		lightningPubToken: ''
 	},
 	taler: {
 		backendUrl: '',

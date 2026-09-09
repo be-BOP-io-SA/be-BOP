@@ -1,4 +1,8 @@
-import { isClinkConfigured, clinkCreateInvoice } from '$lib/server/clink';
+import {
+	isClinkConfigured,
+	clinkCreateInvoice,
+	clinkCheckInvoiceViaLightningPub
+} from '$lib/server/clink';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { getProcessor, lightningPaymentPrice, lightningLabel } from '../pp';
 import type {
@@ -12,26 +16,31 @@ import type { Order } from '$lib/types/Order';
 /**
  * CLINK Lightning processor (transport over Nostr kind 21001 + NIP-44).
  *
- * CLINK is a *transport* layer, not a payment backend. Invoices are created and
- * settled by be-BOP's own configured Lightning processor (LND, Phoenixd, Blink…)
- * — the same node that would back any other Lightning payment. This gives us a
- * real payment hash and an authoritative, node-backed `checkPayment()` that
- * reconciles against the backend that actually received the sats (matching the
- * SDK registry pattern used by Blink/LND/Phoenixd/Taler/OSB from 96b3e59).
+ * CLINK is a *transport* layer, not a payment backend. Which node mints and
+ * settles the bolt11 is chosen in the Admin > CLINK page:
  *
+ * - 'processor' (default): invoices are created and settled by be-BOP's own
+ *   configured Lightning processor (LND, Phoenixd, Blink…) — the same node that
+ *   would back any other Lightning payment. checkPayment re-dispatches to that
+ *   processor's checkPayment, which queries the node by payment hash.
+ * - 'lightning-pub': invoices are minted by the merchant's Lightning.Pub node
+ *   via its HTTP API; checkPayment queries that node's payment state
+ *   (POST /api/user/payment/state) — node-backed, never echoing local state.
+ *
+ * Both branches yield a REAL payment hash persisted in the order payment doc
+ * (invoiceId) alongside the backend discriminator (meta.backend / meta.bolt11).
  * Flow:
- *   1. createPayment() → delegate to the underlying Lightning processor →
- *      a real bolt11 + payment hash. The bolt11 is served to the customer as a
- *      standard QR; the real payment hash is persisted in the order payment doc
- *      (invoiceId) alongside the backend's processor name (meta.processorBackend).
+ *   1. createPayment() → mint a real bolt11 + payment hash on the configured
+ *      backend. The bolt11 is served to the customer as a standard QR; the real
+ *      payment hash is persisted in the order payment doc.
  *   2. Customer pays the bolt11 with any Lightning wallet (including CLINK-aware
  *      ones that obtained it via the Nostr relay).
- *   3. checkPayment() → delegate to the same underlying processor's checkPayment,
- *      which queries the node for the invoice by payment hash. Stateless and
- *      multi-process safe — no in-memory session store, no separate collection.
+ *   3. checkPayment() → settle against the node that actually holds the sats.
+ *      Stateless and multi-process safe — no in-memory session store, no
+ *      separate collection.
  *
  * Settlement note: CLINK does NOT mandate nDebit. Settlement is handled by the
- * merchant's default Lightning backend via the bolt11 invoice, exactly as with any
+ * merchant's configured backend via the bolt11 invoice, exactly as with any
  * other Lightning processor.
  */
 export default {
@@ -45,7 +54,7 @@ export default {
 		const satoshis = toSatoshis(params.toPay.amount, params.toPay.currency);
 		const memo = lightningLabel(params.orderId, params.orderNumber);
 
-		// Delegate invoice creation to be-BOP's own Lightning backend. This throws on
+		// Delegate invoice creation to the configured CLINK backend. This throws on
 		// failure (relay/node down is NOT silently swallowed into a bare nOffer). If no
 		// backend is available, checkout fails loudly rather than leaving the customer
 		// with an unpayable order.
@@ -55,7 +64,11 @@ export default {
 			address: invoice.bolt11,
 			invoiceId: invoice.paymentHash,
 			// Which backend created/settles this invoice, so checkPayment can re-dispatch.
-			meta: { backend: invoice.backendProcessor },
+			// Lightning.Pub payments also persist the bolt11 (the node is queried by invoice).
+			meta:
+				invoice.backendProcessor === 'lightning-pub'
+					? { backend: 'lightning-pub', bolt11: invoice.bolt11 }
+					: { backend: invoice.backendProcessor },
 			processor: 'clink'
 		};
 	},
@@ -68,19 +81,44 @@ export default {
 			throw new Error('Missing invoice ID on clink payment');
 		}
 
-		// CLINK is a transport: settlement is verified by the backend that holds the sats.
-		// Re-dispatch to that backend's own checkPayment with a synthetic payment whose
-		// processor/invoiceId the backend understands (the real payment hash).
-		//
 		// `meta` is not part of OrderPayment's TS shape (it would send the Pojo mapped
 		// type into infinite recursion via `ObjectId extends unknown`), but createPayment
 		// results are spread into the persisted payment document, so the backend name
-		// IS present on stored CLINK payments.
-		const meta = (payment as Order['payments'][number] & { meta?: { backend?: string } }).meta;
+		// and bolt11 ARE present on stored CLINK payments.
+		const meta = (
+			payment as Order['payments'][number] & {
+				meta?: { backend?: string; bolt11?: string };
+			}
+		).meta;
 		const backendName = typeof meta?.backend === 'string' ? meta.backend : '';
 
-		// If the backend name wasn't persisted (older payments), fall back to the
-		// currently-configured default Lightning processor.
+		// Lightning.Pub backend: the invoice lives on the merchant's Lightning.Pub node.
+		// Settlement is queried from that node (POST /api/user/payment/state) — the node
+		// reports what it actually received, never an echo of the expected amount.
+		if (backendName === 'lightning-pub') {
+			const bolt11 = typeof meta?.bolt11 === 'string' ? meta.bolt11 : '';
+			if (!bolt11) {
+				throw new Error('Missing Lightning.Pub invoice on clink payment');
+			}
+			const expectedSats = toSatoshis(payment.price.amount, payment.price.currency);
+			const state = await clinkCheckInvoiceViaLightningPub({
+				bolt11,
+				expectedAmountSat: expectedSats
+			});
+			if (!state.paid) {
+				return { status: 'pending' };
+			}
+			return {
+				status: 'paid',
+				received: { amount: state.amountSat, currency: 'SAT' },
+				fees: { amount: 0, currency: 'SAT' }
+			};
+		}
+
+		// Processor backend: CLINK is a transport; settlement is verified by the backend
+		// that holds the sats. Re-dispatch to that backend's own checkPayment with a
+		// synthetic payment whose processor/invoiceId the backend understands (the real
+		// payment hash).
 		const backend =
 			(backendName && getProcessor(backendName)) ||
 			getProcessor('lnd') ||

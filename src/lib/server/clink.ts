@@ -1,7 +1,8 @@
 import { createHash } from 'crypto';
 import { runtimeConfig } from './runtime-config';
-import { relayUrlIssue } from './webhook-url-guard';
+import { relayUrlIssue, webhookApiRouteIssue } from './webhook-url-guard';
 import { getNostrKeys } from './nostr';
+import { z } from 'zod';
 import {
 	ClinkSDK,
 	finalizeEvent,
@@ -17,19 +18,28 @@ import {
  * CLINK (Common Lightning Interface for Nostr Keys) — server-side transport client.
  *
  * CLINK is a TRANSPORT layer, not a payment backend. Invoices are created and
- * settled by be-BOP's own configured Lightning processor (see clinkCreateInvoice).
+ * settled by a configurable backend (see clinkCreateInvoice):
+ * - 'processor' (default): be-BOP's own configured Lightning processor. CLINK
+ *   invoices are minted by that node and re-checked by PPClink.checkPayment.
+ * - 'lightning-pub': the merchant's Lightning.Pub node via its HTTP API
+ *   (POST /api/user/invoice/new to mint, POST /api/user/payment/state to settle).
+ *
  * This module handles only the Nostr side:
  *   1. Decode/validate the merchant's nOffer string
  *   2. Subscribe to the relay for incoming kind 21001 payment requests
  *   3. NIP-44 decrypt/validate requests, mint a bolt11 via the backend, respond
  *
  * Settlement is NOT detected here. be-BOP's existing 2s order poller calls
- * PPClink.checkPayment(), which re-dispatches to the underlying Lightning
- * processor and queries the node by payment hash — stateless and multi-process
- * safe, with no separate session collection or in-memory maps.
+ * PPClink.checkPayment(), which either re-dispatches to the underlying Lightning
+ * processor or queries the Lightning.Pub node, and settles against the node —
+ * stateless and multi-process safe, with no separate session collection or
+ * in-memory maps.
  */
 
 const CLINK_EVENT_KIND = 21001;
+
+/** Timeout for outbound Lightning.Pub HTTP API calls */
+const CLINK_HTTP_TIMEOUT_MS = 15_000;
 
 // --- Hex / Uint8Array helpers ---
 
@@ -99,8 +109,31 @@ export function clinkValidateNoffer(noffer: string): { valid: boolean; error?: s
 
 // --- Configuration checks ---
 
+/** Which backend mints and settles CLINK invoices. Undefined = stored doc predates the field → 'processor'. */
+export function clinkBackend(): 'lightning-pub' | 'processor' {
+	return (runtimeConfig.clink as { backend?: 'lightning-pub' | 'processor' }).backend ===
+		'lightning-pub'
+		? 'lightning-pub'
+		: 'processor';
+}
+
 export function isClinkConfigured(): boolean {
-	return !!(runtimeConfig.clink?.nOffer && runtimeConfig.clink?.relayUrl);
+	if (!(runtimeConfig.clink?.nOffer && runtimeConfig.clink?.relayUrl)) {
+		return false;
+	}
+	if (clinkBackend() === 'lightning-pub') {
+		return isLightningPubConfigured();
+	}
+	return true;
+}
+
+/** True when the Lightning.Pub HTTP backend is selected AND its credentials are present. */
+export function isLightningPubConfigured(): boolean {
+	return (
+		clinkBackend() === 'lightning-pub' &&
+		!!runtimeConfig.clink?.lightningPubEndpoint &&
+		!!runtimeConfig.clink?.lightningPubToken
+	);
 }
 
 // --- BOLT11 validation ---
@@ -177,6 +210,122 @@ export function validateBolt11(
 	}
 
 	return { valid: true };
+}
+
+// --- BOLT11 payment hash extraction (dependency-free bech32) ---
+
+// BOLT11 payment requests are bech32-encoded. The 256-bit payment hash lives in
+// the `p` tagged field, directly between the timestamp (7 words) and the trailing
+// 104-word schnorr/ecdsa signature. Lightning.Pub's /api/user/invoice/new returns
+// only the bolt11 string — no payment hash — so we extract the REAL hash from the
+// signed invoice instead of hashing the invoice string (which the PR review
+// rejected: sha256(bolt11) is not the payment hash).
+
+const BECH32_CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+const BECH32_CHARS = new Map<string, number>([...BECH32_CHARSET].map((chr, idx) => [chr, idx]));
+const BECH32_GENERATOR = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+
+function bech32Polymod(words: number[]): number {
+	let chk = 1;
+	for (const word of words) {
+		const top = chk >>> 25;
+		chk = ((chk & 0x1ffffff) << 5) ^ word;
+		for (let i = 0; i < 5; i++) {
+			if ((top >>> i) & 1) chk ^= BECH32_GENERATOR[i];
+		}
+	}
+	return chk;
+}
+
+/** Decode a bech32 string (constant 1, i.e. BOLT11/segwit variant) into HRP + body words (checksum stripped). */
+function bech32DecodeBolt11(input: string): { dataValues: number[] } {
+	const lower = input.toLowerCase();
+	const sep = lower.lastIndexOf('1');
+	if (sep < 1 || sep + 7 > lower.length) {
+		throw new Error('Invalid bech32 string');
+	}
+	const hrp = lower.slice(0, sep);
+	const words = [...lower.slice(sep + 1)].map((chr) => BECH32_CHARS.get(chr) ?? -1);
+	if (words.some((w) => w < 0)) {
+		throw new Error('Invalid bech32 character');
+	}
+	const hrpExpand: number[] = [];
+	for (const chr of hrp) {
+		hrpExpand.push(chr.charCodeAt(0) >> 5);
+	}
+	hrpExpand.push(0);
+	for (const chr of hrp) {
+		hrpExpand.push(chr.charCodeAt(0) & 31);
+	}
+	if (bech32Polymod(hrpExpand.concat(words)) !== 1) {
+		throw new Error('Invalid bech32 checksum');
+	}
+	return { dataValues: words.slice(0, -6) };
+}
+
+/** Convert 5-bit words to bytes (BIP-173 convertbits, bounded accumulator so long fields don't overflow 32 bits). */
+function bolt11WordsToBytes(words: number[]): Uint8Array {
+	let acc = 0;
+	let bits = 0;
+	const bytes: number[] = [];
+	const maxAcc = (1 << (5 + 8 - 1)) - 1;
+	const maxv = (1 << 8) - 1;
+	for (const word of words) {
+		acc = ((acc << 5) | word) & maxAcc;
+		bits += 5;
+		while (bits >= 8) {
+			bits -= 8;
+			bytes.push((acc >> bits) & maxv);
+		}
+	}
+	return Uint8Array.from(bytes);
+}
+
+/**
+ * Extract the REAL 256-bit payment hash from a BOLT11 invoice by decoding the
+ * `p` tagged field. Returns `null` when the invoice isn't a decodable bolt11 or
+ * has no parseable payment-hash field. This is the hash Lightning nodes use to
+ * settle the HTLC — never the sha256 of the invoice string.
+ */
+export function decodeBolt11PaymentHash(bolt11: string): string | null {
+	try {
+		const raw = bolt11.replace(/^(lightning|LIGHTNING):/i, '').trim();
+		const separator = raw.indexOf('1');
+		if (separator < 1) {
+			return null;
+		}
+		const { dataValues } = bech32DecodeBolt11(raw);
+		// Layout after the separator: [7 words timestamp][tagged fields][104 words signature].
+		// Each tagged field is [type 1 word][length 2 words, big-endian 5-bit][data].
+
+		// BOLT11 encodes the field length as TWO 5-bit words (e.g. 52 = 'p''5' → 1*32+20).
+		const sigStart = dataValues.length - 104;
+		if (sigStart <= 7) {
+			return null;
+		}
+		let i = 7;
+		while (i + 3 <= sigStart) {
+			const type = dataValues[i];
+			const length = dataValues[i + 1] * 32 + dataValues[i + 2];
+			if (length === 0 || length > 208) {
+				return null;
+			}
+			const start = i + 3;
+			if (start + length > sigStart) {
+				return null;
+			}
+			if (type === 1) {
+				// 'p' → 256-bit payment hash (52 words)
+				const bytes = bolt11WordsToBytes(dataValues.slice(start, start + length));
+				const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+				return /^[0-9a-f]{64}$/.test(hex) ? hex : null;
+			}
+			i = start + length;
+		}
+		return null;
+	} catch {
+		return null;
+	}
 }
 
 // --- CLINK relay subscription (server side) ---
@@ -342,22 +491,33 @@ export function clinkValidateAmount(
 export interface ClinkInvoice {
 	bolt11: string;
 	paymentHash: string;
-	/** The be-BOP Lightning processor that created (and will settle) this invoice */
+	/**
+	 * The be-BOP Lightning processor that created (and will settle) this invoice,
+	 * or 'lightning-pub' when the merchant's Lightning.Pub node minted it.
+	 */
 	backendProcessor: string;
 }
 
 /**
- * Create a Lightning invoice via be-BOP's own configured Lightning backend.
+ * Create a Lightning invoice via the configured CLINK backend.
  *
- * CLINK is a transport only. Delegating to be-BOP's own processor (LND, Phoenixd,
- * Blink…) yields a REAL payment hash and lets checkPayment reconcile against the
- * node that actually received the sats (per the SDK registry pattern). This throws
- * on failure rather than silently producing an unpayable order.
+ * - 'processor': delegates to be-BOP's own Lightning backend (LND, Phoenixd,
+ *   Blink…) → a REAL payment hash and a checkPayment that reconciles against the
+ *   node that actually received the sats (per the SDK registry pattern).
+ * - 'lightning-pub': requests a bolt11 from the merchant's Lightning.Pub node
+ *   over its HTTP API and stores the node's REAL payment hash (decoded from the
+ *   invoice). CheckPayment then queries the same node via /api/user/payment/state.
+ *
+ * This throws on failure rather than silently producing an unpayable order.
  */
 export async function clinkCreateInvoice(params: {
 	amountSat: number;
 	memo: string;
 }): Promise<ClinkInvoice> {
+	if (clinkBackend() === 'lightning-pub') {
+		return await clinkCreateInvoiceViaLightningPub(params);
+	}
+
 	const { getProcessorsForMethod } = await import('./sdk/pp');
 	const processors = getProcessorsForMethod('lightning').filter(
 		(pp) => pp.isEnabled() && pp.meta.processor !== 'clink'
@@ -383,6 +543,115 @@ export async function clinkCreateInvoice(params: {
 		paymentHash: result.invoiceId ?? createHash('sha256').update(result.address).digest('hex'),
 		backendProcessor: backend.meta.processor
 	};
+}
+
+/**
+ * Mint a bolt11 on the merchant's Lightning.Pub node via its HTTP API
+ * (POST /api/user/invoice/new). Returns only the invoice string, so the REAL
+ * payment hash is decoded from the signed bolt11.
+ */
+async function clinkCreateInvoiceViaLightningPub(params: {
+	amountSat: number;
+	memo: string;
+}): Promise<ClinkInvoice> {
+	const backend = runtimeConfig.clink;
+	if (!backend.lightningPubEndpoint || !backend.lightningPubToken) {
+		throw new Error('Lightning.Pub endpoint or token is not configured');
+	}
+
+	// SSRF protection: reject endpoints targeting private/internal networks
+	const endpointIssue = webhookApiRouteIssue(backend.lightningPubEndpoint);
+	if (endpointIssue) {
+		throw new Error(`Unsafe Lightning.Pub endpoint: ${endpointIssue}`);
+	}
+
+	const endpoint = backend.lightningPubEndpoint.replace(/\/$/, '');
+	const resp = await fetch(`${endpoint}/api/user/invoice/new`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${backend.lightningPubToken}`
+		},
+		body: JSON.stringify({ amountSats: params.amountSat, memo: params.memo }),
+		signal: AbortSignal.timeout(CLINK_HTTP_TIMEOUT_MS),
+		redirect: 'error'
+	});
+
+	if (!resp.ok) {
+		throw new Error(`Lightning.Pub invoice creation failed: ${resp.status} ${resp.statusText}`);
+	}
+
+	const json = z.object({ invoice: z.string() }).parse(await resp.json());
+
+	// This bolt11 was minted by our node for an exact amount — validate it.
+	const validation = validateBolt11(json.invoice, { expectedAmountSat: params.amountSat });
+	if (!validation.valid) {
+		throw new Error(`Lightning.Pub returned an invalid invoice: ${validation.error}`);
+	}
+
+	const paymentHash = decodeBolt11PaymentHash(json.invoice);
+	if (!paymentHash) {
+		throw new Error('Could not extract the payment hash from the Lightning.Pub invoice');
+	}
+
+	return { bolt11: json.invoice, paymentHash, backendProcessor: 'lightning-pub' };
+}
+
+/**
+ * Ask the Lightning.Pub node whether a bolt11 it minted has been paid
+ * (POST /api/user/payment/state). Node-backed settlement: `paid_at_unix` is set
+ * by the node when it received the sats, and `amount` is what it actually
+ * received — never the expected amount echoed back from local state.
+ */
+export async function clinkCheckInvoiceViaLightningPub(params: {
+	bolt11: string;
+	expectedAmountSat: number;
+}): Promise<{ paid: boolean; paidAt: number; amountSat: number }> {
+	const backend = runtimeConfig.clink;
+	if (!backend.lightningPubEndpoint || !backend.lightningPubToken) {
+		throw new Error('Lightning.Pub endpoint or token is not configured');
+	}
+
+	// SSRF protection: same guard as invoice minting
+	const endpointIssue = webhookApiRouteIssue(backend.lightningPubEndpoint);
+	if (endpointIssue) {
+		throw new Error(`Unsafe Lightning.Pub endpoint: ${endpointIssue}`);
+	}
+
+	const endpoint = backend.lightningPubEndpoint.replace(/\/$/, '');
+	const resp = await fetch(`${endpoint}/api/user/payment/state`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${backend.lightningPubToken}`
+		},
+		body: JSON.stringify({ invoice: params.bolt11 }),
+		signal: AbortSignal.timeout(CLINK_HTTP_TIMEOUT_MS),
+		redirect: 'error'
+	});
+
+	if (!resp.ok) {
+		throw new Error(`Lightning.Pub payment lookup failed: ${resp.status} ${resp.statusText}`);
+	}
+
+	// proto3 JSON omits zero-valued int64 fields, so treat missing as 0/not paid.
+	const json = z
+		.object({
+			amount: z.number().optional(),
+			paid_at_unix: z.number().optional()
+		})
+		.parse(await resp.json());
+
+	const paidAt = json.paid_at_unix ?? 0;
+	const amountSat = json.amount ?? 0;
+
+	if (paidAt > 0 && amountSat !== params.expectedAmountSat) {
+		throw new Error(
+			`Lightning.Pub reported ${amountSat} sats paid for a ${params.expectedAmountSat} sats invoice`
+		);
+	}
+
+	return { paid: paidAt > 0, paidAt, amountSat };
 }
 
 // --- Request handler ---
