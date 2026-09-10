@@ -3,6 +3,7 @@ import {
 	ORDER_PAYMENT_STATUSES,
 	orderIndividualItemPrice,
 	type Order,
+	type OrderAddress,
 	type OrderPaymentStatus
 } from '$lib/types/Order';
 import type { Currency } from '$lib/types/Currency';
@@ -63,8 +64,22 @@ export type PaidOrderDto = {
 	 * credits on payment cannot tell its own orders apart, and credits them twice.
 	 */
 	externalOrderId?: string;
-	/** The custom checkout fields collected on the order. Absent when it carries none. */
-	customFields?: Array<{ slug: string; label: string; value?: string }>;
+	/**
+	 * The custom checkout fields collected on the order. Absent when it carries none.
+	 *
+	 * Read-only: the API has no route to change what a buyer filled in at checkout. `source` says
+	 * where a row comes from — `shop` for a field the shop configured and the buyer answered, `api`
+	 * for one the caller attached to its own order write.
+	 */
+	customFields?: Array<{
+		slug: string;
+		label: string;
+		type: string;
+		source: 'shop' | 'api';
+		value?: string;
+		address?: OrderAddress;
+		isPersonalData?: true;
+	}>;
 	/**
 	 * The order labels, with the name the shop gave them. Absent when the order carries none.
 	 *
@@ -297,7 +312,15 @@ function orderContext(order: Order) {
 	const customFields = (order.customCheckoutFields ?? []).map((field) => ({
 		slug: field.slug,
 		label: field.label,
-		...(field.value !== undefined && { value: field.value })
+		type: field.type,
+		// `api:` is the namespace mapCustomFields writes under. Telling the two apart matters: one
+		// is what the shop asked the buyer, the other is what the caller sent about its own sale.
+		source: field.fieldId.startsWith('api:') ? ('api' as const) : ('shop' as const),
+		...(field.value !== undefined && { value: field.value }),
+		// An address field keeps its content here and leaves `value` unset; without it the field
+		// came back named but empty.
+		...(field.address && { address: field.address }),
+		...(field.isPersonalData && { isPersonalData: true })
 	}));
 	return {
 		...(order.externalOrderId && { externalOrderId: order.externalOrderId }),
