@@ -29,6 +29,8 @@ export type PaidOrdersQuery = {
 	number?: string;
 	/** Orders carrying this order label id. */
 	label?: string;
+	/** Seller alias, as the read returns it. `null` selects the orders the admin labels "System". */
+	seller?: string;
 	/** Caller's own `externalOrderId`. Always scoped to `apiKeyId` — never cross-key. */
 	externalOrderId?: string;
 	/** `_id` of the API key making the call. Required to use `externalOrderId`. */
@@ -88,6 +90,13 @@ export type PaidOrderDto = {
 	labels?: Array<{ id: string; name: string }>;
 	/** The notes carried by the order — staff, customer and system alike. Absent when it has none. */
 	notes?: OrderNoteDto[];
+	/**
+	 * Who sold it, as the admin order listing shows it: `user.userAlias`.
+	 *
+	 * `null` is what that listing labels "System" — a storefront order nobody sold. An order written
+	 * through this API carries `externalPartner`.
+	 */
+	seller: string | null;
 	items: PaidOrderItemDto[];
 };
 
@@ -152,7 +161,8 @@ function parsePositiveInt(raw: string): number | null {
  *
  * Every criterion here is backed by an existing index on `orders` (see database.ts):
  * `createdAt`, `{ 'items.product._id', status }`, `{ status, 'payments.status' }`,
- * `number` (unique), `orderLabelIds` (sparse), `{ externalSourceApiKeyId, externalOrderId }`.
+ * `number` (unique), `orderLabelIds` (sparse), `user.userAlias` (sparse),
+ * `{ externalSourceApiKeyId, externalOrderId }`.
  *
  * Unlike `limit` and the date bounds — which fall back silently for backwards compatibility —
  * a malformed filter is rejected. Dropping a filter silently widens the result set, and on an
@@ -219,6 +229,12 @@ function buildOrderFilter(
 
 	if (query.label) {
 		filter.orderLabelIds = query.label;
+	}
+
+	if (query.seller) {
+		// `null` is the value the read returns for an order nobody sold, so it is the one a caller
+		// filtering on what it just read will send back.
+		filter['user.userAlias'] = query.seller === 'null' ? { $exists: false } : query.seller;
 	}
 
 	if (query.externalOrderId) {
@@ -352,6 +368,7 @@ export function toPaidOrderDto(order: Order, labelNames?: LabelNames): PaidOrder
 		...orderContext(order),
 		...orderLabels(order, labelNames),
 		...orderNotes(order),
+		seller: order.user?.userAlias ?? null,
 		items: order.items.map(toItemDto)
 	};
 }
@@ -422,6 +439,7 @@ export function toOrderReadDto(order: Order, labelNames?: LabelNames): OrderRead
 		...orderContext(order),
 		...orderLabels(order, labelNames),
 		...orderNotes(order),
+		seller: order.user?.userAlias ?? null,
 		items: order.items.map(toItemDto)
 	};
 }

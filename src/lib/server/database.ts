@@ -165,6 +165,8 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.orders, { 'user.npub': 1 }],
 	[collections.orders, { 'user.email': 1 }],
 	[collections.orders, { 'user.ssoIds': 1 }],
+	// The seller, as the admin order listing and /api/v1/orders both filter on it.
+	[collections.orders, { 'user.userAlias': 1 }, { sparse: true }],
 	/**
 	 * To check amount reserved for a product (with pending orders)
 	 */

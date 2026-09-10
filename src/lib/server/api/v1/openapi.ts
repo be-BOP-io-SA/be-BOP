@@ -255,6 +255,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 			description: 'Orders carrying this order label id.'
 		},
 		{
+			name: 'seller',
+			in: 'query',
+			schema: { type: 'string' },
+			description:
+				'Orders sold by this seller alias — `externalPartner` for the ones this API wrote. ' +
+				'`null` selects the orders the admin listing labels "System".'
+		},
+		{
 			name: 'externalOrderId',
 			in: 'query',
 			schema: { type: 'string' },
@@ -1751,6 +1759,13 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 									amountMinor: { $ref: '#/components/schemas/AmountMinor' }
 								}
 							}
+						},
+						seller: {
+							type: 'string',
+							nullable: true,
+							description:
+								'Who sold it, as the admin order listing shows it. `null` is what that listing ' +
+								'labels "System"; an order written through this API carries `externalPartner`.'
 						},
 						customFields: {
 							type: 'array',
