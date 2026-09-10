@@ -119,6 +119,55 @@ describe('toOrderReadDto', () => {
 	});
 });
 
+describe('custom checkout fields on reads', () => {
+	it('says where each field comes from, and carries an address field whole', () => {
+		const order = makeOrder({ paid: true });
+		order.customCheckoutFields = [
+			{
+				fieldId: 'shipping-1',
+				slug: 'delivery',
+				name: 'delivery',
+				label: 'Delivery address',
+				type: 'address',
+				isPersonalData: true,
+				address: {
+					firstName: 'Ada',
+					lastName: 'Lovelace',
+					address: '1 rue du Lac',
+					city: 'Nyon',
+					zip: '1260',
+					country: 'CH'
+				}
+			},
+			{
+				fieldId: 'api:braceletId',
+				slug: 'braceletId',
+				name: 'braceletId',
+				label: 'braceletId',
+				type: 'free',
+				value: '043129AAEA1B90'
+			}
+		] as Order['customCheckoutFields'];
+
+		const dto = toPaidOrderDto(order);
+		expect(dto?.customFields?.[0]).toMatchObject({
+			slug: 'delivery',
+			type: 'address',
+			source: 'shop',
+			isPersonalData: true,
+			address: { city: 'Nyon' }
+		});
+		expect(dto?.customFields?.[0]).not.toHaveProperty('value');
+		expect(dto?.customFields?.[1]).toEqual({
+			slug: 'braceletId',
+			label: 'braceletId',
+			type: 'free',
+			source: 'api',
+			value: '043129AAEA1B90'
+		});
+	});
+});
+
 describe('order notes on reads', () => {
 	it('omits the field entirely when the order carries no note', () => {
 		expect(toPaidOrderDto(makeOrder({ paid: true }))).not.toHaveProperty('notes');
