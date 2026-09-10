@@ -2,8 +2,8 @@
 # Block commits whose staged files aren't Prettier-clean, matching the CI format check.
 # Bypass with `git commit --no-verify` if you really need to.
 
-# Collect staged, still-present files that Prettier handles.
-files=$(git diff --cached --name-only --diff-filter=ACMR \
+# core.quotepath=false so unicode filenames (emoji) are not C-quoted.
+files=$(git -c core.quotepath=false diff --cached --name-only --diff-filter=ACMR \
 	-- '*.ts' '*.js' '*.svelte' '*.json' '*.css' '*.html' '*.md')
 
 [ -z "$files" ] && exit 0

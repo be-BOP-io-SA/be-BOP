@@ -154,6 +154,26 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 		value: string;
 		price?: number;
 	}[];
+	/**
+	 * Per-family display options, keyed by the family id used in `variations[].name`.
+	 * A family absent from this record behaves as it always has: a dropdown on the product
+	 * page, and the chosen value shown to the customer.
+	 */
+	variationFamilies?: Record<
+		string,
+		{
+			/** No dropdown on the product page. The value can then only come from the URL. */
+			hiddenFromUI?: boolean;
+			/** Never shown to the customer: cart, mini-cart, add-to-cart popup, order summary. */
+			hiddenFromCustomer?: boolean;
+		}
+	>;
+	/**
+	 * What to do when the URL asks for a variation the product does not have, or leaves a
+	 * family hidden from the product page unset. `error` refuses the page; `ignore` drops the
+	 * bad parameter and falls back to a dropdown. Defaults to `error`.
+	 */
+	variationUrlPolicy?: 'error' | 'ignore';
 	hasSellDisclaimer?: boolean;
 	hideFromSEO?: boolean;
 	event?: {
@@ -223,4 +243,79 @@ export function checkProductVariationsIntegrity(
 		variationNamesInDB.every((name) => chosenVariationNames.includes(name));
 
 	return allVariationsChosen;
+}
+
+export type VariationUrlError =
+	| { reason: 'unknownFamily'; family: string }
+	| { reason: 'unknownValue'; family: string; value: string }
+	| { reason: 'missingHiddenFamily'; family: string };
+
+/**
+ * Reads variation choices off the query string: `?color=red&size=xxl`. The family is the id
+ * held in `variations[].name`, the value the id held in `variations[].value`.
+ *
+ * A family whose value comes from the URL loses its dropdown — the choice is already made.
+ * A family flagged `hiddenFromUI` has no dropdown at all, so the URL is its only source;
+ * leaving it unset is reported rather than silently yielding an unbuyable product.
+ *
+ * Only parameters naming a family the shop declared are judged. Anything else on the query
+ * string — a campaign tag, a tracking id — is none of this function's business, and treating
+ * it as a bad variation would make every marketing link break the product page.
+ */
+export function resolveVariationsFromUrl(
+	product: Pick<Product, 'variations' | 'variationFamilies'>,
+	searchParams: URLSearchParams
+): { forced: Record<string, string>; errors: VariationUrlError[] } {
+	const families = new Map<string, Set<string>>();
+	for (const variation of product.variations ?? []) {
+		const values = families.get(variation.name) ?? new Set<string>();
+		values.add(variation.value);
+		families.set(variation.name, values);
+	}
+
+	const forced: Record<string, string> = {};
+	const errors: VariationUrlError[] = [];
+
+	for (const [family, value] of searchParams) {
+		const values = families.get(family);
+		if (!values) {
+			if (product.variationFamilies?.[family]) {
+				errors.push({ reason: 'unknownFamily', family });
+			}
+			continue;
+		}
+		if (!values.has(value)) {
+			errors.push({ reason: 'unknownValue', family, value });
+			continue;
+		}
+		forced[family] = value;
+	}
+
+	for (const family of families.keys()) {
+		if (product.variationFamilies?.[family]?.hiddenFromUI && !(family in forced)) {
+			errors.push({ reason: 'missingHiddenFamily', family });
+		}
+	}
+
+	return { forced, errors };
+}
+
+/**
+ * Product name suffixed with the chosen variations the customer is allowed to see.
+ *
+ * Shared by every customer-facing listing so that a family hidden from the cart is hidden
+ * from all of them at once: cart, mini-cart, add-to-cart popup, order summary.
+ */
+export function productLabelWithVariations(
+	product: Pick<Product, 'name' | 'variationLabels' | 'variationFamilies'>,
+	chosenVariations: Record<string, string> | undefined
+): string {
+	if (!chosenVariations) {
+		return product.name;
+	}
+	const shown = Object.entries(chosenVariations)
+		.filter(([family]) => !product.variationFamilies?.[family]?.hiddenFromCustomer)
+		.map(([family, value]) => product.variationLabels?.values[family]?.[value] ?? value);
+
+	return shown.length ? `${product.name} - ${shown.join(' - ')}` : product.name;
 }

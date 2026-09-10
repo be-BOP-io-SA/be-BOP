@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
+	import { productLabelWithVariations } from '$lib/types/Product';
 	import { goto } from '$app/navigation';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
@@ -157,7 +158,8 @@
 		vatProfiles: data.vatProfiles,
 		bebopCountry: data.vatCountry,
 		userCountry: isDigital ? digitalCountry : country,
-		vatSingleCountry: data.vatSingleCountry
+		vatSingleCountry: data.vatSingleCountry,
+		vatExempted: data.vatExempted
 	});
 	$: deliveryFeesToDisplay = data.deliveryFees.vatIncludedReference
 		? extractVat(deliveryFeesToBill, deliveryFeesVatRate)
@@ -828,13 +830,10 @@
 						{/if}
 						<a href="/product/{item.product._id}">
 							<h3 class="text-base">
-								{item.chosenVariations
-									? item.product.name +
-									  ' - ' +
-									  Object.entries(item.chosenVariations)
-											.map(([key, value]) => item.product.variationLabels?.values[key][value])
-											.join(' - ')
-									: item.product.name}{#if item.quantity > 1 && !item.product.bookingSpec}<span
+								{productLabelWithVariations(
+									item.product,
+									item.chosenVariations
+								)}{#if item.quantity > 1 && !item.product.bookingSpec}<span
 										class="text-gray-500 ml-1">× {item.quantity}</span
 									>{/if}
 							</h3>

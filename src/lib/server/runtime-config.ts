@@ -80,6 +80,8 @@ const baseConfig = {
 	priceReferenceCurrency: 'SAT' as Currency,
 	accountingCurrency: null as Currency | null,
 	orderNumber: 0,
+	/** Counter behind invoice numbers. Seeded from the invoices already issued (#2743). */
+	invoiceNumber: 0,
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
 	/**
@@ -339,6 +341,19 @@ const baseConfig = {
 		}
 	},
 	hideFromSearchEngines: false,
+	/**
+	 * Public HTTP API v1 runtime settings (admin-editable).
+	 * corsOrigins: browser Origin allowlist for /api/v1. "*" opens it to every origin.
+	 * Empty = no cross-origin access. Persisted in DB; edited in Admin -> API Keys.
+	 */
+	apiV1: {
+		// Open by default. This API authenticates on the X-API-Key header alone and never reads a
+		// cookie, so an origin allowlist closes nothing a key holder could not already do — while
+		// being unworkable for the callers it would apply to: local applications on changing
+		// networks, whose origin is a different localhost port on every machine. A shop that wants
+		// an allowlist still names its origins in Admin -> API Keys.
+		corsOrigins: ['*'] as string[]
+	},
 	telemetry: null as null | {
 		enabled: boolean;
 		nextPrompt: Date | null;
