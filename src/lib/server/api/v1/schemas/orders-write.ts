@@ -105,6 +105,8 @@ const orderCommandSchema = z
 		/** One or more payments. When both `payment` and `payments` are set, `payments` wins. */
 		payments: z.array(paymentSchema).min(1).max(50).optional(),
 		customFields: customFieldsSchema,
+		/** Order label ids to put on the order. Unknown ones are dropped with a warning. */
+		labels: z.array(z.string().trim().min(1).max(200)).max(20).optional(),
 		notes: z.string().max(5000).optional()
 	})
 	.strict()

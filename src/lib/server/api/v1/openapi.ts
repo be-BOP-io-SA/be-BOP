@@ -114,6 +114,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					oneOf: [{ type: 'string' }, { type: 'number' }, { type: 'boolean' }]
 				}
 			},
+			labels: {
+				type: 'array',
+				maxItems: 20,
+				items: { type: 'string', minLength: 1, maxLength: 200 },
+				description:
+					'Order label ids to put on the order. A label the shop does not have is dropped and ' +
+					'reported as a LABEL_MISSING warning — the sale still gets written.'
+			},
 			notes: { type: 'string', maxLength: 5000 }
 		}
 	};
@@ -522,6 +530,159 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						},
 						'500': {
 							description: 'Internal error',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
+			'/api/v1/orders/{orderId}/labels': {
+				post: {
+					tags: ['orders'],
+					summary: 'Put an order label on an existing order',
+					description:
+						'Adds the label to a set: calling twice leaves one label and returns the same body. ' +
+						'The label must already exist in the shop — an unknown id is refused with 404 and ' +
+						'nothing is written, since a label be-BOP does not know would show up nowhere.',
+					operationId: 'addOrderLabel',
+					security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+					parameters: [
+						{
+							in: 'path',
+							name: 'orderId',
+							required: true,
+							schema: { type: 'string' },
+							description: 'The `orderId` returned on write and on the order listings.'
+						}
+					],
+					requestBody: {
+						required: true,
+						content: {
+							'application/json': {
+								schema: {
+									type: 'object',
+									additionalProperties: false,
+									required: ['labelId'],
+									properties: { labelId: { type: 'string', minLength: 1, maxLength: 200 } }
+								},
+								example: { labelId: 'cashless' }
+							}
+						}
+					},
+					responses: {
+						'200': {
+							description: 'Every label the order now carries',
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['ok', 'orderId', 'labels'],
+										properties: {
+											ok: { type: 'boolean' },
+											orderId: { type: 'string' },
+											labels: {
+												type: 'array',
+												items: {
+													type: 'object',
+													required: ['id', 'name'],
+													properties: { id: { type: 'string' }, name: { type: 'string' } }
+												}
+											}
+										}
+									},
+									example: {
+										ok: true,
+										orderId: 'ord-1',
+										labels: [{ id: 'cashless', name: 'Cashless' }]
+									}
+								}
+							}
+						},
+						'400': {
+							description: 'Malformed payload',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'404': {
+							description: 'Order or label not found',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'429': {
+							description: 'Rate limited',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
+			'/api/v1/orders/{orderId}/notes': {
+				post: {
+					tags: ['orders'],
+					summary: 'Append an employee note to an existing order',
+					description:
+						'The note joins the ones written from the admin. be-BOP shows order notes to the ' +
+						'buyer, flagged by author, so what is written here is read by the customer too. ' +
+						'Unlike a label, a repeated call appends a second note.',
+					operationId: 'addOrderNote',
+					security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+					parameters: [
+						{
+							in: 'path',
+							name: 'orderId',
+							required: true,
+							schema: { type: 'string' },
+							description: 'The `orderId` returned on write and on the order listings.'
+						}
+					],
+					requestBody: {
+						required: true,
+						content: {
+							'application/json': {
+								schema: {
+									type: 'object',
+									additionalProperties: false,
+									required: ['content'],
+									properties: { content: { type: 'string', minLength: 1, maxLength: 5000 } }
+								},
+								example: { content: 'Bracelet handed over at the stand' }
+							}
+						}
+					},
+					responses: {
+						'200': {
+							description: 'Every note the order now carries',
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['ok', 'orderId', 'notes'],
+										properties: {
+											ok: { type: 'boolean' },
+											orderId: { type: 'string' },
+											notes: {
+												type: 'array',
+												items: { $ref: '#/components/schemas/OrderNote' }
+											}
+										}
+									}
+								}
+							}
+						},
+						'400': {
+							description: 'Malformed payload',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'404': {
+							description: 'Order not found',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'429': {
+							description: 'Rate limited',
 							content: { 'application/json': { schema: errorRef } }
 						}
 					}
@@ -1591,7 +1752,37 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 								}
 							}
 						},
+						labels: {
+							type: 'array',
+							description:
+								'The order labels, with the name the shop gave them. Absent when it carries none.',
+							items: {
+								type: 'object',
+								required: ['id', 'name'],
+								properties: {
+									id: { type: 'string' },
+									name: { type: 'string' }
+								}
+							}
+						},
+						notes: {
+							type: 'array',
+							description:
+								'The notes on the order. Absent when it carries none. be-BOP shows these to the ' +
+								'buyer too, flagged by author.',
+							items: { $ref: '#/components/schemas/OrderNote' }
+						},
 						items: { type: 'array', items: { $ref: '#/components/schemas/PaidOrderItem' } }
+					}
+				},
+				OrderNote: {
+					type: 'object',
+					required: ['content', 'createdAt', 'author'],
+					properties: {
+						content: { type: 'string' },
+						createdAt: { type: 'string', format: 'date-time' },
+						author: { type: 'string', enum: ['employee', 'customer', 'system'] },
+						alias: { type: 'string', description: 'Who wrote it, when the note carries an alias.' }
 					}
 				},
 				PaidOrdersResponse: {

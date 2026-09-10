@@ -34,7 +34,9 @@ export const API_V1_WARNING_CODES = [
 	/** The till sent a price that differs from what be-BOP would have charged. */
 	'PRICE_OVERRIDE',
 	/** A replay of a known externalOrderId carried a different payload. */
-	'DUPLICATE_PAYLOAD_MISMATCH'
+	'DUPLICATE_PAYLOAD_MISMATCH',
+	/** A label the payload asked for does not exist in the shop. The order is written without it. */
+	'LABEL_MISSING'
 ] as const;
 export type ApiV1WarningCode = (typeof API_V1_WARNING_CODES)[number];
 
