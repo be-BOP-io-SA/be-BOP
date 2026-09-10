@@ -15,7 +15,10 @@ import { writeBatch } from './writeBatch';
 import { writeOne } from './writeOne';
 import { API_ORDER_SELLER_ALIAS } from './seller';
 import { amountToMinor } from './money';
-import { CATALOG_INTEGRITY_WARNING_LABEL_ID } from './ensureCatalogIntegrityLabel';
+import {
+	API_ORDER_LABEL_ID,
+	CATALOG_INTEGRITY_WARNING_LABEL_ID
+} from './ensureCatalogIntegrityLabel';
 
 const apiKey: AuthenticatedApiKey = {
 	_id: new ObjectId(),
@@ -170,7 +173,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(res.status).toBe('ok');
 
 		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
-		expect(order?.orderLabelIds).toEqual(['cashless']);
+		expect(order?.orderLabelIds).toEqual([API_ORDER_LABEL_ID, 'cashless']);
 	});
 
 	it('writes the order without an unknown label, and says so', async () => {
@@ -184,7 +187,8 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		);
 
 		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
-		expect(order?.orderLabelIds).toBeUndefined();
+		// The label the caller asked for is gone; the one marking the sale as ours stays.
+		expect(order?.orderLabelIds).toEqual([API_ORDER_LABEL_ID]);
 	});
 
 	it('returns duplicate on replay without mutating the existing order', async () => {
