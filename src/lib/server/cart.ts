@@ -160,6 +160,7 @@ export async function addToCartInDb(
 		customPrice?: { amount: number; currency: Currency };
 		deposit?: boolean;
 		chosenVariations?: Record<string, string>;
+		uniqueKey?: string;
 		booking?: {
 			time: Date;
 			durationMinutes: number;
@@ -306,7 +307,7 @@ export async function addToCartInDb(
 		}
 	}
 
-	if (existingItem && !product.standalone && !product.bookingSpec) {
+	if (existingItem && !product.standalone && !product.bookingSpec && !params.uniqueKey) {
 		existingItem.quantity = params.totalQuantity ? quantity : existingItem.quantity + quantity;
 
 		const max = Math.min(
@@ -343,6 +344,7 @@ export async function addToCartInDb(
 			...(params.chosenVariations && {
 				chosenVariations: params.chosenVariations
 			}),
+			...(params.uniqueKey && { uniqueKey: params.uniqueKey }),
 			reservedUntil: addMinutes(new Date(), runtimeConfig.reserveStockInMinutes),
 			...(depositPercentage && { depositPercentage }),
 			...(params.booking &&

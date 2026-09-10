@@ -2,7 +2,7 @@ import { createHmac } from 'crypto';
 import { collections } from './database';
 import { ALLOW_PAID_ORDER_WEBHOOK } from './env-config';
 import { assertPublicWebhookTarget } from './webhook-url-guard';
-import type { Order } from '$lib/types/Order';
+import { orderItemPrice, type Order } from '$lib/types/Order';
 
 function isPaidOrderWebhookEnabled(): boolean {
 	return ALLOW_PAID_ORDER_WEBHOOK === 'true' || ALLOW_PAID_ORDER_WEBHOOK === '1';
@@ -27,14 +27,76 @@ export function stripPaidOrderWebhook<T extends { paidOrderWebhook?: unknown }>(
 }
 
 /**
+ * What the buyer actually paid for one line. PWYW amounts and variation surcharges live in the
+ * line's `customPrice` snapshot, and `orderItemPrice` applies the POS discount and free units on
+ * top of it, so this is the charged figure rather than the catalogue price.
+ *
+ * Returns null instead of throwing when a line carries no snapshot: the notification for the rest
+ * of the order must not be suppressed by one malformed line.
+ */
+function linePaidAmount(item: Order['items'][number]): { amount: number; currency: string } | null {
+	const snapshot = item.currencySnapshot?.main;
+	if (!snapshot) {
+		return null;
+	}
+	try {
+		return {
+			amount: orderItemPrice(item, 'main'),
+			currency: (snapshot.customPrice ?? snapshot.price).currency
+		};
+	} catch (err) {
+		console.error('[paidOrderWebhook] could not price line for product', item.product._id, err);
+		return null;
+	}
+}
+
+/**
+ * Body sent to one product's webhook.
+ *
+ * `items` is scoped to the receiving product's own lines — never the whole cart. A per-product
+ * hook belongs to whoever sells that product, and a shared basket would otherwise hand them
+ * another seller's lines. A product can still appear several times in one order (different
+ * `uniqueKey`, different variations), hence an array (issue #2688).
+ */
+function buildPayload(order: Order, productId: string, timestamp: string) {
+	return {
+		timestamp,
+		orderId: order._id,
+		orderNumber: order.number,
+		contact: {
+			email: order.notifications.paymentStatus.email ?? null,
+			npub: order.notifications.paymentStatus.npub ?? null
+		},
+		...(order.billingAddress && { billingAddress: order.billingAddress }),
+		customCheckoutFields: (order.customCheckoutFields ?? []).map((f) => ({
+			slug: f.slug,
+			label: f.label,
+			...(f.address ? { address: f.address } : { value: f.value ?? '' })
+		})),
+		items: order.items
+			.filter((item) => item.product._id === productId)
+			.map((item) => {
+				const amountPaid = linePaidAmount(item);
+				return {
+					productId: item.product._id,
+					quantity: item.quantity,
+					...(item.uniqueKey && { uniqueKey: item.uniqueKey }),
+					...(amountPaid && { amountPaid })
+				};
+			})
+	};
+}
+
+/**
  * Per-product outbound webhook fired when an order transitions to paid (see issue #2646).
  *
  * Fire-and-forget on purpose (PoC scope): a network or 5xx failure is logged via console.error
  * but never retried. Each product in the order whose `paidOrderWebhook` is configured triggers
  * its own POST, signed with HMAC-SHA256(secret, raw body) in `X-Webhook-Signature: sha256=<hex>`.
  *
- * The payload shape is documented in the PR description; the receiver verifies the signature
- * by recomputing HMAC-SHA256 with their own copy of the secret over the raw request body, in
+ * The body is built per target (see buildPayload: each receiver only sees its own product's
+ * lines), so each POST is signed over its own bytes. The receiver verifies the signature by
+ * recomputing HMAC-SHA256 with their own copy of the secret over the raw request body, in
  * constant time.
  */
 export async function firePaidOrderWebhooks(order: Order): Promise<void> {
@@ -64,21 +126,8 @@ export async function firePaidOrderWebhooks(order: Order): Promise<void> {
 		return;
 	}
 
-	const payload = {
-		timestamp: new Date().toISOString(),
-		orderNumber: order.number,
-		contact: {
-			email: order.notifications.paymentStatus.email ?? null,
-			npub: order.notifications.paymentStatus.npub ?? null
-		},
-		...(order.billingAddress && { billingAddress: order.billingAddress }),
-		customCheckoutFields: (order.customCheckoutFields ?? []).map((f) => ({
-			slug: f.slug,
-			label: f.label,
-			...(f.address ? { address: f.address } : { value: f.value ?? '' })
-		}))
-	};
-	const body = JSON.stringify(payload);
+	// One timestamp for the whole fan-out, so sibling POSTs for the same order agree.
+	const timestamp = new Date().toISOString();
 
 	await Promise.all(
 		targets.map(async ({ _id: productId, paidOrderWebhook: hook }) => {
@@ -93,6 +142,7 @@ export async function firePaidOrderWebhooks(order: Order): Promise<void> {
 				);
 				return;
 			}
+			const body = JSON.stringify(buildPayload(order, productId, timestamp));
 			const signature = 'sha256=' + createHmac('sha256', hook.secret).update(body).digest('hex');
 			try {
 				const res = await fetch(hook.apiRoute, {

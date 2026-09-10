@@ -1,0 +1,81 @@
+<script lang="ts">
+	import { useI18n } from '$lib/i18n.js';
+
+	export let data;
+	export let form;
+	const { t } = useI18n();
+
+	function confirmRevoke(event: Event) {
+		if (!confirm(t('admin.apiKeys.revokeConfirm'))) {
+			event.preventDefault();
+		}
+	}
+
+	function fmt(d: string | Date | null) {
+		if (!d) {
+			return '—';
+		}
+		return new Date(d).toLocaleString();
+	}
+</script>
+
+<div class="flex flex-col gap-6 max-w-2xl">
+	<a href="{data.adminPrefix}/api-keys" class="underline body-hyperlink self-start">
+		{t('admin.apiKeys.backToList')}
+	</a>
+
+	<header>
+		<h1 class="text-3xl">{data.key.name}</h1>
+	</header>
+
+	<section class="rounded-lg border border-gray-200 p-5">
+		<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+			<dt class="opacity-70">{t('admin.apiKeys.prefix')}</dt>
+			<dd class="font-mono">{data.key.keyPrefix}…</dd>
+
+			<dt class="opacity-70">{t('admin.apiKeys.scopes')}</dt>
+			<dd class="font-mono">{data.key.scopes.join(', ')}</dd>
+
+			<dt class="opacity-70">{t('admin.apiKeys.status')}</dt>
+			<dd>
+				{#if data.key.revokedAt}
+					<span class="text-red-600">{t('admin.apiKeys.statusRevoked')}</span>
+				{:else if data.key.expiresAt && new Date(data.key.expiresAt) <= new Date()}
+					<span class="text-orange-600">{t('admin.apiKeys.statusExpired')}</span>
+				{:else}
+					<span class="text-green-700">{t('admin.apiKeys.statusActive')}</span>
+				{/if}
+			</dd>
+
+			<dt class="opacity-70">{t('admin.apiKeys.createdAt')}</dt>
+			<dd>{fmt(data.key.createdAt)}</dd>
+
+			<dt class="opacity-70">{t('admin.apiKeys.expiresAt')}</dt>
+			<dd>{fmt(data.key.expiresAt)}</dd>
+
+			<dt class="opacity-70">{t('admin.apiKeys.revokedAt')}</dt>
+			<dd>{fmt(data.key.revokedAt)}</dd>
+
+			<dt class="opacity-70">{t('admin.apiKeys.lastUsedAt')}</dt>
+			<dd>{fmt(data.key.lastUsedAt)}</dd>
+
+			<dt class="opacity-70">{t('admin.apiKeys.createdBy')}</dt>
+			<dd class="font-mono text-sm">{data.key.createdBy ?? '—'}</dd>
+		</dl>
+	</section>
+
+	{#if form?.alreadyRevoked}
+		<p class="text-sm text-orange-600">{t('admin.apiKeys.statusRevoked')}</p>
+	{/if}
+
+	{#if !data.key.revokedAt}
+		<form method="post" action="?/revoke">
+			<input
+				type="submit"
+				class="btn btn-red text-white self-start w-auto text-base"
+				value={t('admin.apiKeys.revoke')}
+				on:click={confirmRevoke}
+			/>
+		</form>
+	{/if}
+</div>
