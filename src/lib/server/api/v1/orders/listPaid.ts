@@ -78,7 +78,7 @@ export type PaidOrderDto = {
 		source: 'shop' | 'api';
 		value?: string;
 		address?: OrderAddress;
-		isPersonalData?: true;
+		isPersonalData?: boolean;
 	}>;
 	/**
 	 * The order labels, with the name the shop gave them. Absent when the order carries none.
