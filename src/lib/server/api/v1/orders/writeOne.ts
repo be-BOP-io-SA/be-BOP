@@ -21,7 +21,7 @@ import { checkProductVariationsIntegrity, productPriceWithVariations } from '$li
 import { amountToMinor, minorToPrice } from './money';
 import { mapCustomFields } from './mapCustomFields';
 import { mapDomainError } from './mapErrors';
-import { ensureCatalogIntegrityLabel } from './ensureCatalogIntegrityLabel';
+import { ensureApiOrderLabel, ensureCatalogIntegrityLabel } from './ensureCatalogIntegrityLabel';
 import { resolveProducts } from './resolveProducts';
 import { resolveOrderLabels } from './addLabel';
 import { API_ORDER_SELLER_ALIAS } from './seller';
@@ -387,7 +387,10 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 			});
 		}
 
+		// Every API sale is labelled as such, so the shop can pull them out of its order listing in
+		// one filter — the seller alias says the same thing, but the listing cannot filter on it.
 		const labelIds = [
+			await ensureApiOrderLabel(),
 			...(missingProduct ? [await ensureCatalogIntegrityLabel()] : []),
 			...requestedLabels.found
 		];

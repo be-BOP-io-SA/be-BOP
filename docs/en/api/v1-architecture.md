@@ -296,7 +296,9 @@ Two details matter to a caller reading them. An **address** field keeps its cont
 
 ### The seller on an order written through the API
 
-The admin order listing shows a seller per order, read from `user.userAlias`, and labels a missing one "System" — the same word it uses for a storefront order nobody sold. Orders written through `/api/v1/orders` carry the alias `externalPartner`, so an integrator's sales can be told apart from the shop's own, in the listing as in its seller filter. The filter's dropdown only offers the shop's own staff accounts, so filtering on that alias is done by hand for now.
+The admin order listing shows a seller per order, read from `user.userAlias`, and labels a missing one "System" — the same word it uses for a storefront order nobody sold. Orders written through the API carry the alias `externalPartner`, so an integrator's sales can be told apart from the shop's own.
+
+The listing's seller filter only offers the shop's own staff accounts, so that alias cannot be picked from it. Every API-written order therefore also carries the **`endpoint`** label — 🤖 Endpoint — which the same listing _can_ filter on. It is created on first use, like `catalog-integrity-warning`, and it applies to both write surfaces: the PoS seam goes through the same `writeBatch`.
 
 ### Poll first, stream as an optimisation
 
