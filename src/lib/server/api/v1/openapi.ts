@@ -1752,6 +1752,26 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 								}
 							}
 						},
+						customFields: {
+							type: 'array',
+							description:
+								'The custom checkout fields collected on the order, read-only. `source` is `shop` ' +
+								'for a field the shop configured and the buyer answered, `api` for one the caller ' +
+								'attached to its own write. An address field carries `address` and no `value`.',
+							items: {
+								type: 'object',
+								required: ['slug', 'label', 'type', 'source'],
+								properties: {
+									slug: { type: 'string' },
+									label: { type: 'string' },
+									type: { type: 'string', example: 'free' },
+									source: { type: 'string', enum: ['shop', 'api'] },
+									value: { type: 'string' },
+									address: { type: 'object', additionalProperties: true },
+									isPersonalData: { type: 'boolean' }
+								}
+							}
+						},
 						labels: {
 							type: 'array',
 							description:
