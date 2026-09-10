@@ -10,6 +10,7 @@ import { toCurrency } from '$lib/utils/toCurrency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import type { ObjectId } from 'mongodb';
 import { amountToMinor } from './money';
+import { toOrderNoteDto, type OrderNoteDto } from './addNote';
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 20;
@@ -64,8 +65,46 @@ export type PaidOrderDto = {
 	externalOrderId?: string;
 	/** The custom checkout fields collected on the order. Absent when it carries none. */
 	customFields?: Array<{ slug: string; label: string; value?: string }>;
+	/**
+	 * The order labels, with the name the shop gave them. Absent when the order carries none.
+	 *
+	 * The id alone would not do: it is opaque, and the caller has no other route to resolve it.
+	 */
+	labels?: Array<{ id: string; name: string }>;
+	/** The notes carried by the order — staff, customer and system alike. Absent when it has none. */
+	notes?: OrderNoteDto[];
 	items: PaidOrderItemDto[];
 };
+
+/** Label id → display name, for one page of orders. Absent names fall back to the id. */
+export type LabelNames = Map<string, string>;
+
+/**
+ * Names for the labels carried by these orders, in one query.
+ *
+ * Per-order lookups would multiply round-trips by page size for a field most orders leave empty.
+ */
+export async function loadLabelNames(orders: Order[]): Promise<LabelNames> {
+	const ids = [...new Set(orders.flatMap((order) => order.orderLabelIds ?? []))];
+	if (!ids.length) {
+		return new Map();
+	}
+	const labels = await collections.labels
+		.find({ _id: { $in: ids } })
+		.project<{ _id: string; name: string }>({ _id: 1, name: 1 })
+		.toArray();
+	return new Map(labels.map((label) => [label._id, label.name]));
+}
+
+function orderLabels(order: Order, names: LabelNames | undefined) {
+	const labels = (order.orderLabelIds ?? []).map((id) => ({ id, name: names?.get(id) ?? id }));
+	return labels.length ? { labels } : {};
+}
+
+function orderNotes(order: Order) {
+	const notes = (order.notes ?? []).map(toOrderNoteDto);
+	return notes.length ? { notes } : {};
+}
 
 function parseLimit(raw: string | undefined): number {
 	const n = raw ? Number.parseInt(raw, 10) : DEFAULT_LIMIT;
@@ -266,7 +305,7 @@ function orderContext(order: Order) {
 	};
 }
 
-export function toPaidOrderDto(order: Order): PaidOrderDto | null {
+export function toPaidOrderDto(order: Order, labelNames?: LabelNames): PaidOrderDto | null {
 	const paid = paidAmount(order);
 	if (!paid) {
 		return null;
@@ -288,6 +327,8 @@ export function toPaidOrderDto(order: Order): PaidOrderDto | null {
 		amountPaid,
 		...(vat.length && { vat }),
 		...orderContext(order),
+		...orderLabels(order, labelNames),
+		...orderNotes(order),
 		items: order.items.map(toItemDto)
 	};
 }
@@ -320,9 +361,10 @@ export async function listPaidOrders(query: PaidOrdersQuery): Promise<
 	// and a single drop on a full page would zero out nextCursor and strand the poller.
 	const hasMore = docs.length > limit;
 	const pageDocs = hasMore ? docs.slice(0, limit) : docs;
+	const labelNames = await loadLabelNames(pageDocs as Order[]);
 	const orders: PaidOrderDto[] = [];
 	for (const doc of pageDocs) {
-		const dto = toPaidOrderDto(doc as Order);
+		const dto = toPaidOrderDto(doc as Order, labelNames);
 		if (dto) {
 			orders.push(dto);
 		}
@@ -335,7 +377,7 @@ export async function listPaidOrders(query: PaidOrdersQuery): Promise<
 export type OrderReadDto = PaidOrderDto & { status: string };
 
 /** Full orders:read DTO — includes unpaid rows; amountPaid may be zero. */
-export function toOrderReadDto(order: Order): OrderReadDto {
+export function toOrderReadDto(order: Order, labelNames?: LabelNames): OrderReadDto {
 	const currency = order.currencySnapshot.main.totalPrice.currency;
 	const paid = paidAmount(order);
 	const amountPaid = paid
@@ -355,6 +397,8 @@ export function toOrderReadDto(order: Order): OrderReadDto {
 		amountPaid,
 		...(vat.length && { vat }),
 		...orderContext(order),
+		...orderLabels(order, labelNames),
+		...orderNotes(order),
 		items: order.items.map(toItemDto)
 	};
 }
@@ -383,7 +427,8 @@ export async function listOrders(query: PaidOrdersQuery): Promise<
 
 	const hasMore = docs.length > limit;
 	const pageDocs = hasMore ? docs.slice(0, limit) : docs;
-	const orders = pageDocs.map((doc) => toOrderReadDto(doc as Order));
+	const labelNames = await loadLabelNames(pageDocs as Order[]);
+	const orders = pageDocs.map((doc) => toOrderReadDto(doc as Order, labelNames));
 	const nextCursor = hasMore ? String(pageDocs[pageDocs.length - 1].number) : null;
 	return { orders, page: { limit, nextCursor } };
 }

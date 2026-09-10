@@ -4,8 +4,13 @@ import type { Order } from '$lib/types/Order';
 import { exchangeRate } from '$lib/stores/exchangeRate';
 
 const find = vi.fn();
+const labelDocs: Array<{ _id: string; name: string }> = [];
 vi.mock('$lib/server/database', () => ({
-	collections: { orders: { find: (...args: unknown[]) => find(...args) } }
+	collections: {
+		orders: { find: (...args: unknown[]) => find(...args) },
+		// Label names are read per page; the shape mirrors find().project().toArray().
+		labels: { find: () => ({ project: () => ({ toArray: async () => labelDocs }) }) }
+	}
 }));
 
 import { listPaidOrders, orderVatBreakdown, paidAmount, toPaidOrderDto } from './listPaid';
@@ -30,7 +35,7 @@ function lastFilter(): Record<string, unknown> {
 	return find.mock.calls[find.mock.calls.length - 1][0] as Record<string, unknown>;
 }
 
-function makeOrder(opts: { paid: boolean; uniqueKey?: string }): Order {
+function makeOrder(opts: { paid: boolean; uniqueKey?: string; labelIds?: string[] }): Order {
 	const amount = 100;
 	return {
 		_id: 'ord_test',
@@ -38,6 +43,7 @@ function makeOrder(opts: { paid: boolean; uniqueKey?: string }): Order {
 		createdAt: new Date('2026-08-01T10:00:00Z'),
 		updatedAt: new Date('2026-08-01T10:05:00Z'),
 		status: opts.paid ? 'paid' : 'pending',
+		...(opts.labelIds && { orderLabelIds: opts.labelIds }),
 		items: [
 			{
 				product: TEST_DIGITAL_PRODUCT,
@@ -110,6 +116,76 @@ describe('toOrderReadDto', () => {
 		expect(dto.status).toBe('pending');
 		expect(dto.amountPaid).toEqual({ amountMinor: 0, currency: 'EUR' });
 		expect(dto.paidAt).toBeNull();
+	});
+});
+
+describe('order notes on reads', () => {
+	it('omits the field entirely when the order carries no note', () => {
+		expect(toPaidOrderDto(makeOrder({ paid: true }))).not.toHaveProperty('notes');
+	});
+
+	it('says who wrote each note without exposing their contact details', () => {
+		const order = makeOrder({ paid: true });
+		order.notes = [
+			{
+				content: 'from the till',
+				createdAt: new Date('2026-08-01T11:00:00Z'),
+				role: 'super-admin',
+				userAlias: 'externalPartner',
+				email: 'staff@example.com'
+			},
+			{ content: 'from the buyer', createdAt: new Date('2026-08-01T11:05:00Z'), role: 'customer' },
+			{ content: 'from be-BOP', createdAt: new Date('2026-08-01T11:10:00Z'), role: null }
+		];
+		const dto = toPaidOrderDto(order);
+		expect(dto?.notes).toEqual([
+			{
+				content: 'from the till',
+				createdAt: '2026-08-01T11:00:00.000Z',
+				author: 'employee',
+				alias: 'externalPartner'
+			},
+			{ content: 'from the buyer', createdAt: '2026-08-01T11:05:00.000Z', author: 'customer' },
+			{ content: 'from be-BOP', createdAt: '2026-08-01T11:10:00.000Z', author: 'system' }
+		]);
+	});
+});
+
+describe('order labels on reads', () => {
+	it('omits the field entirely when the order carries no label', () => {
+		const dto = toPaidOrderDto(makeOrder({ paid: true }));
+		expect(dto).not.toHaveProperty('labels');
+	});
+
+	it('names each label the order carries', () => {
+		const order = makeOrder({ paid: true, labelIds: ['cashless', 'to-refund'] });
+		const dto = toPaidOrderDto(
+			order,
+			new Map([
+				['cashless', 'Cashless'],
+				['to-refund', 'À rembourser']
+			])
+		);
+		expect(dto?.labels).toEqual([
+			{ id: 'cashless', name: 'Cashless' },
+			{ id: 'to-refund', name: 'À rembourser' }
+		]);
+	});
+
+	it('falls back to the id rather than dropping a label whose name is gone', () => {
+		const dto = toPaidOrderDto(makeOrder({ paid: true, labelIds: ['orphan'] }), new Map());
+		expect(dto?.labels).toEqual([{ id: 'orphan', name: 'orphan' }]);
+	});
+
+	it('reads the names of every label on the page in one query', async () => {
+		labelDocs.length = 0;
+		labelDocs.push({ _id: 'cashless', name: 'Cashless' });
+		const { loadLabelNames } = await import('./listPaid');
+		const names = await loadLabelNames([
+			makeOrder({ paid: true, labelIds: ['cashless'] }),
+			makeOrder({ paid: true, labelIds: ['cashless'] })
+		]);
+		expect(names.get('cashless')).toBe('Cashless');
 	});
 });
 

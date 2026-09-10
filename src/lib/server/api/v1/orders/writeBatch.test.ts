@@ -13,6 +13,7 @@ import {
 import type { AuthenticatedApiKey } from '$lib/types/ApiV1';
 import { writeBatch } from './writeBatch';
 import { writeOne } from './writeOne';
+import { API_ORDER_SELLER_ALIAS } from './seller';
 import { amountToMinor } from './money';
 import { CATALOG_INTEGRITY_WARNING_LABEL_ID } from './ensureCatalogIntegrityLabel';
 
@@ -149,6 +150,41 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(order?.externalSourceApiKeyId?.toString()).toBe(apiKey._id.toString());
 		expect(order?.user.sessionId).toBe(`api-v1:${apiKey._id.toString()}`);
 		expect(order?.user.userHasPosOptions).toBe(true);
+		// The admin order listing reads the seller here, and labels a missing one "System".
+		expect(order?.user.userAlias).toBe(API_ORDER_SELLER_ALIAS);
+	});
+
+	it('puts the labels the payload asked for on the order', async () => {
+		await collections.labels.insertOne({
+			_id: 'cashless',
+			name: 'Cashless',
+			color: '#000000',
+			icon: '',
+			createdAt: new Date(),
+			updatedAt: new Date()
+		});
+		const res = await writeBatch({
+			apiKey,
+			orders: [paidCommand({ externalOrderId: 'label-1', labels: ['cashless'] })]
+		});
+		expect(res.status).toBe('ok');
+
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order?.orderLabelIds).toEqual(['cashless']);
+	});
+
+	it('writes the order without an unknown label, and says so', async () => {
+		const res = await writeBatch({
+			apiKey,
+			orders: [paidCommand({ externalOrderId: 'label-2', labels: ['nope'] })]
+		});
+		expect(res.results[0].status).toBe('created');
+		expect(res.results[0].warnings).toContainEqual(
+			expect.objectContaining({ code: 'LABEL_MISSING', details: { labelId: 'nope' } })
+		);
+
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order?.orderLabelIds).toBeUndefined();
 	});
 
 	it('returns duplicate on replay without mutating the existing order', async () => {

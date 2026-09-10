@@ -23,6 +23,8 @@ import { mapCustomFields } from './mapCustomFields';
 import { mapDomainError } from './mapErrors';
 import { ensureCatalogIntegrityLabel } from './ensureCatalogIntegrityLabel';
 import { resolveProducts } from './resolveProducts';
+import { resolveOrderLabels } from './addLabel';
+import { API_ORDER_SELLER_ALIAS } from './seller';
 
 function isDuplicateKeyError(err: unknown): boolean {
 	if (isUniqueConstraintError(err)) {
@@ -376,7 +378,20 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 				: null
 			: ('point-of-sale' as const);
 
-		const orderLabelIds = missingProduct ? [await ensureCatalogIntegrityLabel()] : undefined;
+		const requestedLabels = await resolveOrderLabels(cmd.labels);
+		for (const missingLabel of requestedLabels.missing) {
+			warnings.push({
+				code: 'LABEL_MISSING',
+				message: `Order label not found, order written without it: ${missingLabel}`,
+				details: { labelId: missingLabel }
+			});
+		}
+
+		const labelIds = [
+			...(missingProduct ? [await ensureCatalogIntegrityLabel()] : []),
+			...requestedLabels.found
+		];
+		const orderLabelIds = labelIds.length ? labelIds : undefined;
 
 		let orderId: string;
 		try {
@@ -393,6 +408,7 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 					locale: runtimeConfig.defaultLanguage,
 					user: {
 						sessionId: `api-v1:${apiKey._id.toString()}`,
+						userAlias: API_ORDER_SELLER_ALIAS,
 						userHasPosOptions: true
 					},
 					shippingAddress: null,
