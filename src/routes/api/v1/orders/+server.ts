@@ -33,6 +33,7 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		status: url.searchParams.get('status') ?? undefined,
 		number: url.searchParams.get('number') ?? undefined,
 		label: url.searchParams.get('label') ?? undefined,
+		seller: url.searchParams.get('seller') ?? undefined,
 		externalOrderId: url.searchParams.get('externalOrderId') ?? undefined,
 		apiKeyId: apiKey._id
 	});
