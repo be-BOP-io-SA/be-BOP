@@ -119,6 +119,38 @@ describe('toOrderReadDto', () => {
 	});
 });
 
+describe('filtering by seller', () => {
+	it('matches the alias exactly', async () => {
+		find.mockReturnValue(cursorOf([]));
+		await listPaidOk({ seller: 'externalPartner' });
+		expect(lastFilter()['user.userAlias']).toBe('externalPartner');
+	});
+
+	it('selects the orders nobody sold when asked for null', async () => {
+		find.mockReturnValue(cursorOf([]));
+		await listPaidOk({ seller: 'null' });
+		expect(lastFilter()['user.userAlias']).toEqual({ $exists: false });
+	});
+
+	it('leaves the filter out when no seller is asked for', async () => {
+		find.mockReturnValue(cursorOf([]));
+		await listPaidOk({});
+		expect(lastFilter()).not.toHaveProperty('user.userAlias');
+	});
+});
+
+describe('the seller on reads', () => {
+	it('names the seller the admin listing shows', () => {
+		const order = makeOrder({ paid: true });
+		order.user = { userAlias: 'externalPartner' } as Order['user'];
+		expect(toPaidOrderDto(order)?.seller).toBe('externalPartner');
+	});
+
+	it('is null on an order nobody sold — what the listing calls System', () => {
+		expect(toPaidOrderDto(makeOrder({ paid: true }))?.seller).toBeNull();
+	});
+});
+
 describe('custom checkout fields on reads', () => {
 	it('says where each field comes from, and carries an address field whole', () => {
 		const order = makeOrder({ paid: true });

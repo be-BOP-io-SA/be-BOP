@@ -9,6 +9,10 @@ import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import { CURRENCIES, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
+import {
+	ensureApiOrderLabel,
+	ensureCatalogIntegrityLabel
+} from './api/v1/orders/ensureCatalogIntegrityLabel';
 
 async function ensureDefaultSearchlist(session?: ClientSession): Promise<void> {
 	const existing = await collections.searchlists.findOne({ _id: 'default' }, { session });
@@ -1085,4 +1089,8 @@ export async function runMigrations() {
 	// but a manual Mongo delete still happens).
 	await ensureDefaultSearchlist();
 	await ensureSearchSearchlist();
+	// Same idea for the labels the API puts on orders: a shop should see them in its label list
+	// before the first integration sale, not because of it.
+	await ensureApiOrderLabel();
+	await ensureCatalogIntegrityLabel();
 }
