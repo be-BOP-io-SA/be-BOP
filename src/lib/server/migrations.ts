@@ -16,6 +16,10 @@ import {
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
 import { defaultLanguageText } from './i18n-defaults';
 import { languages, type LanguageKey } from '$lib/translations';
+import {
+	ensureApiOrderLabel,
+	ensureCatalogIntegrityLabel
+} from './api/v1/orders/ensureCatalogIntegrityLabel';
 
 // An upsert rather than find-then-insert: every instance seeds at start-up, and two starting
 // together on an empty database would otherwise both insert and one would hit a duplicate key.
@@ -1083,6 +1087,10 @@ export async function runMigrations() {
 	 */
 	await ensureDefaultSearchlist();
 	await ensureSearchSearchlist();
+	// Same idea for the labels the API puts on orders: a shop should see them in its label list
+	// before the first integration sale, not because of it.
+	await ensureApiOrderLabel();
+	await ensureCatalogIntegrityLabel();
 
 	const lock = await Lock.tryAcquire('migrations');
 	if (!lock) {
