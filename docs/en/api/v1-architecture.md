@@ -276,6 +276,22 @@ Tags are read from the product snapshot the order carries, not from the catalog 
 
 Not implemented: the pairing link/QR the seam describes as the way the credential reaches the till. Authentication is the existing admin-issued API key, which already accepts the `Authorization: Bearer` header the seam specifies. Pairing is a credential-delivery mechanism, not a protocol change — it can be added without moving this surface.
 
+### Labels and notes: the two things an integrator may add to a sale
+
+An integration sees things be-BOP cannot: that the wristband was actually handed over, that a top-up was refunded out of band, that the customer disputed it. Two writes carry that back, and both act on an order that already exists.
+
+**Labels** — `POST /api/v1/orders/{orderId}/labels` with `{ "labelId": … }`. Labels are how the shop sorts its orders after the fact, and the admin order listing already filters on them. The label is added to a set, so a retried request leaves one label and returns the same body. It must exist in the shop: an unknown id is refused with `404` and nothing is written, because a label be-BOP does not know would then appear nowhere — not in the listing's filter, which only offers labels it has, and not in the order read, whose names come from the same collection.
+
+The order write accepts them too, as `labels: []`. There the rule is the other way round: **the sale is written and the unknown label is dropped**, with a `LABEL_MISSING` warning naming it. A label the shop never created is a mistake in the caller's configuration, and refusing the sale over it would lose money that has already changed hands.
+
+**Notes** — `POST /api/v1/orders/{orderId}/notes` with `{ "content": … }`. The note joins the ones written from the admin, under the staff role and the API's own seller alias. Unlike a label it is appended every time: a repeated remark is a fact about the order, not an accident to swallow. Note that be-BOP shows order notes **to the buyer**, flagged by author — what an integration writes here is not internal.
+
+Both come back on the order reads, as `labels` and `notes`, so a caller can read what it wrote without keeping its own copy. Labels carry the name the shop gave them, resolved in one query per page; notes carry the author's kind — `employee`, `customer` or `system` — and the alias when they have one, never the contact details.
+
+### The seller on an order written through the API
+
+The admin order listing shows a seller per order, read from `user.userAlias`, and labels a missing one "System" — the same word it uses for a storefront order nobody sold. Orders written through `/api/v1/orders` carry the alias `externalPartner`, so an integrator's sales can be told apart from the shop's own, in the listing as in its seller filter. The filter's dropdown only offers the shop's own staff accounts, so filtering on that alias is done by hand for now.
+
 ### Poll first, stream as an optimisation
 
 A resource that streams is exposed twice: `<resource>` in JSON, `<resource>/stream` as SSE.
