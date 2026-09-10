@@ -288,6 +288,12 @@ The order write accepts them too, as `labels: []`. There the rule is the other w
 
 Both come back on the order reads, as `labels` and `notes`, so a caller can read what it wrote without keeping its own copy. Labels carry the name the shop gave them, resolved in one query per page; notes carry the author's kind — `employee`, `customer` or `system` — and the alias when they have one, never the contact details.
 
+### Custom checkout fields are read, never written
+
+What the buyer filled in at checkout comes back on the order reads as `customFields`, and only that way: no route changes it. A field the shop configured and a field an integrator attached to its own write both land in the same list, so each row says which it is — `source: "shop"` or `source: "api"`, the latter being the `api:` namespace `mapCustomFields` writes under.
+
+Two details matter to a caller reading them. An **address** field keeps its content in `address` and leaves `value` unset, so reading `value` alone returns a field that looks empty. And a field the shop marked as personal data carries `isPersonalData`, which is the shop telling the integrator what it is handling.
+
 ### The seller on an order written through the API
 
 The admin order listing shows a seller per order, read from `user.userAlias`, and labels a missing one "System" — the same word it uses for a storefront order nobody sold. Orders written through `/api/v1/orders` carry the alias `externalPartner`, so an integrator's sales can be told apart from the shop's own, in the listing as in its seller filter. The filter's dropdown only offers the shop's own staff accounts, so filtering on that alias is done by hand for now.
