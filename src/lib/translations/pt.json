@@ -1105,7 +1105,8 @@
 			"orderLabelIds": "IDs de labels da encomenda",
 			"customFieldFilterLabel": "Campo de checkout personalizado",
 			"customFieldValueLabel": "Valor do campo",
-			"customFieldValuePlaceholder": "escreva o valor a filtrar"
+			"customFieldValuePlaceholder": "escreva o valor a filtrar",
+			"customFieldDisabled": "desativado"
 		},
 		"layout": {
 			"title": "Layout",
