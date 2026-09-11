@@ -93,6 +93,11 @@
 			"selectAll": "Alles selecteren",
 			"selectNone": "Niets selecteren",
 			"scopesHint": "Geef alleen wat nodig is. Read en write van dezelfde resource zitten in een categorie."
+		},
+		"order": {
+			"customFieldFilterLabel": "Aangepast checkout-veld",
+			"customFieldValueLabel": "Veldwaarde",
+			"customFieldValuePlaceholder": "typ de waarde om op te filteren"
 		}
 	},
 	"ageWarning": {

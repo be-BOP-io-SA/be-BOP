@@ -93,6 +93,11 @@
 			"selectAll": "Alle auswahlen",
 			"selectNone": "Keine auswahlen",
 			"scopesHint": "Nur das noetige vergeben. Read und Write derselben Ressource sitzen in einer Kategorie."
+		},
+		"order": {
+			"customFieldFilterLabel": "Benutzerdefiniertes Checkout-Feld",
+			"customFieldValueLabel": "Feldwert",
+			"customFieldValuePlaceholder": "den zu filternden Wert eingeben"
 		}
 	},
 	"ageWarning": {

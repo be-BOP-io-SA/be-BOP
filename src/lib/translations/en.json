@@ -93,6 +93,11 @@
 			"selectAll": "Select all",
 			"selectNone": "Select none",
 			"scopesHint": "Grant only what the partner needs. Read and write for the same resource sit in one category."
+		},
+		"order": {
+			"customFieldFilterLabel": "Custom checkout field",
+			"customFieldValueLabel": "Field value",
+			"customFieldValuePlaceholder": "type the value to filter on"
 		}
 	},
 	"ageWarning": {

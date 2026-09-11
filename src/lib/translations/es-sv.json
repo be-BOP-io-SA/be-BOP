@@ -93,6 +93,11 @@
 			"selectAll": "Seleccionar todo",
 			"selectNone": "Seleccionar nada",
 			"scopesHint": "Conceda solo lo necesario. Read y write del mismo recurso van en una categoria."
+		},
+		"order": {
+			"customFieldFilterLabel": "Campo de checkout personalizado",
+			"customFieldValueLabel": "Valor del campo",
+			"customFieldValuePlaceholder": "escribe el valor a filtrar"
 		}
 	},
 	"ageWarning": {

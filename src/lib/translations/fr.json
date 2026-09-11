@@ -93,6 +93,11 @@
 			"selectAll": "Tout selectionner",
 			"selectNone": "Tout deselectionner",
 			"scopesHint": "N'accorder que le necessaire. Lecture et ecriture d'une meme ressource sont dans une categorie."
+		},
+		"order": {
+			"customFieldFilterLabel": "Champ de checkout personnalisé",
+			"customFieldValueLabel": "Valeur du champ",
+			"customFieldValuePlaceholder": "saisissez la valeur à filtrer"
 		}
 	},
 	"ageWarning": {
