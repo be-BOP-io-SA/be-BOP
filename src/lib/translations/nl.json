@@ -1102,7 +1102,11 @@
 			"previous": "Vorige",
 			"next": "Volgende",
 			"orderLabelTitle": "Bestellingslabel",
-			"orderLabelIds": "Bestellingslabel-ID's"
+			"orderLabelIds": "Bestellingslabel-ID's",
+			"customFieldFilterLabel": "Aangepast checkout-veld",
+			"customFieldValueLabel": "Veldwaarde",
+			"customFieldValuePlaceholder": "typ de waarde om op te filteren",
+			"customFieldDisabled": "uitgeschakeld"
 		},
 		"layout": {
 			"title": "Lay-out",
