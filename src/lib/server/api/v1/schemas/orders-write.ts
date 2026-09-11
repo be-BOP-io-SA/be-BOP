@@ -13,9 +13,16 @@ const amountMinorSchema = z
 	.int('amountMinor must be an integer (minor units)')
 	.nonnegative('amountMinor must be >= 0');
 
+/**
+ * A line price may be negative — a deposit given back is a line that takes money off the order.
+ * Whether such a line is honoured at all is settled later, by `apiV1.trustExternalPricing`: with
+ * the shop pricing its own catalogue, a negative line has nowhere to go and is refused there.
+ */
+const lineAmountMinorSchema = z.number().int('amountMinor must be an integer (minor units)');
+
 const customPriceSchema = z
 	.object({
-		amountMinor: amountMinorSchema,
+		amountMinor: lineAmountMinorSchema,
 		currency: currencySchema
 	})
 	.strict();

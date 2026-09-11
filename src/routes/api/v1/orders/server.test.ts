@@ -60,7 +60,8 @@ function call(opts?: { origin?: string; body?: unknown }) {
 describe('POST /api/v1/orders (lot D adapter)', () => {
 	beforeEach(() => {
 		runtimeConfig.apiV1 = {
-			corsOrigins: ['https://allowed.example']
+			corsOrigins: ['https://allowed.example'],
+			trustExternalPricing: false
 		};
 		requireApiKey.mockReset();
 		checkRateLimit.mockReset();
