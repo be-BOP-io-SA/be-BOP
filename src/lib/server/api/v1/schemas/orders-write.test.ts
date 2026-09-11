@@ -192,7 +192,9 @@ describe('ordersWriteRequestSchema', () => {
 		).toBe(false);
 	});
 
-	it('rejects negative customPrice.amountMinor', () => {
+	// A deposit handed back is a line that takes money off the order, so the schema lets it through.
+	// Whether it is honoured is settled by apiV1.trustExternalPricing, in writeOne.
+	it('accepts a negative customPrice.amountMinor', () => {
 		expect(
 			ordersWriteRequestSchema.safeParse({
 				orders: [
@@ -205,6 +207,24 @@ describe('ordersWriteRequestSchema', () => {
 								customPrice: { amountMinor: -5, currency: 'EUR' }
 							}
 						]
+					}
+				]
+			}).success
+		).toBe(true);
+	});
+
+	it('still rejects a negative payment amountMinor', () => {
+		expect(
+			ordersWriteRequestSchema.safeParse({
+				orders: [
+					{
+						...validOrder,
+						payment: {
+							method: 'point-of-sale',
+							status: 'paid',
+							amountMinor: -5,
+							currency: 'EUR'
+						}
 					}
 				]
 			}).success

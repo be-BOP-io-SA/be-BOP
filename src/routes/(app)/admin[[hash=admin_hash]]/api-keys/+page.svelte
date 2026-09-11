@@ -103,6 +103,16 @@
 				>
 			</label>
 			<p class="text-xs opacity-70">{t('admin.apiKeys.corsOriginsHint')}</p>
+			<label class="checkbox-label">
+				<input
+					type="checkbox"
+					name="trustExternalPricing"
+					class="form-checkbox"
+					checked={data.trustExternalPricing}
+				/>
+				{t('admin.apiKeys.trustExternalPricingLabel')}
+			</label>
+			<p class="text-xs opacity-70">{t('admin.apiKeys.trustExternalPricingHint')}</p>
 			<input
 				type="submit"
 				class="btn body-mainCTA self-start w-auto text-base"
