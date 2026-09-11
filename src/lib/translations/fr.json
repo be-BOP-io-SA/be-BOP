@@ -1030,7 +1030,8 @@
 			"orderLabelIds": "Identifiants de label de commande",
 			"customFieldFilterLabel": "Champ de checkout personnalisé",
 			"customFieldValueLabel": "Valeur du champ",
-			"customFieldValuePlaceholder": "saisissez la valeur à filtrer"
+			"customFieldValuePlaceholder": "saisissez la valeur à filtrer",
+			"customFieldDisabled": "désactivé"
 		},
 		"layout": {
 			"title": "Mise en page",
