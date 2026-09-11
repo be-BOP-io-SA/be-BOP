@@ -32,6 +32,7 @@ export async function load({ locals, url }) {
 	return {
 		keys: keys.map(serializeApiKeyPublic),
 		corsOrigins: runtimeConfig.apiV1.corsOrigins.join('\n'),
+		trustExternalPricing: runtimeConfig.apiV1.trustExternalPricing,
 		logs: {
 			entries: logs.entries.map((entry) => ({
 				id: entry._id.toString(),
@@ -68,10 +69,12 @@ export const actions = {
 		const formData = await request.formData();
 		const parsed = z
 			.object({
-				corsOrigins: z.string()
+				corsOrigins: z.string(),
+				trustExternalPricing: z.boolean({ coerce: true })
 			})
 			.parse({
-				corsOrigins: formData.get('corsOrigins') ?? ''
+				corsOrigins: formData.get('corsOrigins') ?? '',
+				trustExternalPricing: !!formData.get('trustExternalPricing')
 			});
 
 		// Accept newline- and/or comma-separated origins. A lone "*" opens every origin.
@@ -82,7 +85,11 @@ export const actions = {
 				.filter(Boolean)
 		);
 
-		const apiV1 = { ...runtimeConfig.apiV1, corsOrigins };
+		const apiV1 = {
+			...runtimeConfig.apiV1,
+			corsOrigins,
+			trustExternalPricing: parsed.trustExternalPricing
+		};
 		await persistConfigElement('apiV1', apiV1);
 		runtimeConfig.apiV1 = apiV1;
 

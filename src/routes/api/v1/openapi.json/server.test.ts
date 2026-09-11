@@ -6,7 +6,8 @@ import { GET } from './+server';
 describe('GET /api/v1/openapi.json', () => {
 	beforeEach(() => {
 		runtimeConfig.apiV1 = {
-			corsOrigins: ['https://allowed.example']
+			corsOrigins: ['https://allowed.example'],
+			trustExternalPricing: false
 		};
 	});
 	it('returns 200 with openapi field and CORS when Origin allowlisted', async () => {
