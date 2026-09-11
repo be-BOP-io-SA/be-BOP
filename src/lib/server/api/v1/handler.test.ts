@@ -6,7 +6,8 @@ import { apiV1Handler, apiV1OptionsHandler } from './handler';
 describe('apiV1Handler', () => {
 	beforeEach(() => {
 		runtimeConfig.apiV1 = {
-			corsOrigins: ['https://allowed.example']
+			corsOrigins: ['https://allowed.example'],
+			trustExternalPricing: false
 		};
 	});
 
@@ -83,7 +84,8 @@ describe('apiV1Handler', () => {
 describe('apiV1OptionsHandler', () => {
 	beforeEach(() => {
 		runtimeConfig.apiV1 = {
-			corsOrigins: ['https://allowed.example']
+			corsOrigins: ['https://allowed.example'],
+			trustExternalPricing: false
 		};
 	});
 
