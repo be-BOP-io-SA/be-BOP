@@ -140,7 +140,11 @@
 						<select name="customFieldSlug" class="form-input" bind:value={filter.slug}>
 							<option value="" />
 							{#each data.checkoutFields as field}
-								<option value={field.slug}>{field.label}</option>
+								<option value={field.slug}
+									>{field.label}{field.disabled
+										? ` (${t('admin.order.customFieldDisabled')})`
+										: ''}</option
+								>
 							{/each}
 						</select>
 					</label>

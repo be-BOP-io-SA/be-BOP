@@ -97,7 +97,8 @@
 		"order": {
 			"customFieldFilterLabel": "Campo de checkout personalizado",
 			"customFieldValueLabel": "Valor do campo",
-			"customFieldValuePlaceholder": "escreva o valor a filtrar"
+			"customFieldValuePlaceholder": "escreva o valor a filtrar",
+			"customFieldDisabled": "desativado"
 		}
 	},
 	"ageWarning": {

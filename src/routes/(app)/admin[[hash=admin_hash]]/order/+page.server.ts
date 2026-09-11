@@ -1,5 +1,5 @@
 import { collections } from '$lib/server/database';
-import { loadEnabledCheckoutFields } from '$lib/server/checkoutFields';
+import { loadAllCheckoutFields } from '$lib/server/checkoutFields';
 import { paymentMethods } from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S } from '$lib/types/Country.js';
 import { type Order, ORDER_PAGINATION_LIMIT } from '$lib/types/Order';
@@ -99,7 +99,7 @@ export async function load({ url, locals }) {
 		.find({})
 		.sort({ sortOrder: 1 })
 		.toArray();
-	const checkoutFields = await loadEnabledCheckoutFields();
+	const checkoutFields = await loadAllCheckoutFields();
 	const nonCustomers = await collections.users
 		.find({ roleId: { $ne: CUSTOMER_ROLE_ID } })
 		.sort({ _id: 1 })
@@ -134,7 +134,11 @@ export async function load({ url, locals }) {
 		})),
 		posSubtype,
 		posSubtypes: posSubtypes.map((s) => ({ slug: s.slug, name: s.name })),
-		checkoutFields: checkoutFields.map((field) => ({ slug: field.slug, label: field.label })),
+		checkoutFields: checkoutFields.map((field) => ({
+			slug: field.slug,
+			label: field.label,
+			disabled: !!field.disabled
+		})),
 		customFieldFilters
 	};
 }

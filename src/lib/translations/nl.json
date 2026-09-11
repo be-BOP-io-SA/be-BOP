@@ -97,7 +97,8 @@
 		"order": {
 			"customFieldFilterLabel": "Aangepast checkout-veld",
 			"customFieldValueLabel": "Veldwaarde",
-			"customFieldValuePlaceholder": "typ de waarde om op te filteren"
+			"customFieldValuePlaceholder": "typ de waarde om op te filteren",
+			"customFieldDisabled": "uitgeschakeld"
 		}
 	},
 	"ageWarning": {

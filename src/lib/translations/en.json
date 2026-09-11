@@ -97,7 +97,8 @@
 		"order": {
 			"customFieldFilterLabel": "Custom checkout field",
 			"customFieldValueLabel": "Field value",
-			"customFieldValuePlaceholder": "type the value to filter on"
+			"customFieldValuePlaceholder": "type the value to filter on",
+			"customFieldDisabled": "disabled"
 		}
 	},
 	"ageWarning": {
