@@ -1102,7 +1102,11 @@
 			"previous": "Zurück",
 			"next": "Weiter",
 			"orderLabelTitle": "Bestell-Label",
-			"orderLabelIds": "Bestell-Label-IDs"
+			"orderLabelIds": "Bestell-Label-IDs",
+			"customFieldFilterLabel": "Benutzerdefiniertes Checkout-Feld",
+			"customFieldValueLabel": "Feldwert",
+			"customFieldValuePlaceholder": "den zu filternden Wert eingeben",
+			"customFieldDisabled": "deaktiviert"
 		},
 		"layout": {
 			"title": "Layout",
