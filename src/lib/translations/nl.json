@@ -40,6 +40,12 @@
 				"noReference": "-- Geen verwijzing (gebruik eigen voorraad) --",
 				"warning": "⚠️ Dit product verwijst naar de voorraad van een ander product. Voorraadwijzigingen zullen het gerefereerde product beïnvloeden."
 			}
+		},
+		"order": {
+			"customFieldFilterLabel": "Aangepast checkout-veld",
+			"customFieldValueLabel": "Veldwaarde",
+			"customFieldValuePlaceholder": "typ de waarde om op te filteren",
+			"customFieldDisabled": "uitgeschakeld"
 		}
 	},
 	"ageWarning": {
@@ -1004,11 +1010,26 @@
 			"then": "dan"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "uur", "other": "uur" },
-			"day": { "one": "dag", "other": "dagen" },
-			"week": { "one": "week", "other": "weken" },
-			"month": { "one": "maand", "other": "maanden" },
-			"year": { "one": "jaar", "other": "jaar" }
+			"hour": {
+				"one": "uur",
+				"other": "uur"
+			},
+			"day": {
+				"one": "dag",
+				"other": "dagen"
+			},
+			"week": {
+				"one": "week",
+				"other": "weken"
+			},
+			"month": {
+				"one": "maand",
+				"other": "maanden"
+			},
+			"year": {
+				"one": "jaar",
+				"other": "jaar"
+			}
 		},
 		"type": {
 			"deposit": "Op borg",

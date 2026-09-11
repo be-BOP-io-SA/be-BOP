@@ -40,6 +40,12 @@
 				"noReference": "-- Sin referencia (usar stock propio) --",
 				"warning": "⚠️ Este producto referencia el stock de otro producto. Los cambios de stock afectarán al producto referenciado."
 			}
+		},
+		"order": {
+			"customFieldFilterLabel": "Campo de checkout personalizado",
+			"customFieldValueLabel": "Valor del campo",
+			"customFieldValuePlaceholder": "escribe el valor a filtrar",
+			"customFieldDisabled": "desactivado"
 		}
 	},
 	"ageWarning": {
@@ -1004,11 +1010,26 @@
 			"then": "luego"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "hora", "other": "horas" },
-			"day": { "one": "día", "other": "días" },
-			"week": { "one": "semana", "other": "semanas" },
-			"month": { "one": "mes", "other": "meses" },
-			"year": { "one": "año", "other": "años" }
+			"hour": {
+				"one": "hora",
+				"other": "horas"
+			},
+			"day": {
+				"one": "día",
+				"other": "días"
+			},
+			"week": {
+				"one": "semana",
+				"other": "semanas"
+			},
+			"month": {
+				"one": "mes",
+				"other": "meses"
+			},
+			"year": {
+				"one": "año",
+				"other": "años"
+			}
 		},
 		"type": {
 			"deposit": "En depósito",
