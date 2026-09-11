@@ -82,6 +82,8 @@
 			"corsHelp": "Origens de navegador autorizadas a chamar /api/v1. Deixe vazio para recusar todo o acesso cross-origin, ou introduza * para as aceitar todas — sem risco aqui, pois a API autentica-se apenas com o cabeçalho X-API-Key e nunca lê um cookie.",
 			"corsOriginsLabel": "Origens permitidas",
 			"corsOriginsHint": "Uma origem por linha ou separadas por vírgulas (ex. https://partner.example). Deixe vazio para recusar todas as origens de navegador, ou introduza * para as aceitar todas.",
+			"trustExternalPricingLabel": "Tornar o sistema terceiro a fonte de verdade prioritária",
+			"trustExternalPricingHint": "Assinalado, uma encomenda escrita pela API é cobrada aos preços que envia, linha a linha, incluindo negativos. Desmarcado, o be-BOP tarifa cada linha a partir do seu próprio catálogo.",
 			"corsSave": "Guardar origens CORS",
 			"corsSaved": "Origens CORS atualizadas.",
 			"listIntro": "Chaves machine-to-machine para a API HTTP publica. O secret e mostrado so uma vez.",

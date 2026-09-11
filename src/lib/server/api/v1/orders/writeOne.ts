@@ -331,6 +331,28 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 		return settleExistingOrder(existing, cmd);
 	}
 
+	const trustExternalPricing = runtimeConfig.apiV1.trustExternalPricing;
+
+	// A line that takes money off the order only makes sense when the caller sets the prices. With
+	// be-BOP pricing its own catalogue, there is no product behind it and no total it could belong
+	// to, so it is refused rather than quietly charged as zero.
+	if (!trustExternalPricing) {
+		const negative = cmd.items.find((item) => (item.customPrice?.amountMinor ?? 0) < 0);
+		if (negative) {
+			return {
+				externalOrderId: cmd.externalOrderId,
+				status: 'failed',
+				error: {
+					code: 'VALIDATION_ERROR',
+					message:
+						`Negative price on ${negative.productId}. Enable "Make the third-party system the ` +
+						`prioritary source of truth" in Admin -> API Keys to accept the prices this API sends.`,
+					details: { productId: negative.productId }
+				}
+			};
+		}
+	}
+
 	try {
 		const { lines, warnings: productWarnings } = await resolveProducts(cmd.items, cmd.currency);
 		warnings.push(...productWarnings);
@@ -356,6 +378,11 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 		// to 'free', and auto-settle an order nobody paid.
 		const provisionalMajor = lines.reduce((sum, line) => {
 			const product = line.product;
+			// With the caller as the source of truth, a price it sent is the price, full stop —
+			// including on a variation product, whose catalogue price would otherwise win below.
+			if (trustExternalPricing && line.customPrice) {
+				return sum + line.customPrice.amount * line.quantity;
+			}
 			const hasPricedVariations =
 				!!product.variations?.length &&
 				!product.payWhatYouWant &&

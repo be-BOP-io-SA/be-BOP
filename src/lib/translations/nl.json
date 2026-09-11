@@ -82,6 +82,8 @@
 			"corsHelp": "Browser-origins die /api/v1 mogen aanroepen. Laat leeg om elke cross-origin toegang te weigeren, of vul * in om ze allemaal toe te staan — hier veilig, omdat de API alleen via de X-API-Key-header authenticeert en nooit een cookie leest.",
 			"corsOriginsLabel": "Toegestane origins",
 			"corsOriginsHint": "Eén origin per regel of gescheiden door komma's (bijv. https://partner.example). Laat leeg om elke browser-origin te weigeren, of vul * in om ze allemaal toe te staan.",
+			"trustExternalPricingLabel": "Maak het externe systeem de leidende bron van waarheid",
+			"trustExternalPricingHint": "Aangevinkt wordt een via de API geschreven bestelling gefactureerd tegen de prijzen die zij stuurt, regel voor regel, ook negatieve. Uitgevinkt prijst be-BOP elke regel vanuit de eigen catalogus.",
 			"corsSave": "CORS-origins opslaan",
 			"corsSaved": "CORS-origins bijgewerkt.",
 			"listIntro": "Machine-to-machine-sleutels voor de publieke HTTP-API. Secrets worden een keer getoond.",

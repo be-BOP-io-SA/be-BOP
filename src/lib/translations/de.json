@@ -82,6 +82,8 @@
 			"corsHelp": "Browser-Herkünfte, die /api/v1 aufrufen dürfen. Leer lassen, um jeden Cross-Origin-Zugriff abzulehnen, oder * eingeben, um alle zu akzeptieren — hier unbedenklich, da sich die API allein über den X-API-Key-Header authentifiziert und nie ein Cookie liest.",
 			"corsOriginsLabel": "Erlaubte Origins",
 			"corsOriginsHint": "Eine Herkunft pro Zeile oder durch Kommas getrennt (z. B. https://partner.example). Leer lassen, um jede Browser-Herkunft abzulehnen, oder * eingeben, um alle zu akzeptieren.",
+			"trustExternalPricingLabel": "Das Drittsystem zur vorrangigen Quelle der Wahrheit machen",
+			"trustExternalPricingHint": "Aktiviert wird eine über die API geschriebene Bestellung zu den von ihr gesendeten Preisen berechnet, Zeile für Zeile, auch negativen. Deaktiviert berechnet be-BOP jede Zeile aus dem eigenen Katalog.",
 			"corsSave": "CORS-Origins speichern",
 			"corsSaved": "CORS-Origins aktualisiert.",
 			"listIntro": "Machine-to-machine-Schlüssel für die öffentliche HTTP-API. Secrets werden nur einmal angezeigt.",

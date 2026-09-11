@@ -352,7 +352,15 @@ const baseConfig = {
 		// being unworkable for the callers it would apply to: local applications on changing
 		// networks, whose origin is a different localhost port on every machine. A shop that wants
 		// an allowlist still names its origins in Admin -> API Keys.
-		corsOrigins: ['*'] as string[]
+		corsOrigins: ['*'] as string[],
+		/**
+		 * "Make the third-party system the prioritary source of truth."
+		 *
+		 * Off, be-BOP prices every line from its own catalogue and a line price sent by a caller is
+		 * only a suggestion. On, what the caller sends is what is charged — including a negative
+		 * line, which is how a till books a deposit back.
+		 */
+		trustExternalPricing: false
 	},
 	telemetry: null as null | {
 		enabled: boolean;
