@@ -40,6 +40,11 @@
 				"noReference": "-- Sem referência (usar stock próprio) --",
 				"warning": "⚠️ Este produto referencia o stock de outro produto. As alterações de stock afetarão o produto referenciado."
 			}
+		},
+		"order": {
+			"customFieldFilterLabel": "Campo de checkout personalizado",
+			"customFieldValueLabel": "Valor do campo",
+			"customFieldValuePlaceholder": "escreva o valor a filtrar"
 		}
 	},
 	"ageWarning": {
@@ -1004,11 +1009,26 @@
 			"then": "depois"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "hora", "other": "horas" },
-			"day": { "one": "dia", "other": "dias" },
-			"week": { "one": "semana", "other": "semanas" },
-			"month": { "one": "mês", "other": "meses" },
-			"year": { "one": "ano", "other": "anos" }
+			"hour": {
+				"one": "hora",
+				"other": "horas"
+			},
+			"day": {
+				"one": "dia",
+				"other": "dias"
+			},
+			"week": {
+				"one": "semana",
+				"other": "semanas"
+			},
+			"month": {
+				"one": "mês",
+				"other": "meses"
+			},
+			"year": {
+				"one": "ano",
+				"other": "anos"
+			}
 		},
 		"type": {
 			"deposit": "Sob depósito",

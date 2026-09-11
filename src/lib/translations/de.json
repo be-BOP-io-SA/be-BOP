@@ -40,6 +40,11 @@
 				"noReference": "-- Keine Referenz (eigenen Lagerbestand verwenden) --",
 				"warning": "⚠️ Dieses Produkt verweist auf den Lagerbestand eines anderen Produkts. Lagerbestandsänderungen wirken sich auf das referenzierte Produkt aus."
 			}
+		},
+		"order": {
+			"customFieldFilterLabel": "Benutzerdefiniertes Checkout-Feld",
+			"customFieldValueLabel": "Feldwert",
+			"customFieldValuePlaceholder": "den zu filternden Wert eingeben"
 		}
 	},
 	"ageWarning": {
@@ -1004,11 +1009,26 @@
 			"then": "dann"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "Stunde", "other": "Stunden" },
-			"day": { "one": "Tag", "other": "Tage" },
-			"week": { "one": "Woche", "other": "Wochen" },
-			"month": { "one": "Monat", "other": "Monate" },
-			"year": { "one": "Jahr", "other": "Jahre" }
+			"hour": {
+				"one": "Stunde",
+				"other": "Stunden"
+			},
+			"day": {
+				"one": "Tag",
+				"other": "Tage"
+			},
+			"week": {
+				"one": "Woche",
+				"other": "Wochen"
+			},
+			"month": {
+				"one": "Monat",
+				"other": "Monate"
+			},
+			"year": {
+				"one": "Jahr",
+				"other": "Jahre"
+			}
 		},
 		"type": {
 			"deposit": "Auf Anzahlung",

@@ -40,6 +40,11 @@
 				"noReference": "-- No reference (use own stock) --",
 				"warning": "⚠️ This product references another product's stock. Stock changes will affect the referenced product."
 			}
+		},
+		"order": {
+			"customFieldFilterLabel": "Custom checkout field",
+			"customFieldValueLabel": "Field value",
+			"customFieldValuePlaceholder": "type the value to filter on"
 		}
 	},
 	"ageWarning": {
@@ -1004,11 +1009,26 @@
 			"then": "then"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "hour", "other": "hours" },
-			"day": { "one": "day", "other": "days" },
-			"week": { "one": "week", "other": "weeks" },
-			"month": { "one": "month", "other": "months" },
-			"year": { "one": "year", "other": "years" }
+			"hour": {
+				"one": "hour",
+				"other": "hours"
+			},
+			"day": {
+				"one": "day",
+				"other": "days"
+			},
+			"week": {
+				"one": "week",
+				"other": "weeks"
+			},
+			"month": {
+				"one": "month",
+				"other": "months"
+			},
+			"year": {
+				"one": "year",
+				"other": "years"
+			}
 		},
 		"type": {
 			"deposit": "On deposit",
