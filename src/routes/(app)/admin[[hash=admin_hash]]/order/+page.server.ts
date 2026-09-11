@@ -1,4 +1,5 @@
 import { collections } from '$lib/server/database';
+import { loadEnabledCheckoutFields } from '$lib/server/checkoutFields';
 import { paymentMethods } from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S } from '$lib/types/Country.js';
 import { type Order, ORDER_PAGINATION_LIMIT } from '$lib/types/Order';
@@ -25,6 +26,15 @@ export async function load({ url, locals }) {
 
 	const searchParams = Object.fromEntries(url.searchParams.entries());
 	const result = querySchema.parse(searchParams);
+
+	// Read before the single-value parse above would flatten them: a filter row is a (slug, value)
+	// pair, and there can be several. Rows are paired by position, and an empty value drops its row
+	// rather than matching every order that carries the field.
+	const customFieldSlugs = url.searchParams.getAll('customFieldSlug');
+	const customFieldValues = url.searchParams.getAll('customFieldValue');
+	const customFieldFilters = customFieldSlugs
+		.map((slug, index) => ({ slug: slug.trim(), value: (customFieldValues[index] ?? '').trim() }))
+		.filter((filter) => filter.slug && filter.value);
 	const {
 		skip,
 		orderNumber,
@@ -64,6 +74,14 @@ export async function load({ url, locals }) {
 	if (label) {
 		query['orderLabelIds'] = label;
 	}
+	if (customFieldFilters.length) {
+		// One $elemMatch per row: two filters must be satisfied by two different entries of the
+		// array, which a flat 'customCheckoutFields.slug' + '.value' pair would not guarantee.
+		query.$and = customFieldFilters.map((filter) => ({
+			customCheckoutFields: { $elemMatch: { slug: filter.slug, value: filter.value } }
+		}));
+	}
+
 	if (employeeAlias === 'System') {
 		query['user.userAlias'] = { $exists: false };
 	} else if (employeeAlias) {
@@ -81,6 +99,7 @@ export async function load({ url, locals }) {
 		.find({})
 		.sort({ sortOrder: 1 })
 		.toArray();
+	const checkoutFields = await loadEnabledCheckoutFields();
 	const nonCustomers = await collections.users
 		.find({ roleId: { $ne: CUSTOMER_ROLE_ID } })
 		.sort({ _id: 1 })
@@ -114,6 +133,8 @@ export async function load({ url, locals }) {
 			alias: user.alias
 		})),
 		posSubtype,
-		posSubtypes: posSubtypes.map((s) => ({ slug: s.slug, name: s.name }))
+		posSubtypes: posSubtypes.map((s) => ({ slug: s.slug, name: s.name })),
+		checkoutFields: checkoutFields.map((field) => ({ slug: field.slug, label: field.label })),
+		customFieldFilters
 	};
 }
