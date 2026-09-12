@@ -8,6 +8,7 @@
 	import {
 		DEFAULT_MAX_QUANTITY_PER_ORDER,
 		MAX_NAME_LIMIT,
+		MAX_QUANTITY_PER_USER_FOR_SUBSCRIPTION,
 		MAX_SHORT_DESCRIPTION_LIMIT,
 		type Product
 	} from '$lib/types/Product';
@@ -52,6 +53,8 @@
 	const { t } = useI18n();
 
 	export let tags: Pick<Tag, '_id' | 'name'>[];
+	export let subscriptionProducts: { _id: string; name: string }[] = [];
+
 	export let isNew = false;
 	export let duplicateFromId: string | undefined = undefined;
 	export let sold = 0;
@@ -89,6 +92,7 @@
 		hideDiscountExpiration: false,
 		stock: undefined,
 		maxQuantityPerOrder: DEFAULT_MAX_QUANTITY_PER_ORDER,
+		requiresAuthentication: false,
 		actionSettings: defaultActionSettings,
 		createdAt: new Date(),
 		updatedAt: new Date(),
@@ -103,6 +107,20 @@
 		hasSellDisclaimer: false,
 		hideFromSEO: false
 	};
+
+	let maxQuantityPerUser: number | string = product.maxQuantityPerUser ?? '';
+	let requiresAuthentication = !!product.requiresAuthentication;
+	let hasWhitelist = !!product.whitelist;
+
+	// A per-person cap only means something once we know who the person is. Ticking it here
+	// mirrors what the server does on save, so the admin sees the real state of the option.
+	// A per-person cap is meaningless until we know who the person is, so it forces the
+	// authentication lock — here and again on save, the way variations force `standalone`.
+	$: authForcedByCap =
+		maxQuantityPerUser !== '' && maxQuantityPerUser !== null && maxQuantityPerUser !== undefined;
+	$: if (authForcedByCap) {
+		requiresAuthentication = true;
+	}
 
 	let paymentMethods = product.paymentMethods || [...availablePaymentMethods];
 	let restrictPaymentMethods = !!product.paymentMethods;
@@ -174,7 +192,8 @@
 		vatProfiles,
 		bebopCountry: $page.data.vatCountry,
 		userCountry: $page.data.vatCountry,
-		vatSingleCountry: true
+		vatSingleCountry: true,
+		vatExempted: $page.data.vatExempted
 	});
 	$: vatProfileLabel =
 		vatProfiles.find((p) => p._id === vatProfileId)?.name ?? 'No custom VAT profile';
@@ -1400,6 +1419,28 @@
 							value={product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER}
 						/>
 					</label>
+
+					<label class="form-label">
+						Maximum quantity for an unique user
+						<input
+							class="form-input"
+							type="number"
+							name="maxQuantityPerUser"
+							placeholder="No limit"
+							step="1"
+							min="1"
+							bind:value={maxQuantityPerUser}
+						/>
+						<span class="text-sm text-gray-600">
+							Across all their orders, not per order. Leave empty for no limit. Orders awaiting
+							payment count towards it, and filling it in requires the customer to be authenticated.
+						</span>
+					</label>
+				{:else}
+					<p class="text-sm text-gray-600">
+						Maximum quantity for an unique user: {MAX_QUANTITY_PER_USER_FOR_SUBSCRIPTION} — a subscription
+						is limited to one per person and per product.
+					</p>
 				{/if}
 			</div>
 			<input type="hidden" name="changedDate" value={changedDate} />
@@ -1775,6 +1816,108 @@
 						bind:retailBasket={product.actionSettings.retail.canBeAddedToBasket}
 						bind:nostrBasket={product.actionSettings.nostr.canBeAddedToBasket}
 					/>
+				</div>
+
+				<div>
+					<h4 class="text-lg font-medium text-gray-900 mb-3">Who can order</h4>
+					<div class="space-y-4">
+						<label class="checkbox-label">
+							<input
+								class="form-checkbox"
+								type="checkbox"
+								name="requiresAuthentication"
+								bind:checked={requiresAuthentication}
+								disabled={authForcedByCap}
+							/>
+							Customer must be authenticated to order this product
+						</label>
+						{#if authForcedByCap}
+							<p class="text-sm text-gray-600">
+								Required, and locked, because this product has a "Maximum quantity for an unique
+								user" set in Inventory &amp; Stock. Clear that field to unlock this option.
+							</p>
+						{/if}
+
+						<label class="checkbox-label">
+							<input
+								class="form-checkbox"
+								type="checkbox"
+								name="hasWhitelist"
+								bind:checked={hasWhitelist}
+							/>
+							Restrict who can order this product
+						</label>
+
+						{#if hasWhitelist}
+							<p class="text-sm text-gray-600">
+								Anyone matching at least one of the sources below can order the product. Everyone
+								else sees the product page, with the order and add-to-cart buttons disabled. Leaving
+								every source empty closes the product to everyone.
+							</p>
+
+							<label class="form-label">
+								Allowed e-mail addresses
+								<textarea
+									class="form-input"
+									name="whitelistEmails"
+									rows="4"
+									placeholder="One e-mail address per line"
+									value={product.whitelist?.emails?.join('\n') ?? ''}
+								/>
+							</label>
+
+							<label class="form-label">
+								Allowed npubs
+								<textarea
+									class="form-input"
+									name="whitelistNpubs"
+									rows="4"
+									placeholder="One npub per line"
+									value={product.whitelist?.npubs?.join('\n') ?? ''}
+								/>
+							</label>
+
+							<!-- svelte-ignore a11y-label-has-associated-control -->
+							<label class="form-label">
+								Allow the active subscribers of
+								<MultiSelect
+									--sms-options-bg="var(--body-mainPlan-backgroundColor)"
+									name="whitelistSubscriptionProductIds"
+									options={subscriptionProducts.map((subscriptionProduct) => ({
+										value: subscriptionProduct._id,
+										label: subscriptionProduct.name
+									}))}
+									selected={product.whitelist?.subscriptionProductIds?.map((productId) => ({
+										value: productId,
+										label:
+											subscriptionProducts.find(
+												(subscriptionProduct) => subscriptionProduct._id === productId
+											)?.name ?? productId
+									})) ?? []}
+								/>
+							</label>
+
+							<label class="checkbox-label">
+								<input
+									class="form-checkbox"
+									type="checkbox"
+									name="whitelistAllowEmployees"
+									checked={product.whitelist?.allowEmployees ?? false}
+								/>
+								Allow every employee, whatever their role
+							</label>
+
+							<label class="checkbox-label">
+								<input
+									class="form-checkbox"
+									type="checkbox"
+									name="whitelistAllowPosOverride"
+									checked={product.whitelist?.allowPosOverride ?? false}
+								/>
+								Let a point-of-sale employee add it for a customer who is not whitelisted
+							</label>
+						{/if}
+					</div>
 				</div>
 			</div>
 		</details>

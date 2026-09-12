@@ -9,6 +9,8 @@ import { cmsFromContent } from '$lib/server/cms';
 import { collections, withTransaction } from '$lib/server/database';
 import { findActivePromoDiscount, hasAnyActivePromoDiscount } from '$lib/server/discount';
 import { picturesForProducts } from '$lib/server/picture';
+import { evaluateSaleLocks, SALE_LOCK_CODES } from '$lib/server/saleLock';
+import { cartErrorKey } from '$lib/cartErrorKey';
 import { applyResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
@@ -73,27 +75,15 @@ function isEmployeeFromLocals(locals: App.Locals): boolean {
 }
 
 function mapAddError(slug: string, body: AddErrorBody, product: ProductBadge | null): AddError {
-	switch (body.code) {
-		case 'NOT_FOR_SALE':
-			return { slug, key: 'product.notForSale', product };
-		case 'OUT_OF_STOCK':
-			return { slug, key: 'product.outOfStock', product };
-		case 'MAX_ITEMS_REACHED':
-			return { slug, key: 'cart.reachedMaxPerLine', product };
-		case 'VARIATION_INVALID':
-			return { slug, key: 'cartFromUrl.errors.reasonVariationRequired', product };
-		case 'BOOKING_INFO_REQUIRED':
-			return { slug, key: 'cartFromUrl.errors.reasonBookingRequired', product };
-		case 'MAX_PER_ORDER':
-			return {
-				slug,
-				key: 'cart.maxQuantityReached',
-				...(body.params && { params: body.params }),
-				product
-			};
-		default:
-			return { slug, key: 'cartFromUrl.errors.reasonGeneric', product };
+	if (!body.code) {
+		return { slug, key: 'cartFromUrl.errors.reasonGeneric', product };
 	}
+	return {
+		slug,
+		key: cartErrorKey(body.code),
+		...(body.params && { params: body.params }),
+		product
+	};
 }
 
 async function resolveProductsBySlug(
@@ -254,20 +244,47 @@ export async function load({ parent, locals, url }) {
 		}))
 	);
 
+	const saleLocks = [
+		...(
+			await evaluateSaleLocks(
+				parentData.cart.items.map((item) => item.product),
+				userIdentifier(locals),
+				{
+					mode: locals.user?.hasPosOptions ? 'pos' : 'eshop',
+					extraQuantityByProductId: parentData.cart.items.reduce<Record<string, number>>(
+						(acc, item) => ({
+							...acc,
+							[item.product._id]: (acc[item.product._id] ?? 0) + item.quantity
+						}),
+						{}
+					)
+				}
+			)
+		).entries()
+	].map(([productId, productLocks]) => ({
+		locks: productLocks,
+		name:
+			parentData.cart.items.find((item) => item.product._id === productId)?.product.name ??
+			productId
+	}));
+
+	let errorMessage: string | undefined;
+
 	if (parentData.cart) {
 		try {
 			await checkCartItems(cartItemsWithResolvedStock, { user: userIdentifier(locals) });
 		} catch (err) {
-			if (
-				typeof err === 'object' &&
-				err &&
-				'body' in err &&
-				typeof err.body === 'object' &&
-				err.body &&
-				'message' in err.body &&
-				typeof err.body.message === 'string'
-			) {
-				return { errorMessage: err.body.message };
+			const body =
+				typeof err === 'object' && err && 'body' in err
+					? (err as { body?: AddErrorBody }).body
+					: undefined;
+			// Only a sale lock is dropped here, because the banner already carries it and in a
+			// better form. Everything else — stock, per-order cap, cart size — is shown
+			// alongside: several rules can block the same checkout, and the customer needs to
+			// read all of them, not the first one we happened to raise.
+			const isSaleLock = !!body?.code && (SALE_LOCK_CODES as readonly string[]).includes(body.code);
+			if (!isSaleLock && typeof body?.message === 'string') {
+				errorMessage = body.message;
 			}
 		}
 	}
@@ -365,6 +382,8 @@ export async function load({ parent, locals, url }) {
 			items: cartItemsWithResolvedStock
 		},
 		hasPromoDiscounts,
+		saleLocks,
+		...(errorMessage && { errorMessage }),
 		appliedPromoCode: cartInDb?.promoCode,
 		allowCartFromUrl: runtimeConfig.allowCartFromUrl,
 		...(cartFromUrl && { cartFromUrl }),

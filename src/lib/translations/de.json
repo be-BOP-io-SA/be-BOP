@@ -116,6 +116,11 @@
 		"vatSellerCountry": "Das Land ist das Land des Verkäufers.",
 		"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})",
 		"error": {
+			"NOT_PWYW": "Dieses Produkt akzeptiert keinen frei wählbaren Preis.",
+			"NOT_PREORDER": "Dieses Produkt ist noch nicht als Vorbestellung verfügbar.",
+			"STANDALONE_QTY_ONE": "Sie können nur ein Exemplar dieses Produkts auf einmal bestellen.",
+			"SUBSCRIPTION_CUSTOM_PRICE": "Ein Abonnement kann nicht zu einem frei wählbaren Preis gekauft werden.",
+			"MAX_PRICE_EXCEEDED": "Der eingegebene Preis liegt über dem Maximum von {max} {currency}.",
 			"BOOKING_SAME_DAY_DISABLED": "Buchungen für heute sind für dieses Produkt nicht verfügbar.",
 			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Buchungen für heute sind nach {maxHour} nicht mehr möglich."
 		}
@@ -1197,5 +1202,11 @@
 		"errorLabelRequired": "Jede Zahlungsmethode benötigt eine Bezeichnung.",
 		"removeConfirm": "Diese Methode entfernen?",
 		"cancel": "Abbrechen"
+	},
+	"saleLock": {
+		"LOGIN_REQUIRED": "Sie müssen angemeldet sein, um dieses Produkt zu bestellen.",
+		"NOT_WHITELISTED": "Dieses Produkt ist ausgewählten Kunden vorbehalten.",
+		"MAX_PER_USER": "Sie haben die maximal bestellbare Menge für dieses Produkt erreicht.",
+		"login": "Anmelden"
 	}
 }
