@@ -2183,7 +2183,8 @@
 				"warning": {
 					"message": "A sua sessão irá terminar em {countdown}",
 					"extend": "Prolongar",
-					"ignore": "Ignorar"
+					"ignore": "Ignorar",
+					"screenReader": "A sua sessão está prestes a expirar. Use o botão Prolongar para continuar a trabalhar."
 				},
 				"expired": {
 					"message": "A sua sessão foi desconectada. As alterações não guardadas não serão registadas, por favor <0>volte a iniciar sessão</0>.",
