@@ -37,6 +37,7 @@
 			<li class="flex gap-2 items-center break-words break-all">
 				{t('login.session.npub', { npub: data.npub })}
 				<form action="?/clearNpub" class="contents" use:enhance method="post">
+					<input type="hidden" name="provider" value={provider} />
 					<button class="text-red-500 hover:underline"><IconTrash /></button>
 				</form>
 			</li>
@@ -66,7 +67,12 @@
 		</div>
 	{/if}
 	{#if data.emailToLogin || data.npubToLogin}
-		<form method="post" action="?/validate&token={$page.url.searchParams.get('token')}&next={encodeURIComponent(data.next)}">
+		<form
+			method="post"
+			action="?/validate&token={$page.url.searchParams.get('token')}&next={encodeURIComponent(
+				data.next
+			)}"
+		>
 			<button class="btn btn-blue text-white break-words break-all h-auto">
 				{t('login.cta.authenticateAs', { as: data.emailToLogin || data.npubToLogin })}
 			</button>
