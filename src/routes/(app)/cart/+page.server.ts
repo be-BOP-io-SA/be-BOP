@@ -11,7 +11,11 @@ import { findActivePromoDiscount, hasAnyActivePromoDiscount } from '$lib/server/
 import { picturesForProducts } from '$lib/server/picture';
 import { evaluateSaleLocks, SALE_LOCK_CODES } from '$lib/server/saleLock';
 import { cartErrorKey } from '$lib/cartErrorKey';
-import { applyResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
+import {
+	applyResolvedStock,
+	refreshAvailableStockInDb,
+	resolveAvailableAmounts
+} from '$lib/server/product.js';
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
@@ -250,13 +254,18 @@ export async function load({ parent, locals, url }) {
 				parentData.cart.items.map((item) => item.product),
 				userIdentifier(locals),
 				{
-					mode: locals.user?.hasPosOptions ? 'pos' : 'eshop',
 					extraQuantityByProductId: parentData.cart.items.reduce<Record<string, number>>(
 						(acc, item) => ({
 							...acc,
 							[item.product._id]: (acc[item.product._id] ?? 0) + item.quantity
 						}),
 						{}
+					),
+					// Without this the banner cannot see stock: it would stay silent on a cart the
+					// checkout is about to refuse, and the customer would learn it by clicking.
+					availableByProductId: await resolveAvailableAmounts(
+						parentData.cart.items.map((item) => item.product),
+						userIdentifier(locals)
 					)
 				}
 			)
@@ -267,6 +276,13 @@ export async function load({ parent, locals, url }) {
 			parentData.cart.items.find((item) => item.product._id === productId)?.product.name ??
 			productId
 	}));
+
+	// A quantity the cart itself refused — the "+" button or the quantity field — comes back here
+	// with its reason, because the cart is left unchanged and the banner has nothing to report.
+	const refusedLockParam = url.searchParams.get('lock');
+	const refusedLock = (SALE_LOCK_CODES as readonly string[]).includes(refusedLockParam ?? '')
+		? (refusedLockParam as (typeof SALE_LOCK_CODES)[number])
+		: undefined;
 
 	let errorMessage: string | undefined;
 
@@ -383,6 +399,7 @@ export async function load({ parent, locals, url }) {
 		},
 		hasPromoDiscounts,
 		saleLocks,
+		...(refusedLock && { refusedLock }),
 		...(errorMessage && { errorMessage }),
 		appliedPromoCode: cartInDb?.promoCode,
 		allowCartFromUrl: runtimeConfig.allowCartFromUrl,

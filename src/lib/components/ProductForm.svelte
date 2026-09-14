@@ -1435,6 +1435,20 @@
 							payment count towards it, and filling it in requires the customer to be authenticated.
 						</span>
 					</label>
+
+					<label class="checkbox-label">
+						<input
+							class="form-checkbox"
+							type="checkbox"
+							name="posOverridesMaxQuantityPerUser"
+							checked={product.posOverridesMaxQuantityPerUser ?? false}
+						/>
+						Let the counter sell beyond that limit
+					</label>
+					<span class="text-sm text-gray-600">
+						At the counter the session belongs to the seller, not to the buyer, so the limit would
+						count the wrong person. Leave it off to apply the limit everywhere.
+					</span>
 				{:else}
 					<p class="text-sm text-gray-600">
 						Maximum quantity for an unique user: {MAX_QUANTITY_PER_USER_FOR_SUBSCRIPTION} — a subscription
@@ -1904,16 +1918,6 @@
 									checked={product.whitelist?.allowEmployees ?? false}
 								/>
 								Allow every employee, whatever their role
-							</label>
-
-							<label class="checkbox-label">
-								<input
-									class="form-checkbox"
-									type="checkbox"
-									name="whitelistAllowPosOverride"
-									checked={product.whitelist?.allowPosOverride ?? false}
-								/>
-								Let a point-of-sale employee add it for a customer who is not whitelisted
 							</label>
 						{/if}
 					</div>

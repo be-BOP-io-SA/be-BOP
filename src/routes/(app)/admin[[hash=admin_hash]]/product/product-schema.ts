@@ -177,7 +177,7 @@ export const productBaseSchema = () => ({
 	whitelistNpubs: z.string().default(''),
 	whitelistSubscriptionProductIds: z.string().array().default([]),
 	whitelistAllowEmployees: z.boolean({ coerce: true }).default(false),
-	whitelistAllowPosOverride: z.boolean({ coerce: true }).default(false),
+	posOverridesMaxQuantityPerUser: z.boolean({ coerce: true }).default(false),
 	eshopVisible: z.boolean({ coerce: true }).default(false),
 	retailVisible: z.boolean({ coerce: true }).default(false),
 	nostrVisible: z.boolean({ coerce: true }).default(false),

@@ -5,6 +5,7 @@ import { cmsFromContent } from '$lib/server/cms.js';
 import { collections } from '$lib/server/database';
 import { picturesForProducts } from '$lib/server/picture.js';
 import { pojo } from '$lib/server/pojo.js';
+import { withoutWhitelist } from '$lib/server/saleLock';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { freeProductsForUser, resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import type { DigitalFile } from '$lib/types/DigitalFile';
@@ -245,10 +246,14 @@ export async function load(params) {
 				return undefined;
 			}
 
+			// The list of authorised customers is a shop secret: the evaluator reads it here, the
+			// browser only ever learns that a product is locked.
+			const productWithoutWhitelist = withoutWhitelist(pojo(productDoc));
+
 			return {
 				_id: item._id,
 				product: {
-					...pojo(productDoc),
+					...productWithoutWhitelist,
 					...(productDoc.type === 'subscription' && {
 						subscriptionDuration: resolveSubscriptionDuration(productDoc)
 					})

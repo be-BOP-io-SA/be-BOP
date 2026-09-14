@@ -215,6 +215,9 @@ export const actions: Actions = {
 						// filling it in turns the authentication lock on, the way variations force `standalone`.
 						requiresAuthentication: requiresAuthenticationToOrder(parsed),
 						...(parsed.maxQuantityPerUser && { maxQuantityPerUser: parsed.maxQuantityPerUser }),
+						...(parsed.posOverridesMaxQuantityPerUser && {
+							posOverridesMaxQuantityPerUser: true
+						}),
 						...(buildProductWhitelist(parsed) && { whitelist: buildProductWhitelist(parsed) }),
 						alias: parsed.alias ? [params.id, parsed.alias] : [params.id],
 						description: parsed.description,
@@ -336,6 +339,9 @@ export const actions: Actions = {
 						// Sale locks. Emptying a field has to remove it, not leave the old value in
 						// place: without these the cap and the whitelist could be set but never cleared.
 						...(!parsed.maxQuantityPerUser && { maxQuantityPerUser: '' }),
+						...(!parsed.posOverridesMaxQuantityPerUser && {
+							posOverridesMaxQuantityPerUser: ''
+						}),
 						...(!buildProductWhitelist(parsed) && { whitelist: '' }),
 						...(!parsed.depositPercentage && { deposit: '' }),
 						...(!parsed.vatProfileId && { vatProfileId: '' }),

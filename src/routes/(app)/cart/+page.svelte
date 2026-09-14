@@ -47,6 +47,12 @@
 	let formAlias: HTMLInputElement;
 	let loading = false;
 	const { t, locale, countryName } = useI18n();
+
+	// A quantity the cart refused leaves the cart unchanged, so the banner has nothing to show:
+	// the reason comes back on the URL and is spelled out here.
+	$: if (!data.errorMessage && data.refusedLock) {
+		errorMessage = t(cartErrorKey(data.refusedLock));
+	}
 	$: isDigital = items.every((item) => !item.product.shipping);
 	$: physicalCartCanBeOrdered =
 		!!data.physicalCartMinAmount && !isDigital && priceInfo
