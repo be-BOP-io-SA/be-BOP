@@ -1,5 +1,5 @@
 import { addToCartInDb, findItemInCart, getCartFromDb, removeFromCartInDb } from '$lib/server/cart';
-import { isSaleLockError } from '$lib/server/saleLock';
+import { isSaleLockError, saleLockErrorCode } from '$lib/server/saleLock';
 import { collections, withTransaction } from '$lib/server/database';
 import { loadProductWithResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
@@ -79,10 +79,12 @@ export const actions = {
 				lineId
 			});
 		} catch (err) {
-			// A sale lock is not an error page: the cart says why, in the customer's language.
+			// A sale lock is not an error page: the cart says why, in the customer's language. The
+			// reason travels with the redirect, otherwise the button appears to do nothing at all.
 			if (!isSaleLockError(err)) {
 				throw err;
 			}
+			throw redirect(303, `/cart?lock=${saleLockErrorCode(err) ?? ''}`);
 		}
 
 		throw redirect(303, request.headers.get('referer') || '/cart');

@@ -182,6 +182,11 @@ export type SearchResult = {
 		| 'isTicket'
 		| 'payWhatYouWant'
 		| 'maxQuantityPerOrder'
+		| 'requiresAuthentication'
+		| 'whitelist'
+		| 'maxQuantityPerUser'
+		| 'posOverridesMaxQuantityPerUser'
+		| 'subscriptionReminderSeconds'
 		| 'mobile'
 	>[];
 	total: number;
@@ -339,6 +344,13 @@ export async function searchProducts(
 		isTicket: 1,
 		payWhatYouWant: 1,
 		maxQuantityPerOrder: 1,
+		// Read by the sale-lock evaluator so a search list cannot offer straight to the cart what
+		// the cart would refuse. Stripped again before the page is serialised.
+		requiresAuthentication: 1,
+		whitelist: 1,
+		maxQuantityPerUser: 1,
+		posOverridesMaxQuantityPerUser: 1,
+		subscriptionReminderSeconds: 1,
 		mobile: 1
 	};
 

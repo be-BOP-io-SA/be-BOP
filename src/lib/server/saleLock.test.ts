@@ -21,8 +21,7 @@ const WHITELIST = {
 	emails: ['Alice@Example.com'],
 	npubs: ['npub1alice'],
 	subscriptionProductIds: ['gold'],
-	allowEmployees: false,
-	allowPosOverride: false
+	allowEmployees: false
 };
 
 describe('isEmployee', () => {
@@ -65,8 +64,7 @@ describe('matchesWhitelist', () => {
 			emails: [],
 			npubs: [],
 			subscriptionProductIds: [],
-			allowEmployees: false,
-			allowPosOverride: false
+			allowEmployees: false
 		};
 		expect(matchesWhitelist(empty, { email: 'alice@example.com' }, ['gold'])).toBe(false);
 	});
@@ -78,8 +76,7 @@ describe('buildProductWhitelist', () => {
 		whitelistEmails: ' alice@example.com \n\n bob@example.com ',
 		whitelistNpubs: '',
 		whitelistSubscriptionProductIds: ['gold', ''],
-		whitelistAllowEmployees: true,
-		whitelistAllowPosOverride: false
+		whitelistAllowEmployees: true
 	};
 
 	it('is undefined when the option is off, leaving the product open', () => {
@@ -91,8 +88,7 @@ describe('buildProductWhitelist', () => {
 			emails: ['alice@example.com', 'bob@example.com'],
 			npubs: [],
 			subscriptionProductIds: ['gold'],
-			allowEmployees: true,
-			allowPosOverride: false
+			allowEmployees: true
 		});
 	});
 });
