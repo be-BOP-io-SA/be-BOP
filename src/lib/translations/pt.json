@@ -46,7 +46,8 @@
 				"warning": {
 					"message": "A sua sessão irá terminar em {countdown}",
 					"extend": "Prolongar",
-					"ignore": "Ignorar"
+					"ignore": "Ignorar",
+					"screenReader": "A sua sessão está prestes a expirar. Use o botão Prolongar para continuar a trabalhar."
 				},
 				"expired": {
 					"message": "A sua sessão foi desconectada. As alterações não guardadas não serão registadas, por favor <0>volte a iniciar sessão</0>.",
@@ -1018,11 +1019,26 @@
 			"then": "depois"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "hora", "other": "horas" },
-			"day": { "one": "dia", "other": "dias" },
-			"week": { "one": "semana", "other": "semanas" },
-			"month": { "one": "mês", "other": "meses" },
-			"year": { "one": "ano", "other": "anos" }
+			"hour": {
+				"one": "hora",
+				"other": "horas"
+			},
+			"day": {
+				"one": "dia",
+				"other": "dias"
+			},
+			"week": {
+				"one": "semana",
+				"other": "semanas"
+			},
+			"month": {
+				"one": "mês",
+				"other": "meses"
+			},
+			"year": {
+				"one": "ano",
+				"other": "anos"
+			}
 		},
 		"type": {
 			"deposit": "Sob depósito",

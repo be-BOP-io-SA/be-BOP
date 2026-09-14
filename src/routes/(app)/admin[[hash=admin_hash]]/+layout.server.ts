@@ -87,6 +87,9 @@ export async function load({ locals }) {
 		s3IsConfigured: !!s3IsConfigured(),
 		disabledAdminEntries: runtimeConfig.disabledAdminEntries,
 		expireUserAt: locals.expireUserAt?.toISOString() ?? null,
+		// The expiry banner counts down against this rather than the browser clock: a workstation
+		// running a few minutes fast would otherwise warn late, or not at all.
+		serverNow: new Date().toISOString(),
 		backOfficeBookmarks: locals.user
 			? collections.users
 					.findOne(

@@ -137,15 +137,20 @@
 	}
 </script>
 
-{#if !isLoginPage && data.expireUserAt}
-	<SessionExpiryBanner expireUserAt={data.expireUserAt} adminPrefix={data.adminPrefix} />
-{/if}
-
 {#if isLoginPage}
 	<main class="p-4 flex flex-col gap-4 body-mainPlan {$page.data.bodyClass || ''}">
 		<slot />
 	</main>
 {:else}
+	<!-- Outside the scrolling main on purpose: a warning that scrolls away is a warning nobody
+	     sees, and the session dies with unsaved work on screen. -->
+	{#if data.expireUserAt}
+		<SessionExpiryBanner
+			expireUserAt={data.expireUserAt}
+			serverNow={data.serverNow}
+			adminPrefix={data.adminPrefix}
+		/>
+	{/if}
 	<div class="flex min-h-screen">
 		{#if sidebarOpen}
 			<button

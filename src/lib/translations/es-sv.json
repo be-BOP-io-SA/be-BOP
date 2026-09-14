@@ -46,7 +46,8 @@
 				"warning": {
 					"message": "Su sesión finalizará en {countdown}",
 					"extend": "Prolongar",
-					"ignore": "Ignorar"
+					"ignore": "Ignorar",
+					"screenReader": "Su sesión está a punto de expirar. Use el botón Prolongar para seguir trabajando."
 				},
 				"expired": {
 					"message": "Su sesión ha sido desconectada. Sus cambios no guardados no serán registrados, por favor <0>vuelva a iniciar sesión</0>.",
@@ -1018,11 +1019,26 @@
 			"then": "luego"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "hora", "other": "horas" },
-			"day": { "one": "día", "other": "días" },
-			"week": { "one": "semana", "other": "semanas" },
-			"month": { "one": "mes", "other": "meses" },
-			"year": { "one": "año", "other": "años" }
+			"hour": {
+				"one": "hora",
+				"other": "horas"
+			},
+			"day": {
+				"one": "día",
+				"other": "días"
+			},
+			"week": {
+				"one": "semana",
+				"other": "semanas"
+			},
+			"month": {
+				"one": "mes",
+				"other": "meses"
+			},
+			"year": {
+				"one": "año",
+				"other": "años"
+			}
 		},
 		"type": {
 			"deposit": "En depósito",

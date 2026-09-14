@@ -46,7 +46,8 @@
 				"warning": {
 					"message": "Uw sessie eindigt over {countdown}",
 					"extend": "Verlengen",
-					"ignore": "Negeren"
+					"ignore": "Negeren",
+					"screenReader": "Uw sessie verloopt bijna. Gebruik de knop Verlengen om door te werken."
 				},
 				"expired": {
 					"message": "Uw sessie is verbroken. Niet-opgeslagen wijzigingen zullen niet worden vastgelegd, gelieve <0>opnieuw in te loggen</0>.",
@@ -1018,11 +1019,26 @@
 			"then": "dan"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "uur", "other": "uur" },
-			"day": { "one": "dag", "other": "dagen" },
-			"week": { "one": "week", "other": "weken" },
-			"month": { "one": "maand", "other": "maanden" },
-			"year": { "one": "jaar", "other": "jaar" }
+			"hour": {
+				"one": "uur",
+				"other": "uur"
+			},
+			"day": {
+				"one": "dag",
+				"other": "dagen"
+			},
+			"week": {
+				"one": "week",
+				"other": "weken"
+			},
+			"month": {
+				"one": "maand",
+				"other": "maanden"
+			},
+			"year": {
+				"one": "jaar",
+				"other": "jaar"
+			}
 		},
 		"type": {
 			"deposit": "Op borg",

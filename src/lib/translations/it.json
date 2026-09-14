@@ -46,7 +46,8 @@
 				"warning": {
 					"message": "La sua sessione terminerà tra {countdown}",
 					"extend": "Prolunga",
-					"ignore": "Ignora"
+					"ignore": "Ignora",
+					"screenReader": "La tua sessione sta per scadere. Usa il pulsante Prolunga per continuare a lavorare."
 				},
 				"expired": {
 					"message": "La sua sessione è stata disconnessa. Le modifiche non salvate non verranno registrate, la preghiamo di <0>accedere di nuovo</0>.",
@@ -1018,11 +1019,26 @@
 			"then": "poi"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "ora", "other": "ore" },
-			"day": { "one": "giorno", "other": "giorni" },
-			"week": { "one": "settimana", "other": "settimane" },
-			"month": { "one": "mese", "other": "mesi" },
-			"year": { "one": "anno", "other": "anni" }
+			"hour": {
+				"one": "ora",
+				"other": "ore"
+			},
+			"day": {
+				"one": "giorno",
+				"other": "giorni"
+			},
+			"week": {
+				"one": "settimana",
+				"other": "settimane"
+			},
+			"month": {
+				"one": "mese",
+				"other": "mesi"
+			},
+			"year": {
+				"one": "anno",
+				"other": "anni"
+			}
 		},
 		"type": {
 			"deposit": "In deposito",
