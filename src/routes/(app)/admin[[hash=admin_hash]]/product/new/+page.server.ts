@@ -193,6 +193,9 @@ export const actions: Actions = {
 							// filling it in turns the authentication lock on, the way variations force `standalone`.
 							requiresAuthentication: requiresAuthenticationToOrder(parsed),
 							...(parsed.maxQuantityPerUser && { maxQuantityPerUser: parsed.maxQuantityPerUser }),
+							...(parsed.posOverridesMaxQuantityPerUser && {
+								posOverridesMaxQuantityPerUser: true
+							}),
 							...(buildProductWhitelist(parsed) && { whitelist: buildProductWhitelist(parsed) }),
 							price: computePriceForStorage(priceAmount, parsed.priceCurrency),
 							hideDiscountExpiration: parsed.hideDiscountExpiration,
@@ -433,6 +436,7 @@ export const actions: Actions = {
 					// filling it in turns the authentication lock on, the way variations force `standalone`.
 					requiresAuthentication: requiresAuthenticationToOrder(parsed),
 					...(parsed.maxQuantityPerUser && { maxQuantityPerUser: parsed.maxQuantityPerUser }),
+					...(parsed.posOverridesMaxQuantityPerUser && { posOverridesMaxQuantityPerUser: true }),
 					...(buildProductWhitelist(parsed) && { whitelist: buildProductWhitelist(parsed) }),
 					price: computePriceForStorage(parseFloat(parsed.priceAmount), parsed.priceCurrency),
 					type: product.type,

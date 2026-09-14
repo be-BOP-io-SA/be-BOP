@@ -6,6 +6,8 @@ import type { Tag } from '$lib/types/Tag';
 import type { VatProfile } from '$lib/types/VatProfile';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { rateLimit } from '$lib/server/rateLimit';
+import { annotateProductsWithSaleLocks, withoutWhitelist } from '$lib/server/saleLock';
+import { userIdentifier } from '$lib/server/user';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 
 export const load = async ({ params, url, locals }) => {
@@ -38,11 +40,16 @@ export const load = async ({ params, url, locals }) => {
 		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
 	};
 
-	const { products, total, totalPages } = await searchProducts(
-		searchlist,
-		state,
-		locals,
-		vatContext
+	const {
+		products: foundProducts,
+		total,
+		totalPages
+	} = await searchProducts(searchlist, state, locals, vatContext);
+
+	// Same rule as a CMS page: flag what the cart would refuse, and keep the list of authorised
+	// customers on the server.
+	const products = (await annotateProductsWithSaleLocks(foundProducts, userIdentifier(locals))).map(
+		withoutWhitelist
 	);
 
 	const productIds = products.map((p) => p._id);
