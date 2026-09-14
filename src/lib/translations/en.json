@@ -2183,7 +2183,8 @@
 				"warning": {
 					"message": "Your session will end in {countdown}",
 					"extend": "Extend",
-					"ignore": "Dismiss"
+					"ignore": "Dismiss",
+					"screenReader": "Your session is about to expire. Use the Extend button to keep working."
 				},
 				"expired": {
 					"message": "Your session has been disconnected. Any unsaved changes will not be recorded, please <0>log in again</0>.",
