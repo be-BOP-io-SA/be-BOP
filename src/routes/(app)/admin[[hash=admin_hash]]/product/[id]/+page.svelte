@@ -37,6 +37,7 @@
 	globalDeliveryFees={data.deliveryFees}
 	product={data.product}
 	tags={data.tags}
+	subscriptionProducts={data.subscriptionProducts ?? []}
 	productsWithStock={data.productsWithStock}
 	adminPrefix={data.adminPrefix}
 	reserved={data.reserved}
