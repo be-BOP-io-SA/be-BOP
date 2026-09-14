@@ -21,10 +21,34 @@
 	let tableDeliveryFeesSynthesis: HTMLTableElement;
 	let tableVATSynthesis: HTMLTableElement;
 
-	let includePending = false;
-	let includeExpired = false;
-	let includeCanceled = false;
-	let includePartiallyPaid = false;
+	// Two questions the four checkboxes used to answer at once, now asked apart: which orders
+	// the reporting is about, and which of their payments it shows. The totals follow the
+	// second, so they always count exactly what is on screen.
+	const ORDER_STATUSES = ['paid', 'pending', 'expired', 'canceled', 'failed'] as const;
+
+	// Search — which orders enter every table.
+	let orderStatuses = new Set<string>(['paid']);
+	// Search — narrows to orders carrying such a payment. All ticked means no narrowing, which
+	// is why "partially paid" is a pending order carrying a paid payment rather than a case of
+	// its own.
+	let carryingPaymentStatuses = new Set<string>(ORDER_STATUSES);
+	// Display — which payment lines the payment table draws, and therefore what it totals.
+	let shownPaymentStatuses = new Set<string>(['paid']);
+
+	// Every table starts open: a reporting that hides itself on arrival would puzzle the people
+	// who use it today. Nothing is remembered between visits.
+	let collapsed = new Set<string>();
+
+	function toggleStatus(set: Set<string>, status: string) {
+		const next = new Set(set);
+		if (next.has(status)) {
+			next.delete(status);
+		} else {
+			next.add(status);
+		}
+		loadedHtml = false;
+		return next;
+	}
 	let filterByTag = !!data.tagId;
 	let selectedPaymentMethod = data.paymentMethod ?? '';
 	let html = '';
@@ -60,8 +84,14 @@
 	$: orders = data.orders.filter(
 		(order) => order.createdAt >= beginsAt && order.createdAt <= endsAt
 	);
-	$: paidOrders = orders.filter((order) => order.status === 'paid');
-	$: paymentMatchesFilter = (payment: { method: string; posSubtype?: string }) => {
+	// The syntheses read the same population as the tables above them: a reporting filtered on
+	// pending orders that still synthesised the paid ones would contradict itself.
+	$: paidOrders = orderFiltered;
+	$: paymentMatchesFilter = (payment: { method: string; posSubtype?: string; status: string }) => {
+		// A payment line is drawn, and counted, only if its status is one the user asked to see.
+		if (!shownPaymentStatuses.has(payment.status)) {
+			return false;
+		}
 		if (!data.paymentMethod) {
 			return true;
 		}
@@ -75,11 +105,8 @@
 	};
 	$: orderFiltered = orders.filter(
 		(order) =>
-			order.status === 'paid' ||
-			(includePending && order.status === 'pending') ||
-			(includeExpired && order.status === 'expired') ||
-			(includeCanceled && order.status === 'canceled') ||
-			(includePartiallyPaid && order.payments.find((payment) => payment.status === 'paid'))
+			orderStatuses.has(order.status) &&
+			order.payments.some((payment) => carryingPaymentStatuses.has(payment.status))
 	);
 	$: orderSynthesis = {
 		count: paidOrders.length,
@@ -289,39 +316,65 @@
 </script>
 
 <h1 class="text-3xl">Reporting</h1>
-<div class="gap-4 grid grid-cols-3">
-	<label class="col-span-3 checkbox-label">
-		<input
-			class="form-checkbox"
-			type="checkbox"
-			bind:checked={includePending}
-			on:click={() => (loadedHtml = false)}
-		/> include pending orders
-	</label>
-	<label class="col-span-3 checkbox-label">
-		<input
-			class="form-checkbox"
-			type="checkbox"
-			bind:checked={includeExpired}
-			on:click={() => (loadedHtml = false)}
-		/> include expired orders
-	</label>
-	<label class="col-span-3 checkbox-label">
-		<input
-			class="form-checkbox"
-			type="checkbox"
-			bind:checked={includeCanceled}
-			on:click={() => (loadedHtml = false)}
-		/> include canceled orders
-	</label>
-	<label class="col-span-3 checkbox-label">
-		<input
-			class="form-checkbox"
-			type="checkbox"
-			bind:checked={includePartiallyPaid}
-			on:click={() => (loadedHtml = false)}
-		/> include partially paid orders
-	</label>
+<div class="flex flex-col gap-4">
+	<fieldset class="flex flex-col gap-1">
+		<legend class="font-medium">Search — which orders this reporting is about</legend>
+		<div class="flex flex-wrap gap-4">
+			<span class="text-sm w-40">Order status</span>
+			{#each ORDER_STATUSES as status}
+				<label class="checkbox-label">
+					<input
+						class="form-checkbox"
+						type="checkbox"
+						checked={orderStatuses.has(status)}
+						on:change={() => (orderStatuses = toggleStatus(orderStatuses, status))}
+					/>
+					{status}
+				</label>
+			{/each}
+		</div>
+		<div class="flex flex-wrap gap-4">
+			<span class="text-sm w-40">Carrying a payment</span>
+			{#each ORDER_STATUSES as status}
+				<label class="checkbox-label">
+					<input
+						class="form-checkbox"
+						type="checkbox"
+						checked={carryingPaymentStatuses.has(status)}
+						on:change={() =>
+							(carryingPaymentStatuses = toggleStatus(carryingPaymentStatuses, status))}
+					/>
+					{status}
+				</label>
+			{/each}
+		</div>
+		<p class="text-xs opacity-70">
+			Leave every payment status ticked to keep all orders. Untick to narrow: a pending order
+			carrying a paid payment is a partially paid one.
+		</p>
+	</fieldset>
+
+	<fieldset class="flex flex-col gap-1">
+		<legend class="font-medium">Display — which payments the payment table shows</legend>
+		<div class="flex flex-wrap gap-4">
+			<span class="text-sm w-40">Payments shown</span>
+			{#each ORDER_STATUSES as status}
+				<label class="checkbox-label">
+					<input
+						class="form-checkbox"
+						type="checkbox"
+						checked={shownPaymentStatuses.has(status)}
+						on:change={() => (shownPaymentStatuses = toggleStatus(shownPaymentStatuses, status))}
+					/>
+					{status}
+				</label>
+			{/each}
+		</div>
+		<p class="text-xs opacity-70">
+			Totals count exactly these lines. Showing expired payments makes the total say what was
+			attempted, not what was taken.
+		</p>
+	</fieldset>
 </div>
 <form method="GET" class="grid grid-cols-12 gap-2 col-span-12" on:submit={() => (isLoading = true)}>
 	<div class="col-span-3">
@@ -440,7 +493,14 @@
 <div class="gap-4 grid grid-cols-12 mr-auto">
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Order detail</h1>
+			<button
+				type="button"
+				class="text-2xl font-bold flex items-center gap-2"
+				on:click={() => (collapsed = toggleStatus(collapsed, 'order-detail'))}
+			>
+				<span class="text-base opacity-60">{collapsed.has('order-detail') ? '▶' : '▼'}</span>
+				Order detail
+			</button>
 			<div class="flex gap-2">
 				<button
 					on:click={() => exportcsv(tableOrder, 'order-detail.csv')}
@@ -470,7 +530,11 @@
 		</div>
 
 		<div class="overflow-x-auto max-h-[500px]">
-			<table class="min-w-full table-auto border border-gray-300 bg-white" bind:this={tableOrder}>
+			<table
+				class="min-w-full table-auto border border-gray-300 bg-white"
+				class:hidden={collapsed.has('order-detail')}
+				bind:this={tableOrder}
+			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
 						<th class="border border-gray-300 px-4 py-2">Order ID</th>
@@ -556,7 +620,14 @@
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">Product detail</h1>
+				<button
+					type="button"
+					class="text-2xl font-bold flex items-center gap-2"
+					on:click={() => (collapsed = toggleStatus(collapsed, 'product-detail'))}
+				>
+					<span class="text-base opacity-60">{collapsed.has('product-detail') ? '▶' : '▼'}</span>
+					Product detail
+				</button>
 				{#if data.tagId}
 					<p class="text-sm text-gray-600 mt-1">
 						Only showing products with the tag "{data.tagId}".
@@ -572,7 +643,11 @@
 			</button>
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
-			<table class="min-w-full table-auto border border-gray-300 bg-white" bind:this={tableProduct}>
+			<table
+				class="min-w-full table-auto border border-gray-300 bg-white"
+				class:hidden={collapsed.has('product-detail')}
+				bind:this={tableProduct}
+			>
 				<thead class="bg-gray-200">
 					<tr>
 						<th class="border border-gray-300 px-4 py-2">Product URL</th>
@@ -623,7 +698,14 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Payment Detail</h1>
+			<button
+				type="button"
+				class="text-2xl font-bold flex items-center gap-2"
+				on:click={() => (collapsed = toggleStatus(collapsed, 'payment-detail'))}
+			>
+				<span class="text-base opacity-60">{collapsed.has('payment-detail') ? '▶' : '▼'}</span>
+				Payment Detail
+			</button>
 			<button
 				on:click={() => exportcsv(tablePayment, 'payment-detail.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
@@ -633,7 +715,11 @@
 			</button>
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
-			<table class="min-w-full table-auto border border-gray-300 bg-white" bind:this={tablePayment}>
+			<table
+				class="min-w-full table-auto border border-gray-300 bg-white"
+				class:hidden={collapsed.has('payment-detail')}
+				bind:this={tablePayment}
+			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
 						<th class="border border-gray-300 px-4 py-2">Order ID</th>
@@ -653,7 +739,7 @@
 				</thead>
 				<tbody>
 					<!-- Order rows -->
-					{#each orders.filter((order) => order.status === 'paid' || (includePartiallyPaid && order.payments.some((payment) => payment.status === 'paid')) || (includeExpired && order.payments.some((payment) => payment.status === 'expired'))) as order}
+					{#each orderFiltered as order}
 						{#each order.payments.filter(paymentMatchesFilter) as payment}
 							<tr class="hover:bg-gray-100 whitespace-nowrap">
 								<td class="border border-gray-300 px-4 py-2">{order.number}</td>
@@ -729,7 +815,14 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Order synthesis</h1>
+			<button
+				type="button"
+				class="text-2xl font-bold flex items-center gap-2"
+				on:click={() => (collapsed = toggleStatus(collapsed, 'order-synthesis'))}
+			>
+				<span class="text-base opacity-60">{collapsed.has('order-synthesis') ? '▶' : '▼'}</span>
+				Order synthesis
+			</button>
 			<button
 				on:click={() => exportcsv(tableOrderSynthesis, 'orderSythesisExport.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
@@ -740,6 +833,7 @@
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
+				class:hidden={collapsed.has('order-synthesis')}
 				class="min-w-full table-auto border border-gray-300 bg-white"
 				bind:this={tableOrderSynthesis}
 			>
@@ -796,6 +890,7 @@
 
 			<div class="overflow-x-auto max-h-[500px]">
 				<table
+					class:hidden={collapsed.has('order-synthesis')}
 					class="min-w-full table-auto border border-gray-300 bg-white"
 					bind:this={tableOrderSynthesisTag}
 				>
@@ -839,7 +934,15 @@
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">Product synthesis</h1>
+				<button
+					type="button"
+					class="text-2xl font-bold flex items-center gap-2"
+					on:click={() => (collapsed = toggleStatus(collapsed, 'product-synthesis'))}
+				>
+					<span class="text-base opacity-60">{collapsed.has('product-synthesis') ? '▶' : '▼'}</span
+					>
+					Product synthesis
+				</button>
 				{#if data.tagId}
 					<p class="text-sm text-gray-600 mt-1">
 						Only showing products with the tag "{data.tagId}".
@@ -856,6 +959,7 @@
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
+				class:hidden={collapsed.has('product-synthesis')}
 				class="min-w-full table-auto border border-gray-300 bg-white"
 				bind:this={tableProductSynthesis}
 			>
@@ -895,7 +999,14 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Payment synthesis</h1>
+			<button
+				type="button"
+				class="text-2xl font-bold flex items-center gap-2"
+				on:click={() => (collapsed = toggleStatus(collapsed, 'payment-synthesis'))}
+			>
+				<span class="text-base opacity-60">{collapsed.has('payment-synthesis') ? '▶' : '▼'}</span>
+				Payment synthesis
+			</button>
 			<button
 				on:click={() => exportcsv(tablePaymentSynthesis, 'orderPaymentSythesis.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
@@ -906,6 +1017,7 @@
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
+				class:hidden={collapsed.has('payment-synthesis')}
 				class="min-w-full table-auto border border-gray-300 bg-white"
 				bind:this={tablePaymentSynthesis}
 			>
@@ -958,7 +1070,14 @@
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">VAT Synthesis</h1>
+				<button
+					type="button"
+					class="text-2xl font-bold flex items-center gap-2"
+					on:click={() => (collapsed = toggleStatus(collapsed, 'vat-synthesis'))}
+				>
+					<span class="text-base opacity-60">{collapsed.has('vat-synthesis') ? '▶' : '▼'}</span>
+					VAT Synthesis
+				</button>
 				{#if data.tagId}
 					<p class="text-sm text-gray-600 mt-1">
 						Only showing VAT for products with the tag "{data.tagId}".
@@ -975,6 +1094,7 @@
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
+				class:hidden={collapsed.has('vat-synthesis')}
 				class="min-w-full table-auto border border-gray-300 bg-white"
 				bind:this={tableVATSynthesis}
 			>
@@ -1018,7 +1138,14 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Delivery Fees</h1>
+			<button
+				type="button"
+				class="text-2xl font-bold flex items-center gap-2"
+				on:click={() => (collapsed = toggleStatus(collapsed, 'delivery-fees'))}
+			>
+				<span class="text-base opacity-60">{collapsed.has('delivery-fees') ? '▶' : '▼'}</span>
+				Delivery Fees
+			</button>
 			<button
 				on:click={() => exportcsv(tableDeliveryFeesSynthesis, 'deliveryFeesSynthesisExport.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
@@ -1029,6 +1156,7 @@
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
+				class:hidden={collapsed.has('delivery-fees')}
 				class="min-w-full table-auto border border-gray-300 bg-white"
 				bind:this={tableDeliveryFeesSynthesis}
 			>
