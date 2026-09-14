@@ -37,7 +37,6 @@
 			<li class="flex gap-2 items-center break-words break-all">
 				{t('login.session.npub', { npub: data.npub })}
 				<form action="?/clearNpub" class="contents" use:enhance method="post">
-					<input type="hidden" name="provider" value={provider} />
 					<button class="text-red-500 hover:underline"><IconTrash /></button>
 				</form>
 			</li>
