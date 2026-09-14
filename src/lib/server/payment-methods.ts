@@ -21,6 +21,7 @@ export const ALL_PAYMENT_PROCESSORS = [
 	'bitcoind',
 	'blink',
 	'btcpay-server',
+	'clink',
 	'lnd',
 	'paypal',
 	'phoenixd',

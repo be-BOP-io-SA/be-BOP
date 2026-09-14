@@ -1,4 +1,5 @@
 import './cleanup-lock';
+import './clink-lock';
 import './currency-lock';
 import './email-notifications';
 import './order-lock';

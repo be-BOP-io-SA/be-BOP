@@ -25,6 +25,7 @@ import { isPhoenixdConfigured } from '$lib/server/phoenixd';
 import { isSwissBitcoinPayConfigured } from '$lib/server/swiss-bitcoin-pay';
 import { isBtcpayServerConfigured } from '$lib/server/btcpay-server';
 import { isBlinkConfigured } from '$lib/server/blink';
+import { isClinkConfigured } from '$lib/server/clink';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
 import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 
@@ -89,6 +90,7 @@ export async function load(event) {
 		swissBitcoinPayConfigured: isSwissBitcoinPayConfigured(),
 		btcpayServerConfigured: isBtcpayServerConfigured(),
 		blinkConfigured: isBlinkConfigured(),
+		clinkConfigured: isClinkConfigured(),
 		dataCleanup: runtimeConfig.dataCleanup
 	};
 }
@@ -160,7 +162,7 @@ export const actions = {
 				preferredProcessorCard: z.enum(['sumup', 'stripe', '']).optional(),
 				preferredProcessorBitcoin: z.enum(['bitcoind', 'bitcoin-nodeless', '']).optional(),
 				preferredProcessorLightning: z
-					.enum(['lnd', 'phoenixd', 'swiss-bitcoin-pay', 'btcpay-server', 'blink', ''])
+					.enum(['lnd', 'phoenixd', 'swiss-bitcoin-pay', 'btcpay-server', 'blink', 'clink', ''])
 					.optional()
 			})
 			.parse({
