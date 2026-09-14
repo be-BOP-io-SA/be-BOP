@@ -474,7 +474,9 @@
 		isZoomed = !isZoomed;
 	}
 
-	let selectedVariations: Record<string, string> = {};
+	// Seeded from the URL so the price preview and the POST body carry the forced values even
+	// though no dropdown was ever rendered for them.
+	let selectedVariations: Record<string, string> = { ...data.forcedVariations };
 	$: if (data.product.hasVariations) {
 		customAmount = productPriceWithVariations(data.product, selectedVariations);
 	}
@@ -977,17 +979,27 @@
 							{/if}
 							{#if data.product.standalone && data.product.hasVariations && data.product.variationLabels}
 								{#each Object.keys(data.product.variationLabels.values) as key}
-									<label class="mb-2" for={key}>{data.product.variationLabels.names[key]}</label>
-									<select
-										bind:value={selectedVariations[key]}
-										id={key}
-										name="chosenVariations[{key}]"
-										class="form-input w-full inline cursor-pointer"
-									>
-										{#each Object.entries(data.product.variationLabels.values[key]) as [valueKey, valueLabel]}
-											<option value={valueKey}>{valueLabel}</option>
-										{/each}
-									</select>
+									{#if key in data.forcedVariations || data.product.variationFamilies?.[key]?.hiddenFromUI}
+										<!-- Settled by the URL, or never offered as a choice: no dropdown, but the
+										     value still has to reach the add-to-cart POST. -->
+										<input
+											type="hidden"
+											name="chosenVariations[{key}]"
+											value={selectedVariations[key]}
+										/>
+									{:else}
+										<label class="mb-2" for={key}>{data.product.variationLabels.names[key]}</label>
+										<select
+											bind:value={selectedVariations[key]}
+											id={key}
+											name="chosenVariations[{key}]"
+											class="form-input w-full inline cursor-pointer"
+										>
+											{#each Object.entries(data.product.variationLabels.values[key]) as [valueKey, valueLabel]}
+												<option value={valueKey}>{valueLabel}</option>
+											{/each}
+										</select>
+									{/if}
 								{/each}
 							{/if}
 							{#if !oneMaxPerLine(data.product) && amountAvailable > 0}
