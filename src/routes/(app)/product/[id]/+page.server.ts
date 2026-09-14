@@ -8,7 +8,12 @@ import {
 } from '$lib/server/product';
 import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { evaluateSaleLocks, isSaleLockError, remainingForUser } from '$lib/server/saleLock';
+import {
+	evaluateSaleLocks,
+	isSaleLockError,
+	remainingForUser,
+	withoutWhitelist
+} from '$lib/server/saleLock';
 import { adminPrefix as getAdminPrefix } from '$lib/server/admin';
 import { identifiedUserQuery, userIdentifier } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
@@ -312,10 +317,14 @@ export const load = async ({ params, url, parent, locals }) => {
 		vatSingleCountry: runtimeConfig.vatSingleCountry
 	});
 
+	// The list of authorised customers never leaves the server: the page only needs to know the
+	// product is locked, and the reason, both of which travel in `saleLocks`.
+	const productForPage = withoutWhitelist(product);
+
 	return {
 		forcedVariations,
 		product: {
-			...product,
+			...productForPage,
 			vatProfileId: product.vatProfileId?.toString(),
 			...(product.type === 'subscription' && {
 				subscriptionDuration: resolveSubscriptionDuration(product)

@@ -64,9 +64,12 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 		/** Anyone holding an active subscription to one of these products is let through. */
 		subscriptionProductIds: string[];
 		allowEmployees: boolean;
-		/** Lets the counter ring the product up for a customer who is not on the list. */
-		allowPosOverride: boolean;
 	};
+	/**
+	 * Lets the counter ring the product up beyond the per-person cap. The seller serves whoever
+	 * stands in front of them, and the counter's own account is not the buyer's.
+	 */
+	posOverridesMaxQuantityPerUser?: boolean;
 	/**
 	 * How many units the same person may take across their whole history, not per order.
 	 * Unset leaves the product uncapped. Subscriptions ignore the stored value: they are

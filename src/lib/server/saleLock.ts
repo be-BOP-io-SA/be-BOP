@@ -48,12 +48,18 @@ export type SaleLock = {
  * this to send the customer to a page that explains the refusal, instead of letting a 400
  * error page do it in English.
  */
-export function isSaleLockError(err: unknown): boolean {
+export function saleLockErrorCode(err: unknown): SaleLockCode | undefined {
 	const code =
 		typeof err === 'object' && err && 'body' in err
 			? (err as { body?: { code?: string } }).body?.code
 			: undefined;
-	return !!code && (SALE_LOCK_CODES as readonly string[]).includes(code);
+	return code && (SALE_LOCK_CODES as readonly string[]).includes(code)
+		? (code as SaleLockCode)
+		: undefined;
+}
+
+export function isSaleLockError(err: unknown): boolean {
+	return !!saleLockErrorCode(err);
 }
 
 /**
@@ -92,7 +98,6 @@ export function buildProductWhitelist(fields: {
 	whitelistNpubs: string;
 	whitelistSubscriptionProductIds: string[];
 	whitelistAllowEmployees: boolean;
-	whitelistAllowPosOverride: boolean;
 }): Product['whitelist'] {
 	if (!fields.hasWhitelist) {
 		return undefined;
@@ -108,9 +113,22 @@ export function buildProductWhitelist(fields: {
 		emails: splitLines(fields.whitelistEmails),
 		npubs: splitLines(fields.whitelistNpubs),
 		subscriptionProductIds: fields.whitelistSubscriptionProductIds.filter(Boolean),
-		allowEmployees: fields.whitelistAllowEmployees,
-		allowPosOverride: fields.whitelistAllowPosOverride
+		allowEmployees: fields.whitelistAllowEmployees
 	};
+}
+
+/**
+ * A product without its customer list, ready to be sent to a browser.
+ *
+ * The list is read here, on the server, and nowhere else: a page only ever needs to know that a
+ * product is locked, never who is allowed on it.
+ */
+export function withoutWhitelist<T extends { whitelist?: unknown }>(
+	product: T
+): Omit<T, 'whitelist'> {
+	const copy = { ...product };
+	delete copy.whitelist;
+	return copy;
 }
 
 export type ProductWithSaleLocks = Pick<
@@ -121,6 +139,7 @@ export type ProductWithSaleLocks = Pick<
 	| 'requiresAuthentication'
 	| 'whitelist'
 	| 'maxQuantityPerUser'
+	| 'posOverridesMaxQuantityPerUser'
 	| 'subscriptionReminderSeconds'
 	| 'maxQuantityPerOrder'
 	| 'stock'
@@ -129,7 +148,6 @@ export type ProductWithSaleLocks = Pick<
 
 export type SaleLockContext = {
 	/** How the product is being added. The counter gets exemptions a customer does not. */
-	mode?: 'eshop' | 'nostr' | 'pos';
 	/** Units of each product about to be added, on top of what the cart already holds. */
 	extraQuantityByProductId?: Record<string, number>;
 	/** Units of each product the cart already holds. Counts against the per-order cap. */
@@ -257,11 +275,13 @@ export async function evaluateSaleLocks(
 	const session = context?.session;
 	const employee = isEmployee(user);
 
-	// The counter sells to a walk-in customer under the seller's own session, so rules that
-	// read the buyer's identity would read the seller's and are skipped there. Being an
-	// employee is not enough on its own: on the e-shop an employee buys for themselves and is
-	// a customer like any other. The whitelist keeps its own per-product answer to this.
-	const sellerSession = context?.mode === 'pos';
+	// A till rings sales up under the seller's own identity, so a per-person cap would count the
+	// seller instead of the buyer. What makes someone a till is their access to it — by account or
+	// by role — and not the screen they happen to use: a shop can take payments from the ordinary
+	// cart. Whether the cap steps aside for them is the shop's call, product by product.
+	const hasPos = !!user?.userHasPosOptions;
+	const capWaivedForSellerOn = (product: ProductWithSaleLocks) =>
+		hasPos && !!product.posOverridesMaxQuantityPerUser;
 
 	const needsSubscriptions = locked.some(
 		(product) =>
@@ -286,11 +306,14 @@ export async function evaluateSaleLocks(
 
 	const cappedIds = locked
 		.filter(
-			(product) => product.type !== 'subscription' && maxQuantityPerUser(product) !== undefined
+			(product) =>
+				product.type !== 'subscription' &&
+				maxQuantityPerUser(product) !== undefined &&
+				!capWaivedForSellerOn(product)
 		)
 		.map((product) => product._id);
 	const takenByProductId = new Map<string, number>();
-	if (cappedIds.length && user && !sellerSession) {
+	if (cappedIds.length && user) {
 		const rows = await collections.orders
 			.aggregate<{ _id: string; total: number }>(
 				[
@@ -316,10 +339,10 @@ export async function evaluateSaleLocks(
 	// Only reached when a subscription product carries a cap, which is always: a subscription is
 	// one per person by a rule that predates all of this.
 	const subscriptionIds = locked
-		.filter((product) => product.type === 'subscription')
+		.filter((product) => product.type === 'subscription' && !capWaivedForSellerOn(product))
 		.map((product) => product._id);
 	const pendingSubscriptionOrderIds = new Set<string>();
-	if (subscriptionIds.length && user && !sellerSession) {
+	if (subscriptionIds.length && user) {
 		const rows = await collections.orders
 			.aggregate<{ _id: string }>(
 				[
@@ -345,8 +368,7 @@ export async function evaluateSaleLocks(
 	for (const product of locked) {
 		const productLocks = locksFor(product, user, {
 			employee,
-			sellerSession,
-			mode: context?.mode,
+			capWaivedForSeller: capWaivedForSellerOn(product),
 			activeSubscriptionProductIds,
 			subscriptions,
 			takenByProductId,
@@ -376,8 +398,7 @@ function locksFor(
 	user: UserIdentifier | undefined,
 	ctx: {
 		employee: boolean;
-		sellerSession: boolean;
-		mode?: 'eshop' | 'nostr' | 'pos';
+		capWaivedForSeller: boolean;
 		activeSubscriptionProductIds: string[];
 		subscriptions: PaidSubscription[];
 		takenByProductId: Map<string, number>;
@@ -394,11 +415,10 @@ function locksFor(
 	const found: SaleLock[] = [];
 
 	if (product.whitelist) {
-		const posOverride = ctx.mode === 'pos' && product.whitelist.allowPosOverride;
-		if (
-			!posOverride &&
-			!matchesWhitelist(product.whitelist, user, ctx.activeSubscriptionProductIds)
-		) {
+		// The counter has no say here: employees are let through by the list's own "allow every
+		// employee", and a till standing in for a customer who is not on the list is not a case
+		// the shop asked for.
+		if (!matchesWhitelist(product.whitelist, user, ctx.activeSubscriptionProductIds)) {
 			found.push({ code: 'NOT_WHITELISTED' });
 		}
 	}
@@ -407,7 +427,7 @@ function locksFor(
 	const wanted = ctx.quantityInCart + ctx.extraQuantity;
 
 	const max = maxQuantityPerUser(product);
-	if (max !== undefined && !ctx.sellerSession) {
+	if (max !== undefined && !ctx.capWaivedForSeller) {
 		const taken =
 			product.type === 'subscription'
 				? subscriptionUnitsHeld(product, ctx.subscriptions, ctx.pendingSubscriptionOrderIds)

@@ -275,16 +275,20 @@ export async function addToCartInDb(
 	// a pre-configured cart link, the point-of-sale alias field, NostR — so none of them needs
 	// its own copy of the rules. Evaluated once the cart is known, because a per-person cap
 	// counts what already sits in it on top of what was already ordered.
+	// The cart's own "+" and quantity field send the new total, not what to add. Counting the
+	// cart again on top of it would read a cart of six asking for seven as thirteen, and refuse
+	// a button that only meant to go from six to seven.
+	const alreadyInCart = params.totalQuantity ? 0 : totalQuantityInCart();
+
 	const lockOnAdd = (
 		await evaluateSaleLocks([product], params.user, {
-			mode: params.mode,
 			// A subscription line is clamped to one unit whatever was asked, but a subscription is
 			// standalone: a second add makes a second line rather than merging. So what the cart
 			// already holds has to count, or the same subscription piles up in one order.
 			extraQuantityByProductId: {
 				[product._id]: product.type === 'subscription' ? 1 : quantity
 			},
-			quantityInCartByProductId: { [product._id]: totalQuantityInCart() },
+			quantityInCartByProductId: { [product._id]: alreadyInCart },
 			availableByProductId: await resolveAvailableAmounts([product], params.user)
 		})
 	).get(product._id);
@@ -509,7 +513,6 @@ export async function checkCartItems(
 			quantityInCart[item.product._id] = (quantityInCart[item.product._id] ?? 0) + item.quantity;
 		}
 		const locks = await evaluateSaleLocks(products, opts.user, {
-			mode: opts.user.userHasPosOptions ? 'pos' : 'eshop',
 			// What sits in the cart is what is about to be ordered, so it counts towards a
 			// per-person cap alongside what was ordered before.
 			extraQuantityByProductId: quantityInCart,

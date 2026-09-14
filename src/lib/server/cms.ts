@@ -9,7 +9,7 @@ import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
 import DOMPurify from 'dompurify';
 import { collections } from './database';
-import { annotateProductsWithSaleLocks } from './saleLock';
+import { annotateProductsWithSaleLocks, withoutWhitelist } from './saleLock';
 import { userIdentifier } from './user';
 import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import type { Specification } from '$lib/types/Specification';
@@ -817,10 +817,11 @@ export async function cmsFromContent(
 
 	// Listings must not offer straight to the cart what the cart would refuse. One evaluation
 	// for the whole page, none at all when no product on it carries a lock.
-	const productsWithSaleLocks = await annotateProductsWithSaleLocks(
-		products,
-		userIdentifier(locals)
-	);
+	// Same rule as the product page: the evaluator reads the list of authorised customers, the
+	// browser receives only the flag.
+	const productsWithSaleLocks = (
+		await annotateProductsWithSaleLocks(products, userIdentifier(locals))
+	).map(withoutWhitelist);
 
 	return {
 		tokens,
