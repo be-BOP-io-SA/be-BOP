@@ -103,7 +103,8 @@
 			vatProfiles: data.vatProfiles,
 			bebopCountry: data.vatCountry,
 			userCountry: data.countryCode,
-			vatSingleCountry: data.vatSingleCountry
+			vatSingleCountry: data.vatSingleCountry,
+			vatExempted: data.vatExempted
 		});
 		return toCurrency(
 			data.currencies.main,
