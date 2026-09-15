@@ -1,3 +1,4 @@
+import { displaysVatIncluded } from '$lib/server/vat-display';
 import { addToCartInDb } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
@@ -366,7 +367,7 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			: undefined;
 
 	// For PWYW products with VAT-included display: extract VAT from entered price
-	if (customPrice && product.payWhatYouWant && runtimeConfig.displayVatIncludedInProduct) {
+	if (customPrice && product.payWhatYouWant && displaysVatIncluded()) {
 		const vatProfiles = await collections.vatProfiles.find().toArray();
 		const rate = computeVatRate({
 			productVatProfileId: product.vatProfileId,

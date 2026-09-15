@@ -181,8 +181,7 @@
 	let deposit = 'partial';
 
 	const vatRate = data.vatRate;
-	// #2679: a VAT-exempt shop hiding VAT mentions always uses the plain (VAT-less) display
-	const displayVatIncluded = data.displayVatIncludedInProduct && !data.hideVatMentions;
+	const displayVatIncluded = data.displayVatIncludedInProduct;
 	const vatMult = displayVatIncluded ? vatMultiplier(vatRate) : 1;
 
 	const PWYWCurrency =
