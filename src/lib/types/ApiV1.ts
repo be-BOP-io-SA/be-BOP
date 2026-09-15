@@ -22,7 +22,9 @@ export const API_V1_SCOPES = [
 	'orders:stream',
 	'pos:read',
 	'pos:write',
-	'pos:stream'
+	'pos:stream',
+	/** Hand out sats: create an LNURL-withdraw the shop's node will pay. */
+	'withdraw:write'
 ] as const;
 export type ApiV1Scope = (typeof API_V1_SCOPES)[number];
 
@@ -54,7 +56,9 @@ export const API_V1_ERROR_CODES = [
 	'NOT_FOUND',
 	'NOT_IMPLEMENTED',
 	'INTERNAL_ERROR',
-	'MAINTENANCE'
+	'MAINTENANCE',
+	/** The Lightning node cannot hand out sats right now — see `details.reason`. */
+	'WITHDRAW_UNAVAILABLE'
 ] as const;
 export type ApiV1ErrorCode = (typeof API_V1_ERROR_CODES)[number];
 
