@@ -1,5 +1,8 @@
 import type { PaymentMethod, PaymentProcessor } from '$lib/server/payment-methods';
+import type { ObjectId } from 'mongodb';
 import type { Price, Order } from '$lib/types/Order';
+import { bitcoinPaymentQrCodeString, lightningPaymentQrCodeString } from '$lib/types/Order';
+import type { SerializedPaymentPresentation } from '$lib/types/Order';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { runtimeConfig } from '$lib/server/runtime-config';
@@ -68,6 +71,45 @@ export type CheckPaymentResult =
 	  }
 	| { status: 'expired' | 'failed' | 'canceled' };
 
+export interface PaymentPresentation {
+	kind: SerializedPaymentPresentation['kind'];
+	/** What the QR encodes. Absent = `payment.address` verbatim. */
+	qrPayload?(payment: Order['payments'][number]): string;
+	/** URI the QR image links to, so tapping it opens a wallet. Absent = not clickable. */
+	qrLink?(payment: Order['payments'][number]): string;
+	/** Tags a wallet browser extension looks for on the payment page. */
+	headTags?(payment: Order['payments'][number]): Array<{ name: string; content: string }>;
+}
+
+/**
+ * The processor that handled a payment. Rows written before the registry recorded one
+ * fall back to whichever processor currently serves the method.
+ */
+export function processorFor(
+	payment: Order['payments'][number]
+): PaymentProcessorDefinition | undefined {
+	const recorded = payment.processor ? getProcessor(payment.processor) : undefined;
+
+	return recorded ?? resolveProcessor(payment.method);
+}
+
+export function serializePresentation(
+	pp: PaymentProcessorDefinition | undefined,
+	payment: Order['payments'][number]
+): SerializedPaymentPresentation | undefined {
+	if (!pp?.presentation) {
+		return undefined;
+	}
+
+	const { kind, qrLink, headTags } = pp.presentation;
+
+	return {
+		kind,
+		...(qrLink && { qrLink: qrLink(payment) }),
+		...(headTags && { headTags: headTags(payment) })
+	};
+}
+
 export interface PaymentProcessorDefinition {
 	meta: PaymentProcessorMeta;
 	isEnabled(): boolean;
@@ -86,6 +128,22 @@ export interface PaymentProcessorDefinition {
 	 * currency. Absent = one currency unit, which only absorbs rounding.
 	 */
 	underpaymentTolerance?(currency: Currency): number;
+
+	/**
+	 * How the buyer is asked to pay. Absent = nothing to scan or follow.
+	 * Owning the payload and the link together is what keeps a QR from being labelled
+	 * as one protocol while encoding another.
+	 */
+	presentation?: PaymentPresentation;
+
+	/**
+	 * Absent = this processor cannot settle a contactless payment made on the terminal.
+	 * `findMatching` returns the provider reference of a transaction that matches the
+	 * payment's amount and tap window, or `null` when none does yet.
+	 */
+	tapToPay?: {
+		findMatching(order: Order, paymentId: ObjectId): Promise<string | null>;
+	};
 
 	/** `params.toPay` is already in `settlementCurrency()` — do not convert it again. */
 	createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult>;
@@ -109,6 +167,26 @@ export function coversPayment(
 	const tolerance = pp.underpaymentTolerance?.(currency) ?? CURRENCY_UNIT[currency];
 
 	return settled >= payment.price.amount - tolerance;
+}
+
+export const LIGHTNING_PRESENTATION: PaymentPresentation = {
+	kind: 'qr',
+	qrLink: (payment) => lightningPaymentQrCodeString(payment.address ?? '')
+};
+
+export const BITCOIN_PRESENTATION: PaymentPresentation = {
+	kind: 'qr',
+	// Both the image and the link read the same settled amount, in the same currency.
+	qrPayload: (payment) => bitcoinQrCode(payment),
+	qrLink: (payment) => bitcoinQrCode(payment)
+};
+
+function bitcoinQrCode(payment: Order['payments'][number]): string {
+	return bitcoinPaymentQrCodeString(
+		payment.address ?? '',
+		payment.price.amount,
+		payment.price.currency
+	);
 }
 
 export function lightningLabel(orderId: string, orderNumber: number): string {

@@ -1,6 +1,6 @@
 import { isBlinkConfigured, blinkCreateInvoice, blinkLookupInvoice } from '$lib/server/blink';
 import { differenceInMinutes } from 'date-fns';
-import { lightningLabel } from '../pp';
+import { lightningLabel, LIGHTNING_PRESENTATION } from '../pp';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -24,6 +24,8 @@ export default {
 	isEnabled: () => isBlinkConfigured(),
 
 	settlementCurrency: () => 'SAT',
+
+	presentation: LIGHTNING_PRESENTATION,
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const satoshis = params.toPay.amount;

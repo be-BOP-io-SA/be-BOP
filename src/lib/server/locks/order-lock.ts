@@ -5,10 +5,7 @@ import { Lock } from '../lock';
 import { inspect } from 'node:util';
 import { onOrderPayment, onOrderPaymentFailed } from '../orders';
 import { refreshPromise } from '../runtime-config';
-import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
-import { isStripeEnabled, lastSuccessfulPaymentIntents } from '../stripe';
 import type { Order, Price } from '$lib/types/Order';
-import { ObjectId } from 'mongodb';
 import { coversPayment, getProcessor } from '../sdk/pp';
 
 const lock = new Lock('orders');
@@ -35,68 +32,6 @@ function reportUnderpayment(
 	);
 }
 
-async function findMatchingTapToPayOrderStripe(
-	order: Order,
-	paymentId: ObjectId
-): Promise<string | undefined> {
-	const payment = order.payments.find((p) => p._id === paymentId);
-	if (!payment) {
-		throw new Error(`Payment ${paymentId} or order ${order._id} not found`);
-	}
-	const tapToPay = payment.posTapToPay;
-	if (!tapToPay) {
-		return;
-	}
-	const amountInCurrencyUnit =
-		payment.price.amount * Math.pow(10, FRACTION_DIGITS_PER_CURRENCY[payment.price.currency]);
-	return lastSuccessfulPaymentIntents().then(async (pis) => {
-		// A tap-to-pay intent is created by the terminal, so it carries none of our metadata.
-		// One that does is a web checkout we created ourselves, and matching it here would
-		// settle this order with a card payment made for another — same amount, same minute.
-		const candidates = pis.filter((pi) => !pi.metadata?.paymentId && !pi.metadata?.orderId);
-
-		// An intent settles at most one payment: without this, a single card payment could be
-		// replayed across successive tap-to-pay windows of the same amount.
-		const alreadyConsumed = new Set(
-			(
-				await collections.orders
-					.find(
-						{ 'payments.detail': { $in: candidates.map((pi) => `stripe - ${pi.id}`) } },
-						{ projection: { 'payments.detail': 1 } }
-					)
-					.toArray()
-			).flatMap((o) =>
-				o.payments.map((p) => p.detail).filter((detail): detail is string => !!detail)
-			)
-		);
-
-		const matchingPaymentIntent = candidates.find((pi) => {
-			if (alreadyConsumed.has(`stripe - ${pi.id}`)) {
-				return false;
-			}
-
-			const amountMatches =
-				pi.amount_received === amountInCurrencyUnit &&
-				pi.currency.toUpperCase() === payment.price.currency;
-			const compatibleTimestamp =
-				// To account for clock skew, we accept payments to
-				// tap-to-pay orders up to 5 seconds before the start time.
-				new Date((pi.created + 5) * 1000) > tapToPay.startsAt &&
-				// Approximation of the time the payment was completed. This is acceptable
-				// because we assume the payment intent is created after tap-to-pay was
-				// requested and completed shortly after. To account for clock skew, we
-				// accept payments to tap-to-pay orders up to 5 seconds after the end time.
-				new Date((pi.created - 5) * 1000) < tapToPay.expiresAt;
-			return compatibleTimestamp && amountMatches;
-		});
-		if (matchingPaymentIntent) {
-			return matchingPaymentIntent.id;
-		} else {
-			return undefined;
-		}
-	});
-}
-
 async function handleTapToPayCheck(
 	payment: Order['payments'][number],
 	order: Order
@@ -105,43 +40,30 @@ async function handleTapToPayCheck(
 		if (!payment.posTapToPay || payment.posTapToPay.expiresAt <= new Date()) {
 			return;
 		}
-		switch (payment.processor) {
-			case 'stripe':
-				if (!isStripeEnabled()) {
-					throw new Error(
-						`Tap-to-pay payment ${payment._id} requests processor stripe but ` +
-							'stripe is currently not configured.'
-					);
-				}
-				const matchingPaymentReference = await findMatchingTapToPayOrderStripe(order, payment._id);
-				if (matchingPaymentReference) {
-					await onOrderPayment(order, payment, payment.price, {
-						tapToPay: { expiresAt: new Date(Date.now() + 5000) },
-						detail: `${payment.processor} - ${matchingPaymentReference}`
-					});
-				}
-				break;
-			case 'blink':
-			case 'btcpay-server':
-			case 'paypal':
-			case 'phoenixd':
-			case 'sumup':
-			case 'bitcoind':
-			case 'lnd':
-			case 'swiss-bitcoin-pay':
-			case 'bitcoin-nodeless':
-			case 'taler':
-			case 'osb':
-				throw new Error(
-					`Tap-to-pay payment ${payment._id} requests processor ` +
-						`${payment.processor}, but Tap-to-pay using this processor is ` +
-						'not supported.'
-				);
-			case undefined:
-				throw new Error('Missing processor for tap-to-pay payment');
-			default:
-				payment.processor satisfies never;
-				break;
+		if (!payment.processor) {
+			throw new Error('Missing processor for tap-to-pay payment');
+		}
+
+		const pp = getProcessor(payment.processor);
+		if (!pp?.tapToPay) {
+			throw new Error(
+				`Tap-to-pay payment ${payment._id} requests processor ` +
+					`${payment.processor}, but Tap-to-pay using this processor is not supported.`
+			);
+		}
+		if (!pp.isEnabled()) {
+			throw new Error(
+				`Tap-to-pay payment ${payment._id} requests processor ${payment.processor} but ` +
+					'it is currently not configured.'
+			);
+		}
+
+		const reference = await pp.tapToPay.findMatching(order, payment._id);
+		if (reference) {
+			await onOrderPayment(order, payment, payment.price, {
+				tapToPay: { expiresAt: new Date(Date.now() + 5000) },
+				detail: `${payment.processor} - ${reference}`
+			});
 		}
 	} catch (err) {
 		console.error(inspect(err, { depth: 10 }));

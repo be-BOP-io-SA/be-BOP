@@ -8,6 +8,7 @@ import {
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { sum } from '$lib/utils/sum';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
+import { BITCOIN_PRESENTATION } from '../pp';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -23,6 +24,8 @@ export default {
 	isEnabled: () => isBitcoinConfigured,
 
 	settlementCurrency: () => 'BTC',
+
+	presentation: BITCOIN_PRESENTATION,
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const label = orderAddressLabel(params.orderId, params.paymentId);

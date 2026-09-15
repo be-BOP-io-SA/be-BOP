@@ -1,6 +1,6 @@
 import { collections } from '$lib/server/database';
 import { rootDir } from '$lib/server/root-dir';
-import { bitcoinPaymentQrCodeString } from '$lib/types/Order';
+import { processorFor } from '$lib/server/sdk/pp';
 import { error } from '@sveltejs/kit';
 import qrcode from 'qrcode';
 import { readFileSync } from 'node:fs';
@@ -23,8 +23,9 @@ export async function GET({ params, url }) {
 		throw error(404, 'Payment not found');
 	}
 
-	const qrMethods = new Set(['bitcoin', 'lightning', 'card', 'taler']);
-	if (!qrMethods.has(payment.method)) {
+	const presentation = processorFor(payment)?.presentation;
+
+	if (presentation?.kind !== 'qr') {
 		throw error(400, 'Invalid payment method for QR Code generation');
 	}
 
@@ -32,10 +33,7 @@ export async function GET({ params, url }) {
 		throw error(400, 'Payment address not found');
 	}
 
-	const address =
-		payment.method === 'bitcoin'
-			? bitcoinPaymentQrCodeString(payment.address, payment.price.amount, payment.price.currency)
-			: payment.address;
+	const address = presentation.qrPayload?.(payment) ?? payment.address;
 
 	let qrcodeString = (await qrcode.toString(address, { type: 'svg' })).trim();
 

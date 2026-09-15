@@ -4,7 +4,7 @@ import {
 	btcpayGetLnInvoice
 } from '$lib/server/btcpay-server';
 import { differenceInSeconds } from 'date-fns';
-import { lightningLabel } from '../pp';
+import { lightningLabel, LIGHTNING_PRESENTATION } from '../pp';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -19,6 +19,8 @@ export default {
 	isEnabled: () => isBtcpayServerConfigured(),
 
 	settlementCurrency: () => 'SAT',
+
+	presentation: LIGHTNING_PRESENTATION,
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const satoshis = params.toPay.amount;

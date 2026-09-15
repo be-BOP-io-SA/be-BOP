@@ -78,6 +78,8 @@ export default {
 
 	settlementCurrency: () => 'XPF',
 
+	presentation: { kind: 'redirect' },
+
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const amount = params.toPay.amount;
 

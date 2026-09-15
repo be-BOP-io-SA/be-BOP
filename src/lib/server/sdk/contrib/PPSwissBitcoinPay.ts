@@ -7,7 +7,7 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { differenceInMinutes } from 'date-fns';
-import { lightningLabel } from '../pp';
+import { lightningLabel, LIGHTNING_PRESENTATION } from '../pp';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -22,6 +22,8 @@ export default {
 	isEnabled: () => isSwissBitcoinPayConfigured(),
 
 	settlementCurrency: () => 'SAT',
+
+	presentation: LIGHTNING_PRESENTATION,
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const satoshis = params.toPay.amount;

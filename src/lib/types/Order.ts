@@ -195,11 +195,24 @@ export interface OrderPayment {
 	customPaymentMethod?: { id: string; label: string; instructions: string };
 }
 
+/**
+ * How the buyer is asked to pay, as the processor declares it. Lives here rather than in
+ * the server-only SDK because the payment page needs it.
+ */
+export type SerializedPaymentPresentation = {
+	kind: 'qr' | 'redirect' | 'embedded' | 'manual';
+	/** URI the QR image links to, so tapping it opens a wallet. */
+	qrLink?: string;
+	/** Tags a wallet browser extension looks for on the payment page. */
+	headTags?: Array<{ name: string; content: string }>;
+};
+
 export type SerializedOrderPayment = Omit<OrderPayment, '_id'> & {
 	id: string;
 	tapToPayOnActivationUrl?: string;
 	posSubtypeHasProcessor?: boolean;
 	confirmationBlocksRequired: number;
+	presentation?: SerializedPaymentPresentation;
 };
 
 export const FAKE_ORDER_INVOICE_NUMBER = -1;

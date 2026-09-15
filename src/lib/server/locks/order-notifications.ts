@@ -22,6 +22,25 @@ import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import { queueEmail } from '../email';
 import { useI18n } from '$lib/i18n';
 import { typedInclude } from '$lib/utils/typedIncludes';
+import type { PaymentMethod } from '../payment-methods';
+
+/**
+ * Email announcing a payment still waiting to be settled. `null` for the methods with
+ * nothing for the buyer to pay online. Typed as a full Record so a new payment method
+ * cannot compile until someone decides what it sends.
+ */
+const PENDING_PAYMENT_TEMPLATE = {
+	bitcoin: 'order.payment.pending.bitcoin',
+	lightning: 'order.payment.pending.lightning',
+	card: 'order.payment.pending.card',
+	'bank-transfer': 'order.payment.pending.bank-transfer',
+	paypal: 'order.payment.pending.paypal',
+	taler: 'order.payment.pending.taler',
+	osb: 'order.payment.pending.osb',
+	custom: 'order.payment.pending.custom',
+	'point-of-sale': null,
+	free: null
+} satisfies Record<PaymentMethod, EmailTemplateKey | null>;
 
 const lock = new Lock('order-notifications');
 
@@ -195,36 +214,8 @@ async function handleOrderNotification(order: Order): Promise<void> {
 						}
 						break;
 					case 'pending':
-						switch (payment.method) {
-							case 'bitcoin':
-								templateKey = 'order.payment.pending.bitcoin';
-								break;
-							case 'lightning':
-								templateKey = 'order.payment.pending.lightning';
-								break;
-							case 'card':
-								templateKey = 'order.payment.pending.card';
-								break;
-							case 'bank-transfer':
-								templateKey = 'order.payment.pending.bank-transfer';
-								break;
-							case 'paypal':
-								templateKey = 'order.payment.pending.paypal';
-								break;
-							case 'taler':
-								templateKey = 'order.payment.pending.taler';
-								break;
-							case 'osb':
-								templateKey = 'order.payment.pending.osb';
-								break;
-							case 'custom':
-								templateKey = 'order.payment.pending.custom';
-								break;
-							case 'point-of-sale':
-							case 'free':
-								// no email
-								break;
-						}
+						templateKey = PENDING_PAYMENT_TEMPLATE[payment.method];
+						break;
 					case 'failed':
 						break;
 					default:

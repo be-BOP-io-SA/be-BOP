@@ -1,6 +1,6 @@
 import { isLndConfigured, lndCreateInvoice, lndLookupInvoice } from '$lib/server/lnd';
 import { differenceInSeconds } from 'date-fns';
-import { lightningLabel } from '../pp';
+import { lightningLabel, LIGHTNING_PRESENTATION } from '../pp';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -15,6 +15,8 @@ export default {
 	isEnabled: () => isLndConfigured(),
 
 	settlementCurrency: () => 'SAT',
+
+	presentation: LIGHTNING_PRESENTATION,
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const satoshis = params.toPay.amount;

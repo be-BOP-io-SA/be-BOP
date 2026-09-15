@@ -67,6 +67,13 @@ export default {
 
 	settlementCurrency: () => runtimeConfig.taler.currency,
 
+	presentation: {
+		kind: 'qr',
+		// The Taler wallet extension picks the payment up from this tag alone.
+		headTags: (payment) =>
+			payment.address ? [{ name: 'taler-support', content: payment.address }] : []
+	},
+
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const { amount, currency } = params.toPay;
 		const talerCurrency = isDemoMerchantBackend() ? 'KUDOS' : currency;

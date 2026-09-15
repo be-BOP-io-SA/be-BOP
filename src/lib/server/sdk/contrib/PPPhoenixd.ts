@@ -4,7 +4,7 @@ import {
 	phoenixdLookupInvoice
 } from '$lib/server/phoenixd';
 import { addHours } from 'date-fns';
-import { lightningLabel } from '../pp';
+import { lightningLabel, LIGHTNING_PRESENTATION } from '../pp';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -19,6 +19,8 @@ export default {
 	isEnabled: () => isPhoenixdConfigured(),
 
 	settlementCurrency: () => 'SAT',
+
+	presentation: LIGHTNING_PRESENTATION,
 
 	// phoenixd refuses invoices valid for more than an hour.
 	expiresIn: (timeoutMinutes) => (timeoutMinutes > 60 ? addHours(new Date(), 1) : undefined),

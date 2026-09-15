@@ -19,6 +19,8 @@ export default {
 
 	settlementCurrency: () => runtimeConfig.sumUp.currency,
 
+	presentation: { kind: 'qr' },
+
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const { amount, currency } = params.toPay;
 

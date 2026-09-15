@@ -24,6 +24,8 @@ export default {
 
 	settlementCurrency: () => runtimeConfig.paypal.currency,
 
+	presentation: { kind: 'redirect' },
+
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const { amount, currency } = params.toPay;
 

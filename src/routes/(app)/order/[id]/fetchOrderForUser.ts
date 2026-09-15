@@ -1,4 +1,5 @@
 import { collections } from '$lib/server/database';
+import { processorFor, serializePresentation } from '$lib/server/sdk/pp';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { isOrderFullyPaid } from '$lib/server/orders';
 import { isPaypalEnabled, paypalGetCheckout } from '$lib/server/paypal';
@@ -143,6 +144,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 				? posSubtypesMap.get(payment.posSubtype)?.hasProcessor ?? false
 				: false,
 			processor: payment.method === 'card' ? payment.processor : undefined,
+			presentation: serializePresentation(processorFor(payment), payment),
 			status: payment.status,
 			address: payment.address,
 			expiresAt: payment.expiresAt,
