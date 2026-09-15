@@ -41,7 +41,10 @@ describe('processor workers', () => {
 			}
 		} as unknown as PaymentProcessorDefinition;
 
-		const stop = await pp.worker!.start();
+		if (!pp.worker) {
+			throw new Error('The fake processor should declare a worker');
+		}
+		const stop = await pp.worker.start();
 		await vi.waitFor(() => expect(ticks).toBeGreaterThan(1));
 
 		stop();

@@ -737,7 +737,7 @@ export type RuntimeConfig = BaseConfig &
 			>
 		>
 	>;
-type ConfigKey = keyof RuntimeConfig;
+export type ConfigKey = keyof RuntimeConfig;
 export type RuntimeConfigItem = {
 	[key in ConfigKey]: { _id: key; data: RuntimeConfig[key]; updatedAt: Date };
 }[ConfigKey];

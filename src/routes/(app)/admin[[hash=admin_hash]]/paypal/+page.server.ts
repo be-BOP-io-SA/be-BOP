@@ -1,8 +1,6 @@
-import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { paymentConfigActions } from '$lib/server/sdk/admin-config';
 import { CURRENCIES, type Currency } from '$lib/types/Currency.js';
-import { rateLimit } from '$lib/server/rateLimit';
-import { testProcessorConnection } from '$lib/server/sdk/test-connection';
 import { z } from 'zod';
 
 export async function load() {
@@ -11,50 +9,16 @@ export async function load() {
 	};
 }
 
-export const actions = {
-	save: async function ({ request }) {
-		const paypal = z
-			.object({
-				clientId: z.string().min(1),
-				secret: z.string().min(1),
-				sandbox: z.boolean({ coerce: true }),
-				currency: z.enum(
-					CURRENCIES.filter((c) => c !== 'BTC' && c !== 'SAT') as [Currency, ...Currency[]]
-				)
-			})
-			.parse(Object.fromEntries(await request.formData()));
-
-		await collections.runtimeConfig.updateOne(
-			{
-				_id: 'paypal'
-			},
-			{
-				$set: {
-					data: paypal,
-					updatedAt: new Date()
-				}
-			},
-			{
-				upsert: true
-			}
-		);
-
-		runtimeConfig.paypal = paypal;
-	},
-	delete: async function () {
-		await collections.runtimeConfig.deleteOne({
-			_id: 'paypal'
-		});
-
-		runtimeConfig.paypal = {
-			clientId: '',
-			secret: '',
-			currency: 'EUR',
-			sandbox: false
-		};
-	},
-	testConnection: async function ({ locals }) {
-		rateLimit(locals.clientIp, 'pp.test.paypal', 5, { minutes: 1 });
-		return await testProcessorConnection('paypal');
-	}
-};
+export const actions = paymentConfigActions({
+	key: 'paypal',
+	processor: 'paypal',
+	schema: z.object({
+		clientId: z.string().min(1),
+		secret: z.string().min(1),
+		sandbox: z.boolean({ coerce: true }),
+		currency: z.enum(
+			CURRENCIES.filter((c) => c !== 'BTC' && c !== 'SAT') as [Currency, ...Currency[]]
+		)
+	}),
+	empty: { clientId: '', secret: '', currency: 'EUR', sandbox: false }
+});

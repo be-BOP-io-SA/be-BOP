@@ -1,7 +1,5 @@
-import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { rateLimit } from '$lib/server/rateLimit';
-import { testProcessorConnection } from '$lib/server/sdk/test-connection';
+import { paymentConfigActions } from '$lib/server/sdk/admin-config';
 import { z } from 'zod';
 
 export async function load() {
@@ -10,46 +8,13 @@ export async function load() {
 	};
 }
 
-export const actions = {
-	save: async function ({ request }) {
-		const osb = z
-			.object({
-				shopId: z.string().min(1),
-				password: z.string().min(1),
-				hmacKey: z.string().default('')
-			})
-			.parse(Object.fromEntries(await request.formData()));
-
-		await collections.runtimeConfig.updateOne(
-			{
-				_id: 'osb'
-			},
-			{
-				$set: {
-					data: osb,
-					updatedAt: new Date()
-				}
-			},
-			{
-				upsert: true
-			}
-		);
-
-		runtimeConfig.osb = osb;
-	},
-	delete: async function () {
-		await collections.runtimeConfig.deleteOne({
-			_id: 'osb'
-		});
-
-		runtimeConfig.osb = {
-			shopId: '',
-			password: '',
-			hmacKey: ''
-		};
-	},
-	testConnection: async function ({ locals }) {
-		rateLimit(locals.clientIp, 'pp.test.osb', 5, { minutes: 1 });
-		return await testProcessorConnection('osb');
-	}
-};
+export const actions = paymentConfigActions({
+	key: 'osb',
+	processor: 'osb',
+	schema: z.object({
+		shopId: z.string().min(1),
+		password: z.string().min(1),
+		hmacKey: z.string().default('')
+	}),
+	empty: { shopId: '', password: '', hmacKey: '' }
+});
