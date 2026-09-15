@@ -2,6 +2,7 @@ import './cleanup-lock';
 import './currency-lock';
 import './email-notifications';
 import './order-lock';
+import './payment-processor-lock';
 import './order-notifications';
 import './nostr-notifications';
 import './handle-messages';

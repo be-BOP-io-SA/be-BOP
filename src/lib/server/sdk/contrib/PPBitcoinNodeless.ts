@@ -5,10 +5,9 @@ import {
 	getSatoshiReceivedNodeless,
 	updateBitcoinBlockHeight
 } from '$lib/server/bitcoin-nodeless';
-import { runtimeConfigUpdatedAt } from '$lib/server/runtime-config';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
-import { differenceInMinutes } from 'date-fns';
+import { setTimeout } from 'node:timers/promises';
 import { BITCOIN_PRESENTATION } from '../pp';
 import type {
 	PaymentProcessorDefinition,
@@ -26,6 +25,9 @@ import type { Order } from '$lib/types/Order';
  */
 const MEMPOOL_DROP_GRACE_MS = 3 * 60 * 1000;
 
+/** Matches the old in-check refresh rate; a new block arrives every ten minutes on average. */
+const BLOCK_HEIGHT_REFRESH_MS = 60 * 1000;
+
 export default {
 	meta: { processor: 'bitcoin-nodeless', method: 'bitcoin', emoji: '₿' },
 
@@ -34,6 +36,29 @@ export default {
 	settlementCurrency: () => 'BTC',
 
 	presentation: BITCOIN_PRESENTATION,
+
+	worker: {
+		async start() {
+			let stopped = false;
+
+			const poll = async () => {
+				while (!stopped) {
+					try {
+						await updateBitcoinBlockHeight();
+					} catch (err) {
+						console.error('[payments] bitcoin-nodeless block height refresh failed', err);
+					}
+					await setTimeout(BLOCK_HEIGHT_REFRESH_MS);
+				}
+			};
+
+			poll();
+
+			return () => {
+				stopped = true;
+			};
+		}
+	},
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
@@ -52,14 +77,7 @@ export default {
 			throw new Error('Bitcoin nodeless payment missing expiresAt');
 		}
 
-		// Rate-limited block height update (1/min)
-		if (
-			!runtimeConfigUpdatedAt['bitcoinBlockHeight'] ||
-			differenceInMinutes(new Date(), runtimeConfigUpdatedAt['bitcoinBlockHeight']) >= 1
-		) {
-			await updateBitcoinBlockHeight();
-		}
-
+		// The chain tip is kept fresh by this processor's worker, not by the check itself.
 		const nConfirmations = getConfirmationBlocks(payment.price);
 		const received = await getSatoshiReceivedNodeless(
 			payment.address,

@@ -145,6 +145,15 @@ export interface PaymentProcessorDefinition {
 		findMatching(order: Order, paymentId: ObjectId): Promise<string | null>;
 	};
 
+	/**
+	 * Background work this processor needs while it is enabled: a provider subscription,
+	 * a chain tip poll. Started once per cluster under a lock, never per request and never
+	 * from inside `checkPayment`. Resolves to a function that stops it.
+	 */
+	worker?: {
+		start(): Promise<() => void>;
+	};
+
 	/** `params.toPay` is already in `settlementCurrency()` — do not convert it again. */
 	createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult>;
 
@@ -212,6 +221,10 @@ export function registerProcessor(pp: PaymentProcessorDefinition): void {
 
 export function getProcessor(processor: string): PaymentProcessorDefinition | undefined {
 	return registry.get(processor);
+}
+
+export function allProcessors(): PaymentProcessorDefinition[] {
+	return [...registry.values()];
 }
 
 export function getProcessorsForMethod(method: PaymentMethod): PaymentProcessorDefinition[] {
