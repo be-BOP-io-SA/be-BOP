@@ -7,12 +7,33 @@ import { onOrderPayment, onOrderPaymentFailed } from '../orders';
 import { refreshPromise } from '../runtime-config';
 import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import { isStripeEnabled, lastSuccessfulPaymentIntents } from '../stripe';
-import type { Order } from '$lib/types/Order';
+import type { Order, Price } from '$lib/types/Order';
 import { ObjectId } from 'mongodb';
-import { getProcessor } from '../sdk/pp';
-import { assertSettlementCovers } from '../sdk/settlement';
+import { coversPayment, getProcessor } from '../sdk/pp';
 
 const lock = new Lock('orders');
+
+/**
+ * Payment ids already reported as underpaid. The check runs every 2s against a payment
+ * that stays pending, so without this the anomaly would fill the logs until it expires.
+ */
+const underpaymentReported = new Set<string>();
+
+function reportUnderpayment(
+	processor: string,
+	payment: Order['payments'][number],
+	received: Price
+): void {
+	const key = payment._id.toHexString();
+	if (underpaymentReported.has(key)) {
+		return;
+	}
+	underpaymentReported.add(key);
+	console.error(
+		`[payments] ${processor} reported payment ${key} settled with ${received.amount} ${received.currency}, ` +
+			`short of the ${payment.price.amount} ${payment.price.currency} asked. Keeping it pending.`
+	);
+}
 
 async function findMatchingTapToPayOrderStripe(
 	order: Order,
@@ -162,19 +183,14 @@ async function maintainOrders() {
 					try {
 						const result = await pp.checkPayment(payment, order);
 						switch (result.status) {
-							case 'paid': {
-								if (!result.received) {
-									throw new Error(`SDK: paid without received amount for order ${order._id}`);
+							case 'paid':
+								// The discriminated result makes `received` mandatory on this arm, so the
+								// old "paid without an amount" throw is now unrepresentable rather than caught.
+								if (!coversPayment(pp, payment, result.received)) {
+									reportUnderpayment(pp.meta.processor, payment, result.received);
+									break;
 								}
-								// Only two processors compared the amount themselves; the rest settled on the
-								// provider's word alone.
-								assertSettlementCovers(
-									payment.price,
-									result.received,
-									result.fees,
-									`SDK: ${payment.processor} on order ${order._id}`
-								);
-
+								underpaymentReported.delete(payment._id.toHexString());
 								if (result.transactions) {
 									payment.transactions = result.transactions;
 								}
@@ -185,7 +201,6 @@ async function maintainOrders() {
 									result.fees ? { fees: result.fees } : undefined
 								);
 								break;
-							}
 							case 'expired':
 								order = await onOrderPaymentFailed(order, payment, 'expired');
 								break;
@@ -231,7 +246,7 @@ async function maintainOrders() {
 								}
 								break;
 							default:
-								result.status satisfies never;
+								result satisfies never;
 						}
 						if (result.status !== 'pending') {
 							console.log(

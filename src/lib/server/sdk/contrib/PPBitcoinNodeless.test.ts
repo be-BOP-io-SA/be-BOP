@@ -2,6 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import PPBitcoinNodeless from './PPBitcoinNodeless';
 import { runtimeConfig, runtimeConfigUpdatedAt } from '$lib/server/runtime-config';
 import type { Order } from '$lib/types/Order';
+import type { CheckPaymentResult } from '../pp';
+
+/** Onchain progress fields live on the pending variant alone, so assert and narrow in one step. */
+function expectPending(
+	res: CheckPaymentResult
+): asserts res is Extract<CheckPaymentResult, { status: 'pending' }> {
+	expect(res.status).toBe('pending');
+}
 
 describe('PPBitcoinNodeless.checkPayment', () => {
 	const ADDRESS = 'bc1qrw2swpufzdx9gy4aewv5q45e53stcf95ker0p7';
@@ -72,7 +80,7 @@ describe('PPBitcoinNodeless.checkPayment', () => {
 	it('holds as awaiting confirmation while a full-amount TX sits in the mempool (before expiry)', async () => {
 		mockFetchTxs([fullAmountTx()]); // unconfirmed
 		const res = await PPBitcoinNodeless.checkPayment(makePayment(), order);
-		expect(res.status).toBe('pending');
+		expectPending(res);
 		expect(res.awaitingConfirmation).toBe(true);
 		expect(res.mempoolMissingSince).toBeNull();
 	});
@@ -93,7 +101,7 @@ describe('PPBitcoinNodeless.checkPayment', () => {
 			makePayment({ expiresAt: minutesAgo(5), awaitingConfirmation: true }),
 			order
 		);
-		expect(res.status).toBe('pending');
+		expectPending(res);
 		expect(res.awaitingConfirmation).toBe(true);
 		expect(res.mempoolMissingSince).toBeInstanceOf(Date);
 		expect((res.mempoolMissingSince as Date).getTime()).toBeGreaterThanOrEqual(before);
@@ -110,7 +118,7 @@ describe('PPBitcoinNodeless.checkPayment', () => {
 			}),
 			order
 		);
-		expect(res.status).toBe('pending');
+		expectPending(res);
 		expect((res.mempoolMissingSince as Date).getTime()).toBe(missingSince.getTime());
 	});
 
@@ -137,7 +145,7 @@ describe('PPBitcoinNodeless.checkPayment', () => {
 			}),
 			order
 		);
-		expect(res.status).toBe('pending');
+		expectPending(res);
 		expect(res.awaitingConfirmation).toBe(true);
 		expect(res.mempoolMissingSince).toBeNull();
 	});

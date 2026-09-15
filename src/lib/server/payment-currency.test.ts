@@ -144,28 +144,6 @@ describe('payment currency', () => {
 		});
 	});
 
-	describe('minimumAmount', () => {
-		it('refuses an amount below what the processor accepts', async () => {
-			useFakeProcessor({ minimumAmount: () => 1_000 });
-
-			await expect(createTalerOrder()).rejects.toThrow();
-		});
-
-		it('accepts an amount at the minimum', async () => {
-			useFakeProcessor({ minimumAmount: () => 120 });
-
-			await expect(createTalerOrder()).resolves.toBeDefined();
-		});
-
-		it('falls back to one currency unit when the processor declares none', async () => {
-			useFakeProcessor({ settlementCurrency: () => 'SAT' });
-
-			const order = await createTalerOrder();
-
-			expect(order.payments[0].price.amount).toBe(400_000);
-		});
-	});
-
 	describe('expiresIn', () => {
 		it('lets the processor cap the expiry', async () => {
 			const capped = new Date('2030-01-01T00:00:00Z');

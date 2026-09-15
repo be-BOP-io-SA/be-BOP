@@ -1,6 +1,7 @@
 import type { PaymentMethod, PaymentProcessor } from '$lib/server/payment-methods';
 import type { Price, Order } from '$lib/types/Order';
-import type { Currency } from '$lib/types/Currency';
+import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
+import { toCurrency } from '$lib/utils/toCurrency';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { ORIGIN } from '$lib/server/env-config';
 
@@ -31,28 +32,41 @@ export interface CreatePaymentResult {
 	meta?: unknown;
 }
 
-export interface CheckPaymentResult {
-	status: 'paid' | 'pending' | 'expired' | 'failed' | 'canceled';
-	/**
-	 * For onchain payments: a full-amount TX is detected but not yet confirmed to the
-	 * required threshold. Surfaced to the buyer as "received, awaiting confirmation".
-	 */
-	awaitingConfirmation?: boolean;
-	/**
-	 * For onchain payments: the persisted start of the post-expiry grace window (see
-	 * `OrderPayment.mempoolMissingSince`). `null` means "clear it". Persisted by the worker.
-	 */
-	mempoolMissingSince?: Date | null;
-	received?: Price;
-	transactions?: Array<{
-		id: string;
-		amount: number;
-		currency: Currency;
-		transaction_code?: string;
-		txid?: string;
-	}>;
-	fees?: Price;
+export interface PaymentTransaction {
+	id: string;
+	amount: number;
+	currency: Currency;
+	transaction_code?: string;
+	txid?: string;
 }
+
+/**
+ * Discriminated on `status` so a processor cannot report a payment as settled without
+ * saying what arrived, and cannot attach onchain progress to a terminal status.
+ */
+export type CheckPaymentResult =
+	| {
+			status: 'paid';
+			/** What actually arrived, in whatever currency the provider settled in. */
+			received: Price;
+			fees?: Price;
+			transactions?: PaymentTransaction[];
+	  }
+	| {
+			status: 'pending';
+			/**
+			 * For onchain payments: a full-amount TX is detected but not yet confirmed to the
+			 * required threshold. Surfaced to the buyer as "received, awaiting confirmation".
+			 */
+			awaitingConfirmation?: boolean;
+			/**
+			 * For onchain payments: the persisted start of the post-expiry grace window (see
+			 * `OrderPayment.mempoolMissingSince`). `null` means "clear it". Persisted by the worker.
+			 */
+			mempoolMissingSince?: Date | null;
+			transactions?: PaymentTransaction[];
+	  }
+	| { status: 'expired' | 'failed' | 'canceled' };
 
 export interface PaymentProcessorDefinition {
 	meta: PaymentProcessorMeta;
@@ -64,11 +78,14 @@ export interface PaymentProcessorDefinition {
 	 */
 	settlementCurrency(): Currency;
 
-	/** Smallest amount this processor accepts. Absent = one unit of the settlement currency. */
-	minimumAmount?(currency: Currency): number;
-
 	/** Absent = the shop's payment timeout applies unchanged. */
 	expiresIn?(timeoutMinutes: number): Date | undefined;
+
+	/**
+	 * Shortfall accepted between what arrived and what was asked, in the settlement
+	 * currency. Absent = one currency unit, which only absorbs rounding.
+	 */
+	underpaymentTolerance?(currency: Currency): number;
 
 	/** `params.toPay` is already in `settlementCurrency()` — do not convert it again. */
 	createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult>;
@@ -77,6 +94,22 @@ export interface PaymentProcessorDefinition {
 }
 
 // --- Helpers ---
+
+/**
+ * Whether what the provider says arrived covers what the payment asked for.
+ * Providers report in their own currency, so the comparison happens in the payment's.
+ */
+export function coversPayment(
+	pp: PaymentProcessorDefinition,
+	payment: Order['payments'][number],
+	received: Price
+): boolean {
+	const currency = payment.price.currency;
+	const settled = toCurrency(currency, received.amount, received.currency);
+	const tolerance = pp.underpaymentTolerance?.(currency) ?? CURRENCY_UNIT[currency];
+
+	return settled >= payment.price.amount - tolerance;
+}
 
 export function lightningLabel(orderId: string, orderNumber: number): string {
 	switch (runtimeConfig.lightningQrCodeDescription) {

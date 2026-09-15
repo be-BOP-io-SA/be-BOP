@@ -8,8 +8,6 @@ import {
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { sum } from '$lib/utils/sum';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
-import { toCurrency } from '$lib/utils/toCurrency';
-import { MIN_SATOSHIS_FOR_BITCOIN_PAYMENT } from '$lib/types/Order';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -25,8 +23,6 @@ export default {
 	isEnabled: () => isBitcoinConfigured,
 
 	settlementCurrency: () => 'BTC',
-
-	minimumAmount: (currency) => toCurrency(currency, MIN_SATOSHIS_FOR_BITCOIN_PAYMENT, 'SAT'),
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const label = orderAddressLabel(params.orderId, params.paymentId);

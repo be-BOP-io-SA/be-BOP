@@ -1983,18 +1983,7 @@ export async function addOrderPayment(
 
 	// Converted once here so the amount recorded and the amount asked of the provider
 	// cannot be computed from two different exchange rates.
-	const settlement = settlementCurrency(paymentMethod);
-	const toPay = bookAmount(settlement, priceToPay);
-
-	const minimumAmount =
-		resolveProcessor(paymentMethod)?.minimumAmount?.(settlement) ?? CURRENCY_UNIT[settlement];
-
-	if (paymentMethod !== 'free' && toPay.amount < minimumAmount) {
-		throw error(
-			400,
-			`${paymentMethod} payments start at ${minimumAmount} ${settlement}, asked for ${toPay.amount}`
-		);
-	}
+	const toPay = bookAmount(settlementCurrency(paymentMethod), priceToPay);
 
 	const paymentId = new ObjectId();
 	const expiresAt =
