@@ -9,7 +9,8 @@ import { runtimeConfigUpdatedAt } from '$lib/server/runtime-config';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { differenceInMinutes } from 'date-fns';
-import { bitcoinPaymentPrice } from '../pp';
+import { toCurrency } from '$lib/utils/toCurrency';
+import { MIN_SATOSHIS_FOR_BITCOIN_PAYMENT } from '$lib/types/Order';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -31,7 +32,9 @@ export default {
 
 	isEnabled: () => isBitcoinNodelessConfigured(),
 
-	paymentPrice: bitcoinPaymentPrice,
+	settlementCurrency: () => 'BTC',
+
+	minimumAmount: (currency) => toCurrency(currency, MIN_SATOSHIS_FOR_BITCOIN_PAYMENT, 'SAT'),
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {

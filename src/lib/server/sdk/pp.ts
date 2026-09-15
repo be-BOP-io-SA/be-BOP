@@ -3,7 +3,6 @@ import type { Price, Order } from '$lib/types/Order';
 import type { Currency } from '$lib/types/Currency';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { ORIGIN } from '$lib/server/env-config';
-import { toCurrency } from '$lib/utils/toCurrency';
 
 // --- Interfaces ---
 
@@ -58,26 +57,26 @@ export interface CheckPaymentResult {
 export interface PaymentProcessorDefinition {
 	meta: PaymentProcessorMeta;
 	isEnabled(): boolean;
-	paymentPrice(price: Price): Price;
+
+	/**
+	 * Currency the payment is asked for. Not the currency it arrives in: `checkPayment`
+	 * reports whatever the provider actually settled.
+	 */
+	settlementCurrency(): Currency;
+
+	/** Smallest amount this processor accepts. Absent = one unit of the settlement currency. */
+	minimumAmount?(currency: Currency): number;
+
+	/** Absent = the shop's payment timeout applies unchanged. */
+	expiresIn?(timeoutMinutes: number): Date | undefined;
+
+	/** `params.toPay` is already in `settlementCurrency()` — do not convert it again. */
 	createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult>;
+
 	checkPayment(payment: Order['payments'][number], order: Order): Promise<CheckPaymentResult>;
 }
 
 // --- Helpers ---
-
-export function lightningPaymentPrice(price: Price): Price {
-	return {
-		amount: toCurrency('SAT', price.amount, price.currency),
-		currency: 'SAT'
-	};
-}
-
-export function bitcoinPaymentPrice(price: Price): Price {
-	return {
-		amount: toCurrency('BTC', price.amount, price.currency),
-		currency: 'BTC'
-	};
-}
 
 export function lightningLabel(orderId: string, orderNumber: number): string {
 	switch (runtimeConfig.lightningQrCodeDescription) {

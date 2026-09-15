@@ -1,5 +1,4 @@
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { toCurrency } from '$lib/utils/toCurrency';
 import { FRACTION_DIGITS_PER_CURRENCY, CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { ORIGIN } from '$lib/server/env-config';
@@ -66,17 +65,10 @@ export default {
 
 	isEnabled: () => isTalerEnabled(),
 
-	paymentPrice(price) {
-		const currency = runtimeConfig.taler.currency;
-		return {
-			amount: toCurrency(currency, price.amount, price.currency),
-			currency
-		};
-	},
+	settlementCurrency: () => runtimeConfig.taler.currency,
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
-		const currency = runtimeConfig.taler.currency;
-		const amount = toCurrency(currency, params.toPay.amount, params.toPay.currency);
+		const { amount, currency } = params.toPay;
 		const talerCurrency = isDemoMerchantBackend() ? 'KUDOS' : currency;
 		const talerAmount = `${talerCurrency}:${amount.toFixed(
 			FRACTION_DIGITS_PER_CURRENCY[currency]

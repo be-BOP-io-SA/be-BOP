@@ -1,5 +1,4 @@
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { toCurrency } from '$lib/utils/toCurrency';
 import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
 import type {
@@ -77,17 +76,10 @@ export default {
 
 	isEnabled: () => isOsbEnabled(),
 
-	paymentPrice(price) {
-		return {
-			amount: toCurrency('XPF', price.amount, price.currency),
-			currency: 'XPF'
-		};
-	},
+	settlementCurrency: () => 'XPF',
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
-		// XPF has 0 decimals (ISO 4217), but FRACTION_DIGITS_PER_CURRENCY.XPF = 2 in codebase
-		// Math.round ensures we send an integer to OSB API
-		const amount = Math.round(toCurrency('XPF', params.toPay.amount, params.toPay.currency));
+		const amount = params.toPay.amount;
 
 		const resp = osbCreatePaymentOrderSchema.parse(
 			await osbRequest('Charge/CreatePaymentOrder', {

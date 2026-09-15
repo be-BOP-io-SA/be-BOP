@@ -3,8 +3,8 @@ import {
 	phoenixdCreateInvoice,
 	phoenixdLookupInvoice
 } from '$lib/server/phoenixd';
-import { toSatoshis } from '$lib/utils/toSatoshis';
-import { lightningPaymentPrice, lightningLabel } from '../pp';
+import { addHours } from 'date-fns';
+import { lightningLabel } from '../pp';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -18,10 +18,13 @@ export default {
 
 	isEnabled: () => isPhoenixdConfigured(),
 
-	paymentPrice: lightningPaymentPrice,
+	settlementCurrency: () => 'SAT',
+
+	// phoenixd refuses invoices valid for more than an hour.
+	expiresIn: (timeoutMinutes) => (timeoutMinutes > 60 ? addHours(new Date(), 1) : undefined),
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
-		const satoshis = toSatoshis(params.toPay.amount, params.toPay.currency);
+		const satoshis = params.toPay.amount;
 		const label = lightningLabel(params.orderId, params.orderNumber);
 		const invoice = await phoenixdCreateInvoice(satoshis, label, params.orderId);
 		return {

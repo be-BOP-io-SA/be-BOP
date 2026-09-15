@@ -1,6 +1,5 @@
 import { isStripeEnabled } from '$lib/server/stripe';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { toCurrency } from '$lib/utils/toCurrency';
 import { toUrlEncoded } from '$lib/utils/toUrlEncoded';
 import { CURRENCY_UNIT, CURRENCIES } from '$lib/types/Currency';
 import type { Currency } from '$lib/types/Currency';
@@ -24,17 +23,10 @@ export default {
 
 	isEnabled: () => isStripeEnabled(),
 
-	paymentPrice(price) {
-		const currency = runtimeConfig.stripe.currency;
-		return {
-			amount: toCurrency(currency, price.amount, price.currency),
-			currency
-		};
-	},
+	settlementCurrency: () => runtimeConfig.stripe.currency,
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
-		const currency = runtimeConfig.stripe.currency;
-		const amount = toCurrency(currency, params.toPay.amount, params.toPay.currency);
+		const { amount, currency } = params.toPay;
 
 		const resp = await fetch('https://api.stripe.com/v1/payment_intents', {
 			method: 'POST',

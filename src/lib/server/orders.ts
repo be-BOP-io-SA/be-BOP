@@ -14,7 +14,6 @@ import {
 	type Duration,
 	add,
 	addDays,
-	addHours,
 	addMinutes,
 	differenceInMinutes,
 	eachDayOfInterval,
@@ -47,6 +46,14 @@ import { type Cart } from '$lib/types/Cart';
 import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { sumCurrency } from '$lib/utils/sumCurrency';
+import {
+	bookAmount,
+	bookSet,
+	commonBookCurrencies,
+	orderBookCurrencies,
+	paymentPriceSnapshot,
+	type BookAxis
+} from './orderBookkeeping';
 import { refreshAvailableStockInDb } from './product';
 import { checkCartItems } from './cart';
 import { handleOrderTabAfterPayment } from './orderTab';
@@ -60,7 +67,6 @@ import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { LanguageKey } from '$lib/translations';
 import { filterNullish } from '$lib/utils/fillterNullish';
-import { isPhoenixdConfigured } from './phoenixd';
 import type { Discount } from '$lib/types/Discount';
 import {
 	collectUserAddresses,
@@ -175,6 +181,45 @@ export async function onOrderPayment(
 
 	payment.status = 'paid'; // for isOrderFullyPaid
 	payment.paidAt = paidAt;
+
+	const bookCurrencies = commonBookCurrencies(order, payment);
+
+	const previouslyPaidIn = (currency: Currency, axis: BookAxis): Price => ({
+		currency,
+		amount: sumCurrency(
+			currency,
+			order.payments
+				.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
+				.map((p) => p.currencySnapshot[axis]?.price)
+				.filter((p) => p !== undefined)
+		)
+	});
+
+	const remainingToPayIn = (currency: Currency, axis: BookAxis): Price => {
+		const orderTotal = order.currencySnapshot[axis]?.totalPrice;
+
+		return {
+			currency,
+			amount: sumCurrency(currency, [
+				...(orderTotal ? [orderTotal] : []),
+				...order.payments
+					.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
+					.map((p) => p.currencySnapshot[axis]?.price)
+					.filter((p) => p !== undefined)
+					.map((p) => ({ currency: p.currency, amount: -p.amount }))
+			])
+		};
+	};
+
+	// The order's frozen currency, never the live config: a shop changing currency
+	// mid-order must not split `price` and `totalReceived` across two of them.
+	const totalReceivedIn = (currency: Currency, axis: BookAxis): Price => ({
+		currency,
+		amount:
+			toCurrency(currency, received.amount, received.currency) +
+			(order.currencySnapshot[axis]?.totalReceived?.amount ?? 0)
+	});
+
 	const fn = async (session: ClientSession) => {
 		const ret = await collections.orders.findOneAndUpdate(
 			{ _id: order._id, 'payments._id': payment._id },
@@ -204,198 +249,23 @@ export async function onOrderPayment(
 					'payments.$.received': received,
 					...(params?.fees && {
 						'payments.$.fees': params.fees,
-						'payments.$.currencySnapshot.main.fees': {
-							currency: payment.currencySnapshot.main.price.currency,
-							amount: toCurrency(
-								payment.currencySnapshot.main.price.currency,
-								params.fees.amount,
-								params.fees.currency
-							)
-						},
-						...(payment.currencySnapshot.secondary && {
-							'payments.$.currencySnapshot.secondary.fees': {
-								currency: payment.currencySnapshot.secondary.price.currency,
-								amount: toCurrency(
-									payment.currencySnapshot.secondary.price.currency,
-									params.fees.amount,
-									params.fees.currency
-								)
-							}
-						}),
-						'payments.$.currencySnapshot.priceReference.fees': {
-							currency: payment.currencySnapshot.priceReference.price.currency,
-							amount: toCurrency(
-								payment.currencySnapshot.priceReference.price.currency,
-								params.fees.amount,
-								params.fees.currency
-							)
-						},
-						...(payment.currencySnapshot.accounting && {
-							'payments.$.currencySnapshot.accounting.fees': {
-								currency: payment.currencySnapshot.accounting.price.currency,
-								amount: toCurrency(
-									payment.currencySnapshot.accounting.price.currency,
-									params.fees.amount,
-									params.fees.currency
-								)
-							}
-						})
+						...bookSet(bookCurrencies, 'payments.$.currencySnapshot', 'fees', params.fees)
 					}),
-					'payments.$.currencySnapshot.main.previouslyPaid': {
-						currency: payment.currencySnapshot.main.price.currency,
-						amount: sumCurrency(
-							payment.currencySnapshot.main.price.currency,
-							order.payments
-								.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-								.map((p) => p.currencySnapshot.main.price)
-						)
-					},
-					'payments.$.currencySnapshot.main.remainingToPay': {
-						currency: payment.currencySnapshot.main.price.currency,
-						amount: sumCurrency(payment.currencySnapshot.main.price.currency, [
-							order.currencySnapshot.main.totalPrice,
-							...order.payments
-								.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-								.map((p) => p.currencySnapshot.main.price)
-								.map((p) => ({ currency: p.currency, amount: -p.amount }))
-						])
-					},
-					'payments.$.currencySnapshot.main.received': {
-						currency: payment.currencySnapshot.main.price.currency,
-						amount: toCurrency(
-							payment.currencySnapshot.main.price.currency,
-							received.amount,
-							received.currency
-						)
-					},
-					'payments.$.currencySnapshot.priceReference.previouslyPaid': {
-						currency: payment.currencySnapshot.priceReference.price.currency,
-						amount: sumCurrency(
-							payment.currencySnapshot.priceReference.price.currency,
-							order.payments
-								.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-								.map((p) => p.currencySnapshot.priceReference.price)
-						)
-					},
-					'payments.$.currencySnapshot.priceReference.remainingToPay': {
-						currency: payment.currencySnapshot.priceReference.price.currency,
-						amount: sumCurrency(payment.currencySnapshot.priceReference.price.currency, [
-							order.currencySnapshot.priceReference.totalPrice,
-							...order.payments
-								.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-								.map((p) => p.currencySnapshot.priceReference.price)
-								.map((p) => ({ currency: p.currency, amount: -p.amount }))
-						])
-					},
-					'payments.$.currencySnapshot.priceReference.received': {
-						currency: payment.currencySnapshot.priceReference.price.currency,
-						amount: toCurrency(
-							payment.currencySnapshot.priceReference.price.currency,
-							received.amount,
-							received.currency
-						)
-					},
-					...(payment.currencySnapshot.secondary &&
-						order.currencySnapshot.secondary && {
-							'payments.$.currencySnapshot.secondary.previouslyPaid': {
-								currency: payment.currencySnapshot.secondary.price.currency,
-								amount: sumCurrency(
-									payment.currencySnapshot.secondary.price.currency,
-									order.payments
-										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-										.map((p) => p.currencySnapshot.secondary?.price)
-										.filter((p) => p !== undefined)
-								)
-							},
-							'payments.$.currencySnapshot.secondary.remainingToPay': {
-								currency: payment.currencySnapshot.secondary.price.currency,
-								amount: sumCurrency(payment.currencySnapshot.secondary.price.currency, [
-									order.currencySnapshot.secondary.totalPrice,
-									...order.payments
-										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-										.map((p) => p.currencySnapshot.secondary?.price)
-										.filter((p) => p !== undefined)
-										.map((p) => ({ currency: p.currency, amount: -p.amount }))
-								])
-							},
-							'payments.$.currencySnapshot.secondary.received': {
-								currency: payment.currencySnapshot.secondary.price.currency,
-								amount: toCurrency(
-									payment.currencySnapshot.secondary.price.currency,
-									received.amount,
-									received.currency
-								)
-							}
-						}),
-					...(payment.currencySnapshot.accounting &&
-						order.currencySnapshot.accounting && {
-							'payments.$.currencySnapshot.accounting.previouslyPaid': {
-								currency: payment.currencySnapshot.accounting.price.currency,
-								amount: sumCurrency(
-									payment.currencySnapshot.accounting.price.currency,
-									order.payments
-										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-										.map((p) => p.currencySnapshot.accounting?.price)
-										.filter((p) => p !== undefined)
-								)
-							},
-							'payments.$.currencySnapshot.accounting.remainingToPay': {
-								currency: payment.currencySnapshot.accounting.price.currency,
-								amount: sumCurrency(payment.currencySnapshot.accounting.price.currency, [
-									order.currencySnapshot.accounting.totalPrice,
-									...order.payments
-										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-										.map((p) => p.currencySnapshot.accounting?.price)
-										.filter((p) => p !== undefined)
-										.map((p) => ({ currency: p.currency, amount: -p.amount }))
-								])
-							},
-							'payments.$.currencySnapshot.accounting.received': {
-								currency: payment.currencySnapshot.accounting.price.currency,
-								amount: toCurrency(
-									payment.currencySnapshot.accounting.price.currency,
-									received.amount,
-									received.currency
-								)
-							}
-						}),
+					...bookSet(
+						bookCurrencies,
+						'payments.$.currencySnapshot',
+						'previouslyPaid',
+						previouslyPaidIn
+					),
+					...bookSet(
+						bookCurrencies,
+						'payments.$.currencySnapshot',
+						'remainingToPay',
+						remainingToPayIn
+					),
+					...bookSet(bookCurrencies, 'payments.$.currencySnapshot', 'received', received),
 					'payments.$.transactions': payment.transactions,
-					'currencySnapshot.main.totalReceived': {
-						amount:
-							toCurrency(
-								order.currencySnapshot.main.totalReceived?.currency ?? runtimeConfig.mainCurrency,
-								received.amount,
-								received.currency
-							) + (order.currencySnapshot.main.totalReceived?.amount ?? 0),
-						currency:
-							order.currencySnapshot.main.totalReceived?.currency ?? runtimeConfig.mainCurrency
-					},
-					...(runtimeConfig.secondaryCurrency && {
-						'currencySnapshot.secondary.totalReceived': {
-							amount:
-								toCurrency(
-									order.currencySnapshot.secondary?.totalReceived?.currency ??
-										runtimeConfig.secondaryCurrency,
-									received.amount,
-									received.currency
-								) + (order.currencySnapshot.secondary?.totalReceived?.amount ?? 0),
-							currency:
-								order.currencySnapshot.secondary?.totalReceived?.currency ??
-								runtimeConfig.secondaryCurrency
-						}
-					}),
-					'currencySnapshot.priceReference.totalReceived': {
-						amount:
-							toCurrency(
-								order.currencySnapshot.priceReference.totalReceived?.currency ??
-									runtimeConfig.priceReferenceCurrency,
-								received.amount,
-								received.currency
-							) + (order.currencySnapshot.priceReference.totalReceived?.amount ?? 0),
-						currency:
-							order.currencySnapshot.priceReference.totalReceived?.currency ??
-							runtimeConfig.priceReferenceCurrency
-					},
+					...bookSet(bookCurrencies, 'currencySnapshot', 'totalReceived', totalReceivedIn),
 					updatedAt: new Date()
 				}
 			},
@@ -2027,21 +1897,24 @@ export function paymentMethodExpiration(
 	paymentMethod: PaymentMethod,
 	opts?: { paymentTimeout?: number }
 ) {
-	return paymentMethod === 'point-of-sale' ||
+	if (
+		paymentMethod === 'point-of-sale' ||
 		paymentMethod === 'bank-transfer' ||
 		paymentMethod === 'custom'
-		? undefined
-		: paymentMethod === 'lightning' &&
-		  isPhoenixdConfigured() &&
-		  (opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout) > 60
-		? addHours(new Date(), 1)
-		: addMinutes(new Date(), opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout);
+	) {
+		return undefined;
+	}
+
+	const timeout = opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout;
+
+	return resolveProcessor(paymentMethod)?.expiresIn?.(timeout) ?? addMinutes(new Date(), timeout);
 }
 
-function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
+/** Currency a payment via this method is denominated in. */
+function settlementCurrency(paymentMethod: PaymentMethod): Currency {
 	const pp = resolveProcessor(paymentMethod);
 	if (pp) {
-		return pp.paymentPrice(price);
+		return pp.settlementCurrency();
 	}
 
 	// Non-SDK methods use mainCurrency
@@ -2050,10 +1923,7 @@ function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
 		case 'free':
 		case 'bank-transfer':
 		case 'custom':
-			return {
-				amount: toCurrency(runtimeConfig.mainCurrency, price.amount, price.currency),
-				currency: runtimeConfig.mainCurrency
-			};
+			return runtimeConfig.mainCurrency;
 		default:
 			throw new PaymentGenerationError(
 				paymentMethod,
@@ -2090,10 +1960,8 @@ export async function addOrderPayment(
 	}
 
 	// We reuse the same currencies as previous payments
-	const mainCurrency = order.currencySnapshot.main.totalPrice.currency;
-	const secondaryCurrency = order.currencySnapshot.secondary?.totalPrice.currency;
-	const priceReferenceCurrency = order.currencySnapshot.priceReference.totalPrice.currency;
-	const accountingCurrency = order.currencySnapshot.accounting?.totalPrice.currency;
+	const bookCurrencies = orderBookCurrencies(order);
+	const mainCurrency = bookCurrencies.main;
 
 	const remainingAmount = orderAmountWithNoPaymentsCreated(order, {
 		ignorePendingPayments: opts?.ignorePendingPayments
@@ -2111,6 +1979,21 @@ export async function addOrderPayment(
 	// offering it on an order that still owes money would hand out a free order.
 	if (paymentMethod === 'free' && priceToPay.amount >= CURRENCY_UNIT[priceToPay.currency]) {
 		throw error(400, "You can't use free payment method on this order");
+	}
+
+	// Converted once here so the amount recorded and the amount asked of the provider
+	// cannot be computed from two different exchange rates.
+	const settlement = settlementCurrency(paymentMethod);
+	const toPay = bookAmount(settlement, priceToPay);
+
+	const minimumAmount =
+		resolveProcessor(paymentMethod)?.minimumAmount?.(settlement) ?? CURRENCY_UNIT[settlement];
+
+	if (paymentMethod !== 'free' && toPay.amount < minimumAmount) {
+		throw error(
+			400,
+			`${paymentMethod} payments start at ${minimumAmount} ${settlement}, asked for ${toPay.amount}`
+		);
 	}
 
 	const paymentId = new ObjectId();
@@ -2140,45 +2023,16 @@ export async function addOrderPayment(
 		status: isFreePayment ? 'paid' : 'pending',
 		...(paidAt && { paidAt }),
 		method: paymentMethod,
-		price: paymentPrice(paymentMethod, priceToPay),
+		price: toPay,
 		...(paymentMethod === 'point-of-sale' && opts?.posSubtype && { posSubtype: opts.posSubtype }),
 		...(customPaymentMethod && { customPaymentMethod }),
-		currencySnapshot: {
-			main: {
-				price: {
-					amount: toCurrency(mainCurrency, priceToPay.amount, priceToPay.currency),
-					currency: mainCurrency
-				}
-			},
-			...(secondaryCurrency && {
-				secondary: {
-					price: {
-						amount: toCurrency(secondaryCurrency, priceToPay.amount, priceToPay.currency),
-						currency: secondaryCurrency
-					}
-				}
-			}),
-			...(accountingCurrency && {
-				accounting: {
-					price: {
-						amount: toCurrency(accountingCurrency, priceToPay.amount, priceToPay.currency),
-						currency: accountingCurrency
-					}
-				}
-			}),
-			priceReference: {
-				price: {
-					amount: toCurrency(priceReferenceCurrency, priceToPay.amount, priceToPay.currency),
-					currency: priceReferenceCurrency
-				}
-			}
-		},
+		currencySnapshot: paymentPriceSnapshot(bookCurrencies, priceToPay),
 		...(expiresAt && { expiresAt }),
 		...(await generatePaymentInfo({
 			method: paymentMethod,
 			orderId: order._id,
 			orderNumber: order.number,
-			toPay: priceToPay,
+			toPay,
 			paymentId,
 			expiresAt: expiresAt ?? undefined
 		})),

@@ -1,6 +1,5 @@
 import { isSumupEnabled } from '$lib/server/sumup';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { toCurrency } from '$lib/utils/toCurrency';
 import { CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { ORIGIN } from '$lib/server/env-config';
@@ -18,17 +17,10 @@ export default {
 
 	isEnabled: () => isSumupEnabled(),
 
-	paymentPrice(price) {
-		const currency = runtimeConfig.sumUp.currency;
-		return {
-			amount: toCurrency(currency, price.amount, price.currency),
-			currency
-		};
-	},
+	settlementCurrency: () => runtimeConfig.sumUp.currency,
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
-		const currency = runtimeConfig.sumUp.currency;
-		const amount = toCurrency(currency, params.toPay.amount, params.toPay.currency);
+		const { amount, currency } = params.toPay;
 
 		const resp = await fetch('https://api.sumup.com/v0.1/checkouts', {
 			method: 'POST',

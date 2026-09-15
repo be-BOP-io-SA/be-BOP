@@ -3,12 +3,11 @@ import {
 	sbpCreateCheckout,
 	sbpGetCheckoutStatus
 } from '$lib/server/swiss-bitcoin-pay';
-import { toSatoshis } from '$lib/utils/toSatoshis';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { differenceInMinutes } from 'date-fns';
-import { lightningPaymentPrice, lightningLabel } from '../pp';
+import { lightningLabel } from '../pp';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -22,10 +21,10 @@ export default {
 
 	isEnabled: () => isSwissBitcoinPayConfigured(),
 
-	paymentPrice: lightningPaymentPrice,
+	settlementCurrency: () => 'SAT',
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
-		const satoshis = toSatoshis(params.toPay.amount, params.toPay.currency);
+		const satoshis = params.toPay.amount;
 		const label = lightningLabel(params.orderId, params.orderNumber);
 		const checkout = await sbpCreateCheckout({
 			title: label,

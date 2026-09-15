@@ -5,7 +5,6 @@ import {
 	paypalGetCheckout
 } from '$lib/server/paypal';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { toCurrency } from '$lib/utils/toCurrency';
 import { FRACTION_DIGITS_PER_CURRENCY, CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { ORIGIN } from '$lib/server/env-config';
@@ -23,17 +22,10 @@ export default {
 
 	isEnabled: () => isPaypalEnabled(),
 
-	paymentPrice(price) {
-		const currency = runtimeConfig.paypal.currency;
-		return {
-			amount: toCurrency(currency, price.amount, price.currency),
-			currency
-		};
-	},
+	settlementCurrency: () => runtimeConfig.paypal.currency,
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
-		const currency = runtimeConfig.paypal.currency;
-		const amount = toCurrency(currency, params.toPay.amount, params.toPay.currency);
+		const { amount, currency } = params.toPay;
 
 		const response = await fetch(`${paypalApiOrigin()}/v2/checkout/orders`, {
 			method: 'POST',

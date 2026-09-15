@@ -1,7 +1,6 @@
 import { isBlinkConfigured, blinkCreateInvoice, blinkLookupInvoice } from '$lib/server/blink';
-import { toSatoshis } from '$lib/utils/toSatoshis';
 import { differenceInMinutes } from 'date-fns';
-import { lightningPaymentPrice, lightningLabel } from '../pp';
+import { lightningLabel } from '../pp';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -24,10 +23,10 @@ export default {
 
 	isEnabled: () => isBlinkConfigured(),
 
-	paymentPrice: lightningPaymentPrice,
+	settlementCurrency: () => 'SAT',
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
-		const satoshis = toSatoshis(params.toPay.amount, params.toPay.currency);
+		const satoshis = params.toPay.amount;
 		const memo = lightningLabel(params.orderId, params.orderNumber);
 		// Blink GraphQL expiry is in minutes; default to 60 when no expiry was provided.
 		const expiresInMinutes = params.expiresAt
