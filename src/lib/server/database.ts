@@ -57,6 +57,7 @@ import type { CheckoutFieldConfig } from '$lib/types/CheckoutFieldConfig';
 import type { PosSession } from '$lib/types/PosSession';
 import type { PendingZap } from '$lib/types/PendingZap';
 import type { AccountingLog } from '$lib/types/AccountingLog';
+import type { LnurlWithdraw } from '$lib/types/LnurlWithdraw';
 import type { ApiKey } from '$lib/types/ApiKey';
 
 // Bigger than the default 10, helpful with MongoDB errors
@@ -124,6 +125,7 @@ const genCollection = () => ({
 	checkoutFieldConfigs: db.collection<CheckoutFieldConfig>('checkoutFieldConfigs'),
 	posSessions: db.collection<PosSession>('posSessions'),
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
+	lnurlWithdrawals: db.collection<LnurlWithdraw>('lnurlWithdrawals'),
 
 	apiKeys: db.collection<ApiKey>('apiKeys'),
 
@@ -159,6 +161,9 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.carts, { 'user.ssoIds': 1 }],
 	[collections.carts, { 'items.productId': 1 }],
 	[collections.challenges, { beginsAt: 1, endsAt: 1 }],
+	// A withdraw link that nobody used disappears on its own rather than staying spendable.
+	[collections.lnurlWithdrawals, { expiresAt: 1 }, { expireAfterSeconds: 0 }],
+	[collections.lnurlWithdrawals, { status: 1, createdAt: 1 }],
 	[collections.orders, { createdAt: 1 }],
 	[collections.orders, { 'user.userId': 1 }],
 	[collections.orders, { 'user.sessionId': 1 }],
