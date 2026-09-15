@@ -34,6 +34,7 @@ const VAT_SETTING_KEYS = new Set([
 	'vatSingleCountry',
 	'vatNullOutsideSellerCountry',
 	'displayVatIncludedInProduct',
+	'hideVatMentionsWhenExempted',
 	'vatExemptionReason'
 ]);
 
@@ -48,6 +49,7 @@ export async function load(event) {
 		subscriptionDuration: runtimeConfig.subscriptionDuration,
 		subscriptionReminderSeconds: runtimeConfig.subscriptionReminderSeconds,
 		vatExemptionReason: runtimeConfig.vatExemptionReason,
+		hideVatMentionsWhenExempted: runtimeConfig.hideVatMentionsWhenExempted,
 		desiredPaymentTimeout: runtimeConfig.desiredPaymentTimeout,
 		reserveStockInMinutes: runtimeConfig.reserveStockInMinutes,
 		allPaymentMethods: paymentMethods({ includeDisabled: true, includePOS: true }),
@@ -123,6 +125,7 @@ export const actions = {
 				vatSingleCountry: z.boolean({ coerce: true }),
 				vatNullOutsideSellerCountry: z.boolean({ coerce: true }),
 				displayVatIncludedInProduct: z.boolean({ coerce: true }),
+				hideVatMentionsWhenExempted: z.boolean({ coerce: true }),
 				vatCountry: z.string().default(runtimeConfig.vatCountry),
 				subscriptionDuration: z.enum(SUBSCRIPTION_DURATIONS),
 				subscriptionReminderSeconds: z

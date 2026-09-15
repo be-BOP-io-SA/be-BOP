@@ -6,6 +6,7 @@
 	import AddToCart from '../AddToCart.svelte';
 	import { useI18n } from '$lib/i18n';
 	import type { ProductWidgetProduct } from './ProductWidgetProduct';
+	import VatMention from '../VatMention.svelte';
 
 	export let pictures: Picture[] | [];
 	export let product: ProductWidgetProduct;
@@ -47,7 +48,8 @@
 					currency={product.price.currency}
 					secondary
 				/>
-				<span class="font-semibold">{t('product.vatExcluded')}</span>
+				<!-- #2679: VAT mention, hidden for VAT-exempt shops (see VatMention.svelte) -->
+				<VatMention class="font-semibold" />
 			</div>
 		</div>
 		<a

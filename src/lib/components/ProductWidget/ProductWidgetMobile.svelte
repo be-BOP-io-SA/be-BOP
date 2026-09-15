@@ -5,6 +5,7 @@
 	import ProductType from '../ProductType.svelte';
 	import { useI18n } from '$lib/i18n';
 	import type { ProductWidgetProduct } from './ProductWidgetProduct';
+	import VatMention from '../VatMention.svelte';
 
 	export let pictures: Picture[] | [];
 	export let product: ProductWidgetProduct;
@@ -55,7 +56,8 @@
 					currency={product.price.currency}
 					secondary
 				/>
-				<span class="text-base mt-1">({t('product.horsTaxeShort')})</span>
+				<!-- #2679: VAT mention, hidden for VAT-exempt shops (see VatMention.svelte) -->
+				<VatMention short class="text-base mt-1" />
 			</div>
 		</div>
 		{#if externalUrl}
