@@ -3,7 +3,7 @@ import {
 	phoenixdCreateInvoice,
 	phoenixdLookupInvoice
 } from '$lib/server/phoenixd';
-import { addHours } from 'date-fns';
+import { addMinutes } from 'date-fns';
 import { lightningLabel, LIGHTNING_PRESENTATION } from '../pp';
 import type {
 	PaymentProcessorDefinition,
@@ -23,7 +23,7 @@ export default {
 	presentation: LIGHTNING_PRESENTATION,
 
 	// phoenixd refuses invoices valid for more than an hour.
-	expiresIn: (timeoutMinutes) => (timeoutMinutes > 60 ? addHours(new Date(), 1) : undefined),
+	expiresIn: (timeoutMinutes) => addMinutes(new Date(), Math.min(timeoutMinutes, 60)),
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const satoshis = params.toPay.amount;

@@ -120,8 +120,11 @@ export interface PaymentProcessorDefinition {
 	 */
 	settlementCurrency(): Currency;
 
-	/** Absent = the shop's payment timeout applies unchanged. */
-	expiresIn?(timeoutMinutes: number): Date | undefined;
+	/**
+	 * When the payment stops being payable. `null` = it never does, for anything settled
+	 * by hand. Absent = the shop's payment timeout from now.
+	 */
+	expiresIn?(timeoutMinutes: number): Date | null;
 
 	/**
 	 * Shortfall accepted between what arrived and what was asked, in the settlement
@@ -157,7 +160,12 @@ export interface PaymentProcessorDefinition {
 	/** `params.toPay` is already in `settlementCurrency()` — do not convert it again. */
 	createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult>;
 
-	checkPayment(payment: Order['payments'][number], order: Order): Promise<CheckPaymentResult>;
+	/**
+	 * Absent = nothing to poll, because settlement happens out of band: cash in a till,
+	 * a wire the shopowner reconciles, an order that was free to begin with. Such a
+	 * payment only ever changes status when someone says so.
+	 */
+	checkPayment?(payment: Order['payments'][number], order: Order): Promise<CheckPaymentResult>;
 }
 
 // --- Helpers ---
@@ -177,6 +185,9 @@ export function coversPayment(
 
 	return settled >= payment.price.amount - tolerance;
 }
+
+/** Nothing to scan or follow: the buyer pays in the room, by wire, or not at all. */
+export const MANUAL_PRESENTATION: PaymentPresentation = { kind: 'manual' };
 
 export const LIGHTNING_PRESENTATION: PaymentPresentation = {
 	kind: 'qr',
@@ -225,6 +236,13 @@ export function getProcessor(processor: string): PaymentProcessorDefinition | un
 
 export function allProcessors(): PaymentProcessorDefinition[] {
 	return [...registry.values()];
+}
+
+/** Processors that can settle a contactless payment made on a terminal. */
+export function tapToPayProcessors(): PaymentProcessor[] {
+	return allProcessors()
+		.filter((pp) => pp.tapToPay)
+		.map((pp) => pp.meta.processor);
 }
 
 export function getProcessorsForMethod(method: PaymentMethod): PaymentProcessorDefinition[] {

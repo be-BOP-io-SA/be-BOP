@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { testProcessorConnection } from './test-connection';
 import { registerProcessor, type CreatePaymentParams, type PaymentProcessorDefinition } from './pp';
 import PPTaler from './contrib/PPTaler';
@@ -6,7 +6,8 @@ import { exchangeRate } from '$lib/stores/exchangeRate';
 import { SATOSHIS_PER_BTC } from '$lib/types/Currency';
 
 describe('testProcessorConnection', () => {
-	exchangeRate.set({ SAT: SATOSHIS_PER_BTC, EUR: 30_000 });
+	// Per test, not per file: other suites share this store and reset it as they go.
+	beforeEach(() => exchangeRate.set({ SAT: SATOSHIS_PER_BTC, EUR: 30_000 }));
 
 	afterEach(() => registerProcessor(PPTaler));
 

@@ -11,6 +11,10 @@ import PPBitcoind from './contrib/PPBitcoind';
 import PPPaypal from './contrib/PPPaypal';
 import PPTaler from './contrib/PPTaler';
 import PPOsb from './contrib/PPOsb';
+import PPPointOfSale from './contrib/PPPointOfSale';
+import PPFree from './contrib/PPFree';
+import PPBankTransfer from './contrib/PPBankTransfer';
+import PPCustom from './contrib/PPCustom';
 
 // Registration order = default priority per method (when no user preference set)
 
@@ -37,3 +41,9 @@ registerProcessor(PPTaler);
 
 // osb: single provider (French Polynesia)
 registerProcessor(PPOsb);
+
+// Settled by hand, one provider each
+registerProcessor(PPPointOfSale);
+registerProcessor(PPFree);
+registerProcessor(PPBankTransfer);
+registerProcessor(PPCustom);

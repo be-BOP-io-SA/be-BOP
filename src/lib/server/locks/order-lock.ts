@@ -99,9 +99,10 @@ async function maintainOrders() {
 				payment = updatedPayment;
 
 				// SDK universal dispatcher — only dispatch if processor AND method match
-				// (prevents tap-to-pay method:'point-of-sale' + processor:'stripe' from being caught by PPStripe)
+				// (prevents tap-to-pay method:'point-of-sale' + processor:'stripe' from being caught by PPStripe).
+				// A processor without checkPayment settles out of band and must not be polled.
 				const pp = payment.processor ? getProcessor(payment.processor) : undefined;
-				if (pp && pp.meta.method === payment.method && pp.isEnabled()) {
+				if (pp?.checkPayment && pp.meta.method === payment.method && pp.isEnabled()) {
 					try {
 						const result = await pp.checkPayment(payment, order);
 						switch (result.status) {

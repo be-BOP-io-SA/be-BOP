@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { BITCOIN_PRESENTATION, LIGHTNING_PRESENTATION, serializePresentation } from './pp';
 import type { PaymentProcessorDefinition } from './pp';
 import PPBitcoind from './contrib/PPBitcoind';
@@ -13,7 +13,8 @@ const payment = (address: string, price: Price) =>
 	({ address, price, method: 'bitcoin' }) as Order['payments'][number];
 
 describe('payment presentation', () => {
-	exchangeRate.set({ SAT: SATOSHIS_PER_BTC, EUR: 30_000 });
+	// Per test, not per file: other suites share this store and reset it as they go.
+	beforeEach(() => exchangeRate.set({ SAT: SATOSHIS_PER_BTC, EUR: 30_000 }));
 
 	describe('bitcoin', () => {
 		const bitcoin = payment('bc1qexample', { amount: 0.004, currency: 'BTC' });

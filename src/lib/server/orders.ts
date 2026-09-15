@@ -46,6 +46,9 @@ import { type Cart } from '$lib/types/Cart';
 import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { sumCurrency } from '$lib/utils/sumCurrency';
+// Every payment now resolves through the registry, so loading it is this module's business
+// rather than something the request hooks happen to have done first.
+import './sdk/pp-registry';
 import {
 	bookAmount,
 	bookSet,
@@ -1856,40 +1859,30 @@ async function generatePaymentInfo(params: {
 	meta?: unknown;
 	processor?: PaymentProcessor;
 }> {
-	// SDK branch — handles bitcoin, lightning, card, paypal
 	const pp = resolveProcessor(params.method);
-	if (pp) {
-		try {
-			const result = await pp.createPayment({
-				orderId: params.orderId,
-				orderNumber: params.orderNumber,
-				paymentId: params.paymentId.toHexString(),
-				toPay: params.toPay,
-				expiresAt: params.expiresAt
-			});
-			return { ...result, processor: pp.meta.processor };
-		} catch (err) {
-			throw new PaymentGenerationError(
-				params.method,
-				err instanceof Error ? err.message : 'Payment creation failed',
-				err
-			);
-		}
+
+	if (!pp) {
+		throw new PaymentGenerationError(
+			params.method,
+			`No payment processor available for method ${params.method}`
+		);
 	}
 
-	// Fallback for methods without SDK: point-of-sale, free, bank-transfer, custom
-	switch (params.method) {
-		case 'point-of-sale':
-		case 'free':
-		case 'custom':
-			return {};
-		case 'bank-transfer':
-			return { address: runtimeConfig.sellerIdentity?.bank?.iban };
-		default:
-			throw new PaymentGenerationError(
-				params.method,
-				`No payment processor available for method ${params.method}`
-			);
+	try {
+		const result = await pp.createPayment({
+			orderId: params.orderId,
+			orderNumber: params.orderNumber,
+			paymentId: params.paymentId.toHexString(),
+			toPay: params.toPay,
+			expiresAt: params.expiresAt
+		});
+		return { ...result, processor: pp.meta.processor };
+	} catch (err) {
+		throw new PaymentGenerationError(
+			params.method,
+			err instanceof Error ? err.message : 'Payment creation failed',
+			err
+		);
 	}
 }
 
@@ -1897,39 +1890,25 @@ export function paymentMethodExpiration(
 	paymentMethod: PaymentMethod,
 	opts?: { paymentTimeout?: number }
 ) {
-	if (
-		paymentMethod === 'point-of-sale' ||
-		paymentMethod === 'bank-transfer' ||
-		paymentMethod === 'custom'
-	) {
-		return undefined;
-	}
-
 	const timeout = opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout;
+	const declared = resolveProcessor(paymentMethod)?.expiresIn?.(timeout);
 
-	return resolveProcessor(paymentMethod)?.expiresIn?.(timeout) ?? addMinutes(new Date(), timeout);
+	// `null` is a processor saying the payment never expires; absent is no opinion.
+	return declared === null ? undefined : declared ?? addMinutes(new Date(), timeout);
 }
 
 /** Currency a payment via this method is denominated in. */
 function settlementCurrency(paymentMethod: PaymentMethod): Currency {
 	const pp = resolveProcessor(paymentMethod);
-	if (pp) {
-		return pp.settlementCurrency();
+
+	if (!pp) {
+		throw new PaymentGenerationError(
+			paymentMethod,
+			`No payment processor configured for method ${paymentMethod}`
+		);
 	}
 
-	// Non-SDK methods use mainCurrency
-	switch (paymentMethod) {
-		case 'point-of-sale':
-		case 'free':
-		case 'bank-transfer':
-		case 'custom':
-			return runtimeConfig.mainCurrency;
-		default:
-			throw new PaymentGenerationError(
-				paymentMethod,
-				`No payment processor configured for method ${paymentMethod}`
-			);
-	}
+	return pp.settlementCurrency();
 }
 
 export async function addOrderPayment(

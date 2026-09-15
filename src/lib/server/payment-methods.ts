@@ -28,7 +28,13 @@ export const ALL_PAYMENT_PROCESSORS = [
 	'sumup',
 	'swiss-bitcoin-pay',
 	'taler',
-	'osb'
+	'osb',
+	// Settled by hand rather than by a provider, but processors all the same: they
+	// declare their currency, their expiry and how they present.
+	'point-of-sale',
+	'free',
+	'bank-transfer',
+	'custom'
 ] as const;
 export type PaymentProcessor = (typeof ALL_PAYMENT_PROCESSORS)[number];
 
@@ -49,21 +55,13 @@ export const paymentMethods = (opts?: {
 						return method === 'free';
 					}
 					switch (method) {
-						case 'card':
-						case 'paypal':
-						case 'bitcoin':
-						case 'lightning':
-						case 'taler':
-						case 'osb':
-							return getProcessorsForMethod(method).some((pp) => pp.isEnabled());
-						case 'bank-transfer':
-							return runtimeConfig.sellerIdentity?.bank;
-						case 'custom':
-							return runtimeConfig.customPaymentMethods.length > 0;
+						// Availability is request-scoped for these two, so no processor can answer it.
 						case 'point-of-sale':
 							return opts?.hasPosOptions || opts?.includePOS;
 						case 'free':
 							return opts?.totalSatoshis === undefined;
+						default:
+							return getProcessorsForMethod(method).some((pp) => pp.isEnabled());
 					}
 				}
 		  );

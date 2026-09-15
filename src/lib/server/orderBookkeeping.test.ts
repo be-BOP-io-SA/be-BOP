@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
 	bookAmount,
 	bookAxes,
@@ -40,7 +40,10 @@ function makePayment(axes: Partial<Record<string, Currency>>): OrderPayment {
 
 describe('orderBookkeeping', () => {
 	// toCurrency reads this store; 1 BTC = 30 000 EUR keeps the arithmetic checkable.
-	exchangeRate.set({ SAT: SATOSHIS_PER_BTC, EUR: 30_000, CHF: 30_000, USD: 30_000 });
+	// Per test, not per file: other suites share this store and reset it as they go.
+	beforeEach(() =>
+		exchangeRate.set({ SAT: SATOSHIS_PER_BTC, EUR: 30_000, CHF: 30_000, USD: 30_000 })
+	);
 
 	describe('orderBookCurrencies', () => {
 		it('reads the two mandatory axes', () => {

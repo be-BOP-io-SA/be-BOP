@@ -13,6 +13,8 @@ function asPaymentProcessor(value: string): PaymentProcessor | undefined {
 	return typedInclude(ALL_PAYMENT_PROCESSORS, value) ? value : undefined;
 }
 
+// Stays as permissive as the stored values: whether a processor can actually watch a
+// terminal is decided when the tap happens, not when the subtype is saved.
 const tapToPayProcessorEnum = z.enum(['', ...ALL_PAYMENT_PROCESSORS]);
 
 const cashSubtypeUpdateSchema = z.object({

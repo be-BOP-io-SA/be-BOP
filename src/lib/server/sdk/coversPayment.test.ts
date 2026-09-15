@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { coversPayment, type PaymentProcessorDefinition } from './pp';
 import { exchangeRate } from '$lib/stores/exchangeRate';
 import { SATOSHIS_PER_BTC } from '$lib/types/Currency';
@@ -11,7 +11,8 @@ const paymentOf = (amount: number, currency: Price['currency']) =>
 	({ price: { amount, currency } }) as Order['payments'][number];
 
 describe('coversPayment', () => {
-	exchangeRate.set({ SAT: SATOSHIS_PER_BTC, EUR: 30_000, USD: 30_000 });
+	// Per test, not per file: other suites share this store and reset it as they go.
+	beforeEach(() => exchangeRate.set({ SAT: SATOSHIS_PER_BTC, EUR: 30_000, USD: 30_000 }));
 
 	it('accepts the exact amount', () => {
 		expect(

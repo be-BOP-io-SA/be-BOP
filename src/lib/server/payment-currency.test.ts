@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanDb } from './test-utils';
 import { collections } from './database';
 import { TEST_DIGITAL_PRODUCT } from './seed/product';
-import { addOrderPayment, createOrder, onOrderPayment } from './orders';
+import { addOrderPayment, createOrder, onOrderPayment, paymentMethodExpiration } from './orders';
 import { runtimeConfig } from './runtime-config';
 import { registerProcessor } from './sdk/pp';
 import PPTaler from './sdk/contrib/PPTaler';
@@ -10,6 +10,7 @@ import PPOsb from './sdk/contrib/PPOsb';
 import { exchangeRate } from '$lib/stores/exchangeRate';
 import { get } from 'svelte/store';
 import type { CreatePaymentParams, PaymentProcessorDefinition } from './sdk/pp';
+import type { PaymentMethod } from './payment-methods';
 import type { Currency } from '$lib/types/Currency';
 import type { Order } from '$lib/types/Order';
 
@@ -37,8 +38,8 @@ function useFakeProcessor(over: Partial<PaymentProcessorDefinition> = {}) {
 	return seen;
 }
 
-async function createTalerOrder(): Promise<Order> {
-	const orderId = await createOrder([{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }], 'taler', {
+async function createOrderWith(method: PaymentMethod): Promise<Order> {
+	const orderId = await createOrder([{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }], method, {
 		locale: 'en',
 		user: { sessionId: 'test-session-id' },
 		notifications: { paymentStatus: { email: 'test@example.com' } },
@@ -83,7 +84,7 @@ describe('payment currency', () => {
 		it('hands createPayment an amount already in the settlement currency', async () => {
 			const seen = useFakeProcessor();
 
-			await createTalerOrder();
+			await createOrderWith('taler');
 
 			// The product costs 0.004 BTC and cleanDb pins 1 BTC = 30 000 CHF.
 			expect(seen).toHaveLength(1);
@@ -93,7 +94,7 @@ describe('payment currency', () => {
 		it('records the same amount it asked the provider for', async () => {
 			const seen = useFakeProcessor();
 
-			const order = await createTalerOrder();
+			const order = await createOrderWith('taler');
 
 			expect(order.payments[0].price).toEqual(seen[0].toPay);
 		});
@@ -110,7 +111,7 @@ describe('payment currency', () => {
 				}
 			});
 
-			const order = await createTalerOrder();
+			const order = await createOrderWith('taler');
 
 			expect(order.payments[0].price).toEqual(seen[0].toPay);
 			expect(order.payments[0].price.amount).toBe(120);
@@ -119,7 +120,7 @@ describe('payment currency', () => {
 		it('books the payment in the order currencies, not the settlement one', async () => {
 			useFakeProcessor();
 
-			const order = await createTalerOrder();
+			const order = await createOrderWith('taler');
 			const snapshot = order.payments[0].currencySnapshot;
 
 			expect(order.payments[0].price.currency).toBe('CHF');
@@ -133,11 +134,11 @@ describe('payment currency', () => {
 			let currency: Currency = 'CHF';
 			const seen = useFakeProcessor({ settlementCurrency: () => currency });
 
-			await createTalerOrder();
+			await createOrderWith('taler');
 			expect(seen[0].toPay.currency).toBe('CHF');
 
 			currency = 'SAT';
-			const order = await createTalerOrder();
+			const order = await createOrderWith('taler');
 
 			expect(seen[1].toPay).toEqual({ amount: 400_000, currency: 'SAT' });
 			expect(order.payments[0].price.currency).toBe('SAT');
@@ -149,7 +150,7 @@ describe('payment currency', () => {
 			const capped = new Date('2030-01-01T00:00:00Z');
 			useFakeProcessor({ expiresIn: () => capped });
 
-			const order = await createTalerOrder();
+			const order = await createOrderWith('taler');
 
 			expect(order.payments[0].expiresAt).toEqual(capped);
 		});
@@ -158,7 +159,7 @@ describe('payment currency', () => {
 			useFakeProcessor();
 
 			const before = Date.now();
-			const order = await createTalerOrder();
+			const order = await createOrderWith('taler');
 			const expiresAt = order.payments[0].expiresAt?.getTime() ?? 0;
 
 			expect(expiresAt).toBeGreaterThanOrEqual(
@@ -184,7 +185,7 @@ describe('payment currency', () => {
 			} as PaymentProcessorDefinition);
 			runtimeConfig.paymentProcessorPreferences = { taler: 'osb' };
 
-			const order = await createTalerOrder();
+			const order = await createOrderWith('taler');
 
 			expect(order.payments[0].processor).toBe('osb');
 			expect(order.payments[0].expiresAt).not.toEqual(capped);
@@ -195,7 +196,7 @@ describe('payment currency', () => {
 		it('books into the order currency even after the shop changes its own', async () => {
 			runtimeConfig.mainCurrency = 'EUR';
 			useFakeProcessor();
-			const order = await createTalerOrder();
+			const order = await createOrderWith('taler');
 			const frozen = order.currencySnapshot.main.totalPrice.currency;
 
 			expect(frozen).toBe('EUR');
@@ -211,7 +212,7 @@ describe('payment currency', () => {
 			runtimeConfig.accountingCurrency = 'USD';
 			useFakeProcessor();
 
-			const order = await createTalerOrder();
+			const order = await createOrderWith('taler');
 			await onOrderPayment(order, order.payments[0], order.payments[0].price);
 
 			const paid = await collections.orders.findOne({ _id: order._id });
@@ -220,10 +221,77 @@ describe('payment currency', () => {
 		});
 	});
 
+	describe('methods settled by hand', () => {
+		const sellerIdentity = runtimeConfig.sellerIdentity;
+		const customMethods = runtimeConfig.customPaymentMethods;
+
+		afterEach(() => {
+			runtimeConfig.sellerIdentity = sellerIdentity;
+			runtimeConfig.customPaymentMethods = customMethods;
+		});
+
+		it('settles point-of-sale in the shop currency, with no deadline', async () => {
+			const order = await createOrderWith('point-of-sale');
+			const payment = order.payments[0];
+
+			expect(payment.processor).toBe('point-of-sale');
+			expect(payment.price.currency).toBe(order.currencySnapshot.main.totalPrice.currency);
+			expect(payment.expiresAt).toBeUndefined();
+		});
+
+		it('still hands bank-transfer the seller IBAN', async () => {
+			runtimeConfig.sellerIdentity = {
+				bank: { iban: 'FR7630001007941234567890185', bic: 'BDFEFRPP' }
+			} as typeof runtimeConfig.sellerIdentity;
+
+			const order = await createOrderWith('bank-transfer');
+
+			expect(order.payments[0].address).toBe('FR7630001007941234567890185');
+			expect(order.payments[0].expiresAt).toBeUndefined();
+		});
+
+		it('gives custom payments no deadline either', async () => {
+			runtimeConfig.customPaymentMethods = [
+				{ id: 'cheque', label: 'Cheque', instructions: 'Post it' }
+			];
+
+			const order = await createOrderWith('custom');
+
+			expect(order.payments[0].processor).toBe('custom');
+			expect(order.payments[0].expiresAt).toBeUndefined();
+		});
+
+		it('keeps the deadline free payments always had', () => {
+			// createOrder refuses 'free' on a priced order, so the rule is checked where it lives.
+			expect(paymentMethodExpiration('free')).toBeInstanceOf(Date);
+		});
+
+		it('gives the hand-settled methods no deadline', () => {
+			runtimeConfig.sellerIdentity = {
+				bank: { iban: 'FR76', bic: 'BDFEFRPP' }
+			} as typeof runtimeConfig.sellerIdentity;
+			runtimeConfig.customPaymentMethods = [{ id: 'c', label: 'C', instructions: '' }];
+
+			expect(paymentMethodExpiration('point-of-sale')).toBeUndefined();
+			expect(paymentMethodExpiration('bank-transfer')).toBeUndefined();
+			expect(paymentMethodExpiration('custom')).toBeUndefined();
+		});
+
+		it('books them in every currency the order carries', async () => {
+			runtimeConfig.accountingCurrency = 'USD';
+
+			const order = await createOrderWith('point-of-sale');
+			const snapshot = order.payments[0].currencySnapshot;
+
+			expect(snapshot.main.price).toEqual(order.currencySnapshot.main.totalPrice);
+			expect(snapshot.accounting?.price.currency).toBe('USD');
+		});
+	});
+
 	describe('partial payments', () => {
 		it('keeps every payment booked in the order currencies', async () => {
 			useFakeProcessor();
-			const order = await createTalerOrder();
+			const order = await createOrderWith('taler');
 			const half = {
 				amount: order.currencySnapshot.main.totalPrice.amount / 2,
 				currency: order.currencySnapshot.main.totalPrice.currency
