@@ -7,6 +7,7 @@ import { collections } from '$lib/server/database';
 import {
 	checkWithdrawReadiness,
 	createLnurlWithdraw,
+	withdrawQrCodeSvg,
 	withdrawUrls
 } from '$lib/server/lnurlWithdraw';
 import { z } from 'zod';
@@ -28,7 +29,12 @@ const withdrawRequestSchema = z
 			.int()
 			.min(60)
 			.max(7 * 24 * 3600)
-			.optional()
+			.optional(),
+		/**
+		 * Return the code in the response body rather than as a link. A till that prints a ticket
+		 * has nowhere to fetch an image from, so it gets the SVG inline.
+		 */
+		includeQrCode: z.boolean().optional()
 	})
 	.strict()
 	.superRefine((body, ctx) => {
@@ -102,13 +108,17 @@ export const POST: RequestHandler = apiV1Handler(async (event) => {
 		expiresInSeconds: parsed.data.expiresInSeconds ?? DEFAULT_EXPIRY_SECONDS
 	});
 
-	const { url, lnurl } = withdrawUrls(withdraw._id);
+	const { url, lnurl, lnurlw } = withdrawUrls(withdraw._id);
 
 	return json({
 		ok: true,
 		withdrawId: withdraw._id,
+		/** LUD-01 address: what a wallet expects when it is handed text rather than a link. */
 		lnurl,
+		lnurlw,
 		url,
+		qrCodeUrl: `${url}/qrcode`,
+		...(parsed.data.includeQrCode && { qrCodeSvg: await withdrawQrCodeSvg(withdraw._id) }),
 		minSat: withdraw.minSat,
 		maxSat: withdraw.maxSat,
 		description: withdraw.description,

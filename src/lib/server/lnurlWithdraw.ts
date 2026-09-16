@@ -4,6 +4,8 @@ import { isPhoenixdConfigured } from '$lib/server/phoenixd';
 import type { LnurlWithdraw } from '$lib/types/LnurlWithdraw';
 import type { ObjectId } from 'mongodb';
 import { ORIGIN } from '$lib/server/env-config';
+import { bech32 } from 'bech32';
+import qrcode from 'qrcode';
 import crypto from 'crypto';
 
 /**
@@ -117,10 +119,39 @@ export async function checkWithdrawReadiness(amountSat: number): Promise<Withdra
 	return { ready: true, balanceSat };
 }
 
-/** The URL a wallet resolves, and the `lnurlw://` form that goes in the QR code (LUD-17). */
-export function withdrawUrls(id: string): { url: string; lnurl: string } {
+/**
+ * A withdraw URL is not handed to a wallet as an address: LUD-01 asks for the URL bech32-encoded
+ * under the `lnurl` prefix. The result is uppercased because a QR code stores uppercase
+ * alphanumerics in a denser mode than mixed case — same data, fewer modules to print.
+ *
+ * The 90-character ceiling the library defaults to is the one from BIP-173, which LNURL does not
+ * follow: a shop URL with a UUID lands around 110 characters once encoded.
+ */
+const BECH32_LIMIT = 2000;
+
+export function encodeLnurl(url: string): string {
+	return bech32
+		.encode('lnurl', bech32.toWords(Buffer.from(url, 'utf8')), BECH32_LIMIT)
+		.toUpperCase();
+}
+
+/**
+ * The three forms of the same withdraw, because wallets disagree on what they accept:
+ * the plain URL, the `LNURL1…` address, and the `lnurlw://` scheme (LUD-17).
+ */
+export function withdrawUrls(id: string): { url: string; lnurl: string; lnurlw: string } {
 	const url = `${ORIGIN}/lnurlw/${id}`;
-	return { url, lnurl: url.replace(/^https?:\/\//, 'lnurlw://') };
+	return {
+		url,
+		lnurl: encodeLnurl(url),
+		lnurlw: url.replace(/^https?:\/\//, 'lnurlw://')
+	};
+}
+
+/** The same address, ready to print. SVG scales to any printer without turning to mush. */
+export async function withdrawQrCodeSvg(id: string): Promise<string> {
+	const { lnurl } = withdrawUrls(id);
+	return (await qrcode.toString(lnurl, { type: 'svg' })).trim();
 }
 
 export async function createLnurlWithdraw(params: {

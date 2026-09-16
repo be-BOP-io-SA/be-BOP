@@ -11,7 +11,13 @@ vi.mock('$lib/server/runtime-config', () => ({
 }));
 vi.mock('$lib/server/env-config', () => ({ ORIGIN: 'https://shop.example' }));
 
-import { checkWithdrawReadiness, withdrawFeeMarginSat, withdrawUrls } from './lnurlWithdraw';
+import { bech32 } from 'bech32';
+import {
+	checkWithdrawReadiness,
+	encodeLnurl,
+	withdrawFeeMarginSat,
+	withdrawUrls
+} from './lnurlWithdraw';
 
 /** One fetch stub per phoenixd route, so a test only says what it cares about. */
 function phoenixdAnswers(answers: {
@@ -115,10 +121,33 @@ describe('withdrawFeeMarginSat', () => {
 });
 
 describe('withdrawUrls', () => {
-	it('gives the URL a wallet resolves and the scheme a QR carries', () => {
-		expect(withdrawUrls('abc')).toEqual({
-			url: 'https://shop.example/lnurlw/abc',
-			lnurl: 'lnurlw://shop.example/lnurlw/abc'
-		});
+	it('gives the URL, the LNURL address and the scheme a wallet may prefer', () => {
+		const urls = withdrawUrls('abc');
+
+		expect(urls.url).toBe('https://shop.example/lnurlw/abc');
+		expect(urls.lnurlw).toBe('lnurlw://shop.example/lnurlw/abc');
+		expect(urls.lnurl).toMatch(/^LNURL1[0-9A-Z]+$/);
+	});
+});
+
+describe('encodeLnurl', () => {
+	it('encodes to something a wallet can decode back to the same URL', () => {
+		const url = 'https://shop.example/lnurlw/9f1c2d3e-4b5a-6c7d-8e9f-0a1b2c3d4e5f';
+		const decoded = bech32.decode(encodeLnurl(url).toLowerCase(), 2000);
+
+		expect(decoded.prefix).toBe('lnurl');
+		expect(Buffer.from(bech32.fromWords(decoded.words)).toString('utf8')).toBe(url);
+	});
+
+	it('stays uppercase, so the QR keeps its compact alphanumeric mode', () => {
+		const lnurl = encodeLnurl('https://shop.example/lnurlw/abc');
+
+		expect(lnurl).toBe(lnurl.toUpperCase());
+	});
+
+	it('encodes URLs past the 90-character bech32 default', () => {
+		const url = `https://shop.example/lnurlw/${'a'.repeat(120)}`;
+
+		expect(() => encodeLnurl(url)).not.toThrow();
 	});
 });
