@@ -563,22 +563,6 @@
 								>
 									{t('order.note.seeText')}
 								</a>
-								{#if data.order.orderTabSlug}
-									{#if data.splitMode && showContinue}
-										<a
-											href="/pos/touch/tab/{data.order.orderTabSlug}/split?mode={data.splitMode}"
-											class="btn lg:w-auto w-full btn-black self-end"
-										>
-											{skipMode ? t('pos.split.skipForNow') : t('pos.split.continueSplit')}
-										</a>
-									{/if}
-									<a
-										href="/pos/touch/tab/{data.order.orderTabSlug}"
-										class="btn lg:w-auto w-full btn-gray self-end"
-									>
-										@@Back to order tab
-									</a>
-								{/if}
 							</div>
 						</section>
 					</form>
