@@ -273,6 +273,41 @@ describe('GET /api/v1/orders/paid/stream', () => {
 		expect(frames).toHaveLength(2);
 	});
 
+	it('announces a note added to an order the backfill had already replayed', async () => {
+		// The terminal was offline, catches up with since_ts, and is waiting to hear that a top-up
+		// bought on the shop has been resolved at another stand. Nothing but the note changes: same
+		// amount, same currency, same paid-at, same lines.
+		const order = makeOrder({ id: 'ord-a', updatedAt: '2026-08-01T10:05:00Z' });
+		backlog.mockImplementation(async function* () {
+			yield { cursor: orderStreamCursor(order), order };
+		});
+
+		const res = await call({ query: '?since_ts=1735689600' });
+		const replayed = await readFrames(res, 3);
+		expect(replayed[2]).toContain('"orderId":"ord-a"');
+
+		const annotated = {
+			...order,
+			updatedAt: new Date('2026-08-01T10:07:00Z'),
+			notes: [
+				{
+					content: 'Resolved into bracelet 42',
+					createdAt: new Date('2026-08-01T10:07:00Z'),
+					role: 'super-admin',
+					userAlias: 'externalPartner'
+				}
+			]
+		} as unknown as Order;
+		for (const listener of subscribers) {
+			listener(annotated);
+		}
+
+		const frames = await readFrames(res, 1);
+		expect(frames).toHaveLength(1);
+		expect(frames[0]).toContain('"orderId":"ord-a"');
+		expect(frames[0]).toContain('Resolved into bracelet 42');
+	});
+
 	it('429s past the concurrent stream budget for one API key', async () => {
 		for (let i = 0; i < 4; i++) {
 			expect((await call()).status).toBe(200);
