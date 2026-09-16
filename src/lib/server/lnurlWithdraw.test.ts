@@ -7,17 +7,26 @@ vi.mock('$lib/server/phoenixd', () => ({
 }));
 vi.mock('$lib/server/database', () => ({ collections: { lnurlWithdrawals: {} } }));
 vi.mock('$lib/server/runtime-config', () => ({
-	runtimeConfig: { phoenixd: { url: 'http://phoenixd.test', password: 'pw', enabled: true } }
+	runtimeConfig: {
+		phoenixd: { url: 'http://phoenixd.test', password: 'pw', enabled: true },
+		// 1 BTC = 100 000 CHF. No JPY on purpose: a shop does not price in every currency.
+		exchangeRate: { SAT: 100_000_000, CHF: 100_000 }
+	}
 }));
 vi.mock('$lib/server/env-config', () => ({ ORIGIN: 'https://shop.example' }));
 
 import { bech32 } from 'bech32';
+import { exchangeRate } from '$lib/stores/exchangeRate';
 import {
 	checkWithdrawReadiness,
 	encodeLnurl,
+	withdrawAmountToSat,
 	withdrawFeeMarginSat,
 	withdrawUrls
 } from './lnurlWithdraw';
+
+// `toCurrency` reads the store, which the server otherwise fills from the runtime config at boot.
+exchangeRate.set({ SAT: 100_000_000, CHF: 100_000 });
 
 /** One fetch stub per phoenixd route, so a test only says what it cares about. */
 function phoenixdAnswers(answers: {
@@ -127,6 +136,29 @@ describe('withdrawUrls', () => {
 		expect(urls.url).toBe('https://shop.example/lnurlw/abc');
 		expect(urls.lnurlw).toBe('lnurlw://shop.example/lnurlw/abc');
 		expect(urls.lnurl).toMatch(/^LNURL1[0-9A-Z]+$/);
+	});
+});
+
+describe('withdrawAmountToSat', () => {
+	it('converts at the shop rate', () => {
+		// 1 BTC = 100 000 CHF, so 50 CHF is 50 000 sat.
+		expect(withdrawAmountToSat(50, 'CHF')).toEqual({ sat: 50_000 });
+	});
+
+	it('refuses a currency the shop has no rate for, rather than taking the amount as sats', () => {
+		const result = withdrawAmountToSat(50, 'JPY');
+
+		expect(result).toEqual({ error: 'This shop has no exchange rate for JPY' });
+	});
+
+	it('refuses an amount worth less than a satoshi', () => {
+		expect(withdrawAmountToSat(0.0000001, 'CHF')).toEqual({
+			error: '1e-7 CHF is worth less than one satoshi'
+		});
+	});
+
+	it('takes sats as they come', () => {
+		expect(withdrawAmountToSat(1234, 'SAT')).toEqual({ sat: 1234 });
 	});
 });
 
