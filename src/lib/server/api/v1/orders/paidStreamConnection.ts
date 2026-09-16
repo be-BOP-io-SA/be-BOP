@@ -30,7 +30,10 @@ export type PaidStreamFraming = {
 	id: string;
 	/** The SSE `data:` line, JSON-serialized. */
 	data: unknown;
-	/** Dedupe key — equal payloads for the same order must produce equal fingerprints. */
+	/**
+	 * Dedupe key — equal payloads for the same order must produce equal fingerprints. The order's
+	 * revision is added by the connection, so a surface never has to hash fields it does not send.
+	 */
 	fingerprint: string;
 };
 
@@ -133,10 +136,23 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 		if (!framing) {
 			return true;
 		}
-		if (seen.has(framing.fingerprint)) {
+		/**
+		 * The order's revision is part of the key, not just what the surface chose to hash.
+		 *
+		 * A note or a label appended to an order changes none of the fields a surface fingerprints —
+		 * amount, currency, paid-at, line count — so the re-announce read as a duplicate and was
+		 * dropped. On a stream opened at the live edge the order had never been sent, so nothing
+		 * matched and the event went through; on a stream opened with `since_ts` the backfill had
+		 * already registered it, and the event vanished. Same events on the wire, opposite outcomes.
+		 *
+		 * `cursor.ms` is the order's `updatedAt`, which every write moves forward: a real change is
+		 * announced, a re-delivery of the unchanged order is still filtered.
+		 */
+		const key = `${cursor.ms}|${framing.fingerprint}`;
+		if (seen.has(key)) {
 			return true;
 		}
-		remember(framing.fingerprint);
+		remember(key);
 		return push(sseEvent(framing.id, framing.data));
 	}
 
