@@ -1,5 +1,6 @@
 import type { ObjectId } from 'mongodb';
 import type { Timestamps } from './Timestamps';
+import type { Currency } from './Currency';
 
 export const LNURL_WITHDRAW_STATUSES = ['open', 'paying', 'paid', 'failed'] as const;
 export type LnurlWithdrawStatus = (typeof LNURL_WITHDRAW_STATUSES)[number];
@@ -26,6 +27,13 @@ export interface LnurlWithdraw extends Timestamps {
 	apiKeyId: ObjectId;
 	/** The order this withdraw settles, when the caller named one. */
 	orderId?: string;
+	/**
+	 * What the caller actually asked for, when the amount was named in a currency rather than in
+	 * sats. Kept because the rate moves: a ticket that says "4,00 CHF" must stay explainable a week
+	 * later, when the same sats are no longer worth four francs.
+	 */
+	requestedAmount?: number;
+	requestedCurrency?: Currency;
 	/** Set once the shop's node has paid. */
 	paidAt?: Date;
 	paidSat?: number;
