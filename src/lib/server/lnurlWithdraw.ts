@@ -2,6 +2,8 @@ import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { isPhoenixdConfigured } from '$lib/server/phoenixd';
 import type { LnurlWithdraw } from '$lib/types/LnurlWithdraw';
+import type { Currency } from '$lib/types/Currency';
+import { toSatoshis } from '$lib/utils/toSatoshis';
 import type { ObjectId } from 'mongodb';
 import { ORIGIN } from '$lib/server/env-config';
 import { bech32 } from 'bech32';
@@ -120,6 +122,30 @@ export async function checkWithdrawReadiness(amountSat: number): Promise<Withdra
 }
 
 /**
+ * Turn an amount named in a currency into the sats the node will hand out.
+ *
+ * `toCurrency` returns the amount untouched when the shop has no rate for that currency — the
+ * right call for a price on a page, the wrong one here: a withdraw of 50 CHF would quietly become
+ * a withdraw of 50 sat. A missing rate is therefore a refusal, not a fallback.
+ */
+export function withdrawAmountToSat(
+	amount: number,
+	currency: Currency
+): { sat: number } | { error: string } {
+	if (currency !== 'BTC' && runtimeConfig.exchangeRate[currency] === undefined) {
+		return { error: `This shop has no exchange rate for ${currency}` };
+	}
+
+	const sat = toSatoshis(amount, currency);
+
+	if (sat < 1) {
+		return { error: `${amount} ${currency} is worth less than one satoshi` };
+	}
+
+	return { sat };
+}
+
+/**
  * A withdraw URL is not handed to a wallet as an address: LUD-01 asks for the URL bech32-encoded
  * under the `lnurl` prefix. The result is uppercased because a QR code stores uppercase
  * alphanumerics in a denser mode than mixed case — same data, fewer modules to print.
@@ -160,6 +186,8 @@ export async function createLnurlWithdraw(params: {
 	description: string;
 	apiKeyId: ObjectId;
 	orderId?: string;
+	requestedAmount?: number;
+	requestedCurrency?: Currency;
 	expiresInSeconds: number;
 }): Promise<LnurlWithdraw> {
 	const now = new Date();
@@ -173,6 +201,10 @@ export async function createLnurlWithdraw(params: {
 		expiresAt: new Date(now.getTime() + params.expiresInSeconds * 1000),
 		apiKeyId: params.apiKeyId,
 		...(params.orderId && { orderId: params.orderId }),
+		...(params.requestedCurrency && {
+			requestedAmount: params.requestedAmount,
+			requestedCurrency: params.requestedCurrency
+		}),
 		createdAt: now,
 		updatedAt: now
 	};
