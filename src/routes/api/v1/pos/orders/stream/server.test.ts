@@ -227,6 +227,37 @@ describe('GET /api/v1/pos/orders/stream', () => {
 		expect(frames.slice(2)).toEqual([':heartbeat', ':heartbeat', ':heartbeat']);
 	});
 
+	it('re-announces an order that changed, though its payload looks the same', async () => {
+		// The till payload is orderId and amount, so a note added elsewhere changes nothing visible.
+		// It is still an event: the order moved, and a till that filters duplicates itself would
+		// otherwise never hear about it.
+		const res = await callGet();
+		await readFrames(res, 2);
+		const order = paidOrder();
+		for (const listener of subscribers) {
+			listener(order);
+			listener({ ...order, updatedAt: new Date('2026-07-29T14:09:00Z') } as Order);
+		}
+
+		// Heartbeats are 20ms apart in this file, so the count only means something once the
+		// comment frames are out of the way.
+		const events = (await readFrames(res, 6)).filter((frame) => frame.startsWith('id: '));
+		expect(events).toHaveLength(2);
+	});
+
+	it('still suppresses the very same delivery twice', async () => {
+		const res = await callGet();
+		await readFrames(res, 2);
+		const order = paidOrder();
+		for (const listener of subscribers) {
+			listener(order);
+			listener(order);
+		}
+
+		const events = (await readFrames(res, 6)).filter((frame) => frame.startsWith('id: '));
+		expect(events).toHaveLength(1);
+	});
+
 	it('holds the heartbeat under the 30s the seam allows', async () => {
 		const { SSE_HEARTBEAT_MS } = await vi.importActual<
 			typeof import('$lib/server/api/v1/orders/paidStream')
