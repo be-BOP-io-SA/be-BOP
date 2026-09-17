@@ -10,7 +10,14 @@ export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 const addLabelSchema = z
 	.object({
-		labelId: z.string().trim().min(1).max(200)
+		labelId: z.string().trim().min(1).max(200),
+		/**
+		 * How the label should look if the shop does not have it yet. All optional, all ignored when
+		 * the label already exists: a caller labels its own orders, it does not restyle the shop's.
+		 */
+		name: z.string().trim().min(1).max(100).optional(),
+		color: z.string().trim().min(1).max(100).optional(),
+		icon: z.string().trim().min(1).max(100).optional()
 	})
 	.strict();
 
@@ -55,12 +62,23 @@ export const POST: RequestHandler = apiV1Handler(async (event) => {
 		return apiError(400, 'VALIDATION_ERROR', 'Invalid label payload', parsed.error.format());
 	}
 
-	const result = await addOrderLabel({ orderId, labelId: parsed.data.labelId });
+	const { labelId, name, color, icon } = parsed.data;
+	const wantedLook = name || color || icon ? { name, color, icon } : undefined;
+	const result = await addOrderLabel({
+		orderId,
+		labelId,
+		...(wantedLook && { label: wantedLook })
+	});
 	if (!result.ok) {
 		return result.reason === 'ORDER_NOT_FOUND'
 			? apiError(404, 'NOT_FOUND', 'Order not found')
-			: apiError(404, 'NOT_FOUND', `Order label not found: ${parsed.data.labelId}`);
+			: apiError(400, 'VALIDATION_ERROR', `Label id cannot be created: ${labelId}`, { labelId });
 	}
 
-	return json({ ok: true, orderId: result.orderId, labels: result.labels });
+	return json({
+		ok: true,
+		orderId: result.orderId,
+		labels: result.labels,
+		labelCreated: result.labelCreated
+	});
 });
