@@ -107,12 +107,33 @@ describe('POST /api/v1/orders/[orderId]/labels', () => {
 		});
 	});
 
-	it('404s on a label the shop does not have', async () => {
-		addOrderLabel.mockResolvedValue({ ok: false, reason: 'LABEL_NOT_FOUND' });
+	it('passes the wanted look through, for a label the shop does not have yet', async () => {
+		addOrderLabel.mockResolvedValue({
+			ok: true,
+			orderId: 'ord-1',
+			labels: [{ id: 'sats-imprimes', name: 'SATs imprimés' }],
+			labelCreated: true
+		});
+
+		const res = await call({
+			body: { labelId: 'sats-imprimes', name: 'SATs imprimés', color: '#F7931A', icon: '⚡' }
+		});
+
+		expect(res.status).toBe(200);
+		await expect(res.json()).resolves.toMatchObject({ labelCreated: true });
+		expect(addOrderLabel).toHaveBeenCalledWith({
+			orderId: 'ord-1',
+			labelId: 'sats-imprimes',
+			label: { name: 'SATs imprimés', color: '#F7931A', icon: '⚡' }
+		});
+	});
+
+	it('400s on a label id that could not be created', async () => {
+		addOrderLabel.mockResolvedValue({ ok: false, reason: 'INVALID_LABEL_ID' });
 		const res = await call();
-		expect(res.status).toBe(404);
+		expect(res.status).toBe(400);
 		await expect(res.json()).resolves.toMatchObject({
-			error: { message: 'Order label not found: cashless' }
+			error: { code: 'VALIDATION_ERROR', details: { labelId: 'cashless' } }
 		});
 	});
 
