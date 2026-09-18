@@ -177,6 +177,9 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 				paymentMethods: item.product.paymentMethods,
 				isTicket: item.product.isTicket,
 				variationLabels: item.product.variationLabels,
+				// Without the families, productLabelWithVariations has nothing to hide a family by,
+				// and the order pages spell out what the product page keeps to itself.
+				variationFamilies: item.product.variationFamilies,
 				externalResources: item.product.externalResources?.map((externalResource) => ({
 					label: externalResource.label,
 					href: order.status === 'paid' ? externalResource.href : undefined
