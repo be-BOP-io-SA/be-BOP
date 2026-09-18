@@ -58,6 +58,7 @@ import type { PosSession } from '$lib/types/PosSession';
 import type { PendingZap } from '$lib/types/PendingZap';
 import type { AccountingLog } from '$lib/types/AccountingLog';
 import type { ApiKey } from '$lib/types/ApiKey';
+import type { ApiV1LogEntry } from '$lib/types/ApiV1Log';
 
 // Bigger than the default 10, helpful with MongoDB errors
 Error.stackTraceLimit = 100;
@@ -126,6 +127,7 @@ const genCollection = () => ({
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
 
 	apiKeys: db.collection<ApiKey>('apiKeys'),
+	apiV1Logs: db.collection<ApiV1LogEntry>('apiV1Logs'),
 
 	accountingLogs: db.collection<AccountingLog>('accountingLogs'),
 
@@ -258,6 +260,14 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.accountingLogs, { eventType: 1, createdAt: 1 }],
 	[collections.accountingLogs, { objectId: 1, objectType: 1 }],
 	[collections.accountingLogs, { eventType: 1, 'after.productIds': 1 }],
+	/**
+	 * The call journal is a debugging aid, not an archive: it holds personal data copied from the
+	 * payloads it observed, so it expires on its own after thirty days rather than accumulating a
+	 * second copy of the shop's customers for good.
+	 */
+	[collections.apiV1Logs, { createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 3600 }],
+	[collections.apiV1Logs, { apiKeyId: 1, createdAt: -1 }],
+	[collections.apiV1Logs, { status: 1, createdAt: -1 }],
 	[collections.apiKeys, { keyHash: 1 }, { unique: true }],
 	[collections.apiKeys, { keyPrefix: 1 }, { unique: true }],
 	[collections.apiKeys, { expiresAt: 1 }, { sparse: true }],
