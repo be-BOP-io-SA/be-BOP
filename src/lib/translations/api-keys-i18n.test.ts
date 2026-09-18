@@ -19,7 +19,30 @@ const KEYS = [
 	'admin.apiKeys.emptyHint',
 	'admin.apiKeys.selectAll',
 	'admin.apiKeys.selectNone',
-	'admin.apiKeys.scopesHint'
+	'admin.apiKeys.scopesHint',
+	'admin.apiKeys.logTitle',
+	'admin.apiKeys.logHelp',
+	'admin.apiKeys.logFilterKey',
+	'admin.apiKeys.logFilterAllKeys',
+	'admin.apiKeys.logFilterOutcome',
+	'admin.apiKeys.logOutcomeAll',
+	'admin.apiKeys.logOutcomeErrors',
+	'admin.apiKeys.logFilterApply',
+	'admin.apiKeys.logEmpty',
+	'admin.apiKeys.logWhen',
+	'admin.apiKeys.logKey',
+	'admin.apiKeys.logCall',
+	'admin.apiKeys.logStatus',
+	'admin.apiKeys.logDuration',
+	'admin.apiKeys.logNoKey',
+	'admin.apiKeys.logDetails',
+	'admin.apiKeys.logStream',
+	'admin.apiKeys.logRequest',
+	'admin.apiKeys.logResponse',
+	'admin.apiKeys.logTruncated',
+	'admin.apiKeys.logCount',
+	'admin.apiKeys.logPrevious',
+	'admin.apiKeys.logNext'
 ];
 
 describe('admin api-keys scope hint translations', () => {
