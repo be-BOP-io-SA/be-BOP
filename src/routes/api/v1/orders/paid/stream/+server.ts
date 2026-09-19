@@ -27,7 +27,7 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 	}
 	const apiKey = apiKeyOrError;
 
-	const limit = checkRateLimit(apiKey._id.toString(), 'api.v1.orders.stream', 30, { minutes: 1 });
+	const limit = checkRateLimit(apiKey._id.toString(), 'api.v1.orders.stream', 300, { minutes: 1 });
 	if (limit.limited) {
 		return apiError(
 			429,
