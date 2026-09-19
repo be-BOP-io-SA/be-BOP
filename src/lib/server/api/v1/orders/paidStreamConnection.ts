@@ -15,8 +15,12 @@ import {
  * Per API key, across every stream surface. Headroom so a reconnect can overlap the old one, and so
  * one credential can serve several devices at once — every stream shares a single change stream, so
  * the cost of an extra connection is one in-memory listener.
+ *
+ * Raised on this demo branch, where a room full of devices shares a single key, along with the
+ * per-minute call quotas. These are test settings: the branch that goes upstream keeps the lower
+ * ones, and the real answer is a quota configured per key rather than compiled in.
  */
-export const MAX_CONCURRENT_STREAMS_PER_KEY = 12;
+export const MAX_CONCURRENT_STREAMS_PER_KEY = 64;
 /** Live events waiting to be written out. Past this the client is too slow to keep up. */
 const MAX_PENDING_EVENTS = 1_000;
 /** Fingerprints retained for dedupe. Bounded so a stream open for weeks cannot grow unbounded. */

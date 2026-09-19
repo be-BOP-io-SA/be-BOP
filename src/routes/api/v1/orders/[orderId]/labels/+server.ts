@@ -37,7 +37,7 @@ export const POST: RequestHandler = apiV1Handler(async (event) => {
 	}
 	const apiKey = apiKeyOrError;
 
-	const limit = checkRateLimit(apiKey._id.toString(), 'api.v1.orders.write', 60, { minutes: 1 });
+	const limit = checkRateLimit(apiKey._id.toString(), 'api.v1.orders.write', 1200, { minutes: 1 });
 	if (limit.limited) {
 		return apiError(429, 'RATE_LIMITED', 'Too many requests for this API key', undefined, {
 			'Retry-After': String(limit.retryAfterSeconds)
