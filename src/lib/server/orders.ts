@@ -486,7 +486,12 @@ export async function onOrderPaymentFailed(
 	order: Order,
 	payment: Order['payments'][0],
 	reason: Extract<OrderPaymentStatus, 'canceled' | 'expired' | 'failed'>,
-	opts?: { preserveOrderStatus?: boolean; session?: ClientSession }
+	/**
+	 * `terminal` says this failure closes the matter. A card payment that fails in the shop does
+	 * not: the customer retries on the same order, so the order stays pending. A till reporting an
+	 * outcome after the fact is the other case — nothing more will happen on that order.
+	 */
+	opts?: { preserveOrderStatus?: boolean; terminal?: boolean; session?: ClientSession }
 ): Promise<Order> {
 	if (!order.payments.includes(payment)) {
 		throw new Error('Sync broken between order and payment');
@@ -503,7 +508,10 @@ export async function onOrderPaymentFailed(
 			$set: {
 				'payments.$.status': reason,
 				...(order.payments.every(
-					(payment) => payment.status === 'canceled' || payment.status === 'expired'
+					(payment) =>
+						payment.status === 'canceled' ||
+						payment.status === 'expired' ||
+						(opts?.terminal && payment.status === 'failed')
 				) &&
 					order.status === 'pending' &&
 					!opts?.preserveOrderStatus && {
