@@ -93,7 +93,9 @@ async function applyMatchedPaymentStatus(
 		return order;
 	}
 	// Terminal: canceled | failed | expired — same helpers as cancelPayment / locks.
-	return onOrderPaymentFailed(order, existingPayment, payment.status);
+	// A till reports an outcome, it does not open a retry: an order whose only payment failed is
+	// closed rather than left waiting for a payment that will never come.
+	return onOrderPaymentFailed(order, existingPayment, payment.status, { terminal: true });
 }
 
 async function addAndSettleUnmatchedPayment(
