@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
 	import { useI18n } from '$lib/i18n.js';
 	import {
 		ORDER_PAYMENT_STATUSES,
@@ -56,71 +55,59 @@
 	}
 
 	/**
-	 * The three sets travel in the address, so the search button, a refresh, a bookmark, a shared
-	 * link and the back button all keep them — the period and the seller already worked that way,
-	 * and the boxes used to be lost on every one of those.
+	 * The address says what the reporting is about, and it is the only thing that says it. The
+	 * three sets travel in it like the period and the seller already did, so the search button, a
+	 * refresh, a bookmark, a shared link and the back button all keep them.
 	 *
-	 * Arriving with no address to read, from a menu link, is the case an address cannot cover: the
-	 * tab remembers the last set instead, and forgets it when it closes.
+	 * Nothing below holds a second copy of that answer: the tables read the address itself. A copy
+	 * is what can fall behind, and a search replaces the page's data without rebuilding the page —
+	 * so a copy taken once would go on answering the previous search until a manual refresh.
+	 *
+	 * An empty group is a choice, not an absence: it travels as a single empty value, so that
+	 * unticking everything survives a search instead of silently coming back as the default.
 	 */
-	const STATUS_SESSION_KEY = 'reporting.statusFilters';
-
-	/**
-	 * An empty group is a choice, not an absence: it is written as a single empty value so that
-	 * unticking everything survives a search, instead of silently coming back as the default.
-	 */
-	function statusesFromUrl(param: string, fallback: readonly string[]) {
-		if (!$page.url.searchParams.has(param)) {
+	function statusesFromUrl(params: URLSearchParams, param: string, fallback: readonly string[]) {
+		if (!params.has(param)) {
 			return new Set<string>(fallback);
 		}
-		return new Set<string>($page.url.searchParams.getAll(param).filter(Boolean));
+		return new Set<string>(params.getAll(param).filter(Boolean));
 	}
 
-	// What the tables are actually about: it only ever changes when a search is run, like the
-	// period and the seller above it.
-	let appliedOrderStatuses = statusesFromUrl('orderStatus', DEFAULT_ORDER_STATUSES);
-	let appliedCarryingStatuses = statusesFromUrl('carryingStatus', DEFAULT_CARRYING_STATUSES);
-	let appliedShownStatuses = statusesFromUrl('shownStatus', DEFAULT_SHOWN_STATUSES);
+	// What the tables answer, read from the address every time it changes.
+	$: appliedOrderStatuses = statusesFromUrl(
+		$page.url.searchParams,
+		'orderStatus',
+		DEFAULT_ORDER_STATUSES
+	);
+	$: appliedCarryingStatuses = statusesFromUrl(
+		$page.url.searchParams,
+		'carryingStatus',
+		DEFAULT_CARRYING_STATUSES
+	);
+	$: appliedShownStatuses = statusesFromUrl(
+		$page.url.searchParams,
+		'shownStatus',
+		DEFAULT_SHOWN_STATUSES
+	);
 
-	// What the boxes show: the search that is being prepared, not the one on screen.
-	let orderStatuses = new Set(appliedOrderStatuses);
-	let carryingPaymentStatuses = new Set(appliedCarryingStatuses);
-	let shownPaymentStatuses = new Set(appliedShownStatuses);
-
-	onMount(() => {
-		const params = $page.url.searchParams;
-		// An address that carries the filters wins: it is what was bookmarked, shared or gone back to.
-		if (params.has('orderStatus') || params.has('carryingStatus') || params.has('shownStatus')) {
-			return;
-		}
-		const remembered = sessionStorage.getItem(STATUS_SESSION_KEY);
-		if (!remembered) {
-			return;
-		}
-		try {
-			const parsed = JSON.parse(remembered);
-			appliedOrderStatuses = new Set<string>(parsed.order ?? DEFAULT_ORDER_STATUSES);
-			appliedCarryingStatuses = new Set<string>(parsed.carrying ?? DEFAULT_CARRYING_STATUSES);
-			appliedShownStatuses = new Set<string>(parsed.shown ?? DEFAULT_SHOWN_STATUSES);
-			orderStatuses = new Set(appliedOrderStatuses);
-			carryingPaymentStatuses = new Set(appliedCarryingStatuses);
-			shownPaymentStatuses = new Set(appliedShownStatuses);
-		} catch {
-			sessionStorage.removeItem(STATUS_SESSION_KEY);
-		}
-	});
-
-	/** Remembered when a search is run, so a bare arrival in this tab finds the last one used. */
-	function rememberStatusFilters() {
-		sessionStorage.setItem(
-			STATUS_SESSION_KEY,
-			JSON.stringify({
-				order: [...orderStatuses],
-				carrying: [...carryingPaymentStatuses],
-				shown: [...shownPaymentStatuses]
-			})
-		);
-	}
+	// What the boxes are preparing: the next search, not the one on screen. Seeded from the address,
+	// and seeded again whenever a search lands, so the boxes and the tables never tell two different
+	// stories.
+	let orderStatuses = statusesFromUrl(
+		$page.url.searchParams,
+		'orderStatus',
+		DEFAULT_ORDER_STATUSES
+	);
+	let carryingPaymentStatuses = statusesFromUrl(
+		$page.url.searchParams,
+		'carryingStatus',
+		DEFAULT_CARRYING_STATUSES
+	);
+	let shownPaymentStatuses = statusesFromUrl(
+		$page.url.searchParams,
+		'shownStatus',
+		DEFAULT_SHOWN_STATUSES
+	);
 
 	function resetStatusFilters() {
 		orderStatuses = new Set<string>(DEFAULT_ORDER_STATUSES);
@@ -392,6 +379,12 @@
 
 	afterNavigate(() => {
 		isLoading = false;
+		// A search has landed: the boxes go back to showing what it searched, so that coming back
+		// with the browser shows the filters of the page it came back to.
+		const params = $page.url.searchParams;
+		orderStatuses = statusesFromUrl(params, 'orderStatus', DEFAULT_ORDER_STATUSES);
+		carryingPaymentStatuses = statusesFromUrl(params, 'carryingStatus', DEFAULT_CARRYING_STATUSES);
+		shownPaymentStatuses = statusesFromUrl(params, 'shownStatus', DEFAULT_SHOWN_STATUSES);
 	});
 </script>
 
@@ -464,7 +457,6 @@
 	class="grid grid-cols-12 gap-2 col-span-12"
 	on:submit={() => {
 		isLoading = true;
-		rememberStatusFilters();
 	}}
 >
 	<div class="col-span-3">
