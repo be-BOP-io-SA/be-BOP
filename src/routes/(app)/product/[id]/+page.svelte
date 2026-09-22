@@ -69,6 +69,7 @@
 	export let data;
 
 	let quantity = 1;
+	let uniqueKey = data.uniqueKey ?? '';
 	let loading = false;
 	let errorMessage = '';
 	let currentTime = Date.now();
@@ -413,6 +414,7 @@
 			...(data.product.hasVariations && {
 				chosenVariations: selectedVariations
 			}),
+			...(uniqueKey && { uniqueKey }),
 			discountPercentage:
 				data.discount?.mode === 'percentage' ? data.discount?.percentage : undefined,
 			...(data.product.bookingSpec && {
@@ -474,7 +476,9 @@
 		isZoomed = !isZoomed;
 	}
 
-	let selectedVariations: Record<string, string> = {};
+	// Seeded from the URL so the price preview and the POST body carry the forced values even
+	// though no dropdown was ever rendered for them.
+	let selectedVariations: Record<string, string> = { ...data.forcedVariations };
 	$: if (data.product.hasVariations) {
 		customAmount = productPriceWithVariations(data.product, selectedVariations);
 	}
@@ -641,14 +645,19 @@
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<!-- svelte-ignore a11y-no-static-element-interactions -->
 						<div
-							class="flex flex-col gap-1 cursor-pointer"
-							on:click={() => (showExclTax = !showExclTax)}
+							class="flex flex-col gap-1"
+							class:cursor-pointer={!data.vatExempted}
+							on:click={() => (showExclTax = !data.vatExempted && !showExclTax)}
 						>
-							<span class="text-sm"
-								>{t('product.vatIncluded')} ({t('cart.vat')}
-								{vatRate}%)
-								<span class="text-gray-400 text-xs ml-1">{showExclTax ? '▲' : '▼'}</span></span
-							>
+							<!-- A shop with VAT turned off has nothing to say about it: no rate, no caption,
+							     and no toggle to a breakdown that would be empty. -->
+							{#if !data.vatExempted}
+								<span class="text-sm"
+									>{t('product.vatIncluded')} ({t('cart.vat')}
+									{vatRate}%)
+									<span class="text-gray-400 text-xs ml-1">{showExclTax ? '▲' : '▼'}</span></span
+								>
+							{/if}
 							<div class="flex items-center gap-2">
 								<PriceTag
 									currency={data.product.price.currency}
@@ -699,7 +708,7 @@
 							/>
 						</div>
 
-						{#if showExclTax}
+						{#if showExclTax && !data.vatExempted}
 							<hr class="border-gray-400 mt-2 w-full" />
 							<span class="text-sm mt-1"
 								>{t('product.vatExcludedEstimate')} ({t('cart.vat')} {vatRate}%)</span
@@ -788,7 +797,9 @@
 							secondary
 							class="text-base"
 						/>
-						<span class="font-semibold text-sm">{t('product.vatExcluded')}</span>
+						{#if !data.vatExempted}
+							<span class="font-semibold text-sm">{t('product.vatExcluded')}</span>
+						{/if}
 					</div>
 				{/if}
 
@@ -953,6 +964,11 @@
 							{#if freeProductsAvailable}
 								<input type="hidden" name="freeQuantity" value={freeProductsAvailable} />
 							{/if}
+							{#if uniqueKey}
+								<!-- Carried to the cart, never shown: the key identifies the artifact the link was
+								     made for, and the customer who follows that link has no use for reading it. -->
+								<input type="hidden" name="uniqueKey" value={uniqueKey} />
+							{/if}
 							{#if data.product.payWhatYouWant}
 								<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
 								<input type="hidden" name="customPriceCurrency" value={PWYWCurrency} />
@@ -975,19 +991,29 @@
 									</label>
 								</div>
 							{/if}
-							{#if data.product.standalone && data.product.hasVariations && data.product.variationLabels}
+							{#if data.product.hasVariations && data.product.variationLabels}
 								{#each Object.keys(data.product.variationLabels.values) as key}
-									<label class="mb-2" for={key}>{data.product.variationLabels.names[key]}</label>
-									<select
-										bind:value={selectedVariations[key]}
-										id={key}
-										name="chosenVariations[{key}]"
-										class="form-input w-full inline cursor-pointer"
-									>
-										{#each Object.entries(data.product.variationLabels.values[key]) as [valueKey, valueLabel]}
-											<option value={valueKey}>{valueLabel}</option>
-										{/each}
-									</select>
+									{#if key in data.forcedVariations || data.product.variationFamilies?.[key]?.hiddenFromUI}
+										<!-- Settled by the URL, or never offered as a choice: no dropdown, but the
+										     value still has to reach the add-to-cart POST. -->
+										<input
+											type="hidden"
+											name="chosenVariations[{key}]"
+											value={selectedVariations[key]}
+										/>
+									{:else}
+										<label class="mb-2" for={key}>{data.product.variationLabels.names[key]}</label>
+										<select
+											bind:value={selectedVariations[key]}
+											id={key}
+											name="chosenVariations[{key}]"
+											class="form-input w-full inline cursor-pointer"
+										>
+											{#each Object.entries(data.product.variationLabels.values[key]) as [valueKey, valueLabel]}
+												<option value={valueKey}>{valueLabel}</option>
+											{/each}
+										</select>
+									{/if}
 								{/each}
 							{/if}
 							{#if !oneMaxPerLine(data.product) && amountAvailable > 0}
