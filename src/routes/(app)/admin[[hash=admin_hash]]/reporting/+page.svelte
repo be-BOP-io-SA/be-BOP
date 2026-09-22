@@ -41,78 +41,6 @@
 	// Display — which payment lines the payment table draws, and therefore what it totals.
 	const DEFAULT_SHOWN_STATUSES = ['paid'];
 
-	/**
-	 * The three sets travel in the address, so the search button, a refresh, a bookmark, a shared
-	 * link and the back button all keep them — the period and the seller already worked that way,
-	 * and the boxes used to be lost on every one of those.
-	 *
-	 * Arriving with no address to read, from a menu link, is the case an address cannot cover: the
-	 * tab remembers the last set instead, and forgets it when it closes.
-	 */
-	const STATUS_SESSION_KEY = 'reporting.statusFilters';
-
-	function statusesFromUrl(param: string, fallback: readonly string[]) {
-		const values = $page.url.searchParams.getAll(param);
-		return new Set<string>(values.length ? values : fallback);
-	}
-
-	let orderStatuses = statusesFromUrl('orderStatus', DEFAULT_ORDER_STATUSES);
-	let carryingPaymentStatuses = statusesFromUrl('carryingStatus', DEFAULT_CARRYING_STATUSES);
-	let shownPaymentStatuses = statusesFromUrl('shownStatus', DEFAULT_SHOWN_STATUSES);
-
-	onMount(() => {
-		const params = $page.url.searchParams;
-		// An address that carries the filters wins: it is what was bookmarked, shared or gone back to.
-		if (params.has('orderStatus') || params.has('carryingStatus') || params.has('shownStatus')) {
-			return;
-		}
-		const remembered = sessionStorage.getItem(STATUS_SESSION_KEY);
-		if (!remembered) {
-			return;
-		}
-		try {
-			const parsed = JSON.parse(remembered);
-			orderStatuses = new Set<string>(parsed.order ?? DEFAULT_ORDER_STATUSES);
-			carryingPaymentStatuses = new Set<string>(parsed.carrying ?? DEFAULT_CARRYING_STATUSES);
-			shownPaymentStatuses = new Set<string>(parsed.shown ?? DEFAULT_SHOWN_STATUSES);
-		} catch {
-			sessionStorage.removeItem(STATUS_SESSION_KEY);
-		}
-	});
-
-	/** Write the three sets where they will be found again: the tab's memory, and the address. */
-	function rememberStatusFilters() {
-		sessionStorage.setItem(
-			STATUS_SESSION_KEY,
-			JSON.stringify({
-				order: [...orderStatuses],
-				carrying: [...carryingPaymentStatuses],
-				shown: [...shownPaymentStatuses]
-			})
-		);
-		const url = new URL(window.location.href);
-		for (const [param, set] of [
-			['orderStatus', orderStatuses],
-			['carryingStatus', carryingPaymentStatuses],
-			['shownStatus', shownPaymentStatuses]
-		] as const) {
-			url.searchParams.delete(param);
-			for (const status of set) {
-				url.searchParams.append(param, status);
-			}
-		}
-		// Replaces rather than pushes: ticking five boxes should not cost five presses of Back.
-		history.replaceState(history.state, '', url);
-	}
-
-	function resetStatusFilters() {
-		orderStatuses = new Set<string>(DEFAULT_ORDER_STATUSES);
-		carryingPaymentStatuses = new Set<string>(DEFAULT_CARRYING_STATUSES);
-		shownPaymentStatuses = new Set<string>(DEFAULT_SHOWN_STATUSES);
-		loadedHtml = false;
-		rememberStatusFilters();
-	}
-
 	// Every table starts open: a reporting that hides itself on arrival would puzzle the people
 	// who use it today. Nothing is remembered between visits.
 	let collapsed = new Set<string>();
@@ -128,13 +56,78 @@
 	}
 
 	/**
-	 * Same toggle, for the filters — which change what a prepared PDF would contain, so it has to be
-	 * prepared again. Folding a table away does not: it only changes what is on screen.
+	 * The three sets travel in the address, so the search button, a refresh, a bookmark, a shared
+	 * link and the back button all keep them — the period and the seller already worked that way,
+	 * and the boxes used to be lost on every one of those.
+	 *
+	 * Arriving with no address to read, from a menu link, is the case an address cannot cover: the
+	 * tab remembers the last set instead, and forgets it when it closes.
 	 */
-	function toggleFilter(set: Set<string>, status: string) {
-		loadedHtml = false;
-		return toggleStatus(set, status);
+	const STATUS_SESSION_KEY = 'reporting.statusFilters';
+
+	/**
+	 * An empty group is a choice, not an absence: it is written as a single empty value so that
+	 * unticking everything survives a search, instead of silently coming back as the default.
+	 */
+	function statusesFromUrl(param: string, fallback: readonly string[]) {
+		if (!$page.url.searchParams.has(param)) {
+			return new Set<string>(fallback);
+		}
+		return new Set<string>($page.url.searchParams.getAll(param).filter(Boolean));
 	}
+
+	// What the tables are actually about: it only ever changes when a search is run, like the
+	// period and the seller above it.
+	let appliedOrderStatuses = statusesFromUrl('orderStatus', DEFAULT_ORDER_STATUSES);
+	let appliedCarryingStatuses = statusesFromUrl('carryingStatus', DEFAULT_CARRYING_STATUSES);
+	let appliedShownStatuses = statusesFromUrl('shownStatus', DEFAULT_SHOWN_STATUSES);
+
+	// What the boxes show: the search that is being prepared, not the one on screen.
+	let orderStatuses = new Set(appliedOrderStatuses);
+	let carryingPaymentStatuses = new Set(appliedCarryingStatuses);
+	let shownPaymentStatuses = new Set(appliedShownStatuses);
+
+	onMount(() => {
+		const params = $page.url.searchParams;
+		// An address that carries the filters wins: it is what was bookmarked, shared or gone back to.
+		if (params.has('orderStatus') || params.has('carryingStatus') || params.has('shownStatus')) {
+			return;
+		}
+		const remembered = sessionStorage.getItem(STATUS_SESSION_KEY);
+		if (!remembered) {
+			return;
+		}
+		try {
+			const parsed = JSON.parse(remembered);
+			appliedOrderStatuses = new Set<string>(parsed.order ?? DEFAULT_ORDER_STATUSES);
+			appliedCarryingStatuses = new Set<string>(parsed.carrying ?? DEFAULT_CARRYING_STATUSES);
+			appliedShownStatuses = new Set<string>(parsed.shown ?? DEFAULT_SHOWN_STATUSES);
+			orderStatuses = new Set(appliedOrderStatuses);
+			carryingPaymentStatuses = new Set(appliedCarryingStatuses);
+			shownPaymentStatuses = new Set(appliedShownStatuses);
+		} catch {
+			sessionStorage.removeItem(STATUS_SESSION_KEY);
+		}
+	});
+
+	/** Remembered when a search is run, so a bare arrival in this tab finds the last one used. */
+	function rememberStatusFilters() {
+		sessionStorage.setItem(
+			STATUS_SESSION_KEY,
+			JSON.stringify({
+				order: [...orderStatuses],
+				carrying: [...carryingPaymentStatuses],
+				shown: [...shownPaymentStatuses]
+			})
+		);
+	}
+
+	function resetStatusFilters() {
+		orderStatuses = new Set<string>(DEFAULT_ORDER_STATUSES);
+		carryingPaymentStatuses = new Set<string>(DEFAULT_CARRYING_STATUSES);
+		shownPaymentStatuses = new Set<string>(DEFAULT_SHOWN_STATUSES);
+	}
+
 	let filterByTag = !!data.tagId;
 	let selectedPaymentMethod = data.paymentMethod ?? '';
 	let html = '';
@@ -172,7 +165,7 @@
 	);
 	$: paymentMatchesFilter = (payment: { method: string; posSubtype?: string; status: string }) => {
 		// A payment line is drawn, and counted, only if its status is one the user asked to see.
-		if (!shownPaymentStatuses.has(payment.status)) {
+		if (!appliedShownStatuses.has(payment.status)) {
 			return false;
 		}
 		if (!data.paymentMethod) {
@@ -188,12 +181,12 @@
 	};
 	$: orderFiltered = orders.filter(
 		(order) =>
-			orderStatuses.has(order.status) &&
+			appliedOrderStatuses.has(order.status) &&
 			// An order carrying no payment at all is kept: a point-of-sale order split over several
 			// payment methods exists before its first payment does, and dropping it here would hide
 			// it from every table whatever is ticked.
 			(!order.payments.length ||
-				order.payments.some((payment) => carryingPaymentStatuses.has(payment.status)))
+				order.payments.some((payment) => appliedCarryingStatuses.has(payment.status)))
 	);
 	$: orderSynthesis = {
 		count: orderFiltered.length,
@@ -414,10 +407,7 @@
 						class="form-checkbox"
 						type="checkbox"
 						checked={orderStatuses.has(status)}
-						on:change={() => {
-							orderStatuses = toggleFilter(orderStatuses, status);
-							rememberStatusFilters();
-						}}
+						on:change={() => (orderStatuses = toggleStatus(orderStatuses, status))}
 					/>
 					{status}
 				</label>
@@ -431,10 +421,8 @@
 						class="form-checkbox"
 						type="checkbox"
 						checked={carryingPaymentStatuses.has(status)}
-						on:change={() => {
-							carryingPaymentStatuses = toggleFilter(carryingPaymentStatuses, status);
-							rememberStatusFilters();
-						}}
+						on:change={() =>
+							(carryingPaymentStatuses = toggleStatus(carryingPaymentStatuses, status))}
 					/>
 					{status}
 				</label>
@@ -456,10 +444,7 @@
 						class="form-checkbox"
 						type="checkbox"
 						checked={shownPaymentStatuses.has(status)}
-						on:change={() => {
-							shownPaymentStatuses = toggleFilter(shownPaymentStatuses, status);
-							rememberStatusFilters();
-						}}
+						on:change={() => (shownPaymentStatuses = toggleStatus(shownPaymentStatuses, status))}
 					/>
 					{status}
 				</label>
@@ -474,7 +459,14 @@
 		</button>
 	</fieldset>
 </div>
-<form method="GET" class="grid grid-cols-12 gap-2 col-span-12" on:submit={() => (isLoading = true)}>
+<form
+	method="GET"
+	class="grid grid-cols-12 gap-2 col-span-12"
+	on:submit={() => {
+		isLoading = true;
+		rememberStatusFilters();
+	}}
+>
 	<div class="col-span-3">
 		<label class="form-label">
 			BeginsAt
@@ -584,12 +576,21 @@
 			</p>
 		{/if}
 	</div>
+	{#if orderStatuses.size === 0}
+		<input type="hidden" name="orderStatus" value="" />
+	{/if}
 	{#each [...orderStatuses] as status}
 		<input type="hidden" name="orderStatus" value={status} />
 	{/each}
+	{#if carryingPaymentStatuses.size === 0}
+		<input type="hidden" name="carryingStatus" value="" />
+	{/if}
 	{#each [...carryingPaymentStatuses] as status}
 		<input type="hidden" name="carryingStatus" value={status} />
 	{/each}
+	{#if shownPaymentStatuses.size === 0}
+		<input type="hidden" name="shownStatus" value="" />
+	{/if}
 	{#each [...shownPaymentStatuses] as status}
 		<input type="hidden" name="shownStatus" value={status} />
 	{/each}
