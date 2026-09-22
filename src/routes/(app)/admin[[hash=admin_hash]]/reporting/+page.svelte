@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 	import { useI18n } from '$lib/i18n.js';
 	import {
 		ORDER_PAYMENT_STATUSES,
@@ -31,13 +33,85 @@
 	// second, so they always count exactly what is on screen.
 
 	// Search — which orders enter every table.
-	let orderStatuses = new Set<string>(['paid']);
+	const DEFAULT_ORDER_STATUSES = ['paid'];
 	// Search — narrows to orders carrying such a payment. All ticked means no narrowing, which
 	// is why "partially paid" is a pending order carrying a paid payment rather than a case of
 	// its own.
-	let carryingPaymentStatuses = new Set<string>(ORDER_PAYMENT_STATUSES);
+	const DEFAULT_CARRYING_STATUSES = [...ORDER_PAYMENT_STATUSES];
 	// Display — which payment lines the payment table draws, and therefore what it totals.
-	let shownPaymentStatuses = new Set<string>(['paid']);
+	const DEFAULT_SHOWN_STATUSES = ['paid'];
+
+	/**
+	 * The three sets travel in the address, so the search button, a refresh, a bookmark, a shared
+	 * link and the back button all keep them — the period and the seller already worked that way,
+	 * and the boxes used to be lost on every one of those.
+	 *
+	 * Arriving with no address to read, from a menu link, is the case an address cannot cover: the
+	 * tab remembers the last set instead, and forgets it when it closes.
+	 */
+	const STATUS_SESSION_KEY = 'reporting.statusFilters';
+
+	function statusesFromUrl(param: string, fallback: readonly string[]) {
+		const values = $page.url.searchParams.getAll(param);
+		return new Set<string>(values.length ? values : fallback);
+	}
+
+	let orderStatuses = statusesFromUrl('orderStatus', DEFAULT_ORDER_STATUSES);
+	let carryingPaymentStatuses = statusesFromUrl('carryingStatus', DEFAULT_CARRYING_STATUSES);
+	let shownPaymentStatuses = statusesFromUrl('shownStatus', DEFAULT_SHOWN_STATUSES);
+
+	onMount(() => {
+		const params = $page.url.searchParams;
+		// An address that carries the filters wins: it is what was bookmarked, shared or gone back to.
+		if (params.has('orderStatus') || params.has('carryingStatus') || params.has('shownStatus')) {
+			return;
+		}
+		const remembered = sessionStorage.getItem(STATUS_SESSION_KEY);
+		if (!remembered) {
+			return;
+		}
+		try {
+			const parsed = JSON.parse(remembered);
+			orderStatuses = new Set<string>(parsed.order ?? DEFAULT_ORDER_STATUSES);
+			carryingPaymentStatuses = new Set<string>(parsed.carrying ?? DEFAULT_CARRYING_STATUSES);
+			shownPaymentStatuses = new Set<string>(parsed.shown ?? DEFAULT_SHOWN_STATUSES);
+		} catch {
+			sessionStorage.removeItem(STATUS_SESSION_KEY);
+		}
+	});
+
+	/** Write the three sets where they will be found again: the tab's memory, and the address. */
+	function rememberStatusFilters() {
+		sessionStorage.setItem(
+			STATUS_SESSION_KEY,
+			JSON.stringify({
+				order: [...orderStatuses],
+				carrying: [...carryingPaymentStatuses],
+				shown: [...shownPaymentStatuses]
+			})
+		);
+		const url = new URL(window.location.href);
+		for (const [param, set] of [
+			['orderStatus', orderStatuses],
+			['carryingStatus', carryingPaymentStatuses],
+			['shownStatus', shownPaymentStatuses]
+		] as const) {
+			url.searchParams.delete(param);
+			for (const status of set) {
+				url.searchParams.append(param, status);
+			}
+		}
+		// Replaces rather than pushes: ticking five boxes should not cost five presses of Back.
+		history.replaceState(history.state, '', url);
+	}
+
+	function resetStatusFilters() {
+		orderStatuses = new Set<string>(DEFAULT_ORDER_STATUSES);
+		carryingPaymentStatuses = new Set<string>(DEFAULT_CARRYING_STATUSES);
+		shownPaymentStatuses = new Set<string>(DEFAULT_SHOWN_STATUSES);
+		loadedHtml = false;
+		rememberStatusFilters();
+	}
 
 	// Every table starts open: a reporting that hides itself on arrival would puzzle the people
 	// who use it today. Nothing is remembered between visits.
@@ -340,7 +414,10 @@
 						class="form-checkbox"
 						type="checkbox"
 						checked={orderStatuses.has(status)}
-						on:change={() => (orderStatuses = toggleFilter(orderStatuses, status))}
+						on:change={() => {
+							orderStatuses = toggleFilter(orderStatuses, status);
+							rememberStatusFilters();
+						}}
 					/>
 					{status}
 				</label>
@@ -354,8 +431,10 @@
 						class="form-checkbox"
 						type="checkbox"
 						checked={carryingPaymentStatuses.has(status)}
-						on:change={() =>
-							(carryingPaymentStatuses = toggleFilter(carryingPaymentStatuses, status))}
+						on:change={() => {
+							carryingPaymentStatuses = toggleFilter(carryingPaymentStatuses, status);
+							rememberStatusFilters();
+						}}
 					/>
 					{status}
 				</label>
@@ -377,7 +456,10 @@
 						class="form-checkbox"
 						type="checkbox"
 						checked={shownPaymentStatuses.has(status)}
-						on:change={() => (shownPaymentStatuses = toggleFilter(shownPaymentStatuses, status))}
+						on:change={() => {
+							shownPaymentStatuses = toggleFilter(shownPaymentStatuses, status);
+							rememberStatusFilters();
+						}}
 					/>
 					{status}
 				</label>
@@ -387,6 +469,9 @@
 			Totals count exactly these lines. Showing expired payments makes the total say what was
 			attempted, not what was taken.
 		</p>
+		<button type="button" class="text-xs underline self-start" on:click={resetStatusFilters}>
+			Back to default filters
+		</button>
 	</fieldset>
 </div>
 <form method="GET" class="grid grid-cols-12 gap-2 col-span-12" on:submit={() => (isLoading = true)}>
@@ -499,6 +584,15 @@
 			</p>
 		{/if}
 	</div>
+	{#each [...orderStatuses] as status}
+		<input type="hidden" name="orderStatus" value={status} />
+	{/each}
+	{#each [...carryingPaymentStatuses] as status}
+		<input type="hidden" name="carryingStatus" value={status} />
+	{/each}
+	{#each [...shownPaymentStatuses] as status}
+		<input type="hidden" name="shownStatus" value={status} />
+	{/each}
 	<div class="col-span-1">
 		<button class="submit btn body-mainCTA mt-8" on:click={() => (loadedHtml = false)}>🔍</button>
 	</div>
@@ -752,7 +846,7 @@
 				</thead>
 				<tbody>
 					<!-- Order rows -->
-					{#each orders.filter((order) => order.status === 'paid' || (includePartiallyPaid && order.payments.some((payment) => payment.status === 'paid')) || (includeExpired && order.payments.some((payment) => payment.status === 'expired'))) as order}
+					{#each orderFiltered as order}
 						{#each order.payments.filter(paymentMatchesFilter) as payment}
 							<tr class="hover:bg-gray-100 whitespace-nowrap">
 								<td class="border border-gray-300 px-4 py-2">{order.number}</td>
