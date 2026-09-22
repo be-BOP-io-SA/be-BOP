@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
 	import { useI18n } from '$lib/i18n.js';
-	import { invoiceNumberVariables, orderItemPrice, type Price } from '$lib/types/Order.js';
+	import {
+		ORDER_PAYMENT_STATUSES,
+		invoiceNumberVariables,
+		orderItemPrice,
+		type Price
+	} from '$lib/types/Order.js';
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding.js';
 	import { sum } from '$lib/utils/sum.js';
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
@@ -24,14 +29,13 @@
 	// Two questions the four checkboxes used to answer at once, now asked apart: which orders
 	// the reporting is about, and which of their payments it shows. The totals follow the
 	// second, so they always count exactly what is on screen.
-	const ORDER_STATUSES = ['paid', 'pending', 'expired', 'canceled', 'failed'] as const;
 
 	// Search — which orders enter every table.
 	let orderStatuses = new Set<string>(['paid']);
 	// Search — narrows to orders carrying such a payment. All ticked means no narrowing, which
 	// is why "partially paid" is a pending order carrying a paid payment rather than a case of
 	// its own.
-	let carryingPaymentStatuses = new Set<string>(ORDER_STATUSES);
+	let carryingPaymentStatuses = new Set<string>(ORDER_PAYMENT_STATUSES);
 	// Display — which payment lines the payment table draws, and therefore what it totals.
 	let shownPaymentStatuses = new Set<string>(['paid']);
 
@@ -46,8 +50,16 @@
 		} else {
 			next.add(status);
 		}
-		loadedHtml = false;
 		return next;
+	}
+
+	/**
+	 * Same toggle, for the filters — which change what a prepared PDF would contain, so it has to be
+	 * prepared again. Folding a table away does not: it only changes what is on screen.
+	 */
+	function toggleFilter(set: Set<string>, status: string) {
+		loadedHtml = false;
+		return toggleStatus(set, status);
 	}
 	let filterByTag = !!data.tagId;
 	let selectedPaymentMethod = data.paymentMethod ?? '';
@@ -84,9 +96,6 @@
 	$: orders = data.orders.filter(
 		(order) => order.createdAt >= beginsAt && order.createdAt <= endsAt
 	);
-	// The syntheses read the same population as the tables above them: a reporting filtered on
-	// pending orders that still synthesised the paid ones would contradict itself.
-	$: paidOrders = orderFiltered;
 	$: paymentMatchesFilter = (payment: { method: string; posSubtype?: string; status: string }) => {
 		// A payment line is drawn, and counted, only if its status is one the user asked to see.
 		if (!shownPaymentStatuses.has(payment.status)) {
@@ -106,20 +115,24 @@
 	$: orderFiltered = orders.filter(
 		(order) =>
 			orderStatuses.has(order.status) &&
-			order.payments.some((payment) => carryingPaymentStatuses.has(payment.status))
+			// An order carrying no payment at all is kept: a point-of-sale order split over several
+			// payment methods exists before its first payment does, and dropping it here would hide
+			// it from every table whatever is ticked.
+			(!order.payments.length ||
+				order.payments.some((payment) => carryingPaymentStatuses.has(payment.status)))
 	);
 	$: orderSynthesis = {
-		count: paidOrders.length,
+		count: orderFiltered.length,
 		orderTotal: sumCurrency(
 			data.currencies.main,
-			paidOrders.map((order) => order.currencySnapshot.main.totalPrice)
+			orderFiltered.map((order) => order.currencySnapshot.main.totalPrice)
 		)
 	};
 	$: orderSynthesisTag = {
-		count: paidOrders.length,
+		count: orderFiltered.length,
 		orderTotal: sumCurrency(
 			data.currencies.main,
-			paidOrders.flatMap((order) =>
+			orderFiltered.flatMap((order) =>
 				order.items
 					.filter((item) => item.product.tagIds?.includes(data.tagId ?? ''))
 					.map((item) => ({
@@ -130,10 +143,10 @@
 		)
 	};
 	$: orderDeliveryFeesSynthesis = {
-		orderNumber: paidOrders.length,
+		orderNumber: orderFiltered.length,
 		orderFeesTotal: sumCurrency(
 			data.currencies.main,
-			paidOrders.map(
+			orderFiltered.map(
 				(order) =>
 					order.currencySnapshot.main.shippingPrice ?? { amount: 0, currency: data.currencies.main }
 			)
@@ -141,11 +154,11 @@
 	};
 
 	$: vatSynthesis = {
-		orderNumber: paidOrders.length,
+		orderNumber: orderFiltered.length,
 		total: sumCurrency(
 			data.currencies.main,
 			data.tagId
-				? paidOrders.flatMap(
+				? orderFiltered.flatMap(
 						(order) =>
 							order.items
 								.filter((item) => item.product.tagIds?.includes(data.tagId ?? ''))
@@ -154,7 +167,7 @@
 									currency: item.currencySnapshot.main.price.currency
 								})) ?? []
 				  )
-				: paidOrders.flatMap((order) => order.currencySnapshot.main.vat ?? [])
+				: orderFiltered.flatMap((order) => order.currencySnapshot.main.vat ?? [])
 		)
 	};
 
@@ -209,7 +222,7 @@
 		downloadCSV(csvData, filename);
 	}
 
-	function quantityOfProduct(orders: typeof paidOrders, tagFilter?: string) {
+	function quantityOfProduct(orders: typeof orderFiltered, tagFilter?: string) {
 		const productQuantities: Record<string, { quantity: number; total: number }> = {};
 		for (const order of orders) {
 			for (const item of order.items) {
@@ -231,7 +244,7 @@
 		}
 		return productQuantities;
 	}
-	function quantityOfPaymentMean(orders: typeof paidOrders) {
+	function quantityOfPaymentMean(orders: typeof orderFiltered) {
 		const grouped = orders
 			.flatMap((order) => order.payments.filter(paymentMatchesFilter))
 			.reduce<Record<string, Price[]>>((acc, payment) => {
@@ -253,7 +266,7 @@
 		);
 	}
 	function fetchProductById(productId: string) {
-		for (const order of paidOrders) {
+		for (const order of orderFiltered) {
 			for (const item of order.items) {
 				if (item.product._id === productId) {
 					return item.product;
@@ -321,13 +334,13 @@
 		<legend class="font-medium">Search — which orders this reporting is about</legend>
 		<div class="flex flex-wrap gap-4">
 			<span class="text-sm w-40">Order status</span>
-			{#each ORDER_STATUSES as status}
+			{#each ORDER_PAYMENT_STATUSES as status}
 				<label class="checkbox-label">
 					<input
 						class="form-checkbox"
 						type="checkbox"
 						checked={orderStatuses.has(status)}
-						on:change={() => (orderStatuses = toggleStatus(orderStatuses, status))}
+						on:change={() => (orderStatuses = toggleFilter(orderStatuses, status))}
 					/>
 					{status}
 				</label>
@@ -335,14 +348,14 @@
 		</div>
 		<div class="flex flex-wrap gap-4">
 			<span class="text-sm w-40">Carrying a payment</span>
-			{#each ORDER_STATUSES as status}
+			{#each ORDER_PAYMENT_STATUSES as status}
 				<label class="checkbox-label">
 					<input
 						class="form-checkbox"
 						type="checkbox"
 						checked={carryingPaymentStatuses.has(status)}
 						on:change={() =>
-							(carryingPaymentStatuses = toggleStatus(carryingPaymentStatuses, status))}
+							(carryingPaymentStatuses = toggleFilter(carryingPaymentStatuses, status))}
 					/>
 					{status}
 				</label>
@@ -358,13 +371,13 @@
 		<legend class="font-medium">Display — which payments the payment table shows</legend>
 		<div class="flex flex-wrap gap-4">
 			<span class="text-sm w-40">Payments shown</span>
-			{#each ORDER_STATUSES as status}
+			{#each ORDER_PAYMENT_STATUSES as status}
 				<label class="checkbox-label">
 					<input
 						class="form-checkbox"
 						type="checkbox"
 						checked={shownPaymentStatuses.has(status)}
-						on:change={() => (shownPaymentStatuses = toggleStatus(shownPaymentStatuses, status))}
+						on:change={() => (shownPaymentStatuses = toggleFilter(shownPaymentStatuses, status))}
 					/>
 					{status}
 				</label>
@@ -975,7 +988,7 @@
 				</thead>
 				<tbody>
 					<!-- Order rows -->
-					{#each Object.entries(quantityOfProduct(paidOrders, data.tagId)).sort((a, b) => b[1].quantity - a[1].quantity) as [productId, { quantity, total }]}
+					{#each Object.entries(quantityOfProduct(orderFiltered, data.tagId)).sort((a, b) => b[1].quantity - a[1].quantity) as [productId, { quantity, total }]}
 						<tr class="hover:bg-gray-100 whitespace-nowrap">
 							<td class="border border-gray-300 px-4 py-2">
 								<time datetime={beginsAt.toISOString()} title={beginsAt.toLocaleString($locale)}>
@@ -1033,7 +1046,7 @@
 				</thead>
 				<tbody>
 					<!-- Order rows -->
-					{#each Object.entries(quantityOfPaymentMean(paidOrders)).sort((a, b) => b[1].quantity - a[1].quantity) as [method, { quantity, total }]}
+					{#each Object.entries(quantityOfPaymentMean(orderFiltered)).sort((a, b) => b[1].quantity - a[1].quantity) as [method, { quantity, total }]}
 						{@const sepIdx = method.indexOf(':')}
 						{@const paymentMethod = sepIdx >= 0 ? method.slice(0, sepIdx) : method}
 						{@const rest = sepIdx >= 0 ? method.slice(sepIdx + 1) : ''}
