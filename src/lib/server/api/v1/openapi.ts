@@ -543,6 +543,103 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					}
 				}
 			},
+			'/api/v1/withdrawals': {
+				post: {
+					tags: ['withdrawals'],
+					summary: 'Offer an LNURL-withdraw the shop pays',
+					description:
+						'Creates a withdraw the shop honours from its own Lightning node, and answers with ' +
+						'the code to show. The node is asked whether it can pay the ceiling before the code ' +
+						'exists, and again when someone collects: a shop that is unconfigured, unreachable, ' +
+						'without an open channel or short on liquidity is refused with 409 and the reason in ' +
+						'`details.reason`. Demo scope: phoenixd only, with no fallback to another backend.',
+					operationId: 'createWithdrawal',
+					security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+					requestBody: {
+						required: true,
+						content: {
+							'application/json': {
+								schema: {
+									type: 'object',
+									additionalProperties: false,
+									required: ['maxSat'],
+									properties: {
+										maxSat: {
+											type: 'integer',
+											minimum: 1,
+											description: 'Most the wallet may take.'
+										},
+										minSat: {
+											type: 'integer',
+											minimum: 1,
+											description: 'Least it may take. Defaults to maxSat, i.e. a fixed amount.'
+										},
+										description: { type: 'string', maxLength: 200 },
+										orderId: {
+											type: 'string',
+											description: 'The order this withdraw settles. Optional.'
+										},
+										expiresInSeconds: { type: 'integer', minimum: 60, maximum: 604800 }
+									}
+								},
+								example: {
+									minSat: 1000,
+									maxSat: 5000,
+									description: 'Deposit refund',
+									orderId: 'ord-1'
+								}
+							}
+						}
+					},
+					responses: {
+						'200': {
+							description: 'The withdraw, and the code to show',
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['ok', 'withdrawId', 'lnurl', 'url', 'minSat', 'maxSat', 'expiresAt'],
+										properties: {
+											ok: { type: 'boolean' },
+											withdrawId: { type: 'string' },
+											lnurl: { type: 'string', example: 'lnurlw://shop.example/lnurlw/1f0c…' },
+											url: { type: 'string', example: 'https://shop.example/lnurlw/1f0c…' },
+											minSat: { type: 'integer' },
+											maxSat: { type: 'integer' },
+											description: { type: 'string' },
+											orderId: { type: 'string' },
+											expiresAt: { type: 'string', format: 'date-time' },
+											status: { type: 'string', enum: ['open'] }
+										}
+									}
+								}
+							}
+						},
+						'400': {
+							description: 'Malformed payload',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'404': {
+							description: 'Named order not found',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'409': {
+							description:
+								'The node cannot hand out sats: `details.reason` is NOT_CONFIGURED, UNREACHABLE, ' +
+								'NO_CHANNELS or INSUFFICIENT_LIQUIDITY.',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'429': {
+							description: 'Rate limited',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
 			'/api/v1/orders/{orderId}/labels': {
 				post: {
 					tags: ['orders'],
