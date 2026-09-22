@@ -216,9 +216,10 @@ describe('GET /api/v1/orders/stream', () => {
 	});
 
 	it('replays the backlog without the paid filter', async () => {
-		// The backfill only starts once the preamble is out, so the frames must be read first.
+		// The backfill only starts once the preamble is out, and it yields nothing here: asking for
+		// one frame more than the stream will ever send waits for it instead of racing it.
 		const res = await call({ query: '?since_ts=1735689600' });
-		await readFrames(res, 2);
+		await readFrames(res, 3);
 
 		expect(backlog).toHaveBeenCalledWith({
 			since: new Date('2025-01-01T00:00:00Z'),
