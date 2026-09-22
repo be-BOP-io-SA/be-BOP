@@ -1,6 +1,6 @@
 import { apiError } from '../errors';
 import type { Order } from '$lib/types/Order';
-import { subscribeToPaidOrders } from './paidStreamHub';
+import { subscribeToAllOrders, subscribeToPaidOrders } from './paidStreamHub';
 import {
 	SSE_HEARTBEAT_MS,
 	SSE_RETRY_MS,
@@ -45,6 +45,8 @@ export type PaidStreamOptions = {
 	since: Date | null;
 	/** Replay strictly after this position. Null means none. */
 	after: PaidStreamCursor | null;
+	/** Follow every order rather than only those with a paid payment. */
+	anyStatus?: boolean;
 	/** Null skips the order — nothing to announce for it on this surface. */
 	render: (order: Order, cursor: PaidStreamCursor) => PaidStreamFraming | null;
 };
@@ -176,7 +178,8 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 
 	// Subscribed before the backfill, so an order paid mid-read cannot fall between snapshot and
 	// live edge.
-	unsubscribe = subscribeToPaidOrders((order) => {
+	const subscribe = options.anyStatus ? subscribeToAllOrders : subscribeToPaidOrders;
+	unsubscribe = subscribe((order) => {
 		if (closed) {
 			return;
 		}
@@ -201,7 +204,8 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 			try {
 				for await (const frame of iteratePaidOrderBacklog({
 					since: options.since,
-					after: options.after
+					after: options.after,
+					...(options.anyStatus && { anyStatus: true })
 				})) {
 					if (closed) {
 						return;
