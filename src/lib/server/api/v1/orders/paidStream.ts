@@ -138,6 +138,8 @@ export async function findOrderCursor(orderId: string): Promise<PaidStreamCursor
 export async function* iteratePaidOrderBacklog(opts: {
 	since: Date | null;
 	after: PaidStreamCursor | null;
+	/** Replay every order rather than only those with a paid payment. */
+	anyStatus?: boolean;
 }): AsyncGenerator<PaidStreamFrame> {
 	const floor = Math.max(opts.since?.getTime() ?? 0, opts.after?.ms ?? 0);
 	let lowerBoundMs = floor;
@@ -145,7 +147,10 @@ export async function* iteratePaidOrderBacklog(opts: {
 
 	for (;;) {
 		const docs = await collections.orders
-			.find({ 'payments.status': 'paid', updatedAt: { $gte: new Date(lowerBoundMs) } })
+			.find({
+				...(opts.anyStatus ? {} : { 'payments.status': 'paid' }),
+				updatedAt: { $gte: new Date(lowerBoundMs) }
+			})
 			.sort({ updatedAt: 1, _id: 1 })
 			.limit(BACKFILL_BATCH)
 			.toArray();
