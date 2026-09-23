@@ -5,7 +5,7 @@ import {
 	paypalGetCheckout
 } from '$lib/server/paypal';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { FRACTION_DIGITS_PER_CURRENCY, CURRENCIES } from '$lib/types/Currency';
+import { FRACTION_DIGITS_PER_CURRENCY, CURRENCIES, FIAT_CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
@@ -21,6 +21,13 @@ export default {
 	meta: { processor: 'paypal', method: 'paypal' },
 
 	isEnabled: () => isPaypalEnabled(),
+
+	configSchema: z.object({
+		clientId: z.string().min(1),
+		secret: z.string().min(1),
+		sandbox: z.boolean({ coerce: true }),
+		currency: z.enum(FIAT_CURRENCIES)
+	}),
 
 	settlementCurrency: () => runtimeConfig.paypal.currency,
 

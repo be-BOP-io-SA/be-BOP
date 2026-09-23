@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { z } from 'zod';
+// The actions read the schema off the registered processor, so the registry has to exist.
+import './pp-registry';
 import { paymentConfigActions } from './admin-config';
 import { cleanDb } from '../test-utils';
 import { collections } from '../database';
@@ -8,15 +9,9 @@ import { defaultConfig, runtimeConfig } from '../runtime-config';
 /** Deleting restores whatever `runtime-config` declares — the page no longer says it twice. */
 const EMPTY = defaultConfig.sumUp;
 
-const actions = paymentConfigActions({
-	key: 'sumUp',
-	processor: 'sumup',
-	schema: z.object({
-		apiKey: z.string().startsWith('sup_sk_'),
-		currency: z.enum(['EUR', 'CHF']),
-		merchantCode: z.string().min(1)
-	})
-});
+// The schema comes from the processor now, so this exercises SumUp's real credential rules
+// rather than a copy of them that could quietly diverge.
+const actions = paymentConfigActions({ key: 'sumUp', processor: 'sumup' });
 
 const form = (fields: Record<string, string>) => {
 	const body = new FormData();

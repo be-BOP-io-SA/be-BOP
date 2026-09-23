@@ -1,4 +1,5 @@
 import { isBlinkConfigured, blinkCreateInvoice, blinkLookupInvoice } from '$lib/server/blink';
+import { z } from 'zod';
 import { differenceInMinutes } from 'date-fns';
 import { lightningLabel, LIGHTNING_PRESENTATION } from './presentations';
 import type {
@@ -22,6 +23,16 @@ export default {
 	meta: { processor: 'blink', method: 'lightning', emoji: '⚡' },
 
 	isEnabled: () => isBlinkConfigured(),
+
+	configSchema: z
+		.object({
+			apiKey: z.string().trim().default(''),
+			lnAddress: z.string().trim().default(''),
+			walletId: z.string().trim().default('')
+		})
+		.refine((v) => v.apiKey || v.lnAddress, {
+			message: 'Provide either a Lightning address or an API key'
+		}),
 
 	settlementCurrency: () => 'SAT',
 

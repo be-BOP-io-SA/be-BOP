@@ -4,6 +4,7 @@ import {
 	btcpayGetLnInvoice
 } from '$lib/server/btcpay-server';
 import { differenceInSeconds } from 'date-fns';
+import { z } from 'zod';
 import { lightningLabel, LIGHTNING_PRESENTATION } from './presentations';
 import type {
 	PaymentProcessorDefinition,
@@ -17,6 +18,18 @@ export default {
 	meta: { processor: 'btcpay-server', method: 'lightning', emoji: '⚡' },
 
 	isEnabled: () => isBtcpayServerConfigured(),
+
+	configSchema: z.object({
+		apiKey: z.string().min(1),
+		serverUrl: z
+			.string()
+			.url()
+			.refine((v) => v.startsWith('http://') || v.startsWith('https://'), {
+				message: 'BTCPay Server URL must specify the http or https protocol'
+			})
+			.transform((v) => v.replace(/\/\s*$/, '').trim()),
+		storeId: z.string().min(1).trim()
+	}),
 
 	settlementCurrency: () => 'SAT',
 

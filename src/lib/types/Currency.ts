@@ -162,6 +162,16 @@ export const CURRENCIES = [
 ] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
+/**
+ * Everything a card or bank provider can settle in — the list without the two bitcoin units.
+ * Spelled out here because four settings forms were each filtering `CURRENCIES` themselves,
+ * with the same cast, to say the same thing.
+ */
+export const FIAT_CURRENCIES = CURRENCIES.filter((c) => c !== 'BTC' && c !== 'SAT') as [
+	Currency,
+	...Currency[]
+];
+
 export const SATOSHIS_PER_BTC = 100_000_000;
 
 export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({

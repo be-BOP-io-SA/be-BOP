@@ -4,7 +4,7 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import type { ObjectId } from 'mongodb';
 import { toUrlEncoded } from '$lib/utils/toUrlEncoded';
-import { CURRENCY_UNIT, CURRENCIES } from '$lib/types/Currency';
+import { CURRENCY_UNIT, CURRENCIES, FIAT_CURRENCIES } from '$lib/types/Currency';
 import type { Currency } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { ORIGIN } from '$lib/server/env-config';
@@ -25,6 +25,12 @@ export default {
 	},
 
 	isEnabled: () => isStripeEnabled(),
+
+	configSchema: z.object({
+		publicKey: z.string().startsWith('pk_'),
+		secretKey: z.string().startsWith('sk_'),
+		currency: z.enum(FIAT_CURRENCIES)
+	}),
 
 	settlementCurrency: () => runtimeConfig.stripe.currency,
 

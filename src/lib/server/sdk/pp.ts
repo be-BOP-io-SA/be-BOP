@@ -6,6 +6,7 @@ import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { PROCESSORS } from '$lib/types/paymentProcessors';
+import type { ZodType, ZodTypeDef } from 'zod';
 
 // --- Interfaces ---
 
@@ -117,6 +118,14 @@ export function serializePresentation(
 export interface PaymentProcessorDefinition {
 	meta: PaymentProcessorMeta;
 	isEnabled(): boolean;
+
+	/**
+	 * Validates this processor's settings form. Absent for the ones configured by environment
+	 * variables and for the hand-settled methods, which have no credentials of their own.
+	 * Declaring it here is what lets one shared settings page serve every processor: the shape
+	 * of a provider's credentials is the provider's business, not the page's.
+	 */
+	configSchema?: ZodType<Record<string, unknown>, ZodTypeDef, unknown>;
 
 	/**
 	 * Currency the payment is asked for. Not the currency it arrives in: `checkPayment`

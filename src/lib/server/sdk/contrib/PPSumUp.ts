@@ -1,6 +1,6 @@
 import { isSumupEnabled } from '$lib/server/sumup';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { CURRENCIES } from '$lib/types/Currency';
+import { CURRENCIES, FIAT_CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
@@ -16,6 +16,12 @@ export default {
 	meta: { processor: 'sumup', method: 'card' },
 
 	isEnabled: () => isSumupEnabled(),
+
+	configSchema: z.object({
+		apiKey: z.string().startsWith('sup_sk_'),
+		currency: z.enum(FIAT_CURRENCIES),
+		merchantCode: z.string().min(1)
+	}),
 
 	settlementCurrency: () => runtimeConfig.sumUp.currency,
 

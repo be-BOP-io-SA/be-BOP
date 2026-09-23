@@ -76,6 +76,12 @@ export default {
 
 	isEnabled: () => isOsbEnabled(),
 
+	configSchema: z.object({
+		shopId: z.string().min(1),
+		password: z.string().min(1),
+		hmacKey: z.string().default('')
+	}),
+
 	settlementCurrency: () => 'XPF',
 
 	presentation: { kind: 'redirect' },

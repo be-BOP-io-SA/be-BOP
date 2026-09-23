@@ -7,6 +7,7 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { differenceInMinutes } from 'date-fns';
+import { z } from 'zod';
 import { lightningLabel, LIGHTNING_PRESENTATION } from './presentations';
 import type {
 	PaymentProcessorDefinition,
@@ -20,6 +21,8 @@ export default {
 	meta: { processor: 'swiss-bitcoin-pay', method: 'lightning', emoji: '⚡' },
 
 	isEnabled: () => isSwissBitcoinPayConfigured(),
+
+	configSchema: z.object({ apiKey: z.string().min(1) }),
 
 	settlementCurrency: () => 'SAT',
 

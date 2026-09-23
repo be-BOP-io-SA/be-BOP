@@ -1,5 +1,5 @@
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { FRACTION_DIGITS_PER_CURRENCY, CURRENCIES } from '$lib/types/Currency';
+import { FRACTION_DIGITS_PER_CURRENCY, CURRENCIES, FIAT_CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
@@ -64,6 +64,15 @@ export default {
 	meta: { processor: 'taler', method: 'taler', emoji: '🪙' },
 
 	isEnabled: () => isTalerEnabled(),
+
+	configSchema: z.object({
+		backendUrl: z
+			.string()
+			.min(1)
+			.transform((v) => v.replace(/\/+$/, '')),
+		backendApiKey: z.string().min(1),
+		currency: z.enum(FIAT_CURRENCIES)
+	}),
 
 	settlementCurrency: () => runtimeConfig.taler.currency,
 

@@ -7,8 +7,8 @@ import {
 } from '../runtime-config';
 import { rateLimit } from '../rateLimit';
 import { testProcessorConnection } from './test-connection';
+import { getProcessor } from './pp';
 import type { PaymentProcessor } from '../payment-methods';
-import type { ZodType, ZodTypeDef } from 'zod';
 
 /**
  * The save / delete / test actions every payment processor settings page needs.
@@ -19,12 +19,24 @@ import type { ZodType, ZodTypeDef } from 'zod';
 export function paymentConfigActions<K extends ConfigKey>(spec: {
 	key: K;
 	processor: PaymentProcessor;
-	/** Input stays `unknown`: `.default()` and `.transform()` make it differ from the output. */
-	schema: ZodType<RuntimeConfig[K], ZodTypeDef, unknown>;
 }) {
+	/**
+	 * The shape of a provider's credentials is the provider's own business, so it is declared
+	 * on the processor. Reading it here rather than taking it as an argument is what will let
+	 * one shared page serve every processor — and meanwhile stops the schema being written
+	 * once in the processor and once more in its settings page.
+	 */
+	const schema = () => {
+		const declared = getProcessor(spec.processor)?.configSchema;
+		if (!declared) {
+			throw new Error(`${spec.processor} has settings but declares no configSchema`);
+		}
+		return declared;
+	};
+
 	return {
 		save: async function ({ request }: { request: Request }) {
-			const data = spec.schema.parse(Object.fromEntries(await request.formData()));
+			const data = schema().parse(Object.fromEntries(await request.formData())) as RuntimeConfig[K];
 
 			await collections.runtimeConfig.updateOne(
 				{ _id: spec.key },
