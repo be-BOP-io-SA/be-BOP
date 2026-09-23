@@ -42,7 +42,17 @@ const KEYS = [
 	'admin.apiKeys.logTruncated',
 	'admin.apiKeys.logCount',
 	'admin.apiKeys.logPrevious',
-	'admin.apiKeys.logNext'
+	'admin.apiKeys.logNext',
+	'admin.apiKeys.streamsTitle',
+	'admin.apiKeys.streamsHelp',
+	'admin.apiKeys.maxConcurrentStreams',
+	'admin.apiKeys.maxConcurrentStreamsHint',
+	'admin.apiKeys.openStreamsNow',
+	'admin.apiKeys.streamLifetimeSeconds',
+	'admin.apiKeys.streamLifetimeSecondsHint',
+	'admin.apiKeys.streamsSave',
+	'admin.apiKeys.streamsSaved',
+	'admin.apiKeys.streamsResetDone'
 ];
 
 describe('admin api-keys scope hint translations', () => {

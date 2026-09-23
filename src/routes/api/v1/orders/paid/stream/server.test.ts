@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
 import type { Order } from '$lib/types/Order';
-import { MAX_CONCURRENT_STREAMS_PER_KEY } from '$lib/server/api/v1/orders/paidStreamConnection';
+import { resetStreamBudget } from '$lib/server/api/v1/orders/paidStreamConnection';
+
+/** Small enough to fill in a test, and nothing is compiled in any more: the key carries it. */
+const BUDGET = 3;
 
 const requireApiKey = vi.fn();
 const checkRateLimit = vi.fn();
@@ -82,7 +85,14 @@ function makeOrder(opts: { id: string; updatedAt: string; amount?: number }): Or
 
 const openConnections: AbortController[] = [];
 
-function call(opts?: { query?: string; lastEventId?: string; withKey?: boolean }) {
+function call(opts?: {
+	query?: string;
+	lastEventId?: string;
+	withKey?: boolean;
+	/** Left out means no ceiling, which is what a key with nothing configured gets. */
+	maxConcurrentStreams?: number;
+	lifetimeSeconds?: number;
+}) {
 	const controller = new AbortController();
 	openConnections.push(controller);
 	const headers = new Headers();
@@ -98,7 +108,9 @@ function call(opts?: { query?: string; lastEventId?: string; withKey?: boolean }
 						_id: keyId,
 						name: 't',
 						scopes: ['orders:stream'] as const,
-						keyPrefix: 'bebop_ak_test_abcd1234'
+						keyPrefix: 'bebop_ak_test_abcd1234',
+						maxConcurrentStreams: opts?.maxConcurrentStreams,
+						streamLifetimeSeconds: opts?.lifetimeSeconds
 					}
 			  };
 	return GET({
@@ -164,6 +176,8 @@ describe('GET /api/v1/orders/paid/stream', () => {
 		for (const controller of openConnections.splice(0)) {
 			controller.abort();
 		}
+		// The count lives in the module, not in the test: one test must not seat the next one.
+		resetStreamBudget(keyId.toString());
 	});
 
 	it('requires orders:stream, not the poll scope', async () => {
@@ -309,22 +323,63 @@ describe('GET /api/v1/orders/paid/stream', () => {
 		expect(frames[0]).toContain('Resolved into bracelet 42');
 	});
 
-	it('429s past the concurrent stream budget for one API key', async () => {
-		for (let i = 0; i < MAX_CONCURRENT_STREAMS_PER_KEY; i++) {
-			expect((await call()).status).toBe(200);
+	it('429s past the budget the key itself carries', async () => {
+		for (let i = 0; i < BUDGET; i++) {
+			expect((await call({ maxConcurrentStreams: BUDGET })).status).toBe(200);
 		}
-		const res = await call();
+		const res = await call({ maxConcurrentStreams: BUDGET });
 		expect(res.status).toBe(429);
 		expect(res.headers.get('Retry-After')).toBeTruthy();
 	});
 
+	it('lets a key with no budget configured open as many as it likes', async () => {
+		for (let i = 0; i < BUDGET * 4; i++) {
+			expect((await call()).status).toBe(200);
+		}
+	});
+
+	it('does not spend a place on a stream it refuses', async () => {
+		for (let i = 0; i < BUDGET; i++) {
+			await call({ maxConcurrentStreams: BUDGET });
+		}
+		// Ten refusals in a row: were a refusal to take a place, freeing one would not be enough.
+		for (let i = 0; i < 10; i++) {
+			expect((await call({ maxConcurrentStreams: BUDGET })).status).toBe(429);
+		}
+		openConnections.shift()?.abort();
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect((await call({ maxConcurrentStreams: BUDGET })).status).toBe(200);
+	});
+
 	it('frees the slot when a stream is aborted', async () => {
-		for (let i = 0; i < MAX_CONCURRENT_STREAMS_PER_KEY; i++) {
-			await call();
+		for (let i = 0; i < BUDGET; i++) {
+			await call({ maxConcurrentStreams: BUDGET });
 		}
 		openConnections.pop()?.abort();
 		await new Promise((resolve) => setTimeout(resolve, 0));
-		expect((await call()).status).toBe(200);
+		expect((await call({ maxConcurrentStreams: BUDGET })).status).toBe(200);
+	});
+
+	it('frees the slot once the stream reaches its lifetime', async () => {
+		for (let i = 0; i < BUDGET; i++) {
+			expect((await call({ maxConcurrentStreams: BUDGET, lifetimeSeconds: 1 })).status).toBe(200);
+		}
+		expect((await call({ maxConcurrentStreams: BUDGET })).status).toBe(429);
+		await new Promise((resolve) => setTimeout(resolve, 1_200));
+		expect((await call({ maxConcurrentStreams: BUDGET })).status).toBe(200);
+	});
+
+	it('hands every place of a key back at once', async () => {
+		for (let i = 0; i < BUDGET; i++) {
+			await call({ maxConcurrentStreams: BUDGET });
+		}
+		expect((await call({ maxConcurrentStreams: BUDGET })).status).toBe(429);
+
+		resetStreamBudget(keyId.toString());
+
+		for (let i = 0; i < BUDGET; i++) {
+			expect((await call({ maxConcurrentStreams: BUDGET })).status).toBe(200);
+		}
 	});
 
 	it('429s when the API key is rate limited', async () => {

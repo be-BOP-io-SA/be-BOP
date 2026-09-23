@@ -115,7 +115,17 @@
 			"logTruncated": "Contenu long : seul son début est conservé.",
 			"logCount": "{count} appels",
 			"logPrevious": "Plus récents",
-			"logNext": "Plus anciens"
+			"logNext": "Plus anciens",
+			"streamsTitle": "Flux d'événements",
+			"streamsHelp": "Combien de flux d'événements cette clé peut tenir ouverts en même temps, et combien de temps chacun reste ouvert. Les deux sont facultatifs.",
+			"maxConcurrentStreams": "Flux simultanés autorisés",
+			"maxConcurrentStreamsHint": "Laissez vide pour ne pas plafonner. Un appareil qui ouvre plusieurs flux occupe une place par flux.",
+			"openStreamsNow": "{count} ouverts actuellement",
+			"streamLifetimeSeconds": "Fermer chaque flux au bout de (secondes)",
+			"streamLifetimeSecondsHint": "Laissez vide pour ne jamais le fermer. L'appareil se reconnecte seul et reprend où il s'était arrêté : la fermeture ne lui coûte rien.",
+			"streamsSave": "Enregistrer les réglages de flux",
+			"streamsSaved": "Réglages de flux mis à jour.",
+			"streamsResetDone": "Places de flux rendues."
 		},
 		"order": {
 			"customFieldFilterLabel": "Champ de checkout personnalisé",

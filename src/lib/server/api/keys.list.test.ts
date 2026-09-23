@@ -53,9 +53,11 @@ describe('listApiKeys', () => {
 				'expiresAt',
 				'keyPrefix',
 				'lastUsedAt',
+				'maxConcurrentStreams',
 				'name',
 				'revokedAt',
 				'scopes',
+				'streamLifetimeSeconds',
 				'updatedAt'
 			].sort()
 		);

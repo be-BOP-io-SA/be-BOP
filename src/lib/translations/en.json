@@ -115,7 +115,17 @@
 			"logTruncated": "Long payload: only its beginning is kept.",
 			"logCount": "{count} calls",
 			"logPrevious": "Newer",
-			"logNext": "Older"
+			"logNext": "Older",
+			"streamsTitle": "Event streams",
+			"streamsHelp": "How many event streams this key may hold open at once, and how long each one stays open. Both are optional.",
+			"maxConcurrentStreams": "Concurrent streams allowed",
+			"maxConcurrentStreamsHint": "Leave empty for no ceiling. A device that opens several feeds takes one place per feed.",
+			"openStreamsNow": "{count} open now",
+			"streamLifetimeSeconds": "Close each stream after (seconds)",
+			"streamLifetimeSecondsHint": "Leave empty to never close it. The device reconnects on its own and picks up where it stopped, so closing costs it nothing.",
+			"streamsSave": "Save stream settings",
+			"streamsSaved": "Stream settings updated.",
+			"streamsResetDone": "Stream places handed back."
 		},
 		"order": {
 			"customFieldFilterLabel": "Custom checkout field",

@@ -86,6 +86,34 @@ export async function revokeApiKey(id: ObjectId | string): Promise<ApiKey | null
 	return result.value;
 }
 
+/**
+ * Set — or clear — the two stream settings of one key. Returns false when no key carries that id.
+ *
+ * Clearing stores nothing rather than zero: "no ceiling" and "a ceiling of zero" are opposite
+ * answers, and zero would refuse every stream the key opens.
+ */
+export async function updateApiKeyStreamSettings(
+	id: ObjectId | string,
+	settings: { maxConcurrentStreams: number | null; streamLifetimeSeconds: number | null }
+): Promise<boolean> {
+	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	const toSet: Record<string, unknown> = { updatedAt: new Date() };
+	const toUnset: Record<string, ''> = {};
+	for (const field of ['maxConcurrentStreams', 'streamLifetimeSeconds'] as const) {
+		const value = settings[field];
+		if (value === null) {
+			toUnset[field] = '';
+		} else {
+			toSet[field] = value;
+		}
+	}
+	const result = await collections.apiKeys.updateOne(
+		{ _id },
+		Object.keys(toUnset).length ? { $set: toSet, $unset: toUnset } : { $set: toSet }
+	);
+	return result.matchedCount > 0;
+}
+
 export async function touchApiKey(id: ObjectId, at = new Date()): Promise<void> {
 	await collections.apiKeys.updateOne({ _id: id }, { $set: { lastUsedAt: at, updatedAt: at } });
 }
@@ -98,6 +126,8 @@ const API_KEY_PUBLIC_PROJECTION = {
 	name: 1,
 	keyPrefix: 1,
 	scopes: 1,
+	maxConcurrentStreams: 1,
+	streamLifetimeSeconds: 1,
 	expiresAt: 1,
 	revokedAt: 1,
 	lastUsedAt: 1,
@@ -133,6 +163,8 @@ export function serializeApiKeyPublic(k: ApiKeyPublic) {
 		name: k.name,
 		keyPrefix: k.keyPrefix,
 		scopes: k.scopes,
+		maxConcurrentStreams: k.maxConcurrentStreams ?? null,
+		streamLifetimeSeconds: k.streamLifetimeSeconds ?? null,
 		expiresAt: k.expiresAt ?? null,
 		revokedAt: k.revokedAt ?? null,
 		lastUsedAt: k.lastUsedAt ?? null,
