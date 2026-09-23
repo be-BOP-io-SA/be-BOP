@@ -3,11 +3,13 @@ import type { ApiV1LogEntry } from '$lib/types/ApiV1Log';
 import { ObjectId } from 'mongodb';
 
 /**
- * How much of a body is kept. A batch of 250 orders is a megabyte of JSON, and a log that grows
- * with the traffic it observes ends up costing more than the traffic. The head of the payload is
- * what tells an operator what was sent; the tail rarely does.
+ * How much of a body is kept — as much as is read, so that a body which reaches the log reaches it
+ * whole. The journal exists to answer "what did that integration actually send us", and a batch of
+ * orders is only ever settled by the line that is in dispute: keeping the head and dropping the
+ * tail answers the question for the first orders of a batch and leaves the last ones unaccounted
+ * for, which is where a till and a shop usually disagree.
  */
-export const MAX_LOGGED_BODY_CHARS = 8_000;
+export const MAX_LOGGED_BODY_CHARS = 256_000;
 
 /** Past this, the request body is not even read: it would be buffered only to be thrown away. */
 export const MAX_READ_BODY_BYTES = 256_000;
