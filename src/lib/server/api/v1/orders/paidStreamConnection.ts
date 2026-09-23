@@ -11,22 +11,33 @@ import {
 	type PaidStreamCursor
 } from './paidStream';
 
-/**
- * Per API key, across every stream surface. Headroom so a reconnect can overlap the old one, and so
- * one credential can serve several devices at once — every stream shares a single change stream, so
- * the cost of an extra connection is one in-memory listener.
- *
- * Raised on this demo branch, where a room full of devices shares a single key, along with the
- * per-minute call quotas. These are test settings: the branch that goes upstream keeps the lower
- * ones, and the real answer is a quota configured per key rather than compiled in.
- */
-export const MAX_CONCURRENT_STREAMS_PER_KEY = 64;
 /** Live events waiting to be written out. Past this the client is too slow to keep up. */
 const MAX_PENDING_EVENTS = 1_000;
 /** Fingerprints retained for dedupe. Bounded so a stream open for weeks cannot grow unbounded. */
 const MAX_SEEN_FINGERPRINTS = 5_000;
 
+/**
+ * Streams currently counted against each key. A count, not a list: it says how many places are
+ * taken, never which ones, so nothing here can be inspected or evicted by name.
+ */
 const activeStreamsByKey = new Map<string, number>();
+
+/** Places currently held by one key. Read on the key's admin page; triggers no call of its own. */
+export function countOpenStreams(keyId: string): number {
+	return activeStreamsByKey.get(keyId) ?? 0;
+}
+
+/**
+ * Give every place held by one key back at once.
+ *
+ * Places are counted, never named, so there is nothing to look up and nothing to close: the count
+ * is the whole state. A stream that is genuinely alive keeps receiving its events — it stops being
+ * counted, and its next reconnection counts it again. What this frees is a budget wedged shut by
+ * streams nobody is reading any more.
+ */
+export function resetStreamBudget(keyId: string): void {
+	activeStreamsByKey.delete(keyId);
+}
 
 /** What one paid order looks like on the wire, for the surface asking. */
 export type PaidStreamFraming = {
@@ -44,6 +55,20 @@ export type PaidStreamFraming = {
 export type PaidStreamOptions = {
 	/** API key id, for the per-credential connection budget. */
 	keyId: string;
+	/**
+	 * Streams this key may hold open at once, across every stream surface. Undefined means no
+	 * ceiling — the number is a setting of the key, never compiled in here.
+	 */
+	maxConcurrentStreams?: number;
+	/**
+	 * Seconds this stream stays open before the server closes it. Undefined means it never does.
+	 *
+	 * This is what returns a place in practice. The abort signal below looks like it should do the
+	 * job, and it cannot: SvelteKit's Node adapter builds the incoming Request without a signal, so
+	 * the one a route hands over is an object nothing ever aborts. A device that stops answering
+	 * therefore never gives its place back, and a fleet of a dozen fills any budget.
+	 */
+	lifetimeSeconds?: number;
 	signal?: AbortSignal;
 	/** Replay from this instant, inclusive. Null means "start at the live edge". */
 	since: Date | null;
@@ -64,12 +89,14 @@ export type PaidStreamOptions = {
 export function openPaidOrderStream(options: PaidStreamOptions): Response {
 	const { keyId } = options;
 
+	const budget = options.maxConcurrentStreams;
 	const openStreams = activeStreamsByKey.get(keyId) ?? 0;
-	if (openStreams >= MAX_CONCURRENT_STREAMS_PER_KEY) {
+	// Refused before the place is taken, so a stream turned away costs the key nothing.
+	if (budget !== undefined && openStreams >= budget) {
 		return apiError(
 			429,
 			'RATE_LIMITED',
-			`At most ${MAX_CONCURRENT_STREAMS_PER_KEY} concurrent streams per API key`,
+			`At most ${budget} concurrent streams per API key`,
 			undefined,
 			{ 'Retry-After': '5' }
 		);
@@ -82,6 +109,7 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 	let writer: WritableStreamDefaultWriter<Uint8Array> | null = writable.getWriter();
 	let unsubscribe: (() => void) | null = null;
 	let heartbeat: ReturnType<typeof setInterval> | null = null;
+	let expiry: ReturnType<typeof setTimeout> | null = null;
 	let closed = false;
 
 	const pending: Order[] = [];
@@ -101,6 +129,10 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 		if (heartbeat) {
 			clearInterval(heartbeat);
 			heartbeat = null;
+		}
+		if (expiry) {
+			clearTimeout(expiry);
+			expiry = null;
 		}
 		writer?.close().catch(() => undefined);
 		writer = null;
@@ -230,6 +262,15 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 	heartbeat = setInterval(() => {
 		void push(sseComment('heartbeat'));
 	}, SSE_HEARTBEAT_MS);
+
+	/**
+	 * Each stream runs its own clock from its own opening, so reconnections spread out by themselves
+	 * instead of arriving as one wave. Closing is not a loss for the client: it reconnects on its own
+	 * and resumes at the last event it acknowledged.
+	 */
+	if (options.lifetimeSeconds !== undefined && options.lifetimeSeconds > 0) {
+		expiry = setTimeout(cleanup, options.lifetimeSeconds * 1_000);
+	}
 
 	if (options.signal?.aborted) {
 		cleanup();
