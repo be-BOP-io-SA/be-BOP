@@ -55,7 +55,9 @@ export async function authenticateApiV1(
 		_id: apiKey._id,
 		name: apiKey.name,
 		scopes: apiKey.scopes,
-		keyPrefix: apiKey.keyPrefix
+		keyPrefix: apiKey.keyPrefix,
+		maxConcurrentStreams: apiKey.maxConcurrentStreams,
+		streamLifetimeSeconds: apiKey.streamLifetimeSeconds
 	};
 	event.locals.apiKey = authenticated;
 

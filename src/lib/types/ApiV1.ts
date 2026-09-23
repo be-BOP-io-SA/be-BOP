@@ -89,6 +89,10 @@ export type AuthenticatedApiKey = {
 	name: string;
 	scopes: ApiV1Scope[];
 	keyPrefix: string;
+	/** Event streams this key may hold open at once. Undefined means no ceiling. */
+	maxConcurrentStreams?: number;
+	/** Seconds a stream of this key stays open. Undefined means the server never closes it. */
+	streamLifetimeSeconds?: number;
 };
 
 /** Resource prefix of a scope (`orders:read` → `orders`). */
