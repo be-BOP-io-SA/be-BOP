@@ -874,4 +874,4 @@
 	style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
 	title="Global Ticket"
 	bind:this={ticketIframe}
-/>
+></iframe>

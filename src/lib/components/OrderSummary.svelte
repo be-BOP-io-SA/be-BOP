@@ -178,7 +178,7 @@
 			</div>
 		</div>
 
-		<div class="border-b border-gray-300 col-span-4" />
+		<div class="border-b border-gray-300 col-span-4"></div>
 	{/each}
 
 	{#if order.shippingPrice?.amount}
@@ -203,7 +203,7 @@
 				{/if}
 			</div>
 		</div>
-		<div class="border-b border-gray-300 col-span-4" />
+		<div class="border-b border-gray-300 col-span-4"></div>
 	{/if}
 
 	{#each order.vat || [] as vat, i}
@@ -232,7 +232,7 @@
 				{/if}
 			</div>
 		</div>
-		<div class="border-b border-gray-300 col-span-4" />
+		<div class="border-b border-gray-300 col-span-4"></div>
 	{/each}
 
 	{#if totalDiscountAmount > 0 || order?.discount}
@@ -274,10 +274,10 @@
 				{/if}
 			</div>
 		</div>
-		<div class="border-b border-gray-300 col-span-4" />
+		<div class="border-b border-gray-300 col-span-4"></div>
 	{/if}
 
-	<span class="py-1" />
+	<span class="py-1"></span>
 
 	<div class="py-3 flex flex-col">
 		<div class="flex justify-between">
@@ -350,7 +350,7 @@
 	{/if}
 
 	{#if invalidDeposits.length}
-		<div class="border-t border-gray-300 col-span-4" />
+		<div class="border-t border-gray-300 col-span-4"></div>
 
 		{#each invalidDeposits as payment}
 			<div class="py-3 flex flex-col">

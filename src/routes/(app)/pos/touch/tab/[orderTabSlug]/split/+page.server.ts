@@ -1,4 +1,4 @@
-import { ItemForPriceInfo, ProductForPriceInfo } from '$lib/cart';
+import type { ItemForPriceInfo, ProductForPriceInfo } from '$lib/cart';
 import { collections } from '$lib/server/database';
 import { ObjectId } from 'mongodb';
 import {
@@ -6,7 +6,7 @@ import {
 	getOrCreateOrderTab,
 	checkoutOrderTab
 } from '$lib/server/orderTab';
-import { OrderTab } from '$lib/types/OrderTab';
+import type { OrderTab } from '$lib/types/OrderTab';
 import { UrlDependency } from '$lib/types/UrlDependency';
 import { removeUserCarts } from '$lib/server/cart';
 import { userIdentifier } from '$lib/server/user';

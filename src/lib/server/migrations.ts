@@ -988,6 +988,48 @@ export const migrations = [
 				);
 			}
 		}
+	},
+	{
+		_id: new ObjectId('000000000000000000002899'),
+		name: 'Attest the SSO e-mails the large providers released, on sessions predating the flag',
+		run: async (session: ClientSession) => {
+			// An SSO address only identifies a customer once the provider attests it. Sessions
+			// written before that flag existed carry none, so their address stops matching orders
+			// it used to match — for up to a year, until the customer signs in again.
+			//
+			// These four release only an address they own, which is why `hooks.server.ts` marks
+			// their new sessions verified outright; this backfills the ones already stored.
+			// Entries from an operator-configured OIDC server are deliberately left alone: be-BOP
+			// cannot know whether that server checks addresses, which is the whole point of the
+			// flag. They are told apart by their id shape — Auth.js prefixes it with the provider
+			// name, an OIDC `sub` is arbitrary — so naming an OIDC slug after a provider is not
+			// enough to be trusted here.
+			const AUTHJS_PROVIDERS = ['github', 'google', 'facebook', 'twitter'];
+
+			await collections.sessions.updateMany(
+				{
+					sso: {
+						$elemMatch: {
+							provider: { $in: AUTHJS_PROVIDERS },
+							emailVerified: { $exists: false }
+						}
+					}
+				},
+				{ $set: { 'sso.$[entry].emailVerified': true } },
+				{
+					session,
+					arrayFilters: [
+						{
+							'entry.emailVerified': { $exists: false },
+							$or: AUTHJS_PROVIDERS.map((provider) => ({
+								'entry.provider': provider,
+								'entry.id': { $regex: `^${provider}-` }
+							}))
+						}
+					]
+				}
+			);
+		}
 	}
 ];
 

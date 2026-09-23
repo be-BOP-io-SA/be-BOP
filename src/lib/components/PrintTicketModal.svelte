@@ -61,7 +61,6 @@
 		on:click={handleCancel}
 		role="presentation"
 	>
-		<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 		<div
 			class="bg-white p-4 rounded-lg w-[95vw] md:w-auto md:min-w-[800px] max-w-[90%] max-h-[90vh] shadow-lg flex flex-col"
 			on:click|stopPropagation

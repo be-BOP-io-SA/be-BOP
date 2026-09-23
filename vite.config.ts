@@ -6,7 +6,10 @@ if (!process.env.PUBLIC_VERSION) {
 
 import 'sharp'; // Otherwise build errors with "module did not self-register"
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vitest/config';
+// Vite's own `defineConfig` takes an async factory, which vitest 0.34's does not; the
+// reference below is what still types the `test` block.
+/// <reference types="vitest" />
+import { defineConfig } from 'vite';
 import Icons from 'unplugin-icons/vite';
 import { readdir, stat, writeFile, readFile, mkdir } from 'fs/promises';
 
@@ -29,20 +32,28 @@ async function recursiveCopy(src: string, dest: string) {
 
 await recursiveCopy('node_modules/tinymce', 'static/tinymce');
 
-export default defineConfig(({ command }) => {
+// Async because SvelteKit 2's plugin resolves to a promise, which the config type
+// does not accept inside `plugins`.
+export default defineConfig(async ({ command }) => {
 	if (command === 'serve') {
 		// Set ORIGIN to http://localhost:5173 for local development
 		process.env.ORIGIN = 'http://localhost:5173';
 	}
 	return {
 		plugins: [
-			sveltekit(),
+			await sveltekit(),
 			Icons({
 				compiler: 'svelte'
 			})
 		],
 		test: {
-			include: ['src/**/*.{test,spec}.{js,ts}']
+			include: ['src/**/*.{test,spec}.{js,ts}'],
+			// Every test file shares one MongoDB, and `cleanDb()` empties it between tests:
+			// two files running at once wipe each other's fixtures. One worker, one file at a
+			// time — what `--no-threads` gave before vitest reworked its pools.
+			pool: 'forks',
+			fileParallelism: false,
+			maxWorkers: 1
 		},
 		// LayerCake ships uncompiled .svelte files; let Vite transform them for SSR
 		// instead of Node trying to import the raw .svelte (ERR_UNKNOWN_FILE_EXTENSION).

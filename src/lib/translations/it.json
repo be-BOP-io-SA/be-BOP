@@ -1146,14 +1146,14 @@
 			"title": "Una parola da be-BOP:",
 			"description1": "Per supportare gratuitamente il software be-BOP, puoi rendere pubblica l'esistenza del tuo negozio.",
 			"description2": "Nessun dato verrà inviato a be-BOP.io SA, tranne l'URI del tuo negozio e il tuo consenso a comunicare al riguardo. Le tue informazioni private e quelle dei tuoi clienti non verranno condivise.",
-			"description3": "La tua condivisione sarà utilizzata per statistiche anonime sul numero di utenti be-BOP (che non viene tracciato automaticamente perché rispettiamo la privacy e il consenso), e per condurre occasionalmente campagne di comunicazione e promozione sui be-BOP distribuiti in tutto il mondo. Una prima notifica verrà inviata al bot Nostr di be-BOP.io, poi settimanalmente finché il tuo be-BOP è attivo. Puoi successivamente disattivare questo messaggio regolare in <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a>.",
+			"description3": "La tua condivisione sarà utilizzata per statistiche anonime sul numero di utenti be-BOP (che non viene tracciato automaticamente perché rispettiamo la privacy e il consenso), e per condurre occasionalmente campagne di comunicazione e promozione sui be-BOP distribuiti in tutto il mondo. Una prima notifica verrà inviata al bot Nostr di be-BOP.io, poi settimanalmente finché il tuo be-BOP è attivo. Puoi successivamente disattivare questo messaggio regolare in <0>/admin/SEO</0>.",
 			"question": "Accetti di condividere l'esistenza del tuo be-BOP?",
 			"acceptButton": "Condividi",
 			"declineButton": "Ricordamelo tra 30 giorni",
 			"configureNostrButton": "Configura Nostr",
 			"accepted": {
 				"thankYou": "Grazie per aver scelto di condividere l'esistenza del tuo negozio con be-BOP.io per scopi statistici e promozionali!",
-				"message": "Nessun dato verrà inviato a be-BOP.io SA, tranne l'URL del tuo negozio e il tuo consenso a comunicare al riguardo. Puoi andare su <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> per disattivare questa telemetria opzionale.",
+				"message": "Nessun dato verrà inviato a be-BOP.io SA, tranne l'URL del tuo negozio e il tuo consenso a comunicare al riguardo. Puoi andare su <0>/admin/seo</0> per disattivare questa telemetria opzionale.",
 				"autoHideCountdown": "Questo messaggio scomparirà tra {seconds} secondi..."
 			},
 			"declined": {

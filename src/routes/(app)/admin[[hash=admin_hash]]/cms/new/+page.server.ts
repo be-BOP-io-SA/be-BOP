@@ -3,13 +3,14 @@ import { collections } from '$lib/server/database';
 import { zodSlug } from '$lib/server/zod.js';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
+import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
 import { error, redirect } from '@sveltejs/kit';
 import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
 export const actions = {
-	default: async function ({ request }) {
+	default: async function ({ request, locals }) {
 		const formData = await request.formData();
 		const json: JsonObject = {};
 
@@ -73,7 +74,9 @@ export const actions = {
 			...(metas.length && { metas: metas.filter((meta) => meta.name && meta.content) }),
 			createdAt: new Date(),
 			updatedAt: new Date(),
-			displayRawContent
+			// Raw content skips the sanitizer, so enabling it is granting script execution on a
+			// public page — a decision above the CMS grant.
+			displayRawContent: locals.user?.roleId === SUPER_ADMIN_ROLE_ID ? displayRawContent : false
 		});
 
 		throw redirect(303, `${adminPrefix()}/cms/${slug}`);

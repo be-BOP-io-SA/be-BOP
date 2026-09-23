@@ -62,7 +62,12 @@ export async function createSuperAdminUserInDb(login: string, password: string) 
 }
 
 export function userIdentifier(locals: App.Locals): UserIdentifier {
-	const secondaryEmails = locals.sso?.flatMap((sso) => (sso.email ? [sso.email] : []));
+	// Only an attested address may pull up a customer's carts and orders — an unverified one
+	// would let anyone claiming it at their provider read someone else's data. Those sessions
+	// still match on `ssoIds`.
+	const secondaryEmails = locals.sso?.flatMap((sso) =>
+		sso.email && sso.emailVerified ? [sso.email] : []
+	);
 	return {
 		ssoIds: locals.sso?.map((sso) => `${sso.provider}:${sso.id}`),
 		userId: locals.user?._id,

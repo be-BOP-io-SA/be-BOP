@@ -1,9 +1,9 @@
 import { collections } from '$lib/server/database';
 import type { Countdown } from '$lib/types/Countdown';
 
-export function load() {
+export async function load() {
 	return {
-		countdowns: collections.countdowns
+		countdowns: await collections.countdowns
 			.find({})
 			.project<Pick<Countdown, '_id' | 'name'>>({
 				_id: 1,

@@ -3,7 +3,7 @@
 	import type { Picture } from '$lib/types/Picture';
 	import PictureComponent from '../Picture.svelte';
 	import VariationFourTemplateWidget from './TagWidgetVariation4.svelte';
-	import { marked } from 'marked';
+	import { renderMarkdown } from '$lib/utils/markdown';
 
 	let className = '';
 	export { className as class };
@@ -24,7 +24,7 @@
 				<h2 class="text-6xl body-title pb-2 {titleClassNames}">{tag.title}</h2>
 				<h2 class="text-md md:text-xl">
 					<!-- eslint-disable svelte/no-at-html-tags -->
-					{@html marked(tag.content.replaceAll('<', '&lt;'))}
+					{@html renderMarkdown(tag.content)}
 				</h2>
 			</div>
 

@@ -148,7 +148,7 @@
 				on:click={() => (sidebarOpen = false)}
 				aria-label="Close menu"
 				tabindex="-1"
-			/>
+			></button>
 		{/if}
 
 		<aside

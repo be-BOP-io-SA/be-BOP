@@ -404,7 +404,7 @@ export async function load(params) {
 		removePopinProductPrice: runtimeConfig.removePopinProductPrice,
 		...(cmsAgewall && {
 			cmsAgewall,
-			cmsAgewallData: cmsFromContent({ desktopContent: cmsAgewall.content }, locals)
+			cmsAgewallData: await cmsFromContent({ desktopContent: cmsAgewall.content }, locals)
 		}),
 		sessionAcceptAgeLimitation: locals.acceptAgeLimitation
 	};

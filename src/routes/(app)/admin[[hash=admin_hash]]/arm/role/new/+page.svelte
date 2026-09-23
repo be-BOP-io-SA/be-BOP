@@ -18,7 +18,6 @@
 		<input class="form-checkbox" type="checkbox" name="hasPosOptions" />
 		Has POS access
 	</label>
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Read/Write access
 		<MultiSelect
@@ -29,7 +28,6 @@
 		/>
 	</label>
 
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Read access
 		<MultiSelect
@@ -40,7 +38,6 @@
 		/>
 	</label>
 
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Forbidden access
 		<MultiSelect

@@ -97,14 +97,31 @@ export default {
 		const checkout = await paypalGetCheckout(payment.checkoutId);
 
 		if (checkout.status === 'COMPLETED') {
-			const rawCurrency = checkout.purchase_units[0].amount.currency_code?.toUpperCase();
+			// A checkout reaches COMPLETED as soon as a capture exists, even a PENDING one — an
+			// eCheck still clearing, or an account under review. Only COMPLETED captures are money
+			// that arrived, and the unit's own `amount` merely echoes what we asked for, so a
+			// checkout with no settled capture stays pending rather than falling back to it.
+			const captures = checkout.purchase_units
+				.flatMap((unit) => unit.payments?.captures ?? [])
+				.filter((capture) => capture.status === 'COMPLETED');
+
+			if (!captures.length) {
+				return { status: 'pending' };
+			}
+
+			const settled = {
+				value: String(captures.reduce((total, capture) => total + Number(capture.amount.value), 0)),
+				currency_code: captures[0].amount.currency_code
+			};
+
+			const rawCurrency = settled.currency_code?.toUpperCase();
 			if (!typedInclude(CURRENCIES, rawCurrency)) {
 				throw new Error(`PayPal returned unknown currency: ${rawCurrency}`);
 			}
 			return {
 				status: 'paid',
 				received: {
-					amount: Number(checkout.purchase_units[0].amount.value),
+					amount: Number(settled.value),
 					currency: rawCurrency
 				}
 			};

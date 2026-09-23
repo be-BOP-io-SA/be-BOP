@@ -1146,14 +1146,14 @@
 			"title": "Een woord van be-BOP:",
 			"description1": "Om de gratis be-BOP-software te ondersteunen, kunt u het bestaan van uw winkel openbaar maken.",
 			"description2": "Er worden geen gegevens naar be-BOP.io SA verzonden, behalve de URI van uw winkel en uw toestemming om hierover te communiceren. Uw privégegevens en die van uw klanten worden niet gedeeld.",
-			"description3": "Uw bijdrage wordt gebruikt voor anonieme statistieken over het aantal be-BOP-gebruikers (dat niet automatisch wordt gevolgd omdat wij privacy en toestemming respecteren), en om af en toe communicatie- en promotiecampagnes te voeren over wereldwijd ingezette be-BOPs. Een eerste notificatie wordt verzonden naar de Nostr-bot van be-BOP.io, vervolgens wekelijks zolang uw be-BOP actief is. U kunt dit regelmatige bericht later uitschakelen in <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a>.",
+			"description3": "Uw bijdrage wordt gebruikt voor anonieme statistieken over het aantal be-BOP-gebruikers (dat niet automatisch wordt gevolgd omdat wij privacy en toestemming respecteren), en om af en toe communicatie- en promotiecampagnes te voeren over wereldwijd ingezette be-BOPs. Een eerste notificatie wordt verzonden naar de Nostr-bot van be-BOP.io, vervolgens wekelijks zolang uw be-BOP actief is. U kunt dit regelmatige bericht later uitschakelen in <0>/admin/SEO</0>.",
 			"question": "Accepteert u om het bestaan van uw be-BOP te delen?",
 			"acceptButton": "Delen",
 			"declineButton": "Herinner me over 30 dagen",
 			"configureNostrButton": "Nostr configureren",
 			"accepted": {
 				"thankYou": "Bedankt dat u ervoor heeft gekozen om het bestaan van uw winkel te delen met be-BOP.io voor statistische en promotionele doeleinden!",
-				"message": "Er worden geen gegevens naar be-BOP.io SA verzonden, behalve de URL van uw winkel en uw toestemming om hierover te communiceren. U kunt naar <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> gaan om deze optionele telemetrie uit te schakelen.",
+				"message": "Er worden geen gegevens naar be-BOP.io SA verzonden, behalve de URL van uw winkel en uw toestemming om hierover te communiceren. U kunt naar <0>/admin/seo</0> gaan om deze optionele telemetrie uit te schakelen.",
 				"autoHideCountdown": "Dit bericht verdwijnt over {seconds} seconden..."
 			},
 			"declined": {

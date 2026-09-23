@@ -167,7 +167,6 @@
 		</fieldset>
 	{/if}
 
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label"
 		>Required Subscription (optional)
 		<MultiSelect
@@ -304,7 +303,6 @@
 			The discount applies to the whole catalog (except free, subscription & PWYW products)
 		</label>
 		{#if !wholeCatalog}
-			<!-- svelte-ignore a11y-label-has-associated-control -->
 			<label class="form-label"
 				>Products
 				<MultiSelect
@@ -318,7 +316,6 @@
 				/>
 			</label>
 			{#if data.tags.length}
-				<!-- svelte-ignore a11y-label-has-associated-control -->
 				<label class="form-label"
 					>Products with this tag (optional)
 					<MultiSelect

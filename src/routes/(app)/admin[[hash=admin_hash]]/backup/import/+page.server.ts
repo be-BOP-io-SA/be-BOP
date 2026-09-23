@@ -1,4 +1,5 @@
-import { fail } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
+import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import * as devalue from 'devalue';
 import type { Challenge } from '$lib/types/Challenge.js';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
@@ -11,6 +12,9 @@ import { z } from 'zod';
 import { collections, db } from '$lib/server/database.js';
 import { ObjectId } from 'mongodb';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
+import { isPrivateIp } from '$lib/server/webhook-url-guard';
+import { lookup } from 'dns/promises';
+import { isIP } from 'net';
 
 export function load({ url }) {
 	return {
@@ -33,8 +37,18 @@ const IMPORT_TYPE_MAPPINGS = {
 	shopConfig: ['runtimeConfig']
 };
 
+// Restoring this would re-open the unauthenticated first-run admin creation that `/admin/login`
+// falls back to: it describes the instance, not the shop, so no backup may carry it.
+const NON_RESTORABLE_CONFIG_IDS = ['isAdminCreated'];
+
 export const actions = {
-	default: async ({ request }) => {
+	default: async ({ request, locals }) => {
+		// An import rewrites runtimeConfig wholesale — signing keys and payment credentials
+		// included — so it is the same privilege as exporting one.
+		if (locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
+			throw error(403, 'Forbidden. Only Super Admin can import a backup!');
+		}
+
 		const {
 			fileToUpload,
 			importType,
@@ -106,8 +120,17 @@ export const actions = {
 					globalInvalidFiles = [...globalInvalidFiles, ...digitalFileResponse.invalidFiles];
 				}
 
-				//Delete all collection
-				await collection.deleteMany({});
+				//Delete all collection, keeping the config documents no backup may carry
+				if (collectionName === 'runtimeConfig') {
+					collectionData = collectionData.filter(
+						(doc: { _id?: string }) => !NON_RESTORABLE_CONFIG_IDS.includes(doc._id ?? '')
+					);
+					await db
+						.collection<{ _id: string }>(collectionName)
+						.deleteMany({ _id: { $nin: NON_RESTORABLE_CONFIG_IDS } });
+				} else {
+					await collection.deleteMany({});
+				}
 
 				//Recreate all collection
 				if (collectionData.length > 0) {
@@ -167,11 +190,15 @@ async function handleImageImport(
 ) {
 	return await handleFilesImport(fileData, importTypeFiles, async (file: Picture) => {
 		let allSuccess = true;
-		allSuccess &&= await uploadFileToS3(file.storage.original.url, file.storage.original.key);
+		allSuccess &&= await uploadFileToS3(
+			file.storage.original.url,
+			file.storage.original.key,
+			'image/webp'
+		);
 
 		if (file.storage.formats) {
 			for (const format of file.storage.formats) {
-				allSuccess = allSuccess && (await uploadFileToS3(format.url, format.key));
+				allSuccess = allSuccess && (await uploadFileToS3(format.url, format.key, 'image/webp'));
 			}
 		}
 
@@ -184,14 +211,68 @@ async function handleDigitalFileImport(
 	importTypeFiles: ImportTypeFilesTypes | undefined
 ) {
 	return await handleFilesImport(fileData, importTypeFiles, (file: DigitalFile) => {
-		return uploadFileToS3(file.storage.url, file.storage.key);
+		// Downloads are served as an attachment, never rendered, so one opaque type fits all.
+		return uploadFileToS3(file.storage.url, file.storage.key, 'application/octet-stream');
 	});
 }
 
-async function uploadFileToS3(imageUrl: URL | RequestInfo | undefined, s3Key: string) {
+// The bytes and the key both come out of an externally-authored backup file, so neither the
+// remote's content type nor an arbitrary key may be taken at face value: the first would let an
+// imported object be served as HTML from our own origin, the second would let it land on top of
+// an existing one.
+const IMPORTABLE_KEY_PREFIXES = ['pictures/', 'products/', 'tags/', 'galleries/', 'digital-files/'];
+
+/**
+ * The source URL is authored by the backup file too, so fetching it unchecked turns the import
+ * into a read proxy into our own network — the fetched bytes end up publicly served under
+ * `/picture/raw`. Unlike a webhook target, http is allowed: an S3-compatible store on the LAN is
+ * a normal deployment, so only the address is vetted, not the scheme.
+ */
+async function assertPublicImportSource(rawUrl: string): Promise<void> {
+	const url = new URL(rawUrl);
+
+	if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+		throw new Error(`Refusing to import from a non-http(s) URL: ${url.protocol}`);
+	}
+
+	const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+
+	if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local')) {
+		throw new Error(`Refusing to import from ${host}`);
+	}
+
+	if (isIP(host)) {
+		if (isPrivateIp(host)) {
+			throw new Error(`Refusing to import from a private address: ${host}`);
+		}
+		return;
+	}
+
+	for (const { address } of await lookup(host, { all: true })) {
+		if (isPrivateIp(address)) {
+			throw new Error(`Refusing to import from ${host}, which resolves to ${address}`);
+		}
+	}
+}
+
+async function uploadFileToS3(
+	imageUrl: URL | RequestInfo | undefined,
+	s3Key: string,
+	contentType: string
+) {
 	try {
-		const response = await fetch(imageUrl ? imageUrl : '');
-		const contentType = response.headers.get('content-type') || undefined;
+		if (
+			!IMPORTABLE_KEY_PREFIXES.some((prefix) => s3Key.startsWith(prefix)) ||
+			s3Key.includes('..')
+		) {
+			console.error(`Refusing to import into an unexpected S3 key: ${s3Key}`);
+			return false;
+		}
+
+		await assertPublicImportSource(String(imageUrl ?? ''));
+
+		// A public host must not be able to bounce the request onto an internal one.
+		const response = await fetch(imageUrl ? imageUrl : '', { redirect: 'error' });
 
 		if (response.status !== 200) {
 			console.error(`Failed to fetch ${imageUrl}. Status code: ${response.status}`);

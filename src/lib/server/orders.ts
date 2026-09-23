@@ -11,7 +11,7 @@ import { ClientSession, ObjectId, type WithId } from 'mongodb';
 import { collections, withTransaction } from './database';
 import { firePaidOrderWebhooks, stripPaidOrderWebhook } from './order-paid-webhook';
 import {
-	Duration,
+	type Duration,
 	add,
 	addDays,
 	addHours,
@@ -71,6 +71,7 @@ import {
 import { groupByNonPartial } from '$lib/utils/group-by';
 import {
 	dayList,
+	closingMinute,
 	minutesToTime,
 	productToScheduleId,
 	scheduleToProductId,
@@ -407,7 +408,19 @@ export async function onOrderPayment(
 
 		order = ret.value;
 		if (order.status === 'paid') {
-			await updateAfterOrderPaid(order, session);
+			// Claim the transition before issuing anything: free payments reach here twice by
+			// design, and two split payments can each cover the full total and both be confirmed.
+			// Tickets, stock decrements and subscription cycles do not survive being applied twice.
+			const claimed = await collections.orders.findOneAndUpdate(
+				{ _id: order._id, paidEffectsAppliedAt: { $exists: false } },
+				{ $set: { paidEffectsAppliedAt: new Date() } },
+				{ returnDocument: 'after', session }
+			);
+
+			if (claimed.value) {
+				order = claimed.value;
+				await updateAfterOrderPaid(order, session);
+			}
 		}
 
 		if (order.vat?.length && !alreadyPaid) {
@@ -789,6 +802,17 @@ export async function createOrder(
 	const npubAddress = params.notifications?.paymentStatus?.npub;
 	const email = params.notifications?.paymentStatus?.email;
 
+	// The order is filed under the notification address too (see `user` on the document below), and
+	// that is the identity the payment later credits the subscription to. Deciding the price from
+	// the session alone would let a new session with the same address buy at the intro price for
+	// ever while extending the same subscription. Deliberately not used for discount eligibility:
+	// there, honouring a self-asserted address would hand over someone else's subscriber pricing.
+	const subscriptionUser: UserIdentifier = {
+		...params.user,
+		...(!params.user.email && email && { email }),
+		...(!params.user.npub && npubAddress && { npub: npubAddress })
+	};
+
 	const canBeNotified = !!(
 		npubAddress ||
 		((runtimeConfig.contactModesForceOption || isEmailConfigured()) && email)
@@ -940,7 +964,7 @@ export async function createOrder(
 			continue;
 		}
 		const existing = await collections.paidSubscriptions.findOne(
-			{ ...userQuery(params.user), productId: item.product._id },
+			{ ...userQuery(subscriptionUser), productId: item.product._id },
 			{
 				projection: { pricingScheduleSnapshot: 1, pricingScheduleCursor: 1 },
 				session: params.session
@@ -1064,7 +1088,7 @@ export async function createOrder(
 
 		const existingSubscription = await collections.paidSubscriptions.findOne(
 			{
-				...userQuery(params.user),
+				...userQuery(subscriptionUser),
 				productId: product._id
 			},
 			{ session: params.session }
@@ -1082,12 +1106,15 @@ export async function createOrder(
 			}
 		}
 
+		// `payment` was replaced by the `payments` array long ago, so this filter matched nothing
+		// and the guard never fired — letting a buyer stack unpaid orders that each snapshot the
+		// pricing schedule's intro phase, then pay them all at the intro price.
 		if (
 			await collections.orders.countDocuments(
 				{
-					...userQuery(params.user),
+					...userQuery(subscriptionUser),
 					'items.product._id': product._id,
-					'payment.status': 'pending'
+					status: 'pending'
 				},
 				{ limit: 1 }
 			)
@@ -1246,7 +1273,7 @@ export async function createOrder(
 							)}) before the scheduled opening time (${daySpec.start})`
 						);
 					}
-					if (minutesEnd > (daySpec.end === '00:00' ? timeToMinutes(daySpec.end) : 24 * 60)) {
+					if (minutesEnd > closingMinute(daySpec.end)) {
 						throw error(
 							400,
 							`Product ${productById[productId].name} booking time range ends (${minutesToTime(
@@ -1605,6 +1632,7 @@ export async function createOrder(
 						type: params.discount.type
 					}
 				}),
+			...(bestAutoDiscount && { appliedAutoDiscountId: bestAutoDiscount.discount._id }),
 			...(params.clientIp && { clientIp: params.clientIp }),
 			currencySnapshot: {
 				main: {
@@ -2077,6 +2105,12 @@ export async function addOrderPayment(
 
 	if (paymentMethod !== 'free' && priceToPay.amount < CURRENCY_UNIT[priceToPay.currency]) {
 		throw error(400, 'Order already fully paid');
+	}
+
+	// A free payment settles itself instantly, so it may only ever cover nothing: any caller
+	// offering it on an order that still owes money would hand out a free order.
+	if (paymentMethod === 'free' && priceToPay.amount >= CURRENCY_UNIT[priceToPay.currency]) {
+		throw error(400, "You can't use free payment method on this order");
 	}
 
 	const paymentId = new ObjectId();

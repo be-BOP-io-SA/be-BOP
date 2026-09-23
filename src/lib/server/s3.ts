@@ -76,7 +76,9 @@ export async function initializeS3Bucket() {
 				new AWS.CreateBucketCommand({
 					Bucket: bucket,
 					CreateBucketConfiguration: {
-						LocationConstraint: region
+						// The SDK now types this as its own enum, but a shop can point at any
+						// S3-compatible host whose region is not in AWS's list — MinIO included.
+						LocationConstraint: region as AWS.BucketLocationConstraint
 					}
 				})
 			);

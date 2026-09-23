@@ -99,7 +99,7 @@ jobs:
           cd release_artifacts
           mv be-BOP-release.zip "../${{ steps.commit.outputs.release_name }}.zip"
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: rel/${{ steps.commit.outputs.commit_date }}/${{ steps.commit.outputs.hash }}
           name: ${{ steps.commit.outputs.title }}

@@ -6,7 +6,7 @@ import {
 	getOrCreateOrderTab
 } from './orderTab';
 import { collections } from './database';
-import { OrderTab } from '$lib/types/OrderTab';
+import type { OrderTab } from '$lib/types/OrderTab';
 
 function mkSession(): string {
 	return new Date().getTime().toString() + Math.random().toString(36).substring(2, 4);

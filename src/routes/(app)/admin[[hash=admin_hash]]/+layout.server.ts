@@ -79,7 +79,7 @@ export async function load({ locals }) {
 		productActionSettings: runtimeConfig.productActionSettings,
 		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		availablePaymentMethods: paymentMethods({ includePOS: true }),
-		role: locals.user?.roleId ? collections.roles.findOne({ _id: locals.user.roleId }) : null,
+		role: locals.user?.roleId ? await collections.roles.findOne({ _id: locals.user.roleId }) : null,
 		adminPrefix: adminPrefix(),
 		isBitcoinConfigured,
 		isLndConfigured: isLndConfigured(),
@@ -87,7 +87,7 @@ export async function load({ locals }) {
 		s3IsConfigured: !!s3IsConfigured(),
 		disabledAdminEntries: runtimeConfig.disabledAdminEntries,
 		backOfficeBookmarks: locals.user
-			? collections.users
+			? await collections.users
 					.findOne(
 						{ _id: locals.user._id },
 						{ projection: { 'userSettings.backOfficeBookmarks': 1 } }

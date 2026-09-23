@@ -41,6 +41,8 @@ export interface StripePaymentIntentObject {
 	amount_received: number;
 	payment_method: string | null;
 	latest_charge: string | null;
+	/** Present on the intents be-BOP creates itself; a terminal's own intent carries none. */
+	metadata?: Record<string, string> | null;
 }
 
 interface StripePaymentIntentSucceededEvent {

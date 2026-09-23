@@ -3,7 +3,8 @@
 	import type { Picture } from '$lib/types/Picture';
 	import PictureComponent from '../Picture.svelte';
 	import VariationFourTemplateWidget from './TagWidgetVariation4.svelte';
-	import { marked } from 'marked';
+	import { renderMarkdown } from '$lib/utils/markdown';
+	import { safeHref } from '$lib/utils/safeUrl';
 
 	let className = '';
 	export { className as class };
@@ -24,16 +25,14 @@
 				<h2 class="text-6xl body-title pb-2 {titleClassNames}">{tag.title}</h2>
 				<h2 class="text-md md:text-xl">
 					<!-- eslint-disable svelte/no-at-html-tags -->
-					{@html marked(tag.content.replaceAll('<', '&lt;'))}
+					{@html renderMarkdown(tag.content)}
 				</h2>
 				<div class="flex text-centern justify-between mt-auto">
 					{#each tag.cta as cta}
 						<div class="btn tagWidget-cta text-xl text-center w-auto p-1">
 							<a
 								class="tagWidget-hyperlink"
-								href={cta.href.startsWith('http') || cta.href.includes('/')
-									? cta.href
-									: `/${cta.href}`}
+								href={safeHref(cta.href)}
 								target={cta.href.startsWith('http') || cta.openNewTab ? '_blank' : '_self'}
 								>{cta.label}</a
 							>

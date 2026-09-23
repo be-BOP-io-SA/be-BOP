@@ -1,9 +1,9 @@
 import { collections } from '$lib/server/database';
 import type { Specification } from '$lib/types/Specification';
 
-export function load() {
+export async function load() {
 	return {
-		specifications: collections.specifications
+		specifications: await collections.specifications
 			.find({})
 			.project<Pick<Specification, '_id' | 'title'>>({
 				_id: 1,

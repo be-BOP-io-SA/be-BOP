@@ -30,7 +30,7 @@
 			class="absolute inset-0 bg-black/50"
 			aria-label={t('priceCalendar.close')}
 			on:click={onClose}
-		/>
+		></button>
 		<div
 			class="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-850"
 			role="dialog"

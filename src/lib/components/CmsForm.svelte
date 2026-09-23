@@ -118,7 +118,7 @@
 			maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 			class="form-input block w-full"
 			value={shortDescription}
-		/>
+		></textarea>
 	</label>
 
 	<label class="checkbox-label">
@@ -321,7 +321,7 @@
 			placeholder="HTML content"
 			class="form-input block w-full"
 			bind:value={pageContent}
-		/>
+		></textarea>
 	</label>
 
 	<label class="checkbox-label">
@@ -354,7 +354,7 @@
 				placeholder="HTML content"
 				class="form-input block w-full"
 				bind:value={mobileContent}
-			/>
+			></textarea>
 		</label>
 	{/if}
 	<label class="checkbox-label">
@@ -387,7 +387,7 @@
 				placeholder="HTML content"
 				class="form-input block w-full"
 				bind:value={employeeContent}
-			/>
+			></textarea>
 		</label>
 	{/if}
 	<div class="flex flex-row justify-between gap-2">

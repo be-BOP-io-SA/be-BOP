@@ -10,6 +10,7 @@ import { isStripeEnabled, lastSuccessfulPaymentIntents } from '../stripe';
 import type { Order } from '$lib/types/Order';
 import { ObjectId } from 'mongodb';
 import { getProcessor } from '../sdk/pp';
+import { assertSettlementCovers } from '../sdk/settlement';
 
 const lock = new Lock('orders');
 
@@ -27,8 +28,32 @@ async function findMatchingTapToPayOrderStripe(
 	}
 	const amountInCurrencyUnit =
 		payment.price.amount * Math.pow(10, FRACTION_DIGITS_PER_CURRENCY[payment.price.currency]);
-	return lastSuccessfulPaymentIntents().then((pis) => {
-		const matchingPaymentIntent = pis.find((pi) => {
+	return lastSuccessfulPaymentIntents().then(async (pis) => {
+		// A tap-to-pay intent is created by the terminal, so it carries none of our metadata.
+		// One that does is a web checkout we created ourselves, and matching it here would
+		// settle this order with a card payment made for another — same amount, same minute.
+		const candidates = pis.filter((pi) => !pi.metadata?.paymentId && !pi.metadata?.orderId);
+
+		// An intent settles at most one payment: without this, a single card payment could be
+		// replayed across successive tap-to-pay windows of the same amount.
+		const alreadyConsumed = new Set(
+			(
+				await collections.orders
+					.find(
+						{ 'payments.detail': { $in: candidates.map((pi) => `stripe - ${pi.id}`) } },
+						{ projection: { 'payments.detail': 1 } }
+					)
+					.toArray()
+			).flatMap((o) =>
+				o.payments.map((p) => p.detail).filter((detail): detail is string => !!detail)
+			)
+		);
+
+		const matchingPaymentIntent = candidates.find((pi) => {
+			if (alreadyConsumed.has(`stripe - ${pi.id}`)) {
+				return false;
+			}
+
 			const amountMatches =
 				pi.amount_received === amountInCurrencyUnit &&
 				pi.currency.toUpperCase() === payment.price.currency;
@@ -137,10 +162,19 @@ async function maintainOrders() {
 					try {
 						const result = await pp.checkPayment(payment, order);
 						switch (result.status) {
-							case 'paid':
+							case 'paid': {
 								if (!result.received) {
 									throw new Error(`SDK: paid without received amount for order ${order._id}`);
 								}
+								// Only two processors compared the amount themselves; the rest settled on the
+								// provider's word alone.
+								assertSettlementCovers(
+									payment.price,
+									result.received,
+									result.fees,
+									`SDK: ${payment.processor} on order ${order._id}`
+								);
+
 								if (result.transactions) {
 									payment.transactions = result.transactions;
 								}
@@ -151,6 +185,7 @@ async function maintainOrders() {
 									result.fees ? { fees: result.fees } : undefined
 								);
 								break;
+							}
 							case 'expired':
 								order = await onOrderPaymentFailed(order, payment, 'expired');
 								break;

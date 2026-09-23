@@ -98,7 +98,6 @@
 		</label>
 	</div>
 
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label"
 		>Products
 		<MultiSelect

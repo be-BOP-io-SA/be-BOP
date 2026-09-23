@@ -36,7 +36,11 @@ export const actions = {
 			throw error(400, `Payment is not ${payment.status}`);
 		}
 
-		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
+		// Same exclusion as the order page's own loader: `free` settles on creation, so offering it
+		// here would let the buyer swap a pending payment for a paid one.
+		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }).filter(
+			(method) => method !== 'free'
+		);
 
 		for (const item of order.items) {
 			if (item.product.paymentMethods) {
@@ -60,6 +64,24 @@ export const actions = {
 
 		if (!typedInclude(methods, parsed.method)) {
 			throw error(400, 'Payment method not available for this order');
+		}
+
+		// The order's prices were snapshotted under the old method. A discount granted for paying
+		// one way must not be carried over to another, so refuse the swap rather than keep it.
+		if (order.appliedAutoDiscountId) {
+			const appliedDiscount = await collections.discounts.findOne({
+				_id: order.appliedAutoDiscountId
+			});
+
+			if (
+				appliedDiscount?.paymentMethods?.length &&
+				!appliedDiscount.paymentMethods.includes(parsed.method)
+			) {
+				throw error(
+					400,
+					'This order was discounted for its current payment method. Place a new order to pay another way.'
+				);
+			}
 		}
 
 		try {

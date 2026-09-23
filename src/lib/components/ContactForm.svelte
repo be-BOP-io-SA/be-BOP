@@ -74,7 +74,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			bind:value={content}
 			class="form-input block w-full"
-		/>
+		></textarea>
 	</label>
 	{#if contactForm.disclaimer}
 		<h2 class="text-xl font-bold">{contactForm.disclaimer?.label}</h2>

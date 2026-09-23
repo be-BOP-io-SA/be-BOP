@@ -89,7 +89,8 @@
 	</label>
 	<label class="form-label">
 		Gallery content
-		<textarea name="principal.content" cols="30" rows="5" maxlength="10000" class="form-input" />
+		<textarea name="principal.content" cols="30" rows="5" maxlength="10000" class="form-input"
+		></textarea>
 	</label>
 	<div class="flex gap-4">
 		<label class="form-label">
@@ -120,13 +121,8 @@
 		</label>
 		<label class="form-label">
 			Gallery subcontent {i + 1}
-			<textarea
-				name="secondary[{i}].content"
-				cols="30"
-				rows="5"
-				maxlength="160"
-				class="form-input"
-			/>
+			<textarea name="secondary[{i}].content" cols="30" rows="5" maxlength="160" class="form-input"
+			></textarea>
 		</label>
 		<label class="form-label">
 			Picture {i + 1}

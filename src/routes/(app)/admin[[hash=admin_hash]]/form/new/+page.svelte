@@ -106,7 +106,7 @@
 				maxlength={MAX_CONTENT_LIMIT}
 				placeholder="message"
 				class="form-input block w-full"
-			/>
+			></textarea>
 		</label>
 		<label class="form-label">
 			Disclaimer checkbox label
@@ -134,7 +134,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder="message"
 			class="form-input block w-full"
-		/>
+		></textarea>
 	</label>
 	<input type="submit" class="btn btn-blue self-start text-white" value="Submit" />
 </form>

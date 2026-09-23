@@ -416,7 +416,7 @@
 						<p class="text-red-600 col-span-3">{errorMessage}</p>
 					{/if}
 
-					<div class="border-b border-gray-300 col-span-3 my-4 lg:my-0" />
+					<div class="border-b border-gray-300 col-span-3 my-4 lg:my-0"></div>
 				{/each}
 			</div>
 			{#if deliveryFees}

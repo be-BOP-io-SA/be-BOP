@@ -1,9 +1,9 @@
 import { collections } from '$lib/server/database';
 import type { OrderLabel } from '$lib/types/OrderLabel';
 
-export function load() {
+export async function load() {
 	return {
-		labels: collections.labels
+		labels: await collections.labels
 			.find({})
 			.project<Pick<OrderLabel, '_id' | 'name'>>({
 				_id: 1,

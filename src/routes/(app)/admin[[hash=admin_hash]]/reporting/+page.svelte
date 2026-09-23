@@ -552,7 +552,7 @@
 		title=""
 		on:load={() => console.log('loaded')}
 		style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
-	/>
+	></iframe>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>

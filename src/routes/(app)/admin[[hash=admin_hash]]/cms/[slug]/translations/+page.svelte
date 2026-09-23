@@ -39,7 +39,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={data.cmsPage.content}
 			value={data.cmsPage.translations?.[language]?.content ?? ''}
-		/>
+		></textarea>
 	</label>
 	<label class="form-label">
 		Substitution content
@@ -50,7 +50,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={data.cmsPage.mobileContent}
 			value={data.cmsPage.translations?.[language]?.mobileContent ?? ''}
-		/>
+		></textarea>
 	</label>
 	<label class="form-label">
 		Employee content
@@ -61,7 +61,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={data.cmsPage.employeeContent}
 			value={data.cmsPage.translations?.[language]?.employeeContent ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<label class="form-label">
@@ -73,7 +73,7 @@
 			maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 			placeholder={data.cmsPage.shortDescription}
 			value={data.cmsPage.translations?.[language]?.shortDescription ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<button class="btn btn-black self-start" type="submit">Save</button>

@@ -349,6 +349,12 @@ export interface Order extends Timestamps {
 	 */
 	status: OrderPaymentStatus;
 
+	/**
+	 * Set once, when the order first became paid and its goods were issued. Tickets, stock and
+	 * subscription cycles are not recoverable if applied twice, and several paths reach that code.
+	 */
+	paidEffectsAppliedAt?: Date;
+
 	payments: OrderPayment[];
 
 	sellerIdentity: SellerIdentity | null;
@@ -368,6 +374,12 @@ export interface Order extends Timestamps {
 		type: DiscountType;
 		price: Price;
 	};
+
+	/**
+	 * The automatic discount baked into the item prices, if any. Recorded so a later change to
+	 * the order — the payment method above all — can re-check the conditions it was granted under.
+	 */
+	appliedAutoDiscountId?: string;
 
 	clientIp?: string;
 	notes?: Note[];

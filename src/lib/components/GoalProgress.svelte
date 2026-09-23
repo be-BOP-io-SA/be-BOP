@@ -24,12 +24,12 @@
 				50
 					? 'before:left-[6px]'
 					: 'before:right-1'} before:-top-1 before:text-base before:whitespace-nowrap"
-			/>
+			></div>
 
 			<div
 				class="h-6 bg-gradient-to-b from-gray-250 to-white to-45% border border-l-0 border-gray-360 rounded-r-[3px]"
 				style="width: {100 - percentage}%"
-			/>
+			></div>
 		{/if}
 	</div>
 	<div
@@ -48,7 +48,7 @@
 				50
 					? 'before:left-[6px]'
 					: 'before:right-1'} before:-top-1 before:text-base before:whitespace-nowrap"
-			/>
+			></div>
 		{/if}
 	</div>
 </div>

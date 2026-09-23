@@ -6,19 +6,12 @@ import it from './it.json';
 import de from './de.json';
 import pt from './pt.json';
 
-// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
 import { formatDistance as formatDistanceEn } from 'date-fns/formatDistance/en-US';
-// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
 import { formatDistance as formatDistanceFr } from 'date-fns/formatDistance/fr';
-// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
 import { formatDistance as formatDistanceIt } from 'date-fns/formatDistance/it';
-// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
 import { formatDistance as formatDistanceNl } from 'date-fns/formatDistance/nl';
-// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
 import { formatDistance as formatDistanceEs } from 'date-fns/formatDistance/es';
-// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
 import { formatDistance as formatDistanceDe } from 'date-fns/formatDistance/de';
-// @ts-expect-error need to upgrade sveltekit and tsconfig's moduleResolution
 import { formatDistance as formatDistancePt } from 'date-fns/formatDistance/pt';
 
 import { typedKeys } from '$lib/utils/typedKeys';

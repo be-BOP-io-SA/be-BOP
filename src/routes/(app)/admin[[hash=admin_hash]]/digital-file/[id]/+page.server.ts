@@ -14,7 +14,7 @@ export async function load({ params }) {
 		throw error(404, 'Digital file not found');
 	}
 
-	const downloadLink = getPublicS3DownloadLink(digitalFile.storage.key);
+	const downloadLink = await getPublicS3DownloadLink(digitalFile.storage.key);
 
 	return {
 		digitalFile,

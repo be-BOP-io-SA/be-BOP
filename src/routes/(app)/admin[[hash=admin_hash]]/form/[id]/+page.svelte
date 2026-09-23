@@ -108,7 +108,7 @@
 				placeholder="message"
 				class="form-input block w-full"
 				value={data.contactForm.disclaimer?.content}
-			/>
+			></textarea>
 		</label>
 		<label class="form-label">
 			Disclaimer checkbox label
@@ -143,7 +143,7 @@
 		value={data.contactForm.content}
 		placeholder="message"
 		class="form-input block w-full"
-	/>
+	></textarea>
 	<div class="flex flex-row justify-between gap-2">
 		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
 		<a href="/form/{data.contactForm._id}" class="btn body-mainCTA">View</a>

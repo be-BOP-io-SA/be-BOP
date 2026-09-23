@@ -11,16 +11,26 @@ import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import type { OrderLabel } from '$lib/types/OrderLabel.js';
+import type { DigitalFile } from '$lib/types/DigitalFile.js';
 
 export async function load({ params, depends, locals, url }) {
 	depends(UrlDependency.Order);
 
 	const order = await fetchOrderForUser(params.id, { userRoleId: locals.user?.roleId });
 
-	const digitalFiles = uniqBy(
-		order.items.flatMap((item) => item.digitalFiles),
-		(file) => file._id
-	);
+	// The order payload deliberately carries no storage details; fetch them here, where they stay
+	// server-side and only a paid order gets a link built from them.
+	const digitalFiles = await collections.digitalFiles
+		.find({
+			_id: {
+				$in: uniqBy(
+					order.items.flatMap((item) => item.digitalFiles),
+					(file) => file._id
+				).map((file) => file._id)
+			}
+		})
+		.project<Pick<DigitalFile, '_id' | 'name' | 'storage'>>({ name: 1, storage: 1 })
+		.toArray();
 	const [cmsOrderTop, cmsOrderBottom] = await Promise.all([
 		collections.cmsPages.findOne(
 			{
@@ -105,7 +115,7 @@ export async function load({ params, depends, locals, url }) {
 		posSubtypes,
 		posMode: posMode,
 		hasPosOptions: locals.user?.hasPosOptions,
-		digitalFiles: Promise.all(
+		digitalFiles: await Promise.all(
 			digitalFiles.map(async (file) => ({
 				name: file.name,
 				size: file.storage.size,
@@ -114,7 +124,7 @@ export async function load({ params, depends, locals, url }) {
 		),
 		...(cmsOrderTop && {
 			cmsOrderTop,
-			cmsOrderTopData: cmsFromContent(
+			cmsOrderTopData: await cmsFromContent(
 				{
 					desktopContent: cmsOrderTop.content,
 					employeeContent:
@@ -126,7 +136,7 @@ export async function load({ params, depends, locals, url }) {
 		}),
 		...(cmsOrderBottom && {
 			cmsOrderBottom,
-			cmsOrderBottomData: cmsFromContent(
+			cmsOrderBottomData: await cmsFromContent(
 				{
 					desktopContent: cmsOrderBottom.content,
 					employeeContent:

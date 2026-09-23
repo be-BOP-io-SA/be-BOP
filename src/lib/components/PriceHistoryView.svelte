@@ -316,11 +316,11 @@
 
 			<div class="mt-3 flex items-center gap-5 text-xs text-gray-600 dark:text-gray-400">
 				<span class="flex items-center gap-1.5"
-					><span class="h-2.5 w-2.5 rounded-full" style="background:{CAT_COLOR}" />
+					><span class="h-2.5 w-2.5 rounded-full" style="background:{CAT_COLOR}"></span>
 					{t('priceCalendar.catalogue')}</span
 				>
 				<span class="flex items-center gap-1.5"
-					><span class="h-2.5 w-2.5 rounded-full" style="background:{PAID_COLOR}" />
+					><span class="h-2.5 w-2.5 rounded-full" style="background:{PAID_COLOR}"></span>
 					{t('priceCalendar.averagePaid')}</span
 				>
 			</div>
@@ -336,7 +336,7 @@
 						<div
 							class="flex-1 rounded-sm bg-gray-200 dark:bg-gray-700"
 							style="height:{25 + ((i * 53) % 60)}%"
-						/>
+						></div>
 					{/each}
 				</div>
 			</div>
@@ -344,7 +344,7 @@
 				{#each [...Array(3).keys()] as i (i)}
 					<div
 						class="h-[64px] rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-850 sm:h-[76px]"
-					/>
+					></div>
 				{/each}
 			</div>
 		</div>

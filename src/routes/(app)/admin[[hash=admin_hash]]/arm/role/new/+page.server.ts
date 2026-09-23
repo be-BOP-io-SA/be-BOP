@@ -1,11 +1,18 @@
 import { adminPrefix } from '$lib/server/admin.js';
 import { collections } from '$lib/server/database.js';
-import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
+import { CUSTOMER_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 
 export const actions = {
 	default: async function (event) {
+		// Defining what a role may do is a super-admin act: otherwise a scoped ARM manager mints a
+		// role with write on /admin/* and assigns it to themselves, and the guard on editing an
+		// existing role is worth nothing.
+		if (event.locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
+			throw error(403, 'Only the super admin can create a role');
+		}
+
 		const data = await event.request.formData();
 
 		const parsed = z

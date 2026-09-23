@@ -222,5 +222,12 @@ export function checkProductVariationsIntegrity(
 		variationNamesInDB.length === chosenVariationNames.length &&
 		variationNamesInDB.every((name) => chosenVariationNames.includes(name));
 
-	return allVariationsChosen;
+	// Values matter as much as names: `productPriceWithVariations` bills an unknown pair as a
+	// zero surcharge, so accepting one would sell the product without its options.
+	const allValuesOffered = Object.entries(chosenVariations ?? {}).every(
+		([name, value]) =>
+			product.variations?.some((vari) => vari.name === name && vari.value === value)
+	);
+
+	return allVariationsChosen && allValuesOffered;
 }

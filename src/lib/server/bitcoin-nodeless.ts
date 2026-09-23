@@ -6,7 +6,6 @@ import { runtimeConfig, runtimeConfigUpdatedAt } from './runtime-config';
 import { z } from 'zod';
 import { sum } from '$lib/utils/sum';
 import { trimSuffix } from '$lib/utils/trimSuffix';
-import { persistConfigElement } from './utils/persistConfig';
 import { collections } from './database';
 
 // SLIP-132 version bytes. See https://github.com/satoshilabs/slips/blob/master/slip-0132.md
@@ -122,8 +121,45 @@ export function generateNodelessAddress(index: number): string {
 	return bip84Address(config.publicKey, index);
 }
 
+/**
+ * Claims the next index in the database rather than in memory. Two checkouts reading the same
+ * in-process counter would derive the same receiving address, and a payment is settled from the
+ * address balance rather than a per-order UTXO — so a single transaction would settle both orders.
+ */
+async function claimDerivationIndex(): Promise<number> {
+	// The `$inc` below must not upsert: a document created by it would carry the counter and none
+	// of the xpub/descriptor fields the rest of the config holds.
+	await collections.runtimeConfig.updateOne(
+		{ _id: 'bitcoinNodeless' },
+		{
+			$setOnInsert: {
+				data: runtimeConfig.bitcoinNodeless,
+				updatedAt: new Date(),
+				createdAt: new Date()
+			}
+		},
+		{ upsert: true }
+	);
+
+	const res = await collections.runtimeConfig.findOneAndUpdate(
+		{ _id: 'bitcoinNodeless' },
+		{ $inc: { 'data.derivationIndex': 1 } as never, $set: { updatedAt: new Date() } },
+		{ returnDocument: 'after' }
+	);
+
+	const claimed = (res.value?.data as typeof runtimeConfig.bitcoinNodeless | undefined)
+		?.derivationIndex;
+
+	if (typeof claimed !== 'number') {
+		throw new Error('Failed to claim a bitcoin derivation index');
+	}
+
+	runtimeConfig.bitcoinNodeless.derivationIndex = claimed;
+	return claimed - 1;
+}
+
 export async function generateDerivationIndex(): Promise<number> {
-	let index = runtimeConfig.bitcoinNodeless.derivationIndex;
+	let index = await claimDerivationIndex();
 
 	if (runtimeConfig.bitcoinNodeless.skipUsedAddresses) {
 		for (let attempts = 0; attempts < 10; attempts++) {
@@ -134,25 +170,17 @@ export async function generateDerivationIndex(): Promise<number> {
 			});
 
 			if (!isUsed) {
-				break;
+				return index;
 			}
-			index++;
+
+			index = await claimDerivationIndex();
 		}
 
-		if (index >= runtimeConfig.bitcoinNodeless.derivationIndex + 10) {
-			throw new Error(
-				'Unable to provide the next derivation index because too many intermediate derivations are already used'
-			);
-		}
+		throw new Error(
+			'Unable to provide the next derivation index because too many intermediate derivations are already used'
+		);
 	}
 
-	const updatedConfig = {
-		...runtimeConfig.bitcoinNodeless,
-		derivationIndex: index + 1
-	};
-
-	await persistConfigElement('bitcoinNodeless', updatedConfig);
-	runtimeConfig.bitcoinNodeless = updatedConfig;
 	return index;
 }
 

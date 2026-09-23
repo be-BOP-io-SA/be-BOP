@@ -139,7 +139,7 @@
 							/>
 						</div>
 					</div>
-					<div class="border-b border-gray-300 col-span-4" />
+					<div class="border-b border-gray-300 col-span-4"></div>
 				{/each}
 			</div>
 		{/if}

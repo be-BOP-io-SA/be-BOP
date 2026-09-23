@@ -218,7 +218,7 @@ export async function load({ parent, locals }) {
 		checkoutFields,
 		...(cmsCheckoutTop && {
 			cmsCheckoutTop,
-			cmsCheckoutTopData: cmsFromContent(
+			cmsCheckoutTopData: await cmsFromContent(
 				{
 					desktopContent: cmsCheckoutTop.content,
 					employeeContent:
@@ -230,7 +230,7 @@ export async function load({ parent, locals }) {
 		}),
 		...(cmsCheckoutBottom && {
 			cmsCheckoutBottom,
-			cmsCheckoutBottomData: cmsFromContent(
+			cmsCheckoutBottomData: await cmsFromContent(
 				{
 					desktopContent: cmsCheckoutBottom.content,
 					employeeContent:
@@ -396,13 +396,16 @@ export const actions = {
 					})
 					.parse(json)
 			: null;
-		const receiptNote = json.receiptNoteContent
-			? z
-					.object({
-						receiptNoteContent: z.string().min(1)
-					})
-					.parse(json)
-			: null;
+		// POS-only, like the other operator fields around it: the receipt note is rendered as
+		// markdown on the employee screens, so a customer must not be able to fill it.
+		const receiptNote =
+			locals.user?.hasPosOptions && json.receiptNoteContent
+				? z
+						.object({
+							receiptNoteContent: z.string().min(1)
+						})
+						.parse(json)
+				: null;
 
 		const multiplePaymentMethods = locals.user?.hasPosOptions
 			? z

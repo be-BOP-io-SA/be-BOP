@@ -16,6 +16,7 @@
 		isWithinInterval
 	} from 'date-fns';
 	import type { ScheduleEvent, Schedule } from '$lib/types/Schedule';
+	import { safeHref } from '$lib/utils/safeUrl';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import IconRssFeed from '../icons/IconRssFeed.svelte';
@@ -295,10 +296,14 @@
 						})}
 					{/if}
 					{#if event.location?.name}
-						- <a href={event.location.link} target="_blank" class="body-hyperlink underline">📍</a>
+						- <a
+							href={safeHref(event.location.link)}
+							target="_blank"
+							class="body-hyperlink underline">📍</a
+						>
 					{/if}
 					{#if event.url}
-						<a title={t('schedule.moreInfo')} href={event.url} target="_blank">ℹ️</a>
+						<a title={t('schedule.moreInfo')} href={safeHref(event.url)} target="_blank">ℹ️</a>
 					{/if}
 					<a title="Provide rss feed" href="/schedule/{schedule._id}/rss.xml" target="_blank">
 						<IconRssFeed />

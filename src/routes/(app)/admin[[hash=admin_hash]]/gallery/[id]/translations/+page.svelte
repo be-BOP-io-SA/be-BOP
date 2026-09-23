@@ -38,7 +38,7 @@
 			rows="5"
 			maxlength="10000"
 			class="form-input"
-		/>
+		></textarea>
 	</label>
 	<div class="flex gap-4">
 		<label class="form-label">
@@ -100,7 +100,7 @@
 				class="form-input"
 				placeholder={data.gallery.secondary[i]?.content}
 				value={data.gallery.translations?.[language]?.secondary?.[i]?.content || ''}
-			/>
+			></textarea>
 		</label>
 		<input
 			type="hidden"

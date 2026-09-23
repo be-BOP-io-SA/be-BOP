@@ -137,11 +137,11 @@
 	</label>
 	<label class="form-label">
 		Short content
-		<textarea name="shortContent" cols="30" rows="2" class="form-input" />
+		<textarea name="shortContent" cols="30" rows="2" class="form-input"></textarea>
 	</label>
 	<label class="form-label">
 		Full content
-		<textarea name="content" cols="30" rows="10" maxlength="10000" class="form-input" />
+		<textarea name="content" cols="30" rows="10" maxlength="10000" class="form-input"></textarea>
 	</label>
 
 	<input type="hidden" name="mainPictureId" />
@@ -223,7 +223,8 @@
 
 	<label class="form-label">
 		CSS override
-		<textarea name="cssOverride" cols="30" rows="10" maxlength="10000" class="form-input" />
+		<textarea name="cssOverride" cols="30" rows="10" maxlength="10000" class="form-input"
+		></textarea>
 	</label>
 
 	<input

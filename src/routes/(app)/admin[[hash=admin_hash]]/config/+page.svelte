@@ -260,7 +260,6 @@
 		</div>
 	</div>
 	<h2 class="text-2xl">Notifications</h2>
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Contact Modes
 		<MultiSelect
@@ -821,7 +820,7 @@
 			name="analyticsScriptSnippet"
 			placeholder="plausible script"
 			value={data.analyticsScriptSnippet}
-		/>
+		></textarea>
 	</label>
 	<h2 class="text-2xl font-semibold mt-8">Customer Data Cleaning</h2>
 	<p class="text-sm text-gray-500 mb-2">

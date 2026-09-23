@@ -4,7 +4,8 @@ import { cleanDb } from './test-utils';
 import { ObjectId } from 'mongodb';
 import { addToCartInDb, restoreFromPendingSnapshot } from './cart';
 import { createOrder } from './orders';
-import { HttpError_1 } from '@sveltejs/kit';
+// SvelteKit 2 exports `HttpError` as a type only; `isHttpError` is how you recognise one.
+import { isHttpError } from '@sveltejs/kit';
 import {
 	TEST_DIGITAL_PRODUCT,
 	TEST_PRODUCT_STOCK,
@@ -32,14 +33,14 @@ describe('cart', () => {
 	});
 
 	it('should fail to add a product to the cart when no stock', async () => {
-		await expect(
-			addToCartInDb(TEST_DIGITAL_PRODUCT, 10, {
-				user: {
-					sessionId: 'test-session-id'
-				},
-				mode: 'eshop'
-			})
-		).rejects.toThrow(HttpError_1);
+		const err = await addToCartInDb(TEST_DIGITAL_PRODUCT, 10, {
+			user: {
+				sessionId: 'test-session-id'
+			},
+			mode: 'eshop'
+		}).catch((e) => e);
+
+		expect(isHttpError(err)).toBe(true);
 	});
 
 	it('should prevent adding a product when reserved by another user', async () => {
@@ -49,14 +50,14 @@ describe('cart', () => {
 			},
 			mode: 'eshop'
 		});
-		await expect(
-			addToCartInDb(TEST_DIGITAL_PRODUCT, TEST_PRODUCT_STOCK, {
-				user: {
-					sessionId: 'test-session-id2'
-				},
-				mode: 'eshop'
-			})
-		).rejects.toThrow(HttpError_1);
+		const err = await addToCartInDb(TEST_DIGITAL_PRODUCT, TEST_PRODUCT_STOCK, {
+			user: {
+				sessionId: 'test-session-id2'
+			},
+			mode: 'eshop'
+		}).catch((e) => e);
+
+		expect(isHttpError(err)).toBe(true);
 	});
 
 	it('should allow checking out a product when the reservation is expired', async () => {

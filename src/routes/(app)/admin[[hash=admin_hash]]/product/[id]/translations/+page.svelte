@@ -38,7 +38,7 @@
 			maxlength={MAX_DESCRIPTION_LIMIT}
 			placeholder={data.product.description}
 			value={data.product.translations?.[language]?.description ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<label class="form-label">
@@ -50,7 +50,7 @@
 			maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 			placeholder={data.product.shortDescription}
 			value={data.product.translations?.[language]?.shortDescription ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<label class="form-label">
@@ -71,7 +71,7 @@
 			name="contentBefore"
 			value={data.product.translations?.[language]?.contentBefore ?? ''}
 			placeholder={data.product.contentBefore ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<label class="form-label">
@@ -81,7 +81,7 @@
 			name="contentAfter"
 			value={data.product.translations?.[language]?.contentAfter ?? ''}
 			placeholder={data.product.contentAfter ?? ''}
-		/>
+		></textarea>
 	</label>
 	<h2 class="text-2xl">Variations</h2>
 	{#each Object.keys(data.product.variationLabels?.values || []) as key}
@@ -182,7 +182,7 @@
 				value={data.product.translations?.[language]?.sellDisclaimer?.reason || ''}
 				placeholder={data.product.sellDisclaimer?.reason ?? ''}
 				class="form-input"
-			/>
+			></textarea>
 		</label>
 	{/if}
 	<button class="btn btn-black self-start" type="submit">Save</button>

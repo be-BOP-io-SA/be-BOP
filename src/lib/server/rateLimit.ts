@@ -8,7 +8,7 @@
 
 import { error } from '@sveltejs/kit';
 import { type Duration, sub } from 'date-fns';
-import ipModule from 'ip';
+import { ipv6Prefix64 } from './utils/ip';
 import { isIPv6 } from 'node:net';
 import { processClosed } from './process';
 
@@ -21,10 +21,8 @@ export function rateLimit(ip: string | undefined, key: string, max: number, dura
 	if (!ip) {
 		return;
 	}
-	const maskedIp = isIPv6(ip)
-		? // Mask the last 64 bits of the IPv6 address
-		  ipModule.mask(ip, 'ffff:ffff:ffff:ffff:0000:0000:0000:0000')
-		: ip;
+	// One customer usually holds a whole /64, so the prefix is the caller, not the address.
+	const maskedIp = isIPv6(ip) ? ipv6Prefix64(ip) : ip;
 
 	const minDate = sub(new Date(), duration);
 	const ipCache = rateLimitCache.get(maskedIp) ?? {};

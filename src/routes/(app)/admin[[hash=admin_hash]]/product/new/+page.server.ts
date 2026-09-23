@@ -33,6 +33,7 @@ import { zodSlug } from '$lib/server/zod';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 import { logProductCreationEvents } from '$lib/server/accounting-log';
+import type { DigitalFile } from '$lib/types/DigitalFile';
 
 export const load = async ({ url }) => {
 	const productId = url.searchParams.get('duplicate_from');
@@ -50,8 +51,10 @@ export const load = async ({ url }) => {
 				.sort({ createdAt: 1 })
 				.toArray();
 
+			// Projected, never raw: `secret` is the whole credential the download endpoint accepts.
 			const digitalFiles = await collections.digitalFiles
 				.find({ productId: productId })
+				.project<Pick<DigitalFile, '_id' | 'name'>>({ name: 1 })
 				.sort({ createdAt: 1 })
 				.toArray();
 

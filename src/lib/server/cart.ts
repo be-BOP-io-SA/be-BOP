@@ -33,7 +33,9 @@ export const CART_ERROR_CODES = [
 	'OUT_OF_STOCK',
 	'STANDALONE_QTY_ONE',
 	'VARIATION_INVALID',
-	'MAX_PER_ORDER'
+	'MAX_PER_ORDER',
+	'INVALID_QUANTITY',
+	'INVALID_PRICE'
 ] as const;
 export type CartErrorCode = (typeof CART_ERROR_CODES)[number];
 
@@ -172,6 +174,16 @@ export async function addToCartInDb(
 ) {
 	if (!canAddToCart(product, params.user, params.mode)) {
 		cartError('NOT_FOR_SALE', "Product can't be added to basket ");
+	}
+
+	// Every stock and price guard below is a comparison, and comparisons against NaN are all
+	// false — one non-finite value would slip past the lot and then poison the stock counters.
+	if (!Number.isFinite(quantity)) {
+		cartError('INVALID_QUANTITY', 'Invalid quantity');
+	}
+
+	if (params.customPrice && !Number.isFinite(params.customPrice.amount)) {
+		cartError('INVALID_PRICE', 'Invalid price');
 	}
 
 	if (params.customPrice && !product.payWhatYouWant) {

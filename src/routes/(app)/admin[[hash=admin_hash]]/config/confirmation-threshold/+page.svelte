@@ -74,7 +74,7 @@
 			<span class="form-label">Minimum amount ({thresholds.currency})</span>
 			<span class="form-label">Maximum amount ({thresholds.currency})</span>
 			<span class="form-label">Confirmation blocks</span>
-			<span />
+			<span></span>
 			{#each thresholds.thresholds as threshold, i}
 				<input
 					type="number"

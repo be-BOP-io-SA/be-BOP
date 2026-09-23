@@ -26,7 +26,7 @@ function settingsEnforcedByEnvVars(): boolean {
 	return !!NOSTR_PRIVATE_KEY;
 }
 
-export function load() {
+export async function load() {
 	const { privKey, pubKey } = isNostrConfigured() ? getNostrKeys() : {};
 	return {
 		disableNostrBotIntro: runtimeConfig.disableNostrBotIntro,
@@ -35,7 +35,7 @@ export function load() {
 		nostrPublicKey: pubKey,
 		nostrRelays: runtimeConfig.nostrRelays,
 		origin: ORIGIN,
-		receivedMessages: collections.nostrReceivedMessages
+		receivedMessages: await collections.nostrReceivedMessages
 			.find({})
 			.sort({ createdAt: -1 })
 			.limit(100)

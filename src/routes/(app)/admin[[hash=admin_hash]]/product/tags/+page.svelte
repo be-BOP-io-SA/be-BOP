@@ -10,7 +10,6 @@
 	{#each data.products as product}
 		<h2 class="text-2xl">{product.name}</h2>
 		<div class="gap-2 mx-4">
-			<!-- svelte-ignore a11y-label-has-associated-control -->
 			<label class="form-label"
 				>Product Tags
 				<MultiSelect

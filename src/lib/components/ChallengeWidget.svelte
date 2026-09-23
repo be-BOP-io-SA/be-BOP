@@ -65,7 +65,7 @@
 	/>
 	<div class="flex justify-between mt-1 items-right">
 		<!-- <a href="/" class="body-hyperlink underline">How can I contribute?</a> -->
-		<p />
+		<p></p>
 		{#if challenge.progress === challenge.goal.amount}
 			<p>{t('challenge.goalMet')}</p>
 		{:else if challenge.progress > challenge.goal.amount && challenge.mode === 'moneyAmount' && challenge.goal.currency}

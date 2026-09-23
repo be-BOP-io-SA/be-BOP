@@ -36,6 +36,7 @@
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import IconSystem from '$lib/components/icons/IconSystem.svelte';
 	import { oneMaxPerLine } from '$lib/types/Product.js';
+	import { safeHref } from '$lib/utils/safeUrl';
 
 	export let data;
 
@@ -166,13 +167,11 @@
 						<span class="header-shopName font-bold text-[24px]">{data.brandName}</span>
 					{/if}
 				</a>
-				<span class="grow body-mainPlan" />
+				<span class="grow body-mainPlan"></span>
 				<nav class="flex gap-10 text-[22px] font-semibold header-tab">
 					{#each data.links.topbar as link}
 						<a
-							href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-								? link.href
-								: `/${link.href}`}
+							href={safeHref(link.href)}
 							class=" {data.notResponsive ? '' : 'hidden lg:inline'}"
 							data-sveltekit-preload-data="off"
 							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
@@ -204,9 +203,7 @@
 				{#each data.links.topbar as link}
 					<a
 						class="py-4"
-						href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-							? link.href
-							: `/${link.href}`}
+						href={safeHref(link.href)}
 						target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 						data-sveltekit-preload-data="off">{link.label}</a
 					>
@@ -216,9 +213,7 @@
 					{#each data.links.navbar as link}
 						<a
 							class="py-4 font-light"
-							href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-								? link.href
-								: `/${link.href}`}
+							href={safeHref(link.href)}
 							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 							data-sveltekit-preload-data="off">{link.label}</a
 						>
@@ -247,9 +242,7 @@
 
 					{#each data.links.navbar as link}
 						<a
-							href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-								? link.href
-								: `/${link.href}`}
+							href={safeHref(link.href)}
 							class={data.notResponsive ? '' : 'hidden lg:inline'}
 							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 							data-sveltekit-preload-data="off">{link.label}</a
@@ -532,9 +525,7 @@
 					<a
 						class="py-2 hover:underline"
 						data-sveltekit-preload-data="off"
-						href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-							? link.href
-							: `/${link.href}`}>{link.label}</a
+						href={safeHref(link.href)}>{link.label}</a
 					>
 				{/each}
 			</nav>
@@ -647,9 +638,7 @@
 						{#each data.links.footer as link}
 							<a
 								class={link.label === '-' ? 'hidden lg:contents' : ''}
-								href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-									? link.href
-									: `/${link.href}`}
+								href={safeHref(link.href)}
 								target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
 								data-sveltekit-preload-data="off">{link.label}</a
 							>
@@ -657,7 +646,7 @@
 					</div>
 					<div class="flex flex-row gap-1 items-center">
 						{#each data.links.socialNetworkIcons as icon}
-							<a href={icon.href} target="_blank"
+							<a href={safeHref(icon.href)} target="_blank"
 								><img src="data:image/svg+xml;utf8, {icon.svg}" alt={icon.name} /></a
 							>
 						{/each}

@@ -3,7 +3,7 @@ import { building } from '$app/environment';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { rootDir } from './root-dir';
-import ipModule from 'ip';
+import { ipToBuffer } from './utils/ip';
 import { isAlpha2CountryCode, type CountryAlpha2 } from '$lib/types/Country';
 
 const ipv4s: { start: bigint; end: bigint; country: string }[] = [];
@@ -73,7 +73,7 @@ function ipToInt(ip: string): { type: 'v4' | 'v6'; value: number | bigint } {
 		type: 'v6',
 		value: BigInt(
 			'0x' +
-				Array.from(ipModule.toBuffer(ip))
+				Array.from(ipToBuffer(ip))
 					.map((i) => i.toString(16).padStart(2, '0'))
 					.join('')
 		)

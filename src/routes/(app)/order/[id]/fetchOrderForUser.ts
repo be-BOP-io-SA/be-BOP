@@ -6,6 +6,7 @@ import { picturesForProducts } from '$lib/server/picture';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { isStripeEnabled } from '$lib/server/stripe';
 import { isSumupEnabled } from '$lib/server/sumup';
+import type { DigitalFile } from '$lib/types/DigitalFile';
 import { FAKE_ORDER_INVOICE_NUMBER } from '$lib/types/Order';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error } from '@sveltejs/kit';
@@ -23,8 +24,14 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 
 	const pictures = await picturesForProducts(order.items.map((item) => item.product._id));
 
+	// Projected, never raw: a DigitalFile carries `secret`, which is the whole credential the
+	// download endpoint accepts, and this order is serialized into the page for the buyer.
 	const digitalFiles = await collections.digitalFiles
 		.find({ productId: { $in: order.items.map((item) => item.product._id) } })
+		.project<Pick<DigitalFile, '_id' | 'name' | 'productId'>>({
+			name: 1,
+			productId: 1
+		})
 		.toArray();
 
 	const posSubtypesMap = new Map<

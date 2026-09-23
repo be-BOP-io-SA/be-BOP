@@ -318,7 +318,7 @@
 						rows="5"
 						placeholder="One option per line"
 						bind:value={optionsInput}
-					/>
+					></textarea>
 					<p class="text-xs text-gray-500 mt-1">One option per line.</p>
 				</label>
 			{/if}

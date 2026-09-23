@@ -5,7 +5,22 @@ import { ObjectId } from 'mongodb';
 import { addYears } from 'date-fns';
 import { SvelteKitAuth } from '@auth/sveltekit';
 import { flatten } from 'flat';
-import { adminPrefix as _adminPrefix } from '$lib/server/admin';
+import { adminPathPrefix, adminPrefix as _adminPrefix, routedPathname } from '$lib/server/admin';
+
+/** What the age wall itself needs to render before anyone has accepted it. */
+const AGEWALL_OPEN_PREFIXES = [
+	'/style',
+	'/script',
+	'/logo',
+	'/favicon',
+	'/picture',
+	'/asset',
+	'/cookie-consent',
+	'/login',
+	'/logout',
+	// The provider redirects here to finish a sign-in that began before the wall was seen.
+	'/oauth'
+];
 import { isAdminPathDisabled } from '$lib/server/admin-disabled';
 import '$lib/server/locks';
 import '$lib/server/sdk/pp-registry';
@@ -136,7 +151,14 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 		rateLimit(event.locals.clientIp, 'method.' + method, 30, { minutes: 1 });
 	}
 
-	const adminPath = /^(\/admin(-.+?)?)(\/|$)/.exec(event.url.pathname);
+	let guardPath: string;
+	try {
+		guardPath = routedPathname(event.url.pathname);
+	} catch {
+		throw error(400, 'Malformed URL');
+	}
+
+	const adminPath = adminPathPrefix(guardPath);
 	const isAdminUrl = !!adminPath;
 
 	const slug = event.url.pathname.split('/')[1] ? event.url.pathname.split('/')[1] : 'home';
@@ -239,14 +261,14 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 			event.locals.countryCode = session.pos.countryCodeOverwrite;
 		}
 	}
-	if (adminPath && adminPath[1] !== adminPrefix) {
+	if (adminPath && adminPath !== adminPrefix) {
 		if (!event.locals.user || event.locals.user.roleId === CUSTOMER_ROLE_ID) {
 			throw error(403, 'Wrong admin prefix. Make sure to type the correct admin URL.');
 		}
 		return new Response(null, {
 			status: 307,
 			headers: {
-				location: event.url.href.replace(adminPath[1], adminPrefix)
+				location: event.url.href.replace(adminPath, adminPrefix)
 			}
 		});
 	}
@@ -275,19 +297,19 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 			throw error(403, 'Your role does not exist in DB.');
 		}
 
-		if (isAdminPathDisabled(event.url.pathname, runtimeConfig.disabledAdminEntries)) {
+		if (isAdminPathDisabled(guardPath, runtimeConfig.disabledAdminEntries)) {
 			throw error(404, 'This admin section is disabled on this deployment.');
 		}
 
 		// User-self endpoints (per-user prefs) only need an admin login, no role permission.
-		const normalizedAdminPath = event.url.pathname.replace(/^\/admin-[a-zA-Z0-9]+/, '/admin');
+		const normalizedAdminPath = guardPath.replace(/^\/admin-[a-zA-Z0-9]+/, '/admin');
 		const isUserSelfAdminEndpoint = normalizedAdminPath === '/admin/back-office-bookmark';
 
 		if (
 			!isUserSelfAdminEndpoint &&
 			!isAllowedOnPage(
 				event.locals.user.role,
-				event.url.pathname,
+				guardPath,
 				['get', 'head', 'options'].includes(method) ? 'read' : 'write'
 			)
 		) {
@@ -299,13 +321,34 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	if (event.url.pathname.startsWith('/pos/') || event.url.pathname === '/pos') {
+	if (guardPath.startsWith('/pos/') || guardPath === '/pos') {
 		if (!event.locals.user) {
 			throw redirect(303, '/admin/login');
 		}
 
 		if (!event.locals.user.hasPosOptions && event.locals.user.roleId !== POS_ROLE_ID) {
 			throw error(403, 'You are not allowed to access this page, only point-of-sale accounts are.');
+		}
+	}
+
+	// The wall used to live only in the layout component, which hides the page but not its data:
+	// SvelteKit serializes every `load` return into the response, so the restricted content was
+	// still served — and `/__data.json` returned it with no wall at all.
+	if (runtimeConfig.ageRestriction.enabled && !event.locals.acceptAgeLimitation && !isAdminUrl) {
+		// Only the storefront group carries catalogue data. The rest — the Lightning callback,
+		// the .well-known descriptors, robots.txt, the style and script endpoints — is fetched by
+		// wallets and crawlers that never carry a cookie, so `acceptAgeLimitation` can never be
+		// true for them and walling them off just takes them offline.
+		const isStorefrontRoute = event.route.id?.startsWith('/(app)') ?? false;
+		const servesTheWall =
+			!isStorefrontRoute ||
+			guardPath === '/' ||
+			AGEWALL_OPEN_PREFIXES.some(
+				(prefix) => guardPath === prefix || guardPath.startsWith(`${prefix}/`)
+			);
+
+		if (!servesTheWall) {
+			throw redirect(303, '/');
 		}
 	}
 
@@ -376,6 +419,9 @@ const handleSsoCookie: Handle = async ({ event, resolve }) => {
 			provider,
 			id: ssoSession.user.id,
 			email: ssoSession.user.email ?? undefined,
+			// The Auth.js providers wired below are the large ones, which only release an address
+			// they own; the risk this flag guards against is a self-hosted OIDC server.
+			emailVerified: true,
 			avatarUrl: ssoSession.user.image ?? undefined,
 			name: ssoSession.user.name
 		};
@@ -520,7 +566,7 @@ const handleSSO = authProviders
 	: null;
 
 export const handle = handleSSO
-	? sequence(addSecurityHeaders, handleGlobal, handleSSO, handleSsoCookie)
+	? sequence(addSecurityHeaders, handleGlobal, handleSSO.handle, handleSsoCookie)
 	: sequence(addSecurityHeaders, handleGlobal);
 
 // Kick-off autoconfiguration of phoenixd

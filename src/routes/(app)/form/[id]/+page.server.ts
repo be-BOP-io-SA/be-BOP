@@ -6,6 +6,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';
 import { z } from 'zod';
+import { escapeHtml } from '$lib/utils/escapeHtml';
 
 export const load = async ({ params, locals }) => {
 	const contactForm = await collections.contactForms.findOne(
@@ -44,13 +45,15 @@ export const actions = {
 			.object({
 				content: z.string().max(MAX_CONTENT_LIMIT),
 				subject: z.string().max(100),
-				from: z.string().max(100).optional()
+				from: z.string().email().max(100).optional()
 			})
 			.parse(Object.fromEntries(data));
 
-		const parsedMessageHtml = parsed.content.replace(/\r\n/g, '<br>');
+		// Escaped before the line breaks become markup: the sender is an anonymous visitor, and
+		// this lands in the shop owner's inbox signed by the shop's own domain.
+		const parsedMessageHtml = escapeHtml(parsed.content).replace(/\r\n|\r|\n/g, '<br>');
 		const htmlContent = `Message envoyé par formulaire sur le site ${ORIGIN}<br> Adresse de contact : ${
-			parsed.from ? parsed.from : 'non-renseigné'
+			parsed.from ? escapeHtml(parsed.from) : 'non-renseigné'
 		}  <br> Message envoyé :<br> ${parsedMessageHtml}`;
 		const content = `Message envoyé par formulaire sur le site ${ORIGIN} Adresse de contact : ${
 			parsed.from ? parsed.from : 'non-renseigné'

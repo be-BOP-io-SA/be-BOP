@@ -1,8 +1,8 @@
-import { OrderTab, type CheckoutOrderTabParams } from '$lib/types/OrderTab';
+import type { OrderTab, CheckoutOrderTabParams } from '$lib/types/OrderTab';
 import { ObjectId, type ClientSession } from 'mongodb';
 import { collections } from './database';
 import { filterNullish } from '$lib/utils/fillterNullish';
-import { Order } from '$lib/types/Order';
+import type { Order } from '$lib/types/Order';
 import { error } from '@sveltejs/kit';
 
 function mkOrderTab(slug: string): OrderTab {

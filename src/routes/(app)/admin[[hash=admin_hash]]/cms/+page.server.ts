@@ -1,9 +1,9 @@
 import { collections } from '$lib/server/database';
 import type { CMSPage } from '$lib/types/CmsPage';
 
-export function load({ locals }) {
+export async function load({ locals }) {
 	return {
-		cmsPages: collections.cmsPages
+		cmsPages: await collections.cmsPages
 			.find({})
 			.project<Pick<CMSPage, '_id' | 'title' | 'maintenanceDisplay' | 'hasMobileContent'>>({
 				_id: 1,

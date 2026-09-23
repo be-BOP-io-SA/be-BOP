@@ -45,7 +45,7 @@
 					class="form-input"
 					readonly
 					value={note.content}
-				/>
+				></textarea>
 			{/each}
 		</div>
 

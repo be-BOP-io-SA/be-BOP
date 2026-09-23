@@ -296,7 +296,7 @@
 			maxlength="4096"
 			class="form-input block w-full"
 			value={data.adminWelcomMessage}
-		/>
+		></textarea>
 	</label>
 	<button type="submit" class="btn body-mainCTA self-start"> Save text </button>
 </form>

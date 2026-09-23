@@ -66,6 +66,12 @@ export interface PaypalCheckout {
 			currency_code: Currency;
 			value: string;
 		};
+		payments?: {
+			captures?: {
+				status: string;
+				amount: { currency_code: Currency; value: string };
+			}[];
+		};
 	}[];
 	payment_source: Record<string, unknown>;
 }
@@ -101,6 +107,23 @@ export async function paypalGetCheckout(checkoutId: string): Promise<PaypalCheck
 			throw new Error('Failed to capture PayPal payment for checkout ' + checkoutId);
 		}
 
+		// PayPal answers 201 for captures that are only PENDING — an eCheck still clearing, or an
+		// account under review — so the HTTP status says the request worked, not that money moved.
+		const captured: PaypalCheckout = await captureResponse.json();
+		const captures =
+			captured.purchase_units?.flatMap((unit) => unit.payments?.captures ?? []) ?? [];
+
+		if (!captures.length || !captures.every((capture) => capture.status === 'COMPLETED')) {
+			throw new Error(
+				`PayPal capture for checkout ${checkoutId} is not completed: ${
+					captures.map((capture) => capture.status).join(', ') || 'no capture returned'
+				}`
+			);
+		}
+
+		// Report what was captured, not what we asked for: `purchase_units[].amount` is an echo of
+		// our own request and says nothing about the settlement.
+		checkout.purchase_units = captured.purchase_units;
 		checkout.status = 'COMPLETED';
 	}
 

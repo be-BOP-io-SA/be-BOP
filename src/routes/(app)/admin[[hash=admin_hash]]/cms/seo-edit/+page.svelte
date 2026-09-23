@@ -28,7 +28,7 @@
 					name="{cmsPage._id}.shortDescription"
 					placeholder="short description"
 					value={cmsPage.shortDescription ?? ''}
-				/>
+				></textarea>
 			</label>
 		</div>
 	{/each}

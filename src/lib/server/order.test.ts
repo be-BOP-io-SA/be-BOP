@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { isHttpError } from '@sveltejs/kit';
 import { cleanDb, createDiscount, createPaidSubscription } from './test-utils';
 import { collections } from './database';
 import {
@@ -7,7 +8,13 @@ import {
 	TEST_DISCOUNTED_PRODUCT,
 	TEST_SUBSCRIPTION_PRODUCT
 } from './seed/product';
-import { addOrderPayment, createOrder, lastInvoiceNumber, onOrderPayment } from './orders';
+import {
+	addOrderPayment,
+	createOrder,
+	lastInvoiceNumber,
+	onOrderPayment,
+	onOrderPaymentFailed
+} from './orders';
 import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
 import { runtimeConfig } from './runtime-config';
 
@@ -279,5 +286,84 @@ describe('order', () => {
 		expect(order?.payments[0].method).toBe('free');
 		expect(order?.items[0].discountPercentage).toBe(100);
 		expect(order?.currencySnapshot.main.totalPrice.amount).toBe(0);
+		// This path calls onOrderPayment twice by design; the goods must still be issued, and
+		// the marker that makes the second call a no-op must be set exactly once.
+		expect(order?.status).toBe('paid');
+		expect(order?.paidEffectsAppliedAt).toBeInstanceOf(Date);
+	});
+
+	it('issues the paid-order effects once when the transition is reached twice', async () => {
+		const orderId = await createOrder(
+			[{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }],
+			'point-of-sale',
+			{
+				locale: 'en',
+				user: { sessionId: 'test-session-id' },
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			}
+		);
+
+		const order = await collections.orders.findOne({ _id: orderId });
+		if (!order) {
+			throw new Error('Order not found');
+		}
+
+		await onOrderPayment(order, order.payments[0], order.payments[0].price);
+		const afterFirst = await collections.orders.findOne({ _id: orderId });
+		if (!afterFirst) {
+			throw new Error('Order not found after the first payment');
+		}
+
+		expect(afterFirst.status).toBe('paid');
+		expect(afterFirst.paidEffectsAppliedAt).toBeInstanceOf(Date);
+
+		// Replay the same settled payment: the order stays paid and the marker does not move.
+		await onOrderPayment(afterFirst, afterFirst.payments[0], afterFirst.payments[0].price);
+		const afterSecond = await collections.orders.findOne({ _id: orderId });
+		expect(afterSecond?.paidEffectsAppliedAt?.getTime()).toBe(
+			afterFirst.paidEffectsAppliedAt?.getTime()
+		);
+	});
+
+	// Replays the payment-substitution path: cancelling the pending payment frees the amount
+	// again, which is exactly what let a buyer settle an unpaid order with `free`.
+	it('should refuse a free payment on an order that still owes money', async () => {
+		const orderId = await createOrder(
+			[
+				{
+					product: TEST_DIGITAL_PRODUCT,
+					quantity: 1
+				}
+			],
+			'point-of-sale',
+			{
+				locale: 'en',
+				user: {
+					sessionId: 'test-session-id'
+				},
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			}
+		);
+
+		const order = await collections.orders.findOne({ _id: orderId });
+		if (!order) {
+			throw new Error('Order not found');
+		}
+
+		const pendingPayment = order.payments[0];
+		await onOrderPaymentFailed(order, pendingPayment, 'canceled', { preserveOrderStatus: true });
+
+		expect(orderAmountWithNoPaymentsCreated(order)).toBeGreaterThan(0);
+
+		const err = await addOrderPayment(
+			order,
+			'free',
+			pendingPayment.currencySnapshot.main.price
+		).catch((e) => e);
+
+		expect(isHttpError(err)).toBe(true);
+		expect(err.body.message).toBe("You can't use free payment method on this order");
 	});
 });

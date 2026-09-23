@@ -70,6 +70,7 @@
 	is a broken compromise. Deferred because most be-BOPs won't configure analytics and the
 	banner never appears — will be revisited when a high-traffic tenant with analytics needs it.
 -->
+<!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
 <aside
 	class="fixed inset-x-0 bottom-0 z-50 body-secondPlan border-t border-gray-300 shadow-lg print:hidden"
 	role="dialog"

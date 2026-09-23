@@ -2,7 +2,8 @@
 	import type { Picture } from '$lib/types/Picture';
 	import type { Gallery, GalleryBase } from '$lib/types/Gallery';
 	import PictureComponent from '../Picture.svelte';
-	import { marked } from 'marked';
+	import { renderMarkdown } from '$lib/utils/markdown';
+	import { safeHref } from '$lib/utils/safeUrl';
 	import { TinySlider } from 'svelte-tiny-slider';
 
 	export let pictures: Picture[];
@@ -28,17 +29,19 @@
 		<div class="btn tagWidget-cta text-xl text-center w-auto m-2 p-4">
 			<a
 				class="tagWidget-hyperlink"
-				href={gallery.principal.cta.href}
+				href={safeHref(gallery.principal.cta.href)}
 				target={gallery.principal.cta.href.startsWith('http') || gallery.principal.cta.openNewTab
 					? '_blank'
 					: '_self'}>{gallery.principal.cta.label}</a
 			>
 		</div>
 		<div class="tagWidget tagWidget-main m-2 p-4">
-			<p class="min-h-[37em] mt-2">
+			<!-- `marked` émet déjà des blocs <p> : les imbriquer dans un <p> produirait un
+			     document que le navigateur reparse différemment du HTML rendu au serveur. -->
+			<div class="min-h-[37em] mt-2">
 				<!-- eslint-disable svelte/no-at-html-tags -->
-				{@html marked(gallery.principal.content.replaceAll('<', '&lt;'))}
-			</p>
+				{@html renderMarkdown(gallery.principal.content)}
+			</div>
 		</div>
 	</div>
 	{#each gallery.secondary as secondary}
@@ -54,15 +57,15 @@
 				<h2 class="text-xl body-title pb-2 uppercase min-h-[4em]">{secondary.title}</h2>
 			</div>
 			<div class="m-2 tagWidget tagWidget-main p-4 text-center">
-				<p class="min-h-[12em] mt-2">
+				<div class="min-h-[12em] mt-2">
 					<!-- eslint-disable svelte/no-at-html-tags -->
-					{@html marked(secondary.content.replaceAll('<', '&lt;'))}
-				</p>
+					{@html renderMarkdown(secondary.content)}
+				</div>
 			</div>
 			<div class="btn tagWidget-cta text-xl text-center w-auto p-4 m-2">
 				<a
 					class="tagWidget-hyperlink"
-					href={secondary.cta.href}
+					href={safeHref(secondary.cta.href)}
 					target={secondary.cta.href.startsWith('http') || secondary.cta.openNewTab
 						? '_blank'
 						: '_self'}>{secondary.cta.label}</a
@@ -78,41 +81,42 @@
 		? 'flex-row-reverse'
 		: ''}"
 >
-	<TinySlider let:currentIndex>
-		{#each Array.from({ length: gallerySecondaryMobile.length }, (_, index) => index) as i}
-			<div class="grid grid-cols-6 justify-center">
-				{#if currentIndex === i}
-					<div class="col-span-6 p-2 m-2 mx-12 tagWidget tagWidget-main text-center">
-						<h2 class="text-xl body-title pb-2 uppercase">
-							{gallerySecondaryMobile[i].title}
-						</h2>
-					</div>
-					<div class="col-span-6 m-2 justify-center items-center">
-						<PictureComponent
-							picture={pictureById[gallerySecondaryMobile[i].pictureId || '']}
-							class="block h-auto w-auto"
-						/>
-					</div>
-					<div class="col-span-6 m-2 tagWidget tagWidget-main text-center">
-						<p class="m-2">
-							<!-- eslint-disable svelte/no-at-html-tags -->
-							{@html marked(gallerySecondaryMobile[i].content.replaceAll('<', '&lt;'))}
-						</p>
-					</div>
-					<div class="col-span-6 btn tagWidget-cta text-xl w-auto p-4 m-2">
-						<a
-							class="tagWidget-hyperlink"
-							href={gallerySecondaryMobile[i].cta.href}
-							target={gallerySecondaryMobile[i].cta.href.startsWith('http') ||
-							gallerySecondaryMobile[i].cta.openNewTab
-								? '_blank'
-								: '_self'}>{gallerySecondaryMobile[i].cta.label}</a
-						>
-					</div>
-				{/if}
-			</div>
-		{/each}
-		<svelte:fragment slot="controls" let:setIndex let:currentIndex>
+	<TinySlider>
+		{#snippet children({ currentIndex })}
+			{#each gallerySecondaryMobile as slide, i}
+				<div class="grid grid-cols-6 justify-center">
+					{#if currentIndex === i}
+						<div class="col-span-6 p-2 m-2 mx-12 tagWidget tagWidget-main text-center">
+							<h2 class="text-xl body-title pb-2 uppercase">
+								{slide.title}
+							</h2>
+						</div>
+						<div class="col-span-6 m-2 justify-center items-center">
+							<PictureComponent
+								picture={pictureById[slide.pictureId || '']}
+								class="block h-auto w-auto"
+							/>
+						</div>
+						<div class="col-span-6 m-2 tagWidget tagWidget-main text-center">
+							<div class="m-2">
+								<!-- eslint-disable svelte/no-at-html-tags -->
+								{@html renderMarkdown(slide.content)}
+							</div>
+						</div>
+						<div class="col-span-6 btn tagWidget-cta text-xl w-auto p-4 m-2">
+							<a
+								class="tagWidget-hyperlink"
+								href={safeHref(slide.cta.href)}
+								target={slide.cta.href.startsWith('http') || slide.cta.openNewTab
+									? '_blank'
+									: '_self'}>{slide.cta.label}</a
+							>
+						</div>
+					{/if}
+				</div>
+			{/each}
+		{/snippet}
+		{#snippet controls({ setIndex, currentIndex })}
 			<div class="absolute top-0 left-0 flex items-center py-3">
 				{#if currentIndex > 0}
 					<button
@@ -129,6 +133,6 @@
 					>
 				{/if}
 			</div>
-		</svelte:fragment>
+		{/snippet}
 	</TinySlider>
 </div>

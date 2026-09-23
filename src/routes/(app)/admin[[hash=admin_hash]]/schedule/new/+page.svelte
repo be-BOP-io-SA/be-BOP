@@ -178,7 +178,7 @@
 				rows="2"
 				maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 				class="form-input"
-			/>
+			></textarea>
 		</label>
 		<label class="form-label">
 			Description
@@ -188,7 +188,7 @@
 				rows="10"
 				maxlength="10000"
 				class="block form-input"
-			/>
+			></textarea>
 		</label>
 		<div class="flex flex-wrap gap-4">
 			<label class="form-label">

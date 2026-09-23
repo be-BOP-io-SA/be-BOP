@@ -18,10 +18,12 @@
 		);
 	}
 
-	function handleSelectChange(
-		e: CustomEvent<{ option?: unknown; type: 'add' | 'remove' | 'removeAll' }>
-	) {
-		const { type, option } = e.detail;
+	// svelte-multiselect 11 reports through a callback prop rather than a dispatched event.
+	function handleSelectChange(detail: {
+		option?: unknown;
+		type: 'add' | 'remove' | 'removeAll' | 'selectAll' | 'reorder';
+	}) {
+		const { type, option } = detail;
 		if (type === 'add' && hasStringValue(option)) {
 			product.productId = option.value;
 		} else if (type === 'remove' || type === 'removeAll') {
@@ -47,7 +49,7 @@
 						}
 				  ]
 				: []}
-			on:change={handleSelectChange}
+			onchange={handleSelectChange}
 		/>
 	</div>
 	<input

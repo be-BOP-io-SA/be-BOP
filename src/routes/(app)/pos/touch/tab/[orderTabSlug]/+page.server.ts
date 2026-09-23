@@ -9,7 +9,7 @@ import {
 import type { PrintHistoryEntry } from '$lib/types/PrintHistoryEntry';
 import { picturesForProducts } from '$lib/server/picture';
 import { pojo } from '$lib/server/pojo';
-import { OrderTab, OrderTabItem, OrderTabPoolStatus } from '$lib/types/OrderTab';
+import type { OrderTab, OrderTabItem, OrderTabPoolStatus } from '$lib/types/OrderTab';
 import type { Picture } from '$lib/types/Picture.js';
 import type { Product } from '$lib/types/Product';
 import { error, fail } from '@sveltejs/kit';

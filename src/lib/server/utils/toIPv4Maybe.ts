@@ -1,11 +1,12 @@
-import ipModule from 'ip';
+import { isIPv6 } from 'node:net';
+import { ipToBuffer } from './ip';
 
 export function toIPv4Maybe(ip: string): string {
-	if (!ipModule.isV6Format(ip)) {
+	if (!isIPv6(ip)) {
 		return ip;
 	}
 
-	const buffer = ipModule.toBuffer(ip);
+	const buffer = ipToBuffer(ip);
 
 	if (
 		buffer[0] === 0 &&

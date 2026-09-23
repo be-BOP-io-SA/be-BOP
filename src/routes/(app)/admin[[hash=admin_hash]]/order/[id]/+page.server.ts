@@ -131,9 +131,13 @@ export const actions = {
 		throw redirect(303, request.headers.get('referer') || `/order/${params.id}/notes`);
 	},
 	cancel: async ({ params, request }) => {
+		// Only a real transition, and only out of `pending`: the refund below credits free-product
+		// allowances back, so re-cancelling an already-cancelled order kept handing them out — and
+		// cancelling a paid one revoked the buyer's downloads while leaving the goods delivered.
 		const order = await collections.orders.findOneAndUpdate(
 			{
-				_id: params.id
+				_id: params.id,
+				status: 'pending'
 			},
 			{
 				$set: {
@@ -144,7 +148,16 @@ export const actions = {
 		);
 
 		if (!order.value) {
-			throw error(404, 'Order not found');
+			const existing = await collections.orders.findOne(
+				{ _id: params.id },
+				{ projection: { status: 1 } }
+			);
+
+			if (!existing) {
+				throw error(404, 'Order not found');
+			}
+
+			throw error(400, `Order is ${existing.status}, only a pending order can be canceled`);
 		}
 		for (const item of order.value?.items) {
 			if (item.freeProductSources?.length) {

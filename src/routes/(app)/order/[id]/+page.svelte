@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import { enhance } from '$app/forms';
+	import { safeHref } from '$lib/utils/safeUrl';
 	import { navigating, page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import OrderSummary from '$lib/components/OrderSummary.svelte';
@@ -251,7 +252,7 @@
 							title=""
 							on:load={() => (receiptReady = { ...receiptReady, [payment.id]: true })}
 							bind:this={receiptIFrame[payment.id]}
-						/>
+						></iframe>
 						{#if roleIsStaff}
 							<iframe
 								src="/order/{data.order._id}/payment/{payment.id}/ticket"
@@ -259,7 +260,7 @@
 								title=""
 								on:load={() => (ticketReady = { ...ticketReady, [payment.id]: true })}
 								bind:this={ticketIFrame[payment.id]}
-							/>
+							></iframe>
 						{/if}
 					{/if}
 				{/each}
@@ -290,7 +291,7 @@
 					title=""
 					on:load={() => (ticketsReady = true)}
 					bind:this={ticketsIframe}
-				/>
+				></iframe>
 
 				<div class="flex flex-col gap-1">
 					<button
@@ -361,7 +362,7 @@
 							<IconExternalNewWindowOpen class="mt-1 body-hyperlink" />
 							{#if externalResource?.href}
 								<a
-									href={externalResource?.href}
+									href={safeHref(externalResource?.href)}
 									class="body-hyperlink hover:underline"
 									target="_blank"
 								>
@@ -510,7 +511,7 @@
 									<div class="p-4 flex flex-col gap-3">
 										<label class="form-label text-2xl">
 											{t('order.note.label')}
-											<textarea name="noteContent" cols="30" rows="2" class="form-input" />
+											<textarea name="noteContent" cols="30" rows="2" class="form-input"></textarea>
 										</label>
 									</div>
 								</article>
@@ -548,7 +549,7 @@
 								<div class="p-4 flex flex-col gap-3">
 									<label class="form-label text-2xl">
 										{t('order.note.label')}
-										<textarea name="noteContent" cols="30" rows="2" class="form-input" />
+										<textarea name="noteContent" cols="30" rows="2" class="form-input"></textarea>
 									</label>
 								</div>
 							</article>

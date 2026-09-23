@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import { UserIdentifier } from '$lib/types/UserIdentifier';
+import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import { collections, connectPromise, createIndexes, db } from './database';
 import { refreshPromise, runtimeConfig } from './runtime-config';
 import { SATOSHIS_PER_BTC } from '$lib/types/Currency';

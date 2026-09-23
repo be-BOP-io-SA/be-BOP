@@ -2,7 +2,6 @@ import { collections } from '$lib/server/database';
 import { validateEmailOrNpub } from '$lib/server/nostr';
 import { userQuery } from '$lib/server/user';
 import { error, fail } from '@sveltejs/kit';
-import { z } from 'zod';
 
 export const load = async ({ params }) => {
 	const schedule = await collections.schedules.findOne({ _id: params.id });
@@ -21,7 +20,7 @@ export const load = async ({ params }) => {
 };
 
 export const actions = {
-	addSubscription: async function ({ request }) {
+	addSubscription: async function ({ params, request }) {
 		const data = await request.formData();
 
 		const addressResult = validateEmailOrNpub(data.get('address'));
@@ -29,13 +28,21 @@ export const actions = {
 			return fail(400, { error: addressResult.error });
 		}
 		const address = addressResult.address;
-		const { scheduleId } = z
-			.object({
-				scheduleId: z.string().min(1)
-			})
-			.parse({
-				scheduleId: data.get('scheduleId')
-			});
+
+		// The schedule is the one being visited, not the one the form names: the posted field only
+		// mirrors the route, and trusting it let a single request subscribe an address to any
+		// schedule, including ones that never opened subscriptions.
+		const schedule = await collections.schedules.findOne(
+			{ _id: params.id },
+			{ projection: { allowSubscription: 1 } }
+		);
+
+		if (!schedule?.allowSubscription) {
+			throw error(403, 'This schedule does not accept subscriptions');
+		}
+
+		const scheduleId = params.id;
+
 		const personalInfo = await collections.personalInfo.findOne(
 			userQuery({
 				...(address.includes('@') && { email: address }),

@@ -701,7 +701,7 @@
 						value={product.shortDescription}
 						class="form-input"
 						placeholder="Brief description of the product"
-					/>
+					></textarea>
 				</label>
 
 				<label class="form-label">
@@ -714,10 +714,9 @@
 						class="form-input"
 						value={product.description}
 						placeholder="Detailed product description"
-					/>
+					></textarea>
 				</label>
 
-				<!-- svelte-ignore a11y-label-has-associated-control -->
 				<label class="form-label">
 					Product Tags
 					<MultiSelect
@@ -1316,7 +1315,7 @@
 									value={product?.customPreorderText ?? ''}
 									class="form-input"
 									placeholder="Custom preorder message"
-								/>
+								></textarea>
 							</label>
 						{/if}
 					</div>
@@ -1737,7 +1736,7 @@
 								class="form-input"
 								placeholder="Explain why the disclaimer is needed"
 								required
-							/>
+							></textarea>
 						</label>
 					</div>
 				{/if}
@@ -1966,7 +1965,7 @@
 									placeholder="HTML content"
 									class="form-input block w-full mt-2"
 									bind:value={product.contentBefore}
-								/>
+								></textarea>
 							</div>
 
 							<div class="bg-gray-50 p-4 rounded-lg">
@@ -2016,7 +2015,7 @@
 									placeholder="HTML content"
 									class="form-input block w-full mt-2"
 									bind:value={product.contentAfter}
-								/>
+								></textarea>
 							</div>
 						</div>
 					</div>

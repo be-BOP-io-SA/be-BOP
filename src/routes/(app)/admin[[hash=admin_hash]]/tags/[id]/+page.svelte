@@ -127,7 +127,7 @@
 			cols="30"
 			rows="2"
 			class="form-input"
-		/>
+		></textarea>
 	</label>
 	<label class="form-label">
 		Full content
@@ -138,7 +138,7 @@
 			rows="10"
 			maxlength="10000"
 			class="form-input"
-		/>
+		></textarea>
 	</label>
 
 	<h3 class="text-xl">CTAs</h3>
@@ -186,7 +186,7 @@
 			rows="10"
 			maxlength="10000"
 			class="form-input"
-		/>
+		></textarea>
 	</label>
 	<div class="flex flex-row justify-between gap-2">
 		<input type="submit" class="btn btn-blue self-start text-white" value="Update" />

@@ -202,7 +202,6 @@
 		Tag filter
 	</label>
 	{#if tagsEnabled}
-		<!-- svelte-ignore a11y-label-has-associated-control -->
 		<label class="form-label">
 			Tags to expose
 			<MultiSelect

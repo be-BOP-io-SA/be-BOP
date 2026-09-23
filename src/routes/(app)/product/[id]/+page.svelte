@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { marked } from 'marked';
+	import { renderMarkdown } from '$lib/utils/markdown';
+	import { safeHref } from '$lib/utils/safeUrl';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
@@ -628,7 +629,7 @@
 					</h2>
 					<div class="prose body-secondaryText lg:block hidden">
 						<!-- eslint-disable svelte/no-at-html-tags -->
-						{@html marked(data.product.description.replaceAll('<', '&lt;'))}
+						{@html renderMarkdown(data.product.description)}
 					</div>
 				{/if}
 			</div>
@@ -1249,8 +1250,7 @@
 						amountAvailable <= 0 ||
 						(data.cartMaxSeparateItems && data.cart.items.length === data.cartMaxSeparateItems)}
 					{#each data.product.cta as cta}
-						{@const ctaHref =
-							cta.href.startsWith('http') || cta.href.includes('/') ? cta.href : `/${cta.href}`}
+						{@const ctaHref = safeHref(cta.href)}
 						{@const isExternal = cta.href.startsWith('http')}
 						{#if !cta.fallback || showFallbackCta}
 							<a
@@ -1271,7 +1271,7 @@
 
 				<div class="prose body-secondaryText block lg:hidden">
 					<!-- eslint-disable svelte/no-at-html-tags -->
-					{@html marked(data.product.description.replaceAll('<', '&lt;'))}
+					{@html renderMarkdown(data.product.description)}
 				</div>
 			</div>
 		</div>
@@ -1307,7 +1307,9 @@
 <style>
 	/* Note, in recent version of tailwind, probably doable with lg:has-hover:overflow-visible */
 	@media (min-width: 1024px) {
-		.overflow-if-child-hovered-lg:has(:hover) {
+		/* Global because the class is applied from an interpolated `class=` string: Svelte
+		   cannot see the match statically and would prune the rule out of the bundle. */
+		:global(.overflow-if-child-hovered-lg:has(:hover)) {
 			overflow: visible;
 			position: relative;
 			z-index: 50;

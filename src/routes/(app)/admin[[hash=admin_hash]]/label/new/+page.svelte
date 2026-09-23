@@ -52,7 +52,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder="icon svg or emoji"
 			class="form-input block w-full"
-		/>
+		></textarea>
 	</label>
 	<input type="submit" class="btn btn-blue self-start text-white" value="Submit" />
 </form>

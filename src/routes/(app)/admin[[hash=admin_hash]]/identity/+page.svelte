@@ -182,7 +182,7 @@
 			class="form-input max-w-[25rem]"
 			rows="5"
 			value={issuerInfo ?? ''}
-		/>
+		></textarea>
 		<p class="text-sm">
 			This is completely optional. It will be printed on the top-right corner of the invoice.
 		</p>

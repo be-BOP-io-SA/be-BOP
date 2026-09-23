@@ -8,7 +8,6 @@ import { refreshPromise, runtimeConfig } from '../runtime-config';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { addSeconds, formatDistance, subMinutes } from 'date-fns';
 import { addToCartInDb, getCartFromDb, removeFromCartInDb } from '../cart';
-import type { Product } from '$lib/types/Product';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { createOrder } from '../orders';
 import { typedEntries } from '$lib/utils/typedEntries';
@@ -364,19 +363,16 @@ const commands: Record<
 
 			if (isNaN(quantity) || quantity <= 0) {
 				await send('Invalid quantity: ' + args.quantity);
+				return;
 			}
 
 			const product = await collections.products.findOne({ _id: ref });
 
-			if (!product) {
-				const products = await collections.products
-					.find({})
-					.project<Pick<Product, '_id'>>({ _id: 1 })
-					.toArray();
+			// A slug is not public: an unreleased or unlisted product is hidden from every other
+			// surface, so the "did you mean" list must not be the one place that enumerates them.
+			if (!product || !product.actionSettings.nostr.visible) {
 				await send(
-					`No product found with ref "${ref}". Use "catalog" to get the list of products. Available refs: ${products
-						.map((p) => p._id)
-						.join(', ')}`
+					`No product found with ref "${ref}". Use "catalog" to get the list of products.`
 				);
 				return;
 			}

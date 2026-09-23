@@ -37,9 +37,9 @@ export async function load() {
 		currentWallet: runtimeConfig.bitcoinWallet,
 		wallets,
 		transactions: transactions.reverse(),
-		balance: wallets.length ? getBalance() : 0,
-		orders: orders.toArray(),
-		blockchainInfo: getBlockchainInfo(),
+		balance: wallets.length ? await getBalance() : 0,
+		orders: await orders.toArray(),
+		blockchainInfo: await getBlockchainInfo(),
 		bip84: isBIP84Configured,
 		bip84Xpub: BIP84_XPUB,
 		rpc: ALLOW_BITCOIN_RPC === 'true' || ALLOW_BITCOIN_RPC === '1'

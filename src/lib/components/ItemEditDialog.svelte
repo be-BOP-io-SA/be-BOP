@@ -62,7 +62,6 @@
 </script>
 
 <!-- Backdrop -->
-<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
 	class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
@@ -73,7 +72,7 @@
 	aria-labelledby="dialog-title"
 >
 	<!-- Dialog content -->
-	<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+	<!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
 	<form
 		class="bg-white shadow-[0_0_0_4px_rgba(0,0,0,0.8)] max-w-2xl w-full max-h-[90vh] overflow-auto"
 		on:click|stopPropagation

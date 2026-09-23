@@ -286,10 +286,10 @@ export const load = async ({ params, parent, locals }) => {
 				}))
 		],
 		...(product.contentBefore && {
-			productCMSBefore: cmsFromContent({ desktopContent: product.contentBefore }, locals)
+			productCMSBefore: await cmsFromContent({ desktopContent: product.contentBefore }, locals)
 		}),
 		...(product.contentAfter && {
-			productCMSAfter: cmsFromContent({ desktopContent: product.contentAfter }, locals)
+			productCMSAfter: await cmsFromContent({ desktopContent: product.contentAfter }, locals)
 		}),
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
 		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,

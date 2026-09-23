@@ -39,7 +39,7 @@
 				placeholder={data.contactForm.disclaimer?.content}
 				class="form-input block w-full"
 				value={data.contactForm.translations?.[language]?.disclaimer?.content ?? ''}
-			/>
+			></textarea>
 		</label>
 		<label class="form-label">
 			Disclaimer checkbox label
@@ -73,7 +73,7 @@
 		value={data.contactForm.translations?.[language]?.content ?? ''}
 		placeholder={data.contactForm.content}
 		class="form-input block w-full"
-	/>
+	></textarea>
 
 	<button class="btn btn-black self-start" type="submit">Save</button>
 </form>

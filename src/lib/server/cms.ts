@@ -7,7 +7,7 @@ import type { Currency } from '$lib/types/Currency';
 import { trimPrefix } from '$lib/utils/trimPrefix';
 import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
-import DOMPurify from 'dompurify';
+import DOMPurify, { type WindowLike } from 'dompurify';
 import { collections } from './database';
 import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import type { Specification } from '$lib/types/Specification';
@@ -31,7 +31,9 @@ export type ExternalProductData = ProductWidgetProduct & {
 
 const window = new JSDOM('').window;
 
-const purify = DOMPurify(window);
+// jsdom's window carries every DOM constructor DOMPurify reads, but its declared type is not
+// assignable to `WindowLike` — the two describe the same object from different sides.
+const purify = DOMPurify(window as unknown as WindowLike);
 
 purify.addHook('afterSanitizeAttributes', function (node) {
 	// set all elements owning target to target=_blank
@@ -309,6 +311,16 @@ export async function cmsFromContent(
 
 	const index = 0;
 
+	// Single gate for every html chunk, so no call site can end up sanitising differently from
+	// its neighbour. Raw HTML stays opt-in, via the env flag or the page's own setting.
+	const pushHtml = (token: TokenObject[], html: string) => {
+		const displayUnsanitizedContent = ALLOW_JS_INJECTION === 'true' || forceUnsanitizedContent;
+		token.push({
+			type: 'html',
+			raw: displayUnsanitizedContent ? html : purify.sanitize(html, { ADD_ATTR: ['target'] })
+		});
+	};
+
 	const processMatches = (token: TokenObject[], content: string, index: number) => {
 		const matches = [
 			...matchAndSort(content, PRODUCT_WIDGET_REGEX, 'productWidget'),
@@ -328,12 +340,7 @@ export async function cmsFromContent(
 			...matchAndSort(content, SEARCHLIST_WIDGET_REGEX, 'searchlistWidget')
 		].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
 		for (const match of matches) {
-			const html = trimPrefix(trimSuffix(content.slice(index, match.index), '<p>'), '</p>');
-			const displayUnsanitizedContent = ALLOW_JS_INJECTION === 'true' || forceUnsanitizedContent;
-			token.push({
-				type: 'html',
-				raw: displayUnsanitizedContent ? html : purify.sanitize(html, { ADD_ATTR: ['target'] })
-			});
+			pushHtml(token, trimPrefix(trimSuffix(content.slice(index, match.index), '<p>'), '</p>'));
 			if (match.groups?.slug) {
 				switch (match.type) {
 					case 'productWidget':
@@ -506,10 +513,7 @@ export async function cmsFromContent(
 			}
 			index = match.index + match[0].length;
 		}
-		token.push({
-			type: 'html',
-			raw: trimPrefix(content.slice(index), '</p>')
-		});
+		pushHtml(token, trimPrefix(content.slice(index), '</p>'));
 	};
 
 	const tokens: {

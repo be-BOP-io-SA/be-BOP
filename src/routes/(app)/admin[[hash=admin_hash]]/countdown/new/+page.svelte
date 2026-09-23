@@ -56,7 +56,7 @@
 			placeholder="Countdown title"
 			class="form-input block w-full"
 			required
-		/>
+		></textarea>
 	</label>
 	<label class="form-label">
 		Description
@@ -68,7 +68,7 @@
 			placeholder="Countdown description"
 			class="form-input block w-full"
 			required
-		/>
+		></textarea>
 	</label>
 	<div class="flex flex-wrap gap-4">
 		<label class="form-label">

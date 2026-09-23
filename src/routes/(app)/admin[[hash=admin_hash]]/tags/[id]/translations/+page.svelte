@@ -47,7 +47,7 @@
 			rows="2"
 			class="form-input"
 			value={data.tag.translations?.[language]?.shortContent ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<label class="form-label">
@@ -61,7 +61,7 @@
 			maxlength="10000"
 			placeholder={data.tag.content}
 			value={data.tag.translations?.[language]?.content ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<h3 class="text-xl">CTAs</h3>

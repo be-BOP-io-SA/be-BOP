@@ -103,7 +103,7 @@
 			rows="5"
 			maxlength="10000"
 			class="form-input"
-		/>
+		></textarea>
 	</label>
 	<div class="flex gap-4">
 		<label class="form-label">
@@ -157,7 +157,7 @@
 				maxlength="160"
 				class="form-input"
 				value={data.gallery.secondary[i]?.content || ''}
-			/>
+			></textarea>
 		</label>
 		<div class="flex flex-col">
 			<a

@@ -21,8 +21,9 @@ import {
 	cleanVariationLabels
 } from '$lib/server/product';
 import type { Tag } from '$lib/types/Tag';
+import type { DigitalFile } from '$lib/types/DigitalFile';
 import { adminPrefix } from '$lib/server/admin';
-import { AnyBulkWriteOperation, ObjectId } from 'mongodb';
+import { ObjectId, type AnyBulkWriteOperation } from 'mongodb';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 import { enrichWithOrderNumbers } from '$lib/server/orders';
@@ -35,8 +36,11 @@ export const load = async ({ params }) => {
 		.find({ productId: params.id })
 		.sort({ order: 1, createdAt: 1 })
 		.toArray();
+	// Projected, never raw: `secret` is the whole credential the download endpoint accepts, and
+	// /admin/digital-file is a separate grant from /admin/product.
 	const digitalFiles = await collections.digitalFiles
 		.find({ productId: params.id })
+		.project<Pick<DigitalFile, '_id' | 'name'>>({ name: 1 })
 		.sort({ createdAt: 1 })
 		.toArray();
 	const tags = await collections.tags

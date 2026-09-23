@@ -11,7 +11,6 @@
 <h1 class="text-3xl">Order Label</h1>
 
 <form method="post" class="flex flex-col gap-6">
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Order Label Ids
 		<MultiSelect

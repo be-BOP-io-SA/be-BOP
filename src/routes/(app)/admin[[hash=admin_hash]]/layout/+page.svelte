@@ -169,7 +169,7 @@
 			maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 			class="form-input block w-full"
 			value={data.websiteShortDescription}
-		/>
+		></textarea>
 	</label>
 
 	<h3 class="text-xl">Links</h3>
@@ -318,10 +318,9 @@
 						aria-hidden="true"
 					>
 						{#if icon.svg}
-							<!-- SVG comes from runtimeConfig (admin-controlled), same trust level as
-							     the storefront footer that already injects the same string. -->
-							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-							{@html icon.svg}
+							<!-- Same framing as the storefront footer: a data: URI is a separate, script-inert
+							     document, where inlining the stored markup would run whatever it contains. -->
+							<img src="data:image/svg+xml;utf8, {icon.svg}" alt="" class="h-full w-full" />
 						{/if}
 					</span>
 				</div>
@@ -345,7 +344,7 @@
 					class="form-input"
 					readonly={socialPresetSelections[i] !== 'custom'}
 					bind:value={icon.svg}
-				/>
+				></textarea>
 			</label>
 			<label class="form-label">
 				Url

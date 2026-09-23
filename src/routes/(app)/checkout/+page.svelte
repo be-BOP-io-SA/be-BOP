@@ -772,14 +772,15 @@
 						<div class="p-4 flex flex-col gap-3">
 							<label class="form-label text-xl">
 								{t('checkout.receiptNote.label')}
-								<textarea name="receiptNoteContent" cols="30" rows="2" class="form-input" />
+								<textarea name="receiptNoteContent" cols="30" rows="2" class="form-input"
+								></textarea>
 							</label>
 						</div>{/if}
 					<div class="p-4 flex flex-col gap-3">
 						<label class="form-label text-xl">
 							{t('checkout.note.label')}
 
-							<textarea name="noteContent" cols="30" rows="2" class="form-input" />
+							<textarea name="noteContent" cols="30" rows="2" class="form-input"></textarea>
 						</label>
 					</div>
 				</article>
@@ -923,7 +924,7 @@
 						</div>
 					</form>
 
-					<div class="border-b border-gray-300 col-span-4" />
+					<div class="border-b border-gray-300 col-span-4"></div>
 				{/each}
 
 				{#if deliveryFeesToBill}
@@ -944,7 +945,7 @@
 							/>
 						</div>
 					</div>
-					<div class="border-b border-gray-300 col-span-4" />
+					<div class="border-b border-gray-300 col-span-4"></div>
 				{:else if isNaN(deliveryFeesToBill)}
 					<div class="alert-error mt-3">
 						{t('checkout.noDeliveryInCountry')}
@@ -998,10 +999,10 @@
 							/>
 						</div>
 					</div>
-					<div class="border-b border-gray-300 col-span-4" />
+					<div class="border-b border-gray-300 col-span-4"></div>
 				{/each}
 
-				<span class="py-1" />
+				<span class="py-1"></span>
 
 				<div class="-mx-3 p-3 flex flex-col">
 					<div class="flex justify-between">

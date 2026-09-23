@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { useI18n } from '$lib/i18n';
+	// Translations are operator-supplied through /admin/language, so they are data, not literals:
+	// Trans splits them into slots instead of handing the string to {@html}.
+	import Trans from './Trans.svelte';
 	import { enhance } from '$app/forms';
 	import DEFAULT_LOGO from '$lib/assets/bebop-light.svg';
 
@@ -131,8 +134,16 @@
 					<div class="space-y-2 text-sm">
 						<p>{t('telemetry.banner.description1')}</p>
 						<p>{t('telemetry.banner.description2')}</p>
-						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-						<p class="font-semibold">{@html t('telemetry.banner.description3')}</p>
+						<p class="font-semibold">
+							<Trans key="telemetry.banner.description3">
+								<a
+									slot="0"
+									let:translation
+									href="/admin/seo"
+									class="underline font-semibold text-blue-600 hover:text-blue-800">{translation}</a
+								>
+							</Trans>
+						</p>
 						<p class="font-semibold">{t('telemetry.banner.question')}</p>
 					</div>
 				</div>
@@ -190,8 +201,17 @@
 						</div>
 						<div class="flex-1 space-y-2 text-sm">
 							<p class="font-semibold">{t('telemetry.banner.accepted.thankYou')}</p>
-							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-							<p>{@html t('telemetry.banner.accepted.message')}</p>
+							<p>
+								<Trans key="telemetry.banner.accepted.message">
+									<a
+										slot="0"
+										let:translation
+										href="/admin/seo"
+										class="underline font-semibold text-blue-600 hover:text-blue-800"
+										>{translation}</a
+									>
+								</Trans>
+							</p>
 							<p class="text-gray-600">
 								{t('telemetry.banner.accepted.autoHideCountdown', { seconds: countdownSeconds })}
 							</p>

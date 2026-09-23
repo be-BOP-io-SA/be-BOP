@@ -157,7 +157,7 @@
 					rows="4"
 					bind:value={method.instructions}
 					placeholder={t('customPaymentMethod.instructionsPlaceholder')}
-				/>
+				></textarea>
 			</label>
 		</fieldset>
 	{/each}

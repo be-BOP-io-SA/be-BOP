@@ -62,7 +62,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			value={data.label.icon}
 			class="form-input block w-full"
-		/>
+		></textarea>
 	</label>
 
 	<div class="flex flex-row justify-between gap-2">

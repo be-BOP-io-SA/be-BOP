@@ -21,7 +21,11 @@ export const actions = {
 			throw error(403, 'You cannot update a customer from here');
 		}
 
-		const allowedRoles = await collections.roles.find().toArray();
+		// Only a super-admin may hand out their own tier, as when creating a user: the guard
+		// below covers editing an existing super-admin, not granting the role in the first place.
+		const allowedRoles = (await collections.roles.find().toArray()).filter(
+			(role) => role._id !== SUPER_ADMIN_ROLE_ID || locals.user?.roleId === SUPER_ADMIN_ROLE_ID
+		);
 
 		const parsed = z
 			.object({
@@ -44,6 +48,16 @@ export const actions = {
 		}
 		if (user.roleId === SUPER_ADMIN_ROLE_ID && locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
 			throw error(400, 'You are not allowed to edit admin information');
+		}
+		// Withholding the super-admin role is not enough: any role wider than the caller's own is
+		// a way out of their scope, so they may not re-role themselves at all.
+		if (
+			parsed.roleId &&
+			parsed.roleId !== user.roleId &&
+			locals.user?.roleId !== SUPER_ADMIN_ROLE_ID &&
+			locals.user?._id.equals(user._id)
+		) {
+			throw error(403, 'You cannot change your own role');
 		}
 		const role = await collections.roles.findOne({
 			_id: parsed.roleId

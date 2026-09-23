@@ -40,7 +40,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={data.specification.content}
 			value={data.specification.translations?.[language]?.content ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<button class="btn btn-black self-start" type="submit">Save</button>

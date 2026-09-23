@@ -4,11 +4,19 @@ import type { DigitalFile } from '$lib/types/DigitalFile.js';
 import type { Picture } from '$lib/types/Picture.js';
 import * as devalue from 'devalue';
 import { ObjectId } from 'mongodb';
+import { error } from '@sveltejs/kit';
+import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 
 //maximum amount of time that is valid for presigned URLs
 const ONE_WEEK_IN_SECONDS = 7 * 24 * 3600;
 
-export const POST = async ({ request }) => {
+export const POST = async ({ request, locals }) => {
+	// The dump carries the whole runtimeConfig — every payment credential and signing key — so it
+	// is the super admin's own data, not something a scoped role should be able to walk off with.
+	if (locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
+		throw error(403, 'Forbidden. Only Super Admin can export a backup!');
+	}
+
 	try {
 		const { exportType } = JSON.parse(await request.text());
 

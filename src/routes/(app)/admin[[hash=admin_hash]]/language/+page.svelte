@@ -60,7 +60,7 @@
 				cols="30"
 				rows="10"
 				value={JSON.stringify(d.keys, null, 2)}
-			/>
+			></textarea>
 		</label>
 	{/each}
 

@@ -28,25 +28,27 @@
 		{/each}
 	</div>
 	<div class="flex lg:hidden py-3 justify-center">
-		<TinySlider let:currentIndex>
-			{#each Object.keys(specificationCategory) as category, i (category)}
-				<div class="flex-wrap">
-					{#if currentIndex === i}
-						<div class="flex-col">
-							<div class="flex justify-center">
-								<h2 class="text-xl body-title text-justify">{category}</h2>
+		<TinySlider>
+			{#snippet children({ currentIndex })}
+				{#each Object.keys(specificationCategory) as category, i (category)}
+					<div class="flex-wrap">
+						{#if currentIndex === i}
+							<div class="flex-col">
+								<div class="flex justify-center">
+									<h2 class="text-xl body-title text-justify">{category}</h2>
+								</div>
+								<div class="my-3">
+									{#each specificationCategory[category] as { attribute, value } (attribute)}
+										<p class="mt-4 uppercase">{attribute}</p>
+										<p>{value}</p>
+									{/each}
+								</div>
 							</div>
-							<div class="my-3">
-								{#each specificationCategory[category] as { attribute, value } (attribute)}
-									<p class="mt-4 uppercase">{attribute}</p>
-									<p>{value}</p>
-								{/each}
-							</div>
-						</div>
-					{/if}
-				</div>
-			{/each}
-			<svelte:fragment slot="controls" let:setIndex let:currentIndex>
+						{/if}
+					</div>
+				{/each}
+			{/snippet}
+			{#snippet controls({ setIndex, currentIndex })}
 				<div class="absolute top-15 left-0 flex items-center px-2">
 					{#if currentIndex > 0}
 						<button
@@ -63,7 +65,7 @@
 						>
 					{/if}
 				</div>
-			</svelte:fragment>
+			{/snippet}
 		</TinySlider>
 	</div>
 </div>

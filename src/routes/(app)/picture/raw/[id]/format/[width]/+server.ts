@@ -49,8 +49,16 @@ export const GET: RequestHandler = async ({ params }) => {
 		});
 		const res = await fetch(link);
 
-		// Until we handle/store ETag properly
-		const headers = new Headers([...res.headers.entries()].filter(([k]) => k !== 'etag'));
+		// Serving from our own origin, so the type is ours to state, not the object store's:
+		// a stored `text/html` would otherwise run as a page of this site. Every generated
+		// format is webp.
+		const headers = new Headers([
+			...[...res.headers.entries()].filter(
+				// Until we handle/store ETag properly
+				([key]) => key !== 'etag' && key !== 'content-type'
+			),
+			['content-type', 'image/webp']
+		]);
 
 		return new Response(res.body, {
 			status: res.status,
