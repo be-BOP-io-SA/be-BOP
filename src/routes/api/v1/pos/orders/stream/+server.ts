@@ -54,6 +54,8 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 
 	return openPaidOrderStream({
 		keyId: apiKey._id.toString(),
+		maxConcurrentStreams: apiKey.maxConcurrentStreams,
+		lifetimeSeconds: apiKey.streamLifetimeSeconds,
 		signal: event.request.signal,
 		since: since.date,
 		after,
