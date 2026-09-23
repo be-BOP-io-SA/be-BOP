@@ -11,6 +11,12 @@
 		}
 	}
 
+	function confirmResetStreams(event: Event) {
+		if (!confirm('Hand back every stream place held by this key?')) {
+			event.preventDefault();
+		}
+	}
+
 	function fmt(d: string | Date | null) {
 		if (!d) {
 			return '—';
@@ -62,6 +68,77 @@
 			<dt class="opacity-70">{t('admin.apiKeys.createdBy')}</dt>
 			<dd class="font-mono text-sm">{data.key.createdBy ?? '—'}</dd>
 		</dl>
+	</section>
+
+	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-4">
+		<header class="flex flex-col gap-1">
+			<h2 class="text-2xl">{t('admin.apiKeys.streamsTitle')}</h2>
+			<p class="text-sm opacity-80">{t('admin.apiKeys.streamsHelp')}</p>
+		</header>
+
+		<form method="post" action="?/saveStreamSettings" class="flex flex-col gap-4">
+			<label class="form-label">
+				{t('admin.apiKeys.maxConcurrentStreams')}
+				<span class="flex items-center gap-3 flex-wrap">
+					<input
+						class="form-input w-32"
+						type="number"
+						name="maxConcurrentStreams"
+						min="1"
+						step="1"
+						value={data.key.maxConcurrentStreams ?? ''}
+					/>
+					<span class="text-sm opacity-70">
+						{t('admin.apiKeys.openStreamsNow', { count: data.openStreams })}
+					</span>
+					<!-- Recovery button: skips field validation so a half-typed form cannot block it. -->
+					<button
+						type="submit"
+						formaction="?/resetStreams"
+						formnovalidate
+						class="btn bg-red-600 text-white w-auto text-base"
+						title="Hand back every stream place held by this key"
+						on:click={confirmResetStreams}
+					>
+						☢
+					</button>
+				</span>
+				<span class="text-sm opacity-70">{t('admin.apiKeys.maxConcurrentStreamsHint')}</span>
+			</label>
+
+			<label class="form-label">
+				{t('admin.apiKeys.streamLifetimeSeconds')}
+				<input
+					class="form-input w-32"
+					type="number"
+					name="streamLifetimeSeconds"
+					min="1"
+					step="1"
+					value={data.key.streamLifetimeSeconds ?? ''}
+				/>
+				<span class="text-sm opacity-70">{t('admin.apiKeys.streamLifetimeSecondsHint')}</span>
+			</label>
+
+			{#each form?.error?.formErrors ?? [] as formError}
+				<p class="text-red-600 text-sm">{formError}</p>
+			{/each}
+			{#each Object.values(form?.error?.fieldErrors ?? {}).flat() as fieldError}
+				<p class="text-red-600 text-sm">{fieldError}</p>
+			{/each}
+
+			{#if form?.streamSettingsSaved}
+				<p class="text-sm text-green-700">{t('admin.apiKeys.streamsSaved')}</p>
+			{/if}
+			{#if form?.streamsReset}
+				<p class="text-sm text-green-700">{t('admin.apiKeys.streamsResetDone')}</p>
+			{/if}
+
+			<input
+				type="submit"
+				class="btn btn-blue self-start w-auto text-white text-base"
+				value={t('admin.apiKeys.streamsSave')}
+			/>
+		</form>
 	</section>
 
 	{#if form?.alreadyRevoked}

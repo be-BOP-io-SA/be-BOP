@@ -18,6 +18,20 @@ export interface ApiKey extends Timestamps {
 	 */
 	keyPrefix: string;
 	scopes: ApiV1Scope[];
+	/**
+	 * Event streams this key may hold open at once, across every stream surface. Undefined means no
+	 * ceiling: nothing is compiled in, so a fleet is sized from the admin rather than from a release.
+	 */
+	maxConcurrentStreams?: number;
+	/**
+	 * Seconds an event stream opened with this key stays open before the server closes it. The client
+	 * reconnects on its own and resumes where it left off, so closing costs it nothing.
+	 *
+	 * Undefined means the server never closes it. That is not the same as harmless: a device that
+	 * disappears without hanging up — wifi out of range, battery flat — leaves a stream the server
+	 * still believes in, and it is only ever counted, never returned.
+	 */
+	streamLifetimeSeconds?: number;
 	expiresAt?: Date;
 	revokedAt?: Date;
 	lastUsedAt?: Date;
