@@ -604,7 +604,8 @@
 			<div class="flex gap-2">
 				<button
 					on:click={() => exportcsv(tableOrder, 'order-detail.csv')}
-					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+					disabled={isLoading}
+					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 					title="Export as CSV"
 				>
 					📊 CSV
@@ -612,7 +613,8 @@
 				{#if data.role?._id === SUPER_ADMIN_ROLE_ID}
 					<button
 						on:click={downloadAllOrdersJson}
-						class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+						disabled={isLoading}
+						class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 						title="Download all displayed orders as JSON (super-admin)"
 					>
 						🧾 JSON
@@ -736,7 +738,8 @@
 			</div>
 			<button
 				on:click={() => exportcsv(tableProduct, 'product-detail.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
@@ -808,7 +811,8 @@
 			</button>
 			<button
 				on:click={() => exportcsv(tablePayment, 'payment-detail.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
@@ -925,7 +929,8 @@
 			</button>
 			<button
 				on:click={() => exportcsv(tableOrderSynthesis, 'orderSythesisExport.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
@@ -981,7 +986,8 @@
 				</p>
 				<button
 					on:click={() => exportcsv(tableOrderSynthesisTag, 'orderSythesisExport.csv')}
-					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors ml-4"
+					disabled={isLoading}
+					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors ml-4 disabled:opacity-50"
 					title="Export tag synthesis as CSV"
 				>
 					📊 CSV
@@ -1051,7 +1057,8 @@
 			</div>
 			<button
 				on:click={() => exportcsv(tableProductSynthesis, 'orderItemsSythesisExport.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
@@ -1109,7 +1116,8 @@
 			</button>
 			<button
 				on:click={() => exportcsv(tablePaymentSynthesis, 'orderPaymentSythesis.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
@@ -1186,7 +1194,8 @@
 			</div>
 			<button
 				on:click={() => exportcsv(tableVATSynthesis, 'vat-synthesis.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
@@ -1248,7 +1257,8 @@
 			</button>
 			<button
 				on:click={() => exportcsv(tableDeliveryFeesSynthesis, 'deliveryFeesSynthesisExport.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
