@@ -1,12 +1,10 @@
 import type { PaymentMethod, PaymentProcessor } from '$lib/server/payment-methods';
 import type { ObjectId } from 'mongodb';
 import type { Price, Order } from '$lib/types/Order';
-import { bitcoinPaymentQrCodeString, lightningPaymentQrCodeString } from '$lib/types/Order';
 import type { SerializedPaymentPresentation } from '$lib/types/Order';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { ORIGIN } from '$lib/server/env-config';
 
 // --- Interfaces ---
 
@@ -40,12 +38,13 @@ export interface PaymentTransaction {
 	amount: number;
 	currency: Currency;
 	transaction_code?: string;
-	txid?: string;
+	/** The provider's own handle on the movement: a chain txid, a card auth code, a SEPA id. */
+	reference?: string;
 }
 
 /**
  * Discriminated on `status` so a processor cannot report a payment as settled without
- * saying what arrived, and cannot attach onchain progress to a terminal status.
+ * saying what arrived, and cannot attach progress to a terminal status.
  */
 export type CheckPaymentResult =
 	| {
@@ -58,15 +57,19 @@ export type CheckPaymentResult =
 	| {
 			status: 'pending';
 			/**
-			 * For onchain payments: a full-amount TX is detected but not yet confirmed to the
-			 * required threshold. Surfaced to the buyer as "received, awaiting confirmation".
+			 * Observed, but not final — money the provider has seen and may still take back.
+			 * Onchain: a full-amount transaction under the confirmation threshold. Card: an
+			 * authorisation not yet captured. PayPal: a capture still PENDING, an eCheck
+			 * clearing. SEPA: a transfer in clearing. The buyer is told it arrived and is
+			 * being confirmed; the order does not settle on it.
 			 */
-			awaitingConfirmation?: boolean;
+			provisional?: { received: Price; reason?: string };
 			/**
-			 * For onchain payments: the persisted start of the post-expiry grace window (see
-			 * `OrderPayment.mempoolMissingSince`). `null` means "clear it". Persisted by the worker.
+			 * Opaque, processor-private, carried between polls. A processor that needs to
+			 * remember something across the 2s loop puts it here rather than inventing a
+			 * column: the onchain grace window is one instance, a provider cursor another.
 			 */
-			mempoolMissingSince?: Date | null;
+			state?: Record<string, unknown>;
 			transactions?: PaymentTransaction[];
 	  }
 	| { status: 'expired' | 'failed' | 'canceled' };
@@ -188,39 +191,6 @@ export function coversPayment(
 
 /** Nothing to scan or follow: the buyer pays in the room, by wire, or not at all. */
 export const MANUAL_PRESENTATION: PaymentPresentation = { kind: 'manual' };
-
-export const LIGHTNING_PRESENTATION: PaymentPresentation = {
-	kind: 'qr',
-	qrLink: (payment) => lightningPaymentQrCodeString(payment.address ?? '')
-};
-
-export const BITCOIN_PRESENTATION: PaymentPresentation = {
-	kind: 'qr',
-	// Both the image and the link read the same settled amount, in the same currency.
-	qrPayload: (payment) => bitcoinQrCode(payment),
-	qrLink: (payment) => bitcoinQrCode(payment)
-};
-
-function bitcoinQrCode(payment: Order['payments'][number]): string {
-	return bitcoinPaymentQrCodeString(
-		payment.address ?? '',
-		payment.price.amount,
-		payment.price.currency
-	);
-}
-
-export function lightningLabel(orderId: string, orderNumber: number): string {
-	switch (runtimeConfig.lightningQrCodeDescription) {
-		case 'brand':
-			return runtimeConfig.brandName;
-		case 'orderUrl':
-			return `${ORIGIN}/order/${orderId}`;
-		case 'brandAndOrderNumber':
-			return `${runtimeConfig.brandName} - Order #${orderNumber.toLocaleString('en')}`;
-		default:
-			return '';
-	}
-}
 
 // --- Registry ---
 

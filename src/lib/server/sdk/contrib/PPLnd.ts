@@ -1,6 +1,6 @@
 import { isLndConfigured, lndCreateInvoice, lndLookupInvoice } from '$lib/server/lnd';
 import { differenceInSeconds } from 'date-fns';
-import { lightningLabel, LIGHTNING_PRESENTATION } from '../pp';
+import { lightningLabel, LIGHTNING_PRESENTATION } from './presentations';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,

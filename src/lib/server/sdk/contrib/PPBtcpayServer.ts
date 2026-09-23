@@ -4,7 +4,7 @@ import {
 	btcpayGetLnInvoice
 } from '$lib/server/btcpay-server';
 import { differenceInSeconds } from 'date-fns';
-import { lightningLabel, LIGHTNING_PRESENTATION } from '../pp';
+import { lightningLabel, LIGHTNING_PRESENTATION } from './presentations';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,

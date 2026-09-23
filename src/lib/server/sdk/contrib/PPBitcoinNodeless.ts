@@ -8,7 +8,7 @@ import {
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { setTimeout } from 'node:timers/promises';
-import { BITCOIN_PRESENTATION } from '../pp';
+import { BITCOIN_PRESENTATION } from './presentations';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,
@@ -103,8 +103,8 @@ export default {
 			// Funds committed and awaiting confirmation — hold the order, clear any grace timer.
 			return {
 				status: 'pending',
-				awaitingConfirmation: true,
-				mempoolMissingSince: null,
+				provisional: { received: { amount: received.pendingSatReceived, currency: 'SAT' } },
+				state: {},
 				transactions
 			};
 		}
@@ -119,8 +119,11 @@ export default {
 				if (now.getTime() - missingSince.getTime() < MEMPOOL_DROP_GRACE_MS) {
 					return {
 						status: 'pending',
-						awaitingConfirmation: true,
-						mempoolMissingSince: missingSince,
+						provisional: {
+							received: { amount: required, currency: 'SAT' },
+							reason: 'mempool-drop'
+						},
+						state: { mempoolMissingSince: missingSince },
 						transactions
 					};
 				}
@@ -131,8 +134,7 @@ export default {
 		// Still within the deadline and no full-amount TX in the mempool: plain pending.
 		return {
 			status: 'pending',
-			awaitingConfirmation: false,
-			mempoolMissingSince: null,
+			state: {},
 			transactions
 		};
 	}

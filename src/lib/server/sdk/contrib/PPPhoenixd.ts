@@ -4,7 +4,7 @@ import {
 	phoenixdLookupInvoice
 } from '$lib/server/phoenixd';
 import { addMinutes } from 'date-fns';
-import { lightningLabel, LIGHTNING_PRESENTATION } from '../pp';
+import { lightningLabel, LIGHTNING_PRESENTATION } from './presentations';
 import type {
 	PaymentProcessorDefinition,
 	CreatePaymentParams,

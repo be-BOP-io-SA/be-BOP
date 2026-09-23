@@ -81,8 +81,8 @@ describe('PPBitcoinNodeless.checkPayment', () => {
 		mockFetchTxs([fullAmountTx()]); // unconfirmed
 		const res = await PPBitcoinNodeless.checkPayment(makePayment(), order);
 		expectPending(res);
-		expect(res.awaitingConfirmation).toBe(true);
-		expect(res.mempoolMissingSince).toBeNull();
+		expect(res.provisional).toBeDefined();
+		expect(res.state?.mempoolMissingSince).toBeUndefined();
 	});
 
 	it('expires past the deadline when no TX was ever seen', async () => {
@@ -102,9 +102,9 @@ describe('PPBitcoinNodeless.checkPayment', () => {
 			order
 		);
 		expectPending(res);
-		expect(res.awaitingConfirmation).toBe(true);
-		expect(res.mempoolMissingSince).toBeInstanceOf(Date);
-		expect((res.mempoolMissingSince as Date).getTime()).toBeGreaterThanOrEqual(before);
+		expect(res.provisional?.reason).toBe('mempool-drop');
+		expect(res.state?.mempoolMissingSince).toBeInstanceOf(Date);
+		expect((res.state?.mempoolMissingSince as Date).getTime()).toBeGreaterThanOrEqual(before);
 	});
 
 	it('keeps holding within the 3-minute grace window', async () => {
@@ -119,7 +119,7 @@ describe('PPBitcoinNodeless.checkPayment', () => {
 			order
 		);
 		expectPending(res);
-		expect((res.mempoolMissingSince as Date).getTime()).toBe(missingSince.getTime());
+		expect((res.state?.mempoolMissingSince as Date).getTime()).toBe(missingSince.getTime());
 	});
 
 	it('expires once the grace window has elapsed', async () => {
@@ -146,7 +146,8 @@ describe('PPBitcoinNodeless.checkPayment', () => {
 			order
 		);
 		expectPending(res);
-		expect(res.awaitingConfirmation).toBe(true);
-		expect(res.mempoolMissingSince).toBeNull();
+		expect(res.provisional).toBeDefined();
+		// The replacement is back in the mempool, so the grace timer is cleared, not carried.
+		expect(res.state?.mempoolMissingSince).toBeUndefined();
 	});
 });

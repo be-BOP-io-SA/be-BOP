@@ -137,12 +137,18 @@ async function maintainOrders() {
 								if (result.transactions) {
 									payment.transactions = result.transactions;
 								}
-								// Persist the "awaiting confirmation" flag (onchain funds detected
-								// but not yet confirmed) so the buyer-facing order page can show it.
+								// A provisional receipt — money seen but not final — is shown to the buyer
+								// as "received, awaiting confirmation". The two columns below are the
+								// storage this predates the generic shape with: `awaitingConfirmation`
+								// records that something provisional exists, and `mempoolMissingSince` is
+								// the one processor-private key the schema still spells out. New
+								// processors read and write `state` and never name either.
 								// Only write on change — this loop runs every 2s.
 								{
-									const awaitingConfirmation = result.awaitingConfirmation ?? false;
-									const missingSince = result.mempoolMissingSince ?? null;
+									const awaitingConfirmation = !!result.provisional;
+									const storedMissingSince = result.state?.mempoolMissingSince;
+									const missingSince =
+										storedMissingSince instanceof Date ? storedMissingSince : null;
 									const awaitingChanged =
 										(payment.awaitingConfirmation ?? false) !== awaitingConfirmation;
 									const missingChanged =
