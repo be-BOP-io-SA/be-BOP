@@ -1,8 +1,8 @@
 import type { Actions } from './$types';
 import { collections } from '$lib/server/database';
 import { fail } from '@sveltejs/kit';
-import { isStripeEnabled } from '$lib/server/stripe';
-import { isSumupEnabled } from '$lib/server/sumup';
+import { getProcessor, tapToPayProcessors } from '$lib/server/sdk/pp';
+import { PROCESSORS } from '$lib/types/paymentProcessors';
 import { ObjectId } from 'mongodb';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import { ALL_PAYMENT_PROCESSORS, type PaymentProcessor } from '$lib/server/payment-methods';
@@ -43,18 +43,19 @@ export const load = async () => {
 		updatedAt: subtype.updatedAt.toISOString()
 	}));
 
-	const availableProcessors = [
-		{
-			processor: 'stripe' as const,
-			available: isStripeEnabled(),
-			displayName: 'Stripe'
-		},
-		{
-			processor: 'sumup' as const,
-			available: isSumupEnabled(),
-			displayName: 'SumUp'
-		}
-	];
+	// Only processors that can actually reconcile a terminal payment. This list used to be
+	// written by hand and offered SumUp, which the worker has always refused: a shopkeeper
+	// could configure a SumUp tap-to-pay subtype and watch every poll log an error while the
+	// payment never settled. Asking the registry makes the unsupported case unofferable
+	// rather than merely loud.
+	const availableProcessors = tapToPayProcessors().map((slug) => {
+		const pp = getProcessor(slug);
+		return {
+			processor: slug,
+			available: !!pp?.isEnabled(),
+			displayName: PROCESSORS[slug].label
+		};
+	});
 
 	return {
 		subtypes,

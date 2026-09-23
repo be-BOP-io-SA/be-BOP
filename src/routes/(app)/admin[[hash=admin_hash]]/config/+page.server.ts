@@ -16,17 +16,28 @@ import {
 	type PaymentMethod,
 	type PaymentProcessor
 } from '$lib/server/payment-methods.js';
-import { isSumupEnabled } from '$lib/server/sumup';
-import { isStripeEnabled } from '$lib/server/stripe';
-import { isBitcoinConfigured as isBitcoindConfigured } from '$lib/server/bitcoind';
-import { isBitcoinNodelessConfigured } from '$lib/server/bitcoin-nodeless';
-import { isLndConfigured } from '$lib/server/lnd';
-import { isPhoenixdConfigured } from '$lib/server/phoenixd';
-import { isSwissBitcoinPayConfigured } from '$lib/server/swiss-bitcoin-pay';
-import { isBtcpayServerConfigured } from '$lib/server/btcpay-server';
-import { isBlinkConfigured } from '$lib/server/blink';
+import { getProcessor, getProcessorsForMethod } from '$lib/server/sdk/pp';
+import { PROCESSORS } from '$lib/types/paymentProcessors';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
 import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
+
+/** The methods a shop can express a processor preference for: the ones several providers serve. */
+const PROCESSOR_CHOICE_METHODS = ['card', 'bitcoin', 'lightning'] as const;
+
+/**
+ * Accepts the empty string (no preference) or a processor that serves this method. Asked of
+ * the registry rather than listed, so adding a provider needs no edit here.
+ */
+const preferenceFor = (method: PaymentMethod) =>
+	z
+		.string()
+		.refine(
+			(slug) => slug === '' || getProcessor(slug)?.meta.method === method,
+			`Not a ${method} processor`
+		)
+		// The refine above has already established this; the cast only tells the compiler so.
+		.transform((slug) => slug as PaymentProcessor | '')
+		.optional();
 
 const VAT_SETTING_KEYS = new Set([
 	'vatExempted',
@@ -79,16 +90,22 @@ export async function load(event) {
 		preferredProcessorCard: runtimeConfig.paymentProcessorPreferences?.card ?? '',
 		preferredProcessorBitcoin: runtimeConfig.paymentProcessorPreferences?.bitcoin ?? '',
 		preferredProcessorLightning: runtimeConfig.paymentProcessorPreferences?.lightning ?? '',
-		// Processor availability flags
-		sumUpConfigured: isSumupEnabled(),
-		stripeConfigured: isStripeEnabled(),
-		bitcoindConfigured: isBitcoindConfigured,
-		bitcoinNodelessConfigured: isBitcoinNodelessConfigured(),
-		lndConfigured: isLndConfigured(),
-		phoenixdConfigured: isPhoenixdConfigured(),
-		swissBitcoinPayConfigured: isSwissBitcoinPayConfigured(),
-		btcpayServerConfigured: isBtcpayServerConfigured(),
-		blinkConfigured: isBlinkConfigured(),
+		// Who serves each method, in the order a shop without a preference falls back through.
+		// The page used to keep its own copy of this, and a ninth import every time a processor
+		// was added; the registry has known it all along.
+		processorsByMethod: Object.fromEntries(
+			PROCESSOR_CHOICE_METHODS.map((method) => [
+				method,
+				getProcessorsForMethod(method).map((pp) => ({
+					slug: pp.meta.processor,
+					label: PROCESSORS[pp.meta.processor].label,
+					configured: pp.isEnabled(),
+					// lnd and bitcoind take their credentials from the environment, so there is no
+					// settings page to send the shopowner to.
+					hasSettingsPage: 'configKey' in PROCESSORS[pp.meta.processor]
+				}))
+			])
+		),
 		dataCleanup: runtimeConfig.dataCleanup
 	};
 }
@@ -157,11 +174,12 @@ export const actions = {
 				hideCreditCardQrCode: z.boolean({ coerce: true }),
 				overwriteCreditCardSvgColor: z.boolean({ coerce: true }),
 				removePopinProductPrice: z.boolean({ coerce: true }),
-				preferredProcessorCard: z.enum(['sumup', 'stripe', '']).optional(),
-				preferredProcessorBitcoin: z.enum(['bitcoind', 'bitcoin-nodeless', '']).optional(),
-				preferredProcessorLightning: z
-					.enum(['lnd', 'phoenixd', 'swiss-bitcoin-pay', 'btcpay-server', 'blink', ''])
-					.optional()
+				// A preference names a processor that actually serves the method. Spelling the
+				// slugs out here meant a fourth hand-maintained copy of the method→processor map,
+				// and it drifted: this list is the registry's answer instead.
+				preferredProcessorCard: preferenceFor('card'),
+				preferredProcessorBitcoin: preferenceFor('bitcoin'),
+				preferredProcessorLightning: preferenceFor('lightning')
 			})
 			.parse({
 				...Object.fromEntries(formData),

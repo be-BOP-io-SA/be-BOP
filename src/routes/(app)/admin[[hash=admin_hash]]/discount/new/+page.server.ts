@@ -8,6 +8,7 @@ import { adminPrefix } from '$lib/server/admin';
 import type { Discount } from '$lib/types/Discount';
 import type { Tag } from '$lib/types/Tag';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
+import { ALL_PAYMENT_METHODS } from '$lib/server/payment-methods';
 import { logPublicDiscountPriceChange, parseDiscountConditionFields } from '$lib/server/discount';
 
 export const load = async () => {
@@ -34,6 +35,9 @@ export const load = async () => {
 		products,
 		subscriptions,
 		tags,
+		// The form used to list these by hand, and the list stopped being updated: taler, osb
+		// and free were missing, so no discount could be scoped to them.
+		paymentMethods: [...ALL_PAYMENT_METHODS],
 		countries: [...COUNTRY_ALPHA2S] as CountryAlpha2[]
 	};
 };

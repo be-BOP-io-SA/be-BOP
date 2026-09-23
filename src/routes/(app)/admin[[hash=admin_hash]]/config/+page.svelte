@@ -137,30 +137,25 @@
 			label: ['email', 'nostr'].find((cont) => cont === contact) ?? contact
 		})) ?? [];
 
-	// Available processors (based on configured ones)
-	const availableCardProcessors = [
-		{ name: 'sumup' as const, configured: data.sumUpConfigured },
-		{ name: 'stripe' as const, configured: data.stripeConfigured }
-	]
-		.filter((p) => p.configured)
-		.map((p) => p.name);
+	// Who serves each method comes from the server, which asks the registry. This page used to
+	// keep three hand-written copies of that map, and three more of the links below.
+	const processorsFor = (method: 'card' | 'bitcoin' | 'lightning') =>
+		data.processorsByMethod[method] ?? [];
 
-	const availableBitcoinProcessors = [
-		{ name: 'bitcoin-nodeless' as const, configured: data.bitcoinNodelessConfigured },
-		{ name: 'bitcoind' as const, configured: data.bitcoindConfigured }
-	]
-		.filter((p) => p.configured)
-		.map((p) => p.name);
+	const availableProcessors = (method: 'card' | 'bitcoin' | 'lightning') =>
+		processorsFor(method)
+			.filter((p) => p.configured)
+			.map((p) => p.slug);
 
-	const availableLightningProcessors = [
-		{ name: 'swiss-bitcoin-pay' as const, configured: data.swissBitcoinPayConfigured },
-		{ name: 'btcpay-server' as const, configured: data.btcpayServerConfigured },
-		{ name: 'phoenixd' as const, configured: data.phoenixdConfigured },
-		{ name: 'lnd' as const, configured: data.lndConfigured },
-		{ name: 'blink' as const, configured: data.blinkConfigured }
-	]
-		.filter((p) => p.configured)
-		.map((p) => p.name);
+	const configLinks = (method: 'card' | 'bitcoin' | 'lightning') =>
+		processorsFor(method).map((p) => ({
+			href: p.hasSettingsPage ? `${data.adminPrefix}/${p.slug}` : '#',
+			name: p.hasSettingsPage ? p.label : `${p.label} via environment variables`
+		}));
+
+	const availableCardProcessors = availableProcessors('card');
+	const availableBitcoinProcessors = availableProcessors('bitcoin');
+	const availableLightningProcessors = availableProcessors('lightning');
 
 	// Reactive local state for live preview
 	let selectedCardProcessor = data.preferredProcessorCard;
@@ -599,10 +594,7 @@
 		availableProcessors={availableCardProcessors}
 		bind:selectedProcessor={selectedCardProcessor}
 		preferredProcessor={data.preferredProcessorCard}
-		configLinks={[
-			{ href: `${data.adminPrefix}/sumup`, name: 'SumUp' },
-			{ href: `${data.adminPrefix}/stripe`, name: 'Stripe' }
-		]}
+		configLinks={configLinks('card')}
 	/>
 
 	<ProcessorSelector
@@ -611,10 +603,7 @@
 		availableProcessors={availableBitcoinProcessors}
 		bind:selectedProcessor={selectedBitcoinProcessor}
 		preferredProcessor={data.preferredProcessorBitcoin}
-		configLinks={[
-			{ href: `${data.adminPrefix}/bitcoin-nodeless`, name: 'Bitcoin Nodeless' },
-			{ href: '#', name: 'Bitcoind via environment variables' }
-		]}
+		configLinks={configLinks('bitcoin')}
 	/>
 
 	<ProcessorSelector
@@ -623,13 +612,7 @@
 		availableProcessors={availableLightningProcessors}
 		bind:selectedProcessor={selectedLightningProcessor}
 		preferredProcessor={data.preferredProcessorLightning}
-		configLinks={[
-			{ href: `${data.adminPrefix}/phoenixd`, name: 'PhoenixD' },
-			{ href: `${data.adminPrefix}/swiss-bitcoin-pay`, name: 'Swiss Bitcoin Pay' },
-			{ href: `${data.adminPrefix}/btcpay-server`, name: 'BTCPay Server' },
-			{ href: `${data.adminPrefix}/blink`, name: 'Blink' },
-			{ href: '#', name: 'LND via environment variables' }
-		]}
+		configLinks={configLinks('lightning')}
 	/>
 
 	<h2 class="text-2xl">Timing</h2>

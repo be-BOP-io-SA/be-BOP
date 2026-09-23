@@ -170,7 +170,7 @@
 
 		<fieldset class="form-label">
 			<legend>Payment method</legend>
-			{#each ['lightning', 'bank-transfer', 'point-of-sale', 'card', 'bitcoin', 'paypal', 'custom'] as pm}
+			{#each data.paymentMethods as pm}
 				<label class="checkbox-label">
 					<input type="checkbox" name="paymentMethods" value={pm} class="form-checkbox" />
 					{pm}{pm === 'point-of-sale' ? ' (only for users with POS role)' : ''}
