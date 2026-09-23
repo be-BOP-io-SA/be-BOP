@@ -24,8 +24,7 @@ export const actions = {
 			})
 			.refine((v) => v.apiKey || v.lnAddress, {
 				message: 'Provide either a Lightning address or an API key'
-			}),
-		empty: { apiKey: '', lnAddress: '', walletId: '' }
+			})
 	}),
 	updateLightningInvoiceDescription
 };

@@ -5,6 +5,7 @@ import type { SerializedPaymentPresentation } from '$lib/types/Order';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { PROCESSORS } from '$lib/types/paymentProcessors';
 
 // --- Interfaces ---
 
@@ -216,7 +217,13 @@ export function tapToPayProcessors(): PaymentProcessor[] {
 }
 
 export function getProcessorsForMethod(method: PaymentMethod): PaymentProcessorDefinition[] {
-	return [...registry.values()].filter((pp) => pp.meta.method === method);
+	return (
+		[...registry.values()]
+			.filter((pp) => pp.meta.method === method)
+			// Declared rank, not load order. `resolveProcessor` returns the first enabled one, so
+			// this decides which acquirer a shop that expressed no preference actually uses.
+			.sort((a, b) => PROCESSORS[a.meta.processor].priority - PROCESSORS[b.meta.processor].priority)
+	);
 }
 
 export function resolveProcessor(method: PaymentMethod): PaymentProcessorDefinition | undefined {

@@ -3,9 +3,10 @@ import { z } from 'zod';
 import { paymentConfigActions } from './admin-config';
 import { cleanDb } from '../test-utils';
 import { collections } from '../database';
-import { runtimeConfig } from '../runtime-config';
+import { defaultConfig, runtimeConfig } from '../runtime-config';
 
-const EMPTY = { apiKey: '', merchantCode: '', currency: 'EUR' } as const;
+/** Deleting restores whatever `runtime-config` declares — the page no longer says it twice. */
+const EMPTY = defaultConfig.sumUp;
 
 const actions = paymentConfigActions({
 	key: 'sumUp',
@@ -14,8 +15,7 @@ const actions = paymentConfigActions({
 		apiKey: z.string().startsWith('sup_sk_'),
 		currency: z.enum(['EUR', 'CHF']),
 		merchantCode: z.string().min(1)
-	}),
-	empty: { ...EMPTY }
+	})
 });
 
 const form = (fields: Record<string, string>) => {

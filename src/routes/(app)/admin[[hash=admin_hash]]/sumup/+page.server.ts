@@ -18,6 +18,5 @@ export const actions = paymentConfigActions({
 			CURRENCIES.filter((c) => c !== 'BTC' && c !== 'SAT') as [Currency, ...Currency[]]
 		),
 		merchantCode: z.string().min(1)
-	}),
-	empty: { apiKey: '', merchantCode: '', currency: 'EUR' }
+	})
 });

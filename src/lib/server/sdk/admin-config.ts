@@ -1,5 +1,10 @@
 import { collections } from '../database';
-import { runtimeConfig, type ConfigKey, type RuntimeConfig } from '../runtime-config';
+import {
+	defaultConfig,
+	runtimeConfig,
+	type ConfigKey,
+	type RuntimeConfig
+} from '../runtime-config';
 import { rateLimit } from '../rateLimit';
 import { testProcessorConnection } from './test-connection';
 import type { PaymentProcessor } from '../payment-methods';
@@ -16,8 +21,6 @@ export function paymentConfigActions<K extends ConfigKey>(spec: {
 	processor: PaymentProcessor;
 	/** Input stays `unknown`: `.default()` and `.transform()` make it differ from the output. */
 	schema: ZodType<RuntimeConfig[K], ZodTypeDef, unknown>;
-	/** What the config reverts to when the shop deletes it. */
-	empty: RuntimeConfig[K];
 }) {
 	return {
 		save: async function ({ request }: { request: Request }) {
@@ -35,7 +38,14 @@ export function paymentConfigActions<K extends ConfigKey>(spec: {
 		delete: async function () {
 			await collections.runtimeConfig.deleteOne({ _id: spec.key });
 
-			runtimeConfig[spec.key] = spec.empty;
+			// Defaults are declared once, where the config itself is declared. A page carrying
+			// its own copy is a second source, and the two drift the first time a field is added.
+			// `defaultConfig` is frozen, so the live config gets a clone rather than a reference.
+			// The cast is the price of `ConfigKey` covering runtime-only keys such as the
+			// per-locale translation buckets, which have no entry in the declared defaults.
+			runtimeConfig[spec.key] = structuredClone(
+				(defaultConfig as Record<string, unknown>)[spec.key]
+			) as RuntimeConfig[K];
 		},
 
 		testConnection: async function ({ locals }: { locals: App.Locals }) {

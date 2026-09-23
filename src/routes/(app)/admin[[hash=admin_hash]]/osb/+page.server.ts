@@ -15,6 +15,5 @@ export const actions = paymentConfigActions({
 		shopId: z.string().min(1),
 		password: z.string().min(1),
 		hmacKey: z.string().default('')
-	}),
-	empty: { shopId: '', password: '', hmacKey: '' }
+	})
 });

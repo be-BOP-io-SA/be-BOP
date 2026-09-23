@@ -14,8 +14,7 @@ export const actions = {
 	...paymentConfigActions({
 		key: 'swissBitcoinPay',
 		processor: 'swiss-bitcoin-pay',
-		schema: z.object({ apiKey: z.string().min(1) }),
-		empty: { apiKey: '' }
+		schema: z.object({ apiKey: z.string().min(1) })
 	}),
 	updateLightningInvoiceDescription
 };

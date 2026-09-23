@@ -19,6 +19,5 @@ export const actions = paymentConfigActions({
 		currency: z.enum(
 			CURRENCIES.filter((c) => c !== 'BTC' && c !== 'SAT') as [Currency, ...Currency[]]
 		)
-	}),
-	empty: { clientId: '', secret: '', currency: 'EUR', sandbox: false }
+	})
 });
