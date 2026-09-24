@@ -40,6 +40,98 @@
 				"noReference": "-- Keine Referenz (eigenen Lagerbestand verwenden) --",
 				"warning": "⚠️ Dieses Produkt verweist auf den Lagerbestand eines anderen Produkts. Lagerbestandsänderungen wirken sich auf das referenzierte Produkt aus."
 			}
+		},
+		"apiKeys": {
+			"listTitle": "API-Schlüssel",
+			"add": "API-Schlüssel erstellen",
+			"empty": "Noch keine API-Schlüssel",
+			"createTitle": "API-Schlüssel erstellen",
+			"name": "Name",
+			"namePlaceholder": "z. B. PoS-Kasse",
+			"scopes": "Scopes",
+			"expiresAt": "Läuft ab am",
+			"expiresAtHint": "Optional. Leer lassen für kein Ablaufdatum.",
+			"create": "Erstellen",
+			"createError": "API-Schlüssel konnte nicht erstellt werden. Formular prüfen.",
+			"secretWarning": "Kopieren Sie dieses Geheimnis jetzt. Es wird nicht erneut angezeigt.",
+			"secret": "Geheimnis",
+			"prefix": "Präfix",
+			"copySecret": "Geheimnis kopieren",
+			"copied": "Kopiert",
+			"viewKey": "Schlüsseldetails anzeigen",
+			"backToList": "Zurück zu API-Schlüsseln",
+			"status": "Status",
+			"statusActive": "Aktiv",
+			"statusRevoked": "Widerrufen",
+			"statusExpired": "Abgelaufen",
+			"createdAt": "Erstellt am",
+			"revokedAt": "Widerrufen am",
+			"lastUsedAt": "Zuletzt verwendet",
+			"createdBy": "Erstellt von",
+			"revoke": "Schlüssel widerrufen",
+			"revokeConfirm": "Diesen API-Schlüssel widerrufen? Dies kann nicht rückgängig gemacht werden.",
+			"revealTitle": "API-Schlüssel erstellt",
+			"secretAlreadyShown": "Dieses Geheimnis wurde bereits angezeigt und kann nicht erneut angezeigt werden.",
+			"scopeHint": {
+				"ordersWrite": "Stapel-Schreiben von Bestellungen via POST /api/v1/orders.",
+				"catalogRead": "Katalog lesen via GET /api/v1/catalog/products.",
+				"ordersRead": "Bestellungen lesen via GET /api/v1/orders und GET /api/v1/orders/paid."
+			},
+			"secretStorageNote": "Das Geheimnis wird nur einmal angezeigt. be-BOP speichert nur SHA-256(secret) — kein Pepper (technische Schuld: DB-Leck ermöglicht Offline-Brute-Force).",
+			"corsTitle": "API-v1-CORS-Origins",
+			"corsHelp": "Browser-Herkünfte, die /api/v1 aufrufen dürfen. Leer lassen, um jeden Cross-Origin-Zugriff abzulehnen, oder * eingeben, um alle zu akzeptieren — hier unbedenklich, da sich die API allein über den X-API-Key-Header authentifiziert und nie ein Cookie liest.",
+			"corsOriginsLabel": "Erlaubte Origins",
+			"corsOriginsHint": "Eine Herkunft pro Zeile oder durch Kommas getrennt (z. B. https://partner.example). Leer lassen, um jede Browser-Herkunft abzulehnen, oder * eingeben, um alle zu akzeptieren.",
+			"trustExternalPricingLabel": "Das Drittsystem zur vorrangigen Quelle der Wahrheit machen",
+			"trustExternalPricingHint": "Aktiviert wird eine über die API geschriebene Bestellung zu den von ihr gesendeten Preisen berechnet, Zeile für Zeile, auch negativen. Deaktiviert berechnet be-BOP jede Zeile aus dem eigenen Katalog.",
+			"corsSave": "CORS-Origins speichern",
+			"corsSaved": "CORS-Origins aktualisiert.",
+			"listIntro": "Machine-to-machine-Schlüssel für die öffentliche HTTP-API. Secrets werden nur einmal angezeigt.",
+			"keysSectionTitle": "Schlüssel",
+			"keysSectionHelp": "Jeder Schlüssel hat Scopes. Widerruf erfolgt auf der Detailseite.",
+			"emptyHint": "Erstellen Sie einen Schlüssel, damit eine Kasse oder ein Partner /api/v1 aufrufen kann.",
+			"selectAll": "Alle auswahlen",
+			"selectNone": "Keine auswahlen",
+			"scopesHint": "Nur das noetige vergeben. Read und Write derselben Ressource sitzen in einer Kategorie.",
+			"logTitle": "Aufrufprotokoll",
+			"logHelp": "Jeder Aufruf der API, mit dem Gesendeten und dem Geantworteten. Einträge bleiben dreißig Tage erhalten und werden dann gelöscht.",
+			"logFilterKey": "Schlüssel",
+			"logFilterAllKeys": "Alle Schlüssel",
+			"logFilterOutcome": "Ergebnis",
+			"logOutcomeAll": "Alle Aufrufe",
+			"logOutcomeErrors": "Nur abgelehnte Aufrufe",
+			"logFilterApply": "Filtern",
+			"logEmpty": "Noch kein Aufruf aufgezeichnet.",
+			"logWhen": "Wann",
+			"logKey": "Schlüssel",
+			"logCall": "Aufruf",
+			"logStatus": "Antwort",
+			"logDuration": "Dauer",
+			"logNoKey": "Nicht authentifiziert",
+			"logDetails": "Austausch anzeigen",
+			"logStream": "Ereignisstrom: beim Schreiben des Eintrags noch offen, daher ohne Inhalt.",
+			"logRequest": "Empfangen",
+			"logResponse": "Geantwortet",
+			"logTruncated": "Langer Inhalt: nur der Anfang wird aufbewahrt.",
+			"logCount": "{count} Aufrufe",
+			"logPrevious": "Neuere",
+			"logNext": "Ältere",
+			"streamsTitle": "Ereignis-Streams",
+			"streamsHelp": "Wie viele Ereignis-Streams dieser Schlüssel gleichzeitig offen halten darf und wie lange jeder offen bleibt. Beides ist optional.",
+			"maxConcurrentStreams": "Erlaubte gleichzeitige Streams",
+			"maxConcurrentStreamsHint": "Leer lassen für keine Obergrenze. Ein Gerät, das mehrere Feeds öffnet, belegt pro Feed einen Platz.",
+			"openStreamsNow": "{count} derzeit offen",
+			"streamLifetimeSeconds": "Jeden Stream schließen nach (Sekunden)",
+			"streamLifetimeSecondsHint": "Leer lassen, um ihn nie zu schließen. Das Gerät verbindet sich selbst neu und macht dort weiter, wo es aufgehört hat — das Schließen kostet es nichts.",
+			"streamsSave": "Stream-Einstellungen speichern",
+			"streamsSaved": "Stream-Einstellungen aktualisiert.",
+			"streamsResetDone": "Stream-Plätze freigegeben."
+		},
+		"order": {
+			"customFieldFilterLabel": "Benutzerdefiniertes Checkout-Feld",
+			"customFieldValueLabel": "Feldwert",
+			"customFieldValuePlaceholder": "den zu filternden Wert eingeben",
+			"customFieldDisabled": "deaktiviert"
 		}
 	},
 	"ageWarning": {
@@ -1005,11 +1097,26 @@
 			"then": "dann"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "Stunde", "other": "Stunden" },
-			"day": { "one": "Tag", "other": "Tage" },
-			"week": { "one": "Woche", "other": "Wochen" },
-			"month": { "one": "Monat", "other": "Monate" },
-			"year": { "one": "Jahr", "other": "Jahre" }
+			"hour": {
+				"one": "Stunde",
+				"other": "Stunden"
+			},
+			"day": {
+				"one": "Tag",
+				"other": "Tage"
+			},
+			"week": {
+				"one": "Woche",
+				"other": "Wochen"
+			},
+			"month": {
+				"one": "Monat",
+				"other": "Monate"
+			},
+			"year": {
+				"one": "Jahr",
+				"other": "Jahre"
+			}
 		},
 		"type": {
 			"deposit": "Auf Anzahlung",

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Picture from '$lib/components/Picture.svelte';
+	import { productLabelWithVariations } from '$lib/types/Product';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import Trans from '$lib/components/Trans.svelte';
 	import { useI18n } from '$lib/i18n.js';
@@ -129,13 +130,7 @@
 			<tr style:background-color={i % 2 === 0 ? '#fef2cc' : '#e7e6e6'}>
 				<td class="text-center border border-white px-2">{i + 1}</td>
 				<td class="text-center border border-white px-2"
-					>{item.chosenVariations
-						? item.product.name +
-						  ' - ' +
-						  Object.entries(item.chosenVariations)
-								.map(([key, value]) => item.product.variationLabels?.values[key][value])
-								.join(' - ')
-						: item.product.name}</td
+					>{productLabelWithVariations(item.product, item.chosenVariations)}</td
 				>
 				<td class="text-center border border-white px-2">{item.quantity}</td>
 				<td class="text-center border border-white px-2">
