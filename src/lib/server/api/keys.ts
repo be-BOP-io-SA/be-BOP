@@ -28,11 +28,23 @@ function assertScopes(scopes: ApiV1Scope[]) {
 	}
 }
 
+/**
+ * What a brand-new key gets for its two stream settings.
+ *
+ * They exist so a key is never born unbounded: with no ceiling and no closing, a device that leaves
+ * the network without hanging up keeps its place for as long as the process lives, and the places
+ * only ever fill. An operator raises or clears them per key from the admin.
+ */
+export const DEFAULT_MAX_CONCURRENT_STREAMS = 4;
+export const DEFAULT_STREAM_LIFETIME_SECONDS = 1200;
+
 export async function createApiKey(opts: {
 	name: string;
 	scopes: ApiV1Scope[];
 	expiresAt?: Date;
 	createdBy?: string;
+	maxConcurrentStreams?: number;
+	streamLifetimeSeconds?: number;
 }): Promise<{ apiKey: ApiKey; secret: string }> {
 	assertScopes(opts.scopes);
 	const secret = generateApiKeySecret();
@@ -43,6 +55,8 @@ export async function createApiKey(opts: {
 		keyHash: hashApiKeySecret(secret),
 		keyPrefix: apiKeyPrefixFromSecret(secret),
 		scopes: [...opts.scopes],
+		maxConcurrentStreams: opts.maxConcurrentStreams ?? DEFAULT_MAX_CONCURRENT_STREAMS,
+		streamLifetimeSeconds: opts.streamLifetimeSeconds ?? DEFAULT_STREAM_LIFETIME_SECONDS,
 		expiresAt: opts.expiresAt,
 		createdBy: opts.createdBy,
 		createdAt: now,
