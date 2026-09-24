@@ -14,3 +14,6 @@ vite.config.ts.timestamp-*
 static/tinymce
 lib/utils/timeZoneOffset.ts
 docker-compose.override.yml
+
+# Playwright: the signed-in session the e2e suite reuses
+playwright/.auth

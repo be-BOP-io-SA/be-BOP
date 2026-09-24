@@ -59,6 +59,11 @@ export async function load({ params, locals, url }) {
 		if (!cmsPage) {
 			throw error(404, 'Page not found');
 		}
+
+		// The shop's own error page is what the visitor sees, but the request still failed to
+		// find anything: answering 200 makes this a soft 404, which search engines index as a
+		// real page and uptime checks read as healthy.
+		locals.status = 404;
 	}
 
 	const forceContentVersion =

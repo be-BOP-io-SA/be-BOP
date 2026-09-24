@@ -26,6 +26,11 @@ export async function load({ locals }) {
 	);
 
 	if (errorPage) {
+		// Nothing matched this URL. The shop's own error page is what gets rendered, but the
+		// status has to say so: a 200 here is a soft 404, indexed as a real page and read as
+		// healthy by monitoring.
+		locals.status = 404;
+
 		return {
 			cmsPage: omit(errorPage, ['content']),
 			cmsData: await cmsFromContent(
