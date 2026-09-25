@@ -70,6 +70,11 @@ export const actions = {
 			},
 			{ $set: { password: passwordBcrypt }, $unset: { passwordReset: '' } }
 		);
+		// A reset is how a compromised account is recovered, so it must also end the sessions of whoever held it.
+		await collections.sessions.updateMany(
+			{ userId: user._id },
+			{ $unset: { userId: '', expireUserAt: '' } }
+		);
 		throw redirect(303, `${adminPrefix()}/login`);
 	}
 };
