@@ -195,6 +195,16 @@ describe('computeReportingSynthesis', () => {
 		]);
 	});
 
+	it('rounds product totals to the main currency', () => {
+		const synthesis = computeReportingSynthesis(
+			[order({ items: [item('coffee', 0.1)] }), order({ items: [item('coffee', 0.2)] })],
+			filters(),
+			'EUR'
+		);
+
+		expect(synthesis.products[0].total).toBe(0.3);
+	});
+
 	it('restricts totals and VAT to tagged products when filtering by tag', () => {
 		const tagged = item('coffee', 10, {
 			product: { _id: 'coffee', name: 'Coffee', tagIds: ['hot'] },

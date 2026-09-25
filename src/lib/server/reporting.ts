@@ -363,7 +363,7 @@ export function computeReportingSynthesis(
 		  )
 		: [];
 
-	const products = new Map<string, { name: string; quantity: number; total: number }>();
+	const products = new Map<string, { name: string; quantity: number; prices: Price[] }>();
 	for (const order of paidOrders) {
 		for (const item of order.items) {
 			if (!itemMatchesTag(item, filters.tagId)) {
@@ -372,10 +372,13 @@ export function computeReportingSynthesis(
 			const entry = products.get(item.product._id) ?? {
 				name: item.product.name,
 				quantity: 0,
-				total: 0
+				prices: []
 			};
 			entry.quantity += item.quantity;
-			entry.total += orderItemPrice(item, 'main');
+			entry.prices.push({
+				amount: orderItemPrice(item, 'main'),
+				currency: item.currencySnapshot.main.price.currency
+			});
 			products.set(item.product._id, entry);
 		}
 	}
@@ -428,7 +431,12 @@ export function computeReportingSynthesis(
 			mainCurrency
 		),
 		products: [...products.entries()]
-			.map(([productId, entry]) => ({ productId, ...entry }))
+			.map(([productId, { name, quantity, prices }]) => ({
+				productId,
+				name,
+				quantity,
+				total: sumCurrency(mainCurrency, prices)
+			}))
 			.sort((a, b) => b.quantity - a.quantity),
 		payments: [...paymentPrices.entries()]
 			.map(([method, prices]) => ({
