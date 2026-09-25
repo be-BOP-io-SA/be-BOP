@@ -283,21 +283,28 @@ export async function addToCartInDb(
 		}
 	}
 
+	if (
+		product.variations?.length &&
+		!checkProductVariationsIntegrity(product, params.chosenVariations)
+	) {
+		cartError('VARIATION_INVALID', 'error matching on variations choice');
+	}
+
+	// A chosen option's surcharge is part of the floor, pay-what-you-want or not.
+	const listPriceAmount = product.variations?.length
+		? productPriceWithVariations(product, params.chosenVariations)
+		: product.price.amount;
+
 	if (params.customPrice) {
 		params.customPrice.amount = Math.max(
 			params.customPrice.amount,
-			toCurrency(params.customPrice.currency, product.price.amount, product.price.currency)
+			toCurrency(params.customPrice.currency, listPriceAmount, product.price.currency)
 		);
-	} else if (
-		product.variations?.length &&
-		checkProductVariationsIntegrity(product, params.chosenVariations)
-	) {
+	} else if (product.variations?.length) {
 		params.customPrice = {
-			amount: productPriceWithVariations(product, params.chosenVariations),
+			amount: listPriceAmount,
 			currency: product.price.currency
 		};
-	} else if (product.variations?.length) {
-		cartError('VARIATION_INVALID', 'error matching on variations choice');
 	}
 
 	// Subscription pricing schedule: when a fresh purchase (no prior subscription for this

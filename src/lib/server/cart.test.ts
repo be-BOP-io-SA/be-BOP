@@ -109,6 +109,46 @@ describe('cart', () => {
 		).resolves.toBeDefined();
 	});
 
+	describe('pay what you want with variations', () => {
+		const PWYW_WITH_SIZES = {
+			...TEST_DIGITAL_PRODUCT_UNLIMITED,
+			_id: 'test-pwyw-sizes',
+			alias: ['test-pwyw-sizes'],
+			payWhatYouWant: true,
+			variations: [
+				{ name: 'size', value: 'S', price: 0 },
+				{ name: 'size', value: 'XXL', price: 30 }
+			]
+		};
+
+		beforeEach(async () => {
+			await collections.products.insertOne(PWYW_WITH_SIZES);
+		});
+
+		it('floors the chosen price at the base price plus the option surcharge', async () => {
+			await addToCartInDb(PWYW_WITH_SIZES, 1, {
+				user: { sessionId: 'pwyw-1' },
+				mode: 'eshop',
+				customPrice: { amount: 100, currency: 'EUR' },
+				chosenVariations: { size: 'XXL' }
+			});
+
+			const cart = await collections.carts.findOne({ 'user.sessionId': 'pwyw-1' });
+			expect(cart?.items[0].customPrice?.amount).toBe(130);
+		});
+
+		it('refuses an option the product does not offer', async () => {
+			const err = await addToCartInDb(PWYW_WITH_SIZES, 1, {
+				user: { sessionId: 'pwyw-2' },
+				mode: 'eshop',
+				customPrice: { amount: 100, currency: 'EUR' },
+				chosenVariations: { size: 'XXXXL' }
+			}).catch((e) => e);
+
+			expect(isHttpError(err)).toBe(true);
+		});
+	});
+
 	describe('typed error codes', () => {
 		it('throws OUT_OF_STOCK with body.code when overshooting available stock', async () => {
 			try {

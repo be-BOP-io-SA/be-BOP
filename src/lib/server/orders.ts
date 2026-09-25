@@ -1014,17 +1014,17 @@ export async function createOrder(
 	}
 
 	for (const item of items) {
-		if (
-			item.product.variations?.length &&
-			!item.product.payWhatYouWant &&
-			checkProductVariationsIntegrity(item.product, item.chosenVariations)
-		) {
+		if (!item.product.variations?.length) {
+			continue;
+		}
+		if (!checkProductVariationsIntegrity(item.product, item.chosenVariations)) {
+			throw error(400, 'error matching on variations choice');
+		}
+		if (!item.product.payWhatYouWant) {
 			item.customPrice = {
 				amount: productPriceWithVariations(item.product, item.chosenVariations),
 				currency: item.product.price.currency
 			};
-		} else if (item.product.variations?.length && !item.product.payWhatYouWant) {
-			throw error(400, 'error matching on variations choice');
 		}
 	}
 	const physicalCartMinAmount = runtimeConfig.physicalCartMinAmount;
