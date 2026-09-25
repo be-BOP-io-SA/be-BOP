@@ -2,6 +2,7 @@ import { runtimeConfig, runtimeConfigUpdatedAt } from '$lib/server/runtime-confi
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { getCookieConsent } from '$lib/server/cookies';
 import { extractAnalyticsHostnames } from '$lib/server/analytics-hostnames';
+import { adminPathPrefix, routedPathname } from '$lib/server/admin';
 
 export async function load(event) {
 	const viewportWidth = (() => {
@@ -23,7 +24,10 @@ export async function load(event) {
 		}
 	})();
 
-	const analyticsSnippet = runtimeConfig.analyticsScriptSnippet;
+	// Third-party script has no business running beside the admin session or the till.
+	const guardPath = routedPathname(event.url.pathname);
+	const isStaffArea = !!adminPathPrefix(guardPath) || /^\/pos(\/|$)/.test(guardPath);
+	const analyticsSnippet = isStaffArea ? '' : runtimeConfig.analyticsScriptSnippet;
 	const analyticsConsent = getCookieConsent(event.cookies);
 	const analyticsSnippetConfigured = !!analyticsSnippet;
 	const analyticsHostnames = analyticsSnippetConfigured

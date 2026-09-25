@@ -20,6 +20,7 @@ import { getProcessor, getProcessorsForMethod } from '$lib/server/sdk/pp';
 import { PROCESSORS } from '$lib/types/paymentProcessors';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
 import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
+import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
 
 /** The methods a shop can express a processor preference for: the ones several providers serve. */
 const PROCESSOR_CHOICE_METHODS = ['card', 'bitcoin', 'lightning'] as const;
@@ -195,6 +196,11 @@ export const actions = {
 			...runtimeConfigUpdates
 		} = {
 			...result,
+			// The snippet is raw HTML on every public page: writing it is granting script execution.
+			analyticsScriptSnippet:
+				locals.user?.roleId === SUPER_ADMIN_ROLE_ID
+					? result.analyticsScriptSnippet
+					: runtimeConfig.analyticsScriptSnippet,
 			secondaryCurrency: result.secondaryCurrency || null,
 			accountingCurrency: result.accountingCurrency || null,
 			cartMaxSeparateItems: result.cartMaxSeparateItems || null
