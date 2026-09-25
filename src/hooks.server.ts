@@ -5,7 +5,12 @@ import { ObjectId } from 'mongodb';
 import { addYears } from 'date-fns';
 import { SvelteKitAuth } from '@auth/sveltekit';
 import { flatten } from 'flat';
-import { adminPathPrefix, adminPrefix as _adminPrefix, routedPathname } from '$lib/server/admin';
+import {
+	adminPathPrefix,
+	adminPrefix as _adminPrefix,
+	isAdminAuthPath,
+	routedPathname
+} from '$lib/server/admin';
 
 /** What the age wall itself needs to render before anyone has accepted it. */
 const AGEWALL_OPEN_PREFIXES = [
@@ -143,8 +148,6 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 
 	const adminPrefix = _adminPrefix();
 
-	const isAdminLoginLogoutUrl = /^\/admin(-.+?)?\/(login|logout)(\/|$)/.test(event.url.pathname);
-
 	const method = event.request.method.toLowerCase();
 
 	if (method === 'post' || method === 'put' || method === 'patch' || method === 'delete') {
@@ -160,6 +163,7 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 
 	const adminPath = adminPathPrefix(guardPath);
 	const isAdminUrl = !!adminPath;
+	const isAdminLoginLogoutUrl = isAdminAuthPath(guardPath);
 
 	const slug = event.url.pathname.split('/')[1] ? event.url.pathname.split('/')[1] : 'home';
 

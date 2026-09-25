@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adminPathPrefix, routedPathname } from './admin';
+import { adminPathPrefix, isAdminAuthPath, routedPathname } from './admin';
 import { match as adminHashMatch } from '../../params/admin_hash';
 
 describe('adminPathPrefix', () => {
@@ -43,6 +43,29 @@ describe('the guard and the route matcher agree', () => {
 		expect(adminHashMatch('x-1')).toBe(false);
 		expect(adminHashMatch('ZZ-9')).toBe(false);
 		expect(adminHashMatch('-abc')).toBe(true);
+	});
+});
+
+describe('isAdminAuthPath', () => {
+	it('recognises the login and logout pages under either prefix', () => {
+		expect(isAdminAuthPath('/admin/login')).toBe(true);
+		expect(isAdminAuthPath('/admin-abc123/login')).toBe(true);
+		expect(isAdminAuthPath('/admin-abc123/login/recovery')).toBe(true);
+		expect(isAdminAuthPath('/admin-abc123/login/reset/some-token')).toBe(true);
+		expect(isAdminAuthPath('/admin-abc123/logout')).toBe(true);
+	});
+
+	// Each of these routes to a real admin page with `login` as its dynamic parameter.
+	it('refuses a login segment deeper in the path', () => {
+		expect(isAdminAuthPath('/admin-abc123/oauth/login')).toBe(false);
+		expect(isAdminAuthPath('/admin-abc123/config/vat/login')).toBe(false);
+		expect(isAdminAuthPath('/admin-abc123/theme/login')).toBe(false);
+		expect(isAdminAuthPath('/admin/arm/role/logout')).toBe(false);
+	});
+
+	it('refuses paths outside the admin tree or merely prefixed by login', () => {
+		expect(isAdminAuthPath('/login')).toBe(false);
+		expect(isAdminAuthPath('/admin/loginx')).toBe(false);
 	});
 });
 

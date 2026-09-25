@@ -24,3 +24,14 @@ export function adminPathPrefix(pathname: string): string | null {
 	// page slugged `administration` reads as a wrong-prefix admin URL and 403s every visitor.
 	return /^(\/admin(-[a-zA-Z0-9]+)?)(\/|$)/.exec(pathname)?.[1] ?? null;
 }
+
+/**
+ * Whether the path is the admin login or logout page, the only admin routes reachable signed out.
+ *
+ * `login` must be the segment right after the prefix: any route with a dynamic parameter accepts
+ * `login` as its value, and reading it deeper would open that route to anonymous callers.
+ */
+export function isAdminAuthPath(pathname: string): boolean {
+	const prefix = adminPathPrefix(pathname);
+	return !!prefix && /^\/(login|logout)(\/|$)/.test(pathname.slice(prefix.length));
+}
