@@ -27,21 +27,10 @@
 				</p>
 			{/if}
 			{#if form?.success}
-				{#if form.email}
-					{#if form.isBackupEmail}
-						<p class="text-green-500">A password reset link was sent to shop's email address.</p>
-					{:else}
-						<p class="text-green-500">
-							A password reset link was sent to user's recovery email address.
-						</p>
-					{/if}
-				{/if}
-				{#if form.npub}
-					<p class="text-green-500">A password reset link was sent to user's recovery npub.</p>
-				{/if}
-			{/if}
-			{#if form?.failedFindUser}
-				<p class="text-red-500">No user with this information.</p>
+				<p class="text-green-500">
+					If this login exists, a password reset link was sent to its recovery email or npub, or to
+					the shop's email address.
+				</p>
 			{/if}
 		</div>
 		<div class="flex justify-center gap-4 mt-2">

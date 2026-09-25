@@ -14,6 +14,9 @@ import {
 import { adminPrefix } from '$lib/server/admin.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
 
+/** A bcrypt hash of no one's password, compared against when the login is unknown. */
+const TIMING_EQUALISER_HASH = '$2a$10$qz09XxQBnuGawp7M3s5dm.vJzU2D1V1lfPuw6BMUPinnI81gGKOQ2';
+
 export const load = async ({ locals }) => {
 	if (locals.user) {
 		throw redirect(303, locals.user.roleId === POS_ROLE_ID ? '/pos' : `/admin`);
@@ -43,6 +46,18 @@ export const actions = {
 				remember: data.get('remember'),
 				memorize: data.get('memorize')
 			});
+		// Spraying from many addresses still converges on one account.
+		rateLimit(`account:${login.toLowerCase()}`, 'login', 30, { minutes: 15 });
+
+		// HP-2026-08-13 (review #2715) : login stays fail-open — `null`
+		// (HIBP API unreachable) does not block the connection, only an
+		// actually pwned password (count > 0) is rejected.
+		// Checked before the lookup so the answer is the same whether the login exists or not.
+		const pwnedTimes = await checkPasswordPwnedTimes(password);
+		if (pwnedTimes) {
+			throw error(400, 'Password has been pwned');
+		}
+
 		let user = await collections.users.findOne({ login: login, roleId: { $ne: CUSTOMER_ROLE_ID } });
 
 		if (!user && !runtimeConfig.isAdminCreated) {
@@ -51,16 +66,13 @@ export const actions = {
 			user = await collections.users.findOne({ login: login });
 		}
 
-		if (!user) {
-			return fail(400, { login, incorrect: 'login' });
-		}
-
-		// HP-2026-08-13 (review #2715) : login stays fail-open — `null`
-		// (HIBP API unreachable) does not block the connection, only an
-		// actually pwned password (count > 0) is rejected.
-		const pwnedTimes = await checkPasswordPwnedTimes(password);
-		if (pwnedTimes) {
-			throw error(400, 'Password has been pwned');
+		// Unknown login, wrong password: same answer, same bcrypt cost, so neither lists accounts.
+		const passwordMatches = await bcryptjs.compare(
+			password,
+			user?.password ?? TIMING_EQUALISER_HASH
+		);
+		if (!user || !user.password || !passwordMatches) {
+			return fail(400, { login, incorrect: 'credentials' });
 		}
 
 		if (user.disabled) {
@@ -69,10 +81,6 @@ export const actions = {
 				disabledUser:
 					'There was an error with this account, please contact your be-BOP administrator to check your account status'
 			});
-		}
-
-		if (!user.password || !(await bcryptjs.compare(password, user.password))) {
-			return fail(400, { login, incorrect: 'password' });
 		}
 
 		await collections.users.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } });
