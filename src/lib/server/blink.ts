@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { z } from 'zod';
 import { runtimeConfig } from './runtime-config';
+import { assertPublicWebhookTarget } from './webhook-url-guard';
 
 /**
  * Blink Lightning client — receive-only, BTC-only.
@@ -42,6 +43,19 @@ export function parseLnAddress(lnAddress: string): { username: string; domain: s
 		throw new Error(`Invalid Blink Lightning address: ${lnAddress}`);
 	}
 	return { username: username.toLowerCase(), domain: domain.toLowerCase() };
+}
+
+/**
+ * The LNURL callback and LUD-21 verify URLs come from the Lightning-address server's answers and
+ * are fetched by us, the verify one on every poll, so they must not reach into our network.
+ * A localhost address is a developer's own stack, which the same rule would make unusable.
+ */
+async function assertLnurlTarget(rawUrl: string): Promise<void> {
+	const { domain } = parseLnAddress(runtimeConfig.blink.lnAddress);
+	if (domain.startsWith('localhost')) {
+		return;
+	}
+	await assertPublicWebhookTarget(rawUrl);
 }
 
 /**
@@ -344,9 +358,11 @@ async function sparkCreateInvoice(params: {
 
 	const callbackUrl = new URL(meta.callback);
 	callbackUrl.searchParams.set('amount', String(amountMsat));
+	await assertLnurlTarget(callbackUrl.href);
 
 	const cbResp = await fetch(callbackUrl, {
 		headers: { 'user-agent': 'be-BOP' },
+		redirect: 'error',
 		signal: AbortSignal.timeout(BLINK_HTTP_TIMEOUT_MS)
 	});
 	if (!cbResp.ok) {
@@ -377,6 +393,7 @@ async function sparkCreateInvoice(params: {
 	if (!paymentHash) {
 		throw new Error(`LUD-21 verify URL does not contain a valid payment hash: ${cb.verify}`);
 	}
+	await assertLnurlTarget(cb.verify);
 
 	return { paymentRequest: cb.pr, paymentHash, verifyUrl: cb.verify };
 }
@@ -457,8 +474,11 @@ async function blinkCheckSparkInvoice(
 	verifyUrl: string,
 	paymentHash: string
 ): Promise<BlinkInvoiceStatus | 'failed'> {
+	// Re-checked on each poll: the host may resolve differently than when the invoice was made.
+	await assertLnurlTarget(verifyUrl);
 	const resp = await fetch(verifyUrl, {
 		headers: { 'user-agent': 'be-BOP' },
+		redirect: 'error',
 		signal: AbortSignal.timeout(BLINK_HTTP_TIMEOUT_MS)
 	});
 	if (!resp.ok) {
