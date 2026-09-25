@@ -129,7 +129,14 @@ const addSecurityHeaders: Handle = async ({ event, resolve }) => {
 	// SAMEORIGIN for invoice generation
 	response.headers.set('X-Frame-Options', 'SAMEORIGIN');
 
-	// Possible to enable CSP / XSS Protection directly in SvelteKit config
+	// No script-src: analytics snippets, payment widgets and raw CMS pages load scripts from
+	// hosts only operators know. These directives close plugin, <base> and framing injection
+	// without breaking any of them. No form-action either: browsers apply it to the redirect
+	// a checkout POST answers with, which leads to the payment provider's page.
+	response.headers.set(
+		'Content-Security-Policy',
+		"object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+	);
 
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
