@@ -275,6 +275,11 @@ describe('computeReportingSynthesis', () => {
 });
 
 describe('toPaymentRow', () => {
+	it('numbers payments by their position in the order', () => {
+		const multi = order({ payments: [payment(), payment(), payment()] });
+		expect(toPaymentRow({ order: multi, payment: multi.payments[1] }).paymentIndex).toBe(2);
+	});
+
 	it('tolerates a card payment without transactions', () => {
 		const cardOrder = order({ payments: [payment({ method: 'card', transactions: [] })] });
 		expect(toPaymentRow({ order: cardOrder, payment: cardOrder.payments[0] }).info).toBeUndefined();
