@@ -41,23 +41,28 @@ jobs:
       - name: 'Build'
         run: |
           pnpm run build
+      # File names come from the pull request: passed through env, never spliced into the script.
       - name: 'Checking prettier errors'
+        env:
+          CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
-          if [ -z "${{ steps.changed-files.outputs.all_changed_files }}" ]
+          if [ -z "$CHANGED_FILES" ]
           then
             echo "no changed files to test"
           else
-            pnpm run format ${{ steps.changed-files.outputs.all_changed_files }};
+            pnpm run format $CHANGED_FILES;
             git diff | head -n 100;
             git diff --name-only --exit-code
           fi
       - name: 'Checking lint errors'
+        env:
+          CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
-          if [ -z "${{ steps.changed-files.outputs.all_changed_files }}" ]
+          if [ -z "$CHANGED_FILES" ]
           then
             echo "no changed files to test"
           else
-            pnpm run lint ${{ steps.changed-files.outputs.all_changed_files }};
+            pnpm run lint $CHANGED_FILES;
             git diff | head -n 100;
             git diff --name-only --exit-code
           fi
