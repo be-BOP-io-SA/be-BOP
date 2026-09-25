@@ -5,7 +5,11 @@ import { fetchOrderForUser } from './fetchOrderForUser.js';
 import { getPublicS3DownloadLink } from '$lib/server/s3.js';
 import { uniqBy } from '$lib/utils/uniqBy.js';
 import { cmsFromContent } from '$lib/server/cms.js';
-import { anonymizeOrderData, conflictingTapToPayOrder } from '$lib/server/orders';
+import {
+	anonymizeOrderData,
+	conflictingTapToPayOrder,
+	onOrderPaymentFailed
+} from '$lib/server/orders';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
@@ -158,17 +162,28 @@ export async function load({ params, depends, locals, url }) {
 
 export const actions = {
 	cancel: async function ({ params, request }) {
-		await collections.orders.updateOne(
-			{
-				_id: params.id,
-				status: 'pending'
-			},
-			{
-				$set: {
-					status: 'canceled'
+		let order = await collections.orders.findOne({ _id: params.id, status: 'pending' });
+
+		if (order) {
+			if (order.payments.some((payment) => payment.status === 'paid')) {
+				throw error(400, 'This order has already been partly paid');
+			}
+			// Through the payment path, so booking slots and free-product units are released too.
+			for (const { _id } of order.payments.filter(
+				(payment) => payment.status === 'pending' || payment.status === 'failed'
+			)) {
+				const payment = order.payments.find((p) => p._id.equals(_id));
+				if (payment) {
+					order = await onOrderPaymentFailed(order, payment, 'canceled');
 				}
 			}
-		);
+			if (!order.payments.length) {
+				await collections.orders.updateOne(
+					{ _id: order._id, status: 'pending' },
+					{ $set: { status: 'canceled' } }
+				);
+			}
+		}
 
 		throw redirect(303, request.headers.get('referer') || '/');
 	},
