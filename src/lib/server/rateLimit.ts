@@ -18,11 +18,11 @@ const rateLimitCache = new Map<string, Record<string, Date[]>>();
  * Note that rate limiting cache is cleared every hour and not persisted across deploys.
  */
 export function rateLimit(ip: string | undefined, key: string, max: number, duration: Duration) {
-	if (!ip) {
-		return;
-	}
+	// An empty address is a request that bypassed the proxy's header: they share one bucket, or
+	// sending `X-Forwarded-For:` with nothing in it would switch every limit off.
+	const caller = ip || 'unknown';
 	// One customer usually holds a whole /64, so the prefix is the caller, not the address.
-	const maskedIp = isIPv6(ip) ? ipv6Prefix64(ip) : ip;
+	const maskedIp = isIPv6(caller) ? ipv6Prefix64(caller) : caller;
 
 	const minDate = sub(new Date(), duration);
 	const ipCache = rateLimitCache.get(maskedIp) ?? {};
