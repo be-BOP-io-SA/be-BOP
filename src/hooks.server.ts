@@ -78,13 +78,19 @@ for (const key of locales) {
 
 export const handleError = (({ error, event }) => {
 	console.error('handleError', error);
-	if (typeof error === 'object' && error) {
+	// A validation failure is the caller's input, not our bug, and anyone can send one unthrottled.
+	if (typeof error === 'object' && error && !(error instanceof ZodError)) {
 		collections.errors
 			.insertOne({
 				_id: new ObjectId(),
-				url: event.url.href,
+				url: event.url.href.slice(0, 2048),
 				method: event.request.method,
-				...error
+				...(error instanceof Error && {
+					name: error.name,
+					message: error.message.slice(0, 2048),
+					stack: error.stack?.slice(0, 8192)
+				}),
+				createdAt: new Date()
 			})
 			.catch();
 	}

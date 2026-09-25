@@ -126,7 +126,15 @@ const genCollection = () => ({
 
 	accountingLogs: db.collection<AccountingLog>('accountingLogs'),
 
-	errors: db.collection<unknown & { _id: ObjectId; url: string; method: string }>('errors')
+	errors: db.collection<{
+		_id: ObjectId;
+		url: string;
+		method: string;
+		name?: string;
+		message?: string;
+		stack?: string;
+		createdAt: Date;
+	}>('errors')
 });
 
 export { client, db };
@@ -149,6 +157,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.products, { 'actionSettings.retail.visible': 1 }],
 	[collections.products, { alias: 1 }, { sparse: true, unique: true }],
 	[collections.locks, { updatedAt: 1 }, { expireAfterSeconds: 60 }],
+	[collections.errors, { createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 3600 }],
 	[collections.carts, { 'user.userId': 1 }],
 	[collections.carts, { 'user.sessionId': 1 }],
 	[collections.carts, { 'user.npub': 1 }],
