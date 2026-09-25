@@ -6,19 +6,22 @@
 </script>
 
 <div class="overflow-x-auto max-h-[500px]">
-	<table class="min-w-full table-auto border border-gray-300 bg-white">
+	<!-- Cell styles live on the table: repeated on every cell they made up a third of the page. -->
+	<table
+		class="min-w-full table-auto border border-gray-300 bg-white [&_td]:border [&_td]:border-gray-300 [&_td]:px-4 [&_td]:py-2 [&_th]:border [&_th]:border-gray-300 [&_th]:px-4 [&_th]:py-2 [&_tr]:whitespace-nowrap [&_tbody_tr:hover]:bg-gray-100"
+	>
 		<thead class="bg-gray-200">
-			<tr class="whitespace-nowrap">
+			<tr>
 				{#each columns as column}
-					<th class="border border-gray-300 px-4 py-2">{column.header}</th>
+					<th>{column.header}</th>
 				{/each}
 			</tr>
 		</thead>
 		<tbody>
 			{#each rows as row}
-				<tr class="hover:bg-gray-100 whitespace-nowrap">
+				<tr>
 					{#each columns as column}
-						<td class="border border-gray-300 px-4 py-2" title={column.title?.(row)}>
+						<td title={column.title?.(row)}>
 							{#if column.href}
 								<a href={column.href(row)} target="_blank" class="underline body-hyperlink"
 									>{column.cell(row) ?? ''}</a
