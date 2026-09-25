@@ -15,7 +15,8 @@ services:
       test: test $$(mongosh --quiet --eval 'try {rs.status().ok} catch(e) {rs.initiate().ok}') -eq 1
       interval: 5s
     ports:
-      - "27017:27017"
+      # Loopback only: this Mongo has no auth, and Docker's publishing bypasses the host firewall.
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo-data:/data/db
     logging:
@@ -26,8 +27,8 @@ services:
     image: quay.io/minio/minio:latest
     hostname: minio
     ports:
-      - "9000:9000"
-      - "9090:9090"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9090:9090"
     environment:
       MINIO_ROOT_USER: ${S3_KEY_ID:-minio}
       MINIO_ROOT_PASSWORD: ${S3_KEY_SECRET:-minio123}
