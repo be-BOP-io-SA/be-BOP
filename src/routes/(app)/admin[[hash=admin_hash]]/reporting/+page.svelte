@@ -9,6 +9,7 @@
 	import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 	import { endOfDay, startOfDay } from 'date-fns';
 	import MultiSelect from 'svelte-multiselect';
+	import { csvCell } from '$lib/utils/csvCell';
 
 	export let data;
 	let tableOrder: HTMLTableElement;
@@ -171,11 +172,11 @@
 		}
 		const rows = table.querySelectorAll('tr');
 		const data = Array.from(rows).map((row) =>
-			Array.from(row.querySelectorAll('td')).map((cell) => cell.innerText.trim())
+			Array.from(row.querySelectorAll('td')).map((cell) => csvCell(cell.innerText.trim()))
 		);
 		const header = table.querySelectorAll('thead');
 		const csvTitle = Array.from(header).map((row) =>
-			Array.from(row.querySelectorAll('th')).map((cell) => cell.innerText.trim())
+			Array.from(row.querySelectorAll('th')).map((cell) => csvCell(cell.innerText.trim()))
 		);
 		const csvRows = data.map((row) => row.join(',')).join('\n');
 		const csvData = `${csvTitle}  ${csvRows}`;
