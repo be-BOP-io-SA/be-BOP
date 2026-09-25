@@ -905,8 +905,9 @@ export async function createOrder(
 				const toUse = Math.min(quantityToConsume, subAvailable);
 				quantityToConsume -= toUse;
 
-				await collections.paidSubscriptions.updateOne(
-					{ _id: sub._id },
+				// The read above can be stale when two orders draw on the same allowance at once.
+				const consumed = await collections.paidSubscriptions.updateOne(
+					{ _id: sub._id, [`freeProductsById.${item.product._id}.available`]: { $gte: toUse } },
 					{
 						$inc: {
 							[`freeProductsById.${item.product._id}.used`]: toUse,
@@ -918,6 +919,9 @@ export async function createOrder(
 					},
 					{ session: params.session }
 				);
+				if (!consumed.modifiedCount) {
+					throw error(409, 'Free product allowance changed, please try again');
+				}
 
 				usedSources.push({ subscriptionId: sub._id, quantity: toUse });
 			}
