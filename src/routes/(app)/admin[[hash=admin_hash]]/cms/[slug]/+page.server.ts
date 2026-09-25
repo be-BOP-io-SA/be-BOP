@@ -17,6 +17,11 @@ export const actions = {
 			throw error(404, 'Page not found');
 		}
 
+		// Content of a raw page reaches visitors unsanitized, so editing it is script execution too.
+		if (cmsPage.displayRawContent && locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
+			throw error(403, 'Only the super admin can edit a page that displays raw content.');
+		}
+
 		const formData = await request.formData();
 		const json: JsonObject = {};
 
