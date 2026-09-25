@@ -1247,6 +1247,15 @@ export async function createOrder(
 		: undefined;
 
 	await withTransaction(async (session) => {
+		if (params.cart) {
+			// Parallel checkouts of one cart all pass the stock and pending-order checks above: only
+			// the one that removes the cart may place its order, and a retried loser finds it gone.
+			const claimed = await collections.carts.deleteOne({ _id: params.cart._id }, { session });
+			if (!claimed.deletedCount) {
+				throw error(409, 'This cart has already been checked out');
+			}
+		}
+
 		const orderNumber = await generateOrderNumber(session);
 
 		if (discount && params.discount && params.user.userHasPosOptions) {

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { isHttpError } from '@sveltejs/kit';
 import { cleanDb, createDiscount, createPaidSubscription } from './test-utils';
 import { collections } from './database';
+import { ObjectId } from 'mongodb';
 import {
 	TEST_DIGITAL_PRODUCT,
 	TEST_DIGITAL_PRODUCT_UNLIMITED,
@@ -365,5 +366,34 @@ describe('order', () => {
 
 		expect(isHttpError(err)).toBe(true);
 		expect(err.body.message).toBe("You can't use free payment method on this order");
+	});
+
+	it('places a single order when one cart is checked out twice at once', async () => {
+		const user = { sessionId: 'race-session-id' };
+		const { insertedId } = await collections.carts.insertOne({
+			_id: new ObjectId(),
+			user,
+			items: [{ _id: 'line-1', productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+			createdAt: new Date(),
+			updatedAt: new Date()
+		});
+		const cart = await collections.carts.findOne({ _id: insertedId });
+		if (!cart) {
+			throw new Error('Cart not found');
+		}
+
+		const checkout = () =>
+			createOrder([{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }], 'point-of-sale', {
+				locale: 'en',
+				user,
+				cart,
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			});
+
+		const results = await Promise.allSettled([checkout(), checkout(), checkout()]);
+
+		expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+		expect(await collections.orders.countDocuments({ 'user.sessionId': user.sessionId })).toBe(1);
 	});
 });
