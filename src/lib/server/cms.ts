@@ -24,6 +24,7 @@ import type { ProductWidgetProduct } from '$lib/components/ProductWidget/Product
 import { readUrlState, searchProducts, type VatContext } from './searchlist';
 import { runtimeConfig } from './runtime-config';
 import type { VatProfile } from '$lib/types/VatProfile';
+import { hideRsvpTargets } from './schedule';
 export type ExternalProductData = ProductWidgetProduct & {
 	externalUrl: string;
 	pictures: Picture[];
@@ -708,7 +709,6 @@ export async function cmsFromContent(
 							ContactForm,
 							| '_id'
 							| 'content'
-							| 'target'
 							| 'subject'
 							| 'displayFromField'
 							| 'prefillWithSession'
@@ -716,7 +716,6 @@ export async function cmsFromContent(
 						>
 					>({
 						content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] },
-						target: 1,
 						displayFromField: 1,
 						prefillWithSession: 1,
 						subject: { $ifNull: [`$translations.${locals.language}.subject`, '$subject'] },
@@ -822,14 +821,16 @@ export async function cmsFromContent(
 		galleries,
 		leaderboards,
 		searchlists,
-		schedules: schedules.map((schedule) => ({
-			...schedule,
-			events: [...schedule.events, ...(scheduleEventsById[schedule._id] ?? [])].filter((event) =>
-				!schedule.displayPastEvents
-					? (event.endsAt ?? Infinity) > subMinutes(new Date(), schedule.pastEventDelay ?? 0)
-					: true
-			)
-		})),
+		schedules: schedules.map((schedule) =>
+			hideRsvpTargets({
+				...schedule,
+				events: [...schedule.events, ...(scheduleEventsById[schedule._id] ?? [])].filter((event) =>
+					!schedule.displayPastEvents
+						? (event.endsAt ?? Infinity) > subMinutes(new Date(), schedule.pastEventDelay ?? 0)
+						: true
+				)
+			})
+		),
 		pictures,
 		digitalFiles,
 		hasPosOptions: locals.user?.hasPosOptions

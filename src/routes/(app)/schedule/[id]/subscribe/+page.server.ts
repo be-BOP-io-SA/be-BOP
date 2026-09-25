@@ -2,6 +2,7 @@ import { collections } from '$lib/server/database';
 import { validateEmailOrNpub } from '$lib/server/nostr';
 import { userQuery } from '$lib/server/user';
 import { error, fail } from '@sveltejs/kit';
+import { hideRsvpTargets } from '$lib/server/schedule';
 
 export const load = async ({ params }) => {
 	const schedule = await collections.schedules.findOne({ _id: params.id });
@@ -14,7 +15,7 @@ export const load = async ({ params }) => {
 		.sort({ createdAt: 1 })
 		.toArray();
 	return {
-		schedule,
+		schedule: hideRsvpTargets(schedule),
 		pictures
 	};
 };

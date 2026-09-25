@@ -8,6 +8,7 @@ import { error, fail } from '@sveltejs/kit';
 import { format } from 'date-fns';
 import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';
+import { hideRsvpTargets } from '$lib/server/schedule';
 
 export const load = async ({ params }) => {
 	const schedule = await collections.schedules.findOne({ _id: params.id });
@@ -20,7 +21,7 @@ export const load = async ({ params }) => {
 		.sort({ createdAt: 1 })
 		.toArray();
 	return {
-		schedule,
+		schedule: hideRsvpTargets(schedule),
 		pictures
 	};
 };

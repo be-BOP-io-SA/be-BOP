@@ -6,13 +6,7 @@
 	import { page } from '$app/stores';
 	export let contactForm: Pick<
 		ContactForm,
-		| '_id'
-		| 'subject'
-		| 'content'
-		| 'target'
-		| 'displayFromField'
-		| 'prefillWithSession'
-		| 'disclaimer'
+		'_id' | 'subject' | 'content' | 'displayFromField' | 'prefillWithSession' | 'disclaimer'
 	>;
 	export let sessionEmail: string | undefined = undefined;
 	let className = '';

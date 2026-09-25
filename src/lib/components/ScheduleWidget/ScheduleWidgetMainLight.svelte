@@ -143,7 +143,7 @@
 							{t('schedule.moreInfo')}
 						</a>
 					{/if}
-					{#if event.rsvp?.target && event.endsAt && event.endsAt > new Date()}
+					{#if event.rsvp && event.endsAt && event.endsAt > new Date()}
 						<a
 							href="/schedule/{schedule._id}/rsvp/{event.slug}"
 							target="_blank"
