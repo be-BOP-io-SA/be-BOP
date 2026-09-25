@@ -132,14 +132,13 @@
 					row.status === 'paid'
 						? 'order.receipt.invoiceNumber'
 						: 'order.receipt.proformaInvoiceNumber',
-					invoiceNumberVariables(
-						{
-							number: row.orderNumber,
-							createdAt: row.orderCreatedAt,
-							payments: row.orderPaymentIds.map((id) => ({ id }))
-						},
-						row
-					)
+					{
+						...invoiceNumberVariables(
+							{ number: row.orderNumber, createdAt: row.orderCreatedAt, payments: [] },
+							row
+						),
+						paymentIndex: row.paymentIndex
+					}
 				)
 		},
 		{
