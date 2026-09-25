@@ -261,6 +261,17 @@
 
 	let iframePrint: HTMLIFrameElement;
 
+	// Browsers open about 6 connections per host; more would only queue.
+	const RECEIPT_FETCH_CONCURRENCY = 6;
+
+	async function fetchReceiptHtml(receipt: { orderId: string; paymentId: string }) {
+		const resp = await fetch(`/order/${receipt.orderId}/payment/${receipt.paymentId}/receipt`);
+		if (!resp.ok) {
+			throw new Error(`Receipt ${receipt.paymentId}: HTTP ${resp.status}`);
+		}
+		return await resp.text();
+	}
+
 	async function exportPdf() {
 		html = '';
 		loadedHtml = false;
@@ -274,20 +285,24 @@
 			return;
 		}
 
-		for (const [index, receipt] of receipts.entries()) {
-			htmlStatus = `Preparing invoice ${index + 1}/${receipts.length}`;
-
-			const htmlResp = await fetch(
-				`/order/${receipt.orderId}/payment/${receipt.paymentId}/receipt`
-			);
-
-			if (!htmlResp.ok) {
-				htmlStatus = '';
-				alert('Error while fetching pdf');
-				return;
+		const receiptsHtml: string[] = [];
+		try {
+			for (let start = 0; start < receipts.length; start += RECEIPT_FETCH_CONCURRENCY) {
+				htmlStatus = `Preparing invoices ${start + 1}/${receipts.length}`;
+				receiptsHtml.push(
+					...(await Promise.all(
+						receipts.slice(start, start + RECEIPT_FETCH_CONCURRENCY).map(fetchReceiptHtml)
+					))
+				);
 			}
-			html += await htmlResp.text();
+		} catch {
+			htmlStatus = '';
+			alert('Error while fetching pdf');
+			return;
 		}
+
+		// Assigned once: every srcdoc change makes the iframe re-parse the whole document.
+		html = receiptsHtml.join('');
 
 		iframePrint.addEventListener(
 			'load',
