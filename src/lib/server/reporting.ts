@@ -164,10 +164,24 @@ export function reportingOrdersQuery(filters: ReportingFilters): Filter<Order> {
 	return {
 		createdAt: { $gte: filters.beginsAt, $lte: filters.endsAt },
 		...statusQuery(filters),
-		...(filters.paymentMethod && { 'payments.method': filters.paymentMethod }),
-		...(filters.posSubtype && { 'payments.posSubtype': filters.posSubtype }),
+		...paymentQuery(filters),
 		...(aliasFilter.length > 0 && { $or: aliasFilter }),
 		...(filters.tagId && { 'items.product.tagIds': filters.tagId })
+	};
+}
+
+// Method and subtype must match on the same payment, not on two different ones of the order.
+function paymentQuery(filters: ReportingFilters): Filter<Order> {
+	if (!filters.paymentMethod && !filters.posSubtype) {
+		return {};
+	}
+	return {
+		payments: {
+			$elemMatch: {
+				...(filters.paymentMethod && { method: filters.paymentMethod }),
+				...(filters.posSubtype && { posSubtype: filters.posSubtype })
+			}
+		}
 	};
 }
 
