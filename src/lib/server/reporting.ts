@@ -171,9 +171,9 @@ export function reportingOrdersQuery(filters: ReportingFilters): Filter<Order> {
 	};
 }
 
-// Partially paid and expired filters look at payment statuses, so any order status can match.
+// The partially paid filter looks at payment statuses, so any order status can match.
 function statusQuery(filters: ReportingFilters): Filter<Order> {
-	if (filters.includePartiallyPaid || filters.includeExpired) {
+	if (filters.includePartiallyPaid) {
 		return {};
 	}
 	return {
@@ -181,6 +181,7 @@ function statusQuery(filters: ReportingFilters): Filter<Order> {
 			$in: [
 				'paid',
 				...(filters.includePending ? (['pending'] as const) : []),
+				...(filters.includeExpired ? (['expired'] as const) : []),
 				...(filters.includeCanceled ? (['canceled'] as const) : [])
 			]
 		}
@@ -232,19 +233,11 @@ export function selectProductDetail(orders: ReportingOrder[], filters: Reporting
 }
 
 export function selectPaymentDetail(orders: ReportingOrder[], filters: ReportingFilters) {
-	return orders
-		.filter(
-			(order) =>
-				order.status === 'paid' ||
-				(filters.includePartiallyPaid &&
-					order.payments.some((payment) => payment.status === 'paid')) ||
-				(filters.includeExpired && order.payments.some((payment) => payment.status === 'expired'))
-		)
-		.flatMap((order) =>
-			order.payments
-				.filter((payment) => paymentMatchesFilter(payment, filters))
-				.map((payment) => ({ order, payment }))
-		);
+	return selectOrderDetail(orders, filters).flatMap((order) =>
+		order.payments
+			.filter((payment) => paymentMatchesFilter(payment, filters))
+			.map((payment) => ({ order, payment }))
+	);
 }
 
 function orderIpCountry(order: ReportingOrder) {

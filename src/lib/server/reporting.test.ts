@@ -92,8 +92,14 @@ describe('reportingOrdersQuery', () => {
 		});
 	});
 
-	it('fetches every status when a payment-status toggle is on', () => {
+	it('fetches every status when partially paid orders are included', () => {
 		expect(reportingOrdersQuery(filters('includePartiallyPaid=on')).status).toBeUndefined();
+	});
+
+	it('fetches expired orders by status', () => {
+		expect(reportingOrdersQuery(filters('includeExpired=on')).status).toEqual({
+			$in: ['paid', 'expired']
+		});
 	});
 });
 
@@ -128,9 +134,25 @@ describe('detail selections', () => {
 		).toEqual([1, 3]);
 	});
 
-	it('lists payments of orders having an expired payment when expired orders are included', () => {
-		const rows = selectPaymentDetail(orders, filters('includeExpired=on'));
-		expect(rows.map(({ order }) => order.number)).toEqual([1, 4]);
+	it('lists payments of the same orders as the order detail', () => {
+		const withExpiredPayment = order({
+			number: 5,
+			status: 'pending',
+			payments: [payment({ status: 'expired' })]
+		});
+		const all = [...orders, withExpiredPayment];
+
+		for (const query of ['', 'includeExpired=on', 'includePending=on&includeCanceled=on']) {
+			expect(
+				selectPaymentDetail(all, filters(query)).map(({ order }) => order.number),
+				query
+			).toEqual(
+				selectOrderDetail(all, filters(query)).flatMap((o) => o.payments.map(() => o.number))
+			);
+		}
+		expect(
+			selectPaymentDetail(all, filters('includeExpired=on')).map(({ order }) => order.number)
+		).toEqual([1, 4]);
 	});
 
 	it('filters payments on method and PoS subtype', () => {
