@@ -10,6 +10,7 @@ import {
 } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userQuery } from '$lib/server/user.js';
+import { webChannelForUser } from '$lib/server/discount';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { error, fail, redirect } from '@sveltejs/kit';
@@ -353,6 +354,8 @@ export const actions: Actions = {
 				{
 					locale: locals.language,
 					user: subscription.user,
+					// Without it, discounts reserved to one sales channel apply to every renewal.
+					channel: webChannelForUser(locals.user?.hasPosOptions),
 					shippingAddress: lastOrder.shippingAddress,
 					billingAddress: lastOrder.billingAddress ?? lastOrder.shippingAddress ?? undefined,
 					...(chosenPosSubtype && { posSubtype: chosenPosSubtype }),
