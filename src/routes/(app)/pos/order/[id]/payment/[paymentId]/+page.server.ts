@@ -15,8 +15,9 @@ function throwIfPosAccountCannotManageOrder(
 		return;
 	}
 	if (!order.user.userId?.equals(user?._id ?? '')) {
+		// A role the account points at but that no longer exists grants nothing, not everything.
 		if (
-			user?.role &&
+			!user?.role ||
 			!isAllowedOnPage(
 				user.role,
 				`${adminPrefix()}/order/${order._id}/payment/${paymentId}`,
