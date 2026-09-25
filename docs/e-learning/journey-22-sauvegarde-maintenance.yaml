@@ -1,0 +1,44 @@
+journey_id: "journey-22"
+title: "Backup and maintenance"
+persona: "owner"
+description: "Create and restore backups, enable maintenance mode with IP allowlisting, and set up a maintenance page"
+prerequisites:
+  - "Admin access to the store"
+  - "At least one product or CMS page created (to have data worth backing up)"
+steps:
+  - id: "step-1"
+    feature_id: "A107"
+    title: "Database backup (currently disabled)"
+    description: "The backup/restore feature via the admin interface is currently disabled. Use MongoDB tools (mongodump/mongorestore) directly to back up and restore your data."
+    navigation: null
+    ui_action: null
+    ui_target: null
+    tip: "Schedule regular mongodump exports and store them in a secure off-site location"
+    disabled: true
+
+  - id: "step-2"
+    feature_id: "A53"
+    title: "Enable maintenance mode"
+    description: "Navigate to the general configuration page and check the Enable maintenance mode checkbox to take the storefront offline"
+    navigation: "/admin/config"
+    ui_action: "check"
+    ui_target: "checkbox[name='maintenanceMode']"
+    tip: "Customers will see a maintenance page instead of the normal storefront while this is active"
+
+  - id: "step-3"
+    feature_id: "A53"
+    title: "Allow specific IPs during maintenance"
+    description: "Fill the Maintenance IPs field with comma-separated IP addresses that should still be able to access the store (e.g. 192.168.1.1, 203.0.113.5)"
+    navigation: "/admin/config"
+    ui_action: "fill"
+    ui_target: "input[name='maintenanceIPs']"
+    tip: "Your current IP address is displayed below the field for easy copy-paste - add it so you can still browse the store while it is in maintenance"
+
+  - id: "step-4"
+    feature_id: "A53"
+    title: "Create a maintenance CMS page"
+    description: "Navigate to the CMS editor and create a page with the slug 'maintenance'. Check Full Screen and Hide from search engines to display a branded maintenance message"
+    navigation: "/admin/cms"
+    ui_action: "fill"
+    ui_target: "input[name='slug'] with value 'maintenance', checkbox Full Screen, checkbox Hide from search engines"
+    tip: "Use this page to communicate expected downtime or provide alternative contact information"
