@@ -25,6 +25,7 @@ import { readUrlState, searchProducts, type VatContext } from './searchlist';
 import { runtimeConfig } from './runtime-config';
 import type { VatProfile } from '$lib/types/VatProfile';
 import { hideRsvpTargets } from './schedule';
+import { assertPublicWebhookTarget } from './webhook-url-guard';
 export type ExternalProductData = ProductWidgetProduct & {
 	externalUrl: string;
 	pictures: Picture[];
@@ -79,6 +80,10 @@ const externalProductSchema = z.object({
 	pictures: z.array(externalPictureSchema).optional()
 });
 
+/** Every visitor would otherwise trigger one outbound request per external product widget. */
+const EXTERNAL_PRODUCT_TTL_MS = 5 * 60_000;
+const externalProductCache = new Map<string, { product: ExternalProductData; expiresAt: number }>();
+
 async function fetchExternalProduct(url: string): Promise<ExternalProductData | null> {
 	try {
 		// Parse URL to extract base and slug
@@ -95,8 +100,16 @@ async function fetchExternalProduct(url: string): Promise<ExternalProductData | 
 		const slug = pathMatch[1];
 		const apiUrl = `${urlObj.origin}/api/product/${slug}`;
 
+		const cached = externalProductCache.get(apiUrl);
+		if (cached && cached.expiresAt > Date.now()) {
+			return cached.product;
+		}
+
+		// The host comes from CMS content and is fetched on every page view.
+		await assertPublicWebhookTarget(apiUrl);
 		const response = await fetch(apiUrl, {
 			headers: { Accept: 'application/json' },
+			redirect: 'error',
 			signal: AbortSignal.timeout(5000) // 5s timeout
 		});
 
@@ -148,6 +161,10 @@ async function fetchExternalProduct(url: string): Promise<ExternalProductData | 
 			hasVariations: false
 		};
 
+		externalProductCache.set(apiUrl, {
+			product: result,
+			expiresAt: Date.now() + EXTERNAL_PRODUCT_TTL_MS
+		});
 		return result;
 	} catch (err) {
 		console.error('[fetchExternalProduct] Error fetching external product:', err);
