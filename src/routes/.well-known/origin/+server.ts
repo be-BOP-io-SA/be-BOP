@@ -1,6 +1,13 @@
 import { env } from '$env/dynamic/private';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { error } from '@sveltejs/kit';
 
-export const GET = ({ request, url }) => {
+export const GET = ({ request, url, locals }) => {
+	// A diagnostic for ORIGIN and proxy setup: it echoes the proxy chain, which visitors have no use for.
+	if (!locals.user || locals.user.roleId === CUSTOMER_ROLE_ID) {
+		throw error(404);
+	}
+
 	return new Response(
 		JSON.stringify(
 			{
