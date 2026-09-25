@@ -2,8 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
 
 vi.mock('$lib/server/database', () => ({ collections: {} }));
-vi.mock('$lib/server/geoip', () => ({ countryFromIp: () => 'FR' }));
+vi.mock('$lib/server/geoip', () => ({
+	countryFromIp: (ip: string) => (ip ? 'FR' : undefined)
+}));
 
+import { endOfDay, startOfDay, subMonths } from 'date-fns';
+import { exchangeRate } from '$lib/stores/exchangeRate';
+import { get } from 'svelte/store';
 import {
 	computeReportingSynthesis,
 	paginate,
@@ -14,7 +19,9 @@ import {
 	selectPaymentDetail,
 	selectProductDetail,
 	selectReceipts,
+	toOrderRow,
 	toPaymentRow,
+	toProductRow,
 	type ReportingOrder
 } from './reporting';
 
@@ -296,5 +303,303 @@ describe('paginate', () => {
 			rows: [REPORTING_PAGE_SIZE]
 		});
 		expect(paginate([], 0)).toMatchObject({ page: 1, pageCount: 1, total: 0, rows: [] });
+	});
+
+	it('returns the requested middle page', () => {
+		const rows = Array.from({ length: REPORTING_PAGE_SIZE * 3 }, (_, i) => i);
+		const { rows: page, pageCount } = paginate(rows, 2);
+		expect(pageCount).toBe(3);
+		expect(page[0]).toBe(REPORTING_PAGE_SIZE);
+		expect(page).toHaveLength(REPORTING_PAGE_SIZE);
+	});
+
+	it('does not create an empty trailing page on an exact multiple', () => {
+		const rows = Array.from({ length: REPORTING_PAGE_SIZE * 2 }, (_, i) => i);
+		expect(paginate(rows, 1).pageCount).toBe(2);
+	});
+});
+
+describe('parseReportingFilters defaults and validation', () => {
+	it('defaults to the last month, from start of day to end of today', () => {
+		const { beginsAt, endsAt } = filters();
+		expect(beginsAt).toEqual(startOfDay(subMonths(new Date(), 1)));
+		expect(endsAt).toEqual(endOfDay(new Date()));
+	});
+
+	it('falls back to the defaults on unparseable dates', () => {
+		const { beginsAt, endsAt } = filters('beginsAt=nope&endsAt=2026-13-45');
+		expect(beginsAt).toEqual(startOfDay(subMonths(new Date(), 1)));
+		expect(endsAt).toEqual(endOfDay(new Date()));
+	});
+
+	it('keeps an end bound that already has seconds', () => {
+		expect(filters('endsAt=2026-09-10T18:30:15.000Z').endsAt.toISOString()).toBe(
+			'2026-09-10T18:30:15.000Z'
+		);
+	});
+
+	it('rejects a payment method that is not enabled', () => {
+		expect(() => filters('paymentMethod=paypal')).toThrow();
+	});
+
+	it('reads every selected employee alias', () => {
+		expect(filters('employeesAlias=alice&employeesAlias=System').employeesAlias).toEqual([
+			'alice',
+			'System'
+		]);
+	});
+
+	it('treats any toggle value other than on/true as off', () => {
+		expect(filters('includePending=off&includeCanceled=true').includePending).toBe(false);
+		expect(filters('includeCanceled=true').includeCanceled).toBe(true);
+	});
+});
+
+describe('reportingOrdersQuery filters', () => {
+	it('bounds the creation date inclusively', () => {
+		const query = reportingOrdersQuery(
+			filters('beginsAt=2026-09-01T00:00:00.000Z&endsAt=2026-09-02T00:00:00.000Z')
+		);
+		expect(query.createdAt).toEqual({
+			$gte: new Date('2026-09-01T00:00:00.000Z'),
+			$lte: new Date('2026-09-02T00:00:59.999Z')
+		});
+	});
+
+	it('matches orders without alias for the System employee', () => {
+		expect(reportingOrdersQuery(filters('employeesAlias=System')).$or).toEqual([
+			{ 'user.userAlias': { $exists: false } }
+		]);
+	});
+
+	it('combines System and named employees', () => {
+		expect(reportingOrdersQuery(filters('employeesAlias=System&employeesAlias=alice')).$or).toEqual(
+			[{ 'user.userAlias': { $exists: false } }, { 'user.userAlias': { $in: ['alice'] } }]
+		);
+	});
+
+	it('does not filter on employees when none is selected', () => {
+		expect(reportingOrdersQuery(filters()).$or).toBeUndefined();
+	});
+
+	it('restricts to orders containing the tag', () => {
+		expect(reportingOrdersQuery(filters('tagId=hot'))['items.product.tagIds']).toBe('hot');
+		expect(reportingOrdersQuery(filters())['items.product.tagIds']).toBeUndefined();
+	});
+
+	it('adds every included order status', () => {
+		expect(
+			reportingOrdersQuery(filters('includePending=on&includeExpired=on&includeCanceled=on')).status
+		).toEqual({ $in: ['paid', 'pending', 'expired', 'canceled'] });
+	});
+
+	it('filters on a PoS subtype alone', () => {
+		expect(reportingOrdersQuery(filters('posSubtype=tpe')).payments).toEqual({
+			$elemMatch: { posSubtype: 'tpe' }
+		});
+	});
+});
+
+describe('detail selections, other cases', () => {
+	it('adds canceled orders when included', () => {
+		const orders = [order({ number: 1 }), order({ number: 2, status: 'canceled' })];
+		expect(selectOrderDetail(orders, filters()).map((o) => o.number)).toEqual([1]);
+		expect(selectOrderDetail(orders, filters('includeCanceled=on')).map((o) => o.number)).toEqual([
+			1, 2
+		]);
+	});
+
+	it('applies the status toggles to product lines too', () => {
+		const orders = [order({ number: 1 }), order({ number: 2, status: 'pending' })];
+		expect(selectProductDetail(orders, filters()).map(({ order }) => order.number)).toEqual([1]);
+		expect(
+			selectProductDetail(orders, filters('includePending=on')).map(({ order }) => order.number)
+		).toEqual([1, 2]);
+	});
+
+	it('keeps every product line without tag filter', () => {
+		const rows = selectProductDetail([order({ items: [item('a', 1), item('b', 2)] })], filters());
+		expect(rows).toHaveLength(2);
+	});
+
+	it('keeps the order sort of the query', () => {
+		const orders = [order({ number: 3 }), order({ number: 1 }), order({ number: 2 })];
+		expect(selectOrderDetail(orders, filters()).map((o) => o.number)).toEqual([3, 1, 2]);
+	});
+
+	it('skips unpaid payments in receipts', () => {
+		const mixed = order({ payments: [payment(), payment({ status: 'canceled' })] });
+		expect(selectReceipts([mixed], filters())).toHaveLength(1);
+	});
+});
+
+describe('toOrderRow', () => {
+	it('lists product names and falls back to the IP country', () => {
+		const row = toOrderRow(order({ clientIp: '1.2.3.4', items: [item('a', 1), item('b', 2)] }));
+		expect(row.productNames).toEqual(['Product a', 'Product b']);
+		expect(row.ipCountry).toBe('FR');
+	});
+
+	it('has no IP country without client IP', () => {
+		expect(toOrderRow(order()).ipCountry).toBeUndefined();
+	});
+});
+
+describe('toProductRow', () => {
+	it('prices the line after discount and free quantity', () => {
+		const line = item('coffee', 10, { quantity: 3, freeQuantity: 1, discountPercentage: 50 });
+		expect(toProductRow({ order: order(), item: line }).price).toBe(10);
+	});
+
+	it('prices a booking by its booked slots', () => {
+		const line = item('room', 5, {
+			product: { _id: 'room', name: 'Room', bookingSpec: { slotMinutes: 30 } },
+			booking: {
+				_id: new ObjectId(),
+				start: new Date('2026-09-10T10:00:00Z'),
+				end: new Date('2026-09-10T11:30:00Z')
+			}
+		} as Partial<Item>);
+		expect(toProductRow({ order: order(), item: line }).price).toBe(15);
+	});
+
+	it('passes the deposit percentage through', () => {
+		const line = item('coffee', 10, { depositPercentage: 30 });
+		expect(toProductRow({ order: order(), item: line }).depositPercentage).toBe(30);
+	});
+});
+
+describe('toPaymentRow details', () => {
+	function info(overrides: Partial<Payment>) {
+		const o = order({ payments: [payment(overrides)] });
+		return toPaymentRow({ order: o, payment: o.payments[0] }).info;
+	}
+
+	it('shows the reference matching each payment method', () => {
+		expect(info({ method: 'lightning', invoiceId: 'lnbc1' })).toBe('lnbc1');
+		expect(info({ method: 'bank-transfer', bankTransferNumber: 'VIR-42' })).toBe('VIR-42');
+		expect(
+			info({
+				method: 'card',
+				transactions: [{ id: 't', amount: 1, currency: 'EUR', transaction_code: 'TC9' }]
+			})
+		).toBe('TC9');
+		expect(
+			info({ method: 'bitcoin', transactions: [{ id: 'txid1', amount: 1, currency: 'BTC' }] })
+		).toBe('txid1');
+		expect(info({ method: 'bitcoin' })).toBe('');
+		expect(info({ method: 'point-of-sale', detail: 'drawer 2' })).toBe('drawer 2');
+		expect(info({ method: 'point-of-sale' })).toBe('');
+	});
+
+	it('resolves the country from billing, then shipping, then IP', () => {
+		const address = (country: 'DE' | 'IT') => ({
+			firstName: '',
+			lastName: '',
+			address: '',
+			city: '',
+			zip: '',
+			country
+		});
+		const row = (o: ReportingOrder) => toPaymentRow({ order: o, payment: o.payments[0] }).country;
+		expect(row(order({ billingAddress: address('DE'), shippingAddress: address('IT') }))).toBe(
+			'DE'
+		);
+		expect(row(order({ shippingAddress: address('IT'), clientIp: '1.2.3.4' }))).toBe('IT');
+		expect(row(order({ clientIp: '1.2.3.4' }))).toBe('FR');
+	});
+
+	it('only sends the invoice number', () => {
+		const o = order({
+			payments: [payment({ invoice: { number: 12, createdAt: new Date() } })]
+		});
+		expect(toPaymentRow({ order: o, payment: o.payments[0] }).invoice).toEqual({ number: 12 });
+	});
+});
+
+describe('computeReportingSynthesis, edge cases', () => {
+	it('returns zeros without paid orders', () => {
+		const synthesis = computeReportingSynthesis([order({ status: 'pending' })], filters(), 'EUR');
+		expect(synthesis).toMatchObject({
+			orderCount: 0,
+			orderTotal: 0,
+			deliveryFeesTotal: 0,
+			vatTotal: 0,
+			products: [],
+			payments: []
+		});
+	});
+
+	it('only counts payments matching the payment filter', () => {
+		const synthesis = computeReportingSynthesis(
+			[order({ payments: [payment({ method: 'card' }), payment({ method: 'bank-transfer' })] })],
+			filters('paymentMethod=card'),
+			'EUR'
+		);
+		expect(synthesis.payments.map((p) => p.method)).toEqual(['card']);
+	});
+
+	it('groups custom payments without label together', () => {
+		const synthesis = computeReportingSynthesis(
+			[order({ payments: [payment({ method: 'custom' }), payment({ method: 'custom' })] })],
+			filters(),
+			'EUR'
+		);
+		expect(synthesis.payments).toEqual([{ method: 'custom:', quantity: 2, total: 20 }]);
+	});
+
+	it('names products after their most recent order', () => {
+		const synthesis = computeReportingSynthesis(
+			[
+				order({ items: [item('coffee', 1, { product: { _id: 'coffee', name: 'New name' } })] }),
+				order({ items: [item('coffee', 1, { product: { _id: 'coffee', name: 'Old name' } })] })
+			],
+			filters(),
+			'EUR'
+		);
+		expect(synthesis.products[0].name).toBe('New name');
+	});
+
+	it('sorts products and payment means by quantity', () => {
+		const synthesis = computeReportingSynthesis(
+			[
+				order({
+					items: [item('rare', 1), item('popular', 1, { quantity: 5 })],
+					payments: [payment({ method: 'card' }), payment(), payment()]
+				})
+			],
+			filters(),
+			'EUR'
+		);
+		expect(synthesis.products.map((p) => p.productId)).toEqual(['popular', 'rare']);
+		expect(synthesis.payments.map((p) => p.method)).toEqual(['bank-transfer', 'card']);
+	});
+
+	it('converts totals in other currencies to the main currency', () => {
+		const rates = get(exchangeRate);
+		try {
+			exchangeRate.set({ ...rates, EUR: 50_000, CHF: 25_000 });
+			const synthesis = computeReportingSynthesis(
+				[
+					order(),
+					order({
+						currencySnapshot: {
+							main: { totalPrice: { amount: 10, currency: 'CHF' } }
+						} as ReportingOrder['currencySnapshot']
+					})
+				],
+				filters(),
+				'EUR'
+			);
+			expect(synthesis.orderTotal).toBe(30);
+		} finally {
+			exchangeRate.set(rates);
+		}
+	});
+
+	it('has a zero tag total when no item carries the tag', () => {
+		const synthesis = computeReportingSynthesis([order()], filters('tagId=hot'), 'EUR');
+		expect(synthesis.tagOrderTotal).toBe(0);
+		expect(synthesis.products).toEqual([]);
 	});
 });
