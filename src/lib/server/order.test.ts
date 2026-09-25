@@ -368,6 +368,33 @@ describe('order', () => {
 		expect(err.body.message).toBe("You can't use free payment method on this order");
 	});
 
+	it('refuses to cancel a payment a stale copy still shows as pending', async () => {
+		const orderId = await createOrder(
+			[{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }],
+			'point-of-sale',
+			{
+				locale: 'en',
+				user: { sessionId: 'stale-session-id' },
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			}
+		);
+		const stale = await collections.orders.findOne({ _id: orderId });
+		const fresh = await collections.orders.findOne({ _id: orderId });
+		if (!stale || !fresh) {
+			throw new Error('Order not found');
+		}
+
+		await onOrderPayment(fresh, fresh.payments[0], fresh.payments[0].price);
+
+		const err = await onOrderPaymentFailed(stale, stale.payments[0], 'canceled').catch((e) => e);
+		expect(isHttpError(err)).toBe(true);
+
+		const after = await collections.orders.findOne({ _id: orderId });
+		expect(after?.payments[0].status).toBe('paid');
+		expect(after?.status).toBe('paid');
+	});
+
 	it('places a single order when one cart is checked out twice at once', async () => {
 		const user = { sessionId: 'race-session-id' };
 		const { insertedId } = await collections.carts.insertOne({

@@ -383,7 +383,8 @@ export async function onOrderPaymentFailed(
 	const ret = await collections.orders.findOneAndUpdate(
 		{
 			_id: order._id,
-			'payments._id': payment._id
+			// The caller's copy may predate a settlement: never let it overwrite a paid payment.
+			payments: { $elemMatch: { _id: payment._id, status: { $in: ['pending', 'failed'] } } }
 		},
 		{
 			$set: {
@@ -435,7 +436,7 @@ export async function onOrderPaymentFailed(
 		}
 	}
 	if (!ret.value) {
-		throw new Error('Failed to update order');
+		throw error(409, 'Payment is no longer pending');
 	}
 	if (
 		order.status !== ret.value.status &&
