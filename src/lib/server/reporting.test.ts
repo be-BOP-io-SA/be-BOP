@@ -96,6 +96,13 @@ describe('reportingOrdersQuery', () => {
 		expect(reportingOrdersQuery(filters('includePartiallyPaid=on')).status).toBeUndefined();
 	});
 
+	it('matches payment method and PoS subtype on the same payment', () => {
+		expect(
+			reportingOrdersQuery(filters('paymentMethod=point-of-sale&posSubtype=tpe')).payments
+		).toEqual({ $elemMatch: { method: 'point-of-sale', posSubtype: 'tpe' } });
+		expect(reportingOrdersQuery(filters()).payments).toBeUndefined();
+	});
+
 	it('fetches expired orders by status', () => {
 		expect(reportingOrdersQuery(filters('includeExpired=on')).status).toEqual({
 			$in: ['paid', 'expired']
