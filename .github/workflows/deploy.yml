@@ -10,6 +10,10 @@ on:
         type: environment
         description: 'Environment to deploy to'
 
+# The job holds the production .env and the SSH key; its token needs nothing more than a checkout.
+permissions:
+  contents: read
+
 jobs:
   deploy:
     if: ${{ github.event_name == 'workflow_dispatch' || vars.DEFAULT_ENV }}
@@ -19,7 +23,7 @@ jobs:
       url: ${{ vars.DEPLOY_URL }}
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@eae0cfeb286e66ffb5155f1a79b90583a127a68b # v2.4.1
         with:
           version: 8.3.1
       - uses: actions/setup-node@v3
