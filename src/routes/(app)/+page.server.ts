@@ -86,9 +86,12 @@ export const actions = {
 		const formData = await request.formData();
 		let redirectTo = formData.get('redirectTo')?.toString() || '/';
 
-		// Only allow redirect to public pages (not employee-only areas)
+		// Only allow redirect to public pages (not employee-only areas). `//host` and `/\host` start
+		// with a slash yet browsers read them as another site.
 		if (
 			!redirectTo.startsWith('/') ||
+			redirectTo.startsWith('//') ||
+			redirectTo.startsWith('/\\') ||
 			redirectTo.startsWith('/admin') ||
 			redirectTo.startsWith('/pos')
 		) {
