@@ -552,10 +552,18 @@ export const actions = {
 		}
 		const desiredPayment = z
 			.object({
-				paymentTimeOut: z.number({ coerce: true }).int().optional()
+				paymentTimeOut: z
+					.number({ coerce: true })
+					.int()
+					.min(1)
+					.max(7 * 24 * 60)
+					.optional()
 			})
 			.parse({
-				paymentTimeOut: formData.get('paymentTimeOut')
+				// A long timeout freezes the crypto quote and holds stock and slots, so only the till sets it.
+				paymentTimeOut: locals.user?.hasPosOptions
+					? formData.get('paymentTimeOut') || undefined
+					: undefined
 			});
 		const vatCountry =
 			shippingInfo?.shipping?.country ??
