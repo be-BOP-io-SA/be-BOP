@@ -29,13 +29,14 @@ import { CopyObjectCommand, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import type { Tag } from '$lib/types/Tag';
 import { adminPrefix } from '$lib/server/admin';
 import { pojo } from '$lib/server/pojo';
+import { withWebhookSecretForEditors } from '$lib/server/paid-order-webhook-secret';
 import { zodSlug } from '$lib/server/zod';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 import { logProductCreationEvents } from '$lib/server/accounting-log';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 
-export const load = async ({ url }) => {
+export const load = async ({ url, locals }) => {
 	const productId = url.searchParams.get('duplicate_from');
 	const tags = await collections.tags
 		.find({})
@@ -59,7 +60,7 @@ export const load = async ({ url }) => {
 				.toArray();
 
 			return {
-				product: pojo(product),
+				product: pojo(withWebhookSecretForEditors(product, locals.user?.role)),
 				productId,
 				pictures,
 				digitalFiles,

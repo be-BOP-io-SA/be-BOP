@@ -5,13 +5,14 @@ import { set } from '$lib/utils/set';
 import type { Actions } from './$types';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { pojo } from '$lib/server/pojo';
+import { withWebhookSecretForEditors } from '$lib/server/paid-order-webhook-secret';
 import { type Product, PRODUCT_PAGINATION_LIMIT } from '$lib/types/Product';
 import { picturesForProducts } from '$lib/server/picture';
 import type { Filter } from 'mongodb';
 import { escapeForRegex } from '$lib/utils/escapeForRegex';
 import type { Tag } from '$lib/types/Tag';
 
-export const load = async ({ url }) => {
+export const load = async ({ url, locals }) => {
 	const querySchema = z.object({
 		skip: z.number({ coerce: true }).int().min(0).optional().default(0),
 		productId: z.string().optional(),
@@ -80,7 +81,9 @@ export const load = async ({ url }) => {
 		.toArray();
 
 	return {
-		products: products.map((product) => pojo(product)),
+		products: products.map((product) =>
+			pojo(withWebhookSecretForEditors(product, locals.user?.role))
+		),
 		pictures: await picturesForProducts(productIds),
 		tags: tags.map((tag) => pojo(tag))
 	};
