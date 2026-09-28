@@ -252,6 +252,28 @@ type TokenObject =
 			raw: string;
 	  };
 
+// One group per option, so the index of the group that matched is the option's rank.
+const PICTURE_OPTION_REGEX =
+	/[?\s](?:(msubstitute)|(width)|(height)|(fit)|(position))=(?<value>[\p{L}\d_-]+)/giu;
+
+// Published pages rely on msubstitute counting only when it opens the last run of options
+// written in msubstitute, width, height, fit, position order.
+function pictureMsubstitute(raw: string): string | undefined {
+	let msubstitute: string | undefined;
+	let previousRank = -1;
+	for (const option of raw.matchAll(PICTURE_OPTION_REGEX)) {
+		const rank = option.slice(1, 6).findIndex((name) => name !== undefined);
+		if (rank <= previousRank) {
+			msubstitute = undefined;
+		}
+		if (rank === 0) {
+			msubstitute = option.groups?.value;
+		}
+		previousRank = rank;
+	}
+	return msubstitute;
+}
+
 export async function cmsFromContent(
 	{
 		desktopContent,
@@ -289,7 +311,7 @@ export async function cmsFromContent(
 
 	const SPECIFICATION_WIDGET_REGEX = /\[Specification=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const PICTURE_WIDGET_REGEX =
-		/\[Picture=(?<slug>[\p{L}\d_-]+)((?:[?\s]msubstitute=(?<msubstitute>[\p{L}\d_-]+))?(?:[?\s]width=(?<width>\d+))?(?:[?\s]height=(?<height>\d+))?(?:[?\s]fit=(?<fit>cover|contain))?(?:[?\s]position=(?<position>right|center|full-width))?)*\]/giu;
+		/\[Picture=(?<slug>[\p{L}\d_-]+)(?:[?\s](?:msubstitute=[\p{L}\d_-]+|width=\d+|height=\d+|fit=(?:cover|contain)|position=(?:right|center|full-width)))*\]/giu;
 	const CONTACTFORM_WIDGET_REGEX = /\[Form=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const COUNTDOWN_WIDGET_REGEX = /\[Countdown=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const TAG_PRODUCTS_REGEX =
@@ -424,7 +446,10 @@ export async function cmsFromContent(
 						break;
 					case 'pictureWidget':
 						pictureSlugs.add(match.groups.slug);
-						pictureSlugs.add(match.groups.msubstitute);
+						const msubstitute = pictureMsubstitute(match[0]);
+						if (msubstitute) {
+							pictureSlugs.add(msubstitute);
+						}
 						// With multiple options, to handle any ordering for the options, we need to parse the string again
 						const raw = match[0];
 						const fit = /[?\s]fit=(?<fit>(cover|contain))/.exec(raw)?.groups?.fit as
@@ -438,7 +463,7 @@ export async function cmsFromContent(
 						token.push({
 							type: 'pictureWidget',
 							slug: match.groups.slug,
-							msubstitute: match.groups.msubstitute,
+							msubstitute,
 							raw,
 							fit,
 							width: width ? Number(width) : undefined,
