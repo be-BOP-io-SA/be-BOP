@@ -71,6 +71,13 @@ export const actions = {
 	delete: (event: RequestEvent) => actionsFor(event.params.pspSlug ?? '').delete(),
 	testConnection: (event: RequestEvent) =>
 		actionsFor(event.params.pspSlug ?? '').testConnection(event),
-	// Only the lightning forms render the control that posts here.
-	updateLightningInvoiceDescription
+	// Only the lightning forms render the control that posts here, but the action answers on every
+	// processor's URL, so a role scoped to another provider could otherwise change this global setting.
+	updateLightningInvoiceDescription: async (event: RequestEvent) => {
+		if (settingsFor(event.params.pspSlug ?? '').method !== 'lightning') {
+			throw error(404, 'This processor has no lightning invoice settings');
+		}
+
+		return updateLightningInvoiceDescription(event);
+	}
 };
