@@ -27,6 +27,19 @@ import {
 } from '$lib/server/discount';
 import type { Discount } from '$lib/types/Discount';
 
+type PercentageDiscount = Extract<Discount, { mode: 'percentage' }>;
+
+// The page payload reaches any visitor, so promo codes and contact allowlists must stay server-side.
+function productPageDiscount(discount: PercentageDiscount) {
+	return {
+		mode: discount.mode,
+		percentage: discount.percentage,
+		endsAt: discount.endsAt,
+		showBadge: discount.showBadge,
+		showExpirationBanner: discount.showExpirationBanner
+	};
+}
+
 async function fetchApplicableDiscount(
 	productId: string,
 	productTagIds: string[],
@@ -40,7 +53,7 @@ async function fetchApplicableDiscount(
 		{ productIds: productId },
 		...(productTagIds.length ? [{ requiredTagIds: { $in: productTagIds } }] : [])
 	];
-	const subscriptionDiscount = await collections.discounts.findOne(
+	const subscriptionDiscount = await collections.discounts.findOne<PercentageDiscount>(
 		{
 			$and: [
 				{ $or: productTargetMatch },
@@ -54,7 +67,7 @@ async function fetchApplicableDiscount(
 	);
 
 	if (subscriptionDiscount) {
-		return subscriptionDiscount;
+		return productPageDiscount(subscriptionDiscount);
 	}
 
 	// 2. Auto discounts (condition-based, no subscription needed)
@@ -73,7 +86,7 @@ async function fetchApplicableDiscount(
 		.filter((d): d is Extract<Discount, { mode: 'percentage' }> => d.mode === 'percentage')
 		.sort((a, b) => b.percentage - a.percentage);
 
-	return applicable[0] ?? null;
+	return applicable[0] ? productPageDiscount(applicable[0]) : null;
 }
 
 async function fetchProduct(
