@@ -27,11 +27,10 @@ function settingsEnforcedByEnvVars(): boolean {
 }
 
 export async function load() {
-	const { privKey, pubKey } = isNostrConfigured() ? getNostrKeys() : {};
+	const { pubKey } = isNostrConfigured() ? getNostrKeys() : {};
 	return {
 		disableNostrBotIntro: runtimeConfig.disableNostrBotIntro,
-		nostr: runtimeConfig.nostr,
-		nostrPrivateKey: privKey,
+		nostrPrivateKeyIsSet: isNostrConfigured(),
 		nostrPublicKey: pubKey,
 		nostrRelays: runtimeConfig.nostrRelays,
 		origin: ORIGIN,
