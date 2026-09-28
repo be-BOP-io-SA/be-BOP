@@ -18,6 +18,7 @@ export function set<T extends object, K extends Paths<T> | string>(
 		const subKey = keys[i + 1];
 		const isArrayIndex = typeof subKey === 'string' && /^\d*$/.test(subKey);
 
+		assertSafeArrayIndex(obj, k);
 		const prop = Object.getOwnPropertyDescriptor(obj, k);
 
 		if (typeof prop?.value !== 'object' || prop?.value === null) {
@@ -34,12 +35,25 @@ export function set<T extends object, K extends Paths<T> | string>(
 	const lastKey = (
 		keys[keys.length - 1] === '' && Array.isArray(obj) ? obj.length : keys[keys.length - 1]
 	) as keyof T;
+	assertSafeArrayIndex(obj, lastKey);
 	Object.defineProperty(obj, lastKey, {
 		value: value as T[keyof T],
 		writable: true,
 		enumerable: true,
 		configurable: true
 	});
+}
+
+const MAX_ARRAY_INDEX = 10_000;
+
+// A field name like "items[4294967294]" would make the array sparse with ~4 billion slots, and zod
+// then spreads it and exhausts the heap.
+function assertSafeArrayIndex(obj: object, key: PropertyKey) {
+	if (Array.isArray(obj) && typeof key === 'string' && /^(0|[1-9]\d*)$/.test(key)) {
+		if (Number(key) > MAX_ARRAY_INDEX) {
+			throw new RangeError(`Array index ${key} is too large`);
+		}
+	}
 }
 
 // Not a regex: keys come from request form fields, and a bracket-matching regex rescans the

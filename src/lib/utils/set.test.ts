@@ -79,4 +79,21 @@ describe('set', () => {
 		set(obj, `a${'['.repeat(500_000)}b`, 1);
 		expect(obj).toEqual({ a: { b: 1 } });
 	});
+
+	it('should refuse an array index that would make the array huge and sparse', () => {
+		expect(() => set({}, 'items[4294967294]', 1)).toThrow(RangeError);
+		expect(() => set({}, 'items[4294967294].name', 1)).toThrow(RangeError);
+	});
+
+	it('should still accept a sparse but reasonable array index', () => {
+		const obj = {};
+		set(obj, 'items[3].name', 'x');
+		expect((obj as { items: unknown[] }).items).toHaveLength(4);
+	});
+
+	it('should not treat a large numeric key on a plain object as an array index', () => {
+		const obj = {};
+		set(obj, '4294967294', 1);
+		expect(obj).toEqual({ '4294967294': 1 });
+	});
 });
