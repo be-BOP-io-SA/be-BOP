@@ -4,6 +4,7 @@ import { cleanDb } from '$lib/server/test-utils';
 import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
 import { createOrder } from '$lib/server/orders';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
 import { fetchOrderForUser } from './fetchOrderForUser';
 
 const DOWNLOAD_SECRET = 'a-secret-that-must-never-reach-the-browser';
@@ -42,6 +43,48 @@ describe('fetchOrderForUser', () => {
 		expect(order.items[0].digitalFiles).toHaveLength(1);
 		expect(JSON.stringify(order)).not.toContain(DOWNLOAD_SECRET);
 		expect(JSON.stringify(order)).not.toContain('digital-files/manual.pdf');
+	});
+
+	describe('staff order labels', () => {
+		async function labelledOrderId() {
+			const orderId = await createOrder(
+				[{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }],
+				'point-of-sale',
+				{
+					locale: 'en',
+					user: { sessionId: 'test-session-id' },
+					shippingAddress: null,
+					userVatCountry: 'FR'
+				}
+			);
+			await collections.orders.updateOne(
+				{ _id: orderId },
+				{ $set: { orderLabelIds: ['label-1'] } }
+			);
+			return orderId;
+		}
+
+		it('hides them from an anonymous viewer', async () => {
+			const order = await fetchOrderForUser(await labelledOrderId());
+
+			expect(order).not.toHaveProperty('orderLabelIds');
+		});
+
+		it('hides them from a customer', async () => {
+			const order = await fetchOrderForUser(await labelledOrderId(), {
+				userRoleId: CUSTOMER_ROLE_ID
+			});
+
+			expect(order).not.toHaveProperty('orderLabelIds');
+		});
+
+		it('shows them to staff', async () => {
+			const order = await fetchOrderForUser(await labelledOrderId(), {
+				userRoleId: POS_ROLE_ID
+			});
+
+			expect(order.orderLabelIds).toEqual(['label-1']);
+		});
 	});
 
 	describe('pending PayPal payment', () => {

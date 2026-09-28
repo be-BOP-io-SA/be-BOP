@@ -251,6 +251,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		},
 		onLocation: order.onLocation,
 		dataAnonymized: order.dataAnonymized,
-		...(params?.userRoleId !== CUSTOMER_ROLE_ID && { orderLabelIds: order.orderLabelIds })
+		...(params?.userRoleId &&
+			params.userRoleId !== CUSTOMER_ROLE_ID && { orderLabelIds: order.orderLabelIds })
 	};
 }
