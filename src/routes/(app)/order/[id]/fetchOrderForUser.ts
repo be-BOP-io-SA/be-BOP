@@ -1,8 +1,8 @@
 import { collections } from '$lib/server/database';
-import { processorFor, serializePresentation } from '$lib/server/sdk/pp';
+import { coversPayment, processorFor, serializePresentation } from '$lib/server/sdk/pp';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { isOrderFullyPaid } from '$lib/server/orders';
-import { isPaypalEnabled, paypalGetCheckout } from '$lib/server/paypal';
+import { isPaypalEnabled } from '$lib/server/paypal';
 import { picturesForProducts } from '$lib/server/picture';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { isStripeEnabled } from '$lib/server/stripe';
@@ -111,8 +111,11 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 					}
 				}
 			} else if (payment.processor === 'paypal' && isPaypalEnabled()) {
-				const checkout = await paypalGetCheckout(payment.checkoutId);
-				if (checkout.status === 'COMPLETED' || checkout.status === 'APPROVED') {
+				// PayPal calls a checkout COMPLETED while its capture is still PENDING, so only the
+				// poller's own verdict (settled captures covering the price) may unlock paid content.
+				const pp = processorFor(payment);
+				const result = await pp?.checkPayment?.(payment, order);
+				if (pp && result?.status === 'paid' && coversPayment(pp, payment, result.received)) {
 					payment.status = 'paid';
 
 					payment.invoice = {
