@@ -226,17 +226,22 @@ async function fetchProductScheduleEvents(productId: string) {
 		.toArray();
 }
 
+function isVisibleToViewer(
+	product: Pick<Product, 'actionSettings'>,
+	locals: Pick<App.Locals, 'user'>
+) {
+	return locals.user?.hasPosOptions
+		? product.actionSettings.retail.visible
+		: product.actionSettings.eShop.visible;
+}
+
 export const load = async ({ params, parent, locals }) => {
 	const productId = params.id;
 	const product = await fetchProduct(productId, locals.language);
 	if (!product) {
 		throw error(404, 'Page not found');
 	}
-	if (
-		locals.user?.hasPosOptions
-			? !product.actionSettings.retail.visible
-			: !product.actionSettings.eShop.visible
-	) {
+	if (!isVisibleToViewer(product, locals)) {
 		throw redirect(303, '/');
 	}
 
@@ -314,7 +319,8 @@ export const load = async ({ params, parent, locals }) => {
 
 async function addToCart({ params, request, locals }: RequestEvent) {
 	const productDoc = await collections.products.findOne({ alias: params.id });
-	if (!productDoc) {
+	// The page load hides these products, but this action is reachable without ever loading the page.
+	if (!productDoc || !isVisibleToViewer(productDoc, locals)) {
 		throw error(404, 'Product not found');
 	}
 	const product = await applyResolvedStock(productDoc);
