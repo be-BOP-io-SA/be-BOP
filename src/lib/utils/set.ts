@@ -42,14 +42,52 @@ export function set<T extends object, K extends Paths<T> | string>(
 	});
 }
 
+// Not a regex: keys come from request form fields, and a bracket-matching regex rescans the
+// rest of the key from every unclosed `[`, which is quadratic on "[[[[...".
 function splitKey(key: string) {
-	const regex = /([^[.\]]+)|\[(.*?)\]/g;
+	const keys: string[] = [];
+	// A scan that finds no `]` sets this: the `[`s it ran past cannot close either
+	let unclosedBefore = 0;
+	let i = 0;
 
-	const matches = [];
-	let match;
-	while ((match = regex.exec(key)) !== null) {
-		matches.push(match[1] || match[2]);
+	while (i < key.length) {
+		if (key[i] === '[' && i >= unclosedBefore) {
+			const end = bracketContentEnd(key, i + 1);
+			if (key[end] === ']') {
+				keys.push(key.slice(i + 1, end));
+				i = end + 1;
+				continue;
+			}
+			unclosedBefore = end;
+		}
+
+		if (isKeyDelimiter(key[i])) {
+			i++;
+			continue;
+		}
+
+		let end = i + 1;
+		while (end < key.length && !isKeyDelimiter(key[end])) {
+			end++;
+		}
+		keys.push(key.slice(i, end));
+		i = end;
 	}
 
-	return matches;
+	return keys;
+}
+
+function isKeyDelimiter(char: string) {
+	return char === '[' || char === '.' || char === ']';
+}
+
+const lineTerminators = '\n\r\u2028\u2029';
+
+// A bracket cannot close across a line break, so "a[b\n.c]" still splits on its "."
+function bracketContentEnd(key: string, start: number) {
+	let end = start;
+	while (end < key.length && key[end] !== ']' && !lineTerminators.includes(key[end])) {
+		end++;
+	}
+	return end;
 }

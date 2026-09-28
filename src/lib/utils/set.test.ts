@@ -61,4 +61,22 @@ describe('set', () => {
 		set(obj, 'cta[0].label', 'test');
 		expect(obj).toEqual({ cta: [{ label: 'test' }] });
 	});
+
+	it('should skip an unclosed bracket', () => {
+		const obj = {};
+		set(obj, 'a[b.c', 1);
+		expect(obj).toEqual({ a: { b: { c: 1 } } });
+	});
+
+	it('should not close a bracket across a line break', () => {
+		const obj = {};
+		set(obj, 'a[b\n.c]', 1);
+		expect(obj).toEqual({ a: { 'b\n': { c: 1 } } });
+	});
+
+	it('should split a long run of unclosed brackets in linear time', () => {
+		const obj = {};
+		set(obj, `a${'['.repeat(500_000)}b`, 1);
+		expect(obj).toEqual({ a: { b: 1 } });
+	});
 });
