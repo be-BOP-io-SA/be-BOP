@@ -33,6 +33,7 @@ export default {
 		.refine((v) => v.apiKey || v.lnAddress, {
 			message: 'Provide either a Lightning address or an API key'
 		}),
+	secretConfigFields: ['apiKey'],
 
 	settlementCurrency: () => 'SAT',
 

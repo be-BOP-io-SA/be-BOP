@@ -128,6 +128,12 @@ export interface PaymentProcessorDefinition {
 	configSchema?: ZodType<Record<string, unknown>, ZodTypeDef, unknown>;
 
 	/**
+	 * The settings fields that give control of the provider account. A role that may only read
+	 * the settings page gets them blanked, since holding them is holding the account.
+	 */
+	secretConfigFields?: readonly string[];
+
+	/**
 	 * Currency the payment is asked for. Not the currency it arrives in: `checkPayment`
 	 * reports whatever the provider actually settled.
 	 */

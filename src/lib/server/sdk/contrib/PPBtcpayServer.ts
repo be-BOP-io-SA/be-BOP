@@ -30,6 +30,7 @@ export default {
 			.transform((v) => v.replace(/\/\s*$/, '').trim()),
 		storeId: z.string().min(1).trim()
 	}),
+	secretConfigFields: ['apiKey'],
 
 	settlementCurrency: () => 'SAT',
 

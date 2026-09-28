@@ -1,8 +1,10 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { runtimeConfig, type ConfigKey } from '$lib/server/runtime-config';
 import { paymentConfigActions } from '$lib/server/sdk/admin-config';
+import { getProcessor } from '$lib/server/sdk/pp';
 import { updateLightningInvoiceDescription } from '$lib/server/actions.js';
 import { PROCESSORS, type PaymentProcessorSlug } from '$lib/types/paymentProcessors';
+import { isAllowedOnPage } from '$lib/types/Role';
 import type { PaymentProcessor } from '$lib/server/payment-methods';
 
 /**
@@ -23,14 +25,35 @@ function settingsFor(slug: string) {
 	return declaration;
 }
 
-export async function load({ params }) {
+/**
+ * The settings as a role that may only read this page sees them. It cannot save, so it has no
+ * use for the credentials, and holding them would let it act on the provider account directly.
+ */
+function withSecretsBlanked(slug: string, config: object) {
+	const secretFields = getProcessor(slug)?.secretConfigFields;
+	if (!secretFields) {
+		throw new Error(`${slug} has settings but declares no secretConfigFields`);
+	}
+
+	return Object.fromEntries(
+		Object.entries(config).map(([field, value]) => [
+			field,
+			secretFields.includes(field) ? '' : value
+		])
+	);
+}
+
+export async function load({ params, locals }) {
 	const declaration = settingsFor(params.pspSlug);
+	const config = runtimeConfig[declaration.configKey];
+	const mayEdit =
+		!!locals.user?.role && isAllowedOnPage(locals.user.role, `/admin/${params.pspSlug}`, 'write');
 
 	return {
 		slug: params.pspSlug as PaymentProcessorSlug,
 		label: declaration.label,
 		method: declaration.method,
-		config: runtimeConfig[declaration.configKey as ConfigKey],
+		config: mayEdit ? config : withSecretsBlanked(params.pspSlug, config),
 		lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription
 	};
 }

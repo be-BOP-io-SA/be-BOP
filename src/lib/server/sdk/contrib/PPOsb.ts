@@ -81,6 +81,7 @@ export default {
 		password: z.string().min(1),
 		hmacKey: z.string().default('')
 	}),
+	secretConfigFields: ['password', 'hmacKey'],
 
 	settlementCurrency: () => 'XPF',
 

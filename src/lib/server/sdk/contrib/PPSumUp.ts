@@ -22,6 +22,7 @@ export default {
 		currency: z.enum(FIAT_CURRENCIES),
 		merchantCode: z.string().min(1)
 	}),
+	secretConfigFields: ['apiKey'],
 
 	settlementCurrency: () => runtimeConfig.sumUp.currency,
 

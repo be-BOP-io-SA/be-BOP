@@ -31,6 +31,7 @@ export default {
 		secretKey: z.string().startsWith('sk_'),
 		currency: z.enum(FIAT_CURRENCIES)
 	}),
+	secretConfigFields: ['secretKey'],
 
 	settlementCurrency: () => runtimeConfig.stripe.currency,
 

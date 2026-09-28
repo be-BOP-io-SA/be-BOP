@@ -28,6 +28,7 @@ export default {
 		sandbox: z.boolean({ coerce: true }),
 		currency: z.enum(FIAT_CURRENCIES)
 	}),
+	secretConfigFields: ['secret'],
 
 	settlementCurrency: () => runtimeConfig.paypal.currency,
 

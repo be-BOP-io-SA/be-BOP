@@ -23,6 +23,7 @@ export default {
 	isEnabled: () => isSwissBitcoinPayConfigured(),
 
 	configSchema: z.object({ apiKey: z.string().min(1) }),
+	secretConfigFields: ['apiKey'],
 
 	settlementCurrency: () => 'SAT',
 

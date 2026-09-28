@@ -73,6 +73,7 @@ export default {
 		backendApiKey: z.string().min(1),
 		currency: z.enum(FIAT_CURRENCIES)
 	}),
+	secretConfigFields: ['backendApiKey'],
 
 	settlementCurrency: () => runtimeConfig.taler.currency,
 
