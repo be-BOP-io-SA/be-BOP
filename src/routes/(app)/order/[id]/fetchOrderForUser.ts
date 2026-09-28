@@ -23,6 +23,9 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		throw error(404, 'Order not found');
 	}
 
+	// An anonymous order-URL holder has no role at all, so "not a customer" alone is not staff.
+	const isStaff = !!params?.userRoleId && params.userRoleId !== CUSTOMER_ROLE_ID;
+
 	const pictures = await picturesForProducts(order.items.map((item) => item.product._id));
 
 	// Projected, never raw: a DigitalFile carries `secret`, which is the whole credential the
@@ -232,26 +235,28 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		discount: order.discount,
 		currencySnapshot: order.currencySnapshot,
 		status: order.status,
-		notes:
-			order.notes?.map((note) => ({
-				content: note.content,
-				createdAt: note.createdAt,
-				isEmployee: note.role !== CUSTOMER_ROLE_ID,
-				isSystem: note.role === null,
-				alias: note.userAlias
-			})) || [],
+		notes: isStaff
+			? order.notes?.map((note) => ({
+					content: note.content,
+					createdAt: note.createdAt,
+					isEmployee: note.role !== CUSTOMER_ROLE_ID,
+					isSystem: note.role === null,
+					alias: note.userAlias
+			  })) || []
+			: [],
 		receiptNote: order.receiptNote,
 		customCheckoutFields: order.customCheckoutFields,
 		user: {
 			npub: order.user.npub,
 			email: order.user.email,
-			userRoleId: order.user.userRoleId,
-			userLogin: order.user.userLogin,
-			userAlias: order.user.userAlias
+			...(isStaff && {
+				userRoleId: order.user.userRoleId,
+				userLogin: order.user.userLogin,
+				userAlias: order.user.userAlias
+			})
 		},
 		onLocation: order.onLocation,
 		dataAnonymized: order.dataAnonymized,
-		...(params?.userRoleId &&
-			params.userRoleId !== CUSTOMER_ROLE_ID && { orderLabelIds: order.orderLabelIds })
+		...(isStaff && { orderLabelIds: order.orderLabelIds })
 	};
 }

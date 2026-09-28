@@ -45,7 +45,7 @@ describe('fetchOrderForUser', () => {
 		expect(JSON.stringify(order)).not.toContain('digital-files/manual.pdf');
 	});
 
-	describe('staff order labels', () => {
+	describe('staff-only order data', () => {
 		async function labelledOrderId() {
 			const orderId = await createOrder(
 				[{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }],
@@ -59,10 +59,55 @@ describe('fetchOrderForUser', () => {
 			);
 			await collections.orders.updateOne(
 				{ _id: orderId },
-				{ $set: { orderLabelIds: ['label-1'] } }
+				{
+					$set: {
+						orderLabelIds: ['label-1'],
+						'user.userLogin': 'seller-login',
+						'user.userAlias': 'Seller',
+						'user.userRoleId': POS_ROLE_ID,
+						notes: [
+							{
+								role: POS_ROLE_ID,
+								userAlias: 'Seller',
+								content: 'internal-note',
+								createdAt: new Date()
+							}
+						]
+					}
+				}
 			);
 			return orderId;
 		}
+
+		it('hides notes and the seller identity from an anonymous viewer', async () => {
+			const order = await fetchOrderForUser(await labelledOrderId());
+
+			expect(order.notes).toEqual([]);
+			expect(JSON.stringify(order)).not.toContain('internal-note');
+			expect(JSON.stringify(order)).not.toContain('seller-login');
+			expect(order.user).not.toHaveProperty('userLogin');
+			expect(order.user).not.toHaveProperty('userAlias');
+			expect(order.user).not.toHaveProperty('userRoleId');
+		});
+
+		it('hides notes and the seller identity from a customer', async () => {
+			const order = await fetchOrderForUser(await labelledOrderId(), {
+				userRoleId: CUSTOMER_ROLE_ID
+			});
+
+			expect(order.notes).toEqual([]);
+			expect(JSON.stringify(order)).not.toContain('seller-login');
+		});
+
+		it('shows notes and the seller identity to staff', async () => {
+			const order = await fetchOrderForUser(await labelledOrderId(), {
+				userRoleId: POS_ROLE_ID
+			});
+
+			expect(order.notes.map((note) => note.content)).toEqual(['internal-note']);
+			expect(order.user.userLogin).toBe('seller-login');
+			expect(order.user.userAlias).toBe('Seller');
+		});
 
 		it('hides them from an anonymous viewer', async () => {
 			const order = await fetchOrderForUser(await labelledOrderId());
