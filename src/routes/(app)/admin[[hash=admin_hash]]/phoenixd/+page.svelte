@@ -83,13 +83,7 @@
 		{#if !data.configManagedByEnvVars}
 			<label class="form-label">
 				PhoenixD http password (from phoenix.conf)
-				<input
-					type="password"
-					name="password"
-					class="form-input"
-					value={data.phoenixd.password}
-					required
-				/>
+				<input type="password" name="password" class="form-input" required />
 			</label>
 		{:else}
 			<div class="bg-gray-100 p-3 rounded">
