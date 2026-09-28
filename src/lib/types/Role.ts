@@ -76,3 +76,26 @@ export function isAllowedOnPage(role: Role, path: string, mode: 'read' | 'write'
 
 	return false;
 }
+
+/** Whether `role` grants nothing that `within` does not already have (patterns compared conservatively). */
+export function isRoleWithin(role: Role, within: Role): boolean {
+	if (role.hasPosOptions && !within.hasPosOptions) {
+		return false;
+	}
+
+	const grantedOutside = (patterns: string[], mode: 'read' | 'write') =>
+		patterns.some((pattern) => !isAllowedOnPage(within, pattern, mode));
+	const reopensForbidden = within.permissions.forbidden.some(
+		(forbidden) =>
+			!role.permissions.forbidden.some((own) => matchPath(forbidden, own)) &&
+			[...role.permissions.read, ...role.permissions.write].some((pattern) =>
+				matchPath(forbidden, pattern)
+			)
+	);
+
+	return (
+		!grantedOutside(role.permissions.write, 'write') &&
+		!grantedOutside(role.permissions.read, 'read') &&
+		!reopensForbidden
+	);
+}

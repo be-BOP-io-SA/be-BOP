@@ -1,4 +1,5 @@
 import { adminPrefix } from '$lib/server/admin';
+import { canManageRole, requireCanManageUser } from '$lib/server/arm-scope';
 import { collections } from '$lib/server/database.js';
 import { zodNpub } from '$lib/server/nostr.js';
 import { sendResetPasswordNotification } from '$lib/server/sendNotification.js';
@@ -23,8 +24,12 @@ export const actions = {
 
 		// Only a super-admin may hand out their own tier, as when creating a user: the guard
 		// below covers editing an existing super-admin, not granting the role in the first place.
+		await requireCanManageUser(locals.user, user);
+
 		const allowedRoles = (await collections.roles.find().toArray()).filter(
-			(role) => role._id !== SUPER_ADMIN_ROLE_ID || locals.user?.roleId === SUPER_ADMIN_ROLE_ID
+			(role) =>
+				(role._id !== SUPER_ADMIN_ROLE_ID || locals.user?.roleId === SUPER_ADMIN_ROLE_ID) &&
+				canManageRole(locals.user, role)
 		);
 
 		const parsed = z
@@ -93,12 +98,14 @@ export const actions = {
 			throw err;
 		}
 	},
-	resetPassword: async function ({ params }) {
+	resetPassword: async function ({ params, locals }) {
 		const user = await collections.users.findOne({ _id: new ObjectId(params.id) });
 
 		if (!user) {
 			throw error(404, 'User not found');
 		}
+
+		await requireCanManageUser(locals.user, user);
 
 		if (user.roleId === SUPER_ADMIN_ROLE_ID) {
 			throw error(
@@ -131,12 +138,14 @@ export const actions = {
 
 		throw redirect(303, `${adminPrefix()}/arm`);
 	},
-	delete: async function ({ params }) {
+	delete: async function ({ params, locals }) {
 		const user = await collections.users.findOne({ _id: new ObjectId(params.id) });
 
 		if (!user) {
 			throw error(404, 'User not found');
 		}
+
+		await requireCanManageUser(locals.user, user);
 
 		if (user.roleId === SUPER_ADMIN_ROLE_ID) {
 			throw error(403, 'You cannot delete a super admin');
