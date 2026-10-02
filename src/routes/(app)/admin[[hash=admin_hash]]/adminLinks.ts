@@ -122,6 +122,11 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/s3',
 				label: 'S3 Storage'
+			},
+			{
+				href: '/admin/api-keys',
+				label: 'API Keys',
+				superAdminOnly: true
 			}
 		]
 	},

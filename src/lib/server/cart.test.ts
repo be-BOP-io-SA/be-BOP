@@ -304,3 +304,44 @@ describe('cart', () => {
 		});
 	});
 });
+
+describe('cart uniqueKey (?key= #2688)', () => {
+	beforeEach(async () => {
+		await cleanDb();
+		await collections.products.insertOne({
+			...TEST_DIGITAL_PRODUCT,
+			payWhatYouWant: true,
+			standalone: true
+		});
+	});
+
+	it('persists uniqueKey on a PWYW line (PWYW and unique key coexist)', async () => {
+		await addToCartInDb({ ...TEST_DIGITAL_PRODUCT, payWhatYouWant: true, standalone: true }, 1, {
+			user: { sessionId: 'key-session' },
+			mode: 'eshop',
+			customPrice: { amount: 120, currency: 'EUR' },
+			uniqueKey: 'kfdjsfeaz12845ND9xezj91820'
+		});
+		const cart = await collections.carts.findOne({ 'user.sessionId': 'key-session' });
+		expect(cart?.items).toHaveLength(1);
+		expect(cart?.items[0].uniqueKey).toBe('kfdjsfeaz12845ND9xezj91820');
+		expect(cart?.items[0].customPrice?.amount).toBe(120);
+	});
+
+	it('does not merge two unique keys into one line', async () => {
+		const product = { ...TEST_DIGITAL_PRODUCT, payWhatYouWant: true, standalone: true };
+		await addToCartInDb(product, 1, {
+			user: { sessionId: 'key-session-2' },
+			mode: 'eshop',
+			uniqueKey: 'alpha-key'
+		});
+		await addToCartInDb(product, 1, {
+			user: { sessionId: 'key-session-2' },
+			mode: 'eshop',
+			uniqueKey: 'beta-key'
+		});
+		const cart = await collections.carts.findOne({ 'user.sessionId': 'key-session-2' });
+		expect(cart?.items).toHaveLength(2);
+		expect(cart?.items.map((i) => i.uniqueKey).sort()).toEqual(['alpha-key', 'beta-key']);
+	});
+});

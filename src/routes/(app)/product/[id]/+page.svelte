@@ -69,6 +69,7 @@
 	export let data;
 
 	let quantity = 1;
+	let uniqueKey = data.uniqueKey ?? '';
 	let loading = false;
 	let errorMessage = '';
 	let currentTime = Date.now();
@@ -413,6 +414,7 @@
 			...(data.product.hasVariations && {
 				chosenVariations: selectedVariations
 			}),
+			...(uniqueKey && { uniqueKey }),
 			discountPercentage:
 				data.discount?.mode === 'percentage' ? data.discount?.percentage : undefined,
 			...(data.product.bookingSpec && {
@@ -953,6 +955,11 @@
 							{#if freeProductsAvailable}
 								<input type="hidden" name="freeQuantity" value={freeProductsAvailable} />
 							{/if}
+							{#if uniqueKey}
+								<!-- Carried to the cart, never shown: the key identifies the artifact the link was
+								     made for, and the customer who follows that link has no use for reading it. -->
+								<input type="hidden" name="uniqueKey" value={uniqueKey} />
+							{/if}
 							{#if data.product.payWhatYouWant}
 								<hr class="border-gray-300 lg:hidden mt-4 pb-2" />
 								<input type="hidden" name="customPriceCurrency" value={PWYWCurrency} />
@@ -975,7 +982,7 @@
 									</label>
 								</div>
 							{/if}
-							{#if data.product.standalone && data.product.hasVariations && data.product.variationLabels}
+							{#if data.product.hasVariations && data.product.variationLabels}
 								{#each Object.keys(data.product.variationLabels.values) as key}
 									<label class="mb-2" for={key}>{data.product.variationLabels.names[key]}</label>
 									<select

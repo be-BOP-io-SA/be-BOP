@@ -213,3 +213,15 @@ export const TEST_DISCOUNTED_PRODUCT = {
 		}
 	}
 } satisfies Product;
+
+/** Base price plus a priced variation: the catalogue price of a `pint` is 150 EUR. */
+export const TEST_VARIATION_PRODUCT = {
+	...TEST_DIGITAL_PRODUCT_UNLIMITED,
+	_id: 'test-variation-product',
+	name: 'Test variation product',
+	alias: ['test-variation-product'],
+	variations: [
+		{ name: 'Size', value: 'half', price: 0 },
+		{ name: 'Size', value: 'pint', price: 50 }
+	]
+} satisfies Product;

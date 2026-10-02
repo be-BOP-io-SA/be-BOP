@@ -133,6 +133,13 @@ export interface OrderPayment {
 	posSubtype?: string;
 
 	/**
+	 * Optional integrator-stable id for a payment row (Face A / PoS).
+	 * Parallel to Order.externalOrderId — used to match payload payments on retry
+	 * when the PoS reorders payments[].
+	 */
+	externalPaymentId?: string;
+
+	/**
 	 * Can be unset for cash or bank transfer payments for example.
 	 */
 	expiresAt?: Date;
@@ -248,6 +255,8 @@ export interface Order extends Timestamps {
 		quantity: number;
 		customPrice?: { amount: number; currency: Currency };
 		chosenVariations?: Record<string, string>;
+		/** Unique artifact secret from storefront `?key=` (#2688). */
+		uniqueKey?: string;
 		depositPercentage?: number;
 		freeQuantity?: number;
 		freeProductSources?: { subscriptionId: string; quantity: number }[];
@@ -382,6 +391,15 @@ export interface Order extends Timestamps {
 	};
 	orderLabelIds?: OrderLabel['_id'][];
 	dataAnonymized?: boolean;
+
+	/**
+	 * Idempotence for the public orders-write API (issue 2687 / D2).
+	 * Unique sparse index with externalSourceApiKeyId.
+	 * Optional for backwards compatibility with orders created outside the API.
+	 */
+	externalOrderId?: string;
+	/** ApiKey._id that created this order via /api/v1/orders. */
+	externalSourceApiKeyId?: ObjectId;
 }
 interface SimplifiedOrderPayment {
 	id: string;
