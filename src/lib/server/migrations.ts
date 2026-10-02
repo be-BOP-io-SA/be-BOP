@@ -995,6 +995,21 @@ export async function runMigrations() {
 	if (env.VITEST) {
 		return;
 	}
+
+	/**
+	 * Before the lock, and before both early returns below.
+	 *
+	 * A brand-new shop records every migration as done and returns; an instance that loses the lock
+	 * returns too. Seeding at the end of this function made it conditional on a path a first start
+	 * never takes, so a shop pointed at an empty database and started once had no searchlist at all,
+	 * and only a restart gave it one.
+	 *
+	 * Safe here: both are idempotent and depend on no migration. They also re-create a list somebody
+	 * removed straight from Mongo — the admin refuses to delete them, a shell does not.
+	 */
+	await ensureDefaultSearchlist();
+	await ensureSearchSearchlist();
+
 	const lock = await Lock.tryAcquire('migrations');
 	if (!lock) {
 		return;
@@ -1042,13 +1057,23 @@ export async function runMigrations() {
 		lock.destroy();
 	}
 
-	while ((await collections.migrations.countDocuments()) < migrations.length) {
+	/**
+	 * Only the lock holder gets here, and it has just written those records itself: a count that
+	 * never catches up means one was lost, not that another instance is still working. Waiting for
+	 * ever on it kept the mismatch silent while the instance served traffic.
+	 */
+	const waitUntil = Date.now() + 60_000;
+	for (;;) {
+		const recorded = await collections.migrations.countDocuments();
+		if (recorded >= migrations.length) {
+			break;
+		}
+		if (Date.now() > waitUntil) {
+			console.error(
+				`migrations: ${recorded} recorded for ${migrations.length} known, still short after 60s — carrying on`
+			);
+			break;
+		}
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 	}
-
-	// Idempotent on every startup: ensure the built-in searchlists exist.
-	// Re-creates them if they were deleted (the admin UI blocks deletion,
-	// but a manual Mongo delete still happens).
-	await ensureDefaultSearchlist();
-	await ensureSearchSearchlist();
 }
