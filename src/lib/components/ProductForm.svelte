@@ -174,7 +174,8 @@
 		vatProfiles,
 		bebopCountry: $page.data.vatCountry,
 		userCountry: $page.data.vatCountry,
-		vatSingleCountry: true
+		vatSingleCountry: true,
+		vatExempted: $page.data.vatExempted
 	});
 	$: vatProfileLabel =
 		vatProfiles.find((p) => p._id === vatProfileId)?.name ?? 'No custom VAT profile';

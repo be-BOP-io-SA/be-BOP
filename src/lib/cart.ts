@@ -155,7 +155,8 @@ function computeVatForItem(
 		vatProfiles: params.vatProfiles,
 		bebopCountry: params.bebopCountry,
 		userCountry: params.userCountry,
-		vatSingleCountry: params.vatSingleCountry
+		vatSingleCountry: params.vatSingleCountry,
+		vatExempted: params.vatExempted
 	});
 	const freeUnits = params.freeUnits ?? 0;
 	const { amount: amountToBill, currency, usedFreeUnits } = priceToBillForItem(item, { freeUnits });
@@ -275,6 +276,7 @@ function computeDeliveryFeesHt(params: {
 	bebopCountry: CountryAlpha2 | undefined;
 	userCountry: CountryAlpha2 | undefined;
 	vatSingleCountry: boolean;
+	vatExempted?: boolean;
 	vatProfiles: Array<{
 		_id: string | ObjectId;
 		rates: Partial<Record<CountryAlpha2, number>>;
@@ -288,7 +290,8 @@ function computeDeliveryFeesHt(params: {
 		vatProfiles: params.vatProfiles,
 		bebopCountry: params.bebopCountry,
 		userCountry: params.userCountry,
-		vatSingleCountry: params.vatSingleCountry
+		vatSingleCountry: params.vatSingleCountry,
+		vatExempted: params.vatExempted
 	});
 	return {
 		amount: extractVat(params.deliveryFees.amount, rate),
@@ -382,6 +385,7 @@ export function computePriceInfo(
 		bebopCountry: params.bebopCountry,
 		userCountry: params.userCountry,
 		vatSingleCountry: params.vatSingleCountry,
+		vatExempted: params.vatExempted,
 		vatProfiles: params.vatProfiles
 	});
 

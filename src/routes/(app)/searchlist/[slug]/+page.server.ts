@@ -35,6 +35,7 @@ export const load = async ({ params, url, locals }) => {
 		bebopCountry: runtimeConfig.vatCountry,
 		userCountry: locals.countryCode,
 		vatSingleCountry: runtimeConfig.vatSingleCountry,
+		vatExempted: runtimeConfig.vatExempted,
 		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
 	};
 
@@ -97,6 +98,7 @@ export const load = async ({ params, url, locals }) => {
 		totalPages,
 		allowedTags,
 		basePath: `/searchlist/${params.slug}`,
+		vatExempted: runtimeConfig.vatExempted,
 		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
 	};
 };
