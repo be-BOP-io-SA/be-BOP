@@ -2,6 +2,7 @@ import { addToCartInDb } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
 import { applyResolvedStock, resolveStockProduct } from '$lib/server/product';
+import { isVisibleToViewer } from '$lib/server/product-visibility';
 import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { adminPrefix as getAdminPrefix } from '$lib/server/admin';
@@ -224,15 +225,6 @@ async function fetchProductScheduleEvents(productId: string) {
 			endsAt: 1
 		})
 		.toArray();
-}
-
-function isVisibleToViewer(
-	product: Pick<Product, 'actionSettings'>,
-	locals: Pick<App.Locals, 'user'>
-) {
-	return locals.user?.hasPosOptions
-		? product.actionSettings.retail.visible
-		: product.actionSettings.eShop.visible;
 }
 
 export const load = async ({ params, parent, locals }) => {

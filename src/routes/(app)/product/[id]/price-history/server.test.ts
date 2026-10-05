@@ -45,7 +45,14 @@ async function statusOf(p: Promise<Response>): Promise<number | 'ok'> {
 	}
 }
 
-const PUBLIC_PRODUCT = { price: { currency: 'CHF' } };
+function withVisibility(visibility: { eShop: boolean; retail: boolean }) {
+	return {
+		price: { currency: 'CHF' },
+		actionSettings: { eShop: { visible: visibility.eShop }, retail: { visible: visibility.retail } }
+	};
+}
+
+const PUBLIC_PRODUCT = withVisibility({ eShop: true, retail: false });
 
 describe('GET /product/[id]/price-history', () => {
 	beforeEach(() => {
@@ -64,6 +71,19 @@ describe('GET /product/[id]/price-history', () => {
 			expect(await statusOf(call())).toBe(404);
 		}
 	);
+
+	it('404s for a product hidden from the e-shop', async () => {
+		findOne.mockResolvedValue(withVisibility({ eShop: false, retail: true }));
+		expect(await statusOf(call())).toBe(404);
+	});
+
+	it('follows the retail visibility for a POS account', async () => {
+		findOne.mockResolvedValue(PUBLIC_PRODUCT);
+		expect(await statusOf(call({ user: { roleId: 'pos', hasPosOptions: true } }))).toBe(404);
+
+		findOne.mockResolvedValue(withVisibility({ eShop: false, retail: true }));
+		expect(await statusOf(call({ user: { roleId: 'pos', hasPosOptions: true } }))).toBe('ok');
+	});
 
 	it('returns JSON for a normal product', async () => {
 		findOne.mockResolvedValue(PUBLIC_PRODUCT);

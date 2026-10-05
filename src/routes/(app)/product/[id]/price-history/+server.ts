@@ -1,5 +1,6 @@
 import { collections } from '$lib/server/database';
 import { getProductPriceHistory } from '$lib/server/price-history';
+import { isVisibleToViewer } from '$lib/server/product-visibility';
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
@@ -29,9 +30,10 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 
 	const product = await collections.products.findOne(
 		{ _id: params.id },
-		{ projection: { price: 1, payWhatYouWant: 1, free: 1, bookingSpec: 1 } }
+		{ projection: { price: 1, payWhatYouWant: 1, free: 1, bookingSpec: 1, actionSettings: 1 } }
 	);
-	if (!product) {
+	// The product page redirects away from hidden products; their prices must not leak from here.
+	if (!product || !isVisibleToViewer(product, locals)) {
 		throw error(404, 'Product not found');
 	}
 	// No fixed catalogue price for these products — the calendar is not available.
