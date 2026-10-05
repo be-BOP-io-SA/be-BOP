@@ -417,8 +417,13 @@
 	 * It used to be resubmitted as stored, so a shop could read a bracelet code on screen, retype
 	 * it, save, and change nothing — the field it was typing into was the label. Changing it here
 	 * rewrites `variations[].value` and moves the label with it.
+	 *
+	 * Keyed by the saved variation, not by row: moving, duplicating or deleting rows must not hand
+	 * one variation's new id to another.
 	 */
-	let variationValueIds: string[] = (product.variations ?? []).map((v) => v.value);
+	let variationValueIds: Record<string, string> = Object.fromEntries(
+		(product.variations ?? []).map((variation) => [variationKey(variation), variation.value])
+	);
 
 	function isNumber(value: string) {
 		return !isNaN(Number(value)) && value.trim() !== '';
@@ -450,7 +455,7 @@
 		return typeof window === 'undefined' ? path : new URL(path, window.location.origin).href;
 	}
 
-	function variationLinkKey(variation: { name: string; value: string }): string {
+	function variationKey(variation: { name: string; value: string }): string {
 		return `${variation.name}:${variation.value}`;
 	}
 
@@ -464,7 +469,7 @@
 	async function copyVariationLink(variation: { name: string; value: string }) {
 		try {
 			await navigator.clipboard.writeText(variationLink(variation));
-			copiedVariationLink = variationLinkKey(variation);
+			copiedVariationLink = variationKey(variation);
 			setTimeout(() => (copiedVariationLink = ''), 2000);
 		} catch {
 			// Clipboard access is denied outside a secure context, and a shop admin served over
@@ -1014,7 +1019,7 @@
 										<input
 											type="text"
 											class="form-input"
-											bind:value={variationValueIds[i]}
+											bind:value={variationValueIds[variationKey(variation)]}
 											placeholder={variation.value}
 										/>
 									</label>
@@ -1034,8 +1039,9 @@
 										Value
 										<input
 											type="text"
-											name="variationLabels.values[{variation.name}][{variationValueIds[i] ||
-												variation.value}]"
+											name="variationLabels.values[{variation.name}][{variationValueIds[
+												variationKey(variation)
+											] || variation.value}]"
 											class="form-input"
 											value={product.variationLabels?.values[variation.name]?.[variation.value]}
 											bind:this={variationInput[i]}
@@ -1086,7 +1092,7 @@
 										<input
 											type="hidden"
 											name="variations[{i}].value"
-											value={variationValueIds[i] || variation.value}
+											value={variationValueIds[variationKey(variation)] || variation.value}
 										/>
 									{:else}
 										<input
@@ -1126,7 +1132,7 @@
 										on:click={() => copyVariationLink(variation)}
 										title={variationLinkTitle(variation)}
 									>
-										{copiedVariationLink === variationLinkKey(variation) ? '✅' : '🔗'}
+										{copiedVariationLink === variationKey(variation) ? '✅' : '🔗'}
 									</button>
 									<button
 										type="button"
