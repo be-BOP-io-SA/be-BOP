@@ -477,6 +477,16 @@
 	// Seeded from the URL so the price preview and the POST body carry the forced values even
 	// though no dropdown was ever rendered for them.
 	let selectedVariations: Record<string, string> = { ...data.forcedVariations };
+	// SvelteKit keeps this component when navigating to another product or query string, so the
+	// URL's choice must be re-applied then, but not on a mere reload of the same page's data.
+	let variationsSeededFor = variationSeedKey();
+	function variationSeedKey() {
+		return `${data.product._id}?${JSON.stringify(data.forcedVariations)}`;
+	}
+	$: if (data && variationSeedKey() !== variationsSeededFor) {
+		variationsSeededFor = variationSeedKey();
+		selectedVariations = { ...data.forcedVariations };
+	}
 	$: if (data.product.hasVariations) {
 		customAmount = productPriceWithVariations(data.product, selectedVariations);
 	}
