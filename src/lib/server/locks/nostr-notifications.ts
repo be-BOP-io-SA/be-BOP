@@ -2,19 +2,18 @@ import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
 import { Lock } from '../lock';
 import { processClosed } from '../process';
 import type { NostRNotification } from '$lib/types/NostRNotifications';
-import { getNostrKeys, hexToNpub, isNostrConfigured, nostrRelays, nostrToHex } from '../nostr';
+import {
+	getNostrKeys,
+	hexToNpub,
+	isAuthenticEvent,
+	isNostrConfigured,
+	nostrRelays,
+	nostrToHex
+} from '../nostr';
 import { fromUnixTime, getUnixTime, max } from 'date-fns';
 import { collections } from '../database';
 import { RelayPool } from 'nostr-relaypool';
-import {
-	getEventHash,
-	getSignature,
-	nip04,
-	type Event,
-	Kind,
-	validateEvent,
-	verifySignature
-} from 'nostr-tools';
+import { getEventHash, getSignature, nip04, type Event, Kind } from 'nostr-tools';
 import { NOSTR_PROTOCOL_VERSION } from './handle-messages';
 import { building } from '$app/environment';
 import { rateLimit } from '../rateLimit';
@@ -120,7 +119,7 @@ function initRelayPool(): boolean {
 		async (event /*, isAfterEose, relayURL*/) => {
 			// isAfterEose = live event
 			try {
-				if (!validateEvent(event) || !verifySignature(event)) {
+				if (!isAuthenticEvent(event)) {
 					return;
 				}
 				if (!event.tags.some((tag) => tag[0] === 'p' && tag[1] === nostrPublicKeyHex)) {

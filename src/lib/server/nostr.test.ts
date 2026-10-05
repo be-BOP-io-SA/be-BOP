@@ -1,6 +1,13 @@
 import { bech32 } from 'bech32';
 import { describe, expect, it } from 'vitest';
-import { hexToNpub, validateEmailOrNpub, zodNpub } from './nostr';
+import {
+	generatePrivateKey,
+	getEventHash,
+	getPublicKey,
+	getSignature,
+	type Event
+} from 'nostr-tools';
+import { hexToNpub, isAuthenticEvent, validateEmailOrNpub, zodNpub } from './nostr';
 
 const validNpub = hexToNpub('a'.repeat(64));
 
@@ -32,5 +39,33 @@ describe('validateEmailOrNpub', () => {
 
 	it('returns a valid npub trimmed', () => {
 		expect(validateEmailOrNpub(`  ${validNpub} `)).toEqual({ address: validNpub });
+	});
+});
+
+describe('isAuthenticEvent', () => {
+	const privateKey = generatePrivateKey();
+	const signed = (() => {
+		const event = {
+			kind: 4,
+			created_at: 1_700_000_000,
+			tags: [['p', 'a'.repeat(64)]],
+			content: '!add abc 1',
+			pubkey: getPublicKey(privateKey)
+		} as Event;
+		event.id = getEventHash(event);
+		event.sig = getSignature(event, privateKey);
+		return event;
+	})();
+
+	it('accepts a genuine signed event', () => {
+		expect(isAuthenticEvent(signed)).toBe(true);
+	});
+
+	it('refuses the same event carrying another id', () => {
+		expect(isAuthenticEvent({ ...signed, id: 'f'.repeat(64) })).toBe(false);
+	});
+
+	it('refuses an event whose content was altered', () => {
+		expect(isAuthenticEvent({ ...signed, content: '!add abc 99' })).toBe(false);
 	});
 });

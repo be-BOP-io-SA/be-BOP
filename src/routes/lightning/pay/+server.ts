@@ -7,9 +7,8 @@ import { jwtVerify } from 'jose';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import { collections } from '$lib/server/database';
-import { getNostrKeys, isNostrConfigured } from '$lib/server/nostr';
+import { getNostrKeys, isAuthenticEvent, isNostrConfigured } from '$lib/server/nostr';
 import { rateLimit } from '$lib/server/rateLimit';
-import { validateEvent, verifySignature } from 'nostr-tools';
 
 const ZAP_REQUEST_KIND = 9734;
 
@@ -41,7 +40,7 @@ function validateZapRequest(nostrParam: string): ZapRequestValidation {
 		}
 
 		// Validate event signature
-		if (!validateEvent(event) || !verifySignature(event)) {
+		if (!isAuthenticEvent(event)) {
 			return { valid: false, error: 'Invalid event signature' };
 		}
 

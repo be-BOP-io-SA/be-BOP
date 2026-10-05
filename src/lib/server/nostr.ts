@@ -1,5 +1,11 @@
 import { bech32 } from 'bech32';
-import { getPublicKey } from 'nostr-tools';
+import {
+	getEventHash,
+	getPublicKey,
+	validateEvent,
+	verifySignature,
+	type Event
+} from 'nostr-tools';
 import { z } from 'zod';
 import { runtimeConfig } from './runtime-config';
 
@@ -95,6 +101,12 @@ export function validateEmailOrNpub(input: unknown): { address: string } | { err
 	}
 
 	return { error: 'invalidContactAddress' };
+}
+
+// nostr-tools' verifySignature signs over the recomputed hash and never compares it with
+// event.id, so a relay could replay a signed event under any id it likes.
+export function isAuthenticEvent(event: Event): boolean {
+	return validateEvent(event) && event.id === getEventHash(event) && verifySignature(event);
 }
 
 export function zodNsec() {
