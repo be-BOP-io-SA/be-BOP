@@ -40,6 +40,20 @@
 				"noReference": "-- No reference (use own stock) --",
 				"warning": "⚠️ This product references another product's stock. Stock changes will affect the referenced product."
 			}
+		},
+		"session": {
+			"expiry": {
+				"warning": {
+					"message": "Your session will end in {countdown}",
+					"extend": "Extend",
+					"ignore": "Dismiss",
+					"screenReader": "Your session is about to expire. Use the Extend button to keep working."
+				},
+				"expired": {
+					"message": "Your session has been disconnected. Any unsaved changes will not be recorded, please <0>log in again</0>.",
+					"configHint": "A longer session duration can be configured at login."
+				}
+			}
 		}
 	},
 	"ageWarning": {
@@ -1005,11 +1019,26 @@
 			"then": "then"
 		},
 		"pricingScheduleUnit": {
-			"hour": { "one": "hour", "other": "hours" },
-			"day": { "one": "day", "other": "days" },
-			"week": { "one": "week", "other": "weeks" },
-			"month": { "one": "month", "other": "months" },
-			"year": { "one": "year", "other": "years" }
+			"hour": {
+				"one": "hour",
+				"other": "hours"
+			},
+			"day": {
+				"one": "day",
+				"other": "days"
+			},
+			"week": {
+				"one": "week",
+				"other": "weeks"
+			},
+			"month": {
+				"one": "month",
+				"other": "months"
+			},
+			"year": {
+				"one": "year",
+				"other": "years"
+			}
 		},
 		"type": {
 			"deposit": "On deposit",
