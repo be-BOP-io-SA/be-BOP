@@ -5,10 +5,11 @@ import { cmsFromContent } from '$lib/server/cms.js';
 import { collections } from '$lib/server/database';
 import { picturesForProducts } from '$lib/server/picture.js';
 import { pojo } from '$lib/server/pojo.js';
+import { withoutWhitelist } from '$lib/server/saleLock';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { freeProductsForUser, resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import type { DigitalFile } from '$lib/types/DigitalFile';
-import { userQuery } from '$lib/server/user.js';
+import { identifiedUserQuery } from '$lib/server/user.js';
 import { userIdentifier } from '$lib/server/user.js';
 import type { CMSPage } from '$lib/types/CmsPage.js';
 import type { Product } from '$lib/types/Product';
@@ -131,6 +132,10 @@ export async function load(params) {
 							| 'maxQuantityPerOrder'
 							| 'stock'
 							| 'stockReference'
+							| 'requiresAuthentication'
+							| 'whitelist'
+							| 'maxQuantityPerUser'
+							| 'subscriptionReminderSeconds'
 							| 'isTicket'
 							| 'vatProfileId'
 							| 'paymentMethods'
@@ -158,6 +163,10 @@ export async function load(params) {
 						maxQuantityPerOrder: 1,
 						stock: 1,
 						stockReference: 1,
+						requiresAuthentication: 1,
+						whitelist: 1,
+						maxQuantityPerUser: 1,
+						subscriptionReminderSeconds: 1,
 						vatProfileId: 1,
 						paymentMethods: 1,
 						'bookingSpec.slotMinutes': 1,
@@ -186,7 +195,7 @@ export async function load(params) {
 		cart.items.length ? await picturesForProducts(cart.items.map((it) => it.productId)) : [],
 		cart.items.length
 			? collections.paidSubscriptions
-					.find({ ...userQuery(user), paidUntil: { $gt: new Date() } })
+					.find({ ...identifiedUserQuery(user), paidUntil: { $gt: new Date() } })
 					.toArray()
 			: []
 	]);
@@ -237,10 +246,14 @@ export async function load(params) {
 				return undefined;
 			}
 
+			// The list of authorised customers is a shop secret: the evaluator reads it here, the
+			// browser only ever learns that a product is locked.
+			const productWithoutWhitelist = withoutWhitelist(pojo(productDoc));
+
 			return {
 				_id: item._id,
 				product: {
-					...pojo(productDoc),
+					...productWithoutWhitelist,
 					...(productDoc.type === 'subscription' && {
 						subscriptionDuration: resolveSubscriptionDuration(productDoc)
 					})

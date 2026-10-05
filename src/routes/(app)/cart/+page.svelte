@@ -12,6 +12,7 @@
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
 	import { useI18n } from '$lib/i18n';
+	import { cartErrorKey } from '$lib/cartErrorKey';
 	import { computeDeliveryFees } from '$lib/cart';
 	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
@@ -46,6 +47,12 @@
 	let formAlias: HTMLInputElement;
 	let loading = false;
 	const { t, locale, countryName } = useI18n();
+
+	// A quantity the cart refused leaves the cart unchanged, so the banner has nothing to show:
+	// the reason comes back on the URL and is spelled out here.
+	$: if (!data.errorMessage && data.refusedLock) {
+		errorMessage = t(cartErrorKey(data.refusedLock));
+	}
 	$: isDigital = items.every((item) => !item.product.shipping);
 	$: physicalCartCanBeOrdered =
 		!!data.physicalCartMinAmount && !isDigital && priceInfo
@@ -161,6 +168,25 @@
 					</label>
 				</div>
 			</form>
+		{/if}
+		{#if data.saleLocks?.length}
+			<div class="border border-red-500 rounded p-4 flex flex-col gap-2">
+				{#each data.saleLocks as { locks, name }}
+					{#each locks as lock}
+						<p class="text-red-500">
+							{name} — {t(cartErrorKey(lock.code), lock.params ?? {})}
+						</p>
+					{/each}
+				{/each}
+				{#if data.saleLocks.some( ({ locks }) => locks.some((lock) => lock.code === 'LOGIN_REQUIRED') )}
+					<a
+						href="/login"
+						target="_blank"
+						rel="noopener"
+						class="btn body-cta body-mainCTA self-start">{t('saleLock.login')}</a
+					>
+				{/if}
+			</div>
 		{/if}
 		{#if errorMessage && !errorProductId}
 			<p class="text-red-500">{errorMessage}</p>
@@ -588,7 +614,7 @@
 			<form action="/checkout" class="flex justify-end">
 				<button
 					class="btn body-cta body-mainCTA"
-					disabled={!physicalCartCanBeOrdered}
+					disabled={!physicalCartCanBeOrdered || !!data.saleLocks?.length}
 					type="submit"
 				>
 					{t('cart.cta.checkout')}
