@@ -74,3 +74,61 @@ describe('migration #2492 — drop single-currency (SAT) amount from order.vat',
 		expect(after?.vat).toEqual([{ rate: 8.1, country: 'CH' }]);
 	});
 });
+
+describe('migration 0000…11f1 — credential e-mail templates', () => {
+	const credentialMigration = () => {
+		const found = migrations.find((m) => m._id.equals(new ObjectId('0000000000000000000011f1')));
+		if (!found) {
+			throw new Error('credential template migration not found');
+		}
+		return found;
+	};
+
+	it('drops only the credential templates that could leak their link', async () => {
+		await cleanDb();
+		const trapped = {
+			subject: 'Password reset',
+			html: '<a href="{{resetLink}}">go</a><img src="https://evil.test/p.png">',
+			default: false
+		};
+		const reworded = {
+			subject: 'Session',
+			html: '<p>Bonjour</p><a href="{{sessionLink}}">Ouvrir</a>',
+			default: false
+		};
+		const other = {
+			subject: 'Expired',
+			html: '<img src="https://cdn.test/logo.png">',
+			default: false
+		};
+		await collections.runtimeConfig.insertOne({
+			_id: 'emailTemplates',
+			data: {
+				passwordReset: trapped,
+				temporarySessionRequest: reworded,
+				'order.payment.expired': other
+			},
+			createdAt: new Date(),
+			updatedAt: new Date()
+		} as never);
+
+		await withTransaction((session) => credentialMigration().run(session));
+
+		const { data } = (await collections.runtimeConfig.findOne({
+			_id: 'emailTemplates'
+		})) as never as {
+			data: Record<string, unknown>;
+		};
+		expect(data.passwordReset).toBeUndefined();
+		expect(data.temporarySessionRequest).toEqual(reworded);
+		expect(data['order.payment.expired']).toEqual(other);
+	});
+
+	it('does nothing when no template was ever saved', async () => {
+		await cleanDb();
+
+		await withTransaction((session) => credentialMigration().run(session));
+
+		expect(await collections.runtimeConfig.countDocuments()).toBe(0);
+	});
+});
