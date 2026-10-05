@@ -1,6 +1,7 @@
 import { env } from '$env/dynamic/private';
 import { runtimeConfig } from './runtime-config';
 import { getProcessorsForMethod } from './sdk/pp';
+import type { Product } from '$lib/types/Product';
 import {
 	ALL_PAYMENT_PROCESSOR_SLUGS,
 	type PaymentProcessorSlug
@@ -28,6 +29,20 @@ export type PaymentMethod = (typeof ALL_PAYMENT_METHODS)[number];
  */
 export const ALL_PAYMENT_PROCESSORS = ALL_PAYMENT_PROCESSOR_SLUGS;
 export type PaymentProcessor = PaymentProcessorSlug;
+
+/** Keeps only the methods that every product in the cart accepts. */
+export function restrictToProducts(
+	methods: PaymentMethod[],
+	products: Array<Pick<Product, 'paymentMethods'>>
+): PaymentMethod[] {
+	return products.reduce(
+		(allowed, product) =>
+			product.paymentMethods
+				? allowed.filter((method) => product.paymentMethods?.includes(method))
+				: allowed,
+		methods
+	);
+}
 
 export const paymentMethods = (opts?: {
 	hasPosOptions?: boolean;

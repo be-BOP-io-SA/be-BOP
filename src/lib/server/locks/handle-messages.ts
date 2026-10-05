@@ -12,7 +12,7 @@ import { typedInclude } from '$lib/utils/typedIncludes';
 import { createOrder } from '../orders';
 import { typedEntries } from '$lib/utils/typedEntries';
 import { building } from '$app/environment';
-import { paymentMethods } from '../payment-methods';
+import { paymentMethods, restrictToProducts } from '../payment-methods';
 import { userQuery } from '../user';
 import { rateLimit } from '../rateLimit';
 import { computePriceInfo } from '$lib/cart';
@@ -567,9 +567,12 @@ export const commands: Record<
 							vatSingleCountry: runtimeConfig.vatSingleCountry
 						});
 
-						return paymentMethods({
-							totalSatoshis: toSatoshis(totalPrice.totalPriceWithVat, totalPrice.currency)
-						});
+						return restrictToProducts(
+							paymentMethods({
+								totalSatoshis: toSatoshis(totalPrice.totalPriceWithVat, totalPrice.currency)
+							}),
+							products
+						);
 					} catch {
 						return paymentMethods();
 					}
@@ -623,7 +626,13 @@ export const commands: Record<
 				}));
 
 			// Should not happen
-			const availablePaymentMethods = paymentMethods().filter((m) => m !== 'free');
+			const availablePaymentMethods = restrictToProducts(paymentMethods(), products).filter(
+				(m) => m !== 'free'
+			);
+			if (!availablePaymentMethods.length) {
+				await send('No payment methods available for this cart');
+				return;
+			}
 			if (!typedInclude(availablePaymentMethods, paymentMethod)) {
 				await send(
 					'Invalid payment method: ' +

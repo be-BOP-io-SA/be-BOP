@@ -80,3 +80,54 @@ describe('!remove', () => {
 		expect((await collections.carts.findOne({}))?.items).toHaveLength(0);
 	});
 });
+
+describe('!checkout', () => {
+	beforeEach(async () => {
+		await cleanDb();
+	});
+
+	async function checkout(paymentMethod: string) {
+		const replies: string[] = [];
+		await commands['!checkout'].execute(
+			async (message) => {
+				replies.push(message);
+			},
+			{ senderNpub, args: { paymentMethod } }
+		);
+		return replies;
+	}
+
+	it('refuses a method the product in the cart does not allow', async () => {
+		await collections.products.insertOne({
+			...product(true),
+			paymentMethods: ['point-of-sale']
+		});
+		await putInCart(1);
+
+		const [reply] = await checkout('lightning');
+
+		expect(reply).toContain('Invalid payment method: lightning');
+		expect(await collections.orders.countDocuments()).toBe(0);
+	});
+
+	it('says so when no method suits every product in the cart', async () => {
+		await collections.products.insertOne({ ...product(true), paymentMethods: [] });
+		await putInCart(1);
+
+		expect(await checkout('lightning')).toEqual(['No payment methods available for this cart']);
+	});
+
+	it('lets a method the product allows through to order creation', async () => {
+		await collections.products.insertOne({
+			...product(true),
+			paymentMethods: ['bank-transfer']
+		});
+		await putInCart(1);
+
+		const replies = await checkout('bank-transfer');
+
+		// No payment processor is configured under test, so createOrder itself fails afterwards.
+		expect(replies.join('\n')).not.toContain('Invalid payment method');
+		expect(replies.join('\n')).not.toContain('No payment methods available');
+	});
+});
