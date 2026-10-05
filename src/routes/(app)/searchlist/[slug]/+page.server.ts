@@ -1,3 +1,4 @@
+import { displaysVatIncluded } from '$lib/server/vat-display';
 import { error } from '@sveltejs/kit';
 import { collections } from '$lib/server/database';
 import { readUrlState, searchProducts, type VatContext } from '$lib/server/searchlist';
@@ -35,7 +36,7 @@ export const load = async ({ params, url, locals }) => {
 		bebopCountry: runtimeConfig.vatCountry,
 		userCountry: locals.countryCode,
 		vatSingleCountry: runtimeConfig.vatSingleCountry,
-		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
+		displayVatIncluded: displaysVatIncluded()
 	};
 
 	const { products, total, totalPages } = await searchProducts(
@@ -97,6 +98,6 @@ export const load = async ({ params, url, locals }) => {
 		totalPages,
 		allowedTags,
 		basePath: `/searchlist/${params.slug}`,
-		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
+		displayVatIncluded: displaysVatIncluded()
 	};
 };

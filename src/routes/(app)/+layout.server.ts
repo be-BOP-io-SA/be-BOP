@@ -1,3 +1,4 @@
+import { displaysVatIncluded, hidesVatMentions } from '$lib/server/vat-display';
 import { ORIGIN } from '$lib/server/env-config';
 import { adminPrefix } from '$lib/server/admin.js';
 import { getCartFromDb } from '$lib/server/cart.js';
@@ -334,7 +335,9 @@ export async function load(params) {
 		vatSingleCountry: runtimeConfig.vatSingleCountry,
 		vatCountry: runtimeConfig.vatCountry,
 		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
-		displayVatIncludedInProduct: runtimeConfig.displayVatIncludedInProduct,
+		// Resolved server-side so every surface reads the same answer — see `vat-display.ts`.
+		displayVatIncludedInProduct: displaysVatIncluded(),
+		hideVatMentions: hidesVatMentions(),
 		currencies: {
 			main: runtimeConfig.mainCurrency,
 			secondary: runtimeConfig.secondaryCurrency,

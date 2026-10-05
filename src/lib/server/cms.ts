@@ -1,3 +1,4 @@
+import { displaysVatIncluded } from './vat-display';
 import type { Challenge } from '$lib/types/Challenge';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import type { Product } from '$lib/types/Product';
@@ -854,7 +855,7 @@ async function buildSearchlistViews(searchlistSlugs: string[], locals: App.Local
 		bebopCountry: runtimeConfig.vatCountry,
 		userCountry: locals.countryCode,
 		vatSingleCountry: runtimeConfig.vatSingleCountry,
-		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
+		displayVatIncluded: displaysVatIncluded()
 	};
 
 	return Promise.all(

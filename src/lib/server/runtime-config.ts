@@ -149,6 +149,8 @@ const baseConfig = {
 	vatCountry: 'FR' satisfies CountryAlpha2 as CountryAlpha2,
 	vatNullOutsideSellerCountry: false,
 	displayVatIncludedInProduct: false,
+	// #2679: hide storefront "VAT excluded"/"(HT)" mentions when the shop is VAT-exempt
+	hideVatMentionsWhenExempted: true,
 	collectIPOnDeliverylessOrders: false,
 	isBillingAddressMandatory: false,
 	disableLanguageSelector: false,
