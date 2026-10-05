@@ -47,11 +47,19 @@ export async function getActivePercentageDiscounts(): Promise<Discount[]> {
  * Each non-empty condition must pass. Empty/undefined = "true" (no filter).
  */
 export function evaluateDiscountConditions(discount: Discount, ctx: DiscountContext): boolean {
-	if (
-		discount.subscriptionIds?.length &&
-		!discount.subscriptionIds.some((id) => ctx.userSubscriptionIds.includes(id))
-	) {
-		return false;
+	if (discount.subscriptionIds?.length) {
+		const hasActiveSubscription = discount.subscriptionIds.some((id) =>
+			ctx.userSubscriptionIds.includes(id)
+		);
+		// Buying the subscription right now counts, when the shop allows it: otherwise a new
+		// customer has to order the membership, come back logged in, and order again (#2718).
+		const isSubscribingNow =
+			!!discount.acceptSubscriptionInCart &&
+			discount.subscriptionIds.some((id) => ctx.cartItems.some((item) => item.productId === id));
+
+		if (!hasActiveSubscription && !isSubscribingNow) {
+			return false;
+		}
 	}
 
 	if (discount.promoCode && discount.promoCode.toLowerCase() !== ctx.promoCode?.toLowerCase()) {

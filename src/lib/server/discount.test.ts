@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
+import {
+	evaluateDiscountConditions,
+	isPublicZeroCriteriaDiscount,
+	publicDiscountPriceSnapshot
+} from './discount';
+import type { DiscountContext } from './discount';
 import type { Discount } from '$lib/types/Discount';
 
 /** Minimal valid public percentage discount; override any field per test. */
@@ -89,5 +94,80 @@ describe('publicDiscountPriceSnapshot', () => {
 			wholeCatalog: false,
 			productIds: ['p1', 'p2']
 		});
+	});
+});
+
+/** Cart context with no conditions met beyond what a test sets. */
+function context(overrides: Partial<DiscountContext> = {}): DiscountContext {
+	return {
+		userSubscriptionIds: [],
+		userContactAddresses: [],
+		cartItems: [],
+		isLoggedIn: false,
+		...overrides
+	};
+}
+
+describe('evaluateDiscountConditions — required subscription', () => {
+	const membership = discount({ subscriptionIds: ['membership'] });
+
+	it('passes when the subscription is already active', () => {
+		expect(
+			evaluateDiscountConditions(membership, context({ userSubscriptionIds: ['membership'] }))
+		).toBe(true);
+	});
+
+	it('fails when the customer has no such subscription', () => {
+		expect(evaluateDiscountConditions(membership, context())).toBe(false);
+	});
+
+	// #2718: without the opt-in, a subscription sitting in the cart is not a subscription the
+	// customer holds — an existing members-only discount must keep meaning paid-up members.
+	it('ignores the subscription sitting in the cart by default', () => {
+		expect(
+			evaluateDiscountConditions(
+				membership,
+				context({ cartItems: [{ productId: 'membership', quantity: 1 }] })
+			)
+		).toBe(false);
+	});
+
+	it('accepts the subscription sitting in the cart once the shop opts in', () => {
+		expect(
+			evaluateDiscountConditions(
+				discount({ subscriptionIds: ['membership'], acceptSubscriptionInCart: true }),
+				context({ cartItems: [{ productId: 'membership', quantity: 1 }] })
+			)
+		).toBe(true);
+	});
+
+	it('still fails with the opt-in when neither the cart nor the customer carries it', () => {
+		expect(
+			evaluateDiscountConditions(
+				discount({ subscriptionIds: ['membership'], acceptSubscriptionInCart: true }),
+				context({ cartItems: [{ productId: 'something-else', quantity: 1 }] })
+			)
+		).toBe(false);
+	});
+});
+
+describe('evaluateDiscountConditions — required product combinations', () => {
+	// #2718: combinations gate the discount and are matched against the cart, so a subscription
+	// works there like any other line once the admin form lets it be picked.
+	const combo = discount({
+		productCombinations: [{ products: [{ productId: 'membership', quantity: 1 }] }]
+	});
+
+	it('matches a subscription listed in a required combination', () => {
+		expect(
+			evaluateDiscountConditions(
+				combo,
+				context({ cartItems: [{ productId: 'membership', quantity: 1 }] })
+			)
+		).toBe(true);
+	});
+
+	it('does not match when the combination is absent from the cart', () => {
+		expect(evaluateDiscountConditions(combo, context())).toBe(false);
 	});
 });
