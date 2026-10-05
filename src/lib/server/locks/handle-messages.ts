@@ -224,7 +224,7 @@ async function sendMessage(dest: string, content: string, minCreatedAt: Date) {
 	});
 }
 
-const commands: Record<
+export const commands: Record<
 	string,
 	{
 		description: string;
@@ -472,8 +472,13 @@ const commands: Record<
 			}
 
 			const product = await collections.products.findOne({ _id: ref });
+			const user = { npub: senderNpub };
+			const currentCart = await getCartFromDb({ user });
 
-			if (!product) {
+			// Same rule as !add so a slug cannot be probed here, except for a product already in the
+			// sender's cart: it must stay removable if it was hidden after being added.
+			const inCart = currentCart.items.some((item) => item.productId === ref);
+			if (!product || (!product.actionSettings.nostr.visible && !inCart)) {
 				await send(
 					'No product found with ref: ' + ref + '. Use "catalog" to get the list of products'
 				);
@@ -481,9 +486,8 @@ const commands: Record<
 			}
 
 			const cart = await removeFromCartInDb(product, quantity, {
-				user: {
-					npub: senderNpub
-				}
+				user,
+				cart: currentCart
 			}).catch(async (e) => {
 				console.error(e);
 				await send(e.message);
