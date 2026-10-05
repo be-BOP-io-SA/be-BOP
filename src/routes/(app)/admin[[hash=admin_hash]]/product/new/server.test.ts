@@ -32,20 +32,20 @@ describe('product duplication', () => {
 	});
 
 	it('keeps the variation family options and the URL policy', async () => {
-		await actions
-			.duplicate({
+		await Promise.resolve(
+			actions.duplicate({
 				request: new Request('http://x/admin/product/new?/duplicate', {
 					method: 'POST',
 					body: duplicateForm()
 				}),
 				locals: {}
 			} as Parameters<typeof actions.duplicate>[0])
-			.catch((thrown) => {
-				// The action ends with a redirect to the new product's admin page.
-				if (thrown?.status !== 303) {
-					throw thrown;
-				}
-			});
+		).catch((thrown: { status?: number }) => {
+			// The action ends with a redirect to the new product's admin page.
+			if (thrown?.status !== 303) {
+				throw thrown;
+			}
+		});
 
 		const duplicated = await collections.products.findOne({ _id: 'duplicated-bracelet' });
 		expect(duplicated?.variationFamilies).toEqual({
