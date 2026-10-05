@@ -242,6 +242,43 @@ describe('order', () => {
 		expect(order1?.payments[1].invoice?.number).toBe(3);
 	});
 
+	it('gives every concurrent settlement its own invoice number', async () => {
+		// #2743: invoice numbers were derived by reading back the highest one already stored, so
+		// settlements landing together computed the same next number. The unique index let one
+		// through and the rest lost their payment, leaving those orders pending at zero.
+		const orderIds = await Promise.all(
+			Array.from({ length: 8 }, (_, i) =>
+				createOrder([{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }], 'point-of-sale', {
+					locale: 'en',
+					user: { sessionId: `concurrent-session-${i}` },
+					shippingAddress: null,
+					userVatCountry: 'FR'
+				})
+			)
+		);
+
+		const orders = await Promise.all(
+			orderIds.map(async (id) => {
+				const order = await collections.orders.findOne({ _id: id });
+				if (!order) {
+					throw new Error(`Order ${id} not found`);
+				}
+				return order;
+			})
+		);
+
+		await Promise.all(
+			orders.map((order) => onOrderPayment(order, order.payments[0], order.payments[0].price))
+		);
+
+		const settled = await collections.orders.find({ _id: { $in: orderIds } }).toArray();
+		const invoiceNumbers = settled.map((order) => order.payments[0].invoice?.number);
+
+		expect(invoiceNumbers.every((number) => typeof number === 'number')).toBe(true);
+		expect(new Set(invoiceNumbers).size).toBe(orderIds.length);
+		expect(settled.every((order) => order.payments[0].status === 'paid')).toBe(true);
+	});
+
 	it('should allow free method payment when only item is fully discounted due to an active subscription', async () => {
 		await createPaidSubscription(TEST_SUBSCRIPTION_PRODUCT._id, {
 			sessionId: 'test-session-id'
