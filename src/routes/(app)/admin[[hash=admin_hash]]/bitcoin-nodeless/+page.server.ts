@@ -15,6 +15,9 @@ import type { JsonObject } from 'type-fest';
 
 type FieldErrors = Record<string, string>;
 
+// BIP-32: indexes from 2^31 upward are hardened and cannot be derived from a public key.
+const MAX_NON_HARDENED_INDEX = 2 ** 31 - 1;
+
 // Array paths become `field[N]` keys (e.g. ['xpubs', 2] → 'xpubs[2]') to match
 // the `name="xpubs[{i}]"` input attribute for inline rendering under each input.
 function zodIssuesToFieldErrors(issues: z.ZodIssue[]): FieldErrors {
@@ -73,7 +76,7 @@ export const actions: Actions = {
 
 		const baseSchema = z.object({
 			mempoolUrl: z.string().url(),
-			derivationIndex: z.number({ coerce: true }).min(0),
+			derivationIndex: z.number({ coerce: true }).int().min(0).max(MAX_NON_HARDENED_INDEX),
 			format: z.enum(['bip84', 'bip48']),
 			skipUsedAddresses: z.boolean({ coerce: true }).default(false)
 		});
