@@ -66,15 +66,32 @@ test.beforeAll(async () => {
 			}),
 			{ upsert: true }
 		);
+		// The product page needs a picture until #2639's fix is merged.
+		for (const productId of [URL_PRODUCT, HIDDEN_FAMILY_PRODUCT]) {
+			await db.collection('pictures').replaceOne(
+				{ _id: `${productId}-picture` as never },
+				{
+					name: productId,
+					productId,
+					storage: {
+						original: { key: 'e2e.png', width: 800, height: 800, size: 1 },
+						formats: [{ key: 'e2e-800.webp', width: 800, height: 800, size: 1 }]
+					},
+					createdAt: new Date(),
+					updatedAt: new Date()
+				},
+				{ upsert: true }
+			);
+		}
 	});
 });
 
 test.afterAll(async () => {
-	await withDb((db) =>
-		db
-			.collection('products')
-			.deleteMany({ _id: { $in: [URL_PRODUCT, HIDDEN_FAMILY_PRODUCT] as never[] } })
-	);
+	await withDb(async (db) => {
+		const ids = [URL_PRODUCT, HIDDEN_FAMILY_PRODUCT];
+		await db.collection('products').deleteMany({ _id: { $in: ids as never[] } });
+		await db.collection('pictures').deleteMany({ productId: { $in: ids } });
+	});
 });
 
 test('a variation chosen by the URL follows in-app navigation to another link', async ({
