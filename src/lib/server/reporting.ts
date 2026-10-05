@@ -372,21 +372,26 @@ function paymentSynthesisKey(payment: ReportingPayment) {
 	return payment.method;
 }
 
-/** Totals over the searched orders; the payment synthesis counts only the payments shown. */
+/**
+ * Order, product, VAT and delivery totals count the paid orders among the searched ones: an
+ * unpaid or partially paid order has not taken its total. The payment synthesis counts the
+ * payments shown, which is where a partial payment appears.
+ */
 export function computeReportingSynthesis(
 	orders: ReportingOrder[],
 	filters: ReportingFilters,
 	mainCurrency: Currency
 ) {
 	const searchedOrders = selectOrderDetail(orders, filters);
+	const paidOrders = searchedOrders.filter((order) => order.status === 'paid');
 	const taggedItems = filters.tagId
-		? searchedOrders.flatMap((order) =>
+		? paidOrders.flatMap((order) =>
 				order.items.filter((item) => itemMatchesTag(item, filters.tagId))
 		  )
 		: [];
 
 	const products = new Map<string, { name: string; quantity: number; prices: Price[] }>();
-	for (const order of searchedOrders) {
+	for (const order of paidOrders) {
 		for (const item of order.items) {
 			if (!itemMatchesTag(item, filters.tagId)) {
 				continue;
@@ -419,10 +424,10 @@ export function computeReportingSynthesis(
 	}
 
 	return {
-		orderCount: searchedOrders.length,
+		orderCount: paidOrders.length,
 		orderTotal: sumCurrency(
 			mainCurrency,
-			searchedOrders.map((order) => order.currencySnapshot.main.totalPrice)
+			paidOrders.map((order) => order.currencySnapshot.main.totalPrice)
 		),
 		tagOrderTotal: filters.tagId
 			? sumCurrency(
@@ -435,7 +440,7 @@ export function computeReportingSynthesis(
 			: 0,
 		deliveryFeesTotal: sumCurrency(
 			mainCurrency,
-			searchedOrders.map(
+			paidOrders.map(
 				(order) =>
 					order.currencySnapshot.main.shippingPrice ?? { amount: 0, currency: mainCurrency }
 			)
@@ -448,7 +453,7 @@ export function computeReportingSynthesis(
 							amount: (orderItemPrice(item, 'main') * item.vatRate) / 100,
 							currency: item.currencySnapshot.main.price.currency
 					  }))
-					: searchedOrders.flatMap((order) => order.currencySnapshot.main.vat ?? [])
+					: paidOrders.flatMap((order) => order.currencySnapshot.main.vat ?? [])
 			),
 			mainCurrency
 		),

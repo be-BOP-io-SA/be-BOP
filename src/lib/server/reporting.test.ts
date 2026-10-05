@@ -231,7 +231,7 @@ describe('detail selections', () => {
 });
 
 describe('computeReportingSynthesis', () => {
-	it('sums the searched orders', () => {
+	it('sums paid orders only', () => {
 		const synthesis = computeReportingSynthesis(
 			[
 				order({
@@ -255,6 +255,33 @@ describe('computeReportingSynthesis', () => {
 			{ productId: 'coffee', name: 'Product coffee', quantity: 4, total: 8 },
 			{ productId: 'cake', name: 'Product cake', quantity: 1, total: 4 }
 		]);
+		expect(synthesis.payments.map((p) => [p.method, p.quantity, p.total])).toEqual([
+			['bank-transfer', 1, 10],
+			['card', 1, 10]
+		]);
+	});
+
+	it('keeps unpaid orders out of the totals when their status is searched', () => {
+		const synthesis = computeReportingSynthesis(
+			[
+				order({ items: [item('coffee', 10)] }),
+				order({ status: 'pending', payments: [payment({ status: 'pending' })] }),
+				order({
+					status: 'pending',
+					payments: [payment({ method: 'card' }), payment({ status: 'pending' })]
+				})
+			],
+			filters('orderStatus=paid&orderStatus=pending'),
+			'EUR'
+		);
+
+		expect(synthesis.orderCount).toBe(1);
+		expect(synthesis.orderTotal).toBe(10);
+		expect(synthesis.vatTotal).toBe(1.67);
+		expect(synthesis.products).toEqual([
+			{ productId: 'coffee', name: 'Product coffee', quantity: 1, total: 10 }
+		]);
+		// The paid payment of a partially paid order is money taken, so it is counted.
 		expect(synthesis.payments.map((p) => [p.method, p.quantity, p.total])).toEqual([
 			['bank-transfer', 1, 10],
 			['card', 1, 10]
