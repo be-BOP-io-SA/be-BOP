@@ -979,9 +979,9 @@
 							{/if}
 							{#if data.product.standalone && data.product.hasVariations && data.product.variationLabels}
 								{#each Object.keys(data.product.variationLabels.values) as key}
-									{#if key in data.forcedVariations || data.product.variationFamilies?.[key]?.hiddenFromUI}
-										<!-- Settled by the URL, or never offered as a choice: no dropdown, but the
-										     value still has to reach the add-to-cart POST. -->
+									<!-- A family hidden from the page but unset by the URL only gets this far under
+									     the "ignore" policy, which promises the dropdown back. -->
+									{#if key in data.forcedVariations}
 										<input
 											type="hidden"
 											name="chosenVariations[{key}]"

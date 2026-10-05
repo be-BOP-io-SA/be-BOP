@@ -238,9 +238,16 @@ export function checkProductVariationsIntegrity(
 ) {
 	const variationNamesInDB = [...new Set(product.variations?.map((vari) => vari.name))];
 	const chosenVariationNames = Object.keys(chosenVariations ?? {});
+	// Checking the value too, not just the family: a family rendered without a dropdown can post
+	// an empty one.
 	const allVariationsChosen =
 		variationNamesInDB.length === chosenVariationNames.length &&
-		variationNamesInDB.every((name) => chosenVariationNames.includes(name));
+		variationNamesInDB.every(
+			(name) =>
+				product.variations?.some(
+					(variation) => variation.name === name && variation.value === chosenVariations?.[name]
+				)
+		);
 
 	return allVariationsChosen;
 }
