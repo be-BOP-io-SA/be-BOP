@@ -409,7 +409,10 @@ export const migrations = [
 				[
 					{
 						$set: {
-							vat: ['$vat'],
+							// items must be computed before vat is reassigned below: $set fields
+							// evaluate sequentially, so referencing '$vat.rate' after 'vat' has
+							// already been turned into an array would read the array, not the
+							// original scalar rate.
 							items: {
 								$map: {
 									input: '$items',
@@ -423,7 +426,8 @@ export const migrations = [
 										]
 									}
 								}
-							}
+							},
+							vat: ['$vat']
 						}
 					}
 				],
@@ -984,6 +988,30 @@ export const migrations = [
 						after: publicDiscountPriceSnapshot(discount),
 						createdAt: discount.createdAt ?? new Date()
 					},
+					{ session }
+				);
+			}
+		}
+	},
+	{
+		_id: new ObjectId('0295fdf30e394bdf3fc015b1'),
+		name: 'Fix items.vatRate wrongly stored as an array by the VAT-to-array migration',
+		run: async (session: ClientSession) => {
+			// The 'Convert VAT rate to array in orders' migration referenced '$vat.rate' after
+			// already reassigning 'vat' to an array in the same $set stage, so it picked up the
+			// array-wrapped rate ([rate]) instead of the scalar rate.
+			for await (const order of collections.orders.find(
+				{ 'items.vatRate': { $type: 'array' } },
+				{ session }
+			)) {
+				for (const item of order.items) {
+					if (Array.isArray(item.vatRate)) {
+						item.vatRate = item.vatRate[0];
+					}
+				}
+				await collections.orders.updateOne(
+					{ _id: order._id },
+					{ $set: { items: order.items } },
 					{ session }
 				);
 			}
