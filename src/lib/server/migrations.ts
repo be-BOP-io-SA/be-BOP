@@ -10,89 +10,87 @@ import { CURRENCIES, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
 
-async function ensureDefaultSearchlist(session?: ClientSession): Promise<void> {
-	const existing = await collections.searchlists.findOne({ _id: 'default' }, { session });
-	if (existing) {
-		return;
-	}
+// An upsert rather than find-then-insert: every instance seeds at start-up, and two starting
+// together on an empty database would otherwise both insert and one would hit a duplicate key.
+export async function ensureDefaultSearchlist(session?: ClientSession): Promise<void> {
 	const now = new Date();
-	await collections.searchlists.insertOne(
+	await collections.searchlists.updateOne(
+		{ _id: 'default' },
 		{
-			_id: 'default',
-			name: 'default',
-			displayWidgetName: false,
-			hideSearchbar: true,
-			prefillSearchterm: false,
-			hideSearchterm: false,
-			searchTargets: {
-				title: true,
-				shortDescription: true,
-				longDescription: true,
-				productTags: false,
-				productVariation: false,
-				productCustomCta: false,
-				productCmsBefore: false,
-				productCmsAfter: false
-			},
-			filters: {
-				price: { enabled: false },
-				stock: { enabled: false, defaultChecked: false },
-				tags: { enabled: false, allowedTagIds: [] }
-			},
-			sort: {
-				displayed: false,
-				options: ['alphaAsc', 'alphaDesc', 'priceAsc', 'priceDesc', 'createdAsc', 'createdDesc'],
-				default: 'alphaAsc'
-			},
-			view: { default: 'grid', hideToggle: true },
-			pagination: { mode: 'loadMore', perPage: 12 },
-			createdAt: now,
-			updatedAt: now
+			$setOnInsert: {
+				name: 'default',
+				displayWidgetName: false,
+				hideSearchbar: true,
+				prefillSearchterm: false,
+				hideSearchterm: false,
+				searchTargets: {
+					title: true,
+					shortDescription: true,
+					longDescription: true,
+					productTags: false,
+					productVariation: false,
+					productCustomCta: false,
+					productCmsBefore: false,
+					productCmsAfter: false
+				},
+				filters: {
+					price: { enabled: false },
+					stock: { enabled: false, defaultChecked: false },
+					tags: { enabled: false, allowedTagIds: [] }
+				},
+				sort: {
+					displayed: false,
+					options: ['alphaAsc', 'alphaDesc', 'priceAsc', 'priceDesc', 'createdAsc', 'createdDesc'],
+					default: 'alphaAsc'
+				},
+				view: { default: 'grid', hideToggle: true },
+				pagination: { mode: 'loadMore', perPage: 12 },
+				createdAt: now,
+				updatedAt: now
+			}
 		},
-		{ session }
+		{ session, upsert: true }
 	);
 }
 
-async function ensureSearchSearchlist(session?: ClientSession): Promise<void> {
-	const existing = await collections.searchlists.findOne({ _id: 'search' }, { session });
-	if (existing) {
-		return;
-	}
+export async function ensureSearchSearchlist(session?: ClientSession): Promise<void> {
 	const now = new Date();
-	await collections.searchlists.insertOne(
+	await collections.searchlists.updateOne(
+		{ _id: 'search' },
 		{
-			_id: 'search',
-			name: 'Recherche',
-			displayWidgetName: false,
-			hideSearchbar: false,
-			prefillSearchterm: false,
-			hideSearchterm: false,
-			searchTargets: {
-				title: true,
-				shortDescription: true,
-				longDescription: true,
-				productTags: false,
-				productVariation: false,
-				productCustomCta: false,
-				productCmsBefore: false,
-				productCmsAfter: false
-			},
-			filters: {
-				price: { enabled: true },
-				stock: { enabled: true, defaultChecked: false },
-				tags: { enabled: false, allowedTagIds: [] }
-			},
-			sort: {
-				displayed: true,
-				options: ['alphaAsc', 'alphaDesc', 'priceAsc', 'priceDesc', 'createdAsc', 'createdDesc'],
-				default: 'alphaAsc'
-			},
-			view: { default: 'grid', hideToggle: false },
-			pagination: { mode: 'loadMore', perPage: 12 },
-			createdAt: now,
-			updatedAt: now
+			$setOnInsert: {
+				name: 'Recherche',
+				displayWidgetName: false,
+				hideSearchbar: false,
+				prefillSearchterm: false,
+				hideSearchterm: false,
+				searchTargets: {
+					title: true,
+					shortDescription: true,
+					longDescription: true,
+					productTags: false,
+					productVariation: false,
+					productCustomCta: false,
+					productCmsBefore: false,
+					productCmsAfter: false
+				},
+				filters: {
+					price: { enabled: true },
+					stock: { enabled: true, defaultChecked: false },
+					tags: { enabled: false, allowedTagIds: [] }
+				},
+				sort: {
+					displayed: true,
+					options: ['alphaAsc', 'alphaDesc', 'priceAsc', 'priceDesc', 'createdAsc', 'createdDesc'],
+					default: 'alphaAsc'
+				},
+				view: { default: 'grid', hideToggle: false },
+				pagination: { mode: 'loadMore', perPage: 12 },
+				createdAt: now,
+				updatedAt: now
+			}
 		},
-		{ session }
+		{ session, upsert: true }
 	);
 }
 
