@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 import { MongoClient, ObjectId } from 'mongodb';
 
@@ -98,4 +99,27 @@ test('searching pending orders lists them without adding them to the totals', as
 	// ...but the totals still count only what was paid.
 	expect(await synthesis(page, 'order Total')).toEqual(paidOnly.order);
 	expect(await synthesis(page, 'VAT Total')).toEqual(paidOnly.vat);
+});
+
+test('a collapsed synthesis exports the same CSV as an open one', async ({ page }) => {
+	await page.goto(`/admin/reporting?${PERIOD}`);
+	const section = page.locator('div.col-span-12', {
+		has: page.getByRole('button', { name: 'VAT Synthesis' })
+	});
+
+	async function exportCsv() {
+		const [download] = await Promise.all([
+			page.waitForEvent('download'),
+			section.getByRole('button', { name: '📊 CSV' }).click()
+		]);
+		return readFile((await download.path()) ?? '', 'utf8');
+	}
+
+	const open = await exportCsv();
+	await section.getByRole('button', { name: 'VAT Synthesis' }).click();
+	await expect(section.locator('table')).toBeHidden();
+	const collapsed = await exportCsv();
+
+	expect(open.split('\n')).toHaveLength(2);
+	expect(collapsed).toBe(open);
 });

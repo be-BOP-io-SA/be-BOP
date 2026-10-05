@@ -16,7 +16,7 @@
 	import type { PageData } from './$types';
 	import ReportingDetailTable from './ReportingDetailTable.svelte';
 	import ReportingPager from './ReportingPager.svelte';
-	import { columnsToCsv, toCsv, type ReportingColumn } from './reportingColumns';
+	import { cellText, columnsToCsv, toCsv, type ReportingColumn } from './reportingColumns';
 
 	type OrderRow = PageData['orderDetail']['rows'][number];
 	type ProductRow = PageData['productDetail']['rows'][number];
@@ -262,7 +262,7 @@
 			return;
 		}
 		const cellsText = (row: Element, selector: string) =>
-			Array.from(row.querySelectorAll<HTMLElement>(selector)).map((cell) => cell.innerText.trim());
+			Array.from(row.querySelectorAll(selector)).map(cellText);
 		const header = cellsText(tableElement.querySelector('thead tr') ?? tableElement, 'th');
 		const rows = Array.from(tableElement.querySelectorAll('tbody tr')).map((row) =>
 			cellsText(row, 'td')
