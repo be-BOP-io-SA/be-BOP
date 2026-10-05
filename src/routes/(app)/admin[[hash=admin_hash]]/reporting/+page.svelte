@@ -395,8 +395,8 @@
 				{/each}
 			</div>
 			<p class="text-xs opacity-70">
-				Leave every payment status ticked to keep all orders. Untick to narrow: a pending order
-				carrying a paid payment is a partially paid one.
+				Leave every payment status ticked to keep all orders, including those with no payment yet.
+				Untick to narrow: a pending order carrying a paid payment is a partially paid one.
 			</p>
 		</fieldset>
 

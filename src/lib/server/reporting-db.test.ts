@@ -76,6 +76,20 @@ describe('fetchReportingOrders', () => {
 		]);
 	});
 
+	it('drops orders without payment once the payment statuses narrow the search', async () => {
+		await insertTestOrder({ number: 1, createdAt: inPeriod, status: 'pending', payments: [] });
+		await insertTestOrder({
+			number: 2,
+			createdAt: inPeriod,
+			status: 'pending',
+			payments: [{ status: 'paid' }]
+		});
+
+		const numbers = async (query: string) => (await fetchOrders(query)).map((o) => o.number).sort();
+		expect(await numbers('orderStatus=pending')).toEqual([1, 2]);
+		expect(await numbers('orderStatus=pending&carryingStatus=paid')).toEqual([2]);
+	});
+
 	it('requires the PoS subtype on the payment that has the method', async () => {
 		await insertTestOrder({
 			number: 1,

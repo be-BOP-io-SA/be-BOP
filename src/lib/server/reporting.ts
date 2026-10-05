@@ -209,8 +209,16 @@ function paymentQuery(filters: ReportingFilters): Filter<Order> {
 	};
 }
 
+// Every payment status ticked means no narrowing, so orders with no payment yet still match.
+function carryingNarrows(filters: ReportingFilters) {
+	return ORDER_PAYMENT_STATUSES.some((status) => !filters.carryingStatuses.includes(status));
+}
+
 function statusQuery(filters: ReportingFilters): Filter<Order> {
-	return { status: { $in: filters.orderStatuses } };
+	return {
+		status: { $in: filters.orderStatuses },
+		...(carryingNarrows(filters) && { 'payments.status': { $in: filters.carryingStatuses } })
+	};
 }
 
 export async function fetchReportingOrders(filters: ReportingFilters): Promise<ReportingOrder[]> {
@@ -246,9 +254,7 @@ export function selectOrderDetail(orders: ReportingOrder[], filters: ReportingFi
 	return orders.filter(
 		(order) =>
 			filters.orderStatuses.includes(order.status) &&
-			// A point-of-sale order split over several payment methods exists before its first
-			// payment does; dropping it here would hide it from every table whatever is ticked.
-			(!order.payments.length ||
+			(!carryingNarrows(filters) ||
 				order.payments.some((payment) => filters.carryingStatuses.includes(payment.status)))
 	);
 }

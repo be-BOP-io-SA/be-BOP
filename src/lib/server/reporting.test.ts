@@ -109,6 +109,13 @@ describe('reportingOrdersQuery', () => {
 		expect(reportingOrdersQuery(filters()).status).toEqual({ $in: ['paid'] });
 	});
 
+	it('narrows on payment statuses only when some are unticked', () => {
+		expect(reportingOrdersQuery(filters())['payments.status']).toBeUndefined();
+		expect(
+			reportingOrdersQuery(filters('carryingStatus=paid&carryingStatus=pending'))['payments.status']
+		).toEqual({ $in: ['paid', 'pending'] });
+	});
+
 	it('matches payment method and PoS subtype on the same payment', () => {
 		expect(
 			reportingOrdersQuery(filters('paymentMethod=point-of-sale&posSubtype=tpe')).payments
@@ -158,6 +165,20 @@ describe('detail selections', () => {
 				filters('orderStatus=paid&orderStatus=pending&carryingStatus=paid')
 			).map((o) => o.number)
 		).toEqual([1, 3]);
+	});
+
+	it('keeps an order without payment unless the payment statuses narrow the search', () => {
+		const split = order({ number: 6, status: 'pending', payments: [] });
+		const all = [...orders, split];
+
+		expect(selectOrderDetail(all, filters('orderStatus=pending')).map((o) => o.number)).toEqual([
+			2, 3, 6
+		]);
+		expect(
+			selectOrderDetail(all, filters('orderStatus=pending&carryingStatus=paid')).map(
+				(o) => o.number
+			)
+		).toEqual([3]);
 	});
 
 	it('lists payments of the same orders as the order detail', () => {
