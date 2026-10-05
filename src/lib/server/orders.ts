@@ -63,6 +63,7 @@ import { handleOrderTabAfterPayment } from './orderTab';
 import { userQuery } from './user';
 import { SMTP_USER } from '$lib/server/env-config';
 import { toCurrency } from '$lib/utils/toCurrency';
+import { escapeHtml } from '$lib/utils/escapeHtml';
 import { convertAmountToCurrencyForStorage } from '$lib/utils/toStorageCurrency';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
@@ -612,6 +613,26 @@ export async function lastInvoiceNumber(): Promise<number | undefined> {
 			])
 			.next()
 	)?.invoiceNumber;
+}
+
+// The justification and the login are typed by staff, and the owner reads this mail as an audit
+// trail, so they must not be able to add markup to it.
+export function discountAlertHtml(params: {
+	amount: string;
+	discountInSats: number;
+	orderId: string;
+	orderNumber: number;
+	total: string;
+	userLogin?: string;
+	justification?: string;
+}): string {
+	return `A discount of ${params.amount} (${
+		params.discountInSats
+	} SAT) has been applied to the <a href="${ORIGIN}/order/${params.orderId}">order ${
+		params.orderNumber
+	}</a> (${params.total}). The discount was applied by ${escapeHtml(
+		params.userLogin ?? ''
+	)}. Justification: ${escapeHtml(params.justification ?? '-')} `;
 }
 
 export async function createOrder(
@@ -1270,19 +1291,19 @@ export async function createOrder(
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					subject: 'NEW DISCOUNT',
-					htmlContent: `A discount of ${params?.discount?.amount}${
-						params.discount.type === 'fiat' ? runtimeConfig.mainCurrency : '%'
-					} (${toCurrency(
-						'SAT',
-						priceInfo.discount,
-						priceInfo.currency
-					)} SAT) has been applied to the <a href="${ORIGIN}/order/${orderId}">order ${orderNumber}</a> (${toCurrency(
-						runtimeConfig.mainCurrency,
-						totalSatoshis,
-						'SAT'
-					)}${runtimeConfig.mainCurrency}). The discount was applied by ${
-						params.user.userLogin
-					}. Justification: ${params?.discount?.justification ?? '-'} `,
+					htmlContent: discountAlertHtml({
+						amount: `${params.discount.amount}${
+							params.discount.type === 'fiat' ? runtimeConfig.mainCurrency : '%'
+						}`,
+						discountInSats: toCurrency('SAT', priceInfo.discount, priceInfo.currency),
+						orderId,
+						orderNumber,
+						total: `${toCurrency(runtimeConfig.mainCurrency, totalSatoshis, 'SAT')}${
+							runtimeConfig.mainCurrency
+						}`,
+						userLogin: params.user.userLogin,
+						justification: params.discount.justification
+					}),
 					dest: runtimeConfig.sellerIdentity?.contact.email || SMTP_USER
 				},
 				{ session }
