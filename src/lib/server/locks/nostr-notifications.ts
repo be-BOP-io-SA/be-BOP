@@ -82,7 +82,7 @@ if (!building) {
 	watch();
 }
 
-async function processUnprocessedNotifications() {
+export async function processUnprocessedNotifications() {
 	if (!isNostrConfigured()) {
 		return;
 	}
@@ -92,7 +92,10 @@ async function processUnprocessedNotifications() {
 	});
 
 	for await (const notification of unprocessedNotifications) {
-		await handleNostrNotification(notification);
+		// One malformed notification must not keep the ones after it from being sent.
+		await handleNostrNotification(notification).catch((err) =>
+			console.error(`Nostr notification ${notification._id} failed`, err)
+		);
 	}
 }
 

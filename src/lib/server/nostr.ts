@@ -54,9 +54,21 @@ export function zodNpub() {
 		.string()
 		.trim()
 		.startsWith('npub')
-		.refine((npubAddress) => bech32.decodeUnsafe(npubAddress, 90)?.prefix === 'npub', {
-			message: 'Invalid npub address'
-		});
+		.refine(isWellFormedNpub, { message: 'Invalid npub address' });
+}
+
+// A key of any other length passes the bech32 checksum but cannot be used to encrypt a DM,
+// and it would make the notification worker throw on the stored address.
+function isWellFormedNpub(address: string): boolean {
+	const decoded = bech32.decodeUnsafe(address, 90);
+	if (decoded?.prefix !== 'npub') {
+		return false;
+	}
+	try {
+		return bech32.fromWords(decoded.words).length === 32;
+	} catch {
+		return false;
+	}
 }
 
 /**
