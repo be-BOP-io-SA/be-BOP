@@ -261,6 +261,10 @@ export const productBaseSchema = () => ({
 		)
 		.optional(),
 	variationUrlPolicy: z.enum(['error', 'ignore']).default('error'),
+	/** `{ [family]: { [oldValueId]: newValueId } }` for the saved values whose id was edited. */
+	variationValueRenames: z
+		.record(z.string().trim(), z.record(z.string().trim(), z.string().trim()))
+		.optional(),
 	variationLabels: z
 		.object({
 			names: z.record(z.string().trim(), z.string().trim()),

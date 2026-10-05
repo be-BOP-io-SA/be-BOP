@@ -19,7 +19,8 @@ import {
 	getProductsWithStock,
 	validateStockReference,
 	cleanVariationLabels,
-	cleanVariationFamilies
+	cleanVariationFamilies,
+	renameTranslatedVariationValues
 } from '$lib/server/product';
 import type { Tag } from '$lib/types/Tag';
 import { adminPrefix } from '$lib/server/admin';
@@ -174,6 +175,10 @@ export const actions: Actions = {
 		);
 		const amountInCarts = await amountOfStockReserved(params.id);
 		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
+		const renamedTranslations = renameTranslatedVariationValues(
+			product.translations,
+			parsed.variationValueRenames
+		);
 		const hasVariations =
 			parsed.hasVariations && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
 
@@ -297,6 +302,7 @@ export const actions: Actions = {
 								),
 								variationUrlPolicy: parsed.variationUrlPolicy
 							}),
+						...(renamedTranslations && { translations: renamedTranslations }),
 						hasSellDisclaimer: parsed.hasSellDisclaimer,
 						...(parsed.hasSellDisclaimer &&
 							parsed.sellDisclaimerTitle &&

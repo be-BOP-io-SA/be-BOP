@@ -379,3 +379,42 @@ export function cleanVariationFamilies(
 			.filter(([, options]) => Object.keys(options).length > 0)
 	);
 }
+
+/**
+ * Moves translated value labels to the new id of every renamed variation value.
+ *
+ * A translation replaces `variationLabels` wholesale, so a label left under the old id would
+ * offer visitors in that language a value no variation carries any more.
+ *
+ * @param renames - `{ [family]: { [oldValueId]: newValueId } }`
+ * @returns the updated translations, or `undefined` when no translated label had to move
+ */
+export function renameTranslatedVariationValues(
+	translations: Product['translations'],
+	renames: Record<string, Record<string, string>> | undefined
+): Product['translations'] | undefined {
+	if (!translations || !renames) {
+		return undefined;
+	}
+	let changed = false;
+	const updated = structuredClone(translations);
+
+	for (const translation of Object.values(updated)) {
+		const values = translation?.variationLabels?.values;
+		if (!values) {
+			continue;
+		}
+		for (const [family, familyRenames] of Object.entries(renames)) {
+			for (const [oldId, newId] of Object.entries(familyRenames)) {
+				if (!newId || newId === oldId || !(oldId in (values[family] ?? {}))) {
+					continue;
+				}
+				values[family][newId] = values[family][oldId];
+				delete values[family][oldId];
+				changed = true;
+			}
+		}
+	}
+
+	return changed ? updated : undefined;
+}

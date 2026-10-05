@@ -1094,6 +1094,13 @@
 											name="variations[{i}].value"
 											value={variationValueIds[variationKey(variation)] || variation.value}
 										/>
+										{#if variationValueIds[variationKey(variation)] && variationValueIds[variationKey(variation)] !== variation.value}
+											<input
+												type="hidden"
+												name="variationValueRenames[{variation.name}][{variation.value}]"
+												value={variationValueIds[variationKey(variation)]}
+											/>
+										{/if}
 									{:else}
 										<input
 											type="hidden"
