@@ -2,7 +2,12 @@
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n.js';
-	import { invoiceNumberVariables } from '$lib/types/Order.js';
+	import { ORDER_PAYMENT_STATUSES, invoiceNumberVariables } from '$lib/types/Order.js';
+	import {
+		DEFAULT_CARRYING_STATUSES,
+		DEFAULT_ORDER_STATUSES,
+		DEFAULT_SHOWN_STATUSES
+	} from '$lib/reportingStatuses';
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding.js';
 	import { toCurrency } from '$lib/utils/toCurrency';
 	import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
@@ -11,7 +16,7 @@
 	import type { PageData } from './$types';
 	import ReportingDetailTable from './ReportingDetailTable.svelte';
 	import ReportingPager from './ReportingPager.svelte';
-	import { columnsToCsv, toCsv, type ReportingColumn } from './reportingColumns';
+	import { cellText, columnsToCsv, toCsv, type ReportingColumn } from './reportingColumns';
 
 	type OrderRow = PageData['orderDetail']['rows'][number];
 	type ProductRow = PageData['productDetail']['rows'][number];
@@ -37,6 +42,38 @@
 		value: employee,
 		label: employee
 	}));
+
+	// Two questions the old checkboxes answered at once, now asked apart: which orders the
+	// reporting is about (search), and which of their payments it shows (display). The boxes
+	// prepare the next search; the server answers the one in the address.
+	let orderStatuses = new Set<string>(data.filters.orderStatuses);
+	let carryingPaymentStatuses = new Set<string>(data.filters.carryingStatuses);
+	let shownPaymentStatuses = new Set<string>(data.filters.shownStatuses);
+
+	// Every table starts open; nothing is remembered between visits.
+	let collapsed = new Set<string>();
+
+	function toggle(set: Set<string>, value: string) {
+		const next = new Set(set);
+		if (next.has(value)) {
+			next.delete(value);
+		} else {
+			next.add(value);
+		}
+		return next;
+	}
+
+	function resetStatusFilters() {
+		orderStatuses = new Set<string>(DEFAULT_ORDER_STATUSES);
+		carryingPaymentStatuses = new Set<string>(DEFAULT_CARRYING_STATUSES);
+		shownPaymentStatuses = new Set<string>(DEFAULT_SHOWN_STATUSES);
+	}
+
+	$: statusGroups = [
+		{ name: 'orderStatus', statuses: orderStatuses },
+		{ name: 'carryingStatus', statuses: carryingPaymentStatuses },
+		{ name: 'shownStatus', statuses: shownPaymentStatuses }
+	];
 
 	$: beginsAt = data.filters.beginsAt;
 	$: endsAt = data.filters.endsAt;
@@ -225,7 +262,7 @@
 			return;
 		}
 		const cellsText = (row: Element, selector: string) =>
-			Array.from(row.querySelectorAll<HTMLElement>(selector)).map((cell) => cell.innerText.trim());
+			Array.from(row.querySelectorAll(selector)).map(cellText);
 		const header = cellsText(tableElement.querySelector('thead tr') ?? tableElement, 'th');
 		const rows = Array.from(tableElement.querySelectorAll('tbody tr')).map((row) =>
 			cellsText(row, 'td')
@@ -315,55 +352,87 @@
 		);
 	}
 
-	function submitFilters(event: Event & { currentTarget: HTMLInputElement }) {
-		loadedHtml = false;
-		event.currentTarget.form?.requestSubmit();
-	}
-
 	afterNavigate(() => {
 		isLoading = false;
+		// A search has landed (or the browser came back): the boxes show what it searched.
+		orderStatuses = new Set<string>(data.filters.orderStatuses);
+		carryingPaymentStatuses = new Set<string>(data.filters.carryingStatuses);
+		shownPaymentStatuses = new Set<string>(data.filters.shownStatuses);
 	});
 </script>
 
 <h1 class="text-3xl">Reporting</h1>
 <form method="GET" class="grid grid-cols-12 gap-2 col-span-12" on:submit={() => (isLoading = true)}>
-	<div class="col-span-12 grid grid-cols-3 gap-4">
-		<label class="col-span-3 checkbox-label">
-			<input
-				class="form-checkbox"
-				type="checkbox"
-				name="includePending"
-				checked={data.filters.includePending}
-				on:change={submitFilters}
-			/> include pending orders
-		</label>
-		<label class="col-span-3 checkbox-label">
-			<input
-				class="form-checkbox"
-				type="checkbox"
-				name="includeExpired"
-				checked={data.filters.includeExpired}
-				on:change={submitFilters}
-			/> include expired orders
-		</label>
-		<label class="col-span-3 checkbox-label">
-			<input
-				class="form-checkbox"
-				type="checkbox"
-				name="includeCanceled"
-				checked={data.filters.includeCanceled}
-				on:change={submitFilters}
-			/> include canceled orders
-		</label>
-		<label class="col-span-3 checkbox-label">
-			<input
-				class="form-checkbox"
-				type="checkbox"
-				name="includePartiallyPaid"
-				checked={data.filters.includePartiallyPaid}
-				on:change={submitFilters}
-			/> include partially paid orders
-		</label>
+	<div class="col-span-12 flex flex-col gap-4">
+		<fieldset class="flex flex-col gap-1">
+			<legend class="font-medium">Search — which orders this reporting is about</legend>
+			<div class="flex flex-wrap gap-4">
+				<span class="text-sm w-40">Order status</span>
+				{#each ORDER_PAYMENT_STATUSES as status}
+					<label class="checkbox-label">
+						<input
+							class="form-checkbox"
+							type="checkbox"
+							checked={orderStatuses.has(status)}
+							on:change={() => (orderStatuses = toggle(orderStatuses, status))}
+						/>
+						{status}
+					</label>
+				{/each}
+			</div>
+			<div class="flex flex-wrap gap-4">
+				<span class="text-sm w-40">Carrying a payment</span>
+				{#each ORDER_PAYMENT_STATUSES as status}
+					<label class="checkbox-label">
+						<input
+							class="form-checkbox"
+							type="checkbox"
+							checked={carryingPaymentStatuses.has(status)}
+							on:change={() => (carryingPaymentStatuses = toggle(carryingPaymentStatuses, status))}
+						/>
+						{status}
+					</label>
+				{/each}
+			</div>
+			<p class="text-xs opacity-70">
+				Leave every payment status ticked to keep all orders, including those with no payment yet.
+				Untick to narrow: a pending order carrying a paid payment is a partially paid one.
+			</p>
+		</fieldset>
+
+		<fieldset class="flex flex-col gap-1">
+			<legend class="font-medium">Display — which payments the payment table shows</legend>
+			<div class="flex flex-wrap gap-4">
+				<span class="text-sm w-40">Payments shown</span>
+				{#each ORDER_PAYMENT_STATUSES as status}
+					<label class="checkbox-label">
+						<input
+							class="form-checkbox"
+							type="checkbox"
+							checked={shownPaymentStatuses.has(status)}
+							on:change={() => (shownPaymentStatuses = toggle(shownPaymentStatuses, status))}
+						/>
+						{status}
+					</label>
+				{/each}
+			</div>
+			<p class="text-xs opacity-70">
+				Totals count exactly these lines. Showing expired payments makes the total say what was
+				attempted, not what was taken.
+			</p>
+			<button type="button" class="text-xs underline self-start" on:click={resetStatusFilters}>
+				Back to default filters
+			</button>
+		</fieldset>
+
+		{#each statusGroups as group}
+			{#if group.statuses.size === 0}
+				<input type="hidden" name={group.name} value="" />
+			{/if}
+			{#each [...group.statuses] as status}
+				<input type="hidden" name={group.name} value={status} />
+			{/each}
+		{/each}
 	</div>
 	<div class="col-span-3">
 		<label class="form-label">
@@ -478,11 +547,19 @@
 <div class="gap-4 grid grid-cols-12 mr-auto">
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Order detail</h1>
+			<button
+				type="button"
+				class="text-2xl font-bold flex items-center gap-2"
+				on:click={() => (collapsed = toggle(collapsed, 'order-detail'))}
+			>
+				<span class="text-base opacity-60">{collapsed.has('order-detail') ? '▶' : '▼'}</span>
+				Order detail
+			</button>
 			<div class="flex gap-2">
 				<button
 					on:click={() => exportDetailCsv('orders', orderColumns, 'order-detail.csv')}
-					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+					disabled={isLoading}
+					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 					title="Export as CSV"
 				>
 					📊 CSV
@@ -490,7 +567,8 @@
 				{#if data.role?._id === SUPER_ADMIN_ROLE_ID}
 					<button
 						on:click={downloadAllOrdersJson}
-						class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+						disabled={isLoading}
+						class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 						title="Download all displayed orders as JSON (super-admin)"
 					>
 						🧾 JSON
@@ -507,13 +585,15 @@
 			</div>
 		</div>
 
-		<ReportingDetailTable columns={orderColumns} rows={data.orderDetail.rows} />
-		<ReportingPager
-			param="ordersPage"
-			current={data.orderDetail.page}
-			pageCount={data.orderDetail.pageCount}
-			total={data.orderDetail.total}
-		/>
+		<div class:hidden={collapsed.has('order-detail')}>
+			<ReportingDetailTable columns={orderColumns} rows={data.orderDetail.rows} />
+			<ReportingPager
+				param="ordersPage"
+				current={data.orderDetail.page}
+				pageCount={data.orderDetail.pageCount}
+				total={data.orderDetail.total}
+			/>
+		</div>
 	</div>
 	<iframe
 		srcdoc={html}
@@ -524,7 +604,14 @@
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">Product detail</h1>
+				<button
+					type="button"
+					class="text-2xl font-bold flex items-center gap-2"
+					on:click={() => (collapsed = toggle(collapsed, 'product-detail'))}
+				>
+					<span class="text-base opacity-60">{collapsed.has('product-detail') ? '▶' : '▼'}</span>
+					Product detail
+				</button>
 				{#if data.filters.tagId}
 					<p class="text-sm text-gray-600 mt-1">
 						Only showing products with the tag "{tagName ?? data.filters.tagId}".
@@ -533,45 +620,66 @@
 			</div>
 			<button
 				on:click={() => exportDetailCsv('products', productColumns, 'product-detail.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
 			</button>
 		</div>
-		<ReportingDetailTable columns={productColumns} rows={data.productDetail.rows} />
-		<ReportingPager
-			param="productsPage"
-			current={data.productDetail.page}
-			pageCount={data.productDetail.pageCount}
-			total={data.productDetail.total}
-		/>
+		<div class:hidden={collapsed.has('product-detail')}>
+			<ReportingDetailTable columns={productColumns} rows={data.productDetail.rows} />
+			<ReportingPager
+				param="productsPage"
+				current={data.productDetail.page}
+				pageCount={data.productDetail.pageCount}
+				total={data.productDetail.total}
+			/>
+		</div>
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Payment Detail</h1>
+			<button
+				type="button"
+				class="text-2xl font-bold flex items-center gap-2"
+				on:click={() => (collapsed = toggle(collapsed, 'payment-detail'))}
+			>
+				<span class="text-base opacity-60">{collapsed.has('payment-detail') ? '▶' : '▼'}</span>
+				Payment Detail
+			</button>
 			<button
 				on:click={() => exportDetailCsv('payments', paymentColumns, 'payment-detail.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
 			</button>
 		</div>
-		<ReportingDetailTable columns={paymentColumns} rows={data.paymentDetail.rows} />
-		<ReportingPager
-			param="paymentsPage"
-			current={data.paymentDetail.page}
-			pageCount={data.paymentDetail.pageCount}
-			total={data.paymentDetail.total}
-		/>
+		<div class:hidden={collapsed.has('payment-detail')}>
+			<ReportingDetailTable columns={paymentColumns} rows={data.paymentDetail.rows} />
+			<ReportingPager
+				param="paymentsPage"
+				current={data.paymentDetail.page}
+				pageCount={data.paymentDetail.pageCount}
+				total={data.paymentDetail.total}
+			/>
+		</div>
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Order synthesis</h1>
+			<button
+				type="button"
+				class="text-2xl font-bold flex items-center gap-2"
+				on:click={() => (collapsed = toggle(collapsed, 'order-synthesis'))}
+			>
+				<span class="text-base opacity-60">{collapsed.has('order-synthesis') ? '▶' : '▼'}</span>
+				Order synthesis
+			</button>
 			<button
 				on:click={() => exportSynthesisCsv(tableOrderSynthesis, 'orderSythesisExport.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
@@ -579,6 +687,7 @@
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
+				class:hidden={collapsed.has('order-synthesis')}
 				class="min-w-full table-auto border border-gray-300 bg-white"
 				bind:this={tableOrderSynthesis}
 			>
@@ -626,7 +735,8 @@
 				</p>
 				<button
 					on:click={() => exportSynthesisCsv(tableOrderSynthesisTag, 'orderSythesisExport.csv')}
-					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors ml-4"
+					disabled={isLoading}
+					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors ml-4 disabled:opacity-50"
 					title="Export tag synthesis as CSV"
 				>
 					📊 CSV
@@ -635,6 +745,7 @@
 
 			<div class="overflow-x-auto max-h-[500px]">
 				<table
+					class:hidden={collapsed.has('order-synthesis')}
 					class="min-w-full table-auto border border-gray-300 bg-white"
 					bind:this={tableOrderSynthesisTag}
 				>
@@ -678,7 +789,15 @@
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">Product synthesis</h1>
+				<button
+					type="button"
+					class="text-2xl font-bold flex items-center gap-2"
+					on:click={() => (collapsed = toggle(collapsed, 'product-synthesis'))}
+				>
+					<span class="text-base opacity-60">{collapsed.has('product-synthesis') ? '▶' : '▼'}</span
+					>
+					Product synthesis
+				</button>
 				{#if data.filters.tagId}
 					<p class="text-sm text-gray-600 mt-1">
 						Only showing products with the tag "{tagName ?? data.filters.tagId}".
@@ -687,7 +806,8 @@
 			</div>
 			<button
 				on:click={() => exportSynthesisCsv(tableProductSynthesis, 'orderItemsSythesisExport.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
@@ -695,6 +815,7 @@
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
+				class:hidden={collapsed.has('product-synthesis')}
 				class="min-w-full table-auto border border-gray-300 bg-white"
 				bind:this={tableProductSynthesis}
 			>
@@ -733,10 +854,18 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Payment synthesis</h1>
+			<button
+				type="button"
+				class="text-2xl font-bold flex items-center gap-2"
+				on:click={() => (collapsed = toggle(collapsed, 'payment-synthesis'))}
+			>
+				<span class="text-base opacity-60">{collapsed.has('payment-synthesis') ? '▶' : '▼'}</span>
+				Payment synthesis
+			</button>
 			<button
 				on:click={() => exportSynthesisCsv(tablePaymentSynthesis, 'orderPaymentSythesis.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
@@ -744,6 +873,7 @@
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
+				class:hidden={collapsed.has('payment-synthesis')}
 				class="min-w-full table-auto border border-gray-300 bg-white"
 				bind:this={tablePaymentSynthesis}
 			>
@@ -787,7 +917,14 @@
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">VAT Synthesis</h1>
+				<button
+					type="button"
+					class="text-2xl font-bold flex items-center gap-2"
+					on:click={() => (collapsed = toggle(collapsed, 'vat-synthesis'))}
+				>
+					<span class="text-base opacity-60">{collapsed.has('vat-synthesis') ? '▶' : '▼'}</span>
+					VAT Synthesis
+				</button>
 				{#if data.filters.tagId}
 					<p class="text-sm text-gray-600 mt-1">
 						Only showing VAT for products with the tag "{tagName ?? data.filters.tagId}".
@@ -796,7 +933,8 @@
 			</div>
 			<button
 				on:click={() => exportSynthesisCsv(tableVATSynthesis, 'vat-synthesis.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
@@ -804,6 +942,7 @@
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
+				class:hidden={collapsed.has('vat-synthesis')}
 				class="min-w-full table-auto border border-gray-300 bg-white"
 				bind:this={tableVATSynthesis}
 			>
@@ -845,11 +984,19 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Delivery Fees</h1>
+			<button
+				type="button"
+				class="text-2xl font-bold flex items-center gap-2"
+				on:click={() => (collapsed = toggle(collapsed, 'delivery-fees'))}
+			>
+				<span class="text-base opacity-60">{collapsed.has('delivery-fees') ? '▶' : '▼'}</span>
+				Delivery Fees
+			</button>
 			<button
 				on:click={() =>
 					exportSynthesisCsv(tableDeliveryFeesSynthesis, 'deliveryFeesSynthesisExport.csv')}
-				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
+				disabled={isLoading}
+				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 				title="Export as CSV"
 			>
 				📊 CSV
@@ -857,6 +1004,7 @@
 		</div>
 		<div class="overflow-x-auto max-h-[500px]">
 			<table
+				class:hidden={collapsed.has('delivery-fees')}
 				class="min-w-full table-auto border border-gray-300 bg-white"
 				bind:this={tableDeliveryFeesSynthesis}
 			>

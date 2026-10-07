@@ -58,7 +58,7 @@ describe('fetchReportingOrders', () => {
 		expect((await fetchOrders()).map((o) => o.number)).toEqual([2, 3, 1]);
 	});
 
-	it('loads unpaid orders only when a toggle asks for them', async () => {
+	it('loads unpaid orders only when their status is ticked', async () => {
 		await insertTestOrder({ number: 1, createdAt: inPeriod });
 		await insertTestOrder({
 			number: 2,
@@ -70,8 +70,24 @@ describe('fetchReportingOrders', () => {
 
 		const numbers = async (query: string) => (await fetchOrders(query)).map((o) => o.number).sort();
 		expect(await numbers('')).toEqual([1]);
-		expect(await numbers('includeCanceled=on')).toEqual([1, 3]);
-		expect(await numbers('includePartiallyPaid=on')).toEqual([1, 2, 3]);
+		expect(await numbers('orderStatus=paid&orderStatus=canceled')).toEqual([1, 3]);
+		expect(await numbers('orderStatus=paid&orderStatus=pending&orderStatus=canceled')).toEqual([
+			1, 2, 3
+		]);
+	});
+
+	it('drops orders without payment once the payment statuses narrow the search', async () => {
+		await insertTestOrder({ number: 1, createdAt: inPeriod, status: 'pending', payments: [] });
+		await insertTestOrder({
+			number: 2,
+			createdAt: inPeriod,
+			status: 'pending',
+			payments: [{ status: 'paid' }]
+		});
+
+		const numbers = async (query: string) => (await fetchOrders(query)).map((o) => o.number).sort();
+		expect(await numbers('orderStatus=pending')).toEqual([1, 2]);
+		expect(await numbers('orderStatus=pending&carryingStatus=paid')).toEqual([2]);
 	});
 
 	it('requires the PoS subtype on the payment that has the method', async () => {

@@ -78,9 +78,11 @@ describe('reporting page load', () => {
 	});
 
 	it('echoes the parsed filters for the form', async () => {
-		const { filters } = await loadPage('includePending=on&employeesAlias=System');
+		const { filters } = await loadPage(
+			'orderStatus=paid&orderStatus=pending&employeesAlias=System'
+		);
 
-		expect(filters.includePending).toBe(true);
+		expect(filters.orderStatuses).toEqual(['paid', 'pending']);
 		expect(filters.employeesAlias).toEqual(['System']);
 		expect(filters.beginsAt).toEqual(new Date('2026-09-01T00:00:00.000Z'));
 	});
@@ -112,7 +114,7 @@ describe('reporting rows endpoint', () => {
 		await insertTestOrder({ createdAt: inPeriod, status: 'canceled' });
 
 		expect(await getRows('orders')).toHaveLength(1);
-		expect(await getRows('orders', 'includeCanceled=on')).toHaveLength(2);
+		expect(await getRows('orders', 'orderStatus=paid&orderStatus=canceled')).toHaveLength(2);
 	});
 
 	it('lists the paid payments to print as receipts', async () => {

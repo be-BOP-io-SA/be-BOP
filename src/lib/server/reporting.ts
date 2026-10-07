@@ -5,16 +5,41 @@ import { collections } from '$lib/server/database';
 import { countryFromIp } from '$lib/server/geoip';
 import type { PaymentMethod } from '$lib/server/payment-methods';
 import type { Currency } from '$lib/types/Currency';
-import { orderItemPrice, type Order, type OrderPayment, type Price } from '$lib/types/Order';
+import {
+	ORDER_PAYMENT_STATUSES,
+	orderItemPrice,
+	type Order,
+	type OrderPayment,
+	type OrderPaymentStatus,
+	type Price
+} from '$lib/types/Order';
+import {
+	DEFAULT_CARRYING_STATUSES,
+	DEFAULT_ORDER_STATUSES,
+	DEFAULT_SHOWN_STATUSES
+} from '$lib/reportingStatuses';
 import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 
 export const REPORTING_PAGE_SIZE = 100;
 
-const booleanParam = z
-	.string()
-	.optional()
-	.transform((value) => value === 'on' || value === 'true');
+/**
+ * An absent parameter means the default; an empty group travels as a single empty value, so
+ * unticking everything survives a search instead of coming back as the default.
+ */
+function statusesParam(
+	url: URL,
+	name: string,
+	fallback: readonly OrderPaymentStatus[]
+): OrderPaymentStatus[] {
+	if (!url.searchParams.has(name)) {
+		return [...fallback];
+	}
+	return z
+		.enum(ORDER_PAYMENT_STATUSES)
+		.array()
+		.parse(url.searchParams.getAll(name).filter(Boolean));
+}
 
 export function parseReportingFilters(url: URL, methods: PaymentMethod[]) {
 	const querySchema = z.object({
@@ -23,11 +48,7 @@ export function parseReportingFilters(url: URL, methods: PaymentMethod[]) {
 		paymentMethod: z.enum(['' as const, ...methods]).optional(),
 		employeesAlias: z.string().array(),
 		tagId: z.string().optional(),
-		posSubtype: z.string().optional(),
-		includePending: booleanParam,
-		includeExpired: booleanParam,
-		includeCanceled: booleanParam,
-		includePartiallyPaid: booleanParam
+		posSubtype: z.string().optional()
 	});
 	const parsed = querySchema.parse({
 		...Object.fromEntries(url.searchParams.entries()),
@@ -36,6 +57,9 @@ export function parseReportingFilters(url: URL, methods: PaymentMethod[]) {
 
 	return {
 		...parsed,
+		orderStatuses: statusesParam(url, 'orderStatus', DEFAULT_ORDER_STATUSES),
+		carryingStatuses: statusesParam(url, 'carryingStatus', DEFAULT_CARRYING_STATUSES),
+		shownStatuses: statusesParam(url, 'shownStatus', DEFAULT_SHOWN_STATUSES),
 		beginsAt: parseDate(parsed.beginsAt) ?? startOfDay(subMonths(new Date(), 1)),
 		endsAt: parseEndDate(parsed.endsAt) ?? endOfDay(new Date()),
 		paymentMethod: parsed.paymentMethod || undefined,
@@ -185,20 +209,15 @@ function paymentQuery(filters: ReportingFilters): Filter<Order> {
 	};
 }
 
-// The partially paid filter looks at payment statuses, so any order status can match.
+// Every payment status ticked means no narrowing, so orders with no payment yet still match.
+function carryingNarrows(filters: ReportingFilters) {
+	return ORDER_PAYMENT_STATUSES.some((status) => !filters.carryingStatuses.includes(status));
+}
+
 function statusQuery(filters: ReportingFilters): Filter<Order> {
-	if (filters.includePartiallyPaid) {
-		return {};
-	}
 	return {
-		status: {
-			$in: [
-				'paid',
-				...(filters.includePending ? (['pending'] as const) : []),
-				...(filters.includeExpired ? (['expired'] as const) : []),
-				...(filters.includeCanceled ? (['canceled'] as const) : [])
-			]
-		}
+		status: { $in: filters.orderStatuses },
+		...(carryingNarrows(filters) && { 'payments.status': { $in: filters.carryingStatuses } })
 	};
 }
 
@@ -211,9 +230,13 @@ export async function fetchReportingOrders(filters: ReportingFilters): Promise<R
 }
 
 function paymentMatchesFilter(
-	payment: Pick<ReportingPayment, 'method' | 'posSubtype'>,
+	payment: Pick<ReportingPayment, 'method' | 'posSubtype' | 'status'>,
 	filters: ReportingFilters
 ) {
+	// A payment line is drawn, and counted, only if its status is one the admin asked to see.
+	if (!filters.shownStatuses.includes(payment.status)) {
+		return false;
+	}
 	if (!filters.paymentMethod) {
 		return true;
 	}
@@ -230,11 +253,9 @@ function itemMatchesTag(item: ReportingItem, tagId: string | undefined) {
 export function selectOrderDetail(orders: ReportingOrder[], filters: ReportingFilters) {
 	return orders.filter(
 		(order) =>
-			order.status === 'paid' ||
-			(filters.includePending && order.status === 'pending') ||
-			(filters.includeExpired && order.status === 'expired') ||
-			(filters.includeCanceled && order.status === 'canceled') ||
-			(filters.includePartiallyPaid && order.payments.some((payment) => payment.status === 'paid'))
+			filters.orderStatuses.includes(order.status) &&
+			(!carryingNarrows(filters) ||
+				order.payments.some((payment) => filters.carryingStatuses.includes(payment.status)))
 	);
 }
 
@@ -357,13 +378,18 @@ function paymentSynthesisKey(payment: ReportingPayment) {
 	return payment.method;
 }
 
-/** Totals over paid orders only; the "include …" toggles only affect the detail tables. */
+/**
+ * Order, product, VAT and delivery totals count the paid orders among the searched ones: an
+ * unpaid or partially paid order has not taken its total. The payment synthesis counts the
+ * payments shown, which is where a partial payment appears.
+ */
 export function computeReportingSynthesis(
 	orders: ReportingOrder[],
 	filters: ReportingFilters,
 	mainCurrency: Currency
 ) {
-	const paidOrders = orders.filter((order) => order.status === 'paid');
+	const searchedOrders = selectOrderDetail(orders, filters);
+	const paidOrders = searchedOrders.filter((order) => order.status === 'paid');
 	const taggedItems = filters.tagId
 		? paidOrders.flatMap((order) =>
 				order.items.filter((item) => itemMatchesTag(item, filters.tagId))
@@ -391,7 +417,7 @@ export function computeReportingSynthesis(
 	}
 
 	const paymentPrices = new Map<string, Price[]>();
-	for (const order of paidOrders) {
+	for (const order of searchedOrders) {
 		for (const payment of order.payments) {
 			if (!paymentMatchesFilter(payment, filters)) {
 				continue;
