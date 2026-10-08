@@ -35,6 +35,16 @@
 	},
 	"admin": {
 		"product": {
+			"attribute": {
+				"label": "Atributo do produto",
+				"shipping": "Envio",
+				"standalone": "Autónomo",
+				"payWhatYouWant": "Pague o que quiser",
+				"free": "Gratuito",
+				"isTicket": "Bilhete",
+				"preorder": "Pré-encomenda",
+				"isBookingSlot": "Horário de reserva"
+			},
 			"stockReference": {
 				"label": "Referenciar o stock de outro produto (opcional)",
 				"noReference": "-- Sem referência (usar stock próprio) --",

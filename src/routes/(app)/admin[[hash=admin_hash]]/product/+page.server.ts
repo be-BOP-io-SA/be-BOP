@@ -5,7 +5,11 @@ import { set } from '$lib/utils/set';
 import type { Actions } from './$types';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { pojo } from '$lib/server/pojo';
-import { type Product, PRODUCT_PAGINATION_LIMIT } from '$lib/types/Product';
+import {
+	type Product,
+	PRODUCT_LIST_ATTRIBUTES,
+	PRODUCT_PAGINATION_LIMIT
+} from '$lib/types/Product';
 import { picturesForProducts } from '$lib/server/picture';
 import type { Filter } from 'mongodb';
 import { escapeForRegex } from '$lib/utils/escapeForRegex';
@@ -17,12 +21,7 @@ export const load = async ({ url }) => {
 		productId: z.string().optional(),
 		productName: z.string().optional(),
 		productType: z.enum(['' as const, ...['resource', 'donation', 'subscription']]).optional(),
-		productAttribute: z
-			.enum([
-				'' as const,
-				...['shipping', 'standalone', 'payWhatYouWant', 'free', 'isTicket', 'preorder']
-			])
-			.optional(),
+		productAttribute: z.enum(['' as const, ...PRODUCT_LIST_ATTRIBUTES]).optional(),
 		stock: z.enum(['' as const, ...['no-stock-management', 'with-stock', 'no-stock']]).optional(),
 		tagId: z.string().optional()
 	});
@@ -44,7 +43,10 @@ export const load = async ({ url }) => {
 		query.type = productType as 'resource' | 'donation' | 'subscription';
 	}
 
-	if (productAttribute) {
+	if (productAttribute === 'isBookingSlot') {
+		// A bookable product is recognised by its booking spec; it has no boolean flag.
+		query.bookingSpec = { $exists: true };
+	} else if (productAttribute) {
 		query[productAttribute] = true;
 	}
 

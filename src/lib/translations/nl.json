@@ -35,6 +35,16 @@
 	},
 	"admin": {
 		"product": {
+			"attribute": {
+				"label": "Productkenmerk",
+				"shipping": "Verzending",
+				"standalone": "Zelfstandig",
+				"payWhatYouWant": "Betaal wat je wilt",
+				"free": "Gratis",
+				"isTicket": "Ticket",
+				"preorder": "Voorbestelling",
+				"isBookingSlot": "Boekingsslot"
+			},
 			"stockReference": {
 				"label": "Verwijzing naar voorraad van ander product (optioneel)",
 				"noReference": "-- Geen verwijzing (gebruik eigen voorraad) --",
