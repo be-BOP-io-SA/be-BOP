@@ -1,7 +1,36 @@
 <script lang="ts">
-	import type { PosTab, PosTabGroup } from '$lib/types/PosTabGroup';
+	import { useI18n } from '$lib/i18n';
+	import {
+		poolSlugs,
+		resolvePoolLabel,
+		sluggifyTab,
+		type PosTab,
+		type PosTabGroup
+	} from '$lib/types/PosTabGroup';
 
 	export let tabGroups: PosTabGroup[] = [];
+	export let nonEmptyPoolSlugs: string[] = [];
+
+	const { t } = useI18n();
+	// Order tabs are keyed by the slugs of the saved config, not of the edited one.
+	const savedTabGroups: PosTabGroup[] = structuredClone(tabGroups);
+
+	function keepsNonEmptyPools(nextTabGroups: PosTabGroup[], deletedSlug?: string): boolean {
+		const nextSlugs = new Set(poolSlugs(nextTabGroups));
+		// Deleting a row mid-group drops the last slug, not its own: its items would slide under the
+		// next pool's label, so the row itself counts too.
+		const stranded = nonEmptyPoolSlugs.filter(
+			(slug) => !nextSlugs.has(slug) || slug === deletedSlug
+		);
+		if (stranded.length) {
+			alert(
+				t('admin.pos.poolsHoldItems', {
+					pools: stranded.map((slug) => resolvePoolLabel(savedTabGroups, slug)).join(', ')
+				})
+			);
+		}
+		return !stranded.length;
+	}
 
 	function addGroup(name: string) {
 		tabGroups.push({ name, tabs: [] });
@@ -9,6 +38,9 @@
 	}
 
 	function deleteGroup(groupIndex: number) {
+		if (!keepsNonEmptyPools(tabGroups.filter((_, i) => i !== groupIndex))) {
+			return;
+		}
 		tabGroups.splice(groupIndex, 1);
 		tabGroups = tabGroups; // Force reactivity
 	}
@@ -16,6 +48,16 @@
 	function renameGroup(groupIndex: number, newName: string) {
 		tabGroups[groupIndex].name = newName;
 		tabGroups = tabGroups; // Force reactivity
+	}
+
+	let nameBeforeEdit = '';
+
+	// Checked when leaving the field, so typing a new name is not interrupted at each key.
+	function confirmGroupName(groupIndex: number, input: HTMLInputElement) {
+		if (!keepsNonEmptyPools(tabGroups)) {
+			input.value = nameBeforeEdit;
+			renameGroup(groupIndex, nameBeforeEdit);
+		}
 	}
 
 	function updateLabel(groupIndex: number, tabIndex: number, newLabel?: string) {
@@ -34,6 +76,12 @@
 	}
 
 	function deleteTab(groupIndex: number, tabIndex: number) {
+		const next = tabGroups.map((group, i) =>
+			i === groupIndex ? { ...group, tabs: group.tabs.filter((_, j) => j !== tabIndex) } : group
+		);
+		if (!keepsNonEmptyPools(next, sluggifyTab(tabGroups, groupIndex, tabIndex))) {
+			return;
+		}
 		tabGroups[groupIndex].tabs.splice(tabIndex, 1);
 		tabGroups = tabGroups; // Force reactivity
 	}
@@ -65,7 +113,9 @@
 						placeholder="Group Name"
 						value={group.name}
 						class="border font-semibold rounded px-2 py-1 text-sm"
+						on:focus={() => (nameBeforeEdit = group.name)}
 						on:input={(e) => renameGroup(groupIndex, inputValue(e))}
+						on:change={(e) => confirmGroupName(groupIndex, e.currentTarget)}
 					/>
 					<button
 						type="button"

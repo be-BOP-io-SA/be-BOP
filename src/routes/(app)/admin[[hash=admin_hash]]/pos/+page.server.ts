@@ -21,6 +21,14 @@ interface RawTagGroup {
 	updatedAt?: string | Date;
 }
 
+async function nonEmptyPoolSlugs(slugs: string[]): Promise<string[]> {
+	const tabs = await collections.orderTabs
+		.find({ slug: { $in: slugs }, 'items.quantity': { $gt: 0 } })
+		.project<{ slug: string }>({ slug: 1 })
+		.toArray();
+	return tabs.map((tab) => tab.slug);
+}
+
 export const load = async ({}) => {
 	const [tags, tagGroups] = await Promise.all([
 		collections.tags.find({}).project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 }).toArray(),
@@ -57,6 +65,7 @@ export const load = async ({}) => {
 		),
 		posTouchTag: runtimeConfig.posTouchTag,
 		posTabGroups: runtimeConfig.posTabGroups,
+		nonEmptyPoolSlugs: await nonEmptyPoolSlugs(poolSlugs(runtimeConfig.posTabGroups)),
 		posPoolEmptyIcon: runtimeConfig.posPoolEmptyIcon,
 		posPoolOccupiedIcon: runtimeConfig.posPoolOccupiedIcon,
 		posMidTicketTopBlankLines: runtimeConfig.posMidTicketTopBlankLines,
@@ -154,14 +163,11 @@ export const actions: Actions = {
 		// unreachable tab that could still be paid later.
 		const newSlugs = new Set(poolSlugs(result.posTabGroups));
 		const removedSlugs = poolSlugs(runtimeConfig.posTabGroups).filter((s) => !newSlugs.has(s));
-		const nonEmptyRemovedTabs = await collections.orderTabs
-			.find({ slug: { $in: removedSlugs }, 'items.quantity': { $gt: 0 } })
-			.project<{ slug: string }>({ slug: 1 })
-			.toArray();
-		if (nonEmptyRemovedTabs.length) {
+		const nonEmptyRemovedSlugs = await nonEmptyPoolSlugs(removedSlugs);
+		if (nonEmptyRemovedSlugs.length) {
 			return fail(400, {
-				nonEmptyPools: nonEmptyRemovedTabs.map((tab) =>
-					resolvePoolLabel(runtimeConfig.posTabGroups, tab.slug)
+				nonEmptyPools: nonEmptyRemovedSlugs.map((slug) =>
+					resolvePoolLabel(runtimeConfig.posTabGroups, slug)
 				)
 			});
 		}

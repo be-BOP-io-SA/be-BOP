@@ -35,6 +35,7 @@
 	},
 	"admin": {
 		"pos": {
+			"poolsHoldItems": "Deze pools bevatten nog artikelen en kunnen niet worden verwijderd of hernoemd: {pools}. Reken ze eerst af of maak ze leeg.",
 			"nonEmptyPoolsNotRemoved": "Er is niets opgeslagen: deze pools bevatten nog artikelen en kunnen niet worden verwijderd of hernoemd: {pools}. Reken ze eerst af of maak ze leeg."
 		},
 		"product": {

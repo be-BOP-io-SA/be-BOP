@@ -372,7 +372,7 @@
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		Tabs management
-		<ManageOrderTabs bind:tabGroups />
+		<ManageOrderTabs bind:tabGroups nonEmptyPoolSlugs={data.nonEmptyPoolSlugs} />
 	</label>
 	<input type="hidden" name="posTabGroups" bind:value={serializedTabGroups} />
 

@@ -35,6 +35,7 @@
 	},
 	"admin": {
 		"pos": {
+			"poolsHoldItems": "Questi pool contengono ancora articoli e non possono essere rimossi né rinominati: {pools}. Incassali o svuotali prima.",
 			"nonEmptyPoolsNotRemoved": "Non è stato salvato nulla: questi pool contengono ancora articoli e non possono essere rimossi né rinominati: {pools}. Incassali o svuotali prima."
 		},
 		"product": {

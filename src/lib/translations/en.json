@@ -35,6 +35,7 @@
 	},
 	"admin": {
 		"pos": {
+			"poolsHoldItems": "These pools still hold items and cannot be removed or renamed: {pools}. Pay or empty them first.",
 			"nonEmptyPoolsNotRemoved": "Nothing was saved: these pools still hold items and cannot be removed or renamed: {pools}. Pay or empty them first."
 		},
 		"product": {
