@@ -35,6 +35,7 @@
 	},
 	"admin": {
 		"product": {
+			"openInShop": "Im Shop in einem neuen Tab öffnen",
 			"stockReference": {
 				"label": "Auf Lagerbestand eines anderen Produkts verweisen (optional)",
 				"noReference": "-- Keine Referenz (eigenen Lagerbestand verwenden) --",

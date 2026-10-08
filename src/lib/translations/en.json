@@ -35,6 +35,7 @@
 	},
 	"admin": {
 		"product": {
+			"openInShop": "Open in the shop, in a new tab",
 			"stockReference": {
 				"label": "Reference another product's stock (optional)",
 				"noReference": "-- No reference (use own stock) --",

@@ -154,7 +154,7 @@
 			<a href="/admin/product" class="btn body-mainCTA">🧹</a>
 		</label>
 	</div>
-	<div class="flex flex-row flex-wrap gap-6">
+	<div class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-6">
 		{#each data.products as product}
 			<ProductItem {product} picture={picturesByProduct[product._id]} isAdmin />
 		{/each}
