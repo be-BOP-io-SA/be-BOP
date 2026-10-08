@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="100" onload="alert(1)">
+	<script>alert(document.domain)</script>
+	<image href="file:///etc/passwd" width="10" height="10"/>
+	<image xlink:href="http://127.0.0.1:9/probe.png" width="10" height="10"/>
+	<rect width="200" height="100" fill="#3a3"/>
+</svg>
