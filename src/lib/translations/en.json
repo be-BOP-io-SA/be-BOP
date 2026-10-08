@@ -34,6 +34,9 @@
 		"zipCode": "Zip code"
 	},
 	"admin": {
+		"schedule": {
+			"eventDeletedReminder": "The event is removed from this page only. Click \"Update\" to save the deletion."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Reference another product's stock (optional)",

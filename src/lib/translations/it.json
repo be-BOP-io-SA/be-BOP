@@ -34,6 +34,9 @@
 		"zipCode": "Codice d'avviamento postale"
 	},
 	"admin": {
+		"schedule": {
+			"eventDeletedReminder": "L'evento è stato rimosso solo da questa pagina. Fai clic su «Update» per salvare l'eliminazione."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Riferimento allo stock di un altro prodotto (opzionale)",

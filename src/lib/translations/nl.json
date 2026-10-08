@@ -34,6 +34,9 @@
 		"zipCode": "Postcode"
 	},
 	"admin": {
+		"schedule": {
+			"eventDeletedReminder": "Het evenement is alleen van deze pagina verwijderd. Klik op \"Update\" om de verwijdering op te slaan."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Verwijzing naar voorraad van ander product (optioneel)",

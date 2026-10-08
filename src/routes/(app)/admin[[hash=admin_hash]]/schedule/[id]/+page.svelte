@@ -10,8 +10,11 @@
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 
 	let name = data.schedule.name;
 	let slug = data.schedule._id;
@@ -57,11 +60,15 @@
 		}
 	}
 
-	function deleteEventSchedule(title: string) {
-		data.schedule.events = data.schedule.events.filter(
-			(eventSchedule) => !(eventSchedule.title === title)
-		);
+	// By position: titles are not unique, and a line not saved yet has no event behind it.
+	function deleteEventSchedule(index: number) {
+		if (index >= data.schedule.events.length) {
+			eventLines -= 1;
+			return;
+		}
+		data.schedule.events = data.schedule.events.filter((_, i) => i !== index);
 		eventLines -= 1;
+		alert(t('admin.schedule.eventDeletedReminder'));
 	}
 	function closeDetailByIndex(i: number) {
 		const detail = document.getElementById(`detail-${i}`);
@@ -264,9 +271,7 @@
 					{data.schedule.events[i] && data.schedule.events[i].title
 						? ' - ' + data.schedule.events[i].title
 						: ''}
-					<button type="button" on:click={() => deleteEventSchedule(data.schedule.events[i].title)}
-						>🗑️</button
-					>
+					<button type="button" on:click={() => deleteEventSchedule(i)}>🗑️</button>
 				</h1>
 			</summary>
 			<div class="flex flex-col gap-4 mt-2">
@@ -621,7 +626,7 @@
 							class="btn btn-red text-white ml-auto"
 							value="Delete"
 							on:click={() => {
-								deleteEventSchedule(data.schedule.events[i].title);
+								deleteEventSchedule(i);
 								closeDetailByIndex(i);
 							}}
 						/>

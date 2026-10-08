@@ -34,6 +34,9 @@
 		"zipCode": "Postleitzahl"
 	},
 	"admin": {
+		"schedule": {
+			"eventDeletedReminder": "Die Veranstaltung wurde nur von dieser Seite entfernt. Klicken Sie auf „Update“, um das Löschen zu speichern."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Auf Lagerbestand eines anderen Produkts verweisen (optional)",

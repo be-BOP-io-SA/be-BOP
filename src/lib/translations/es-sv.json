@@ -34,6 +34,9 @@
 		"zipCode": "Código postal"
 	},
 	"admin": {
+		"schedule": {
+			"eventDeletedReminder": "El evento solo se ha quitado de esta página. Haz clic en «Update» para guardar la eliminación."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Referenciar el stock de otro producto (opcional)",
