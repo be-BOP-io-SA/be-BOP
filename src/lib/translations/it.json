@@ -35,7 +35,7 @@
 	},
 	"admin": {
 		"schedule": {
-			"eventDeletedReminder": "L'evento è stato rimosso solo da questa pagina. Fai clic su «Update» per salvare l'eliminazione."
+			"confirmEventDeletion": "Eliminare l'evento «{title}»? L'eliminazione verrà salvata quando farai clic su «Update»."
 		},
 		"product": {
 			"stockReference": {

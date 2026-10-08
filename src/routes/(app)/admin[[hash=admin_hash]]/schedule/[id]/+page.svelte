@@ -66,9 +66,12 @@
 			eventLines -= 1;
 			return;
 		}
+		const title = data.schedule.events[index].title || `#${index + 1}`;
+		if (!confirm(t('admin.schedule.confirmEventDeletion', { title }))) {
+			return;
+		}
 		data.schedule.events = data.schedule.events.filter((_, i) => i !== index);
 		eventLines -= 1;
-		alert(t('admin.schedule.eventDeletedReminder'));
 	}
 	function closeDetailByIndex(i: number) {
 		const detail = document.getElementById(`detail-${i}`);

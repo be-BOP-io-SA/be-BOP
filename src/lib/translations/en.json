@@ -35,7 +35,7 @@
 	},
 	"admin": {
 		"schedule": {
-			"eventDeletedReminder": "The event is removed from this page only. Click \"Update\" to save the deletion."
+			"confirmEventDeletion": "Delete the event \"{title}\"? The deletion is saved when you click \"Update\"."
 		},
 		"product": {
 			"stockReference": {

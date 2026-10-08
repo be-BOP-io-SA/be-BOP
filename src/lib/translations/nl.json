@@ -35,7 +35,7 @@
 	},
 	"admin": {
 		"schedule": {
-			"eventDeletedReminder": "Het evenement is alleen van deze pagina verwijderd. Klik op \"Update\" om de verwijdering op te slaan."
+			"confirmEventDeletion": "Het evenement \"{title}\" verwijderen? De verwijdering wordt opgeslagen wanneer je op \"Update\" klikt."
 		},
 		"product": {
 			"stockReference": {

@@ -30,12 +30,12 @@ async function savedSlugs(): Promise<string[]> {
 	return schedule?.events.map((e: { slug: string }) => e.slug);
 }
 
-// A native alert blocks the click that opened it until it is closed.
-function recordDialogs(page: Page): string[] {
+// A native dialog blocks the click that opened it until it is answered.
+function recordDialogs(page: Page, answer: 'accept' | 'dismiss' = 'accept'): string[] {
 	const messages: string[] = [];
 	page.on('dialog', async (dialog) => {
 		messages.push(dialog.message());
-		await dialog.accept();
+		await (answer === 'accept' ? dialog.accept() : dialog.dismiss());
 	});
 	return messages;
 }
@@ -74,7 +74,7 @@ test.afterAll(async () => {
 	await withDb((db) => db.collection('schedules').deleteOne({ _id: SCHEDULE_ID as never }));
 });
 
-test('deleting an event reminds to click Update, and Update saves only that event', async ({
+test('deleting an event asks for confirmation, and Update saves only that event', async ({
 	page
 }) => {
 	const dialogs = recordDialogs(page);
@@ -83,7 +83,7 @@ test('deleting an event reminds to click Update, and Update saves only that even
 	await trashButtons(page).first().click();
 
 	expect(dialogs).toEqual([
-		'The event is removed from this page only. Click "Update" to save the deletion.'
+		'Delete the event "Workshop"? The deletion is saved when you click "Update".'
 	]);
 	await expect(trashButtons(page)).toHaveCount(2);
 
@@ -91,7 +91,17 @@ test('deleting an event reminds to click Update, and Update saves only that even
 	await expect.poll(savedSlugs).toEqual(['workshop-tuesday', 'concert']);
 });
 
-test('removing a line not saved yet works and needs no reminder', async ({ page }) => {
+test('cancelling the confirmation keeps the event', async ({ page }) => {
+	const dialogs = recordDialogs(page, 'dismiss');
+	await openSchedule(page);
+
+	await trashButtons(page).first().click();
+
+	expect(dialogs).toHaveLength(1);
+	await expect(trashButtons(page)).toHaveCount(3);
+});
+
+test('removing a line not saved yet needs no confirmation', async ({ page }) => {
 	const dialogs = recordDialogs(page);
 	await openSchedule(page);
 
@@ -107,14 +117,14 @@ test('removing a line not saved yet works and needs no reminder', async ({ page 
 test.describe('in French', () => {
 	test.use({ locale: 'fr-FR' });
 
-	test('the reminder is translated', async ({ page }) => {
-		const dialogs = recordDialogs(page);
+	test('the confirmation is translated', async ({ page }) => {
+		const dialogs = recordDialogs(page, 'dismiss');
 		await openSchedule(page);
 
 		await trashButtons(page).first().click();
 
 		expect(dialogs).toEqual([
-			"L'événement est retiré de cette page seulement. Cliquez sur « Update » pour enregistrer la suppression."
+			"Supprimer l'événement « Workshop » ? La suppression sera enregistrée quand vous cliquerez sur « Update »."
 		]);
 	});
 });
