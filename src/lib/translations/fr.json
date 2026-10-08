@@ -549,7 +549,8 @@
 		},
 		"nsecBlockTitle": "Ne partagez jamais votre nsec ici, mettez votre npub uniquement!",
 		"password": {
-			"pwned": "Votre mot de passe n'est pas sécurisé, il a été trouvé dans {count} brèches de données. Veuillez réinitialiser votre mot de passe."
+			"pwned": "Votre mot de passe n'est pas sécurisé, il a été trouvé dans {count} brèches de données. Veuillez réinitialiser votre mot de passe.",
+			"unavailable": "La vérification de fuite de mot de passe est indisponible, veuillez réessayer plus tard."
 		},
 		"session": {
 			"email": "E-mail : {email}",

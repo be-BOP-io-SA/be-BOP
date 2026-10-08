@@ -549,7 +549,8 @@
 		},
 		"nsecBlockTitle": "Deel nooit uw NSEC! \nHier, zet je NPUB alleen!",
 		"password": {
-			"pwned": "Uw wachtwoord is onveilig. Het is aangetroffen bij {count} datalekken. \nStel alstublieft uw wachtwoord opnieuw in."
+			"pwned": "Uw wachtwoord is onveilig. Het is aangetroffen bij {count} datalekken. \nStel alstublieft uw wachtwoord opnieuw in.",
+			"unavailable": "De controle op gelekte wachtwoorden is niet beschikbaar, probeer het later opnieuw."
 		},
 		"session": {
 			"email": "E-mail: {email}",

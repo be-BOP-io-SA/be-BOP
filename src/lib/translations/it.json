@@ -549,7 +549,8 @@
 		},
 		"nsecBlockTitle": "Non condividere mai il tuo NSEC! \nQui, metti solo il tuo NPUB!",
 		"password": {
-			"pwned": "La tua password non è sicura, è stata trovata in {count} violazioni di dati. Si prega di reimpostare la password."
+			"pwned": "La tua password non è sicura, è stata trovata in {count} violazioni di dati. Si prega di reimpostare la password.",
+			"unavailable": "Il controllo delle violazioni della password non è disponibile, riprova più tardi."
 		},
 		"session": {
 			"email": "Email: {email}",
