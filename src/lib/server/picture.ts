@@ -15,6 +15,27 @@ import * as mimeTypes from 'mime-types';
 import type { ImageData, Picture, TagType } from '../types/Picture';
 import type { SetRequired } from 'type-fest';
 
+const SVG_RENDER_SIZE = 2048;
+// sharp refuses a higher density; it only bites for SVGs a few pixels wide.
+const MAX_SVG_DENSITY = 100_000;
+
+/**
+ * The original of every picture is kept and can be served as is, and an SVG one could carry
+ * script: an SVG is rendered to a PNG large enough to stay sharp, and only that PNG is kept.
+ */
+async function rasterizeIfSvg(upload: Buffer): Promise<Buffer> {
+	const { format, width, height } = await sharp(upload).metadata();
+
+	if (format !== 'svg' || !width || !height) {
+		return upload;
+	}
+
+	// Sizes read from an SVG are at sharp's default 72 DPI.
+	const density = Math.min((72 * SVG_RENDER_SIZE) / Math.max(width, height), MAX_SVG_DENSITY);
+
+	return sharp(upload, { density }).png().toBuffer();
+}
+
 /**
  * Upload picture to S3 under different formats, and create a document in db.pictures.
  *
@@ -49,11 +70,7 @@ export async function generatePicture(
 		throw error(400, 'Error when uploading picture');
 	}
 
-	const buffer = Buffer.from(await resp.arrayBuffer());
-
-	if (!resp.ok) {
-		throw error(400, 'Error when uploading picture');
-	}
+	const upload = Buffer.from(await resp.arrayBuffer());
 
 	await getS3Client()
 		.deleteObject({
@@ -64,10 +81,11 @@ export async function generatePicture(
 
 	await collections.pendingPictures.deleteOne({ _id: pictureId });
 
-	if (buffer.length > 10 * 1024 * 1024) {
+	if (upload.length > 10 * 1024 * 1024) {
 		throw error(400, 'Image too big, 10MB max');
 	}
 
+	const buffer = await rasterizeIfSvg(upload);
 	const image = sharp(buffer);
 	const { width, height, format } = await image.metadata();
 

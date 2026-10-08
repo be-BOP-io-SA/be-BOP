@@ -89,7 +89,7 @@
 				type="file"
 				bind:files
 				on:change={onChange}
-				accept="image/jpeg,image/png,image/webp,image/avif"
+				accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
 				class="block"
 				required
 				multiple

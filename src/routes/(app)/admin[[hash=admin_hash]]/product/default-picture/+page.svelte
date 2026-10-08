@@ -29,7 +29,7 @@
 			class="block"
 			required
 			name="file"
-			accept="image/jpeg,image/png,image/webp,image/avif"
+			accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
 		/>
 	</label>
 
