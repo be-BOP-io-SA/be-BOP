@@ -1,5 +1,6 @@
 <script lang="ts">
 	import LeaderBoardWidget from '$lib/components/LeaderBoardWidget.svelte';
+	import CmsTagSnippet from '$lib/components/CmsTagSnippet.svelte';
 
 	export let data;
 </script>
@@ -9,6 +10,7 @@
 		class="w-full rounded-xl body-secondPlan border-gray-300 border py-3 px-3 flex flex-col gap-2"
 	>
 		<h1 class="text-3xl">{data.leaderboard.name}</h1>
+		<CmsTagSnippet tag="[Leaderboard={data.leaderboard._id}]" />
 		<LeaderBoardWidget
 			leaderboard={data.leaderboard}
 			pictures={data.pictures}

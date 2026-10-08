@@ -34,6 +34,11 @@
 		"zipCode": "Code postal"
 	},
 	"admin": {
+		"cmsTag": {
+			"label": "Tag CMS :",
+			"copy": "Copier",
+			"copied": "Copié"
+		},
 		"product": {
 			"stockReference": {
 				"label": "Référencer le stock d'un autre produit (optionnel)",
