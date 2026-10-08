@@ -34,6 +34,9 @@
 		"zipCode": "Zip code"
 	},
 	"admin": {
+		"schedule": {
+			"confirmEventDeletion": "Delete the event \"{title}\"? The deletion is saved when you click \"Update\"."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Reference another product's stock (optional)",

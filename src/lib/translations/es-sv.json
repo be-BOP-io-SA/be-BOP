@@ -34,6 +34,9 @@
 		"zipCode": "Código postal"
 	},
 	"admin": {
+		"schedule": {
+			"confirmEventDeletion": "¿Eliminar el evento «{title}»? La eliminación se guardará cuando hagas clic en «Update»."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Referenciar el stock de otro producto (opcional)",

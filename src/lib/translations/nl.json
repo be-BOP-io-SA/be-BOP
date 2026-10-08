@@ -34,6 +34,9 @@
 		"zipCode": "Postcode"
 	},
 	"admin": {
+		"schedule": {
+			"confirmEventDeletion": "Het evenement \"{title}\" verwijderen? De verwijdering wordt opgeslagen wanneer je op \"Update\" klikt."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Verwijzing naar voorraad van ander product (optioneel)",
