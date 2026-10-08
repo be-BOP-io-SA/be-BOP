@@ -34,6 +34,11 @@
 		"zipCode": "Zip code"
 	},
 	"admin": {
+		"cmsTag": {
+			"label": "CMS tag:",
+			"copy": "Copy",
+			"copied": "Copied"
+		},
 		"product": {
 			"stockReference": {
 				"label": "Reference another product's stock (optional)",

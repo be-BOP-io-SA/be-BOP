@@ -34,6 +34,11 @@
 		"zipCode": "Postcode"
 	},
 	"admin": {
+		"cmsTag": {
+			"label": "CMS-tag:",
+			"copy": "Kopiëren",
+			"copied": "Gekopieerd"
+		},
 		"product": {
 			"stockReference": {
 				"label": "Verwijzing naar voorraad van ander product (optioneel)",

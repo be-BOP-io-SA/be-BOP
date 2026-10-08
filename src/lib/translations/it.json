@@ -34,6 +34,11 @@
 		"zipCode": "Codice d'avviamento postale"
 	},
 	"admin": {
+		"cmsTag": {
+			"label": "Tag CMS:",
+			"copy": "Copia",
+			"copied": "Copiato"
+		},
 		"product": {
 			"stockReference": {
 				"label": "Riferimento allo stock di un altro prodotto (opzionale)",

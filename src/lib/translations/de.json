@@ -34,6 +34,11 @@
 		"zipCode": "Postleitzahl"
 	},
 	"admin": {
+		"cmsTag": {
+			"label": "CMS-Tag:",
+			"copy": "Kopieren",
+			"copied": "Kopiert"
+		},
 		"product": {
 			"stockReference": {
 				"label": "Auf Lagerbestand eines anderen Produkts verweisen (optional)",
