@@ -32,6 +32,12 @@ export function sluggifyTab(
 		.replace(/^-|-$/g, '');
 }
 
+export function poolSlugs(posTabGroups: PosTabGroup[]): string[] {
+	return posTabGroups.flatMap((group, groupIndex) =>
+		group.tabs.map((_, tabIndex) => sluggifyTab(posTabGroups, groupIndex, tabIndex))
+	);
+}
+
 export function resolvePoolLabel(posTabGroups: PosTabGroup[], tabSlug: string): string {
 	return (
 		posTabGroups
