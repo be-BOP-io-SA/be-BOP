@@ -35,6 +35,7 @@
 	},
 	"admin": {
 		"product": {
+			"openInShop": "Abrir en la tienda, en una pestaña nueva",
 			"stockReference": {
 				"label": "Referenciar el stock de otro producto (opcional)",
 				"noReference": "-- Sin referencia (usar stock propio) --",

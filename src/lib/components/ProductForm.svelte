@@ -2108,7 +2108,7 @@
 				</button>
 
 				{#if !isNew}
-					<div class="flex gap-3">
+					<div class="flex flex-wrap gap-3">
 						<a href="/product/{product._id}" class="btn body-mainCTA px-6 py-3" target="_blank">
 							View Product
 						</a>
