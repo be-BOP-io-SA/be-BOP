@@ -625,14 +625,14 @@
 						<span class="text-red-500">*</span> Product images
 						<input
 							type="file"
-							accept="image/jpeg,image/png,image/webp"
+							accept="image/jpeg,image/png,image/webp,image/avif"
 							class="form-input file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
 							bind:files
 							required
 							multiple
 						/>
 						<p class="text-sm text-gray-500 mt-1">
-							Upload one or more product images (JPEG, PNG, WebP)
+							Upload one or more product images (JPEG, PNG, WebP, AVIF)
 						</p>
 					</label>
 				{/if}

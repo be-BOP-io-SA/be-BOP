@@ -149,7 +149,7 @@
 		Main picture
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept="image/jpeg,image/png,image/webp,image/avif"
 			class="block"
 			bind:files={fileMainPicture}
 			disabled={submitting}
@@ -160,7 +160,7 @@
 		Full picture
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept="image/jpeg,image/png,image/webp,image/avif"
 			class="block"
 			bind:files={fileFullPicture}
 			disabled={submitting}
@@ -171,7 +171,7 @@
 		Wide banner
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept="image/jpeg,image/png,image/webp,image/avif"
 			class="block"
 			bind:files={fileWideBanner}
 			disabled={submitting}
@@ -182,7 +182,7 @@
 		Slim banner
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept="image/jpeg,image/png,image/webp,image/avif"
 			class="block"
 			bind:files={fileSlimBanner}
 			disabled={submitting}
@@ -193,7 +193,7 @@
 		Avatar
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept="image/jpeg,image/png,image/webp,image/avif"
 			class="block"
 			bind:files={fileAvatar}
 			disabled={submitting}

@@ -81,12 +81,12 @@
 >
 	<fieldset class="contents" disabled={submitting}>
 		<label class="form-label">
-			JPEG or PNG file
+			JPEG, PNG, WebP or AVIF file
 			<input
 				type="file"
 				bind:files
 				on:change={onChange}
-				accept="image/jpeg,image/png,image/webp"
+				accept="image/jpeg,image/png,image/webp,image/avif"
 				class="block"
 				required
 				multiple
