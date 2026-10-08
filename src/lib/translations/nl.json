@@ -34,7 +34,11 @@
 		"zipCode": "Postcode"
 	},
 	"admin": {
+		"picture": {
+			"fileLabel": "JPEG-, PNG-, WebP- of AVIF-bestand"
+		},
 		"product": {
+			"imagesHint": "Upload een of meer productafbeeldingen (JPEG, PNG, WebP, AVIF)",
 			"stockReference": {
 				"label": "Verwijzing naar voorraad van ander product (optioneel)",
 				"noReference": "-- Geen verwijzing (gebruik eigen voorraad) --",

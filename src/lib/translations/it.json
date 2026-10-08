@@ -34,7 +34,11 @@
 		"zipCode": "Codice d'avviamento postale"
 	},
 	"admin": {
+		"picture": {
+			"fileLabel": "File JPEG, PNG, WebP o AVIF"
+		},
 		"product": {
+			"imagesHint": "Carica una o più immagini del prodotto (JPEG, PNG, WebP, AVIF)",
 			"stockReference": {
 				"label": "Riferimento allo stock di un altro prodotto (opzionale)",
 				"noReference": "-- Nessun riferimento (usa stock proprio) --",

@@ -34,7 +34,11 @@
 		"zipCode": "Código postal"
 	},
 	"admin": {
+		"picture": {
+			"fileLabel": "Ficheiro JPEG, PNG, WebP ou AVIF"
+		},
 		"product": {
+			"imagesHint": "Carregue uma ou mais imagens do produto (JPEG, PNG, WebP, AVIF)",
 			"stockReference": {
 				"label": "Referenciar o stock de outro produto (opcional)",
 				"noReference": "-- Sem referência (usar stock próprio) --",

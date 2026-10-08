@@ -632,7 +632,7 @@
 							multiple
 						/>
 						<p class="text-sm text-gray-500 mt-1">
-							Upload one or more product images (JPEG, PNG, WebP, AVIF)
+							{t('admin.product.imagesHint')}
 						</p>
 					</label>
 				{/if}

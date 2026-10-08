@@ -4,8 +4,11 @@
 	import { page } from '$app/stores';
 	import { TAGTYPES, preUploadPicture } from '$lib/types/Picture.js';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 
 	const productId = $page.url.searchParams.get('productId');
 	const sliderId = $page.url.searchParams.get('sliderId');
@@ -81,7 +84,7 @@
 >
 	<fieldset class="contents" disabled={submitting}>
 		<label class="form-label">
-			JPEG, PNG, WebP or AVIF file
+			{t('admin.picture.fileLabel')}
 			<input
 				type="file"
 				bind:files
