@@ -34,7 +34,11 @@
 		"zipCode": "Zip code"
 	},
 	"admin": {
+		"picture": {
+			"fileLabel": "JPEG, PNG, WebP, AVIF or SVG file"
+		},
 		"product": {
+			"imagesHint": "Upload one or more product images (JPEG, PNG, WebP, AVIF, SVG)",
 			"stockReference": {
 				"label": "Reference another product's stock (optional)",
 				"noReference": "-- No reference (use own stock) --",
