@@ -263,7 +263,7 @@
 		{/if}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp,image/avif"
+			accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
 			class="block"
 			on:change={(e) => handleFileChange(e, i)}
 			disabled={submitting}

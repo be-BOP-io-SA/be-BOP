@@ -35,10 +35,10 @@
 	},
 	"admin": {
 		"picture": {
-			"fileLabel": "File JPEG, PNG, WebP o AVIF"
+			"fileLabel": "File JPEG, PNG, WebP, AVIF o SVG"
 		},
 		"product": {
-			"imagesHint": "Carica una o più immagini del prodotto (JPEG, PNG, WebP, AVIF)",
+			"imagesHint": "Carica una o più immagini del prodotto (JPEG, PNG, WebP, AVIF, SVG)",
 			"stockReference": {
 				"label": "Riferimento allo stock di un altro prodotto (opzionale)",
 				"noReference": "-- Nessun riferimento (usa stock proprio) --",
