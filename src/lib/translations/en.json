@@ -35,6 +35,16 @@
 	},
 	"admin": {
 		"product": {
+			"attribute": {
+				"label": "Product attribute",
+				"shipping": "Shipping",
+				"standalone": "Standalone",
+				"payWhatYouWant": "Pay what you want",
+				"free": "Free",
+				"isTicket": "Ticket",
+				"preorder": "Preorder",
+				"isBookingSlot": "Booking slot"
+			},
 			"stockReference": {
 				"label": "Reference another product's stock (optional)",
 				"noReference": "-- No reference (use own stock) --",

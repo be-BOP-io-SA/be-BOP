@@ -183,6 +183,17 @@ export const DEFAULT_MAX_QUANTITY_PER_ORDER = 10;
 export const POS_PRODUCT_PAGINATION = 10;
 export const PRODUCT_PAGINATION_LIMIT = 25;
 
+/** Filters of the admin product list; all are boolean fields except isBookingSlot. */
+export const PRODUCT_LIST_ATTRIBUTES = [
+	'shipping',
+	'standalone',
+	'payWhatYouWant',
+	'free',
+	'isTicket',
+	'preorder',
+	'isBookingSlot'
+] as const;
+
 export function isPreorder(
 	availableDate: Date | undefined,
 	preorder: boolean | undefined

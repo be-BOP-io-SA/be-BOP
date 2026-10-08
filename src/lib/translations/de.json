@@ -35,6 +35,16 @@
 	},
 	"admin": {
 		"product": {
+			"attribute": {
+				"label": "Produktattribut",
+				"shipping": "Versand",
+				"standalone": "Eigenständig",
+				"payWhatYouWant": "Zahl, was du willst",
+				"free": "Kostenlos",
+				"isTicket": "Ticket",
+				"preorder": "Vorbestellung",
+				"isBookingSlot": "Buchungszeitfenster"
+			},
 			"stockReference": {
 				"label": "Auf Lagerbestand eines anderen Produkts verweisen (optional)",
 				"noReference": "-- Keine Referenz (eigenen Lagerbestand verwenden) --",
