@@ -162,7 +162,7 @@
 		{t('admin.tags.mainPicture')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept="image/jpeg,image/png,image/webp,image/avif"
 			class="block"
 			bind:files={fileMainPicture}
 			disabled={submitting}
@@ -173,7 +173,7 @@
 		{t('admin.tags.fullPicture')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept="image/jpeg,image/png,image/webp,image/avif"
 			class="block"
 			bind:files={fileFullPicture}
 			disabled={submitting}
@@ -184,7 +184,7 @@
 		{t('admin.tags.wideBanner')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept="image/jpeg,image/png,image/webp,image/avif"
 			class="block"
 			bind:files={fileWideBanner}
 			disabled={submitting}
@@ -195,7 +195,7 @@
 		{t('admin.tags.slimBanner')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept="image/jpeg,image/png,image/webp,image/avif"
 			class="block"
 			bind:files={fileSlimBanner}
 			disabled={submitting}
@@ -206,7 +206,7 @@
 		{t('admin.tags.avatar')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept="image/jpeg,image/png,image/webp,image/avif"
 			class="block"
 			bind:files={fileAvatar}
 			disabled={submitting}
