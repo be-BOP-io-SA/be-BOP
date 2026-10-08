@@ -349,3 +349,72 @@ export function cleanVariationLabels(variationLabels?: {
 
 	return { names, values };
 }
+
+/**
+ * Keep only the family options whose family still has at least one variation, and only those
+ * that actually turn something on.
+ *
+ * The form posts a checkbox pair for every family it displayed. Storing the false ones would
+ * leave a record of families behind after their last variation is deleted, and the product
+ * page would then look up options for families that no longer exist.
+ */
+export function cleanVariationFamilies(
+	variationFamilies:
+		| Record<string, { hiddenFromUI?: boolean; hiddenFromCustomer?: boolean }>
+		| undefined,
+	variations: Array<{ name: string }>
+): Record<string, { hiddenFromUI?: boolean; hiddenFromCustomer?: boolean }> {
+	const known = new Set(variations.map((variation) => variation.name));
+
+	return Object.fromEntries(
+		Object.entries(variationFamilies ?? {})
+			.filter(([family]) => known.has(family))
+			.map(([family, options]) => [
+				family,
+				{
+					...(options.hiddenFromUI && { hiddenFromUI: true }),
+					...(options.hiddenFromCustomer && { hiddenFromCustomer: true })
+				}
+			])
+			.filter(([, options]) => Object.keys(options).length > 0)
+	);
+}
+
+/**
+ * Moves translated value labels to the new id of every renamed variation value.
+ *
+ * A translation replaces `variationLabels` wholesale, so a label left under the old id would
+ * offer visitors in that language a value no variation carries any more.
+ *
+ * @param renames - `{ [family]: { [oldValueId]: newValueId } }`
+ * @returns the updated translations, or `undefined` when no translated label had to move
+ */
+export function renameTranslatedVariationValues(
+	translations: Product['translations'],
+	renames: Record<string, Record<string, string>> | undefined
+): Product['translations'] | undefined {
+	if (!translations || !renames) {
+		return undefined;
+	}
+	let changed = false;
+	const updated = structuredClone(translations);
+
+	for (const translation of Object.values(updated)) {
+		const values = translation?.variationLabels?.values;
+		if (!values) {
+			continue;
+		}
+		for (const [family, familyRenames] of Object.entries(renames)) {
+			for (const [oldId, newId] of Object.entries(familyRenames)) {
+				if (!newId || newId === oldId || !(oldId in (values[family] ?? {}))) {
+					continue;
+				}
+				values[family][newId] = values[family][oldId];
+				delete values[family][oldId];
+				changed = true;
+			}
+		}
+	}
+
+	return changed ? updated : undefined;
+}

@@ -474,7 +474,19 @@
 		isZoomed = !isZoomed;
 	}
 
-	let selectedVariations: Record<string, string> = {};
+	// Seeded from the URL so the price preview and the POST body carry the forced values even
+	// though no dropdown was ever rendered for them.
+	let selectedVariations: Record<string, string> = { ...data.forcedVariations };
+	// SvelteKit keeps this component when navigating to another product or query string, so the
+	// URL's choice must be re-applied then, but not on a mere reload of the same page's data.
+	let variationsSeededFor = variationSeedKey();
+	function variationSeedKey() {
+		return `${data.product._id}?${JSON.stringify(data.forcedVariations)}`;
+	}
+	$: if (data && variationSeedKey() !== variationsSeededFor) {
+		variationsSeededFor = variationSeedKey();
+		selectedVariations = { ...data.forcedVariations };
+	}
 	$: if (data.product.hasVariations) {
 		customAmount = productPriceWithVariations(data.product, selectedVariations);
 	}
@@ -977,17 +989,27 @@
 							{/if}
 							{#if data.product.standalone && data.product.hasVariations && data.product.variationLabels}
 								{#each Object.keys(data.product.variationLabels.values) as key}
-									<label class="mb-2" for={key}>{data.product.variationLabels.names[key]}</label>
-									<select
-										bind:value={selectedVariations[key]}
-										id={key}
-										name="chosenVariations[{key}]"
-										class="form-input w-full inline cursor-pointer"
-									>
-										{#each Object.entries(data.product.variationLabels.values[key]) as [valueKey, valueLabel]}
-											<option value={valueKey}>{valueLabel}</option>
-										{/each}
-									</select>
+									<!-- A family hidden from the page but unset by the URL only gets this far under
+									     the "ignore" policy, which promises the dropdown back. -->
+									{#if key in data.forcedVariations}
+										<input
+											type="hidden"
+											name="chosenVariations[{key}]"
+											value={selectedVariations[key]}
+										/>
+									{:else}
+										<label class="mb-2" for={key}>{data.product.variationLabels.names[key]}</label>
+										<select
+											bind:value={selectedVariations[key]}
+											id={key}
+											name="chosenVariations[{key}]"
+											class="form-input w-full inline cursor-pointer"
+										>
+											{#each Object.entries(data.product.variationLabels.values[key]) as [valueKey, valueLabel]}
+												<option value={valueKey}>{valueLabel}</option>
+											{/each}
+										</select>
+									{/if}
 								{/each}
 							{/if}
 							{#if !oneMaxPerLine(data.product) && amountAvailable > 0}

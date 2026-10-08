@@ -35,7 +35,7 @@
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import IconSystem from '$lib/components/icons/IconSystem.svelte';
-	import { oneMaxPerLine } from '$lib/types/Product.js';
+	import { oneMaxPerLine, productLabelWithVariations } from '$lib/types/Product.js';
 
 	export let data;
 
@@ -360,16 +360,7 @@
 											<div class="flex flex-col">
 												<a href="/product/{item.product._id}">
 													<h3 class="text-base font-medium">
-														{item.chosenVariations
-															? item.product.name +
-															  ' - ' +
-															  Object.entries(item.chosenVariations)
-																	.map(
-																		([key, value]) =>
-																			item.product.variationLabels?.values[key][value]
-																	)
-																	.join(' - ')
-															: item.product.name}
+														{productLabelWithVariations(item.product, item.chosenVariations)}
 													</h3>
 												</a>
 												{#if !oneMaxPerLine(item.product)}
