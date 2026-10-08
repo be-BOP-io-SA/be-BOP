@@ -34,6 +34,9 @@
 		"zipCode": "Zip code"
 	},
 	"admin": {
+		"pos": {
+			"nonEmptyPoolsNotRemoved": "Nothing was saved: these pools still hold items and cannot be removed or renamed: {pools}. Pay or empty them first."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Reference another product's stock (optional)",

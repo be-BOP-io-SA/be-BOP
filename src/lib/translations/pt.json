@@ -34,6 +34,9 @@
 		"zipCode": "Código postal"
 	},
 	"admin": {
+		"pos": {
+			"nonEmptyPoolsNotRemoved": "Nada foi guardado: estes pools ainda contêm artigos e não podem ser removidos nem renomeados: {pools}. Cobre-os ou esvazie-os primeiro."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Referenciar o stock de outro produto (opcional)",

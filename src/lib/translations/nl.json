@@ -34,6 +34,9 @@
 		"zipCode": "Postcode"
 	},
 	"admin": {
+		"pos": {
+			"nonEmptyPoolsNotRemoved": "Er is niets opgeslagen: deze pools bevatten nog artikelen en kunnen niet worden verwijderd of hernoemd: {pools}. Reken ze eerst af of maak ze leeg."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Verwijzing naar voorraad van ander product (optioneel)",

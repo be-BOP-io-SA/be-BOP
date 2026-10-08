@@ -34,6 +34,9 @@
 		"zipCode": "Postleitzahl"
 	},
 	"admin": {
+		"pos": {
+			"nonEmptyPoolsNotRemoved": "Nichts wurde gespeichert: Diese Pools enthalten noch Artikel und können weder entfernt noch umbenannt werden: {pools}. Kassieren oder leeren Sie sie zuerst."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Auf Lagerbestand eines anderen Produkts verweisen (optional)",

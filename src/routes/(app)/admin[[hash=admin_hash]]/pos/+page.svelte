@@ -4,6 +4,7 @@
 	import { useI18n } from '$lib/i18n';
 	import type { TagGroup } from '$lib/types/TagGroup';
 	export let data;
+	export let form: { nonEmptyPools?: string[] } | null;
 
 	const { t } = useI18n();
 
@@ -91,6 +92,11 @@
 </div>
 
 <form method="post" class="flex flex-col gap-6" on:submit={handleSubmit}>
+	{#if form?.nonEmptyPools?.length}
+		<p class="alert-error" role="alert">
+			{t('admin.pos.nonEmptyPoolsNotRemoved', { pools: form.nonEmptyPools.join(', ') })}
+		</p>
+	{/if}
 	<h2 class="text-2xl">POS Session Management (Z-Ticket System)</h2>
 
 	<label class="checkbox-label">
