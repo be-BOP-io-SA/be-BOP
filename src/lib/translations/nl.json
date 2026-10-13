@@ -1351,7 +1351,33 @@
 			"setCheckoutAdditionalFields": "Extra afrekenvelden instellen",
 			"defaultSubscriptionDuration": "Standaard abonnementsduur",
 			"subscriptionDurationHint": "Gebruikt voor abonnementsproducten ingesteld op \"Standaard (winkelbreed)\" en voor verouderde snapshots.",
-			"analyticsScriptPlaceholder": "Plausible-script"
+			"analyticsScriptPlaceholder": "Plausible-script",
+			"orderNotificationsTitle": "Welke besteldmails verstuurd worden",
+			"orderNotificationsHint": "Eén regel per e-mail die be-BOP over een bestelling verstuurt. Vink uit wat u niet wilt ontvangen — \"betaling in afwachting\" en \"betaling verlopen\" zijn doorgaans de luidruchtigste.",
+			"orderNotificationsOverridden": "De optie hierboven stuurt u een kopie van elke bestelmail, dus deze lijst heeft geen effect. Vink haar uit om per e-mail te kiezen.",
+			"orderNotificationsEmail": "E-mail",
+			"orderNotificationsToCustomer": "Naar de klant",
+			"orderNotificationsToOwner": "Kopie naar u",
+			"orderNotificationLabel": {
+				"order": {
+					"payment": {
+						"pending": {
+							"lightning": "Betaling in afwachting — Lightning",
+							"bitcoin": "Betaling in afwachting — Bitcoin",
+							"card": "Betaling in afwachting — kaart",
+							"paypal": "Betaling in afwachting — PayPal",
+							"taler": "Betaling in afwachting — Taler",
+							"osb": "Betaling in afwachting — OSB",
+							"custom": "Betaling in afwachting — andere methode"
+						},
+						"paid": "Er is een betaling ontvangen",
+						"expired": "Betaling verlopen",
+						"canceled": "Betaling geannuleerd"
+					},
+					"paid": "De bestelling is volledig betaald"
+				}
+			},
+			"orderNotificationsNoOwnerEmail": "Er is geen contactadres voor de winkel ingesteld, dus er is niemand om een kopie naar te sturen. De optie hieronder en de kopiekolom van de lijst blijven onbeschikbaar totdat u er een instelt onder Instellingen en dan"
 		},
 		"oauth": {
 			"title": "OAuth-providers",

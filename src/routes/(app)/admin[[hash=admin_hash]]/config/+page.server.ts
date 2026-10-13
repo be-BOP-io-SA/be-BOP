@@ -2,7 +2,12 @@ import { ORDER_PAYMENT_STATUSES, type OrderPaymentStatus } from '$lib/types/Orde
 import { DELAY_MULTIPLIERS } from '$lib/utils/delayMultipliers';
 import { ORIGIN } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
-import { runtimeConfig } from '$lib/server/runtime-config';
+import {
+	ORDER_NOTIFICATION_TEMPLATE_KEYS,
+	orderNotificationSetting,
+	runtimeConfig,
+	type OrderNotificationTemplateKey
+} from '$lib/server/runtime-config';
 import { CURRENCIES } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { typedKeys } from '$lib/utils/typedKeys.js';
@@ -64,6 +69,10 @@ export async function load(event) {
 		physicalCartMinAmount: runtimeConfig.physicalCartMinAmount,
 		accountingCurrency: runtimeConfig.accountingCurrency,
 		copyOrderEmailsToAdmin: runtimeConfig.copyOrderEmailsToAdmin,
+		orderNotificationKeys: [...ORDER_NOTIFICATION_TEMPLATE_KEYS],
+		orderNotifications: Object.fromEntries(
+			ORDER_NOTIFICATION_TEMPLATE_KEYS.map((key) => [key, orderNotificationSetting(key)])
+		),
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
 		defaultOnLocation: runtimeConfig.defaultOnLocation,
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,
@@ -291,6 +300,25 @@ export const actions = {
 		if (JSON.stringify(runtimeConfig.dataCleanup) !== JSON.stringify(dataCleanup)) {
 			runtimeConfig.dataCleanup = dataCleanup;
 			await persistConfigElement('dataCleanup', dataCleanup);
+		}
+
+		/**
+		 * Read straight from the form rather than through the schema: a template key carries dots,
+		 * and the path parser would read them as nested objects. The prefixed names keep it flat.
+		 */
+		const orderNotifications = Object.fromEntries(
+			ORDER_NOTIFICATION_TEMPLATE_KEYS.map((key) => [
+				key,
+				{
+					sendToUser: formData.get(`notifyUser:${key}`) === 'on',
+					sendCopyToAdmin: formData.get(`notifyOwner:${key}`) === 'on'
+				}
+			])
+		) as Record<OrderNotificationTemplateKey, { sendToUser: boolean; sendCopyToAdmin: boolean }>;
+
+		if (JSON.stringify(runtimeConfig.orderNotifications) !== JSON.stringify(orderNotifications)) {
+			runtimeConfig.orderNotifications = orderNotifications;
+			await persistConfigElement('orderNotifications', orderNotifications);
 		}
 
 		if (oldAdminHash !== result.adminHash) {

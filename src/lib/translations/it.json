@@ -1351,7 +1351,33 @@
 			"setCheckoutAdditionalFields": "Imposta campi aggiuntivi per il checkout",
 			"defaultSubscriptionDuration": "Durata predefinita dell'abbonamento",
 			"subscriptionDurationHint": "Usato per i prodotti in abbonamento impostati su \"Predefinito (a livello di negozio)\" e per gli snapshot legacy.",
-			"analyticsScriptPlaceholder": "script Plausible"
+			"analyticsScriptPlaceholder": "script Plausible",
+			"orderNotificationsTitle": "Quali e-mail d’ordine vengono inviate",
+			"orderNotificationsHint": "Una riga per ogni e-mail che be-BOP invia a proposito di un ordine. Deselezioni ciò che non vuole ricevere: «pagamento in attesa» e «pagamento scaduto» sono di solito le più rumorose.",
+			"orderNotificationsOverridden": "L’opzione sopra le invia una copia di tutte le e-mail d’ordine, quindi questo elenco non ha effetto. La deselezioni per scegliere e-mail per e-mail.",
+			"orderNotificationsEmail": "E-mail",
+			"orderNotificationsToCustomer": "Al cliente",
+			"orderNotificationsToOwner": "In copia a lei",
+			"orderNotificationLabel": {
+				"order": {
+					"payment": {
+						"pending": {
+							"lightning": "Pagamento in attesa — Lightning",
+							"bitcoin": "Pagamento in attesa — Bitcoin",
+							"card": "Pagamento in attesa — carta",
+							"paypal": "Pagamento in attesa — PayPal",
+							"taler": "Pagamento in attesa — Taler",
+							"osb": "Pagamento in attesa — OSB",
+							"custom": "Pagamento in attesa — altro metodo"
+						},
+						"paid": "È stato ricevuto un pagamento",
+						"expired": "Pagamento scaduto",
+						"canceled": "Pagamento annullato"
+					},
+					"paid": "L’ordine è interamente pagato"
+				}
+			},
+			"orderNotificationsNoOwnerEmail": "Per il negozio non è impostato alcun indirizzo di contatto, quindi non c’è nessuno a cui inviare copia. L’opzione sotto e la colonna della copia nell’elenco restano non disponibili finché non ne imposta uno in Impostazioni poi"
 		},
 		"oauth": {
 			"title": "Provider OAuth",

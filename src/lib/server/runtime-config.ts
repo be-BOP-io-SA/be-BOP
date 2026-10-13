@@ -53,6 +53,27 @@ import { deepClone } from '$lib/utils/deep-clone';
 import { defaultLanguageText } from './i18n-defaults';
 
 /**
+ * The order e-mails a shop can switch on and off one by one, in the order they reach a customer
+ * along the life of an order. Only these: the list is about order noise, and a shop has no business
+ * silencing a password reset.
+ */
+export const ORDER_NOTIFICATION_TEMPLATE_KEYS = [
+	'order.payment.pending.lightning',
+	'order.payment.pending.bitcoin',
+	'order.payment.pending.card',
+	'order.payment.pending.paypal',
+	'order.payment.pending.taler',
+	'order.payment.pending.osb',
+	'order.payment.pending.custom',
+	'order.payment.paid',
+	'order.paid',
+	'order.payment.expired',
+	'order.payment.canceled'
+] as const;
+
+export type OrderNotificationTemplateKey = (typeof ORDER_NOTIFICATION_TEMPLATE_KEYS)[number];
+
+/**
  * Shape of a seeded per-locale layout override. The link arrays are typed as optional so
  * the assignment in `/admin/layout/translations` (which spreads a Partial of the schema)
  * stays compatible with the intersection type of `runtimeConfig['translations.<locale>.config']`.
@@ -316,7 +337,26 @@ const baseConfig = {
 	hideShopBankOnTicket: false,
 	hideCmsZonesOnMobile: false,
 	mergeMobileMenus: true,
+	/**
+	 * Master switch, and it stays one: on, every order e-mail is copied to the shop owner, whatever
+	 * the per-e-mail list below says. Shops that ticked it before that list existed keep exactly the
+	 * behaviour they chose. Untick it to decide e-mail by e-mail.
+	 */
 	copyOrderEmailsToAdmin: true,
+	/**
+	 * Who gets which order e-mail, one line per kind. Read only when the master switch above is off.
+	 *
+	 * Shipped so a new shop behaves as before for its customers — they are told about every step of
+	 * their order — and quietly for its owner, who asked for none of it. The point of the whole
+	 * setting is that "payment pending" and "payment expired" are noise for the owner while "paid"
+	 * is not.
+	 */
+	orderNotifications: Object.fromEntries(
+		ORDER_NOTIFICATION_TEMPLATE_KEYS.map((key) => [
+			key,
+			{ sendToUser: true, sendCopyToAdmin: false }
+		])
+	) as Record<OrderNotificationTemplateKey, { sendToUser: boolean; sendCopyToAdmin: boolean }>,
 	/**
 	 * Test feature (no admin UI yet): list of npubs that will receive a Nostr DM
 	 * "Order #N was fully paid, total amount X.XX CCY" each time an order
@@ -974,6 +1014,29 @@ export const runtimeConfig = structuredClone({
 	...baseConfig,
 	...overridesFromEnvVars(baseConfig)
 }) as RuntimeConfig;
+
+/**
+ * The two answers for one order e-mail: does the customer get it, does the owner get a copy.
+ *
+ * Falls back to how be-BOP behaved before the list existed — customer yes, owner only through the
+ * general setting. That matters for a key the stored configuration does not carry: a shop that
+ * saved its list before a payment method was added must not go silent on that method's e-mails.
+ */
+export function orderNotificationSetting(key: string): {
+	sendToUser: boolean;
+	sendCopyToAdmin: boolean;
+} {
+	const stored = (
+		runtimeConfig.orderNotifications as Record<
+			string,
+			{ sendToUser?: boolean; sendCopyToAdmin?: boolean } | undefined
+		>
+	)[key];
+	return {
+		sendToUser: stored?.sendToUser ?? true,
+		sendCopyToAdmin: stored?.sendCopyToAdmin ?? false
+	};
+}
 
 export function resetConfig() {
 	if (!import.meta.env.VITEST) {

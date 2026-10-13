@@ -18,6 +18,9 @@
 	import Select from 'svelte-select';
 	import ProcessorSelector from '$lib/components/ProcessorSelector.svelte';
 	export let data;
+
+	// Drives the note under the per-e-mail list: ticked, that list has no effect.
+	let copyAllOrderEmails = data.copyOrderEmailsToAdmin && !!data.sellerIdentity?.contact.email;
 	export let form;
 
 	let vatExempted = data.vatExempted;
@@ -759,12 +762,23 @@
 		</p>
 	</label>
 
+	<!-- Above both controls it explains, because both are greyed out, and a greyed control with no
+	     reason given is a dead end. -->
+	{#if !data.sellerIdentity?.contact.email}
+		<p class="alert-warning text-sm">
+			{t('admin.config.orderNotificationsNoOwnerEmail')}
+			<a href="{data.adminPrefix}/identity" class="body-hyperlink underline"
+				>{t('admin.config.identity')}</a
+			>{t('admin.config.identitySectionSuffix')}
+		</p>
+	{/if}
+
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
 			name="copyOrderEmailsToAdmin"
 			class="form-checkbox"
-			checked={data.copyOrderEmailsToAdmin && !!data.sellerIdentity?.contact.email}
+			bind:checked={copyAllOrderEmails}
 			disabled={!data.sellerIdentity?.contact.email}
 		/>
 		{t('admin.config.copyOrderEmailsTo', {
@@ -774,6 +788,55 @@
 			>{t('admin.config.identity')}</a
 		>{t('admin.config.identitySectionSuffix')}
 	</label>
+
+	<!-- Not disabled when the copy-everything switch is on: a disabled fieldset submits nothing, and
+	     saving would quietly empty the list. Only the sentence below changes. -->
+	<fieldset class="form-label" class:opacity-60={copyAllOrderEmails}>
+		<legend>{t('admin.config.orderNotificationsTitle')}</legend>
+		<p class="text-sm text-gray-500">
+			{copyAllOrderEmails
+				? t('admin.config.orderNotificationsOverridden')
+				: t('admin.config.orderNotificationsHint')}
+		</p>
+
+		<div class="overflow-x-auto">
+			<table class="text-sm">
+				<thead>
+					<tr>
+						<th class="text-left font-medium py-2 pr-6">
+							{t('admin.config.orderNotificationsEmail')}
+						</th>
+						<th class="font-medium py-2 px-4">{t('admin.config.orderNotificationsToCustomer')}</th>
+						<th class="font-medium py-2 px-4">{t('admin.config.orderNotificationsToOwner')}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each data.orderNotificationKeys as key}
+						<tr>
+							<td class="py-1 pr-6">{t(`admin.config.orderNotificationLabel.${key}`)}</td>
+							<td class="py-1 px-4 text-center">
+								<input
+									type="checkbox"
+									name="notifyUser:{key}"
+									class="form-checkbox"
+									checked={data.orderNotifications[key].sendToUser}
+								/>
+							</td>
+							<td class="py-1 px-4 text-center">
+								<input
+									type="checkbox"
+									name="notifyOwner:{key}"
+									class="form-checkbox"
+									checked={data.orderNotifications[key].sendCopyToAdmin}
+									disabled={!data.sellerIdentity?.contact.email}
+								/>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	</fieldset>
 
 	<label class="checkbox-label">
 		<input

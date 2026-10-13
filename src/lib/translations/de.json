@@ -1351,7 +1351,33 @@
 			"setCheckoutAdditionalFields": "Zusätzliche Checkout-Felder festlegen",
 			"defaultSubscriptionDuration": "Standard-Abonnementdauer",
 			"subscriptionDurationHint": "Wird für Abonnementprodukte verwendet, die auf „Standard (shopweit)“ eingestellt sind, sowie für ältere Snapshots.",
-			"analyticsScriptPlaceholder": "Plausible-Skript"
+			"analyticsScriptPlaceholder": "Plausible-Skript",
+			"orderNotificationsTitle": "Welche Auftrags-E-Mails versendet werden",
+			"orderNotificationsHint": "Eine Zeile pro E-Mail, die be-BOP zu einem Auftrag verschickt. Haken Sie ab, was Sie nicht erhalten möchten — „Zahlung ausstehend“ und „Zahlung abgelaufen“ sind meist die lautesten.",
+			"orderNotificationsOverridden": "Die Option oben sendet Ihnen eine Kopie jeder Auftrags-E-Mail, diese Liste hat daher keine Wirkung. Haken Sie sie ab, um E-Mail für E-Mail zu entscheiden.",
+			"orderNotificationsEmail": "E-Mail",
+			"orderNotificationsToCustomer": "An den Kunden",
+			"orderNotificationsToOwner": "Kopie an Sie",
+			"orderNotificationLabel": {
+				"order": {
+					"payment": {
+						"pending": {
+							"lightning": "Zahlung ausstehend — Lightning",
+							"bitcoin": "Zahlung ausstehend — Bitcoin",
+							"card": "Zahlung ausstehend — Karte",
+							"paypal": "Zahlung ausstehend — PayPal",
+							"taler": "Zahlung ausstehend — Taler",
+							"osb": "Zahlung ausstehend — OSB",
+							"custom": "Zahlung ausstehend — anderes Verfahren"
+						},
+						"paid": "Eine Zahlung ist eingegangen",
+						"expired": "Zahlung abgelaufen",
+						"canceled": "Zahlung storniert"
+					},
+					"paid": "Der Auftrag ist vollständig bezahlt"
+				}
+			},
+			"orderNotificationsNoOwnerEmail": "Für den Shop ist keine Kontaktadresse hinterlegt, es gibt also niemanden, der eine Kopie erhalten könnte. Die Option unten und die Kopie-Spalte der Liste bleiben gesperrt, bis Sie eine Adresse hinterlegen unter Einstellungen dann"
 		},
 		"oauth": {
 			"title": "OAuth-Anbieter",
