@@ -1351,7 +1351,33 @@
 			"setCheckoutAdditionalFields": "Definir campos adicionais de finalização de compra",
 			"defaultSubscriptionDuration": "Duração predefinida da subscrição",
 			"subscriptionDurationHint": "Usado para produtos de subscrição definidos como \"Predefinido (para toda a loja)\" e para snapshots antigos.",
-			"analyticsScriptPlaceholder": "script Plausible"
+			"analyticsScriptPlaceholder": "script Plausible",
+			"orderNotificationsTitle": "Que e-mails de encomenda são enviados",
+			"orderNotificationsHint": "Uma linha por cada e-mail que o be-BOP envia sobre uma encomenda. Desmarque o que não quiser receber — «pagamento pendente» e «pagamento expirado» são geralmente os mais ruidosos.",
+			"orderNotificationsOverridden": "A opção acima envia-lhe uma cópia de todos os e-mails de encomenda, pelo que esta lista não tem efeito. Desmarque-a para escolher e-mail a e-mail.",
+			"orderNotificationsEmail": "E-mail",
+			"orderNotificationsToCustomer": "Ao cliente",
+			"orderNotificationsToOwner": "Cópia para si",
+			"orderNotificationLabel": {
+				"order": {
+					"payment": {
+						"pending": {
+							"lightning": "Pagamento pendente — Lightning",
+							"bitcoin": "Pagamento pendente — Bitcoin",
+							"card": "Pagamento pendente — cartão",
+							"paypal": "Pagamento pendente — PayPal",
+							"taler": "Pagamento pendente — Taler",
+							"osb": "Pagamento pendente — OSB",
+							"custom": "Pagamento pendente — outro meio"
+						},
+						"paid": "Foi recebido um pagamento",
+						"expired": "Pagamento expirado",
+						"canceled": "Pagamento cancelado"
+					},
+					"paid": "A encomenda está totalmente paga"
+				}
+			},
+			"orderNotificationsNoOwnerEmail": "A loja não tem endereço de contacto definido, pelo que não há a quem enviar cópia. A opção abaixo e a coluna de cópia da lista permanecem indisponíveis até definir um em Configurações e depois"
 		},
 		"oauth": {
 			"title": "Provedores OAuth",

@@ -1351,7 +1351,33 @@
 			"setCheckoutAdditionalFields": "Establecer campos adicionales de pago",
 			"defaultSubscriptionDuration": "Duración de suscripción predeterminada",
 			"subscriptionDurationHint": "Se usa para productos de suscripción configurados como \"Predeterminado (para toda la tienda)\" y para instantáneas heredadas.",
-			"analyticsScriptPlaceholder": "script de Plausible"
+			"analyticsScriptPlaceholder": "script de Plausible",
+			"orderNotificationsTitle": "Qué correos de pedido se envían",
+			"orderNotificationsHint": "Una línea por cada correo que be-BOP envía sobre un pedido. Desmarque lo que no quiera recibir: «pago pendiente» y «pago vencido» suelen ser los más ruidosos.",
+			"orderNotificationsOverridden": "La opción de arriba le envía copia de todos los correos de pedido, así que esta lista no tiene efecto. Desmárquela para elegir correo por correo.",
+			"orderNotificationsEmail": "Correo",
+			"orderNotificationsToCustomer": "Al cliente",
+			"orderNotificationsToOwner": "Copia para usted",
+			"orderNotificationLabel": {
+				"order": {
+					"payment": {
+						"pending": {
+							"lightning": "Pago pendiente — Lightning",
+							"bitcoin": "Pago pendiente — Bitcoin",
+							"card": "Pago pendiente — tarjeta",
+							"paypal": "Pago pendiente — PayPal",
+							"taler": "Pago pendiente — Taler",
+							"osb": "Pago pendiente — OSB",
+							"custom": "Pago pendiente — otro medio"
+						},
+						"paid": "Se recibió un pago",
+						"expired": "Pago vencido",
+						"canceled": "Pago cancelado"
+					},
+					"paid": "El pedido está totalmente pagado"
+				}
+			},
+			"orderNotificationsNoOwnerEmail": "La tienda no tiene dirección de contacto, así que no hay a quién enviar copia. La opción de abajo y la columna de copia de la lista permanecen inactivas hasta que indique una en Ajustes y luego"
 		},
 		"oauth": {
 			"title": "Proveedores OAuth",

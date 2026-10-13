@@ -1351,7 +1351,33 @@
 			"setCheckoutAdditionalFields": "Set checkout additional fields",
 			"defaultSubscriptionDuration": "Default subscription duration",
 			"subscriptionDurationHint": "Used for subscription products set to \"Default (shop-wide)\" and for legacy snapshots.",
-			"analyticsScriptPlaceholder": "Plausible script"
+			"analyticsScriptPlaceholder": "Plausible script",
+			"orderNotificationsTitle": "Which order e-mails go out",
+			"orderNotificationsHint": "One line per e-mail be-BOP sends about an order. Untick what you do not want to receive — \"payment pending\" and \"payment expired\" are usually the noisy ones.",
+			"orderNotificationsOverridden": "The option above sends you a copy of every order e-mail, so this list has no effect. Untick it to choose e-mail by e-mail.",
+			"orderNotificationsEmail": "E-mail",
+			"orderNotificationsToCustomer": "To the customer",
+			"orderNotificationsToOwner": "Copy to you",
+			"orderNotificationLabel": {
+				"order": {
+					"payment": {
+						"pending": {
+							"lightning": "Payment pending — Lightning",
+							"bitcoin": "Payment pending — Bitcoin",
+							"card": "Payment pending — card",
+							"paypal": "Payment pending — PayPal",
+							"taler": "Payment pending — Taler",
+							"osb": "Payment pending — OSB",
+							"custom": "Payment pending — other method"
+						},
+						"paid": "A payment was received",
+						"expired": "Payment expired",
+						"canceled": "Payment cancelled"
+					},
+					"paid": "The order is fully paid"
+				}
+			},
+			"orderNotificationsNoOwnerEmail": "No contact address is set for the shop, so there is nobody to copy. The option below and the copy column of the list stay unavailable until you set one under Settings then"
 		},
 		"oauth": {
 			"title": "OAuth Providers",

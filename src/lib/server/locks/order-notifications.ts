@@ -14,7 +14,12 @@ import { ORIGIN } from '$lib/server/env-config';
 import { Kind } from 'nostr-tools';
 import { toBitcoins } from '$lib/utils/toBitcoins';
 import { getUnixTime, subHours } from 'date-fns';
-import { refreshPromise, type EmailTemplateKey, runtimeConfig } from '../runtime-config';
+import {
+	refreshPromise,
+	type EmailTemplateKey,
+	orderNotificationSetting,
+	runtimeConfig
+} from '../runtime-config';
 import { refreshAvailableStockInDb } from '../product';
 import { rateLimit } from '../rateLimit';
 import { isOrderFullyPaid } from '../orders';
@@ -251,19 +256,29 @@ async function handleOrderNotification(order: Order): Promise<void> {
 						// Instructions snapshotted on the payment, for the pending.custom template.
 						customPaymentInstructions: payment.customPaymentMethod?.instructions ?? ''
 					};
-					if (email) {
+					/**
+					 * Who gets this one.
+					 *
+					 * The general setting keeps the last word when it is on, so a shop that asked for
+					 * every copy before the per-e-mail list existed still gets every copy. Switched
+					 * off, the list decides, which is the whole point: silence "pending" and
+					 * "expired" without losing "paid".
+					 *
+					 * An e-mail the customer is not sent can still reach the owner — that is the
+					 * second branch, and it already served orders with no customer address.
+					 */
+					const perEmail = orderNotificationSetting(templateKey);
+					const ownerEmail = runtimeConfig.sellerIdentity?.contact.email;
+					const copyToOwner =
+						!!ownerEmail && (runtimeConfig.copyOrderEmailsToAdmin || perEmail.sendCopyToAdmin);
+
+					if (email && perEmail.sendToUser) {
 						await queueEmail(email, templateKey, vars, {
 							session,
-							...(!!runtimeConfig.sellerIdentity?.contact.email &&
-								runtimeConfig.copyOrderEmailsToAdmin && {
-									bcc: runtimeConfig.sellerIdentity?.contact.email
-								})
+							...(copyToOwner && { bcc: ownerEmail })
 						});
-					} else if (
-						runtimeConfig.sellerIdentity?.contact.email &&
-						runtimeConfig.copyOrderEmailsToAdmin
-					) {
-						await queueEmail(runtimeConfig.sellerIdentity?.contact.email, templateKey, vars, {
+					} else if (copyToOwner) {
+						await queueEmail(ownerEmail, templateKey, vars, {
 							session
 						});
 					}
