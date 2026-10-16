@@ -290,7 +290,9 @@ describe('order', () => {
 		// through and the rest lost their payment, leaving those orders pending at zero.
 		const orderIds = await Promise.all(
 			Array.from({ length: 8 }, (_, i) =>
-				createOrder([{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }], 'point-of-sale', {
+				// Unlimited product on purpose: eight orders of a product stocked at five could be
+				// refused by the stock check, failing the test for a reason unrelated to invoicing.
+				createOrder([{ product: TEST_DIGITAL_PRODUCT_UNLIMITED, quantity: 1 }], 'point-of-sale', {
 					locale: 'en',
 					user: { sessionId: `concurrent-session-${i}` },
 					shippingAddress: null,
@@ -319,6 +321,47 @@ describe('order', () => {
 		expect(invoiceNumbers.every((number) => typeof number === 'number')).toBe(true);
 		expect(new Set(invoiceNumbers).size).toBe(orderIds.length);
 		expect(settled.every((order) => order.payments[0].status === 'paid')).toBe(true);
+	});
+
+	it('issues past the invoices already stored when the counter is behind them', async () => {
+		// A shop can end up with its history ahead of its counter: a database restored without the
+		// counter, or a downgrade that left it behind. The next invoice has to follow the last one
+		// given out — reusing it would be refused by the unique index and lose the payment (#2743).
+		const pastOrderId = await createOrder(
+			[{ product: TEST_DIGITAL_PRODUCT_UNLIMITED, quantity: 1 }],
+			'point-of-sale',
+			{
+				locale: 'en',
+				user: { sessionId: 'past-session' },
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			}
+		);
+		await collections.orders.updateOne(
+			{ _id: pastOrderId },
+			{ $set: { 'payments.0.invoice': { number: 41, createdAt: new Date() } } }
+		);
+		await collections.runtimeConfig.deleteOne({ _id: 'invoiceNumber' });
+
+		const orderId = await createOrder(
+			[{ product: TEST_DIGITAL_PRODUCT_UNLIMITED, quantity: 1 }],
+			'point-of-sale',
+			{
+				locale: 'en',
+				user: { sessionId: 'next-session' },
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			}
+		);
+		const order = await collections.orders.findOne({ _id: orderId });
+		if (!order) {
+			throw new Error(`Order ${orderId} not found`);
+		}
+		await onOrderPayment(order, order.payments[0], order.payments[0].price);
+
+		expect(await lastInvoiceNumber()).toBe(42);
+		const settledOrder = await collections.orders.findOne({ _id: orderId });
+		expect(settledOrder?.payments[0].invoice?.number).toBe(42);
 	});
 
 	it('should allow free method payment when only item is fully discounted due to an active subscription', async () => {

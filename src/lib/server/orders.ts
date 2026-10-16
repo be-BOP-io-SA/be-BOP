@@ -129,14 +129,32 @@ async function generateOrderNumber(session?: ClientSession): Promise<number> {
  * others lost their payment and stayed pending (#2743). A single atomic increment cannot hand
  * the same value to two callers.
  *
- * The counter is seeded past the highest number already issued when the shop starts up, so
- * numbering continues where the shop left it rather than colliding with its own history.
+ * The highest number already issued is read first and the counter raised to it, so a shop whose
+ * counter is behind its own history — a database restored without the counter, or a downgrade
+ * that left it behind — issues the number after its last invoice instead of colliding with it.
+ * `$max` never moves the counter backwards, so this is safe to run on every settlement.
+ *
+ * Raising and incrementing are two writes, but what makes two numbers distinct is the increment,
+ * which is atomic on its own: settlements interleaving between the two still come out with one
+ * number each.
  */
 async function generateInvoiceNumber(session?: ClientSession): Promise<number> {
+	const highestIssued = (await lastInvoiceNumber(session)) ?? 0;
+
+	await collections.runtimeConfig.updateOne(
+		{ _id: 'invoiceNumber' },
+		{
+			$max: { data: highestIssued as never },
+			$set: { updatedAt: new Date() },
+			$setOnInsert: { createdAt: new Date() }
+		},
+		{ upsert: true, session }
+	);
+
 	const res = await collections.runtimeConfig.findOneAndUpdate(
 		{ _id: 'invoiceNumber' },
 		{ $inc: { data: 1 as never } },
-		{ upsert: true, returnDocument: 'after', session }
+		{ returnDocument: 'after', session }
 	);
 
 	if (!res.value) {
@@ -181,8 +199,6 @@ export async function onOrderPayment(
 		firstPaidTransition?: boolean;
 	}
 ): Promise<Order> {
-	const invoiceNumber = await generateInvoiceNumber(params?.providedSession);
-
 	if (!order.payments.includes(payment)) {
 		throw new Error('Sync broken between order and payment');
 	}
@@ -201,6 +217,12 @@ export async function onOrderPayment(
 	payment.status = 'paid'; // for isOrderFullyPaid
 	payment.paidAt = paidAt;
 	const fn = async (session: ClientSession) => {
+		// Taken inside the transaction that stores it: anything failing afterwards rolls the
+		// counter back instead of leaving a gap in the numbering. `maintainOrders` re-polls the
+		// same pending payment every two seconds, so a transient failure here would otherwise
+		// burn one number per poll.
+		const invoiceNumber = await generateInvoiceNumber(session);
+
 		const ret = await collections.orders.findOneAndUpdate(
 			{ _id: order._id, 'payments._id': payment._id },
 			{
@@ -706,55 +728,59 @@ export async function anonymizeOrderData(orderId: string): Promise<boolean> {
 /**
  * Highest invoice number actually stored on an order.
  *
- * No longer what issues the next one — see `generateInvoiceNumber`. Kept as a read: it answers
- * "what has this shop given out", which is what the seeding migration and the tests ask.
+ * No longer what issues the next one — see `generateInvoiceNumber`, which uses it as a floor so
+ * that numbering never walks back over what the shop has already given out. Served by the index
+ * on `payments.invoice.number`: one key read, whatever the number of orders.
  */
-export async function lastInvoiceNumber(): Promise<number | undefined> {
+export async function lastInvoiceNumber(session?: ClientSession): Promise<number | undefined> {
 	return (
 		await collections.orders
-			.aggregate<{ invoiceNumber: number }>([
-				{
-					$match: {
-						'payments.invoice.number': { $exists: true }
+			.aggregate<{ invoiceNumber: number }>(
+				[
+					{
+						$match: {
+							'payments.invoice.number': { $exists: true }
+						}
+					},
+					{
+						$sort: {
+							'payments.invoice.number': -1
+						}
+					},
+					{
+						$limit: 1
+					},
+					{
+						$project: {
+							'payments.invoice.number': 1
+						}
+					},
+					{
+						$unwind: {
+							path: '$payments'
+						}
+					},
+					{
+						$match: {
+							'payments.invoice.number': { $exists: true }
+						}
+					},
+					{
+						$sort: {
+							'payments.invoice.number': -1
+						}
+					},
+					{
+						$limit: 1
+					},
+					{
+						$project: {
+							invoiceNumber: '$payments.invoice.number'
+						}
 					}
-				},
-				{
-					$sort: {
-						'payments.invoice.number': -1
-					}
-				},
-				{
-					$limit: 1
-				},
-				{
-					$project: {
-						'payments.invoice.number': 1
-					}
-				},
-				{
-					$unwind: {
-						path: '$payments'
-					}
-				},
-				{
-					$match: {
-						'payments.invoice.number': { $exists: true }
-					}
-				},
-				{
-					$sort: {
-						'payments.invoice.number': -1
-					}
-				},
-				{
-					$limit: 1
-				},
-				{
-					$project: {
-						invoiceNumber: '$payments.invoice.number'
-					}
-				}
-			])
+				],
+				{ session }
+			)
 			.next()
 	)?.invoiceNumber;
 }

@@ -84,7 +84,7 @@ const baseConfig = {
 	priceReferenceCurrency: 'SAT' as Currency,
 	accountingCurrency: null as Currency | null,
 	orderNumber: 0,
-	/** Counter behind invoice numbers. Seeded from the invoices already issued (#2743). */
+	/** Counter behind invoice numbers. Never issues below the invoices already stored (#2743). */
 	invoiceNumber: 0,
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
