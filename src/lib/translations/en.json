@@ -200,10 +200,11 @@
 			"attribute": {
 				"shipping": "Shipping",
 				"standalone": "Standalone",
-				"payWhatYouWant": "PayWhatYouWant",
+				"payWhatYouWant": "Pay what you want",
 				"free": "Free",
-				"isTicket": "IsTicket",
-				"preorder": "Preorder"
+				"isTicket": "Ticket",
+				"preorder": "Preorder",
+				"isBookingSlot": "Booking slot"
 			},
 			"stock": {
 				"noStockManagement": "No-stock-management",

@@ -200,10 +200,11 @@
 			"attribute": {
 				"shipping": "Livraison",
 				"standalone": "Autonome",
-				"payWhatYouWant": "Payez ce que vous voulez",
+				"payWhatYouWant": "Prix libre",
 				"free": "Gratuit",
 				"isTicket": "Billet",
-				"preorder": "Précommande"
+				"preorder": "Précommande",
+				"isBookingSlot": "Créneau de réservation"
 			},
 			"stock": {
 				"noStockManagement": "Pas de gestion de stock",

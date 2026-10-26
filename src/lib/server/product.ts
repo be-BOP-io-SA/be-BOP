@@ -1,8 +1,11 @@
-import type { ClientSession } from 'mongodb';
+import type { ClientSession, Filter } from 'mongodb';
 import { collections } from './database';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { Product } from '$lib/types/Product';
 import { getCartFromDb } from './cart';
+
+// Only an object is a booking spec; $exists would also match a stored null.
+export const BOOKABLE_PRODUCT_FILTER: Filter<Product> = { bookingSpec: { $type: 'object' } };
 
 /**
  * Amount of stock reserved in carts and pending orders.

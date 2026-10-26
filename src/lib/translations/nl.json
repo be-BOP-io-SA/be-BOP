@@ -203,7 +203,8 @@
 				"payWhatYouWant": "Betaal wat je wilt",
 				"free": "Gratis",
 				"isTicket": "Ticket",
-				"preorder": "Voorbestelling"
+				"preorder": "Voorbestelling",
+				"isBookingSlot": "Boekingsslot"
 			},
 			"stock": {
 				"noStockManagement": "Geen voorraadbeheer",

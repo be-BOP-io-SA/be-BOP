@@ -203,7 +203,8 @@
 				"payWhatYouWant": "Zahl was du willst",
 				"free": "Kostenlos",
 				"isTicket": "Ticket",
-				"preorder": "Vorbestellung"
+				"preorder": "Vorbestellung",
+				"isBookingSlot": "Buchungszeitfenster"
 			},
 			"stock": {
 				"noStockManagement": "Keine Bestandsverwaltung",

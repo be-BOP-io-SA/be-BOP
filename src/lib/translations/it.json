@@ -203,7 +203,8 @@
 				"payWhatYouWant": "Paga quanto vuoi",
 				"free": "Gratuito",
 				"isTicket": "Biglietto",
-				"preorder": "Preordine"
+				"preorder": "Preordine",
+				"isBookingSlot": "Fascia di prenotazione"
 			},
 			"stock": {
 				"noStockManagement": "Nessuna gestione delle scorte",
