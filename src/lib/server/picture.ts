@@ -16,7 +16,8 @@ import type { ImageData, Picture, TagType } from '../types/Picture';
 import type { SetRequired } from 'type-fest';
 
 const SVG_RENDER_SIZE = 2048;
-// sharp refuses a higher density; it only bites for SVGs a few pixels wide.
+// sharp refuses a density outside this range; it bites for SVGs a few pixels or a mile wide.
+const MIN_SVG_DENSITY = 1;
 const MAX_SVG_DENSITY = 100_000;
 
 /**
@@ -24,16 +25,33 @@ const MAX_SVG_DENSITY = 100_000;
  * PNG large enough to stay sharp, so that only the PNG is ever stored.
  */
 export async function rasterizeIfSvg(upload: Buffer): Promise<Buffer> {
-	const { format, width, height } = await sharp(upload).metadata();
+	const { format, width, height } = await sharp(upload)
+		.metadata()
+		.catch(() => {
+			throw error(400, 'Invalid image');
+		});
 
-	if (format !== 'svg' || !width || !height) {
+	if (format !== 'svg') {
 		return upload;
 	}
 
-	// Sizes read from an SVG are at sharp's default 72 DPI.
-	const density = Math.min((72 * SVG_RENDER_SIZE) / Math.max(width, height), MAX_SVG_DENSITY);
+	if (!width || !height) {
+		throw error(400, 'Invalid SVG: no width or height');
+	}
 
-	return sharp(upload, { density }).png().toBuffer();
+	// Sizes read from an SVG are at sharp's default 72 DPI.
+	const density = Math.min(
+		Math.max((72 * SVG_RENDER_SIZE) / Math.max(width, height), MIN_SVG_DENSITY),
+		MAX_SVG_DENSITY
+	);
+
+	return sharp(upload, { density })
+		.resize(SVG_RENDER_SIZE, SVG_RENDER_SIZE, { fit: 'inside', withoutEnlargement: true })
+		.png()
+		.toBuffer()
+		.catch(() => {
+			throw error(400, 'Invalid SVG');
+		});
 }
 
 /**

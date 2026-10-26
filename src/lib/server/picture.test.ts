@@ -98,6 +98,26 @@ describe('generatePicture', () => {
 		expect(picture.storage.original.width).toBe(2048);
 	});
 
+	it('renders an SVG wider than 147456 px down to 2048 px', async () => {
+		const banner = Buffer.from(
+			'<svg xmlns="http://www.w3.org/2000/svg" width="200000" height="1000"><rect width="200000" height="1000" fill="#770C56"/></svg>'
+		);
+
+		const { original } = (await upload('banner.svg', banner)).storage;
+
+		expect(original).toMatchObject({ width: 2048, height: 10 });
+		expect(original.key).toMatch(/\.png$/);
+	});
+
+	it('refuses an SVG without a size with a 400', async () => {
+		const sizeless = Buffer.from(
+			'<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"><rect width="50" height="50"/></svg>'
+		);
+
+		await expect(upload('sizeless.svg', sizeless)).rejects.toMatchObject({ status: 400 });
+		expect(stored.size).toBe(0);
+	});
+
 	it('keeps no trace of the script a hostile SVG carries', async () => {
 		const hostile =
 			Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="100" onload="alert(1)">

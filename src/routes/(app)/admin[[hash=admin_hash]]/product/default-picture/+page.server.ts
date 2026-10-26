@@ -28,8 +28,9 @@ export const actions = {
 		const uniqueFileName = `default-picture.png`;
 		const filePath = path.resolve(assetsDir, uniqueFileName);
 
+		const image = await rasterizeIfSvg(buffer);
+
 		try {
-			const image = await rasterizeIfSvg(buffer);
 			const pngBuffer = await sharp(image).png().toBuffer();
 
 			await writeFile(filePath, pngBuffer);
