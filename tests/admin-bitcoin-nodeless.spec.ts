@@ -46,10 +46,22 @@ async function storedNodelessConfig() {
 	);
 }
 
+// Hydration resets bound inputs and strips attributes set before it, so fill only after it.
+async function waitForSetupFormHydration(page: Page) {
+	const format = page.locator('select[name="format"]');
+	await expect(async () => {
+		await format.selectOption('bip48');
+		// Only the hydrated page swaps the key field for the multisig fields.
+		await expect(page.locator('input[name="m"]')).toBeVisible({ timeout: 1000 });
+	}).toPass();
+	await format.selectOption('bip84');
+}
+
 async function fillSetupForm(page: Page, derivationIndex: string) {
 	await page.goto('/admin/bitcoin-nodeless');
 	// Neither case saves anything, so the page is always on its first-time set-up form.
 	await expect(page.getByRole('button', { name: 'Set up' })).toBeVisible();
+	await waitForSetupFormHydration(page);
 	await page.locator('input[name="publicKey"]').fill(ZPUB);
 	await page.locator('input[name="derivationIndex"]').fill(derivationIndex);
 }
