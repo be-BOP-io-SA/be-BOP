@@ -60,20 +60,19 @@ export async function rasterizeIfSvg(upload: Buffer): Promise<Buffer> {
  * You can associate the picture to a product, and you can pass a callback called at the end that if it fails,
  * will cancel everything (remove from DB and S3)
  */
-export async function generatePicture(
-	pictureId: string,
-	opts?: {
-		productId?: string;
-		tag?: { _id: string; type: TagType };
-		slider?: { _id: string; url?: string; openNewTab?: boolean };
-		galleryId?: string;
-		schedule?: {
-			_id: string;
-			eventSlug: string;
-		};
-		cb?: (session: ClientSession) => Promise<void>;
-	}
-): Promise<void> {
+type PictureOptions = {
+	productId?: string;
+	tag?: { _id: string; type: TagType };
+	slider?: { _id: string; url?: string; openNewTab?: boolean };
+	galleryId?: string;
+	schedule?: {
+		_id: string;
+		eventSlug: string;
+	};
+	cb?: (session: ClientSession) => Promise<void>;
+};
+
+export async function generatePicture(pictureId: string, opts?: PictureOptions): Promise<void> {
 	const pendingPicture = await collections.pendingPictures.findOne({
 		_id: pictureId
 	});
@@ -99,6 +98,16 @@ export async function generatePicture(
 
 	await collections.pendingPictures.deleteOne({ _id: pictureId });
 
+	await storePicture({ _id: pictureId, name: pendingPicture.name, upload }, opts);
+}
+
+/**
+ * Same as generatePicture, for a file the server received itself.
+ */
+export async function storePicture(
+	{ _id, name, upload }: { _id: string; name: string; upload: Buffer },
+	opts?: PictureOptions
+): Promise<void> {
 	if (upload.length > 10 * 1024 * 1024) {
 		throw error(400, 'Image too big, 10MB max');
 	}
@@ -122,7 +131,6 @@ export async function generatePicture(
 		throw error(400, 'Invalid image format: ' + format);
 	}
 
-	const _id = pictureId;
 	const extension = '.' + mimeTypes.extension(mime);
 
 	const uploadedKeys: string[] = [];
@@ -222,7 +230,7 @@ export async function generatePicture(
 			await collections.pictures.insertOne(
 				{
 					_id,
-					name: pendingPicture.name,
+					name,
 					storage: {
 						original,
 						formats
