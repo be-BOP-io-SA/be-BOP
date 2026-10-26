@@ -536,6 +536,8 @@
 			"nextAddressesDescription": "Dit worden de volgende adressen die door be-BOP worden gegenereerd",
 			"warning": "Waarschuwing:",
 			"alreadyUsedAddressWarning": "Ten minste één adres is al gebruikt. Gebruik een specifieke wallet-XPub voor uw be-BOP of definieer een ander afleidingsadres om dubbel gebruik van uw adres te voorkomen.",
+			"keyRunningOutWarning": "Deze sleutel heeft bijna geen ontvangstadressen meer. Verwijder deze configuratie en stel een nieuwe sleutel in om bitcoinbetalingen te blijven ontvangen.",
+			"keyExhaustedWarning": "Deze sleutel heeft geen ontvangstadres meer, dus bitcoinbetalingen mislukken. Verwijder deze configuratie en stel een nieuwe sleutel in.",
 			"alreadyUsed": "al gebruikt"
 		},
 		"challenge": {

@@ -536,6 +536,8 @@
 			"nextAddressesDescription": "Estas serán las próximas direcciones generadas por be-BOP",
 			"warning": "Advertencia:",
 			"alreadyUsedAddressWarning": "Al menos una dirección ya fue utilizada. Use un XPub de billetera específico para su be-BOP o defina otra dirección de derivación para evitar el uso doble de su dirección.",
+			"keyRunningOutWarning": "A esta clave casi no le quedan direcciones de recepción. Elimine esta configuración y configure una nueva clave para seguir recibiendo pagos en bitcoin.",
+			"keyExhaustedWarning": "A esta clave no le queda ninguna dirección de recepción, por lo que los pagos en bitcoin fallan. Elimine esta configuración y configure una nueva clave.",
 			"alreadyUsed": "ya utilizada"
 		},
 		"challenge": {

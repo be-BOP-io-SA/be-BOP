@@ -40,6 +40,15 @@
 	{t('admin.bitcoinNodeless.intro')}
 </p>
 
+{#if data.addressSupply !== 'enough'}
+	<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm text-yellow-700">
+		! <strong>{t('admin.bitcoinNodeless.warning')}</strong>
+		{data.addressSupply === 'exhausted'
+			? t('admin.bitcoinNodeless.keyExhaustedWarning')
+			: t('admin.bitcoinNodeless.keyRunningOutWarning')}
+	</div>
+{/if}
+
 <h2 class="text-2xl">{t('admin.bitcoinNodeless.configuration')}</h2>
 
 {#key data.bitcoinNodeless}
