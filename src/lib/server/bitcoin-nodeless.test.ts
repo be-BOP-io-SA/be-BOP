@@ -9,6 +9,8 @@ import {
 import { runtimeConfig } from './runtime-config';
 import { collections } from './database';
 import { cleanDb } from './test-utils';
+import { getProcessor, resolveProcessor } from './sdk/pp';
+import './sdk/pp-registry';
 
 describe('bitcoin-nodeless', () => {
 	it('should derivate public key', () => {
@@ -285,6 +287,15 @@ describe('derivation index limit', () => {
 		await expect(generateDerivationIndex()).rejects.toThrow(exhausted);
 		expect(runtimeConfig.bitcoinNodeless.derivationIndex).toBe(LAST_INDEX + 1);
 		expect(await storedIndex()).toBe(LAST_INDEX + 1);
+	});
+
+	it('stops offering new bitcoin payments once the key is exhausted, but keeps checking pending ones', () => {
+		configureBip84(LAST_INDEX);
+		expect(resolveProcessor('bitcoin')?.meta.processor).toBe('bitcoin-nodeless');
+
+		configureBip84(LAST_INDEX + 1);
+		expect(resolveProcessor('bitcoin')).toBeUndefined();
+		expect(getProcessor('bitcoin-nodeless')?.isEnabled()).toBe(true);
 	});
 
 	// LAST_INDEX - 9 ends the ten-address skip window exactly one past the limit.

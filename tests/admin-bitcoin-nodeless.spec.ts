@@ -126,6 +126,101 @@ test.describe('a key at the end of its derivation range', () => {
 		await expect(page.getByRole('button', { name: 'Set up' })).toBeVisible();
 	});
 
+	test.describe('at checkout', () => {
+		const PRODUCT_ID = 'e2e-nodeless-checkout';
+
+		test.beforeAll(async () => {
+			// The product page cannot render a product without a picture; only its stored size is read.
+			await withDb((db) =>
+				db.collection<{ _id: string }>('pictures').replaceOne(
+					{ _id: PRODUCT_ID },
+					{
+						_id: PRODUCT_ID,
+						productId: PRODUCT_ID,
+						name: 'E2E nodeless checkout',
+						storage: {
+							original: { key: 'e2e/nodeless.png', width: 512, height: 512, size: 1 },
+							formats: [{ key: 'e2e/nodeless-512.png', width: 512, height: 512, size: 1 }]
+						},
+						createdAt: new Date(),
+						updatedAt: new Date()
+					},
+					{ upsert: true }
+				)
+			);
+			await withDb((db) =>
+				db.collection<{ _id: string }>('products').replaceOne(
+					{ _id: PRODUCT_ID },
+					{
+						_id: PRODUCT_ID,
+						name: 'E2E nodeless checkout',
+						alias: [PRODUCT_ID],
+						description: '',
+						shortDescription: '',
+						type: 'resource',
+						// Well above the minimum amount checkout accepts for an on-chain payment.
+						price: { amount: 100, currency: 'EUR' },
+						shipping: false,
+						preorder: false,
+						free: false,
+						standalone: false,
+						isTicket: false,
+						displayShortDescription: false,
+						payWhatYouWant: false,
+						hideDiscountExpiration: false,
+						actionSettings: {
+							eShop: { visible: true, canBeAddedToBasket: true },
+							retail: { visible: true, canBeAddedToBasket: true },
+							googleShopping: { visible: true },
+							nostr: { visible: true, canBeAddedToBasket: true }
+						},
+						createdAt: new Date(),
+						updatedAt: new Date()
+					},
+					{ upsert: true }
+				)
+			);
+		});
+
+		test.afterAll(async () => {
+			await withDb(async (db) => {
+				await db
+					.collection<{ items: { productId: string }[] }>('carts')
+					.updateMany({}, { $pull: { items: { productId: PRODUCT_ID } } });
+				await db.collection<{ _id: string }>('products').deleteOne({ _id: PRODUCT_ID });
+				await db.collection<{ _id: string }>('pictures').deleteOne({ _id: PRODUCT_ID });
+			});
+		});
+
+		async function expectBitcoinOffered(page: Page, derivationIndex: number, offered: boolean) {
+			await storeNodelessConfig(ZPUB, derivationIndex);
+			const methods = page.locator('select[name="paymentMethod"]');
+			await expect(async () => {
+				await page.goto('/checkout');
+				await expect(methods).toBeVisible({ timeout: 1000 });
+				await expect(methods.locator('option[value="bitcoin"]')).toHaveCount(offered ? 1 : 0, {
+					timeout: 1000
+				});
+			}).toPass({ timeout: 15_000 });
+		}
+
+		test('offers bitcoin up to the last index and hides it once the key is exhausted', async ({
+			page
+		}) => {
+			await page.goto(`/product/${PRODUCT_ID}`);
+			// Its label is "Buy" or "Add to cart" depending on the shop's checkout settings.
+			await page.locator('button[formaction="?/addToCart"]').first().click();
+			await expect
+				.poll(() =>
+					withDb((db) => db.collection('carts').countDocuments({ 'items.productId': PRODUCT_ID }))
+				)
+				.toBe(1);
+
+			await expectBitcoinOffered(page, LAST_INDEX, true);
+			await expectBitcoinOffered(page, LAST_INDEX + 1, false);
+		});
+	});
+
 	test.describe('in French', () => {
 		test.use({ locale: 'fr-FR' });
 
