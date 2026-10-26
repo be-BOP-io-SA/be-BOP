@@ -3,7 +3,7 @@
 	import PictureComponent from '$lib/components/Picture.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { applyAction, deserialize } from '$app/forms';
-	import { preUploadPicture } from '$lib/types/Picture.js';
+	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture.js';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
 
@@ -183,7 +183,7 @@
 				/>
 				<input
 					type="file"
-					accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
+					accept={PICTURE_UPLOAD_ACCEPT}
 					class="block"
 					bind:files={galleryPictures[i]}
 					disabled={submitting}

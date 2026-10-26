@@ -4,7 +4,7 @@
 	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency';
 	import { applyAction, enhance, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { preUploadPicture } from '$lib/types/Picture.js';
+	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture.js';
 	import Select from 'svelte-select';
 	import { browser } from '$app/environment';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
@@ -748,7 +748,7 @@
 					{/if}
 					<input
 						type="file"
-						accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
+						accept={PICTURE_UPLOAD_ACCEPT}
 						class="block"
 						on:change={(e) => handleFileChange(e, i - (data.schedule.events.length || 1))}
 						disabled={submitting}

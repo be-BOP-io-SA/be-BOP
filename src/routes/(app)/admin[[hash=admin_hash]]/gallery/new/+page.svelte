@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { preUploadPicture } from '$lib/types/Picture';
+	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
 	import { generateId } from '$lib/utils/generateId';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
@@ -141,7 +141,7 @@
 			<input type="hidden" name="secondary[{i}].pictureId" class="form-input" />
 			<input
 				type="file"
-				accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
+				accept={PICTURE_UPLOAD_ACCEPT}
 				class="block"
 				bind:files={galleryPictures[i]}
 				disabled={submitting}

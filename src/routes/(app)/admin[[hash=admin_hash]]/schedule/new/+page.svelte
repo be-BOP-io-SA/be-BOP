@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { preUploadPicture } from '$lib/types/Picture';
+	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 	import { applyAction, deserialize } from '$app/forms';
@@ -267,7 +267,7 @@
 		{/if}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
+			accept={PICTURE_UPLOAD_ACCEPT}
 			class="block"
 			on:change={(e) => handleFileChange(e, i)}
 			disabled={submitting}

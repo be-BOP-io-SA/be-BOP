@@ -31,7 +31,7 @@
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import type { ProductActionSettings } from '$lib/types/ProductActionSettings';
-	import { preUploadPicture } from '$lib/types/Picture';
+	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
 	import { currencies } from '$lib/stores/currencies';
 	import { page } from '$app/stores';
 	import type { PojoObject } from '$lib/server/pojo';
@@ -639,7 +639,7 @@
 						{t('admin.productForm.productImages')}
 						<input
 							type="file"
-							accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
+							accept={PICTURE_UPLOAD_ACCEPT}
 							class="form-input file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
 							bind:files
 							required
