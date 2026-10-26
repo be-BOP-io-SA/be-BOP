@@ -42,7 +42,9 @@ async function storeNodelessConfig(publicKey: string, derivationIndex: number) {
 
 async function storedNodelessConfig() {
 	return withDb((db) =>
-		db.collection<{ _id: string }>('runtimeConfig').findOne({ _id: 'bitcoinNodeless' })
+		db
+			.collection<{ _id: string; data: Record<string, unknown> }>('runtimeConfig')
+			.findOne({ _id: 'bitcoinNodeless' })
 	);
 }
 
@@ -112,18 +114,14 @@ test.describe('a key at the end of its derivation range', () => {
 		await expect.poll(storedNodelessConfig).toBeNull();
 	}
 
-	test('at the last index, the page warns, previews that address, and deletes the key', async ({
-		page
-	}) => {
+	// No delete here: the next test covers it, and every form post spends the server's 30 per minute.
+	test('at the last index, the page warns and previews that address', async ({ page }) => {
 		await openWithWarning(
 			page,
 			LAST_INDEX,
 			'This key is almost out of receiving addresses. Delete this configuration and set up a new key to keep receiving bitcoin payments.'
 		);
 		await expect(page.getByText('bc1qvpzdfcnqgp5qqvhsllttmgs57pcwhxgd55namz')).toBeVisible();
-
-		await deleteConfiguration(page, 'Delete configuration');
-		await expect(page.getByRole('button', { name: 'Set up' })).toBeVisible();
 	});
 
 	test('past the last index, the page says payments fail and deletes the key', async ({ page }) => {
@@ -250,6 +248,31 @@ test.describe('a key at the end of its derivation range', () => {
 
 			await deleteConfiguration(page, 'Supprimer la configuration');
 			await expect(page.getByRole('button', { name: 'Configurer' })).toBeVisible();
+		});
+
+		test('refuses to set up over a stored configuration and keeps its index', async ({ page }) => {
+			// A stored document with no key shows the set-up form, like a tab left open before another set-up.
+			await storeNodelessConfig('', 42);
+			await expect(async () => {
+				await page.goto('/admin/bitcoin-nodeless');
+				// The server applies the stored document through a change stream, so the key may still be the previous test's.
+				await expect(page.getByRole('button', { name: 'Configurer' })).toBeVisible({
+					timeout: 1000
+				});
+			}).toPass({ timeout: 15_000 });
+			await waitForSetupFormHydration(page);
+			await page.locator('input[name="publicKey"]').fill(ZPUB);
+			await page.getByRole('button', { name: 'Configurer' }).click();
+
+			await expect(
+				page.getByText(
+					'Bitcoin nodeless est déjà configuré. Supprimez la configuration pour utiliser une autre clé.'
+				)
+			).toBeVisible();
+			expect((await storedNodelessConfig())?.data).toMatchObject({
+				publicKey: '',
+				derivationIndex: 42
+			});
 		});
 	});
 });

@@ -219,6 +219,10 @@
 			{t('admin.bitcoinNodeless.skipUsedAddresses')}
 		</label>
 
+		{#if form?.alreadySetUp}
+			<p class="text-red-500 text-sm">{t('admin.bitcoinNodeless.alreadySetUpError')}</p>
+		{/if}
+
 		<div class="flex gap-2">
 			{#if alreadySet}
 				<button class="btn btn-black" type="submit" formaction="?/update"

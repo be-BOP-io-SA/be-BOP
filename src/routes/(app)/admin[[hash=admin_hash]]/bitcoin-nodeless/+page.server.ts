@@ -13,8 +13,27 @@ import { z } from 'zod';
 import type { Actions } from './$types';
 import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
+import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 
 type FieldErrors = Record<string, string>;
+
+// Insert-only: replacing a live config would rewind its stored index and reuse addresses.
+async function storeNewConfig(data: typeof runtimeConfig.bitcoinNodeless): Promise<boolean> {
+	try {
+		await collections.runtimeConfig.insertOne({
+			_id: 'bitcoinNodeless',
+			data,
+			updatedAt: new Date()
+		});
+	} catch (err) {
+		if (isUniqueConstraintError(err)) {
+			return false;
+		}
+		throw err;
+	}
+	runtimeConfig.bitcoinNodeless = data;
+	return true;
+}
 
 const PREVIEWED_ADDRESSES = 5;
 
@@ -130,18 +149,9 @@ export const actions: Actions = {
 				derivationPath: "m/84'/0'/0'" as const
 			};
 
-			runtimeConfig.bitcoinNodeless = data;
-
-			await collections.runtimeConfig.updateOne(
-				{ _id: 'bitcoinNodeless' },
-				{
-					$set: {
-						data,
-						updatedAt: new Date()
-					}
-				},
-				{ upsert: true }
-			);
+			if (!(await storeNewConfig(data))) {
+				return fail(409, { alreadySetUp: true });
+			}
 		} else {
 			if (parsed.xpubs.length !== parsed.n) {
 				return fail(400, {
@@ -186,18 +196,9 @@ export const actions: Actions = {
 				derivationPath: "m/48'/0'/0'/2'" as const
 			};
 
-			runtimeConfig.bitcoinNodeless = data;
-
-			await collections.runtimeConfig.updateOne(
-				{ _id: 'bitcoinNodeless' },
-				{
-					$set: {
-						data,
-						updatedAt: new Date()
-					}
-				},
-				{ upsert: true }
-			);
+			if (!(await storeNewConfig(data))) {
+				return fail(409, { alreadySetUp: true });
+			}
 		}
 	},
 	async update({ request }) {
