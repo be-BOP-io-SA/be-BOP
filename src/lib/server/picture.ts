@@ -87,7 +87,7 @@ export async function generatePicture(
 
 	const buffer = await rasterizeIfSvg(upload);
 	const image = sharp(buffer);
-	const { width, height, format } = await image.metadata();
+	const { width, height, format, compression } = await image.metadata();
 
 	if (!width || !height) {
 		throw error(400, 'Invalid image: no height or width');
@@ -97,7 +97,8 @@ export async function generatePicture(
 		throw error(400, 'Invalid image format');
 	}
 
-	const mime = mimeTypes.lookup(format);
+	// sharp names AVIF by its HEIF container, which browsers do not display.
+	const mime = format === 'heif' && compression === 'av1' ? 'image/avif' : mimeTypes.lookup(format);
 
 	if (!mime) {
 		throw error(400, 'Invalid image format: ' + format);

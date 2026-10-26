@@ -62,6 +62,8 @@ describe('generatePicture', () => {
 		);
 
 		expect(picture.storage.original).toMatchObject({ width: 600, height: 400 });
+		expect(picture.storage.original.key).toMatch(/\.avif$/);
+		expect(stored.get(picture.storage.original.key)?.contentType).toBe('image/avif');
 		expect(picture.storage.formats.length).toBeGreaterThan(0);
 		expect(picture.storage.formats.every((format) => format.key.endsWith('.webp'))).toBe(true);
 	});
