@@ -16,6 +16,10 @@ import type { JsonObject } from 'type-fest';
 
 type FieldErrors = Record<string, string>;
 
+const PREVIEWED_ADDRESSES = 5;
+
+type AddressSupply = 'enough' | 'low' | 'exhausted';
+
 // Array paths become `field[N]` keys (e.g. ['xpubs', 2] → 'xpubs[2]') to match
 // the `name="xpubs[{i}]"` input attribute for inline rendering under each input.
 function zodIssuesToFieldErrors(issues: z.ZodIssue[]): FieldErrors {
@@ -37,15 +41,23 @@ export async function load() {
 			bitcoinNodeless: runtimeConfig.bitcoinNodeless,
 			nextAddresses: [],
 			hasAlreadyUsedNextAddresses: false,
+			addressSupply: 'enough' as AddressSupply,
 			maxDerivationIndex: MAX_NON_HARDENED_INDEX
 		};
 	}
 
 	const ADDRESS_CHECK_TIMEOUT_MS = 3000;
+	const { derivationIndex } = runtimeConfig.bitcoinNodeless;
+	const derivableCount = Math.max(
+		0,
+		Math.min(PREVIEWED_ADDRESSES, MAX_NON_HARDENED_INDEX - derivationIndex + 1)
+	);
+	const addressSupply: AddressSupply =
+		derivableCount === 0 ? 'exhausted' : derivableCount < PREVIEWED_ADDRESSES ? 'low' : 'enough';
 
 	const nextAddresses = await Promise.all(
-		Array.from({ length: 5 }, async (_, i) => {
-			const index = runtimeConfig.bitcoinNodeless.derivationIndex + i;
+		Array.from({ length: derivableCount }, async (_, i) => {
+			const index = derivationIndex + i;
 			const address = generateNodelessAddress(index);
 
 			const isUsed = await Promise.race([
@@ -61,6 +73,7 @@ export async function load() {
 		bitcoinNodeless: runtimeConfig.bitcoinNodeless,
 		nextAddresses,
 		hasAlreadyUsedNextAddresses: nextAddresses.some((addr) => addr.isUsed),
+		addressSupply,
 		maxDerivationIndex: MAX_NON_HARDENED_INDEX
 	};
 }
