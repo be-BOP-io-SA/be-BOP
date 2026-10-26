@@ -2,6 +2,20 @@ import type { Product } from '$lib/types/Product';
 
 export const TEST_PRODUCT_STOCK = 5;
 
+export const TEST_BOOKING_SPEC = {
+	slotMinutes: 60,
+	schedule: {
+		timezone: 'Europe/Paris',
+		monday: { start: '09:00', end: '17:00' },
+		tuesday: null,
+		wednesday: null,
+		thursday: null,
+		friday: null,
+		saturday: null,
+		sunday: null
+	}
+} satisfies Product['bookingSpec'];
+
 export const TEST_DIGITAL_PRODUCT = {
 	_id: 'test-product',
 	name: 'Test product',

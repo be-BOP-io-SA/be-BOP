@@ -4,7 +4,7 @@
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { downloadFile } from '$lib/utils/downloadFile.js';
 	import { page } from '$app/stores';
-	import { PRODUCT_PAGINATION_LIMIT } from '$lib/types/Product.js';
+	import { PRODUCT_LIST_ATTRIBUTES, PRODUCT_PAGINATION_LIMIT } from '$lib/types/Product.js';
 	import Select from 'svelte-select';
 	import { useI18n } from '$lib/i18n';
 	export let data;
@@ -134,11 +134,11 @@
 			{t('admin.product.productAttributeLabel')}
 			<select name="productAttribute" class="form-input">
 				<option></option>
-				{#each [['shipping', 'attribute.shipping'], ['standalone', 'attribute.standalone'], ['payWhatYouWant', 'attribute.payWhatYouWant'], ['free', 'attribute.free'], ['isTicket', 'attribute.isTicket'], ['preorder', 'attribute.preorder']] as [attribute, labelKey]}
+				{#each PRODUCT_LIST_ATTRIBUTES as attribute}
 					<option
 						value={attribute}
 						selected={$page.url.searchParams.get('productAttribute') === attribute}
-						>{t(`admin.product.${labelKey}`)}</option
+						>{t(`admin.product.attribute.${attribute}`)}</option
 					>
 				{/each}
 			</select>
