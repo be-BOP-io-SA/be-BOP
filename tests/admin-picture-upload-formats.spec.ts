@@ -20,6 +20,30 @@ test('the product form accepts AVIF and SVG pictures', async ({ page }) => {
 	await expect(page.getByText('(JPEG, PNG, WebP, AVIF, SVG)')).toBeVisible();
 });
 
+for (const path of [
+	'/admin/picture/new',
+	'/admin/product/new',
+	'/admin/product/default-picture',
+	'/admin/schedule/new',
+	'/admin/schedule/event-default-picture',
+	'/admin/gallery/new',
+	'/admin/slider/new',
+	'/admin/tags/new'
+]) {
+	test(`${path} offers AVIF and SVG in its file picker`, async ({ page }) => {
+		await page.goto(path);
+
+		const inputs = page.locator('input[type="file"]');
+		expect(await inputs.count()).toBeGreaterThan(0);
+		for (const input of await inputs.all()) {
+			await expect(input).toHaveAttribute(
+				'accept',
+				'image/jpeg,image/png,image/webp,image/avif,image/svg+xml'
+			);
+		}
+	});
+}
+
 test.describe('in French', () => {
 	test.use({ locale: 'fr-FR' });
 
