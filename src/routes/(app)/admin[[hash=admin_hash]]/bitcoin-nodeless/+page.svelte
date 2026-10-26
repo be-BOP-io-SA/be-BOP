@@ -254,7 +254,7 @@
 		</div>
 	{/if}
 
-	<ul class="font-mono">
+	<ul class="font-mono break-all">
 		{#each data.nextAddresses as addressData}
 			<li class="flex gap-2">
 				- {addressData.address}
