@@ -198,7 +198,7 @@ export const actions: Actions = {
 								}),
 							standalone: parsed.payWhatYouWant || parsed.hasVariations || parsed.standalone,
 							free: parsed.free,
-							bookingSpec: parsed.bookingSpec,
+							...(parsed.bookingSpec && { bookingSpec: parsed.bookingSpec }),
 							displayShortDescription: parsed.displayShortDescription,
 							...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
 							applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
@@ -410,7 +410,7 @@ export const actions: Actions = {
 					type: product.type,
 					availableDate: parsed.availableDate || undefined,
 					preorder: parsed.preorder,
-					bookingSpec: parsed.bookingSpec,
+					...(parsed.bookingSpec && { bookingSpec: parsed.bookingSpec }),
 					shipping: parsed.shipping,
 					payWhatYouWant: parsed.payWhatYouWant,
 					...(parsed.payWhatYouWant && {
