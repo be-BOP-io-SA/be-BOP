@@ -58,6 +58,8 @@ export interface CheckPaymentResult {
 export interface PaymentProcessorDefinition {
 	meta: PaymentProcessorMeta;
 	isEnabled(): boolean;
+	// Separate from isEnabled: payments already pending must still be checked when new ones are refused.
+	acceptsNewPayments?(): boolean;
 	paymentPrice(price: Price): Price;
 	createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult>;
 	checkPayment(payment: Order['payments'][number], order: Order): Promise<CheckPaymentResult>;
@@ -108,8 +110,12 @@ export function getProcessorsForMethod(method: PaymentMethod): PaymentProcessorD
 	return [...registry.values()].filter((pp) => pp.meta.method === method);
 }
 
+export function canTakeNewPayment(pp: PaymentProcessorDefinition): boolean {
+	return pp.isEnabled() && (pp.acceptsNewPayments?.() ?? true);
+}
+
 export function resolveProcessor(method: PaymentMethod): PaymentProcessorDefinition | undefined {
-	const processors = getProcessorsForMethod(method).filter((pp) => pp.isEnabled());
+	const processors = getProcessorsForMethod(method).filter(canTakeNewPayment);
 	if (!processors.length) {
 		return undefined;
 	}

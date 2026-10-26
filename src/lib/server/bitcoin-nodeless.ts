@@ -123,6 +123,10 @@ export class DerivationIndexExhaustedError extends Error {
 	}
 }
 
+export function hasDerivableNodelessAddress(): boolean {
+	return runtimeConfig.bitcoinNodeless.derivationIndex <= MAX_NON_HARDENED_INDEX;
+}
+
 export function generateNodelessAddress(index: number): string {
 	if (index > MAX_NON_HARDENED_INDEX) {
 		throw new DerivationIndexExhaustedError(index);

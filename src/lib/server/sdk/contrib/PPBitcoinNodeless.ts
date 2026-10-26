@@ -3,6 +3,7 @@ import {
 	generateNodelessAddress,
 	generateDerivationIndex,
 	getSatoshiReceivedNodeless,
+	hasDerivableNodelessAddress,
 	updateBitcoinBlockHeight
 } from '$lib/server/bitcoin-nodeless';
 import { runtimeConfigUpdatedAt } from '$lib/server/runtime-config';
@@ -30,6 +31,8 @@ export default {
 	meta: { processor: 'bitcoin-nodeless', method: 'bitcoin', emoji: '₿' },
 
 	isEnabled: () => isBitcoinNodelessConfigured(),
+
+	acceptsNewPayments: () => hasDerivableNodelessAddress(),
 
 	paymentPrice: bitcoinPaymentPrice,
 
