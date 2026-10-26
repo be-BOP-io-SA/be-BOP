@@ -3,7 +3,8 @@ import {
 	generateNodelessAddress,
 	isBitcoinNodelessConfigured,
 	isZPubValid,
-	isAddressUsed
+	isAddressUsed,
+	MAX_NON_HARDENED_INDEX
 } from '$lib/server/bitcoin-nodeless.js';
 import { collections } from '$lib/server/database.js';
 import { defaultConfig, runtimeConfig } from '$lib/server/runtime-config';
@@ -35,7 +36,8 @@ export async function load() {
 		return {
 			bitcoinNodeless: runtimeConfig.bitcoinNodeless,
 			nextAddresses: [],
-			hasAlreadyUsedNextAddresses: false
+			hasAlreadyUsedNextAddresses: false,
+			maxDerivationIndex: MAX_NON_HARDENED_INDEX
 		};
 	}
 
@@ -58,7 +60,8 @@ export async function load() {
 	return {
 		bitcoinNodeless: runtimeConfig.bitcoinNodeless,
 		nextAddresses,
-		hasAlreadyUsedNextAddresses: nextAddresses.some((addr) => addr.isUsed)
+		hasAlreadyUsedNextAddresses: nextAddresses.some((addr) => addr.isUsed),
+		maxDerivationIndex: MAX_NON_HARDENED_INDEX
 	};
 }
 
@@ -73,7 +76,7 @@ export const actions: Actions = {
 
 		const baseSchema = z.object({
 			mempoolUrl: z.string().url(),
-			derivationIndex: z.number({ coerce: true }).min(0),
+			derivationIndex: z.number({ coerce: true }).int().min(0).max(MAX_NON_HARDENED_INDEX),
 			format: z.enum(['bip84', 'bip48']),
 			skipUsedAddresses: z.boolean({ coerce: true }).default(false)
 		});

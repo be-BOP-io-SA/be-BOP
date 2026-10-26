@@ -169,6 +169,9 @@
 				type="number"
 				name="derivationIndex"
 				class="form-input"
+				min="0"
+				max={data.maxDerivationIndex}
+				step="1"
 				required
 				disabled={alreadySet}
 				bind:value={derivationIndex}
