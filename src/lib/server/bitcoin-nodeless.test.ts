@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { bip84Address, bip48Address, getSatoshiReceivedNodeless } from './bitcoin-nodeless';
+import {
+	bip84Address,
+	bip48Address,
+	generateDerivationIndex,
+	generateNodelessAddress,
+	getSatoshiReceivedNodeless
+} from './bitcoin-nodeless';
 import { runtimeConfig } from './runtime-config';
+import { collections } from './database';
+import { cleanDb } from './test-utils';
 
 describe('bitcoin-nodeless', () => {
 	it('should derivate public key', () => {
@@ -207,4 +215,91 @@ describe('getSatoshiReceivedNodeless', () => {
 		expect(res.satReceived).toBe(AMOUNT);
 		expect(res.pendingSatReceived).toBe(0);
 	});
+});
+
+describe('derivation index limit', () => {
+	const LAST_INDEX = 2 ** 31 - 1;
+	const exhausted = expect.objectContaining({ name: 'DerivationIndexExhaustedError' });
+	const ZPUB =
+		'zpub6r8LffkeFh5if3FefxX5zq5oQnQbLxXXPE87fEskLhY2v37Tj16TzMqRL7p32wQweeq1DpRYWrvm4t3ArKHrLNnVhPkFsHGdo3h6nyoppeS';
+	const TESTNET_XPUBS = [
+		'tpubDFErwxEibF1d8NwR7wG9KUz94F8JAFJJPz5GQFeGVcz6ssgEr5nWsPkpbcpn6KPcDPgYrSofnya2kbm196He327iWCRK9nVkxuz8ZjT9cXG',
+		'tpubDF6CqZd1yujcP79jyEvuC4f5rMNByCqgomZhtfgV6LprZGoxxmzH5LuDPvybL8rzCzJpXynsSARzmN9SoYdLKpLq5ZGwED6vE4mXpLS6gDH'
+	];
+	const initialConfig = runtimeConfig.bitcoinNodeless;
+
+	function configureBip84(derivationIndex: number, skipUsedAddresses = false) {
+		runtimeConfig.bitcoinNodeless = {
+			...initialConfig,
+			format: 'bip84',
+			publicKey: ZPUB,
+			mempoolUrl: 'https://mempool.example',
+			derivationIndex,
+			skipUsedAddresses
+		};
+	}
+
+	async function storedIndex() {
+		const doc = await collections.runtimeConfig.findOne({ _id: 'bitcoinNodeless' });
+		return (doc?.data as { derivationIndex?: number } | undefined)?.derivationIndex;
+	}
+
+	beforeEach(async () => {
+		await cleanDb();
+	});
+
+	afterEach(() => {
+		runtimeConfig.bitcoinNodeless = initialConfig;
+		vi.unstubAllGlobals();
+	});
+
+	it('derives the last non-hardened bip84 address and refuses the next index', () => {
+		configureBip84(0);
+
+		expect(generateNodelessAddress(LAST_INDEX)).toBe('bc1qvpzdfcnqgp5qqvhsllttmgs57pcwhxgd55namz');
+		expect(() => generateNodelessAddress(LAST_INDEX + 1)).toThrow(exhausted);
+	});
+
+	it('derives the last non-hardened bip48 address and refuses the next index', () => {
+		runtimeConfig.bitcoinNodeless = {
+			...initialConfig,
+			format: 'bip48',
+			publicKey: '',
+			m: 2,
+			xpubs: TESTNET_XPUBS,
+			derivationIndex: 0
+		};
+
+		expect(generateNodelessAddress(LAST_INDEX)).toBe(
+			'tb1qd3eldeqdnwwddsm69tlqxscdfuxyckq3kcc6098uafua0nwsjnusk6wzne'
+		);
+		expect(() => generateNodelessAddress(LAST_INDEX + 1)).toThrow(exhausted);
+	});
+
+	it('hands out the last index once, then refuses without moving the stored index', async () => {
+		configureBip84(LAST_INDEX);
+
+		expect(await generateDerivationIndex()).toBe(LAST_INDEX);
+		expect(await storedIndex()).toBe(LAST_INDEX + 1);
+
+		await expect(generateDerivationIndex()).rejects.toThrow(exhausted);
+		expect(runtimeConfig.bitcoinNodeless.derivationIndex).toBe(LAST_INDEX + 1);
+		expect(await storedIndex()).toBe(LAST_INDEX + 1);
+	});
+
+	// LAST_INDEX - 9 ends the ten-address skip window exactly one past the limit.
+	it.each([LAST_INDEX, LAST_INDEX - 9])(
+		'refuses to skip past the last index when every address from %i is used',
+		async (start) => {
+			configureBip84(start, true);
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async () => ({ ok: true, json: async () => ({ chain_stats: { tx_count: 1 } }) }))
+			);
+
+			await expect(generateDerivationIndex()).rejects.toThrow(exhausted);
+			expect(runtimeConfig.bitcoinNodeless.derivationIndex).toBe(start);
+			expect(await storedIndex()).toBeUndefined();
+		}
+	);
 });

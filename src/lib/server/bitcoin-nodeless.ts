@@ -111,7 +111,22 @@ export function bip48Address(m: number, xpubs: string[], index: number): string 
 	return result.address;
 }
 
+// BIP-32: indexes from 2^31 upward are hardened and cannot be derived from a public key.
+export const MAX_NON_HARDENED_INDEX = 2 ** 31 - 1;
+
+export class DerivationIndexExhaustedError extends Error {
+	constructor(index: number) {
+		super(
+			`Derivation index ${index} exceeds ${MAX_NON_HARDENED_INDEX}: the bitcoin nodeless key has no address left, configure a new one`
+		);
+		this.name = 'DerivationIndexExhaustedError';
+	}
+}
+
 export function generateNodelessAddress(index: number): string {
+	if (index > MAX_NON_HARDENED_INDEX) {
+		throw new DerivationIndexExhaustedError(index);
+	}
 	const config = runtimeConfig.bitcoinNodeless;
 	if (config.format === 'bip48') {
 		if (!config.m || !config.xpubs?.length) {
@@ -138,12 +153,15 @@ export async function generateDerivationIndex(): Promise<number> {
 			}
 			index++;
 		}
+	}
 
-		if (index >= runtimeConfig.bitcoinNodeless.derivationIndex + 10) {
-			throw new Error(
-				'Unable to provide the next derivation index because too many intermediate derivations are already used'
-			);
-		}
+	// Derive before persisting, or each failed checkout would push the stored index further out.
+	generateNodelessAddress(index);
+
+	if (index >= runtimeConfig.bitcoinNodeless.derivationIndex + 10) {
+		throw new Error(
+			'Unable to provide the next derivation index because too many intermediate derivations are already used'
+		);
 	}
 
 	const updatedConfig = {
