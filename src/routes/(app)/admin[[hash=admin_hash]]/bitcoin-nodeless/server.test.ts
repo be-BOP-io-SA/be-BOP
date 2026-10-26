@@ -94,4 +94,19 @@ describe('bitcoin nodeless admin', () => {
 			(await collections.runtimeConfig.findOne({ _id: 'bitcoinNodeless' }))?.data
 		).toMatchObject({ derivationIndex: Number(index) });
 	});
+
+	it('refuses to set up over an existing configuration and keeps its stored index', async () => {
+		await initialize('0');
+		await collections.runtimeConfig.updateOne(
+			{ _id: 'bitcoinNodeless' },
+			{ $set: { 'data.derivationIndex': 42 } }
+		);
+
+		const result = await initialize('0');
+
+		expect(result).toMatchObject({ status: 409, data: { alreadySetUp: true } });
+		expect(
+			(await collections.runtimeConfig.findOne({ _id: 'bitcoinNodeless' }))?.data
+		).toMatchObject({ derivationIndex: 42, publicKey: ZPUB });
+	});
 });
