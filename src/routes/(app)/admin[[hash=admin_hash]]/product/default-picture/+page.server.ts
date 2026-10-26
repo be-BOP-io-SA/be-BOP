@@ -5,6 +5,8 @@ import { join } from 'path';
 import sharp from 'sharp';
 import { rootDir } from '$lib/server/root-dir';
 import { adminPrefix } from '$lib/server/admin';
+import { rasterizeIfSvg } from '$lib/server/picture';
+import { PICTURE_UPLOAD_TYPES } from '$lib/types/Picture';
 
 export const actions = {
 	default: async ({ request }) => {
@@ -17,8 +19,7 @@ export const actions = {
 
 		const buffer = Buffer.from(await file.arrayBuffer());
 
-		const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-		if (!allowedTypes.includes(file.type)) {
+		if (!PICTURE_UPLOAD_TYPES.some((type) => type === file.type)) {
 			throw error(400, 'Unsupported file type.');
 		}
 
@@ -28,7 +29,8 @@ export const actions = {
 		const filePath = path.resolve(assetsDir, uniqueFileName);
 
 		try {
-			const pngBuffer = await sharp(buffer).png().toBuffer();
+			const image = await rasterizeIfSvg(buffer);
+			const pngBuffer = await sharp(image).png().toBuffer();
 
 			await writeFile(filePath, pngBuffer);
 		} catch (err) {

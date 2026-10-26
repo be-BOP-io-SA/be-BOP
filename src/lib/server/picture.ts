@@ -20,10 +20,10 @@ const SVG_RENDER_SIZE = 2048;
 const MAX_SVG_DENSITY = 100_000;
 
 /**
- * The original of every picture is kept and can be served as is, and an SVG one could carry
- * script: an SVG is rendered to a PNG large enough to stay sharp, and only that PNG is kept.
+ * Uploaded files can be served as is, and an SVG could carry script: an SVG is rendered to a
+ * PNG large enough to stay sharp, so that only the PNG is ever stored.
  */
-async function rasterizeIfSvg(upload: Buffer): Promise<Buffer> {
+export async function rasterizeIfSvg(upload: Buffer): Promise<Buffer> {
 	const { format, width, height } = await sharp(upload).metadata();
 
 	if (format !== 'svg' || !width || !height) {
