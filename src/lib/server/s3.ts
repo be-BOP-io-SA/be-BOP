@@ -6,6 +6,12 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 let _s3client: AWS.S3 | null = null;
 let _publicS3Client: AWS.S3 | null = null;
 
+// Otherwise a presigned upload carries the CRC32 of an empty body, which Garage refuses.
+export const S3_CHECKSUMS_WHEN_REQUIRED = {
+	requestChecksumCalculation: 'WHEN_REQUIRED',
+	responseChecksumValidation: 'WHEN_REQUIRED'
+} as const;
+
 export function s3IsConfigured() {
 	return runtimeConfig.s3.bucket && runtimeConfig.s3.keyId && runtimeConfig.s3.keySecret;
 }
@@ -25,7 +31,8 @@ function createS3Client(usePublicEndpoint = false): AWS.S3 {
 		},
 		// Handle minio, eg http://minio:9000/bucket instead of http://bucket.minio:9000
 		// Should work with any S3-compatible server, so no harm in leaving it on
-		forcePathStyle: true
+		forcePathStyle: true,
+		...S3_CHECKSUMS_WHEN_REQUIRED
 	});
 }
 
