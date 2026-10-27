@@ -45,9 +45,9 @@ function recordDialogs(page: Page): string[] {
 	return messages;
 }
 
-async function openPools(page: Page) {
+async function openPools(page: Page, groupNamePlaceholder = 'Group Name') {
 	await page.goto('/admin/pos', { waitUntil: 'networkidle' });
-	const groupNames = page.getByPlaceholder('Group Name');
+	const groupNames = page.getByPlaceholder(groupNamePlaceholder);
 	await expect(groupNames).toHaveCount(2);
 	await expect(groupNames.nth(1)).toHaveValue('Terrasse');
 	return groupNames;
@@ -103,9 +103,9 @@ test.describe('in French', () => {
 
 	test('the refusal is translated', async ({ page }) => {
 		const dialogs = recordDialogs(page);
-		await openPools(page);
+		await openPools(page, 'Nom du groupe');
 
-		await page.getByRole('button', { name: 'Delete Group' }).nth(1).click();
+		await page.getByRole('button', { name: 'Supprimer le groupe' }).nth(1).click();
 
 		expect(dialogs).toEqual([
 			"Ces pools contiennent encore des articles et ne peuvent être ni supprimés ni renommés : Sunny. Encaissez-les ou videz-les d'abord."
