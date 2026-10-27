@@ -34,6 +34,9 @@
 		"zipCode": "Postcode"
 	},
 	"admin": {
+		"picture": {
+			"uploadFailed": "De afbeelding kon niet naar de opslag worden verzonden. Controleer de S3-instellingen en probeer het opnieuw."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Verwijzing naar voorraad van ander product (optioneel)",

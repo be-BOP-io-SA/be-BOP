@@ -7,8 +7,11 @@
 	import { browser } from '$app/environment';
 	import Select from 'svelte-select';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 
 	let name = '';
 	let slug = '';
@@ -34,16 +37,25 @@
 			submitting = true;
 			const formData = new FormData(formElement);
 
+			let uploadFailed = false;
 			await Promise.all(
 				eventPictures.map(async (picture, index) => {
 					if (picture) {
 						const pictureId = await preUploadPicture(data.adminPrefix, picture[0], {
 							fileName: name
 						});
+						if (!pictureId) {
+							uploadFailed = true;
+							return;
+						}
 						formData.set(`eventPictures[${index}]`, pictureId);
 					}
 				})
 			);
+			if (uploadFailed) {
+				alert(t('admin.picture.uploadFailed'));
+				return;
+			}
 
 			const finalResponse = await fetch(formElement.action, {
 				method: 'POST',

@@ -5,8 +5,11 @@
 	import { preUploadPicture } from '$lib/types/Picture.js';
 	import { page } from '$app/stores';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 	let pageId = $page.url.searchParams.get('id') || null;
 	let name = $page.url.searchParams.get('id')?.replaceAll('-', ' ') ?? '';
 	let slug = pageId ?? '';
@@ -30,16 +33,25 @@
 				{ file: fileSlimBanner, id: 'slimBannerId' },
 				{ file: fileAvatar, id: 'avatarId' }
 			];
+			let uploadFailed = false;
 			await Promise.all(
 				picturesToUpload.map(async (picture) => {
 					if (picture.file) {
 						const pictureId = await preUploadPicture(data.adminPrefix, picture.file[0], {
 							fileName: name
 						});
+						if (!pictureId) {
+							uploadFailed = true;
+							return;
+						}
 						formData.set(picture.id, pictureId);
 					}
 				})
 			);
+			if (uploadFailed) {
+				alert(t('admin.picture.uploadFailed'));
+				return;
+			}
 
 			const finalResponse = await fetch(formElement.action, {
 				method: 'POST',

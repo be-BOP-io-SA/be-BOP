@@ -10,8 +10,11 @@
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 
 	let name = data.schedule.name;
 	let slug = data.schedule._id;
@@ -85,16 +88,25 @@
 		submitting = true;
 		const formData = new FormData(formElement);
 		try {
+			let uploadFailed = false;
 			await Promise.all(
 				eventPictures.map(async (picture, index) => {
 					if (picture) {
 						const pictureId = await preUploadPicture(data.adminPrefix, picture[0], {
 							fileName: name
 						});
+						if (!pictureId) {
+							uploadFailed = true;
+							return;
+						}
 						formData.set(`eventPictures[${index}]`, pictureId);
 					}
 				})
 			);
+			if (uploadFailed) {
+				alert(t('admin.picture.uploadFailed'));
+				return;
+			}
 			const action = (event.submitter as HTMLButtonElement | null)?.formAction.includes('?/')
 				? (event.submitter as HTMLButtonElement).formAction
 				: formElement.action;

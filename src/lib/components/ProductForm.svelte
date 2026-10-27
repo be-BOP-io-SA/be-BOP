@@ -267,6 +267,10 @@
 					const pictureId = await preUploadPicture(adminPrefix, file, {
 						fileName: `${product.name}-${index}`
 					});
+					if (!pictureId) {
+						errorMessage = t('admin.picture.uploadFailed');
+						return;
+					}
 
 					formData.set(`pictureIds[${index}]`, pictureId);
 					index++;

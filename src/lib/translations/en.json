@@ -34,6 +34,9 @@
 		"zipCode": "Zip code"
 	},
 	"admin": {
+		"picture": {
+			"uploadFailed": "The picture could not be sent to the storage. Check the S3 settings, then try again."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Reference another product's stock (optional)",

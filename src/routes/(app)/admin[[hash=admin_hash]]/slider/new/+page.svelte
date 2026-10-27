@@ -5,8 +5,11 @@
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 
 	let submitting = false;
 	let files: FileList | null = null;
@@ -27,6 +30,10 @@
 			const pictureId = await preUploadPicture(data.adminPrefix, files[0], {
 				fileName: title
 			});
+			if (!pictureId) {
+				alert(t('admin.picture.uploadFailed'));
+				return;
+			}
 
 			formData.set('sliderPictureId', pictureId);
 

@@ -4,8 +4,11 @@
 	import { preUploadPicture } from '$lib/types/Picture';
 	import { generateId } from '$lib/utils/generateId';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 	let name = '';
 	let slug = '';
 	let submitting = false;
@@ -17,14 +20,23 @@
 			submitting = true;
 			// Need to load here, or for some reason, some inputs disappear afterwards
 			const formData = new FormData(formElement);
+			let uploadFailed = false;
 			await Promise.all(
 				galleryPictures.map(async (picture, i) => {
 					if (picture[0]) {
 						const pictureId = await preUploadPicture(data.adminPrefix, picture[0]);
+						if (!pictureId) {
+							uploadFailed = true;
+							return;
+						}
 						formData.set(`secondary[${i}].pictureId`, pictureId);
 					}
 				})
 			);
+			if (uploadFailed) {
+				alert(t('admin.picture.uploadFailed'));
+				return;
+			}
 
 			const finalResponse = await fetch(formElement.action, {
 				method: 'POST',

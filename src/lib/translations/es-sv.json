@@ -34,6 +34,9 @@
 		"zipCode": "Código postal"
 	},
 	"admin": {
+		"picture": {
+			"uploadFailed": "No se pudo enviar la imagen al almacenamiento. Revise la configuración de S3 e inténtelo de nuevo."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Referenciar el stock de otro producto (opcional)",

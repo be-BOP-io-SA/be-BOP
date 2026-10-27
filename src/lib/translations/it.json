@@ -34,6 +34,9 @@
 		"zipCode": "Codice d'avviamento postale"
 	},
 	"admin": {
+		"picture": {
+			"uploadFailed": "Non è stato possibile inviare l'immagine allo spazio di archiviazione. Controlla le impostazioni S3 e riprova."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Riferimento allo stock di un altro prodotto (opzionale)",

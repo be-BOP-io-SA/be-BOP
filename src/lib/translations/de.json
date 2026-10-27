@@ -34,6 +34,9 @@
 		"zipCode": "Postleitzahl"
 	},
 	"admin": {
+		"picture": {
+			"uploadFailed": "Das Bild konnte nicht in den Speicher hochgeladen werden. Prüfen Sie die S3-Einstellungen und versuchen Sie es erneut."
+		},
 		"product": {
 			"stockReference": {
 				"label": "Auf Lagerbestand eines anderen Produkts verweisen (optional)",
