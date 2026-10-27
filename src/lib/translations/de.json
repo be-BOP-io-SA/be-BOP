@@ -1939,6 +1939,7 @@
 			"reservedMetaNameError": "Die Wörter 'description' und 'viewport' sind nicht erlaubt."
 		},
 		"schedule": {
+			"confirmEventDeletion": "Die Veranstaltung „{title}“ löschen? Das Löschen wird gespeichert, wenn Sie auf „{update}“ klicken.",
 			"eventProductCta": {
 				"exportToCalendar": "Zum Kalender exportieren",
 				"location": "Ort",
