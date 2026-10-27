@@ -4,6 +4,9 @@
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
 	import type { TagFamily } from '$lib/types/TagFamily';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 
@@ -80,7 +83,7 @@
 		if (tagsInFamily > 0) {
 			if (
 				!confirm(
-					`This family "${family?.name}" has ${tagsInFamily} tag(s). Deleting it will dissociate these tags. Continue?`
+					t('admin.tags.deleteFamilyConfirm', { name: family?.name ?? '', count: tagsInFamily })
 				)
 			) {
 				return;
@@ -93,7 +96,7 @@
 
 	// Special tags
 	const specialTags = {
-		'pos-favorite': 'Products with this tag will be displayed by default on /pos/touch interface'
+		'pos-favorite': t('admin.tags.posFavoriteDescription')
 	};
 	const tagsMap = new Map(data.tags.map((tag) => [tag._id, tag]));
 </script>
@@ -102,42 +105,44 @@
 	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
 {/if}
 
-<a href="{data.adminPrefix}/tags/new" class="underline block mb-4">Create new tag</a>
+<a href="{data.adminPrefix}/tags/new" class="underline block mb-4">{t('admin.tags.createNew')}</a>
 
-<h1 class="text-3xl mb-4">List of Tags</h1>
+<h1 class="text-3xl mb-4">{t('admin.tags.listTitle')}</h1>
 
 <!-- Legend -->
 <div class="mb-4 text-sm text-gray-600 flex flex-wrap gap-3">
-	<span class="font-semibold">Legend:</span>
-	<span title="Widget use only">🧩 Widget only</span>
-	<span title="Product tagging">🏷️ Product tagging</span>
-	<span title="Light/dark mode">🌓 Light/dark</span>
-	<span title="Reporting filter">📊 Reporting</span>
-	<span title="Print receipt filter">🧾 Receipt</span>
+	<span class="font-semibold">{t('admin.tags.legend')}</span>
+	<span title={t('admin.tags.widgetUseOnly')}>🧩 {t('admin.tags.widgetOnly')}</span>
+	<span title={t('admin.tags.productTagging')}>🏷️ {t('admin.tags.productTagging')}</span>
+	<span title={t('admin.tags.lightDarkMode')}>🌓 {t('admin.tags.lightDark')}</span>
+	<span title={t('admin.tags.reportingFilter')}>📊 {t('admin.tags.reporting')}</span>
+	<span title={t('admin.tags.printReceiptFilter')}>🧾 {t('admin.tags.receipt')}</span>
 </div>
 
 <!-- Expand/Collapse All -->
 <div class="flex gap-2 mb-4">
-	<button class="btn btn-gray text-sm" on:click={expandAll}>Expand All</button>
-	<button class="btn btn-gray text-sm" on:click={collapseAll}>Collapse All</button>
+	<button class="btn btn-gray text-sm" on:click={expandAll}>{t('admin.tags.expandAll')}</button>
+	<button class="btn btn-gray text-sm" on:click={collapseAll}>{t('admin.tags.collapseAll')}</button>
 </div>
 
 <!-- Family management (following /admin/pos pattern) -->
 <form method="post" action="?/saveFamilies" use:enhance class="mb-6 p-4 bg-gray-100 rounded">
-	<h2 class="text-xl mb-2">Tag Families</h2>
+	<h2 class="text-xl mb-2">{t('admin.tags.tagFamilies')}</h2>
 
 	<div class="flex gap-2 items-end mb-4">
 		<label class="form-label">
-			New family name
+			{t('admin.tags.newFamilyName')}
 			<input
 				type="text"
 				class="form-input"
 				bind:value={newFamilyName}
-				placeholder="Enter family name"
+				placeholder={t('admin.tags.enterFamilyName')}
 				on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addFamily())}
 			/>
 		</label>
-		<button type="button" class="btn btn-black" on:click={addFamily}>Add Family</button>
+		<button type="button" class="btn btn-black" on:click={addFamily}
+			>{t('admin.tags.addFamily')}</button
+		>
 	</div>
 
 	{#if families.length > 0}
@@ -149,12 +154,12 @@
 						type="text"
 						bind:value={family.name}
 						class="form-input flex-1"
-						placeholder="Family name"
+						placeholder={t('admin.tags.familyNamePlaceholder')}
 					/>
 					<button
 						type="button"
 						class="text-red-500 hover:text-red-700"
-						title="Delete family"
+						title={t('admin.tags.deleteFamilyTitle')}
 						on:click={() => deleteFamily(family._id)}
 					>
 						<IconTrash />
@@ -165,7 +170,7 @@
 	{/if}
 
 	<input type="hidden" name="families" value={serializedFamilies} />
-	<button type="submit" class="btn btn-blue text-white">Save Families</button>
+	<button type="submit" class="btn btn-blue text-white">{t('admin.tags.saveFamilies')}</button>
 </form>
 
 <!-- Tag families list -->
@@ -173,7 +178,7 @@
 	{#each tagsByFamily as { family, tags }}
 		<div class="border-l-4 border-gray-300 pl-4">
 			<div class="flex items-center gap-2">
-				<span>Family:</span>
+				<span>{t('admin.tags.familyLabel')}</span>
 				<b>{family.name}</b>
 				<a
 					href="#{family._id}"
@@ -181,9 +186,13 @@
 					on:click|preventDefault={() =>
 						(expandedFamilies[family._id] = !expandedFamilies[family._id])}
 				>
-					({expandedFamilies[family._id] ? 'collapse' : 'expand'})
+					({expandedFamilies[family._id]
+						? t('admin.tags.collapseText')
+						: t('admin.tags.expandText')})
 				</a>
-				<span class="text-gray-500 text-sm">({tags.length} tags)</span>
+				<span class="text-gray-500 text-sm"
+					>{t('admin.tags.tagsCount', { count: tags.length })}</span
+				>
 			</div>
 
 			{#if expandedFamilies[family._id]}
@@ -195,17 +204,18 @@
 							</a>
 							<button
 								class="text-gray-500 text-sm hover:text-blue-500 cursor-pointer"
-								title="Copy to clipboard"
+								title={t('admin.tags.copyToClipboard')}
 								on:click={() => copyToClipboard(`[Tag=${tag._id}]`)}>[Tag={tag._id}]</button
 							>
-							{#if tag.widgetUseOnly}<span title="Widget use only">🧩</span>{/if}
-							{#if tag.productTagging}<span title="Product tagging">🏷️</span>{/if}
-							{#if tag.useLightDark}<span title="Light/dark mode">🌓</span>{/if}
-							{#if tag.reportingFilter}<span title="Reporting filter">📊</span>{/if}
-							{#if tag.printReceiptFilter}<span title="Print receipt filter">🧾</span>{/if}
+							{#if tag.widgetUseOnly}<span title={t('admin.tags.widgetUseOnly')}>🧩</span>{/if}
+							{#if tag.productTagging}<span title={t('admin.tags.productTagging')}>🏷️</span>{/if}
+							{#if tag.useLightDark}<span title={t('admin.tags.lightDarkMode')}>🌓</span>{/if}
+							{#if tag.reportingFilter}<span title={t('admin.tags.reportingFilter')}>📊</span>{/if}
+							{#if tag.printReceiptFilter}<span title={t('admin.tags.printReceiptFilter')}>🧾</span
+								>{/if}
 						</li>
 					{:else}
-						<li class="text-gray-500 italic">No tags in this family</li>
+						<li class="text-gray-500 italic">{t('admin.tags.noTagsInFamily')}</li>
 					{/each}
 				</ul>
 			{/if}
@@ -216,17 +226,21 @@
 	{#if orphanTags.length > 0 || families.length === 0}
 		<div class="border-l-4 border-orange-300 pl-4">
 			<div class="flex items-center gap-2">
-				<span>Family:</span>
-				<b class="text-orange-600">Not associated to a family</b>
+				<span>{t('admin.tags.familyLabel')}</span>
+				<b class="text-orange-600">{t('admin.tags.notAssociatedToFamily')}</b>
 				<a
 					href="#orphan"
 					class="text-blue-500 underline text-sm"
 					on:click|preventDefault={() =>
 						(expandedFamilies['_orphan'] = !expandedFamilies['_orphan'])}
 				>
-					({expandedFamilies['_orphan'] ? 'collapse' : 'expand'})
+					({expandedFamilies['_orphan']
+						? t('admin.tags.collapseText')
+						: t('admin.tags.expandText')})
 				</a>
-				<span class="text-gray-500 text-sm">({orphanTags.length} tags)</span>
+				<span class="text-gray-500 text-sm"
+					>{t('admin.tags.tagsCount', { count: orphanTags.length })}</span
+				>
 			</div>
 
 			{#if expandedFamilies['_orphan']}
@@ -238,17 +252,18 @@
 							</a>
 							<button
 								class="text-gray-500 text-sm hover:text-blue-500 cursor-pointer"
-								title="Copy to clipboard"
+								title={t('admin.tags.copyToClipboard')}
 								on:click={() => copyToClipboard(`[Tag=${tag._id}]`)}>[Tag={tag._id}]</button
 							>
-							{#if tag.widgetUseOnly}<span title="Widget use only">🧩</span>{/if}
-							{#if tag.productTagging}<span title="Product tagging">🏷️</span>{/if}
-							{#if tag.useLightDark}<span title="Light/dark mode">🌓</span>{/if}
-							{#if tag.reportingFilter}<span title="Reporting filter">📊</span>{/if}
-							{#if tag.printReceiptFilter}<span title="Print receipt filter">🧾</span>{/if}
+							{#if tag.widgetUseOnly}<span title={t('admin.tags.widgetUseOnly')}>🧩</span>{/if}
+							{#if tag.productTagging}<span title={t('admin.tags.productTagging')}>🏷️</span>{/if}
+							{#if tag.useLightDark}<span title={t('admin.tags.lightDarkMode')}>🌓</span>{/if}
+							{#if tag.reportingFilter}<span title={t('admin.tags.reportingFilter')}>📊</span>{/if}
+							{#if tag.printReceiptFilter}<span title={t('admin.tags.printReceiptFilter')}>🧾</span
+								>{/if}
 						</li>
 					{:else}
-						<li class="text-gray-500 italic">No orphan tags</li>
+						<li class="text-gray-500 italic">{t('admin.tags.noOrphanTags')}</li>
 					{/each}
 				</ul>
 			{/if}
@@ -258,13 +273,13 @@
 
 <!-- Special tags section -->
 {#if typedKeys(specialTags).some((key) => tagsMap.has(key))}
-	<h2 class="text-2xl mt-8 mb-2">Existing Special Tags</h2>
+	<h2 class="text-2xl mt-8 mb-2">{t('admin.tags.existingSpecialTags')}</h2>
 
 	<table class="border border-gray-300 divide-y divide-gray-300 border-collapse">
 		<thead>
 			<tr>
-				<th class="text-left border border-gray-300 p-2">Tag slug</th>
-				<th class="text-left border border-gray-300 p-2">Description</th>
+				<th class="text-left border border-gray-300 p-2">{t('admin.tags.tagSlug')}</th>
+				<th class="text-left border border-gray-300 p-2">{t('admin.tags.description')}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -283,13 +298,13 @@
 {/if}
 
 {#if typedKeys(specialTags).some((key) => !tagsMap.has(key))}
-	<h2 class="text-2xl mt-8 mb-2">Suggestions</h2>
+	<h2 class="text-2xl mt-8 mb-2">{t('admin.tags.suggestions')}</h2>
 
 	<table class="border border-gray-300 divide-y divide-gray-300 border-collapse">
 		<thead>
 			<tr>
-				<th class="text-left border border-gray-300 p-2">Tag slug</th>
-				<th class="text-left border border-gray-300 p-2">Description</th>
+				<th class="text-left border border-gray-300 p-2">{t('admin.tags.tagSlug')}</th>
+				<th class="text-left border border-gray-300 p-2">{t('admin.tags.description')}</th>
 			</tr>
 		</thead>
 		<tbody>

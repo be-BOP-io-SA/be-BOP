@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	const productId = $page.url.searchParams.get('productId');
 	export let data;
@@ -11,7 +14,7 @@
 	let uploading = false;
 	async function handleSubmit() {
 		if (!files || files.length === 0) {
-			alert('Please select a file');
+			alert(t('admin.digitalFile.selectFileAlert'));
 			return;
 		}
 		try {
@@ -70,37 +73,36 @@
 	}
 </script>
 
-<h1 class="text-3xl">Add a digital file</h1>
+<h1 class="text-3xl">{t('admin.digitalFile.addTitle')}</h1>
 
 <form method="post" class="flex flex-col gap-4" on:submit|preventDefault={handleSubmit}>
 	<label>
-		Name of the file
+		{t('admin.digitalFile.nameLabel')}
 		<input
 			class="form-input block"
 			type="text"
 			name="name"
-			placeholder="Final name"
+			placeholder={t('admin.digitalFile.finalNamePlaceholder')}
 			bind:value={name}
 			required
 		/>
 	</label>
 
 	<label>
-		File
+		{t('admin.digitalFile.fileLabel')}
 		<input type="file" class="block" bind:files required />
 	</label>
 
 	{#if productId}
 		<p>
-			Associated product: <a href="{data.adminPrefix}/product/{productId}" class="hover:underline"
-				>{productId}
-			</a>
+			{t('admin.digitalFile.associatedProduct')}
+			<a href="{data.adminPrefix}/product/{productId}" class="hover:underline">{productId} </a>
 		</p>
 	{/if}
 
 	{#if !uploading}
-		<input type="submit" class="btn body-mainCTA self-start" value="Add" />
+		<input type="submit" class="btn body-mainCTA self-start" value={t('admin.digitalFile.add')} />
 	{:else}
-		<p>Uploading...</p>
+		<p>{t('admin.digitalFile.uploading')}</p>
 	{/if}
 </form>

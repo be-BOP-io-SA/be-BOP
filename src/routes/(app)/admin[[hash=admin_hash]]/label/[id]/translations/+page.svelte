@@ -1,14 +1,17 @@
 <script lang="ts">
 	import { languageNames, type LanguageKey } from '$lib/translations/index.js';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
 
 	let language: LanguageKey = 'fr';
+
+	const { t } = useI18n();
 </script>
 
 <form method="post" class="contents">
 	<label class="form-label">
-		Select Language
+		{t('admin.label.selectLanguage')}
 
 		<select bind:value={language} name="language" class="form-input">
 			{#each data.locales as locale}
@@ -18,7 +21,7 @@
 	</label>
 
 	<label class="form-label">
-		Name
+		{t('admin.label.name')}
 		<input
 			class="form-input block"
 			type="text"
@@ -28,5 +31,5 @@
 		/>
 	</label>
 
-	<button class="btn btn-black self-start" type="submit">Save</button>
+	<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>
 </form>

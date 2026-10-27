@@ -2,14 +2,18 @@
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage.js';
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
 	let title = data.contactForm.title;
 	let slug = data.contactForm._id;
 	let displayFrom = data.contactForm.displayFromField;
 	let mandatoryAgreement = !!data.contactForm.disclaimer;
+
+	const { t } = useI18n();
+
 	function confirmDelete(event: Event) {
-		if (!confirm('Would you like to delete this Contact form?')) {
+		if (!confirm(t('admin.form.confirmDelete'))) {
 			event.preventDefault();
 		}
 	}
@@ -17,13 +21,13 @@
 
 <form method="post" class="flex flex-col gap-4">
 	<label class="form-label">
-		Title
+		{t('admin.form.title')}
 		<input
 			class="form-input"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="title"
-			placeholder="title"
+			placeholder={t('admin.form.titlePlaceholder')}
 			bind:value={title}
 			on:change={() => (slug = generateId(title, true))}
 			on:input={() => (slug = generateId(title, true))}
@@ -32,24 +36,24 @@
 	</label>
 
 	<label class="form-label">
-		Slug
+		{t('admin.form.slug')}
 		<input
 			class="form-input block"
 			type="text"
 			name="slug"
-			placeholder="Slug"
+			placeholder={t('admin.form.slug')}
 			bind:value={slug}
-			title="Only lowercase letters, numbers and dashes are allowed"
+			title={t('admin.form.onlyLowercaseLettersNumbersDashes')}
 			disabled
 		/>
 	</label>
 	<label class="form-label">
-		target
+		{t('admin.form.target')}
 		<input
 			class="form-input block"
 			type="text"
 			name="target"
-			placeholder="Target"
+			placeholder={t('admin.form.targetPlaceholder')}
 			value={data.contactForm.target}
 			pattern={data.contactModes.includes('email') && data.contactModes.includes('nostr')
 				? '^npub.*|^.*@.*'
@@ -67,7 +71,8 @@
 			name="displayFromField"
 			placeholder="From"
 			bind:checked={displayFrom}
-		/> Display From field
+		/>
+		{t('admin.form.displayFromField')}
 	</label>
 	{#if displayFrom}
 		<label class="checkbox-label">
@@ -76,7 +81,8 @@
 				type="checkbox"
 				name="prefillWithSession"
 				checked={data.contactForm.prefillWithSession}
-			/> Prefill with session information
+			/>
+			{t('admin.form.prefillWithSessionInformation')}
 		</label>{/if}
 	<label class="checkbox-label">
 		<input
@@ -84,56 +90,57 @@
 			type="checkbox"
 			name="mandatoryAgreement"
 			bind:checked={mandatoryAgreement}
-		/> Add a warning to the form with mandatory agreement
+		/>
+		{t('admin.form.mandatoryAgreementWarning')}
 	</label>
 	{#if mandatoryAgreement}
 		<label class="form-label">
-			Disclaimer label
+			{t('admin.form.disclaimerLabel')}
 			<input
 				class="form-input block"
 				type="text"
 				name="disclaimer.label"
-				placeholder="Disclaimer label"
+				placeholder={t('admin.form.disclaimerLabel')}
 				required
 				value={data.contactForm.disclaimer?.label}
 			/>
 		</label>
-		Disclaimer Content
+		{t('admin.form.disclaimerContent')}
 		<label class="form-label">
 			<textarea
 				name="disclaimer.content"
 				cols="30"
 				rows="5"
 				maxlength={MAX_CONTENT_LIMIT}
-				placeholder="message"
+				placeholder={t('admin.form.messagePlaceholder')}
 				class="form-input block w-full"
 				value={data.contactForm.disclaimer?.content}
 			/>
 		</label>
 		<label class="form-label">
-			Disclaimer checkbox label
+			{t('admin.form.disclaimerCheckboxLabel')}
 			<input
 				class="form-input block"
 				type="text"
 				name="disclaimer.checkboxLabel"
-				placeholder="Disclaimer checkbox label"
+				placeholder={t('admin.form.disclaimerCheckboxLabel')}
 				required
 				value={data.contactForm.disclaimer?.checkboxLabel}
 			/>
 		</label>
 	{/if}
 	<label class="form-label">
-		Subject
+		{t('admin.form.subject')}
 		<input
 			class="form-input block"
 			type="text"
 			name="subject"
-			placeholder="Subject"
+			placeholder={t('admin.form.subject')}
 			value={data.contactForm.subject}
 			required
 		/>
 	</label>
-	Content
+	{t('admin.form.content')}
 
 	<textarea
 		name="content"
@@ -141,18 +148,23 @@
 		rows="10"
 		maxlength={MAX_CONTENT_LIMIT}
 		value={data.contactForm.content}
-		placeholder="message"
+		placeholder={t('admin.form.messagePlaceholder')}
 		class="form-input block w-full"
 	/>
 	<div class="flex flex-row justify-between gap-2">
-		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
-		<a href="/form/{data.contactForm._id}" class="btn body-mainCTA">View</a>
+		<input
+			type="submit"
+			class="btn btn-blue text-white"
+			formaction="?/update"
+			value={t('admin.action.update')}
+		/>
+		<a href="/form/{data.contactForm._id}" class="btn body-mainCTA">{t('admin.form.view')}</a>
 
 		<input
 			type="submit"
 			class="btn btn-red text-white ml-auto"
 			formaction="?/delete"
-			value="Delete"
+			value={t('admin.form.delete')}
 			on:click={confirmDelete}
 		/>
 	</div>

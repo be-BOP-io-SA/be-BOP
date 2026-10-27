@@ -5,6 +5,9 @@
 	import { preUploadPicture } from '$lib/types/Picture.js';
 	import { page } from '$app/stores';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	let pageId = $page.url.searchParams.get('id') || null;
@@ -60,7 +63,7 @@
 	}
 </script>
 
-<h1 class="text-3xl">Add a tag</h1>
+<h1 class="text-3xl">{t('admin.tags.addTag')}</h1>
 
 {#if !data.s3IsConfigured}
 	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
@@ -73,12 +76,12 @@
 	on:submit|preventDefault={handleSubmit}
 >
 	<label class="form-label">
-		tag name
+		{t('admin.tags.tagNameLabel')}
 		<input
 			class="form-input"
 			type="text"
 			name="name"
-			placeholder="Tag name"
+			placeholder={t('admin.tags.tagNamePlaceholder')}
 			bind:value={name}
 			on:change={() => (slug = generateId(name, false))}
 			on:input={() => (slug = generateId(name, false))}
@@ -87,39 +90,39 @@
 	</label>
 
 	<label class="form-label">
-		Slug
+		{t('admin.tags.slug')}
 
 		<input
 			class="form-input block"
 			type="text"
 			name="slug"
-			placeholder="Slug"
+			placeholder={t('admin.tags.slug')}
 			bind:value={slug}
-			title="Only lowercase letters, numbers and dashes are allowed"
+			title={t('admin.tags.slugHint')}
 			required
 		/>
 	</label>
 	<label class="checkbox-label">
 		<input class="form-checkbox" type="checkbox" name="widgetUseOnly" />
-		For widget use only
+		{t('admin.tags.forWidgetUseOnly')}
 	</label>
 	<label class="checkbox-label">
 		<input class="form-checkbox" type="checkbox" name="productTagging" />
-		Available for product tagging
+		{t('admin.tags.availableForProductTagging')}
 	</label>
 	<label class="checkbox-label">
 		<input class="form-checkbox" type="checkbox" name="useLightDark" />
-		Use light/dark inverted mode
+		{t('admin.tags.useLightDarkInvertedMode')}
 	</label>
 	<label class="checkbox-label">
 		<input class="form-checkbox" type="checkbox" name="reportingFilter" />
-		Available as filter for reporting
+		{t('admin.tags.availableAsFilterForReporting')}
 	</label>
 	<div class="flex flex-col gap-4 w-[20em]">
 		<label class="form-label">
-			Tag family
+			{t('admin.tags.tagFamilyLabel')}
 			<select class="form-input" name="family">
-				<option value="">No family</option>
+				<option value="">{t('admin.tags.noFamily')}</option>
 				{#each data.families as family}
 					<option value={family._id}>{family.name}</option>
 				{/each}
@@ -128,25 +131,35 @@
 	</div>
 
 	<label class="form-label">
-		Tag title
-		<input class="form-input" type="text" name="title" placeholder="Tag title" />
+		{t('admin.tags.tagTitleLabel')}
+		<input
+			class="form-input"
+			type="text"
+			name="title"
+			placeholder={t('admin.tags.tagTitleLabel')}
+		/>
 	</label>
 	<label class="form-label">
-		Tag subtitle
-		<input class="form-input" type="text" name="subtitle" placeholder="Tag subtitle" />
+		{t('admin.tags.tagSubtitleLabel')}
+		<input
+			class="form-input"
+			type="text"
+			name="subtitle"
+			placeholder={t('admin.tags.tagSubtitleLabel')}
+		/>
 	</label>
 	<label class="form-label">
-		Short content
+		{t('admin.tags.shortContent')}
 		<textarea name="shortContent" cols="30" rows="2" class="form-input" />
 	</label>
 	<label class="form-label">
-		Full content
+		{t('admin.tags.fullContent')}
 		<textarea name="content" cols="30" rows="10" maxlength="10000" class="form-input" />
 	</label>
 
 	<input type="hidden" name="mainPictureId" />
 	<label class="form-label">
-		Main picture
+		{t('admin.tags.mainPicture')}
 		<input
 			type="file"
 			accept="image/jpeg,image/png,image/webp"
@@ -157,7 +170,7 @@
 	</label>
 	<input type="hidden" name="fullPictureId" />
 	<label class="form-label">
-		Full picture
+		{t('admin.tags.fullPicture')}
 		<input
 			type="file"
 			accept="image/jpeg,image/png,image/webp"
@@ -168,7 +181,7 @@
 	</label>
 	<input type="hidden" name="wideBannerId" />
 	<label class="form-label">
-		Wide banner
+		{t('admin.tags.wideBanner')}
 		<input
 			type="file"
 			accept="image/jpeg,image/png,image/webp"
@@ -179,7 +192,7 @@
 	</label>
 	<input type="hidden" name="slimBannerId" />
 	<label class="form-label">
-		Slim banner
+		{t('admin.tags.slimBanner')}
 		<input
 			type="file"
 			accept="image/jpeg,image/png,image/webp"
@@ -190,7 +203,7 @@
 	</label>
 	<input type="hidden" name="avatarId" />
 	<label class="form-label">
-		Avatar
+		{t('admin.tags.avatar')}
 		<input
 			type="file"
 			accept="image/jpeg,image/png,image/webp"
@@ -200,36 +213,36 @@
 		/>
 	</label>
 
-	<h3 class="text-xl">CTAs</h3>
+	<h3 class="text-xl">{t('admin.tags.ctas')}</h3>
 	{#each [...Array(tagCtaLines).fill( { label: '', href: '', openNewTab: false } )].slice(0, tagCtaLines) as cta, i}
 		<div class="flex gap-4">
 			<label class="form-label">
-				Text
+				{t('admin.tags.ctaText')}
 				<input type="text" name="cta[{i}].label" class="form-input" value={cta.label} />
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.tags.ctaUrl')}
 				<input type="text" name="cta[{i}].href" class="form-input" value={cta.href} />
 			</label>
 			<label class="checkbox-label mt-4">
 				<input class="form-checkbox" type="checkbox" name="cta[{i}].openNewTab" />
-				Open in new tab
+				{t('admin.tags.openInNewTab')}
 			</label>
 		</div>
 	{/each}
 	<button class="btn body-mainCTA self-start" on:click={() => (tagCtaLines += 1)} type="button"
-		>Add CTAs
+		>{t('admin.tags.addCtas')}
 	</button>
 
 	<label class="form-label">
-		CSS override
+		{t('admin.tags.cssOverride')}
 		<textarea name="cssOverride" cols="30" rows="10" maxlength="10000" class="form-input" />
 	</label>
 
 	<input
 		type="submit"
 		class="btn btn-blue self-start text-white"
-		value="Submit"
+		value={t('admin.tags.submit')}
 		disabled={submitting}
 	/>
 </form>

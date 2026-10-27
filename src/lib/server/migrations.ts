@@ -8,95 +8,100 @@ import { ORIGIN } from '$lib/server/env-config';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import { CURRENCIES, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
+import {
+	DEFAULT_CMS_PAGES,
+	buildDefaultCmsPageFields,
+	isUntouchedDefaultCmsPage
+} from '$lib/server/defaultCmsPages';
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
 import {
 	ensureApiOrderLabel,
 	ensureCatalogIntegrityLabel
 } from './api/v1/orders/ensureCatalogIntegrityLabel';
+import { defaultLanguageText } from './i18n-defaults';
+import { languages, type LanguageKey } from '$lib/translations';
 
-async function ensureDefaultSearchlist(session?: ClientSession): Promise<void> {
-	const existing = await collections.searchlists.findOne({ _id: 'default' }, { session });
-	if (existing) {
-		return;
-	}
+// An upsert rather than find-then-insert: every instance seeds at start-up, and two starting
+// together on an empty database would otherwise both insert and one would hit a duplicate key.
+export async function ensureDefaultSearchlist(session?: ClientSession): Promise<void> {
 	const now = new Date();
-	await collections.searchlists.insertOne(
+	await collections.searchlists.updateOne(
+		{ _id: 'default' },
 		{
-			_id: 'default',
-			name: 'default',
-			displayWidgetName: false,
-			hideSearchbar: true,
-			prefillSearchterm: false,
-			hideSearchterm: false,
-			searchTargets: {
-				title: true,
-				shortDescription: true,
-				longDescription: true,
-				productTags: false,
-				productVariation: false,
-				productCustomCta: false,
-				productCmsBefore: false,
-				productCmsAfter: false
-			},
-			filters: {
-				price: { enabled: false },
-				stock: { enabled: false, defaultChecked: false },
-				tags: { enabled: false, allowedTagIds: [] }
-			},
-			sort: {
-				displayed: false,
-				options: ['alphaAsc', 'alphaDesc', 'priceAsc', 'priceDesc', 'createdAsc', 'createdDesc'],
-				default: 'alphaAsc'
-			},
-			view: { default: 'grid', hideToggle: true },
-			pagination: { mode: 'loadMore', perPage: 12 },
-			createdAt: now,
-			updatedAt: now
+			$setOnInsert: {
+				name: 'default',
+				displayWidgetName: false,
+				hideSearchbar: true,
+				prefillSearchterm: false,
+				hideSearchterm: false,
+				searchTargets: {
+					title: true,
+					shortDescription: true,
+					longDescription: true,
+					productTags: false,
+					productVariation: false,
+					productCustomCta: false,
+					productCmsBefore: false,
+					productCmsAfter: false
+				},
+				filters: {
+					price: { enabled: false },
+					stock: { enabled: false, defaultChecked: false },
+					tags: { enabled: false, allowedTagIds: [] }
+				},
+				sort: {
+					displayed: false,
+					options: ['alphaAsc', 'alphaDesc', 'priceAsc', 'priceDesc', 'createdAsc', 'createdDesc'],
+					default: 'alphaAsc'
+				},
+				view: { default: 'grid', hideToggle: true },
+				pagination: { mode: 'loadMore', perPage: 12 },
+				createdAt: now,
+				updatedAt: now
+			}
 		},
-		{ session }
+		{ session, upsert: true }
 	);
 }
 
-async function ensureSearchSearchlist(session?: ClientSession): Promise<void> {
-	const existing = await collections.searchlists.findOne({ _id: 'search' }, { session });
-	if (existing) {
-		return;
-	}
+export async function ensureSearchSearchlist(session?: ClientSession): Promise<void> {
 	const now = new Date();
-	await collections.searchlists.insertOne(
+	await collections.searchlists.updateOne(
+		{ _id: 'search' },
 		{
-			_id: 'search',
-			name: 'Recherche',
-			displayWidgetName: false,
-			hideSearchbar: false,
-			prefillSearchterm: false,
-			hideSearchterm: false,
-			searchTargets: {
-				title: true,
-				shortDescription: true,
-				longDescription: true,
-				productTags: false,
-				productVariation: false,
-				productCustomCta: false,
-				productCmsBefore: false,
-				productCmsAfter: false
-			},
-			filters: {
-				price: { enabled: true },
-				stock: { enabled: true, defaultChecked: false },
-				tags: { enabled: false, allowedTagIds: [] }
-			},
-			sort: {
-				displayed: true,
-				options: ['alphaAsc', 'alphaDesc', 'priceAsc', 'priceDesc', 'createdAsc', 'createdDesc'],
-				default: 'alphaAsc'
-			},
-			view: { default: 'grid', hideToggle: false },
-			pagination: { mode: 'loadMore', perPage: 12 },
-			createdAt: now,
-			updatedAt: now
+			$setOnInsert: {
+				name: 'Recherche',
+				displayWidgetName: false,
+				hideSearchbar: false,
+				prefillSearchterm: false,
+				hideSearchterm: false,
+				searchTargets: {
+					title: true,
+					shortDescription: true,
+					longDescription: true,
+					productTags: false,
+					productVariation: false,
+					productCustomCta: false,
+					productCmsBefore: false,
+					productCmsAfter: false
+				},
+				filters: {
+					price: { enabled: true },
+					stock: { enabled: true, defaultChecked: false },
+					tags: { enabled: false, allowedTagIds: [] }
+				},
+				sort: {
+					displayed: true,
+					options: ['alphaAsc', 'alphaDesc', 'priceAsc', 'priceDesc', 'createdAsc', 'createdDesc'],
+					default: 'alphaAsc'
+				},
+				view: { default: 'grid', hideToggle: false },
+				pagination: { mode: 'loadMore', perPage: 12 },
+				createdAt: now,
+				updatedAt: now
+			}
 		},
-		{ session }
+		{ session, upsert: true }
 	);
 }
 
@@ -708,11 +713,12 @@ export const migrations = [
 				return;
 			}
 
+			const language = await defaultLanguage(session);
 			const defaultSubtype: PosPaymentSubtype = {
 				_id: new ObjectId(),
 				slug: 'cash',
-				name: 'Cash',
-				description: 'Cash payments',
+				name: defaultLanguageText(language, 'admin.posPayments.defaultCashName'),
+				description: defaultLanguageText(language, 'admin.posPayments.defaultCashDescription'),
 				sortOrder: 1,
 				createdAt: new Date(),
 				updatedAt: new Date()
@@ -992,13 +998,88 @@ export const migrations = [
 				);
 			}
 		}
+	},
+	{
+		_id: new ObjectId('6b1f4880e92e590e85af0878'),
+		name: 'Backfill translations on untouched default CMS pages (issue #878)',
+		run: async (session: ClientSession) => {
+			const pages = await collections.cmsPages
+				.find(
+					{ _id: { $in: [...DEFAULT_CMS_PAGES] } },
+					{ projection: { _id: 1, title: 1, content: 1, translations: 1 }, session }
+				)
+				.toArray();
+
+			for (const page of pages) {
+				const slug = page._id as (typeof DEFAULT_CMS_PAGES)[number];
+				if (
+					!isUntouchedDefaultCmsPage(slug, page) ||
+					(page.translations && Object.keys(page.translations).length > 0)
+				) {
+					continue;
+				}
+				const { translations } = buildDefaultCmsPageFields(slug);
+				await collections.cmsPages.updateOne(
+					{ _id: slug },
+					{ $set: { translations, updatedAt: new Date() } },
+					{ session }
+				);
+			}
+		}
+	},
+	{
+		_id: new ObjectId('6b2a91c4e92e590e85af1120'),
+		name: 'Translate the untouched default PoS cash subtype (issue #878)',
+		run: async (session: ClientSession) => {
+			const language = await defaultLanguage(session);
+			const name = defaultLanguageText(language, 'admin.posPayments.defaultCashName');
+			const description = defaultLanguageText(language, 'admin.posPayments.defaultCashDescription');
+			if (name === 'Cash' && description === 'Cash payments') {
+				return;
+			}
+			// Only the untouched English default is rewritten: a shop that renamed its cash
+			// subtype keeps its own wording.
+			await collections.posPaymentSubtypes.updateOne(
+				{ slug: 'cash', name: 'Cash', description: 'Cash payments' },
+				{ $set: { name, description, updatedAt: new Date() } },
+				{ session }
+			);
+		}
 	}
 ];
+
+/**
+ * Migrations cannot import runtimeConfig: runtime-config.ts imports runMigrations, which
+ * would make the cycle. Read the shop language straight from its collection instead.
+ */
+async function defaultLanguage(session: ClientSession): Promise<LanguageKey> {
+	const doc = await collections.runtimeConfig.findOne({ _id: 'defaultLanguage' }, { session });
+	const value = doc?.data;
+	return typeof value === 'string' && value in languages ? (value as LanguageKey) : 'en';
+}
 
 export async function runMigrations() {
 	if (env.VITEST) {
 		return;
 	}
+
+	/**
+	 * Before the lock, and before both early returns below.
+	 *
+	 * A brand-new shop records every migration as done and returns; an instance that loses the lock
+	 * returns too. Seeding at the end of this function made it conditional on a path a first start
+	 * never takes, so a shop pointed at an empty database and started once had no searchlist at all,
+	 * and only a restart gave it one.
+	 *
+	 * Safe here: both are idempotent and depend on no migration. They also re-create a list somebody
+	 * removed straight from Mongo — the admin refuses to delete them, a shell does not.
+	 */
+	await ensureDefaultSearchlist();
+	await ensureSearchSearchlist();
+	// A shop should see the labels the API puts on orders before the first integration sale.
+	await ensureApiOrderLabel();
+	await ensureCatalogIntegrityLabel();
+
 	const lock = await Lock.tryAcquire('migrations');
 	if (!lock) {
 		return;
@@ -1046,17 +1127,23 @@ export async function runMigrations() {
 		lock.destroy();
 	}
 
-	while ((await collections.migrations.countDocuments()) < migrations.length) {
+	/**
+	 * Only the lock holder gets here, and it has just written those records itself: a count that
+	 * never catches up means one was lost, not that another instance is still working. Waiting for
+	 * ever on it kept the mismatch silent while the instance served traffic.
+	 */
+	const waitUntil = Date.now() + 60_000;
+	for (;;) {
+		const recorded = await collections.migrations.countDocuments();
+		if (recorded >= migrations.length) {
+			break;
+		}
+		if (Date.now() > waitUntil) {
+			console.error(
+				`migrations: ${recorded} recorded for ${migrations.length} known, still short after 60s — carrying on`
+			);
+			break;
+		}
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 	}
-
-	// Idempotent on every startup: ensure the built-in searchlists exist.
-	// Re-creates them if they were deleted (the admin UI blocks deletion,
-	// but a manual Mongo delete still happens).
-	await ensureDefaultSearchlist();
-	await ensureSearchSearchlist();
-	// Same idea for the labels the API puts on orders: a shop should see them in its label list
-	// before the first integration sale, not because of it.
-	await ensureApiOrderLabel();
-	await ensureCatalogIntegrityLabel();
 }

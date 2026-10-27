@@ -17,26 +17,31 @@
 			href="{data.adminPrefix}/product/{data.digitalFile.productId}"
 			class="underline body-hyperlink text-center"
 		>
-			Back to product
+			{t('admin.digitalFile.backToProduct')}
 		</a>
 	{:else}
 		<a href="{data.adminPrefix}/digital-file" class="underline body-hyperlink text-center">
-			Back to files
+			{t('admin.digitalFile.backToFiles')}
 		</a>
 	{/if}
 
 	<input type="text" name="name" class="form-input" value={data.digitalFile.name} />
 	<a href={data.downloadLink} target="_blank" class="underline body-hyperlink text-center"
-		>Download file</a
+		>{t('admin.digitalFile.downloadFile')}</a
 	>
 	<div class="flex gap-4 justify-between">
-		<input type="submit" value="Update" class="btn body-mainCTA" />
-		<input type="submit" value="Delete" formaction="?/delete" class="btn btn-red" />
+		<input type="submit" value={t('admin.action.update')} class="btn body-mainCTA" />
+		<input
+			type="submit"
+			value={t('admin.digitalFile.delete')}
+			formaction="?/delete"
+			class="btn btn-red"
+		/>
 	</div>
 </form>
 {#if data.digitalFile.secret}
 	<h2 class="text-md font-light">
-		This permanently valid link can be used to share the file to anyone
+		{t('admin.digitalFile.permanentLinkNotice')}
 	</h2>
 	<code>
 		{`${$page.url.origin}/digital-file/raw/${data.digitalFile._id}?key=${data.digitalFile.secret}`}

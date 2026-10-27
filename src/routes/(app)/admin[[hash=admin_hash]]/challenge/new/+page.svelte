@@ -7,6 +7,9 @@
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	let mode = 'moneyAmount';
@@ -22,7 +25,7 @@
 
 	function checkForm(event: SubmitEvent) {
 		if (endsAt < beginsAt) {
-			endsAtElement.setCustomValidity('End date must be after beginning date');
+			endsAtElement.setCustomValidity(t('admin.challenge.endDateAfterBegin'));
 			endsAtElement.reportValidity();
 			event.preventDefault();
 			return;
@@ -32,23 +35,23 @@
 	}
 </script>
 
-<h1 class="text-3xl">Add a challenge</h1>
+<h1 class="text-3xl">{t('admin.challenge.addTitle')}</h1>
 
 <form method="post" class="flex flex-col gap-4" on:submit={checkForm}>
 	<label class="form-label">
-		Challenge name
+		{t('admin.challenge.challengeName')}
 		<input
 			class="form-input"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="name"
-			placeholder="Challenge name"
+			placeholder={t('admin.challenge.challengeName')}
 			required
 		/>
 	</label>
 
 	<label class="form-label">
-		Mode
+		{t('admin.challenge.mode')}
 		<select class="form-input" name="mode" bind:value={mode}>
 			{#each ['moneyAmount', 'totalProducts'] as option}
 				<option value={option}>{upperFirst(option)}</option>
@@ -57,20 +60,22 @@
 	</label>
 
 	<label class="form-label">
-		Goal
+		{t('admin.challenge.goal')}
 		<input
 			class="form-input"
 			type="number"
 			name="goalAmount"
 			min="0"
-			placeholder={mode === 'moneyAmount' ? 'Amount' : 'Quantity'}
+			placeholder={mode === 'moneyAmount'
+				? t('admin.challenge.amount')
+				: t('admin.challenge.quantity')}
 			step={mode === 'moneyAmount' ? 'any' : '1'}
 			required
 		/>
 	</label>
 	{#if mode === 'moneyAmount'}
 		<label class="form-label w-full">
-			<CurrencyLabel label="Currency" />
+			<CurrencyLabel label={t('admin.challenge.currency')} />
 			<Select
 				items={allCurrenciesOptions}
 				searchable={true}
@@ -81,17 +86,20 @@
 			<input type="hidden" name="currency" value={selectedCurrency?.value || ''} required />
 		</label>
 		<label class="form-label w-full">
-			Ratio
+			{t('admin.challenge.ratio')}
 			<select name="ratio" class="form-input" bind:value={ratio}>
 				{#each ['total', 'global', 'perProduct'] as ratio}
-					<option value={ratio}>{ratio === 'total' ? upperFirst(ratio) : `Ratio (${ratio})`}</option
+					<option value={ratio}
+						>{ratio === 'total'
+							? upperFirst(ratio)
+							: t('admin.challenge.ratioOption', { ratio })}</option
 					>
 				{/each}
 			</select>
 		</label>
 		{#if ratio === 'global'}
 			<label class="form-label">
-				Ratio value (global)
+				{t('admin.challenge.ratioValueGlobal')}
 				<input
 					class="form-input"
 					type="number"
@@ -107,14 +115,14 @@
 
 	<div class="flex flex-wrap gap-4">
 		<label class="form-label">
-			Beginning date
+			{t('admin.challenge.beginningDate')}
 
 			<input class="form-input" type="date" name="beginsAt" required bind:value={beginsAt} />
 		</label>
 	</div>
 	<div class="flex flex-wrap gap-4">
 		<label class="form-label">
-			Ending date
+			{t('admin.challenge.endingDate')}
 
 			<input
 				class="form-input"
@@ -131,7 +139,7 @@
 
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label"
-		>Products
+		>{t('admin.challenge.products')}
 		<MultiSelect
 			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			name="productIds"
@@ -139,5 +147,9 @@
 		/>
 	</label>
 
-	<input type="submit" class="btn btn-blue self-start text-white" value="Submit" />
+	<input
+		type="submit"
+		class="btn btn-blue self-start text-white"
+		value={t('admin.challenge.submit')}
+	/>
 </form>

@@ -10,8 +10,31 @@
 	import { isAllowedOnPage } from '$lib/types/Role';
 	import { adminLinks as adminLinksImported } from './adminLinks.js';
 	import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t, te } = useI18n();
+
+	// Nav labels/sections are i18n'd by deriving a key from the (English) source string:
+	// `admin.nav.link.<slug>` / `admin.nav.section.<slug>`. A translation is used when it exists in
+	// the current locale (or en); otherwise we fall back to the English source. Brand/technical
+	// entries (SumUp, Stripe, NostR…) simply have no key and stay as-is.
+	function navKey(kind: 'link' | 'section', source: string): string {
+		const slug = source
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '');
+		return `admin.nav.${kind}.${slug}`;
+	}
+	function navLabel(label: string): string {
+		const key = navKey('link', label);
+		return te(key) ? t(key) : label;
+	}
+	function navSection(section: string): string {
+		const key = navKey('section', section);
+		return te(key) ? t(key) : section;
+	}
 
 	let sidebarOpen = false;
 	let searchTerm = '';
@@ -80,7 +103,7 @@
 					return false;
 				}
 				if (trimmedSearch) {
-					return link.label.toLowerCase().includes(trimmedSearch);
+					return navLabel(link.label).toLowerCase().includes(trimmedSearch);
 				}
 				return true;
 			});
@@ -100,7 +123,7 @@
 					visibleLeaves: regularSections
 						.flatMap((s) => s.visibleLeaves)
 						.filter((l) => bookmarks.includes(l.canonicalHref))
-						.sort((a, b) => a.label.localeCompare(b.label))
+						.sort((a, b) => navLabel(a.label).localeCompare(navLabel(b.label)))
 			  }
 			: null;
 
@@ -146,7 +169,7 @@
 			<button
 				class="md:hidden fixed inset-0 bg-black bg-opacity-40 z-30"
 				on:click={() => (sidebarOpen = false)}
-				aria-label="Close menu"
+				aria-label={t('admin.nav.closeMenu')}
 				tabindex="-1"
 			/>
 		{/if}
@@ -157,10 +180,10 @@
 				: 'hidden md:flex'}"
 		>
 			<div class="flex items-center justify-between gap-2 font-bold text-xl">
-				<a class="hover:underline" href={data.adminPrefix}>Admin</a>
+				<a class="hover:underline" href={data.adminPrefix}>{t('admin.nav.brandHome')}</a>
 				<form action="{data.adminPrefix}/logout" method="post" class="contents">
 					<button type="submit">
-						<span class="sr-only">Log out</span>
+						<span class="sr-only">{t('admin.nav.logOut')}</span>
 						<IconLogout class="text-red-500" />
 					</button>
 				</form>
@@ -171,7 +194,7 @@
 				<input
 					type="search"
 					bind:value={searchTerm}
-					placeholder="Search…"
+					placeholder={t('admin.nav.searchPlaceholder')}
 					class="bg-transparent border-0 outline-none w-full p-0 text-sm focus:ring-0"
 				/>
 			</label>
@@ -183,12 +206,16 @@
 				class:font-bold={$page.url.pathname === data.adminPrefix}
 			>
 				<span aria-hidden="true">🏠</span>
-				Home
+				{t('admin.nav.home')}
 			</a>
 
 			<div class="flex gap-3 text-xs">
-				<button type="button" class="underline" on:click={expandAll}>Expand all</button>
-				<button type="button" class="underline" on:click={collapseAll}>Collapse all</button>
+				<button type="button" class="underline" on:click={expandAll}
+					>{t('admin.nav.expandAll')}</button
+				>
+				<button type="button" class="underline" on:click={collapseAll}
+					>{t('admin.nav.collapseAll')}</button
+				>
 			</div>
 
 			<nav class="flex flex-col gap-1">
@@ -200,7 +227,7 @@
 							on:click={() => toggleSection(section.section)}
 						>
 							<svelte:component this={section.icon} />
-							<span class="flex-1">{section.section}</span>
+							<span class="flex-1">{navSection(section.section)}</span>
 							{#if hasSearch || expandedSections.has(section.section)}
 								<IconChevronDown />
 							{:else}
@@ -216,8 +243,8 @@
 											class="text-yellow-700 leading-none"
 											on:click={() => toggleBookmark(link.canonicalHref)}
 											aria-label={bookmarks.includes(link.canonicalHref)
-												? 'Remove bookmark'
-												: 'Add bookmark'}
+												? t('admin.nav.removeBookmark')
+												: t('admin.nav.addBookmark')}
 										>
 											{#if bookmarks.includes(link.canonicalHref)}
 												<IconStarFilled />
@@ -234,7 +261,7 @@
 											class:opacity-70={data.role &&
 												!isAllowedOnPage(data.role, link.href, 'write')}
 										>
-											{link.label}
+											{navLabel(link.label)}
 										</a>
 									</div>
 								{/each}
@@ -253,7 +280,7 @@
 					class="font-bold text-green-700 mt-2 flex items-center gap-2 py-0.5 hover:underline"
 				>
 					<span aria-hidden="true">🧾</span>
-					POS session
+					{t('admin.nav.posSession')}
 				</a>
 			{/if}
 		</aside>
@@ -263,7 +290,7 @@
 				type="button"
 				class="md:hidden self-start bg-gray-400 text-gray-800 rounded p-2 text-2xl"
 				on:click={() => (sidebarOpen = !sidebarOpen)}
-				aria-label="Toggle admin menu"
+				aria-label={t('admin.nav.toggleMenu')}
 			>
 				<IconMenu />
 			</button>
