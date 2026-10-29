@@ -8,6 +8,7 @@ vi.mock('$lib/server/geoip', () => ({
 
 import { endOfDay, startOfDay, subMonths } from 'date-fns';
 import { exchangeRate } from '$lib/stores/exchangeRate';
+import { ORDER_PAYMENT_STATUSES } from '$lib/types/Order';
 import { get } from 'svelte/store';
 import {
 	computeReportingSynthesis,
@@ -83,24 +84,36 @@ describe('parseReportingFilters', () => {
 		expect(endsAt.toISOString()).toBe('2026-09-10T18:30:59.999Z');
 	});
 
-	it('reads checkbox toggles and drops empty selects', () => {
-		const parsed = filters('includePending=on&paymentMethod=&tagId=');
-		expect(parsed.includePending).toBe(true);
-		expect(parsed.includeCanceled).toBe(false);
+	it('reads the status groups and drops empty selects', () => {
+		const parsed = filters('orderStatus=paid&orderStatus=pending&paymentMethod=&tagId=');
+		expect(parsed.orderStatuses).toEqual(['paid', 'pending']);
+		expect(parsed.carryingStatuses).toEqual(['pending', 'paid', 'expired', 'canceled', 'failed']);
+		expect(parsed.shownStatuses).toEqual(['paid']);
 		expect(parsed.paymentMethod).toBeUndefined();
 		expect(parsed.tagId).toBeUndefined();
+	});
+
+	it('keeps a group the admin emptied empty', () => {
+		expect(filters('shownStatus=').shownStatuses).toEqual([]);
 	});
 });
 
 describe('reportingOrdersQuery', () => {
 	it('only fetches the order statuses the page can display', () => {
-		expect(reportingOrdersQuery(filters('includeCanceled=on')).status).toEqual({
+		expect(reportingOrdersQuery(filters('orderStatus=paid&orderStatus=canceled')).status).toEqual({
 			$in: ['paid', 'canceled']
 		});
 	});
 
-	it('fetches every status when partially paid orders are included', () => {
-		expect(reportingOrdersQuery(filters('includePartiallyPaid=on')).status).toBeUndefined();
+	it('fetches paid orders by default', () => {
+		expect(reportingOrdersQuery(filters()).status).toEqual({ $in: ['paid'] });
+	});
+
+	it('narrows on payment statuses only when some are unticked', () => {
+		expect(reportingOrdersQuery(filters())['payments.status']).toBeUndefined();
+		expect(
+			reportingOrdersQuery(filters('carryingStatus=paid&carryingStatus=pending'))['payments.status']
+		).toEqual({ $in: ['paid', 'pending'] });
 	});
 
 	it('matches payment method and PoS subtype on the same payment', () => {
@@ -111,7 +124,7 @@ describe('reportingOrdersQuery', () => {
 	});
 
 	it('fetches expired orders by status', () => {
-		expect(reportingOrdersQuery(filters('includeExpired=on')).status).toEqual({
+		expect(reportingOrdersQuery(filters('orderStatus=paid&orderStatus=expired')).status).toEqual({
 			$in: ['paid', 'expired']
 		});
 	});
@@ -140,12 +153,32 @@ describe('detail selections', () => {
 		expect(selectOrderDetail(orders, filters()).map((o) => o.number)).toEqual([1]);
 	});
 
-	it('adds orders matching each toggle', () => {
-		const selected = selectOrderDetail(orders, filters('includePending=on&includeExpired=on'));
+	it('keeps orders with a ticked status, narrowed by the payments they carry', () => {
+		const selected = selectOrderDetail(
+			orders,
+			filters('orderStatus=paid&orderStatus=pending&orderStatus=expired')
+		);
 		expect(selected.map((o) => o.number)).toEqual([1, 2, 3, 4]);
 		expect(
-			selectOrderDetail(orders, filters('includePartiallyPaid=on')).map((o) => o.number)
+			selectOrderDetail(
+				orders,
+				filters('orderStatus=paid&orderStatus=pending&carryingStatus=paid')
+			).map((o) => o.number)
 		).toEqual([1, 3]);
+	});
+
+	it('keeps an order without payment unless the payment statuses narrow the search', () => {
+		const split = order({ number: 6, status: 'pending', payments: [] });
+		const all = [...orders, split];
+
+		expect(selectOrderDetail(all, filters('orderStatus=pending')).map((o) => o.number)).toEqual([
+			2, 3, 6
+		]);
+		expect(
+			selectOrderDetail(all, filters('orderStatus=pending&carryingStatus=paid')).map(
+				(o) => o.number
+			)
+		).toEqual([3]);
 	});
 
 	it('lists payments of the same orders as the order detail', () => {
@@ -155,17 +188,33 @@ describe('detail selections', () => {
 			payments: [payment({ status: 'expired' })]
 		});
 		const all = [...orders, withExpiredPayment];
+		const everyPayment = ORDER_PAYMENT_STATUSES.map((status) => `shownStatus=${status}`).join('&');
 
-		for (const query of ['', 'includeExpired=on', 'includePending=on&includeCanceled=on']) {
+		for (const query of [
+			'',
+			'orderStatus=paid&orderStatus=expired',
+			'orderStatus=pending&orderStatus=canceled'
+		]) {
 			expect(
-				selectPaymentDetail(all, filters(query)).map(({ order }) => order.number),
+				selectPaymentDetail(all, filters(`${query}&${everyPayment}`)).map(
+					({ order }) => order.number
+				),
 				query
 			).toEqual(
 				selectOrderDetail(all, filters(query)).flatMap((o) => o.payments.map(() => o.number))
 			);
 		}
+	});
+
+	it('shows only the payment statuses asked for', () => {
+		const query = 'orderStatus=paid&orderStatus=expired';
+		expect(selectPaymentDetail(orders, filters(query)).map(({ order }) => order.number)).toEqual([
+			1
+		]);
 		expect(
-			selectPaymentDetail(all, filters('includeExpired=on')).map(({ order }) => order.number)
+			selectPaymentDetail(orders, filters(`${query}&shownStatus=paid&shownStatus=expired`)).map(
+				({ order }) => order.number
+			)
 		).toEqual([1, 4]);
 	});
 
@@ -194,14 +243,16 @@ describe('detail selections', () => {
 	});
 
 	it('lists paid payments of displayed orders as receipts', () => {
-		expect(selectReceipts([partiallyPaid], filters('includePartiallyPaid=on'))).toEqual([
+		expect(
+			selectReceipts([partiallyPaid], filters('orderStatus=pending&carryingStatus=paid'))
+		).toEqual([
 			{ orderId: partiallyPaid._id, paymentId: partiallyPaid.payments[0]._id.toString() }
 		]);
 	});
 });
 
 describe('computeReportingSynthesis', () => {
-	it('sums paid orders only, whatever the detail toggles', () => {
+	it('sums paid orders only', () => {
 		const synthesis = computeReportingSynthesis(
 			[
 				order({
@@ -213,7 +264,7 @@ describe('computeReportingSynthesis', () => {
 				order({ items: [item('coffee', 2)], payments: [payment({ method: 'card' })] }),
 				order({ status: 'pending' })
 			],
-			filters('includePending=on'),
+			filters(),
 			'EUR'
 		);
 
@@ -225,6 +276,33 @@ describe('computeReportingSynthesis', () => {
 			{ productId: 'coffee', name: 'Product coffee', quantity: 4, total: 8 },
 			{ productId: 'cake', name: 'Product cake', quantity: 1, total: 4 }
 		]);
+		expect(synthesis.payments.map((p) => [p.method, p.quantity, p.total])).toEqual([
+			['bank-transfer', 1, 10],
+			['card', 1, 10]
+		]);
+	});
+
+	it('keeps unpaid orders out of the totals when their status is searched', () => {
+		const synthesis = computeReportingSynthesis(
+			[
+				order({ items: [item('coffee', 10)] }),
+				order({ status: 'pending', payments: [payment({ status: 'pending' })] }),
+				order({
+					status: 'pending',
+					payments: [payment({ method: 'card' }), payment({ status: 'pending' })]
+				})
+			],
+			filters('orderStatus=paid&orderStatus=pending'),
+			'EUR'
+		);
+
+		expect(synthesis.orderCount).toBe(1);
+		expect(synthesis.orderTotal).toBe(10);
+		expect(synthesis.vatTotal).toBe(1.67);
+		expect(synthesis.products).toEqual([
+			{ productId: 'coffee', name: 'Product coffee', quantity: 1, total: 10 }
+		]);
+		// The paid payment of a partially paid order is money taken, so it is counted.
 		expect(synthesis.payments.map((p) => [p.method, p.quantity, p.total])).toEqual([
 			['bank-transfer', 1, 10],
 			['card', 1, 10]
@@ -349,9 +427,8 @@ describe('parseReportingFilters defaults and validation', () => {
 		]);
 	});
 
-	it('treats any toggle value other than on/true as off', () => {
-		expect(filters('includePending=off&includeCanceled=true').includePending).toBe(false);
-		expect(filters('includeCanceled=true').includeCanceled).toBe(true);
+	it('rejects an unknown status', () => {
+		expect(() => filters('orderStatus=refunded')).toThrow();
 	});
 });
 
@@ -387,9 +464,11 @@ describe('reportingOrdersQuery filters', () => {
 		expect(reportingOrdersQuery(filters())['items.product.tagIds']).toBeUndefined();
 	});
 
-	it('adds every included order status', () => {
+	it('adds every ticked order status', () => {
 		expect(
-			reportingOrdersQuery(filters('includePending=on&includeExpired=on&includeCanceled=on')).status
+			reportingOrdersQuery(
+				filters('orderStatus=paid&orderStatus=pending&orderStatus=expired&orderStatus=canceled')
+			).status
 		).toEqual({ $in: ['paid', 'pending', 'expired', 'canceled'] });
 	});
 
@@ -401,19 +480,23 @@ describe('reportingOrdersQuery filters', () => {
 });
 
 describe('detail selections, other cases', () => {
-	it('adds canceled orders when included', () => {
+	it('adds canceled orders when ticked', () => {
 		const orders = [order({ number: 1 }), order({ number: 2, status: 'canceled' })];
 		expect(selectOrderDetail(orders, filters()).map((o) => o.number)).toEqual([1]);
-		expect(selectOrderDetail(orders, filters('includeCanceled=on')).map((o) => o.number)).toEqual([
-			1, 2
-		]);
+		expect(
+			selectOrderDetail(orders, filters('orderStatus=paid&orderStatus=canceled')).map(
+				(o) => o.number
+			)
+		).toEqual([1, 2]);
 	});
 
-	it('applies the status toggles to product lines too', () => {
+	it('applies the order statuses to product lines too', () => {
 		const orders = [order({ number: 1 }), order({ number: 2, status: 'pending' })];
 		expect(selectProductDetail(orders, filters()).map(({ order }) => order.number)).toEqual([1]);
 		expect(
-			selectProductDetail(orders, filters('includePending=on')).map(({ order }) => order.number)
+			selectProductDetail(orders, filters('orderStatus=paid&orderStatus=pending')).map(
+				({ order }) => order.number
+			)
 		).toEqual([1, 2]);
 	});
 
