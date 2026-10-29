@@ -10,9 +10,11 @@ import {
 	phoenixdInfo,
 	phoenixdLnAddress,
 	phoenixdPayInvoice,
-	phoenixdSendOnChain
+	phoenixdSendOnChain,
+	warnOnAlmostFullChannels
 } from '$lib/server/phoenixd.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { persistConfigElement } from '$lib/server/utils/persistConfig';
 import { updateLightningInvoiceDescription } from '$lib/server/actions.js';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -98,6 +100,26 @@ export const actions = {
 				$setOnInsert: { createdAt: new Date() }
 			},
 			{ upsert: true }
+		);
+	},
+	// Its own action, so changing the level does not require typing the node password again.
+	async updateCapacityWarning(event) {
+		const parsed = z
+			.object({
+				channelFillWarningPercent: z.number({ coerce: true }).min(0).max(100)
+			})
+			.parse(Object.fromEntries(await event.request.formData()));
+
+		if (parsed.channelFillWarningPercent !== runtimeConfig.phoenixd.channelFillWarningPercent) {
+			// A new level deserves its own warning.
+			runtimeConfig.phoenixd.capacityWarningSentAt = null;
+		}
+		runtimeConfig.phoenixd.channelFillWarningPercent = parsed.channelFillWarningPercent;
+		await persistConfigElement('phoenixd', runtimeConfig.phoenixd);
+
+		// Caught, so an unreachable node cannot make the setting look like it failed to save.
+		await warnOnAlmostFullChannels().catch((err) =>
+			console.error('[phoenixd] could not check channel capacity after saving the level', err)
 		);
 	},
 	updateLightningInvoiceDescription,

@@ -3,16 +3,31 @@ import { z } from 'zod';
 import { PHOENIXD_ENDPOINT_URL, PHOENIXD_HTTP_PASSWORD } from './env-config';
 import { runtimeConfig } from './runtime-config';
 import { persistConfigElement } from './utils/persistConfig';
+import { queueEmail } from './email';
+import { channelFillPercent, isPastFillWarning } from '$lib/utils/channelFill';
 
 export const isPhoenixdConfigured = () =>
 	runtimeConfig.phoenixd.enabled && !!runtimeConfig.phoenixd.password;
 
-export async function phoenixdInfo(): Promise<{
-	nodeId: string;
-	chain: 'mainnet' | 'testnet';
-	channels: string[];
-	version: string;
-}> {
+const phoenixdInfoSchema = z
+	.object({
+		nodeId: z.string(),
+		chain: z.string(),
+		channels: z.array(
+			z
+				.object({
+					state: z.string(),
+					// phoenixd omits these on a channel that has no commitments yet.
+					channelId: z.string().optional(),
+					capacitySat: z.number().optional(),
+					inboundLiquiditySat: z.number().optional()
+				})
+				.passthrough()
+		)
+	})
+	.passthrough();
+
+export async function phoenixdInfo() {
 	const res = await fetch(`${runtimeConfig.phoenixd.url}/getinfo`, {
 		headers: {
 			Authorization: `Basic ${Buffer.from(`:${runtimeConfig.phoenixd.password}`).toString(
@@ -21,7 +36,51 @@ export async function phoenixdInfo(): Promise<{
 		}
 	});
 
-	return await res.json();
+	if (!res.ok) {
+		throw error(500, `Error fetching phoenixd info: ${res.status} ${await res.text()}`);
+	}
+
+	return phoenixdInfoSchema.parse(await res.json());
+}
+
+/**
+ * E-mails the shop once when a channel gets fuller than the level it set, and again only after
+ * every channel has gone back under it.
+ */
+export async function warnOnAlmostFullChannels(): Promise<void> {
+	const warningPercent = runtimeConfig.phoenixd.channelFillWarningPercent ?? 0;
+	const contactEmail = runtimeConfig.sellerIdentity?.contact.email;
+	if (!warningPercent || !contactEmail) {
+		return;
+	}
+
+	const { channels } = await phoenixdInfo();
+	const fullChannels = channels.flatMap((channel) => {
+		const fillPercent = channelFillPercent(channel);
+		return fillPercent !== null && isPastFillWarning(fillPercent, warningPercent)
+			? [{ fillPercent, inboundSat: channel.inboundLiquiditySat ?? 0 }]
+			: [];
+	});
+
+	if (!fullChannels.length) {
+		if (runtimeConfig.phoenixd.capacityWarningSentAt) {
+			runtimeConfig.phoenixd.capacityWarningSentAt = null;
+			await persistConfigElement('phoenixd', runtimeConfig.phoenixd);
+		}
+		return;
+	}
+	if (runtimeConfig.phoenixd.capacityWarningSentAt) {
+		return;
+	}
+
+	for (const channel of fullChannels) {
+		await queueEmail(contactEmail, 'phoenixd.channel.almostFull', {
+			fillPercentage: Math.round(channel.fillPercent).toString(),
+			inboundSat: channel.inboundSat.toString()
+		});
+	}
+	runtimeConfig.phoenixd.capacityWarningSentAt = new Date();
+	await persistConfigElement('phoenixd', runtimeConfig.phoenixd);
 }
 
 export async function phoenixdBalance(): Promise<{ balanceSat: number; feeCreditSat: number }> {
@@ -96,6 +155,7 @@ export async function attemptAutoconfigurePhoenixd() {
 				const lnAddress = await phoenixdLnAddress();
 				const bolt12Address = await phoenixdGetBolt12();
 				runtimeConfig.phoenixd = {
+					...prevConfig,
 					enabled: true,
 					url: PHOENIXD_ENDPOINT_URL,
 					password: PHOENIXD_HTTP_PASSWORD,

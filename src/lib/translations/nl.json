@@ -1509,7 +1509,10 @@
 			"nodeInfoTitle": "Node-informatie",
 			"balanceTitle": "Saldo",
 			"invoicesTitle": "Facturen",
-			"withdrawalSuccessful": "Opname geslaagd"
+			"withdrawalSuccessful": "Opname geslaagd",
+			"capacityWarningLabel": "Waarschuw me per e-mail zodra een kanaal zo vol is (%)",
+			"capacityWarningHint": "Een vol kanaal neemt nog steeds betalingen aan, maar die gaan kosten met zich meebrengen. De waarschuwing gaat naar het contactadres van uw verkopersidentiteit; 0 schakelt haar uit.",
+			"currentFill": "Kanaal {channel}: {fillPercentage}% vol, nog {inboundSat} sat ruimte"
 		},
 		"s3": {
 			"notConfiguredWarning": "S3-opslag is niet geconfigureerd. Stel dit in bij de <0>S3-instellingen</0> voordat u afbeeldingen uploadt.",

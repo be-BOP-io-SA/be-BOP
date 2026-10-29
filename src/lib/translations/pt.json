@@ -1509,7 +1509,10 @@
 			"nodeInfoTitle": "Informações do nó",
 			"balanceTitle": "Saldo",
 			"invoicesTitle": "Faturas",
-			"withdrawalSuccessful": "Levantamento bem-sucedido"
+			"withdrawalSuccessful": "Levantamento bem-sucedido",
+			"capacityWarningLabel": "Avisar-me por e-mail quando um canal atingir este enchimento (%)",
+			"capacityWarningHint": "Um canal cheio continua a aceitar pagamentos, mas estes passam a ter uma taxa. O aviso é enviado para o endereço de contacto da sua identidade de vendedor, e 0 desativa-o.",
+			"currentFill": "Canal {channel}: {fillPercentage} % cheio, restam {inboundSat} sat de espaço"
 		},
 		"s3": {
 			"notConfiguredWarning": "O armazenamento S3 não está configurado. Configure-o nas <0>definições S3</0> antes de carregar imagens.",
