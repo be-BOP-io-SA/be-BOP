@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { cleanDb, createDiscount, createPaidSubscription } from './test-utils';
+import { cleanDb, createDiscount, createPaidSubscription, insertTestOrder } from './test-utils';
 import { collections } from './database';
 import {
 	TEST_DIGITAL_PRODUCT,
@@ -10,6 +10,17 @@ import {
 import { addOrderPayment, createOrder, lastInvoiceNumber, onOrderPayment } from './orders';
 import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
 import { runtimeConfig } from './runtime-config';
+
+function createPosOrder(sessionId: string) {
+	// Unlimited product on purpose: orders of a stocked product could be refused by the stock
+	// check, failing a test for a reason unrelated to invoicing.
+	return createOrder([{ product: TEST_DIGITAL_PRODUCT_UNLIMITED, quantity: 1 }], 'point-of-sale', {
+		locale: 'en',
+		user: { sessionId },
+		shippingAddress: null,
+		userVatCountry: 'FR'
+	});
+}
 
 describe('order', () => {
 	beforeEach(async () => {
@@ -285,31 +296,12 @@ describe('order', () => {
 	});
 
 	it('gives every concurrent settlement its own invoice number', async () => {
-		// #2743: invoice numbers were derived by reading back the highest one already stored, so
-		// settlements landing together computed the same next number. The unique index let one
-		// through and the rest lost their payment, leaving those orders pending at zero.
 		const orderIds = await Promise.all(
-			Array.from({ length: 8 }, (_, i) =>
-				// Unlimited product on purpose: eight orders of a product stocked at five could be
-				// refused by the stock check, failing the test for a reason unrelated to invoicing.
-				createOrder([{ product: TEST_DIGITAL_PRODUCT_UNLIMITED, quantity: 1 }], 'point-of-sale', {
-					locale: 'en',
-					user: { sessionId: `concurrent-session-${i}` },
-					shippingAddress: null,
-					userVatCountry: 'FR'
-				})
-			)
+			Array.from({ length: 8 }, (_, i) => createPosOrder(`concurrent-session-${i}`))
 		);
 
-		const orders = await Promise.all(
-			orderIds.map(async (id) => {
-				const order = await collections.orders.findOne({ _id: id });
-				if (!order) {
-					throw new Error(`Order ${id} not found`);
-				}
-				return order;
-			})
-		);
+		const orders = await collections.orders.find({ _id: { $in: orderIds } }).toArray();
+		expect(orders).toHaveLength(orderIds.length);
 
 		await Promise.all(
 			orders.map((order) => onOrderPayment(order, order.payments[0], order.payments[0].price))
@@ -327,41 +319,51 @@ describe('order', () => {
 		// A shop can end up with its history ahead of its counter: a database restored without the
 		// counter, or a downgrade that left it behind. The next invoice has to follow the last one
 		// given out — reusing it would be refused by the unique index and lose the payment (#2743).
-		const pastOrderId = await createOrder(
-			[{ product: TEST_DIGITAL_PRODUCT_UNLIMITED, quantity: 1 }],
-			'point-of-sale',
-			{
-				locale: 'en',
-				user: { sessionId: 'past-session' },
-				shippingAddress: null,
-				userVatCountry: 'FR'
-			}
+		await insertTestOrder({ payments: [{ invoice: { number: 41, createdAt: new Date() } }] });
+		// A counter that exists but is behind, so `$max` has to raise it rather than create it.
+		await collections.runtimeConfig.updateOne(
+			{ _id: 'invoiceNumber' },
+			{ $set: { data: 3 as never, updatedAt: new Date() } },
+			{ upsert: true }
 		);
-		await collections.orders.updateOne(
-			{ _id: pastOrderId },
-			{ $set: { 'payments.0.invoice': { number: 41, createdAt: new Date() } } }
-		);
-		await collections.runtimeConfig.deleteOne({ _id: 'invoiceNumber' });
 
-		const orderId = await createOrder(
-			[{ product: TEST_DIGITAL_PRODUCT_UNLIMITED, quantity: 1 }],
-			'point-of-sale',
-			{
-				locale: 'en',
-				user: { sessionId: 'next-session' },
-				shippingAddress: null,
-				userVatCountry: 'FR'
-			}
-		);
+		const orderId = await createPosOrder('next-session');
 		const order = await collections.orders.findOne({ _id: orderId });
 		if (!order) {
 			throw new Error(`Order ${orderId} not found`);
 		}
 		await onOrderPayment(order, order.payments[0], order.payments[0].price);
 
-		expect(await lastInvoiceNumber()).toBe(42);
 		const settledOrder = await collections.orders.findOne({ _id: orderId });
 		expect(settledOrder?.payments[0].invoice?.number).toBe(42);
+	});
+
+	it('refuses to settle the same payment twice, and gives its number back', async () => {
+		const orderId = await createPosOrder('double-session');
+		// Two snapshots of the same pending payment, as a double click or a confirmation racing the
+		// poller would load.
+		const first = await collections.orders.findOne({ _id: orderId });
+		const second = await collections.orders.findOne({ _id: orderId });
+		if (!first || !second) {
+			throw new Error(`Order ${orderId} not found`);
+		}
+
+		await onOrderPayment(first, first.payments[0], first.payments[0].price);
+		await expect(
+			onOrderPayment(second, second.payments[0], second.payments[0].price)
+		).rejects.toMatchObject({ status: 400 });
+
+		const nextId = await createPosOrder('next-session');
+		const next = await collections.orders.findOne({ _id: nextId });
+		if (!next) {
+			throw new Error(`Order ${nextId} not found`);
+		}
+		await onOrderPayment(next, next.payments[0], next.payments[0].price);
+
+		const settled = await collections.orders.findOne({ _id: orderId });
+		const settledNext = await collections.orders.findOne({ _id: nextId });
+		expect(settled?.payments[0].invoice?.number).toBe(1);
+		expect(settledNext?.payments[0].invoice?.number).toBe(2);
 	});
 
 	it('should allow free method payment when only item is fully discounted due to an active subscription', async () => {
