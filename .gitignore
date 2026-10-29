@@ -14,3 +14,8 @@ vite.config.ts.timestamp-*
 static/tinymce
 lib/utils/timeZoneOffset.ts
 docker-compose.override.yml
+
+# Playwright session and run output
+playwright/.auth
+/test-results
+/playwright-report

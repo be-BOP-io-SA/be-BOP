@@ -158,6 +158,10 @@ export const adminLinks: AdminLinks = [
 				label: 'Swiss Bitcoin Pay'
 			},
 			{
+				href: '/admin/blink',
+				label: 'Blink'
+			},
+			{
 				href: '/admin/bitcoind',
 				label: 'Bitcoin core node'
 			},

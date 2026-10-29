@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MultiSelect } from 'svelte-multiselect';
 	import { createEventDispatcher } from 'svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let product: { productId: string; quantity: number };
 	export let comboIdx: number;
@@ -8,6 +9,7 @@
 	export let availableProductList: Array<{ _id: string; name: string }>;
 
 	const dispatch = createEventDispatcher<{ remove: null; change: null }>();
+	const { t } = useI18n();
 
 	function hasStringValue(o: unknown): o is { value: string } {
 		return (
@@ -61,8 +63,8 @@
 		class="form-input flex-1 min-w-0 !h-[30px] !py-0"
 		name="combinations[{comboIdx}][{prodIdx}][quantity]"
 		bind:value={product.quantity}
-		placeholder="Required quantity"
-		title="Required quantity of this product to trigger the discount"
+		placeholder={t('admin.productForm.requiredQuantity')}
+		title={t('admin.productForm.requiredQuantityToTriggerDiscount')}
 	/>
 	<button type="button" class="shrink-0" on:click={() => dispatch('remove')}>🗑️</button>
 </div>

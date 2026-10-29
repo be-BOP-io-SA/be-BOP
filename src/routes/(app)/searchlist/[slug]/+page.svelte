@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Searchlist from '$lib/components/Searchlist.svelte';
+	import CmsTagSnippet from '$lib/components/CmsTagSnippet.svelte';
 
 	export let data;
 </script>
@@ -9,6 +10,7 @@
 </svelte:head>
 
 <main class="mx-auto max-w-7xl flex flex-col gap-4 px-6 py-10 body-mainPlan">
+	<CmsTagSnippet tag="[Searchlist={data.searchlist._id}]" />
 	{#if data.searchlist.displayWidgetName}
 		<h1 class="page-title body-title">{data.searchlist.name}</h1>
 	{/if}

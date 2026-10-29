@@ -6,6 +6,9 @@
 		MAX_SHORT_DESCRIPTION_LIMIT
 	} from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	let name = '';
 	let slug = '';
@@ -16,17 +19,17 @@
 	const timezoneString = `GMT${timezoneSign}${Math.abs(timezoneOffsetHours)}`;
 </script>
 
-<h1 class="text-3xl">Add a countdown</h1>
+<h1 class="text-3xl">{t('admin.countdown.addTitle')}</h1>
 
 <form method="post" class="flex flex-col gap-4">
 	<label class="form-label">
-		Name
+		{t('admin.countdown.name')}
 		<input
 			class="form-input"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="name"
-			placeholder="Countdown name"
+			placeholder={t('admin.countdown.namePlaceholder')}
 			bind:value={name}
 			on:change={() => (slug = generateId(name, true))}
 			on:input={() => (slug = generateId(name, true))}
@@ -35,46 +38,51 @@
 	</label>
 
 	<label class="form-label">
-		Slug
+		{t('admin.countdown.slug')}
 		<input
 			class="form-input block"
 			type="text"
 			name="slug"
-			placeholder="Slug"
+			placeholder={t('admin.countdown.slug')}
 			bind:value={slug}
-			title="Only lowercase letters, numbers and dashes are allowed"
+			title={t('admin.countdown.slugTitle')}
 			required
 		/>
 	</label>
 	<label class="form-label">
-		Title
+		{t('admin.countdown.title')}
 		<textarea
 			name="title"
 			cols="30"
 			rows="3"
 			maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
-			placeholder="Countdown title"
+			placeholder={t('admin.countdown.titlePlaceholder')}
 			class="form-input block w-full"
 			required
 		/>
 	</label>
 	<label class="form-label">
-		Description
+		{t('admin.countdown.description')}
 		<textarea
 			name="description"
 			cols="30"
 			rows="10"
 			maxlength={MAX_DESCRIPTION_LIMIT}
-			placeholder="Countdown description"
+			placeholder={t('admin.countdown.descriptionPlaceholder')}
 			class="form-input block w-full"
 			required
 		/>
 	</label>
 	<div class="flex flex-wrap gap-4">
 		<label class="form-label">
-			End At {#if browser}(your browser's current zone is {timezoneString}){/if}
+			{t('admin.countdown.endAt')}
+			{#if browser}{t('admin.countdown.browserZone', { timezoneString })}{/if}
 			<input class="form-input" type="datetime-local" required name="endsAt" bind:value={endsAt} />
 		</label>
 	</div>
-	<input type="submit" class="btn btn-blue self-start text-white" value="Submit" />
+	<input
+		type="submit"
+		class="btn btn-blue self-start text-white"
+		value={t('admin.countdown.submit')}
+	/>
 </form>

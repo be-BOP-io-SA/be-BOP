@@ -10,6 +10,9 @@
 	import Select from 'svelte-select';
 	import CurrencyLabel from './CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let productId: string;
 	export let productName: string;
@@ -52,7 +55,9 @@
 		const newPrice = target.value;
 
 		if (newPrice && parseFloat(newPrice) < 1 / SATOSHIS_PER_BTC) {
-			target.setCustomValidity('Price ' + productId + ' must be greater than 1 SAT');
+			target.setCustomValidity(
+				t('admin.productVatCalcRow.priceMustBeGreaterThan1Sat', { productId })
+			);
 			target.reportValidity();
 			return;
 		} else {
@@ -65,7 +70,7 @@
 {#if displayVATCalculator}
 	<div class="gap-4 mx-4 flex flex-col md:flex-row">
 		<label class="w-full">
-			Price amount (VAT included)
+			{t('admin.priceFieldsWithVat.priceIncluded')}
 			<input
 				class="form-input"
 				type="number"
@@ -76,12 +81,12 @@
 		</label>
 
 		<label class="w-full">
-			VAT (for VAT excluded price calculation)
+			{t('admin.productVatCalcRow.vatForExcludedCalc')}
 			<input class="form-input" type="number" bind:value={vatRate} step="any" />
 		</label>
 
 		<label class="w-full">
-			Price amount (VAT excluded)
+			{t('admin.priceFieldsWithVat.priceExcluded')}
 			<input
 				class="form-input"
 				type="number"
@@ -94,7 +99,7 @@
 		</label>
 
 		<label class="w-full">
-			<CurrencyLabel label="Price currency" />
+			<CurrencyLabel label={t('admin.productForm.priceCurrency')} />
 			<Select
 				items={allCurrenciesOptions}
 				searchable={true}
@@ -108,12 +113,12 @@
 {:else}
 	<div class="gap-4 mx-4 flex flex-col md:flex-row">
 		<label class="w-full">
-			Price amount
+			{t('admin.productVatCalcRow.priceAmount')}
 			<input
 				class="form-input"
 				type="number"
 				name="{productId}.price"
-				placeholder="Price"
+				placeholder={t('admin.productVatCalcRow.pricePlaceholder')}
 				step="any"
 				value={initialPrice.amount
 					.toLocaleString('en', { maximumFractionDigits: 8 })
@@ -124,7 +129,7 @@
 		</label>
 
 		<label class="w-full">
-			<CurrencyLabel label="Price currency" />
+			<CurrencyLabel label={t('admin.productForm.priceCurrency')} />
 			<Select
 				items={allCurrenciesOptions}
 				searchable={true}

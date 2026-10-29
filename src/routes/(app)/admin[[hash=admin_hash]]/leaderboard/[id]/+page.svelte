@@ -7,8 +7,11 @@
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 
 	let beginsAt = formatInTimeZone(
 		data.beginsAt,
@@ -40,7 +43,7 @@
 
 	function checkForm(event: SubmitEvent) {
 		if (endsAt < beginsAt) {
-			endsAtElement.setCustomValidity('End date must be after beginning date');
+			endsAtElement.setCustomValidity(t('admin.leaderboard.endDateAfterBeginning'));
 			endsAtElement.reportValidity();
 			event.preventDefault();
 			return;
@@ -50,43 +53,48 @@
 	}
 
 	function confirmDelete(event: Event) {
-		if (!confirm('Would you like to delete this leaderboard?')) {
+		if (!confirm(t('admin.leaderboard.confirmDelete'))) {
 			event.preventDefault();
 		}
 	}
+
+	const modeLabels: Record<string, string> = {
+		moneyAmount: t('admin.leaderboard.modeMoneyAmount'),
+		totalProducts: t('admin.leaderboard.modeTotalProducts')
+	};
 </script>
 
-<h1 class="text-3xl">Edit a leaderboard</h1>
+<h1 class="text-3xl">{t('admin.leaderboard.editTitle')}</h1>
 
 <form method="post" class="flex flex-col gap-4" on:submit={checkForm}>
 	<label class="form-label">
-		Leaderboard slug for CMS integration
+		{t('admin.leaderboard.slugLabel')}
 		<input type="text" disabled class="form-input" value={data.leaderboard._id} />
 	</label>
 
 	<label class="form-label">
-		Leaderboard name
+		{t('admin.leaderboard.nameLabel')}
 		<input
 			class="form-input"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="name"
 			value={data.leaderboard.name}
-			placeholder="leaderboard name"
+			placeholder={t('admin.leaderboard.namePlaceholder')}
 			required
 		/>
 	</label>
 
 	<label class="form-label">
-		Mode
+		{t('admin.leaderboard.modeLabel')}
 		<select class="form-input" value={data.leaderboard.mode} disabled>
 			{#each ['moneyAmount', 'totalProducts'] as option}
-				<option value={option}>{upperFirst(option)}</option>
+				<option value={option}>{modeLabels[option] ?? upperFirst(option)}</option>
 			{/each}
 		</select>
 	</label>
 
-	<h2 class="text-2xl">Progress</h2>
+	<h2 class="text-2xl">{t('admin.leaderboard.progressTitle')}</h2>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
@@ -94,7 +102,7 @@
 			class="form-checkbox"
 			bind:checked={progressChanged}
 		/>
-		Edit progress
+		{t('admin.leaderboard.editProgress')}
 	</label>
 	{#each data.leaderboard.progress as progress, i}
 		<h2 class="text-xl">{progress.productId}</h2>
@@ -102,12 +110,12 @@
 			<input type="hidden" name="progress[{i}].productId" value={progress.productId} />
 
 			<label class="w-full">
-				amount
+				{t('admin.leaderboard.amountLabel')}
 				<input
 					class="form-input"
 					type="number"
 					name="progress[{i}].amount"
-					placeholder="amount"
+					placeholder={t('admin.leaderboard.amountPlaceholder')}
 					step="any"
 					value={progress.amount
 						.toLocaleString('en', { maximumFractionDigits: 8 })
@@ -118,7 +126,7 @@
 			</label>
 			{#if data.leaderboard.mode === 'moneyAmount'}
 				<label class="w-full">
-					<CurrencyLabel label="currency" />
+					<CurrencyLabel label={t('admin.leaderboard.currencyLabel')} />
 					<Select
 						items={allCurrenciesOptions}
 						searchable={true}
@@ -138,7 +146,7 @@
 	{/each}
 
 	<label class="form-label">
-		Beginning date
+		{t('admin.leaderboard.beginningDate')}
 
 		<input
 			class="form-input"
@@ -150,7 +158,7 @@
 	</label>
 
 	<label class="form-label">
-		Ending date
+		{t('admin.leaderboard.endingDate')}
 
 		<input
 			class="form-input"
@@ -165,7 +173,7 @@
 
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
-		Products
+		{t('admin.leaderboard.productsLabel')}
 		<MultiSelect
 			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			disabled
@@ -179,14 +187,21 @@
 	</label>
 
 	<div class="flex flex-row justify-between gap-2">
-		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
-		<a href="/leaderboards/{data.leaderboard._id}" class="btn body-mainCTA">View</a>
+		<input
+			type="submit"
+			class="btn btn-blue text-white"
+			formaction="?/update"
+			value={t('admin.action.update')}
+		/>
+		<a href="/leaderboards/{data.leaderboard._id}" class="btn body-mainCTA"
+			>{t('admin.leaderboard.view')}</a
+		>
 
 		<input
 			type="submit"
 			class="btn btn-red text-white ml-auto"
 			formaction="?/delete"
-			value="Delete"
+			value={t('admin.leaderboard.delete')}
 			on:click={confirmDelete}
 		/>
 	</div>

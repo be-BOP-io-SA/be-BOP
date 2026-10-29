@@ -342,7 +342,7 @@
 					{t('checkout.paymentGenerationFailed')}
 				</div>
 			{/if}
-			<section class="gap-4 grid grid-cols-6">
+			<section class="gap-4 flex flex-col sm:grid sm:grid-cols-6">
 				<h2 class="font-light text-2xl col-span-6">{t('checkout.shipmentInfo')}</h2>
 				{#if isDigital}
 					<p class="col-span-6">
@@ -402,9 +402,7 @@
 						</select>
 					</label>
 
-					<span class="col-span-3" />
-
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.state')}
 
 						<input
@@ -418,7 +416,7 @@
 								''}
 						/>
 					</label>
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.city')}
 
 						<input
@@ -433,7 +431,7 @@
 							required={!data.hasPosOptions}
 						/>
 					</label>
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.zipCode')}
 
 						<input
@@ -504,7 +502,7 @@
 			</section>
 
 			{#if showBillingInfo || (isDigital && data.isBillingAddressMandatory) || isProfessionalOrder}
-				<section class="gap-4 grid grid-cols-6">
+				<section class="gap-4 flex flex-col sm:grid sm:grid-cols-6">
 					<h2 class="font-light text-2xl col-span-6">{t('checkout.billingInfo')}</h2>
 
 					<label class="form-label col-span-3">
@@ -552,9 +550,7 @@
 						</select>
 					</label>
 
-					<span class="col-span-3" />
-
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.state')}
 
 						<input
@@ -564,7 +560,7 @@
 							value={data.personalInfoConnected.address?.state ?? ''}
 						/>
 					</label>
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.city')}
 
 						<input
@@ -575,7 +571,7 @@
 							required
 						/>
 					</label>
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.zipCode')}
 
 						<input
@@ -622,7 +618,7 @@
 					<label class="form-label col-span-6">
 						{t('checkout.payment.method')}
 
-						<div class="grid grid-cols-2 gap-4 items-center">
+						<div class="flex flex-col gap-1">
 							<select
 								name="paymentMethod"
 								class="form-input"
@@ -665,7 +661,7 @@
 						{t('checkout.changePaymentExpiration')}
 					</label>
 					<label class="form-label col-span-6">
-						<div class="grid grid-cols-2 gap-4 items-center">
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
 							<input
 								type="number"
 								name="paymentTimeOut"

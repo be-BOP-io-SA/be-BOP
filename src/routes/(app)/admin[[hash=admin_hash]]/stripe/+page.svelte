@@ -4,9 +4,12 @@
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
 	import { enhance } from '$app/forms';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
 	export let form;
+
+	const { t } = useI18n();
 
 	let testInFlight = false;
 	let testCooldownUntil = 0;
@@ -29,7 +32,7 @@
 
 <form class="contents" method="post" action="?/save">
 	<label class="form-label">
-		Secret Key
+		{t('admin.stripe.secretKey')}
 		<input
 			class="form-input"
 			type="password"
@@ -41,7 +44,7 @@
 	</label>
 
 	<label class="form-label">
-		Public Key
+		{t('admin.stripe.publicKey')}
 		<input
 			class="form-input"
 			type="text"
@@ -53,7 +56,7 @@
 	</label>
 
 	<label class="form-label">
-		<CurrencyLabel label="Currency" />
+		<CurrencyLabel label={t('admin.stripe.currency')} />
 		<Select
 			items={currenciesWithoutCrypto}
 			searchable={true}
@@ -65,8 +68,8 @@
 	</label>
 
 	<div class="flex justify-between">
-		<button class="btn btn-black" type="submit">Save</button>
-		<button class="btn btn-red" type="submit" form="delete-form">Reset</button>
+		<button class="btn btn-black" type="submit">{t('admin.action.save')}</button>
+		<button class="btn btn-red" type="submit" form="delete-form">{t('admin.action.reset')}</button>
 	</div>
 </form>
 <form class="contents" method="post" action="?/delete" id="delete-form"></form>
@@ -86,11 +89,11 @@
 	class="flex flex-col gap-2"
 >
 	<button class="btn btn-blue self-start" type="submit" disabled={testDisabled}>
-		{testInFlight ? 'Testing…' : 'Test connection'}
+		{testInFlight ? t('admin.stripe.testing') : t('admin.stripe.testConnection')}
 	</button>
 	{#if form?.ok}
-		<div class="alert-success">Connection successful. Stripe credentials are working.</div>
+		<div class="alert-success">{t('admin.stripe.testSuccess')}</div>
 	{:else if form?.reason}
-		<div class="alert-error">Connection failed: {form.reason}</div>
+		<div class="alert-error">{t('admin.stripe.testFailed', { reason: form.reason })}</div>
 	{/if}
 </form>

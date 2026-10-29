@@ -19,6 +19,7 @@ export type PaymentMethod = (typeof ALL_PAYMENT_METHODS)[number];
 export const ALL_PAYMENT_PROCESSORS = [
 	'bitcoin-nodeless',
 	'bitcoind',
+	'blink',
 	'btcpay-server',
 	'lnd',
 	'paypal',

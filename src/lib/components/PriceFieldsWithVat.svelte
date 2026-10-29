@@ -3,11 +3,14 @@
 	import { applyVat, extractVat } from '$lib/utils/vat';
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 	import { hasMoreDecimalsThanCurrency } from '$lib/utils/currency-validation';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let priceVatExcluded: number;
 	export let currency: Currency;
 	export let vatRate: number;
-	export let vatProfileLabel = 'No custom VAT profile';
+	export let vatProfileLabel = t('admin.productForm.noCustomVatProfile');
 	export let disabled = false;
 
 	// Computed TTC is rounded to currency precision (float artifact: 17.24137931 × 1.16 =
@@ -50,7 +53,8 @@
 
 <div class="gap-4 flex flex-col md:flex-row">
 	<label class="w-full">
-		<span class="text-red-500">*</span> Price amount (VAT excluded)
+		<span class="text-red-500">*</span>
+		{t('admin.priceFieldsWithVat.priceExcluded')}
 		<input
 			class="form-input"
 			type="number"
@@ -65,7 +69,8 @@
 	</label>
 
 	<label class="w-full">
-		<span class="text-red-500">*</span> Price amount (VAT included)
+		<span class="text-red-500">*</span>
+		{t('admin.priceFieldsWithVat.priceIncluded')}
 		<input
 			class="form-input"
 			class:border-red-500={hasDecimalError}
@@ -79,43 +84,45 @@
 			required
 		/>
 		<small class="text-gray-500 block mt-1">
-			Fill your end user price here. More info about price definition (i)
+			{t('admin.priceFieldsWithVat.endUserPriceHint')}
 		</small>
 	</label>
 </div>
 
 {#if hasDecimalError}
 	<p class="alert-error">
-		{currency} currency has {FRACTION_DIGITS_PER_CURRENCY[currency]} decimal. Your current price amount
-		(VAT included) has more. Please correct that otherwise you will have accounting and taxes errors.
+		{t('admin.priceFieldsWithVat.decimalError', {
+			currency,
+			digits: FRACTION_DIGITS_PER_CURRENCY[currency]
+		})}
 	</p>
 {/if}
 
 <div class="gap-4 flex flex-col md:flex-row">
 	<label class="w-full">
-		VAT profile
+		{t('admin.priceFieldsWithVat.vatProfile')}
 		<input class="form-input" value={vatProfileLabel} disabled />
 	</label>
 
 	<label class="w-full">
-		VAT rate (%)
+		{t('admin.priceFieldsWithVat.vatRate')}
 		<input class="form-input" type="number" value={vatRate} disabled />
 	</label>
 
 	<label class="w-full">
-		VAT amount
+		{t('admin.priceFieldsWithVat.vatAmount')}
 		<input class="form-input" type="number" value={vatAmount} disabled />
 	</label>
 </div>
 
 <div class="gap-4 flex flex-col md:flex-row">
 	<label class="w-full">
-		Displayed estimated price amount (VAT excluded)
+		{t('admin.priceFieldsWithVat.displayedExcluded')}
 		<input class="form-input" type="number" value={displayedExcluded} disabled />
 	</label>
 
 	<label class="w-full">
-		Displayed estimated price amount (VAT included)
+		{t('admin.priceFieldsWithVat.displayedIncluded')}
 		<input
 			class="form-input"
 			class:border-red-500={hasDecimalError}
@@ -126,7 +133,7 @@
 	</label>
 
 	<label class="w-full">
-		Displayed estimated VAT amount
+		{t('admin.priceFieldsWithVat.displayedVat')}
 		<input class="form-input" type="number" value={displayedVat} disabled />
 	</label>
 </div>

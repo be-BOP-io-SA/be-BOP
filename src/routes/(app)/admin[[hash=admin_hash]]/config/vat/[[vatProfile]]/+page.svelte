@@ -27,23 +27,23 @@
 		rates = [...rates, { country: '', rate: undefined }];
 	}
 
-	const { countryName, sortedCountryCodes } = useI18n();
+	const { t, countryName, sortedCountryCodes } = useI18n();
 </script>
 
-<h2 class="text-2xl">{profile ? profile.name : 'Create new profile'}</h2>
+<h2 class="text-2xl">{profile ? profile.name : t('admin.config.createNewProfile')}</h2>
 
 <form method="post" class="contents">
 	<input type="hidden" name="profileId" value={profile?._id ?? 'new'} />
 
 	<label class="form-label">
-		Profile name
+		{t('admin.config.profileName')}
 		<input class="form-input" type="text" name="name" value={profile?.name ?? ''} required />
 	</label>
 
 	<div class="grid gap-2" style="grid-template-columns: 1fr 1fr auto;">
 		{#each rates as item, i}
 			<label class="form-label">
-				Country
+				{t('admin.config.country')}
 				<select class="form-input" bind:value={item.country}>
 					{#each sortedCountryCodes() as code}
 						<option value={code}>{countryName(code)}</option>
@@ -52,7 +52,7 @@
 			</label>
 
 			<label class="form-label">
-				VAT rate
+				{t('admin.config.vatRate')}
 				<input
 					class="form-input"
 					type="number"
@@ -74,9 +74,11 @@
 		{/each}
 	</div>
 	<div class="flex items-center">
-		<button class="btn btn-black" formaction="?/saveProfile" formmethod="post"> Save </button>
+		<button class="btn btn-black" formaction="?/saveProfile" formmethod="post">
+			{t('admin.action.save')}
+		</button>
 		<button class="btn btn-red ml-auto" formaction="?/deleteProfile" formmethod="post">
-			Delete
+			{t('admin.config.delete')}
 		</button>
 	</div>
 </form>

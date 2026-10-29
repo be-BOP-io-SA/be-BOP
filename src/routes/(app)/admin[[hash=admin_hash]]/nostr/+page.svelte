@@ -1,6 +1,10 @@
 <script lang="ts">
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { bech32 } from 'bech32';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
+
 	export let data;
 	export let form;
 
@@ -40,7 +44,7 @@
 	{/each}
 {/if}
 
-<h2 class="text-2xl">Private Key Configuration</h2>
+<h2 class="text-2xl">{t('admin.nostr.privateKeyConfiguration')}</h2>
 
 {#if data.settingsEnforcedByEnvVars}
 	<div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -56,14 +60,11 @@
 			</div>
 			<div class="ml-3">
 				<h3 class="text-sm font-medium text-yellow-800">
-					Nostr private key Configured via Environment Variables
+					{t('admin.nostr.privateKeyConfiguredViaEnvVars')}
 				</h3>
 				<div class="mt-2 text-sm text-yellow-700">
 					<p>
-						The Nostr private key is currently controlled by your environment configuration, which
-						takes precedence over the form below. To modify it, update or remove the following
-						environment values (for example, in the be-BOP configuration file or your hosting
-						provider’s settings), then restart be-BOP.
+						{t('admin.nostr.privateKeyEnvVarsDescription')}
 					</p>
 					<ul class="mt-2 list-disc list-inside">
 						<li>NOSTR_PRIVATE_KEY</li>
@@ -73,12 +74,12 @@
 		</div>
 	</div>
 {:else}
-	<p class="text-gray-600 mb-6">Configure your Nostr private key.</p>
+	<p class="text-gray-600 mb-6">{t('admin.nostr.configurePrivateKeyDescription')}</p>
 {/if}
 
 <form action="?/updatePrivateKey" method="post" class="flex flex-col gap-4 mb-6">
 	<label class="form-label">
-		Private Key (nsec format)
+		{t('admin.nostr.privateKeyNsecFormat')}
 		<div class="flex gap-2 items-center">
 			<input
 				bind:this={nsecInputEl}
@@ -108,18 +109,18 @@
 				class="btn btn-black"
 				type="submit"
 				disabled={writeNsecDisabled}
-				title={writeNsecDisabled ? 'Delete the private key first to save a new one' : ''}
+				title={writeNsecDisabled ? t('admin.nostr.deleteKeyFirstToSave') : ''}
 			>
-				Save Private Key
+				{t('admin.nostr.savePrivateKey')}
 			</button>
 			<button
 				class="btn btn-gray"
 				type="submit"
 				disabled={writeNsecDisabled}
 				on:click={generateNostrKey}
-				title={writeNsecDisabled ? 'Delete the private key first to generate a new one' : ''}
+				title={writeNsecDisabled ? t('admin.nostr.deleteKeyFirstToGenerate') : ''}
 			>
-				Generate New Key
+				{t('admin.nostr.generateNewKey')}
 			</button>
 		</div>
 		<button
@@ -128,28 +129,30 @@
 			disabled={!writeNsecDisabled || readOnlyForm}
 			formaction="?/delete"
 			on:click={(e) => {
-				if (!confirm('Are you sure you want to delete your private key?')) {
+				if (!confirm(t('admin.nostr.confirmDeletePrivateKey'))) {
 					e.preventDefault();
 				}
 			}}
 		>
-			Delete Private Key
+			{t('admin.nostr.deletePrivateKey')}
 		</button>
 	</div>
 </form>
 
 {#if data.nostrPublicKey}
-	<p class="break-words">Your NostR public key is: {data.nostrPublicKey}</p>
+	<p class="break-words">
+		{t('admin.nostr.yourPublicKeyIs', { publicKey: data.nostrPublicKey })}
+	</p>
 {/if}
 
 {#if data.nostrPrivateKey}
 	{#if data.origin}
 		<form action="?/certify" class="flex flex-col gap-4" method="post">
-			<button class="btn btn-black self-start" type="submit">Certify</button>
+			<button class="btn btn-black self-start" type="submit">{t('admin.nostr.certify')}</button>
 		</form>
 	{/if}
 
-	<h2 class="text-2xl">Send message</h2>
+	<h2 class="text-2xl">{t('admin.nostr.sendMessage')}</h2>
 
 	<form action="?/sendMessage" method="post" class="flex flex-col gap-4">
 		<label class="form-label">
@@ -164,15 +167,15 @@
 		</label>
 
 		<label>
-			Message
+			{t('admin.nostr.message')}
 			<input class="form-input" type="text" name="message" required />
 		</label>
 
-		<button class="btn btn-black self-start" type="submit">Send</button>
+		<button class="btn btn-black self-start" type="submit">{t('admin.nostr.send')}</button>
 	</form>
 {/if}
 
-<h2 class="text-2xl">Get metadata</h2>
+<h2 class="text-2xl">{t('admin.nostr.getMetadata')}</h2>
 
 <form action="?/getMetadata" method="post" class="flex flex-col gap-4">
 	<label class="form-label">
@@ -186,10 +189,10 @@
 		/>
 	</label>
 
-	<button class="btn btn-black self-start" type="submit">Get metadata</button>
+	<button class="btn btn-black self-start" type="submit">{t('admin.nostr.getMetadata')}</button>
 </form>
 
-<h2 class="text-2xl">Relays</h2>
+<h2 class="text-2xl">{t('admin.nostr.relays')}</h2>
 <form action="?/updateRelays" method="post" class="flex flex-col gap-4">
 	<ul>
 		{#each relays as relay}
@@ -202,7 +205,7 @@
 		{/each}
 	</ul>
 	<label class="form-label">
-		Relay
+		{t('admin.nostr.relay')}
 		<input
 			class="form-input"
 			type="text"
@@ -211,13 +214,11 @@
 			pattern="wss://.*"
 		/>
 	</label>
-	<button class="btn btn-black self-start" type="submit">Update relay list</button>
+	<button class="btn btn-black self-start" type="submit">{t('admin.nostr.updateRelayList')}</button>
 </form>
 <div class="flex items-center gap-2 text-2xl">
-	Intro Message <div
-		class="contents"
-		title="This is the message sent when receiving a message that doesn't match a command"
-	>
+	{t('admin.nostr.introMessage')}
+	<div class="contents" title={t('admin.nostr.introMessageTooltip')}>
 		<IconInfo class="cursor-pointer"></IconInfo>
 	</div>
 </div>
@@ -229,9 +230,9 @@
 			class="form-checkbox"
 			checked={data.disableNostrBotIntro}
 		/>
-		Disable Nostr-bot intro message
+		{t('admin.nostr.disableNostrBotIntroMessage')}
 	</label>
-	<button class="btn btn-black self-start" type="submit">Send</button>
+	<button class="btn btn-black self-start" type="submit">{t('admin.nostr.send')}</button>
 </form>
 {#if 0}
 	<h2 class="text-2xl">Zaps</h2>
@@ -240,7 +241,7 @@
 		{#each data.receivedMessages.filter((mes) => mes.kind === 9735) as message}
 			<li class="break-words">
 				{#if message.kind === 4}
-					<span title="Encrypted message">'⚡'</span>
+					<span title={t('admin.nostr.encryptedMessage')}>'⚡'</span>
 				{/if}
 				<time datetime={message.createdAt.toJSON()}
 					>{message.createdAt.toLocaleString('en-UK')}</time
@@ -250,22 +251,22 @@
 		{/each}
 	</ul>
 {/if}
-<h2 class="text-2xl">Received messages</h2>
+<h2 class="text-2xl">{t('admin.nostr.receivedMessages')}</h2>
 
 <label class="checkbox-label">
 	<input type="checkbox" bind:checked={displayPublicMessages} class="form-checkbox" />
-	Display public messages (mentions)</label
+	{t('admin.nostr.displayPublicMessages')}</label
 >
 
 <label class="checkbox-label">
 	<input type="checkbox" bind:checked={displayPrivateMessages} class="form-checkbox" />
-	Display private messages</label
+	{t('admin.nostr.displayPrivateMessages')}</label
 >
 <ul>
 	{#each data.receivedMessages as message}
 		<li class="break-words">
 			{#if message.kind === 4 && displayPrivateMessages}
-				<span title="Encrypted message">'🔐'</span>
+				<span title={t('admin.nostr.encryptedMessage')}>'🔐'</span>
 
 				<time datetime={message.createdAt.toJSON()}
 					>{message.createdAt.toLocaleString('en-UK')}</time

@@ -2,7 +2,12 @@ import { collections } from '$lib/server/database';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import bcryptjs from 'bcryptjs';
-import { CUSTOMER_ROLE_ID, MIN_PASSWORD_LENGTH, type User } from '$lib/types/User';
+import {
+	CUSTOMER_ROLE_ID,
+	MIN_PASSWORD_LENGTH,
+	checkPasswordPwnedTimes,
+	type User
+} from '$lib/types/User';
 import type { SetRequired } from 'type-fest';
 import { BCRYPT_SALT_ROUNDS } from '$lib/server/user.js';
 import { adminPrefix } from '$lib/server/admin.js';
@@ -46,6 +51,17 @@ export const actions = {
 			.parse({
 				password: data.get('password')
 			});
+
+		// HP-2026-08-13 (review #2715) : fail-closed — a reset never stores
+		// a password whose breach status could not be verified
+		// (HIBP API unreachable => reject).
+		const pwnedTimes = await checkPasswordPwnedTimes(password);
+		if (pwnedTimes === null) {
+			throw error(503, 'Password breach check unavailable, please retry later');
+		}
+		if (pwnedTimes) {
+			throw error(400, 'Password has been pwned');
+		}
 
 		const passwordBcrypt = await bcryptjs.hash(password, BCRYPT_SALT_ROUNDS);
 		await collections.users.updateOne(

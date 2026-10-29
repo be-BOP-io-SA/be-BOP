@@ -40,10 +40,12 @@
 						<div class="flex items-center gap-3 text-2xl">
 							{#if link}
 								<a href={link} class="font-semibold text-blue-600 underline">
-									Payment {payment.number}:
+									{t('admin.order.paymentNumber', { number: payment.number })}
 								</a>
 							{:else}
-								<span class="font-semibold">Payment {payment.number}:</span>
+								<span class="font-semibold"
+									>{t('admin.order.paymentNumber', { number: payment.number })}</span
+								>
 							{/if}
 							<span class="font-bold">
 								<PriceTag amount={payment.amount} currency={payment.currency} />
@@ -66,7 +68,7 @@
 					</div>
 					{#if link}
 						<a href={link} class="bg-blue-600 text-white font-bold px-4 py-2 rounded text-xl">
-							View
+							{t('admin.order.view')}
 						</a>
 					{/if}
 				</div>
