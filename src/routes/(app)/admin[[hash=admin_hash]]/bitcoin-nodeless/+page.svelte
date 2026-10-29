@@ -40,6 +40,15 @@
 	{t('admin.bitcoinNodeless.intro')}
 </p>
 
+{#if data.addressSupply !== 'enough'}
+	<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm text-yellow-700">
+		! <strong>{t('admin.bitcoinNodeless.warning')}</strong>
+		{data.addressSupply === 'exhausted'
+			? t('admin.bitcoinNodeless.keyExhaustedWarning')
+			: t('admin.bitcoinNodeless.keyRunningOutWarning')}
+	</div>
+{/if}
+
 <h2 class="text-2xl">{t('admin.bitcoinNodeless.configuration')}</h2>
 
 {#key data.bitcoinNodeless}
@@ -169,6 +178,9 @@
 				type="number"
 				name="derivationIndex"
 				class="form-input"
+				min="0"
+				max={data.maxDerivationIndex}
+				step="1"
 				required
 				disabled={alreadySet}
 				bind:value={derivationIndex}
@@ -207,6 +219,10 @@
 			{t('admin.bitcoinNodeless.skipUsedAddresses')}
 		</label>
 
+		{#if form?.alreadySetUp}
+			<p class="text-red-500 text-sm">{t('admin.bitcoinNodeless.alreadySetUpError')}</p>
+		{/if}
+
 		<div class="flex gap-2">
 			{#if alreadySet}
 				<button class="btn btn-black" type="submit" formaction="?/update"
@@ -242,7 +258,7 @@
 		</div>
 	{/if}
 
-	<ul class="font-mono">
+	<ul class="font-mono break-all">
 		{#each data.nextAddresses as addressData}
 			<li class="flex gap-2">
 				- {addressData.address}

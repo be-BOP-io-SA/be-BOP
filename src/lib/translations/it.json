@@ -536,7 +536,10 @@
 			"nextAddressesDescription": "Questi saranno i prossimi indirizzi generati da be-BOP",
 			"warning": "Attenzione:",
 			"alreadyUsedAddressWarning": "Almeno un indirizzo è già stato utilizzato. Usa un XPub del portafoglio specifico per il tuo be-BOP o definisci un altro indirizzo di derivazione per evitare il doppio utilizzo del tuo indirizzo.",
-			"alreadyUsed": "già utilizzato"
+			"keyRunningOutWarning": "Questa chiave ha quasi esaurito gli indirizzi di ricezione. Elimina questa configurazione e imposta una nuova chiave per continuare a ricevere pagamenti in bitcoin.",
+			"keyExhaustedWarning": "Questa chiave non ha più indirizzi di ricezione, quindi i pagamenti in bitcoin non vanno a buon fine. Elimina questa configurazione e imposta una nuova chiave.",
+			"alreadyUsed": "già utilizzato",
+			"alreadySetUpError": "Bitcoin nodeless è già configurato. Elimina la configurazione per usare un'altra chiave."
 		},
 		"challenge": {
 			"addChallenge": "Aggiungi sfida",
