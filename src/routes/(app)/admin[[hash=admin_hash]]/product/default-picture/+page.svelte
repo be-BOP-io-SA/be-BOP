@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { useI18n } from '$lib/i18n';
+	import { PICTURE_UPLOAD_ACCEPT } from '$lib/types/Picture';
 
 	const { t } = useI18n();
 
@@ -24,13 +25,7 @@
 
 	<label>
 		{t('admin.product.fileLabel')}
-		<input
-			type="file"
-			class="block"
-			required
-			name="file"
-			accept="image/jpeg,image/png,image/webp"
-		/>
+		<input type="file" class="block" required name="file" accept={PICTURE_UPLOAD_ACCEPT} />
 	</label>
 
 	<input
