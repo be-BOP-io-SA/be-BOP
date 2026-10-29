@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { columnsToCsv, toCsv, type ReportingColumn } from './reportingColumns';
+import { cellText, columnsToCsv, toCsv, type ReportingColumn } from './reportingColumns';
+
+describe('cellText', () => {
+	it('reads a cell on one line, whatever the markup indentation', () => {
+		expect(cellText({ textContent: '\n\t\t\t01/01/2001\n\t\t\t—\n\t\t\t31/01/2001\n\t\t' })).toBe(
+			'01/01/2001 — 31/01/2001'
+		);
+	});
+
+	it('reads an empty cell as empty', () => {
+		expect(cellText({ textContent: null })).toBe('');
+	});
+});
 
 describe('toCsv', () => {
 	it('joins plain cells with commas and rows with newlines', () => {
