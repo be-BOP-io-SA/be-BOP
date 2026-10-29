@@ -1,10 +1,14 @@
 import { collections } from '$lib/server/database';
+import { loadAllCheckoutFields } from '$lib/server/checkoutFields';
 import { paymentMethods } from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S } from '$lib/types/Country.js';
 import { type Order, ORDER_PAGINATION_LIMIT } from '$lib/types/Order';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { escapeForRegex } from '$lib/utils/escapeForRegex';
+import { set } from '$lib/utils/set';
 
 import type { Filter } from 'mongodb';
+import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
 export async function load({ url, locals }) {
@@ -20,11 +24,21 @@ export async function load({ url, locals }) {
 		label: z.string().optional(),
 		npub: z.string().optional(),
 		employeeAlias: z.string().optional(),
-		posSubtype: z.string().optional()
+		posSubtype: z.string().optional(),
+		customFields: z
+			.array(z.object({ slug: z.string().trim(), value: z.string().trim() }))
+			.optional()
+			.default([])
 	});
 
-	const searchParams = Object.fromEntries(url.searchParams.entries());
+	const searchParams: JsonObject = {};
+	for (const [key, value] of url.searchParams) {
+		set(searchParams, key, value);
+	}
 	const result = querySchema.parse(searchParams);
+
+	// A row left half empty filters nothing.
+	const customFieldFilters = result.customFields.filter((filter) => filter.slug && filter.value);
 	const {
 		skip,
 		orderNumber,
@@ -64,6 +78,18 @@ export async function load({ url, locals }) {
 	if (label) {
 		query['orderLabelIds'] = label;
 	}
+	if (customFieldFilters.length) {
+		// One $elemMatch per row, so each row has to match its own answer.
+		query.$and = customFieldFilters.map((filter) => ({
+			customCheckoutFields: {
+				$elemMatch: {
+					slug: filter.slug,
+					value: { $regex: `^${escapeForRegex(filter.value)}$`, $options: 'i' }
+				}
+			}
+		}));
+	}
+
 	if (employeeAlias === 'System') {
 		query['user.userAlias'] = { $exists: false };
 	} else if (employeeAlias) {
@@ -81,6 +107,7 @@ export async function load({ url, locals }) {
 		.find({})
 		.sort({ sortOrder: 1 })
 		.toArray();
+	const checkoutFields = await loadAllCheckoutFields();
 	const nonCustomers = await collections.users
 		.find({ roleId: { $ne: CUSTOMER_ROLE_ID } })
 		.sort({ _id: 1 })
@@ -114,6 +141,11 @@ export async function load({ url, locals }) {
 			alias: user.alias
 		})),
 		posSubtype,
-		posSubtypes: posSubtypes.map((s) => ({ slug: s.slug, name: s.name }))
+		posSubtypes: posSubtypes.map((s) => ({ slug: s.slug, name: s.name })),
+		// An Address field answers with a whole address, which this filter cannot search yet (#2816).
+		checkoutFields: checkoutFields
+			.filter((field) => field.type !== 'address')
+			.map((field) => ({ slug: field.slug, name: field.name, disabled: !!field.disabled })),
+		customFieldFilters
 	};
 }

@@ -1102,7 +1102,12 @@
 			"previous": "Precedente",
 			"next": "Successivo",
 			"orderLabelTitle": "Label ordine",
-			"orderLabelIds": "ID label ordine"
+			"orderLabelIds": "ID label ordine",
+			"customFieldFilterLabel": "Campo di checkout personalizzato",
+			"customFieldValueLabel": "Valore del campo",
+			"customFieldValuePlaceholder": "cerca ordine per valore del campo",
+			"addCustomFieldFilter": "Aggiungi un filtro su un campo di checkout",
+			"removeCustomFieldFilter": "Rimuovi questo filtro"
 		},
 		"layout": {
 			"title": "Layout",
