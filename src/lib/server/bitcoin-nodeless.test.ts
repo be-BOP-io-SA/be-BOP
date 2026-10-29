@@ -6,6 +6,7 @@ import {
 	isAddressUsed,
 	MempoolRateLimitedError,
 	resetMempoolPacing,
+	saveBitcoinBlockHeight,
 	updateBitcoinBlockHeight
 } from './bitcoin-nodeless';
 import { refreshPromise, runtimeConfig } from './runtime-config';
@@ -27,6 +28,13 @@ async function settleBlockHeight(height: number) {
 		{ upsert: true }
 	);
 	await vi.waitFor(() => expect(runtimeConfig.bitcoinBlockHeight).toBe(height));
+}
+
+// Reloads triggered by the test's own saves can still be in flight when it asserts.
+async function expectBlockHeight(height: number) {
+	await vi.waitFor(async () =>
+		expect([runtimeConfig.bitcoinBlockHeight, await storedBlockHeight()]).toEqual([height, height])
+	);
 }
 
 async function storedBlockHeight() {
@@ -372,6 +380,30 @@ describe('bitcoin block height', () => {
 		resetMempoolPacing();
 		mockMempool({ height: { body: 111 } });
 		await updateBitcoinBlockHeight();
-		expect([runtimeConfig.bitcoinBlockHeight, await storedBlockHeight()]).toEqual([111, 111]);
+		await expectBlockHeight(111);
+	});
+
+	it('follows a block height far below the stored one, as after switching from testnet to mainnet', async () => {
+		await settleBlockHeight(4_800_000);
+		mockMempool({ height: { body: 973_000 } });
+		await updateBitcoinBlockHeight();
+
+		await expectBlockHeight(973_000);
+	});
+
+	it('keeps the stored height when a save a few blocks behind reaches the database last', async () => {
+		await saveBitcoinBlockHeight(105);
+		runtimeConfig.bitcoinBlockHeight = 90;
+		await saveBitcoinBlockHeight(103);
+
+		expect(await storedBlockHeight()).toBe(105);
+	});
+
+	it('saves the height when none is stored yet', async () => {
+		await collections.runtimeConfig.deleteOne({ _id: 'bitcoinBlockHeight' });
+
+		await saveBitcoinBlockHeight(105);
+
+		expect(await storedBlockHeight()).toBe(105);
 	});
 });

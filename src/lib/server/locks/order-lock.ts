@@ -9,7 +9,7 @@ import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import { isStripeEnabled, lastSuccessfulPaymentIntents } from '../stripe';
 import type { Order } from '$lib/types/Order';
 import { ObjectId } from 'mongodb';
-import { getProcessor } from '../sdk/pp';
+import { processorFor, dispatchPendingPayments } from '../sdk/pp';
 
 const lock = new Lock('orders');
 
@@ -107,6 +107,7 @@ async function maintainOrders() {
 
 	while (!processClosed) {
 		if (!lock.ownsLock) {
+			dispatchPendingPayments([]);
 			await setTimeout(5_000);
 			continue;
 		}
@@ -118,10 +119,14 @@ async function maintainOrders() {
 			.toArray()
 			.catch((err) => {
 				console.error(inspect(err, { depth: 10 }));
-				return [];
+				return undefined;
 			});
+		// A failed query says nothing about which payments are pending, so the sockets stay as they are.
+		if (pendingOrders) {
+			dispatchPendingPayments(pendingOrders);
+		}
 
-		for (let order of pendingOrders) {
+		for (let order of pendingOrders ?? []) {
 			for (let payment of order.payments.filter((p) => p.status === 'pending')) {
 				// Since we can overwrite order, we need to update payment too if needed
 				const updatedPayment = order.payments.find((p) => p._id.equals(payment._id));
@@ -130,10 +135,8 @@ async function maintainOrders() {
 				}
 				payment = updatedPayment;
 
-				// SDK universal dispatcher — only dispatch if processor AND method match
-				// (prevents tap-to-pay method:'point-of-sale' + processor:'stripe' from being caught by PPStripe)
-				const pp = payment.processor ? getProcessor(payment.processor) : undefined;
-				if (pp && pp.meta.method === payment.method && pp.isEnabled()) {
+				const pp = processorFor(payment);
+				if (pp) {
 					try {
 						const result = await pp.checkPayment(payment, order);
 						switch (result.status) {
@@ -234,6 +237,7 @@ async function maintainOrders() {
 
 		await setTimeout(2_000);
 	}
+	dispatchPendingPayments([]);
 }
 
 maintainOrders();

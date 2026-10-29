@@ -757,8 +757,12 @@ export type RuntimeConfigItem = {
 let changeStream: ChangeStream<RuntimeConfigItem, ChangeStreamDocument<RuntimeConfigItem>> | null =
 	null;
 
+let refreshQueue = Promise.resolve();
 if (!building) {
-	changeStream = collections.runtimeConfig.watch().on('change', refresh);
+	changeStream = collections.runtimeConfig.watch().on('change', (item) => {
+		// Each lookup reads the current document, so running them in order keeps a stale one from landing last.
+		refreshQueue = refreshQueue.then(() => refresh(item)).catch(console.error);
+	});
 }
 process.on('SIGINT', () => {
 	changeStream?.close().catch(console.error);
@@ -982,4 +986,6 @@ export function resetConfig() {
 	Object.assign(runtimeConfig, defaultConfig);
 }
 
-export const refreshPromise = building ? Promise.resolve() : refresh().then(() => runMigrations());
+export const refreshPromise = building
+	? Promise.resolve()
+	: (refreshQueue = refresh()).then(() => runMigrations());

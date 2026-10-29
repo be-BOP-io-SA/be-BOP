@@ -1,10 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import PPBitcoinNodeless, { resetCheckScheduler } from './PPBitcoinNodeless';
-import { resetMempoolPacing } from '$lib/server/bitcoin-nodeless';
+import { resetMempoolPacing, saveBitcoinBlockHeight } from '$lib/server/bitcoin-nodeless';
 import { refreshPromise, runtimeConfig } from '$lib/server/runtime-config';
 import type { Order } from '$lib/types/Order';
 import { ObjectId } from 'mongodb';
-import { advance, mockMempool } from '$lib/server/test-utils';
+import { isAddressWatched, resetMempoolWebSocket } from '$lib/server/bitcoin-nodeless-ws';
+import { dispatchPendingPayments, registerProcessor } from '../pp';
+import { advance, FakeWebSocket, mockMempool, TEST_ZPUB } from '$lib/server/test-utils';
+
+vi.mock('$lib/server/bitcoin-nodeless', async (importOriginal) => ({
+	...(await importOriginal<typeof import('$lib/server/bitcoin-nodeless')>()),
+	// Keeps these tests off the database; bitcoin-nodeless.test.ts covers the save itself.
+	saveBitcoinBlockHeight: vi.fn()
+}));
 
 const ADDRESS = 'bc1qrw2swpufzdx9gy4aewv5q45e53stcf95ker0p7';
 const OTHER_ADDRESS = 'bc1qa07qeugkc8u7pjv98dejfdnd5ml7qxv88zwzrn';
@@ -49,13 +57,29 @@ function silenceLogs() {
 	};
 }
 
+function savedHeights() {
+	return vi.mocked(saveBitcoinBlockHeight).mock.calls.map(([height]) => height);
+}
+
+function configureNodeless() {
+	vi.stubGlobal('WebSocket', FakeWebSocket);
+	runtimeConfig.bitcoinNodeless = {
+		...runtimeConfig.bitcoinNodeless,
+		format: 'bip84',
+		publicKey: TEST_ZPUB
+	};
+}
+
 describe('PPBitcoinNodeless.checkPayment', () => {
 	beforeEach(async () => {
 		await refreshPromise;
 		runtimeConfig.bitcoinBlockHeight = 100;
+		vi.mocked(saveBitcoinBlockHeight).mockReset().mockResolvedValue(undefined);
 		resetCheckScheduler();
 		resetMempoolPacing();
-		vi.useFakeTimers({ toFake: ['Date'] });
+		resetMempoolWebSocket();
+		FakeWebSocket.instances = [];
+		vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
 		vi.setSystemTime(new Date('2026-06-01T00:05:00Z'));
 		runtimeConfig.bitcoinNodeless = {
 			...runtimeConfig.bitcoinNodeless,
@@ -69,6 +93,7 @@ describe('PPBitcoinNodeless.checkPayment', () => {
 	});
 
 	afterEach(() => {
+		resetMempoolWebSocket();
 		vi.unstubAllGlobals();
 		vi.useRealTimers();
 		vi.restoreAllMocks();
@@ -259,6 +284,279 @@ describe('PPBitcoinNodeless.checkPayment', () => {
 			advance(1);
 			await PPBitcoinNodeless.checkPayment(payment, order);
 			expect(mempool.callsTo('/txs')).toBe(2);
+		});
+
+		describe('with the mempool WebSocket', () => {
+			function watchOverWebSocket(payments: Order['payments'][number][]) {
+				configureNodeless();
+				PPBitcoinNodeless.watchPendingPayments(payments);
+				const socket = FakeWebSocket.instances[FakeWebSocket.instances.length - 1];
+				socket.serverOpens();
+				return socket;
+			}
+
+			it('asks mempool about a watched address every 5 minutes, an unwatched one every 30 seconds', async () => {
+				const mempool = mockMempool();
+				const watched = makePayment();
+				const unwatched = makePayment({ address: OTHER_ADDRESS });
+				watchOverWebSocket([watched]);
+
+				const checkBoth = async () => {
+					await PPBitcoinNodeless.checkPayment(watched, order);
+					await PPBitcoinNodeless.checkPayment(unwatched, order);
+					return [mempool.callsTo(`${ADDRESS}/txs`), mempool.callsTo(`${OTHER_ADDRESS}/txs`)];
+				};
+
+				expect(await checkBoth()).toEqual([1, 1]);
+				advance(30_000);
+				expect(await checkBoth()).toEqual([1, 2]);
+				advance(5 * 60_000 - 30_001);
+				expect(await checkBoth()).toEqual([1, 3]);
+				advance(1);
+				expect(await checkBoth()).toEqual([2, 3]);
+			});
+
+			it('checks a watched address on activity, never within 10 seconds of the last check', async () => {
+				const mempool = mockMempool();
+				const payment = makePayment();
+				const socket = watchOverWebSocket([payment]);
+				await PPBitcoinNodeless.checkPayment(payment, order);
+
+				advance(1_000);
+				socket.serverReportsActivity(ADDRESS);
+				const callsAfter = async (ms: number) => {
+					advance(ms);
+					await PPBitcoinNodeless.checkPayment(payment, order);
+					return mempool.callsTo('/txs');
+				};
+
+				expect(await callsAfter(8_999)).toBe(1);
+				expect(await callsAfter(1)).toBe(2);
+				expect(await callsAfter(10_000)).toBe(2);
+			});
+
+			it('checks again on the next turn when activity arrives while a check is running', async () => {
+				const payment = makePayment();
+				const socket = watchOverWebSocket([payment]);
+				let notifyDuringCheck = true;
+				const mempool = mockMempool({
+					txs: () => {
+						if (notifyDuringCheck) {
+							notifyDuringCheck = false;
+							socket.serverReportsActivity(ADDRESS);
+						}
+						return { body: [] };
+					}
+				});
+
+				await PPBitcoinNodeless.checkPayment(payment, order);
+				advance(10_000);
+				await PPBitcoinNodeless.checkPayment(payment, order);
+				expect(mempool.callsTo('/txs')).toBe(2);
+				advance(10_000);
+				await PPBitcoinNodeless.checkPayment(payment, order);
+				expect(mempool.callsTo('/txs')).toBe(2);
+			});
+
+			it('checks a payment awaiting confirmation on each new block, not an unpaid one', async () => {
+				const mempool = mockMempool({ txs: { body: [fullAmountTx()] } });
+				const awaiting = makePayment({ awaitingConfirmation: true });
+				const unpaid = makePayment({ address: OTHER_ADDRESS });
+				const socket = watchOverWebSocket([awaiting, unpaid]);
+				socket.serverSends({ blocks: [{ height: 100 }] });
+
+				const checkBoth = async () => {
+					await PPBitcoinNodeless.checkPayment(awaiting, order);
+					await PPBitcoinNodeless.checkPayment(unpaid, order);
+					return [mempool.callsTo(`${ADDRESS}/txs`), mempool.callsTo(`${OTHER_ADDRESS}/txs`)];
+				};
+
+				expect(await checkBoth()).toEqual([1, 1]);
+				advance(10_000);
+				socket.serverSends({ block: { height: 101 } });
+				expect(await checkBoth()).toEqual([2, 1]);
+				advance(10_000);
+				socket.serverSends({ blocks: [{ height: 100 }, { height: 101 }] });
+				expect(await checkBoth()).toEqual([2, 1]);
+			});
+
+			it('saves each new socket block height, skipping repeats and lagging ones, and follows a switch of network', () => {
+				const socket = watchOverWebSocket([makePayment()]);
+
+				for (const height of [4_800_000, 4_800_001, 4_800_001, 4_799_995, 973_000, 973_001]) {
+					socket.serverSends({ block: { height } });
+				}
+
+				expect(savedHeights()).toEqual([4_800_000, 4_800_001, 973_000, 973_001]);
+			});
+
+			it('records the block snapshot sent on open without treating it as a new block, also after regaining the lock', async () => {
+				const mempool = mockMempool({ txs: { body: [fullAmountTx()] } });
+				const awaiting = makePayment({ awaitingConfirmation: true });
+				const unpaid = makePayment({ address: OTHER_ADDRESS });
+				const checkAwaiting = async () => {
+					await PPBitcoinNodeless.checkPayment(awaiting, order);
+					return mempool.callsTo(`${ADDRESS}/txs`);
+				};
+				expect(await checkAwaiting()).toBe(1);
+
+				advance(10_000);
+				let socket = watchOverWebSocket([unpaid]);
+				socket.serverSends({ blocks: [{ height: 101 }] });
+				expect(await checkAwaiting()).toBe(1);
+				advance(10_000);
+				socket.serverSends({ block: { height: 102 } });
+				expect(await checkAwaiting()).toBe(2);
+
+				PPBitcoinNodeless.watchPendingPayments([]);
+				advance(10_000);
+				socket = watchOverWebSocket([unpaid]);
+				socket.serverSends({ blocks: [{ height: 103 }] });
+				expect(await checkAwaiting()).toBe(2);
+				advance(10_000);
+				socket.serverSends({ block: { height: 104 } });
+				expect(await checkAwaiting()).toBe(3);
+				expect(savedHeights()).toEqual([101, 102, 103, 104]);
+			});
+
+			it('treats the first block from a new mempool URL as the current tip, not a new block', async () => {
+				const mempool = mockMempool({ txs: { body: [fullAmountTx()] } });
+				const awaiting = makePayment({ awaitingConfirmation: true });
+				const unpaid = makePayment({ address: OTHER_ADDRESS });
+				const checkAwaiting = async () => {
+					await PPBitcoinNodeless.checkPayment(awaiting, order);
+					return mempool.callsTo(`${ADDRESS}/txs`);
+				};
+				watchOverWebSocket([unpaid]).serverSends({ blocks: [{ height: 101 }] });
+				expect(await checkAwaiting()).toBe(1);
+
+				advance(10_000);
+				runtimeConfig.bitcoinNodeless.mempoolUrl = 'https://testnet-mempool.example';
+				const socket = watchOverWebSocket([unpaid]);
+				socket.serverSends({ blocks: [{ height: 4_800_000 }] });
+				expect(await checkAwaiting()).toBe(1);
+
+				advance(10_000);
+				socket.serverSends({ block: { height: 4_800_001 } });
+				expect(await checkAwaiting()).toBe(2);
+			});
+
+			it('checks a watched address as soon as its socket reopens', async () => {
+				const mempool = mockMempool();
+				const payment = makePayment();
+				const socket = watchOverWebSocket([payment]);
+				await PPBitcoinNodeless.checkPayment(payment, order);
+
+				socket.serverDrops();
+				advance(10_000);
+				PPBitcoinNodeless.watchPendingPayments([payment]);
+				FakeWebSocket.instances[FakeWebSocket.instances.length - 1].serverOpens();
+				await PPBitcoinNodeless.checkPayment(payment, order);
+
+				expect(mempool.callsTo('/txs')).toBe(2);
+			});
+
+			it('still asks mempool for the block height once a minute while a socket is open', async () => {
+				const mempool = mockMempool();
+				const payment = makePayment();
+				const socket = watchOverWebSocket([payment]);
+				socket.serverSends({ block: { height: 100 } });
+
+				await PPBitcoinNodeless.checkPayment(payment, order);
+				advance(60_000);
+				socket.serverReportsActivity(ADDRESS);
+				await PPBitcoinNodeless.checkPayment(payment, order);
+
+				expect(mempool.callsTo('/blocks/tip/height')).toBe(2);
+			});
+
+			it('retries a failed check of a watched address 30 seconds later, then every 5 minutes', async () => {
+				silenceLogs();
+				const payment = makePayment();
+				watchOverWebSocket([payment]);
+				const failing = mockMempool({ txs: { status: 503 } });
+
+				await PPBitcoinNodeless.checkPayment(payment, order);
+				advance(29_999);
+				await PPBitcoinNodeless.checkPayment(payment, order);
+				expect(failing.callsTo('/txs')).toBe(1);
+				advance(1);
+				const mempool = mockMempool();
+				await PPBitcoinNodeless.checkPayment(payment, order);
+				advance(30_000);
+				await PPBitcoinNodeless.checkPayment(payment, order);
+				expect(mempool.callsTo('/txs')).toBe(1);
+			});
+
+			it('does not count a check refused by a rate limit pause, so the activity stays due', async () => {
+				silenceLogs();
+				mockMempool();
+				const payment = makePayment();
+				const socket = watchOverWebSocket([payment]);
+				await PPBitcoinNodeless.checkPayment(payment, order);
+
+				advance(10_000);
+				socket.serverReportsActivity(ADDRESS);
+				const limited = mockMempool({ txs: { status: 429 } });
+				await PPBitcoinNodeless.checkPayment(payment, order);
+				advance(2_000);
+				await PPBitcoinNodeless.checkPayment(payment, order);
+				expect(limited.callsTo('/txs')).toBe(1);
+
+				advance(60_000);
+				const mempool = mockMempool({ txs: { body: [fullAmountTx()] } });
+				expect(await PPBitcoinNodeless.checkPayment(payment, order)).toEqual({
+					status: 'pending',
+					awaitingConfirmation: true,
+					mempoolMissingSince: null,
+					transactions: []
+				});
+				advance(10_000);
+				await PPBitcoinNodeless.checkPayment(payment, order);
+				expect(mempool.callsTo('/txs')).toBe(1);
+			});
+		});
+	});
+
+	describe('through the order loop dispatcher', () => {
+		const pendingOrders = [
+			{
+				payments: [
+					makePayment({ status: 'pending', processor: 'bitcoin-nodeless', method: 'bitcoin' })
+				]
+			}
+		] as unknown as Order[];
+
+		beforeEach(() => {
+			registerProcessor(PPBitcoinNodeless);
+			configureNodeless();
+		});
+
+		it('closes its sockets when the loop dispatches no order, as after losing the lock', () => {
+			dispatchPendingPayments(pendingOrders);
+			const [socket] = FakeWebSocket.instances;
+			socket.serverOpens();
+			expect(isAddressWatched(ADDRESS)).toBe(true);
+
+			dispatchPendingPayments([]);
+
+			expect([socket.closedByClient, isAddressWatched(ADDRESS), vi.getTimerCount()]).toEqual([
+				true,
+				false,
+				0
+			]);
+		});
+
+		it('closes its sockets and stops its timer once nodeless is no longer configured', () => {
+			dispatchPendingPayments(pendingOrders);
+			FakeWebSocket.instances[0].serverOpens();
+
+			runtimeConfig.bitcoinNodeless.publicKey = '';
+			dispatchPendingPayments(pendingOrders);
+			dispatchPendingPayments(pendingOrders);
+
+			expect(FakeWebSocket.instances.map((s) => s.closedByClient)).toEqual([true]);
+			expect([isAddressWatched(ADDRESS), vi.getTimerCount()]).toEqual([false, 0]);
 		});
 	});
 

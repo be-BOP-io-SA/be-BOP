@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { sum } from '$lib/utils/sum';
 import { trimSuffix } from '$lib/utils/trimSuffix';
 import { isWithin } from '$lib/utils/isWithin';
+import { isLaggingBlockHeight, MAX_BLOCK_HEIGHT_LAG } from '$lib/utils/isLaggingBlockHeight';
 import { persistConfigElement } from './utils/persistConfig';
 import { collections } from './database';
 
@@ -281,6 +282,39 @@ export async function isAddressUsed(address: string): Promise<boolean> {
 	}
 }
 
+export async function saveBitcoinBlockHeight(blockHeight: number): Promise<void> {
+	if (isLaggingBlockHeight(blockHeight, runtimeConfig.bitcoinBlockHeight)) {
+		return;
+	}
+	console.log('Updating bitcoin block height to', blockHeight);
+	runtimeConfig.bitcoinBlockHeight = blockHeight;
+
+	// Saves are not awaited by the socket, so two of them can reach the database out of order.
+	await collections.runtimeConfig.updateOne(
+		{ _id: 'bitcoinBlockHeight' },
+		[
+			{
+				$set: {
+					data: {
+						$cond: [
+							{
+								$and: [
+									{ $lte: [blockHeight, '$data'] },
+									{ $lte: [{ $subtract: ['$data', blockHeight] }, MAX_BLOCK_HEIGHT_LAG] }
+								]
+							},
+							'$data',
+							blockHeight
+						]
+					},
+					updatedAt: new Date()
+				}
+			}
+		],
+		{ upsert: true }
+	);
+}
+
 const BLOCK_HEIGHT_REFRESH_MS = 60_000;
 let blockHeightCheckedAt = -Infinity;
 
@@ -293,28 +327,7 @@ export async function updateBitcoinBlockHeight(): Promise<void> {
 		const resp = await fetchMempool('/api/blocks/tip/height');
 
 		if (resp.ok) {
-			const blockHeight = z.number().parse(await resp.json());
-
-			// A lagging mempool backend can answer an older tip; lowering it would undercount confirmations.
-			if (blockHeight > runtimeConfig.bitcoinBlockHeight) {
-				console.log('Updating bitcoin block height to', blockHeight);
-				runtimeConfig.bitcoinBlockHeight = blockHeight;
-
-				await collections.runtimeConfig.updateOne(
-					{
-						_id: 'bitcoinBlockHeight'
-					},
-					{
-						$set: {
-							data: blockHeight,
-							updatedAt: new Date()
-						}
-					},
-					{
-						upsert: true
-					}
-				);
-			}
+			await saveBitcoinBlockHeight(z.number().parse(await resp.json()));
 		}
 	} catch (err) {
 		if (err instanceof MempoolRateLimitedError) {
