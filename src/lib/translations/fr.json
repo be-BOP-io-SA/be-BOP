@@ -1351,7 +1351,26 @@
 			"setCheckoutAdditionalFields": "Définir des champs supplémentaires pour le paiement",
 			"defaultSubscriptionDuration": "Durée d'abonnement par défaut",
 			"subscriptionDurationHint": "Utilisé pour les produits d’abonnement réglés sur « Par défaut (à l’échelle de la boutique) » et pour les instantanés hérités.",
-			"analyticsScriptPlaceholder": "Collez votre script de tracking"
+			"analyticsScriptPlaceholder": "Collez votre script de tracking",
+			"orderEmailRecipientsTitle": "Quels mails de commande partent",
+			"orderEmailRecipientsHint": "Une ligne par mail que be-BOP envoie au sujet d'une commande. Décochez ce que vous ne voulez pas recevoir — « paiement en attente » et « paiement expiré » sont en général les plus bruyants.",
+			"orderEmailRecipientsOverridden": "L'option ci-dessus vous envoie une copie de tous les mails de commande, cette liste n'a donc aucun effet. Décochez-la pour choisir mail par mail.",
+			"orderEmailRecipientsEmail": "Mail",
+			"orderEmailRecipientsToCustomer": "Au client",
+			"orderEmailRecipientsToShop": "En copie à vous",
+			"orderEmailLabel": {
+				"order": {
+					"payment": {
+						"paid": "Un paiement a été reçu",
+						"expired": "Paiement expiré",
+						"canceled": "Paiement annulé"
+					},
+					"paid": "La commande est entièrement payée"
+				}
+			},
+			"orderEmailPaymentPending": "Paiement en attente : {method}",
+			"orderEmailRecipientsNoShopEmail": "Aucune adresse de contact n'est renseignée pour la boutique, il n'y a donc personne à mettre en copie. L'option ci-dessous et la colonne de copie de la liste restent indisponibles jusqu'à ce que vous en renseigniez une dans Réglages puis",
+			"orderEmailRecipientsNoShopEmailSuffix": " section."
 		},
 		"oauth": {
 			"title": "Fournisseurs OAuth",

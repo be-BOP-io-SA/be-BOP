@@ -2,7 +2,11 @@ import { ORDER_PAYMENT_STATUSES, type OrderPaymentStatus } from '$lib/types/Orde
 import { DELAY_MULTIPLIERS } from '$lib/utils/delayMultipliers';
 import { ORIGIN } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
-import { runtimeConfig } from '$lib/server/runtime-config';
+import {
+	ORDER_EMAIL_TEMPLATE_KEYS,
+	orderEmailRecipientsFor,
+	runtimeConfig
+} from '$lib/server/runtime-config';
 import { CURRENCIES } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { typedKeys } from '$lib/utils/typedKeys.js';
@@ -64,6 +68,9 @@ export async function load(event) {
 		physicalCartMinAmount: runtimeConfig.physicalCartMinAmount,
 		accountingCurrency: runtimeConfig.accountingCurrency,
 		copyOrderEmailsToAdmin: runtimeConfig.copyOrderEmailsToAdmin,
+		orderEmailRecipients: Object.fromEntries(
+			ORDER_EMAIL_TEMPLATE_KEYS.map((key) => [key, orderEmailRecipientsFor(key)])
+		),
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
 		defaultOnLocation: runtimeConfig.defaultOnLocation,
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,
@@ -291,6 +298,27 @@ export const actions = {
 		if (JSON.stringify(runtimeConfig.dataCleanup) !== JSON.stringify(dataCleanup)) {
 			runtimeConfig.dataCleanup = dataCleanup;
 			await persistConfigElement('dataCleanup', dataCleanup);
+		}
+
+		const hasShopEmail = !!runtimeConfig.sellerIdentity?.contact.email;
+		const orderEmailRecipients = Object.fromEntries(
+			ORDER_EMAIL_TEMPLATE_KEYS.map((key) => [
+				key,
+				{
+					customer: formData.get(`customer:${key}`) === 'on',
+					// Without a contact address the shop column is disabled, so it is not submitted.
+					shop: hasShopEmail
+						? formData.get(`shop:${key}`) === 'on'
+						: orderEmailRecipientsFor(key).shop
+				}
+			])
+		);
+
+		if (
+			JSON.stringify(runtimeConfig.orderEmailRecipients) !== JSON.stringify(orderEmailRecipients)
+		) {
+			runtimeConfig.orderEmailRecipients = orderEmailRecipients;
+			await persistConfigElement('orderEmailRecipients', orderEmailRecipients);
 		}
 
 		if (oldAdminHash !== result.adminHash) {
