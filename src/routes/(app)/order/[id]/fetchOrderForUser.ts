@@ -27,6 +27,25 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		.find({ productId: { $in: order.items.map((item) => item.product._id) } })
 		.toArray();
 
+	// An employee without an alias is named after their role in the notes they wrote.
+	const unaliasedRoleIds = [
+		...new Set(
+			(order.notes ?? []).flatMap((note) =>
+				note.role && note.role !== CUSTOMER_ROLE_ID && !note.userAlias ? [note.role] : []
+			)
+		)
+	];
+	const roleNameById = new Map(
+		unaliasedRoleIds.length
+			? (
+					await collections.roles
+						.find({ _id: { $in: unaliasedRoleIds } })
+						.project<{ _id: string; name: string }>({ name: 1 })
+						.toArray()
+			  ).map((role) => [role._id, role.name])
+			: []
+	);
+
 	const posSubtypesMap = new Map<
 		string,
 		{ tapToPayOnActivationUrl?: string; hasProcessor: boolean }
@@ -226,7 +245,11 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 				createdAt: note.createdAt,
 				isEmployee: note.role !== CUSTOMER_ROLE_ID,
 				isSystem: note.role === null,
-				alias: note.userAlias
+				alias:
+					note.userAlias ||
+					(note.role && note.role !== CUSTOMER_ROLE_ID
+						? roleNameById.get(note.role) ?? note.role
+						: undefined)
 			})) || [],
 		receiptNote: order.receiptNote,
 		customCheckoutFields: order.customCheckoutFields,

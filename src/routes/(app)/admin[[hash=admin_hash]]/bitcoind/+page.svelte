@@ -4,6 +4,9 @@
 	import { downloadFile } from '$lib/utils/downloadFile.js';
 	import { formatDistance } from 'date-fns';
 	import { onMount, tick } from 'svelte';
+	import { useI18n } from '$lib/i18n.js';
+
+	const { t } = useI18n();
 
 	export let data;
 	export let form;
@@ -13,7 +16,7 @@
 	let walletToCreate = 'bootik';
 
 	async function inputWalletName(event: Event) {
-		const walletName = prompt('Wallet name')?.trim();
+		const walletName = prompt(t('admin.bitcoind.walletNamePrompt'))?.trim();
 
 		if (!walletName) {
 			return;
@@ -38,7 +41,7 @@
 		if (response.ok) {
 			downloadFile(await response.blob(), `wallet-${wallet}.json`);
 		} else {
-			alert('Error dumping wallet: ' + (await response.text()));
+			alert(t('admin.bitcoind.errorDumpingWallet', { error: await response.text() }));
 		}
 	}
 
@@ -51,17 +54,17 @@
 	});
 </script>
 
-<h1 class="text-3xl">Bitcoin node</h1>
+<h1 class="text-3xl">{t('admin.bitcoind.bitcoinNode')}</h1>
 
-<h2 class="text-2xl">Chain</h2>
+<h2 class="text-2xl">{t('admin.bitcoind.chainHeading')}</h2>
 
 <ul>
-	<li>Blocks: {data.blockchainInfo.blocks.toLocaleString('en')}</li>
-	<li>Chain: {data.blockchainInfo.chain}</li>
+	<li>{t('admin.bitcoind.blocks', { blocks: data.blockchainInfo.blocks.toLocaleString('en') })}</li>
+	<li>{t('admin.bitcoind.chainLabel', { chain: data.blockchainInfo.chain })}</li>
 </ul>
 
 {#if data.rpc}
-	<h2 class="text-2xl">Bitcoin RPC</h2>
+	<h2 class="text-2xl">{t('admin.bitcoind.bitcoinRpc')}</h2>
 
 	<form
 		action="?/rpc"
@@ -77,14 +80,14 @@
 		}}
 	>
 		<label class="form-label">
-			Command
+			{t('admin.bitcoind.command')}
 			<input type="text" name="method" class="form-input" bind:value={rpcCommand} required />
 		</label>
 		<label class="form-label">
-			Params
+			{t('admin.bitcoind.params')}
 			<textarea cols="30" rows="10" name="params" class="form-input" bind:value={rpcParams} />
 		</label>
-		<button class="btn btn-black self-start" type="submit">Send</button>
+		<button class="btn btn-black self-start" type="submit">{t('admin.bitcoind.send')}</button>
 	</form>
 
 	{#if form?.rpcFail}
@@ -100,23 +103,24 @@
 
 {#if !data.bip84}
 	<p>
-		BIP 84 is not enabled. Configure <kbd class="kbd body-secondaryCTA">BIP84_XPUB</kbd> in the environment
-		to enable it, as well as the bitcoin node
+		{t('admin.bitcoind.bip84NotEnabledBefore')}
+		<kbd class="kbd body-secondaryCTA">BIP84_XPUB</kbd>
+		{t('admin.bitcoind.bip84NotEnabledAfter')}
 	</p>
 {:else}
 	<ul>
-		<li>BIP 84 Xpub: {data.bip84Xpub}</li>
+		<li>{t('admin.bitcoind.bip84Xpub', { xpub: data.bip84Xpub })}</li>
 		<li>
-			Derivation path: <kbd class="kbd body-secondaryCTA">m/84'/0'/0'</kbd>
+			{t('admin.bitcoind.derivationPath')}
+			<kbd class="kbd body-secondaryCTA">m/84'/0'/0'</kbd>
 		</li>
 		<li>
-			Note that you need to create a new wallet (if not already done) via the UI, so that it will
-			use the Xpub.
+			{t('admin.bitcoind.createNewWalletNote')}
 		</li>
 	</ul>
 {/if}
 
-<h2 class="text-2xl">Wallet</h2>
+<h2 class="text-2xl">{t('admin.bitcoind.walletHeading')}</h2>
 
 {#if data.wallets.length}
 	<ul>
@@ -126,43 +130,48 @@
 				{#if data.currentWallet !== wallet}
 					<form action="?/setCurrentWallet" method="post">
 						<input type="hidden" value={wallet} name="wallet" />
-						<button type="submit" class="body-hyperlink underline"> select </button>
+						<button type="submit" class="body-hyperlink underline">
+							{t('admin.bitcoind.select')}
+						</button>
 					</form>
 				{/if}
 				<button on:click|preventDefault={() => dump(wallet)} class="body-hyperlink underline">
-					dump
+					{t('admin.bitcoind.dump')}
 				</button>
 			</li>
 		{/each}
 	</ul>
 
 	<p>
-		Changing wallet in an active be-BOP means that incoming transactions in the old wallet will not
-		be detected.
+		{t('admin.bitcoind.changingWalletWarning')}
 	</p>
 {/if}
 
 <div class="flex gap-2">
 	<form action="?/createWallet" method="post" on:submit|preventDefault={inputWalletName}>
 		<input type="hidden" name="wallet" value={walletToCreate} />
-		<button class="btn btn-black">Create wallet {data.bip84 ? 'for bip84 xpub' : ''}</button>
+		<button class="btn btn-black"
+			>{data.bip84
+				? t('admin.bitcoind.createWalletBip84')
+				: t('admin.bitcoind.createWallet')}</button
+		>
 	</form>
 
 	<form action="?/loadWallets" method="post">
-		<button class="btn btn-black">Load all wallets on disk</button>
+		<button class="btn btn-black">{t('admin.bitcoind.loadAllWallets')}</button>
 	</form>
 </div>
 
-<h2 class="text-2xl">Balance</h2>
+<h2 class="text-2xl">{t('admin.bitcoind.balance')}</h2>
 
 <PriceTag amount={data.balance} currency="BTC" />
 
-<h2 class="text-2xl">Transactions</h2>
+<h2 class="text-2xl">{t('admin.bitcoind.transactions')}</h2>
 
 <ul>
 	{#each data.transactions as transaction}
 		<li class="flex flex-wrap gap-2">
-			Amount: {transaction.amount}
+			{t('admin.bitcoind.amount', { amount: transaction.amount })}
 			{#if data.currencies.priceReference !== 'BTC'}(<PriceTag
 					currency="BTC"
 					amount={transaction.amount}
@@ -179,9 +188,9 @@
 				{@const orderCreatedAt = orderById[transaction.label.slice('order:'.length)].createdAt}
 				/
 				<a class="underline body-hyperlink" href="/order/{transaction.label.slice('order:'.length)}"
-					>Order</a
+					>{t('admin.bitcoind.order')}</a
 				>
-				created
+				{t('admin.bitcoind.created')}
 				<time datetime={orderCreatedAt.toJSON()} title={orderCreatedAt.toLocaleString('en')}
 					>{formatDistance(orderCreatedAt, Date.now(), {
 						addSuffix: true
@@ -190,6 +199,6 @@
 			{/if}
 		</li>
 	{:else}
-		No transactions yet
+		{t('admin.bitcoind.noTransactions')}
 	{/each}
 </ul>

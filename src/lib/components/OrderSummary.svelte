@@ -308,7 +308,7 @@
 						- {payment.status === 'paid' ? t('order.depositPaid') : t('order.depositToPay')}
 					</span>
 					{#if payment.status === 'pending'}
-						<span class="text-sm text-gray-500">pending</span>
+						<span class="text-sm text-gray-500">{t('order.paymentPending')}</span>
 					{/if}
 				</div>
 				<PriceTag

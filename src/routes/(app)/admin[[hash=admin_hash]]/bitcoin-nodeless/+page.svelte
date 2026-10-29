@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { enhance, applyAction } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	export let form;
@@ -31,14 +34,13 @@
 			: !!data.bitcoinNodeless.publicKey;
 </script>
 
-<h1 class="text-3xl">Bitcoin nodeless</h1>
+<h1 class="text-3xl">{t('admin.bitcoinNodeless.title')}</h1>
 
 <p>
-	Enter your public key(s). be-BOP will be able to generate new addresses and check funds received,
-	but you have full control of the funds on your own wallet.
+	{t('admin.bitcoinNodeless.intro')}
 </p>
 
-<h2 class="text-2xl">Configuration</h2>
+<h2 class="text-2xl">{t('admin.bitcoinNodeless.configuration')}</h2>
 
 {#key data.bitcoinNodeless}
 	<form
@@ -54,23 +56,23 @@
 		}}
 	>
 		<label class="form-label">
-			Derivation scheme
+			{t('admin.bitcoinNodeless.derivationScheme')}
 			<select name="format" class="form-input" disabled={alreadySet} bind:value={selectedFormat}>
-				<option value="bip84">Single Signature (BIP-84)</option>
-				<option value="bip48">Multi-Signature (BIP-48 - P2WSH)</option>
+				<option value="bip84">{t('admin.bitcoinNodeless.singleSignatureOption')}</option>
+				<option value="bip48">{t('admin.bitcoinNodeless.multiSignatureOption')}</option>
 			</select>
 			<p class="text-sm">
 				{#if selectedFormat === 'bip84'}
-					BIP 84 derives single-signature native SegWit addresses (bc1...).
+					{t('admin.bitcoinNodeless.bip84Description')}
 				{:else}
-					BIP 48 derives multi-signature P2WSH addresses requiring M-of-N cosigner approval.
+					{t('admin.bitcoinNodeless.bip48Description')}
 				{/if}
 			</p>
 		</label>
 
 		{#if selectedFormat === 'bip84'}
 			<label class="form-label">
-				Public key
+				{t('admin.bitcoinNodeless.publicKey')}
 				<input
 					type="text"
 					name="publicKey"
@@ -84,17 +86,14 @@
 					<p class="text-red-500 text-sm mt-1">{form.errors.publicKey}</p>
 				{/if}
 				<p class="text-sm">
-					A BIP84 extended public key. You can use a wallet such as <a
-						href="https://sparrowwallet.com/"
-						rel="noreferrer">Sparrow Wallet</a
-					>
-					to generate one. The derivation path should be m/84'/0'/0' for mainnet and m/84'/1'/0' for
-					testnet.
+					{t('admin.bitcoinNodeless.publicKeyDescriptionBefore')}
+					<a href="https://sparrowwallet.com/" rel="noreferrer">Sparrow Wallet</a>
+					{t('admin.bitcoinNodeless.publicKeyDescriptionAfter')}
 				</p>
 			</label>
 		{:else}
 			<label class="form-label">
-				Required signatures (M)
+				{t('admin.bitcoinNodeless.requiredSignatures')}
 				<input
 					type="number"
 					name="m"
@@ -108,11 +107,11 @@
 				{#if form?.errors?.m}
 					<p class="text-red-500 text-sm mt-1">{form.errors.m}</p>
 				{/if}
-				<p class="text-sm">The minimum number of cosigner approvals required to spend funds.</p>
+				<p class="text-sm">{t('admin.bitcoinNodeless.requiredSignaturesDescription')}</p>
 			</label>
 
 			<label class="form-label">
-				Total signatures (N)
+				{t('admin.bitcoinNodeless.totalSignatures')}
 				<input
 					type="number"
 					name="n"
@@ -126,12 +125,12 @@
 				{#if form?.errors?.n}
 					<p class="text-red-500 text-sm mt-1">{form.errors.n}</p>
 				{/if}
-				<p class="text-sm">The total number of cosigners.</p>
+				<p class="text-sm">{t('admin.bitcoinNodeless.totalSignaturesDescription')}</p>
 			</label>
 
 			{#each xpubs as xpub, i (i)}
 				<label class="form-label">
-					Cosigner {i + 1} xpub
+					{t('admin.bitcoinNodeless.cosignerXpub', { index: i + 1 })}
 					<input
 						type="text"
 						name="xpubs[{i}]"
@@ -154,19 +153,17 @@
 
 			{#if n >= 2 && m >= 1 && m <= n}
 				<p class="text-sm font-medium">
-					Wallet policy: {m}-of-{n}
+					{t('admin.bitcoinNodeless.walletPolicy', { m, n })}
 				</p>
 			{/if}
 
 			<p class="text-sm">
-				Provide the account-level public keys from each cosigner. The derivation path should be
-				m/48'/0'/0'/2' for mainnet P2WSH. Pubkeys will be sorted per BIP-67 for deterministic
-				address generation.
+				{t('admin.bitcoinNodeless.multiSigDescription')}
 			</p>
 		{/if}
 
 		<label class="form-label">
-			Derivation index
+			{t('admin.bitcoinNodeless.derivationIndex')}
 
 			<input
 				type="number"
@@ -182,23 +179,20 @@
 			{/if}
 
 			<p class="text-sm">
-				The derivation index is the index of the address to generate. It starts at 0 and increments
-				by 1 for each new address / bitcoin payment request on be-BOP. DO NOT CHANGE THIS VALUE
-				unless you know what you are doing. It can lead to reusing existing addresses or creating
-				addresses not detected by your wallet.
+				{t('admin.bitcoinNodeless.derivationIndexDescription')}
 			</p>
 		</label>
 
 		<label class="form-label">
-			Mempool URL
+			{t('admin.bitcoinNodeless.mempoolUrl')}
 			<input type="url" name="mempoolUrl" class="form-input" bind:value={mempoolUrl} required />
 			{#if form?.errors?.mempoolUrl}
 				<p class="text-red-500 text-sm mt-1">{form.errors.mempoolUrl}</p>
 			{/if}
 			<p class="text-sm">
-				The URL of the mempool API to use, to check incoming funds on the generated addresses. You
-				can add a /testnet suffix. The official API is rate-limited, but you can host your own as
-				the project is <a href="https://github.com/mempool/mempool" rel="noreferrer">open-source</a
+				{t('admin.bitcoinNodeless.mempoolUrlDescriptionBefore')}
+				<a href="https://github.com/mempool/mempool" rel="noreferrer"
+					>{t('admin.bitcoinNodeless.openSource')}</a
 				>.
 			</p>
 		</label>
@@ -210,37 +204,41 @@
 				class="form-checkbox"
 				bind:checked={skipUsedAddresses}
 			/>
-			Skip on-chain address to use for invoicing if it's already used
+			{t('admin.bitcoinNodeless.skipUsedAddresses')}
 		</label>
 
 		<div class="flex gap-2">
 			{#if alreadySet}
-				<button class="btn btn-black" type="submit" formaction="?/update">Update</button>
+				<button class="btn btn-black" type="submit" formaction="?/update"
+					>{t('admin.action.update')}</button
+				>
 				<button
 					class="btn btn-red ml-auto"
 					type="submit"
 					formaction="?/delete"
 					on:click={(e) =>
-						confirm('Delete bitcoin nodeless configuration? This action cannot be undone.')
+						confirm(t('admin.bitcoinNodeless.deleteConfigurationConfirm'))
 							? true
-							: e.preventDefault()}>Delete configuration</button
+							: e.preventDefault()}>{t('admin.bitcoinNodeless.deleteConfiguration')}</button
 				>
 			{:else}
-				<button class="btn btn-black" type="submit" formaction="?/initialize">Set up</button>
+				<button class="btn btn-black" type="submit" formaction="?/initialize"
+					>{t('admin.bitcoinNodeless.setUp')}</button
+				>
 			{/if}
 		</div>
 	</form>
 {/key}
 
 {#if data.nextAddresses.length}
-	<h2 class="text-2xl">Next addresses</h2>
+	<h2 class="text-2xl">{t('admin.bitcoinNodeless.nextAddresses')}</h2>
 
-	<p>Those will be the next addresses generated by be-BOP</p>
+	<p>{t('admin.bitcoinNodeless.nextAddressesDescription')}</p>
 
 	{#if data.hasAlreadyUsedNextAddresses}
 		<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 text-sm text-yellow-700">
-			! <strong>Warning:</strong> At least one address was already used. Use a specific wallet XPub for
-			your be-BOP or define another derivation address to avoid double-use of your address.
+			! <strong>{t('admin.bitcoinNodeless.warning')}</strong>
+			{t('admin.bitcoinNodeless.alreadyUsedAddressWarning')}
 		</div>
 	{/if}
 
@@ -250,7 +248,7 @@
 				- {addressData.address}
 				{#if addressData.isUsed}
 					<span class="text-xs bg-yellow-200 text-yellow-900 px-2 py-1 rounded">
-						! already used
+						! {t('admin.bitcoinNodeless.alreadyUsed')}
 					</span>
 				{/if}
 			</li>

@@ -1,4 +1,8 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
+
 	type ImportTypeTypes = 'global' | 'catalog' | 'shopConfig';
 
 	export let data;
@@ -13,20 +17,20 @@
 </script>
 
 {#if form?.success}
-	<p class="alert-success">Data imported</p>
+	<p class="alert-success">{t('admin.backup.importSuccess')}</p>
 {/if}
 
 {#if form?.message === 'warning'}
-	<p class="alert-warning">Some files are corrupted</p>
+	<p class="alert-warning">{t('admin.backup.importWarning')}</p>
 {/if}
 
 {#if form?.message === 'error'}
-	<p class="alert-error">Some files haven't been imported</p>
+	<p class="alert-error">{t('admin.backup.importErrorMessage')}</p>
 {/if}
 
-<h1 class="text-3xl">Import backup</h1>
+<h1 class="text-3xl">{t('admin.backup.importTitle')}</h1>
 <form method="post" enctype="multipart/form-data" class="flex flex-col gap-4">
-	<label for="file">Upload your file</label>
+	<label for="file">{t('admin.backup.uploadFile')}</label>
 	<input
 		type="file"
 		id="file"
@@ -36,7 +40,7 @@
 	/>
 
 	<div class="flex flex-col gap-2">
-		<h2 class="text-2xl">Import type</h2>
+		<h2 class="text-2xl">{t('admin.backup.importType')}</h2>
 
 		<label class="checkbox-label">
 			<input
@@ -46,7 +50,7 @@
 				name="importType"
 				value="global"
 			/>
-			Global
+			{t('admin.backup.importTypeGlobal')}
 		</label>
 
 		<label class="checkbox-label">
@@ -57,7 +61,7 @@
 				name="importType"
 				value="catalog"
 			/>
-			Catalog
+			{t('admin.backup.importTypeCatalog')}
 		</label>
 
 		<label class="checkbox-label">
@@ -68,16 +72,16 @@
 				name="importType"
 				value="shopConfig"
 			/>
-			Shop configuration
+			{t('admin.backup.importTypeShopConfig')}
 		</label>
 	</div>
 
 	<div class="flex flex-col gap-2">
-		<h2 class="text-2xl">Specific import</h2>
+		<h2 class="text-2xl">{t('admin.backup.specificImport')}</h2>
 
 		<label class="checkbox-label">
 			<input type="checkbox" class="form-checkbox" name="importOrders" checked={importOrders} />
-			Orders
+			{t('admin.backup.orders')}
 		</label>
 		<label class="checkbox-label">
 			<input
@@ -86,12 +90,12 @@
 				name="includePastChallenges"
 				checked={includePastChallenges}
 			/>
-			Passed challenges
+			{t('admin.backup.passedChallenges')}
 		</label>
 
 		<label class="checkbox-label">
 			<input type="checkbox" class="form-checkbox" name="importFiles" bind:checked={importFiles} />
-			Import Pictures & Digital Files
+			{t('admin.backup.importFiles')}
 		</label>
 
 		<!-- {#if importFiles}
@@ -104,5 +108,5 @@
 		{/if} -->
 	</div>
 
-	<button type="submit" class="btn btn-black self-start">Import</button>
+	<button type="submit" class="btn btn-black self-start">{t('admin.backup.importButton')}</button>
 </form>

@@ -5,6 +5,9 @@
 	import { MultiSelect } from 'svelte-multiselect';
 	import { formatInTimeZone } from 'date-fns-tz';
 	import OrdersList from '$lib/components/OrdersList.svelte';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 
@@ -29,7 +32,7 @@
 
 	function checkForm(event: SubmitEvent) {
 		if (endsAt < beginsAt) {
-			endsAtElement.setCustomValidity('End date must be after beginning date');
+			endsAtElement.setCustomValidity(t('admin.challenge.endDateAfterBegin'));
 			endsAtElement.reportValidity();
 			event.preventDefault();
 			return;
@@ -39,35 +42,35 @@
 	}
 
 	function confirmDelete(event: Event) {
-		if (!confirm('Would you like to delete this Challenge?')) {
+		if (!confirm(t('admin.challenge.confirmDelete'))) {
 			event.preventDefault();
 		}
 	}
 </script>
 
-<h1 class="text-3xl">Edit a challenge</h1>
+<h1 class="text-3xl">{t('admin.challenge.editTitle')}</h1>
 
 <form method="post" class="flex flex-col gap-4" on:submit={checkForm}>
 	<label class="form-label">
-		Challenge slug for CMS integration
+		{t('admin.challenge.slugForCms')}
 		<input type="text" disabled class="form-input" value={data.challenge._id} />
 	</label>
 
 	<label class="form-label">
-		Challenge name
+		{t('admin.challenge.challengeName')}
 		<input
 			class="form-input"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="name"
 			value={data.challenge.name}
-			placeholder="Challenge name"
+			placeholder={t('admin.challenge.challengeName')}
 			required
 		/>
 	</label>
 
 	<label class="form-label">
-		Mode
+		{t('admin.challenge.mode')}
 		<select class="form-input" value={data.challenge.mode} disabled>
 			{#each ['moneyAmount', 'totalProducts'] as option}
 				<option value={option}>{upperFirst(option)}</option>
@@ -76,21 +79,23 @@
 	</label>
 
 	<label class="form-label">
-		Goal
+		{t('admin.challenge.goal')}
 		<input
 			class="form-input"
 			type="number"
 			name="goalAmount"
 			min="0"
 			value={data.challenge.goal.amount}
-			placeholder={data.challenge.mode === 'moneyAmount' ? 'Amount' : 'Quantity'}
+			placeholder={data.challenge.mode === 'moneyAmount'
+				? t('admin.challenge.amount')
+				: t('admin.challenge.quantity')}
 			step={data.challenge.mode === 'moneyAmount' ? 'any' : '1'}
 			required
 		/>
 	</label>
 	{#if data.challenge.mode === 'moneyAmount'}
 		<label class="form-label w-full">
-			Currency
+			{t('admin.challenge.currency')}
 			<select name="currency" class="form-input" value={data.challenge.goal.currency} disabled>
 				{#each CURRENCIES as currency}
 					<option value={currency}>{currency}</option>
@@ -98,10 +103,13 @@
 			</select>
 		</label>
 		<label class="form-label w-full">
-			Ratio
+			{t('admin.challenge.ratio')}
 			<select name="ratio" class="form-input" value={ratio} disabled>
 				{#each ['total', 'global', 'perProduct'] as ratio}
-					<option value={ratio}>{ratio === 'total' ? upperFirst(ratio) : `Ratio (${ratio})`}</option
+					<option value={ratio}
+						>{ratio === 'total'
+							? upperFirst(ratio)
+							: t('admin.challenge.ratioOption', { ratio })}</option
 					>
 				{/each}
 			</select>
@@ -109,7 +117,7 @@
 		{#if data.challenge.ratio === 'global'}
 			<div class="grid grid-cols-2 gap-4">
 				<label class="form-label">
-					Ratio value (global)
+					{t('admin.challenge.ratioValueGlobal')}
 					<input
 						class="form-input"
 						type="number"
@@ -136,11 +144,11 @@
 			class="form-checkbox"
 			bind:checked={progressChanged}
 		/>
-		Edit progress
+		{t('admin.challenge.editProgress')}
 	</label>
 	<input type="hidden" name="oldProgress" value={data.challenge.progress} />
 	<label class="form-label">
-		Progress
+		{t('admin.challenge.progress')}
 		<input
 			class="form-input"
 			name="progress"
@@ -152,7 +160,7 @@
 	</label>
 
 	<label class="form-label">
-		Beginning date
+		{t('admin.challenge.beginningDate')}
 
 		<input
 			class="form-input"
@@ -166,7 +174,7 @@
 	<input type="hidden" name="beginsAt" value={beginsAtISO} />
 
 	<label class="form-label">
-		Ending date
+		{t('admin.challenge.endingDate')}
 
 		<input
 			class="form-input"
@@ -183,7 +191,7 @@
 
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
-		Products
+		{t('admin.challenge.products')}
 		<MultiSelect
 			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			name="productIds"
@@ -196,25 +204,30 @@
 	</label>
 
 	<div class="flex flex-row justify-between gap-2">
-		<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
-		<a href="/challenges/{data.challenge._id}" class="btn body-mainCTA">View</a>
+		<input
+			type="submit"
+			class="btn btn-blue text-white"
+			formaction="?/update"
+			value={t('admin.action.update')}
+		/>
+		<a href="/challenges/{data.challenge._id}" class="btn body-mainCTA"
+			>{t('admin.challenge.view')}</a
+		>
 
 		<input
 			type="submit"
 			class="btn btn-red text-white ml-auto"
 			formaction="?/delete"
-			value="Delete"
+			value={t('admin.challenge.delete')}
 			on:click={confirmDelete}
 		/>
 	</div>
-	<h1 class="text-3xl">List of orders</h1>
+	<h1 class="text-3xl">{t('admin.challenge.listOfOrders')}</h1>
 	<p>
-		Those are full orders made and fully paid during the challenge periods, and including at least
-		one product whitelisted on the Challenge
+		{t('admin.challenge.ordersDescription1')}
 	</p>
 	<p>
-		The display amounts are those from order total. It's not necessarily the amount added to the
-		challenge gauge
+		{t('admin.challenge.ordersDescription2')}
 	</p>
 	<OrdersList orders={data.orders} />
 </form>

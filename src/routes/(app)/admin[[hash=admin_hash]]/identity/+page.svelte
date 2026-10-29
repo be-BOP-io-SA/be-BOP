@@ -11,16 +11,16 @@
 	let bankAccountHolder = id?.bank?.accountHolder ?? '';
 	let bankAccountHolderAddress = id?.bank?.accountHolderAddress ?? '';
 
-	const { sortedCountryCodes, countryName } = useI18n();
+	const { t, sortedCountryCodes, countryName } = useI18n();
 </script>
 
-<h1 class="text-3xl">Seller identity</h1>
+<h1 class="text-3xl">{t('admin.identity.sellerIdentity')}</h1>
 
 <form class="contents" method="post">
-	<h2 class="text-2xl">Legal information</h2>
+	<h2 class="text-2xl">{t('admin.identity.legalInformation')}</h2>
 
 	<label class="form-label">
-		Business name
+		{t('admin.identity.businessName')}
 		<input
 			type="text"
 			name="businessName"
@@ -31,7 +31,7 @@
 	</label>
 
 	<label class="form-label">
-		VAT number
+		{t('admin.identity.vatNumber')}
 		<input
 			type="text"
 			name="vatNumber"
@@ -40,10 +40,10 @@
 		/>
 	</label>
 
-	<h2 class="text-2xl">Company address</h2>
+	<h2 class="text-2xl">{t('admin.identity.companyAddress')}</h2>
 
 	<label class="form-label">
-		Street
+		{t('admin.identity.street')}
 		<input
 			type="text"
 			name="address.street"
@@ -54,7 +54,7 @@
 	</label>
 
 	<label class="form-label">
-		Country
+		{t('admin.identity.country')}
 		<select name="address.country" class="form-input max-w-[25rem]">
 			{#each sortedCountryCodes() as countryCode}
 				<option value={countryCode} selected={countryCode === id?.address?.country}>
@@ -66,7 +66,7 @@
 
 	<div class="flex flex-wrap gap-2">
 		<label class="form-label">
-			State
+			{t('admin.identity.state')}
 			<input
 				type="text"
 				name="address.state"
@@ -76,7 +76,7 @@
 		</label>
 
 		<label class="form-label">
-			City
+			{t('admin.identity.city')}
 			<input
 				type="text"
 				name="address.city"
@@ -87,7 +87,7 @@
 		</label>
 
 		<label class="form-label">
-			ZIP code
+			{t('admin.identity.zipCode')}
 			<input
 				type="text"
 				name="address.zip"
@@ -98,10 +98,10 @@
 		</label>
 	</div>
 
-	<h2 class="text-2xl">Contact information</h2>
+	<h2 class="text-2xl">{t('admin.identity.contactInformation')}</h2>
 
 	<label class="form-label">
-		Email
+		{t('admin.identity.email')}
 		<input
 			type="email"
 			name="contact.email"
@@ -112,7 +112,7 @@
 	</label>
 
 	<label class="form-label">
-		Phone
+		{t('admin.identity.phone')}
 		<input
 			type="tel"
 			name="contact.phone"
@@ -121,10 +121,10 @@
 		/>
 	</label>
 
-	<h2 class="text-2xl">Bank account</h2>
+	<h2 class="text-2xl">{t('admin.identity.bankAccount')}</h2>
 
 	<label class="form-label">
-		Account holder name
+		{t('admin.identity.accountHolderName')}
 		<input
 			type="text"
 			name="bank.accountHolder"
@@ -135,7 +135,7 @@
 	</label>
 
 	<label class="form-label">
-		Account holder address
+		{t('admin.identity.accountHolderAddress')}
 		<input
 			type="text"
 			name="bank.accountHolderAddress"
@@ -146,7 +146,7 @@
 	</label>
 
 	<label class="form-label">
-		IBAN
+		{t('admin.identity.iban')}
 		<input
 			type="text"
 			name="bank.iban"
@@ -157,7 +157,7 @@
 	</label>
 
 	<label class="form-label">
-		BIC
+		{t('admin.identity.bic')}
 		<input
 			type="text"
 			name="bank.bic"
@@ -167,16 +167,16 @@
 		/>
 	</label>
 
-	<h2 class="text-2xl">Invoice Information</h2>
+	<h2 class="text-2xl">{t('admin.identity.invoiceInformation')}</h2>
 	<button
 		type="button"
 		class="btn btn-blue self-start"
 		on:click={() => (issuerInfo = mainShopInfo?.invoice?.issuerInfo)}
-		>Fill with main shop informations</button
+		>{t('admin.identity.fillWithMainShopInformations')}</button
 	>
 
 	<label class="form-label">
-		Very-top-right issuer information
+		{t('admin.identity.veryTopRightIssuerInformation')}
 		<textarea
 			name="invoice.issuerInfo"
 			class="form-input max-w-[25rem]"
@@ -184,10 +184,10 @@
 			value={issuerInfo ?? ''}
 		/>
 		<p class="text-sm">
-			This is completely optional. It will be printed on the top-right corner of the invoice.
+			{t('admin.identity.issuerInfoHelp')}
 		</p>
 	</label>
 	<div>
-		<button type="submit" class="btn btn-black self-start">Update</button>
+		<button type="submit" class="btn btn-black self-start">{t('admin.action.update')}</button>
 	</div>
 </form>

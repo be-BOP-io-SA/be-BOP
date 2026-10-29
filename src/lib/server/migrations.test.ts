@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { ObjectId } from 'mongodb';
 import { cleanDb } from './test-utils';
 import { collections, withTransaction } from './database';
-import { migrations } from './migrations';
+import { ensureDefaultSearchlist, ensureSearchSearchlist, migrations } from './migrations';
 
 function migration2492() {
 	const migration = migrations.find((m) => m._id.equals(new ObjectId('6b1f4880e92e590e85af2492')));
@@ -72,5 +72,31 @@ describe('migration #2492 — drop single-currency (SAT) amount from order.vat',
 
 		const after = await collections.orders.findOne({ _id });
 		expect(after?.vat).toEqual([{ rate: 8.1, country: 'CH' }]);
+	});
+});
+
+describe('built-in searchlists seeding', () => {
+	it('survives several instances seeding an empty database at the same time', async () => {
+		await cleanDb();
+
+		await Promise.all(
+			Array.from({ length: 5 }, () =>
+				Promise.all([ensureDefaultSearchlist(), ensureSearchSearchlist()])
+			)
+		);
+
+		expect((await collections.searchlists.find().toArray()).map((list) => list._id).sort()).toEqual(
+			['default', 'search']
+		);
+	});
+
+	it('leaves a list the shop already customised untouched', async () => {
+		await cleanDb();
+		await ensureDefaultSearchlist();
+		await collections.searchlists.updateOne({ _id: 'default' }, { $set: { name: 'Mine' } });
+
+		await ensureDefaultSearchlist();
+
+		expect((await collections.searchlists.findOne({ _id: 'default' }))?.name).toBe('Mine');
 	});
 });

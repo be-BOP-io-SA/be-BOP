@@ -4,6 +4,9 @@
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
 	import { onMount } from 'svelte';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	export let form;
@@ -19,37 +22,37 @@
 	});
 </script>
 
-<h1 class="text-3xl">Lightning node</h1>
+<h1 class="text-3xl">{t('admin.lnd.title')}</h1>
 
-<h2 class="text-2xl">Status</h2>
+<h2 class="text-2xl">{t('admin.lnd.status')}</h2>
 
 <ul>
-	<li>testnet: {data.info.testnet}</li>
-	<li>alias: {data.info.alias}</li>
-	<li>autopilot active: {data.autopilotActive}</li>
-	<li>pending channels: {data.info.num_pending_channels}</li>
-	<li>active channels: {data.info.num_active_channels}</li>
-	<li>inactive channels: {data.info.num_inactive_channels}</li>
-	<li>synced to chain: {data.info.synced_to_chain}</li>
-	<li>synced to graph: {data.info.synced_to_graph}</li>
-	<li>peers: {data.info.num_peers}</li>
-	<li class="break-words">node url: {data.info.uris.join(' / ')}</li>
+	<li>{t('admin.lnd.testnet', { value: String(data.info.testnet) })}</li>
+	<li>{t('admin.lnd.alias', { value: data.info.alias })}</li>
+	<li>{t('admin.lnd.autopilotActive', { value: String(data.autopilotActive) })}</li>
+	<li>{t('admin.lnd.pendingChannels', { value: data.info.num_pending_channels })}</li>
+	<li>{t('admin.lnd.activeChannels', { value: data.info.num_active_channels })}</li>
+	<li>{t('admin.lnd.inactiveChannels', { value: data.info.num_inactive_channels })}</li>
+	<li>{t('admin.lnd.syncedToChain', { value: String(data.info.synced_to_chain) })}</li>
+	<li>{t('admin.lnd.syncedToGraph', { value: String(data.info.synced_to_graph) })}</li>
+	<li>{t('admin.lnd.peers', { value: data.info.num_peers })}</li>
+	<li class="break-words">{t('admin.lnd.nodeUrl', { value: data.info.uris.join(' / ') })}</li>
 	{#if data.info.uris.length}
 		<li>
-			<b>LN url:</b>
+			<b>{t('admin.lnd.lnUrl')}</b>
 			<a href="lightning:ln@{$page.url.hostname}" class="body-hyperlink">ln@{$page.url.hostname}</a>
-			- any other @{$page.url.hostname} address will also work
+			{t('admin.lnd.anyOtherAddressWorks', { hostname: $page.url.hostname })}
 		</li>
 	{/if}
 </ul>
 
 {#if !data.autopilotActive}
 	<form action="?/activateAutopilot" method="POST">
-		<button type="submit" class="btn btn-black">Activate autopilot</button>
+		<button type="submit" class="btn btn-black">{t('admin.lnd.activateAutopilot')}</button>
 	</form>
 {/if}
 
-<h2 class="text-2xl">Balance</h2>
+<h2 class="text-2xl">{t('admin.lnd.balance')}</h2>
 
 <ul>
 	<li class="flex items-center gap-2">
@@ -58,7 +61,8 @@
 				currency="SAT"
 				amount={data.walletBalance}
 				convertedTo={data.currencies.priceReference}
-			/>){/if} in the wallet
+			/>){/if}
+		{t('admin.lnd.inTheWallet')}
 	</li>
 	<li class="flex items-center gap-2">
 		<PriceTag amount={data.channelsBalance} currency="SAT" convertedTo="SAT" inline />
@@ -66,11 +70,12 @@
 				currency="SAT"
 				amount={data.channelsBalance}
 				convertedTo={data.currencies.priceReference}
-			/>){/if} in channels
+			/>){/if}
+		{t('admin.lnd.inChannels')}
 	</li>
 </ul>
 
-<h2 class="text-2xl">Invoices</h2>
+<h2 class="text-2xl">{t('admin.lnd.invoices')}</h2>
 
 <SetLightningQrCodeDescription
 	bind:invoiceDescription={data.lightningInvoiceDescription}
@@ -78,18 +83,20 @@
 	showThirdPartyWarning={false}
 />
 
-<h2 class="text-2xl">Channels</h2>
+<h2 class="text-2xl">{t('admin.lnd.channels')}</h2>
 
 <ul>
 	{#each data.channels as channel}
 		<li>
-			Channel {channel.chan_id}: {channel.capacity.toLocaleString('en')} capacity / {channel.local_balance.toLocaleString(
-				'en'
-			)} local balance /
-			{channel.remote_balance.toLocaleString('en')} remote balance
+			{t('admin.lnd.channelSummary', {
+				chanId: channel.chan_id,
+				capacity: channel.capacity.toLocaleString('en'),
+				localBalance: channel.local_balance.toLocaleString('en'),
+				remoteBalance: channel.remote_balance.toLocaleString('en')
+			})}
 		</li>
 	{:else}
-		No channels open
+		{t('admin.lnd.noChannelsOpen')}
 	{/each}
 </ul>
 
@@ -111,7 +118,7 @@
 		}}
 	>
 		<label class="form-label">
-			Url
+			{t('admin.lnd.url')}
 			<input
 				type="text"
 				name="url"
@@ -122,17 +129,17 @@
 			/>
 		</label>
 		<label class="form-label">
-			Method
+			{t('admin.lnd.method')}
 			<select class="form-input" name="method" bind:value={rpcMethod}>
 				<option value="GET">GET</option>
 				<option value="POST">POST</option>
 			</select>
 		</label>
 		<label class="form-label">
-			Params
+			{t('admin.lnd.params')}
 			<textarea cols="30" rows="10" name="params" class="form-input" bind:value={rpcParams} />
 		</label>
-		<button class="btn btn-black self-start" type="submit">Send</button>
+		<button class="btn btn-black self-start" type="submit">{t('admin.lnd.send')}</button>
 	</form>
 
 	{#if form?.rpcFail}

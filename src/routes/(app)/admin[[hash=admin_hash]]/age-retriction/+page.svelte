@@ -1,9 +1,13 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
+
 	export let data;
 	export let form;
 </script>
 
-<h1 class="text-2xl">Age restriction</h1>
+<h1 class="text-2xl">{t('admin.ageRetriction.title')}</h1>
 {#if form?.success}
 	<div class="alert alert-success">{form.success}</div>
 {/if}
@@ -15,10 +19,10 @@
 			class="form-checkbox"
 			checked={data.ageRestriction.enabled}
 		/>
-		My online business needs age limitation & validation
+		{t('admin.ageRetriction.enableLabel')}
 	</label>
 	<label class="form-label">
-		Legal reason
+		{t('admin.ageRetriction.legalReason')}
 		<input
 			type="input"
 			name="legalReason"
@@ -26,5 +30,5 @@
 			value={data.ageRestriction.legalReason}
 		/>
 	</label>
-	<input type="submit" value="Update" class="btn body-mainCTA self-start" />
+	<input type="submit" value={t('admin.action.update')} class="btn body-mainCTA self-start" />
 </form>

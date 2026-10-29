@@ -2,6 +2,9 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
 	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	export let form;
@@ -30,17 +33,22 @@
 
 {#if !data.phoenixd.enabled && !data.configManagedByEnvVars}
 	<p>
-		PhoenixD is not active yet. Follow <a
-			href="https://phoenix.acinq.co/server/get-started"
-			class="body-hyperlink underline">this procedure</a
-		> to install it on the same server as be-BOP.
+		{t('admin.phoenixd.notActiveYetBefore')}
+		<a href="https://phoenix.acinq.co/server/get-started" class="body-hyperlink underline"
+			>{t('admin.phoenixd.thisProcedure')}</a
+		>
+		{t('admin.phoenixd.notActiveYetAfter')}
 	</p>
 
-	<p>Once done, click on "Detect PhoenixD Server" button</p>
+	<p>
+		{t('admin.phoenixd.onceDoneClickDetect', {
+			buttonLabel: t('admin.phoenixd.detectServerButton')
+		})}
+	</p>
 
 	<form method="POST" class="flex flex-col gap-2" action="?/detect">
 		<label class="form-label">
-			PhoenixD URL
+			{t('admin.phoenixd.urlLabel')}
 			<input
 				type="url"
 				name="url"
@@ -50,10 +58,11 @@
 				required
 			/>
 		</label>
-		<p>If you run be-BOP (but not phoenixd) inside Docker:</p>
+		<p>{t('admin.phoenixd.dockerIntro')}</p>
 		<ul class="list-disc ml-4 mb-4">
 			<li>
-				Change the url to <a
+				{t('admin.phoenixd.changeUrlTo')}
+				<a
 					href="http://host.docker.internal:9740"
 					class="body-hyperlink underline"
 					on:click|preventDefault={() => (defaultUrl = 'http://host.docker.internal:9740')}
@@ -61,28 +70,33 @@
 				>
 			</li>
 			<li>
-				Run phoenixd with <code class="font-mono">--http-bind-ip={data.dockerIp || '0.0.0.0'}</code>
+				{t('admin.phoenixd.runPhoenixdWith')}
+				<code class="font-mono">--http-bind-ip={data.dockerIp || '0.0.0.0'}</code>
 			</li>
 			<li>
-				Make sure that your firewall accepts connections on port 9740 {data.dockerIp
-					? `from ${data.dockerIp}`
-					: 'from your docker container'}. For example, with ufw:
+				{t('admin.phoenixd.firewallPort', {
+					source: data.dockerIp
+						? t('admin.phoenixd.fromDockerIp', { dockerIp: data.dockerIp })
+						: t('admin.phoenixd.fromDockerContainer')
+				})}
 				<code class="font-mono">ufw allow from any to {data.dockerIp || 'any'} port 9740</code>
 			</li>
 		</ul>
 
-		<button class="btn btn-black self-start" type="submit">Detect PhoenixD Server</button>
+		<button class="btn btn-black self-start" type="submit"
+			>{t('admin.phoenixd.detectServerButton')}</button
+		>
 	</form>
 
 	{#if $page.status >= 400 && form?.message}
 		<p class="text-red-500">{form.message}</p>
 	{/if}
 {:else}
-	<p>Note that PhoenixD lightning payments have a max expiration of one hour.</p>
+	<p>{t('admin.phoenixd.maxExpirationNote')}</p>
 	<form class="contents" method="POST" action="?/update">
 		{#if !data.configManagedByEnvVars}
 			<label class="form-label">
-				PhoenixD http password (from phoenix.conf)
+				{t('admin.phoenixd.httpPasswordLabel')}
 				<input
 					type="password"
 					name="password"
@@ -94,30 +108,33 @@
 		{:else}
 			<div class="bg-gray-100 p-3 rounded">
 				<p class="text-gray-500">
-					Your Phoenixd settings are managed through environment variables and cannot be viewed or
-					edited from the be-BOP back office.
+					{t('admin.phoenixd.managedByEnvVars')}
 				</p>
 			</div>
 		{/if}
 
 		<div class="flex gap-2">
 			{#if !data.configManagedByEnvVars}
-				<button class="btn btn-black" type="submit">Save</button>
-				<button class="btn btn-red" type="submit" form="disableForm">Reset</button>
+				<button class="btn btn-black" type="submit">{t('admin.action.save')}</button>
+				<button class="btn btn-red" type="submit" form="disableForm"
+					>{t('admin.action.reset')}</button
+				>
 			{/if}
 			<button class="btn body-mainCTA" type="button" on:click={() => (showBolt12 = !showBolt12)}
-				>Get bolt12 address</button
+				>{t('admin.phoenixd.getBolt12AddressButton')}</button
 			>
 
 			{#if data.nodeInfo}
 				<button class="btn btn-blue ml-auto" type="button" on:click={() => showDialog()}
-					>Withdraw</button
+					>{t('admin.phoenixd.withdrawButton')}</button
 				>
 			{/if}
 		</div>
 		{#if showBolt12}
-			<p class="break-words">Bolt12 address: {data.bolt12Address}</p>
-			<p>To use it on page CMS, use this code : <code>[QRCode=Bolt12]</code></p>
+			<p class="break-words">
+				{t('admin.phoenixd.bolt12AddressValue', { address: data.bolt12Address ?? '' })}
+			</p>
+			<p>{t('admin.phoenixd.pageCmsCode')} <code>[QRCode=Bolt12]</code></p>
 		{/if}
 	</form>
 	<form method="POST" action="?/disable" id="disableForm"></form>
@@ -131,7 +148,11 @@
 						alert(result.error?.message ?? JSON.stringify(result.error));
 					} else if (result.type === 'success') {
 						console.log(result.data);
-						alert('Withdrawal successful\n\n' + JSON.stringify(result.data, null, 2));
+						alert(
+							t('admin.phoenixd.withdrawalSuccessful') +
+								'\n\n' +
+								JSON.stringify(result.data, null, 2)
+						);
 						withdrawDialog?.close();
 					}
 				};
@@ -146,7 +167,7 @@
 					name="withdrawMode"
 					value="bolt11"
 				/>
-				Lightning
+				{t('admin.phoenixd.lightningOption')}
 			</label>
 
 			<label class="checkbox-label">
@@ -157,22 +178,22 @@
 					name="withdrawMode"
 					value="bitcoin"
 				/>
-				Bitcoin
+				{t('admin.phoenixd.bitcoinOption')}
 			</label>
 
 			{#if withdrawMode === 'bitcoin'}
 				<label class="form-label">
-					Address
+					{t('admin.phoenixd.addressLabel')}
 					<input type="text" name="address" class="form-input" placeholder="bc1p..." required />
 				</label>
 
 				<label class="form-label">
-					Amount (sats)
+					{t('admin.phoenixd.amountSatsLabel')}
 					<input type="number" name="amount" class="form-input" required />
 				</label>
 
 				<label class="form-label">
-					Fee rate (sats/vbyte)
+					{t('admin.phoenixd.feeRateLabel')}
 					<input
 						type="number"
 						name="feeRate"
@@ -181,35 +202,35 @@
 						required
 					/>
 					<p>
-						Checkout
+						{t('admin.phoenixd.checkoutMempoolBefore')}
 						<a href="https://mempool.space" class="body-hyperlink" target="_blank">mempool.space</a>
-						to choose a fee rate.
+						{t('admin.phoenixd.checkoutMempoolAfter')}
 					</p>
 				</label>
 			{:else}
 				<label class="form-label">
-					Bolt11 Lightning invoice
+					{t('admin.phoenixd.bolt11InvoiceLabel')}
 					<input type="text" name="address" class="form-input" placeholder="lnbc..." required />
 				</label>
 
 				<label class="form-label">
-					Amount (sats)
+					{t('admin.phoenixd.amountSatsLabel')}
 					<input
 						type="number"
 						name="amount"
 						class="form-input"
-						placeholder="optional, if not set determined by the invoice"
+						placeholder={t('admin.phoenixd.amountOptionalPlaceholder')}
 					/>
 				</label>
 			{/if}
 
 			<div class="flex gap-2">
-				<button class="btn btn-black" type="submit">Withdraw</button>
+				<button class="btn btn-black" type="submit">{t('admin.phoenixd.withdrawButton')}</button>
 
 				<button
 					class="btn body-mainCTA ml-auto"
 					type="button"
-					on:click={() => withdrawDialog?.close()}>Cancel</button
+					on:click={() => withdrawDialog?.close()}>{t('admin.phoenixd.cancelButton')}</button
 				>
 			</div>
 		</form>
@@ -217,22 +238,23 @@
 
 	{#if data.nodeInfo === null}
 		<p class="text-red-500">
-			There was an error, check your http password and if PhoenixD is running/listening on <a
-				href={defaultUrl}
-				class="body-hyperlink underline">{defaultUrl}</a
-			>. If you want to change the url, click on the "Reset" button.
+			{t('admin.phoenixd.connectionErrorBefore')}
+			<a href={defaultUrl} class="body-hyperlink underline">{defaultUrl}</a>{t(
+				'admin.phoenixd.connectionErrorAfter',
+				{ resetLabel: t('admin.action.reset') }
+			)}
 		</p>
 	{:else if data.nodeInfo}
-		<h2 class="text-2xl">Node info</h2>
+		<h2 class="text-2xl">{t('admin.phoenixd.nodeInfoTitle')}</h2>
 		<pre>{JSON.stringify(data.nodeInfo, null, 2)}</pre>
 	{/if}
 
 	{#if data.balance}
-		<h2 class="text-2xl">Balance</h2>
+		<h2 class="text-2xl">{t('admin.phoenixd.balanceTitle')}</h2>
 		<pre>{JSON.stringify(data.balance, null, 2)}</pre>
 	{/if}
 
-	<h2 class="text-2xl">Invoices</h2>
+	<h2 class="text-2xl">{t('admin.phoenixd.invoicesTitle')}</h2>
 
 	<SetLightningQrCodeDescription
 		bind:invoiceDescription={data.lightningInvoiceDescription}

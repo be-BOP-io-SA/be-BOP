@@ -7,8 +7,12 @@
 	import Select from 'svelte-select';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
+
 	let mode = 'moneyAmount';
 	let beginsAt = new Date().toJSON().slice(0, 10);
 	let endsAt = addMonths(new Date(), 30).toJSON().slice(0, 10);
@@ -21,7 +25,7 @@
 
 	function checkForm(event: SubmitEvent) {
 		if (endsAt < beginsAt) {
-			endsAtElement.setCustomValidity('End date must be after beginning date');
+			endsAtElement.setCustomValidity(t('admin.leaderboard.endDateAfterBeginning'));
 			endsAtElement.reportValidity();
 			event.preventDefault();
 			return;
@@ -29,35 +33,40 @@
 			endsAtElement.setCustomValidity('');
 		}
 	}
+
+	const modeLabels: Record<string, string> = {
+		moneyAmount: t('admin.leaderboard.modeMoneyAmount'),
+		totalProducts: t('admin.leaderboard.modeTotalProducts')
+	};
 </script>
 
-<h1 class="text-3xl">Add a leaderboard</h1>
+<h1 class="text-3xl">{t('admin.leaderboard.addLeaderboardTitle')}</h1>
 
 <form method="post" class="flex flex-col gap-4" on:submit={checkForm}>
 	<label class="form-label">
-		Leaderboard name
+		{t('admin.leaderboard.nameLabel')}
 		<input
 			class="form-input"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="name"
-			placeholder="leaderboard name"
+			placeholder={t('admin.leaderboard.namePlaceholder')}
 			required
 		/>
 	</label>
 
 	<label class="form-label">
-		Mode
+		{t('admin.leaderboard.modeLabel')}
 		<select class="form-input" name="mode" bind:value={mode}>
 			{#each ['moneyAmount', 'totalProducts'] as option}
-				<option value={option}>{upperFirst(option)}</option>
+				<option value={option}>{modeLabels[option] ?? upperFirst(option)}</option>
 			{/each}
 		</select>
 	</label>
 
 	{#if mode === 'moneyAmount'}
 		<label class="form-label w-full">
-			<CurrencyLabel label="currency" />
+			<CurrencyLabel label={t('admin.leaderboard.currencyLabel')} />
 			<Select
 				items={allCurrenciesOptions}
 				searchable={true}
@@ -70,7 +79,7 @@
 	{/if}
 	<div class="flex flex-wrap gap-4">
 		<label class="form-label">
-			Beginning date
+			{t('admin.leaderboard.beginningDate')}
 
 			<input
 				class="form-input"
@@ -83,7 +92,7 @@
 	</div>
 	<div class="flex flex-wrap gap-4">
 		<label class="form-label">
-			Ending date
+			{t('admin.leaderboard.endingDate')}
 
 			<input
 				class="form-input"
@@ -100,7 +109,7 @@
 
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label"
-		>Products
+		>{t('admin.leaderboard.productsLabel')}
 		<MultiSelect
 			--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 			name="productIds"
@@ -109,5 +118,9 @@
 		/>
 	</label>
 
-	<input type="submit" class="btn btn-blue self-start text-white" value="Submit" />
+	<input
+		type="submit"
+		class="btn btn-blue self-start text-white"
+		value={t('admin.leaderboard.submit')}
+	/>
 </form>

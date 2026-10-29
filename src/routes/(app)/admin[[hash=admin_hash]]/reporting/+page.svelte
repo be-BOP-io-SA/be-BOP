@@ -1,19 +1,23 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n.js';
-	import { invoiceNumberVariables, orderItemPrice, type Price } from '$lib/types/Order.js';
+	import { invoiceNumberVariables } from '$lib/types/Order.js';
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding.js';
-	import { sum } from '$lib/utils/sum.js';
-	import { sumCurrency } from '$lib/utils/sumCurrency.js';
 	import { toCurrency } from '$lib/utils/toCurrency';
 	import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
-	import { endOfDay, startOfDay } from 'date-fns';
+	import { parse } from 'devalue';
 	import MultiSelect from 'svelte-multiselect';
+	import type { PageData } from './$types';
+	import ReportingDetailTable from './ReportingDetailTable.svelte';
+	import ReportingPager from './ReportingPager.svelte';
+	import { columnsToCsv, toCsv, type ReportingColumn } from './reportingColumns';
+
+	type OrderRow = PageData['orderDetail']['rows'][number];
+	type ProductRow = PageData['productDetail']['rows'][number];
+	type PaymentRow = PageData['paymentDetail']['rows'][number];
 
 	export let data;
-	let tableOrder: HTMLTableElement;
-	let tableProduct: HTMLTableElement;
-	let tablePayment: HTMLTableElement;
 	let tableOrderSynthesis: HTMLTableElement;
 	let tableOrderSynthesisTag: HTMLTableElement;
 	let tablePaymentSynthesis: HTMLTableElement;
@@ -21,30 +25,23 @@
 	let tableDeliveryFeesSynthesis: HTMLTableElement;
 	let tableVATSynthesis: HTMLTableElement;
 
-	let includePending = false;
-	let includeExpired = false;
-	let includeCanceled = false;
-	let includePartiallyPaid = false;
-	let filterByTag = !!data.tagId;
-	let selectedPaymentMethod = data.paymentMethod ?? '';
+	let filterByTag = !!data.filters.tagId;
+	let selectedPaymentMethod = data.filters.paymentMethod ?? '';
+	let beginsAtInput = dateTimeLocalString(data.filters.beginsAt);
+	let endsAtInput = dateTimeLocalString(data.filters.endsAt);
 	let html = '';
 	let loadedHtml = false;
 	let htmlStatus = '';
 	let isLoading = false;
-	let selectedEmployees =
-		data.employeesAlias?.map((employee) => ({
-			value: employee,
-			label: employee
-		})) ?? [];
+	let selectedEmployees = data.filters.employeesAlias.map((employee) => ({
+		value: employee,
+		label: employee
+	}));
 
-	$: beginsAt = data.beginsAtStr ? new Date(data.beginsAtStr) : startOfDay(data.beginsAt);
-	$: endsAt = data.endsAtStr
-		? (() => {
-				const d = new Date(data.endsAtStr);
-				d.setSeconds(59, 999);
-				return d;
-		  })()
-		: endOfDay(data.endsAt);
+	$: beginsAt = data.filters.beginsAt;
+	$: endsAt = data.filters.endsAt;
+	$: synthesis = data.synthesis;
+	$: tagName = data.reportingTags.find((tag) => tag._id === data.filters.tagId)?.name;
 
 	function dateTimeLocalString(date: Date) {
 		return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date
@@ -56,80 +53,160 @@
 			.padStart(2, '0')}`;
 	}
 
-	const { locale, textAddress, countryName, t } = useI18n();
-	$: orders = data.orders.filter(
-		(order) => order.createdAt >= beginsAt && order.createdAt <= endsAt
-	);
-	$: paidOrders = orders.filter((order) => order.status === 'paid');
-	$: paymentMatchesFilter = (payment: { method: string; posSubtype?: string }) => {
-		if (!data.paymentMethod) {
-			return true;
-		}
-		if (payment.method !== data.paymentMethod) {
-			return false;
-		}
-		if (data.posSubtype && payment.posSubtype !== data.posSubtype) {
-			return false;
-		}
-		return true;
-	};
-	$: orderFiltered = orders.filter(
-		(order) =>
-			order.status === 'paid' ||
-			(includePending && order.status === 'pending') ||
-			(includeExpired && order.status === 'expired') ||
-			(includeCanceled && order.status === 'canceled') ||
-			(includePartiallyPaid && order.payments.find((payment) => payment.status === 'paid'))
-	);
-	$: orderSynthesis = {
-		count: paidOrders.length,
-		orderTotal: sumCurrency(
-			data.currencies.main,
-			paidOrders.map((order) => order.currencySnapshot.main.totalPrice)
-		)
-	};
-	$: orderSynthesisTag = {
-		count: paidOrders.length,
-		orderTotal: sumCurrency(
-			data.currencies.main,
-			paidOrders.flatMap((order) =>
-				order.items
-					.filter((item) => item.product.tagIds?.includes(data.tagId ?? ''))
-					.map((item) => ({
-						amount: orderItemPrice(item, 'main'),
-						currency: item.currencySnapshot.main.price.currency
-					}))
-			)
-		)
-	};
-	$: orderDeliveryFeesSynthesis = {
-		orderNumber: paidOrders.length,
-		orderFeesTotal: sumCurrency(
-			data.currencies.main,
-			paidOrders.map(
-				(order) =>
-					order.currencySnapshot.main.shippingPrice ?? { amount: 0, currency: data.currencies.main }
-			)
-		)
-	};
+	// The server has no idea of the admin's timezone, so the bounds travel as absolute instants.
+	function toIsoString(dateTimeLocal: string) {
+		const date = new Date(dateTimeLocal);
+		return isNaN(date.getTime()) ? '' : date.toISOString();
+	}
 
-	$: vatSynthesis = {
-		orderNumber: paidOrders.length,
-		total: sumCurrency(
-			data.currencies.main,
-			data.tagId
-				? paidOrders.flatMap(
-						(order) =>
-							order.items
-								.filter((item) => item.product.tagIds?.includes(data.tagId ?? ''))
-								.flatMap((item) => ({
-									amount: (orderItemPrice(item, 'main') * item.vatRate) / 100,
-									currency: item.currencySnapshot.main.price.currency
-								})) ?? []
-				  )
-				: paidOrders.flatMap((order) => order.currencySnapshot.main.vat ?? [])
-		)
-	};
+	const { locale, textAddress, countryName, t } = useI18n();
+
+	function formatDate(date: Date | undefined) {
+		return date?.toLocaleDateString($locale) ?? '';
+	}
+
+	function formatDateTime(date: Date | undefined) {
+		return date?.toLocaleString($locale);
+	}
+
+	$: orderColumns = [
+		{
+			header: t('admin.reporting.orderId'),
+			cell: (row) => row.number,
+			href: (row) => `/admin/order/${row._id}/json`
+		},
+		{
+			header: t('admin.reporting.orderUrl'),
+			cell: (row) => data.websiteLink + '/order/' + row._id
+		},
+		{
+			header: t('admin.reporting.orderDate'),
+			cell: (row) => formatDate(row.createdAt),
+			title: (row) => formatDateTime(row.createdAt)
+		},
+		{
+			header: t('admin.reporting.orderStatus'),
+			cell: (row) => row.status,
+			href: (row) => `/order/${row._id}`
+		},
+		{ header: t('admin.reporting.currency'), cell: () => data.currencies.main },
+		{
+			header: t('admin.reporting.amount'),
+			cell: (row) =>
+				toCurrency(data.currencies.main, row.totalPrice.amount, row.totalPrice.currency)
+		},
+		{
+			header: t('admin.reporting.billingCountry'),
+			cell: (row) => countryName(row.billingAddress?.country ?? row.ipCountry ?? '')
+		},
+		{
+			header: t('admin.reporting.billingInfo'),
+			cell: (row) => (row.billingAddress ? textAddress(row.billingAddress).replace(',', '/') : '')
+		},
+		{
+			header: t('admin.reporting.shippingCountry'),
+			cell: (row) => countryName(row.shippingAddress?.country ?? row.ipCountry ?? '')
+		},
+		{
+			header: t('admin.reporting.shippingInfo'),
+			cell: (row) => (row.shippingAddress ? textAddress(row.shippingAddress).replace(',', '/') : '')
+		},
+		{ header: t('admin.reporting.cart'), cell: (row) => row.productNames.join('|') }
+	] satisfies ReportingColumn<OrderRow>[];
+
+	$: productColumns = [
+		{
+			header: t('admin.reporting.productUrl'),
+			cell: (row) => data.websiteLink + '/product/' + row.productId
+		},
+		{ header: t('admin.reporting.productName'), cell: (row) => row.productName },
+		{ header: t('admin.reporting.quantity'), cell: (row) => row.quantity },
+		{ header: t('admin.reporting.deposit'), cell: (row) => row.depositPercentage ?? 100 },
+		{ header: t('admin.reporting.orderId'), cell: (row) => row.orderNumber },
+		{
+			header: t('admin.reporting.orderDate'),
+			cell: (row) => formatDate(row.orderCreatedAt),
+			title: (row) => formatDateTime(row.orderCreatedAt)
+		},
+		{ header: t('admin.reporting.currency'), cell: (row) => row.currency },
+		{ header: t('admin.reporting.price'), cell: (row) => row.price },
+		{ header: t('admin.reporting.vatRate'), cell: (row) => `${row.vatRate} %` }
+	] satisfies ReportingColumn<ProductRow>[];
+
+	$: paymentColumns = [
+		{ header: t('admin.reporting.orderId'), cell: (row) => row.orderNumber },
+		{
+			header: t('admin.reporting.invoiceId'),
+			cell: (row) =>
+				t(
+					row.status === 'paid'
+						? 'order.receipt.invoiceNumber'
+						: 'order.receipt.proformaInvoiceNumber',
+					{
+						...invoiceNumberVariables(
+							{ number: row.orderNumber, createdAt: row.orderCreatedAt, payments: [] },
+							row
+						),
+						paymentIndex: row.paymentIndex
+					}
+				)
+		},
+		{
+			header: t('admin.reporting.paymentDate'),
+			cell: (row) => formatDate(row.paidAt),
+			title: (row) => formatDateTime(row.paidAt)
+		},
+		{ header: t('admin.reporting.orderStatus'), cell: (row) => row.orderStatus },
+		{
+			header: t('admin.reporting.paymentMeanLower'),
+			cell: (row) =>
+				row.method === 'point-of-sale' && row.posSubtype
+					? `${row.method} (${
+							data.posSubtypes.find((subtype) => subtype.slug === row.posSubtype)?.name ||
+							row.posSubtype
+					  })`
+					: row.method
+		},
+		{
+			header: t('admin.reporting.paymentStatus'),
+			cell: (row) => row.status,
+			href: (row) => `/order/${row.orderId}/payment/${row.id}/receipt`
+		},
+		{ header: t('admin.reporting.paymentInfo'), cell: (row) => row.info },
+		{ header: t('admin.reporting.invoice'), cell: (row) => row.invoice?.number ?? '' },
+		{ header: t('admin.reporting.currency'), cell: () => data.currencies.main },
+		{
+			header: t('admin.reporting.amount'),
+			cell: (row) => toCurrency(data.currencies.main, row.mainPrice.amount, row.mainPrice.currency)
+		},
+		{ header: t('admin.reporting.cashedCurrency'), cell: (row) => row.price.currency },
+		{ header: t('admin.reporting.cashedAmount'), cell: (row) => row.price.amount },
+		{ header: t('admin.reporting.billingCountry'), cell: (row) => countryName(row.country ?? '') }
+	] satisfies ReportingColumn<PaymentRow>[];
+
+	function paymentSynthesisLabel(key: string) {
+		const sepIdx = key.indexOf(':');
+		const paymentMethod = sepIdx >= 0 ? key.slice(0, sepIdx) : key;
+		const rest = sepIdx >= 0 ? key.slice(sepIdx + 1) : '';
+		if (paymentMethod === 'custom' && rest) {
+			return rest;
+		}
+		const subtype =
+			paymentMethod === 'point-of-sale' && rest
+				? data.posSubtypes.find((s) => s.slug === rest)
+				: null;
+		return subtype ? `${paymentMethod} (${subtype.name})` : paymentMethod;
+	}
+
+	async function fetchRows<Row>(table: 'orders' | 'products' | 'payments' | 'receipts') {
+		const searchParams = new URLSearchParams($page.url.searchParams);
+		searchParams.set('table', table);
+		const resp = await fetch(`${$page.url.pathname}/rows?${searchParams}`);
+		if (!resp.ok) {
+			throw new Error(`Error while fetching ${table} rows`);
+		}
+		return parse(await resp.text()) as Row[];
+	}
 
 	function downloadCSV(csvData: string, filename: string) {
 		const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvData);
@@ -140,10 +217,36 @@
 		link.click();
 		document.body.removeChild(link);
 	}
+
+	async function exportDetailCsv<Row>(
+		table: 'orders' | 'products' | 'payments',
+		columns: ReportingColumn<Row>[],
+		filename: string
+	) {
+		try {
+			downloadCSV(columnsToCsv(columns, await fetchRows<Row>(table)), filename);
+		} catch (err) {
+			alert(err instanceof Error ? err.message : String(err));
+		}
+	}
+
+	function exportSynthesisCsv(tableElement: HTMLTableElement, filename: string) {
+		if (!tableElement) {
+			return;
+		}
+		const cellsText = (row: Element, selector: string) =>
+			Array.from(row.querySelectorAll<HTMLElement>(selector)).map((cell) => cell.innerText.trim());
+		const header = cellsText(tableElement.querySelector('thead tr') ?? tableElement, 'th');
+		const rows = Array.from(tableElement.querySelectorAll('tbody tr')).map((row) =>
+			cellsText(row, 'td')
+		);
+		downloadCSV(toCsv(header, rows), filename);
+	}
+
 	async function downloadAllOrdersJson() {
-		const ids = orderFiltered.map((order) => order._id);
+		const ids = (await fetchRows<OrderRow>('orders')).map((order) => order._id);
 		if (ids.length === 0) {
-			alert('No orders to export');
+			alert(t('admin.reporting.noOrdersToExport'));
 			return;
 		}
 		const resp = await fetch('/admin/orders/json', {
@@ -152,7 +255,7 @@
 			body: JSON.stringify({ ids })
 		});
 		if (!resp.ok) {
-			alert('Error while downloading orders JSON');
+			alert(t('admin.reporting.errorDownloadingOrdersJson'));
 			return;
 		}
 		const url = URL.createObjectURL(await resp.blob());
@@ -164,112 +267,54 @@
 		document.body.removeChild(link);
 		URL.revokeObjectURL(url);
 	}
-	function exportcsv(tableElement: HTMLTableElement, filename: string) {
-		const table = tableElement;
-		if (!table) {
-			return;
-		}
-		const rows = table.querySelectorAll('tr');
-		const data = Array.from(rows).map((row) =>
-			Array.from(row.querySelectorAll('td')).map((cell) => cell.innerText.trim())
-		);
-		const header = table.querySelectorAll('thead');
-		const csvTitle = Array.from(header).map((row) =>
-			Array.from(row.querySelectorAll('th')).map((cell) => cell.innerText.trim())
-		);
-		const csvRows = data.map((row) => row.join(',')).join('\n');
-		const csvData = `${csvTitle}  ${csvRows}`;
-		downloadCSV(csvData, filename);
-	}
-
-	function quantityOfProduct(orders: typeof paidOrders, tagFilter?: string) {
-		const productQuantities: Record<string, { quantity: number; total: number }> = {};
-		for (const order of orders) {
-			for (const item of order.items) {
-				// If tagFilter is specified, only include products that have that tag
-				if (tagFilter && !item.product.tagIds?.includes(tagFilter)) {
-					continue;
-				}
-
-				if (productQuantities[item.product._id]) {
-					productQuantities[item.product._id].quantity += item.quantity;
-					productQuantities[item.product._id].total += orderItemPrice(item, 'main');
-				} else {
-					productQuantities[item.product._id] = {
-						quantity: item.quantity,
-						total: orderItemPrice(item, 'main')
-					};
-				}
-			}
-		}
-		return productQuantities;
-	}
-	function quantityOfPaymentMean(orders: typeof paidOrders) {
-		const grouped = orders
-			.flatMap((order) => order.payments.filter(paymentMatchesFilter))
-			.reduce<Record<string, Price[]>>((acc, payment) => {
-				const key =
-					payment.method === 'point-of-sale' && payment.posSubtype
-						? `${payment.method}:${payment.posSubtype}`
-						: payment.method === 'custom'
-						? `custom:${payment.customPaymentMethod?.label ?? ''}`
-						: payment.method;
-				(acc[key] ??= []).push(payment.currencySnapshot.main.price);
-				return acc;
-			}, {});
-
-		return Object.fromEntries(
-			Object.entries(grouped).map(([method, prices]) => [
-				method,
-				{ quantity: prices.length, total: sumCurrency(data.currencies.main, prices) }
-			])
-		);
-	}
-	function fetchProductById(productId: string) {
-		for (const order of paidOrders) {
-			for (const item of order.items) {
-				if (item.product._id === productId) {
-					return item.product;
-				}
-			}
-		}
-		return null;
-	}
 
 	let iframePrint: HTMLIFrameElement;
+
+	// Browsers open about 6 connections per host; more would only queue.
+	const RECEIPT_FETCH_CONCURRENCY = 6;
+
+	async function fetchReceiptHtml(receipt: { orderId: string; paymentId: string }) {
+		const resp = await fetch(`/order/${receipt.orderId}/payment/${receipt.paymentId}/receipt`);
+		if (!resp.ok) {
+			throw new Error(`Receipt ${receipt.paymentId}: HTTP ${resp.status}`);
+		}
+		return await resp.text();
+	}
 
 	async function exportPdf() {
 		html = '';
 		loadedHtml = false;
-		htmlStatus = '';
+		htmlStatus = 'Listing receipts';
 
-		const paymentCount = sum(
-			orderFiltered.map(
-				(order) => order.payments.filter((payment) => payment.status === 'paid').length
-			)
-		);
+		const receipts = await fetchRows<{ orderId: string; paymentId: string }>('receipts');
 
-		if (paymentCount === 0) {
-			alert('No paid orders to print');
+		if (receipts.length === 0) {
+			htmlStatus = '';
+			alert(t('admin.reporting.noPaidOrdersToPrint'));
 			return;
 		}
 
-		let index = 0;
-
-		for (const order of orderFiltered) {
-			for (const payment of order.payments.filter((payment) => payment.status === 'paid')) {
-				htmlStatus = `Preparing invoice ${index + 1}/${paymentCount}`;
-				index++;
-
-				const htmlResp = await fetch(`/order/${order._id}/payment/${payment.id}/receipt`);
-
-				if (!htmlResp.ok) {
-					alert('Error while fetching pdf');
-					return;
-				}
-				html += await htmlResp.text();
+		const receiptsHtml: string[] = [];
+		try {
+			for (let start = 0; start < receipts.length; start += RECEIPT_FETCH_CONCURRENCY) {
+				htmlStatus = t('admin.reporting.preparingInvoice', {
+					current: start + 1,
+					total: receipts.length
+				});
+				receiptsHtml.push(
+					...(await Promise.all(
+						receipts.slice(start, start + RECEIPT_FETCH_CONCURRENCY).map(fetchReceiptHtml)
+					))
+				);
 			}
+		} catch {
+			htmlStatus = '';
+			alert(t('admin.reporting.errorFetchingPdf'));
+			return;
 		}
+
+		// Assigned once: every srcdoc change makes the iframe re-parse the whole document.
+		html = receiptsHtml.join('');
 
 		iframePrint.addEventListener(
 			'load',
@@ -283,67 +328,68 @@
 		);
 	}
 
+	function submitFilters(event: Event & { currentTarget: HTMLInputElement }) {
+		loadedHtml = false;
+		event.currentTarget.form?.requestSubmit();
+	}
+
 	afterNavigate(() => {
 		isLoading = false;
 	});
 </script>
 
-<h1 class="text-3xl">Reporting</h1>
-<div class="gap-4 grid grid-cols-3">
-	<label class="col-span-3 checkbox-label">
-		<input
-			class="form-checkbox"
-			type="checkbox"
-			bind:checked={includePending}
-			on:click={() => (loadedHtml = false)}
-		/> include pending orders
-	</label>
-	<label class="col-span-3 checkbox-label">
-		<input
-			class="form-checkbox"
-			type="checkbox"
-			bind:checked={includeExpired}
-			on:click={() => (loadedHtml = false)}
-		/> include expired orders
-	</label>
-	<label class="col-span-3 checkbox-label">
-		<input
-			class="form-checkbox"
-			type="checkbox"
-			bind:checked={includeCanceled}
-			on:click={() => (loadedHtml = false)}
-		/> include canceled orders
-	</label>
-	<label class="col-span-3 checkbox-label">
-		<input
-			class="form-checkbox"
-			type="checkbox"
-			bind:checked={includePartiallyPaid}
-			on:click={() => (loadedHtml = false)}
-		/> include partially paid orders
-	</label>
-</div>
+<h1 class="text-3xl">{t('admin.reporting.title')}</h1>
 <form method="GET" class="grid grid-cols-12 gap-2 col-span-12" on:submit={() => (isLoading = true)}>
+	<div class="col-span-12 grid grid-cols-3 gap-4">
+		<label class="col-span-3 checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				name="includePending"
+				checked={data.filters.includePending}
+				on:change={submitFilters}
+			/> include pending orders
+		</label>
+		<label class="col-span-3 checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				name="includeExpired"
+				checked={data.filters.includeExpired}
+				on:change={submitFilters}
+			/> include expired orders
+		</label>
+		<label class="col-span-3 checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				name="includeCanceled"
+				checked={data.filters.includeCanceled}
+				on:change={submitFilters}
+			/> include canceled orders
+		</label>
+		<label class="col-span-3 checkbox-label">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				name="includePartiallyPaid"
+				checked={data.filters.includePartiallyPaid}
+				on:change={submitFilters}
+			/> include partially paid orders
+		</label>
+	</div>
 	<div class="col-span-3">
 		<label class="form-label">
 			BeginsAt
-			<input
-				class="form-input"
-				type="datetime-local"
-				name="beginsAt"
-				value={dateTimeLocalString(beginsAt)}
-			/>
+			<input class="form-input" type="datetime-local" bind:value={beginsAtInput} />
+			<input type="hidden" name="beginsAt" value={toIsoString(beginsAtInput)} />
 		</label>
 	</div>
 	<div class="col-span-3">
 		<label class="form-label">
 			EndsAt
-			<input
-				class="form-input"
-				type="datetime-local"
-				name="endsAt"
-				value={dateTimeLocalString(endsAt)}
-			/>
+			<input class="form-input" type="datetime-local" bind:value={endsAtInput} />
+			<input type="hidden" name="endsAt" value={toIsoString(endsAtInput)} />
 		</label>
 	</div>
 	<div class="col-span-2">
@@ -369,9 +415,9 @@
 			<label class="form-label">
 				PoS Subtype
 				<select name="posSubtype" class="form-input">
-					<option value="">All subtypes</option>
+					<option value="">{t('admin.reporting.allSubtypes')}</option>
 					{#each data.posSubtypes as subtype}
-						<option value={subtype.slug} selected={data.posSubtype === subtype.slug}>
+						<option value={subtype.slug} selected={data.filters.posSubtype === subtype.slug}>
 							{subtype.name}
 						</option>
 					{/each}
@@ -417,10 +463,15 @@
 		{#if data.reportingTags.length > 0}
 			<label class="form-label mt-2">
 				Select tag
-				<select name="tagId" class="form-input" disabled={!filterByTag} value={data.tagId ?? ''}>
-					<option value="">Select a tag...</option>
+				<select
+					name="tagId"
+					class="form-input"
+					disabled={!filterByTag}
+					value={data.filters.tagId ?? ''}
+				>
+					<option value="">{t('admin.reporting.selectATag')}</option>
 					{#each data.reportingTags as tag}
-						<option value={tag._id} selected={data.tagId === tag._id}>
+						<option value={tag._id} selected={data.filters.tagId === tag._id}>
 							{tag.name}
 						</option>
 					{/each}
@@ -440,12 +491,12 @@
 <div class="gap-4 grid grid-cols-12 mr-auto">
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Order detail</h1>
+			<h1 class="text-2xl font-bold">{t('admin.reporting.orderDetail')}</h1>
 			<div class="flex gap-2">
 				<button
-					on:click={() => exportcsv(tableOrder, 'order-detail.csv')}
+					on:click={() => exportDetailCsv('orders', orderColumns, 'order-detail.csv')}
 					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-					title="Export as CSV"
+					title={t('admin.reporting.exportAsCsv')}
 				>
 					📊 CSV
 				</button>
@@ -453,7 +504,7 @@
 					<button
 						on:click={downloadAllOrdersJson}
 						class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-						title="Download all displayed orders as JSON (super-admin)"
+						title={t('admin.reporting.downloadAllOrdersJson')}
 					>
 						🧾 JSON
 					</button>
@@ -462,278 +513,81 @@
 					disabled={!!htmlStatus || isLoading}
 					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors disabled:opacity-50"
 					on:click={loadedHtml ? () => iframePrint.contentWindow?.print() : exportPdf}
-					title={loadedHtml ? 'Print receipts' : 'Prepare PDF receipts'}
+					title={loadedHtml
+						? t('admin.reporting.printReceipts')
+						: t('admin.reporting.preparePdfReceipts')}
 				>
-					🖨️ {loadedHtml ? 'Print' : htmlStatus || 'PDF'}
+					🖨️ {loadedHtml ? t('admin.reporting.print') : htmlStatus || 'PDF'}
 				</button>
 			</div>
 		</div>
 
-		<div class="overflow-x-auto max-h-[500px]">
-			<table class="min-w-full table-auto border border-gray-300 bg-white" bind:this={tableOrder}>
-				<thead class="bg-gray-200">
-					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Order ID</th>
-						<th class="border border-gray-300 px-4 py-2">Order URL</th>
-						<th class="border border-gray-300 px-4 py-2">Order Date</th>
-						<th class="border border-gray-300 px-4 py-2">Order Status</th>
-						<th class="border border-gray-300 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Amount</th>
-						<th class="border border-gray-300 px-4 py-2">Billing Country</th>
-						<th class="border border-gray-300 px-4 py-2">Billing Info</th>
-						<th class="border border-gray-300 px-4 py-2">Shipping Country</th>
-						<th class="border border-gray-300 px-4 py-2">Shipping Info</th>
-						<th class="border border-gray-300 px-4 py-2">Cart</th>
-					</tr>
-				</thead>
-				<tbody>
-					<!-- Order rows -->
-					{#each orderFiltered as order}
-						<tr class="hover:bg-gray-100 whitespace-nowrap">
-							<td class="border border-gray-300 px-4 py-2"
-								><a
-									href="/admin/order/{order._id}/json"
-									target="_blank"
-									class="underline body-hyperlink">{order.number}</a
-								></td
-							>
-							<td class="border border-gray-300 px-4 py-2"
-								>{data.websiteLink + '/order/' + order._id}</td
-							>
-							<td class="border border-gray-300 px-4 py-2">
-								<time
-									datetime={order.createdAt.toISOString()}
-									title={order.createdAt.toLocaleString($locale)}
-								>
-									{order.createdAt.toLocaleDateString($locale)}
-								</time>
-							</td>
-							<td class="border border-gray-300 px-4 py-2">
-								<a href="/order/{order._id}" target="_blank" class="underline body-hyperlink">
-									{order.status}
-								</a>
-							</td>
-							<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
-							<td class="border border-gray-300 px-4 py-2"
-								>{toCurrency(
-									data.currencies.main,
-									order.currencySnapshot.main.totalPrice.amount,
-									order.currencySnapshot.main.totalPrice.currency
-								)}</td
-							>
-							<td class="border border-gray-300 px-4 py-2"
-								>{countryName(order.billingAddress?.country ?? order.ipCountry ?? '')}</td
-							>
-							<td class="border border-gray-300 px-4 py-2"
-								>{order.billingAddress
-									? textAddress(order.billingAddress).replace(',', '/')
-									: ''}</td
-							>
-							<td class="border border-gray-300 px-4 py-2"
-								>{countryName(order.shippingAddress?.country ?? order.ipCountry ?? '')}</td
-							>
-							<td class="border border-gray-300 px-4 py-2"
-								>{order.shippingAddress
-									? textAddress(order.shippingAddress).replace(',', '/')
-									: ''}</td
-							>
-							<td class="border border-gray-300 px-4 py-2">
-								{order.items.map((item) => item.product.name).join('|')}
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
+		<ReportingDetailTable columns={orderColumns} rows={data.orderDetail.rows} />
+		<ReportingPager
+			param="ordersPage"
+			current={data.orderDetail.page}
+			pageCount={data.orderDetail.pageCount}
+			total={data.orderDetail.total}
+		/>
 	</div>
 	<iframe
 		srcdoc={html}
 		bind:this={iframePrint}
 		title=""
-		on:load={() => console.log('loaded')}
 		style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
 	/>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">Product detail</h1>
-				{#if data.tagId}
+				<h1 class="text-2xl font-bold">{t('admin.reporting.productDetail')}</h1>
+				{#if data.filters.tagId}
 					<p class="text-sm text-gray-600 mt-1">
-						Only showing products with the tag "{data.tagId}".
+						Only showing products with the tag "{tagName ?? data.filters.tagId}".
 					</p>
 				{/if}
 			</div>
 			<button
-				on:click={() => exportcsv(tableProduct, 'product-detail.csv')}
+				on:click={() => exportDetailCsv('products', productColumns, 'product-detail.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
 		</div>
-		<div class="overflow-x-auto max-h-[500px]">
-			<table class="min-w-full table-auto border border-gray-300 bg-white" bind:this={tableProduct}>
-				<thead class="bg-gray-200">
-					<tr>
-						<th class="border border-gray-300 px-4 py-2">Product URL</th>
-						<th class="border border-gray-300 px-4 py-2">Product Name</th>
-						<th class="border border-gray-300 px-4 py-2">Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">Deposit</th>
-						<th class="border border-gray-300 px-4 py-2">Order ID</th>
-						<th class="border border-gray-300 px-4 py-2">Order Date</th>
-						<th class="border border-gray-300 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Price</th>
-						<th class="border border-gray-300 px-4 py-2">Vat Rate</th>
-					</tr>
-				</thead>
-				<tbody>
-					<!-- Order rows -->
-					{#each orderFiltered as order}
-						{#each order.items as item}
-							{#if !data.tagId || item.product.tagIds?.includes(data.tagId)}
-								<tr class="hover:bg-gray-100 whitespace-nowrap">
-									<td class="border border-gray-300 px-4 py-2"
-										>{data.websiteLink + '/product/' + item.product._id}</td
-									>
-									<td class="border border-gray-300 px-4 py-2">{item.product.name}</td>
-									<td class="border border-gray-300 px-4 py-2">{item.quantity}</td>
-									<td class="border border-gray-300 px-4 py-2">{item.depositPercentage ?? 100}</td>
-									<td class="border border-gray-300 px-4 py-2">{order.number}</td><td
-										class="border border-gray-300 px-4 py-2"
-									>
-										<time
-											datetime={order.createdAt.toISOString()}
-											title={order.createdAt.toLocaleString($locale)}
-										>
-											{order.createdAt.toLocaleDateString($locale)}
-										</time>
-									</td>
-									<td class="border border-gray-300 px-4 py-2">
-										{item.currencySnapshot.main.price.currency}
-									</td>
-									<td class="border border-gray-300 px-4 py-2">{orderItemPrice(item, 'main')}</td>
-									<td class="border border-gray-300 px-4 py-2">{item.vatRate} %</td>
-								</tr>
-							{/if}
-						{/each}
-					{/each}
-				</tbody>
-			</table>
-		</div>
+		<ReportingDetailTable columns={productColumns} rows={data.productDetail.rows} />
+		<ReportingPager
+			param="productsPage"
+			current={data.productDetail.page}
+			pageCount={data.productDetail.pageCount}
+			total={data.productDetail.total}
+		/>
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Payment Detail</h1>
+			<h1 class="text-2xl font-bold">{t('admin.reporting.paymentDetail')}</h1>
 			<button
-				on:click={() => exportcsv(tablePayment, 'payment-detail.csv')}
+				on:click={() => exportDetailCsv('payments', paymentColumns, 'payment-detail.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
 		</div>
-		<div class="overflow-x-auto max-h-[500px]">
-			<table class="min-w-full table-auto border border-gray-300 bg-white" bind:this={tablePayment}>
-				<thead class="bg-gray-200">
-					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Order ID</th>
-						<th class="border border-gray-300 px-4 py-2">Invoice ID</th>
-						<th class="border border-gray-300 px-4 py-2">Payment Date</th>
-						<th class="border border-gray-300 px-4 py-2">Order Status</th>
-						<th class="border border-gray-300 px-4 py-2">Payment mean</th>
-						<th class="border border-gray-300 px-4 py-2">Payment Status</th>
-						<th class="border border-gray-300 px-4 py-2">Payment Info</th>
-						<th class="border border-gray-300 px-4 py-2">Invoice</th>
-						<th class="border border-gray-300 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Amount</th>
-						<th class="border border-gray-300 py-2">Cashed Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Cashed Amount</th>
-						<th class="border border-gray-300 px-4 py-2">Billing Country</th>
-					</tr>
-				</thead>
-				<tbody>
-					<!-- Order rows -->
-					{#each orders.filter((order) => order.status === 'paid' || (includePartiallyPaid && order.payments.some((payment) => payment.status === 'paid')) || (includeExpired && order.payments.some((payment) => payment.status === 'expired'))) as order}
-						{#each order.payments.filter(paymentMatchesFilter) as payment}
-							<tr class="hover:bg-gray-100 whitespace-nowrap">
-								<td class="border border-gray-300 px-4 py-2">{order.number}</td>
-								<td class="border border-gray-300 px-4 py-2"
-									>{t(
-										payment.status === 'paid'
-											? 'order.receipt.invoiceNumber'
-											: 'order.receipt.proformaInvoiceNumber',
-										invoiceNumberVariables(order, payment)
-									)}</td
-								>
-
-								<td class="border border-gray-300 px-4 py-2">
-									{#if payment.paidAt}
-										<time
-											datetime={payment.paidAt.toISOString()}
-											title={payment.paidAt.toLocaleString($locale)}
-										>
-											{payment.paidAt.toLocaleDateString($locale)}
-										</time>
-									{/if}
-								</td>
-								<td class="border border-gray-300 px-4 py-2">{order.status}</td>
-								<td class="border border-gray-300 px-4 py-2"
-									>{payment.method}{#if payment.method === 'point-of-sale' && payment.posSubtype}
-										{@const subtype = data.posSubtypes?.find((s) => s.slug === payment.posSubtype)}
-										({subtype?.name || payment.posSubtype})
-									{/if}</td
-								>
-								<td class="border border-gray-300 px-4 py-2">
-									<a
-										class="body-hyperlink underline"
-										target="_blank"
-										href="/order/{order._id}/payment/{payment.id}/receipt">{payment.status}</a
-									>
-								</td>
-								<td class="border border-gray-300 px-4 py-2"
-									>{payment.method === 'lightning'
-										? payment.invoiceId
-										: payment.method === 'bank-transfer'
-										? payment.bankTransferNumber
-										: payment.method === 'card'
-										? payment.transactions?.[0].transaction_code
-										: payment.method === 'bitcoin'
-										? payment.transactions?.[0].id ?? ''
-										: payment.detail || ''}</td
-								>
-								<td class="border border-gray-300 px-4 py-2">{payment.invoice?.number ?? ''}</td>
-								<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
-								<td class="border border-gray-300 px-4 py-2"
-									>{toCurrency(
-										data.currencies.main,
-										payment.currencySnapshot.main.price.amount,
-										payment.currencySnapshot.main.price.currency
-									)}</td
-								>
-								<td class="border border-gray-300 px-4 py-2">{payment.price.currency}</td>
-								<td class="border border-gray-300 px-4 py-2">{payment.price.amount}</td>
-								<td class="border border-gray-300 px-4 py-2"
-									>{countryName(
-										order.billingAddress?.country ??
-											order.shippingAddress?.country ??
-											order.ipCountry ??
-											''
-									)}</td
-								>
-							</tr>
-						{/each}
-					{/each}
-				</tbody>
-			</table>
-		</div>
+		<ReportingDetailTable columns={paymentColumns} rows={data.paymentDetail.rows} />
+		<ReportingPager
+			param="paymentsPage"
+			current={data.paymentDetail.page}
+			pageCount={data.paymentDetail.pageCount}
+			total={data.paymentDetail.total}
+		/>
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Order synthesis</h1>
+			<h1 class="text-2xl font-bold">{t('admin.reporting.orderSynthesis')}</h1>
 			<button
-				on:click={() => exportcsv(tableOrderSynthesis, 'orderSythesisExport.csv')}
+				on:click={() => exportSynthesisCsv(tableOrderSynthesis, 'orderSythesisExport.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -745,11 +599,11 @@
 			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Period</th>
-						<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">order Total</th>
-						<th class="border border-gray-300 px-4 py-2">Average Cart</th>
-						<th class="border border-gray-300 py-2">Currency</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderQuantity')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderTotal')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.averageCart')}</th>
+						<th class="border border-gray-300 py-2">{t('admin.reporting.currency')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -763,12 +617,12 @@
 								{endsAt.toLocaleDateString($locale)}
 							</time>
 						</td>
-						<td class="border border-gray-300 px-4 py-2">{orderSynthesis.count}</td>
-						<td class="border border-gray-300 px-4 py-2">{orderSynthesis.orderTotal}</td>
+						<td class="border border-gray-300 px-4 py-2">{synthesis.orderCount}</td>
+						<td class="border border-gray-300 px-4 py-2">{synthesis.orderTotal}</td>
 						<td class="border border-gray-300 px-4 py-2"
-							>{orderSynthesis.count
+							>{synthesis.orderCount
 								? fixCurrencyRounding(
-										orderSynthesis.orderTotal / orderSynthesis.count,
+										synthesis.orderTotal / synthesis.orderCount,
 										data.currencies.main
 								  )
 								: 0}</td
@@ -779,16 +633,16 @@
 			</table>
 		</div>
 
-		{#if data.tagId}
+		{#if data.filters.tagId}
 			<div class="flex items-start justify-between mt-4 mb-4">
 				<p class="text-sm text-gray-600">
-					Synthesis for tag "{data.tagId}" only - order flat discount and shipping price are not
-					included, only the specific products with the tag are included.
+					Synthesis for tag "{tagName ?? data.filters.tagId}" only - order flat discount and
+					shipping price are not included, only the specific products with the tag are included.
 				</p>
 				<button
-					on:click={() => exportcsv(tableOrderSynthesisTag, 'orderSythesisExport.csv')}
+					on:click={() => exportSynthesisCsv(tableOrderSynthesisTag, 'orderSythesisExport.csv')}
 					class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors ml-4"
-					title="Export tag synthesis as CSV"
+					title={t('admin.reporting.exportTagSynthesisAsCsv')}
 				>
 					📊 CSV
 				</button>
@@ -801,11 +655,11 @@
 				>
 					<thead class="bg-gray-200">
 						<tr class="whitespace-nowrap">
-							<th class="border border-gray-300 px-4 py-2">Period</th>
-							<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-							<th class="border border-gray-300 px-4 py-2">order Total</th>
-							<th class="border border-gray-300 px-4 py-2">Average Cart</th>
-							<th class="border border-gray-300 py-2">Currency</th>
+							<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+							<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderQuantity')}</th>
+							<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderTotal')}</th>
+							<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.averageCart')}</th>
+							<th class="border border-gray-300 py-2">{t('admin.reporting.currency')}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -819,12 +673,12 @@
 									{endsAt.toLocaleDateString($locale)}
 								</time>
 							</td>
-							<td class="border border-gray-300 px-4 py-2">{orderSynthesisTag.count}</td>
-							<td class="border border-gray-300 px-4 py-2">{orderSynthesisTag.orderTotal}</td>
+							<td class="border border-gray-300 px-4 py-2">{synthesis.orderCount}</td>
+							<td class="border border-gray-300 px-4 py-2">{synthesis.tagOrderTotal}</td>
 							<td class="border border-gray-300 px-4 py-2"
-								>{orderSynthesisTag.count
+								>{synthesis.orderCount
 									? fixCurrencyRounding(
-											orderSynthesisTag.orderTotal / orderSynthesisTag.count,
+											synthesis.tagOrderTotal / synthesis.orderCount,
 											data.currencies.main
 									  )
 									: 0}</td
@@ -839,17 +693,17 @@
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">Product synthesis</h1>
-				{#if data.tagId}
+				<h1 class="text-2xl font-bold">{t('admin.reporting.productSynthesis')}</h1>
+				{#if data.filters.tagId}
 					<p class="text-sm text-gray-600 mt-1">
-						Only showing products with the tag "{data.tagId}".
+						Only showing products with the tag "{tagName ?? data.filters.tagId}".
 					</p>
 				{/if}
 			</div>
 			<button
-				on:click={() => exportcsv(tableProductSynthesis, 'orderItemsSythesisExport.csv')}
+				on:click={() => exportSynthesisCsv(tableProductSynthesis, 'orderItemsSythesisExport.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -861,17 +715,16 @@
 			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Period</th>
-						<th class="border border-gray-300 px-4 py-2">Product ID </th>
-						<th class="border border-gray-300 px-4 py-2">Product Name</th>
-						<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Total price</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.productId')} </th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.productName')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderQuantity')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.currency')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.totalPrice')}</th>
 					</tr>
 				</thead>
 				<tbody>
-					<!-- Order rows -->
-					{#each Object.entries(quantityOfProduct(paidOrders, data.tagId)).sort((a, b) => b[1].quantity - a[1].quantity) as [productId, { quantity, total }]}
+					{#each synthesis.products as product}
 						<tr class="hover:bg-gray-100 whitespace-nowrap">
 							<td class="border border-gray-300 px-4 py-2">
 								<time datetime={beginsAt.toISOString()} title={beginsAt.toLocaleString($locale)}>
@@ -882,11 +735,11 @@
 									{endsAt.toLocaleDateString($locale)}
 								</time>
 							</td>
-							<td class="border border-gray-300 px-4 py-2">{productId}</td>
-							<td class="border border-gray-300 px-4 py-2">{fetchProductById(productId)?.name}</td>
-							<td class="border border-gray-300 px-4 py-2">{quantity}</td>
+							<td class="border border-gray-300 px-4 py-2">{product.productId}</td>
+							<td class="border border-gray-300 px-4 py-2">{product.name}</td>
+							<td class="border border-gray-300 px-4 py-2">{product.quantity}</td>
 							<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
-							<td class="border border-gray-300 px-4 py-2">{total}</td>
+							<td class="border border-gray-300 px-4 py-2">{product.total}</td>
 						</tr>
 					{/each}
 				</tbody>
@@ -895,11 +748,11 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Payment synthesis</h1>
+			<h1 class="text-2xl font-bold">{t('admin.reporting.paymentSynthesis')}</h1>
 			<button
-				on:click={() => exportcsv(tablePaymentSynthesis, 'orderPaymentSythesis.csv')}
+				on:click={() => exportSynthesisCsv(tablePaymentSynthesis, 'orderPaymentSythesis.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -911,24 +764,16 @@
 			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Period</th>
-						<th class="border border-gray-300 px-4 py-2">Payment Mean </th>
-						<th class="border border-gray-300 px-4 py-2">Payment Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">Total price</th>
-						<th class="border border-gray-300 px-4 py-2">Currency</th>
-						<th class="border border-gray-300 px-4 py-2">Average</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.paymentMean')} </th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.paymentQuantity')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.totalPrice')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.currency')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.average')}</th>
 					</tr>
 				</thead>
 				<tbody>
-					<!-- Order rows -->
-					{#each Object.entries(quantityOfPaymentMean(paidOrders)).sort((a, b) => b[1].quantity - a[1].quantity) as [method, { quantity, total }]}
-						{@const sepIdx = method.indexOf(':')}
-						{@const paymentMethod = sepIdx >= 0 ? method.slice(0, sepIdx) : method}
-						{@const rest = sepIdx >= 0 ? method.slice(sepIdx + 1) : ''}
-						{@const subtype =
-							paymentMethod === 'point-of-sale' && rest
-								? data.posSubtypes?.find((s) => s.slug === rest)
-								: null}
+					{#each synthesis.payments as payment}
 						<tr class="hover:bg-gray-100 whitespace-nowrap">
 							<td class="border border-gray-300 px-4 py-2">
 								<time datetime={beginsAt.toISOString()}>
@@ -940,14 +785,13 @@
 								</time>
 							</td>
 							<td class="border border-gray-300 px-4 py-2"
-								>{paymentMethod === 'custom' && rest ? rest : paymentMethod}{#if subtype}
-									({subtype.name}){/if}</td
+								>{paymentSynthesisLabel(payment.method)}</td
 							>
-							<td class="border border-gray-300 px-4 py-2">{quantity}</td>
-							<td class="border border-gray-300 px-4 py-2">{total}</td>
+							<td class="border border-gray-300 px-4 py-2">{payment.quantity}</td>
+							<td class="border border-gray-300 px-4 py-2">{payment.total}</td>
 							<td class="border border-gray-300 px-4 py-2">{data.currencies.main}</td>
 							<td class="border border-gray-300 px-4 py-2"
-								>{fixCurrencyRounding(total / quantity, data.currencies.main)}</td
+								>{fixCurrencyRounding(payment.total / payment.quantity, data.currencies.main)}</td
 							>
 						</tr>
 					{/each}
@@ -958,17 +802,17 @@
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
 			<div>
-				<h1 class="text-2xl font-bold">VAT Synthesis</h1>
-				{#if data.tagId}
+				<h1 class="text-2xl font-bold">{t('admin.reporting.vatSynthesis')}</h1>
+				{#if data.filters.tagId}
 					<p class="text-sm text-gray-600 mt-1">
-						Only showing VAT for products with the tag "{data.tagId}".
+						Only showing VAT for products with the tag "{tagName ?? data.filters.tagId}".
 					</p>
 				{/if}
 			</div>
 			<button
-				on:click={() => exportcsv(tableVATSynthesis, 'vat-synthesis.csv')}
+				on:click={() => exportSynthesisCsv(tableVATSynthesis, 'vat-synthesis.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -980,11 +824,13 @@
 			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Period</th>
-						<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">VAT Total</th>
-						<th class="border border-gray-300 px-4 py-2">Average VAT per order</th>
-						<th class="border border-gray-300 py-2">Currency</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderQuantity')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.vatTotal')}</th>
+						<th class="border border-gray-300 px-4 py-2"
+							>{t('admin.reporting.averageVatPerOrder')}</th
+						>
+						<th class="border border-gray-300 py-2">{t('admin.reporting.currency')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -998,14 +844,12 @@
 								{endsAt.toLocaleDateString($locale)}
 							</time>
 						</td>
-						<td class="border border-gray-300 px-4 py-2">{vatSynthesis.orderNumber}</td>
+						<td class="border border-gray-300 px-4 py-2">{synthesis.orderCount}</td>
+						<td class="border border-gray-300 px-4 py-2">{synthesis.vatTotal}</td>
 						<td class="border border-gray-300 px-4 py-2"
-							>{fixCurrencyRounding(vatSynthesis.total, data.currencies.main)}</td
-						>
-						<td class="border border-gray-300 px-4 py-2"
-							>{vatSynthesis.orderNumber
+							>{synthesis.orderCount
 								? fixCurrencyRounding(
-										vatSynthesis.total / orderSynthesis.count,
+										synthesis.vatTotal / synthesis.orderCount,
 										data.currencies.main
 								  )
 								: 0}</td
@@ -1018,11 +862,12 @@
 	</div>
 	<div class="col-span-12">
 		<div class="flex items-center justify-between mb-4">
-			<h1 class="text-2xl font-bold">Delivery Fees</h1>
+			<h1 class="text-2xl font-bold">{t('admin.reporting.deliveryFees')}</h1>
 			<button
-				on:click={() => exportcsv(tableDeliveryFeesSynthesis, 'deliveryFeesSynthesisExport.csv')}
+				on:click={() =>
+					exportSynthesisCsv(tableDeliveryFeesSynthesis, 'deliveryFeesSynthesisExport.csv')}
 				class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-700 transition-colors"
-				title="Export as CSV"
+				title={t('admin.reporting.exportAsCsv')}
 			>
 				📊 CSV
 			</button>
@@ -1034,11 +879,11 @@
 			>
 				<thead class="bg-gray-200">
 					<tr class="whitespace-nowrap">
-						<th class="border border-gray-300 px-4 py-2">Period</th>
-						<th class="border border-gray-300 px-4 py-2">Order Quantity</th>
-						<th class="border border-gray-300 px-4 py-2">order Fees Total</th>
-						<th class="border border-gray-300 px-4 py-2">Average Fees Cart</th>
-						<th class="border border-gray-300 py-2">Currency</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.period')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderQuantity')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.orderFeesTotal')}</th>
+						<th class="border border-gray-300 px-4 py-2">{t('admin.reporting.averageFeesCart')}</th>
+						<th class="border border-gray-300 py-2">{t('admin.reporting.currency')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -1052,17 +897,12 @@
 								{endsAt.toLocaleDateString($locale)}
 							</time>
 						</td>
+						<td class="border border-gray-300 px-4 py-2">{synthesis.orderCount}</td>
+						<td class="border border-gray-300 px-4 py-2">{synthesis.deliveryFeesTotal}</td>
 						<td class="border border-gray-300 px-4 py-2"
-							>{orderDeliveryFeesSynthesis.orderNumber}</td
-						>
-						<td class="border border-gray-300 px-4 py-2"
-							>{orderDeliveryFeesSynthesis.orderFeesTotal}</td
-						>
-						<td class="border border-gray-300 px-4 py-2"
-							>{orderDeliveryFeesSynthesis.orderNumber
+							>{synthesis.orderCount
 								? fixCurrencyRounding(
-										orderDeliveryFeesSynthesis.orderFeesTotal /
-											orderDeliveryFeesSynthesis.orderNumber,
+										synthesis.deliveryFeesTotal / synthesis.orderCount,
 										data.currencies.main
 								  )
 								: 0}</td

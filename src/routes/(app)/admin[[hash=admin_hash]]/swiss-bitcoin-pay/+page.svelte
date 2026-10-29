@@ -1,8 +1,11 @@
 <script lang="ts">
 	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
 	import { enhance } from '$app/forms';
+	import { useI18n } from '$lib/i18n';
 	export let data;
 	export let form;
+
+	const { t } = useI18n();
 
 	let testInFlight = false;
 	let testCooldownUntil = 0;
@@ -13,13 +16,13 @@
 
 <form class="contents" method="post" action="?/save">
 	<label class="form-label">
-		API Key
+		{t('admin.swissBitcoinPay.apiKey')}
 		<input class="form-input" type="password" name="apiKey" value={data.apiKey} required />
 	</label>
 
 	<div class="flex justify-between">
-		<button class="btn btn-black" type="submit">Save</button>
-		<button class="btn btn-red" type="submit" form="delete-form">Reset</button>
+		<button class="btn btn-black" type="submit">{t('admin.action.save')}</button>
+		<button class="btn btn-red" type="submit" form="delete-form">{t('admin.action.reset')}</button>
 	</div>
 </form>
 <form class="contents" method="post" action="?/delete" id="delete-form"></form>
@@ -38,18 +41,18 @@
 	class="flex flex-col gap-2"
 >
 	<button class="btn btn-blue self-start" type="submit" disabled={testDisabled}>
-		{testInFlight ? 'Testing…' : 'Test connection'}
+		{testInFlight ? t('admin.action.testing') : t('admin.action.testConnection')}
 	</button>
 	{#if form?.ok}
 		<div class="alert-success">
-			Connection successful. Swiss Bitcoin Pay credentials are working.
+			{t('admin.action.testSuccess', { provider: 'Swiss Bitcoin Pay' })}
 		</div>
 	{:else if form?.reason}
-		<div class="alert-error">Connection failed: {form.reason}</div>
+		<div class="alert-error">{t('admin.action.testFailed', { reason: form.reason })}</div>
 	{/if}
 </form>
 
-<h2 class="text-2xl">Invoices</h2>
+<h2 class="text-2xl">{t('admin.swissBitcoinPay.invoices')}</h2>
 
 <SetLightningQrCodeDescription
 	bind:invoiceDescription={data.lightningInvoiceDescription}
