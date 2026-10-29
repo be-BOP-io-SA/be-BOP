@@ -4,19 +4,30 @@ import { PHOENIXD_ENDPOINT_URL, PHOENIXD_HTTP_PASSWORD } from './env-config';
 import { runtimeConfig } from './runtime-config';
 import { persistConfigElement } from './utils/persistConfig';
 import { queueEmail } from './email';
+import { channelFillPercent, isPastFillWarning } from '$lib/utils/channelFill';
 
 export const isPhoenixdConfigured = () =>
 	runtimeConfig.phoenixd.enabled && !!runtimeConfig.phoenixd.password;
 
-export async function phoenixdInfo(): Promise<{
-	nodeId: string;
-	chain: 'mainnet' | 'testnet';
-	channels: {
-		capacitySat: number;
-		inboundLiquiditySat: number;
-	}[];
-	version: string;
-}> {
+const phoenixdInfoSchema = z
+	.object({
+		nodeId: z.string(),
+		chain: z.string(),
+		channels: z.array(
+			z
+				.object({
+					state: z.string(),
+					// phoenixd omits these on a channel that has no commitments yet.
+					channelId: z.string().optional(),
+					capacitySat: z.number().optional(),
+					inboundLiquiditySat: z.number().optional()
+				})
+				.passthrough()
+		)
+	})
+	.passthrough();
+
+export async function phoenixdInfo() {
 	const res = await fetch(`${runtimeConfig.phoenixd.url}/getinfo`, {
 		headers: {
 			Authorization: `Basic ${Buffer.from(`:${runtimeConfig.phoenixd.password}`).toString(
@@ -25,40 +36,51 @@ export async function phoenixdInfo(): Promise<{
 		}
 	});
 
-	return await res.json();
+	if (!res.ok) {
+		throw error(500, `Error fetching phoenixd info: ${res.status} ${await res.text()}`);
+	}
+
+	return phoenixdInfoSchema.parse(await res.json());
 }
 
 /**
- * Warn the shop by e-mail when a Lightning channel has little room left to receive.
- *
- * A full channel does not refuse payments, it makes them cost a fee the shop never asked for — so
- * the warning has to arrive while there is still time to withdraw. Checked after a payment lands,
- * which is the only moment the room actually shrinks.
- *
- * The threshold is a share of capacity already used, set on the phoenixd page; zero turns the
- * warning off entirely. No contact e-mail on the seller identity means no one to warn.
+ * E-mails the shop once when a channel gets fuller than the level it set, and again only after
+ * every channel has gone back under it.
  */
 export async function warnOnAlmostFullChannels(): Promise<void> {
-	const threshold = runtimeConfig.phoenixd.inboundLiquidityWarningThreshold;
+	const warningPercent = runtimeConfig.phoenixd.channelFillWarningPercent ?? 0;
 	const contactEmail = runtimeConfig.sellerIdentity?.contact.email;
-	if (!threshold || !contactEmail) {
+	if (!warningPercent || !contactEmail) {
 		return;
 	}
 
 	const { channels } = await phoenixdInfo();
-	for (const channel of channels) {
-		if (!channel.capacitySat) {
-			continue;
+	const fullChannels = channels.flatMap((channel) => {
+		const fillPercent = channelFillPercent(channel);
+		return fillPercent !== null && isPastFillWarning(fillPercent, warningPercent)
+			? [{ fillPercent, inboundSat: channel.inboundLiquiditySat ?? 0 }]
+			: [];
+	});
+
+	if (!fullChannels.length) {
+		if (runtimeConfig.phoenixd.capacityWarningSentAt) {
+			runtimeConfig.phoenixd.capacityWarningSentAt = null;
+			await persistConfigElement('phoenixd', runtimeConfig.phoenixd);
 		}
-		const fill = (channel.capacitySat - channel.inboundLiquiditySat) / channel.capacitySat;
-		if (fill < threshold) {
-			continue;
-		}
+		return;
+	}
+	if (runtimeConfig.phoenixd.capacityWarningSentAt) {
+		return;
+	}
+
+	for (const channel of fullChannels) {
 		await queueEmail(contactEmail, 'phoenixd.channel.almostFull', {
-			fillPercentage: Math.round(fill * 100).toString(),
-			inboundSat: channel.inboundLiquiditySat.toString()
+			fillPercentage: Math.round(channel.fillPercent).toString(),
+			inboundSat: channel.inboundSat.toString()
 		});
 	}
+	runtimeConfig.phoenixd.capacityWarningSentAt = new Date();
+	await persistConfigElement('phoenixd', runtimeConfig.phoenixd);
 }
 
 export async function phoenixdBalance(): Promise<{ balanceSat: number; feeCreditSat: number }> {

@@ -14,6 +14,7 @@ import {
 	warnOnAlmostFullChannels
 } from '$lib/server/phoenixd.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { persistConfigElement } from '$lib/server/utils/persistConfig';
 import { updateLightningInvoiceDescription } from '$lib/server/actions.js';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -101,34 +102,24 @@ export const actions = {
 			{ upsert: true }
 		);
 	},
-	/**
-	 * Its own action rather than a field on the password form: changing when the warning fires must
-	 * not require typing the node password again.
-	 */
+	// Its own action, so changing the level does not require typing the node password again.
 	async updateCapacityWarning(event) {
 		const parsed = z
 			.object({
-				// Entered as a percentage and kept as a share; 0 turns the warning off. Decimals are
-				// allowed: on a channel of a few million sats, one percent is already a wide margin.
-				fillPercentage: z.number({ coerce: true }).min(0).max(100)
+				channelFillWarningPercent: z.number({ coerce: true }).min(0).max(100)
 			})
 			.parse(Object.fromEntries(await event.request.formData()));
 
-		runtimeConfig.phoenixd.inboundLiquidityWarningThreshold = parsed.fillPercentage / 100;
-		await collections.runtimeConfig.updateOne(
-			{ _id: 'phoenixd' },
-			{
-				$set: { data: runtimeConfig.phoenixd, updatedAt: new Date() },
-				$setOnInsert: { createdAt: new Date() }
-			},
-			{ upsert: true }
-		);
+		if (parsed.channelFillWarningPercent !== runtimeConfig.phoenixd.channelFillWarningPercent) {
+			// A new level deserves its own warning.
+			runtimeConfig.phoenixd.capacityWarningSentAt = null;
+		}
+		runtimeConfig.phoenixd.channelFillWarningPercent = parsed.channelFillWarningPercent;
+		await persistConfigElement('phoenixd', runtimeConfig.phoenixd);
 
-		// Checked right after saving, and with the new value: setting a threshold already below the
-		// current fill is the moment the shop expects to hear about it, not the next payment in.
 		// Caught, so an unreachable node cannot make the setting look like it failed to save.
 		await warnOnAlmostFullChannels().catch((err) =>
-			console.error('[phoenixd] could not check channel capacity after saving the threshold', err)
+			console.error('[phoenixd] could not check channel capacity after saving the level', err)
 		);
 	},
 	updateLightningInvoiceDescription,
