@@ -11,8 +11,12 @@ function note(role: string | null, userAlias?: string) {
 describe('fetchOrderForUser notes', () => {
 	beforeEach(async () => {
 		await cleanDb();
-		// cleanDb seeds the built-in roles; give this one a name that is not its id.
-		await collections.roles.updateOne({ _id: POS_ROLE_ID }, { $set: { name: 'Point of sale' } });
+		// Built-in roles are reseeded in the background after cleanDb, so the role may not exist yet.
+		await collections.roles.updateOne(
+			{ _id: POS_ROLE_ID },
+			{ $set: { name: 'Point of sale' } },
+			{ upsert: true }
+		);
 	});
 
 	it('names an employee by alias, else by role name, else by role id', async () => {
