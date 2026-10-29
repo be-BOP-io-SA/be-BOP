@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { preUploadPicture } from '$lib/types/Picture';
+	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
@@ -98,7 +98,7 @@
 		{t('admin.slider.picture')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept={PICTURE_UPLOAD_ACCEPT}
 			class="block"
 			bind:files
 			required

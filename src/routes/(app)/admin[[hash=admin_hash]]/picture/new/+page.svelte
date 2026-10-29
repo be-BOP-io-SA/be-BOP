@@ -2,7 +2,7 @@
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { TAGTYPES, preUploadPicture } from '$lib/types/Picture.js';
+	import { PICTURE_UPLOAD_ACCEPT, TAGTYPES, preUploadPicture } from '$lib/types/Picture.js';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
 
@@ -84,12 +84,12 @@
 >
 	<fieldset class="contents" disabled={submitting}>
 		<label class="form-label">
-			{t('admin.picture.jpegOrPngFile')}
+			{t('admin.picture.fileLabel')}
 			<input
 				type="file"
 				bind:files
 				on:change={onChange}
-				accept="image/jpeg,image/png,image/webp"
+				accept={PICTURE_UPLOAD_ACCEPT}
 				class="block"
 				required
 				multiple

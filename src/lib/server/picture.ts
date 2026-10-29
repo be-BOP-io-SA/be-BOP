@@ -15,26 +15,64 @@ import * as mimeTypes from 'mime-types';
 import type { ImageData, Picture, TagType } from '../types/Picture';
 import type { SetRequired } from 'type-fest';
 
+const SVG_RENDER_SIZE = 2048;
+// sharp refuses a density outside this range; it bites for SVGs a few pixels or a mile wide.
+const MIN_SVG_DENSITY = 1;
+const MAX_SVG_DENSITY = 100_000;
+
+/**
+ * Uploaded files can be served as is, and an SVG could carry script: an SVG is rendered to a
+ * PNG large enough to stay sharp, so that only the PNG is ever stored.
+ */
+export async function rasterizeIfSvg(upload: Buffer): Promise<Buffer> {
+	const { format, width, height } = await sharp(upload)
+		.metadata()
+		.catch(() => {
+			throw error(400, 'Invalid image');
+		});
+
+	if (format !== 'svg') {
+		return upload;
+	}
+
+	if (!width || !height) {
+		throw error(400, 'Invalid SVG: no width or height');
+	}
+
+	// Sizes read from an SVG are at sharp's default 72 DPI.
+	const density = Math.min(
+		Math.max((72 * SVG_RENDER_SIZE) / Math.max(width, height), MIN_SVG_DENSITY),
+		MAX_SVG_DENSITY
+	);
+
+	return sharp(upload, { density })
+		.resize(SVG_RENDER_SIZE, SVG_RENDER_SIZE, { fit: 'inside', withoutEnlargement: true })
+		.png()
+		.toBuffer()
+		.catch(() => {
+			throw error(400, 'Invalid SVG');
+		});
+}
+
 /**
  * Upload picture to S3 under different formats, and create a document in db.pictures.
  *
  * You can associate the picture to a product, and you can pass a callback called at the end that if it fails,
  * will cancel everything (remove from DB and S3)
  */
-export async function generatePicture(
-	pictureId: string,
-	opts?: {
-		productId?: string;
-		tag?: { _id: string; type: TagType };
-		slider?: { _id: string; url?: string; openNewTab?: boolean };
-		galleryId?: string;
-		schedule?: {
-			_id: string;
-			eventSlug: string;
-		};
-		cb?: (session: ClientSession) => Promise<void>;
-	}
-): Promise<void> {
+type PictureOptions = {
+	productId?: string;
+	tag?: { _id: string; type: TagType };
+	slider?: { _id: string; url?: string; openNewTab?: boolean };
+	galleryId?: string;
+	schedule?: {
+		_id: string;
+		eventSlug: string;
+	};
+	cb?: (session: ClientSession) => Promise<void>;
+};
+
+export async function generatePicture(pictureId: string, opts?: PictureOptions): Promise<void> {
 	const pendingPicture = await collections.pendingPictures.findOne({
 		_id: pictureId
 	});
@@ -49,11 +87,7 @@ export async function generatePicture(
 		throw error(400, 'Error when uploading picture');
 	}
 
-	const buffer = Buffer.from(await resp.arrayBuffer());
-
-	if (!resp.ok) {
-		throw error(400, 'Error when uploading picture');
-	}
+	const upload = Buffer.from(await resp.arrayBuffer());
 
 	await getS3Client()
 		.deleteObject({
@@ -64,12 +98,23 @@ export async function generatePicture(
 
 	await collections.pendingPictures.deleteOne({ _id: pictureId });
 
-	if (buffer.length > 10 * 1024 * 1024) {
+	await storePicture({ _id: pictureId, name: pendingPicture.name, upload }, opts);
+}
+
+/**
+ * Same as generatePicture, for a file the server received itself.
+ */
+export async function storePicture(
+	{ _id, name, upload }: { _id: string; name: string; upload: Buffer },
+	opts?: PictureOptions
+): Promise<void> {
+	if (upload.length > 10 * 1024 * 1024) {
 		throw error(400, 'Image too big, 10MB max');
 	}
 
+	const buffer = await rasterizeIfSvg(upload);
 	const image = sharp(buffer);
-	const { width, height, format } = await image.metadata();
+	const { width, height, format, compression } = await image.metadata();
 
 	if (!width || !height) {
 		throw error(400, 'Invalid image: no height or width');
@@ -79,13 +124,13 @@ export async function generatePicture(
 		throw error(400, 'Invalid image format');
 	}
 
-	const mime = mimeTypes.lookup(format);
+	// sharp names AVIF by its HEIF container, which browsers do not display.
+	const mime = format === 'heif' && compression === 'av1' ? 'image/avif' : mimeTypes.lookup(format);
 
 	if (!mime) {
 		throw error(400, 'Invalid image format: ' + format);
 	}
 
-	const _id = pictureId;
 	const extension = '.' + mimeTypes.extension(mime);
 
 	const uploadedKeys: string[] = [];
@@ -185,7 +230,7 @@ export async function generatePicture(
 			await collections.pictures.insertOne(
 				{
 					_id,
-					name: pendingPicture.name,
+					name,
 					storage: {
 						original,
 						formats

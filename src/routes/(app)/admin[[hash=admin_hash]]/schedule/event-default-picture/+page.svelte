@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n';
+	import { PICTURE_UPLOAD_ACCEPT } from '$lib/types/Picture';
 
 	let uploading = false;
 
@@ -15,13 +16,7 @@
 
 	<label>
 		{t('admin.schedule.file')}
-		<input
-			type="file"
-			class="block"
-			required
-			name="file"
-			accept="image/jpeg,image/png,image/webp"
-		/>
+		<input type="file" class="block" required name="file" accept={PICTURE_UPLOAD_ACCEPT} />
 	</label>
 
 	<input
