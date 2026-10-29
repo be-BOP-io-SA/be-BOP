@@ -1,5 +1,6 @@
 import type { Actions } from './$types';
 import { collections } from '$lib/server/database';
+import { loadAllCheckoutFields } from '$lib/server/checkoutFields';
 import { fail } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
@@ -78,10 +79,7 @@ function fieldDocFields(parsed: z.infer<typeof fieldSchema>, options: string[] |
 }
 
 export const load = async () => {
-	const fieldsRaw = await collections.checkoutFieldConfigs
-		.find({})
-		.sort({ sortOrder: 1 })
-		.toArray();
+	const fieldsRaw = await loadAllCheckoutFields();
 
 	const fields = fieldsRaw.map((field) => ({
 		...field,

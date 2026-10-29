@@ -10,13 +10,7 @@ import type {
 } from '$lib/types/CheckoutFieldConfig';
 import type { CollectedCheckoutField } from '$lib/types/Order';
 
-/**
- * Every checkout field the shop has defined, disabled ones included.
- *
- * Disabling a field stops it being asked at checkout; it does not erase the answers already
- * collected. A screen that searches past orders therefore needs the whole list, or the orders
- * carrying a retired field become unreachable.
- */
+/** Every checkout field, disabled ones included: their answers stay on past orders. */
 export function loadAllCheckoutFields() {
 	return collections.checkoutFieldConfigs.find({}).sort({ sortOrder: 1 }).toArray();
 }

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import OrdersList from '$lib/components/OrdersList.svelte';
+	import IconTrash from '$lib/components/icons/IconTrash.svelte';
 	import { ORDER_PAGINATION_LIMIT } from '$lib/types/Order';
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n.js';
@@ -8,22 +9,9 @@
 	let next = 0;
 	let selectedPaymentMethod = $page.url.searchParams.get('paymentMethod') ?? '';
 
-	// One row per custom checkout field to filter on. Restored from the URL so a bookmarked or
-	// shared search comes back with its rows, and never empty: the first row is the invitation.
-	let customFieldFilters: Array<{ slug: string; value: string }> = data.customFieldFilters.length
-		? data.customFieldFilters.map((filter) => ({ ...filter }))
-		: [{ slug: '', value: '' }];
-
-	function addCustomFieldFilter() {
-		customFieldFilters = [...customFieldFilters, { slug: '', value: '' }];
-	}
-
-	function removeCustomFieldFilter(index: number) {
-		customFieldFilters = customFieldFilters.filter((_, i) => i !== index);
-		if (!customFieldFilters.length) {
-			customFieldFilters = [{ slug: '', value: '' }];
-		}
-	}
+	// Follows the URL, so the clear link and Back reset the rows as well.
+	let customFieldFilters: Array<{ slug: string; value: string }> = [];
+	$: customFieldFilters = data.customFieldFilters.map((filter) => ({ ...filter }));
 
 	const { t, countryName, sortedCountryCodes } = useI18n();
 </script>
@@ -136,53 +124,58 @@
 				{/each}
 			</select>
 		</label>
+		{#if data.checkoutFields.length}
+			<div class="flex flex-col gap-2 w-full">
+				{#each customFieldFilters as filter, index}
+					<div class="gap-4 flex flex-col md:flex-row md:flex-wrap md:items-end">
+						<label class="form-label w-[15em]">
+							{t('admin.order.customFieldFilterLabel')}
+							<select name="customFields[{index}].slug" class="form-input" bind:value={filter.slug}>
+								<option value="" />
+								{#each data.checkoutFields as field}
+									<option value={field.slug}
+										>{field.name}{field.disabled
+											? ` (${t('admin.config.checkoutFieldDisabledBadge')})`
+											: ''}</option
+									>
+								{/each}
+							</select>
+						</label>
+						<label class="form-label w-[15em]">
+							{t('admin.order.customFieldValueLabel')}
+							<input
+								class="form-input"
+								type="text"
+								name="customFields[{index}].value"
+								bind:value={filter.value}
+								placeholder={t('admin.order.customFieldValuePlaceholder')}
+							/>
+						</label>
+						<button
+							type="button"
+							class="btn btn-red self-start md:self-end"
+							on:click={() =>
+								(customFieldFilters = customFieldFilters.filter((_, i) => i !== index))}
+						>
+							<IconTrash />
+							<span class="sr-only">{t('admin.order.removeCustomFieldFilter')}</span>
+						</button>
+					</div>
+				{/each}
+				<button
+					class="underline self-start"
+					type="button"
+					on:click={() => (customFieldFilters = [...customFieldFilters, { slug: '', value: '' }])}
+				>
+					{t('admin.order.addCustomFieldFilter')}
+				</button>
+			</div>
+		{/if}
 		<label class="form-label w-auto mt-8 flex flex-row">
 			<input type="submit" value="🔍" class="btn body-mainCTA" on:click={() => (next = 0)} />
 			<a href="/admin/order" class="btn body-mainCTA">🧹</a>
 		</label>
 	</div>
-	{#if data.checkoutFields.length}
-		<div class="flex flex-col gap-2">
-			{#each customFieldFilters as filter, index}
-				<div class="gap-4 flex flex-col md:flex-row md:flex-wrap md:items-end">
-					<label class="form-label w-[15em]">
-						{t('admin.order.customFieldFilterLabel')}
-						<select name="customFieldSlug" class="form-input" bind:value={filter.slug}>
-							<option value="" />
-							{#each data.checkoutFields as field}
-								<option value={field.slug}
-									>{field.label}{field.disabled
-										? ` (${t('admin.order.customFieldDisabled')})`
-										: ''}</option
-								>
-							{/each}
-						</select>
-					</label>
-					<label class="form-label w-[15em]">
-						{t('admin.order.customFieldValueLabel')}
-						<input
-							class="form-input"
-							type="text"
-							name="customFieldValue"
-							bind:value={filter.value}
-							placeholder={t('admin.order.customFieldValuePlaceholder')}
-						/>
-					</label>
-					<label class="form-label w-auto flex flex-row gap-2">
-						<button type="button" class="btn body-mainCTA" on:click={addCustomFieldFilter}>+</button
-						>
-						{#if customFieldFilters.length > 1}
-							<button
-								type="button"
-								class="btn body-secondaryCTA"
-								on:click={() => removeCustomFieldFilter(index)}>-</button
-							>
-						{/if}
-					</label>
-				</div>
-			{/each}
-		</div>
-	{/if}
 	<OrdersList orders={data.orders} adminPrefix={data.adminPrefix} orderLabels={data.labels} />
 	<div class="no-sticky flex gap-2">
 		<input type="hidden" value={next} name="skip" />

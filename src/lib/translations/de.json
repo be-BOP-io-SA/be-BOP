@@ -1105,8 +1105,9 @@
 			"orderLabelIds": "Bestell-Label-IDs",
 			"customFieldFilterLabel": "Benutzerdefiniertes Checkout-Feld",
 			"customFieldValueLabel": "Feldwert",
-			"customFieldValuePlaceholder": "den zu filternden Wert eingeben",
-			"customFieldDisabled": "deaktiviert"
+			"customFieldValuePlaceholder": "Bestellung nach Feldwert suchen",
+			"addCustomFieldFilter": "Filter für ein Checkout-Feld hinzufügen",
+			"removeCustomFieldFilter": "Diesen Filter entfernen"
 		},
 		"layout": {
 			"title": "Layout",
