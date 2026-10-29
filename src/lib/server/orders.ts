@@ -23,7 +23,7 @@ import {
 	startOfDay,
 	subSeconds
 } from 'date-fns';
-import { runtimeConfig } from './runtime-config';
+import { incrementCounter, runtimeConfig } from './runtime-config';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import {
 	buildPricingScheduleSnapshot,
@@ -107,17 +107,36 @@ export async function conflictingTapToPayOrder(orderId: string): Promise<string 
 }
 
 async function generateOrderNumber(session?: ClientSession): Promise<number> {
-	const res = await collections.runtimeConfig.findOneAndUpdate(
-		{ _id: 'orderNumber' },
-		{ $inc: { data: 1 as never } },
-		{ upsert: true, returnDocument: 'after', session }
+	return incrementCounter('orderNumber', { session });
+}
+
+/**
+ * Next invoice number, from a counter of its own: a single atomic increment cannot hand the same
+ * value to two settlements landing together.
+ *
+ * The highest number already issued is read first and the counter raised to it, so a shop whose
+ * counter is behind its own history — a database restored without the counter, or a downgrade
+ * that left it behind — issues the number after its last invoice instead of colliding with it.
+ * `$max` never moves the counter backwards, so this is safe to run on every settlement, and it
+ * writes nothing when the counter is already ahead.
+ *
+ * Raising and incrementing are two writes, but what makes two numbers distinct is the increment,
+ * which is atomic on its own: settlements interleaving between the two still come out with one
+ * number each.
+ */
+async function generateInvoiceNumber(session?: ClientSession): Promise<number> {
+	const highestIssued = (await lastInvoiceNumber(session)) ?? 0;
+
+	await collections.runtimeConfig.updateOne(
+		{ _id: 'invoiceNumber' },
+		{
+			$max: { data: highestIssued as never },
+			$setOnInsert: { createdAt: new Date() }
+		},
+		{ upsert: true, session }
 	);
 
-	if (!res.value) {
-		throw new Error('Failed to increment order number');
-	}
-
-	return res.value.data as number;
+	return incrementCounter('invoiceNumber', { session });
 }
 
 export function isOrderFullyPaid(order: Order, opts?: { includePendingOrders?: boolean }): boolean {
@@ -155,8 +174,6 @@ export async function onOrderPayment(
 		firstPaidTransition?: boolean;
 	}
 ): Promise<Order> {
-	const invoiceNumber = ((await lastInvoiceNumber()) ?? 0) + 1;
-
 	if (!order.payments.includes(payment)) {
 		throw new Error('Sync broken between order and payment');
 	}
@@ -175,8 +192,20 @@ export async function onOrderPayment(
 	payment.status = 'paid'; // for isOrderFullyPaid
 	payment.paidAt = paidAt;
 	const fn = async (session: ClientSession) => {
+		// Taken inside the transaction that stores it: anything failing afterwards rolls the
+		// counter back instead of leaving a gap in the numbering. `maintainOrders` re-polls the
+		// same pending payment every two seconds, so a transient failure here would otherwise
+		// burn one number per poll.
+		const invoiceNumber = await generateInvoiceNumber(session);
+
+		// A payment confirmed twice — a double click, or a confirmation racing `maintainOrders` —
+		// must not take a second number: matching only a payment without an invoice makes the
+		// second run fail, which rolls its number back.
 		const ret = await collections.orders.findOneAndUpdate(
-			{ _id: order._id, 'payments._id': payment._id },
+			{
+				_id: order._id,
+				payments: { $elemMatch: { _id: payment._id, invoice: { $exists: false } } }
+			},
 			{
 				$set: {
 					'payments.$.invoice': {
@@ -402,7 +431,7 @@ export async function onOrderPayment(
 		);
 
 		if (!ret.value) {
-			throw new Error('Failed to update order');
+			throw error(400, 'Payment is not pending');
 		}
 
 		order = ret.value;
@@ -677,52 +706,62 @@ export async function anonymizeOrderData(orderId: string): Promise<boolean> {
 	return result.modifiedCount > 0;
 }
 
-export async function lastInvoiceNumber(): Promise<number | undefined> {
+/**
+ * Highest invoice number actually stored on an order.
+ *
+ * `generateInvoiceNumber` uses it as a floor, so that numbering never walks back over what the
+ * shop has already given out. Served by the index on `payments.invoice.number`: one key read,
+ * whatever the number of orders.
+ */
+export async function lastInvoiceNumber(session?: ClientSession): Promise<number | undefined> {
 	return (
 		await collections.orders
-			.aggregate<{ invoiceNumber: number }>([
-				{
-					$match: {
-						'payments.invoice.number': { $exists: true }
+			.aggregate<{ invoiceNumber: number }>(
+				[
+					{
+						$match: {
+							'payments.invoice.number': { $exists: true }
+						}
+					},
+					{
+						$sort: {
+							'payments.invoice.number': -1
+						}
+					},
+					{
+						$limit: 1
+					},
+					{
+						$project: {
+							'payments.invoice.number': 1
+						}
+					},
+					{
+						$unwind: {
+							path: '$payments'
+						}
+					},
+					{
+						$match: {
+							'payments.invoice.number': { $exists: true }
+						}
+					},
+					{
+						$sort: {
+							'payments.invoice.number': -1
+						}
+					},
+					{
+						$limit: 1
+					},
+					{
+						$project: {
+							invoiceNumber: '$payments.invoice.number'
+						}
 					}
-				},
-				{
-					$sort: {
-						'payments.invoice.number': -1
-					}
-				},
-				{
-					$limit: 1
-				},
-				{
-					$project: {
-						'payments.invoice.number': 1
-					}
-				},
-				{
-					$unwind: {
-						path: '$payments'
-					}
-				},
-				{
-					$match: {
-						'payments.invoice.number': { $exists: true }
-					}
-				},
-				{
-					$sort: {
-						'payments.invoice.number': -1
-					}
-				},
-				{
-					$limit: 1
-				},
-				{
-					$project: {
-						invoiceNumber: '$payments.invoice.number'
-					}
-				}
-			])
+				],
+				{ session }
+			)
 			.next()
 	)?.invoiceNumber;
 }

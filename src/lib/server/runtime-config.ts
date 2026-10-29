@@ -1,4 +1,4 @@
-import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
+import type { ChangeStream, ChangeStreamDocument, ClientSession } from 'mongodb';
 import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
@@ -84,6 +84,8 @@ const baseConfig = {
 	priceReferenceCurrency: 'SAT' as Currency,
 	accountingCurrency: null as Currency | null,
 	orderNumber: 0,
+	/** Counter behind invoice numbers. Never issues below the invoices already stored (#2743). */
+	invoiceNumber: 0,
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
 	/**
@@ -753,6 +755,26 @@ type ConfigKey = keyof RuntimeConfig;
 export type RuntimeConfigItem = {
 	[key in ConfigKey]: { _id: key; data: RuntimeConfig[key]; updatedAt: Date };
 }[ConfigKey];
+
+/**
+ * Atomically adds `by` (1 by default) to a numeric counter and returns its new value.
+ */
+export async function incrementCounter(
+	key: 'orderNumber' | 'invoiceNumber' | 'subscriptionNumber',
+	opts?: { by?: number; session?: ClientSession }
+): Promise<number> {
+	const res = await collections.runtimeConfig.findOneAndUpdate(
+		{ _id: key },
+		{ $inc: { data: (opts?.by ?? 1) as never } },
+		{ upsert: true, returnDocument: 'after', session: opts?.session }
+	);
+
+	if (!res.value) {
+		throw new Error(`Failed to increment ${key}`);
+	}
+
+	return res.value.data as number;
+}
 
 let changeStream: ChangeStream<RuntimeConfigItem, ChangeStreamDocument<RuntimeConfigItem>> | null =
 	null;
