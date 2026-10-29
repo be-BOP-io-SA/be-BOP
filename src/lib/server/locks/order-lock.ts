@@ -6,7 +6,7 @@ import { inspect } from 'node:util';
 import { onOrderPayment, onOrderPaymentFailed } from '../orders';
 import { refreshPromise } from '../runtime-config';
 import type { Order } from '$lib/types/Order';
-import { getProcessor } from '../sdk/pp';
+import { getProcessor, watchingProcessorFor, dispatchPendingPayments } from '../sdk/pp';
 
 const lock = new Lock('orders');
 
@@ -53,6 +53,7 @@ async function maintainOrders() {
 
 	while (!processClosed) {
 		if (!lock.ownsLock) {
+			dispatchPendingPayments([]);
 			await setTimeout(5_000);
 			continue;
 		}
@@ -64,10 +65,14 @@ async function maintainOrders() {
 			.toArray()
 			.catch((err) => {
 				console.error(inspect(err, { depth: 10 }));
-				return [];
+				return undefined;
 			});
+		// A failed query says nothing about which payments are pending, so the sockets stay as they are.
+		if (pendingOrders) {
+			dispatchPendingPayments(pendingOrders);
+		}
 
-		for (let order of pendingOrders) {
+		for (let order of pendingOrders ?? []) {
 			// One order failing, as when the buyer cancels a payment this poll still sees pending,
 			// must not end the loop that polls every other order.
 			try {
@@ -79,11 +84,9 @@ async function maintainOrders() {
 					}
 					payment = updatedPayment;
 
-					// SDK universal dispatcher — only dispatch if processor AND method match
-					// (prevents tap-to-pay method:'point-of-sale' + processor:'stripe' from being caught by PPStripe).
 					// A processor without checkPayment settles out of band and must not be polled.
-					const pp = payment.processor ? getProcessor(payment.processor) : undefined;
-					if (pp?.checkPayment && pp.meta.method === payment.method && pp.isEnabled()) {
+					const pp = watchingProcessorFor(payment);
+					if (pp?.checkPayment) {
 						try {
 							const result = await pp.checkPayment(payment, order);
 							switch (result.status) {
@@ -187,6 +190,7 @@ async function maintainOrders() {
 
 		await setTimeout(2_000);
 	}
+	dispatchPendingPayments([]);
 }
 
 maintainOrders();

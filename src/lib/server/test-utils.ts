@@ -171,3 +171,56 @@ export function mockMempool(
 			fetchMock.mock.calls.filter(([url]) => url.pathname.endsWith(pathEnd)).length
 	};
 }
+
+/** Stand-in for the global WebSocket: install with `vi.stubGlobal('WebSocket', FakeWebSocket)`. */
+export class FakeWebSocket {
+	static instances: FakeWebSocket[] = [];
+	readonly sent: unknown[] = [];
+	closedByClient = false;
+	private listeners = new Map<string, Array<(event: { data?: unknown }) => void>>();
+
+	constructor(readonly url: string) {
+		FakeWebSocket.instances.push(this);
+	}
+
+	addEventListener(type: string, listener: (event: { data?: unknown }) => void): void {
+		this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
+	}
+
+	send(data: string): void {
+		this.sent.push(JSON.parse(data));
+	}
+
+	close(): void {
+		this.closedByClient = true;
+	}
+
+	serverOpens(): void {
+		this.emit('open', {});
+	}
+
+	serverSends(message: unknown): void {
+		this.emit('message', { data: typeof message === 'string' ? message : JSON.stringify(message) });
+	}
+
+	serverReportsActivity(address: string, kind: 'mempool' | 'confirmed' = 'mempool'): void {
+		this.serverSends({
+			'multi-address-transactions': {
+				[address]: {
+					mempool: kind === 'mempool' ? [{ txid: 'tx-1' }] : [],
+					confirmed: kind === 'confirmed' ? [{ txid: 'tx-1' }] : [],
+					removed: []
+				}
+			}
+		});
+	}
+
+	serverDrops(): void {
+		this.emit('error', {});
+		this.emit('close', {});
+	}
+
+	private emit(type: string, event: { data?: unknown }): void {
+		this.listeners.get(type)?.forEach((listener) => listener(event));
+	}
+}
