@@ -141,7 +141,7 @@
 	We use data-sveltekit-preload-data="off" on header/footer links due to this: 	https://github.com/sveltejs/kit/issues/9508#issuecomment-1807200239
 -->
 
-<div data-sveltekit-preload-data={data.isMaintenance ? 'tap' : 'hover'} style="display: contents;">
+<div data-sveltekit-preload-data="tap" style="display: contents;">
 	{#if $page.data.layoutReset || $page.url.searchParams.get('display') === 'headless'}
 		<slot />
 	{:else}
