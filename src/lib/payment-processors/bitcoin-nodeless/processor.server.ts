@@ -3,8 +3,10 @@ import {
 	reserveNodelessAddress,
 	getSatoshiReceivedNodeless,
 	hasDerivableNodelessAddress,
+	MempoolRateLimitedError,
 	updateBitcoinBlockHeight
 } from '$lib/server/bitcoin-nodeless';
+import { isWithin } from '$lib/utils/isWithin';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { setTimeout } from 'node:timers/promises';
@@ -28,6 +30,78 @@ const MEMPOOL_DROP_GRACE_MS = 3 * 60 * 1000;
 
 /** Matches the old in-check refresh rate; a new block arrives every ten minutes on average. */
 const BLOCK_HEIGHT_REFRESH_MS = 60 * 1000;
+
+// The order loop runs every 2s, far more often than a payment needs or mempool.space tolerates.
+const CHECK_INTERVAL_MS = 30_000;
+const MIN_GAP_MS = 10_000;
+
+type AddressCheck = { lastCheckStartedAt: number };
+const checks = new Map<string, AddressCheck>();
+
+/** Times when the outcome can change with no new mempool data: the expiry and the end of the RBF grace. */
+function deadlinesOf(payment: Order['payments'][number], expiresAt: Date): number[] {
+	return payment.awaitingConfirmation && payment.mempoolMissingSince
+		? [expiresAt.getTime(), payment.mempoolMissingSince.getTime() + MEMPOOL_DROP_GRACE_MS]
+		: [expiresAt.getTime()];
+}
+
+function isCheckDue(check: AddressCheck | undefined, deadlines: number[], now: number): boolean {
+	if (!check) {
+		return true;
+	}
+	if (isWithin(MIN_GAP_MS, check.lastCheckStartedAt, now)) {
+		return false;
+	}
+	if (deadlines.some((deadline) => deadline <= now && check.lastCheckStartedAt < deadline)) {
+		return true;
+	}
+	return !isWithin(CHECK_INTERVAL_MS, check.lastCheckStartedAt, now);
+}
+
+function startCheck(address: string, now: number): void {
+	// An entry older than the longest interval is due anyway, so dropping it changes nothing.
+	for (const [other, check] of checks) {
+		if (!isWithin(CHECK_INTERVAL_MS, check.lastCheckStartedAt, now)) {
+			checks.delete(other);
+		}
+	}
+	checks.set(address, { lastCheckStartedAt: now });
+}
+
+function restoreCheck(address: string, previous: AddressCheck | undefined): void {
+	if (previous) {
+		checks.set(address, previous);
+	} else {
+		checks.delete(address);
+	}
+}
+
+export function resetCheckScheduler() {
+	if (!import.meta.env.VITEST) {
+		throw new Error('resetCheckScheduler should only be used in tests');
+	}
+	checks.clear();
+}
+
+/** No `transactions`, so the order loop keeps the ones it stored and writes nothing. */
+function storedState(payment: Order['payments'][number]): CheckPaymentResult {
+	const missingSince = payment.mempoolMissingSince;
+	return {
+		status: 'pending',
+		// The order loop reads "awaiting confirmation" from `provisional` being there: omitting it
+		// on a skipped check would tell the buyer their payment is no longer seen.
+		...(payment.awaitingConfirmation && {
+			provisional: {
+				received: {
+					amount: toSatoshis(payment.price.amount, payment.price.currency),
+					currency: 'SAT'
+				},
+				...(missingSince && { reason: 'mempool-drop' })
+			}
+		}),
+		state: missingSince ? { mempoolMissingSince: missingSince } : {}
+	};
+}
 
 export default definePaymentProcessor(declaration, {
 	...BITCOIN,
@@ -76,13 +150,30 @@ export default definePaymentProcessor(declaration, {
 			throw new Error('Bitcoin nodeless payment missing expiresAt');
 		}
 
+		const startedAt = Date.now();
+		const previous = checks.get(payment.address);
+		if (!isCheckDue(previous, deadlinesOf(payment, payment.expiresAt), startedAt)) {
+			return storedState(payment);
+		}
+		startCheck(payment.address, startedAt);
+
 		// The chain tip is kept fresh by this processor's worker, not by the check itself.
 		const nConfirmations = getConfirmationBlocks(payment.price);
-		const received = await getSatoshiReceivedNodeless(
-			payment.address,
-			nConfirmations,
-			order.createdAt
-		);
+		let received: Awaited<ReturnType<typeof getSatoshiReceivedNodeless>>;
+		try {
+			received = await getSatoshiReceivedNodeless(payment.address, nConfirmations, order.createdAt);
+		} catch (err) {
+			if (err instanceof MempoolRateLimitedError) {
+				restoreCheck(payment.address, previous);
+				return storedState(payment);
+			}
+			// Throwing would let the order loop expire a payment we could not see.
+			console.warn(
+				`Mempool check failed for payment ${payment._id}:`,
+				err instanceof Error ? err.message : err
+			);
+			return storedState(payment);
+		}
 
 		const required = toSatoshis(payment.price.amount, payment.price.currency);
 
@@ -108,7 +199,8 @@ export default definePaymentProcessor(declaration, {
 			};
 		}
 
-		const now = new Date();
+		// An answer fetched before the deadline cannot expire the payment; the check after it will.
+		const now = new Date(startedAt);
 		if (payment.expiresAt < now) {
 			// Past the deadline with no TX in the mempool right now. If we had already seen a
 			// full-amount TX (RBF replacement may be in flight), ride out a short grace window
