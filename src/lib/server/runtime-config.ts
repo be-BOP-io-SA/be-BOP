@@ -193,19 +193,10 @@ const baseConfig = {
 		password: '',
 		lnAddress: '',
 		bolt12Address: '',
-		/**
-		 * How full a Lightning channel may get before the shop is warned by e-mail, as a share of its
-		 * capacity. A channel past this level has little room left to receive, and the payments that
-		 * follow start costing a fee the shop did not plan for.
-		 *
-		 * Expressed as fill, not as remaining liquidity: 0.7 means "tell me once the channel is 70%
-		 * full", which is the way the setting reads on the phoenixd page.
-		 *
-		 * Zero, and so off until the shop asks for it: be-BOP does not start mailing a shop that never
-		 * requested the warning, and a shop that already had a phoenixd configuration carries no value
-		 * here either — both end up in the same place.
-		 */
-		inboundLiquidityWarningThreshold: 0
+		/** Channel fill, 0 to 100, past which the shop is warned by e-mail; 0 turns it off. */
+		channelFillWarningPercent: 0,
+		/** When that warning went out, cleared once the channels are back under the level. */
+		capacityWarningSentAt: null as Date | null
 	},
 	oauth: [] as Array<{
 		name: string;
@@ -487,12 +478,6 @@ Amount: {{amount}} {{currency}}</p>`,
 <p>Order <a href="{{orderLink}}">#{{orderNumber}}</a> is not fully paid yet.</p>`,
 			default: true as boolean
 		},
-		'phoenixd.channel.almostFull': {
-			subject: 'Action required: your Lightning channel is nearly full',
-			html: `<p>Your Lightning channel is {{fillPercentage}}% full, and only {{inboundSat}} sat of room is left to receive payments.</p>
-<p>Once a channel is full, the payments that follow cost a fee you did not plan for. Withdrawing part of the balance frees the room back up — on {{websiteLink}}, under Settings then PhoenixD.</p>`,
-			default: true as boolean
-		},
 		'order.update.challenge': {
 			subject: 'Leaderboard {{challengeName}',
 			html: `<p>Dear be-BOP owner,
@@ -549,6 +534,12 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 <p>Actual: {{actualAmount}} {{actualCurrency}}</p>
 <p>Opened by: {{openedBy}}</p>
 <p>Date: {{openedAt}}</p>`,
+			default: true as boolean
+		},
+		'phoenixd.channel.almostFull': {
+			subject: '{{brandName}} - Lightning channel nearly full',
+			html: `<p>Your Lightning channel is {{fillPercentage}}% full, and only {{inboundSat}} sat of room is left to receive payments.</p>
+<p>Once a channel is full, the payments that follow cost a fee you did not plan for. Withdrawing part of the balance frees the room back up — on {{websiteLink}}, under Payment Settings then PhoenixD.</p>`,
 			default: true as boolean
 		},
 		'subscription.reminder': {

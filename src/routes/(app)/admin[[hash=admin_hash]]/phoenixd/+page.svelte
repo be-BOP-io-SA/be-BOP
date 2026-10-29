@@ -3,8 +3,9 @@
 	import { page } from '$app/stores';
 	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
 	import { useI18n } from '$lib/i18n';
+	import { channelFillPercent, isPastFillWarning } from '$lib/utils/channelFill';
 
-	const { t } = useI18n();
+	const { t, locale } = useI18n();
 
 	export let data;
 	export let form;
@@ -28,27 +29,17 @@
 	let defaultUrl = data.phoenixd.url || 'http://localhost:9740';
 	let showBolt12 = false;
 
-	// Two decimals, like the figure shown underneath: rounding any coarser displayed a threshold as a
-	// value that is not the one applying, and the two numbers are meant to be compared.
-	let thresholdPercentage =
-		Math.round(data.phoenixd.inboundLiquidityWarningThreshold * 10000) / 100;
+	// Absent on a shop that configured phoenixd before this setting existed.
+	let channelFillWarningPercent = data.phoenixd.channelFillWarningPercent ?? 0;
 
-	/**
-	 * Shown as fill, like the threshold right above it: the two numbers have to be comparable at a
-	 * glance, and the warning is set on how full the channel is rather than on what is left.
-	 */
-	$: channelFill = (data.nodeInfo?.channels ?? [])
-		.filter((channel) => channel.capacitySat > 0)
-		.map((channel) => {
-			const fill = (channel.capacitySat - channel.inboundLiquiditySat) / channel.capacitySat;
-			return {
-				// Kept exact for the comparison and only rounded for display: a channel 0.7% full once
-				// read as "1% full, threshold reached" next to a threshold of 1, while no mail was sent.
-				fill,
-				percentage: Math.round(fill * 10000) / 100,
-				inboundSat: channel.inboundLiquiditySat
-			};
-		});
+	$: channels = (data.nodeInfo?.channels ?? []).flatMap((channel) => {
+		const fillPercent = channelFillPercent(channel);
+		return fillPercent === null
+			? []
+			: [
+					{ id: channel.channelId ?? '', fillPercent, inboundSat: channel.inboundLiquiditySat ?? 0 }
+			  ];
+	});
 </script>
 
 <h1 class="text-3xl">PhoenixD</h1>
@@ -164,32 +155,32 @@
 			{t('admin.phoenixd.capacityWarningLabel')}
 			<input
 				type="number"
-				name="fillPercentage"
+				name="channelFillWarningPercent"
 				class="form-input"
 				min="0"
 				max="100"
 				step="0.01"
-				bind:value={thresholdPercentage}
+				bind:value={channelFillWarningPercent}
 			/>
 			<span class="text-sm text-gray-500">{t('admin.phoenixd.capacityWarningHint')}</span>
 		</label>
 
-		{#each channelFill as channel, index}
-			<!-- Same test as the server, on the exact ratio. A threshold of zero means the warning is
-			     off, so nothing is past it. -->
-			{@const past = thresholdPercentage > 0 && channel.fill * 100 >= thresholdPercentage}
+		{#each channels as channel}
+			{@const past = isPastFillWarning(channel.fillPercent, channelFillWarningPercent)}
 			<div class="flex flex-col gap-1 max-w-[22rem]">
-				<span class="text-sm" class:text-red-600={past}>
+				<span class="text-sm break-all" class:text-red-600={past}>
 					{t('admin.phoenixd.currentFill', {
-						channel: String(index + 1),
-						fillPercentage: String(channel.percentage),
-						inboundSat: channel.inboundSat.toLocaleString()
+						channel: channel.id,
+						fillPercentage: channel.fillPercent.toLocaleString($locale, {
+							maximumFractionDigits: 2
+						}),
+						inboundSat: channel.inboundSat.toLocaleString($locale)
 					})}
 				</span>
 				<div class="h-2 w-full rounded bg-gray-200">
 					<div
 						class="h-2 rounded {past ? 'bg-red-600' : 'bg-green-600'}"
-						style="width: {channel.percentage}%"
+						style="width: {channel.fillPercent}%"
 					></div>
 				</div>
 			</div>

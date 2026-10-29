@@ -1,8 +1,7 @@
 import {
 	isPhoenixdConfigured,
 	phoenixdCreateInvoice,
-	phoenixdLookupInvoice,
-	warnOnAlmostFullChannels
+	phoenixdLookupInvoice
 } from '$lib/server/phoenixd';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { lightningPaymentPrice, lightningLabel } from '../pp';
@@ -41,11 +40,6 @@ export default {
 		}
 		const invoice = await phoenixdLookupInvoice(payment.invoiceId);
 		if (invoice.isPaid) {
-			// Receiving is what eats the room, so this is the moment to look. Detached and caught: a
-			// node that answers badly must never hold back a payment that did go through.
-			warnOnAlmostFullChannels().catch((err) =>
-				console.error('[phoenixd] could not check channel capacity', err)
-			);
 			return {
 				status: 'paid',
 				received: { amount: invoice.receivedSat, currency: 'SAT' },
