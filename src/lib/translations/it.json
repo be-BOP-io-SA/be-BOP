@@ -1105,8 +1105,9 @@
 			"orderLabelIds": "ID label ordine",
 			"customFieldFilterLabel": "Campo di checkout personalizzato",
 			"customFieldValueLabel": "Valore del campo",
-			"customFieldValuePlaceholder": "digita il valore da filtrare",
-			"customFieldDisabled": "disattivato"
+			"customFieldValuePlaceholder": "cerca ordine per valore del campo",
+			"addCustomFieldFilter": "Aggiungi un filtro su un campo di checkout",
+			"removeCustomFieldFilter": "Rimuovi questo filtro"
 		},
 		"layout": {
 			"title": "Layout",
