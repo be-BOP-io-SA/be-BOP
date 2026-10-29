@@ -1,18 +1,54 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { bip84Address, bip48Address, getSatoshiReceivedNodeless } from './bitcoin-nodeless';
-import { runtimeConfig } from './runtime-config';
+import {
+	bip84Address,
+	bip48Address,
+	getSatoshiReceivedNodeless,
+	isAddressUsed,
+	MempoolRateLimitedError,
+	resetMempoolPacing,
+	updateBitcoinBlockHeight
+} from './bitcoin-nodeless';
+import { refreshPromise, runtimeConfig } from './runtime-config';
+import { collections } from './database';
+import { advance, mockMempool, TEST_ZPUB } from './test-utils';
+
+const ADDRESS = 'bc1qrw2swpufzdx9gy4aewv5q45e53stcf95ker0p7';
+const OTHER_ADDRESS = 'bc1qa07qeugkc8u7pjv98dejfdnd5ml7qxv88zwzrn';
+const BLOCK_HEIGHT = 100;
+const ORDER_CREATED_AT = new Date('2026-06-01T00:00:00Z');
+
+// The runtime config follows the database through a change stream, so a height saved by an earlier test can land late.
+async function settleBlockHeight(height: number) {
+	await refreshPromise;
+	runtimeConfig.bitcoinBlockHeight = -1;
+	await collections.runtimeConfig.updateOne(
+		{ _id: 'bitcoinBlockHeight' },
+		{ $set: { data: height, updatedAt: new Date() } },
+		{ upsert: true }
+	);
+	await vi.waitFor(() => expect(runtimeConfig.bitcoinBlockHeight).toBe(height));
+}
+
+async function storedBlockHeight() {
+	return (await collections.runtimeConfig.findOne({ _id: 'bitcoinBlockHeight' }))?.data;
+}
+
+function silenceLogs() {
+	return {
+		log: vi.spyOn(console, 'log').mockImplementation(() => undefined),
+		warn: vi.spyOn(console, 'warn').mockImplementation(() => undefined),
+		error: vi.spyOn(console, 'error').mockImplementation(() => undefined)
+	};
+}
 
 describe('bitcoin-nodeless', () => {
 	it('should derivate public key', () => {
-		const zpub =
-			'zpub6r8LffkeFh5if3FefxX5zq5oQnQbLxXXPE87fEskLhY2v37Tj16TzMqRL7p32wQweeq1DpRYWrvm4t3ArKHrLNnVhPkFsHGdo3h6nyoppeS';
-
-		expect(bip84Address(zpub, 0)).toBe('bc1qrw2swpufzdx9gy4aewv5q45e53stcf95ker0p7');
-		expect(bip84Address(zpub, 1)).toBe('bc1qa07qeugkc8u7pjv98dejfdnd5ml7qxv88zwzrn');
-		expect(bip84Address(zpub, 2)).toBe('bc1qlyaf3z5auqt0da07303xhhehqzxx797d3c67lr');
-		expect(bip84Address(zpub, 3)).toBe('bc1qsh4z5ntmcva4a0aj5u2u9c6xsx4rdr4jw7m29f');
-		expect(bip84Address(zpub, 4)).toBe('bc1qldvg4ldzcy8v00gvy7m22uv68fw7gz72ky7v6l');
-		expect(bip84Address(zpub, 5)).toBe('bc1qlgxhugactwcmz57hsreydlpvldx4ud5aj8fhh4');
+		expect(bip84Address(TEST_ZPUB, 0)).toBe('bc1qrw2swpufzdx9gy4aewv5q45e53stcf95ker0p7');
+		expect(bip84Address(TEST_ZPUB, 1)).toBe('bc1qa07qeugkc8u7pjv98dejfdnd5ml7qxv88zwzrn');
+		expect(bip84Address(TEST_ZPUB, 2)).toBe('bc1qlyaf3z5auqt0da07303xhhehqzxx797d3c67lr');
+		expect(bip84Address(TEST_ZPUB, 3)).toBe('bc1qsh4z5ntmcva4a0aj5u2u9c6xsx4rdr4jw7m29f');
+		expect(bip84Address(TEST_ZPUB, 4)).toBe('bc1qldvg4ldzcy8v00gvy7m22uv68fw7gz72ky7v6l');
+		expect(bip84Address(TEST_ZPUB, 5)).toBe('bc1qlgxhugactwcmz57hsreydlpvldx4ud5aj8fhh4');
 	});
 
 	it('should derivate public key for testnet', () => {
@@ -126,9 +162,7 @@ describe('bitcoin-nodeless', () => {
 });
 
 describe('getSatoshiReceivedNodeless', () => {
-	const ADDRESS = 'bc1qrw2swpufzdx9gy4aewv5q45e53stcf95ker0p7';
-	const BLOCK_HEIGHT = 100;
-	const orderCreatedAt = new Date('2026-06-01T00:00:00Z');
+	const orderCreatedAt = ORDER_CREATED_AT;
 	const AMOUNT = 100_000;
 
 	const secs = (d: Date) => Math.floor(d.getTime() / 1000);
@@ -149,15 +183,9 @@ describe('getSatoshiReceivedNodeless', () => {
 		};
 	}
 
-	function mockFetchTxs(txs: unknown[]) {
-		vi.stubGlobal(
-			'fetch',
-			vi.fn(async () => ({ ok: true, status: 200, statusText: 'OK', json: async () => txs }))
-		);
-	}
-
-	beforeEach(() => {
-		runtimeConfig.bitcoinBlockHeight = BLOCK_HEIGHT;
+	beforeEach(async () => {
+		await settleBlockHeight(BLOCK_HEIGHT);
+		resetMempoolPacing();
 		runtimeConfig.bitcoinNodeless = {
 			...runtimeConfig.bitcoinNodeless,
 			mempoolUrl: 'https://mempool.example'
@@ -169,7 +197,7 @@ describe('getSatoshiReceivedNodeless', () => {
 	});
 
 	it('counts a full-amount mempool TX as pending, not received', async () => {
-		mockFetchTxs([makeTx()]); // unconfirmed
+		mockMempool({ txs: { body: [makeTx()] } }); // unconfirmed
 		const res = await getSatoshiReceivedNodeless(ADDRESS, 1, orderCreatedAt);
 		expect(res.satReceived).toBe(0);
 		expect(res.pendingSatReceived).toBe(AMOUNT);
@@ -178,7 +206,9 @@ describe('getSatoshiReceivedNodeless', () => {
 
 	it('counts a confirmed-but-too-shallow TX as pending, not received', async () => {
 		// block_height 100 with current tip 100 = 1 confirmation, threshold needs 3
-		mockFetchTxs([makeTx({ blockHeight: 100, blockTime: new Date('2026-06-01T01:00:00Z') })]);
+		mockMempool({
+			txs: { body: [makeTx({ blockHeight: 100, blockTime: new Date('2026-06-01T01:00:00Z') })] }
+		});
 		const res = await getSatoshiReceivedNodeless(ADDRESS, 3, orderCreatedAt);
 		expect(res.satReceived).toBe(0);
 		expect(res.pendingSatReceived).toBe(AMOUNT);
@@ -186,7 +216,9 @@ describe('getSatoshiReceivedNodeless', () => {
 
 	it('counts a threshold-confirmed TX as received even when mined after the expiry window', async () => {
 		// Regression guard: the old upper time-bound dropped TXs confirmed late.
-		mockFetchTxs([makeTx({ blockHeight: 98, blockTime: new Date('2027-01-01T00:00:00Z') })]);
+		mockMempool({
+			txs: { body: [makeTx({ blockHeight: 98, blockTime: new Date('2027-01-01T00:00:00Z') })] }
+		});
 		const res = await getSatoshiReceivedNodeless(ADDRESS, 3, orderCreatedAt);
 		expect(res.satReceived).toBe(AMOUNT);
 		expect(res.pendingSatReceived).toBe(0);
@@ -194,7 +226,9 @@ describe('getSatoshiReceivedNodeless', () => {
 	});
 
 	it('ignores TXs mined before the order was created', async () => {
-		mockFetchTxs([makeTx({ blockHeight: 50, blockTime: new Date('2026-05-01T00:00:00Z') })]);
+		mockMempool({
+			txs: { body: [makeTx({ blockHeight: 50, blockTime: new Date('2026-05-01T00:00:00Z') })] }
+		});
 		const res = await getSatoshiReceivedNodeless(ADDRESS, 3, orderCreatedAt);
 		expect(res.satReceived).toBe(0);
 		expect(res.pendingSatReceived).toBe(0);
@@ -202,9 +236,142 @@ describe('getSatoshiReceivedNodeless', () => {
 	});
 
 	it('counts a mempool TX as received when threshold is 0', async () => {
-		mockFetchTxs([makeTx()]); // unconfirmed
+		mockMempool({ txs: { body: [makeTx()] } }); // unconfirmed
 		const res = await getSatoshiReceivedNodeless(ADDRESS, 0, orderCreatedAt);
 		expect(res.satReceived).toBe(AMOUNT);
 		expect(res.pendingSatReceived).toBe(0);
+	});
+});
+
+describe('mempool pacing', () => {
+	beforeEach(async () => {
+		await settleBlockHeight(BLOCK_HEIGHT);
+		resetMempoolPacing();
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(new Date('2026-06-01T00:05:00Z'));
+		runtimeConfig.bitcoinNodeless = {
+			...runtimeConfig.bitcoinNodeless,
+			mempoolUrl: 'https://mempool.example'
+		};
+	});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.useRealTimers();
+		vi.restoreAllMocks();
+	});
+
+	it('asks for the block height at most once a minute', async () => {
+		const mempool = mockMempool();
+
+		for (let i = 0; i < 3; i++) {
+			await updateBitcoinBlockHeight();
+			advance(31_000);
+		}
+
+		expect(mempool.callsTo('/blocks/tip/height')).toBe(2);
+	});
+
+	it('waits a minute before asking again for a block height that failed', async () => {
+		const { error } = silenceLogs();
+		const mempool = mockMempool({ height: new Error('ECONNRESET') });
+
+		await updateBitcoinBlockHeight();
+		advance(31_000);
+		await updateBitcoinBlockHeight();
+
+		expect(mempool.callsTo('/blocks/tip/height')).toBe(1);
+		expect(error.mock.calls).toEqual([['Failed to update bitcoin block height:', 'ECONNRESET']]);
+	});
+
+	it('pauses every mempool request for 60 seconds after a 429, with a single log line', async () => {
+		const { warn, error } = silenceLogs();
+		const mempool = mockMempool({ txs: { status: 429 } });
+
+		await expect(getSatoshiReceivedNodeless(ADDRESS, 1, ORDER_CREATED_AT)).rejects.toThrow(
+			MempoolRateLimitedError
+		);
+		await expect(getSatoshiReceivedNodeless(OTHER_ADDRESS, 1, ORDER_CREATED_AT)).rejects.toThrow(
+			MempoolRateLimitedError
+		);
+		await updateBitcoinBlockHeight();
+
+		expect(mempool.urls()).toEqual([`https://mempool.example/api/address/${ADDRESS}/txs`]);
+		expect(warn.mock.calls).toEqual([
+			['Mempool rate limit reached (429), pausing mempool requests for 60s']
+		]);
+		expect(error.mock.calls).toEqual([]);
+
+		advance(60_000);
+		mockMempool();
+		expect(await getSatoshiReceivedNodeless(OTHER_ADDRESS, 1, ORDER_CREATED_AT)).toEqual({
+			satReceived: 0,
+			pendingSatReceived: 0,
+			transactions: []
+		});
+	});
+
+	it('pauses the transaction requests when the block height request gets a 429', async () => {
+		const { warn } = silenceLogs();
+		const mempool = mockMempool({ height: { status: 429 } });
+
+		await updateBitcoinBlockHeight();
+
+		await expect(getSatoshiReceivedNodeless(ADDRESS, 1, ORDER_CREATED_AT)).rejects.toThrow(
+			MempoolRateLimitedError
+		);
+		expect(mempool.callsTo('/txs')).toBe(0);
+		expect(warn).toHaveBeenCalledTimes(1);
+	});
+
+	it('still asks whether an address is used during a pause, so polling cannot blind checkout', async () => {
+		silenceLogs();
+		mockMempool({ txs: { status: 429 } });
+		await getSatoshiReceivedNodeless(ADDRESS, 1, ORDER_CREATED_AT).catch(() => undefined);
+
+		advance(30_000);
+		const mempool = mockMempool({ address: { body: { chain_stats: { tx_count: 2 } } } });
+		expect(await isAddressUsed(ADDRESS)).toBe(true);
+		expect(mempool.urls()).toEqual([`https://mempool.example/api/address/${ADDRESS}`]);
+	});
+
+	it('does not pause mempool requests when the used-address check gets a 429', async () => {
+		const { warn } = silenceLogs();
+		const mempool = mockMempool({ address: { status: 429 } });
+
+		expect(await isAddressUsed(ADDRESS)).toBe(false);
+		await getSatoshiReceivedNodeless(ADDRESS, 1, ORDER_CREATED_AT);
+
+		expect(mempool.callsTo(`${ADDRESS}/txs`)).toBe(1);
+		expect(warn.mock.calls).toEqual([]);
+	});
+});
+
+describe('bitcoin block height', () => {
+	beforeEach(async () => {
+		await settleBlockHeight(BLOCK_HEIGHT);
+		resetMempoolPacing();
+		runtimeConfig.bitcoinNodeless = {
+			...runtimeConfig.bitcoinNodeless,
+			mempoolUrl: 'https://mempool.example'
+		};
+		silenceLogs();
+	});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
+	});
+
+	it('never lowers the block height when mempool answers an older tip', async () => {
+		await settleBlockHeight(110);
+		mockMempool({ height: { body: 109 } });
+		await updateBitcoinBlockHeight();
+		expect([runtimeConfig.bitcoinBlockHeight, await storedBlockHeight()]).toEqual([110, 110]);
+
+		resetMempoolPacing();
+		mockMempool({ height: { body: 111 } });
+		await updateBitcoinBlockHeight();
+		expect([runtimeConfig.bitcoinBlockHeight, await storedBlockHeight()]).toEqual([111, 111]);
 	});
 });

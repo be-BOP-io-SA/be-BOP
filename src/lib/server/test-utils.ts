@@ -7,6 +7,7 @@ import { addDays, subDays } from 'date-fns';
 import { ObjectId } from 'mongodb';
 import type { Order, OrderPayment } from '$lib/types/Order';
 import { TEST_DIGITAL_PRODUCT } from './seed/product';
+import { vi } from 'vitest';
 
 export async function cleanDb() {
 	if (!env.VITEST) {
@@ -130,4 +131,43 @@ export async function createDiscount(params: {
 		name: 'test discount',
 		wholeCatalog: false
 	});
+}
+
+/** Moves the faked clock without running timers. */
+export function advance(ms: number) {
+	vi.setSystemTime(Date.now() + ms);
+}
+
+export const TEST_ZPUB =
+	'zpub6r8LffkeFh5if3FefxX5zq5oQnQbLxXXPE87fEskLhY2v37Tj16TzMqRL7p32wQweeq1DpRYWrvm4t3ArKHrLNnVhPkFsHGdo3h6nyoppeS';
+
+type MempoolReply = { status?: number; body?: unknown } | Error;
+
+/** A reply given as a function runs when the request is made, as a real round trip would. */
+export function mockMempool(
+	replies: {
+		txs?: MempoolReply | (() => MempoolReply);
+		height?: MempoolReply | (() => MempoolReply);
+		address?: MempoolReply | (() => MempoolReply);
+	} = {}
+) {
+	const fetchMock = vi.fn(async (url: URL) => {
+		const route = url.pathname.endsWith('/blocks/tip/height')
+			? replies.height ?? { body: 100 }
+			: url.pathname.endsWith('/txs')
+			? replies.txs ?? { body: [] }
+			: replies.address ?? { body: { chain_stats: { tx_count: 0 } } };
+		const reply = typeof route === 'function' ? route() : route;
+		if (reply instanceof Error) {
+			throw reply;
+		}
+		const status = reply.status ?? 200;
+		return { ok: status < 400, status, statusText: '', json: async () => reply.body };
+	});
+	vi.stubGlobal('fetch', fetchMock);
+	return {
+		urls: () => fetchMock.mock.calls.map(([url]) => String(url)),
+		callsTo: (pathEnd: string) =>
+			fetchMock.mock.calls.filter(([url]) => url.pathname.endsWith(pathEnd)).length
+	};
 }
