@@ -6,7 +6,7 @@ import {
 	type SubscriptionDuration
 } from '$lib/types/SubscriptionDuration';
 import { collections } from './database';
-import { runtimeConfig } from './runtime-config';
+import { incrementCounter, runtimeConfig } from './runtime-config';
 import { userQuery } from './user';
 
 /** Shared resolver so order renewal and customer display never compute the fallback differently. */
@@ -111,15 +111,5 @@ export function buildPricingScheduleSnapshot(
 export { subscriptionUnitToSeconds };
 
 export async function generateSubscriptionNumber(): Promise<number> {
-	const res = await collections.runtimeConfig.findOneAndUpdate(
-		{ _id: 'subscriptionNumber' },
-		{ $inc: { data: 1 as never } },
-		{ upsert: true, returnDocument: 'after' }
-	);
-
-	if (!res.value) {
-		throw new Error('Failed to increment subscription number');
-	}
-
-	return res.value.data as number;
+	return incrementCounter('subscriptionNumber');
 }
