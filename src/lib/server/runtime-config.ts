@@ -52,26 +52,8 @@ import { deepEquals } from '$lib/utils/deep-equals';
 import { deepClone } from '$lib/utils/deep-clone';
 import { defaultLanguageText } from './i18n-defaults';
 
-/**
- * The order e-mails a shop can switch on and off one by one, in the order they reach a customer
- * along the life of an order. Only these: the list is about order noise, and a shop has no business
- * silencing a password reset.
- */
-export const ORDER_NOTIFICATION_TEMPLATE_KEYS = [
-	'order.payment.pending.lightning',
-	'order.payment.pending.bitcoin',
-	'order.payment.pending.card',
-	'order.payment.pending.paypal',
-	'order.payment.pending.taler',
-	'order.payment.pending.osb',
-	'order.payment.pending.custom',
-	'order.payment.paid',
-	'order.paid',
-	'order.payment.expired',
-	'order.payment.canceled'
-] as const;
-
-export type OrderNotificationTemplateKey = (typeof ORDER_NOTIFICATION_TEMPLATE_KEYS)[number];
+/** Who receives one order e-mail: the customer, and a copy for the shop. */
+export type OrderEmailRecipients = { customer: boolean; shop: boolean };
 
 /**
  * Shape of a seeded per-locale layout override. The link arrays are typed as optional so
@@ -337,26 +319,10 @@ const baseConfig = {
 	hideShopBankOnTicket: false,
 	hideCmsZonesOnMobile: false,
 	mergeMobileMenus: true,
-	/**
-	 * Master switch, and it stays one: on, every order e-mail is copied to the shop owner, whatever
-	 * the per-e-mail list below says. Shops that ticked it before that list existed keep exactly the
-	 * behaviour they chose. Untick it to decide e-mail by e-mail.
-	 */
+	/** Master switch: on, the shop gets a copy of every order e-mail, whatever its own choices. */
 	copyOrderEmailsToAdmin: true,
-	/**
-	 * Who gets which order e-mail, one line per kind. Read only when the master switch above is off.
-	 *
-	 * Shipped so a new shop behaves as before for its customers — they are told about every step of
-	 * their order — and quietly for its owner, who asked for none of it. The point of the whole
-	 * setting is that "payment pending" and "payment expired" are noise for the owner while "paid"
-	 * is not.
-	 */
-	orderNotifications: Object.fromEntries(
-		ORDER_NOTIFICATION_TEMPLATE_KEYS.map((key) => [
-			key,
-			{ sendToUser: true, sendCopyToAdmin: false }
-		])
-	) as Record<OrderNotificationTemplateKey, { sendToUser: boolean; sendCopyToAdmin: boolean }>,
+	/** Who gets each order e-mail, as saved by the shop. Defaults: see `orderEmailRecipientsFor`. */
+	orderEmailRecipients: {} as Partial<Record<`order.${string}`, OrderEmailRecipients>>,
 	/**
 	 * Test feature (no admin UI yet): list of npubs that will receive a Nostr DM
 	 * "Order #N was fully paid, total amount X.XX CCY" each time an order
@@ -759,6 +725,20 @@ function applyEnvOverrides(runtimeConfig: RuntimeConfig): void {
 
 export type EmailTemplateKey = keyof typeof defaultConfig.emailTemplates;
 
+export type OrderEmailTemplateKey = Extract<
+	EmailTemplateKey,
+	'order.paid' | `order.payment.${string}`
+>;
+
+/**
+ * The order e-mails a shop can switch on and off one by one.
+ *
+ * TODO: some of them must not be switched off — add a way to lock their value.
+ */
+export const ORDER_EMAIL_TEMPLATE_KEYS = typedKeys(defaultConfig.emailTemplates).filter(
+	(key): key is OrderEmailTemplateKey => key === 'order.paid' || key.startsWith('order.payment.')
+);
+
 export const runtimeConfigUpdatedAt: Partial<Record<ConfigKey, Date>> = {};
 
 exchangeRate.set(defaultConfig.exchangeRate);
@@ -1016,26 +996,20 @@ export const runtimeConfig = structuredClone({
 }) as RuntimeConfig;
 
 /**
- * The two answers for one order e-mail: does the customer get it, does the owner get a copy.
- *
- * Falls back to how be-BOP behaved before the list existed — customer yes, owner only through the
- * general setting. That matters for a key the stored configuration does not carry: a shop that
- * saved its list before a payment method was added must not go silent on that method's e-mails.
+ * Who gets one order e-mail, as the shop chose it. An e-mail it never saved, such as one added
+ * since, goes to the customer, and to the shop as the master switch says.
  */
-export function orderNotificationSetting(key: string): {
-	sendToUser: boolean;
-	sendCopyToAdmin: boolean;
-} {
-	const stored = (
-		runtimeConfig.orderNotifications as Record<
-			string,
-			{ sendToUser?: boolean; sendCopyToAdmin?: boolean } | undefined
-		>
-	)[key];
+export function orderEmailRecipientsFor(key: OrderEmailTemplateKey): OrderEmailRecipients {
+	const stored = runtimeConfig.orderEmailRecipients[key];
 	return {
-		sendToUser: stored?.sendToUser ?? true,
-		sendCopyToAdmin: stored?.sendCopyToAdmin ?? false
+		customer: stored?.customer ?? true,
+		shop: stored?.shop ?? runtimeConfig.copyOrderEmailsToAdmin
 	};
+}
+
+/** The master switch overrides the per-e-mail choice. */
+export function shopGetsOrderEmail(key: OrderEmailTemplateKey): boolean {
+	return runtimeConfig.copyOrderEmailsToAdmin || orderEmailRecipientsFor(key).shop;
 }
 
 export function resetConfig() {

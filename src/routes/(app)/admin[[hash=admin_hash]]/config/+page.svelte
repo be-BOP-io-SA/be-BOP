@@ -766,10 +766,10 @@
 	     reason given is a dead end. -->
 	{#if !data.sellerIdentity?.contact.email}
 		<p class="alert-warning text-sm">
-			{t('admin.config.orderNotificationsNoOwnerEmail')}
+			{t('admin.config.orderEmailRecipientsNoShopEmail')}
 			<a href="{data.adminPrefix}/identity" class="body-hyperlink underline"
 				>{t('admin.config.identity')}</a
-			>{t('admin.config.identitySectionSuffix')}
+			>{t('admin.config.orderEmailRecipientsNoShopEmailSuffix')}
 		</p>
 	{/if}
 
@@ -792,11 +792,11 @@
 	<!-- Not disabled when the copy-everything switch is on: a disabled fieldset submits nothing, and
 	     saving would quietly empty the list. Only the sentence below changes. -->
 	<fieldset class="form-label" class:opacity-60={copyAllOrderEmails}>
-		<legend>{t('admin.config.orderNotificationsTitle')}</legend>
+		<legend>{t('admin.config.orderEmailRecipientsTitle')}</legend>
 		<p class="text-sm text-gray-500">
 			{copyAllOrderEmails
-				? t('admin.config.orderNotificationsOverridden')
-				: t('admin.config.orderNotificationsHint')}
+				? t('admin.config.orderEmailRecipientsOverridden')
+				: t('admin.config.orderEmailRecipientsHint')}
 		</p>
 
 		<div class="overflow-x-auto">
@@ -804,30 +804,39 @@
 				<thead>
 					<tr>
 						<th class="text-left font-medium py-2 pr-6">
-							{t('admin.config.orderNotificationsEmail')}
+							{t('admin.config.orderEmailRecipientsEmail')}
 						</th>
-						<th class="font-medium py-2 px-4">{t('admin.config.orderNotificationsToCustomer')}</th>
-						<th class="font-medium py-2 px-4">{t('admin.config.orderNotificationsToOwner')}</th>
+						<th class="font-medium py-2 px-4">{t('admin.config.orderEmailRecipientsToCustomer')}</th
+						>
+						<th class="font-medium py-2 px-4">{t('admin.config.orderEmailRecipientsToShop')}</th>
 					</tr>
 				</thead>
 				<tbody>
-					{#each data.orderNotificationKeys as key}
+					{#each Object.entries(data.orderEmailRecipients) as [key, recipients]}
 						<tr>
-							<td class="py-1 pr-6">{t(`admin.config.orderNotificationLabel.${key}`)}</td>
+							<td class="py-1 pr-6">
+								{key.startsWith('order.payment.pending.')
+									? t('admin.config.orderEmailPaymentPending', {
+											method: t(
+												`checkout.paymentMethod.${key.slice('order.payment.pending.'.length)}`
+											)
+									  })
+									: t(`admin.config.orderEmailLabel.${key}`)}
+							</td>
 							<td class="py-1 px-4 text-center">
 								<input
 									type="checkbox"
-									name="notifyUser:{key}"
+									name="customer:{key}"
 									class="form-checkbox"
-									checked={data.orderNotifications[key].sendToUser}
+									checked={recipients.customer}
 								/>
 							</td>
 							<td class="py-1 px-4 text-center">
 								<input
 									type="checkbox"
-									name="notifyOwner:{key}"
+									name="shop:{key}"
 									class="form-checkbox"
-									checked={data.orderNotifications[key].sendCopyToAdmin}
+									checked={recipients.shop}
 									disabled={!data.sellerIdentity?.contact.email}
 								/>
 							</td>

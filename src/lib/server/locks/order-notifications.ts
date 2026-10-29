@@ -15,10 +15,11 @@ import { Kind } from 'nostr-tools';
 import { toBitcoins } from '$lib/utils/toBitcoins';
 import { getUnixTime, subHours } from 'date-fns';
 import {
+	orderEmailRecipientsFor,
 	refreshPromise,
-	type EmailTemplateKey,
-	orderNotificationSetting,
-	runtimeConfig
+	runtimeConfig,
+	shopGetsOrderEmail,
+	type OrderEmailTemplateKey
 } from '../runtime-config';
 import { refreshAvailableStockInDb } from '../product';
 import { rateLimit } from '../rateLimit';
@@ -184,7 +185,7 @@ async function handleOrderNotification(order: Order): Promise<void> {
 					);
 				}
 				// #region emailNotification
-				let templateKey: EmailTemplateKey | null = null;
+				let templateKey: OrderEmailTemplateKey | null = null;
 				switch (payment.status) {
 					case 'canceled':
 						templateKey = 'order.payment.canceled';
@@ -256,29 +257,17 @@ async function handleOrderNotification(order: Order): Promise<void> {
 						// Instructions snapshotted on the payment, for the pending.custom template.
 						customPaymentInstructions: payment.customPaymentMethod?.instructions ?? ''
 					};
-					/**
-					 * Who gets this one.
-					 *
-					 * The general setting keeps the last word when it is on, so a shop that asked for
-					 * every copy before the per-e-mail list existed still gets every copy. Switched
-					 * off, the list decides, which is the whole point: silence "pending" and
-					 * "expired" without losing "paid".
-					 *
-					 * An e-mail the customer is not sent can still reach the owner — that is the
-					 * second branch, and it already served orders with no customer address.
-					 */
-					const perEmail = orderNotificationSetting(templateKey);
-					const ownerEmail = runtimeConfig.sellerIdentity?.contact.email;
-					const copyToOwner =
-						!!ownerEmail && (runtimeConfig.copyOrderEmailsToAdmin || perEmail.sendCopyToAdmin);
+					// The shop still gets its copy of an e-mail the customer is not sent.
+					const shopEmail = runtimeConfig.sellerIdentity?.contact.email;
+					const copyToShop = !!shopEmail && shopGetsOrderEmail(templateKey);
 
-					if (email && perEmail.sendToUser) {
+					if (email && orderEmailRecipientsFor(templateKey).customer) {
 						await queueEmail(email, templateKey, vars, {
 							session,
-							...(copyToOwner && { bcc: ownerEmail })
+							...(copyToShop && { bcc: shopEmail })
 						});
-					} else if (copyToOwner) {
-						await queueEmail(ownerEmail, templateKey, vars, {
+					} else if (copyToShop) {
+						await queueEmail(shopEmail, templateKey, vars, {
 							session
 						});
 					}

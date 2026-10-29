@@ -3,10 +3,9 @@ import { DELAY_MULTIPLIERS } from '$lib/utils/delayMultipliers';
 import { ORIGIN } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import {
-	ORDER_NOTIFICATION_TEMPLATE_KEYS,
-	orderNotificationSetting,
-	runtimeConfig,
-	type OrderNotificationTemplateKey
+	ORDER_EMAIL_TEMPLATE_KEYS,
+	orderEmailRecipientsFor,
+	runtimeConfig
 } from '$lib/server/runtime-config';
 import { CURRENCIES } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
@@ -69,9 +68,8 @@ export async function load(event) {
 		physicalCartMinAmount: runtimeConfig.physicalCartMinAmount,
 		accountingCurrency: runtimeConfig.accountingCurrency,
 		copyOrderEmailsToAdmin: runtimeConfig.copyOrderEmailsToAdmin,
-		orderNotificationKeys: [...ORDER_NOTIFICATION_TEMPLATE_KEYS],
-		orderNotifications: Object.fromEntries(
-			ORDER_NOTIFICATION_TEMPLATE_KEYS.map((key) => [key, orderNotificationSetting(key)])
+		orderEmailRecipients: Object.fromEntries(
+			ORDER_EMAIL_TEMPLATE_KEYS.map((key) => [key, orderEmailRecipientsFor(key)])
 		),
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
 		defaultOnLocation: runtimeConfig.defaultOnLocation,
@@ -302,23 +300,25 @@ export const actions = {
 			await persistConfigElement('dataCleanup', dataCleanup);
 		}
 
-		/**
-		 * Read straight from the form rather than through the schema: a template key carries dots,
-		 * and the path parser would read them as nested objects. The prefixed names keep it flat.
-		 */
-		const orderNotifications = Object.fromEntries(
-			ORDER_NOTIFICATION_TEMPLATE_KEYS.map((key) => [
+		const hasShopEmail = !!runtimeConfig.sellerIdentity?.contact.email;
+		const orderEmailRecipients = Object.fromEntries(
+			ORDER_EMAIL_TEMPLATE_KEYS.map((key) => [
 				key,
 				{
-					sendToUser: formData.get(`notifyUser:${key}`) === 'on',
-					sendCopyToAdmin: formData.get(`notifyOwner:${key}`) === 'on'
+					customer: formData.get(`customer:${key}`) === 'on',
+					// Without a contact address the shop column is disabled, so it is not submitted.
+					shop: hasShopEmail
+						? formData.get(`shop:${key}`) === 'on'
+						: orderEmailRecipientsFor(key).shop
 				}
 			])
-		) as Record<OrderNotificationTemplateKey, { sendToUser: boolean; sendCopyToAdmin: boolean }>;
+		);
 
-		if (JSON.stringify(runtimeConfig.orderNotifications) !== JSON.stringify(orderNotifications)) {
-			runtimeConfig.orderNotifications = orderNotifications;
-			await persistConfigElement('orderNotifications', orderNotifications);
+		if (
+			JSON.stringify(runtimeConfig.orderEmailRecipients) !== JSON.stringify(orderEmailRecipients)
+		) {
+			runtimeConfig.orderEmailRecipients = orderEmailRecipients;
+			await persistConfigElement('orderEmailRecipients', orderEmailRecipients);
 		}
 
 		if (oldAdminHash !== result.adminHash) {
