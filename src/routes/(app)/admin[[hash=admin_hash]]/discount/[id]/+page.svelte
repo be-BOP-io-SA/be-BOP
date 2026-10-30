@@ -197,11 +197,10 @@
 			name="acceptSubscriptionInCart"
 			checked={data.discount.acceptSubscriptionInCart}
 		/>
-		Accept the subscription when it is in the cart, not only when it is already active
+		{t('admin.discount.acceptSubscriptionInCart')}
 	</label>
 	<p class="text-sm text-gray-600 -mt-2">
-		Lets a new customer subscribe and buy the discounted product in the same order, instead of
-		ordering the subscription, coming back logged in, and ordering again.
+		{t('admin.discount.acceptSubscriptionInCartHint')}
 	</p>
 
 	{#if mode === 'percentage'}

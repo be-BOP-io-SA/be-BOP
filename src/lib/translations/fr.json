@@ -761,6 +761,8 @@
 			"channelWebPos": "Web avec privilège PoS (/cart)",
 			"channelPosTouch": "PoS bar-restaurant (/pos/touch)",
 			"requiredCode": "Code requis (facultatif)",
+			"acceptSubscriptionInCart": "Accepter l'abonnement quand il est dans le panier, pas seulement quand il est déjà actif",
+			"acceptSubscriptionInCartHint": "Permet à un nouveau client de s'abonner et d'acheter le produit remisé dans la même commande, au lieu de commander l'abonnement, de revenir connecté, puis de commander à nouveau.",
 			"promoCodePlaceholder": "Saisissez la chaîne du code promo",
 			"promoCodeTip": "Astuce : utilisez 8 caractères ou plus en mélangeant lettres, chiffres et caractères spéciaux (ex. SPRING_2026X4!) — les codes courts se devinent facilement par force brute.",
 			"requiredDeliveryCountry": "Pays de livraison requis (facultatif)",
