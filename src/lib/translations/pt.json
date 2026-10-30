@@ -761,6 +761,8 @@
 			"channelWebPos": "Web com privilégio de PoS (/cart)",
 			"channelPosTouch": "PoS bar-restaurante (/pos/touch)",
 			"requiredCode": "Código necessário (opcional)",
+			"acceptSubscriptionInCart": "Aceitar a subscrição quando está no carrinho, não apenas quando já está ativa",
+			"acceptSubscriptionInCartHint": "Permite que um novo cliente subscreva e compre o produto com desconto na mesma encomenda, em vez de encomendar a subscrição, voltar com sessão iniciada e encomendar novamente.",
 			"promoCodePlaceholder": "Introduza a cadeia do código promocional",
 			"promoCodeTip": "Dica: use 8+ caracteres misturando letras, números e caracteres especiais (ex. SPRING_2026X4!) — códigos curtos são fáceis de quebrar por força bruta.",
 			"requiredDeliveryCountry": "País de entrega necessário (opcional)",

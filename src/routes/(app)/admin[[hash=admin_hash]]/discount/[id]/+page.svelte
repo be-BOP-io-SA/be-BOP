@@ -16,6 +16,10 @@
 	let endsAtElement: HTMLInputElement;
 	let availableProductList = data.products;
 	let subscriptions = data.subscriptions;
+	// Required combinations gate the discount, they are not what gets discounted — so a
+	// subscription belongs here even though it can never be the discounted product itself.
+	// That is what lets a customer subscribe and buy in the same order (#2718).
+	$: combinationProductList = [...availableProductList, ...subscriptions];
 	let wholeCatalog = data.discount.wholeCatalog;
 	let mode = data.discount.mode;
 	let productFree: string[] = [];
@@ -187,6 +191,19 @@
 	{/if}
 
 	{#if mode === 'percentage'}
+		<label class="form-label flex flex-row items-center gap-2">
+			<input
+				class="form-checkbox"
+				type="checkbox"
+				name="acceptSubscriptionInCart"
+				checked={data.discount.acceptSubscriptionInCart}
+			/>
+			{t('admin.discount.acceptSubscriptionInCart')}
+		</label>
+		<p class="text-sm text-gray-600 -mt-2">
+			{t('admin.discount.acceptSubscriptionInCartHint')}
+		</p>
+
 		<label class="form-label">
 			{t('admin.discount.requiredCode')}
 			<input
@@ -266,7 +283,7 @@
 							{product}
 							{comboIdx}
 							{prodIdx}
-							{availableProductList}
+							availableProductList={combinationProductList}
 							on:change={() => (combinations = combinations)}
 							on:remove={() => {
 								combo.products = combo.products.filter((_, idx) => idx !== prodIdx);
