@@ -1,6 +1,7 @@
 import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { isPhoenixdConfigured } from '$lib/server/phoenixd';
+import { phoenixdGet } from '$lib/server/lnurlWithdrawNode';
 import type { LnurlWithdraw } from '$lib/types/LnurlWithdraw';
 import type { Currency } from '$lib/types/Currency';
 import { toSatoshis } from '$lib/utils/toSatoshis';
@@ -45,19 +46,6 @@ const FEE_MARGIN_MIN_SAT = 10;
 
 export function withdrawFeeMarginSat(amountSat: number): number {
 	return Math.max(FEE_MARGIN_MIN_SAT, Math.ceil(amountSat * FEE_MARGIN_RATIO));
-}
-
-const PHOENIXD_TIMEOUT_MS = 5000;
-
-async function phoenixdGet(path: string): Promise<Response> {
-	return fetch(`${runtimeConfig.phoenixd.url}${path}`, {
-		headers: {
-			Authorization: `Basic ${Buffer.from(`:${runtimeConfig.phoenixd.password}`).toString(
-				'base64'
-			)}`
-		},
-		signal: AbortSignal.timeout(PHOENIXD_TIMEOUT_MS)
-	});
 }
 
 /**
