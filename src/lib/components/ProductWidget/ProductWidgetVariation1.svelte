@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SaleLockedLink from './SaleLockedLink.svelte';
 	import type { Picture } from '$lib/types/Picture';
 	import PictureComponent from '../Picture.svelte';
 	import PriceTag from '../PriceTag.svelte';
@@ -92,9 +93,7 @@
 				<AddToCart {product} picture={pictures[0]} class="btn cartPreview-mainCTA" />
 			</div>
 		{:else if saleLockedHref}
-			<a href={saleLockedHref} class="btn cartPreview-mainCTA">
-				{t('product.cta.view')}
-			</a>
+			<SaleLockedLink href={saleLockedHref} />
 		{/if}
 	</div>
 </div>
