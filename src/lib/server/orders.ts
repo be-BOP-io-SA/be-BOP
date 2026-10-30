@@ -32,6 +32,7 @@ import {
 	resolveSubscriptionDuration
 } from './subscriptions';
 import {
+	canOrderWithoutContactAddress,
 	checkProductVariationsIntegrity,
 	productPriceWithVariations,
 	type Product
@@ -750,6 +751,7 @@ export async function createOrder(
 
 	if (
 		!canBeNotified &&
+		!items.every((item) => canOrderWithoutContactAddress(item.product)) &&
 		paymentMethod !== 'point-of-sale' &&
 		paymentMethod !== null &&
 		!params.user.userHasPosOptions

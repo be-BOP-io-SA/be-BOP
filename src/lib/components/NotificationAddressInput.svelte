@@ -13,6 +13,8 @@
 	export let name = 'address';
 	export let value = '';
 	export let required = false;
+	/** Says in the label that the address may be left empty */
+	export let optional = false;
 	let className = 'form-label';
 	export { className as class };
 
@@ -48,6 +50,7 @@
 		{:else}
 			{t('checkout.notifications.npub')}
 		{/if}
+		{#if optional}{t('checkout.notifications.optional')}{/if}
 		<input
 			type="text"
 			class="form-input"
