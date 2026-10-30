@@ -1054,22 +1054,29 @@ export const migrations = [
 		}
 	},
 	{
-		_id: new ObjectId('000000000000000000002738'),
+		_id: new ObjectId('6ae41fff6f246a84e7340f05'),
 		name: 'Cancel pending payments left on fully paid orders (issue #2738)',
-		run: async (session: ClientSession) => {
+		run: async () => {
 			// Imported here and not at the top: runtime-config imports this module, so a
 			// static import of orders.ts would close the cycle at load time.
-			const { onOrderPaymentFailed } = await import('./orders');
-			for await (let order of collections.orders.find(
-				{ status: 'paid', 'payments.status': 'pending' },
-				{ session }
-			)) {
-				for (const { _id } of order.payments.filter((p) => p.status === 'pending')) {
-					const stale = order.payments.find((p) => p._id.equals(_id));
-					if (stale) {
-						order = await onOrderPaymentFailed(order, stale, 'canceled', { session });
+			const { cancelStalePendingPayments } = await import('./orders');
+			// One transaction per order, not the migration's single one: on a shop with many such
+			// orders, one transaction would exceed MongoDB's size and time limits and the shop would
+			// not boot. Running it again is harmless, a fixed order no longer matches.
+			const orderIds = await collections.orders
+				.find({ status: 'paid', 'payments.status': 'pending' }, { projection: { _id: 1 } })
+				.map((order) => order._id)
+				.toArray();
+			for (const orderId of orderIds) {
+				await withTransaction(async (session) => {
+					const order = await collections.orders.findOne(
+						{ _id: orderId, status: 'paid' },
+						{ session }
+					);
+					if (order) {
+						await cancelStalePendingPayments(order, session);
 					}
-				}
+				});
 			}
 		}
 	}
