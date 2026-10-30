@@ -2177,6 +2177,21 @@
 			"notConfigured": "non configurato",
 			"priority": "Priorità",
 			"systemPriority": "Priorità di sistema"
+		},
+		"session": {
+			"expiry": {
+				"warning": {
+					"message": "La sua sessione terminerà tra {countdown}",
+					"extend": "Prolunga",
+					"extendFailed": "Non è stato possibile prolungare la sessione. Salva il tuo lavoro e accedi di nuovo.",
+					"ignore": "Ignora",
+					"screenReader": "La tua sessione sta per scadere. Usa il pulsante Prolunga per continuare a lavorare."
+				},
+				"expired": {
+					"message": "La sua sessione è stata disconnessa. Le modifiche non salvate non verranno registrate, la preghiamo di <0>accedere di nuovo</0>.",
+					"configHint": "Una durata di sessione più lunga può essere configurata al momento dell'accesso."
+				}
+			}
 		}
 	},
 	"ageWarning": {
