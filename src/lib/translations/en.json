@@ -2183,6 +2183,7 @@
 				"warning": {
 					"message": "Your session will end in {countdown}",
 					"extend": "Extend",
+					"extendFailed": "The session could not be extended. Save your work and log in again.",
 					"ignore": "Dismiss",
 					"screenReader": "Your session is about to expire. Use the Extend button to keep working."
 				},

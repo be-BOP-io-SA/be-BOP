@@ -2183,6 +2183,7 @@
 				"warning": {
 					"message": "Ihre Sitzung endet in {countdown}",
 					"extend": "Verlängern",
+					"extendFailed": "Die Sitzung konnte nicht verlängert werden. Speichern Sie Ihre Arbeit und melden Sie sich erneut an.",
 					"ignore": "Ausblenden",
 					"screenReader": "Ihre Sitzung läuft bald ab. Verwenden Sie die Schaltfläche Verlängern, um weiterzuarbeiten."
 				},
