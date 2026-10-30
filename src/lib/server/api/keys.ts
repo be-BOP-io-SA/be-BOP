@@ -1,5 +1,4 @@
 import { ObjectId } from 'mongodb';
-import { z } from 'zod';
 import { collections } from '$lib/server/database';
 import type { ApiKey } from '$lib/types/ApiKey';
 import { API_V1_SCOPES, type ApiV1Scope } from '$lib/types/ApiV1';
@@ -28,19 +27,6 @@ function assertScopes(scopes: ApiV1Scope[]) {
 		throw new Error('At least one scope is required');
 	}
 }
-
-/**
- * One stream setting as typed in the admin. An empty field is an answer, not a missing one: it
- * means "no ceiling" for the budget and "never close it" for the lifetime, and it is stored as
- * absent rather than as zero.
- */
-export const optionalStreamSetting = z
-	.string()
-	.trim()
-	.transform((raw) => (raw === '' ? null : Number(raw)))
-	.refine((value) => value === null || (Number.isInteger(value) && value > 0), {
-		message: 'Leave empty, or enter a whole number greater than zero'
-	});
 
 export async function createApiKey(opts: {
 	name: string;
