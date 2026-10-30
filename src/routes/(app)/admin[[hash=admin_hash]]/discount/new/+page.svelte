@@ -142,15 +142,15 @@
 		</label>
 	{/if}
 
-	<label class="form-label flex flex-row items-center gap-2">
-		<input class="form-checkbox" type="checkbox" name="acceptSubscriptionInCart" />
-		{t('admin.discount.acceptSubscriptionInCart')}
-	</label>
-	<p class="text-sm text-gray-600 -mt-2">
-		{t('admin.discount.acceptSubscriptionInCartHint')}
-	</p>
-
 	{#if mode === 'percentage'}
+		<label class="form-label flex flex-row items-center gap-2">
+			<input class="form-checkbox" type="checkbox" name="acceptSubscriptionInCart" />
+			{t('admin.discount.acceptSubscriptionInCart')}
+		</label>
+		<p class="text-sm text-gray-600 -mt-2">
+			{t('admin.discount.acceptSubscriptionInCartHint')}
+		</p>
+
 		<label class="form-label">
 			{t('admin.discount.requiredCode')}
 			<input
