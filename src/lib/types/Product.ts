@@ -176,6 +176,8 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	variationUrlPolicy?: 'error' | 'ignore';
 	hasSellDisclaimer?: boolean;
 	hideFromSEO?: boolean;
+	/** Lets the customer leave the contact address empty on checkout, see canOrderWithoutContactAddress */
+	allowOrderWithoutContactAddress?: boolean;
 	event?: {
 		beginsAt: Date;
 		endsAt: Date;
@@ -218,6 +220,25 @@ export function isPreorder(
 	preorder: boolean | undefined
 ): boolean {
 	return !!(preorder && availableDate && availableDate > new Date());
+}
+
+/**
+ * A contact address is still required for anything that needs to reach the customer after
+ * checkout: subscription reminders, delivery, deposit remainder, preorder availability.
+ */
+export function canOrderWithoutContactAddress(
+	product: Pick<
+		Product,
+		'allowOrderWithoutContactAddress' | 'type' | 'shipping' | 'deposit' | 'preorder'
+	>
+): boolean {
+	return (
+		!!product.allowOrderWithoutContactAddress &&
+		product.type !== 'subscription' &&
+		!product.shipping &&
+		!product.deposit &&
+		!product.preorder
+	);
 }
 
 export function oneMaxPerLine(

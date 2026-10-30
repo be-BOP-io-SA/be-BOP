@@ -1801,6 +1801,7 @@
 			"productIsVisible": "Produkt ist sichtbar",
 			"canBeAddedToBasket": "Kann in den Warenkorb gelegt werden",
 			"advancedFeatures": "Erweiterte Funktionen",
+			"allowOrderWithoutContactAddress": "Bestellung ohne Kontaktadresse erlauben",
 			"customCtaButtons": "Benutzerdefinierte Call-to-Action-Schaltflächen",
 			"buttonText": "Schaltflächentext",
 			"url": "URL",
@@ -2340,6 +2341,7 @@
 			"email": "E-Mail",
 			"message": "Bitte geben Sie mindestens eine Kontaktadresse an, um über Neuigkeiten zu Ihrer Bestellung informiert zu werden.",
 			"npub": "Öffentlicher Nostr-Schlüssel",
+			"optional": "(optional)",
 			"title": "Feed & Benachrichtigungen"
 		},
 		"numProducts": {
