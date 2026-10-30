@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SaleLockedLink from './SaleLockedLink.svelte';
 	import type { Picture } from '$lib/types/Picture';
 	import PictureComponent from '../Picture.svelte';
 	import PriceTag from '../PriceTag.svelte';
@@ -11,6 +12,7 @@
 	export let product: ProductWidgetProduct;
 	export let hasDigitalFiles: boolean;
 	export let canAddToCart: boolean;
+	export let saleLockedHref: string | undefined = undefined;
 	export let externalUrl: string | undefined = undefined;
 
 	let className = '';
@@ -89,6 +91,8 @@
 			<div class="flex flex-row items-end justify-end">
 				<AddToCart {product} picture={pictures[0]} class="btn cartPreview-mainCTA" />
 			</div>
+		{:else if saleLockedHref}
+			<SaleLockedLink href={saleLockedHref} />
 		{/if}
 	</div>
 </div>
