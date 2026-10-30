@@ -437,6 +437,12 @@
 			lines.push('');
 			lines.push(separator('─'));
 
+			// No VAT on the order, no VAT on the ticket: a single total, no excl./incl. VAT lines.
+			const hasVat =
+				priceInfo.vatBreakdown.length > 0 || !!priceInfo.undiscountedVatBreakdown?.length;
+			const totalLabel = hasVat ? ticketLabels.inclVat : ticketLabels.total;
+			const vatOnly = <T,>(rows: T[]): T[] => (hasVat ? rows : []);
+
 			if (hasDiscount) {
 				const discountMultiplier =
 					totalBeforeDiscountSafe > 0 ? priceInfo.total / totalBeforeDiscountSafe : 1;
@@ -462,13 +468,15 @@
 
 				// excl. VAT (before discount)
 				lines.push(
-					tableRow([
-						{ text: ticketLabels.exclVat, width: 0.7, align: 'LEFT' },
-						{
-							text: formatPrice(beforeExclVat, priceInfo.currency),
-							width: 0.3,
-							align: 'RIGHT'
-						}
+					...vatOnly([
+						tableRow([
+							{ text: ticketLabels.exclVat, width: 0.7, align: 'LEFT' },
+							{
+								text: formatPrice(beforeExclVat, priceInfo.currency),
+								width: 0.3,
+								align: 'RIGHT'
+							}
+						])
 					])
 				);
 
@@ -485,7 +493,7 @@
 				// incl. VAT (before discount)
 				lines.push(
 					tableRow([
-						{ text: ticketLabels.inclVat, width: 0.7, align: 'LEFT' },
+						{ text: totalLabel, width: 0.7, align: 'LEFT' },
 						{
 							text: formatPrice(totalBeforeDiscountSafe, priceInfo.currency),
 							width: 0.3,
@@ -524,13 +532,15 @@
 
 				// excl. VAT (after discount)
 				lines.push(
-					tableRow([
-						{ text: ticketLabels.exclVat, width: 0.7, align: 'LEFT' },
-						{
-							text: formatPrice(afterExclVat, priceInfo.currency),
-							width: 0.3,
-							align: 'RIGHT'
-						}
+					...vatOnly([
+						tableRow([
+							{ text: ticketLabels.exclVat, width: 0.7, align: 'LEFT' },
+							{
+								text: formatPrice(afterExclVat, priceInfo.currency),
+								width: 0.3,
+								align: 'RIGHT'
+							}
+						])
 					])
 				);
 
@@ -551,7 +561,7 @@
 				// incl. VAT (after discount) - final total, bold
 				lines.push(
 					tableRow([
-						{ text: ticketLabels.inclVat, width: 0.7, align: 'LEFT', bold: true },
+						{ text: totalLabel, width: 0.7, align: 'LEFT', bold: true },
 						{
 							text: formatPrice(priceInfo.total, priceInfo.currency),
 							width: 0.3,
@@ -565,13 +575,15 @@
 
 				// excl. VAT
 				lines.push(
-					tableRow([
-						{ text: ticketLabels.exclVat, width: 0.7, align: 'LEFT' },
-						{
-							text: formatPrice(priceInfo.totalExclVat, priceInfo.currency),
-							width: 0.3,
-							align: 'RIGHT'
-						}
+					...vatOnly([
+						tableRow([
+							{ text: ticketLabels.exclVat, width: 0.7, align: 'LEFT' },
+							{
+								text: formatPrice(priceInfo.totalExclVat, priceInfo.currency),
+								width: 0.3,
+								align: 'RIGHT'
+							}
+						])
 					])
 				);
 
@@ -588,7 +600,7 @@
 				// incl. VAT - final total, bold
 				lines.push(
 					tableRow([
-						{ text: ticketLabels.inclVat, width: 0.7, align: 'LEFT', bold: true },
+						{ text: totalLabel, width: 0.7, align: 'LEFT', bold: true },
 						{
 							text: formatPrice(priceInfo.total, priceInfo.currency),
 							width: 0.3,
