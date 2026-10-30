@@ -1,9 +1,15 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const isPhoenixdConfigured = vi.fn();
+const phoenixdGet = vi.fn();
 
 vi.mock('$lib/server/phoenixd', () => ({
 	isPhoenixdConfigured: () => isPhoenixdConfigured()
+}));
+// The node is reached through its own module, so the stub stays in this file instead of replacing
+// the global fetch every later test would inherit.
+vi.mock('$lib/server/lnurlWithdrawNode', () => ({
+	phoenixdGet: (path: string) => phoenixdGet(path)
 }));
 vi.mock('$lib/server/database', () => ({ collections: { lnurlWithdrawals: {} } }));
 vi.mock('$lib/server/runtime-config', () => ({
@@ -28,26 +34,23 @@ import {
 // `toCurrency` reads the store, which the server otherwise fills from the runtime config at boot.
 exchangeRate.set({ SAT: 100_000_000, CHF: 100_000 });
 
-/** One fetch stub per phoenixd route, so a test only says what it cares about. */
+/** One answer per phoenixd route, so a test only says what it cares about. */
 function phoenixdAnswers(answers: {
 	channels?: unknown[] | 'error' | 'throw';
 	balanceSat?: number;
 }) {
-	vi.stubGlobal(
-		'fetch',
-		vi.fn(async (input: string) => {
-			if (answers.channels === 'throw') {
-				throw new Error('ECONNREFUSED');
+	phoenixdGet.mockImplementation(async (path: string) => {
+		if (answers.channels === 'throw') {
+			throw new Error('ECONNREFUSED');
+		}
+		if (path.endsWith('/listchannels')) {
+			if (answers.channels === 'error') {
+				return new Response('nope', { status: 500 });
 			}
-			if (String(input).endsWith('/listchannels')) {
-				if (answers.channels === 'error') {
-					return new Response('nope', { status: 500 });
-				}
-				return new Response(JSON.stringify(answers.channels ?? [{ channelId: 'a' }]));
-			}
-			return new Response(JSON.stringify({ balanceSat: answers.balanceSat ?? 100_000 }));
-		})
-	);
+			return new Response(JSON.stringify(answers.channels ?? [{ channelId: 'a' }]));
+		}
+		return new Response(JSON.stringify({ balanceSat: answers.balanceSat ?? 100_000 }));
+	});
 }
 
 describe('checkWithdrawReadiness', () => {
@@ -56,14 +59,17 @@ describe('checkWithdrawReadiness', () => {
 		isPhoenixdConfigured.mockReturnValue(true);
 	});
 
+	afterEach(() => {
+		phoenixdGet.mockReset();
+		vi.unstubAllGlobals();
+	});
+
 	it('refuses when phoenixd is not configured, without calling it', async () => {
 		isPhoenixdConfigured.mockReturnValue(false);
-		const fetchSpy = vi.fn();
-		vi.stubGlobal('fetch', fetchSpy);
 
 		const readiness = await checkWithdrawReadiness(1000);
 		expect(readiness).toMatchObject({ ready: false, blocker: 'NOT_CONFIGURED' });
-		expect(fetchSpy).not.toHaveBeenCalled();
+		expect(phoenixdGet).not.toHaveBeenCalled();
 	});
 
 	it('refuses when phoenixd cannot be reached', async () => {
