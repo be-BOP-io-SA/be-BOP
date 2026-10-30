@@ -131,7 +131,7 @@ function computeVatForItem(
 	params: {
 		bebopCountry: CountryAlpha2 | undefined;
 		freeUnits?: number;
-		isPhysicalVatExempted: boolean;
+		vatExemptedOutsideSellerCountry: boolean;
 		userCountry: CountryAlpha2 | undefined;
 		vatExempted: boolean;
 		vatProfiles: Array<{
@@ -141,7 +141,7 @@ function computeVatForItem(
 		vatSingleCountry: boolean;
 	}
 ) {
-	if (params.vatExempted || (item.product.shipping && params.isPhysicalVatExempted)) {
+	if (params.vatExempted || (item.product.shipping && params.vatExemptedOutsideSellerCountry)) {
 		return undefined;
 	}
 	const country = params.vatSingleCountry
@@ -156,7 +156,8 @@ function computeVatForItem(
 		bebopCountry: params.bebopCountry,
 		userCountry: params.userCountry,
 		vatSingleCountry: params.vatSingleCountry,
-		vatExempted: params.vatExempted
+		// Exempt orders returned above
+		vatExempted: false
 	});
 	const freeUnits = params.freeUnits ?? 0;
 	const { amount: amountToBill, currency, usedFreeUnits } = priceToBillForItem(item, { freeUnits });
@@ -186,7 +187,7 @@ function vatForCart(
 	params: {
 		bebopCountry: CountryAlpha2 | undefined;
 		freeUnits?: Record<string, number>;
-		isPhysicalVatExempted: boolean;
+		vatExemptedOutsideSellerCountry: boolean;
 		usePartialPrice?: boolean;
 		userCountry: CountryAlpha2 | undefined;
 		vatExempted: boolean;
@@ -276,7 +277,7 @@ function computeDeliveryFeesHt(params: {
 	bebopCountry: CountryAlpha2 | undefined;
 	userCountry: CountryAlpha2 | undefined;
 	vatSingleCountry: boolean;
-	vatExempted?: boolean;
+	vatExempted: boolean;
 	vatProfiles: Array<{
 		_id: string | ObjectId;
 		rates: Partial<Record<CountryAlpha2, number>>;
@@ -373,7 +374,7 @@ export function computePriceInfo(
 	}
 ): CartPriceInfo {
 	const freeUnits = params.freeProductUnits;
-	const isPhysicalVatExempted =
+	const vatExemptedOutsideSellerCountry =
 		params.vatNullOutsideSellerCountry && params.bebopCountry !== params.userCountry;
 	const singleVatCountry = params.vatSingleCountry && !!params.bebopCountry;
 
@@ -387,7 +388,7 @@ export function computePriceInfo(
 		vatSingleCountry: params.vatSingleCountry,
 		// Delivery is shipped, so the outside-seller-country exemption applies to it too: an
 		// exempted order pays the fee as entered, with no VAT taken out of it or added to it.
-		vatExempted: params.vatExempted || isPhysicalVatExempted,
+		vatExempted: params.vatExempted || vatExemptedOutsideSellerCountry,
 		vatProfiles: params.vatProfiles
 	});
 
@@ -399,7 +400,7 @@ export function computePriceInfo(
 	const cartVat = vatForCart(items, {
 		...params,
 		freeUnits,
-		isPhysicalVatExempted
+		vatExemptedOutsideSellerCountry
 	});
 	const deliveryFeeVat = computeVatForItem(
 		{
@@ -410,7 +411,7 @@ export function computePriceInfo(
 			},
 			quantity: 1
 		},
-		{ ...params, freeUnits: 0, isPhysicalVatExempted }
+		{ ...params, freeUnits: 0, vatExemptedOutsideSellerCountry }
 	);
 
 	const partialVat = sumCurrency(
@@ -495,7 +496,7 @@ export function computePriceInfo(
 		partialPriceWithVat,
 		partialVat,
 		perItem: cartPrice.perItem,
-		physicalVatAtCustoms: isPhysicalVatExempted && !params.vatExempted,
+		physicalVatAtCustoms: vatExemptedOutsideSellerCountry && !params.vatExempted,
 		singleVatCountry,
 		totalPrice,
 		totalPriceWithVat,

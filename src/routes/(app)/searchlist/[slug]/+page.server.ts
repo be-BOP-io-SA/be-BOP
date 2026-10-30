@@ -1,10 +1,8 @@
 import { error } from '@sveltejs/kit';
 import { collections } from '$lib/server/database';
-import { readUrlState, searchProducts, type VatContext } from '$lib/server/searchlist';
+import { loadVatContext, readUrlState, searchProducts } from '$lib/server/searchlist';
 import type { Picture } from '$lib/types/Picture';
 import type { Tag } from '$lib/types/Tag';
-import type { VatProfile } from '$lib/types/VatProfile';
-import { runtimeConfig } from '$lib/server/runtime-config';
 import { rateLimit } from '$lib/server/rateLimit';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 
@@ -25,19 +23,7 @@ export const load = async ({ params, url, locals }) => {
 
 	const state = readUrlState(url, searchlist);
 
-	const vatProfiles = await collections.vatProfiles
-		.find({})
-		.project<Pick<VatProfile, '_id' | 'rates'>>({ _id: 1, rates: 1 })
-		.map((p) => ({ _id: p._id.toString(), rates: p.rates }))
-		.toArray();
-	const vatContext: VatContext = {
-		vatProfiles,
-		bebopCountry: runtimeConfig.vatCountry,
-		userCountry: locals.countryCode,
-		vatSingleCountry: runtimeConfig.vatSingleCountry,
-		vatExempted: runtimeConfig.vatExempted,
-		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
-	};
+	const vatContext = await loadVatContext(locals.countryCode);
 
 	const { products, total, totalPages } = await searchProducts(
 		searchlist,
@@ -98,7 +84,6 @@ export const load = async ({ params, url, locals }) => {
 		totalPages,
 		allowedTags,
 		basePath: `/searchlist/${params.slug}`,
-		vatExempted: runtimeConfig.vatExempted,
-		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
+		displayVatIncluded: vatContext.displayVatIncluded
 	};
 };

@@ -21,9 +21,7 @@ import { groupBy } from '$lib/utils/group-by';
 import { subMinutes } from 'date-fns';
 import { z } from 'zod';
 import type { ProductWidgetProduct } from '$lib/components/ProductWidget/ProductWidgetProduct';
-import { readUrlState, searchProducts, type VatContext } from './searchlist';
-import { runtimeConfig } from './runtime-config';
-import type { VatProfile } from '$lib/types/VatProfile';
+import { loadVatContext, readUrlState, searchProducts } from './searchlist';
 export type ExternalProductData = ProductWidgetProduct & {
 	externalUrl: string;
 	pictures: Picture[];
@@ -840,23 +838,10 @@ async function buildSearchlistViews(searchlistSlugs: string[], locals: App.Local
 	const isEmployee = locals.user?.roleId !== undefined && locals.user.roleId !== CUSTOMER_ROLE_ID;
 	const visibilityFilter = isEmployee ? {} : { disabled: { $ne: true } };
 
-	const [searchlists, vatProfiles] = await Promise.all([
+	const [searchlists, vatContext] = await Promise.all([
 		collections.searchlists.find({ _id: { $in: searchlistSlugs }, ...visibilityFilter }).toArray(),
-		collections.vatProfiles
-			.find({})
-			.project<Pick<VatProfile, '_id' | 'rates'>>({ _id: 1, rates: 1 })
-			.map((p) => ({ _id: p._id.toString(), rates: p.rates }))
-			.toArray()
+		loadVatContext(locals.countryCode)
 	]);
-
-	const vatContext: VatContext = {
-		vatProfiles,
-		bebopCountry: runtimeConfig.vatCountry,
-		userCountry: locals.countryCode,
-		vatSingleCountry: runtimeConfig.vatSingleCountry,
-		vatExempted: runtimeConfig.vatExempted,
-		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
-	};
 
 	return Promise.all(
 		searchlists.map(async (sl) => {

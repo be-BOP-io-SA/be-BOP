@@ -22,7 +22,7 @@ export function computeVatRate(params: {
 	userCountry: CountryAlpha2 | undefined;
 	vatSingleCountry: boolean;
 	/** "Disable VAT for my be-BOP". Nothing is taxed, whatever the country or profile says. */
-	vatExempted?: boolean;
+	vatExempted: boolean;
 }): number {
 	if (params.vatExempted) {
 		return 0;
