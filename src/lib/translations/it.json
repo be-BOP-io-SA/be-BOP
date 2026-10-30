@@ -2255,7 +2255,8 @@
 			"streamLifetimeSecondsHint": "Lasciare vuoto per non chiuderlo mai. Il dispositivo si riconnette da sé e riprende da dove si era fermato, quindi chiuderlo non gli costa nulla.",
 			"streamsSave": "Salva impostazioni dei flussi",
 			"streamsSaved": "Impostazioni dei flussi aggiornate.",
-			"streamsResetDone": "Posti dei flussi liberati."
+			"streamsResetDone": "Posti dei flussi liberati.",
+			"resetStreamsTitle": "Libera tutti i posti di flusso occupati da questa chiave"
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Nessun processore configurato. Configurali nella scheda Impostazioni di pagamento qui sopra",

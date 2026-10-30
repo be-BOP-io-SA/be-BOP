@@ -2255,7 +2255,8 @@
 			"streamLifetimeSecondsHint": "Leave empty to never close it. The device reconnects on its own and picks up where it stopped, so closing costs it nothing.",
 			"streamsSave": "Save stream settings",
 			"streamsSaved": "Stream settings updated.",
-			"streamsResetDone": "Stream places handed back."
+			"streamsResetDone": "Stream places handed back.",
+			"resetStreamsTitle": "Hand back every stream place held by this key"
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "No processors configured. Configure them in the Payment Settings tab above",

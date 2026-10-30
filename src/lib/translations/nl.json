@@ -2255,7 +2255,8 @@
 			"streamLifetimeSecondsHint": "Laat leeg om hem nooit te sluiten. Het apparaat verbindt zelf opnieuw en gaat verder waar het gebleven was, sluiten kost het dus niets.",
 			"streamsSave": "Stroominstellingen opslaan",
 			"streamsSaved": "Stroominstellingen bijgewerkt.",
-			"streamsResetDone": "Stroomplaatsen vrijgegeven."
+			"streamsResetDone": "Stroomplaatsen vrijgegeven.",
+			"resetStreamsTitle": "Alle streamplaatsen van deze sleutel vrijgeven"
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Geen verwerkers geconfigureerd. Configureer ze in het tabblad Betalingsinstellingen hierboven",

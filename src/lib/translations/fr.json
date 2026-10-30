@@ -2255,7 +2255,8 @@
 			"streamLifetimeSecondsHint": "Laissez vide pour ne jamais le fermer. L'appareil se reconnecte seul et reprend où il s'était arrêté : la fermeture ne lui coûte rien.",
 			"streamsSave": "Enregistrer les réglages de flux",
 			"streamsSaved": "Réglages de flux mis à jour.",
-			"streamsResetDone": "Places de flux rendues."
+			"streamsResetDone": "Places de flux rendues.",
+			"resetStreamsTitle": "Libérer toutes les places de flux occupées par cette clé"
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Aucun processeur configuré. Configurez-les dans l’onglet Paramètres de paiement ci-dessus",
