@@ -101,7 +101,8 @@
 
 		hasVariations: false,
 		hasSellDisclaimer: false,
-		hideFromSEO: false
+		hideFromSEO: false,
+		allowOrderWithoutContactAddress: false
 	};
 
 	let paymentMethods = product.paymentMethods || [...availablePaymentMethods];
@@ -1976,6 +1977,17 @@
 				{t('admin.productForm.advancedFeatures')}
 			</summary>
 			<div class="p-4 pt-0 space-y-6">
+				{#if product.type !== 'subscription' && !product.shipping && !allowDeposit && !product.preorder}
+					<label class="checkbox-label">
+						<input
+							type="checkbox"
+							name="allowOrderWithoutContactAddress"
+							checked={product.allowOrderWithoutContactAddress}
+							class="form-checkbox"
+						/>
+						{t('admin.productForm.allowOrderWithoutContactAddress')}
+					</label>
+				{/if}
 				<div>
 					<h4 class="text-lg font-medium text-gray-900 mb-3">
 						{t('admin.productForm.customCtaButtons')}

@@ -224,7 +224,12 @@
 			"bulkPriceChangeTitle": "Modification groupée des prix",
 			"displayVatCalculator": "Afficher le calculateur de TVA",
 			"bulkTagsEditTitle": "Modification groupée des étiquettes",
-			"productTagsLabel": "Étiquettes du produit"
+			"productTagsLabel": "Étiquettes du produit",
+			"noContact": {
+				"title": "Commande sans adresse de contact",
+				"hint": "Cochez les produits qu'un client peut commander sans laisser d'adresse de contact. Les abonnements, les produits livrés, avec acompte ou en précommande en demandent toujours une : leur case est grisée.",
+				"noLongerEditable": "Ces produits ne peuvent plus être commandés sans adresse de contact depuis l'ouverture de cette page, rien n'a donc été enregistré : {products}. Rechargez la page, puis enregistrez à nouveau."
+			}
 		},
 		"deliveryFees": {
 			"addFeeOption": "Ajouter une option de frais",
@@ -1801,6 +1806,7 @@
 			"productIsVisible": "Le produit est visible",
 			"canBeAddedToBasket": "Peut être ajouté au panier",
 			"advancedFeatures": "Fonctionnalités avancées",
+			"allowOrderWithoutContactAddress": "Autoriser la commande sans adresse de contact",
 			"customCtaButtons": "Boutons d'appel à l'action personnalisés",
 			"buttonText": "Texte du bouton",
 			"url": "URL",
@@ -2340,6 +2346,7 @@
 			"emailOrNpub": "E-mail ou clé publique Nostr",
 			"message": "Merci de remplir une adresse de contact pour être notifié des évolutions de votre commande.",
 			"npub": "Clé publique Nostr",
+			"optional": "(facultatif)",
 			"title": "Notifications"
 		},
 		"numProducts": {
