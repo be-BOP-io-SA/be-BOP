@@ -385,7 +385,9 @@ export function computePriceInfo(
 		bebopCountry: params.bebopCountry,
 		userCountry: params.userCountry,
 		vatSingleCountry: params.vatSingleCountry,
-		vatExempted: params.vatExempted,
+		// Delivery is shipped, so the outside-seller-country exemption applies to it too: an
+		// exempted order pays the fee as entered, with no VAT taken out of it or added to it.
+		vatExempted: params.vatExempted || isPhysicalVatExempted,
 		vatProfiles: params.vatProfiles
 	});
 
