@@ -14,6 +14,10 @@ import {
 	isUntouchedDefaultCmsPage
 } from '$lib/server/defaultCmsPages';
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
+import {
+	ensureApiOrderLabel,
+	ensureCatalogIntegrityLabel
+} from './api/v1/orders/ensureCatalogIntegrityLabel';
 import { defaultLanguageText } from './i18n-defaults';
 import { languages, type LanguageKey } from '$lib/translations';
 
@@ -1083,6 +1087,9 @@ export async function runMigrations() {
 	 */
 	await ensureDefaultSearchlist();
 	await ensureSearchSearchlist();
+	// A shop should see the labels the API puts on orders before the first integration sale.
+	await ensureApiOrderLabel();
+	await ensureCatalogIntegrityLabel();
 
 	const lock = await Lock.tryAcquire('migrations');
 	if (!lock) {

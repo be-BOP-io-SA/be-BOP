@@ -116,7 +116,7 @@
 	{#if mode === 'percentage'}
 		<fieldset class="form-label">
 			<legend>{t('admin.discount.channelApplication')}</legend>
-			{#each [{ value: 'web', label: t('admin.discount.channelWeb') }, { value: 'web-pos', label: t('admin.discount.channelWebPos') }, { value: 'pos-touch', label: t('admin.discount.channelPosTouch') }, { value: 'nostr-bot', label: 'Nostr-bot' }] as channel}
+			{#each [{ value: 'web', label: t('admin.discount.channelWeb') }, { value: 'web-pos', label: t('admin.discount.channelWebPos') }, { value: 'pos-touch', label: t('admin.discount.channelPosTouch') }, { value: 'nostr-bot', label: 'Nostr-bot' }, { value: 'api', label: t('admin.discount.channelApi') }] as channel}
 				<label class="checkbox-label">
 					<input type="checkbox" name="channels" value={channel.value} class="form-checkbox" />
 					{channel.label}

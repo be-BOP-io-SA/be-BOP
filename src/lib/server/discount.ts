@@ -12,7 +12,8 @@ const ALL_DISCOUNT_CHANNELS: readonly DiscountChannel[] = [
 	'web',
 	'web-pos',
 	'pos-touch',
-	'nostr-bot'
+	'nostr-bot',
+	'api'
 ];
 
 export interface DiscountContext {
@@ -192,7 +193,7 @@ export function selectBestDiscount(
 
 /**
  * Determine the web sales channel for a user (web vs web-pos).
- * /pos/touch and nostr-bot routes pass their channel literal directly.
+ * /pos/touch, nostr-bot, and Face A API routes pass their channel literal directly.
  */
 export function webChannelForUser(hasPosOptions?: boolean): DiscountChannel {
 	return hasPosOptions ? 'web-pos' : 'web';
