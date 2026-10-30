@@ -1801,6 +1801,7 @@
 			"productIsVisible": "Product is visible",
 			"canBeAddedToBasket": "Can be added to basket",
 			"advancedFeatures": "Advanced Features",
+			"allowOrderWithoutContactAddress": "Allow order with no contact address",
 			"customCtaButtons": "Custom Call-to-Action Buttons",
 			"buttonText": "Button text",
 			"url": "URL",
@@ -2340,6 +2341,7 @@
 			"email": "Email",
 			"message": "Please fill at least one contact address to be notified about your order news.",
 			"npub": "Nostr public key",
+			"optional": "(optional)",
 			"title": "Feed & Notifications"
 		},
 		"numProducts": {

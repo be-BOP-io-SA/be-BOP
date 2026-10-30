@@ -1801,6 +1801,7 @@
 			"productIsVisible": "Le produit est visible",
 			"canBeAddedToBasket": "Peut être ajouté au panier",
 			"advancedFeatures": "Fonctionnalités avancées",
+			"allowOrderWithoutContactAddress": "Autoriser la commande sans adresse de contact",
 			"customCtaButtons": "Boutons d'appel à l'action personnalisés",
 			"buttonText": "Texte du bouton",
 			"url": "URL",
@@ -2340,6 +2341,7 @@
 			"email": "E-mail",
 			"message": "Merci de remplir au moins une adresse de contact pour être notifié des évolutions de votre commande.",
 			"npub": "Clé publique Nostr",
+			"optional": "(facultatif)",
 			"title": "Notifications"
 		},
 		"numProducts": {

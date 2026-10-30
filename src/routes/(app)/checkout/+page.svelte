@@ -692,6 +692,7 @@
 							{#if (data.contactModesForceOption || data.emailsEnabled) && data.contactModes.includes('email')}
 								<label class="form-label">
 									{t('checkout.notifications.email')}
+									{#if data.contactAddressOptional}{t('checkout.notifications.optional')}{/if}
 									<input
 										type="email"
 										class="form-input"
@@ -700,6 +701,7 @@
 										bind:value={emails[key]}
 										required={key === 'paymentStatus' &&
 											!data.hasPosOptions &&
+											!data.contactAddressOptional &&
 											(!npubs[key] || !data.contactModes.includes('nostr'))}
 									/>
 								</label>
@@ -708,6 +710,7 @@
 							{#if data.contactModes.includes('nostr')}
 								<label class="form-label">
 									{t('checkout.notifications.npub')}
+									{#if data.contactAddressOptional}{t('checkout.notifications.optional')}{/if}
 									<input
 										type="text"
 										class="form-input"
@@ -719,7 +722,8 @@
 										placeholder="npub1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 										required={key === 'paymentStatus' &&
 											(!emails[key] || !data.contactModes.includes('email')) &&
-											!data.hasPosOptions}
+											!data.hasPosOptions &&
+											!data.contactAddressOptional}
 										on:change={(ev) => ev.currentTarget.setCustomValidity('')}
 									/>
 								</label>

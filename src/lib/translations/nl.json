@@ -1801,6 +1801,7 @@
 			"productIsVisible": "Product is zichtbaar",
 			"canBeAddedToBasket": "Kan aan winkelwagen worden toegevoegd",
 			"advancedFeatures": "Geavanceerde functies",
+			"allowOrderWithoutContactAddress": "Bestelling zonder contactadres toestaan",
 			"customCtaButtons": "Aangepaste call-to-action-knoppen",
 			"buttonText": "Knoptekst",
 			"url": "URL",
@@ -2340,6 +2341,7 @@
 			"email": "E-mail",
 			"message": "Vul ten minste één contactadres in om op de hoogte te blijven van uw bestellingsnieuws.",
 			"npub": "Publieke sleutel Nostr",
+			"optional": "(optioneel)",
 			"title": "Voer"
 		},
 		"numProducts": {

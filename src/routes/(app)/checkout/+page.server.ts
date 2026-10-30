@@ -11,6 +11,7 @@ import {
 import { isEmailConfigured } from '$lib/server/email';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
+import { canOrderWithoutContactAddress } from '$lib/types/Product';
 import { applyResolvedStock } from '$lib/server/product.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
@@ -52,6 +53,25 @@ export async function load({ parent, locals }) {
 			throw redirect(303, '/cart');
 		}
 	}
+	const contactAddressOptional =
+		parentData.cart.items.length > 0 &&
+		(
+			await collections.products
+				.find(
+					{ _id: { $in: parentData.cart.items.map((item) => item.product._id) } },
+					{
+						projection: {
+							allowOrderWithoutContactAddress: 1,
+							type: 1,
+							shipping: 1,
+							deposit: 1,
+							preorder: 1
+						}
+					}
+				)
+				.toArray()
+		).every(canOrderWithoutContactAddress);
+
 	const personalInfoConnected = await collections.personalInfo.findOne(
 		userQuery(userIdentifier(locals)),
 		{
@@ -209,6 +229,7 @@ export async function load({ parent, locals }) {
 		},
 		shopInformation: runtimeConfig.shopInformation,
 		isBillingAddressMandatory: runtimeConfig.isBillingAddressMandatory,
+		contactAddressOptional,
 		displayNewsletterCommercialProspection: runtimeConfig.displayNewsletterCommercialProspection,
 		noProBilling: runtimeConfig.noProBilling,
 		posSubtypes: posSubtypes.map((subtype) => ({
