@@ -2183,6 +2183,7 @@
 				"warning": {
 					"message": "Uw sessie eindigt over {countdown}",
 					"extend": "Verlengen",
+					"extendFailed": "De sessie kon niet worden verlengd. Sla uw werk op en log opnieuw in.",
 					"ignore": "Negeren",
 					"screenReader": "Uw sessie verloopt bijna. Gebruik de knop Verlengen om door te werken."
 				},

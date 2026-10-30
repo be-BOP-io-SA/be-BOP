@@ -2183,6 +2183,7 @@
 				"warning": {
 					"message": "A sua sessão irá terminar em {countdown}",
 					"extend": "Prolongar",
+					"extendFailed": "Não foi possível prolongar a sessão. Guarde o seu trabalho e inicie sessão novamente.",
 					"ignore": "Ignorar",
 					"screenReader": "A sua sessão está prestes a expirar. Use o botão Prolongar para continuar a trabalhar."
 				},

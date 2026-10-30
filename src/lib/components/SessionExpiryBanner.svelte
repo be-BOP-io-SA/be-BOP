@@ -4,6 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { useI18n } from '$lib/i18n';
 	import Trans from '$lib/components/Trans.svelte';
+	import { SESSION_EXPIRY_WARNING_MS } from '$lib/sessionExpiry';
 
 	export let expireUserAt: string;
 	export let adminPrefix: string;
@@ -12,8 +13,6 @@
 
 	const { t } = useI18n();
 
-	const WARNING_THRESHOLD_MS = 5 * 60 * 1000;
-
 	// Offset between the two clocks, measured once on render. A workstation a few minutes fast would
 	// otherwise warn too late, or skip the warning entirely and log the user out mid-form.
 	const clockOffsetMs = new Date(serverNow).getTime() - Date.now();
@@ -21,6 +20,7 @@
 	let now = Date.now() + clockOffsetMs;
 	let dismissed = false;
 	let extending = false;
+	let extendFailed = false;
 	let interval: ReturnType<typeof setInterval> | undefined;
 	let lastPath = '';
 
@@ -44,7 +44,7 @@
 	$: expiryMs = new Date(expireUserAt).getTime();
 	$: msRemaining = expiryMs - now;
 	$: isExpired = msRemaining <= 0;
-	$: isWarning = !isExpired && msRemaining <= WARNING_THRESHOLD_MS;
+	$: isWarning = !isExpired && msRemaining <= SESSION_EXPIRY_WARNING_MS;
 
 	$: countdown = formatCountdown(msRemaining);
 
@@ -60,6 +60,7 @@
 			return;
 		}
 		extending = true;
+		extendFailed = false;
 		try {
 			const res = await fetch(`${adminPrefix}/session/extend`, {
 				method: 'POST',
@@ -67,7 +68,11 @@
 			});
 			if (res.ok) {
 				await invalidateAll();
+			} else {
+				extendFailed = true;
 			}
+		} catch {
+			extendFailed = true;
 		} finally {
 			extending = false;
 		}
@@ -79,7 +84,9 @@
 </script>
 
 {#if isExpired}
-	<div class="fixed top-0 left-0 right-0 z-50 bg-red-600 text-white p-3 shadow" role="alert">
+	<!-- In the flow, not fixed: this one cannot be dismissed, so it pushes the admin down instead
+	     of covering its top. -->
+	<div class="sticky top-0 z-50 bg-red-600 text-white p-3 shadow" role="alert">
 		<Trans key="admin.session.expiry.expired.message">
 			<a slot="0" href="{adminPrefix}/login" class="underline" let:translation>
 				{translation}
@@ -97,6 +104,11 @@
 		     message is announced once, the seconds are left to the eye. -->
 		<span aria-hidden="true">{t('admin.session.expiry.warning.message', { countdown })}</span>
 		<span class="sr-only">{t('admin.session.expiry.warning.screenReader')}</span>
+		{#if extendFailed}
+			<span class="font-semibold" role="alert"
+				>{t('admin.session.expiry.warning.extendFailed')}</span
+			>
+		{/if}
 		<button type="button" on:click={extend} disabled={extending} class="btn body-mainCTA">
 			{t('admin.session.expiry.warning.extend')}
 		</button>
