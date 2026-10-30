@@ -407,15 +407,7 @@ export async function onOrderPayment(
 
 		order = ret.value;
 		if (order.status === 'paid') {
-			// Nothing is owed anymore: no other attempt on this order may go through.
-			// `order` is replaced on each pass, so the payment is looked up again —
-			// `onOrderPaymentFailed` rejects a payment absent from the order it is given.
-			for (const { _id } of order.payments.filter((p) => p.status === 'pending')) {
-				const stale = order.payments.find((p) => p._id.equals(_id));
-				if (stale) {
-					order = await onOrderPaymentFailed(order, stale, 'canceled', { session });
-				}
-			}
+			order = await cancelStalePendingPayments(order, session);
 			await updateAfterOrderPaid(order, session);
 		}
 
@@ -489,6 +481,22 @@ export async function onOrderPayment(
 	}
 
 	return updated;
+}
+
+/** A fully paid order owes nothing anymore: no other attempt on it may go through (#2738). */
+export async function cancelStalePendingPayments(
+	order: Order,
+	session: ClientSession
+): Promise<Order> {
+	// `order` is replaced on each pass, so the payment is looked up again —
+	// `onOrderPaymentFailed` rejects a payment absent from the order it is given.
+	for (const { _id } of order.payments.filter((p) => p.status === 'pending')) {
+		const stale = order.payments.find((p) => p._id.equals(_id));
+		if (stale) {
+			order = await onOrderPaymentFailed(order, stale, 'canceled', { session });
+		}
+	}
+	return order;
 }
 
 export async function onOrderPaymentFailed(
