@@ -1,10 +1,10 @@
 import { collections } from '$lib/server/database';
 import { getOrCreateOrderTab } from '$lib/server/orderTab';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { vatRate } from '$lib/types/Country';
 import type { Currency } from '$lib/types/Currency';
 import { resolvePoolLabel } from '$lib/types/PosTabGroup';
 import { toCurrency } from '$lib/utils/toCurrency';
+import { computeVatRate } from '$lib/utils/vat';
 import { ObjectId } from 'mongodb';
 
 export async function load({ locals, params }) {
@@ -37,18 +37,18 @@ export async function load({ locals, params }) {
 				.find({ _id: { $in: vatProfileIds.map((id) => new ObjectId(id)) } })
 				.toArray()
 		: [];
-	const vatProfileById = new Map(vatProfiles.map((v) => [v._id.toString(), v]));
 
 	const bebopCountry = runtimeConfig.vatCountry;
 	function getVatRate(vatProfileId?: string): number {
-		if (!bebopCountry) {
-			return 0;
-		}
-		if (!vatProfileId) {
-			return vatRate(bebopCountry);
-		}
-		const profile = vatProfileById.get(vatProfileId);
-		return profile?.rates?.[bebopCountry] ?? vatRate(bebopCountry);
+		// Same rule as the till and the order, so the printed ticket cannot disagree with them.
+		return computeVatRate({
+			productVatProfileId: vatProfileId,
+			vatProfiles,
+			bebopCountry,
+			userCountry: bebopCountry,
+			vatSingleCountry: true,
+			vatExempted: runtimeConfig.vatExempted
+		});
 	}
 
 	const discountTagId = tab.discount?.tagId;
@@ -91,6 +91,9 @@ export async function load({ locals, params }) {
 
 	const vatByRate = new Map<number, number>();
 	itemsForTicket.forEach((item) => {
+		if (!item.vatRate) {
+			return;
+		}
 		const vatAmount = item.totalIncl - item.totalExcl;
 		vatByRate.set(item.vatRate, (vatByRate.get(item.vatRate) ?? 0) + vatAmount);
 	});

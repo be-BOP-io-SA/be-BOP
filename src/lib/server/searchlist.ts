@@ -193,8 +193,26 @@ export type VatContext = {
 	bebopCountry: CountryAlpha2 | undefined;
 	userCountry: CountryAlpha2 | undefined;
 	vatSingleCountry: boolean;
+	vatExempted: boolean;
 	displayVatIncluded: boolean;
 };
+
+/** VAT settings every search list needs to price and filter products the way the shop shows them. */
+export async function loadVatContext(userCountry: CountryAlpha2 | undefined): Promise<VatContext> {
+	const vatProfiles = await collections.vatProfiles
+		.find({})
+		.project<{ _id: ObjectId; rates: Partial<Record<CountryAlpha2, number>> }>({ _id: 1, rates: 1 })
+		.map((p) => ({ _id: p._id.toString(), rates: p.rates }))
+		.toArray();
+	return {
+		vatProfiles,
+		bebopCountry: runtimeConfig.vatCountry,
+		userCountry,
+		vatSingleCountry: runtimeConfig.vatSingleCountry,
+		vatExempted: runtimeConfig.vatExempted,
+		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
+	};
+}
 
 export async function searchProducts(
 	searchlist: Searchlist,
@@ -256,7 +274,8 @@ export async function searchProducts(
 					vatProfiles: vat.vatProfiles,
 					bebopCountry: vat.bebopCountry,
 					userCountry: vat.userCountry,
-					vatSingleCountry: vat.vatSingleCountry
+					vatSingleCountry: vat.vatSingleCountry,
+					vatExempted: vat.vatExempted
 				});
 				const branches = vat.vatProfiles.map((vp) => ({
 					case: { $eq: ['$vatProfileId', new ObjectId(vp._id)] },
@@ -267,7 +286,8 @@ export async function searchProducts(
 							vatProfiles: vat.vatProfiles,
 							bebopCountry: vat.bebopCountry,
 							userCountry: vat.userCountry,
-							vatSingleCountry: vat.vatSingleCountry
+							vatSingleCountry: vat.vatSingleCountry,
+							vatExempted: vat.vatExempted
 						}) /
 							100
 				}));

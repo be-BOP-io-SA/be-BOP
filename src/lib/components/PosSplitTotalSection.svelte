@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import type { Currency } from '$lib/types/Currency';
@@ -15,11 +16,13 @@
 <div class="flex flex-col border-t border-gray-300 py-6 w-fit">
 	<h2 class="text-3xl underline uppercase">{t('pos.touch.subtotal')}</h2>
 	<div class="grid grid-cols-2 gap-4 justify-start">
-		<div class="text-2xl">{t('pos.split.exclVat')}</div>
-		<PriceTag amount={totalExcl} {currency} main class="text-2xl" />
+		{#if !$page.data.vatExempted}
+			<div class="text-2xl">{t('pos.split.exclVat')}</div>
+			<PriceTag amount={totalExcl} {currency} main class="text-2xl" />
+		{/if}
 		{#if totalInclBeforeDiscount && discountPercentage}
 			<div class="text-2xl">
-				{t('pos.split.inclVatShort')}
+				{$page.data.vatExempted ? t('pos.touch.subtotal') : t('pos.split.inclVatShort')}
 			</div>
 			<PriceTag
 				amount={totalInclBeforeDiscount}
@@ -44,7 +47,7 @@
 			</div>
 		{:else}
 			<div class="text-2xl">
-				{t('pos.split.inclVatShort')}
+				{$page.data.vatExempted ? t('pos.touch.total') : t('pos.split.inclVatShort')}
 			</div>
 			<PriceTag amount={totalIncl} {currency} main class="text-2xl" />
 		{/if}
