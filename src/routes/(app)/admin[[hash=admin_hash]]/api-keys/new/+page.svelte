@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { useI18n } from '$lib/i18n.js';
 	import { groupScopesByCategory } from '$lib/types/ApiV1';
+	import { STREAM_SETTINGS_PREFILL } from '$lib/types/ApiKey';
 
 	export let data;
 	export let form;
@@ -164,6 +165,32 @@
 			<input type="hidden" name="expiresAt" value="" />
 			<input type="hidden" name="expiresAtOffsetMinutes" bind:value={expiresOffsetMinutes} />
 			<span class="text-sm opacity-70">{t('admin.apiKeys.expiresAtHint')}</span>
+		</label>
+
+		<label class="form-label">
+			{t('admin.apiKeys.maxConcurrentStreams')}
+			<input
+				class="form-input w-32"
+				type="number"
+				name="maxConcurrentStreams"
+				min="1"
+				step="1"
+				value={STREAM_SETTINGS_PREFILL.maxConcurrentStreams}
+			/>
+			<span class="text-sm opacity-70">{t('admin.apiKeys.maxConcurrentStreamsHint')}</span>
+		</label>
+
+		<label class="form-label">
+			{t('admin.apiKeys.streamLifetimeSeconds')}
+			<input
+				class="form-input w-32"
+				type="number"
+				name="streamLifetimeSeconds"
+				min="1"
+				step="1"
+				value={STREAM_SETTINGS_PREFILL.streamLifetimeSeconds}
+			/>
+			<span class="text-sm opacity-70">{t('admin.apiKeys.streamLifetimeSecondsHint')}</span>
 		</label>
 
 		{#if form?.error}

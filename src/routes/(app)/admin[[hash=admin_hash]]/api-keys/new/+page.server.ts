@@ -1,4 +1,4 @@
-import { createApiKey } from '$lib/server/api/keys';
+import { createApiKey, optionalStreamSetting } from '$lib/server/api/keys';
 import { parseExpiresAtFormValue } from '$lib/server/api/expires-at';
 import { setApiKeyRevealCookie } from '$lib/server/api/reveal-flash';
 import { adminPrefix } from '$lib/server/admin';
@@ -42,11 +42,15 @@ export const actions: Actions = {
 		const parsed = z
 			.object({
 				name: z.string().trim().min(1).max(200),
-				scopes: z.array(z.enum(API_V1_SCOPES)).min(1)
+				scopes: z.array(z.enum(API_V1_SCOPES)).min(1),
+				maxConcurrentStreams: optionalStreamSetting,
+				streamLifetimeSeconds: optionalStreamSetting
 			})
 			.safeParse({
 				name: formData.get('name'),
-				scopes: scopesRaw
+				scopes: scopesRaw,
+				maxConcurrentStreams: String(formData.get('maxConcurrentStreams') ?? ''),
+				streamLifetimeSeconds: String(formData.get('streamLifetimeSeconds') ?? '')
 			});
 
 		if (!parsed.success) {
@@ -57,7 +61,9 @@ export const actions: Actions = {
 			name: parsed.data.name,
 			scopes: parsed.data.scopes as ApiV1Scope[],
 			expiresAt: expiresParsed.value,
-			createdBy: locals.user?._id?.toString()
+			createdBy: locals.user?._id?.toString(),
+			maxConcurrentStreams: parsed.data.maxConcurrentStreams,
+			streamLifetimeSeconds: parsed.data.streamLifetimeSeconds
 		});
 
 		// PRG: stash secret in a short-lived signed httpOnly cookie, then redirect.

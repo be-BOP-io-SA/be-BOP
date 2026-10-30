@@ -2,6 +2,9 @@ import type { ObjectId } from 'mongodb';
 import type { Timestamps } from './Timestamps';
 import type { ApiV1Scope } from './ApiV1';
 
+/** What the creation form starts with for the two stream settings; the admin can change or clear them. */
+export const STREAM_SETTINGS_PREFILL = { maxConcurrentStreams: 4, streamLifetimeSeconds: 1200 };
+
 /**
  * Server-side API key record. The raw secret is never stored — only
  * SHA-256(secret) as keyHash, plus a non-secret keyPrefix for display.
