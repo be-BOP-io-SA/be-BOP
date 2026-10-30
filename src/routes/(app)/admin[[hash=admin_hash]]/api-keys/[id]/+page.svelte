@@ -97,7 +97,7 @@
 						formaction="?/resetStreams"
 						formnovalidate
 						class="btn bg-red-600 text-white w-auto text-base"
-						title="Hand back every stream place held by this key"
+						title={t('admin.apiKeys.resetStreamsTitle')}
 						on:click={confirmResetStreams}
 					>
 						☢
