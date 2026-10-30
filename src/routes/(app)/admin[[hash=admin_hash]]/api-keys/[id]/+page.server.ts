@@ -1,5 +1,6 @@
 import {
 	getApiKeyPublic,
+	optionalStreamSetting,
 	revokeApiKey,
 	serializeApiKeyPublic,
 	updateApiKeyStreamSettings
@@ -14,18 +15,6 @@ import {
 	countOpenStreams,
 	resetStreamBudget
 } from '$lib/server/api/v1/orders/paidStreamConnection';
-
-/**
- * An empty field is an answer, not a missing one: it means "no ceiling" for the budget and "never
- * close it" for the lifetime, and it is stored as absent rather than as zero.
- */
-const optionalCount = z
-	.string()
-	.trim()
-	.transform((raw) => (raw === '' ? null : Number(raw)))
-	.refine((value) => value === null || (Number.isInteger(value) && value > 0), {
-		message: 'Leave empty, or enter a whole number greater than zero'
-	});
 
 function assertSuperAdmin(locals: App.Locals) {
 	if (locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
@@ -86,7 +75,10 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const parsed = z
-			.object({ maxConcurrentStreams: optionalCount, streamLifetimeSeconds: optionalCount })
+			.object({
+				maxConcurrentStreams: optionalStreamSetting,
+				streamLifetimeSeconds: optionalStreamSetting
+			})
 			.safeParse({
 				maxConcurrentStreams: String(formData.get('maxConcurrentStreams') ?? ''),
 				streamLifetimeSeconds: String(formData.get('streamLifetimeSeconds') ?? '')
