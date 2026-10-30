@@ -656,7 +656,7 @@
 						<div
 							class="flex flex-col gap-1"
 							class:cursor-pointer={!data.vatExempted}
-							on:click={() => (showExclTax = !data.vatExempted && !showExclTax)}
+							on:click={data.vatExempted ? undefined : () => (showExclTax = !showExclTax)}
 						>
 							<!-- A shop with VAT turned off has nothing to say about it: no rate, no caption,
 							     and no toggle to a breakdown that would be empty. -->

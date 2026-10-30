@@ -11,7 +11,8 @@ describe('computeVatRate', () => {
 				vatProfiles: [],
 				bebopCountry: 'CH',
 				userCountry: 'CH',
-				vatSingleCountry: true
+				vatSingleCountry: true,
+				vatExempted: false
 			})
 		).toBeGreaterThan(0);
 	});
@@ -23,7 +24,8 @@ describe('computeVatRate', () => {
 				vatProfiles: [CH_PROFILE],
 				bebopCountry: 'CH',
 				userCountry: 'CH',
-				vatSingleCountry: true
+				vatSingleCountry: true,
+				vatExempted: false
 			})
 		).toBe(2.6);
 	});
