@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n';
 	import { goto } from '$app/navigation';
 	import ProductWidget from './ProductWidget.svelte';
@@ -27,7 +28,8 @@
 	let className = '';
 	export { className as class };
 
-	$: priceUnitLabel = displayVatIncluded ? `${$currencies.main} TTC` : $currencies.main;
+	$: priceUnitLabel =
+		displayVatIncluded && !$page.data.vatExempted ? `${$currencies.main} TTC` : $currencies.main;
 
 	const { t } = useI18n();
 

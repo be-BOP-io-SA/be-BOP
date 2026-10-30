@@ -553,22 +553,26 @@
 												? ''
 												: 'text-xl'}"
 										>
-											<span class={isMobile ? 'hidden' : 'block'}>{t('pos.touch.exclVat')}</span>
+											<span class={isMobile ? 'hidden' : 'block'}
+												>{data.vatExempted ? '' : t('pos.touch.exclVat')}</span
+											>
 											<PriceTag
 												amount={priceInfo.perItem[i].amount}
 												currency={priceInfo.perItem[i].currency}
 												class="text-sm sm:text-base md:text-lg lg:text-xl text-right"
 												main
 											/>
-											<span class="whitespace-nowrap"
-												>{t('pos.touch.inclVat')} {priceInfo.vatRates[i]}%</span
-											>
-											<PriceTag
-												amount={priceInfo.perItem[i].amount * (1 + priceInfo.vatRates[i] / 100)}
-												currency={priceInfo.perItem[i].currency}
-												class="text-sm sm:text-base md:text-lg lg:text-xl text-right"
-												main
-											/>
+											{#if !data.vatExempted}
+												<span class="whitespace-nowrap"
+													>{t('pos.touch.inclVat')} {priceInfo.vatRates[i]}%</span
+												>
+												<PriceTag
+													amount={priceInfo.perItem[i].amount * (1 + priceInfo.vatRates[i] / 100)}
+													currency={priceInfo.perItem[i].currency}
+													class="text-sm sm:text-base md:text-lg lg:text-xl text-right"
+													main
+												/>
+											{/if}
 										</div>
 									</button><br />
 								</form>
@@ -579,14 +583,18 @@
 							<div
 								class="grid grid-cols-[auto_1fr] items-start gap-x-2 gap-y-0 text-base sm:text-lg md:text-xl lg:text-2xl"
 							>
-								<span class="whitespace-nowrap">{t('pos.touch.exclVat')}</span>
-								<PriceTag
-									amount={priceInfo.partialPrice}
-									currency={priceInfo.currency}
-									main
-									class="text-base sm:text-lg md:text-xl lg:text-2xl text-right"
-								/>
-								<span class="whitespace-nowrap">{t('pos.touch.inclVat')}</span>
+								{#if !data.vatExempted}
+									<span class="whitespace-nowrap">{t('pos.touch.exclVat')}</span>
+									<PriceTag
+										amount={priceInfo.partialPrice}
+										currency={priceInfo.currency}
+										main
+										class="text-base sm:text-lg md:text-xl lg:text-2xl text-right"
+									/>
+									<span class="whitespace-nowrap">{t('pos.touch.inclVat')}</span>
+								{:else}
+									<span />
+								{/if}
 								<PriceTag
 									amount={priceInfo.partialPriceWithVat}
 									currency={priceInfo.currency}

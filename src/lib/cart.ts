@@ -495,7 +495,7 @@ export function computePriceInfo(
 		partialPriceWithVat,
 		partialVat,
 		perItem: cartPrice.perItem,
-		physicalVatAtCustoms: isPhysicalVatExempted,
+		physicalVatAtCustoms: isPhysicalVatExempted && !params.vatExempted,
 		singleVatCountry,
 		totalPrice,
 		totalPriceWithVat,
