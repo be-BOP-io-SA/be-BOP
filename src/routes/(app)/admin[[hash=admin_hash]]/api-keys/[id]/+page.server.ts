@@ -1,10 +1,10 @@
 import {
 	getApiKeyPublic,
-	optionalStreamSetting,
 	revokeApiKey,
 	serializeApiKeyPublic,
 	updateApiKeyStreamSettings
 } from '$lib/server/api/keys';
+import { optionalStreamSetting } from '$lib/server/api/stream-settings';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { adminPrefix } from '$lib/server/admin';
 import { error, fail, redirect } from '@sveltejs/kit';

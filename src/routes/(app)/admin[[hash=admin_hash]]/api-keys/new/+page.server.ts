@@ -1,4 +1,5 @@
-import { createApiKey, optionalStreamSetting } from '$lib/server/api/keys';
+import { createApiKey } from '$lib/server/api/keys';
+import { optionalStreamSetting } from '$lib/server/api/stream-settings';
 import { parseExpiresAtFormValue } from '$lib/server/api/expires-at';
 import { setApiKeyRevealCookie } from '$lib/server/api/reveal-flash';
 import { adminPrefix } from '$lib/server/admin';
