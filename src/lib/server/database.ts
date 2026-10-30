@@ -57,6 +57,7 @@ import type { CheckoutFieldConfig } from '$lib/types/CheckoutFieldConfig';
 import type { PosSession } from '$lib/types/PosSession';
 import type { PendingZap } from '$lib/types/PendingZap';
 import type { AccountingLog } from '$lib/types/AccountingLog';
+import type { LnurlWithdraw } from '$lib/types/LnurlWithdraw';
 import type { ApiKey } from '$lib/types/ApiKey';
 import type { ApiV1LogEntry } from '$lib/types/ApiV1Log';
 
@@ -125,6 +126,7 @@ const genCollection = () => ({
 	checkoutFieldConfigs: db.collection<CheckoutFieldConfig>('checkoutFieldConfigs'),
 	posSessions: db.collection<PosSession>('posSessions'),
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
+	lnurlWithdrawals: db.collection<LnurlWithdraw>('lnurlWithdrawals'),
 
 	apiKeys: db.collection<ApiKey>('apiKeys'),
 	apiV1Logs: db.collection<ApiV1LogEntry>('apiV1Logs'),
@@ -161,6 +163,20 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.carts, { 'user.ssoIds': 1 }],
 	[collections.carts, { 'items.productId': 1 }],
 	[collections.challenges, { beginsAt: 1, endsAt: 1 }],
+	/**
+	 * A withdraw link nobody used is swept, but only a week after it expired, and only while it is
+	 * still on offer.
+	 *
+	 * Sweeping on the expiry date itself made the wallet say "unknown withdraw" instead of
+	 * "expired" — the record was gone before anyone could be told why. And a paid withdraw must
+	 * never be swept at all: sats left the node, and this record carries the payment hash.
+	 */
+	[
+		collections.lnurlWithdrawals,
+		{ expiresAt: 1 },
+		{ expireAfterSeconds: 7 * 24 * 3600, partialFilterExpression: { status: 'open' } }
+	],
+	[collections.lnurlWithdrawals, { status: 1, createdAt: 1 }],
 	[collections.orders, { createdAt: 1 }],
 	[collections.orders, { 'user.userId': 1 }],
 	[collections.orders, { 'user.sessionId': 1 }],
