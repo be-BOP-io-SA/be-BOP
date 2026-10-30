@@ -761,6 +761,8 @@
 			"channelWebPos": "Web with PoS privilege (/cart)",
 			"channelPosTouch": "Bar-restaurant PoS (/pos/touch)",
 			"requiredCode": "Required code (optional)",
+			"acceptSubscriptionInCart": "Accept the subscription when it is in the cart, not only when it is already active",
+			"acceptSubscriptionInCartHint": "Lets a new customer subscribe and buy the discounted product in the same order, instead of ordering the subscription, coming back logged in, and ordering again.",
 			"promoCodePlaceholder": "Enter promocode chain",
 			"promoCodeTip": "Tip: use 8+ characters mixing letters, numbers and special characters (e.g. SPRING_2026X4!) — short codes are easy to brute-force.",
 			"requiredDeliveryCountry": "Required delivery country (optional)",

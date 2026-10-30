@@ -761,6 +761,8 @@
 			"channelWebPos": "Web met kassaprivilege (/cart)",
 			"channelPosTouch": "Bar-restaurant kassa (/pos/touch)",
 			"requiredCode": "Vereiste code (optioneel)",
+			"acceptSubscriptionInCart": "Het abonnement accepteren wanneer het in de winkelwagen zit, niet alleen wanneer het al actief is",
+			"acceptSubscriptionInCartHint": "Laat een nieuwe klant zich abonneren en het afgeprijsde product in dezelfde bestelling kopen, in plaats van het abonnement te bestellen, ingelogd terug te komen en opnieuw te bestellen.",
 			"promoCodePlaceholder": "Voer de promocode-tekenreeks in",
 			"promoCodeTip": "Tip: gebruik 8+ tekens met een mix van letters, cijfers en speciale tekens (bijv. SPRING_2026X4!) — korte codes zijn eenvoudig te kraken met brute-force.",
 			"requiredDeliveryCountry": "Vereist leverland (optioneel)",
