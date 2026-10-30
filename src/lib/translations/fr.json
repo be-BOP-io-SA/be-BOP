@@ -200,10 +200,11 @@
 			"attribute": {
 				"shipping": "Livraison",
 				"standalone": "Autonome",
-				"payWhatYouWant": "Payez ce que vous voulez",
+				"payWhatYouWant": "Prix libre",
 				"free": "Gratuit",
 				"isTicket": "Billet",
-				"preorder": "Précommande"
+				"preorder": "Précommande",
+				"isBookingSlot": "Créneau de réservation"
 			},
 			"stock": {
 				"noStockManagement": "Pas de gestion de stock",
@@ -1378,7 +1379,7 @@
 			"bulkNameEditor": "Éditeur groupé des noms d'images",
 			"selectFileAlert": "Veuillez sélectionner un fichier",
 			"addPicture": "Ajouter une image",
-			"jpegOrPngFile": "Fichier JPEG ou PNG",
+			"fileLabel": "Fichier JPEG, PNG, WebP, AVIF ou SVG",
 			"nameOfPicture": "Nom de l'image",
 			"finalNamePlaceholder": "Nom final",
 			"associatedProduct": "Produit associé :",
@@ -1702,7 +1703,7 @@
 			"vatProfile": "Profil de TVA",
 			"noCustomVatProfile": "Aucun profil de TVA personnalisé",
 			"productImages": "Images du produit",
-			"uploadProductImages": "Téléchargez une ou plusieurs images du produit (JPEG, PNG, WebP)",
+			"uploadProductImages": "Téléchargez une ou plusieurs images du produit (JPEG, PNG, WebP, AVIF, SVG)",
 			"basicSettings": "Paramètres de base",
 			"slug": "Slug",
 			"slugTitle": "Seules les lettres minuscules, les chiffres et les tirets sont autorisés",
@@ -1939,6 +1940,7 @@
 			"reservedMetaNameError": "Les mots « description » et « viewport » ne sont pas autorisés."
 		},
 		"schedule": {
+			"confirmEventDeletion": "Supprimer l'événement « {title} » ? La suppression sera enregistrée quand vous cliquerez sur « {update} ».",
 			"eventProductCta": {
 				"exportToCalendar": "Exporter vers l'agenda",
 				"location": "Lieu",

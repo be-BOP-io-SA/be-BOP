@@ -410,7 +410,7 @@ export async function onOrderPayment(
 			await updateAfterOrderPaid(order, session);
 		}
 
-		if (order.vat?.length && !alreadyPaid) {
+		if (!alreadyPaid) {
 			await logAccountingEvent(
 				{
 					eventType: 'paymentDone',
@@ -2203,36 +2203,34 @@ export async function addOrderPayment(
 		{ session: opts?.session }
 	);
 
-	if (order.vat?.length) {
-		await logAccountingEvent(
-			{
-				eventType: 'paymentCall',
-				before: null,
-				after: {
-					method: paymentMethod,
-					...(payment.customPaymentMethod && {
-						customPaymentMethod: {
-							id: payment.customPaymentMethod.id,
-							label: payment.customPaymentMethod.label
-						}
-					}),
-					paymentId: payment._id.toString(),
-					vat: orderVatAccountingSnapshot(order),
-					totalPrice: orderCurrencyAmounts(order, (entry) => entry.totalPrice),
-					...(order.discount && { discount: order.discount }),
-					...(order.currencySnapshot?.main?.discount && {
-						discountAmount: orderCurrencyAmounts(order, (entry) => entry.discount)
-					})
-				},
-				objectId: order._id.toString(),
-				objectType: 'order',
-				...(order.user?.userId && {
-					employee: { userId: order.user.userId, alias: order.user.userAlias }
+	await logAccountingEvent(
+		{
+			eventType: 'paymentCall',
+			before: null,
+			after: {
+				method: paymentMethod,
+				...(payment.customPaymentMethod && {
+					customPaymentMethod: {
+						id: payment.customPaymentMethod.id,
+						label: payment.customPaymentMethod.label
+					}
+				}),
+				paymentId: payment._id.toString(),
+				vat: orderVatAccountingSnapshot(order),
+				totalPrice: orderCurrencyAmounts(order, (entry) => entry.totalPrice),
+				...(order.discount && { discount: order.discount }),
+				...(order.currencySnapshot?.main?.discount && {
+					discountAmount: orderCurrencyAmounts(order, (entry) => entry.discount)
 				})
 			},
-			opts?.session
-		);
-	}
+			objectId: order._id.toString(),
+			objectType: 'order',
+			...(order.user?.userId && {
+				employee: { userId: order.user.userId, alias: order.user.userAlias }
+			})
+		},
+		opts?.session
+	);
 
 	// free payments creating as 'paid'
 	if (isFreePayment) {

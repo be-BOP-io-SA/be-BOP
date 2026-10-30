@@ -4,7 +4,7 @@
 	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency';
 	import { applyAction, enhance, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { preUploadPicture } from '$lib/types/Picture.js';
+	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture.js';
 	import Select from 'svelte-select';
 	import { browser } from '$app/environment';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
@@ -60,10 +60,21 @@
 		}
 	}
 
-	function deleteEventSchedule(title: string) {
-		data.schedule.events = data.schedule.events.filter(
-			(eventSchedule) => !(eventSchedule.title === title)
-		);
+	// By position: titles are not unique, and a line not saved yet has no event behind it.
+	function deleteEventSchedule(index: number) {
+		if (index >= data.schedule.events.length) {
+			eventLines -= 1;
+			return;
+		}
+		const title = data.schedule.events[index].title || `#${index + 1}`;
+		if (
+			!confirm(
+				t('admin.schedule.confirmEventDeletion', { title, update: t('admin.action.update') })
+			)
+		) {
+			return;
+		}
+		data.schedule.events = data.schedule.events.filter((_, i) => i !== index);
 		eventLines -= 1;
 	}
 	function closeDetailByIndex(i: number) {
@@ -269,9 +280,7 @@
 					{data.schedule.events[i] && data.schedule.events[i].title
 						? ' - ' + data.schedule.events[i].title
 						: ''}
-					<button type="button" on:click={() => deleteEventSchedule(data.schedule.events[i].title)}
-						>🗑️</button
-					>
+					<button type="button" on:click={() => deleteEventSchedule(i)}>🗑️</button>
 				</h1>
 			</summary>
 			<div class="flex flex-col gap-4 mt-2">
@@ -629,7 +638,7 @@
 							class="btn btn-red text-white ml-auto"
 							value={t('admin.schedule.delete')}
 							on:click={() => {
-								deleteEventSchedule(data.schedule.events[i].title);
+								deleteEventSchedule(i);
 								closeDetailByIndex(i);
 							}}
 						/>
@@ -748,7 +757,7 @@
 					{/if}
 					<input
 						type="file"
-						accept="image/jpeg,image/png,image/webp"
+						accept={PICTURE_UPLOAD_ACCEPT}
 						class="block"
 						on:change={(e) => handleFileChange(e, i - (data.schedule.events.length || 1))}
 						disabled={submitting}

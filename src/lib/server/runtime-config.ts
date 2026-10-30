@@ -126,6 +126,8 @@ const baseConfig = {
 	faviconPictureId: '',
 	footerLogoId: '',
 	ticketLogoId: '',
+	defaultProductPictureId: '',
+	defaultEventPictureId: '',
 	lnurlPayMetadataJwtSigningKey: '',
 	authLinkJwtSigningKey: '',
 	ssoSecret: '',

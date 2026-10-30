@@ -5,11 +5,26 @@ import { set } from '$lib/utils/set';
 import type { Actions } from './$types';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { pojo } from '$lib/server/pojo';
-import { type Product, PRODUCT_PAGINATION_LIMIT } from '$lib/types/Product';
+import {
+	type Product,
+	PRODUCT_LIST_ATTRIBUTES,
+	PRODUCT_PAGINATION_LIMIT
+} from '$lib/types/Product';
 import { picturesForProducts } from '$lib/server/picture';
 import type { Filter } from 'mongodb';
 import { escapeForRegex } from '$lib/utils/escapeForRegex';
 import type { Tag } from '$lib/types/Tag';
+import { BOOKABLE_PRODUCT_FILTER } from '$lib/server/product';
+
+const ATTRIBUTE_FILTERS: Record<(typeof PRODUCT_LIST_ATTRIBUTES)[number], Filter<Product>> = {
+	shipping: { shipping: true },
+	standalone: { standalone: true },
+	payWhatYouWant: { payWhatYouWant: true },
+	free: { free: true },
+	isTicket: { isTicket: true },
+	preorder: { preorder: true },
+	isBookingSlot: BOOKABLE_PRODUCT_FILTER
+};
 
 export const load = async ({ url }) => {
 	const querySchema = z.object({
@@ -17,12 +32,7 @@ export const load = async ({ url }) => {
 		productId: z.string().optional(),
 		productName: z.string().optional(),
 		productType: z.enum(['' as const, ...['resource', 'donation', 'subscription']]).optional(),
-		productAttribute: z
-			.enum([
-				'' as const,
-				...['shipping', 'standalone', 'payWhatYouWant', 'free', 'isTicket', 'preorder']
-			])
-			.optional(),
+		productAttribute: z.enum(['' as const, ...PRODUCT_LIST_ATTRIBUTES]).optional(),
 		stock: z.enum(['' as const, ...['no-stock-management', 'with-stock', 'no-stock']]).optional(),
 		tagId: z.string().optional()
 	});
@@ -45,7 +55,7 @@ export const load = async ({ url }) => {
 	}
 
 	if (productAttribute) {
-		query[productAttribute] = true;
+		Object.assign(query, ATTRIBUTE_FILTERS[productAttribute]);
 	}
 
 	if (stock) {

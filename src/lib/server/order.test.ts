@@ -76,6 +76,48 @@ describe('order', () => {
 			}
 		});
 
+		it('logs the payment of a shop that charges no VAT', async () => {
+			runtimeConfig.vatExempted = true;
+			try {
+				const orderId = await createOrder(
+					[
+						{
+							product: TEST_DIGITAL_PRODUCT,
+							quantity: 1
+						}
+					],
+					'point-of-sale',
+					{
+						locale: 'en',
+						user: {
+							sessionId: 'test-session-id'
+						},
+						shippingAddress: null,
+						userVatCountry: 'FR'
+					}
+				);
+
+				const order = await collections.orders.findOne({ _id: orderId });
+
+				if (!order) {
+					throw new Error('Order not found');
+				}
+
+				await onOrderPayment(order, order.payments[0], order.payments[0].price);
+
+				const logged = await collections.accountingLogs
+					.find({ objectId: orderId, objectType: 'order' })
+					.map((log) => log.eventType)
+					.toArray();
+
+				for (const eventType of ['paymentCall', 'paymentDone', 'orderPaid']) {
+					expect(logged).toContain(eventType);
+				}
+			} finally {
+				runtimeConfig.vatExempted = false;
+			}
+		});
+
 		it('should increase the invoice number each time', async () => {
 			const order1Id = await createOrder(
 				[

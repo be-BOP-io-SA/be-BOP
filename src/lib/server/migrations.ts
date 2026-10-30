@@ -1045,6 +1045,17 @@ export const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('6b1f4880e92e590e85af2568'),
+		name: 'Drop the null booking spec stored on products created without one (issue #2568)',
+		run: async (session: ClientSession) => {
+			await collections.products.updateMany(
+				{ bookingSpec: { $type: 'null' } },
+				{ $unset: { bookingSpec: '' } },
+				{ session }
+			);
+		}
 	}
 ];
 

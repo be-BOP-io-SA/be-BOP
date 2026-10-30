@@ -2,7 +2,7 @@
 	import { generateId } from '$lib/utils/generateId';
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { preUploadPicture } from '$lib/types/Picture.js';
+	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture.js';
 	import { page } from '$app/stores';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
@@ -162,7 +162,7 @@
 		{t('admin.tags.mainPicture')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept={PICTURE_UPLOAD_ACCEPT}
 			class="block"
 			bind:files={fileMainPicture}
 			disabled={submitting}
@@ -173,7 +173,7 @@
 		{t('admin.tags.fullPicture')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept={PICTURE_UPLOAD_ACCEPT}
 			class="block"
 			bind:files={fileFullPicture}
 			disabled={submitting}
@@ -184,7 +184,7 @@
 		{t('admin.tags.wideBanner')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept={PICTURE_UPLOAD_ACCEPT}
 			class="block"
 			bind:files={fileWideBanner}
 			disabled={submitting}
@@ -195,7 +195,7 @@
 		{t('admin.tags.slimBanner')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept={PICTURE_UPLOAD_ACCEPT}
 			class="block"
 			bind:files={fileSlimBanner}
 			disabled={submitting}
@@ -206,7 +206,7 @@
 		{t('admin.tags.avatar')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept={PICTURE_UPLOAD_ACCEPT}
 			class="block"
 			bind:files={fileAvatar}
 			disabled={submitting}

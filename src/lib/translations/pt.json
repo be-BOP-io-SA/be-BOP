@@ -203,7 +203,8 @@
 				"payWhatYouWant": "Pague o que quiser",
 				"free": "Grátis",
 				"isTicket": "Bilhete",
-				"preorder": "Pré-encomenda"
+				"preorder": "Pré-encomenda",
+				"isBookingSlot": "Horário de reserva"
 			},
 			"stock": {
 				"noStockManagement": "Sem gestão de stock",
@@ -1378,7 +1379,7 @@
 			"bulkNameEditor": "Editor em massa de nomes de imagens",
 			"selectFileAlert": "Por favor, selecione um ficheiro",
 			"addPicture": "Adicionar uma imagem",
-			"jpegOrPngFile": "Ficheiro JPEG ou PNG",
+			"fileLabel": "Ficheiro JPEG, PNG, WebP, AVIF ou SVG",
 			"nameOfPicture": "Nome da imagem",
 			"finalNamePlaceholder": "Nome final",
 			"associatedProduct": "Produto associado:",
@@ -1702,7 +1703,7 @@
 			"vatProfile": "Perfil de IVA",
 			"noCustomVatProfile": "Nenhum perfil de IVA personalizado",
 			"productImages": "Imagens do produto",
-			"uploadProductImages": "Carregue uma ou mais imagens do produto (JPEG, PNG, WebP)",
+			"uploadProductImages": "Carregue uma ou mais imagens do produto (JPEG, PNG, WebP, AVIF, SVG)",
 			"basicSettings": "Configurações básicas",
 			"slug": "Slug",
 			"slugTitle": "Somente letras minúsculas, números e traços são permitidos",
@@ -1939,6 +1940,7 @@
 			"reservedMetaNameError": "As palavras 'description' e 'viewport' não são permitidas."
 		},
 		"schedule": {
+			"confirmEventDeletion": "Eliminar o evento «{title}»? A eliminação será guardada quando clicar em «{update}».",
 			"eventProductCta": {
 				"exportToCalendar": "Exportar para o calendário",
 				"location": "Local",

@@ -203,7 +203,8 @@
 				"payWhatYouWant": "Betaal wat je wilt",
 				"free": "Gratis",
 				"isTicket": "Ticket",
-				"preorder": "Voorbestelling"
+				"preorder": "Voorbestelling",
+				"isBookingSlot": "Boekingsslot"
 			},
 			"stock": {
 				"noStockManagement": "Geen voorraadbeheer",
@@ -1378,7 +1379,7 @@
 			"bulkNameEditor": "Bulkeditor voor afbeeldingsnamen",
 			"selectFileAlert": "Selecteer een bestand",
 			"addPicture": "Een afbeelding toevoegen",
-			"jpegOrPngFile": "JPEG- of PNG-bestand",
+			"fileLabel": "JPEG-, PNG-, WebP-, AVIF- of SVG-bestand",
 			"nameOfPicture": "Naam van de afbeelding",
 			"finalNamePlaceholder": "Definitieve naam",
 			"associatedProduct": "Gekoppeld product:",
@@ -1702,7 +1703,7 @@
 			"vatProfile": "Btw-profiel",
 			"noCustomVatProfile": "Geen aangepast btw-profiel",
 			"productImages": "Productafbeeldingen",
-			"uploadProductImages": "Upload een of meer productafbeeldingen (JPEG, PNG, WebP)",
+			"uploadProductImages": "Upload een of meer productafbeeldingen (JPEG, PNG, WebP, AVIF, SVG)",
 			"basicSettings": "Basisinstellingen",
 			"slug": "Slug",
 			"slugTitle": "Alleen kleine letters, cijfers en streepjes zijn toegestaan",
@@ -1939,6 +1940,7 @@
 			"reservedMetaNameError": "De woorden 'description' en 'viewport' zijn niet toegestaan."
 		},
 		"schedule": {
+			"confirmEventDeletion": "Het evenement \"{title}\" verwijderen? De verwijdering wordt opgeslagen wanneer je op \"{update}\" klikt.",
 			"eventProductCta": {
 				"exportToCalendar": "Naar agenda exporteren",
 				"location": "Locatie",

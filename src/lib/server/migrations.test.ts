@@ -3,13 +3,18 @@ import { ObjectId } from 'mongodb';
 import { cleanDb } from './test-utils';
 import { collections, withTransaction } from './database';
 import { ensureDefaultSearchlist, ensureSearchSearchlist, migrations } from './migrations';
+import { TEST_BOOKING_SPEC, TEST_DIGITAL_PRODUCT } from './seed/product';
 
-function migration2492() {
-	const migration = migrations.find((m) => m._id.equals(new ObjectId('6b1f4880e92e590e85af2492')));
+function migrationById(id: string) {
+	const migration = migrations.find((m) => m._id.equals(new ObjectId(id)));
 	if (!migration) {
-		throw new Error('migration #2492 not found');
+		throw new Error(`migration ${id} not found`);
 	}
 	return migration;
+}
+
+function migration2492() {
+	return migrationById('6b1f4880e92e590e85af2492');
 }
 
 describe('migration #2492 — drop single-currency (SAT) amount from order.vat', () => {
@@ -72,6 +77,42 @@ describe('migration #2492 — drop single-currency (SAT) amount from order.vat',
 
 		const after = await collections.orders.findOne({ _id });
 		expect(after?.vat).toEqual([{ rate: 8.1, country: 'CH' }]);
+	});
+});
+
+describe('migration #2568, drop the null booking spec of products', () => {
+	it('unsets a null booking spec and keeps a real one', async () => {
+		await cleanDb();
+		await collections.products.insertMany([
+			{
+				...TEST_DIGITAL_PRODUCT,
+				_id: 'null-spec',
+				alias: ['null-spec'],
+				bookingSpec: null
+			} as never,
+			{
+				...TEST_DIGITAL_PRODUCT,
+				_id: 'booking',
+				alias: ['booking'],
+				bookingSpec: TEST_BOOKING_SPEC
+			},
+			{ ...TEST_DIGITAL_PRODUCT, _id: 'plain', alias: ['plain'] }
+		]);
+		const migration = migrationById('6b1f4880e92e590e85af2568');
+
+		for (let run = 0; run < 2; run++) {
+			await withTransaction((session) => migration.run(session));
+
+			expect(await collections.products.findOne({ _id: 'null-spec' })).not.toHaveProperty(
+				'bookingSpec'
+			);
+			expect((await collections.products.findOne({ _id: 'booking' }))?.bookingSpec).toEqual(
+				TEST_BOOKING_SPEC
+			);
+			expect(await collections.products.findOne({ _id: 'plain' })).not.toHaveProperty(
+				'bookingSpec'
+			);
+		}
 	});
 });
 
