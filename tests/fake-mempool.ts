@@ -11,6 +11,8 @@ export type EsploraTx = {
 
 type Route = 'txs' | 'address' | 'tipHeight';
 
+type Activity = { mempool: EsploraTx[]; confirmed: EsploraTx[]; removed: EsploraTx[] };
+
 type Client = {
 	socket: WebSocket;
 	wantsBlocks: boolean;
@@ -24,8 +26,9 @@ const WS_PATH = '/api/v1/ws';
 /**
  * A mempool.space stand-in: the HTTP routes be-BOP polls, the WebSocket it subscribes to, and
  * controls a spec drives in-process to make payments, blocks, outages and rate limits happen.
+ * Serves nothing until `listen()`.
  */
-export async function startFakeMempool(port: number) {
+export function createFakeMempool(port: number) {
 	let tipHeight = GENESIS_TIP;
 	let txs: EsploraTx[] = [];
 	let httpFailure: number | null = null;
@@ -53,23 +56,31 @@ export async function startFakeMempool(port: number) {
 		}
 	}
 
-	/** Same grouping as mempool's websocket handler: per tracked address, what entered the mempool or a block. */
-	function addressActivity(client: Client, changed: EsploraTx[], kind: 'mempool' | 'confirmed') {
-		const activity: Record<string, { mempool: EsploraTx[]; confirmed: EsploraTx[]; removed: [] }> =
-			{};
+	/** Same grouping as mempool's websocket handler: per tracked address, what entered the mempool, a block, or left the mempool. */
+	function addressActivity(client: Client, changed: Partial<Activity>) {
+		const activity: Record<string, Activity> = {};
 		for (const address of client.addresses) {
-			const paying = changed.filter((tx) =>
-				tx.vout.some((vout) => vout.scriptpubkey_address === address)
-			);
-			if (paying.length) {
-				activity[address] = {
-					mempool: kind === 'mempool' ? paying : [],
-					confirmed: kind === 'confirmed' ? paying : [],
-					removed: []
-				};
+			const paying = (list: EsploraTx[] = []) =>
+				list.filter((tx) => tx.vout.some((vout) => vout.scriptpubkey_address === address));
+			const entry = {
+				mempool: paying(changed.mempool),
+				confirmed: paying(changed.confirmed),
+				removed: paying(changed.removed)
+			};
+			if (entry.mempool.length || entry.confirmed.length || entry.removed.length) {
+				activity[address] = entry;
 			}
 		}
 		return Object.keys(activity).length ? { 'multi-address-transactions': activity } : {};
+	}
+
+	function notifyActivity(changed: Partial<Activity>): void {
+		for (const client of clients) {
+			const activity = addressActivity(client, changed);
+			if (Object.keys(activity).length) {
+				send(client, activity);
+			}
+		}
 	}
 
 	function onHttp(req: IncomingMessage, res: ServerResponse): void {
@@ -159,16 +170,26 @@ export async function startFakeMempool(port: number) {
 		socket.on('message', (data) => onMessage(client, data.toString()));
 		socket.on('close', () => clients.delete(client));
 	});
-	await new Promise<void>((resolve, reject) => {
-		server.once('error', reject);
-		server.listen(port, '127.0.0.1', resolve);
-	});
 
 	return {
 		url: `http://localhost:${port}`,
 
-		/** Broadcasts a transaction paying `address`, or lands it in the current tip block when `confirmed`. */
-		addTx(address: string, sats: number, opts: { confirmed?: boolean } = {}): EsploraTx {
+		async listen(): Promise<void> {
+			await new Promise<void>((resolve, reject) => {
+				server.once('error', reject);
+				server.listen(port, '127.0.0.1', resolve);
+			});
+		},
+
+		/**
+		 * Broadcasts a transaction paying `address`, or lands it in the current tip block when `confirmed`.
+		 * `silent` sends no WebSocket message, like one lost on the way.
+		 */
+		addTx(
+			address: string,
+			sats: number,
+			opts: { confirmed?: boolean; silent?: boolean } = {}
+		): EsploraTx {
 			const tx: EsploraTx = {
 				txid: randomBytes(32).toString('hex'),
 				vout: [{ scriptpubkey_address: address, value: sats }],
@@ -177,13 +198,20 @@ export async function startFakeMempool(port: number) {
 					: { confirmed: false }
 			};
 			txs.push(tx);
-			for (const client of clients) {
-				const activity = addressActivity(client, [tx], opts.confirmed ? 'confirmed' : 'mempool');
-				if (Object.keys(activity).length) {
-					send(client, activity);
-				}
+			if (!opts.silent) {
+				notifyActivity(opts.confirmed ? { confirmed: [tx] } : { mempool: [tx] });
 			}
 			return tx;
+		},
+
+		/** Drops an unconfirmed transaction from the mempool, as an RBF replacement or an eviction does. */
+		removeTx(txid: string): void {
+			const removed = txs.filter((tx) => tx.txid === txid && !tx.status.confirmed);
+			if (!removed.length) {
+				throw new Error(`No unconfirmed transaction ${txid} in the fake mempool`);
+			}
+			txs = txs.filter((tx) => !removed.includes(tx));
+			notifyActivity({ removed });
 		},
 
 		/** Mines `n` blocks; every unconfirmed transaction lands in the first one. */
@@ -195,7 +223,7 @@ export async function startFakeMempool(port: number) {
 				tx.status = { confirmed: true, block_height: firstHeight, block_time: nowSeconds() };
 			}
 			for (const client of clients) {
-				const activity = addressActivity(client, confirmed, 'confirmed');
+				const activity = addressActivity(client, { confirmed });
 				if (client.wantsBlocks) {
 					send(client, { block: blockAt(tipHeight), ...activity });
 				} else if (Object.keys(activity).length) {
@@ -271,4 +299,4 @@ export async function startFakeMempool(port: number) {
 	};
 }
 
-export type FakeMempool = Awaited<ReturnType<typeof startFakeMempool>>;
+export type FakeMempool = ReturnType<typeof createFakeMempool>;
