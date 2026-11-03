@@ -1,16 +1,21 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+	import Trans from '$lib/components/Trans.svelte';
+
 	export let config: { apiKey: string; lnAddress: string; walletId: string };
+
+	const { t } = useI18n();
 </script>
 
 <p class="text-sm">
-	Receive Lightning payments into your Blink account. Configure <strong>one</strong> of the two options
-	below. A Lightning address needs no API key and works for both custodial Blink accounts and self-custodial
-	(Spark) addresses. Only BTC wallets are supported.
+	<Trans key="admin.blink.intro">
+		<strong slot="0" let:translation>{translation}</strong>
+	</Trans>
 </p>
 
-<h2 class="text-2xl">Option 1 — Lightning address (no API key)</h2>
+<h2 class="text-2xl">{t('admin.blink.option1Title')}</h2>
 <label class="form-label">
-	Lightning address
+	{t('admin.blink.lnAddress')}
 	<input
 		class="form-input"
 		type="text"
@@ -20,9 +25,9 @@
 	/>
 </label>
 
-<h2 class="text-2xl">Option 2 — API key (custodial account)</h2>
+<h2 class="text-2xl">{t('admin.blink.option2Title')}</h2>
 <label class="form-label">
-	API Key
+	{t('admin.blink.apiKey')}
 	<input
 		class="form-input"
 		type="password"
@@ -32,6 +37,6 @@
 	/>
 </label>
 <label class="form-label">
-	Wallet ID (optional — defaults to your account's default BTC wallet)
+	{t('admin.blink.walletId')}
 	<input class="form-input" type="text" name="walletId" value={config.walletId} />
 </label>

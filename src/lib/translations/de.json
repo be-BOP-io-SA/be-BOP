@@ -2173,6 +2173,9 @@
 			"priceAmount": "Preisbetrag",
 			"pricePlaceholder": "Preis"
 		},
+		"paymentProcessor": {
+			"invoices": "Rechnungen"
+		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Keine Zahlungsanbieter konfiguriert. Konfigurieren Sie sie im obigen Tab Zahlungseinstellungen",
 			"or": "oder",

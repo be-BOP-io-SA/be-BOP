@@ -1,16 +1,19 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
 	import FiatCurrencySelect from './FiatCurrencySelect.svelte';
 
 	export let config: { backendUrl: string; backendApiKey: string; currency: string };
+
+	const { t } = useI18n();
 </script>
 
 <label class="form-label">
-	Backend URL
+	{t('admin.taler.backendUrl')}
 	<input class="form-input" type="text" name="backendUrl" value={config.backendUrl} required />
 </label>
 
 <label class="form-label">
-	Backend API Key
+	{t('admin.taler.backendApiKey')}
 	<input
 		class="form-input"
 		type="password"
@@ -20,4 +23,4 @@
 	/>
 </label>
 
-<FiatCurrencySelect bind:value={config.currency} />
+<FiatCurrencySelect label={t('admin.taler.currency')} bind:value={config.currency} />

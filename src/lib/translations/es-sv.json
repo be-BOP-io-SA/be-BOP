@@ -2173,6 +2173,9 @@
 			"priceAmount": "Importe del precio",
 			"pricePlaceholder": "Precio"
 		},
+		"paymentProcessor": {
+			"invoices": "Facturas"
+		},
 		"processorSelector": {
 			"noProcessorsConfigured": "No hay procesadores configurados. Configúrelos en la pestaña Configuración de pago de arriba",
 			"or": "o",

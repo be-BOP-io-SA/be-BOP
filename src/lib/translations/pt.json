@@ -2173,6 +2173,9 @@
 			"priceAmount": "Montante do preço",
 			"pricePlaceholder": "Preço"
 		},
+		"paymentProcessor": {
+			"invoices": "Faturas"
+		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Nenhum processador configurado. Configure-os no separador Definições de pagamento acima",
 			"or": "ou",

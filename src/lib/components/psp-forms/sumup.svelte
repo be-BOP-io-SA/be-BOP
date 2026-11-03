@@ -1,11 +1,14 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
 	import FiatCurrencySelect from './FiatCurrencySelect.svelte';
 
 	export let config: { apiKey: string; merchantCode: string; currency: string };
+
+	const { t } = useI18n();
 </script>
 
 <label class="form-label">
-	API Key
+	{t('admin.sumup.apiKey')}
 	<input
 		class="form-input"
 		type="password"
@@ -17,7 +20,7 @@
 </label>
 
 <label class="form-label">
-	Merchant Code
+	{t('admin.sumup.merchantCode')}
 	<input
 		class="form-input"
 		type="text"
@@ -28,4 +31,4 @@
 	/>
 </label>
 
-<FiatCurrencySelect bind:value={config.currency} />
+<FiatCurrencySelect label={t('admin.sumup.currency')} bind:value={config.currency} />

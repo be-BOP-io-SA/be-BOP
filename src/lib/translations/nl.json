@@ -2173,6 +2173,9 @@
 			"priceAmount": "Prijsbedrag",
 			"pricePlaceholder": "Prijs"
 		},
+		"paymentProcessor": {
+			"invoices": "Facturen"
+		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Geen verwerkers geconfigureerd. Configureer ze in het tabblad Betalingsinstellingen hierboven",
 			"or": "of",

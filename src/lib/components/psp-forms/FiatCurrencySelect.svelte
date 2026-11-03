@@ -6,6 +6,7 @@
 
 	/** The processor's configured settlement currency. Bound, so the form posts what is picked. */
 	export let value: string;
+	export let label: string;
 
 	// The shop's own currencies first, then the rest alphabetically. Crypto is excluded: a
 	// provider that settles in BTC or SAT says so itself and never renders this.
@@ -22,7 +23,7 @@
 </script>
 
 <label class="form-label">
-	<CurrencyLabel label="Currency" />
+	<CurrencyLabel {label} />
 	<Select
 		items={options}
 		searchable={true}

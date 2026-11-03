@@ -1,11 +1,14 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
 	import FiatCurrencySelect from './FiatCurrencySelect.svelte';
 
 	export let config: { publicKey: string; secretKey: string; currency: string };
+
+	const { t } = useI18n();
 </script>
 
 <label class="form-label">
-	Secret Key
+	{t('admin.stripe.secretKey')}
 	<input
 		class="form-input"
 		type="password"
@@ -17,7 +20,7 @@
 </label>
 
 <label class="form-label">
-	Public Key
+	{t('admin.stripe.publicKey')}
 	<input
 		class="form-input"
 		type="text"
@@ -28,4 +31,4 @@
 	/>
 </label>
 
-<FiatCurrencySelect bind:value={config.currency} />
+<FiatCurrencySelect label={t('admin.stripe.currency')} bind:value={config.currency} />
