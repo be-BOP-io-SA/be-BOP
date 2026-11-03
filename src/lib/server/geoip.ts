@@ -1,4 +1,4 @@
-import { isIPv4 } from 'node:net';
+import { isIP, isIPv4 } from 'node:net';
 import { building } from '$app/environment';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -85,6 +85,10 @@ const cache = new Map<string, CountryAlpha2 | undefined>();
 export function countryFromIp(ip: string): CountryAlpha2 | undefined {
 	if (ip === '::1' || ip === '127.0.0.1') {
 		return 'FR';
+	}
+	// Orders placed without a recorded client address carry an empty one, which has no country.
+	if (!isIP(ip)) {
+		return undefined;
 	}
 	const cached = cache.get(ip);
 	if (cached) {
