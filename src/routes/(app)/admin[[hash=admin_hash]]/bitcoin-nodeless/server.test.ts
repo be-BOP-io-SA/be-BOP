@@ -18,6 +18,32 @@ function initialize(derivationIndex: string) {
 	} as Parameters<typeof actions.initialize>[0]);
 }
 
+const TESTNET_XPUBS = [
+	'tpubDFErwxEibF1d8NwR7wG9KUz94F8JAFJJPz5GQFeGVcz6ssgEr5nWsPkpbcpn6KPcDPgYrSofnya2kbm196He327iWCRK9nVkxuz8ZjT9cXG',
+	'tpubDF6CqZd1yujcP79jyEvuC4f5rMNByCqgomZhtfgV6LprZGoxxmzH5LuDPvybL8rzCzJpXynsSARzmN9SoYdLKpLq5ZGwED6vE4mXpLS6gDH'
+];
+
+function initializeMultisig(derivationIndex: string) {
+	const body = new FormData();
+	body.set('format', 'bip48');
+	body.set('mempoolUrl', 'https://mempool.space');
+	body.set('m', '2');
+	body.set('n', '2');
+	TESTNET_XPUBS.forEach((xpub, i) => body.set(`xpubs[${i}]`, xpub));
+	body.set('derivationIndex', derivationIndex);
+	return actions.initialize({
+		request: new Request('http://x/admin/bitcoin-nodeless?/initialize', { method: 'POST', body })
+	} as Parameters<typeof actions.initialize>[0]);
+}
+
+const KEYLESS_DEFAULT = {
+	mempoolUrl: 'https://mempool.space',
+	format: 'bip84',
+	publicKey: '',
+	derivationIndex: 0,
+	skipUsedAddresses: true
+} as const;
+
 describe('bitcoin nodeless admin', () => {
 	beforeEach(async () => {
 		await cleanDb();
@@ -93,6 +119,52 @@ describe('bitcoin nodeless admin', () => {
 		expect(
 			(await collections.runtimeConfig.findOne({ _id: 'bitcoinNodeless' }))?.data
 		).toMatchObject({ derivationIndex: Number(index) });
+	});
+
+	it.each([
+		{ ...KEYLESS_DEFAULT },
+		{ ...KEYLESS_DEFAULT, format: 'bip48' as const, m: 2, xpubs: [] },
+		{ ...KEYLESS_DEFAULT, format: 'bip48' as const, m: 1, xpubs: [TESTNET_XPUBS[0]] }
+	])('sets up over a stored configuration without a key: %o', async (keyless) => {
+		await collections.runtimeConfig.insertOne({
+			_id: 'bitcoinNodeless',
+			data: keyless,
+			updatedAt: new Date()
+		});
+
+		const result = await initialize('7');
+
+		expect(result).toBeUndefined();
+		expect(
+			(await collections.runtimeConfig.findOne({ _id: 'bitcoinNodeless' }))?.data
+		).toMatchObject({ format: 'bip84', publicKey: ZPUB, derivationIndex: 7 });
+		expect(runtimeConfig.bitcoinNodeless).toMatchObject({ publicKey: ZPUB, derivationIndex: 7 });
+	});
+
+	it('sets up a multisig key over a stored configuration without a key', async () => {
+		await collections.runtimeConfig.insertOne({
+			_id: 'bitcoinNodeless',
+			data: { ...KEYLESS_DEFAULT },
+			updatedAt: new Date()
+		});
+
+		const result = await initializeMultisig('3');
+
+		expect(result).toBeUndefined();
+		expect(
+			(await collections.runtimeConfig.findOne({ _id: 'bitcoinNodeless' }))?.data
+		).toMatchObject({ format: 'bip48', m: 2, xpubs: TESTNET_XPUBS, derivationIndex: 3 });
+	});
+
+	it('refuses to set up over a stored multisig configuration and keeps its index', async () => {
+		await initializeMultisig('42');
+
+		const result = await initialize('0');
+
+		expect(result).toMatchObject({ status: 409, data: { alreadySetUp: true } });
+		expect(
+			(await collections.runtimeConfig.findOne({ _id: 'bitcoinNodeless' }))?.data
+		).toMatchObject({ format: 'bip48', xpubs: TESTNET_XPUBS, derivationIndex: 42 });
 	});
 
 	it('refuses to set up over an existing configuration and keeps its stored index', async () => {

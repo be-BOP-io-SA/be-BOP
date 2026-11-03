@@ -17,19 +17,33 @@ import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintErr
 
 type FieldErrors = Record<string, string>;
 
-// Insert-only: replacing a live config would rewind its stored index and reuse addresses.
+// A stored config with no key derives no address, so it is safe to replace.
+const KEYLESS_CONFIG_FILTER = {
+	$or: [
+		{ 'data.format': { $ne: 'bip48' }, 'data.publicKey': { $in: ['', null] } },
+		{ 'data.format': 'bip48', 'data.xpubs.1': { $exists: false } }
+	]
+};
+
+// Never replaces a config that has a key: rewinding its stored index would reuse addresses.
 async function storeNewConfig(data: typeof runtimeConfig.bitcoinNodeless): Promise<boolean> {
-	try {
-		await collections.runtimeConfig.insertOne({
-			_id: 'bitcoinNodeless',
-			data,
-			updatedAt: new Date()
-		});
-	} catch (err) {
-		if (isUniqueConstraintError(err)) {
-			return false;
+	const replaced = await collections.runtimeConfig.updateOne(
+		{ _id: 'bitcoinNodeless', ...KEYLESS_CONFIG_FILTER },
+		{ $set: { data, updatedAt: new Date() } }
+	);
+	if (!replaced.matchedCount) {
+		try {
+			await collections.runtimeConfig.insertOne({
+				_id: 'bitcoinNodeless',
+				data,
+				updatedAt: new Date()
+			});
+		} catch (err) {
+			if (isUniqueConstraintError(err)) {
+				return false;
+			}
+			throw err;
 		}
-		throw err;
 	}
 	runtimeConfig.bitcoinNodeless = data;
 	return true;

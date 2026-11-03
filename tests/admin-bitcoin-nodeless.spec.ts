@@ -68,6 +68,43 @@ async function fillSetupForm(page: Page, derivationIndex: string) {
 	await page.locator('input[name="derivationIndex"]').fill(derivationIndex);
 }
 
+// Deleting the document would leave the server's in-memory config behind, so write an unset key.
+test.afterEach(async () => {
+	if (await storedNodelessConfig()) {
+		await storeNodelessConfig('', 0);
+	}
+});
+
+async function openSetupFormOverKeylessConfig(page: Page, setUpLabel: string) {
+	await storeNodelessConfig('', 0);
+	await expect(async () => {
+		await page.goto('/admin/bitcoin-nodeless');
+		// The server applies the stored document through a change stream, so the key may still be the previous test's.
+		await expect(page.getByRole('button', { name: setUpLabel })).toBeVisible({ timeout: 1000 });
+	}).toPass({ timeout: 15_000 });
+	await waitForSetupFormHydration(page);
+	await page.locator('input[name="publicKey"]').fill(ZPUB);
+}
+
+test('sets up over a stored configuration that has no key and offers to delete it', async ({
+	page
+}) => {
+	await openSetupFormOverKeylessConfig(page, 'Set up');
+	await page.locator('input[name="derivationIndex"]').fill('7');
+	await page.getByRole('button', { name: 'Set up' }).click();
+
+	await expect(page.getByRole('button', { name: 'Delete configuration' })).toBeVisible();
+	await expect(
+		page.getByText(
+			'Bitcoin nodeless is already set up. Delete the configuration to use another key.'
+		)
+	).toHaveCount(0);
+	expect((await storedNodelessConfig())?.data).toMatchObject({
+		publicKey: ZPUB,
+		derivationIndex: 7
+	});
+});
+
 test('the browser stops a negative derivation index before submitting', async ({ page }) => {
 	await fillSetupForm(page, '-1');
 	await page.getByRole('button', { name: 'Set up' }).click();
@@ -93,13 +130,6 @@ test('the server refuses a decimal derivation index the browser let through', as
 });
 
 test.describe('a key at the end of its derivation range', () => {
-	// Deleting the document would leave the server's in-memory config behind, so write an unset key.
-	test.afterEach(async () => {
-		if (await storedNodelessConfig()) {
-			await storeNodelessConfig('', 0);
-		}
-	});
-
 	async function openWithWarning(page: Page, derivationIndex: number, warning: string) {
 		await storeNodelessConfig(ZPUB, derivationIndex);
 		await expect(async () => {
@@ -250,18 +280,10 @@ test.describe('a key at the end of its derivation range', () => {
 			await expect(page.getByRole('button', { name: 'Configurer' })).toBeVisible();
 		});
 
-		test('refuses to set up over a stored configuration and keeps its index', async ({ page }) => {
-			// A stored document with no key shows the set-up form, like a tab left open before another set-up.
-			await storeNodelessConfig('', 42);
-			await expect(async () => {
-				await page.goto('/admin/bitcoin-nodeless');
-				// The server applies the stored document through a change stream, so the key may still be the previous test's.
-				await expect(page.getByRole('button', { name: 'Configurer' })).toBeVisible({
-					timeout: 1000
-				});
-			}).toPass({ timeout: 15_000 });
-			await waitForSetupFormHydration(page);
-			await page.locator('input[name="publicKey"]').fill(ZPUB);
+		test('refuses to set up over a key stored meanwhile and keeps its index', async ({ page }) => {
+			await openSetupFormOverKeylessConfig(page, 'Configurer');
+			// Another tab sets up a key while this form is still open.
+			await storeNodelessConfig(ZPUB, 42);
 			await page.getByRole('button', { name: 'Configurer' }).click();
 
 			await expect(
@@ -270,7 +292,7 @@ test.describe('a key at the end of its derivation range', () => {
 				)
 			).toBeVisible();
 			expect((await storedNodelessConfig())?.data).toMatchObject({
-				publicKey: '',
+				publicKey: ZPUB,
 				derivationIndex: 42
 			});
 		});
