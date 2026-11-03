@@ -6,6 +6,8 @@ const E2E_DB = 'bebop-e2e';
 const ZPUB =
 	'zpub6r8LffkeFh5if3FefxX5zq5oQnQbLxXXPE87fEskLhY2v37Tj16TzMqRL7p32wQweeq1DpRYWrvm4t3ArKHrLNnVhPkFsHGdo3h6nyoppeS';
 const LAST_INDEX = 2 ** 31 - 1;
+// Tailwind's yellow-50.
+const YELLOW_50 = 'rgb(254, 252, 232)';
 
 async function withDb<T>(run: (db: ReturnType<MongoClient['db']>) => Promise<T>): Promise<T> {
 	const client = await MongoClient.connect(process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017');
@@ -130,12 +132,23 @@ test('the server refuses a decimal derivation index the browser let through', as
 });
 
 test.describe('a key at the end of its derivation range', () => {
+	// The warning shows at the top of the page and again right under the derivation index field.
+	function warningBoxes(page: Page, warning: string) {
+		return [
+			page.locator('h1 + p + div', { hasText: warning }),
+			page.locator('label:has(input[name="derivationIndex"]) + div', { hasText: warning })
+		];
+	}
+
 	async function openWithWarning(page: Page, derivationIndex: number, warning: string) {
 		await storeNodelessConfig(ZPUB, derivationIndex);
 		await expect(async () => {
 			await page.goto('/admin/bitcoin-nodeless');
-			await expect(page.getByText(warning)).toBeVisible({ timeout: 1000 });
+			await expect(page.getByText(warning)).toHaveCount(2, { timeout: 1000 });
 		}).toPass({ timeout: 15_000 });
+		for (const box of warningBoxes(page, warning)) {
+			await expect(box).toBeVisible();
+		}
 	}
 
 	async function deleteConfiguration(page: Page, deleteLabel: string) {
@@ -143,6 +156,19 @@ test.describe('a key at the end of its derivation range', () => {
 		await page.getByRole('button', { name: deleteLabel }).click();
 		await expect.poll(storedNodelessConfig).toBeNull();
 	}
+
+	async function expectWarningColor(page: Page, warning: string, background: string) {
+		for (const box of warningBoxes(page, warning)) {
+			await expect(box).toHaveCSS('background-color', background);
+		}
+	}
+
+	test('with 3 addresses left, the page warns in yellow in both places', async ({ page }) => {
+		const runningOut =
+			'This key is almost out of receiving addresses. Delete this configuration and set up a new key to keep receiving bitcoin payments.';
+		await openWithWarning(page, LAST_INDEX - 2, runningOut);
+		await expectWarningColor(page, runningOut, YELLOW_50);
+	});
 
 	// No delete here: the next test covers it, and every form post spends the server's 30 per minute.
 	test('at the last index, the page warns and previews that address', async ({ page }) => {
