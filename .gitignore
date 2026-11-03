@@ -15,8 +15,10 @@ static/tinymce
 lib/utils/timeZoneOffset.ts
 docker-compose.override.yml
 
-# Playwright: the signed-in session the e2e suite reuses
+# Playwright session and run output
 playwright/.auth
+/test-results
+/playwright-report
 
 # Vitest JSON report output
 .vitest

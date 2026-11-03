@@ -15,7 +15,7 @@
 	import { computeDeliveryFees } from '$lib/cart';
 	import { isAlpha2CountryCode } from '$lib/types/Country.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
-	import { oneMaxPerLine } from '$lib/types/Product.js';
+	import { oneMaxPerLine, productLabelWithVariations } from '$lib/types/Product.js';
 	import { UrlDependency } from '$lib/types/UrlDependency.js';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { CUSTOMER_ROLE_ID } from '$lib/types/User';
@@ -217,13 +217,7 @@
 						<!-- Mobile-only title (lg+: shown inside info column instead) -->
 						<a href="/product/{item.product._id}" class="block mb-4 lg:hidden">
 							<h2 class="text-2xl">
-								{item.chosenVariations
-									? item.product.name +
-									  ' - ' +
-									  Object.entries(item.chosenVariations)
-											.map(([key, value]) => item.product.variationLabels?.values[key][value])
-											.join(' - ')
-									: item.product.name}
+								{productLabelWithVariations(item.product, item.chosenVariations)}
 							</h2>
 						</a>
 
@@ -290,13 +284,7 @@
 						<div class="hidden lg:flex flex-col lg:gap-2">
 							<a href="/product/{item.product._id}">
 								<h2 class="text-2xl">
-									{item.chosenVariations
-										? item.product.name +
-										  ' - ' +
-										  Object.entries(item.chosenVariations)
-												.map(([key, value]) => item.product.variationLabels?.values[key][value])
-												.join(' - ')
-										: item.product.name}
+									{productLabelWithVariations(item.product, item.chosenVariations)}
 								</h2>
 							</a>
 							<p class="text-sm">{item.product.shortDescription}</p>

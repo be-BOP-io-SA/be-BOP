@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { languageNames, locales } from '$lib/translations';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
 
 	let languages = data.locales;
+
+	const { t } = useI18n();
 </script>
 
-<h1 class="text-3xl">Languages</h1>
+<h1 class="text-3xl">{t('admin.language.title')}</h1>
 
 <form class="contents" method="post" action="?/languages">
-	<p class="text-lg">Languages available (select at least one)</p>
+	<p class="text-lg">{t('admin.language.availableLanguages')}</p>
 	<ul>
 		{#each locales as locale}
 			<li>
@@ -28,7 +31,7 @@
 	</ul>
 
 	<label class="form-label">
-		Default language when no language matches the user's preference
+		{t('admin.language.defaultLanguageLabel')}
 		<select class="form-input" name="defaultLanguage" value={data.defaultLanguage} required>
 			{#each languages as locale}
 				<option value={locale}>{languageNames[locale]}</option>
@@ -37,23 +40,21 @@
 	</label>
 
 	<p>
-		You can show/hide the language selector <a
-			href="{data.adminPrefix}/config#disableLanguageSelector"
-			class="body-hyperlink"
-		>
-			here
+		{t('admin.language.showHideSelectorPrefix')}
+		<a href="{data.adminPrefix}/config#disableLanguageSelector" class="body-hyperlink">
+			{t('admin.language.here')}
 		</a>
 	</p>
 
-	<button class="btn btn-black self-start">Save</button>
+	<button class="btn btn-black self-start">{t('admin.action.save')}</button>
 </form>
 
-<h2 class="text-2xl">Custom Translation Keys</h2>
+<h2 class="text-2xl">{t('admin.language.customTranslationKeys')}</h2>
 
 <form class="contents" method="post" action="?/custom">
 	{#each data.customTranslationKeys as d}
 		<label class="form-label">
-			Custom translation keys - {d.locale}
+			{t('admin.language.customTranslationKeysFor', { locale: d.locale })}
 			<textarea
 				class="form-input"
 				name={d.locale}
@@ -64,5 +65,5 @@
 		</label>
 	{/each}
 
-	<button class="btn btn-black self-start">Save</button>
+	<button class="btn btn-black self-start">{t('admin.action.save')}</button>
 </form>

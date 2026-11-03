@@ -135,6 +135,7 @@ export async function load(params) {
 							| 'vatProfileId'
 							| 'paymentMethods'
 							| 'variationLabels'
+							| 'variationFamilies'
 							| 'bookingSpec.slotMinutes'
 							| 'subscriptionDuration'
 						>
@@ -165,7 +166,8 @@ export async function load(params) {
 						subscriptionDuration: 1,
 						variationLabels: {
 							$ifNull: [`$translations.${locals.language}.variationLabels`, '$variationLabels']
-						}
+						},
+						variationFamilies: 1
 					})
 					.map((p) =>
 						runtimeConfig.deliveryFees.mode !== 'perItem' ? { ...p, deliveryFees: undefined } : p

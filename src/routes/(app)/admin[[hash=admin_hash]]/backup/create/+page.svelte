@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { downloadFile } from '$lib/utils/downloadFile';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 
@@ -13,7 +16,9 @@
 		});
 
 		if (!response.ok) {
-			alert('Error ' + response.status + ': ' + (await response.text()));
+			alert(
+				t('admin.backup.exportError', { status: response.status, message: await response.text() })
+			);
 		}
 
 		const blob = await response.blob();
@@ -21,5 +26,7 @@
 	}
 </script>
 
-<h1 class="text-3xl">Export Data</h1>
-<button on:click={exportData} class="btn btn-black self-start">Export</button>
+<h1 class="text-3xl">{t('admin.backup.exportTitle')}</h1>
+<button on:click={exportData} class="btn btn-black self-start"
+	>{t('admin.backup.exportButton')}</button
+>

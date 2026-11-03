@@ -1,13 +1,17 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
+
 	export let data;
 </script>
 
-<h1 class="text-3xl">Edit ratio per product</h1>
+<h1 class="text-3xl">{t('admin.challenge.editRatioPerProduct')}</h1>
 <form method="post" class="contents">
 	{#each data.products.filter((prod) => !data.challenge.productIds?.length || data.challenge.productIds.includes(prod._id)) as product}
 		<h1 class="text-xl">{product.name}</h1>
 		<label class="form-label"
-			>Custom ratio
+			>{t('admin.challenge.customRatio')}
 			<input
 				type="number"
 				class="form-input"
@@ -22,5 +26,5 @@
 			/>
 		</label>
 	{/each}
-	<button type="submit" class="btn btn-black self-start">Update</button>
+	<button type="submit" class="btn btn-black self-start">{t('admin.action.update')}</button>
 </form>

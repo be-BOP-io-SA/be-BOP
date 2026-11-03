@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { preUploadPicture } from '$lib/types/Picture';
+	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
@@ -23,7 +23,7 @@
 		// Need to load here, or for some reason, some inputs disappear afterwards
 		const formData = new FormData(formElement);
 		if (!files || files.length === 0) {
-			alert('Please select a file');
+			alert(t('admin.slider.pleaseSelectFile'));
 			return;
 		}
 		try {
@@ -56,7 +56,7 @@
 	}
 </script>
 
-<h1 class="text-3xl">Add a slider</h1>
+<h1 class="text-3xl">{t('admin.slider.addASlider')}</h1>
 
 {#if !data.s3IsConfigured}
 	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
@@ -69,13 +69,13 @@
 	on:submit|preventDefault={checkForm}
 >
 	<label class="form-label">
-		Slider title
+		{t('admin.slider.sliderTitle')}
 		<input
 			class="form-input"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="title"
-			placeholder="Slider title"
+			placeholder={t('admin.slider.sliderNamePlaceholder')}
 			bind:value={title}
 			on:change={() => (slug = generateId(title, true))}
 			on:input={() => (slug = generateId(title, true))}
@@ -84,25 +84,25 @@
 	</label>
 
 	<label class="form-label">
-		Slug
+		{t('admin.slider.slug')}
 
 		<input
 			class="form-input block"
 			type="text"
 			name="slug"
-			placeholder="Slug"
+			placeholder={t('admin.slider.slug')}
 			bind:value={slug}
-			title="Only lowercase letters, numbers and dashes are allowed"
+			title={t('admin.slider.slugFormatHint')}
 			required
 		/>
 	</label>
 
 	<input type="hidden" name="sliderPictureId" />
 	<label class="form-label">
-		Picture
+		{t('admin.slider.picture')}
 		<input
 			type="file"
-			accept="image/jpeg,image/png,image/webp"
+			accept={PICTURE_UPLOAD_ACCEPT}
 			class="block"
 			bind:files
 			required
@@ -114,6 +114,6 @@
 		type="submit"
 		class="btn btn-blue self-start text-white"
 		disabled={submitting}
-		value="Submit"
+		value={t('admin.slider.submit')}
 	/>
 </form>

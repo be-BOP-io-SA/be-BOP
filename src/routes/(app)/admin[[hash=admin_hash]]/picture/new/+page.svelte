@@ -2,7 +2,7 @@
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { TAGTYPES, preUploadPicture } from '$lib/types/Picture.js';
+	import { PICTURE_UPLOAD_ACCEPT, TAGTYPES, preUploadPicture } from '$lib/types/Picture.js';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
 
@@ -24,7 +24,7 @@
 
 	async function checkForm() {
 		if (!files) {
-			alert('Please select a file');
+			alert(t('admin.picture.selectFileAlert'));
 			return;
 		}
 
@@ -74,7 +74,7 @@
 	}
 </script>
 
-<h1 class="text-3xl">Add a picture</h1>
+<h1 class="text-3xl">{t('admin.picture.addPicture')}</h1>
 
 {#if !data.s3IsConfigured}
 	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
@@ -88,12 +88,12 @@
 >
 	<fieldset class="contents" disabled={submitting}>
 		<label class="form-label">
-			JPEG or PNG file
+			{t('admin.picture.fileLabel')}
 			<input
 				type="file"
 				bind:files
 				on:change={onChange}
-				accept="image/jpeg,image/png,image/webp"
+				accept={PICTURE_UPLOAD_ACCEPT}
 				class="block"
 				required
 				multiple
@@ -101,12 +101,12 @@
 		</label>
 
 		<label class="form-label">
-			Name of the picture
+			{t('admin.picture.nameOfPicture')}
 			<input
 				class="form-input"
 				type="text"
 				name="name"
-				placeholder="Final name"
+				placeholder={t('admin.picture.finalNamePlaceholder')}
 				required
 				bind:value={fileName}
 			/>
@@ -114,22 +114,22 @@
 
 		{#if productId}
 			<p>
-				Associated product: <a href="{data.adminPrefix}/product/{productId}" class="hover:underline"
-					>{productId}</a
-				>
+				{t('admin.picture.associatedProduct')}
+				<a href="{data.adminPrefix}/product/{productId}" class="hover:underline">{productId}</a>
 			</p>
 			<input type="hidden" name="productId" value={productId} />
 		{/if}
 
 		{#if sliderId}
 			<p>
-				Associated slider: <a href="/admin/slider/{sliderId}" class="hover:underline">{sliderId}</a>
+				{t('admin.picture.associatedSlider')}
+				<a href="/admin/slider/{sliderId}" class="hover:underline">{sliderId}</a>
 			</p>
 			<input type="hidden" name="sliderId" value={sliderId} />
 		{/if}
 		{#if tagId}
 			<label class="form-label w-full">
-				Tag type
+				{t('admin.picture.tagType')}
 				<select name="tagType" class="form-input">
 					{#each TAGTYPES as tagType}
 						<option value={tagType}>{tagType}</option>
@@ -137,21 +137,21 @@
 				</select>
 			</label>
 			<p>
-				Associated tag: <a href="/admin/tags/{tagId}" class="hover:underline">{tagId}</a>
+				{t('admin.picture.associatedTag')}
+				<a href="/admin/tags/{tagId}" class="hover:underline">{tagId}</a>
 			</p>
 			<input type="hidden" name="tagId" value={tagId} />
 		{/if}
 		{#if scheduleId}
 			<p>
-				Associated Schedule: <a href="/admin/schedule/{scheduleId}" class="hover:underline"
-					>{scheduleId}</a
-				>
+				{t('admin.picture.associatedSchedule')}
+				<a href="/admin/schedule/{scheduleId}" class="hover:underline">{scheduleId}</a>
 			</p>
-			<p>Event: {eventScheduleSlug}</p>
+			<p>{t('admin.picture.event', { eventScheduleSlug: eventScheduleSlug ?? '' })}</p>
 			<input type="hidden" name="scheduleId" value={scheduleId} />
 			<input type="hidden" name="eventScheduleSlug" value={eventScheduleSlug} />
 		{/if}
 
-		<input type="submit" class="btn body-mainCTA self-start" value="Add" />
+		<input type="submit" class="btn body-mainCTA self-start" value={t('admin.picture.add')} />
 	</fieldset>
 </form>

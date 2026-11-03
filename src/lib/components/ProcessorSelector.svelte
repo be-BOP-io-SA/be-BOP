@@ -1,4 +1,8 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
+
 	export let label: string;
 	export let name: string;
 	export let availableProcessors: readonly string[];
@@ -14,12 +18,11 @@
 	<div class="form-label">
 		<div>{label}</div>
 		<p class="text-sm text-gray-500">
-			No processors configured. Configure them in the Payment Settings tab above
+			{t('admin.processorSelector.noProcessorsConfigured')}
 			{#each configLinks as link, i}
-				{#if i > 0}{i === configLinks.length - 1 ? ', or ' : ', '}{/if}<a
-					href={link.href}
-					class="underline">{link.name}</a
-				>
+				{#if i > 0}{i === configLinks.length - 1
+						? ` ${t('admin.processorSelector.or')} `
+						: ', '}{/if}<a href={link.href} class="underline">{link.name}</a>
 			{/each}.
 		</p>
 	</div>
@@ -27,10 +30,10 @@
 	<label class="form-label">
 		{label}
 		<select {name} class="form-input max-w-[25rem]" bind:value={selectedProcessor}>
-			<option value="">Auto (system priority)</option>
+			<option value="">{t('admin.processorSelector.autoSystemPriority')}</option>
 			{#if showPreferredWarning}
 				<option value={preferredProcessor} class="text-orange-600">
-					⚠ {preferredProcessor} (not configured)
+					⚠ {preferredProcessor} ({t('admin.processorSelector.notConfigured')})
 				</option>
 			{/if}
 			{#each availableProcessors as processor}
@@ -42,11 +45,11 @@
 		<span class="text-sm text-gray-500">
 			{#if selectedProcessor}
 				{@const others = availableProcessors.filter((p) => p !== selectedProcessor)}
-				Priority: {#if isNotConfigured}<del>{selectedProcessor}</del
+				{t('admin.processorSelector.priority')}: {#if isNotConfigured}<del>{selectedProcessor}</del
 					>{:else}{selectedProcessor}{/if}{#if others.length}
 					→ {others.join(' → ')}{/if}
 			{:else}
-				System priority: {availableProcessors.join(' → ')}
+				{t('admin.processorSelector.systemPriority')}: {availableProcessors.join(' → ')}
 			{/if}
 		</span>
 	</label>

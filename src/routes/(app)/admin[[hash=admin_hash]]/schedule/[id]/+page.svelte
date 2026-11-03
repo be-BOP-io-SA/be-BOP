@@ -4,7 +4,7 @@
 	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency';
 	import { applyAction, enhance, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { preUploadPicture } from '$lib/types/Picture.js';
+	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture.js';
 	import Select from 'svelte-select';
 	import { browser } from '$app/environment';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
@@ -55,15 +55,26 @@
 	let errorMessage = data.schedule.events.map(() => '');
 	let loading = false;
 	function confirmDelete(event: Event) {
-		if (!confirm('Would you like to delete this schedule?')) {
+		if (!confirm(t('admin.schedule.confirmDeleteSchedule'))) {
 			event.preventDefault();
 		}
 	}
 
-	function deleteEventSchedule(title: string) {
-		data.schedule.events = data.schedule.events.filter(
-			(eventSchedule) => !(eventSchedule.title === title)
-		);
+	// By position: titles are not unique, and a line not saved yet has no event behind it.
+	function deleteEventSchedule(index: number) {
+		if (index >= data.schedule.events.length) {
+			eventLines -= 1;
+			return;
+		}
+		const title = data.schedule.events[index].title || `#${index + 1}`;
+		if (
+			!confirm(
+				t('admin.schedule.confirmEventDeletion', { title, update: t('admin.action.update') })
+			)
+		) {
+			return;
+		}
+		data.schedule.events = data.schedule.events.filter((_, i) => i !== index);
 		eventLines -= 1;
 	}
 	function closeDetailByIndex(i: number) {
@@ -156,7 +167,7 @@
 	}
 </script>
 
-<h1 class="text-3xl">Edit a schedule</h1>
+<h1 class="text-3xl">{t('admin.schedule.editScheduleTitle')}</h1>
 
 {#if !data.s3IsConfigured}
 	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
@@ -170,35 +181,37 @@
 	on:submit|preventDefault={handleSubmit}
 >
 	<label class="form-label">
-		Name
+		{t('admin.schedule.name')}
 		<input
 			class="form-input"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="name"
-			placeholder="schedule name"
+			placeholder={t('admin.schedule.namePlaceholder')}
 			bind:value={name}
 			required
 		/>
 	</label>
 	<label class="form-label">
-		Slug
+		{t('admin.schedule.slug')}
 		<input
 			class="form-input block"
 			type="text"
 			name="slug"
-			placeholder="Slug"
+			placeholder={t('admin.schedule.slug')}
 			bind:value={slug}
-			title="Only lowercase letters, numbers and dashes are allowed"
+			title={t('admin.schedule.slugFormatHint')}
 			disabled
 		/>
 	</label>
 	<small class="text-sm text-gray-500 block">
-		To use in a CMS zone, use <kbd class="kbd body-secondaryCTA">[Schedule={slug}]</kbd> or
+		{t('admin.schedule.cmsZoneHintPrefix')}
+		<kbd class="kbd body-secondaryCTA">[Schedule={slug}]</kbd>
+		{t('admin.schedule.cmsZoneHintOr')}
 		<kbd class="kbd body-secondaryCTA">[Schedule={slug} display=calendar]</kbd>
 	</small>
 	<label class="form-label">
-		Set desired delay for event with no end time (in minutes)
+		{t('admin.schedule.pastEventDelayLabel')}
 		<input
 			class="form-input block"
 			type="number"
@@ -213,7 +226,7 @@
 			name="displayPastEvents"
 			bind:checked={displayPastEvents}
 		/>
-		Display past events
+		{t('admin.schedule.displayPastEvents')}
 	</label>
 	{#if displayPastEvents}
 		<label class="checkbox-label">
@@ -223,7 +236,7 @@
 				name="displayPastEventsAfterFuture"
 				bind:checked={data.schedule.displayPastEventsAfterFuture}
 			/>
-			Show past events after future events
+			{t('admin.schedule.displayPastEventsAfterFuture')}
 		</label>
 	{/if}
 	<label class="checkbox-label">
@@ -233,7 +246,7 @@
 			name="sortByEventDateDesc"
 			bind:checked={data.schedule.sortByEventDateDesc}
 		/>
-		sort by event date desc (default:asc)
+		{t('admin.schedule.sortByEventDateDesc')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -242,18 +255,18 @@
 			name="allowSubscription"
 			bind:checked={data.schedule.allowSubscription}
 		/>
-		Allow user to subscribe
+		{t('admin.schedule.allowSubscription')}
 	</label>
 	<label class="checkbox-label">
 		<input class="form-checkbox" type="checkbox" bind:checked={hasTimezone} />
-		Set GMT timezone instead of server timezone
+		{t('admin.schedule.setGmtTimezone')}
 	</label>
 	{#if hasTimezone}
-		{#if browser}(your browser's current zone is {timezoneString}){/if}
+		{#if browser}{t('admin.schedule.browserTimezoneHint', { timezoneString })}{/if}
 		<Select
 			items={timezones}
 			searchable={true}
-			placeholder="Select a timezone"
+			placeholder={t('admin.schedule.selectTimezonePlaceholder')}
 			clearable={true}
 			bind:value={selectedTimezone}
 			class="form-input"
@@ -262,7 +275,7 @@
 	{/if}
 
 	<button class="btn btn-gray self-start" on:click={() => (hideAll = !hideAll)} type="button">
-		{hideAll ? 'Expand all events' : 'Reduce all events'}
+		{hideAll ? t('admin.schedule.expandAllEvents') : t('admin.schedule.reduceAllEvents')}
 	</button>
 	{#each [...Array(eventLines).keys()] as i}
 		<details
@@ -272,13 +285,11 @@
 		>
 			<summary class="text-xl font-bold">
 				<h1 class="items-center inline-flex gap-2">
-					Event #{i + 1}
+					{t('admin.schedule.eventNumber', { number: i + 1 })}
 					{data.schedule.events[i] && data.schedule.events[i].title
 						? ' - ' + data.schedule.events[i].title
 						: ''}
-					<button type="button" on:click={() => deleteEventSchedule(data.schedule.events[i].title)}
-						>🗑️</button
-					>
+					<button type="button" on:click={() => deleteEventSchedule(i)}>🗑️</button>
 				</h1>
 			</summary>
 			<div class="flex flex-col gap-4 mt-2">
@@ -316,32 +327,34 @@
 								class="btn {createATicket[i] ? 'btn-red' : 'btn-gray'} self-start"
 								on:click={() => (createATicket[i] = !createATicket[i])}
 								type="button"
-								>{createATicket[i] ? 'Cancel ticket creation' : 'Create a ticket product'}
+								>{createATicket[i]
+									? t('admin.schedule.cancelTicketCreation')
+									: t('admin.schedule.createTicketProduct')}
 							</button>
 							{#if createATicket[i]}
 								<label class="checkbox-label">
 									<input class="form-checkbox" type="checkbox" name="useTitleDateAsShortDesc" />
-									Use title and date as short description
+									{t('admin.schedule.useTitleDateAsShortDesc')}
 								</label>
 								<label class="checkbox-label">
 									<input class="form-checkbox" type="checkbox" name="displayShortDescription" />
-									Display short description on product
+									{t('admin.schedule.displayShortDescriptionOnProduct')}
 								</label>
 								<label class="checkbox-label">
 									<input class="form-checkbox" type="checkbox" name="exportEventToCalendar" />
-									Create CTA for exporting event to calendar
+									{t('admin.schedule.createExportCalendarCta')}
 								</label>
 								<label class="checkbox-label">
 									<input class="form-checkbox" type="checkbox" name="locationUrlCta" />
-									Create a CTA for location URL if not empty
+									{t('admin.schedule.createLocationUrlCta')}
 								</label>
 								<label class="checkbox-label">
 									<input class="form-checkbox" type="checkbox" name="overwriteEventUrl" />
-									Overwrite event URL information with product URL
+									{t('admin.schedule.overwriteEventUrlWithProductUrl')}
 								</label>
 								<label class="checkbox-label">
 									<input class="form-checkbox" type="checkbox" name="CTAForMoreInformation" />
-									Create a CTA for event URL ('More Information') if not empty
+									{t('admin.schedule.createMoreInfoCta')}
 								</label>
 								<label class="checkbox-label">
 									<input
@@ -350,24 +363,24 @@
 										name="nonFreePrice"
 										bind:checked={nonFreePrice}
 									/>
-									Set non-free price
+									{t('admin.schedule.setNonFreePrice')}
 								</label>
 								{#if nonFreePrice}
 									<div class="gap-4 flex flex-col md:flex-row">
 										<label class="w-full">
-											Price amount
+											{t('admin.schedule.priceAmount')}
 											<input
 												class="form-input"
 												type="number"
 												name="priceAmount"
-												placeholder="Price"
+												placeholder={t('admin.schedule.pricePlaceholder')}
 												step="any"
 												required
 											/>
 										</label>
 
 										<label class="w-full">
-											<CurrencyLabel label="Price currency" />
+											<CurrencyLabel label={t('admin.schedule.priceCurrency')} />
 											<Select
 												items={allCurrenciesOptions}
 												searchable={true}
@@ -391,16 +404,16 @@
 										name="limitedStock"
 										bind:checked={limitedStock}
 									/>
-									Use limited stock
+									{t('admin.schedule.useLimitedStock')}
 								</label>
 								{#if limitedStock}
 									<label class="form-label">
-										Stock
+										{t('admin.schedule.stock')}
 										<input
 											class="form-input"
 											type="number"
 											name="stock"
-											placeholder="Stock"
+											placeholder={t('admin.schedule.stock')}
 											step="1"
 											min="0"
 										/>
@@ -412,13 +425,13 @@
 									disabled={loading}
 									formaction="{data.adminPrefix}/schedule/{data.schedule._id}/event/{data.schedule
 										.events[i].slug}?/creatTicket"
-									>Confirm ticket creation
+									>{t('admin.schedule.confirmTicketCreation')}
 								</button>
 							{/if}
 						</form>
 					{/if}
 					<label class="form-label">
-						Title
+						{t('admin.schedule.eventTitle')}
 						<input
 							type="text"
 							name="events[{i}].title"
@@ -435,7 +448,7 @@
 						/>
 					</label>
 					<label class="form-label">
-						Short description
+						{t('admin.schedule.shortDescription')}
 						<textarea
 							name="events[{i}].shortDescription"
 							cols="30"
@@ -446,7 +459,7 @@
 						></textarea>
 					</label>
 					<label class="form-label">
-						Description
+						{t('admin.schedule.description')}
 						<textarea
 							name="events[{i}].description"
 							cols="30"
@@ -458,7 +471,7 @@
 					</label>
 					<div class="flex flex-wrap gap-4">
 						<label class="form-label">
-							Begins at
+							{t('admin.schedule.beginsAt')}
 
 							<input
 								class="form-input"
@@ -474,7 +487,7 @@
 					</div>
 					<div class="flex flex-wrap gap-4">
 						<label class="form-label">
-							Ends at
+							{t('admin.schedule.endsAt')}
 
 							<input
 								class="form-input"
@@ -486,12 +499,13 @@
 								min={beginsAt[i]}
 							/>
 							<span class="text-sm text-gray-600 mt-2 block">
-								<kbd class="kbd body-secondaryCTA">backspace</kbd> to remove the date.</span
+								<kbd class="kbd body-secondaryCTA">backspace</kbd>
+								{t('admin.schedule.toRemoveDate')}</span
 							>
 						</label>
 					</div>
 					<label class="form-label">
-						Location name
+						{t('admin.schedule.locationName')}
 						<input
 							type="text"
 							name="events[{i}].location.name"
@@ -500,7 +514,7 @@
 						/>
 					</label>
 					<label class="form-label">
-						Location link
+						{t('admin.schedule.locationLink')}
 						<input
 							type="text"
 							name="events[{i}].location.link"
@@ -509,7 +523,7 @@
 						/>
 					</label>
 					<label class="form-label">
-						Event url
+						{t('admin.schedule.eventUrl')}
 						<input
 							type="text"
 							name="events[{i}].url"
@@ -524,7 +538,7 @@
 							name="events[{i}].hideFromList"
 							bind:checked={data.schedule.events[i].hideFromList}
 						/>
-						Hide event from list
+						{t('admin.schedule.hideEventFromList')}
 					</label>
 					<label class="checkbox-label">
 						<input
@@ -533,11 +547,11 @@
 							name="events[{i}].rsvp.option"
 							bind:checked={rsvpOptions[i].option}
 						/>
-						Add RSVP option
+						{t('admin.schedule.addRsvpOption')}
 					</label>
 					{#if rsvpOptions[i].option}
 						<label class="form-label">
-							Target
+							{t('admin.schedule.rsvpTarget')}
 							<input
 								type="text"
 								name="events[{i}].rsvp.target"
@@ -557,11 +571,11 @@
 							name="events[{i}].calendarHasCustomColor"
 							bind:checked={eventCalendar[i].calendarColor}
 						/>
-						Event has custom color on calendar
+						{t('admin.schedule.eventHasCustomColor')}
 					</label>
 					{#if eventCalendar[i]?.calendarColor}
 						<label class="form-label">
-							Event color on calendar
+							{t('admin.schedule.eventColorLabel')}
 							<input
 								type="color"
 								name="events[{i}].calendarColor"
@@ -577,7 +591,7 @@
 							name="events[{i}].unavailabity.isUnavailable"
 							bind:checked={eventAvailable[i].isUnavailable}
 						/>
-						Make event unavailable (postponed, cancelled, sold out)
+						{t('admin.schedule.makeEventUnavailable')}
 					</label>
 					{#if eventAvailable[i]?.isUnavailable}
 						<input
@@ -594,14 +608,14 @@
 							name="events[{i}].isArchived"
 							checked={data.schedule.events[i].isArchived}
 						/>
-						Archive event
+						{t('admin.schedule.archiveEvent')}
 					</label>
 					<a
 						href="{data.adminPrefix}/picture/new?scheduleId={data.schedule
 							._id}&eventScheduleSlug={data.schedule.events[i].slug}"
 						class="underline"
 					>
-						Add picture
+						{t('admin.schedule.addPicture')}
 					</a>
 
 					<div class="flex flex-row flex-wrap gap-6 mt-6">
@@ -623,28 +637,28 @@
 							type="submit"
 							class="btn btn-blue text-white"
 							formaction="?/update"
-							value="Update"
+							value={t('admin.action.update')}
 						/>
 						<button
 							class="btn body-mainCTA self-start"
 							on:click={() => closeDetailByIndex(i)}
 							type="button"
 						>
-							Hide details
+							{t('admin.schedule.hideDetails')}
 						</button>
 						<input
 							type="button"
 							class="btn btn-red text-white ml-auto"
-							value="Delete"
+							value={t('admin.schedule.delete')}
 							on:click={() => {
-								deleteEventSchedule(data.schedule.events[i].title);
+								deleteEventSchedule(i);
 								closeDetailByIndex(i);
 							}}
 						/>
 					</div>
 				{:else}
 					<label class="form-label">
-						Title
+						{t('admin.schedule.eventTitle')}
 						<input
 							type="text"
 							name="events[{i}].title"
@@ -654,7 +668,7 @@
 						/>
 					</label>
 					<label class="form-label">
-						Short description
+						{t('admin.schedule.shortDescription')}
 						<textarea
 							name="events[{i}].shortDescription"
 							cols="30"
@@ -664,7 +678,7 @@
 						></textarea>
 					</label>
 					<label class="form-label">
-						Description
+						{t('admin.schedule.description')}
 						<textarea
 							name="events[{i}].description"
 							cols="30"
@@ -675,7 +689,7 @@
 					</label>
 					<div class="flex flex-wrap gap-4">
 						<label class="form-label">
-							Begins at
+							{t('admin.schedule.beginsAt')}
 							<input
 								class="form-input"
 								type="datetime-local"
@@ -688,7 +702,7 @@
 					</div>
 					<div class="flex flex-wrap gap-4">
 						<label class="form-label">
-							Ends at
+							{t('admin.schedule.endsAt')}
 							<input
 								class="form-input"
 								type="datetime-local"
@@ -697,25 +711,26 @@
 								min={beginsAt[i]}
 							/>
 							<span class="text-sm text-gray-600 mt-2 block">
-								<kbd class="kbd body-secondaryCTA">backspace</kbd> to remove the date.</span
+								<kbd class="kbd body-secondaryCTA">backspace</kbd>
+								{t('admin.schedule.toRemoveDate')}</span
 							>
 						</label>
 					</div>
 					<label class="form-label">
-						Location name
+						{t('admin.schedule.locationName')}
 						<input type="text" name="events[{i}].location.name" class="form-input" />
 					</label>
 					<label class="form-label">
-						Location link
+						{t('admin.schedule.locationLink')}
 						<input type="text" name="events[{i}].location.link" class="form-input" />
 					</label>
 					<label class="form-label">
-						Event url
+						{t('admin.schedule.eventUrl')}
 						<input type="text" name="events[{i}].url" class="form-input" />
 					</label>
 					<label class="checkbox-label">
 						<input class="form-checkbox" type="checkbox" name="events[{i}].hideFromList" />
-						Hide event from list
+						{t('admin.schedule.hideEventFromList')}
 					</label>
 					<label class="checkbox-label">
 						<input
@@ -724,11 +739,11 @@
 							name="events[{i}].rsvp.option"
 							bind:checked={rsvpOption}
 						/>
-						Add RSVP option
+						{t('admin.schedule.addRsvpOption')}
 					</label>
 					{#if rsvpOption}
 						<label class="form-label">
-							Target
+							{t('admin.schedule.rsvpTarget')}
 							<input
 								type="text"
 								name="events[{i}].rsvp.target"
@@ -745,17 +760,17 @@
 							name="events[{i}].calendarHasCustomColor"
 							bind:checked={calendarHasCustomColor}
 						/>
-						Event has custom color on calendar
+						{t('admin.schedule.eventHasCustomColor')}
 					</label>
 					{#if calendarHasCustomColor}
 						<label class="form-label">
-							Event color on calendar
+							{t('admin.schedule.eventColorLabel')}
 							<input type="color" name="events[{i}].calendarColor" class="form-input" />
 						</label>
 					{/if}
 					<input
 						type="file"
-						accept="image/jpeg,image/png,image/webp"
+						accept={PICTURE_UPLOAD_ACCEPT}
 						class="block"
 						on:change={(e) => handleFileChange(e, i - (data.schedule.events.length || 1))}
 						disabled={submitting}
@@ -765,15 +780,20 @@
 		</details>
 	{/each}
 	<button class="btn body-mainCTA self-start" on:click={() => (eventLines += 1)} type="button"
-		>Add another event
+		>{t('admin.schedule.addAnotherEvent')}
 	</button>
 	<div class="flex flex-row justify-between gap-2">
-		<input type="submit" class="btn btn-blue text-white" value="Update" disabled={submitting} />
-		<a href="/schedule/{data.schedule._id}" class="btn body-mainCTA">View</a>
+		<input
+			type="submit"
+			class="btn btn-blue text-white"
+			value={t('admin.action.update')}
+			disabled={submitting}
+		/>
+		<a href="/schedule/{data.schedule._id}" class="btn body-mainCTA">{t('admin.schedule.view')}</a>
 		<input
 			type="submit"
 			class="btn btn-red text-white ml-auto"
-			value="Delete"
+			value={t('admin.schedule.delete')}
 			formaction="?/delete"
 			on:click={confirmDelete}
 		/>

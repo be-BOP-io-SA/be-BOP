@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Trans from '$lib/components/Trans.svelte';
+
 	/**
 	 * Shown on admin pages that upload pictures (products, pictures, tag widgets,
 	 * slider widgets, calendar events) when S3 storage is not configured yet —
@@ -8,7 +10,7 @@
 </script>
 
 <p class="alert-warning">
-	S3 storage is not configured. Configure it in
-	<a href="{adminPrefix}/s3" class="underline">S3 settings</a>
-	before uploading pictures.
+	<Trans key="admin.s3.notConfiguredWarning">
+		<a href="{adminPrefix}/s3" class="underline" slot="0" let:translation>{translation}</a>
+	</Trans>
 </p>

@@ -1,10 +1,16 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
+
 	export let data;
 </script>
 
-<a href="{data.adminPrefix}/countdown/new" class="underline block">Add countdown</a>
+<a href="{data.adminPrefix}/countdown/new" class="underline block"
+	>{t('admin.countdown.addCountdown')}</a
+>
 
-<h1 class="text-3xl">List of Countdown</h1>
+<h1 class="text-3xl">{t('admin.countdown.listTitle')}</h1>
 
 <ul>
 	{#each data.countdowns as countdown}
@@ -15,6 +21,6 @@
 			>
 		</li>
 	{:else}
-		No countdown yet
+		{t('admin.countdown.noCountdownYet')}
 	{/each}
 </ul>

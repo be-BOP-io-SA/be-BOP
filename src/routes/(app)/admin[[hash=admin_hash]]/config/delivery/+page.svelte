@@ -1,6 +1,9 @@
 <script lang="ts">
 	import DeliveryFeesSelector from '$lib/components/DeliveryFeesSelector.svelte';
 	import { computeVatRate } from '$lib/utils/vat';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	export let form;
@@ -23,20 +26,20 @@
 </script>
 
 {#if form?.success}
-	<p class="alert-success">Values updated</p>
+	<p class="alert-success">{t('admin.config.valuesUpdated')}</p>
 {/if}
 
-<h1 class="text-3xl">Delivery fees config</h1>
+<h1 class="text-3xl">{t('admin.config.deliveryFeesConfig')}</h1>
 
 <form method="post" class="flex flex-col gap-4">
 	<label class="checkbox-label">
 		<input type="radio" bind:group={mode} class="form-radio" name="mode" value="flatFee" />
-		Flat fee
+		{t('admin.config.flatFee')}
 	</label>
 
 	<label class="checkbox-label">
 		<input type="radio" bind:group={mode} class="form-radio" name="mode" value="perItem" />
-		Fee depending on product
+		{t('admin.config.feeDependingOnProduct')}
 	</label>
 
 	<label class="checkbox-label">
@@ -46,22 +49,20 @@
 			class="form-checkbox"
 			checked={data.deliveryFees.allowFreeForPOS}
 		/>
-		Allow voiding delivery fees on POS sale
+		{t('admin.config.allowVoidingDeliveryFeesOnPos')}
 	</label>
 	<h2 class="text-2xl">
-		{mode === 'flatFee' ? 'Flat fee config' : 'Product delivery fees'}
+		{mode === 'flatFee' ? t('admin.config.flatFeeConfig') : t('admin.config.productDeliveryFees')}
 	</h2>
 
 	{#if mode === 'perItem'}
 		<p class="alert-info">
-			Those delivery fees will be applied to your products, unless overriden inside the product
-			itself.
+			{t('admin.config.perItemDeliveryFeesHint')}
 		</p>
 
 		<label class="checkbox-label">
 			<input type="checkbox" class="form-checkbox" name="onlyPayHighest" checked={onlyPayHighest} />
-			For orders with multiple products, only apply the delivery fee of the product with the highest
-			delivery fee
+			{t('admin.config.onlyPayHighestDeliveryFeeHint')}
 		</label>
 	{/if}
 
@@ -73,7 +74,7 @@
 				name="applyFlatFeeToEachItem"
 				checked={applyFlatFeeToEachItem}
 			/>
-			Apply flat fee for each item instead of once for the whole order
+			{t('admin.config.applyFlatFeeToEachItem')}
 		</label>
 	{/if}
 
@@ -84,13 +85,13 @@
 			name="vatIncludedReference"
 			bind:checked={vatIncludedReference}
 		/>
-		Use delivery fees price reference as VAT included price instead of VAT excluded
+		{t('admin.config.useDeliveryFeesVatIncludedReference')}
 	</label>
 
 	<label class="form-label">
-		VAT profile for delivery fees
+		{t('admin.config.vatProfileForDeliveryFees')}
 		<select name="vatProfileId" class="form-input" bind:value={vatProfileId}>
-			<option value="">Use shop standard VAT</option>
+			<option value="">{t('admin.config.useShopStandardVat')}</option>
 			{#each data.vatProfiles as profile}
 				<option value={profile._id}>{profile.name}</option>
 			{/each}
@@ -105,6 +106,6 @@
 	/>
 
 	<div>
-		<button type="submit" class="btn btn-black self-start"> Save config </button>
+		<button type="submit" class="btn btn-black self-start"> {t('admin.config.saveConfig')} </button>
 	</div>
 </form>

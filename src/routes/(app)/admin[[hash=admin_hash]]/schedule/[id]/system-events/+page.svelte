@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { formatDuration } from '$lib/utils/formatDuration';
 	import type { BookingSummary } from '$lib/types/Schedule';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data: { bookings: BookingSummary[]; from: string | null; until: string | null };
 
@@ -26,37 +29,37 @@
 	}
 </script>
 
-<h1 class="text-3xl mb-4">System events</h1>
+<h1 class="text-3xl mb-4">{t('admin.schedule.systemEventsTab')}</h1>
 
 <div class="flex flex-wrap gap-4 mb-4 items-end">
 	<label class="checkbox-label">
 		<input class="form-checkbox" type="checkbox" bind:checked={hidePast} />
-		Hide past bookings
+		{t('admin.schedule.hidePastBookings')}
 	</label>
 	<form method="GET" class="flex gap-4 items-end">
 		<label class="form-label">
-			From
+			{t('admin.schedule.from')}
 			<input class="form-input" type="date" name="from" value={data.from ?? ''} />
 		</label>
 		<label class="form-label">
-			Until
+			{t('admin.schedule.until')}
 			<input class="form-input" type="date" name="until" value={data.until ?? ''} />
 		</label>
-		<button type="submit" class="btn btn-black">Filter</button>
+		<button type="submit" class="btn btn-black">{t('admin.schedule.filter')}</button>
 	</form>
 </div>
 
 {#if filteredBookings.length === 0}
-	<p class="text-gray-500">No bookings found.</p>
+	<p class="text-gray-500">{t('admin.schedule.noBookingsFound')}</p>
 {:else}
 	<table class="w-full text-sm border-collapse">
 		<thead>
 			<tr class="border-b text-left">
 				<th class="p-2"></th>
-				<th class="p-2">Begins at</th>
-				<th class="p-2">Ends at</th>
-				<th class="p-2">Duration</th>
-				<th class="p-2">Order</th>
+				<th class="p-2">{t('admin.schedule.beginsAt')}</th>
+				<th class="p-2">{t('admin.schedule.endsAt')}</th>
+				<th class="p-2">{t('admin.schedule.duration')}</th>
+				<th class="p-2">{t('admin.schedule.order')}</th>
 			</tr>
 		</thead>
 		<tbody>

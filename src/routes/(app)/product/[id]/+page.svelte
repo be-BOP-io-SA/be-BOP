@@ -4,6 +4,7 @@
 	import { safeHref } from '$lib/utils/safeUrl';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
+	import DiscountBadge from '$lib/components/DiscountBadge.svelte';
 	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import PriceCalendarModal from '$lib/components/PriceCalendarModal.svelte';
 	import { applyAction, enhance } from '$app/forms';
@@ -458,10 +459,12 @@
 		'@context': `https://schema.org`,
 		'@type': 'Product',
 		name: data.product.name,
-		image: `${$page.url.origin}/picture/raw/${data.pictures[0]._id}/format/${
-			data.pictures[0].storage.formats.find((image) => image.width >= 500 && image.height >= 500)
-				?.width ?? data.pictures[0].storage.formats[0].width
-		}`,
+		...(data.pictures[0] && {
+			image: `${$page.url.origin}/picture/raw/${data.pictures[0]._id}/format/${
+				data.pictures[0].storage.formats.find((image) => image.width >= 500 && image.height >= 500)
+					?.width ?? data.pictures[0].storage.formats[0].width
+			}`
+		}),
 		description: data.product.description,
 		offers: {
 			'@type': 'Offer',
@@ -475,7 +478,19 @@
 		isZoomed = !isZoomed;
 	}
 
-	let selectedVariations: Record<string, string> = {};
+	// Seeded from the URL so the price preview and the POST body carry the forced values even
+	// though no dropdown was ever rendered for them.
+	let selectedVariations: Record<string, string> = { ...data.forcedVariations };
+	// SvelteKit keeps this component when navigating to another product or query string, so the
+	// URL's choice must be re-applied then, but not on a mere reload of the same page's data.
+	let variationsSeededFor = variationSeedKey();
+	function variationSeedKey() {
+		return `${data.product._id}?${JSON.stringify(data.forcedVariations)}`;
+	}
+	$: if (data && variationSeedKey() !== variationsSeededFor) {
+		variationsSeededFor = variationSeedKey();
+		selectedVariations = { ...data.forcedVariations };
+	}
 	$: if (data.product.hasVariations) {
 		customAmount = productPriceWithVariations(data.product, selectedVariations);
 	}
@@ -650,23 +665,27 @@
 								{vatRate}%)
 								<span class="text-gray-400 text-xs ml-1">{showExclTax ? '▲' : '▼'}</span></span
 							>
-							<div class="flex items-center gap-2">
-								<PriceTag
-									currency={data.product.price.currency}
-									class={data.discount?.mode === 'percentage'
-										? 'text-xl lg:text-2xl line-through text-gray-400'
-										: 'text-2xl lg:text-3xl'}
-									short={!!data.discount}
-									amount={unitPriceWithVat}
-									main
-								/>
-								{#if data.discount?.mode === 'percentage'}
-									{#if data.discount.showBadge !== false}
-										<span
-											class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
-											>-{data.discount.percentage}%</span
-										>
+							<!-- The struck price takes its own line: on a long amount it, the badge and the
+							     real price ran off the side of the card together. -->
+							<div class="flex flex-wrap items-center gap-2">
+								<div
+									class="flex items-center gap-2"
+									class:w-full={data.discount?.mode === 'percentage'}
+								>
+									<PriceTag
+										currency={data.product.price.currency}
+										class={data.discount?.mode === 'percentage'
+											? 'text-xl lg:text-2xl line-through text-gray-400'
+											: 'text-2xl lg:text-3xl'}
+										short={!!data.discount}
+										amount={unitPriceWithVat}
+										main
+									/>
+									{#if data.discount?.mode === 'percentage' && data.discount.showBadge !== false}
+										<DiscountBadge percentage={data.discount.percentage} />
 									{/if}
+								</div>
+								{#if data.discount?.mode === 'percentage'}
 									<PriceTag
 										currency={data.product.price.currency}
 										class="text-2xl lg:text-3xl"
@@ -705,23 +724,27 @@
 							<span class="text-sm mt-1"
 								>{t('product.vatExcludedEstimate')} ({t('cart.vat')} {vatRate}%)</span
 							>
-							<div class="flex items-center gap-2">
-								<PriceTag
-									currency={data.product.price.currency}
-									class={data.discount?.mode === 'percentage'
-										? 'text-base line-through text-gray-400'
-										: 'text-lg'}
-									short={!!data.discount}
-									amount={unitPrice}
-									main
-								/>
-								{#if data.discount?.mode === 'percentage'}
-									{#if data.discount.showBadge !== false}
-										<span
-											class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
-											>-{data.discount.percentage}%</span
-										>
+							<!-- The struck price takes its own line: on a long amount it, the badge and the
+							     real price ran off the side of the card together. -->
+							<div class="flex flex-wrap items-center gap-2">
+								<div
+									class="flex items-center gap-2"
+									class:w-full={data.discount?.mode === 'percentage'}
+								>
+									<PriceTag
+										currency={data.product.price.currency}
+										class={data.discount?.mode === 'percentage'
+											? 'text-base line-through text-gray-400'
+											: 'text-lg'}
+										short={!!data.discount}
+										amount={unitPrice}
+										main
+									/>
+									{#if data.discount?.mode === 'percentage' && data.discount.showBadge !== false}
+										<DiscountBadge percentage={data.discount.percentage} />
 									{/if}
+								</div>
+								{#if data.discount?.mode === 'percentage'}
 									<PriceTag
 										currency={data.product.price.currency}
 										class="text-lg"
@@ -740,24 +763,30 @@
 						{/if}
 					</div>
 				{:else}
-					{@const showStrikeThrough =
-						data.discount?.mode === 'percentage' && data.discount.showBadge !== false}
+					{@const badgePercentage =
+						data.discount?.mode === 'percentage' && data.discount.showBadge !== false
+							? data.discount.percentage
+							: null}
+					{@const showStrikeThrough = badgePercentage !== null}
 					<div class="flex flex-col gap-1 lg:items-start">
-						<div class="flex items-baseline gap-3">
-							<PriceTag
-								currency={data.product.price.currency}
-								class="text-2xl lg:text-4xl truncate max-w-full {showStrikeThrough
-									? 'line-through text-gray-400'
-									: ''}"
-								short={showStrikeThrough}
-								amount={unitPrice}
-								main
-							/>
+						<!-- Same reason as above: the struck price gets its own line rather than sharing
+						     one with the badge and the real price. -->
+						<div class="flex flex-wrap items-baseline gap-3">
+							<div class="flex items-baseline gap-3" class:w-full={showStrikeThrough}>
+								<PriceTag
+									currency={data.product.price.currency}
+									class="text-2xl lg:text-4xl truncate max-w-full {showStrikeThrough
+										? 'line-through text-gray-400'
+										: ''}"
+									short={showStrikeThrough}
+									amount={unitPrice}
+									main
+								/>
+								{#if badgePercentage !== null}
+									<DiscountBadge percentage={badgePercentage} />
+								{/if}
+							</div>
 							{#if showStrikeThrough}
-								<span
-									class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
-									>-{data.discount?.mode === 'percentage' ? data.discount.percentage : 0}%</span
-								>
 								<PriceTag
 									currency={data.product.price.currency}
 									class="text-2xl lg:text-4xl truncate max-w-full"
@@ -978,17 +1007,27 @@
 							{/if}
 							{#if data.product.standalone && data.product.hasVariations && data.product.variationLabels}
 								{#each Object.keys(data.product.variationLabels.values) as key}
-									<label class="mb-2" for={key}>{data.product.variationLabels.names[key]}</label>
-									<select
-										bind:value={selectedVariations[key]}
-										id={key}
-										name="chosenVariations[{key}]"
-										class="form-input w-full inline cursor-pointer"
-									>
-										{#each Object.entries(data.product.variationLabels.values[key]) as [valueKey, valueLabel]}
-											<option value={valueKey}>{valueLabel}</option>
-										{/each}
-									</select>
+									<!-- A family hidden from the page but unset by the URL only gets this far under
+									     the "ignore" policy, which promises the dropdown back. -->
+									{#if key in data.forcedVariations}
+										<input
+											type="hidden"
+											name="chosenVariations[{key}]"
+											value={selectedVariations[key]}
+										/>
+									{:else}
+										<label class="mb-2" for={key}>{data.product.variationLabels.names[key]}</label>
+										<select
+											bind:value={selectedVariations[key]}
+											id={key}
+											name="chosenVariations[{key}]"
+											class="form-input w-full inline cursor-pointer"
+										>
+											{#each Object.entries(data.product.variationLabels.values[key]) as [valueKey, valueLabel]}
+												<option value={valueKey}>{valueLabel}</option>
+											{/each}
+										</select>
+									{/if}
 								{/each}
 							{/if}
 							{#if !oneMaxPerLine(data.product) && amountAvailable > 0}

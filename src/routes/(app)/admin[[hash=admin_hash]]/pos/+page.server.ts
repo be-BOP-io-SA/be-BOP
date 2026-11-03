@@ -6,7 +6,8 @@ import { runtimeConfig, defaultConfig } from '$lib/server/runtime-config';
 import type { Tag } from '$lib/types/Tag';
 import type { TagGroup } from '$lib/types/TagGroup';
 import { set } from '$lib/utils/set';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
+import { poolSlugs, resolvePoolLabel } from '$lib/types/PosTabGroup';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { persistConfigElement } from '$lib/server/utils/persistConfig';
@@ -20,17 +21,27 @@ interface RawTagGroup {
 	updatedAt?: string | Date;
 }
 
+async function nonEmptyPoolSlugs(slugs: string[]): Promise<string[]> {
+	const tabs = await collections.orderTabs
+		.find({ slug: { $in: slugs }, 'items.quantity': { $gt: 0 } })
+		.project<{ slug: string }>({ slug: 1 })
+		.toArray();
+	return tabs.map((tab) => tab.slug);
+}
+
 export const load = async ({}) => {
 	const [tags, tagGroups] = await Promise.all([
 		collections.tags.find({}).project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 }).toArray(),
 		collections.tagGroups.find({}).sort({ order: 1 }).toArray()
 	]);
 	const supportedTapToPayProviders = ['not-used', 'stripe'] as const;
-	const tapToPayProviders: { provider: string; displayName: string; available: boolean }[] =
+	// displayName is only for brand names, which stay literal in every locale. UI copy like
+	// "Not used" has no displayName and is resolved client-side through t() (issue #878).
+	const tapToPayProviders: { provider: string; displayName?: string; available: boolean }[] =
 		supportedTapToPayProviders.map((provider) => {
 			switch (provider) {
 				case 'not-used':
-					return { provider, displayName: 'Not used', available: true };
+					return { provider, available: true };
 				case 'stripe':
 					return {
 						provider,
@@ -56,6 +67,7 @@ export const load = async ({}) => {
 		),
 		posTouchTag: runtimeConfig.posTouchTag,
 		posTabGroups: runtimeConfig.posTabGroups,
+		nonEmptyPoolSlugs: await nonEmptyPoolSlugs(poolSlugs(runtimeConfig.posTabGroups)),
 		posPoolEmptyIcon: runtimeConfig.posPoolEmptyIcon,
 		posPoolOccupiedIcon: runtimeConfig.posPoolOccupiedIcon,
 		posMidTicketTopBlankLines: runtimeConfig.posMidTicketTopBlankLines,
@@ -148,6 +160,20 @@ export const actions: Actions = {
 				posTabGroups,
 				posTouchTag
 			});
+		// A pool's items live under a slug made of its group name and position, so a pool whose slug
+		// leaves the config (deleted pool or group, renamed group) would strand them in an
+		// unreachable tab that could still be paid later.
+		const newSlugs = new Set(poolSlugs(result.posTabGroups));
+		const removedSlugs = poolSlugs(runtimeConfig.posTabGroups).filter((s) => !newSlugs.has(s));
+		const nonEmptyRemovedSlugs = await nonEmptyPoolSlugs(removedSlugs);
+		if (nonEmptyRemovedSlugs.length) {
+			return fail(400, {
+				nonEmptyPools: nonEmptyRemovedSlugs.map((slug) =>
+					resolvePoolLabel(runtimeConfig.posTabGroups, slug)
+				)
+			});
+		}
+
 		const posTapToPay = {
 			processor: ALL_PAYMENT_PROCESSORS.find((p) => p === result.tapToPayProvider),
 			onActivationUrl:
@@ -178,6 +204,7 @@ export const actions: Actions = {
 		runtimeConfig.posTouchTag = result.posTouchTag;
 		await persistConfigElement('posTabGroups', result.posTabGroups);
 		runtimeConfig.posTabGroups = result.posTabGroups;
+		await collections.orderTabs.deleteMany({ slug: { $in: removedSlugs } });
 		const posPoolEmptyIcon = result.posPoolEmptyIcon === '' ? undefined : result.posPoolEmptyIcon;
 		const posPoolOccupiedIcon =
 			result.posPoolOccupiedIcon === '' ? undefined : result.posPoolOccupiedIcon;

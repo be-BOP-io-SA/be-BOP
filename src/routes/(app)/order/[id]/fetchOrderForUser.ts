@@ -38,6 +38,25 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		})
 		.toArray();
 
+	// An employee without an alias is named after their role in the notes they wrote.
+	const unaliasedRoleIds = [
+		...new Set(
+			(order.notes ?? []).flatMap((note) =>
+				note.role && note.role !== CUSTOMER_ROLE_ID && !note.userAlias ? [note.role] : []
+			)
+		)
+	];
+	const roleNameById = new Map(
+		unaliasedRoleIds.length
+			? (
+					await collections.roles
+						.find({ _id: { $in: unaliasedRoleIds } })
+						.project<{ _id: string; name: string }>({ name: 1 })
+						.toArray()
+			  ).map((role) => [role._id, role.name])
+			: []
+	);
+
 	const posSubtypesMap = new Map<
 		string,
 		{ tapToPayOnActivationUrl?: string; hasProcessor: boolean }
@@ -192,6 +211,9 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 				paymentMethods: item.product.paymentMethods,
 				isTicket: item.product.isTicket,
 				variationLabels: item.product.variationLabels,
+				// Without the families, productLabelWithVariations has nothing to hide a family by,
+				// and the order pages spell out what the product page keeps to itself.
+				variationFamilies: item.product.variationFamilies,
 				externalResources: item.product.externalResources?.map((externalResource) => ({
 					label: externalResource.label,
 					href: order.status === 'paid' ? externalResource.href : undefined
@@ -241,7 +263,11 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 					createdAt: note.createdAt,
 					isEmployee: note.role !== CUSTOMER_ROLE_ID,
 					isSystem: note.role === null,
-					alias: note.userAlias
+					alias:
+						note.userAlias ||
+						(note.role && note.role !== CUSTOMER_ROLE_ID
+							? roleNameById.get(note.role) ?? note.role
+							: undefined)
 			  })) || []
 			: [],
 		receiptNote: order.receiptNote,

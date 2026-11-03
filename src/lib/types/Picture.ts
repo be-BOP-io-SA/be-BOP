@@ -3,6 +3,16 @@ import type { Slider } from './slider';
 export const TAGTYPES = ['main', 'full', 'wide', 'slim', 'avatar'] as const;
 export type TagType = (typeof TAGTYPES)[number];
 
+// One list for every picture file picker, and for any server check of the type, so they cannot drift.
+export const PICTURE_UPLOAD_TYPES = [
+	'image/jpeg',
+	'image/png',
+	'image/webp',
+	'image/avif',
+	'image/svg+xml'
+] as const;
+export const PICTURE_UPLOAD_ACCEPT = PICTURE_UPLOAD_TYPES.join(',');
+
 export interface ImageData {
 	key: string;
 	width: number;

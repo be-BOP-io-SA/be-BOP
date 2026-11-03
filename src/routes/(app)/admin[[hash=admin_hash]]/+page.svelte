@@ -2,19 +2,21 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/stores';
 	import TelemetryBanner from '$lib/components/TelemetryBanner.svelte';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	$: lang = new URL($page.url).searchParams.get('lang') || 'en';
 </script>
 
 <div class="flex flex-col gap-4">
-	<h1 class="text-2xl">Back-office home</h1>
+	<h1 class="text-2xl">{t('admin.home.title')}</h1>
 	<p>
-		Welcome on be-BOP back-office! From here, you'll be able to manage, configure, and monitor your
-		be-BOP.
+		{t('admin.home.welcome')}
 	</p>
 
-	<h1 class="text-xl">A word from your administrator :</h1>
+	<h1 class="text-xl">{t('admin.home.adminWord')}</h1>
 	<p>
 		<em class="whitespace-pre-line">{data.adminWelcomMessage}</em>
 	</p>
@@ -23,25 +25,25 @@
 		<TelemetryBanner adminPrefix={data.adminPrefix} nostrConfigured={data.nostrConfigured} />
 	{/if}
 
-	<h1 class="text-xl">be-BOP version & updates</h1>
+	<h1 class="text-xl">{t('admin.home.versionUpdates')}</h1>
 
-	<h1 class="text-xl">Version check</h1>
+	<h1 class="text-xl">{t('admin.home.versionCheck')}</h1>
 	<p>
-		You're currently using this version of be-BOP :<br />
+		{t('admin.home.currentVersion')}<br />
 		<code class="font-mono">{PUBLIC_VERSION}</code>
 	</p>
 	<p>
-		The last version on official repo is : <br />
+		{t('admin.home.latestVersion')} <br />
 		<code class="font-mono">{PUBLIC_VERSION}</code>
 	</p>
 
-	<p class="check">✅ Your be-BOP is from an official build</p>
-	<p class="check">✅ Your be-BOP version is up-to-date</p>
+	<p class="check">✅ {t('admin.home.officialBuild')}</p>
+	<p class="check">✅ {t('admin.home.upToDate')}</p>
 
 	<div class="justify-between">
-		<h1 class="text-xl">Last releases</h1>
+		<h1 class="text-xl">{t('admin.home.lastReleases')}</h1>
 		<a href="https://be-bop.io/release-note" target="_blank" class="body-hyperlink">
-			>>> Check here for more updates</a
+			>>> {t('admin.home.checkForUpdates')}</a
 		>
 
 		{#if 0}
@@ -80,9 +82,9 @@
 		{/if}
 	</div>
 
-	<h1 class="text-xl" id="doc">Documentation</h1>
+	<h1 class="text-xl" id="doc">{t('admin.home.documentation')}</h1>
 
-	<p>Select your language :</p>
+	<p>{t('admin.home.selectLanguage')}</p>
 	<div class="flex flex-row justify-evenly">
 		<a href="?lang=en#doc">🇬🇧</a>
 		<a href="?lang=fr#doc">🇫🇷</a>
@@ -92,7 +94,7 @@
 		<a href="?lang=de#doc">🇩🇪</a>
 		<a href="?lang=pt#doc">🇵🇹</a>
 	</div>
-	<p>Select your topic :</p>
+	<p>{t('admin.home.selectTopic')}</p>
 
 	<ul>
 		{#each data.files as file}

@@ -1,4 +1,5 @@
 import { collections } from '$lib/server/database';
+import { BOOKABLE_PRODUCT_FILTER } from '$lib/server/product';
 import { error } from '@sveltejs/kit';
 
 export const load = async ({ params }) => {
@@ -10,7 +11,7 @@ export const load = async ({ params }) => {
 	const productSlug = params.id.startsWith('product:') ? params.id.slice('product:'.length) : null;
 	const isBookingSchedule = productSlug
 		? !!(await collections.products.findOne(
-				{ _id: productSlug, bookingSpec: { $exists: true } },
+				{ _id: productSlug, ...BOOKABLE_PRODUCT_FILTER },
 				{ projection: { _id: 1 } }
 		  ))
 		: false;

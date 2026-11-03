@@ -21,6 +21,15 @@ const ADMIN_PASSWORD = 'e2e-Xk4pQ7-vR2nL9tB';
 setup('sign in as the shop administrator', async ({ page }) => {
 	await page.goto('/admin/login');
 
+	// Hydration resets the login field, and an empty required field blocks the submit without a word.
+	const remember = page.locator('input[name="remember"]');
+	await expect(async () => {
+		await remember.check();
+		// Only the hydrated page reveals the duration select once "remember me" is ticked.
+		await expect(page.locator('select[name="memorize"]')).toBeVisible({ timeout: 1000 });
+	}).toPass();
+	await remember.uncheck();
+
 	await page.locator('input[name="login"]').fill(ADMIN_LOGIN);
 	await page.locator('input[name="password"]').fill(ADMIN_PASSWORD);
 	// The submit control is an `<input>`, labelled "Create Super Admin" on a fresh instance and

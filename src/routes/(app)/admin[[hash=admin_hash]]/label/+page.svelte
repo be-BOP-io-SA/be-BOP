@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
-<a href="{data.adminPrefix}/label/new" class="underline block">Add a label</a>
+<a href="{data.adminPrefix}/label/new" class="underline block">{t('admin.label.addLabel')}</a>
 
-<h1 class="text-3xl">List of Label</h1>
+<h1 class="text-3xl">{t('admin.label.listOfLabel')}</h1>
 
 <ul>
 	{#each data.labels as label}
@@ -15,6 +19,6 @@
 			>
 		</li>
 	{:else}
-		No label yet
+		{t('admin.label.noLabelYet')}
 	{/each}
 </ul>

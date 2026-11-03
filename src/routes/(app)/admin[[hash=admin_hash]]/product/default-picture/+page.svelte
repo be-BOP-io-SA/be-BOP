@@ -1,5 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { useI18n } from '$lib/i18n';
+	import { PICTURE_UPLOAD_ACCEPT } from '$lib/types/Picture';
+
+	const { t } = useI18n();
 
 	let uploading = false;
 	let cacheBuster = 0;
@@ -8,10 +12,10 @@
 	});
 </script>
 
-<h1 class="text-3xl">Add a default picture for product</h1>
+<h1 class="text-3xl">{t('admin.product.addDefaultPictureTitle')}</h1>
 
 <form method="post" class="flex flex-col gap-4" enctype="multipart/form-data">
-	Current picture
+	{t('admin.product.currentPicture')}
 	<!-- svelte-ignore a11y-img-redundant-alt -->
 	<img
 		srcset="/asset/default-picture.png?t={cacheBuster}"
@@ -20,15 +24,14 @@
 	/>
 
 	<label>
-		File
-		<input
-			type="file"
-			class="block"
-			required
-			name="file"
-			accept="image/jpeg,image/png,image/webp"
-		/>
+		{t('admin.product.fileLabel')}
+		<input type="file" class="block" required name="file" accept={PICTURE_UPLOAD_ACCEPT} />
 	</label>
 
-	<input type="submit" class="btn btn-gray self-start" value="Add" disabled={uploading} />
+	<input
+		type="submit"
+		class="btn btn-gray self-start"
+		value={t('admin.product.addValue')}
+		disabled={uploading}
+	/>
 </form>

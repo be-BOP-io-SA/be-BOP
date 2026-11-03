@@ -69,6 +69,8 @@ export const actions: Actions = {
 				? `${adminPrefix()}/tags/${picture.tag._id}`
 				: picture.slider?._id
 				? `${adminPrefix()}/slider/${picture.slider._id}`
+				: picture.schedule?._id
+				? `${adminPrefix()}/schedule/${picture.schedule._id}`
 				: `${adminPrefix()}/picture`
 		);
 	},

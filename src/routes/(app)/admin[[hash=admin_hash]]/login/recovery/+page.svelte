@@ -1,10 +1,13 @@
 <script lang="ts">
 	import IconStandBy from '$lib/components/icons/IconStandBy.svelte';
+	import { useI18n } from '$lib/i18n';
 	import type { ActionData } from './$types';
 	export let form: ActionData;
+
+	const { t } = useI18n();
 </script>
 
-<h1 class="text-2xl text-center">Password recovery</h1>
+<h1 class="text-2xl text-center">{t('admin.login.recoveryTitle')}</h1>
 <div class="flex justify-center items-center">
 	<form method="post" class="flex flex-col gap-4 p-6 w-[30em]">
 		<div class="flex justify-center">
@@ -16,25 +19,21 @@
 				type="text"
 				name="login"
 				value={form?.login ?? ''}
-				placeholder="Enter admin login"
+				placeholder={t('admin.login.recoveryLoginPlaceholder')}
 			/>
 		</label>
 		<div class="flex-wrap text-center">
 			{#if !form?.success}
 				<p>
-					A password reset email will be sent to either the user's recovery information or the
-					shop's email address.
+					{t('admin.login.recoveryDisclaimer')}
 				</p>
 			{/if}
 			{#if form?.success}
-				<p class="text-green-500">
-					If this login exists, a password reset link was sent to its recovery email or npub, or to
-					the shop's email address.
-				</p>
+				<p class="text-green-500">{t('admin.login.recoverySentIfExists')}</p>
 			{/if}
 		</div>
 		<div class="flex justify-center gap-4 mt-2">
-			<input type="submit" class="btn btn-red text-white" value="Reset" />
+			<input type="submit" class="btn btn-red text-white" value={t('admin.action.reset')} />
 		</div>
 	</form>
 </div>

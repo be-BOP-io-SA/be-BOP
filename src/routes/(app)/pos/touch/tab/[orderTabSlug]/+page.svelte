@@ -858,10 +858,14 @@
 
 							<!-- Tag filters -->
 							<h3 class="text-2xl font-semibold mt-4 mb-2">{t('pos.discount.applyToTag')}</h3>
-							<div class="grid grid-cols-3 gap-3">
+							<!-- Tag names are longer than the percentages above: fewer columns on mobile, and they wrap. -->
+							<div class="grid {isMobile ? 'grid-cols-2' : 'grid-cols-3'} gap-3">
 								{#each data.printTags as tag}
 									<button
-										class="text-2xl font-bold p-4 rounded {selectedTagId === tag._id
+										class="{isMobile
+											? 'text-xl p-3'
+											: 'text-2xl p-4'} font-bold rounded min-w-0 break-words {selectedTagId ===
+										tag._id
 											? 'bg-blue-800'
 											: 'bg-yellow-800'} text-white"
 										disabled={isDiscountLocked}
@@ -872,7 +876,7 @@
 								{/each}
 
 								<button
-									class="col-span-3 text-2xl font-bold p-4 rounded {selectedTagId === null
+									class="col-span-full text-2xl font-bold p-4 rounded {selectedTagId === null
 										? 'bg-blue-800'
 										: 'bg-yellow-800'} text-white"
 									disabled={isDiscountLocked}
@@ -942,10 +946,12 @@
 	</main>
 	<footer class="shrink-0">
 		<div
-			class="grid {isMobile
+			class="grid {rightPanel === 'discount'
+				? isMobile
+					? 'grid-cols-2 gap-2 mt-1'
+					: 'grid-cols-2 gap-4 mt-2'
+				: isMobile
 				? 'grid-cols-1 gap-2 mt-1'
-				: rightPanel === 'discount'
-				? 'grid-cols-2 gap-4 mt-2'
 				: 'grid-cols-3 gap-4 mt-2'}"
 		>
 			{#if rightPanel === 'products'}

@@ -23,8 +23,11 @@ describe('checkProductVariationsIntegrity', () => {
 
 	// An unknown value used to pass the name-only check and then price at +0, selling the
 	// surcharged option for the base price.
-	it('rejects a value the catalogue does not offer', () => {
-		expect(checkProductVariationsIntegrity(TSHIRT, { size: 'XXL_', color: 'black' })).toBe(false);
+	it.each(['', 'XXL_'])('rejects the size %j the catalogue does not offer', (size) => {
+		expect(checkProductVariationsIntegrity(TSHIRT, { size, color: 'black' })).toBe(false);
+	});
+
+	it('rejects a color the catalogue does not offer', () => {
 		expect(checkProductVariationsIntegrity(TSHIRT, { size: 'XXL', color: 'gold' })).toBe(false);
 	});
 

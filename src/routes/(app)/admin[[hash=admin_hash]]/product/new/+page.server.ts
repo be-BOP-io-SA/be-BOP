@@ -3,7 +3,8 @@ import { generatePicture } from '$lib/server/picture';
 import {
 	getProductsWithStock,
 	validateStockReference,
-	cleanVariationLabels
+	cleanVariationLabels,
+	cleanVariationFamilies
 } from '$lib/server/product';
 import type { Actions } from './$types';
 import { error, redirect } from '@sveltejs/kit';
@@ -201,7 +202,7 @@ export const actions: Actions = {
 								}),
 							standalone: parsed.payWhatYouWant || parsed.hasVariations || parsed.standalone,
 							free: parsed.free,
-							bookingSpec: parsed.bookingSpec,
+							...(parsed.bookingSpec && { bookingSpec: parsed.bookingSpec }),
 							displayShortDescription: parsed.displayShortDescription,
 							...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
 							applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
@@ -250,7 +251,14 @@ export const actions: Actions = {
 								(externalResourceLink) => externalResourceLink.label && externalResourceLink.href
 							),
 							hasVariations: parsed.hasVariations,
-							...(validVariations.length > 0 && { variations: validVariations }),
+							...(validVariations.length > 0 && {
+								variations: validVariations,
+								variationFamilies: cleanVariationFamilies(
+									parsed.variationFamilies,
+									validVariations
+								),
+								variationUrlPolicy: parsed.variationUrlPolicy
+							}),
 							...(parsed.variationLabels &&
 								Object.keys(cleanedVariationLabels.names).length > 0 && {
 									variationLabels: cleanedVariationLabels
@@ -406,7 +414,7 @@ export const actions: Actions = {
 					type: product.type,
 					availableDate: parsed.availableDate || undefined,
 					preorder: parsed.preorder,
-					bookingSpec: parsed.bookingSpec,
+					...(parsed.bookingSpec && { bookingSpec: parsed.bookingSpec }),
 					shipping: parsed.shipping,
 					payWhatYouWant: parsed.payWhatYouWant,
 					...(parsed.payWhatYouWant && {
@@ -462,7 +470,11 @@ export const actions: Actions = {
 					cta: product.cta,
 					externalResources: product.externalResources,
 					hasVariations: parsed.hasVariations,
-					...(validVariations.length > 0 && { variations: validVariations }),
+					...(validVariations.length > 0 && {
+						variations: validVariations,
+						variationFamilies: cleanVariationFamilies(parsed.variationFamilies, validVariations),
+						variationUrlPolicy: parsed.variationUrlPolicy
+					}),
 					...(parsed.variationLabels &&
 						Object.keys(cleanedVariationLabels.names).length > 0 && {
 							variationLabels: cleanedVariationLabels

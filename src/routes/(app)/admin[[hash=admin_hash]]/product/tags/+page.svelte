@@ -1,17 +1,20 @@
 <script lang="ts">
 	import MultiSelect from 'svelte-multiselect';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
-<h1 class="text-3xl">Bulk tags edit</h1>
+<h1 class="text-3xl">{t('admin.product.bulkTagsEditTitle')}</h1>
 
 <form class="flex flex-col gap-2" method="post">
 	{#each data.products as product}
 		<h2 class="text-2xl">{product.name}</h2>
 		<div class="gap-2 mx-4">
 			<label class="form-label"
-				>Product Tags
+				>{t('admin.product.productTagsLabel')}
 				<MultiSelect
 					--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 					name="{product._id}.tagIds"
@@ -28,5 +31,5 @@
 		</div>
 	{/each}
 
-	<button class="btn btn-black self-start mt-4" type="submit">Update</button>
+	<button class="btn btn-black self-start mt-4" type="submit">{t('admin.action.update')}</button>
 </form>
