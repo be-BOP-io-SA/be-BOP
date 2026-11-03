@@ -6,8 +6,9 @@ const E2E_DB = 'bebop-e2e';
 const ZPUB =
 	'zpub6r8LffkeFh5if3FefxX5zq5oQnQbLxXXPE87fEskLhY2v37Tj16TzMqRL7p32wQweeq1DpRYWrvm4t3ArKHrLNnVhPkFsHGdo3h6nyoppeS';
 const LAST_INDEX = 2 ** 31 - 1;
-// Tailwind's yellow-50.
+// Tailwind's yellow-50 and red-50.
 const YELLOW_50 = 'rgb(254, 252, 232)';
+const RED_50 = 'rgb(254, 242, 242)';
 
 async function withDb<T>(run: (db: ReturnType<MongoClient['db']>) => Promise<T>): Promise<T> {
 	const client = await MongoClient.connect(process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017');
@@ -171,21 +172,21 @@ test.describe('a key at the end of its derivation range', () => {
 	});
 
 	// No delete here: the next test covers it, and every form post spends the server's 30 per minute.
-	test('at the last index, the page warns and previews that address', async ({ page }) => {
-		await openWithWarning(
-			page,
-			LAST_INDEX,
-			'This key is almost out of receiving addresses. Delete this configuration and set up a new key to keep receiving bitcoin payments.'
-		);
+	test('at the last index, the page warns in red and previews that address', async ({ page }) => {
+		const lastAddress =
+			'This key is down to its last receiving address. Delete this configuration and set up a new key to keep receiving bitcoin payments.';
+		await openWithWarning(page, LAST_INDEX, lastAddress);
+		await expectWarningColor(page, lastAddress, RED_50);
 		await expect(page.getByText('bc1qvpzdfcnqgp5qqvhsllttmgs57pcwhxgd55namz')).toBeVisible();
 	});
 
-	test('past the last index, the page says payments fail and deletes the key', async ({ page }) => {
-		await openWithWarning(
-			page,
-			LAST_INDEX + 1,
-			'This key has no receiving address left, so bitcoin payments fail. Delete this configuration and set up a new key.'
-		);
+	test('past the last index, the page says in red that payments fail and deletes the key', async ({
+		page
+	}) => {
+		const exhausted =
+			'This key has no receiving address left, so bitcoin payments fail. Delete this configuration and set up a new key.';
+		await openWithWarning(page, LAST_INDEX + 1, exhausted);
+		await expectWarningColor(page, exhausted, RED_50);
 		await expect(page.getByRole('heading', { name: 'Next addresses' })).toHaveCount(0);
 
 		await deleteConfiguration(page, 'Delete configuration');
@@ -290,17 +291,20 @@ test.describe('a key at the end of its derivation range', () => {
 	test.describe('in French', () => {
 		test.use({ locale: 'fr-FR' });
 
-		test('shows both warnings in French and deletes the key', async ({ page }) => {
+		test('shows the warnings in French and deletes the key', async ({ page }) => {
 			await openWithWarning(
 				page,
-				LAST_INDEX,
+				LAST_INDEX - 2,
 				"Cette clé n'a presque plus d'adresses de réception. Supprimez cette configuration et configurez une nouvelle clé pour continuer à recevoir des paiements en bitcoin."
 			);
-			await openWithWarning(
-				page,
-				LAST_INDEX + 1,
-				"Cette clé n'a plus aucune adresse de réception : les paiements en bitcoin échouent. Supprimez cette configuration et configurez une nouvelle clé."
-			);
+			const lastAddress =
+				'Il ne reste à cette clé que sa dernière adresse de réception. Supprimez cette configuration et configurez une nouvelle clé pour continuer à recevoir des paiements en bitcoin.';
+			await openWithWarning(page, LAST_INDEX, lastAddress);
+			await expectWarningColor(page, lastAddress, RED_50);
+			const exhausted =
+				"Cette clé n'a plus aucune adresse de réception : les paiements en bitcoin échouent. Supprimez cette configuration et configurez une nouvelle clé.";
+			await openWithWarning(page, LAST_INDEX + 1, exhausted);
+			await expectWarningColor(page, exhausted, RED_50);
 
 			await deleteConfiguration(page, 'Supprimer la configuration');
 			await expect(page.getByRole('button', { name: 'Configurer' })).toBeVisible();

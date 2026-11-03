@@ -80,7 +80,7 @@ describe('bitcoin nodeless admin', () => {
 				index: 2 ** 31 - 1
 			}
 		]);
-		expect(data.addressSupply).toBe('low');
+		expect(data.addressSupply).toBe('last');
 	});
 
 	it.each([
@@ -94,6 +94,8 @@ describe('bitcoin nodeless admin', () => {
 			previewed: [2 ** 31 - 4, 2 ** 31 - 3, 2 ** 31 - 2, 2 ** 31 - 1],
 			supply: 'low'
 		},
+		{ stored: 2 ** 31 - 2, previewed: [2 ** 31 - 2, 2 ** 31 - 1], supply: 'low' },
+		{ stored: 2 ** 31 - 1, previewed: [2 ** 31 - 1], supply: 'last' },
 		{ stored: 2 ** 31, previewed: [], supply: 'exhausted' }
 	])(
 		'previews only derivable addresses from stored index $stored',

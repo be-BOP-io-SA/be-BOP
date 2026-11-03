@@ -51,7 +51,17 @@ async function storeNewConfig(data: typeof runtimeConfig.bitcoinNodeless): Promi
 
 const PREVIEWED_ADDRESSES = 5;
 
-type AddressSupply = 'enough' | 'low' | 'exhausted';
+type AddressSupply = 'enough' | 'low' | 'last' | 'exhausted';
+
+function addressSupplyOf(derivableCount: number): AddressSupply {
+	if (derivableCount === 0) {
+		return 'exhausted';
+	}
+	if (derivableCount === 1) {
+		return 'last';
+	}
+	return derivableCount < PREVIEWED_ADDRESSES ? 'low' : 'enough';
+}
 
 // Array paths become `field[N]` keys (e.g. ['xpubs', 2] → 'xpubs[2]') to match
 // the `name="xpubs[{i}]"` input attribute for inline rendering under each input.
@@ -85,8 +95,7 @@ export async function load() {
 		0,
 		Math.min(PREVIEWED_ADDRESSES, MAX_NON_HARDENED_INDEX - derivationIndex + 1)
 	);
-	const addressSupply: AddressSupply =
-		derivableCount === 0 ? 'exhausted' : derivableCount < PREVIEWED_ADDRESSES ? 'low' : 'enough';
+	const addressSupply = addressSupplyOf(derivableCount);
 
 	const nextAddresses = await Promise.all(
 		Array.from({ length: derivableCount }, async (_, i) => {
