@@ -63,10 +63,13 @@ describe('payment currency', () => {
 	};
 	const preferences = runtimeConfig.paymentProcessorPreferences;
 	const paymentTimeout = runtimeConfig.desiredPaymentTimeout;
+	const smtpFake = runtimeConfig.smtp.fake;
 
 	beforeEach(async () => {
 		await cleanDb();
 		await collections.products.insertOne(TEST_DIGITAL_PRODUCT);
+		// createOrder refuses an e-mail contact unless e-mail can be sent, which otherwise depends on the machine's SMTP env.
+		runtimeConfig.smtp.fake = true;
 	});
 
 	afterEach(() => {
@@ -78,6 +81,7 @@ describe('payment currency', () => {
 		runtimeConfig.priceReferenceCurrency = shopCurrencies.priceReference;
 		runtimeConfig.accountingCurrency = shopCurrencies.accounting;
 		runtimeConfig.desiredPaymentTimeout = paymentTimeout;
+		runtimeConfig.smtp.fake = smtpFake;
 	});
 
 	describe('settlement', () => {
