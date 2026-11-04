@@ -18,6 +18,11 @@
 		}
 	}
 
+	// The server refuses anything outside the caller's own scope, so the screen does not offer it.
+	$: isSuperAdmin = data.roleId === SUPER_ADMIN_ROLE_ID;
+	$: canManage = (roleId: string) => data.manageableRoleIds.includes(roleId);
+	$: canCreateUser = data.manageableRoleIds.some((roleId) => roleId !== SUPER_ADMIN_ROLE_ID);
+
 	let successMessage = '';
 	let listEmail = data.users.flatMap((user) => user.recovery?.email ?? '');
 	let listNpub = data.users.flatMap((user) => user.recovery?.npub ?? '');
@@ -35,7 +40,9 @@
 
 <h2 class="text-2xl">{t('admin.arm.roles')}</h2>
 
-<a href="{data.adminPrefix}/arm/role/new" class="underline">{t('admin.arm.createRole')}</a>
+{#if isSuperAdmin}
+	<a href="{data.adminPrefix}/arm/role/new" class="underline">{t('admin.arm.createRole')}</a>
+{/if}
 
 <ul class="grid grid-cols-[auto_auto_auto_auto_auto__auto_min-content_min-content] gap-2">
 	<li class="contents">
@@ -76,21 +83,21 @@
 					name="name"
 					class="form-input"
 					value={role.name}
-					readonly={role._id === SUPER_ADMIN_ROLE_ID}
+					readonly={role._id === SUPER_ADMIN_ROLE_ID || !isSuperAdmin}
 				/>
 				<input
 					class="form-checkbox place-self-center"
 					type="checkbox"
 					name="hasPosOptions"
 					checked={role.hasPosOptions || role._id === POS_ROLE_ID}
-					disabled={role._id === POS_ROLE_ID}
+					disabled={role._id === POS_ROLE_ID || !isSuperAdmin}
 				/>
 				<MultiSelect
 					--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 					name="write"
 					selected={role.permissions.write}
 					options={defaultRoleOptions}
-					disabled={role._id === SUPER_ADMIN_ROLE_ID}
+					disabled={role._id === SUPER_ADMIN_ROLE_ID || !isSuperAdmin}
 					allowUserOptions
 				/>
 				<MultiSelect
@@ -98,7 +105,7 @@
 					name="read"
 					selected={role.permissions.read}
 					options={defaultRoleOptions}
-					disabled={role._id === SUPER_ADMIN_ROLE_ID}
+					disabled={role._id === SUPER_ADMIN_ROLE_ID || !isSuperAdmin}
 					allowUserOptions
 				/>
 				<MultiSelect
@@ -107,16 +114,21 @@
 					selected={role.permissions.forbidden}
 					options={defaultRoleOptions}
 					allowUserOptions
-					disabled={role._id === SUPER_ADMIN_ROLE_ID}
+					disabled={role._id === SUPER_ADMIN_ROLE_ID || !isSuperAdmin}
 				/>
-				<button type="submit" class="btn btn-black self-start" title={t('admin.action.save')}>
+				<button
+					type="submit"
+					class="btn btn-black self-start"
+					title={t('admin.action.save')}
+					disabled={!isSuperAdmin}
+				>
 					<IconSave />
 				</button>
 				<button
 					type="submit"
 					class="btn btn-red self-start"
 					formaction="{data.adminPrefix}/arm/role/{role._id}?/delete"
-					disabled={role._id === SUPER_ADMIN_ROLE_ID}
+					disabled={role._id === SUPER_ADMIN_ROLE_ID || !isSuperAdmin}
 					title={t('admin.arm.deleteRole')}
 					on:click={(e) => {
 						if (!confirm(t('admin.arm.confirmDeleteRole', { id: role._id }))) {
@@ -138,7 +150,9 @@
 {#if hasDuplicates(listNpub)}
 	<span class="text-red-500">{t('admin.arm.duplicateNpubs')}</span>
 {/if}
-<a href="{data.adminPrefix}/arm/user/new" class="underline">{t('admin.arm.createUser')}</a>
+{#if canCreateUser}
+	<a href="{data.adminPrefix}/arm/user/new" class="underline">{t('admin.arm.createUser')}</a>
+{/if}
 
 <ul
 	class="grid grid-cols-[auto_auto_auto_auto_auto_min-content_auto_min-content_min-content_min-content] gap-2"
@@ -156,6 +170,12 @@
 		<span>{t('admin.arm.delete')}</span>
 	</li>
 	{#each data.users as user, i}
+		{@const manageable =
+			user.roleId === SUPER_ADMIN_ROLE_ID ? isSuperAdmin : canManage(user.roleId)}
+		{@const roleLocked =
+			user.roleId === SUPER_ADMIN_ROLE_ID ||
+			!manageable ||
+			(!isSuperAdmin && user._id === data.userId)}
 		<li class="contents">
 			<form
 				action="{data.adminPrefix}/arm/user/{user._id}?/update"
@@ -207,19 +227,19 @@
 					disabled={data.roleId !== SUPER_ADMIN_ROLE_ID && user.roleId === SUPER_ADMIN_ROLE_ID}
 					bind:value={listNpub[i]}
 				/>
-				<select class="form-input" disabled={user.roleId === SUPER_ADMIN_ROLE_ID} name="roleId">
+				<select class="form-input" disabled={roleLocked} name="roleId">
 					{#each data.roles as role}
 						<option
 							value={role._id}
 							selected={role._id === user.roleId}
-							disabled={role._id === SUPER_ADMIN_ROLE_ID}
+							disabled={role._id === SUPER_ADMIN_ROLE_ID || !canManage(role._id)}
 						>
 							{role.name}
 						</option>
 					{/each}
 				</select>
-				{#if user.roleId === SUPER_ADMIN_ROLE_ID}
-					<input type="hidden" name="roleId" value={SUPER_ADMIN_ROLE_ID} />
+				{#if roleLocked}
+					<input type="hidden" name="roleId" value={user.roleId} />
 				{/if}
 				<input
 					class="form-checkbox place-self-center"
@@ -236,7 +256,7 @@
 					type="submit"
 					class="btn btn-black self-start"
 					title={t('admin.action.save')}
-					disabled={hasDuplicates(listEmail) || hasDuplicates(listNpub)}
+					disabled={!manageable || hasDuplicates(listEmail) || hasDuplicates(listNpub)}
 				>
 					<IconSave />
 				</button>
@@ -244,7 +264,7 @@
 					type="submit"
 					class="btn btn-red self-start"
 					formaction="{data.adminPrefix}/arm/user/{user._id}?/resetPassword"
-					disabled={user.roleId === SUPER_ADMIN_ROLE_ID}
+					disabled={user.roleId === SUPER_ADMIN_ROLE_ID || !manageable}
 					title={t('admin.arm.resetPassword')}
 				>
 					<IconRefresh />
@@ -253,7 +273,7 @@
 					type="submit"
 					class="btn btn-red self-start"
 					formaction="{data.adminPrefix}/arm/user/{user._id}?/delete"
-					disabled={user.roleId === SUPER_ADMIN_ROLE_ID}
+					disabled={user.roleId === SUPER_ADMIN_ROLE_ID || !manageable}
 					title={t('admin.arm.deleteAccount')}
 					on:click={(e) => {
 						if (!confirm(t('admin.arm.confirmDeleteAccount', { login: user.login }))) {

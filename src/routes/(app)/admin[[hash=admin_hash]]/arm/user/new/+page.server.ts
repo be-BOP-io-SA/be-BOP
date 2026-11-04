@@ -26,7 +26,7 @@ export const actions = {
 				alias: z.string().optional(),
 				email: z.string().email().optional(),
 				npub: zodNpub().optional(),
-				roleId: z.enum([allowedRoles[0]._id, ...allowedRoles.map((role) => role._id)])
+				roleId: z.enum(allowedRoles.map((role) => role._id) as [string, ...string[]])
 			})
 			.parse({
 				...Object.fromEntries(data),

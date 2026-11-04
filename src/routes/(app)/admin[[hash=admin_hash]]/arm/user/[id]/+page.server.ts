@@ -39,7 +39,7 @@ export const actions = {
 				recoveryEmail: z.string().email().optional(),
 				recoveryNpub: zodNpub().optional(),
 				status: z.enum(['enabled', 'disabled']).optional(),
-				roleId: z.enum([allowedRoles[0]._id, ...allowedRoles.map((role) => role._id)]).optional(),
+				roleId: z.enum(allowedRoles.map((role) => role._id) as [string, ...string[]]).optional(),
 				hasPosOptions: z.boolean({ coerce: true })
 			})
 			.parse({
