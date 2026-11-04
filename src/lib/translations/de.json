@@ -695,6 +695,7 @@
 			"channelWeb": "Web",
 			"channelWebPos": "Web mit Kassen-Berechtigung (/cart)",
 			"channelPosTouch": "Bar-Restaurant-Kasse (/pos/touch)",
+			"channelApi": "Öffentliche API (/api/v1)",
 			"requiredCode": "Erforderlicher Code (optional)",
 			"promoCodePlaceholder": "Promocode-Zeichenfolge eingeben",
 			"promoCodeTip": "Tipp: Verwenden Sie 8+ Zeichen mit einer Mischung aus Buchstaben, Zahlen und Sonderzeichen (z. B. SPRING_2026X4!) — kurze Codes lassen sich leicht per Brute-Force erraten.",
