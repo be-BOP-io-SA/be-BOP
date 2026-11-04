@@ -161,9 +161,7 @@ export async function storePicture(
 			Bucket: runtimeConfig.s3.bucket,
 			Key: path,
 			Body: buffer,
-			ContentType: mime,
-			// An SVG opened as a page runs its scripts; <img> ignores the disposition, navigation does not.
-			...(mime === 'image/svg+xml' && { ContentDisposition: 'attachment' })
+			ContentType: mime
 		})
 	);
 	uploadedKeys.push(path);
