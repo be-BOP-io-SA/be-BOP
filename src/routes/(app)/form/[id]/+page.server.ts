@@ -44,7 +44,13 @@ export const actions = {
 			.object({
 				content: z.string().max(MAX_CONTENT_LIMIT),
 				subject: z.string().max(100),
-				from: z.string().email().max(100).optional()
+				// The shop's contact modes let the sender leave an npub, free text or nothing.
+				from: z
+					.string()
+					.trim()
+					.max(100)
+					.optional()
+					.transform((from) => from || undefined)
 			})
 			.parse(Object.fromEntries(data));
 
