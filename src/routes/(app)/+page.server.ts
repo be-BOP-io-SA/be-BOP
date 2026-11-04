@@ -6,6 +6,7 @@ import { addYears } from 'date-fns';
 import { omit } from '$lib/utils/omit';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { sameOriginPath } from '$lib/server/utils/sameOriginPath';
 
 export const load = async ({ locals, url }) => {
 	// `/` has to stay reachable for the wall to render on it, so this is the one storefront load
@@ -82,21 +83,11 @@ export const load = async ({ locals, url }) => {
 };
 
 export const actions = {
-	navigate: async ({ locals, request }) => {
+	navigate: async ({ locals, request, url }) => {
 		const formData = await request.formData();
-		let redirectTo = formData.get('redirectTo')?.toString() || '/';
-
-		// Only allow redirect to public pages (not employee-only areas). `//host` and `/\host` start
-		// with a slash yet browsers read them as another site.
-		if (
-			!redirectTo.startsWith('/') ||
-			redirectTo.startsWith('//') ||
-			redirectTo.startsWith('/\\') ||
-			redirectTo.startsWith('/admin') ||
-			redirectTo.startsWith('/pos')
-		) {
-			redirectTo = '/';
-		}
+		const path = sameOriginPath(formData.get('redirectTo')?.toString() || '/', url.origin);
+		// Employee areas are not where a visitor clearing the age wall is headed.
+		const redirectTo = !path || path.startsWith('/admin') || path.startsWith('/pos') ? '/' : path;
 
 		await collections.sessions.updateOne(
 			{

@@ -100,6 +100,23 @@ test('a visitor who accepts the age wall lands on the page they asked for', asyn
 	await expect(page.getByRole('heading', { name: 'E2E age-restricted product' })).toBeVisible();
 });
 
+test('accepting the age wall never leaves the shop', async ({ request }) => {
+	// A plain form post, as the browser sends it, so the action answers with a real redirect.
+	const navigate = (redirectTo: string) =>
+		request.post('/?/navigate', {
+			form: { redirectTo },
+			headers: { origin: 'http://localhost:5012', accept: 'text/html' },
+			maxRedirects: 0
+		});
+
+	for (const redirectTo of ['/\t/example.com', '//example.com', '/\\example.com', '/admin']) {
+		expect((await navigate(redirectTo)).headers()['location'], redirectTo).toBe('/');
+	}
+	expect((await navigate(`/product/${PRODUCT_ID}`)).headers()['location']).toBe(
+		`/product/${PRODUCT_ID}`
+	);
+});
+
 test('the age wall leaves feeds and endpoints reachable without a cookie', async ({ request }) => {
 	await expect(async () => {
 		const wall = await request.get(`/product/${PRODUCT_ID}`, { maxRedirects: 0 });
