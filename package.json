@@ -55,7 +55,8 @@
 		"typescript": "^5.8.3",
 		"unplugin-icons": "^0.16.3",
 		"vite": "^4.3.1",
-		"vitest": "^0.34.6"
+		"vitest": "^0.34.6",
+		"ws": "8.18.3"
 	},
 	"type": "module",
 	"dependencies": {

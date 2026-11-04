@@ -2,10 +2,12 @@
 import bip84 from 'bip84';
 import bs58check from 'bs58check';
 import { ChangeChain, buildBip48P2wshAddress } from 'bip48-multisig';
-import { runtimeConfig, runtimeConfigUpdatedAt } from './runtime-config';
+import { runtimeConfig } from './runtime-config';
 import { z } from 'zod';
 import { sum } from '$lib/utils/sum';
 import { trimSuffix } from '$lib/utils/trimSuffix';
+import { isWithin } from '$lib/utils/isWithin';
+import { isLaggingBlockHeight, MAX_BLOCK_HEIGHT_LAG } from '$lib/utils/isLaggingBlockHeight';
 import { persistConfigElement } from './utils/persistConfig';
 import { collections } from './database';
 
@@ -156,6 +158,32 @@ export async function generateDerivationIndex(): Promise<number> {
 	return index;
 }
 
+const MEMPOOL_RATE_LIMIT_PAUSE_MS = 60_000;
+let mempoolPausedAt = -Infinity;
+
+export class MempoolRateLimitedError extends Error {}
+
+export function mempoolApiUrl(path: string): string {
+	return trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + path;
+}
+
+async function fetchMempool(path: string): Promise<Response> {
+	if (isWithin(MEMPOOL_RATE_LIMIT_PAUSE_MS, mempoolPausedAt)) {
+		throw new MempoolRateLimitedError('Mempool requests are paused after a rate limit');
+	}
+	const resp = await fetch(new URL(mempoolApiUrl(path)));
+	if (resp.status === 429) {
+		mempoolPausedAt = Date.now();
+		console.warn(
+			`Mempool rate limit reached (429), pausing mempool requests for ${
+				MEMPOOL_RATE_LIMIT_PAUSE_MS / 1000
+			}s`
+		);
+		throw new MempoolRateLimitedError('Mempool answered 429');
+	}
+	return resp;
+}
+
 export async function getSatoshiReceivedNodeless(
 	address: string,
 	confirmations: number,
@@ -174,14 +202,10 @@ export async function getSatoshiReceivedNodeless(
 		id: string;
 	}>;
 }> {
-	const mempoolUrl =
-		trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + `/api/address/${address}/txs`;
-
-	const resp = await fetch(new URL(mempoolUrl));
+	const resp = await fetchMempool(`/api/address/${address}/txs`);
 
 	if (!resp.ok) {
-		console.warn(`Mempool API error: ${resp.status} ${resp.statusText} for URL: ${mempoolUrl}`);
-		throw new Error('Failed to fetch transactions for ' + address + ': ' + resp.status);
+		throw new Error(`Mempool API error ${resp.status} ${resp.statusText} for address ${address}`);
 	}
 
 	const json = await resp.json();
@@ -244,11 +268,10 @@ export async function getSatoshiReceivedNodeless(
 	};
 }
 
+// Bypasses the rate limit pause, so polling cannot blind checkout and checkout cannot renew the pause.
 export async function isAddressUsed(address: string): Promise<boolean> {
 	try {
-		const mempoolUrl =
-			trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + `/api/address/${address}`;
-		const resp = await fetch(new URL(mempoolUrl));
+		const resp = await fetch(new URL(mempoolApiUrl(`/api/address/${address}`)));
 		if (!resp.ok) {
 			return false;
 		}
@@ -259,40 +282,68 @@ export async function isAddressUsed(address: string): Promise<boolean> {
 	}
 }
 
+export async function saveBitcoinBlockHeight(blockHeight: number): Promise<void> {
+	if (isLaggingBlockHeight(blockHeight, runtimeConfig.bitcoinBlockHeight)) {
+		return;
+	}
+	console.log('Updating bitcoin block height to', blockHeight);
+	runtimeConfig.bitcoinBlockHeight = blockHeight;
+
+	// Saves are not awaited by the socket, so two of them can reach the database out of order.
+	await collections.runtimeConfig.updateOne(
+		{ _id: 'bitcoinBlockHeight' },
+		[
+			{
+				$set: {
+					data: {
+						$cond: [
+							{
+								$and: [
+									{ $lte: [blockHeight, '$data'] },
+									{ $lte: [{ $subtract: ['$data', blockHeight] }, MAX_BLOCK_HEIGHT_LAG] }
+								]
+							},
+							'$data',
+							blockHeight
+						]
+					},
+					updatedAt: new Date()
+				}
+			}
+		],
+		{ upsert: true }
+	);
+}
+
+const BLOCK_HEIGHT_REFRESH_MS = 60_000;
+let blockHeightCheckedAt = -Infinity;
+
 export async function updateBitcoinBlockHeight(): Promise<void> {
+	if (isWithin(BLOCK_HEIGHT_REFRESH_MS, blockHeightCheckedAt)) {
+		return;
+	}
+	blockHeightCheckedAt = Date.now();
 	try {
-		const resp = await fetch(
-			new URL(trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + '/api/blocks/tip/height')
-		);
+		const resp = await fetchMempool('/api/blocks/tip/height');
 
 		if (resp.ok) {
-			const blockHeight = z.number().parse(await resp.json());
-
-			if (runtimeConfig.bitcoinBlockHeight !== blockHeight) {
-				console.log('Updating bitcoin block height to', blockHeight);
-				runtimeConfig.bitcoinBlockHeight = blockHeight;
-				runtimeConfigUpdatedAt['bitcoinBlockHeight'] = new Date();
-
-				await collections.runtimeConfig.updateOne(
-					{
-						_id: 'bitcoinBlockHeight'
-					},
-					{
-						$set: {
-							data: blockHeight,
-							updatedAt: new Date()
-						}
-					},
-					{
-						upsert: true
-					}
-				);
-			}
+			await saveBitcoinBlockHeight(z.number().parse(await resp.json()));
 		}
 	} catch (err) {
+		if (err instanceof MempoolRateLimitedError) {
+			return;
+		}
 		console.error(
 			'Failed to update bitcoin block height:',
 			err instanceof Error ? err.message : err
 		);
 	}
+}
+
+export function resetMempoolPacing() {
+	if (!import.meta.env.VITEST) {
+		throw new Error('resetMempoolPacing should only be used in tests');
+	}
+	mempoolPausedAt = -Infinity;
+	blockHeightCheckedAt = -Infinity;
 }
