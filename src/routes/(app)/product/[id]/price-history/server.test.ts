@@ -13,8 +13,19 @@ vi.mock('$lib/server/runtime-config', () => ({
 vi.mock('$lib/server/price-history', () => ({
 	getProductPriceHistory: vi.fn(async () => ({
 		currency: 'CHF',
-		catalogue: { points: [], current: null, deltaPct: null, min30: null, max30: null },
-		paid: { points: [], mean: null, pctBelowCatalogue: null }
+		catalogue: {
+			points: [{ t: '2026-01-02', price: 12.5 }],
+			current: null,
+			deltaPct: null,
+			min30: null,
+			max30: null
+		},
+		paid: {
+			currency: 'CHF',
+			points: [{ t: '2026-01-03', price: 11 }],
+			mean: null,
+			pctBelowCatalogue: null
+		}
 	}))
 }));
 
@@ -128,5 +139,8 @@ describe('GET /product/[id]/price-history', () => {
 		expect(res.status).toBe(200);
 		expect(res.headers.get('content-type')).toContain('text/csv');
 		expect(res.headers.get('content-disposition')).toContain('attachment');
+		expect(await res.text()).toBe(
+			'series,date,price,currency\ncatalogue,2026-01-02,12.5,CHF\naverage_paid,2026-01-03,11,CHF'
+		);
 	});
 });

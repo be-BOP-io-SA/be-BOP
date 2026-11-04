@@ -5,6 +5,7 @@ import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { isAllowedOnPage } from '$lib/types/Role';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { csvCell } from '$lib/utils/csvCell';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -14,12 +15,6 @@ const RANGE_DAYS: Record<string, number | null> = {
 	'5y': 1825,
 	all: null
 };
-
-function escapeCSV(value: string): string {
-	// Prefix formula-trigger characters to prevent spreadsheet injection.
-	const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
-	return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-}
 
 export const GET: RequestHandler = async ({ params, locals, url }) => {
 	if (!runtimeConfig.priceHistoryEnabled) {
@@ -61,10 +56,10 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		const header = 'series,date,price,currency';
 		const rows = [
 			...history.catalogue.points.map((p) =>
-				['catalogue', p.t, String(p.price), history.currency].map(escapeCSV).join(',')
+				['catalogue', p.t, p.price, history.currency].map(csvCell).join(',')
 			),
 			...history.paid.points.map((p) =>
-				['average_paid', p.t, String(p.price), history.paid.currency].map(escapeCSV).join(',')
+				['average_paid', p.t, p.price, history.paid.currency].map(csvCell).join(',')
 			)
 		];
 		const csv = [header, ...rows].join('\n');
