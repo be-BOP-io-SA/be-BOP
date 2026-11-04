@@ -81,8 +81,14 @@ describe('set', () => {
 	});
 
 	it('should refuse an array index that would make the array huge and sparse', () => {
-		expect(() => set({}, 'items[4294967294]', 1)).toThrow(RangeError);
-		expect(() => set({}, 'items[4294967294].name', 1)).toThrow(RangeError);
+		expect(() => set({}, 'items[4294967294]', 1)).toThrowError(
+			expect.objectContaining({ status: 400 })
+		);
+		expect(() => set({}, 'items[4294967294].name', 1)).toThrowError(
+			expect.objectContaining({ status: 400 })
+		);
+		expect(() => set({}, 'items[10001]', 1)).toThrowError(expect.objectContaining({ status: 400 }));
+		expect(() => set({}, 'items[10000]', 1)).not.toThrow();
 	});
 
 	it('should still accept a sparse but reasonable array index', () => {

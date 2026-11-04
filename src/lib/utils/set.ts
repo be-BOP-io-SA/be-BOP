@@ -1,3 +1,4 @@
+import { error } from '@sveltejs/kit';
 import type { Paths } from 'type-fest';
 
 export function set<T extends object, K extends Paths<T> | string>(
@@ -51,7 +52,7 @@ const MAX_ARRAY_INDEX = 10_000;
 function assertSafeArrayIndex(obj: object, key: PropertyKey) {
 	if (Array.isArray(obj) && typeof key === 'string' && /^(0|[1-9]\d*)$/.test(key)) {
 		if (Number(key) > MAX_ARRAY_INDEX) {
-			throw new RangeError(`Array index ${key} is too large`);
+			throw error(400, `Array index ${key} is too large`);
 		}
 	}
 }
