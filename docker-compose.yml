@@ -23,8 +23,8 @@ services:
       - S3_BUCKET=${S3_BUCKET:-bebop}
       - S3_REGION=${S3_REGION:-localhost}
       # No default: the storage is published on 9000, and a known key opens the whole bucket.
-      - S3_KEY_ID=${S3_KEY_ID:?set S3_KEY_ID in .env.local, see README}
-      - S3_KEY_SECRET=${S3_KEY_SECRET:?set S3_KEY_SECRET in .env.local, see README}
+      - S3_KEY_ID=${S3_KEY_ID:?set S3_KEY_ID in .env.local and run docker compose --env-file .env.local, see README}
+      - S3_KEY_SECRET=${S3_KEY_SECRET:?set S3_KEY_SECRET in .env.local and run docker compose --env-file .env.local, see README}
     env_file:
       - path: .env
         required: true
@@ -57,8 +57,8 @@ services:
     ports:
       - 9000:9000
     environment:
-      MINIO_ROOT_USER: ${S3_KEY_ID:?set S3_KEY_ID in .env.local, see README}
-      MINIO_ROOT_PASSWORD: ${S3_KEY_SECRET:?set S3_KEY_SECRET in .env.local, see README}
+      MINIO_ROOT_USER: ${S3_KEY_ID:?set S3_KEY_ID in .env.local and run docker compose --env-file .env.local, see README}
+      MINIO_ROOT_PASSWORD: ${S3_KEY_SECRET:?set S3_KEY_SECRET in .env.local and run docker compose --env-file .env.local, see README}
       MINIO_SERVER_URL: ${S3_ENDPOINT_URL:-http://localhost:9000}
     volumes:
       - minio-data:/data

@@ -61,7 +61,7 @@ card.
 
 ### 3. Docker
 
-`docker compose up` brings up be-BOP with a MongoDB and an S3 storage. Good for
+`docker compose --env-file .env.local up` brings up be-BOP with a MongoDB and an S3 storage. Good for
 local development, and for a single-host deployment you manage yourself.
 
 **You need** Docker, and the environment variables from
@@ -335,6 +335,10 @@ Add an S3 access key and secret to `.env.local` if not already present:
 echo "S3_KEY_ID=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
 echo "S3_KEY_SECRET=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
 ```
+
+Compose fills `${S3_KEY_ID}` and the other variables of `docker-compose.yml` from the
+`--env-file` it is given, not from `.env.local` on its own, so pass
+`--env-file .env.local` to every `docker compose` command.
 
 Make sure you have a fairly recent version of docker and docker compose, then:
 
