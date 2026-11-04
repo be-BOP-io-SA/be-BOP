@@ -453,6 +453,7 @@
 						paymentMethods={data.paymentMethods}
 						posSubtypes={data.posSubtypes}
 						maxAmount={remainingAmount}
+						orderCurrency={data.order.currencySnapshot.main.totalPrice.currency}
 						posMode={data.posMode}
 					/>
 
