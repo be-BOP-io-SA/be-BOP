@@ -85,17 +85,15 @@ export type CheckPaymentResult =
 	| {
 			status: 'pending';
 			/**
-			 * Observed, but not final — money the provider has seen and may still take back.
-			 * Onchain: a full-amount transaction under the confirmation threshold. Card: an
-			 * authorisation not yet captured. PayPal: a capture still PENDING, an eCheck
-			 * clearing. SEPA: a transfer in clearing. The buyer is told it arrived and is
-			 * being confirmed; the order does not settle on it.
+			 * Observed, but not final: money the provider has seen and may still take back. The
+			 * poller stores only that it exists (`payment.awaitingConfirmation`), and the order page
+			 * tells the buyer it arrived and is being confirmed for bitcoin payments only. The order
+			 * does not settle on it.
 			 */
 			provisional?: { received: Price; reason?: string };
 			/**
-			 * Opaque, processor-private, carried between polls. A processor that needs to
-			 * remember something across the 2s loop puts it here rather than inventing a
-			 * column: the onchain grace window is one instance, a provider cursor another.
+			 * Read by the poller after this check and not passed back to the next one. Only
+			 * `mempoolMissingSince` is kept, on the payment, where the processor reads it again.
 			 */
 			state?: Record<string, unknown>;
 			transactions?: PaymentTransaction[];

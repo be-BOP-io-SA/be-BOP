@@ -86,8 +86,6 @@ async function maintainOrders() {
 						const result = await pp.checkPayment(payment, order);
 						switch (result.status) {
 							case 'paid':
-								// The discriminated result makes `received` mandatory on this arm, so the
-								// old "paid without an amount" throw is now unrepresentable rather than caught.
 								if (!coversPayment(pp, payment, result.received, result.fees)) {
 									await recordUnderpayment(order, payment, pp.meta.processor, result.received);
 									break;
@@ -115,13 +113,7 @@ async function maintainOrders() {
 								if (result.transactions) {
 									payment.transactions = result.transactions;
 								}
-								// A provisional receipt — money seen but not final — is shown to the buyer
-								// as "received, awaiting confirmation". The two columns below are the
-								// storage this predates the generic shape with: `awaitingConfirmation`
-								// records that something provisional exists, and `mempoolMissingSince` is
-								// the one processor-private key the schema still spells out. New
-								// processors read and write `state` and never name either.
-								// Only write on change — this loop runs every 2s.
+								// Only write on change: this loop runs every 2s.
 								{
 									const awaitingConfirmation = !!result.provisional;
 									const storedMissingSince = result.state?.mempoolMissingSince;
