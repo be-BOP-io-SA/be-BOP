@@ -5,32 +5,11 @@ import { Lock } from '../lock';
 import { inspect } from 'node:util';
 import { onOrderPayment, onOrderPaymentFailed } from '../orders';
 import { refreshPromise } from '../runtime-config';
-import type { Order, Price } from '$lib/types/Order';
+import type { Order } from '$lib/types/Order';
 import { coversPayment, getProcessor } from '../sdk/pp';
+import { recordUnderpayment } from '../underpayment';
 
 const lock = new Lock('orders');
-
-/**
- * Payment ids already reported as underpaid. The check runs every 2s against a payment
- * that stays pending, so without this the anomaly would fill the logs until it expires.
- */
-const underpaymentReported = new Set<string>();
-
-function reportUnderpayment(
-	processor: string,
-	payment: Order['payments'][number],
-	received: Price
-): void {
-	const key = payment._id.toHexString();
-	if (underpaymentReported.has(key)) {
-		return;
-	}
-	underpaymentReported.add(key);
-	console.error(
-		`[payments] ${processor} reported payment ${key} settled with ${received.amount} ${received.currency}, ` +
-			`short of the ${payment.price.amount} ${payment.price.currency} asked. Keeping it pending.`
-	);
-}
 
 async function handleTapToPayCheck(
 	payment: Order['payments'][number],
@@ -110,10 +89,9 @@ async function maintainOrders() {
 								// The discriminated result makes `received` mandatory on this arm, so the
 								// old "paid without an amount" throw is now unrepresentable rather than caught.
 								if (!coversPayment(pp, payment, result.received, result.fees)) {
-									reportUnderpayment(pp.meta.processor, payment, result.received);
+									await recordUnderpayment(order, payment, pp.meta.processor, result.received);
 									break;
 								}
-								underpaymentReported.delete(payment._id.toHexString());
 								if (result.transactions) {
 									payment.transactions = result.transactions;
 								}
