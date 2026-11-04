@@ -760,6 +760,7 @@
 			"channelWeb": "Web",
 			"channelWebPos": "Web with PoS privilege (/cart)",
 			"channelPosTouch": "Bar-restaurant PoS (/pos/touch)",
+			"channelApi": "Public API (/api/v1)",
 			"requiredCode": "Required code (optional)",
 			"promoCodePlaceholder": "Enter promocode chain",
 			"promoCodeTip": "Tip: use 8+ characters mixing letters, numbers and special characters (e.g. SPRING_2026X4!) — short codes are easy to brute-force.",
@@ -2170,14 +2171,6 @@
 			"priceAmount": "Price amount",
 			"pricePlaceholder": "Price"
 		},
-		"processorSelector": {
-			"noProcessorsConfigured": "No processors configured. Configure them in the Payment Settings tab above",
-			"or": "or",
-			"autoSystemPriority": "Auto (system priority)",
-			"notConfigured": "not configured",
-			"priority": "Priority",
-			"systemPriority": "System priority"
-		},
 		"apiKeys": {
 			"listTitle": "API Keys",
 			"add": "Create API key",
@@ -2264,6 +2257,14 @@
 			"streamsSaved": "Stream settings updated.",
 			"streamsResetDone": "Stream places handed back.",
 			"resetStreamsTitle": "Hand back every stream place held by this key"
+		},
+		"processorSelector": {
+			"noProcessorsConfigured": "No processors configured. Configure them in the Payment Settings tab above",
+			"or": "or",
+			"autoSystemPriority": "Auto (system priority)",
+			"notConfigured": "not configured",
+			"priority": "Priority",
+			"systemPriority": "System priority"
 		}
 	},
 	"ageWarning": {

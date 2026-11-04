@@ -23,7 +23,6 @@ import { error, redirect } from '@sveltejs/kit';
 import { subDays, parseISO, isValid } from 'date-fns';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
-import { parseUniqueKey } from '$lib/server/api/v1/unique-key';
 import {
 	collectUserAddresses,
 	discountTargetsProduct,
@@ -331,8 +330,7 @@ export const load = async ({ params, url, parent, locals }) => {
 		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		websiteShortDescription: product.shortDescription,
 		freeProductsAvailable,
-		adminPrefix: getAdminPrefix(),
-		uniqueKey: parseUniqueKey(url.searchParams.get('key'))
+		adminPrefix: getAdminPrefix()
 	};
 };
 
@@ -356,7 +354,6 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		customPriceCurrency,
 		deposit,
 		chosenVariations,
-		uniqueKey: uniqueKeyRaw,
 		time,
 		durationMinutes,
 		bookedDates
@@ -375,7 +372,6 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 			customPriceCurrency: z.enum([CURRENCIES[0], ...CURRENCIES.slice(1)]).optional(),
 			deposit: z.enum(['partial', 'full']).optional(),
 			chosenVariations: z.record(z.string(), z.string()).optional(),
-			uniqueKey: z.string().optional(),
 			time: z.date({ coerce: true }).optional(),
 			durationMinutes: z.number({ coerce: true }).int().min(1).optional(),
 			bookedDates: z
@@ -426,7 +422,6 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 		...(customPrice && { customPrice }),
 		deposit: deposit === 'partial',
 		...(product.hasVariations && { chosenVariations }),
-		...(parseUniqueKey(uniqueKeyRaw) && { uniqueKey: parseUniqueKey(uniqueKeyRaw) }),
 		...(time && durationMinutes && product.bookingSpec
 			? {
 					booking: {

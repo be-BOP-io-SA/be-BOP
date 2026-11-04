@@ -760,6 +760,7 @@
 			"channelWeb": "Web",
 			"channelWebPos": "Web con privilegio de PoS (/cart)",
 			"channelPosTouch": "PoS bar-restaurante (/pos/touch)",
+			"channelApi": "API pública (/api/v1)",
 			"requiredCode": "Código requerido (opcional)",
 			"promoCodePlaceholder": "Introduzca la cadena del código promocional",
 			"promoCodeTip": "Consejo: use 8 o más caracteres combinando letras, números y caracteres especiales (por ejemplo, SPRING_2026X4!): los códigos cortos son fáciles de descifrar por fuerza bruta.",
@@ -2170,14 +2171,6 @@
 			"priceAmount": "Importe del precio",
 			"pricePlaceholder": "Precio"
 		},
-		"processorSelector": {
-			"noProcessorsConfigured": "No hay procesadores configurados. Configúrelos en la pestaña Configuración de pago de arriba",
-			"or": "o",
-			"autoSystemPriority": "Automático (prioridad del sistema)",
-			"notConfigured": "no configurado",
-			"priority": "Prioridad",
-			"systemPriority": "Prioridad del sistema"
-		},
 		"apiKeys": {
 			"listTitle": "Claves API",
 			"add": "Crear clave API",
@@ -2264,6 +2257,14 @@
 			"streamsSaved": "Ajustes de flujos actualizados.",
 			"streamsResetDone": "Lugares de flujo liberados.",
 			"resetStreamsTitle": "Liberar todos los puestos de flujo ocupados por esta clave"
+		},
+		"processorSelector": {
+			"noProcessorsConfigured": "No hay procesadores configurados. Configúrelos en la pestaña Configuración de pago de arriba",
+			"or": "o",
+			"autoSystemPriority": "Automático (prioridad del sistema)",
+			"notConfigured": "no configurado",
+			"priority": "Prioridad",
+			"systemPriority": "Prioridad del sistema"
 		}
 	},
 	"ageWarning": {

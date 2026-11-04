@@ -760,6 +760,7 @@
 			"channelWeb": "Web",
 			"channelWebPos": "Web met kassaprivilege (/cart)",
 			"channelPosTouch": "Bar-restaurant kassa (/pos/touch)",
+			"channelApi": "Publieke API (/api/v1)",
 			"requiredCode": "Vereiste code (optioneel)",
 			"promoCodePlaceholder": "Voer de promocode-tekenreeks in",
 			"promoCodeTip": "Tip: gebruik 8+ tekens met een mix van letters, cijfers en speciale tekens (bijv. SPRING_2026X4!) — korte codes zijn eenvoudig te kraken met brute-force.",
@@ -2170,14 +2171,6 @@
 			"priceAmount": "Prijsbedrag",
 			"pricePlaceholder": "Prijs"
 		},
-		"processorSelector": {
-			"noProcessorsConfigured": "Geen verwerkers geconfigureerd. Configureer ze in het tabblad Betalingsinstellingen hierboven",
-			"or": "of",
-			"autoSystemPriority": "Automatisch (systeemprioriteit)",
-			"notConfigured": "niet geconfigureerd",
-			"priority": "Prioriteit",
-			"systemPriority": "Systeemprioriteit"
-		},
 		"apiKeys": {
 			"listTitle": "API-sleutels",
 			"add": "API-sleutel maken",
@@ -2264,6 +2257,14 @@
 			"streamsSaved": "Stroominstellingen bijgewerkt.",
 			"streamsResetDone": "Stroomplaatsen vrijgegeven.",
 			"resetStreamsTitle": "Alle streamplaatsen van deze sleutel vrijgeven"
+		},
+		"processorSelector": {
+			"noProcessorsConfigured": "Geen verwerkers geconfigureerd. Configureer ze in het tabblad Betalingsinstellingen hierboven",
+			"or": "of",
+			"autoSystemPriority": "Automatisch (systeemprioriteit)",
+			"notConfigured": "niet geconfigureerd",
+			"priority": "Prioriteit",
+			"systemPriority": "Systeemprioriteit"
 		}
 	},
 	"ageWarning": {
