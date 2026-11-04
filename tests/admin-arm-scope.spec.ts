@@ -10,6 +10,7 @@ const MANAGER_LOGIN = 'e2e-arm-manager';
 const ARM_ONLY_LOGIN = 'e2e-arm-only';
 const POS_MANAGER_LOGIN = 'e2e-arm-pos-manager';
 const STAFF_LOGIN = 'e2e-arm-staff';
+const TILL_STAFF_LOGIN = 'e2e-arm-till-staff';
 
 async function withDb<T>(run: (db: ReturnType<MongoClient['db']>) => Promise<T>): Promise<T> {
 	const client = await MongoClient.connect(process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017');
@@ -24,7 +25,11 @@ async function cleanUp() {
 	await withDb(async (db) => {
 		const users = await db
 			.collection('users')
-			.find({ login: { $in: [MANAGER_LOGIN, ARM_ONLY_LOGIN, POS_MANAGER_LOGIN, STAFF_LOGIN] } })
+			.find({
+				login: {
+					$in: [MANAGER_LOGIN, ARM_ONLY_LOGIN, POS_MANAGER_LOGIN, STAFF_LOGIN, TILL_STAFF_LOGIN]
+				}
+			})
 			.toArray();
 		await db.collection('sessions').deleteMany({ userId: { $in: users.map((u) => u._id) } });
 		await db.collection('users').deleteMany({ _id: { $in: users.map((u) => u._id) } });
@@ -34,13 +39,14 @@ async function cleanUp() {
 	});
 }
 
-async function seedUser(login: string, roleId: string) {
+async function seedUser(login: string, roleId: string, hasPosOptions = false) {
 	const _id = new ObjectId();
 	await withDb((db) =>
 		db.collection('users').insertOne({
 			_id,
 			login,
 			roleId,
+			hasPosOptions,
 			recovery: { email: `${login}@example.com` },
 			createdAt: new Date(),
 			updatedAt: new Date()
@@ -90,6 +96,7 @@ let managerId: ObjectId;
 let armOnlyId: ObjectId;
 let posManagerId: ObjectId;
 let staffId: ObjectId;
+let tillStaffId: ObjectId;
 
 test.beforeAll(async () => {
 	await cleanUp();
@@ -106,6 +113,7 @@ test.beforeAll(async () => {
 	armOnlyId = await seedUser(ARM_ONLY_LOGIN, ARM_ONLY_ROLE);
 	posManagerId = await seedUser(POS_MANAGER_LOGIN, POS_MANAGER_ROLE);
 	staffId = await seedUser(STAFF_LOGIN, 'ticket-checker');
+	tillStaffId = await seedUser(TILL_STAFF_LOGIN, 'ticket-checker', true);
 });
 
 test.afterAll(cleanUp);
@@ -155,6 +163,34 @@ test('only a manager with point of sale can hand it out', async ({ page, context
 	await signIn(context, posManagerId);
 	await page.goto('/admin/arm');
 	await expect(staffPos()).toBeEnabled();
+});
+
+test('a manager without point of sale cannot edit a user who has it', async ({ page, context }) => {
+	const tillStaffButton = (title: string) =>
+		page.locator(`form[action$="/arm/user/${tillStaffId}?/update"] button[title="${title}"]`);
+
+	await signIn(context, managerId);
+	await page.goto('/admin/arm');
+	await expect(tillStaffButton('Save')).toBeDisabled();
+	await expect(tillStaffButton('Reset password')).toBeDisabled();
+	await expect(tillStaffButton('Delete account')).toBeDisabled();
+
+	const response = await page.request.post(`/admin/arm/user/${tillStaffId}?/update`, {
+		form: {
+			login: TILL_STAFF_LOGIN,
+			recoveryEmail: `${MANAGER_LOGIN}@example.com`,
+			roleId: 'ticket-checker',
+			status: 'enabled'
+		},
+		headers: { origin: 'http://localhost:5012' }
+	});
+	expect(response.status()).toBe(403);
+	const tillStaff = await withDb((db) => db.collection('users').findOne({ _id: tillStaffId }));
+	expect(tillStaff?.recovery?.email).toBe(`${TILL_STAFF_LOGIN}@example.com`);
+
+	await signIn(context, posManagerId);
+	await page.goto('/admin/arm');
+	await expect(tillStaffButton('Reset password')).toBeEnabled();
 });
 
 test('the role error names each allowed role once', async ({ page, context }) => {

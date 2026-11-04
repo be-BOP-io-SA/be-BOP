@@ -36,6 +36,16 @@ async function seedStaff(hasPosOptions: boolean) {
 	return _id;
 }
 
+function callerOf(callerRole: Role) {
+	return {
+		_id: new ObjectId(),
+		login: callerRole._id,
+		roleId: callerRole._id,
+		role: callerRole,
+		hasPosOptions: callerRole.hasPosOptions
+	};
+}
+
 async function update(callerRole: Role, staffId: ObjectId, form: Record<string, string>) {
 	const body = new FormData();
 	for (const [key, value] of Object.entries({
@@ -51,15 +61,7 @@ async function update(callerRole: Role, staffId: ObjectId, form: Record<string, 
 		await actions.update({
 			params: { id: staffId.toString() },
 			request: new Request('http://x/admin/arm/user', { method: 'POST', body }),
-			locals: {
-				user: {
-					_id: new ObjectId(),
-					login: callerRole._id,
-					roleId: callerRole._id,
-					role: callerRole,
-					hasPosOptions: callerRole.hasPosOptions
-				}
-			}
+			locals: { user: callerOf(callerRole) }
 		} as unknown as UpdateEvent);
 	} catch (thrown) {
 		if ((thrown as { status?: number }).status !== 303) {
@@ -80,9 +82,35 @@ describe('arm user update, point-of-sale access', () => {
 		expect(await update(managerRole, staffId, { hasPosOptions: 'on' })).toBe(false);
 	});
 
-	it('keeps the point of sale a manager without it cannot see', async () => {
+	it('refuses a manager without point of sale the edit of a user who has it', async () => {
 		const staffId = await seedStaff(true);
-		expect(await update(managerRole, staffId, { alias: 'Front desk' })).toBe(true);
+		await expect(
+			update(managerRole, staffId, { recoveryEmail: 'manager@example.com' })
+		).rejects.toMatchObject({ status: 403 });
+		const staff = await collections.users.findOne({ _id: staffId });
+		expect(staff?.recovery?.email).toBe('staff@example.com');
+		expect(staff?.hasPosOptions).toBe(true);
+	});
+
+	it('refuses a manager without point of sale the password reset of a user who has it', async () => {
+		const staffId = await seedStaff(true);
+		await expect(
+			actions.resetPassword({
+				params: { id: staffId.toString() },
+				locals: { user: callerOf(managerRole) }
+			} as unknown as Parameters<(typeof actions)['resetPassword']>[0])
+		).rejects.toMatchObject({ status: 403 });
+		expect((await collections.users.findOne({ _id: staffId }))?.recovery?.email).toBe(
+			'staff@example.com'
+		);
+	});
+
+	it('lets a manager with point of sale edit a user who has it', async () => {
+		const staffId = await seedStaff(true);
+		expect(await update(posManagerRole, staffId, { hasPosOptions: 'on', alias: 'Desk' })).toBe(
+			true
+		);
+		expect((await collections.users.findOne({ _id: staffId }))?.alias).toBe('Desk');
 	});
 
 	it('lets a manager with point of sale grant and remove it', async () => {

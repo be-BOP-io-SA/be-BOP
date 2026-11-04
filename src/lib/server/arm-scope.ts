@@ -24,7 +24,10 @@ export function canManagePosAccess(caller: Caller): boolean {
 	);
 }
 
-export async function requireCanManageUser(caller: Caller, user: Pick<User, 'roleId'>) {
+export async function requireCanManageUser(
+	caller: Caller,
+	user: Pick<User, 'roleId' | 'hasPosOptions'>
+) {
 	if (caller?.roleId === SUPER_ADMIN_ROLE_ID) {
 		return;
 	}
@@ -33,5 +36,9 @@ export async function requireCanManageUser(caller: Caller, user: Pick<User, 'rol
 
 	if (!role || !canManageRole(caller, role)) {
 		throw error(403, 'You cannot manage a user whose role is wider than your own');
+	}
+
+	if (user.hasPosOptions && !canManagePosAccess(caller)) {
+		throw error(403, 'You cannot manage a user who has point of sale access');
 	}
 }

@@ -171,7 +171,9 @@
 	</li>
 	{#each data.users as user, i}
 		{@const manageable =
-			user.roleId === SUPER_ADMIN_ROLE_ID ? isSuperAdmin : canManage(user.roleId)}
+			user.roleId === SUPER_ADMIN_ROLE_ID
+				? isSuperAdmin
+				: canManage(user.roleId) && (!user.hasPosOptions || data.canManagePosAccess)}
 		{@const roleLocked =
 			user.roleId === SUPER_ADMIN_ROLE_ID ||
 			!manageable ||
