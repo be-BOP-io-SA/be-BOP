@@ -702,11 +702,14 @@ export async function createOrder(
 	// the session alone would let a new session with the same address buy at the intro price for
 	// ever while extending the same subscription. Deliberately not used for discount eligibility:
 	// there, honouring a self-asserted address would hand over someone else's subscriber pricing.
-	const subscriptionUser: UserIdentifier = {
-		...params.user,
-		...(!params.user.email && email && { email }),
-		...(!params.user.npub && npubAddress && { npub: npubAddress })
-	};
+	// At the till the session is the cashier's, so only the customer's address names the subscriber.
+	const subscriptionUser: UserIdentifier = params.user.userHasPosOptions
+		? { ...(email && { email }), ...(npubAddress && { npub: npubAddress }) }
+		: {
+				...params.user,
+				...(!params.user.email && email && { email }),
+				...(!params.user.npub && npubAddress && { npub: npubAddress })
+		  };
 
 	const canBeNotified = !!(
 		npubAddress ||

@@ -465,4 +465,46 @@ describe('order', () => {
 		expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
 		expect(await collections.orders.countDocuments({ 'user.sessionId': user.sessionId })).toBe(1);
 	});
+
+	describe('subscription sold at the till', () => {
+		const till = { userId: new ObjectId(), sessionId: 'till-session', userHasPosOptions: true };
+		const sellTo = (npub: string) =>
+			createOrder([{ product: TEST_SUBSCRIPTION_PRODUCT, quantity: 1 }], 'point-of-sale', {
+				locale: 'en',
+				user: till,
+				notifications: { paymentStatus: { npub } },
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			});
+
+		it('sells it to a second customer while the first sale is still pending', async () => {
+			await sellTo('npub1firstcustomer');
+			await sellTo('npub1secondcustomer');
+
+			expect(await collections.orders.countDocuments({ 'user.userId': till.userId })).toBe(2);
+		});
+
+		it('sells it to a second customer once the first one holds the subscription', async () => {
+			await createPaidSubscription(TEST_SUBSCRIPTION_PRODUCT._id, { npub: 'npub1firstcustomer' });
+			await collections.paidSubscriptions.updateOne(
+				{},
+				{ $set: { 'user.userId': till.userId, paidUntil: new Date(Date.now() + 365 * 86400_000) } }
+			);
+
+			await sellTo('npub1secondcustomer');
+
+			expect(await collections.orders.countDocuments({ 'user.userId': till.userId })).toBe(1);
+		});
+
+		it('still refuses a second pending order for the same customer', async () => {
+			await sellTo('npub1firstcustomer');
+
+			await expect(sellTo('npub1firstcustomer')).rejects.toMatchObject({
+				status: 400,
+				body: {
+					message: `You already have a pending order for this product: ${TEST_SUBSCRIPTION_PRODUCT.name}`
+				}
+			});
+		});
+	});
 });
