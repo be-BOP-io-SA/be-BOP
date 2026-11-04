@@ -278,24 +278,26 @@ redirect URL to `https://<your-domain>/api/callback/<provider>`, where
 
 ```shell
 pnpm run build
-node --enable-source-maps build/index.js
+./start.sh
 ```
+
+`start.sh` is the universal launcher (shipped at the root of every release artifact). It wraps `node build/index.js` with the right flags, including the pre-import shim for the `ALLOW_ENV_OVERRIDE` feature when the shim is present. Always invoke be-BOP through `start.sh` from your supervisor (systemd ExecStart, pm2 start, etc.) — that way future releases can change their launch flags without requiring a supervisor-side update. Requires Node 20+ (or 18.20+) when the override feature is active.
 
 Behind a reverse proxy, add the headers described in
 [Reverse proxy](#reverse-proxy):
 
 ```shell
-ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 node build/index.js
+ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 ./start.sh
 ```
 
 You can also use [pm2](https://pm2.keymetrics.io/docs/usage/quick-start/) to
 manage the process and run it on multiple cores:
 
 ```shell
-NODE_OPTIONS=--enable-source-maps pm2 start --name bebop --update-env build/index.js
+pm2 start --name bebop --update-env ./start.sh
 
 # behind a reverse proxy
-NODE_OPTIONS=--enable-source-maps ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 pm2 start --name bebop --update-env build/index.js
+ADDRESS_HEADER=X-Forwarded-For XFF_DEPTH=1 pm2 start --name bebop --update-env ./start.sh
 ```
 
 ### Docker

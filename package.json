@@ -13,7 +13,7 @@
 		"lint": "eslint",
 		"prepare": "git config core.hooksPath .githooks || true",
 		"preview": "vite preview --port 5012",
-		"run-production": "node build/index.js",
+		"run-production": "./start.sh",
 		"test": "playwright test",
 		"test:unit": "vitest --no-threads"
 	},
