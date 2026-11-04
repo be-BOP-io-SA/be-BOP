@@ -695,6 +695,7 @@
 			"channelWeb": "Web",
 			"channelWebPos": "Web avec privilège PoS (/cart)",
 			"channelPosTouch": "PoS bar-restaurant (/pos/touch)",
+			"channelApi": "API publique (/api/v1)",
 			"requiredCode": "Code requis (facultatif)",
 			"promoCodePlaceholder": "Saisissez la chaîne du code promo",
 			"promoCodeTip": "Astuce : utilisez 8 caractères ou plus en mélangeant lettres, chiffres et caractères spéciaux (ex. SPRING_2026X4!) — les codes courts se devinent facilement par force brute.",
