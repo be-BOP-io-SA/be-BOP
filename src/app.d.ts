@@ -8,6 +8,7 @@ import type { LanguageKey } from '$lib/translations';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { Role } from '$lib/types/Role';
 import type { ObjectId } from 'mongodb';
+import type { AuthenticatedApiKey } from '$lib/types/ApiV1';
 
 declare global {
 	namespace App {
@@ -39,6 +40,8 @@ declare global {
 				id: string;
 			}>;
 			clientIp?: string;
+			/** Set by /api/v1 auth middleware when a valid API key is presented. */
+			apiKey?: AuthenticatedApiKey;
 			acceptAgeLimitation?: boolean;
 			language: LanguageKey;
 		}
