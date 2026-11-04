@@ -10,6 +10,7 @@ import type {
 	CreatePaymentResult,
 	CheckPaymentResult
 } from '../pp';
+import { configSchemaFor } from '../pp';
 import type { Order } from '$lib/types/Order';
 
 export default {
@@ -17,11 +18,14 @@ export default {
 
 	isEnabled: () => isSumupEnabled(),
 
-	configSchema: z.object({
-		apiKey: z.string().startsWith('sup_sk_'),
-		currency: z.enum(FIAT_CURRENCIES),
-		merchantCode: z.string().min(1)
-	}),
+	configSchema: configSchemaFor(
+		'sumup',
+		z.object({
+			apiKey: z.string().startsWith('sup_sk_'),
+			currency: z.enum(FIAT_CURRENCIES),
+			merchantCode: z.string().min(1)
+		})
+	),
 	secretConfigFields: ['apiKey'],
 
 	settlementCurrency: () => runtimeConfig.sumUp.currency,

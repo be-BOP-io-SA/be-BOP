@@ -8,6 +8,7 @@ import type {
 	CreatePaymentResult,
 	CheckPaymentResult
 } from '../pp';
+import { configSchemaFor } from '../pp';
 import type { Order } from '$lib/types/Order';
 
 /**
@@ -24,15 +25,18 @@ export default {
 
 	isEnabled: () => isBlinkConfigured(),
 
-	configSchema: z
-		.object({
-			apiKey: z.string().trim().default(''),
-			lnAddress: z.string().trim().default(''),
-			walletId: z.string().trim().default('')
-		})
-		.refine((v) => v.apiKey || v.lnAddress, {
-			message: 'Provide either a Lightning address or an API key'
-		}),
+	configSchema: configSchemaFor(
+		'blink',
+		z
+			.object({
+				apiKey: z.string().trim().default(''),
+				lnAddress: z.string().trim().default(''),
+				walletId: z.string().trim().default('')
+			})
+			.refine((v) => v.apiKey || v.lnAddress, {
+				message: 'Provide either a Lightning address or an API key'
+			})
+	),
 	secretConfigFields: ['apiKey'],
 
 	settlementCurrency: () => 'SAT',

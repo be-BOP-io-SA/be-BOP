@@ -15,6 +15,7 @@ import type {
 	CreatePaymentResult,
 	CheckPaymentResult
 } from '../pp';
+import { configSchemaFor } from '../pp';
 import type { Order } from '$lib/types/Order';
 
 export default {
@@ -22,12 +23,15 @@ export default {
 
 	isEnabled: () => isPaypalEnabled(),
 
-	configSchema: z.object({
-		clientId: z.string().min(1),
-		secret: z.string().min(1),
-		sandbox: z.boolean({ coerce: true }),
-		currency: z.enum(FIAT_CURRENCIES)
-	}),
+	configSchema: configSchemaFor(
+		'paypal',
+		z.object({
+			clientId: z.string().min(1),
+			secret: z.string().min(1),
+			sandbox: z.boolean({ coerce: true }),
+			currency: z.enum(FIAT_CURRENCIES)
+		})
+	),
 	secretConfigFields: ['secret'],
 
 	settlementCurrency: () => runtimeConfig.paypal.currency,

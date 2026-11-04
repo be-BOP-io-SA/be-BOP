@@ -9,6 +9,7 @@ import type {
 	CreatePaymentResult,
 	CheckPaymentResult
 } from '../pp';
+import { configSchemaFor } from '../pp';
 import type { Order } from '$lib/types/Order';
 
 // --- Taler API helpers (private to this module) ---
@@ -65,14 +66,17 @@ export default {
 
 	isEnabled: () => isTalerEnabled(),
 
-	configSchema: z.object({
-		backendUrl: z
-			.string()
-			.min(1)
-			.transform((v) => v.replace(/\/+$/, '')),
-		backendApiKey: z.string().min(1),
-		currency: z.enum(FIAT_CURRENCIES)
-	}),
+	configSchema: configSchemaFor(
+		'taler',
+		z.object({
+			backendUrl: z
+				.string()
+				.min(1)
+				.transform((v) => v.replace(/\/+$/, '')),
+			backendApiKey: z.string().min(1),
+			currency: z.enum(FIAT_CURRENCIES)
+		})
+	),
 	secretConfigFields: ['backendApiKey'],
 
 	settlementCurrency: () => runtimeConfig.taler.currency,

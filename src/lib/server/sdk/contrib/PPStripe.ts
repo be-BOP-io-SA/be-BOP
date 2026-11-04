@@ -15,6 +15,7 @@ import type {
 	CreatePaymentResult,
 	CheckPaymentResult
 } from '../pp';
+import { configSchemaFor } from '../pp';
 import type { Order } from '$lib/types/Order';
 
 export default {
@@ -26,11 +27,14 @@ export default {
 
 	isEnabled: () => isStripeEnabled(),
 
-	configSchema: z.object({
-		publicKey: z.string().startsWith('pk_'),
-		secretKey: z.string().startsWith('sk_'),
-		currency: z.enum(FIAT_CURRENCIES)
-	}),
+	configSchema: configSchemaFor(
+		'stripe',
+		z.object({
+			publicKey: z.string().startsWith('pk_'),
+			secretKey: z.string().startsWith('sk_'),
+			currency: z.enum(FIAT_CURRENCIES)
+		})
+	),
 	secretConfigFields: ['secretKey'],
 
 	settlementCurrency: () => runtimeConfig.stripe.currency,

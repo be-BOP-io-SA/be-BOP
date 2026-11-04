@@ -36,6 +36,7 @@ export function paymentConfigActions<K extends ConfigKey>(spec: {
 
 	return {
 		save: async function ({ request }: { request: Request }) {
+			// configSchemaFor checked this schema against the config of the processor's manifest key.
 			const data = schema().parse(Object.fromEntries(await request.formData())) as RuntimeConfig[K];
 
 			await collections.runtimeConfig.updateOne(

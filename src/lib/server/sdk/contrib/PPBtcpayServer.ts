@@ -12,6 +12,7 @@ import type {
 	CreatePaymentResult,
 	CheckPaymentResult
 } from '../pp';
+import { configSchemaFor } from '../pp';
 import type { Order } from '$lib/types/Order';
 
 export default {
@@ -19,17 +20,20 @@ export default {
 
 	isEnabled: () => isBtcpayServerConfigured(),
 
-	configSchema: z.object({
-		apiKey: z.string().min(1),
-		serverUrl: z
-			.string()
-			.url()
-			.refine((v) => v.startsWith('http://') || v.startsWith('https://'), {
-				message: 'BTCPay Server URL must specify the http or https protocol'
-			})
-			.transform((v) => v.replace(/\/\s*$/, '').trim()),
-		storeId: z.string().min(1).trim()
-	}),
+	configSchema: configSchemaFor(
+		'btcpay-server',
+		z.object({
+			apiKey: z.string().min(1),
+			serverUrl: z
+				.string()
+				.url()
+				.refine((v) => v.startsWith('http://') || v.startsWith('https://'), {
+					message: 'BTCPay Server URL must specify the http or https protocol'
+				})
+				.transform((v) => v.replace(/\/\s*$/, '').trim()),
+			storeId: z.string().min(1).trim()
+		})
+	),
 	secretConfigFields: ['apiKey'],
 
 	settlementCurrency: () => 'SAT',

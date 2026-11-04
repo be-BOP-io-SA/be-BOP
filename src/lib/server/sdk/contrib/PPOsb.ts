@@ -7,6 +7,7 @@ import type {
 	CreatePaymentResult,
 	CheckPaymentResult
 } from '../pp';
+import { configSchemaFor } from '../pp';
 import type { Order } from '$lib/types/Order';
 
 // --- OSB (PayZen/Lyra) REST V4 API helpers ---
@@ -76,11 +77,14 @@ export default {
 
 	isEnabled: () => isOsbEnabled(),
 
-	configSchema: z.object({
-		shopId: z.string().min(1),
-		password: z.string().min(1),
-		hmacKey: z.string().default('')
-	}),
+	configSchema: configSchemaFor(
+		'osb',
+		z.object({
+			shopId: z.string().min(1),
+			password: z.string().min(1),
+			hmacKey: z.string().default('')
+		})
+	),
 	secretConfigFields: ['password', 'hmacKey'],
 
 	settlementCurrency: () => 'XPF',

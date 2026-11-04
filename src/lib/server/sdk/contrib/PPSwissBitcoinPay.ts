@@ -15,6 +15,7 @@ import type {
 	CreatePaymentResult,
 	CheckPaymentResult
 } from '../pp';
+import { configSchemaFor } from '../pp';
 import type { Order } from '$lib/types/Order';
 
 export default {
@@ -22,7 +23,7 @@ export default {
 
 	isEnabled: () => isSwissBitcoinPayConfigured(),
 
-	configSchema: z.object({ apiKey: z.string().min(1) }),
+	configSchema: configSchemaFor('swiss-bitcoin-pay', z.object({ apiKey: z.string().min(1) })),
 	secretConfigFields: ['apiKey'],
 
 	settlementCurrency: () => 'SAT',

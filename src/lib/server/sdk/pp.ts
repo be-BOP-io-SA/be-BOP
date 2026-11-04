@@ -4,11 +4,36 @@ import type { Price, Order } from '$lib/types/Order';
 import type { SerializedPaymentPresentation } from '$lib/types/Order';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
-import { runtimeConfig } from '$lib/server/runtime-config';
-import { PROCESSORS } from '$lib/types/paymentProcessors';
+import { runtimeConfig, type ConfigKey, type RuntimeConfig } from '$lib/server/runtime-config';
+import { PROCESSORS, type PaymentProcessorSlug } from '$lib/types/paymentProcessors';
 import type { ZodType, ZodTypeDef } from 'zod';
 
 // --- Interfaces ---
+
+declare const checkedAgainstConfig: unique symbol;
+
+/** A settings schema checked against the config it saves into. Only `configSchemaFor` makes one. */
+export type ProcessorConfigSchema = ZodType<Record<string, unknown>, ZodTypeDef, unknown> & {
+	readonly [checkedAgainstConfig]: true;
+};
+
+type ConfiguredSlug = {
+	[S in PaymentProcessorSlug]: (typeof PROCESSORS)[S] extends { configKey: ConfigKey } ? S : never;
+}[PaymentProcessorSlug];
+
+type ConfigOf<S extends ConfiguredSlug> = (typeof PROCESSORS)[S] extends {
+	configKey: infer K extends ConfigKey;
+}
+	? RuntimeConfig[K]
+	: never;
+
+/** Ties a processor's settings schema to the config shape its manifest key saves into. */
+export function configSchemaFor<S extends ConfiguredSlug>(
+	processor: S,
+	schema: ZodType<ConfigOf<S>, ZodTypeDef, unknown>
+): ProcessorConfigSchema {
+	return schema as unknown as ProcessorConfigSchema;
+}
 
 export interface PaymentProcessorMeta {
 	processor: PaymentProcessor;
@@ -131,7 +156,7 @@ export interface PaymentProcessorDefinition {
 	 * Declaring it here is what lets one shared settings page serve every processor: the shape
 	 * of a provider's credentials is the provider's business, not the page's.
 	 */
-	configSchema?: ZodType<Record<string, unknown>, ZodTypeDef, unknown>;
+	configSchema?: ProcessorConfigSchema;
 
 	/**
 	 * The settings fields that give control of the provider account. A role that may only read
