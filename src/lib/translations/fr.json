@@ -2358,6 +2358,7 @@
 		"multiplePaymentMethodsHelpText": "Vous pourrez définir les méthodes de paiement à l'étape suivante.",
 		"noDeliveryInCountry": "La livraison n'est pas disponible dans votre pays pour certains articles de votre panier.",
 		"paymentGenerationFailed": "Le paiement n'a pas pu être initié. Veuillez réessayer dans quelques instants, ou contactez le vendeur de la boutique si le problème persiste.",
+		"paymentTimeoutOutOfRange": "Le délai de paiement doit être compris entre 1 et {max} minutes (7 jours).",
 		"note": {
 			"label": "Laissez un message au vendeur",
 			"title": "Note"

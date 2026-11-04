@@ -2358,6 +2358,7 @@
 		"multiplePaymentMethodsHelpText": "Puedes configurar métodos de pago en el siguiente paso.",
 		"noDeliveryInCountry": "La entrega no está disponible en tu país para algunos de los artículos de la lista de compras.",
 		"paymentGenerationFailed": "No pudimos iniciar el pago. Por favor, inténtalo de nuevo en unos instantes o contacta con la tienda si el problema persiste.",
+		"paymentTimeoutOutOfRange": "El plazo de pago debe estar entre 1 y {max} minutos (7 días).",
 		"note": {
 			"label": "Dejar una nota para el comerciante",
 			"title": "Nota"

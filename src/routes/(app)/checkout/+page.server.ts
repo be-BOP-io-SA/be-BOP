@@ -6,6 +6,7 @@ import {
 } from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
 import { error, fail, redirect } from '@sveltejs/kit';
+import { MAX_PAYMENT_TIMEOUT_MINUTES } from '$lib/types/Order';
 import { z } from 'zod';
 import {
 	createOrder,
@@ -552,15 +553,18 @@ export const actions = {
 					.number({ coerce: true })
 					.int()
 					.min(1)
-					.max(7 * 24 * 60)
+					.max(MAX_PAYMENT_TIMEOUT_MINUTES)
 					.optional()
 			})
-			.parse({
+			.safeParse({
 				// A long timeout freezes the crypto quote and holds stock and slots, so only the till sets it.
 				paymentTimeOut: locals.user?.hasPosOptions
 					? formData.get('paymentTimeOut') || undefined
 					: undefined
 			});
+		if (!desiredPayment.success) {
+			return fail(400, { paymentTimeoutOutOfRange: true });
+		}
 		const vatCountry =
 			shippingInfo?.shipping?.country ??
 			locals.countryCode ??
@@ -669,8 +673,8 @@ export const actions = {
 							})
 						},
 						...(physicalFullyPaid && { onLocation: physicalFullyPaid.onLocation }),
-						...(desiredPayment.paymentTimeOut && {
-							paymentTimeOut: desiredPayment.paymentTimeOut
+						...(desiredPayment.data.paymentTimeOut && {
+							paymentTimeOut: desiredPayment.data.paymentTimeOut
 						}),
 						session
 					}

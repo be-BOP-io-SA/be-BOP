@@ -14,7 +14,11 @@
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
-	import { MIN_SATOSHIS_FOR_BITCOIN_PAYMENT, type DiscountType } from '$lib/types/Order.js';
+	import {
+		MAX_PAYMENT_TIMEOUT_MINUTES,
+		MIN_SATOSHIS_FOR_BITCOIN_PAYMENT,
+		type DiscountType
+	} from '$lib/types/Order.js';
 	import { useI18n } from '$lib/i18n';
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
@@ -343,6 +347,11 @@
 					{t('checkout.paymentGenerationFailed')}
 				</div>
 			{/if}
+			{#if form?.paymentTimeoutOutOfRange}
+				<div class="alert-error">
+					{t('checkout.paymentTimeoutOutOfRange', { max: MAX_PAYMENT_TIMEOUT_MINUTES })}
+				</div>
+			{/if}
 			<section class="gap-4 flex flex-col sm:grid sm:grid-cols-6">
 				<h2 class="font-light text-2xl col-span-6">{t('checkout.shipmentInfo')}</h2>
 				{#if isDigital}
@@ -668,9 +677,15 @@
 								name="paymentTimeOut"
 								class="form-input"
 								min="1"
+								max={MAX_PAYMENT_TIMEOUT_MINUTES}
 								value={data.desiredPaymentTimeout}
 								disabled={!changePaymentTimeOut}
 								required={changePaymentTimeOut}
+								on:invalid={(event) =>
+									event.currentTarget.setCustomValidity(
+										t('checkout.paymentTimeoutOutOfRange', { max: MAX_PAYMENT_TIMEOUT_MINUTES })
+									)}
+								on:input={(event) => event.currentTarget.setCustomValidity('')}
 							/>
 						</div>
 					</label>
