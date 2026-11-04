@@ -79,6 +79,7 @@ describe('payment presentation', () => {
 
 			expect(serializePresentation(PPTaler, taler)).toEqual({
 				kind: 'qr',
+				qrLink: 'taler://pay/example',
 				headTags: [{ name: 'taler-support', content: 'taler://pay/example' }]
 			});
 		});

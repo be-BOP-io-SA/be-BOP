@@ -79,6 +79,8 @@ export default {
 
 	presentation: {
 		kind: 'qr',
+		// Tapping the QR opens the wallet installed on the same device.
+		qrLink: (payment) => payment.address ?? '',
 		// The Taler wallet extension picks the payment up from this tag alone.
 		headTags: (payment) =>
 			payment.address ? [{ name: 'taler-support', content: payment.address }] : []
