@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { collections, db } from '$lib/server/database.js';
 import { ObjectId } from 'mongodb';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
-import { assertPublicImportSource } from '$lib/server/backup-import-source';
+import { assertPublicImportSource, importedPictureType } from '$lib/server/backup-import-source';
 
 export function load({ url }) {
 	return {
@@ -191,7 +191,7 @@ async function handleImageImport(
 		allSuccess &&= await uploadFileToS3(
 			file.storage.original.url,
 			file.storage.original.key,
-			'image/webp'
+			importedPictureType
 		);
 
 		if (file.storage.formats) {
@@ -223,7 +223,7 @@ const IMPORTABLE_KEY_PREFIXES = ['pictures/', 'products/', 'tags/', 'galleries/'
 async function uploadFileToS3(
 	imageUrl: URL | RequestInfo | undefined,
 	s3Key: string,
-	contentType: string
+	contentType: string | ((bytes: Uint8Array) => Promise<string | undefined>)
 ) {
 	try {
 		if (
@@ -246,12 +246,19 @@ async function uploadFileToS3(
 
 		const arrayBuffer = await response.arrayBuffer();
 		const uint8ArrayBuffer = new Uint8Array(arrayBuffer);
+		const type =
+			typeof contentType === 'string' ? contentType : await contentType(uint8ArrayBuffer);
+
+		if (!type) {
+			console.error(`Refusing to import ${s3Key}: not a picture`);
+			return false;
+		}
 
 		const params = {
 			Bucket: runtimeConfig.s3.bucket,
 			Key: s3Key,
 			Body: uint8ArrayBuffer,
-			ContentType: contentType
+			ContentType: type
 		};
 
 		await getS3Client().send(new PutObjectCommand(params));

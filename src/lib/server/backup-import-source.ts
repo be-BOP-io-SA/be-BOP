@@ -2,6 +2,21 @@ import { lookup } from 'dns/promises';
 import { isIP } from 'net';
 import { isPrivateIp } from './webhook-url-guard';
 import { runtimeConfig } from './runtime-config';
+import sharp from 'sharp';
+import { pictureMime } from './picture';
+
+/**
+ * The type an imported original is served with, read from its bytes: the backup's own word is
+ * not trusted, and an SVG or anything that is not a raster picture is refused.
+ */
+export async function importedPictureType(bytes: Uint8Array): Promise<string | undefined> {
+	try {
+		const mime = pictureMime(await sharp(bytes).metadata());
+		return mime && mime.startsWith('image/') && mime !== 'image/svg+xml' ? mime : undefined;
+	} catch {
+		return undefined;
+	}
+}
 
 function isShopS3Endpoint(url: URL): boolean {
 	return [runtimeConfig.s3.endpointUrl, runtimeConfig.s3.publicEndpointUrl].some((endpoint) => {
