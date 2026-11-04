@@ -65,6 +65,7 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		const csv = [header, ...rows].join('\n');
 		return new Response(csv, {
 			headers: {
+				'cache-control': 'private',
 				'content-type': 'text/csv; charset=utf-8',
 				'content-disposition': `attachment; filename="price-history-${params.id}.csv"`
 			}
@@ -86,5 +87,9 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 				}
 		  };
 
-	return json(payload, { headers: { 'Cache-Control': 'public, max-age=60' } });
+	// Staff get figures and hidden products a shared cache must not hand to the next visitor.
+	const cacheControl =
+		isStaff || canReadAdminProduct ? 'private, max-age=60' : 'public, max-age=60';
+	// The body depends on who is signed in, so a shared cache keys its public copy on the cookie.
+	return json(payload, { headers: { 'Cache-Control': cacheControl, Vary: 'Cookie' } });
 };

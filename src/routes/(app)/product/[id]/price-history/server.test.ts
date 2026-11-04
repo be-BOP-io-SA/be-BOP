@@ -123,6 +123,29 @@ describe('GET /product/[id]/price-history', () => {
 		expect(res.headers.get('content-type')).toContain('application/json');
 	});
 
+	it('keeps staff responses out of shared caches, and the public one apart from them', async () => {
+		const productReader = {
+			roleId: 'catalog',
+			role: {
+				_id: 'catalog',
+				permissions: { read: ['/admin/product/*'], write: [], forbidden: [] }
+			}
+		};
+		findOne.mockResolvedValue(withVisibility({ eShop: false, retail: false }));
+		const hidden = await call({ user: productReader });
+		expect(hidden.headers.get('cache-control')).toBe('private, max-age=60');
+		const csv = await call({ csv: true, user: productReader });
+		expect(csv.headers.get('cache-control')).toBe('private');
+
+		findOne.mockResolvedValue(PUBLIC_PRODUCT);
+		const staff = await call({ user: { roleId: 'admin' } });
+		expect(staff.headers.get('cache-control')).toBe('private, max-age=60');
+
+		const visitor = await call();
+		expect(visitor.headers.get('cache-control')).toBe('public, max-age=60');
+		expect(visitor.headers.get('vary')).toBe('Cookie');
+	});
+
 	it('forbids CSV export for an anonymous visitor', async () => {
 		findOne.mockResolvedValue(PUBLIC_PRODUCT);
 		expect(await statusOf(call({ csv: true }))).toBe(403);
