@@ -1,4 +1,5 @@
 import { collections } from '$lib/server/database';
+import { incrementCounter } from '$lib/server/runtime-config';
 import { error, fail } from '@sveltejs/kit';
 import { userQuery } from '$lib/server/user';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
@@ -71,17 +72,7 @@ function buildUserIdentifier(data: { email?: string; npub?: string }): UserIdent
 
 // Generate bulk subscription numbers (single DB call)
 async function generateBulkSubscriptionNumbers(count: number): Promise<number> {
-	const res = await collections.runtimeConfig.findOneAndUpdate(
-		{ _id: 'subscriptionNumber' },
-		{ $inc: { data: count as never } },
-		{ upsert: true, returnDocument: 'after' }
-	);
-
-	if (!res.value) {
-		throw new Error('Failed to increment subscription number');
-	}
-
-	return (res.value.data as number) - count + 1;
+	return (await incrementCounter('subscriptionNumber', { by: count })) - count + 1;
 }
 
 // Create subscription objects
