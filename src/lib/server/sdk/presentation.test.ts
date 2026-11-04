@@ -6,6 +6,7 @@ import PPBitcoind from './contrib/PPBitcoind';
 import PPPhoenixd from './contrib/PPPhoenixd';
 import PPTaler from './contrib/PPTaler';
 import PPOsb from './contrib/PPOsb';
+import PPStripe from './contrib/PPStripe';
 import { exchangeRate } from '$lib/stores/exchangeRate';
 import { SATOSHIS_PER_BTC } from '$lib/types/Currency';
 import type { Order, Price } from '$lib/types/Order';
@@ -80,6 +81,27 @@ describe('payment presentation', () => {
 				kind: 'qr',
 				headTags: [{ name: 'taler-support', content: 'taler://pay/example' }]
 			});
+		});
+
+		it('shows nothing for a till payment collected through a card processor', () => {
+			const tapToPay = {
+				method: 'point-of-sale',
+				processor: 'stripe',
+				price: { amount: 12, currency: 'EUR' }
+			} as Order['payments'][number];
+
+			expect(serializePresentation(PPStripe, tapToPay)).toBeUndefined();
+		});
+
+		it('shows the card QR once the processor gave the payment an address', () => {
+			const card = {
+				method: 'card',
+				processor: 'stripe',
+				address: 'https://checkout.stripe.com/c/pay/example',
+				price: { amount: 12, currency: 'EUR' }
+			} as Order['payments'][number];
+
+			expect(serializePresentation(PPStripe, card)).toEqual({ kind: 'qr' });
 		});
 
 		it('carries no function across to the client', () => {

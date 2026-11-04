@@ -108,6 +108,11 @@ export function serializePresentation(
 
 	const { kind, qrLink, headTags } = pp.presentation;
 
+	// A QR or a redirect carries the address; a till payment taken by tap-to-pay has none.
+	if ((kind === 'qr' || kind === 'redirect') && !payment.address) {
+		return undefined;
+	}
+
 	return {
 		kind,
 		...(qrLink && { qrLink: qrLink(payment) }),
