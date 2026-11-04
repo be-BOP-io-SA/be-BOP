@@ -2265,7 +2265,20 @@
 		"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})",
 		"error": {
 			"BOOKING_SAME_DAY_DISABLED": "Boekingen voor vandaag zijn niet beschikbaar voor dit product.",
-			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Boekingen voor vandaag zijn niet meer mogelijk na {maxHour}."
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Boekingen voor vandaag zijn niet meer mogelijk na {maxHour}.",
+			"NOT_FOR_SALE": "Dit product kan niet aan het winkelmandje worden toegevoegd.",
+			"NOT_PWYW": "U kunt de prijs van dit product niet zelf kiezen.",
+			"BOOKING_INFO_REQUIRED": "Kies eerst een tijd en duur voor de boeking.",
+			"MAX_PRICE_EXCEEDED": "De prijs mag niet hoger zijn dan {max} {currency}.",
+			"SUBSCRIPTION_CUSTOM_PRICE": "U kunt de prijs van een abonnement niet zelf kiezen.",
+			"NOT_PREORDER": "Dit product is nog niet beschikbaar en kan niet worden voorbesteld.",
+			"MAX_ITEMS_REACHED": "Uw winkelmandje heeft de maximale grootte bereikt. Verwijder artikelen om er meer toe te voegen.",
+			"OUT_OF_STOCK": "Dit product is niet op voorraad.",
+			"STANDALONE_QTY_ONE": "U kunt maar één exemplaar van dit product bestellen.",
+			"VARIATION_INVALID": "Kies een van de opties die voor dit product worden aangeboden.",
+			"MAX_PER_ORDER": "U kunt maximaal {max} exemplaren van dit product bestellen.",
+			"INVALID_QUANTITY": "Voer een geldige hoeveelheid in.",
+			"INVALID_PRICE": "Voer een geldige prijs in."
 		}
 	},
 	"cartFromUrl": {

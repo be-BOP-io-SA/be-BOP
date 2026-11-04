@@ -2265,7 +2265,20 @@
 		"maxQuantityReached": "Quantità massima per ordine raggiunta ({max})",
 		"error": {
 			"BOOKING_SAME_DAY_DISABLED": "Le prenotazioni per oggi non sono disponibili per questo prodotto.",
-			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Le prenotazioni per oggi non sono più possibili dopo le {maxHour}."
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Le prenotazioni per oggi non sono più possibili dopo le {maxHour}.",
+			"NOT_FOR_SALE": "Questo prodotto non può essere aggiunto al carrello.",
+			"NOT_PWYW": "Non puoi scegliere il prezzo di questo prodotto.",
+			"BOOKING_INFO_REQUIRED": "Scegli prima un orario e una durata di prenotazione.",
+			"MAX_PRICE_EXCEEDED": "Il prezzo non può superare {max} {currency}.",
+			"SUBSCRIPTION_CUSTOM_PRICE": "Non puoi scegliere il prezzo di un abbonamento.",
+			"NOT_PREORDER": "Questo prodotto non è ancora disponibile e non può essere preordinato.",
+			"MAX_ITEMS_REACHED": "Il tuo carrello ha raggiunto la dimensione massima. Per aggiungere altri articoli, rimuovine alcuni dal carrello.",
+			"OUT_OF_STOCK": "Questo prodotto è esaurito.",
+			"STANDALONE_QTY_ONE": "Puoi ordinare un solo esemplare di questo prodotto.",
+			"VARIATION_INVALID": "Scegli una delle opzioni proposte per questo prodotto.",
+			"MAX_PER_ORDER": "Puoi ordinare al massimo {max} esemplari di questo prodotto.",
+			"INVALID_QUANTITY": "Inserisci una quantità valida.",
+			"INVALID_PRICE": "Inserisci un prezzo valido."
 		}
 	},
 	"cartFromUrl": {
