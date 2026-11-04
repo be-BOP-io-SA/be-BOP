@@ -32,12 +32,15 @@ const PLAIN_TAGS = new Set([
 /**
  * A template that mails a login credential is only safe if the link can go nowhere but to
  * the placeholder: no remote resource (image, style, frame, script) and no other URL that
- * the credential could be copied into. Anything outside plain text and links is refused.
+ * the credential could be copied into. Anything outside plain text and links is refused, and
+ * the placeholder may only appear as the whole href of a link.
  */
 export function isSafeCredentialTemplate(html: string, linkPlaceholder: string): boolean {
 	if (!html.includes(linkPlaceholder)) {
 		return false;
 	}
+
+	let placeholderHrefs = 0;
 
 	for (const [, closing, name, attributes] of html.matchAll(/<(\/?)([a-zA-Z][\w:-]*)([^>]*)>/g)) {
 		if (!PLAIN_TAGS.has(name.toLowerCase())) {
@@ -57,8 +60,11 @@ export function isSafeCredentialTemplate(html: string, linkPlaceholder: string):
 			if (!(attributeName === 'href' && name.toLowerCase() === 'a' && value === linkPlaceholder)) {
 				return false;
 			}
+			placeholderHrefs++;
 		}
 	}
 
-	return true;
+	// Variables are substituted case-insensitively, so any other spelling also carries the link.
+	const placeholderCount = html.toLowerCase().split(linkPlaceholder.toLowerCase()).length - 1;
+	return placeholderCount === placeholderHrefs;
 }

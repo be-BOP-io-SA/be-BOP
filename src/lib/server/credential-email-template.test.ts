@@ -33,7 +33,13 @@ describe('isSafeCredentialTemplate', () => {
 		['a style can fetch a URL', `<a href="${link}" style="background:url(//evil.test)">go</a>`],
 		['an event handler is set', `<a href="${link}" onclick="x()">go</a>`],
 		['the tag is upper-cased', `<a href="${link}">go</a><IMG SRC="https://evil.test/p.png">`],
-		['quotes are left out', `<a href=https://evil.test/${link}>go</a>`]
+		['quotes are left out', `<a href=https://evil.test/${link}>go</a>`],
+		['the link is copied into a plain-text URL', `Reset here: https://evil.test/?t=${link}`],
+		[
+			'a plain-text URL carries the link next to the real one',
+			`<p>https://evil.test/?t=${link}</p><a href="${link}">go</a>`
+		],
+		['the placeholder is written in another case', `<a href="${link}">go</a> ${link.toUpperCase()}`]
 	])('refuses a template where %s', (_, html) => {
 		expect(isSafeCredentialTemplate(html, link)).toBe(false);
 	});
