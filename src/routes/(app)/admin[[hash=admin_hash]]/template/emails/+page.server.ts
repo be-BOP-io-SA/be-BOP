@@ -2,12 +2,11 @@ import { collections } from '$lib/server/database.js';
 import { defaultConfig, runtimeConfig, type EmailTemplateKey } from '$lib/server/runtime-config';
 import { typedKeys } from '$lib/utils/typedKeys.js';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
+import { CREDENTIAL_TEMPLATE_LINKS } from '$lib/server/credential-email-template';
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
-// These templates carry a login credential (reset or session link): whoever edits one can read it
-// in the /admin/email log or through a remote image, and so takes over the account it is sent to.
-const CREDENTIAL_TEMPLATE_KEYS: EmailTemplateKey[] = ['passwordReset', 'temporarySessionRequest'];
+const CREDENTIAL_TEMPLATE_KEYS: EmailTemplateKey[] = typedKeys(CREDENTIAL_TEMPLATE_LINKS);
 
 export async function load({ locals }) {
 	return {
