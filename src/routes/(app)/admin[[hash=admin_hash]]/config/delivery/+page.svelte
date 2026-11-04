@@ -21,7 +21,8 @@
 		vatProfiles: data.vatProfiles,
 		bebopCountry: data.vatCountry,
 		userCountry: data.vatCountry,
-		vatSingleCountry: true
+		vatSingleCountry: true,
+		vatExempted: data.vatExempted
 	});
 </script>
 

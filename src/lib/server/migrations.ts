@@ -16,6 +16,10 @@ import {
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
 import { defaultLanguageText } from './i18n-defaults';
 import { languages, type LanguageKey } from '$lib/translations';
+import {
+	ensureApiOrderLabel,
+	ensureCatalogIntegrityLabel
+} from './api/v1/orders/ensureCatalogIntegrityLabel';
 
 // An upsert rather than find-then-insert: every instance seeds at start-up, and two starting
 // together on an empty database would otherwise both insert and one would hit a duplicate key.
@@ -1052,6 +1056,40 @@ export const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('68b9a4c17d2f4e0a3c5b1d90'),
+		name: 'Seed the invoice number counter from the invoices already issued',
+		run: async (session: ClientSession) => {
+			// Invoice numbers used to be derived by reading the highest one already stored (#2743).
+			// The counter has to start past that, or the first invoice issued after this migration
+			// would reuse a number the shop has already given out.
+			const highest = await collections.orders
+				.aggregate<{ payments: Array<{ invoice?: { number: number } }> }>(
+					[
+						{ $match: { 'payments.invoice.number': { $exists: true } } },
+						{ $sort: { 'payments.invoice.number': -1 } },
+						{ $limit: 1 },
+						{ $project: { 'payments.invoice.number': 1 } }
+					],
+					{ session }
+				)
+				.next();
+
+			const highestNumber = Math.max(
+				0,
+				...(highest?.payments ?? []).map((payment) => payment.invoice?.number ?? 0)
+			);
+
+			await collections.runtimeConfig.updateOne(
+				{ _id: 'invoiceNumber' },
+				{
+					$set: { data: highestNumber as never, updatedAt: new Date() },
+					$setOnInsert: { createdAt: new Date() }
+				},
+				{ upsert: true, session }
+			);
+		}
 	}
 ];
 
@@ -1083,6 +1121,10 @@ export async function runMigrations() {
 	 */
 	await ensureDefaultSearchlist();
 	await ensureSearchSearchlist();
+	// Same idea for the labels the API puts on orders: a shop should see them in its label list
+	// before the first integration sale, not because of it.
+	await ensureApiOrderLabel();
+	await ensureCatalogIntegrityLabel();
 
 	const lock = await Lock.tryAcquire('migrations');
 	if (!lock) {
