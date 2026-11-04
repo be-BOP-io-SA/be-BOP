@@ -1351,7 +1351,26 @@
 			"setCheckoutAdditionalFields": "Imposta campi aggiuntivi per il checkout",
 			"defaultSubscriptionDuration": "Durata predefinita dell'abbonamento",
 			"subscriptionDurationHint": "Usato per i prodotti in abbonamento impostati su \"Predefinito (a livello di negozio)\" e per gli snapshot legacy.",
-			"analyticsScriptPlaceholder": "script Plausible"
+			"analyticsScriptPlaceholder": "script Plausible",
+			"orderEmailRecipientsTitle": "Quali e-mail d’ordine vengono inviate",
+			"orderEmailRecipientsHint": "Una riga per ogni e-mail che be-BOP invia a proposito di un ordine. Deselezioni ciò che non vuole ricevere: «pagamento in attesa» e «pagamento scaduto» sono di solito le più rumorose.",
+			"orderEmailRecipientsOverridden": "L’opzione sopra le invia una copia di tutte le e-mail d’ordine, quindi questo elenco non ha effetto. La deselezioni per scegliere e-mail per e-mail.",
+			"orderEmailRecipientsEmail": "E-mail",
+			"orderEmailRecipientsToCustomer": "Al cliente",
+			"orderEmailRecipientsToShop": "In copia a lei",
+			"orderEmailLabel": {
+				"order": {
+					"payment": {
+						"paid": "È stato ricevuto un pagamento",
+						"expired": "Pagamento scaduto",
+						"canceled": "Pagamento annullato"
+					},
+					"paid": "L’ordine è interamente pagato"
+				}
+			},
+			"orderEmailPaymentPending": "Pagamento in attesa: {method}",
+			"orderEmailRecipientsNoShopEmail": "Per il negozio non è impostato alcun indirizzo di contatto, quindi non c’è nessuno a cui inviare copia. L’opzione sotto e la colonna della copia nell’elenco restano non disponibili finché non ne imposta uno in Impostazioni poi",
+			"orderEmailRecipientsNoShopEmailSuffix": " sezione."
 		},
 		"oauth": {
 			"title": "Provider OAuth",

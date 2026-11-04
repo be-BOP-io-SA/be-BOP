@@ -52,6 +52,9 @@ import { deepEquals } from '$lib/utils/deep-equals';
 import { deepClone } from '$lib/utils/deep-clone';
 import { defaultLanguageText } from './i18n-defaults';
 
+/** Who receives one order e-mail: the customer, and a copy for the shop. */
+export type OrderEmailRecipients = { customer: boolean; shop: boolean };
+
 /**
  * Shape of a seeded per-locale layout override. The link arrays are typed as optional so
  * the assignment in `/admin/layout/translations` (which spreads a Partial of the schema)
@@ -316,7 +319,10 @@ const baseConfig = {
 	hideShopBankOnTicket: false,
 	hideCmsZonesOnMobile: false,
 	mergeMobileMenus: true,
+	/** Master switch: on, the shop gets a copy of every order e-mail, whatever its own choices. */
 	copyOrderEmailsToAdmin: true,
+	/** Who gets each order e-mail, as saved by the shop. Defaults: see `orderEmailRecipientsFor`. */
+	orderEmailRecipients: {} as Partial<Record<`order.${string}`, OrderEmailRecipients>>,
 	/**
 	 * Test feature (no admin UI yet): list of npubs that will receive a Nostr DM
 	 * "Order #N was fully paid, total amount X.XX CCY" each time an order
@@ -719,6 +725,20 @@ function applyEnvOverrides(runtimeConfig: RuntimeConfig): void {
 
 export type EmailTemplateKey = keyof typeof defaultConfig.emailTemplates;
 
+export type OrderEmailTemplateKey = Extract<
+	EmailTemplateKey,
+	'order.paid' | `order.payment.${string}`
+>;
+
+/**
+ * The order e-mails a shop can switch on and off one by one.
+ *
+ * TODO: some of them must not be switched off — add a way to lock their value.
+ */
+export const ORDER_EMAIL_TEMPLATE_KEYS = typedKeys(defaultConfig.emailTemplates).filter(
+	(key): key is OrderEmailTemplateKey => key === 'order.paid' || key.startsWith('order.payment.')
+);
+
 export const runtimeConfigUpdatedAt: Partial<Record<ConfigKey, Date>> = {};
 
 exchangeRate.set(defaultConfig.exchangeRate);
@@ -974,6 +994,23 @@ export const runtimeConfig = structuredClone({
 	...baseConfig,
 	...overridesFromEnvVars(baseConfig)
 }) as RuntimeConfig;
+
+/**
+ * Who gets one order e-mail, as the shop chose it. An e-mail it never saved, such as one added
+ * since, goes to the customer, and to the shop as the master switch says.
+ */
+export function orderEmailRecipientsFor(key: OrderEmailTemplateKey): OrderEmailRecipients {
+	const stored = runtimeConfig.orderEmailRecipients[key];
+	return {
+		customer: stored?.customer ?? true,
+		shop: stored?.shop ?? runtimeConfig.copyOrderEmailsToAdmin
+	};
+}
+
+/** The master switch overrides the per-e-mail choice. */
+export function shopGetsOrderEmail(key: OrderEmailTemplateKey): boolean {
+	return runtimeConfig.copyOrderEmailsToAdmin || orderEmailRecipientsFor(key).shop;
+}
 
 export function resetConfig() {
 	if (!import.meta.env.VITEST) {

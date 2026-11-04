@@ -18,6 +18,9 @@
 	import Select from 'svelte-select';
 	import ProcessorSelector from '$lib/components/ProcessorSelector.svelte';
 	export let data;
+
+	// Drives the note under the per-e-mail list: ticked, that list has no effect.
+	let copyAllOrderEmails = data.copyOrderEmailsToAdmin && !!data.sellerIdentity?.contact.email;
 	export let form;
 
 	let vatExempted = data.vatExempted;
@@ -759,12 +762,23 @@
 		</p>
 	</label>
 
+	<!-- Above both controls it explains, because both are greyed out, and a greyed control with no
+	     reason given is a dead end. -->
+	{#if !data.sellerIdentity?.contact.email}
+		<p class="alert-warning text-sm">
+			{t('admin.config.orderEmailRecipientsNoShopEmail')}
+			<a href="{data.adminPrefix}/identity" class="body-hyperlink underline"
+				>{t('admin.config.identity')}</a
+			>{t('admin.config.orderEmailRecipientsNoShopEmailSuffix')}
+		</p>
+	{/if}
+
 	<label class="checkbox-label">
 		<input
 			type="checkbox"
 			name="copyOrderEmailsToAdmin"
 			class="form-checkbox"
-			checked={data.copyOrderEmailsToAdmin && !!data.sellerIdentity?.contact.email}
+			bind:checked={copyAllOrderEmails}
 			disabled={!data.sellerIdentity?.contact.email}
 		/>
 		{t('admin.config.copyOrderEmailsTo', {
@@ -774,6 +788,64 @@
 			>{t('admin.config.identity')}</a
 		>{t('admin.config.identitySectionSuffix')}
 	</label>
+
+	<!-- Not disabled when the copy-everything switch is on: a disabled fieldset submits nothing, and
+	     saving would quietly empty the list. Only the sentence below changes. -->
+	<fieldset class="form-label" class:opacity-60={copyAllOrderEmails}>
+		<legend>{t('admin.config.orderEmailRecipientsTitle')}</legend>
+		<p class="text-sm text-gray-500">
+			{copyAllOrderEmails
+				? t('admin.config.orderEmailRecipientsOverridden')
+				: t('admin.config.orderEmailRecipientsHint')}
+		</p>
+
+		<div class="overflow-x-auto">
+			<table class="text-sm">
+				<thead>
+					<tr>
+						<th class="text-left font-medium py-2 pr-6">
+							{t('admin.config.orderEmailRecipientsEmail')}
+						</th>
+						<th class="font-medium py-2 px-4">{t('admin.config.orderEmailRecipientsToCustomer')}</th
+						>
+						<th class="font-medium py-2 px-4">{t('admin.config.orderEmailRecipientsToShop')}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each Object.entries(data.orderEmailRecipients) as [key, recipients]}
+						<tr>
+							<td class="py-1 pr-6">
+								{key.startsWith('order.payment.pending.')
+									? t('admin.config.orderEmailPaymentPending', {
+											method: t(
+												`checkout.paymentMethod.${key.slice('order.payment.pending.'.length)}`
+											)
+									  })
+									: t(`admin.config.orderEmailLabel.${key}`)}
+							</td>
+							<td class="py-1 px-4 text-center">
+								<input
+									type="checkbox"
+									name="customer:{key}"
+									class="form-checkbox"
+									checked={recipients.customer}
+								/>
+							</td>
+							<td class="py-1 px-4 text-center">
+								<input
+									type="checkbox"
+									name="shop:{key}"
+									class="form-checkbox"
+									checked={recipients.shop}
+									disabled={!data.sellerIdentity?.contact.email}
+								/>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	</fieldset>
 
 	<label class="checkbox-label">
 		<input

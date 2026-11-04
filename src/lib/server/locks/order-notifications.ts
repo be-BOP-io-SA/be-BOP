@@ -14,7 +14,13 @@ import { ORIGIN } from '$lib/server/env-config';
 import { Kind } from 'nostr-tools';
 import { toBitcoins } from '$lib/utils/toBitcoins';
 import { getUnixTime, subHours } from 'date-fns';
-import { refreshPromise, type EmailTemplateKey, runtimeConfig } from '../runtime-config';
+import {
+	orderEmailRecipientsFor,
+	refreshPromise,
+	runtimeConfig,
+	shopGetsOrderEmail,
+	type OrderEmailTemplateKey
+} from '../runtime-config';
 import { refreshAvailableStockInDb } from '../product';
 import { rateLimit } from '../rateLimit';
 import { isOrderFullyPaid } from '../orders';
@@ -179,7 +185,7 @@ async function handleOrderNotification(order: Order): Promise<void> {
 					);
 				}
 				// #region emailNotification
-				let templateKey: EmailTemplateKey | null = null;
+				let templateKey: OrderEmailTemplateKey | null = null;
 				switch (payment.status) {
 					case 'canceled':
 						templateKey = 'order.payment.canceled';
@@ -251,19 +257,17 @@ async function handleOrderNotification(order: Order): Promise<void> {
 						// Instructions snapshotted on the payment, for the pending.custom template.
 						customPaymentInstructions: payment.customPaymentMethod?.instructions ?? ''
 					};
-					if (email) {
+					// The shop still gets its copy of an e-mail the customer is not sent.
+					const shopEmail = runtimeConfig.sellerIdentity?.contact.email;
+					const copyToShop = !!shopEmail && shopGetsOrderEmail(templateKey);
+
+					if (email && orderEmailRecipientsFor(templateKey).customer) {
 						await queueEmail(email, templateKey, vars, {
 							session,
-							...(!!runtimeConfig.sellerIdentity?.contact.email &&
-								runtimeConfig.copyOrderEmailsToAdmin && {
-									bcc: runtimeConfig.sellerIdentity?.contact.email
-								})
+							...(copyToShop && { bcc: shopEmail })
 						});
-					} else if (
-						runtimeConfig.sellerIdentity?.contact.email &&
-						runtimeConfig.copyOrderEmailsToAdmin
-					) {
-						await queueEmail(runtimeConfig.sellerIdentity?.contact.email, templateKey, vars, {
+					} else if (copyToShop) {
+						await queueEmail(shopEmail, templateKey, vars, {
 							session
 						});
 					}
