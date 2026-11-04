@@ -2,6 +2,7 @@ import { runtimeConfig, runtimeConfigUpdatedAt } from '$lib/server/runtime-confi
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { getCookieConsent } from '$lib/server/cookies';
 import { extractAnalyticsHostnames } from '$lib/server/analytics-hostnames';
+import { availableContactModes } from '$lib/server/contact-modes';
 
 export async function load(event) {
 	const viewportWidth = (() => {
@@ -52,6 +53,7 @@ export async function load(event) {
 		viewportWidth,
 		contactModes: runtimeConfig.contactModes,
 		contactModesForceOption: runtimeConfig.contactModesForceOption,
+		availableContactModes: availableContactModes(),
 		hideFromSearchEngines: runtimeConfig.hideFromSearchEngines,
 		ageRestriction: runtimeConfig.ageRestriction,
 		bolt12Address: runtimeConfig.phoenixd.bolt12Address

@@ -2326,7 +2326,6 @@
 		"deliveryFeesEstimationTooltip": "Isto é uma estimativa, as taxas definitivas serão processadas na seleção do país de entrega.",
 		"differentBillingAddress": "A minha morada de envio e a minha morada de faturação são diferentes",
 		"digitalNoShippingNeeded": "Todos os produtos no seu carrinho são produtos digitais. Não precisa de fornecer nenhuma informação de envio.",
-		"invalidNpub": "Chave pública Nostr inválida",
 		"isProBilling": "Esta é uma encomenda profissional",
 		"multiplePaymentMethods": "Usar vários métodos de pagamento",
 		"multiplePaymentMethodsHelpText": "Pode definir os métodos de pagamento no próximo passo.",
@@ -2338,7 +2337,8 @@
 		},
 		"notifications": {
 			"email": "Email",
-			"message": "Por favor, preencha pelo menos um endereço de contacto para ser notificado sobre as novidades da sua encomenda.",
+			"emailOrNpub": "Email ou chave pública Nostr",
+			"message": "Por favor, preencha um endereço de contacto para ser notificado sobre as novidades da sua encomenda.",
 			"npub": "Chave pública Nostr",
 			"title": "Feed & Notificações"
 		},
@@ -2668,6 +2668,7 @@
 			"invalidEmail": "Endereço de email inválido",
 			"invalidNpub": "Endereço Nostr npub inválido",
 			"invalidContactAddress": "O seu endereço de contacto é inválido (preencha um endereço de email correto ou um npub Nostr)",
+			"missingContactAddress": "Por favor, preencha o seu endereço de contacto",
 			"invalidOrExpiredToken": "Token inválido ou expirado"
 		},
 		"authenticate": {

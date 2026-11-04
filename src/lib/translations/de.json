@@ -2326,7 +2326,6 @@
 		"deliveryFeesEstimationTooltip": "Dies ist eine Schätzung, die endgültigen Gebühren werden bei Auswahl des Lieferlandes berechnet.",
 		"differentBillingAddress": "Meine Lieferadresse und meine Rechnungsadresse sind unterschiedlich",
 		"digitalNoShippingNeeded": "Alle Produkte in Ihrem Warenkorb sind digitale Produkte. Sie müssen keine Versandinformationen angeben.",
-		"invalidNpub": "Ungültiger öffentlicher Nostr-Schlüssel",
 		"isProBilling": "Dies ist eine gewerbliche Bestellung",
 		"multiplePaymentMethods": "Mehrere Zahlungsmethoden verwenden",
 		"multiplePaymentMethodsHelpText": "Sie können Zahlungsmethoden im nächsten Schritt festlegen.",
@@ -2338,7 +2337,8 @@
 		},
 		"notifications": {
 			"email": "E-Mail",
-			"message": "Bitte geben Sie mindestens eine Kontaktadresse an, um über Neuigkeiten zu Ihrer Bestellung informiert zu werden.",
+			"emailOrNpub": "E-Mail oder öffentlicher Nostr-Schlüssel",
+			"message": "Bitte geben Sie eine Kontaktadresse an, um über Neuigkeiten zu Ihrer Bestellung informiert zu werden.",
 			"npub": "Öffentlicher Nostr-Schlüssel",
 			"title": "Feed & Benachrichtigungen"
 		},
@@ -2668,6 +2668,7 @@
 			"invalidEmail": "Ungültige E-Mail-Adresse",
 			"invalidNpub": "Ungültige Nostr-npub-Adresse",
 			"invalidContactAddress": "Ihre Kontaktadresse ist ungültig (geben Sie entweder eine korrekte E-Mail-Adresse oder einen Nostr-npub ein)",
+			"missingContactAddress": "Bitte geben Sie Ihre Kontaktadresse an",
 			"invalidOrExpiredToken": "Ungültiger oder abgelaufener Token"
 		},
 		"authenticate": {

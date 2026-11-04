@@ -13,13 +13,14 @@ import { collections } from './database';
 import { ClientSession, ObjectId } from 'mongodb';
 import { mapKeys } from '$lib/utils/mapKeys';
 
-export function isEmailConfigured() {
+export function isEmailConfigured(): boolean {
 	return (
-		(runtimeConfig.smtp.host &&
+		!!(
+			runtimeConfig.smtp.host &&
 			runtimeConfig.smtp.port &&
 			runtimeConfig.smtp.user &&
-			runtimeConfig.smtp.password) ||
-		runtimeConfig.smtp.fake
+			runtimeConfig.smtp.password
+		) || !!runtimeConfig.smtp.fake
 	);
 }
 
