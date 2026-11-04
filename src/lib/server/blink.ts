@@ -46,16 +46,20 @@ export function parseLnAddress(lnAddress: string): { username: string; domain: s
 }
 
 /**
- * The LNURL callback and LUD-21 verify URLs come from the Lightning-address server's answers and
- * are fetched by us, the verify one on every poll, so they must not reach into our network.
+ * The LNURL-pay metadata, callback and LUD-21 verify URLs are fetched by us, the verify one on
+ * every poll, and the address server picks the last two, so none may reach into our network.
  * A localhost address is a developer's own stack, which the same rule would make unusable.
  */
 async function assertLnurlTarget(rawUrl: string): Promise<void> {
 	const { domain } = parseLnAddress(runtimeConfig.blink.lnAddress);
-	if (domain.startsWith('localhost')) {
+	if (isLocalDomain(domain)) {
 		return;
 	}
 	await assertPublicWebhookTarget(rawUrl);
+}
+
+function isLocalDomain(domain: string): boolean {
+	return domain === 'localhost' || domain.startsWith('localhost:');
 }
 
 /**
@@ -64,7 +68,7 @@ async function assertLnurlTarget(rawUrl: string): Promise<void> {
  */
 export function graphqlEndpointForDomain(domain: string): string {
 	const host = domain.startsWith('api.') ? domain : `api.${domain}`;
-	const scheme = domain.startsWith('localhost') ? 'http' : 'https';
+	const scheme = isLocalDomain(domain) ? 'http' : 'https';
 	return `${scheme}://${host}/graphql`;
 }
 
@@ -318,13 +322,15 @@ async function sparkCreateInvoice(params: {
 	domain: string;
 	amountSat: number;
 }): Promise<BlinkCreatedInvoice> {
-	const scheme = params.domain.startsWith('localhost') ? 'http' : 'https';
+	const scheme = isLocalDomain(params.domain) ? 'http' : 'https';
 	const metadataUrl = `${scheme}://${params.domain}/.well-known/lnurlp/${encodeURIComponent(
 		params.username
 	)}`;
+	await assertLnurlTarget(metadataUrl);
 
 	const metaResp = await fetch(metadataUrl, {
 		headers: { 'user-agent': 'be-BOP' },
+		redirect: 'error',
 		signal: AbortSignal.timeout(BLINK_HTTP_TIMEOUT_MS)
 	});
 	if (!metaResp.ok) {
