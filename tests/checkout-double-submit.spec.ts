@@ -96,33 +96,21 @@ test.afterAll(async () => {
 	});
 });
 
-test('a second payment of a checked-out cart lands on the order already placed', async ({
+// One test, three posts: the shop allows 30 posts a minute per address and the suite runs close to it.
+test('payments of one cart, at once or late, all land on the one order placed', async ({
 	page
 }) => {
 	const cartId = await fillCart();
 	await page.goto('/checkout');
 	const ordersBefore = await ordersOfProduct();
 
-	const first = await pay(page, cartId);
-	const second = await pay(page, cartId);
+	const [first, racing] = await Promise.all([pay(page, cartId), pay(page, cartId)]);
+	const late = await pay(page, cartId);
 
 	expect(first.status).toBe(303);
 	expect(first.location).toMatch(/^\/order\/[^/?]+$/);
-	expect(second).toEqual(first);
-	expect(await ordersOfProduct()).toBe(ordersBefore + 1);
-	expect(await cartIdOnCheckoutPage(page)).toBe(cartId);
-});
-
-test('two payments of one cart at once both land on the one order placed', async ({ page }) => {
-	const cartId = await fillCart();
-	await page.goto('/checkout');
-	const ordersBefore = await ordersOfProduct();
-
-	const [first, second] = await Promise.all([pay(page, cartId), pay(page, cartId)]);
-
-	expect(first.status).toBe(303);
-	expect(first.location).toMatch(/^\/order\/[^/?]+$/);
-	expect(second).toEqual(first);
+	expect(racing).toEqual(first);
+	expect(late).toEqual(first);
 	expect(await ordersOfProduct()).toBe(ordersBefore + 1);
 	expect(await cartIdOnCheckoutPage(page)).toBe(cartId);
 });
