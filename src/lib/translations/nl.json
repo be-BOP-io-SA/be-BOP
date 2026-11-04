@@ -1901,6 +1901,7 @@
 			"confirmResetToDefault": "Weet u zeker dat u dit sjabloon wilt terugzetten naar de standaardwaarde?",
 			"resetToDefault": "Terugzetten naar standaard",
 			"resetForSafetyNotice": "Deze sjabloon is bij een update teruggezet naar de standaard: de inhoud kon de inloglink naar iemand anders dan de ontvanger sturen. Herschrijf hem indien nodig op basis van de vorige inhoud en behoud alleen tekst en de inloglink.",
+			"superAdminOnly": "Alleen de superbeheerder kan deze sjabloon bewerken: hij bevat een inloglink.",
 			"previousContent": "Vorige inhoud",
 			"dismissResetNotice": "Deze melding verbergen"
 		},

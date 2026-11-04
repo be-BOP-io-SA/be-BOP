@@ -3,17 +3,20 @@
 	import { useI18n } from '$lib/i18n';
 
 	export let data;
+	export let form;
 
 	const { t } = useI18n();
 
 	$: zippedTemplates = typedEntries(data.defaultTemplates).map(([key, template]) => {
+		const refused = form?.superAdminOnly && form.key === key ? form : undefined;
 		return {
 			key,
-			subject: data.templates[key]?.subject,
+			subject: refused ? refused.subject : data.templates[key]?.subject,
 			defaultSubject: template.subject,
-			html: data.templates[key]?.html,
+			html: refused ? refused.html : data.templates[key]?.html,
 			defaultHtml: template.html,
-			isDefault: data.templates[key]?.default
+			isDefault: data.templates[key]?.default,
+			superAdminOnly: !!refused || data.superAdminOnlyKeys.includes(key)
 		};
 	});
 </script>
@@ -52,10 +55,15 @@
 					<pre class="whitespace-pre-wrap text-sm">{data.resetTemplates[template.key].html ??
 							''}</pre>
 				</details>
-				<button type="submit" class="btn btn-black mt-2" formaction="?/dismissResetNotice"
-					>{t('admin.template.dismissResetNotice')}</button
-				>
+				{#if !template.superAdminOnly}
+					<button type="submit" class="btn btn-black mt-2" formaction="?/dismissResetNotice"
+						>{t('admin.template.dismissResetNotice')}</button
+					>
+				{/if}
 			</div>
+		{/if}
+		{#if template.superAdminOnly}
+			<p class="text-gray-600">{t('admin.template.superAdminOnly')}</p>
 		{/if}
 		<label class="form-label">
 			{t('admin.template.subject')}
@@ -65,12 +73,17 @@
 				placeholder={template.defaultSubject}
 				value={template.subject}
 				class="form-input"
+				readonly={template.superAdminOnly}
 			/>
 		</label>
 		<label class="form-label">
 			{t('admin.template.htmlBody')}
-			<textarea name="html" class="form-input" rows={5} placeholder={template.defaultHtml}
-				>{template.html}</textarea
+			<textarea
+				name="html"
+				class="form-input"
+				rows={5}
+				placeholder={template.defaultHtml}
+				readonly={template.superAdminOnly}>{template.html}</textarea
 			>
 		</label>
 		{#if template.isDefault}
@@ -83,8 +96,11 @@
 			</p>
 		{/if}
 		<div class="flex justify-start gap-2">
-			<button type="submit" class="btn btn-black" formaction="?/update"
-				>{t('admin.action.update')}</button
+			<button
+				type="submit"
+				class="btn btn-black"
+				formaction="?/update"
+				disabled={template.superAdminOnly}>{t('admin.action.update')}</button
 			>
 			<button
 				type="submit"
@@ -95,7 +111,8 @@
 						e.preventDefault();
 					}
 				}}
-				disabled={template.isDefault}>{t('admin.template.resetToDefault')}</button
+				disabled={template.isDefault || template.superAdminOnly}
+				>{t('admin.template.resetToDefault')}</button
 			>
 		</div>
 	</form>

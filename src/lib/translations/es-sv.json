@@ -1901,6 +1901,7 @@
 			"confirmResetToDefault": "¿Está seguro de que desea restablecer esta plantilla al valor predeterminado?",
 			"resetToDefault": "Restablecer valor predeterminado",
 			"resetForSafetyNotice": "Esta plantilla se restableció a la predeterminada durante una actualización: su contenido podía enviar su enlace de inicio de sesión a alguien distinto del destinatario. Reescríbala a partir del contenido anterior si es necesario, conservando solo texto y el enlace de inicio de sesión.",
+			"superAdminOnly": "Solo el superadministrador puede editar esta plantilla: contiene un enlace de inicio de sesión.",
 			"previousContent": "Contenido anterior",
 			"dismissResetNotice": "Ocultar este aviso"
 		},

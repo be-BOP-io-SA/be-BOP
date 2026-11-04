@@ -1901,6 +1901,7 @@
 			"confirmResetToDefault": "Tem certeza de que deseja redefinir este modelo para o padrão?",
 			"resetToDefault": "Redefinir para o padrão",
 			"resetForSafetyNotice": "Este modelo foi reposto para o padrão durante uma atualização: o seu conteúdo podia enviar a ligação de início de sessão a outra pessoa que não o destinatário. Reescreva-o a partir do conteúdo anterior, se necessário, mantendo apenas texto e a ligação de início de sessão.",
+			"superAdminOnly": "Apenas o super administrador pode editar este modelo: contém uma ligação de início de sessão.",
 			"previousContent": "Conteúdo anterior",
 			"dismissResetNotice": "Ocultar este aviso"
 		},

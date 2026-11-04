@@ -1901,6 +1901,7 @@
 			"confirmResetToDefault": "Sei sicuro di voler ripristinare questo modello al valore predefinito?",
 			"resetToDefault": "Ripristina predefinito",
 			"resetForSafetyNotice": "Questo modello è stato ripristinato al predefinito durante un aggiornamento: il suo contenuto poteva inviare il link di accesso a qualcuno diverso dal destinatario. Se necessario, riscrivilo partendo dal contenuto precedente, mantenendo solo testo e il link di accesso.",
+			"superAdminOnly": "Solo il super admin può modificare questo modello: contiene un link di accesso.",
 			"previousContent": "Contenuto precedente",
 			"dismissResetNotice": "Nascondi questo avviso"
 		},

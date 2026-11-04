@@ -2,18 +2,19 @@ import { collections } from '$lib/server/database.js';
 import { defaultConfig, runtimeConfig, type EmailTemplateKey } from '$lib/server/runtime-config';
 import { typedKeys } from '$lib/utils/typedKeys.js';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
 // These templates carry a login credential (reset or session link): whoever edits one can read it
 // in the /admin/email log or through a remote image, and so takes over the account it is sent to.
 const CREDENTIAL_TEMPLATE_KEYS: EmailTemplateKey[] = ['passwordReset', 'temporarySessionRequest'];
 
-export async function load() {
+export async function load({ locals }) {
 	return {
 		defaultTemplates: defaultConfig.emailTemplates,
 		templates: runtimeConfig.emailTemplates,
-		resetTemplates: runtimeConfig.resetEmailTemplates
+		resetTemplates: runtimeConfig.resetEmailTemplates,
+		superAdminOnlyKeys: locals.user?.roleId === SUPER_ADMIN_ROLE_ID ? [] : CREDENTIAL_TEMPLATE_KEYS
 	};
 }
 
@@ -33,7 +34,7 @@ export const actions = {
 			CREDENTIAL_TEMPLATE_KEYS.includes(parsed.key) &&
 			locals.user?.roleId !== SUPER_ADMIN_ROLE_ID
 		) {
-			throw error(403, 'Only Super Admin can edit this template');
+			return fail(403, { ...parsed, superAdminOnly: true });
 		}
 
 		if (!parsed.subject) {

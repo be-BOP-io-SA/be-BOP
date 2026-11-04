@@ -1901,6 +1901,7 @@
 			"confirmResetToDefault": "Are you sure you want to reset this template to the default?",
 			"resetToDefault": "Reset to default",
 			"resetForSafetyNotice": "This template was reset to the default during an update: its content could send its login link somewhere other than the recipient. Rewrite it from the previous content if needed, keeping only text and the login link.",
+			"superAdminOnly": "Only the super admin can edit this template: it carries a sign-in link.",
 			"previousContent": "Previous content",
 			"dismissResetNotice": "Dismiss this notice"
 		},
