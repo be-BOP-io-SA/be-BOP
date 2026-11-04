@@ -1102,7 +1102,12 @@
 			"previous": "Previous",
 			"next": "Next",
 			"orderLabelTitle": "Order Label",
-			"orderLabelIds": "Order Label Ids"
+			"orderLabelIds": "Order Label Ids",
+			"customFieldFilterLabel": "Custom checkout field",
+			"customFieldValueLabel": "Field value",
+			"customFieldValuePlaceholder": "search order by field value",
+			"addCustomFieldFilter": "Add a checkout field filter",
+			"removeCustomFieldFilter": "Remove this filter"
 		},
 		"layout": {
 			"title": "Layout",
