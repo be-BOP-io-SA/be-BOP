@@ -5,8 +5,6 @@
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import CheckoutFieldInput from '$lib/components/CheckoutFieldInput.svelte';
-	import { bech32 } from 'bech32';
-	import { typedValues } from '$lib/utils/typedValues';
 	import ProductType from '$lib/components/ProductType.svelte';
 	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
@@ -16,9 +14,10 @@
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import { MIN_SATOSHIS_FOR_BITCOIN_PAYMENT, type DiscountType } from '$lib/types/Order.js';
 	import { useI18n } from '$lib/i18n';
+	import NotificationAddressInput from '$lib/components/NotificationAddressInput.svelte';
+	import { contactModesOrEmail } from '$lib/types/ContactMode';
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
-	import { trimPrefix } from '$lib/utils/trimPrefix.js';
 	import { formatBookedDates } from '$lib/utils/formatBookedDates.js';
 
 	export let data;
@@ -67,44 +66,26 @@
 
 	type FeedKey = (typeof feedItems)[number]['key'];
 
-	const npubInputs: Record<FeedKey, HTMLInputElement | null> = {
-		paymentStatus: null
-		// productChanges: null,
-		// newsletter: null
+	// With no contact mode available, the customer still leaves an email the staff can use
+	const contactModes = contactModesOrEmail(data.availableContactModes);
+
+	// The email is preferred over the npub when the customer has both
+	const prefilledEmail = contactModes.includes('email')
+		? data.email || data.personalInfoConnected?.email || ''
+		: '';
+	const prefilledNpub = contactModes.includes('nostr')
+		? data.npub || data.personalInfoConnected?.npub || ''
+		: '';
+	const addresses: Record<FeedKey, string> = {
+		paymentStatus: data.hasPosOptions ? '' : prefilledEmail || prefilledNpub
 	};
 
-	const emails: Record<FeedKey, string> = {
-		paymentStatus: data.hasPosOptions ? '' : data.email || data.personalInfoConnected?.email || ''
-	};
-
-	const npubs: Record<FeedKey, string> = {
-		paymentStatus: data.hasPosOptions ? '' : data.npub || data.personalInfoConnected?.npub || ''
-	};
-
-	function checkForm(event: SubmitEvent) {
+	function checkForm() {
 		submitting = true;
-		for (const input of typedValues(npubInputs)) {
-			if (!input) {
-				continue;
-			}
-
-			input.value = trimPrefix(input.value.trim(), 'nostr:');
-			if (
-				input.value &&
-				(!input.value.startsWith('npub1') || bech32.decodeUnsafe(input.value)?.prefix !== 'npub')
-			) {
-				input.setCustomValidity(t('checkout.invalidNpub'));
-				input.reportValidity();
-
-				event.preventDefault();
-				// Validation failed → the form is NOT being submitted, re-enable the button.
-				submitting = false;
-				return;
-			}
-		}
-		// Validation passed → the browser is submitting to the server now; keep `submitting`
-		// true so the "Payer" button stays disabled until the server response triggers a
-		// navigation (success) or a re-render with `form?.paymentGenerationFailed` (failure).
+		// The browser only fires `submit` once every field is valid, so it is submitting to the
+		// server now; keep `submitting` true so the "Payer" button stays disabled until the server
+		// response triggers a navigation (success) or a re-render with
+		// `form?.paymentGenerationFailed` (failure).
 	}
 
 	// The selected option value: a plain PaymentMethod, or `custom:<id>` for a custom method.
@@ -689,41 +670,12 @@
 							{label}
 						</div>
 						<div class="p-4 flex flex-col gap-3">
-							{#if (data.contactModesForceOption || data.emailsEnabled) && data.contactModes.includes('email')}
-								<label class="form-label">
-									{t('checkout.notifications.email')}
-									<input
-										type="email"
-										class="form-input"
-										autocomplete="email"
-										name="{key}Email"
-										bind:value={emails[key]}
-										required={key === 'paymentStatus' &&
-											!data.hasPosOptions &&
-											(!npubs[key] || !data.contactModes.includes('nostr'))}
-									/>
-								</label>
-							{/if}
-
-							{#if data.contactModes.includes('nostr')}
-								<label class="form-label">
-									{t('checkout.notifications.npub')}
-									<input
-										type="text"
-										class="form-input"
-										bind:this={npubInputs[key]}
-										bind:value={npubs[key]}
-										pattern="^(?!nsec).*"
-										title={t('login.nsecBlockTitle')}
-										name="{key}NPUB"
-										placeholder="npub1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-										required={key === 'paymentStatus' &&
-											(!emails[key] || !data.contactModes.includes('email')) &&
-											!data.hasPosOptions}
-										on:change={(ev) => ev.currentTarget.setCustomValidity('')}
-									/>
-								</label>
-							{/if}
+							<NotificationAddressInput
+								modes={contactModes}
+								name="{key}Address"
+								bind:value={addresses[key]}
+								required={key === 'paymentStatus' && !data.hasPosOptions}
+							/>
 						</div>
 						{#if data.displayNewsletterCommercialProspection}
 							<div class="p-4 flex flex-col gap-3">

@@ -3,6 +3,7 @@ import { collections } from '$lib/server/database';
 import { queueEmail } from '$lib/server/email';
 import { ORIGIN } from '$lib/server/env-config';
 import { validateEmailOrNpub } from '$lib/server/nostr';
+import { availableContactModes } from '$lib/server/contact-modes';
 import {
 	addOrderPayment,
 	notifySuperAdminPaymentFailure,
@@ -180,7 +181,7 @@ export const actions = {
 		}
 
 		const formData = await request.formData();
-		const addressResult = validateEmailOrNpub(formData.get('address'));
+		const addressResult = validateEmailOrNpub(formData.get('address'), availableContactModes());
 		if ('error' in addressResult) {
 			return fail(400, { error: addressResult.error });
 		}
@@ -198,7 +199,7 @@ export const actions = {
 			throw error(404, 'Payment not found');
 		}
 
-		if (address.startsWith('npub')) {
+		if (addressResult.kind === 'npub') {
 			await collections.nostrNotifications.insertOne({
 				_id: new ObjectId(),
 				createdAt: new Date(),

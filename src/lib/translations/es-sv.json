@@ -2326,7 +2326,6 @@
 		"deliveryFeesEstimationTooltip": "Esta es una estimación, las tarifas definitivas se procesarán al seleccionar el país de entrega.",
 		"differentBillingAddress": "La dirección de envío y facturación son diferentes",
 		"digitalNoShippingNeeded": "Todos los productos en la lista de compras son digitales. No necesitas proporcionar información de envío.",
-		"invalidNpub": "Clave pública de Nostr inválida",
 		"isProBilling": "Este es un pedido profesional",
 		"multiplePaymentMethods": "Usar varios métodos de pago",
 		"multiplePaymentMethodsHelpText": "Puedes configurar métodos de pago en el siguiente paso.",
@@ -2338,7 +2337,8 @@
 		},
 		"notifications": {
 			"email": "Correo electrónico",
-			"message": "Por favor ingrese al menos una dirección de contacto para recibir notificaciones de tu pedido.",
+			"emailOrNpub": "Correo electrónico o clave pública de Nostr",
+			"message": "Por favor ingrese una dirección de contacto para recibir notificaciones de tu pedido.",
 			"npub": "Clave pública de Nostr",
 			"title": "Feed y Notificaciones"
 		},
@@ -2668,6 +2668,7 @@
 			"invalidEmail": "Dirección de correo electrónico inválida",
 			"invalidNpub": "Dirección Nostr npub inválida",
 			"invalidContactAddress": "Su dirección de contacto es inválida (ingrese una dirección de correo electrónico correcta o un npub de Nostr)",
+			"missingContactAddress": "Por favor ingrese su dirección de contacto",
 			"invalidOrExpiredToken": "Token inválido o expirado"
 		},
 		"authenticate": {
