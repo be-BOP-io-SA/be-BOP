@@ -24,7 +24,11 @@
 	export let data;
 	// `form` carries action results from this page's own actions AND from staff actions
 	// posted to /admin/order/[id] or /pos/order/[id] via `use:enhance` in PaymentForm.
-	export let form: { success?: boolean; paymentGenerationFailed?: boolean } | null = null;
+	export let form: {
+		success?: boolean;
+		paymentGenerationFailed?: boolean;
+		discountTiedToPaymentMethod?: boolean;
+	} | null = null;
 
 	let count = 0;
 
@@ -143,6 +147,11 @@
 			{#if form?.paymentGenerationFailed}
 				<div class="alert-error">
 					{t('checkout.paymentGenerationFailed')}
+				</div>
+			{/if}
+			{#if form?.discountTiedToPaymentMethod}
+				<div class="alert-error">
+					{t('order.discountTiedToPaymentMethod')}
 				</div>
 			{/if}
 

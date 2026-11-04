@@ -77,10 +77,7 @@ export const actions = {
 				appliedDiscount?.paymentMethods?.length &&
 				!appliedDiscount.paymentMethods.includes(parsed.method)
 			) {
-				throw error(
-					400,
-					'This order was discounted for its current payment method. Place a new order to pay another way.'
-				);
+				return fail(400, { discountTiedToPaymentMethod: true });
 			}
 		}
 

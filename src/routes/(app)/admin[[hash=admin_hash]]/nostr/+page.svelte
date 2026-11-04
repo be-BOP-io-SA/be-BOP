@@ -88,7 +88,7 @@
 				name="privateKey"
 				disabled={writeNsecDisabled}
 				required
-				placeholder={data.nostrPrivateKeyIsSet ? 'Private key is set' : 'nsec1...'}
+				placeholder={data.nostrPrivateKeyIsSet ? t('admin.nostr.privateKeyIsSet') : 'nsec1...'}
 			/>
 			<button
 				type="button"
