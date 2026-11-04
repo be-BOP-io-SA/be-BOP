@@ -761,6 +761,8 @@
 			"channelWebPos": "Web mit Kassen-Berechtigung (/cart)",
 			"channelPosTouch": "Bar-Restaurant-Kasse (/pos/touch)",
 			"requiredCode": "Erforderlicher Code (optional)",
+			"acceptSubscriptionInCart": "Abonnement akzeptieren, wenn es sich im Warenkorb befindet, nicht nur wenn es bereits aktiv ist",
+			"acceptSubscriptionInCartHint": "Ermöglicht es einem neuen Kunden, das Abonnement abzuschließen und das rabattierte Produkt in derselben Bestellung zu kaufen, statt das Abonnement zu bestellen, angemeldet zurückzukommen und erneut zu bestellen.",
 			"promoCodePlaceholder": "Promocode-Zeichenfolge eingeben",
 			"promoCodeTip": "Tipp: Verwenden Sie 8+ Zeichen mit einer Mischung aus Buchstaben, Zahlen und Sonderzeichen (z. B. SPRING_2026X4!) — kurze Codes lassen sich leicht per Brute-Force erraten.",
 			"requiredDeliveryCountry": "Erforderliches Lieferland (optional)",
