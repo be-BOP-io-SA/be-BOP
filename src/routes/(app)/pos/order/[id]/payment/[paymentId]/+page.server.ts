@@ -6,7 +6,7 @@ import { adminPrefix } from '$lib/server/admin';
 import { isAllowedOnPage } from '$lib/types/Role';
 import type { Order } from '$lib/types/Order';
 
-function throwIfPosAccountCannotManageOrder(
+function throwIfPosAccountCannotManagePayment(
 	order: Order | null,
 	paymentId: string,
 	user?: App.Locals['user']
@@ -33,7 +33,7 @@ export const actions = {
 	confirm: async (event) => {
 		const { id, paymentId } = event.params;
 		const order = await collections.orders.findOne({ _id: id });
-		throwIfPosAccountCannotManageOrder(order, paymentId, event.locals.user);
+		throwIfPosAccountCannotManagePayment(order, paymentId, event.locals.user);
 		const confirm = adminOrderActions.confirm;
 		// @ts-expect-error different route but compatible
 		return confirm(event);
@@ -42,7 +42,7 @@ export const actions = {
 	cancel: async (event) => {
 		const { id, paymentId } = event.params;
 		const order = await collections.orders.findOne({ _id: id });
-		throwIfPosAccountCannotManageOrder(order, paymentId, event.locals.user);
+		throwIfPosAccountCannotManagePayment(order, paymentId, event.locals.user);
 
 		const redirectUrl = order?.orderTabSlug
 			? order.splitMode
@@ -56,7 +56,7 @@ export const actions = {
 	cancelTapToPay: async (event) => {
 		const { id, paymentId } = event.params;
 		const order = await collections.orders.findOne({ _id: id });
-		throwIfPosAccountCannotManageOrder(order, paymentId, event.locals.user);
+		throwIfPosAccountCannotManagePayment(order, paymentId, event.locals.user);
 		const cancelTapToPay = adminOrderActions.cancelTapToPay;
 		// @ts-expect-error different route but compatible
 		return cancelTapToPay(event);
@@ -65,7 +65,7 @@ export const actions = {
 	tapToPay: async (event) => {
 		const { id, paymentId } = event.params;
 		const order = await collections.orders.findOne({ _id: id });
-		throwIfPosAccountCannotManageOrder(order, paymentId, event.locals.user);
+		throwIfPosAccountCannotManagePayment(order, paymentId, event.locals.user);
 		const tapToPay = adminOrderActions.tapToPay;
 		// @ts-expect-error different route but compatible
 		return tapToPay(event);
@@ -74,7 +74,7 @@ export const actions = {
 	updatePaymentDetail: async (event) => {
 		const { id, paymentId } = event.params;
 		const order = await collections.orders.findOne({ _id: id });
-		throwIfPosAccountCannotManageOrder(order, paymentId, event.locals.user);
+		throwIfPosAccountCannotManagePayment(order, paymentId, event.locals.user);
 		const updatePaymentDetail = adminOrderActions.updatePaymentDetail;
 		// @ts-expect-error different route but compatible
 		return updatePaymentDetail(event);
