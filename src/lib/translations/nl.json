@@ -2177,6 +2177,21 @@
 			"notConfigured": "niet geconfigureerd",
 			"priority": "Prioriteit",
 			"systemPriority": "Systeemprioriteit"
+		},
+		"session": {
+			"expiry": {
+				"warning": {
+					"message": "Uw sessie eindigt over {countdown}",
+					"extend": "Verlengen",
+					"extendFailed": "De sessie kon niet worden verlengd. Sla uw werk op en log opnieuw in.",
+					"ignore": "Negeren",
+					"screenReader": "Uw sessie verloopt bijna. Gebruik de knop Verlengen om door te werken."
+				},
+				"expired": {
+					"message": "Uw sessie is verbroken. Niet-opgeslagen wijzigingen zullen niet worden vastgelegd, gelieve <0>opnieuw in te loggen</0>.",
+					"configHint": "Een langere sessieduur kan worden geconfigureerd bij het inloggen."
+				}
+			}
 		}
 	},
 	"ageWarning": {

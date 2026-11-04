@@ -11,6 +11,7 @@
 	import { adminLinks as adminLinksImported } from './adminLinks.js';
 	import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 	import { useI18n } from '$lib/i18n';
+	import SessionExpiryBanner from '$lib/components/SessionExpiryBanner.svelte';
 
 	export let data;
 
@@ -164,6 +165,15 @@
 		<slot />
 	</main>
 {:else}
+	<!-- Outside the scrolling main on purpose: a warning that scrolls away is a warning nobody
+	     sees, and the session dies with unsaved work on screen. -->
+	{#if data.expireUserAt}
+		<SessionExpiryBanner
+			expireUserAt={data.expireUserAt}
+			serverNow={data.serverNow}
+			adminPrefix={data.adminPrefix}
+		/>
+	{/if}
 	<div class="flex min-h-screen">
 		{#if sidebarOpen}
 			<button

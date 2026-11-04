@@ -2177,6 +2177,21 @@
 			"notConfigured": "not configured",
 			"priority": "Priority",
 			"systemPriority": "System priority"
+		},
+		"session": {
+			"expiry": {
+				"warning": {
+					"message": "Your session will end in {countdown}",
+					"extend": "Extend",
+					"extendFailed": "The session could not be extended. Save your work and log in again.",
+					"ignore": "Dismiss",
+					"screenReader": "Your session is about to expire. Use the Extend button to keep working."
+				},
+				"expired": {
+					"message": "Your session has been disconnected. Any unsaved changes will not be recorded, please <0>log in again</0>.",
+					"configHint": "A longer session duration can be configured at login."
+				}
+			}
 		}
 	},
 	"ageWarning": {
