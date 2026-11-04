@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 import { runtimeConfig } from './runtime-config';
-import { getProcessorsForMethod } from './sdk/pp';
+import { canTakeNewPayment, getProcessorsForMethod } from './sdk/pp';
 
 export const ALL_PAYMENT_METHODS = [
 	'card',
@@ -55,7 +55,7 @@ export const paymentMethods = (opts?: {
 						case 'lightning':
 						case 'taler':
 						case 'osb':
-							return getProcessorsForMethod(method).some((pp) => pp.isEnabled());
+							return getProcessorsForMethod(method).some(canTakeNewPayment);
 						case 'bank-transfer':
 							return runtimeConfig.sellerIdentity?.bank;
 						case 'custom':
