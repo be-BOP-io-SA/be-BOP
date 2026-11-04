@@ -27,6 +27,11 @@ function matchPath(path: string, pattern: string): boolean {
 	const patternParts = pattern.split('/');
 
 	for (let i = 0; i < Math.max(patternParts.length, parts.length); i++) {
+		// Only a trailing `*` reaches below a page, so a pattern that runs out first names another page.
+		if (patternParts[i] === undefined) {
+			return false;
+		}
+
 		if (patternParts[i] === '*') {
 			if (i === patternParts.length - 1) {
 				return true;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isRoleWithin, type Role } from './Role';
+import { isAllowedOnPage, isRoleWithin, type Role } from './Role';
 
 function role(permissions: Partial<Role['permissions']>, hasPosOptions?: boolean): Role {
 	return {
@@ -53,5 +53,29 @@ describe('isRoleWithin', () => {
 
 	it('rejects POS options the caller does not have', () => {
 		expect(isRoleWithin(role({}, true), role({}))).toBe(false);
+	});
+
+	it('compares a pattern without a trailing star to a longer forbidden path', () => {
+		const caller = role({ write: ['/admin/*'], forbidden: ['/admin/nostr/relays/*'] });
+		expect(isRoleWithin(role({ write: ['/admin'] }), caller)).toBe(true);
+		expect(isRoleWithin(role({ write: ['/admin/nostr'] }), caller)).toBe(true);
+		expect(isRoleWithin(role({ write: ['/admin/nostr/relays'] }), caller)).toBe(false);
+	});
+});
+
+describe('isAllowedOnPage', () => {
+	it('reads a pattern without a trailing star as that page only', () => {
+		const exact = role({ write: ['/admin/product'], forbidden: ['/admin/order'] });
+		expect(isAllowedOnPage(exact, '/admin/product', 'write')).toBe(true);
+		expect(isAllowedOnPage(exact, '/admin/product/new', 'write')).toBe(false);
+		expect(isAllowedOnPage(role({ write: ['/admin/*'] }), '/admin/product/new', 'write')).toBe(
+			true
+		);
+	});
+
+	it('lets a pattern without a trailing star forbid that page only', () => {
+		const caller = role({ write: ['/admin/*'], forbidden: ['/admin/order'] });
+		expect(isAllowedOnPage(caller, '/admin/order', 'read')).toBe(false);
+		expect(isAllowedOnPage(caller, '/admin/order/42', 'read')).toBe(true);
 	});
 });

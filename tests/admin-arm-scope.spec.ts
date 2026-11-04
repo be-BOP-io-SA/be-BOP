@@ -6,7 +6,10 @@ const E2E_DB = 'bebop-e2e';
 const MANAGER_ROLE = 'e2e-arm-manager';
 const ARM_ONLY_ROLE = 'e2e-arm-only';
 const POS_MANAGER_ROLE = 'e2e-arm-pos-manager';
+const SEO_FENCED_ROLE = 'e2e-arm-seo-fenced';
+const SEO_PAGE_ROLE = 'e2e-arm-seo-page';
 const MANAGER_LOGIN = 'e2e-arm-manager';
+const SEO_FENCED_LOGIN = 'e2e-arm-seo-fenced';
 const ARM_ONLY_LOGIN = 'e2e-arm-only';
 const POS_MANAGER_LOGIN = 'e2e-arm-pos-manager';
 const STAFF_LOGIN = 'e2e-arm-staff';
@@ -27,15 +30,30 @@ async function cleanUp() {
 			.collection('users')
 			.find({
 				login: {
-					$in: [MANAGER_LOGIN, ARM_ONLY_LOGIN, POS_MANAGER_LOGIN, STAFF_LOGIN, TILL_STAFF_LOGIN]
+					$in: [
+						MANAGER_LOGIN,
+						ARM_ONLY_LOGIN,
+						POS_MANAGER_LOGIN,
+						SEO_FENCED_LOGIN,
+						STAFF_LOGIN,
+						TILL_STAFF_LOGIN
+					]
 				}
 			})
 			.toArray();
 		await db.collection('sessions').deleteMany({ userId: { $in: users.map((u) => u._id) } });
 		await db.collection('users').deleteMany({ _id: { $in: users.map((u) => u._id) } });
-		await db
-			.collection('roles')
-			.deleteMany({ _id: { $in: [MANAGER_ROLE, ARM_ONLY_ROLE, POS_MANAGER_ROLE] as never[] } });
+		await db.collection('roles').deleteMany({
+			_id: {
+				$in: [
+					MANAGER_ROLE,
+					ARM_ONLY_ROLE,
+					POS_MANAGER_ROLE,
+					SEO_FENCED_ROLE,
+					SEO_PAGE_ROLE
+				] as never[]
+			}
+		});
 	});
 }
 
@@ -83,11 +101,17 @@ function offeredRoles(select: Locator) {
 		);
 }
 
-const role = (_id: string, name: string, write: string[], hasPosOptions = false) => ({
+const role = (
+	_id: string,
+	name: string,
+	write: string[],
+	hasPosOptions = false,
+	forbidden: string[] = []
+) => ({
 	_id,
 	name,
 	hasPosOptions,
-	permissions: { read: [], write, forbidden: [] },
+	permissions: { read: [], write, forbidden },
 	createdAt: new Date(),
 	updatedAt: new Date()
 });
@@ -95,6 +119,7 @@ const role = (_id: string, name: string, write: string[], hasPosOptions = false)
 let managerId: ObjectId;
 let armOnlyId: ObjectId;
 let posManagerId: ObjectId;
+let seoFencedId: ObjectId;
 let staffId: ObjectId;
 let tillStaffId: ObjectId;
 
@@ -106,10 +131,13 @@ test.beforeAll(async () => {
 			.insertMany([
 				role(MANAGER_ROLE, 'E2E manager', ['/admin/*']),
 				role(ARM_ONLY_ROLE, 'E2E ARM only', ['/admin/arm/*']),
-				role(POS_MANAGER_ROLE, 'E2E POS manager', ['/admin/*'], true)
+				role(POS_MANAGER_ROLE, 'E2E POS manager', ['/admin/*'], true),
+				role(SEO_FENCED_ROLE, 'E2E SEO fenced', ['/admin/*'], false, ['/admin/seo/advanced/*']),
+				role(SEO_PAGE_ROLE, 'E2E SEO page', ['/admin/seo'])
 			] as never[])
 	);
 	managerId = await seedUser(MANAGER_LOGIN, MANAGER_ROLE);
+	seoFencedId = await seedUser(SEO_FENCED_LOGIN, SEO_FENCED_ROLE);
 	armOnlyId = await seedUser(ARM_ONLY_LOGIN, ARM_ONLY_ROLE);
 	posManagerId = await seedUser(POS_MANAGER_LOGIN, POS_MANAGER_ROLE);
 	staffId = await seedUser(STAFF_LOGIN, 'ticket-checker');
@@ -231,4 +259,17 @@ test('a manager limited to user accounts is offered only their own role', async 
 	await page.getByRole('link', { name: 'Create a user' }).click();
 	await expect(page.getByRole('heading', { name: 'Create a user' })).toBeVisible();
 	expect(await offeredRoles(page.locator('select[name="roleId"]'))).toEqual([ARM_ONLY_ROLE]);
+});
+
+test('a manager with a forbidden subpage can open the page next to a role naming one page', async ({
+	page,
+	context
+}) => {
+	await signIn(context, seoFencedId);
+	const response = await page.goto('/admin/arm/user/new');
+
+	expect(response?.status()).toBe(200);
+	expect(await offeredRoles(page.locator('select[name="roleId"]'))).toEqual(
+		expect.arrayContaining([SEO_FENCED_ROLE, SEO_PAGE_ROLE])
+	);
 });
