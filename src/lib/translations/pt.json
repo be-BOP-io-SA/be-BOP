@@ -1665,6 +1665,7 @@
 			"password": "Palavra-passe SMTP",
 			"passwordSetPlaceholder": "A palavra-passe está definida - introduza um novo valor para a substituir",
 			"passwordPlaceholder": "Introduza a palavra-passe SMTP",
+			"passwordClearedWarning": "O anfitrião ou a porta mudou: ao guardar, a palavra-passe guardada será apagada. Introduza novamente a palavra-passe para continuar a enviar e-mails.",
 			"fromEmail": "Endereço de e-mail do remetente",
 			"fromEmailHint": "Se estiver vazio, será usado o utilizador SMTP como remetente",
 			"save": "Guardar configurações SMTP",

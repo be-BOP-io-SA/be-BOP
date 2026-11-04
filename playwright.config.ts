@@ -11,7 +11,10 @@ const config: PlaywrightTestConfig = {
 		env: {
 			// The suite creates a super admin and writes to the database. Keep that out of the
 			// database a developer is using for their own shop.
-			MONGODB_DB: 'bebop-e2e'
+			MONGODB_DB: 'bebop-e2e',
+			// A developer's SMTP_* variables lock the SMTP settings page the suite drives; e-mails
+			// stay fake through the database default.
+			SMTP_FAKE: ''
 		}
 	},
 	// One worker, in order: the tests share one database and one shop.

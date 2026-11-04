@@ -1665,6 +1665,7 @@
 			"password": "Password SMTP",
 			"passwordSetPlaceholder": "La password è impostata - inserisci un nuovo valore per sostituirla",
 			"passwordPlaceholder": "Inserisci la password SMTP",
+			"passwordClearedWarning": "L'host o la porta sono cambiati: il salvataggio cancellerà la password salvata. Inserisci di nuovo la password per continuare a inviare e-mail.",
 			"fromEmail": "Indirizzo e-mail del mittente",
 			"fromEmailHint": "Se vuoto, verrà utilizzato l'utente SMTP come mittente",
 			"save": "Salva impostazioni SMTP",

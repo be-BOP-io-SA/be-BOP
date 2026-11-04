@@ -1665,6 +1665,7 @@
 			"password": "SMTP Password",
 			"passwordSetPlaceholder": "Password is set - enter new value to replace",
 			"passwordPlaceholder": "Enter SMTP password",
+			"passwordClearedWarning": "The host or port changed: saving will clear the saved password. Enter the password again to keep sending e-mails.",
 			"fromEmail": "From Email Address",
 			"fromEmailHint": "If empty, will use SMTP User as sender",
 			"save": "Save SMTP Settings",

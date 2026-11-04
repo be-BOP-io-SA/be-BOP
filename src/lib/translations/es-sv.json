@@ -1665,6 +1665,7 @@
 			"password": "Contraseña SMTP",
 			"passwordSetPlaceholder": "La contraseña está establecida - ingrese un nuevo valor para reemplazarla",
 			"passwordPlaceholder": "Ingrese la contraseña SMTP",
+			"passwordClearedWarning": "El host o el puerto cambió: al guardar se borrará la contraseña guardada. Ingrese de nuevo la contraseña para seguir enviando correos.",
 			"fromEmail": "Dirección de correo electrónico del remitente",
 			"fromEmailHint": "Si está vacío, se usará el usuario SMTP como remitente",
 			"save": "Guardar configuración SMTP",

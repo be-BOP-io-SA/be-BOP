@@ -9,6 +9,14 @@
 	$: disableForm = data.smtp.fake || data.settingsEnforcedByEnvVars;
 	$: disableResetButton = deepEquals(data.defaultSmtpSettings, data.smtp);
 	$: disableSubmitButton = data.settingsEnforcedByEnvVars;
+
+	// Saving another host or port without a new password clears the saved one on the server.
+	const savedRemote = { host: data.smtp.host, port: data.smtp.port };
+	let password = '';
+	$: passwordWillBeCleared =
+		data.smtp.passwordIsSet &&
+		!password &&
+		(data.smtp.host !== savedRemote.host || Number(data.smtp.port) !== Number(savedRemote.port));
 </script>
 
 <h1 class="text-3xl">{t('admin.smtp.title')}</h1>
@@ -115,8 +123,13 @@
 					? t('admin.smtp.passwordSetPlaceholder')
 					: t('admin.smtp.passwordPlaceholder')}
 				type="password"
-				value=""
+				bind:value={password}
 			/>
+			{#if passwordWillBeCleared && !disableForm}
+				<span class="text-sm text-red-500" role="alert">
+					{t('admin.smtp.passwordClearedWarning')}
+				</span>
+			{/if}
 		</label>
 
 		<label class="form-label">

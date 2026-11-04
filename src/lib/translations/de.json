@@ -1665,6 +1665,7 @@
 			"password": "SMTP-Passwort",
 			"passwordSetPlaceholder": "Passwort ist gesetzt - neuen Wert eingeben, um es zu ersetzen",
 			"passwordPlaceholder": "SMTP-Passwort eingeben",
+			"passwordClearedWarning": "Host oder Port wurde geändert: Beim Speichern wird das gespeicherte Passwort gelöscht. Geben Sie das Passwort erneut ein, um weiterhin E-Mails zu senden.",
 			"fromEmail": "Absender-E-Mail-Adresse",
 			"fromEmailHint": "Wenn leer, wird der SMTP-Benutzer als Absender verwendet",
 			"save": "SMTP-Einstellungen speichern",
