@@ -12,7 +12,8 @@ const CREDENTIAL_TEMPLATE_KEYS: EmailTemplateKey[] = ['passwordReset', 'temporar
 export async function load() {
 	return {
 		defaultTemplates: defaultConfig.emailTemplates,
-		templates: runtimeConfig.emailTemplates
+		templates: runtimeConfig.emailTemplates,
+		resetTemplates: runtimeConfig.resetEmailTemplates
 	};
 }
 
@@ -57,6 +58,24 @@ export const actions = {
 				$setOnInsert: { createdAt: new Date() }
 			},
 			{ upsert: true }
+		);
+	},
+	dismissResetNotice: async function ({ request, locals }) {
+		if (locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
+			throw error(403, 'Only Super Admin can edit this template');
+		}
+		const { key } = z
+			.object({ key: z.string() })
+			.parse(Object.fromEntries(await request.formData()));
+
+		const kept = Object.fromEntries(
+			Object.entries(runtimeConfig.resetEmailTemplates).filter(([reset]) => reset !== key)
+		);
+		runtimeConfig.resetEmailTemplates = kept;
+
+		await collections.runtimeConfig.updateOne(
+			{ _id: 'resetEmailTemplates' },
+			{ $set: { data: kept, updatedAt: new Date() } }
 		);
 	},
 	reset: async function ({ request }) {

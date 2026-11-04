@@ -1899,7 +1899,10 @@
 			"defaultTemplateHint": "Questo è il modello predefinito. Se lo lasci invariato, continuerà a essere aggiornato man mano che il codice cambia.",
 			"customTemplateHint": "Questo è un modello personalizzato. Se lo lasci invariato, non verrà aggiornato man mano che il codice cambia. Per vedere le ultime modifiche, puoi cancellare i valori.",
 			"confirmResetToDefault": "Sei sicuro di voler ripristinare questo modello al valore predefinito?",
-			"resetToDefault": "Ripristina predefinito"
+			"resetToDefault": "Ripristina predefinito",
+			"resetForSafetyNotice": "Questo modello è stato ripristinato al predefinito durante un aggiornamento: il suo contenuto poteva inviare il link di accesso a qualcuno diverso dal destinatario. Se necessario, riscrivilo partendo dal contenuto precedente, mantenendo solo testo e il link di accesso.",
+			"previousContent": "Contenuto precedente",
+			"dismissResetNotice": "Nascondi questo avviso"
 		},
 		"cmsForm": {
 			"confirmDelete": "Vuoi eliminare questa pagina CMS?",

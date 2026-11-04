@@ -1899,7 +1899,10 @@
 			"defaultTemplateHint": "Dies ist die Standardvorlage. Wenn Sie sie unverändert lassen, wird sie weiterhin aktualisiert, sobald sich der Code ändert.",
 			"customTemplateHint": "Dies ist eine benutzerdefinierte Vorlage. Wenn Sie sie unverändert lassen, wird sie nicht aktualisiert, wenn sich der Code ändert. Um die neuesten Änderungen zu sehen, können Sie die Werte löschen.",
 			"confirmResetToDefault": "Möchten Sie diese Vorlage wirklich auf die Standardeinstellung zurücksetzen?",
-			"resetToDefault": "Auf Standard zurücksetzen"
+			"resetToDefault": "Auf Standard zurücksetzen",
+			"resetForSafetyNotice": "Diese Vorlage wurde bei einem Update auf den Standard zurückgesetzt: Ihr Inhalt konnte den Anmeldelink an jemand anderen als den Empfänger senden. Schreiben Sie sie bei Bedarf anhand des bisherigen Inhalts neu und behalten Sie nur Text und den Anmeldelink.",
+			"previousContent": "Bisheriger Inhalt",
+			"dismissResetNotice": "Hinweis ausblenden"
 		},
 		"cmsForm": {
 			"confirmDelete": "Möchten Sie diese CMS-Seite löschen?",

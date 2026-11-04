@@ -1899,7 +1899,10 @@
 			"defaultTemplateHint": "This is the default template. If you leave it as is, it will keep being updated as the codebase changes.",
 			"customTemplateHint": "This is a custom template. If you leave it as is, it will not be updated as the codebase changes. To see the latest changes, you can erase the values.",
 			"confirmResetToDefault": "Are you sure you want to reset this template to the default?",
-			"resetToDefault": "Reset to default"
+			"resetToDefault": "Reset to default",
+			"resetForSafetyNotice": "This template was reset to the default during an update: its content could send its login link somewhere other than the recipient. Rewrite it from the previous content if needed, keeping only text and the login link.",
+			"previousContent": "Previous content",
+			"dismissResetNotice": "Dismiss this notice"
 		},
 		"cmsForm": {
 			"confirmDelete": "Would you like to delete this CMS page?",

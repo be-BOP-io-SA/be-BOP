@@ -1107,7 +1107,10 @@ export const migrations = [
 				{ _id: 'emailTemplates' },
 				{ session }
 			);
-			const templates = (stored?.data ?? {}) as Record<string, { html?: string } | undefined>;
+			const templates = (stored?.data ?? {}) as Record<
+				string,
+				{ subject?: string; html?: string } | undefined
+			>;
 
 			const unsafe = typedKeys(CREDENTIAL_TEMPLATE_LINKS).filter((key) => {
 				const template = templates[key];
@@ -1121,9 +1124,25 @@ export const migrations = [
 				return;
 			}
 
-			for (const key of unsafe) {
-				console.warn(`Resetting e-mail template ${key}; previous content:`, templates[key]);
-			}
+			await collections.runtimeConfig.updateOne(
+				{ _id: 'resetEmailTemplates' },
+				{
+					$set: {
+						...Object.fromEntries(
+							unsafe.map((key) => [
+								`data.${key}`,
+								{
+									subject: templates[key]?.subject,
+									html: templates[key]?.html,
+									resetAt: new Date()
+								}
+							])
+						),
+						updatedAt: new Date()
+					}
+				},
+				{ upsert: true, session }
+			);
 
 			await collections.runtimeConfig.updateOne(
 				{ _id: 'emailTemplates' },

@@ -127,6 +127,17 @@ describe('migration 0000…11f1 — credential e-mail templates', () => {
 		expect(data.passwordReset).toBeUndefined();
 		expect(data.temporarySessionRequest).toEqual(reworded);
 		expect(data['order.payment.expired']).toEqual(other);
+
+		const backup = (await collections.runtimeConfig.findOne({
+			_id: 'resetEmailTemplates'
+		})) as never as { data: Record<string, unknown> };
+		expect(backup.data).toEqual({
+			passwordReset: {
+				subject: 'Password reset',
+				html: '<a href="{{resetLink}}">go</a><img src="https://evil.test/p.png">',
+				resetAt: expect.any(Date)
+			}
+		});
 	});
 
 	it('does nothing when no template was ever saved', async () => {
