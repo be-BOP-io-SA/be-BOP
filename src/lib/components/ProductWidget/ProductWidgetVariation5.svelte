@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SaleLockedLink from './SaleLockedLink.svelte';
 	import type { Picture } from '$lib/types/Picture';
 	import PictureComponent from '../Picture.svelte';
 
@@ -13,6 +14,7 @@
 	export let product: ProductWidgetProduct;
 	export let pictures: Picture[] | [];
 	export let canAddToCart: boolean;
+	export let saleLockedHref: string | undefined = undefined;
 	export let externalUrl: string | undefined = undefined;
 	let pictureId = 0;
 
@@ -61,6 +63,8 @@
 						/>
 					</div>
 				</div>
+			{:else if saleLockedHref}
+				<SaleLockedLink href={saleLockedHref} />
 			{/if}
 		</div>
 
