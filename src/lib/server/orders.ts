@@ -68,6 +68,7 @@ import { convertAmountToCurrencyForStorage } from '$lib/utils/toStorageCurrency'
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
+import { restrictToProducts } from './payment-methods';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { LanguageKey } from '$lib/translations';
 import { filterNullish } from '$lib/utils/fillterNullish';
@@ -694,6 +695,17 @@ export async function createOrder(
 		channel?: import('$lib/types/Discount').DiscountChannel;
 	}
 ): Promise<Order['_id']> {
+	// Every channel creates orders through here, so none can forget a product's restriction.
+	if (
+		paymentMethod &&
+		!restrictToProducts(
+			[paymentMethod],
+			items.map((item) => item.product)
+		).length
+	) {
+		throw error(400, 'Payment method not available for these products');
+	}
+
 	const npubAddress = params.notifications?.paymentStatus?.npub;
 	const email = params.notifications?.paymentStatus?.email;
 

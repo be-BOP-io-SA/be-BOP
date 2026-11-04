@@ -507,4 +507,29 @@ describe('order', () => {
 			});
 		});
 	});
+
+	describe('payment methods a product accepts', () => {
+		const tillOnly = { ...TEST_DIGITAL_PRODUCT, paymentMethods: ['point-of-sale' as const] };
+		const orderWith = (method: 'point-of-sale' | 'bank-transfer') =>
+			createOrder([{ product: tillOnly, quantity: 1 }], method, {
+				locale: 'en',
+				user: { sessionId: 'test-session-id' },
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			});
+
+		it('refuses an order paid by a method one of its products does not accept', async () => {
+			await expect(orderWith('bank-transfer')).rejects.toMatchObject({
+				status: 400,
+				body: { message: 'Payment method not available for these products' }
+			});
+		});
+
+		it('creates the order with a method every product accepts', async () => {
+			const orderId = await orderWith('point-of-sale');
+			expect((await collections.orders.findOne({ _id: orderId }))?.payments[0].method).toBe(
+				'point-of-sale'
+			);
+		});
+	});
 });
