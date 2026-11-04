@@ -53,6 +53,7 @@ export type CheckPaymentResult =
 			status: 'paid';
 			/** What actually arrived, in whatever currency the provider settled in. */
 			received: Price;
+			/** Only a fee already taken out of `received`: it counts toward the amount due. */
 			fees?: Price;
 			transactions?: PaymentTransaction[];
 	  }
@@ -201,10 +202,14 @@ export interface PaymentProcessorDefinition {
 export function coversPayment(
 	pp: PaymentProcessorDefinition,
 	payment: Order['payments'][number],
-	received: Price
+	received: Price,
+	/** A fee the provider took out of `received`, as phoenixd does with its channel fee. */
+	fees?: Price
 ): boolean {
 	const currency = payment.price.currency;
-	const settled = toCurrency(currency, received.amount, received.currency);
+	const settled =
+		toCurrency(currency, received.amount, received.currency) +
+		(fees ? toCurrency(currency, fees.amount, fees.currency) : 0);
 	const tolerance = pp.underpaymentTolerance?.(currency) ?? CURRENCY_UNIT[currency];
 
 	return settled >= payment.price.amount - tolerance;

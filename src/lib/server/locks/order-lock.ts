@@ -109,7 +109,7 @@ async function maintainOrders() {
 							case 'paid':
 								// The discriminated result makes `received` mandatory on this arm, so the
 								// old "paid without an amount" throw is now unrepresentable rather than caught.
-								if (!coversPayment(pp, payment, result.received)) {
+								if (!coversPayment(pp, payment, result.received, result.fees)) {
 									reportUnderpayment(pp.meta.processor, payment, result.received);
 									break;
 								}

@@ -64,4 +64,27 @@ describe('coversPayment', () => {
 			coversPayment(processor(), paymentOf(400_000, 'SAT'), { amount: 399_998, currency: 'SAT' })
 		).toBe(false);
 	});
+
+	// phoenixd reports what reached the wallet once its channel fee is taken.
+	it('counts the reported channel fee toward the amount due', () => {
+		expect(
+			coversPayment(
+				processor(),
+				paymentOf(10_000, 'SAT'),
+				{ amount: 9_990, currency: 'SAT' },
+				{ amount: 10.5, currency: 'SAT' }
+			)
+		).toBe(true);
+	});
+
+	it('still refuses a shortfall larger than the channel fee', () => {
+		expect(
+			coversPayment(
+				processor(),
+				paymentOf(10_000, 'SAT'),
+				{ amount: 9_990, currency: 'SAT' },
+				{ amount: 5, currency: 'SAT' }
+			)
+		).toBe(false);
+	});
 });
