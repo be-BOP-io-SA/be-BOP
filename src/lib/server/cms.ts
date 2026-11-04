@@ -37,13 +37,58 @@ const window = new JSDOM('').window;
 // assignable to `WindowLike` — the two describe the same object from different sides.
 const purify = DOMPurify(window as unknown as WindowLike);
 
+const VIDEO_EMBEDS = [
+	{ host: 'www.youtube.com', path: '/embed/' },
+	{ host: 'www.youtube-nocookie.com', path: '/embed/' },
+	{ host: 'player.vimeo.com', path: '/video/' }
+];
+
+function isVideoEmbed(src: string | null) {
+	try {
+		const url = new URL(src ?? '');
+		return VIDEO_EMBEDS.some(
+			(embed) =>
+				url.protocol === 'https:' && url.host === embed.host && url.pathname.startsWith(embed.path)
+		);
+	} catch {
+		return false;
+	}
+}
+
+const SANITIZE_CONFIG = {
+	// Otherwise a <style> that opens the content is parsed into <head> and silently dropped.
+	FORCE_BODY: true,
+	ADD_TAGS: ['iframe'],
+	ADD_ATTR: ['target', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy']
+};
+
 purify.addHook('afterSanitizeAttributes', function (node) {
 	// set all elements owning target to target=_blank
 	if ('target' in node) {
 		node.setAttribute('target', '_blank');
 		node.setAttribute('rel', 'noopener');
 	}
+	if (node.nodeName === 'IFRAME' && !isVideoEmbed(node.getAttribute('src'))) {
+		node.remove();
+		purify.removed.push({ element: node });
+	}
 });
+
+function sanitizeCmsHtml(html: string) {
+	return purify.sanitize(html, SANITIZE_CONFIG);
+}
+
+/** What the sanitizer strips from content shown without the raw-content setting, for the editor. */
+export function cmsRemovedContent(html: string): string[] {
+	sanitizeCmsHtml(html);
+	const removed = purify.removed.map((item) =>
+		'attribute' in item ? item.attribute?.name ?? '' : `<${item.element.nodeName.toLowerCase()}>`
+	);
+	// `<remove>` is the placeholder FORCE_BODY inserts, `<#…>` text and comment nodes.
+	return [...new Set(removed)].filter(
+		(name) => name && name !== '<remove>' && !name.startsWith('<#')
+	);
+}
 
 // Zod schema for external product picture validation
 const externalPictureSchema = z.object({
@@ -357,7 +402,7 @@ export async function cmsFromContent(
 		const displayUnsanitizedContent = ALLOW_JS_INJECTION === 'true' || forceUnsanitizedContent;
 		token.push({
 			type: 'html',
-			raw: displayUnsanitizedContent ? html : purify.sanitize(html, { ADD_ATTR: ['target'] })
+			raw: displayUnsanitizedContent ? html : sanitizeCmsHtml(html)
 		});
 	};
 

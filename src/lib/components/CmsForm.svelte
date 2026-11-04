@@ -30,6 +30,7 @@
 		}[];
 	} | null;
 
+	export let removedContent: string[] = [];
 	export let slug = cmsPage?._id || '';
 	let pageContent = cmsPage?.content || '';
 	let title = cmsPage?.title || '';
@@ -196,6 +197,11 @@
 	{#if advancedHtmlEdition}
 		<p class="text-red-500">
 			{t('admin.cmsForm.advancedHtmlWarning')}
+		</p>
+	{/if}
+	{#if removedContent.length && !cmsPage?.displayRawContent}
+		<p class="text-red-500" role="alert">
+			{t('admin.cmsForm.removedContentWarning', { items: removedContent.join(', ') })}
 		</p>
 	{/if}
 	<label class="block w-full mt-4">

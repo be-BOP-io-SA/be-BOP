@@ -4,4 +4,4 @@
 	export let data;
 </script>
 
-<CmsForm cmsPage={data.cmsPage} />
+<CmsForm cmsPage={data.cmsPage} removedContent={data.removedContent} />
