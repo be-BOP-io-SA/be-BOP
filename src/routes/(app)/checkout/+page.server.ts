@@ -1,5 +1,9 @@
 import { collections, withTransaction } from '$lib/server/database';
-import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
+import {
+	paymentMethods,
+	restrictToProducts,
+	type PaymentMethod
+} from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -101,14 +105,9 @@ export async function load({ parent, locals }) {
 		)
 	]);
 
-	const initialMethods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
-	// Each item with explicit paymentMethods narrows the available methods (intersection)
-	const methods = (parentData.cart.items ?? []).reduce(
-		(acc, item) =>
-			item.product.paymentMethods
-				? acc.filter((m) => item.product.paymentMethods?.includes(m))
-				: acc,
-		initialMethods
+	const methods = restrictToProducts(
+		paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }),
+		(parentData.cart.items ?? []).map((item) => item.product)
 	);
 	const forceContentVersion =
 		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
@@ -269,13 +268,10 @@ export const actions = {
 			productsFromDb.map(async (product) => await applyResolvedStock(product))
 		);
 
-		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
-
-		for (const product of products) {
-			if (product.paymentMethods) {
-				methods = methods.filter((method) => product.paymentMethods?.includes(method));
-			}
-		}
+		const methods = restrictToProducts(
+			paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }),
+			products
+		);
 
 		if (!methods.length) {
 			throw error(400, 'No payment methods available');

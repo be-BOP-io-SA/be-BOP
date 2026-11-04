@@ -7,7 +7,11 @@ import {
 	PaymentGenerationError
 } from '$lib/server/orders';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
-import { paymentMethods, ALL_PAYMENT_METHODS } from '$lib/server/payment-methods.js';
+import {
+	paymentMethods,
+	restrictToProducts,
+	ALL_PAYMENT_METHODS
+} from '$lib/server/payment-methods.js';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -38,15 +42,12 @@ export const actions = {
 
 		// Same exclusion as the order page's own loader: `free` settles on creation, so offering it
 		// here would let the buyer swap a pending payment for a paid one.
-		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }).filter(
-			(method) => method !== 'free'
+		const methods = restrictToProducts(
+			paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }).filter(
+				(method) => method !== 'free'
+			),
+			order.items.map((item) => item.product)
 		);
-
-		for (const item of order.items) {
-			if (item.product.paymentMethods) {
-				methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
-			}
-		}
 
 		if (!methods.length) {
 			throw error(400, 'No payment methods available');

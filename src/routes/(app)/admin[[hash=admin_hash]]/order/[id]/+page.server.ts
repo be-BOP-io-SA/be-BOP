@@ -8,7 +8,11 @@ import {
 	notifySuperAdminPaymentFailure,
 	PaymentGenerationError
 } from '$lib/server/orders';
-import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods.js';
+import {
+	paymentMethods,
+	restrictToProducts,
+	type PaymentMethod
+} from '$lib/server/payment-methods.js';
 import { rateLimit } from '$lib/server/rateLimit';
 import { userIdentifier } from '$lib/server/user';
 import { parsePriceAmount } from '$lib/types/Currency.js';
@@ -39,13 +43,10 @@ export const actions = {
 			throw error(400, 'Order has no remaining amount to pay');
 		}
 
-		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
-
-		for (const item of order.items) {
-			if (item.product.paymentMethods) {
-				methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
-			}
-		}
+		const methods = restrictToProducts(
+			paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }),
+			order.items.map((item) => item.product)
+		);
 
 		if (!methods.length) {
 			throw error(400, 'No payment methods available');

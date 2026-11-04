@@ -13,7 +13,7 @@ import {
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
-import { paymentMethods } from '$lib/server/payment-methods.js';
+import { paymentMethods, restrictToProducts } from '$lib/server/payment-methods.js';
 import type { OrderLabel } from '$lib/types/OrderLabel.js';
 import type { DigitalFile } from '$lib/types/DigitalFile.js';
 
@@ -77,15 +77,12 @@ export async function load({ params, depends, locals, url }) {
 			}
 		)
 	]);
-	let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }).filter(
-		(method) => method !== 'free'
+	const methods = restrictToProducts(
+		paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }).filter(
+			(method) => method !== 'free'
+		),
+		order.items.map((item) => item.product)
 	);
-
-	for (const item of order.items) {
-		if (item.product.paymentMethods) {
-			methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
-		}
-	}
 	let labels: OrderLabel[] = [];
 	if (locals.user?.roleId && locals.user.roleId !== CUSTOMER_ROLE_ID) {
 		labels = await collections.labels.find({}).toArray();

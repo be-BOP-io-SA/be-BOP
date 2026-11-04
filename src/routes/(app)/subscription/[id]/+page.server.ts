@@ -11,7 +11,11 @@ import {
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { userQuery } from '$lib/server/user.js';
 import { webChannelForUser } from '$lib/server/discount';
-import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
+import {
+	paymentMethods,
+	restrictToProducts,
+	type PaymentMethod
+} from '$lib/server/payment-methods';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { add, subHours, subSeconds } from 'date-fns';
@@ -98,9 +102,7 @@ export async function load({ params, locals }: { params: { id: string }; locals:
 		hasPosOptions: locals.user?.hasPosOptions,
 		totalSatoshis: nextBillingSatoshis
 	});
-	const eligibleMethods = product.paymentMethods
-		? initialMethods.filter((m) => product.paymentMethods?.includes(m))
-		: initialMethods;
+	const eligibleMethods = restrictToProducts(initialMethods, [product]);
 	const lastPaidMethodStillEligible = !!lastPaidMethod && eligibleMethods.includes(lastPaidMethod);
 
 	// The shared PaymentMethodSelector renders a POS subtype dropdown whenever `point-of-sale`
@@ -296,9 +298,7 @@ export const actions: Actions = {
 			hasPosOptions: locals.user?.hasPosOptions,
 			totalSatoshis: nextBillingSatoshis
 		});
-		const eligibleMethods = product.paymentMethods
-			? initialMethods.filter((m) => product.paymentMethods?.includes(m))
-			: initialMethods;
+		const eligibleMethods = restrictToProducts(initialMethods, [product]);
 		if (eligibleMethods.length === 0) {
 			throw error(500, 'No payment method available for the next renewal on this subscription');
 		}

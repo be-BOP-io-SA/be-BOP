@@ -21,6 +21,10 @@ describe('restrictToProducts', () => {
 		).toEqual(['lightning']);
 	});
 
+	it('treats an empty list as accepting no method, as the inline filters did', () => {
+		expect(restrictToProducts([...methods], [{ paymentMethods: [] }])).toEqual([]);
+	});
+
 	it('returns nothing when the restrictions do not overlap', () => {
 		expect(
 			restrictToProducts(
