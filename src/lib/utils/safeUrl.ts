@@ -3,6 +3,10 @@ const SAFE_PROTOCOLS = new Set([
 	'https:',
 	'mailto:',
 	'tel:',
+	'sms:',
+	'whatsapp:',
+	'tg:',
+	'geo:',
 	'bitcoin:',
 	'lightning:',
 	'lnurl:'
@@ -74,4 +78,9 @@ export function safeHref(href: string | undefined | null): string {
 	const candidate = hasSchemeOrPath ? href : `/${href}`;
 
 	return isSafeUrl(candidate) ? candidate : '#';
+}
+
+/** Only web pages open in a new tab: an app link would leave a blank one behind. */
+export function linkTarget(href: string | undefined | null): '_blank' | '_self' {
+	return /^https?:/i.test(href?.trim() ?? '') ? '_blank' : '_self';
 }

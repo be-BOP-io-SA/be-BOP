@@ -36,7 +36,7 @@
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import IconSystem from '$lib/components/icons/IconSystem.svelte';
 	import { oneMaxPerLine, productLabelWithVariations } from '$lib/types/Product.js';
-	import { safeHref } from '$lib/utils/safeUrl';
+	import { linkTarget, safeHref } from '$lib/utils/safeUrl';
 
 	export let data;
 
@@ -174,7 +174,7 @@
 							href={safeHref(link.href)}
 							class=" {data.notResponsive ? '' : 'hidden lg:inline'}"
 							data-sveltekit-preload-data="off"
-							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
+							target={linkTarget(link.href)}
 						>
 							{link.label}
 						</a>
@@ -204,7 +204,7 @@
 					<a
 						class="py-4"
 						href={safeHref(link.href)}
-						target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
+						target={linkTarget(link.href)}
 						data-sveltekit-preload-data="off">{link.label}</a
 					>
 				{/each}
@@ -214,7 +214,7 @@
 						<a
 							class="py-4 font-light"
 							href={safeHref(link.href)}
-							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
+							target={linkTarget(link.href)}
 							data-sveltekit-preload-data="off">{link.label}</a
 						>
 					{/each}
@@ -244,7 +244,7 @@
 						<a
 							href={safeHref(link.href)}
 							class={data.notResponsive ? '' : 'hidden lg:inline'}
-							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
+							target={linkTarget(link.href)}
 							data-sveltekit-preload-data="off">{link.label}</a
 						>
 					{/each}
@@ -635,14 +635,14 @@
 							<a
 								class={link.label === '-' ? 'hidden lg:contents' : ''}
 								href={safeHref(link.href)}
-								target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
+								target={linkTarget(link.href)}
 								data-sveltekit-preload-data="off">{link.label}</a
 							>
 						{/each}
 					</div>
 					<div class="flex flex-row gap-1 items-center">
 						{#each data.links.socialNetworkIcons as icon}
-							<a href={safeHref(icon.href)} target="_blank"
+							<a href={safeHref(icon.href)} target={linkTarget(icon.href)}
 								><img src="data:image/svg+xml;utf8, {icon.svg}" alt={icon.name} /></a
 							>
 						{/each}

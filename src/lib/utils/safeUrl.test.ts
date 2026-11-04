@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isSafeUrl, safeHref } from './safeUrl';
+import { isSafeUrl, linkTarget, safeHref } from './safeUrl';
 
 describe('isSafeUrl', () => {
 	it.each(['https://example.com', 'http://example.com', 'mailto:a@example.com', 'tel:+33100'])(
@@ -54,4 +54,26 @@ describe('safeHref', () => {
 		expect(safeHref(undefined)).toBe('#');
 		expect(safeHref('')).toBe('#');
 	});
+
+	it.each([
+		'sms:+33600000000',
+		'tel:+33100000000',
+		'whatsapp://send?phone=33600000000',
+		'tg://resolve?domain=shop',
+		'geo:48.85,2.35'
+	])('keeps the app link %s', (href) => expect(safeHref(href)).toBe(href));
+});
+
+describe('linkTarget', () => {
+	it.each([
+		['https://example.com', '_blank'],
+		['http://example.com', '_blank'],
+		['/about', '_self'],
+		['about', '_self'],
+		['sms:+33600000000', '_self'],
+		['tel:+33100000000', '_self'],
+		['mailto:a@example.com', '_self'],
+		['whatsapp://send?phone=33600000000', '_self'],
+		['geo:48.85,2.35', '_self']
+	])('opens %s in %s', (href, target) => expect(linkTarget(href)).toBe(target));
 });
