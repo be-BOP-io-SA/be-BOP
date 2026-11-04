@@ -202,6 +202,55 @@ export async function phoenixdLookupInvoice(paymentHash: string) {
 	};
 }
 
+/**
+ * What an invoice says, according to the node that will pay it.
+ *
+ * Used before honouring a withdraw: the amount has to be checked against the agreed range, and
+ * trusting the wallet's word on it would let anyone rewrite the bounds.
+ */
+export async function phoenixdDecodeInvoice(paymentRequest: string): Promise<{
+	amountSat?: number;
+	paymentHash: string;
+	description?: string;
+	expirySeconds?: number;
+}> {
+	const res = await fetch(`${runtimeConfig.phoenixd.url}/decodeinvoice`, {
+		method: 'POST',
+		headers: {
+			Authorization: `Basic ${Buffer.from(`:${runtimeConfig.phoenixd.password}`).toString(
+				'base64'
+			)}`,
+			'Content-Type': 'application/x-www-form-urlencoded',
+			Accept: 'application/json'
+		},
+		body: new URLSearchParams({ invoice: paymentRequest })
+	});
+
+	if (!res.ok) {
+		throw error(400, `Could not decode invoice on PhoenixD: ${res.status} ${await res.text()}`);
+	}
+
+	const json = z
+		.object({
+			amount: z.number().optional(),
+			amountSat: z.number().optional(),
+			paymentHash: z.string(),
+			description: z.string().optional(),
+			expirySeconds: z.number().optional()
+		})
+		.passthrough()
+		.parse(await res.json());
+
+	return {
+		// phoenixd reports millisatoshis on `amount`; older builds answer `amountSat`.
+		amountSat:
+			json.amountSat ?? (json.amount !== undefined ? Math.floor(json.amount / 1000) : undefined),
+		paymentHash: json.paymentHash,
+		description: json.description,
+		expirySeconds: json.expirySeconds
+	};
+}
+
 export async function phoenixdPayInvoice(paymentRequest: string, amountSat?: number) {
 	const res = await fetch(`${runtimeConfig.phoenixd.url}/payinvoice`, {
 		method: 'POST',

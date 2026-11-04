@@ -302,6 +302,20 @@ The alias comes back on every order read as `seller` — `null` where the admin 
 
 The admin listing's own seller filter only offers the shop's staff accounts, so that alias cannot be picked from it there. Every API-written order therefore also carries the **`endpoint`** label — 🤖 Endpoint — which the same listing _can_ filter on. It is created on first use, like `catalog-integrity-warning`, and it applies to both write surfaces: the PoS seam goes through the same `writeBatch`.
 
+### Handing out sats: LNURL-withdraw (demo)
+
+An integration can offer a withdraw — a deposit returned, a refund at the counter, a prize — and the shop's own node pays whoever scans it. `POST /api/v1/withdrawals` takes a ceiling, an optional floor, an optional order to attach it to, and answers with the code to show.
+
+phoenixd cannot serve this itself. Its `lnurlwithdraw` route is the other direction: it _consumes_ a withdraw offered by someone else. So be-BOP serves the protocol, exactly as it already does for LNURL-pay: `GET /lnurlw/{id}` answers the `withdrawRequest`, and the wallet calls `GET /lnurlw/{id}/cb?k1=…&pr=…` with its invoice, which the shop pays through phoenixd.
+
+**The node is asked twice.** Once before the code exists, once when someone collects, because a channel closes and a balance drops between the two. Four refusals, same set both times: not configured, unreachable, no open channel, not enough liquidity. On creation they are a `409` with the reason in `details.reason`; on collection they are `{"status":"ERROR","reason":…}` with HTTP 200, since a wallet reads a non-200 as the service being down and hides the reason.
+
+**The balance is checked against the amount plus a margin**, not the bare amount: phoenixd charges for sending and routing costs more. Without it a withdraw at the ceiling is accepted and then fails while paying, after the wallet has told the customer it worked.
+
+**One withdraw, one payment.** The record moves to `paying` in a single atomic update before anything leaves; the loser of a race is told the withdraw is spent. A failure after that point puts it back on offer, so the customer can try again. Links expire, and expired ones are dropped by a TTL index rather than lingering as spendable.
+
+Demo scope: phoenixd only, no other backend consulted and none fallen back to.
+
 ### Poll first, stream as an optimisation
 
 A resource that streams is exposed twice: `<resource>` in JSON, `<resource>/stream` as SSE.
