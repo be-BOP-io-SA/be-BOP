@@ -1,5 +1,5 @@
 import { adminPrefix } from '$lib/server/admin';
-import { canManageRole, requireCanManageUser } from '$lib/server/arm-scope';
+import { canManagePosAccess, canManageRole, requireCanManageUser } from '$lib/server/arm-scope';
 import { collections } from '$lib/server/database.js';
 import { zodNpub } from '$lib/server/nostr.js';
 import { sendResetPasswordNotification } from '$lib/server/sendNotification.js';
@@ -71,7 +71,11 @@ export const actions = {
 			throw error(404, 'Role not found');
 		}
 		try {
-			const hasPosOptions = parsed.hasPosOptions || role.hasPosOptions;
+			// A manager without point of sale gets a disabled checkbox, so its absence keeps the stored value.
+			const ownPosOptions = canManagePosAccess(locals.user)
+				? parsed.hasPosOptions
+				: !!user.hasPosOptions;
+			const hasPosOptions = ownPosOptions || !!role.hasPosOptions;
 
 			await collections.users.updateOne(
 				{ _id: user._id },

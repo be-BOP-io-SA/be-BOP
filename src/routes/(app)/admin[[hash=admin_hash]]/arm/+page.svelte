@@ -246,7 +246,8 @@
 					type="checkbox"
 					name="hasPosOptions"
 					bind:checked={user.hasPosOptions}
-					disabled={data.roles.find((rol) => rol._id === user.roleId)?.hasPosOptions}
+					disabled={!data.canManagePosAccess ||
+						data.roles.find((rol) => rol._id === user.roleId)?.hasPosOptions}
 				/>
 				<select class="form-input" disabled={user.roleId === SUPER_ADMIN_ROLE_ID} name="status">
 					<option value="enabled" selected={!user.disabled}>{t('admin.arm.enabled')}</option>
