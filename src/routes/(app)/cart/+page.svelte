@@ -381,7 +381,9 @@
 								currency={price.currency}
 								secondary
 							/>
-							<span class="font-semibold">{t('cart.vat')} {priceInfo.vatRates[i]}%</span>
+							{#if !data.vatExempted}
+								<span class="font-semibold">{t('cart.vat')} {priceInfo.vatRates[i]}%</span>
+							{/if}
 						</div>
 					</form>
 
