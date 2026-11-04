@@ -23,7 +23,7 @@ import { GET } from './+server';
 type CallOpts = {
 	id?: string;
 	csv?: boolean;
-	user?: { roleId: string; hasPosOptions?: boolean };
+	user?: { roleId: string; hasPosOptions?: boolean; role?: unknown };
 };
 
 function call(opts: CallOpts = {}) {
@@ -75,6 +75,26 @@ describe('GET /product/[id]/price-history', () => {
 	it('404s for a product hidden from the e-shop', async () => {
 		findOne.mockResolvedValue(withVisibility({ eShop: false, retail: true }));
 		expect(await statusOf(call())).toBe(404);
+	});
+
+	it('serves a hidden product to staff allowed on the admin product page, chart and CSV', async () => {
+		const productReader = {
+			roleId: 'catalog',
+			role: {
+				_id: 'catalog',
+				permissions: { read: ['/admin/product/*'], write: [], forbidden: [] }
+			}
+		};
+		findOne.mockResolvedValue(withVisibility({ eShop: false, retail: false }));
+		expect(await statusOf(call({ user: productReader }))).toBe('ok');
+		const csv = await call({ csv: true, user: productReader });
+		expect(csv.headers.get('content-type')).toContain('text/csv');
+
+		const otherStaff = {
+			roleId: 'checker',
+			role: { _id: 'checker', permissions: { read: ['/admin/order/*'], write: [], forbidden: [] } }
+		};
+		expect(await statusOf(call({ user: otherStaff }))).toBe(404);
 	});
 
 	it('follows the retail visibility for a POS account', async () => {

@@ -3,6 +3,7 @@ import { getProductPriceHistory } from '$lib/server/price-history';
 import { isVisibleToViewer } from '$lib/server/product-visibility';
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { isAllowedOnPage } from '$lib/types/Role';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
@@ -32,8 +33,11 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		{ _id: params.id },
 		{ projection: { price: 1, payWhatYouWant: 1, free: 1, bookingSpec: 1, actionSettings: 1 } }
 	);
+	// The admin price-history tab reads this endpoint for products the shop does not show yet.
+	const canReadAdminProduct =
+		!!locals.user?.role && isAllowedOnPage(locals.user.role, `/admin/product/${params.id}`, 'read');
 	// The product page redirects away from hidden products; their prices must not leak from here.
-	if (!product || !isVisibleToViewer(product, locals)) {
+	if (!product || (!canReadAdminProduct && !isVisibleToViewer(product, locals))) {
 		throw error(404, 'Product not found');
 	}
 	// No fixed catalogue price for these products — the calendar is not available.
