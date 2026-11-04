@@ -48,8 +48,26 @@ describe('processUnprocessedNotifications', () => {
 		expect(
 			(await collections.nostrNotifications.findOne({ _id: sendable._id }))?.processedAt
 		).toBeDefined();
-		expect(
-			(await collections.nostrNotifications.findOne({ _id: broken._id }))?.processedAt
-		).toBeUndefined();
+		expect((await collections.nostrNotifications.findOne({ _id: broken._id }))?.error).toBe(
+			'Invalid npub address'
+		);
+	});
+
+	it('records a DM to a key off the curve once instead of retrying it forever', async () => {
+		const offCurve = bech32.encode(
+			'npub',
+			bech32.toWords(Buffer.from('5'.padStart(64, '0'), 'hex'))
+		);
+		const stuck = notification({ kind: Kind.EncryptedDirectMessage, dest: offCurve });
+		await collections.nostrNotifications.insertOne(stuck as never);
+		const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		await processUnprocessedNotifications();
+		await processUnprocessedNotifications();
+
+		const stored = await collections.nostrNotifications.findOne({ _id: stuck._id });
+		expect(stored?.error).toBe('Invalid npub address');
+		expect(stored?.processedAt).toBeInstanceOf(Date);
+		expect(logged).toHaveBeenCalledTimes(1);
 	});
 });

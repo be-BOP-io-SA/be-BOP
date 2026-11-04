@@ -24,6 +24,11 @@ describe('zodNpub', () => {
 		expect(zodNpub().safeParse(npubWithBytes(length)).success).toBe(false);
 	});
 
+	it('rejects 32 bytes that are not a key on the curve, which a DM cannot be encrypted to', () => {
+		expect(zodNpub().safeParse(hexToNpub('5'.padStart(64, '0'))).success).toBe(false);
+		expect(zodNpub().safeParse(hexToNpub('1'.padStart(64, '0'))).success).toBe(true);
+	});
+
 	it('rejects another bech32 prefix and a bad checksum', () => {
 		expect(zodNpub().safeParse(validNpub.replace('npub', 'nsec')).success).toBe(false);
 		expect(

@@ -8,7 +8,8 @@ import {
 	isAuthenticEvent,
 	isNostrConfigured,
 	nostrRelays,
-	nostrToHex
+	nostrToHex,
+	zodNpub
 } from '../nostr';
 import { fromUnixTime, getUnixTime, max } from 'date-fns';
 import { collections } from '../database';
@@ -221,6 +222,18 @@ async function handleNostrNotification(nostrNotification: NostRNotification): Pr
 				const npub = nostrNotification.dest;
 
 				if (!npub) {
+					return;
+				}
+
+				// Stored before the address check was strict: no retry can ever encrypt to it.
+				const dest = zodNpub().safeParse(npub);
+				if (!dest.success) {
+					const error = dest.error.issues[0].message;
+					console.error(`Nostr notification ${nostrNotification._id} dropped: ${error}`);
+					await collections.nostrNotifications.updateOne(
+						{ _id: nostrNotification._id },
+						{ $set: { error, processedAt: new Date(), updatedAt: new Date() } }
+					);
 					return;
 				}
 

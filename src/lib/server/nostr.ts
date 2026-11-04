@@ -63,18 +63,43 @@ export function zodNpub() {
 		.refine(isWellFormedNpub, { message: 'Invalid npub address' });
 }
 
-// A key of any other length passes the bech32 checksum but cannot be used to encrypt a DM,
-// and it would make the notification worker throw on the stored address.
+// A key of any other length, or 32 bytes off the curve, passes the bech32 checksum but cannot be
+// used to encrypt a DM, and it would make the notification worker throw on the stored address.
 function isWellFormedNpub(address: string): boolean {
 	const decoded = bech32.decodeUnsafe(address, 90);
 	if (decoded?.prefix !== 'npub') {
 		return false;
 	}
 	try {
-		return bech32.fromWords(decoded.words).length === 32;
+		const key = bech32.fromWords(decoded.words);
+		return key.length === 32 && isSecp256k1X(BigInt('0x' + Buffer.from(key).toString('hex')));
 	} catch {
 		return false;
 	}
+}
+
+const SECP256K1_P = 2n ** 256n - 2n ** 32n - 977n;
+
+/** Whether some point of secp256k1 (y² = x³ + 7 mod p) has this x, by Euler's criterion. */
+function isSecp256k1X(x: bigint): boolean {
+	if (x >= SECP256K1_P) {
+		return false;
+	}
+	const ySquared = (x ** 3n + 7n) % SECP256K1_P;
+	return ySquared === 0n || modPow(ySquared, (SECP256K1_P - 1n) / 2n, SECP256K1_P) === 1n;
+}
+
+function modPow(base: bigint, exponent: bigint, modulus: bigint): bigint {
+	let result = 1n;
+	base %= modulus;
+	while (exponent > 0n) {
+		if (exponent & 1n) {
+			result = (result * base) % modulus;
+		}
+		base = (base * base) % modulus;
+		exponent >>= 1n;
+	}
+	return result;
 }
 
 /**
