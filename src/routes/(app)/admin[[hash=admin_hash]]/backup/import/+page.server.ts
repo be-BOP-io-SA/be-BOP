@@ -12,9 +12,7 @@ import { z } from 'zod';
 import { collections, db } from '$lib/server/database.js';
 import { ObjectId } from 'mongodb';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
-import { isPrivateIp } from '$lib/server/webhook-url-guard';
-import { lookup } from 'dns/promises';
-import { isIP } from 'net';
+import { assertPublicImportSource } from '$lib/server/backup-import-source';
 
 export function load({ url }) {
 	return {
@@ -221,39 +219,6 @@ async function handleDigitalFileImport(
 // imported object be served as HTML from our own origin, the second would let it land on top of
 // an existing one.
 const IMPORTABLE_KEY_PREFIXES = ['pictures/', 'products/', 'tags/', 'galleries/', 'digital-files/'];
-
-/**
- * The source URL is authored by the backup file too, so fetching it unchecked turns the import
- * into a read proxy into our own network — the fetched bytes end up publicly served under
- * `/picture/raw`. Unlike a webhook target, http is allowed: an S3-compatible store on the LAN is
- * a normal deployment, so only the address is vetted, not the scheme.
- */
-async function assertPublicImportSource(rawUrl: string): Promise<void> {
-	const url = new URL(rawUrl);
-
-	if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-		throw new Error(`Refusing to import from a non-http(s) URL: ${url.protocol}`);
-	}
-
-	const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
-
-	if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local')) {
-		throw new Error(`Refusing to import from ${host}`);
-	}
-
-	if (isIP(host)) {
-		if (isPrivateIp(host)) {
-			throw new Error(`Refusing to import from a private address: ${host}`);
-		}
-		return;
-	}
-
-	for (const { address } of await lookup(host, { all: true })) {
-		if (isPrivateIp(address)) {
-			throw new Error(`Refusing to import from ${host}, which resolves to ${address}`);
-		}
-	}
-}
 
 async function uploadFileToS3(
 	imageUrl: URL | RequestInfo | undefined,
