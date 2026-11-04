@@ -9,7 +9,7 @@ import {
 	type User
 } from '$lib/types/User';
 import type { SetRequired } from 'type-fest';
-import { BCRYPT_SALT_ROUNDS } from '$lib/server/user.js';
+import { BCRYPT_SALT_ROUNDS, signOutEverywhere } from '$lib/server/user.js';
 import { adminPrefix } from '$lib/server/admin.js';
 
 export async function load({ params }) {
@@ -71,10 +71,7 @@ export const actions = {
 			{ $set: { password: passwordBcrypt }, $unset: { passwordReset: '' } }
 		);
 		// A reset is how a compromised account is recovered, so it must also end the sessions of whoever held it.
-		await collections.sessions.updateMany(
-			{ userId: user._id },
-			{ $unset: { userId: '', expireUserAt: '' } }
-		);
+		await signOutEverywhere(user._id);
 		throw redirect(303, `${adminPrefix()}/login`);
 	}
 };

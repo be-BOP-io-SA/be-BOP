@@ -123,6 +123,11 @@ export function userQuery(user: UserIdentifier) {
 	return ret;
 }
 
+// The session documents stay so carts, locale and orders keep their owner; only the sign-in goes.
+export async function signOutEverywhere(userId: ObjectId) {
+	await collections.sessions.updateMany({ userId }, { $unset: { userId: '', expireUserAt: '' } });
+}
+
 /**
  * To prevent session fixation attacks
  */
