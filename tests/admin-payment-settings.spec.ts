@@ -88,3 +88,14 @@ test('the back office navigation lists every processor that has settings', async
 		await expect(page.getByRole('link', { name: label, exact: true })).toHaveCount(1);
 	}
 });
+
+test('the settings form keeps the width of the other settings pages on a wide screen', async ({
+	page
+}) => {
+	await page.setViewportSize({ width: 1920, height: 1080 });
+	for (const path of ['/admin/stripe', '/admin/smtp']) {
+		await page.goto(path);
+		const box = await page.locator('main').boundingBox();
+		expect(box?.width, path).toBeLessThanOrEqual(1280);
+	}
+});
