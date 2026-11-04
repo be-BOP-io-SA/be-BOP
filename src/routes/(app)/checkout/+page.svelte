@@ -352,6 +352,12 @@
 					{t('checkout.paymentTimeoutOutOfRange', { max: MAX_PAYMENT_TIMEOUT_MINUTES })}
 				</div>
 			{/if}
+			{#if form?.cartAlreadyCheckedOut}
+				<div class="alert-error">
+					{t('checkout.cartAlreadyCheckedOut')}
+				</div>
+			{/if}
+			<input type="hidden" name="cartId" value={data.cartId} />
 			<section class="gap-4 flex flex-col sm:grid sm:grid-cols-6">
 				<h2 class="font-light text-2xl col-span-6">{t('checkout.shipmentInfo')}</h2>
 				{#if isDigital}

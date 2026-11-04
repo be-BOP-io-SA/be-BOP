@@ -1755,10 +1755,11 @@ export async function createOrder(
 			}),
 			...(params.engagements && { engagements: params.engagements }),
 			...(params.onLocation !== undefined && { onLocation: params.onLocation }),
+			// A checkout that lost the race for this cart finds the winner's order through it.
+			...(params.cart && { cartId: params.cart._id }),
 			...(params.cart?.orderTabSlug && {
 				orderTabSlug: params.cart.orderTabSlug,
 				orderTabId: params.cart.orderTabId,
-				cartId: params.cart._id,
 				splitMode: params.cart.splitMode
 			}),
 			...(params.peopleCountFromPosUi !== undefined && {

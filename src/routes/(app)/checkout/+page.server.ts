@@ -5,7 +5,7 @@ import {
 	type PaymentMethod
 } from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail, isHttpError, redirect } from '@sveltejs/kit';
 import { MAX_PAYMENT_TIMEOUT_MINUTES } from '$lib/types/Order';
 import { z } from 'zod';
 import {
@@ -242,15 +242,35 @@ export async function load({ parent, locals }) {
 			)
 		}),
 		defaultOnLocation: runtimeConfig.defaultOnLocation,
-		desiredPaymentTimeout: runtimeConfig.desiredPaymentTimeout
+		desiredPaymentTimeout: runtimeConfig.desiredPaymentTimeout,
+		cartId: (await getCartFromDb({ user: userIdentifier(locals) }))._id.toString()
 	};
+}
+
+async function orderPlacedFromCart(cartId: ObjectId, locals: App.Locals) {
+	const order = await collections.orders.findOne(
+		{ cartId, ...userQuery(userIdentifier(locals)) },
+		{ projection: { _id: 1 } }
+	);
+	return order?._id;
 }
 
 export const actions = {
 	default: async ({ request, locals, url }) => {
 		const cart = await getCartFromDb({ user: userIdentifier(locals) });
+		const formData = await request.formData();
+		const displayHeadless =
+			url.searchParams.get('display') === 'headless' ? '?display=headless' : '';
 
 		if (!cart?.items.length) {
+			// A double click on "Pay" sends the form again once the first request has placed the order.
+			const postedCartId = String(formData.get('cartId') ?? '');
+			const placedOrderId = ObjectId.isValid(postedCartId)
+				? await orderPlacedFromCart(new ObjectId(postedCartId), locals)
+				: undefined;
+			if (placedOrderId) {
+				throw redirect(303, `/order/${placedOrderId}${displayHeadless}`);
+			}
 			throw error(400, 'Cart is empty');
 		}
 
@@ -286,7 +306,6 @@ export const actions = {
 			throw error(400, 'Cart is empty');
 		}
 
-		const formData = await request.formData();
 		const json: JsonObject = {};
 
 		for (const [key, value] of formData) {
@@ -689,10 +708,18 @@ export const actions = {
 				});
 				return fail(400, { paymentGenerationFailed: true });
 			}
+			// createOrder answers 409 when a parallel checkout of this same cart placed the order first.
+			if (isHttpError(err, 409)) {
+				const placedOrderId = await orderPlacedFromCart(cart._id, locals);
+				if (placedOrderId) {
+					throw redirect(303, `/order/${placedOrderId}${displayHeadless}`);
+				}
+				if (!(await collections.carts.countDocuments({ _id: cart._id }))) {
+					return fail(409, { cartAlreadyCheckedOut: true });
+				}
+			}
 			throw err;
 		}
-		const displayHeadless =
-			url.searchParams.get('display') === 'headless' ? '?display=headless' : '';
 		throw redirect(303, `/order/${orderId}${displayHeadless}`);
 	}
 };

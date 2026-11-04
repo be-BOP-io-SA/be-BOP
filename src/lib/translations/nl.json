@@ -2359,6 +2359,7 @@
 		"noDeliveryInCountry": "Voor sommige artikelen in uw winkelwagentje is bezorging in uw land niet mogelijk.",
 		"paymentGenerationFailed": "De betaling kon niet worden gestart. Probeer het binnen enkele ogenblikken opnieuw, of neem contact op met de verkoper als het probleem aanhoudt.",
 		"paymentTimeoutOutOfRange": "De betaaltermijn moet tussen 1 en {max} minuten (7 dagen) liggen.",
+		"cartAlreadyCheckedOut": "Deze winkelwagen is al besteld, dus er is geen tweede bestelling geplaatst. U vindt uw bestelling in uw account of in het bevestigingsbericht.",
 		"note": {
 			"label": "Laat een briefje achter voor de verkoper",
 			"title": "Opmerking"

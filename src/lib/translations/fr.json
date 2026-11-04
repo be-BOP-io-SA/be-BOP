@@ -2359,6 +2359,7 @@
 		"noDeliveryInCountry": "La livraison n'est pas disponible dans votre pays pour certains articles de votre panier.",
 		"paymentGenerationFailed": "Le paiement n'a pas pu être initié. Veuillez réessayer dans quelques instants, ou contactez le vendeur de la boutique si le problème persiste.",
 		"paymentTimeoutOutOfRange": "Le délai de paiement doit être compris entre 1 et {max} minutes (7 jours).",
+		"cartAlreadyCheckedOut": "Ce panier a déjà été commandé, aucune seconde commande n'a donc été passée. Vous retrouverez votre commande dans votre compte ou dans son message de confirmation.",
 		"note": {
 			"label": "Laissez un message au vendeur",
 			"title": "Note"
