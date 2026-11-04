@@ -3,8 +3,9 @@
 	import { page } from '$app/stores';
 	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
 	import { useI18n } from '$lib/i18n';
+	import { channelFillPercent, isPastFillWarning } from '$lib/utils/channelFill';
 
-	const { t } = useI18n();
+	const { t, locale } = useI18n();
 
 	export let data;
 	export let form;
@@ -27,6 +28,18 @@
 
 	let defaultUrl = data.phoenixd.url || 'http://localhost:9740';
 	let showBolt12 = false;
+
+	// Absent on a shop that configured phoenixd before this setting existed.
+	let channelFillWarningPercent = data.phoenixd.channelFillWarningPercent ?? 0;
+
+	$: channels = (data.nodeInfo?.channels ?? []).flatMap((channel) => {
+		const fillPercent = channelFillPercent(channel);
+		return fillPercent === null
+			? []
+			: [
+					{ id: channel.channelId ?? '', fillPercent, inboundSat: channel.inboundLiquiditySat ?? 0 }
+			  ];
+	});
 </script>
 
 <h1 class="text-3xl">PhoenixD</h1>
@@ -136,6 +149,43 @@
 			</p>
 			<p>{t('admin.phoenixd.pageCmsCode')} <code>[QRCode=Bolt12]</code></p>
 		{/if}
+	</form>
+	<form method="POST" action="?/updateCapacityWarning" class="contents">
+		<label class="form-label">
+			{t('admin.phoenixd.capacityWarningLabel')}
+			<input
+				type="number"
+				name="channelFillWarningPercent"
+				class="form-input"
+				min="0"
+				max="100"
+				step="0.01"
+				bind:value={channelFillWarningPercent}
+			/>
+			<span class="text-sm text-gray-500">{t('admin.phoenixd.capacityWarningHint')}</span>
+		</label>
+
+		{#each channels as channel}
+			{@const past = isPastFillWarning(channel.fillPercent, channelFillWarningPercent)}
+			<div class="flex flex-col gap-1 max-w-[22rem]">
+				<span class="text-sm break-all" class:text-red-600={past}>
+					{t('admin.phoenixd.currentFill', {
+						channel: channel.id,
+						fillPercentage: channel.fillPercent.toLocaleString($locale, {
+							maximumFractionDigits: 2
+						}),
+						inboundSat: channel.inboundSat.toLocaleString($locale)
+					})}
+				</span>
+				<div class="h-2 w-full rounded bg-gray-200">
+					<div
+						class="h-2 rounded {past ? 'bg-red-600' : 'bg-green-600'}"
+						style="width: {channel.fillPercent}%"
+					></div>
+				</div>
+			</div>
+		{/each}
+		<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>
 	</form>
 	<form method="POST" action="?/disable" id="disableForm"></form>
 	<dialog bind:this={withdrawDialog} class="max-w-full w-[500px] rounded">

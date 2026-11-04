@@ -192,7 +192,11 @@ const baseConfig = {
 		enabled: false,
 		password: '',
 		lnAddress: '',
-		bolt12Address: ''
+		bolt12Address: '',
+		/** Channel fill, 0 to 100, past which the shop is warned by e-mail; 0 turns it off. */
+		channelFillWarningPercent: 0,
+		/** When that warning went out, cleared once the channels are back under the level. */
+		capacityWarningSentAt: null as Date | null
 	},
 	oauth: [] as Array<{
 		name: string;
@@ -530,6 +534,12 @@ It contains the following product(s) that increase the leaderboard {{leaderboard
 <p>Actual: {{actualAmount}} {{actualCurrency}}</p>
 <p>Opened by: {{openedBy}}</p>
 <p>Date: {{openedAt}}</p>`,
+			default: true as boolean
+		},
+		'phoenixd.channel.almostFull': {
+			subject: '{{brandName}} - Lightning channel nearly full',
+			html: `<p>Your Lightning channel is {{fillPercentage}}% full, and only {{inboundSat}} sat of room is left to receive payments.</p>
+<p>Once a channel is full, the payments that follow cost a fee you did not plan for. Withdrawing part of the balance frees the room back up — on {{websiteLink}}, under Payment Settings then PhoenixD.</p>`,
 			default: true as boolean
 		},
 		'subscription.reminder': {

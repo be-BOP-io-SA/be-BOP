@@ -1509,7 +1509,10 @@
 			"nodeInfoTitle": "Infos du nœud",
 			"balanceTitle": "Solde",
 			"invoicesTitle": "Factures",
-			"withdrawalSuccessful": "Retrait réussi"
+			"withdrawalSuccessful": "Retrait réussi",
+			"capacityWarningLabel": "M'avertir par e-mail quand un canal atteint ce remplissage (%)",
+			"capacityWarningHint": "Un canal plein accepte encore les paiements, mais ils commencent à coûter des frais. L'avertissement part vers l'adresse de contact de votre identité vendeur, et 0 le désactive.",
+			"currentFill": "Canal {channel} : {fillPercentage} % plein, {inboundSat} sat de place restante"
 		},
 		"s3": {
 			"notConfiguredWarning": "Le stockage S3 n'est pas configuré. Configurez-le dans les <0>paramètres S3</0> avant d'envoyer des images.",

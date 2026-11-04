@@ -1509,7 +1509,10 @@
 			"nodeInfoTitle": "Node info",
 			"balanceTitle": "Balance",
 			"invoicesTitle": "Invoices",
-			"withdrawalSuccessful": "Withdrawal successful"
+			"withdrawalSuccessful": "Withdrawal successful",
+			"capacityWarningLabel": "Warn me by e-mail once a channel is this full (%)",
+			"capacityWarningHint": "A full channel still takes payments, but they start costing a fee. The warning goes to the contact address of your seller identity, and 0 turns it off.",
+			"currentFill": "Channel {channel}: {fillPercentage}% full, {inboundSat} sat left to receive"
 		},
 		"s3": {
 			"notConfiguredWarning": "S3 storage is not configured. Configure it in <0>S3 settings</0> before uploading pictures.",
