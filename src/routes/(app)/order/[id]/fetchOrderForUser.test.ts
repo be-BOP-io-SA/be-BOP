@@ -144,7 +144,10 @@ describe('fetchOrderForUser', () => {
 			vi.unstubAllGlobals();
 		});
 
-		async function orderWithPaypalCapture(captureStatus: string) {
+		async function orderWithPaypalCapture(
+			captureStatus: string,
+			checkoutStatus: 'COMPLETED' | 'APPROVED' = 'COMPLETED'
+		) {
 			const orderId = await createOrder(
 				[{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }],
 				'point-of-sale',
@@ -178,7 +181,8 @@ describe('fetchOrderForUser', () => {
 					Response.json(
 						url.endsWith('/v1/oauth2/token')
 							? { access_token: 'test-token', expires_in: 3600 }
-							: {
+							: url.endsWith('/capture') || checkoutStatus === 'COMPLETED'
+							? {
 									id: 'PAYPAL-CHECKOUT',
 									// PayPal reports the checkout COMPLETED whatever state its capture is in.
 									status: 'COMPLETED',
@@ -186,6 +190,8 @@ describe('fetchOrderForUser', () => {
 										{ amount, payments: { captures: [{ status: captureStatus, amount }] } }
 									]
 							  }
+							: { id: 'PAYPAL-CHECKOUT', status: checkoutStatus, purchase_units: [{ amount }] },
+						{ status: url.endsWith('/capture') ? 201 : 200 }
 					)
 				)
 			);
@@ -200,6 +206,23 @@ describe('fetchOrderForUser', () => {
 
 			expect(order.payments[0].status).toBe('pending');
 			expect(order.status).toBe('pending');
+		});
+
+		it('shows the payment pending when the capture made on return comes back PENDING', async () => {
+			const orderId = await orderWithPaypalCapture('PENDING', 'APPROVED');
+
+			const order = await fetchOrderForUser(orderId);
+
+			expect(order.payments[0].status).toBe('pending');
+			expect(order.status).toBe('pending');
+		});
+
+		it('reports the order paid when the capture made on return is COMPLETED', async () => {
+			const orderId = await orderWithPaypalCapture('COMPLETED', 'APPROVED');
+
+			const order = await fetchOrderForUser(orderId);
+
+			expect(order.payments[0].status).toBe('paid');
 		});
 
 		it('reports the order paid once the capture is COMPLETED', async () => {
