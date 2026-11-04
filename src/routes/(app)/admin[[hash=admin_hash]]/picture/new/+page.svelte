@@ -2,7 +2,12 @@
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { PICTURE_UPLOAD_ACCEPT, TAGTYPES, preUploadPicture } from '$lib/types/Picture.js';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		TAGTYPES,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture.js';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
 
@@ -35,15 +40,15 @@
 		try {
 			let index = 0;
 			for (const file of files) {
-				const pictureId = await preUploadPicture(data.adminPrefix, file, {
+				const upload = await preUploadPicture(data.adminPrefix, file, {
 					fileName: `${fileName}-${index}`
 				});
-				if (!pictureId) {
-					alert(t('admin.picture.uploadFailed'));
+				if ('failure' in upload) {
+					alert(pictureUploadFailureMessage(t, upload.failure));
 					return;
 				}
 
-				formData.set(`pictureIds[${index}]`, pictureId);
+				formData.set(`pictureIds[${index}]`, upload.pictureId);
 				index++;
 			}
 

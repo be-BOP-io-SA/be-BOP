@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture';
+	import type { StorageUploadFailure } from '$lib/utils/sendToStorage';
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 	import { applyAction, deserialize } from '$app/forms';
@@ -37,23 +42,23 @@
 			submitting = true;
 			const formData = new FormData(formElement);
 
-			let uploadFailed = false;
+			let uploadFailure: StorageUploadFailure | undefined;
 			await Promise.all(
 				eventPictures.map(async (picture, index) => {
 					if (picture) {
-						const pictureId = await preUploadPicture(data.adminPrefix, picture[0], {
+						const upload = await preUploadPicture(data.adminPrefix, picture[0], {
 							fileName: name
 						});
-						if (!pictureId) {
-							uploadFailed = true;
+						if ('failure' in upload) {
+							uploadFailure = upload.failure;
 							return;
 						}
-						formData.set(`eventPictures[${index}]`, pictureId);
+						formData.set(`eventPictures[${index}]`, upload.pictureId);
 					}
 				})
 			);
-			if (uploadFailed) {
-				alert(t('admin.picture.uploadFailed'));
+			if (uploadFailure) {
+				alert(pictureUploadFailureMessage(t, uploadFailure));
 				return;
 			}
 

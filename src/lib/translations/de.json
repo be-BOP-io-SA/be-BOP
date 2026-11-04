@@ -610,6 +610,9 @@
 			"associatedProduct": "Zugehöriges Produkt:",
 			"add": "Hinzufügen",
 			"uploading": "Wird hochgeladen...",
+			"uploadFailed": "Die Datei konnte nicht in den Speicher hochgeladen werden. Prüfen Sie die S3-Einstellungen und versuchen Sie es erneut.",
+			"uploadTooLarge": "Die Datei ist größer als {max} MB. Wählen Sie eine kleinere Datei.",
+			"uploadSessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an und senden Sie die Datei noch einmal.",
 			"backToProduct": "Zurück zum Produkt",
 			"backToFiles": "Zurück zu den Dateien",
 			"downloadFile": "Datei herunterladen",
@@ -1377,6 +1380,8 @@
 		},
 		"picture": {
 			"uploadFailed": "Das Bild konnte nicht in den Speicher hochgeladen werden. Prüfen Sie die S3-Einstellungen und versuchen Sie es erneut.",
+			"uploadTooLarge": "Das Bild ist größer als {max} MB. Wählen Sie eine kleinere Datei.",
+			"uploadSessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an und senden Sie das Bild noch einmal.",
 			"listTitle": "Liste der Bilder ohne zugeordnetes Produkt oder Widget",
 			"newPicture": "Neues Bild",
 			"bulkNameEditor": "Massen-Editor für Bildnamen",

@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture';
+	import type { StorageUploadFailure } from '$lib/utils/sendToStorage';
 	import { generateId } from '$lib/utils/generateId';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
@@ -20,21 +25,21 @@
 			submitting = true;
 			// Need to load here, or for some reason, some inputs disappear afterwards
 			const formData = new FormData(formElement);
-			let uploadFailed = false;
+			let uploadFailure: StorageUploadFailure | undefined;
 			await Promise.all(
 				galleryPictures.map(async (picture, i) => {
 					if (picture[0]) {
-						const pictureId = await preUploadPicture(data.adminPrefix, picture[0]);
-						if (!pictureId) {
-							uploadFailed = true;
+						const upload = await preUploadPicture(data.adminPrefix, picture[0]);
+						if ('failure' in upload) {
+							uploadFailure = upload.failure;
 							return;
 						}
-						formData.set(`secondary[${i}].pictureId`, pictureId);
+						formData.set(`secondary[${i}].pictureId`, upload.pictureId);
 					}
 				})
 			);
-			if (uploadFailed) {
-				alert(t('admin.picture.uploadFailed'));
+			if (uploadFailure) {
+				alert(pictureUploadFailureMessage(t, uploadFailure));
 				return;
 			}
 

@@ -2,7 +2,12 @@
 	import { generateId } from '$lib/utils/generateId';
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture.js';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture.js';
+	import type { StorageUploadFailure } from '$lib/utils/sendToStorage';
 	import { page } from '$app/stores';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
@@ -33,23 +38,23 @@
 				{ file: fileSlimBanner, id: 'slimBannerId' },
 				{ file: fileAvatar, id: 'avatarId' }
 			];
-			let uploadFailed = false;
+			let uploadFailure: StorageUploadFailure | undefined;
 			await Promise.all(
 				picturesToUpload.map(async (picture) => {
 					if (picture.file) {
-						const pictureId = await preUploadPicture(data.adminPrefix, picture.file[0], {
+						const upload = await preUploadPicture(data.adminPrefix, picture.file[0], {
 							fileName: name
 						});
-						if (!pictureId) {
-							uploadFailed = true;
+						if ('failure' in upload) {
+							uploadFailure = upload.failure;
 							return;
 						}
-						formData.set(picture.id, pictureId);
+						formData.set(picture.id, upload.pictureId);
 					}
 				})
 			);
-			if (uploadFailed) {
-				alert(t('admin.picture.uploadFailed'));
+			if (uploadFailure) {
+				alert(pictureUploadFailureMessage(t, uploadFailure));
 				return;
 			}
 

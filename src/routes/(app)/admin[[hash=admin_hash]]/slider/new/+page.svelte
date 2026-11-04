@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture';
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
@@ -27,15 +31,15 @@
 			return;
 		}
 		try {
-			const pictureId = await preUploadPicture(data.adminPrefix, files[0], {
+			const upload = await preUploadPicture(data.adminPrefix, files[0], {
 				fileName: title
 			});
-			if (!pictureId) {
-				alert(t('admin.picture.uploadFailed'));
+			if ('failure' in upload) {
+				alert(pictureUploadFailureMessage(t, upload.failure));
 				return;
 			}
 
-			formData.set('sliderPictureId', pictureId);
+			formData.set('sliderPictureId', upload.pictureId);
 
 			const finalResponse = await fetch(formElement.action, {
 				method: 'POST',

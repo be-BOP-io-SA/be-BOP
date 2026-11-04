@@ -31,7 +31,11 @@
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import type { ProductActionSettings } from '$lib/types/ProductActionSettings';
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture';
 	import { currencies } from '$lib/stores/currencies';
 	import { page } from '$app/stores';
 	import type { PojoObject } from '$lib/server/pojo';
@@ -271,15 +275,15 @@
 				}
 				let index = 0;
 				for (const file of files) {
-					const pictureId = await preUploadPicture(adminPrefix, file, {
+					const upload = await preUploadPicture(adminPrefix, file, {
 						fileName: `${product.name}-${index}`
 					});
-					if (!pictureId) {
-						errorMessage = t('admin.picture.uploadFailed');
+					if ('failure' in upload) {
+						errorMessage = pictureUploadFailureMessage(t, upload.failure);
 						return;
 					}
 
-					formData.set(`pictureIds[${index}]`, pictureId);
+					formData.set(`pictureIds[${index}]`, upload.pictureId);
 					index++;
 				}
 			}

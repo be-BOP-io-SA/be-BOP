@@ -610,6 +610,9 @@
 			"associatedProduct": "Bijbehorend product:",
 			"add": "Toevoegen",
 			"uploading": "Uploaden...",
+			"uploadFailed": "Het bestand kon niet naar de opslag worden verzonden. Controleer de S3-instellingen en probeer het opnieuw.",
+			"uploadTooLarge": "Het bestand is groter dan {max} MB. Kies een kleiner bestand.",
+			"uploadSessionExpired": "Uw sessie is verlopen. Log opnieuw in en verstuur het bestand nogmaals.",
 			"backToProduct": "Terug naar product",
 			"backToFiles": "Terug naar bestanden",
 			"downloadFile": "Bestand downloaden",
@@ -1377,6 +1380,8 @@
 		},
 		"picture": {
 			"uploadFailed": "De afbeelding kon niet naar de opslag worden verzonden. Controleer de S3-instellingen en probeer het opnieuw.",
+			"uploadTooLarge": "De afbeelding is groter dan {max} MB. Kies een kleiner bestand.",
+			"uploadSessionExpired": "Uw sessie is verlopen. Log opnieuw in en verstuur de afbeelding nogmaals.",
 			"listTitle": "Lijst met afbeeldingen zonder gekoppeld product of widget",
 			"newPicture": "Nieuwe afbeelding",
 			"bulkNameEditor": "Bulkeditor voor afbeeldingsnamen",

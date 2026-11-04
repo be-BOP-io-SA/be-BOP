@@ -610,6 +610,9 @@
 			"associatedProduct": "Prodotto associato:",
 			"add": "Aggiungi",
 			"uploading": "Caricamento in corso...",
+			"uploadFailed": "Non è stato possibile inviare il file allo spazio di archiviazione. Controlla le impostazioni S3 e riprova.",
+			"uploadTooLarge": "Il file supera i {max} MB. Scegli un file più piccolo.",
+			"uploadSessionExpired": "La sessione è scaduta. Accedi di nuovo, poi invia di nuovo il file.",
 			"backToProduct": "Torna al prodotto",
 			"backToFiles": "Torna ai file",
 			"downloadFile": "Scarica il file",
@@ -1377,6 +1380,8 @@
 		},
 		"picture": {
 			"uploadFailed": "Non è stato possibile inviare l'immagine allo spazio di archiviazione. Controlla le impostazioni S3 e riprova.",
+			"uploadTooLarge": "L'immagine supera i {max} MB. Scegli un file più piccolo.",
+			"uploadSessionExpired": "La sessione è scaduta. Accedi di nuovo, poi invia di nuovo l'immagine.",
 			"listTitle": "Elenco delle immagini senza prodotto o widget associato",
 			"newPicture": "Nuova immagine",
 			"bulkNameEditor": "Editor collettivo dei nomi delle immagini",

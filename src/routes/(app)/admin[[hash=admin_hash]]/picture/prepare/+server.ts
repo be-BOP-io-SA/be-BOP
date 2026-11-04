@@ -6,14 +6,19 @@ import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import * as mimeTypes from 'mime-types';
 import { z } from 'zod';
+import { error } from '@sveltejs/kit';
+import { MAX_PICTURE_SIZE } from '$lib/types/Picture';
 
 export async function POST({ request }) {
 	const body = z
 		.object({
-			fileSize: z.number().int().min(1).max(20_000_000),
+			fileSize: z.number().int().min(1),
 			fileName: z.string().trim().min(1).max(500)
 		})
 		.parse(await request.json());
+	if (body.fileSize > MAX_PICTURE_SIZE) {
+		throw error(413, 'The picture is too large');
+	}
 
 	const pictureId = generateId(body.fileName, true);
 

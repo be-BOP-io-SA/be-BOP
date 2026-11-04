@@ -4,7 +4,12 @@
 	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency';
 	import { applyAction, enhance, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture.js';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture.js';
+	import type { StorageUploadFailure } from '$lib/utils/sendToStorage';
 	import Select from 'svelte-select';
 	import { browser } from '$app/environment';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
@@ -100,23 +105,23 @@
 		submitting = true;
 		const formData = new FormData(formElement);
 		try {
-			let uploadFailed = false;
+			let uploadFailure: StorageUploadFailure | undefined;
 			await Promise.all(
 				eventPictures.map(async (picture, index) => {
 					if (picture) {
-						const pictureId = await preUploadPicture(data.adminPrefix, picture[0], {
+						const upload = await preUploadPicture(data.adminPrefix, picture[0], {
 							fileName: name
 						});
-						if (!pictureId) {
-							uploadFailed = true;
+						if ('failure' in upload) {
+							uploadFailure = upload.failure;
 							return;
 						}
-						formData.set(`eventPictures[${index}]`, pictureId);
+						formData.set(`eventPictures[${index}]`, upload.pictureId);
 					}
 				})
 			);
-			if (uploadFailed) {
-				alert(t('admin.picture.uploadFailed'));
+			if (uploadFailure) {
+				alert(pictureUploadFailureMessage(t, uploadFailure));
 				return;
 			}
 			const action = (event.submitter as HTMLButtonElement | null)?.formAction.includes('?/')

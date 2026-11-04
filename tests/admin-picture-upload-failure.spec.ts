@@ -15,13 +15,62 @@ function recordDialogs(page: Page): string[] {
 	return messages;
 }
 
-async function submitPicture(page: Page) {
+async function submitPicture(page: Page, buffer = PNG) {
 	await page.goto('/admin/picture/new', { waitUntil: 'networkidle' });
 	await page
 		.locator('input[type="file"]')
-		.setInputFiles({ name: 'refused.png', mimeType: 'image/png', buffer: PNG });
+		.setInputFiles({ name: 'refused.png', mimeType: 'image/png', buffer });
 	await page.locator('input[type="submit"]').click();
 }
+
+test('a picture over 20 MB is refused before anything is sent', async ({ page }) => {
+	const dialogs = recordDialogs(page);
+	const prepared: string[] = [];
+	page.on('request', (request) => {
+		if (request.url().includes('/picture/prepare')) {
+			prepared.push(request.url());
+		}
+	});
+
+	await submitPicture(page, Buffer.alloc(20_000_001));
+
+	await expect
+		.poll(() => dialogs)
+		.toEqual(['The picture is larger than 20 MB. Choose a smaller file.']);
+	expect(prepared).toEqual([]);
+	await expect(page.locator('input[type="submit"]')).toBeEnabled();
+});
+
+test('an expired session is named as such, not as a storage problem', async ({ page, context }) => {
+	const dialogs = recordDialogs(page);
+	await page.goto('/admin/picture/new', { waitUntil: 'networkidle' });
+	await page
+		.locator('input[type="file"]')
+		.setInputFiles({ name: 'late.png', mimeType: 'image/png', buffer: PNG });
+	await context.clearCookies();
+	await page.locator('input[type="submit"]').click();
+
+	await expect
+		.poll(() => dialogs)
+		.toEqual(['Your session has expired. Log in again, then send the picture again.']);
+});
+
+test('a digital file the storage refuses gets a readable message', async ({ page }) => {
+	const dialogs = recordDialogs(page);
+	await page.route('**/digital-files/**', (route) => route.abort('failed'));
+
+	await page.goto('/admin/digital-file/new', { waitUntil: 'networkidle' });
+	await page.locator('input[name="name"]').fill('E2E refused file');
+	await page
+		.locator('input[type="file"]')
+		.setInputFiles({ name: 'refused.pdf', mimeType: 'application/pdf', buffer: PNG });
+	await page.locator('input[type="submit"]').click();
+
+	await expect
+		.poll(() => dialogs)
+		.toEqual(['The file could not be sent to the storage. Check the S3 settings, then try again.']);
+	await expect(page).toHaveURL(/\/admin\/digital-file\/new$/);
+});
 
 test('a picture the storage refuses is reported, and the form can be sent again', async ({
 	page

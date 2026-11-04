@@ -610,6 +610,9 @@
 			"associatedProduct": "Associated product:",
 			"add": "Add",
 			"uploading": "Uploading...",
+			"uploadFailed": "The file could not be sent to the storage. Check the S3 settings, then try again.",
+			"uploadTooLarge": "The file is larger than {max} MB. Choose a smaller file.",
+			"uploadSessionExpired": "Your session has expired. Log in again, then send the file again.",
 			"backToProduct": "Back to product",
 			"backToFiles": "Back to files",
 			"downloadFile": "Download file",
@@ -1377,6 +1380,8 @@
 		},
 		"picture": {
 			"uploadFailed": "The picture could not be sent to the storage. Check the S3 settings, then try again.",
+			"uploadTooLarge": "The picture is larger than {max} MB. Choose a smaller file.",
+			"uploadSessionExpired": "Your session has expired. Log in again, then send the picture again.",
 			"listTitle": "List of pictures with no associated product or widget",
 			"newPicture": "New picture",
 			"bulkNameEditor": "Bulk picture name editor",

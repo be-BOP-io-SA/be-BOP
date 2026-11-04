@@ -1,5 +1,6 @@
 import type { Timestamps } from './Timestamps';
 import type { Slider } from './slider';
+import { sendToStorage, type StorageUploadFailure } from '$lib/utils/sendToStorage';
 export const TAGTYPES = ['main', 'full', 'wide', 'slim', 'avatar'] as const;
 export type TagType = (typeof TAGTYPES)[number];
 
@@ -46,47 +47,32 @@ export interface Picture extends Timestamps {
 	};
 }
 
-/**
- * @returns the picture id, or null when the picture could not be stored: callers tell the admin.
- */
+export const MAX_PICTURE_SIZE = 20_000_000;
+
+/** Callers tell the admin about a failure with {@link pictureUploadFailureMessage}. */
 export async function preUploadPicture(
 	adminPrefix: string,
 	file: File,
 	opts?: { fileName?: string }
-): Promise<string | null> {
-	const fileSize = file.size;
-	const fileName = opts?.fileName || file.name;
+): Promise<{ pictureId: string } | { failure: StorageUploadFailure }> {
+	const sent = await sendToStorage<{ uploadUrl: string; pictureId: string }>(file, {
+		url: `${adminPrefix}/picture/prepare`,
+		body: { fileName: opts?.fileName || file.name, fileSize: file.size },
+		maxSize: MAX_PICTURE_SIZE
+	});
+	return 'failure' in sent ? sent : { pictureId: sent.prepared.pictureId };
+}
 
-	try {
-		const response = await fetch(`${adminPrefix}/picture/prepare`, {
-			method: 'POST',
-			body: JSON.stringify({
-				fileName,
-				fileSize
-			}),
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		});
-
-		if (!response.ok) {
-			throw new Error(await response.text());
-		}
-
-		const { uploadUrl, pictureId } = await response.json();
-
-		// A storage refusal often lacks CORS headers, so the browser reports it as a network error.
-		const uploadResponse = await fetch(uploadUrl, {
-			method: 'PUT',
-			body: file
-		});
-
-		if (!uploadResponse.ok) {
-			throw new Error(await uploadResponse.text());
-		}
-		return pictureId;
-	} catch (err) {
-		console.error('Picture upload failed:', err);
-		return null;
+export function pictureUploadFailureMessage(
+	t: (key: string, params?: Record<string, number>) => string,
+	failure: StorageUploadFailure
+): string {
+	switch (failure) {
+		case 'tooLarge':
+			return t('admin.picture.uploadTooLarge', { max: MAX_PICTURE_SIZE / 1_000_000 });
+		case 'sessionExpired':
+			return t('admin.picture.uploadSessionExpired');
+		case 'storageRefused':
+			return t('admin.picture.uploadFailed');
 	}
 }
