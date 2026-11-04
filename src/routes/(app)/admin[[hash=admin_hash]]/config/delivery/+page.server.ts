@@ -3,7 +3,7 @@ import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { z } from 'zod';
 import { collections } from '$lib/server/database';
-import { deliveryFeesSchema } from './schema';
+import { deliveryFeesSchema, deliveryZonesSchema } from './schema';
 import { zodObjectId } from '$lib/server/zod';
 
 export const actions = {
@@ -21,6 +21,7 @@ export const actions = {
 				onlyPayHighest: z.boolean({ coerce: true }),
 				applyFlatFeeToEachItem: z.boolean({ coerce: true }),
 				deliveryFees: deliveryFeesSchema.default({}),
+				deliveryZones: deliveryZonesSchema.default([]),
 				allowFreeForPOS: z.boolean({ coerce: true }),
 				vatIncludedReference: z.boolean({ coerce: true }).default(false),
 				vatProfileId: zodObjectId()

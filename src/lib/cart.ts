@@ -4,6 +4,7 @@ import { sum } from '$lib/utils/sum';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import type { RuntimeConfig } from './server/runtime-config';
+import type { DeliveryFees, DeliveryZone } from './types/DeliveryFees';
 import { type CountryAlpha2 } from './types/Country';
 import { computeVatRate, extractVat } from './utils/vat';
 import { UNDERLYING_CURRENCY, type Currency } from './types/Currency';
@@ -499,6 +500,19 @@ export function computePriceInfo(
 	};
 }
 
+function resolveDeliveryFee(
+	deliveryFees: DeliveryFees,
+	deliveryZones: DeliveryZone[] | undefined,
+	country: CountryAlpha2
+): { amount: number; currency: Currency } | undefined {
+	const zone = deliveryZones?.find((z) => z.countries.includes(country));
+	return (
+		deliveryFees[country] ??
+		(zone && { amount: zone.amount, currency: zone.currency }) ??
+		deliveryFees.default
+	);
+}
+
 export function computeDeliveryFees(
 	currency: Currency,
 	country: CountryAlpha2,
@@ -507,6 +521,7 @@ export function computeDeliveryFees(
 			Product,
 			| 'price'
 			| 'deliveryFees'
+			| 'deliveryZones'
 			| 'applyDeliveryFeesOnlyOnce'
 			| 'shipping'
 			| 'requireSpecificDeliveryFee'
@@ -522,7 +537,11 @@ export function computeDeliveryFees(
 	}
 
 	if (deliveryFeesConfig.mode === 'flatFee' && !deliveryFeesConfig.applyFlatFeeToEachItem) {
-		const cfg = deliveryFeesConfig.deliveryFees[country] || deliveryFeesConfig.deliveryFees.default;
+		const cfg = resolveDeliveryFee(
+			deliveryFeesConfig.deliveryFees,
+			deliveryFeesConfig.deliveryZones,
+			country
+		);
 
 		if (!cfg) {
 			return NaN;
@@ -533,13 +552,16 @@ export function computeDeliveryFees(
 
 	const fees = items.map(({ product, quantity }) => {
 		const cfg = (() => {
-			const defaultConfig =
-				deliveryFeesConfig.deliveryFees[country] || deliveryFeesConfig.deliveryFees.default;
+			const defaultConfig = resolveDeliveryFee(
+				deliveryFeesConfig.deliveryFees,
+				deliveryFeesConfig.deliveryZones,
+				country
+			);
 			if (deliveryFeesConfig.mode === 'flatFee') {
 				return defaultConfig;
 			}
 
-			let cfg = product.deliveryFees?.[country] || product.deliveryFees?.default;
+			let cfg = resolveDeliveryFee(product.deliveryFees ?? {}, product.deliveryZones, country);
 
 			if (!product.requireSpecificDeliveryFee) {
 				cfg ||= defaultConfig;
