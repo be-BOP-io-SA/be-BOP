@@ -532,9 +532,14 @@
 			</div>
 		{:else}
 			<div class="grow body-mainPlan">
-				{#if data.ageRestriction.enabled && !data.sessionAcceptAgeLimitation && !$page.url.pathname.startsWith('/admin')}
-					<form class="mx-auto max-w-7xl" method="POST" action="{data.websiteLink}?/navigate">
-						<input type="hidden" name="redirectTo" value={$page.url.pathname + $page.url.search} />
+				{#if data.ageRestriction.enabled && !data.sessionAcceptAgeLimitation && !$page.url.pathname.startsWith('/admin') && !$page.url.pathname.startsWith('/pos')}
+					<form class="mx-auto max-w-7xl" method="POST" action="/?/navigate">
+						<input
+							type="hidden"
+							name="redirectTo"
+							value={$page.url.searchParams.get('redirectTo') ??
+								$page.url.pathname + $page.url.search}
+						/>
 						{#if data.cmsAgewall && data.cmsAgewallData}
 							<CmsDesign
 								{...data.cmsAgewallData}
