@@ -4,7 +4,7 @@ import { SUBSCRIPTION_DURATIONS, subscriptionUnitToSeconds } from '$lib/types/Su
 
 const MAX_PHASE_REMINDER_SECONDS = 7 * 24 * 60 * 60;
 import { z } from 'zod';
-import { deliveryFeesSchema } from '../config/delivery/schema';
+import { defaultBlacklistSchema, deliveryFeesSchema } from '../config/delivery/schema';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 import { zodObjectId } from '$lib/server/zod';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
@@ -30,6 +30,7 @@ export const productBaseSchema = () => ({
 	shipping: z.boolean({ coerce: true }).default(false),
 	displayShortDescription: z.boolean({ coerce: true }).default(false),
 	deliveryFees: deliveryFeesSchema.optional(),
+	defaultBlacklist: defaultBlacklistSchema.optional(),
 	restrictPaymentMethods: z.boolean({ coerce: true }).default(false),
 	paymentMethods: z
 		.array(z.enum(paymentMethods({ includePOS: true }) as [PaymentMethod, ...PaymentMethod[]]))

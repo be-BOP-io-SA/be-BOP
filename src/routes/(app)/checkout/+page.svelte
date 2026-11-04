@@ -132,6 +132,8 @@
 		data.deliveryFees
 	);
 	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
+	// Order is blocked elsewhere when this is NaN; feed 0 so the summary isn't all €NaN
+	$: deliveryFeesForPriceInfo = isNaN(deliveryFeesToBill) ? 0 : deliveryFeesToBill;
 
 	// Display delivery HT (not the raw TTC) so the breakdown sums up to Total.
 	$: deliveryFeesVatRate = computeVatRate({
@@ -173,19 +175,19 @@
 	// Without discount — for validation purposes
 	$: priceInfoWithoutDiscount = computePriceInfo(items, {
 		...vatBaseConfig,
-		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		deliveryFees: { amount: deliveryFeesForPriceInfo, currency: UNDERLYING_CURRENCY },
 		discount: undefined
 	});
 	// basePriceInfo: used by nothingToPay/paymentMethods filter (breaks reactive cycle)
 	$: basePriceInfo = computePriceInfo(items, {
 		...vatBaseConfig,
-		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		deliveryFees: { amount: deliveryFeesForPriceInfo, currency: UNDERLYING_CURRENCY },
 		discount: possiblyOutOfBoundsDiscount
 	});
 	// priceInfo: used for display with dynamic discount from payment method
 	$: priceInfo = computePriceInfo(effectiveItems, {
 		...vatBaseConfig,
-		deliveryFees: { amount: deliveryFeesToBill, currency: UNDERLYING_CURRENCY },
+		deliveryFees: { amount: deliveryFeesForPriceInfo, currency: UNDERLYING_CURRENCY },
 		discount: possiblyOutOfBoundsDiscount
 	});
 	$: isDigital = items.every((item) => !item.product.shipping);
