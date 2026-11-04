@@ -22,10 +22,10 @@ export const actions = {
 			throw error(403, 'You cannot update a customer from here');
 		}
 
-		// Only a super-admin may hand out their own tier, as when creating a user: the guard
-		// below covers editing an existing super-admin, not granting the role in the first place.
 		await requireCanManageUser(locals.user, user);
 
+		// Only a super-admin may hand out their own tier: the edit guard further down covers
+		// editing an existing super-admin, not granting the role in the first place.
 		const allowedRoles = (await collections.roles.find().toArray()).filter(
 			(role) =>
 				(role._id !== SUPER_ADMIN_ROLE_ID || locals.user?.roleId === SUPER_ADMIN_ROLE_ID) &&

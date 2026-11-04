@@ -6,8 +6,7 @@ if (!process.env.PUBLIC_VERSION) {
 
 import 'sharp'; // Otherwise build errors with "module did not self-register"
 import { sveltekit } from '@sveltejs/kit/vite';
-// Vite's own `defineConfig` takes an async factory, which vitest 0.34's does not; the
-// reference below is what still types the `test` block.
+// Vite's `defineConfig` does not know the `test` block; this reference types it.
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import Icons from 'unplugin-icons/vite';
@@ -49,8 +48,7 @@ export default defineConfig(async ({ command }) => {
 		test: {
 			include: ['src/**/*.{test,spec}.{js,ts}'],
 			// Every test file shares one MongoDB, and `cleanDb()` empties it between tests:
-			// two files running at once wipe each other's fixtures. One worker, one file at a
-			// time — what `--no-threads` gave before vitest reworked its pools.
+			// two files running at once wipe each other's fixtures, so one file runs at a time.
 			pool: 'forks',
 			fileParallelism: false,
 			maxWorkers: 1
