@@ -224,7 +224,12 @@
 			"bulkPriceChangeTitle": "Alteração em massa de preços",
 			"displayVatCalculator": "Mostrar calculadora de IVA",
 			"bulkTagsEditTitle": "Edição em massa de etiquetas",
-			"productTagsLabel": "Etiquetas do produto"
+			"productTagsLabel": "Etiquetas do produto",
+			"noContact": {
+				"title": "Encomenda sem endereço de contacto",
+				"hint": "Assinale os produtos que um cliente pode encomendar sem deixar um endereço de contacto. As subscrições, os produtos enviados, com sinal ou em pré-encomenda exigem sempre um: a sua caixa está desativada.",
+				"noLongerEditable": "Estes produtos já não podem ser encomendados sem endereço de contacto desde que esta página foi aberta, por isso nada foi guardado: {products}. Recarregue a página e guarde novamente."
+			}
 		},
 		"deliveryFees": {
 			"addFeeOption": "Adicionar uma opção de taxa",
@@ -1801,6 +1806,7 @@
 			"productIsVisible": "O produto é visível",
 			"canBeAddedToBasket": "Pode ser adicionado ao carrinho",
 			"advancedFeatures": "Funcionalidades avançadas",
+			"allowOrderWithoutContactAddress": "Permitir a encomenda sem endereço de contacto",
 			"customCtaButtons": "Botões de apelo à ação personalizados",
 			"buttonText": "Texto do botão",
 			"url": "URL",
@@ -2340,6 +2346,7 @@
 			"emailOrNpub": "Email ou chave pública Nostr",
 			"message": "Por favor, preencha um endereço de contacto para ser notificado sobre as novidades da sua encomenda.",
 			"npub": "Chave pública Nostr",
+			"optional": "(opcional)",
 			"title": "Feed & Notificações"
 		},
 		"numProducts": {

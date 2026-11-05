@@ -674,7 +674,10 @@
 								modes={contactModes}
 								name="{key}Address"
 								bind:value={addresses[key]}
-								required={key === 'paymentStatus' && !data.hasPosOptions}
+								required={key === 'paymentStatus' &&
+									!data.hasPosOptions &&
+									!data.contactAddressOptional}
+								optional={data.contactAddressOptional}
 							/>
 						</div>
 						{#if data.displayNewsletterCommercialProspection}

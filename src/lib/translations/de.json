@@ -224,7 +224,12 @@
 			"bulkPriceChangeTitle": "Massenänderung der Preise",
 			"displayVatCalculator": "MwSt.-Rechner anzeigen",
 			"bulkTagsEditTitle": "Massenbearbeitung der Tags",
-			"productTagsLabel": "Produkt-Tags"
+			"productTagsLabel": "Produkt-Tags",
+			"noContact": {
+				"title": "Bestellung ohne Kontaktadresse",
+				"hint": "Markieren Sie die Produkte, die ein Kunde ohne Angabe einer Kontaktadresse bestellen darf. Abonnements, versandte Produkte, Produkte mit Anzahlung und Vorbestellungen benötigen immer eine: Ihr Kästchen ist ausgegraut.",
+				"noLongerEditable": "Diese Produkte können seit dem Öffnen dieser Seite nicht mehr ohne Kontaktadresse bestellt werden, daher wurde nichts gespeichert: {products}. Laden Sie die Seite neu und speichern Sie erneut."
+			}
 		},
 		"deliveryFees": {
 			"addFeeOption": "Gebührenoption hinzufügen",
@@ -1801,6 +1806,7 @@
 			"productIsVisible": "Produkt ist sichtbar",
 			"canBeAddedToBasket": "Kann in den Warenkorb gelegt werden",
 			"advancedFeatures": "Erweiterte Funktionen",
+			"allowOrderWithoutContactAddress": "Bestellung ohne Kontaktadresse erlauben",
 			"customCtaButtons": "Benutzerdefinierte Call-to-Action-Schaltflächen",
 			"buttonText": "Schaltflächentext",
 			"url": "URL",
@@ -2340,6 +2346,7 @@
 			"emailOrNpub": "E-Mail oder öffentlicher Nostr-Schlüssel",
 			"message": "Bitte geben Sie eine Kontaktadresse an, um über Neuigkeiten zu Ihrer Bestellung informiert zu werden.",
 			"npub": "Öffentlicher Nostr-Schlüssel",
+			"optional": "(optional)",
 			"title": "Feed & Benachrichtigungen"
 		},
 		"numProducts": {
