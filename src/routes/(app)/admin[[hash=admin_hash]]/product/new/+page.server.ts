@@ -279,7 +279,8 @@ export const actions: Actions = {
 										reason: parsed.sellDisclaimerReason
 									}
 								}),
-							hideFromSEO: parsed.hideFromSEO
+							hideFromSEO: parsed.hideFromSEO,
+							allowOrderWithoutContactAddress: parsed.allowOrderWithoutContactAddress
 						},
 						{ session }
 					);
@@ -496,6 +497,7 @@ export const actions: Actions = {
 							pricingSchedule: parsed.pricingSchedule
 						}),
 					hideFromSEO: parsed.hideFromSEO,
+					allowOrderWithoutContactAddress: parsed.allowOrderWithoutContactAddress,
 					translations: product.translations
 				},
 				{ session }

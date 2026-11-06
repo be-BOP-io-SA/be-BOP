@@ -313,6 +313,7 @@ export const actions: Actions = {
 								}
 							}),
 						hideFromSEO: parsed.hideFromSEO,
+						allowOrderWithoutContactAddress: parsed.allowOrderWithoutContactAddress,
 						...(parsed.stockReferenceProductId && {
 							stockReference: {
 								productId: parsed.stockReferenceProductId

@@ -224,7 +224,12 @@
 			"bulkPriceChangeTitle": "Bulkwijziging van prijzen",
 			"displayVatCalculator": "BTW-calculator weergeven",
 			"bulkTagsEditTitle": "Bulkbewerking van tags",
-			"productTagsLabel": "Producttags"
+			"productTagsLabel": "Producttags",
+			"noContact": {
+				"title": "Bestelling zonder contactadres",
+				"hint": "Vink de producten aan die een klant kan bestellen zonder een contactadres op te geven. Abonnementen, verzonden producten, producten met aanbetaling en voorbestellingen vereisen er altijd een: hun vakje is uitgeschakeld.",
+				"noLongerEditable": "Deze producten kunnen sinds het openen van deze pagina niet meer zonder contactadres worden besteld, dus er is niets opgeslagen: {products}. Herlaad de pagina en sla opnieuw op."
+			}
 		},
 		"deliveryFees": {
 			"addFeeOption": "Kostenoptie toevoegen",
@@ -1801,6 +1806,7 @@
 			"productIsVisible": "Product is zichtbaar",
 			"canBeAddedToBasket": "Kan aan winkelwagen worden toegevoegd",
 			"advancedFeatures": "Geavanceerde functies",
+			"allowOrderWithoutContactAddress": "Bestelling zonder contactadres toestaan",
 			"customCtaButtons": "Aangepaste call-to-action-knoppen",
 			"buttonText": "Knoptekst",
 			"url": "URL",
@@ -2340,6 +2346,7 @@
 			"emailOrNpub": "E-mail of publieke sleutel Nostr",
 			"message": "Vul een contactadres in om op de hoogte te blijven van uw bestellingsnieuws.",
 			"npub": "Publieke sleutel Nostr",
+			"optional": "(optioneel)",
 			"title": "Voer"
 		},
 		"numProducts": {
