@@ -279,6 +279,7 @@ export const productBaseSchema = () => ({
 	sellDisclaimerTitle: z.string().trim().max(60).optional(),
 	sellDisclaimerReason: z.string().trim().max(10_000).optional(),
 	hideFromSEO: z.boolean({ coerce: true }).default(false),
+	allowOrderWithoutContactAddress: z.boolean({ coerce: true }).default(false),
 	hideDiscountExpiration: z.boolean({ coerce: true }).default(false),
 	paidOrderWebhook: z
 		.object({
