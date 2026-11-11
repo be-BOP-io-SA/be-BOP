@@ -261,7 +261,9 @@ async function writeNewOrder(
 	}
 
 	try {
-		const { lines, warnings: productWarnings } = await resolveProducts(cmd.items, cmd.currency);
+		const { lines, warnings: productWarnings } = await resolveProducts(cmd.items, cmd.currency, {
+			trustExternalPricing
+		});
 		warnings.push(...productWarnings);
 
 		const posSubtypes: (string | undefined)[] = [];

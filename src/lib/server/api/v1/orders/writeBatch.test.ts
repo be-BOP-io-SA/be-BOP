@@ -1,5 +1,5 @@
 import { MongoClient, ObjectId } from 'mongodb';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as ordersModule from '$lib/server/orders';
 import { env } from '$env/dynamic/private';
 import { cleanDb } from '$lib/server/test-utils';
@@ -127,6 +127,102 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		// The variation surcharge must reach the order total, not just the item line.
 		expect(order?.currencySnapshot.main.totalPrice.amount).toBe(10);
 		expect(order?.items[0].currencySnapshot.main.customPrice?.amount).toBe(10);
+	});
+
+	describe('price sent by the third-party system', () => {
+		let previous: boolean;
+		beforeEach(() => {
+			previous = runtimeConfig.apiV1.trustExternalPricing;
+		});
+		afterEach(() => {
+			runtimeConfig.apiV1.trustExternalPricing = previous;
+		});
+
+		it('charges the catalogue price when the third party is not the source of truth', async () => {
+			runtimeConfig.apiV1.trustExternalPricing = false;
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'price-ignored-1',
+						items: [
+							{
+								productId: TEST_DIGITAL_PRODUCT._id,
+								quantity: 1,
+								customPrice: { amountMinor: 1, currency: 'EUR' }
+							}
+						]
+					})
+				]
+			});
+			expect(res.results[0].warnings?.map((w) => w.code)).toContain('PRICE_OVERRIDE');
+			const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+			expect(order?.currencySnapshot.main.totalPrice.amount).toBe(
+				TEST_DIGITAL_PRODUCT.price.amount
+			);
+			expect(order?.status).toBe('paid');
+		});
+
+		it('charges the price sent when the third party is the source of truth', async () => {
+			runtimeConfig.apiV1.trustExternalPricing = true;
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'price-honoured-1',
+						items: [
+							{
+								productId: TEST_DIGITAL_PRODUCT._id,
+								quantity: 1,
+								customPrice: { amountMinor: 1, currency: 'EUR' }
+							}
+						],
+						payment: { method: 'point-of-sale', status: 'paid', amountMinor: 1, currency: 'EUR' }
+					})
+				]
+			});
+			const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+			expect(order?.currencySnapshot.main.totalPrice.amount).toBe(0.01);
+			expect(order?.status).toBe('paid');
+		});
+
+		it('charges the variation price of a line sent at zero, instead of leaving it pending', async () => {
+			runtimeConfig.apiV1.trustExternalPricing = false;
+			await collections.products.insertOne({
+				...TEST_DIGITAL_PRODUCT,
+				_id: 'variation-sent-free',
+				alias: ['variation-sent-free'],
+				price: { amount: 0, currency: 'EUR' as const },
+				payWhatYouWant: false,
+				variations: [{ name: 'size', value: 'L', price: 20 }]
+			});
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'variation-sent-free-1',
+						items: [
+							{
+								productId: 'variation-sent-free',
+								quantity: 1,
+								chosenVariations: { size: 'L' },
+								customPrice: { amountMinor: 0, currency: 'EUR' }
+							}
+						],
+						payment: {
+							method: 'point-of-sale',
+							status: 'paid',
+							amountMinor: amountToMinor(20, 'EUR'),
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+			const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+			expect(order?.currencySnapshot.main.totalPrice.amount).toBe(20);
+			expect(order?.payments[0].method).toBe('point-of-sale');
+			expect(order?.status).toBe('paid');
+		});
 	});
 
 	it('creates a paid order from lines and marks payment paid', async () => {
