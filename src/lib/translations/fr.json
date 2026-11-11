@@ -1102,7 +1102,12 @@
 			"previous": "Précédent",
 			"next": "Suivant",
 			"orderLabelTitle": "Label de commande",
-			"orderLabelIds": "Identifiants de label de commande"
+			"orderLabelIds": "Identifiants de label de commande",
+			"customFieldFilterLabel": "Champ de checkout personnalisé",
+			"customFieldValueLabel": "Valeur du champ",
+			"customFieldValuePlaceholder": "rechercher une commande par valeur du champ",
+			"addCustomFieldFilter": "Ajouter un filtre sur un champ de checkout",
+			"removeCustomFieldFilter": "Supprimer ce filtre"
 		},
 		"layout": {
 			"title": "Mise en page",

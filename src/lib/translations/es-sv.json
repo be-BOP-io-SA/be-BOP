@@ -1102,7 +1102,12 @@
 			"previous": "Anterior",
 			"next": "Siguiente",
 			"orderLabelTitle": "Label de pedido",
-			"orderLabelIds": "IDs de labels de pedido"
+			"orderLabelIds": "IDs de labels de pedido",
+			"customFieldFilterLabel": "Campo de checkout personalizado",
+			"customFieldValueLabel": "Valor del campo",
+			"customFieldValuePlaceholder": "buscar pedido por valor del campo",
+			"addCustomFieldFilter": "Añadir un filtro por campo de checkout",
+			"removeCustomFieldFilter": "Quitar este filtro"
 		},
 		"layout": {
 			"title": "Diseño",

@@ -173,6 +173,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.orders, { orderTabId: 1, status: 1 }, { sparse: true }],
 	[collections.orders, { orderTabId: 1, splitMode: 1, status: 1 }, { sparse: true }],
 	[collections.orders, { orderLabelIds: 1 }, { sparse: true }],
+	[collections.orders, { 'customCheckoutFields.slug': 1 }, { sparse: true }],
 	[collections.digitalFiles, { productId: 1 }],
 	[collections.digitalFiles, { secret: 1 }, { unique: true, sparse: true }],
 	[collections.pendingDigitalFiles, { createdAt: 1 }],
