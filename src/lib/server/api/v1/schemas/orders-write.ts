@@ -114,7 +114,12 @@ const orderCommandSchema = z
 		customFields: customFieldsSchema,
 		/** Order label ids to put on the order. Unknown ones are dropped with a warning. */
 		labels: z.array(z.string().trim().min(1).max(200)).max(20).optional(),
-		notes: z.string().max(5000).optional()
+		notes: z.string().max(5000).optional(),
+		/**
+		 * `false`: be-BOP notifies nobody about this order, neither the customer nor the shop.
+		 * Absent: the shop's usual notifications. Webhooks and event streams are not affected.
+		 */
+		notifications: z.boolean().optional()
 	})
 	.strict()
 	.superRefine((order, ctx) => {
