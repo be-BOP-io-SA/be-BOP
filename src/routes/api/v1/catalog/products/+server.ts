@@ -3,10 +3,8 @@ import { apiV1Handler, apiV1OptionsHandler } from '$lib/server/api/v1/handler';
 import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { jsonWithETag } from '$lib/server/api/v1/validators';
-import {
-	CATALOG_LISTING_QUERY,
-	listCatalogProducts
-} from '$lib/server/api/v1/catalog/listProducts';
+import { listCatalogProducts } from '$lib/server/api/v1/catalog/listProducts';
+import { CATALOG_LISTING_QUERY } from '$lib/server/api/v1/catalog/listingQuery';
 import { parseApiQuery } from '$lib/server/api/v1/query';
 import { parsePictureOptions } from '$lib/server/api/v1/catalog/pictureOptions';
 import { checkRateLimit } from '$lib/server/rateLimit';

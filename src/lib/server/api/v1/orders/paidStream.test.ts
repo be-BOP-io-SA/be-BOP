@@ -6,6 +6,9 @@ const find = vi.fn();
 vi.mock('$lib/server/database', () => ({
 	collections: { orders: { find: (...args: unknown[]) => find(...args) } }
 }));
+vi.mock('$lib/server/runtime-config', () => ({
+	runtimeConfig: { authLinkJwtSigningKey: 'test-signing-key' }
+}));
 
 import {
 	compareCursors,

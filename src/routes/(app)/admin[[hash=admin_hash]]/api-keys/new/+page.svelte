@@ -211,7 +211,7 @@
 			{#each form.error.formErrors ?? [] as formError}
 				<p class="text-red-600 text-sm">{formError}</p>
 			{/each}
-			{#if form.streamLifetimeTooLong}
+			{#if 'streamLifetimeTooLong' in form && form.streamLifetimeTooLong}
 				<p class="text-red-600 text-sm">
 					{t('admin.apiKeys.streamLifetimeTooLong', { max: MAX_STREAM_LIFETIME_SECONDS })}
 				</p>

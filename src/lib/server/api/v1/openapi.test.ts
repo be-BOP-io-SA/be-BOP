@@ -91,7 +91,7 @@ describe('buildOpenApiDocument', () => {
 		expect(get.responses['304']).toBeTruthy();
 	});
 
-	it('documents the paid-order SSE stream: event-stream body, since_ts, Last-Event-ID', () => {
+	it('documents the paid-order SSE stream: event-stream body, Last-Event-ID, no start date', () => {
 		const get = buildOpenApiDocument().paths['/api/v1/orders/paid/stream'].get;
 		// Streaming is its own scope: holding a connection open is not the same as reading a page.
 		expect(get.security).toEqual([
@@ -100,7 +100,7 @@ describe('buildOpenApiDocument', () => {
 		]);
 		expect(get.responses['200'].content['text/event-stream']).toBeTruthy();
 		const names = get.parameters.map((param) => param.name);
-		expect(names).toContain('since_ts');
+		expect(names).not.toContain('since_ts');
 		expect(names).toContain('Last-Event-ID');
 		expect(get.description).toMatch(/heartbeat/);
 	});

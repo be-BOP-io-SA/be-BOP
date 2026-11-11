@@ -1,4 +1,4 @@
-import { isoDateParam, limitParam, oneOfParam, positiveIntParam, textParam } from '../query';
+import { ORDER_LISTING_MAX_LIMIT } from './listingQuery';
 import { collections } from '$lib/server/database';
 import {
 	ORDER_PAYMENT_STATUSES,
@@ -14,7 +14,7 @@ import type { ObjectId } from 'mongodb';
 import { amountToMinor } from './money';
 import { toOrderNoteDto, type OrderNoteDto } from './addNote';
 
-const MAX_LIMIT = 100;
+const MAX_LIMIT = ORDER_LISTING_MAX_LIMIT;
 const DEFAULT_LIMIT = 20;
 
 export type PaidOrdersQuery = {
@@ -42,20 +42,6 @@ export type PaidOrdersQuery = {
 
 /** A query parameter the caller got wrong. Routes map this to 400 VALIDATION_ERROR. */
 export type OrderQueryError = { field: string; message: string };
-
-/** The query parameters both order listings take, read the same way on each. */
-export const ORDER_LISTING_QUERY = {
-	since: isoDateParam,
-	until: isoDateParam,
-	limit: limitParam(MAX_LIMIT),
-	cursor: positiveIntParam,
-	productId: textParam,
-	status: oneOfParam(ORDER_PAYMENT_STATUSES),
-	number: positiveIntParam,
-	label: textParam,
-	seller: textParam,
-	externalOrderId: textParam
-};
 
 export type PaidOrderItemDto = {
 	productId: string;

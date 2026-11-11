@@ -3,7 +3,8 @@ import { apiV1Handler, apiV1OptionsHandler } from '$lib/server/api/v1/handler';
 import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { jsonWithETag } from '$lib/server/api/v1/validators';
-import { ORDER_LISTING_QUERY, listPaidOrders } from '$lib/server/api/v1/orders/listPaid';
+import { listPaidOrders } from '$lib/server/api/v1/orders/listPaid';
+import { ORDER_LISTING_QUERY } from '$lib/server/api/v1/orders/listingQuery';
 import { parseApiQuery } from '$lib/server/api/v1/query';
 import { checkRateLimit } from '$lib/server/rateLimit';
 

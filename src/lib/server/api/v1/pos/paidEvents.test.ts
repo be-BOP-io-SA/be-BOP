@@ -3,6 +3,9 @@ import { ObjectId } from 'mongodb';
 import type { Order } from '$lib/types/Order';
 
 vi.mock('$lib/server/database', () => ({ collections: {} }));
+vi.mock('$lib/server/runtime-config', () => ({
+	runtimeConfig: { authLinkJwtSigningKey: 'test-signing-key' }
+}));
 
 import { toPosPaidOrderEvent } from './paidEvents';
 import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
