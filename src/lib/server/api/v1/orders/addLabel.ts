@@ -50,12 +50,14 @@ const DEFAULT_LABEL_ICON = '🏷️';
 const LABEL_ID_SHAPE = /^(?!admin$)(?!admin-)[^/\\?#]+$/;
 
 /**
- * Create the label if the shop does not have it yet, and return whether it was created.
+ * Create the label if the shop does not have it yet, and return whether it was created. The one
+ * place an order label is created outside the admin: by an integration, or by be-BOP itself for the
+ * labels it puts on the orders written through the API.
  *
  * An existing label is never touched: two tills configured differently would otherwise repaint
  * each other's label on every order, and the shop would watch its own listing change colour.
  */
-async function ensureOrderLabel(
+export async function ensureOrderLabel(
 	labelId: string,
 	presentation?: { name?: string; color?: string; icon?: string }
 ): Promise<{ created: boolean } | { invalidId: true }> {
