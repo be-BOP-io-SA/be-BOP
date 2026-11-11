@@ -23,8 +23,8 @@ function sale(overrides?: Partial<PosSale>): PosSale {
 		externalOrderId: 'sale-1',
 		soldAt: '2026-07-29T14:03:00.000Z',
 		method: 'cashless',
-		totalPrice: { amount: 12.5, currency: 'CHF' },
-		items: [{ product: 'tartiflette', quantity: 1, price: { amount: 12.5, currency: 'CHF' } }],
+		totalPrice: { amountMinor: 1250, currency: 'CHF' },
+		items: [{ product: 'tartiflette', quantity: 1, price: { amountMinor: 1250, currency: 'CHF' } }],
 		...overrides
 	} as PosSale;
 }

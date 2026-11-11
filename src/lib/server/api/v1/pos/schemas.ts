@@ -2,13 +2,17 @@ import { z } from 'zod';
 import { CURRENCIES } from '$lib/types/Currency';
 
 /**
- * be-BOP `Price` on the wire: major units, no storage `precision`.
+ * A price on the wire, as on `/api/v1/orders`: an integer amount in minor units (`1250` in CHF is
+ * 12.50 CHF), so no amount is ever rounded on its way in.
  *
  * Every be-BOP currency is accepted; an integration contract that pins a single one is a subset.
  */
 const posPriceSchema = z
 	.object({
-		amount: z.number().positive('amount must be > 0'),
+		amountMinor: z
+			.number()
+			.int('amountMinor must be an integer (minor units)')
+			.positive('amountMinor must be > 0'),
 		currency: z.enum(CURRENCIES)
 	})
 	.strict();

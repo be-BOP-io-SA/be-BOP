@@ -182,7 +182,7 @@ describe('GET /api/v1/pos/orders/stream', () => {
 		expect(frame.split('\n')[0]).toBe('id: 3f2a0c');
 	});
 
-	it('sends the seam payload: orderId, amount in major units, nothing else', async () => {
+	it('sends the seam payload: orderId, amount in minor units, nothing else', async () => {
 		const res = await callGet();
 		await readFrames(res, 2);
 		for (const listener of subscribers) {
@@ -190,7 +190,7 @@ describe('GET /api/v1/pos/orders/stream', () => {
 		}
 		const [frame] = await readFrames(res, 1);
 		const data = JSON.parse(frame.split('\n')[1].slice('data: '.length));
-		expect(data).toEqual({ orderId: '3f2a0c', amount: { amount: 20, currency: 'CHF' } });
+		expect(data).toEqual({ orderId: '3f2a0c', amount: { amountMinor: 2000, currency: 'CHF' } });
 	});
 
 	it('resumes after the order named by Last-Event-ID', async () => {

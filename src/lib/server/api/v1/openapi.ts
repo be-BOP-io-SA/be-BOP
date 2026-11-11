@@ -324,8 +324,8 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					"be-BOP's point-of-sale surface, for a register or any system that sells on be-BOP's " +
 					'behalf. Its own `pos:*` scopes, so a register credential unlocks this and nothing else. ' +
 					'Same authentication as the rest of v1; the wire shapes differ because a register does: ' +
-					'be-BOP `Price` in major units, product slugs, whole documents instead of paginated ' +
-					'envelopes, and payloads carrying only what a register acts on.'
+					'product slugs, whole documents instead of paginated envelopes, and payloads carrying ' +
+					'only what a register acts on. Amounts are integers in minor units, as everywhere in v1.'
 			}
 		],
 		paths: {
@@ -1049,7 +1049,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 								'text/event-stream': {
 									schema: { $ref: '#/components/schemas/PosPaidOrderEvent' },
 									example:
-										'retry: 5000\n\n:ok\n\nid: 3f2a0c\ndata: {"orderId":"3f2a0c","amount":{"amount":20,"currency":"CHF"}}\n\n:heartbeat\n\n'
+										'retry: 5000\n\n:ok\n\nid: 3f2a0c\ndata: {"orderId":"3f2a0c","amount":{"amountMinor":2000,"currency":"CHF"}}\n\n:heartbeat\n\n'
 								}
 							}
 						},
@@ -1539,10 +1539,12 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 				},
 				PosPrice: {
 					type: 'object',
-					description: 'be-BOP `Price` on the wire — major units, without the storage `precision`.',
-					required: ['amount', 'currency'],
+					description:
+						'A price on the wire, as on `/api/v1/orders`: an integer amount in minor units ' +
+						'(`1250` in CHF is 12.50 CHF).',
+					required: ['amountMinor', 'currency'],
 					properties: {
-						amount: { type: 'number', exclusiveMinimum: 0 },
+						amountMinor: { type: 'integer', minimum: 1, example: 1250 },
 						currency: { type: 'string', enum: currencyEnum }
 					}
 				},
@@ -1625,10 +1627,10 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 								'since is not the rate that was charged.',
 							items: {
 								type: 'object',
-								required: ['rate', 'amount'],
+								required: ['rate', 'amountMinor'],
 								properties: {
 									rate: { type: 'number', example: 8.1 },
-									amount: { type: 'number', example: 0.94 }
+									amountMinor: { type: 'integer', example: 94 }
 								}
 							}
 						}

@@ -2,6 +2,7 @@ import type { Order } from '$lib/types/Order';
 import type { ObjectId } from 'mongodb';
 import type { PosPaidOrderEvent } from '$lib/types/ApiV1Pos';
 import { orderVatBreakdown, paidAmount } from '../orders/listPaid';
+import { amountToMinor } from '../orders/money';
 import { findTaggedLine } from './taggedLine';
 import { iteratePaidOrderBacklog, type PaidStreamCursor } from '../orders/paidStream';
 
@@ -52,17 +53,22 @@ export function toPosPaidOrderEvent(order: Order, tag?: string): PosPaidOrderEve
 		}
 		return {
 			orderId: order._id,
-			amount: { amount: line.amount, currency: line.currency },
+			amount: { amountMinor: amountToMinor(line.amount, line.currency), currency: line.currency },
 			...(line.key && { key: line.key }),
-			...(line.vat && { vat: [line.vat] }),
+			...(line.vat && {
+				vat: [{ rate: line.vat.rate, amountMinor: amountToMinor(line.vat.amount, line.currency) }]
+			}),
 			...orderContext(order)
 		};
 	}
 
-	const vat = orderVatBreakdown(order);
+	const vat = orderVatBreakdown(order).map((row) => ({
+		rate: row.rate,
+		amountMinor: amountToMinor(row.amount, paid.currency)
+	}));
 	return {
 		orderId: order._id,
-		amount: { amount: paid.amount, currency: paid.currency },
+		amount: { amountMinor: amountToMinor(paid.amount, paid.currency), currency: paid.currency },
 		...(vat.length && { vat }),
 		...orderContext(order)
 	};
