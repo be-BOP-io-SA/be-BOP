@@ -2,13 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { cleanDb } from '$lib/server/test-utils';
 import { collections } from '$lib/server/database';
 import { createApiKey, isApiKeyUsable } from './keys';
-import {
-	MAX_SUSPICIOUS_DETAIL_LENGTH,
-	MAX_SUSPICIOUS_EVENTS,
-	clearSuspiciousFlag,
-	listSuspiciousEvents,
-	reportSuspiciousCall
-} from './suspicious';
+import { clearSuspiciousFlag, listSuspiciousEvents, reportSuspiciousCall } from './suspicious';
 
 const CALL = 'POST /api/v1/orders/{orderId}/labels';
 
@@ -67,14 +61,9 @@ describe('suspicious API keys', () => {
 		]);
 	});
 
-	it('cuts what it keeps of each call, and keeps only the latest calls', async () => {
+	it('keeps every doubtful call, most recent first', async () => {
 		const { apiKey } = await createApiKey({ name: 'till', scopes: ['orders:write'] });
-		await reportSuspiciousCall(apiKey._id, {
-			type: 'labelColorCss',
-			call: CALL,
-			detail: 'a:'.repeat(MAX_SUSPICIOUS_DETAIL_LENGTH)
-		});
-		for (let i = 0; i < MAX_SUSPICIOUS_EVENTS; i++) {
+		for (let i = 0; i < 3; i++) {
 			await reportSuspiciousCall(apiKey._id, {
 				type: 'labelColorCss',
 				call: CALL,
@@ -83,9 +72,7 @@ describe('suspicious API keys', () => {
 		}
 
 		const events = await listSuspiciousEvents(apiKey._id);
-		expect(events).toHaveLength(MAX_SUSPICIOUS_EVENTS);
-		expect(events[0].detail).toBe(`n:${MAX_SUSPICIOUS_EVENTS - 1}`);
-		expect(events.some((event) => event.detail.length > MAX_SUSPICIOUS_DETAIL_LENGTH)).toBe(false);
+		expect(events.map((event) => event.detail)).toEqual(['n:2', 'n:1', 'n:0']);
 	});
 
 	it('takes the flag off by hand and keeps the journal', async () => {

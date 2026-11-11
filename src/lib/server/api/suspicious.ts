@@ -2,11 +2,6 @@ import { ObjectId } from 'mongodb';
 import { collections } from '$lib/server/database';
 import type { ApiKeySuspiciousEvent, ApiKeySuspiciousEventType } from '$lib/types/ApiKey';
 
-/** Events kept per key. Past it the oldest go first, so a key cannot grow its record forever. */
-export const MAX_SUSPICIOUS_EVENTS = 100;
-/** Characters kept of what was received: enough to see the attempt, not a payload store. */
-export const MAX_SUSPICIOUS_DETAIL_LENGTH = 500;
-
 /**
  * Flag a key as suspicious and write the call to its journal.
  *
@@ -21,12 +16,12 @@ export async function reportSuspiciousCall(
 		type: event.type,
 		at: now,
 		call: event.call,
-		detail: event.detail.slice(0, MAX_SUSPICIOUS_DETAIL_LENGTH)
+		detail: event.detail
 	};
 	await collections.apiKeys.updateOne(
 		{ _id: keyId },
 		{
-			$push: { suspiciousEvents: { $each: [entry], $slice: -MAX_SUSPICIOUS_EVENTS } },
+			$push: { suspiciousEvents: entry },
 			// $min keeps the date the key was first flagged, and sets it when there is none.
 			$min: { suspiciousAt: now },
 			$set: { updatedAt: now }
