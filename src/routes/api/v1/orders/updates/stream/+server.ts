@@ -40,7 +40,8 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 	// EventSource replays the last id in a header; a fetch-driven client uses the query parameter.
 	const rawLastEventId =
 		event.request.headers.get('last-event-id') ?? event.url.searchParams.get('last_event_id');
-	const resumeFrom = parseStreamCursor(rawLastEventId);
+	const cursorScope = { keyId: apiKey._id.toString(), feed: 'annotations' as const };
+	const resumeFrom = parseStreamCursor(rawLastEventId, cursorScope);
 	if (rawLastEventId && !resumeFrom) {
 		return apiError(
 			400,
@@ -59,11 +60,11 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		...(apiKey.ownOrdersOnly && { ordersOfKey: apiKey._id }),
 		signal: event.request.signal,
 		after: resumeFrom,
-		feed: 'annotations',
+		feed: cursorScope.feed,
 		render: (order, cursor) => {
 			const dto = toOrderReadDto(order);
 			return {
-				id: encodeStreamCursor(cursor),
+				id: encodeStreamCursor(cursor, cursorScope),
 				data: dto,
 				fingerprint: dto.orderId
 			};

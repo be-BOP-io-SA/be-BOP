@@ -70,15 +70,32 @@ function makeOrder(opts: { id: string; updatedAt: string; amount?: number }): Or
 }
 
 describe('stream cursors', () => {
+	const scope = { keyId: 'key-a', feed: 'paid' } as const;
+
 	it('round-trips through the SSE id field', () => {
 		const cursor = { ms: 1_735_689_600_000, orderId: '1f0c8e3a-aaaa' };
-		expect(parseStreamCursor(encodeStreamCursor(cursor))).toEqual(cursor);
+		expect(parseStreamCursor(encodeStreamCursor(cursor, scope), scope)).toEqual(cursor);
 	});
 
 	it('rejects anything it did not issue', () => {
 		for (const raw of ['', 'nope', ':abc', '12', '-1:abc', '1.5:abc', '1735689600000:']) {
-			expect(parseStreamCursor(raw)).toBeNull();
+			expect(parseStreamCursor(raw, scope)).toBeNull();
 		}
+	});
+
+	it('rejects a cursor made up by hand, or altered to start earlier', () => {
+		const cursor = { ms: 1_735_689_600_000, orderId: '1f0c8e3a-aaaa' };
+		const issued = encodeStreamCursor(cursor, scope);
+		const signature = issued.slice(issued.lastIndexOf(':') + 1);
+		expect(parseStreamCursor('1735689600000:1f0c8e3a-aaaa', scope)).toBeNull();
+		expect(parseStreamCursor(`0:1f0c8e3a-aaaa:${signature}`, scope)).toBeNull();
+	});
+
+	it('does not resume another key, nor another stream', () => {
+		const cursor = { ms: 1_735_689_600_000, orderId: '1f0c8e3a-aaaa' };
+		const issued = encodeStreamCursor(cursor, scope);
+		expect(parseStreamCursor(issued, { keyId: 'key-b', feed: 'paid' })).toBeNull();
+		expect(parseStreamCursor(issued, { keyId: 'key-a', feed: 'all' })).toBeNull();
 	});
 
 	it('is derived from updatedAt, not from the random _id', () => {

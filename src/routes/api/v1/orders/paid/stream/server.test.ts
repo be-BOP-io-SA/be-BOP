@@ -38,10 +38,15 @@ vi.mock('$lib/server/api/v1/orders/paidStream', async () => {
 });
 
 import { GET } from './+server';
-import { orderStreamCursor } from '$lib/server/api/v1/orders/paidStream';
+import { encodeStreamCursor, orderStreamCursor } from '$lib/server/api/v1/orders/paidStream';
 import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
 
 const keyId = new ObjectId();
+/** A cursor this stream issued to the test key, as a device sends it back. */
+const lastSent = encodeStreamCursor(
+	{ ms: 1735689600000, orderId: 'ord-0' },
+	{ keyId: keyId.toString(), feed: 'paid' }
+);
 
 function makeOrder(opts: { id: string; updatedAt: string; amount?: number }): Order {
 	const amount = opts.amount ?? 100;
@@ -230,7 +235,7 @@ describe('GET /api/v1/orders/paid/stream', () => {
 		backlog.mockImplementation(async function* () {
 			yield { cursor: orderStreamCursor(order), order };
 		});
-		const res = await call({ lastEventId: '1735689600000:ord-0' });
+		const res = await call({ lastEventId: lastSent });
 		const frames = await readFrames(res, 3);
 		expect(backlog).toHaveBeenCalledWith({
 			since: null,
@@ -238,7 +243,12 @@ describe('GET /api/v1/orders/paid/stream', () => {
 			feed: 'paid'
 		});
 		const [id, data] = frames[2].split('\n');
-		expect(id).toBe(`id: ${new Date('2026-08-01T10:05:00Z').getTime()}:ord-a`);
+		expect(id).toBe(
+			`id: ${encodeStreamCursor(orderStreamCursor(order), {
+				keyId: keyId.toString(),
+				feed: 'paid'
+			})}`
+		);
 		expect(JSON.parse(data.slice('data: '.length))).toMatchObject({ orderId: 'ord-a' });
 	});
 
@@ -291,7 +301,7 @@ describe('GET /api/v1/orders/paid/stream', () => {
 			yield { cursor: orderStreamCursor(order), order };
 		});
 
-		const res = await call({ lastEventId: '1735689600000:ord-0' });
+		const res = await call({ lastEventId: lastSent });
 		const replayed = await readFrames(res, 3);
 		expect(replayed[2]).toContain('"orderId":"ord-a"');
 
@@ -338,7 +348,7 @@ describe('GET /api/v1/orders/paid/stream', () => {
 	});
 
 	it('replays only its own orders to a key restricted to them', async () => {
-		const res = await call({ lastEventId: '1735689600000:ord-0', ownOrdersOnly: true });
+		const res = await call({ lastEventId: lastSent, ownOrdersOnly: true });
 		await readFrames(res, 3);
 		expect(backlog).toHaveBeenCalledWith({
 			since: null,

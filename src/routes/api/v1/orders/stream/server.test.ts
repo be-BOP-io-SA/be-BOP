@@ -36,6 +36,7 @@ vi.mock('$lib/server/api/v1/orders/paidStream', async () => {
 });
 
 import { GET } from './+server';
+import { encodeStreamCursor } from '$lib/server/api/v1/orders/paidStream';
 import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
 
 const keyId = new ObjectId();
@@ -218,7 +219,11 @@ describe('GET /api/v1/orders/stream', () => {
 	it('resumes after the last event received, without the paid filter', async () => {
 		// The backfill only starts once the preamble is out, and it yields nothing here: asking for
 		// one frame more than the stream will ever send waits for it instead of racing it.
-		const res = await call({ query: '?last_event_id=1735689600000:ord-a' });
+		const lastSent = encodeStreamCursor(
+			{ ms: 1735689600000, orderId: 'ord-a' },
+			{ keyId: keyId.toString(), feed: 'all' }
+		);
+		const res = await call({ query: `?last_event_id=${lastSent}` });
 		await readFrames(res, 3);
 
 		expect(backlog).toHaveBeenCalledWith({
