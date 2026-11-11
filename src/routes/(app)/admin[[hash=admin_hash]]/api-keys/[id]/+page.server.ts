@@ -12,8 +12,8 @@ import type { Actions } from './$types';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import {
-	countOpenStreams,
-	resetStreamBudget
+	closeStreamsOfKey,
+	countOpenStreams
 } from '$lib/server/api/v1/orders/paidStreamConnection';
 
 function assertSuperAdmin(locals: App.Locals) {
@@ -107,10 +107,8 @@ export const actions: Actions = {
 	},
 
 	/**
-	 * Hand every place held by this key back at once, without restarting be-BOP.
-	 *
-	 * The budget is a count and nothing else, so this clears it outright. It is the recovery for a
-	 * budget wedged shut by streams nobody is reading any more.
+	 * Close every stream open with this key and hand its places back at once, without restarting
+	 * be-BOP. It is the recovery for a budget wedged shut by streams nobody is reading any more.
 	 */
 	resetStreams: async ({ locals, params }) => {
 		assertSuperAdmin(locals);
@@ -122,7 +120,7 @@ export const actions: Actions = {
 			throw error(404, 'API key not found');
 		}
 
-		resetStreamBudget(params.id);
+		closeStreamsOfKey(params.id);
 
 		return {
 			alreadyRevoked: false,
