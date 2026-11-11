@@ -11,6 +11,7 @@ import {
 	MAX_LOGGED_BODY_CHARS,
 	errorCodeOf,
 	isEventStream,
+	listApiV1Logs,
 	pruneApiV1Logs,
 	readBodyForLog,
 	shouldLogApiV1Call,
@@ -141,5 +142,44 @@ describe('shouldLogApiV1Call', () => {
 				{ ...everything, logUnauthenticated: false }
 			)
 		).toBe(false);
+	});
+});
+
+describe('listApiV1Logs', () => {
+	/** A journal holding `available` entries for the filter asked. */
+	function fakeJournalPage(available: number) {
+		let asked = 0;
+		const cursor = {
+			sort: () => cursor,
+			skip: () => cursor,
+			limit: (n: number) => {
+				asked = n;
+				return cursor;
+			},
+			toArray: async () =>
+				Array.from({ length: Math.min(asked, available) }, () => ({ _id: new ObjectId() }))
+		};
+		const countDocuments = vi.fn();
+		Object.assign(collections.apiV1Logs as object, { find: () => cursor, countDocuments });
+		return { countDocuments };
+	}
+
+	it('says an older page exists without counting the journal', async () => {
+		const { countDocuments } = fakeJournalPage(30);
+
+		const page = await listApiV1Logs({ limit: 25 });
+
+		expect(page.entries).toHaveLength(25);
+		expect(page.hasMore).toBe(true);
+		expect(countDocuments).not.toHaveBeenCalled();
+	});
+
+	it('says the last page is the last one', async () => {
+		fakeJournalPage(25);
+
+		const page = await listApiV1Logs({ limit: 25 });
+
+		expect(page.entries).toHaveLength(25);
+		expect(page.hasMore).toBe(false);
 	});
 });
