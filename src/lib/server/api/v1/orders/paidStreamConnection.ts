@@ -17,25 +17,29 @@ const MAX_PENDING_EVENTS = 1_000;
 const MAX_SEEN_FINGERPRINTS = 5_000;
 
 /**
- * Streams currently counted against each key. A count, not a list: it says how many places are
- * taken, never which ones, so nothing here can be inspected or evicted by name.
+ * Streams currently open with each key, each one held by the function that closes it. The size of
+ * a key's set is the number of places it takes against its budget.
  */
-const activeStreamsByKey = new Map<string, number>();
+const activeStreamsByKey = new Map<string, Set<() => void>>();
 
 /** Places currently held by one key. Read on the key's admin page; triggers no call of its own. */
 export function countOpenStreams(keyId: string): number {
-	return activeStreamsByKey.get(keyId) ?? 0;
+	return activeStreamsByKey.get(keyId)?.size ?? 0;
 }
 
 /**
- * Give every place held by one key back at once.
+ * Close every stream open with one key, and give its places back at once.
  *
- * Places are counted, never named, so there is nothing to look up and nothing to close: the count
- * is the whole state. A stream that is genuinely alive keeps receiving its events — it stops being
- * counted, and its next reconnection counts it again. What this frees is a budget wedged shut by
- * streams nobody is reading any more.
+ * This is the recovery for a budget wedged shut by streams nobody is reading any more, and the way
+ * to cut a key off its feeds right away. A device that is still listening sees its stream end, and
+ * reconnects as it does at the end of a lifetime, if the key still lets it.
  */
-export function resetStreamBudget(keyId: string): void {
+export function closeStreamsOfKey(keyId: string): void {
+	const closers = activeStreamsByKey.get(keyId);
+	// Each closer removes itself from the set: iterate over a copy.
+	for (const close of [...(closers ?? [])]) {
+		close();
+	}
 	activeStreamsByKey.delete(keyId);
 }
 
@@ -90,9 +94,9 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 	const { keyId } = options;
 
 	const budget = options.maxConcurrentStreams;
-	const openStreams = activeStreamsByKey.get(keyId) ?? 0;
+	const openStreams = activeStreamsByKey.get(keyId) ?? new Set<() => void>();
 	// Refused before the place is taken, so a stream turned away costs the key nothing.
-	if (budget !== undefined && openStreams >= budget) {
+	if (budget !== undefined && openStreams.size >= budget) {
 		return apiError(
 			429,
 			'RATE_LIMITED',
@@ -101,7 +105,8 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 			{ 'Retry-After': '5' }
 		);
 	}
-	activeStreamsByKey.set(keyId, openStreams + 1);
+	openStreams.add(cleanup);
+	activeStreamsByKey.set(keyId, openStreams);
 
 	// A Response body is a byte stream; encoding here keeps frame boundaries where SSE puts them.
 	const encoder = new TextEncoder();
@@ -136,10 +141,9 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 		}
 		writer?.close().catch(() => undefined);
 		writer = null;
-		const remaining = (activeStreamsByKey.get(keyId) ?? 1) - 1;
-		if (remaining > 0) {
-			activeStreamsByKey.set(keyId, remaining);
-		} else {
+		const remaining = activeStreamsByKey.get(keyId);
+		remaining?.delete(cleanup);
+		if (remaining && !remaining.size) {
 			activeStreamsByKey.delete(keyId);
 		}
 	}

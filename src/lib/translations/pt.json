@@ -2265,8 +2265,8 @@
 			"streamLifetimeSecondsHint": "Deixe vazio para nunca o fechar. O dispositivo reconecta-se sozinho e retoma de onde parou, portanto fechar não lhe custa nada.",
 			"streamsSave": "Guardar configurações de fluxos",
 			"streamsSaved": "Configurações de fluxos atualizadas.",
-			"streamsResetDone": "Lugares de fluxo liberados.",
-			"resetStreamsTitle": "Libertar todos os lugares de fluxo ocupados por esta chave"
+			"streamsResetDone": "Fluxos desta chave fechados, os seus lugares libertados.",
+			"resetStreamsTitle": "Fechar todos os fluxos abertos com esta chave e libertar os seus lugares"
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Nenhum processador configurado. Configure-os no separador Definições de pagamento acima",

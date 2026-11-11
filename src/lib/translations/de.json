@@ -2265,8 +2265,8 @@
 			"streamLifetimeSecondsHint": "Leer lassen, um ihn nie zu schließen. Das Gerät verbindet sich selbst neu und macht dort weiter, wo es aufgehört hat — das Schließen kostet es nichts.",
 			"streamsSave": "Stream-Einstellungen speichern",
 			"streamsSaved": "Stream-Einstellungen aktualisiert.",
-			"streamsResetDone": "Stream-Plätze freigegeben.",
-			"resetStreamsTitle": "Alle von diesem Schlüssel belegten Stream-Plätze freigeben"
+			"streamsResetDone": "Streams dieses Schlüssels geschlossen, ihre Plätze freigegeben.",
+			"resetStreamsTitle": "Alle mit diesem Schlüssel geöffneten Streams schließen und ihre Plätze freigeben"
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Keine Zahlungsanbieter konfiguriert. Konfigurieren Sie sie im obigen Tab Zahlungseinstellungen",

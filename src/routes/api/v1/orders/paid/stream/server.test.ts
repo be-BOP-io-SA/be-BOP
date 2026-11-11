@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
 import type { Order } from '$lib/types/Order';
-import { resetStreamBudget } from '$lib/server/api/v1/orders/paidStreamConnection';
+import {
+	closeStreamsOfKey,
+	countOpenStreams
+} from '$lib/server/api/v1/orders/paidStreamConnection';
 
 /** Small enough to fill in a test, and nothing is compiled in any more: the key carries it. */
 const BUDGET = 3;
@@ -177,7 +180,7 @@ describe('GET /api/v1/orders/paid/stream', () => {
 			controller.abort();
 		}
 		// The count lives in the module, not in the test: one test must not seat the next one.
-		resetStreamBudget(keyId.toString());
+		closeStreamsOfKey(keyId.toString());
 	});
 
 	it('requires orders:stream, not the poll scope', async () => {
@@ -375,11 +378,35 @@ describe('GET /api/v1/orders/paid/stream', () => {
 		}
 		expect((await call({ maxConcurrentStreams: BUDGET })).status).toBe(429);
 
-		resetStreamBudget(keyId.toString());
+		closeStreamsOfKey(keyId.toString());
 
+		expect(countOpenStreams(keyId.toString())).toBe(0);
 		for (let i = 0; i < BUDGET; i++) {
 			expect((await call({ maxConcurrentStreams: BUDGET })).status).toBe(200);
 		}
+	});
+
+	it('ends the streams it hands back, so their devices stop being served', async () => {
+		const res = await call({ maxConcurrentStreams: BUDGET });
+		await readFrames(res, 2);
+		expect(subscribers.size).toBe(1);
+
+		closeStreamsOfKey(keyId.toString());
+
+		// The body ends rather than going quiet, and the stream no longer listens for orders.
+		const reader = res.body?.getReader();
+		await expect(reader?.read()).resolves.toMatchObject({ done: true });
+		expect(subscribers.size).toBe(0);
+	});
+
+	it('leaves the streams of other keys open', async () => {
+		await call({ maxConcurrentStreams: BUDGET });
+		const otherKey = new ObjectId().toString();
+
+		closeStreamsOfKey(otherKey);
+
+		expect(countOpenStreams(keyId.toString())).toBe(1);
+		expect(subscribers.size).toBe(1);
 	});
 
 	it('429s when the API key is rate limited', async () => {
