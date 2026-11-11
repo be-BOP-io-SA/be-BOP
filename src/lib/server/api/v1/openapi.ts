@@ -38,7 +38,13 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 		properties: {
 			productId: { type: 'string', minLength: 1, maxLength: 200 },
 			quantity: { type: 'integer', minimum: 1, maximum: 1_000_000 },
-			customPrice: { $ref: '#/components/schemas/CustomPrice' },
+			customPrice: {
+				allOf: [{ $ref: '#/components/schemas/CustomPrice' }],
+				description:
+					'Price charged for one unit when the shop has ticked "Make the third-party system the ' +
+					'prioritary source of truth". Unticked, it is ignored and the catalogue price is charged; ' +
+					'either way a price that differs from the catalogue is reported as a PRICE_OVERRIDE warning.'
+			},
 			chosenVariations: {
 				type: 'object',
 				additionalProperties: { type: 'string' }
@@ -565,8 +571,11 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					summary: 'Put an order label on an existing order',
 					description:
 						'Adds the label to a set: calling twice leaves one label and returns the same body. ' +
-						'The label must already exist in the shop — an unknown id is refused with 404 and ' +
-						'nothing is written, since a label be-BOP does not know would show up nowhere.',
+						'A label the shop does not have yet is created, looking as `name`, `color` and `icon` ' +
+						'say; they are ignored when the label already exists. `color` takes a hexadecimal ' +
+						'color or a named CSS color, nothing else: any other value is refused, and one that ' +
+						'carries a CSS declaration also flags the API key as suspicious in the admin. ' +
+						'A key restricted to its own orders gets 404 for any other order.',
 					operationId: 'addOrderLabel',
 					security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
 					parameters: [
@@ -586,7 +595,15 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 									type: 'object',
 									additionalProperties: false,
 									required: ['labelId'],
-									properties: { labelId: { type: 'string', minLength: 1, maxLength: 200 } }
+									properties: {
+										labelId: { type: 'string', minLength: 1, maxLength: 200 },
+										name: { type: 'string', minLength: 1, maxLength: 100 },
+										color: {
+											type: 'string',
+											description: 'Hexadecimal (`#F7931A`) or a named CSS color (`orange`).'
+										},
+										icon: { type: 'string', minLength: 1, maxLength: 100 }
+									}
 								},
 								example: { labelId: 'cashless' }
 							}
@@ -630,7 +647,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							content: { 'application/json': { schema: errorRef } }
 						},
 						'404': {
-							description: 'Order or label not found',
+							description: 'Order not found, or not written by a key restricted to its own orders',
 							content: { 'application/json': { schema: errorRef } }
 						},
 						'429': {
@@ -645,9 +662,10 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					tags: ['orders'],
 					summary: 'Append an employee note to an existing order',
 					description:
-						'The note joins the ones written from the admin. be-BOP shows order notes to the ' +
-						'buyer, flagged by author, so what is written here is read by the customer too. ' +
-						'Unlike a label, a repeated call appends a second note.',
+						'The note joins the ones written from the admin, signed as a system employee named ' +
+						'`API - <name of the key>`. Like every employee note, it is read by the shop staff, ' +
+						'not by the buyer. Unlike a label, a repeated call appends a second note. A key ' +
+						'restricted to its own orders gets 404 for any other order.',
 					operationId: 'addOrderNote',
 					security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
 					parameters: [
@@ -1008,19 +1026,16 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						'order id, which is also in the payload and is what consumers deduplicate on — delivery ' +
 						'is at-least-once. A `:heartbeat` comment is emitted at least every 30 seconds. ' +
 						'No order is flagged as belonging to a particular integration — see `PosPaidOrderEvent`. ' +
-						'Both resume hints are advisory and may be given together, singly, or not at ' +
-						'all: an unknown `Last-Event-ID` starts the stream at the live edge rather than failing. ' +
+						'A sale is announced once: a note, a label or the erasure of personal data added to the ' +
+						'order later does not announce it again. The stream carries what happens from the moment ' +
+						'it opens and resumes after the last order id received; the history, from a date, is read ' +
+						'from `GET /api/v1/pos/orders`. The resume hint is advisory: an unknown `Last-Event-ID` ' +
+						'starts the stream at the live edge rather than failing. ' +
 						'Authentication uses the usual Bearer header, so a browser `EventSource` (which cannot ' +
 						'set headers) is not a supported client — drive the stream over fetch.',
 					operationId: 'streamPaidPosOrders',
 					security: [{ BearerAuth: ['pos:stream'] }, { ApiKeyAuth: ['pos:stream'] }],
 					parameters: [
-						{
-							name: 'since_ts',
-							in: 'query',
-							schema: { type: 'integer', format: 'int64', minimum: 0 },
-							description: 'Unix epoch seconds; advisory replay hint, inclusive.'
-						},
 						{
 							name: 'Last-Event-ID',
 							in: 'header',
@@ -1061,7 +1076,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							}
 						},
 						'400': {
-							description: 'Malformed since_ts',
+							description: 'Malformed query parameter',
 							content: { 'application/json': { schema: errorRef } }
 						},
 						'401': {
@@ -1094,9 +1109,10 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					tags: ['pos'],
 					summary: 'Paid PoS orders (poll)',
 					description:
-						'The primary transport for the paid-order feed. Same events and same `since_ts` / ' +
-						'`last_event_id` vocabulary as the SSE stream on /api/v1/pos/orders/stream, so a client ' +
-						'that cannot hold a connection open polls here without relearning anything. ' +
+						'The primary transport for the paid-order feed. Same events and same `last_event_id` ' +
+						'as the SSE stream on /api/v1/pos/orders/stream, so a client that cannot hold a ' +
+						'connection open polls here without relearning anything; `since_ts` reads the history ' +
+						'from a date, which the stream does not. ' +
 						'`nextCursor` is the last order id of the page — feed it back as `last_event_id` — and ' +
 						'is null once the page is the tail. Delivery is at-least-once: deduplicate on `orderId`.',
 					operationId: 'listPaidPosOrders',
@@ -1266,32 +1282,23 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						'A `:heartbeat` comment is sent at least every 30 seconds so a silent connection can be told ' +
 						'from a dead one, and a `retry:` hint opens the stream. The `id` is an opaque resume cursor — ' +
 						'replay it in `Last-Event-ID` (or the `last_event_id` query parameter) to pick up where the ' +
-						'connection dropped. Delivery is at-least-once: dedupe on `orderId`. Without `since_ts` or ' +
-						'`Last-Event-ID` the stream starts at the live edge and replays nothing. ' +
+						'connection dropped. The cursor is signed: only an id this stream sent to the same API key ' +
+						'resumes it. Delivery is at-least-once: dedupe on `orderId`. A sale is announced once: a ' +
+						'note, a label or the erasure of personal data added to the order later does not announce ' +
+						'it again — those are on `/api/v1/orders/updates/stream`. Without `Last-Event-ID` the ' +
+						'stream starts at the live edge and replays nothing; the order history is read from ' +
+						'`GET /api/v1/orders/paid`. ' +
 						'Authentication uses the same Bearer / X-Api-Key headers as the rest of v1, so a browser ' +
 						'`EventSource` (which cannot set headers) is not a supported client — drive the stream over fetch.',
 					operationId: 'streamPaidOrders',
 					security: [{ BearerAuth: ['orders:stream'] }, { ApiKeyAuth: ['orders:stream'] }],
 					parameters: [
 						{
-							name: 'since_ts',
-							in: 'query',
-							schema: { type: 'integer', minimum: 0 },
-							description:
-								'Replay paid orders updated at or after this instant, in whole seconds since the Unix epoch.'
-						},
-						{
-							name: 'since',
-							in: 'query',
-							schema: { type: 'string', format: 'date-time' },
-							description: 'ISO 8601 alternative to since_ts. Ignored when since_ts is present.'
-						},
-						{
 							name: 'Last-Event-ID',
 							in: 'header',
 							schema: { type: 'string' },
 							description:
-								'Resume cursor from the last `id:` received. Rejected with 400 when it was not issued by this stream.'
+								'Resume cursor from the last `id:` received. Rejected with 400 when it was not issued by this stream to this API key.'
 						},
 						{
 							name: 'last_event_id',
@@ -1313,7 +1320,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							}
 						},
 						'400': {
-							description: 'Malformed since_ts or Last-Event-ID',
+							description: 'Last-Event-ID not issued by this stream to this API key',
 							content: { 'application/json': { schema: errorRef } }
 						},
 						'401': {
@@ -1337,6 +1344,116 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						},
 						'500': {
 							description: 'Internal error',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
+			'/api/v1/orders/stream': {
+				get: {
+					tags: ['orders'],
+					summary: 'Stream every order (SSE)',
+					description:
+						'Server-Sent Events, with the same framing, heartbeat, signed resume cursor and ' +
+						'live-edge start as `/api/v1/orders/paid/stream`. Each frame carries the order as ' +
+						'`GET /api/v1/orders` returns it. A key restricted to its own orders only receives those. ' +
+						'Every order, whatever its payments are worth, on each change of the order itself: created ' +
+						'pending, paid, failed, cancelled, expired. A note, a label or the erasure of personal ' +
+						'data is not announced here — see `/api/v1/orders/updates/stream`.',
+					operationId: 'streamOrders',
+					security: [{ BearerAuth: ['orders:stream'] }, { ApiKeyAuth: ['orders:stream'] }],
+					parameters: [
+						{
+							name: 'Last-Event-ID',
+							in: 'header',
+							schema: { type: 'string' },
+							description:
+								'Resume cursor from the last `id:` received. Rejected with 400 when it was not issued by this stream to this API key.'
+						},
+						{
+							name: 'last_event_id',
+							in: 'query',
+							schema: { type: 'string' },
+							description:
+								'Query-parameter form of Last-Event-ID, for clients that cannot set the header.'
+						}
+					],
+					responses: {
+						'200': {
+							description:
+								'Event stream of orders, each frame `id: <cursor>` then `data: <order>`.',
+							content: { 'text/event-stream': { schema: { type: 'string' } } }
+						},
+						'400': {
+							description: 'Last-Event-ID not issued by this stream to this API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'403': {
+							description: 'Missing required scope',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'429': {
+							description:
+								'Rate limited, or too many concurrent streams already open for this API key.',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
+			'/api/v1/orders/updates/stream': {
+				get: {
+					tags: ['orders'],
+					summary: 'Stream notes, labels and erasures of orders (SSE)',
+					description:
+						'Server-Sent Events, with the same framing, heartbeat, signed resume cursor and ' +
+						'live-edge start as `/api/v1/orders/paid/stream`. Each frame carries the order as ' +
+						'`GET /api/v1/orders` returns it. A key restricted to its own orders only receives those. ' +
+						'Every order, each time a note or a label is put on it or its personal data is erased — ' +
+						'and only then. Those writes leave the sale as it was, which is why the other order ' +
+						'streams do not announce them.',
+					operationId: 'streamOrderUpdates',
+					security: [{ BearerAuth: ['orders:stream'] }, { ApiKeyAuth: ['orders:stream'] }],
+					parameters: [
+						{
+							name: 'Last-Event-ID',
+							in: 'header',
+							schema: { type: 'string' },
+							description:
+								'Resume cursor from the last `id:` received. Rejected with 400 when it was not issued by this stream to this API key.'
+						},
+						{
+							name: 'last_event_id',
+							in: 'query',
+							schema: { type: 'string' },
+							description:
+								'Query-parameter form of Last-Event-ID, for clients that cannot set the header.'
+						}
+					],
+					responses: {
+						'200': {
+							description:
+								'Event stream of orders, each frame `id: <cursor>` then `data: <order>`.',
+							content: { 'text/event-stream': { schema: { type: 'string' } } }
+						},
+						'400': {
+							description: 'Last-Event-ID not issued by this stream to this API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'403': {
+							description: 'Missing required scope',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'429': {
+							description:
+								'Rate limited, or too many concurrent streams already open for this API key.',
 							content: { 'application/json': { schema: errorRef } }
 						}
 					}
@@ -1833,9 +1950,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						},
 						notes: {
 							type: 'array',
-							description:
-								'The notes on the order. Absent when it carries none. be-BOP shows these to the ' +
-								'buyer too, flagged by author.',
+							description: 'The notes on the order. Absent when it carries none.',
 							items: { $ref: '#/components/schemas/OrderNote' }
 						},
 						items: { type: 'array', items: { $ref: '#/components/schemas/PaidOrderItem' } }
