@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	evaluateDiscountConditions,
 	isPublicZeroCriteriaDiscount,
-	publicDiscountPriceSnapshot
+	publicDiscountPriceSnapshot,
+	selectBestDiscount
 } from './discount';
 import type { DiscountContext } from './discount';
 import type { Discount } from '$lib/types/Discount';
@@ -148,6 +149,51 @@ describe('evaluateDiscountConditions — required subscription', () => {
 				context({ cartItems: [{ productId: 'something-else', quantity: 1 }] })
 			)
 		).toBe(false);
+	});
+});
+
+describe('selectBestDiscount — a subscription never discounts itself', () => {
+	const membersDiscount = discount({
+		subscriptionIds: ['membership'],
+		acceptSubscriptionInCart: true,
+		percentage: 10
+	});
+	const membership = {
+		product: { _id: 'membership', price: { amount: 50, currency: 'EUR' as const } },
+		quantity: 1
+	};
+	const tshirt = {
+		product: { _id: 'tshirt', price: { amount: 20, currency: 'EUR' as const } },
+		quantity: 1
+	};
+	const inCart = (items: Array<{ product: { _id: string } }>) =>
+		context({
+			cartItems: items.map((item) => ({ productId: item.product._id, quantity: 1 }))
+		});
+
+	it('does not discount the membership that qualifies the order', () => {
+		const best = selectBestDiscount([membersDiscount], [membership], inCart([membership]));
+		expect(best?.discountByProduct.get('membership') ?? 0).toBe(0);
+	});
+
+	it('does not discount the membership a member renews', () => {
+		const best = selectBestDiscount(
+			[discount({ subscriptionIds: ['membership'], percentage: 10 })],
+			[membership, tshirt],
+			context({ userSubscriptionIds: ['membership'] })
+		);
+		expect(best?.discountByProduct.get('tshirt')).toBe(10);
+		expect(best?.discountByProduct.get('membership') ?? 0).toBe(0);
+	});
+
+	it('still discounts the product bought alongside the membership', () => {
+		const best = selectBestDiscount(
+			[membersDiscount],
+			[membership, tshirt],
+			inCart([membership, tshirt])
+		);
+		expect(best?.discountByProduct.get('tshirt')).toBe(10);
+		expect(best?.discountByProduct.get('membership') ?? 0).toBe(0);
 	});
 });
 

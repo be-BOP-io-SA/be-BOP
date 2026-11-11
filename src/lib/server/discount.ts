@@ -157,8 +157,12 @@ function computeDiscountSavings(
 	discount: PercentageDiscount,
 	items: SelectBestItem[]
 ): DiscountSavings {
-	const eligibleItems = items.filter((item) =>
-		discountTargetsProduct(discount, { _id: item.product._id, tagIds: item.product.tagIds })
+	const eligibleItems = items.filter(
+		(item) =>
+			// A discount brought by a subscription never discounts that subscription itself, whether
+			// it is already held or bought in the same order.
+			!discount.subscriptionIds?.includes(item.product._id) &&
+			discountTargetsProduct(discount, { _id: item.product._id, tagIds: item.product.tagIds })
 	);
 
 	const discountByProduct = new Map(
