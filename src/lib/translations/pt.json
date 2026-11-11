@@ -1852,7 +1852,26 @@
 			"phasePriceHint": "Teste gratuito = 0. Moeda herdada do produto.",
 			"phaseReminderBeforeEnd": "Lembrete antes do fim",
 			"phaseReminderHint": "0 = sem lembrete",
-			"addPhase": "Adicionar fase"
+			"addPhase": "Adicionar fase",
+			"saleLocks": {
+				"maxPerPerson": "Quantidade máxima por pessoa",
+				"noLimit": "Sem limite",
+				"maxPerPersonHint": "Contada em todas as encomendas do cliente, não por encomenda. Deixe vazio para não haver limite. As encomendas a aguardar pagamento contam, e preenchê-lo exige que o cliente esteja autenticado.",
+				"posOverride": "Permitir que o POS venda acima deste limite",
+				"posOverrideHint": "No POS, a sessão pertence ao vendedor e não ao comprador, por isso o limite contaria a pessoa errada. Deixe desmarcado para aplicar o limite em todo o lado.",
+				"subscriptionMax": "Quantidade máxima por pessoa: {max}. Uma subscrição está limitada a uma por pessoa e por produto.",
+				"whoCanOrder": "Quem pode encomendar",
+				"requiresAuthentication": "O cliente tem de estar autenticado para encomendar este produto",
+				"authForcedByCap": "Obrigatório e bloqueado, porque «{field}» está preenchido em {section}. Esvazie esse campo para desbloquear esta opção.",
+				"restrict": "Restringir quem pode encomendar este produto",
+				"restrictHint": "Qualquer pessoa que corresponda a pelo menos uma das fontes abaixo pode encomendar o produto. Os restantes veem a página do produto, com os botões de encomenda e de adicionar ao carrinho desativados. Se todas as fontes estiverem vazias, ninguém pode encomendar o produto.",
+				"emails": "Endereços de e-mail autorizados",
+				"emailsPlaceholder": "Um endereço de e-mail por linha",
+				"npubs": "Npubs autorizadas",
+				"npubsPlaceholder": "Uma npub por linha",
+				"subscribers": "Permitir os subscritores ativos de",
+				"employees": "Permitir todos os funcionários, seja qual for a sua função"
+			}
 		},
 		"taler": {
 			"backendUrl": "URL do backend",
@@ -2254,7 +2273,12 @@
 		"maxQuantityReached": "Quantidade máxima por encomenda atingida ({max})",
 		"error": {
 			"BOOKING_SAME_DAY_DISABLED": "As reservas para hoje não estão disponíveis para este produto.",
-			"BOOKING_SAME_DAY_CUTOFF_PASSED": "As reservas para hoje já não são possíveis após as {maxHour}."
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "As reservas para hoje já não são possíveis após as {maxHour}.",
+			"NOT_PWYW": "Este produto não aceita um preço livre.",
+			"NOT_PREORDER": "Este produto ainda não está disponível em pré-encomenda.",
+			"STANDALONE_QTY_ONE": "Só pode encomendar uma unidade deste produto de cada vez.",
+			"SUBSCRIPTION_CUSTOM_PRICE": "Uma subscrição não pode ser comprada a preço livre.",
+			"MAX_PRICE_EXCEEDED": "O preço introduzido excede o máximo de {max} {currency}."
 		}
 	},
 	"cartFromUrl": {
@@ -3392,5 +3416,11 @@
 			},
 			"emptyContent": "<p>Esta página está vazia. Edite-a para adicionar o seu conteúdo.</p>"
 		}
+	},
+	"saleLock": {
+		"LOGIN_REQUIRED": "Tem de iniciar sessão para encomendar este produto.",
+		"NOT_WHITELISTED": "Este produto está reservado a determinados clientes.",
+		"MAX_PER_USER": "Atingiu o máximo que pode encomendar deste produto.",
+		"login": "Iniciar sessão"
 	}
 }

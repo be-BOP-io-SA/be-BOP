@@ -1,11 +1,22 @@
 import { addToCartInDb } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
-import { applyResolvedStock, resolveStockProduct } from '$lib/server/product';
+import {
+	applyResolvedStock,
+	resolveAvailableAmounts,
+	resolveStockProduct
+} from '$lib/server/product';
 import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import {
+	evaluateSaleLocks,
+	isSaleLockError,
+	remainingForUser,
+	SALE_LOCK_PROJECTION,
+	withoutWhitelist
+} from '$lib/server/saleLock';
 import { adminPrefix as getAdminPrefix } from '$lib/server/admin';
-import { userIdentifier, userQuery } from '$lib/server/user';
+import { identifiedUserQuery, userIdentifier } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import {
 	DEFAULT_MAX_QUANTITY_PER_ORDER,
@@ -19,7 +30,7 @@ import { set } from '$lib/utils/set';
 import { sum } from '$lib/utils/sum';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { RequestEvent } from './$types';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { subDays, parseISO, isValid } from 'date-fns';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
@@ -122,6 +133,11 @@ async function fetchProduct(
 	| 'bookingSpec'
 	| 'vatProfileId'
 	| 'stockReference'
+	| 'requiresAuthentication'
+	| 'whitelist'
+	| 'maxQuantityPerUser'
+	| 'posOverridesMaxQuantityPerUser'
+	| 'subscriptionReminderSeconds'
 	| 'tagIds'
 	| 'subscriptionDuration'
 	| 'pricingSchedule'
@@ -131,6 +147,7 @@ async function fetchProduct(
 		{ _id: productId },
 		{
 			projection: {
+				...SALE_LOCK_PROJECTION,
 				_id: 1,
 				name: { $ifNull: [`$translations.${language}.name`, '$name'] },
 				price: 1,
@@ -195,7 +212,7 @@ async function fetchProductPictures(productId: string) {
 async function fetchUserSubscriptions(userIdentifier: UserIdentifier) {
 	return collections.paidSubscriptions
 		.find({
-			...userQuery(userIdentifier),
+			...identifiedUserQuery(userIdentifier),
 			paidUntil: { $gt: new Date() }
 		})
 		.toArray();
@@ -299,10 +316,14 @@ export const load = async ({ params, url, parent, locals }) => {
 		vatSingleCountry: runtimeConfig.vatSingleCountry
 	});
 
+	// The list of authorised customers never leaves the server: the page only needs to know the
+	// product is locked, and the reason, both of which travel in `saleLocks`.
+	const productForPage = withoutWhitelist(product);
+
 	return {
 		forcedVariations,
 		product: {
-			...product,
+			...productForPage,
 			vatProfileId: product.vatProfileId?.toString(),
 			...(product.type === 'subscription' && {
 				subscriptionDuration: resolveSubscriptionDuration(product)
@@ -326,6 +347,32 @@ export const load = async ({ params, url, parent, locals }) => {
 		...(product.contentAfter && {
 			productCMSAfter: cmsFromContent({ desktopContent: product.contentAfter }, locals)
 		}),
+		// Same verdict the cart and the order will give, asked before the click so the CTA can
+		// go flat instead of failing after it.
+		// Asked as "may they take one more?", which is the question the CTA answers. Without the
+		// extra unit a customer sitting exactly on their cap reads nothing, and only finds out by
+		// clicking — what the cart already holds counts towards it too.
+		// Asked as "may they take one more?", which is the question the CTA answers. Every
+		// reason comes back the same way — login, whitelist, per-person cap, per-order cap,
+		// stock — so the page states them all before the click instead of letting whichever
+		// one happens to fire first surface after it.
+		saleLocks:
+			(
+				await evaluateSaleLocks([product], userIdentifier(locals), {
+					extraQuantityByProductId: { [productId]: 1 },
+					quantityInCartByProductId: {
+						[productId]: sum(
+							parentData.cart.items
+								.filter((item) => item.product._id === productId)
+								.map((item) => item.quantity)
+						)
+					},
+					availableByProductId: await resolveAvailableAmounts([product], userIdentifier(locals))
+				})
+			).get(product._id) ?? [],
+		// How many more units this person may take, so the quantity picker cannot offer a number
+		// the cart will refuse. Undefined on an uncapped product.
+		maxPerUserRemaining: await remainingForUser(product, userIdentifier(locals)),
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
 		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		websiteShortDescription: product.shortDescription,
@@ -434,15 +481,41 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 	});
 }
 
+/**
+ * A refusal is answered with `fail`, not with a redirect: under `use:enhance` a redirect is not
+ * an error, so the page would take its success path and announce a product it did not add.
+ * `fail` gives the form a typed failure it can state, and keeps the no-JS path on the product
+ * page rather than on a bare 400.
+ */
+async function addToCartOrExplain(params: RequestEvent) {
+	try {
+		await addToCart(params);
+		return null;
+	} catch (err) {
+		if (!isSaleLockError(err)) {
+			throw err;
+		}
+		const body = (err as { body?: { code?: string; params?: Record<string, string | number> } })
+			.body;
+		return fail(400, { saleLock: { code: body?.code, params: body?.params ?? {} } });
+	}
+}
+
 export const actions = {
 	buy: async (params) => {
-		await addToCart(params);
+		const refused = await addToCartOrExplain(params);
+		if (refused) {
+			return refused;
+		}
 
 		throw redirect(303, '/checkout');
 	},
 
 	addToCart: async (params) => {
-		await addToCart(params);
+		const refused = await addToCartOrExplain(params);
+		if (refused) {
+			return refused;
+		}
 
 		throw redirect(303, params.request.headers.get('referer') || '/cart');
 	}

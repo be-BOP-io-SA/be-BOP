@@ -8,6 +8,7 @@
 	import {
 		DEFAULT_MAX_QUANTITY_PER_ORDER,
 		MAX_NAME_LIMIT,
+		MAX_QUANTITY_PER_USER_FOR_SUBSCRIPTION,
 		MAX_SHORT_DESCRIPTION_LIMIT,
 		type Product
 	} from '$lib/types/Product';
@@ -52,6 +53,8 @@
 	const { t, formatDistanceLocale } = useI18n();
 
 	export let tags: Pick<Tag, '_id' | 'name'>[];
+	export let subscriptionProducts: { _id: string; name: string }[] = [];
+
 	export let isNew = false;
 	export let duplicateFromId: string | undefined = undefined;
 	export let sold = 0;
@@ -89,6 +92,7 @@
 		hideDiscountExpiration: false,
 		stock: undefined,
 		maxQuantityPerOrder: DEFAULT_MAX_QUANTITY_PER_ORDER,
+		requiresAuthentication: false,
 		actionSettings: defaultActionSettings,
 		createdAt: new Date(),
 		updatedAt: new Date(),
@@ -103,6 +107,20 @@
 		hasSellDisclaimer: false,
 		hideFromSEO: false
 	};
+
+	let maxQuantityPerUser: number | string = product.maxQuantityPerUser ?? '';
+	let requiresAuthentication = !!product.requiresAuthentication;
+	let hasWhitelist = !!product.whitelist;
+
+	// A per-person cap only means something once we know who the person is. Ticking it here
+	// mirrors what the server does on save, so the admin sees the real state of the option.
+	// A per-person cap is meaningless until we know who the person is, so it forces the
+	// authentication lock — here and again on save, the way variations force `standalone`.
+	$: authForcedByCap =
+		maxQuantityPerUser !== '' && maxQuantityPerUser !== null && maxQuantityPerUser !== undefined;
+	$: if (authForcedByCap) {
+		requiresAuthentication = true;
+	}
 
 	let paymentMethods = product.paymentMethods || [...availablePaymentMethods];
 	let restrictPaymentMethods = !!product.paymentMethods;
@@ -1564,6 +1582,41 @@
 							value={product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER}
 						/>
 					</label>
+
+					<label class="form-label">
+						{t('admin.productForm.saleLocks.maxPerPerson')}
+						<input
+							class="form-input"
+							type="number"
+							name="maxQuantityPerUser"
+							placeholder={t('admin.productForm.saleLocks.noLimit')}
+							step="1"
+							min="1"
+							bind:value={maxQuantityPerUser}
+						/>
+						<span class="text-sm text-gray-600"
+							>{t('admin.productForm.saleLocks.maxPerPersonHint')}</span
+						>
+					</label>
+
+					<label class="checkbox-label">
+						<input
+							class="form-checkbox"
+							type="checkbox"
+							name="posOverridesMaxQuantityPerUser"
+							checked={product.posOverridesMaxQuantityPerUser ?? false}
+						/>
+						{t('admin.productForm.saleLocks.posOverride')}
+					</label>
+					<span class="text-sm text-gray-600"
+						>{t('admin.productForm.saleLocks.posOverrideHint')}</span
+					>
+				{:else}
+					<p class="text-sm text-gray-600">
+						{t('admin.productForm.saleLocks.subscriptionMax', {
+							max: MAX_QUANTITY_PER_USER_FOR_SUBSCRIPTION
+						})}
+					</p>
 				{/if}
 			</div>
 			<input type="hidden" name="changedDate" value={changedDate} />
@@ -1951,6 +2004,98 @@
 						bind:retailBasket={product.actionSettings.retail.canBeAddedToBasket}
 						bind:nostrBasket={product.actionSettings.nostr.canBeAddedToBasket}
 					/>
+				</div>
+
+				<div>
+					<h4 class="text-lg font-medium text-gray-900 mb-3">
+						{t('admin.productForm.saleLocks.whoCanOrder')}
+					</h4>
+					<div class="space-y-4">
+						<label class="checkbox-label">
+							<input
+								class="form-checkbox"
+								type="checkbox"
+								name="requiresAuthentication"
+								bind:checked={requiresAuthentication}
+								disabled={authForcedByCap}
+							/>
+							{t('admin.productForm.saleLocks.requiresAuthentication')}
+						</label>
+						{#if authForcedByCap}
+							<p class="text-sm text-gray-600">
+								{t('admin.productForm.saleLocks.authForcedByCap', {
+									field: t('admin.productForm.saleLocks.maxPerPerson'),
+									section: t('admin.productForm.inventoryAndStock')
+								})}
+							</p>
+						{/if}
+
+						<label class="checkbox-label">
+							<input
+								class="form-checkbox"
+								type="checkbox"
+								name="hasWhitelist"
+								bind:checked={hasWhitelist}
+							/>
+							{t('admin.productForm.saleLocks.restrict')}
+						</label>
+
+						{#if hasWhitelist}
+							<p class="text-sm text-gray-600">{t('admin.productForm.saleLocks.restrictHint')}</p>
+
+							<label class="form-label">
+								{t('admin.productForm.saleLocks.emails')}
+								<textarea
+									class="form-input"
+									name="whitelistEmails"
+									rows="4"
+									placeholder={t('admin.productForm.saleLocks.emailsPlaceholder')}
+									value={product.whitelist?.emails?.join('\n') ?? ''}
+								/>
+							</label>
+
+							<label class="form-label">
+								{t('admin.productForm.saleLocks.npubs')}
+								<textarea
+									class="form-input"
+									name="whitelistNpubs"
+									rows="4"
+									placeholder={t('admin.productForm.saleLocks.npubsPlaceholder')}
+									value={product.whitelist?.npubs?.join('\n') ?? ''}
+								/>
+							</label>
+
+							<!-- svelte-ignore a11y-label-has-associated-control -->
+							<label class="form-label">
+								{t('admin.productForm.saleLocks.subscribers')}
+								<MultiSelect
+									--sms-options-bg="var(--body-mainPlan-backgroundColor)"
+									name="whitelistSubscriptionProductIds"
+									options={subscriptionProducts.map((subscriptionProduct) => ({
+										value: subscriptionProduct._id,
+										label: subscriptionProduct.name
+									}))}
+									selected={product.whitelist?.subscriptionProductIds?.map((productId) => ({
+										value: productId,
+										label:
+											subscriptionProducts.find(
+												(subscriptionProduct) => subscriptionProduct._id === productId
+											)?.name ?? productId
+									})) ?? []}
+								/>
+							</label>
+
+							<label class="checkbox-label">
+								<input
+									class="form-checkbox"
+									type="checkbox"
+									name="whitelistAllowEmployees"
+									checked={product.whitelist?.allowEmployees ?? false}
+								/>
+								{t('admin.productForm.saleLocks.employees')}
+							</label>
+						{/if}
+					</div>
 				</div>
 			</div>
 		</details>

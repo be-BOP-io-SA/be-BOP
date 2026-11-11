@@ -9,6 +9,8 @@ import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
 import DOMPurify from 'dompurify';
 import { collections } from './database';
+import { annotateProductsWithSaleLocks, SALE_LOCK_PROJECTION, withoutWhitelist } from './saleLock';
+import { userIdentifier } from './user';
 import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import type { Specification } from '$lib/types/Specification';
 import type { Tag } from '$lib/types/Tag';
@@ -591,6 +593,11 @@ export async function cmsFromContent(
 						Pick<
 							Product,
 							| '_id'
+							| 'requiresAuthentication'
+							| 'whitelist'
+							| 'maxQuantityPerUser'
+							| 'posOverridesMaxQuantityPerUser'
+							| 'subscriptionReminderSeconds'
 							| 'price'
 							| 'name'
 							| 'shortDescription'
@@ -609,6 +616,7 @@ export async function cmsFromContent(
 							| 'hasVariations'
 						>
 					>({
+						...SALE_LOCK_PROJECTION,
 						price: 1,
 						shortDescription: locals.language
 							? {
@@ -805,11 +813,19 @@ export async function cmsFromContent(
 
 	const scheduleEventsById = groupBy(scheduleEvents, (event) => event.scheduleId);
 
+	// Listings must not offer straight to the cart what the cart would refuse. One evaluation
+	// for the whole page, none at all when no product on it carries a lock.
+	// Same rule as the product page: the evaluator reads the list of authorised customers, the
+	// browser receives only the flag.
+	const productsWithSaleLocks = (
+		await annotateProductsWithSaleLocks(products, userIdentifier(locals))
+	).map(withoutWhitelist);
+
 	return {
 		tokens,
 		challenges,
 		sliders,
-		products,
+		products: productsWithSaleLocks,
 		externalProducts,
 		tags,
 		specifications,

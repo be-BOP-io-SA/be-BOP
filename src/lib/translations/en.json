@@ -1852,7 +1852,26 @@
 			"phasePriceHint": "Free trial = 0. Currency inherited from the product.",
 			"phaseReminderBeforeEnd": "Reminder before end",
 			"phaseReminderHint": "0 = no reminder",
-			"addPhase": "Add phase"
+			"addPhase": "Add phase",
+			"saleLocks": {
+				"maxPerPerson": "Maximum quantity per person",
+				"noLimit": "No limit",
+				"maxPerPersonHint": "Counted across all of the customer's orders, not per order. Leave empty for no limit. Orders awaiting payment count towards it, and setting it requires the customer to be authenticated.",
+				"posOverride": "Let the POS sell beyond this limit",
+				"posOverrideHint": "At the POS, the session belongs to the seller, not to the buyer, so the limit would count the wrong person. Leave it unchecked to apply the limit everywhere.",
+				"subscriptionMax": "Maximum quantity per person: {max}. A subscription is limited to one per person and per product.",
+				"whoCanOrder": "Who can order",
+				"requiresAuthentication": "The customer must be authenticated to order this product",
+				"authForcedByCap": "Required and locked, because \"{field}\" is set in {section}. Clear that field to unlock this option.",
+				"restrict": "Restrict who can order this product",
+				"restrictHint": "Anyone matching at least one of the sources below can order the product. Everyone else sees the product page, with the order and add-to-cart buttons disabled. Leaving every source empty closes the product to everyone.",
+				"emails": "Allowed email addresses",
+				"emailsPlaceholder": "One email address per line",
+				"npubs": "Allowed npubs",
+				"npubsPlaceholder": "One npub per line",
+				"subscribers": "Allow the active subscribers of",
+				"employees": "Allow every employee, whatever their role"
+			}
 		},
 		"taler": {
 			"backendUrl": "Backend URL",
@@ -2254,7 +2273,12 @@
 		"maxQuantityReached": "Maximum quantity per order reached ({max})",
 		"error": {
 			"BOOKING_SAME_DAY_DISABLED": "Bookings for today are not available for this product.",
-			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Bookings for today are no longer possible past {maxHour}."
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Bookings for today are no longer possible past {maxHour}.",
+			"NOT_PWYW": "This product does not accept a custom price.",
+			"NOT_PREORDER": "This product is not available for pre-order yet.",
+			"STANDALONE_QTY_ONE": "You can only order one of this product at a time.",
+			"SUBSCRIPTION_CUSTOM_PRICE": "A subscription cannot be bought at a custom price.",
+			"MAX_PRICE_EXCEEDED": "The price you entered is above the maximum of {max} {currency}."
 		}
 	},
 	"cartFromUrl": {
@@ -3392,5 +3416,11 @@
 			},
 			"emptyContent": "<p>This page is empty. Please edit it to add your content.</p>"
 		}
+	},
+	"saleLock": {
+		"LOGIN_REQUIRED": "You need to be logged in to order this product.",
+		"NOT_WHITELISTED": "This product is reserved for selected customers.",
+		"MAX_PER_USER": "You have reached the maximum you can order for this product.",
+		"login": "Log in"
 	}
 }

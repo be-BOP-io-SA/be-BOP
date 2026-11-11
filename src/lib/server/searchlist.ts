@@ -14,6 +14,8 @@ import { runtimeConfig } from './runtime-config';
 import { CURRENCIES, CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import { computeVatRate } from '$lib/utils/vat';
+import { annotateProductsWithSaleLocks, SALE_LOCK_PROJECTION, withoutWhitelist } from './saleLock';
+import { userIdentifier } from './user';
 
 export const MAX_SEARCH_TERM_LENGTH = 64;
 export const MAX_CUMULATIVE_PAGES = 100;
@@ -163,27 +165,39 @@ export function buildSearchOrClauses(
 	return clauses;
 }
 
+/** What the database returns for a search, before the customer list is taken out. */
+type ProductHit = Pick<
+	Product,
+	| '_id'
+	| 'name'
+	| 'shortDescription'
+	| 'price'
+	| 'shipping'
+	| 'preorder'
+	| 'availableDate'
+	| 'standalone'
+	| 'tagIds'
+	| 'stock'
+	| 'actionSettings'
+	| 'type'
+	| 'free'
+	| 'isTicket'
+	| 'payWhatYouWant'
+	| 'maxQuantityPerOrder'
+	| 'requiresAuthentication'
+	| 'whitelist'
+	| 'maxQuantityPerUser'
+	| 'posOverridesMaxQuantityPerUser'
+	| 'subscriptionReminderSeconds'
+	| 'mobile'
+>;
+
 export type SearchResult = {
-	products: Pick<
-		Product,
-		| '_id'
-		| 'name'
-		| 'shortDescription'
-		| 'price'
-		| 'shipping'
-		| 'preorder'
-		| 'availableDate'
-		| 'standalone'
-		| 'tagIds'
-		| 'stock'
-		| 'actionSettings'
-		| 'type'
-		| 'free'
-		| 'isTicket'
-		| 'payWhatYouWant'
-		| 'maxQuantityPerOrder'
-		| 'mobile'
-	>[];
+	/**
+	 * Ready to be sent to a browser: flagged when the cart would refuse them, and without their
+	 * list of authorised customers, which never leaves the server.
+	 */
+	products: Array<Omit<ProductHit, 'whitelist'> & { saleLocked: boolean }>;
 	total: number;
 	totalPages: number;
 };
@@ -321,6 +335,9 @@ export async function searchProducts(
 		: { amount: '$price.amount', currency: '$price.currency' };
 
 	const projection: Document = {
+		// Read by the sale-lock evaluator so a search list cannot offer straight to the cart what
+		// the cart would refuse. The customer list is stripped again before the page is serialised.
+		...SALE_LOCK_PROJECTION,
 		_id: 1,
 		name: { $ifNull: [`$translations.${locals.language}.name`, '$name'] },
 		shortDescription: {
@@ -370,7 +387,6 @@ export async function searchProducts(
 		}
 	});
 
-	type ProductHit = SearchResult['products'][number];
 	type FacetResult = {
 		products: ProductHit[];
 		count: Array<{ total: number }>;
@@ -388,7 +404,9 @@ export async function searchProducts(
 	}
 
 	return {
-		products,
+		products: (await annotateProductsWithSaleLocks(products, userIdentifier(locals))).map(
+			withoutWhitelist
+		),
 		total,
 		totalPages: Math.max(1, Math.ceil(total / perPage))
 	};

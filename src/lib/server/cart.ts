@@ -2,13 +2,12 @@ import { ObjectId } from 'mongodb';
 import { collections, withTransaction } from './database';
 import {
 	checkProductVariationsIntegrity,
-	DEFAULT_MAX_QUANTITY_PER_ORDER,
 	productPriceWithVariations,
 	type Product
 } from '$lib/types/Product';
 import { error } from '@sveltejs/kit';
 import { runtimeConfig } from './runtime-config';
-import { amountOfStockReserved, refreshAvailableStockInDb } from './product';
+import { refreshAvailableStockInDb, resolveAvailableAmounts } from './product';
 import type { Cart } from '$lib/types/Cart';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import { userQuery } from './user';
@@ -19,6 +18,14 @@ import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { sum } from '$lib/utils/sum';
 import { deepEquals } from '$lib/utils/deep-equals';
+import {
+	evaluateSaleLocks,
+	orderLimitLocks,
+	saleLockMessage,
+	SALE_LOCK_CODES,
+	type ProductWithSaleLocks,
+	type SaleLock
+} from './saleLock';
 
 export const CART_ERROR_CODES = [
 	'NOT_FOR_SALE',
@@ -33,7 +40,8 @@ export const CART_ERROR_CODES = [
 	'OUT_OF_STOCK',
 	'STANDALONE_QTY_ONE',
 	'VARIATION_INVALID',
-	'MAX_PER_ORDER'
+	'MAX_PER_ORDER',
+	...SALE_LOCK_CODES
 ] as const;
 export type CartErrorCode = (typeof CART_ERROR_CODES)[number];
 
@@ -259,10 +267,32 @@ export async function addToCartInDb(
 	const totalQuantityInCart = () =>
 		sum(cart.items.filter((item) => item.productId === product._id).map((item) => item.quantity));
 
-	const availableAmount = await computeAvailableAmount(product, cart);
+	// Sale locks, refused at the door. Every way into the cart lands here — the product page,
+	// a pre-configured cart link, the point-of-sale alias field, NostR — so none of them needs
+	// its own copy of the rules. Evaluated once the cart is known, because a per-person cap
+	// counts what already sits in it on top of what was already ordered.
+	// The cart's own "+" and quantity field send the new total, not what to add. Counting the
+	// cart again on top of it would read a cart of six asking for seven as thirteen, and refuse
+	// a button that only meant to go from six to seven.
+	const alreadyInCart = params.totalQuantity ? 0 : totalQuantityInCart();
 
-	if (availableAmount <= 0) {
-		cartError('OUT_OF_STOCK', 'Product is out of stock');
+	const lockOnAdd = (
+		await evaluateSaleLocks([product], params.user, {
+			// A subscription line is clamped to one unit whatever was asked, but a subscription is
+			// standalone: a second add makes a second line rather than merging. So what the cart
+			// already holds has to count, or the same subscription piles up in one order.
+			extraQuantityByProductId: {
+				[product._id]: product.type === 'subscription' ? 1 : quantity
+			},
+			quantityInCartByProductId: { [product._id]: alreadyInCart },
+			availableByProductId: await resolveAvailableAmounts([product], params.user)
+		})
+	).get(product._id);
+	if (lockOnAdd?.length) {
+		// One code and its params travel on the error — the first reason, which is the most
+		// actionable. The message carries every reason; the pages read the evaluator directly
+		// and show them all.
+		cartError(lockOnAdd[0].code, saleLockMessage(lockOnAdd, product.name), lockOnAdd[0].params);
 	}
 
 	if (product.standalone || product.bookingSpec) {
@@ -309,15 +339,6 @@ export async function addToCartInDb(
 	if (existingItem && !product.standalone && !product.bookingSpec) {
 		existingItem.quantity = params.totalQuantity ? quantity : existingItem.quantity + quantity;
 
-		const max = Math.min(
-			product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER,
-			availableAmount
-		);
-
-		if (totalQuantityInCart() > max) {
-			cartError('MAX_PER_ORDER', `You can only order ${max} of this product`, { max });
-		}
-
 		if (product.type === 'subscription') {
 			existingItem.quantity = 1;
 			if (params.customPrice) {
@@ -326,13 +347,6 @@ export async function addToCartInDb(
 		}
 		existingItem.reservedUntil = addMinutes(new Date(), runtimeConfig.reserveStockInMinutes);
 	} else {
-		const max = Math.min(
-			product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER,
-			availableAmount
-		);
-		if (totalQuantityInCart() + quantity > max) {
-			cartError('MAX_PER_ORDER', `You can only order ${max} of this product`, { max });
-		}
 		cart.items.push({
 			_id: crypto.randomUUID(),
 			productId: product._id,
@@ -411,14 +425,14 @@ export async function removeFromCartInDb(
 
 	const newQty = params.totalQuantity ? quantity : Math.max(item.quantity - quantity, 0);
 
-	const availableAmount = await computeAvailableAmount(product, cart);
-
-	item.quantity = Math.min(
-		availableAmount,
+	const [limit] = orderLimitLocks(
+		product,
 		newQty,
-		item.quantity,
-		product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER
+		(await resolveAvailableAmounts([product], cart.user))[product._id]
 	);
+	const allowed = limit?.code === 'OUT_OF_STOCK' ? 0 : Number(limit?.params?.max ?? Infinity);
+
+	item.quantity = Math.min(allowed, newQty, item.quantity);
 
 	if (item.quantity <= 0) {
 		cart.items = cart.items.filter((it) => it !== item);
@@ -437,62 +451,53 @@ export async function removeFromCartInDb(
 	return cart;
 }
 
-async function computeAvailableAmount(product: Product, cart: Cart): Promise<number> {
-	return !product.stock
-		? Infinity
-		: product.stock.total -
-				(await amountOfStockReserved(product.stockReference?.productId || product._id, {
-					exclude: {
-						sessionId: cart.user.sessionId,
-						npub: cart.user.npub
-					}
-				}));
-}
-
 export async function checkCartItems(
 	items: Array<{
 		quantity: number;
-		product: Pick<Product, 'stock' | '_id' | 'name' | 'maxQuantityPerOrder' | 'stockReference'>;
+		product: Pick<Product, 'stock' | '_id' | 'name' | 'maxQuantityPerOrder' | 'stockReference'> &
+			ProductWithSaleLocks;
 	}>,
 	opts?: {
 		user?: UserIdentifier;
 	}
 ) {
 	const products = items.map((item) => item.product);
-	const productById = Object.fromEntries(products.map((product) => [product._id, product]));
 
 	// be careful, there can be multiple lines for the same product due to product.standalone
-	const qtyPerItem: Record<string, number> = {};
+	const quantityInCart: Record<string, number> = {};
 	for (const item of items) {
-		qtyPerItem[item.product._id] = (qtyPerItem[item.product._id] || 0) + item.quantity;
+		quantityInCart[item.product._id] = (quantityInCart[item.product._id] ?? 0) + item.quantity;
 	}
+	const availableByProductId = await resolveAvailableAmounts(products, opts?.user);
 
-	for (const productId of Object.keys(qtyPerItem)) {
-		const product = productById[productId];
-		const productStockAlreadyReserved = await amountOfStockReserved(
-			product.stockReference?.productId || productId,
-			{ exclude: opts?.user }
-		);
-		const available = product.stock ? product.stock.total - productStockAlreadyReserved : Infinity;
-		if (product.stock && qtyPerItem[productId] > available) {
-			if (!available) {
-				throw error(400, 'Product is out of stock: ' + product.name);
-			}
-			throw error(
-				400,
-				'Not enough stock for product: ' + product.name + ', only ' + available + ' left'
-			);
-		}
+	// Sale locks, re-asked here and not only on the way in: a cart filled before the shop owner
+	// drew a list up, or before a subscription lapsed, would otherwise still check out. This
+	// function is what the cart page, the checkout page and order creation all call, so the
+	// three give the same answer. Without a customer — a renewal — only stock and the per-order
+	// cap apply.
+	const locks = opts?.user
+		? await evaluateSaleLocks(products, opts.user, {
+				// What sits in the cart is what is about to be ordered, so it counts towards a
+				// per-person cap alongside what was ordered before.
+				extraQuantityByProductId: quantityInCart,
+				availableByProductId
+		  })
+		: new Map(
+				products
+					.map((product): [string, SaleLock[]] => [
+						product._id,
+						orderLimitLocks(product, quantityInCart[product._id], availableByProductId[product._id])
+					])
+					.filter(([, productLocks]) => productLocks.length)
+		  );
 
-		if (qtyPerItem[productId] > (product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER)) {
-			throw error(
-				400,
-				'Cannot order more than ' +
-					(product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER) +
-					' of product: ' +
-					product.name
-			);
-		}
+	const firstLocked = products.find((product) => locks.has(product._id));
+	if (firstLocked) {
+		const productLocks = locks.get(firstLocked._id) as SaleLock[];
+		cartError(productLocks[0].code, saleLockMessage(productLocks, firstLocked.name), {
+			...productLocks[0].params,
+			products: firstLocked.name
+		});
 	}
 }
 

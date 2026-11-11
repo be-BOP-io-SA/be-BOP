@@ -11,9 +11,15 @@ import {
 import { availableContactModes } from '$lib/server/contact-modes';
 import { contactModesOrEmail } from '$lib/types/ContactMode';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
+import {
+	CART_ERROR_CODES,
+	checkCartItems,
+	getCartFromDb,
+	type CartErrorCode
+} from '$lib/server/cart.js';
 import { applyResolvedStock } from '$lib/server/product.js';
-import { userIdentifier, userQuery } from '$lib/server/user.js';
+import { withStoredWhitelists } from '$lib/server/saleLock';
+import { identifiedUserQuery, userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import {
 	collectUserAddresses,
@@ -39,10 +45,15 @@ import {
 export async function load({ parent, locals }) {
 	const parentData = await parent();
 
+	// The layout hands the cart over without the customer lists: read them again, so that a
+	// customer taken off a list after filling their cart is sent back to it with the reason.
+	const cartProducts = await withStoredWhitelists(
+		parentData.cart.items.map((item) => item.product)
+	);
 	const cartItemsWithResolvedStock = await Promise.all(
-		parentData.cart.items.map(async (item) => ({
+		parentData.cart.items.map(async (item, index) => ({
 			...item,
-			product: await applyResolvedStock(item.product)
+			product: await applyResolvedStock(cartProducts[index])
 		}))
 	);
 
@@ -119,7 +130,7 @@ export async function load({ parent, locals }) {
 	// Precompute auto discount per payment method so the frontend can switch live
 	const activeDiscounts = await getActivePercentageDiscounts();
 	const paidSubs = await collections.paidSubscriptions
-		.find({ ...userQuery(userIdentifier(locals)), paidUntil: { $gt: new Date() } })
+		.find({ ...identifiedUserQuery(userIdentifier(locals)), paidUntil: { $gt: new Date() } })
 		.toArray();
 	const user = userIdentifier(locals);
 	const discountItemsForEval = cartItemsWithResolvedStock.map((i) => ({
@@ -675,6 +686,16 @@ export const actions = {
 				);
 			});
 		} catch (err) {
+			// A typed cart error means the cart itself is no longer orderable. The cart page says
+			// why, in the customer's own language, and keeps their cart intact; a raw 400 page
+			// says nothing and loses them.
+			const cartErrorBody =
+				typeof err === 'object' && err && 'body' in err
+					? (err as { body?: { code?: string } }).body
+					: undefined;
+			if (cartErrorBody?.code && CART_ERROR_CODES.includes(cartErrorBody.code as CartErrorCode)) {
+				throw redirect(303, '/cart');
+			}
 			if (err instanceof PaymentGenerationError) {
 				console.error('PaymentGenerationError on /checkout:', err.method, err.reason);
 				await notifySuperAdminPaymentFailure({
