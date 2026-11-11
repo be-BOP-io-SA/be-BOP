@@ -2278,7 +2278,18 @@
 			"suspensionTitle": "Suspension",
 			"suspensionHelp": "Une clé suspendue est refusée par l'API comme une clé révoquée, et ses flux ouverts sont fermés. Elle n'est pas supprimée : réactivée, elle fonctionne de nouveau, avec le même secret.",
 			"suspend": "Suspendre la clé",
-			"reactivate": "Réactiver la clé"
+			"reactivate": "Réactiver la clé",
+			"suspicious": "Suspecte",
+			"suspiciousTitle": "Activité suspecte",
+			"suspiciousHelp": "Les appels de cette clé qui ressemblent à une tentative plutôt qu'à une erreur. Chacun est refusé, signale la clé comme suspecte et est consigné ici. Le signalement ne change rien à ce que la clé peut faire : suspendez-la si besoin.",
+			"suspiciousSince": "Signalée comme suspecte depuis le {date}.",
+			"clearSuspicious": "Retirer le signalement",
+			"suspiciousEventType": "Quoi",
+			"suspiciousEventDetail": "Reçu",
+			"suspiciousEmpty": "Aucun appel suspect consigné.",
+			"suspiciousEvents": {
+				"labelColorCss": "Déclaration CSS dans une couleur de label"
+			}
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Aucun processeur configuré. Configurez-les dans l’onglet Paramètres de paiement ci-dessus",

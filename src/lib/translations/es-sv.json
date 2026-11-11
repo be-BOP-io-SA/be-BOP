@@ -2278,7 +2278,18 @@
 			"suspensionTitle": "Suspensión",
 			"suspensionHelp": "La API rechaza una clave suspendida como una clave revocada, y sus flujos abiertos se cierran. No se elimina: una vez reactivada, vuelve a funcionar, con el mismo secreto.",
 			"suspend": "Suspender la clave",
-			"reactivate": "Reactivar la clave"
+			"reactivate": "Reactivar la clave",
+			"suspicious": "Sospechosa",
+			"suspiciousTitle": "Actividad sospechosa",
+			"suspiciousHelp": "Las llamadas de esta clave que parecen un intento más que un error. Cada una se rechaza, marca la clave como sospechosa y queda registrada aquí. La marca no cambia nada de lo que la clave puede hacer: suspéndala si hace falta.",
+			"suspiciousSince": "Marcada como sospechosa desde el {date}.",
+			"clearSuspicious": "Quitar la marca de sospechosa",
+			"suspiciousEventType": "Qué",
+			"suspiciousEventDetail": "Recibido",
+			"suspiciousEmpty": "Ninguna llamada sospechosa registrada.",
+			"suspiciousEvents": {
+				"labelColorCss": "Declaración CSS en un color de label"
+			}
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "No hay procesadores configurados. Configúrelos en la pestaña Configuración de pago de arriba",

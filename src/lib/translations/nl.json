@@ -2278,7 +2278,18 @@
 			"suspensionTitle": "Opschorting",
 			"suspensionHelp": "Een opgeschorte sleutel wordt door de API geweigerd zoals een ingetrokken sleutel, en zijn open streams worden gesloten. Hij wordt niet verwijderd: opnieuw geactiveerd werkt hij weer, met hetzelfde geheim.",
 			"suspend": "Sleutel opschorten",
-			"reactivate": "Sleutel opnieuw activeren"
+			"reactivate": "Sleutel opnieuw activeren",
+			"suspicious": "Verdacht",
+			"suspiciousTitle": "Verdachte activiteit",
+			"suspiciousHelp": "Aanroepen van deze sleutel die eerder op een poging lijken dan op een vergissing. Elke aanroep wordt geweigerd, markeert de sleutel als verdacht en wordt hier vastgelegd. De markering verandert niets aan wat de sleutel mag: schort hem zo nodig op.",
+			"suspiciousSince": "Als verdacht gemarkeerd sinds {date}.",
+			"clearSuspicious": "Markering verwijderen",
+			"suspiciousEventType": "Wat",
+			"suspiciousEventDetail": "Ontvangen",
+			"suspiciousEmpty": "Geen verdachte aanroep vastgelegd.",
+			"suspiciousEvents": {
+				"labelColorCss": "CSS-declaratie in een labelkleur"
+			}
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Geen verwerkers geconfigureerd. Configureer ze in het tabblad Betalingsinstellingen hierboven",

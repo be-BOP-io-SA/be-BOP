@@ -2278,7 +2278,18 @@
 			"suspensionTitle": "Suspensão",
 			"suspensionHelp": "Uma chave suspensa é recusada pela API como uma chave revogada, e os seus fluxos abertos são fechados. Não é eliminada: reativada, volta a funcionar, com o mesmo segredo.",
 			"suspend": "Suspender a chave",
-			"reactivate": "Reativar a chave"
+			"reactivate": "Reativar a chave",
+			"suspicious": "Suspeita",
+			"suspiciousTitle": "Atividade suspeita",
+			"suspiciousHelp": "As chamadas desta chave que parecem uma tentativa e não um erro. Cada uma é recusada, assinala a chave como suspeita e fica registada aqui. O assinalamento não muda nada do que a chave pode fazer: suspenda-a se necessário.",
+			"suspiciousSince": "Assinalada como suspeita desde {date}.",
+			"clearSuspicious": "Retirar o assinalamento",
+			"suspiciousEventType": "O quê",
+			"suspiciousEventDetail": "Recebido",
+			"suspiciousEmpty": "Nenhuma chamada suspeita registada.",
+			"suspiciousEvents": {
+				"labelColorCss": "Declaração CSS numa cor de label"
+			}
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Nenhum processador configurado. Configure-os no separador Definições de pagamento acima",

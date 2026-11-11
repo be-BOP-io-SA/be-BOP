@@ -2278,7 +2278,18 @@
 			"suspensionTitle": "Sperre",
 			"suspensionHelp": "Ein gesperrter Schlüssel wird von der API wie ein widerrufener abgelehnt, und seine offenen Streams werden geschlossen. Er wird nicht gelöscht: Nach der Reaktivierung funktioniert er wieder, mit demselben Geheimnis.",
 			"suspend": "Schlüssel sperren",
-			"reactivate": "Schlüssel reaktivieren"
+			"reactivate": "Schlüssel reaktivieren",
+			"suspicious": "Verdächtig",
+			"suspiciousTitle": "Verdächtige Aktivität",
+			"suspiciousHelp": "Aufrufe dieses Schlüssels, die eher nach einem Versuch als nach einem Fehler aussehen. Jeder wird abgelehnt, markiert den Schlüssel als verdächtig und wird hier festgehalten. Die Markierung ändert nichts an dem, was der Schlüssel darf: Sperren Sie ihn bei Bedarf.",
+			"suspiciousSince": "Als verdächtig markiert seit {date}.",
+			"clearSuspicious": "Markierung entfernen",
+			"suspiciousEventType": "Was",
+			"suspiciousEventDetail": "Empfangen",
+			"suspiciousEmpty": "Kein verdächtiger Aufruf festgehalten.",
+			"suspiciousEvents": {
+				"labelColorCss": "CSS-Deklaration in einer Label-Farbe"
+			}
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Keine Zahlungsanbieter konfiguriert. Konfigurieren Sie sie im obigen Tab Zahlungseinstellungen",

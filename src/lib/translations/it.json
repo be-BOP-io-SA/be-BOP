@@ -2278,7 +2278,18 @@
 			"suspensionTitle": "Sospensione",
 			"suspensionHelp": "Una chiave sospesa viene rifiutata dall'API come una chiave revocata, e i suoi flussi aperti vengono chiusi. Non viene eliminata: una volta riattivata, funziona di nuovo, con lo stesso segreto.",
 			"suspend": "Sospendi la chiave",
-			"reactivate": "Riattiva la chiave"
+			"reactivate": "Riattiva la chiave",
+			"suspicious": "Sospetta",
+			"suspiciousTitle": "Attività sospetta",
+			"suspiciousHelp": "Le chiamate di questa chiave che sembrano un tentativo più che un errore. Ognuna viene rifiutata, segnala la chiave come sospetta e viene registrata qui. La segnalazione non cambia nulla di ciò che la chiave può fare: sospendila se necessario.",
+			"suspiciousSince": "Segnalata come sospetta dal {date}.",
+			"clearSuspicious": "Rimuovi la segnalazione",
+			"suspiciousEventType": "Cosa",
+			"suspiciousEventDetail": "Ricevuto",
+			"suspiciousEmpty": "Nessuna chiamata sospetta registrata.",
+			"suspiciousEvents": {
+				"labelColorCss": "Dichiarazione CSS in un colore di label"
+			}
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Nessun processore configurato. Configurali nella scheda Impostazioni di pagamento qui sopra",

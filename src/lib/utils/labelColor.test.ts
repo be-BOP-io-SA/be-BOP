@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isLabelColor } from './labelColor';
+import { carriesCssDeclaration, isLabelColor } from './labelColor';
 
 describe('isLabelColor', () => {
 	it('accepts hexadecimal colors of every length CSS knows', () => {
@@ -31,6 +31,25 @@ describe('isLabelColor', () => {
 			'red;'
 		]) {
 			expect(isLabelColor(color)).toBe(false);
+		}
+	});
+});
+
+describe('carriesCssDeclaration', () => {
+	it('spots a declaration or a url( in a refused color', () => {
+		for (const color of [
+			'red; background: url(https://x.example/a.png)',
+			'background:red',
+			'url(https://x.example/a.png)',
+			'URL (x)'
+		]) {
+			expect(carriesCssDeclaration(color)).toBe(true);
+		}
+	});
+
+	it('leaves plain mistakes alone', () => {
+		for (const color of ['notacolor', 'rgb(0, 0, 0)', '#ff', 'red;']) {
+			expect(carriesCssDeclaration(color)).toBe(false);
 		}
 	});
 });

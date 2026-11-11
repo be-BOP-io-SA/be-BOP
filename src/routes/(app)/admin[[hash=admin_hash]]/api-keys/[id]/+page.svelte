@@ -31,8 +31,13 @@
 		{t('admin.apiKeys.backToList')}
 	</a>
 
-	<header>
+	<header class="flex flex-wrap items-center gap-3">
 		<h1 class="text-3xl">{data.key.name}</h1>
+		{#if data.key.suspiciousAt}
+			<span class="rounded bg-red-100 text-red-700 px-2 py-0.5 text-sm font-medium">
+				⚠ {t('admin.apiKeys.suspicious')}
+			</span>
+		{/if}
 	</header>
 
 	<section class="rounded-lg border border-gray-200 p-5">
@@ -151,6 +156,51 @@
 				value={t('admin.apiKeys.streamsSave')}
 			/>
 		</form>
+	</section>
+
+	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-4">
+		<header class="flex flex-col gap-1">
+			<h2 class="text-2xl">{t('admin.apiKeys.suspiciousTitle')}</h2>
+			<p class="text-sm opacity-80">{t('admin.apiKeys.suspiciousHelp')}</p>
+		</header>
+		{#if data.key.suspiciousAt}
+			<p class="text-sm text-red-700">
+				{t('admin.apiKeys.suspiciousSince', { date: fmt(data.key.suspiciousAt) })}
+			</p>
+			<form method="post" action="?/clearSuspicious">
+				<input
+					type="submit"
+					class="btn btn-gray self-start w-auto text-base"
+					value={t('admin.apiKeys.clearSuspicious')}
+				/>
+			</form>
+		{/if}
+		{#if data.suspiciousEvents.length}
+			<div class="overflow-x-auto">
+				<table class="w-full text-left text-sm">
+					<thead>
+						<tr class="border-b border-gray-200 opacity-70">
+							<th class="py-2 pr-3 font-medium">{t('admin.apiKeys.logWhen')}</th>
+							<th class="py-2 pr-3 font-medium">{t('admin.apiKeys.suspiciousEventType')}</th>
+							<th class="py-2 pr-3 font-medium">{t('admin.apiKeys.logCall')}</th>
+							<th class="py-2 font-medium">{t('admin.apiKeys.suspiciousEventDetail')}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each data.suspiciousEvents as event}
+							<tr class="border-b border-gray-100 last:border-0 align-top">
+								<td class="py-2 pr-3 whitespace-nowrap">{fmt(event.at)}</td>
+								<td class="py-2 pr-3">{t(`admin.apiKeys.suspiciousEvents.${event.type}`)}</td>
+								<td class="py-2 pr-3 font-mono text-xs">{event.call}</td>
+								<td class="py-2 font-mono text-xs break-all">{event.detail}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{:else}
+			<p class="text-sm opacity-70">{t('admin.apiKeys.suspiciousEmpty')}</p>
+		{/if}
 	</section>
 
 	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-4">

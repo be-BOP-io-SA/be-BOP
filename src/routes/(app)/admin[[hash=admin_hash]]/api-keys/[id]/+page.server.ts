@@ -6,6 +6,7 @@ import {
 	updateApiKeyOwnOrdersOnly,
 	updateApiKeyStreamSettings
 } from '$lib/server/api/keys';
+import { clearSuspiciousFlag, listSuspiciousEvents } from '$lib/server/api/suspicious';
 import { isStreamLifetimeTooLong, optionalStreamSetting } from '$lib/server/api/stream-settings';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { adminPrefix } from '$lib/server/admin';
@@ -38,7 +39,8 @@ export async function load({ locals, params }) {
 
 	return {
 		key: serializeApiKeyPublic(key),
-		openStreams: countOpenStreams(params.id)
+		openStreams: countOpenStreams(params.id),
+		suspiciousEvents: await listSuspiciousEvents(params.id)
 	};
 }
 
@@ -82,6 +84,20 @@ export const actions: Actions = {
 			throw error(404, 'API key not found');
 		}
 		closeStreamsOfKey(params.id);
+
+		throw redirect(303, `${adminPrefix()}/api-keys/${params.id}`);
+	},
+
+	/** Take the suspicious flag off, once an admin has looked at what raised it. */
+	clearSuspicious: async ({ locals, params }) => {
+		assertSuperAdmin(locals);
+
+		if (!ObjectId.isValid(params.id)) {
+			throw error(404, 'API key not found');
+		}
+		if (!(await clearSuspiciousFlag(params.id))) {
+			throw error(404, 'API key not found');
+		}
 
 		throw redirect(303, `${adminPrefix()}/api-keys/${params.id}`);
 	},

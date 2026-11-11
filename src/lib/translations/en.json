@@ -2278,7 +2278,18 @@
 			"suspensionTitle": "Suspension",
 			"suspensionHelp": "A suspended key is refused by the API as a revoked one, and its open streams are closed. It is not deleted: reactivate it and it works again, with the same secret.",
 			"suspend": "Suspend key",
-			"reactivate": "Reactivate key"
+			"reactivate": "Reactivate key",
+			"suspicious": "Suspicious",
+			"suspiciousTitle": "Suspicious activity",
+			"suspiciousHelp": "Calls of this key that look like an attempt rather than a mistake. Each one is refused, flags the key as suspicious and is recorded here. The flag changes nothing to what the key may do: suspend it if needed.",
+			"suspiciousSince": "Flagged as suspicious since {date}.",
+			"clearSuspicious": "Remove the suspicious flag",
+			"suspiciousEventType": "What",
+			"suspiciousEventDetail": "Received",
+			"suspiciousEmpty": "No suspicious call recorded.",
+			"suspiciousEvents": {
+				"labelColorCss": "CSS declaration in a label color"
+			}
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "No processors configured. Configure them in the Payment Settings tab above",
