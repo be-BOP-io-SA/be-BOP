@@ -1,7 +1,7 @@
 import { collections } from '$lib/server/database';
 import type { ObjectId } from 'mongodb';
-import { CUSTOMER_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
-import { API_ORDER_SELLER_ALIAS } from './seller';
+import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { API_NOTE_ROLE, apiNoteAlias } from './seller';
 
 export type AddNoteResult =
 	| { ok: true; orderId: string; notes: OrderNoteDto[] }
@@ -34,13 +34,15 @@ export function toOrderNoteDto(note: {
 /**
  * Append an employee note to an existing order.
  *
- * Written with the staff role and the integration's alias, so the note reads as coming from the
- * till rather than from nobody. It lands in the same list the admin and the customer already see —
- * be-BOP shows order notes to the buyer, flagged as staff or system, and this one is no exception.
+ * The note joins the staff notes of the order, signed "API - " and the name of the key that wrote
+ * it, so the shop can tell which integration said what. It never carries an admin role. Staff notes
+ * are shown to employees only: the buyer does not see them.
  */
 export async function addOrderNote(params: {
 	orderId: string;
 	content: string;
+	/** Name of the API key writing the note, shown as its author. */
+	keyName: string;
 	/** Set to an API key id, only an order written with that key is annotated; any other is not found. */
 	ownedBy?: ObjectId;
 }): Promise<AddNoteResult> {
@@ -51,8 +53,8 @@ export async function addOrderNote(params: {
 				notes: {
 					content: params.content,
 					createdAt: new Date(),
-					role: SUPER_ADMIN_ROLE_ID,
-					userAlias: API_ORDER_SELLER_ALIAS
+					role: API_NOTE_ROLE,
+					userAlias: apiNoteAlias(params.keyName)
 				}
 			},
 			$set: { updatedAt: new Date() }
