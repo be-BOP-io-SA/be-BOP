@@ -35,6 +35,7 @@ import { load as loadReveal } from '../../../routes/(app)/admin[[hash=admin_hash
 import { API_KEY_REVEAL_COOKIE, sealApiKeyReveal, consumeApiKeyRevealCookie } from './reveal-flash';
 import type { Cookies } from '@sveltejs/kit';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
+import { MAX_STREAM_LIFETIME_SECONDS } from '$lib/types/ApiKey';
 
 function mockCookies(initial?: Record<string, string>) {
 	const jar = new Map<string, string>(Object.entries(initial ?? {}));
@@ -128,6 +129,46 @@ describe('api key create PRG + reveal one-shot', () => {
 		// No secret was generated, so nothing to reveal.
 		expect(createApiKey).not.toHaveBeenCalled();
 		expect(jar.has(API_KEY_REVEAL_COOKIE)).toBe(false);
+	});
+
+	it('refuses a stream lifetime longer than a stream can be given', async () => {
+		const { cookies } = mockCookies();
+		const body = new FormData();
+		body.set('name', 'desk');
+		body.append('scopes', 'orders:stream');
+		body.set('streamLifetimeSeconds', String(MAX_STREAM_LIFETIME_SECONDS + 1));
+
+		const res = (await actions.createApiKey({
+			request: new Request('http://localhost/admin/api-keys/new', { method: 'POST', body }),
+			locals: { user: { roleId: SUPER_ADMIN_ROLE_ID, _id: new ObjectId() } },
+			cookies
+		} as never)) as { status: number; data: { streamLifetimeTooLong?: boolean } };
+
+		expect(res.status).toBe(400);
+		expect(res.data.streamLifetimeTooLong).toBe(true);
+		expect(createApiKey).not.toHaveBeenCalled();
+	});
+
+	it('accepts the longest stream lifetime there is', async () => {
+		createApiKey.mockResolvedValueOnce({
+			apiKey: { _id: new ObjectId(), name: 'desk', keyPrefix: 'bebop_ak_abcd1234' },
+			secret: 'bebop_ak_abcd1234secrettoken'
+		});
+		const body = new FormData();
+		body.set('name', 'desk');
+		body.append('scopes', 'orders:stream');
+		body.set('streamLifetimeSeconds', String(MAX_STREAM_LIFETIME_SECONDS));
+
+		await expect(
+			actions.createApiKey({
+				request: new Request('http://localhost/admin/api-keys/new', { method: 'POST', body }),
+				locals: { user: { roleId: SUPER_ADMIN_ROLE_ID, _id: new ObjectId() } },
+				cookies: mockCookies().cookies
+			} as never)
+		).rejects.toMatchObject({ status: 303 });
+		expect(createApiKey).toHaveBeenCalledWith(
+			expect.objectContaining({ streamLifetimeSeconds: MAX_STREAM_LIFETIME_SECONDS })
+		);
 	});
 
 	it('reveal load consumes cookie once; second load reports already shown (no second create)', async () => {
