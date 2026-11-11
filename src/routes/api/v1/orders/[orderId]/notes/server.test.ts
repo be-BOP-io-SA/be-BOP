@@ -27,16 +27,19 @@ const note = {
 	alias: 'externalPartner'
 };
 
-function call(opts?: { body?: unknown; withKey?: boolean }) {
+const restrictedKeyId = new ObjectId();
+
+function call(opts?: { body?: unknown; withKey?: boolean; ownOrdersOnly?: boolean }) {
 	const locals =
 		opts?.withKey === false
 			? {}
 			: {
 					apiKey: {
-						_id: new ObjectId(),
+						_id: opts?.ownOrdersOnly ? restrictedKeyId : new ObjectId(),
 						name: 't',
 						scopes: ['orders:write'] as const,
-						keyPrefix: 'bebop_ak_test_abcd1234'
+						keyPrefix: 'bebop_ak_test_abcd1234',
+						...(opts?.ownOrdersOnly && { ownOrdersOnly: true })
 					}
 			  };
 	return POST({
@@ -95,6 +98,18 @@ describe('POST /api/v1/orders/[orderId]/notes', () => {
 		expect(res.status).toBe(400);
 		await expect(res.json()).resolves.toMatchObject({ error: { code: 'VALIDATION_ERROR' } });
 		expect(addOrderNote).not.toHaveBeenCalled();
+	});
+
+	it('reaches only its own orders when the key is restricted to them', async () => {
+		await call({ ownOrdersOnly: true });
+		expect(addOrderNote).toHaveBeenCalledWith(
+			expect.objectContaining({ orderId: 'ord-1', ownedBy: restrictedKeyId })
+		);
+	});
+
+	it('reaches every order when the key is not restricted', async () => {
+		await call();
+		expect(addOrderNote.mock.calls[0][0]).not.toHaveProperty('ownedBy');
 	});
 
 	it('404s on an unknown order', async () => {

@@ -2267,7 +2267,12 @@
 			"streamsSaved": "Stream settings updated.",
 			"streamsResetDone": "Streams of this key closed, their places handed back.",
 			"resetStreamsTitle": "Close every stream open with this key and hand its places back",
-			"streamLifetimeTooLong": "A stream can stay open for {max} seconds at most (24.8 days). The device reconnects on its own at the end of each lifetime."
+			"streamLifetimeTooLong": "A stream can stay open for {max} seconds at most (24.8 days). The device reconnects on its own at the end of each lifetime.",
+			"orderAccessTitle": "Order access",
+			"ownOrdersOnly": "Restrict this key to its own orders",
+			"ownOrdersOnlyHint": "Ticked, the key only reaches the orders it wrote itself: order lists and event streams, point of sale included, leave out web orders and those of other keys, and it can add notes and labels to its own orders only. Left unticked, it reaches every order of the shop.",
+			"orderAccessSave": "Save order access",
+			"orderAccessSaved": "Order access updated."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "No processors configured. Configure them in the Payment Settings tab above",

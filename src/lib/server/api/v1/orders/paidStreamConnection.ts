@@ -1,5 +1,6 @@
 import { apiError } from '../errors';
 import type { Order } from '$lib/types/Order';
+import type { ObjectId } from 'mongodb';
 import { subscribeToAllOrders, subscribeToPaidOrders } from './paidStreamHub';
 import {
 	SSE_HEARTBEAT_MS,
@@ -80,6 +81,11 @@ export type PaidStreamOptions = {
 	after: PaidStreamCursor | null;
 	/** Follow every order rather than only those with a paid payment. */
 	anyStatus?: boolean;
+	/**
+	 * Only the orders written with this API key, for a key restricted to its own orders. Undefined
+	 * means every order.
+	 */
+	ordersOfKey?: ObjectId;
 	/** Null skips the order — nothing to announce for it on this surface. */
 	render: (order: Order, cursor: PaidStreamCursor) => PaidStreamFraming | null;
 };
@@ -219,8 +225,12 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 	// Subscribed before the backfill, so an order paid mid-read cannot fall between snapshot and
 	// live edge.
 	const subscribe = options.anyStatus ? subscribeToAllOrders : subscribeToPaidOrders;
+	const ordersOfKey = options.ordersOfKey?.toString();
 	unsubscribe = subscribe((order) => {
 		if (closed) {
+			return;
+		}
+		if (ordersOfKey && order.externalSourceApiKeyId?.toString() !== ordersOfKey) {
 			return;
 		}
 		if (pending.length >= MAX_PENDING_EVENTS) {
@@ -245,7 +255,8 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 				for await (const frame of iteratePaidOrderBacklog({
 					since: options.since,
 					after: options.after,
-					...(options.anyStatus && { anyStatus: true })
+					...(options.anyStatus && { anyStatus: true }),
+					...(options.ordersOfKey && { ordersOfKey: options.ordersOfKey })
 				})) {
 					if (closed) {
 						return;

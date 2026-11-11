@@ -35,6 +35,7 @@ export async function createApiKey(opts: {
 	createdBy?: string;
 	maxConcurrentStreams?: number | null;
 	streamLifetimeSeconds?: number | null;
+	ownOrdersOnly?: boolean;
 }): Promise<{ apiKey: ApiKey; secret: string }> {
 	assertScopes(opts.scopes);
 	const secret = generateApiKeySecret();
@@ -49,6 +50,7 @@ export async function createApiKey(opts: {
 		createdBy: opts.createdBy,
 		...(opts.maxConcurrentStreams && { maxConcurrentStreams: opts.maxConcurrentStreams }),
 		...(opts.streamLifetimeSeconds && { streamLifetimeSeconds: opts.streamLifetimeSeconds }),
+		...(opts.ownOrdersOnly && { ownOrdersOnly: true }),
 		createdAt: now,
 		updatedAt: now
 	};
@@ -118,6 +120,31 @@ export async function updateApiKeyStreamSettings(
 	return result.matchedCount > 0;
 }
 
+/**
+ * Restrict one key to its own orders, or open every order to it again. Returns whether the setting
+ * changed, and null when no key carries that id.
+ */
+export async function updateApiKeyOwnOrdersOnly(
+	id: ObjectId | string,
+	ownOrdersOnly: boolean
+): Promise<boolean | null> {
+	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	// Matching on the current state tells a change apart from a save that changes nothing.
+	const result = ownOrdersOnly
+		? await collections.apiKeys.updateOne(
+				{ _id, ownOrdersOnly: { $ne: true } },
+				{ $set: { ownOrdersOnly: true, updatedAt: new Date() } }
+		  )
+		: await collections.apiKeys.updateOne(
+				{ _id, ownOrdersOnly: true },
+				{ $unset: { ownOrdersOnly: '' }, $set: { updatedAt: new Date() } }
+		  );
+	if (result.modifiedCount) {
+		return true;
+	}
+	return (await collections.apiKeys.countDocuments({ _id }, { limit: 1 })) ? false : null;
+}
+
 export async function touchApiKey(id: ObjectId, at = new Date()): Promise<void> {
 	await collections.apiKeys.updateOne({ _id: id }, { $set: { lastUsedAt: at, updatedAt: at } });
 }
@@ -132,6 +159,7 @@ const API_KEY_PUBLIC_PROJECTION = {
 	scopes: 1,
 	maxConcurrentStreams: 1,
 	streamLifetimeSeconds: 1,
+	ownOrdersOnly: 1,
 	expiresAt: 1,
 	revokedAt: 1,
 	lastUsedAt: 1,
@@ -169,6 +197,7 @@ export function serializeApiKeyPublic(k: ApiKeyPublic) {
 		scopes: k.scopes,
 		maxConcurrentStreams: k.maxConcurrentStreams ?? null,
 		streamLifetimeSeconds: k.streamLifetimeSeconds ?? null,
+		ownOrdersOnly: !!k.ownOrdersOnly,
 		expiresAt: k.expiresAt ?? null,
 		revokedAt: k.revokedAt ?? null,
 		lastUsedAt: k.lastUsedAt ?? null,

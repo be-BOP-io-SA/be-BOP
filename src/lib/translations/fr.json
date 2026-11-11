@@ -2267,7 +2267,12 @@
 			"streamsSaved": "Réglages de flux mis à jour.",
 			"streamsResetDone": "Flux de cette clé fermés, leurs places rendues.",
 			"resetStreamsTitle": "Fermer tous les flux ouverts avec cette clé et libérer leurs places",
-			"streamLifetimeTooLong": "Un flux peut rester ouvert {max} secondes au plus (24,8 jours). L'appareil se reconnecte de lui-même à la fin de chaque durée de vie."
+			"streamLifetimeTooLong": "Un flux peut rester ouvert {max} secondes au plus (24,8 jours). L'appareil se reconnecte de lui-même à la fin de chaque durée de vie.",
+			"orderAccessTitle": "Accès aux commandes",
+			"ownOrdersOnly": "Restreindre cette clé à ses propres commandes",
+			"ownOrdersOnlyHint": "Cochée, la clé n'atteint que les commandes qu'elle a écrites elle-même : les listes de commandes et les flux, point de vente compris, écartent les commandes web et celles des autres clés, et elle ne peut ajouter notes et labels qu'à ses propres commandes. Décochée, elle atteint toutes les commandes de la boutique.",
+			"orderAccessSave": "Enregistrer l'accès aux commandes",
+			"orderAccessSaved": "Accès aux commandes mis à jour."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Aucun processeur configuré. Configurez-les dans l’onglet Paramètres de paiement ci-dessus",

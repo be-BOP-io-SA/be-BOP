@@ -13,7 +13,13 @@ vi.mock('$lib/server/database', () => ({
 	}
 }));
 
-import { listPaidOrders, orderVatBreakdown, paidAmount, toPaidOrderDto } from './listPaid';
+import {
+	listOrders,
+	listPaidOrders,
+	orderVatBreakdown,
+	paidAmount,
+	toPaidOrderDto
+} from './listPaid';
 import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
 
 /** Mongo cursor stub: find().sort().limit().toArray() */
@@ -366,6 +372,25 @@ describe('order filters', () => {
 		const res = await listPaidOrders({ externalOrderId: 'pos-1' });
 		expect('error' in res && res.error.field).toBe('externalOrderId');
 		expect(find).not.toHaveBeenCalled();
+	});
+
+	it('keeps a key restricted to its own orders to the orders it wrote', async () => {
+		const apiKeyId = new ObjectId();
+		await listPaidOk({ apiKeyId, ownOrdersOnly: true });
+		expect(lastFilter().externalSourceApiKeyId).toBe(apiKeyId);
+		expect(lastFilter()['payments.status']).toBe('paid');
+	});
+
+	it('lists every order for a key that is not restricted', async () => {
+		await listPaidOk({ apiKeyId: new ObjectId() });
+		expect(lastFilter()).not.toHaveProperty('externalSourceApiKeyId');
+	});
+
+	it('restricts the full order listing the same way', async () => {
+		const apiKeyId = new ObjectId();
+		const res = await listOrders({ apiKeyId, ownOrdersOnly: true, status: 'pending' });
+		expect('error' in res).toBe(false);
+		expect(lastFilter()).toEqual({ status: 'pending', externalSourceApiKeyId: apiKeyId });
 	});
 
 	it('filters on order labels', async () => {

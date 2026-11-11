@@ -95,6 +95,7 @@ function call(opts?: {
 	/** Left out means no ceiling, which is what a key with nothing configured gets. */
 	maxConcurrentStreams?: number;
 	lifetimeSeconds?: number;
+	ownOrdersOnly?: boolean;
 }) {
 	const controller = new AbortController();
 	openConnections.push(controller);
@@ -113,7 +114,8 @@ function call(opts?: {
 						scopes: ['orders:stream'] as const,
 						keyPrefix: 'bebop_ak_test_abcd1234',
 						maxConcurrentStreams: opts?.maxConcurrentStreams,
-						streamLifetimeSeconds: opts?.lifetimeSeconds
+						streamLifetimeSeconds: opts?.lifetimeSeconds,
+						ownOrdersOnly: opts?.ownOrdersOnly
 					}
 			  };
 	return GET({
@@ -324,6 +326,38 @@ describe('GET /api/v1/orders/paid/stream', () => {
 		expect(frames).toHaveLength(1);
 		expect(frames[0]).toContain('"orderId":"ord-a"');
 		expect(frames[0]).toContain('Resolved into bracelet 42');
+	});
+
+	it('only streams its own orders to a key restricted to them', async () => {
+		const res = await call({ ownOrdersOnly: true });
+		await readFrames(res, 2);
+		const own = {
+			...makeOrder({ id: 'ord-own', updatedAt: '2026-08-01T11:00:00Z' }),
+			externalSourceApiKeyId: keyId
+		} as Order;
+		const otherKey = {
+			...makeOrder({ id: 'ord-other-key', updatedAt: '2026-08-01T11:01:00Z' }),
+			externalSourceApiKeyId: new ObjectId()
+		} as Order;
+		const web = makeOrder({ id: 'ord-web', updatedAt: '2026-08-01T11:02:00Z' });
+		for (const listener of subscribers) {
+			listener(otherKey);
+			listener(web);
+			listener(own);
+		}
+		const frames = await readFrames(res, 3);
+		expect(frames).toHaveLength(1);
+		expect(frames[0]).toContain('"orderId":"ord-own"');
+	});
+
+	it('replays only its own orders to a key restricted to them', async () => {
+		const res = await call({ query: '?since_ts=1735689600', ownOrdersOnly: true });
+		await readFrames(res, 3);
+		expect(backlog).toHaveBeenCalledWith({
+			since: new Date('2025-01-01T00:00:00Z'),
+			after: null,
+			ordersOfKey: keyId
+		});
 	});
 
 	it('429s past the budget the key itself carries', async () => {

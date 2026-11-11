@@ -148,6 +148,30 @@
 		</form>
 	</section>
 
+	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-4">
+		<h2 class="text-2xl">{t('admin.apiKeys.orderAccessTitle')}</h2>
+		<form method="post" action="?/saveOrderAccess" class="flex flex-col gap-3">
+			<label class="checkbox-label">
+				<input
+					type="checkbox"
+					name="ownOrdersOnly"
+					class="form-checkbox"
+					checked={data.key.ownOrdersOnly}
+				/>
+				{t('admin.apiKeys.ownOrdersOnly')}
+			</label>
+			<p class="text-sm opacity-70">{t('admin.apiKeys.ownOrdersOnlyHint')}</p>
+			{#if form?.orderAccessSaved}
+				<p class="text-sm text-green-700">{t('admin.apiKeys.orderAccessSaved')}</p>
+			{/if}
+			<input
+				type="submit"
+				class="btn btn-blue self-start w-auto text-white text-base"
+				value={t('admin.apiKeys.orderAccessSave')}
+			/>
+		</form>
+	</section>
+
 	{#if form?.alreadyRevoked}
 		<p class="text-sm text-orange-600">{t('admin.apiKeys.statusRevoked')}</p>
 	{/if}

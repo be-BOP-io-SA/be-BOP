@@ -2267,7 +2267,12 @@
 			"streamsSaved": "Stroominstellingen bijgewerkt.",
 			"streamsResetDone": "Streams van deze sleutel gesloten, hun plaatsen vrijgegeven.",
 			"resetStreamsTitle": "Alle streams van deze sleutel sluiten en hun plaatsen vrijgeven",
-			"streamLifetimeTooLong": "Een stream kan hoogstens {max} seconden (24,8 dagen) open blijven. Het apparaat maakt aan het einde van elke levensduur zelf opnieuw verbinding."
+			"streamLifetimeTooLong": "Een stream kan hoogstens {max} seconden (24,8 dagen) open blijven. Het apparaat maakt aan het einde van elke levensduur zelf opnieuw verbinding.",
+			"orderAccessTitle": "Toegang tot bestellingen",
+			"ownOrdersOnly": "Deze sleutel beperken tot zijn eigen bestellingen",
+			"ownOrdersOnlyHint": "Aangevinkt bereikt de sleutel alleen de bestellingen die hij zelf heeft geschreven: bestellijsten en streams, kassa inbegrepen, laten webbestellingen en die van andere sleutels weg, en hij kan alleen notities en labels aan zijn eigen bestellingen toevoegen. Niet aangevinkt bereikt hij alle bestellingen van de winkel.",
+			"orderAccessSave": "Toegang tot bestellingen opslaan",
+			"orderAccessSaved": "Toegang tot bestellingen bijgewerkt."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Geen verwerkers geconfigureerd. Configureer ze in het tabblad Betalingsinstellingen hierboven",

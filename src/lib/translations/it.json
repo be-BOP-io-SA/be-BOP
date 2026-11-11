@@ -2267,7 +2267,12 @@
 			"streamsSaved": "Impostazioni dei flussi aggiornate.",
 			"streamsResetDone": "Flussi di questa chiave chiusi, i loro posti liberati.",
 			"resetStreamsTitle": "Chiudi tutti i flussi aperti con questa chiave e libera i loro posti",
-			"streamLifetimeTooLong": "Un flusso può restare aperto al massimo {max} secondi (24,8 giorni). Il dispositivo si riconnette da solo alla fine di ogni durata."
+			"streamLifetimeTooLong": "Un flusso può restare aperto al massimo {max} secondi (24,8 giorni). Il dispositivo si riconnette da solo alla fine di ogni durata.",
+			"orderAccessTitle": "Accesso agli ordini",
+			"ownOrdersOnly": "Limita questa chiave ai propri ordini",
+			"ownOrdersOnlyHint": "Se selezionata, la chiave raggiunge solo gli ordini che ha scritto lei stessa: gli elenchi degli ordini e i flussi, punto vendita compreso, escludono gli ordini web e quelli delle altre chiavi, e può aggiungere note e label solo ai propri ordini. Se deselezionata, raggiunge tutti gli ordini del negozio.",
+			"orderAccessSave": "Salva l'accesso agli ordini",
+			"orderAccessSaved": "Accesso agli ordini aggiornato."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Nessun processore configurato. Configurali nella scheda Impostazioni di pagamento qui sopra",

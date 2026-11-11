@@ -2267,7 +2267,12 @@
 			"streamsSaved": "Configurações de fluxos atualizadas.",
 			"streamsResetDone": "Fluxos desta chave fechados, os seus lugares libertados.",
 			"resetStreamsTitle": "Fechar todos os fluxos abertos com esta chave e libertar os seus lugares",
-			"streamLifetimeTooLong": "Um fluxo pode ficar aberto no máximo {max} segundos (24,8 dias). O dispositivo volta a ligar-se sozinho no fim de cada duração de vida."
+			"streamLifetimeTooLong": "Um fluxo pode ficar aberto no máximo {max} segundos (24,8 dias). O dispositivo volta a ligar-se sozinho no fim de cada duração de vida.",
+			"orderAccessTitle": "Acesso às encomendas",
+			"ownOrdersOnly": "Restringir esta chave às suas próprias encomendas",
+			"ownOrdersOnlyHint": "Marcada, a chave só alcança as encomendas que ela própria escreveu: as listas de encomendas e os fluxos, ponto de venda incluído, deixam de fora as encomendas web e as de outras chaves, e só pode adicionar notas e labels às suas próprias encomendas. Desmarcada, alcança todas as encomendas da loja.",
+			"orderAccessSave": "Guardar o acesso às encomendas",
+			"orderAccessSaved": "Acesso às encomendas atualizado."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Nenhum processador configurado. Configure-os no separador Definições de pagamento acima",

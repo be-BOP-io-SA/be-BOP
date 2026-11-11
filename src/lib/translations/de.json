@@ -2267,7 +2267,12 @@
 			"streamsSaved": "Stream-Einstellungen aktualisiert.",
 			"streamsResetDone": "Streams dieses Schlüssels geschlossen, ihre Plätze freigegeben.",
 			"resetStreamsTitle": "Alle mit diesem Schlüssel geöffneten Streams schließen und ihre Plätze freigeben",
-			"streamLifetimeTooLong": "Ein Stream kann höchstens {max} Sekunden (24,8 Tage) geöffnet bleiben. Das Gerät verbindet sich am Ende jeder Laufzeit von selbst neu."
+			"streamLifetimeTooLong": "Ein Stream kann höchstens {max} Sekunden (24,8 Tage) geöffnet bleiben. Das Gerät verbindet sich am Ende jeder Laufzeit von selbst neu.",
+			"orderAccessTitle": "Zugriff auf Bestellungen",
+			"ownOrdersOnly": "Diesen Schlüssel auf seine eigenen Bestellungen beschränken",
+			"ownOrdersOnlyHint": "Aktiviert erreicht der Schlüssel nur die Bestellungen, die er selbst geschrieben hat: Bestelllisten und Streams, Kasse eingeschlossen, lassen Web-Bestellungen und die anderer Schlüssel weg, und er kann Notizen und Labels nur zu seinen eigenen Bestellungen hinzufügen. Deaktiviert erreicht er alle Bestellungen des Shops.",
+			"orderAccessSave": "Zugriff auf Bestellungen speichern",
+			"orderAccessSaved": "Zugriff auf Bestellungen aktualisiert."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Keine Zahlungsanbieter konfiguriert. Konfigurieren Sie sie im obigen Tab Zahlungseinstellungen",

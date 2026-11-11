@@ -2267,7 +2267,12 @@
 			"streamsSaved": "Ajustes de flujos actualizados.",
 			"streamsResetDone": "Flujos de esta clave cerrados, sus puestos liberados.",
 			"resetStreamsTitle": "Cerrar todos los flujos abiertos con esta clave y liberar sus puestos",
-			"streamLifetimeTooLong": "Un flujo puede permanecer abierto {max} segundos como máximo (24,8 días). El dispositivo se reconecta por sí solo al final de cada duración de vida."
+			"streamLifetimeTooLong": "Un flujo puede permanecer abierto {max} segundos como máximo (24,8 días). El dispositivo se reconecta por sí solo al final de cada duración de vida.",
+			"orderAccessTitle": "Acceso a los pedidos",
+			"ownOrdersOnly": "Restringir esta clave a sus propios pedidos",
+			"ownOrdersOnlyHint": "Marcada, la clave solo alcanza los pedidos que ella misma escribió: las listas de pedidos y los flujos, punto de venta incluido, dejan fuera los pedidos web y los de otras claves, y solo puede añadir notas y labels a sus propios pedidos. Desmarcada, alcanza todos los pedidos de la tienda.",
+			"orderAccessSave": "Guardar el acceso a los pedidos",
+			"orderAccessSaved": "Acceso a los pedidos actualizado."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "No hay procesadores configurados. Configúrelos en la pestaña Configuración de pago de arriba",

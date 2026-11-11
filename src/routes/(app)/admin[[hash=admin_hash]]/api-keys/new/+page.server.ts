@@ -70,7 +70,8 @@ export const actions: Actions = {
 			expiresAt: expiresParsed.value,
 			createdBy: locals.user?._id?.toString(),
 			maxConcurrentStreams: parsed.data.maxConcurrentStreams,
-			streamLifetimeSeconds: parsed.data.streamLifetimeSeconds
+			streamLifetimeSeconds: parsed.data.streamLifetimeSeconds,
+			ownOrdersOnly: !!formData.get('ownOrdersOnly')
 		});
 
 		// PRG: stash secret in a short-lived signed httpOnly cookie, then redirect.

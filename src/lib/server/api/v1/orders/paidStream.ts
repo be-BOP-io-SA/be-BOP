@@ -1,5 +1,6 @@
 import { collections } from '$lib/server/database';
 import type { Order } from '$lib/types/Order';
+import type { ObjectId } from 'mongodb';
 import type { OrderQueryError, PaidOrderDto } from './listPaid';
 
 /** Heartbeat cadence. Must stay under the 30s the seam allows between comment frames. */
@@ -140,6 +141,8 @@ export async function* iteratePaidOrderBacklog(opts: {
 	after: PaidStreamCursor | null;
 	/** Replay every order rather than only those with a paid payment. */
 	anyStatus?: boolean;
+	/** Only the orders written with this API key. Undefined means every order. */
+	ordersOfKey?: ObjectId;
 }): AsyncGenerator<PaidStreamFrame> {
 	const floor = Math.max(opts.since?.getTime() ?? 0, opts.after?.ms ?? 0);
 	let lowerBoundMs = floor;
@@ -149,6 +152,7 @@ export async function* iteratePaidOrderBacklog(opts: {
 		const docs = await collections.orders
 			.find({
 				...(opts.anyStatus ? {} : { 'payments.status': 'paid' }),
+				...(opts.ordersOfKey && { externalSourceApiKeyId: opts.ordersOfKey }),
 				updatedAt: { $gte: new Date(lowerBoundMs) }
 			})
 			.sort({ updatedAt: 1, _id: 1 })
