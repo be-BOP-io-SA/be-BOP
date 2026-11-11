@@ -58,7 +58,7 @@ export const actions = {
 		});
 		await collections.orders.updateMany(
 			{ orderLabelIds: params.id },
-			{ $pull: { orderLabelIds: params.id } }
+			{ $pull: { orderLabelIds: params.id }, $set: { annotatedAt: new Date() } }
 		);
 		throw redirect(303, `${adminPrefix()}/label`);
 	}

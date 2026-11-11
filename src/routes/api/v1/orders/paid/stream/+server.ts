@@ -8,8 +8,7 @@ import { openPaidOrderStream } from '$lib/server/api/v1/orders/paidStreamConnect
 import {
 	encodeStreamCursor,
 	paidOrderFingerprint,
-	parseStreamCursor,
-	parseStreamSince
+	parseStreamCursor
 } from '$lib/server/api/v1/orders/paidStream';
 
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
@@ -40,14 +39,6 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		);
 	}
 
-	const since = parseStreamSince(
-		event.url.searchParams.get('since_ts') ?? undefined,
-		event.url.searchParams.get('since') ?? undefined
-	);
-	if ('error' in since) {
-		return apiError(400, 'VALIDATION_ERROR', since.error.message, { field: since.error.field });
-	}
-
 	// EventSource replays the last id in a header; a fetch-driven client uses the query parameter.
 	const rawLastEventId =
 		event.request.headers.get('last-event-id') ?? event.url.searchParams.get('last_event_id');
@@ -69,8 +60,8 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		lifetimeSeconds: apiKey.streamLifetimeSeconds,
 		...(apiKey.ownOrdersOnly && { ordersOfKey: apiKey._id }),
 		signal: event.request.signal,
-		since: since.date,
 		after: resumeFrom,
+		feed: 'paid',
 		render: (order, cursor) => {
 			const dto = toPaidOrderDto(order);
 			if (!dto) {

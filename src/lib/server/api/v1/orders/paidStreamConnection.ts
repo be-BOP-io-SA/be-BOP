@@ -1,7 +1,11 @@
 import { apiError } from '../errors';
 import type { Order } from '$lib/types/Order';
 import type { ObjectId } from 'mongodb';
-import { subscribeToAllOrders, subscribeToPaidOrders } from './paidStreamHub';
+import {
+	subscribeToAllOrders,
+	subscribeToOrderAnnotations,
+	subscribeToPaidOrders
+} from './paidStreamHub';
 import {
 	SSE_HEARTBEAT_MS,
 	SSE_RETRY_MS,
@@ -9,6 +13,7 @@ import {
 	orderStreamCursor,
 	sseComment,
 	sseEvent,
+	type OrderFeed,
 	type PaidStreamCursor
 } from './paidStream';
 
@@ -75,12 +80,13 @@ export type PaidStreamOptions = {
 	 */
 	lifetimeSeconds?: number;
 	signal?: AbortSignal;
-	/** Replay from this instant, inclusive. Null means "start at the live edge". */
-	since: Date | null;
-	/** Replay strictly after this position. Null means none. */
+	/**
+	 * Replay strictly after this position — the last event the client received. Null starts at the
+	 * live edge: a stream carries what happens from now on, and history is read from the listings.
+	 */
 	after: PaidStreamCursor | null;
-	/** Follow every order rather than only those with a paid payment. */
-	anyStatus?: boolean;
+	/** Which orders this stream follows. */
+	feed: OrderFeed;
 	/**
 	 * Only the orders written with this API key, for a key restricted to its own orders. Undefined
 	 * means every order.
@@ -125,7 +131,7 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 
 	const pending: Order[] = [];
 	const seen = new Map<string, true>();
-	const replaying = options.since !== null || options.after !== null;
+	const replaying = options.after !== null;
 	// Held until the preamble and any backlog are written, so no frame overtakes the replay.
 	let holdingLiveEvents = true;
 	let draining = false;
@@ -185,18 +191,12 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 			return true;
 		}
 		/**
-		 * The order's revision is part of the key, not just what the surface chose to hash.
-		 *
-		 * A note or a label appended to an order changes none of the fields a surface fingerprints —
-		 * amount, currency, paid-at, line count — so the re-announce read as a duplicate and was
-		 * dropped. On a stream opened at the live edge the order had never been sent, so nothing
-		 * matched and the event went through; on a stream opened with `since_ts` the backfill had
-		 * already registered it, and the event vanished. Same events on the wire, opposite outcomes.
-		 *
-		 * `cursor.ms` is the order's `updatedAt`, which every write moves forward: a real change is
-		 * announced, a re-delivery of the unchanged order is still filtered.
+		 * A sale is announced on the paid feed once: a further write that leaves what was paid as it
+		 * was is a re-delivery, filtered on the surface's own fingerprint. The other feeds announce
+		 * each revision, so the date the feed resumes on is part of their key.
 		 */
-		const key = `${cursor.ms}|${framing.fingerprint}`;
+		const key =
+			options.feed === 'paid' ? framing.fingerprint : `${cursor.ms}|${framing.fingerprint}`;
 		if (seen.has(key)) {
 			return true;
 		}
@@ -213,7 +213,7 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 		try {
 			while (pending.length && !closed) {
 				const order = pending.shift();
-				if (order && !(await emit(order, orderStreamCursor(order)))) {
+				if (order && !(await emit(order, orderStreamCursor(order, options.feed)))) {
 					return;
 				}
 			}
@@ -224,7 +224,12 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 
 	// Subscribed before the backfill, so an order paid mid-read cannot fall between snapshot and
 	// live edge.
-	const subscribe = options.anyStatus ? subscribeToAllOrders : subscribeToPaidOrders;
+	const subscribe =
+		options.feed === 'annotations'
+			? subscribeToOrderAnnotations
+			: options.feed === 'all'
+			? subscribeToAllOrders
+			: subscribeToPaidOrders;
 	const ordersOfKey = options.ordersOfKey?.toString();
 	unsubscribe = subscribe((order) => {
 		if (closed) {
@@ -253,9 +258,9 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 		if (replaying) {
 			try {
 				for await (const frame of iteratePaidOrderBacklog({
-					since: options.since,
+					since: null,
 					after: options.after,
-					...(options.anyStatus && { anyStatus: true }),
+					feed: options.feed,
 					...(options.ordersOfKey && { ordersOfKey: options.ordersOfKey })
 				})) {
 					if (closed) {

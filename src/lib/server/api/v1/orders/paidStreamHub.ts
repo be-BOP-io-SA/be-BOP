@@ -1,32 +1,70 @@
 import { collections } from '$lib/server/database';
 import type { Order } from '$lib/types/Order';
-import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
+import type { ChangeStream, ChangeStreamDocument, ResumeToken } from 'mongodb';
 
-export type PaidOrderListener = (order: Order) => void;
+/**
+ * What a write did to an order.
+ *
+ * `order`: the order itself changed — created, paid, failed, cancelled, anything about what was
+ * sold or paid. `annotation`: only a note, a label or the erasure of its personal data, which
+ * leaves the sale as it was.
+ */
+export type OrderChangeKind = 'order' | 'annotation';
+
+export type OrderChangeListener = (order: Order) => void;
 
 const REOPEN_DELAY_MS = 1_000;
 
-const listeners = new Set<PaidOrderListener>();
-/**
- * Listeners that want every order, not just the paid ones.
- *
- * Kept apart so the change stream can stay narrow while nobody asks for the wide feed: the moment
- * one subscriber wants unpaid orders too, the filter has to open for everyone, and every listener
- * that only cares about paid ones filters again on its side.
- */
-const anyStatusListeners = new Set<PaidOrderListener>();
+/** Top-level fields an annotation touches, and nothing else does. */
+const ANNOTATION_FIELDS = new Set([
+	'notes',
+	'orderLabelIds',
+	'annotatedAt',
+	'dataAnonymized',
+	'shippingAddress',
+	'billingAddress',
+	'customCheckoutFields'
+]);
+
+const paidListeners = new Set<OrderChangeListener>();
+const allListeners = new Set<OrderChangeListener>();
+const annotationListeners = new Set<OrderChangeListener>();
+
 let changeStream: ChangeStream<Order, ChangeStreamDocument<Order>> | null = null;
-let watchingAnyStatus = false;
+let resumeToken: ResumeToken | null = null;
 let reopenTimer: ReturnType<typeof setTimeout> | null = null;
 
 function hasPaidPayment(order: Order): boolean {
 	return order.payments.some((payment) => payment.status === 'paid');
 }
 
-function fanOut(order: Order): void {
-	const paid = hasPaidPayment(order);
+/**
+ * An update is an annotation when every field it wrote or removed belongs to one. An insert, a
+ * replace, or an update that touched anything else is a change of the order.
+ */
+export function changeKind(changeEvent: ChangeStreamDocument<Order>): OrderChangeKind {
+	if (changeEvent.operationType !== 'update') {
+		return 'order';
+	}
+	const description = changeEvent.updateDescription;
+	const paths = [
+		...Object.keys(description?.updatedFields ?? {}),
+		...(description?.removedFields ?? []),
+		...(description?.truncatedArrays ?? []).map((array) => array.field)
+	];
+	if (!paths.length) {
+		return 'order';
+	}
+	return paths.every((path) => ANNOTATION_FIELDS.has(path.split('.')[0])) ? 'annotation' : 'order';
+}
+
+function fanOut(order: Order, kind: OrderChangeKind): void {
+	const targets =
+		kind === 'annotation'
+			? [...annotationListeners]
+			: [...allListeners, ...(hasPaidPayment(order) ? paidListeners : [])];
 	// Snapshot: a listener may unsubscribe itself from inside its own callback.
-	for (const listener of [...anyStatusListeners, ...(paid ? listeners : [])]) {
+	for (const listener of targets) {
 		try {
 			listener(order);
 		} catch (err) {
@@ -35,49 +73,42 @@ function fanOut(order: Order): void {
 	}
 }
 
+function totalListeners(): number {
+	return paidListeners.size + allListeners.size + annotationListeners.size;
+}
+
 function closeStream(): void {
 	changeStream?.close().catch(() => undefined);
 	changeStream = null;
 }
 
-function totalListeners(): number {
-	return listeners.size + anyStatusListeners.size;
-}
-
+/**
+ * One watch over every order, shared by every connection, open as long as anyone listens.
+ *
+ * It is never narrowed nor reopened as subscribers come and go: a watch that closes and opens again
+ * misses whatever is written in between, and nothing would ever send it. Each subscriber picks its
+ * own share of the events instead. When the watch fails, it reopens where it stopped, from the last
+ * event it saw.
+ */
 function openStream(): void {
-	const wantAnyStatus = anyStatusListeners.size > 0;
-	// A narrow cursor cannot serve a subscriber that wants everything: reopen it wide.
-	if (changeStream && watchingAnyStatus === wantAnyStatus) {
+	if (changeStream || reopenTimer || !totalListeners()) {
 		return;
 	}
-	if (!totalListeners()) {
-		return;
-	}
-	closeStream();
-	watchingAnyStatus = wantAnyStatus;
 	changeStream = collections.orders.watch(
-		[
-			{
-				$match: {
-					operationType: { $in: ['insert', 'update', 'replace'] },
-					...(wantAnyStatus ? {} : { 'fullDocument.payments.status': 'paid' })
-				}
-			}
-		],
-		{ fullDocument: 'updateLookup' }
+		[{ $match: { operationType: { $in: ['insert', 'update', 'replace'] } } }],
+		{ fullDocument: 'updateLookup', ...(resumeToken && { resumeAfter: resumeToken }) }
 	);
 	changeStream.on('change', (changeEvent) => {
+		resumeToken = changeEvent._id;
 		const doc = 'fullDocument' in changeEvent ? changeEvent.fullDocument : null;
 		if (doc) {
-			fanOut(doc as Order);
+			fanOut(doc as Order, changeKind(changeEvent));
 		}
 	});
 	changeStream.on('error', (err) => {
 		console.error('[api/v1] order change stream error', err);
 		closeStream();
 		if (totalListeners() && !reopenTimer) {
-			// Subscribers stay connected across the gap; events missed in between are recovered on
-			// the next reconnect through Last-Event-ID.
 			reopenTimer = setTimeout(() => {
 				reopenTimer = null;
 				openStream();
@@ -86,27 +117,22 @@ function openStream(): void {
 	});
 }
 
-/**
- * Subscribe to orders that have at least one paid payment.
- *
- * One change stream — a server-side cursor — is shared by every connection. Returns the unsubscribe
- * function; the stream closes with the last listener.
- */
-export function subscribeToPaidOrders(listener: PaidOrderListener): () => void {
-	return subscribe(listeners, listener);
+/** Orders with at least one paid payment, on every change of the order itself. */
+export function subscribeToPaidOrders(listener: OrderChangeListener): () => void {
+	return subscribe(paidListeners, listener);
 }
 
-/**
- * Subscribe to every order, whatever its payments are worth.
- *
- * The wide feed: an order created pending, one that failed, one that was cancelled. Announced on
- * each write, so the same order comes back as it moves.
- */
-export function subscribeToAllOrders(listener: PaidOrderListener): () => void {
-	return subscribe(anyStatusListeners, listener);
+/** Every order, whatever its payments are worth, on every change of the order itself. */
+export function subscribeToAllOrders(listener: OrderChangeListener): () => void {
+	return subscribe(allListeners, listener);
 }
 
-function subscribe(into: Set<PaidOrderListener>, listener: PaidOrderListener): () => void {
+/** Every order, each time a note or a label is put on it or its personal data is erased. */
+export function subscribeToOrderAnnotations(listener: OrderChangeListener): () => void {
+	return subscribe(annotationListeners, listener);
+}
+
+function subscribe(into: Set<OrderChangeListener>, listener: OrderChangeListener): () => void {
 	into.add(listener);
 	openStream();
 
@@ -123,23 +149,21 @@ function subscribe(into: Set<PaidOrderListener>, listener: PaidOrderListener): (
 				reopenTimer = null;
 			}
 			closeStream();
-			return;
-		}
-		// The last wide subscriber left: narrow the cursor again rather than keep reading everything.
-		if (!anyStatusListeners.size && watchingAnyStatus) {
-			openStream();
+			// Nobody listens any more: the next subscriber starts at the live edge.
+			resumeToken = null;
 		}
 	};
 }
 
 /** Test seam — drops every listener and the underlying cursor. */
 export function resetPaidOrderStreamHub(): void {
-	listeners.clear();
-	anyStatusListeners.clear();
-	watchingAnyStatus = false;
+	paidListeners.clear();
+	allListeners.clear();
+	annotationListeners.clear();
 	if (reopenTimer) {
 		clearTimeout(reopenTimer);
 		reopenTimer = null;
 	}
 	closeStream();
+	resumeToken = null;
 }

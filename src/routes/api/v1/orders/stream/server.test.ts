@@ -215,21 +215,24 @@ describe('GET /api/v1/orders/stream', () => {
 		expect(frames[1]).toContain('"status":"failed"');
 	});
 
-	it('replays the backlog without the paid filter', async () => {
+	it('resumes after the last event received, without the paid filter', async () => {
 		// The backfill only starts once the preamble is out, and it yields nothing here: asking for
 		// one frame more than the stream will ever send waits for it instead of racing it.
-		const res = await call({ query: '?since_ts=1735689600' });
+		const res = await call({ query: '?last_event_id=1735689600000:ord-a' });
 		await readFrames(res, 3);
 
 		expect(backlog).toHaveBeenCalledWith({
-			since: new Date('2025-01-01T00:00:00Z'),
-			after: null,
-			anyStatus: true
+			since: null,
+			after: { ms: 1735689600000, orderId: 'ord-a' },
+			feed: 'all'
 		});
 	});
 
-	it('rejects a since_ts that is not epoch seconds', async () => {
-		const res = await call({ query: '?since_ts=yesterday' });
-		expect(res.status).toBe(400);
+	it('starts at the live edge, whatever date it is asked to start from', async () => {
+		const res = await call({ query: '?since_ts=1735689600' });
+		expect(res.status).toBe(200);
+		await readFrames(res, 3);
+
+		expect(backlog).not.toHaveBeenCalled();
 	});
 });

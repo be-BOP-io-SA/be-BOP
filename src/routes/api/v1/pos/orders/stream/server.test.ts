@@ -207,12 +207,10 @@ describe('GET /api/v1/pos/orders/stream', () => {
 		expect(res.headers.get('content-type')).toMatch(/^text\/event-stream/);
 	});
 
-	it('rejects a since_ts that is not epoch seconds', async () => {
+	it('starts at the live edge, whatever date it is asked to start from', async () => {
 		const res = await callGet({ query: '?since_ts=yesterday' });
-		expect(res.status).toBe(400);
-		await expect(res.json()).resolves.toMatchObject({
-			error: { code: 'VALIDATION_ERROR', details: { field: 'since_ts' } }
-		});
+		expect(res.status).toBe(200);
+		expect(res.headers.get('content-type')).toMatch(/^text\/event-stream/);
 	});
 
 	it('opens with a retry hint and a comment, so the connection flushes', async () => {
@@ -227,10 +225,9 @@ describe('GET /api/v1/pos/orders/stream', () => {
 		expect(frames.slice(2)).toEqual([':heartbeat', ':heartbeat', ':heartbeat']);
 	});
 
-	it('re-announces an order that changed, though its payload looks the same', async () => {
-		// The till payload is orderId and amount, so a note added elsewhere changes nothing visible.
-		// It is still an event: the order moved, and a till that filters duplicates itself would
-		// otherwise never hear about it.
+	it('announces a sale once, though the order is written again', async () => {
+		// The till acts on each sale it receives: the same sale coming back, because something else
+		// was written on the order, would be served twice.
 		const res = await callGet();
 		await readFrames(res, 2);
 		const order = paidOrder();
@@ -242,7 +239,7 @@ describe('GET /api/v1/pos/orders/stream', () => {
 		// Heartbeats are 20ms apart in this file, so the count only means something once the
 		// comment frames are out of the way.
 		const events = (await readFrames(res, 6)).filter((frame) => frame.startsWith('id: '));
-		expect(events).toHaveLength(2);
+		expect(events).toHaveLength(1);
 	});
 
 	it('still suppresses the very same delivery twice', async () => {

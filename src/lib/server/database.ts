@@ -185,6 +185,8 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	 * `updatedAt` with `_id` as the intra-millisecond tiebreak, matching the stream's sort.
 	 */
 	[collections.orders, { updatedAt: 1, _id: 1 }],
+	// Resume position of the API stream of order annotations (notes, labels, erasure).
+	[collections.orders, { annotatedAt: 1, _id: 1 }, { sparse: true }],
 	[collections.digitalFiles, { productId: 1 }],
 	[collections.digitalFiles, { secret: 1 }, { unique: true, sparse: true }],
 	[collections.pendingDigitalFiles, { createdAt: 1 }],

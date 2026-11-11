@@ -390,6 +390,12 @@ export interface Order extends Timestamps {
 	};
 	orderLabelIds?: OrderLabel['_id'][];
 	dataAnonymized?: boolean;
+	/**
+	 * Last time a note or a label was put on the order, or its personal data erased. Kept apart from
+	 * `updatedAt` on purpose: those writes do not change what was sold or paid, so they must not make
+	 * the order look changed to anything that follows sales and payments.
+	 */
+	annotatedAt?: Date;
 
 	/**
 	 * The reference the caller gave when it wrote this order through the public API. Not unique:

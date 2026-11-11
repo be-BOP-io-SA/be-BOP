@@ -4,7 +4,7 @@ import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { checkRateLimit } from '$lib/server/rateLimit';
 import { openPaidOrderStream } from '$lib/server/api/v1/orders/paidStreamConnection';
-import { findOrderCursor, parseStreamSince } from '$lib/server/api/v1/orders/paidStream';
+import { findOrderCursor } from '$lib/server/api/v1/orders/paidStream';
 import { toPosPaidOrderEvent } from '$lib/server/api/v1/pos/paidEvents';
 
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
@@ -12,12 +12,12 @@ export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 /**
  * Paid orders as Server-Sent Events, in the seam's framing.
  *
- * The same feed as the JSON poll on `/api/v1/pos/orders`, with the same `since_ts` and
- * `last_event_id` vocabulary — a client that cannot hold a connection open falls back to the poll
- * without relearning anything.
+ * The same feed as the JSON poll on `/api/v1/pos/orders`, with the same `last_event_id`
+ * vocabulary. A stream carries what happens from now on: it resumes after the last event the
+ * client received, and history, from a date, is read from the poll.
  *
- * The `id:` line carries the order id, which is what a consumer deduplicates on. Both resume hints
- * are advisory: an unknown `Last-Event-ID` starts the stream at the live edge rather than failing.
+ * The `id:` line carries the order id, which is what a consumer deduplicates on. The resume hint is
+ * advisory: an unknown `Last-Event-ID` starts the stream at the live edge rather than failing.
  */
 export const GET: RequestHandler = apiV1Handler(async (event) => {
 	const apiKeyOrError = await requireApiKey(event, 'pos:stream');
@@ -39,11 +39,6 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		);
 	}
 
-	const since = parseStreamSince(event.url.searchParams.get('since_ts') ?? undefined, undefined);
-	if ('error' in since) {
-		return apiError(400, 'VALIDATION_ERROR', since.error.message, { field: since.error.field });
-	}
-
 	const lastEventId =
 		event.request.headers.get('last-event-id') ?? event.url.searchParams.get('last_event_id');
 	const after = lastEventId ? await findOrderCursor(lastEventId.trim()) : null;
@@ -58,8 +53,8 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		lifetimeSeconds: apiKey.streamLifetimeSeconds,
 		...(apiKey.ownOrdersOnly && { ordersOfKey: apiKey._id }),
 		signal: event.request.signal,
-		since: since.date,
 		after,
+		feed: 'paid',
 		render: (order) => {
 			const paidEvent = toPosPaidOrderEvent(order, tag);
 			if (!paidEvent) {

@@ -210,12 +210,11 @@ describe('GET /api/v1/orders/paid/stream', () => {
 		expect(frames[1]).toBe(':ok');
 	});
 
-	it('rejects a since_ts that is not epoch seconds', async () => {
-		const res = await call({ query: '?since_ts=yesterday' });
-		expect(res.status).toBe(400);
-		await expect(res.json()).resolves.toMatchObject({
-			error: { code: 'VALIDATION_ERROR', details: { field: 'since_ts' } }
-		});
+	it('starts at the live edge, whatever date it is asked to start from', async () => {
+		const res = await call({ query: '?since_ts=1735689600' });
+		expect(res.status).toBe(200);
+		await readFrames(res, 3);
+		expect(backlog).not.toHaveBeenCalled();
 	});
 
 	it('rejects a Last-Event-ID it never issued', async () => {
@@ -226,33 +225,24 @@ describe('GET /api/v1/orders/paid/stream', () => {
 		});
 	});
 
-	it('replays the backlog from since_ts, framed as id: then data:', async () => {
+	it('replays what came after the last event received, framed as id: then data:', async () => {
 		const order = makeOrder({ id: 'ord-a', updatedAt: '2026-08-01T10:05:00Z' });
 		backlog.mockImplementation(async function* () {
 			yield { cursor: orderStreamCursor(order), order };
 		});
-		const res = await call({ query: '?since_ts=1735689600' });
+		const res = await call({ lastEventId: '1735689600000:ord-0' });
 		const frames = await readFrames(res, 3);
 		expect(backlog).toHaveBeenCalledWith({
-			since: new Date('2025-01-01T00:00:00Z'),
-			after: null
+			since: null,
+			after: { ms: 1735689600000, orderId: 'ord-0' },
+			feed: 'paid'
 		});
 		const [id, data] = frames[2].split('\n');
 		expect(id).toBe(`id: ${new Date('2026-08-01T10:05:00Z').getTime()}:ord-a`);
 		expect(JSON.parse(data.slice('data: '.length))).toMatchObject({ orderId: 'ord-a' });
 	});
 
-	it('resumes from Last-Event-ID without needing since_ts', async () => {
-		const res = await call({ lastEventId: '1735689600000:ord-a' });
-		// One frame past the preamble: the backfill only starts once `retry:` and `:ok` are out.
-		await readFrames(res, 3);
-		expect(backlog).toHaveBeenCalledWith({
-			since: null,
-			after: { ms: 1735689600000, orderId: 'ord-a' }
-		});
-	});
-
-	it('does not replay anything when neither since_ts nor Last-Event-ID is given', async () => {
+	it('does not replay anything when no Last-Event-ID is given', async () => {
 		const res = await call();
 		await readFrames(res, 3);
 		expect(backlog).not.toHaveBeenCalled();
@@ -293,22 +283,21 @@ describe('GET /api/v1/orders/paid/stream', () => {
 		expect(frames).toHaveLength(2);
 	});
 
-	it('announces a note added to an order the backfill had already replayed', async () => {
-		// The terminal was offline, catches up with since_ts, and is waiting to hear that a top-up
-		// bought on the shop has been resolved at another stand. Nothing but the note changes: same
-		// amount, same currency, same paid-at, same lines.
+	it('does not announce again a sale it already sent when only a note is added', async () => {
+		// The till was offline, catches up from its last event, and acts on each sale it receives:
+		// the same sale coming back would be served twice.
 		const order = makeOrder({ id: 'ord-a', updatedAt: '2026-08-01T10:05:00Z' });
 		backlog.mockImplementation(async function* () {
 			yield { cursor: orderStreamCursor(order), order };
 		});
 
-		const res = await call({ query: '?since_ts=1735689600' });
+		const res = await call({ lastEventId: '1735689600000:ord-0' });
 		const replayed = await readFrames(res, 3);
 		expect(replayed[2]).toContain('"orderId":"ord-a"');
 
 		const annotated = {
 			...order,
-			updatedAt: new Date('2026-08-01T10:07:00Z'),
+			annotatedAt: new Date('2026-08-01T10:07:00Z'),
 			notes: [
 				{
 					content: 'Resolved into bracelet 42',
@@ -323,9 +312,7 @@ describe('GET /api/v1/orders/paid/stream', () => {
 		}
 
 		const frames = await readFrames(res, 1);
-		expect(frames).toHaveLength(1);
-		expect(frames[0]).toContain('"orderId":"ord-a"');
-		expect(frames[0]).toContain('Resolved into bracelet 42');
+		expect(frames).toHaveLength(0);
 	});
 
 	it('only streams its own orders to a key restricted to them', async () => {
@@ -351,11 +338,12 @@ describe('GET /api/v1/orders/paid/stream', () => {
 	});
 
 	it('replays only its own orders to a key restricted to them', async () => {
-		const res = await call({ query: '?since_ts=1735689600', ownOrdersOnly: true });
+		const res = await call({ lastEventId: '1735689600000:ord-0', ownOrdersOnly: true });
 		await readFrames(res, 3);
 		expect(backlog).toHaveBeenCalledWith({
-			since: new Date('2025-01-01T00:00:00Z'),
-			after: null,
+			since: null,
+			after: { ms: 1735689600000, orderId: 'ord-0' },
+			feed: 'paid',
 			ordersOfKey: keyId
 		});
 	});

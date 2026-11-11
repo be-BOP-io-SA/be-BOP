@@ -122,7 +122,7 @@ export async function addOrderLabel(params: {
 
 	const updated = await collections.orders.findOneAndUpdate(
 		orderFilter,
-		{ $addToSet: { orderLabelIds: params.labelId }, $set: { updatedAt: new Date() } },
+		{ $addToSet: { orderLabelIds: params.labelId }, $set: { annotatedAt: new Date() } },
 		{ returnDocument: 'after', projection: { orderLabelIds: 1 } }
 	);
 	// The order was there a moment ago; it can still have been deleted between the two calls.

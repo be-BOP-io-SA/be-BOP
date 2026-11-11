@@ -630,7 +630,7 @@ export async function anonymizeOrderData(orderId: string): Promise<boolean> {
 
 	const $set: Record<string, unknown> = {
 		dataAnonymized: true,
-		updatedAt: new Date()
+		annotatedAt: new Date()
 	};
 	if (order.shippingAddress) {
 		$set.shippingAddress = {
