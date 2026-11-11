@@ -371,9 +371,15 @@ const baseConfig = {
 	 *
 	 * maxEntries: past this many entries, the oldest ones are removed. An entry carries the request
 	 * and response bodies, so a shop that wants a long history plans the disk space for it.
+	 * logSuccesses / logErrors: calls made with a valid key, by outcome (errors are 4xx and 5xx).
+	 * logUnauthenticated: calls made without a valid key, public endpoints included. Off by default:
+	 * anyone can make those, and each one would push an older entry out of the journal.
 	 */
 	apiV1Log: {
-		maxEntries: 10_000
+		maxEntries: 10_000,
+		logSuccesses: true,
+		logErrors: true,
+		logUnauthenticated: false
 	},
 	telemetry: null as null | {
 		enabled: boolean;

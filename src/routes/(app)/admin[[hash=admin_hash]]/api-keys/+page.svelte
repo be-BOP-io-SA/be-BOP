@@ -140,6 +140,35 @@
 				/>
 			</label>
 			<p class="text-xs opacity-70">{t('admin.apiKeys.logMaxEntriesHint')}</p>
+			<label class="checkbox-label">
+				<input
+					type="checkbox"
+					name="logSuccesses"
+					class="form-checkbox"
+					checked={data.logSettings.logSuccesses}
+				/>
+				{t('admin.apiKeys.logSuccesses')}
+			</label>
+			<label class="checkbox-label">
+				<input
+					type="checkbox"
+					name="logErrors"
+					class="form-checkbox"
+					checked={data.logSettings.logErrors}
+				/>
+				{t('admin.apiKeys.logErrors')}
+			</label>
+			<p class="text-xs opacity-70">{t('admin.apiKeys.logOutcomesHint')}</p>
+			<label class="checkbox-label">
+				<input
+					type="checkbox"
+					name="logUnauthenticated"
+					class="form-checkbox"
+					checked={data.logSettings.logUnauthenticated}
+				/>
+				{t('admin.apiKeys.logUnauthenticated')}
+			</label>
+			<p class="text-xs opacity-70">{t('admin.apiKeys.logUnauthenticatedHint')}</p>
 			<input
 				type="submit"
 				class="btn body-mainCTA self-start w-auto text-base"

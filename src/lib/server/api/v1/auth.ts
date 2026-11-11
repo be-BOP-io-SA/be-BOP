@@ -27,8 +27,11 @@ function extractApiKeySecret(request: Request): string | null {
 }
 
 /**
- * Authenticate an /api/v1 request. On success sets event.locals.apiKey and returns null.
- * On failure returns a Response to short-circuit the handler.
+ * Authenticate an /api/v1 request. On success returns null; on failure returns a Response to
+ * short-circuit the handler.
+ *
+ * event.locals.apiKey is set as soon as the key is known valid, before the scope check: a key that
+ * lacks a scope is still a valid key, and the call journal files that refusal under its name.
  */
 export async function authenticateApiV1(
 	event: RequestEvent,
@@ -47,10 +50,6 @@ export async function authenticateApiV1(
 		return apiError(401, 'UNAUTHORIZED', 'Invalid or revoked API key');
 	}
 
-	if (requiredScope && !apiKeyHasScope(apiKey, requiredScope)) {
-		return apiError(403, 'FORBIDDEN', `API key lacks required scope: ${requiredScope}`);
-	}
-
 	const authenticated: AuthenticatedApiKey = {
 		_id: apiKey._id,
 		name: apiKey.name,
@@ -60,6 +59,10 @@ export async function authenticateApiV1(
 		streamLifetimeSeconds: apiKey.streamLifetimeSeconds
 	};
 	event.locals.apiKey = authenticated;
+
+	if (requiredScope && !apiKeyHasScope(apiKey, requiredScope)) {
+		return apiError(403, 'FORBIDDEN', `API key lacks required scope: ${requiredScope}`);
+	}
 
 	// Fire-and-forget last-used touch — do not log the secret.
 	void touchApiKey(apiKey._id).catch(() => undefined);
