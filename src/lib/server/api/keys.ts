@@ -179,8 +179,11 @@ export async function touchApiKey(id: ObjectId, at = new Date()): Promise<void> 
 	await collections.apiKeys.updateOne({ _id: id }, { $set: { lastUsedAt: at, updatedAt: at } });
 }
 
-/** Fields safe to send to the admin UI — never includes keyHash. */
-export type ApiKeyPublic = Omit<ApiKey, 'keyHash'>;
+/**
+ * Fields safe to send to the admin UI — never includes keyHash. The journal of doubtful calls is
+ * read on its own, on the key's page only.
+ */
+export type ApiKeyPublic = Omit<ApiKey, 'keyHash' | 'suspiciousEvents'>;
 
 const API_KEY_PUBLIC_PROJECTION = {
 	_id: 1,
@@ -193,6 +196,7 @@ const API_KEY_PUBLIC_PROJECTION = {
 	expiresAt: 1,
 	revokedAt: 1,
 	suspendedAt: 1,
+	suspiciousAt: 1,
 	lastUsedAt: 1,
 	createdBy: 1,
 	createdAt: 1,
@@ -232,6 +236,7 @@ export function serializeApiKeyPublic(k: ApiKeyPublic) {
 		expiresAt: k.expiresAt ?? null,
 		revokedAt: k.revokedAt ?? null,
 		suspendedAt: k.suspendedAt ?? null,
+		suspiciousAt: k.suspiciousAt ?? null,
 		lastUsedAt: k.lastUsedAt ?? null,
 		createdBy: k.createdBy ?? null,
 		createdAt: k.createdAt,

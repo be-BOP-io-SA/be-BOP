@@ -4,6 +4,7 @@ import { ObjectId } from 'mongodb';
 const requireApiKey = vi.fn();
 const checkRateLimit = vi.fn();
 const addOrderLabel = vi.fn();
+const reportSuspiciousCall = vi.fn();
 
 vi.mock('$lib/server/api/v1/auth', () => ({
 	requireApiKey: (...args: unknown[]) => requireApiKey(...args)
@@ -16,6 +17,9 @@ vi.mock('$lib/server/runtime-config', () => ({
 }));
 vi.mock('$lib/server/api/v1/orders/addLabel', () => ({
 	addOrderLabel: (...args: unknown[]) => addOrderLabel(...args)
+}));
+vi.mock('$lib/server/api/suspicious', () => ({
+	reportSuspiciousCall: (...args: unknown[]) => reportSuspiciousCall(...args)
 }));
 
 import { POST } from './+server';
@@ -56,6 +60,8 @@ describe('POST /api/v1/orders/[orderId]/labels', () => {
 		requireApiKey.mockReset();
 		checkRateLimit.mockReset();
 		addOrderLabel.mockReset();
+		reportSuspiciousCall.mockReset();
+		reportSuspiciousCall.mockResolvedValue(undefined);
 		checkRateLimit.mockReturnValue({ limited: false });
 		requireApiKey.mockImplementation(async (event: { locals: { apiKey?: unknown } }) => {
 			if (!event.locals.apiKey) {
@@ -168,6 +174,38 @@ describe('POST /api/v1/orders/[orderId]/labels', () => {
 			await expect(res.json()).resolves.toMatchObject({ error: { code: 'VALIDATION_ERROR' } });
 		}
 		expect(addOrderLabel).not.toHaveBeenCalled();
+	});
+
+	it('flags the key when the color carries a CSS declaration, and still refuses it', async () => {
+		const res = await call({
+			body: { labelId: 'cashless', color: 'red; background: url(https://x.example/a.png)' },
+			ownOrdersOnly: true
+		});
+
+		expect(res.status).toBe(400);
+		expect(addOrderLabel).not.toHaveBeenCalled();
+		expect(reportSuspiciousCall).toHaveBeenCalledWith(restrictedKeyId, {
+			type: 'labelColorCss',
+			call: 'POST /api/v1/orders/{orderId}/labels',
+			detail: 'red; background: url(https://x.example/a.png)'
+		});
+	});
+
+	it('flags a url( on its own too', async () => {
+		await call({ body: { labelId: 'cashless', color: 'url(https://x.example/a.png)' } });
+		expect(reportSuspiciousCall).toHaveBeenCalledTimes(1);
+	});
+
+	it('refuses a color that is merely wrong without flagging the key', async () => {
+		for (const color of ['notacolor', 'rgb(0, 0, 0)', '#ff']) {
+			expect((await call({ body: { labelId: 'cashless', color } })).status).toBe(400);
+		}
+		expect(reportSuspiciousCall).not.toHaveBeenCalled();
+	});
+
+	it('does not flag a valid color', async () => {
+		await call({ body: { labelId: 'cashless', color: '#F7931A' } });
+		expect(reportSuspiciousCall).not.toHaveBeenCalled();
 	});
 
 	it('400s on a label id that could not be created', async () => {

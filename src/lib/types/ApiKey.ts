@@ -13,6 +13,25 @@ export const STREAM_SETTINGS_PREFILL = { maxConcurrentStreams: 4, streamLifetime
 export const MAX_STREAM_LIFETIME_SECONDS = 2_147_483;
 
 /**
+ * Kinds of doubtful call be-BOP watches for. Each one flags the key that made it as suspicious and
+ * is written to that key's own journal; a new kind is one more entry here and one more check.
+ *
+ * - `labelColorCss`: a label color carrying a CSS declaration or a `url(`, an attempt to style the
+ *   shop's pages through a field meant for a color.
+ */
+export const API_KEY_SUSPICIOUS_EVENT_TYPES = ['labelColorCss'] as const;
+export type ApiKeySuspiciousEventType = (typeof API_KEY_SUSPICIOUS_EVENT_TYPES)[number];
+
+export interface ApiKeySuspiciousEvent {
+	type: ApiKeySuspiciousEventType;
+	at: Date;
+	/** The call it came with, e.g. `POST /api/v1/orders/{orderId}/labels`. */
+	call: string;
+	/** What was received, cut short. */
+	detail: string;
+}
+
+/**
  * Server-side API key record. The raw secret is never stored — only
  * SHA-256(secret) as keyHash, plus a non-secret keyPrefix for display.
  */
@@ -55,6 +74,14 @@ export interface ApiKey extends Timestamps {
 	 * key stays in place and can be reactivated.
 	 */
 	suspendedAt?: Date;
+	/**
+	 * Set when the key first made a doubtful call, and kept until an admin clears it by hand. It
+	 * changes nothing to what the key may do: suspending is a separate, manual decision, so a
+	 * stranger cannot get a key switched off just by sending doubtful calls with it.
+	 */
+	suspiciousAt?: Date;
+	/** The doubtful calls the key made, oldest first, the most recent ones only. */
+	suspiciousEvents?: ApiKeySuspiciousEvent[];
 	lastUsedAt?: Date;
 	createdBy?: string;
 }
