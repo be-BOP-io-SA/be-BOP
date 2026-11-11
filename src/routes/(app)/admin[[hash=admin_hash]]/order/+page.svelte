@@ -3,15 +3,21 @@
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
 	import { ORDER_PAGINATION_LIMIT } from '$lib/types/Order';
 	import { page } from '$app/stores';
+	import { afterNavigate } from '$app/navigation';
 	import { useI18n } from '$lib/i18n.js';
 
 	export let data;
 	let next = 0;
 	let selectedPaymentMethod = $page.url.searchParams.get('paymentMethod') ?? '';
 
-	// Follows the URL, so the clear link and Back reset the rows as well.
-	let customFieldFilters: Array<{ slug: string; value: string }> = [];
-	$: customFieldFilters = data.customFieldFilters.map((filter) => ({ ...filter }));
+	// Reset from the URL after each navigation, so the clear link and Back reset the rows as well.
+	// Not a `$:` on `data`: the rows are bound to the inputs, and binding them would invalidate
+	// `data` and reset the rows on every keystroke.
+	const rowsFromUrl = () => data.customFieldFilters.map((filter) => ({ ...filter }));
+	let customFieldFilters: Array<{ slug: string; value: string }> = rowsFromUrl();
+	afterNavigate(() => {
+		customFieldFilters = rowsFromUrl();
+	});
 
 	const { t, countryName, sortedCountryCodes } = useI18n();
 </script>

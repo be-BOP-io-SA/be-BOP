@@ -56,6 +56,10 @@ function seededOrder(suffix: string, number: number, size: string, team: string)
 const SMALL_RED = seededOrder('small-red', 960_001, 'S', 'Red');
 const MEDIUM_RED = seededOrder('medium-red', 960_002, 'M', 'Red');
 const SMALL_BLUE = seededOrder('small-blue', 960_003, 'S', 'Blue');
+// One more than a page of the order list, so that Next shows.
+const GREEN_ORDERS = Array.from({ length: 51 }, (_, index) =>
+	seededOrder(`green-${index}`, 960_100 + index, 'M', 'Green')
+);
 
 async function cleanUp() {
 	await withDb(async (db) => {
@@ -80,7 +84,9 @@ test.beforeAll(async () => {
 				updatedAt: new Date()
 			}))
 		);
-		await db.collection('orders').insertMany([SMALL_RED, MEDIUM_RED, SMALL_BLUE] as never);
+		await db
+			.collection('orders')
+			.insertMany([SMALL_RED, MEDIUM_RED, SMALL_BLUE, ...GREEN_ORDERS] as never);
 	});
 });
 
@@ -127,4 +133,32 @@ test('Address fields are not offered', async ({ page }) => {
 
 	await expect(options.filter({ hasText: SIZE.name })).toHaveCount(1);
 	await expect(options.filter({ hasText: GIFT.name })).toHaveCount(0);
+});
+
+test('the value is matched as typed, not as a pattern', async ({ page }) => {
+	await filterOn(page, [{ slug: SIZE.slug, value: 'S.*' }]);
+
+	await expect(orderLink(page, SMALL_RED)).toHaveCount(0);
+	await expect(orderLink(page, SMALL_BLUE)).toHaveCount(0);
+	await expect(orderLink(page, MEDIUM_RED)).toHaveCount(0);
+});
+
+test('Next keeps the filter', async ({ page }) => {
+	await filterOn(page, [{ slug: TEAM.slug, value: 'Green' }]);
+	await page.getByRole('button', { name: 'Next' }).click();
+
+	await expect(page).toHaveURL(/skip=50/);
+	await expect(page).toHaveURL(/customFields/);
+	await expect(page.locator('input[name="customFields[0].value"]')).toHaveValue('Green');
+	await expect(page.locator('a[href^="/order/e2e-custom-field-filter-green-"]')).toHaveCount(1);
+	await expect(orderLink(page, SMALL_RED)).toHaveCount(0);
+});
+
+test('the clear link empties the rows', async ({ page }) => {
+	await filterOn(page, [{ slug: SIZE.slug, value: 'S' }]);
+	await page.locator('a[href="/admin/order"]', { hasText: '🧹' }).click();
+
+	await expect(page).not.toHaveURL(/customFields/);
+	await expect(page.locator('select[name^="customFields"]')).toHaveCount(0);
+	await expect(orderLink(page, MEDIUM_RED)).toBeVisible();
 });
