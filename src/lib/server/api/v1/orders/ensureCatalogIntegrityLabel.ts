@@ -1,5 +1,5 @@
 import { collections } from '$lib/server/database';
-import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
+import { ensureOrderLabel } from './addLabel';
 
 export const CATALOG_INTEGRITY_WARNING_LABEL_ID = 'catalog-integrity-warning';
 export const API_ORDER_LABEL_ID = 'endpoint';
@@ -25,32 +25,13 @@ const LEGACY_ICONS: Record<string, string> = { [CATALOG_INTEGRITY_WARNING_LABEL_
 
 async function ensureLabel(id: keyof typeof MANAGED_LABELS): Promise<string> {
 	const spec = MANAGED_LABELS[id];
-	const existing = await collections.labels.findOne({ _id: id });
-	if (existing) {
-		const legacyIcon = LEGACY_ICONS[id];
-		if (legacyIcon && existing.icon === legacyIcon) {
-			await collections.labels.updateOne(
-				{ _id: id, icon: legacyIcon },
-				{ $set: { icon: spec.icon, updatedAt: new Date() } }
-			);
-		}
-		return existing._id;
-	}
-
-	const now = new Date();
-	try {
-		await collections.labels.insertOne({
-			_id: id,
-			name: spec.name,
-			color: spec.color,
-			icon: spec.icon,
-			createdAt: now,
-			updatedAt: now
-		});
-	} catch (err) {
-		if (!isUniqueConstraintError(err)) {
-			throw err;
-		}
+	const result = await ensureOrderLabel(id, spec);
+	const legacyIcon = LEGACY_ICONS[id];
+	if (legacyIcon && 'created' in result && !result.created) {
+		await collections.labels.updateOne(
+			{ _id: id, icon: legacyIcon },
+			{ $set: { icon: spec.icon, updatedAt: new Date() } }
+		);
 	}
 	return id;
 }
