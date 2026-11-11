@@ -1058,13 +1058,6 @@ export const migrations = [
 		}
 	},
 	{
-		_id: new ObjectId('6af4b0b572bdfae4f9731156'),
-		name: 'Stop expiring the API call journal, now capped by its number of entries',
-		run: async () => {
-			await collections.apiV1Logs.dropIndex('createdAt_1').catch(console.error);
-		}
-	},
-	{
 		_id: new ObjectId('6af4bb4eaa73d77c82cc4b79'),
 		name: 'Let an API key write several orders with the same external order id',
 		run: async () => {

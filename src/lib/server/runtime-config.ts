@@ -369,17 +369,17 @@ const baseConfig = {
 	/**
 	 * API v1 call journal settings (admin-editable, Admin -> API Keys).
 	 *
-	 * maxEntries: past this many entries, the oldest ones are removed. An entry carries the request
-	 * and response bodies, so a shop that wants a long history plans the disk space for it.
+	 * maxSizeMb: past this size, the oldest entries are removed; null means no limit. An entry
+	 * carries the request and response bodies, so a shop that wants a long history plans the disk
+	 * space for it. Entries also expire after thirty days.
 	 * logSuccesses / logErrors: calls made with a valid key, by outcome (errors are 4xx and 5xx).
-	 * logUnauthenticated: calls made without a valid key, public endpoints included. Off by default:
-	 * anyone can make those, and each one would push an older entry out of the journal.
+	 * logUnauthenticated: calls made without a valid key, public endpoints included.
 	 */
 	apiV1Log: {
-		maxEntries: 10_000,
+		maxSizeMb: null as number | null,
 		logSuccesses: true,
 		logErrors: true,
-		logUnauthenticated: false
+		logUnauthenticated: true
 	},
 	telemetry: null as null | {
 		enabled: boolean;

@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 
 vi.mock('$lib/server/database', () => ({ collections: { apiV1Logs: {} } }));
 vi.mock('$lib/server/runtime-config', () => ({
-	runtimeConfig: { apiV1Log: { maxEntries: 10_000 } }
+	runtimeConfig: { apiV1Log: { maxSizeMb: null } }
 }));
 
 import { collections } from '$lib/server/database';
@@ -38,7 +38,10 @@ function fakeJournal(count: number) {
 		deletedCount: ids.filter((id) => id.toHexString() <= filter._id.$lte.toHexString()).length
 	}));
 	Object.assign(collections.apiV1Logs as object, {
-		estimatedDocumentCount: async () => ids.length,
+		// Every entry weighs 100 bytes.
+		aggregate: () => ({
+			toArray: async () => [{ storageStats: { size: ids.length * 100, avgObjSize: 100 } }]
+		}),
 		find: () => cursor,
 		deleteMany
 	});
@@ -109,17 +112,17 @@ describe('readBodyForLog', () => {
 });
 
 describe('pruneApiV1Logs', () => {
-	it('removes the oldest entries past the ceiling, and only them', async () => {
+	it('removes the oldest entries past the size limit, and only them', async () => {
 		const { ids, deleteMany } = fakeJournal(12);
 
-		await expect(pruneApiV1Logs(10)).resolves.toBe(2);
+		await expect(pruneApiV1Logs(1000)).resolves.toBe(2);
 		expect(deleteMany).toHaveBeenCalledWith({ _id: { $lte: ids[1] } });
 	});
 
-	it('leaves a journal under its ceiling alone', async () => {
+	it('leaves a journal under its size limit alone', async () => {
 		const { deleteMany } = fakeJournal(5);
 
-		await expect(pruneApiV1Logs(10)).resolves.toBe(0);
+		await expect(pruneApiV1Logs(1000)).resolves.toBe(0);
 		expect(deleteMany).not.toHaveBeenCalled();
 	});
 });

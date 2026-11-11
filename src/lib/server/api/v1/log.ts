@@ -174,9 +174,13 @@ function scheduleApiV1LogPrune(): void {
 	if (pruning || now - lastPruneAt < PRUNE_INTERVAL_MS) {
 		return;
 	}
+	const maxSizeMb = runtimeConfig.apiV1Log.maxSizeMb ?? null;
+	if (maxSizeMb === null) {
+		return;
+	}
 	pruning = true;
 	lastPruneAt = now;
-	void pruneApiV1Logs(runtimeConfig.apiV1Log.maxEntries)
+	void pruneApiV1Logs(maxSizeMb * 1024 * 1024)
 		.catch((err) => console.error('[api/v1] could not trim the call log', err))
 		.finally(() => {
 			pruning = false;
@@ -184,17 +188,26 @@ function scheduleApiV1LogPrune(): void {
 }
 
 /**
- * Remove the oldest entries past `maxEntries`, and return how many went.
+ * Remove the oldest entries until the journal is back under `maxSizeBytes`, and return how many
+ * went.
  *
- * The count is the collection's own estimate: free to read, where counting the documents would
- * scan the very collection that grew too large. Entries are cut by `_id`, which is unique and
- * follows insertion order, so two calls in the same millisecond cannot blur the cut.
+ * The size is the collection's own data size, and the number of entries to drop is worked out from
+ * its average entry size: both are free to read, where measuring the entries one by one would scan
+ * the very collection that grew too large. Entries are cut by `_id`, which is unique and follows
+ * insertion order, so two calls in the same millisecond cannot blur the cut.
  */
-export async function pruneApiV1Logs(maxEntries: number): Promise<number> {
-	const excess = (await collections.apiV1Logs.estimatedDocumentCount()) - maxEntries;
-	if (excess <= 0) {
+export async function pruneApiV1Logs(maxSizeBytes: number): Promise<number> {
+	const [stats] = await collections.apiV1Logs
+		.aggregate<{ storageStats: { size: number; avgObjSize?: number } }>([
+			{ $collStats: { storageStats: {} } }
+		])
+		.toArray();
+	const size = stats?.storageStats.size ?? 0;
+	const averageEntrySize = stats?.storageStats.avgObjSize ?? 0;
+	if (size <= maxSizeBytes || averageEntrySize <= 0) {
 		return 0;
 	}
+	const excess = Math.ceil((size - maxSizeBytes) / averageEntrySize);
 	const cutoff = await collections.apiV1Logs
 		.find({}, { projection: { _id: 1 } })
 		.sort({ _id: 1 })
