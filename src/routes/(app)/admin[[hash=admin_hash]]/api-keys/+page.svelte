@@ -146,18 +146,17 @@
 		{/if}
 		<form method="post" action="?/updateLogSettings" class="flex flex-col gap-3">
 			<label class="form-label">
-				{t('admin.apiKeys.logMaxEntries')}
+				{t('admin.apiKeys.logMaxSize')}
 				<input
 					class="form-input w-32"
 					type="number"
-					name="logMaxEntries"
-					min="1"
-					step="1"
-					required
-					value={data.logSettings.maxEntries}
+					name="logMaxSizeMb"
+					min="0"
+					step="any"
+					value={data.logSettings.maxSizeMb ?? ''}
 				/>
 			</label>
-			<p class="text-xs opacity-70">{t('admin.apiKeys.logMaxEntriesHint')}</p>
+			<p class="text-xs opacity-70">{t('admin.apiKeys.logMaxSizeHint')}</p>
 			<label class="checkbox-label">
 				<input
 					type="checkbox"
