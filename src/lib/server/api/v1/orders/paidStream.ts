@@ -1,4 +1,6 @@
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { collections } from '$lib/server/database';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Order } from '$lib/types/Order';
 import type { ObjectId } from 'mongodb';
 import type { OrderQueryError, PaidOrderDto } from './listPaid';
@@ -34,22 +36,56 @@ function feedDateField(feed: OrderFeed): 'updatedAt' | 'annotatedAt' {
  */
 export type PaidStreamCursor = { ms: number; orderId: string };
 
-export function encodeStreamCursor(cursor: PaidStreamCursor): string {
-	return `${cursor.ms}:${cursor.orderId}`;
+/** Whom a cursor was issued to: it only resumes the same feed, for the same API key. */
+export type StreamCursorScope = { keyId: string; feed: OrderFeed };
+
+const CURSOR_SIGNING_PURPOSE = 'bebop-api-v1-stream-cursor-v1';
+/** Stands in until the shop has its signing key: cursors then hold for the life of the process. */
+const PROCESS_SIGNING_KEY = randomBytes(32).toString('hex');
+
+function cursorSigningKey(): string {
+	const appSecret = runtimeConfig.authLinkJwtSigningKey?.trim() || PROCESS_SIGNING_KEY;
+	return createHmac('sha256', appSecret).update(CURSOR_SIGNING_PURPOSE, 'utf8').digest('hex');
 }
 
-export function parseStreamCursor(raw: string | null | undefined): PaidStreamCursor | null {
+function cursorSignature(cursor: PaidStreamCursor, scope: StreamCursorScope): string {
+	return createHmac('sha256', cursorSigningKey())
+		.update(`${scope.feed}|${scope.keyId}|${cursor.ms}|${cursor.orderId}`, 'utf8')
+		.digest('base64url');
+}
+
+/**
+ * The cursor is signed. It carries a date, and a stream only resumes after an event it actually
+ * sent: a cursor made up by hand, with an older date, would otherwise replay the shop's history to
+ * a key that is only allowed to follow it from now on.
+ */
+export function encodeStreamCursor(cursor: PaidStreamCursor, scope: StreamCursorScope): string {
+	return `${cursor.ms}:${cursor.orderId}:${cursorSignature(cursor, scope)}`;
+}
+
+/** Null for anything this stream did not issue to this key — unsigned, altered or foreign. */
+export function parseStreamCursor(
+	raw: string | null | undefined,
+	scope: StreamCursorScope
+): PaidStreamCursor | null {
 	if (!raw) {
 		return null;
 	}
-	const separator = raw.indexOf(':');
-	if (separator <= 0) {
+	const first = raw.indexOf(':');
+	const last = raw.lastIndexOf(':');
+	if (first <= 0 || last <= first) {
 		return null;
 	}
-	const msPart = raw.slice(0, separator);
-	const orderId = raw.slice(separator + 1);
+	const msPart = raw.slice(0, first);
+	const orderId = raw.slice(first + 1, last);
+	const signature = raw.slice(last + 1);
 	const ms = Number.parseInt(msPart, 10);
-	if (!Number.isSafeInteger(ms) || ms < 0 || String(ms) !== msPart || !orderId) {
+	if (!Number.isSafeInteger(ms) || ms < 0 || String(ms) !== msPart || !orderId || !signature) {
+		return null;
+	}
+	const expected = Buffer.from(cursorSignature({ ms, orderId }, scope));
+	const received = Buffer.from(signature);
+	if (expected.length !== received.length || !timingSafeEqual(expected, received)) {
 		return null;
 	}
 	return { ms, orderId };
