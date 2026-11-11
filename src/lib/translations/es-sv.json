@@ -2266,7 +2266,8 @@
 			"streamsSave": "Guardar ajustes de flujos",
 			"streamsSaved": "Ajustes de flujos actualizados.",
 			"streamsResetDone": "Flujos de esta clave cerrados, sus puestos liberados.",
-			"resetStreamsTitle": "Cerrar todos los flujos abiertos con esta clave y liberar sus puestos"
+			"resetStreamsTitle": "Cerrar todos los flujos abiertos con esta clave y liberar sus puestos",
+			"streamLifetimeTooLong": "Un flujo puede permanecer abierto {max} segundos como máximo (24,8 días). El dispositivo se reconecta por sí solo al final de cada duración de vida."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "No hay procesadores configurados. Configúrelos en la pestaña Configuración de pago de arriba",

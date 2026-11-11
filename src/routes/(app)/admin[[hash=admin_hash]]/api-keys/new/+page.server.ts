@@ -1,5 +1,5 @@
 import { createApiKey } from '$lib/server/api/keys';
-import { optionalStreamSetting } from '$lib/server/api/stream-settings';
+import { isStreamLifetimeTooLong, optionalStreamSetting } from '$lib/server/api/stream-settings';
 import { parseExpiresAtFormValue } from '$lib/server/api/expires-at';
 import { setApiKeyRevealCookie } from '$lib/server/api/reveal-flash';
 import { adminPrefix } from '$lib/server/admin';
@@ -56,6 +56,12 @@ export const actions: Actions = {
 
 		if (!parsed.success) {
 			return fail(400, { error: parsed.error.flatten() });
+		}
+		if (isStreamLifetimeTooLong(parsed.data.streamLifetimeSeconds)) {
+			return fail(400, {
+				error: { formErrors: [], fieldErrors: {} },
+				streamLifetimeTooLong: true
+			});
 		}
 
 		const { apiKey, secret } = await createApiKey({

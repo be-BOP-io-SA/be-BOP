@@ -2266,7 +2266,8 @@
 			"streamsSave": "Save stream settings",
 			"streamsSaved": "Stream settings updated.",
 			"streamsResetDone": "Streams of this key closed, their places handed back.",
-			"resetStreamsTitle": "Close every stream open with this key and hand its places back"
+			"resetStreamsTitle": "Close every stream open with this key and hand its places back",
+			"streamLifetimeTooLong": "A stream can stay open for {max} seconds at most (24.8 days). The device reconnects on its own at the end of each lifetime."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "No processors configured. Configure them in the Payment Settings tab above",

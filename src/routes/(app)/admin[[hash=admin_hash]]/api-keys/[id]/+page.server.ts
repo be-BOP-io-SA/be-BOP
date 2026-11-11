@@ -4,7 +4,7 @@ import {
 	serializeApiKeyPublic,
 	updateApiKeyStreamSettings
 } from '$lib/server/api/keys';
-import { optionalStreamSetting } from '$lib/server/api/stream-settings';
+import { isStreamLifetimeTooLong, optionalStreamSetting } from '$lib/server/api/stream-settings';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { adminPrefix } from '$lib/server/admin';
 import { error, fail, redirect } from '@sveltejs/kit';
@@ -90,6 +90,15 @@ export const actions: Actions = {
 				streamSettingsSaved: false,
 				streamsReset: false,
 				error: parsed.error.flatten()
+			});
+		}
+		if (isStreamLifetimeTooLong(parsed.data.streamLifetimeSeconds)) {
+			return fail(400, {
+				alreadyRevoked: false,
+				streamSettingsSaved: false,
+				streamsReset: false,
+				streamLifetimeTooLong: true,
+				error: null
 			});
 		}
 

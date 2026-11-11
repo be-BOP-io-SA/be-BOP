@@ -2266,7 +2266,8 @@
 			"streamsSave": "Salva impostazioni dei flussi",
 			"streamsSaved": "Impostazioni dei flussi aggiornate.",
 			"streamsResetDone": "Flussi di questa chiave chiusi, i loro posti liberati.",
-			"resetStreamsTitle": "Chiudi tutti i flussi aperti con questa chiave e libera i loro posti"
+			"resetStreamsTitle": "Chiudi tutti i flussi aperti con questa chiave e libera i loro posti",
+			"streamLifetimeTooLong": "Un flusso può restare aperto al massimo {max} secondi (24,8 giorni). Il dispositivo si riconnette da solo alla fine di ogni durata."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Nessun processore configurato. Configurali nella scheda Impostazioni di pagamento qui sopra",

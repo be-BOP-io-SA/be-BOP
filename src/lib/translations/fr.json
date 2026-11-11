@@ -2266,7 +2266,8 @@
 			"streamsSave": "Enregistrer les réglages de flux",
 			"streamsSaved": "Réglages de flux mis à jour.",
 			"streamsResetDone": "Flux de cette clé fermés, leurs places rendues.",
-			"resetStreamsTitle": "Fermer tous les flux ouverts avec cette clé et libérer leurs places"
+			"resetStreamsTitle": "Fermer tous les flux ouverts avec cette clé et libérer leurs places",
+			"streamLifetimeTooLong": "Un flux peut rester ouvert {max} secondes au plus (24,8 jours). L'appareil se reconnecte de lui-même à la fin de chaque durée de vie."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Aucun processeur configuré. Configurez-les dans l’onglet Paramètres de paiement ci-dessus",

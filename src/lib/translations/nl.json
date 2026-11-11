@@ -2266,7 +2266,8 @@
 			"streamsSave": "Stroominstellingen opslaan",
 			"streamsSaved": "Stroominstellingen bijgewerkt.",
 			"streamsResetDone": "Streams van deze sleutel gesloten, hun plaatsen vrijgegeven.",
-			"resetStreamsTitle": "Alle streams van deze sleutel sluiten en hun plaatsen vrijgeven"
+			"resetStreamsTitle": "Alle streams van deze sleutel sluiten en hun plaatsen vrijgeven",
+			"streamLifetimeTooLong": "Een stream kan hoogstens {max} seconden (24,8 dagen) open blijven. Het apparaat maakt aan het einde van elke levensduur zelf opnieuw verbinding."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Geen verwerkers geconfigureerd. Configureer ze in het tabblad Betalingsinstellingen hierboven",

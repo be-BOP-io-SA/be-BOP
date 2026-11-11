@@ -2266,7 +2266,8 @@
 			"streamsSave": "Guardar configurações de fluxos",
 			"streamsSaved": "Configurações de fluxos atualizadas.",
 			"streamsResetDone": "Fluxos desta chave fechados, os seus lugares libertados.",
-			"resetStreamsTitle": "Fechar todos os fluxos abertos com esta chave e libertar os seus lugares"
+			"resetStreamsTitle": "Fechar todos os fluxos abertos com esta chave e libertar os seus lugares",
+			"streamLifetimeTooLong": "Um fluxo pode ficar aberto no máximo {max} segundos (24,8 dias). O dispositivo volta a ligar-se sozinho no fim de cada duração de vida."
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Nenhum processador configurado. Configure-os no separador Definições de pagamento acima",

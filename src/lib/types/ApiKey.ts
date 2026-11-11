@@ -6,6 +6,13 @@ import type { ApiV1Scope } from './ApiV1';
 export const STREAM_SETTINGS_PREFILL = { maxConcurrentStreams: 4, streamLifetimeSeconds: 1200 };
 
 /**
+ * Longest lifetime a stream can be given, about 24.8 days: the longest delay a Node.js timer holds,
+ * in whole seconds. Past it the timer fires at once, and the stream would close as soon as opened.
+ * A device meant to stay connected longer reconnects on its own at the end of each lifetime.
+ */
+export const MAX_STREAM_LIFETIME_SECONDS = 2_147_483;
+
+/**
  * Server-side API key record. The raw secret is never stored — only
  * SHA-256(secret) as keyHash, plus a non-secret keyPrefix for display.
  */
