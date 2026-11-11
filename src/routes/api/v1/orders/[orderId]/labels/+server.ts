@@ -4,6 +4,7 @@ import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { checkRateLimit } from '$lib/server/rateLimit';
 import { addOrderLabel } from '$lib/server/api/v1/orders/addLabel';
+import { zodLabelColor } from '$lib/server/zod';
 import { z } from 'zod';
 
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
@@ -16,7 +17,8 @@ const addLabelSchema = z
 		 * the label already exists: a caller labels its own orders, it does not restyle the shop's.
 		 */
 		name: z.string().trim().min(1).max(100).optional(),
-		color: z.string().trim().min(1).max(100).optional(),
+		/** Hexadecimal (`#F7931A`) or a named CSS color (`orange`), nothing else. */
+		color: zodLabelColor().optional(),
 		icon: z.string().trim().min(1).max(100).optional()
 	})
 	.strict();
