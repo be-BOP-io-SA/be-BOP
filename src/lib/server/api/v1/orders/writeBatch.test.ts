@@ -503,28 +503,73 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 			'pending→%s via onOrderPaymentFailed (admin cancel / lock parity)',
 			async (status) => {
 				const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
-				const ext = `c4-${status}`;
-				const first = await writeBatch({ apiKey, orders: [pendingCreate(ext)] });
-				const orderId = requireOrderId(first.results[0]);
-				const second = await writeBatch({
-					apiKey,
-					orders: [
-						paidCommand({
-							externalOrderId: ext,
-							payment: {
-								method: 'point-of-sale',
-								status,
-								amountMinor,
-								currency: 'EUR'
-							}
-						})
-					]
-				});
-				expect(second.results[0]).toMatchObject({ status: 'duplicate', orderId });
-				const order = await collections.orders.findOne({ _id: orderId });
-				expect(order?.payments[0]?.status).toBe(status);
+				const failedSpy = vi.spyOn(ordersModule, 'onOrderPaymentFailed');
+				try {
+					// One call: the order is created with its payment pending, then the outcome the till
+					// reported is applied to it.
+					const res = await writeBatch({
+						apiKey,
+						orders: [
+							paidCommand({
+								externalOrderId: `c4-${status}`,
+								payment: {
+									method: 'point-of-sale',
+									status,
+									amountMinor,
+									currency: 'EUR'
+								}
+							})
+						]
+					});
+					expect(res.results[0].status).toBe('created');
+					expect(failedSpy).toHaveBeenCalledWith(expect.anything(), expect.anything(), status, {
+						terminal: true
+					});
+					const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+					expect(order?.payments).toHaveLength(1);
+					expect(order?.payments[0]?.status).toBe(status);
+					// Its only payment is closed, so the order is closed with it rather than left waiting
+					// for a payment that will never come.
+					expect(order?.status).toBe(status);
+				} finally {
+					failedSpy.mockRestore();
+				}
 			}
 		);
+
+		it('keeps a paid deposit, and the order pending, when the other payment fails', async () => {
+			const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+			const depositMinor = Math.floor(totalMinor / 2);
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					{
+						externalOrderId: 'c4-deposit-then-failed',
+						currency: 'EUR' as const,
+						items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+						payments: [
+							{
+								method: 'point-of-sale' as const,
+								status: 'paid' as const,
+								amountMinor: depositMinor,
+								currency: 'EUR' as const
+							},
+							{
+								method: 'point-of-sale' as const,
+								status: 'failed' as const,
+								amountMinor: totalMinor - depositMinor,
+								currency: 'EUR' as const
+							}
+						]
+					}
+				]
+			});
+			expect(res.results[0].status).toBe('created');
+			const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+			expect(order?.payments.map((p) => p.status)).toEqual(['paid', 'failed']);
+			// A payment was received: the order is neither closed as failed nor counted as paid.
+			expect(order?.status).toBe('pending');
+		});
 
 		it('already-paid replay is a no-op (admin would 400 non-pending)', async () => {
 			const first = await writeBatch({
