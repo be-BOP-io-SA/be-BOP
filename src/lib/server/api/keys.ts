@@ -71,6 +71,9 @@ export function isApiKeyUsable(apiKey: ApiKey, at = new Date()): boolean {
 	if (apiKey.revokedAt && apiKey.revokedAt <= at) {
 		return false;
 	}
+	if (apiKey.suspendedAt) {
+		return false;
+	}
 	if (apiKey.expiresAt && apiKey.expiresAt <= at) {
 		return false;
 	}
@@ -90,6 +93,33 @@ export async function revokeApiKey(id: ObjectId | string): Promise<ApiKey | null
 		{ returnDocument: 'after' }
 	);
 	return result.value;
+}
+
+/**
+ * Suspend a key, or reactivate it. Returns false when no key carries that id.
+ *
+ * Suspending is not revoking: nothing is deleted, and the key works again once reactivated.
+ */
+export async function setApiKeySuspended(
+	id: ObjectId | string,
+	suspended: boolean
+): Promise<boolean> {
+	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	const now = new Date();
+	// Matching on the current state: an already suspended key keeps the date it was suspended at.
+	const result = suspended
+		? await collections.apiKeys.updateOne(
+				{ _id, suspendedAt: { $exists: false } },
+				{ $set: { suspendedAt: now, updatedAt: now } }
+		  )
+		: await collections.apiKeys.updateOne(
+				{ _id, suspendedAt: { $exists: true } },
+				{ $unset: { suspendedAt: '' }, $set: { updatedAt: now } }
+		  );
+	if (result.matchedCount) {
+		return true;
+	}
+	return (await collections.apiKeys.countDocuments({ _id }, { limit: 1 })) > 0;
 }
 
 /**
@@ -162,6 +192,7 @@ const API_KEY_PUBLIC_PROJECTION = {
 	ownOrdersOnly: 1,
 	expiresAt: 1,
 	revokedAt: 1,
+	suspendedAt: 1,
 	lastUsedAt: 1,
 	createdBy: 1,
 	createdAt: 1,
@@ -200,6 +231,7 @@ export function serializeApiKeyPublic(k: ApiKeyPublic) {
 		ownOrdersOnly: !!k.ownOrdersOnly,
 		expiresAt: k.expiresAt ?? null,
 		revokedAt: k.revokedAt ?? null,
+		suspendedAt: k.suspendedAt ?? null,
 		lastUsedAt: k.lastUsedAt ?? null,
 		createdBy: k.createdBy ?? null,
 		createdAt: k.createdAt,

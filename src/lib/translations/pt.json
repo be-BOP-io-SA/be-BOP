@@ -2272,7 +2272,13 @@
 			"ownOrdersOnly": "Restringir esta chave às suas próprias encomendas",
 			"ownOrdersOnlyHint": "Marcada, a chave só alcança as encomendas que ela própria escreveu: as listas de encomendas e os fluxos, ponto de venda incluído, deixam de fora as encomendas web e as de outras chaves, e só pode adicionar notas e labels às suas próprias encomendas. Desmarcada, alcança todas as encomendas da loja.",
 			"orderAccessSave": "Guardar o acesso às encomendas",
-			"orderAccessSaved": "Acesso às encomendas atualizado."
+			"orderAccessSaved": "Acesso às encomendas atualizado.",
+			"statusSuspended": "Suspensa",
+			"suspendedAt": "Suspensa em",
+			"suspensionTitle": "Suspensão",
+			"suspensionHelp": "Uma chave suspensa é recusada pela API como uma chave revogada, e os seus fluxos abertos são fechados. Não é eliminada: reativada, volta a funcionar, com o mesmo segredo.",
+			"suspend": "Suspender a chave",
+			"reactivate": "Reativar a chave"
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Nenhum processador configurado. Configure-os no separador Definições de pagamento acima",

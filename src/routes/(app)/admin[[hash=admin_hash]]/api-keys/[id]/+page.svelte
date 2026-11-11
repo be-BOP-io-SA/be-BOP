@@ -47,6 +47,8 @@
 			<dd>
 				{#if data.key.revokedAt}
 					<span class="text-red-600">{t('admin.apiKeys.statusRevoked')}</span>
+				{:else if data.key.suspendedAt}
+					<span class="text-orange-600">{t('admin.apiKeys.statusSuspended')}</span>
 				{:else if data.key.expiresAt && new Date(data.key.expiresAt) <= new Date()}
 					<span class="text-orange-600">{t('admin.apiKeys.statusExpired')}</span>
 				{:else}
@@ -62,6 +64,9 @@
 
 			<dt class="opacity-70">{t('admin.apiKeys.revokedAt')}</dt>
 			<dd>{fmt(data.key.revokedAt)}</dd>
+
+			<dt class="opacity-70">{t('admin.apiKeys.suspendedAt')}</dt>
+			<dd>{fmt(data.key.suspendedAt)}</dd>
 
 			<dt class="opacity-70">{t('admin.apiKeys.lastUsedAt')}</dt>
 			<dd>{fmt(data.key.lastUsedAt)}</dd>
@@ -177,6 +182,28 @@
 	{/if}
 
 	{#if !data.key.revokedAt}
+		<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-3">
+			<h2 class="text-2xl">{t('admin.apiKeys.suspensionTitle')}</h2>
+			<p class="text-sm opacity-80">{t('admin.apiKeys.suspensionHelp')}</p>
+			{#if data.key.suspendedAt}
+				<form method="post" action="?/reactivate">
+					<input
+						type="submit"
+						class="btn btn-blue text-white self-start w-auto text-base"
+						value={t('admin.apiKeys.reactivate')}
+					/>
+				</form>
+			{:else}
+				<form method="post" action="?/suspend">
+					<input
+						type="submit"
+						class="btn bg-orange-600 text-white self-start w-auto text-base"
+						value={t('admin.apiKeys.suspend')}
+					/>
+				</form>
+			{/if}
+		</section>
+
 		<form method="post" action="?/revoke">
 			<input
 				type="submit"

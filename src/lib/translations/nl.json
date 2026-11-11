@@ -2272,7 +2272,13 @@
 			"ownOrdersOnly": "Deze sleutel beperken tot zijn eigen bestellingen",
 			"ownOrdersOnlyHint": "Aangevinkt bereikt de sleutel alleen de bestellingen die hij zelf heeft geschreven: bestellijsten en streams, kassa inbegrepen, laten webbestellingen en die van andere sleutels weg, en hij kan alleen notities en labels aan zijn eigen bestellingen toevoegen. Niet aangevinkt bereikt hij alle bestellingen van de winkel.",
 			"orderAccessSave": "Toegang tot bestellingen opslaan",
-			"orderAccessSaved": "Toegang tot bestellingen bijgewerkt."
+			"orderAccessSaved": "Toegang tot bestellingen bijgewerkt.",
+			"statusSuspended": "Opgeschort",
+			"suspendedAt": "Opgeschort op",
+			"suspensionTitle": "Opschorting",
+			"suspensionHelp": "Een opgeschorte sleutel wordt door de API geweigerd zoals een ingetrokken sleutel, en zijn open streams worden gesloten. Hij wordt niet verwijderd: opnieuw geactiveerd werkt hij weer, met hetzelfde geheim.",
+			"suspend": "Sleutel opschorten",
+			"reactivate": "Sleutel opnieuw activeren"
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Geen verwerkers geconfigureerd. Configureer ze in het tabblad Betalingsinstellingen hierboven",

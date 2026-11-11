@@ -2272,7 +2272,13 @@
 			"ownOrdersOnly": "Restreindre cette clé à ses propres commandes",
 			"ownOrdersOnlyHint": "Cochée, la clé n'atteint que les commandes qu'elle a écrites elle-même : les listes de commandes et les flux, point de vente compris, écartent les commandes web et celles des autres clés, et elle ne peut ajouter notes et labels qu'à ses propres commandes. Décochée, elle atteint toutes les commandes de la boutique.",
 			"orderAccessSave": "Enregistrer l'accès aux commandes",
-			"orderAccessSaved": "Accès aux commandes mis à jour."
+			"orderAccessSaved": "Accès aux commandes mis à jour.",
+			"statusSuspended": "Suspendue",
+			"suspendedAt": "Suspendue le",
+			"suspensionTitle": "Suspension",
+			"suspensionHelp": "Une clé suspendue est refusée par l'API comme une clé révoquée, et ses flux ouverts sont fermés. Elle n'est pas supprimée : réactivée, elle fonctionne de nouveau, avec le même secret.",
+			"suspend": "Suspendre la clé",
+			"reactivate": "Réactiver la clé"
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Aucun processeur configuré. Configurez-les dans l’onglet Paramètres de paiement ci-dessus",

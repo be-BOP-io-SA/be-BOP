@@ -157,6 +157,16 @@ describe('authenticateApiV1', () => {
 		expect(touchApiKey).not.toHaveBeenCalled();
 	});
 
+	it('rejects a suspended key as it rejects a revoked one', async () => {
+		findApiKeyBySecret.mockResolvedValue({ ...usableKey, suspendedAt: new Date() });
+		const res = await authenticateApiV1(
+			makeEvent({ 'x-api-key': 'bebop_ak_test_secret' }),
+			'orders:write'
+		);
+		await expectUnauthorized(res);
+		expect(touchApiKey).not.toHaveBeenCalled();
+	});
+
 	it('rejects expired keys', async () => {
 		findApiKeyBySecret.mockResolvedValue({
 			...usableKey,

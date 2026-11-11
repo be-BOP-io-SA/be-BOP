@@ -2272,7 +2272,13 @@
 			"ownOrdersOnly": "Diesen Schlüssel auf seine eigenen Bestellungen beschränken",
 			"ownOrdersOnlyHint": "Aktiviert erreicht der Schlüssel nur die Bestellungen, die er selbst geschrieben hat: Bestelllisten und Streams, Kasse eingeschlossen, lassen Web-Bestellungen und die anderer Schlüssel weg, und er kann Notizen und Labels nur zu seinen eigenen Bestellungen hinzufügen. Deaktiviert erreicht er alle Bestellungen des Shops.",
 			"orderAccessSave": "Zugriff auf Bestellungen speichern",
-			"orderAccessSaved": "Zugriff auf Bestellungen aktualisiert."
+			"orderAccessSaved": "Zugriff auf Bestellungen aktualisiert.",
+			"statusSuspended": "Gesperrt",
+			"suspendedAt": "Gesperrt am",
+			"suspensionTitle": "Sperre",
+			"suspensionHelp": "Ein gesperrter Schlüssel wird von der API wie ein widerrufener abgelehnt, und seine offenen Streams werden geschlossen. Er wird nicht gelöscht: Nach der Reaktivierung funktioniert er wieder, mit demselben Geheimnis.",
+			"suspend": "Schlüssel sperren",
+			"reactivate": "Schlüssel reaktivieren"
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Keine Zahlungsanbieter konfiguriert. Konfigurieren Sie sie im obigen Tab Zahlungseinstellungen",

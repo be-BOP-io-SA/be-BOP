@@ -76,6 +76,21 @@ describe('api key helpers', () => {
 		expect(isApiKeyUsable({ ...base, expiresAt: at }, at)).toBe(false);
 		expect(isApiKeyUsable({ ...base, revokedAt: at }, at)).toBe(false);
 	});
+
+	it('isApiKeyUsable refuses a suspended key, and accepts it again once reactivated', () => {
+		const base: ApiKey = {
+			_id: new ObjectId(),
+			name: 't',
+			keyHash: 'a'.repeat(64),
+			keyPrefix: 'bebop_ak_test_abcd1234',
+			scopes: ['orders:write'],
+			createdAt: new Date(),
+			updatedAt: new Date()
+		};
+		const suspended = { ...base, suspendedAt: new Date() };
+		expect(isApiKeyUsable(suspended)).toBe(false);
+		expect(isApiKeyUsable({ ...suspended, suspendedAt: undefined })).toBe(true);
+	});
 });
 
 describe('apiKeyPublicProjection', () => {
@@ -90,6 +105,7 @@ describe('apiKeyPublicProjection', () => {
 			scopes: 1,
 			expiresAt: 1,
 			revokedAt: 1,
+			suspendedAt: 1,
 			lastUsedAt: 1,
 			createdBy: 1,
 			createdAt: 1,

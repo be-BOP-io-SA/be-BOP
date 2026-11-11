@@ -2272,7 +2272,13 @@
 			"ownOrdersOnly": "Restrict this key to its own orders",
 			"ownOrdersOnlyHint": "Ticked, the key only reaches the orders it wrote itself: order lists and event streams, point of sale included, leave out web orders and those of other keys, and it can add notes and labels to its own orders only. Left unticked, it reaches every order of the shop.",
 			"orderAccessSave": "Save order access",
-			"orderAccessSaved": "Order access updated."
+			"orderAccessSaved": "Order access updated.",
+			"statusSuspended": "Suspended",
+			"suspendedAt": "Suspended at",
+			"suspensionTitle": "Suspension",
+			"suspensionHelp": "A suspended key is refused by the API as a revoked one, and its open streams are closed. It is not deleted: reactivate it and it works again, with the same secret.",
+			"suspend": "Suspend key",
+			"reactivate": "Reactivate key"
 		},
 		"processorSelector": {
 			"noProcessorsConfigured": "No processors configured. Configure them in the Payment Settings tab above",
