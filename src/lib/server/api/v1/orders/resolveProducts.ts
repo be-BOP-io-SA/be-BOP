@@ -64,7 +64,8 @@ function samePrice(a: Price, b: Price): boolean {
 
 export async function resolveProducts(
 	items: OrderWriteCommand['items'],
-	orderCurrency: Currency
+	orderCurrency: Currency,
+	opts: { trustExternalPricing: boolean }
 ): Promise<{ lines: ResolvedLine[]; warnings: ApiV1Warning[] }> {
 	const ids = [...new Set(items.map((item) => item.productId))];
 	const found = await collections.products.find({ _id: { $in: ids } }).toArray();
@@ -91,16 +92,19 @@ export async function resolveProducts(
 						currency: existing.price.currency
 				  }
 				: undefined;
-		// The till is authoritative: it records what was actually charged. A batch uploaded
-		// hours later must not be repriced by a catalogue that moved in between, and a
-		// discount applied at the counter has no other way to reach us. What be-BOP would
-		// have charged is reported as a warning rather than silently substituted.
-		const customPrice = clientPrice ?? variationPrice;
+		// With the third-party system as the source of truth, the price it sent is the price: it
+		// records what was actually charged, and a batch uploaded hours later must not be repriced
+		// by a catalogue that moved in between. Otherwise be-BOP prices the line from its own
+		// catalogue and the price sent is ignored. Either way, a divergence is reported.
+		const honoursClientPrice = opts.trustExternalPricing || !existing;
+		const customPrice = (honoursClientPrice ? clientPrice : undefined) ?? variationPrice;
 		const expectedPrice = variationPrice ?? existing?.price;
 		if (clientPrice && expectedPrice && !samePrice(clientPrice, expectedPrice)) {
 			warnings.push({
 				code: 'PRICE_OVERRIDE',
-				message: `Price sent for ${item.productId} differs from the catalogue price`,
+				message: honoursClientPrice
+					? `Price sent for ${item.productId} differs from the catalogue price`
+					: `Price sent for ${item.productId} ignored, the catalogue price is charged`,
 				productId: item.productId,
 				details: {
 					sent: { amount: clientPrice.amount, currency: clientPrice.currency },
