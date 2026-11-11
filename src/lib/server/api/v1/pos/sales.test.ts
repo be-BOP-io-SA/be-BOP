@@ -51,6 +51,11 @@ describe('toOrderWriteCommand', () => {
 		});
 	});
 
+	it('passes notifications on only when the till sets it', () => {
+		expect(toOrderWriteCommand(sale({ notifications: false })).notifications).toBe(false);
+		expect('notifications' in toOrderWriteCommand(sale())).toBe(false);
+	});
+
 	it('maps the seam method onto be-BOP two-level payment model', () => {
 		// `method` is the axis, `posLabel` the subtype resolved against the shop's configured
 		// posPaymentSubtypes. The seam flattens both into one field, so its value becomes the label.

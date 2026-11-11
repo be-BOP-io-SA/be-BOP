@@ -144,9 +144,12 @@ async function handleOrderNotification(order: Order): Promise<void> {
 		}
 
 		const { npub, email } = order.notifications.paymentStatus;
+		// Written with notifications off: neither the customer nor the shop hears about it. Its
+		// payments are still marked as handled, and the stock still refreshed.
+		const silent = !!order.skipNotifications;
 		for (const payment of payments) {
 			await withTransaction(async (session) => {
-				if (npub) {
+				if (npub && !silent) {
 					let content = `Payment for order #${order.number} is ${payment.status}, see ${ORIGIN}/order/${order._id}`;
 
 					if (payment.status === 'pending') {
@@ -234,7 +237,7 @@ async function handleOrderNotification(order: Order): Promise<void> {
 
 				const { t } = useI18n(order.locale || 'en');
 
-				if (templateKey) {
+				if (templateKey && !silent) {
 					const vars = {
 						orderNumber: order.number.toLocaleString(order.locale || 'en'),
 						orderLink: `${ORIGIN}/order/${order._id}`,
@@ -270,7 +273,7 @@ async function handleOrderNotification(order: Order): Promise<void> {
 				}
 				//#endregion
 
-				if (payment.status === 'paid' && isOrderFullyPaid(order)) {
+				if (!silent && payment.status === 'paid' && isOrderFullyPaid(order)) {
 					await notifyAdminsOrderFullyPaidViaNostr(order, payment, session);
 				}
 

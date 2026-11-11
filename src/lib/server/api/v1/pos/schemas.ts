@@ -61,7 +61,9 @@ const posSaleSchema = z
 		 * appended to. A sale in the future is always a bug; a sale in the past is a late batch,
 		 * which is exactly what a till that lost its link is expected to produce.
 		 */
-		soldAt: z.string().datetime({ offset: true })
+		soldAt: z.string().datetime({ offset: true }),
+		/** `false`: nobody is notified about this sale, as on `/api/v1/orders`. */
+		notifications: z.boolean().optional()
 	})
 	.strict()
 	.superRefine((sale, ctx) => {

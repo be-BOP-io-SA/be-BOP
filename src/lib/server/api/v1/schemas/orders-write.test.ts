@@ -231,6 +231,18 @@ describe('ordersWriteRequestSchema', () => {
 		).toBe(false);
 	});
 
+	it('accepts notifications as a boolean, and only as a boolean', () => {
+		for (const notifications of [false, true]) {
+			expect(
+				ordersWriteRequestSchema.safeParse({ orders: [{ ...validOrder, notifications }] }).success
+			).toBe(true);
+		}
+		expect(
+			ordersWriteRequestSchema.safeParse({ orders: [{ ...validOrder, notifications: 'false' }] })
+				.success
+		).toBe(false);
+	});
+
 	it('rejects unknown root keys via .strict()', () => {
 		expect(
 			ordersWriteRequestSchema.safeParse({

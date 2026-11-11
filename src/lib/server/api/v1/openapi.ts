@@ -131,7 +131,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					'Order label ids to put on the order. A label the shop does not have is dropped and ' +
 					'reported as a LABEL_MISSING warning — the sale still gets written.'
 			},
-			notes: { type: 'string', maxLength: 5000 }
+			notes: { type: 'string', maxLength: 5000 },
+			notifications: {
+				type: 'boolean',
+				description:
+					'`false`: be-BOP notifies nobody about this order — neither the customer nor the shop, ' +
+					'whatever notifications the shop has turned on. Absent: the shop’s usual notifications. ' +
+					'Webhooks and event streams are not notifications and still carry the order.'
+			}
 		}
 	};
 
@@ -1688,6 +1695,12 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 								'of now is a bug, while a sale in the past is a late batch and is accepted however ' +
 								'old. The window is wide enough to absorb any timezone misconfiguration (at most ' +
 								'14 hours) or daylight-saving shift.'
+						},
+						notifications: {
+							type: 'boolean',
+							description:
+								'`false`: be-BOP notifies nobody about this sale, neither the customer nor the ' +
+								'shop. Absent: the shop’s usual notifications.'
 						}
 					}
 				},

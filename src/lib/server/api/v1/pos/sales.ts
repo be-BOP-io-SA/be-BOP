@@ -41,7 +41,8 @@ export function toOrderWriteCommand(sale: PosSale): OrderWriteCommand {
 			amountMinor: sale.totalPrice.amountMinor,
 			currency,
 			posLabel: sale.method
-		}
+		},
+		...(sale.notifications !== undefined && { notifications: sale.notifications })
 	};
 }
 

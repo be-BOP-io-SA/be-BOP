@@ -399,6 +399,12 @@ export interface Order extends Timestamps {
 	externalOrderId?: string;
 	/** ApiKey._id that created this order via /api/v1/orders. */
 	externalSourceApiKeyId?: ObjectId;
+	/**
+	 * Set when the order was written through the public API with `notifications: false`: nobody is
+	 * notified about its payments — neither the customer nor the shop's own copies. Webhooks and the
+	 * API's event streams are not notifications and still see the order.
+	 */
+	skipNotifications?: boolean;
 }
 interface SimplifiedOrderPayment {
 	id: string;

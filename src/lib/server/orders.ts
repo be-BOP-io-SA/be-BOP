@@ -817,6 +817,8 @@ export async function createOrder(
 		externalOrderId?: string;
 		externalSourceApiKeyId?: ObjectId;
 		orderLabelIds?: string[];
+		/** Notify nobody about this order's payments, neither the customer nor the shop. */
+		skipNotifications?: boolean;
 		/** When provided, used as Order.createdAt at insert instead of new Date(). */
 		createdAt?: Date;
 	}
@@ -1868,7 +1870,8 @@ export async function createOrder(
 			...(params.externalSourceApiKeyId && {
 				externalSourceApiKeyId: params.externalSourceApiKeyId
 			}),
-			...(params.orderLabelIds?.length && { orderLabelIds: params.orderLabelIds })
+			...(params.orderLabelIds?.length && { orderLabelIds: params.orderLabelIds }),
+			...(params.skipNotifications && { skipNotifications: true })
 		};
 		await collections.orders.insertOne(order, { session });
 
