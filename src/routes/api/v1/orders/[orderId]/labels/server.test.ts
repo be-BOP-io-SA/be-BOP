@@ -148,6 +148,28 @@ describe('POST /api/v1/orders/[orderId]/labels', () => {
 		});
 	});
 
+	it('accepts a named CSS color', async () => {
+		const res = await call({ body: { labelId: 'cashless', color: 'orange' } });
+		expect(res.status).toBe(200);
+		expect(addOrderLabel).toHaveBeenCalledWith(
+			expect.objectContaining({ label: expect.objectContaining({ color: 'orange' }) })
+		);
+	});
+
+	it('refuses a color that is neither hexadecimal nor a named CSS color', async () => {
+		for (const color of [
+			'notacolor',
+			'rgb(0, 0, 0)',
+			'#ff',
+			'background: url(https://x.example/a.png)'
+		]) {
+			const res = await call({ body: { labelId: 'cashless', color } });
+			expect(res.status).toBe(400);
+			await expect(res.json()).resolves.toMatchObject({ error: { code: 'VALIDATION_ERROR' } });
+		}
+		expect(addOrderLabel).not.toHaveBeenCalled();
+	});
+
 	it('400s on a label id that could not be created', async () => {
 		addOrderLabel.mockResolvedValue({ ok: false, reason: 'INVALID_LABEL_ID' });
 		const res = await call();

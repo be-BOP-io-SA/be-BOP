@@ -3,6 +3,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { adminPrefix } from '$lib/server/admin';
 import { MAX_NAME_LIMIT } from '$lib/types/Product';
+import { zodLabelColor } from '$lib/server/zod';
 
 export async function load({ params }) {
 	const label = await collections.labels.findOne({
@@ -32,7 +33,7 @@ export const actions = {
 		const parsed = z
 			.object({
 				name: z.string().min(1).max(MAX_NAME_LIMIT),
-				color: z.string().trim().min(1).max(100),
+				color: zodLabelColor(),
 				icon: z.string().trim().min(1).max(100)
 			})
 			.parse(Object.fromEntries(data));
