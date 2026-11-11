@@ -80,6 +80,13 @@
 									>
 										{key.name}
 									</a>
+									{#if key.suspiciousAt}
+										<span
+											class="ml-2 rounded bg-red-100 text-red-700 px-1.5 py-0.5 text-xs font-medium whitespace-nowrap"
+										>
+											⚠ {t('admin.apiKeys.suspicious')}
+										</span>
+									{/if}
 								</td>
 								<td class="py-2.5 pr-3 font-mono text-xs opacity-80">{key.keyPrefix}…</td>
 								<td class="py-2.5 pr-3 {statusClass(key)}">{statusLabel(key)}</td>

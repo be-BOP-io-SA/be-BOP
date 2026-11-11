@@ -165,3 +165,11 @@ const HEX_COLOR = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 export function isLabelColor(value: string): boolean {
 	return HEX_COLOR.test(value) || CSS_NAMED_COLORS.has(value.toLowerCase());
 }
+
+/**
+ * Whether a label color carries a CSS declaration (`property: value`) or a `url(`: the shape of an
+ * attempt to style the page or load something through the color, rather than a typo.
+ */
+export function carriesCssDeclaration(value: string): boolean {
+	return /[a-z-]+\s*:|url\s*\(/i.test(value);
+}

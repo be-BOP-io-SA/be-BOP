@@ -5,6 +5,8 @@ import { apiError } from '$lib/server/api/v1/errors';
 import { checkRateLimit } from '$lib/server/rateLimit';
 import { addOrderLabel } from '$lib/server/api/v1/orders/addLabel';
 import { zodLabelColor } from '$lib/server/zod';
+import { reportSuspiciousCall } from '$lib/server/api/suspicious';
+import { carriesCssDeclaration, isLabelColor } from '$lib/utils/labelColor';
 import { z } from 'zod';
 
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
@@ -59,6 +61,20 @@ export const POST: RequestHandler = apiV1Handler(async (event) => {
 		body = await event.request.json();
 	} catch {
 		return apiError(400, 'VALIDATION_ERROR', 'Request body must be JSON');
+	}
+
+	// Checked before the schema, which refuses the color either way: a declaration in it is not a
+	// typo, and the key that sent it is flagged for the shop to look at.
+	const sentColor = (body as { color?: unknown } | null)?.color;
+	if (typeof sentColor === 'string') {
+		const color = sentColor.trim();
+		if (!isLabelColor(color) && carriesCssDeclaration(color)) {
+			await reportSuspiciousCall(apiKey._id, {
+				type: 'labelColorCss',
+				call: 'POST /api/v1/orders/{orderId}/labels',
+				detail: color
+			});
+		}
 	}
 
 	const parsed = addLabelSchema.safeParse(body);

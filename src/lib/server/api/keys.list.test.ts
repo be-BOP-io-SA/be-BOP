@@ -60,6 +60,7 @@ describe('listApiKeys', () => {
 				'scopes',
 				'streamLifetimeSeconds',
 				'suspendedAt',
+				'suspiciousAt',
 				'updatedAt'
 			].sort()
 		);
