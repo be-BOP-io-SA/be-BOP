@@ -57,7 +57,7 @@ export async function addOrderNote(params: {
 					userAlias: apiNoteAlias(params.keyName)
 				}
 			},
-			$set: { updatedAt: new Date() }
+			$set: { annotatedAt: new Date() }
 		},
 		{ returnDocument: 'after', projection: { notes: 1 } }
 	);
