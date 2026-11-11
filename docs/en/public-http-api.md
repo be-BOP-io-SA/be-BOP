@@ -47,7 +47,15 @@ Stable DTO: id, aliases, type, translated name/shortDescription, price in **mino
 
 ## Orders write
 
-See [v1 orders write](./api/v1-orders-write.md). Batch, idempotent on `(apiKey, externalOrderId)`.
+See [v1 orders write](./api/v1-orders-write.md). Batch; one call, one order. An `externalOrderId` the key already sent is refused, unless the key accepts several orders per id.
+
+## Order streams
+
+Three Server-Sent Events streams, each with the `orders:stream` scope. They carry what happens from the moment they open and resume after the last event received (`Last-Event-ID`, a signed cursor); the history is read from the listings.
+
+- `GET /api/v1/orders/paid/stream`: a sale once it is paid, announced once.
+- `GET /api/v1/orders/stream`: every order on each change of the order itself — created pending, paid, failed, cancelled, expired.
+- `GET /api/v1/orders/updates/stream`: a note or a label put on an order, or its personal data erased — and only that.
 
 ## Paid-orders read (poll)
 
