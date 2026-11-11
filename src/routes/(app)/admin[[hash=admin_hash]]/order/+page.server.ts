@@ -11,6 +11,9 @@ import type { Filter } from 'mongodb';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
+/** More rows than an admin would ever fill; anything beyond is ignored. */
+const MAX_CUSTOM_FIELD_FILTERS = 20;
+
 export async function load({ url, locals }) {
 	const methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions, includePOS: true });
 
@@ -24,21 +27,39 @@ export async function load({ url, locals }) {
 		label: z.string().optional(),
 		npub: z.string().optional(),
 		employeeAlias: z.string().optional(),
-		posSubtype: z.string().optional(),
-		customFields: z
-			.array(z.object({ slug: z.string().trim(), value: z.string().trim() }))
-			.optional()
-			.default([])
+		posSubtype: z.string().optional()
+	});
+	const customFieldRowSchema = z.object({
+		slug: z.string().trim().optional().default(''),
+		value: z.string().trim().optional().default('')
 	});
 
+	// The custom field rows are read key by key, `customFields[n].slug` and
+	// `customFields[n].value` only, with `n` bounded: a gap in the numbering or an arbitrary index
+	// in the URL must not reach the generic parser.
 	const searchParams: JsonObject = {};
+	const customFieldRows = new Map<number, Record<string, string>>();
 	for (const [key, value] of url.searchParams) {
+		const match = /^customFields\[(\d{1,2})\]\.(slug|value)$/.exec(key);
+		if (match) {
+			const index = Number(match[1]);
+			if (index < MAX_CUSTOM_FIELD_FILTERS) {
+				customFieldRows.set(index, { ...customFieldRows.get(index), [match[2]]: value });
+			}
+			continue;
+		}
+		if (key.startsWith('customFields')) {
+			continue;
+		}
 		set(searchParams, key, value);
 	}
 	const result = querySchema.parse(searchParams);
 
 	// A row left half empty filters nothing.
-	const customFieldFilters = result.customFields.filter((filter) => filter.slug && filter.value);
+	const customFieldFilters = [...customFieldRows.entries()]
+		.sort(([a], [b]) => a - b)
+		.map(([, row]) => customFieldRowSchema.parse(row))
+		.filter((filter) => filter.slug && filter.value);
 	const {
 		skip,
 		orderNumber,
