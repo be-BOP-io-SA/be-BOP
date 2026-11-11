@@ -194,6 +194,12 @@
 			<span class="text-sm opacity-70">{t('admin.apiKeys.streamLifetimeSecondsHint')}</span>
 		</label>
 
+		<label class="checkbox-label">
+			<input type="checkbox" name="ownOrdersOnly" class="form-checkbox" />
+			{t('admin.apiKeys.ownOrdersOnly')}
+		</label>
+		<p class="text-sm opacity-70">{t('admin.apiKeys.ownOrdersOnlyHint')}</p>
+
 		{#if form?.error}
 			<p class="text-red-600">{t('admin.apiKeys.createError')}</p>
 			{#each form.error.formErrors ?? [] as formError}

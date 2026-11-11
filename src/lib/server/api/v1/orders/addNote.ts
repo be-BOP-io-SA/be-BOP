@@ -1,4 +1,5 @@
 import { collections } from '$lib/server/database';
+import type { ObjectId } from 'mongodb';
 import { CUSTOMER_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
 import { API_ORDER_SELLER_ALIAS } from './seller';
 
@@ -40,9 +41,11 @@ export function toOrderNoteDto(note: {
 export async function addOrderNote(params: {
 	orderId: string;
 	content: string;
+	/** Set to an API key id, only an order written with that key is annotated; any other is not found. */
+	ownedBy?: ObjectId;
 }): Promise<AddNoteResult> {
 	const updated = await collections.orders.findOneAndUpdate(
-		{ _id: params.orderId },
+		{ _id: params.orderId, ...(params.ownedBy && { externalSourceApiKeyId: params.ownedBy }) },
 		{
 			$push: {
 				notes: {

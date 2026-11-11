@@ -35,7 +35,8 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		label: url.searchParams.get('label') ?? undefined,
 		seller: url.searchParams.get('seller') ?? undefined,
 		externalOrderId: url.searchParams.get('externalOrderId') ?? undefined,
-		apiKeyId: apiKey._id
+		apiKeyId: apiKey._id,
+		ownOrdersOnly: apiKey.ownOrdersOnly
 	});
 	if ('error' in result) {
 		return apiError(400, 'VALIDATION_ERROR', result.error.message, {

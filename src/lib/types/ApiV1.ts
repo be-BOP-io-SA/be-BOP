@@ -93,6 +93,8 @@ export type AuthenticatedApiKey = {
 	maxConcurrentStreams?: number;
 	/** Seconds a stream of this key stays open. Undefined means the server never closes it. */
 	streamLifetimeSeconds?: number;
+	/** The key only reaches the orders it wrote itself. Undefined means every order. */
+	ownOrdersOnly?: boolean;
 };
 
 /** Resource prefix of a scope (`orders:read` → `orders`). */
