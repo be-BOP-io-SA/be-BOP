@@ -11,9 +11,24 @@ export const SSE_RETRY_MS = 5_000;
 export const BACKFILL_BATCH = 200;
 
 /**
+ * Which share of the orders a stream follows.
+ *
+ * `paid`: orders with a paid payment, on each change of the order itself. `all`: every order, on
+ * each change of the order itself. `annotations`: every order, each time a note or a label is put on
+ * it or its personal data is erased — and only then.
+ */
+export type OrderFeed = 'paid' | 'all' | 'annotations';
+
+/** The date a feed resumes on: annotations move `annotatedAt`, every other write `updatedAt`. */
+function feedDateField(feed: OrderFeed): 'updatedAt' | 'annotatedAt' {
+	return feed === 'annotations' ? 'annotatedAt' : 'updatedAt';
+}
+
+/**
  * Resume position.
  *
- * Keyed on `updatedAt`, which moves forward when a payment is confirmed. Not on `_id`: an order
+ * Keyed on `updatedAt` (`annotatedAt` for the annotations feed), which moves forward when a payment
+ * is confirmed. Not on `_id`: an order
  * `_id` is a crypto UUID and sorts at random, so it cannot express "everything after this point".
  * `orderId` breaks ties inside the same millisecond.
  */
@@ -40,8 +55,8 @@ export function parseStreamCursor(raw: string | null | undefined): PaidStreamCur
 	return { ms, orderId };
 }
 
-export function orderStreamCursor(order: Order): PaidStreamCursor {
-	const at = order.updatedAt ?? order.createdAt;
+export function orderStreamCursor(order: Order, feed: OrderFeed = 'paid'): PaidStreamCursor {
+	const at = (feed === 'annotations' ? order.annotatedAt : order.updatedAt) ?? order.createdAt;
 	return { ms: at.getTime(), orderId: order._id };
 }
 
@@ -122,12 +137,15 @@ export type PaidStreamFrame = { cursor: PaidStreamCursor; order: Order };
  * Where an order sits in the stream, for a caller resuming by order id rather than by cursor.
  * Null for an unknown id — the caller then starts at the live edge.
  */
-export async function findOrderCursor(orderId: string): Promise<PaidStreamCursor | null> {
+export async function findOrderCursor(
+	orderId: string,
+	feed: OrderFeed = 'paid'
+): Promise<PaidStreamCursor | null> {
 	const doc = await collections.orders.findOne(
 		{ _id: orderId },
-		{ projection: { updatedAt: 1, createdAt: 1 } }
+		{ projection: { updatedAt: 1, annotatedAt: 1, createdAt: 1 } }
 	);
-	return doc ? orderStreamCursor(doc as Order) : null;
+	return doc ? orderStreamCursor(doc as Order, feed) : null;
 }
 
 /**
@@ -139,11 +157,13 @@ export async function findOrderCursor(orderId: string): Promise<PaidStreamCursor
 export async function* iteratePaidOrderBacklog(opts: {
 	since: Date | null;
 	after: PaidStreamCursor | null;
-	/** Replay every order rather than only those with a paid payment. */
-	anyStatus?: boolean;
+	/** Which orders to replay. Paid ones when absent. */
+	feed?: OrderFeed;
 	/** Only the orders written with this API key. Undefined means every order. */
 	ordersOfKey?: ObjectId;
 }): AsyncGenerator<PaidStreamFrame> {
+	const feed = opts.feed ?? 'paid';
+	const field = feedDateField(feed);
 	const floor = Math.max(opts.since?.getTime() ?? 0, opts.after?.ms ?? 0);
 	let lowerBoundMs = floor;
 	let after = opts.after;
@@ -151,18 +171,18 @@ export async function* iteratePaidOrderBacklog(opts: {
 	for (;;) {
 		const docs = await collections.orders
 			.find({
-				...(opts.anyStatus ? {} : { 'payments.status': 'paid' }),
+				...(feed === 'paid' && { 'payments.status': 'paid' }),
 				...(opts.ordersOfKey && { externalSourceApiKeyId: opts.ordersOfKey }),
-				updatedAt: { $gte: new Date(lowerBoundMs) }
+				[field]: { $gte: new Date(lowerBoundMs) }
 			})
-			.sort({ updatedAt: 1, _id: 1 })
+			.sort({ [field]: 1, _id: 1 })
 			.limit(BACKFILL_BATCH)
 			.toArray();
 
 		let advanced = false;
 		for (const doc of docs) {
 			const order = doc as Order;
-			const cursor = orderStreamCursor(order);
+			const cursor = orderStreamCursor(order, feed);
 			if (after && compareCursors(cursor, after) <= 0) {
 				continue;
 			}

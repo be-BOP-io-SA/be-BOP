@@ -135,7 +135,7 @@ describe('/api/v1/pos/orders', () => {
 			});
 		});
 
-		it('reads since_ts as epoch seconds, like the stream', async () => {
+		it('reads since_ts as epoch seconds', async () => {
 			await callGet({ query: '?since_ts=1735689600' });
 			expect(listPosPaidOrders.mock.calls[0][0].since).toEqual(new Date('2025-01-01T00:00:00Z'));
 		});
