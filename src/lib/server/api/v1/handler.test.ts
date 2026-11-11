@@ -117,7 +117,7 @@ describe('apiV1Handler call journal', () => {
 	beforeEach(() => {
 		write = vi.spyOn(logModule, 'logApiV1Event').mockImplementation(() => undefined);
 		runtimeConfig.apiV1Log = {
-			maxEntries: 10_000,
+			maxSizeMb: null,
 			logSuccesses: true,
 			logErrors: true,
 			logUnauthenticated: false
