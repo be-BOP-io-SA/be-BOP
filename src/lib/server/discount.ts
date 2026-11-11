@@ -47,11 +47,19 @@ export async function getActivePercentageDiscounts(): Promise<Discount[]> {
  * Each non-empty condition must pass. Empty/undefined = "true" (no filter).
  */
 export function evaluateDiscountConditions(discount: Discount, ctx: DiscountContext): boolean {
-	if (
-		discount.subscriptionIds?.length &&
-		!discount.subscriptionIds.some((id) => ctx.userSubscriptionIds.includes(id))
-	) {
-		return false;
+	if (discount.subscriptionIds?.length) {
+		const hasActiveSubscription = discount.subscriptionIds.some((id) =>
+			ctx.userSubscriptionIds.includes(id)
+		);
+		// Buying the subscription right now counts, when the shop allows it: otherwise a new
+		// customer has to order the membership, come back logged in, and order again (#2718).
+		const isSubscribingNow =
+			!!discount.acceptSubscriptionInCart &&
+			discount.subscriptionIds.some((id) => ctx.cartItems.some((item) => item.productId === id));
+
+		if (!hasActiveSubscription && !isSubscribingNow) {
+			return false;
+		}
 	}
 
 	if (discount.promoCode && discount.promoCode.toLowerCase() !== ctx.promoCode?.toLowerCase()) {
@@ -149,8 +157,12 @@ function computeDiscountSavings(
 	discount: PercentageDiscount,
 	items: SelectBestItem[]
 ): DiscountSavings {
-	const eligibleItems = items.filter((item) =>
-		discountTargetsProduct(discount, { _id: item.product._id, tagIds: item.product.tagIds })
+	const eligibleItems = items.filter(
+		(item) =>
+			// A discount brought by a subscription never discounts that subscription itself, whether
+			// it is already held or bought in the same order.
+			!discount.subscriptionIds?.includes(item.product._id) &&
+			discountTargetsProduct(discount, { _id: item.product._id, tagIds: item.product.tagIds })
 	);
 
 	const discountByProduct = new Map(
