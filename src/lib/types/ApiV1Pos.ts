@@ -106,8 +106,10 @@ export type PosSaleStatus = (typeof POS_SALE_STATUSES)[number];
 /**
  * Outcome of one pushed sale.
  *
- * `success`: an order was created, or an equivalent one already existed under this reference.
- * `conflict`: the reference was already ingested by a *different* order, and `orderUrl` points at it.
+ * `success`: an order was created for this sale.
+ * `conflict`: the reference was already received from this API key. Nothing was written, and
+ * `orderUrl` points at the order that holds the reference. A key that accepts several orders with
+ * the same external id never gets one: each of its sales is written as its own order.
  *
  * A sale that produced no order has neither status: both require an `orderUrl`. It fails the whole
  * request instead, as a `PosSaleRejection` when the shop refused it and as a 500 otherwise.
@@ -137,7 +139,7 @@ export type PosSaleRejection = {
 	details?: Record<string, unknown>;
 	/**
 	 * References of the same batch that did land before the request failed. They are on file; the
-	 * caller re-pushes the corrected batch whole, and reference idempotency makes these a no-op.
+	 * caller re-pushes the corrected batch whole, and these come back as `conflict`, written once.
 	 */
 	ingested: string[];
 };

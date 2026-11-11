@@ -3,6 +3,7 @@ import {
 	revokeApiKey,
 	serializeApiKeyPublic,
 	setApiKeySuspended,
+	updateApiKeyAcceptDuplicateExternalOrderIds,
 	updateApiKeyOwnOrdersOnly,
 	updateApiKeyStreamSettings
 } from '$lib/server/api/keys';
@@ -191,6 +192,32 @@ export const actions: Actions = {
 			streamSettingsSaved: false,
 			streamsReset: false,
 			orderAccessSaved: true,
+			error: null
+		};
+	},
+
+	/** Let the key create several orders with the same external id, or refuse a repeated id again. */
+	saveOrderWriting: async ({ locals, params, request }) => {
+		assertSuperAdmin(locals);
+
+		if (!ObjectId.isValid(params.id)) {
+			throw error(404, 'API key not found');
+		}
+
+		const formData = await request.formData();
+		const updated = await updateApiKeyAcceptDuplicateExternalOrderIds(
+			params.id,
+			!!formData.get('acceptDuplicateExternalOrderIds')
+		);
+		if (!updated) {
+			throw error(404, 'API key not found');
+		}
+
+		return {
+			alreadyRevoked: false,
+			streamSettingsSaved: false,
+			streamsReset: false,
+			orderWritingSaved: true,
 			error: null
 		};
 	},

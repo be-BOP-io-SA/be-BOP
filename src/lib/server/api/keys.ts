@@ -36,6 +36,7 @@ export async function createApiKey(opts: {
 	maxConcurrentStreams?: number | null;
 	streamLifetimeSeconds?: number | null;
 	ownOrdersOnly?: boolean;
+	acceptDuplicateExternalOrderIds?: boolean;
 }): Promise<{ apiKey: ApiKey; secret: string }> {
 	assertScopes(opts.scopes);
 	const secret = generateApiKeySecret();
@@ -51,6 +52,7 @@ export async function createApiKey(opts: {
 		...(opts.maxConcurrentStreams && { maxConcurrentStreams: opts.maxConcurrentStreams }),
 		...(opts.streamLifetimeSeconds && { streamLifetimeSeconds: opts.streamLifetimeSeconds }),
 		...(opts.ownOrdersOnly && { ownOrdersOnly: true }),
+		...(opts.acceptDuplicateExternalOrderIds && { acceptDuplicateExternalOrderIds: true }),
 		createdAt: now,
 		updatedAt: now
 	};
@@ -175,6 +177,24 @@ export async function updateApiKeyOwnOrdersOnly(
 	return (await collections.apiKeys.countDocuments({ _id }, { limit: 1 })) ? false : null;
 }
 
+/**
+ * Let one key create several orders with the same external id, or refuse a repeated id again.
+ * Returns false when no key carries that id.
+ */
+export async function updateApiKeyAcceptDuplicateExternalOrderIds(
+	id: ObjectId | string,
+	accept: boolean
+): Promise<boolean> {
+	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	const result = await collections.apiKeys.updateOne(
+		{ _id },
+		accept
+			? { $set: { acceptDuplicateExternalOrderIds: true, updatedAt: new Date() } }
+			: { $unset: { acceptDuplicateExternalOrderIds: '' }, $set: { updatedAt: new Date() } }
+	);
+	return result.matchedCount > 0;
+}
+
 export async function touchApiKey(id: ObjectId, at = new Date()): Promise<void> {
 	await collections.apiKeys.updateOne({ _id: id }, { $set: { lastUsedAt: at, updatedAt: at } });
 }
@@ -193,6 +213,7 @@ const API_KEY_PUBLIC_PROJECTION = {
 	maxConcurrentStreams: 1,
 	streamLifetimeSeconds: 1,
 	ownOrdersOnly: 1,
+	acceptDuplicateExternalOrderIds: 1,
 	expiresAt: 1,
 	revokedAt: 1,
 	suspendedAt: 1,
@@ -233,6 +254,7 @@ export function serializeApiKeyPublic(k: ApiKeyPublic) {
 		maxConcurrentStreams: k.maxConcurrentStreams ?? null,
 		streamLifetimeSeconds: k.streamLifetimeSeconds ?? null,
 		ownOrdersOnly: !!k.ownOrdersOnly,
+		acceptDuplicateExternalOrderIds: !!k.acceptDuplicateExternalOrderIds,
 		expiresAt: k.expiresAt ?? null,
 		revokedAt: k.revokedAt ?? null,
 		suspendedAt: k.suspendedAt ?? null,

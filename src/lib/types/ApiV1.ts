@@ -33,14 +33,19 @@ export const API_V1_WARNING_CODES = [
 	'PAYMENT_SYNC_FAILED',
 	/** The till sent a price that differs from what be-BOP would have charged. */
 	'PRICE_OVERRIDE',
-	/** A replay of a known externalOrderId carried a different payload. */
-	'DUPLICATE_PAYLOAD_MISMATCH',
 	/** A label the payload asked for does not exist in the shop. The order is written without it. */
 	'LABEL_MISSING'
 ] as const;
 export type ApiV1WarningCode = (typeof API_V1_WARNING_CODES)[number];
 
-export const API_V1_RESULT_STATUSES = ['created', 'duplicate', 'failed'] as const;
+/**
+ * One call, one order: there is no status for a replay. An `externalOrderId` the key already sent is
+ * `failed` with the `DUPLICATE_EXTERNAL_ORDER_ID` error, unless the key accepts several orders per id.
+ */
+export const API_V1_RESULT_STATUSES = ['created', 'failed'] as const;
+
+/** Per-command error code of an order write whose `externalOrderId` this key already sent. */
+export const API_V1_DUPLICATE_EXTERNAL_ORDER_ID = 'DUPLICATE_EXTERNAL_ORDER_ID';
 export type ApiV1ResultStatus = (typeof API_V1_RESULT_STATUSES)[number];
 
 export const API_V1_BATCH_STATUSES = ['ok', 'ok_with_warnings', 'ok_with_errors'] as const;
@@ -95,6 +100,8 @@ export type AuthenticatedApiKey = {
 	streamLifetimeSeconds?: number;
 	/** The key only reaches the orders it wrote itself. Undefined means every order. */
 	ownOrdersOnly?: boolean;
+	/** Each write creates its own order, even on an `externalOrderId` already received. */
+	acceptDuplicateExternalOrderIds?: boolean;
 };
 
 /** Resource prefix of a scope (`orders:read` → `orders`). */

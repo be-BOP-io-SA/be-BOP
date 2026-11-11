@@ -227,6 +227,30 @@
 		</form>
 	</section>
 
+	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-4">
+		<h2 class="text-2xl">{t('admin.apiKeys.orderWritingTitle')}</h2>
+		<form method="post" action="?/saveOrderWriting" class="flex flex-col gap-3">
+			<label class="checkbox-label">
+				<input
+					type="checkbox"
+					name="acceptDuplicateExternalOrderIds"
+					class="form-checkbox"
+					checked={data.key.acceptDuplicateExternalOrderIds}
+				/>
+				{t('admin.apiKeys.acceptDuplicateExternalOrderIds')}
+			</label>
+			<p class="text-sm opacity-70">{t('admin.apiKeys.acceptDuplicateExternalOrderIdsHint')}</p>
+			{#if form?.orderWritingSaved}
+				<p class="text-sm text-green-700">{t('admin.apiKeys.orderWritingSaved')}</p>
+			{/if}
+			<input
+				type="submit"
+				class="btn btn-blue self-start w-auto text-white text-base"
+				value={t('admin.apiKeys.orderWritingSave')}
+			/>
+		</form>
+	</section>
+
 	{#if form?.alreadyRevoked}
 		<p class="text-sm text-orange-600">{t('admin.apiKeys.statusRevoked')}</p>
 	{/if}
