@@ -14,8 +14,8 @@ function sale(overrides?: Record<string, unknown>): unknown {
 		externalOrderId: 'sale-1',
 		soldAt: at(0),
 		method: 'cashless',
-		totalPrice: { amount: 12.5, currency: 'CHF' },
-		items: [{ product: 'tartiflette', quantity: 1, price: { amount: 12.5, currency: 'CHF' } }],
+		totalPrice: { amountMinor: 1250, currency: 'CHF' },
+		items: [{ product: 'tartiflette', quantity: 1, price: { amountMinor: 1250, currency: 'CHF' } }],
 		...overrides
 	};
 }
@@ -24,7 +24,7 @@ function line(overrides?: Record<string, unknown>): unknown {
 	return {
 		product: 'tartiflette',
 		quantity: 1,
-		price: { amount: 1, currency: 'CHF' },
+		price: { amountMinor: 100, currency: 'CHF' },
 		...overrides
 	};
 }
@@ -163,14 +163,27 @@ describe('posSalesRequestSchema', () => {
 	});
 
 	describe('prices', () => {
-		it('accepts a decimal amount — these are major units, not minor', () => {
-			expect(accepts([sale({ totalPrice: { amount: 12.5, currency: 'CHF' } })])).toBe(true);
+		it('accepts an integer amount in minor units', () => {
+			expect(accepts([sale({ totalPrice: { amountMinor: 1250, currency: 'CHF' } })])).toBe(true);
+		});
+
+		it('rejects a decimal amount — these are minor units, as on /api/v1/orders', () => {
+			expect(firstIssuePath([sale({ totalPrice: { amountMinor: 12.5, currency: 'CHF' } })])).toBe(
+				'0.totalPrice.amountMinor'
+			);
+			expect(
+				firstIssuePath([sale({ items: [line({ price: { amountMinor: 0.5, currency: 'CHF' } })] })])
+			).toBe('0.items.0.price.amountMinor');
+		});
+
+		it('rejects an amount still given in major units under its old name', () => {
+			expect(accepts([sale({ totalPrice: { amount: 12.5, currency: 'CHF' } })])).toBe(false);
 		});
 
 		it('rejects zero and negative amounts', () => {
-			for (const amount of [0, -1]) {
-				expect(firstIssuePath([sale({ totalPrice: { amount, currency: 'CHF' } })])).toBe(
-					'0.totalPrice.amount'
+			for (const amountMinor of [0, -1]) {
+				expect(firstIssuePath([sale({ totalPrice: { amountMinor, currency: 'CHF' } })])).toBe(
+					'0.totalPrice.amountMinor'
 				);
 			}
 		});
@@ -179,29 +192,29 @@ describe('posSalesRequestSchema', () => {
 			expect(
 				accepts([
 					sale({
-						totalPrice: { amount: 1, currency: 'EUR' },
-						items: [line({ price: { amount: 1, currency: 'EUR' } })]
+						totalPrice: { amountMinor: 100, currency: 'EUR' },
+						items: [line({ price: { amountMinor: 100, currency: 'EUR' } })]
 					})
 				])
 			).toBe(true);
 		});
 
 		it('rejects a currency be-BOP does not know', () => {
-			expect(accepts([sale({ totalPrice: { amount: 1, currency: 'chf' } })])).toBe(false);
+			expect(accepts([sale({ totalPrice: { amountMinor: 100, currency: 'chf' } })])).toBe(false);
 		});
 
 		it('rejects a price carrying the storage precision field', () => {
-			expect(accepts([sale({ totalPrice: { amount: 1, currency: 'CHF', precision: 8 } })])).toBe(
-				false
-			);
+			expect(
+				accepts([sale({ totalPrice: { amountMinor: 100, currency: 'CHF', precision: 8 } })])
+			).toBe(false);
 		});
 
 		it('requires every line to match the total currency', () => {
 			expect(
 				firstIssuePath([
 					sale({
-						totalPrice: { amount: 2, currency: 'CHF' },
-						items: [line(), line({ price: { amount: 1, currency: 'EUR' } })]
+						totalPrice: { amountMinor: 200, currency: 'CHF' },
+						items: [line(), line({ price: { amountMinor: 100, currency: 'EUR' } })]
 					})
 				])
 			).toBe('0.items.1.price.currency');
@@ -211,8 +224,8 @@ describe('posSalesRequestSchema', () => {
 			expect(
 				issuePaths([
 					sale({
-						totalPrice: { amount: 1, currency: 'CHF' },
-						items: [line({ price: { amount: 1, currency: 'EUR' } })]
+						totalPrice: { amountMinor: 100, currency: 'CHF' },
+						items: [line({ price: { amountMinor: 100, currency: 'EUR' } })]
 					})
 				])
 			).toEqual(['0.items.0.price.currency']);
@@ -222,7 +235,7 @@ describe('posSalesRequestSchema', () => {
 			// Deliberate: discounts, rounding and PWYW all break the sum, and the write path reports
 			// a divergence as AMOUNT_MISMATCH rather than refusing the sale.
 			expect(
-				accepts([sale({ totalPrice: { amount: 999, currency: 'CHF' }, items: [line()] })])
+				accepts([sale({ totalPrice: { amountMinor: 99900, currency: 'CHF' }, items: [line()] })])
 			).toBe(true);
 		});
 	});

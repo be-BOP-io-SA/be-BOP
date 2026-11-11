@@ -153,8 +153,9 @@ describe('buildOpenApiDocument', () => {
 
 	it('keeps the PoS wire shapes distinct from the general API ones', () => {
 		const schemas = buildOpenApiDocument().components.schemas;
-		// Major units on the seam, minor units everywhere else.
-		expect(schemas.PosPrice.properties.amount.type).toBe('number');
+		// Minor units on the seam, as everywhere else.
+		expect(schemas.PosPrice.properties.amountMinor.type).toBe('integer');
+		expect(schemas.PosPrice.required).toEqual(['amountMinor', 'currency']);
 		expect(schemas.AmountMinor.type).toBe('integer');
 		// Slug, which PosSaleItem.product refers back to.
 		expect(schemas.PosCatalogProduct.required).toContain('slug');

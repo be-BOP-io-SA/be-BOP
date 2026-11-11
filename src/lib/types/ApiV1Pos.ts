@@ -3,13 +3,13 @@
  *
  * Separate from `$lib/types/ApiV1` because a till needs different shapes, not because a particular
  * integration asked: whole documents rather than paginated envelopes, since a register syncs its
- * catalog wholesale; be-BOP `Price` in major units, since a register displays amounts rather than
- * computing on them; and payloads carrying only what a register acts on.
+ * catalog wholesale; and payloads carrying only what a register acts on. Amounts are integers in
+ * minor units, as everywhere else in `/api/v1`.
  */
 
-/** be-BOP `Price` on the wire, without the storage `precision` field. Major units. */
+/** A price on the wire: an integer amount in minor units (`1250` in CHF is 12.50 CHF). */
 export type PosPrice = {
-	amount: number;
+	amountMinor: number;
 	currency: string;
 };
 
@@ -53,7 +53,7 @@ export type PosPaidOrderEvent = {
 	 * Snapshotted on the order at payment time, not recomputed: a rate that changed since is not
 	 * the rate that was charged, and #2695 signs these figures into an append-only chain.
 	 */
-	vat?: Array<{ rate: number; amount: number }>;
+	vat?: Array<{ rate: number; amountMinor: number }>;
 };
 
 /** Mirrors be-BOP `ImageData`. Links point at be-BOP, never at object storage, and do not expire. */
