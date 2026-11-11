@@ -1,4 +1,5 @@
 import { collections } from '$lib/server/database';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import type { ApiV1LogEntry } from '$lib/types/ApiV1Log';
 import { ObjectId } from 'mongodb';
 
@@ -81,7 +82,57 @@ export type ApiV1LogDraft = Omit<ApiV1LogEntry, '_id' | 'createdAt'>;
 export function logApiV1Event(draft: ApiV1LogDraft): void {
 	void collections.apiV1Logs
 		.insertOne({ _id: new ObjectId(), createdAt: new Date(), ...draft })
+		.then(() => scheduleApiV1LogPrune())
 		.catch((err) => console.error('[api/v1] could not write the call log', err));
+}
+
+/** How often, at most, a server trims the journal back to its ceiling. */
+export const PRUNE_INTERVAL_MS = 60_000;
+
+let lastPruneAt = 0;
+let pruning = false;
+
+/**
+ * Trim after a write, once a minute at most: trimming on every call would double the cost of
+ * journaling. Between two trims the journal may run over its ceiling by a minute of calls.
+ */
+function scheduleApiV1LogPrune(): void {
+	const now = Date.now();
+	if (pruning || now - lastPruneAt < PRUNE_INTERVAL_MS) {
+		return;
+	}
+	pruning = true;
+	lastPruneAt = now;
+	void pruneApiV1Logs(runtimeConfig.apiV1Log.maxEntries)
+		.catch((err) => console.error('[api/v1] could not trim the call log', err))
+		.finally(() => {
+			pruning = false;
+		});
+}
+
+/**
+ * Remove the oldest entries past `maxEntries`, and return how many went.
+ *
+ * The count is the collection's own estimate: free to read, where counting the documents would
+ * scan the very collection that grew too large. Entries are cut by `_id`, which is unique and
+ * follows insertion order, so two calls in the same millisecond cannot blur the cut.
+ */
+export async function pruneApiV1Logs(maxEntries: number): Promise<number> {
+	const excess = (await collections.apiV1Logs.estimatedDocumentCount()) - maxEntries;
+	if (excess <= 0) {
+		return 0;
+	}
+	const cutoff = await collections.apiV1Logs
+		.find({}, { projection: { _id: 1 } })
+		.sort({ _id: 1 })
+		.skip(excess - 1)
+		.limit(1)
+		.next();
+	if (!cutoff) {
+		return 0;
+	}
+	const { deletedCount } = await collections.apiV1Logs.deleteMany({ _id: { $lte: cutoff._id } });
+	return deletedCount;
 }
 
 export type ApiV1LogQuery = {
