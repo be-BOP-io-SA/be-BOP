@@ -12,7 +12,6 @@ import {
 } from '$lib/server/seed/product';
 import type { AuthenticatedApiKey } from '$lib/types/ApiV1';
 import { writeBatch } from './writeBatch';
-import { writeOne } from './writeOne';
 import { API_ORDER_SELLER_ALIAS } from './seller';
 import { amountToMinor } from './money';
 import {
