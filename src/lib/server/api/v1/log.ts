@@ -1,7 +1,7 @@
 import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { ApiV1LogEntry } from '$lib/types/ApiV1Log';
-import { ObjectId } from 'mongodb';
+import { ObjectId, type AnyBulkWriteOperation } from 'mongodb';
 
 /**
  * How much of a body is kept — as much as is read, so that a body which reaches the log reaches it
@@ -68,6 +68,57 @@ export async function readBodyForLog(source: Request | Response): Promise<string
 		return text || undefined;
 	} catch {
 		return undefined;
+	}
+}
+
+/**
+ * The be-BOP orders a call concerns: the one named in its address, and every `orderId` found in
+ * its bodies, which is the name the API gives an order in everything it reads and writes.
+ */
+export function orderIdsOfCall(
+	pathOrderId: string | undefined,
+	bodies: Array<string | undefined>
+): string[] {
+	const ids = new Set<string>();
+	if (pathOrderId) {
+		ids.add(pathOrderId);
+	}
+	for (const body of bodies) {
+		const parsed = parseJson(body);
+		if (parsed !== undefined) {
+			collectOrderIds(parsed, ids);
+		}
+	}
+	return [...ids];
+}
+
+function parseJson(body: string | undefined): unknown {
+	if (!body) {
+		return undefined;
+	}
+	try {
+		return JSON.parse(body);
+	} catch {
+		return undefined;
+	}
+}
+
+function collectOrderIds(node: unknown, ids: Set<string>): void {
+	if (Array.isArray(node)) {
+		for (const item of node) {
+			collectOrderIds(item, ids);
+		}
+		return;
+	}
+	if (!node || typeof node !== 'object') {
+		return;
+	}
+	for (const [key, value] of Object.entries(node)) {
+		if (key === 'orderId' && typeof value === 'string') {
+			ids.add(value);
+		} else {
+			collectOrderIds(value, ids);
+		}
 	}
 }
 
@@ -194,4 +245,134 @@ export async function listApiV1Logs(
 		.toArray();
 
 	return { entries: entries.slice(0, limit), hasMore: entries.length > limit };
+}
+
+/**
+ * A body with the personal checkout fields of one order erased, the way anonymization erases them
+ * on the order itself: a field loses its value, an address field keeps only its country and zip.
+ *
+ * Only the order carrying `orderId` is touched; the other orders of a list keep their fields. A
+ * field is personal when the body says so, or, in shapes that do not say, when its slug is one of
+ * `personalSlugs` and it is not a field the caller attached to its own order.
+ *
+ * Returns undefined when the body names the order but cannot be read back, which is what a body cut
+ * to fit the journal looks like: it cannot be rewritten field by field, so it has to go whole.
+ */
+export function erasePersonalFields(
+	body: string,
+	orderId: string,
+	personalSlugs: Set<string>
+): string | undefined {
+	const parsed = parseJson(body);
+	if (parsed === undefined) {
+		return body.includes(orderId) ? undefined : body;
+	}
+	return eraseInNode(parsed, orderId, personalSlugs) ? JSON.stringify(parsed) : body;
+}
+
+function eraseInNode(node: unknown, orderId: string, personalSlugs: Set<string>): boolean {
+	if (Array.isArray(node)) {
+		let erased = false;
+		for (const item of node) {
+			erased = eraseInNode(item, orderId, personalSlugs) || erased;
+		}
+		return erased;
+	}
+	if (!node || typeof node !== 'object') {
+		return false;
+	}
+	const record = node as Record<string, unknown>;
+	if (record.orderId === orderId && Array.isArray(record.customFields)) {
+		let erased = false;
+		for (const field of record.customFields) {
+			erased = erasePersonalField(field, personalSlugs) || erased;
+		}
+		return erased;
+	}
+	let erased = false;
+	for (const value of Object.values(record)) {
+		erased = eraseInNode(value, orderId, personalSlugs) || erased;
+	}
+	return erased;
+}
+
+function erasePersonalField(field: unknown, personalSlugs: Set<string>): boolean {
+	if (!field || typeof field !== 'object') {
+		return false;
+	}
+	const row = field as Record<string, unknown>;
+	const personal =
+		row.isPersonalData === true ||
+		(row.source !== 'api' && typeof row.slug === 'string' && personalSlugs.has(row.slug));
+	if (!personal) {
+		return false;
+	}
+	let erased = false;
+	if (row.address && typeof row.address === 'object') {
+		// An absent country or zip stays absent: JSON leaves undefined values out.
+		const { country, zip } = row.address as Record<string, unknown>;
+		row.address = { country, zip };
+		erased = true;
+	}
+	if (typeof row.value === 'string' && row.value !== '') {
+		row.value = '';
+		erased = true;
+	}
+	return erased;
+}
+
+/**
+ * Erase, in every journal entry that concerns an order, the checkout fields it marks as personal
+ * data. Called when the order is anonymized: the journal holds copies of what the API sent and
+ * answered about it, and they would otherwise outlive the anonymization.
+ */
+export async function eraseOrderPersonalDataFromApiV1Logs(
+	orderId: string,
+	personalSlugs: string[]
+): Promise<void> {
+	if (!personalSlugs.length) {
+		return;
+	}
+	const slugs = new Set(personalSlugs);
+	const entries = collections.apiV1Logs.find(
+		{ orderIds: orderId },
+		{ projection: { requestBody: 1, responseBody: 1 } }
+	);
+
+	let batch: AnyBulkWriteOperation<ApiV1LogEntry>[] = [];
+	for await (const entry of entries) {
+		const $set: Partial<Pick<ApiV1LogEntry, 'requestBody' | 'responseBody'>> = {};
+		const $unset: Partial<Record<'requestBody' | 'responseBody', ''>> = {};
+		for (const key of ['requestBody', 'responseBody'] as const) {
+			const body = entry[key];
+			if (!body) {
+				continue;
+			}
+			const erased = erasePersonalFields(body, orderId, slugs);
+			if (erased === undefined) {
+				$unset[key] = '';
+			} else if (erased !== body) {
+				$set[key] = erased;
+			}
+		}
+		if (!Object.keys($set).length && !Object.keys($unset).length) {
+			continue;
+		}
+		batch.push({
+			updateOne: {
+				filter: { _id: entry._id },
+				update: {
+					...(Object.keys($set).length && { $set }),
+					...(Object.keys($unset).length && { $unset })
+				}
+			}
+		});
+		if (batch.length >= 500) {
+			await collections.apiV1Logs.bulkWrite(batch);
+			batch = [];
+		}
+	}
+	if (batch.length) {
+		await collections.apiV1Logs.bulkWrite(batch);
+	}
 }

@@ -9,9 +9,12 @@ vi.mock('$lib/server/runtime-config', () => ({
 import { collections } from '$lib/server/database';
 import {
 	MAX_LOGGED_BODY_CHARS,
+	eraseOrderPersonalDataFromApiV1Logs,
+	erasePersonalFields,
 	errorCodeOf,
 	isEventStream,
 	listApiV1Logs,
+	orderIdsOfCall,
 	pruneApiV1Logs,
 	readBodyForLog,
 	shouldLogApiV1Call,
@@ -181,5 +184,131 @@ describe('listApiV1Logs', () => {
 
 		expect(page.entries).toHaveLength(25);
 		expect(page.hasMore).toBe(false);
+	});
+});
+
+describe('orderIdsOfCall', () => {
+	it('names the order of the address and every order of the bodies, once each', () => {
+		const request = JSON.stringify({ orders: [{ externalOrderId: 'A-1' }] });
+		const response = JSON.stringify({
+			results: [{ orderId: 'o-1' }, { orderId: 'o-2', payment: { orderId: 'o-1' } }]
+		});
+
+		expect(orderIdsOfCall('o-3', [request, response])).toEqual(['o-3', 'o-1', 'o-2']);
+	});
+
+	it('names nothing for a body that is not JSON', () => {
+		expect(orderIdsOfCall(undefined, ['<html>o-1</html>', undefined])).toEqual([]);
+	});
+});
+
+describe('erasePersonalFields', () => {
+	const personal = new Set(['phone', 'delivery']);
+	const order = (orderId: string) => ({
+		orderId,
+		customFields: [
+			{ slug: 'phone', source: 'shop', value: '+41 79 000 00 00', isPersonalData: true },
+			{
+				slug: 'delivery',
+				source: 'shop',
+				type: 'address',
+				address: { firstName: 'Ada', address: '1 rue du Lac', zip: '1200', country: 'CH' },
+				isPersonalData: true
+			},
+			{ slug: 'table', source: 'shop', value: '12' },
+			{ slug: 'phone', source: 'api', value: 'till-7' }
+		]
+	});
+
+	it('erases the personal fields of the order, the way anonymization does', () => {
+		const body = JSON.stringify({ orders: [order('o-1'), order('o-2')] });
+
+		const erased = JSON.parse(erasePersonalFields(body, 'o-1', personal) ?? '{}');
+
+		expect(erased.orders[0].customFields).toEqual([
+			{ slug: 'phone', source: 'shop', value: '', isPersonalData: true },
+			{
+				slug: 'delivery',
+				source: 'shop',
+				type: 'address',
+				address: { zip: '1200', country: 'CH' },
+				isPersonalData: true
+			},
+			{ slug: 'table', source: 'shop', value: '12' },
+			{ slug: 'phone', source: 'api', value: 'till-7' }
+		]);
+		// Another order of the same list keeps its fields.
+		expect(erased.orders[1]).toEqual(order('o-2'));
+	});
+
+	it('goes by the slug where the body does not flag personal fields', () => {
+		const body = JSON.stringify([
+			{ orderId: 'o-1', customFields: [{ slug: 'phone', label: 'Phone', value: '+41' }] }
+		]);
+
+		expect(JSON.parse(erasePersonalFields(body, 'o-1', personal) ?? '[]')).toEqual([
+			{ orderId: 'o-1', customFields: [{ slug: 'phone', label: 'Phone', value: '' }] }
+		]);
+	});
+
+	it('returns a body with nothing to erase as it was', () => {
+		const body = '{ "orders": [] }';
+
+		expect(erasePersonalFields(body, 'o-1', personal)).toBe(body);
+	});
+
+	it('gives up a cut body that names the order, and keeps one that does not', () => {
+		const cut = '{"orders":[{"orderId":"o-1","custom';
+		const other = '{"orders":[{"orderId":"o-2"';
+
+		expect(erasePersonalFields(cut, 'o-1', personal)).toBeUndefined();
+		expect(erasePersonalFields(other, 'o-1', personal)).toBe(other);
+	});
+});
+
+describe('eraseOrderPersonalDataFromApiV1Logs', () => {
+	it('rewrites the entries of the order and drops the bodies it cannot read back', async () => {
+		const readable = new ObjectId();
+		const cut = new ObjectId();
+		const response = JSON.stringify({
+			orderId: 'o-1',
+			customFields: [{ slug: 'phone', value: '+41', isPersonalData: true }]
+		});
+		const entries = [
+			{ _id: readable, requestBody: '{"note":"hi"}', responseBody: response },
+			{ _id: cut, responseBody: '{"orderId":"o-1","customFields":[{"slug":"pho' }
+		];
+		const find = vi.fn(() => entries);
+		const bulkWrite = vi.fn(async () => ({}));
+		Object.assign(collections.apiV1Logs as object, { find, bulkWrite });
+
+		await eraseOrderPersonalDataFromApiV1Logs('o-1', ['phone']);
+
+		expect(find).toHaveBeenCalledWith({ orderIds: 'o-1' }, expect.anything());
+		expect(bulkWrite).toHaveBeenCalledWith([
+			{
+				updateOne: {
+					filter: { _id: readable },
+					update: {
+						$set: {
+							responseBody: JSON.stringify({
+								orderId: 'o-1',
+								customFields: [{ slug: 'phone', value: '', isPersonalData: true }]
+							})
+						}
+					}
+				}
+			},
+			{ updateOne: { filter: { _id: cut }, update: { $unset: { responseBody: '' } } } }
+		]);
+	});
+
+	it('does not even look when the order has no personal field', async () => {
+		const find = vi.fn(() => []);
+		Object.assign(collections.apiV1Logs as object, { find });
+
+		await eraseOrderPersonalDataFromApiV1Logs('o-1', []);
+
+		expect(find).not.toHaveBeenCalled();
 	});
 });

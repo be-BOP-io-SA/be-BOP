@@ -32,4 +32,9 @@ export interface ApiV1LogEntry {
 	truncated?: boolean;
 	/** An event stream: it is still open when the entry is written, so it has no body. */
 	stream?: boolean;
+	/**
+	 * The orders this call concerns: the one in its address, and every `orderId` in its bodies.
+	 * It is how anonymizing an order reaches the entries that copied its personal data.
+	 */
+	orderIds?: string[];
 }
