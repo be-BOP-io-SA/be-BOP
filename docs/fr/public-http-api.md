@@ -47,7 +47,15 @@ DTO stable : id, alias, type, nom/description courte traduits, prix en **unités
 
 ## Écriture commandes
 
-Voir [écriture commandes v1](./api/v1-orders-write.md). Lot, idempotent sur `(apiKey, externalOrderId)`.
+Voir [écriture commandes v1](./api/v1-orders-write.md). Lot ; un appel, une commande. Un `externalOrderId` déjà envoyé par la clé est refusé, sauf si la clé accepte plusieurs commandes par identifiant.
+
+## Flux de commandes
+
+Trois flux Server-Sent Events, chacun avec le droit `orders:stream`. Ils portent ce qui arrive à partir de leur ouverture et reprennent après le dernier événement reçu (`Last-Event-ID`, un curseur signé) ; l'historique se lit dans les listes.
+
+- `GET /api/v1/orders/paid/stream` : une vente une fois payée, annoncée une seule fois.
+- `GET /api/v1/orders/stream` : toutes les commandes, à chaque changement de la commande elle-même — créée en attente, payée, échouée, annulée, expirée.
+- `GET /api/v1/orders/updates/stream` : une note ou un label posé sur une commande, ou ses données personnelles effacées — et seulement cela.
 
 ## Lecture commandes payées (poll)
 

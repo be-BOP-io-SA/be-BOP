@@ -82,16 +82,14 @@ POST /orders
   → zod OrdersWriteRequest
   → writeBatch({ apiKey, orders, clientIp })
        for each order:
-         writeOne → existing? settleExistingOrder (admin-parity payment sync)
-                    | else resolve products | createOrder (atomic external ids)
+         writeOne → external id already sent by the key? refuse (DUPLICATE_EXTERNAL_ORDER_ID)
+                    | else resolve products | createOrder
                     | labels | syncExternalPayment (onOrderPayment / onOrderPaymentFailed)
-                    | map errors → created | duplicate | failed + warnings
+                    | map errors → created | failed + warnings
   → HTTP 200 { ok, status, results }
 ```
 
-Idempotency: unique sparse `(externalSourceApiKeyId, externalOrderId)` set atomically in the `createOrder` insert.
-`duplicate` is not always read-only (D3): payment side-effects follow admin confirm/cancel domain helpers
-(`onOrderPayment` / `onOrderPaymentFailed` / `cancelPayment`) for each still-pending payment matched to the payload (`payment` or `payments[]`) via `externalPaymentId`, else amount+method, else unused index (legacy, no externalPaymentId).
+One call, one order (D3). The `externalOrderId` is kept on the order and is not unique: one this API key already sent is refused, unless the key accepts several orders per id, and nothing is ever reconciled onto an existing order — a failed order is never turned paid by a later call.
 
 **Channel:** Face A calls `createOrder` with dedicated `channel: 'api'` (DiscountChannel) and **`skipAutoDiscounts: true`** so shop percentage discounts never rewrite PoS-priced line totals — even if a discount explicitly targets `api`.
 
@@ -145,7 +143,7 @@ src/lib/types/ApiKey.ts
 - **Stateless app nodes** — session skipped on `/api/v1`; API keys in Mongo
 - **Rate limits** — in-process (document multi-instance caveat; no Redis)
 - **Batch over chatty APIs** — 1–100 orders/request
-- **Idempotent retries** — safe PoS replays
+- **One call, one order** — a reference already sent is refused, never merged
 - **Versioned surface** — `/api/v1` only; breaking changes → `/api/v2`
 - **Read APIs** — `GET /api/v1/catalog/products` (`catalog:read`) and `GET /api/v1/orders/paid` (`orders:read`) share Face A middleware/auth/rate-limit. Both answer conditional GETs (`ETag` / `If-None-Match` → `304`).
 - **Two faces** — Face A `/api/v1` (API keys) must not be merged with Face B storefront session Bearer ([ADR](./adr-api-faces.md))
@@ -160,7 +158,7 @@ Helpers live in `src/lib/server/api/v1/validators.ts` (`buildStrongETag`, `parse
   - Responses carry `Cache-Control: private, no-cache`: per-API-key payloads stay out of shared caches, while clients can still store and revalidate.
   - Cross-origin callers need the header plumbing in `cors.ts` — `If-None-Match` in `Access-Control-Allow-Headers`, `ETag` in `Access-Control-Expose-Headers`.
   - Value for a PoS polling `/orders/paid` on a short interval: unchanged pages cost a `304` with no body.
-- **Not wired** to `POST /api/v1/orders` (batch write has its own `(apiKeyId, externalOrderId)` idempotency key; no ETag precondition, no `If-Match`).
+- **Not wired** to `POST /api/v1/orders` (the batch write refuses a reference already sent by the key; no ETag precondition, no `If-Match`).
 - `ifMatchSatisfied` / `parseIfMatch` stay available but unused: no Face A route accepts a write precondition today.
 
 ## Product pictures — links into be-BOP, in every generated size
@@ -280,11 +278,11 @@ Not implemented: the pairing link/QR the seam describes as the way the credentia
 
 An integration sees things be-BOP cannot: that the wristband was actually handed over, that a top-up was refunded out of band, that the customer disputed it. Two writes carry that back, and both act on an order that already exists.
 
-**Labels** — `POST /api/v1/orders/{orderId}/labels` with `{ "labelId": … }`. Labels are how the shop sorts its orders after the fact, and the admin order listing already filters on them. The label is added to a set, so a retried request leaves one label and returns the same body. It must exist in the shop: an unknown id is refused with `404` and nothing is written, because a label be-BOP does not know would then appear nowhere — not in the listing's filter, which only offers labels it has, and not in the order read, whose names come from the same collection.
+**Labels** — `POST /api/v1/orders/{orderId}/labels` with `{ "labelId": … }`. Labels are how the shop sorts its orders after the fact, and the admin order listing already filters on them. The label is added to a set, so a retried request leaves one label and returns the same body. A label the shop does not have yet is created on the fly, looking as the optional `name`, `color` and `icon` say; they are ignored when the label already exists, so an integration labels its own orders without restyling the shop's. The color is a hexadecimal color or a named CSS color, nothing else: a value carrying a CSS declaration is refused and flags the API key as suspicious in the admin. A key restricted to its own orders gets `404` for any other order.
 
 The order write accepts them too, as `labels: []`. There the rule is the other way round: **the sale is written and the unknown label is dropped**, with a `LABEL_MISSING` warning naming it. A label the shop never created is a mistake in the caller's configuration, and refusing the sale over it would lose money that has already changed hands.
 
-**Notes** — `POST /api/v1/orders/{orderId}/notes` with `{ "content": … }`. The note joins the ones written from the admin, under the staff role and the API's own seller alias. Unlike a label it is appended every time: a repeated remark is a fact about the order, not an accident to swallow. Note that be-BOP shows order notes **to the buyer**, flagged by author — what an integration writes here is not internal.
+**Notes** — `POST /api/v1/orders/{orderId}/notes` with `{ "content": … }`. The note joins the ones written from the admin, signed as a system employee named `API - <name of the key>`. Unlike a label it is appended every time: a repeated remark is a fact about the order, not an accident to swallow. Like every employee note, it is read by the shop staff, not by the buyer.
 
 Both come back on the order reads, as `labels` and `notes`, so a caller can read what it wrote without keeping its own copy. Labels carry the name the shop gave them, resolved in one query per page; notes carry the author's kind — `employee`, `customer` or `system` — and the alias when they have one, never the contact details.
 
@@ -308,7 +306,10 @@ A resource that streams is exposed twice: `<resource>` in JSON, `<resource>/stre
 
 ```
 GET  /api/v1/orders/paid           JSON poll
-GET  /api/v1/orders/paid/stream    SSE
+GET  /api/v1/orders/paid/stream    SSE, a sale once paid
+GET  /api/v1/orders                JSON poll
+GET  /api/v1/orders/stream         SSE, every order on each change of the order itself
+GET  /api/v1/orders/updates/stream SSE, notes, labels and erasures of personal data
 GET  /api/v1/pos/orders            JSON poll
 GET  /api/v1/pos/orders/stream     SSE
 POST /api/v1/pos/orders            sale ingestion
@@ -316,7 +317,7 @@ POST /api/v1/pos/orders            sale ingestion
 
 The **poll is the primary transport**. A till on a bad link cannot be assumed to hold a connection open, and a surface that only streams leaves it with nothing. The stream is the optimisation you reach for when the link allows it.
 
-Both carry the same events and the same `since_ts` / `last_event_id` vocabulary, so falling back costs nothing: the poll's `nextCursor` is the last order id of the page, which is exactly what the stream resumes on. A client can stream, drop, poll, and go back to streaming without relearning anything.
+Both carry the same events and the same `last_event_id`, so falling back costs nothing: the poll's `nextCursor` is the last order id of the page, which is exactly what the stream resumes on. A client can stream, drop, poll, and go back to streaming without relearning anything. Only the poll reads the history from a date (`since_ts`): a stream carries what happens from the moment it opens, and resumes after the last event it sent.
 
 Separate routes rather than content negotiation on one path. An `Accept` header that changes the nature of a response is invisible in a log, in a cache, and in a URL pasted into a ticket — and the two transports want opposite cache headers, one an ETag and the other `no-transform`. This departs from the seam, which puts SSE on `GET /api/pos/orders`; the poll it has no shape for at all.
 
@@ -324,11 +325,11 @@ Separate routes rather than content negotiation on one path. An `Accept` header 
 
 Both stream surfaces run on `openPaidOrderStream` (`orders/paidStreamConnection.ts`). The hard parts are not the payload: subscribing to the change-stream hub _before_ the backlog is read so nothing falls in the gap between snapshot and live edge, writing every frame through one serialized path so the cursor never goes backwards, keeping backpressure honest, and tearing down exactly once. Callers supply only the framing.
 
-- One Mongo change stream is shared by every connection (`paidStreamHub.ts`). A change stream is a server-side cursor; one per connected till would put the cost of the fleet on the database.
-- Four concurrent streams per API key, counted across both surfaces — two connections from one credential cost the same whichever route they came in by.
-- Delivery is at-least-once. A document touched again after payment comes back through the change stream, and a resume replays the tail of the window; consumers deduplicate on `orderId`.
+- One Mongo change stream over every order is shared by every connection (`paidStreamHub.ts`). A change stream is a server-side cursor; one per connected till would put the cost of the fleet on the database. It is never narrowed nor reopened as subscribers come and go — a watch that closes and opens again misses whatever is written in between — and each stream picks its own share of the events. After an error it reopens from the last event it saw (resume token).
+- The number of concurrent streams is a setting of each API key, counted across every stream surface — two connections from one credential cost the same whichever route they came in by.
+- Delivery is at-least-once; consumers deduplicate on `orderId`. A sale is announced once on the paid streams: a note, a label or an erasure of personal data leaves the sale as it was, does not move `updatedAt` (it moves `annotatedAt`), and is announced on `/api/v1/orders/updates/stream` only.
 - Past a 1000-event backlog the connection closes rather than dropping frames silently, and the client reconnects from where it left off.
-- Resume is keyed on `updatedAt`, never on `_id`: an order `_id` is a crypto UUID, so it sorts at random and could never express "everything after this point". The PoS seam resumes by order id, which is resolved to that position (`findOrderCursor`).
+- Resume is keyed on `updatedAt` (`annotatedAt` for the updates stream), never on `_id`: an order `_id` is a crypto UUID, so it sorts at random and could never express "everything after this point". The cursor is signed for the API key and the stream it was sent on, so a stream only resumes after an event it actually sent. The PoS seam resumes by order id, which is resolved to that position (`findOrderCursor`).
 
 ## Testing strategy
 
@@ -343,7 +344,7 @@ Both stream surfaces run on `openPaidOrderStream` (`orders/paidStreamConnection.
 
 - Redis / distributed rate-limit store
 - GraphQL / #2616 full headless cart (Face B — keep separate from Face A)
-- [Wiring ETag validators to write routes](#conditional-requests--etag-2713) (explicit non-goal; reads are wired, `POST /api/v1/orders` stays on idempotency keys)
+- [Wiring ETag validators to write routes](#conditional-requests--etag-2713) (explicit non-goal; reads are wired, `POST /api/v1/orders` refuses a reference already sent)
 - Replacing `createOrder` internals
 - Force-stock / upsert semantics
 - Heavy OpenAPI codegen deps (hand-maintained `openapi.ts` + CDN Swagger UI instead)
