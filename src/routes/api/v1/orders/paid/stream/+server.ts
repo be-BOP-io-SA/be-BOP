@@ -5,6 +5,7 @@ import { apiError } from '$lib/server/api/v1/errors';
 import { checkRateLimit } from '$lib/server/rateLimit';
 import { toPaidOrderDto } from '$lib/server/api/v1/orders/listPaid';
 import { openPaidOrderStream } from '$lib/server/api/v1/orders/paidStreamConnection';
+import { parseApiQuery, textParam } from '$lib/server/api/v1/query';
 import {
 	encodeStreamCursor,
 	paidOrderFingerprint,
@@ -40,8 +41,11 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 	}
 
 	// EventSource replays the last id in a header; a fetch-driven client uses the query parameter.
-	const rawLastEventId =
-		event.request.headers.get('last-event-id') ?? event.url.searchParams.get('last_event_id');
+	const query = parseApiQuery(event.url, { last_event_id: textParam });
+	if ('error' in query) {
+		return query.error;
+	}
+	const rawLastEventId = event.request.headers.get('last-event-id') ?? query.data.last_event_id;
 	const cursorScope = { keyId: apiKey._id.toString(), feed: 'paid' as const };
 	const resumeFrom = parseStreamCursor(rawLastEventId, cursorScope);
 	if (rawLastEventId && !resumeFrom) {

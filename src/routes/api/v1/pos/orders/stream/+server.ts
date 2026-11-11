@@ -5,6 +5,7 @@ import { apiError } from '$lib/server/api/v1/errors';
 import { checkRateLimit } from '$lib/server/rateLimit';
 import { openPaidOrderStream } from '$lib/server/api/v1/orders/paidStreamConnection';
 import { findOrderCursor } from '$lib/server/api/v1/orders/paidStream';
+import { parseApiQuery, textParam } from '$lib/server/api/v1/query';
 import { toPosPaidOrderEvent } from '$lib/server/api/v1/pos/paidEvents';
 
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
@@ -39,13 +40,19 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		);
 	}
 
+	const query = parseApiQuery(event.url, {
+		last_event_id: textParam,
+		// Naming a tag narrows the feed to orders carrying a line tagged with it, and reduces
+		// `amount` to that line. be-BOP holds no domain word: the caller says which tag it means.
+		tag: textParam
+	});
+	if ('error' in query) {
+		return query.error;
+	}
 	const lastEventId =
-		event.request.headers.get('last-event-id') ?? event.url.searchParams.get('last_event_id');
-	const after = lastEventId ? await findOrderCursor(lastEventId.trim()) : null;
-
-	// Naming a tag narrows the feed to orders carrying a line tagged with it, and reduces `amount`
-	// to that line. be-BOP holds no domain word: the caller says which tag it means.
-	const tag = event.url.searchParams.get('tag')?.trim() || undefined;
+		event.request.headers.get('last-event-id')?.trim() || query.data.last_event_id;
+	const after = lastEventId ? await findOrderCursor(lastEventId) : null;
+	const tag = query.data.tag;
 
 	return openPaidOrderStream({
 		keyId: apiKey._id.toString(),

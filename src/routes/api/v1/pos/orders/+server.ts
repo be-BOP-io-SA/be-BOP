@@ -9,6 +9,7 @@ import { listPosPaidOrders } from '$lib/server/api/v1/pos/paidEvents';
 import { ingestPosSales } from '$lib/server/api/v1/pos/sales';
 import { posSalesRequestSchema } from '$lib/server/api/v1/pos/schemas';
 import { ZodError } from 'zod';
+import { epochSecondsParam, limitParam, parseApiQuery, textParam } from '$lib/server/api/v1/query';
 
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
@@ -40,34 +41,28 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		});
 	}
 
-	const since = parseStreamSince(event.url.searchParams.get('since_ts') ?? undefined, undefined);
+	const query = parseApiQuery(event.url, {
+		since_ts: epochSecondsParam,
+		limit: limitParam(MAX_PAGE),
+		last_event_id: textParam,
+		// Naming a tag narrows the feed to orders carrying a line tagged with it, and reduces
+		// `amount` to that line. be-BOP holds no domain word: the caller says which tag it means.
+		tag: textParam
+	});
+	if ('error' in query) {
+		return query.error;
+	}
+	const since = parseStreamSince(query.data.since_ts, undefined);
 	if ('error' in since) {
 		return apiError(400, 'VALIDATION_ERROR', since.error.message, { field: since.error.field });
 	}
-
-	const rawLimit = event.url.searchParams.get('limit');
-	let pageSize = DEFAULT_PAGE;
-	if (rawLimit !== null) {
-		const parsed = Number.parseInt(rawLimit, 10);
-		if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > MAX_PAGE) {
-			return apiError(400, 'VALIDATION_ERROR', `limit must be between 1 and ${MAX_PAGE}`, {
-				field: 'limit'
-			});
-		}
-		pageSize = parsed;
-	}
-
-	const lastEventId = event.url.searchParams.get('last_event_id');
-	const after = lastEventId ? await findOrderCursor(lastEventId.trim()) : null;
-
-	// Naming a tag narrows the feed to orders carrying a line tagged with it, and reduces `amount`
-	// to that line. be-BOP holds no domain word: the caller says which tag it means.
-	const tag = event.url.searchParams.get('tag')?.trim() || undefined;
+	const after = query.data.last_event_id ? await findOrderCursor(query.data.last_event_id) : null;
+	const tag = query.data.tag;
 
 	const page = await listPosPaidOrders({
 		since: since.date,
 		after,
-		limit: pageSize,
+		limit: query.data.limit ? Number(query.data.limit) : DEFAULT_PAGE,
 		tag,
 		...(apiKey.ownOrdersOnly && { ordersOfKey: apiKey._id })
 	});
