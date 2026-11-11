@@ -861,88 +861,100 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		}
 	});
 
-	it('zero-total paid uses free domain path (onOrderPayment), not raw status set', async () => {
-		const res = await writeBatch({
-			apiKey,
-			orders: [
-				paidCommand({
-					externalOrderId: 'zero-paid-1',
-					items: [
-						{
-							productId: TEST_DIGITAL_PRODUCT._id,
-							quantity: 1,
-							customPrice: { amountMinor: 0, currency: 'EUR' }
+	describe('zero total sent by the third-party system', () => {
+		// A line sent at zero is only charged at zero when the third party sets the prices.
+		let previous: boolean;
+		beforeEach(() => {
+			previous = runtimeConfig.apiV1.trustExternalPricing;
+			runtimeConfig.apiV1.trustExternalPricing = true;
+		});
+		afterEach(() => {
+			runtimeConfig.apiV1.trustExternalPricing = previous;
+		});
+
+		it('zero-total paid uses free domain path (onOrderPayment), not raw status set', async () => {
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'zero-paid-1',
+						items: [
+							{
+								productId: TEST_DIGITAL_PRODUCT._id,
+								quantity: 1,
+								customPrice: { amountMinor: 0, currency: 'EUR' }
+							}
+						],
+						payment: {
+							method: 'point-of-sale',
+							status: 'paid',
+							amountMinor: 0,
+							currency: 'EUR'
 						}
-					],
-					payment: {
-						method: 'point-of-sale',
-						status: 'paid',
-						amountMinor: 0,
-						currency: 'EUR'
-					}
-				})
-			]
+					})
+				]
+			});
+			expect(res.results[0].status).toBe('created');
+			const order = await collections.orders.findOne({ _id: res.results[0].orderId });
+			expect(order?.status).toBe('paid');
+			expect(order?.payments.length).toBeGreaterThanOrEqual(1);
+			expect(order?.payments[0]?.method).toBe('free');
+			expect(order?.payments[0]?.status).toBe('paid');
+			expect(order?.payments[0]?.invoice).toBeTruthy();
 		});
-		expect(res.results[0].status).toBe('created');
-		const order = await collections.orders.findOne({ _id: res.results[0].orderId });
-		expect(order?.status).toBe('paid');
-		expect(order?.payments.length).toBeGreaterThanOrEqual(1);
-		expect(order?.payments[0]?.method).toBe('free');
-		expect(order?.payments[0]?.status).toBe('paid');
-		expect(order?.payments[0]?.invoice).toBeTruthy();
-	});
 
-	it('zero-total pending order is not settled by a replay marked paid', async () => {
-		const zeroLine = [
-			{
-				productId: TEST_DIGITAL_PRODUCT._id,
-				quantity: 1,
-				customPrice: { amountMinor: 0, currency: 'EUR' as const }
-			}
-		];
-		const first = await writeBatch({
-			apiKey,
-			orders: [
-				paidCommand({
-					externalOrderId: 'zero-settle-1',
-					items: zeroLine,
-					payment: {
-						method: 'point-of-sale',
-						status: 'pending',
-						amountMinor: 0,
-						currency: 'EUR'
-					}
-				})
-			]
-		});
-		expect(first.results[0].status).toBe('created');
-		const orderId = requireOrderId(first.results[0]);
-		const pending = await collections.orders.findOne({ _id: orderId });
-		expect(pending?.status).toBe('pending');
-		expect(pending?.payments ?? []).toHaveLength(0);
+		it('zero-total pending order is not settled by a replay marked paid', async () => {
+			const zeroLine = [
+				{
+					productId: TEST_DIGITAL_PRODUCT._id,
+					quantity: 1,
+					customPrice: { amountMinor: 0, currency: 'EUR' as const }
+				}
+			];
+			const first = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'zero-settle-1',
+						items: zeroLine,
+						payment: {
+							method: 'point-of-sale',
+							status: 'pending',
+							amountMinor: 0,
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+			expect(first.results[0].status).toBe('created');
+			const orderId = requireOrderId(first.results[0]);
+			const pending = await collections.orders.findOne({ _id: orderId });
+			expect(pending?.status).toBe('pending');
+			expect(pending?.payments ?? []).toHaveLength(0);
 
-		const second = await writeBatch({
-			apiKey,
-			orders: [
-				paidCommand({
-					externalOrderId: 'zero-settle-1',
-					items: zeroLine,
-					payment: {
-						method: 'point-of-sale',
-						status: 'paid',
-						amountMinor: 0,
-						currency: 'EUR'
-					}
-				})
-			]
+			const second = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'zero-settle-1',
+						items: zeroLine,
+						payment: {
+							method: 'point-of-sale',
+							status: 'paid',
+							amountMinor: 0,
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+			expect(second.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+			});
+			const after = await collections.orders.findOne({ _id: orderId });
+			expect(after?.status).toBe('pending');
+			expect(after?.payments ?? []).toHaveLength(0);
 		});
-		expect(second.results[0]).toMatchObject({
-			status: 'failed',
-			error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
-		});
-		const after = await collections.orders.findOne({ _id: orderId });
-		expect(after?.status).toBe('pending');
-		expect(after?.payments ?? []).toHaveLength(0);
 	});
 
 	it('creates an order with two payments and applies each status to its own row', async () => {
