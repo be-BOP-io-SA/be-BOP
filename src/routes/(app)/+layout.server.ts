@@ -5,7 +5,7 @@ import { cmsFromContent } from '$lib/server/cms.js';
 import { collections } from '$lib/server/database';
 import { picturesForProducts } from '$lib/server/picture.js';
 import { pojo } from '$lib/server/pojo.js';
-import { withoutWhitelist } from '$lib/server/saleLock';
+import { SALE_LOCK_PROJECTION, withoutWhitelist } from '$lib/server/saleLock';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { freeProductsForUser, resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import type { DigitalFile } from '$lib/types/DigitalFile';
@@ -135,6 +135,7 @@ export async function load(params) {
 							| 'requiresAuthentication'
 							| 'whitelist'
 							| 'maxQuantityPerUser'
+							| 'posOverridesMaxQuantityPerUser'
 							| 'subscriptionReminderSeconds'
 							| 'isTicket'
 							| 'vatProfileId'
@@ -145,6 +146,7 @@ export async function load(params) {
 							| 'subscriptionDuration'
 						>
 					>({
+						...SALE_LOCK_PROJECTION,
 						_id: 1,
 						name: { $ifNull: [`$translations.${locals.language}.name`, '$name'] },
 						price: 1,
@@ -164,10 +166,6 @@ export async function load(params) {
 						maxQuantityPerOrder: 1,
 						stock: 1,
 						stockReference: 1,
-						requiresAuthentication: 1,
-						whitelist: 1,
-						maxQuantityPerUser: 1,
-						subscriptionReminderSeconds: 1,
 						vatProfileId: 1,
 						paymentMethods: 1,
 						'bookingSpec.slotMinutes': 1,

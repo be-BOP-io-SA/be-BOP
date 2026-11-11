@@ -9,11 +9,11 @@ import {
 	requiresAuthenticationToOrder
 } from '$lib/types/Product';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
-import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
 import { collections } from './database';
 import { collectUserAddresses, isAuthenticated } from './discount';
 import { currentFundingReminderSeconds } from './subscriptions';
-import { userQuery } from './user';
+import { identifiedUserQuery, userQuery } from './user';
 
 /**
  * A sale lock is a per-product rule that answers one question: may *this* customer buy *this*
@@ -146,8 +146,44 @@ export type ProductWithSaleLocks = Pick<
 	| 'stockReference'
 >;
 
+/**
+ * What the evaluator reads, as a Mongo projection. Every query that loads a product for it
+ * spreads this, so a field added to `ProductWithSaleLocks` cannot be forgotten in one of them.
+ */
+export const SALE_LOCK_PROJECTION = {
+	_id: 1,
+	name: 1,
+	type: 1,
+	requiresAuthentication: 1,
+	whitelist: 1,
+	maxQuantityPerUser: 1,
+	posOverridesMaxQuantityPerUser: 1,
+	subscriptionReminderSeconds: 1,
+	maxQuantityPerOrder: 1,
+	stock: 1,
+	stockReference: 1
+} as const satisfies Record<keyof ProductWithSaleLocks, 1>;
+
+/**
+ * Products read from the database again for their customer list.
+ *
+ * Pages receive products without it, so a load that evaluates a cart built from page data
+ * would otherwise judge it with no list at all, and never tell a customer who was taken off it.
+ */
+export async function withStoredWhitelists<T extends { _id: string }>(
+	products: T[]
+): Promise<Array<T & Pick<Product, 'whitelist'>>> {
+	const ids = [...new Set(products.map((product) => product._id))];
+	const stored = ids.length
+		? await collections.products
+				.find({ _id: { $in: ids } }, { projection: { whitelist: 1 } })
+				.toArray()
+		: [];
+	const whitelistById = new Map(stored.map((product) => [product._id, product.whitelist]));
+	return products.map((product) => ({ ...product, whitelist: whitelistById.get(product._id) }));
+}
+
 export type SaleLockContext = {
-	/** How the product is being added. The counter gets exemptions a customer does not. */
 	/** Units of each product about to be added, on top of what the cart already holds. */
 	extraQuantityByProductId?: Record<string, number>;
 	/** Units of each product the cart already holds. Counts against the per-order cap. */
@@ -169,20 +205,11 @@ export function isEmployee(user: UserIdentifier | undefined): boolean {
 }
 
 /**
- * Whether a stored identity is the same *identified* person — account, contact address, npub
- * or SSO. The browser session deliberately does not count: see `identifiedUserQuery`.
+ * Whether this account may use the till, by its own option or by its role: the rule
+ * `hooks.server.ts` applies to `/pos`. A till rings sales up under the seller's identity.
  */
-function matchesIdentifiedUser(stored: UserIdentifier, user: UserIdentifier | undefined): boolean {
-	if (!user) {
-		return false;
-	}
-	const addresses = new Set(collectUserAddresses(user).map(normalizeAddress));
-	return !!(
-		(user.userId && stored.userId === user.userId) ||
-		(stored.email && addresses.has(normalizeAddress(stored.email))) ||
-		(stored.npub && addresses.has(normalizeAddress(stored.npub))) ||
-		stored.ssoIds?.some((ssoId) => user.ssoIds?.includes(ssoId))
-	);
+export function isPosSeller(user: UserIdentifier | undefined): boolean {
+	return !!user?.userHasPosOptions || user?.userRoleId === POS_ROLE_ID;
 }
 
 function normalizeAddress(address: string): string {
@@ -263,48 +290,55 @@ export async function evaluateSaleLocks(
 	context?: SaleLockContext
 ): Promise<Map<string, SaleLock[]>> {
 	const locks = new Map<string, SaleLock[]>();
-	// Every product is evaluated: stock and the per-order cap apply to all of them, and it is
-	// having them answered elsewhere that made the customer's experience depend on which rule
-	// happened to fire first.
-	const locked = products;
 
-	if (!locked.length) {
+	if (!products.length) {
 		return locks;
 	}
 
 	const session = context?.session;
 	const employee = isEmployee(user);
 
-	// A till rings sales up under the seller's own identity, so a per-person cap would count the
-	// seller instead of the buyer. What makes someone a till is their access to it — by account or
-	// by role — and not the screen they happen to use: a shop can take payments from the ordinary
-	// cart. Whether the cap steps aside for them is the shop's call, product by product.
-	const hasPos = !!user?.userHasPosOptions;
+	// A per-person cap read from a till would count the seller instead of the buyer. Whether the
+	// cap steps aside for them is the shop's call, product by product.
+	const seller = isPosSeller(user);
 	const capWaivedForSellerOn = (product: ProductWithSaleLocks) =>
-		hasPos && !!product.posOverridesMaxQuantityPerUser;
-
-	const needsSubscriptions = locked.some(
-		(product) =>
-			product.whitelist?.subscriptionProductIds.length ||
-			(product.type === 'subscription' && maxQuantityPerUser(product) !== undefined)
-	);
-	const subscriptions =
-		needsSubscriptions && user
-			? await collections.paidSubscriptions
-					.find({ ...userQuery(user), paidUntil: { $gt: new Date() } }, { session })
-					.toArray()
-			: [];
+		seller && !!product.posOverridesMaxQuantityPerUser;
 
 	// Two different questions, two different identities. Whether a subscription already
 	// occupies someone's single slot is a refusal, and the browser session counts for it — that
 	// is how an anonymous buyer is stopped from taking a second one. Whether a subscription
 	// lets someone through a whitelist is a grant, and a session that once served a subscriber
 	// must not carry that right to whoever holds the browser next.
-	const activeSubscriptionProductIds = subscriptions
-		.filter((subscription) => matchesIdentifiedUser(subscription.user, user))
-		.map((subscription) => subscription.productId);
+	const needsHeldSubscriptions = products.some(
+		(product) => product.type === 'subscription' && maxQuantityPerUser(product) !== undefined
+	);
+	const subscriptions =
+		needsHeldSubscriptions && user
+			? await collections.paidSubscriptions
+					.find({ ...userQuery(user), paidUntil: { $gt: new Date() } }, { session })
+					.toArray()
+			: [];
 
-	const cappedIds = locked
+	const grantingProductIds = [
+		...new Set(products.flatMap((product) => product.whitelist?.subscriptionProductIds ?? []))
+	];
+	const activeSubscriptionProductIds =
+		grantingProductIds.length && user
+			? (
+					await collections.paidSubscriptions
+						.find(
+							{
+								...identifiedUserQuery(user),
+								productId: { $in: grantingProductIds },
+								paidUntil: { $gt: new Date() }
+							},
+							{ session, projection: { productId: 1 } }
+						)
+						.toArray()
+			  ).map((subscription) => subscription.productId)
+			: [];
+
+	const cappedIds = products
 		.filter(
 			(product) =>
 				product.type !== 'subscription' &&
@@ -338,7 +372,7 @@ export async function evaluateSaleLocks(
 
 	// Only reached when a subscription product carries a cap, which is always: a subscription is
 	// one per person by a rule that predates all of this.
-	const subscriptionIds = locked
+	const subscriptionIds = products
 		.filter((product) => product.type === 'subscription' && !capWaivedForSellerOn(product))
 		.map((product) => product._id);
 	const pendingSubscriptionOrderIds = new Set<string>();
@@ -365,7 +399,7 @@ export async function evaluateSaleLocks(
 		}
 	}
 
-	for (const product of locked) {
+	for (const product of products) {
 		const productLocks = locksFor(product, user, {
 			employee,
 			capWaivedForSeller: capWaivedForSellerOn(product),
@@ -442,24 +476,36 @@ function locksFor(
 
 	// Rules that predate the sale locks, answered here so there is one list of reasons and one
 	// way of being told, whoever the customer is and whichever rule bites first.
+	found.push(...orderLimitLocks(product, wanted, ctx.available));
 
-	// Nothing left to reserve is its own answer. Wanting more than is left is not: the cap the
-	// customer runs into is whichever of stock and per-order limit is lower, and it has always
-	// been reported as MAX_PER_ORDER carrying that figure. Kept as it was.
-	if (ctx.available !== undefined && ctx.available <= 0) {
-		found.push({ code: 'OUT_OF_STOCK' });
-		return found;
+	return found;
+}
+
+/**
+ * Stock and the per-order cap, the two rules every product carries, locked or not. This is
+ * their only implementation: the evaluator, the cart and order creation all come through it.
+ *
+ * Nothing left to reserve is its own answer. Wanting more than is left is not: the cap the
+ * customer runs into is whichever of stock and per-order limit is lower, reported as
+ * MAX_PER_ORDER carrying that figure.
+ *
+ * @param available Units still sellable, from `resolveAvailableAmounts`. Undefined when the
+ * product has no stock.
+ */
+export function orderLimitLocks(
+	product: Pick<ProductWithSaleLocks, 'maxQuantityPerOrder'>,
+	wanted: number,
+	available: number | undefined
+): SaleLock[] {
+	if (available !== undefined && available <= 0) {
+		return [{ code: 'OUT_OF_STOCK' }];
 	}
 
 	const maxPerOrder = Math.min(
 		product.maxQuantityPerOrder || DEFAULT_MAX_QUANTITY_PER_ORDER,
-		ctx.available ?? Infinity
+		available ?? Infinity
 	);
-	if (wanted > maxPerOrder) {
-		found.push({ code: 'MAX_PER_ORDER', params: { max: maxPerOrder } });
-	}
-
-	return found;
+	return wanted > maxPerOrder ? [{ code: 'MAX_PER_ORDER', params: { max: maxPerOrder } }] : [];
 }
 
 function subscriptionUnitsHeld(
@@ -487,7 +533,11 @@ export async function annotateProductsWithSaleLocks<T extends ProductWithSaleLoc
 		return products.map((product) => ({ ...product, saleLocked: false }));
 	}
 
-	const locks = await evaluateSaleLocks(products, user);
+	// A listing CTA adds one unit: asking for none would leave a customer sitting exactly on
+	// their cap with a live "Add to cart" that the cart then refuses.
+	const locks = await evaluateSaleLocks(products, user, {
+		extraQuantityByProductId: Object.fromEntries(products.map((product) => [product._id, 1]))
+	});
 	return products.map((product) => ({ ...product, saleLocked: locks.has(product._id) }));
 }
 
@@ -503,7 +553,7 @@ export async function remainingForUser(
 	session?: ClientSession
 ): Promise<number | undefined> {
 	const max = maxQuantityPerUser(product);
-	if (max === undefined || !user) {
+	if (max === undefined || !user || (isPosSeller(user) && product.posOverridesMaxQuantityPerUser)) {
 		return undefined;
 	}
 

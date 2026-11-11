@@ -1852,7 +1852,26 @@
 			"phasePriceHint": "Gratis proefperiode = 0. Valuta overgenomen van het product.",
 			"phaseReminderBeforeEnd": "Herinnering vóór einde",
 			"phaseReminderHint": "0 = geen herinnering",
-			"addPhase": "Fase toevoegen"
+			"addPhase": "Fase toevoegen",
+			"saleLocks": {
+				"maxPerPerson": "Maximale hoeveelheid per persoon",
+				"noLimit": "Geen limiet",
+				"maxPerPersonHint": "Geteld over alle bestellingen van de klant, niet per bestelling. Laat leeg voor geen limiet. Bestellingen die op betaling wachten tellen mee, en het invullen vereist dat de klant is aangemeld.",
+				"posOverride": "De POS toestaan boven deze limiet te verkopen",
+				"posOverrideHint": "Op de POS hoort de sessie bij de verkoper, niet bij de koper, dus de limiet zou de verkeerde persoon tellen. Laat uitgevinkt om de limiet overal toe te passen.",
+				"subscriptionMax": "Maximale hoeveelheid per persoon: {max}. Een abonnement is beperkt tot één per persoon en per product.",
+				"whoCanOrder": "Wie kan bestellen",
+				"requiresAuthentication": "De klant moet aangemeld zijn om dit product te bestellen",
+				"authForcedByCap": "Verplicht en vergrendeld, omdat „{field}” is ingevuld in {section}. Maak dat veld leeg om deze optie te ontgrendelen.",
+				"restrict": "Beperken wie dit product kan bestellen",
+				"restrictHint": "Iedereen die overeenkomt met minstens één van de bronnen hieronder kan het product bestellen. Alle anderen zien de productpagina, met de knoppen om te bestellen en toe te voegen aan de winkelwagen uitgeschakeld. Als alle bronnen leeg zijn, kan niemand het product bestellen.",
+				"emails": "Toegestane e-mailadressen",
+				"emailsPlaceholder": "Eén e-mailadres per regel",
+				"npubs": "Toegestane npubs",
+				"npubsPlaceholder": "Eén npub per regel",
+				"subscribers": "De actieve abonnees toestaan van",
+				"employees": "Alle medewerkers toestaan, ongeacht hun rol"
+			}
 		},
 		"taler": {
 			"backendUrl": "Backend-URL",

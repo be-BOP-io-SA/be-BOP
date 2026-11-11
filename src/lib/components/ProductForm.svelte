@@ -1584,20 +1584,19 @@
 					</label>
 
 					<label class="form-label">
-						Maximum quantity for an unique user
+						{t('admin.productForm.saleLocks.maxPerPerson')}
 						<input
 							class="form-input"
 							type="number"
 							name="maxQuantityPerUser"
-							placeholder="No limit"
+							placeholder={t('admin.productForm.saleLocks.noLimit')}
 							step="1"
 							min="1"
 							bind:value={maxQuantityPerUser}
 						/>
-						<span class="text-sm text-gray-600">
-							Across all their orders, not per order. Leave empty for no limit. Orders awaiting
-							payment count towards it, and filling it in requires the customer to be authenticated.
-						</span>
+						<span class="text-sm text-gray-600"
+							>{t('admin.productForm.saleLocks.maxPerPersonHint')}</span
+						>
 					</label>
 
 					<label class="checkbox-label">
@@ -1607,16 +1606,16 @@
 							name="posOverridesMaxQuantityPerUser"
 							checked={product.posOverridesMaxQuantityPerUser ?? false}
 						/>
-						Let the counter sell beyond that limit
+						{t('admin.productForm.saleLocks.posOverride')}
 					</label>
-					<span class="text-sm text-gray-600">
-						At the counter the session belongs to the seller, not to the buyer, so the limit would
-						count the wrong person. Leave it off to apply the limit everywhere.
-					</span>
+					<span class="text-sm text-gray-600"
+						>{t('admin.productForm.saleLocks.posOverrideHint')}</span
+					>
 				{:else}
 					<p class="text-sm text-gray-600">
-						Maximum quantity for an unique user: {MAX_QUANTITY_PER_USER_FOR_SUBSCRIPTION} — a subscription
-						is limited to one per person and per product.
+						{t('admin.productForm.saleLocks.subscriptionMax', {
+							max: MAX_QUANTITY_PER_USER_FOR_SUBSCRIPTION
+						})}
 					</p>
 				{/if}
 			</div>
@@ -2008,7 +2007,9 @@
 				</div>
 
 				<div>
-					<h4 class="text-lg font-medium text-gray-900 mb-3">Who can order</h4>
+					<h4 class="text-lg font-medium text-gray-900 mb-3">
+						{t('admin.productForm.saleLocks.whoCanOrder')}
+					</h4>
 					<div class="space-y-4">
 						<label class="checkbox-label">
 							<input
@@ -2018,12 +2019,14 @@
 								bind:checked={requiresAuthentication}
 								disabled={authForcedByCap}
 							/>
-							Customer must be authenticated to order this product
+							{t('admin.productForm.saleLocks.requiresAuthentication')}
 						</label>
 						{#if authForcedByCap}
 							<p class="text-sm text-gray-600">
-								Required, and locked, because this product has a "Maximum quantity for an unique
-								user" set in Inventory &amp; Stock. Clear that field to unlock this option.
+								{t('admin.productForm.saleLocks.authForcedByCap', {
+									field: t('admin.productForm.saleLocks.maxPerPerson'),
+									section: t('admin.productForm.inventoryAndStock')
+								})}
 							</p>
 						{/if}
 
@@ -2034,41 +2037,37 @@
 								name="hasWhitelist"
 								bind:checked={hasWhitelist}
 							/>
-							Restrict who can order this product
+							{t('admin.productForm.saleLocks.restrict')}
 						</label>
 
 						{#if hasWhitelist}
-							<p class="text-sm text-gray-600">
-								Anyone matching at least one of the sources below can order the product. Everyone
-								else sees the product page, with the order and add-to-cart buttons disabled. Leaving
-								every source empty closes the product to everyone.
-							</p>
+							<p class="text-sm text-gray-600">{t('admin.productForm.saleLocks.restrictHint')}</p>
 
 							<label class="form-label">
-								Allowed e-mail addresses
+								{t('admin.productForm.saleLocks.emails')}
 								<textarea
 									class="form-input"
 									name="whitelistEmails"
 									rows="4"
-									placeholder="One e-mail address per line"
+									placeholder={t('admin.productForm.saleLocks.emailsPlaceholder')}
 									value={product.whitelist?.emails?.join('\n') ?? ''}
 								/>
 							</label>
 
 							<label class="form-label">
-								Allowed npubs
+								{t('admin.productForm.saleLocks.npubs')}
 								<textarea
 									class="form-input"
 									name="whitelistNpubs"
 									rows="4"
-									placeholder="One npub per line"
+									placeholder={t('admin.productForm.saleLocks.npubsPlaceholder')}
 									value={product.whitelist?.npubs?.join('\n') ?? ''}
 								/>
 							</label>
 
 							<!-- svelte-ignore a11y-label-has-associated-control -->
 							<label class="form-label">
-								Allow the active subscribers of
+								{t('admin.productForm.saleLocks.subscribers')}
 								<MultiSelect
 									--sms-options-bg="var(--body-mainPlan-backgroundColor)"
 									name="whitelistSubscriptionProductIds"
@@ -2093,7 +2092,7 @@
 									name="whitelistAllowEmployees"
 									checked={product.whitelist?.allowEmployees ?? false}
 								/>
-								Allow every employee, whatever their role
+								{t('admin.productForm.saleLocks.employees')}
 							</label>
 						{/if}
 					</div>

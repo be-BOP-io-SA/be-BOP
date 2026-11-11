@@ -1852,7 +1852,26 @@
 			"phasePriceHint": "Kostenlose Testphase = 0. Währung wird vom Produkt übernommen.",
 			"phaseReminderBeforeEnd": "Erinnerung vor Ablauf",
 			"phaseReminderHint": "0 = keine Erinnerung",
-			"addPhase": "Phase hinzufügen"
+			"addPhase": "Phase hinzufügen",
+			"saleLocks": {
+				"maxPerPerson": "Maximale Menge pro Person",
+				"noLimit": "Keine Begrenzung",
+				"maxPerPersonHint": "Gezählt über alle Bestellungen des Kunden, nicht pro Bestellung. Leer lassen für keine Begrenzung. Bestellungen, die auf Zahlung warten, werden mitgezählt, und das Ausfüllen setzt voraus, dass der Kunde angemeldet ist.",
+				"posOverride": "Dem POS erlauben, über diese Grenze hinaus zu verkaufen",
+				"posOverrideHint": "Am POS gehört die Sitzung dem Verkäufer, nicht dem Käufer, daher würde die Grenze die falsche Person zählen. Nicht ankreuzen, um die Grenze überall anzuwenden.",
+				"subscriptionMax": "Maximale Menge pro Person: {max}. Ein Abonnement ist auf eines pro Person und pro Produkt begrenzt.",
+				"whoCanOrder": "Wer bestellen kann",
+				"requiresAuthentication": "Der Kunde muss angemeldet sein, um dieses Produkt zu bestellen",
+				"authForcedByCap": "Erforderlich und gesperrt, weil „{field}“ in {section} ausgefüllt ist. Leeren Sie dieses Feld, um diese Option freizugeben.",
+				"restrict": "Einschränken, wer dieses Produkt bestellen kann",
+				"restrictHint": "Wer mindestens einer der unten stehenden Quellen entspricht, kann das Produkt bestellen. Alle anderen sehen die Produktseite, mit deaktivierten Schaltflächen zum Bestellen und zum Hinzufügen zum Warenkorb. Bleiben alle Quellen leer, kann niemand das Produkt bestellen.",
+				"emails": "Erlaubte E-Mail-Adressen",
+				"emailsPlaceholder": "Eine E-Mail-Adresse pro Zeile",
+				"npubs": "Erlaubte npubs",
+				"npubsPlaceholder": "Eine npub pro Zeile",
+				"subscribers": "Die aktiven Abonnenten folgender Produkte zulassen",
+				"employees": "Alle Mitarbeiter zulassen, unabhängig von ihrer Rolle"
+			}
 		},
 		"taler": {
 			"backendUrl": "Backend-URL",

@@ -1852,7 +1852,26 @@
 			"phasePriceHint": "Essai gratuit = 0. Devise héritée du produit.",
 			"phaseReminderBeforeEnd": "Rappel avant la fin",
 			"phaseReminderHint": "0 = pas de rappel",
-			"addPhase": "Ajouter une phase"
+			"addPhase": "Ajouter une phase",
+			"saleLocks": {
+				"maxPerPerson": "Quantité maximale par personne",
+				"noLimit": "Aucune limite",
+				"maxPerPersonHint": "Comptée sur l'ensemble des commandes du client, et non par commande. Laissez vide pour ne fixer aucune limite. Les commandes en attente de paiement sont comptées, et la renseigner impose que le client soit authentifié.",
+				"posOverride": "Autoriser le POS à vendre au-delà de cette limite",
+				"posOverrideHint": "Au POS, la session est celle du vendeur et non celle de l'acheteur : la limite compterait la mauvaise personne. Laissez décoché pour appliquer la limite partout.",
+				"subscriptionMax": "Quantité maximale par personne : {max}. Un abonnement est limité à un par personne et par produit.",
+				"whoCanOrder": "Qui peut commander",
+				"requiresAuthentication": "Le client doit être authentifié pour commander ce produit",
+				"authForcedByCap": "Obligatoire et verrouillé, car « {field} » est renseigné dans {section}. Videz ce champ pour déverrouiller cette option.",
+				"restrict": "Restreindre qui peut commander ce produit",
+				"restrictHint": "Toute personne qui correspond à au moins une des sources ci-dessous peut commander le produit. Les autres voient la page du produit, avec les boutons de commande et d'ajout au panier désactivés. Si toutes les sources sont vides, personne ne peut commander le produit.",
+				"emails": "Adresses e-mail autorisées",
+				"emailsPlaceholder": "Une adresse e-mail par ligne",
+				"npubs": "Npubs autorisées",
+				"npubsPlaceholder": "Une npub par ligne",
+				"subscribers": "Autoriser les abonnés actifs de",
+				"employees": "Autoriser tous les employés, quel que soit leur rôle"
+			}
 		},
 		"taler": {
 			"backendUrl": "URL du backend",

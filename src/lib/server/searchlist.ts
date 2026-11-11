@@ -14,7 +14,7 @@ import { runtimeConfig } from './runtime-config';
 import { CURRENCIES, CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import { computeVatRate } from '$lib/utils/vat';
-import { annotateProductsWithSaleLocks, withoutWhitelist } from './saleLock';
+import { annotateProductsWithSaleLocks, SALE_LOCK_PROJECTION, withoutWhitelist } from './saleLock';
 import { userIdentifier } from './user';
 
 export const MAX_SEARCH_TERM_LENGTH = 64;
@@ -335,6 +335,9 @@ export async function searchProducts(
 		: { amount: '$price.amount', currency: '$price.currency' };
 
 	const projection: Document = {
+		// Read by the sale-lock evaluator so a search list cannot offer straight to the cart what
+		// the cart would refuse. The customer list is stripped again before the page is serialised.
+		...SALE_LOCK_PROJECTION,
 		_id: 1,
 		name: { $ifNull: [`$translations.${locals.language}.name`, '$name'] },
 		shortDescription: {
@@ -353,13 +356,6 @@ export async function searchProducts(
 		isTicket: 1,
 		payWhatYouWant: 1,
 		maxQuantityPerOrder: 1,
-		// Read by the sale-lock evaluator so a search list cannot offer straight to the cart what
-		// the cart would refuse. Stripped again before the page is serialised.
-		requiresAuthentication: 1,
-		whitelist: 1,
-		maxQuantityPerUser: 1,
-		posOverridesMaxQuantityPerUser: 1,
-		subscriptionReminderSeconds: 1,
 		mobile: 1
 	};
 

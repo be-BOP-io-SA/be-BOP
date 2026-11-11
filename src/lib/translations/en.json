@@ -1852,7 +1852,26 @@
 			"phasePriceHint": "Free trial = 0. Currency inherited from the product.",
 			"phaseReminderBeforeEnd": "Reminder before end",
 			"phaseReminderHint": "0 = no reminder",
-			"addPhase": "Add phase"
+			"addPhase": "Add phase",
+			"saleLocks": {
+				"maxPerPerson": "Maximum quantity per person",
+				"noLimit": "No limit",
+				"maxPerPersonHint": "Counted across all of the customer's orders, not per order. Leave empty for no limit. Orders awaiting payment count towards it, and setting it requires the customer to be authenticated.",
+				"posOverride": "Let the POS sell beyond this limit",
+				"posOverrideHint": "At the POS, the session belongs to the seller, not to the buyer, so the limit would count the wrong person. Leave it unchecked to apply the limit everywhere.",
+				"subscriptionMax": "Maximum quantity per person: {max}. A subscription is limited to one per person and per product.",
+				"whoCanOrder": "Who can order",
+				"requiresAuthentication": "The customer must be authenticated to order this product",
+				"authForcedByCap": "Required and locked, because \"{field}\" is set in {section}. Clear that field to unlock this option.",
+				"restrict": "Restrict who can order this product",
+				"restrictHint": "Anyone matching at least one of the sources below can order the product. Everyone else sees the product page, with the order and add-to-cart buttons disabled. Leaving every source empty closes the product to everyone.",
+				"emails": "Allowed email addresses",
+				"emailsPlaceholder": "One email address per line",
+				"npubs": "Allowed npubs",
+				"npubsPlaceholder": "One npub per line",
+				"subscribers": "Allow the active subscribers of",
+				"employees": "Allow every employee, whatever their role"
+			}
 		},
 		"taler": {
 			"backendUrl": "Backend URL",

@@ -14,7 +14,6 @@
 	export let product: ProductWidgetProduct;
 	export let pictures: Picture[] | [];
 	export let canAddToCart: boolean;
-	export let saleLockedHref: string | undefined = undefined;
 	export let externalUrl: string | undefined = undefined;
 	let pictureId = 0;
 
@@ -63,8 +62,8 @@
 						/>
 					</div>
 				</div>
-			{:else if saleLockedHref}
-				<SaleLockedLink href={saleLockedHref} />
+			{:else if product.saleLocked}
+				<SaleLockedLink href={productUrl} />
 			{/if}
 		</div>
 

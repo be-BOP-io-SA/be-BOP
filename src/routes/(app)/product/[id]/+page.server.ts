@@ -12,6 +12,7 @@ import {
 	evaluateSaleLocks,
 	isSaleLockError,
 	remainingForUser,
+	SALE_LOCK_PROJECTION,
 	withoutWhitelist
 } from '$lib/server/saleLock';
 import { adminPrefix as getAdminPrefix } from '$lib/server/admin';
@@ -135,6 +136,7 @@ async function fetchProduct(
 	| 'requiresAuthentication'
 	| 'whitelist'
 	| 'maxQuantityPerUser'
+	| 'posOverridesMaxQuantityPerUser'
 	| 'subscriptionReminderSeconds'
 	| 'tagIds'
 	| 'subscriptionDuration'
@@ -145,6 +147,7 @@ async function fetchProduct(
 		{ _id: productId },
 		{
 			projection: {
+				...SALE_LOCK_PROJECTION,
 				_id: 1,
 				name: { $ifNull: [`$translations.${language}.name`, '$name'] },
 				price: 1,
@@ -193,10 +196,6 @@ async function fetchProduct(
 				bookingSpec: 1,
 				vatProfileId: 1,
 				stockReference: 1,
-				requiresAuthentication: 1,
-				whitelist: 1,
-				maxQuantityPerUser: 1,
-				subscriptionReminderSeconds: 1,
 				tagIds: 1,
 				subscriptionDuration: 1,
 				pricingSchedule: 1,
@@ -483,18 +482,10 @@ async function addToCart({ params, request, locals }: RequestEvent) {
 }
 
 /**
- * A sale lock is not an error page. Send the customer back to the product page, which
- * recomputes the same verdict on load and states it there, with the CTA already greyed out —
- * the way they would have seen it had they landed on the page a moment later. Everything
- * else keeps bubbling up as it did.
- */
-/**
- * A refusal is answered, not redirected.
- *
- * Redirecting looked tidy and was a lie: under `use:enhance` a redirect is not an error, so the
- * page took its success path and announced a product it had not added. `fail` gives the form a
- * typed failure it can state, and leaves the no-JS path on the product page rather than on a
- * bare 400.
+ * A refusal is answered with `fail`, not with a redirect: under `use:enhance` a redirect is not
+ * an error, so the page would take its success path and announce a product it did not add.
+ * `fail` gives the form a typed failure it can state, and keeps the no-JS path on the product
+ * page rather than on a bare 400.
  */
 async function addToCartOrExplain(params: RequestEvent) {
 	try {

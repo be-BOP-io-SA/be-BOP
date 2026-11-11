@@ -9,7 +9,7 @@ import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
 import DOMPurify from 'dompurify';
 import { collections } from './database';
-import { annotateProductsWithSaleLocks, withoutWhitelist } from './saleLock';
+import { annotateProductsWithSaleLocks, SALE_LOCK_PROJECTION, withoutWhitelist } from './saleLock';
 import { userIdentifier } from './user';
 import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import type { Specification } from '$lib/types/Specification';
@@ -596,6 +596,7 @@ export async function cmsFromContent(
 							| 'requiresAuthentication'
 							| 'whitelist'
 							| 'maxQuantityPerUser'
+							| 'posOverridesMaxQuantityPerUser'
 							| 'subscriptionReminderSeconds'
 							| 'price'
 							| 'name'
@@ -615,6 +616,7 @@ export async function cmsFromContent(
 							| 'hasVariations'
 						>
 					>({
+						...SALE_LOCK_PROJECTION,
 						price: 1,
 						shortDescription: locals.language
 							? {
@@ -639,11 +641,7 @@ export async function cmsFromContent(
 						hasSellDisclaimer: 1,
 						payWhatYouWant: 1,
 						bookingSpec: 1,
-						hasVariations: 1,
-						requiresAuthentication: 1,
-						whitelist: 1,
-						maxQuantityPerUser: 1,
-						subscriptionReminderSeconds: 1
+						hasVariations: 1
 					})
 					.toArray()
 			: [],

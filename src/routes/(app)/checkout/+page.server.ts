@@ -18,6 +18,7 @@ import {
 	type CartErrorCode
 } from '$lib/server/cart.js';
 import { applyResolvedStock } from '$lib/server/product.js';
+import { withStoredWhitelists } from '$lib/server/saleLock';
 import { identifiedUserQuery, userIdentifier, userQuery } from '$lib/server/user.js';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import {
@@ -44,10 +45,15 @@ import {
 export async function load({ parent, locals }) {
 	const parentData = await parent();
 
+	// The layout hands the cart over without the customer lists: read them again, so that a
+	// customer taken off a list after filling their cart is sent back to it with the reason.
+	const cartProducts = await withStoredWhitelists(
+		parentData.cart.items.map((item) => item.product)
+	);
 	const cartItemsWithResolvedStock = await Promise.all(
-		parentData.cart.items.map(async (item) => ({
+		parentData.cart.items.map(async (item, index) => ({
 			...item,
-			product: await applyResolvedStock(item.product)
+			product: await applyResolvedStock(cartProducts[index])
 		}))
 	);
 

@@ -1852,7 +1852,26 @@
 			"phasePriceHint": "Prueba gratuita = 0. Moneda heredada del producto.",
 			"phaseReminderBeforeEnd": "Recordatorio antes del final",
 			"phaseReminderHint": "0 = sin recordatorio",
-			"addPhase": "Añadir fase"
+			"addPhase": "Añadir fase",
+			"saleLocks": {
+				"maxPerPerson": "Cantidad máxima por persona",
+				"noLimit": "Sin límite",
+				"maxPerPersonHint": "Se cuenta sobre todos los pedidos del cliente, no por pedido. Déjelo vacío para no fijar ningún límite. Los pedidos pendientes de pago cuentan, y rellenarlo exige que el cliente esté autenticado.",
+				"posOverride": "Permitir que el POS venda por encima de este límite",
+				"posOverrideHint": "En el POS, la sesión es la del vendedor y no la del comprador, por lo que el límite contaría a la persona equivocada. Déjelo sin marcar para aplicar el límite en todas partes.",
+				"subscriptionMax": "Cantidad máxima por persona: {max}. Una suscripción está limitada a una por persona y por producto.",
+				"whoCanOrder": "Quién puede pedir",
+				"requiresAuthentication": "El cliente debe estar autenticado para pedir este producto",
+				"authForcedByCap": "Obligatorio y bloqueado, porque «{field}» está rellenado en {section}. Vacíe ese campo para desbloquear esta opción.",
+				"restrict": "Restringir quién puede pedir este producto",
+				"restrictHint": "Cualquier persona que coincida con al menos una de las fuentes siguientes puede pedir el producto. Los demás ven la página del producto, con los botones de pedido y de añadir al carrito desactivados. Si todas las fuentes están vacías, nadie puede pedir el producto.",
+				"emails": "Direcciones de correo electrónico autorizadas",
+				"emailsPlaceholder": "Una dirección de correo electrónico por línea",
+				"npubs": "Npubs autorizadas",
+				"npubsPlaceholder": "Una npub por línea",
+				"subscribers": "Permitir a los suscriptores activos de",
+				"employees": "Permitir a todos los empleados, sea cual sea su rol"
+			}
 		},
 		"taler": {
 			"backendUrl": "URL del backend",
