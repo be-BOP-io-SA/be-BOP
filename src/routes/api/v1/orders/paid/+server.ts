@@ -3,7 +3,8 @@ import { apiV1Handler, apiV1OptionsHandler } from '$lib/server/api/v1/handler';
 import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { jsonWithETag } from '$lib/server/api/v1/validators';
-import { listPaidOrders } from '$lib/server/api/v1/orders/listPaid';
+import { ORDER_LISTING_QUERY, listPaidOrders } from '$lib/server/api/v1/orders/listPaid';
+import { parseApiQuery } from '$lib/server/api/v1/query';
 import { checkRateLimit } from '$lib/server/rateLimit';
 
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
@@ -22,18 +23,12 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		});
 	}
 
-	const url = event.url;
+	const query = parseApiQuery(event.url, ORDER_LISTING_QUERY);
+	if ('error' in query) {
+		return query.error;
+	}
 	const result = await listPaidOrders({
-		since: url.searchParams.get('since') ?? undefined,
-		until: url.searchParams.get('until') ?? undefined,
-		limit: url.searchParams.get('limit') ?? undefined,
-		cursor: url.searchParams.get('cursor') ?? undefined,
-		productId: url.searchParams.get('productId') ?? undefined,
-		status: url.searchParams.get('status') ?? undefined,
-		number: url.searchParams.get('number') ?? undefined,
-		label: url.searchParams.get('label') ?? undefined,
-		seller: url.searchParams.get('seller') ?? undefined,
-		externalOrderId: url.searchParams.get('externalOrderId') ?? undefined,
+		...query.data,
 		apiKeyId: apiKey._id,
 		ownOrdersOnly: apiKey.ownOrdersOnly
 	});
