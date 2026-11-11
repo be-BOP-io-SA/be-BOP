@@ -24,6 +24,7 @@ import {
 	subSeconds
 } from 'date-fns';
 import { runtimeConfig } from './runtime-config';
+import { eraseOrderPersonalDataFromApiV1Logs } from './api/v1/log';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import {
 	buildPricingScheduleSnapshot,
@@ -683,7 +684,18 @@ export async function anonymizeOrderData(orderId: string): Promise<boolean> {
 			}
 		}
 	);
-	return result.modifiedCount > 0;
+	if (!result.modifiedCount) {
+		return false;
+	}
+
+	// The API call journal keeps copies of what the API sent and answered about this order.
+	const personalSlugs = (order.customCheckoutFields ?? [])
+		.filter((field) => field.isPersonalData)
+		.map((field) => field.slug);
+	await eraseOrderPersonalDataFromApiV1Logs(orderId, personalSlugs).catch((err) =>
+		console.error(`[api/v1] could not erase order ${orderId} from the call log`, err)
+	);
+	return true;
 }
 
 export async function lastInvoiceNumber(): Promise<number | undefined> {

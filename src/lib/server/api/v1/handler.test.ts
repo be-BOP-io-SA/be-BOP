@@ -135,6 +135,7 @@ describe('apiV1Handler call journal', () => {
 		await handler({
 			request: new Request('http://localhost/api/v1/orders'),
 			url: new URL('http://localhost/api/v1/orders'),
+			params: {},
 			locals: key ? { apiKey: key } : {}
 		} as unknown as Parameters<typeof handler>[0]);
 		// The entry is written after the answer is returned, once its body has been read.
@@ -167,6 +168,14 @@ describe('apiV1Handler call journal', () => {
 
 	it('leaves calls without a valid key out by default', async () => {
 		expect(await journaled(unauthorized)).toBe(false);
+	});
+
+	it('names the orders a call concerns, so that their anonymization reaches it', async () => {
+		const ordersPage = () => Response.json({ orders: [{ orderId: 'o-1' }, { orderId: 'o-2' }] });
+
+		await journaled(ordersPage, apiKey);
+
+		expect(write).toHaveBeenCalledWith(expect.objectContaining({ orderIds: ['o-1', 'o-2'] }));
 	});
 
 	it('keeps calls without a valid key when asked, even with errors turned off', async () => {

@@ -264,6 +264,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.apiV1Logs, { createdAt: -1 }],
 	[collections.apiV1Logs, { apiKeyId: 1, createdAt: -1 }],
 	[collections.apiV1Logs, { status: 1, createdAt: -1 }],
+	[collections.apiV1Logs, { orderIds: 1 }, { sparse: true }],
 	[collections.apiKeys, { keyHash: 1 }, { unique: true }],
 	[collections.apiKeys, { keyPrefix: 1 }, { unique: true }],
 	[collections.apiKeys, { expiresAt: 1 }, { sparse: true }],
