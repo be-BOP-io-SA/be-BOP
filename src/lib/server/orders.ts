@@ -398,6 +398,7 @@ export async function onOrderPaymentFailed(
 		{
 			$set: {
 				'payments.$.status': reason,
+				updatedAt: new Date(),
 				...(order.payments.every(
 					(payment) =>
 						payment.status === 'canceled' ||
@@ -2143,7 +2144,8 @@ export async function addOrderPayment(
 		{
 			$push: {
 				payments: payment
-			}
+			},
+			$set: { updatedAt: new Date() }
 		},
 		{ session: opts?.session }
 	);
