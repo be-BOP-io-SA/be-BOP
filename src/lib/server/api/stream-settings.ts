@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_STREAM_LIFETIME_SECONDS } from '$lib/types/ApiKey';
 
 /**
  * One stream setting as typed in the admin. An empty field is an answer, not a missing one: it
@@ -12,3 +13,8 @@ export const optionalStreamSetting = z
 	.refine((value) => value === null || (Number.isInteger(value) && value > 0), {
 		message: 'Leave empty, or enter a whole number greater than zero'
 	});
+
+/** True when the admin asked for a stream lifetime longer than a stream can be given. */
+export function isStreamLifetimeTooLong(seconds: number | null): boolean {
+	return seconds !== null && seconds > MAX_STREAM_LIFETIME_SECONDS;
+}

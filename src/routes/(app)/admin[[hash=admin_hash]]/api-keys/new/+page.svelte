@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { useI18n } from '$lib/i18n.js';
 	import { groupScopesByCategory } from '$lib/types/ApiV1';
-	import { STREAM_SETTINGS_PREFILL } from '$lib/types/ApiKey';
+	import { MAX_STREAM_LIFETIME_SECONDS, STREAM_SETTINGS_PREFILL } from '$lib/types/ApiKey';
 
 	export let data;
 	export let form;
@@ -187,6 +187,7 @@
 				type="number"
 				name="streamLifetimeSeconds"
 				min="1"
+				max={MAX_STREAM_LIFETIME_SECONDS}
 				step="1"
 				value={STREAM_SETTINGS_PREFILL.streamLifetimeSeconds}
 			/>
@@ -198,6 +199,11 @@
 			{#each form.error.formErrors ?? [] as formError}
 				<p class="text-red-600 text-sm">{formError}</p>
 			{/each}
+			{#if form.streamLifetimeTooLong}
+				<p class="text-red-600 text-sm">
+					{t('admin.apiKeys.streamLifetimeTooLong', { max: MAX_STREAM_LIFETIME_SECONDS })}
+				</p>
+			{/if}
 		{/if}
 
 		<input

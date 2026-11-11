@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n.js';
+	import { MAX_STREAM_LIFETIME_SECONDS } from '$lib/types/ApiKey';
 
 	export let data;
 	export let form;
@@ -113,6 +114,7 @@
 					type="number"
 					name="streamLifetimeSeconds"
 					min="1"
+					max={MAX_STREAM_LIFETIME_SECONDS}
 					step="1"
 					value={data.key.streamLifetimeSeconds ?? ''}
 				/>
@@ -125,6 +127,11 @@
 			{#each Object.values(form?.error?.fieldErrors ?? {}).flat() as fieldError}
 				<p class="text-red-600 text-sm">{fieldError}</p>
 			{/each}
+			{#if form?.streamLifetimeTooLong}
+				<p class="text-red-600 text-sm">
+					{t('admin.apiKeys.streamLifetimeTooLong', { max: MAX_STREAM_LIFETIME_SECONDS })}
+				</p>
+			{/if}
 
 			{#if form?.streamSettingsSaved}
 				<p class="text-sm text-green-700">{t('admin.apiKeys.streamsSaved')}</p>
