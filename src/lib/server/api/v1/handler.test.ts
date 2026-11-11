@@ -1,7 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type SpyInstance } from 'vitest';
+import { ObjectId } from 'mongodb';
 import { apiError } from './errors';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import type { AuthenticatedApiKey } from '$lib/types/ApiV1';
 import { apiV1Handler, apiV1OptionsHandler } from './handler';
+import * as logModule from './log';
 
 describe('apiV1Handler', () => {
 	beforeEach(() => {
@@ -99,5 +102,77 @@ describe('apiV1OptionsHandler', () => {
 		expect(res.status).toBe(204);
 		expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://allowed.example');
 		expect(res.headers.get('Access-Control-Allow-Methods')).toContain('POST');
+	});
+});
+
+describe('apiV1Handler call journal', () => {
+	const apiKey: AuthenticatedApiKey = {
+		_id: new ObjectId(),
+		name: 'till',
+		scopes: ['orders:read'],
+		keyPrefix: 'bebop_ak_test_journal1'
+	};
+	let write: SpyInstance;
+
+	beforeEach(() => {
+		write = vi.spyOn(logModule, 'logApiV1Event').mockImplementation(() => undefined);
+		runtimeConfig.apiV1Log = {
+			maxEntries: 10_000,
+			logSuccesses: true,
+			logErrors: true,
+			logUnauthenticated: false
+		};
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	/** Run one call through the handler and say whether it reached the journal. */
+	async function journaled(response: () => Response, key?: AuthenticatedApiKey) {
+		write.mockClear();
+		const handler = apiV1Handler(async () => response());
+		await handler({
+			request: new Request('http://localhost/api/v1/orders'),
+			url: new URL('http://localhost/api/v1/orders'),
+			locals: key ? { apiKey: key } : {}
+		} as unknown as Parameters<typeof handler>[0]);
+		// The entry is written after the answer is returned, once its body has been read.
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		return write.mock.calls.length > 0;
+	}
+
+	const ok = () => Response.json({ orders: [] });
+	const notFound = () => apiError(404, 'NOT_FOUND', 'Order not found');
+	const unauthorized = () => apiError(401, 'UNAUTHORIZED', 'Invalid or revoked API key');
+
+	it('keeps successes and errors of a valid key by default', async () => {
+		expect(await journaled(ok, apiKey)).toBe(true);
+		expect(await journaled(notFound, apiKey)).toBe(true);
+	});
+
+	it('leaves successes out when the shop turned them off', async () => {
+		runtimeConfig.apiV1Log.logSuccesses = false;
+
+		expect(await journaled(ok, apiKey)).toBe(false);
+		expect(await journaled(notFound, apiKey)).toBe(true);
+	});
+
+	it('leaves errors out when the shop turned them off', async () => {
+		runtimeConfig.apiV1Log.logErrors = false;
+
+		expect(await journaled(ok, apiKey)).toBe(true);
+		expect(await journaled(notFound, apiKey)).toBe(false);
+	});
+
+	it('leaves calls without a valid key out by default', async () => {
+		expect(await journaled(unauthorized)).toBe(false);
+	});
+
+	it('keeps calls without a valid key when asked, even with errors turned off', async () => {
+		runtimeConfig.apiV1Log.logUnauthenticated = true;
+		runtimeConfig.apiV1Log.logErrors = false;
+
+		expect(await journaled(unauthorized)).toBe(true);
 	});
 });
