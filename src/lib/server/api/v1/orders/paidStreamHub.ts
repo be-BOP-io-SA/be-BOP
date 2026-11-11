@@ -96,7 +96,9 @@ function openStream(): void {
 	}
 	changeStream = collections.orders.watch(
 		[{ $match: { operationType: { $in: ['insert', 'update', 'replace'] } } }],
-		{ fullDocument: 'updateLookup', ...(resumeToken && { resumeAfter: resumeToken }) }
+		resumeToken
+			? { fullDocument: 'updateLookup', resumeAfter: resumeToken }
+			: { fullDocument: 'updateLookup' }
 	);
 	changeStream.on('change', (changeEvent) => {
 		resumeToken = changeEvent._id;

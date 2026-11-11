@@ -4,7 +4,8 @@ import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { ordersWriteRequestSchema } from '$lib/server/api/v1/schemas/orders-write';
 import { writeBatch } from '$lib/server/api/v1/orders/writeBatch';
-import { ORDER_LISTING_QUERY, listOrders } from '$lib/server/api/v1/orders/listPaid';
+import { listOrders } from '$lib/server/api/v1/orders/listPaid';
+import { ORDER_LISTING_QUERY } from '$lib/server/api/v1/orders/listingQuery';
 import { parseApiQuery } from '$lib/server/api/v1/query';
 import { checkRateLimit } from '$lib/server/rateLimit';
 
