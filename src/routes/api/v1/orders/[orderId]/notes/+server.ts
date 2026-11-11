@@ -17,8 +17,10 @@ const addNoteSchema = z
 /**
  * Append an employee note to an existing order.
  *
- * The note joins the ones written from the admin, and be-BOP shows order notes to the buyer — so
- * what an integration writes here is read by the customer, not only by the staff.
+ * The note joins the ones written from the admin, signed with the name of the key. Like them, it is
+ * read by the staff only, never by the buyer.
+ *
+ * A key restricted to its own orders gets a 404 for any other order, as if it did not exist.
  *
  * Unlike a label, a note is appended every time: two identical calls leave two notes, because a
  * repeated remark is a fact about the order, not an accident to swallow.
@@ -58,6 +60,7 @@ export const POST: RequestHandler = apiV1Handler(async (event) => {
 	const result = await addOrderNote({
 		orderId,
 		content: parsed.data.content,
+		keyName: apiKey.name,
 		...(apiKey.ownOrdersOnly && { ownedBy: apiKey._id })
 	});
 	if (!result.ok) {

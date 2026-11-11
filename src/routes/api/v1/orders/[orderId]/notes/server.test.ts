@@ -24,7 +24,7 @@ const note = {
 	content: 'Bracelet remis en main propre',
 	createdAt: '2026-09-10T12:00:00.000Z',
 	author: 'employee',
-	alias: 'externalPartner'
+	alias: 'API - t'
 };
 
 const restrictedKeyId = new ObjectId();
@@ -84,7 +84,11 @@ describe('POST /api/v1/orders/[orderId]/notes', () => {
 		const res = await call();
 		expect(res.status).toBe(200);
 		await expect(res.json()).resolves.toEqual({ ok: true, orderId: 'ord-1', notes: [note] });
-		expect(addOrderNote).toHaveBeenCalledWith({ orderId: 'ord-1', content: note.content });
+		expect(addOrderNote).toHaveBeenCalledWith({
+			orderId: 'ord-1',
+			content: note.content,
+			keyName: 't'
+		});
 	});
 
 	it('rejects an empty note rather than storing a blank line', async () => {

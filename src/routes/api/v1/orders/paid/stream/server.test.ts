@@ -313,8 +313,8 @@ describe('GET /api/v1/orders/paid/stream', () => {
 				{
 					content: 'Resolved into bracelet 42',
 					createdAt: new Date('2026-08-01T10:07:00Z'),
-					role: 'super-admin',
-					userAlias: 'externalPartner'
+					role: 'api-key',
+					userAlias: 'API - t'
 				}
 			]
 		} as unknown as Order;
