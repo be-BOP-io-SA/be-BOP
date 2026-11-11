@@ -366,6 +366,15 @@ const baseConfig = {
 		 */
 		trustExternalPricing: false
 	},
+	/**
+	 * API v1 call journal settings (admin-editable, Admin -> API Keys).
+	 *
+	 * maxEntries: past this many entries, the oldest ones are removed. An entry carries the request
+	 * and response bodies, so a shop that wants a long history plans the disk space for it.
+	 */
+	apiV1Log: {
+		maxEntries: 10_000
+	},
 	telemetry: null as null | {
 		enabled: boolean;
 		nextPrompt: Date | null;
