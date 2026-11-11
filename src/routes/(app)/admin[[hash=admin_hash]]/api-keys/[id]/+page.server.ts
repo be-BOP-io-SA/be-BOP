@@ -2,6 +2,7 @@ import {
 	getApiKeyPublic,
 	revokeApiKey,
 	serializeApiKeyPublic,
+	setApiKeySuspended,
 	updateApiKeyOwnOrdersOnly,
 	updateApiKeyStreamSettings
 } from '$lib/server/api/keys';
@@ -62,6 +63,37 @@ export const actions: Actions = {
 				streamsReset: false,
 				error: null
 			};
+		}
+
+		throw redirect(303, `${adminPrefix()}/api-keys/${params.id}`);
+	},
+
+	/**
+	 * Stop the key from being used, without revoking it. Its open streams are closed with it: they
+	 * were let in before, and a suspended key must not keep receiving orders.
+	 */
+	suspend: async ({ locals, params }) => {
+		assertSuperAdmin(locals);
+
+		if (!ObjectId.isValid(params.id)) {
+			throw error(404, 'API key not found');
+		}
+		if (!(await setApiKeySuspended(params.id, true))) {
+			throw error(404, 'API key not found');
+		}
+		closeStreamsOfKey(params.id);
+
+		throw redirect(303, `${adminPrefix()}/api-keys/${params.id}`);
+	},
+
+	reactivate: async ({ locals, params }) => {
+		assertSuperAdmin(locals);
+
+		if (!ObjectId.isValid(params.id)) {
+			throw error(404, 'API key not found');
+		}
+		if (!(await setApiKeySuspended(params.id, false))) {
+			throw error(404, 'API key not found');
 		}
 
 		throw redirect(303, `${adminPrefix()}/api-keys/${params.id}`);

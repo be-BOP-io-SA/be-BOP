@@ -50,6 +50,11 @@ export interface ApiKey extends Timestamps {
 	ownOrdersOnly?: boolean;
 	expiresAt?: Date;
 	revokedAt?: Date;
+	/**
+	 * Set while the key is suspended by hand: the API refuses it as it refuses a revoked key, but the
+	 * key stays in place and can be reactivated.
+	 */
+	suspendedAt?: Date;
 	lastUsedAt?: Date;
 	createdBy?: string;
 }

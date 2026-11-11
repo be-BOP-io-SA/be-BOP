@@ -9,6 +9,9 @@
 		if (key.revokedAt) {
 			return t('admin.apiKeys.statusRevoked');
 		}
+		if (key.suspendedAt) {
+			return t('admin.apiKeys.statusSuspended');
+		}
 		if (key.expiresAt && new Date(key.expiresAt) <= new Date()) {
 			return t('admin.apiKeys.statusExpired');
 		}
@@ -18,6 +21,9 @@
 	function statusClass(key: (typeof data.keys)[number]) {
 		if (key.revokedAt) {
 			return 'text-red-600';
+		}
+		if (key.suspendedAt) {
+			return 'text-orange-600';
 		}
 		if (key.expiresAt && new Date(key.expiresAt) <= new Date()) {
 			return 'text-orange-600';
