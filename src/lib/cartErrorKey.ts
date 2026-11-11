@@ -1,15 +1,11 @@
 import type { CartErrorCode } from '$lib/server/cart';
 
-// Re-exported so client code can name a cart error code without reaching into a server module.
-export type { CartErrorCode };
-
 /**
  * The translation key for each refusal the cart can raise.
  *
  * There is one table, and every surface reads it: the product page, the cart, the shared-cart
  * popup. The messages carried by the errors themselves are an English last resort meant for
- * NostR and API clients, and they used to reach the screen whenever a surface had no case for
- * a code — which was most of them.
+ * NostR and API clients, never for the screen.
  */
 export function cartErrorKey(code: CartErrorCode): string {
 	switch (code) {

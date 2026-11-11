@@ -9,7 +9,7 @@ import { cmsFromContent } from '$lib/server/cms';
 import { collections, withTransaction } from '$lib/server/database';
 import { findActivePromoDiscount, hasAnyActivePromoDiscount } from '$lib/server/discount';
 import { picturesForProducts } from '$lib/server/picture';
-import { evaluateSaleLocks, SALE_LOCK_CODES } from '$lib/server/saleLock';
+import { evaluateSaleLocks, SALE_LOCK_CODES, withStoredWhitelists } from '$lib/server/saleLock';
 import { cartErrorKey } from '$lib/cartErrorKey';
 import {
 	applyResolvedStock,
@@ -240,35 +240,37 @@ export async function load({ parent, locals, url }) {
 
 	const parentData = await parent();
 
+	// The layout hands the cart over without the customer lists, which are read again here: a
+	// customer taken off a list after filling their cart must be told before checking out.
+	const cartProducts = await withStoredWhitelists(
+		parentData.cart.items.map((item) => item.product)
+	);
+
 	// Resolve stock for cart items FIRST (needed for checkCartItems)
 	const cartItemsWithResolvedStock = await Promise.all(
-		parentData.cart.items.map(async (item) => ({
+		parentData.cart.items.map(async (item, index) => ({
 			...item,
-			product: await applyResolvedStock(item.product)
+			product: await applyResolvedStock(cartProducts[index])
 		}))
 	);
 
 	const saleLocks = [
 		...(
-			await evaluateSaleLocks(
-				parentData.cart.items.map((item) => item.product),
-				userIdentifier(locals),
-				{
-					extraQuantityByProductId: parentData.cart.items.reduce<Record<string, number>>(
-						(acc, item) => ({
-							...acc,
-							[item.product._id]: (acc[item.product._id] ?? 0) + item.quantity
-						}),
-						{}
-					),
-					// Without this the banner cannot see stock: it would stay silent on a cart the
-					// checkout is about to refuse, and the customer would learn it by clicking.
-					availableByProductId: await resolveAvailableAmounts(
-						parentData.cart.items.map((item) => item.product),
-						userIdentifier(locals)
-					)
-				}
-			)
+			await evaluateSaleLocks(cartProducts, userIdentifier(locals), {
+				extraQuantityByProductId: parentData.cart.items.reduce<Record<string, number>>(
+					(acc, item) => ({
+						...acc,
+						[item.product._id]: (acc[item.product._id] ?? 0) + item.quantity
+					}),
+					{}
+				),
+				// Without this the banner cannot see stock: it would stay silent on a cart the
+				// checkout is about to refuse, and the customer would learn it by clicking.
+				availableByProductId: await resolveAvailableAmounts(
+					parentData.cart.items.map((item) => item.product),
+					userIdentifier(locals)
+				)
+			})
 		).entries()
 	].map(([productId, productLocks]) => ({
 		locks: productLocks,
