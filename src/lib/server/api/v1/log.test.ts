@@ -1,14 +1,44 @@
 import { describe, expect, it, vi } from 'vitest';
+import { ObjectId } from 'mongodb';
 
 vi.mock('$lib/server/database', () => ({ collections: { apiV1Logs: {} } }));
+vi.mock('$lib/server/runtime-config', () => ({
+	runtimeConfig: { apiV1Log: { maxEntries: 10_000 } }
+}));
 
+import { collections } from '$lib/server/database';
 import {
 	MAX_LOGGED_BODY_CHARS,
 	errorCodeOf,
 	isEventStream,
+	pruneApiV1Logs,
 	readBodyForLog,
 	truncateBody
 } from './log';
+
+/** A journal of `count` entries, oldest first, behind the calls the trim makes. */
+function fakeJournal(count: number) {
+	const ids = Array.from({ length: count }, () => new ObjectId());
+	let skipped = 0;
+	const cursor = {
+		sort: () => cursor,
+		skip: (n: number) => {
+			skipped = n;
+			return cursor;
+		},
+		limit: () => cursor,
+		next: async () => (ids[skipped] ? { _id: ids[skipped] } : null)
+	};
+	const deleteMany = vi.fn(async (filter: { _id: { $lte: ObjectId } }) => ({
+		deletedCount: ids.filter((id) => id.toHexString() <= filter._id.$lte.toHexString()).length
+	}));
+	Object.assign(collections.apiV1Logs as object, {
+		estimatedDocumentCount: async () => ids.length,
+		find: () => cursor,
+		deleteMany
+	});
+	return { ids, deleteMany };
+}
 
 describe('truncateBody', () => {
 	it('keeps a short body whole', () => {
@@ -70,5 +100,21 @@ describe('readBodyForLog', () => {
 		});
 
 		await expect(readBodyForLog(response)).resolves.toBeUndefined();
+	});
+});
+
+describe('pruneApiV1Logs', () => {
+	it('removes the oldest entries past the ceiling, and only them', async () => {
+		const { ids, deleteMany } = fakeJournal(12);
+
+		await expect(pruneApiV1Logs(10)).resolves.toBe(2);
+		expect(deleteMany).toHaveBeenCalledWith({ _id: { $lte: ids[1] } });
+	});
+
+	it('leaves a journal under its ceiling alone', async () => {
+		const { deleteMany } = fakeJournal(5);
+
+		await expect(pruneApiV1Logs(10)).resolves.toBe(0);
+		expect(deleteMany).not.toHaveBeenCalled();
 	});
 });

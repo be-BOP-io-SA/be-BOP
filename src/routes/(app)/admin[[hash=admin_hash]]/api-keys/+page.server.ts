@@ -33,6 +33,7 @@ export async function load({ locals, url }) {
 		keys: keys.map(serializeApiKeyPublic),
 		corsOrigins: runtimeConfig.apiV1.corsOrigins.join('\n'),
 		trustExternalPricing: runtimeConfig.apiV1.trustExternalPricing,
+		logSettings: runtimeConfig.apiV1Log,
 		logs: {
 			entries: logs.entries.map((entry) => ({
 				id: entry._id.toString(),
@@ -94,5 +95,29 @@ export const actions = {
 		runtimeConfig.apiV1 = apiV1;
 
 		return { corsSuccess: true };
+	},
+
+	updateLogSettings: async function ({ request, locals }) {
+		if (locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
+			throw error(403, 'Forbidden. Only Super Admin can access this page !');
+		}
+
+		const formData = await request.formData();
+		const parsed = z
+			.object({
+				maxEntries: z.number({ coerce: true }).int().min(1)
+			})
+			.parse({
+				maxEntries: formData.get('logMaxEntries')
+			});
+
+		const apiV1Log = {
+			...runtimeConfig.apiV1Log,
+			maxEntries: parsed.maxEntries
+		};
+		await persistConfigElement('apiV1Log', apiV1Log);
+		runtimeConfig.apiV1Log = apiV1Log;
+
+		return { logSettingsSuccess: true };
 	}
 };

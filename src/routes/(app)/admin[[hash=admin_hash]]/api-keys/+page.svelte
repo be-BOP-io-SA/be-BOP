@@ -122,6 +122,33 @@
 	</section>
 
 	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-3">
+		<h2 class="text-xl">{t('admin.apiKeys.logSettingsTitle')}</h2>
+		{#if form?.logSettingsSuccess}
+			<div class="alert alert-success">{t('admin.apiKeys.logSettingsSaved')}</div>
+		{/if}
+		<form method="post" action="?/updateLogSettings" class="flex flex-col gap-3">
+			<label class="form-label">
+				{t('admin.apiKeys.logMaxEntries')}
+				<input
+					class="form-input w-32"
+					type="number"
+					name="logMaxEntries"
+					min="1"
+					step="1"
+					required
+					value={data.logSettings.maxEntries}
+				/>
+			</label>
+			<p class="text-xs opacity-70">{t('admin.apiKeys.logMaxEntriesHint')}</p>
+			<input
+				type="submit"
+				class="btn body-mainCTA self-start w-auto text-base"
+				value={t('admin.apiKeys.logSettingsSave')}
+			/>
+		</form>
+	</section>
+
+	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-3">
 		<h2 class="text-xl">{t('admin.apiKeys.logTitle')}</h2>
 		<p class="text-sm opacity-80">{t('admin.apiKeys.logHelp')}</p>
 
