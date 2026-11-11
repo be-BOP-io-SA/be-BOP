@@ -165,9 +165,16 @@ export type ApiV1LogQuery = {
 	limit?: number;
 };
 
+/**
+ * One page of the journal, newest first.
+ *
+ * No total: counting the matching entries would scan a collection that may hold millions of them,
+ * on every page shown. Fetching one entry past the page is enough to tell whether an older page
+ * exists.
+ */
 export async function listApiV1Logs(
 	query: ApiV1LogQuery
-): Promise<{ entries: ApiV1LogEntry[]; total: number }> {
+): Promise<{ entries: ApiV1LogEntry[]; hasMore: boolean }> {
 	const filter: Record<string, unknown> = {};
 	if (query.apiKeyId && ObjectId.isValid(query.apiKeyId)) {
 		filter.apiKeyId = new ObjectId(query.apiKeyId);
@@ -179,10 +186,12 @@ export async function listApiV1Logs(
 	const limit = Math.min(Math.max(query.limit ?? 50, 1), 200);
 	const skip = Math.max(query.skip ?? 0, 0);
 
-	const [entries, total] = await Promise.all([
-		collections.apiV1Logs.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
-		collections.apiV1Logs.countDocuments(filter)
-	]);
+	const entries = await collections.apiV1Logs
+		.find(filter)
+		.sort({ createdAt: -1 })
+		.skip(skip)
+		.limit(limit + 1)
+		.toArray();
 
-	return { entries, total };
+	return { entries: entries.slice(0, limit), hasMore: entries.length > limit };
 }
