@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb';
 import { collections } from '$lib/server/database';
 import {
 	addOrderPayment,
@@ -7,7 +6,6 @@ import {
 	onOrderPaymentFailed
 } from '$lib/server/orders';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { toCurrency } from '$lib/utils/toCurrency';
 import {
 	API_V1_DUPLICATE_EXTERNAL_ORDER_ID,
@@ -121,38 +119,6 @@ function duplicateRefusal(cmd: OrderWriteCommand, orderId?: string): ApiV1OrderR
 	};
 }
 
-/**
- * Hold an external order id for the time of one write, so that two calls carrying it at once cannot
- * both find it free and both create an order. Returns null when another write holds it.
- *
- * The claim lives in the locks collection, whose entries expire on their own: one left behind by a
- * write that never finished frees itself within a couple of minutes.
- */
-async function claimExternalOrderId(
-	apiKeyId: ObjectId,
-	externalOrderId: string
-): Promise<(() => Promise<void>) | null> {
-	const _id = `api-v1-order:${apiKeyId.toString()}:${externalOrderId}`;
-	const now = new Date();
-	try {
-		await collections.locks.insertOne({
-			_id,
-			ownerId: apiKeyId,
-			instanceId: new ObjectId(),
-			createdAt: now,
-			updatedAt: now
-		});
-	} catch (err) {
-		if (isUniqueConstraintError(err)) {
-			return null;
-		}
-		throw err;
-	}
-	return async () => {
-		await collections.locks.deleteOne({ _id }).catch(console.error);
-	};
-}
-
 async function ensureMultiPayments(
 	order: Order,
 	payments: OrderPaymentWrite[],
@@ -209,27 +175,17 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 
 	// One call, one order. By default an external id this key already sent is refused, and the
 	// order it names is left as it is: payments are never reconciled onto an existing order.
-	let release: (() => Promise<void>) | null = null;
 	if (!apiKey.acceptDuplicateExternalOrderIds) {
-		release = await claimExternalOrderId(apiKey._id, cmd.externalOrderId);
-		if (!release) {
-			return duplicateRefusal(cmd);
-		}
 		const existing = await collections.orders.findOne(
 			{ externalSourceApiKeyId: apiKey._id, externalOrderId: cmd.externalOrderId },
 			{ projection: { _id: 1 } }
 		);
 		if (existing) {
-			await release();
 			return duplicateRefusal(cmd, existing._id);
 		}
 	}
 
-	try {
-		return await writeNewOrder(params, payments);
-	} finally {
-		await release?.();
-	}
+	return writeNewOrder(params, payments);
 }
 
 async function writeNewOrder(

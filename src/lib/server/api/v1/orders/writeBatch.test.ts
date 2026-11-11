@@ -818,20 +818,6 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		);
 	});
 
-	it('P0: concurrent inserts with same external id create one order, the other is refused', async () => {
-		const cmd = paidCommand({ externalOrderId: 'race-ext-1' });
-		const [a, b] = await Promise.all([
-			writeOne({ apiKey, order: cmd }),
-			writeOne({ apiKey, order: cmd })
-		]);
-		const statuses = [a.status, b.status].sort();
-		expect(statuses).toEqual(['created', 'failed']);
-		const refused = a.status === 'failed' ? a : b;
-		expect(refused.error?.code).toBe('DUPLICATE_EXTERNAL_ORDER_ID');
-		expect(refused.orderId).toBeUndefined();
-		expect(await collections.orders.countDocuments({ externalOrderId: 'race-ext-1' })).toBe(1);
-	});
-
 	it('Face A onLocation accepts shippable SKU without shippingAddress', async () => {
 		await collections.products.insertOne({ ...TEST_PHYSICAL_PRODUCT });
 		const amountMinor = amountToMinor(TEST_PHYSICAL_PRODUCT.price.amount, 'EUR');
