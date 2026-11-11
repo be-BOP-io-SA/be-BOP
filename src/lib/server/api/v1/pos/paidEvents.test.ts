@@ -72,10 +72,17 @@ function makeOrder(opts?: {
 }
 
 describe('toPosPaidOrderEvent', () => {
-	it('carries the order id and the amount in major units', () => {
+	it('carries the order id and the amount in minor units', () => {
 		expect(toPosPaidOrderEvent(makeOrder({ amount: 20 }))).toEqual({
 			orderId: '3f2a0c',
-			amount: { amount: 20, currency: 'CHF' }
+			amount: { amountMinor: 2000, currency: 'CHF' }
+		});
+	});
+
+	it('gives an amount with cents as an integer, with no float residue', () => {
+		expect(toPosPaidOrderEvent(makeOrder({ amount: 12.3 }))?.amount).toEqual({
+			amountMinor: 1230,
+			currency: 'CHF'
 		});
 	});
 
@@ -95,7 +102,10 @@ describe('toPosPaidOrderEvent with a tag', () => {
 
 	it('announces an order whose line carries the tag', () => {
 		const event = toPosPaidOrderEvent(makeOrder({ tagIds: ['recharge'], amount: 20 }), 'recharge');
-		expect(event).toMatchObject({ orderId: '3f2a0c', amount: { amount: 20, currency: 'CHF' } });
+		expect(event).toMatchObject({
+			orderId: '3f2a0c',
+			amount: { amountMinor: 2000, currency: 'CHF' }
+		});
 	});
 
 	it('reports the tagged line alone, not the basket it was bought with', () => {
@@ -104,7 +114,7 @@ describe('toPosPaidOrderEvent with a tag', () => {
 			makeOrder({ tagIds: ['recharge'], amount: 20, extraLine: true }),
 			'recharge'
 		);
-		expect(event?.amount.amount).toBe(20);
+		expect(event?.amount.amountMinor).toBe(2000);
 	});
 
 	it('carries the storefront key, which is how the support is identified', () => {
@@ -113,6 +123,14 @@ describe('toPosPaidOrderEvent with a tag', () => {
 			'recharge'
 		);
 		expect(event?.key).toBe('3Qz8yTaVbNk7');
+	});
+
+	it('gives the VAT of the tagged line in minor units', () => {
+		const order = makeOrder({ tagIds: ['recharge'], amount: 20 });
+		order.items[0].vatRate = 8.1;
+		const event = toPosPaidOrderEvent(order, 'recharge');
+		expect(event?.amount).toEqual({ amountMinor: 2162, currency: 'CHF' });
+		expect(event?.vat).toEqual([{ rate: 8.1, amountMinor: 162 }]);
 	});
 
 	it('stays silent on an order carrying two tagged lines rather than crediting one at random', () => {
@@ -125,7 +143,7 @@ describe('toPosPaidOrderEvent with a tag', () => {
 		const event = toPosPaidOrderEvent(
 			makeOrder({ tagIds: ['recharge'], amount: 20, extraLine: true })
 		);
-		expect(event?.amount.amount).toBe(20);
+		expect(event?.amount.amountMinor).toBe(2000);
 		expect(event).not.toHaveProperty('key');
 	});
 });

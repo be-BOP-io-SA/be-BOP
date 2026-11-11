@@ -1,4 +1,5 @@
 import { orderIndividualItemPrice, type Order } from '$lib/types/Order';
+import type { Currency } from '$lib/types/Currency';
 
 /**
  * The one line of an order whose product carries a given tag.
@@ -12,7 +13,7 @@ import { orderIndividualItemPrice, type Order } from '$lib/types/Order';
 export type TaggedLine = {
 	/** What was charged for the line, VAT included, in major units. */
 	amount: number;
-	currency: string;
+	currency: Currency;
 	/** The VAT contained in `amount`, at the line's own rate. Null when the line carries none. */
 	vat: { rate: number; amount: number } | null;
 	/** The storefront `?key=` the line carried, when it had one — see #2688. */

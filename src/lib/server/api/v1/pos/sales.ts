@@ -7,7 +7,6 @@ import {
 import type { PosSaleRejection, PosSaleResult, PosSalesResponse } from '$lib/types/ApiV1Pos';
 import type { Currency } from '$lib/types/Currency';
 import type { OrderWriteCommand } from '../schemas/orders-write';
-import { amountToMinor } from '../orders/money';
 import { writeBatch } from '../orders/writeBatch';
 import type { PosSale } from './schemas';
 
@@ -31,7 +30,7 @@ export function toOrderWriteCommand(sale: PosSale): OrderWriteCommand {
 		items: sale.items.map((item) => ({
 			productId: item.product,
 			quantity: item.quantity,
-			customPrice: { amountMinor: amountToMinor(item.price.amount, currency), currency }
+			customPrice: { amountMinor: item.price.amountMinor, currency }
 		})),
 		// be-BOP models payment on two levels: `method` for the axis, `posLabel` for the subtype
 		// resolved against the shop's configured `posPaymentSubtypes`. The seam flattens both into
@@ -39,7 +38,7 @@ export function toOrderWriteCommand(sale: PosSale): OrderWriteCommand {
 		payment: {
 			method: 'point-of-sale',
 			status: 'paid',
-			amountMinor: amountToMinor(sale.totalPrice.amount, currency),
+			amountMinor: sale.totalPrice.amountMinor,
 			currency,
 			posLabel: sale.method
 		}

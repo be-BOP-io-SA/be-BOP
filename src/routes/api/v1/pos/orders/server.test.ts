@@ -81,8 +81,8 @@ const sale = {
 	externalOrderId: 'sale-1',
 	soldAt: '2026-07-29T14:03:00.000Z',
 	method: 'cashless',
-	totalPrice: { amount: 12.5, currency: 'CHF' },
-	items: [{ product: 'tartiflette', quantity: 1, price: { amount: 12.5, currency: 'CHF' } }]
+	totalPrice: { amountMinor: 1250, currency: 'CHF' },
+	items: [{ product: 'tartiflette', quantity: 1, price: { amountMinor: 1250, currency: 'CHF' } }]
 };
 
 describe('/api/v1/pos/orders', () => {
@@ -253,7 +253,7 @@ describe('/api/v1/pos/orders', () => {
 		});
 
 		it('rejects a malformed batch whole, ingesting nothing', async () => {
-			const res = await callPost([{ ...sale, totalPrice: { amount: -1, currency: 'CHF' } }]);
+			const res = await callPost([{ ...sale, totalPrice: { amountMinor: -1, currency: 'CHF' } }]);
 			expect(res.status).toBe(400);
 			expect(ingestPosSales).not.toHaveBeenCalled();
 		});
