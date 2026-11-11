@@ -1,3 +1,6 @@
+import { z } from 'zod';
+import { oneOfParam } from '../query';
+
 /**
  * How a request wants pictures rendered.
  *
@@ -29,6 +32,18 @@ export const DEFAULT_PICTURE_OPTIONS: PictureOptions = { encoding: 'url', size: 
 
 export type PictureOptionError = { field: string; message: string };
 
+/** `picture`: how the picture travels. */
+export const pictureParam = oneOfParam(PICTURE_ENCODINGS);
+
+/** `sizes`: `all`, or a width in pixels. */
+export const sizesParam = z
+	.string()
+	.transform((raw) => raw.trim().toLowerCase())
+	.refine(
+		(value) => value === 'all' || (/^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value))),
+		`must be "all" or a width in pixels (typically ${GENERATED_PICTURE_WIDTHS.join(', ')})`
+	);
+
 /**
  * Both parameters are rejected rather than defaulted when unrecognised: silently serving a
  * different encoding or size than the one asked for is worse than saying no.
@@ -39,33 +54,22 @@ export function parsePictureOptions(
 ): { options: PictureOptions } | { error: PictureOptionError } {
 	const options = { ...DEFAULT_PICTURE_OPTIONS };
 
-	const encoding = picture?.trim().toLowerCase();
-	if (encoding) {
-		if (!(PICTURE_ENCODINGS as readonly string[]).includes(encoding)) {
-			return {
-				error: {
-					field: 'picture',
-					message: `picture must be one of: ${PICTURE_ENCODINGS.join(', ')}`
-				}
-			};
+	if (picture?.trim()) {
+		const parsed = pictureParam.safeParse(picture);
+		if (!parsed.success) {
+			return { error: { field: 'picture', message: `picture ${parsed.error.issues[0].message}` } };
 		}
-		options.encoding = encoding as PictureEncoding;
+		options.encoding = parsed.data as PictureEncoding;
 	}
 
-	const size = sizes?.trim().toLowerCase();
-	if (size && size !== 'all') {
-		const width = Number.parseInt(size, 10);
-		if (!Number.isSafeInteger(width) || width < 1 || String(width) !== size) {
-			return {
-				error: {
-					field: 'sizes',
-					message: `sizes must be "all" or a width in pixels (typically ${GENERATED_PICTURE_WIDTHS.join(
-						', '
-					)})`
-				}
-			};
+	if (sizes?.trim()) {
+		const parsed = sizesParam.safeParse(sizes);
+		if (!parsed.success) {
+			return { error: { field: 'sizes', message: `sizes ${parsed.error.issues[0].message}` } };
 		}
-		options.size = width;
+		if (parsed.data !== 'all') {
+			options.size = Number(parsed.data);
+		}
 	}
 
 	return { options };

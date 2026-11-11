@@ -3,7 +3,12 @@ import { apiV1Handler, apiV1OptionsHandler } from '$lib/server/api/v1/handler';
 import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { jsonWithETag } from '$lib/server/api/v1/validators';
-import { getCatalogProduct, parseCatalogLanguage } from '$lib/server/api/v1/catalog/listProducts';
+import {
+	catalogLanguageParam,
+	getCatalogProduct,
+	parseCatalogLanguage
+} from '$lib/server/api/v1/catalog/listProducts';
+import { parseApiQuery } from '$lib/server/api/v1/query';
 import { parsePictureOptions } from '$lib/server/api/v1/catalog/pictureOptions';
 import { checkRateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config';
@@ -25,8 +30,12 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		});
 	}
 
+	const query = parseApiQuery(event.url, { lang: catalogLanguageParam });
+	if ('error' in query) {
+		return query.error;
+	}
 	const language = parseCatalogLanguage(
-		event.url.searchParams.get('lang') ?? undefined,
+		query.data.lang,
 		runtimeConfig.defaultLanguage as LanguageKey
 	);
 	// apiV1Handler hands back a generic RequestEvent, so params are Partial — the router

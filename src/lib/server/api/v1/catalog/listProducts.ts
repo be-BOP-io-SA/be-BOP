@@ -1,4 +1,5 @@
 import { collections } from '$lib/server/database';
+import { limitParam, oneOfParam, textParam } from '../query';
 import { locales, type LanguageKey } from '$lib/translations';
 import type { Product } from '$lib/types/Product';
 import { toCatalogProductDto, type CatalogProductDto } from './dto';
@@ -10,6 +11,18 @@ import type { PictureOptions } from './pictureOptions';
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 20;
 const PRODUCT_TYPES = ['subscription', 'resource', 'donation'] as const;
+
+/** `lang`: one of the shop's languages. */
+export const catalogLanguageParam = oneOfParam(locales);
+
+/** The query parameters the catalogue listing takes, besides the picture options. */
+export const CATALOG_LISTING_QUERY = {
+	type: oneOfParam(PRODUCT_TYPES),
+	tags: textParam,
+	limit: limitParam(MAX_LIMIT),
+	cursor: textParam,
+	lang: catalogLanguageParam
+};
 
 export type CatalogListQuery = {
 	type?: string;
