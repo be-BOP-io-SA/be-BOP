@@ -355,6 +355,7 @@ async function writeNewOrder(
 				externalOrderId: cmd.externalOrderId,
 				externalSourceApiKeyId: apiKey._id,
 				...(orderLabelIds && { orderLabelIds }),
+				...(cmd.notifications === false && { skipNotifications: true }),
 				...(cmd.createdAt && { createdAt: new Date(cmd.createdAt) }),
 				...(clientIp && { clientIp }),
 				...(cmd.notes && { note: cmd.notes }),

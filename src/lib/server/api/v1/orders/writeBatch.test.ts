@@ -244,6 +244,26 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(firstOrder?.notes?.some((n) => n.content === 'second sale')).toBeFalsy();
 	});
 
+	it('writes an order nobody is notified about when notifications is false', async () => {
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({ externalOrderId: 'silent-1', notifications: false }),
+				paidCommand({ externalOrderId: 'default-1' }),
+				paidCommand({ externalOrderId: 'notified-1', notifications: true })
+			]
+		});
+		expect(res.results.map((r) => r.status)).toEqual(['created', 'created', 'created']);
+		const [silent, byDefault, notified] = await Promise.all(
+			res.results.map((r) => collections.orders.findOne({ _id: requireOrderId(r) }))
+		);
+		expect(silent?.skipNotifications).toBe(true);
+		// The order itself is written and paid as any other: only its notifications are off.
+		expect(silent?.status).toBe('paid');
+		expect(byDefault?.skipNotifications).toBeUndefined();
+		expect(notified?.skipNotifications).toBeUndefined();
+	});
+
 	it('creates with PRODUCT_MISSING warning and catalog-integrity-warning label', async () => {
 		const res = await writeBatch({
 			apiKey,
