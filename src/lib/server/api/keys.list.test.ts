@@ -55,6 +55,7 @@ describe('listApiKeys', () => {
 				'lastUsedAt',
 				'maxConcurrentStreams',
 				'name',
+				'ownOrdersOnly',
 				'revokedAt',
 				'scopes',
 				'streamLifetimeSeconds',

@@ -1,4 +1,5 @@
 import type { Order } from '$lib/types/Order';
+import type { ObjectId } from 'mongodb';
 import type { PosPaidOrderEvent } from '$lib/types/ApiV1Pos';
 import { orderVatBreakdown, paidAmount } from '../orders/listPaid';
 import { findTaggedLine } from './taggedLine';
@@ -79,12 +80,18 @@ export async function listPosPaidOrders(opts: {
 	after: PaidStreamCursor | null;
 	limit: number;
 	tag?: string;
+	/** Only the orders written with this API key, for a key restricted to its own orders. */
+	ordersOfKey?: ObjectId;
 }): Promise<{ orders: PosPaidOrderEvent[]; nextCursor: string | null }> {
 	const orders: PosPaidOrderEvent[] = [];
 	let lastId: string | null = null;
 	let reachedTail = true;
 
-	for await (const frame of iteratePaidOrderBacklog({ since: opts.since, after: opts.after })) {
+	for await (const frame of iteratePaidOrderBacklog({
+		since: opts.since,
+		after: opts.after,
+		...(opts.ordersOfKey && { ordersOfKey: opts.ordersOfKey })
+	})) {
 		if (orders.length >= opts.limit) {
 			reachedTail = false;
 			break;

@@ -67,6 +67,7 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		keyId: apiKey._id.toString(),
 		maxConcurrentStreams: apiKey.maxConcurrentStreams,
 		lifetimeSeconds: apiKey.streamLifetimeSeconds,
+		...(apiKey.ownOrdersOnly && { ordersOfKey: apiKey._id }),
 		signal: event.request.signal,
 		since: since.date,
 		after: resumeFrom,

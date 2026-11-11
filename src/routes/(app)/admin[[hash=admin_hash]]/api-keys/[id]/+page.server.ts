@@ -2,6 +2,7 @@ import {
 	getApiKeyPublic,
 	revokeApiKey,
 	serializeApiKeyPublic,
+	updateApiKeyOwnOrdersOnly,
 	updateApiKeyStreamSettings
 } from '$lib/server/api/keys';
 import { isStreamLifetimeTooLong, optionalStreamSetting } from '$lib/server/api/stream-settings';
@@ -111,6 +112,37 @@ export const actions: Actions = {
 			alreadyRevoked: false,
 			streamSettingsSaved: true,
 			streamsReset: false,
+			error: null
+		};
+	},
+
+	/**
+	 * Restrict the key to its own orders, or open every order to it again.
+	 *
+	 * The streams already open were filtered by the rule they opened under, so a change closes them:
+	 * they reconnect under the new one.
+	 */
+	saveOrderAccess: async ({ locals, params, request }) => {
+		assertSuperAdmin(locals);
+
+		if (!ObjectId.isValid(params.id)) {
+			throw error(404, 'API key not found');
+		}
+
+		const formData = await request.formData();
+		const changed = await updateApiKeyOwnOrdersOnly(params.id, !!formData.get('ownOrdersOnly'));
+		if (changed === null) {
+			throw error(404, 'API key not found');
+		}
+		if (changed) {
+			closeStreamsOfKey(params.id);
+		}
+
+		return {
+			alreadyRevoked: false,
+			streamSettingsSaved: false,
+			streamsReset: false,
+			orderAccessSaved: true,
 			error: null
 		};
 	},

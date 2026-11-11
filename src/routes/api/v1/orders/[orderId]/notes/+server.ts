@@ -55,7 +55,11 @@ export const POST: RequestHandler = apiV1Handler(async (event) => {
 		return apiError(400, 'VALIDATION_ERROR', 'Invalid note payload', parsed.error.format());
 	}
 
-	const result = await addOrderNote({ orderId, content: parsed.data.content });
+	const result = await addOrderNote({
+		orderId,
+		content: parsed.data.content,
+		...(apiKey.ownOrdersOnly && { ownedBy: apiKey._id })
+	});
 	if (!result.ok) {
 		return apiError(404, 'NOT_FOUND', 'Order not found');
 	}

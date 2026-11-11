@@ -35,6 +35,8 @@ export type PaidOrdersQuery = {
 	externalOrderId?: string;
 	/** `_id` of the API key making the call. Required to use `externalOrderId`. */
 	apiKeyId?: ObjectId;
+	/** Only the orders written with `apiKeyId`: the key is restricted to its own orders. */
+	ownOrdersOnly?: boolean;
 };
 
 /** A query parameter the caller got wrong. Routes map this to 400 VALIDATION_ERROR. */
@@ -250,6 +252,14 @@ function buildOrderFilter(
 		}
 		filter.externalSourceApiKeyId = query.apiKeyId;
 		filter.externalOrderId = query.externalOrderId;
+	}
+
+	if (query.ownOrdersOnly) {
+		// Never reached without a key: the routes pass the flag from the key itself.
+		if (!query.apiKeyId) {
+			throw new Error('ownOrdersOnly requires the API key making the call');
+		}
+		filter.externalSourceApiKeyId = query.apiKeyId;
 	}
 
 	return { filter };

@@ -29,6 +29,8 @@ const addLabelSchema = z
  * its own database.
  *
  * Repeating the call is safe: the label is added to a set, and the response is the same either way.
+ *
+ * A key restricted to its own orders gets a 404 for any other order, as if it did not exist.
  */
 export const POST: RequestHandler = apiV1Handler(async (event) => {
 	const apiKeyOrError = await requireApiKey(event, 'orders:write');
@@ -67,7 +69,8 @@ export const POST: RequestHandler = apiV1Handler(async (event) => {
 	const result = await addOrderLabel({
 		orderId,
 		labelId,
-		...(wantedLook && { label: wantedLook })
+		...(wantedLook && { label: wantedLook }),
+		...(apiKey.ownOrdersOnly && { ownedBy: apiKey._id })
 	});
 	if (!result.ok) {
 		return result.reason === 'ORDER_NOT_FOUND'

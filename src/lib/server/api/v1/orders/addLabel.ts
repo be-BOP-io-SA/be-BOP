@@ -1,6 +1,7 @@
 import { collections } from '$lib/server/database';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import type { Order } from '$lib/types/Order';
+import type { ObjectId } from 'mongodb';
 
 /**
  * Split the labels a payload asked for into the ones the shop actually has and the rest.
@@ -102,11 +103,14 @@ export async function addOrderLabel(params: {
 	labelId: string;
 	/** How the label should look if the shop does not have it yet. Ignored when it already does. */
 	label?: { name?: string; color?: string; icon?: string };
+	/** Set to an API key id, only an order written with that key is labelled; any other is not found. */
+	ownedBy?: ObjectId;
 }): Promise<AddLabelResult> {
-	const order = await collections.orders.findOne(
-		{ _id: params.orderId },
-		{ projection: { _id: 1 } }
-	);
+	const orderFilter = {
+		_id: params.orderId,
+		...(params.ownedBy && { externalSourceApiKeyId: params.ownedBy })
+	};
+	const order = await collections.orders.findOne(orderFilter, { projection: { _id: 1 } });
 	if (!order) {
 		return { ok: false, reason: 'ORDER_NOT_FOUND' };
 	}
@@ -117,7 +121,7 @@ export async function addOrderLabel(params: {
 	}
 
 	const updated = await collections.orders.findOneAndUpdate(
-		{ _id: params.orderId },
+		orderFilter,
 		{ $addToSet: { orderLabelIds: params.labelId }, $set: { updatedAt: new Date() } },
 		{ returnDocument: 'after', projection: { orderLabelIds: 1 } }
 	);

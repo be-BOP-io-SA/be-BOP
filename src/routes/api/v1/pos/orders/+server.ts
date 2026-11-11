@@ -64,7 +64,13 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 	// to that line. be-BOP holds no domain word: the caller says which tag it means.
 	const tag = event.url.searchParams.get('tag')?.trim() || undefined;
 
-	const page = await listPosPaidOrders({ since: since.date, after, limit: pageSize, tag });
+	const page = await listPosPaidOrders({
+		since: since.date,
+		after,
+		limit: pageSize,
+		tag,
+		...(apiKey.ownOrdersOnly && { ordersOfKey: apiKey._id })
+	});
 	return jsonWithETag(page, event.request);
 });
 

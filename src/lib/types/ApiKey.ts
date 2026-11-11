@@ -42,6 +42,12 @@ export interface ApiKey extends Timestamps {
 	 * still believes in, and it is only ever counted, never returned.
 	 */
 	streamLifetimeSeconds?: number;
+	/**
+	 * When true, the key only reaches the orders it wrote itself (`externalSourceApiKeyId`): order
+	 * listings and event streams leave every other order out, and notes and labels can only be added
+	 * to its own. Undefined or false, the key reaches every order of the shop, web orders included.
+	 */
+	ownOrdersOnly?: boolean;
 	expiresAt?: Date;
 	revokedAt?: Date;
 	lastUsedAt?: Date;
