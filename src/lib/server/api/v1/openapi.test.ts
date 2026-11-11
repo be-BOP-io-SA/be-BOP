@@ -11,6 +11,8 @@ describe('buildOpenApiDocument', () => {
 		expect(doc.paths['/api/v1/catalog/products']).toBeTruthy();
 		expect(doc.paths['/api/v1/orders/paid']).toBeTruthy();
 		expect(doc.paths['/api/v1/orders/paid/stream']).toBeTruthy();
+		expect(doc.paths['/api/v1/orders/stream']).toBeTruthy();
+		expect(doc.paths['/api/v1/orders/updates/stream']).toBeTruthy();
 		expect(doc.paths['/api/v1/openapi.json']).toBeTruthy();
 		expect(doc.paths['/api/v1/docs']).toBeTruthy();
 		expect(doc.components.securitySchemes.BearerAuth).toBeTruthy();
