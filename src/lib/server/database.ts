@@ -269,12 +269,9 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.apiKeys, { keyPrefix: 1 }, { unique: true }],
 	[collections.apiKeys, { expiresAt: 1 }, { sparse: true }],
 	[collections.apiKeys, { revokedAt: 1 }, { sparse: true }],
-	// Idempotence for /api/v1/orders (D2) — sparse so pre-API orders are unaffected
-	[
-		collections.orders,
-		{ externalSourceApiKeyId: 1, externalOrderId: 1 },
-		{ unique: true, sparse: true }
-	]
+	// Orders an API key wrote, by the reference it gave. Not unique: a key may be allowed several
+	// orders per reference. Sparse so orders placed outside the API stay out of it.
+	[collections.orders, { externalSourceApiKeyId: 1, externalOrderId: 1 }, { sparse: true }]
 ];
 
 export async function createIndexes() {

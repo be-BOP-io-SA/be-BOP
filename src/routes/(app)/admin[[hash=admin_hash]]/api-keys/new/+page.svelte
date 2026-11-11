@@ -200,6 +200,12 @@
 		</label>
 		<p class="text-sm opacity-70">{t('admin.apiKeys.ownOrdersOnlyHint')}</p>
 
+		<label class="checkbox-label">
+			<input type="checkbox" name="acceptDuplicateExternalOrderIds" class="form-checkbox" />
+			{t('admin.apiKeys.acceptDuplicateExternalOrderIds')}
+		</label>
+		<p class="text-sm opacity-70">{t('admin.apiKeys.acceptDuplicateExternalOrderIdsHint')}</p>
+
 		{#if form?.error}
 			<p class="text-red-600">{t('admin.apiKeys.createError')}</p>
 			{#each form.error.formErrors ?? [] as formError}

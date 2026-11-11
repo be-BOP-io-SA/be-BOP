@@ -67,6 +67,12 @@ export interface ApiKey extends Timestamps {
 	 * to its own. Undefined or false, the key reaches every order of the shop, web orders included.
 	 */
 	ownOrdersOnly?: boolean;
+	/**
+	 * When true, every order write creates its own order, even when its `externalOrderId` was already
+	 * received from this key; the orders share the reference. Undefined or false, a reference already
+	 * received is refused, and the order it names is left untouched.
+	 */
+	acceptDuplicateExternalOrderIds?: boolean;
 	expiresAt?: Date;
 	revokedAt?: Date;
 	/**

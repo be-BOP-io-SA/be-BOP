@@ -50,7 +50,7 @@ const paymentSchema = z
 		amountMinor: amountMinorSchema,
 		currency: currencySchema,
 		posLabel: z.string().trim().max(200).optional(),
-		/** Strongly recommended stable PoS payment id on every payment for safe retries / reorder / splits. */
+		/** Stable PoS payment id, kept on the payment row it creates. */
 		externalPaymentId: z.string().trim().min(1).max(200).optional()
 	})
 	.strict();
@@ -159,8 +159,8 @@ const orderCommandSchema = z
 /**
  * POST /api/v1/orders request body.
  *
- * Idempotence (D2): uniqueness is (externalSourceApiKeyId, externalOrderId) — sparse unique
- * index on Order. Documented here; enforced at persistence in lot D.
+ * One command, one order. An externalOrderId the key already sent is refused, unless the key
+ * accepts several orders per external id (see writeOne).
  *
  * currencySnapshot is rejected by .strict() on every object (D4) — no custom superRefine needed.
  */

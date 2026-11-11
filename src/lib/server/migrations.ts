@@ -1063,6 +1063,19 @@ export const migrations = [
 		run: async () => {
 			await collections.apiV1Logs.dropIndex('createdAt_1').catch(console.error);
 		}
+	},
+	{
+		_id: new ObjectId('6af4bb4eaa73d77c82cc4b79'),
+		name: 'Let an API key write several orders with the same external order id',
+		run: async () => {
+			// Same key, same name: the unique index has to go before the plain one can take its place.
+			await collections.orders
+				.dropIndex('externalSourceApiKeyId_1_externalOrderId_1')
+				.catch(console.error);
+			await collections.orders
+				.createIndex({ externalSourceApiKeyId: 1, externalOrderId: 1 }, { sparse: true })
+				.catch(console.error);
+		}
 	}
 ];
 

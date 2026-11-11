@@ -133,9 +133,8 @@ export interface OrderPayment {
 	posSubtype?: string;
 
 	/**
-	 * Optional integrator-stable id for a payment row (Face A / PoS).
-	 * Parallel to Order.externalOrderId — used to match payload payments on retry
-	 * when the PoS reorders payments[].
+	 * Optional integrator-stable id for a payment row (Face A / PoS), kept as the caller sent it,
+	 * parallel to Order.externalOrderId.
 	 */
 	externalPaymentId?: string;
 
@@ -393,9 +392,9 @@ export interface Order extends Timestamps {
 	dataAnonymized?: boolean;
 
 	/**
-	 * Idempotence for the public orders-write API (issue 2687 / D2).
-	 * Unique sparse index with externalSourceApiKeyId.
-	 * Optional for backwards compatibility with orders created outside the API.
+	 * The reference the caller gave when it wrote this order through the public API. Not unique:
+	 * a key allowed several orders per reference shares it between them, and a key that is not is
+	 * refused a reference it already sent. Absent on orders placed outside the API.
 	 */
 	externalOrderId?: string;
 	/** ApiKey._id that created this order via /api/v1/orders. */

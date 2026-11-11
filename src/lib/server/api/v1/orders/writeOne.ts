@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import { collections } from '$lib/server/database';
 import {
 	addOrderPayment,
@@ -5,12 +6,15 @@ import {
 	onOrderPayment,
 	onOrderPaymentFailed
 } from '$lib/server/orders';
-import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
-import { matchPayloadPayment, shouldAddUnmatchedPayment } from './matchPayments';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { toCurrency } from '$lib/utils/toCurrency';
-import type { AuthenticatedApiKey, ApiV1OrderResult, ApiV1Warning } from '$lib/types/ApiV1';
+import {
+	API_V1_DUPLICATE_EXTERNAL_ORDER_ID,
+	type AuthenticatedApiKey,
+	type ApiV1OrderResult,
+	type ApiV1Warning
+} from '$lib/types/ApiV1';
 import type { Order } from '$lib/types/Order';
 import {
 	normalizeOrderPayments,
@@ -25,24 +29,6 @@ import { ensureApiOrderLabel, ensureCatalogIntegrityLabel } from './ensureCatalo
 import { resolveProducts } from './resolveProducts';
 import { resolveOrderLabels } from './addLabel';
 import { API_ORDER_SELLER_ALIAS } from './seller';
-
-function isDuplicateKeyError(err: unknown): boolean {
-	if (isUniqueConstraintError(err)) {
-		return true;
-	}
-	if (
-		typeof err === 'object' &&
-		err &&
-		'code' in err &&
-		(err as { code: unknown }).code === 11000
-	) {
-		return true;
-	}
-	if (typeof err === 'object' && err && 'cause' in err) {
-		return isDuplicateKeyError((err as { cause: unknown }).cause);
-	}
-	return false;
-}
 
 export type WriteOneParams = {
 	apiKey: AuthenticatedApiKey;
@@ -98,127 +84,20 @@ async function applyMatchedPaymentStatus(
 	return onOrderPaymentFailed(order, existingPayment, payment.status, { terminal: true });
 }
 
-async function addAndSettleUnmatchedPayment(
-	order: Order,
-	payment: OrderPaymentWrite
-): Promise<{ order: Order; addedIndex?: number }> {
-	const { posSubtype } = await resolvePosSubtype(payment.posLabel);
-	const beforeCount = order.payments.length;
-	try {
-		await addOrderPayment(
-			order,
-			'point-of-sale',
-			minorToPrice(payment.amountMinor, payment.currency),
-			{
-				expiresAt: null,
-				...(posSubtype && { posSubtype }),
-				...(payment.externalPaymentId && { externalPaymentId: payment.externalPaymentId })
-			}
-		);
-	} catch (err) {
-		// Remaining / status guards rejected the add — ignore (D3: no hard fail on duplicate).
-		const mapped = mapDomainError(err);
-		console.error('[api/v1] addOrderPayment on duplicate failed', {
-			orderId: order._id,
-			externalPaymentId: payment.externalPaymentId,
-			code: mapped.code,
-			message: mapped.message
-		});
-		return { order };
-	}
-	const afterAdd = await collections.orders.findOne({ _id: order._id });
-	if (!afterAdd) {
-		throw new Error('Order not found after addOrderPayment on duplicate');
-	}
-	if (afterAdd.payments.length <= beforeCount) {
-		return { order: afterAdd };
-	}
-	const addedIndex = afterAdd.payments.length - 1;
-	const created = afterAdd.payments[addedIndex];
-	if (!created) {
-		return { order: afterAdd };
-	}
-	const settled = await applyMatchedPaymentStatus(afterAdd, created, payment);
-	return { order: settled, addedIndex };
-}
-
 /**
- * Match strategy (duplicate settle / sync):
- * 1. externalPaymentId when present on both sides
- * 2. unused order payment by (amountMinor + currency + method)
- * 3. same index if still unused — only when payload has no externalPaymentId (legacy)
- * Never apply two payload payments to the same order payment.
- * Extra payload payment with a new externalPaymentId: addOrderPayment when order is
- * pending and remaining allows (admin-style); otherwise ignore (no item mutation).
- * Zero-total with no payment row: addOrderPayment('free') so onOrderPayment / webhooks run.
+ * Apply the status each payload payment carries to the payment row written for it.
+ *
+ * Rows are written in payload order — by createOrder for a single payment, one by one for several —
+ * so the payload index is the row index. A zero-total order has no row unless it was paid ('free').
  */
-async function syncExternalPaymentAtIndex(
-	order: Order,
-	payment: OrderPaymentWrite,
-	index: number,
-	usedOrderIndexes: Set<number>
-): Promise<Order> {
-	// Zero-total order created without a payment row (paymentMethod null).
-	const orderTotalMain = order.currencySnapshot.main.totalPrice.amount;
-	if (
-		order.payments.length === 0 &&
-		payment.status === 'paid' &&
-		order.status !== 'paid' &&
-		orderTotalMain <= 0
-	) {
-		await addOrderPayment(
-			order,
-			'free',
-			{
-				amount: 0,
-				currency: order.currencySnapshot.main.totalPrice.currency
-			},
-			{
-				expiresAt: null,
-				...(payment.externalPaymentId && { externalPaymentId: payment.externalPaymentId })
-			}
-		);
-		const updated = await collections.orders.findOne({ _id: order._id });
-		if (!updated) {
-			throw new Error('Order not found after zero-total free payment');
-		}
-		if (updated.payments[0]) {
-			usedOrderIndexes.add(0);
-		}
-		return updated;
-	}
-
-	const match = matchPayloadPayment(order.payments, payment, index, usedOrderIndexes);
-	if (match.kind === 'existing') {
-		usedOrderIndexes.add(match.orderPaymentIndex);
-		const existingPayment = order.payments[match.orderPaymentIndex];
-		return applyMatchedPaymentStatus(order, existingPayment, payment);
-	}
-
-	const remaining = orderAmountWithNoPaymentsCreated(order);
-	if (shouldAddUnmatchedPayment(order, payment, remaining)) {
-		const { order: after, addedIndex } = await addAndSettleUnmatchedPayment(order, payment);
-		if (addedIndex !== undefined) {
-			usedOrderIndexes.add(addedIndex);
-		}
-		return after;
-	}
-
-	return order;
-}
-
-/**
- * Apply external payment intents via the same domain helpers/guards as admin order UI.
- * Supports one or many payments; matching prefers externalPaymentId (see matchPayments).
- */
-export async function syncExternalPayments(
-	order: Order,
-	payments: OrderPaymentWrite[]
-): Promise<Order> {
+async function settleCreatedPayments(order: Order, payments: OrderPaymentWrite[]): Promise<Order> {
 	let current = order;
-	const usedOrderIndexes = new Set<number>();
 	for (let i = 0; i < payments.length; i++) {
-		current = await syncExternalPaymentAtIndex(current, payments[i], i, usedOrderIndexes);
+		const row = current.payments[i];
+		if (!row) {
+			continue;
+		}
+		current = await applyMatchedPaymentStatus(current, row, payments[i]);
 		const fresh = await collections.orders.findOne({ _id: current._id });
 		if (fresh) {
 			current = fresh;
@@ -227,46 +106,50 @@ export async function syncExternalPayments(
 	return current;
 }
 
-/** @deprecated Prefer syncExternalPayments — kept for call-site clarity in older tests. */
-export async function syncExternalPayment(
-	order: Order,
-	payment: OrderPaymentWrite
-): Promise<Order> {
-	return syncExternalPayments(order, [payment]);
-}
-
-async function settleExistingOrder(
-	existing: Order,
-	cmd: OrderWriteCommand
-): Promise<ApiV1OrderResult> {
-	const payments = normalizeOrderPayments(cmd);
-	const warnings: ApiV1Warning[] = [];
-	// Retry of a paid intent must complete payment if the prior write stopped mid-flight.
-	// Domain errors stay per-command: keep duplicate (idempotency key hit) + warning (D1/D3).
-	try {
-		await syncExternalPayments(existing, payments);
-	} catch (err) {
-		const mapped = mapDomainError(err);
-		console.error('[api/v1] payment sync on duplicate failed', {
-			orderId: existing._id,
-			externalOrderId: cmd.externalOrderId,
-			code: mapped.code,
-			message: mapped.message
-		});
-		warnings.push({
-			code: 'PAYMENT_SYNC_FAILED',
-			message: mapped.message,
-			details: {
-				domainCode: mapped.code,
-				...(mapped.details ?? {})
-			}
-		});
-	}
+function duplicateRefusal(cmd: OrderWriteCommand, orderId?: string): ApiV1OrderResult {
 	return {
 		externalOrderId: cmd.externalOrderId,
-		status: 'duplicate',
-		orderId: existing._id,
-		...(warnings.length && { warnings })
+		status: 'failed',
+		error: {
+			code: API_V1_DUPLICATE_EXTERNAL_ORDER_ID,
+			message:
+				`externalOrderId ${cmd.externalOrderId} was already received from this API key. ` +
+				'Each call creates one order: send a new externalOrderId, or tick "Accept several ' +
+				'orders with the same external id" on the key in Admin -> API Keys.',
+			...(orderId && { details: { orderId } })
+		}
+	};
+}
+
+/**
+ * Hold an external order id for the time of one write, so that two calls carrying it at once cannot
+ * both find it free and both create an order. Returns null when another write holds it.
+ *
+ * The claim lives in the locks collection, whose entries expire on their own: one left behind by a
+ * write that never finished frees itself within a couple of minutes.
+ */
+async function claimExternalOrderId(
+	apiKeyId: ObjectId,
+	externalOrderId: string
+): Promise<(() => Promise<void>) | null> {
+	const _id = `api-v1-order:${apiKeyId.toString()}:${externalOrderId}`;
+	const now = new Date();
+	try {
+		await collections.locks.insertOne({
+			_id,
+			ownerId: apiKeyId,
+			instanceId: new ObjectId(),
+			createdAt: now,
+			updatedAt: now
+		});
+	} catch (err) {
+		if (isUniqueConstraintError(err)) {
+			return null;
+		}
+		throw err;
+	}
+	return async () => {
+		await collections.locks.deleteOne({ _id }).catch(console.error);
 	};
 }
 
@@ -301,13 +184,12 @@ async function ensureMultiPayments(
 }
 
 /**
- * Persist a single API order command.
- * Orchestrates resolveProducts → createOrder (atomic external ids) → payment sync.
+ * Persist a single API order command: one call, one order.
+ * Orchestrates the external id check → resolveProducts → createOrder → payment settle.
  * No HTTP / transport concerns here.
  */
 export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult> {
-	const { apiKey, order: cmd, clientIp } = params;
-	const warnings: ApiV1Warning[] = [];
+	const { apiKey, order: cmd } = params;
 	const payments = normalizeOrderPayments(cmd);
 
 	if (cmd.currency !== runtimeConfig.mainCurrency) {
@@ -325,14 +207,37 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 		};
 	}
 
-	const existing = await collections.orders.findOne({
-		externalSourceApiKeyId: apiKey._id,
-		externalOrderId: cmd.externalOrderId
-	});
-	if (existing) {
-		return settleExistingOrder(existing, cmd);
+	// One call, one order. By default an external id this key already sent is refused, and the
+	// order it names is left as it is: payments are never reconciled onto an existing order.
+	let release: (() => Promise<void>) | null = null;
+	if (!apiKey.acceptDuplicateExternalOrderIds) {
+		release = await claimExternalOrderId(apiKey._id, cmd.externalOrderId);
+		if (!release) {
+			return duplicateRefusal(cmd);
+		}
+		const existing = await collections.orders.findOne(
+			{ externalSourceApiKeyId: apiKey._id, externalOrderId: cmd.externalOrderId },
+			{ projection: { _id: 1 } }
+		);
+		if (existing) {
+			await release();
+			return duplicateRefusal(cmd, existing._id);
+		}
 	}
 
+	try {
+		return await writeNewOrder(params, payments);
+	} finally {
+		await release?.();
+	}
+}
+
+async function writeNewOrder(
+	params: WriteOneParams,
+	payments: OrderPaymentWrite[]
+): Promise<ApiV1OrderResult> {
+	const { apiKey, order: cmd, clientIp } = params;
+	const warnings: ApiV1Warning[] = [];
 	const trustExternalPricing = runtimeConfig.apiV1.trustExternalPricing;
 
 	// A line that takes money off the order only makes sense when the caller sets the prices. With
@@ -425,65 +330,50 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 		];
 		const orderLabelIds = labelIds.length ? labelIds : undefined;
 
-		let orderId: string;
-		try {
-			orderId = await createOrder(
-				lines.map((line) => ({
-					product: line.product,
-					quantity: line.quantity,
-					...(line.customPrice && { customPrice: line.customPrice }),
-					...(line.chosenVariations && { chosenVariations: line.chosenVariations }),
-					...(line.uniqueKey && { uniqueKey: line.uniqueKey })
-				})),
-				paymentMethod,
-				{
-					locale: runtimeConfig.defaultLanguage,
-					user: {
-						sessionId: `api-v1:${apiKey._id.toString()}`,
-						userAlias: API_ORDER_SELLER_ALIAS,
-						userHasPosOptions: true
-					},
-					shippingAddress: null,
-					onLocation: true,
-					userVatCountry: runtimeConfig.vatCountry,
-					channel: 'api',
-					// PoS already priced the ticket — dedicated api channel + skip shop auto-discounts.
-					skipAutoDiscounts: true,
-					externalOrderId: cmd.externalOrderId,
-					externalSourceApiKeyId: apiKey._id,
-					...(orderLabelIds && { orderLabelIds }),
-					...(cmd.createdAt && { createdAt: new Date(cmd.createdAt) }),
-					...(clientIp && { clientIp }),
-					...(cmd.notes && { note: cmd.notes }),
-					...(customCheckoutFields.length && { customCheckoutFields }),
-					...(!multi && posSubtypes[0] && { posSubtype: posSubtypes[0] }),
-					...(!multi &&
-						payments[0]?.externalPaymentId && {
-							externalPaymentId: payments[0].externalPaymentId
-						})
-				}
-			);
-		} catch (err) {
-			if (isDuplicateKeyError(err)) {
-				// Concurrent insert won the sparse unique index — no orphan to delete.
-				const winner = await collections.orders.findOne({
-					externalSourceApiKeyId: apiKey._id,
-					externalOrderId: cmd.externalOrderId
-				});
-				if (winner) {
-					return settleExistingOrder(winner, cmd);
-				}
+		const orderId = await createOrder(
+			lines.map((line) => ({
+				product: line.product,
+				quantity: line.quantity,
+				...(line.customPrice && { customPrice: line.customPrice }),
+				...(line.chosenVariations && { chosenVariations: line.chosenVariations }),
+				...(line.uniqueKey && { uniqueKey: line.uniqueKey })
+			})),
+			paymentMethod,
+			{
+				locale: runtimeConfig.defaultLanguage,
+				user: {
+					sessionId: `api-v1:${apiKey._id.toString()}`,
+					userAlias: API_ORDER_SELLER_ALIAS,
+					userHasPosOptions: true
+				},
+				shippingAddress: null,
+				onLocation: true,
+				userVatCountry: runtimeConfig.vatCountry,
+				channel: 'api',
+				// PoS already priced the ticket — dedicated api channel + skip shop auto-discounts.
+				skipAutoDiscounts: true,
+				externalOrderId: cmd.externalOrderId,
+				externalSourceApiKeyId: apiKey._id,
+				...(orderLabelIds && { orderLabelIds }),
+				...(cmd.createdAt && { createdAt: new Date(cmd.createdAt) }),
+				...(clientIp && { clientIp }),
+				...(cmd.notes && { note: cmd.notes }),
+				...(customCheckoutFields.length && { customCheckoutFields }),
+				...(!multi && posSubtypes[0] && { posSubtype: posSubtypes[0] }),
+				...(!multi &&
+					payments[0]?.externalPaymentId && {
+						externalPaymentId: payments[0].externalPaymentId
+					})
 			}
-			throw err;
-		}
+		);
 
 		let order = await collections.orders.findOne({ _id: orderId });
 		if (!order) {
 			throw new Error('Order not found after create');
 		}
 
-		// Order row exists: payment setup/settle failures must not report `failed` without orderId
-		// (retry would hit duplicate). Mirror settleExistingOrder → PAYMENT_SYNC_FAILED warning.
+		// Order row exists: payment setup/settle failures must not report `failed` without orderId,
+		// since a retry with the same external id would be refused. They come back as a warning.
 		try {
 			if (multi) {
 				order = await ensureMultiPayments(order, payments, posSubtypes);
@@ -513,7 +403,7 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 				});
 			}
 
-			await syncExternalPayments(order, payments);
+			await settleCreatedPayments(order, payments);
 		} catch (err) {
 			const mapped = mapDomainError(err);
 			console.error('[api/v1] payment sync on create failed', {

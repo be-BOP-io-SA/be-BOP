@@ -191,7 +191,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(order?.orderLabelIds).toEqual([API_ORDER_LABEL_ID]);
 	});
 
-	it('returns duplicate on replay without mutating the existing order', async () => {
+	it('refuses a replay without mutating the existing order', async () => {
 		const first = await writeBatch({
 			apiKey,
 			orders: [paidCommand({ externalOrderId: 'dup-1' })]
@@ -204,14 +204,44 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 			apiKey,
 			orders: [paidCommand({ externalOrderId: 'dup-1', notes: 'should-not-apply' })]
 		});
-		expect(second.status).toBe('ok');
+		expect(second.status).toBe('ok_with_errors');
+		expect(second.ok).toBe(false);
 		expect(second.results[0]).toMatchObject({
-			status: 'duplicate',
-			orderId
+			externalOrderId: 'dup-1',
+			status: 'failed',
+			error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
 		});
+		expect(second.results[0].orderId).toBeUndefined();
 		const after = await collections.orders.findOne({ _id: orderId });
 		expect(after?.notes?.some((n) => n.content === 'should-not-apply')).toBeFalsy();
 		expect(after?.updatedAt?.getTime()).toBe(before?.updatedAt?.getTime());
+		expect(await collections.orders.countDocuments({})).toBe(1);
+	});
+
+	it('creates a second order with the same external id when the key accepts it', async () => {
+		const acceptingKey = { ...apiKey, acceptDuplicateExternalOrderIds: true };
+		const first = await writeBatch({
+			apiKey: acceptingKey,
+			orders: [paidCommand({ externalOrderId: 'dup-accepted-1' })]
+		});
+		const second = await writeBatch({
+			apiKey: acceptingKey,
+			orders: [paidCommand({ externalOrderId: 'dup-accepted-1', notes: 'second sale' })]
+		});
+		expect(first.results[0].status).toBe('created');
+		expect(second.results[0].status).toBe('created');
+		const firstId = requireOrderId(first.results[0]);
+		const secondId = requireOrderId(second.results[0]);
+		expect(secondId).not.toBe(firstId);
+
+		const orders = await collections.orders
+			.find({ externalSourceApiKeyId: apiKey._id, externalOrderId: 'dup-accepted-1' })
+			.toArray();
+		expect(orders.map((order) => order._id).sort()).toEqual([firstId, secondId].sort());
+		expect(orders.every((order) => order.status === 'paid')).toBe(true);
+		// The first order is left as it was: the note went to the new one only.
+		const firstOrder = orders.find((order) => order._id === firstId);
+		expect(firstOrder?.notes?.some((n) => n.content === 'second sale')).toBeFalsy();
 	});
 
 	it('creates with PRODUCT_MISSING warning and catalog-integrity-warning label', async () => {
@@ -392,7 +422,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(await collections.orders.countDocuments({})).toBe(0);
 	});
 
-	it('on duplicate replay with paid, completes a still-pending order payment', async () => {
+	it('does not complete a pending order from a replay marked paid', async () => {
 		const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
 		const first = await writeBatch({
 			apiKey,
@@ -410,9 +440,6 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		});
 		expect(first.results[0].status).toBe('created');
 		const orderId = requireOrderId(first.results[0]);
-		const pending = await collections.orders.findOne({ _id: orderId });
-		expect(pending?.status).toBe('pending');
-		expect(pending?.payments[0]?.status).toBe('pending');
 
 		const second = await writeBatch({
 			apiKey,
@@ -428,10 +455,14 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 				})
 			]
 		});
-		expect(second.results[0]).toMatchObject({ status: 'duplicate', orderId });
-		const paid = await collections.orders.findOne({ _id: orderId });
-		expect(paid?.status).toBe('paid');
-		expect(paid?.payments[0]?.status).toBe('paid');
+		expect(second.results[0]).toMatchObject({
+			status: 'failed',
+			error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+		});
+		const order = await collections.orders.findOne({ _id: orderId });
+		expect(order?.status).toBe('pending');
+		expect(order?.payments).toHaveLength(1);
+		expect(order?.payments[0]?.status).toBe('pending');
 	});
 
 	it('applies canceled payment via domain path (not raw status set)', async () => {
@@ -457,7 +488,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(order?.status).toBe('canceled');
 	});
 
-	describe('C4 admin-parity payment transitions on duplicate', () => {
+	describe('C4 admin-parity payment transitions', () => {
 		function pendingCreate(externalOrderId: string) {
 			const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
 			return paidCommand({
@@ -472,31 +503,20 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		}
 
 		it('pending→paid settles via onOrderPayment (admin confirm parity)', async () => {
-			const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
-			const first = await writeBatch({
-				apiKey,
-				orders: [pendingCreate('c4-paid')]
-			});
-			expect(first.results[0].status).toBe('created');
-			const orderId = requireOrderId(first.results[0]);
-			const second = await writeBatch({
-				apiKey,
-				orders: [
-					paidCommand({
-						externalOrderId: 'c4-paid',
-						payment: {
-							method: 'point-of-sale',
-							status: 'paid',
-							amountMinor,
-							currency: 'EUR'
-						}
-					})
-				]
-			});
-			expect(second.results[0]).toMatchObject({ status: 'duplicate', orderId });
-			const order = await collections.orders.findOne({ _id: orderId });
-			expect(order?.payments[0]?.status).toBe('paid');
-			expect(order?.status).toBe('paid');
+			const paySpy = vi.spyOn(ordersModule, 'onOrderPayment');
+			try {
+				const res = await writeBatch({
+					apiKey,
+					orders: [paidCommand({ externalOrderId: 'c4-paid' })]
+				});
+				expect(res.results[0].status).toBe('created');
+				expect(paySpy).toHaveBeenCalled();
+				const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+				expect(order?.payments[0]?.status).toBe('paid');
+				expect(order?.status).toBe('paid');
+			} finally {
+				paySpy.mockRestore();
+			}
 		});
 
 		it.each(['canceled', 'failed', 'expired'] as const)(
@@ -571,7 +591,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 			expect(order?.status).toBe('pending');
 		});
 
-		it('already-paid replay is a no-op (admin would 400 non-pending)', async () => {
+		it('refuses a replay of a paid order and leaves it as it is', async () => {
 			const first = await writeBatch({
 				apiKey,
 				orders: [paidCommand({ externalOrderId: 'c4-replay-paid' })]
@@ -582,68 +602,71 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 				apiKey,
 				orders: [paidCommand({ externalOrderId: 'c4-replay-paid', notes: 'ignored' })]
 			});
-			expect(second.results[0]).toMatchObject({ status: 'duplicate', orderId });
+			expect(second.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+			});
 			const after = await collections.orders.findOne({ _id: orderId });
 			expect(after?.payments[0]?.status).toBe('paid');
 			expect(after?.updatedAt?.getTime()).toBe(before?.updatedAt?.getTime());
 			expect(after?.notes?.some((n) => n.content === 'ignored')).toBeFalsy();
 		});
 
-		it('already-terminal payment ignores further paid/canceled intents', async () => {
+		it('a failed order never turns paid on a later call', async () => {
 			const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
-			const first = await writeBatch({ apiKey, orders: [pendingCreate('c4-terminal')] });
+			const failedCommand = paidCommand({
+				externalOrderId: 'c4-terminal',
+				payment: {
+					method: 'point-of-sale',
+					status: 'failed',
+					amountMinor,
+					currency: 'EUR'
+				}
+			});
+			const first = await writeBatch({ apiKey, orders: [failedCommand] });
 			const orderId = requireOrderId(first.results[0]);
-			await writeBatch({
-				apiKey,
-				orders: [
-					paidCommand({
-						externalOrderId: 'c4-terminal',
-						payment: {
-							method: 'point-of-sale',
-							status: 'canceled',
-							amountMinor,
-							currency: 'EUR'
-						}
-					})
-				]
+			const failed = await collections.orders.findOne({ _id: orderId });
+			expect(failed?.status).toBe('failed');
+
+			const paidRetry = paidCommand({ externalOrderId: 'c4-terminal' });
+			const refused = await writeBatch({ apiKey, orders: [paidRetry] });
+			expect(refused.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID' }
 			});
-			const mid = await collections.orders.findOne({ _id: orderId });
-			expect(mid?.payments[0]?.status).toBe('canceled');
-			const third = await writeBatch({
-				apiKey,
-				orders: [
-					paidCommand({
-						externalOrderId: 'c4-terminal',
-						payment: {
-							method: 'point-of-sale',
-							status: 'paid',
-							amountMinor,
-							currency: 'EUR'
-						}
-					})
-				]
+
+			// Accepted as a new order, the paid retry is paid on its own; the failed one stays failed.
+			const accepted = await writeBatch({
+				apiKey: { ...apiKey, acceptDuplicateExternalOrderIds: true },
+				orders: [paidRetry]
 			});
-			expect(third.results[0].status).toBe('duplicate');
+			const retryId = requireOrderId(accepted.results[0]);
+			expect(retryId).not.toBe(orderId);
+			expect((await collections.orders.findOne({ _id: retryId }))?.status).toBe('paid');
+
 			const after = await collections.orders.findOne({ _id: orderId });
-			expect(after?.payments[0]?.status).toBe('canceled');
-			expect(after?.status).not.toBe('paid');
+			expect(after?.payments[0]?.status).toBe('failed');
+			expect(after?.status).toBe('failed');
 		});
 
-		it('client pending on duplicate is a no-op', async () => {
+		it('refuses a pending replay, leaving the pending order as it is', async () => {
 			const first = await writeBatch({ apiKey, orders: [pendingCreate('c4-pending-noop')] });
 			const orderId = requireOrderId(first.results[0]);
 			const second = await writeBatch({
 				apiKey,
 				orders: [pendingCreate('c4-pending-noop')]
 			});
-			expect(second.results[0]).toMatchObject({ status: 'duplicate', orderId });
+			expect(second.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+			});
 			const order = await collections.orders.findOne({ _id: orderId });
 			expect(order?.payments[0]?.status).toBe('pending');
 			expect(order?.status).toBe('pending');
 		});
 	});
 
-	it('P2: same externalOrderId twice in one batch → created then duplicate', async () => {
+	it('P2: same externalOrderId twice in one batch → created then refused', async () => {
 		const res = await writeBatch({
 			apiKey,
 			orders: [
@@ -653,22 +676,43 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		});
 		expect(res.results).toHaveLength(2);
 		expect(res.results[0].status).toBe('created');
-		expect(res.results[1].status).toBe('duplicate');
-		expect(res.results[1].orderId).toBe(res.results[0].orderId);
+		expect(res.results[1]).toMatchObject({
+			status: 'failed',
+			error: {
+				code: 'DUPLICATE_EXTERNAL_ORDER_ID',
+				details: { orderId: res.results[0].orderId }
+			}
+		});
+		expect(res.status).toBe('ok_with_errors');
 		expect(await collections.orders.countDocuments({})).toBe(1);
 	});
 
-	it('P0: concurrent inserts with same external id converge to one order', async () => {
+	it('P2: same externalOrderId twice in one batch → two orders when the key accepts it', async () => {
+		const res = await writeBatch({
+			apiKey: { ...apiKey, acceptDuplicateExternalOrderIds: true },
+			orders: [
+				paidCommand({ externalOrderId: 'batch-dup-accepted' }),
+				paidCommand({ externalOrderId: 'batch-dup-accepted' })
+			]
+		});
+		expect(res.results.map((r) => r.status)).toEqual(['created', 'created']);
+		expect(res.results[1].orderId).not.toBe(res.results[0].orderId);
+		expect(await collections.orders.countDocuments({ externalOrderId: 'batch-dup-accepted' })).toBe(
+			2
+		);
+	});
+
+	it('P0: concurrent inserts with same external id create one order, the other is refused', async () => {
 		const cmd = paidCommand({ externalOrderId: 'race-ext-1' });
 		const [a, b] = await Promise.all([
 			writeOne({ apiKey, order: cmd }),
 			writeOne({ apiKey, order: cmd })
 		]);
 		const statuses = [a.status, b.status].sort();
-		expect(statuses).toEqual(['created', 'duplicate']);
-		expect(a.orderId).toBeTruthy();
-		expect(b.orderId).toBeTruthy();
-		expect(a.orderId).toBe(b.orderId);
+		expect(statuses).toEqual(['created', 'failed']);
+		const refused = a.status === 'failed' ? a : b;
+		expect(refused.error?.code).toBe('DUPLICATE_EXTERNAL_ORDER_ID');
+		expect(refused.orderId).toBeUndefined();
 		expect(await collections.orders.countDocuments({ externalOrderId: 'race-ext-1' })).toBe(1);
 	});
 
@@ -747,19 +791,20 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(order?.payments[0]?.invoice).toBeTruthy();
 	});
 
-	it('zero-total pending→paid on duplicate uses addOrderPayment(free)/onOrderPayment', async () => {
+	it('zero-total pending order is not settled by a replay marked paid', async () => {
+		const zeroLine = [
+			{
+				productId: TEST_DIGITAL_PRODUCT._id,
+				quantity: 1,
+				customPrice: { amountMinor: 0, currency: 'EUR' as const }
+			}
+		];
 		const first = await writeBatch({
 			apiKey,
 			orders: [
 				paidCommand({
 					externalOrderId: 'zero-settle-1',
-					items: [
-						{
-							productId: TEST_DIGITAL_PRODUCT._id,
-							quantity: 1,
-							customPrice: { amountMinor: 0, currency: 'EUR' }
-						}
-					],
+					items: zeroLine,
 					payment: {
 						method: 'point-of-sale',
 						status: 'pending',
@@ -780,13 +825,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 			orders: [
 				paidCommand({
 					externalOrderId: 'zero-settle-1',
-					items: [
-						{
-							productId: TEST_DIGITAL_PRODUCT._id,
-							quantity: 1,
-							customPrice: { amountMinor: 0, currency: 'EUR' }
-						}
-					],
+					items: zeroLine,
 					payment: {
 						method: 'point-of-sale',
 						status: 'paid',
@@ -796,50 +835,20 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 				})
 			]
 		});
-		expect(second.results[0]).toMatchObject({ status: 'duplicate', orderId });
-		const paid = await collections.orders.findOne({ _id: orderId });
-		expect(paid?.status).toBe('paid');
-		expect(paid?.payments[0]?.method).toBe('free');
-		expect(paid?.payments[0]?.status).toBe('paid');
-		expect(paid?.payments[0]?.invoice).toBeTruthy();
+		expect(second.results[0]).toMatchObject({
+			status: 'failed',
+			error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+		});
+		const after = await collections.orders.findOne({ _id: orderId });
+		expect(after?.status).toBe('pending');
+		expect(after?.payments ?? []).toHaveLength(0);
 	});
 
-	it('creates an order with two payments and settles/cancels by index on duplicate', async () => {
+	it('creates an order with two payments and applies each status to its own row', async () => {
 		const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
 		const aMinor = Math.floor(totalMinor / 2);
 		const bMinor = totalMinor - aMinor;
-		const first = await writeBatch({
-			apiKey,
-			orders: [
-				{
-					externalOrderId: 'multi-pay-1',
-					currency: 'EUR' as const,
-					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
-					payments: [
-						{
-							method: 'point-of-sale' as const,
-							status: 'pending' as const,
-							amountMinor: aMinor,
-							currency: 'EUR' as const
-						},
-						{
-							method: 'point-of-sale' as const,
-							status: 'pending' as const,
-							amountMinor: bMinor,
-							currency: 'EUR' as const
-						}
-					]
-				}
-			]
-		});
-		expect(first.results[0].status).toBe('created');
-		const orderId = requireOrderId(first.results[0]);
-		const created = await collections.orders.findOne({ _id: orderId });
-		expect(created?.payments).toHaveLength(2);
-		expect(created?.payments.every((p) => p.status === 'pending')).toBe(true);
-		expect(created?.status).toBe('pending');
-
-		const second = await writeBatch({
+		const res = await writeBatch({
 			apiKey,
 			orders: [
 				{
@@ -863,12 +872,13 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 				}
 			]
 		});
-		expect(second.results[0]).toMatchObject({ status: 'duplicate', orderId });
-		const after = await collections.orders.findOne({ _id: orderId });
-		expect(after?.payments[0]?.status).toBe('paid');
-		expect(after?.payments[1]?.status).toBe('canceled');
+		expect(res.results[0].status).toBe('created');
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order?.payments).toHaveLength(2);
+		expect(order?.payments[0]?.status).toBe('paid');
+		expect(order?.payments[1]?.status).toBe('canceled');
 		// Not fully paid (second canceled) — order must not flip to paid.
-		expect(after?.status).not.toBe('paid');
+		expect(order?.status).not.toBe('paid');
 	});
 
 	it('mono singular payment still works alongside payments[] support', async () => {
@@ -883,47 +893,15 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(order?.status).toBe('paid');
 	});
 
-	it('persists externalPaymentId and settles correctly when payments are reordered on retry', async () => {
+	it('persists externalPaymentId and applies each status to the row written for it', async () => {
 		const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
 		const aMinor = Math.floor(totalMinor / 2);
 		const bMinor = totalMinor - aMinor;
-		const first = await writeBatch({
+		const res = await writeBatch({
 			apiKey,
 			orders: [
 				{
-					externalOrderId: 'multi-reorder-1',
-					currency: 'EUR' as const,
-					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
-					payments: [
-						{
-							method: 'point-of-sale' as const,
-							status: 'pending' as const,
-							amountMinor: aMinor,
-							currency: 'EUR' as const,
-							externalPaymentId: 'pay-a'
-						},
-						{
-							method: 'point-of-sale' as const,
-							status: 'pending' as const,
-							amountMinor: bMinor,
-							currency: 'EUR' as const,
-							externalPaymentId: 'pay-b'
-						}
-					]
-				}
-			]
-		});
-		expect(first.results[0].status).toBe('created');
-		const orderId = requireOrderId(first.results[0]);
-		const created = await collections.orders.findOne({ _id: orderId });
-		expect(created?.payments.map((p) => p.externalPaymentId)).toEqual(['pay-a', 'pay-b']);
-
-		// Swap order + opposite statuses — must settle by externalPaymentId, not index.
-		const second = await writeBatch({
-			apiKey,
-			orders: [
-				{
-					externalOrderId: 'multi-reorder-1',
+					externalOrderId: 'multi-ids-1',
 					currency: 'EUR' as const,
 					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
 					payments: [
@@ -945,50 +923,26 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 				}
 			]
 		});
-		expect(second.results[0]).toMatchObject({ status: 'duplicate', orderId });
-		const after = await collections.orders.findOne({ _id: orderId });
+		expect(res.results[0].status).toBe('created');
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order?.payments.map((p) => p.externalPaymentId)).toEqual(['pay-b', 'pay-a']);
 		const byId = Object.fromEntries(
-			(after?.payments ?? []).map((p) => [p.externalPaymentId, p.status])
+			(order?.payments ?? []).map((p) => [p.externalPaymentId, p.status])
 		);
 		expect(byId['pay-a']).toBe('paid');
 		expect(byId['pay-b']).toBe('canceled');
 	});
 
-	it('matches swapped payments by amount+method when externalPaymentId is absent', async () => {
+	it('applies statuses by position when payments carry no externalPaymentId', async () => {
 		const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
 		const aMinor = Math.floor(totalMinor / 3);
 		const bMinor = totalMinor - aMinor;
 		expect(aMinor).not.toBe(bMinor);
-		const first = await writeBatch({
+		const res = await writeBatch({
 			apiKey,
 			orders: [
 				{
-					externalOrderId: 'multi-swap-amt-1',
-					currency: 'EUR' as const,
-					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
-					payments: [
-						{
-							method: 'point-of-sale' as const,
-							status: 'pending' as const,
-							amountMinor: aMinor,
-							currency: 'EUR' as const
-						},
-						{
-							method: 'point-of-sale' as const,
-							status: 'pending' as const,
-							amountMinor: bMinor,
-							currency: 'EUR' as const
-						}
-					]
-				}
-			]
-		});
-		const orderId = requireOrderId(first.results[0]);
-		const second = await writeBatch({
-			apiKey,
-			orders: [
-				{
-					externalOrderId: 'multi-swap-amt-1',
+					externalOrderId: 'multi-position-1',
 					currency: 'EUR' as const,
 					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
 					payments: [
@@ -1008,50 +962,23 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 				}
 			]
 		});
-		expect(second.results[0]).toMatchObject({ status: 'duplicate', orderId });
-		const after = await collections.orders.findOne({ _id: orderId });
-		expect(after?.payments[0]?.status).toBe('canceled'); // aMinor row
-		expect(after?.payments[1]?.status).toBe('paid'); // bMinor row
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order?.payments.map((p) => amountToMinor(p.price.amount, 'EUR'))).toEqual([
+			bMinor,
+			aMinor
+		]);
+		expect(order?.payments[0]?.status).toBe('paid'); // bMinor row
+		expect(order?.payments[1]?.status).toBe('canceled'); // aMinor row
 	});
 
-	it('does not double-apply two payload payments onto one order payment', async () => {
+	it('writes one row per payment, even when two share an externalPaymentId', async () => {
 		const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
 		const aMinor = Math.floor(totalMinor / 3);
-		const bMinor = totalMinor - aMinor;
-		expect(aMinor).not.toBe(bMinor);
-		const first = await writeBatch({
+		const res = await writeBatch({
 			apiKey,
 			orders: [
 				{
-					externalOrderId: 'multi-nodouble-1',
-					currency: 'EUR' as const,
-					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
-					payments: [
-						{
-							method: 'point-of-sale' as const,
-							status: 'pending' as const,
-							amountMinor: aMinor,
-							currency: 'EUR' as const,
-							externalPaymentId: 'only-a'
-						},
-						{
-							method: 'point-of-sale' as const,
-							status: 'pending' as const,
-							amountMinor: bMinor,
-							currency: 'EUR' as const,
-							externalPaymentId: 'only-b'
-						}
-					]
-				}
-			]
-		});
-		const orderId = requireOrderId(first.results[0]);
-		// Both payload rows claim only-a — second must not mutate only-a again, nor steal only-b by amount.
-		const second = await writeBatch({
-			apiKey,
-			orders: [
-				{
-					externalOrderId: 'multi-nodouble-1',
+					externalOrderId: 'multi-shared-id-1',
 					currency: 'EUR' as const,
 					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
 					payments: [
@@ -1073,13 +1000,14 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 				}
 			]
 		});
-		expect(second.results[0].status).toBe('duplicate');
-		const after = await collections.orders.findOne({ _id: orderId });
-		expect(after?.payments[0]?.status).toBe('paid');
-		expect(after?.payments[1]?.status).toBe('pending');
+		expect(res.results[0].status).toBe('created');
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order?.payments).toHaveLength(2);
+		expect(order?.payments[0]?.status).toBe('paid');
+		expect(order?.payments[1]?.status).toBe('canceled');
 	});
 
-	it('domain error during settle stays duplicate with PAYMENT_SYNC_FAILED (no batch throw)', async () => {
+	it('refuses a replay before touching any payment of the existing order', async () => {
 		const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
 		const first = await writeBatch({
 			apiKey,
@@ -1094,7 +1022,6 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 						externalPaymentId: 'pay-settle-1'
 					}
 				}),
-				// Create sibling before spy so paid create is not affected.
 				paidCommand({ externalOrderId: 'settle-ok-sibling' })
 			]
 		});
@@ -1102,15 +1029,12 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(first.results[1].status).toBe('created');
 		const orderId = requireOrderId(first.results[0]);
 
-		// Http-like domain error (same shape as SvelteKit HttpError / mapDomainError).
-		const domainErr = { status: 400, body: 'Payment is not pending' };
-		const paySpy = vi.spyOn(ordersModule, 'onOrderPayment').mockRejectedValue(domainErr);
-		const logSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+		const paySpy = vi.spyOn(ordersModule, 'onOrderPayment');
+		const failedSpy = vi.spyOn(ordersModule, 'onOrderPaymentFailed');
 		try {
 			const second = await writeBatch({
 				apiKey,
 				orders: [
-					// Already-paid sibling: duplicate no-op (does not call onOrderPayment).
 					paidCommand({ externalOrderId: 'settle-ok-sibling' }),
 					paidCommand({
 						externalOrderId: 'settle-err-1',
@@ -1124,39 +1048,28 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 					})
 				]
 			});
-			// Sibling still processed; settle error does not 500 the batch.
-			expect(second.results[0]).toMatchObject({ status: 'duplicate' });
-			expect(second.results[1]).toMatchObject({
-				status: 'duplicate',
-				orderId
-			});
-			expect(second.results[1].warnings).toEqual(
-				expect.arrayContaining([
-					expect.objectContaining({
-						code: 'PAYMENT_SYNC_FAILED',
-						details: expect.objectContaining({ domainCode: 'DOMAIN_ERROR' })
-					})
-				])
-			);
-			expect(second.status).toBe('ok_with_warnings');
-			expect(logSpy).toHaveBeenCalledWith(
-				'[api/v1] payment sync on duplicate failed',
-				expect.objectContaining({
-					orderId,
-					externalOrderId: 'settle-err-1',
-					code: 'DOMAIN_ERROR'
-				})
-			);
+			// Both refused, each on its own: the batch still answers for every command.
+			expect(second.results.map((r) => r.error?.code)).toEqual([
+				'DUPLICATE_EXTERNAL_ORDER_ID',
+				'DUPLICATE_EXTERNAL_ORDER_ID'
+			]);
+			expect(second.results[1].error?.details).toEqual({ orderId });
+			expect(second.status).toBe('ok_with_errors');
+			expect(paySpy).not.toHaveBeenCalled();
+			expect(failedSpy).not.toHaveBeenCalled();
 		} finally {
 			paySpy.mockRestore();
-			logSpy.mockRestore();
+			failedSpy.mockRestore();
 		}
+		const order = await collections.orders.findOne({ _id: orderId });
+		expect(order?.status).toBe('pending');
+		expect(order?.payments[0]?.status).toBe('pending');
 	});
 
-	it('logs when addOrderPayment on duplicate is rejected by domain guards', async () => {
+	it('never adds a payment to an existing order on a replay', async () => {
 		const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
 		const aMinor = Math.floor(totalMinor / 2);
-		// Under-cover multi so remaining > 0 and shouldAddUnmatchedPayment can run.
+		// Under-covered on purpose: the order still has room for the payment the replay brings.
 		const first = await writeBatch({
 			apiKey,
 			orders: [
@@ -1186,9 +1099,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(first.results[0].status).toBe('created');
 		const orderId = requireOrderId(first.results[0]);
 
-		const domainErr = { status: 400, body: 'Order already fully paid' };
-		const addSpy = vi.spyOn(ordersModule, 'addOrderPayment').mockRejectedValue(domainErr);
-		const logSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+		const addSpy = vi.spyOn(ordersModule, 'addOrderPayment');
 		try {
 			const second = await writeBatch({
 				apiKey,
@@ -1223,20 +1134,16 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 					}
 				]
 			});
-			expect(second.results[0]).toMatchObject({ status: 'duplicate', orderId });
-			expect(logSpy).toHaveBeenCalledWith(
-				'[api/v1] addOrderPayment on duplicate failed',
-				expect.objectContaining({
-					orderId,
-					externalPaymentId: 'pay-new-extra',
-					code: 'DOMAIN_ERROR',
-					message: 'Order already fully paid'
-				})
-			);
+			expect(second.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+			});
+			expect(addSpy).not.toHaveBeenCalled();
 		} finally {
 			addSpy.mockRestore();
-			logSpy.mockRestore();
 		}
+		const order = await collections.orders.findOne({ _id: orderId });
+		expect(order?.payments.map((p) => p.externalPaymentId)).toEqual(['pay-a', 'pay-tiny']);
 	});
 
 	it('uses channel api and does not apply auto-discounts on Face A create', async () => {
@@ -1321,7 +1228,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 							externalPaymentId: 'pay-create-1'
 						}
 					}),
-					// Already-paid sibling: duplicate no-op (does not call onOrderPayment).
+					// Already sent: refused before any payment is touched (no onOrderPayment call).
 					paidCommand({ externalOrderId: 'create-settle-ok-sibling' })
 				]
 			});
@@ -1337,8 +1244,11 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 					})
 				])
 			);
-			expect(res.results[1]).toMatchObject({ status: 'duplicate' });
-			expect(res.status).toBe('ok_with_warnings');
+			expect(res.results[1]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID' }
+			});
+			expect(res.status).toBe('ok_with_errors');
 			expect(logSpy).toHaveBeenCalledWith(
 				'[api/v1] payment sync on create failed',
 				expect.objectContaining({
@@ -1351,7 +1261,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 			logSpy.mockRestore();
 		}
 
-		// Idempotency key persisted — retry becomes duplicate, not a second create.
+		// The external id is on the order — a retry is refused, not a second create.
 		const createdId = (
 			await collections.orders.findOne({
 				externalSourceApiKeyId: apiKey._id,
@@ -1374,7 +1284,12 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 				})
 			]
 		});
-		expect(retry.results[0].status).toBe('duplicate');
-		expect(retry.results[0].orderId).toBe(createdId);
+		expect(retry.results[0]).toMatchObject({
+			status: 'failed',
+			error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId: createdId } }
+		});
+		expect(
+			await collections.orders.countDocuments({ externalOrderId: 'create-settle-err-1' })
+		).toBe(1);
 	});
 });

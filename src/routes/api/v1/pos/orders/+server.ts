@@ -75,14 +75,15 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 });
 
 /**
- * Till sales, batched. Idempotent on `externalOrderId`.
+ * Till sales, batched. One order per sale; a reference the key already sent is a `conflict`, unless
+ * the key accepts several orders with the same external id.
  *
  * A malformed batch is rejected whole and nothing is ingested: a partially-applied batch would
  * leave the caller unable to say what landed.
  *
  * A sale the shop refuses for good — an unsupported currency, an unknown product — is a 400 naming
  * it, and `details.ingested` lists the references of the same batch that did land. The till fixes
- * the batch and re-pushes it whole; the listed references settle as no-ops. A refusal that may
+ * the batch and re-pushes it whole; the listed references come back as `conflict`. A refusal that may
  * clear on its own stays a 500, which is what a retrying client should see.
  */
 export const POST: RequestHandler = apiV1Handler(async (event) => {

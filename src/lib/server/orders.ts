@@ -813,7 +813,7 @@ export async function createOrder(
 		 * Manual `params.discount` (POS employee discount) is unaffected.
 		 */
 		skipAutoDiscounts?: boolean;
-		/** Public API idempotence (issue 2687) — set before insert so sparse unique index fires atomically. */
+		/** Reference the public API caller gave for this order, kept on it as sent. */
 		externalOrderId?: string;
 		externalSourceApiKeyId?: ObjectId;
 		orderLabelIds?: string[];

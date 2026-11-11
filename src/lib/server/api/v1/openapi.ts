@@ -82,7 +82,16 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 		additionalProperties: false,
 		required: ['externalOrderId', 'currency', 'items'],
 		properties: {
-			externalOrderId: { type: 'string', minLength: 1, maxLength: 200 },
+			externalOrderId: {
+				type: 'string',
+				minLength: 1,
+				maxLength: 200,
+				description:
+					'Your reference for the order, kept on it as sent. One command, one order: by default a ' +
+					'reference this key already sent is refused with the `DUPLICATE_EXTERNAL_ORDER_ID` error ' +
+					'(`details.orderId` names the order that holds it, which is left untouched). A key set to ' +
+					'accept several orders with the same external id creates a new order for each command.'
+			},
 			currency: { type: 'string', enum: currencyEnum },
 			createdAt: {
 				type: 'string',
@@ -106,7 +115,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 				maxItems: 50,
 				items: { $ref: '#/components/schemas/OrderPayment' },
 				description:
-					'One or more payments. On duplicate settle: match by externalPaymentId, else amountMinor+currency+method, else unused index (legacy, no id). Never double-apply.'
+					'One or more payments, each written as its own payment row, in order, with the status it carries.'
 			},
 			customFields: {
 				type: 'object',
@@ -215,8 +224,8 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 
 	const errorRef = { $ref: '#/components/schemas/ErrorEnvelope' };
 
-	// Conditional GETs (#2713, RFC 9110). Reads only — POST /api/v1/orders relies on
-	// (apiKeyId, externalOrderId) idempotency and takes no ETag precondition.
+	// Conditional GETs (#2713, RFC 9110). Reads only — POST /api/v1/orders refuses an
+	// externalOrderId the key already sent and takes no ETag precondition.
 	const ifNoneMatchParam = {
 		name: 'If-None-Match',
 		in: 'header',
@@ -1173,15 +1182,15 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					tags: ['pos'],
 					summary: 'Push PoS sales, batched',
 					description:
-						'Idempotent per `externalOrderId` (the seam calls it `saleRef`): the same reference ' +
-						're-pushed with an equal payload — every ' +
-						'field matching, amounts compared numerically and `soldAt` as the same instant — is a ' +
-						'`success` no-op. Any field differing is a `conflict`, and `orderUrl` then points at the ' +
-						'order that already holds the reference. A malformed batch is rejected whole and nothing ' +
-						'is ingested. A sale that cannot be ingested at all has no order to point at and so no ' +
-						'representable outcome here: the request fails rather than inventing a status — 400 when ' +
-						'the shop refuses it for good, 500 when a retry may still clear it. Retrying the batch is ' +
-						'safe either way — the reference turns whatever already landed into a `success` no-op.',
+						'One sale, one order. By default a reference (`externalOrderId`, the seam calls it ' +
+						'`saleRef`) this key already sent is a `conflict`: nothing is written, and `orderUrl` ' +
+						'points at the order that already holds the reference. A key set to accept several ' +
+						'orders with the same external id writes a new order for every sale. A malformed batch ' +
+						'is rejected whole and nothing is ingested. A sale that cannot be ingested at all has no ' +
+						'order to point at and so no representable outcome here: the request fails rather than ' +
+						'inventing a status — 400 when the shop refuses it for good, 500 when a retry may still ' +
+						'clear it. Retrying the batch never writes a sale twice under the default rule — what ' +
+						'already landed comes back as a `conflict`.',
 					operationId: 'pushPosSales',
 					security: [{ BearerAuth: ['pos:write'] }, { ApiKeyAuth: ['pos:write'] }],
 					requestBody: {
@@ -1212,8 +1221,8 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 								'sale for a reason a retry will not change — an unsupported currency, an unknown ' +
 								'product. `details` then names the refused `externalOrderId`, the domain `code` ' +
 								'behind it, and `ingested`: the references of the same batch that did land. Fix ' +
-								'the batch and push it whole again; the listed references settle as `success` ' +
-								'no-ops. Do not retry unchanged.',
+								'the batch and push it whole again; the listed references come back as ' +
+								'`conflict`, written once. Do not retry unchanged.',
 							content: { 'application/json': { schema: errorRef } }
 						},
 						'401': {
@@ -1647,7 +1656,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						externalOrderId: {
 							type: 'string',
 							description:
-								"Minted by the caller. Idempotency and correlation handle — never be-BOP's order id. " +
+								"Minted by the caller. Correlation handle, one per sale — never be-BOP's order id. " +
 								"Named `saleRef` in the seam document; be-BOP's name is used here."
 						},
 						items: {
@@ -1692,7 +1701,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 								required: ['externalOrderId', 'status', 'orderUrl'],
 								properties: {
 									externalOrderId: { type: 'string' },
-									status: { type: 'string', enum: ['success', 'conflict'] },
+									status: {
+										type: 'string',
+										enum: ['success', 'conflict'],
+										description:
+											'`success`: an order was written for this sale. `conflict`: the reference was ' +
+											'already received from this key; nothing was written, and `orderUrl` points at ' +
+											'the order that holds it.'
+									},
 									orderUrl: {
 										type: 'string',
 										format: 'uri',
