@@ -6,6 +6,7 @@ import {
 	errorCodeOf,
 	isEventStream,
 	logApiV1Event,
+	orderIdsOfCall,
 	readBodyForLog,
 	shouldLogApiV1Call,
 	truncateBody
@@ -60,6 +61,8 @@ async function recordCall(
 
 		const request = requestBody ? truncateBody(requestBody) : undefined;
 		const answer = responseBody ? truncateBody(responseBody) : undefined;
+		// Read from the whole bodies: a body cut to fit the journal is no longer JSON.
+		const orderIds = orderIdsOfCall(event.params.orderId, [requestBody, responseBody]);
 
 		logApiV1Event({
 			...(apiKey && {
@@ -80,7 +83,8 @@ async function recordCall(
 			...(request && { requestBody: request.body }),
 			...(answer && { responseBody: answer.body }),
 			...((request?.truncated || answer?.truncated) && { truncated: true }),
-			...(stream && { stream: true })
+			...(stream && { stream: true }),
+			...(orderIds.length && { orderIds })
 		});
 	} catch (err) {
 		console.error('[api/v1] could not record the call', err);
