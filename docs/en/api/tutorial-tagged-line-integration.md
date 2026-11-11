@@ -66,9 +66,9 @@ Authorization: Bearer bebop_ak_…
 	"orders": [
 		{
 			"orderId": "3f2a0c…",
-			"amount": { "amount": 20, "currency": "CHF" },
+			"amount": { "amountMinor": 2000, "currency": "CHF" },
 			"key": "3Qz8yTaVbNk7Rf2mWpXs",
-			"vat": [{ "rate": 8.1, "amount": 1.5 }]
+			"vat": [{ "rate": 8.1, "amountMinor": 150 }]
 		}
 	],
 	"nextCursor": "3f2a0c…"
@@ -109,7 +109,7 @@ retry: 5000
 :ok
 
 id: 3f2a0c…
-data: {"orderId":"3f2a0c…","amount":{"amount":20,"currency":"CHF"},"key":"3Qz8yTaVbNk7Rf2mWpXs"}
+data: {"orderId":"3f2a0c…","amount":{"amountMinor":2000,"currency":"CHF"},"key":"3Qz8yTaVbNk7Rf2mWpXs"}
 
 :heartbeat
 ```
@@ -145,18 +145,17 @@ seconds; retry the stream every few minutes.
 
 ---
 
-## Resuming, and why `last_event_id` beats `since_ts`
+## Resuming, and reading the past
 
-Both resume hints are advisory, and an unknown value starts you at the live edge rather than
-failing.
+The stream carries what happens from the moment it opens. After a dropped connection it resumes
+after the last order id it sent you (`Last-Event-ID` or `last_event_id`). The hint is advisory: an
+unknown value starts you at the live edge rather than failing. A sale is announced once — a note or
+a label added to the order later does not send it again.
 
-`last_event_id` carries no timestamp and is immune to clock problems. Prefer it whenever you have
-one.
-
-`since_ts` (Unix epoch seconds) is for the first ever connection, or after losing your bookmark. It
-is compared against the server's clock, so a register whose own clock runs fast could ask to resume
-in the future — be-BOP clamps such a request to now rather than replaying nothing, which would
-otherwise be a silent, permanent gap.
+The past, from a date, is read from the poll with `since_ts` (Unix epoch seconds): for the first
+ever connection, or after losing your bookmark. It is compared against the server's clock, so a
+register whose own clock runs fast could ask to start in the future — be-BOP clamps such a request
+to now rather than replaying nothing, which would otherwise be a silent, permanent gap.
 
 ---
 
@@ -175,9 +174,9 @@ Content-Type: application/json
     "externalOrderId": "till-3-000412",
     "soldAt": "2026-07-29T14:03:00Z",
     "method": "cashless",
-    "totalPrice": { "amount": 12.5, "currency": "CHF" },
+    "totalPrice": { "amountMinor": 1250, "currency": "CHF" },
     "items": [
-      { "product": "biere-pression", "quantity": 1, "price": { "amount": 12.5, "currency": "CHF" } }
+      { "product": "biere-pression", "quantity": 1, "price": { "amountMinor": 1250, "currency": "CHF" } }
     ]
   }
 ]
@@ -197,9 +196,10 @@ Content-Type: application/json
 
 Five things worth knowing.
 
-**`externalOrderId` is yours, and it is the idempotency key.** Re-pushing the same reference with
-the same payload is a `success` no-op. Re-pushing it with anything different is a `conflict`, and
-`orderUrl` points at the order that already holds it — that is a bug in your till, not a race.
+**`externalOrderId` is yours, and one push makes one order.** A reference the key already sent is
+answered `conflict`, nothing is written, and `orderUrl` points at the order that already holds it.
+If your till reuses references on purpose, the shop can tick "Accept several orders with the same
+external id" on the key: each push then becomes its own order.
 
 **`soldAt` is when the sale happened**, not when you send it. A batch sitting in a queue overnight
 still reports the real time; reporting and VAT day boundaries follow it. Send RFC 3339 with an
@@ -235,7 +235,7 @@ product snapshot the order carries. Tag your top-up products before selling them
 
 **The tag is matched exactly**, `topup` is not `Topup`.
 
-**Amounts are in major units** on this surface — `20` is twenty francs, not twenty centimes.
+**Amounts are in minor units**, as everywhere in the API — `2000` is twenty francs.
 
 **`amount` includes VAT**; `vat` breaks out what is inside it, at the rate charged on the day. Those
 figures are snapshotted at payment time and never recomputed, so a later rate change does not
@@ -258,7 +258,7 @@ loop:
     for event in events:
         if event.orderId in credited:
             continue
-        credit(wristband = event.key, amount = event.amount.amount)
+        credit(wristband = event.key, amount = event.amount.amountMinor)
         credited.add(event.orderId)
         cursor = event.orderId
         persist(credited, cursor)

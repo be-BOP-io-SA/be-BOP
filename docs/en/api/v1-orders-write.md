@@ -77,17 +77,17 @@ Example JSON shape:
 
 ### Rules (Zod-enforced)
 
-| Rule             | Detail                                                                                                                                       |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Batch size       | orders length 1-100                                                                                                                          |
-| externalOrderId  | Required, non-empty string (idempotence key with the API key — D2)                                                                           |
-| currencySnapshot | Rejected anywhere in the payload (D4). be-BOP computes snapshots itself                                                                      |
-| Amounts          | Minor units integers (amountMinor) — D4                                                                                                      |
-| payment.method   | v1: point-of-sale only — D5                                                                                                                  |
-| Items            | At least one item; productId + quantity (>= 1) required                                                                                      |
-| customPrice      | Optional per line; authoritative over catalogue price (D8, lot D). `customPrice.currency` and `payment.currency` must equal `order.currency` |
-| customFields     | Optional map; ≤ 50 keys; each key ≤ 100 chars                                                                                                |
-| createdAt        | Optional ISO datetime; rejected if outside ±365 days from server now (`VALIDATION_ERROR`)                                                    |
+| Rule             | Detail                                                                                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Batch size       | orders length 1-100                                                                                                                                         |
+| externalOrderId  | Required, non-empty string. Your reference, kept on the order; one already sent by the key is refused unless the key accepts several orders per id (D2, D3) |
+| currencySnapshot | Rejected anywhere in the payload (D4). be-BOP computes snapshots itself                                                                                     |
+| Amounts          | Minor units integers (amountMinor) — D4                                                                                                                     |
+| payment.method   | v1: point-of-sale only — D5                                                                                                                                 |
+| Items            | At least one item; productId + quantity (>= 1) required                                                                                                     |
+| customPrice      | Optional per line; authoritative over catalogue price (D8, lot D). `customPrice.currency` and `payment.currency` must equal `order.currency`                |
+| customFields     | Optional map; ≤ 50 keys; each key ≤ 100 chars                                                                                                               |
+| createdAt        | Optional ISO datetime; rejected if outside ±365 days from server now (`VALIDATION_ERROR`)                                                                   |
 
 ## Response (D1 — frozen)
 
@@ -101,20 +101,19 @@ HTTP status is 200 for a successfully authenticated and validated batch that was
 
 ### Per-command status
 
-| Status    | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| created   | New order persisted                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| duplicate | Same (externalSourceApiKeyId, externalOrderId) already exists (D3). Payment side-effects follow admin confirm/cancel domain helpers (`onOrderPayment` / `onOrderPaymentFailed`) for each still-pending order payment matched to the payload (see matching rules); otherwise no-op. Items/amounts/labels are not re-applied. If payment sync throws a known domain error after the key already exists, status stays **`duplicate`** with optional `PAYMENT_SYNC_FAILED` warning (does not 500 the batch). |
-| failed    | Command rejected (e.g. stock fail in lot D — D6)                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Status  | Meaning                                                                                                                       |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| created | New order persisted                                                                                                           |
+| failed  | Command rejected (e.g. stock fail — D6; external order id already received from this key — `DUPLICATE_EXTERNAL_ORDER_ID`, D3) |
 
 ### Warning codes
 
-| Code                | Meaning                                                                                                                                                                 |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PRODUCT_MISSING     | Product id unknown / deleted — order still created with stub + catalog-integrity-warning label                                                                          |
-| AMOUNT_MISMATCH     | `payment.amountMinor` differs from order total computed from lines (truth = lines; not a fail)                                                                          |
-| POS_LABEL_UNKNOWN   | `payment.posLabel` did not match a `posPaymentSubtypes.slug` (order still created)                                                                                      |
-| PAYMENT_SYNC_FAILED | Payment settle/sync threw a domain error after the order row exists (create or duplicate) — status stays `created`/`duplicate` with `orderId`; see `details.domainCode` |
+| Code                | Meaning                                                                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| PRODUCT_MISSING     | Product id unknown / deleted — order still created with stub + catalog-integrity-warning label                                        |
+| AMOUNT_MISMATCH     | `payment.amountMinor` differs from order total computed from lines (truth = lines; not a fail)                                        |
+| POS_LABEL_UNKNOWN   | `payment.posLabel` did not match a `posPaymentSubtypes.slug` (order still created)                                                    |
+| PAYMENT_SYNC_FAILED | Payment settle/sync threw a domain error after the order row exists — status stays `created` with `orderId`; see `details.domainCode` |
 
 ## Error envelope (non-200)
 
@@ -129,24 +128,26 @@ Shape: { error: { code, message, details? } }
 | 503  | MAINTENANCE (all authenticated `/api/v1` routes; only health / openapi.json / docs GET + OPTIONS stay up) |
 | 500  | INTERNAL_ERROR                                                                                            |
 
-## Idempotence (D2)
+## External order id (D2, D3)
 
-Unique sparse index on (externalSourceApiKeyId, externalOrderId), set **atomically at insert** inside `createOrder` (not a post-create `$set`). Replays return status "duplicate" with the existing be-BOP orderId (D3). Duplicate payment side-effects reuse the same domain functions as admin order payment confirm/cancel (`onOrderPayment` / `onOrderPaymentFailed` / `cancelPayment`): pending→paid, pending→canceled|failed|expired; already non-pending or client `pending` → no-op. Face A accepts `payment` or `payments[]` and matches each payload payment to an unused `order.payments` row (see Payment sync matching below).
+One call creates one order. The `externalOrderId` is kept on the order, and it is not unique: by default, an order whose `externalOrderId` this API key already sent is refused — status `failed`, error `DUPLICATE_EXTERNAL_ORDER_ID`, with the existing be-BOP `orderId` in `details` — and the existing order is left exactly as it was. Nothing is reconciled onto it: a failed order is never turned paid by a later call, and a paid payment is never discarded without a signal.
+
+The option "Accept several orders with the same external id" on the API key lifts the refusal: every call then creates its own order, each keeping the `externalOrderId` it was sent with.
 
 ## Decisions D1-D10
 
-| Id  | Decision                                                                                                                                                                                           |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D1  | HTTP 200 + per-command report. Missing products to created + PRODUCT_MISSING. Global ok_with_warnings when warnings present. No 207.                                                               |
-| D2  | Idempotence unique sparse (externalSourceApiKeyId, externalOrderId).                                                                                                                               |
-| D3  | Duplicate returns the existing `orderId`. Payment side-effects follow admin confirm/cancel domain helpers (`onOrderPayment` / `onOrderPaymentFailed`). Items/amounts are not mutated on duplicate. |
-| D4  | Amounts in minor units; no client currencySnapshot.                                                                                                                                                |
-| D5  | payment.method v1 = point-of-sale only.                                                                                                                                                            |
-| D6  | Stock failure fails the command (`failed` + `STOCK_UNAVAILABLE`).                                                                                                                                  |
-| D7  | Paid / terminal statuses applied synchronously via the same domain helpers as admin (`onOrderPayment` / `onOrderPaymentFailed`) when the existing payment is still pending.                        |
-| D8  | customPrice takes priority over catalogue price.                                                                                                                                                   |
-| D9  | CORS allowlist via admin `apiV1.corsOrigins`, stored in DB with no env fallback, never wildcard on auth routes.                                                                                    |
-| D10 | **Lifted:** admin UI for API keys (super-admin) + OpenAPI (`/api/v1/openapi.json`) + Swagger UI (`/api/v1/docs`). Scripts remain available.                                                        |
+| Id  | Decision                                                                                                                                                                                  |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | HTTP 200 + per-command report. Missing products to created + PRODUCT_MISSING. Global ok_with_warnings when warnings present. No 207.                                                      |
+| D2  | `externalOrderId` kept on the order, not unique; one call, one order.                                                                                                                     |
+| D3  | An `externalOrderId` already sent by the key is refused (`DUPLICATE_EXTERNAL_ORDER_ID`), unless the key accepts several orders per id. Nothing is ever reconciled onto an existing order. |
+| D4  | Amounts in minor units; no client currencySnapshot.                                                                                                                                       |
+| D5  | payment.method v1 = point-of-sale only.                                                                                                                                                   |
+| D6  | Stock failure fails the command (`failed` + `STOCK_UNAVAILABLE`).                                                                                                                         |
+| D7  | Paid / terminal statuses applied synchronously via the same domain helpers as admin (`onOrderPayment` / `onOrderPaymentFailed`) when the existing payment is still pending.               |
+| D8  | `customPrice` is charged when the shop makes the third-party system the prioritary source of truth; otherwise the catalogue price is charged.                                             |
+| D9  | CORS allowlist via admin `apiV1.corsOrigins`, stored in DB with no env fallback, never wildcard on auth routes.                                                                           |
+| D10 | **Lifted:** admin UI for API keys (super-admin) + OpenAPI (`/api/v1/openapi.json`) + Swagger UI (`/api/v1/docs`). Scripts remain available.                                               |
 
 ## Runtime behaviour (lot D)
 
@@ -154,21 +155,20 @@ Unique sparse index on (externalSourceApiKeyId, externalOrderId), set **atomical
 - POS semantics: `onLocation: true`, `shippingAddress: null`, `user.sessionId = api-v1:{apiKeyId}`, `userHasPosOptions: true`.
 - **D11:** Face A PoS orders are on-location. `createOrder` does **not** require a shipping address when `onLocation` is true, even if catalog products have `shipping: true` (pickup / deliveryless for address purposes). Delivery fees stay zero unless a shipping address is explicitly provided.
 - Missing products: stub `shipping:false`, name `Missing product {id}`, price `customPrice || 0`, warning + label `catalog-integrity-warning` (create-if-missing).
-- Idempotence: unique sparse `(externalSourceApiKeyId, externalOrderId)` written **atomically in the `createOrder` insert** (with optional client `createdAt`); unique violation / existing row → `duplicate` (may still apply pending payment transitions via `syncExternalPayment` using admin domain helpers).
+- External order id: looked up before the write; already sent by the key → `failed` + `DUPLICATE_EXTERNAL_ORDER_ID`, unless the key accepts several orders per id (D3).
 - Optional client `createdAt` passed into `createOrder` at insert (Zod rejects values outside ±365 days).
 - `customFields` → `CollectedCheckoutField` type `free`, `fieldId = api:{slug}` (≤ 50 keys, key ≤ 100).
 - `posLabel` → lookup `posPaymentSubtypes.slug`; unknown → `POS_LABEL_UNKNOWN` warning.
 - E-shop gates (`runtimeConfig.isBillingAddressMandatory`, `collectIPOnDeliverylessOrders`) still apply inside `createOrder` for the API channel → per-command `failed` with `DOMAIN_ERROR` (no special Face A bypass for those gates). Shipping-address requirement is skipped for `onLocation` (D11), separately from these gates.
 - Channel: Face A uses dedicated `channel: 'api'` + **`skipAutoDiscounts: true`** (PoS-priced totals; no shop auto-discount rewrite).
 - Payments: accept singular `payment` **or** `payments[]` (max 50; `payments` wins if both set). Mono path keeps `createOrder` + first payment row; multi creates a bare order then `addOrderPayment` per row (admin-style splits; remaining amount accounts for prior pending rows).
-- Payment sync matching (duplicate / settle):
+- Payment sync matching (on create):
   1. `externalPaymentId` when present on both sides (**strongly recommended on every payment** for integrators; max 200 chars — safe PoS retries / reorder / splits)
   2. else unused order payment with same `(amountMinor + currency + method)`
   3. else same index if still unused — only when payload has no externalPaymentId (legacy)
      Never apply two payload payments to the same order payment. Mono singular `payment` is treated as a one-element list.
-- Extra payload payments on duplicate with a **new** `externalPaymentId`: `addOrderPayment` when the order is still `pending` and remaining amount allows (admin-style); otherwise ignored (no item mutation). Extra payments without a new id are ignored. Guard rejections from `addOrderPayment` on duplicate are logged server-side and ignored (no hard fail).
 - On create, `externalPaymentId` is persisted on the payment row when provided.
-- Settle errors after the order row exists (create or duplicate): domain failures from `onOrderPayment` / `onOrderPaymentFailed` / `addOrderPayment` / multi `ensureMultiPayments` during sync are caught per command → `created`/`duplicate` + `PAYMENT_SYNC_FAILED` warning (idempotency key succeeded; client can retry safely). Unexpected throws are isolated in `writeBatch` so other orders in the batch still return 200 + `results[]`.
+- Settle errors after the order row exists: domain failures from `onOrderPayment` / `onOrderPaymentFailed` / `addOrderPayment` / multi `ensureMultiPayments` during sync are caught per command → `created` + `PAYMENT_SYNC_FAILED` warning. Unexpected throws are isolated in `writeBatch` so other orders in the batch still return 200 + `results[]`.
 - Zero-total paid: uses domain `free` / `addOrderPayment('free')` → `onOrderPayment` (webhooks/accounting), never a raw `$set status: paid`.
 
 ## Manual test examples
