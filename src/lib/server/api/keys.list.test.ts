@@ -48,6 +48,7 @@ describe('listApiKeys', () => {
 		expect(Object.keys(projection).sort()).toEqual(
 			[
 				'_id',
+				'acceptDuplicateExternalOrderIds',
 				'createdAt',
 				'createdBy',
 				'expiresAt',

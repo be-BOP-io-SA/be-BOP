@@ -1,21 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
-import type { Order } from '$lib/types/Order';
 
-const find = vi.fn();
 const writeBatch = vi.fn();
 
-vi.mock('$lib/server/database', () => ({
-	collections: { orders: { find: (...args: unknown[]) => find(...args) } }
-}));
 vi.mock('$lib/server/env-config', () => ({ ORIGIN: 'https://shop.example' }));
 vi.mock('../orders/writeBatch', () => ({
 	writeBatch: (...args: unknown[]) => writeBatch(...args)
 }));
 
-import { ingestPosSales, orderUrl, posSaleMatchesOrder, toOrderWriteCommand } from './sales';
+import { ingestPosSales, orderUrl, toOrderWriteCommand } from './sales';
 import type { PosSale } from './schemas';
-import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
 
 const apiKey = {
 	_id: new ObjectId(),
@@ -33,39 +27,6 @@ function sale(overrides?: Partial<PosSale>): PosSale {
 		items: [{ product: 'tartiflette', quantity: 1, price: { amount: 12.5, currency: 'CHF' } }],
 		...overrides
 	} as PosSale;
-}
-
-function orderFor(s: PosSale, overrides?: Partial<Order>): Order {
-	return {
-		_id: 'ord-1',
-		number: 1,
-		externalOrderId: s.externalOrderId,
-		externalSourceApiKeyId: apiKey._id,
-		createdAt: new Date(s.soldAt),
-		updatedAt: new Date(s.soldAt),
-		status: 'paid',
-		items: s.items.map((item) => ({
-			product: { ...TEST_DIGITAL_PRODUCT, _id: item.product },
-			quantity: item.quantity,
-			currencySnapshot: {
-				main: { price: { amount: item.price.amount, currency: item.price.currency } },
-				priceReference: { price: { amount: item.price.amount, currency: item.price.currency } }
-			},
-			vatRate: 0
-		})),
-		payments: [],
-		currencySnapshot: {
-			main: { totalPrice: { amount: s.totalPrice.amount, currency: s.totalPrice.currency } },
-			priceReference: {
-				totalPrice: { amount: s.totalPrice.amount, currency: s.totalPrice.currency }
-			}
-		},
-		sellerIdentity: null,
-		notifications: { paymentStatus: {} },
-		user: {},
-		locale: 'en',
-		...overrides
-	} as unknown as Order;
 }
 
 describe('orderUrl', () => {
@@ -103,68 +64,6 @@ describe('toOrderWriteCommand', () => {
 	});
 });
 
-describe('posSaleMatchesOrder', () => {
-	it('accepts an identical re-push', () => {
-		const s = sale();
-		expect(posSaleMatchesOrder(s, orderFor(s))).toBe(true);
-	});
-
-	it('compares amounts numerically', () => {
-		const s = sale();
-		const order = orderFor(s);
-		order.currencySnapshot.main.totalPrice.amount = 12.5000000001;
-		expect(posSaleMatchesOrder(s, order)).toBe(true);
-	});
-
-	it('rejects a different total, currency, or instant', () => {
-		const s = sale();
-		expect(
-			posSaleMatchesOrder(sale({ totalPrice: { amount: 13, currency: 'CHF' } }), orderFor(s))
-		).toBe(false);
-		expect(
-			posSaleMatchesOrder(sale({ totalPrice: { amount: 12.5, currency: 'EUR' } }), orderFor(s))
-		).toBe(false);
-		expect(posSaleMatchesOrder(sale({ soldAt: '2026-07-29T15:03:00.000Z' }), orderFor(s))).toBe(
-			false
-		);
-	});
-
-	it('rejects a different product, quantity, or unit price', () => {
-		const s = sale();
-		expect(
-			posSaleMatchesOrder(
-				sale({
-					items: [{ product: 'banane', quantity: 1, price: { amount: 12.5, currency: 'CHF' } }]
-				}),
-				orderFor(s)
-			)
-		).toBe(false);
-		expect(
-			posSaleMatchesOrder(
-				sale({
-					items: [{ product: 'tartiflette', quantity: 2, price: { amount: 12.5, currency: 'CHF' } }]
-				}),
-				orderFor(s)
-			)
-		).toBe(false);
-		expect(
-			posSaleMatchesOrder(
-				sale({
-					items: [{ product: 'tartiflette', quantity: 1, price: { amount: 9, currency: 'CHF' } }]
-				}),
-				orderFor(s)
-			)
-		).toBe(false);
-	});
-
-	it('rejects a different number of lines', () => {
-		const s = sale();
-		const order = orderFor(s);
-		order.items = [];
-		expect(posSaleMatchesOrder(s, order)).toBe(false);
-	});
-});
-
 /** Unwraps the success arm, so a test that expects sales to land fails loudly on a rejection. */
 async function ingestOk(...args: Parameters<typeof ingestPosSales>) {
 	const res = await ingestPosSales(...args);
@@ -185,8 +84,6 @@ async function ingestRejected(...args: Parameters<typeof ingestPosSales>) {
 
 describe('ingestPosSales', () => {
 	beforeEach(() => {
-		find.mockReset();
-		find.mockReturnValue({ toArray: async () => [] });
 		writeBatch.mockReset();
 		writeBatch.mockResolvedValue({ ok: true, status: 'ok', results: [] });
 	});
@@ -208,40 +105,100 @@ describe('ingestPosSales', () => {
 		]);
 	});
 
-	it('scopes the known-reference lookup to the calling key', async () => {
+	it('hands every sale to the order write, under the calling key', async () => {
 		writeBatch.mockResolvedValue({
 			ok: true,
 			status: 'ok',
 			results: [{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1' }]
 		});
-		await ingestOk({ apiKey, sales: [sale()] });
-		expect(find.mock.calls[0][0]).toEqual({
-			externalSourceApiKeyId: apiKey._id,
-			externalOrderId: { $in: ['sale-1'] }
-		});
+		await ingestOk({ apiKey, sales: [sale()], clientIp: '203.0.113.50' });
+		expect(writeBatch).toHaveBeenCalledTimes(1);
+		expect(writeBatch.mock.calls[0][0]).toMatchObject({ apiKey, clientIp: '203.0.113.50' });
+		expect(writeBatch.mock.calls[0][0].orders).toEqual([toOrderWriteCommand(sale())]);
 	});
 
-	it('answers success on an identical re-push, without writing again', async () => {
-		const s = sale();
-		find.mockReturnValue({ toArray: async () => [orderFor(s)] });
-		const res = await ingestOk({ apiKey, sales: [s] });
+	it('answers conflict on a reference already received, pointing at the order holding it', async () => {
+		writeBatch.mockResolvedValue({
+			ok: false,
+			status: 'ok_with_errors',
+			results: [
+				{
+					externalOrderId: 'sale-1',
+					status: 'failed',
+					error: {
+						code: 'DUPLICATE_EXTERNAL_ORDER_ID',
+						message: 'externalOrderId sale-1 was already received from this API key.',
+						details: { orderId: 'ord-1' }
+					}
+				}
+			]
+		});
+		const res = await ingestOk({ apiKey, sales: [sale()] });
 		expect(res.results[0]).toEqual({
 			externalOrderId: 'sale-1',
-			status: 'success',
+			status: 'conflict',
 			orderId: 'ord-1',
 			orderUrl: 'https://shop.example/order/ord-1'
 		});
-		expect(writeBatch).not.toHaveBeenCalled();
 	});
 
-	it('answers conflict when the same reference carries different goods', async () => {
-		find.mockReturnValue({ toArray: async () => [orderFor(sale())] });
-		const res = await ingestOk({
-			apiKey,
-			sales: [sale({ totalPrice: { amount: 99, currency: 'CHF' } })]
+	it('throws on a reference held by a write still in flight, so the till retries', async () => {
+		// Without an order to point at, a conflict cannot be answered yet; the next attempt can.
+		writeBatch.mockResolvedValue({
+			ok: false,
+			status: 'ok_with_errors',
+			results: [
+				{
+					externalOrderId: 'sale-1',
+					status: 'failed',
+					error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', message: 'in flight' }
+				}
+			]
 		});
-		expect(res.results[0]).toMatchObject({ externalOrderId: 'sale-1', status: 'conflict' });
-		expect(writeBatch).not.toHaveBeenCalled();
+		await expect(ingestPosSales({ apiKey, sales: [sale()] })).rejects.toThrow(/in flight/);
+	});
+
+	it('answers a reference repeated within one batch as a conflict with the first sale', async () => {
+		writeBatch.mockResolvedValue({
+			ok: false,
+			status: 'ok_with_errors',
+			results: [
+				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1' },
+				{
+					externalOrderId: 'sale-1',
+					status: 'failed',
+					error: {
+						code: 'DUPLICATE_EXTERNAL_ORDER_ID',
+						message: 'externalOrderId sale-1 was already received from this API key.',
+						details: { orderId: 'ord-1' }
+					}
+				}
+			]
+		});
+		const res = await ingestOk({ apiKey, sales: [sale(), sale()] });
+		expect(res.results.map((r) => [r.status, r.orderId])).toEqual([
+			['success', 'ord-1'],
+			['conflict', 'ord-1']
+		]);
+	});
+
+	it('answers each sale on its own when the key accepts several orders per reference', async () => {
+		writeBatch.mockResolvedValue({
+			ok: true,
+			status: 'ok',
+			results: [
+				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1' },
+				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-2' }
+			]
+		});
+		const res = await ingestOk({
+			apiKey: { ...apiKey, acceptDuplicateExternalOrderIds: true },
+			sales: [sale(), sale()]
+		});
+		expect(res.results.map((r) => [r.status, r.orderId])).toEqual([
+			['success', 'ord-1'],
+			['success', 'ord-2']
+		]);
 	});
 
 	it('throws on a failure a retry could clear, so the caller keeps retrying', async () => {
@@ -393,18 +350,30 @@ describe('ingestPosSales', () => {
 	});
 
 	it('answers in the order the till pushed, mixing known and fresh references', async () => {
-		const known = sale({ externalOrderId: 'sale-known' });
-		find.mockReturnValue({ toArray: async () => [orderFor(known)] });
 		writeBatch.mockResolvedValue({
-			ok: true,
-			status: 'ok',
-			results: [{ externalOrderId: 'sale-new', status: 'created', orderId: 'ord-2' }]
+			ok: false,
+			status: 'ok_with_errors',
+			results: [
+				{ externalOrderId: 'sale-new', status: 'created', orderId: 'ord-2' },
+				{
+					externalOrderId: 'sale-known',
+					status: 'failed',
+					error: {
+						code: 'DUPLICATE_EXTERNAL_ORDER_ID',
+						message: 'externalOrderId sale-known was already received from this API key.',
+						details: { orderId: 'ord-1' }
+					}
+				}
+			]
 		});
 		const res = await ingestOk({
 			apiKey,
-			sales: [sale({ externalOrderId: 'sale-new' }), known]
+			sales: [sale({ externalOrderId: 'sale-new' }), sale({ externalOrderId: 'sale-known' })]
 		});
-		expect(res.results.map((r) => r.externalOrderId)).toEqual(['sale-new', 'sale-known']);
-		expect(writeBatch.mock.calls[0][0].orders).toHaveLength(1);
+		expect(res.results.map((r) => [r.externalOrderId, r.status])).toEqual([
+			['sale-new', 'success'],
+			['sale-known', 'conflict']
+		]);
+		expect(writeBatch.mock.calls[0][0].orders).toHaveLength(2);
 	});
 });

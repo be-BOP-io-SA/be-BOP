@@ -71,7 +71,8 @@ export const actions: Actions = {
 			createdBy: locals.user?._id?.toString(),
 			maxConcurrentStreams: parsed.data.maxConcurrentStreams,
 			streamLifetimeSeconds: parsed.data.streamLifetimeSeconds,
-			ownOrdersOnly: !!formData.get('ownOrdersOnly')
+			ownOrdersOnly: !!formData.get('ownOrdersOnly'),
+			acceptDuplicateExternalOrderIds: !!formData.get('acceptDuplicateExternalOrderIds')
 		});
 
 		// PRG: stash secret in a short-lived signed httpOnly cookie, then redirect.
