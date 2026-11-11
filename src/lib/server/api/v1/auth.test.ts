@@ -129,6 +129,8 @@ describe('authenticateApiV1', () => {
 			error: { code: 'FORBIDDEN' }
 		});
 		expect(touchApiKey).not.toHaveBeenCalled();
+		// Still a valid key: the call journal files the refusal under it.
+		expect(event.locals.apiKey?.keyPrefix).toBe(usableKey.keyPrefix);
 	});
 
 	it('rejects unknown keys (hash miss)', async () => {

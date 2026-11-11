@@ -73,6 +73,28 @@ export async function readBodyForLog(source: Request | Response): Promise<string
 
 export type ApiV1LogDraft = Omit<ApiV1LogEntry, '_id' | 'createdAt'>;
 
+export type ApiV1LogFilter = {
+	logSuccesses: boolean;
+	logErrors: boolean;
+	logUnauthenticated: boolean;
+};
+
+/**
+ * Whether a call goes to the journal.
+ *
+ * A call without a valid key answers to `logUnauthenticated` alone, whatever its outcome: that
+ * setting exists to spot someone probing the API, and turning errors off must not hide them.
+ */
+export function shouldLogApiV1Call(
+	call: { authenticated: boolean; status: number },
+	filter: ApiV1LogFilter
+): boolean {
+	if (!call.authenticated) {
+		return filter.logUnauthenticated;
+	}
+	return call.status >= 400 ? filter.logErrors : filter.logSuccesses;
+}
+
 /**
  * Write one entry.
  *

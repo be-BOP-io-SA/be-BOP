@@ -105,15 +105,24 @@ export const actions = {
 		const formData = await request.formData();
 		const parsed = z
 			.object({
-				maxEntries: z.number({ coerce: true }).int().min(1)
+				maxEntries: z.number({ coerce: true }).int().min(1),
+				logSuccesses: z.boolean({ coerce: true }),
+				logErrors: z.boolean({ coerce: true }),
+				logUnauthenticated: z.boolean({ coerce: true })
 			})
 			.parse({
-				maxEntries: formData.get('logMaxEntries')
+				maxEntries: formData.get('logMaxEntries'),
+				logSuccesses: !!formData.get('logSuccesses'),
+				logErrors: !!formData.get('logErrors'),
+				logUnauthenticated: !!formData.get('logUnauthenticated')
 			});
 
 		const apiV1Log = {
 			...runtimeConfig.apiV1Log,
-			maxEntries: parsed.maxEntries
+			maxEntries: parsed.maxEntries,
+			logSuccesses: parsed.logSuccesses,
+			logErrors: parsed.logErrors,
+			logUnauthenticated: parsed.logUnauthenticated
 		};
 		await persistConfigElement('apiV1Log', apiV1Log);
 		runtimeConfig.apiV1Log = apiV1Log;

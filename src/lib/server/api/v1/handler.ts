@@ -1,7 +1,15 @@
 import type { RequestEvent, RequestHandler } from '@sveltejs/kit';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import { applyApiV1CorsHeaders, apiV1OptionsResponse } from './cors';
 import { apiError } from './errors';
-import { errorCodeOf, isEventStream, logApiV1Event, readBodyForLog, truncateBody } from './log';
+import {
+	errorCodeOf,
+	isEventStream,
+	logApiV1Event,
+	readBodyForLog,
+	shouldLogApiV1Call,
+	truncateBody
+} from './log';
 
 type ApiV1Inner = (event: RequestEvent) => Response | Promise<Response>;
 
@@ -40,13 +48,18 @@ async function recordCall(
 	startedAt: number
 ): Promise<void> {
 	try {
+		const apiKey = event.locals.apiKey;
+		const call = { authenticated: !!apiKey, status: response.status };
+		if (!shouldLogApiV1Call(call, runtimeConfig.apiV1Log)) {
+			return;
+		}
+
 		const stream = isEventStream(response.headers.get('content-type'));
 		// An event stream is still open at this point — reading it would wait for the shop to close.
 		const responseBody = stream ? undefined : await readBodyForLog(response);
 
 		const request = requestBody ? truncateBody(requestBody) : undefined;
 		const answer = responseBody ? truncateBody(responseBody) : undefined;
-		const apiKey = event.locals.apiKey;
 
 		logApiV1Event({
 			...(apiKey && {

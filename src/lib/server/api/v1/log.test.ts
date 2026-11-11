@@ -13,6 +13,7 @@ import {
 	isEventStream,
 	pruneApiV1Logs,
 	readBodyForLog,
+	shouldLogApiV1Call,
 	truncateBody
 } from './log';
 
@@ -116,5 +117,29 @@ describe('pruneApiV1Logs', () => {
 
 		await expect(pruneApiV1Logs(10)).resolves.toBe(0);
 		expect(deleteMany).not.toHaveBeenCalled();
+	});
+});
+
+describe('shouldLogApiV1Call', () => {
+	const everything = { logSuccesses: true, logErrors: true, logUnauthenticated: true };
+
+	it('files a call with a valid key by its outcome', () => {
+		const noErrors = { ...everything, logErrors: false };
+
+		expect(shouldLogApiV1Call({ authenticated: true, status: 200 }, noErrors)).toBe(true);
+		expect(shouldLogApiV1Call({ authenticated: true, status: 422 }, noErrors)).toBe(false);
+		expect(shouldLogApiV1Call({ authenticated: true, status: 500 }, noErrors)).toBe(false);
+	});
+
+	it('files a call without a valid key under its own setting alone', () => {
+		const noOutcome = { logSuccesses: false, logErrors: false, logUnauthenticated: true };
+
+		expect(shouldLogApiV1Call({ authenticated: false, status: 401 }, noOutcome)).toBe(true);
+		expect(
+			shouldLogApiV1Call(
+				{ authenticated: false, status: 401 },
+				{ ...everything, logUnauthenticated: false }
+			)
+		).toBe(false);
 	});
 });
