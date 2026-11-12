@@ -58,6 +58,30 @@ async function assertLnurlTarget(rawUrl: string): Promise<void> {
 	await assertPublicWebhookTarget(rawUrl);
 }
 
+const LNURL_MAX_REDIRECTS = 5;
+
+/**
+ * GET an LNURL endpoint, following redirects one hop at a time: address servers commonly
+ * redirect (http to https, bare domain to www), and each hop must pass the same target check.
+ */
+async function fetchLnurl(rawUrl: string): Promise<Response> {
+	let url = rawUrl;
+	for (let hop = 0; hop <= LNURL_MAX_REDIRECTS; hop++) {
+		await assertLnurlTarget(url);
+		const response = await fetch(url, {
+			headers: { 'user-agent': 'be-BOP' },
+			redirect: 'manual',
+			signal: AbortSignal.timeout(BLINK_HTTP_TIMEOUT_MS)
+		});
+		const location = response.headers.get('location');
+		if (response.status < 300 || response.status >= 400 || !location) {
+			return response;
+		}
+		url = new URL(location, url).href;
+	}
+	throw new Error('LNURL endpoint redirected too many times');
+}
+
 function isLocalDomain(domain: string): boolean {
 	return domain === 'localhost' || domain.startsWith('localhost:');
 }
@@ -326,13 +350,7 @@ async function sparkCreateInvoice(params: {
 	const metadataUrl = `${scheme}://${params.domain}/.well-known/lnurlp/${encodeURIComponent(
 		params.username
 	)}`;
-	await assertLnurlTarget(metadataUrl);
-
-	const metaResp = await fetch(metadataUrl, {
-		headers: { 'user-agent': 'be-BOP' },
-		redirect: 'error',
-		signal: AbortSignal.timeout(BLINK_HTTP_TIMEOUT_MS)
-	});
+	const metaResp = await fetchLnurl(metadataUrl);
 	if (!metaResp.ok) {
 		throw new Error(`LNURL-pay endpoint unavailable: ${metaResp.status} ${metaResp.statusText}`);
 	}
@@ -364,13 +382,7 @@ async function sparkCreateInvoice(params: {
 
 	const callbackUrl = new URL(meta.callback);
 	callbackUrl.searchParams.set('amount', String(amountMsat));
-	await assertLnurlTarget(callbackUrl.href);
-
-	const cbResp = await fetch(callbackUrl, {
-		headers: { 'user-agent': 'be-BOP' },
-		redirect: 'error',
-		signal: AbortSignal.timeout(BLINK_HTTP_TIMEOUT_MS)
-	});
+	const cbResp = await fetchLnurl(callbackUrl.href);
 	if (!cbResp.ok) {
 		throw new Error(`LNURL-pay callback failed: ${cbResp.status} ${cbResp.statusText}`);
 	}
@@ -481,12 +493,7 @@ async function blinkCheckSparkInvoice(
 	paymentHash: string
 ): Promise<BlinkInvoiceStatus | 'failed'> {
 	// Re-checked on each poll: the host may resolve differently than when the invoice was made.
-	await assertLnurlTarget(verifyUrl);
-	const resp = await fetch(verifyUrl, {
-		headers: { 'user-agent': 'be-BOP' },
-		redirect: 'error',
-		signal: AbortSignal.timeout(BLINK_HTTP_TIMEOUT_MS)
-	});
+	const resp = await fetchLnurl(verifyUrl);
 	if (!resp.ok) {
 		// Transient — let the poller retry.
 		return 'pending';
