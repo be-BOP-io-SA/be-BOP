@@ -1,6 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { bip84Address, bip48Address, getSatoshiReceivedNodeless } from './bitcoin-nodeless';
+import {
+	bip84Address,
+	bip48Address,
+	generateNodelessAddress,
+	getSatoshiReceivedNodeless,
+	reserveNodelessAddress
+} from './bitcoin-nodeless';
 import { runtimeConfig } from './runtime-config';
+import { collections } from './database';
+import { cleanDb } from './test-utils';
+import { getProcessor, resolveProcessor } from './sdk/pp';
+import './sdk/pp-registry';
 
 describe('bitcoin-nodeless', () => {
 	it('should derivate public key', () => {
@@ -207,4 +217,173 @@ describe('getSatoshiReceivedNodeless', () => {
 		expect(res.satReceived).toBe(AMOUNT);
 		expect(res.pendingSatReceived).toBe(0);
 	});
+});
+
+describe('derivation index limit', () => {
+	const LAST_INDEX = 2 ** 31 - 1;
+	const exhausted = expect.objectContaining({ name: 'DerivationIndexExhaustedError' });
+	const ZPUB =
+		'zpub6r8LffkeFh5if3FefxX5zq5oQnQbLxXXPE87fEskLhY2v37Tj16TzMqRL7p32wQweeq1DpRYWrvm4t3ArKHrLNnVhPkFsHGdo3h6nyoppeS';
+	const TESTNET_XPUBS = [
+		'tpubDFErwxEibF1d8NwR7wG9KUz94F8JAFJJPz5GQFeGVcz6ssgEr5nWsPkpbcpn6KPcDPgYrSofnya2kbm196He327iWCRK9nVkxuz8ZjT9cXG',
+		'tpubDF6CqZd1yujcP79jyEvuC4f5rMNByCqgomZhtfgV6LprZGoxxmzH5LuDPvybL8rzCzJpXynsSARzmN9SoYdLKpLq5ZGwED6vE4mXpLS6gDH'
+	];
+	const initialConfig = runtimeConfig.bitcoinNodeless;
+
+	function configureBip84(derivationIndex: number, skipUsedAddresses = false) {
+		runtimeConfig.bitcoinNodeless = {
+			...initialConfig,
+			format: 'bip84',
+			publicKey: ZPUB,
+			mempoolUrl: 'https://mempool.example',
+			derivationIndex,
+			skipUsedAddresses
+		};
+	}
+
+	async function storeBip84(derivationIndex: number, skipUsedAddresses = false) {
+		configureBip84(derivationIndex, skipUsedAddresses);
+		await collections.runtimeConfig.insertOne({
+			_id: 'bitcoinNodeless',
+			data: runtimeConfig.bitcoinNodeless,
+			updatedAt: new Date()
+		});
+	}
+
+	async function storedIndex() {
+		const doc = await collections.runtimeConfig.findOne({ _id: 'bitcoinNodeless' });
+		return (doc?.data as { derivationIndex?: number } | undefined)?.derivationIndex;
+	}
+
+	async function reserveIndex() {
+		return (await reserveNodelessAddress()).index;
+	}
+
+	beforeEach(async () => {
+		await cleanDb();
+	});
+
+	afterEach(() => {
+		runtimeConfig.bitcoinNodeless = initialConfig;
+		vi.unstubAllGlobals();
+	});
+
+	it('derives the last non-hardened bip84 address and refuses the next index', () => {
+		configureBip84(0);
+
+		expect(generateNodelessAddress(LAST_INDEX)).toBe('bc1qvpzdfcnqgp5qqvhsllttmgs57pcwhxgd55namz');
+		expect(() => generateNodelessAddress(LAST_INDEX + 1)).toThrow(exhausted);
+	});
+
+	it('derives the last non-hardened bip48 address and refuses the next index', () => {
+		runtimeConfig.bitcoinNodeless = {
+			...initialConfig,
+			format: 'bip48',
+			publicKey: '',
+			m: 2,
+			xpubs: TESTNET_XPUBS,
+			derivationIndex: 0
+		};
+
+		expect(generateNodelessAddress(LAST_INDEX)).toBe(
+			'tb1qd3eldeqdnwwddsm69tlqxscdfuxyckq3kcc6098uafua0nwsjnusk6wzne'
+		);
+		expect(() => generateNodelessAddress(LAST_INDEX + 1)).toThrow(exhausted);
+	});
+
+	it('hands out the last index once, then refuses without moving the stored index', async () => {
+		await storeBip84(LAST_INDEX);
+
+		expect(await reserveNodelessAddress()).toEqual({
+			index: LAST_INDEX,
+			address: 'bc1qvpzdfcnqgp5qqvhsllttmgs57pcwhxgd55namz'
+		});
+		expect(await storedIndex()).toBe(LAST_INDEX + 1);
+
+		await expect(reserveNodelessAddress()).rejects.toThrow(exhausted);
+		expect(runtimeConfig.bitcoinNodeless.derivationIndex).toBe(LAST_INDEX + 1);
+		expect(await storedIndex()).toBe(LAST_INDEX + 1);
+	});
+
+	it('stops offering new bitcoin payments once the key is exhausted, but keeps checking pending ones', () => {
+		configureBip84(LAST_INDEX);
+		expect(resolveProcessor('bitcoin')?.meta.processor).toBe('bitcoin-nodeless');
+
+		configureBip84(LAST_INDEX + 1);
+		expect(resolveProcessor('bitcoin')).toBeUndefined();
+		expect(getProcessor('bitcoin-nodeless')?.isEnabled()).toBe(true);
+	});
+
+	it('gives concurrent checkouts distinct indexes', async () => {
+		await storeBip84(100);
+
+		const indexes = await Promise.all(Array.from({ length: 10 }, reserveIndex));
+
+		expect([...indexes].sort((a, b) => a - b)).toEqual([
+			100, 101, 102, 103, 104, 105, 106, 107, 108, 109
+		]);
+		expect(await storedIndex()).toBe(110);
+	});
+
+	it('gives concurrent checkouts distinct unused indexes when skipping used addresses', async () => {
+		await storeBip84(100, true);
+		const usedAddresses = [101, 103].map((index) => bip84Address(ZPUB, index));
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (url: URL) => ({
+				ok: true,
+				json: async () => ({
+					chain_stats: { tx_count: usedAddresses.some((a) => url.href.endsWith(a)) ? 1 : 0 }
+				})
+			}))
+		);
+
+		const indexes = await Promise.all(Array.from({ length: 5 }, reserveIndex));
+
+		expect([...indexes].sort((a, b) => a - b)).toEqual([100, 102, 104, 105, 106]);
+		expect(await storedIndex()).toBe(107);
+	});
+
+	it('derives from the stored key when it is replaced while addresses are being checked', async () => {
+		await storeBip84(0, true);
+		const VPUB =
+			'vpub5YoHT14yexuoFrVBLXNbAUhniupoaUZXin3EXfJCpg2WhdrYiNSDW7CsFHyh3JoG26MnDv3JgDWZXjauyXdo9S46E2xZXdzgi9SXEiPyBUY';
+		let replaced = false;
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => {
+				// Stands in for an admin on another instance setting up a new key at the same index.
+				if (!replaced) {
+					replaced = true;
+					await collections.runtimeConfig.updateOne(
+						{ _id: 'bitcoinNodeless' },
+						{ $set: { 'data.publicKey': VPUB } }
+					);
+				}
+				return { ok: true, json: async () => ({ chain_stats: { tx_count: 0 } }) };
+			})
+		);
+
+		expect(await reserveNodelessAddress()).toEqual({
+			index: 0,
+			address: 'tb1qrw2swpufzdx9gy4aewv5q45e53stcf95ulcu6d'
+		});
+		expect(await storedIndex()).toBe(1);
+	});
+
+	// LAST_INDEX - 9 ends the ten-address skip window exactly one past the limit.
+	it.each([LAST_INDEX, LAST_INDEX - 9])(
+		'refuses to skip past the last index when every address from %i is used',
+		async (start) => {
+			await storeBip84(start, true);
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async () => ({ ok: true, json: async () => ({ chain_stats: { tx_count: 1 } }) }))
+			);
+
+			await expect(reserveNodelessAddress()).rejects.toThrow(exhausted);
+			expect(runtimeConfig.bitcoinNodeless.derivationIndex).toBe(start);
+			expect(await storedIndex()).toBe(start);
+		}
+	);
 });

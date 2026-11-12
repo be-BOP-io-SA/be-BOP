@@ -2,6 +2,7 @@
 	import { enhance, applyAction } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { useI18n } from '$lib/i18n';
+	import AddressSupplyWarning from './AddressSupplyWarning.svelte';
 
 	const { t } = useI18n();
 
@@ -39,6 +40,8 @@
 <p>
 	{t('admin.bitcoinNodeless.intro')}
 </p>
+
+<AddressSupplyWarning supply={data.addressSupply} />
 
 <h2 class="text-2xl">{t('admin.bitcoinNodeless.configuration')}</h2>
 
@@ -169,6 +172,9 @@
 				type="number"
 				name="derivationIndex"
 				class="form-input"
+				min="0"
+				max={data.maxDerivationIndex}
+				step="1"
 				required
 				disabled={alreadySet}
 				bind:value={derivationIndex}
@@ -182,6 +188,8 @@
 				{t('admin.bitcoinNodeless.derivationIndexDescription')}
 			</p>
 		</label>
+
+		<AddressSupplyWarning supply={data.addressSupply} />
 
 		<label class="form-label">
 			{t('admin.bitcoinNodeless.mempoolUrl')}
@@ -206,6 +214,10 @@
 			/>
 			{t('admin.bitcoinNodeless.skipUsedAddresses')}
 		</label>
+
+		{#if form?.alreadySetUp}
+			<p class="text-red-500 text-sm">{t('admin.bitcoinNodeless.alreadySetUpError')}</p>
+		{/if}
 
 		<div class="flex gap-2">
 			{#if alreadySet}
@@ -242,7 +254,7 @@
 		</div>
 	{/if}
 
-	<ul class="font-mono">
+	<ul class="font-mono break-all">
 		{#each data.nextAddresses as addressData}
 			<li class="flex gap-2">
 				- {addressData.address}
