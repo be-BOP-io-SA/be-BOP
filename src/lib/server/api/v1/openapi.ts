@@ -1640,26 +1640,30 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							}
 						},
 						variations: {
-							type: 'array',
+							type: 'object',
+							additionalProperties: { type: 'array', items: { type: 'string' } },
+							example: { key: ['3Qz8yTaVbNk7', 'Rf2mWpXs9Lq4'], amount: ['10', '20', '50'] },
 							description:
-								'The variations the product offers, one entry per value of each family. `price` is ' +
-								'what the value adds to the product price. Absent when the product has none.',
-							items: {
+								'The values the product offers in each variation family, by family name. Absent when ' +
+								'the product has none.'
+						},
+						variationPrices: {
+							type: 'object',
+							additionalProperties: {
 								type: 'object',
-								required: ['name', 'value'],
-								properties: {
-									name: { type: 'string', description: 'Family, such as `size` or `key`.' },
-									value: { type: 'string' },
-									price: {
-										type: 'object',
-										required: ['amountMinor', 'currency'],
-										properties: {
-											amountMinor: { $ref: '#/components/schemas/AmountMinor' },
-											currency: { type: 'string', enum: currencyEnum }
-										}
+								additionalProperties: {
+									type: 'object',
+									required: ['amountMinor', 'currency'],
+									properties: {
+										amountMinor: { $ref: '#/components/schemas/AmountMinor' },
+										currency: { type: 'string', enum: currencyEnum }
 									}
 								}
-							}
+							},
+							example: { amount: { '20': { amountMinor: 1000, currency: 'CHF' } } },
+							description:
+								'What a value adds to the product price, by family then value, only for the values ' +
+								'where it is not zero. Absent when no value adds anything.'
 						},
 						picture: { $ref: '#/components/schemas/CatalogPicture' },
 						stock: {
@@ -1751,18 +1755,12 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							}
 						},
 						variations: {
-							type: 'array',
+							type: 'object',
+							additionalProperties: { type: 'array', items: { type: 'string' } },
+							example: { key: ['3Qz8yTaVbNk7', 'Rf2mWpXs9Lq4'], amount: ['10', '20', '50'] },
 							description:
-								'The variations the product offers, one entry per value of each family. No price, as ' +
-								'for the product itself. Absent when the product has none.',
-							items: {
-								type: 'object',
-								required: ['name', 'value'],
-								properties: {
-									name: { type: 'string', description: 'Family, such as `size` or `key`.' },
-									value: { type: 'string' }
-								}
-							}
+								'The values the product offers in each variation family, by family name. No price, ' +
+								'as for the product itself. Absent when the product has none.'
 						}
 					}
 				},

@@ -80,7 +80,7 @@ Un `304` compte quand même dans la limite de débit. Les appels navigateur lise
 
 ## Variations, et l’identifiant porté par un lien (`?key=`)
 
-Partout où l’API renvoie un produit du catalogue, elle renvoie les variations qu’il propose (`variations`, avec `variationLabels` pour leurs libellés). Partout où elle renvoie un produit acheté — lecture des commandes, flux des commandes payées, flux de la caisse, webhook produit de commande payée —, elle renvoie la variation choisie sur la ligne (`chosenVariations`). Les écritures prennent `chosenVariations` de la même façon.
+Partout où l’API renvoie un produit du catalogue, elle renvoie les valeurs qu’il propose dans chaque famille de variations (`variations`, par exemple `{ "taille": ["35", "36"], "couleur": ["rouge"] }`), avec `variationLabels` pour leurs libellés et, dans le catalogue général, `variationPrices` pour les valeurs qui ajoutent au prix. Partout où elle renvoie un produit acheté — lecture des commandes, flux des commandes payées, flux de la caisse, webhook produit de commande payée —, elle renvoie la valeur choisie dans chaque famille sur la ligne (`chosenVariations`, par exemple `{ "taille": "35", "couleur": "rouge" }`). Les écritures prennent `chosenVariations` de la même façon.
 
 Un article unique, comme un bracelet, s’identifie par une variation. Le produit a une famille de variations, par exemple `key`, dont les valeurs sont les identifiants ; la famille peut être cachée de la page produit. Un lien comme `/product/{slug}?key=kfdjsfeaz12845ND9xezj91820` fixe cette variation, et l’identifiant arrive sur la commande dans `chosenVariations.key`. Une valeur que le produit ne propose pas est refusée. Ce `?key=` n’est **pas** une clé API.
 

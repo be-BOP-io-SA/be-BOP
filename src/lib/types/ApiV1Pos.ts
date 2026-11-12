@@ -91,10 +91,11 @@ export type PosCatalogProduct = {
 	/** Display names of the variation families (`names`) and of their values (`values`). */
 	variationLabels?: Product['variationLabels'];
 	/**
-	 * The variations the product offers, one entry per value of each family. No price, as for the
-	 * product itself: the till sends what it charged. Absent when the product has none.
+	 * The values the product offers in each variation family, by family name — `{ key: […],
+	 * amount: ['10', '20'] }`. No price, as for the product itself: the till sends what it charged.
+	 * Absent when the product has none.
 	 */
-	variations?: Array<{ name: string; value: string }>;
+	variations?: Record<string, string[]>;
 };
 
 /** Resolves a `tagIds` entry to something displayable. `family` is be-BOP's tag grouping. */

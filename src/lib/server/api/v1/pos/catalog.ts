@@ -7,6 +7,7 @@ import { catalogVisibilityFilter } from '../catalog/listProducts';
 import { loadCatalogPictures, type CatalogPictureDto } from '../catalog/pictures';
 import type { PictureOptions } from '../catalog/pictureOptions';
 import { loadCatalogVatRates } from '../catalog/vat';
+import { valuesByFamily } from '../catalog/dto';
 
 function translated(
 	product: Product,
@@ -35,12 +36,7 @@ export function toPosCatalogProduct(
 		tagIds: product.tagIds ?? [],
 		vatRate,
 		...(product.variationLabels && { variationLabels: product.variationLabels }),
-		...(product.variations?.length && {
-			variations: product.variations.map((variation) => ({
-				name: variation.name,
-				value: variation.value
-			}))
-		})
+		...(product.variations?.length && { variations: valuesByFamily(product.variations) })
 	};
 }
 

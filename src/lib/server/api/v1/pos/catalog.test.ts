@@ -57,21 +57,20 @@ describe('toPosCatalogProduct', () => {
 		expect(toPosCatalogProduct(product(), 'en', undefined, 8.1).vatRate).toBe(8.1);
 	});
 
-	it('carries the variations the product offers, without their price', () => {
+	it('carries the values offered in each variation family, without their price', () => {
 		const dto = toPosCatalogProduct(
 			product({
 				variations: [
-					{ name: 'key', value: 'abc', price: 5 },
-					{ name: 'key', value: 'def', price: 0 }
+					{ name: 'key', value: 'abc', price: 0 },
+					{ name: 'amount', value: '10', price: 10 },
+					{ name: 'key', value: 'def', price: 0 },
+					{ name: 'amount', value: '20', price: 20 }
 				],
 				variationLabels: { names: { key: 'Wristband' }, values: { key: { abc: 'A', def: 'D' } } }
 			}),
 			'en'
 		);
-		expect(dto.variations).toEqual([
-			{ name: 'key', value: 'abc' },
-			{ name: 'key', value: 'def' }
-		]);
+		expect(dto.variations).toEqual({ key: ['abc', 'def'], amount: ['10', '20'] });
 		expect(dto.variationLabels?.names).toEqual({ key: 'Wristband' });
 		expect(toPosCatalogProduct(product(), 'en')).not.toHaveProperty('variations');
 	});
