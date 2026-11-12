@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { SerializedOrderPayment } from '$lib/types/Order';
 	import { useI18n } from '$lib/i18n';
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
 	import { CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
 
 	const { t } = useI18n();
@@ -36,7 +36,20 @@
 			: t('pos.cta.resendPaymentMethod');
 </script>
 
-<form {action} method="post" class="flex flex-col gap-2" use:enhance>
+<form
+	{action}
+	method="post"
+	class="flex flex-col gap-2"
+	use:enhance={() =>
+		async ({ result, update }) => {
+			// The action lives on another route, and SvelteKit only shows a refusal from the page's own.
+			if (result.type === 'failure') {
+				await applyAction(result);
+			} else {
+				await update();
+			}
+		}}
+>
 	<!-- Amount input -->
 	<label>
 		{amountLabel}
