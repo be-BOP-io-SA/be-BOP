@@ -19,24 +19,30 @@ describe('ordersWriteRequestSchema', () => {
 		expect(parsed.success).toBe(true);
 	});
 
-	it('accepts uniqueKey on items', () => {
+	it('accepts the variations chosen on an item', () => {
 		const parsed = ordersWriteRequestSchema.safeParse({
 			orders: [
 				{
 					...validOrder,
-					items: [{ productId: 'artifact', quantity: 1, uniqueKey: 'kfdjsfeaz12845ND9xezj91820' }]
+					items: [
+						{
+							productId: 'artifact',
+							quantity: 1,
+							chosenVariations: { key: 'kfdjsfeaz12845ND9xezj91820' }
+						}
+					]
 				}
 			]
 		});
 		expect(parsed.success).toBe(true);
 	});
 
-	it('rejects uniqueKey with spaces (fail-closed)', () => {
+	it('rejects a uniqueKey on an item: the identifier travels as a variation', () => {
 		const parsed = ordersWriteRequestSchema.safeParse({
 			orders: [
 				{
 					...validOrder,
-					items: [{ productId: 'artifact', quantity: 1, uniqueKey: 'not a key' }]
+					items: [{ productId: 'artifact', quantity: 1, uniqueKey: 'kfdjsfeaz12845ND9xezj91820' }]
 				}
 			]
 		});

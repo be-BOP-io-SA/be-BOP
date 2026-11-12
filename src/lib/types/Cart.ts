@@ -32,8 +32,6 @@ export interface Cart extends Timestamps {
 		discountJustification?: string;
 		internalNote?: { value: string; updatedAt: Date; updatedById?: User['_id'] };
 		chosenVariations?: Record<string, string>;
-		/** Unique artifact secret from storefront `?key=` (#2688). */
-		uniqueKey?: string;
 	}>;
 	promoCode?: string;
 	orderTabSlug?: string;

@@ -54,7 +54,7 @@ export function toPosPaidOrderEvent(order: Order, tag?: string): PosPaidOrderEve
 		return {
 			orderId: order._id,
 			amount: { amountMinor: amountToMinor(line.amount, line.currency), currency: line.currency },
-			...(line.key && { key: line.key }),
+			...(line.chosenVariations && { chosenVariations: line.chosenVariations }),
 			...(line.vat && {
 				vat: [{ rate: line.vat.rate, amountMinor: amountToMinor(line.vat.amount, line.currency) }]
 			}),

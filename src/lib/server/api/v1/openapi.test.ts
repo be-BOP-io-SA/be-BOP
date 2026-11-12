@@ -171,7 +171,7 @@ describe('buildOpenApiDocument', () => {
 		expect(Object.keys(schemas.PosPaidOrderEvent.properties)).toEqual([
 			'orderId',
 			'amount',
-			'key',
+			'chosenVariations',
 			'vat'
 		]);
 		expect(schemas.PosPaidOrderEvent.required).toEqual(['orderId', 'amount']);

@@ -23,7 +23,9 @@ const posSaleItemSchema = z
 		product: z.string().trim().min(1).max(200),
 		quantity: z.number().int().positive().max(1_000_000),
 		/** Unit price at sale time. */
-		price: posPriceSchema
+		price: posPriceSchema,
+		/** The variation chosen in each family, by family name, as the catalog lists them. */
+		chosenVariations: z.record(z.string(), z.string()).optional()
 	})
 	.strict();
 
