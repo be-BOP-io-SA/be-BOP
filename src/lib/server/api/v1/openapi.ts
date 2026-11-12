@@ -47,14 +47,10 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 			},
 			chosenVariations: {
 				type: 'object',
-				additionalProperties: { type: 'string' }
-			},
-			uniqueKey: {
-				type: 'string',
-				minLength: 1,
-				maxLength: 128,
-				pattern: '^[A-Za-z0-9_-]+$',
-				description: 'Unique artifact secret from storefront ?key= (#2688).'
+				additionalProperties: { type: 'string' },
+				description:
+					'The variation chosen in each family, by family name. A link such as `?key=…` sets one ' +
+					'(#2688): the identifier of a wristband is a variation value like any other.'
 			}
 		}
 	};
@@ -1057,8 +1053,9 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							description:
 								'Narrow the feed to orders carrying a line whose product bears this tag, and reduce ' +
 								'`amount` to that line — what an integration crediting a single item needs, not the ' +
-								'total of a basket it did not sell. The event then also carries `key`, the ' +
-								'storefront `?key=` that line was bought with. be-BOP holds no domain word: you name ' +
+								'total of a basket it did not sell. The event then also carries `chosenVariations`, ' +
+								'the variations of that line, such as the wristband a `?key=` link set. be-BOP holds ' +
+								'no domain word: you name ' +
 								'the tag. Omitted, every paid order is announced whole. An order carrying more than ' +
 								'one line with the tag is not announced at all — there is no correct way to choose ' +
 								'between them — and the condition is logged for the shop.'
@@ -1139,8 +1136,9 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							description:
 								'Narrow the feed to orders carrying a line whose product bears this tag, and reduce ' +
 								'`amount` to that line — what an integration crediting a single item needs, not the ' +
-								'total of a basket it did not sell. The event then also carries `key`, the ' +
-								'storefront `?key=` that line was bought with. be-BOP holds no domain word: you name ' +
+								'total of a basket it did not sell. The event then also carries `chosenVariations`, ' +
+								'the variations of that line, such as the wristband a `?key=` link set. be-BOP holds ' +
+								'no domain word: you name ' +
 								'the tag. Omitted, every paid order is announced whole. An order carrying more than ' +
 								'one line with the tag is not announced at all — there is no correct way to choose ' +
 								'between them — and the condition is logged for the shop.'
@@ -1628,6 +1626,41 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						shipping: { type: 'boolean' },
 						tagIds: { type: 'array', items: { type: 'string' } },
 						hasVariations: { type: 'boolean' },
+						variationLabels: {
+							type: 'object',
+							description:
+								'Display names of the variation families (`names`, by family) and of their values ' +
+								'(`values`, by family then value).',
+							properties: {
+								names: { type: 'object', additionalProperties: { type: 'string' } },
+								values: {
+									type: 'object',
+									additionalProperties: { type: 'object', additionalProperties: { type: 'string' } }
+								}
+							}
+						},
+						variations: {
+							type: 'array',
+							description:
+								'The variations the product offers, one entry per value of each family. `price` is ' +
+								'what the value adds to the product price. Absent when the product has none.',
+							items: {
+								type: 'object',
+								required: ['name', 'value'],
+								properties: {
+									name: { type: 'string', description: 'Family, such as `size` or `key`.' },
+									value: { type: 'string' },
+									price: {
+										type: 'object',
+										required: ['amountMinor', 'currency'],
+										properties: {
+											amountMinor: { $ref: '#/components/schemas/AmountMinor' },
+											currency: { type: 'string', enum: currencyEnum }
+										}
+									}
+								}
+							}
+						},
 						picture: { $ref: '#/components/schemas/CatalogPicture' },
 						stock: {
 							type: 'object',
@@ -1703,6 +1736,33 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							description:
 								'VAT rate as a percentage, resolved against the shop country — a register sells on ' +
 								'the premises, so the buyer country never enters.'
+						},
+						variationLabels: {
+							type: 'object',
+							description:
+								'Display names of the variation families (`names`, by family) and of their values ' +
+								'(`values`, by family then value).',
+							properties: {
+								names: { type: 'object', additionalProperties: { type: 'string' } },
+								values: {
+									type: 'object',
+									additionalProperties: { type: 'object', additionalProperties: { type: 'string' } }
+								}
+							}
+						},
+						variations: {
+							type: 'array',
+							description:
+								'The variations the product offers, one entry per value of each family. No price, as ' +
+								'for the product itself. Absent when the product has none.',
+							items: {
+								type: 'object',
+								required: ['name', 'value'],
+								properties: {
+									name: { type: 'string', description: 'Family, such as `size` or `key`.' },
+									value: { type: 'string' }
+								}
+							}
 						}
 					}
 				},
@@ -1735,13 +1795,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 								'What was received, VAT included — the whole order, or the tagged line alone when ' +
 								'the request named a tag.'
 						},
-						key: {
-							type: 'string',
-							example: '3Qz8yTaVbNk7Rf2mWpXs',
+						chosenVariations: {
+							type: 'object',
+							additionalProperties: { type: 'string' },
+							example: { key: '3Qz8yTaVbNk7Rf2mWpXs' },
 							description:
-								'The storefront `?key=` the tagged line was bought with, present when a tag was ' +
-								'named and the line carried one. This is how an item scanned at the counter reaches ' +
-								'the integration that acts on it.'
+								'The variations of the tagged line, present when a tag was named and the line has ' +
+								'some. This is how an item scanned at the counter reaches the integration that acts ' +
+								'on it: the identifier a `?key=` link set is one of them.'
 						},
 						vat: {
 							type: 'array',
@@ -1772,6 +1833,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						price: {
 							allOf: [{ $ref: '#/components/schemas/PosPrice' }],
 							description: 'Unit price at sale time.'
+						},
+						chosenVariations: {
+							type: 'object',
+							additionalProperties: { type: 'string' },
+							example: { key: '3Qz8yTaVbNk7Rf2mWpXs' },
+							description:
+								'The variation chosen in each family, by family name, as `PosCatalogProduct.variations` ' +
+								'lists them.'
 						}
 					}
 				},
@@ -1858,7 +1927,6 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						productId: { type: 'string' },
 						name: { type: 'string' },
 						quantity: { type: 'integer' },
-						uniqueKey: { type: 'string' },
 						chosenVariations: { type: 'object', additionalProperties: { type: 'string' } },
 						freeQuantity: {
 							type: 'integer',

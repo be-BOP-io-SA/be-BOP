@@ -14,7 +14,7 @@ function makeOrder(opts?: {
 	paid?: boolean;
 	amount?: number;
 	tagIds?: string[];
-	uniqueKey?: string;
+	chosenVariations?: Record<string, string>;
 	extraLine?: boolean;
 }): Order {
 	const amount = opts?.amount ?? 20;
@@ -29,7 +29,7 @@ function makeOrder(opts?: {
 			{
 				product: { ...TEST_DIGITAL_PRODUCT, _id: 'credit', tagIds: opts?.tagIds },
 				quantity: 1,
-				...(opts?.uniqueKey && { uniqueKey: opts.uniqueKey }),
+				...(opts?.chosenVariations && { chosenVariations: opts.chosenVariations }),
 				currencySnapshot: {
 					main: { price: { amount, currency: 'CHF' } },
 					priceReference: { price: { amount, currency: 'CHF' } }
@@ -120,12 +120,12 @@ describe('toPosPaidOrderEvent with a tag', () => {
 		expect(event?.amount.amountMinor).toBe(2000);
 	});
 
-	it('carries the storefront key, which is how the support is identified', () => {
+	it('carries the variations of the line, which is how the support is identified', () => {
 		const event = toPosPaidOrderEvent(
-			makeOrder({ tagIds: ['recharge'], uniqueKey: '3Qz8yTaVbNk7' }),
+			makeOrder({ tagIds: ['recharge'], chosenVariations: { key: '3Qz8yTaVbNk7' } }),
 			'recharge'
 		);
-		expect(event?.key).toBe('3Qz8yTaVbNk7');
+		expect(event?.chosenVariations).toEqual({ key: '3Qz8yTaVbNk7' });
 	});
 
 	it('gives the VAT of the tagged line in minor units', () => {

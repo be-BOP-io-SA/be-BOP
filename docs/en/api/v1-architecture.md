@@ -266,7 +266,7 @@ An integration typically acts on some orders and ignores the rest — a top-up s
 
 The orders an integration cares about are identified **by the tags their lines carry**, and the caller says which tag it means, as `?tag=` on the paid-order poll and stream. be-BOP holds no domain word — not "top-up", not "deposit", not "locker": it is told "the lines that matter to me are tagged X" and answers accordingly. The same request serves any integration, and the shop names its own tags.
 
-Naming a tag does three things at once. It **filters** the feed to orders carrying such a line. It **narrows `amount`** to that line alone, which is what an integration crediting a single item needs rather than the total of a basket it did not sell. And it surfaces **`key`**, the storefront `?key=` that line was bought with (#2688) — the identity of the physical thing scanned at the counter.
+Naming a tag does three things at once. It **filters** the feed to orders carrying such a line. It **narrows `amount`** to that line alone, which is what an integration crediting a single item needs rather than the total of a basket it did not sell. And it surfaces **`chosenVariations`**, the variations of that line — among them the value a `?key=` link set (#2688), the identity of the physical thing scanned at the counter.
 
 Tags are read from the product snapshot the order carries, not from the catalog as it stands now: a product tagged after the sale was not that kind of product when it was sold.
 

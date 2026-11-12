@@ -56,7 +56,7 @@ function linePaidAmount(item: Order['items'][number]): { amount: number; currenc
  * `items` is scoped to the receiving product's own lines — never the whole cart. A per-product
  * hook belongs to whoever sells that product, and a shared basket would otherwise hand them
  * another seller's lines. A product can still appear several times in one order (different
- * `uniqueKey`, different variations), hence an array (issue #2688).
+ * variations, such as two wristbands), hence an array (issue #2688).
  */
 function buildPayload(order: Order, productId: string, timestamp: string) {
 	return {
@@ -80,7 +80,7 @@ function buildPayload(order: Order, productId: string, timestamp: string) {
 				return {
 					productId: item.product._id,
 					quantity: item.quantity,
-					...(item.uniqueKey && { uniqueKey: item.uniqueKey }),
+					...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
 					...(amountPaid && { amountPaid })
 				};
 			})

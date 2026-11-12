@@ -674,7 +674,6 @@ export async function createOrder(
 		product: Product;
 		customPrice?: { amount: number; currency: Currency };
 		chosenVariations?: Record<string, string>;
-		uniqueKey?: string;
 		depositPercentage?: number;
 		discountPercentage?: number;
 		freeProductSources?: { subscriptionId: string; quantity: number }[];
@@ -1509,7 +1508,6 @@ export async function createOrder(
 				product: stripPaidOrderWebhook(item.product),
 				customPrice: item.customPrice,
 				chosenVariations: item.chosenVariations,
-				...(item.uniqueKey && { uniqueKey: item.uniqueKey }),
 				depositPercentage: item.depositPercentage,
 				discountPercentage: item.discountPercentage,
 				freeQuantity: priceInfo.perItem[i].usedFreeUnits,

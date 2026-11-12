@@ -15,7 +15,6 @@ export type ResolvedLine = {
 	quantity: number;
 	customPrice?: Price;
 	chosenVariations?: Record<string, string>;
-	uniqueKey?: string;
 	missing: boolean;
 };
 
@@ -126,7 +125,6 @@ export async function resolveProducts(
 			quantity: item.quantity,
 			...(customPrice && { customPrice }),
 			...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
-			...(item.uniqueKey && { uniqueKey: item.uniqueKey }),
 			missing
 		});
 	}

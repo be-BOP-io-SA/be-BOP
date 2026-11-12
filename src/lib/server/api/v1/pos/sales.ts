@@ -30,7 +30,8 @@ export function toOrderWriteCommand(sale: PosSale): OrderWriteCommand {
 		items: sale.items.map((item) => ({
 			productId: item.product,
 			quantity: item.quantity,
-			customPrice: { amountMinor: item.price.amountMinor, currency }
+			customPrice: { amountMinor: item.price.amountMinor, currency },
+			...(item.chosenVariations && { chosenVariations: item.chosenVariations })
 		})),
 		// be-BOP models payment on two levels: `method` for the axis, `posLabel` for the subtype
 		// resolved against the shop's configured `posPaymentSubtypes`. The seam flattens both into

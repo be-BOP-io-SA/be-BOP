@@ -61,7 +61,7 @@ Trois flux Server-Sent Events, chacun avec le droit `orders:stream`. Ils portent
 
 `GET /api/v1/orders/paid?since=…&until=…&limit=20&cursor=…`
 
-Uniquement les commandes avec au moins un paiement **paid**. Le payload contient les lignes produit, l’éventuel `uniqueKey` (vitrine `?key=`), et le montant **réellement payé**. Ce n’est pas un webhook (issue #2689). Le webhook produit #2646 transporte désormais le même détail par ligne, mais c'est un push limité aux lignes de son propre produit : il ne peut pas servir un poller qui veut toutes les commandes payées de la boutique.
+Uniquement les commandes avec au moins un paiement **paid**. Le payload contient les lignes produit avec la variation choisie sur chacune, et le montant **réellement payé**. Ce n’est pas un webhook (issue #2689). Le webhook produit #2646 transporte désormais le même détail par ligne, mais c'est un push limité aux lignes de son propre produit : il ne peut pas servir un poller qui veut toutes les commandes payées de la boutique.
 
 ## GET conditionnels (ETag)
 
@@ -78,9 +78,11 @@ If-None-Match: "9f2b…"
 
 Un `304` compte quand même dans la limite de débit. Les appels navigateur lisent l’`ETag` via `Access-Control-Expose-Headers`. Les écritures n’acceptent aucune précondition ETag : `POST /api/v1/orders` reste idempotent sur `(apiKey, externalOrderId)`.
 
-## Clé unique vitrine (`?key=`)
+## Variations, et l’identifiant porté par un lien (`?key=`)
 
-`/product/{slug}?key=kfdjsfeaz12845ND9xezj91820` présélectionne un secret d’artefact unique. Il est stocké sur la ligne panier puis copié sur la commande. Le pay-what-you-want et les variations légères cohabitent avec ce secret. Ce n’est **pas** une clé API ; c’est un identifiant produit côté client.
+Partout où l’API renvoie un produit du catalogue, elle renvoie les variations qu’il propose (`variations`, avec `variationLabels` pour leurs libellés). Partout où elle renvoie un produit acheté — lecture des commandes, flux des commandes payées, flux de la caisse, webhook produit de commande payée —, elle renvoie la variation choisie sur la ligne (`chosenVariations`). Les écritures prennent `chosenVariations` de la même façon.
+
+Un article unique, comme un bracelet, s’identifie par une variation. Le produit a une famille de variations, par exemple `key`, dont les valeurs sont les identifiants ; la famille peut être cachée de la page produit. Un lien comme `/product/{slug}?key=kfdjsfeaz12845ND9xezj91820` fixe cette variation, et l’identifiant arrive sur la commande dans `chosenVariations.key`. Une valeur que le produit ne propose pas est refusée. Ce `?key=` n’est **pas** une clé API.
 
 ## Limites de débit
 

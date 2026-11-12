@@ -41,7 +41,11 @@ function lastFilter(): Record<string, unknown> {
 	return find.mock.calls[find.mock.calls.length - 1][0] as Record<string, unknown>;
 }
 
-function makeOrder(opts: { paid: boolean; uniqueKey?: string; labelIds?: string[] }): Order {
+function makeOrder(opts: {
+	paid: boolean;
+	chosenVariations?: Record<string, string>;
+	labelIds?: string[];
+}): Order {
 	const amount = 100;
 	return {
 		_id: 'ord_test',
@@ -54,7 +58,7 @@ function makeOrder(opts: { paid: boolean; uniqueKey?: string; labelIds?: string[
 			{
 				product: TEST_DIGITAL_PRODUCT,
 				quantity: 1,
-				uniqueKey: opts.uniqueKey,
+				...(opts.chosenVariations && { chosenVariations: opts.chosenVariations }),
 				currencySnapshot: {
 					main: { price: { amount, currency: 'EUR' } },
 					priceReference: { price: { amount, currency: 'EUR' } }
@@ -106,11 +110,13 @@ describe('toPaidOrderDto', () => {
 		expect(toPaidOrderDto(makeOrder({ paid: false }))).toBeNull();
 	});
 
-	it('includes product lines, uniqueKey, and amount actually paid', () => {
-		const dto = toPaidOrderDto(makeOrder({ paid: true, uniqueKey: 'kfdjsfeaz12845ND9xezj91820' }));
+	it('includes product lines, their variations, and amount actually paid', () => {
+		const dto = toPaidOrderDto(
+			makeOrder({ paid: true, chosenVariations: { key: 'kfdjsfeaz12845ND9xezj91820' } })
+		);
 		expect(dto).not.toBeNull();
 		expect(dto?.amountPaid).toEqual({ amountMinor: 10000, currency: 'EUR' });
-		expect(dto?.items[0].uniqueKey).toBe('kfdjsfeaz12845ND9xezj91820');
+		expect(dto?.items[0].chosenVariations).toEqual({ key: 'kfdjsfeaz12845ND9xezj91820' });
 		expect(dto?.items[0].productId).toBe(TEST_DIGITAL_PRODUCT._id);
 	});
 });
