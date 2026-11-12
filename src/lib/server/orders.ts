@@ -714,14 +714,16 @@ export async function createOrder(
 	// the session alone would let a new session with the same address buy at the intro price for
 	// ever while extending the same subscription. Deliberately not used for discount eligibility:
 	// there, honouring a self-asserted address would hand over someone else's subscriber pricing.
-	// At the till the session is the cashier's, so only the customer's address names the subscriber.
-	const subscriptionUser: UserIdentifier = params.user.userHasPosOptions
-		? { ...(email && { email }), ...(npubAddress && { npub: npubAddress }) }
-		: {
-				...params.user,
-				...(!params.user.email && email && { email }),
-				...(!params.user.npub && npubAddress && { npub: npubAddress })
-		  };
+	const subscriptionUser = subscriberOf(params.user, { email, npub: npubAddress });
+
+	if (
+		params.user.userHasPosOptions &&
+		!email &&
+		!npubAddress &&
+		items.some((item) => item.product.type === 'subscription')
+	) {
+		throw error(400, "A subscription sold at the till needs the customer's email or npub");
+	}
 
 	const canBeNotified = !!(
 		npubAddress ||
@@ -2109,6 +2111,24 @@ export async function addOrderPayment(
 	return payment;
 }
 
+/**
+ * Who a subscription bought by `user` belongs to. At the till the session is the cashier's,
+ * shared by every sale, so only the customer's address names the subscriber there.
+ */
+function subscriberOf(user: UserIdentifier, address: { email?: string; npub?: string }) {
+	if (user.userHasPosOptions) {
+		return {
+			...(address.email && { email: address.email }),
+			...(address.npub && { npub: address.npub })
+		} satisfies UserIdentifier;
+	}
+	return {
+		...user,
+		...(!user.email && address.email && { email: address.email }),
+		...(!user.npub && address.npub && { npub: address.npub })
+	} satisfies UserIdentifier;
+}
+
 /** Adds the free products of the specified discount to the specified accumulator */
 function addDiscountFreeProducts(
 	discount: Discount,
@@ -2155,10 +2175,11 @@ function pricingPhaseDuration(value: number, unit: SubscriptionDuration): Durati
 
 async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSession) {
 	const subscriptionProducts = order.items.filter((item) => item.product.type === 'subscription');
+	const subscriber = subscriberOf(order.user, order.notifications?.paymentStatus ?? {});
 	const existingSubscriptions = await collections.paidSubscriptions
 		.find(
 			{
-				...userQuery(order.user),
+				...userQuery(subscriber),
 				productId: { $in: order.items.map((item) => item.product._id) }
 			},
 			{ session }
@@ -2296,7 +2317,7 @@ async function applyOrderSubscriptionsDiscounts(order: Order, session: ClientSes
 				{
 					_id: crypto.randomUUID(),
 					number: await generateSubscriptionNumber(),
-					user: order.user,
+					user: subscriber,
 					productId: subscription.product._id,
 					paidUntil: add(new Date(), extension),
 					createdAt: new Date(),

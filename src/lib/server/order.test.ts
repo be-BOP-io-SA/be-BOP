@@ -496,6 +496,35 @@ describe('order', () => {
 			expect(await collections.orders.countDocuments({ 'user.userId': till.userId })).toBe(1);
 		});
 
+		it('gives each paying customer their own subscription', async () => {
+			for (const npub of ['npub1firstcustomer', 'npub1secondcustomer']) {
+				const order = await collections.orders.findOne({ _id: await sellTo(npub) });
+				if (!order) {
+					throw new Error('order not created');
+				}
+				await onOrderPayment(order, order.payments[0], order.payments[0].price);
+			}
+
+			const subscriptions = await collections.paidSubscriptions.find({}).toArray();
+			expect(subscriptions.map((sub) => sub.user.npub).sort()).toEqual([
+				'npub1firstcustomer',
+				'npub1secondcustomer'
+			]);
+			expect(subscriptions.every((sub) => !sub.user.userId && !sub.user.sessionId)).toBe(true);
+		});
+
+		it('refuses a sale without the customer address the subscription would belong to', async () => {
+			await expect(
+				createOrder([{ product: TEST_SUBSCRIPTION_PRODUCT, quantity: 1 }], 'point-of-sale', {
+					locale: 'en',
+					user: till,
+					notifications: { paymentStatus: {} },
+					shippingAddress: null,
+					userVatCountry: 'FR'
+				})
+			).rejects.toMatchObject({ status: 400 });
+		});
+
 		it('still refuses a second pending order for the same customer', async () => {
 			await sellTo('npub1firstcustomer');
 
