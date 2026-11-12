@@ -12,7 +12,7 @@ type LineSpec = {
 	freeQuantity?: number;
 	discountPercentage?: number;
 	vatRate?: number;
-	uniqueKey?: string;
+	chosenVariations?: Record<string, string>;
 	currency?: string;
 };
 
@@ -26,7 +26,7 @@ function line(spec: LineSpec) {
 		...(spec.discountPercentage !== undefined && {
 			discountPercentage: spec.discountPercentage
 		}),
-		...(spec.uniqueKey && { uniqueKey: spec.uniqueKey }),
+		...(spec.chosenVariations && { chosenVariations: spec.chosenVariations }),
 		vatRate: spec.vatRate ?? 0,
 		currencySnapshot: {
 			main: { price: { amount: unit, currency } },
@@ -156,29 +156,32 @@ describe('findTaggedLine', () => {
 		});
 	});
 
-	describe('the key it reports', () => {
-		it('carries the storefront ?key= of the tagged line', () => {
+	describe('the variations it reports', () => {
+		it('carries the variations of the tagged line, such as the wristband a ?key= link set', () => {
 			expect(
-				findTaggedLine(order([{ id: 'credit', tagIds: ['t'], uniqueKey: '3Qz8yTaVbNk7' }]), 't')
-			).toMatchObject({ key: '3Qz8yTaVbNk7' });
+				findTaggedLine(
+					order([{ id: 'credit', tagIds: ['t'], chosenVariations: { key: '3Qz8yTaVbNk7' } }]),
+					't'
+				)
+			).toMatchObject({ chosenVariations: { key: '3Qz8yTaVbNk7' } });
 		});
 
 		it('omits it when the line carried none', () => {
 			expect(findTaggedLine(order([{ id: 'credit', tagIds: ['t'] }]), 't')).not.toHaveProperty(
-				'key'
+				'chosenVariations'
 			);
 		});
 
-		it('takes the key of the tagged line, not of another line that has one', () => {
+		it('takes the variations of the tagged line, not of another line that has some', () => {
 			expect(
 				findTaggedLine(
 					order([
-						{ id: 'biere', uniqueKey: 'wrong-key' },
-						{ id: 'credit', tagIds: ['t'], uniqueKey: 'right-key' }
+						{ id: 'biere', chosenVariations: { key: 'wrong-key' } },
+						{ id: 'credit', tagIds: ['t'], chosenVariations: { key: 'right-key' } }
 					]),
 					't'
 				)
-			).toMatchObject({ key: 'right-key' });
+			).toMatchObject({ chosenVariations: { key: 'right-key' } });
 		});
 	});
 

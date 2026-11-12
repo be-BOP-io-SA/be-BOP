@@ -16,8 +16,11 @@ export type TaggedLine = {
 	currency: Currency;
 	/** The VAT contained in `amount`, at the line's own rate. Null when the line carries none. */
 	vat: { rate: number; amount: number } | null;
-	/** The storefront `?key=` the line carried, when it had one — see #2688. */
-	key?: string;
+	/**
+	 * The variations chosen on the line, such as the identifier of the wristband a link set
+	 * (`?key=…`, #2688). Absent when the line has none.
+	 */
+	chosenVariations?: Record<string, string>;
 };
 
 /**
@@ -52,6 +55,6 @@ export function findTaggedLine(order: Order, tag: string): TaggedLine | null | '
 		amount: excludingVat + vatAmount,
 		currency: snapshot.price.currency,
 		vat: rate ? { rate, amount: vatAmount } : null,
-		...(line.uniqueKey && { key: line.uniqueKey })
+		...(line.chosenVariations && { chosenVariations: line.chosenVariations })
 	};
 }

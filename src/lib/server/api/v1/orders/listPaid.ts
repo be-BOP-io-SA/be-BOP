@@ -47,7 +47,6 @@ export type PaidOrderItemDto = {
 	productId: string;
 	name: string;
 	quantity: number;
-	uniqueKey?: string;
 	chosenVariations?: Record<string, string>;
 	/** Per-unit price after any line discount. Units actually charged = quantity - freeQuantity. */
 	unitPrice: { amountMinor: number; currency: string };
@@ -324,7 +323,6 @@ function toItemDto(item: Order['items'][number]): PaidOrderItemDto {
 		productId: item.product._id,
 		name: item.product.name,
 		quantity: item.quantity,
-		...(item.uniqueKey && { uniqueKey: item.uniqueKey }),
 		...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
 		...(freeQuantity > 0 && { freeQuantity }),
 		unitPrice: {

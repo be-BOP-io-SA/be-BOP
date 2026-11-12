@@ -43,7 +43,7 @@ function line(
 	opts: {
 		amount?: number;
 		quantity?: number;
-		uniqueKey?: string;
+		chosenVariations?: Record<string, string>;
 		customPrice?: number;
 		discountPercentage?: number;
 		freeQuantity?: number;
@@ -53,7 +53,7 @@ function line(
 	return {
 		product: { _id: productId },
 		quantity: opts.quantity ?? 1,
-		...(opts.uniqueKey && { uniqueKey: opts.uniqueKey }),
+		...(opts.chosenVariations && { chosenVariations: opts.chosenVariations }),
 		...(opts.discountPercentage && { discountPercentage: opts.discountPercentage }),
 		...(opts.freeQuantity && { freeQuantity: opts.freeQuantity }),
 		currencySnapshot: {
@@ -204,12 +204,15 @@ describe('firePaidOrderWebhooks', () => {
 		]);
 	});
 
-	it('reports each line with its uniqueKey and the amount actually paid', async () => {
+	it('reports each line with its variations and the amount actually paid', async () => {
 		await insertWebhookProduct('wh-product', 'https://receiver.test/hook', 'k');
 
 		await firePaidOrderWebhooks(
 			makeOrder([
-				line('wh-product', { uniqueKey: 'kfdjsfeaz12845ND9xezj91820', amount: 30 }),
+				line('wh-product', {
+					chosenVariations: { key: 'kfdjsfeaz12845ND9xezj91820' },
+					amount: 30
+				}),
 				line('wh-product', { amount: 30, quantity: 2 })
 			])
 		);
@@ -219,7 +222,7 @@ describe('firePaidOrderWebhooks', () => {
 			{
 				productId: 'wh-product',
 				quantity: 1,
-				uniqueKey: 'kfdjsfeaz12845ND9xezj91820',
+				chosenVariations: { key: 'kfdjsfeaz12845ND9xezj91820' },
 				amountPaid: { amount: 30, currency: 'EUR' }
 			},
 			{ productId: 'wh-product', quantity: 2, amountPaid: { amount: 60, currency: 'EUR' } }
@@ -249,8 +252,8 @@ describe('firePaidOrderWebhooks', () => {
 
 		await firePaidOrderWebhooks(
 			makeOrder([
-				line('seller-a', { uniqueKey: 'key-a' }),
-				line('seller-b', { uniqueKey: 'key-b' })
+				line('seller-a', { chosenVariations: { key: 'key-a' } }),
+				line('seller-b', { chosenVariations: { key: 'key-b' } })
 			])
 		);
 

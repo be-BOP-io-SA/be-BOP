@@ -55,7 +55,15 @@ describe.skipIf(!mongoAvailable)('API v1 e2e: key → catalog → POST order →
 		runtimeConfig.vatExempted = true;
 	});
 
-	it('runs the Face A concentrator loop with uniqueKey', async () => {
+	it('carries the wristband a link set, as a variation, from the write to the paid read', async () => {
+		// The wristband identifier is a value of a `key` variation family, as a `?key=` link sets it.
+		const wristband = {
+			...TEST_DIGITAL_PRODUCT,
+			_id: 'e2e-wristband',
+			alias: ['e2e-wristband'],
+			variations: [{ name: 'key', value: 'kfdjsfeaz12845ND9xezj91820', price: 0 }]
+		};
+		await collections.products.insertOne(wristband);
 		const { apiKey, secret } = await createApiKey({
 			name: 'e2e-pos',
 			scopes: ['orders:write', 'catalog:read', 'orders:read']
@@ -82,9 +90,9 @@ describe.skipIf(!mongoAvailable)('API v1 e2e: key → catalog → POST order →
 					currency: 'EUR',
 					items: [
 						{
-							productId: TEST_DIGITAL_PRODUCT._id,
+							productId: wristband._id,
 							quantity: 1,
-							uniqueKey: 'kfdjsfeaz12845ND9xezj91820'
+							chosenVariations: { key: 'kfdjsfeaz12845ND9xezj91820' }
 						}
 					],
 					payment: {
@@ -104,7 +112,7 @@ describe.skipIf(!mongoAvailable)('API v1 e2e: key → catalog → POST order →
 		const found = paid.orders.find((o) => o.orderId === orderId);
 		expect(found).toBeTruthy();
 		expect(found?.amountPaid.amountMinor).toBe(amountMinor);
-		expect(found?.items[0].uniqueKey).toBe('kfdjsfeaz12845ND9xezj91820');
+		expect(found?.items[0].chosenVariations).toEqual({ key: 'kfdjsfeaz12845ND9xezj91820' });
 	});
 
 	it('hides unpaid orders from the paid read', async () => {

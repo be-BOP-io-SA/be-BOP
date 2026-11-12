@@ -293,8 +293,7 @@ async function writeNewOrder(
 				product: line.product,
 				quantity: line.quantity,
 				...(line.customPrice && { customPrice: line.customPrice }),
-				...(line.chosenVariations && { chosenVariations: line.chosenVariations }),
-				...(line.uniqueKey && { uniqueKey: line.uniqueKey })
+				...(line.chosenVariations && { chosenVariations: line.chosenVariations })
 			})),
 			paymentMethod,
 			{

@@ -51,6 +51,22 @@ describe('toOrderWriteCommand', () => {
 		});
 	});
 
+	it('carries the variation chosen on each line, and nothing when there is none', () => {
+		const withKey = sale({
+			items: [
+				{
+					product: 'recharge',
+					quantity: 1,
+					price: { amountMinor: 2000, currency: 'CHF' },
+					chosenVariations: { key: '3Qz8yTaVbNk7' }
+				}
+			],
+			totalPrice: { amountMinor: 2000, currency: 'CHF' }
+		});
+		expect(toOrderWriteCommand(withKey).items[0].chosenVariations).toEqual({ key: '3Qz8yTaVbNk7' });
+		expect('chosenVariations' in toOrderWriteCommand(sale()).items[0]).toBe(false);
+	});
+
 	it('passes notifications on only when the till sets it', () => {
 		expect(toOrderWriteCommand(sale({ notifications: false })).notifications).toBe(false);
 		expect('notifications' in toOrderWriteCommand(sale())).toBe(false);

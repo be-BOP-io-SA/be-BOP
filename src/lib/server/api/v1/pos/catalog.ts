@@ -33,7 +33,14 @@ export function toPosCatalogProduct(
 		shortDescription: translated(product, language, 'shortDescription'),
 		...(picture && { picture }),
 		tagIds: product.tagIds ?? [],
-		vatRate
+		vatRate,
+		...(product.variationLabels && { variationLabels: product.variationLabels }),
+		...(product.variations?.length && {
+			variations: product.variations.map((variation) => ({
+				name: variation.name,
+				value: variation.value
+			}))
+		})
 	};
 }
 

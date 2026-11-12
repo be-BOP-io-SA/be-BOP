@@ -7,6 +7,8 @@
  * minor units, as everywhere else in `/api/v1`.
  */
 
+import type { Product } from './Product';
+
 /** A price on the wire: an integer amount in minor units (`1250` in CHF is 12.50 CHF). */
 export type PosPrice = {
 	amountMinor: number;
@@ -43,10 +45,11 @@ export type PosPaidOrderEvent = {
 	 */
 	amount: PosPrice;
 	/**
-	 * The storefront `?key=` the tagged line carried, when the request named a tag and the line had
-	 * one. This is how a support scanned at the counter reaches the integration that credits it.
+	 * The variations chosen on the tagged line, when the request named a tag and the line has some.
+	 * This is how a support reaches the integration that credits it: the identifier its link set
+	 * (`?key=…`, #2688) is one of them.
 	 */
-	key?: string;
+	chosenVariations?: Record<string, string>;
 	/**
 	 * The VAT contained in `amount`, one entry per rate. Absent when the order carries no VAT.
 	 *
@@ -85,6 +88,13 @@ export type PosCatalogProduct = {
 	 * premises, so the buyer's country never enters.
 	 */
 	vatRate: number;
+	/** Display names of the variation families (`names`) and of their values (`values`). */
+	variationLabels?: Product['variationLabels'];
+	/**
+	 * The variations the product offers, one entry per value of each family. No price, as for the
+	 * product itself: the till sends what it charged. Absent when the product has none.
+	 */
+	variations?: Array<{ name: string; value: string }>;
 };
 
 /** Resolves a `tagIds` entry to something displayable. `family` is be-BOP's tag grouping. */

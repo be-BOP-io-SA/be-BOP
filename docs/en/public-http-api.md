@@ -61,7 +61,7 @@ Three Server-Sent Events streams, each with the `orders:stream` scope. They carr
 
 `GET /api/v1/orders/paid?since=…&until=…&limit=20&cursor=…`
 
-Only orders with at least one **paid** payment. Payload includes product lines, optional `uniqueKey` (from storefront `?key=`), and the amount **actually paid**. This replaces a push webhook for partners that prefer to pull (issue #2689). The product-level paid webhook (#2646) now carries the same per-line detail, but it is a push scoped to one product's own lines — it cannot serve a poller that needs every paid order in the shop.
+Only orders with at least one **paid** payment. Payload includes product lines with the variations chosen on each, and the amount **actually paid**. This replaces a push webhook for partners that prefer to pull (issue #2689). The product-level paid webhook (#2646) now carries the same per-line detail, but it is a push scoped to one product's own lines — it cannot serve a poller that needs every paid order in the shop.
 
 ## Conditional GETs (ETag)
 
@@ -78,9 +78,11 @@ If-None-Match: "9f2b…"
 
 `304` still counts against the rate limit. Browser callers read `ETag` through `Access-Control-Expose-Headers`. Writes take no ETag precondition: `POST /api/v1/orders` is idempotent on `(apiKey, externalOrderId)` instead.
 
-## Storefront unique key (`?key=`)
+## Variations, and the identifier a link carries (`?key=`)
 
-`/product/{slug}?key=kfdjsfeaz12845ND9xezj91820` preselects a unique artifact secret. It is stored on the cart line and copied onto the order. Pay-what-you-want and light variations coexist with this secret. This is **not** an API key; it is a customer-facing product identifier.
+Wherever the API returns a catalog product, it returns the variations the product offers (`variations`, with `variationLabels` for their display names). Wherever it returns a product that was bought — order reads, paid-order streams, the point-of-sale feed, the product's paid-order webhook — it returns the variation chosen on that line (`chosenVariations`). Writes take `chosenVariations` the same way.
+
+A unique item, such as a wristband, is identified by a variation. The product has a variation family, for instance `key`, whose values are the identifiers; the family can be hidden from the product page. A link such as `/product/{slug}?key=kfdjsfeaz12845ND9xezj91820` sets that variation, and the identifier reaches the order as `chosenVariations.key`. A value the product does not offer is refused. This `?key=` is **not** an API key.
 
 ## Rate limits
 

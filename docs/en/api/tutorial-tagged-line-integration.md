@@ -19,14 +19,15 @@ be-BOP knows nothing about wristbands. It is told which orders matter and report
 **A tag on those products.** Call it `topup`. Any slug works; the integration will name this one,
 so pick it and keep it.
 
-**A wristband that carries its own identity.** Each wristband is printed with a QR pointing at the
-top-up product with its own key:
+**A wristband that carries its own identity.** The top-up product has a variation family `key`,
+hidden from the product page, with one value per wristband. Each wristband is printed with a QR
+pointing at the top-up product with its own value:
 
 ```
 https://shop.example/product/topup-20?key=3Qz8yTaVbNk7Rf2mWpXs
 ```
 
-be-BOP pre-selects that key on the product page, carries it through the cart, and stores it on the
+be-BOP sets that variation on the product page, carries it through the cart, and stores it on the
 order line (see issues #2688 and #2689). The visitor scans and pays; nothing is typed.
 
 **An API key** with the scopes the integration needs: `pos:read` to poll, `pos:stream` to hold a
@@ -67,7 +68,7 @@ Authorization: Bearer bebop_ak_…
 		{
 			"orderId": "3f2a0c…",
 			"amount": { "amountMinor": 2000, "currency": "CHF" },
-			"key": "3Qz8yTaVbNk7Rf2mWpXs",
+			"chosenVariations": { "key": "3Qz8yTaVbNk7Rf2mWpXs" },
 			"vat": [{ "rate": 8.1, "amountMinor": 150 }]
 		}
 	],
@@ -81,7 +82,8 @@ Authorization: Bearer bebop_ak_…
   buys a beer and nothing else never appears.
 - **Narrows the amount.** `amount` is the tagged line alone, not the basket. Someone who tops up 20
   and buys two beers still credits 20.
-- **Surfaces the key.** `key` is the `?key=` the wristband's QR carried — the wristband's identity.
+- **Surfaces the variations.** `chosenVariations` are those of the tagged line; `chosenVariations.key`
+  is the value the wristband's QR set — the wristband's identity.
 
 Feed `nextCursor` back as `last_event_id` on the next call. When it comes back `null`, you have
 reached the end of the feed.
@@ -109,7 +111,7 @@ retry: 5000
 :ok
 
 id: 3f2a0c…
-data: {"orderId":"3f2a0c…","amount":{"amountMinor":2000,"currency":"CHF"},"key":"3Qz8yTaVbNk7Rf2mWpXs"}
+data: {"orderId":"3f2a0c…","amount":{"amountMinor":2000,"currency":"CHF"},"chosenVariations":{"key":"3Qz8yTaVbNk7Rf2mWpXs"}}
 
 :heartbeat
 ```
@@ -258,7 +260,7 @@ loop:
     for event in events:
         if event.orderId in credited:
             continue
-        credit(wristband = event.key, amount = event.amount.amountMinor)
+        credit(wristband = event.chosenVariations.key, amount = event.amount.amountMinor)
         credited.add(event.orderId)
         cursor = event.orderId
         persist(credited, cursor)

@@ -57,6 +57,25 @@ describe('toPosCatalogProduct', () => {
 		expect(toPosCatalogProduct(product(), 'en', undefined, 8.1).vatRate).toBe(8.1);
 	});
 
+	it('carries the variations the product offers, without their price', () => {
+		const dto = toPosCatalogProduct(
+			product({
+				variations: [
+					{ name: 'key', value: 'abc', price: 5 },
+					{ name: 'key', value: 'def', price: 0 }
+				],
+				variationLabels: { names: { key: 'Wristband' }, values: { key: { abc: 'A', def: 'D' } } }
+			}),
+			'en'
+		);
+		expect(dto.variations).toEqual([
+			{ name: 'key', value: 'abc' },
+			{ name: 'key', value: 'def' }
+		]);
+		expect(dto.variationLabels?.names).toEqual({ key: 'Wristband' });
+		expect(toPosCatalogProduct(product(), 'en')).not.toHaveProperty('variations');
+	});
+
 	it('never emits a price — the till holds its own, and sends it back at sale time', () => {
 		expect(toPosCatalogProduct(product(), 'en')).not.toHaveProperty('price');
 	});

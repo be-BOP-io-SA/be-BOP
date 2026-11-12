@@ -254,8 +254,6 @@ export interface Order extends Timestamps {
 		quantity: number;
 		customPrice?: { amount: number; currency: Currency };
 		chosenVariations?: Record<string, string>;
-		/** Unique artifact secret from storefront `?key=` (#2688). */
-		uniqueKey?: string;
 		depositPercentage?: number;
 		freeQuantity?: number;
 		freeProductSources?: { subscriptionId: string; quantity: number }[];
