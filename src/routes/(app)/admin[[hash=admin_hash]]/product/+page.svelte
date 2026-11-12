@@ -2,7 +2,6 @@
 	import ProductActionSettingsCards from '$lib/components/ProductActionSettingsCards.svelte';
 	import ProductItem from '$lib/components/ProductItem.svelte';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
-	import { downloadFile } from '$lib/utils/downloadFile.js';
 	import { page } from '$app/stores';
 	import { PRODUCT_LIST_ATTRIBUTES, PRODUCT_PAGINATION_LIMIT } from '$lib/types/Product.js';
 	import Select from 'svelte-select';
@@ -30,25 +29,6 @@
 	$: picturesByProduct = Object.fromEntries(
 		[...data.pictures].reverse().map((picture) => [picture.productId, picture])
 	);
-
-	async function exportData() {
-		const response = await fetch(`${data.adminPrefix}/backup/create`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ exportType: 'product' })
-		});
-
-		if (!response.ok) {
-			alert(
-				t('admin.product.exportError', { status: response.status, message: await response.text() })
-			);
-		}
-
-		const blob = await response.blob();
-		downloadFile(blob, 'backup.json');
-	}
 </script>
 
 {#if !data.s3IsConfigured}
@@ -72,15 +52,6 @@
 <a href="{data.adminPrefix}/product/default-picture" class="underline block"
 	>{t('admin.product.productsDefaultPicture')}</a
 >
-
-{#if 0}
-	<button on:click={exportData} class="btn btn-black self-start"
-		>{t('admin.product.exportCatalog')}</button
-	>
-	<a href="{data.adminPrefix}/backup/import?type=catalog" class="btn btn-black self-start"
-		>{t('admin.product.importCatalog')}</a
-	>
-{/if}
 
 <form method="post" class="flex flex-col gap-4" action="?/update">
 	<h3 class="text-xl">{t('admin.product.defaultActionSettingsTitle')}</h3>

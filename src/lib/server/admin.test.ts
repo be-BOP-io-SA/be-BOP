@@ -88,7 +88,7 @@ describe('routedPathname', () => {
 	});
 
 	it('makes encoded admin paths read as admin', () => {
-		expect(adminPathPrefix(routedPathname('/%61dmin/backup/create'))).toBe('/admin');
-		expect(adminPathPrefix('/%61dmin/backup/create')).toBeNull();
+		expect(adminPathPrefix(routedPathname('/%61dmin/order'))).toBe('/admin');
+		expect(adminPathPrefix('/%61dmin/order')).toBeNull();
 	});
 });
