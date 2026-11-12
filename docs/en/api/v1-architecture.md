@@ -260,8 +260,6 @@ The deposit mechanics themselves — what a returnable costs, how it comes back 
 
 ### No order is flagged as belonging to an integration
 
-> A worked example of the whole loop: [Tutorial — crediting a wristband from be-BOP orders](./tutorial-tagged-line-integration.md).
-
 An integration typically acts on some orders and ignores the rest — a top-up system on top-ups, a locker on locker rentals. be-BOP does not carry a per-integration marker on the paid-order event, and will not: the moment one integration's vocabulary appears in the payload, every other integration inherits a field it must ignore.
 
 The orders an integration cares about are identified **by the tags their lines carry**, and the caller says which tag it means, as `?tag=` on the paid-order poll and stream. be-BOP holds no domain word — not "top-up", not "deposit", not "locker": it is told "the lines that matter to me are tagged X" and answers accordingly. The same request serves any integration, and the shop names its own tags.
