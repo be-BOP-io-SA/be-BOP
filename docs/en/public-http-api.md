@@ -80,7 +80,7 @@ If-None-Match: "9f2b…"
 
 ## Variations, and the identifier a link carries (`?key=`)
 
-Wherever the API returns a catalog product, it returns the variations the product offers (`variations`, with `variationLabels` for their display names). Wherever it returns a product that was bought — order reads, paid-order streams, the point-of-sale feed, the product's paid-order webhook — it returns the variation chosen on that line (`chosenVariations`). Writes take `chosenVariations` the same way.
+Wherever the API returns a catalog product, it returns the values the product offers in each variation family (`variations`, such as `{ "size": ["35", "36"], "color": ["red"] }`), with `variationLabels` for their display names and, in the general catalog, `variationPrices` for the values that add to the price. Wherever it returns a product that was bought — order reads, paid-order streams, the point-of-sale feed, the product's paid-order webhook — it returns the value chosen in each family on that line (`chosenVariations`, such as `{ "size": "35", "color": "red" }`). Writes take `chosenVariations` the same way.
 
 A unique item, such as a wristband, is identified by a variation. The product has a variation family, for instance `key`, whose values are the identifiers; the family can be hidden from the product page. A link such as `/product/{slug}?key=kfdjsfeaz12845ND9xezj91820` sets that variation, and the identifier reaches the order as `chosenVariations.key`. A value the product does not offer is refused. This `?key=` is **not** an API key.
 
