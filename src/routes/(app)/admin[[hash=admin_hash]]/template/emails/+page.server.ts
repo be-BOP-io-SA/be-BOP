@@ -78,7 +78,7 @@ export const actions = {
 			{ $set: { data: kept, updatedAt: new Date() } }
 		);
 	},
-	reset: async function ({ request }) {
+	reset: async function ({ request, locals }) {
 		const parsed = z
 			.object({
 				key: z.enum(
@@ -86,6 +86,13 @@ export const actions = {
 				)
 			})
 			.parse(Object.fromEntries(await request.formData()));
+
+		if (
+			CREDENTIAL_TEMPLATE_KEYS.includes(parsed.key) &&
+			locals.user?.roleId !== SUPER_ADMIN_ROLE_ID
+		) {
+			return fail(403, { ...parsed, superAdminOnly: true });
+		}
 
 		runtimeConfig.emailTemplates[parsed.key] = defaultConfig.emailTemplates[parsed.key];
 
