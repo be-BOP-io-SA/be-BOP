@@ -14,6 +14,10 @@ import {
 	isUntouchedDefaultCmsPage
 } from '$lib/server/defaultCmsPages';
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
+import {
+	ensureApiOrderLabel,
+	ensureCatalogIntegrityLabel
+} from './api/v1/orders/ensureCatalogIntegrityLabel';
 import { defaultLanguageText } from './i18n-defaults';
 import { languages, type LanguageKey } from '$lib/translations';
 
@@ -1052,6 +1056,19 @@ export const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('6af4bb4eaa73d77c82cc4b79'),
+		name: 'Let an API key write several orders with the same external order id',
+		run: async () => {
+			// Same key, same name: the unique index has to go before the plain one can take its place.
+			await collections.orders
+				.dropIndex('externalSourceApiKeyId_1_externalOrderId_1')
+				.catch(console.error);
+			await collections.orders
+				.createIndex({ externalSourceApiKeyId: 1, externalOrderId: 1 }, { sparse: true })
+				.catch(console.error);
+		}
 	}
 ];
 
@@ -1083,6 +1100,9 @@ export async function runMigrations() {
 	 */
 	await ensureDefaultSearchlist();
 	await ensureSearchSearchlist();
+	// A shop should see the labels the API puts on orders before the first integration sale.
+	await ensureApiOrderLabel();
+	await ensureCatalogIntegrityLabel();
 
 	const lock = await Lock.tryAcquire('migrations');
 	if (!lock) {

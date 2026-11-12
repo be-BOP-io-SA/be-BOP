@@ -1,0 +1,267 @@
+import { ObjectId } from 'mongodb';
+import { collections } from '$lib/server/database';
+import type { ApiKey } from '$lib/types/ApiKey';
+import { API_V1_SCOPES, type ApiV1Scope } from '$lib/types/ApiV1';
+import {
+	apiKeyPrefixFromSecret,
+	generateApiKeySecret,
+	hashApiKeySecret,
+	parseApiKeySecret
+} from './key-crypto';
+
+export {
+	apiKeyPrefixFromSecret,
+	generateApiKeySecret,
+	hashApiKeySecret,
+	parseApiKeySecret,
+	timingSafeEqualHex
+} from './key-crypto';
+
+function assertScopes(scopes: ApiV1Scope[]) {
+	for (const scope of scopes) {
+		if (!API_V1_SCOPES.includes(scope)) {
+			throw new Error(`Unknown API scope: ${scope}`);
+		}
+	}
+	if (!scopes.length) {
+		throw new Error('At least one scope is required');
+	}
+}
+
+export async function createApiKey(opts: {
+	name: string;
+	scopes: ApiV1Scope[];
+	expiresAt?: Date;
+	createdBy?: string;
+	maxConcurrentStreams?: number | null;
+	streamLifetimeSeconds?: number | null;
+	ownOrdersOnly?: boolean;
+	acceptDuplicateExternalOrderIds?: boolean;
+}): Promise<{ apiKey: ApiKey; secret: string }> {
+	assertScopes(opts.scopes);
+	const secret = generateApiKeySecret();
+	const now = new Date();
+	const apiKey: ApiKey = {
+		_id: new ObjectId(),
+		name: opts.name.trim(),
+		keyHash: hashApiKeySecret(secret),
+		keyPrefix: apiKeyPrefixFromSecret(secret),
+		scopes: [...opts.scopes],
+		expiresAt: opts.expiresAt,
+		createdBy: opts.createdBy,
+		...(opts.maxConcurrentStreams && { maxConcurrentStreams: opts.maxConcurrentStreams }),
+		...(opts.streamLifetimeSeconds && { streamLifetimeSeconds: opts.streamLifetimeSeconds }),
+		...(opts.ownOrdersOnly && { ownOrdersOnly: true }),
+		...(opts.acceptDuplicateExternalOrderIds && { acceptDuplicateExternalOrderIds: true }),
+		createdAt: now,
+		updatedAt: now
+	};
+	await collections.apiKeys.insertOne(apiKey);
+	return { apiKey, secret };
+}
+
+export async function findApiKeyBySecret(secret: string): Promise<ApiKey | null> {
+	const parsed = parseApiKeySecret(secret);
+	if (!parsed.validFormat) {
+		return null;
+	}
+	const keyHash = hashApiKeySecret(secret);
+	return collections.apiKeys.findOne({ keyHash });
+}
+
+export function isApiKeyUsable(apiKey: ApiKey, at = new Date()): boolean {
+	if (apiKey.revokedAt && apiKey.revokedAt <= at) {
+		return false;
+	}
+	if (apiKey.suspendedAt) {
+		return false;
+	}
+	if (apiKey.expiresAt && apiKey.expiresAt <= at) {
+		return false;
+	}
+	return true;
+}
+
+export function apiKeyHasScope(apiKey: ApiKey, scope: ApiV1Scope): boolean {
+	return apiKey.scopes.includes(scope);
+}
+
+export async function revokeApiKey(id: ObjectId | string): Promise<ApiKey | null> {
+	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	const now = new Date();
+	const result = await collections.apiKeys.findOneAndUpdate(
+		{ _id, revokedAt: { $exists: false } },
+		{ $set: { revokedAt: now, updatedAt: now } },
+		{ returnDocument: 'after' }
+	);
+	return result.value;
+}
+
+/**
+ * Suspend a key, or reactivate it. Returns false when no key carries that id.
+ *
+ * Suspending is not revoking: nothing is deleted, and the key works again once reactivated.
+ */
+export async function setApiKeySuspended(
+	id: ObjectId | string,
+	suspended: boolean
+): Promise<boolean> {
+	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	const now = new Date();
+	// Matching on the current state: an already suspended key keeps the date it was suspended at.
+	const result = suspended
+		? await collections.apiKeys.updateOne(
+				{ _id, suspendedAt: { $exists: false } },
+				{ $set: { suspendedAt: now, updatedAt: now } }
+		  )
+		: await collections.apiKeys.updateOne(
+				{ _id, suspendedAt: { $exists: true } },
+				{ $unset: { suspendedAt: '' }, $set: { updatedAt: now } }
+		  );
+	if (result.matchedCount) {
+		return true;
+	}
+	return (await collections.apiKeys.countDocuments({ _id }, { limit: 1 })) > 0;
+}
+
+/**
+ * Set — or clear — the two stream settings of one key. Returns false when no key carries that id.
+ *
+ * Clearing stores nothing rather than zero: "no ceiling" and "a ceiling of zero" are opposite
+ * answers, and zero would refuse every stream the key opens.
+ */
+export async function updateApiKeyStreamSettings(
+	id: ObjectId | string,
+	settings: { maxConcurrentStreams: number | null; streamLifetimeSeconds: number | null }
+): Promise<boolean> {
+	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	const toSet: Record<string, unknown> = { updatedAt: new Date() };
+	const toUnset: Record<string, ''> = {};
+	for (const field of ['maxConcurrentStreams', 'streamLifetimeSeconds'] as const) {
+		const value = settings[field];
+		if (value === null) {
+			toUnset[field] = '';
+		} else {
+			toSet[field] = value;
+		}
+	}
+	const result = await collections.apiKeys.updateOne(
+		{ _id },
+		Object.keys(toUnset).length ? { $set: toSet, $unset: toUnset } : { $set: toSet }
+	);
+	return result.matchedCount > 0;
+}
+
+/**
+ * Restrict one key to its own orders, or open every order to it again. Returns whether the setting
+ * changed, and null when no key carries that id.
+ */
+export async function updateApiKeyOwnOrdersOnly(
+	id: ObjectId | string,
+	ownOrdersOnly: boolean
+): Promise<boolean | null> {
+	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	// Matching on the current state tells a change apart from a save that changes nothing.
+	const result = ownOrdersOnly
+		? await collections.apiKeys.updateOne(
+				{ _id, ownOrdersOnly: { $ne: true } },
+				{ $set: { ownOrdersOnly: true, updatedAt: new Date() } }
+		  )
+		: await collections.apiKeys.updateOne(
+				{ _id, ownOrdersOnly: true },
+				{ $unset: { ownOrdersOnly: '' }, $set: { updatedAt: new Date() } }
+		  );
+	if (result.modifiedCount) {
+		return true;
+	}
+	return (await collections.apiKeys.countDocuments({ _id }, { limit: 1 })) ? false : null;
+}
+
+/**
+ * Let one key create several orders with the same external id, or refuse a repeated id again.
+ * Returns false when no key carries that id.
+ */
+export async function updateApiKeyAcceptDuplicateExternalOrderIds(
+	id: ObjectId | string,
+	accept: boolean
+): Promise<boolean> {
+	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	const result = await collections.apiKeys.updateOne(
+		{ _id },
+		accept
+			? { $set: { acceptDuplicateExternalOrderIds: true, updatedAt: new Date() } }
+			: { $unset: { acceptDuplicateExternalOrderIds: '' }, $set: { updatedAt: new Date() } }
+	);
+	return result.matchedCount > 0;
+}
+
+export async function touchApiKey(id: ObjectId, at = new Date()): Promise<void> {
+	await collections.apiKeys.updateOne({ _id: id }, { $set: { lastUsedAt: at, updatedAt: at } });
+}
+
+/**
+ * Fields safe to send to the admin UI — never includes keyHash. The journal of doubtful calls is
+ * read on its own, on the key's page only.
+ */
+export type ApiKeyPublic = Omit<ApiKey, 'keyHash' | 'suspiciousEvents'>;
+
+const API_KEY_PUBLIC_PROJECTION = {
+	_id: 1,
+	name: 1,
+	keyPrefix: 1,
+	scopes: 1,
+	maxConcurrentStreams: 1,
+	streamLifetimeSeconds: 1,
+	ownOrdersOnly: 1,
+	acceptDuplicateExternalOrderIds: 1,
+	expiresAt: 1,
+	revokedAt: 1,
+	suspendedAt: 1,
+	suspiciousAt: 1,
+	lastUsedAt: 1,
+	createdBy: 1,
+	createdAt: 1,
+	updatedAt: 1
+} as const;
+
+/** Projection used by list/detail — tested so keyHash cannot leak to clients. */
+export function apiKeyPublicProjection(): typeof API_KEY_PUBLIC_PROJECTION {
+	return API_KEY_PUBLIC_PROJECTION;
+}
+
+export async function listApiKeys(): Promise<ApiKeyPublic[]> {
+	return collections.apiKeys
+		.find({})
+		.project<ApiKeyPublic>(API_KEY_PUBLIC_PROJECTION)
+		.sort({ createdAt: -1 })
+		.toArray();
+}
+
+export async function getApiKeyPublic(id: ObjectId | string): Promise<ApiKeyPublic | null> {
+	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	return collections.apiKeys.findOne<ApiKeyPublic>(
+		{ _id },
+		{ projection: API_KEY_PUBLIC_PROJECTION }
+	);
+}
+
+export function serializeApiKeyPublic(k: ApiKeyPublic) {
+	return {
+		_id: k._id.toString(),
+		name: k.name,
+		keyPrefix: k.keyPrefix,
+		scopes: k.scopes,
+		maxConcurrentStreams: k.maxConcurrentStreams ?? null,
+		streamLifetimeSeconds: k.streamLifetimeSeconds ?? null,
+		ownOrdersOnly: !!k.ownOrdersOnly,
+		acceptDuplicateExternalOrderIds: !!k.acceptDuplicateExternalOrderIds,
+		expiresAt: k.expiresAt ?? null,
+		revokedAt: k.revokedAt ?? null,
+		suspendedAt: k.suspendedAt ?? null,
+		suspiciousAt: k.suspiciousAt ?? null,
+		lastUsedAt: k.lastUsedAt ?? null,
+		createdBy: k.createdBy ?? null,
+		createdAt: k.createdAt,
+		updatedAt: k.updatedAt
+	};
+}

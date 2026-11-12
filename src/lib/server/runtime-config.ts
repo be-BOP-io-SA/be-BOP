@@ -345,6 +345,42 @@ const baseConfig = {
 		}
 	},
 	hideFromSearchEngines: false,
+	/**
+	 * Public HTTP API v1 runtime settings (admin-editable).
+	 * corsOrigins: browser Origin allowlist for /api/v1. "*" opens it to every origin.
+	 * Empty = no cross-origin access. Persisted in DB; edited in Admin -> API Keys.
+	 */
+	apiV1: {
+		// Open by default. This API authenticates on the X-API-Key header alone and never reads a
+		// cookie, so an origin allowlist closes nothing a key holder could not already do — while
+		// being unworkable for the callers it would apply to: local applications on changing
+		// networks, whose origin is a different localhost port on every machine. A shop that wants
+		// an allowlist still names its origins in Admin -> API Keys.
+		corsOrigins: ['*'] as string[],
+		/**
+		 * "Make the third-party system the prioritary source of truth."
+		 *
+		 * Off, be-BOP prices every line from its own catalogue and a line price sent by a caller is
+		 * only a suggestion. On, what the caller sends is what is charged — including a negative
+		 * line, which is how a till books a deposit back.
+		 */
+		trustExternalPricing: false
+	},
+	/**
+	 * API v1 call journal settings (admin-editable, Admin -> API Keys).
+	 *
+	 * maxSizeMb: past this size, the oldest entries are removed; null means no limit. An entry
+	 * carries the request and response bodies, so a shop that wants a long history plans the disk
+	 * space for it. Entries also expire after thirty days.
+	 * logSuccesses / logErrors: calls made with a valid key, by outcome (errors are 4xx and 5xx).
+	 * logUnauthenticated: calls made without a valid key, public endpoints included.
+	 */
+	apiV1Log: {
+		maxSizeMb: null as number | null,
+		logSuccesses: true,
+		logErrors: true,
+		logUnauthenticated: true
+	},
 	telemetry: null as null | {
 		enabled: boolean;
 		nextPrompt: Date | null;

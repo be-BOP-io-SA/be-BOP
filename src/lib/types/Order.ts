@@ -133,6 +133,12 @@ export interface OrderPayment {
 	posSubtype?: string;
 
 	/**
+	 * Optional integrator-stable id for a payment row (Face A / PoS), kept as the caller sent it,
+	 * parallel to Order.externalOrderId.
+	 */
+	externalPaymentId?: string;
+
+	/**
 	 * Can be unset for cash or bank transfer payments for example.
 	 */
 	expiresAt?: Date;
@@ -382,6 +388,27 @@ export interface Order extends Timestamps {
 	};
 	orderLabelIds?: OrderLabel['_id'][];
 	dataAnonymized?: boolean;
+	/**
+	 * Last time a note or a label was put on the order, or its personal data erased. Kept apart from
+	 * `updatedAt` on purpose: those writes do not change what was sold or paid, so they must not make
+	 * the order look changed to anything that follows sales and payments.
+	 */
+	annotatedAt?: Date;
+
+	/**
+	 * The reference the caller gave when it wrote this order through the public API. Not unique:
+	 * a key allowed several orders per reference shares it between them, and a key that is not is
+	 * refused a reference it already sent. Absent on orders placed outside the API.
+	 */
+	externalOrderId?: string;
+	/** ApiKey._id that created this order via /api/v1/orders. */
+	externalSourceApiKeyId?: ObjectId;
+	/**
+	 * Set when the order was written through the public API with `notifications: false`: nobody is
+	 * notified about its payments — neither the customer nor the shop's own copies. Webhooks and the
+	 * API's event streams are not notifications and still see the order.
+	 */
+	skipNotifications?: boolean;
 }
 interface SimplifiedOrderPayment {
 	id: string;

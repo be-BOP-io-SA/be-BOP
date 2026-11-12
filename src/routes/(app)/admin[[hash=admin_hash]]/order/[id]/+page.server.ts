@@ -126,7 +126,8 @@ export const actions = {
 						...(userIdentifier(locals).npub && { npub: userIdentifier(locals).npub }),
 						...(userIdentifier(locals).email && { email: userIdentifier(locals).email })
 					}
-				}
+				},
+				$set: { annotatedAt: new Date() }
 			}
 		);
 		throw redirect(303, request.headers.get('referer') || `/order/${params.id}/notes`);

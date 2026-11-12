@@ -1,0 +1,50 @@
+import type { RequestHandler } from '@sveltejs/kit';
+import { apiV1Handler, apiV1OptionsHandler } from '$lib/server/api/v1/handler';
+import { requireApiKey } from '$lib/server/api/v1/auth';
+import { apiError } from '$lib/server/api/v1/errors';
+import { jsonWithETag } from '$lib/server/api/v1/validators';
+import { listPaidOrders } from '$lib/server/api/v1/orders/listPaid';
+import { ORDER_LISTING_QUERY } from '$lib/server/api/v1/orders/listingQuery';
+import { parseApiQuery } from '$lib/server/api/v1/query';
+import { checkRateLimit } from '$lib/server/rateLimit';
+
+export const OPTIONS: RequestHandler = apiV1OptionsHandler;
+
+export const GET: RequestHandler = apiV1Handler(async (event) => {
+	const apiKeyOrError = await requireApiKey(event, 'orders:read');
+	if (apiKeyOrError instanceof Response) {
+		return apiKeyOrError;
+	}
+	const apiKey = apiKeyOrError;
+
+	const limit = checkRateLimit(apiKey._id.toString(), 'api.v1.orders.read', 60, { minutes: 1 });
+	if (limit.limited) {
+		return apiError(429, 'RATE_LIMITED', 'Too many requests for this API key', undefined, {
+			'Retry-After': String(limit.retryAfterSeconds)
+		});
+	}
+
+	const query = parseApiQuery(event.url, ORDER_LISTING_QUERY);
+	if ('error' in query) {
+		return query.error;
+	}
+	const result = await listPaidOrders({
+		...query.data,
+		apiKeyId: apiKey._id,
+		ownOrdersOnly: apiKey.ownOrdersOnly
+	});
+	if ('error' in result) {
+		return apiError(400, 'VALIDATION_ERROR', result.error.message, {
+			field: result.error.field
+		});
+	}
+
+	return jsonWithETag(
+		{
+			ok: true,
+			orders: result.orders,
+			page: result.page
+		},
+		event.request
+	);
+});
