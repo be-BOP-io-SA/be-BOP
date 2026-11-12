@@ -42,7 +42,8 @@ async function addProductToCart(page: Page) {
 	const origin = new URL(page.url()).origin;
 	const response = await page.request.post(`/product/${PRODUCT_ID}?/addToCart`, {
 		form: { quantity: '1' },
-		headers: { origin },
+		// SvelteKit 2 answers a form post that accepts anything as a fetch, with JSON instead of a redirect.
+		headers: { origin, accept: 'text/html' },
 		maxRedirects: 0
 	});
 	expect(response.status()).toBe(303);
@@ -215,7 +216,7 @@ test.describe('customer forms', () => {
 
 		const response = await page.request.post('/login?/sendLink', {
 			form: { address: NPUB },
-			headers: { origin }
+			headers: { origin, accept: 'text/html' }
 		});
 
 		expect(response.status()).toBe(400);
@@ -223,17 +224,33 @@ test.describe('customer forms', () => {
 });
 
 test('a point-of-sale checkout does not require a contact address', async ({ page }) => {
-	await setContactModes(['email', 'nostr'], true);
-	await addProductToCart(page);
-	const field = page.getByLabel('Email or Nostr public key', { exact: true });
-	await expect(async () => {
-		await page.goto('/checkout');
-		await expect(field).toBeVisible({ timeout: 1000 });
-	}).toPass();
+	const setTill = (on: boolean) =>
+		withDb((db) =>
+			db
+				.collection('users')
+				.updateOne(
+					{ login: 'e2e-admin' },
+					on ? { $set: { hasPosOptions: true } } : { $unset: { hasPosOptions: '' } }
+				)
+		);
+	// The suite's admin is not a till by default; relying on another spec leaving it one made this
+	// test pass or fail with the run order.
+	await setTill(true);
+	try {
+		await setContactModes(['email', 'nostr'], true);
+		await addProductToCart(page);
+		const field = page.getByLabel('Email or Nostr public key', { exact: true });
+		await expect(async () => {
+			await page.goto('/checkout');
+			await expect(field).toBeVisible({ timeout: 1000 });
+		}).toPass();
 
-	await expect(field).not.toHaveAttribute('required', '');
-	await expect(field).toHaveValue('');
-	await expect
-		.poll(() => field.evaluate((input: HTMLInputElement) => input.validationMessage))
-		.toBe('');
+		await expect(field).not.toHaveAttribute('required', '');
+		await expect(field).toHaveValue('');
+		await expect
+			.poll(() => field.evaluate((input: HTMLInputElement) => input.validationMessage))
+			.toBe('');
+	} finally {
+		await setTill(false);
+	}
 });
