@@ -38,12 +38,23 @@ describe('zodNpub', () => {
 });
 
 describe('validateEmailOrNpub', () => {
+	const modes = ['email', 'nostr'] as const;
+
 	it('flags a malformed npub', () => {
-		expect(validateEmailOrNpub(npubWithBytes(0))).toEqual({ error: 'invalidNpub' });
+		expect(validateEmailOrNpub(npubWithBytes(0), modes)).toEqual({ error: 'invalidNpub' });
+	});
+
+	it('flags 32 bytes off the curve, that the browser check lets through', () => {
+		expect(validateEmailOrNpub(hexToNpub('5'.padStart(64, '0')), modes)).toEqual({
+			error: 'invalidNpub'
+		});
 	});
 
 	it('returns a valid npub trimmed', () => {
-		expect(validateEmailOrNpub(`  ${validNpub} `)).toEqual({ address: validNpub });
+		expect(validateEmailOrNpub(`  ${validNpub} `, modes)).toEqual({
+			kind: 'npub',
+			address: validNpub
+		});
 	});
 });
 

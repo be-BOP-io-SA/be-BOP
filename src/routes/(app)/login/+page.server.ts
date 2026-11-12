@@ -16,6 +16,8 @@ import {
 	TWITTER_SECRET
 } from '$lib/server/env-config';
 import { validateEmailOrNpub } from '$lib/server/nostr.js';
+import { availableContactModes } from '$lib/server/contact-modes';
+import { contactModesOrEmail } from '$lib/types/ContactMode';
 import { renewSessionId } from '$lib/server/user.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
 import { SESSION_COOKIE_NAME } from '$lib/server/cookies';
@@ -86,7 +88,10 @@ export const load = async ({ url }) => {
 export const actions = {
 	sendLink: async function ({ request, locals }) {
 		const data = await request.formData();
-		const result = validateEmailOrNpub(data.get('address'));
+		const result = validateEmailOrNpub(
+			data.get('address'),
+			contactModesOrEmail(availableContactModes())
+		);
 		if ('error' in result) {
 			return fail(400, { error: result.error });
 		}
@@ -94,7 +99,9 @@ export const actions = {
 
 		rateLimit(locals.clientIp, 'email', 5, { minutes: 5 });
 
-		await sendAuthentificationlink(address.includes('@') ? { email: address } : { npub: address });
+		await sendAuthentificationlink(
+			result.kind === 'email' ? { email: address } : { npub: address }
+		);
 		return { address, successUser: true };
 	},
 	validate: async function ({ url, locals, cookies }) {

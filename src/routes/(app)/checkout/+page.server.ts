@@ -13,7 +13,8 @@ import {
 	notifySuperAdminPaymentFailure,
 	PaymentGenerationError
 } from '$lib/server/orders';
-import { isEmailConfigured } from '$lib/server/email';
+import { availableContactModes } from '$lib/server/contact-modes';
+import { contactModesOrEmail } from '$lib/types/ContactMode';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
 import { applyResolvedStock } from '$lib/server/product.js';
@@ -26,7 +27,7 @@ import {
 	selectBestDiscount,
 	webChannelForUser
 } from '$lib/server/discount';
-import { zodNpub } from '$lib/server/nostr.js';
+import { validateEmailOrNpub } from '$lib/server/nostr.js';
 import type { JsonObject } from 'type-fest';
 import { rateLimit } from '$lib/server/rateLimit.js';
 import { cmsFromContent } from '$lib/server/cms';
@@ -195,7 +196,6 @@ export async function load({ parent, locals }) {
 		relevantShipCountries,
 		relevantBillCountries,
 		reportingTags,
-		emailsEnabled: isEmailConfigured(),
 		collectIPOnDeliverylessOrders: runtimeConfig.collectIPOnDeliverylessOrders,
 		posPrefillTermOfUse: runtimeConfig.posPrefillTermOfUse,
 		personalInfoConnected: {
@@ -376,18 +376,23 @@ export const actions = {
 			}
 		}
 
-		const notifications = z
-			.object({
-				paymentStatusNPUB: zodNpub().optional(),
-				paymentStatusEmail: z.string().email().optional()
-			})
-			.parse({
-				paymentStatusNPUB: formData.get('paymentStatusNPUB') || undefined,
-				paymentStatusEmail: formData.get('paymentStatusEmail') || undefined
-			});
-
-		const npubAddress = notifications?.paymentStatusNPUB;
-		const email = notifications?.paymentStatusEmail;
+		const rawAddress = String(formData.get('paymentStatusAddress') ?? '').trim();
+		let npubAddress: string | undefined;
+		let email: string | undefined;
+		if (rawAddress) {
+			const addressResult = validateEmailOrNpub(
+				rawAddress,
+				contactModesOrEmail(availableContactModes())
+			);
+			if ('error' in addressResult) {
+				throw error(400, 'Invalid notification address');
+			}
+			if (addressResult.kind === 'email') {
+				email = addressResult.address;
+			} else {
+				npubAddress = addressResult.address;
+			}
+		}
 
 		// Remove empty string
 		if (shippingInfo && !shippingInfo.shipping.state) {

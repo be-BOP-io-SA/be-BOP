@@ -2,6 +2,7 @@ import { SMTP_USER } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import { queueEmail } from '$lib/server/email';
 import { validateEmailOrNpub } from '$lib/server/nostr';
+import { CONTACT_MODES } from '$lib/types/ContactMode';
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { error, fail } from '@sveltejs/kit';
@@ -39,7 +40,8 @@ export const actions = {
 
 		const data = await request.formData();
 
-		const result = validateEmailOrNpub(data.get('address'));
+		// An RSVP accepts an email or an npub whatever the shop's contact modes
+		const result = validateEmailOrNpub(data.get('address'), CONTACT_MODES);
 		if ('error' in result) {
 			return fail(400, { error: result.error });
 		}

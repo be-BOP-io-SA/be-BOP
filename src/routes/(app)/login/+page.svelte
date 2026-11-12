@@ -9,6 +9,8 @@
 	import IconTrash from '$lib/components/icons/IconTrash.svelte';
 	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n';
+	import NotificationAddressInput from '$lib/components/NotificationAddressInput.svelte';
+	import { contactModesOrEmail } from '$lib/types/ContactMode';
 
 	const { t } = useI18n();
 
@@ -80,18 +82,11 @@
 		<h2 class="text-2xl">{t('login.authenticate.title')}</h2>
 		<p>{t('login.authenticate.disclaimer')}</p>
 		<form method="post" class="flex flex-col gap-4" action="?/sendLink">
-			<label class="form-label body-secondaryText">
-				{t('login.authenticate.inputLabel')}
-				<input
-					class="form-input"
-					type="text"
-					name="address"
-					placeholder="test@example.com"
-					required
-					pattern="^(?!nsec).*"
-					title={t('login.nsecBlockTitle')}
-				/>
-			</label>
+			<NotificationAddressInput
+				class="form-label body-secondaryText"
+				modes={contactModesOrEmail(data.availableContactModes)}
+				required
+			/>
 			{#if form?.successUser}
 				<p class="text-green-500">{t('login.willReceiveSessionLink')}</p>
 			{/if}

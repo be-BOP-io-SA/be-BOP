@@ -41,6 +41,7 @@ import { toSatoshis } from '$lib/utils/toSatoshis';
 import { ORIGIN } from '$lib/server/env-config';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { isEmailConfigured, queueEmail } from './email';
+import { availableContactModes } from './contact-modes';
 import { sum } from '$lib/utils/sum';
 import { type Cart } from '$lib/types/Cart';
 import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
@@ -725,9 +726,13 @@ export async function createOrder(
 		throw error(400, "A subscription sold at the till needs the customer's email or npub");
 	}
 
+	// With no contact mode available, checkout asks for an email anyway, for the staff to use
 	const canBeNotified = !!(
 		npubAddress ||
-		((runtimeConfig.contactModesForceOption || isEmailConfigured()) && email)
+		((runtimeConfig.contactModesForceOption ||
+			isEmailConfigured() ||
+			!availableContactModes().length) &&
+			email)
 	);
 
 	if (

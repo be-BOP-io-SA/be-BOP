@@ -2357,7 +2357,6 @@
 		"deliveryFeesEstimationTooltip": "Questa è una stima, le spede finali saranno calcolate dopo la selezione del paese di spedizione.",
 		"differentBillingAddress": "Il mio indirizzo di spedizione e quello di fatturazione sono differenti",
 		"digitalNoShippingNeeded": "Tutti i prodotti nel vostro carrello sono prodotti digitali. Non è richiesta nessuna informazione di spedizione.",
-		"invalidNpub": "Questo indirizzo pubblico non è valido",
 		"isProBilling": "Questo è un ordine professionale",
 		"multiplePaymentMethods": "Usa differenti metodi di pagamento",
 		"multiplePaymentMethodsHelpText": "Potrete decidere il vostro tipo di pagamento alla prossima tappa.",
@@ -2371,7 +2370,8 @@
 		},
 		"notifications": {
 			"email": "Email",
-			"message": "Si prega di riempire almeno un indirizzo mail di contatto per ricevere notizie sull'ordine.",
+			"emailOrNpub": "Email o chiave pubblica di Nostr",
+			"message": "Si prega di inserire un indirizzo di contatto per ricevere notizie sull'ordine.",
 			"npub": "Chiave pubblica di Nostr",
 			"title": "Feed e notificazioni"
 		},
@@ -2701,6 +2701,7 @@
 			"invalidEmail": "Indirizzo email non valido",
 			"invalidNpub": "Indirizzo Nostr npub non valido",
 			"invalidContactAddress": "Il tuo indirizzo di contatto non è valido (inserisci un indirizzo email corretto o un npub Nostr)",
+			"missingContactAddress": "Si prega di inserire il proprio indirizzo di contatto",
 			"invalidOrExpiredToken": "Token non valido o scaduto"
 		},
 		"authenticate": {
