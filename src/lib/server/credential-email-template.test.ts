@@ -24,7 +24,22 @@ describe('isSafeCredentialTemplate', () => {
 	});
 
 	it.each([
+		['as the text of its own link', `<a href="${link}">${link}</a>`],
+		[
+			'on a line of its own',
+			`<p>Follow <a href="${link}">this link</a>, or open:</p><p>${link}</p>`
+		],
+		['after a colon and a space', `<p>Your link: <strong>${link}</strong></p>`]
+	])('accepts a template that shows the link %s', (_, html) => {
+		expect(isSafeCredentialTemplate(html, link)).toBe(true);
+	});
+
+	it.each([
 		['the link is gone', '<p>Contact support</p>'],
+		[
+			'a plain-text URL is split from the link by an inline tag',
+			`<a href="${link}">go</a> https://evil.test/?t=<b>${link}</b>`
+		],
 		['a remote image is loaded', `<a href="${link}">go</a><img src="https://evil.test/p.png">`],
 		['the link is copied into another URL', `<a href="https://evil.test/?t=${link}">go</a>`],
 		['the link is only shown as text next to another href', `<a href="//evil.test">${link}</a>`],

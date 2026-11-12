@@ -64,7 +64,28 @@ export function isSafeCredentialTemplate(html: string, linkPlaceholder: string):
 		}
 	}
 
+	const hrefsInTags = [...html.matchAll(/<[^>]*>/g)].reduce(
+		(count, [tag]) => count + countInsensitive(tag, linkPlaceholder),
+		0
+	);
+	if (hrefsInTags !== placeholderHrefs) {
+		return false;
+	}
+
+	// As text the link is safe only as a word of its own: glued to other text, a mail client
+	// reads both as one URL and sends the credential there. Inline tags join their neighbours.
+	const text = html
+		.replace(/<\/?(p|br|div|li|ul|ol|h[1-4]|blockquote)\b[^>]*>/gi, '\n')
+		.replace(/<[^>]*>/g, '');
+	const standalone = new RegExp(`(^|\\s)${escapeRegExp(linkPlaceholder)}(?=\\s|$)`, 'g');
 	// Variables are substituted case-insensitively, so any other spelling also carries the link.
-	const placeholderCount = html.toLowerCase().split(linkPlaceholder.toLowerCase()).length - 1;
-	return placeholderCount === placeholderHrefs;
+	return countInsensitive(text, linkPlaceholder) === [...text.matchAll(standalone)].length;
+}
+
+function countInsensitive(haystack: string, needle: string): number {
+	return haystack.toLowerCase().split(needle.toLowerCase()).length - 1;
+}
+
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
