@@ -65,7 +65,12 @@ export function isAllowedOnPage(role: Role, path: string, mode: 'read' | 'write'
 		return true;
 	}
 
-	if (role.permissions.forbidden.find((forbidden) => matchPath(path, forbidden))) {
+	// Unlike a grant, a forbidden page must close what lies below it, so a missing star fails closed.
+	if (
+		role.permissions.forbidden.find(
+			(forbidden) => matchPath(path, forbidden) || matchPath(path, `${forbidden}/*`)
+		)
+	) {
 		return false;
 	}
 

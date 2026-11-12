@@ -73,9 +73,11 @@ describe('isAllowedOnPage', () => {
 		);
 	});
 
-	it('lets a pattern without a trailing star forbid that page only', () => {
+	it('lets a forbidden pattern without a trailing star forbid the pages below it too', () => {
 		const caller = role({ write: ['/admin/*'], forbidden: ['/admin/order'] });
 		expect(isAllowedOnPage(caller, '/admin/order', 'read')).toBe(false);
-		expect(isAllowedOnPage(caller, '/admin/order/42', 'read')).toBe(true);
+		expect(isAllowedOnPage(caller, '/admin/order/42', 'read')).toBe(false);
+		expect(isAllowedOnPage(caller, '/admin/order/42', 'write')).toBe(false);
+		expect(isAllowedOnPage(caller, '/admin/orders', 'read')).toBe(true);
 	});
 });
