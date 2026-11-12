@@ -3,7 +3,6 @@ import { MongoClient } from 'mongodb';
 
 const E2E_DB = 'bebop-e2e';
 const PRODUCT_ID = 'e2e-age-wall-product';
-const SCHEDULE_ID = 'e2e-age-wall-schedule';
 
 async function withDb<T>(run: (db: ReturnType<MongoClient['db']>) => Promise<T>): Promise<T> {
 	const client = await MongoClient.connect(process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017');
@@ -58,30 +57,13 @@ test.beforeAll(async () => {
 			},
 			{ upsert: true }
 		);
-		await db.collection('schedules').replaceOne(
-			{ _id: SCHEDULE_ID as never },
-			{
-				name: 'E2E age wall schedule',
-				pastEventDelay: 60,
-				displayPastEvents: true,
-				displayPastEventsAfterFuture: false,
-				sortByEventDateDesc: false,
-				events: [],
-				createdAt: new Date(),
-				updatedAt: new Date()
-			},
-			{ upsert: true }
-		);
 	});
 	await setAgeWall(true);
 });
 
 test.afterAll(async () => {
 	await setAgeWall(false);
-	await withDb(async (db) => {
-		await db.collection('products').deleteOne({ _id: PRODUCT_ID as never });
-		await db.collection('schedules').deleteOne({ _id: SCHEDULE_ID as never });
-	});
+	await withDb((db) => db.collection('products').deleteOne({ _id: PRODUCT_ID as never }));
 });
 
 test('a visitor who accepts the age wall lands on the page they asked for', async ({ page }) => {
@@ -115,18 +97,4 @@ test('accepting the age wall never leaves the shop', async ({ request }) => {
 	expect((await navigate(`/product/${PRODUCT_ID}`)).headers()['location']).toBe(
 		`/product/${PRODUCT_ID}`
 	);
-});
-
-test('the age wall leaves feeds and endpoints reachable without a cookie', async ({ request }) => {
-	await expect(async () => {
-		const wall = await request.get(`/product/${PRODUCT_ID}`, { maxRedirects: 0 });
-		expect(wall.status()).toBe(303);
-	}).toPass();
-
-	const rss = await request.get(`/schedule/${SCHEDULE_ID}/rss.xml`, { maxRedirects: 0 });
-	expect(rss.status()).toBe(200);
-	expect(await rss.text()).toContain('<title>E2E age wall schedule</title>');
-
-	const api = await request.get(`/api/product/${PRODUCT_ID}`, { maxRedirects: 0 });
-	expect(api.status()).toBe(200);
 });

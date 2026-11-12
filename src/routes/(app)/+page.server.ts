@@ -5,16 +5,9 @@ import { redirect } from '@sveltejs/kit';
 import { addYears } from 'date-fns';
 import { omit } from '$lib/utils/omit';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
-import { runtimeConfig } from '$lib/server/runtime-config';
 import { sameOriginPath } from '$lib/server/utils/sameOriginPath';
 
 export const load = async ({ locals, url }) => {
-	// `/` has to stay reachable for the wall to render on it, so this is the one storefront load
-	// the hook cannot refuse — it withholds its own content instead of shipping it behind the wall.
-	if (runtimeConfig.ageRestriction.enabled && !locals.acceptAgeLimitation) {
-		return { catalog: { products: [], pictures: [] } };
-	}
-
 	const cmsPage = await collections.cmsPages.findOne(
 		{
 			_id: 'home'

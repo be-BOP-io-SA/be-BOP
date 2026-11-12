@@ -12,26 +12,6 @@ import {
 	routedPathname
 } from '$lib/server/admin';
 
-/** What the age wall itself needs to render before anyone has accepted it. */
-const AGEWALL_OPEN_PREFIXES = [
-	'/style',
-	'/script',
-	'/logo',
-	'/favicon',
-	'/picture',
-	'/asset',
-	'/cookie-consent',
-	'/login',
-	'/logout',
-	// The provider redirects here to finish a sign-in that began before the wall was seen.
-	'/oauth'
-];
-/** Route ids of the `+server.ts` endpoints: feeds, QR codes and APIs, never a page. */
-const ENDPOINT_ROUTE_IDS = new Set(
-	Object.keys(import.meta.glob('/src/routes/**/+server.ts')).map((file) =>
-		file.slice('/src/routes'.length, -'/+server.ts'.length)
-	)
-);
 import { isAdminPathDisabled } from '$lib/server/admin-disabled';
 import '$lib/server/locks';
 import '$lib/server/sdk/pp-registry';
@@ -352,37 +332,6 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 
 		if (!event.locals.user.hasPosOptions && event.locals.user.roleId !== POS_ROLE_ID) {
 			throw error(403, 'You are not allowed to access this page, only point-of-sale accounts are.');
-		}
-	}
-
-	// The wall used to live only in the layout component, which hides the page but not its data:
-	// SvelteKit serializes every `load` return into the response, so the restricted content was
-	// still served — and `/__data.json` returned it with no wall at all.
-	if (
-		runtimeConfig.ageRestriction.enabled &&
-		!event.locals.acceptAgeLimitation &&
-		!isAdminUrl &&
-		!isPosUrl
-	) {
-		// Only the storefront pages carry catalogue data. Endpoints — the Lightning callback,
-		// the .well-known descriptors, feeds, QR codes, the product API — are fetched by wallets,
-		// readers and crawlers that never carry a cookie, so `acceptAgeLimitation` can never be
-		// true for them and walling them off just takes them offline.
-		const isStorefrontPage =
-			!!event.route.id?.startsWith('/(app)') && !ENDPOINT_ROUTE_IDS.has(event.route.id);
-		const servesTheWall =
-			!isStorefrontPage ||
-			guardPath === '/' ||
-			AGEWALL_OPEN_PREFIXES.some(
-				(prefix) => guardPath === prefix || guardPath.startsWith(`${prefix}/`)
-			);
-
-		if (!servesTheWall) {
-			// The wall renders on `/` only; it sends the visitor back here once accepted.
-			throw redirect(
-				303,
-				`/?redirectTo=${encodeURIComponent(event.url.pathname + event.url.search)}`
-			);
 		}
 	}
 
