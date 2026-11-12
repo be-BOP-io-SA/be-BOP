@@ -6,7 +6,7 @@ import {
 } from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
 import { error, fail, isHttpError, redirect } from '@sveltejs/kit';
-import { MAX_PAYMENT_TIMEOUT_MINUTES } from '$lib/types/Order';
+import { maxTillPaymentTimeoutMinutes } from '$lib/types/Order';
 import { z } from 'zod';
 import {
 	createOrder,
@@ -572,7 +572,7 @@ export const actions = {
 					.number({ coerce: true })
 					.int()
 					.min(1)
-					.max(MAX_PAYMENT_TIMEOUT_MINUTES)
+					.max(maxTillPaymentTimeoutMinutes(runtimeConfig.desiredPaymentTimeout))
 					.optional()
 			})
 			.safeParse({

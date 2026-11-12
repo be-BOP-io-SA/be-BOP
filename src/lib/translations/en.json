@@ -2360,7 +2360,7 @@
 		"multiplePaymentMethodsHelpText": "You can set payment methods at the next step.",
 		"noDeliveryInCountry": "Delivery is not available in your country for some of the items of your cart.",
 		"paymentGenerationFailed": "We couldn't initiate your payment. Please try again in a few moments, or contact the shop owner if the problem persists.",
-		"paymentTimeoutOutOfRange": "The payment timeout must be between 1 and {max} minutes (7 days).",
+		"paymentTimeoutOutOfRange": "The payment timeout must be between 1 and {max} minutes.",
 		"cartAlreadyCheckedOut": "This cart has already been ordered, so no second order was placed. You can find your order in your account or in its confirmation message.",
 		"additionalFields": {
 			"title": "Additional information"

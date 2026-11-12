@@ -2363,7 +2363,7 @@
 		"multiplePaymentMethodsHelpText": "Pode definir os métodos de pagamento no próximo passo.",
 		"noDeliveryInCountry": "A entrega não está disponível no seu país para alguns dos artigos do seu carrinho.",
 		"paymentGenerationFailed": "Não foi possível iniciar o pagamento. Por favor, tente novamente dentro de alguns instantes, ou contacte o vendedor da loja se o problema persistir.",
-		"paymentTimeoutOutOfRange": "O prazo de pagamento deve estar entre 1 e {max} minutos (7 dias).",
+		"paymentTimeoutOutOfRange": "O prazo de pagamento deve estar entre 1 e {max} minutos.",
 		"cartAlreadyCheckedOut": "Este carrinho já foi encomendado, por isso não foi feita uma segunda encomenda. Encontra a sua encomenda na sua conta ou na respetiva mensagem de confirmação.",
 		"note": {
 			"label": "Deixe uma nota para o comerciante",

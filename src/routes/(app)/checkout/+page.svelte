@@ -15,7 +15,7 @@
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import {
-		MAX_PAYMENT_TIMEOUT_MINUTES,
+		maxTillPaymentTimeoutMinutes,
 		MIN_SATOSHIS_FOR_BITCOIN_PAYMENT,
 		type DiscountType
 	} from '$lib/types/Order.js';
@@ -28,6 +28,8 @@
 	export let data;
 	export let form;
 	let submitting = false;
+
+	$: maxPaymentTimeout = maxTillPaymentTimeoutMinutes(data.desiredPaymentTimeout);
 
 	let actionCount = 0;
 	const defaultShippingCountry =
@@ -349,7 +351,7 @@
 			{/if}
 			{#if form?.paymentTimeoutOutOfRange}
 				<div class="alert-error">
-					{t('checkout.paymentTimeoutOutOfRange', { max: MAX_PAYMENT_TIMEOUT_MINUTES })}
+					{t('checkout.paymentTimeoutOutOfRange', { max: maxPaymentTimeout })}
 				</div>
 			{/if}
 			{#if form?.cartAlreadyCheckedOut}
@@ -683,13 +685,13 @@
 								name="paymentTimeOut"
 								class="form-input"
 								min="1"
-								max={MAX_PAYMENT_TIMEOUT_MINUTES}
+								max={maxPaymentTimeout}
 								value={data.desiredPaymentTimeout}
 								disabled={!changePaymentTimeOut}
 								required={changePaymentTimeOut}
 								on:invalid={(event) =>
 									event.currentTarget.setCustomValidity(
-										t('checkout.paymentTimeoutOutOfRange', { max: MAX_PAYMENT_TIMEOUT_MINUTES })
+										t('checkout.paymentTimeoutOutOfRange', { max: maxPaymentTimeout })
 									)}
 								on:input={(event) => event.currentTarget.setCustomValidity('')}
 							/>

@@ -20,6 +20,11 @@ import type { CheckoutFieldType } from './CheckoutFieldConfig';
 // A long timeout freezes a crypto quote and holds stock and booking slots, so the till stops at a week.
 export const MAX_PAYMENT_TIMEOUT_MINUTES = 7 * 24 * 60;
 
+/** The longest timeout the till may set: never below the shop's own default, which it prefills. */
+export function maxTillPaymentTimeoutMinutes(shopDefaultMinutes: number): number {
+	return Math.max(MAX_PAYMENT_TIMEOUT_MINUTES, shopDefaultMinutes);
+}
+
 export const ORDER_PAYMENT_STATUSES = ['pending', 'paid', 'expired', 'canceled', 'failed'] as const;
 export type OrderPaymentStatus = (typeof ORDER_PAYMENT_STATUSES)[number];
 
