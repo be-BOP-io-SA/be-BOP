@@ -642,7 +642,7 @@
 					</div>
 					<div class="flex flex-row gap-1 items-center">
 						{#each data.links.socialNetworkIcons as icon}
-							<a href={safeHref(icon.href)} target={linkTarget(icon.href)}
+							<a href={safeHref(icon.href)} target="_blank"
 								><img src="data:image/svg+xml;utf8, {icon.svg}" alt={icon.name} /></a
 							>
 						{/each}

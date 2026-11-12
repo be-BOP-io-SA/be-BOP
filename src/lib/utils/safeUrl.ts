@@ -80,7 +80,7 @@ export function safeHref(href: string | undefined | null): string {
 	return isSafeUrl(candidate) ? candidate : '#';
 }
 
-/** Only web pages open in a new tab: an app link would leave a blank one behind. */
+/** A link with a scheme leaves the shop, so it keeps the shop open in its own tab. */
 export function linkTarget(href: string | undefined | null): '_blank' | '_self' {
-	return /^https?:/i.test(href?.trim() ?? '') ? '_blank' : '_self';
+	return /^[a-z]+:/i.test(href?.trim() ?? '') ? '_blank' : '_self';
 }
