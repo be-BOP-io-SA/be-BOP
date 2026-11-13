@@ -1880,10 +1880,7 @@
 			"customTemplateHint": "Dies ist eine benutzerdefinierte Vorlage. Wenn Sie sie unverändert lassen, wird sie nicht aktualisiert, wenn sich der Code ändert. Um die neuesten Änderungen zu sehen, können Sie die Werte löschen.",
 			"confirmResetToDefault": "Möchten Sie diese Vorlage wirklich auf die Standardeinstellung zurücksetzen?",
 			"resetToDefault": "Auf Standard zurücksetzen",
-			"resetForSafetyNotice": "Diese Vorlage wurde bei einem Update auf den Standard zurückgesetzt: Ihr Inhalt konnte den Anmeldelink an jemand anderen als den Empfänger senden. Schreiben Sie sie bei Bedarf anhand des bisherigen Inhalts neu und behalten Sie nur Text und den Anmeldelink.",
-			"superAdminOnly": "Nur der Super-Admin kann diese Vorlage bearbeiten: Sie enthält einen Anmeldelink.",
-			"previousContent": "Bisheriger Inhalt",
-			"dismissResetNotice": "Hinweis ausblenden"
+			"superAdminOnly": "Nur der Super-Admin kann diese Vorlage bearbeiten: Sie enthält einen Anmeldelink."
 		},
 		"cmsForm": {
 			"confirmDelete": "Möchten Sie diese CMS-Seite löschen?",

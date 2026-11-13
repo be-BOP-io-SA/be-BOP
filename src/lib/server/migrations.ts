@@ -14,8 +14,6 @@ import {
 	isUntouchedDefaultCmsPage
 } from '$lib/server/defaultCmsPages';
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
-import { typedKeys } from '$lib/utils/typedKeys';
-import { CREDENTIAL_TEMPLATE_LINKS, isSafeCredentialTemplate } from './credential-email-template';
 import { defaultLanguageText } from './i18n-defaults';
 import { languages, type LanguageKey } from '$lib/translations';
 
@@ -1094,63 +1092,6 @@ export const migrations = [
 						}
 					]
 				}
-			);
-		}
-	},
-	{
-		_id: new ObjectId('0000000000000000000011f1'),
-		name: 'Drop password-reset and session e-mail templates that could leak their link',
-		run: async (session: ClientSession) => {
-			// Those two templates carry a login credential and used to be editable by any role
-			// allowed on /admin/template/emails. Removing a key restores its default at load time.
-			const stored = await collections.runtimeConfig.findOne(
-				{ _id: 'emailTemplates' },
-				{ session }
-			);
-			const templates = (stored?.data ?? {}) as Record<
-				string,
-				{ subject?: string; html?: string } | undefined
-			>;
-
-			const unsafe = typedKeys(CREDENTIAL_TEMPLATE_LINKS).filter((key) => {
-				const template = templates[key];
-				return (
-					template &&
-					!isSafeCredentialTemplate(String(template.html ?? ''), CREDENTIAL_TEMPLATE_LINKS[key])
-				);
-			});
-
-			if (!unsafe.length) {
-				return;
-			}
-
-			await collections.runtimeConfig.updateOne(
-				{ _id: 'resetEmailTemplates' },
-				{
-					$set: {
-						...Object.fromEntries(
-							unsafe.map((key) => [
-								`data.${key}`,
-								{
-									subject: templates[key]?.subject,
-									html: templates[key]?.html,
-									resetAt: new Date()
-								}
-							])
-						),
-						updatedAt: new Date()
-					}
-				},
-				{ upsert: true, session }
-			);
-
-			await collections.runtimeConfig.updateOne(
-				{ _id: 'emailTemplates' },
-				{
-					$unset: Object.fromEntries(unsafe.map((key) => [`data.${key}`, ''])),
-					$set: { updatedAt: new Date() }
-				},
-				{ session }
 			);
 		}
 	}

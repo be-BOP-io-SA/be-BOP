@@ -1880,10 +1880,7 @@
 			"customTemplateHint": "Dit is een aangepast sjabloon. Als u het ongewijzigd laat, wordt het niet bijgewerkt naarmate de code verandert. Om de laatste wijzigingen te zien, kunt u de waarden wissen.",
 			"confirmResetToDefault": "Weet u zeker dat u dit sjabloon wilt terugzetten naar de standaardwaarde?",
 			"resetToDefault": "Terugzetten naar standaard",
-			"resetForSafetyNotice": "Deze sjabloon is bij een update teruggezet naar de standaard: de inhoud kon de inloglink naar iemand anders dan de ontvanger sturen. Herschrijf hem indien nodig op basis van de vorige inhoud en behoud alleen tekst en de inloglink.",
-			"superAdminOnly": "Alleen de superbeheerder kan deze sjabloon bewerken: hij bevat een inloglink.",
-			"previousContent": "Vorige inhoud",
-			"dismissResetNotice": "Deze melding verbergen"
+			"superAdminOnly": "Alleen de superbeheerder kan deze sjabloon bewerken: hij bevat een inloglink."
 		},
 		"cmsForm": {
 			"confirmDelete": "Wilt u deze CMS-pagina verwijderen?",

@@ -43,25 +43,6 @@
 	<form class="contents" method="post">
 		<h2 class="text-2xl">{template.key}</h2>
 		<input type="hidden" name="key" value={template.key} />
-		{#if data.resetTemplates[template.key]}
-			<div
-				class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800"
-				role="alert"
-			>
-				<p>{t('admin.template.resetForSafetyNotice')}</p>
-				<details class="mt-2">
-					<summary class="cursor-pointer">{t('admin.template.previousContent')}</summary>
-					<p class="mt-2 font-bold">{data.resetTemplates[template.key].subject ?? ''}</p>
-					<pre class="whitespace-pre-wrap text-sm">{data.resetTemplates[template.key].html ??
-							''}</pre>
-				</details>
-				{#if !template.superAdminOnly}
-					<button type="submit" class="btn btn-black mt-2" formaction="?/dismissResetNotice"
-						>{t('admin.template.dismissResetNotice')}</button
-					>
-				{/if}
-			</div>
-		{/if}
 		{#if template.superAdminOnly}
 			<p class="text-gray-600">{t('admin.template.superAdminOnly')}</p>
 		{/if}

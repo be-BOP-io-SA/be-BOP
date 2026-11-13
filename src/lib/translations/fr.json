@@ -1880,10 +1880,7 @@
 			"customTemplateHint": "Il s'agit d'un modèle personnalisé. Si vous le laissez tel quel, il ne sera pas mis à jour au fil des évolutions du code. Pour voir les dernières modifications, vous pouvez effacer les valeurs.",
 			"confirmResetToDefault": "Êtes-vous sûr de vouloir réinitialiser ce modèle par défaut ?",
 			"resetToDefault": "Réinitialiser par défaut",
-			"resetForSafetyNotice": "Ce modèle a été remis par défaut lors d'une mise à jour : son contenu pouvait envoyer son lien de connexion ailleurs que chez le destinataire. Réécrivez-le à partir de l'ancien contenu si besoin, en ne gardant que du texte et le lien de connexion.",
-			"superAdminOnly": "Seul le super admin peut modifier ce modèle : il contient un lien de connexion.",
-			"previousContent": "Ancien contenu",
-			"dismissResetNotice": "Masquer cet avertissement"
+			"superAdminOnly": "Seul le super admin peut modifier ce modèle : il contient un lien de connexion."
 		},
 		"cmsForm": {
 			"confirmDelete": "Voulez-vous supprimer cette page CMS ?",

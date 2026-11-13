@@ -384,8 +384,6 @@ const baseConfig = {
 		keyId: '',
 		keySecret: ''
 	},
-	/** Credential templates a migration reset as unsafe, kept so the admin can rewrite them. */
-	resetEmailTemplates: {} as Record<string, { subject?: string; html?: string; resetAt: Date }>,
 	emailTemplates: {
 		passwordReset: {
 			subject: 'Password reset',
