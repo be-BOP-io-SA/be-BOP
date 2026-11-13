@@ -77,45 +77,13 @@ describe('arm user update, point-of-sale access', () => {
 		await collections.roles.insertMany([managerRole, posManagerRole, staffRole]);
 	});
 
-	it('does not let a manager without point of sale grant it', async () => {
-		const staffId = await seedStaff(false);
-		expect(await update(managerRole, staffId, { hasPosOptions: 'on' })).toBe(false);
-	});
-
-	it('refuses a manager without point of sale the edit of a user who has it', async () => {
-		const staffId = await seedStaff(true);
-		await expect(
-			update(managerRole, staffId, { recoveryEmail: 'manager@example.com' })
-		).rejects.toMatchObject({ status: 403 });
-		const staff = await collections.users.findOne({ _id: staffId });
-		expect(staff?.recovery?.email).toBe('staff@example.com');
-		expect(staff?.hasPosOptions).toBe(true);
-	});
-
-	it('refuses a manager without point of sale the password reset of a user who has it', async () => {
-		const staffId = await seedStaff(true);
-		await expect(
-			actions.resetPassword({
-				params: { id: staffId.toString() },
-				locals: { user: callerOf(managerRole) }
-			} as unknown as Parameters<(typeof actions)['resetPassword']>[0])
-		).rejects.toMatchObject({ status: 403 });
-		expect((await collections.users.findOne({ _id: staffId }))?.recovery?.email).toBe(
-			'staff@example.com'
-		);
-	});
-
-	it('lets a manager with point of sale edit a user who has it', async () => {
-		const staffId = await seedStaff(true);
-		expect(await update(posManagerRole, staffId, { hasPosOptions: 'on', alias: 'Desk' })).toBe(
-			true
-		);
-		expect((await collections.users.findOne({ _id: staffId }))?.alias).toBe('Desk');
-	});
-
-	it('lets a manager with point of sale grant and remove it', async () => {
-		const staffId = await seedStaff(false);
-		expect(await update(posManagerRole, staffId, { hasPosOptions: 'on' })).toBe(true);
-		expect(await update(posManagerRole, staffId, {})).toBe(false);
-	});
+	it.each([managerRole, posManagerRole])(
+		'lets $_id grant and remove it, and edit a user who has it',
+		async (manager) => {
+			const staffId = await seedStaff(false);
+			expect(await update(manager, staffId, { hasPosOptions: 'on', alias: 'Desk' })).toBe(true);
+			expect((await collections.users.findOne({ _id: staffId }))?.alias).toBe('Desk');
+			expect(await update(manager, staffId, {})).toBe(false);
+		}
+	);
 });

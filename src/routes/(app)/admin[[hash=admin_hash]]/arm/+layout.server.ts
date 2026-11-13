@@ -1,4 +1,4 @@
-import { canManagePosAccess, canManageRole } from '$lib/server/arm-scope';
+import { canManageRole } from '$lib/server/arm-scope';
 import { collections } from '$lib/server/database';
 
 export const load = async ({ locals }) => {
@@ -8,7 +8,6 @@ export const load = async ({ locals }) => {
 		roles,
 		manageableRoleIds: roles
 			.filter((role) => canManageRole(locals.user, role))
-			.map((role) => role._id),
-		canManagePosAccess: canManagePosAccess(locals.user)
+			.map((role) => role._id)
 	};
 };

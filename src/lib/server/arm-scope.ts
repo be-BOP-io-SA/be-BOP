@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { collections } from '$lib/server/database';
 import { isRoleWithin, type Role } from '$lib/types/Role';
-import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID, type User } from '$lib/types/User';
+import { SUPER_ADMIN_ROLE_ID, type User } from '$lib/types/User';
 
 type Caller = App.Locals['user'];
 
@@ -14,20 +14,7 @@ export function canManageRole(caller: Caller, target: Role): boolean {
 	return !!caller?.role && isRoleWithin(target, caller.role);
 }
 
-// A user's own point-of-sale flag sits outside their role, so the role check above does not cover it.
-export function canManagePosAccess(caller: Caller): boolean {
-	return (
-		caller?.roleId === SUPER_ADMIN_ROLE_ID ||
-		caller?.roleId === POS_ROLE_ID ||
-		!!caller?.hasPosOptions ||
-		!!caller?.role?.hasPosOptions
-	);
-}
-
-export async function requireCanManageUser(
-	caller: Caller,
-	user: Pick<User, 'roleId' | 'hasPosOptions'>
-) {
+export async function requireCanManageUser(caller: Caller, user: Pick<User, 'roleId'>) {
 	if (caller?.roleId === SUPER_ADMIN_ROLE_ID) {
 		return;
 	}
@@ -36,9 +23,5 @@ export async function requireCanManageUser(
 
 	if (!role || !canManageRole(caller, role)) {
 		throw error(403, 'You cannot manage a user whose role is wider than your own');
-	}
-
-	if (user.hasPosOptions && !canManagePosAccess(caller)) {
-		throw error(403, 'You cannot manage a user who has point of sale access');
 	}
 }

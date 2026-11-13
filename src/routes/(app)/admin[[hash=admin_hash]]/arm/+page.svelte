@@ -171,9 +171,7 @@
 	</li>
 	{#each data.users as user, i}
 		{@const manageable =
-			user.roleId === SUPER_ADMIN_ROLE_ID
-				? isSuperAdmin
-				: canManage(user.roleId) && (!user.hasPosOptions || data.canManagePosAccess)}
+			user.roleId === SUPER_ADMIN_ROLE_ID ? isSuperAdmin : canManage(user.roleId)}
 		{@const roleLocked =
 			user.roleId === SUPER_ADMIN_ROLE_ID ||
 			!manageable ||
@@ -248,8 +246,7 @@
 					type="checkbox"
 					name="hasPosOptions"
 					bind:checked={user.hasPosOptions}
-					disabled={!data.canManagePosAccess ||
-						data.roles.find((rol) => rol._id === user.roleId)?.hasPosOptions}
+					disabled={data.roles.find((rol) => rol._id === user.roleId)?.hasPosOptions}
 				/>
 				<select class="form-input" disabled={user.roleId === SUPER_ADMIN_ROLE_ID} name="status">
 					<option value="enabled" selected={!user.disabled}>{t('admin.arm.enabled')}</option>

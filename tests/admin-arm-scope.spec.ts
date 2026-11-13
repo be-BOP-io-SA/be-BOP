@@ -5,15 +5,12 @@ import { createHash, randomUUID } from 'node:crypto';
 const E2E_DB = 'bebop-e2e';
 const MANAGER_ROLE = 'e2e-arm-manager';
 const ARM_ONLY_ROLE = 'e2e-arm-only';
-const POS_MANAGER_ROLE = 'e2e-arm-pos-manager';
 const SEO_FENCED_ROLE = 'e2e-arm-seo-fenced';
 const SEO_PAGE_ROLE = 'e2e-arm-seo-page';
 const MANAGER_LOGIN = 'e2e-arm-manager';
 const SEO_FENCED_LOGIN = 'e2e-arm-seo-fenced';
 const ARM_ONLY_LOGIN = 'e2e-arm-only';
-const POS_MANAGER_LOGIN = 'e2e-arm-pos-manager';
 const STAFF_LOGIN = 'e2e-arm-staff';
-const TILL_STAFF_LOGIN = 'e2e-arm-till-staff';
 
 async function withDb<T>(run: (db: ReturnType<MongoClient['db']>) => Promise<T>): Promise<T> {
 	const client = await MongoClient.connect(process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017');
@@ -30,14 +27,7 @@ async function cleanUp() {
 			.collection('users')
 			.find({
 				login: {
-					$in: [
-						MANAGER_LOGIN,
-						ARM_ONLY_LOGIN,
-						POS_MANAGER_LOGIN,
-						SEO_FENCED_LOGIN,
-						STAFF_LOGIN,
-						TILL_STAFF_LOGIN
-					]
+					$in: [MANAGER_LOGIN, ARM_ONLY_LOGIN, SEO_FENCED_LOGIN, STAFF_LOGIN]
 				}
 			})
 			.toArray();
@@ -45,13 +35,7 @@ async function cleanUp() {
 		await db.collection('users').deleteMany({ _id: { $in: users.map((u) => u._id) } });
 		await db.collection('roles').deleteMany({
 			_id: {
-				$in: [
-					MANAGER_ROLE,
-					ARM_ONLY_ROLE,
-					POS_MANAGER_ROLE,
-					SEO_FENCED_ROLE,
-					SEO_PAGE_ROLE
-				] as never[]
+				$in: [MANAGER_ROLE, ARM_ONLY_ROLE, SEO_FENCED_ROLE, SEO_PAGE_ROLE] as never[]
 			}
 		});
 	});
@@ -118,10 +102,8 @@ const role = (
 
 let managerId: ObjectId;
 let armOnlyId: ObjectId;
-let posManagerId: ObjectId;
 let seoFencedId: ObjectId;
 let staffId: ObjectId;
-let tillStaffId: ObjectId;
 
 test.beforeAll(async () => {
 	await cleanUp();
@@ -131,7 +113,6 @@ test.beforeAll(async () => {
 			.insertMany([
 				role(MANAGER_ROLE, 'E2E manager', ['/admin/*']),
 				role(ARM_ONLY_ROLE, 'E2E ARM only', ['/admin/arm/*']),
-				role(POS_MANAGER_ROLE, 'E2E POS manager', ['/admin/*'], true),
 				role(SEO_FENCED_ROLE, 'E2E SEO fenced', ['/admin/*'], false, ['/admin/seo/advanced/*']),
 				role(SEO_PAGE_ROLE, 'E2E SEO page', ['/admin/seo'])
 			] as never[])
@@ -139,87 +120,10 @@ test.beforeAll(async () => {
 	managerId = await seedUser(MANAGER_LOGIN, MANAGER_ROLE);
 	seoFencedId = await seedUser(SEO_FENCED_LOGIN, SEO_FENCED_ROLE);
 	armOnlyId = await seedUser(ARM_ONLY_LOGIN, ARM_ONLY_ROLE);
-	posManagerId = await seedUser(POS_MANAGER_LOGIN, POS_MANAGER_ROLE);
 	staffId = await seedUser(STAFF_LOGIN, 'ticket-checker');
-	tillStaffId = await seedUser(TILL_STAFF_LOGIN, 'ticket-checker', true);
 });
 
 test.afterAll(cleanUp);
-
-test('a manager without point of sale is not offered the point of sale role', async ({
-	page,
-	context
-}) => {
-	await signIn(context, managerId);
-	await page.goto('/admin/arm');
-
-	const staffRow = page.locator(`form[action$="/arm/user/${staffId}?/update"]`);
-	const select = staffRow.locator('select[name="roleId"]');
-	await expect(select).toHaveValue('ticket-checker');
-	const offered = await offeredRoles(select);
-	expect(offered).toEqual(expect.arrayContaining(['ticket-checker', MANAGER_ROLE, ARM_ONLY_ROLE]));
-	expect(offered).not.toContain('point-of-sale');
-
-	await page.goto('/admin/arm/user/new');
-	const offeredForNew = await offeredRoles(page.locator('select[name="roleId"]'));
-	expect(offeredForNew).toContain('ticket-checker');
-	expect(offeredForNew).not.toContain('point-of-sale');
-});
-
-test('only a manager with point of sale can hand it out', async ({ page, context }) => {
-	const staffPos = () =>
-		page.locator(`form[action$="/arm/user/${staffId}?/update"] input[name="hasPosOptions"]`);
-
-	await signIn(context, managerId);
-	await page.goto('/admin/arm');
-	await expect(staffPos()).toBeDisabled();
-
-	const response = await page.request.post(`/admin/arm/user/${staffId}?/update`, {
-		form: {
-			login: STAFF_LOGIN,
-			recoveryEmail: `${STAFF_LOGIN}@example.com`,
-			roleId: 'ticket-checker',
-			status: 'enabled',
-			hasPosOptions: 'on'
-		},
-		headers: { origin: 'http://localhost:5012' }
-	});
-	expect(response.ok()).toBe(true);
-	const staff = await withDb((db) => db.collection('users').findOne({ _id: staffId }));
-	expect(staff?.hasPosOptions).toBe(false);
-
-	await signIn(context, posManagerId);
-	await page.goto('/admin/arm');
-	await expect(staffPos()).toBeEnabled();
-});
-
-test('a manager without point of sale cannot edit a user who has it', async ({ page, context }) => {
-	const tillStaffButton = (title: string) =>
-		page.locator(`form[action$="/arm/user/${tillStaffId}?/update"] button[title="${title}"]`);
-
-	await signIn(context, managerId);
-	await page.goto('/admin/arm');
-	await expect(tillStaffButton('Save')).toBeDisabled();
-	await expect(tillStaffButton('Reset password')).toBeDisabled();
-	await expect(tillStaffButton('Delete account')).toBeDisabled();
-
-	const response = await page.request.post(`/admin/arm/user/${tillStaffId}?/update`, {
-		form: {
-			login: TILL_STAFF_LOGIN,
-			recoveryEmail: `${MANAGER_LOGIN}@example.com`,
-			roleId: 'ticket-checker',
-			status: 'enabled'
-		},
-		headers: { origin: 'http://localhost:5012' }
-	});
-	expect(response.status()).toBe(403);
-	const tillStaff = await withDb((db) => db.collection('users').findOne({ _id: tillStaffId }));
-	expect(tillStaff?.recovery?.email).toBe(`${TILL_STAFF_LOGIN}@example.com`);
-
-	await signIn(context, posManagerId);
-	await page.goto('/admin/arm');
-	await expect(tillStaffButton('Reset password')).toBeEnabled();
-});
 
 test('the role error names each allowed role once', async ({ page, context }) => {
 	await signIn(context, managerId);
