@@ -3,7 +3,6 @@ import { canManagePosAccess, canManageRole, requireCanManageUser } from '$lib/se
 import { collections } from '$lib/server/database.js';
 import { zodNpub } from '$lib/server/nostr.js';
 import { sendResetPasswordNotification } from '$lib/server/sendNotification.js';
-import { signOutEverywhere } from '$lib/server/user';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { CUSTOMER_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { error, redirect } from '@sveltejs/kit';
@@ -138,8 +137,6 @@ export const actions = {
 				}
 			}
 		);
-		// A manager resets a password when the account may be in someone else's hands.
-		await signOutEverywhere(user._id);
 
 		await sendResetPasswordNotification(user);
 

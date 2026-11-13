@@ -105,39 +105,6 @@ describe('arm user update, point-of-sale access', () => {
 		);
 	});
 
-	it('signs the user out everywhere when a manager resets their password', async () => {
-		const staffId = await seedStaff(false);
-		const otherId = new ObjectId();
-		const sessionOf = (sessionId: string, userId: ObjectId) => ({
-			_id: new ObjectId(),
-			sessionId,
-			userId,
-			expireUserAt: new Date(Date.now() + 3_600_000),
-			expiresAt: new Date(Date.now() + 3_600_000),
-			createdAt: new Date(),
-			updatedAt: new Date()
-		});
-		await collections.sessions.insertMany([
-			sessionOf('staff-laptop', staffId),
-			sessionOf('staff-till', staffId),
-			sessionOf('someone-else', otherId)
-		]);
-
-		await expect(
-			actions.resetPassword({
-				params: { id: staffId.toString() },
-				locals: { user: callerOf(managerRole) }
-			} as unknown as Parameters<(typeof actions)['resetPassword']>[0])
-		).rejects.toMatchObject({ status: 303 });
-
-		const sessions = await collections.sessions.find().sort({ sessionId: 1 }).toArray();
-		expect(sessions.map((s) => [s.sessionId, s.userId?.toString() ?? null])).toEqual([
-			['someone-else', otherId.toString()],
-			['staff-laptop', null],
-			['staff-till', null]
-		]);
-	});
-
 	it('lets a manager with point of sale edit a user who has it', async () => {
 		const staffId = await seedStaff(true);
 		expect(await update(posManagerRole, staffId, { hasPosOptions: 'on', alias: 'Desk' })).toBe(
