@@ -34,10 +34,6 @@ function settingsEnforcedByEnvVars(): boolean {
 	return !!(SMTP_FAKE || SMTP_HOST || SMTP_PORT || SMTP_USER || SMTP_PASSWORD || SMTP_FROM);
 }
 
-function sameRemote(smtp: Pick<typeof runtimeConfig.smtp, 'host' | 'port'>) {
-	return smtp.host === runtimeConfig.smtp.host && smtp.port === runtimeConfig.smtp.port;
-}
-
 export async function load() {
 	return {
 		smtp: projectSettingsForFrontend(runtimeConfig.smtp),
@@ -70,7 +66,7 @@ export const actions: Actions = {
 					from: z.string().trim()
 				})
 				.parse(requestData);
-			const password = smtp.password || (sameRemote(smtp) ? existingSettings.password : '');
+			const password = smtp.password || existingSettings.password;
 			updated = { ...existingSettings, ...smtp, password, fake: false };
 		}
 		persistConfigElement('smtp', updated);

@@ -1646,7 +1646,6 @@
 			"password": "SMTP-wachtwoord",
 			"passwordSetPlaceholder": "Wachtwoord is ingesteld - voer een nieuwe waarde in om te vervangen",
 			"passwordPlaceholder": "Voer het SMTP-wachtwoord in",
-			"passwordClearedWarning": "De host of poort is gewijzigd: bij het opslaan wordt het opgeslagen wachtwoord gewist. Voer het wachtwoord opnieuw in om e-mails te blijven versturen.",
 			"fromEmail": "Afzender e-mailadres",
 			"fromEmailHint": "Indien leeg, wordt de SMTP-gebruiker als afzender gebruikt",
 			"save": "SMTP-instellingen opslaan",

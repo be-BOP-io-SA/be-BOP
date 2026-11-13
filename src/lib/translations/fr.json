@@ -1646,7 +1646,6 @@
 			"password": "Mot de passe SMTP",
 			"passwordSetPlaceholder": "Le mot de passe est défini - saisissez une nouvelle valeur pour le remplacer",
 			"passwordPlaceholder": "Saisissez le mot de passe SMTP",
-			"passwordClearedWarning": "L'hôte ou le port a changé : l'enregistrement effacera le mot de passe enregistré. Saisissez à nouveau le mot de passe pour continuer à envoyer des e-mails.",
 			"fromEmail": "Adresse e-mail d'expédition",
 			"fromEmailHint": "Si vide, l'utilisateur SMTP sera utilisé comme expéditeur",
 			"save": "Enregistrer les paramètres SMTP",
