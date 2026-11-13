@@ -5,7 +5,7 @@ import { MongoClient, ObjectId } from 'mongodb';
 const E2E_DB = 'bebop-e2e';
 const PRODUCT_ID = 'e2e-checkout-timeout';
 const METHOD = { id: 'e2e-voucher', label: 'E2E voucher', instructions: '' };
-const OUT_OF_RANGE = 'The payment timeout must be between 1 and 10080 minutes.';
+const OUT_OF_RANGE = 'The payment timeout must be at least 1 minute.';
 
 async function withDb<T>(run: (db: ReturnType<MongoClient['db']>) => Promise<T>): Promise<T> {
 	const client = await MongoClient.connect(process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017');
@@ -96,35 +96,13 @@ test.afterAll(async () => {
 	});
 });
 
-test('the till refuses a payment timeout over a week on the checkout form', async ({ page }) => {
-	const ordersBefore = await ordersOfAdmin();
-	await page.goto('/checkout');
-
-	const timeout = page.locator('input[name="paymentTimeOut"]');
-	// Before hydration the method select does not reveal the timeout checkbox yet.
-	await expect(async () => {
-		await page.locator('select[name="paymentMethod"]').selectOption(`custom:${METHOD.id}`);
-		await page.locator('input[name="changePaymentTimeOut"]').check({ timeout: 2000 });
-		await timeout.fill('20000', { timeout: 2000 });
-		await expect(timeout).toHaveValue('20000', { timeout: 1000 });
-	}).toPass({ timeout: 20_000 });
-	await page.getByRole('button', { name: 'Proceed' }).click();
-
-	await expect(page).toHaveURL(/\/checkout$/);
-	await expect(timeout).toHaveValue('20000');
-	expect(await timeout.evaluate((input) => (input as HTMLInputElement).validationMessage)).toBe(
-		OUT_OF_RANGE
-	);
-	expect(await ordersOfAdmin()).toBe(ordersBefore);
-});
-
 test('the server answers an out-of-range timeout with the checkout page', async ({ page }) => {
 	const ordersBefore = await ordersOfAdmin();
 	const response = await page.request.post('/checkout', {
 		form: {
 			paymentMethod: `custom:${METHOD.id}`,
 			teecees: 'on',
-			paymentTimeOut: '20000'
+			paymentTimeOut: '0'
 		},
 		headers: { origin: 'http://localhost:5012', accept: 'text/html' }
 	});
@@ -134,43 +112,18 @@ test('the server answers an out-of-range timeout with the checkout page', async 
 	expect(await ordersOfAdmin()).toBe(ordersBefore);
 });
 
-test('the till accepts the shop default timeout it prefills, even over a week', async ({
-	page
-}) => {
-	const setShopDefault = (data: number) =>
-		withDb((db) =>
-			db
-				.collection('runtimeConfig')
-				.updateOne(
-					{ _id: 'desiredPaymentTimeout' as never },
-					{ $set: { data, updatedAt: new Date() } },
-					{ upsert: true }
-				)
-		);
-	await setShopDefault(20_000);
+test('the till accepts a payment timeout of any length', async ({ page }) => {
 	try {
 		const ordersBefore = await ordersOfAdmin();
 		await page.goto('/checkout');
-
-		const timeout = page.locator('input[name="paymentTimeOut"]');
-		await expect(async () => {
-			await page.locator('select[name="paymentMethod"]').selectOption(`custom:${METHOD.id}`);
-			await page.locator('input[name="changePaymentTimeOut"]').check({ timeout: 2000 });
-			await expect(timeout).toHaveValue('20000', { timeout: 1000 });
-		}).toPass({ timeout: 20_000 });
-		expect(await timeout.evaluate((input) => (input as HTMLInputElement).validity.valid)).toBe(
-			true
-		);
-
 		const response = await page.request.post('/checkout', {
-			form: { paymentMethod: `custom:${METHOD.id}`, teecees: 'on', paymentTimeOut: '20000' },
+			form: { paymentMethod: `custom:${METHOD.id}`, teecees: 'on', paymentTimeOut: '50000' },
 			headers: { origin: 'http://localhost:5012', accept: 'text/html' },
 			maxRedirects: 0
 		});
 		expect(response.status()).toBe(303);
 		expect(await ordersOfAdmin()).toBe(ordersBefore + 1);
 	} finally {
-		await setShopDefault(120);
 		await withDb((db) => db.collection('orders').deleteMany({ 'items.product._id': PRODUCT_ID }));
 	}
 });

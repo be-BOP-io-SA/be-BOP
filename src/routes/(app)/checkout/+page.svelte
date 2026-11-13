@@ -12,11 +12,7 @@
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
-	import {
-		maxTillPaymentTimeoutMinutes,
-		MIN_SATOSHIS_FOR_BITCOIN_PAYMENT,
-		type DiscountType
-	} from '$lib/types/Order.js';
+	import { MIN_SATOSHIS_FOR_BITCOIN_PAYMENT, type DiscountType } from '$lib/types/Order.js';
 	import { useI18n } from '$lib/i18n';
 	import NotificationAddressInput from '$lib/components/NotificationAddressInput.svelte';
 	import { contactModesOrEmail } from '$lib/types/ContactMode';
@@ -27,8 +23,6 @@
 	export let data;
 	export let form;
 	let submitting = false;
-
-	$: maxPaymentTimeout = maxTillPaymentTimeoutMinutes(data.desiredPaymentTimeout);
 
 	let actionCount = 0;
 	const defaultShippingCountry =
@@ -332,7 +326,7 @@
 			{/if}
 			{#if form?.paymentTimeoutOutOfRange}
 				<div class="alert-error">
-					{t('checkout.paymentTimeoutOutOfRange', { max: maxPaymentTimeout })}
+					{t('checkout.paymentTimeoutOutOfRange')}
 				</div>
 			{/if}
 			{#if form?.cartAlreadyCheckedOut}
@@ -666,14 +660,11 @@
 								name="paymentTimeOut"
 								class="form-input"
 								min="1"
-								max={maxPaymentTimeout}
 								value={data.desiredPaymentTimeout}
 								disabled={!changePaymentTimeOut}
 								required={changePaymentTimeOut}
 								on:invalid={(event) =>
-									event.currentTarget.setCustomValidity(
-										t('checkout.paymentTimeoutOutOfRange', { max: maxPaymentTimeout })
-									)}
+									event.currentTarget.setCustomValidity(t('checkout.paymentTimeoutOutOfRange'))}
 								on:input={(event) => event.currentTarget.setCustomValidity('')}
 							/>
 						</div>

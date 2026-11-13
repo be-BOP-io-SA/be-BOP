@@ -2333,7 +2333,7 @@
 		"multiplePaymentMethodsHelpText": "Sie können Zahlungsmethoden im nächsten Schritt festlegen.",
 		"noDeliveryInCountry": "Die Lieferung ist in Ihrem Land für einige Artikel in Ihrem Warenkorb nicht möglich.",
 		"paymentGenerationFailed": "Die Zahlung konnte nicht initiiert werden. Bitte versuchen Sie es in wenigen Augenblicken erneut, oder kontaktieren Sie den Shop-Betreiber, falls das Problem weiterhin besteht.",
-		"paymentTimeoutOutOfRange": "Die Zahlungsfrist muss zwischen 1 und {max} Minuten liegen.",
+		"paymentTimeoutOutOfRange": "Die Zahlungsfrist muss mindestens 1 Minute betragen.",
 		"cartAlreadyCheckedOut": "Dieser Warenkorb wurde bereits bestellt, daher wurde keine zweite Bestellung aufgegeben. Sie finden Ihre Bestellung in Ihrem Konto oder in der Bestätigungsnachricht.",
 		"note": {
 			"label": "Hinterlassen Sie eine Nachricht für den Händler",

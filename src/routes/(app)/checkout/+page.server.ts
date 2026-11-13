@@ -6,7 +6,6 @@ import {
 } from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
 import { error, fail, isHttpError, redirect } from '@sveltejs/kit';
-import { maxTillPaymentTimeoutMinutes } from '$lib/types/Order';
 import { z } from 'zod';
 import {
 	createOrder,
@@ -573,12 +572,7 @@ export const actions = {
 		}
 		const desiredPayment = z
 			.object({
-				paymentTimeOut: z
-					.number({ coerce: true })
-					.int()
-					.min(1)
-					.max(maxTillPaymentTimeoutMinutes(runtimeConfig.desiredPaymentTimeout))
-					.optional()
+				paymentTimeOut: z.number({ coerce: true }).int().min(1).optional()
 			})
 			.safeParse({
 				// A long timeout freezes the crypto quote and holds stock and slots, so only the till sets it.
