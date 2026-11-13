@@ -2332,6 +2332,7 @@
 		"paymentGenerationFailed": "We couldn't initiate your payment. Please try again in a few moments, or contact the shop owner if the problem persists.",
 		"paymentTimeoutOutOfRange": "The payment timeout must be at least 1 minute.",
 		"cartAlreadyCheckedOut": "This cart has already been ordered, so no second order was placed. You can find your order in your account or in its confirmation message.",
+		"subscriptionAtTill": "Subscriptions are not sold at the till: the customer subscribes from the product page. Remove the subscription to take payment for the rest.",
 		"additionalFields": {
 			"title": "Additional information"
 		},

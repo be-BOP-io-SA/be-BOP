@@ -334,6 +334,11 @@
 				{t('checkout.paymentGenerationFailed')}
 			</div>
 		{/if}
+		{#if form?.subscriptionAtTill}
+			<div class="alert-error m-2">
+				{t('checkout.subscriptionAtTill')}
+			</div>
+		{/if}
 		<div
 			class="grid {isMobile && (rightPannel !== 'menu' || isPortrait)
 				? 'grid-cols-1'

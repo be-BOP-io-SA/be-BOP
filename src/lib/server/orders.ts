@@ -637,6 +637,15 @@ export function discountAlertHtml(params: {
 	)}. Justification: ${escapeHtml(params.justification ?? '-')} `;
 }
 
+// A till sells under the cashier's account, so a subscription is bought from the product page.
+export function sellsSubscriptionAtTill(
+	user: UserIdentifier,
+	products: Array<Pick<Product, 'type'>>
+): boolean {
+	const soldAtTill = user.userHasPosOptions || user.userRoleId === POS_ROLE_ID;
+	return !!soldAtTill && products.some((product) => product.type === 'subscription');
+}
+
 export async function createOrder(
 	items: Array<{
 		_id?: ObjectId;
@@ -707,9 +716,12 @@ export async function createOrder(
 		throw error(400, 'Payment method not available for these products');
 	}
 
-	// A till sells under the cashier's account, so a subscription is bought from the product page.
-	const soldAtTill = params.user.userHasPosOptions || params.user.userRoleId === POS_ROLE_ID;
-	if (soldAtTill && items.some((item) => item.product.type === 'subscription')) {
+	if (
+		sellsSubscriptionAtTill(
+			params.user,
+			items.map((item) => item.product)
+		)
+	) {
 		throw error(400, 'Subscriptions are not sold at the point of sale');
 	}
 

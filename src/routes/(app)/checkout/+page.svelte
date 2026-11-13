@@ -334,6 +334,11 @@
 					{t('checkout.cartAlreadyCheckedOut')}
 				</div>
 			{/if}
+			{#if form?.subscriptionAtTill}
+				<div class="alert-error">
+					{t('checkout.subscriptionAtTill')}
+				</div>
+			{/if}
 			<input type="hidden" name="cartId" value={data.cartId} />
 			<section class="gap-4 flex flex-col sm:grid sm:grid-cols-6">
 				<h2 class="font-light text-2xl col-span-6">{t('checkout.shipmentInfo')}</h2>

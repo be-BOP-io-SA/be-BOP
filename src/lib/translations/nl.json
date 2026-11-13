@@ -2335,6 +2335,7 @@
 		"paymentGenerationFailed": "De betaling kon niet worden gestart. Probeer het binnen enkele ogenblikken opnieuw, of neem contact op met de verkoper als het probleem aanhoudt.",
 		"paymentTimeoutOutOfRange": "De betaaltermijn moet minstens 1 minuut zijn.",
 		"cartAlreadyCheckedOut": "Deze winkelwagen is al besteld, dus er is geen tweede bestelling geplaatst. U vindt uw bestelling in uw account of in het bevestigingsbericht.",
+		"subscriptionAtTill": "Abonnementen worden niet aan de kassa verkocht: de klant neemt het abonnement via de productpagina. Verwijder het abonnement om de rest af te rekenen.",
 		"note": {
 			"label": "Laat een briefje achter voor de verkoper",
 			"title": "Opmerking"

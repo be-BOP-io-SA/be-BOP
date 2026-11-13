@@ -2335,6 +2335,7 @@
 		"paymentGenerationFailed": "Die Zahlung konnte nicht initiiert werden. Bitte versuchen Sie es in wenigen Augenblicken erneut, oder kontaktieren Sie den Shop-Betreiber, falls das Problem weiterhin besteht.",
 		"paymentTimeoutOutOfRange": "Die Zahlungsfrist muss mindestens 1 Minute betragen.",
 		"cartAlreadyCheckedOut": "Dieser Warenkorb wurde bereits bestellt, daher wurde keine zweite Bestellung aufgegeben. Sie finden Ihre Bestellung in Ihrem Konto oder in der Bestätigungsnachricht.",
+		"subscriptionAtTill": "Abonnements werden nicht an der Kasse verkauft: Der Kunde schließt das Abonnement über die Produktseite ab. Entfernen Sie das Abonnement, um den Rest zu kassieren.",
 		"note": {
 			"label": "Hinterlassen Sie eine Nachricht für den Händler",
 			"title": "Notiz"

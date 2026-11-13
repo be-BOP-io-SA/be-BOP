@@ -10,7 +10,8 @@ import { z } from 'zod';
 import {
 	createOrder,
 	notifySuperAdminPaymentFailure,
-	PaymentGenerationError
+	PaymentGenerationError,
+	sellsSubscriptionAtTill
 } from '$lib/server/orders';
 import { availableContactModes } from '$lib/server/contact-modes';
 import { contactModesOrEmail } from '$lib/types/ContactMode';
@@ -609,6 +610,14 @@ export const actions = {
 				400,
 				'You must acknowledge that you are only paying a deposit and will have to pay the rest later'
 			);
+		}
+		if (
+			sellsSubscriptionAtTill(
+				userIdentifier(locals),
+				cart.items.map((item) => byId[item.productId])
+			)
+		) {
+			return fail(400, { subscriptionAtTill: true });
 		}
 		const enabledCheckoutFields = await loadEnabledCheckoutFields();
 		const customCheckoutFields = collectCheckoutFieldValues(enabledCheckoutFields, json);

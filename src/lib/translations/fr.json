@@ -2335,6 +2335,7 @@
 		"paymentGenerationFailed": "Le paiement n'a pas pu être initié. Veuillez réessayer dans quelques instants, ou contactez le vendeur de la boutique si le problème persiste.",
 		"paymentTimeoutOutOfRange": "Le délai de paiement doit être d'au moins 1 minute.",
 		"cartAlreadyCheckedOut": "Ce panier a déjà été commandé, aucune seconde commande n'a donc été passée. Vous retrouverez votre commande dans votre compte ou dans son message de confirmation.",
+		"subscriptionAtTill": "Les abonnements ne se vendent pas en caisse : le client s'abonne depuis la page du produit. Retirez l'abonnement pour encaisser le reste.",
 		"note": {
 			"label": "Laissez un message au vendeur",
 			"title": "Note"

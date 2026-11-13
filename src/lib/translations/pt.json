@@ -2335,6 +2335,7 @@
 		"paymentGenerationFailed": "Não foi possível iniciar o pagamento. Por favor, tente novamente dentro de alguns instantes, ou contacte o vendedor da loja se o problema persistir.",
 		"paymentTimeoutOutOfRange": "O prazo de pagamento deve ser de pelo menos 1 minuto.",
 		"cartAlreadyCheckedOut": "Este carrinho já foi encomendado, por isso não foi feita uma segunda encomenda. Encontra a sua encomenda na sua conta ou na respetiva mensagem de confirmação.",
+		"subscriptionAtTill": "As assinaturas não são vendidas na caixa: o cliente subscreve a partir da página do produto. Retire a assinatura para cobrar o resto.",
 		"note": {
 			"label": "Deixe uma nota para o comerciante",
 			"title": "Nota"

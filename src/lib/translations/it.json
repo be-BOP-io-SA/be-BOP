@@ -2335,6 +2335,7 @@
 		"paymentGenerationFailed": "Non è stato possibile avviare il pagamento. Si prega di riprovare tra qualche istante, o di contattare il negoziante se il problema persiste.",
 		"paymentTimeoutOutOfRange": "Il termine di pagamento deve essere di almeno 1 minuto.",
 		"cartAlreadyCheckedOut": "Questo carrello è già stato ordinato, quindi non è stato effettuato un secondo ordine. Trovi il tuo ordine nel tuo account o nel relativo messaggio di conferma.",
+		"subscriptionAtTill": "Gli abbonamenti non si vendono in cassa: il cliente si abbona dalla pagina del prodotto. Rimuovi l'abbonamento per incassare il resto.",
 		"note": {
 			"label": "Lascia un messaggio per il venditore",
 			"title": "Messaggio"
