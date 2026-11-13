@@ -1898,7 +1898,7 @@
 			"addCustomMetaBalise": "Add custom meta balise",
 			"useAdvancedHtmlEdition": "Use advanced HTML edition",
 			"advancedHtmlWarning": "Warning: use at your own risk, only if you're a Jedi of web or a be-BOP McGyver. Never use on an already existing CMS page, otherwise, you'll risk losing your CMS content.",
-			"removedContentWarning": "Visitors will not see some of this content, it is removed when the page is displayed: {items}. Only YouTube and Vimeo videos can be embedded. A super admin can enable advanced HTML edition to keep everything.",
+			"removedContentWarning": "Visitors will not see some of this content, it is removed when the page is displayed: {items}. A super admin can enable advanced HTML edition to keep everything.",
 			"showTips": "Show tips",
 			"tipsProduct": "To include products, add a paragraph with only <code class=\"font-mono\">[Product=slug]</code>, where <code class=\"font-mono\">slug</code> is the slug of your product. You can specify the display option like this: <code class=\"font-mono\">[Product=slug?display=img-1]</code>",
 			"tipsPicture": "To include pictures, add a paragraph with only <code class=\"font-mono\">[Picture=slug]</code>. You can also set the width, height and fit: <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=cover]</code> or <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=contain]</code> And also msubstitute (replacement image on mobile), position <code class=\"font-mono\">[Picture=slug msubstitute=slug position=right|center|full-width]</code>",

@@ -1898,7 +1898,7 @@
 			"addCustomMetaBalise": "Benutzerdefinierten Meta-Tag hinzufügen",
 			"useAdvancedHtmlEdition": "Erweiterte HTML-Bearbeitung verwenden",
 			"advancedHtmlWarning": "Warnung: Verwendung auf eigene Gefahr, nur wenn Sie ein Web-Jedi oder ein be-BOP-McGyver sind. Verwenden Sie diese Funktion niemals auf einer bereits bestehenden CMS-Seite, da Sie sonst riskieren, Ihren CMS-Inhalt zu verlieren.",
-			"removedContentWarning": "Ein Teil dieses Inhalts ist für Besucher nicht sichtbar, er wird beim Anzeigen der Seite entfernt: {items}. Nur YouTube- und Vimeo-Videos können eingebettet werden. Ein Super-Admin kann die erweiterte HTML-Bearbeitung aktivieren, um alles zu behalten.",
+			"removedContentWarning": "Ein Teil dieses Inhalts ist für Besucher nicht sichtbar, er wird beim Anzeigen der Seite entfernt: {items}. Ein Super-Admin kann die erweiterte HTML-Bearbeitung aktivieren, um alles zu behalten.",
 			"showTips": "Tipps anzeigen",
 			"tipsProduct": "Um Produkte einzufügen, fügen Sie einen Absatz hinzu, der nur <code class=\"font-mono\">[Product=slug]</code> enthält, wobei <code class=\"font-mono\">slug</code> der Slug Ihres Produkts ist. Sie können die Anzeigeoption so angeben: <code class=\"font-mono\">[Product=slug?display=img-1]</code>",
 			"tipsPicture": "Um Bilder einzufügen, fügen Sie einen Absatz hinzu, der nur <code class=\"font-mono\">[Picture=slug]</code> enthält. Sie können auch Breite, Höhe und Anpassung festlegen: <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=cover]</code> oder <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=contain]</code> Und auch msubstitute (Ersatzbild auf Mobilgeräten), Position <code class=\"font-mono\">[Picture=slug msubstitute=slug position=right|center|full-width]</code>",

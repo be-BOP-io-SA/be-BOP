@@ -1898,7 +1898,7 @@
 			"addCustomMetaBalise": "Aangepaste meta-tag toevoegen",
 			"useAdvancedHtmlEdition": "Geavanceerde HTML-bewerking gebruiken",
 			"advancedHtmlWarning": "Waarschuwing: gebruik op eigen risico, alleen als u een web-Jedi of een be-BOP McGyver bent. Gebruik dit nooit op een reeds bestaande CMS-pagina, anders riskeert u het verlies van uw CMS-inhoud.",
-			"removedContentWarning": "Bezoekers zien een deel van deze inhoud niet, het wordt verwijderd wanneer de pagina wordt weergegeven: {items}. Alleen YouTube- en Vimeo-video's kunnen worden ingesloten. Een superbeheerder kan geavanceerde HTML-bewerking inschakelen om alles te behouden.",
+			"removedContentWarning": "Bezoekers zien een deel van deze inhoud niet, het wordt verwijderd wanneer de pagina wordt weergegeven: {items}. Een superbeheerder kan geavanceerde HTML-bewerking inschakelen om alles te behouden.",
 			"showTips": "Tips tonen",
 			"tipsProduct": "Om producten toe te voegen, voeg een alinea toe met alleen <code class=\"font-mono\">[Product=slug]</code>, waarbij <code class=\"font-mono\">slug</code> de slug van uw product is. U kunt de weergaveoptie zo opgeven: <code class=\"font-mono\">[Product=slug?display=img-1]</code>",
 			"tipsPicture": "Om afbeeldingen toe te voegen, voeg een alinea toe met alleen <code class=\"font-mono\">[Picture=slug]</code>. U kunt ook de breedte, hoogte en pasvorm instellen: <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=cover]</code> of <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=contain]</code> En ook msubstitute (vervangende afbeelding op mobiel), positie <code class=\"font-mono\">[Picture=slug msubstitute=slug position=right|center|full-width]</code>",

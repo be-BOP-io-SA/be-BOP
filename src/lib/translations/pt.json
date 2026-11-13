@@ -1898,7 +1898,7 @@
 			"addCustomMetaBalise": "Adicionar meta tag personalizada",
 			"useAdvancedHtmlEdition": "Usar edição HTML avançada",
 			"advancedHtmlWarning": "Aviso: use por sua conta e risco, apenas se for um Jedi da web ou um McGyver do be-BOP. Nunca use numa página CMS já existente, caso contrário arrisca perder o conteúdo do seu CMS.",
-			"removedContentWarning": "Os visitantes não verão parte deste conteúdo, é removida quando a página é apresentada: {items}. Só é possível incorporar vídeos do YouTube e do Vimeo. Um super administrador pode ativar a edição HTML avançada para manter tudo.",
+			"removedContentWarning": "Os visitantes não verão parte deste conteúdo, é removida quando a página é apresentada: {items}. Um super administrador pode ativar a edição HTML avançada para manter tudo.",
 			"showTips": "Mostrar dicas",
 			"tipsProduct": "Para incluir produtos, adicione um parágrafo apenas com <code class=\"font-mono\">[Product=slug]</code>, onde <code class=\"font-mono\">slug</code> é o slug do seu produto. Pode especificar a opção de exibição assim: <code class=\"font-mono\">[Product=slug?display=img-1]</code>",
 			"tipsPicture": "Para incluir imagens, adicione um parágrafo apenas com <code class=\"font-mono\">[Picture=slug]</code>. Também pode definir a largura, altura e ajuste: <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=cover]</code> ou <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=contain]</code> E também msubstitute (imagem de substituição em dispositivos móveis), posição <code class=\"font-mono\">[Picture=slug msubstitute=slug position=right|center|full-width]</code>",
