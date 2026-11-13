@@ -6,8 +6,7 @@ import { inspect } from 'node:util';
 import { onOrderPayment, onOrderPaymentFailed } from '../orders';
 import { refreshPromise } from '../runtime-config';
 import type { Order } from '$lib/types/Order';
-import { coversPayment, getProcessor } from '../sdk/pp';
-import { recordUnderpayment } from '../underpayment';
+import { getProcessor } from '../sdk/pp';
 
 const lock = new Lock('orders');
 
@@ -89,10 +88,6 @@ async function maintainOrders() {
 							const result = await pp.checkPayment(payment, order);
 							switch (result.status) {
 								case 'paid':
-									if (!coversPayment(pp, payment, result.received, result.fees)) {
-										await recordUnderpayment(order, payment, pp.meta.processor, result.received);
-										break;
-									}
 									if (result.transactions) {
 										payment.transactions = result.transactions;
 									}
