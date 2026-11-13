@@ -19,6 +19,7 @@ import {
 import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
 import { runtimeConfig } from './runtime-config';
 import type { Product } from '$lib/types/Product';
+import { POS_ROLE_ID } from '$lib/types/User';
 
 describe('order', () => {
 	beforeEach(async () => {
@@ -485,6 +486,18 @@ describe('order', () => {
 				});
 			}
 			expect(await collections.orders.countDocuments()).toBe(0);
+		});
+
+		it('refuses it to an account of the point of sale role without the till flag', async () => {
+			await expect(
+				createOrder([{ product: TEST_SUBSCRIPTION_PRODUCT, quantity: 1 }], 'point-of-sale', {
+					locale: 'en',
+					user: { userId: new ObjectId(), sessionId: 'pos-role', userRoleId: POS_ROLE_ID },
+					notifications: { paymentStatus: { npub: 'npub1customer' } },
+					shippingAddress: null,
+					userVatCountry: 'FR'
+				})
+			).rejects.toMatchObject({ status: 400 });
 		});
 
 		it('still sells other products', async () => {

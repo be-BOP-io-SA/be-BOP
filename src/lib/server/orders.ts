@@ -66,7 +66,7 @@ import { SMTP_USER } from '$lib/server/env-config';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { escapeHtml } from '$lib/utils/escapeHtml';
 import { convertAmountToCurrencyForStorage } from '$lib/utils/toStorageCurrency';
-import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import { restrictToProducts } from './payment-methods';
@@ -708,7 +708,8 @@ export async function createOrder(
 	}
 
 	// A till sells under the cashier's account, so a subscription is bought from the product page.
-	if (params.user.userHasPosOptions && items.some((item) => item.product.type === 'subscription')) {
+	const soldAtTill = params.user.userHasPosOptions || params.user.userRoleId === POS_ROLE_ID;
+	if (soldAtTill && items.some((item) => item.product.type === 'subscription')) {
 		throw error(400, 'Subscriptions are not sold at the point of sale');
 	}
 
