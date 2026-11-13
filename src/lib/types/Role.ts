@@ -89,10 +89,6 @@ export function isAllowedOnPage(role: Role, path: string, mode: 'read' | 'write'
 
 /** Whether `role` grants nothing that `within` does not already have (patterns compared conservatively). */
 export function isRoleWithin(role: Role, within: Role): boolean {
-	if (role.hasPosOptions && !within.hasPosOptions) {
-		return false;
-	}
-
 	const grantedOutside = (patterns: string[], mode: 'read' | 'write') =>
 		patterns.some((pattern) => !isAllowedOnPage(within, pattern, mode));
 	const reopensForbidden = within.permissions.forbidden.some(

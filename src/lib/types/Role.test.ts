@@ -51,8 +51,8 @@ describe('isRoleWithin', () => {
 		).toBe(false);
 	});
 
-	it('rejects POS options the caller does not have', () => {
-		expect(isRoleWithin(role({}, true), role({}))).toBe(false);
+	it('leaves POS options to any manager of the role, as user management delegates them', () => {
+		expect(isRoleWithin(role({}, true), role({}))).toBe(true);
 	});
 
 	it('compares a pattern without a trailing star to a longer forbidden path', () => {

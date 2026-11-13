@@ -125,13 +125,40 @@ test.beforeAll(async () => {
 
 test.afterAll(cleanUp);
 
+test('a manager without point of sale ticks it for a user and saves', async ({ page, context }) => {
+	const staffRow = page.locator(`form[action$="/arm/user/${staffId}?/update"]`);
+	const staffPos = staffRow.locator('input[name="hasPosOptions"]');
+
+	await signIn(context, managerId);
+	try {
+		await expect(async () => {
+			await page.goto('/admin/arm');
+			await staffPos.check({ timeout: 1000 });
+			await expect(staffPos).toBeChecked({ timeout: 1000 });
+		}).toPass();
+		await expect(staffPos).toBeEnabled();
+		await staffRow.locator('button[title="Save"]').click();
+
+		await expect
+			.poll(
+				async () =>
+					(await withDb((db) => db.collection('users').findOne({ _id: staffId })))?.hasPosOptions
+			)
+			.toBe(true);
+	} finally {
+		await withDb((db) =>
+			db.collection('users').updateOne({ _id: staffId }, { $set: { hasPosOptions: false } })
+		);
+	}
+});
+
 test('the role error names each allowed role once', async ({ page, context }) => {
 	await signIn(context, managerId);
 	const response = await page.request.post(`/admin/arm/user/${staffId}?/update`, {
 		form: {
 			login: STAFF_LOGIN,
 			recoveryEmail: `${STAFF_LOGIN}@example.com`,
-			roleId: 'point-of-sale',
+			roleId: 'e2e-arm-no-such-role',
 			status: 'enabled'
 		},
 		headers: { origin: 'http://localhost:5012' }
@@ -142,7 +169,7 @@ test('the role error names each allowed role once', async ({ page, context }) =>
 	expect(body.match(/ticket-checker/g)).toHaveLength(1);
 });
 
-test('a manager limited to user accounts is offered only their own role', async ({
+test('a manager limited to user accounts is offered their own role and the point of sale', async ({
 	page,
 	context
 }) => {
@@ -162,7 +189,11 @@ test('a manager limited to user accounts is offered only their own role', async 
 
 	await page.getByRole('link', { name: 'Create a user' }).click();
 	await expect(page.getByRole('heading', { name: 'Create a user' })).toBeVisible();
-	expect(await offeredRoles(page.locator('select[name="roleId"]'))).toEqual([ARM_ONLY_ROLE]);
+	// The point of sale role opens no admin page, and handing out its access is delegated.
+	expect((await offeredRoles(page.locator('select[name="roleId"]'))).sort()).toEqual([
+		ARM_ONLY_ROLE,
+		'point-of-sale'
+	]);
 });
 
 test('a manager with a forbidden subpage can open the page next to a role naming one page', async ({
