@@ -18,6 +18,7 @@ import {
 } from './orders';
 import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
 import { runtimeConfig } from './runtime-config';
+import type { Product } from '$lib/types/Product';
 
 describe('order', () => {
 	beforeEach(async () => {
@@ -468,72 +469,28 @@ describe('order', () => {
 
 	describe('subscription sold at the till', () => {
 		const till = { userId: new ObjectId(), sessionId: 'till-session', userHasPosOptions: true };
-		const sellTo = (npub: string) =>
-			createOrder([{ product: TEST_SUBSCRIPTION_PRODUCT, quantity: 1 }], 'point-of-sale', {
+		const sell = (product: Product, method: 'point-of-sale' | 'bank-transfer') =>
+			createOrder([{ product, quantity: 1 }], method, {
 				locale: 'en',
 				user: till,
-				notifications: { paymentStatus: { npub } },
+				notifications: { paymentStatus: { npub: 'npub1customer' } },
 				shippingAddress: null,
 				userVatCountry: 'FR'
 			});
 
-		it('sells it to a second customer while the first sale is still pending', async () => {
-			await sellTo('npub1firstcustomer');
-			await sellTo('npub1secondcustomer');
-
-			expect(await collections.orders.countDocuments({ 'user.userId': till.userId })).toBe(2);
-		});
-
-		it('sells it to a second customer once the first one holds the subscription', async () => {
-			await createPaidSubscription(TEST_SUBSCRIPTION_PRODUCT._id, { npub: 'npub1firstcustomer' });
-			await collections.paidSubscriptions.updateOne(
-				{},
-				{ $set: { 'user.userId': till.userId, paidUntil: new Date(Date.now() + 365 * 86400_000) } }
-			);
-
-			await sellTo('npub1secondcustomer');
-
-			expect(await collections.orders.countDocuments({ 'user.userId': till.userId })).toBe(1);
-		});
-
-		it('gives each paying customer their own subscription', async () => {
-			for (const npub of ['npub1firstcustomer', 'npub1secondcustomer']) {
-				const order = await collections.orders.findOne({ _id: await sellTo(npub) });
-				if (!order) {
-					throw new Error('order not created');
-				}
-				await onOrderPayment(order, order.payments[0], order.payments[0].price);
+		it('refuses a subscription, whatever the payment method', async () => {
+			for (const method of ['point-of-sale', 'bank-transfer'] as const) {
+				await expect(sell(TEST_SUBSCRIPTION_PRODUCT, method)).rejects.toMatchObject({
+					status: 400
+				});
 			}
-
-			const subscriptions = await collections.paidSubscriptions.find({}).toArray();
-			expect(subscriptions.map((sub) => sub.user.npub).sort()).toEqual([
-				'npub1firstcustomer',
-				'npub1secondcustomer'
-			]);
-			expect(subscriptions.every((sub) => !sub.user.userId && !sub.user.sessionId)).toBe(true);
+			expect(await collections.orders.countDocuments()).toBe(0);
 		});
 
-		it('refuses a sale without the customer address the subscription would belong to', async () => {
-			await expect(
-				createOrder([{ product: TEST_SUBSCRIPTION_PRODUCT, quantity: 1 }], 'point-of-sale', {
-					locale: 'en',
-					user: till,
-					notifications: { paymentStatus: {} },
-					shippingAddress: null,
-					userVatCountry: 'FR'
-				})
-			).rejects.toMatchObject({ status: 400 });
-		});
+		it('still sells other products', async () => {
+			await sell(TEST_DIGITAL_PRODUCT, 'point-of-sale');
 
-		it('still refuses a second pending order for the same customer', async () => {
-			await sellTo('npub1firstcustomer');
-
-			await expect(sellTo('npub1firstcustomer')).rejects.toMatchObject({
-				status: 400,
-				body: {
-					message: `You already have a pending order for this product: ${TEST_SUBSCRIPTION_PRODUCT.name}`
-				}
-			});
+			expect(await collections.orders.countDocuments()).toBe(1);
 		});
 	});
 
