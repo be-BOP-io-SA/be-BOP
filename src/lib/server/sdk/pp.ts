@@ -148,6 +148,9 @@ export interface PaymentProcessorDefinition {
 	meta: PaymentProcessorMeta;
 	isEnabled(): boolean;
 
+	// Separate from isEnabled: payments already pending must still be checked when new ones are refused.
+	acceptsNewPayments?(): boolean;
+
 	/**
 	 * Validates this processor's settings form. Absent for the ones configured by environment
 	 * variables and for the hand-settled methods, which have no credentials of their own.
@@ -274,8 +277,12 @@ export function getProcessorsForMethod(method: PaymentMethod): PaymentProcessorD
 	);
 }
 
+export function canTakeNewPayment(pp: PaymentProcessorDefinition): boolean {
+	return pp.isEnabled() && (pp.acceptsNewPayments?.() ?? true);
+}
+
 export function resolveProcessor(method: PaymentMethod): PaymentProcessorDefinition | undefined {
-	const processors = getProcessorsForMethod(method).filter((pp) => pp.isEnabled());
+	const processors = getProcessorsForMethod(method).filter(canTakeNewPayment);
 	if (!processors.length) {
 		return undefined;
 	}

@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 import { runtimeConfig } from './runtime-config';
-import { getProcessorsForMethod } from './sdk/pp';
+import { canTakeNewPayment, getProcessorsForMethod } from './sdk/pp';
 import type { Product } from '$lib/types/Product';
 import {
 	ALL_PAYMENT_PROCESSOR_SLUGS,
@@ -67,7 +67,7 @@ export const paymentMethods = (opts?: {
 						case 'free':
 							return opts?.totalSatoshis === undefined;
 						default:
-							return getProcessorsForMethod(method).some((pp) => pp.isEnabled());
+							return getProcessorsForMethod(method).some(canTakeNewPayment);
 					}
 				}
 		  );

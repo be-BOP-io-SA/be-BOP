@@ -1,8 +1,8 @@
 import {
 	isBitcoinNodelessConfigured,
-	generateNodelessAddress,
-	generateDerivationIndex,
+	reserveNodelessAddress,
 	getSatoshiReceivedNodeless,
+	hasDerivableNodelessAddress,
 	updateBitcoinBlockHeight
 } from '$lib/server/bitcoin-nodeless';
 import { toSatoshis } from '$lib/utils/toSatoshis';
@@ -33,6 +33,8 @@ export default {
 
 	isEnabled: () => isBitcoinNodelessConfigured(),
 
+	acceptsNewPayments: () => hasDerivableNodelessAddress(),
+
 	settlementCurrency: () => 'BTC',
 
 	presentation: BITCOIN_PRESENTATION,
@@ -62,7 +64,7 @@ export default {
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
-		const address = generateNodelessAddress(await generateDerivationIndex());
+		const { address } = await reserveNodelessAddress();
 		return { address, processor: 'bitcoin-nodeless' };
 	},
 

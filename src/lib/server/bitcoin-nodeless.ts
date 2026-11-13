@@ -110,8 +110,31 @@ export function bip48Address(m: number, xpubs: string[], index: number): string 
 	return result.address;
 }
 
-export function generateNodelessAddress(index: number): string {
-	const config = runtimeConfig.bitcoinNodeless;
+// BIP-32: indexes from 2^31 upward are hardened and cannot be derived from a public key.
+export const MAX_NON_HARDENED_INDEX = 2 ** 31 - 1;
+
+export class DerivationIndexExhaustedError extends Error {
+	constructor(index: number) {
+		super(
+			`Derivation index ${index} exceeds ${MAX_NON_HARDENED_INDEX}: the bitcoin nodeless key has no address left, configure a new one`
+		);
+		this.name = 'DerivationIndexExhaustedError';
+	}
+}
+
+export function hasDerivableNodelessAddress(): boolean {
+	return runtimeConfig.bitcoinNodeless.derivationIndex <= MAX_NON_HARDENED_INDEX;
+}
+
+type BitcoinNodelessConfig = typeof runtimeConfig.bitcoinNodeless;
+
+export function generateNodelessAddress(
+	index: number,
+	config: BitcoinNodelessConfig = runtimeConfig.bitcoinNodeless
+): string {
+	if (index > MAX_NON_HARDENED_INDEX) {
+		throw new DerivationIndexExhaustedError(index);
+	}
 	if (config.format === 'bip48') {
 		if (!config.m || !config.xpubs?.length) {
 			throw new Error('BIP-48 configuration incomplete: m and xpubs are required');
@@ -121,67 +144,76 @@ export function generateNodelessAddress(index: number): string {
 	return bip84Address(config.publicKey, index);
 }
 
-/**
- * Claims the next index in the database rather than in memory. Two checkouts reading the same
- * in-process counter would derive the same receiving address, and a payment is settled from the
- * address balance rather than a per-order UTXO — so a single transaction would settle both orders.
- */
-async function claimDerivationIndex(): Promise<number> {
-	// The `$inc` below must not upsert: a document created by it would carry the counter and none
-	// of the xpub/descriptor fields the rest of the config holds.
-	await collections.runtimeConfig.updateOne(
-		{ _id: 'bitcoinNodeless' },
-		{
-			$setOnInsert: {
-				data: runtimeConfig.bitcoinNodeless,
-				updatedAt: new Date(),
-				createdAt: new Date()
+// A lost claim only costs a retry, so this just has to exceed the checkouts racing at once.
+const MAX_CLAIM_ATTEMPTS = 20;
+
+export async function reserveNodelessAddress(): Promise<{ index: number; address: string }> {
+	// Kept across retries so a lost claim does not query the mempool again for the same address.
+	const usedAddresses = new Map<string, boolean>();
+
+	for (let attempt = 0; attempt < MAX_CLAIM_ATTEMPTS; attempt++) {
+		const stored = await collections.runtimeConfig.findOne({ _id: 'bitcoinNodeless' });
+		if (!stored) {
+			throw new Error('Bitcoin nodeless is not configured');
+		}
+		const config = stored.data as BitcoinNodelessConfig;
+		const reserved = await firstUnusedAddress(config, usedAddresses);
+
+		// Matching the whole config, not just the index, refuses a claim made against a replaced key.
+		const claimed = await collections.runtimeConfig.findOneAndUpdate(
+			{ _id: 'bitcoinNodeless', data: config },
+			{ $set: { 'data.derivationIndex': reserved.index + 1, updatedAt: new Date() } }
+		);
+		if (claimed.value) {
+			// Claims can resolve out of order; the change stream brings the rest of the config.
+			if (reserved.index + 1 > runtimeConfig.bitcoinNodeless.derivationIndex) {
+				runtimeConfig.bitcoinNodeless = {
+					...runtimeConfig.bitcoinNodeless,
+					derivationIndex: reserved.index + 1
+				};
 			}
-		},
-		{ upsert: true }
-	);
-
-	const res = await collections.runtimeConfig.findOneAndUpdate(
-		{ _id: 'bitcoinNodeless' },
-		{ $inc: { 'data.derivationIndex': 1 } as never, $set: { updatedAt: new Date() } },
-		{ returnDocument: 'after' }
-	);
-
-	const claimed = (res.value?.data as typeof runtimeConfig.bitcoinNodeless | undefined)
-		?.derivationIndex;
-
-	if (typeof claimed !== 'number') {
-		throw new Error('Failed to claim a bitcoin derivation index');
+			return reserved;
+		}
 	}
-
-	runtimeConfig.bitcoinNodeless.derivationIndex = claimed;
-	return claimed - 1;
+	throw new Error('Unable to reserve a derivation index: too many concurrent requests');
 }
 
-export async function generateDerivationIndex(): Promise<number> {
-	let index = await claimDerivationIndex();
+async function firstUnusedAddress(
+	config: BitcoinNodelessConfig,
+	usedAddresses: Map<string, boolean>
+): Promise<{ index: number; address: string }> {
+	const start = config.derivationIndex;
+	let index = start;
+	// Derived before anything is saved, or each failed checkout would push the stored index further out.
+	let address = generateNodelessAddress(index, config);
 
-	if (runtimeConfig.bitcoinNodeless.skipUsedAddresses) {
+	if (config.skipUsedAddresses) {
 		for (let attempts = 0; attempts < 10; attempts++) {
-			const address = generateNodelessAddress(index);
-			const isUsed = await isAddressUsed(address).catch((err) => {
-				console.warn(`Failed to check if address ${address} is used:`, err);
-				return false;
-			});
-
-			if (!isUsed) {
-				return index;
+			let isUsed = usedAddresses.get(address);
+			if (isUsed === undefined) {
+				const checked = address;
+				isUsed = await isAddressUsed(checked, config.mempoolUrl).catch((err) => {
+					console.warn(`Failed to check if address ${checked} is used:`, err);
+					return false;
+				});
+				usedAddresses.set(address, isUsed);
 			}
 
-			index = await claimDerivationIndex();
+			if (!isUsed) {
+				break;
+			}
+			index++;
+			address = generateNodelessAddress(index, config);
 		}
+	}
 
+	if (index >= start + 10) {
 		throw new Error(
 			'Unable to provide the next derivation index because too many intermediate derivations are already used'
 		);
 	}
 
-	return index;
+	return { index, address };
 }
 
 export async function getSatoshiReceivedNodeless(
@@ -272,10 +304,12 @@ export async function getSatoshiReceivedNodeless(
 	};
 }
 
-export async function isAddressUsed(address: string): Promise<boolean> {
+export async function isAddressUsed(
+	address: string,
+	mempoolBaseUrl = runtimeConfig.bitcoinNodeless.mempoolUrl
+): Promise<boolean> {
 	try {
-		const mempoolUrl =
-			trimSuffix(runtimeConfig.bitcoinNodeless.mempoolUrl, '/') + `/api/address/${address}`;
+		const mempoolUrl = trimSuffix(mempoolBaseUrl, '/') + `/api/address/${address}`;
 		const resp = await fetch(new URL(mempoolUrl));
 		if (!resp.ok) {
 			return false;
