@@ -1,7 +1,6 @@
 import { createHash } from 'crypto';
 import { z } from 'zod';
 import { runtimeConfig } from './runtime-config';
-import { assertPublicWebhookTarget } from './webhook-url-guard';
 
 /**
  * Blink Lightning client — receive-only, BTC-only.
@@ -46,53 +45,12 @@ export function parseLnAddress(lnAddress: string): { username: string; domain: s
 }
 
 /**
- * The LNURL-pay metadata, callback and LUD-21 verify URLs are fetched by us, the verify one on
- * every poll, and the address server picks the last two, so none may reach into our network.
- * A localhost address is a developer's own stack, which the same rule would make unusable.
- */
-async function assertLnurlTarget(rawUrl: string): Promise<void> {
-	const { domain } = parseLnAddress(runtimeConfig.blink.lnAddress);
-	if (isLocalDomain(domain)) {
-		return;
-	}
-	await assertPublicWebhookTarget(rawUrl);
-}
-
-const LNURL_MAX_REDIRECTS = 5;
-
-/**
- * GET an LNURL endpoint, following redirects one hop at a time: address servers commonly
- * redirect (http to https, bare domain to www), and each hop must pass the same target check.
- */
-async function fetchLnurl(rawUrl: string): Promise<Response> {
-	let url = rawUrl;
-	for (let hop = 0; hop <= LNURL_MAX_REDIRECTS; hop++) {
-		await assertLnurlTarget(url);
-		const response = await fetch(url, {
-			headers: { 'user-agent': 'be-BOP' },
-			redirect: 'manual',
-			signal: AbortSignal.timeout(BLINK_HTTP_TIMEOUT_MS)
-		});
-		const location = response.headers.get('location');
-		if (response.status < 300 || response.status >= 400 || !location) {
-			return response;
-		}
-		url = new URL(location, url).href;
-	}
-	throw new Error('LNURL endpoint redirected too many times');
-}
-
-function isLocalDomain(domain: string): boolean {
-	return domain === 'localhost' || domain.startsWith('localhost:');
-}
-
-/**
  * Derive the GraphQL endpoint for a Blink domain.
  * blink.sv → https://api.blink.sv/graphql ; otherwise https://api.{domain}/graphql
  */
 export function graphqlEndpointForDomain(domain: string): string {
 	const host = domain.startsWith('api.') ? domain : `api.${domain}`;
-	const scheme = isLocalDomain(domain) ? 'http' : 'https';
+	const scheme = domain.startsWith('localhost') ? 'http' : 'https';
 	return `${scheme}://${host}/graphql`;
 }
 
@@ -346,11 +304,15 @@ async function sparkCreateInvoice(params: {
 	domain: string;
 	amountSat: number;
 }): Promise<BlinkCreatedInvoice> {
-	const scheme = isLocalDomain(params.domain) ? 'http' : 'https';
+	const scheme = params.domain.startsWith('localhost') ? 'http' : 'https';
 	const metadataUrl = `${scheme}://${params.domain}/.well-known/lnurlp/${encodeURIComponent(
 		params.username
 	)}`;
-	const metaResp = await fetchLnurl(metadataUrl);
+
+	const metaResp = await fetch(metadataUrl, {
+		headers: { 'user-agent': 'be-BOP' },
+		signal: AbortSignal.timeout(BLINK_HTTP_TIMEOUT_MS)
+	});
 	if (!metaResp.ok) {
 		throw new Error(`LNURL-pay endpoint unavailable: ${metaResp.status} ${metaResp.statusText}`);
 	}
@@ -382,7 +344,11 @@ async function sparkCreateInvoice(params: {
 
 	const callbackUrl = new URL(meta.callback);
 	callbackUrl.searchParams.set('amount', String(amountMsat));
-	const cbResp = await fetchLnurl(callbackUrl.href);
+
+	const cbResp = await fetch(callbackUrl, {
+		headers: { 'user-agent': 'be-BOP' },
+		signal: AbortSignal.timeout(BLINK_HTTP_TIMEOUT_MS)
+	});
 	if (!cbResp.ok) {
 		throw new Error(`LNURL-pay callback failed: ${cbResp.status} ${cbResp.statusText}`);
 	}
@@ -411,7 +377,6 @@ async function sparkCreateInvoice(params: {
 	if (!paymentHash) {
 		throw new Error(`LUD-21 verify URL does not contain a valid payment hash: ${cb.verify}`);
 	}
-	await assertLnurlTarget(cb.verify);
 
 	return { paymentRequest: cb.pr, paymentHash, verifyUrl: cb.verify };
 }
@@ -492,8 +457,10 @@ async function blinkCheckSparkInvoice(
 	verifyUrl: string,
 	paymentHash: string
 ): Promise<BlinkInvoiceStatus | 'failed'> {
-	// Re-checked on each poll: the host may resolve differently than when the invoice was made.
-	const resp = await fetchLnurl(verifyUrl);
+	const resp = await fetch(verifyUrl, {
+		headers: { 'user-agent': 'be-BOP' },
+		signal: AbortSignal.timeout(BLINK_HTTP_TIMEOUT_MS)
+	});
 	if (!resp.ok) {
 		// Transient — let the poller retry.
 		return 'pending';

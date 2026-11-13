@@ -113,7 +113,7 @@ describe('blink', () => {
 		function mockVerify(body: unknown, ok = true, status = 200) {
 			vi.stubGlobal(
 				'fetch',
-				vi.fn(async () => Response.json(body, { status: ok ? status : 500 }))
+				vi.fn(async () => ({ ok, status, statusText: ok ? 'OK' : 'ERR', json: async () => body }))
 			);
 		}
 
