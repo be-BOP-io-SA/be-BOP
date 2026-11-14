@@ -1355,7 +1355,11 @@
 			"setCheckoutAdditionalFields": "Imposta campi aggiuntivi per il checkout",
 			"defaultSubscriptionDuration": "Durata predefinita dell'abbonamento",
 			"subscriptionDurationHint": "Usato per i prodotti in abbonamento impostati su \"Predefinito (a livello di negozio)\" e per gli snapshot legacy.",
-			"analyticsScriptPlaceholder": "script Plausible"
+			"analyticsScriptPlaceholder": "script Plausible",
+			"checkoutFieldOrderPageVisibilityLabel": "Visibile nella pagina dell'ordine per",
+			"checkoutFieldVisibleToEveryone": "Tutti",
+			"checkoutFieldVisibleToEmployees": "Solo i dipendenti",
+			"checkoutFieldVisibleToNobody": "Nessuno"
 		},
 		"oauth": {
 			"title": "Provider OAuth",

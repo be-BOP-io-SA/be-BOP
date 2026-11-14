@@ -1355,7 +1355,11 @@
 			"setCheckoutAdditionalFields": "Zusätzliche Checkout-Felder festlegen",
 			"defaultSubscriptionDuration": "Standard-Abonnementdauer",
 			"subscriptionDurationHint": "Wird für Abonnementprodukte verwendet, die auf „Standard (shopweit)“ eingestellt sind, sowie für ältere Snapshots.",
-			"analyticsScriptPlaceholder": "Plausible-Skript"
+			"analyticsScriptPlaceholder": "Plausible-Skript",
+			"checkoutFieldOrderPageVisibilityLabel": "Auf der Bestellseite sichtbar für",
+			"checkoutFieldVisibleToEveryone": "Alle",
+			"checkoutFieldVisibleToEmployees": "Nur Mitarbeitende",
+			"checkoutFieldVisibleToNobody": "Niemanden"
 		},
 		"oauth": {
 			"title": "OAuth-Anbieter",

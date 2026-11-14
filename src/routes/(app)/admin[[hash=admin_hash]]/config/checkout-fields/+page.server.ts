@@ -6,6 +6,7 @@ import { z } from 'zod';
 import {
 	CHECKOUT_FIELD_TYPES,
 	FREE_INPUT_FORMATS,
+	ORDER_PAGE_VISIBILITIES,
 	type CheckoutFieldConfig
 } from '$lib/types/CheckoutFieldConfig';
 
@@ -21,7 +22,8 @@ const fieldSchema = z.object({
 	format: z.enum(FREE_INPUT_FORMATS).optional(),
 	required: z.boolean({ coerce: true }).default(false),
 	disabled: z.boolean({ coerce: true }).default(false),
-	isPersonalData: z.boolean({ coerce: true }).default(false)
+	isPersonalData: z.boolean({ coerce: true }).default(false),
+	orderPageVisibility: z.enum(ORDER_PAGE_VISIBILITIES).default('everyone')
 });
 
 function parseForm(formData: FormData) {
@@ -34,7 +36,8 @@ function parseForm(formData: FormData) {
 		format: formData.get('format') || undefined,
 		required: formData.get('required') === 'true',
 		disabled: formData.get('disabled') === 'true',
-		isPersonalData: formData.get('isPersonalData') === 'true'
+		isPersonalData: formData.get('isPersonalData') === 'true',
+		orderPageVisibility: formData.get('orderPageVisibility') || undefined
 	});
 
 	if (!parsed.success) {
@@ -73,7 +76,8 @@ function fieldDocFields(parsed: z.infer<typeof fieldSchema>, options: string[] |
 		...(free && { free }),
 		required: parsed.required,
 		disabled: parsed.disabled,
-		isPersonalData: parsed.isPersonalData
+		isPersonalData: parsed.isPersonalData,
+		orderPageVisibility: parsed.orderPageVisibility
 	};
 }
 
@@ -90,7 +94,12 @@ export const load = async () => {
 		updatedAt: field.updatedAt.toISOString()
 	}));
 
-	return { fields, fieldTypes: CHECKOUT_FIELD_TYPES, freeFormats: FREE_INPUT_FORMATS };
+	return {
+		fields,
+		fieldTypes: CHECKOUT_FIELD_TYPES,
+		freeFormats: FREE_INPUT_FORMATS,
+		orderPageVisibilities: ORDER_PAGE_VISIBILITIES
+	};
 };
 
 export const actions: Actions = {

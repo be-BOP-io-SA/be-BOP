@@ -1355,7 +1355,11 @@
 			"setCheckoutAdditionalFields": "Extra afrekenvelden instellen",
 			"defaultSubscriptionDuration": "Standaard abonnementsduur",
 			"subscriptionDurationHint": "Gebruikt voor abonnementsproducten ingesteld op \"Standaard (winkelbreed)\" en voor verouderde snapshots.",
-			"analyticsScriptPlaceholder": "Plausible-script"
+			"analyticsScriptPlaceholder": "Plausible-script",
+			"checkoutFieldOrderPageVisibilityLabel": "Zichtbaar op de bestelpagina voor",
+			"checkoutFieldVisibleToEveryone": "Iedereen",
+			"checkoutFieldVisibleToEmployees": "Alleen medewerkers",
+			"checkoutFieldVisibleToNobody": "Niemand"
 		},
 		"oauth": {
 			"title": "OAuth-providers",

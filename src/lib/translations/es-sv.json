@@ -1355,7 +1355,11 @@
 			"setCheckoutAdditionalFields": "Establecer campos adicionales de pago",
 			"defaultSubscriptionDuration": "Duración de suscripción predeterminada",
 			"subscriptionDurationHint": "Se usa para productos de suscripción configurados como \"Predeterminado (para toda la tienda)\" y para instantáneas heredadas.",
-			"analyticsScriptPlaceholder": "script de Plausible"
+			"analyticsScriptPlaceholder": "script de Plausible",
+			"checkoutFieldOrderPageVisibilityLabel": "Visible en la página del pedido para",
+			"checkoutFieldVisibleToEveryone": "Todos",
+			"checkoutFieldVisibleToEmployees": "Solo los empleados",
+			"checkoutFieldVisibleToNobody": "Nadie"
 		},
 		"oauth": {
 			"title": "Proveedores OAuth",

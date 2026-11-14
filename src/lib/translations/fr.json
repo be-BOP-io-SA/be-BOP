@@ -1355,7 +1355,11 @@
 			"setCheckoutAdditionalFields": "Définir des champs supplémentaires pour le paiement",
 			"defaultSubscriptionDuration": "Durée d'abonnement par défaut",
 			"subscriptionDurationHint": "Utilisé pour les produits d’abonnement réglés sur « Par défaut (à l’échelle de la boutique) » et pour les instantanés hérités.",
-			"analyticsScriptPlaceholder": "Collez votre script de tracking"
+			"analyticsScriptPlaceholder": "Collez votre script de tracking",
+			"checkoutFieldOrderPageVisibilityLabel": "Visible sur la page commande par",
+			"checkoutFieldVisibleToEveryone": "Tout le monde",
+			"checkoutFieldVisibleToEmployees": "Les employés seulement",
+			"checkoutFieldVisibleToNobody": "Personne"
 		},
 		"oauth": {
 			"title": "Fournisseurs OAuth",

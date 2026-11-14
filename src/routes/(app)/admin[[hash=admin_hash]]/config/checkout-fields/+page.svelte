@@ -12,6 +12,13 @@
 
 	const { t } = useI18n();
 
+	let VISIBILITY_LABELS: Record<string, string> = {};
+	$: VISIBILITY_LABELS = {
+		everyone: t('admin.config.checkoutFieldVisibleToEveryone'),
+		employees: t('admin.config.checkoutFieldVisibleToEmployees'),
+		nobody: t('admin.config.checkoutFieldVisibleToNobody')
+	};
+
 	let TYPE_LABELS: Record<string, string> = {};
 	$: TYPE_LABELS = {
 		options: t('admin.config.checkoutFieldTypeOptions'),
@@ -123,6 +130,11 @@
 								{#if field.required}
 									<span class="text-xs bg-amber-600 text-white px-2 py-1 rounded"
 										>{t('admin.config.checkoutFieldMandatoryBadge')}</span
+									>
+								{/if}
+								{#if field.orderPageVisibility && field.orderPageVisibility !== 'everyone'}
+									<span class="text-xs bg-gray-700 text-white px-2 py-1 rounded"
+										>{VISIBILITY_LABELS[field.orderPageVisibility]}</span
 									>
 								{/if}
 								{#if field.disabled}
@@ -398,6 +410,19 @@
 					checked={editingField?.isPersonalData}
 				/>
 				<span>{t('admin.config.checkoutFieldPersonalDataCheckbox')}</span>
+			</label>
+
+			<label class="form-label">
+				{t('admin.config.checkoutFieldOrderPageVisibilityLabel')}
+				<select
+					name="orderPageVisibility"
+					class="form-input"
+					value={editingField?.orderPageVisibility ?? 'everyone'}
+				>
+					{#each data.orderPageVisibilities as visibility}
+						<option value={visibility}>{VISIBILITY_LABELS[visibility]}</option>
+					{/each}
+				</select>
 			</label>
 
 			<div class="flex gap-2 mt-4">

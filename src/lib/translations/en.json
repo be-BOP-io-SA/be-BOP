@@ -1355,7 +1355,11 @@
 			"setCheckoutAdditionalFields": "Set checkout additional fields",
 			"defaultSubscriptionDuration": "Default subscription duration",
 			"subscriptionDurationHint": "Used for subscription products set to \"Default (shop-wide)\" and for legacy snapshots.",
-			"analyticsScriptPlaceholder": "Plausible script"
+			"analyticsScriptPlaceholder": "Plausible script",
+			"checkoutFieldOrderPageVisibilityLabel": "Visible on the order page to",
+			"checkoutFieldVisibleToEveryone": "Everyone",
+			"checkoutFieldVisibleToEmployees": "Employees only",
+			"checkoutFieldVisibleToNobody": "Nobody"
 		},
 		"oauth": {
 			"title": "OAuth Providers",

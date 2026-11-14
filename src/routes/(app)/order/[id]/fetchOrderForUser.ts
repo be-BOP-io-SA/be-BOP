@@ -9,6 +9,7 @@ import { isSumupEnabled } from '$lib/server/sumup';
 import { FAKE_ORDER_INVOICE_NUMBER } from '$lib/types/Order';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error } from '@sveltejs/kit';
+import { ObjectId } from 'mongodb';
 
 export type FetchOrderResult = Awaited<ReturnType<typeof fetchOrderForUser>>;
 
@@ -20,6 +21,30 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 	if (!order) {
 		throw error(404, 'Order not found');
 	}
+
+	// Each custom checkout field says who sees its answer on the order page. The setting is read
+	// from the field as it is now, so it applies to past orders too; a field deleted since is shown
+	// to everyone, as before the setting existed.
+	const isEmployee = !!params?.userRoleId && params.userRoleId !== CUSTOMER_ROLE_ID;
+	const fieldIds = (order.customCheckoutFields ?? [])
+		.map((field) => field.fieldId)
+		.filter((id) => ObjectId.isValid(id));
+	const visibilityByFieldId = new Map(
+		fieldIds.length
+			? (
+					await collections.checkoutFieldConfigs
+						.find(
+							{ _id: { $in: fieldIds.map((id) => new ObjectId(id)) } },
+							{ projection: { orderPageVisibility: 1 } }
+						)
+						.toArray()
+			  ).map((field) => [field._id.toString(), field.orderPageVisibility ?? 'everyone'])
+			: []
+	);
+	const customCheckoutFields = order.customCheckoutFields?.filter((field) => {
+		const visibility = visibilityByFieldId.get(field.fieldId) ?? 'everyone';
+		return visibility === 'everyone' || (visibility === 'employees' && isEmployee);
+	});
 
 	const pictures = await picturesForProducts(order.items.map((item) => item.product._id));
 
@@ -255,7 +280,7 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 						: undefined)
 			})) || [],
 		receiptNote: order.receiptNote,
-		customCheckoutFields: order.customCheckoutFields,
+		customCheckoutFields,
 		user: {
 			npub: order.user.npub,
 			email: order.user.email,

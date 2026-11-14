@@ -1355,7 +1355,11 @@
 			"setCheckoutAdditionalFields": "Definir campos adicionais de finalização de compra",
 			"defaultSubscriptionDuration": "Duração predefinida da subscrição",
 			"subscriptionDurationHint": "Usado para produtos de subscrição definidos como \"Predefinido (para toda a loja)\" e para snapshots antigos.",
-			"analyticsScriptPlaceholder": "script Plausible"
+			"analyticsScriptPlaceholder": "script Plausible",
+			"checkoutFieldOrderPageVisibilityLabel": "Visível na página da encomenda para",
+			"checkoutFieldVisibleToEveryone": "Todos",
+			"checkoutFieldVisibleToEmployees": "Apenas os funcionários",
+			"checkoutFieldVisibleToNobody": "Ninguém"
 		},
 		"oauth": {
 			"title": "Provedores OAuth",
