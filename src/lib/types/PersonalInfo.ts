@@ -18,13 +18,16 @@ export interface PersonalInfo extends Timestamp {
 	};
 	/**
 	 * Answers to the two historical opt-ins. Kept as stored, read only by the migration that
-	 * copied them to `consentOptinIds`.
+	 * gathered them into consentRecords.
 	 */
 	newsletter?: {
 		seller: boolean;
 		partner: boolean;
 	};
-	/** Ids of the consent opt-ins the customer accepted. */
+	/**
+	 * Opt-ins accepted before consents moved to one record per address (consentRecords). Kept as
+	 * stored, read only by the migration that gathered them.
+	 */
 	consentOptinIds?: string[];
 	npub?: string;
 	email?: string;

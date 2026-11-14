@@ -11,12 +11,10 @@ export const load = async ({ url, locals }) => {
 
 	const selectedId = url.searchParams.get('optin') ?? optins[0]?._id ?? null;
 
+	// One consent record per contact address, so each customer is listed once.
 	const customers = selectedId
-		? await collections.personalInfo
-				.find<{ email?: string; npub?: string; updatedAt?: Date; createdAt?: Date }>(
-					{ consentOptinIds: selectedId },
-					{ projection: { email: 1, npub: 1, updatedAt: 1, createdAt: 1 } }
-				)
+		? await collections.consentRecords
+				.find({ optinIds: selectedId })
 				.sort({ updatedAt: -1 })
 				.toArray()
 		: [];
@@ -29,12 +27,10 @@ export const load = async ({ url, locals }) => {
 			disabled: !optin.enabled
 		})),
 		selectedId,
-		customers: customers
-			.filter((customer) => customer.email || customer.npub)
-			.map((customer) => ({
-				email: customer.email ?? '',
-				npub: customer.npub ?? '',
-				updatedAt: (customer.updatedAt ?? customer.createdAt)?.toISOString() ?? ''
-			}))
+		customers: customers.map((customer) => ({
+			email: customer.email ?? '',
+			npub: customer.npub ?? '',
+			updatedAt: customer.updatedAt.toISOString()
+		}))
 	};
 };

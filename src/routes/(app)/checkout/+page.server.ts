@@ -28,7 +28,13 @@ import { rateLimit } from '$lib/server/rateLimit.js';
 import { cmsFromContent } from '$lib/server/cms';
 import { omit } from '$lib/utils/omit.js';
 import { set } from '$lib/utils/set';
-import { displayedConsentOptins, saveConsentOptinAnswers } from '$lib/server/consentOptins';
+import {
+	acceptedConsentOptinIds as acceptedOptinIdsFor,
+	displayedConsentOptins,
+	saveFirstConsent,
+	saveSignedInConsent,
+	signedInConsentAddress
+} from '$lib/server/consentOptins';
 import { ObjectId } from 'mongodb';
 import type { Tag } from '$lib/types/Tag';
 import {
@@ -204,7 +210,8 @@ export async function load({ parent, locals }) {
 			lastName: personalInfoConnected?.lastName,
 			address: personalInfoConnected?.address,
 			_id: personalInfoConnected?._id.toString(),
-			consentOptinIds: personalInfoConnected?.consentOptinIds ?? [],
+			// Only a signed-in customer sees their choice: it would reveal what an address accepted.
+			consentOptinIds: await acceptedOptinIdsFor(signedInConsentAddress(locals)),
 			npub: personalInfoConnected?.npub,
 			email: personalInfoConnected?.email
 		},
@@ -483,15 +490,22 @@ export const actions = {
 			throw error(400, 'You must acknowledge that you offer delivery fees and add a justification');
 		}
 
-		if (acceptedConsentOptinIds.length) {
-			const displayedIds = (await displayedConsentOptins(locals.language)).map(({ id }) => id);
-			if (acceptedConsentOptinIds.some((id) => displayedIds.includes(id))) {
-				await saveConsentOptinAnswers({
-					user: userIdentifier(locals),
-					displayedIds,
-					acceptedIds: acceptedConsentOptinIds,
-					...(npubAddress && { npub: npubAddress }),
-					...(email && { email })
+		const displayedConsentIds = (await displayedConsentOptins(locals.language)).map(({ id }) => id);
+		if (displayedConsentIds.length) {
+			const signedInAddress = signedInConsentAddress(locals);
+			if (signedInAddress) {
+				await saveSignedInConsent({
+					address: signedInAddress,
+					displayedIds: displayedConsentIds,
+					acceptedIds: acceptedConsentOptinIds
+				});
+			} else if (email || npubAddress) {
+				await saveFirstConsent({
+					address: email
+						? { kind: 'email', address: email }
+						: { kind: 'npub', address: npubAddress as string },
+					displayedIds: displayedConsentIds,
+					acceptedIds: acceptedConsentOptinIds
 				});
 			}
 		}

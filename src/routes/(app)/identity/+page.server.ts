@@ -1,6 +1,11 @@
 import { collections } from '$lib/server/database.js';
 import { redirect } from '@sveltejs/kit';
-import { displayedConsentOptins, saveConsentOptinAnswers } from '$lib/server/consentOptins';
+import {
+	acceptedConsentOptinIds,
+	displayedConsentOptins,
+	saveSignedInConsent,
+	signedInConsentAddress
+} from '$lib/server/consentOptins';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country.js';
 import { set } from '$lib/utils/set';
@@ -33,7 +38,7 @@ export async function load({ locals }) {
 			lastName: personalInfoConnected?.lastName,
 			address: personalInfoConnected?.address,
 			_id: personalInfoConnected?._id.toString(),
-			consentOptinIds: personalInfoConnected?.consentOptinIds ?? [],
+			consentOptinIds: await acceptedConsentOptinIds(signedInConsentAddress(locals)),
 			npub: personalInfoConnected?.npub,
 			email: personalInfoConnected?.email
 		}
@@ -105,16 +110,14 @@ export const actions = {
 			}
 		);
 
-		const acceptedConsentOptinIds = formData.getAll('consentOptinIds').map(String);
-		if (acceptedConsentOptinIds.length) {
-			const displayedIds = (await displayedConsentOptins(locals.language)).map(({ id }) => id);
-			if (acceptedConsentOptinIds.some((id) => displayedIds.includes(id))) {
-				await saveConsentOptinAnswers({
-					user: userIdentifier(locals),
-					displayedIds,
-					acceptedIds: acceptedConsentOptinIds
-				});
-			}
+		const consentAddress = signedInConsentAddress(locals);
+		const displayedIds = (await displayedConsentOptins(locals.language)).map(({ id }) => id);
+		if (consentAddress && displayedIds.length) {
+			await saveSignedInConsent({
+				address: consentAddress,
+				displayedIds,
+				acceptedIds: formData.getAll('consentOptinIds').map(String)
+			});
 		}
 	}
 };

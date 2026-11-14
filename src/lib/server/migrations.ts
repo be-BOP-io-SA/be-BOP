@@ -1093,21 +1093,70 @@ export const migrations = [
 		}
 	},
 	{
-		_id: new ObjectId('6b35c2a0e92e590e85af2834'),
-		name: 'Copy the historical newsletter answers to consent opt-ins (issue #2834)',
+		_id: new ObjectId('6b35c2a0e92e590e85af2835'),
+		name: 'Gather customer opt-in answers into one consent record per address (issue #2834)',
 		run: async (session: ClientSession) => {
-			for (const id of [LEGACY_CONSENT_OPTIN_IDS.seller, LEGACY_CONSENT_OPTIN_IDS.partner]) {
-				await collections.personalInfo.updateMany(
-					{ [`newsletter.${id}`]: true },
-					[
+			// A customer file that holds both an e-mail and an npub gives a record carrying both: the
+			// customer finds it whichever way they sign in, and their first save keeps one address.
+			const files = await collections.personalInfo
+				.find(
+					{
+						$or: [
+							{ 'newsletter.seller': true },
+							{ 'newsletter.partner': true },
+							{ 'consentOptinIds.0': { $exists: true } }
+						]
+					},
+					{ session }
+				)
+				.toArray();
+
+			for (const file of files) {
+				const email = file.email || file.user?.email;
+				const npub = file.npub || file.user?.npub;
+				if (!email && !npub) {
+					continue;
+				}
+				const optinIds = [
+					...(file.consentOptinIds ?? []),
+					...(file.newsletter?.seller ? [LEGACY_CONSENT_OPTIN_IDS.seller] : []),
+					...(file.newsletter?.partner ? [LEGACY_CONSENT_OPTIN_IDS.partner] : [])
+				];
+				const existing =
+					(email && (await collections.consentRecords.findOne({ email }, { session }))) ||
+					(npub && (await collections.consentRecords.findOne({ npub }, { session }))) ||
+					null;
+				const now = new Date();
+				if (existing) {
+					const npubFree =
+						npub &&
+						!existing.npub &&
+						!(await collections.consentRecords.findOne({ npub }, { session }));
+					await collections.consentRecords.updateOne(
+						{ _id: existing._id },
 						{
 							$set: {
-								consentOptinIds: { $setUnion: [{ $ifNull: ['$consentOptinIds', []] }, [id]] }
+								optinIds: [...new Set([...existing.optinIds, ...optinIds])],
+								...(email && !existing.email && { email }),
+								...(npubFree && { npub }),
+								updatedAt: now
 							}
-						}
-					],
-					{ session }
-				);
+						},
+						{ session }
+					);
+				} else {
+					await collections.consentRecords.insertOne(
+						{
+							_id: new ObjectId(),
+							...(email && { email }),
+							...(npub && { npub }),
+							optinIds: [...new Set(optinIds)],
+							createdAt: now,
+							updatedAt: now
+						},
+						{ session }
+					);
+				}
 			}
 		}
 	}
