@@ -11,8 +11,11 @@
 	$: emails = data.customers.map((customer) => customer.email).filter(Boolean);
 	$: selectedOptin = data.optins.find((optin) => optin.id === data.selectedId);
 
-	function optinName(optin: { label: string; deleted: boolean }) {
-		return optin.deleted ? `${optin.label} ${t('admin.consent.deletedSuffix')}` : optin.label;
+	function optinName(optin: { label: string; deleted: boolean; disabled: boolean }) {
+		if (optin.deleted) {
+			return `${optin.label} ${t('admin.consent.deletedSuffix')}`;
+		}
+		return optin.disabled ? `${optin.label} ${t('admin.consent.disabledSuffix')}` : optin.label;
 	}
 
 	function formatDate(iso: string) {

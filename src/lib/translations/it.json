@@ -2218,7 +2218,8 @@
 			"copied": "Copiato",
 			"count": "Clienti: {count}",
 			"optinsTab": "Consensi",
-			"exportTab": "Esportazione"
+			"exportTab": "Esportazione",
+			"disabledSuffix": "(disattivato)"
 		}
 	},
 	"ageWarning": {

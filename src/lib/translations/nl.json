@@ -2218,7 +2218,8 @@
 			"copied": "Gekopieerd",
 			"count": "Klanten: {count}",
 			"optinsTab": "Opt-ins",
-			"exportTab": "Export"
+			"exportTab": "Export",
+			"disabledSuffix": "(uitgeschakeld)"
 		}
 	},
 	"ageWarning": {

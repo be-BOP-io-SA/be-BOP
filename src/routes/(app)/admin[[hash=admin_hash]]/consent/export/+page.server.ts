@@ -2,10 +2,12 @@ import { collections } from '$lib/server/database';
 import { consentOptinLabel } from '$lib/server/consentOptins';
 
 export const load = async ({ url, locals }) => {
-	const optins = await collections.consentOptins
-		.find({})
-		.sort({ deletedAt: 1, sortOrder: 1 })
-		.toArray();
+	// Enabled opt-ins first, then disabled ones, then deleted ones, each group in the employees' order.
+	const group = (optin: { enabled: boolean; deletedAt?: Date }) =>
+		optin.deletedAt ? 2 : optin.enabled ? 0 : 1;
+	const optins = (await collections.consentOptins.find({}).sort({ sortOrder: 1 }).toArray()).sort(
+		(a, b) => group(a) - group(b)
+	);
 
 	const selectedId = url.searchParams.get('optin') ?? optins[0]?._id ?? null;
 
@@ -23,7 +25,8 @@ export const load = async ({ url, locals }) => {
 		optins: optins.map((optin) => ({
 			id: optin._id,
 			label: consentOptinLabel(optin, locals.language),
-			deleted: !!optin.deletedAt
+			deleted: !!optin.deletedAt,
+			disabled: !optin.enabled
 		})),
 		selectedId,
 		customers: customers
