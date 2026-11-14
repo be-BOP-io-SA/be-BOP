@@ -2,12 +2,23 @@
 	import { useI18n } from '$lib/i18n.js';
 	import { page } from '$app/stores';
 	import { cookieConsentVisible } from '$lib/stores/cookieConsentVisible';
+	import NotificationAddressInput from '$lib/components/NotificationAddressInput.svelte';
+	import { contactModesOrEmail } from '$lib/types/ContactMode';
 
 	export let data;
 
 	const { t, sortedCountryCodes, countryName } = useI18n();
 
 	let country = data.personalInfoConnected?.address?.country ?? 'CH';
+
+	// With no contact mode available, the customer still leaves an email the staff can use
+	const contactModes = contactModesOrEmail(data.availableContactModes);
+
+	// The email is preferred over the npub when the customer has both
+	const prefilledContactAddress =
+		(contactModes.includes('email') && (data.personalInfoConnected?.email || data.email)) ||
+		(contactModes.includes('nostr') && (data.personalInfoConnected?.npub || data.npub)) ||
+		'';
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
@@ -91,33 +102,13 @@
 						value={data.personalInfoConnected?.address?.zip ?? ''}
 					/>
 				</label>
-				{#if data.contactModes.includes('email')}
-					<label class="form-label col-span-3">
-						{t('checkout.notifications.email')}
-						<input
-							type="email"
-							name="email"
-							class="form-input"
-							placeholder={data.email || ''}
-							value={data.personalInfoConnected?.email || ''}
-						/>
-					</label>
-				{/if}
-				<label
-					class="form-label {!data.contactModes.includes('email') ? 'col-span-6' : 'col-span-3'}"
-				>
-					{t('checkout.notifications.npub')}
-
-					<input
-						type="text"
-						name="npub"
-						class="form-input"
-						placeholder={data.npub || ''}
-						value={data.personalInfoConnected?.npub || ''}
-						pattern="^(?!nsec).*"
-						title={t('login.nsecBlockTitle')}
-					/>
-				</label>
+				<NotificationAddressInput
+					class="form-label col-span-6"
+					modes={contactModes}
+					name="contactAddress"
+					value={prefilledContactAddress}
+					required
+				/>
 				{#each data.consentOptins as optin (optin.id)}
 					<label class="checkbox-label col-span-3">
 						<input

@@ -1,5 +1,8 @@
 import { collections } from '$lib/server/database.js';
-import { zodNpub } from '$lib/server/nostr';
+import { validateEmailOrNpub } from '$lib/server/nostr';
+import { availableContactModes } from '$lib/server/contact-modes';
+import { contactModesOrEmail } from '$lib/types/ContactMode';
+import { error } from '@sveltejs/kit';
 import { displayedConsentOptins, saveConsentOptinAnswers } from '$lib/server/consentOptins';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country.js';
@@ -39,42 +42,55 @@ export const actions = {
 			}
 		}
 
-		// The address is optional, so that a customer can manage their opt-ins with only an e-mail or
-		// an npub. The country select always sends a value: only the other fields start an address.
-		const address = json.address as Record<string, unknown> | undefined;
-		if (address && !address.street && !address.zip && !address.city && !address.state) {
-			delete json.address;
-		}
-
+		// The page saves what the form holds: a field left empty is removed. Name and postal address
+		// are optional and may be partial, so that a customer known only by an e-mail or an npub can
+		// manage their opt-ins; the contact address is required.
+		const optionalText = z.string().min(1).max(100).trim().optional();
 		const personalInfo = z
 			.object({
 				address: z
 					.object({
-						street: z.string().min(1).max(100).trim(),
-						zip: z.string().min(1).max(100).trim(),
-						city: z.string().min(1).max(100).trim(),
-						country: z.enum([...COUNTRY_ALPHA2S] as [CountryAlpha2, ...CountryAlpha2[]]),
-						state: z.string().min(1).max(100).trim().optional()
+						street: optionalText,
+						zip: optionalText,
+						city: optionalText,
+						state: optionalText,
+						country: z.enum([...COUNTRY_ALPHA2S] as [CountryAlpha2, ...CountryAlpha2[]]).optional()
 					})
 					.optional(),
-				firstName: z.string().min(1).max(100).trim().optional(),
-				lastName: z.string().min(1).max(100).trim().optional(),
-				npub: zodNpub().optional(),
-				email: z.string().email().optional()
+				firstName: optionalText,
+				lastName: optionalText
 			})
 			.parse(json);
+
+		const contact = validateEmailOrNpub(
+			String(formData.get('contactAddress') ?? '').trim(),
+			contactModesOrEmail(availableContactModes())
+		);
+		if ('error' in contact) {
+			throw error(400, 'Invalid contact address');
+		}
+
+		const address =
+			personalInfo.address && Object.keys(personalInfo.address).length
+				? personalInfo.address
+				: undefined;
 
 		await collections.personalInfo.updateOne(
 			userQuery(userIdentifier(locals)),
 			{
 				$set: {
-					...(personalInfo.address && { address: personalInfo.address }),
+					...(address && { address }),
 					...(personalInfo.firstName && { firstName: personalInfo.firstName }),
 					...(personalInfo.lastName && { lastName: personalInfo.lastName }),
-					...(personalInfo.npub && { npub: personalInfo.npub }),
-					...(personalInfo.email && { email: personalInfo.email }),
+					[contact.kind]: contact.address,
 					updatedAt: new Date(),
 					user: userIdentifier(locals)
+				},
+				$unset: {
+					...(!address && { address: '' }),
+					...(!personalInfo.firstName && { firstName: '' }),
+					...(!personalInfo.lastName && { lastName: '' }),
+					[contact.kind === 'email' ? 'npub' : 'email']: ''
 				},
 				$setOnInsert: { createdAt: new Date() }
 			},
