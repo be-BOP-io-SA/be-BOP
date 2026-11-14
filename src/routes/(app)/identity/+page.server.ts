@@ -1,8 +1,5 @@
 import { collections } from '$lib/server/database.js';
-import { validateEmailOrNpub } from '$lib/server/nostr';
-import { availableContactModes } from '$lib/server/contact-modes';
-import { contactModesOrEmail } from '$lib/types/ContactMode';
-import { error } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { displayedConsentOptins, saveConsentOptinAnswers } from '$lib/server/consentOptins';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country.js';
@@ -10,7 +7,19 @@ import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
+/**
+ * The page is reserved to a session signed in with an e-mail or an npub: that address is proven
+ * by the sign-in link, so the opt-ins saved here belong to whoever controls it. A blank session
+ * or an employee sign-in alone is sent to the login page.
+ */
+function requireContactSignIn(locals: App.Locals) {
+	if (!locals.email && !locals.npub) {
+		throw redirect(303, '/login');
+	}
+}
+
 export async function load({ locals }) {
+	requireContactSignIn(locals);
 	const personalInfoConnected = await collections.personalInfo.findOne(
 		userQuery(userIdentifier(locals)),
 		{
@@ -33,6 +42,7 @@ export async function load({ locals }) {
 
 export const actions = {
 	default: async ({ request, locals }) => {
+		requireContactSignIn(locals);
 		const formData = await request.formData();
 		const json: JsonObject = {};
 
@@ -43,8 +53,7 @@ export const actions = {
 		}
 
 		// The page saves what the form holds: a field left empty is removed. Name and postal address
-		// are optional and may be partial, so that a customer known only by an e-mail or an npub can
-		// manage their opt-ins; the contact address is required.
+		// are optional and may be partial; the contact address is the one the session signed in with.
 		const optionalText = z.string().min(1).max(100).trim().optional();
 		const personalInfo = z
 			.object({
@@ -62,14 +71,6 @@ export const actions = {
 			})
 			.parse(json);
 
-		const contact = validateEmailOrNpub(
-			String(formData.get('contactAddress') ?? '').trim(),
-			contactModesOrEmail(availableContactModes())
-		);
-		if ('error' in contact) {
-			throw error(400, 'Invalid contact address');
-		}
-
 		const address =
 			personalInfo.address && Object.keys(personalInfo.address).length
 				? personalInfo.address
@@ -78,8 +79,7 @@ export const actions = {
 		const removed = [
 			...(address ? [] : ['address']),
 			...(personalInfo.firstName ? [] : ['firstName']),
-			...(personalInfo.lastName ? [] : ['lastName']),
-			contact.kind === 'email' ? 'npub' : 'email'
+			...(personalInfo.lastName ? [] : ['lastName'])
 		];
 		const now = new Date();
 
@@ -91,13 +91,14 @@ export const actions = {
 						...(address && { address: { $literal: address } }),
 						...(personalInfo.firstName && { firstName: { $literal: personalInfo.firstName } }),
 						...(personalInfo.lastName && { lastName: { $literal: personalInfo.lastName } }),
-						[contact.kind]: { $literal: contact.address },
+						...(locals.email && { email: { $literal: locals.email } }),
+						...(locals.npub && { npub: { $literal: locals.npub } }),
 						user: { $literal: userIdentifier(locals) },
 						updatedAt: now,
 						createdAt: { $ifNull: ['$createdAt', now] }
 					}
 				},
-				{ $unset: removed }
+				...(removed.length ? [{ $unset: removed }] : [])
 			],
 			{
 				upsert: true
