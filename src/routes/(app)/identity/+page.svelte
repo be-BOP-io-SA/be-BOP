@@ -147,7 +147,7 @@
 				{/if}
 				<input
 					type="submit"
-					class="btn btn-black self-start p-1 col-start-1"
+					class="btn btn-black self-start justify-self-start p-1 col-span-6"
 					value={t('identity.cta.update')}
 				/>
 			</section>
