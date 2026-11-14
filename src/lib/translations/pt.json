@@ -384,7 +384,8 @@
 				"galleries": "Galerias",
 				"schedules": "Agendas",
 				"leaderboards": "Classificações",
-				"searchlists": "Listas de pesquisa"
+				"searchlists": "Listas de pesquisa",
+				"consent": "Consentimentos"
 			},
 			"closeMenu": "Fechar menu",
 			"brandHome": "Admin",
@@ -1191,7 +1192,7 @@
 			"removePopinProductPrice": "Remover o preço do produto no pop-in ao adicionar ao carrinho",
 			"checkout": "Finalização de compra",
 			"showCheckoutButtonOnProductPage": "Exibir botão \"finalizar compra\" na página do produto",
-			"displayNewsletterCommercialProspection": "Exibir opção de newsletter + prospecção comercial (desativada por padrão)",
+			"displayNewsletterCommercialProspection": "Mostrar os consentimentos de solicitação de clientes",
 			"requestIpCollectionOnDeliverylessOrder": "Solicitar coleta de IP em pedidos sem entrega",
 			"mandatoryBillingAddress": "Endereço de faturamento obrigatório",
 			"onlyAllowNonBusinessCustomers": "Permitir apenas clientes particulares (sem opção de faturamento empresarial)",
@@ -2181,6 +2182,43 @@
 			"notConfigured": "não configurado",
 			"priority": "Prioridade",
 			"systemPriority": "Prioridade do sistema"
+		},
+		"consentOptins": {
+			"manageLink": "Gerir os consentimentos de solicitação de clientes",
+			"title": "Consentimentos de solicitação de clientes",
+			"description": "Consentimentos propostos aos clientes nas páginas de pagamento e de identidade, por esta ordem, quando «Mostrar os consentimentos de solicitação de clientes» está assinalado em Definições > Geral. Só são mostrados os ativados, e um cliente só aceita um consentimento assinalando-o.",
+			"empty": "Ainda não há consentimentos.",
+			"disabledBadge": "Desativado",
+			"translations": "Traduções",
+			"edit": "Editar",
+			"deleteConfirm": "Eliminar o consentimento «{label}»? Os clientes que o aceitaram continuam listados na exportação de consentimentos.",
+			"createNew": "Adicionar um consentimento",
+			"saveSortOrder": "Guardar a ordem",
+			"editTitle": "Editar o consentimento: {label}",
+			"labelField": "Texto",
+			"labelHint": "Mostrado em todas as línguas sem tradução. Traduza-o a partir da ligação Traduções.",
+			"enabledCheckbox": "Ativado (visível para os clientes)",
+			"createButton": "Criar",
+			"cancel": "Cancelar",
+			"operationSuccess": "Guardado.",
+			"backToList": "Voltar aos consentimentos",
+			"translationsTitle": "Traduções: {label}"
+		},
+		"consent": {
+			"title": "Consentimentos",
+			"description": "Clientes que aceitaram o consentimento escolhido.",
+			"optinSelect": "Consentimento",
+			"deletedSuffix": "(eliminado)",
+			"email": "E-mail",
+			"npub": "npub",
+			"updatedAt": "Última atualização",
+			"empty": "Nenhum cliente aceitou este consentimento.",
+			"exportCsv": "Exportar em CSV",
+			"copyBcc": "Copiar a lista de e-mails para o campo Bcc",
+			"copied": "Copiado",
+			"count": "Clientes: {count}",
+			"optinsTab": "Consentimentos",
+			"exportTab": "Exportação"
 		}
 	},
 	"ageWarning": {

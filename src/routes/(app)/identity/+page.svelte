@@ -123,26 +123,18 @@
 						title={t('login.nsecBlockTitle')}
 					/>
 				</label>
-				{#if data.displayNewsletterCommercialProspection}
+				{#each data.consentOptins as optin (optin.id)}
 					<label class="checkbox-label col-span-3">
 						<input
 							class="form-checkbox"
 							type="checkbox"
-							checked={data.personalInfoConnected?.newsletter?.seller ?? false}
-							name="newsletter.seller"
+							checked={data.personalInfoConnected.consentOptinIds.includes(optin.id)}
+							name="consentOptinIds"
+							value={optin.id}
 						/>
-						{t('newsletter.allowSellerContact')}
+						{optin.label}
 					</label>
-					<label class="checkbox-label col-span-3">
-						<input
-							class="form-checkbox"
-							type="checkbox"
-							checked={data.personalInfoConnected?.newsletter?.partner ?? false}
-							name="newsletter.partner"
-						/>
-						{t('newsletter.allowPartnerContact')}
-					</label>
-				{/if}
+				{/each}
 				{#if $page.data.analyticsSnippetConfigured}
 					<button
 						type="button"

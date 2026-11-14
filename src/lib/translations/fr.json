@@ -384,7 +384,8 @@
 				"galleries": "Galeries",
 				"schedules": "Agendas",
 				"leaderboards": "Classements",
-				"searchlists": "Listes de recherche"
+				"searchlists": "Listes de recherche",
+				"consent": "Consentements"
 			},
 			"closeMenu": "Fermer le menu",
 			"brandHome": "Admin",
@@ -1191,7 +1192,7 @@
 			"removePopinProductPrice": "Supprimer le prix du produit dans la pop-in lors de l'ajout au panier",
 			"checkout": "Commande",
 			"showCheckoutButtonOnProductPage": "Afficher le bouton « commander » sur la page produit",
-			"displayNewsletterCommercialProspection": "Afficher l'option newsletter + prospection commerciale (désactivée par défaut)",
+			"displayNewsletterCommercialProspection": "Afficher les optins de sollicitation client",
 			"requestIpCollectionOnDeliverylessOrder": "Demander la collecte de l'IP pour les commandes sans livraison",
 			"mandatoryBillingAddress": "Adresse de facturation obligatoire",
 			"onlyAllowNonBusinessCustomers": "N'autoriser que les clients particuliers (pas d'option facturation pro)",
@@ -2181,6 +2182,43 @@
 			"notConfigured": "non configuré",
 			"priority": "Priorité",
 			"systemPriority": "Priorité système"
+		},
+		"consentOptins": {
+			"manageLink": "Gérer les optins de sollicitation client",
+			"title": "Optins de sollicitation client",
+			"description": "Optins proposés aux clients sur les pages de paiement et d'identité, dans cet ordre, quand « Afficher les optins de sollicitation client » est coché dans Paramètres > Général. Seuls les optins activés sont affichés, et un client n'accepte un optin qu'en le cochant.",
+			"empty": "Aucun optin pour l'instant.",
+			"disabledBadge": "Désactivé",
+			"translations": "Traductions",
+			"edit": "Modifier",
+			"deleteConfirm": "Supprimer l'optin « {label} » ? Les clients qui l'ont accepté restent listés dans l'export des consentements.",
+			"createNew": "Ajouter un optin",
+			"saveSortOrder": "Enregistrer l'ordre",
+			"editTitle": "Modifier l'optin : {label}",
+			"labelField": "Libellé",
+			"labelHint": "Affiché dans toutes les langues sans traduction. Traduisez-le depuis le lien Traductions.",
+			"enabledCheckbox": "Activé (affiché aux clients)",
+			"createButton": "Créer",
+			"cancel": "Annuler",
+			"operationSuccess": "Enregistré.",
+			"backToList": "Retour aux optins",
+			"translationsTitle": "Traductions : {label}"
+		},
+		"consent": {
+			"title": "Consentements",
+			"description": "Clients ayant accepté l'optin choisi.",
+			"optinSelect": "Optin",
+			"deletedSuffix": "(supprimé)",
+			"email": "E-mail",
+			"npub": "npub",
+			"updatedAt": "Dernière mise à jour",
+			"empty": "Aucun client n'a accepté cet optin.",
+			"exportCsv": "Exporter en CSV",
+			"copyBcc": "Copier la liste d'e-mails pour le champ Cci :",
+			"copied": "Copié",
+			"count": "Clients : {count}",
+			"optinsTab": "Optins",
+			"exportTab": "Export"
 		}
 	},
 	"ageWarning": {

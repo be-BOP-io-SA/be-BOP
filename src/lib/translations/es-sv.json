@@ -384,7 +384,8 @@
 				"galleries": "Galerías",
 				"schedules": "Horarios",
 				"leaderboards": "Clasificaciones",
-				"searchlists": "Listas de búsqueda"
+				"searchlists": "Listas de búsqueda",
+				"consent": "Consentimientos"
 			},
 			"closeMenu": "Cerrar menú",
 			"brandHome": "Admin",
@@ -1191,7 +1192,7 @@
 			"removePopinProductPrice": "Quitar el precio del producto en la ventana emergente al añadir al carrito",
 			"checkout": "Pago",
 			"showCheckoutButtonOnProductPage": "Mostrar el botón \"pagar\" en la página del producto",
-			"displayNewsletterCommercialProspection": "Mostrar la opción de boletín + prospección comercial (desactivada por defecto)",
+			"displayNewsletterCommercialProspection": "Mostrar las autorizaciones de solicitudes a clientes",
 			"requestIpCollectionOnDeliverylessOrder": "Solicitar la recopilación de la IP en pedidos sin envío",
 			"mandatoryBillingAddress": "Dirección de facturación obligatoria",
 			"onlyAllowNonBusinessCustomers": "Permitir solo clientes particulares (sin opción de facturación empresarial)",
@@ -2181,6 +2182,43 @@
 			"notConfigured": "no configurado",
 			"priority": "Prioridad",
 			"systemPriority": "Prioridad del sistema"
+		},
+		"consentOptins": {
+			"manageLink": "Gestionar las autorizaciones de solicitudes a clientes",
+			"title": "Autorizaciones de solicitudes a clientes",
+			"description": "Autorizaciones propuestas a los clientes en las páginas de pago e identidad, en este orden, cuando «Mostrar las autorizaciones de solicitudes a clientes» está marcado en Configuración > General. Solo se muestran las activadas, y un cliente solo acepta una autorización marcándola.",
+			"empty": "Aún no hay autorizaciones.",
+			"disabledBadge": "Desactivada",
+			"translations": "Traducciones",
+			"edit": "Editar",
+			"deleteConfirm": "¿Eliminar la autorización «{label}»? Los clientes que la aceptaron siguen apareciendo en la exportación de consentimientos.",
+			"createNew": "Añadir una autorización",
+			"saveSortOrder": "Guardar el orden",
+			"editTitle": "Editar la autorización: {label}",
+			"labelField": "Texto",
+			"labelHint": "Se muestra en todos los idiomas sin traducción. Tradúzcalo desde el enlace Traducciones.",
+			"enabledCheckbox": "Activada (visible para los clientes)",
+			"createButton": "Crear",
+			"cancel": "Cancelar",
+			"operationSuccess": "Guardado.",
+			"backToList": "Volver a las autorizaciones",
+			"translationsTitle": "Traducciones: {label}"
+		},
+		"consent": {
+			"title": "Consentimientos",
+			"description": "Clientes que aceptaron la autorización elegida.",
+			"optinSelect": "Autorización",
+			"deletedSuffix": "(eliminada)",
+			"email": "Correo electrónico",
+			"npub": "npub",
+			"updatedAt": "Última actualización",
+			"empty": "Ningún cliente aceptó esta autorización.",
+			"exportCsv": "Exportar en CSV",
+			"copyBcc": "Copiar la lista de correos para el campo CCO",
+			"copied": "Copiado",
+			"count": "Clientes: {count}",
+			"optinsTab": "Autorizaciones",
+			"exportTab": "Exportación"
 		}
 	},
 	"ageWarning": {

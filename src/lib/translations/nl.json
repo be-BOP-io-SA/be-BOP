@@ -384,7 +384,8 @@
 				"galleries": "Galerijen",
 				"schedules": "Schema's",
 				"leaderboards": "Scoreborden",
-				"searchlists": "Zoeklijsten"
+				"searchlists": "Zoeklijsten",
+				"consent": "Toestemmingen"
 			},
 			"closeMenu": "Menu sluiten",
 			"brandHome": "Admin",
@@ -1191,7 +1192,7 @@
 			"removePopinProductPrice": "Productprijs in de pop-in verwijderen bij toevoegen aan winkelwagen",
 			"checkout": "Afrekenen",
 			"showCheckoutButtonOnProductPage": "\"Afrekenen\"-knop tonen op de productpagina",
-			"displayNewsletterCommercialProspection": "Nieuwsbrief- + commerciële-prospectie-optie tonen (standaard uitgeschakeld)",
+			"displayNewsletterCommercialProspection": "Opt-ins voor klantbenadering weergeven",
 			"requestIpCollectionOnDeliverylessOrder": "IP-verzameling aanvragen bij bestellingen zonder bezorging",
 			"mandatoryBillingAddress": "Verplicht factuuradres",
 			"onlyAllowNonBusinessCustomers": "Alleen particuliere klanten toestaan (geen zakelijke facturatieoptie)",
@@ -2181,6 +2182,43 @@
 			"notConfigured": "niet geconfigureerd",
 			"priority": "Prioriteit",
 			"systemPriority": "Systeemprioriteit"
+		},
+		"consentOptins": {
+			"manageLink": "Opt-ins voor klantbenadering beheren",
+			"title": "Opt-ins voor klantbenadering",
+			"description": "Opt-ins die klanten op de afreken- en identiteitspagina in deze volgorde worden aangeboden, wanneer \"Opt-ins voor klantbenadering weergeven\" is aangevinkt onder Instellingen > Algemeen. Alleen ingeschakelde opt-ins worden getoond, en een klant gaat alleen akkoord door de opt-in aan te vinken.",
+			"empty": "Nog geen opt-in.",
+			"disabledBadge": "Uitgeschakeld",
+			"translations": "Vertalingen",
+			"edit": "Bewerken",
+			"deleteConfirm": "Opt-in \"{label}\" verwijderen? Klanten die akkoord gingen, blijven in de toestemmingsexport staan.",
+			"createNew": "Opt-in toevoegen",
+			"saveSortOrder": "Volgorde opslaan",
+			"editTitle": "Opt-in bewerken: {label}",
+			"labelField": "Label",
+			"labelHint": "Wordt getoond in elke taal zonder vertaling. Vertaal het via de link Vertalingen.",
+			"enabledCheckbox": "Ingeschakeld (zichtbaar voor klanten)",
+			"createButton": "Aanmaken",
+			"cancel": "Annuleren",
+			"operationSuccess": "Opgeslagen.",
+			"backToList": "Terug naar de opt-ins",
+			"translationsTitle": "Vertalingen: {label}"
+		},
+		"consent": {
+			"title": "Toestemmingen",
+			"description": "Klanten die akkoord gingen met de gekozen opt-in.",
+			"optinSelect": "Opt-in",
+			"deletedSuffix": "(verwijderd)",
+			"email": "E-mail",
+			"npub": "npub",
+			"updatedAt": "Laatste update",
+			"empty": "Geen enkele klant ging akkoord met deze opt-in.",
+			"exportCsv": "Exporteren als CSV",
+			"copyBcc": "E-maillijst kopiëren voor het Bcc-veld",
+			"copied": "Gekopieerd",
+			"count": "Klanten: {count}",
+			"optinsTab": "Opt-ins",
+			"exportTab": "Export"
 		}
 	},
 	"ageWarning": {
