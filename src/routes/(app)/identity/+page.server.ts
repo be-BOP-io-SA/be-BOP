@@ -39,17 +39,26 @@ export const actions = {
 			}
 		}
 
+		// The address is optional, so that a customer can manage their opt-ins with only an e-mail or
+		// an npub. The country select always sends a value: only the other fields start an address.
+		const address = json.address as Record<string, unknown> | undefined;
+		if (address && !address.street && !address.zip && !address.city && !address.state) {
+			delete json.address;
+		}
+
 		const personalInfo = z
 			.object({
-				address: z.object({
-					street: z.string().min(1).max(100).trim(),
-					zip: z.string().min(1).max(100).trim(),
-					city: z.string().min(1).max(100).trim(),
-					country: z.enum([...COUNTRY_ALPHA2S] as [CountryAlpha2, ...CountryAlpha2[]]),
-					state: z.string().min(1).max(100).trim().optional()
-				}),
-				firstName: z.string().min(1).max(100).trim(),
-				lastName: z.string().min(1).max(100).trim(),
+				address: z
+					.object({
+						street: z.string().min(1).max(100).trim(),
+						zip: z.string().min(1).max(100).trim(),
+						city: z.string().min(1).max(100).trim(),
+						country: z.enum([...COUNTRY_ALPHA2S] as [CountryAlpha2, ...CountryAlpha2[]]),
+						state: z.string().min(1).max(100).trim().optional()
+					})
+					.optional(),
+				firstName: z.string().min(1).max(100).trim().optional(),
+				lastName: z.string().min(1).max(100).trim().optional(),
 				npub: zodNpub().optional(),
 				email: z.string().email().optional()
 			})
@@ -59,9 +68,9 @@ export const actions = {
 			userQuery(userIdentifier(locals)),
 			{
 				$set: {
-					address: personalInfo.address,
-					firstName: personalInfo.firstName,
-					lastName: personalInfo.lastName,
+					...(personalInfo.address && { address: personalInfo.address }),
+					...(personalInfo.firstName && { firstName: personalInfo.firstName }),
+					...(personalInfo.lastName && { lastName: personalInfo.lastName }),
 					...(personalInfo.npub && { npub: personalInfo.npub }),
 					...(personalInfo.email && { email: personalInfo.email }),
 					updatedAt: new Date(),

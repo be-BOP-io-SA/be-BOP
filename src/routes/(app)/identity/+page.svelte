@@ -23,7 +23,6 @@
 						class="form-input"
 						name="firstName"
 						autocomplete="given-name"
-						required
 						value={data.personalInfoConnected?.firstName ?? ''}
 					/>
 				</label>
@@ -35,7 +34,6 @@
 						class="form-input"
 						name="lastName"
 						autocomplete="family-name"
-						required
 						value={data.personalInfoConnected?.lastName ?? ''}
 					/>
 				</label>
@@ -47,14 +45,13 @@
 						class="form-input"
 						autocomplete="street-address"
 						name="address.street"
-						required
 						value={data.personalInfoConnected?.address?.street ?? ''}
 					/>
 				</label>
 
 				<label class="form-label col-span-3">
 					{t('address.country')}
-					<select name="address.country" class="form-input" required>
+					<select name="address.country" class="form-input">
 						{#each sortedCountryCodes() as code}
 							<option value={code} selected={code === country}>{countryName(code)}</option>
 						{/each}
@@ -80,7 +77,6 @@
 						type="text"
 						name="address.city"
 						class="form-input"
-						required
 						value={data.personalInfoConnected?.address?.city ?? ''}
 					/>
 				</label>
@@ -91,7 +87,6 @@
 						type="text"
 						name="address.zip"
 						class="form-input"
-						required
 						autocomplete="postal-code"
 						value={data.personalInfoConnected?.address?.zip ?? ''}
 					/>
