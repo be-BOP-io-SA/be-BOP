@@ -75,6 +75,13 @@ export const actions = {
 				? personalInfo.address
 				: undefined;
 
+		const unset: Record<string, ''> = {
+			...(!address && { address: '' }),
+			...(!personalInfo.firstName && { firstName: '' }),
+			...(!personalInfo.lastName && { lastName: '' }),
+			[contact.kind === 'email' ? 'npub' : 'email']: ''
+		};
+
 		await collections.personalInfo.updateOne(
 			userQuery(userIdentifier(locals)),
 			{
@@ -86,12 +93,7 @@ export const actions = {
 					updatedAt: new Date(),
 					user: userIdentifier(locals)
 				},
-				$unset: {
-					...(!address && { address: '' }),
-					...(!personalInfo.firstName && { firstName: '' }),
-					...(!personalInfo.lastName && { lastName: '' }),
-					[contact.kind === 'email' ? 'npub' : 'email']: ''
-				},
+				$unset: unset,
 				$setOnInsert: { createdAt: new Date() }
 			},
 			{
