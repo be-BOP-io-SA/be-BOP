@@ -75,27 +75,30 @@ export const actions = {
 				? personalInfo.address
 				: undefined;
 
-		const unset: Record<string, ''> = {
-			...(!address && { address: '' }),
-			...(!personalInfo.firstName && { firstName: '' }),
-			...(!personalInfo.lastName && { lastName: '' }),
-			[contact.kind === 'email' ? 'npub' : 'email']: ''
-		};
+		const removed = [
+			...(address ? [] : ['address']),
+			...(personalInfo.firstName ? [] : ['firstName']),
+			...(personalInfo.lastName ? [] : ['lastName']),
+			contact.kind === 'email' ? 'npub' : 'email'
+		];
+		const now = new Date();
 
 		await collections.personalInfo.updateOne(
 			userQuery(userIdentifier(locals)),
-			{
-				$set: {
-					...(address && { address }),
-					...(personalInfo.firstName && { firstName: personalInfo.firstName }),
-					...(personalInfo.lastName && { lastName: personalInfo.lastName }),
-					[contact.kind]: contact.address,
-					updatedAt: new Date(),
-					user: userIdentifier(locals)
+			[
+				{
+					$set: {
+						...(address && { address: { $literal: address } }),
+						...(personalInfo.firstName && { firstName: { $literal: personalInfo.firstName } }),
+						...(personalInfo.lastName && { lastName: { $literal: personalInfo.lastName } }),
+						[contact.kind]: { $literal: contact.address },
+						user: { $literal: userIdentifier(locals) },
+						updatedAt: now,
+						createdAt: { $ifNull: ['$createdAt', now] }
+					}
 				},
-				$unset: unset,
-				$setOnInsert: { createdAt: new Date() }
-			},
+				{ $unset: removed }
+			],
 			{
 				upsert: true
 			}
