@@ -3,6 +3,7 @@ import { collections } from '$lib/server/database';
 import { fail } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
+import { consentOptinLabel } from '$lib/server/consentOptins';
 
 const optinSchema = z.object({
 	label: z.string().trim().min(1),
@@ -16,7 +17,7 @@ function parseForm(formData: FormData) {
 	});
 }
 
-export const load = async () => {
+export const load = async ({ locals }) => {
 	const optins = await collections.consentOptins
 		.find({ deletedAt: { $exists: false } })
 		.sort({ sortOrder: 1 })
@@ -26,6 +27,7 @@ export const load = async () => {
 		optins: optins.map((optin) => ({
 			_id: optin._id,
 			label: optin.label,
+			displayLabel: consentOptinLabel(optin, locals.language),
 			enabled: optin.enabled
 		}))
 	};

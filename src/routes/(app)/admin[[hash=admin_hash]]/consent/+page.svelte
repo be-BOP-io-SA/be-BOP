@@ -79,7 +79,7 @@
 				>
 					<div class="flex-1">
 						<div class="flex items-center gap-2">
-							<p class="font-bold">{optin.label}</p>
+							<p class="font-bold">{optin.displayLabel}</p>
 							{#if !optin.enabled}
 								<span class="text-xs bg-gray-500 text-white px-2 py-1 rounded"
 									>{t('admin.consentOptins.disabledBadge')}</span
@@ -110,7 +110,11 @@
 									type="submit"
 									class="btn btn-sm btn-danger"
 									on:click={(e) => {
-										if (!confirm(t('admin.consentOptins.deleteConfirm', { label: optin.label }))) {
+										if (
+											!confirm(
+												t('admin.consentOptins.deleteConfirm', { label: optin.displayLabel })
+											)
+										) {
 											e.preventDefault();
 										}
 									}}
@@ -172,7 +176,7 @@
 			>
 				<h3 class="text-xl font-bold">
 					{editingOptin
-						? t('admin.consentOptins.editTitle', { label: editingOptin.label })
+						? t('admin.consentOptins.editTitle', { label: editingOptin.displayLabel })
 						: t('admin.consentOptins.createNew')}
 				</h3>
 
