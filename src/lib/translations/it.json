@@ -2216,7 +2216,9 @@
 			"exportCsv": "Esporta in CSV",
 			"copyBcc": "Copia l'elenco e-mail per il campo Ccn",
 			"copied": "Copiato",
-			"count": "Clienti: {count}"
+			"count": "Clienti: {count}",
+			"optinsTab": "Consensi",
+			"exportTab": "Esportazione"
 		}
 	},
 	"ageWarning": {

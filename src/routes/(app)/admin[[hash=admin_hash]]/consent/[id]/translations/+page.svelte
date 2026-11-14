@@ -9,7 +9,7 @@
 	const { t } = useI18n();
 </script>
 
-<a href="{data.adminPrefix}/config/consent-optins" class="underline">
+<a href="{data.adminPrefix}/consent" class="underline">
 	{t('admin.consentOptins.backToList')}
 </a>
 

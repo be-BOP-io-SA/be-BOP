@@ -2216,7 +2216,9 @@
 			"exportCsv": "Exporteren als CSV",
 			"copyBcc": "E-maillijst kopiëren voor het Bcc-veld",
 			"copied": "Gekopieerd",
-			"count": "Klanten: {count}"
+			"count": "Klanten: {count}",
+			"optinsTab": "Opt-ins",
+			"exportTab": "Export"
 		}
 	},
 	"ageWarning": {

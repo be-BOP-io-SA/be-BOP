@@ -1099,7 +1099,13 @@ export const migrations = [
 			for (const id of [LEGACY_CONSENT_OPTIN_IDS.seller, LEGACY_CONSENT_OPTIN_IDS.partner]) {
 				await collections.personalInfo.updateMany(
 					{ [`newsletter.${id}`]: true },
-					{ $addToSet: { consentOptinIds: id } },
+					[
+						{
+							$set: {
+								consentOptinIds: { $setUnion: [{ $ifNull: ['$consentOptinIds', []] }, [id]] }
+							}
+						}
+					],
 					{ session }
 				);
 			}

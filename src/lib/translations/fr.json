@@ -2216,7 +2216,9 @@
 			"exportCsv": "Exporter en CSV",
 			"copyBcc": "Copier la liste d'e-mails pour le champ Cci :",
 			"copied": "Copié",
-			"count": "Clients : {count}"
+			"count": "Clients : {count}",
+			"optinsTab": "Optins",
+			"exportTab": "Export"
 		}
 	},
 	"ageWarning": {

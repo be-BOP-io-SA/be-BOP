@@ -2216,7 +2216,9 @@
 			"exportCsv": "Exportar en CSV",
 			"copyBcc": "Copiar la lista de correos para el campo CCO",
 			"copied": "Copiado",
-			"count": "Clientes: {count}"
+			"count": "Clientes: {count}",
+			"optinsTab": "Autorizaciones",
+			"exportTab": "Exportación"
 		}
 	},
 	"ageWarning": {

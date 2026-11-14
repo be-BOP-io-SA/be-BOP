@@ -2216,7 +2216,9 @@
 			"exportCsv": "Export CSV",
 			"copyBcc": "Copy e-mail list as cci: entry",
 			"copied": "Copied",
-			"count": "Customers: {count}"
+			"count": "Customers: {count}",
+			"optinsTab": "Opt-ins",
+			"exportTab": "Export"
 		}
 	},
 	"ageWarning": {

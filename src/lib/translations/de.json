@@ -2216,7 +2216,9 @@
 			"exportCsv": "Als CSV exportieren",
 			"copyBcc": "E-Mail-Liste für das Bcc-Feld kopieren",
 			"copied": "Kopiert",
-			"count": "Kunden: {count}"
+			"count": "Kunden: {count}",
+			"optinsTab": "Opt-ins",
+			"exportTab": "Export"
 		}
 	},
 	"ageWarning": {
