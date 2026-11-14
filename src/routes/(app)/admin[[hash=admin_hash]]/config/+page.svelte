@@ -342,6 +342,9 @@
 		/>
 		{t('admin.config.displayNewsletterCommercialProspection')}
 	</label>
+	<a href="{data.adminPrefix}/config/consent-optins" class="underline">
+		{t('admin.consentOptins.manageLink')}
+	</a>
 	<label class="checkbox-label">
 		<input
 			type="checkbox"

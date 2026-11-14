@@ -1,6 +1,6 @@
 import { collections } from '$lib/server/database.js';
 import { zodNpub } from '$lib/server/nostr';
-import { runtimeConfig } from '$lib/server/runtime-config';
+import { displayedConsentOptins, saveConsentOptinAnswers } from '$lib/server/consentOptins';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country.js';
 import { set } from '$lib/utils/set';
@@ -15,13 +15,13 @@ export async function load({ locals }) {
 		}
 	);
 	return {
-		displayNewsletterCommercialProspection: runtimeConfig.displayNewsletterCommercialProspection,
+		consentOptins: await displayedConsentOptins(locals.language),
 		personalInfoConnected: {
 			firstName: personalInfoConnected?.firstName,
 			lastName: personalInfoConnected?.lastName,
 			address: personalInfoConnected?.address,
 			_id: personalInfoConnected?._id.toString(),
-			newsletter: personalInfoConnected?.newsletter,
+			consentOptinIds: personalInfoConnected?.consentOptinIds ?? [],
 			npub: personalInfoConnected?.npub,
 			email: personalInfoConnected?.email
 		}
@@ -50,12 +50,6 @@ export const actions = {
 				}),
 				firstName: z.string().min(1).max(100).trim(),
 				lastName: z.string().min(1).max(100).trim(),
-				newsletter: z
-					.object({
-						seller: z.boolean({ coerce: true }).default(false),
-						partner: z.boolean({ coerce: true }).default(false)
-					})
-					.optional(),
 				npub: zodNpub().optional(),
 				email: z.string().email().optional()
 			})
@@ -68,7 +62,6 @@ export const actions = {
 					address: personalInfo.address,
 					firstName: personalInfo.firstName,
 					lastName: personalInfo.lastName,
-					...(personalInfo.newsletter && { newsletter: personalInfo.newsletter }),
 					...(personalInfo.npub && { npub: personalInfo.npub }),
 					...(personalInfo.email && { email: personalInfo.email }),
 					updatedAt: new Date(),
@@ -80,5 +73,17 @@ export const actions = {
 				upsert: true
 			}
 		);
+
+		const acceptedConsentOptinIds = formData.getAll('consentOptinIds').map(String);
+		if (acceptedConsentOptinIds.length) {
+			const displayedIds = (await displayedConsentOptins(locals.language)).map(({ id }) => id);
+			if (acceptedConsentOptinIds.some((id) => displayedIds.includes(id))) {
+				await saveConsentOptinAnswers({
+					user: userIdentifier(locals),
+					displayedIds,
+					acceptedIds: acceptedConsentOptinIds
+				});
+			}
+		}
 	}
 };

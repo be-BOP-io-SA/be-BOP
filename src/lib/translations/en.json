@@ -384,7 +384,8 @@
 				"galleries": "Galleries",
 				"schedules": "Schedules",
 				"leaderboards": "Leaderboards",
-				"searchlists": "Searchlists"
+				"searchlists": "Searchlists",
+				"consent": "Consent"
 			},
 			"closeMenu": "Close menu",
 			"brandHome": "Admin",
@@ -1191,7 +1192,7 @@
 			"removePopinProductPrice": "Remove product price on pop-in when adding to Cart",
 			"checkout": "Checkout",
 			"showCheckoutButtonOnProductPage": "Show \"checkout\" button on product page",
-			"displayNewsletterCommercialProspection": "Display newsletter + commercial prospection option (disabled by default)",
+			"displayNewsletterCommercialProspection": "Display customer solicitation opt-ins",
 			"requestIpCollectionOnDeliverylessOrder": "Request IP collection on deliveryless order",
 			"mandatoryBillingAddress": "Mandatory billing address",
 			"onlyAllowNonBusinessCustomers": "Only allow non-business customers (no pro-billing option)",
@@ -2181,6 +2182,41 @@
 			"notConfigured": "not configured",
 			"priority": "Priority",
 			"systemPriority": "System priority"
+		},
+		"consentOptins": {
+			"manageLink": "Manage customer solicitation opt-ins",
+			"title": "Customer solicitation opt-ins",
+			"description": "Opt-ins offered to customers on the checkout and identity pages, in this order, when \"Display customer solicitation opt-ins\" is checked in Settings > General. Only the enabled ones are shown, and a customer accepts an opt-in only by ticking it.",
+			"empty": "No opt-in yet.",
+			"disabledBadge": "Disabled",
+			"translations": "Translations",
+			"edit": "Edit",
+			"deleteConfirm": "Delete the opt-in \"{label}\"? Customers who accepted it stay listed in the consent export.",
+			"createNew": "Add an opt-in",
+			"saveSortOrder": "Save order",
+			"editTitle": "Edit opt-in: {label}",
+			"labelField": "Label",
+			"labelHint": "Shown in every language without a translation. Translate it from the Translations link.",
+			"enabledCheckbox": "Enabled (shown to customers)",
+			"createButton": "Create",
+			"cancel": "Cancel",
+			"operationSuccess": "Saved.",
+			"backToList": "Back to the opt-ins",
+			"translationsTitle": "Translations: {label}"
+		},
+		"consent": {
+			"title": "Consent",
+			"description": "Customers who accepted the chosen opt-in.",
+			"optinSelect": "Opt-in",
+			"deletedSuffix": "(deleted)",
+			"email": "E-mail",
+			"npub": "npub",
+			"updatedAt": "Last update",
+			"empty": "No customer accepted this opt-in.",
+			"exportCsv": "Export CSV",
+			"copyBcc": "Copy e-mail list as cci: entry",
+			"copied": "Copied",
+			"count": "Customers: {count}"
 		}
 	},
 	"ageWarning": {

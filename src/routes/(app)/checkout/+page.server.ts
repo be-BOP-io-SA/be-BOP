@@ -28,6 +28,7 @@ import { rateLimit } from '$lib/server/rateLimit.js';
 import { cmsFromContent } from '$lib/server/cms';
 import { omit } from '$lib/utils/omit.js';
 import { set } from '$lib/utils/set';
+import { displayedConsentOptins, saveConsentOptinAnswers } from '$lib/server/consentOptins';
 import { ObjectId } from 'mongodb';
 import type { Tag } from '$lib/types/Tag';
 import {
@@ -203,13 +204,13 @@ export async function load({ parent, locals }) {
 			lastName: personalInfoConnected?.lastName,
 			address: personalInfoConnected?.address,
 			_id: personalInfoConnected?._id.toString(),
-			newsletter: personalInfoConnected?.newsletter,
+			consentOptinIds: personalInfoConnected?.consentOptinIds ?? [],
 			npub: personalInfoConnected?.npub,
 			email: personalInfoConnected?.email
 		},
 		shopInformation: runtimeConfig.shopInformation,
 		isBillingAddressMandatory: runtimeConfig.isBillingAddressMandatory,
-		displayNewsletterCommercialProspection: runtimeConfig.displayNewsletterCommercialProspection,
+		consentOptins: await displayedConsentOptins(locals.language),
 		noProBilling: runtimeConfig.noProBilling,
 		posSubtypes: posSubtypes.map((subtype) => ({
 			slug: subtype.slug,
@@ -382,18 +383,7 @@ export const actions = {
 		if (shippingInfo && !shippingInfo.shipping.state) {
 			delete shippingInfo.shipping.state;
 		}
-		const newsletterProspection = runtimeConfig.displayNewsletterCommercialProspection
-			? z
-					.object({
-						newsletter: z
-							.object({
-								seller: z.boolean({ coerce: true }).default(false),
-								partner: z.boolean({ coerce: true }).default(false)
-							})
-							.optional()
-					})
-					.parse(json)
-			: null;
+		const acceptedConsentOptinIds = formData.getAll('consentOptinIds').map(String);
 		const note = json.noteContent
 			? z
 					.object({
@@ -493,27 +483,17 @@ export const actions = {
 			throw error(400, 'You must acknowledge that you offer delivery fees and add a justification');
 		}
 
-		if (
-			runtimeConfig.displayNewsletterCommercialProspection &&
-			newsletterProspection &&
-			(newsletterProspection.newsletter?.partner || newsletterProspection.newsletter?.seller)
-		) {
-			await collections.personalInfo.updateOne(
-				userQuery(userIdentifier(locals)),
-				{
-					$set: {
-						newsletter: newsletterProspection.newsletter,
-						...(npubAddress && { npub: npubAddress }),
-						...(email && { email: email }),
-						updatedAt: new Date(),
-						user: userIdentifier(locals)
-					},
-					$setOnInsert: { createdAt: new Date() }
-				},
-				{
-					upsert: true
-				}
-			);
+		if (acceptedConsentOptinIds.length) {
+			const displayedIds = (await displayedConsentOptins(locals.language)).map(({ id }) => id);
+			if (acceptedConsentOptinIds.some((id) => displayedIds.includes(id))) {
+				await saveConsentOptinAnswers({
+					user: userIdentifier(locals),
+					displayedIds,
+					acceptedIds: acceptedConsentOptinIds,
+					...(npubAddress && { npub: npubAddress }),
+					...(email && { email })
+				});
+			}
 		}
 		const physicalFullyPaid =
 			locals.user?.hasPosOptions && runtimeConfig.defaultOnLocation

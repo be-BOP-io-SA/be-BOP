@@ -15,7 +15,11 @@ import {
 } from '$lib/server/defaultCmsPages';
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
 import { defaultLanguageText } from './i18n-defaults';
-import { languages, type LanguageKey } from '$lib/translations';
+import { languages, locales, type LanguageKey } from '$lib/translations';
+import {
+	LEGACY_CONSENT_OPTIN_IDS,
+	type ConsentOptinTranslatableFields
+} from '$lib/types/ConsentOptin';
 
 // An upsert rather than find-then-insert: every instance seeds at start-up, and two starting
 // together on an empty database would otherwise both insert and one would hit a duplicate key.
@@ -58,6 +62,41 @@ export async function ensureDefaultSearchlist(session?: ClientSession): Promise<
 		},
 		{ session, upsert: true }
 	);
+}
+
+/**
+ * The two opt-ins every shop offered before opt-ins became editable, seeded first in the list and
+ * enabled. An upsert on a fixed id: run at every start, it creates them once and never recreates
+ * one an employee deleted, since a deleted opt-in stays in the collection.
+ */
+export async function ensureDefaultConsentOptins(session?: ClientSession): Promise<void> {
+	const legacy = [
+		{ _id: LEGACY_CONSENT_OPTIN_IDS.seller, key: 'newsletter.allowSellerContact', sortOrder: 0 },
+		{ _id: LEGACY_CONSENT_OPTIN_IDS.partner, key: 'newsletter.allowPartnerContact', sortOrder: 1 }
+	];
+	const now = new Date();
+	for (const optin of legacy) {
+		const translations: Partial<Record<LanguageKey, ConsentOptinTranslatableFields>> = {};
+		for (const locale of locales) {
+			if (locale !== 'en') {
+				translations[locale] = { label: defaultLanguageText(locale, optin.key) };
+			}
+		}
+		await collections.consentOptins.updateOne(
+			{ _id: optin._id },
+			{
+				$setOnInsert: {
+					label: defaultLanguageText('en', optin.key),
+					enabled: true,
+					sortOrder: optin.sortOrder,
+					translations,
+					createdAt: now,
+					updatedAt: now
+				}
+			},
+			{ session, upsert: true }
+		);
+	}
 }
 
 export async function ensureSearchSearchlist(session?: ClientSession): Promise<void> {
@@ -1052,6 +1091,19 @@ export const migrations = [
 				{ session }
 			);
 		}
+	},
+	{
+		_id: new ObjectId('6b35c2a0e92e590e85af2834'),
+		name: 'Copy the historical newsletter answers to consent opt-ins (issue #2834)',
+		run: async (session: ClientSession) => {
+			for (const id of [LEGACY_CONSENT_OPTIN_IDS.seller, LEGACY_CONSENT_OPTIN_IDS.partner]) {
+				await collections.personalInfo.updateMany(
+					{ [`newsletter.${id}`]: true },
+					{ $addToSet: { consentOptinIds: id } },
+					{ session }
+				);
+			}
+		}
 	}
 ];
 
@@ -1083,6 +1135,7 @@ export async function runMigrations() {
 	 */
 	await ensureDefaultSearchlist();
 	await ensureSearchSearchlist();
+	await ensureDefaultConsentOptins();
 
 	const lock = await Lock.tryAcquire('migrations');
 	if (!lock) {

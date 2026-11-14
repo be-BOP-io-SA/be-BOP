@@ -15,10 +15,16 @@ export interface PersonalInfo extends Timestamp {
 		country: CountryAlpha2;
 		state?: string;
 	};
+	/**
+	 * Answers to the two historical opt-ins. Kept as stored, read only by the migration that
+	 * copied them to `consentOptinIds`.
+	 */
 	newsletter?: {
 		seller: boolean;
 		partner: boolean;
 	};
+	/** Ids of the consent opt-ins the customer accepted. */
+	consentOptinIds?: string[];
 	npub?: string;
 	email?: string;
 	subscribedSchedule?: Schedule['_id'][];

@@ -54,6 +54,7 @@ import type { Leaderboard } from '$lib/types/Leaderboard';
 import type { OrderTab } from '$lib/types/OrderTab';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import type { CheckoutFieldConfig } from '$lib/types/CheckoutFieldConfig';
+import type { ConsentOptin } from '$lib/types/ConsentOptin';
 import type { PosSession } from '$lib/types/PosSession';
 import type { PendingZap } from '$lib/types/PendingZap';
 import type { AccountingLog } from '$lib/types/AccountingLog';
@@ -121,6 +122,7 @@ const genCollection = () => ({
 	scheduleEvents: db.collection<ScheduleEventBooked>('schedule.events'),
 	posPaymentSubtypes: db.collection<PosPaymentSubtype>('posPaymentSubtypes'),
 	checkoutFieldConfigs: db.collection<CheckoutFieldConfig>('checkoutFieldConfigs'),
+	consentOptins: db.collection<ConsentOptin>('consentOptins'),
 	posSessions: db.collection<PosSession>('posSessions'),
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
 
@@ -224,6 +226,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.personalInfo, { 'user.email': 1 }],
 	[collections.personalInfo, { 'user.ssoIds': 1 }],
 	[collections.personalInfo, { subscribedSchedule: 1 }, { sparse: true }],
+	[collections.personalInfo, { consentOptinIds: 1 }, { sparse: true }],
 	[collections.tickets, { orderId: 1 }],
 	[collections.tickets, { productId: 1 }],
 	[collections.tickets, { ticketId: 1 }, { unique: true }],
@@ -239,6 +242,7 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.checkoutFieldConfigs, { slug: 1 }, { unique: true }],
 	[collections.checkoutFieldConfigs, { sortOrder: 1 }],
 	[collections.checkoutFieldConfigs, { disabled: 1 }],
+	[collections.consentOptins, { sortOrder: 1 }],
 	[collections.posSessions, { status: 1, openedAt: -1 }],
 	[collections.posSessions, { closedAt: -1 }],
 	[collections.orderTabs, { slug: 1 }, { unique: true }],
