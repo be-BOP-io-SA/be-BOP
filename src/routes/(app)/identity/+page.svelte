@@ -23,7 +23,6 @@
 						class="form-input"
 						name="firstName"
 						autocomplete="given-name"
-						required
 						value={data.personalInfoConnected?.firstName ?? ''}
 					/>
 				</label>
@@ -35,7 +34,6 @@
 						class="form-input"
 						name="lastName"
 						autocomplete="family-name"
-						required
 						value={data.personalInfoConnected?.lastName ?? ''}
 					/>
 				</label>
@@ -47,14 +45,13 @@
 						class="form-input"
 						autocomplete="street-address"
 						name="address.street"
-						required
 						value={data.personalInfoConnected?.address?.street ?? ''}
 					/>
 				</label>
 
 				<label class="form-label col-span-3">
 					{t('address.country')}
-					<select name="address.country" class="form-input" required>
+					<select name="address.country" class="form-input">
 						{#each sortedCountryCodes() as code}
 							<option value={code} selected={code === country}>{countryName(code)}</option>
 						{/each}
@@ -80,7 +77,6 @@
 						type="text"
 						name="address.city"
 						class="form-input"
-						required
 						value={data.personalInfoConnected?.address?.city ?? ''}
 					/>
 				</label>
@@ -91,58 +87,34 @@
 						type="text"
 						name="address.zip"
 						class="form-input"
-						required
 						autocomplete="postal-code"
 						value={data.personalInfoConnected?.address?.zip ?? ''}
 					/>
 				</label>
-				{#if data.contactModes.includes('email')}
-					<label class="form-label col-span-3">
+				{#if data.email}
+					<label class="form-label col-span-6">
 						{t('checkout.notifications.email')}
-						<input
-							type="email"
-							name="email"
-							class="form-input"
-							placeholder={data.email || ''}
-							value={data.personalInfoConnected?.email || ''}
-						/>
+						<input type="email" class="form-input" value={data.email} readonly />
 					</label>
 				{/if}
-				<label
-					class="form-label {!data.contactModes.includes('email') ? 'col-span-6' : 'col-span-3'}"
-				>
-					{t('checkout.notifications.npub')}
-
-					<input
-						type="text"
-						name="npub"
-						class="form-input"
-						placeholder={data.npub || ''}
-						value={data.personalInfoConnected?.npub || ''}
-						pattern="^(?!nsec).*"
-						title={t('login.nsecBlockTitle')}
-					/>
-				</label>
-				{#if data.displayNewsletterCommercialProspection}
+				{#if data.npub}
+					<label class="form-label col-span-6">
+						{t('checkout.notifications.npub')}
+						<input type="text" class="form-input" value={data.npub} readonly />
+					</label>
+				{/if}
+				{#each data.consentOptins as optin (optin.id)}
 					<label class="checkbox-label col-span-3">
 						<input
 							class="form-checkbox"
 							type="checkbox"
-							checked={data.personalInfoConnected?.newsletter?.seller ?? false}
-							name="newsletter.seller"
+							checked={data.personalInfoConnected.consentOptinIds.includes(optin.id)}
+							name="consentOptinIds"
+							value={optin.id}
 						/>
-						{t('newsletter.allowSellerContact')}
+						{optin.label}
 					</label>
-					<label class="checkbox-label col-span-3">
-						<input
-							class="form-checkbox"
-							type="checkbox"
-							checked={data.personalInfoConnected?.newsletter?.partner ?? false}
-							name="newsletter.partner"
-						/>
-						{t('newsletter.allowPartnerContact')}
-					</label>
-				{/if}
+				{/each}
 				{#if $page.data.analyticsSnippetConfigured}
 					<button
 						type="button"
@@ -155,7 +127,7 @@
 				{/if}
 				<input
 					type="submit"
-					class="btn btn-black self-start p-1"
+					class="btn btn-black self-start justify-self-start p-1 col-span-6"
 					value={t('identity.cta.update')}
 				/>
 			</section>

@@ -677,26 +677,20 @@
 								required={key === 'paymentStatus' && !data.hasPosOptions}
 							/>
 						</div>
-						{#if data.displayNewsletterCommercialProspection}
+						{#if data.consentOptins.length}
 							<div class="p-4 flex flex-col gap-3">
-								<label class="checkbox-label col-span-3">
-									<input
-										class="form-checkbox"
-										type="checkbox"
-										checked={data.personalInfoConnected?.newsletter?.seller ?? false}
-										name="newsletter.seller"
-									/>
-									{t('newsletter.allowSellerContact')}
-								</label>
-								<label class="checkbox-label col-span-3">
-									<input
-										class="form-checkbox"
-										type="checkbox"
-										checked={data.personalInfoConnected?.newsletter?.partner ?? false}
-										name="newsletter.partner"
-									/>
-									{t('newsletter.allowPartnerContact')}
-								</label>
+								{#each data.consentOptins as optin (optin.id)}
+									<label class="checkbox-label col-span-3">
+										<input
+											class="form-checkbox"
+											type="checkbox"
+											checked={data.personalInfoConnected.consentOptinIds.includes(optin.id)}
+											name="consentOptinIds"
+											value={optin.id}
+										/>
+										{optin.label}
+									</label>
+								{/each}
 							</div>
 						{/if}
 					</article>

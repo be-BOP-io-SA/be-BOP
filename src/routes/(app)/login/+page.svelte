@@ -54,9 +54,15 @@
 		{/each}
 	</ul>
 	{#if !data.emailToLogin && !data.npubToLogin}
-		<p>{t('login.session.identityPrefill')}</p>
+		<!-- The identity page needs a session signed in with an e-mail or an npub -->
+		{#if data.email || data.npub}
+			<p>{t('login.session.identityPrefill')}</p>
+		{/if}
 		<div class="flex flex-col items-center sm:flex-row sm:items-start gap-4">
-			<a class="btn body-mainCTA min-h-[2em] h-auto" href="/identity">{t('login.cta.identity')}</a>
+			{#if data.email || data.npub}
+				<a class="btn body-mainCTA min-h-[2em] h-auto" href="/identity">{t('login.cta.identity')}</a
+				>
+			{/if}
 			{#if data.email || data.npub || data.sso?.length}
 				<a class="btn body-mainCTA min-h-[2em] h-auto" href="/orders">{t('login.cta.orders')}</a>
 				<form method="post" action="?/clearAll" use:enhance>
