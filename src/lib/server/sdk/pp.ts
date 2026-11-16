@@ -207,6 +207,9 @@ export interface PaymentProcessorDefinition {
 	 * It may ask the provider, for a value that expires before the payment does.
 	 */
 	payData?(payment: Order['payments'][number]): unknown | Promise<unknown>;
+
+	/** For a payment confirmed block after block: how many blocks it waits for. */
+	confirmationBlocks?(payment: Order['payments'][number]): number;
 }
 
 /** What a processor still writes itself: the rest is read from its declaration. */

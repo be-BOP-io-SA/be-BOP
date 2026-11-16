@@ -25,13 +25,14 @@ const METHOD_RANK: Record<PaymentMethod, number> = {
 	card: 0,
 	lightning: 1,
 	bitcoin: 2,
-	paypal: 3,
-	taler: 4,
-	osb: 5,
-	'point-of-sale': 6,
-	free: 7,
-	'bank-transfer': 8,
-	custom: 9
+	zcash: 3,
+	paypal: 4,
+	taler: 5,
+	osb: 6,
+	'point-of-sale': 7,
+	free: 8,
+	'bank-transfer': 9,
+	custom: 10
 };
 
 export const ALL_PAYMENT_PROCESSOR_SLUGS = (Object.keys(PROCESSORS) as PaymentProcessorSlug[]).sort(

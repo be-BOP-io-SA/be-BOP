@@ -12,6 +12,7 @@ export const ALL_PAYMENT_METHODS = [
 	'bank-transfer',
 	'bitcoin',
 	'lightning',
+	'zcash',
 	'point-of-sale',
 	'free',
 	'paypal',

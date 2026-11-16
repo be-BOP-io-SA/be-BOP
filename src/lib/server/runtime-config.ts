@@ -111,6 +111,20 @@ const baseConfig = {
 		defaultBlocks: 1
 	} as ConfirmationThresholds,
 	/**
+	 * A Zcash block comes every 75 seconds, eight times as often as a bitcoin block, so the
+	 * bitcoin thresholds would wait far too little. Defaults: about 75 s up to 0.1 ZEC, 4 min up
+	 * to 1 ZEC, 12 min up to 10 ZEC, and 30 min above.
+	 */
+	zcashConfirmationBlocksThresholds: {
+		currency: 'ZEC',
+		thresholds: [
+			{ minAmount: 0, maxAmount: 0.1, confirmationBlocks: 1 },
+			{ minAmount: 0.1, maxAmount: 1, confirmationBlocks: 3 },
+			{ minAmount: 1, maxAmount: 10, confirmationBlocks: 10 }
+		],
+		defaultBlocks: 24
+	} as ConfirmationThresholds,
+	/**
 	 * Payment timeout in minutes
 	 *
 	 * For POS & Wire transfer we set unlimited
@@ -242,6 +256,14 @@ const baseConfig = {
 		derivationPath?: string;
 	},
 	bitcoinBlockHeight: 0,
+	zcashNodeless: {
+		/** BIP44 account key, m/44'/133'/account' (xpub…), or m/44'/1'/account' on testnet (tpub…). */
+		xpub: '',
+		/** Two lightwalletd servers run by different operators: the second takes over when the first fails. */
+		primaryServer: 'zec.rocks:443',
+		backupServer: 'us.zec.stardust.rest:443',
+		derivationIndex: 0
+	},
 	...processorConfigDefaults(),
 	bity: {
 		clientId: ''
@@ -415,6 +437,12 @@ Amount: {{amount}} {{currency}}</p>`,
 			default: true as boolean
 		},
 		'order.payment.pending.bitcoin': {
+			subject: 'Order #{{orderNumber}}',
+			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
+<p>Please send {{amount}} {{currency}} to {{paymentAddress}}</p>`,
+			default: true as boolean
+		},
+		'order.payment.pending.zcash': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is pending, see <a href="{{orderLink}}">{{orderLink}}</a></p>
 <p>Please send {{amount}} {{currency}} to {{paymentAddress}}</p>`,

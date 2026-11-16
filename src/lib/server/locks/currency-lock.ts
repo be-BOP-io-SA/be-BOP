@@ -4,12 +4,12 @@ import { setTimeout } from 'node:timers/promises';
 import { processClosed } from '../process';
 import { Lock } from '../lock';
 import { runtimeConfig } from '../runtime-config';
-import { CURRENCIES, SATOSHIS_PER_BTC } from '$lib/types/Currency';
+import { FIAT_CURRENCIES, SATOSHIS_PER_BTC } from '$lib/types/Currency';
 import { z } from 'zod';
 
 const lock = new Lock('currency');
 
-const fiatCurrencySet = new Set<string>(CURRENCIES.filter((c) => c !== 'BTC' && c !== 'SAT'));
+const fiatCurrencySet = new Set<string>(FIAT_CURRENCIES);
 
 const coinbaseResponseSchema = z.object({
 	data: z.object({
@@ -42,6 +42,13 @@ export async function fetchAndSaveExchangeRates(): Promise<void> {
 				currentExchangeRates[currency] = number;
 			}
 		});
+
+	// A rate is "units for 1 BTC". ZEC is worth a few hundredths of a BTC, so unlike the fiat
+	// rates it keeps its decimals: 74.38 floored to 74 would price every order 0.5% off.
+	const zec = +rates.ZEC;
+	if (!isNaN(zec) && zec > 0) {
+		currentExchangeRates.ZEC = zec;
+	}
 
 	// SAT is fixed, never from API
 	currentExchangeRates.SAT = SATOSHIS_PER_BTC;

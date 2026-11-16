@@ -16,3 +16,4 @@ export { default as stripe } from './stripe/declaration';
 export { default as sumup } from './sumup/declaration';
 export { default as swissBitcoinPay } from './swiss-bitcoin-pay/declaration';
 export { default as taler } from './taler/declaration';
+export { default as zcashNodeless } from './zcash-nodeless/declaration';

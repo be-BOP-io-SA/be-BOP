@@ -5,9 +5,21 @@ import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
+/** Each chain keeps its own grid: a Zcash block comes every 75 seconds, a bitcoin one every ten minutes. */
+const GRID_KEYS = {
+	bitcoin: 'confirmationBlocksThresholds',
+	zcash: 'zcashConfirmationBlocksThresholds'
+} as const;
+
+export function load() {
+	// The bitcoin grid already comes with every page, from the layout.
+	return { zcashConfirmationBlocksThresholds: runtimeConfig.zcashConfirmationBlocksThresholds };
+}
+
 export const actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
+		const key = GRID_KEYS[z.enum(['bitcoin', 'zcash']).parse(formData.get('grid') ?? 'bitcoin')];
 
 		const json: JsonObject = {};
 		for (const [key, value] of formData) {
@@ -31,7 +43,7 @@ export const actions = {
 		confirmationThresholds.thresholds.sort((a, b) => a.minAmount - b.minAmount);
 
 		await collections.runtimeConfig.updateOne(
-			{ _id: 'confirmationBlocksThresholds' },
+			{ _id: key },
 			{
 				$set: {
 					data: confirmationThresholds,
@@ -46,6 +58,6 @@ export const actions = {
 			}
 		);
 
-		runtimeConfig.confirmationBlocksThresholds = confirmationThresholds;
+		runtimeConfig[key] = confirmationThresholds;
 	}
 };

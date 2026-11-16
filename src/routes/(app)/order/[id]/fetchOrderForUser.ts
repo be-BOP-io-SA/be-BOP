@@ -95,7 +95,9 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 			price: payment.price,
 			currencySnapshot: payment.currencySnapshot,
 			confirmationBlocksRequired:
-				payment.method === 'bitcoin' ? getConfirmationBlocks(payment.price) : 0,
+				payment.method === 'bitcoin'
+					? getConfirmationBlocks(payment.price)
+					: processorFor(payment)?.confirmationBlocks?.(payment) ?? 0,
 			awaitingConfirmation: payment.awaitingConfirmation ?? false,
 			...(payment.bankTransferNumber && { bankTransferNumber: payment.bankTransferNumber }),
 			...(payment.detail && { detail: payment.detail }),

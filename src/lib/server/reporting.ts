@@ -344,6 +344,7 @@ function paymentInfo(payment: ReportingPayment) {
 		case 'card':
 			return payment.transactions?.[0]?.transaction_code;
 		case 'bitcoin':
+		case 'zcash':
 			return payment.transactions?.[0]?.id ?? '';
 		default:
 			return payment.detail || '';
