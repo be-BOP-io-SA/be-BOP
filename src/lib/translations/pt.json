@@ -329,12 +329,6 @@
 			"assistSameAsMainFont": "Igual ao tipo de letra principal",
 			"assistGenerate": "Gerar tema"
 		},
-		"stripe": {
-			"testing": "A testar…",
-			"testConnection": "Testar ligação",
-			"testSuccess": "Ligação bem-sucedida. As credenciais Stripe estão a funcionar.",
-			"testFailed": "Falha na ligação: {reason}"
-		},
 		"nav": {
 			"section": {
 				"merch": "Loja",

@@ -1,7 +1,7 @@
 import { differenceInSeconds } from 'date-fns';
 import { z } from 'zod';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { lightningLabel, LIGHTNING } from '$lib/server/sdk/contrib/presentations';
+import { lightningLabel, LIGHTNING } from '$lib/server/sdk/presentations';
 import {
 	definePaymentProcessor,
 	type CreatePaymentParams,

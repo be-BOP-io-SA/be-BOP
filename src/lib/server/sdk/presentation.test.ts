@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { serializePresentation } from './pp';
-import { BITCOIN_PRESENTATION, LIGHTNING_PRESENTATION } from './contrib/presentations';
+import { BITCOIN_PRESENTATION, LIGHTNING_PRESENTATION } from './presentations';
 import type { PaymentProcessorDefinition } from './pp';
 import PPBitcoind from '$lib/payment-processors/bitcoind/processor.server';
 import PPPhoenixd from '$lib/payment-processors/phoenixd/processor.server';

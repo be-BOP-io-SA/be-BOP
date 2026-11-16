@@ -329,12 +329,6 @@
 			"assistSameAsMainFont": "Igual que la fuente principal",
 			"assistGenerate": "Generar tema"
 		},
-		"stripe": {
-			"testing": "Probando…",
-			"testConnection": "Probar conexión",
-			"testSuccess": "Conexión exitosa. Las credenciales de Stripe funcionan.",
-			"testFailed": "Conexión fallida: {reason}"
-		},
 		"nav": {
 			"section": {
 				"merch": "Tienda",

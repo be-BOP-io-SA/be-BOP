@@ -20,7 +20,6 @@ import type { ZodType, ZodTypeDef } from 'zod';
 export interface PaymentProcessorMeta {
 	processor: PaymentProcessor;
 	method: PaymentMethod;
-	emoji?: string;
 }
 
 export interface CreatePaymentParams {

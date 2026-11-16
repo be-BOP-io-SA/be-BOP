@@ -41,10 +41,9 @@ describe('adminLinks integrity', () => {
 		}
 	});
 
-	it('lists the payment settings in the order shop owners know', () => {
-		const payment = adminLinks.find((section) => section.section === 'Payment Settings');
-
-		expect(payment?.links.map((link) => [link.href, link.label])).toEqual([
+	// A new processor takes its place among these without being listed here.
+	it('keeps the payment settings shop owners know in the order they know', () => {
+		const known = [
 			['/admin/sumup', 'SumUp'],
 			['/admin/stripe', 'Stripe'],
 			['/admin/swiss-bitcoin-pay', 'Swiss Bitcoin Pay'],
@@ -59,6 +58,13 @@ describe('adminLinks integrity', () => {
 			['/admin/osb', 'OSB'],
 			['/admin/pos-payments', 'PoS Payments'],
 			['/admin/custom-payments', 'Custom payment methods']
-		]);
+		];
+		const payment = adminLinks.find((section) => section.section === 'Payment Settings');
+
+		expect(
+			payment?.links
+				.map((link) => [link.href, link.label])
+				.filter(([href]) => known.some(([knownHref]) => knownHref === href))
+		).toEqual(known);
 	});
 });

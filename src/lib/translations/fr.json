@@ -329,12 +329,6 @@
 			"assistSameAsMainFont": "Identique à la police principale",
 			"assistGenerate": "Générer le thème"
 		},
-		"stripe": {
-			"testing": "Test en cours…",
-			"testConnection": "Tester la connexion",
-			"testSuccess": "Connexion réussie. Les identifiants Stripe fonctionnent.",
-			"testFailed": "Échec de la connexion : {reason}"
-		},
 		"nav": {
 			"section": {
 				"merch": "Boutique",

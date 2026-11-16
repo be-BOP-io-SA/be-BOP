@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { differenceInMinutes } from 'date-fns';
-import { lightningLabel, LIGHTNING } from '$lib/server/sdk/contrib/presentations';
+import { lightningLabel, LIGHTNING } from '$lib/server/sdk/presentations';
 import {
 	definePaymentProcessor,
 	type CreatePaymentParams,

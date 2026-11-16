@@ -91,11 +91,13 @@ describe('admin POS tap-to-pay provider', () => {
 		return (await load({} as Parameters<typeof load>[0])).tapToPay.providers;
 	}
 
-	it('offers no provider first, then every processor that matches terminal payments', async () => {
-		expect(await providers()).toEqual([
-			{ provider: 'not-used', available: true },
-			{ provider: 'stripe', displayName: 'Stripe', available: false }
-		]);
+	it('offers no provider first, and a processor without its credentials greyed out', async () => {
+		runtimeConfig.stripe = { ...stripeConfig, secretKey: '', publicKey: 'pk_test' };
+
+		const offered = await providers();
+
+		expect(offered[0]).toEqual({ provider: 'not-used', available: true });
+		expect(offered).toContainEqual({ provider: 'stripe', displayName: 'Stripe', available: false });
 	});
 
 	// Matching reads the payments of the terminal, which takes the secret key and nothing else.

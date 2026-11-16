@@ -1,14 +1,10 @@
 import type { PaymentMethod } from '$lib/server/payment-methods';
 import * as declarations from '$lib/payment-processors';
-import {
-	configDefaults,
-	type ProcessorConfigs,
-	type ProcessorDeclaration
-} from '$lib/payment-processors/types';
+import { configDefaults, type ProcessorConfigs } from '$lib/payment-processors/types';
 
 /**
  * The static facts about every payment processor: what it is, what it serves, how it ranks,
- * and where its settings live.
+ * and where its settings live. Each is read from the declaration in the processor's folder.
  *
  * This file is a leaf on purpose. `adminLinks.ts` needs the list to build the back-office
  * navigation, and that file runs in the browser — it is imported by the admin layout and by
@@ -18,22 +14,9 @@ import {
  */
 type Declared = (typeof declarations)[keyof typeof declarations];
 
-// Processors still written as `sdk/contrib/PP<Name>.ts`. One with its own folder in
-// `$lib/payment-processors` is declared there instead.
-const LEGACY = {
-	// --- settled by hand, so nothing to configure and nothing to poll ---
-	'point-of-sale': { method: 'point-of-sale', label: 'Point of sale', priority: 10 },
-	free: { method: 'free', label: 'Free', priority: 10 },
-	'bank-transfer': { method: 'bank-transfer', label: 'Bank transfer', priority: 10 },
-	custom: { method: 'custom', label: 'Custom', priority: 10 }
-} as const satisfies Record<string, Omit<ProcessorDeclaration, 'slug' | 'config'>>;
-
-export const PROCESSORS = {
-	...LEGACY,
-	...(Object.fromEntries(
-		Object.values(declarations).map((declaration) => [declaration.slug, declaration])
-	) as { [D in Declared as D['slug']]: D })
-};
+export const PROCESSORS = Object.fromEntries(
+	Object.values(declarations).map((declaration) => [declaration.slug, declaration])
+) as { [D in Declared as D['slug']]: D };
 
 export type PaymentProcessorSlug = keyof typeof PROCESSORS;
 

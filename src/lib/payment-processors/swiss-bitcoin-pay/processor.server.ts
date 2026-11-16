@@ -2,7 +2,7 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { differenceInMinutes } from 'date-fns';
-import { lightningLabel, LIGHTNING } from '$lib/server/sdk/contrib/presentations';
+import { lightningLabel, LIGHTNING } from '$lib/server/sdk/presentations';
 import {
 	definePaymentProcessor,
 	type CreatePaymentParams,

@@ -258,6 +258,14 @@ describe('fetchOrderForUser', () => {
 		({ processor, configKey, credentials, statusUrl, paid, unpaid }) => {
 			const initialConfig = { ...runtimeConfig[configKey] };
 
+			// The config is read from the test database, where another file may have left some.
+			beforeEach(() => {
+				Object.assign(
+					runtimeConfig[configKey],
+					Object.fromEntries(Object.keys(credentials).map((name) => [name, '']))
+				);
+			});
+
 			afterEach(() => {
 				Object.assign(runtimeConfig[configKey], initialConfig);
 				vi.unstubAllGlobals();

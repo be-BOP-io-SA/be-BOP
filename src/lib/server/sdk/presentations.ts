@@ -3,13 +3,19 @@ import type { Order } from '$lib/types/Order';
 import type { Currency } from '$lib/types/Currency';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { ORIGIN } from '$lib/server/env-config';
-import type { PaymentPresentation } from '../pp';
+import { MANUAL_PRESENTATION, type PaymentPresentation } from './pp';
 
 /**
- * Presentations and label helpers for the crypto processors. They live here rather than in
- * `pp.ts` so the interface itself names no particular payment protocol: a card, a wire or a
- * mobile-money processor has no reason to load a BIP21 encoder to implement it.
+ * What processors of a same family share. It lives here rather than in `pp.ts` so the
+ * interface itself names no particular payment protocol: a card, a wire or a mobile-money
+ * processor has no reason to load a BIP21 encoder to implement it.
  */
+
+/** What every hand-settled processor shares: nothing to scan, paid in the shop's own currency. */
+export const MANUAL = {
+	presentation: MANUAL_PRESENTATION,
+	settlementCurrency: (): Currency => runtimeConfig.mainCurrency
+};
 
 export const LIGHTNING_PRESENTATION: PaymentPresentation = {
 	kind: 'qr',

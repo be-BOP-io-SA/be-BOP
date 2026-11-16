@@ -329,12 +329,6 @@
 			"assistSameAsMainFont": "Zelfde als hoofdlettertype",
 			"assistGenerate": "Thema genereren"
 		},
-		"stripe": {
-			"testing": "Testen…",
-			"testConnection": "Verbinding testen",
-			"testSuccess": "Verbinding geslaagd. De Stripe-inloggegevens werken.",
-			"testFailed": "Verbinding mislukt: {reason}"
-		},
 		"nav": {
 			"section": {
 				"merch": "Winkel",

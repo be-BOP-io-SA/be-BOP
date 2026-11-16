@@ -8,7 +8,7 @@ import {
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { sum } from '$lib/utils/sum';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
-import { BITCOIN } from '$lib/server/sdk/contrib/presentations';
+import { BITCOIN } from '$lib/server/sdk/presentations';
 import {
 	definePaymentProcessor,
 	type CreatePaymentParams,

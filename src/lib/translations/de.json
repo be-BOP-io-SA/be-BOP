@@ -329,12 +329,6 @@
 			"assistSameAsMainFont": "Gleich wie Hauptschriftart",
 			"assistGenerate": "Theme generieren"
 		},
-		"stripe": {
-			"testing": "Wird getestet…",
-			"testConnection": "Verbindung testen",
-			"testSuccess": "Verbindung erfolgreich. Die Stripe-Zugangsdaten funktionieren.",
-			"testFailed": "Verbindung fehlgeschlagen: {reason}"
-		},
 		"nav": {
 			"section": {
 				"merch": "Shop",
