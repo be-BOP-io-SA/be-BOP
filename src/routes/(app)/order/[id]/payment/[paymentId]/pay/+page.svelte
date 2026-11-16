@@ -13,7 +13,7 @@
 <main class="mx-auto max-w-7xl py-10 px-6 flex flex-col md:flex-row gap-4 justify-around">
 	<div class="grow">
 		{#if data.front && data.payData}
-			<svelte:component this={data.front.PayForm} data={data.payData} {orderPath} />
+			<svelte:component this={data.front.component} view="pay" data={data.payData} {orderPath} />
 		{/if}
 	</div>
 	<div class="self-center md:self-stretch">

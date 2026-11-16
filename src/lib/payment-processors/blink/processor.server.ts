@@ -1,15 +1,15 @@
-import { isBlinkConfigured, blinkCreateInvoice, blinkLookupInvoice } from '$lib/server/blink';
 import { z } from 'zod';
 import { differenceInMinutes } from 'date-fns';
-import { lightningLabel, LIGHTNING_PRESENTATION } from './presentations';
-import type {
-	PaymentProcessorDefinition,
-	CreatePaymentParams,
-	CreatePaymentResult,
-	CheckPaymentResult
-} from '../pp';
-import { configSchemaFor } from '../pp';
+import { lightningLabel, LIGHTNING } from '$lib/server/sdk/contrib/presentations';
+import {
+	definePaymentProcessor,
+	type CreatePaymentParams,
+	type CreatePaymentResult,
+	type CheckPaymentResult
+} from '$lib/server/sdk/pp';
 import type { Order } from '$lib/types/Order';
+import { isBlinkConfigured, blinkCreateInvoice, blinkLookupInvoice } from './api.server';
+import declaration from './declaration';
 
 /**
  * Blink Lightning processor (receive-only, BTC-only).
@@ -20,28 +20,20 @@ import type { Order } from '$lib/types/Order';
  *   - checkoutId set  ⇒ Spark (LUD-21 verify URL)
  *   - otherwise       ⇒ GraphQL lookup (api-key or custodial, per current config)
  */
-export default {
-	meta: { processor: 'blink', method: 'lightning', emoji: '⚡' },
+export default definePaymentProcessor(declaration, {
+	...LIGHTNING,
 
 	isEnabled: () => isBlinkConfigured(),
 
-	configSchema: configSchemaFor(
-		'blink',
-		z
-			.object({
-				apiKey: z.string().trim().default(''),
-				lnAddress: z.string().trim().default(''),
-				walletId: z.string().trim().default('')
-			})
-			.refine((v) => v.apiKey || v.lnAddress, {
-				message: 'Provide either a Lightning address or an API key'
-			})
-	),
-	secretConfigFields: ['apiKey'],
-
-	settlementCurrency: () => 'SAT',
-
-	presentation: LIGHTNING_PRESENTATION,
+	configSchema: z
+		.object({
+			apiKey: z.string().trim().default(''),
+			lnAddress: z.string().trim().default(''),
+			walletId: z.string().trim().default('')
+		})
+		.refine((v) => v.apiKey || v.lnAddress, {
+			message: 'Provide either a Lightning address or an API key'
+		}),
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const satoshis = params.toPay.amount;
@@ -80,4 +72,4 @@ export default {
 		}
 		return { status: 'pending' };
 	}
-} satisfies PaymentProcessorDefinition;
+});

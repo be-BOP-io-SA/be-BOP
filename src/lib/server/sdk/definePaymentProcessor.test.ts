@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
+import { z } from 'zod';
 import { configDefaults, defineProcessor, payData } from '$lib/payment-processors/types';
 import { runtimeConfig, type RuntimeConfig } from '$lib/server/runtime-config';
 import type { Currency } from '$lib/types/Currency';
@@ -70,6 +71,45 @@ describe('definePaymentProcessor', () => {
 			publicKey: string;
 			currency: Currency;
 		}>();
+	});
+});
+
+describe('a processor with a rule its fields cannot say', () => {
+	const eitherOr = defineProcessor({
+		slug: 'blink',
+		method: 'lightning',
+		label: 'Fixture',
+		priority: 10,
+		configKey: 'blink',
+		config: {
+			fields: {
+				lnAddress: { kind: 'text', optional: true },
+				apiKey: { kind: 'secret', optional: true }
+			}
+		}
+	});
+
+	it('saves through the schema it wrote', () => {
+		const pp = definePaymentProcessor(eitherOr, {
+			...implementation,
+			configSchema: z
+				.object({ lnAddress: z.string().default(''), apiKey: z.string().default('') })
+				.refine((config) => config.lnAddress || config.apiKey)
+		});
+
+		expect(pp.configSchema.safeParse({}).success).toBe(false);
+		expect(pp.configSchema.parse({ apiKey: 'key' })).toEqual({ lnAddress: '', apiKey: 'key' });
+		expect(pp.secretConfigFields).toEqual(['apiKey']);
+	});
+
+	it('refuses, at compile time, a schema that leaves out a declared field', () => {
+		const pp = definePaymentProcessor(eitherOr, {
+			...implementation,
+			// @ts-expect-error `apiKey` is declared, so pnpm check fails on a schema without it
+			configSchema: z.object({ lnAddress: z.string() })
+		});
+
+		expect(pp.configSchema?.parse({ lnAddress: 'a' })).toEqual({ lnAddress: 'a' });
 	});
 });
 

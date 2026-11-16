@@ -1,11 +1,22 @@
-import { runtimeConfig } from './runtime-config';
+import { differenceInSeconds } from 'date-fns';
+import { z } from 'zod';
+import { runtimeConfig } from '$lib/server/runtime-config';
+import { lightningLabel, LIGHTNING } from '$lib/server/sdk/contrib/presentations';
+import {
+	definePaymentProcessor,
+	type CreatePaymentParams,
+	type CreatePaymentResult,
+	type CheckPaymentResult
+} from '$lib/server/sdk/pp';
+import type { Order } from '$lib/types/Order';
+import declaration from './declaration';
 
-export function isBtcpayServerConfigured() {
+function isBtcpayServerConfigured() {
 	const config = runtimeConfig.btcpayServer ?? {};
 	return !!config.apiKey && !!config.serverUrl && !!config.storeId;
 }
 
-export interface CreateLightningInvoiceRequest {
+interface CreateLightningInvoiceRequest {
 	/** Amount in millisatoshi as a string */
 	amount: string;
 	/** Description of the invoice in BOLT11 */
@@ -18,9 +29,9 @@ export interface CreateLightningInvoiceRequest {
 	privateRouteHints?: boolean;
 }
 
-export type LightningInvoiceStatus = 'Expired' | 'Paid' | 'Unpaid';
+type LightningInvoiceStatus = 'Expired' | 'Paid' | 'Unpaid';
 
-export interface LightningInvoiceData {
+interface LightningInvoiceData {
 	id: string;
 	/** Invoice status (e.g., New, Paid, Expired) */
 	status: LightningInvoiceStatus;
@@ -53,7 +64,7 @@ interface ProblemDetails {
 	message: string;
 }
 
-export async function btcpayCreateLnInvoice(
+async function btcpayCreateLnInvoice(
 	request: CreateLightningInvoiceRequest
 ): Promise<LightningInvoiceData> {
 	if (!isBtcpayServerConfigured()) {
@@ -82,7 +93,7 @@ export async function btcpayCreateLnInvoice(
 	return await response.json();
 }
 
-export async function btcpayGetLnInvoice(invoiceId: string): Promise<LightningInvoiceData> {
+async function btcpayGetLnInvoice(invoiceId: string): Promise<LightningInvoiceData> {
 	if (!isBtcpayServerConfigured()) {
 		throw new Error('BTCPay Server is not enabled');
 	}
@@ -107,3 +118,72 @@ export async function btcpayGetLnInvoice(invoiceId: string): Promise<LightningIn
 	}
 	return await response.json();
 }
+
+export default definePaymentProcessor(declaration, {
+	...LIGHTNING,
+
+	isEnabled: () => isBtcpayServerConfigured(),
+
+	configSchema: z.object({
+		apiKey: z.string().min(1),
+		serverUrl: z
+			.string()
+			.url()
+			.refine((v) => v.startsWith('http://') || v.startsWith('https://'), {
+				message: 'BTCPay Server URL must specify the http or https protocol'
+			})
+			.transform((v) => v.replace(/\/\s*$/, '').trim()),
+		storeId: z.string().min(1).trim()
+	}),
+
+	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
+		const satoshis = params.toPay.amount;
+		const label = lightningLabel(params.orderId, params.orderNumber);
+
+		const invoice = await btcpayCreateLnInvoice({
+			amount: `${satoshis * 1000}`,
+			description: label,
+			...(params.expiresAt && {
+				expiry: differenceInSeconds(params.expiresAt, new Date())
+			})
+		});
+
+		return {
+			address: invoice.BOLT11,
+			invoiceId: invoice.id,
+			processor: 'btcpay-server'
+		};
+	},
+
+	async checkPayment(
+		payment: Order['payments'][number],
+		order: Order // eslint-disable-line @typescript-eslint/no-unused-vars
+	): Promise<CheckPaymentResult> {
+		if (!payment.invoiceId) {
+			throw new Error('Missing invoice ID on btcpay-server payment');
+		}
+
+		const invoice = await btcpayGetLnInvoice(payment.invoiceId);
+
+		switch (invoice.status) {
+			case 'Paid':
+				return {
+					status: 'paid',
+					received: {
+						amount: Number(invoice.amountReceived) / 1000,
+						currency: 'SAT'
+					}
+				};
+			case 'Expired':
+				return { status: 'expired' };
+			case 'Unpaid':
+				return { status: 'pending' };
+			default:
+				console.log(
+					`Unexpected status for BTCPay Server invoice ${payment.invoiceId}: ${invoice.status}`
+				);
+				invoice.status satisfies never;
+				return { status: 'pending' };
+		}
+	}
+});

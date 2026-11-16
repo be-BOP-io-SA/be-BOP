@@ -1,22 +1,19 @@
 import { isLndConfigured, lndCreateInvoice, lndLookupInvoice } from '$lib/server/lnd';
 import { differenceInSeconds } from 'date-fns';
-import { lightningLabel, LIGHTNING_PRESENTATION } from './presentations';
-import type {
-	PaymentProcessorDefinition,
-	CreatePaymentParams,
-	CreatePaymentResult,
-	CheckPaymentResult
-} from '../pp';
+import { lightningLabel, LIGHTNING } from '$lib/server/sdk/contrib/presentations';
+import {
+	definePaymentProcessor,
+	type CreatePaymentParams,
+	type CreatePaymentResult,
+	type CheckPaymentResult
+} from '$lib/server/sdk/pp';
 import type { Order } from '$lib/types/Order';
+import declaration from './declaration';
 
-export default {
-	meta: { processor: 'lnd', method: 'lightning', emoji: '⚡' },
+export default definePaymentProcessor(declaration, {
+	...LIGHTNING,
 
 	isEnabled: () => isLndConfigured(),
-
-	settlementCurrency: () => 'SAT',
-
-	presentation: LIGHTNING_PRESENTATION,
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const satoshis = params.toPay.amount;
@@ -63,4 +60,4 @@ export default {
 		// ACCEPTED or OPEN — still pending
 		return { status: 'pending' };
 	}
-} satisfies PaymentProcessorDefinition;
+});

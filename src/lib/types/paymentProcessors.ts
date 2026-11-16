@@ -21,23 +21,6 @@ type Declared = (typeof declarations)[keyof typeof declarations];
 // Processors still written as `sdk/contrib/PP<Name>.ts`. One with its own folder in
 // `$lib/payment-processors` is declared there instead.
 const LEGACY = {
-	// --- lightning ---
-	'btcpay-server': {
-		method: 'lightning',
-		label: 'BTCPay Server',
-		priority: 20,
-		configKey: 'btcpayServer'
-	},
-	phoenixd: {
-		method: 'lightning',
-		label: 'PhoenixD',
-		priority: 30,
-		configKey: 'phoenixd',
-		customAdminPage: true
-	},
-	lnd: { method: 'lightning', label: 'Lightning LND node', priority: 40, customAdminPage: true },
-	blink: { method: 'lightning', label: 'Blink', priority: 50, configKey: 'blink' },
-
 	// --- bitcoin ---
 	'bitcoin-nodeless': {
 		method: 'bitcoin',
@@ -84,13 +67,14 @@ export const ALL_PAYMENT_PROCESSOR_SLUGS = (Object.keys(PROCESSORS) as PaymentPr
 		PROCESSORS[a].priority - PROCESSORS[b].priority
 );
 
-/** The default settings of every processor declared in its own folder, by `configKey`. */
+/** The default settings of every processor that declares its fields, by `configKey`. */
 export function processorConfigDefaults(): ProcessorConfigs<Declared> {
 	return Object.fromEntries(
-		Object.values(declarations).map((declaration) => [
-			declaration.configKey,
-			configDefaults(declaration.config.fields)
-		])
+		Object.values(declarations).flatMap((declaration) =>
+			'config' in declaration
+				? [[declaration.configKey, configDefaults(declaration.config.fields)]]
+				: []
+		)
 	) as ProcessorConfigs<Declared>;
 }
 

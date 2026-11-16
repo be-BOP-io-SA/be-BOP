@@ -1,6 +1,10 @@
 // One line per processor: everything else about it lives in its folder.
+export { default as blink } from './blink/declaration';
+export { default as btcpayServer } from './btcpay-server/declaration';
+export { default as lnd } from './lnd/declaration';
 export { default as osb } from './osb/declaration';
 export { default as paypal } from './paypal/declaration';
+export { default as phoenixd } from './phoenixd/declaration';
 export { default as stripe } from './stripe/declaration';
 export { default as sumup } from './sumup/declaration';
 export { default as swissBitcoinPay } from './swiss-bitcoin-pay/declaration';

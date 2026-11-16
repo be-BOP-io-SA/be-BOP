@@ -4,11 +4,11 @@ import { choose, selectFor } from './select.js';
 /**
  * End-to-end cover for the shared payment-processor settings page.
  *
- * Every processor with credentials is served by one route, `[pspSlug=psp]`, which renders a
- * component named after the processor. Nothing in the type system says that component exists,
- * that the route matcher lets the slug through, or that the page renders at all — a missing
- * form would be a blank section in production, not a compile error. That is what these
- * assertions are for.
+ * Every processor with credentials is served by one route, `[pspSlug=psp]`, which draws the
+ * fields the processor declares, or lets the processor draw them. Nothing in the type system
+ * says that the route matcher lets the slug through, or that the page renders at all — a
+ * missing form would be a blank section in production, not a compile error. That is what
+ * these assertions are for.
  *
  * The session comes from `auth.setup.ts`, which signs in once for the whole run.
  */
@@ -153,6 +153,73 @@ test('a server address is stored without its trailing slash', async ({ page }) =
 	await expect(page.getByLabel('Backend URL')).toHaveValue('');
 });
 
+test('a processor that draws its own form links to what the shop is typing', async ({ page }) => {
+	await page.goto('/admin/btcpay-server', { waitUntil: 'networkidle' });
+	// By name: once the links show, the label of the API key also reads "Server URL".
+	const serverUrl = page.locator('input[name="serverUrl"]');
+	const storeId = page.locator('input[name="storeId"]');
+	await expect(page.getByLabel('Server URL')).toHaveAttribute('type', 'url');
+	await expect(page.getByRole('link', { name: 'your store settings' })).toHaveCount(0);
+
+	try {
+		await serverUrl.fill('https://btcpay.e2e.example/');
+		await storeId.fill('e2e-store');
+		await expect(page.locator('a', { hasText: 'your store settings' })).toHaveAttribute(
+			'href',
+			'https://btcpay.e2e.example/stores/e2e-store/lightning/BTC/settings'
+		);
+		await expect(page.locator('a', { hasText: 'your account settings' })).toHaveAttribute(
+			'href',
+			'https://btcpay.e2e.example/account/apikeys'
+		);
+		await expect(page.locator('code').first()).toHaveText('btcpay.store.cancreatelightninginvoice');
+
+		await page.locator('input[name="apiKey"]').fill('e2e-btcpay-key');
+		await page.getByRole('button', { name: 'Save' }).click();
+		await page.waitForLoadState('networkidle');
+		await page.reload();
+		await expect(serverUrl).toHaveValue('https://btcpay.e2e.example');
+		await expect(storeId).toHaveValue('e2e-store');
+	} finally {
+		// Saved credentials make BTCPay a Lightning processor of the shop for the specs that follow.
+		await page.getByRole('button', { name: 'Reset' }).click();
+		await page.waitForLoadState('networkidle');
+	}
+	await page.reload();
+	await expect(serverUrl).toHaveValue('');
+});
+
+test('a form with two ways to connect saves either, and refuses neither', async ({ page }) => {
+	await page.goto('/admin/blink', { waitUntil: 'networkidle' });
+	await expect(page.locator('form[action="?/save"] p strong')).toHaveText('one');
+	await expect(
+		page.getByRole('heading', { name: 'Option 1 — Lightning address (no API key)' })
+	).toBeVisible();
+	await expect(
+		page.getByRole('heading', { name: 'Option 2 — API key (custodial account)' })
+	).toBeVisible();
+	await expect(page.getByLabel('Lightning address')).toHaveAttribute('placeholder', 'you@blink.sv');
+
+	// No browser check stops an empty form: the refusal comes from the server.
+	const refused = page.waitForResponse((response) => response.request().method() === 'POST');
+	await page.getByRole('button', { name: 'Save' }).click();
+	expect((await refused).ok()).toBe(false);
+
+	await page.goto('/admin/blink', { waitUntil: 'networkidle' });
+	try {
+		await page.getByLabel('Lightning address').fill('  e2e@blink.sv ');
+		await page.getByRole('button', { name: 'Save' }).click();
+		await page.waitForLoadState('networkidle');
+		await page.reload();
+		await expect(page.getByLabel('Lightning address')).toHaveValue('e2e@blink.sv');
+	} finally {
+		await page.getByRole('button', { name: 'Reset' }).click();
+		await page.waitForLoadState('networkidle');
+	}
+	await page.reload();
+	await expect(page.getByLabel('Lightning address')).toHaveValue('');
+});
+
 test.describe('in French', () => {
 	test.use({ locale: 'fr-FR' });
 
@@ -191,6 +258,27 @@ test.describe('in French', () => {
 		await page.goto('/admin/taler');
 
 		await expect(page.getByLabel('URL du backend')).toHaveAttribute('name', 'backendUrl');
+	});
+
+	test('a form its processor draws is in French too', async ({ page }) => {
+		await page.goto('/admin/btcpay-server', { waitUntil: 'networkidle' });
+
+		await expect(page.getByLabel('URL du serveur')).toHaveAttribute(
+			'placeholder',
+			'p. ex. https://mainnet.demo.btcpayserver.org'
+		);
+		await page.getByLabel('URL du serveur').fill('https://btcpay.e2e.example');
+		await expect(page.locator('a', { hasText: 'les paramètres de votre compte' })).toHaveAttribute(
+			'aria-label',
+			'Paramètres lightning dans votre boutique BTCPay Server'
+		);
+
+		await page.goto('/admin/blink');
+
+		await expect(page.locator('form[action="?/save"] p strong')).toHaveText("l'une");
+		await expect(
+			page.getByRole('heading', { name: 'Option 1 — adresse Lightning (sans clé API)' })
+		).toBeVisible();
 	});
 });
 

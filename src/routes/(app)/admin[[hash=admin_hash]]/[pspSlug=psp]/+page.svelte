@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
-	import type { ComponentType } from 'svelte';
 	import { useI18n } from '$lib/i18n';
 	import ConfigForm from '$lib/payment-processors/ConfigForm.svelte';
 	import { PROCESSORS } from '$lib/types/paymentProcessors';
@@ -15,12 +14,6 @@
 	let testCooldownUntil = 0;
 	$: testDisabled = testInFlight || Date.now() < testCooldownUntil;
 
-	// A processor with its own folder declares its fields; the others still have a form here.
-	const fieldComponents = import.meta.glob('/src/lib/components/psp-forms/*.svelte', {
-		eager: true
-	}) as Record<string, { default: ComponentType }>;
-
-	$: Fields = fieldComponents[`/src/lib/components/psp-forms/${data.slug}.svelte`]?.default;
 	$: declaration = PROCESSORS[data.slug];
 	$: fields = 'config' in declaration ? declaration.config.fields : undefined;
 </script>
@@ -28,10 +21,10 @@
 <h1 class="text-3xl">{data.label}</h1>
 
 <form class="contents" method="post" action="?/save">
-	{#if fields && data.front?.settings}
+	{#if data.front?.settings === 'custom'}
+		<svelte:component this={data.front.component} view="settings" config={data.config} />
+	{:else if fields && data.front?.settings}
 		<ConfigForm {fields} settings={data.front.settings} config={data.config} />
-	{:else}
-		<svelte:component this={Fields} bind:config={data.config} />
 	{/if}
 
 	<div class="flex justify-between">

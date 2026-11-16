@@ -109,13 +109,17 @@ describe('a processor with its own folder', () => {
 		}
 	});
 
-	it('labels every field of its settings form', async () => {
+	it('labels every field of its settings form, unless it draws the form itself', async () => {
 		for (const declaration of Object.values(declarations)) {
-			const front = await loadFront(declaration.slug);
+			const settings = (await loadFront(declaration.slug))?.settings;
 
-			expect(Object.keys(front?.settings?.fields ?? {}), declaration.slug).toEqual(
-				Object.keys(declaration.config.fields)
-			);
+			if (!('config' in declaration)) {
+				expect(settings, declaration.slug).toBeUndefined();
+			} else if (settings !== 'custom') {
+				expect(Object.keys(settings?.fields ?? {}), declaration.slug).toEqual(
+					Object.keys(declaration.config.fields)
+				);
+			}
 		}
 	});
 

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n';
 	import FiatCurrencySelect from './FiatCurrencySelect.svelte';
-	import type { Front } from './front';
+	import type { SettingsTexts } from './front';
 	import type { ConfigFields } from './types';
 
 	export let fields: ConfigFields;
-	export let settings: NonNullable<Front['settings']>;
+	export let settings: SettingsTexts;
 	export let config: Record<string, unknown>;
 
 	const { tInline } = useI18n();

@@ -7,8 +7,8 @@ import {
 	mapGraphqlInvoiceStatus,
 	parseLnAddress,
 	validatePreimage
-} from './blink';
-import { runtimeConfig } from './runtime-config';
+} from './api.server';
+import { runtimeConfig } from '$lib/server/runtime-config';
 
 describe('blink', () => {
 	describe('parseLnAddress', () => {

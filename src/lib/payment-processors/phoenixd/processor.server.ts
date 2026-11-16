@@ -4,23 +4,20 @@ import {
 	phoenixdLookupInvoice
 } from '$lib/server/phoenixd';
 import { addMinutes } from 'date-fns';
-import { lightningLabel, LIGHTNING_PRESENTATION } from './presentations';
-import type {
-	PaymentProcessorDefinition,
-	CreatePaymentParams,
-	CreatePaymentResult,
-	CheckPaymentResult
-} from '../pp';
+import { lightningLabel, LIGHTNING } from '$lib/server/sdk/contrib/presentations';
+import {
+	definePaymentProcessor,
+	type CreatePaymentParams,
+	type CreatePaymentResult,
+	type CheckPaymentResult
+} from '$lib/server/sdk/pp';
 import type { Order } from '$lib/types/Order';
+import declaration from './declaration';
 
-export default {
-	meta: { processor: 'phoenixd', method: 'lightning', emoji: '⚡' },
+export default definePaymentProcessor(declaration, {
+	...LIGHTNING,
 
 	isEnabled: () => isPhoenixdConfigured(),
-
-	settlementCurrency: () => 'SAT',
-
-	presentation: LIGHTNING_PRESENTATION,
 
 	// phoenixd refuses invoices valid for more than an hour.
 	expiresIn: (timeoutMinutes) => addMinutes(new Date(), Math.min(timeoutMinutes, 60)),
@@ -56,4 +53,4 @@ export default {
 		}
 		return { status: 'pending' };
 	}
-} satisfies PaymentProcessorDefinition;
+});

@@ -3,7 +3,7 @@ import { serializePresentation } from './pp';
 import { BITCOIN_PRESENTATION, LIGHTNING_PRESENTATION } from './contrib/presentations';
 import type { PaymentProcessorDefinition } from './pp';
 import PPBitcoind from './contrib/PPBitcoind';
-import PPPhoenixd from './contrib/PPPhoenixd';
+import PPPhoenixd from '$lib/payment-processors/phoenixd/processor.server';
 import PPTaler from '$lib/payment-processors/taler/processor.server';
 import PPOsb from '$lib/payment-processors/osb/processor.server';
 import PPStripe from '$lib/payment-processors/stripe/processor.server';

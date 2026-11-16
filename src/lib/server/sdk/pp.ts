@@ -4,38 +4,18 @@ import type { Price, Order } from '$lib/types/Order';
 import type { SerializedPaymentPresentation } from '$lib/types/Order';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
-import { runtimeConfig, type ConfigKey, type RuntimeConfig } from '$lib/server/runtime-config';
-import { PROCESSORS, type PaymentProcessorSlug } from '$lib/types/paymentProcessors';
-import type { ConfigFields, PayZone, ProcessorDeclaration } from '$lib/payment-processors/types';
+import { runtimeConfig, type ConfigKey } from '$lib/server/runtime-config';
+import { PROCESSORS } from '$lib/types/paymentProcessors';
+import type {
+	ConfigFields,
+	ConfigOf,
+	PayZone,
+	ProcessorDeclaration
+} from '$lib/payment-processors/types';
 import { configSchemaFromFields, hasEveryCredential, secretFieldsOf } from './config-fields';
 import type { ZodType, ZodTypeDef } from 'zod';
 
 // --- Interfaces ---
-
-declare const checkedAgainstConfig: unique symbol;
-
-/** A settings schema checked against the config it saves into. Only `configSchemaFor` makes one. */
-export type ProcessorConfigSchema = ZodType<Record<string, unknown>, ZodTypeDef, unknown> & {
-	readonly [checkedAgainstConfig]: true;
-};
-
-type ConfiguredSlug = {
-	[S in PaymentProcessorSlug]: (typeof PROCESSORS)[S] extends { configKey: ConfigKey } ? S : never;
-}[PaymentProcessorSlug];
-
-type ConfigOf<S extends ConfiguredSlug> = (typeof PROCESSORS)[S] extends {
-	configKey: infer K extends ConfigKey;
-}
-	? RuntimeConfig[K]
-	: never;
-
-/** Ties a processor's settings schema to the config shape its manifest key saves into. */
-export function configSchemaFor<S extends ConfiguredSlug>(
-	processor: S,
-	schema: ZodType<ConfigOf<S>, ZodTypeDef, unknown>
-): ProcessorConfigSchema {
-	return schema as unknown as ProcessorConfigSchema;
-}
 
 export interface PaymentProcessorMeta {
 	processor: PaymentProcessor;
@@ -159,7 +139,7 @@ export interface PaymentProcessorDefinition {
 	 * Declaring it here is what lets one shared settings page serve every processor: the shape
 	 * of a provider's credentials is the provider's business, not the page's.
 	 */
-	configSchema?: ProcessorConfigSchema;
+	configSchema?: ZodType<Record<string, unknown>, ZodTypeDef, unknown>;
 
 	/**
 	 * The settings fields that give control of the provider account. A role that may only read
@@ -235,8 +215,12 @@ export type ProcessorImplementation<D extends ProcessorDeclaration> = Omit<
 	'meta' | 'configSchema' | 'secretConfigFields' | 'isEnabled' | 'settlementCurrency' | 'payData'
 > &
 	(D extends { config: { fields: ConfigFields } }
-		? { isEnabled?(): boolean }
-		: { isEnabled(): boolean }) &
+		? {
+				isEnabled?(): boolean;
+				/** For a rule the fields cannot say, such as one that spans two of them. */
+				configSchema?: ZodType<ConfigOf<D>, ZodTypeDef, unknown>;
+		  }
+		: { isEnabled(): boolean; configSchema?: never }) &
 	(D extends { config: { fields: { currency: { kind: 'currency' } } } }
 		? { settlementCurrency?(): Currency }
 		: { settlementCurrency(): Currency }) &
@@ -255,7 +239,7 @@ export function definePaymentProcessor<
 
 	return {
 		...(fields && {
-			configSchema: configSchemaFromFields(fields) as unknown as ProcessorConfigSchema,
+			configSchema: configSchemaFromFields(fields),
 			secretConfigFields: secretFieldsOf(fields),
 			isEnabled: () => hasEveryCredential(fields, config())
 		}),

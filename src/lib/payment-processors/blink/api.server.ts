@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import { z } from 'zod';
-import { runtimeConfig } from './runtime-config';
+import { runtimeConfig } from '$lib/server/runtime-config';
 
 /**
  * Blink Lightning client — receive-only, BTC-only.
@@ -17,8 +17,8 @@ import { runtimeConfig } from './runtime-config';
  * existing 2s order poller calling checkPayment(), so no separate poll loop is needed.
  */
 
-// Blink's HTTP API can hang on bad credentials / network blips. Fail fast (mirrors
-// swiss-bitcoin-pay.ts) so checkout and the admin "test connection" button don't stall.
+// Blink's HTTP API can hang on bad credentials / network blips. Fail fast, as Swiss Bitcoin
+// Pay does, so checkout and the admin "test connection" button don't stall.
 const BLINK_HTTP_TIMEOUT_MS = 15_000;
 
 export function isBlinkConfigured(): boolean {
@@ -59,7 +59,7 @@ const accountKindCache = new Map<string, BlinkMode>();
 
 /**
  * Resolve which mode applies given current config. Called at createPayment time.
- * At checkPayment time we instead discriminate from persisted payment fields (see PPBlink).
+ * At checkPayment time we instead discriminate from persisted payment fields (see processor.server.ts).
  */
 export async function blinkResolveMode(): Promise<BlinkMode> {
 	if (runtimeConfig.blink.apiKey) {
