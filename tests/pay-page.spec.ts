@@ -1,8 +1,7 @@
 import { expect, test, type Page } from './client-ip.js';
-import { MongoClient, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
+import { orderAwaiting, withDb } from './pending-order.js';
 
-// Same database as the web server started by playwright.config.ts.
-const E2E_DB = 'bebop-e2e';
 const ORIGIN = 'http://localhost:5012';
 
 const STRIPE_ORDER = 'e2e-pay-page-stripe';
@@ -10,100 +9,29 @@ const SUMUP_ORDER = 'e2e-pay-page-sumup';
 const STRIPE_PAYMENT = new ObjectId();
 const SUMUP_PAYMENT = new ObjectId();
 
-async function withDb<T>(run: (db: ReturnType<MongoClient['db']>) => Promise<T>): Promise<T> {
-	const client = await MongoClient.connect(process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017');
-	try {
-		return await run(client.db(E2E_DB));
-	} finally {
-		await client.close();
-	}
-}
-
-function orderAwaitingCard(
-	orderId: string,
-	number: number,
-	payment: { _id: ObjectId; processor: string; checkoutId: string; clientSecret?: string }
-) {
-	const createdAt = new Date();
-	const price = { amount: 10, currency: 'EUR' };
-
-	return {
-		number,
-		locale: 'en',
-		status: 'pending',
-		createdAt,
-		updatedAt: createdAt,
-		user: {},
-		notifications: { paymentStatus: {} },
-		items: [
-			{
-				_id: new ObjectId(),
-				product: {
-					_id: 'e2e-pay-page-product',
-					name: 'E2E product',
-					alias: [],
-					description: '',
-					shortDescription: '',
-					type: 'resource',
-					price,
-					shipping: false,
-					preorder: false,
-					free: false,
-					standalone: false,
-					payWhatYouWant: false,
-					displayShortDescription: false,
-					hideDiscountExpiration: false,
-					actionSettings: {
-						eShop: { visible: true, canBeAddedToBasket: true },
-						retail: { visible: true, canBeAddedToBasket: true },
-						googleShopping: { visible: true },
-						nostr: { visible: true, canBeAddedToBasket: true }
-					},
-					createdAt,
-					updatedAt: createdAt
-				},
-				quantity: 1,
-				vatRate: 20,
-				currencySnapshot: { main: { price }, priceReference: { price } }
-			}
-		],
-		payments: [
-			{
-				...payment,
-				status: 'pending',
-				method: 'card',
-				price,
-				currencySnapshot: { main: { price }, priceReference: { price } },
-				createdAt,
-				address: `${ORIGIN}/order/${orderId}/payment/${payment._id}/pay`
-			}
-		],
-		currencySnapshot: {
-			main: { totalPrice: price, vat: [{ amount: 1.67, currency: 'EUR' }] },
-			priceReference: { totalPrice: price }
-		}
-	};
-}
-
 test.beforeAll(async () => {
 	await withDb(async (db) => {
 		await db.collection('orders').replaceOne(
 			{ _id: STRIPE_ORDER as never },
-			orderAwaitingCard(STRIPE_ORDER, 990011, {
+			orderAwaiting(990011, {
 				_id: STRIPE_PAYMENT,
+				method: 'card',
 				processor: 'stripe',
 				// The web server of the suite answers for a payment intent named like this one.
 				checkoutId: 'pi_e2e_pay_page',
-				clientSecret: 'pi_e2e_pay_page_secret'
+				clientSecret: 'pi_e2e_pay_page_secret',
+				address: `${ORIGIN}/order/${STRIPE_ORDER}/payment/${STRIPE_PAYMENT}/pay`
 			}),
 			{ upsert: true }
 		);
 		await db.collection('orders').replaceOne(
 			{ _id: SUMUP_ORDER as never },
-			orderAwaitingCard(SUMUP_ORDER, 990012, {
+			orderAwaiting(990012, {
 				_id: SUMUP_PAYMENT,
+				method: 'card',
 				processor: 'sumup',
-				checkoutId: 'e2e-sumup-checkout'
+				checkoutId: 'e2e-sumup-checkout',
+				address: `${ORIGIN}/order/${SUMUP_ORDER}/payment/${SUMUP_PAYMENT}/pay`
 			}),
 			{ upsert: true }
 		);

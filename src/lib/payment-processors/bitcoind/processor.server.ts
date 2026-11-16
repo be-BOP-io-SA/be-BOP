@@ -8,24 +8,21 @@ import {
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { sum } from '$lib/utils/sum';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
-import { BITCOIN_PRESENTATION } from './presentations';
-import type {
-	PaymentProcessorDefinition,
-	CreatePaymentParams,
-	CreatePaymentResult,
-	CheckPaymentResult
-} from '../pp';
+import { BITCOIN } from '$lib/server/sdk/contrib/presentations';
+import {
+	definePaymentProcessor,
+	type CreatePaymentParams,
+	type CreatePaymentResult,
+	type CheckPaymentResult
+} from '$lib/server/sdk/pp';
 import type { Order } from '$lib/types/Order';
+import declaration from './declaration';
 
-export default {
-	meta: { processor: 'bitcoind', method: 'bitcoin', emoji: '₿' },
+export default definePaymentProcessor(declaration, {
+	...BITCOIN,
 
 	// Note: isBitcoinConfigured is a const (not a function), so we wrap it
 	isEnabled: () => isBitcoinConfigured,
-
-	settlementCurrency: () => 'BTC',
-
-	presentation: BITCOIN_PRESENTATION,
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
 		const label = orderAddressLabel(params.orderId, params.paymentId);
@@ -81,4 +78,4 @@ export default {
 
 		return { status: 'pending', transactions: mappedTransactions };
 	}
-} satisfies PaymentProcessorDefinition;
+});

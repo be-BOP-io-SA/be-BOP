@@ -29,6 +29,12 @@ export const BITCOIN_PRESENTATION: PaymentPresentation = {
 	qrLink: (payment) => bitcoinQrCode(payment)
 };
 
+/** What every on-chain processor shares: an address shown as a QR code, asked for in bitcoins. */
+export const BITCOIN = {
+	presentation: BITCOIN_PRESENTATION,
+	settlementCurrency: (): Currency => 'BTC'
+};
+
 function bitcoinQrCode(payment: Order['payments'][number]): string {
 	return bitcoinPaymentQrCodeString(
 		payment.address ?? '',

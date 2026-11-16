@@ -21,16 +21,6 @@ type Declared = (typeof declarations)[keyof typeof declarations];
 // Processors still written as `sdk/contrib/PP<Name>.ts`. One with its own folder in
 // `$lib/payment-processors` is declared there instead.
 const LEGACY = {
-	// --- bitcoin ---
-	'bitcoin-nodeless': {
-		method: 'bitcoin',
-		label: 'Bitcoin nodeless',
-		priority: 10,
-		configKey: 'bitcoinNodeless',
-		customAdminPage: true
-	},
-	bitcoind: { method: 'bitcoin', label: 'Bitcoin core node', priority: 20, customAdminPage: true },
-
 	// --- settled by hand, so nothing to configure and nothing to poll ---
 	'point-of-sale': { method: 'point-of-sale', label: 'Point of sale', priority: 10 },
 	free: { method: 'free', label: 'Free', priority: 10 },

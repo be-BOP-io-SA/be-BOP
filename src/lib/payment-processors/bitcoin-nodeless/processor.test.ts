@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import PPBitcoinNodeless from './PPBitcoinNodeless';
+import PPBitcoinNodeless from './processor.server';
 import { runtimeConfig, runtimeConfigUpdatedAt } from '$lib/server/runtime-config';
 import type { Order } from '$lib/types/Order';
-import type { CheckPaymentResult } from '../pp';
+import type { CheckPaymentResult } from '$lib/server/sdk/pp';
 
 /** Onchain progress fields live on the pending variant alone, so assert and narrow in one step. */
 function expectPending(
