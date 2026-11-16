@@ -1,4 +1,5 @@
 // One line per processor: everything else about it lives in its folder.
+export { default as airwallex } from './airwallex/declaration';
 export { default as bankTransfer } from './bank-transfer/declaration';
 export { default as bitcoinNodeless } from './bitcoin-nodeless/declaration';
 export { default as bitcoind } from './bitcoind/declaration';

@@ -43,6 +43,6 @@ export async function load({ params, depends }) {
 	return {
 		order,
 		payment,
-		payData: storedPayment && processor?.payData?.(storedPayment)
+		payData: storedPayment && (await processor?.payData?.(storedPayment))
 	};
 }

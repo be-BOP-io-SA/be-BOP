@@ -202,8 +202,11 @@ export interface PaymentProcessorDefinition {
 	 */
 	checkPayment?(payment: Order['payments'][number], order: Order): Promise<CheckPaymentResult>;
 
-	/** What its form on the pay page receives. It reaches the buyer's browser: never a credential. */
-	payData?(payment: Order['payments'][number]): unknown;
+	/**
+	 * What its form on the pay page receives. It reaches the buyer's browser: never a credential.
+	 * It may ask the provider, for a value that expires before the payment does.
+	 */
+	payData?(payment: Order['payments'][number]): unknown | Promise<unknown>;
 }
 
 /** What a processor still writes itself: the rest is read from its declaration. */
@@ -222,7 +225,7 @@ export type ProcessorImplementation<D extends ProcessorDeclaration> = Omit<
 		? { settlementCurrency?(): Currency }
 		: { settlementCurrency(): Currency }) &
 	(D extends { pay: PayZone<infer Data> }
-		? { payData(payment: Order['payments'][number]): Data }
+		? { payData(payment: Order['payments'][number]): Data | Promise<Data> }
 		: { payData?: never });
 
 /** Builds a processor from its declaration, so that what the declaration says is not written twice. */
