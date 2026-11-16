@@ -4,6 +4,7 @@ import { getProcessor, getProcessorsForMethod } from './pp';
 import { ALL_PAYMENT_METHODS, type PaymentMethod } from '../payment-methods';
 import { ALL_PAYMENT_PROCESSOR_SLUGS, PROCESSORS } from '$lib/types/paymentProcessors';
 import * as declarations from '$lib/payment-processors';
+import { loadFront } from '$lib/payment-processors/front';
 
 /**
  * Registration order is live behaviour: `resolveProcessor` returns the first *enabled*
@@ -105,6 +106,24 @@ describe('a processor with its own folder', () => {
 				processor: slug,
 				method: PROCESSORS[slug].method
 			});
+		}
+	});
+
+	it('labels every field of its settings form', async () => {
+		for (const declaration of Object.values(declarations)) {
+			const front = await loadFront(declaration.slug);
+
+			expect(Object.keys(front?.settings?.fields ?? {}), declaration.slug).toEqual(
+				Object.keys(declaration.config.fields)
+			);
+		}
+	});
+
+	it('sends data to its payment form if, and only if, it declares one', () => {
+		for (const declaration of Object.values(declarations)) {
+			expect(!!getProcessor(declaration.slug)?.payData, declaration.slug).toBe(
+				'pay' in declaration
+			);
 		}
 	});
 

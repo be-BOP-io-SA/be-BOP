@@ -1,12 +1,14 @@
 import { collections } from '$lib/server/database';
-import { coversPayment, processorFor, serializePresentation } from '$lib/server/sdk/pp';
+import {
+	coversPayment,
+	getProcessor,
+	processorFor,
+	serializePresentation
+} from '$lib/server/sdk/pp';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { isOrderFullyPaid } from '$lib/server/orders';
 import { isPaypalEnabled } from '$lib/server/paypal';
 import { picturesForProducts } from '$lib/server/picture';
-import { runtimeConfig } from '$lib/server/runtime-config';
-import { isStripeEnabled } from '$lib/server/stripe';
-import { isSumupEnabled } from '$lib/server/sumup';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import { FAKE_ORDER_INVOICE_NUMBER } from '$lib/types/Order';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
@@ -78,76 +80,29 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		// Check if the payment has been paid but the status is still pending in DB
 		// In that case, we send back the status as paid, but do not update the DB (it's taken care of by order-lock)
 		if (payment.status === 'pending' && payment.checkoutId) {
-			if (payment.processor === 'sumup' && isSumupEnabled()) {
-				const response = await fetch('https://api.sumup.com/v0.1/checkouts/' + payment.checkoutId, {
-					headers: {
-						Authorization: 'Bearer ' + runtimeConfig.sumUp.apiKey
-					},
-					...{ autoSelectFamily: true }
-				});
+			const recorded = payment.processor ? getProcessor(payment.processor) : undefined;
+			let paid = false;
 
-				if (!response.ok) {
-					throw new Error('Failed to fetch checkout status');
-				}
-
-				const checkout = await response.json();
-
-				if (checkout.status === 'PAID') {
-					payment.status = 'paid';
-
-					payment.invoice = {
-						number: FAKE_ORDER_INVOICE_NUMBER,
-						createdAt: new Date()
-					};
-
-					if (isOrderFullyPaid(order) && order.status === 'pending') {
-						order.status = 'paid';
-					}
-				}
-			} else if (payment.processor === 'stripe' && isStripeEnabled()) {
-				const response = await fetch(
-					'https://api.stripe.com/v1/payment_intents/' + payment.checkoutId,
-					{
-						headers: {
-							Authorization: 'Bearer ' + runtimeConfig.stripe.secretKey
-						}
-					}
-				);
-
-				if (!response.ok) {
-					throw new Error('Failed to fetch checkout status');
-				}
-
-				const paymentIntent = await response.json();
-
-				if (paymentIntent.status === 'succeeded') {
-					payment.status = 'paid';
-
-					payment.invoice = {
-						number: FAKE_ORDER_INVOICE_NUMBER,
-						createdAt: new Date()
-					};
-
-					if (isOrderFullyPaid(order) && order.status === 'pending') {
-						order.status = 'paid';
-					}
-				}
+			if (recorded?.paidAtProvider && recorded.isEnabled()) {
+				paid = await recorded.paidAtProvider(payment, order);
 			} else if (payment.processor === 'paypal' && isPaypalEnabled()) {
 				// PayPal calls a checkout COMPLETED while its capture is still PENDING, so only the
 				// poller's own verdict (settled captures covering the price) may unlock paid content.
 				const pp = processorFor(payment);
 				const result = await pp?.checkPayment?.(payment, order);
-				if (pp && result?.status === 'paid' && coversPayment(pp, payment, result.received)) {
-					payment.status = 'paid';
+				paid = !!pp && result?.status === 'paid' && coversPayment(pp, payment, result.received);
+			}
 
-					payment.invoice = {
-						number: FAKE_ORDER_INVOICE_NUMBER,
-						createdAt: new Date()
-					};
+			if (paid) {
+				payment.status = 'paid';
 
-					if (isOrderFullyPaid(order) && order.status === 'pending') {
-						order.status = 'paid';
-					}
+				payment.invoice = {
+					number: FAKE_ORDER_INVOICE_NUMBER,
+					createdAt: new Date()
+				};
+
+				if (isOrderFullyPaid(order) && order.status === 'pending') {
+					order.status = 'paid';
 				}
 			}
 		}
@@ -176,7 +131,6 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 			paidAt: payment.paidAt,
 			createdAt: payment.createdAt,
 			checkoutId: payment.checkoutId,
-			clientSecret: payment.clientSecret,
 			invoice: payment.invoice,
 			price: payment.price,
 			currencySnapshot: payment.currencySnapshot,

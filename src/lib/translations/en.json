@@ -330,9 +330,6 @@
 			"assistGenerate": "Generate theme"
 		},
 		"stripe": {
-			"secretKey": "Secret Key",
-			"publicKey": "Public Key",
-			"currency": "Currency",
 			"testing": "Testing…",
 			"testConnection": "Test connection",
 			"testSuccess": "Connection successful. Stripe credentials are working.",
@@ -1661,11 +1658,6 @@
 			"notePort25": "Port 25 is for unencrypted SMTP (not recommended)",
 			"noteFakeMode": "Enable \"fake\" mode for development/testing without real SMTP server",
 			"noteOverrides": "These settings override environment variables when configured"
-		},
-		"sumup": {
-			"apiKey": "API Key",
-			"merchantCode": "Merchant Code",
-			"currency": "Currency"
 		},
 		"productForm": {
 			"allowSameDayBooking": "Allow booking on same day",

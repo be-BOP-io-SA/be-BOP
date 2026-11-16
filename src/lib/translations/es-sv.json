@@ -330,9 +330,6 @@
 			"assistGenerate": "Generar tema"
 		},
 		"stripe": {
-			"secretKey": "Clave secreta",
-			"publicKey": "Clave pública",
-			"currency": "Moneda",
 			"testing": "Probando…",
 			"testConnection": "Probar conexión",
 			"testSuccess": "Conexión exitosa. Las credenciales de Stripe funcionan.",
@@ -1661,11 +1658,6 @@
 			"notePort25": "El puerto 25 es para SMTP sin cifrar (no recomendado)",
 			"noteFakeMode": "Active el modo «falso» para desarrollo/pruebas sin un servidor SMTP real",
 			"noteOverrides": "Esta configuración anula las variables de entorno cuando está definida"
-		},
-		"sumup": {
-			"apiKey": "Clave API",
-			"merchantCode": "Código de comerciante",
-			"currency": "Moneda"
 		},
 		"productForm": {
 			"allowSameDayBooking": "Permitir la reserva el mismo día",

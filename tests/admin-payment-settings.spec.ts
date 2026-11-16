@@ -80,6 +80,20 @@ test.describe('in French', () => {
 
 		await expect(page.getByLabel('Clé API')).toHaveAttribute('name', 'apiKey');
 	});
+
+	test('a card processor is labelled in French too, its currency included', async ({ page }) => {
+		await page.goto('/admin/stripe');
+
+		await expect(page.getByLabel('Clé secrète')).toHaveAttribute('name', 'secretKey');
+		await expect(page.getByLabel('Clé publique')).toHaveAttribute('name', 'publicKey');
+		await expect(
+			page.locator('label', { has: page.locator('input[name="currency"]') })
+		).toContainText('Devise');
+
+		await page.goto('/admin/sumup');
+
+		await expect(page.getByLabel('Code marchand')).toHaveAttribute('placeholder', 'MXXXXXX');
+	});
 });
 
 test('a processor settled by hand gets no settings page', async ({ page }) => {

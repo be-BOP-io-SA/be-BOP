@@ -6,7 +6,7 @@ import PPBitcoind from './contrib/PPBitcoind';
 import PPPhoenixd from './contrib/PPPhoenixd';
 import PPTaler from './contrib/PPTaler';
 import PPOsb from './contrib/PPOsb';
-import PPStripe from './contrib/PPStripe';
+import PPStripe from '$lib/payment-processors/stripe/processor.server';
 import { exchangeRate } from '$lib/stores/exchangeRate';
 import { SATOSHIS_PER_BTC } from '$lib/types/Currency';
 import type { Order, Price } from '$lib/types/Order';

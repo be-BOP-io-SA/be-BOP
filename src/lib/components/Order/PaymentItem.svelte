@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { SerializedOrderPayment } from '$lib/types/Order';
 	import type { SellerIdentity } from '$lib/types/SellerIdentity';
+	import type { Front } from '$lib/payment-processors/front';
 	import CardPayment from './CardPayment.svelte';
 	import BitcoinPayment from './BitcoinPayment.svelte';
 	import LightningPayment from './LightningPayment.svelte';
@@ -22,6 +23,7 @@
 	export let sellerIdentity: SellerIdentity | null | undefined = undefined;
 	export let posSubtypes: Array<{ slug: string; name: string }> | undefined = undefined;
 	export let returnTo: string | undefined = undefined;
+	export let front: Front | undefined = undefined;
 
 	// The chosen custom method, snapshotted on the payment at order time.
 	$: customPaymentMethod = payment.method === 'custom' ? payment.customPaymentMethod : undefined;
@@ -79,6 +81,7 @@
 				{posMode}
 				{returnTo}
 				{customPaymentMethod}
+				{front}
 			/>
 		{:else if payment.method === 'point-of-sale'}
 			<PointOfSalePayment />

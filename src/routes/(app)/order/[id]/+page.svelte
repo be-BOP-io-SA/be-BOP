@@ -237,6 +237,7 @@
 						sellerIdentity={data.sellerIdentity}
 						posSubtypes={data.posSubtypes}
 						returnTo={data.returnTo}
+						front={payment.processor ? data.fronts[payment.processor] : undefined}
 					>
 						<PaymentActions
 							{payment}

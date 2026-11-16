@@ -6,8 +6,8 @@ import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { runtimeConfig, type ConfigKey, type RuntimeConfig } from '$lib/server/runtime-config';
 import { PROCESSORS, type PaymentProcessorSlug } from '$lib/types/paymentProcessors';
-import type { ConfigFields, ProcessorDeclaration } from '$lib/payment-processors/types';
-import { configSchemaFromFields, hasEveryField, secretFieldsOf } from './config-fields';
+import type { ConfigFields, PayZone, ProcessorDeclaration } from '$lib/payment-processors/types';
+import { configSchemaFromFields, hasEveryCredential, secretFieldsOf } from './config-fields';
 import type { ZodType, ZodTypeDef } from 'zod';
 
 // --- Interfaces ---
@@ -198,6 +198,8 @@ export interface PaymentProcessorDefinition {
 	 * payment's amount and tap window, or `null` when none does yet.
 	 */
 	tapToPay?: {
+		/** Whether the shop gave what matching needs, which can be less than taking payments does. */
+		isConfigured(): boolean;
 		findMatching(order: Order, paymentId: ObjectId): Promise<string | null>;
 	};
 
@@ -219,37 +221,50 @@ export interface PaymentProcessorDefinition {
 	 * payment only ever changes status when someone says so.
 	 */
 	checkPayment?(payment: Order['payments'][number], order: Order): Promise<CheckPaymentResult>;
+
+	/** What its form on the pay page receives. It reaches the buyer's browser: never a credential. */
+	payData?(payment: Order['payments'][number]): unknown;
+
+	/** Lets the order page show as paid a payment the provider holds before the poller saw it. */
+	paidAtProvider?(payment: Order['payments'][number], order: Order): Promise<boolean>;
 }
 
 /** What a processor still writes itself: the rest is read from its declaration. */
 export type ProcessorImplementation<D extends ProcessorDeclaration> = Omit<
 	PaymentProcessorDefinition,
-	'meta' | 'configSchema' | 'secretConfigFields' | 'isEnabled'
+	'meta' | 'configSchema' | 'secretConfigFields' | 'isEnabled' | 'settlementCurrency' | 'payData'
 > &
 	(D extends { config: { fields: ConfigFields } }
 		? { isEnabled?(): boolean }
-		: { isEnabled(): boolean });
+		: { isEnabled(): boolean }) &
+	(D extends { config: { fields: { currency: { kind: 'currency' } } } }
+		? { settlementCurrency?(): Currency }
+		: { settlementCurrency(): Currency }) &
+	(D extends { pay: PayZone<infer Data> }
+		? { payData(payment: Order['payments'][number]): Data }
+		: { payData?: never });
 
 /** Builds a processor from its declaration, so that what the declaration says is not written twice. */
 export function definePaymentProcessor<
 	D extends ProcessorDeclaration,
 	I extends ProcessorImplementation<D>
->(declaration: D, implementation: I): PaymentProcessorDefinition & I {
+>(declaration: D, implementation: I): Omit<PaymentProcessorDefinition, keyof I> & I {
 	const fields = declaration.config?.fields;
+	const config = () =>
+		runtimeConfig[declaration.configKey as ConfigKey] as Record<string, unknown> | undefined;
 
 	return {
 		...(fields && {
 			configSchema: configSchemaFromFields(fields) as unknown as ProcessorConfigSchema,
 			secretConfigFields: secretFieldsOf(fields),
-			isEnabled: () =>
-				hasEveryField(
-					fields,
-					runtimeConfig[declaration.configKey as ConfigKey] as Record<string, unknown> | undefined
-				)
+			isEnabled: () => hasEveryCredential(fields, config())
+		}),
+		...(fields?.currency?.kind === 'currency' && {
+			settlementCurrency: () => config()?.currency as Currency
 		}),
 		...implementation,
 		meta: { processor: declaration.slug as PaymentProcessor, method: declaration.method }
-	} as PaymentProcessorDefinition & I;
+	} as Omit<PaymentProcessorDefinition, keyof I> & I;
 }
 
 // --- Helpers ---

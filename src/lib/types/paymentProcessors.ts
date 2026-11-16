@@ -21,10 +21,6 @@ type Declared = (typeof declarations)[keyof typeof declarations];
 // Processors still written as `sdk/contrib/PP<Name>.ts`. One with its own folder in
 // `$lib/payment-processors` is declared there instead.
 const LEGACY = {
-	// --- card ---
-	sumup: { method: 'card', label: 'SumUp', priority: 10, configKey: 'sumUp' },
-	stripe: { method: 'card', label: 'Stripe', priority: 20, configKey: 'stripe' },
-
 	// --- lightning ---
 	'btcpay-server': {
 		method: 'lightning',

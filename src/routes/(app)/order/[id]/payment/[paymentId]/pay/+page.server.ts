@@ -1,8 +1,8 @@
 import { UrlDependency } from '$lib/types/UrlDependency.js';
 import { error, redirect } from '@sveltejs/kit';
 import { fetchOrderForUser } from '../../../fetchOrderForUser.js';
-import { isStripeEnabled } from '$lib/server/stripe.js';
-import { runtimeConfig } from '$lib/server/runtime-config.js';
+import { collections } from '$lib/server/database';
+import { getProcessor } from '$lib/server/sdk/pp';
 import { ORIGIN } from '$lib/server/env-config';
 
 export async function load({ params, depends }) {
@@ -20,9 +20,7 @@ export async function load({ params, depends }) {
 	}
 
 	// An address that is not one of ours is the provider's own hosted page: send the buyer
-	// there. Only Stripe and SumUp put a local URL here — they are the two that mount a card
-	// form on this very route — so this covers PayPal, which used to be named explicitly, and
-	// every redirect provider added after it.
+	// there. Only a processor that shows its form on this very route puts a local URL here.
 	if (payment.address && !payment.address.startsWith(ORIGIN)) {
 		throw redirect(303, payment.address);
 	}
@@ -35,9 +33,16 @@ export async function load({ params, depends }) {
 		throw error(400, 'Checkout ID not found');
 	}
 
+	const processor = payment.processor ? getProcessor(payment.processor) : undefined;
+	// The order above goes to every page showing it, so it leaves out what only this form gets.
+	const stored = processor?.payData
+		? await collections.orders.findOne({ _id: order._id }, { projection: { payments: 1 } })
+		: null;
+	const storedPayment = stored?.payments.find((p) => p._id.equals(params.paymentId));
+
 	return {
 		order,
 		payment,
-		stripePublicKey: isStripeEnabled() ? runtimeConfig.stripe.publicKey : null
+		payData: storedPayment && processor?.payData?.(storedPayment)
 	};
 }

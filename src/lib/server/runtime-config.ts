@@ -225,11 +225,6 @@ const baseConfig = {
 	mainThemeId: '',
 	sellerIdentity: null as SellerIdentity | null,
 	shopInformation: null as SellerIdentity | null,
-	sumUp: {
-		apiKey: '',
-		merchantCode: '',
-		currency: 'EUR' as Currency
-	},
 	bitcoinNodeless: {
 		mempoolUrl: 'https://mempool.space',
 		format: 'bip84' as 'bip84' | 'bip48',
@@ -247,13 +242,6 @@ const baseConfig = {
 		derivationPath?: string;
 	},
 	bitcoinBlockHeight: 0,
-	stripe: {
-		/** pk_... */
-		publicKey: '',
-		/** sk_... */
-		secretKey: '',
-		currency: 'EUR' as Currency
-	},
 	btcpayServer: {
 		apiKey: '',
 		serverUrl: '',

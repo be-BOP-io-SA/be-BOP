@@ -330,9 +330,6 @@
 			"assistGenerate": "Générer le thème"
 		},
 		"stripe": {
-			"secretKey": "Clé secrète",
-			"publicKey": "Clé publique",
-			"currency": "Devise",
 			"testing": "Test en cours…",
 			"testConnection": "Tester la connexion",
 			"testSuccess": "Connexion réussie. Les identifiants Stripe fonctionnent.",
@@ -1661,11 +1658,6 @@
 			"notePort25": "Le port 25 est destiné au SMTP non chiffré (non recommandé)",
 			"noteFakeMode": "Activez le mode « factice » pour le développement/les tests sans serveur SMTP réel",
 			"noteOverrides": "Ces paramètres remplacent les variables d'environnement lorsqu'ils sont configurés"
-		},
-		"sumup": {
-			"apiKey": "Clé API",
-			"merchantCode": "Code marchand",
-			"currency": "Devise"
 		},
 		"productForm": {
 			"allowSameDayBooking": "Autoriser la réservation le jour même",

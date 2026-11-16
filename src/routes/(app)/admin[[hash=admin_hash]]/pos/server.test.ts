@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ObjectId } from 'mongodb';
 import { cleanDb } from '$lib/server/test-utils';
 import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import '$lib/server/sdk/pp-registry';
 import type { PosTabGroup } from '$lib/types/PosTabGroup';
-import { actions } from './+page.server';
+import { actions, load } from './+page.server';
 
 const INITIAL_GROUPS: PosTabGroup[] = [
 	{ name: 'Tables', tabs: [{}, {}, {}] },
@@ -72,5 +73,39 @@ describe('admin POS pools', () => {
 		expect(runtimeConfig.posTabGroups[0].tabs).toHaveLength(2);
 		expect(await collections.orderTabs.countDocuments({ slug: 'tables-2' })).toBe(0);
 		expect(await collections.orderTabs.countDocuments({ slug: 'tables-0' })).toBe(1);
+	});
+});
+
+describe('admin POS tap-to-pay provider', () => {
+	const stripeConfig = { ...runtimeConfig.stripe };
+
+	beforeEach(async () => {
+		await cleanDb();
+	});
+
+	afterEach(() => {
+		runtimeConfig.stripe = { ...stripeConfig };
+	});
+
+	async function providers() {
+		return (await load({} as Parameters<typeof load>[0])).tapToPay.providers;
+	}
+
+	it('offers no provider first, then every processor that matches terminal payments', async () => {
+		expect(await providers()).toEqual([
+			{ provider: 'not-used', available: true },
+			{ provider: 'stripe', displayName: 'Stripe', available: false }
+		]);
+	});
+
+	// Matching reads the payments of the terminal, which takes the secret key and nothing else.
+	it('lets Stripe be picked as soon as the shop gave its secret key', async () => {
+		runtimeConfig.stripe = { ...stripeConfig, secretKey: 'sk_test', publicKey: '' };
+
+		expect(await providers()).toContainEqual({
+			provider: 'stripe',
+			displayName: 'Stripe',
+			available: true
+		});
 	});
 });

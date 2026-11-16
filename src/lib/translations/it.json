@@ -330,9 +330,6 @@
 			"assistGenerate": "Genera tema"
 		},
 		"stripe": {
-			"secretKey": "Chiave segreta",
-			"publicKey": "Chiave pubblica",
-			"currency": "Valuta",
 			"testing": "Test in corso…",
 			"testConnection": "Prova connessione",
 			"testSuccess": "Connessione riuscita. Le credenziali Stripe funzionano.",
@@ -1661,11 +1658,6 @@
 			"notePort25": "La porta 25 è per SMTP non crittografato (non consigliata)",
 			"noteFakeMode": "Attiva la modalità \"finta\" per lo sviluppo/test senza un vero server SMTP",
 			"noteOverrides": "Queste impostazioni sovrascrivono le variabili d'ambiente quando configurate"
-		},
-		"sumup": {
-			"apiKey": "Chiave API",
-			"merchantCode": "Codice commerciante",
-			"currency": "Valuta"
 		},
 		"productForm": {
 			"allowSameDayBooking": "Consenti la prenotazione lo stesso giorno",

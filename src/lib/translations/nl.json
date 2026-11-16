@@ -330,9 +330,6 @@
 			"assistGenerate": "Thema genereren"
 		},
 		"stripe": {
-			"secretKey": "Geheime sleutel",
-			"publicKey": "Openbare sleutel",
-			"currency": "Valuta",
 			"testing": "Testen…",
 			"testConnection": "Verbinding testen",
 			"testSuccess": "Verbinding geslaagd. De Stripe-inloggegevens werken.",
@@ -1661,11 +1658,6 @@
 			"notePort25": "Poort 25 is voor onversleutelde SMTP (niet aanbevolen)",
 			"noteFakeMode": "Schakel de \"nep\"-modus in voor ontwikkeling/testen zonder echte SMTP-server",
 			"noteOverrides": "Deze instellingen overschrijven omgevingsvariabelen wanneer ze zijn geconfigureerd"
-		},
-		"sumup": {
-			"apiKey": "API-sleutel",
-			"merchantCode": "Handelaarscode",
-			"currency": "Valuta"
 		},
 		"productForm": {
 			"allowSameDayBooking": "Reservering op dezelfde dag toestaan",

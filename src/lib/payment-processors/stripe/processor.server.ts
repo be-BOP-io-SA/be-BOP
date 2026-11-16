@@ -1,47 +1,88 @@
-import { isStripeEnabled, lastSuccessfulPaymentIntents } from '$lib/server/stripe';
 import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import type { ObjectId } from 'mongodb';
 import { toUrlEncoded } from '$lib/utils/toUrlEncoded';
-import { CURRENCY_UNIT, CURRENCIES, FIAT_CURRENCIES } from '$lib/types/Currency';
+import { CURRENCY_UNIT, CURRENCIES } from '$lib/types/Currency';
 import type { Currency } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
-import type {
-	PaymentProcessorDefinition,
-	CreatePaymentParams,
-	CreatePaymentResult,
-	CheckPaymentResult
-} from '../pp';
-import { configSchemaFor } from '../pp';
+import {
+	definePaymentProcessor,
+	type CreatePaymentParams,
+	type CreatePaymentResult,
+	type CheckPaymentResult
+} from '$lib/server/sdk/pp';
 import type { Order } from '$lib/types/Order';
+import declaration from './declaration';
 
-export default {
-	meta: {
-		processor: 'stripe',
-		method: 'card',
-		emoji: '💳'
-	},
+async function lastSuccessfulPaymentIntents(): Promise<StripePaymentIntentObject[]> {
+	const controller = new AbortController();
+	const timer = setTimeout(() => controller.abort(), 1000);
+	try {
+		const response = await fetch('https://api.stripe.com/v1/events', {
+			headers: {
+				Authorization: 'Bearer ' + runtimeConfig.stripe.secretKey
+			},
+			signal: controller.signal
+		});
+		if (!response.ok) {
+			throw new Error(
+				`Failed to fetch Stripe events: (${response.status}) ${await response.text()}`
+			);
+		}
+		const stripeEventsResponse: StripeEventListResponse = await response.json();
+		return stripeEventsResponse.data
+			.filter((event): event is StripePaymentIntentSucceededEvent => {
+				return event.type === 'payment_intent.succeeded';
+			})
+			.map((event) => event.data.object);
+	} catch (error) {
+		throw new Error('Failed to fetch Stripe events', { cause: error });
+	} finally {
+		clearTimeout(timer);
+	}
+}
 
-	isEnabled: () => isStripeEnabled(),
+interface StripePaymentIntentObject {
+	id: string;
+	object: 'payment_intent';
+	amount: number;
+	currency: string;
+	status: string;
+	created: number;
+	amount_received: number;
+	payment_method: string | null;
+	latest_charge: string | null;
+	/** Present on the intents be-BOP creates itself; a terminal's own intent carries none. */
+	metadata?: Record<string, string> | null;
+}
 
-	configSchema: configSchemaFor(
-		'stripe',
-		z.object({
-			publicKey: z.string().startsWith('pk_'),
-			secretKey: z.string().startsWith('sk_'),
-			currency: z.enum(FIAT_CURRENCIES)
-		})
-	),
-	secretConfigFields: ['secretKey'],
+interface StripePaymentIntentSucceededEvent {
+	id: string;
+	object: 'event';
+	type: 'payment_intent.succeeded';
+	created: number;
+	data: {
+		object: StripePaymentIntentObject;
+	};
+	livemode: boolean;
+}
 
-	settlementCurrency: () => runtimeConfig.stripe.currency,
+interface StripeEventListResponse {
+	object: 'list';
+	data: Array<StripePaymentIntentSucceededEvent | Record<string, unknown>>;
+	has_more: boolean;
+	url: string;
+}
 
+export default definePaymentProcessor(declaration, {
 	presentation: { kind: 'qr' },
 
 	tapToPay: {
+		isConfigured: () => !!runtimeConfig.stripe.secretKey,
+
 		async findMatching(order: Order, paymentId: ObjectId): Promise<string | null> {
 			const payment = order.payments.find((p) => p._id.equals(paymentId));
 			if (!payment) {
@@ -209,5 +250,30 @@ export default {
 		}
 
 		return { status: 'pending' };
+	},
+
+	payData: (payment) => ({
+		// Without the secret key the payment could never be checked, so its form must not open.
+		publicKey: runtimeConfig.stripe.secretKey ? runtimeConfig.stripe.publicKey : '',
+		clientSecret: payment.clientSecret
+	}),
+
+	async paidAtProvider(payment) {
+		const response = await fetch(
+			'https://api.stripe.com/v1/payment_intents/' + payment.checkoutId,
+			{
+				headers: {
+					Authorization: 'Bearer ' + runtimeConfig.stripe.secretKey
+				}
+			}
+		);
+
+		if (!response.ok) {
+			throw new Error('Failed to fetch checkout status');
+		}
+
+		const paymentIntent = await response.json();
+
+		return paymentIntent.status === 'succeeded';
 	}
-} satisfies PaymentProcessorDefinition;
+});

@@ -1,35 +1,18 @@
-import { isSumupEnabled } from '$lib/server/sumup';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { CURRENCIES, FIAT_CURRENCIES } from '$lib/types/Currency';
+import { CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
-import type {
-	PaymentProcessorDefinition,
-	CreatePaymentParams,
-	CreatePaymentResult,
-	CheckPaymentResult
-} from '../pp';
-import { configSchemaFor } from '../pp';
+import {
+	definePaymentProcessor,
+	type CreatePaymentParams,
+	type CreatePaymentResult,
+	type CheckPaymentResult
+} from '$lib/server/sdk/pp';
 import type { Order } from '$lib/types/Order';
+import declaration from './declaration';
 
-export default {
-	meta: { processor: 'sumup', method: 'card' },
-
-	isEnabled: () => isSumupEnabled(),
-
-	configSchema: configSchemaFor(
-		'sumup',
-		z.object({
-			apiKey: z.string().startsWith('sup_sk_'),
-			currency: z.enum(FIAT_CURRENCIES),
-			merchantCode: z.string().min(1)
-		})
-	),
-	secretConfigFields: ['apiKey'],
-
-	settlementCurrency: () => runtimeConfig.sumUp.currency,
-
+export default definePaymentProcessor(declaration, {
 	presentation: { kind: 'qr' },
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
@@ -144,5 +127,24 @@ export default {
 		}
 
 		return { status: 'pending' };
+	},
+
+	payData: (payment) => ({ checkoutId: payment.checkoutId }),
+
+	async paidAtProvider(payment) {
+		const response = await fetch('https://api.sumup.com/v0.1/checkouts/' + payment.checkoutId, {
+			headers: {
+				Authorization: 'Bearer ' + runtimeConfig.sumUp.apiKey
+			},
+			...{ autoSelectFamily: true }
+		});
+
+		if (!response.ok) {
+			throw new Error('Failed to fetch checkout status');
+		}
+
+		const checkout = await response.json();
+
+		return checkout.status === 'PAID';
 	}
-} satisfies PaymentProcessorDefinition;
+});

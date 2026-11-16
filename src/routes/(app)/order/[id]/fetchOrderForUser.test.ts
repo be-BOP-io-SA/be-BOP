@@ -4,6 +4,7 @@ import { cleanDb, insertTestOrder } from '$lib/server/test-utils';
 import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
 import { createOrder } from '$lib/server/orders';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { FAKE_ORDER_INVOICE_NUMBER } from '$lib/types/Order';
 import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
 import { fetchOrderForUser } from './fetchOrderForUser';
 
@@ -234,6 +235,114 @@ describe('fetchOrderForUser', () => {
 			expect(order.status).toBe('paid');
 		});
 	});
+
+	describe.each([
+		{
+			processor: 'stripe',
+			configKey: 'stripe',
+			credentials: { secretKey: 'sk_test', publicKey: 'pk_test' },
+			statusUrl: 'https://api.stripe.com/v1/payment_intents/CHECKOUT',
+			paid: 'succeeded',
+			unpaid: 'requires_payment_method'
+		},
+		{
+			processor: 'sumup',
+			configKey: 'sumUp',
+			credentials: { apiKey: 'sup_sk_test', merchantCode: 'MTEST' },
+			statusUrl: 'https://api.sumup.com/v0.1/checkouts/CHECKOUT',
+			paid: 'PAID',
+			unpaid: 'PENDING'
+		}
+	] as const)(
+		'pending $processor payment',
+		({ processor, configKey, credentials, statusUrl, paid, unpaid }) => {
+			const initialConfig = { ...runtimeConfig[configKey] };
+
+			afterEach(() => {
+				Object.assign(runtimeConfig[configKey], initialConfig);
+				vi.unstubAllGlobals();
+			});
+
+			async function orderAwaitingCard(providerStatus: string) {
+				const orderId = await createOrder(
+					[{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }],
+					'point-of-sale',
+					{
+						locale: 'en',
+						user: { sessionId: 'test-session-id' },
+						shippingAddress: null,
+						userVatCountry: 'FR'
+					}
+				);
+				await collections.orders.updateOne(
+					{ _id: orderId },
+					{
+						$set: {
+							'payments.0.method': 'card',
+							'payments.0.processor': processor,
+							'payments.0.checkoutId': 'CHECKOUT',
+							'payments.0.clientSecret': 'CLIENT-SECRET'
+						}
+					}
+				);
+				const provider = vi.fn(async () => Response.json({ status: providerStatus }));
+				vi.stubGlobal('fetch', provider);
+
+				return { orderId, provider };
+			}
+
+			it('reports the order paid as soon as the provider holds the money', async () => {
+				Object.assign(runtimeConfig[configKey], credentials);
+				const { orderId, provider } = await orderAwaitingCard(paid);
+
+				const order = await fetchOrderForUser(orderId);
+
+				expect(provider).toHaveBeenCalledWith(statusUrl, expect.anything());
+				expect(order.payments[0].status).toBe('paid');
+				expect(order.payments[0].invoice?.number).toBe(FAKE_ORDER_INVOICE_NUMBER);
+				expect(order.status).toBe('paid');
+			});
+
+			it('leaves settling the stored order to the payment poller', async () => {
+				Object.assign(runtimeConfig[configKey], credentials);
+				const { orderId } = await orderAwaitingCard(paid);
+
+				await fetchOrderForUser(orderId);
+
+				const stored = await collections.orders.findOne({ _id: orderId });
+				expect(stored?.status).toBe('pending');
+				expect(stored?.payments[0].status).toBe('pending');
+			});
+
+			it('keeps the order pending while the provider still waits for the card', async () => {
+				Object.assign(runtimeConfig[configKey], credentials);
+				const { orderId } = await orderAwaitingCard(unpaid);
+
+				const order = await fetchOrderForUser(orderId);
+
+				expect(order.payments[0].status).toBe('pending');
+				expect(order.status).toBe('pending');
+			});
+
+			it('does not ask a provider the shop has no credentials for', async () => {
+				const { orderId, provider } = await orderAwaitingCard(paid);
+
+				const order = await fetchOrderForUser(orderId);
+
+				expect(provider).not.toHaveBeenCalled();
+				expect(order.payments[0].status).toBe('pending');
+			});
+
+			// Every page showing the order receives it; only the pay page opens the payment form.
+			it('keeps what opens the payment form out of the order', async () => {
+				const { orderId } = await orderAwaitingCard(unpaid);
+
+				const order = await fetchOrderForUser(orderId);
+
+				expect(JSON.stringify(order)).not.toContain('CLIENT-SECRET');
+			});
+		}
+	);
 });
 
 function note(role: string | null, userAlias?: string) {

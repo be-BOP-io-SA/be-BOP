@@ -1,13 +1,29 @@
 import type { PaymentMethod } from '$lib/server/payment-methods';
+import type { Currency } from '$lib/types/Currency';
 
 /** One setting of a processor, as its settings page edits it and `runtimeConfig` stores it. */
-export interface ConfigField {
-	/** A `secret` is typed as a password and never sent to a role that may only read the page. */
-	kind: 'text' | 'secret';
-}
+export type ConfigField =
+	| {
+			/** A `secret` is typed as a password and never sent to a role that may only read the page. */
+			kind: 'text' | 'secret';
+			/** What a valid value starts with, such as `sk_`. */
+			prefix?: string;
+	  }
+	| {
+			/** The fiat currency the processor is asked to settle in. */
+			kind: 'currency';
+			default: Currency;
+	  };
 
 /** Key order is the order of the settings form. */
 export type ConfigFields = Readonly<Record<string, ConfigField>>;
+
+declare const payDataType: unique symbol;
+
+/** Marks a processor that shows its own payment form on the pay page, fed with `Data`. */
+export type PayZone<Data> = true & { readonly [payDataType]?: Data };
+
+export const payData = <Data>() => true as PayZone<Data>;
 
 /**
  * The static facts about a payment processor. Nothing here may import `$lib/server/*` for a
@@ -28,6 +44,7 @@ export interface ProcessorDeclaration {
 	/** Its `runtimeConfig` key, which is also its `runtimeConfig` collection `_id`. */
 	configKey?: string;
 	config?: { fields: ConfigFields };
+	pay?: PayZone<unknown>;
 	/**
 	 * Keeps a hand-written settings page: these carry real domain UI — wallet management,
 	 * RPC consoles, derivation paths — that no shared form can express.
@@ -43,8 +60,10 @@ export type FieldsOf<D> = D extends { config: { fields: infer F extends ConfigFi
 	: never;
 
 export type ConfigOf<D> = D extends { config: { fields: infer F extends ConfigFields } }
-	? { -readonly [Name in keyof F]: string }
+	? { -readonly [Name in keyof F]: F[Name] extends { kind: 'currency' } ? Currency : string }
 	: never;
+
+export type PayDataOf<D> = D extends { pay: PayZone<infer Data> } ? Data : never;
 
 /** The slice of `runtimeConfig` the declared processors own, keyed by their `configKey`. */
 export type ProcessorConfigs<D> = {
@@ -54,5 +73,10 @@ export type ProcessorConfigs<D> = {
 };
 
 export function configDefaults(fields: ConfigFields): Record<string, string> {
-	return Object.fromEntries(Object.keys(fields).map((name) => [name, '']));
+	return Object.fromEntries(
+		Object.entries(fields).map(([name, field]) => [
+			name,
+			field.kind === 'currency' ? field.default : ''
+		])
+	);
 }

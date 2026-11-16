@@ -4,7 +4,7 @@ const config: PlaywrightTestConfig = {
 	webServer: {
 		// Unlike `vite preview`, the production server reads the client address from `ADDRESS_HEADER`.
 		command:
-			'npm run build && node --env-file-if-exists=.env --env-file-if-exists=.env.local --env-file-if-exists=.env.production --env-file-if-exists=.env.production.local build',
+			'npm run build && node --import ./tests/fake-providers.mjs --env-file-if-exists=.env --env-file-if-exists=.env.local --env-file-if-exists=.env.production --env-file-if-exists=.env.production.local build',
 		port: 5012,
 		// The command builds first, which the default 60s does not cover on a cold cache.
 		timeout: 180_000,
