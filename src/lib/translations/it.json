@@ -1883,8 +1883,7 @@
 			"defaultTemplateHint": "Questo è il modello predefinito. Se lo lasci invariato, continuerà a essere aggiornato man mano che il codice cambia.",
 			"customTemplateHint": "Questo è un modello personalizzato. Se lo lasci invariato, non verrà aggiornato man mano che il codice cambia. Per vedere le ultime modifiche, puoi cancellare i valori.",
 			"confirmResetToDefault": "Sei sicuro di voler ripristinare questo modello al valore predefinito?",
-			"resetToDefault": "Ripristina predefinito",
-			"superAdminOnly": "Solo il super admin può modificare questo modello: contiene un link di accesso."
+			"resetToDefault": "Ripristina predefinito"
 		},
 		"cmsForm": {
 			"confirmDelete": "Vuoi eliminare questa pagina CMS?",

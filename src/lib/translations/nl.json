@@ -1883,8 +1883,7 @@
 			"defaultTemplateHint": "Dit is de standaardsjabloon. Als u deze ongewijzigd laat, blijft deze bijgewerkt naarmate de code verandert.",
 			"customTemplateHint": "Dit is een aangepast sjabloon. Als u het ongewijzigd laat, wordt het niet bijgewerkt naarmate de code verandert. Om de laatste wijzigingen te zien, kunt u de waarden wissen.",
 			"confirmResetToDefault": "Weet u zeker dat u dit sjabloon wilt terugzetten naar de standaardwaarde?",
-			"resetToDefault": "Terugzetten naar standaard",
-			"superAdminOnly": "Alleen de superbeheerder kan deze sjabloon bewerken: hij bevat een inloglink."
+			"resetToDefault": "Terugzetten naar standaard"
 		},
 		"cmsForm": {
 			"confirmDelete": "Wilt u deze CMS-pagina verwijderen?",

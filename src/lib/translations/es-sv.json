@@ -1883,8 +1883,7 @@
 			"defaultTemplateHint": "Esta es la plantilla predeterminada. Si la deja tal cual, se seguirá actualizando a medida que cambie el código.",
 			"customTemplateHint": "Esta es una plantilla personalizada. Si la deja tal cual, no se actualizará a medida que cambie el código. Para ver los últimos cambios, puede borrar los valores.",
 			"confirmResetToDefault": "¿Está seguro de que desea restablecer esta plantilla al valor predeterminado?",
-			"resetToDefault": "Restablecer valor predeterminado",
-			"superAdminOnly": "Solo el superadministrador puede editar esta plantilla: contiene un enlace de inicio de sesión."
+			"resetToDefault": "Restablecer valor predeterminado"
 		},
 		"cmsForm": {
 			"confirmDelete": "¿Desea eliminar esta página CMS?",

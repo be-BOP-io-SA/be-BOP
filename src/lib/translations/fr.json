@@ -1883,8 +1883,7 @@
 			"defaultTemplateHint": "Il s'agit du modèle par défaut. Si vous le laissez tel quel, il continuera à être mis à jour au fil des évolutions du code.",
 			"customTemplateHint": "Il s'agit d'un modèle personnalisé. Si vous le laissez tel quel, il ne sera pas mis à jour au fil des évolutions du code. Pour voir les dernières modifications, vous pouvez effacer les valeurs.",
 			"confirmResetToDefault": "Êtes-vous sûr de vouloir réinitialiser ce modèle par défaut ?",
-			"resetToDefault": "Réinitialiser par défaut",
-			"superAdminOnly": "Seul le super admin peut modifier ce modèle : il contient un lien de connexion."
+			"resetToDefault": "Réinitialiser par défaut"
 		},
 		"cmsForm": {
 			"confirmDelete": "Voulez-vous supprimer cette page CMS ?",

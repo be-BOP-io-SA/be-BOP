@@ -1,23 +1,17 @@
 import { collections } from '$lib/server/database.js';
 import { defaultConfig, runtimeConfig, type EmailTemplateKey } from '$lib/server/runtime-config';
 import { typedKeys } from '$lib/utils/typedKeys.js';
-import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
-import { CREDENTIAL_TEMPLATE_LINKS } from '$lib/server/credential-email-template';
-import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
-const CREDENTIAL_TEMPLATE_KEYS: EmailTemplateKey[] = typedKeys(CREDENTIAL_TEMPLATE_LINKS);
-
-export async function load({ locals }) {
+export async function load() {
 	return {
 		defaultTemplates: defaultConfig.emailTemplates,
-		templates: runtimeConfig.emailTemplates,
-		superAdminOnlyKeys: locals.user?.roleId === SUPER_ADMIN_ROLE_ID ? [] : CREDENTIAL_TEMPLATE_KEYS
+		templates: runtimeConfig.emailTemplates
 	};
 }
 
 export const actions = {
-	update: async function ({ request, locals }) {
+	update: async function ({ request }) {
 		const parsed = z
 			.object({
 				key: z.enum(
@@ -27,13 +21,6 @@ export const actions = {
 				html: z.string().trim()
 			})
 			.parse(Object.fromEntries(await request.formData()));
-
-		if (
-			CREDENTIAL_TEMPLATE_KEYS.includes(parsed.key) &&
-			locals.user?.roleId !== SUPER_ADMIN_ROLE_ID
-		) {
-			return fail(403, { ...parsed, superAdminOnly: true });
-		}
 
 		if (!parsed.subject) {
 			parsed.subject = defaultConfig.emailTemplates[parsed.key].subject;

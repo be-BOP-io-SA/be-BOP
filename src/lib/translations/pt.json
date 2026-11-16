@@ -1883,8 +1883,7 @@
 			"defaultTemplateHint": "Este é o modelo padrão. Se você o deixar como está, ele continuará sendo atualizado conforme o código mudar.",
 			"customTemplateHint": "Este é um modelo personalizado. Se você o deixar como está, ele não será atualizado conforme o código mudar. Para ver as últimas alterações, você pode apagar os valores.",
 			"confirmResetToDefault": "Tem certeza de que deseja redefinir este modelo para o padrão?",
-			"resetToDefault": "Redefinir para o padrão",
-			"superAdminOnly": "Apenas o super administrador pode editar este modelo: contém uma ligação de início de sessão."
+			"resetToDefault": "Redefinir para o padrão"
 		},
 		"cmsForm": {
 			"confirmDelete": "Deseja eliminar esta página CMS?",
