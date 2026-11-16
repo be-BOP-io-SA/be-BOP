@@ -1,4 +1,4 @@
-import { expect, test, type BrowserContext, type Locator } from '@playwright/test';
+import { expect, test, type BrowserContext, type Locator } from './client-ip.js';
 import { MongoClient, ObjectId } from 'mongodb';
 import { createHash, randomUUID } from 'node:crypto';
 

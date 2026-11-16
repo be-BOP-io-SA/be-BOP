@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext } from '@playwright/test';
+import { expect, test, type APIRequestContext } from './client-ip.js';
 import { readFile } from 'fs/promises';
 import { MongoClient } from 'mongodb';
 import sharp from 'sharp';

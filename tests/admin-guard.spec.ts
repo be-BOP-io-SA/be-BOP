@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './client-ip.js';
 
 // These run without the saved session on purpose: the point is what a stranger sees.
 test.use({ storageState: { cookies: [], origins: [] } });

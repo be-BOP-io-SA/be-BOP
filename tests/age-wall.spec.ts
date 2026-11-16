@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './client-ip.js';
 import { MongoClient } from 'mongodb';
 
 const E2E_DB = 'bebop-e2e';

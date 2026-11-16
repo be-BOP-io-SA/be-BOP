@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './client-ip.js';
 
 // A tiny valid PNG: the storage refuses it before reading it anyway.
 const PNG = Buffer.from(

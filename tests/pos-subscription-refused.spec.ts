@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './client-ip.js';
 import { MongoClient, ObjectId } from 'mongodb';
 
 // Same database as the web server started by playwright.config.ts.

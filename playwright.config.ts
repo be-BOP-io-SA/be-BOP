@@ -2,9 +2,10 @@ import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
 	webServer: {
-		command: 'npm run build && npm run preview',
-		// `npm run preview` serves on 5012. This said 4173 — Vite's default — so the server was
-		// never found and every run timed out before a single test executed.
+		// The production server, as it reads the client address from `ADDRESS_HEADER` where
+		// `vite preview` only sees the socket. It loads the env files `vite preview` loaded.
+		command:
+			'npm run build && node --env-file-if-exists=.env --env-file-if-exists=.env.local build',
 		port: 5012,
 		// The command builds first, which the default 60s does not cover on a cold cache.
 		timeout: 180_000,
@@ -14,7 +15,11 @@ const config: PlaywrightTestConfig = {
 			MONGODB_DB: 'bebop-e2e',
 			// A developer's SMTP_* variables lock the SMTP settings page the suite drives; e-mails
 			// stay fake through the database default.
-			SMTP_FAKE: ''
+			SMTP_FAKE: '',
+			PORT: '5012',
+			ORIGIN: 'http://localhost:5012',
+			// Each spec file sends its own address (tests/client-ip.ts) to stay under the rate limit.
+			ADDRESS_HEADER: 'x-forwarded-for'
 		}
 	},
 	// One worker, in order: the tests share one database and one shop.

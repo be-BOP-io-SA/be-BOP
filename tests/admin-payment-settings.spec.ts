@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './client-ip.js';
 
 /**
  * End-to-end cover for the shared payment-processor settings page.
