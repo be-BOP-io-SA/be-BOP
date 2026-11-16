@@ -1,22 +1,18 @@
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { FRACTION_DIGITS_PER_CURRENCY, CURRENCIES, FIAT_CURRENCIES } from '$lib/types/Currency';
+import { FRACTION_DIGITS_PER_CURRENCY, CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
-import type {
-	PaymentProcessorDefinition,
-	CreatePaymentParams,
-	CreatePaymentResult,
-	CheckPaymentResult
-} from '../pp';
-import { configSchemaFor } from '../pp';
+import {
+	definePaymentProcessor,
+	type CreatePaymentParams,
+	type CreatePaymentResult,
+	type CheckPaymentResult
+} from '$lib/server/sdk/pp';
 import type { Order } from '$lib/types/Order';
+import declaration from './declaration';
 
 // --- Taler API helpers (private to this module) ---
-
-function isTalerEnabled(): boolean {
-	return !!runtimeConfig.taler.backendUrl && !!runtimeConfig.taler.backendApiKey;
-}
 
 // Demo backend (backend.demo.taler.net) uses test currency KUDOS instead of real currencies
 function isDemoMerchantBackend(): boolean {
@@ -61,26 +57,7 @@ async function getTalerOrder(orderId: string): Promise<TalerOrder | 'not_found'>
 
 // --- SDK Payment Processor ---
 
-export default {
-	meta: { processor: 'taler', method: 'taler', emoji: '🪙' },
-
-	isEnabled: () => isTalerEnabled(),
-
-	configSchema: configSchemaFor(
-		'taler',
-		z.object({
-			backendUrl: z
-				.string()
-				.min(1)
-				.transform((v) => v.replace(/\/+$/, '')),
-			backendApiKey: z.string().min(1),
-			currency: z.enum(FIAT_CURRENCIES)
-		})
-	),
-	secretConfigFields: ['backendApiKey'],
-
-	settlementCurrency: () => runtimeConfig.taler.currency,
-
+export default definePaymentProcessor(declaration, {
 	presentation: {
 		kind: 'qr',
 		// Tapping the QR opens the wallet installed on the same device.
@@ -186,4 +163,4 @@ export default {
 		// 'claimed' (wallet grabbed order) and 'unpaid' → pending
 		return { status: 'pending' };
 	}
-} satisfies PaymentProcessorDefinition;
+});

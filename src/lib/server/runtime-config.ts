@@ -247,12 +247,6 @@ const baseConfig = {
 		serverUrl: '',
 		storeId: ''
 	},
-	paypal: {
-		clientId: '',
-		secret: '',
-		currency: 'EUR' as Currency,
-		sandbox: false
-	},
 	...processorConfigDefaults(),
 	blink: {
 		/** blink_... — when set, uses the API-key custodial GraphQL mode */
@@ -261,16 +255,6 @@ const baseConfig = {
 		lnAddress: '',
 		/** Optional wallet id override for API-key mode; empty = account default wallet */
 		walletId: ''
-	},
-	taler: {
-		backendUrl: '',
-		backendApiKey: '',
-		currency: 'CHF' as Currency
-	},
-	osb: {
-		shopId: '',
-		password: '',
-		hmacKey: ''
 	},
 	bity: {
 		clientId: ''

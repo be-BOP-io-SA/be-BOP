@@ -972,18 +972,6 @@
 			"delete": "Verwijderen",
 			"confirmDelete": "Wilt u deze ranglijst verwijderen?"
 		},
-		"osb": {
-			"shopId": "Winkel-ID",
-			"restApiPassword": "REST API-wachtwoord",
-			"hmacKeyOptional": "HMAC-SHA-256-sleutel (optioneel)",
-			"currencyFixed": "Valuta: XPF (vast)"
-		},
-		"paypal": {
-			"clientId": "Client-ID",
-			"secret": "Geheime sleutel",
-			"sandboxCredentials": "Deze gegevens zijn voor de sandbox-omgeving",
-			"currency": "Valuta"
-		},
 		"login": {
 			"login": "Login",
 			"loginPlaceholder": "Voer uw login in",
@@ -1829,11 +1817,6 @@
 			"phaseReminderBeforeEnd": "Herinnering vóór einde",
 			"phaseReminderHint": "0 = geen herinnering",
 			"addPhase": "Fase toevoegen"
-		},
-		"taler": {
-			"backendUrl": "Backend-URL",
-			"backendApiKey": "Backend-API-sleutel",
-			"currency": "Valuta"
 		},
 		"specification": {
 			"addSpecification": "Specificatie toevoegen",

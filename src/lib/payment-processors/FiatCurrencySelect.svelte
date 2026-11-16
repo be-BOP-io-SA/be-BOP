@@ -4,10 +4,10 @@
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
 	import { currencies } from '$lib/stores/currencies';
 
-	/** The processor's configured settlement currency. Bound, so the form posts what is picked. */
+	/** The currency stored for the processor, on which the picker opens. */
 	export let value: string;
 	export let label: string;
-	export let name = 'currency';
+	export let name: string;
 
 	// The shop's own currencies first, then the rest alphabetically. Crypto is excluded: a
 	// provider that settles in BTC or SAT says so itself and never renders this.
@@ -18,9 +18,6 @@
 	);
 
 	let selected = options.find((option) => option.value === value) ?? null;
-	$: if (selected) {
-		value = selected.value;
-	}
 </script>
 
 <label class="form-label">

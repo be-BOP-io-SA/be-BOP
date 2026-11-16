@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { testProcessorConnection } from './test-connection';
 import { registerProcessor, type CreatePaymentParams, type PaymentProcessorDefinition } from './pp';
-import PPTaler from './contrib/PPTaler';
+import PPTaler from '$lib/payment-processors/taler/processor.server';
 import { exchangeRate } from '$lib/stores/exchangeRate';
 import { SATOSHIS_PER_BTC } from '$lib/types/Currency';
 

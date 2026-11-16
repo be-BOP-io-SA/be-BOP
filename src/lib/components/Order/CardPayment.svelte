@@ -28,12 +28,6 @@
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html front.logo.body}
 			</svg>
-		{:else if payment.processor === 'paypal'}
-			<img
-				src="https://www.paypalobjects.com/webstatic/mktg/Logo/pp-logo-200px.png"
-				alt="PayPal"
-				class="h-12"
-			/>
 		{:else if payment.processor}
 			<span class="text-sm text-gray-500">{payment.processor}</span>
 		{/if}

@@ -972,18 +972,6 @@
 			"delete": "Löschen",
 			"confirmDelete": "Möchten Sie diese Rangliste löschen?"
 		},
-		"osb": {
-			"shopId": "Shop-ID",
-			"restApiPassword": "REST-API-Passwort",
-			"hmacKeyOptional": "HMAC-SHA-256-Schlüssel (optional)",
-			"currencyFixed": "Währung: XPF (fest)"
-		},
-		"paypal": {
-			"clientId": "Client-ID",
-			"secret": "Geheimnis",
-			"sandboxCredentials": "Diese Zugangsdaten sind für die Sandbox-Umgebung",
-			"currency": "Währung"
-		},
 		"login": {
 			"login": "Login",
 			"loginPlaceholder": "Geben Sie Ihren Login ein",
@@ -1829,11 +1817,6 @@
 			"phaseReminderBeforeEnd": "Erinnerung vor Ablauf",
 			"phaseReminderHint": "0 = keine Erinnerung",
 			"addPhase": "Phase hinzufügen"
-		},
-		"taler": {
-			"backendUrl": "Backend-URL",
-			"backendApiKey": "Backend-API-Schlüssel",
-			"currency": "Währung"
 		},
 		"specification": {
 			"addSpecification": "Spezifikation hinzufügen",

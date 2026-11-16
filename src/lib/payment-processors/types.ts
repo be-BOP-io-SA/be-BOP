@@ -8,6 +8,14 @@ export type ConfigField =
 			kind: 'text' | 'secret';
 			/** What a valid value starts with, such as `sk_`. */
 			prefix?: string;
+			/** May stay empty: the processor takes payments without it. */
+			optional?: true;
+			/** For the address of a server, so that paths can be appended to what is stored. */
+			stripTrailingSlashes?: true;
+	  }
+	| {
+			/** A checkbox, unchecked until the shop says otherwise. */
+			kind: 'boolean';
 	  }
 	| {
 			/** The fiat currency the processor is asked to settle in. */
@@ -59,8 +67,14 @@ export type FieldsOf<D> = D extends { config: { fields: infer F extends ConfigFi
 	? F
 	: never;
 
+type ValueOf<Field> = Field extends { kind: 'currency' }
+	? Currency
+	: Field extends { kind: 'boolean' }
+	? boolean
+	: string;
+
 export type ConfigOf<D> = D extends { config: { fields: infer F extends ConfigFields } }
-	? { -readonly [Name in keyof F]: F[Name] extends { kind: 'currency' } ? Currency : string }
+	? { -readonly [Name in keyof F]: ValueOf<F[Name]> }
 	: never;
 
 export type PayDataOf<D> = D extends { pay: PayZone<infer Data> } ? Data : never;
@@ -72,11 +86,11 @@ export type ProcessorConfigs<D> = {
 		: never]: ConfigOf<P>;
 };
 
-export function configDefaults(fields: ConfigFields): Record<string, string> {
+export function configDefaults(fields: ConfigFields): Record<string, string | boolean> {
 	return Object.fromEntries(
 		Object.entries(fields).map(([name, field]) => [
 			name,
-			field.kind === 'currency' ? field.default : ''
+			field.kind === 'currency' ? field.default : field.kind === 'boolean' ? false : ''
 		])
 	);
 }

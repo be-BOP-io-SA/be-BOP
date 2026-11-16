@@ -1,13 +1,7 @@
 import { collections } from '$lib/server/database';
-import {
-	coversPayment,
-	getProcessor,
-	processorFor,
-	serializePresentation
-} from '$lib/server/sdk/pp';
+import { getProcessor, processorFor, serializePresentation } from '$lib/server/sdk/pp';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { isOrderFullyPaid } from '$lib/server/orders';
-import { isPaypalEnabled } from '$lib/server/paypal';
 import { picturesForProducts } from '$lib/server/picture';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import { FAKE_ORDER_INVOICE_NUMBER } from '$lib/types/Order';
@@ -81,19 +75,12 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 		// In that case, we send back the status as paid, but do not update the DB (it's taken care of by order-lock)
 		if (payment.status === 'pending' && payment.checkoutId) {
 			const recorded = payment.processor ? getProcessor(payment.processor) : undefined;
-			let paid = false;
 
-			if (recorded?.paidAtProvider && recorded.isEnabled()) {
-				paid = await recorded.paidAtProvider(payment, order);
-			} else if (payment.processor === 'paypal' && isPaypalEnabled()) {
-				// PayPal calls a checkout COMPLETED while its capture is still PENDING, so only the
-				// poller's own verdict (settled captures covering the price) may unlock paid content.
-				const pp = processorFor(payment);
-				const result = await pp?.checkPayment?.(payment, order);
-				paid = !!pp && result?.status === 'paid' && coversPayment(pp, payment, result.received);
-			}
-
-			if (paid) {
+			if (
+				recorded?.paidAtProvider &&
+				recorded.isEnabled() &&
+				(await recorded.paidAtProvider(payment, order))
+			) {
 				payment.status = 'paid';
 
 				payment.invoice = {

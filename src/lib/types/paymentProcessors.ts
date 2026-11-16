@@ -48,11 +48,6 @@ const LEGACY = {
 	},
 	bitcoind: { method: 'bitcoin', label: 'Bitcoin core node', priority: 20, customAdminPage: true },
 
-	// --- one provider each ---
-	paypal: { method: 'paypal', label: 'Paypal', priority: 10, configKey: 'paypal' },
-	taler: { method: 'taler', label: 'Taler', priority: 10, configKey: 'taler' },
-	osb: { method: 'osb', label: 'OSB', priority: 10, configKey: 'osb' },
-
 	// --- settled by hand, so nothing to configure and nothing to poll ---
 	'point-of-sale': { method: 'point-of-sale', label: 'Point of sale', priority: 10 },
 	free: { method: 'free', label: 'Free', priority: 10 },

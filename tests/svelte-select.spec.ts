@@ -1,5 +1,6 @@
-import { expect, test, type Locator, type Page } from './client-ip.js';
+import { expect, test, type Page } from './client-ip.js';
 import { MongoClient } from 'mongodb';
+import { choose, selectFor } from './select.js';
 
 // Same database as the web server started by playwright.config.ts.
 const E2E_DB = 'bebop-e2e';
@@ -13,29 +14,6 @@ async function withDb<T>(run: (db: ReturnType<MongoClient['db']>) => Promise<T>)
 	} finally {
 		await client.close();
 	}
-}
-
-/** Searches the list, picks the option and checks the field shows it once the list closes */
-async function choose(select: Locator, search: string, option: string) {
-	const input = select.locator('input').first();
-	// Before hydration the field is plain markup that ignores the click, so retry until it opens.
-	await expect(async () => {
-		await input.click();
-		await expect(select.locator('.svelte-select-list')).toBeVisible({ timeout: 1000 });
-	}).toPass();
-	await input.fill(search);
-	await expect(select.locator('.svelte-select-list .item').first()).toHaveText(option);
-	// The keyboard, because the sticky save bar of admin forms can cover the open list.
-	await input.press('Enter');
-	await expect(select.locator('.svelte-select-list')).toHaveCount(0);
-	await expect(select.locator('.selected-item')).toHaveText(option);
-}
-
-/** The select whose choice is posted through the hidden input of that name */
-function selectFor(page: Page, hiddenName: string) {
-	return page
-		.locator('label', { has: page.locator(`input[type=hidden][name="${hiddenName}"]`) })
-		.locator('.svelte-select');
 }
 
 function hidden(page: Page, name: string) {

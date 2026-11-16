@@ -29,7 +29,7 @@
 
 <form class="contents" method="post" action="?/save">
 	{#if fields && data.front?.settings}
-		<ConfigForm {fields} texts={data.front.settings.fields} config={data.config} />
+		<ConfigForm {fields} settings={data.front.settings} config={data.config} />
 	{:else}
 		<svelte:component this={Fields} bind:config={data.config} />
 	{/if}

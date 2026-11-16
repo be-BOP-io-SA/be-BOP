@@ -972,18 +972,6 @@
 			"delete": "Delete",
 			"confirmDelete": "Would you like to delete this leaderboard?"
 		},
-		"osb": {
-			"shopId": "Shop ID",
-			"restApiPassword": "REST API Password",
-			"hmacKeyOptional": "HMAC-SHA-256 Key (optional)",
-			"currencyFixed": "Currency: XPF (fixed)"
-		},
-		"paypal": {
-			"clientId": "Client ID",
-			"secret": "Secret",
-			"sandboxCredentials": "Those credentials are for the sandbox environment",
-			"currency": "Currency"
-		},
 		"login": {
 			"login": "Login",
 			"loginPlaceholder": "Enter your login",
@@ -1829,11 +1817,6 @@
 			"phaseReminderBeforeEnd": "Reminder before end",
 			"phaseReminderHint": "0 = no reminder",
 			"addPhase": "Add phase"
-		},
-		"taler": {
-			"backendUrl": "Backend URL",
-			"backendApiKey": "Backend API Key",
-			"currency": "Currency"
 		},
 		"specification": {
 			"addSpecification": "Add specification",

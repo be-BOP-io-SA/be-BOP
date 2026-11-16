@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Order } from '$lib/types/Order';
-import PPPaypal from './PPPaypal';
+import PPPaypal from './processor.server';
 
 const CHECKOUT_ID = 'paypal-checkout-1';
 

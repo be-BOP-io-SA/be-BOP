@@ -1,22 +1,18 @@
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
-import type {
-	PaymentProcessorDefinition,
-	CreatePaymentParams,
-	CreatePaymentResult,
-	CheckPaymentResult
-} from '../pp';
-import { configSchemaFor } from '../pp';
+import {
+	definePaymentProcessor,
+	type CreatePaymentParams,
+	type CreatePaymentResult,
+	type CheckPaymentResult
+} from '$lib/server/sdk/pp';
 import type { Order } from '$lib/types/Order';
+import declaration from './declaration';
 
 // --- OSB (PayZen/Lyra) REST V4 API helpers ---
 
 const OSB_API_BASE = 'https://api.secure.osb.pf/api-payment/V4';
-
-function isOsbEnabled(): boolean {
-	return !!runtimeConfig.osb.shopId && !!runtimeConfig.osb.password;
-}
 
 function osbAuthHeader(): string {
 	return (
@@ -72,21 +68,7 @@ const osbPaymentOrderGetSchema = z.object({
 
 // --- SDK Payment Processor ---
 
-export default {
-	meta: { processor: 'osb', method: 'osb', emoji: '🇵🇫' },
-
-	isEnabled: () => isOsbEnabled(),
-
-	configSchema: configSchemaFor(
-		'osb',
-		z.object({
-			shopId: z.string().min(1),
-			password: z.string().min(1),
-			hmacKey: z.string().default('')
-		})
-	),
-	secretConfigFields: ['password', 'hmacKey'],
-
+export default definePaymentProcessor(declaration, {
 	settlementCurrency: () => 'XPF',
 
 	presentation: { kind: 'redirect' },
@@ -153,4 +135,4 @@ export default {
 
 		return { status: 'pending' };
 	}
-} satisfies PaymentProcessorDefinition;
+});

@@ -153,3 +153,72 @@ describe('a processor that settles in a currency the shop picks', () => {
 		expect(schema?.safeParse({ secretKey: 'sk_test' }).success).toBe(false);
 	});
 });
+
+describe('a processor with a checkbox, an optional field and a server address', () => {
+	const hosted = defineProcessor({
+		slug: 'taler',
+		method: 'taler',
+		label: 'Fixture',
+		priority: 10,
+		configKey: 'taler',
+		config: {
+			fields: {
+				backendUrl: { kind: 'text', stripTrailingSlashes: true },
+				signingKey: { kind: 'secret', optional: true },
+				sandbox: { kind: 'boolean' }
+			}
+		}
+	});
+	const pp = definePaymentProcessor(hosted, {
+		settlementCurrency: () => 'CHF' as const,
+		createPayment: async () => ({ processor: 'taler' as const })
+	});
+	const saved = { ...runtimeConfig.taler };
+
+	afterEach(() => {
+		runtimeConfig.taler = { ...saved };
+	});
+
+	it('starts with the box unchecked', () => {
+		expect(configDefaults(hosted.config.fields)).toEqual({
+			backendUrl: '',
+			signingKey: '',
+			sandbox: false
+		});
+	});
+
+	// A browser posts nothing for an unchecked box, and nothing must not read as an error.
+	it('reads a missing checkbox as unchecked, and a missing optional field as empty', () => {
+		expect(pp.configSchema?.parse({ backendUrl: 'https://taler.example' })).toEqual({
+			backendUrl: 'https://taler.example',
+			signingKey: '',
+			sandbox: false
+		});
+		expect(
+			pp.configSchema?.parse({ backendUrl: 'https://taler.example', sandbox: 'true' })
+		).toMatchObject({ sandbox: true });
+	});
+
+	it('stores a server address without its trailing slashes', () => {
+		expect(pp.configSchema?.parse({ backendUrl: 'https://taler.example//' })).toMatchObject({
+			backendUrl: 'https://taler.example'
+		});
+	});
+
+	it('is enabled without its optional field, whatever the checkbox says', () => {
+		Object.assign(runtimeConfig.taler, { backendUrl: '', signingKey: 'key', sandbox: true });
+		expect(pp.isEnabled()).toBe(false);
+
+		Object.assign(runtimeConfig.taler, { backendUrl: 'https://taler.example', signingKey: '' });
+		expect(pp.isEnabled()).toBe(true);
+	});
+
+	it('types a checkbox as a boolean', () => {
+		expectTypeOf<RuntimeConfig['paypal']>().toEqualTypeOf<{
+			clientId: string;
+			secret: string;
+			sandbox: boolean;
+			currency: Currency;
+		}>();
+	});
+});

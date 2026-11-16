@@ -8,6 +8,8 @@ export interface Front<D extends ProcessorDeclaration = ProcessorDeclaration> {
 	logo?: { viewBox: string; body: string };
 	settings?: {
 		fields: Record<keyof FieldsOf<D> & string, { label: InlineText; placeholder?: string }>;
+		/** A note under the fields, for what the shop cannot change. */
+		outro?: InlineText;
 	};
 }
 

@@ -1,4 +1,5 @@
 import { expect, test } from './client-ip.js';
+import { choose, selectFor } from './select.js';
 
 /**
  * End-to-end cover for the shared payment-processor settings page.
@@ -72,6 +73,86 @@ test('a processor with its own folder gets its form from what it declares', asyn
 	await expect(page.getByLabel('API Key')).toHaveValue('');
 });
 
+test('a checkbox is saved checked, and comes back unchecked after a reset', async ({ page }) => {
+	await page.goto('/admin/paypal', { waitUntil: 'networkidle' });
+	const sandbox = page.getByLabel('Those credentials are for the sandbox environment');
+	await expect(sandbox).toHaveAttribute('type', 'checkbox');
+	await expect(sandbox).not.toBeChecked();
+
+	try {
+		await page.getByLabel('Client ID').fill('e2e-paypal-client');
+		await page.getByLabel('Secret').fill('e2e-paypal-secret');
+		// Last on purpose: ticking the box must leave what was just typed in place.
+		await sandbox.check();
+		await expect(page.getByLabel('Client ID')).toHaveValue('e2e-paypal-client');
+		await page.getByRole('button', { name: 'Save' }).click();
+		await page.waitForLoadState('networkidle');
+		await page.reload();
+		await expect(page.getByLabel('Client ID')).toHaveValue('e2e-paypal-client');
+		await expect(sandbox).toBeChecked();
+
+		// An unchecked box is not posted at all, and must still be saved as unchecked.
+		await sandbox.uncheck();
+		await page.getByRole('button', { name: 'Save' }).click();
+		await page.waitForLoadState('networkidle');
+		await page.reload();
+		await expect(sandbox).not.toBeChecked();
+		await expect(page.getByLabel('Client ID')).toHaveValue('e2e-paypal-client');
+	} finally {
+		// Saved credentials make PayPal a payment method of the shop for every spec that follows.
+		await page.getByRole('button', { name: 'Reset' }).click();
+		await page.waitForLoadState('networkidle');
+	}
+	await page.reload();
+	await expect(page.getByLabel('Client ID')).toHaveValue('');
+});
+
+test('an optional field may stay empty, and a fixed setting is stated under the form', async ({
+	page
+}) => {
+	await page.goto('/admin/osb', { waitUntil: 'networkidle' });
+	await expect(page.getByLabel('HMAC-SHA-256 Key (optional)')).not.toHaveAttribute('required', '');
+	await expect(page.getByLabel('REST API Password')).toHaveAttribute('required', '');
+	await expect(page.getByText('Currency: XPF (fixed)')).toBeVisible();
+
+	try {
+		await page.getByLabel('Shop ID').fill('e2e-osb-shop');
+		await page.getByLabel('REST API Password').fill('e2e-osb-password');
+		await page.getByRole('button', { name: 'Save' }).click();
+		await page.waitForLoadState('networkidle');
+		await page.reload();
+		await expect(page.getByLabel('Shop ID')).toHaveValue('e2e-osb-shop');
+		await expect(page.getByLabel('HMAC-SHA-256 Key (optional)')).toHaveValue('');
+	} finally {
+		await page.getByRole('button', { name: 'Reset' }).click();
+		await page.waitForLoadState('networkidle');
+	}
+	await page.reload();
+	await expect(page.getByLabel('Shop ID')).toHaveValue('');
+});
+
+test('a server address is stored without its trailing slash', async ({ page }) => {
+	await page.goto('/admin/taler', { waitUntil: 'networkidle' });
+
+	try {
+		await page.getByLabel('Backend URL').fill('https://taler.e2e.example/');
+		await page.getByLabel('Backend API Key').fill('e2e-taler-key');
+		// Last on purpose: picking a currency must leave what was just typed in place.
+		await choose(selectFor(page, 'currency'), 'USD', 'USD');
+		await expect(page.getByLabel('Backend API Key')).toHaveValue('e2e-taler-key');
+		await page.getByRole('button', { name: 'Save' }).click();
+		await page.waitForLoadState('networkidle');
+		await page.reload();
+		await expect(page.getByLabel('Backend URL')).toHaveValue('https://taler.e2e.example');
+		await expect(page.locator('input[type=hidden][name="currency"]')).toHaveValue('USD');
+	} finally {
+		await page.getByRole('button', { name: 'Reset' }).click();
+		await page.waitForLoadState('networkidle');
+	}
+	await page.reload();
+	await expect(page.getByLabel('Backend URL')).toHaveValue('');
+});
+
 test.describe('in French', () => {
 	test.use({ locale: 'fr-FR' });
 
@@ -93,6 +174,23 @@ test.describe('in French', () => {
 		await page.goto('/admin/sumup');
 
 		await expect(page.getByLabel('Code marchand')).toHaveAttribute('placeholder', 'MXXXXXX');
+	});
+
+	test('a checkbox and a note under the form are in French too', async ({ page }) => {
+		await page.goto('/admin/paypal');
+
+		await expect(
+			page.getByLabel("Ces identifiants sont destinés à l'environnement de test (sandbox)")
+		).toHaveAttribute('name', 'sandbox');
+
+		await page.goto('/admin/osb');
+
+		await expect(page.getByLabel('Mot de passe API REST')).toHaveAttribute('name', 'password');
+		await expect(page.getByText('Devise : XPF (fixe)')).toBeVisible();
+
+		await page.goto('/admin/taler');
+
+		await expect(page.getByLabel('URL du backend')).toHaveAttribute('name', 'backendUrl');
 	});
 });
 

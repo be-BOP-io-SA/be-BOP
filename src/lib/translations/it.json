@@ -972,18 +972,6 @@
 			"delete": "Elimina",
 			"confirmDelete": "Vuoi eliminare questa classifica?"
 		},
-		"osb": {
-			"shopId": "ID negozio",
-			"restApiPassword": "Password API REST",
-			"hmacKeyOptional": "Chiave HMAC-SHA-256 (opzionale)",
-			"currencyFixed": "Valuta: XPF (fissa)"
-		},
-		"paypal": {
-			"clientId": "ID cliente",
-			"secret": "Segreto",
-			"sandboxCredentials": "Queste credenziali sono per l'ambiente sandbox",
-			"currency": "Valuta"
-		},
 		"login": {
 			"login": "Accedi",
 			"loginPlaceholder": "Inserisci il tuo login",
@@ -1829,11 +1817,6 @@
 			"phaseReminderBeforeEnd": "Promemoria prima della fine",
 			"phaseReminderHint": "0 = nessun promemoria",
 			"addPhase": "Aggiungi fase"
-		},
-		"taler": {
-			"backendUrl": "URL del backend",
-			"backendApiKey": "Chiave API del backend",
-			"currency": "Valuta"
 		},
 		"specification": {
 			"addSpecification": "Aggiungi specifica",

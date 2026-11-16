@@ -972,18 +972,6 @@
 			"delete": "Eliminar",
 			"confirmDelete": "¿Desea eliminar esta clasificación?"
 		},
-		"osb": {
-			"shopId": "ID de la tienda",
-			"restApiPassword": "Contraseña de la API REST",
-			"hmacKeyOptional": "Clave HMAC-SHA-256 (opcional)",
-			"currencyFixed": "Moneda: XPF (fija)"
-		},
-		"paypal": {
-			"clientId": "ID de cliente",
-			"secret": "Clave secreta",
-			"sandboxCredentials": "Estas credenciales son para el entorno de pruebas (sandbox)",
-			"currency": "Moneda"
-		},
 		"login": {
 			"login": "Usuario",
 			"loginPlaceholder": "Ingrese su usuario",
@@ -1829,11 +1817,6 @@
 			"phaseReminderBeforeEnd": "Recordatorio antes del final",
 			"phaseReminderHint": "0 = sin recordatorio",
 			"addPhase": "Añadir fase"
-		},
-		"taler": {
-			"backendUrl": "URL del backend",
-			"backendApiKey": "Clave API del backend",
-			"currency": "Moneda"
 		},
 		"specification": {
 			"addSpecification": "Agregar especificación",
