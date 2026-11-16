@@ -231,9 +231,9 @@
 					{tInline(text.accountSettingsLink)}
 				</a>.
 				<br />{tInline(text.apiKeyPermissionsPrefix)}
-				<code>btcpay.store.cancreatelightninginvoice</code>
+				<code class="break-all">btcpay.store.cancreatelightninginvoice</code>
 				{tInline(text.apiKeyPermissionsMiddle)}
-				<code>btcpay.store.canviewlightninginvoice</code>
+				<code class="break-all">btcpay.store.canviewlightninginvoice</code>
 				{tInline(text.apiKeyPermissionsSuffix)}
 				<br />{tInline(text.apiKeyLinkFallback)}
 			</p>

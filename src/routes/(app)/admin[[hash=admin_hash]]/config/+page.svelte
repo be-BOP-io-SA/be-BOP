@@ -551,7 +551,10 @@
 
 	<h2 class="text-2xl">{t('admin.config.paymentMethods')}</h2>
 
-	<div class="grid gap-4" style="grid-template-columns: max-content max-content max-content;">
+	<div
+		class="grid gap-4"
+		style="grid-template-columns: minmax(0, max-content) max-content max-content;"
+	>
 		{#each allPaymentMethods as paymentMethod, i (paymentMethod)}
 			<label class="checkbox-label">
 				<input
