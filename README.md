@@ -152,7 +152,7 @@ hand rather than with the wizard.
 
 ## Requirements
 
-- **Node.js 18+**, with corepack enabled: `corepack enable`
+- **Node.js 22 (22.19 or later) or 24**, 24 recommended as in the Dockerfile, with corepack enabled: `corepack enable`
 - **pnpm** (enabled via corepack — you may need `sudo corepack enable`)
 - **Git LFS**, installed with `git lfs install`
 - A **MongoDB replica set** — run it in Docker or use [MongoDB Atlas](https://www.mongodb.com/atlas/database)
