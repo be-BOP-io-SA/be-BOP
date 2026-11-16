@@ -5,10 +5,7 @@ import { basename } from 'node:path';
 export { expect } from '@playwright/test';
 export type { APIRequestContext, BrowserContext, Locator, Page } from '@playwright/test';
 
-/**
- * The shop allows 30 submissions a minute per address, fewer than the suite makes: each spec
- * file calls from its own address, read by the server through `ADDRESS_HEADER`.
- */
+/** The suite makes more submissions than the shop allows one address, so each spec file has its own. */
 export const test = base.extend<Pick<PlaywrightTestOptions, 'extraHTTPHeaders'>>({
 	extraHTTPHeaders: async ({ extraHTTPHeaders }, use, testInfo) => {
 		const [high, low] = createHash('sha256').update(basename(testInfo.file)).digest();

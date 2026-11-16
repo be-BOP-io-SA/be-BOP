@@ -2,10 +2,9 @@ import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
 	webServer: {
-		// The production server, as it reads the client address from `ADDRESS_HEADER` where
-		// `vite preview` only sees the socket. It loads the env files `vite preview` loaded.
+		// Unlike `vite preview`, the production server reads the client address from `ADDRESS_HEADER`.
 		command:
-			'npm run build && node --env-file-if-exists=.env --env-file-if-exists=.env.local build',
+			'npm run build && node --env-file-if-exists=.env --env-file-if-exists=.env.local --env-file-if-exists=.env.production --env-file-if-exists=.env.production.local build',
 		port: 5012,
 		// The command builds first, which the default 60s does not cover on a cold cache.
 		timeout: 180_000,

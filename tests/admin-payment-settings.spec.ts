@@ -52,6 +52,9 @@ test('a processor settled by hand gets no settings page', async ({ page }) => {
 	// route matcher must not claim it.
 	await page.goto('/admin/free');
 
+	await expect(
+		page.getByText('The page /admin/free you requested could not be found')
+	).toBeVisible();
 	await expect(page.locator('form[action="?/save"]')).toHaveCount(0);
 });
 

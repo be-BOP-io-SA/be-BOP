@@ -1,13 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createServer as createHttpServer, type Server as HttpServer } from 'node:http';
-import { connect, createServer as createTcpServer, type Server as TcpServer } from 'node:net';
-import type { AddressInfo } from 'node:net';
+import {
+	connect,
+	createServer as createTcpServer,
+	type AddressInfo,
+	type Server as TcpServer
+} from 'node:net';
 import { orderAddressLabel } from './bitcoind';
 import { ObjectId } from 'mongodb';
-// import { bip84Address } from './bitcoin';
 
 describe('bitcoin', () => {
-	// dummy test so vitest doesn't complain
 	it('should have labels', () => {
 		expect(orderAddressLabel('orderId', new ObjectId('6577739b4feec6c5137a2202'))).toBe(
 			'order:orderId:6577739b4feec6c5137a2202'

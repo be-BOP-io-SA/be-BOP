@@ -18,10 +18,6 @@ const rateLimitCache = new Map<string, Record<string, Date[]>>();
  * Note that rate limiting cache is cleared every hour and not persisted across deploys.
  */
 export function rateLimit(ip: string | undefined, key: string, max: number, duration: Duration) {
-	if (!ip) {
-		return;
-	}
-
 	if (isRateLimited(ip, key, max, duration)) {
 		throw error(429, 'Too many requests, wait a few minutes before trying again.');
 	}
@@ -36,6 +32,7 @@ export function isRateLimited(
 	max: number,
 	duration: Duration
 ): boolean {
+	// Callers without a readable address can't be told apart: one shared limit would block them all.
 	if (!ip) {
 		return false;
 	}

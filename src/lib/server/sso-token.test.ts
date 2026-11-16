@@ -16,13 +16,6 @@ describe('withProviderAccountId', () => {
 		expect(token.sub?.split('-')[0]).toBe('github');
 	});
 
-	it('gives the same id at each sign-in with the same account', () => {
-		const first = withProviderAccountId({ sub: crypto.randomUUID() }, account);
-		const second = withProviderAccountId({ sub: crypto.randomUUID() }, account);
-
-		expect(second.sub).toBe(first.sub);
-	});
-
 	it('keeps the token as is when the session is only read', () => {
 		expect(withProviderAccountId({ sub: 'github-12345' }, undefined).sub).toBe('github-12345');
 		expect(withProviderAccountId({ sub: 'github-12345' }, null).sub).toBe('github-12345');

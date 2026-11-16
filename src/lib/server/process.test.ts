@@ -4,8 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 const processModuleUrl = new URL('./process.ts', import.meta.url).href;
 
-// Stands in for the production server: a SIGTERM listener that never exits, as adapter-node's,
-// and a timer that keeps the event loop busy, as Mongo connections and lock loops do.
+// Like the production server: adapter-node's SIGTERM listener never exits, and timers keep it alive.
 const childScript = `
 process.on('SIGTERM', () => {});
 await import(${JSON.stringify(processModuleUrl)});

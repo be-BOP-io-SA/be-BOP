@@ -70,8 +70,18 @@ test.beforeAll(async () => {
 	);
 });
 
-test.afterAll(async () => {
+test.afterAll(async ({ playwright }) => {
 	await removeEditor();
+	// Deleting the stored templates never reaches the server's memory; the reset action does.
+	const admin = await playwright.request.newContext({
+		storageState: 'playwright/.auth/admin.json'
+	});
+	const reset = await admin.post('http://localhost:5012/admin/template/emails?/reset', {
+		form: { key: 'passwordReset' },
+		headers: { origin: 'http://localhost:5012' }
+	});
+	expect(reset.ok()).toBe(true);
+	await admin.dispose();
 	// The shop's templates are shared by the whole suite: put back what this test changed.
 	await withDb(async (db) => {
 		const templates = db.collection('runtimeConfig');

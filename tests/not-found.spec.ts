@@ -7,11 +7,6 @@ const E2E_DB = 'bebop-e2e';
 // What a stranger sees: no session needed, and none should be.
 test.use({ storageState: { cookies: [], origins: [] } });
 
-/**
- * A URL that matches nothing renders the shop's own `error` CMS page, the one an operator
- * customises, and answers 200 as main does.
- */
-
 async function errorPageTitle(): Promise<string> {
 	const client = await MongoClient.connect(process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017');
 	try {
@@ -60,8 +55,9 @@ test("a link to an unknown page shows the shop's error page", async ({ page }) =
 	await expect(page).toHaveTitle(await errorPageTitle());
 });
 
-test('a real page still answers 200', async ({ page }) => {
+test("a real page is not the shop's error page", async ({ page }) => {
 	const response = await page.goto('/');
 
 	expect(response?.status()).toBe(200);
+	await expect(page).not.toHaveTitle(await errorPageTitle());
 });

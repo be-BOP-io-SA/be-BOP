@@ -21,7 +21,7 @@ overrides:
   picomatch@2: ^2.3.2
   diff@4: ^4.0.4
   cookie@0.6: ^0.7.0
-  bitcoinjs-lib: ^6.1.8
+  bitcoinjs-lib@6: ^6.1.8
 
 patchedDependencies:
   date-fns@3.6.0:
