@@ -115,7 +115,7 @@
 				placeholder={t('admin.form.messagePlaceholder')}
 				class="form-input block w-full"
 				value={data.contactForm.disclaimer?.content}
-			/>
+			></textarea>
 		</label>
 		<label class="form-label">
 			{t('admin.form.disclaimerCheckboxLabel')}
@@ -150,7 +150,7 @@
 		value={data.contactForm.content}
 		placeholder={t('admin.form.messagePlaceholder')}
 		class="form-input block w-full"
-	/>
+	></textarea>
 	<div class="flex flex-row justify-between gap-2">
 		<input
 			type="submit"

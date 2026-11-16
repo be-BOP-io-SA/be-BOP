@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { SerializedOrderPayment } from '$lib/types/Order';
 	import { useI18n } from '$lib/i18n';
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
+	import { CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
 
 	const { t } = useI18n();
 
@@ -12,12 +13,15 @@
 	export let posSubtypes: Array<{ slug: string; name: string }> | undefined = undefined;
 	export let maxAmount: number | undefined = undefined;
 	export let posMode = false;
+	/** The currency the server records a new payment in: the order's main currency. */
+	export let orderCurrency: Currency | undefined = undefined;
 
 	let selectedMethod = paymentMethods[0] || 'card';
 	let selectedSubtype = posSubtypes?.[0]?.slug || '';
 
 	$: amount = payment?.price.amount || maxAmount || 0;
-	$: currency = payment?.price.currency || 'CHF';
+	$: currency = payment?.price.currency || orderCurrency || 'CHF';
+	$: step = CURRENCY_UNIT[currency].toFixed(FRACTION_DIGITS_PER_CURRENCY[currency]);
 
 	// Short labels for POS
 	$: amountLabel = posMode ? t('pos.label.amount') : t('order.addPayment.amount');
@@ -32,13 +36,26 @@
 			: t('pos.cta.resendPaymentMethod');
 </script>
 
-<form {action} method="post" class="flex flex-col gap-2" use:enhance>
+<form
+	{action}
+	method="post"
+	class="flex flex-col gap-2"
+	use:enhance={() =>
+		async ({ result, update }) => {
+			// The action lives on another route, and SvelteKit only shows a refusal from the page's own.
+			if (result.type === 'failure') {
+				await applyAction(result);
+			} else {
+				await update();
+			}
+		}}
+>
 	<!-- Amount input -->
 	<label>
 		{amountLabel}
 		<input
 			type="number"
-			step="0.01"
+			{step}
 			name="amount"
 			class="form-input"
 			value={amount}

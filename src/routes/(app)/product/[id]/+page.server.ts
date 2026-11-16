@@ -2,6 +2,7 @@ import { addToCartInDb } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
 import { applyResolvedStock, resolveStockProduct } from '$lib/server/product';
+import { isVisibleToViewer } from '$lib/server/product-visibility';
 import { resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { adminPrefix as getAdminPrefix } from '$lib/server/admin';
@@ -32,6 +33,19 @@ import {
 } from '$lib/server/discount';
 import type { Discount } from '$lib/types/Discount';
 
+type PercentageDiscount = Extract<Discount, { mode: 'percentage' }>;
+
+// The page payload reaches any visitor, so promo codes and contact allowlists must stay server-side.
+function productPageDiscount(discount: PercentageDiscount) {
+	return {
+		mode: discount.mode,
+		percentage: discount.percentage,
+		endsAt: discount.endsAt,
+		showBadge: discount.showBadge,
+		showExpirationBanner: discount.showExpirationBanner
+	};
+}
+
 async function fetchApplicableDiscount(
 	productId: string,
 	productTagIds: string[],
@@ -45,7 +59,7 @@ async function fetchApplicableDiscount(
 		{ productIds: productId },
 		...(productTagIds.length ? [{ requiredTagIds: { $in: productTagIds } }] : [])
 	];
-	const subscriptionDiscount = await collections.discounts.findOne(
+	const subscriptionDiscount = await collections.discounts.findOne<PercentageDiscount>(
 		{
 			$and: [
 				{ $or: productTargetMatch },
@@ -59,7 +73,7 @@ async function fetchApplicableDiscount(
 	);
 
 	if (subscriptionDiscount) {
-		return subscriptionDiscount;
+		return productPageDiscount(subscriptionDiscount);
 	}
 
 	// 2. Auto discounts (condition-based, no subscription needed)
@@ -78,7 +92,7 @@ async function fetchApplicableDiscount(
 		.filter((d): d is Extract<Discount, { mode: 'percentage' }> => d.mode === 'percentage')
 		.sort((a, b) => b.percentage - a.percentage);
 
-	return applicable[0] ?? null;
+	return applicable[0] ? productPageDiscount(applicable[0]) : null;
 }
 
 async function fetchProduct(
@@ -240,6 +254,9 @@ export const load = async ({ params, url, parent, locals }) => {
 	if (!product) {
 		throw error(404, 'Page not found');
 	}
+	if (!isVisibleToViewer(product, locals)) {
+		throw redirect(303, '/');
+	}
 
 	// A variation can be settled by the URL — `?color=red` — instead of by a dropdown. That is
 	// the only way to set a family the shop hid from the page, which is what lets a value nobody
@@ -252,13 +269,6 @@ export const load = async ({ params, url, parent, locals }) => {
 		// Refusing the page rather than falling back keeps the shop out of default-value and
 		// silent-substitution territory: a wrong link is wrong, and says so.
 		throw error(400, variationUrlErrorMessage(variationErrors[0]));
-	}
-	if (
-		locals.user?.hasPosOptions
-			? !product.actionSettings.retail.visible
-			: !product.actionSettings.eShop.visible
-	) {
-		throw redirect(303, '/');
 	}
 
 	const resolved = product.stockReference?.productId ? await resolveStockProduct(productId) : null;
@@ -321,10 +331,10 @@ export const load = async ({ params, url, parent, locals }) => {
 				}))
 		],
 		...(product.contentBefore && {
-			productCMSBefore: cmsFromContent({ desktopContent: product.contentBefore }, locals)
+			productCMSBefore: await cmsFromContent({ desktopContent: product.contentBefore }, locals)
 		}),
 		...(product.contentAfter && {
-			productCMSAfter: cmsFromContent({ desktopContent: product.contentAfter }, locals)
+			productCMSAfter: await cmsFromContent({ desktopContent: product.contentAfter }, locals)
 		}),
 		showCheckoutButton: runtimeConfig.checkoutButtonOnProductPage,
 		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
@@ -336,7 +346,8 @@ export const load = async ({ params, url, parent, locals }) => {
 
 async function addToCart({ params, request, locals }: RequestEvent) {
 	const productDoc = await collections.products.findOne({ alias: params.id });
-	if (!productDoc) {
+	// The page load hides these products, but this action is reachable without ever loading the page.
+	if (!productDoc || !isVisibleToViewer(productDoc, locals)) {
 		throw error(404, 'Product not found');
 	}
 	const product = await applyResolvedStock(productDoc);

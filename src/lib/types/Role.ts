@@ -27,6 +27,11 @@ function matchPath(path: string, pattern: string): boolean {
 	const patternParts = pattern.split('/');
 
 	for (let i = 0; i < Math.max(patternParts.length, parts.length); i++) {
+		// Only a trailing `*` reaches below a page, so a pattern that runs out first names another page.
+		if (patternParts[i] === undefined) {
+			return false;
+		}
+
 		if (patternParts[i] === '*') {
 			if (i === patternParts.length - 1) {
 				return true;
@@ -60,7 +65,12 @@ export function isAllowedOnPage(role: Role, path: string, mode: 'read' | 'write'
 		return true;
 	}
 
-	if (role.permissions.forbidden.find((forbidden) => matchPath(path, forbidden))) {
+	// Unlike a grant, a forbidden page must close what lies below it, so a missing star fails closed.
+	if (
+		role.permissions.forbidden.find(
+			(forbidden) => matchPath(path, forbidden) || matchPath(path, `${forbidden}/*`)
+		)
+	) {
 		return false;
 	}
 
@@ -75,4 +85,23 @@ export function isAllowedOnPage(role: Role, path: string, mode: 'read' | 'write'
 	}
 
 	return false;
+}
+
+/** Whether `role` grants nothing that `within` does not already have (patterns compared conservatively). */
+export function isRoleWithin(role: Role, within: Role): boolean {
+	const grantedOutside = (patterns: string[], mode: 'read' | 'write') =>
+		patterns.some((pattern) => !isAllowedOnPage(within, pattern, mode));
+	const reopensForbidden = within.permissions.forbidden.some(
+		(forbidden) =>
+			!role.permissions.forbidden.some((own) => matchPath(forbidden, own)) &&
+			[...role.permissions.read, ...role.permissions.write].some((pattern) =>
+				matchPath(forbidden, pattern)
+			)
+	);
+
+	return (
+		!grantedOutside(role.permissions.write, 'write') &&
+		!grantedOutside(role.permissions.read, 'read') &&
+		!reopensForbidden
+	);
 }

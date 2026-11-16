@@ -1,6 +1,11 @@
 import { env } from '$env/dynamic/private';
 import { runtimeConfig } from './runtime-config';
 import { canTakeNewPayment, getProcessorsForMethod } from './sdk/pp';
+import type { Product } from '$lib/types/Product';
+import {
+	ALL_PAYMENT_PROCESSOR_SLUGS,
+	type PaymentProcessorSlug
+} from '$lib/types/paymentProcessors';
 
 export const ALL_PAYMENT_METHODS = [
 	'card',
@@ -16,21 +21,28 @@ export const ALL_PAYMENT_METHODS = [
 ] as const;
 export type PaymentMethod = (typeof ALL_PAYMENT_METHODS)[number];
 
-export const ALL_PAYMENT_PROCESSORS = [
-	'bitcoin-nodeless',
-	'bitcoind',
-	'blink',
-	'btcpay-server',
-	'lnd',
-	'paypal',
-	'phoenixd',
-	'stripe',
-	'sumup',
-	'swiss-bitcoin-pay',
-	'taler',
-	'osb'
-] as const;
-export type PaymentProcessor = (typeof ALL_PAYMENT_PROCESSORS)[number];
+/**
+ * The processors, from the manifest that already has to list them for its method, label and
+ * rank. Keeping a second list here meant adding a provider in two places and hoping.
+ * The hand-settled methods are processors too: they declare their currency, their expiry
+ * and how they present, they simply have nothing to poll.
+ */
+export const ALL_PAYMENT_PROCESSORS = ALL_PAYMENT_PROCESSOR_SLUGS;
+export type PaymentProcessor = PaymentProcessorSlug;
+
+/** Keeps only the methods that every product in the cart accepts. */
+export function restrictToProducts(
+	methods: PaymentMethod[],
+	products: Array<Pick<Product, 'paymentMethods'>>
+): PaymentMethod[] {
+	return products.reduce(
+		(allowed, product) =>
+			product.paymentMethods
+				? allowed.filter((method) => product.paymentMethods?.includes(method))
+				: allowed,
+		methods
+	);
+}
 
 export const paymentMethods = (opts?: {
 	hasPosOptions?: boolean;
@@ -49,21 +61,13 @@ export const paymentMethods = (opts?: {
 						return method === 'free';
 					}
 					switch (method) {
-						case 'card':
-						case 'paypal':
-						case 'bitcoin':
-						case 'lightning':
-						case 'taler':
-						case 'osb':
-							return getProcessorsForMethod(method).some(canTakeNewPayment);
-						case 'bank-transfer':
-							return runtimeConfig.sellerIdentity?.bank;
-						case 'custom':
-							return runtimeConfig.customPaymentMethods.length > 0;
+						// Availability is request-scoped for these two, so no processor can answer it.
 						case 'point-of-sale':
 							return opts?.hasPosOptions || opts?.includePOS;
 						case 'free':
 							return opts?.totalSatoshis === undefined;
+						default:
+							return getProcessorsForMethod(method).some(canTakeNewPayment);
 					}
 				}
 		  );

@@ -32,7 +32,7 @@
 					name="{cmsPage._id}.shortDescription"
 					placeholder={t('admin.cms.shortDescriptionPlaceholder')}
 					value={cmsPage.shortDescription ?? ''}
-				/>
+				></textarea>
 			</label>
 		</div>
 	{/each}

@@ -7,8 +7,8 @@ import { jwtVerify } from 'jose';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import { collections } from '$lib/server/database';
-import { getNostrKeys, isNostrConfigured } from '$lib/server/nostr';
-import { validateEvent, verifySignature } from 'nostr-tools';
+import { getNostrKeys, isAuthenticEvent, isNostrConfigured } from '$lib/server/nostr';
+import { rateLimit } from '$lib/server/rateLimit';
 
 const ZAP_REQUEST_KIND = 9734;
 
@@ -40,7 +40,7 @@ function validateZapRequest(nostrParam: string): ZapRequestValidation {
 		}
 
 		// Validate event signature
-		if (!validateEvent(event) || !verifySignature(event)) {
+		if (!isAuthenticEvent(event)) {
 			return { valid: false, error: 'Invalid event signature' };
 		}
 
@@ -81,7 +81,10 @@ export const OPTIONS = () => {
 	});
 };
 
-export const GET = async ({ url }) => {
+export const GET = async ({ url, locals }) => {
+	// Each call creates a real invoice on the node, and the signed metadata replays for an hour.
+	rateLimit(locals.clientIp, 'lnurl-pay', 30, { minutes: 1 });
+
 	if (!isLndConfigured() && !runtimeConfig.phoenixd.lnAddress) {
 		throw error(400, 'Lightning is not configured');
 	}

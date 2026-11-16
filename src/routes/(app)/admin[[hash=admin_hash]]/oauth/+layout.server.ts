@@ -1,7 +1,8 @@
+import { oauthProvidersForRole } from '$lib/server/oauth-providers';
 import { runtimeConfig } from '$lib/server/runtime-config';
 
-export async function load() {
+export async function load({ locals }) {
 	return {
-		oauth: runtimeConfig.oauth
+		oauth: oauthProvidersForRole(runtimeConfig.oauth, locals.user?.role)
 	};
 }

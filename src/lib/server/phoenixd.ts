@@ -191,7 +191,8 @@ export async function phoenixdLookupInvoice(paymentHash: string) {
 
 	return {
 		address: json.invoice,
-		feesSat: json.fees,
+		// phoenixd reports `fees` in millisatoshis and `receivedSat` in satoshis.
+		feesSat: json.fees / 1000,
 		receivedSat: json.receivedSat,
 		isPaid: json.isPaid,
 		preimage: json.preimage, // NIP-57: preimage for zap receipts

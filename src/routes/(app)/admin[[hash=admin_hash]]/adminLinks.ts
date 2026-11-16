@@ -5,6 +5,11 @@ import IconWallet from '~icons/ant-design/wallet-outlined';
 import IconTransaction from '~icons/ant-design/transaction-outlined';
 import IconCluster from '~icons/ant-design/cluster-outlined';
 import IconDeploymentUnit from '~icons/ant-design/deployment-unit-outlined';
+import {
+	ALL_PAYMENT_PROCESSOR_SLUGS,
+	PROCESSORS,
+	processorAdminHref
+} from '$lib/types/paymentProcessors';
 
 type AdminLinks = Array<{
 	section: string;
@@ -129,54 +134,15 @@ export const adminLinks: AdminLinks = [
 		section: 'Payment Settings',
 		icon: IconWallet,
 		links: [
-			{
-				href: '/admin/bitcoin-nodeless',
-				label: 'Bitcoin nodeless'
-			},
-			{
-				href: '/admin/sumup',
-				label: 'SumUp'
-			},
-			{
-				href: '/admin/stripe',
-				label: 'Stripe'
-			},
-			{
-				href: '/admin/btcpay-server',
-				label: 'BTCPay Server'
-			},
-			{
-				href: '/admin/phoenixd',
-				label: 'PhoenixD'
-			},
-			{
-				href: '/admin/paypal',
-				label: 'Paypal'
-			},
-			{
-				href: '/admin/swiss-bitcoin-pay',
-				label: 'Swiss Bitcoin Pay'
-			},
-			{
-				href: '/admin/blink',
-				label: 'Blink'
-			},
-			{
-				href: '/admin/bitcoind',
-				label: 'Bitcoin core node'
-			},
-			{
-				href: '/admin/lnd',
-				label: 'Lightning LND node'
-			},
-			{
-				href: '/admin/taler',
-				label: 'Taler'
-			},
-			{
-				href: '/admin/osb',
-				label: 'OSB'
-			},
+			// One entry per processor that has settings, straight from the manifest: a processor
+			// added there appears here, with its own label, and cannot be forgotten. The order is
+			// the manifest's, so the list now groups by payment method instead of by whenever
+			// each provider happened to be added.
+			...ALL_PAYMENT_PROCESSOR_SLUGS.flatMap((slug) => {
+				const href = processorAdminHref(slug);
+				return href ? [{ href, label: PROCESSORS[slug].label }] : [];
+			}),
+			// These two configure a method rather than a provider, so they have no manifest entry.
 			{
 				href: '/admin/pos-payments',
 				label: 'PoS Payments'

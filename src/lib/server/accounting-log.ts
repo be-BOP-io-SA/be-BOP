@@ -1,6 +1,7 @@
 import { collections } from './database';
 import { ObjectId, type ClientSession } from 'mongodb';
 import type { AccountingLog } from '$lib/types/AccountingLog';
+import { csvCell } from '$lib/utils/csvCell';
 
 export function employeeFromLocals(locals: {
 	user?: { _id: ObjectId; alias?: string };
@@ -69,25 +70,18 @@ export async function logProductCreationEvents(
 	}
 }
 
-function escapeCSVField(value: string): string {
-	if (value.includes('"') || value.includes(',') || value.includes('\n')) {
-		return `"${value.replace(/"/g, '""')}"`;
-	}
-	return value;
-}
-
 export function accountingLogsToCSV(logs: AccountingLog[]): string {
 	const header = 'id,eventType,objectId,objectType,before,after,employeeId,employeeAlias,createdAt';
 	const rows = logs.map((log) =>
 		[
 			log._id.toString(),
 			log.eventType,
-			escapeCSVField(log.objectId),
+			csvCell(log.objectId),
 			log.objectType,
-			escapeCSVField(JSON.stringify(log.before ?? null)),
-			escapeCSVField(JSON.stringify(log.after ?? null)),
+			csvCell(JSON.stringify(log.before ?? null)),
+			csvCell(JSON.stringify(log.after ?? null)),
 			log.employee?.userId?.toString() ?? '',
-			escapeCSVField(log.employee?.alias ?? ''),
+			csvCell(log.employee?.alias ?? ''),
 			log.createdAt.toISOString()
 		].join(',')
 	);
