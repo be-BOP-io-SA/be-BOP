@@ -6,6 +6,8 @@ import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { runtimeConfig, type ConfigKey, type RuntimeConfig } from '$lib/server/runtime-config';
 import { PROCESSORS, type PaymentProcessorSlug } from '$lib/types/paymentProcessors';
+import type { ConfigFields, ProcessorDeclaration } from '$lib/payment-processors/types';
+import { configSchemaFromFields, hasEveryField, secretFieldsOf } from './config-fields';
 import type { ZodType, ZodTypeDef } from 'zod';
 
 // --- Interfaces ---
@@ -217,6 +219,37 @@ export interface PaymentProcessorDefinition {
 	 * payment only ever changes status when someone says so.
 	 */
 	checkPayment?(payment: Order['payments'][number], order: Order): Promise<CheckPaymentResult>;
+}
+
+/** What a processor still writes itself: the rest is read from its declaration. */
+export type ProcessorImplementation<D extends ProcessorDeclaration> = Omit<
+	PaymentProcessorDefinition,
+	'meta' | 'configSchema' | 'secretConfigFields' | 'isEnabled'
+> &
+	(D extends { config: { fields: ConfigFields } }
+		? { isEnabled?(): boolean }
+		: { isEnabled(): boolean });
+
+/** Builds a processor from its declaration, so that what the declaration says is not written twice. */
+export function definePaymentProcessor<
+	D extends ProcessorDeclaration,
+	I extends ProcessorImplementation<D>
+>(declaration: D, implementation: I): PaymentProcessorDefinition & I {
+	const fields = declaration.config?.fields;
+
+	return {
+		...(fields && {
+			configSchema: configSchemaFromFields(fields) as unknown as ProcessorConfigSchema,
+			secretConfigFields: secretFieldsOf(fields),
+			isEnabled: () =>
+				hasEveryField(
+					fields,
+					runtimeConfig[declaration.configKey as ConfigKey] as Record<string, unknown> | undefined
+				)
+		}),
+		...implementation,
+		meta: { processor: declaration.slug as PaymentProcessor, method: declaration.method }
+	} as PaymentProcessorDefinition & I;
 }
 
 // --- Helpers ---

@@ -1,4 +1,10 @@
 import type { PaymentMethod } from '$lib/server/payment-methods';
+import * as declarations from '$lib/payment-processors';
+import {
+	configDefaults,
+	type ProcessorConfigs,
+	type ProcessorDeclaration
+} from '$lib/payment-processors/types';
 
 /**
  * The static facts about every payment processor: what it is, what it serves, how it ranks,
@@ -7,47 +13,19 @@ import type { PaymentMethod } from '$lib/server/payment-methods';
  * This file is a leaf on purpose. `adminLinks.ts` needs the list to build the back-office
  * navigation, and that file runs in the browser — it is imported by the admin layout and by
  * `Role.ts`, which keys the permission model off admin hrefs. So nothing here may import
- * `$lib/server/*` for a value; the one server import below is a type, erased at compile time,
+ * `$lib/server/*` for a value; the one server import above is a type, erased at compile time,
  * the same way `types/Order.ts` already does it.
- *
- * Behaviour stays in `sdk/contrib/PP<Name>.ts`. This is only the registration data that a
- * dozen other files used to keep their own copy of.
  */
-export interface ProcessorDeclaration {
-	/** The payment method this processor serves. Several may serve the same one. */
-	method: PaymentMethod;
-	/** Shown in the admin navigation and in the preferred-processor picker. */
-	label: string;
-	/**
-	 * Rank within the method when the shop expressed no preference. Lower wins.
-	 * This used to be the order of the import statements in `pp-registry.ts`, which meant
-	 * reordering those lines silently changed which acquirer took live card payments.
-	 * Gaps of ten leave room to slot a processor in without renumbering its neighbours.
-	 */
-	priority: number;
-	/** Its `runtimeConfig` key, which is also its `runtimeConfig` collection `_id`.
-	 *  Absent for processors configured by environment variables, and for the hand-settled
-	 *  methods, which have no credentials of their own. */
-	configKey?: string;
-	/**
-	 * Keeps a hand-written settings page: these carry real domain UI — wallet management,
-	 * RPC consoles, derivation paths — that no shared form can express.
-	 */
-	customAdminPage?: true;
-}
+type Declared = (typeof declarations)[keyof typeof declarations];
 
-export const PROCESSORS = {
+// Processors still written as `sdk/contrib/PP<Name>.ts`. One with its own folder in
+// `$lib/payment-processors` is declared there instead.
+const LEGACY = {
 	// --- card ---
 	sumup: { method: 'card', label: 'SumUp', priority: 10, configKey: 'sumUp' },
 	stripe: { method: 'card', label: 'Stripe', priority: 20, configKey: 'stripe' },
 
 	// --- lightning ---
-	'swiss-bitcoin-pay': {
-		method: 'lightning',
-		label: 'Swiss Bitcoin Pay',
-		priority: 10,
-		configKey: 'swissBitcoinPay'
-	},
 	'btcpay-server': {
 		method: 'lightning',
 		label: 'BTCPay Server',
@@ -84,11 +62,46 @@ export const PROCESSORS = {
 	free: { method: 'free', label: 'Free', priority: 10 },
 	'bank-transfer': { method: 'bank-transfer', label: 'Bank transfer', priority: 10 },
 	custom: { method: 'custom', label: 'Custom', priority: 10 }
-} as const satisfies Record<string, ProcessorDeclaration>;
+} as const satisfies Record<string, Omit<ProcessorDeclaration, 'slug' | 'config'>>;
+
+export const PROCESSORS = {
+	...LEGACY,
+	...(Object.fromEntries(
+		Object.values(declarations).map((declaration) => [declaration.slug, declaration])
+	) as { [D in Declared as D['slug']]: D })
+};
 
 export type PaymentProcessorSlug = keyof typeof PROCESSORS;
 
-export const ALL_PAYMENT_PROCESSOR_SLUGS = Object.keys(PROCESSORS) as PaymentProcessorSlug[];
+// The admin lists processors method by method, in this order.
+const METHOD_RANK: Record<PaymentMethod, number> = {
+	card: 0,
+	lightning: 1,
+	bitcoin: 2,
+	paypal: 3,
+	taler: 4,
+	osb: 5,
+	'point-of-sale': 6,
+	free: 7,
+	'bank-transfer': 8,
+	custom: 9
+};
+
+export const ALL_PAYMENT_PROCESSOR_SLUGS = (Object.keys(PROCESSORS) as PaymentProcessorSlug[]).sort(
+	(a, b) =>
+		METHOD_RANK[PROCESSORS[a].method] - METHOD_RANK[PROCESSORS[b].method] ||
+		PROCESSORS[a].priority - PROCESSORS[b].priority
+);
+
+/** The default settings of every processor declared in its own folder, by `configKey`. */
+export function processorConfigDefaults(): ProcessorConfigs<Declared> {
+	return Object.fromEntries(
+		Object.values(declarations).map((declaration) => [
+			declaration.configKey,
+			configDefaults(declaration.config.fields)
+		])
+	) as ProcessorConfigs<Declared>;
+}
 
 /** The admin page for a processor: its own if it has one, otherwise none yet. */
 export function processorAdminHref(slug: PaymentProcessorSlug): string | undefined {

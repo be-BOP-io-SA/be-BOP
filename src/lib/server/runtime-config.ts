@@ -46,6 +46,7 @@ import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { OrderPaymentStatus } from '$lib/types/Order';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
+import { processorConfigDefaults } from '$lib/types/paymentProcessors';
 import { merge } from '$lib/utils/merge';
 import { typedEntries } from '$lib/utils/typedEntries';
 import { deepEquals } from '$lib/utils/deep-equals';
@@ -264,9 +265,7 @@ const baseConfig = {
 		currency: 'EUR' as Currency,
 		sandbox: false
 	},
-	swissBitcoinPay: {
-		apiKey: ''
-	},
+	...processorConfigDefaults(),
 	blink: {
 		/** blink_... — when set, uses the API-key custodial GraphQL mode */
 		apiKey: '',

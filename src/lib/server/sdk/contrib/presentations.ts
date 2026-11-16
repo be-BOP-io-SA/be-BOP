@@ -1,5 +1,6 @@
 import { bitcoinPaymentQrCodeString, lightningPaymentQrCodeString } from '$lib/types/Order';
 import type { Order } from '$lib/types/Order';
+import type { Currency } from '$lib/types/Currency';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { ORIGIN } from '$lib/server/env-config';
 import type { PaymentPresentation } from '../pp';
@@ -13,6 +14,12 @@ import type { PaymentPresentation } from '../pp';
 export const LIGHTNING_PRESENTATION: PaymentPresentation = {
 	kind: 'qr',
 	qrLink: (payment) => lightningPaymentQrCodeString(payment.address ?? '')
+};
+
+/** What every Lightning processor shares: an invoice shown as a QR code, asked for in satoshis. */
+export const LIGHTNING = {
+	presentation: LIGHTNING_PRESENTATION,
+	settlementCurrency: (): Currency => 'SAT'
 };
 
 export const BITCOIN_PRESENTATION: PaymentPresentation = {

@@ -47,6 +47,41 @@ test('a lightning processor also gets the invoice section, a card one does not',
 	await expect(page.getByRole('heading', { name: 'Invoices' })).toHaveCount(0);
 });
 
+test('a processor with its own folder gets its form from what it declares', async ({ page }) => {
+	await page.goto('/admin/swiss-bitcoin-pay', { waitUntil: 'networkidle' });
+
+	await expect(page.getByRole('heading', { name: 'Swiss Bitcoin Pay', level: 1 })).toBeVisible();
+	const apiKey = page.getByLabel('API Key');
+	await expect(apiKey).toHaveAttribute('name', 'apiKey');
+	await expect(apiKey).toHaveAttribute('type', 'password');
+	await expect(apiKey).toHaveAttribute('required', '');
+	await expect(page.getByRole('heading', { name: 'Invoices' })).toBeVisible();
+
+	try {
+		await apiKey.fill('e2e-swiss-bitcoin-pay-key');
+		await page.getByRole('button', { name: 'Save' }).click();
+		await page.waitForLoadState('networkidle');
+		await page.reload();
+		await expect(page.getByLabel('API Key')).toHaveValue('e2e-swiss-bitcoin-pay-key');
+	} finally {
+		// A saved key makes this the shop's Lightning processor for every spec that follows.
+		await page.getByRole('button', { name: 'Reset' }).click();
+		await page.waitForLoadState('networkidle');
+	}
+	await page.reload();
+	await expect(page.getByLabel('API Key')).toHaveValue('');
+});
+
+test.describe('in French', () => {
+	test.use({ locale: 'fr-FR' });
+
+	test('the declared form is labelled in the language of the back office', async ({ page }) => {
+		await page.goto('/admin/swiss-bitcoin-pay');
+
+		await expect(page.getByLabel('Clé API')).toHaveAttribute('name', 'apiKey');
+	});
+});
+
 test('a processor settled by hand gets no settings page', async ({ page }) => {
 	// `free` is a processor, but it is settled by hand and declares no credentials, so the
 	// route matcher must not claim it.

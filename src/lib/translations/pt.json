@@ -1662,10 +1662,6 @@
 			"noteFakeMode": "Ative o modo \"falso\" para desenvolvimento/testes sem um servidor SMTP real",
 			"noteOverrides": "Estas configurações substituem as variáveis de ambiente quando definidas"
 		},
-		"swissBitcoinPay": {
-			"apiKey": "Chave API",
-			"invoices": "Faturas"
-		},
 		"sumup": {
 			"apiKey": "Chave da API",
 			"merchantCode": "Código de comerciante",

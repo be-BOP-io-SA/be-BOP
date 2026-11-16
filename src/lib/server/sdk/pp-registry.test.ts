@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import './pp-registry';
-import { getProcessorsForMethod } from './pp';
+import { getProcessor, getProcessorsForMethod } from './pp';
 import { ALL_PAYMENT_METHODS, type PaymentMethod } from '../payment-methods';
 import { ALL_PAYMENT_PROCESSOR_SLUGS, PROCESSORS } from '$lib/types/paymentProcessors';
+import * as declarations from '$lib/payment-processors';
 
 /**
  * Registration order is live behaviour: `resolveProcessor` returns the first *enabled*
@@ -78,6 +79,41 @@ describe('the manifest agrees with the registry', () => {
 				(slug) => PROCESSORS[slug as keyof typeof PROCESSORS].priority
 			);
 			expect(new Set(priorities).size).toBe(priorities.length);
+		}
+	});
+});
+
+describe('a processor with its own folder', () => {
+	const folders = (files: Record<string, unknown>) =>
+		Object.keys(files)
+			.map((path) => path.split('/').at(-2))
+			.sort();
+	const declared = Object.values(declarations).map((declaration) => declaration.slug);
+
+	it('is listed in the index under the name of its folder', () => {
+		expect(folders(import.meta.glob('/src/lib/payment-processors/*/declaration.ts'))).toEqual(
+			[...declared].sort()
+		);
+	});
+
+	it('registers the processor it declares', () => {
+		expect(folders(import.meta.glob('/src/lib/payment-processors/*/processor.server.ts'))).toEqual(
+			[...declared].sort()
+		);
+		for (const slug of declared) {
+			expect(getProcessor(slug)?.meta).toEqual({
+				processor: slug,
+				method: PROCESSORS[slug].method
+			});
+		}
+	});
+
+	// `'configKey' in declaration` is how the admin tells a processor has settings.
+	it('never carries a settings key it does not have', () => {
+		for (const declaration of Object.values(PROCESSORS)) {
+			for (const [key, value] of Object.entries(declaration)) {
+				expect(value, `${declaration.label}.${key}`).toBeDefined();
+			}
 		}
 	});
 });

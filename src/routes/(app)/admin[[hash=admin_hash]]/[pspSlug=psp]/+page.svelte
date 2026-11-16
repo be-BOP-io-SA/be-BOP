@@ -3,6 +3,8 @@
 	import SetLightningQrCodeDescription from '$lib/components/SetLightningQrCodeDescription.svelte';
 	import type { ComponentType } from 'svelte';
 	import { useI18n } from '$lib/i18n';
+	import ConfigForm from '$lib/payment-processors/ConfigForm.svelte';
+	import { PROCESSORS } from '$lib/types/paymentProcessors';
 
 	export let data;
 	export let form;
@@ -13,24 +15,24 @@
 	let testCooldownUntil = 0;
 	$: testDisabled = testInFlight || Date.now() < testCooldownUntil;
 
-	/**
-	 * One hand-written component per processor, found by name. The fields differ far too much
-	 * to generate — a crypto-filtered currency picker, a merchant-code hint, a two-mode
-	 * explainer, deep links rebuilt as the operator types — while everything around them
-	 * differs not at all. So the markup stays written by hand and only the scaffolding is
-	 * shared.
-	 */
+	// A processor with its own folder declares its fields; the others still have a form here.
 	const fieldComponents = import.meta.glob('/src/lib/components/psp-forms/*.svelte', {
 		eager: true
 	}) as Record<string, { default: ComponentType }>;
 
 	$: Fields = fieldComponents[`/src/lib/components/psp-forms/${data.slug}.svelte`]?.default;
+	$: declaration = PROCESSORS[data.slug];
+	$: fields = 'config' in declaration ? declaration.config.fields : undefined;
 </script>
 
 <h1 class="text-3xl">{data.label}</h1>
 
 <form class="contents" method="post" action="?/save">
-	<svelte:component this={Fields} bind:config={data.config} />
+	{#if fields && data.front?.settings}
+		<ConfigForm {fields} texts={data.front.settings.fields} config={data.config} />
+	{:else}
+		<svelte:component this={Fields} bind:config={data.config} />
+	{/if}
 
 	<div class="flex justify-between">
 		<button class="btn btn-black" type="submit">{t('admin.action.save')}</button>

@@ -1662,10 +1662,6 @@
 			"noteFakeMode": "Enable \"fake\" mode for development/testing without real SMTP server",
 			"noteOverrides": "These settings override environment variables when configured"
 		},
-		"swissBitcoinPay": {
-			"apiKey": "API Key",
-			"invoices": "Invoices"
-		},
 		"sumup": {
 			"apiKey": "API Key",
 			"merchantCode": "Merchant Code",

@@ -6,7 +6,7 @@ import { createOrder } from '$lib/server/orders';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import type { Order } from '$lib/types/Order';
-import PPSwissBitcoinPay from './PPSwissBitcoinPay';
+import PPSwissBitcoinPay from './processor.server';
 
 const INVOICE = 'lnbc-swiss-bitcoin-pay-test';
 

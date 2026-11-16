@@ -1662,10 +1662,6 @@
 			"noteFakeMode": "Schakel de \"nep\"-modus in voor ontwikkeling/testen zonder echte SMTP-server",
 			"noteOverrides": "Deze instellingen overschrijven omgevingsvariabelen wanneer ze zijn geconfigureerd"
 		},
-		"swissBitcoinPay": {
-			"apiKey": "API-sleutel",
-			"invoices": "Facturen"
-		},
 		"sumup": {
 			"apiKey": "API-sleutel",
 			"merchantCode": "Handelaarscode",
