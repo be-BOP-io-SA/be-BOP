@@ -2,14 +2,19 @@
 	import { generateId } from '$lib/utils/generateId';
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture.js';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture.js';
+	import type { StorageUploadFailure } from '$lib/utils/sendToStorage';
 	import { page } from '$app/stores';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
 
-	const { t } = useI18n();
-
 	export let data;
+
+	const { t } = useI18n();
 	let pageId = $page.url.searchParams.get('id') || null;
 	let name = $page.url.searchParams.get('id')?.replaceAll('-', ' ') ?? '';
 	let slug = pageId ?? '';
@@ -33,16 +38,25 @@
 				{ file: fileSlimBanner, id: 'slimBannerId' },
 				{ file: fileAvatar, id: 'avatarId' }
 			];
+			let uploadFailure: StorageUploadFailure | undefined;
 			await Promise.all(
 				picturesToUpload.map(async (picture) => {
 					if (picture.file) {
-						const pictureId = await preUploadPicture(data.adminPrefix, picture.file[0], {
+						const upload = await preUploadPicture(data.adminPrefix, picture.file[0], {
 							fileName: name
 						});
-						formData.set(picture.id, pictureId);
+						if ('failure' in upload) {
+							uploadFailure = upload.failure;
+							return;
+						}
+						formData.set(picture.id, upload.pictureId);
 					}
 				})
 			);
+			if (uploadFailure) {
+				alert(pictureUploadFailureMessage(t, uploadFailure));
+				return;
+			}
 
 			const finalResponse = await fetch(formElement.action, {
 				method: 'POST',
@@ -150,11 +164,11 @@
 	</label>
 	<label class="form-label">
 		{t('admin.tags.shortContent')}
-		<textarea name="shortContent" cols="30" rows="2" class="form-input" />
+		<textarea name="shortContent" cols="30" rows="2" class="form-input"></textarea>
 	</label>
 	<label class="form-label">
 		{t('admin.tags.fullContent')}
-		<textarea name="content" cols="30" rows="10" maxlength="10000" class="form-input" />
+		<textarea name="content" cols="30" rows="10" maxlength="10000" class="form-input"></textarea>
 	</label>
 
 	<input type="hidden" name="mainPictureId" />
@@ -236,7 +250,8 @@
 
 	<label class="form-label">
 		{t('admin.tags.cssOverride')}
-		<textarea name="cssOverride" cols="30" rows="10" maxlength="10000" class="form-input" />
+		<textarea name="cssOverride" cols="30" rows="10" maxlength="10000" class="form-input"
+		></textarea>
 	</label>
 
 	<input

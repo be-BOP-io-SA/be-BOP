@@ -7,16 +7,20 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { error } from '@sveltejs/kit';
 import * as mimeTypes from 'mime-types';
 import { z } from 'zod';
+import { MAX_DIGITAL_FILE_SIZE } from '$lib/types/DigitalFile';
 
 export async function POST({ request }) {
 	const body = z
 		.object({
 			name: z.string().trim().min(1).max(100),
-			fileSize: z.number().int().min(1).max(100_000_000),
+			fileSize: z.number().int().min(1),
 			fileName: z.string().trim().min(1).max(500),
 			productId: z.string().nullable().optional()
 		})
 		.parse(await request.json());
+	if (body.fileSize > MAX_DIGITAL_FILE_SIZE) {
+		throw error(413, 'The file is too large');
+	}
 	if (body.productId) {
 		const product = await collections.products.findOne({ _id: body.productId });
 

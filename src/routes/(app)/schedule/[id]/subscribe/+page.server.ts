@@ -4,7 +4,7 @@ import { availableContactModes } from '$lib/server/contact-modes';
 import { contactModesOrEmail } from '$lib/types/ContactMode';
 import { userQuery } from '$lib/server/user';
 import { error, fail } from '@sveltejs/kit';
-import { z } from 'zod';
+import { hideRsvpTargets } from '$lib/server/schedule';
 
 export const load = async ({ params }) => {
 	const schedule = await collections.schedules.findOne({ _id: params.id });
@@ -17,13 +17,13 @@ export const load = async ({ params }) => {
 		.sort({ createdAt: 1 })
 		.toArray();
 	return {
-		schedule,
+		schedule: hideRsvpTargets(schedule),
 		pictures
 	};
 };
 
 export const actions = {
-	addSubscription: async function ({ request }) {
+	addSubscription: async function ({ params, request }) {
 		const data = await request.formData();
 
 		const addressResult = validateEmailOrNpub(
@@ -37,13 +37,21 @@ export const actions = {
 			addressResult.kind === 'email'
 				? { email: addressResult.address }
 				: { npub: addressResult.address };
-		const { scheduleId } = z
-			.object({
-				scheduleId: z.string().min(1)
-			})
-			.parse({
-				scheduleId: data.get('scheduleId')
-			});
+
+		// The schedule is the one being visited, not the one the form names: the posted field only
+		// mirrors the route, and trusting it let a single request subscribe an address to any
+		// schedule, including ones that never opened subscriptions.
+		const schedule = await collections.schedules.findOne(
+			{ _id: params.id },
+			{ projection: { allowSubscription: 1 } }
+		);
+
+		if (!schedule?.allowSubscription) {
+			throw error(403, 'This schedule does not accept subscriptions');
+		}
+
+		const scheduleId = params.id;
+
 		const personalInfo = await collections.personalInfo.findOne(userQuery(contact));
 
 		await collections.personalInfo.updateOne(

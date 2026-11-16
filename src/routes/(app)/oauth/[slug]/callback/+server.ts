@@ -2,8 +2,7 @@ import { collections } from '$lib/server/database.js';
 import { oauthConfig } from '$lib/server/oauth';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { renewSessionId } from '$lib/server/user.js';
-import { redirect } from '@sveltejs/kit';
-import { error } from 'console';
+import { error, redirect } from '@sveltejs/kit';
 import { addYears } from 'date-fns';
 import { ObjectId } from 'mongodb';
 import * as client from 'openid-client';
@@ -35,8 +34,6 @@ export const GET = async ({ params, fetch, cookies, url, locals }) => {
 		throw error(400, 'Missing claims');
 	}
 
-	console.log('tokens', tokens, claims);
-
 	const userId = claims.sub;
 	const username =
 		claims.preferred_username ||
@@ -66,6 +63,9 @@ export const GET = async ({ params, fetch, cookies, url, locals }) => {
 		provider,
 		id: userId,
 		email: email?.toString(),
+		// An operator-configured OIDC server may let its users pick their own address, so the
+		// address only becomes an identity once the provider says it checked it.
+		emailVerified: claims.email_verified === true,
 		avatarUrl: avatarUrl?.toString(),
 		name: username.toString()
 	};

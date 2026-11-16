@@ -54,7 +54,7 @@
 		value={data.specification.content}
 		placeholder={t('admin.specification.contentPlaceholder')}
 		class="form-input block w-full"
-	/>
+	></textarea>
 	<div class="flex flex-row justify-between gap-2">
 		<input
 			type="submit"

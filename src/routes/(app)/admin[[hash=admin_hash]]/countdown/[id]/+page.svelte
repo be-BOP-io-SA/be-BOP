@@ -63,7 +63,7 @@
 			class="form-input block w-full"
 			value={data.countdown.title}
 			required
-		/>
+		></textarea>
 	</label>
 	<label class="form-label">
 		{t('admin.countdown.description')}
@@ -76,7 +76,7 @@
 			class="form-input block w-full"
 			value={data.countdown.description}
 			required
-		/>
+		></textarea>
 	</label>
 
 	<div class="flex flex-wrap gap-4">

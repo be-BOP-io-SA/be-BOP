@@ -151,7 +151,7 @@
 			class="form-input max-w-[25rem]"
 			rows="5"
 			value={id?.invoice?.issuerInfo ?? ''}
-		/>
+		></textarea>
 		<p class="text-sm">
 			{t('admin.physicalShop.issuerInfoHint')}
 		</p>

@@ -46,6 +46,7 @@ import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { OrderPaymentStatus } from '$lib/types/Order';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
+import { processorConfigDefaults } from '$lib/types/paymentProcessors';
 import { merge } from '$lib/utils/merge';
 import { typedEntries } from '$lib/utils/typedEntries';
 import { deepEquals } from '$lib/utils/deep-equals';
@@ -224,11 +225,6 @@ const baseConfig = {
 	mainThemeId: '',
 	sellerIdentity: null as SellerIdentity | null,
 	shopInformation: null as SellerIdentity | null,
-	sumUp: {
-		apiKey: '',
-		merchantCode: '',
-		currency: 'EUR' as Currency
-	},
 	bitcoinNodeless: {
 		mempoolUrl: 'https://mempool.space',
 		format: 'bip84' as 'bip84' | 'bip48',
@@ -246,45 +242,7 @@ const baseConfig = {
 		derivationPath?: string;
 	},
 	bitcoinBlockHeight: 0,
-	stripe: {
-		/** pk_... */
-		publicKey: '',
-		/** sk_... */
-		secretKey: '',
-		currency: 'EUR' as Currency
-	},
-	btcpayServer: {
-		apiKey: '',
-		serverUrl: '',
-		storeId: ''
-	},
-	paypal: {
-		clientId: '',
-		secret: '',
-		currency: 'EUR' as Currency,
-		sandbox: false
-	},
-	swissBitcoinPay: {
-		apiKey: ''
-	},
-	blink: {
-		/** blink_... — when set, uses the API-key custodial GraphQL mode */
-		apiKey: '',
-		/** user@blink.sv — when set (and no apiKey), auto-detects custodial vs non-custodial (Spark) */
-		lnAddress: '',
-		/** Optional wallet id override for API-key mode; empty = account default wallet */
-		walletId: ''
-	},
-	taler: {
-		backendUrl: '',
-		backendApiKey: '',
-		currency: 'CHF' as Currency
-	},
-	osb: {
-		shopId: '',
-		password: '',
-		hmacKey: ''
-	},
+	...processorConfigDefaults(),
 	bity: {
 		clientId: ''
 	},
@@ -749,7 +707,7 @@ export type RuntimeConfig = BaseConfig &
 			>
 		>
 	>;
-type ConfigKey = keyof RuntimeConfig;
+export type ConfigKey = keyof RuntimeConfig;
 export type RuntimeConfigItem = {
 	[key in ConfigKey]: { _id: key; data: RuntimeConfig[key]; updatedAt: Date };
 }[ConfigKey];

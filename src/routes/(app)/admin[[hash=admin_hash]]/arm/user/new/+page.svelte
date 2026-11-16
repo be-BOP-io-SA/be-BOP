@@ -17,7 +17,11 @@
 		{t('admin.arm.role')}
 		<select class="form-input" name="roleId" required>
 			{#each data.roles as role}
-				<option value={role._id} disabled={role._id === SUPER_ADMIN_ROLE_ID}>{role.name}</option>
+				<option
+					value={role._id}
+					disabled={role._id === SUPER_ADMIN_ROLE_ID || !data.manageableRoleIds.includes(role._id)}
+					>{role.name}</option
+				>
 			{/each}
 		</select>
 	</label>
