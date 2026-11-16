@@ -15,7 +15,7 @@ const unit = (captureStatus?: string) => ({
 });
 
 /** Answers PayPal's token, order and capture endpoints, and records every call */
-function mockPaypal(captureBody: Record<string, unknown>) {
+function mockPaypal(captureBody: Record<string, unknown>, { readBackFails = false } = {}) {
 	let captured = false;
 	const calls: Array<{ url: string; init?: RequestInit }> = [];
 	vi.stubGlobal(
@@ -28,6 +28,9 @@ function mockPaypal(captureBody: Record<string, unknown>) {
 			if (url.endsWith('/capture')) {
 				captured = true;
 				return Response.json(captureBody);
+			}
+			if (captured && readBackFails) {
+				return new Response('Service Unavailable', { status: 503 });
 			}
 			return Response.json(
 				captured
@@ -89,11 +92,11 @@ describe('PayPal', () => {
 		expect(result).toEqual({ status: 'paid', received: { amount: 12.5, currency: 'EUR' } });
 	});
 
-	it('settles a payment approved at its deadline instead of expiring it', async () => {
-		mockPaypal({ id: CHECKOUT_ID, status: 'COMPLETED', links: [] });
+	it('keeps a payment captured past its deadline pending when the order cannot be read back', async () => {
+		mockPaypal({ id: CHECKOUT_ID, status: 'COMPLETED', links: [] }, { readBackFails: true });
 
 		const result = await PPPaypal.checkPayment(payment(new Date(Date.now() - 1000)), {} as Order);
 
-		expect(result.status).toBe('paid');
+		expect(result).toEqual({ status: 'pending' });
 	});
 });

@@ -117,8 +117,11 @@ export async function paypalGetCheckout(checkoutId: string): Promise<PaypalCheck
 		// caller reads each capture's status, so the payment stays pending until one settles.
 		const captured: Partial<PaypalCheckout> = await captureResponse.json();
 		if (!captured.purchase_units || !captured.status) {
-			// The money is taken by now: a failed read would expire an order approved near its deadline.
-			return await fetchCheckout(checkoutId);
+			// The money is taken by now: a failed read must leave the payment pending, never expired.
+			return await fetchCheckout(checkoutId).catch((err) => {
+				console.error('Captured PayPal checkout ' + checkoutId + ' could not be read back', err);
+				return { ...checkout, status: 'COMPLETED' as const };
+			});
 		}
 		checkout.purchase_units = captured.purchase_units;
 		checkout.status = captured.status;
