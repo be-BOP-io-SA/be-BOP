@@ -103,7 +103,8 @@
 	"pnpm": {
 		"patchedDependencies": {
 			"date-fns@3.6.0": "patches/date-fns@3.6.0.patch",
-			"nostr-relaypool@0.6.28": "patches/nostr-relaypool@0.6.28.patch"
+			"nostr-relaypool@0.6.28": "patches/nostr-relaypool@0.6.28.patch",
+			"svelte@5.57.0": "patches/svelte@5.57.0.patch"
 		},
 		"overrides": {
 			"sha.js": "^2.4.12",
