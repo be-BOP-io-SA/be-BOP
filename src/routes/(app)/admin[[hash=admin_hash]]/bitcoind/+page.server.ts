@@ -99,10 +99,12 @@ export const actions = {
 		const resp = await bitcoinRpc(parsed.method as BitcoinCommand, JSON.parse(parsed.params));
 
 		if (!resp.ok) {
-			return fail(400, { rpcFail: (await resp.json()).error.message });
+			return fail(400, {
+				rpcFail: ((await resp.json()) as { error: { message: string } }).error.message
+			});
 		}
 		return {
-			rpcSuccess: (await resp.json()).result
+			rpcSuccess: ((await resp.json()) as { result: unknown }).result
 		};
 	},
 	loadWallets: async function () {
