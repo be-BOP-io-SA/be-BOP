@@ -7,8 +7,8 @@ import { sumCurrency } from '$lib/utils/sumCurrency';
 import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
 import {
-	coversPayment,
 	definePaymentProcessor,
+	orderReturnUrl,
 	type CreatePaymentParams,
 	type CreatePaymentResult,
 	type CheckPaymentResult
@@ -140,7 +140,7 @@ async function paypalGetCheckout(checkoutId: string): Promise<PaypalCheckout> {
 	return checkout;
 }
 
-const paypal = definePaymentProcessor(declaration, {
+export default definePaymentProcessor(declaration, {
 	presentation: { kind: 'redirect' },
 
 	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
@@ -166,7 +166,7 @@ const paypal = definePaymentProcessor(declaration, {
 				application_context: {
 					user_action: 'PAY_NOW',
 					shipping_preference: 'NO_SHIPPING',
-					return_url: `${ORIGIN}/order/${params.orderId}`,
+					return_url: orderReturnUrl(params.orderId, params.paymentId),
 					cancel_url: `${ORIGIN}/order/${params.orderId}?paymentId=${params.paymentId}&cancel=true`
 				}
 			})
@@ -248,15 +248,5 @@ const paypal = definePaymentProcessor(declaration, {
 		}
 
 		return { status: 'pending' };
-	},
-
-	async paidAtProvider(payment, order): Promise<boolean> {
-		// PayPal calls a checkout COMPLETED while its capture is still PENDING, so only the
-		// poller's own verdict (settled captures covering the price) may unlock paid content.
-		const result = await paypal.checkPayment(payment, order);
-
-		return result.status === 'paid' && coversPayment(paypal, payment, result.received);
 	}
 });
-
-export default paypal;

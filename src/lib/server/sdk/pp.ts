@@ -1,7 +1,8 @@
 import type { PaymentMethod, PaymentProcessor } from '$lib/server/payment-methods';
 import type { ObjectId } from 'mongodb';
 import type { Price, Order } from '$lib/types/Order';
-import type { SerializedPaymentPresentation } from '$lib/types/Order';
+import { PAYMENT_RETURN_PARAM, type SerializedPaymentPresentation } from '$lib/types/Order';
+import { ORIGIN } from '$lib/server/env-config';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { runtimeConfig, type ConfigKey } from '$lib/server/runtime-config';
@@ -203,9 +204,6 @@ export interface PaymentProcessorDefinition {
 
 	/** What its form on the pay page receives. It reaches the buyer's browser: never a credential. */
 	payData?(payment: Order['payments'][number]): unknown;
-
-	/** Lets the order page show as paid a payment the provider holds before the poller saw it. */
-	paidAtProvider?(payment: Order['payments'][number], order: Order): Promise<boolean>;
 }
 
 /** What a processor still writes itself: the rest is read from its declaration. */
@@ -270,6 +268,14 @@ export function coversPayment(
 	const tolerance = pp.underpaymentTolerance?.(currency) ?? CURRENCY_UNIT[currency];
 
 	return settled >= payment.price.amount - tolerance;
+}
+
+/**
+ * Where a provider sends the buyer once they paid: the order page, told which payment it is
+ * waiting for, so that it shows the confirmation in progress rather than the link to pay again.
+ */
+export function orderReturnUrl(orderId: string, paymentId: string): string {
+	return `${ORIGIN}/order/${orderId}?${PAYMENT_RETURN_PARAM}=${paymentId}`;
 }
 
 /** Nothing to scan or follow: the buyer pays in the room, by wire, or not at all. */

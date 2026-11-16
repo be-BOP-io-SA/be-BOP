@@ -115,7 +115,8 @@ test('the SumUp form opens on the checkout of the payment and returns to the ord
 	await page.evaluate(() =>
 		(window as unknown as { sumUpResponse: (type: string) => void }).sumUpResponse('success')
 	);
-	await expect(page).toHaveURL(`/order/${SUMUP_ORDER}`);
+	// Back on the order, told which payment the buyer has just made.
+	await expect(page).toHaveURL(`/order/${SUMUP_ORDER}?paymentReturn=${SUMUP_PAYMENT}`);
 });
 
 test('the SumUp form returns to where the buyer came from', async ({ page }) => {
@@ -126,7 +127,9 @@ test('the SumUp form returns to where the buyer came from', async ({ page }) => 
 	await page.evaluate(() =>
 		(window as unknown as { sumUpResponse: (type: string) => void }).sumUpResponse('success')
 	);
-	await expect(page).toHaveURL(`/order/${SUMUP_ORDER}?returnTo=%2Fpos%2Ftouch`);
+	await expect(page).toHaveURL(
+		`/order/${SUMUP_ORDER}?paymentReturn=${SUMUP_PAYMENT}&returnTo=%2Fpos%2Ftouch`
+	);
 });
 
 test('the Stripe form opens with the keys of the shop and returns to the order', async ({
@@ -154,7 +157,7 @@ test('the Stripe form opens with the keys of the shop and returns to the order',
 		await expect(pay).toBeEnabled({ timeout: 15_000 });
 
 		await pay.click();
-		await expect(page).toHaveURL(`/order/${STRIPE_ORDER}`);
+		await expect(page).toHaveURL(`/order/${STRIPE_ORDER}?paymentReturn=${STRIPE_PAYMENT}`);
 	} finally {
 		// Saved keys make Stripe a card processor of the shop for every spec that follows.
 		await page.goto('/admin/stripe', { waitUntil: 'networkidle' });

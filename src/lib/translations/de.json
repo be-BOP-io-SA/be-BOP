@@ -2738,6 +2738,7 @@
 		"paymentDoneCustomerCTA": "ich bin fertig",
 		"paymentExpiresAt": "Zahlungsfrist: ",
 		"paymentIban": "IBAN für die Überweisung",
+		"paymentConfirming": "Ihre Zahlung wird bestätigt…",
 		"paymentLink": "Klicken Sie hier, um per Karte mit zu bezahlen",
 		"paymentLinkGeneric": "Klicken Sie hier, um mit zu bezahlen",
 		"paymentPaidAt": "Zahlung erfolgt am {date}",

@@ -215,7 +215,8 @@ export type SerializedOrderPayment = Omit<OrderPayment, '_id'> & {
 	presentation?: SerializedPaymentPresentation;
 };
 
-export const FAKE_ORDER_INVOICE_NUMBER = -1;
+/** On the order page's address, the id of the payment the buyer has just come back from. */
+export const PAYMENT_RETURN_PARAM = 'paymentReturn';
 
 export interface OrderAddress {
 	firstName: string;

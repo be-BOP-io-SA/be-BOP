@@ -2738,6 +2738,7 @@
 		"paymentDoneCustomerCTA": "He terminado",
 		"paymentExpiresAt": "Fecha límite de pago: <0></0>",
 		"paymentIban": "IBAN para enviar la transferencia bancaria",
+		"paymentConfirming": "Confirmando su pago…",
 		"paymentLink": "Clic aquí para pagar con tarjeta",
 		"paymentLinkGeneric": "Haga clic aquí para pagar con",
 		"paymentPaidAt": "Pago realizado el {date}",

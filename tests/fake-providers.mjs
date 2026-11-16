@@ -5,6 +5,10 @@ const realFetch = globalThis.fetch;
 globalThis.fetch = async (input, init) => {
 	const url = String(input instanceof Request ? input.url : input);
 
+	if (url.startsWith('https://api.stripe.com/v1/payment_intents/pi_e2e_paid_')) {
+		return Response.json({ status: 'succeeded', amount_received: 1000, currency: 'eur' });
+	}
+
 	if (url.startsWith('https://api.stripe.com/v1/payment_intents/pi_e2e_')) {
 		return Response.json({
 			status: 'requires_payment_method',

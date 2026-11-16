@@ -1,10 +1,8 @@
 import { collections } from '$lib/server/database';
-import { getProcessor, processorFor, serializePresentation } from '$lib/server/sdk/pp';
+import { processorFor, serializePresentation } from '$lib/server/sdk/pp';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
-import { isOrderFullyPaid } from '$lib/server/orders';
 import { picturesForProducts } from '$lib/server/picture';
 import type { DigitalFile } from '$lib/types/DigitalFile';
-import { FAKE_ORDER_INVOICE_NUMBER } from '$lib/types/Order';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error } from '@sveltejs/kit';
 
@@ -67,31 +65,6 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 				tapToPayOnActivationUrl: subtype?.tapToPay?.onActivationUrl,
 				hasProcessor: !!subtype?.tapToPay?.processor
 			});
-		}
-	}
-
-	for (const payment of order.payments) {
-		// Check if the payment has been paid but the status is still pending in DB
-		// In that case, we send back the status as paid, but do not update the DB (it's taken care of by order-lock)
-		if (payment.status === 'pending' && payment.checkoutId) {
-			const recorded = payment.processor ? getProcessor(payment.processor) : undefined;
-
-			if (
-				recorded?.paidAtProvider &&
-				recorded.isEnabled() &&
-				(await recorded.paidAtProvider(payment, order))
-			) {
-				payment.status = 'paid';
-
-				payment.invoice = {
-					number: FAKE_ORDER_INVOICE_NUMBER,
-					createdAt: new Date()
-				};
-
-				if (isOrderFullyPaid(order) && order.status === 'pending') {
-					order.status = 'paid';
-				}
-			}
 		}
 	}
 

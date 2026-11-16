@@ -14,6 +14,7 @@ import { userIdentifier, userQuery } from '$lib/server/user';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { paymentMethods, restrictToProducts } from '$lib/server/payment-methods.js';
+import { PAYMENT_RETURN_PARAM } from '$lib/types/Order.js';
 import type { OrderLabel } from '$lib/types/OrderLabel.js';
 import type { DigitalFile } from '$lib/types/DigitalFile.js';
 
@@ -151,6 +152,7 @@ export async function load({ params, depends, locals, url }) {
 		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode,
 		labels,
 		returnTo: returnTo ?? undefined,
+		paymentReturn: url.searchParams.get(PAYMENT_RETURN_PARAM) ?? undefined,
 		allowManualCleanup: runtimeConfig.dataCleanup.allowUserManualCleanup,
 		canCleanPersonalData:
 			runtimeConfig.dataCleanup.allowUserManualCleanup && !!(locals.email || locals.npub)

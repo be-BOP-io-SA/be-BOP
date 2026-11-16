@@ -3,6 +3,7 @@ import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
 import {
 	definePaymentProcessor,
+	orderReturnUrl,
 	type CreatePaymentParams,
 	type CreatePaymentResult,
 	type CheckPaymentResult
@@ -82,7 +83,7 @@ export default definePaymentProcessor(declaration, {
 				currency: 'XPF',
 				orderId: String(params.orderNumber),
 				channelOptions: { channelType: 'URL' },
-				successUrl: `${ORIGIN}/order/${params.orderId}`,
+				successUrl: orderReturnUrl(params.orderId, params.paymentId),
 				cancelUrl: `${ORIGIN}/order/${params.orderId}?cancel=true`,
 				errorUrl: `${ORIGIN}/order/${params.orderId}`,
 				...(params.expiresAt && { expirationDate: params.expiresAt.toISOString() })

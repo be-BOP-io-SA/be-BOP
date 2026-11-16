@@ -2738,6 +2738,7 @@
 		"paymentDoneCustomerCTA": "I'm done",
 		"paymentExpiresAt": "Payment deadline: <0></0>",
 		"paymentIban": "IBAN to send the wire transfer to",
+		"paymentConfirming": "Confirming your payment…",
 		"paymentLink": "Click here to pay by card with",
 		"paymentLinkGeneric": "Click here to pay with",
 		"paymentPaidAt": "Payment done on {date}",

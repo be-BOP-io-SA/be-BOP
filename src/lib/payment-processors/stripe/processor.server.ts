@@ -256,24 +256,5 @@ export default definePaymentProcessor(declaration, {
 		// Without the secret key the payment could never be checked, so its form must not open.
 		publicKey: runtimeConfig.stripe.secretKey ? runtimeConfig.stripe.publicKey : '',
 		clientSecret: payment.clientSecret
-	}),
-
-	async paidAtProvider(payment) {
-		const response = await fetch(
-			'https://api.stripe.com/v1/payment_intents/' + payment.checkoutId,
-			{
-				headers: {
-					Authorization: 'Bearer ' + runtimeConfig.stripe.secretKey
-				}
-			}
-		);
-
-		if (!response.ok) {
-			throw new Error('Failed to fetch checkout status');
-		}
-
-		const paymentIntent = await response.json();
-
-		return paymentIntent.status === 'succeeded';
-	}
+	})
 });

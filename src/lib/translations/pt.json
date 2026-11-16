@@ -2738,6 +2738,7 @@
 		"paymentDoneCustomerCTA": "terminei",
 		"paymentExpiresAt": "Prazo de pagamento: ",
 		"paymentIban": "IBAN para enviar a transferência bancária",
+		"paymentConfirming": "A confirmar o seu pagamento…",
 		"paymentLink": "Clique aqui para pagar com cartão através de",
 		"paymentLinkGeneric": "Clique aqui para pagar com",
 		"paymentPaidAt": "Pagamento efetuado em {date}",

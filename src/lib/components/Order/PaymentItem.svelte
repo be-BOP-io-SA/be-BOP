@@ -13,6 +13,7 @@
 
 	import { useI18n } from '$lib/i18n';
 	import PriceTag from '$lib/components/PriceTag.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 
 	const { t } = useI18n();
 
@@ -24,6 +25,8 @@
 	export let posSubtypes: Array<{ slug: string; name: string }> | undefined = undefined;
 	export let returnTo: string | undefined = undefined;
 	export let front: Front | undefined = undefined;
+	/** The buyer has just paid: every way to pay again gives way to a wait for the confirmation. */
+	export let confirming = false;
 
 	// The chosen custom method, snapshotted on the payment at order time.
 	$: customPaymentMethod = payment.method === 'custom' ? payment.customPaymentMethod : undefined;
@@ -71,8 +74,13 @@
 	</summary>
 
 	<div class="payment-content flex flex-col gap-2 mt-2">
-		<!-- Dynamic component by payment method -->
-		{#if payment.method !== 'point-of-sale' && paymentComponents[payment.method]}
+		{#if confirming}
+			<p class="payment-confirming flex items-center gap-2" role="status">
+				<Spinner class="w-8" />
+				{t('order.paymentConfirming')}
+			</p>
+			<!-- Dynamic component by payment method -->
+		{:else if payment.method !== 'point-of-sale' && paymentComponents[payment.method]}
 			<svelte:component
 				this={paymentComponents[payment.method]}
 				{payment}
@@ -91,7 +99,7 @@
 		<slot />
 
 		<!-- QR codes -->
-		{#if payment.status === 'pending'}
+		{#if payment.status === 'pending' && !confirming}
 			<div class="qr-codes">
 				<PaymentQRCodes {payment} {hideCreditCardQrCode} />
 			</div>

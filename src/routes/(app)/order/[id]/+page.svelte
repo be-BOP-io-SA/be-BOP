@@ -17,7 +17,7 @@
 	import ForwardReceiptForm from '$lib/components/Order/ForwardReceiptForm.svelte';
 	import PaymentForm from '$lib/components/Order/PaymentForm.svelte';
 	import { useI18n } from '$lib/i18n';
-	import { FAKE_ORDER_INVOICE_NUMBER, orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
+	import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
 	import { UrlDependency } from '$lib/types/UrlDependency';
 	import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 
@@ -30,20 +30,31 @@
 		discountTiedToPaymentMethod?: boolean;
 	} | null = null;
 
+	// Past this wait, the link to pay comes back: the buyer may have cancelled at the provider.
+	const PAYMENT_CONFIRMATION_SECONDS = 30;
+
 	let count = 0;
+	let secondsOnPage = 0;
+
+	// The payment the buyer has just come back from, until the payment poller has settled it.
+	$: confirmingPaymentId =
+		secondsOnPage < PAYMENT_CONFIRMATION_SECONDS
+			? data.order.payments.find(
+					(payment) => payment.id === data.paymentReturn && payment.status === 'pending'
+			  )?.id
+			: undefined;
 
 	onMount(() => {
 		const interval = setInterval(() => {
+			secondsOnPage++;
+
 			if ($navigating) {
 				return;
 			}
 
-			if (
-				data.order.status === 'pending' ||
-				data.order.payments.some((p) => p.invoice?.number === FAKE_ORDER_INVOICE_NUMBER)
-			) {
+			if (data.order.status === 'pending') {
 				count++;
-				if (count % 4 === 0) {
+				if (confirmingPaymentId || count % 4 === 0) {
 					invalidate(UrlDependency.Order);
 				}
 			}
@@ -198,7 +209,7 @@
 			<!-- ========== POS MODE: Receipt buttons above payment details ========== -->
 			{#if data.posMode && data.order.payments.length > 0}
 				{@const lastPayment = data.order.payments[data.order.payments.length - 1]}
-				{#if lastPayment.status === 'paid' || (lastPayment.invoice?.number && lastPayment.invoice.number !== FAKE_ORDER_INVOICE_NUMBER)}
+				{#if lastPayment.status === 'paid' || lastPayment.invoice?.number}
 					<div class="pos-receipt-buttons flex flex-row gap-1">
 						<button
 							class="btn btn-black flex-1 text-base px-3 py-2 whitespace-nowrap"
@@ -238,6 +249,7 @@
 						posSubtypes={data.posSubtypes}
 						returnTo={data.returnTo}
 						front={payment.processor ? data.fronts[payment.processor] : undefined}
+						confirming={payment.id === confirmingPaymentId}
 					>
 						<PaymentActions
 							{payment}
@@ -255,7 +267,7 @@
 					</PaymentItem>
 
 					<!-- Hidden iframes for receipt/invoice printing -->
-					{#if payment.status !== 'paid' || (payment.invoice?.number && payment.invoice.number !== FAKE_ORDER_INVOICE_NUMBER)}
+					{#if payment.status !== 'paid' || payment.invoice?.number}
 						<iframe
 							src="/order/{data.order._id}/payment/{payment.id}/receipt"
 							style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"

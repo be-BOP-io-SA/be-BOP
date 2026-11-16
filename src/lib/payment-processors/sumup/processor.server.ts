@@ -5,6 +5,7 @@ import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
 import {
 	definePaymentProcessor,
+	orderReturnUrl,
 	type CreatePaymentParams,
 	type CreatePaymentResult,
 	type CheckPaymentResult
@@ -29,7 +30,7 @@ export default definePaymentProcessor(declaration, {
 				currency,
 				checkout_reference: params.orderId + '-' + params.paymentId,
 				merchant_code: runtimeConfig.sumUp.merchantCode,
-				redirect_url: `${ORIGIN}/order/${params.orderId}`,
+				redirect_url: orderReturnUrl(params.orderId, params.paymentId),
 				description: 'Order ' + params.orderNumber,
 				...(params.expiresAt && {
 					valid_until: params.expiresAt.toISOString()
@@ -129,22 +130,5 @@ export default definePaymentProcessor(declaration, {
 		return { status: 'pending' };
 	},
 
-	payData: (payment) => ({ checkoutId: payment.checkoutId }),
-
-	async paidAtProvider(payment) {
-		const response = await fetch('https://api.sumup.com/v0.1/checkouts/' + payment.checkoutId, {
-			headers: {
-				Authorization: 'Bearer ' + runtimeConfig.sumUp.apiKey
-			},
-			...{ autoSelectFamily: true }
-		});
-
-		if (!response.ok) {
-			throw new Error('Failed to fetch checkout status');
-		}
-
-		const checkout = await response.json();
-
-		return checkout.status === 'PAID';
-	}
+	payData: (payment) => ({ checkoutId: payment.checkoutId })
 });

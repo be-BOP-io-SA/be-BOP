@@ -2738,6 +2738,7 @@
 		"paymentDoneCustomerCTA": "Ik ben klaar",
 		"paymentExpiresAt": "Betalingstermijn: <0></0>",
 		"paymentIban": "IBAN waarnaar de overboeking moet worden verzonden",
+		"paymentConfirming": "Uw betaling wordt bevestigd…",
 		"paymentLink": "Klik hier om met pin te betalen",
 		"paymentLinkGeneric": "Klik hier om mee te betalen",
 		"paymentPaidAt": "Betaling gedaan op {date}",
