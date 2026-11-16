@@ -7,6 +7,7 @@ import {
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { FRACTION_DIGITS_PER_CURRENCY, CURRENCIES, FIAT_CURRENCIES } from '$lib/types/Currency';
 import { typedInclude } from '$lib/utils/typedIncludes';
+import { sumCurrency } from '$lib/utils/sumCurrency';
 import { ORIGIN } from '$lib/server/env-config';
 import { z } from 'zod';
 import type {
@@ -115,19 +116,20 @@ export default {
 				return { status: 'pending' };
 			}
 
-			const settled = {
-				value: String(captures.reduce((total, capture) => total + Number(capture.amount.value), 0)),
-				currency_code: captures[0].amount.currency_code
-			};
-
-			const rawCurrency = settled.currency_code?.toUpperCase();
+			const rawCurrency = captures[0].amount.currency_code?.toUpperCase();
 			if (!typedInclude(CURRENCIES, rawCurrency)) {
 				throw new Error(`PayPal returned unknown currency: ${rawCurrency}`);
 			}
 			return {
 				status: 'paid',
 				received: {
-					amount: Number(settled.value),
+					amount: sumCurrency(
+						rawCurrency,
+						captures.map((capture) => ({
+							amount: Number(capture.amount.value),
+							currency: rawCurrency
+						}))
+					),
 					currency: rawCurrency
 				}
 			};

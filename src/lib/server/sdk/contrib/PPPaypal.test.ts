@@ -92,6 +92,27 @@ describe('PayPal', () => {
 		expect(result).toEqual({ status: 'paid', received: { amount: 12.5, currency: 'EUR' } });
 	});
 
+	it('adds up several captures to the cent', async () => {
+		const capture = (value: string) => ({
+			status: 'COMPLETED',
+			amount: { currency_code: 'EUR', value }
+		});
+		mockPaypal({
+			id: CHECKOUT_ID,
+			status: 'COMPLETED',
+			purchase_units: [
+				{
+					amount: { currency_code: 'EUR', value: '30.30' },
+					payments: { captures: [capture('10.10'), capture('20.20')] }
+				}
+			]
+		});
+
+		const result = await PPPaypal.checkPayment(payment(), {} as Order);
+
+		expect(result).toEqual({ status: 'paid', received: { amount: 30.3, currency: 'EUR' } });
+	});
+
 	it('keeps a payment captured past its deadline pending when the order cannot be read back', async () => {
 		mockPaypal({ id: CHECKOUT_ID, status: 'COMPLETED', links: [] }, { readBackFails: true });
 
