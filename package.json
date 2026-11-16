@@ -125,7 +125,8 @@
 			"@tootallnate/once@2": "^2.0.1",
 			"picomatch@2": "^2.3.2",
 			"diff@4": "^4.0.4",
-			"cookie@0.6": "^0.7.0"
+			"cookie@0.6": "^0.7.0",
+			"bitcoinjs-lib": "^6.1.8"
 		}
 	}
 }
