@@ -36,6 +36,8 @@
 	const paymentComponents: Record<string, any> = {
 		card: CardPayment,
 		bitcoin: BitcoinPayment,
+		// Paid to an address on a chain as well: the same address to copy.
+		zcash: BitcoinPayment,
 		lightning: LightningPayment,
 		'bank-transfer': BankTransferPayment,
 		'point-of-sale': PointOfSalePayment,

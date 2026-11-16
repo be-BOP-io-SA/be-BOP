@@ -1,6 +1,7 @@
 import { collections } from '$lib/server/database';
 import { processorFor, serializePresentation } from '$lib/server/sdk/pp';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
+import { confirmationBlocksFor as zcashConfirmationBlocks } from '$lib/payment-processors/zcash-nodeless/confirmations.server';
 import { picturesForProducts } from '$lib/server/picture';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
@@ -95,7 +96,11 @@ export async function fetchOrderForUser(orderId: string, params?: { userRoleId?:
 			price: payment.price,
 			currencySnapshot: payment.currencySnapshot,
 			confirmationBlocksRequired:
-				payment.method === 'bitcoin' ? getConfirmationBlocks(payment.price) : 0,
+				payment.method === 'bitcoin'
+					? getConfirmationBlocks(payment.price)
+					: payment.method === 'zcash'
+					? zcashConfirmationBlocks(payment.price)
+					: 0,
 			awaitingConfirmation: payment.awaitingConfirmation ?? false,
 			...(payment.bankTransferNumber && { bankTransferNumber: payment.bankTransferNumber }),
 			...(payment.detail && { detail: payment.detail }),
