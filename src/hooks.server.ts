@@ -22,6 +22,7 @@ import GitHub from '@auth/core/providers/github';
 import Google from '@auth/core/providers/google';
 import Facebook from '@auth/core/providers/facebook';
 import Twitter from '@auth/core/providers/twitter';
+import { withProviderAccountId } from '$lib/server/sso-token';
 import {
 	FACEBOOK_ID,
 	FACEBOOK_SECRET,
@@ -533,6 +534,7 @@ const handleSSO = authProviders
 				}
 			},
 			callbacks: {
+				jwt: async ({ token, account }) => withProviderAccountId(token, account),
 				/**
 				 * Get the user's ID from the token and add it to the session
 				 */
