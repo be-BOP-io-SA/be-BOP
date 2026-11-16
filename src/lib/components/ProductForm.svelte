@@ -2125,7 +2125,11 @@
 									<Editor
 										scriptSrc="/tinymce/tinymce.js"
 										bind:value={product.contentBefore}
-										conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+										conf={{
+											plugins: TINYMCE_PLUGINS,
+											toolbar: TINYMCE_TOOLBAR,
+											license_key: 'gpl'
+										}}
 									/>
 								</div>
 
@@ -2177,7 +2181,11 @@
 									<Editor
 										scriptSrc="/tinymce/tinymce.js"
 										bind:value={product.contentAfter}
-										conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+										conf={{
+											plugins: TINYMCE_PLUGINS,
+											toolbar: TINYMCE_TOOLBAR,
+											license_key: 'gpl'
+										}}
 									/>
 								</div>
 

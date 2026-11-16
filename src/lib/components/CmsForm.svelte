@@ -210,7 +210,7 @@
 			<Editor
 				scriptSrc="/tinymce/tinymce.js"
 				bind:value={pageContent}
-				conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+				conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR, license_key: 'gpl' }}
 			/>
 		{/if}
 		<label class="checkbox-label my-2">
@@ -285,7 +285,7 @@
 				<Editor
 					scriptSrc="/tinymce/tinymce.js"
 					bind:value={mobileContent}
-					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR, license_key: 'gpl' }}
 				/>
 			{/if}
 
@@ -318,7 +318,7 @@
 				<Editor
 					scriptSrc="/tinymce/tinymce.js"
 					bind:value={employeeContent}
-					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR, license_key: 'gpl' }}
 				/>
 			{/if}
 
