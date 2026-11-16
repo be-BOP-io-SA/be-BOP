@@ -76,7 +76,7 @@ export interface PaypalCheckout {
 	payment_source: Record<string, unknown>;
 }
 
-export async function paypalGetCheckout(checkoutId: string): Promise<PaypalCheckout> {
+async function fetchCheckout(checkoutId: string): Promise<PaypalCheckout> {
 	const response = await fetch(`${paypalApiOrigin()}/v2/checkout/orders/${checkoutId}`, {
 		headers: {
 			Authorization: `Bearer ${await paypalAccessToken()}`
@@ -87,7 +87,11 @@ export async function paypalGetCheckout(checkoutId: string): Promise<PaypalCheck
 		throw new Error(`Failed to get PayPal order: ${response.status} ${response.statusText}`);
 	}
 
-	const checkout: PaypalCheckout = await response.json();
+	return await response.json();
+}
+
+export async function paypalGetCheckout(checkoutId: string): Promise<PaypalCheckout> {
+	const checkout = await fetchCheckout(checkoutId);
 
 	// Automatically execute payment if approved
 	if (checkout.status === 'APPROVED') {
@@ -97,7 +101,9 @@ export async function paypalGetCheckout(checkoutId: string): Promise<PaypalCheck
 				method: 'POST',
 				headers: {
 					Authorization: 'Bearer ' + (await paypalAccessToken()),
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
+					// Without it PayPal may answer with only the id, the status and the links.
+					Prefer: 'return=representation'
 				}
 			}
 		);
@@ -109,7 +115,11 @@ export async function paypalGetCheckout(checkoutId: string): Promise<PaypalCheck
 
 		// A capture can come back PENDING (an eCheck still clearing, an account under review): the
 		// caller reads each capture's status, so the payment stays pending until one settles.
-		const captured: PaypalCheckout = await captureResponse.json();
+		const captured: Partial<PaypalCheckout> = await captureResponse.json();
+		if (!captured.purchase_units || !captured.status) {
+			// The money is taken by now: a failed read would expire an order approved near its deadline.
+			return await fetchCheckout(checkoutId);
+		}
 		checkout.purchase_units = captured.purchase_units;
 		checkout.status = captured.status;
 	}
