@@ -75,7 +75,8 @@ test('the processor picker links to the shared settings route', async ({ page })
 });
 
 test('the back office navigation lists every processor that has settings', async ({ page }) => {
-	await page.goto('/admin');
+	// The sections open on click only once the page is hydrated.
+	await page.goto('/admin', { waitUntil: 'networkidle' });
 
 	// Each section of the sidebar is collapsed until its heading is clicked, so the links only
 	// exist once Payment Settings is opened.

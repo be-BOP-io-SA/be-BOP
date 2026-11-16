@@ -102,7 +102,8 @@ test('searching pending orders lists them without adding them to the totals', as
 });
 
 test('a collapsed synthesis exports the same CSV as an open one', async ({ page }) => {
-	await page.goto(`/admin/reporting?${PERIOD}`);
+	// The CSV is built in the browser: a click before hydration downloads nothing.
+	await page.goto(`/admin/reporting?${PERIOD}`, { waitUntil: 'networkidle' });
 	const section = page.locator('div.col-span-12', {
 		has: page.getByRole('button', { name: 'VAT Synthesis' })
 	});
