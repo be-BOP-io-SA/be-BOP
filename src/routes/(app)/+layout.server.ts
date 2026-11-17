@@ -20,7 +20,7 @@ import { error, redirect } from '@sveltejs/kit';
 import type { PickDeep, SetRequired } from 'type-fest';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { Cart } from '$lib/types/Cart';
-import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
+import { computeDeliveryFees, computePriceInfo, deliveryFeesVatOf } from '$lib/cart';
 import { UNDERLYING_CURRENCY } from '$lib/types/Currency';
 import { isAlpha2CountryCode } from '$lib/types/Country';
 import {
@@ -290,8 +290,7 @@ export async function load(params) {
 			amount: deliveryFees || 0,
 			currency: UNDERLYING_CURRENCY
 		},
-		deliveryFeesVatProfileId: runtimeConfig.deliveryFees.vatProfileId,
-		deliveryFeesVatIncluded: runtimeConfig.deliveryFees.vatIncludedReference,
+		deliveryFeesVat: deliveryFeesVatOf(runtimeConfig.deliveryFees),
 		freeProductUnits: cartFreeProductUnits,
 		userCountry: locals.countryCode,
 		vatExempted: runtimeConfig.vatExempted,

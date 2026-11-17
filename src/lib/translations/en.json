@@ -1213,7 +1213,14 @@
 			"saveConfig": "Save config",
 			"useDeliveryFeesVatIncludedReference": "Use delivery fees price reference as VAT included price instead of VAT excluded",
 			"vatProfileForDeliveryFees": "VAT profile for delivery fees",
-			"useShopStandardVat": "Use shop standard VAT",
+			"deliveryFeesVatMode": "VAT applied to delivery fees",
+			"deliveryFeesVatModes": {
+				"standard": "Shop standard VAT",
+				"highest": "Highest VAT rate among the cart products",
+				"prorata": "VAT rates of the cart products, prorated on their share of the cart total excluding VAT",
+				"custom": "Custom VAT profile",
+				"none": "No VAT"
+			},
 			"valuesUpdated": "Values updated",
 			"manageVatProfiles": "Manage VAT profiles",
 			"vatProfilesHint": "You can create VAT profiles, with custom vat rates for specific countries. It is useful for products with specific VAT rates, like books in France and Switzerland.",

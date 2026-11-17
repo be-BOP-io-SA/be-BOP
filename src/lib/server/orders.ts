@@ -44,7 +44,7 @@ import { isEmailConfigured, queueEmail } from './email';
 import { availableContactModes } from './contact-modes';
 import { sum } from '$lib/utils/sum';
 import { type Cart } from '$lib/types/Cart';
-import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
+import { computeDeliveryFees, computePriceInfo, deliveryFeesVatOf } from '$lib/cart';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { sumCurrency } from '$lib/utils/sumCurrency';
 // Every payment now resolves through the registry, so loading it is this module's business
@@ -921,8 +921,7 @@ export async function createOrder(
 	const priceInfo = computePriceInfo(items, {
 		bebopCountry: runtimeConfig.vatCountry,
 		deliveryFees: shippingPrice,
-		deliveryFeesVatProfileId: runtimeConfig.deliveryFees.vatProfileId,
-		deliveryFeesVatIncluded: runtimeConfig.deliveryFees.vatIncludedReference,
+		deliveryFeesVat: deliveryFeesVatOf(runtimeConfig.deliveryFees),
 		discount: discountInfo,
 		freeProductUnits: await freeProductsForUser(
 			params.user,
