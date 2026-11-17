@@ -205,6 +205,7 @@ export const actions: Actions = {
 							...(parsed.bookingSpec && { bookingSpec: parsed.bookingSpec }),
 							displayShortDescription: parsed.displayShortDescription,
 							...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
+							...(parsed.deliveryZones?.length && { deliveryZones: parsed.deliveryZones }),
 							applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
 							requireSpecificDeliveryFee: parsed.requireSpecificDeliveryFee,
 							...(parsed.stock !== undefined && {
