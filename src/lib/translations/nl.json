@@ -1213,7 +1213,14 @@
 			"saveConfig": "Configuratie opslaan",
 			"useDeliveryFeesVatIncludedReference": "Prijsreferentie van bezorgkosten gebruiken als prijs inclusief btw in plaats van exclusief btw",
 			"vatProfileForDeliveryFees": "Btw-profiel voor bezorgkosten",
-			"useShopStandardVat": "Standaard btw van de winkel gebruiken",
+			"deliveryFeesVatMode": "Btw op bezorgkosten",
+			"deliveryFeesVatModes": {
+				"standard": "Standaard btw van de winkel",
+				"highest": "Hoogste btw-tarief van de producten in de winkelwagen",
+				"prorata": "Btw-tarieven van de producten in de winkelwagen, naar rato van hun aandeel in het winkelwagentotaal exclusief btw",
+				"custom": "Eigen btw-profiel",
+				"none": "Geen btw"
+			},
 			"valuesUpdated": "Waarden bijgewerkt",
 			"manageVatProfiles": "Btw-profielen beheren",
 			"vatProfilesHint": "U kunt btw-profielen aanmaken met aangepaste btw-tarieven voor specifieke landen. Dit is handig voor producten met specifieke btw-tarieven, zoals boeken in Frankrijk en Zwitserland.",

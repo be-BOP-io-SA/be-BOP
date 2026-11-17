@@ -1213,7 +1213,14 @@
 			"saveConfig": "Enregistrer la configuration",
 			"useDeliveryFeesVatIncludedReference": "Utiliser le prix de référence des frais de livraison TVA incluse au lieu de TVA exclue",
 			"vatProfileForDeliveryFees": "Profil de TVA pour les frais de livraison",
-			"useShopStandardVat": "Utiliser la TVA standard de la boutique",
+			"deliveryFeesVatMode": "TVA appliquée aux frais de livraison",
+			"deliveryFeesVatModes": {
+				"standard": "TVA standard de la boutique",
+				"highest": "Taux de TVA le plus élevé parmi les produits du panier",
+				"prorata": "Taux de TVA des produits du panier, au prorata de leur part du total HT du panier",
+				"custom": "Profil de TVA personnalisé",
+				"none": "Pas de TVA"
+			},
 			"valuesUpdated": "Valeurs mises à jour",
 			"manageVatProfiles": "Gérer les profils de TVA",
 			"vatProfilesHint": "Vous pouvez créer des profils de TVA, avec des taux de TVA personnalisés pour des pays spécifiques. C'est utile pour les produits ayant des taux de TVA spécifiques, comme les livres en France et en Suisse.",

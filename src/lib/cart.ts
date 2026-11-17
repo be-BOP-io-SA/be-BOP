@@ -13,6 +13,54 @@ import { differenceInMinutes } from 'date-fns';
 import type { ObjectId } from 'mongodb';
 import { get } from 'svelte/store';
 
+/**
+ * Which VAT the delivery fees carry. Delivery is an accessory to the goods it carries, so a shop
+ * may tax it like those goods instead of at its standard rate:
+ * - `standard`: the shop's standard rate;
+ * - `highest`: the highest rate among the cart products;
+ * - `prorata`: the rates of the cart products, each on the share of the fees matching its share
+ *   of the cart total excluding VAT;
+ * - `custom`: the rate of a chosen VAT profile;
+ * - `none`: no VAT at all, for shops whose postal fees are exempt.
+ */
+export const DELIVERY_FEES_VAT_MODES = [
+	'standard',
+	'highest',
+	'prorata',
+	'custom',
+	'none'
+] as const;
+export type DeliveryFeesVatMode = (typeof DELIVERY_FEES_VAT_MODES)[number];
+
+/**
+ * Everything that decides the VAT of one delivery fee, kept together so that a delivery method can
+ * carry its own once a shop offers several.
+ */
+export type DeliveryFeesVat = {
+	mode: DeliveryFeesVatMode;
+	/** Only read in `custom` mode. */
+	profileId: string | null;
+	/** true = the fee amounts are entered VAT included. */
+	included: boolean;
+};
+
+/**
+ * Reads the VAT settings stored beside a delivery fee. Shops saved before the mode existed only
+ * had a profile, which meant `custom` when one was set and `standard` otherwise.
+ */
+export function deliveryFeesVatOf(config: {
+	vatMode?: DeliveryFeesVatMode | null;
+	vatProfileId?: string | null;
+	vatIncludedReference?: boolean;
+}): DeliveryFeesVat {
+	const mode = config.vatMode ?? (config.vatProfileId ? 'custom' : 'standard');
+	return {
+		mode,
+		profileId: mode === 'custom' ? config.vatProfileId ?? null : null,
+		included: !!config.vatIncludedReference
+	};
+}
+
 export type ProductForPriceInfo = {
 	// The id is optional here, so we can compute prices for “products” that are
 	// not in the database (e.g. delivery fees)
@@ -217,6 +265,8 @@ function vatForCart(
 
 export type CartPriceInfo = {
 	currency: Currency;
+	/** The delivery fees excluding VAT, once the VAT is taken out of fees entered VAT included. */
+	deliveryFeesHt: Price;
 	discount: number;
 	partialPrice: number;
 	partialPriceWithVat: number;
@@ -267,33 +317,40 @@ function ensureDiscountWithinBounds(discount: CartDiscount, cartTotal: number): 
 	}
 }
 
-/** Resolve delivery fees as a VAT-excluded (HT) Price, back-extracting from TTC if needed. */
-function computeDeliveryFeesHt(params: {
-	deliveryFees: Price;
-	deliveryFeesVatProfileId?: string | null;
-	deliveryFeesVatIncluded?: boolean;
-	bebopCountry: CountryAlpha2 | undefined;
-	userCountry: CountryAlpha2 | undefined;
-	vatSingleCountry: boolean;
-	vatProfiles: Array<{
-		_id: string | ObjectId;
-		rates: Partial<Record<CountryAlpha2, number>>;
-	}>;
-}): Price {
-	if (!params.deliveryFeesVatIncluded) {
-		return params.deliveryFees;
-	}
-	const rate = computeVatRate({
-		productVatProfileId: params.deliveryFeesVatProfileId ?? undefined,
-		vatProfiles: params.vatProfiles,
-		bebopCountry: params.bebopCountry,
-		userCountry: params.userCountry,
-		vatSingleCountry: params.vatSingleCountry
+/**
+ * The VAT rates of the cart products, each weighted by its share of the cart total excluding VAT.
+ * `highest` keeps the highest rate alone, and so does a cart whose total is zero, since it gives
+ * no share to weigh by.
+ */
+function deliveryFeesVatShares(
+	mode: 'highest' | 'prorata',
+	itemVats: Array<{ rate: number; country: CountryAlpha2 } | undefined>,
+	itemAmounts: Array<{ amount: number; currency: Currency }>
+): Array<{ rate: number; country: CountryAlpha2; weight: number }> {
+	const byRate: Array<{ rate: number; country: CountryAlpha2; amount: number }> = [];
+	itemVats.forEach((vat, i) => {
+		if (!vat) {
+			return;
+		}
+		const amount = toCurrency(UNDERLYING_CURRENCY, itemAmounts[i].amount, itemAmounts[i].currency);
+		const existing = byRate.find((s) => s.rate === vat.rate && s.country === vat.country);
+		if (existing) {
+			existing.amount += amount;
+		} else {
+			byRate.push({ rate: vat.rate, country: vat.country, amount });
+		}
 	});
-	return {
-		amount: extractVat(params.deliveryFees.amount, rate),
-		currency: params.deliveryFees.currency
-	};
+	if (!byRate.length) {
+		return [];
+	}
+	const total = sum(byRate.map((s) => s.amount));
+	if (mode === 'highest' || total <= 0) {
+		const highest = byRate.reduce((a, b) => (b.rate > a.rate ? b : a));
+		return [{ rate: highest.rate, country: highest.country, weight: 1 }];
+	}
+	return byRate
+		.filter((s) => s.amount > 0)
+		.map((s) => ({ rate: s.rate, country: s.country, weight: s.amount / total }));
 }
 
 /** Percentage discounts round DOWN — a smaller-than-stated discount can be illegal. */
@@ -353,10 +410,8 @@ export function computePriceInfo(
 	params: {
 		bebopCountry: CountryAlpha2 | undefined;
 		deliveryFees: Price;
-		/** null = shop standard VAT; otherwise a VAT profile id (hex ObjectId string). */
-		deliveryFeesVatProfileId?: string | null;
-		/** true = `deliveryFees.amount` is VAT-included (TTC). */
-		deliveryFeesVatIncluded?: boolean;
+		/** Defaults to the shop standard VAT, with `deliveryFees.amount` excluding VAT. */
+		deliveryFeesVat?: DeliveryFeesVat;
 		discount?: CartDiscount;
 		freeProductUnits: Record<string, number>;
 		userCountry: CountryAlpha2 | undefined;
@@ -374,46 +429,103 @@ export function computePriceInfo(
 		params.vatNullOutsideSellerCountry && params.bebopCountry !== params.userCountry;
 	const singleVatCountry = params.vatSingleCountry && !!params.bebopCountry;
 
-	// Resolve HT before computeCartPrice so subtotal and VAT use the same base.
-	const deliveryFeesHt = computeDeliveryFeesHt({
-		deliveryFees: params.deliveryFees,
-		deliveryFeesVatProfileId: params.deliveryFeesVatProfileId,
-		deliveryFeesVatIncluded: params.deliveryFeesVatIncluded,
-		bebopCountry: params.bebopCountry,
-		userCountry: params.userCountry,
-		vatSingleCountry: params.vatSingleCountry,
-		vatProfiles: params.vatProfiles
+	const deliveryFeesVat: DeliveryFeesVat = params.deliveryFeesVat ?? {
+		mode: 'standard',
+		profileId: null,
+		included: false
+	};
+
+	const cartVat = vatForCart(items, {
+		...params,
+		freeUnits,
+		isPhysicalVatExempted
 	});
+
+	// The shares are read on the products alone: the fees can't weigh in their own split.
+	const deliveryShares =
+		deliveryFeesVat.mode === 'highest' || deliveryFeesVat.mode === 'prorata'
+			? deliveryFeesVatShares(
+					deliveryFeesVat.mode,
+					cartVat.vats,
+					computeCartPrice(items, { freeUnits }).perItem
+			  )
+			: [];
+	// A cart without any product VAT gives no rate to follow: the fees fall back to the standard one.
+	const followsProducts = deliveryShares.length > 0;
+	const deliveryProfileId =
+		deliveryFeesVat.mode === 'custom' ? deliveryFeesVat.profileId ?? undefined : undefined;
+
+	// The rate the fees were entered with, to take the VAT out when they are entered VAT included.
+	const deliveryEnteredRate =
+		deliveryFeesVat.mode === 'none'
+			? 0
+			: followsProducts
+			? sum(deliveryShares.map((s) => s.rate * s.weight))
+			: computeVatRate({
+					productVatProfileId: deliveryProfileId,
+					vatProfiles: params.vatProfiles,
+					bebopCountry: params.bebopCountry,
+					userCountry: params.userCountry,
+					vatSingleCountry: params.vatSingleCountry
+			  });
+	// Resolve HT before computeCartPrice so subtotal and VAT use the same base.
+	const deliveryFeesHt: Price =
+		deliveryFeesVat.included && deliveryEnteredRate
+			? {
+					amount: extractVat(params.deliveryFees.amount, deliveryEnteredRate),
+					currency: params.deliveryFees.currency
+			  }
+			: params.deliveryFees;
 
 	const cartPrice = computeCartPrice(items, {
 		deliveryFees: deliveryFeesHt,
 		freeUnits
 	});
 	const { partialAmount: partialPrice, totalAmount: totalPrice } = cartPrice.cart;
-	const cartVat = vatForCart(items, {
-		...params,
-		freeUnits,
-		isPhysicalVatExempted
-	});
-	const deliveryFeeVat = computeVatForItem(
-		{
-			product: {
-				shipping: true,
-				price: deliveryFeesHt,
-				vatProfileId: params.deliveryFeesVatProfileId ?? undefined
+
+	const deliveryFeeVats: Array<{
+		price: Price;
+		partialPrice: Price;
+		rate: number;
+		country: CountryAlpha2;
+	}> = [];
+	if (deliveryFeesVat.mode === 'none') {
+		// The fees carry no VAT.
+	} else if (followsProducts) {
+		// Product VAT exists, so the cart isn't exempt; only the exemption on physical goods can apply.
+		if (!isPhysicalVatExempted) {
+			for (const share of deliveryShares) {
+				const vat = (deliveryFeesHt.amount * share.weight * share.rate) / 100;
+				deliveryFeeVats.push({
+					price: { amount: vat, currency: deliveryFeesHt.currency },
+					partialPrice: { amount: vat, currency: deliveryFeesHt.currency },
+					rate: share.rate,
+					country: share.country
+				});
+			}
+		}
+	} else {
+		const vat = computeVatForItem(
+			{
+				product: { shipping: true, price: deliveryFeesHt, vatProfileId: deliveryProfileId },
+				quantity: 1
 			},
-			quantity: 1
-		},
-		{ ...params, freeUnits: 0, isPhysicalVatExempted }
-	);
+			{ ...params, freeUnits: 0, isPhysicalVatExempted }
+		);
+		if (vat) {
+			deliveryFeeVats.push(vat);
+		}
+	}
 
 	const partialVat = sumCurrency(
 		UNDERLYING_CURRENCY,
-		[...cartVat.vats, deliveryFeeVat].filter((p) => p !== undefined).map((vat) => vat.partialPrice)
+		[...cartVat.vats, ...deliveryFeeVats]
+			.filter((p) => p !== undefined)
+			.map((vat) => vat.partialPrice)
 	);
 	const totalVat = sumCurrency(
 		UNDERLYING_CURRENCY,
-		[...cartVat.vats, deliveryFeeVat].filter((p) => p !== undefined).map((vat) => vat.price)
+		[...cartVat.vats, ...deliveryFeeVats].filter((p) => p !== undefined).map((vat) => vat.price)
 	);
 
 	let totalPriceWithVat = totalPrice + totalVat;
@@ -443,7 +555,7 @@ export function computePriceInfo(
 		partialPrice: Price;
 	}> = [];
 
-	for (const vatItem of [...cartVat.vats, deliveryFeeVat]) {
+	for (const vatItem of [...cartVat.vats, ...deliveryFeeVats]) {
 		if (!vatItem) {
 			continue;
 		}
@@ -484,6 +596,7 @@ export function computePriceInfo(
 
 	return {
 		currency: UNDERLYING_CURRENCY,
+		deliveryFeesHt,
 		discount: discountAmount,
 		partialPrice,
 		partialPriceWithVat,
