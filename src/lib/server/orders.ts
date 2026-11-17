@@ -913,9 +913,10 @@ export async function createOrder(
 	// Pick the best applicable auto discount based on the order's conditions.
 	// Face A / external API passes skipAutoDiscounts so PoS-priced totals are not rewritten.
 	let usedSubIds: string[] = [];
+	let bestAutoDiscount: ReturnType<typeof selectBestDiscount> = null;
 	if (!params.skipAutoDiscounts) {
 		const activeDiscounts = await getActivePercentageDiscounts();
-		const bestAutoDiscount = selectBestDiscount(activeDiscounts, items, {
+		bestAutoDiscount = selectBestDiscount(activeDiscounts, items, {
 			userSubscriptionIds: paidSubs.map((s) => s.productId),
 			promoCode: params.promoCode,
 			channel: params.channel,

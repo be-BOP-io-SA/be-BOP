@@ -148,7 +148,7 @@
 					<label class="form-label w-[15em]">
 						{t('admin.order.customFieldFilterLabel')}
 						<select name="customFieldSlug" class="form-input" bind:value={filter.slug}>
-							<option value="" />
+							<option value=""></option>
 							{#each data.checkoutFields as field}
 								<option value={field.slug}
 									>{field.label}{field.disabled
