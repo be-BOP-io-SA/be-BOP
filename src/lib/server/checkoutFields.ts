@@ -10,6 +10,11 @@ import type {
 } from '$lib/types/CheckoutFieldConfig';
 import type { CollectedCheckoutField } from '$lib/types/Order';
 
+/** Every checkout field, disabled ones included: their answers stay on past orders. */
+export function loadAllCheckoutFields() {
+	return collections.checkoutFieldConfigs.find({}).sort({ sortOrder: 1 }).toArray();
+}
+
 export function loadEnabledCheckoutFields() {
 	return collections.checkoutFieldConfigs
 		.find({ disabled: { $ne: true } })

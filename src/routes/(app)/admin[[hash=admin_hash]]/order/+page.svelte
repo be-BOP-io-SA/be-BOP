@@ -1,12 +1,23 @@
 <script lang="ts">
 	import OrdersList from '$lib/components/OrdersList.svelte';
+	import IconTrash from '$lib/components/icons/IconTrash.svelte';
 	import { ORDER_PAGINATION_LIMIT } from '$lib/types/Order';
 	import { page } from '$app/stores';
+	import { afterNavigate } from '$app/navigation';
 	import { useI18n } from '$lib/i18n.js';
 
 	export let data;
 	let next = 0;
 	let selectedPaymentMethod = $page.url.searchParams.get('paymentMethod') ?? '';
+
+	// Reset from the URL after each navigation, so the clear link and Back reset the rows as well.
+	// Not a `$:` on `data`: the rows are bound to the inputs, and binding them would invalidate
+	// `data` and reset the rows on every keystroke.
+	const rowsFromUrl = () => data.customFieldFilters.map((filter) => ({ ...filter }));
+	let customFieldFilters: Array<{ slug: string; value: string }> = rowsFromUrl();
+	afterNavigate(() => {
+		customFieldFilters = rowsFromUrl();
+	});
 
 	const { t, countryName, sortedCountryCodes } = useI18n();
 </script>
@@ -119,6 +130,53 @@
 				{/each}
 			</select>
 		</label>
+		{#if data.checkoutFields.length}
+			<div class="flex flex-col gap-2 w-full">
+				{#each customFieldFilters as filter, index}
+					<div class="gap-4 flex flex-col md:flex-row md:flex-wrap md:items-end">
+						<label class="form-label w-[15em]">
+							{t('admin.order.customFieldFilterLabel')}
+							<select name="customFields[{index}].slug" class="form-input" bind:value={filter.slug}>
+								<option value="" />
+								{#each data.checkoutFields as field}
+									<option value={field.slug}
+										>{field.name}{field.disabled
+											? ` (${t('admin.config.checkoutFieldDisabledBadge')})`
+											: ''}</option
+									>
+								{/each}
+							</select>
+						</label>
+						<label class="form-label w-[15em]">
+							{t('admin.order.customFieldValueLabel')}
+							<input
+								class="form-input"
+								type="text"
+								name="customFields[{index}].value"
+								bind:value={filter.value}
+								placeholder={t('admin.order.customFieldValuePlaceholder')}
+							/>
+						</label>
+						<button
+							type="button"
+							class="btn btn-red self-start md:self-end"
+							on:click={() =>
+								(customFieldFilters = customFieldFilters.filter((_, i) => i !== index))}
+						>
+							<IconTrash />
+							<span class="sr-only">{t('admin.order.removeCustomFieldFilter')}</span>
+						</button>
+					</div>
+				{/each}
+				<button
+					class="underline self-start"
+					type="button"
+					on:click={() => (customFieldFilters = [...customFieldFilters, { slug: '', value: '' }])}
+				>
+					{t('admin.order.addCustomFieldFilter')}
+				</button>
+			</div>
+		{/if}
 		<label class="form-label w-auto mt-8 flex flex-row">
 			<input type="submit" value="🔍" class="btn body-mainCTA" on:click={() => (next = 0)} />
 			<a href="/admin/order" class="btn body-mainCTA">🧹</a>
