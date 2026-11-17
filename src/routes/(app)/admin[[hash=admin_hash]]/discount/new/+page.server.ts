@@ -56,6 +56,7 @@ export const actions: Actions = {
 		const base = z.object({
 			name: z.string().min(1).max(MAX_NAME_LIMIT),
 			subscriptionIds: z.string().array(), // was .min(1), now optional
+			acceptSubscriptionInCart: z.boolean({ coerce: true }).default(false),
 			productIds: z.string().array(),
 			wholeCatalog: z.boolean({ coerce: true }).default(false),
 			beginsAt: z.date({ coerce: true }),
@@ -79,6 +80,7 @@ export const actions: Actions = {
 			subscriptionIds: JSON.parse(String(formData.get('subscriptionIds') ?? '[]')).map(
 				(x: { value: string }) => x.value
 			),
+			acceptSubscriptionInCart: formData.get('acceptSubscriptionInCart'),
 			productIds: JSON.parse(String(formData.get('productIds') ?? '[]')).map(
 				(x: { value: string }) => x.value
 			),

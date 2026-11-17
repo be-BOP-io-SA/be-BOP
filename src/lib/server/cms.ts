@@ -9,6 +9,8 @@ import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
 import DOMPurify, { type WindowLike } from 'dompurify';
 import { collections } from './database';
+import { annotateProductsWithSaleLocks } from './saleLock';
+import { userIdentifier } from './user';
 import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import type { Specification } from '$lib/types/Specification';
 import type { Tag } from '$lib/types/Tag';
@@ -661,6 +663,10 @@ export async function cmsFromContent(
 						Pick<
 							Product,
 							| '_id'
+							| 'requiresAuthentication'
+							| 'whitelist'
+							| 'maxQuantityPerUser'
+							| 'subscriptionReminderSeconds'
 							| 'price'
 							| 'name'
 							| 'shortDescription'
@@ -703,7 +709,11 @@ export async function cmsFromContent(
 						hasSellDisclaimer: 1,
 						payWhatYouWant: 1,
 						bookingSpec: 1,
-						hasVariations: 1
+						hasVariations: 1,
+						requiresAuthentication: 1,
+						whitelist: 1,
+						maxQuantityPerUser: 1,
+						subscriptionReminderSeconds: 1
 					})
 					.toArray()
 			: [],
@@ -873,11 +883,18 @@ export async function cmsFromContent(
 
 	const scheduleEventsById = groupBy(scheduleEvents, (event) => event.scheduleId);
 
+	// Listings must not offer straight to the cart what the cart would refuse. One evaluation
+	// for the whole page, none at all when no product on it carries a lock.
+	const productsWithSaleLocks = await annotateProductsWithSaleLocks(
+		products,
+		userIdentifier(locals)
+	);
+
 	return {
 		tokens,
 		challenges,
 		sliders,
-		products,
+		products: productsWithSaleLocks,
 		externalProducts,
 		tags,
 		specifications,
@@ -924,6 +941,7 @@ async function buildSearchlistViews(searchlistSlugs: string[], locals: App.Local
 		bebopCountry: runtimeConfig.vatCountry,
 		userCountry: locals.countryCode,
 		vatSingleCountry: runtimeConfig.vatSingleCountry,
+		vatExempted: runtimeConfig.vatExempted,
 		displayVatIncluded: runtimeConfig.displayVatIncludedInProduct
 	};
 
