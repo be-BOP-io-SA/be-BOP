@@ -39,7 +39,7 @@ export type SaleLockCode = (typeof SALE_LOCK_CODES)[number];
 
 export type SaleLock = {
 	code: SaleLockCode;
-	/** Interpolated into `saleLock.<code>` on the front. */
+	/** Interpolated into the translation `cartErrorKey(code)` names on the front. */
 	params?: Record<string, string | number>;
 };
 
@@ -58,7 +58,7 @@ export function isSaleLockError(err: unknown): boolean {
 
 /**
  * Fallback wording, for the callers that have no translation at hand — NostR, a raw API
- * client. Every surface a customer actually reads goes through `saleLock.<code>` instead.
+ * client. Every surface a customer actually reads goes through `cartErrorKey(code)` instead.
  */
 export function saleLockMessage(locks: SaleLock[], productName: string): string {
 	return locks.map((lock) => saleLockReason(lock, productName)).join(' ');

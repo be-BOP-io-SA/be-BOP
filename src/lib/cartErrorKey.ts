@@ -27,16 +27,16 @@ export function cartErrorKey(code: CartErrorCode): string {
 			return 'cartFromUrl.errors.reasonBookingRequired';
 		case 'BOOKING_SAME_DAY_DISABLED':
 		case 'BOOKING_SAME_DAY_CUTOFF_PASSED':
-			return `cart.error.${code}`;
 		case 'LOGIN_REQUIRED':
 		case 'NOT_WHITELISTED':
 		case 'MAX_PER_USER':
-			return `saleLock.${code}`;
 		case 'NOT_PWYW':
 		case 'NOT_PREORDER':
 		case 'STANDALONE_QTY_ONE':
 		case 'SUBSCRIPTION_CUSTOM_PRICE':
 		case 'MAX_PRICE_EXCEEDED':
+		case 'INVALID_QUANTITY':
+		case 'INVALID_PRICE':
 			return `cart.error.${code}`;
 		default:
 			code satisfies never;

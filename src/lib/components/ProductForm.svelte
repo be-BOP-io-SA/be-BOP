@@ -2046,7 +2046,7 @@
 									rows="4"
 									placeholder="One e-mail address per line"
 									value={product.whitelist?.emails?.join('\n') ?? ''}
-								/>
+								></textarea>
 							</label>
 
 							<label class="form-label">
@@ -2057,10 +2057,9 @@
 									rows="4"
 									placeholder="One npub per line"
 									value={product.whitelist?.npubs?.join('\n') ?? ''}
-								/>
+								></textarea>
 							</label>
 
-							<!-- svelte-ignore a11y-label-has-associated-control -->
 							<label class="form-label">
 								Allow the active subscribers of
 								<MultiSelect

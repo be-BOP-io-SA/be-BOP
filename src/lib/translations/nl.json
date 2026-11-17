@@ -2186,7 +2186,10 @@
 			"VARIATION_INVALID": "Kies een van de opties die voor dit product worden aangeboden.",
 			"MAX_PER_ORDER": "U kunt maximaal {max} exemplaren van dit product bestellen.",
 			"INVALID_QUANTITY": "Voer een geldige hoeveelheid in.",
-			"INVALID_PRICE": "Voer een geldige prijs in."
+			"INVALID_PRICE": "Voer een geldige prijs in.",
+			"LOGIN_REQUIRED": "U moet ingelogd zijn om dit product te bestellen.",
+			"NOT_WHITELISTED": "Dit product is voorbehouden aan bepaalde klanten.",
+			"MAX_PER_USER": "U hebt het maximum bereikt dat u van dit product kunt bestellen."
 		}
 	},
 	"cartFromUrl": {
@@ -3331,9 +3334,6 @@
 		}
 	},
 	"saleLock": {
-		"LOGIN_REQUIRED": "U moet ingelogd zijn om dit product te bestellen.",
-		"NOT_WHITELISTED": "Dit product is voorbehouden aan bepaalde klanten.",
-		"MAX_PER_USER": "U hebt het maximum bereikt dat u van dit product kunt bestellen.",
 		"login": "Inloggen"
 	}
 }
