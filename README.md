@@ -182,19 +182,36 @@ in `.env.local`. See [Configuration](#configuration) for the variable names.
 
 ### Option B: Docker Compose (fully local)
 
-Runs MongoDB and an S3 storage locally. Add an S3 access key and secret to `.env.local`
-if they are not there yet:
+Runs MongoDB and a [Garage](https://garagehq.deuxfleurs.fr/) S3 storage locally. Add their
+settings to `.env.local` if they are not there yet. Garage only accepts keys in its own
+format: `GK` and 24 hex characters for the key, 64 hex characters for the secret.
 
 ```console
-echo "S3_KEY_ID=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
-echo "S3_KEY_SECRET=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
+echo "MONGODB_URL=mongodb://127.0.0.1:27017" >> .env.local
+echo "MONGODB_DIRECT_CONNECTION=true" >> .env.local
+echo "S3_ENDPOINT_URL=http://127.0.0.1:9000" >> .env.local
+echo "S3_REGION=garage" >> .env.local
+echo "S3_BUCKET=bebop" >> .env.local
+echo "S3_KEY_ID=GK$(openssl rand -hex 12)" >> .env.local
+echo "S3_KEY_SECRET=$(openssl rand -hex 32)" >> .env.local
 ```
 
-Then start the containers:
+Then start the containers. The storage reads its key from `.env.local`, and creates the bucket
+on its first start:
 
 ```bash
-docker compose -f docker-compose.dev.yml -f docker-compose.override.yml up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
+
+If the storage used to be MinIO, its files are moved into Garage on that first start, with
+the same checks as in [Docker Compose](#docker-compose). If `.env.local` still holds a key
+that is not in Garage's format, the storage keeps serving MinIO and its logs
+(`docker compose -f docker-compose.dev.yml logs minio`) give the lines to put in `.env.local`.
+
+To run personal services next to them, such as
+[mongo-express](https://github.com/mongo-express/mongo-express) or
+[mailhog](https://github.com/mailhog/MailHog), put them in a `docker-compose.override.yml`
+(ignored by git) and add `-f docker-compose.override.yml` to the command.
 
 ## Configuration
 
@@ -327,18 +344,14 @@ docker run -p 3000:3000 --env-file .env.local bebop --add-host=host.docker.inter
 ### Docker Compose
 
 Docker Compose is used for local development, but it also works in production.
-It launches a MongoDB and an S3 storage container.
+It launches a MongoDB and a [Garage](https://garagehq.deuxfleurs.fr/) S3 storage
+container. The storage creates its own key on its first start and hands it to be-BOP,
+so `.env.local` needs no S3 key. To [copy the shop elsewhere](#copying-db--s3-to-another-instance),
+`docker compose exec minio cat /var/lib/garage/meta/bebop-storage/garage-key.env` shows it.
 
-Add an S3 access key and secret to `.env.local` if not already present:
-
-```console
-echo "S3_KEY_ID=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
-echo "S3_KEY_SECRET=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
-```
-
-Compose fills `${S3_KEY_ID}` and the other variables of `docker-compose.yml` from the
-`--env-file` it is given, not from `.env.local` on its own, so pass
-`--env-file .env.local` to every `docker compose` command.
+Compose fills the variables of `docker-compose.yml` from the `--env-file` it is given,
+not from `.env.local` on its own, so pass `--env-file .env.local` to every
+`docker compose` command.
 
 Make sure you have a fairly recent version of docker and docker compose, then:
 
@@ -357,6 +370,7 @@ Helper commands:
 ```bash
 docker compose ps              # see the containers
 docker compose logs bebop -f   # follow the logs
+docker compose logs minio -f   # follow the storage
 docker compose exec bebop sh   # enter the container
 docker compose down            # stop the containers
 ```
@@ -366,8 +380,26 @@ For production, set `ORIGIN` and the public URL of your object storage in
 
 ```env
 ORIGIN=https://bebop.example.com
-S3_ENDPOINT_URL=https://s3.bebop.example.com
+PUBLIC_S3_ENDPOINT_URL=https://s3.bebop.example.com
 ```
+
+#### Updating an install that ran the former storage
+
+There is nothing to do: update as usual. On its first start, the storage container
+copies the stored files of the former storage into Garage, compares them, reads files
+back in full from every folder depth, and checks that Garage reads and writes through
+be-BOP's `S3_ENDPOINT_URL`. be-BOP waits for this, and `docker compose logs minio -f`
+shows the progress. To read the former volume, the storage fetches once the last
+published MinIO server (about 100 MB, checked against a fixed fingerprint), and deletes it
+once the move is verified.
+
+If any of these checks fails, the move is cancelled: the shop starts on the former
+storage, as before, and the move is tried again on the next start. The copy only reads
+the former `minio-data` volume. Once the logs say "move verified" and the shop shows its
+pictures, it can be removed with `docker volume rm <project>_minio-data` after
+`docker compose down` (never use `down -v`, which removes every volume). Do not go back to
+an older version of be-BOP afterwards: it would serve the former volume, without the files
+added since.
 
 See [Configuration](#configuration) for the other variables. To reach a local
 BTC or LND node, use `host.docker.internal` (see [Docker](#docker)).
