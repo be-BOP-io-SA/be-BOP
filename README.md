@@ -182,19 +182,36 @@ in `.env.local`. See [Configuration](#configuration) for the variable names.
 
 ### Option B: Docker Compose (fully local)
 
-Runs MongoDB and an S3 storage locally. Add an S3 access key and secret to `.env.local`
-if they are not there yet:
+Runs MongoDB and a [Garage](https://garagehq.deuxfleurs.fr/) S3 storage locally. Add their
+settings to `.env.local` if they are not there yet. Garage only accepts keys in its own
+format: `GK` and 24 hex characters for the key, 64 hex characters for the secret.
 
 ```console
-echo "S3_KEY_ID=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
-echo "S3_KEY_SECRET=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
+echo "MONGODB_URL=mongodb://127.0.0.1:27017" >> .env.local
+echo "MONGODB_DIRECT_CONNECTION=true" >> .env.local
+echo "S3_ENDPOINT_URL=http://127.0.0.1:9000" >> .env.local
+echo "S3_REGION=garage" >> .env.local
+echo "S3_BUCKET=bebop" >> .env.local
+echo "S3_KEY_ID=GK$(openssl rand -hex 12)" >> .env.local
+echo "S3_KEY_SECRET=$(openssl rand -hex 32)" >> .env.local
 ```
 
-Then start the containers:
+Then start the containers. The storage reads its key from `.env.local`, and creates the bucket
+on its first start:
 
 ```bash
-docker compose -f docker-compose.dev.yml -f docker-compose.override.yml up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
+
+If the storage used to be MinIO, its files are moved into Garage on that first start, with
+the same checks as in [Docker Compose](#docker-compose). If `.env.local` still holds a key
+that is not in Garage's format, the storage keeps serving MinIO and its logs
+(`docker compose -f docker-compose.dev.yml logs minio`) give the lines to put in `.env.local`.
+
+To run personal services next to them, such as
+[mongo-express](https://github.com/mongo-express/mongo-express) or
+[mailhog](https://github.com/mailhog/MailHog), put them in a `docker-compose.override.yml`
+(ignored by git) and add `-f docker-compose.override.yml` to the command.
 
 ## Configuration
 
