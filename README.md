@@ -327,18 +327,14 @@ docker run -p 3000:3000 --env-file .env.local bebop --add-host=host.docker.inter
 ### Docker Compose
 
 Docker Compose is used for local development, but it also works in production.
-It launches a MongoDB and an S3 storage container.
+It launches a MongoDB and a [Garage](https://garagehq.deuxfleurs.fr/) S3 storage
+container. The storage creates its own key on its first start and hands it to be-BOP,
+so `.env.local` needs no S3 key. To [copy the shop elsewhere](#copying-db--s3-to-another-instance),
+`docker compose exec minio cat /var/lib/garage/meta/bebop-storage/garage-key.env` shows it.
 
-Add an S3 access key and secret to `.env.local` if not already present:
-
-```console
-echo "S3_KEY_ID=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
-echo "S3_KEY_SECRET=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
-```
-
-Compose fills `${S3_KEY_ID}` and the other variables of `docker-compose.yml` from the
-`--env-file` it is given, not from `.env.local` on its own, so pass
-`--env-file .env.local` to every `docker compose` command.
+Compose fills the variables of `docker-compose.yml` from the `--env-file` it is given,
+not from `.env.local` on its own, so pass `--env-file .env.local` to every
+`docker compose` command.
 
 Make sure you have a fairly recent version of docker and docker compose, then:
 
@@ -357,6 +353,7 @@ Helper commands:
 ```bash
 docker compose ps              # see the containers
 docker compose logs bebop -f   # follow the logs
+docker compose logs minio -f   # follow the storage
 docker compose exec bebop sh   # enter the container
 docker compose down            # stop the containers
 ```
@@ -366,8 +363,26 @@ For production, set `ORIGIN` and the public URL of your object storage in
 
 ```env
 ORIGIN=https://bebop.example.com
-S3_ENDPOINT_URL=https://s3.bebop.example.com
+PUBLIC_S3_ENDPOINT_URL=https://s3.bebop.example.com
 ```
+
+#### Updating an install that ran the former storage
+
+There is nothing to do: update as usual. On its first start, the storage container
+copies the stored files of the former storage into Garage, compares them, reads files
+back in full from every folder depth, and checks that Garage reads and writes through
+be-BOP's `S3_ENDPOINT_URL`. be-BOP waits for this, and `docker compose logs minio -f`
+shows the progress. To read the former volume, the storage fetches once the last
+published MinIO server (about 100 MB, checked against a fixed fingerprint), and deletes it
+once the move is verified.
+
+If any of these checks fails, the move is cancelled: the shop starts on the former
+storage, as before, and the move is tried again on the next start. The copy only reads
+the former `minio-data` volume. Once the logs say "move verified" and the shop shows its
+pictures, it can be removed with `docker volume rm <project>_minio-data` after
+`docker compose down` (never use `down -v`, which removes every volume). Do not go back to
+an older version of be-BOP afterwards: it would serve the former volume, without the files
+added since.
 
 See [Configuration](#configuration) for the other variables. To reach a local
 BTC or LND node, use `host.docker.internal` (see [Docker](#docker)).
