@@ -1,0 +1,14 @@
+# Garage for local development, run by docker-compose.dev.yml: one node, one copy of the data.
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "lmdb"
+replication_factor = 1
+
+# The RPC port is reachable only from the Compose network, so a fixed development secret is enough.
+rpc_secret = "be0b0de5ec7e7000000000000000000000000000000000000000000000000000"
+rpc_bind_addr = "0.0.0.0:3901"
+rpc_public_addr = "garage:3901"
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "0.0.0.0:3900"

@@ -1,9 +1,9 @@
 # Local development infrastructure
-# Starts MongoDB and MinIO only (no be-BOP container — use pnpm dev instead)
+# Starts MongoDB and Garage (S3 storage) only (no be-BOP container — use pnpm dev instead)
 #
 # Usage:
-#   docker compose -f docker-compose.dev.yml up -d
-#   docker compose -f docker-compose.dev.yml down
+#   docker compose -f docker-compose.dev.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.dev.yml --env-file .env.local down
 services:
   mongo:
     image: mongo:6.0.9
@@ -16,29 +16,45 @@ services:
       interval: 5s
     ports:
       # Loopback only: this Mongo has no auth, and Docker's publishing bypasses the host firewall.
-      - "127.0.0.1:27017:27017"
+      - '127.0.0.1:27017:27017'
     volumes:
       - mongo-data:/data/db
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "100m"
-  minio:
-    image: quay.io/minio/minio:latest
-    hostname: minio
+        max-size: '100m'
+  garage:
+    image: dxflrs/garage:v2.2.0
+    hostname: garage
     ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9090:9090"
-    environment:
-      MINIO_ROOT_USER: ${S3_KEY_ID:-minio}
-      MINIO_ROOT_PASSWORD: ${S3_KEY_SECRET:-minio123}
+      - '127.0.0.1:9000:3900'
     volumes:
-      - minio-data:/data
-    command: server /data --console-address ":9090"
+      - ./docker/garage.dev.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "100m"
+        max-size: '100m'
+  # Runs once per `up`: the Garage image has no shell, so the setup runs next to it.
+  garage-init:
+    build:
+      dockerfile_inline: |
+        FROM dxflrs/garage:v2.2.0 AS garage
+        FROM alpine:3.20
+        COPY --from=garage /garage /usr/local/bin/garage
+    depends_on:
+      - garage
+    environment:
+      S3_KEY_ID: ${S3_KEY_ID:?set S3_KEY_ID in .env.local and pass --env-file .env.local, see README}
+      S3_KEY_SECRET: ${S3_KEY_SECRET:?set S3_KEY_SECRET in .env.local and pass --env-file .env.local, see README}
+      S3_BUCKET: ${S3_BUCKET:-bebop}
+    volumes:
+      - ./docker/garage.dev.toml:/etc/garage.toml:ro
+      - ./docker/garage-init.sh:/garage-init.sh:ro
+      - garage-meta:/var/lib/garage/meta:ro
+    command: sh /garage-init.sh
 volumes:
   mongo-data:
-  minio-data:
+  garage-meta:
+  garage-data:
