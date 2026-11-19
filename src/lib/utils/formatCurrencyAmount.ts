@@ -12,7 +12,7 @@ import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 export function formatCurrencyAmount(amount: number, currency: string): string {
 	const max =
 		FRACTION_DIGITS_PER_CURRENCY[currency as keyof typeof FRACTION_DIGITS_PER_CURRENCY] ?? 2;
-	const isCrypto = currency === 'BTC' || currency === 'SAT';
+	const isCrypto = currency === 'BTC' || currency === 'SAT' || currency === 'ZEC';
 	const min = !Number.isInteger(amount) && !isCrypto ? max : 0;
 	return amount.toLocaleString('en', { maximumFractionDigits: max, minimumFractionDigits: min });
 }

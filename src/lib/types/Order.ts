@@ -475,6 +475,7 @@ export const PAYMENT_METHOD_EMOJI: Record<PaymentMethod, string> = {
 	'point-of-sale': '🛒',
 	lightning: '⚡',
 	bitcoin: '₿',
+	zcash: 'ⓩ',
 	free: '🆓',
 	taler: '🅣',
 	osb: '🇵🇫',
