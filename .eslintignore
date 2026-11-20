@@ -15,9 +15,6 @@ pnpm-lock.yaml
 package-lock.json
 yarn.lock
 
-# Stray nested clone
-/be-BOP
-
 # Re-include dot-folder routes that ESLint would otherwise ignore by default
 !**/.well-known
 !**/.well-known/**
