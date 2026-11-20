@@ -2,9 +2,9 @@ import { collections } from '$lib/server/database';
 import type { Schedule } from '$lib/types/Schedule';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = () => {
+export const load: PageServerLoad = async () => {
 	return {
-		schedules: collections.schedules
+		schedules: await collections.schedules
 			.find({})
 			.project<Pick<Schedule, '_id' | 'name'>>({
 				_id: 1,

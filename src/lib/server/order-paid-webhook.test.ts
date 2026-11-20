@@ -96,6 +96,25 @@ describe('webhook-url-guard', () => {
 		}
 	});
 
+	// Every spelling here reaches an internal v4 host; the URL parser normalises to the hex ones.
+	it('isPrivateIp sees the IPv4 address an IPv6 one embeds', () => {
+		for (const ip of [
+			'::ffff:a9fe:a9fe',
+			'::a9fe:a9fe',
+			'::7f00:1',
+			'64:ff9b::a9fe:a9fe',
+			'2002:a9fe:a9fe::1',
+			'198.18.0.1',
+			'224.0.0.1'
+		]) {
+			expect(isPrivateIp(ip), ip).toBe(true);
+		}
+		for (const ip of ['::ffff:808:808', '64:ff9b::808:808', '2002:808:808::1']) {
+			expect(isPrivateIp(ip), ip).toBe(false);
+		}
+		expect(webhookApiRouteIssue('https://[::ffff:169.254.169.254]/hook')).toMatch(/private/);
+	});
+
 	it('webhookApiRouteIssue rejects non-https, localhost and private literal IPs', () => {
 		expect(webhookApiRouteIssue('http://example.com/hook')).toMatch(/https/);
 		expect(webhookApiRouteIssue('https://localhost/hook')).toMatch(/localhost|internal/);

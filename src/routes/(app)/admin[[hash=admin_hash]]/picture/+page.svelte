@@ -1,18 +1,23 @@
 <script lang="ts">
 	import Picture from '$lib/components/Picture.svelte';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
-<h1 class="text-3xl">List of pictures with no associated product or widget</h1>
+<h1 class="text-3xl">{t('admin.picture.listTitle')}</h1>
 
 {#if !data.s3IsConfigured}
 	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
 {/if}
 
-<a href="{data.adminPrefix}/picture/new" class="block underline">New picture</a>
-<a href="{data.adminPrefix}/picture/name" class="block underline">Bulk picture name editor</a>
+<a href="{data.adminPrefix}/picture/new" class="block underline">{t('admin.picture.newPicture')}</a>
+<a href="{data.adminPrefix}/picture/name" class="block underline"
+	>{t('admin.picture.bulkNameEditor')}</a
+>
 
 <div class="flex flex-row flex-wrap gap-6">
 	{#each data.pictures as picture}

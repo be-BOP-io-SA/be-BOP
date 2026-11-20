@@ -1,12 +1,13 @@
 <script lang="ts">
 	import Picture from '$lib/components/Picture.svelte';
+	import { productLabelWithVariations } from '$lib/types/Product';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import Trans from '$lib/components/Trans.svelte';
 	import { useI18n } from '$lib/i18n.js';
 	import { invoiceNumberVariables, orderRemainingToPay } from '$lib/types/Order.js';
 	import { sum } from '$lib/utils/sum.js';
 	import { differenceInMinutes } from 'date-fns';
-	import { marked } from 'marked';
+	import { renderMarkdown } from '$lib/utils/markdown';
 	import { computePriceForDisplay } from '$lib/types/Currency';
 
 	export let data;
@@ -129,13 +130,7 @@
 			<tr style:background-color={i % 2 === 0 ? '#fef2cc' : '#e7e6e6'}>
 				<td class="text-center border border-white px-2">{i + 1}</td>
 				<td class="text-center border border-white px-2"
-					>{item.chosenVariations
-						? item.product.name +
-						  ' - ' +
-						  Object.entries(item.chosenVariations)
-								.map(([key, value]) => item.product.variationLabels?.values[key][value])
-								.join(' - ')
-						: item.product.name}</td
+					>{productLabelWithVariations(item.product, item.chosenVariations)}</td
 				>
 				<td class="text-center border border-white px-2">{item.quantity}</td>
 				<td class="text-center border border-white px-2">
@@ -154,46 +149,48 @@
 </table>
 
 <table class="mt-4 mx-4 border-collapse">
-	<tr style:background-color="#fef2cc">
-		<td class="border border-white px-2 text-right" style="width: 70%"
-			>{t('order.receipt.totalExcVat')}</td
-		>
-		<td class="border border-white px-2 text-right whitespace-nowrap">
-			<PriceTag
-				amount={data.order.currencySnapshot.main.totalPrice.amount - totalVat.amount}
-				currency={data.order.currencySnapshot.main.totalPrice.currency}
-				inline
-			/>
-		</td>
-	</tr>
-	{#if data.order.shippingPrice && data.order.currencySnapshot.main.shippingPrice}
-		<tr style:background-color="#e7e6e6">
-			<td class="border border-white px-2 text-right">{t('checkout.deliveryFees')}</td>
+	<tbody>
+		<tr style:background-color="#fef2cc">
+			<td class="border border-white px-2 text-right" style="width: 70%"
+				>{t('order.receipt.totalExcVat')}</td
+			>
 			<td class="border border-white px-2 text-right whitespace-nowrap">
 				<PriceTag
-					amount={data.order.currencySnapshot.main.shippingPrice.amount}
-					currency={data.order.currencySnapshot.main.shippingPrice.currency}
+					amount={data.order.currencySnapshot.main.totalPrice.amount - totalVat.amount}
+					currency={data.order.currencySnapshot.main.totalPrice.currency}
 					inline
 				/>
 			</td>
 		</tr>
-	{/if}
-	<tr style:background-color="#e7e6e6">
-		<td class="border border-white px-2 text-right">{t('order.receipt.totalVat')}</td>
-		<td class="border border-white px-2 text-right whitespace-nowrap">
-			<PriceTag amount={totalVat.amount} currency={totalVat.currency} inline />
-		</td>
-	</tr>
-	<tr style:background-color="#aeaaaa" class="text-white font-bold">
-		<td class="border border-white px-2 text-right">{t('order.receipt.totalInclVat')}</td>
-		<td class="border border-white px-2 whitespace-nowrap text-right">
-			<PriceTag
-				amount={data.order.currencySnapshot.main.totalPrice.amount}
-				currency={data.order.currencySnapshot.main.totalPrice.currency}
-				inline
-			/>
-		</td>
-	</tr>
+		{#if data.order.shippingPrice && data.order.currencySnapshot.main.shippingPrice}
+			<tr style:background-color="#e7e6e6">
+				<td class="border border-white px-2 text-right">{t('checkout.deliveryFees')}</td>
+				<td class="border border-white px-2 text-right whitespace-nowrap">
+					<PriceTag
+						amount={data.order.currencySnapshot.main.shippingPrice.amount}
+						currency={data.order.currencySnapshot.main.shippingPrice.currency}
+						inline
+					/>
+				</td>
+			</tr>
+		{/if}
+		<tr style:background-color="#e7e6e6">
+			<td class="border border-white px-2 text-right">{t('order.receipt.totalVat')}</td>
+			<td class="border border-white px-2 text-right whitespace-nowrap">
+				<PriceTag amount={totalVat.amount} currency={totalVat.currency} inline />
+			</td>
+		</tr>
+		<tr style:background-color="#aeaaaa" class="text-white font-bold">
+			<td class="border border-white px-2 text-right">{t('order.receipt.totalInclVat')}</td>
+			<td class="border border-white px-2 whitespace-nowrap text-right">
+				<PriceTag
+					amount={data.order.currencySnapshot.main.totalPrice.amount}
+					currency={data.order.currencySnapshot.main.totalPrice.currency}
+					inline
+				/>
+			</td>
+		</tr>
+	</tbody>
 </table>
 
 <div class="mt-4 mx-4">
@@ -250,17 +247,17 @@
 	<div class="mt-4 mx-4 text-right">
 		<h2 class="text-xl">{t('order.receipt.bankInfo')} :</h2>
 		<table class="ml-auto">
-			<tr><td class="px-2">IBAN</td><td>{identity.bank.iban}</td></tr>
-			<tr><td class="px-2">BIC</td><td>{identity.bank.bic}</td></tr>
+			<tbody>
+				<tr><td class="px-2">IBAN</td><td>{identity.bank.iban}</td></tr>
+				<tr><td class="px-2">BIC</td><td>{identity.bank.bic}</td></tr>
+			</tbody>
 		</table>
 	</div>
 {/if}
 
 {#if data.order.receiptNote}
 	<div class="mt-4 mx-4 text-center">
-		<p>
-			<!-- eslint-disable svelte/no-at-html-tags -->
-			{@html marked(data.order.receiptNote.replaceAll('<', '&lt;'))}
-		</p>
+		<!-- eslint-disable svelte/no-at-html-tags -->
+		{@html renderMarkdown(data.order.receiptNote)}
 	</div>
 {/if}

@@ -1,15 +1,25 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { isHttpError } from '@sveltejs/kit';
 import { cleanDb, createDiscount, createPaidSubscription } from './test-utils';
 import { collections } from './database';
+import { ObjectId } from 'mongodb';
 import {
 	TEST_DIGITAL_PRODUCT,
 	TEST_DIGITAL_PRODUCT_UNLIMITED,
 	TEST_DISCOUNTED_PRODUCT,
 	TEST_SUBSCRIPTION_PRODUCT
 } from './seed/product';
-import { addOrderPayment, createOrder, lastInvoiceNumber, onOrderPayment } from './orders';
+import {
+	addOrderPayment,
+	createOrder,
+	lastInvoiceNumber,
+	onOrderPayment,
+	onOrderPaymentFailed
+} from './orders';
 import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
 import { runtimeConfig } from './runtime-config';
+import type { Product } from '$lib/types/Product';
+import { POS_ROLE_ID } from '$lib/types/User';
 
 describe('order', () => {
 	beforeEach(async () => {
@@ -68,6 +78,48 @@ describe('order', () => {
 			for (const amount of order?.currencySnapshot?.main.vat ?? []) {
 				expect(amount.currency).not.toBe('SAT');
 				expect(amount.currency).toBe(runtimeConfig.mainCurrency);
+			}
+		});
+
+		it('logs the payment of a shop that charges no VAT', async () => {
+			runtimeConfig.vatExempted = true;
+			try {
+				const orderId = await createOrder(
+					[
+						{
+							product: TEST_DIGITAL_PRODUCT,
+							quantity: 1
+						}
+					],
+					'point-of-sale',
+					{
+						locale: 'en',
+						user: {
+							sessionId: 'test-session-id'
+						},
+						shippingAddress: null,
+						userVatCountry: 'FR'
+					}
+				);
+
+				const order = await collections.orders.findOne({ _id: orderId });
+
+				if (!order) {
+					throw new Error('Order not found');
+				}
+
+				await onOrderPayment(order, order.payments[0], order.payments[0].price);
+
+				const logged = await collections.accountingLogs
+					.find({ objectId: orderId, objectType: 'order' })
+					.map((log) => log.eventType)
+					.toArray();
+
+				for (const eventType of ['paymentCall', 'paymentDone', 'orderPaid']) {
+					expect(logged).toContain(eventType);
+				}
+			} finally {
+				runtimeConfig.vatExempted = false;
 			}
 		});
 
@@ -279,5 +331,204 @@ describe('order', () => {
 		expect(order?.payments[0].method).toBe('free');
 		expect(order?.items[0].discountPercentage).toBe(100);
 		expect(order?.currencySnapshot.main.totalPrice.amount).toBe(0);
+		// This path calls onOrderPayment twice by design; the goods must still be issued, and
+		// the marker that makes the second call a no-op must be set exactly once.
+		expect(order?.status).toBe('paid');
+		expect(order?.paidEffectsAppliedAt).toBeInstanceOf(Date);
+	});
+
+	it('issues the paid-order effects once when the transition is reached twice', async () => {
+		const orderId = await createOrder(
+			[{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }],
+			'point-of-sale',
+			{
+				locale: 'en',
+				user: { sessionId: 'test-session-id' },
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			}
+		);
+
+		const order = await collections.orders.findOne({ _id: orderId });
+		if (!order) {
+			throw new Error('Order not found');
+		}
+
+		await onOrderPayment(order, order.payments[0], order.payments[0].price);
+		const afterFirst = await collections.orders.findOne({ _id: orderId });
+		if (!afterFirst) {
+			throw new Error('Order not found after the first payment');
+		}
+
+		expect(afterFirst.status).toBe('paid');
+		expect(afterFirst.paidEffectsAppliedAt).toBeInstanceOf(Date);
+
+		// Replay the same settled payment: the order stays paid and the marker does not move.
+		await onOrderPayment(afterFirst, afterFirst.payments[0], afterFirst.payments[0].price);
+		const afterSecond = await collections.orders.findOne({ _id: orderId });
+		expect(afterSecond?.paidEffectsAppliedAt?.getTime()).toBe(
+			afterFirst.paidEffectsAppliedAt?.getTime()
+		);
+	});
+
+	// Replays the payment-substitution path: cancelling the pending payment frees the amount
+	// again, which is exactly what let a buyer settle an unpaid order with `free`.
+	it('should refuse a free payment on an order that still owes money', async () => {
+		const orderId = await createOrder(
+			[
+				{
+					product: TEST_DIGITAL_PRODUCT,
+					quantity: 1
+				}
+			],
+			'point-of-sale',
+			{
+				locale: 'en',
+				user: {
+					sessionId: 'test-session-id'
+				},
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			}
+		);
+
+		const order = await collections.orders.findOne({ _id: orderId });
+		if (!order) {
+			throw new Error('Order not found');
+		}
+
+		const pendingPayment = order.payments[0];
+		await onOrderPaymentFailed(order, pendingPayment, 'canceled', { preserveOrderStatus: true });
+
+		expect(orderAmountWithNoPaymentsCreated(order)).toBeGreaterThan(0);
+
+		const err = await addOrderPayment(
+			order,
+			'free',
+			pendingPayment.currencySnapshot.main.price
+		).catch((e) => e);
+
+		expect(isHttpError(err)).toBe(true);
+		expect(err.body.message).toBe("You can't use free payment method on this order");
+	});
+
+	it('refuses to cancel a payment a stale copy still shows as pending', async () => {
+		const orderId = await createOrder(
+			[{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }],
+			'point-of-sale',
+			{
+				locale: 'en',
+				user: { sessionId: 'stale-session-id' },
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			}
+		);
+		const stale = await collections.orders.findOne({ _id: orderId });
+		const fresh = await collections.orders.findOne({ _id: orderId });
+		if (!stale || !fresh) {
+			throw new Error('Order not found');
+		}
+
+		await onOrderPayment(fresh, fresh.payments[0], fresh.payments[0].price);
+
+		const err = await onOrderPaymentFailed(stale, stale.payments[0], 'canceled').catch((e) => e);
+		expect(isHttpError(err)).toBe(true);
+
+		const after = await collections.orders.findOne({ _id: orderId });
+		expect(after?.payments[0].status).toBe('paid');
+		expect(after?.status).toBe('paid');
+	});
+
+	it('places a single order when one cart is checked out twice at once', async () => {
+		const user = { sessionId: 'race-session-id' };
+		const { insertedId } = await collections.carts.insertOne({
+			_id: new ObjectId(),
+			user,
+			items: [{ _id: 'line-1', productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+			createdAt: new Date(),
+			updatedAt: new Date()
+		});
+		const cart = await collections.carts.findOne({ _id: insertedId });
+		if (!cart) {
+			throw new Error('Cart not found');
+		}
+
+		const checkout = () =>
+			createOrder([{ product: TEST_DIGITAL_PRODUCT, quantity: 1 }], 'point-of-sale', {
+				locale: 'en',
+				user,
+				cart,
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			});
+
+		const results = await Promise.allSettled([checkout(), checkout(), checkout()]);
+
+		expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+		expect(await collections.orders.countDocuments({ 'user.sessionId': user.sessionId })).toBe(1);
+	});
+
+	describe('subscription sold at the till', () => {
+		const till = { userId: new ObjectId(), sessionId: 'till-session', userHasPosOptions: true };
+		const sell = (product: Product, method: 'point-of-sale' | 'bank-transfer') =>
+			createOrder([{ product, quantity: 1 }], method, {
+				locale: 'en',
+				user: till,
+				notifications: { paymentStatus: { npub: 'npub1customer' } },
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			});
+
+		it('refuses a subscription, whatever the payment method', async () => {
+			for (const method of ['point-of-sale', 'bank-transfer'] as const) {
+				await expect(sell(TEST_SUBSCRIPTION_PRODUCT, method)).rejects.toMatchObject({
+					status: 400
+				});
+			}
+			expect(await collections.orders.countDocuments()).toBe(0);
+		});
+
+		it('refuses it to an account of the point of sale role without the till flag', async () => {
+			await expect(
+				createOrder([{ product: TEST_SUBSCRIPTION_PRODUCT, quantity: 1 }], 'point-of-sale', {
+					locale: 'en',
+					user: { userId: new ObjectId(), sessionId: 'pos-role', userRoleId: POS_ROLE_ID },
+					notifications: { paymentStatus: { npub: 'npub1customer' } },
+					shippingAddress: null,
+					userVatCountry: 'FR'
+				})
+			).rejects.toMatchObject({ status: 400 });
+		});
+
+		it('still sells other products', async () => {
+			await sell(TEST_DIGITAL_PRODUCT, 'point-of-sale');
+
+			expect(await collections.orders.countDocuments()).toBe(1);
+		});
+	});
+
+	describe('payment methods a product accepts', () => {
+		const tillOnly = { ...TEST_DIGITAL_PRODUCT, paymentMethods: ['point-of-sale' as const] };
+		const orderWith = (method: 'point-of-sale' | 'bank-transfer') =>
+			createOrder([{ product: tillOnly, quantity: 1 }], method, {
+				locale: 'en',
+				user: { sessionId: 'test-session-id' },
+				shippingAddress: null,
+				userVatCountry: 'FR'
+			});
+
+		it('refuses an order paid by a method one of its products does not accept', async () => {
+			await expect(orderWith('bank-transfer')).rejects.toMatchObject({
+				status: 400,
+				body: { message: 'Payment method not available for these products' }
+			});
+		});
+
+		it('creates the order with a method every product accepts', async () => {
+			const orderId = await orderWith('point-of-sale');
+			expect((await collections.orders.findOne({ _id: orderId }))?.payments[0].method).toBe(
+				'point-of-sale'
+			);
+		});
 	});
 });

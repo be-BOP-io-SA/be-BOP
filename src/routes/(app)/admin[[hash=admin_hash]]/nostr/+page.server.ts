@@ -27,16 +27,15 @@ function settingsEnforcedByEnvVars(): boolean {
 	return !!NOSTR_PRIVATE_KEY;
 }
 
-export const load: PageServerLoad = () => {
-	const { privKey, pubKey } = isNostrConfigured() ? getNostrKeys() : {};
+export const load: PageServerLoad = async () => {
+	const { pubKey } = isNostrConfigured() ? getNostrKeys() : {};
 	return {
 		disableNostrBotIntro: runtimeConfig.disableNostrBotIntro,
-		nostr: runtimeConfig.nostr,
-		nostrPrivateKey: privKey,
+		nostrPrivateKeyIsSet: isNostrConfigured(),
 		nostrPublicKey: pubKey,
 		nostrRelays: runtimeConfig.nostrRelays,
 		origin: ORIGIN,
-		receivedMessages: collections.nostrReceivedMessages
+		receivedMessages: await collections.nostrReceivedMessages
 			.find({})
 			.sort({ createdAt: -1 })
 			.limit(100)

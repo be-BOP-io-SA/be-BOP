@@ -6,15 +6,20 @@ import { ObjectId } from 'mongodb';
 import { zodNpub } from '$lib/server/nostr.js';
 import { sendResetPasswordNotification } from '$lib/server/sendNotification.js';
 import { adminPrefix } from '$lib/server/admin.js';
+import { canManageRole } from '$lib/server/arm-scope';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
-	default: async function ({ request }) {
+	default: async function ({ request, locals }) {
 		const data = await request.formData();
 		const allowedRoles = (await collections.roles.find().toArray()).filter(
-			(role) => role._id !== SUPER_ADMIN_ROLE_ID
+			(role) => role._id !== SUPER_ADMIN_ROLE_ID && canManageRole(locals.user, role)
 		);
+
+		if (!allowedRoles.length) {
+			throw error(403, 'You cannot create users');
+		}
 
 		const { login, alias, email, npub, roleId } = z
 			.object({
@@ -22,7 +27,7 @@ export const actions: Actions = {
 				alias: z.string().optional(),
 				email: z.string().email().optional(),
 				npub: zodNpub().optional(),
-				roleId: z.enum([allowedRoles[0]._id, ...allowedRoles.map((role) => role._id)])
+				roleId: z.enum(allowedRoles.map((role) => role._id) as [string, ...string[]])
 			})
 			.parse({
 				...Object.fromEntries(data),

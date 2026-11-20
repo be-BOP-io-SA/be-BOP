@@ -1,6 +1,7 @@
 import { collections } from './database';
 import { runtimeConfig } from './runtime-config';
 import { queueTelemetryBeaconMessage } from './sendNotification';
+import { isAllowedOnPage, type Role } from '$lib/types/Role';
 
 export function calculateNextBeaconDate(): Date {
 	const daysUntilNext = 6 + Math.random() * 2;
@@ -127,4 +128,10 @@ export async function disableTelemetry(options?: {
 			? `Telemetry disabled via ${options?.source ?? 'unknown'} (never ask)`
 			: `Telemetry disabled via ${options?.source ?? 'unknown'}, reminder set for 30 days`
 	);
+}
+
+// Same permission as /admin/seo, where the setting lives: the banner on the /admin root is open
+// to every back-office role, so it needs its own check.
+export function canConfigureTelemetry(role: Role | undefined): boolean {
+	return !!role && isAllowedOnPage(role, '/admin/seo', 'write');
 }

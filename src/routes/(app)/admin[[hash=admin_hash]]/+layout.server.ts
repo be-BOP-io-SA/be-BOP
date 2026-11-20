@@ -6,35 +6,10 @@ import { isPaidOrderWebhookEnabled } from '$lib/server/order-paid-webhook';
 import { paymentMethods } from '$lib/server/payment-methods.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { s3IsConfigured } from '$lib/server/s3.js';
+import { DEFAULT_CMS_PAGES, buildDefaultCmsPageFields } from '$lib/server/defaultCmsPages';
 import type { LayoutServerLoad } from './$types';
 
-const DEFAULT_CMS_PAGES = [
-	'home',
-	'terms',
-	'privacy',
-	'why-vat-customs',
-	'why-collect-ip',
-	'why-pay-remainder',
-	'maintenance',
-	'error',
-	'order-top',
-	'order-bottom',
-	'checkout-top',
-	'checkout-bottom',
-	'cart-top',
-	'cart-bottom',
-	'agewall'
-] as const;
-
 const SEO_VISIBLE_PAGES = new Set(['home', 'privacy', 'terms']);
-const PAGES_WITHOUT_DEFAULT_TEXT = new Set([
-	'order-top',
-	'order-bottom',
-	'checkout-top',
-	'checkout-bottom',
-	'cart-top',
-	'cart-bottom'
-]);
 
 async function ensureDefaultCmsPages() {
 	// Check which pages already exist (single query)
@@ -54,10 +29,7 @@ async function ensureDefaultCmsPages() {
 	const now = new Date();
 	const pagesToCreate = missingPages.map((slug) => ({
 		_id: slug,
-		title: slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' '),
-		content: PAGES_WITHOUT_DEFAULT_TEXT.has(slug)
-			? ''
-			: '<p>This page is empty. Please edit it to add your content.</p>',
+		...buildDefaultCmsPageFields(slug),
 		shortDescription: '',
 		fullScreen: false,
 		maintenanceDisplay: false,
@@ -80,7 +52,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		productActionSettings: runtimeConfig.productActionSettings,
 		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		availablePaymentMethods: paymentMethods({ includePOS: true }),
-		role: locals.user?.roleId ? collections.roles.findOne({ _id: locals.user.roleId }) : null,
+		role: locals.user?.roleId ? await collections.roles.findOne({ _id: locals.user.roleId }) : null,
 		adminPrefix: adminPrefix(),
 		isBitcoinConfigured,
 		isLndConfigured: isLndConfigured(),
@@ -88,7 +60,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		s3IsConfigured: !!s3IsConfigured(),
 		disabledAdminEntries: runtimeConfig.disabledAdminEntries,
 		backOfficeBookmarks: locals.user
-			? collections.users
+			? await collections.users
 					.findOne(
 						{ _id: locals.user._id },
 						{ projection: { 'userSettings.backOfficeBookmarks': 1 } }

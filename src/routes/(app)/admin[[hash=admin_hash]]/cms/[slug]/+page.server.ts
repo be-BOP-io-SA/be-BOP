@@ -3,18 +3,24 @@ import { collections } from '$lib/server/database';
 import type { JsonObject } from 'type-fest';
 import { cmsTranslatableSchema } from './cms-schema';
 import { error, redirect } from '@sveltejs/kit';
+import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
 import { z } from 'zod';
 import { set } from '$lib/utils/set';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
-	update: async function ({ request, params }) {
+	update: async function ({ request, params, locals }) {
 		const cmsPage = await collections.cmsPages.findOne({
 			_id: params.slug
 		});
 
 		if (!cmsPage) {
 			throw error(404, 'Page not found');
+		}
+
+		// Content of a raw page reaches visitors unsanitized, so editing it is script execution too.
+		if (cmsPage.displayRawContent && locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
+			throw error(403, 'Only the super admin can edit a page that displays raw content.');
 		}
 
 		const formData = await request.formData();
@@ -59,6 +65,11 @@ export const actions: Actions = {
 			})
 			.parse(json);
 
+		// Raw content skips the sanitizer, so turning it on is granting script execution on a public
+		// page — a decision above the CMS grant. Anyone else leaves the flag as they found it.
+		const rawContent =
+			locals.user?.roleId === SUPER_ADMIN_ROLE_ID ? displayRawContent : cmsPage.displayRawContent;
+
 		await collections.cmsPages.updateOne(
 			{
 				_id: cmsPage._id
@@ -76,7 +87,7 @@ export const actions: Actions = {
 					hasEmployeeContent,
 					...(hasEmployeeContent && { employeeContent }),
 					...(metas.length && { metas: metas.filter((meta) => meta.name && meta.content) }),
-					displayRawContent,
+					displayRawContent: rawContent ?? false,
 					updatedAt: new Date()
 				},
 				$unset: {

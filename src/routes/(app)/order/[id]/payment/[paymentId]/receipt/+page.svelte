@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Picture from '$lib/components/Picture.svelte';
+	import { productLabelWithVariations } from '$lib/types/Product';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import Trans from '$lib/components/Trans.svelte';
 	import { useI18n } from '$lib/i18n.js';
@@ -7,7 +8,7 @@
 	import { fixCurrencyRounding } from '$lib/utils/fixCurrencyRounding';
 	import { sum } from '$lib/utils/sum.js';
 	import { sumCurrency } from '$lib/utils/sumCurrency.js';
-	import { marked } from 'marked';
+	import { renderMarkdown } from '$lib/utils/markdown';
 	import { computePriceForDisplay } from '$lib/types/Currency';
 
 	export let data;
@@ -216,13 +217,7 @@
 				<tr style:background-color={i % 2 === 0 ? '#fef2cc' : '#e7e6e6'}>
 					<td class="text-center border border-white px-2">{i + 1}</td>
 					<td class="text-center border border-white px-2"
-						>{item.chosenVariations
-							? item.product.name +
-							  ' - ' +
-							  Object.entries(item.chosenVariations)
-									.map(([key, value]) => item.product.variationLabels?.values[key][value])
-									.join(' - ')
-							: item.product.name}</td
+						>{productLabelWithVariations(item.product, item.chosenVariations)}</td
 					>
 					<td class="text-center border border-white px-2"
 						>{paidQuantity}
@@ -264,102 +259,105 @@
 	</table>
 
 	<table class="mt-4 border-collapse">
-		{#if data.order.shippingPrice && data.order.currencySnapshot.main.shippingPrice?.amount}
-			<tr style:background-color="#e7e6e6">
-				<td class="border border-white px-2 text-right">{t('checkout.deliveryFees')}</td>
-				<td class="border border-white px-2 text-right whitespace-nowrap">
-					<PriceTag
-						amount={data.order.currencySnapshot.main.shippingPrice.amount}
-						currency={data.order.currencySnapshot.main.shippingPrice.currency}
-						inline
-					/>
-				</td>
-			</tr>
-		{/if}
-		{#if discountNoTax.amount}
-			<tr style:background-color="#e7e6e6">
-				<td class="border border-white px-2 text-right">{t('order.receipt.discountExcVat')}</td>
-				<td class="border border-white px-2 text-right whitespace-nowrap">
-					<PriceTag amount={-discountNoTax.amount} currency={discountNoTax.currency} inline />
-				</td>
-			</tr>
-		{/if}
-		{#if perItemDiscountNoTax.amount > 0}
-			<tr style:background-color="#e7e6e6">
-				<td class="border border-white px-2 text-right">{t('order.receipt.discountExcVat')}</td>
-				<td class="border border-white px-2 text-right whitespace-nowrap">
-					<PriceTag
-						amount={-perItemDiscountNoTax.amount}
-						currency={perItemDiscountNoTax.currency}
-						inline
-					/>
-				</td>
-			</tr>
-		{/if}
-		<tr style:background-color="#fef2cc">
-			<td class="border border-white px-2 text-right" style="width: 70%"
-				>{t('order.receipt.totalExcVat')}</td
-			>
-			<td class="border border-white px-2 text-right whitespace-nowrap">
-				<PriceTag amount={totalNoTax.amount} {currency} inline />
-			</td>
-		</tr>
-		<tr style:background-color="#e7e6e6">
-			<td class="border border-white px-2 text-right">{t('order.receipt.totalVat')}</td>
-			<td class="border border-white px-2 text-right whitespace-nowrap">
-				<PriceTag amount={totalVat.amount} currency={totalVat.currency} inline />
-			</td>
-		</tr>
-		<tr style:background-color="#aeaaaa" class="text-white font-bold">
-			<td class="border border-white px-2 text-right">{t('order.receipt.totalInclVat')}</td>
-			<td class="border border-white px-2 whitespace-nowrap text-right">
-				<PriceTag
-					amount={data.order.currencySnapshot.main.totalPrice.amount}
-					currency={data.order.currencySnapshot.main.totalPrice.currency}
-					inline
-				/>
-			</td>
-		</tr>
-		{#if data.payment.currencySnapshot.main.previouslyPaid?.amount}
-			<tr style:background-color="#aeaaaa" class="text-white font-bold">
-				<td class="border border-white px-2 text-right">{t('order.receipt.alreadyPaidAmount')}</td>
-				<td class="border border-white px-2 whitespace-nowrap text-right">
-					<PriceTag
-						amount={data.payment.currencySnapshot.main.previouslyPaid.amount}
-						currency={data.payment.currencySnapshot.main.previouslyPaid.currency}
-						inline
-					/>
-				</td>
-			</tr>
-		{/if}
-		{#if data.payment.currencySnapshot.main.price.amount !== data.order.currencySnapshot.main.totalPrice.amount}
-			<tr style:background-color="#aeaaaa" class="text-white font-bold">
-				<td class="border border-white px-2 text-right"
-					>{finalInvoice
-						? t('order.receipt.partialAmount')
-						: t('order.receipt.partialAmountPre')}</td
+		<tbody>
+			{#if data.order.shippingPrice && data.order.currencySnapshot.main.shippingPrice?.amount}
+				<tr style:background-color="#e7e6e6">
+					<td class="border border-white px-2 text-right">{t('checkout.deliveryFees')}</td>
+					<td class="border border-white px-2 text-right whitespace-nowrap">
+						<PriceTag
+							amount={data.order.currencySnapshot.main.shippingPrice.amount}
+							currency={data.order.currencySnapshot.main.shippingPrice.currency}
+							inline
+						/>
+					</td>
+				</tr>
+			{/if}
+			{#if discountNoTax.amount}
+				<tr style:background-color="#e7e6e6">
+					<td class="border border-white px-2 text-right">{t('order.receipt.discountExcVat')}</td>
+					<td class="border border-white px-2 text-right whitespace-nowrap">
+						<PriceTag amount={-discountNoTax.amount} currency={discountNoTax.currency} inline />
+					</td>
+				</tr>
+			{/if}
+			{#if perItemDiscountNoTax.amount > 0}
+				<tr style:background-color="#e7e6e6">
+					<td class="border border-white px-2 text-right">{t('order.receipt.discountExcVat')}</td>
+					<td class="border border-white px-2 text-right whitespace-nowrap">
+						<PriceTag
+							amount={-perItemDiscountNoTax.amount}
+							currency={perItemDiscountNoTax.currency}
+							inline
+						/>
+					</td>
+				</tr>
+			{/if}
+			<tr style:background-color="#fef2cc">
+				<td class="border border-white px-2 text-right" style="width: 70%"
+					>{t('order.receipt.totalExcVat')}</td
 				>
-				<td class="border border-white px-2 whitespace-nowrap text-right">
-					<PriceTag
-						amount={data.payment.currencySnapshot.main.price.amount}
-						currency={data.payment.currencySnapshot.main.price.currency}
-						inline
-					/>
+				<td class="border border-white px-2 text-right whitespace-nowrap">
+					<PriceTag amount={totalNoTax.amount} {currency} inline />
 				</td>
 			</tr>
-		{/if}
-		{#if data.payment.currencySnapshot.main.remainingToPay?.amount}
+			<tr style:background-color="#e7e6e6">
+				<td class="border border-white px-2 text-right">{t('order.receipt.totalVat')}</td>
+				<td class="border border-white px-2 text-right whitespace-nowrap">
+					<PriceTag amount={totalVat.amount} currency={totalVat.currency} inline />
+				</td>
+			</tr>
 			<tr style:background-color="#aeaaaa" class="text-white font-bold">
-				<td class="border border-white px-2 text-right">{t('order.receipt.remainingAmount')}</td>
+				<td class="border border-white px-2 text-right">{t('order.receipt.totalInclVat')}</td>
 				<td class="border border-white px-2 whitespace-nowrap text-right">
 					<PriceTag
-						amount={data.payment.currencySnapshot.main.remainingToPay.amount}
-						currency={data.payment.currencySnapshot.main.remainingToPay.currency}
+						amount={data.order.currencySnapshot.main.totalPrice.amount}
+						currency={data.order.currencySnapshot.main.totalPrice.currency}
 						inline
 					/>
 				</td>
 			</tr>
-		{/if}
+			{#if data.payment.currencySnapshot.main.previouslyPaid?.amount}
+				<tr style:background-color="#aeaaaa" class="text-white font-bold">
+					<td class="border border-white px-2 text-right">{t('order.receipt.alreadyPaidAmount')}</td
+					>
+					<td class="border border-white px-2 whitespace-nowrap text-right">
+						<PriceTag
+							amount={data.payment.currencySnapshot.main.previouslyPaid.amount}
+							currency={data.payment.currencySnapshot.main.previouslyPaid.currency}
+							inline
+						/>
+					</td>
+				</tr>
+			{/if}
+			{#if data.payment.currencySnapshot.main.price.amount !== data.order.currencySnapshot.main.totalPrice.amount}
+				<tr style:background-color="#aeaaaa" class="text-white font-bold">
+					<td class="border border-white px-2 text-right"
+						>{finalInvoice
+							? t('order.receipt.partialAmount')
+							: t('order.receipt.partialAmountPre')}</td
+					>
+					<td class="border border-white px-2 whitespace-nowrap text-right">
+						<PriceTag
+							amount={data.payment.currencySnapshot.main.price.amount}
+							currency={data.payment.currencySnapshot.main.price.currency}
+							inline
+						/>
+					</td>
+				</tr>
+			{/if}
+			{#if data.payment.currencySnapshot.main.remainingToPay?.amount}
+				<tr style:background-color="#aeaaaa" class="text-white font-bold">
+					<td class="border border-white px-2 text-right">{t('order.receipt.remainingAmount')}</td>
+					<td class="border border-white px-2 whitespace-nowrap text-right">
+						<PriceTag
+							amount={data.payment.currencySnapshot.main.remainingToPay.amount}
+							currency={data.payment.currencySnapshot.main.remainingToPay.currency}
+							inline
+						/>
+					</td>
+				</tr>
+			{/if}
+		</tbody>
 	</table>
 
 	{#if data.order.vatFree?.reason}
@@ -396,32 +394,32 @@
 		<div class="mt-4 text-right">
 			<h2 class="text-xl">{t('order.receipt.bankInfo')} :</h2>
 			<table class="ml-auto">
-				{#if identity.bank.accountHolder}
-					<tr>
-						<td class="px-2">{t('order.receipt.accountHolder')}</td>
-						<td>
-							{identity.bank.accountHolder}
-						</td>
-					</tr>
-				{/if}
-				{#if identity.bank.accountHolderAddress}
-					<tr>
-						<td class="px-2">{t('order.receipt.accountHolderAddress')}</td>
-						<td>{identity.bank.accountHolderAddress}</td>
-					</tr>
-				{/if}
-				<tr><td class="px-2">IBAN</td><td>{identity.bank.iban}</td></tr>
-				<tr><td class="px-2">BIC</td><td>{identity.bank.bic}</td></tr>
+				<tbody>
+					{#if identity.bank.accountHolder}
+						<tr>
+							<td class="px-2">{t('order.receipt.accountHolder')}</td>
+							<td>
+								{identity.bank.accountHolder}
+							</td>
+						</tr>
+					{/if}
+					{#if identity.bank.accountHolderAddress}
+						<tr>
+							<td class="px-2">{t('order.receipt.accountHolderAddress')}</td>
+							<td>{identity.bank.accountHolderAddress}</td>
+						</tr>
+					{/if}
+					<tr><td class="px-2">IBAN</td><td>{identity.bank.iban}</td></tr>
+					<tr><td class="px-2">BIC</td><td>{identity.bank.bic}</td></tr>
+				</tbody>
 			</table>
 		</div>
 	{/if}
 
 	{#if data.order.receiptNote}
 		<div class="mt-4 text-center">
-			<p>
-				<!-- eslint-disable svelte/no-at-html-tags -->
-				{@html marked(data.order.receiptNote.replaceAll('<', '&lt;'))}
-			</p>
+			<!-- eslint-disable svelte/no-at-html-tags -->
+			{@html renderMarkdown(data.order.receiptNote)}
 		</div>
 	{/if}
 </div>

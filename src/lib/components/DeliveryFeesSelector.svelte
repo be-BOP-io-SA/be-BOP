@@ -20,7 +20,7 @@
 
 	let feeCountryToAdd: CountryAlpha2 | 'default' = 'default';
 
-	const { countryName, sortedCountryCodes } = useI18n();
+	const { countryName, sortedCountryCodes, t } = useI18n();
 
 	// Currency options for Select components (sorted: main → secondary → BTC/SAT → fiat A-Z)
 	const sortedCurrencies = sortCurrencies($currencies.main, $currencies.secondary);
@@ -79,7 +79,7 @@
 				})}
 			class="body-hyperlink underline"
 		>
-			Add fee option
+			{t('admin.deliveryFees.addFeeOption')}
 		</button>
 	</div>
 {/if}
@@ -91,13 +91,15 @@
 		</h3>
 		<div class="gap-4 flex flex-col md:flex-row">
 			<label class="w-full">
-				Amount {vatIncludedReference ? '(VAT included)' : '(VAT excluded)'}
+				{t('admin.deliveryFees.amount')} ({vatIncludedReference
+					? t('admin.deliveryFees.vatIncluded')
+					: t('admin.deliveryFees.vatExcluded')})
 				<input
 					class="form-input"
 					type="number"
 					{disabled}
 					name="deliveryFees[{country}].amount"
-					placeholder="Price"
+					placeholder={t('admin.productVatCalcRow.pricePlaceholder')}
 					step="any"
 					value={deliveryFee?.amount
 						.toLocaleString('en', { maximumFractionDigits: 8 })
@@ -111,10 +113,10 @@
 						<small class="text-gray-500 block mt-1">
 							{#if vatIncludedReference}
 								= {fixCurrencyRounding(extractVat(deliveryFee.amount, vatRate), selectedCurrency)}
-								{selectedCurrency} (VAT excluded)
+								{selectedCurrency} ({t('admin.deliveryFees.vatExcluded')})
 							{:else}
 								= {fixCurrencyRounding(applyVat(deliveryFee.amount, vatRate), selectedCurrency)}
-								{selectedCurrency} (VAT included)
+								{selectedCurrency} ({t('admin.deliveryFees.vatIncluded')})
 							{/if}
 						</small>
 					{/if}
@@ -147,7 +149,7 @@
 				deliveryFees = { ...deliveryFees };
 			}}
 		>
-			Remove
+			{t('admin.deliveryFees.remove')}
 		</button>
 	</div>
 {/each}

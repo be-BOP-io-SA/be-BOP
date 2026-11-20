@@ -1,19 +1,24 @@
 <script lang="ts">
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
 {#if !data.s3IsConfigured}
 	<S3NotConfiguredWarning adminPrefix={data.adminPrefix} />
 {/if}
 
-<a href="{data.adminPrefix}/schedule/new" class="underline block">Add schedule</a>
+<a href="{data.adminPrefix}/schedule/new" class="underline block"
+	>{t('admin.schedule.addSchedule')}</a
+>
 <a href="{data.adminPrefix}/schedule/event-default-picture" class="underline block"
-	>Event default picture</a
+	>{t('admin.schedule.eventDefaultPicture')}</a
 >
 
-<h1 class="text-3xl">List of Schedules</h1>
+<h1 class="text-3xl">{t('admin.schedule.listTitle')}</h1>
 
 <ul>
 	{#each data.schedules as schedule}
@@ -24,6 +29,6 @@
 			>
 		</li>
 	{:else}
-		No schedule yet
+		{t('admin.schedule.noScheduleYet')}
 	{/each}
 </ul>

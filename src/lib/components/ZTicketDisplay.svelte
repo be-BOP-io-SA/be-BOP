@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
 	import IconCheck from '~icons/ant-design/check-outlined';
 	import IconArrowLeft from '~icons/ant-design/arrow-left-outlined';
 
@@ -8,6 +9,8 @@
 		closedAt?: Date;
 	};
 	export let showBackToPos = false;
+
+	const { t } = useI18n();
 
 	let copied = false;
 
@@ -51,11 +54,13 @@
 
 <div class="no-print mb-6">
 	<p class="text-gray-600 mb-2">
-		Session opened: {new Date(sessionInfo.openedAt).toLocaleString()}
+		{t('pos.zTicket.sessionOpened')}
+		{new Date(sessionInfo.openedAt).toLocaleString()}
 	</p>
 	{#if sessionInfo.closedAt}
 		<p class="text-gray-600">
-			Session closed: {new Date(sessionInfo.closedAt).toLocaleString()}
+			{t('pos.zTicket.sessionClosed')}
+			{new Date(sessionInfo.closedAt).toLocaleString()}
 		</p>
 	{/if}
 </div>
@@ -65,12 +70,12 @@
 </div>
 
 <div class="no-print flex gap-3 flex-wrap">
-	<button on:click={printTicket} class="btn btn-blue">Print</button>
+	<button on:click={printTicket} class="btn btn-blue">{t('pos.zTicket.print')}</button>
 	<button on:click={copyToClipboard} class="btn" class:btn-blue={!copied} class:btn-green={copied}>
 		{#if copied}
-			<IconCheck class="w-4 h-4 inline" /> Copied
+			<IconCheck class="w-4 h-4 inline" /> {t('pos.zTicket.copied')}
 		{:else}
-			Copy
+			{t('pos.zTicket.copy')}
 		{/if}
 	</button>
 	<slot name="back-buttons" />

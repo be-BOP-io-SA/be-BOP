@@ -6,6 +6,12 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 let _s3client: AWS.S3 | null = null;
 let _publicS3Client: AWS.S3 | null = null;
 
+// Otherwise a presigned upload carries the CRC32 of an empty body, which Garage refuses.
+export const S3_CHECKSUMS_WHEN_REQUIRED = {
+	requestChecksumCalculation: 'WHEN_REQUIRED',
+	responseChecksumValidation: 'WHEN_REQUIRED'
+} as const;
+
 export function s3IsConfigured(): string {
 	return runtimeConfig.s3.bucket && runtimeConfig.s3.keyId && runtimeConfig.s3.keySecret;
 }
@@ -25,7 +31,8 @@ function createS3Client(usePublicEndpoint = false): AWS.S3 {
 		},
 		// Handle minio, eg http://minio:9000/bucket instead of http://bucket.minio:9000
 		// Should work with any S3-compatible server, so no harm in leaving it on
-		forcePathStyle: true
+		forcePathStyle: true,
+		...S3_CHECKSUMS_WHEN_REQUIRED
 	});
 }
 
@@ -76,7 +83,9 @@ export async function initializeS3Bucket(): Promise<void> {
 				new AWS.CreateBucketCommand({
 					Bucket: bucket,
 					CreateBucketConfiguration: {
-						LocationConstraint: region
+						// The SDK now types this as its own enum, but a shop can point at any
+						// S3-compatible host whose region is not in AWS's list — MinIO included.
+						LocationConstraint: region as AWS.BucketLocationConstraint
 					}
 				})
 			);

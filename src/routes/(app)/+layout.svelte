@@ -36,7 +36,8 @@
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import IconSystem from '$lib/components/icons/IconSystem.svelte';
-	import { oneMaxPerLine } from '$lib/types/Product.js';
+	import { oneMaxPerLine, productLabelWithVariations } from '$lib/types/Product.js';
+	import { linkTarget, safeHref } from '$lib/utils/safeUrl';
 
 	export let data;
 
@@ -142,7 +143,7 @@
 	We use data-sveltekit-preload-data="off" on header/footer links due to this: 	https://github.com/sveltejs/kit/issues/9508#issuecomment-1807200239
 -->
 
-<div data-sveltekit-preload-data={data.isMaintenance ? 'tap' : 'hover'} style="display: contents;">
+<div data-sveltekit-preload-data="tap" style="display: contents;">
 	{#if $page.data.layoutReset || $page.url.searchParams.get('display') === 'headless'}
 		<slot />
 	{:else}
@@ -167,16 +168,14 @@
 						<span class="header-shopName font-bold text-[24px]">{data.brandName}</span>
 					{/if}
 				</a>
-				<span class="grow body-mainPlan" />
+				<span class="grow body-mainPlan"></span>
 				<nav class="flex gap-10 text-[22px] font-semibold header-tab">
 					{#each data.links.topbar as link}
 						<a
-							href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-								? link.href
-								: `/${link.href}`}
+							href={safeHref(link.href)}
 							class=" {data.notResponsive ? '' : 'hidden lg:inline'}"
 							data-sveltekit-preload-data="off"
-							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
+							target={linkTarget(link.href)}
 						>
 							{link.label}
 						</a>
@@ -205,10 +204,8 @@
 				{#each data.links.topbar as link}
 					<a
 						class="py-4"
-						href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-							? link.href
-							: `/${link.href}`}
-						target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
+						href={safeHref(link.href)}
+						target={linkTarget(link.href)}
 						data-sveltekit-preload-data="off">{link.label}</a
 					>
 				{/each}
@@ -217,10 +214,8 @@
 					{#each data.links.navbar as link}
 						<a
 							class="py-4 font-light"
-							href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-								? link.href
-								: `/${link.href}`}
-							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
+							href={safeHref(link.href)}
+							target={linkTarget(link.href)}
 							data-sveltekit-preload-data="off">{link.label}</a
 						>
 					{/each}
@@ -248,11 +243,9 @@
 
 					{#each data.links.navbar as link}
 						<a
-							href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-								? link.href
-								: `/${link.href}`}
+							href={safeHref(link.href)}
 							class={data.notResponsive ? '' : 'hidden lg:inline'}
-							target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
+							target={linkTarget(link.href)}
 							data-sveltekit-preload-data="off">{link.label}</a
 						>
 					{/each}
@@ -361,16 +354,7 @@
 											<div class="flex flex-col">
 												<a href="/product/{item.product._id}">
 													<h3 class="text-base font-medium">
-														{item.chosenVariations
-															? item.product.name +
-															  ' - ' +
-															  Object.entries(item.chosenVariations)
-																	.map(
-																		([key, value]) =>
-																			item.product.variationLabels?.values[key][value]
-																	)
-																	.join(' - ')
-															: item.product.name}
+														{productLabelWithVariations(item.product, item.chosenVariations)}
 													</h3>
 												</a>
 												{#if !oneMaxPerLine(item.product)}
@@ -533,9 +517,7 @@
 					<a
 						class="py-2 hover:underline"
 						data-sveltekit-preload-data="off"
-						href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-							? link.href
-							: `/${link.href}`}>{link.label}</a
+						href={safeHref(link.href)}>{link.label}</a
 					>
 				{/each}
 			</nav>
@@ -551,9 +533,14 @@
 			</div>
 		{:else}
 			<div class="grow body-mainPlan">
-				{#if data.ageRestriction.enabled && !data.sessionAcceptAgeLimitation && !$page.url.pathname.startsWith('/admin')}
-					<form class="mx-auto max-w-7xl" method="POST" action="{data.websiteLink}?/navigate">
-						<input type="hidden" name="redirectTo" value={$page.url.pathname + $page.url.search} />
+				{#if data.ageRestriction.enabled && !data.sessionAcceptAgeLimitation && !$page.url.pathname.startsWith('/admin') && !$page.url.pathname.startsWith('/pos')}
+					<form class="mx-auto max-w-7xl" method="POST" action="/?/navigate">
+						<input
+							type="hidden"
+							name="redirectTo"
+							value={$page.url.searchParams.get('redirectTo') ??
+								$page.url.pathname + $page.url.search}
+						/>
 						{#if data.cmsAgewall && data.cmsAgewallData}
 							<CmsDesign
 								{...data.cmsAgewallData}
@@ -648,17 +635,15 @@
 						{#each data.links.footer as link}
 							<a
 								class={link.label === '-' ? 'hidden lg:contents' : ''}
-								href={link.href.includes('/') || /^[a-zA-Z]+:/.test(link.href)
-									? link.href
-									: `/${link.href}`}
-								target={/^[a-zA-Z]+:/.test(link.href) ? '_blank' : '_self'}
+								href={safeHref(link.href)}
+								target={linkTarget(link.href)}
 								data-sveltekit-preload-data="off">{link.label}</a
 							>
 						{/each}
 					</div>
 					<div class="flex flex-row gap-1 items-center">
 						{#each data.links.socialNetworkIcons as icon}
-							<a href={icon.href} target="_blank"
+							<a href={safeHref(icon.href)} target="_blank"
 								><img src="data:image/svg+xml;utf8, {icon.svg}" alt={icon.name} /></a
 							>
 						{/each}

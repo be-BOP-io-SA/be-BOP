@@ -6,25 +6,26 @@
 	export let data;
 
 	let rememberOption = false;
+	const { t, locale } = useI18n();
 	const rememberDates = [
 		{
-			option: '1 hour',
+			option: t('admin.login.rememberOneHour'),
 			value: 3600
 		},
 		{
-			option: '1 day',
+			option: t('admin.login.rememberOneDay'),
 			value: 86400
 		},
 		{
-			option: '1 week',
+			option: t('admin.login.rememberOneWeek'),
 			value: 86400 * 7
 		},
 		{
-			option: '1 month',
+			option: t('admin.login.rememberOneMonth'),
 			value: 86400 * 30
 		},
 		{
-			option: 'As much as possible',
+			option: t('admin.login.rememberForever'),
 			value: 10 * 365 * 86400
 		}
 	];
@@ -32,8 +33,6 @@
 
 	let passwordInput: HTMLInputElement | null = null;
 	let formElement: HTMLFormElement | null = null;
-
-	const { t, locale } = useI18n();
 
 	async function checkPassword() {
 		errorMessage = '';
@@ -61,26 +60,26 @@
 		on:submit|preventDefault={checkPassword}
 	>
 		<label class="form-label">
-			Login
+			{t('admin.login.login')}
 			<input
 				class="form-input"
 				type="text"
 				name="login"
-				placeholder="Enter your login"
+				placeholder={t('admin.login.loginPlaceholder')}
 				value={form?.login ?? ''}
 				required
 				disabled={!!form?.disabledUser}
 			/>
 		</label>
 		<label class="form-label">
-			Password
+			{t('admin.login.password')}
 			<input
 				class="form-input"
 				type="password"
 				name="password"
 				minlength={MIN_PASSWORD_LENGTH}
 				bind:this={passwordInput}
-				placeholder="Enter your password"
+				placeholder={t('admin.login.passwordPlaceholder')}
 				required
 				disabled={!!form?.disabledUser}
 			/>
@@ -93,7 +92,7 @@
 					name="remember"
 					bind:checked={rememberOption}
 				/>
-				Remember me
+				{t('admin.login.rememberMe')}
 			</label>
 			<select
 				name="memorize"
@@ -105,7 +104,7 @@
 			</select>
 		</div>
 		{#if form?.incorrect || errorMessage}
-			<p class="text-red-500">{errorMessage || 'Invalid credentials, please try again'}</p>
+			<p class="text-red-500">{errorMessage || t('admin.login.invalidCredentials')}</p>
 		{/if}
 		{#if form?.disabledUser}
 			<p class="text-red-500">{form.disabledUser}</p>
@@ -114,12 +113,12 @@
 			<input
 				type="submit"
 				class="btn btn-blue text-white w-full"
-				value={data.isAdminCreated ? 'Login' : 'Create Super Admin'}
+				value={data.isAdminCreated ? t('admin.login.login') : t('admin.login.createSuperAdmin')}
 				disabled={!!form?.disabledUser}
 			/>
 			{#if data.isAdminCreated}
 				<a href="{data.adminPrefix}/login/recovery" class="btn body-mainCTA w-full text-center"
-					>Recovery</a
+					>{t('admin.login.recovery')}</a
 				>
 			{/if}
 		</div>

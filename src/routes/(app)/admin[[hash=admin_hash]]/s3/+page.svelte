@@ -2,6 +2,9 @@
 	import { enhance } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
 	import type { ActionData } from './$types';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let data;
 	let readOnlyForm = data.settingsEnforcedByEnvVars;
@@ -31,23 +34,22 @@
 			{
 				element: bucketInputEl,
 				isValid: data.s3.bucket.trim(),
-				message: 'S3 Bucket is required'
+				message: t('admin.s3.bucketRequired')
 			},
 			{
 				element: endpointInputEl,
 				isValid: endpointUrl.trim(),
-				message: 'S3 Endpoint URL is required'
+				message: t('admin.s3.endpointUrlRequired')
 			},
 			{
 				element: accessKeyInputEl,
 				isValid: data.s3.keyId.trim(),
-				message: 'S3 Access Key is required'
+				message: t('admin.s3.accessKeyRequired')
 			},
 			{
 				element: secretInputEl,
 				isValid: !secretRequired() || keySecret.trim(),
-				message:
-					'S3 Secret Access Key is required when updating the endpoint or public endpoint URL'
+				message: t('admin.s3.secretRequiredWhenUpdatingEndpoint')
 			}
 		];
 	}
@@ -100,7 +102,7 @@
 	}
 </script>
 
-<h1 class="text-3xl" bind:this={titleEl}>S3 Configuration</h1>
+<h1 class="text-3xl" bind:this={titleEl}>{t('admin.s3.title')}</h1>
 
 {#if data.settingsEnforcedByEnvVars}
 	<div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -116,14 +118,11 @@
 			</div>
 			<div class="ml-3">
 				<h3 class="text-sm font-medium text-yellow-800">
-					S3 Settings Configured via Environment Variables
+					{t('admin.s3.settingsConfiguredViaEnvVars')}
 				</h3>
 				<div class="mt-2 text-sm text-yellow-700">
 					<p>
-						The S3 settings are currently controlled by your environment configuration, which takes
-						precedence over the form bellow. To modify them, update or remove the following
-						environment values (for example, in the be-BOP configuration file or your hosting
-						provider’s settings), then restart be-BOP.
+						{t('admin.s3.envVarsExplanation')}
 					</p>
 					<ul class="mt-2 list-disc list-inside">
 						<li>PUBLIC_S3_ENDPOINT_URL</li>
@@ -139,7 +138,7 @@
 	</div>
 {:else}
 	<p class="text-gray-600 mb-6">
-		Configure your S3 storage settings for file uploads and static assets.
+		{t('admin.s3.description')}
 	</p>
 {/if}
 
@@ -159,7 +158,7 @@
 			</span>
 			{actionResult.message}
 			{#if actionResult.action === 'save' && !actionResult.success}
-				<br />The configuration was not saved because the provided settings are not valid.
+				<br />{t('admin.s3.configurationNotSaved')}
 			{/if}
 		</div>
 	</div>
@@ -188,7 +187,7 @@
 >
 	<div class="grid grid-cols-1 md:grid-cols-2 gap-4 {readOnlyForm ? 'opacity-50' : ''}">
 		<label class="form-label">
-			S3 Bucket
+			{t('admin.s3.bucketLabel')}
 			<input
 				bind:this={bucketInputEl}
 				class="form-input"
@@ -202,7 +201,7 @@
 		</label>
 
 		<label class="form-label">
-			S3 Region
+			{t('admin.s3.regionLabel')}
 			<input
 				class="form-input"
 				readonly={readOnlyForm}
@@ -214,7 +213,7 @@
 		</label>
 
 		<label class="form-label md:col-span-2">
-			S3 Endpoint URL
+			{t('admin.s3.endpointUrlLabel')}
 			<input
 				bind:this={endpointInputEl}
 				class="form-input"
@@ -226,12 +225,12 @@
 				bind:value={endpointUrl}
 			/>
 			<span class="text-sm text-gray-500">
-				Enter the S3 endpoint URL for your storage service.
+				{t('admin.s3.endpointUrlHint')}
 			</span>
 		</label>
 
 		<label class="form-label md:col-span-2">
-			Public S3 Endpoint URL
+			{t('admin.s3.publicEndpointUrlLabel')}
 			<input
 				class="form-input"
 				readonly={readOnlyForm}
@@ -241,26 +240,25 @@
 				bind:value={publicEndpointUrl}
 			/>
 			<span class="text-sm text-gray-500">
-				Public URL for accessing uploaded files. Usually your bucket's public URL. Leave empty to
-				use the same endpoint URL.
+				{t('admin.s3.publicEndpointUrlHint')}
 			</span>
 		</label>
 
 		<label class="form-label">
-			Access Key ID
+			{t('admin.s3.accessKeyIdLabel')}
 			<input
 				bind:this={accessKeyInputEl}
 				class="form-input"
 				readonly={readOnlyForm}
 				name="keyId"
-				placeholder="Enter S3 key ID"
+				placeholder={t('admin.s3.enterKeyIdPlaceholder')}
 				type="text"
 				bind:value={data.s3.keyId}
 			/>
 		</label>
 
 		<label class="form-label">
-			Secret Access Key
+			{t('admin.s3.secretAccessKeyLabel')}
 			<input
 				bind:this={secretInputEl}
 				class="form-input"
@@ -268,8 +266,8 @@
 				name="keySecret"
 				type="password"
 				placeholder={data.s3.keySecretIsSet
-					? 'Key secret is set - enter new value to replace'
-					: 'Enter S3 key secret'}
+					? t('admin.s3.keySecretIsSetPlaceholder')
+					: t('admin.s3.enterKeySecretPlaceholder')}
 				bind:value={keySecret}
 			/>
 		</label>
@@ -278,36 +276,42 @@
 	<div class="flex justify-between items-center mt-6">
 		<div class="flex gap-3">
 			<button class="btn btn-black" type="submit" disabled={readOnlyForm} on:click={clearValidity}>
-				Save S3 Settings
+				{t('admin.s3.saveButton')}
 			</button>
 			<button class="btn btn-blue" type="submit" formaction="?/test" on:click={clearValidity}>
-				Test Connection
+				{t('admin.s3.testConnectionButton')}
 			</button>
 		</div>
 	</div>
 </form>
 
 <div class="mt-8 p-4 bg-blue-50 rounded-lg">
-	<h3 class="text-lg font-semibold mb-2">Configuration Notes</h3>
+	<h3 class="text-lg font-semibold mb-2">{t('admin.s3.configurationNotesTitle')}</h3>
 	<ul class="text-sm space-y-1 text-gray-700">
-		<li>• <strong>AWS S3:</strong> Leave endpoint URL empty, use your AWS region</li>
-		<li>• <strong>MinIO/Compatible:</strong> Enter your MinIO endpoint URL and region</li>
-		<li>• <strong>Public Endpoint:</strong> Used for generating public URLs for uploaded files</li>
-		<li>• <strong>Security:</strong> Use IAM roles with minimal required permissions</li>
-		<li>• <strong>Testing:</strong> Use the "Test Connection" button to verify your settings</li>
-		<li>• These settings override environment variables when configured</li>
+		<li>• <strong>AWS S3:</strong> {t('admin.s3.noteAwsS3')}</li>
+		<li>• <strong>MinIO/Compatible:</strong> {t('admin.s3.noteMinioCompatible')}</li>
+		<li>
+			• <strong>{t('admin.s3.notePublicEndpointLabel')}:</strong>
+			{t('admin.s3.notePublicEndpoint')}
+		</li>
+		<li>• <strong>{t('admin.s3.noteSecurityLabel')}:</strong> {t('admin.s3.noteSecurity')}</li>
+		<li>
+			• <strong>{t('admin.s3.noteTestingLabel')}:</strong>
+			{t('admin.s3.noteTesting', { button: t('admin.s3.testConnectionButton') })}
+		</li>
+		<li>• {t('admin.s3.noteOverridesEnvVars')}</li>
 	</ul>
 </div>
 
 <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
-	<h3 class="text-lg font-semibold mb-2">Required S3 Permissions</h3>
+	<h3 class="text-lg font-semibold mb-2">{t('admin.s3.requiredPermissionsTitle')}</h3>
 	<div class="text-sm text-gray-700">
-		<p class="mb-2">Your S3 credentials need the following permissions on the bucket:</p>
+		<p class="mb-2">{t('admin.s3.requiredPermissionsIntro')}</p>
 		<ul class="space-y-1 ml-4">
-			<li>• <code>s3:GetObject</code> - Download files</li>
-			<li>• <code>s3:PutObject</code> - Upload files</li>
-			<li>• <code>s3:DeleteObject</code> - Delete files</li>
-			<li>• <code>s3:ListBucket</code> - List bucket contents</li>
+			<li>• <code>s3:GetObject</code> - {t('admin.s3.permissionDownloadFiles')}</li>
+			<li>• <code>s3:PutObject</code> - {t('admin.s3.permissionUploadFiles')}</li>
+			<li>• <code>s3:DeleteObject</code> - {t('admin.s3.permissionDeleteFiles')}</li>
+			<li>• <code>s3:ListBucket</code> - {t('admin.s3.permissionListBucketContents')}</li>
 		</ul>
 	</div>
 </div>

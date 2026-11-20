@@ -1,7 +1,10 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
 	import { languageNames, type LanguageKey } from '$lib/translations/index.js';
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage.js';
 	import { MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product.js';
+
+	const { t } = useI18n();
 
 	export let data;
 
@@ -10,7 +13,7 @@
 
 <form method="post" class="contents">
 	<label class="form-label">
-		Select Language
+		{t('admin.cms.selectLanguage')}
 
 		<select bind:value={language} name="language" class="form-input">
 			{#each data.locales as locale}
@@ -20,7 +23,7 @@
 	</label>
 
 	<label class="form-label">
-		Title
+		{t('admin.cms.title')}
 		<input
 			type="text"
 			name="title"
@@ -31,7 +34,7 @@
 	</label>
 
 	<label class="form-label">
-		Content
+		{t('admin.cms.content')}
 		<textarea
 			name="content"
 			class="form-input"
@@ -39,10 +42,10 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={data.cmsPage.content}
 			value={data.cmsPage.translations?.[language]?.content ?? ''}
-		/>
+		></textarea>
 	</label>
 	<label class="form-label">
-		Substitution content
+		{t('admin.cms.substitutionContent')}
 		<textarea
 			name="mobileContent"
 			class="form-input"
@@ -50,10 +53,10 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={data.cmsPage.mobileContent}
 			value={data.cmsPage.translations?.[language]?.mobileContent ?? ''}
-		/>
+		></textarea>
 	</label>
 	<label class="form-label">
-		Employee content
+		{t('admin.cms.employeeContent')}
 		<textarea
 			name="employeeContent"
 			class="form-input"
@@ -61,11 +64,11 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={data.cmsPage.employeeContent}
 			value={data.cmsPage.translations?.[language]?.employeeContent ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<label class="form-label">
-		Short Description
+		{t('admin.cms.shortDescriptionLabel')}
 		<textarea
 			name="shortDescription"
 			class="form-input"
@@ -73,8 +76,8 @@
 			maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 			placeholder={data.cmsPage.shortDescription}
 			value={data.cmsPage.translations?.[language]?.shortDescription ?? ''}
-		/>
+		></textarea>
 	</label>
 
-	<button class="btn btn-black self-start" type="submit">Save</button>
+	<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>
 </form>

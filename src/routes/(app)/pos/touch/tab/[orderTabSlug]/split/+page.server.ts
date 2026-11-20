@@ -1,4 +1,4 @@
-import { ItemForPriceInfo, ProductForPriceInfo } from '$lib/cart';
+import type { ItemForPriceInfo, ProductForPriceInfo } from '$lib/cart';
 import { collections } from '$lib/server/database';
 import { ObjectId } from 'mongodb';
 import {
@@ -6,7 +6,7 @@ import {
 	getOrCreateOrderTab,
 	checkoutOrderTab
 } from '$lib/server/orderTab';
-import { OrderTab } from '$lib/types/OrderTab';
+import type { OrderTab } from '$lib/types/OrderTab';
 import { UrlDependency } from '$lib/types/UrlDependency';
 import { removeUserCarts } from '$lib/server/cart';
 import { userIdentifier } from '$lib/server/user';
@@ -16,8 +16,10 @@ import {
 	createOrder,
 	addOrderPayment,
 	notifySuperAdminPaymentFailure,
-	PaymentGenerationError
+	PaymentGenerationError,
+	sellsSubscriptionAtTill
 } from '$lib/server/orders';
+import type { Product } from '$lib/types/Product';
 import { orderRemainingToPay } from '$lib/types/Order';
 import { CURRENCY_UNIT } from '$lib/types/Currency';
 import { runtimeConfig } from '$lib/server/runtime-config';
@@ -267,6 +269,17 @@ export const actions: Actions = {
 					: null;
 
 			if (!order) {
+				const orderedProductIds = orderTab.items
+					.filter((item) => !itemQuantities || itemQuantities.has(item._id.toString()))
+					.map((item) => item.productId);
+				const orderedProducts = await collections.products
+					.find({ _id: { $in: orderedProductIds } })
+					.project<{ type: Product['type'] }>({ type: 1 })
+					.toArray();
+				if (sellsSubscriptionAtTill(user, orderedProducts)) {
+					return fail(400, { subscriptionAtTill: true });
+				}
+
 				await removeUserCarts(user);
 
 				if (splitMode === 'items' && itemQuantities) {

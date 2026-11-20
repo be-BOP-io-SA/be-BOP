@@ -20,7 +20,14 @@ export async function createSuperAdminUserInDb(login: string, password: string):
 		throw error(400, 'Password too short');
 	}
 
-	if (await checkPasswordPwnedTimes(password)) {
+	const pwnedTimes = await checkPasswordPwnedTimes(password);
+	if (pwnedTimes === null) {
+		// HP-2026-08-13 (review #2715) : fail-closed — never create a
+		// super-admin with a password whose breach status could not be
+		// verified (HIBP API unreachable).
+		throw error(503, 'Password breach check unavailable, please retry later');
+	}
+	if (pwnedTimes) {
 		throw error(400, 'Password has been pwned');
 	}
 
@@ -55,7 +62,12 @@ export async function createSuperAdminUserInDb(login: string, password: string):
 }
 
 export function userIdentifier(locals: App.Locals): UserIdentifier {
-	const secondaryEmails = locals.sso?.flatMap((sso) => (sso.email ? [sso.email] : []));
+	// Only an attested address may pull up a customer's carts and orders — an unverified one
+	// would let anyone claiming it at their provider read someone else's data. Those sessions
+	// still match on `ssoIds`.
+	const secondaryEmails = locals.sso?.flatMap((sso) =>
+		sso.email && sso.emailVerified ? [sso.email] : []
+	);
 	return {
 		ssoIds: locals.sso?.map((sso) => `${sso.provider}:${sso.id}`),
 		userId: locals.user?._id,
@@ -111,6 +123,11 @@ export function userQuery(
 	}
 
 	return ret;
+}
+
+// The session documents stay so carts, locale and orders keep their owner; only the sign-in goes.
+export async function signOutEverywhere(userId: ObjectId): Promise<void> {
+	await collections.sessions.updateMany({ userId }, { $unset: { userId: '', expireUserAt: '' } });
 }
 
 /**

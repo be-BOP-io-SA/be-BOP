@@ -1,6 +1,7 @@
 <script lang="ts">
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { useI18n } from '$lib/i18n';
+	import { safeHref } from '$lib/utils/safeUrl';
 
 	export let label: string;
 
@@ -10,7 +11,7 @@
 <div class="flex items-center gap-2">
 	{label}
 	<a
-		href={t('pos.label.currencyCodeHelpUrl')}
+		href={safeHref(t('pos.label.currencyCodeHelpUrl'))}
 		target="_blank"
 		rel="noopener noreferrer"
 		title={t('pos.label.currencyCodeHelp')}

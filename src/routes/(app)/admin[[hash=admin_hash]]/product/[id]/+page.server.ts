@@ -18,11 +18,14 @@ import {
 	amountOfProductSold,
 	getProductsWithStock,
 	validateStockReference,
-	cleanVariationLabels
+	cleanVariationLabels,
+	cleanVariationFamilies,
+	renameTranslatedVariationValues
 } from '$lib/server/product';
 import type { Tag } from '$lib/types/Tag';
+import type { DigitalFile } from '$lib/types/DigitalFile';
 import { adminPrefix } from '$lib/server/admin';
-import { AnyBulkWriteOperation, ObjectId } from 'mongodb';
+import { ObjectId, type AnyBulkWriteOperation } from 'mongodb';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 import { enrichWithOrderNumbers } from '$lib/server/orders';
@@ -35,8 +38,11 @@ export const load: PageServerLoad = async ({ params }) => {
 		.find({ productId: params.id })
 		.sort({ order: 1, createdAt: 1 })
 		.toArray();
+	// Projected, never raw: `secret` is the whole credential the download endpoint accepts, and
+	// /admin/digital-file is a separate grant from /admin/product.
 	const digitalFiles = await collections.digitalFiles
 		.find({ productId: params.id })
+		.project<Pick<DigitalFile, '_id' | 'name'>>({ name: 1 })
 		.sort({ createdAt: 1 })
 		.toArray();
 	const tags = await collections.tags
@@ -168,10 +174,17 @@ export const actions: Actions = {
 			...variation,
 			price: Math.max(parsePriceAmount(variation.price, parsed.priceCurrency), 0)
 		}));
+		const validVariations = variationsParsedPrice.filter(
+			(variation) => variation.name && variation.value
+		);
 		const amountInCarts = await amountOfStockReserved(params.id);
 		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
+		const renamedTranslations = renameTranslatedVariationValues(
+			product.translations,
+			parsed.variationValueRenames
+		);
 		const hasVariations =
-			parsed.standalone && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
+			parsed.hasVariations && Object.entries(cleanedVariationLabels?.names || []).length !== 0;
 
 		// Validate stock reference if provided
 		if (parsed.stockReferenceProductId) {
@@ -219,7 +232,7 @@ export const actions: Actions = {
 								}
 							}),
 						hideDiscountExpiration: parsed.hideDiscountExpiration,
-						standalone: parsed.payWhatYouWant || parsed.standalone,
+						standalone: parsed.payWhatYouWant || hasVariations || parsed.standalone,
 						free: parsed.free,
 						...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
 						applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
@@ -283,12 +296,17 @@ export const actions: Actions = {
 							paymentMethods: parsed.paymentMethods ?? []
 						}),
 						hasVariations,
-						...(hasVariations && {
-							variations: variationsParsedPrice.filter(
-								(variation) => variation.name && variation.value
-							),
-							variationLabels: cleanedVariationLabels
-						}),
+						...(hasVariations &&
+							validVariations.length > 0 && {
+								variations: validVariations,
+								variationLabels: cleanedVariationLabels,
+								variationFamilies: cleanVariationFamilies(
+									parsed.variationFamilies,
+									validVariations
+								),
+								variationUrlPolicy: parsed.variationUrlPolicy
+							}),
+						...(renamedTranslations && { translations: renamedTranslations }),
 						hasSellDisclaimer: parsed.hasSellDisclaimer,
 						...(parsed.hasSellDisclaimer &&
 							parsed.sellDisclaimerTitle &&
@@ -323,11 +341,17 @@ export const actions: Actions = {
 							pricingSchedule: ''
 						}),
 						...(!parsed.restrictPaymentMethods && { paymentMethods: '' }),
-						...(!hasVariations && { variations: '', variationLabels: '' }),
 						...(!parsed.hasSellDisclaimer && { sellDisclaimer: '' }),
 						...(!parsed.payWhatYouWant && { recommendedPWYWAmount: '' }),
 						...(!parsed.bookingSpec && { bookingSpec: '' }),
 						...(!parsed.hasMaximumPrice && { maximumPrice: '' }),
+						...(parsed.hasVariations &&
+							validVariations.length === 0 && {
+								variations: '',
+								variationLabels: '',
+								variationFamilies: '',
+								variationUrlPolicy: ''
+							}),
 						...(!parsed.paidOrderWebhook && { paidOrderWebhook: '' })
 					}
 				}

@@ -2,12 +2,14 @@ import { SMTP_USER } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
 import { queueEmail } from '$lib/server/email';
 import { validateEmailOrNpub } from '$lib/server/nostr';
+import { CONTACT_MODES } from '$lib/types/ContactMode';
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { error, fail } from '@sveltejs/kit';
 import { format } from 'date-fns';
 import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';
+import { hideRsvpTargets } from '$lib/server/schedule';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -21,7 +23,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		.sort({ createdAt: 1 })
 		.toArray();
 	return {
-		schedule,
+		schedule: hideRsvpTargets(schedule),
 		pictures
 	};
 };
@@ -39,7 +41,8 @@ export const actions: Actions = {
 
 		const data = await request.formData();
 
-		const result = validateEmailOrNpub(data.get('address'));
+		// An RSVP accepts an email or an npub whatever the shop's contact modes
+		const result = validateEmailOrNpub(data.get('address'), CONTACT_MODES);
 		if ('error' in result) {
 			return fail(400, { error: result.error });
 		}

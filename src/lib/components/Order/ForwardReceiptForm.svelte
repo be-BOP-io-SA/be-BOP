@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n';
+	import NotificationAddressInput from '$lib/components/NotificationAddressInput.svelte';
+	import { page } from '$app/stores';
 
 	const { t } = useI18n();
 
@@ -37,18 +39,11 @@
 		{#if errorKey}
 			<p class="text-red-500">{t('login.error.' + errorKey)}</p>
 		{/if}
-		<label class="form-label body-secondaryText">
-			{t('login.authenticate.inputLabel')}
-			<input
-				class="form-input"
-				type="text"
-				name="address"
-				placeholder="email / npub1..."
-				required
-				pattern="^(?!nsec).*"
-				title={t('login.nsecBlockTitle')}
-			/>
-		</label>
+		<NotificationAddressInput
+			class="form-label body-secondaryText"
+			modes={$page.data.availableContactModes}
+			required
+		/>
 		<div class="flex gap-2">
 			<button type="submit" class="btn btn-black">
 				{t('order.forwardReceipt.send')}

@@ -13,6 +13,8 @@ import { pojo, type PojoObject } from '$lib/server/pojo';
 import { groupBy } from '$lib/utils/group-by';
 import type { SetRequired } from 'type-fest';
 
+type CartDigitalFile = Pick<SetRequired<DigitalFile, 'productId'>, '_id' | 'name' | 'productId'>;
+
 type FormattedCartItem = {
 	product: PojoObject<
 		Pick<
@@ -36,7 +38,7 @@ type FormattedCartItem = {
 		>
 	>;
 	picture: Picture | null;
-	digitalFiles: WithId<DigitalFile>[];
+	digitalFiles: CartDigitalFile[];
 	quantity: number;
 	customPrice?: {
 		amount: number;
@@ -103,10 +105,13 @@ export async function formatCart(
 		const pictureByProductId = Object.fromEntries(
 			pictures.map((picture) => [picture.productId, picture])
 		);
+		// Projected, never raw: a DigitalFile carries `secret`, which alone unlocks the download,
+		// and a cashier holds no permission on the digital-file admin section.
 		const digitalFiles = await collections.digitalFiles
 			.find<SetRequired<DigitalFile, 'productId'>>({
 				productId: { $in: products.map((product) => product._id) }
 			})
+			.project<CartDigitalFile>({ name: 1, productId: 1 })
 			.toArray();
 		const digitalFilesByProductId = groupBy(digitalFiles, (d) => d.productId);
 

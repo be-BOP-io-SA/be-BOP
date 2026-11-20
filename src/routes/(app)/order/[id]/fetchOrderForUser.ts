@@ -1,12 +1,8 @@
 import { collections } from '$lib/server/database';
+import { processorFor, serializePresentation } from '$lib/server/sdk/pp';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
-import { isOrderFullyPaid } from '$lib/server/orders';
-import { isPaypalEnabled, paypalGetCheckout } from '$lib/server/paypal';
 import { picturesForProducts } from '$lib/server/picture';
-import { runtimeConfig } from '$lib/server/runtime-config';
-import { isStripeEnabled } from '$lib/server/stripe';
-import { isSumupEnabled } from '$lib/server/sumup';
-import { FAKE_ORDER_INVOICE_NUMBER } from '$lib/types/Order';
+import type { DigitalFile } from '$lib/types/DigitalFile';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { error } from '@sveltejs/kit';
 
@@ -23,11 +19,39 @@ async function fetchOrderForUserImpl(orderId: string, params?: { userRoleId?: st
 		throw error(404, 'Order not found');
 	}
 
+	// An anonymous order-URL holder has no role at all, so "not a customer" alone is not staff.
+	const isStaff = !!params?.userRoleId && params.userRoleId !== CUSTOMER_ROLE_ID;
+
 	const pictures = await picturesForProducts(order.items.map((item) => item.product._id));
 
+	// Projected, never raw: a DigitalFile carries `secret`, which is the whole credential the
+	// download endpoint accepts, and this order is serialized into the page for the buyer.
 	const digitalFiles = await collections.digitalFiles
 		.find({ productId: { $in: order.items.map((item) => item.product._id) } })
+		.project<Pick<DigitalFile, '_id' | 'name' | 'productId'>>({
+			name: 1,
+			productId: 1
+		})
 		.toArray();
+
+	// An employee without an alias is named after their role in the notes they wrote.
+	const unaliasedRoleIds = [
+		...new Set(
+			(order.notes ?? []).flatMap((note) =>
+				note.role && note.role !== CUSTOMER_ROLE_ID && !note.userAlias ? [note.role] : []
+			)
+		)
+	];
+	const roleNameById = new Map(
+		unaliasedRoleIds.length
+			? (
+					await collections.roles
+						.find({ _id: { $in: unaliasedRoleIds } })
+						.project<{ _id: string; name: string }>({ name: 1 })
+						.toArray()
+			  ).map((role) => [role._id, role.name])
+			: []
+	);
 
 	const posSubtypesMap = new Map<
 		string,
@@ -43,82 +67,6 @@ async function fetchOrderForUserImpl(orderId: string, params?: { userRoleId?: st
 				tapToPayOnActivationUrl: subtype?.tapToPay?.onActivationUrl,
 				hasProcessor: !!subtype?.tapToPay?.processor
 			});
-		}
-	}
-
-	for (const payment of order.payments) {
-		// Check if the payment has been paid but the status is still pending in DB
-		// In that case, we send back the status as paid, but do not update the DB (it's taken care of by order-lock)
-		if (payment.status === 'pending' && payment.checkoutId) {
-			if (payment.processor === 'sumup' && isSumupEnabled()) {
-				const response = await fetch('https://api.sumup.com/v0.1/checkouts/' + payment.checkoutId, {
-					headers: {
-						Authorization: 'Bearer ' + runtimeConfig.sumUp.apiKey
-					},
-					...{ autoSelectFamily: true }
-				});
-
-				if (!response.ok) {
-					throw new Error('Failed to fetch checkout status');
-				}
-
-				const checkout = await response.json();
-
-				if (checkout.status === 'PAID') {
-					payment.status = 'paid';
-
-					payment.invoice = {
-						number: FAKE_ORDER_INVOICE_NUMBER,
-						createdAt: new Date()
-					};
-
-					if (isOrderFullyPaid(order) && order.status === 'pending') {
-						order.status = 'paid';
-					}
-				}
-			} else if (payment.processor === 'stripe' && isStripeEnabled()) {
-				const response = await fetch(
-					'https://api.stripe.com/v1/payment_intents/' + payment.checkoutId,
-					{
-						headers: {
-							Authorization: 'Bearer ' + runtimeConfig.stripe.secretKey
-						}
-					}
-				);
-
-				if (!response.ok) {
-					throw new Error('Failed to fetch checkout status');
-				}
-
-				const paymentIntent = await response.json();
-
-				if (paymentIntent.status === 'succeeded') {
-					payment.status = 'paid';
-
-					payment.invoice = {
-						number: FAKE_ORDER_INVOICE_NUMBER,
-						createdAt: new Date()
-					};
-
-					if (isOrderFullyPaid(order) && order.status === 'pending') {
-						order.status = 'paid';
-					}
-				}
-			} else if (payment.processor === 'paypal' && isPaypalEnabled()) {
-				const checkout = await paypalGetCheckout(payment.checkoutId);
-				if (checkout.status === 'COMPLETED' || checkout.status === 'APPROVED') {
-					payment.status = 'paid';
-
-					payment.invoice = {
-						number: FAKE_ORDER_INVOICE_NUMBER,
-						createdAt: new Date()
-					};
-
-					if (isOrderFullyPaid(order) && order.status === 'pending') {
-						order.status = 'paid';
-					}
-				}
-			}
 		}
 	}
 
@@ -138,13 +86,13 @@ async function fetchOrderForUserImpl(orderId: string, params?: { userRoleId?: st
 				? posSubtypesMap.get(payment.posSubtype)?.hasProcessor ?? false
 				: false,
 			processor: payment.method === 'card' ? payment.processor : undefined,
+			presentation: serializePresentation(processorFor(payment), payment),
 			status: payment.status,
 			address: payment.address,
 			expiresAt: payment.expiresAt,
 			paidAt: payment.paidAt,
 			createdAt: payment.createdAt,
 			checkoutId: payment.checkoutId,
-			clientSecret: payment.clientSecret,
 			invoice: payment.invoice,
 			price: payment.price,
 			currencySnapshot: payment.currencySnapshot,
@@ -179,6 +127,9 @@ async function fetchOrderForUserImpl(orderId: string, params?: { userRoleId?: st
 				paymentMethods: item.product.paymentMethods,
 				isTicket: item.product.isTicket,
 				variationLabels: item.product.variationLabels,
+				// Without the families, productLabelWithVariations has nothing to hide a family by,
+				// and the order pages spell out what the product page keeps to itself.
+				variationFamilies: item.product.variationFamilies,
 				externalResources: item.product.externalResources?.map((externalResource) => ({
 					label: externalResource.label,
 					href: order.status === 'paid' ? externalResource.href : undefined
@@ -222,26 +173,33 @@ async function fetchOrderForUserImpl(orderId: string, params?: { userRoleId?: st
 		discount: order.discount,
 		currencySnapshot: order.currencySnapshot,
 		status: order.status,
-		notes:
-			order.notes?.map((note) => ({
-				content: note.content,
-				createdAt: note.createdAt,
-				isEmployee: note.role !== CUSTOMER_ROLE_ID,
-				isSystem: note.role === null,
-				alias: note.userAlias
-			})) || [],
+		notes: isStaff
+			? order.notes?.map((note) => ({
+					content: note.content,
+					createdAt: note.createdAt,
+					isEmployee: note.role !== CUSTOMER_ROLE_ID,
+					isSystem: note.role === null,
+					alias:
+						note.userAlias ||
+						(note.role && note.role !== CUSTOMER_ROLE_ID
+							? roleNameById.get(note.role) ?? note.role
+							: undefined)
+			  })) || []
+			: [],
 		receiptNote: order.receiptNote,
 		customCheckoutFields: order.customCheckoutFields,
 		user: {
 			npub: order.user.npub,
 			email: order.user.email,
-			userRoleId: order.user.userRoleId,
-			userLogin: order.user.userLogin,
-			userAlias: order.user.userAlias
+			...(isStaff && {
+				userRoleId: order.user.userRoleId,
+				userLogin: order.user.userLogin,
+				userAlias: order.user.userAlias
+			})
 		},
 		onLocation: order.onLocation,
 		dataAnonymized: order.dataAnonymized,
-		...(params?.userRoleId !== CUSTOMER_ROLE_ID && { orderLabelIds: order.orderLabelIds })
+		...(isStaff && { orderLabelIds: order.orderLabelIds })
 	};
 }
 

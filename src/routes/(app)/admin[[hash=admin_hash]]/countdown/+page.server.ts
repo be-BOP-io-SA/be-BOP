@@ -2,9 +2,9 @@ import { collections } from '$lib/server/database';
 import type { Countdown } from '$lib/types/Countdown';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = () => {
+export const load: PageServerLoad = async () => {
 	return {
-		countdowns: collections.countdowns
+		countdowns: await collections.countdowns
 			.find({})
 			.project<Pick<Countdown, '_id' | 'name'>>({
 				_id: 1,

@@ -2,10 +2,47 @@ import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
 	webServer: {
-		command: 'npm run build && npm run preview',
-		port: 4173
+		// Unlike `vite preview`, the production server reads the client address from `ADDRESS_HEADER`.
+		command:
+			'npm run build && node --import ./tests/fake-providers.mjs --env-file-if-exists=.env --env-file-if-exists=.env.local --env-file-if-exists=.env.production --env-file-if-exists=.env.production.local build',
+		port: 5012,
+		// The command builds first, which the default 60s does not cover on a cold cache.
+		timeout: 180_000,
+		env: {
+			// The suite creates a super admin and writes to the database. Keep that out of the
+			// database a developer is using for their own shop.
+			MONGODB_DB: 'bebop-e2e',
+			// A developer's SMTP_* variables lock the SMTP settings page the suite drives; e-mails
+			// stay fake through the database default.
+			SMTP_FAKE: '',
+			PORT: '5012',
+			ORIGIN: 'http://localhost:5012',
+			// Each spec file sends its own address (tests/client-ip.ts) to stay under the rate limit.
+			ADDRESS_HEADER: 'x-forwarded-for',
+			// Some shops set 0, which SvelteKit alone reads as 0 bytes: every form of the suite
+			// then checks it still gets through.
+			BODY_SIZE_LIMIT: '0'
+		}
 	},
-	testDir: 'tests'
+	// One worker, in order: the tests share one database and one shop.
+	workers: 1,
+	fullyParallel: false,
+	// The first page of a freshly built server is compiled on demand, and signing in waits out
+	// a breach-check call to an API a CI box often cannot reach. Thirty seconds covers neither.
+	timeout: 60_000,
+	testDir: 'tests',
+	projects: [
+		{ name: 'setup', testMatch: /auth\.setup\.ts/ },
+		{
+			name: 'e2e',
+			dependencies: ['setup'],
+			// Signing in once and reusing the session is not only faster: the login route allows
+			// ten attempts per IP per five minutes, so a suite that re-authenticates per test
+			// starts failing with a 429 partway through.
+			use: { storageState: 'playwright/.auth/admin.json' },
+			testIgnore: /auth\.setup\.ts/
+		}
+	]
 };
 
 export default config;

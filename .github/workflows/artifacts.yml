@@ -10,17 +10,19 @@ jobs:
   build:
     name: Build artifacts
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           lfs: true
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'pnpm'
       - name: Build release artifact
         run: |
@@ -56,11 +58,31 @@ jobs:
         with:
           path: release_artifacts
           merge-multiple: true
-      - name: Get merge commit message
+      # The release name and notes come from the merged pull request, not from
+      # the last commit on main. With a merge or rebase strategy, that commit is
+      # whatever the branch ended on — a formatting pass, a lint fix, a fixup —
+      # and the release then announces that instead of the feature. Trailers are
+      # stripped: they address the commit log, not the people reading releases.
+      - name: Get release title and notes from the merged pull request
         id: commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TITLE=$(git log -1 --pretty=%s)
-          BODY=$(git log -1 --pretty=%b)
+          SHA=$(git rev-parse HEAD)
+          PR_JSON=$(gh api "repos/${{ github.repository }}/commits/$SHA/pulls" \
+            --jq '.[0] // empty' 2>/dev/null || true)
+          if [ -n "$PR_JSON" ]; then
+            NUMBER=$(printf '%s' "$PR_JSON" | jq -r '.number')
+            TITLE=$(printf '%s' "$PR_JSON" | jq -r '.title')
+            BODY=$(printf '%s' "$PR_JSON" | jq -r '.body // ""')
+            BODY=$(printf '%s\n\nPR #%s' "$BODY" "$NUMBER")
+          else
+            # Direct push to main: nothing better to fall back on.
+            TITLE=$(git log -1 --pretty=%s)
+            BODY=$(git log -1 --pretty=%b)
+          fi
+          TITLE=$(printf '%s' "$TITLE" | sed -e 's/:new:/🆕/g' -e 's/🤖//g' -e 's/  */ /g' -e 's/^ *//' -e 's/ *$//')
+          BODY=$(printf '%s' "$BODY" | grep -viE '^[[:space:]]*(co-authored-by:|.*claude\.ai/code|.*generated with )' | cat -s || true)
           COMMIT_DATE="$(git log -1 --date=format:%F --pretty=format:%cd)"
           HASH=$(git rev-parse --short HEAD)
           echo "title<<EOF" >> $GITHUB_OUTPUT
@@ -79,7 +101,7 @@ jobs:
           cd release_artifacts
           mv be-BOP-release.zip "../${{ steps.commit.outputs.release_name }}.zip"
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: rel/${{ steps.commit.outputs.commit_date }}/${{ steps.commit.outputs.hash }}
           name: ${{ steps.commit.outputs.title }}

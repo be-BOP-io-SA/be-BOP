@@ -2,48 +2,52 @@
 	import { MAX_NAME_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 	import PictureComponent from '$lib/components/Picture.svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
 	let name = data.slider.title;
 	let slug = data.slider._id;
+
+	const { t } = useI18n();
+
 	function confirmDelete(event: Event) {
-		if (!confirm('Would you like to delete this slider?')) {
+		if (!confirm(t('admin.slider.confirmDelete'))) {
 			event.preventDefault();
 		}
 	}
 </script>
 
-<h1 class="text-3xl">Edit a slider</h1>
+<h1 class="text-3xl">{t('admin.slider.editSlider')}</h1>
 
 <form method="post" class="flex flex-col gap-4" action="?/update">
 	<label class="form-label">
-		Slug
+		{t('admin.slider.slug')}
 		<input
 			class="form-input block"
 			type="text"
 			name="slug"
-			placeholder="Slug"
+			placeholder={t('admin.slider.slug')}
 			bind:value={slug}
-			title="Only lowercase letters, numbers and dashes are allowed"
+			title={t('admin.slider.slugFormatHint')}
 			required
 			disabled
 		/>
 	</label>
 	<label class="form-label">
-		Slider title
+		{t('admin.slider.sliderTitle')}
 		<input
 			class="form-input"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="title"
-			placeholder="Slider name"
+			placeholder={t('admin.slider.sliderNamePlaceholder')}
 			bind:value={name}
 			on:change={() => (slug = generateId(name, true))}
 			on:input={() => (slug = generateId(name, true))}
 			required
 		/>
 	</label>
-	<h2 class="text-2xl my-4">Photos</h2>
+	<h2 class="text-2xl my-4">{t('admin.slider.photos')}</h2>
 
 	<div class="flex flex-row flex-wrap gap-6">
 		{#each data.pictures as picture}
@@ -55,13 +59,15 @@
 			</div>
 		{/each}
 	</div>
-	<a href="/admin/picture/new?sliderId={data.slider._id}" class="underline">Add picture</a>
+	<a href="/admin/picture/new?sliderId={data.slider._id}" class="underline"
+		>{t('admin.slider.addPicture')}</a
+	>
 	{#each [...data.pictures] as slidePicture, i}
 		{#if slidePicture.slider}
 			<div class="flex flex-col">
 				<input type="hidden" name="slideLinks[{i}].idPicture" bind:value={slidePicture._id} />
 				<label class="form-label">
-					Slide url ({slidePicture._id})
+					{t('admin.slider.slideUrl', { id: slidePicture._id })}
 					<input
 						type="text"
 						name="slideLinks[{i}].href"
@@ -76,20 +82,20 @@
 						name="slideLinks[{i}].newTab"
 						bind:checked={slidePicture.slider.openNewTab}
 					/>
-					Open in new tab
+					{t('admin.slider.openInNewTab')}
 				</label>
 			</div>
 		{/if}
 	{/each}
 	<div class="flex flex-row justify-between gap-2">
-		<input type="submit" class="btn btn-blue text-white" value="Update" />
-		<a href="/slider/{data.slider._id}" class="btn body-mainCTA">View</a>
+		<input type="submit" class="btn btn-blue text-white" value={t('admin.action.update')} />
+		<a href="/slider/{data.slider._id}" class="btn body-mainCTA">{t('admin.slider.view')}</a>
 
 		<input
 			type="submit"
 			class="btn btn-red text-white ml-auto"
 			formaction="?/delete"
-			value="Delete"
+			value={t('admin.slider.delete')}
 			on:click={confirmDelete}
 		/>
 	</div>

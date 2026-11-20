@@ -1,8 +1,10 @@
 import { collections } from '$lib/server/database';
 import { validateEmailOrNpub } from '$lib/server/nostr';
+import { availableContactModes } from '$lib/server/contact-modes';
+import { contactModesOrEmail } from '$lib/types/ContactMode';
 import { userQuery } from '$lib/server/user';
 import { error, fail } from '@sveltejs/kit';
-import { z } from 'zod';
+import { hideRsvpTargets } from '$lib/server/schedule';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -16,43 +18,48 @@ export const load: PageServerLoad = async ({ params }) => {
 		.sort({ createdAt: 1 })
 		.toArray();
 	return {
-		schedule,
+		schedule: hideRsvpTargets(schedule),
 		pictures
 	};
 };
 
 export const actions: Actions = {
-	addSubscription: async function ({ request }) {
+	addSubscription: async function ({ params, request }) {
 		const data = await request.formData();
 
-		const addressResult = validateEmailOrNpub(data.get('address'));
+		const addressResult = validateEmailOrNpub(
+			data.get('address'),
+			contactModesOrEmail(availableContactModes())
+		);
 		if ('error' in addressResult) {
 			return fail(400, { error: addressResult.error });
 		}
-		const address = addressResult.address;
-		const { scheduleId } = z
-			.object({
-				scheduleId: z.string().min(1)
-			})
-			.parse({
-				scheduleId: data.get('scheduleId')
-			});
-		const personalInfo = await collections.personalInfo.findOne(
-			userQuery({
-				...(address.includes('@') && { email: address }),
-				...(!address.includes('@') && { npub: address })
-			})
+		const contact =
+			addressResult.kind === 'email'
+				? { email: addressResult.address }
+				: { npub: addressResult.address };
+
+		// The schedule is the one being visited, not the one the form names: the posted field only
+		// mirrors the route, and trusting it let a single request subscribe an address to any
+		// schedule, including ones that never opened subscriptions.
+		const schedule = await collections.schedules.findOne(
+			{ _id: params.id },
+			{ projection: { allowSubscription: 1 } }
 		);
 
+		if (!schedule?.allowSubscription) {
+			throw error(403, 'This schedule does not accept subscriptions');
+		}
+
+		const scheduleId = params.id;
+
+		const personalInfo = await collections.personalInfo.findOne(userQuery(contact));
+
 		await collections.personalInfo.updateOne(
-			userQuery({
-				...(address.includes('@') && { email: address }),
-				...(!address.includes('@') && { npub: address })
-			}),
+			userQuery(contact),
 			{
 				$set: {
-					...(address.includes('@') && { email: address }),
-					...(!address.includes('@') && { npub: address }),
+					...contact,
 					subscribedSchedule: personalInfo?.subscribedSchedule
 						? [...new Set([...personalInfo.subscribedSchedule, scheduleId])]
 						: [scheduleId],

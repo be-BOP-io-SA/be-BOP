@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
-<a href="{data.adminPrefix}/form/new" class="underline block">Add contact form</a>
+<a href="{data.adminPrefix}/form/new" class="underline block">{t('admin.form.addContactForm')}</a>
 
-<h1 class="text-3xl">List of Contact Form</h1>
+<h1 class="text-3xl">{t('admin.form.listOfContactForm')}</h1>
 
 <ul>
 	{#each data.contactForms as contactForm}
@@ -15,6 +19,6 @@
 			>
 		</li>
 	{:else}
-		No contact form yet
+		{t('admin.form.noContactFormYet')}
 	{/each}
 </ul>

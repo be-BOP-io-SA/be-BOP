@@ -46,7 +46,7 @@ export function getSubscriptionsToRemindViaNostr(
 			$lt: reminderWindow
 		},
 		cancelledAt: { $exists: false },
-		'user.npub': { $exists: true },
+		'user.npub': { $exists: true, $nin: ['', null] },
 		notifications: { $not: { $elemMatch: { type: 'reminder', medium: 'nostr' } } }
 	});
 }
@@ -72,7 +72,7 @@ export function getSubscriptionsToNotifyEndViaNostr(now: Date): FindCursor<PaidS
 			$lt: now
 		},
 		cancelledAt: { $exists: false },
-		'user.npub': { $exists: true },
+		'user.npub': { $exists: true, $nin: ['', null] },
 		notifications: { $not: { $elemMatch: { type: 'expiration', medium: 'nostr' } } }
 	});
 }

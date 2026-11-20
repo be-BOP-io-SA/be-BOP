@@ -1,47 +1,16 @@
-import { rootDir } from '$lib/server/root-dir';
-import { createHash } from 'crypto';
-import fs from 'fs';
-import { join } from 'path';
+import { bundledAssetUrl } from '$lib/server/bundled-assets';
+import { defaultPictureUrl, isDefaultPictureFile } from '$lib/server/default-picture';
+import { error, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-const assetDir = join(rootDir, 'src/lib/assets');
-const allowedAssets: ReadonlySet<string> = new Set(
-	fs.readdirSync(assetDir).filter((name) => fs.statSync(join(assetDir, name)).isFile())
-);
+export const GET: RequestHandler = async ({ params }) => {
+	const url = isDefaultPictureFile(params.filename)
+		? await defaultPictureUrl(params.filename)
+		: bundledAssetUrl(params.filename);
 
-export const GET: RequestHandler = async ({ params, request }) => {
-	if (!allowedAssets.has(params.filename)) {
-		return new Response('Asset not found', { status: 404 });
+	if (!url) {
+		throw error(404, 'Asset not found');
 	}
 
-	const filePath = join(assetDir, params.filename);
-
-	try {
-		const fileContent = fs.readFileSync(filePath);
-		const hash = createHash('sha1').update(fileContent).digest('hex');
-
-		const ifNoneMatch = request.headers.get('If-None-Match');
-
-		if (ifNoneMatch === hash) {
-			return new Response(null, {
-				status: 304,
-				headers: {
-					'Cache-Control': 'max-age=0; must-revalidate',
-					ETag: `"${hash}"`
-				}
-			});
-		}
-
-		return new Response(fileContent, {
-			status: 200,
-			headers: {
-				'Content-Type': 'image/png',
-				'Cache-Control': 'max-age=0; must-revalidate',
-				ETag: `"${hash}"`
-			}
-		});
-	} catch (err) {
-		console.error('Error serving asset:', err);
-		return new Response('Asset not found or server error', { status: 404 });
-	}
+	throw redirect(302, url);
 };

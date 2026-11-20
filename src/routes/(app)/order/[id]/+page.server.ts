@@ -5,12 +5,18 @@ import { fetchOrderForUser } from './fetchOrderForUser.js';
 import { getPublicS3DownloadLink } from '$lib/server/s3.js';
 import { uniqBy } from '$lib/utils/uniqBy.js';
 import { cmsFromContent } from '$lib/server/cms.js';
-import { anonymizeOrderData, conflictingTapToPayOrder } from '$lib/server/orders';
+import {
+	anonymizeOrderData,
+	conflictingTapToPayOrder,
+	onOrderPaymentFailed
+} from '$lib/server/orders';
 import { userIdentifier, userQuery } from '$lib/server/user';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
-import { paymentMethods } from '$lib/server/payment-methods.js';
+import { paymentMethods, restrictToProducts } from '$lib/server/payment-methods.js';
+import { PAYMENT_RETURN_PARAM } from '$lib/types/Order.js';
 import type { OrderLabel } from '$lib/types/OrderLabel.js';
+import type { DigitalFile } from '$lib/types/DigitalFile.js';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ params, depends, locals, url }) => {
@@ -18,10 +24,19 @@ export const load: PageServerLoad = async ({ params, depends, locals, url }) => 
 
 	const order = await fetchOrderForUser(params.id, { userRoleId: locals.user?.roleId });
 
-	const digitalFiles = uniqBy(
-		order.items.flatMap((item) => item.digitalFiles),
-		(file) => file._id
-	);
+	// The order payload deliberately carries no storage details; fetch them here, where they stay
+	// server-side and only a paid order gets a link built from them.
+	const digitalFiles = await collections.digitalFiles
+		.find({
+			_id: {
+				$in: uniqBy(
+					order.items.flatMap((item) => item.digitalFiles),
+					(file) => file._id
+				).map((file) => file._id)
+			}
+		})
+		.project<Pick<DigitalFile, '_id' | 'name' | 'storage'>>({ name: 1, storage: 1 })
+		.toArray();
 	const [cmsOrderTop, cmsOrderBottom] = await Promise.all([
 		collections.cmsPages.findOne(
 			{
@@ -64,15 +79,12 @@ export const load: PageServerLoad = async ({ params, depends, locals, url }) => 
 			}
 		)
 	]);
-	let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }).filter(
-		(method) => method !== 'free'
+	const methods = restrictToProducts(
+		paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }).filter(
+			(method) => method !== 'free'
+		),
+		order.items.map((item) => item.product)
 	);
-
-	for (const item of order.items) {
-		if (item.product.paymentMethods) {
-			methods = methods.filter((method) => item.product.paymentMethods?.includes(method));
-		}
-	}
 	let labels: OrderLabel[] = [];
 	if (locals.user?.roleId && locals.user.roleId !== CUSTOMER_ROLE_ID) {
 		labels = await collections.labels.find({}).toArray();
@@ -106,7 +118,7 @@ export const load: PageServerLoad = async ({ params, depends, locals, url }) => 
 		posSubtypes,
 		posMode: posMode,
 		hasPosOptions: locals.user?.hasPosOptions,
-		digitalFiles: Promise.all(
+		digitalFiles: await Promise.all(
 			digitalFiles.map(async (file) => ({
 				name: file.name,
 				size: file.storage.size,
@@ -115,7 +127,7 @@ export const load: PageServerLoad = async ({ params, depends, locals, url }) => 
 		),
 		...(cmsOrderTop && {
 			cmsOrderTop,
-			cmsOrderTopData: cmsFromContent(
+			cmsOrderTopData: await cmsFromContent(
 				{
 					desktopContent: cmsOrderTop.content,
 					employeeContent:
@@ -127,7 +139,7 @@ export const load: PageServerLoad = async ({ params, depends, locals, url }) => 
 		}),
 		...(cmsOrderBottom && {
 			cmsOrderBottom,
-			cmsOrderBottomData: cmsFromContent(
+			cmsOrderBottomData: await cmsFromContent(
 				{
 					desktopContent: cmsOrderBottom.content,
 					employeeContent:
@@ -141,6 +153,7 @@ export const load: PageServerLoad = async ({ params, depends, locals, url }) => 
 		hideCreditCardQrCode: runtimeConfig.hideCreditCardQrCode,
 		labels,
 		returnTo: returnTo ?? undefined,
+		paymentReturn: url.searchParams.get(PAYMENT_RETURN_PARAM) ?? undefined,
 		allowManualCleanup: runtimeConfig.dataCleanup.allowUserManualCleanup,
 		canCleanPersonalData:
 			runtimeConfig.dataCleanup.allowUserManualCleanup && !!(locals.email || locals.npub)
@@ -149,17 +162,28 @@ export const load: PageServerLoad = async ({ params, depends, locals, url }) => 
 
 export const actions: Actions = {
 	cancel: async function ({ params, request }) {
-		await collections.orders.updateOne(
-			{
-				_id: params.id,
-				status: 'pending'
-			},
-			{
-				$set: {
-					status: 'canceled'
+		let order = await collections.orders.findOne({ _id: params.id, status: 'pending' });
+
+		if (order) {
+			if (order.payments.some((payment) => payment.status === 'paid')) {
+				throw error(400, 'This order has already been partly paid');
+			}
+			// Through the payment path, so booking slots and free-product units are released too.
+			for (const { _id } of order.payments.filter(
+				(payment) => payment.status === 'pending' || payment.status === 'failed'
+			)) {
+				const payment = order.payments.find((p) => p._id.equals(_id));
+				if (payment) {
+					order = await onOrderPaymentFailed(order, payment, 'canceled');
 				}
 			}
-		);
+			if (!order.payments.length) {
+				await collections.orders.updateOne(
+					{ _id: order._id, status: 'pending' },
+					{ $set: { status: 'canceled' } }
+				);
+			}
+		}
 
 		throw redirect(303, request.headers.get('referer') || '/');
 	},

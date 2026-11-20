@@ -6,7 +6,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	return {
-		emails: collections.emailNotifications
+		emails: await collections.emailNotifications
 			.find({})
 			.project<Pick<EmailNotification, 'subject' | 'dest' | 'error' | 'processedAt'>>({
 				subject: 1,

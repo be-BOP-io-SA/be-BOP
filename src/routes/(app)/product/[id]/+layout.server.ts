@@ -28,7 +28,7 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 		if (errorPage) {
 			return {
 				cmsPage: omit(errorPage, ['content']),
-				cmsData: cmsFromContent({ desktopContent: errorPage.content }, locals)
+				cmsData: await cmsFromContent({ desktopContent: errorPage.content }, locals)
 			};
 		}
 	}

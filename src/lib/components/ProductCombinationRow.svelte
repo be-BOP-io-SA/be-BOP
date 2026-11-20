@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MultiSelect } from 'svelte-multiselect';
 	import { createEventDispatcher } from 'svelte';
+	import { useI18n } from '$lib/i18n';
 
 	export let product: { productId: string; quantity: number };
 	export let comboIdx: number;
@@ -8,6 +9,7 @@
 	export let availableProductList: Array<{ _id: string; name: string }>;
 
 	const dispatch = createEventDispatcher<{ remove: null; change: null }>();
+	const { t } = useI18n();
 
 	function hasStringValue(o: unknown): o is { value: string } {
 		return (
@@ -18,10 +20,12 @@
 		);
 	}
 
-	function handleSelectChange(
-		e: CustomEvent<{ option?: unknown; type: 'add' | 'remove' | 'removeAll' }>
-	) {
-		const { type, option } = e.detail;
+	// svelte-multiselect 11 reports through a callback prop rather than a dispatched event.
+	function handleSelectChange(detail: {
+		option?: unknown;
+		type: 'add' | 'remove' | 'removeAll' | 'selectAll' | 'reorder';
+	}) {
+		const { type, option } = detail;
 		if (type === 'add' && hasStringValue(option)) {
 			product.productId = option.value;
 		} else if (type === 'remove' || type === 'removeAll') {
@@ -47,7 +51,7 @@
 						}
 				  ]
 				: []}
-			on:change={handleSelectChange}
+			onchange={handleSelectChange}
 		/>
 	</div>
 	<input
@@ -61,8 +65,8 @@
 		class="form-input flex-1 min-w-0 !h-[30px] !py-0"
 		name="combinations[{comboIdx}][{prodIdx}][quantity]"
 		bind:value={product.quantity}
-		placeholder="Required quantity"
-		title="Required quantity of this product to trigger the discount"
+		placeholder={t('admin.productForm.requiredQuantity')}
+		title={t('admin.productForm.requiredQuantityToTriggerDiscount')}
 	/>
 	<button type="button" class="shrink-0" on:click={() => dispatch('remove')}>🗑️</button>
 </div>

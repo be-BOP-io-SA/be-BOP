@@ -2,9 +2,9 @@ import { collections } from '$lib/server/database';
 import type { CMSPage } from '$lib/types/CmsPage';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = ({ locals }) => {
+export const load: PageServerLoad = async ({ locals }) => {
 	return {
-		cmsPages: collections.cmsPages
+		cmsPages: await collections.cmsPages
 			.find({})
 			.project<Pick<CMSPage, '_id' | 'title' | 'maintenanceDisplay' | 'hasMobileContent'>>({
 				_id: 1,

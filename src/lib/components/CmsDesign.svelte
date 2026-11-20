@@ -251,7 +251,7 @@
 				{:else}
 					<PictureComponent picture={pictureById[token.slug]} class="my-5 lg:hidden block" />
 				{/if}
-			{:else if token.type === 'leaderboardWidget'}
+			{:else if token.type === 'leaderboardWidget' && leaderboardById[token.slug]}
 				<LeaderBoardWidget
 					leaderboard={leaderboardById[token.slug]}
 					{pictures}
@@ -376,7 +376,7 @@
 					/>
 				{:else if token.type === 'pictureWidget'}
 					<PictureComponent picture={pictureById[token.slug]} class="my-5" />
-				{:else if token.type === 'leaderboardWidget'}
+				{:else if token.type === 'leaderboardWidget' && leaderboardById[token.slug]}
 					<LeaderBoardWidget
 						leaderboard={leaderboardById[token.slug]}
 						{pictures}

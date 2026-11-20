@@ -1,10 +1,16 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
+
 	export let data;
 </script>
 
-<a href="{data.adminPrefix}/specification/new" class="underline block">Add specification</a>
+<a href="{data.adminPrefix}/specification/new" class="underline block"
+	>{t('admin.specification.addSpecification')}</a
+>
 
-<h1 class="text-3xl">List of Specification</h1>
+<h1 class="text-3xl">{t('admin.specification.listTitle')}</h1>
 
 <ul>
 	{#each data.specifications as specification}
@@ -16,6 +22,6 @@
 			>
 		</li>
 	{:else}
-		No specification yet
+		{t('admin.specification.noSpecificationYet')}
 	{/each}
 </ul>

@@ -3,8 +3,11 @@
 	import { invalidateAll } from '$app/navigation';
 	import { languageNames, type LanguageKey } from '$lib/translations/index.js';
 	import { MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 
 	let language: LanguageKey = 'fr';
 	let errorMessage = '';
@@ -63,7 +66,7 @@
 		<p class="alert-success" role="status">{savedNotice}</p>
 	{/if}
 	<label class="form-label">
-		Select Language
+		{t('admin.layout.selectLanguage')}
 
 		<select bind:value={language} name="language" class="form-input">
 			{#each data.locales as locale}
@@ -73,7 +76,7 @@
 	</label>
 
 	<label class="form-label">
-		Brand name
+		{t('admin.layout.brandName')}
 		<input
 			type="text"
 			name="brandName"
@@ -84,7 +87,7 @@
 	</label>
 
 	<label class="form-label">
-		Website title
+		{t('admin.layout.websiteTitle')}
 		<input
 			type="text"
 			name="websiteTitle"
@@ -95,7 +98,7 @@
 	</label>
 
 	<label class="form-label">
-		Website description
+		{t('admin.layout.websiteDescription')}
 
 		<textarea
 			name="websiteShortDescription"
@@ -109,17 +112,18 @@
 	</label>
 
 	<p class="text-sm text-gray-600 mt-4">
-		Links themselves are managed in <a href="../layout" class="body-hyperlink underline">Layout</a>;
-		here you only translate the existing labels and (optionally) override the URLs per language.
+		{t('admin.layout.translationsLinksNotePrefix')}
+		<a href="../layout" class="body-hyperlink underline">{t('admin.layout.title')}</a>
+		{t('admin.layout.translationsLinksNoteSuffix')}
 	</p>
 
-	<h2 class="text-2xl">Top bar links</h2>
+	<h2 class="text-2xl">{t('admin.layout.topbarLinks')}</h2>
 
 	{#each topbarRows as row, i}
 		<div class="flex gap-4">
 			<input type="hidden" name="topbarLinks[{i}].id" value={row.id} />
 			<label class="form-label">
-				Text
+				{t('admin.layout.text')}
 				<input
 					type="text"
 					name="topbarLinks[{i}].label"
@@ -129,7 +133,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.layout.url')}
 				<input
 					type="text"
 					name="topbarLinks[{i}].href"
@@ -141,13 +145,13 @@
 		</div>
 	{/each}
 
-	<h2 class="text-2xl">Nav bar links</h2>
+	<h2 class="text-2xl">{t('admin.layout.navbarLinks')}</h2>
 
 	{#each navbarRows as row, i}
 		<div class="flex gap-4">
 			<input type="hidden" name="navbarLinks[{i}].id" value={row.id} />
 			<label class="form-label">
-				Text
+				{t('admin.layout.text')}
 				<input
 					type="text"
 					name="navbarLinks[{i}].label"
@@ -157,7 +161,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.layout.url')}
 				<input
 					type="text"
 					name="navbarLinks[{i}].href"
@@ -169,13 +173,13 @@
 		</div>
 	{/each}
 
-	<h2 class="text-2xl">Footer links</h2>
+	<h2 class="text-2xl">{t('admin.layout.footerLinks')}</h2>
 
 	{#each footerRows as row, i}
 		<div class="flex gap-4">
 			<input type="hidden" name="footerLinks[{i}].id" value={row.id} />
 			<label class="form-label">
-				Text
+				{t('admin.layout.text')}
 				<input
 					type="text"
 					name="footerLinks[{i}].label"
@@ -185,7 +189,7 @@
 				/>
 			</label>
 			<label class="form-label">
-				Url
+				{t('admin.layout.url')}
 				<input
 					type="text"
 					name="footerLinks[{i}].href"
@@ -197,5 +201,5 @@
 		</div>
 	{/each}
 
-	<button class="btn btn-black self-start" type="submit">Save</button>
+	<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>
 </form>

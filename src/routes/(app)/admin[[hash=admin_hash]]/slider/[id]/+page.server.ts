@@ -50,7 +50,8 @@ export const actions: Actions = {
 			parsed.slideLinks.map(async (slideLink) => {
 				await collections.pictures.updateOne(
 					{
-						_id: slideLink.idPicture
+						_id: slideLink.idPicture,
+						'slider._id': params.id
 					},
 					{
 						$set: {

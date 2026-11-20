@@ -33,7 +33,9 @@ export const CART_ERROR_CODES = [
 	'OUT_OF_STOCK',
 	'STANDALONE_QTY_ONE',
 	'VARIATION_INVALID',
-	'MAX_PER_ORDER'
+	'MAX_PER_ORDER',
+	'INVALID_QUANTITY',
+	'INVALID_PRICE'
 ] as const;
 export type CartErrorCode = (typeof CART_ERROR_CODES)[number];
 
@@ -174,6 +176,16 @@ export async function addToCartInDb(
 		cartError('NOT_FOR_SALE', "Product can't be added to basket ");
 	}
 
+	// Every stock and price guard below is a comparison, and comparisons against NaN are all
+	// false — one non-finite value would slip past the lot and then poison the stock counters.
+	if (!Number.isFinite(quantity)) {
+		cartError('INVALID_QUANTITY', 'Invalid quantity');
+	}
+
+	if (params.customPrice && !Number.isFinite(params.customPrice.amount)) {
+		cartError('INVALID_PRICE', 'Invalid price');
+	}
+
 	if (params.customPrice && !product.payWhatYouWant) {
 		cartError('NOT_PWYW', 'Product is not pay what you want');
 	}
@@ -271,21 +283,28 @@ export async function addToCartInDb(
 		}
 	}
 
+	if (
+		product.variations?.length &&
+		!checkProductVariationsIntegrity(product, params.chosenVariations)
+	) {
+		cartError('VARIATION_INVALID', 'error matching on variations choice');
+	}
+
+	// A chosen option's surcharge is part of the floor, pay-what-you-want or not.
+	const listPriceAmount = product.variations?.length
+		? productPriceWithVariations(product, params.chosenVariations)
+		: product.price.amount;
+
 	if (params.customPrice) {
 		params.customPrice.amount = Math.max(
 			params.customPrice.amount,
-			toCurrency(params.customPrice.currency, product.price.amount, product.price.currency)
+			toCurrency(params.customPrice.currency, listPriceAmount, product.price.currency)
 		);
-	} else if (
-		product.variations?.length &&
-		checkProductVariationsIntegrity(product, params.chosenVariations)
-	) {
+	} else if (product.variations?.length) {
 		params.customPrice = {
-			amount: productPriceWithVariations(product, params.chosenVariations),
+			amount: listPriceAmount,
 			currency: product.price.currency
 		};
-	} else if (product.variations?.length) {
-		cartError('VARIATION_INVALID', 'error matching on variations choice');
 	}
 
 	// Subscription pricing schedule: when a fresh purchase (no prior subscription for this

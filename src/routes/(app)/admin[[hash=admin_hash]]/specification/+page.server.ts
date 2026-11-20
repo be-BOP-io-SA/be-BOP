@@ -2,9 +2,9 @@ import { collections } from '$lib/server/database';
 import type { Specification } from '$lib/types/Specification';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = () => {
+export const load: PageServerLoad = async () => {
 	return {
-		specifications: collections.specifications
+		specifications: await collections.specifications
 			.find({})
 			.project<Pick<Specification, '_id' | 'title'>>({
 				_id: 1,

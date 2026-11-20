@@ -11,30 +11,30 @@
 	const { t, countryName, sortedCountryCodes } = useI18n();
 </script>
 
-<h1 class="text-3xl">List of orders</h1>
+<h1 class="text-3xl">{t('admin.order.title')}</h1>
 <form class="flex flex-col gap-2" method="GET">
 	<div class="gap-4 flex flex-col md:flex-row md:flex-wrap">
 		<label class="form-label w-[15em]">
-			Search Order
+			{t('admin.order.searchOrder')}
 			<input
 				class="form-input"
 				type="number"
 				name="orderNumber"
-				placeholder="search order by number"
+				placeholder={t('admin.order.searchOrderByNumberPlaceholder')}
 			/>
 		</label>
 		<label class="form-label w-[15em]">
-			Product alias
+			{t('admin.order.productAlias')}
 			<input
 				class="form-input"
 				type="text"
 				name="productAlias"
 				value={$page.url.searchParams.get('productAlias')}
-				placeholder="search order by product alias"
+				placeholder={t('admin.order.searchOrderByProductAliasPlaceholder')}
 			/>
 		</label>
 		<label class="form-label w-[15em]">
-			Payment Mean
+			{t('admin.order.paymentMean')}
 			<select
 				name="paymentMethod"
 				class="form-input"
@@ -51,9 +51,9 @@
 		</label>
 		{#if selectedPaymentMethod === 'point-of-sale' && data.posSubtypes?.length}
 			<label class="form-label w-[15em]">
-				PoS Subtype
+				{t('admin.order.posSubtype')}
 				<select name="posSubtype" class="form-input">
-					<option value="">All subtypes</option>
+					<option value="">{t('admin.order.allSubtypes')}</option>
 					{#each data.posSubtypes as subtype}
 						<option
 							value={subtype.slug}
@@ -66,7 +66,7 @@
 			</label>
 		{/if}
 		<label class="form-label w-[15em]">
-			Country
+			{t('admin.order.country')}
 			<select name="country" class="form-input">
 				<option></option>
 				{#each sortedCountryCodes() as code}
@@ -77,7 +77,7 @@
 			</select>
 		</label>
 		<label class="form-label w-[15em]">
-			Label
+			{t('admin.order.label')}
 			<select name="label" class="form-input">
 				<option></option>
 				{#each data.labels as label}
@@ -88,18 +88,28 @@
 			</select>
 		</label>
 		<label class="form-label w-[15em]">
-			Email
-			<input class="form-input" type="text" name="email" placeholder="search order by email" />
+			{t('admin.order.email')}
+			<input
+				class="form-input"
+				type="text"
+				name="email"
+				placeholder={t('admin.order.searchOrderByEmailPlaceholder')}
+			/>
 		</label>
 		<label class="form-label w-[15em]">
-			Npub
-			<input class="form-input" type="text" name="npub" placeholder="search order npub" />
+			{t('admin.order.npub')}
+			<input
+				class="form-input"
+				type="text"
+				name="npub"
+				placeholder={t('admin.order.searchOrderByNpubPlaceholder')}
+			/>
 		</label>
 		<label class="form-label w-[15em]">
-			Employee alias
+			{t('admin.order.employeeAlias')}
 			<select name="employeeAlias" class="form-input">
 				<option></option>
-				<option>System</option>
+				<option>{t('admin.order.system')}</option>
 				{#each data.employees as employee}
 					<option
 						value={employee.alias}
@@ -121,12 +131,13 @@
 			<button
 				class="btn btn-blue"
 				type="submit"
-				on:click={() => (next = Math.max(0, next - ORDER_PAGINATION_LIMIT))}>Previous</button
+				on:click={() => (next = Math.max(0, next - ORDER_PAGINATION_LIMIT))}
+				>{t('admin.order.previous')}</button
 			>
 		{/if}
 		{#if data.orders.length >= ORDER_PAGINATION_LIMIT}
 			<button class="btn btn-blue" type="submit" on:click={() => (next += ORDER_PAGINATION_LIMIT)}
-				>Next</button
+				>{t('admin.order.next')}</button
 			>
 		{/if}
 	</div>

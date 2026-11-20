@@ -3,12 +3,14 @@
 
 	export let data;
 
-	const { locale } = useI18n();
+	const { locale, t } = useI18n();
 </script>
 
-<a href="{data.adminPrefix}/challenge/new" class="underline block">Add challenge</a>
+<a href="{data.adminPrefix}/challenge/new" class="underline block"
+	>{t('admin.challenge.addChallenge')}</a
+>
 
-<h1 class="text-3xl">List of challenges</h1>
+<h1 class="text-3xl">{t('admin.challenge.listTitle')}</h1>
 <ul>
 	{#each data.challenges as challenge}
 		<li>
@@ -18,9 +20,10 @@
 			({challenge.progress.toLocaleString($locale)} /
 			{challenge.goal.amount.toLocaleString($locale)}
 			{challenge.mode === 'moneyAmount' ? challenge.goal.currency : ''}) -
-			<span class="text-gray-550">[Challenge={challenge._id}]</span>
+			<span class="text-gray-550">{t('admin.challenge.challengeIdTag', { id: challenge._id })}</span
+			>
 		</li>
 	{:else}
-		No challenges yet
+		{t('admin.challenge.noChallengesYet')}
 	{/each}
 </ul>

@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
+	import { productLabelWithVariations } from '$lib/types/Product';
 	import { goto } from '$app/navigation';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import CheckoutFieldInput from '$lib/components/CheckoutFieldInput.svelte';
-	import { bech32 } from 'bech32';
-	import { typedValues } from '$lib/utils/typedValues';
 	import ProductType from '$lib/components/ProductType.svelte';
 	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
 	import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
@@ -15,9 +14,10 @@
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
 	import { MIN_SATOSHIS_FOR_BITCOIN_PAYMENT, type DiscountType } from '$lib/types/Order.js';
 	import { useI18n } from '$lib/i18n';
+	import NotificationAddressInput from '$lib/components/NotificationAddressInput.svelte';
+	import { contactModesOrEmail } from '$lib/types/ContactMode';
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
-	import { trimPrefix } from '$lib/utils/trimPrefix.js';
 	import { formatBookedDates } from '$lib/utils/formatBookedDates.js';
 
 	export let data;
@@ -66,44 +66,26 @@
 
 	type FeedKey = (typeof feedItems)[number]['key'];
 
-	const npubInputs: Record<FeedKey, HTMLInputElement | null> = {
-		paymentStatus: null
-		// productChanges: null,
-		// newsletter: null
+	// With no contact mode available, the customer still leaves an email the staff can use
+	const contactModes = contactModesOrEmail(data.availableContactModes);
+
+	// The email is preferred over the npub when the customer has both
+	const prefilledEmail = contactModes.includes('email')
+		? data.email || data.personalInfoConnected?.email || ''
+		: '';
+	const prefilledNpub = contactModes.includes('nostr')
+		? data.npub || data.personalInfoConnected?.npub || ''
+		: '';
+	const addresses: Record<FeedKey, string> = {
+		paymentStatus: data.hasPosOptions ? '' : prefilledEmail || prefilledNpub
 	};
 
-	const emails: Record<FeedKey, string> = {
-		paymentStatus: data.hasPosOptions ? '' : data.email || data.personalInfoConnected?.email || ''
-	};
-
-	const npubs: Record<FeedKey, string> = {
-		paymentStatus: data.hasPosOptions ? '' : data.npub || data.personalInfoConnected?.npub || ''
-	};
-
-	function checkForm(event: SubmitEvent) {
+	function checkForm() {
 		submitting = true;
-		for (const input of typedValues(npubInputs)) {
-			if (!input) {
-				continue;
-			}
-
-			input.value = trimPrefix(input.value.trim(), 'nostr:');
-			if (
-				input.value &&
-				(!input.value.startsWith('npub1') || bech32.decodeUnsafe(input.value)?.prefix !== 'npub')
-			) {
-				input.setCustomValidity(t('checkout.invalidNpub'));
-				input.reportValidity();
-
-				event.preventDefault();
-				// Validation failed → the form is NOT being submitted, re-enable the button.
-				submitting = false;
-				return;
-			}
-		}
-		// Validation passed → the browser is submitting to the server now; keep `submitting`
-		// true so the "Payer" button stays disabled until the server response triggers a
-		// navigation (success) or a re-render with `form?.paymentGenerationFailed` (failure).
+		// The browser only fires `submit` once every field is valid, so it is submitting to the
+		// server now; keep `submitting` true so the "Payer" button stays disabled until the server
+		// response triggers a navigation (success) or a re-render with
+		// `form?.paymentGenerationFailed` (failure).
 	}
 
 	// The selected option value: a plain PaymentMethod, or `custom:<id>` for a custom method.
@@ -342,7 +324,23 @@
 					{t('checkout.paymentGenerationFailed')}
 				</div>
 			{/if}
-			<section class="gap-4 grid grid-cols-6">
+			{#if form?.paymentTimeoutOutOfRange}
+				<div class="alert-error">
+					{t('checkout.paymentTimeoutOutOfRange')}
+				</div>
+			{/if}
+			{#if form?.cartAlreadyCheckedOut}
+				<div class="alert-error">
+					{t('checkout.cartAlreadyCheckedOut')}
+				</div>
+			{/if}
+			{#if form?.subscriptionAtTill}
+				<div class="alert-error">
+					{t('checkout.subscriptionAtTill')}
+				</div>
+			{/if}
+			<input type="hidden" name="cartId" value={data.cartId} />
+			<section class="gap-4 flex flex-col sm:grid sm:grid-cols-6">
 				<h2 class="font-light text-2xl col-span-6">{t('checkout.shipmentInfo')}</h2>
 				{#if isDigital}
 					<p class="col-span-6">
@@ -402,9 +400,7 @@
 						</select>
 					</label>
 
-					<span class="col-span-3" />
-
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.state')}
 
 						<input
@@ -418,7 +414,7 @@
 								''}
 						/>
 					</label>
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.city')}
 
 						<input
@@ -433,7 +429,7 @@
 							required={!data.hasPosOptions}
 						/>
 					</label>
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.zipCode')}
 
 						<input
@@ -504,7 +500,7 @@
 			</section>
 
 			{#if showBillingInfo || (isDigital && data.isBillingAddressMandatory) || isProfessionalOrder}
-				<section class="gap-4 grid grid-cols-6">
+				<section class="gap-4 flex flex-col sm:grid sm:grid-cols-6">
 					<h2 class="font-light text-2xl col-span-6">{t('checkout.billingInfo')}</h2>
 
 					<label class="form-label col-span-3">
@@ -552,9 +548,7 @@
 						</select>
 					</label>
 
-					<span class="col-span-3" />
-
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.state')}
 
 						<input
@@ -564,7 +558,7 @@
 							value={data.personalInfoConnected.address?.state ?? ''}
 						/>
 					</label>
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.city')}
 
 						<input
@@ -575,7 +569,7 @@
 							required
 						/>
 					</label>
-					<label class="form-label col-span-2">
+					<label class="form-label col-span-3">
 						{t('address.zipCode')}
 
 						<input
@@ -622,7 +616,7 @@
 					<label class="form-label col-span-6">
 						{t('checkout.payment.method')}
 
-						<div class="grid grid-cols-2 gap-4 items-center">
+						<div class="flex flex-col gap-1">
 							<select
 								name="paymentMethod"
 								class="form-input"
@@ -665,7 +659,7 @@
 						{t('checkout.changePaymentExpiration')}
 					</label>
 					<label class="form-label col-span-6">
-						<div class="grid grid-cols-2 gap-4 items-center">
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
 							<input
 								type="number"
 								name="paymentTimeOut"
@@ -674,6 +668,9 @@
 								value={data.desiredPaymentTimeout}
 								disabled={!changePaymentTimeOut}
 								required={changePaymentTimeOut}
+								on:invalid={(event) =>
+									event.currentTarget.setCustomValidity(t('checkout.paymentTimeoutOutOfRange'))}
+								on:input={(event) => event.currentTarget.setCustomValidity('')}
 							/>
 						</div>
 					</label>
@@ -692,41 +689,12 @@
 							{label}
 						</div>
 						<div class="p-4 flex flex-col gap-3">
-							{#if (data.contactModesForceOption || data.emailsEnabled) && data.contactModes.includes('email')}
-								<label class="form-label">
-									{t('checkout.notifications.email')}
-									<input
-										type="email"
-										class="form-input"
-										autocomplete="email"
-										name="{key}Email"
-										bind:value={emails[key]}
-										required={key === 'paymentStatus' &&
-											!data.hasPosOptions &&
-											(!npubs[key] || !data.contactModes.includes('nostr'))}
-									/>
-								</label>
-							{/if}
-
-							{#if data.contactModes.includes('nostr')}
-								<label class="form-label">
-									{t('checkout.notifications.npub')}
-									<input
-										type="text"
-										class="form-input"
-										bind:this={npubInputs[key]}
-										bind:value={npubs[key]}
-										pattern="^(?!nsec).*"
-										title={t('login.nsecBlockTitle')}
-										name="{key}NPUB"
-										placeholder="npub1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-										required={key === 'paymentStatus' &&
-											(!emails[key] || !data.contactModes.includes('email')) &&
-											!data.hasPosOptions}
-										on:change={(ev) => ev.currentTarget.setCustomValidity('')}
-									/>
-								</label>
-							{/if}
+							<NotificationAddressInput
+								modes={contactModes}
+								name="{key}Address"
+								bind:value={addresses[key]}
+								required={key === 'paymentStatus' && !data.hasPosOptions}
+							/>
 						</div>
 						{#if data.displayNewsletterCommercialProspection}
 							<div class="p-4 flex flex-col gap-3">
@@ -776,14 +744,15 @@
 						<div class="p-4 flex flex-col gap-3">
 							<label class="form-label text-xl">
 								{t('checkout.receiptNote.label')}
-								<textarea name="receiptNoteContent" cols="30" rows="2" class="form-input" />
+								<textarea name="receiptNoteContent" cols="30" rows="2" class="form-input"
+								></textarea>
 							</label>
 						</div>{/if}
 					<div class="p-4 flex flex-col gap-3">
 						<label class="form-label text-xl">
 							{t('checkout.note.label')}
 
-							<textarea name="noteContent" cols="30" rows="2" class="form-input" />
+							<textarea name="noteContent" cols="30" rows="2" class="form-input"></textarea>
 						</label>
 					</div>
 				</article>
@@ -832,13 +801,10 @@
 						{/if}
 						<a href="/product/{item.product._id}">
 							<h3 class="text-base">
-								{item.chosenVariations
-									? item.product.name +
-									  ' - ' +
-									  Object.entries(item.chosenVariations)
-											.map(([key, value]) => item.product.variationLabels?.values[key][value])
-											.join(' - ')
-									: item.product.name}{#if item.quantity > 1 && !item.product.bookingSpec}<span
+								{productLabelWithVariations(
+									item.product,
+									item.chosenVariations
+								)}{#if item.quantity > 1 && !item.product.bookingSpec}<span
 										class="text-gray-500 ml-1">× {item.quantity}</span
 									>{/if}
 							</h3>
@@ -927,7 +893,7 @@
 						</div>
 					</form>
 
-					<div class="border-b border-gray-300 col-span-4" />
+					<div class="border-b border-gray-300 col-span-4"></div>
 				{/each}
 
 				{#if deliveryFeesToBill}
@@ -948,7 +914,7 @@
 							/>
 						</div>
 					</div>
-					<div class="border-b border-gray-300 col-span-4" />
+					<div class="border-b border-gray-300 col-span-4"></div>
 				{:else if isNaN(deliveryFeesToBill)}
 					<div class="alert-error mt-3">
 						{t('checkout.noDeliveryInCountry')}
@@ -1002,10 +968,10 @@
 							/>
 						</div>
 					</div>
-					<div class="border-b border-gray-300 col-span-4" />
+					<div class="border-b border-gray-300 col-span-4"></div>
 				{/each}
 
-				<span class="py-1" />
+				<span class="py-1"></span>
 
 				<div class="-mx-3 p-3 flex flex-col">
 					<div class="flex justify-between">

@@ -6,7 +6,7 @@ import { z } from 'zod';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
-	update: async function ({ params, request }) {
+	update: async function ({ params, request, locals }) {
 		const roleId = params.id;
 
 		const role = await collections.roles.findOne({
@@ -15,6 +15,12 @@ export const actions: Actions = {
 
 		if (!role) {
 			throw error(404, 'Role not found');
+		}
+
+		// Rewriting a permission set is a super-admin act, as creating one is: a scoped ARM
+		// manager who can widen any role can always reach the whole back office through it.
+		if (locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
+			throw error(403, 'Only the super admin can change a role’s permissions');
 		}
 
 		const data = await request.formData();
@@ -59,8 +65,14 @@ export const actions: Actions = {
 
 		throw redirect(303, `${adminPrefix()}/arm`);
 	},
-	delete: async function ({ params }) {
+	delete: async function ({ params, locals }) {
 		const roleId = params.id;
+
+		// Destroying a permission set is a super-admin act, as authoring one is: only the super
+		// admin can recreate it afterwards.
+		if (locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
+			throw error(403, 'Only the super admin can delete a role');
+		}
 
 		if (roleId === SUPER_ADMIN_ROLE_ID) {
 			throw error(403, 'You cannot delete this role');

@@ -38,9 +38,9 @@ export const load: PageServerLoad = async () => {
 		currentWallet: runtimeConfig.bitcoinWallet,
 		wallets,
 		transactions: transactions.reverse(),
-		balance: wallets.length ? getBalance() : 0,
-		orders: orders.toArray(),
-		blockchainInfo: getBlockchainInfo(),
+		balance: wallets.length ? await getBalance() : 0,
+		orders: await orders.toArray(),
+		blockchainInfo: await getBlockchainInfo(),
 		bip84: isBIP84Configured,
 		bip84Xpub: BIP84_XPUB,
 		rpc: ALLOW_BITCOIN_RPC === 'true' || ALLOW_BITCOIN_RPC === '1'
@@ -100,10 +100,12 @@ export const actions: Actions = {
 		const resp = await bitcoinRpc(parsed.method as BitcoinCommand, JSON.parse(parsed.params));
 
 		if (!resp.ok) {
-			return fail(400, { rpcFail: (await resp.json()).error.message });
+			return fail(400, {
+				rpcFail: ((await resp.json()) as { error: { message: string } }).error.message
+			});
 		}
 		return {
-			rpcSuccess: (await resp.json()).result
+			rpcSuccess: ((await resp.json()) as { result: unknown }).result
 		};
 	},
 	loadWallets: async function () {

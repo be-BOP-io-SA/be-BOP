@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { BasicProductFrontend } from '$lib/types/Product';
+	import { productLabelWithVariations, type BasicProductFrontend } from '$lib/types/Product';
 	import type { Picture as PictureType } from '$lib/types/Picture';
 	import Picture from './Picture.svelte';
 	import PriceTag from './PriceTag.svelte';
@@ -32,13 +32,7 @@
 	<div class="flex flex-col grow gap-1">
 		<h2 class="body-title text-[18px] font-medium">{t('product.addedToCart')}</h2>
 		<h3 class="text-base font-light">
-			{chosenVariations
-				? product.name +
-				  ' - ' +
-				  Object.entries(chosenVariations)
-						.map(([key, value]) => product.variationLabels?.values[key][value])
-						.join(' - ')
-				: product.name}
+			{productLabelWithVariations(product, chosenVariations)}
 		</h3>
 		{#if !removePopinProductPrice}
 			<PriceTag

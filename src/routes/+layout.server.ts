@@ -3,6 +3,8 @@ import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import type { LayoutServerLoad } from './$types';
 import { getCookieConsent } from '$lib/server/cookies';
 import { extractAnalyticsHostnames } from '$lib/server/analytics-hostnames';
+import { adminPathPrefix, routedPathname } from '$lib/server/admin';
+import { availableContactModes } from '$lib/server/contact-modes';
 
 export const load: LayoutServerLoad = async (event) => {
 	const viewportWidth = (() => {
@@ -24,7 +26,10 @@ export const load: LayoutServerLoad = async (event) => {
 		}
 	})();
 
-	const analyticsSnippet = runtimeConfig.analyticsScriptSnippet;
+	// Third-party script has no business running beside the admin session or the till.
+	const guardPath = routedPathname(event.url.pathname);
+	const isStaffArea = !!adminPathPrefix(guardPath) || /^\/pos(\/|$)/.test(guardPath);
+	const analyticsSnippet = isStaffArea ? '' : runtimeConfig.analyticsScriptSnippet;
 	const analyticsConsent = getCookieConsent(event.cookies);
 	const analyticsSnippetConfigured = !!analyticsSnippet;
 	const analyticsHostnames = analyticsSnippetConfigured
@@ -53,6 +58,7 @@ export const load: LayoutServerLoad = async (event) => {
 		viewportWidth,
 		contactModes: runtimeConfig.contactModes,
 		contactModesForceOption: runtimeConfig.contactModesForceOption,
+		availableContactModes: availableContactModes(),
 		hideFromSearchEngines: runtimeConfig.hideFromSearchEngines,
 		ageRestriction: runtimeConfig.ageRestriction,
 		bolt12Address: runtimeConfig.phoenixd.bolt12Address

@@ -1,18 +1,22 @@
 <script>
 	import { page } from '$app/stores';
+	import { useI18n } from '$lib/i18n';
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
-<h1 class="text-3xl">Update OAuth provider</h1>
+<h1 class="text-3xl">{t('admin.oauth.updateTitle')}</h1>
 
 <p>
-	Specify <span class="underline">{$page.url.origin}/oauth/{data.provider.slug}/callback</span> as the
-	redirect URL when creating the OAuth application.
+	{t('admin.oauth.redirectUrlDescriptionBefore')}
+	<span class="underline">{$page.url.origin}/oauth/{data.provider.slug}/callback</span>
+	{t('admin.oauth.redirectUrlDescriptionAfter')}
 </p>
 
 <form class="flex flex-col gap-4" method="POST">
 	<label class="form-label"
-		>Provider name
+		>{t('admin.oauth.providerName')}
 
 		<input
 			class="form-input"
@@ -25,7 +29,7 @@
 	</label>
 
 	<label class="form-label">
-		Slug
+		{t('admin.oauth.slug')}
 		<input
 			class="form-input"
 			type="text"
@@ -38,7 +42,7 @@
 	</label>
 
 	<label class="form-label">
-		Client id
+		{t('admin.oauth.clientId')}
 		<input
 			class="form-input"
 			type="text"
@@ -50,7 +54,7 @@
 	</label>
 
 	<label class="form-label">
-		Client secret
+		{t('admin.oauth.clientSecret')}
 		<input
 			class="form-input"
 			type="text"
@@ -62,7 +66,7 @@
 	</label>
 
 	<label class="form-label">
-		Issuer
+		{t('admin.oauth.issuer')}
 		<input
 			class="form-input"
 			type="text"
@@ -74,7 +78,7 @@
 	</label>
 
 	<label class="form-label">
-		Scope
+		{t('admin.oauth.scope')}
 		<input
 			class="form-input"
 			type="text"
@@ -84,17 +88,21 @@
 			value={data.provider.scope}
 		/>
 		<p class="text-sm">
-			You can remove 'email' if you do not want to request the user's email address
+			{t('admin.oauth.scopeEmailHint')}
 		</p>
 	</label>
 
 	<label class="checkbox-label">
 		<input type="checkbox" name="enabled" class="form-checkbox" checked={data.provider.enabled} />
-		Enable this provider
+		{t('admin.oauth.enableProvider')}
 	</label>
 	<div class="flex flex-row justify-between">
-		<button type="submit" class="btn btn-black self-start" formaction="?/update">Submit</button>
+		<button type="submit" class="btn btn-black self-start" formaction="?/update"
+			>{t('admin.action.update')}</button
+		>
 
-		<button type="submit" class="btn btn-red self-start" formaction="?/delete"> Delete </button>
+		<button type="submit" class="btn btn-red self-start" formaction="?/delete">
+			{t('admin.oauth.delete')}
+		</button>
 	</div>
 </form>

@@ -13,8 +13,18 @@ export type LocalesDictionary = {
 	[key: string]: LocaleDictionary;
 };
 
+/** A text written next to the code that shows it. English is required, other locales fall back on it. */
+export type LocalizedText = { en: string } & Partial<Record<string, string>>;
+
+/** `key` lets a shop override the text from its custom translations, like any other key. */
+export interface InlineText {
+	key?: string;
+	text: LocalizedText;
+}
+
 export type I18n = {
 	t: (key: string, params?: Record<string, string | number | undefined>) => string;
+	tInline: (inline: InlineText) => string;
 	locale: Writable<string>;
 	countryName: (alpha2: string) => string;
 	te: (key: string) => boolean;
@@ -55,6 +65,7 @@ export function useI18n(language?: string): I18n {
 
 	return {
 		t,
+		tInline,
 		locale,
 		countryName,
 		te,
@@ -117,6 +128,16 @@ function t(key: string, params?: Record<string, string | number | undefined>) {
 	}
 
 	return translation.replaceAll(/{(\w+)}/g, (_, key) => String(params?.[key] ?? `{${key}}`));
+}
+
+function tInline({ key, text }: InlineText): string {
+	const language = storeGet(locale);
+	const stored = (lang: string) => {
+		const translation = key ? get(data[lang], key) : undefined;
+		return typeof translation === 'string' ? translation : undefined;
+	};
+
+	return stored(language) ?? text[language] ?? stored('en') ?? text.en;
 }
 
 export function addTranslations(

@@ -16,13 +16,26 @@ import {
 	TWITTER_SECRET
 } from '$lib/server/env-config';
 import { validateEmailOrNpub } from '$lib/server/nostr.js';
+import { availableContactModes } from '$lib/server/contact-modes';
+import { contactModesOrEmail } from '$lib/types/ContactMode';
 import { renewSessionId } from '$lib/server/user.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
 import { SESSION_COOKIE_NAME } from '$lib/server/cookies';
 import type { PageServerLoad, Actions } from './$types';
 
+// HP-2026-08-12 (Peak Learn) : post-authLink redirect restricted to a
+// strict allowlist (never an external URL, never an open redirect).
+// HP-2026-08-13 (review #2715) : extracted into a shared function
+// (load + validate) instead of being duplicated.
+const SAFE_NEXT = ['/checkout', '/cart', '/orders', '/identity', '/login'];
+const CART_NEXT_RE = /^\/cart\?slug=[a-z0-9][a-z0-9-]{0,119}&qty=\d+$/;
+function safeNext(next: string | null): string {
+	return next && (SAFE_NEXT.includes(next) || CART_NEXT_RE.test(next)) ? next : '/login';
+}
+
 export const load: PageServerLoad = async ({ url }) => {
 	const token = url.searchParams.get('token');
+	const next = safeNext(url.searchParams.get('next'));
 
 	const base = {
 		canSso: {
@@ -36,7 +49,8 @@ export const load: PageServerLoad = async ({ url }) => {
 					name: o.name,
 					slug: o.slug
 				}))
-		}
+		},
+		next: next
 	};
 
 	if (token) {
@@ -75,7 +89,10 @@ export const load: PageServerLoad = async ({ url }) => {
 export const actions: Actions = {
 	sendLink: async function ({ request, locals }) {
 		const data = await request.formData();
-		const result = validateEmailOrNpub(data.get('address'));
+		const result = validateEmailOrNpub(
+			data.get('address'),
+			contactModesOrEmail(availableContactModes())
+		);
 		if ('error' in result) {
 			return fail(400, { error: result.error });
 		}
@@ -83,11 +100,14 @@ export const actions: Actions = {
 
 		rateLimit(locals.clientIp, 'email', 5, { minutes: 5 });
 
-		await sendAuthentificationlink(address.includes('@') ? { email: address } : { npub: address });
+		await sendAuthentificationlink(
+			result.kind === 'email' ? { email: address } : { npub: address }
+		);
 		return { address, successUser: true };
 	},
 	validate: async function ({ url, locals, cookies }) {
 		const token = url.searchParams.get('token');
+		const next = safeNext(url.searchParams.get('next'));
 		let dontCatch = false;
 
 		if (!token) {
@@ -99,10 +119,12 @@ export const actions: Actions = {
 				Uint8Array.from(Buffer.from(runtimeConfig.authLinkJwtSigningKey))
 			);
 
-			const { npub, email } = z
+			const { npub, email, firstName, lastName } = z
 				.object({
 					npub: z.string().optional(),
-					email: z.string().optional()
+					email: z.string().optional(),
+					firstName: z.string().trim().max(100).optional(),
+					lastName: z.string().trim().max(100).optional()
 				})
 				.parse(authLink.payload);
 
@@ -125,10 +147,36 @@ export const actions: Actions = {
 					upsert: true
 				}
 			);
+
+			// HP-2026-08-12 (Peak Learn) : the AuthLink JWT issued by the
+			// platform may carry first/last name (signed, never client-side).
+			// We materialize a personalInfo linked to the email so the be-BOP
+			// checkout natively pre-fills email + first name + last name
+			// (native mechanism).
+			// HP-2026-08-13 (review #2715) : $set targeted on firstName/lastName
+			// only — `user: { email }` is set in $setOnInsert so an existing
+			// personalInfo never loses its sessionId/userId/npub.
+			if (email && firstName && lastName) {
+				await collections.personalInfo.updateOne(
+					{ 'user.email': email },
+					{
+						$set: {
+							firstName,
+							lastName,
+							updatedAt: new Date()
+						},
+						$setOnInsert: {
+							createdAt: new Date(),
+							user: { email }
+						}
+					},
+					{ upsert: true }
+				);
+			}
 			await renewSessionId(locals, cookies);
 
 			dontCatch = true;
-			throw redirect(303, '/login');
+			throw redirect(303, next);
 		} catch (err) {
 			if (dontCatch) {
 				throw err;

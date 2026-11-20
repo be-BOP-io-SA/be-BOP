@@ -9,7 +9,7 @@ import {
 import type { PrintHistoryEntry } from '$lib/types/PrintHistoryEntry';
 import { picturesForProducts } from '$lib/server/picture';
 import { pojo } from '$lib/server/pojo';
-import { OrderTab, OrderTabItem, OrderTabPoolStatus } from '$lib/types/OrderTab';
+import type { OrderTab, OrderTabItem, OrderTabPoolStatus } from '$lib/types/OrderTab';
 import type { Picture } from '$lib/types/Picture.js';
 import type { Product } from '$lib/types/Product';
 import { error, fail } from '@sveltejs/kit';
@@ -272,19 +272,38 @@ export const actions: Actions = {
 				updates: formData.get('updates')
 			});
 
-		const parsedUpdates = JSON.parse(updates) as Array<{
-			itemId: string;
-			currentQuantity: number;
-		}>;
+		const parsedUpdates = z
+			.array(
+				z.object({
+					itemId: z.string().refine((id) => ObjectId.isValid(id)),
+					currentQuantity: z.number().min(0)
+				})
+			)
+			.parse(JSON.parse(updates));
+
+		const orderTab = await collections.orderTabs.findOne(
+			{ slug: params.orderTabSlug },
+			{ projection: { items: 1 } }
+		);
 
 		for (const update of parsedUpdates) {
+			const itemId = new ObjectId(update.itemId);
+			const item = orderTab?.items.find((i) => i._id.equals(itemId));
+			if (!item) {
+				continue;
+			}
+
+			// printedQuantity backs the mid-ticket deletion lock, so the client can only raise it,
+			// and never above what the tab really holds.
 			await collections.orderTabs.updateOne(
-				{ slug: params.orderTabSlug, 'items._id': new ObjectId(update.itemId) },
+				{ slug: params.orderTabSlug, 'items._id': itemId },
 				{
 					$set: {
 						'items.$.printStatus': 'acknowledged',
-						'items.$.printedQuantity': update.currentQuantity,
 						updatedAt: new Date()
+					},
+					$max: {
+						'items.$.printedQuantity': Math.min(update.currentQuantity, item.quantity)
 					},
 					$unset: {
 						'items.$.internalNote': 1

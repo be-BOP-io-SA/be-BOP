@@ -853,7 +853,7 @@
 						</div>
 					{/if}
 					{#if companyInfo.phone}
-						<div>Tel: {companyInfo.phone}</div>
+						<div>{t('ticket.phonePrefix')} {companyInfo.phone}</div>
 					{/if}
 				</div>
 			</div>
@@ -874,7 +874,7 @@
 					</div>
 				{/if}
 				{#if companyInfo.phone}
-					<div>Tel: {companyInfo.phone}</div>
+					<div>{t('ticket.phonePrefix')} {companyInfo.phone}</div>
 				{/if}
 			</div>
 		{/if}
@@ -909,7 +909,7 @@
 	{#if showBebopLogo}
 		<div class="bebop-footer">
 			<div class="powered-by">
-				<span class="pt-3.5">Powered by</span>
+				<span class="pt-3.5">{t('footer.poweredBy')}</span>
 				<img src={BEBOP_LOGO_BW} alt="Be-Bop" />
 			</div>
 			<div class="site-url">http://be-bop.io</div>

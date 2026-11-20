@@ -12,14 +12,16 @@ import { defaultConfig, runtimeConfig, type EmailTemplateKey } from './runtime-c
 import { collections } from './database';
 import { ClientSession, ObjectId } from 'mongodb';
 import { mapKeys } from '$lib/utils/mapKeys';
+import { stripControlChars } from '$lib/utils/stripControlChars';
 
-export function isEmailConfigured(): string | number | boolean {
+export function isEmailConfigured(): boolean {
 	return (
-		(runtimeConfig.smtp.host &&
+		!!(
+			runtimeConfig.smtp.host &&
 			runtimeConfig.smtp.port &&
 			runtimeConfig.smtp.user &&
-			runtimeConfig.smtp.password) ||
-		runtimeConfig.smtp.fake
+			runtimeConfig.smtp.password
+		) || !!runtimeConfig.smtp.fake
 	);
 }
 
@@ -87,7 +89,10 @@ export async function sendEmail(params: {
 		})
 	});
 
-	console.log(`✅ Email sent [${params.subject}] → ${params.to}`, res);
+	console.log(
+		`✅ Email sent [${stripControlChars(params.subject)}] → ${stripControlChars(params.to)}`,
+		res
+	);
 
 	if (dev && runtimeConfig.smtp.fake) {
 		console.log(`📬 Preview URL: ${getTestMessageUrl(res)}`);
@@ -103,7 +108,7 @@ export async function queueEmail(
 		bcc?: string;
 	}
 ): Promise<void> {
-	console.log(`📧 Queueing email: ${templateKey} → ${to}`);
+	console.log(`📧 Queueing email: ${templateKey} → ${stripControlChars(to)}`);
 
 	const lowerVars = mapKeys(
 		{

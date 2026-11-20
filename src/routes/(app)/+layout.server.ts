@@ -136,6 +136,7 @@ export const load: LayoutServerLoad = async (params) => {
 							| 'vatProfileId'
 							| 'paymentMethods'
 							| 'variationLabels'
+							| 'variationFamilies'
 							| 'bookingSpec.slotMinutes'
 							| 'subscriptionDuration'
 						>
@@ -166,7 +167,8 @@ export const load: LayoutServerLoad = async (params) => {
 						subscriptionDuration: 1,
 						variationLabels: {
 							$ifNull: [`$translations.${locals.language}.variationLabels`, '$variationLabels']
-						}
+						},
+						variationFamilies: 1
 					})
 					.map((p) =>
 						runtimeConfig.deliveryFees.mode !== 'perItem' ? { ...p, deliveryFees: undefined } : p
@@ -405,7 +407,7 @@ export const load: LayoutServerLoad = async (params) => {
 		removePopinProductPrice: runtimeConfig.removePopinProductPrice,
 		...(cmsAgewall && {
 			cmsAgewall,
-			cmsAgewallData: cmsFromContent({ desktopContent: cmsAgewall.content }, locals)
+			cmsAgewallData: await cmsFromContent({ desktopContent: cmsAgewall.content }, locals)
 		}),
 		sessionAcceptAgeLimitation: locals.acceptAgeLimitation
 	};

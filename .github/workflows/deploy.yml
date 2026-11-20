@@ -1,14 +1,18 @@
 name: deploy
 
+# Deploys are manual. Every merge to main used to ship straight to the
+# environment named by the DEFAULT_ENV variable, which left no room between
+# review and production.
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       environment:
         type: environment
         description: 'Environment to deploy to'
+
+# The job holds the production .env and the SSH key; its token needs nothing more than a checkout.
+permissions:
+  contents: read
 
 jobs:
   deploy:
@@ -19,12 +23,12 @@ jobs:
       url: ${{ vars.DEPLOY_URL }}
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@eae0cfeb286e66ffb5155f1a79b90583a127a68b # v2.4.1
         with:
           version: 8.3.1
       - uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'pnpm'
       - run: |
           pnpm install --frozen-lockfile
@@ -33,7 +37,7 @@ jobs:
           EOF
           pnpm build
       - name: Install SSH Key
-        uses: shimataro/ssh-key-action@v2
+        uses: shimataro/ssh-key-action@87a8f067114a8ce263df83e9ed5c849953548bc3 # v2.8.1
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           # ssh-keygen -H -F [<host>]:<port>

@@ -1,4 +1,5 @@
 import { adminPrefix } from '$lib/server/admin';
+import { canManageRole, requireCanManageUser } from '$lib/server/arm-scope';
 import { collections } from '$lib/server/database.js';
 import { zodNpub } from '$lib/server/nostr.js';
 import { sendResetPasswordNotification } from '$lib/server/sendNotification.js';
@@ -22,7 +23,15 @@ export const actions: Actions = {
 			throw error(403, 'You cannot update a customer from here');
 		}
 
-		const allowedRoles = await collections.roles.find().toArray();
+		await requireCanManageUser(locals.user, user);
+
+		// Only a super-admin may hand out their own tier: the edit guard further down covers
+		// editing an existing super-admin, not granting the role in the first place.
+		const allowedRoles = (await collections.roles.find().toArray()).filter(
+			(role) =>
+				(role._id !== SUPER_ADMIN_ROLE_ID || locals.user?.roleId === SUPER_ADMIN_ROLE_ID) &&
+				canManageRole(locals.user, role)
+		);
 
 		const parsed = z
 			.object({
@@ -31,7 +40,7 @@ export const actions: Actions = {
 				recoveryEmail: z.string().email().optional(),
 				recoveryNpub: zodNpub().optional(),
 				status: z.enum(['enabled', 'disabled']).optional(),
-				roleId: z.enum([allowedRoles[0]._id, ...allowedRoles.map((role) => role._id)]).optional(),
+				roleId: z.enum(allowedRoles.map((role) => role._id) as [string, ...string[]]).optional(),
 				hasPosOptions: z.boolean({ coerce: true })
 			})
 			.parse({
@@ -46,6 +55,16 @@ export const actions: Actions = {
 		if (user.roleId === SUPER_ADMIN_ROLE_ID && locals.user?.roleId !== SUPER_ADMIN_ROLE_ID) {
 			throw error(400, 'You are not allowed to edit admin information');
 		}
+		// Withholding the super-admin role is not enough: any role wider than the caller's own is
+		// a way out of their scope, so they may not re-role themselves at all.
+		if (
+			parsed.roleId &&
+			parsed.roleId !== user.roleId &&
+			locals.user?.roleId !== SUPER_ADMIN_ROLE_ID &&
+			locals.user?._id.equals(user._id)
+		) {
+			throw error(403, 'You cannot change your own role');
+		}
 		const role = await collections.roles.findOne({
 			_id: parsed.roleId
 		});
@@ -53,7 +72,7 @@ export const actions: Actions = {
 			throw error(404, 'Role not found');
 		}
 		try {
-			const hasPosOptions = parsed.hasPosOptions || role.hasPosOptions;
+			const hasPosOptions = parsed.hasPosOptions || !!role.hasPosOptions;
 
 			await collections.users.updateOne(
 				{ _id: user._id },
@@ -80,12 +99,14 @@ export const actions: Actions = {
 			throw err;
 		}
 	},
-	resetPassword: async function ({ params }) {
+	resetPassword: async function ({ params, locals }) {
 		const user = await collections.users.findOne({ _id: new ObjectId(params.id) });
 
 		if (!user) {
 			throw error(404, 'User not found');
 		}
+
+		await requireCanManageUser(locals.user, user);
 
 		if (user.roleId === SUPER_ADMIN_ROLE_ID) {
 			throw error(
@@ -118,12 +139,14 @@ export const actions: Actions = {
 
 		throw redirect(303, `${adminPrefix()}/arm`);
 	},
-	delete: async function ({ params }) {
+	delete: async function ({ params, locals }) {
 		const user = await collections.users.findOne({ _id: new ObjectId(params.id) });
 
 		if (!user) {
 			throw error(404, 'User not found');
 		}
+
+		await requireCanManageUser(locals.user, user);
 
 		if (user.roleId === SUPER_ADMIN_ROLE_ID) {
 			throw error(403, 'You cannot delete a super admin');

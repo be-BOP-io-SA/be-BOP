@@ -8,7 +8,7 @@
 
 import { error } from '@sveltejs/kit';
 import { type Duration, sub } from 'date-fns';
-import ipModule from 'ip';
+import { ipv6Prefix64 } from './utils/ip';
 import { isIPv6 } from 'node:net';
 import { processClosed } from './process';
 
@@ -23,32 +23,51 @@ export function rateLimit(
 	max: number,
 	duration: Duration
 ): void {
-	if (!ip) {
-		return;
-	}
-	const maskedIp = isIPv6(ip)
-		? // Mask the last 64 bits of the IPv6 address
-		  ipModule.mask(ip, 'ffff:ffff:ffff:ffff:0000:0000:0000:0000')
-		: ip;
-
-	const minDate = sub(new Date(), duration);
-	const ipCache = rateLimitCache.get(maskedIp) ?? {};
-
-	if (!ipCache[key]) {
-		ipCache[key] = [];
-	}
-
-	while (ipCache[key].length && ipCache[key][0] < minDate) {
-		ipCache[key].shift();
-	}
-
-	if (ipCache[key].length >= max) {
+	if (isRateLimited(ip, key, max, duration)) {
 		throw error(429, 'Too many requests, wait a few minutes before trying again.');
 	}
 
-	ipCache[key].push(new Date());
+	countHit(ip, key, duration);
+}
 
+/** Whether `ip` already reached `max` hits on `key` within `duration`, without counting one. */
+export function isRateLimited(
+	ip: string | undefined,
+	key: string,
+	max: number,
+	duration: Duration
+): boolean {
+	// Callers without a readable address can't be told apart: one shared limit would block them all.
+	if (!ip) {
+		return false;
+	}
+
+	return recentHits(ip, key, duration).length >= max;
+}
+
+/** Counts one hit, for a limit checked separately with `isRateLimited`. */
+export function countHit(ip: string | undefined, key: string, duration: Duration): void {
+	if (!ip) {
+		return;
+	}
+
+	recentHits(ip, key, duration).push(new Date());
+}
+
+function recentHits(ip: string, key: string, duration: Duration): Date[] {
+	// One customer usually holds a whole /64, so the prefix is the caller, not the address.
+	const maskedIp = isIPv6(ip) ? ipv6Prefix64(ip) : ip;
+
+	const minDate = sub(new Date(), duration);
+	const ipCache = rateLimitCache.get(maskedIp) ?? {};
 	rateLimitCache.set(maskedIp, ipCache);
+
+	const hits = (ipCache[key] ??= []);
+	while (hits.length && hits[0] < minDate) {
+		hits.shift();
+	}
+
+	return hits;
 }
 
 // Clear the cache every hour

@@ -371,7 +371,7 @@ export const load: PageServerLoad = async ({ parent, locals, url }) => {
 		...(cartFromUrl && { cartFromUrl }),
 		...(cmsBasketTop && {
 			cmsBasketTop,
-			cmsBasketTopData: cmsFromContent(
+			cmsBasketTopData: await cmsFromContent(
 				{
 					desktopContent: cmsBasketTop.content,
 					employeeContent:
@@ -383,7 +383,7 @@ export const load: PageServerLoad = async ({ parent, locals, url }) => {
 		}),
 		...(cmsBasketBottom && {
 			cmsBasketBottom,
-			cmsBasketBottomData: cmsFromContent(
+			cmsBasketBottomData: await cmsFromContent(
 				{
 					desktopContent: cmsBasketBottom.content,
 					employeeContent:

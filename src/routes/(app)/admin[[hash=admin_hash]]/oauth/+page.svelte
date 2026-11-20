@@ -1,11 +1,14 @@
 <script lang="ts">
+	import { useI18n } from '$lib/i18n';
+
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
-<h1 class="text-3xl">OAuth Providers</h1>
+<h1 class="text-3xl">{t('admin.oauth.title')}</h1>
 
-You can add a "sign in with ..." to your be-BOP supporting any OAuth provider. Whether you want to
-use Google, Discord or your own WordPress with the wp-oauth server plugin.
+{t('admin.oauth.description')}
 
 {#if data.oauth}
 	<ul class="list-disc pl-5">
@@ -17,4 +20,4 @@ use Google, Discord or your own WordPress with the wp-oauth server plugin.
 	</ul>
 {/if}
 
-<a href="{data.adminPrefix}/oauth/new" class="underline block">Add OAuth Integration</a>
+<a href="{data.adminPrefix}/oauth/new" class="underline block">{t('admin.oauth.addIntegration')}</a>

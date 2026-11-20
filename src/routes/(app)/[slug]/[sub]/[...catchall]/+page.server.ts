@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (errorPage) {
 		return {
 			cmsPage: omit(errorPage, ['content']),
-			cmsData: cmsFromContent(
+			cmsData: await cmsFromContent(
 				{ desktopContent: errorPage.content, mobileContent: errorPage.mobileContent },
 				locals
 			),

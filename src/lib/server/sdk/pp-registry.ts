@@ -1,37 +1,24 @@
-import { registerProcessor } from './pp';
-import PPSumUp from './contrib/PPSumUp';
-import PPStripe from './contrib/PPStripe';
-import PPSwissBitcoinPay from './contrib/PPSwissBitcoinPay';
-import PPBtcpayServer from './contrib/PPBtcpayServer';
-import PPPhoenixd from './contrib/PPPhoenixd';
-import PPLnd from './contrib/PPLnd';
-import PPBitcoinNodeless from './contrib/PPBitcoinNodeless';
-import PPBitcoind from './contrib/PPBitcoind';
-import PPPaypal from './contrib/PPPaypal';
-import PPTaler from './contrib/PPTaler';
-import PPOsb from './contrib/PPOsb';
+import { registerProcessor, type PaymentProcessorDefinition } from './pp';
+import { ALL_PAYMENT_PROCESSOR_SLUGS } from '$lib/types/paymentProcessors';
 
-// Registration order = default priority per method (when no user preference set)
+/**
+ * Every processor registers itself from its folder in `$lib/payment-processors`.
+ *
+ * The hand-written import list this replaces had two failure modes: dropping a line removed a
+ * payment method from the shop with no error anywhere, and reordering lines silently changed
+ * which processor took live traffic.
+ */
+const modules = import.meta.glob<{ default: PaymentProcessorDefinition }>(
+	'/src/lib/payment-processors/*/processor.server.ts',
+	{ eager: true }
+);
 
-// card: sumup → stripe (matches orders.ts hardcodedPriority)
-registerProcessor(PPSumUp);
-registerProcessor(PPStripe);
+const rank = (pp: PaymentProcessorDefinition) =>
+	ALL_PAYMENT_PROCESSOR_SLUGS.indexOf(pp.meta.processor);
 
-// lightning: swiss-bitcoin-pay → btcpay-server → phoenixd → lnd
-registerProcessor(PPSwissBitcoinPay);
-registerProcessor(PPBtcpayServer);
-registerProcessor(PPPhoenixd);
-registerProcessor(PPLnd);
-
-// bitcoin: bitcoin-nodeless → bitcoind
-registerProcessor(PPBitcoinNodeless);
-registerProcessor(PPBitcoind);
-
-// paypal: single provider
-registerProcessor(PPPaypal);
-
-// taler: single provider
-registerProcessor(PPTaler);
-
-// osb: single provider (French Polynesia)
-registerProcessor(PPOsb);
+// In the manifest's order, so that nothing depends on how the folders happen to be named.
+for (const pp of Object.values(modules)
+	.map((module) => module.default)
+	.sort((a, b) => rank(a) - rank(b))) {
+	registerProcessor(pp);
+}

@@ -6,8 +6,8 @@
 	import { getCurrencyFromCountry } from '$lib/types/Country';
 	import Select from 'svelte-select';
 
-	$: sortedCurrencies = sortCurrencies($currencies.main, $currencies.secondary);
-	$: currencyOptions = currenciesToSelectOptions(sortedCurrencies);
+	const sortedCurrencies = sortCurrencies($currencies.main, $currencies.secondary);
+	const currencyOptions = currenciesToSelectOptions(sortedCurrencies);
 
 	function getDefaultSecondCurrency(): Currency {
 		if ($currencies.secondary) {

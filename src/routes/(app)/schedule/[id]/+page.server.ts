@@ -1,5 +1,6 @@
 import { collections } from '$lib/server/database';
 import { error } from '@sveltejs/kit';
+import { hideRsvpTargets } from '$lib/server/schedule';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -13,7 +14,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		.sort({ createdAt: 1 })
 		.toArray();
 	return {
-		schedule,
+		schedule: hideRsvpTargets(schedule),
 		pictures
 	};
 };

@@ -1,16 +1,22 @@
 <script lang="ts">
 	import TabLinksHeader from '$lib/components/TabLinksHeader.svelte';
 	import { page } from '$app/stores';
+	import { useI18n } from '$lib/i18n';
 
 	export let data;
+
+	const { t } = useI18n();
 </script>
 
 <TabLinksHeader
 	tabs={[
-		{ href: `${data.adminPrefix}/form/${$page.params.id}`, name: 'Edit Contact Form' },
+		{
+			href: `${data.adminPrefix}/form/${$page.params.id}`,
+			name: t('admin.form.editContactFormTab')
+		},
 		{
 			href: `${data.adminPrefix}/form/${$page.params.id}/translations`,
-			name: 'Translations'
+			name: t('admin.form.translationsTab')
 		}
 	]}
 />
@@ -18,7 +24,8 @@
 	<kbd class="kbd body-secondaryCTA">{'{{websiteLink}}'}</kbd>,
 	<kbd class="kbd body-secondaryCTA">{'{{brandName}}'}</kbd>,
 	<kbd class="kbd body-secondaryCTA">{'{{pageLink}}'}</kbd>
-	and
-	<kbd class="kbd body-secondaryCTA">{'{{pageName}}'}</kbd> are always available in templates.
+	{t('admin.form.and')}
+	<kbd class="kbd body-secondaryCTA">{'{{pageName}}'}</kbd>
+	{t('admin.form.alwaysAvailableInTemplates')}
 </p>
 <slot />

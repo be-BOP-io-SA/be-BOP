@@ -1,23 +1,27 @@
-import { error } from '@sveltejs/kit';
+import { error, type RequestEvent } from '@sveltejs/kit';
 import { actions as adminOrderActions } from '../../../admin[[hash=admin_hash]]/order/[id]/+page.server';
 import { collections } from '$lib/server/database';
 import { isAllowedOnPage } from '$lib/types/Role';
 import { adminPrefix } from '$lib/server/admin';
 import type { Actions } from './$types';
 
+async function throwIfPosAccountCannotManageOrder(event: RequestEvent<{ id: string }>) {
+	const { id } = event.params;
+	const order = await collections.orders.findOne({ _id: id });
+
+	if (order?.user.userId?.equals(event.locals.user?._id ?? '')) {
+		return;
+	}
+	// A role the account points at but that no longer exists grants nothing, not everything.
+	const role = event.locals.user?.role;
+	if (!role || !isAllowedOnPage(role, `${adminPrefix()}/order/${id}`, 'write')) {
+		throw error(403, 'Order does not belong to this POS account.');
+	}
+}
+
 export const actions: Actions = {
 	addPayment: async function (event) {
-		const { id } = event.params;
-		const order = await collections.orders.findOne({ _id: id });
-
-		if (!order?.user.userId?.equals(event.locals.user?._id ?? '')) {
-			if (
-				event.locals.user?.role &&
-				!isAllowedOnPage(event.locals.user.role, `${adminPrefix()}/order/${id}`, 'write')
-			) {
-				throw error(403, 'Order does not belong to this POS account.');
-			}
-		}
+		await throwIfPosAccountCannotManageOrder(event);
 
 		const addPayment = adminOrderActions.addPayment;
 
@@ -25,18 +29,7 @@ export const actions: Actions = {
 		return addPayment(event);
 	},
 	saveNote: async function (event) {
-		const { id } = event.params;
-
-		const order = await collections.orders.findOne({ _id: id });
-
-		if (!order?.user.userId?.equals(event.locals.user?._id ?? '')) {
-			if (
-				event.locals.user?.role &&
-				!isAllowedOnPage(event.locals.user.role, `${adminPrefix()}/order/${id}`, 'write')
-			) {
-				throw error(403, 'Order does not belong to this POS account.');
-			}
-		}
+		await throwIfPosAccountCannotManageOrder(event);
 
 		const saveNote = adminOrderActions.saveNote;
 
@@ -44,18 +37,7 @@ export const actions: Actions = {
 		return saveNote(event);
 	},
 	cancel: async function (event) {
-		const { id } = event.params;
-
-		const order = await collections.orders.findOne({ _id: id });
-
-		if (!order?.user.userId?.equals(event.locals.user?._id ?? '')) {
-			if (
-				event.locals.user?.role &&
-				!isAllowedOnPage(event.locals.user.role, `${adminPrefix()}/order/${id}`, 'write')
-			) {
-				throw error(403, 'Order does not belong to this POS account.');
-			}
-		}
+		await throwIfPosAccountCannotManageOrder(event);
 
 		const cancel = adminOrderActions.cancel;
 
@@ -63,17 +45,7 @@ export const actions: Actions = {
 		return cancel(event);
 	},
 	forwardReceipt: async function (event) {
-		const { id } = event.params;
-		const order = await collections.orders.findOne({ _id: id });
-
-		if (!order?.user.userId?.equals(event.locals.user?._id ?? '')) {
-			if (
-				event.locals.user?.role &&
-				!isAllowedOnPage(event.locals.user.role, `${adminPrefix()}/order/${id}`, 'write')
-			) {
-				throw error(403, 'Order does not belong to this POS account.');
-			}
-		}
+		await throwIfPosAccountCannotManageOrder(event);
 
 		const forwardReceipt = adminOrderActions.forwardReceipt;
 

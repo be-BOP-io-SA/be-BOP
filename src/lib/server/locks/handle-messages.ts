@@ -8,12 +8,11 @@ import { refreshPromise, runtimeConfig } from '../runtime-config';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import { addSeconds, formatDistance, subMinutes } from 'date-fns';
 import { addToCartInDb, getCartFromDb, removeFromCartInDb } from '../cart';
-import type { Product } from '$lib/types/Product';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { createOrder } from '../orders';
 import { typedEntries } from '$lib/utils/typedEntries';
 import { building } from '$app/environment';
-import { paymentMethods } from '../payment-methods';
+import { paymentMethods, restrictToProducts } from '../payment-methods';
 import { userQuery } from '../user';
 import { rateLimit } from '../rateLimit';
 import { computePriceInfo } from '$lib/cart';
@@ -225,7 +224,7 @@ async function sendMessage(dest: string, content: string, minCreatedAt: Date) {
 	});
 }
 
-const commands: Record<
+export const commands: Record<
 	string,
 	{
 		description: string;
@@ -364,19 +363,16 @@ const commands: Record<
 
 			if (isNaN(quantity) || quantity <= 0) {
 				await send('Invalid quantity: ' + args.quantity);
+				return;
 			}
 
 			const product = await collections.products.findOne({ _id: ref });
 
-			if (!product) {
-				const products = await collections.products
-					.find({})
-					.project<Pick<Product, '_id'>>({ _id: 1 })
-					.toArray();
+			// A slug is not public: an unreleased or unlisted product is hidden from every other
+			// surface, so the "did you mean" list must not be the one place that enumerates them.
+			if (!product || !product.actionSettings.nostr.visible) {
 				await send(
-					`No product found with ref "${ref}". Use "catalog" to get the list of products. Available refs: ${products
-						.map((p) => p._id)
-						.join(', ')}`
+					`No product found with ref "${ref}". Use "catalog" to get the list of products.`
 				);
 				return;
 			}
@@ -476,8 +472,13 @@ const commands: Record<
 			}
 
 			const product = await collections.products.findOne({ _id: ref });
+			const user = { npub: senderNpub };
+			const currentCart = await getCartFromDb({ user });
 
-			if (!product) {
+			// Same rule as !add so a slug cannot be probed here, except for a product already in the
+			// sender's cart: it must stay removable if it was hidden after being added.
+			const inCart = currentCart.items.some((item) => item.productId === ref);
+			if (!product || (!product.actionSettings.nostr.visible && !inCart)) {
 				await send(
 					'No product found with ref: ' + ref + '. Use "catalog" to get the list of products'
 				);
@@ -485,9 +486,8 @@ const commands: Record<
 			}
 
 			const cart = await removeFromCartInDb(product, quantity, {
-				user: {
-					npub: senderNpub
-				}
+				user,
+				cart: currentCart
 			}).catch(async (e) => {
 				console.error(e);
 				await send(e.message);
@@ -521,7 +521,7 @@ const commands: Record<
 		args: [
 			{
 				name: 'paymentMethod',
-				enum: async (senderNpub) => {
+				enum: async (senderNpub: string): Promise<Readonly<Array<string>>> => {
 					try {
 						const user = { npub: senderNpub };
 						const cart = await getCartFromDb({ user });
@@ -567,9 +567,12 @@ const commands: Record<
 							vatSingleCountry: runtimeConfig.vatSingleCountry
 						});
 
-						return paymentMethods({
-							totalSatoshis: toSatoshis(totalPrice.totalPriceWithVat, totalPrice.currency)
-						});
+						return restrictToProducts(
+							paymentMethods({
+								totalSatoshis: toSatoshis(totalPrice.totalPriceWithVat, totalPrice.currency)
+							}),
+							products
+						);
 					} catch {
 						return paymentMethods();
 					}
@@ -623,7 +626,13 @@ const commands: Record<
 				}));
 
 			// Should not happen
-			const availablePaymentMethods = paymentMethods().filter((m) => m !== 'free');
+			const availablePaymentMethods = restrictToProducts(paymentMethods(), products).filter(
+				(m) => m !== 'free'
+			);
+			if (!availablePaymentMethods.length) {
+				await send('No payment methods available for this cart');
+				return;
+			}
 			if (!typedInclude(availablePaymentMethods, paymentMethod)) {
 				await send(
 					'Invalid payment method: ' +

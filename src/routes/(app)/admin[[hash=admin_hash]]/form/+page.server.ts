@@ -2,9 +2,9 @@ import { collections } from '$lib/server/database';
 import type { ContactForm } from '$lib/types/ContactForm';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = () => {
+export const load: PageServerLoad = async () => {
 	return {
-		contactForms: collections.contactForms
+		contactForms: await collections.contactForms
 			.find({})
 			.project<Pick<ContactForm, '_id' | 'title'>>({
 				_id: 1,

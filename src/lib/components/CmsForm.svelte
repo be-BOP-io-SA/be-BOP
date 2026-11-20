@@ -7,6 +7,9 @@
 	} from '../../routes/(app)/admin[[hash=admin_hash]]/cms/tinymce-plugins';
 	import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 	import { generateId } from '$lib/utils/generateId';
+	import { useI18n } from '$lib/i18n';
+
+	const { t } = useI18n();
 
 	export let cmsPage: {
 		_id: string;
@@ -27,6 +30,7 @@
 		}[];
 	} | null;
 
+	export let removedContent: string[] = [];
 	export let slug = cmsPage?._id || '';
 	let pageContent = cmsPage?.content || '';
 	let title = cmsPage?.title || '';
@@ -46,7 +50,7 @@
 	let displayRawHTML = false;
 
 	function confirmDelete(event: Event) {
-		if (!confirm('Would you like to delete this CMS page?')) {
+		if (!confirm(t('admin.cmsForm.confirmDelete'))) {
 			event.preventDefault();
 		}
 	}
@@ -64,9 +68,7 @@
 		const value = slugElement.value;
 		const result = slugRegex.test(value);
 		if (!result && !cmsPage?._id) {
-			slugElement.setCustomValidity(
-				"Slug must be lowercase, without spaces or special characters (# / \\ ?) and cannot start with 'admin'"
-			);
+			slugElement.setCustomValidity(t('admin.cmsForm.slugValidationError'));
 			slugElement.reportValidity();
 			event.preventDefault();
 			return;
@@ -81,24 +83,24 @@
 
 <form method="post" class="flex flex-col gap-4" bind:this={formElement} on:submit={validateSlug}>
 	<label>
-		Page title
+		{t('admin.cmsForm.pageTitle')}
 		<input
 			class="form-input block"
 			type="text"
 			maxlength={MAX_NAME_LIMIT}
 			name="title"
-			placeholder="Page title"
+			placeholder={t('admin.cmsForm.pageTitle')}
 			bind:value={title}
 			required
 		/>
 	</label>
 
 	<label>
-		Page slug
+		{t('admin.cmsForm.pageSlug')}
 		<input
 			class="form-input block"
 			type="text"
-			placeholder="Page slug"
+			placeholder={t('admin.cmsForm.pageSlug')}
 			name="slug"
 			bind:value={slug}
 			disabled={!!cmsPage}
@@ -109,21 +111,21 @@
 	</label>
 
 	<label>
-		Short description
+		{t('admin.cmsForm.shortDescription')}
 		<textarea
 			name="shortDescription"
 			cols="30"
 			rows="2"
-			placeholder="Shown in social media previews"
+			placeholder={t('admin.cmsForm.shortDescriptionPlaceholder')}
 			maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 			class="form-input block w-full"
 			value={shortDescription}
-		/>
+		></textarea>
 	</label>
 
 	<label class="checkbox-label">
 		<input type="checkbox" name="fullScreen" checked={fullScreen} class="form-checkbox" />
-		Full screen
+		{t('admin.cmsForm.fullScreen')}
 	</label>
 
 	<label class="checkbox-label">
@@ -133,11 +135,11 @@
 			checked={maintenanceDisplay}
 			class="form-checkbox"
 		/>
-		Available even in Maintenance mode
+		{t('admin.cmsForm.availableInMaintenance')}
 	</label>
 	<label class="checkbox-label">
 		<input type="checkbox" name="hideFromSEO" checked={hideFromSEO} class="form-checkbox" />
-		Hide this page from search engines
+		{t('admin.cmsForm.hideFromSeo')}
 	</label>
 	<label class="checkbox-label">
 		<input
@@ -146,29 +148,25 @@
 			bind:checked={hasCustomMeta}
 			class="form-checkbox"
 		/>
-		Add custom meta tag
+		{t('admin.cmsForm.addCustomMetaTag')}
 	</label>
 	{#if hasCustomMeta}
 		{#each [...(metas ?? []), ...Array(cmsMetaLine).fill( { name: '', content: '' } )].slice(0, cmsMetaLine) as meta, i}
 			<div class="flex gap-4">
 				<label class="form-label">
-					Name
+					{t('admin.cmsForm.metaName')}
 					<input
 						type="text"
 						name="metas[{i}].name"
 						class="form-input"
 						value={meta.name}
 						pattern="^(?!.*\b(description|viewport)\b).*$"
-						title="Les mots 'description' et 'viewport' ne sont pas autorisés."
+						title={t('admin.cmsForm.reservedMetaNameError')}
 					/>
 				</label>
 				<label class="form-label">
-					Content <input
-						type="text"
-						name="metas[{i}].content"
-						class="form-input"
-						value={meta.content}
-					/>
+					{t('admin.cmsForm.content')}
+					<input type="text" name="metas[{i}].content" class="form-input" value={meta.content} />
 				</label>
 				{#if cmsPage && cmsPage?.metas?.length}
 					<button
@@ -184,7 +182,7 @@
 			</div>
 		{/each}
 		<button class="btn body-mainCTA" on:click={() => (cmsMetaLine += 1)} type="button"
-			>Add custom meta balise
+			>{t('admin.cmsForm.addCustomMetaBalise')}
 		</button>
 	{/if}
 	<label class="checkbox-label">
@@ -194,108 +192,55 @@
 			bind:checked={advancedHtmlEdition}
 			class="form-checkbox"
 		/>
-		Use advanced HTML edition
+		{t('admin.cmsForm.useAdvancedHtmlEdition')}
 	</label>
 	{#if advancedHtmlEdition}
 		<p class="text-red-500">
-			Warning: use at your own risk, only if you're a Jedi of web or a be-BOP McGyver. Never use on
-			an already existing CMS page, otherwise, you'll risk losing your CMS content.
+			{t('admin.cmsForm.advancedHtmlWarning')}
+		</p>
+	{/if}
+	{#if removedContent.length && !cmsPage?.displayRawContent}
+		<p class="text-red-500" role="alert">
+			{t('admin.cmsForm.removedContentWarning', { items: removedContent.join(', ') })}
 		</p>
 	{/if}
 	<label class="block w-full mt-4">
-		Content
+		{t('admin.cmsForm.content')}
 		{#if !advancedHtmlEdition}
 			<Editor
 				scriptSrc="/tinymce/tinymce.js"
 				bind:value={pageContent}
-				conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+				conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR, license_key: 'gpl' }}
 			/>
 		{/if}
 		<label class="checkbox-label my-2">
 			<input type="checkbox" name="showTips" bind:checked={showTips} class="form-checkbox" />
-			Show tips
+			{t('admin.cmsForm.showTips')}
 		</label>
 		{#if showTips}
 			<ul class="text-gray-700 my-3 list-disc ml-4">
-				<li>
-					To include products, add a paragraph with only <code class="font-mono"
-						>[Product=slug]</code
-					>, where
-					<code class="font-mono">slug</code> is the slug of your product. You can specify the
-					display option like this:
-					<code class="font-mono">[Product=slug?display=img-1]</code>
-				</li>
-				<li>
-					To include pictures, add a paragraph with only <code class="font-mono"
-						>[Picture=slug]
-					</code>. You can also set the width, height and fit:
-					<code class="font-mono">[Picture=slug width=100 height=100 fit=cover]</code> or
-					<code class="font-mono">[Picture=slug width=100 height=100 fit=contain]</code>
-					And also msubstitute (replacement image on mobile), position
-					<code class="font-mono"
-						>[Picture=slug msubstitute=slug position=right|center|full-width]</code
-					>
-				</li>
-				<li>
-					To include challenges, add a paragraph with only <code class="font-mono"
-						>[Challenge=slug]</code
-					>, where
-					<code class="font-mono">slug</code> is the slug of your challenge
-				</li>
-				<li>
-					To include sliders, add a paragraph with only <code class="font-mono">[Slider=slug]</code
-					>, where
-					<code class="font-mono">slug</code> is the slug of your slider. You can specify the
-					autoplay duration in milliseconds like this:
-					<code class="font-mono">[Slider=slug?autoplay=3000]</code>
-				</li>
-				<li>
-					To include a specification widget, add a paragraph with only <code class="font-mono"
-						>[Specification=slug]</code
-					>, where <code class="font-mono">slug</code> is the slug of your specification.
-				</li>
-				<li>
-					To include a tag widget, add a paragraph with only <code class="font-mono"
-						>[Tag=slug]</code
-					>, where
-					<code class="font-mono">slug</code> is the slug of your tag. You can specify the display
-					option like this:
-					<code class="font-mono">[Tag=slug?display=var-1]</code>
-				</li>
-				<li>
-					To include a tagProducts widget, add a paragraph with only <code class="font-mono"
-						>[TagProducts=slug]</code
-					>, where
-					<code class="font-mono">slug</code> is the slug of your tag. You can specify the display
-					option like this:
-					<code class="font-mono">[TagProducts=slug?display=img-3]</code>
-				</li>
-				<li>
-					To include a form widget, add a paragraph with only <code class="font-mono"
-						>[Form=slug]</code
-					>, where
-					<code class="font-mono">slug</code> is the slug of your form.
-				</li>
-				<li>
-					To include a countdown widget, add a paragraph with only <code class="font-mono"
-						>[Countdown=slug]</code
-					>, where
-					<code class="font-mono">slug</code> is the slug of your countdown.
-				</li>
-				<li>
-					To include a specification widget, add a paragraph with only <code class="font-mono"
-						>[Specification=slug]</code
-					>, where
-					<code class="font-mono">slug</code> is the slug of your specification.
-				</li>
-				<li>
-					To include a gallery widget, add a paragraph with only <code class="font-mono"
-						>[Gallery=slug]</code
-					>, where
-					<code class="font-mono">slug</code> is the slug of your gallery. You can specify the
-					display option like this:
-					<code class="font-mono">[Gallery=slug?display=var-1]</code>
-				</li>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<li>{@html t('admin.cmsForm.tipsProduct')}</li>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<li>{@html t('admin.cmsForm.tipsPicture')}</li>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<li>{@html t('admin.cmsForm.tipsChallenge')}</li>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<li>{@html t('admin.cmsForm.tipsSlider')}</li>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<li>{@html t('admin.cmsForm.tipsSpecification')}</li>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<li>{@html t('admin.cmsForm.tipsTag')}</li>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<li>{@html t('admin.cmsForm.tipsTagProducts')}</li>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<li>{@html t('admin.cmsForm.tipsForm')}</li>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<li>{@html t('admin.cmsForm.tipsCountdown')}</li>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<li>{@html t('admin.cmsForm.tipsSpecification')}</li>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<li>{@html t('admin.cmsForm.tipsGallery')}</li>
 			</ul>
 		{/if}
 		<label class="checkbox-label">
@@ -306,10 +251,10 @@
 				disabled={advancedHtmlEdition}
 				class="form-checkbox"
 			/>
-			Display raw HTML
+			{t('admin.cmsForm.displayRawHtml')}
 		</label>
 		{#if displayRawHTML}
-			Raw HTML
+			{t('admin.cmsForm.rawHtml')}
 		{/if}
 
 		<textarea
@@ -318,10 +263,10 @@
 			cols="30"
 			rows="10"
 			maxlength={MAX_CONTENT_LIMIT}
-			placeholder="HTML content"
+			placeholder={t('admin.cmsForm.htmlContentPlaceholder')}
 			class="form-input block w-full"
 			bind:value={pageContent}
-		/>
+		></textarea>
 	</label>
 
 	<label class="checkbox-label">
@@ -331,30 +276,30 @@
 			bind:checked={hasMobileContent}
 			class="form-checkbox"
 		/>
-		This page has a subtitution target on mobile devices
+		{t('admin.cmsForm.hasMobileContentLabel')}
 	</label>
 	{#if hasMobileContent}
 		<label class="block w-full mt-4">
-			Substitution content
+			{t('admin.cmsForm.substitutionContent')}
 			{#if !advancedHtmlEdition}
 				<Editor
 					scriptSrc="/tinymce/tinymce.js"
 					bind:value={mobileContent}
-					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR, license_key: 'gpl' }}
 				/>
 			{/if}
 
-			Raw HTML
+			{t('admin.cmsForm.rawHtml')}
 
 			<textarea
 				name="mobileContent"
 				cols="30"
 				rows="10"
 				maxlength={MAX_CONTENT_LIMIT}
-				placeholder="HTML content"
+				placeholder={t('admin.cmsForm.htmlContentPlaceholder')}
 				class="form-input block w-full"
 				bind:value={mobileContent}
-			/>
+			></textarea>
 		</label>
 	{/if}
 	<label class="checkbox-label">
@@ -364,51 +309,59 @@
 			bind:checked={hasEmployeeContent}
 			class="form-checkbox"
 		/>
-		This page has a subtitution target for employee
+		{t('admin.cmsForm.hasEmployeeContentLabel')}
 	</label>
 	{#if hasEmployeeContent}
 		<label class="block w-full mt-4">
-			Employee content
+			{t('admin.cmsForm.employeeContent')}
 			{#if !advancedHtmlEdition}
 				<Editor
 					scriptSrc="/tinymce/tinymce.js"
 					bind:value={employeeContent}
-					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR, license_key: 'gpl' }}
 				/>
 			{/if}
 
-			Raw HTML
+			{t('admin.cmsForm.rawHtml')}
 
 			<textarea
 				name="employeeContent"
 				cols="30"
 				rows="10"
 				maxlength={MAX_CONTENT_LIMIT}
-				placeholder="HTML content"
+				placeholder={t('admin.cmsForm.htmlContentPlaceholder')}
 				class="form-input block w-full"
 				bind:value={employeeContent}
-			/>
+			></textarea>
 		</label>
 	{/if}
 	<div class="flex flex-row justify-between gap-2">
 		{#if cmsPage}
-			<input type="submit" class="btn btn-blue text-white" formaction="?/update" value="Update" />
+			<input
+				type="submit"
+				class="btn btn-blue text-white"
+				formaction="?/update"
+				value={t('admin.action.update')}
+			/>
 			{#if hasMobileContent && mobileContent}
-				<a href="/{slug}?content=desktop" class="btn body-mainCTA">View 💻</a>
-				<a href="/{slug}?content=mobile" class="btn body-mainCTA">View 📱</a>
+				<a href="/{slug}?content=desktop" class="btn body-mainCTA"
+					>{t('admin.cmsForm.viewDesktop')}</a
+				>
+				<a href="/{slug}?content=mobile" class="btn body-mainCTA">{t('admin.cmsForm.viewMobile')}</a
+				>
 			{:else}
-				<a href="/{slug}" class="btn body-mainCTA">View</a>
+				<a href="/{slug}" class="btn body-mainCTA">{t('admin.cmsForm.view')}</a>
 			{/if}
 
 			<input
 				type="submit"
 				class="btn btn-red text-white ml-auto"
 				formaction="?/delete"
-				value="Delete"
+				value={t('admin.cmsForm.delete')}
 				on:click={confirmDelete}
 			/>
 		{:else}
-			<input type="submit" class="btn btn-blue text-white" value="Submit" />
+			<input type="submit" class="btn btn-blue text-white" value={t('admin.cmsForm.submit')} />
 		{/if}
 	</div>
 </form>

@@ -3,7 +3,8 @@ import { generatePicture } from '$lib/server/picture';
 import {
 	getProductsWithStock,
 	validateStockReference,
-	cleanVariationLabels
+	cleanVariationLabels,
+	cleanVariationFamilies
 } from '$lib/server/product';
 import type { Actions, PageServerLoad } from './$types';
 import { error, redirect } from '@sveltejs/kit';
@@ -29,14 +30,15 @@ import { CopyObjectCommand, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import type { Tag } from '$lib/types/Tag';
 import { adminPrefix } from '$lib/server/admin';
 import { pojo } from '$lib/server/pojo';
+import { withWebhookSecretForEditors } from '$lib/server/paid-order-webhook-secret';
 import { zodSlug } from '$lib/server/zod';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 import { logProductCreationEvents } from '$lib/server/accounting-log';
+import type { DigitalFile } from '$lib/types/DigitalFile';
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
 	const productId = url.searchParams.get('duplicate_from');
-
 	const tags = await collections.tags
 		.find({})
 		.project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 })
@@ -51,13 +53,15 @@ export const load: PageServerLoad = async ({ url }) => {
 				.sort({ createdAt: 1 })
 				.toArray();
 
+			// Projected, never raw: `secret` is the whole credential the download endpoint accepts.
 			const digitalFiles = await collections.digitalFiles
 				.find({ productId: productId })
+				.project<Pick<DigitalFile, '_id' | 'name'>>({ name: 1 })
 				.sort({ createdAt: 1 })
 				.toArray();
 
 			return {
-				product: pojo(product),
+				product: pojo(withWebhookSecretForEditors(product, locals.user?.role)),
 				productId,
 				pictures,
 				digitalFiles,
@@ -141,6 +145,9 @@ export const actions: Actions = {
 		if (!parsed.free && !parsed.payWhatYouWant && parsed.priceAmount === '0') {
 			parsed.free = true;
 		}
+		const validVariations = variationsParsedPrice.filter(
+			(variation) => variation.name && variation.value
+		);
 		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
 
 		// Validate stock reference if provided
@@ -193,9 +200,9 @@ export const actions: Actions = {
 										currency: parsed.priceCurrency
 									}
 								}),
-							standalone: parsed.payWhatYouWant || parsed.standalone,
+							standalone: parsed.payWhatYouWant || parsed.hasVariations || parsed.standalone,
 							free: parsed.free,
-							bookingSpec: parsed.bookingSpec,
+							...(parsed.bookingSpec && { bookingSpec: parsed.bookingSpec }),
 							displayShortDescription: parsed.displayShortDescription,
 							...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
 							applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
@@ -243,16 +250,17 @@ export const actions: Actions = {
 							externalResources: parsed.externalResources?.filter(
 								(externalResourceLink) => externalResourceLink.label && externalResourceLink.href
 							),
-							...(parsed.standalone && { hasVariations: parsed.hasVariations }),
-							...(parsed.standalone &&
-								parsed.hasVariations && {
-									variations: variationsParsedPrice.filter(
-										(variation) => variation.name && variation.value
-									)
-								}),
-							...(parsed.standalone &&
-								parsed.hasVariations &&
-								parsed.variationLabels && {
+							hasVariations: parsed.hasVariations,
+							...(validVariations.length > 0 && {
+								variations: validVariations,
+								variationFamilies: cleanVariationFamilies(
+									parsed.variationFamilies,
+									validVariations
+								),
+								variationUrlPolicy: parsed.variationUrlPolicy
+							}),
+							...(parsed.variationLabels &&
+								Object.keys(cleanedVariationLabels.names).length > 0 && {
 									variationLabels: cleanedVariationLabels
 								}),
 							...(parsed.vatProfileId && { vatProfileId: new ObjectId(parsed.vatProfileId) }),
@@ -385,6 +393,9 @@ export const actions: Actions = {
 			...variation,
 			price: Math.max(parsePriceAmount(variation.price, parsed.priceCurrency), 0)
 		}));
+		const validVariations = variationsParsedPrice.filter(
+			(variation) => variation.name && variation.value
+		);
 		const cleanedVariationLabels = cleanVariationLabels(parsed.variationLabels);
 
 		await withTransaction(async (session) => {
@@ -403,7 +414,7 @@ export const actions: Actions = {
 					type: product.type,
 					availableDate: parsed.availableDate || undefined,
 					preorder: parsed.preorder,
-					bookingSpec: parsed.bookingSpec,
+					...(parsed.bookingSpec && { bookingSpec: parsed.bookingSpec }),
 					shipping: parsed.shipping,
 					payWhatYouWant: parsed.payWhatYouWant,
 					...(parsed.payWhatYouWant && {
@@ -419,7 +430,7 @@ export const actions: Actions = {
 								currency: parsed.priceCurrency
 							}
 						}),
-					standalone: parsed.standalone,
+					standalone: parsed.payWhatYouWant || parsed.hasVariations || parsed.standalone,
 					free: parsed.free,
 					...(parsed.stock !== undefined && {
 						stock: { total: parsed.stock, available: parsed.stock, reserved: 0 }
@@ -458,16 +469,14 @@ export const actions: Actions = {
 					tagIds: product.tagIds,
 					cta: product.cta,
 					externalResources: product.externalResources,
-					...(parsed.standalone && { hasVariations: parsed.hasVariations }),
-					...(parsed.standalone &&
-						parsed.hasVariations && {
-							variations: variationsParsedPrice.filter(
-								(variation) => variation.name && variation.value
-							)
-						}),
-					...(parsed.standalone &&
-						parsed.hasVariations &&
-						parsed.variationLabels && {
+					hasVariations: parsed.hasVariations,
+					...(validVariations.length > 0 && {
+						variations: validVariations,
+						variationFamilies: cleanVariationFamilies(parsed.variationFamilies, validVariations),
+						variationUrlPolicy: parsed.variationUrlPolicy
+					}),
+					...(parsed.variationLabels &&
+						Object.keys(cleanedVariationLabels.names).length > 0 && {
 							variationLabels: cleanedVariationLabels
 						}),
 					hasSellDisclaimer: parsed.hasSellDisclaimer,

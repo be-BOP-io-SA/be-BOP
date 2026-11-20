@@ -5,6 +5,7 @@ import { redirect } from '@sveltejs/kit';
 import { addYears } from 'date-fns';
 import { omit } from '$lib/utils/omit';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { sameOriginPath } from '$lib/server/utils/sameOriginPath';
 import type { Actions, PageServerLoadEvent } from './$types';
 
 // Private impl with a typed param and inferred (concrete) return so `data.catalog` stays
@@ -29,8 +30,15 @@ async function loadImpl({ locals, url }: PageServerLoadEvent) {
 				},
 				fullScreen: 1,
 				hasEmployeeContent: 1,
+				// Without this, `cmsPage.displayRawContent` below is always
+				// undefined and the home page is sanitized at `/` but not at
+				// `/home` — the <style> block of an advanced-HTML page is
+				// dropped on the site root only.
+				displayRawContent: 1,
 				hasMobileContent: 1,
+				hideFromSEO: 1,
 				maintenanceDisplay: 1,
+				metas: 1,
 				mobileContent: {
 					$ifNull: [`$translations.${locals.language}.mobileContent`, '$mobileContent']
 				},
@@ -59,7 +67,7 @@ async function loadImpl({ locals, url }: PageServerLoadEvent) {
 
 	return {
 		cmsPage: omit(cmsPage, ['content', 'mobileContent', 'employeeContent']),
-		cmsData: cmsFromContent(
+		cmsData: await cmsFromContent(
 			{
 				desktopContent: cmsPage.content,
 				mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
@@ -69,25 +77,21 @@ async function loadImpl({ locals, url }: PageServerLoadEvent) {
 			},
 			locals
 		),
-		layoutReset: cmsPage.fullScreen
+		layoutReset: cmsPage.fullScreen,
+		// `[slug]` does the same, so that the meta description of `/` is the
+		// one written on the home page rather than the shop-wide default.
+		websiteShortDescription: cmsPage.shortDescription
 	};
 }
 
 export const load = loadImpl;
 
 export const actions: Actions = {
-	navigate: async ({ locals, request }) => {
+	navigate: async ({ locals, request, url }) => {
 		const formData = await request.formData();
-		let redirectTo = formData.get('redirectTo')?.toString() || '/';
-
-		// Only allow redirect to public pages (not employee-only areas)
-		if (
-			!redirectTo.startsWith('/') ||
-			redirectTo.startsWith('/admin') ||
-			redirectTo.startsWith('/pos')
-		) {
-			redirectTo = '/';
-		}
+		const path = sameOriginPath(formData.get('redirectTo')?.toString() || '/', url.origin);
+		// Employee areas are not where a visitor clearing the age wall is headed.
+		const redirectTo = !path || path.startsWith('/admin') || path.startsWith('/pos') ? '/' : path;
 
 		await collections.sessions.updateOne(
 			{
