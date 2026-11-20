@@ -6,7 +6,7 @@ import { inspect } from 'node:util';
 import { onOrderPayment, onOrderPaymentFailed } from '../orders';
 import { refreshPromise } from '../runtime-config';
 import type { Order } from '$lib/types/Order';
-import { getProcessor, watchingProcessorFor, dispatchPendingPayments } from '../sdk/pp';
+import { getProcessor, dispatchPendingPayments } from '../sdk/pp';
 
 const lock = new Lock('orders');
 
@@ -84,9 +84,11 @@ async function maintainOrders() {
 					}
 					payment = updatedPayment;
 
+					// SDK universal dispatcher — only dispatch if processor AND method match
+					// (prevents tap-to-pay method:'point-of-sale' + processor:'stripe' from being caught by PPStripe).
 					// A processor without checkPayment settles out of band and must not be polled.
-					const pp = watchingProcessorFor(payment);
-					if (pp?.checkPayment) {
+					const pp = payment.processor ? getProcessor(payment.processor) : undefined;
+					if (pp?.checkPayment && pp.meta.method === payment.method && pp.isEnabled()) {
 						try {
 							const result = await pp.checkPayment(payment, order);
 							switch (result.status) {
