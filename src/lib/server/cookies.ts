@@ -5,7 +5,7 @@ import { addMonths, addYears } from 'date-fns';
 
 export const SESSION_COOKIE_NAME = env.BOOTIK_SESSION_COOKIE_NAME || 'bootik-session';
 
-export function refreshSessionCookie(cookies: Cookies, secretSessionId: string) {
+export function refreshSessionCookie(cookies: Cookies, secretSessionId: string): void {
 	cookies.set(SESSION_COOKIE_NAME, secretSessionId, {
 		path: '/',
 		sameSite: 'lax',
@@ -21,7 +21,7 @@ export function refreshSessionCookie(cookies: Cookies, secretSessionId: string) 
 export const COOKIE_CONSENT_COOKIE_NAME = 'cookieConsent';
 export type CookieConsentValue = 'accepted' | 'denied';
 
-export function setCookieConsent(cookies: Cookies, value: CookieConsentValue) {
+export function setCookieConsent(cookies: Cookies, value: CookieConsentValue): void {
 	cookies.set(COOKIE_CONSENT_COOKIE_NAME, value, {
 		path: '/',
 		sameSite: 'lax',

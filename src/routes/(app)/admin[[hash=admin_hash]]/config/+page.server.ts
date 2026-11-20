@@ -21,6 +21,7 @@ import { PROCESSORS } from '$lib/types/paymentProcessors';
 import { logAccountingEvent, employeeFromLocals } from '$lib/server/accounting-log';
 import { SUBSCRIPTION_DURATIONS } from '$lib/types/SubscriptionDuration';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
+import type { PageServerLoad, Actions } from './$types';
 
 /** The methods a shop can express a processor preference for: the ones several providers serve. */
 const PROCESSOR_CHOICE_METHODS = ['card', 'bitcoin', 'lightning'] as const;
@@ -49,7 +50,7 @@ const VAT_SETTING_KEYS = new Set([
 	'vatExemptionReason'
 ]);
 
-export async function load(event) {
+export const load: PageServerLoad = async (event) => {
 	return {
 		ip: event.locals.clientIp,
 		isMaintenance: runtimeConfig.isMaintenance,
@@ -109,9 +110,9 @@ export async function load(event) {
 		),
 		dataCleanup: runtimeConfig.dataCleanup
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ request, locals }) {
 		const formData = await request.formData();
 		const oldAdminHash = runtimeConfig.adminHash;

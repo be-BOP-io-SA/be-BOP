@@ -8,8 +8,9 @@ import { sendResetPasswordNotification } from '$lib/server/sendNotification.js';
 import { adminPrefix } from '$lib/server/admin.js';
 import { canManageRole } from '$lib/server/arm-scope';
 import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, locals }) {
 		const data = await request.formData();
 		const allowedRoles = (await collections.roles.find().toArray()).filter(

@@ -26,7 +26,9 @@ function fieldSchema(field: ConfigField) {
 }
 
 /** What the settings page saves: every declared field, valid. */
-export function configSchemaFromFields(fields: ConfigFields) {
+export function configSchemaFromFields(
+	fields: ConfigFields
+): z.ZodObject<Record<string, ReturnType<typeof fieldSchema>>> {
 	return z.object(
 		Object.fromEntries(Object.entries(fields).map(([name, field]) => [name, fieldSchema(field)]))
 	);

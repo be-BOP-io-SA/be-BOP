@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
 import { userIdentifier, userQuery } from '$lib/server/user';
+import type { PageServerLoad } from './$types';
 
-export async function load({ locals }) {
+export const load: PageServerLoad = async ({ locals }) => {
 	const userQ = userQuery(userIdentifier(locals));
 	const now = new Date();
 
@@ -84,4 +85,4 @@ export async function load({ locals }) {
 			lastOrderId: lastOrder?.lastOrderId ?? null
 		}))
 	};
-}
+};

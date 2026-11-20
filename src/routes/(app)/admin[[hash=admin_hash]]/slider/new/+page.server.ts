@@ -1,12 +1,12 @@
 import { collections } from '$lib/server/database';
 import { generatePicture } from '$lib/server/picture';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { MAX_NAME_LIMIT } from '$lib/types/Product';
 import { zodSlug } from '$lib/server/zod';
 
-export const load = async () => {};
+export const load: PageServerLoad = async () => {};
 
 export const actions: Actions = {
 	default: async ({ request }) => {

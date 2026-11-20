@@ -78,7 +78,7 @@ function zodIssuesToFieldErrors(issues: z.ZodIssue[]): FieldErrors {
 	);
 }
 
-export async function load() {
+const loadImpl = async () => {
 	if (!isBitcoinNodelessConfigured()) {
 		return {
 			bitcoinNodeless: runtimeConfig.bitcoinNodeless,
@@ -118,7 +118,10 @@ export async function load() {
 		addressSupply,
 		maxDerivationIndex: MAX_NON_HARDENED_INDEX
 	};
-}
+};
+
+// Not annotated `PageServerLoad`: that would widen the return its callers read to `void | …`.
+export const load = (): ReturnType<typeof loadImpl> => loadImpl();
 
 export const actions: Actions = {
 	async initialize({ request }) {

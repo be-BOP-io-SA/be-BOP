@@ -3,8 +3,9 @@ import { accountingLogsToCSV } from '$lib/server/accounting-log';
 import type { Filter } from 'mongodb';
 import type { AccountingLog } from '$lib/types/AccountingLog';
 import { z } from 'zod';
+import type { RequestHandler } from './$types';
 
-export const GET = async ({ url }) => {
+export const GET: RequestHandler = async ({ url }) => {
 	const format = z.enum(['csv', 'json']).catch('csv').parse(url.searchParams.get('format'));
 	const from = url.searchParams.get('from');
 	const to = url.searchParams.get('to');

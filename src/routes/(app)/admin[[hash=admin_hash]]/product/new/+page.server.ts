@@ -6,7 +6,7 @@ import {
 	cleanVariationLabels,
 	cleanVariationFamilies
 } from '$lib/server/product';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { ObjectId } from 'mongodb';
@@ -37,7 +37,7 @@ import { defaultSchedule, productToScheduleId } from '$lib/types/Schedule';
 import { logProductCreationEvents } from '$lib/server/accounting-log';
 import type { DigitalFile } from '$lib/types/DigitalFile';
 
-export const load = async ({ url, locals }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
 	const productId = url.searchParams.get('duplicate_from');
 	const tags = await collections.tags
 		.find({})

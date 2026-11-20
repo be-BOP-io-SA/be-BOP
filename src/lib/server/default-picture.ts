@@ -36,7 +36,10 @@ export async function defaultPictureUrl(file: DefaultPictureFile): Promise<strin
 	return picture ? getPublicS3DownloadLink(picture.storage.formats[0].key) : bundled;
 }
 
-export async function replaceDefaultPicture(file: DefaultPictureFile, request: Request) {
+export async function replaceDefaultPicture(
+	file: DefaultPictureFile,
+	request: Request
+): Promise<void> {
 	const upload = (await request.formData()).get('file');
 
 	if (!upload || !(upload instanceof File)) {

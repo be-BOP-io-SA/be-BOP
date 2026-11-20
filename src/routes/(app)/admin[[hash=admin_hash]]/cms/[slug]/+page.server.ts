@@ -6,8 +6,9 @@ import { error, redirect } from '@sveltejs/kit';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
 import { z } from 'zod';
 import { set } from '$lib/utils/set';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ request, params, locals }) {
 		const cmsPage = await collections.cmsPages.findOne({
 			_id: params.slug

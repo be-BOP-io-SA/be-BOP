@@ -10,8 +10,9 @@ import { format } from 'date-fns';
 import { ObjectId } from 'mongodb';
 import { Kind } from 'nostr-tools';
 import { hideRsvpTargets } from '$lib/server/schedule';
+import type { PageServerLoad, Actions } from './$types';
 
-export const load = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const schedule = await collections.schedules.findOne({ _id: params.id });
 
 	if (!schedule) {
@@ -27,7 +28,7 @@ export const load = async ({ params }) => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	notify: async function ({ request, params, locals }) {
 		const schedule = await collections.schedules.findOne({ _id: params.id });
 		if (!schedule) {

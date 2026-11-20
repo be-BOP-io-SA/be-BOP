@@ -13,7 +13,7 @@ import { poolSlugs, resolvePoolLabel } from '$lib/types/PosTabGroup';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { persistConfigElement } from '$lib/server/utils/persistConfig';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoadEvent } from './$types';
 
 interface RawTagGroup {
 	_id: string;
@@ -31,7 +31,7 @@ async function nonEmptyPoolSlugs(slugs: string[]): Promise<string[]> {
 	return tabs.map((tab) => tab.slug);
 }
 
-export const load = async ({}) => {
+const loadImpl = async ({}: PageServerLoadEvent) => {
 	const [tags, tagGroups] = await Promise.all([
 		collections.tags.find({}).project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 }).toArray(),
 		collections.tagGroups.find({}).sort({ order: 1 }).toArray()
@@ -80,6 +80,9 @@ export const load = async ({}) => {
 		}
 	};
 };
+
+// Not annotated `PageServerLoad`: that would widen the return its callers read to `void | …`.
+export const load = (event: PageServerLoadEvent): ReturnType<typeof loadImpl> => loadImpl(event);
 
 export const actions: Actions = {
 	default: async ({ request }) => {

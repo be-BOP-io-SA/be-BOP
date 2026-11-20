@@ -3,6 +3,7 @@ import { actions as adminOrderActions } from '../../../admin[[hash=admin_hash]]/
 import { collections } from '$lib/server/database';
 import { isAllowedOnPage } from '$lib/types/Role';
 import { adminPrefix } from '$lib/server/admin';
+import type { Actions } from './$types';
 
 async function throwIfPosAccountCannotManageOrder(event: RequestEvent<{ id: string }>) {
 	const { id } = event.params;
@@ -18,7 +19,7 @@ async function throwIfPosAccountCannotManageOrder(event: RequestEvent<{ id: stri
 	}
 }
 
-export const actions = {
+export const actions: Actions = {
 	addPayment: async function (event) {
 		await throwIfPosAccountCannotManageOrder(event);
 

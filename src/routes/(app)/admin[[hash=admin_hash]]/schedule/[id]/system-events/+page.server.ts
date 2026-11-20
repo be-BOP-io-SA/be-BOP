@@ -3,8 +3,9 @@ import { collections } from '$lib/server/database';
 import { enrichWithOrderNumbers } from '$lib/server/orders';
 import type { Filter } from 'mongodb';
 import type { ScheduleEventBooked } from '$lib/types/Schedule';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ params, url, parent }) => {
+export const load: PageServerLoad = async ({ params, url, parent }) => {
 	const { isBookingSchedule } = await parent();
 	if (!isBookingSchedule) {
 		throw error(404, 'System events are only available for booking schedules');

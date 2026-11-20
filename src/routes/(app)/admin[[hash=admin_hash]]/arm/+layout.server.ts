@@ -1,7 +1,8 @@
 import { canManageRole } from '$lib/server/arm-scope';
 import { collections } from '$lib/server/database';
+import type { LayoutServerLoad } from './$types';
 
-export const load = async ({ locals }) => {
+export const load: LayoutServerLoad = async ({ locals }) => {
 	const roles = await collections.roles.find().sort({ createdAt: 1 }).toArray();
 
 	return {

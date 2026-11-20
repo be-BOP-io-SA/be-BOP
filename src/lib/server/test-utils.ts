@@ -8,7 +8,7 @@ import { ObjectId } from 'mongodb';
 import type { Order, OrderPayment } from '$lib/types/Order';
 import { TEST_DIGITAL_PRODUCT } from './seed/product';
 
-export async function cleanDb() {
+export async function cleanDb(): Promise<void> {
 	if (!env.VITEST) {
 		throw new Error('cleanDb is only available in test mode');
 	}
@@ -36,7 +36,10 @@ export async function cleanDb() {
 	});
 }
 
-export async function createPaidSubscription(subscriptionProductId: string, user: UserIdentifier) {
+export async function createPaidSubscription(
+	subscriptionProductId: string,
+	user: UserIdentifier
+): Promise<void> {
 	if (!(await collections.products.findOne({ _id: subscriptionProductId, type: 'subscription' }))) {
 		throw new Error(`Subscription product not found in database: ${subscriptionProductId}`);
 	}
@@ -58,7 +61,7 @@ export async function createPaidSubscription(subscriptionProductId: string, user
  */
 export async function insertTestOrder(
 	overrides: Partial<Omit<Order, 'payments'>> & { payments?: Partial<OrderPayment>[] } = {}
-) {
+): Promise<Order> {
 	const createdAt = overrides.createdAt ?? new Date();
 	const price = { amount: 10, currency: 'EUR' as const };
 	const { payments, ...rest } = overrides;
@@ -109,7 +112,7 @@ export async function createDiscount(params: {
 	discountedProductId: string;
 	subscriptionProductId: string;
 	percentage: number;
-}) {
+}): Promise<void> {
 	const { discountedProductId, subscriptionProductId, percentage } = params;
 	if (!(await collections.products.findOne({ _id: discountedProductId, type: 'resource' }))) {
 		throw new Error(`Product to discount not found in database: ${discountedProductId}`);

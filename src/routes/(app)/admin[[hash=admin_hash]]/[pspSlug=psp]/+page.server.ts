@@ -6,6 +6,8 @@ import { updateLightningInvoiceDescription } from '$lib/server/actions.js';
 import { PROCESSORS, type PaymentProcessorSlug } from '$lib/types/paymentProcessors';
 import { isAllowedOnPage } from '$lib/types/Role';
 import type { PaymentProcessor } from '$lib/server/payment-methods';
+import type { testProcessorConnection } from '$lib/server/sdk/test-connection';
+import type { PageServerLoad } from './$types';
 
 /**
  * One settings page for every processor that keeps its credentials in `runtimeConfig`. What
@@ -43,7 +45,7 @@ function withSecretsBlanked(slug: string, config: object) {
 	);
 }
 
-export async function load({ params, locals }) {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const declaration = settingsFor(params.pspSlug);
 	const config = runtimeConfig[declaration.configKey];
 	const mayEdit =
@@ -56,7 +58,7 @@ export async function load({ params, locals }) {
 		config: mayEdit ? config : withSecretsBlanked(params.pspSlug, config),
 		lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription
 	};
-}
+};
 
 /** The shared save / delete / test actions, bound to whichever processor the URL names. */
 function actionsFor(slug: string) {
@@ -67,13 +69,13 @@ function actionsFor(slug: string) {
 }
 
 export const actions = {
-	save: (event: RequestEvent) => actionsFor(event.params.pspSlug ?? '').save(event),
-	delete: (event: RequestEvent) => actionsFor(event.params.pspSlug ?? '').delete(),
-	testConnection: (event: RequestEvent) =>
+	save: (event: RequestEvent): Promise<void> => actionsFor(event.params.pspSlug ?? '').save(event),
+	delete: (event: RequestEvent): Promise<void> => actionsFor(event.params.pspSlug ?? '').delete(),
+	testConnection: (event: RequestEvent): ReturnType<typeof testProcessorConnection> =>
 		actionsFor(event.params.pspSlug ?? '').testConnection(event),
 	// Only the lightning forms render the control that posts here, but the action answers on every
 	// processor's URL, so a role scoped to another provider could otherwise change this global setting.
-	updateLightningInvoiceDescription: async (event: RequestEvent) => {
+	updateLightningInvoiceDescription: async (event: RequestEvent): Promise<void> => {
 		if (settingsFor(event.params.pspSlug ?? '').method !== 'lightning') {
 			throw error(404, 'This processor has no lightning invoice settings');
 		}

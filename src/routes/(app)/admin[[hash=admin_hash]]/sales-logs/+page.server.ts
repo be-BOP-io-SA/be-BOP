@@ -1,8 +1,9 @@
 import { collections } from '$lib/server/database';
 import { subDays } from 'date-fns';
 import { z } from 'zod';
+import type { PageServerLoad } from './$types';
 
-export async function load({ url }) {
+export const load: PageServerLoad = async ({ url }) => {
 	const querySchema = z.object({
 		from: z.date({ coerce: true }).default(subDays(new Date(), 1)),
 		to: z.date({ coerce: true }).default(new Date())
@@ -39,4 +40,4 @@ export async function load({ url }) {
 		from,
 		to
 	};
-}
+};

@@ -12,8 +12,9 @@ import {
 	disableTelemetry
 } from '$lib/server/telemetry-helpers';
 import { isNostrConfigured } from '$lib/server/nostr';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load({ url, locals }) {
+export const load: PageServerLoad = async ({ url, locals }) => {
 	if (!locals.user) {
 		throw redirect(303, `${adminPrefix()}/login`);
 	}
@@ -68,11 +69,11 @@ export async function load({ url, locals }) {
 		console.error(`Error reading files from docs/${result.lang}`, err);
 		throw error(404, `Unable to load documentation files for "${result.lang}"`);
 	}
-}
+};
 
 const TELEMETRY_CHOICES = ['accept', 'decline', 'hide'] as const;
 
-export const actions = {
+export const actions: Actions = {
 	telemetry: async ({ request, locals }) => {
 		if (!canConfigureTelemetry(locals.user?.role)) {
 			throw error(403, 'You are not allowed to change the telemetry setting');

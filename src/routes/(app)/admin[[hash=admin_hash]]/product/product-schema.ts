@@ -19,7 +19,7 @@ const zodSafeHref = () =>
 		.refine((href) => !href || safeHref(href) !== '#', 'Unsupported link scheme');
 import { webhookApiRouteIssue } from '$lib/server/webhook-url-guard';
 
-export const productBaseSchema = () => ({
+const productBaseSchemaFields = () => ({
 	name: z.string().trim().min(1).max(MAX_NAME_LIMIT),
 	alias: z.string().trim().max(MAX_NAME_LIMIT).optional(),
 	description: z.string().trim().max(10_000),
@@ -308,3 +308,9 @@ export const productBaseSchema = () => ({
 		})
 		.optional()
 });
+
+// Exported boundary keeps a concrete (non-erased) return type so the shape can be
+// spread into `z.object({ ...productBaseSchema() })` with all keys preserved.
+export function productBaseSchema(): ReturnType<typeof productBaseSchemaFields> {
+	return productBaseSchemaFields();
+}

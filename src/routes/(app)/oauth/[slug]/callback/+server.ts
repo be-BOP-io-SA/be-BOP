@@ -6,8 +6,9 @@ import { error, redirect } from '@sveltejs/kit';
 import { addYears } from 'date-fns';
 import { ObjectId } from 'mongodb';
 import * as client from 'openid-client';
+import type { RequestHandler } from './$types';
 
-export const GET = async ({ params, fetch, cookies, url, locals }) => {
+export const GET: RequestHandler = async ({ params, fetch, cookies, url, locals }) => {
 	const state = cookies.get('oauth_state');
 	const code_verifier = cookies.get('oauth_code_verifier');
 

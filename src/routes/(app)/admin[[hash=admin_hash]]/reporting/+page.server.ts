@@ -16,12 +16,13 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { CUSTOMER_ROLE_ID, type User } from '$lib/types/User';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import type { Tag } from '$lib/types/Tag';
+import type { PageServerLoadEvent } from './$types';
 
 function pageParam(url: URL, name: string) {
 	return Number(url.searchParams.get(name)) || 1;
 }
 
-export async function load({ url }) {
+const loadImpl = async ({ url }: PageServerLoadEvent) => {
 	const methods = paymentMethods({ includePOS: true });
 	const filters = parseReportingFilters(url, methods);
 
@@ -70,4 +71,7 @@ export async function load({ url }) {
 			name: subtype.name
 		}))
 	};
-}
+};
+
+// Not annotated `PageServerLoad`: that would widen the return its callers read to `void | …`.
+export const load = (event: PageServerLoadEvent): ReturnType<typeof loadImpl> => loadImpl(event);

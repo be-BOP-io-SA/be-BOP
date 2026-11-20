@@ -3,8 +3,9 @@ import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { adminPrefix } from '$lib/server/admin';
 import { MAX_NAME_LIMIT } from '$lib/types/Product';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load({ params }) {
+export const load: PageServerLoad = async ({ params }) => {
 	const label = await collections.labels.findOne({
 		_id: params.id
 	});
@@ -16,8 +17,8 @@ export async function load({ params }) {
 	return {
 		label
 	};
-}
-export const actions = {
+};
+export const actions: Actions = {
 	update: async function ({ request, params }) {
 		const label = await collections.labels.findOne({
 			_id: params.id

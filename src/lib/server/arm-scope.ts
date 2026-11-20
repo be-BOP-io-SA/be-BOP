@@ -14,7 +14,10 @@ export function canManageRole(caller: Caller, target: Role): boolean {
 	return !!caller?.role && isRoleWithin(target, caller.role);
 }
 
-export async function requireCanManageUser(caller: Caller, user: Pick<User, 'roleId'>) {
+export async function requireCanManageUser(
+	caller: Caller,
+	user: Pick<User, 'roleId'>
+): Promise<void> {
 	if (caller?.roleId === SUPER_ADMIN_ROLE_ID) {
 		return;
 	}

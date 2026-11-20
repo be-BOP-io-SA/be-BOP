@@ -7,6 +7,7 @@ import { paymentMethods } from '$lib/server/payment-methods.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { s3IsConfigured } from '$lib/server/s3.js';
 import { DEFAULT_CMS_PAGES, buildDefaultCmsPageFields } from '$lib/server/defaultCmsPages';
+import type { LayoutServerLoad } from './$types';
 
 const SEO_VISIBLE_PAGES = new Set(['home', 'privacy', 'terms']);
 
@@ -40,7 +41,7 @@ async function ensureDefaultCmsPages() {
 	await collections.cmsPages.insertMany(pagesToCreate);
 }
 
-export async function load({ locals }) {
+export const load: LayoutServerLoad = async ({ locals }) => {
 	// Ensure default CMS pages exist on every admin access
 	await ensureDefaultCmsPages();
 
@@ -67,4 +68,4 @@ export async function load({ locals }) {
 					.then((u) => u?.userSettings?.backOfficeBookmarks ?? [])
 			: []
 	};
-}
+};

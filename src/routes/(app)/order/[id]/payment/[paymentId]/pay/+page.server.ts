@@ -4,8 +4,9 @@ import { fetchOrderForUser } from '../../../fetchOrderForUser.js';
 import { collections } from '$lib/server/database';
 import { getProcessor } from '$lib/server/sdk/pp';
 import { ORIGIN } from '$lib/server/env-config';
+import type { PageServerLoadEvent } from './$types';
 
-export async function load({ params, depends }) {
+const loadImpl = async ({ params, depends }: PageServerLoadEvent) => {
 	const order = await fetchOrderForUser(params.id);
 
 	depends(UrlDependency.Order);
@@ -45,4 +46,7 @@ export async function load({ params, depends }) {
 		payment,
 		payData: storedPayment && processor?.payData?.(storedPayment)
 	};
-}
+};
+
+// Not annotated `PageServerLoad`: that would widen the return its callers read to `void | …`.
+export const load = (event: PageServerLoadEvent): ReturnType<typeof loadImpl> => loadImpl(event);

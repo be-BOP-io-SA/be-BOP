@@ -275,7 +275,7 @@ export async function storePicture(
 	}
 }
 
-export async function deletePicture(pictureId: Picture['_id']) {
+export async function deletePicture(pictureId: Picture['_id']): Promise<void> {
 	const res = await collections.pictures.findOneAndDelete({ _id: pictureId });
 
 	if (!res.value) {

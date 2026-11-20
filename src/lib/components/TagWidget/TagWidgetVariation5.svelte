@@ -1,15 +1,12 @@
 <script lang="ts">
 	import type { Picture } from '$lib/types/Picture';
-	import type { Tag } from '$lib/types/Tag';
+	import type { TagWidgetTag } from '$lib/types/Tag';
 	import { safeHref } from '$lib/utils/safeUrl';
 	import PictureComponent from '../Picture.svelte';
 
 	let className = '';
 	export { className as class };
-	export let tag: Pick<
-		Tag,
-		'_id' | 'name' | 'title' | 'subtitle' | 'content' | 'shortContent' | 'cta'
-	>;
+	export let tag: TagWidgetTag;
 	export let picture: Picture | undefined;
 	export let titleClassNames = '';
 </script>

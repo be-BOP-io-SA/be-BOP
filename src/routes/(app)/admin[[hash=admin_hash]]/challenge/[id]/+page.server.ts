@@ -4,8 +4,9 @@ import { parsePriceAmount } from '$lib/types/Currency';
 import { MAX_NAME_LIMIT } from '$lib/types/Product';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	update: async function ({ request, params }) {
 		const challenge = await collections.challenges.findOne({
 			_id: params.id

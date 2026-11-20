@@ -25,7 +25,7 @@ const processingIds = new Set<string>();
 
 let relayPool: RelayPool | null = null;
 
-export async function closeRelayPool() {
+export async function closeRelayPool(): Promise<void> {
 	try {
 		await relayPool?.close()?.then(() => console.log('Closed Nostr Relay Pool'));
 	} catch (err) {
@@ -82,7 +82,7 @@ if (!building) {
 	watch();
 }
 
-export async function processUnprocessedNotifications() {
+export async function processUnprocessedNotifications(): Promise<void> {
 	if (!isNostrConfigured()) {
 		return;
 	}

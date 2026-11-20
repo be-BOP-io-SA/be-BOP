@@ -41,7 +41,11 @@ function statusesParam(
 		.parse(url.searchParams.getAll(name).filter(Boolean));
 }
 
-export function parseReportingFilters(url: URL, methods: PaymentMethod[]) {
+export function parseReportingFilters(url: URL, methods: PaymentMethod[]): ReportingFilters {
+	return parseReportingFiltersImpl(url, methods);
+}
+
+function parseReportingFiltersImpl(url: URL, methods: PaymentMethod[]) {
 	const querySchema = z.object({
 		beginsAt: z.string().optional(),
 		endsAt: z.string().optional(),
@@ -68,7 +72,7 @@ export function parseReportingFilters(url: URL, methods: PaymentMethod[]) {
 	};
 }
 
-export type ReportingFilters = ReturnType<typeof parseReportingFilters>;
+export type ReportingFilters = ReturnType<typeof parseReportingFiltersImpl>;
 
 function parseDate(value: string | undefined) {
 	if (!value) {
@@ -250,7 +254,10 @@ function itemMatchesTag(item: ReportingItem, tagId: string | undefined) {
 	return !tagId || !!item.product.tagIds?.includes(tagId);
 }
 
-export function selectOrderDetail(orders: ReportingOrder[], filters: ReportingFilters) {
+export function selectOrderDetail(
+	orders: ReportingOrder[],
+	filters: ReportingFilters
+): ReportingOrder[] {
 	return orders.filter(
 		(order) =>
 			filters.orderStatuses.includes(order.status) &&
@@ -259,7 +266,10 @@ export function selectOrderDetail(orders: ReportingOrder[], filters: ReportingFi
 	);
 }
 
-export function selectProductDetail(orders: ReportingOrder[], filters: ReportingFilters) {
+export function selectProductDetail(
+	orders: ReportingOrder[],
+	filters: ReportingFilters
+): Array<{ order: ReportingOrder; item: ReportingItem }> {
 	return selectOrderDetail(orders, filters).flatMap((order) =>
 		order.items
 			.filter((item) => itemMatchesTag(item, filters.tagId))
@@ -267,7 +277,10 @@ export function selectProductDetail(orders: ReportingOrder[], filters: Reporting
 	);
 }
 
-export function selectPaymentDetail(orders: ReportingOrder[], filters: ReportingFilters) {
+export function selectPaymentDetail(
+	orders: ReportingOrder[],
+	filters: ReportingFilters
+): Array<{ order: ReportingOrder; payment: ReportingPayment }> {
 	return selectOrderDetail(orders, filters).flatMap((order) =>
 		order.payments
 			.filter((payment) => paymentMatchesFilter(payment, filters))
@@ -279,7 +292,11 @@ function orderIpCountry(order: ReportingOrder) {
 	return countryFromIp(order.clientIp ?? '');
 }
 
-export function toOrderRow(order: ReportingOrder) {
+export function toOrderRow(order: ReportingOrder): ReturnType<typeof toOrderRowImpl> {
+	return toOrderRowImpl(order);
+}
+
+function toOrderRowImpl(order: ReportingOrder) {
 	return {
 		_id: order._id,
 		number: order.number,
@@ -293,7 +310,14 @@ export function toOrderRow(order: ReportingOrder) {
 	};
 }
 
-export function toProductRow({ order, item }: { order: ReportingOrder; item: ReportingItem }) {
+export function toProductRow(detail: {
+	order: ReportingOrder;
+	item: ReportingItem;
+}): ReturnType<typeof toProductRowImpl> {
+	return toProductRowImpl(detail);
+}
+
+function toProductRowImpl({ order, item }: { order: ReportingOrder; item: ReportingItem }) {
 	return {
 		productId: item.product._id,
 		productName: item.product.name,
@@ -307,7 +331,14 @@ export function toProductRow({ order, item }: { order: ReportingOrder; item: Rep
 	};
 }
 
-export function toPaymentRow({
+export function toPaymentRow(detail: {
+	order: ReportingOrder;
+	payment: ReportingPayment;
+}): ReturnType<typeof toPaymentRowImpl> {
+	return toPaymentRowImpl(detail);
+}
+
+function toPaymentRowImpl({
 	order,
 	payment
 }: {
@@ -356,11 +387,14 @@ export function toReceiptRow({
 }: {
 	order: ReportingOrder;
 	payment: ReportingPayment;
-}) {
+}): { orderId: string; paymentId: string } {
 	return { orderId: order._id, paymentId: payment._id.toString() };
 }
 
-export function selectReceipts(orders: ReportingOrder[], filters: ReportingFilters) {
+export function selectReceipts(
+	orders: ReportingOrder[],
+	filters: ReportingFilters
+): Array<ReturnType<typeof toReceiptRow>> {
 	return selectOrderDetail(orders, filters).flatMap((order) =>
 		order.payments
 			.filter((payment) => payment.status === 'paid')
@@ -384,6 +418,14 @@ function paymentSynthesisKey(payment: ReportingPayment) {
  * payments shown, which is where a partial payment appears.
  */
 export function computeReportingSynthesis(
+	orders: ReportingOrder[],
+	filters: ReportingFilters,
+	mainCurrency: Currency
+): ReturnType<typeof computeReportingSynthesisImpl> {
+	return computeReportingSynthesisImpl(orders, filters, mainCurrency);
+}
+
+function computeReportingSynthesisImpl(
 	orders: ReportingOrder[],
 	filters: ReportingFilters,
 	mainCurrency: Currency
@@ -481,7 +523,10 @@ export function computeReportingSynthesis(
 	};
 }
 
-export function paginate<T>(rows: T[], page: number) {
+export function paginate<T>(
+	rows: T[],
+	page: number
+): { rows: T[]; page: number; pageCount: number; total: number } {
 	const pageCount = Math.max(1, Math.ceil(rows.length / REPORTING_PAGE_SIZE));
 	const current = Math.min(Math.max(1, page), pageCount);
 	return {

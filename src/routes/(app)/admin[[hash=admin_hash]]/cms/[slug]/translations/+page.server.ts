@@ -6,8 +6,9 @@ import { locales, type LanguageKey } from '$lib/translations/index.js';
 import { collections } from '$lib/server/database.js';
 import { error } from '@sveltejs/kit';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, params, locals }) {
 		const cmsPage = await collections.cmsPages.findOne(
 			{ _id: params.slug },

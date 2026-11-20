@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { collections } from '$lib/server/database';
 import { getNostrKeys, isAuthenticEvent, isNostrConfigured } from '$lib/server/nostr';
 import { rateLimit } from '$lib/server/rateLimit';
+import type { RequestHandler } from './$types';
 
 const ZAP_REQUEST_KIND = 9734;
 
@@ -71,7 +72,7 @@ function validateZapRequest(nostrParam: string): ZapRequestValidation {
 	}
 }
 
-export const OPTIONS = () => {
+export const OPTIONS: RequestHandler = () => {
 	return new Response(null, {
 		headers: {
 			'access-control-allow-origin': '*',
@@ -81,7 +82,7 @@ export const OPTIONS = () => {
 	});
 };
 
-export const GET = async ({ url, locals }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
 	// Each call creates a real invoice on the node, and the signed metadata replays for an hour.
 	rateLimit(locals.clientIp, 'lnurl-pay', 30, { minutes: 1 });
 

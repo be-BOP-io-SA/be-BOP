@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
+import type { PageLoad } from './$types';
 
-export async function load({ parent, data }) {
+export const load: PageLoad = async ({ parent, data }) => {
 	const res = await parent();
 
 	if (!res.cart.items?.length) {
@@ -8,4 +9,4 @@ export async function load({ parent, data }) {
 	}
 
 	return data;
-}
+};

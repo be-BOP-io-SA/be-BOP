@@ -13,7 +13,7 @@ async function sendBeaconAndGetNextDate(): Promise<Date | null> {
 	return sent ? calculateNextBeaconDate() : null;
 }
 
-export async function sendPeriodicBeacon() {
+export async function sendPeriodicBeacon(): Promise<void> {
 	const telemetryConfig = runtimeConfig.telemetry;
 
 	if (
@@ -42,7 +42,10 @@ export async function sendPeriodicBeacon() {
 	}
 }
 
-export async function enableTelemetry(options?: { forceBeaconNow?: boolean; source?: string }) {
+export async function enableTelemetry(options?: {
+	forceBeaconNow?: boolean;
+	source?: string;
+}): Promise<{ beaconSent: boolean; nextBeacon: Date | null }> {
 	const currentTelemetry = runtimeConfig.telemetry;
 	const now = new Date();
 
@@ -96,7 +99,10 @@ export async function enableTelemetry(options?: { forceBeaconNow?: boolean; sour
 	return { beaconSent: shouldSendNow, nextBeacon: nextBeaconDate };
 }
 
-export async function disableTelemetry(options?: { neverAskAgain?: boolean; source?: string }) {
+export async function disableTelemetry(options?: {
+	neverAskAgain?: boolean;
+	source?: string;
+}): Promise<void> {
 	const now = new Date();
 	const neverAsk = options?.neverAskAgain ?? false;
 

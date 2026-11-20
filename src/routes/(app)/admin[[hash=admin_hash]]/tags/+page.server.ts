@@ -1,7 +1,7 @@
 import { collections, withTransaction } from '$lib/server/database';
 import { z } from 'zod';
 import { generateId } from '$lib/utils/generateId';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 interface RawTagFamily {
 	_id: string;
@@ -10,7 +10,7 @@ interface RawTagFamily {
 	updatedAt?: string | Date;
 }
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const [tags, families] = await Promise.all([
 		collections.tags.find({}).toArray(),
 		collections.tagFamilies.find({}).sort({ order: 1 }).toArray()

@@ -13,13 +13,14 @@ import {
 } from '$lib/types/User.js';
 import { adminPrefix } from '$lib/server/admin.js';
 import { countHit, isRateLimited, rateLimit } from '$lib/server/rateLimit.js';
+import type { Actions, PageServerLoad } from './$types';
 
 const FAILURE_WINDOW = { minutes: 15 };
 
 /** A bcrypt hash of no one's password, compared against when the login is unknown. */
 const TIMING_EQUALISER_HASH = '$2a$10$qz09XxQBnuGawp7M3s5dm.vJzU2D1V1lfPuw6BMUPinnI81gGKOQ2';
 
-export const load = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.user) {
 		throw redirect(303, locals.user.roleId === POS_ROLE_ID ? '/pos' : `/admin`);
 	}
@@ -29,7 +30,7 @@ export const load = async ({ locals }) => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ locals, request, cookies }) {
 		rateLimit(locals.clientIp, 'login', 10, { minutes: 5 });
 

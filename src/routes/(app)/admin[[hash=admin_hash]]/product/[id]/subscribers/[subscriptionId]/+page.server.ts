@@ -1,8 +1,9 @@
 import { adminPrefix } from '$lib/server/admin';
 import { collections } from '$lib/server/database';
 import { error, redirect } from '@sveltejs/kit';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	cancel: async ({ params, request }) => {
 		const subscription = await collections.paidSubscriptions.findOne({
 			_id: params.subscriptionId

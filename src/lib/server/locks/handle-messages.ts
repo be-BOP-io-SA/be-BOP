@@ -521,7 +521,7 @@ export const commands: Record<
 		args: [
 			{
 				name: 'paymentMethod',
-				enum: async (senderNpub) => {
+				enum: async (senderNpub: string): Promise<Readonly<Array<string>>> => {
 					try {
 						const user = { npub: senderNpub };
 						const cart = await getCartFromDb({ user });

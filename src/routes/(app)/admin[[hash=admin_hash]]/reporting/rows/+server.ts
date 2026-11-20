@@ -12,9 +12,10 @@ import {
 	toPaymentRow,
 	toProductRow
 } from '$lib/server/reporting';
+import type { RequestHandler } from './$types';
 
 /** Unpaginated rows for the CSV, JSON and receipt exports, fetched only when the admin asks. */
-export async function GET({ url }) {
+export const GET: RequestHandler = async ({ url }) => {
 	const filters = parseReportingFilters(url, paymentMethods({ includePOS: true }));
 	const orders = await fetchReportingOrders(filters);
 
@@ -34,7 +35,7 @@ export async function GET({ url }) {
 				throw error(400, 'Unknown table');
 		}
 	}
-}
+};
 
 // devalue keeps Date instances, so the page formats export rows exactly like page data rows.
 function devalueResponse(value: unknown) {

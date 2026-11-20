@@ -37,7 +37,7 @@ export async function loadFront(slug: string): Promise<LoadedFront | undefined> 
 }
 
 /** Runs `mount` once the provider's script is there, adding it to the page when it is not. */
-export function withProviderScript(src: string, loaded: boolean, mount: () => void) {
+export function withProviderScript(src: string, loaded: boolean, mount: () => void): void {
 	if (loaded) {
 		mount();
 		return;
