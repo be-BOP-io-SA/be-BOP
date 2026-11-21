@@ -152,6 +152,9 @@
 	{:else}
 		<div class="flex items-center gap-3 text-sm opacity-70">
 			<span>{data.deviceName} · {data.operator.alias}</span>
+			{#if data.operator.actions.includes('xReport')}
+				<a href="/pos/terminal/x" class="underline">{t('pos.terminal.xTitle')}</a>
+			{/if}
 			<form method="post" action="?/lock">
 				<button type="submit" class="underline">{t('pos.terminal.switchOperator')}</button>
 			</form>

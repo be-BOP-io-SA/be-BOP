@@ -3286,7 +3286,9 @@
 			"orBadge": "ou aproxime o seu crachá",
 			"pin": "PIN",
 			"signIn": "Entrar",
-			"switchOperator": "Mudar de operador"
+			"switchOperator": "Mudar de operador",
+			"xTitle": "Relatório X",
+			"noSession": "Não há nenhuma sessão de caixa aberta."
 		}
 	},
 	"product": {

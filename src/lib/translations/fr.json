@@ -3286,7 +3286,9 @@
 			"orBadge": "ou passez votre badge",
 			"pin": "PIN",
 			"signIn": "Se connecter",
-			"switchOperator": "Changer d'opérateur"
+			"switchOperator": "Changer d'opérateur",
+			"xTitle": "X",
+			"noSession": "Aucune session de caisse n'est ouverte."
 		}
 	},
 	"product": {

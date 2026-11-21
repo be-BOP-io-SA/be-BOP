@@ -3286,7 +3286,9 @@
 			"orBadge": "of houd uw badge tegen het toestel",
 			"pin": "Pincode",
 			"signIn": "Inloggen",
-			"switchOperator": "Andere medewerker"
+			"switchOperator": "Andere medewerker",
+			"xTitle": "X-rapport",
+			"noSession": "Er is geen kassasessie geopend."
 		}
 	},
 	"product": {

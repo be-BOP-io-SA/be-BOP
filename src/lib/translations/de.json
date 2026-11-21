@@ -3286,7 +3286,9 @@
 			"orBadge": "oder halten Sie Ihren Badge an",
 			"pin": "PIN",
 			"signIn": "Anmelden",
-			"switchOperator": "Bediener wechseln"
+			"switchOperator": "Bediener wechseln",
+			"xTitle": "X-Bericht",
+			"noSession": "Keine Kassensitzung ist geöffnet."
 		}
 	},
 	"product": {

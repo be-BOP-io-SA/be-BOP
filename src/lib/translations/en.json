@@ -3286,7 +3286,9 @@
 			"orBadge": "or tap your badge",
 			"pin": "PIN",
 			"signIn": "Sign in",
-			"switchOperator": "Switch operator"
+			"switchOperator": "Switch operator",
+			"xTitle": "X report",
+			"noSession": "No till session is open."
 		}
 	},
 	"product": {

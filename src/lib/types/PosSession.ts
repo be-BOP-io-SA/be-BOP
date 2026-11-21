@@ -18,6 +18,17 @@ export interface PosSessionIncome {
 	currency: Currency;
 	originalAmount?: number;
 	originalCurrency?: Currency;
+	/** Set for the payments taken on paired terminals: they are summed by processor too. */
+	processor?: string;
+}
+
+/** The terminal payments of a session, against the till's references. */
+export interface PosSessionTerminalReconciliation {
+	currency: Currency;
+	tips: number;
+	refs: Array<{ ref: string; amount: number; count: number }>;
+	/** Taken while the till was down, and not attached to a reference since. */
+	toReconcile: { amount: number; count: number };
 }
 
 export interface PosSessionOutcome {
@@ -67,4 +78,7 @@ export interface PosSession extends Timestamps {
 	dailyOutcomes: PosSessionOutcome[];
 
 	xTickets: PosSessionXTicket[];
+
+	/** Computed at closing, for the Z ticket. */
+	terminalReconciliation?: PosSessionTerminalReconciliation;
 }

@@ -3286,7 +3286,9 @@
 			"orBadge": "o acerque su credencial",
 			"pin": "PIN",
 			"signIn": "Entrar",
-			"switchOperator": "Cambiar de operador"
+			"switchOperator": "Cambiar de operador",
+			"xTitle": "Informe X",
+			"noSession": "No hay ninguna sesión de caja abierta."
 		}
 	},
 	"product": {
