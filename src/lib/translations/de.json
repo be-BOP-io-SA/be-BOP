@@ -3304,7 +3304,8 @@
 			"nfcUnavailable": "Dieses Gerät hat kein NFC: Es kann keine Karten kassieren.",
 			"methodCardStripe": "Stripe-Karte",
 			"cancelYes": "Ja, stornieren",
-			"cancelKeep": "Nicht stornieren"
+			"cancelKeep": "Nicht stornieren",
+			"pendingPayments": "Ausstehende Zahlungen"
 		}
 	},
 	"product": {

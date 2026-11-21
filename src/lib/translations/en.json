@@ -3304,7 +3304,8 @@
 			"nfcUnavailable": "This device has no NFC: it cannot take cards.",
 			"methodCardStripe": "Stripe card",
 			"cancelYes": "Yes, cancel",
-			"cancelKeep": "Do not cancel"
+			"cancelKeep": "Do not cancel",
+			"pendingPayments": "Waiting payments"
 		}
 	},
 	"product": {

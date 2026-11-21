@@ -3304,7 +3304,8 @@
 			"nfcUnavailable": "Questo dispositivo non ha l'NFC: non può incassare carte.",
 			"methodCardStripe": "Carta Stripe",
 			"cancelYes": "Sì, annulla",
-			"cancelKeep": "Non annullare"
+			"cancelKeep": "Non annullare",
+			"pendingPayments": "Pagamenti in attesa"
 		}
 	},
 	"product": {

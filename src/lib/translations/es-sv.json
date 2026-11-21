@@ -3304,7 +3304,8 @@
 			"nfcUnavailable": "Este dispositivo no tiene NFC: no puede cobrar tarjetas.",
 			"methodCardStripe": "Tarjeta Stripe",
 			"cancelYes": "Sí, cancelar",
-			"cancelKeep": "No cancelar"
+			"cancelKeep": "No cancelar",
+			"pendingPayments": "Pagos en espera"
 		}
 	},
 	"product": {

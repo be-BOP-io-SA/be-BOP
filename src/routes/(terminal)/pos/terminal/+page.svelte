@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { useI18n } from '$lib/i18n';
+	import PriceTag from '$lib/components/PriceTag.svelte';
 	import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 
 	export let data;
@@ -174,6 +175,18 @@
 			<p class="text-red-500 text-center" role="alert">
 				{t(`pos.terminal.errors.${form.error}`)}
 			</p>
+		{/if}
+
+		{#if step === 'amount' && data.pending.length}
+			<section class="flex flex-col gap-2 w-full max-w-sm">
+				<p class="font-semibold">{t('pos.terminal.pendingPayments')}</p>
+				{#each data.pending as pending}
+					<a href="/pos/terminal/payment/{pending.id}" class="btn btn-gray flex justify-between">
+						<span>#{pending.number}{pending.externalRef ? ` · ${pending.externalRef}` : ''}</span>
+						<PriceTag inline amount={pending.price.amount} currency={pending.price.currency} />
+					</a>
+				{/each}
+			</section>
 		{/if}
 
 		{#if step === 'amount' || step === 'tip'}

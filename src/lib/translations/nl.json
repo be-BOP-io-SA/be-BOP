@@ -3304,7 +3304,8 @@
 			"nfcUnavailable": "Dit toestel heeft geen NFC: het kan geen kaarten afrekenen.",
 			"methodCardStripe": "Stripe-kaart",
 			"cancelYes": "Ja, annuleren",
-			"cancelKeep": "Niet annuleren"
+			"cancelKeep": "Niet annuleren",
+			"pendingPayments": "Wachtende betalingen"
 		}
 	},
 	"product": {
