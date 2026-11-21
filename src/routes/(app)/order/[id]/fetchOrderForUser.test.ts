@@ -256,7 +256,7 @@ describe('fetchOrderForUser notes', () => {
 			notes: [note(API_NOTE_ROLE, apiNoteAlias('Testropic'))]
 		});
 
-		const { notes } = await fetchOrderForUser(order._id);
+		const { notes } = await fetchOrderForUser(order._id, { userRoleId: POS_ROLE_ID });
 
 		expect(notes[0]).toMatchObject({
 			alias: 'API - Testropic',
