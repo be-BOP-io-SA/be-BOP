@@ -3299,7 +3299,9 @@
 			"sendReceipt": "Bonnetje versturen",
 			"sendBySms": "SMS",
 			"scan": "Scannen",
-			"receiptSent": "Bonnetje verstuurd."
+			"receiptSent": "Bonnetje verstuurd.",
+			"nfcDisabled": "Zet NFC aan in de instellingen van het toestel om de kaart af te rekenen.",
+			"nfcUnavailable": "Dit toestel heeft geen NFC: het kan geen kaarten afrekenen."
 		}
 	},
 	"product": {

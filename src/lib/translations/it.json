@@ -3299,7 +3299,9 @@
 			"sendReceipt": "Inviare la ricevuta",
 			"sendBySms": "SMS",
 			"scan": "Scansiona",
-			"receiptSent": "Ricevuta inviata."
+			"receiptSent": "Ricevuta inviata.",
+			"nfcDisabled": "Attiva l'NFC nelle impostazioni del dispositivo per incassare la carta.",
+			"nfcUnavailable": "Questo dispositivo non ha l'NFC: non può incassare carte."
 		}
 	},
 	"product": {

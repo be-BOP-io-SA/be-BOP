@@ -27,7 +27,7 @@
 		collectCardPayment(clientSecret: string): Promise<unknown>;
 		scanQr?(): Promise<string>;
 		sendSms?(phone: string, text: string): Promise<unknown>;
-		info?(): Promise<{ smsAvailable?: boolean }>;
+		info?(): Promise<{ smsAvailable?: boolean; nfcAvailable?: boolean; nfcEnabled?: boolean }>;
 	};
 	// The app says whether the device has a SIM ready: the SMS receipt is offered only then.
 	let smsAvailable = false;
@@ -59,15 +59,40 @@
 		}
 	}
 	let cardError = '';
+	// Tap to Pay reads the card with the device's NFC: it must be there, and switched on.
+	let nfc: 'ready' | 'disabled' | 'unavailable' = 'ready';
+	async function readDevice() {
+		try {
+			const info = await cardBridge?.info?.();
+			smsAvailable = !!info?.smsAvailable;
+			nfc =
+				info?.nfcAvailable === false
+					? 'unavailable'
+					: info?.nfcEnabled === false
+					? 'disabled'
+					: 'ready';
+		} catch {
+			smsAvailable = false;
+		}
+	}
+	// Coming back from the Android settings, where NFC was switched on.
+	function onVisible() {
+		if (document.visibilityState === 'visible') {
+			readDevice();
+		}
+	}
 	onMount(() => {
 		cardBridge = (window as unknown as { bebopPos?: CardBridge }).bebopPos;
-		cardBridge
-			?.info?.()
-			.then((info) => (smsAvailable = !!info.smsAvailable))
-			.catch(() => (smsAvailable = false));
+		readDevice();
+		document.addEventListener('visibilitychange', onVisible);
+		return () => document.removeEventListener('visibilitychange', onVisible);
 	});
 	async function collectCard() {
 		cardError = '';
+		await readDevice();
+		if (nfc !== 'ready') {
+			return;
+		}
 		try {
 			await cardBridge?.collectCardPayment(data.cardClientSecret ?? '');
 		} catch (err) {
@@ -96,9 +121,15 @@
 
 	{#if data.status === 'pending' && data.method === 'card'}
 		{#if cardBridge}
+			{#if nfc !== 'ready'}
+				<p class="text-red-500" role="alert">
+					{nfc === 'disabled' ? t('pos.terminal.nfcDisabled') : t('pos.terminal.nfcUnavailable')}
+				</p>
+			{/if}
 			<button
 				type="button"
 				class="btn body-mainCTA w-full max-w-sm text-xl py-4"
+				disabled={nfc !== 'ready'}
 				on:click={collectCard}
 			>
 				{t('pos.terminal.collectCard')}

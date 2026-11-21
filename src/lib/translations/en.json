@@ -3299,7 +3299,9 @@
 			"sendReceipt": "Send the receipt",
 			"sendBySms": "SMS",
 			"scan": "Scan",
-			"receiptSent": "Receipt sent."
+			"receiptSent": "Receipt sent.",
+			"nfcDisabled": "Switch NFC on in the device settings to take the card.",
+			"nfcUnavailable": "This device has no NFC: it cannot take cards."
 		}
 	},
 	"product": {

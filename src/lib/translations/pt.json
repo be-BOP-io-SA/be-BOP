@@ -3299,7 +3299,9 @@
 			"sendReceipt": "Enviar o recibo",
 			"sendBySms": "SMS",
 			"scan": "Ler",
-			"receiptSent": "Recibo enviado."
+			"receiptSent": "Recibo enviado.",
+			"nfcDisabled": "Ative o NFC nas definições do dispositivo para cobrar o cartão.",
+			"nfcUnavailable": "Este dispositivo não tem NFC: não pode cobrar cartões."
 		}
 	},
 	"product": {
