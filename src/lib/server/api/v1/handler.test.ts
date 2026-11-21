@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi, type SpyInstance } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { ObjectId } from 'mongodb';
 import { apiError } from './errors';
 import { runtimeConfig } from '$lib/server/runtime-config';
@@ -112,7 +112,7 @@ describe('apiV1Handler call journal', () => {
 		scopes: ['orders:read'],
 		keyPrefix: 'bebop_ak_test_journal1'
 	};
-	let write: SpyInstance;
+	let write: MockInstance;
 
 	beforeEach(() => {
 		write = vi.spyOn(logModule, 'logApiV1Event').mockImplementation(() => undefined);
