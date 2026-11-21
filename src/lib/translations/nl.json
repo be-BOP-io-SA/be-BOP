@@ -384,7 +384,9 @@
 			"removeBookmark": "Bladwijzer verwijderen",
 			"addBookmark": "Bladwijzer toevoegen",
 			"posSession": "Kassasessie",
-			"toggleMenu": "Adminmenu wisselen"
+			"toggleMenu": "Adminmenu wisselen",
+			"fullMode": "Volledig",
+			"posMode": "PoS"
 		},
 		"ageRetriction": {
 			"title": "Leeftijdsbeperking",
@@ -2221,7 +2223,8 @@
 			"suspiciousEmpty": "Geen verdachte aanroep vastgelegd.",
 			"suspiciousEvents": {
 				"labelColorCss": "CSS-declaratie in een labelkleur"
-			}
+			},
+			"pairingQr": "Scan deze QR-code met de app be-BOP-pos om het apparaat aan deze sleutel te koppelen."
 		}
 	},
 	"ageWarning": {
@@ -3152,6 +3155,12 @@
 			"print": "Afdrukken",
 			"copy": "Kopiëren",
 			"copied": "Gekopieerd"
+		},
+		"terminal": {
+			"amount": "Bedrag",
+			"erase": "Wissen",
+			"next": "Volgende",
+			"notPaired": "Dit apparaat is niet aan de winkel gekoppeld, of het is ingetrokken."
 		}
 	},
 	"product": {

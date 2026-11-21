@@ -45,6 +45,13 @@
 			/>
 		</label>
 		<p class="text-sm opacity-80 font-mono">{t('admin.apiKeys.prefix')}: {data.prefix}</p>
+		{#if data.pairingQrSvg}
+			<p>{t('admin.apiKeys.pairingQr')}</p>
+			<div class="w-72 h-72 bg-white">
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				{@html data.pairingQrSvg}
+			</div>
+		{/if}
 		<div class="flex flex-wrap gap-2">
 			<button type="button" class="btn btn-blue text-white" on:click={copySecret}>
 				{copied ? t('admin.apiKeys.copied') : t('admin.apiKeys.copySecret')}

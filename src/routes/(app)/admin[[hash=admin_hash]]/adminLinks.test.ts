@@ -68,3 +68,16 @@ describe('adminLinks integrity', () => {
 		).toEqual(known);
 	});
 });
+
+describe('posAdminLinks', () => {
+	it('only holds entries of the full menu, so the role permissions cover it', async () => {
+		const { adminLinks, posAdminLinks } = await import('./adminLinks');
+		const fullHrefs = new Set(adminLinks.flatMap((s) => s.links.map((l) => l.href)));
+		for (const section of posAdminLinks) {
+			expect(section.links.length, `section "${section.section}"`).toBeGreaterThan(0);
+			for (const link of section.links) {
+				expect(fullHrefs.has(link.href), link.href).toBe(true);
+			}
+		}
+	});
+});

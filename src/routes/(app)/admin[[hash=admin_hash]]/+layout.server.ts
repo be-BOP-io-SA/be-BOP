@@ -58,6 +58,7 @@ export async function load({ locals }) {
 		allowPaidOrderWebhook: isPaidOrderWebhookEnabled(),
 		s3IsConfigured: !!s3IsConfigured(),
 		disabledAdminEntries: runtimeConfig.disabledAdminEntries,
+		backOfficeMode: runtimeConfig.backOfficeMode,
 		backOfficeBookmarks: locals.user
 			? await collections.users
 					.findOne(

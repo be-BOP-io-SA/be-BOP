@@ -2,6 +2,7 @@ import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
 import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
+import type { BackOfficeMode } from '$lib/types/BackOfficeMode';
 import type { Currency } from '$lib/types/Currency';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import type { DeliveryFees } from '$lib/types/DeliveryFees';
@@ -74,6 +75,8 @@ const baseConfig = {
 	 * Edited by the hoster (mongosh today) — no in-app UI.
 	 */
 	disabledAdminEntries: [] as string[],
+	/** Full back office, or the PoS one: the payment terminal without the shop. */
+	backOfficeMode: 'full' as BackOfficeMode,
 	adminWelcomMessage: '',
 	isAdminCreated: false,
 	exchangeRate: defaultExchangeRate,

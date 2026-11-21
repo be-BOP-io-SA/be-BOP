@@ -8,7 +8,7 @@
 	import IconChevronDown from '~icons/ant-design/down-outlined';
 	import IconChevronRight from '~icons/ant-design/right-outlined';
 	import { isAllowedOnPage } from '$lib/types/Role';
-	import { adminLinks as adminLinksImported } from './adminLinks.js';
+	import { adminLinks as fullAdminLinks, posAdminLinks } from './adminLinks.js';
 	import { POS_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 	import { useI18n } from '$lib/i18n';
 
@@ -48,7 +48,9 @@
 	}
 	$: bookmarks = data.backOfficeBookmarks ?? [];
 
-	const adminLinks = adminLinksImported.map((s) => ({
+	// Two menus on the same engine: the full back office, or the PoS one for a terminal-only shop.
+	$: adminLinksImported = data.backOfficeMode === 'pos' ? posAdminLinks : fullAdminLinks;
+	$: adminLinks = adminLinksImported.map((s) => ({
 		...s,
 		links: s.links.map((l) => ({
 			...l,
@@ -68,8 +70,12 @@
 		return null;
 	}
 
+	$: canSwitchMode =
+		!!data.role && isAllowedOnPage(data.role, `${data.adminPrefix}/back-office-mode`, 'write');
+
 	$: isLoginPage = /^\/admin(-[0-9a-zA-Z]+)?\/login/.test($page.url.pathname);
-	$: currentSection = findSectionByHref(decodeURIComponent($page.url.pathname));
+	// Names adminLinks so that Svelte computes it first: the function reads it.
+	$: currentSection = adminLinks && findSectionByHref(decodeURIComponent($page.url.pathname));
 
 	// Auto-expand the section of the page the user navigates to (without fighting manual collapses).
 	$: if (currentSection && currentSection !== lastSeenSection) {
@@ -188,6 +194,29 @@
 					</button>
 				</form>
 			</div>
+
+			{#if canSwitchMode}
+				<form
+					action="{data.adminPrefix}/back-office-mode"
+					method="post"
+					class="flex rounded overflow-hidden text-sm font-semibold"
+				>
+					<input type="hidden" name="returnTo" value={$page.url.pathname} />
+					{#each ['full', 'pos'] as mode}
+						<button
+							type="submit"
+							name="mode"
+							value={mode}
+							class="flex-1 px-2 py-1 {data.backOfficeMode === mode
+								? 'bg-gray-800 text-white'
+								: 'bg-white bg-opacity-70'}"
+							aria-pressed={data.backOfficeMode === mode}
+						>
+							{mode === 'pos' ? t('admin.nav.posMode') : t('admin.nav.fullMode')}
+						</button>
+					{/each}
+				</form>
+			{/if}
 
 			<label class="flex items-center gap-2 bg-white bg-opacity-70 rounded px-2 py-1">
 				<IconSearch />
