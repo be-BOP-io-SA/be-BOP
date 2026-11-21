@@ -373,7 +373,8 @@
 				"schedules": "Schema's",
 				"leaderboards": "Scoreborden",
 				"searchlists": "Zoeklijsten",
-				"terminal-payments": "Terminalbetalingen"
+				"terminal-payments": "Terminalbetalingen",
+				"arm-pos": "ARM PoS"
 			},
 			"closeMenu": "Menu sluiten",
 			"brandHome": "Admin",
@@ -2258,6 +2259,36 @@
 			"create": "Aanmaken",
 			"addressFirst": "Vul eerst het adres van de winkel in, onder Settings > Identity.",
 			"createFailed": "Stripe weigerde de locatie aan te maken."
+		},
+		"armPos": {
+			"title": "ARM PoS",
+			"intro": "Wat elke rol op een gekoppelde terminal mag, en hoe elke medewerker inlogt: met een pincode of een NFC-badge.",
+			"badgeWrite": "Schrijf deze code met de app be-BOP-pos op de badge. Hij wordt alleen deze keer getoond.",
+			"rolesTitle": "Terminalrechten per rol",
+			"superAdminNote": "De super-admin heeft alle rechten.",
+			"operatorsTitle": "Medewerkers",
+			"disabled": "uitgeschakeld",
+			"setPin": "Pincode instellen (4 tot 8 cijfers)",
+			"changePin": "Pincode wijzigen (4 tot 8 cijfers)",
+			"clearPin": "Pincode verwijderen",
+			"addBadge": "Badge toevoegen",
+			"pinInvalid": "Een pincode heeft 4 tot 8 cijfers.",
+			"suspended": "geblokkeerd",
+			"active": "actief",
+			"reactivate": "Opnieuw activeren",
+			"suspend": "Blokkeren",
+			"renew": "Vernieuwen",
+			"remove": "Verwijderen",
+			"actions": {
+				"charge": "Afrekenen",
+				"refund": "Terugbetalen",
+				"cancel": "Annuleren",
+				"tillDown": "Kassa niet beschikbaar",
+				"attachRef": "Referentie koppelen",
+				"xReport": "X-rapport",
+				"zReport": "Z-rapport",
+				"unlock": "Vergrendelde modus verlaten"
+			}
 		}
 	},
 	"ageWarning": {
@@ -3163,7 +3194,8 @@
 			"rate": "1 BTC =",
 			"ref": "Kassareferentie",
 			"noRef": "zonder kassareferentie",
-			"device": "Terminal"
+			"device": "Terminal",
+			"operator": "Medewerker"
 		},
 		"staffNotes": "Personeelsnotities",
 		"discount": {
@@ -3234,7 +3266,9 @@
 				"notPaired": "Dit apparaat is niet aan de winkel gekoppeld, of het is ingetrokken.",
 				"invalid": "Het bedrag is ongeldig.",
 				"unavailable": "Deze betaalmethode is niet beschikbaar op terminals.",
-				"failed": "De betaling kon niet worden aangemaakt. Probeer het opnieuw of kies een andere methode."
+				"failed": "De betaling kon niet worden aangemaakt. Probeer het opnieuw of kies een andere methode.",
+				"wrongCredentials": "Verkeerde pincode, of onbekende of geblokkeerde badge.",
+				"notAllowed": "U mag dit niet doen."
 			},
 			"continue": "Doorgaan",
 			"enterTip": "Fooi invoeren",
@@ -3243,7 +3277,13 @@
 			"cancelConfirm": "Deze betaling annuleren? Een betaling die daarna wordt verstuurd, wordt niet geregistreerd.",
 			"canceled": "De betaling is geannuleerd.",
 			"collectCard": "Kaart afrekenen",
-			"cardNeedsApp": "Kaartbetalingen gaan via de app be-BOP-pos."
+			"cardNeedsApp": "Kaartbetalingen gaan via de app be-BOP-pos.",
+			"whoAreYou": "Wie rekent af?",
+			"noOperator": "Nog geen enkele medewerker kan inloggen: geef een rol terminalrechten en een pincode of badge in ARM PoS.",
+			"orBadge": "of houd uw badge tegen het toestel",
+			"pin": "Pincode",
+			"signIn": "Inloggen",
+			"switchOperator": "Andere medewerker"
 		}
 	},
 	"product": {

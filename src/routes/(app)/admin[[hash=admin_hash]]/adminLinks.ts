@@ -99,6 +99,11 @@ export const adminLinks: AdminLinks = [
 				label: 'ARM'
 			},
 			{
+				// Terminal rights by action, operator PINs and badges.
+				href: '/admin/arm-pos',
+				label: 'ARM PoS'
+			},
+			{
 				href: '/admin/identity',
 				label: 'Identity',
 				superAdminOnly: true
@@ -268,6 +273,7 @@ const POS_MENU: Array<{ section: string; hrefs: string[] }> = [
 		hrefs: [
 			'/admin/config',
 			'/admin/arm',
+			'/admin/arm-pos',
 			'/admin/identity',
 			'/admin/physical-shop',
 			'/admin/template',

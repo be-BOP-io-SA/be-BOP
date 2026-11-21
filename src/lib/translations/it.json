@@ -373,7 +373,8 @@
 				"schedules": "Programmi",
 				"leaderboards": "Classifiche",
 				"searchlists": "Liste di ricerca",
-				"terminal-payments": "Pagamenti terminale"
+				"terminal-payments": "Pagamenti terminale",
+				"arm-pos": "ARM PoS"
 			},
 			"closeMenu": "Chiudi menu",
 			"brandHome": "Admin",
@@ -2258,6 +2259,36 @@
 			"create": "Crea",
 			"addressFirst": "Inserite prima l'indirizzo del negozio, in Settings > Identity.",
 			"createFailed": "Stripe ha rifiutato di creare la sede."
+		},
+		"armPos": {
+			"title": "ARM PoS",
+			"intro": "Cosa può fare ogni ruolo su un terminale associato, e come vi accede ogni operatore: un PIN o un badge NFC.",
+			"badgeWrite": "Scrivete questo identificativo sul badge con l'app be-BOP-pos. Viene mostrato solo questa volta.",
+			"rolesTitle": "Diritti terminale per ruolo",
+			"superAdminNote": "Il super-admin ha tutti i diritti.",
+			"operatorsTitle": "Operatori",
+			"disabled": "disattivato",
+			"setPin": "Impostare un PIN (da 4 a 8 cifre)",
+			"changePin": "Cambiare il PIN (da 4 a 8 cifre)",
+			"clearPin": "Rimuovere il PIN",
+			"addBadge": "Aggiungere un badge",
+			"pinInvalid": "Un PIN ha da 4 a 8 cifre.",
+			"suspended": "sospeso",
+			"active": "attivo",
+			"reactivate": "Riattivare",
+			"suspend": "Sospendere",
+			"renew": "Rinnovare",
+			"remove": "Rimuovere",
+			"actions": {
+				"charge": "Incassare",
+				"refund": "Rimborsare",
+				"cancel": "Annullare",
+				"tillDown": "Cassa non disponibile",
+				"attachRef": "Collegare un riferimento",
+				"xReport": "Report X",
+				"zReport": "Report Z",
+				"unlock": "Uscire dalla modalità bloccata"
+			}
 		}
 	},
 	"ageWarning": {
@@ -3163,7 +3194,8 @@
 			"rate": "1 BTC =",
 			"ref": "Riferimento cassa",
 			"noRef": "senza riferimento cassa",
-			"device": "Terminale"
+			"device": "Terminale",
+			"operator": "Operatore"
 		},
 		"staffNotes": "Note del personale",
 		"discount": {
@@ -3234,7 +3266,9 @@
 				"notPaired": "Questo dispositivo non è associato al negozio, oppure è stato revocato.",
 				"invalid": "L'importo non è valido.",
 				"unavailable": "Questo metodo di pagamento non è disponibile sui terminali.",
-				"failed": "Non è stato possibile creare il pagamento. Riprovate o scegliete un altro metodo."
+				"failed": "Non è stato possibile creare il pagamento. Riprovate o scegliete un altro metodo.",
+				"wrongCredentials": "PIN errato, o badge sconosciuto o sospeso.",
+				"notAllowed": "Non avete il diritto di farlo."
 			},
 			"continue": "Continua",
 			"enterTip": "Inserisci la mancia",
@@ -3243,7 +3277,13 @@
 			"cancelConfirm": "Annullare questo pagamento? Un pagamento inviato dopo non sarà registrato.",
 			"canceled": "Il pagamento è stato annullato.",
 			"collectCard": "Incassa con carta",
-			"cardNeedsApp": "Il pagamento con carta si fa con l'app be-BOP-pos."
+			"cardNeedsApp": "Il pagamento con carta si fa con l'app be-BOP-pos.",
+			"whoAreYou": "Chi incassa?",
+			"noOperator": "Nessun operatore può ancora accedere: date diritti terminale a un ruolo e un PIN o un badge in ARM PoS.",
+			"orBadge": "o avvicinate il vostro badge",
+			"pin": "PIN",
+			"signIn": "Accedi",
+			"switchOperator": "Cambia operatore"
 		}
 	},
 	"product": {

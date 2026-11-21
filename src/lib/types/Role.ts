@@ -6,6 +6,8 @@ export interface Role extends Timestamps {
 	_id: string;
 	name: string;
 	hasPosOptions?: boolean;
+	/** What its holders may do on a paired terminal (arm-pos). */
+	posActions?: import('./PosAction').PosAction[];
 	permissions: {
 		read: string[];
 		write: string[];

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy, onMount } from 'svelte';
 	import { useI18n } from '$lib/i18n';
 	import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 
@@ -17,7 +18,7 @@
 	const MAX_DIGITS = 12;
 	const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', 'erase'];
 
-	$: fractionDigits = data.paired ? FRACTION_DIGITS_PER_CURRENCY[data.currency] : 0;
+	$: fractionDigits = data.paired && !data.locked ? FRACTION_DIGITS_PER_CURRENCY[data.currency] : 0;
 	const valueOf = (digits: string, fd: number) => Number(digits || '0') / 10 ** fd;
 	$: amount = valueOf(amountDigits, fractionDigits);
 	$: tip = valueOf(tipDigits, fractionDigits);
@@ -45,6 +46,35 @@
 	// Continue skips the tip: going back from the reference then returns to the amount.
 	let tipSkipped = false;
 
+	// Lock screen (arm-pos): the operator picks their name, then types their PIN, or taps a badge.
+	let operatorId = '';
+	let pinDigits = '';
+	let badgeForm: HTMLFormElement;
+	let badgeInput: HTMLInputElement;
+	onMount(() => {
+		// The be-BOP-pos app calls this when it reads an operator badge on the locked screen.
+		(window as unknown as { bebopTerminal?: unknown }).bebopTerminal = {
+			badge(identifier: string) {
+				if (data.paired && data.locked && badgeForm) {
+					badgeInput.value = identifier;
+					badgeForm.requestSubmit();
+				}
+			}
+		};
+	});
+	onDestroy(() => {
+		if (typeof window !== 'undefined') {
+			delete (window as unknown as { bebopTerminal?: unknown }).bebopTerminal;
+		}
+	});
+	function pressPin(key: string) {
+		if (key === 'erase') {
+			pinDigits = pinDigits.slice(0, -1);
+		} else if (pinDigits.length < 8 && key !== '00') {
+			pinDigits += key;
+		}
+	}
+
 	function back() {
 		step = step === 'method' ? 'ref' : step === 'ref' && !tipSkipped ? 'tip' : 'amount';
 	}
@@ -53,8 +83,79 @@
 <main class="min-h-screen flex flex-col items-center justify-center gap-6 p-4 body-mainPlan">
 	{#if !data.paired}
 		<p class="text-xl text-center">{t('pos.terminal.notPaired')}</p>
-	{:else}
+	{:else if data.locked}
 		<p class="text-sm opacity-70">{data.deviceName}</p>
+		<form method="post" action="?/unlock" bind:this={badgeForm} class="hidden">
+			<input type="hidden" name="badge" bind:this={badgeInput} />
+		</form>
+		{#if form?.error}
+			<p class="text-red-500 text-center" role="alert">{t(`pos.terminal.errors.${form.error}`)}</p>
+		{/if}
+		{#if !operatorId}
+			<p class="text-xl">{t('pos.terminal.whoAreYou')}</p>
+			{#if data.operators.length}
+				<div class="grid grid-cols-2 gap-3 w-full max-w-sm">
+					{#each data.operators as operator}
+						<button
+							type="button"
+							class="btn btn-gray text-xl py-4"
+							on:click={() => {
+								operatorId = operator.id;
+								pinDigits = '';
+							}}
+						>
+							{operator.alias}
+						</button>
+					{/each}
+				</div>
+			{:else}
+				<p class="text-center">{t('pos.terminal.noOperator')}</p>
+			{/if}
+			<p class="text-sm opacity-70">{t('pos.terminal.orBadge')}</p>
+		{:else}
+			<form
+				method="post"
+				action="?/unlock"
+				class="flex flex-col items-center gap-4 w-full max-w-sm"
+			>
+				<p class="text-xl">{data.operators.find((o) => o.id === operatorId)?.alias}</p>
+				<input type="hidden" name="operatorId" value={operatorId} />
+				<input type="hidden" name="pin" value={pinDigits} />
+				<output class="text-4xl tracking-widest" aria-label={t('pos.terminal.pin')}>
+					{'•'.repeat(pinDigits.length) || '—'}
+				</output>
+				<div class="grid grid-cols-3 gap-3 w-full">
+					{#each KEYS as key}
+						<button
+							type="button"
+							class="btn btn-gray text-2xl py-4"
+							on:click={() => pressPin(key)}
+							disabled={key === '00'}
+							aria-label={key === 'erase' ? t('pos.terminal.erase') : key}
+						>
+							{key === 'erase' ? '⌫' : key === '00' ? '' : key}
+						</button>
+					{/each}
+				</div>
+				<button
+					type="submit"
+					class="btn body-mainCTA w-full text-xl py-4"
+					disabled={pinDigits.length < 4}
+				>
+					{t('pos.terminal.signIn')}
+				</button>
+				<button type="button" class="underline" on:click={() => (operatorId = '')}>
+					{t('pos.terminal.back')}
+				</button>
+			</form>
+		{/if}
+	{:else}
+		<div class="flex items-center gap-3 text-sm opacity-70">
+			<span>{data.deviceName} · {data.operator.alias}</span>
+			<form method="post" action="?/lock">
+				<button type="submit" class="underline">{t('pos.terminal.switchOperator')}</button>
+			</form>
+		</div>
 
 		{#if form?.error}
 			<p class="text-red-500 text-center" role="alert">
@@ -115,7 +216,9 @@
 				>
 					{t('pos.terminal.enterTip')}
 				</button>
-				{#if !data.methods.length}
+				{#if !data.operator.actions.includes('charge')}
+					<p class="text-center" role="alert">{t('pos.terminal.errors.notAllowed')}</p>
+				{:else if !data.methods.length}
 					<p class="text-center" role="alert">{t('pos.terminal.noProcessor')}</p>
 				{/if}
 			{:else}
@@ -146,16 +249,18 @@
 			>
 				{t('pos.terminal.next')}
 			</button>
-			<button
-				type="button"
-				class="btn btn-gray w-full max-w-sm text-xl py-4"
-				on:click={() => {
-					externalRef = '';
-					step = 'method';
-				}}
-			>
-				{t('pos.terminal.tillDown')}
-			</button>
+			{#if data.operator.actions.includes('tillDown')}
+				<button
+					type="button"
+					class="btn btn-gray w-full max-w-sm text-xl py-4"
+					on:click={() => {
+						externalRef = '';
+						step = 'method';
+					}}
+				>
+					{t('pos.terminal.tillDown')}
+				</button>
+			{/if}
 		{:else}
 			<p class="text-lg">
 				{t('pos.terminal.totalLine', { amount: `${format(amount + tip)} ${data.currency}` })}

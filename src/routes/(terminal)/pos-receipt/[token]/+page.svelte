@@ -61,5 +61,9 @@
 		<dd>{data.externalRef ?? t('pos.receipt.noRef')}</dd>
 		<dt>{t('pos.receipt.device')}</dt>
 		<dd>{data.device}</dd>
+		{#if data.operator}
+			<dt>{t('pos.receipt.operator')}</dt>
+			<dd>{data.operator}</dd>
+		{/if}
 	</dl>
 </main>

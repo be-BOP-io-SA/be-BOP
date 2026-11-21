@@ -373,7 +373,8 @@
 				"schedules": "Zeitpläne",
 				"leaderboards": "Ranglisten",
 				"searchlists": "Suchlisten",
-				"terminal-payments": "Terminal-Zahlungen"
+				"terminal-payments": "Terminal-Zahlungen",
+				"arm-pos": "ARM PoS"
 			},
 			"closeMenu": "Menü schließen",
 			"brandHome": "Admin",
@@ -2258,6 +2259,36 @@
 			"create": "Anlegen",
 			"addressFirst": "Tragen Sie zuerst die Adresse des Shops ein, unter Settings > Identity.",
 			"createFailed": "Stripe hat das Anlegen des Standorts abgelehnt."
+		},
+		"armPos": {
+			"title": "ARM PoS",
+			"intro": "Was jede Rolle auf einem gekoppelten Terminal darf und wie sich jeder Bediener dort anmeldet: mit PIN oder NFC-Badge.",
+			"badgeWrite": "Schreiben Sie diese Kennung mit der App be-BOP-pos auf den Badge. Sie wird nur dieses eine Mal angezeigt.",
+			"rolesTitle": "Terminalrechte nach Rolle",
+			"superAdminNote": "Der Super-Admin hat alle Rechte.",
+			"operatorsTitle": "Bediener",
+			"disabled": "deaktiviert",
+			"setPin": "PIN festlegen (4 bis 8 Ziffern)",
+			"changePin": "PIN ändern (4 bis 8 Ziffern)",
+			"clearPin": "PIN entfernen",
+			"addBadge": "Badge hinzufügen",
+			"pinInvalid": "Eine PIN hat 4 bis 8 Ziffern.",
+			"suspended": "gesperrt",
+			"active": "aktiv",
+			"reactivate": "Reaktivieren",
+			"suspend": "Sperren",
+			"renew": "Erneuern",
+			"remove": "Entfernen",
+			"actions": {
+				"charge": "Kassieren",
+				"refund": "Erstatten",
+				"cancel": "Abbrechen",
+				"tillDown": "Kasse nicht verfügbar",
+				"attachRef": "Referenz zuordnen",
+				"xReport": "X-Bericht",
+				"zReport": "Z-Bericht",
+				"unlock": "Gesperrten Modus verlassen"
+			}
 		}
 	},
 	"ageWarning": {
@@ -3164,7 +3195,8 @@
 			"rate": "1 BTC =",
 			"ref": "Kassenreferenz",
 			"noRef": "ohne Kassenreferenz",
-			"device": "Terminal"
+			"device": "Terminal",
+			"operator": "Bediener"
 		},
 		"staffNotes": "Mitarbeiternotizen",
 		"discount": {
@@ -3234,7 +3266,9 @@
 				"notPaired": "Dieses Gerät ist nicht mit dem Shop gekoppelt oder wurde widerrufen.",
 				"invalid": "Der Betrag ist ungültig.",
 				"unavailable": "Diese Zahlungsart ist auf Terminals nicht verfügbar.",
-				"failed": "Die Zahlung konnte nicht erstellt werden. Versuchen Sie es erneut oder wählen Sie eine andere Zahlungsart."
+				"failed": "Die Zahlung konnte nicht erstellt werden. Versuchen Sie es erneut oder wählen Sie eine andere Zahlungsart.",
+				"wrongCredentials": "Falsche PIN oder unbekannter bzw. gesperrter Badge.",
+				"notAllowed": "Dazu sind Sie nicht berechtigt."
 			},
 			"continue": "Weiter",
 			"enterTip": "Trinkgeld eingeben",
@@ -3243,7 +3277,13 @@
 			"cancelConfirm": "Diese Zahlung abbrechen? Eine danach gesendete Zahlung wird nicht erfasst.",
 			"canceled": "Die Zahlung wurde abgebrochen.",
 			"collectCard": "Karte kassieren",
-			"cardNeedsApp": "Kartenzahlungen erfolgen mit der App be-BOP-pos."
+			"cardNeedsApp": "Kartenzahlungen erfolgen mit der App be-BOP-pos.",
+			"whoAreYou": "Wer kassiert?",
+			"noOperator": "Noch kann sich kein Bediener anmelden: Geben Sie einer Rolle Terminalrechte und eine PIN oder einen Badge in ARM PoS.",
+			"orBadge": "oder halten Sie Ihren Badge an",
+			"pin": "PIN",
+			"signIn": "Anmelden",
+			"switchOperator": "Bediener wechseln"
 		}
 	},
 	"product": {

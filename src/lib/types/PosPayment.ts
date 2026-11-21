@@ -27,6 +27,8 @@ export interface PosPayment extends Timestamps {
 	externalRefHistory?: Array<{ from: string | null; to: string; at: Date; by?: string }>;
 	/** The terminal that took it: the API key it is paired with. */
 	device: { apiKeyId: ObjectId; name: string };
+	/** The operator signed in on the terminal when it was taken (arm-pos). */
+	operator?: { userId: ObjectId; alias: string };
 	/**
 	 * Shaped like an order payment so that every payment processor reads it as it reads those.
 	 * Its price is the sale plus the tip, in the processor's settlement currency.

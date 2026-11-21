@@ -373,7 +373,8 @@
 				"schedules": "Schedules",
 				"leaderboards": "Leaderboards",
 				"searchlists": "Searchlists",
-				"terminal-payments": "Terminal payments"
+				"terminal-payments": "Terminal payments",
+				"arm-pos": "ARM PoS"
 			},
 			"closeMenu": "Close menu",
 			"brandHome": "Admin",
@@ -2258,6 +2259,36 @@
 			"create": "Create",
 			"addressFirst": "Fill in the shop address first, in Settings > Identity.",
 			"createFailed": "Stripe refused to create the Location."
+		},
+		"armPos": {
+			"title": "ARM PoS",
+			"intro": "What each role may do on a paired terminal, and how each operator signs in on it: a PIN, or an NFC badge.",
+			"badgeWrite": "Write this identifier on the badge with the be-BOP-pos app. It is shown only this once.",
+			"rolesTitle": "Terminal rights by role",
+			"superAdminNote": "The super-admin has every right.",
+			"operatorsTitle": "Operators",
+			"disabled": "disabled",
+			"setPin": "Set a PIN (4 to 8 digits)",
+			"changePin": "Change the PIN (4 to 8 digits)",
+			"clearPin": "Remove the PIN",
+			"addBadge": "Add a badge",
+			"pinInvalid": "A PIN is 4 to 8 digits.",
+			"suspended": "suspended",
+			"active": "active",
+			"reactivate": "Reactivate",
+			"suspend": "Suspend",
+			"renew": "Renew",
+			"remove": "Remove",
+			"actions": {
+				"charge": "Take payments",
+				"refund": "Refund",
+				"cancel": "Cancel",
+				"tillDown": "Till unavailable",
+				"attachRef": "Attach a reference",
+				"xReport": "X report",
+				"zReport": "Z report",
+				"unlock": "Leave locked mode"
+			}
 		}
 	},
 	"ageWarning": {
@@ -3135,7 +3166,8 @@
 			"rate": "1 BTC =",
 			"ref": "Till reference",
 			"noRef": "no till reference",
-			"device": "Terminal"
+			"device": "Terminal",
+			"operator": "Operator"
 		},
 		"staffNotes": "Staff notes",
 		"btn": {
@@ -3234,7 +3266,9 @@
 				"notPaired": "This device is not paired with the shop, or it was revoked.",
 				"invalid": "The amount is not valid.",
 				"unavailable": "This payment method is not available on terminals.",
-				"failed": "The payment could not be created. Try again, or choose another method."
+				"failed": "The payment could not be created. Try again, or choose another method.",
+				"wrongCredentials": "Wrong PIN, or unknown or suspended badge.",
+				"notAllowed": "You are not allowed to do this."
 			},
 			"continue": "Continue",
 			"enterTip": "Enter a tip",
@@ -3243,7 +3277,13 @@
 			"cancelConfirm": "Cancel this payment? A payment sent after this will not be recorded.",
 			"canceled": "The payment was canceled.",
 			"collectCard": "Take the card",
-			"cardNeedsApp": "Card payments are taken with the be-BOP-pos app."
+			"cardNeedsApp": "Card payments are taken with the be-BOP-pos app.",
+			"whoAreYou": "Who is taking payments?",
+			"noOperator": "No operator can sign in yet: give a role terminal rights and a PIN or a badge in ARM PoS.",
+			"orBadge": "or tap your badge",
+			"pin": "PIN",
+			"signIn": "Sign in",
+			"switchOperator": "Switch operator"
 		}
 	},
 	"product": {

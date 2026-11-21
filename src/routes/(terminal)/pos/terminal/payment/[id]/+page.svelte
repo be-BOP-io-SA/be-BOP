@@ -81,13 +81,15 @@
 			<p>{t('pos.terminal.cardNeedsApp')}</p>
 		{/if}
 		<p>{t('pos.terminal.waiting')}</p>
-		<form
-			method="post"
-			action="?/cancel"
-			on:submit={(e) => (confirm(t('pos.terminal.cancelConfirm')) ? true : e.preventDefault())}
-		>
-			<button type="submit" class="btn btn-red">{t('pos.terminal.cancel')}</button>
-		</form>
+		{#if data.canCancel}
+			<form
+				method="post"
+				action="?/cancel"
+				on:submit={(e) => (confirm(t('pos.terminal.cancelConfirm')) ? true : e.preventDefault())}
+			>
+				<button type="submit" class="btn btn-red">{t('pos.terminal.cancel')}</button>
+			</form>
+		{/if}
 	{:else if data.status === 'pending'}
 		<a href={data.address} class="w-72 h-72 bg-white block">
 			<img src="{$page.url.pathname}/qrcode" alt="QR code" class="w-full h-full" />
@@ -108,13 +110,15 @@
 		{:else}
 			<p>{t('pos.terminal.waiting')}</p>
 		{/if}
-		<form
-			method="post"
-			action="?/cancel"
-			on:submit={(e) => (confirm(t('pos.terminal.cancelConfirm')) ? true : e.preventDefault())}
-		>
-			<button type="submit" class="btn btn-red">{t('pos.terminal.cancel')}</button>
-		</form>
+		{#if data.canCancel}
+			<form
+				method="post"
+				action="?/cancel"
+				on:submit={(e) => (confirm(t('pos.terminal.cancelConfirm')) ? true : e.preventDefault())}
+			>
+				<button type="submit" class="btn btn-red">{t('pos.terminal.cancel')}</button>
+			</form>
+		{/if}
 	{:else if data.status === 'paid'}
 		<p class="text-3xl text-green-600 font-semibold">{t('pos.terminal.paid')}</p>
 		{#if data.overpayment && !data.overpayment.treatment}
@@ -131,9 +135,11 @@
 				<button type="submit" name="treatment" value="tip" class="btn body-mainCTA text-xl py-4">
 					{t('pos.terminal.keepAsTip')}
 				</button>
-				<button type="submit" name="treatment" value="refund" class="btn btn-gray text-xl py-4">
-					{t('pos.terminal.refundOverpayment')}
-				</button>
+				{#if data.canRefund}
+					<button type="submit" name="treatment" value="refund" class="btn btn-gray text-xl py-4">
+						{t('pos.terminal.refundOverpayment')}
+					</button>
+				{/if}
 			</form>
 		{:else}
 			{#if data.overpayment?.treatment === 'refund'}

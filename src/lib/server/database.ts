@@ -126,6 +126,14 @@ const genCollection = () => ({
 	checkoutFieldConfigs: db.collection<CheckoutFieldConfig>('checkoutFieldConfigs'),
 	posSessions: db.collection<PosSession>('posSessions'),
 	posPayments: db.collection<PosPayment>('posPayments'),
+	posOperatorSessions: db.collection<{
+		_id: ObjectId;
+		tokenHash: string;
+		apiKeyId: ObjectId;
+		userId: ObjectId;
+		createdAt: Date;
+		lastSeenAt: Date;
+	}>('posOperatorSessions'),
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
 
 	apiKeys: db.collection<ApiKey>('apiKeys'),
@@ -271,6 +279,9 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.posPayments, { 'payment.status': 1 }],
 	[collections.posPayments, { createdAt: -1 }],
 	[collections.posPayments, { externalRef: 1 }],
+	[collections.posOperatorSessions, { tokenHash: 1 }, { unique: true }],
+	[collections.posOperatorSessions, { lastSeenAt: 1 }, { expireAfterSeconds: 24 * 60 * 60 }],
+	[collections.users, { 'posBadges.hash': 1 }, { sparse: true }],
 	[collections.orderTabs, { slug: 1 }, { unique: true }],
 	[collections.pendingZaps, { processedAt: 1 }],
 	[collections.pendingZaps, { invoiceId: 1 }, { unique: true }],

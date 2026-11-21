@@ -68,6 +68,7 @@ export class PosPaymentError extends Error {}
 /** Asks the processor of `method` for a payment of the sale plus the tip, and records it. */
 export async function createPosPayment(params: {
 	device: PosPayment['device'];
+	operator?: PosPayment['operator'];
 	amount: number;
 	tip: number;
 	method: PaymentMethod;
@@ -119,6 +120,7 @@ export async function createPosPayment(params: {
 		tip: { amount: params.tip, currency: main },
 		...(externalRef ? { externalRef } : { noExternalRef: true }),
 		device: params.device,
+		...(params.operator && { operator: params.operator }),
 		payment: {
 			_id: paymentId,
 			status: 'pending',

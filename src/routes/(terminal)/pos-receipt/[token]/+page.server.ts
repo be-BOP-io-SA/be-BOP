@@ -41,6 +41,7 @@ export async function load({ params, setHeaders }) {
 				? { amount: (total * SATOSHIS_PER_BTC) / sats, currency: posPayment.amount.currency }
 				: null,
 		externalRef: posPayment.externalRef,
-		device: posPayment.device.name
+		device: posPayment.device.name,
+		operator: posPayment.operator?.alias
 	};
 }

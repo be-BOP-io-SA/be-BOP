@@ -373,7 +373,8 @@
 				"schedules": "Horarios",
 				"leaderboards": "Clasificaciones",
 				"searchlists": "Listas de búsqueda",
-				"terminal-payments": "Pagos del terminal"
+				"terminal-payments": "Pagos del terminal",
+				"arm-pos": "ARM PoS"
 			},
 			"closeMenu": "Cerrar menú",
 			"brandHome": "Admin",
@@ -2258,6 +2259,36 @@
 			"create": "Crear",
 			"addressFirst": "Indique primero la dirección de la tienda, en Settings > Identity.",
 			"createFailed": "Stripe ha rechazado crear la ubicación."
+		},
+		"armPos": {
+			"title": "ARM PoS",
+			"intro": "Lo que cada rol puede hacer en un terminal vinculado, y cómo se conecta cada operador: un PIN o una credencial NFC.",
+			"badgeWrite": "Escriba este identificador en la credencial con la app be-BOP-pos. Solo se muestra esta vez.",
+			"rolesTitle": "Derechos de terminal por rol",
+			"superAdminNote": "El superadministrador tiene todos los derechos.",
+			"operatorsTitle": "Operadores",
+			"disabled": "desactivado",
+			"setPin": "Definir un PIN (4 a 8 cifras)",
+			"changePin": "Cambiar el PIN (4 a 8 cifras)",
+			"clearPin": "Quitar el PIN",
+			"addBadge": "Añadir una credencial",
+			"pinInvalid": "Un PIN tiene de 4 a 8 cifras.",
+			"suspended": "suspendida",
+			"active": "activa",
+			"reactivate": "Reactivar",
+			"suspend": "Suspender",
+			"renew": "Renovar",
+			"remove": "Quitar",
+			"actions": {
+				"charge": "Cobrar",
+				"refund": "Reembolsar",
+				"cancel": "Cancelar",
+				"tillDown": "Caja no disponible",
+				"attachRef": "Asociar una referencia",
+				"xReport": "Informe X",
+				"zReport": "Informe Z",
+				"unlock": "Salir del modo bloqueado"
+			}
 		}
 	},
 	"ageWarning": {
@@ -3163,7 +3194,8 @@
 			"rate": "1 BTC =",
 			"ref": "Referencia de caja",
 			"noRef": "sin referencia de caja",
-			"device": "Terminal"
+			"device": "Terminal",
+			"operator": "Operador"
 		},
 		"staffNotes": "Notas del personal",
 		"discount": {
@@ -3234,7 +3266,9 @@
 				"notPaired": "Este dispositivo no está vinculado a la tienda, o ha sido revocado.",
 				"invalid": "El importe no es válido.",
 				"unavailable": "Este medio de pago no está disponible en los terminales.",
-				"failed": "No se ha podido crear el pago. Inténtelo de nuevo o elija otro medio."
+				"failed": "No se ha podido crear el pago. Inténtelo de nuevo o elija otro medio.",
+				"wrongCredentials": "PIN incorrecto, o credencial desconocida o suspendida.",
+				"notAllowed": "No tiene derecho a hacer esto."
 			},
 			"continue": "Continuar",
 			"enterTip": "Introducir propina",
@@ -3243,7 +3277,13 @@
 			"cancelConfirm": "¿Cancelar este pago? Un pago enviado después no quedará registrado.",
 			"canceled": "El pago ha sido cancelado.",
 			"collectCard": "Cobrar con tarjeta",
-			"cardNeedsApp": "El pago con tarjeta se hace con la app be-BOP-pos."
+			"cardNeedsApp": "El pago con tarjeta se hace con la app be-BOP-pos.",
+			"whoAreYou": "¿Quién cobra?",
+			"noOperator": "Ningún operador puede conectarse todavía: dé derechos de terminal a un rol y un PIN o una credencial en ARM PoS.",
+			"orBadge": "o acerque su credencial",
+			"pin": "PIN",
+			"signIn": "Entrar",
+			"switchOperator": "Cambiar de operador"
 		}
 	},
 	"product": {

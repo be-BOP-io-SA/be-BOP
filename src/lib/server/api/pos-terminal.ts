@@ -48,3 +48,14 @@ export async function terminalKeyOf(event: {
 	}
 	return apiKey;
 }
+
+/** The cookie that keeps an operator signed in on a terminal (arm-pos). */
+export const POS_OPERATOR_COOKIE = 'bebop-pos-operator';
+
+export const operatorCookieOptions = {
+	path: '/',
+	httpOnly: true,
+	secure: true,
+	sameSite: 'strict' as const,
+	maxAge: 24 * 60 * 60
+};
