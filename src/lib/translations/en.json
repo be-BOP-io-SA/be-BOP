@@ -384,7 +384,9 @@
 			"removeBookmark": "Remove bookmark",
 			"addBookmark": "Add bookmark",
 			"posSession": "POS session",
-			"toggleMenu": "Toggle admin menu"
+			"toggleMenu": "Toggle admin menu",
+			"fullMode": "Full",
+			"posMode": "PoS"
 		},
 		"ageRetriction": {
 			"title": "Age restriction",
@@ -2221,7 +2223,8 @@
 			"suspiciousEmpty": "No suspicious call recorded.",
 			"suspiciousEvents": {
 				"labelColorCss": "CSS declaration in a label color"
-			}
+			},
+			"pairingQr": "Scan this QR code with the be-BOP-pos app to pair the device with this key."
 		}
 	},
 	"ageWarning": {
@@ -3152,6 +3155,12 @@
 			"print": "Print",
 			"copy": "Copy",
 			"copied": "Copied"
+		},
+		"terminal": {
+			"amount": "Amount",
+			"erase": "Erase",
+			"next": "Next",
+			"notPaired": "This device is not paired with the shop, or it was revoked."
 		}
 	},
 	"product": {

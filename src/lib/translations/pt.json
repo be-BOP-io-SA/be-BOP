@@ -384,7 +384,9 @@
 			"removeBookmark": "Remover marcador",
 			"addBookmark": "Adicionar marcador",
 			"posSession": "Sessão de POS",
-			"toggleMenu": "Alternar menu de administração"
+			"toggleMenu": "Alternar menu de administração",
+			"fullMode": "Completo",
+			"posMode": "PoS"
 		},
 		"ageRetriction": {
 			"title": "Restrição de idade",
@@ -2221,7 +2223,8 @@
 			"suspiciousEmpty": "Nenhuma chamada suspeita registada.",
 			"suspiciousEvents": {
 				"labelColorCss": "Declaração CSS numa cor de label"
-			}
+			},
+			"pairingQr": "Leia este código QR com a app be-BOP-pos para associar o dispositivo a esta chave."
 		}
 	},
 	"ageWarning": {
@@ -3152,6 +3155,12 @@
 			"print": "Imprimir",
 			"copy": "Copiar",
 			"copied": "Copiado"
+		},
+		"terminal": {
+			"amount": "Montante",
+			"erase": "Apagar",
+			"next": "Seguinte",
+			"notPaired": "Este dispositivo não está associado à loja, ou foi revogado."
 		}
 	},
 	"product": {

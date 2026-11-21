@@ -1013,6 +1013,55 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					}
 				}
 			},
+			'/api/v1/pos/ping': {
+				get: {
+					tags: ['pos'],
+					summary: 'Check that a PoS terminal is paired',
+					description:
+						'What a be-BOP-pos terminal calls after scanning its pairing QR code: it answers 200 ' +
+						'when the key is usable and carries `pos:read`, with the names the terminal shows.',
+					operationId: 'getPosPing',
+					security: [{ BearerAuth: ['pos:read'] }, { ApiKeyAuth: ['pos:read'] }],
+					responses: {
+						'200': {
+							description: 'The key is paired with this shop.',
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['ok', 'device', 'shop'],
+										properties: {
+											ok: { type: 'boolean', example: true },
+											device: {
+												type: 'object',
+												required: ['name'],
+												properties: { name: { type: 'string', description: 'The API key name.' } }
+											},
+											shop: {
+												type: 'object',
+												required: ['name'],
+												properties: { name: { type: 'string', description: 'The brand name.' } }
+											}
+										}
+									}
+								}
+							}
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'403': {
+							description: 'Missing required scope',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'500': {
+							description: 'Internal error',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
 			'/api/v1/pos/orders/stream': {
 				get: {
 					tags: ['pos'],

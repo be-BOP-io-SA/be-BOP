@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { useI18n } from '$lib/i18n.js';
 
 	export let data;
@@ -6,6 +7,15 @@
 	const { t } = useI18n();
 
 	let copied = false;
+
+	// Drawn in the browser, so that the key does not travel once more in an image request.
+	let pairingQrSvg = '';
+	onMount(async () => {
+		if (!data.alreadyShown && data.pairing) {
+			const qrcode = (await import('qrcode')).default;
+			pairingQrSvg = await qrcode.toString(data.pairing, { type: 'svg', margin: 1 });
+		}
+	});
 
 	async function copySecret() {
 		if (data.alreadyShown || !data.secret) {
@@ -45,6 +55,13 @@
 			/>
 		</label>
 		<p class="text-sm opacity-80 font-mono">{t('admin.apiKeys.prefix')}: {data.prefix}</p>
+		{#if !data.alreadyShown && data.pairing}
+			<p>{t('admin.apiKeys.pairingQr')}</p>
+			<div class="w-72 h-72 bg-white">
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				{@html pairingQrSvg}
+			</div>
+		{/if}
 		<div class="flex flex-wrap gap-2">
 			<button type="button" class="btn btn-blue text-white" on:click={copySecret}>
 				{copied ? t('admin.apiKeys.copied') : t('admin.apiKeys.copySecret')}
