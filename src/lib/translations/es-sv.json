@@ -3302,7 +3302,9 @@
 			"receiptSent": "Recibo enviado.",
 			"nfcDisabled": "Active el NFC en los ajustes del dispositivo para cobrar la tarjeta.",
 			"nfcUnavailable": "Este dispositivo no tiene NFC: no puede cobrar tarjetas.",
-			"methodCardStripe": "Tarjeta Stripe"
+			"methodCardStripe": "Tarjeta Stripe",
+			"cancelYes": "Sí, cancelar",
+			"cancelKeep": "No cancelar"
 		}
 	},
 	"product": {

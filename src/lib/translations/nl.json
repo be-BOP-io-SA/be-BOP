@@ -3302,7 +3302,9 @@
 			"receiptSent": "Bonnetje verstuurd.",
 			"nfcDisabled": "Zet NFC aan in de instellingen van het toestel om de kaart af te rekenen.",
 			"nfcUnavailable": "Dit toestel heeft geen NFC: het kan geen kaarten afrekenen.",
-			"methodCardStripe": "Stripe-kaart"
+			"methodCardStripe": "Stripe-kaart",
+			"cancelYes": "Ja, annuleren",
+			"cancelKeep": "Niet annuleren"
 		}
 	},
 	"product": {

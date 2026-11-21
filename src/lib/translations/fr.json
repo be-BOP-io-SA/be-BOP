@@ -3302,7 +3302,9 @@
 			"receiptSent": "Reçu envoyé.",
 			"nfcDisabled": "Activez le NFC dans les réglages de l'appareil pour encaisser la carte.",
 			"nfcUnavailable": "Cet appareil n'a pas de NFC : il ne peut pas encaisser de carte.",
-			"methodCardStripe": "CB Stripe"
+			"methodCardStripe": "CB Stripe",
+			"cancelYes": "Oui, annuler",
+			"cancelKeep": "Ne pas annuler"
 		}
 	},
 	"product": {

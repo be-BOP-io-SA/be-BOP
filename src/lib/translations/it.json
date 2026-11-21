@@ -3302,7 +3302,9 @@
 			"receiptSent": "Ricevuta inviata.",
 			"nfcDisabled": "Attiva l'NFC nelle impostazioni del dispositivo per incassare la carta.",
 			"nfcUnavailable": "Questo dispositivo non ha l'NFC: non può incassare carte.",
-			"methodCardStripe": "Carta Stripe"
+			"methodCardStripe": "Carta Stripe",
+			"cancelYes": "Sì, annulla",
+			"cancelKeep": "Non annullare"
 		}
 	},
 	"product": {

@@ -3,6 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n';
+	import CancelPayment from './CancelPayment.svelte';
 	import NotificationAddressInput from '$lib/components/NotificationAddressInput.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 
@@ -142,13 +143,7 @@
 		{/if}
 		<p>{t('pos.terminal.waiting')}</p>
 		{#if data.canCancel}
-			<form
-				method="post"
-				action="?/cancel"
-				on:submit={(e) => (confirm(t('pos.terminal.cancelConfirm')) ? true : e.preventDefault())}
-			>
-				<button type="submit" class="btn btn-red">{t('pos.terminal.cancel')}</button>
-			</form>
+			<CancelPayment />
 		{/if}
 	{:else if data.status === 'pending'}
 		<!-- Shown for the customer's wallet to scan: the device itself never pays. -->
@@ -161,13 +156,7 @@
 			<p>{t('pos.terminal.waiting')}</p>
 		{/if}
 		{#if data.canCancel}
-			<form
-				method="post"
-				action="?/cancel"
-				on:submit={(e) => (confirm(t('pos.terminal.cancelConfirm')) ? true : e.preventDefault())}
-			>
-				<button type="submit" class="btn btn-red">{t('pos.terminal.cancel')}</button>
-			</form>
+			<CancelPayment />
 		{/if}
 	{:else if data.status === 'paid'}
 		<p class="text-3xl text-green-600 font-semibold">{t('pos.terminal.paid')}</p>
