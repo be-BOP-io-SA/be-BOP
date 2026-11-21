@@ -153,6 +153,11 @@ export const adminLinks: AdminLinks = [
 				const href = processorAdminHref(slug);
 				return href ? [{ href, label: PROCESSORS[slug].label }] : [];
 			}),
+			{
+				// The Stripe Location the Tap to Pay terminals connect to.
+				href: '/admin/stripe-terminal',
+				label: 'Stripe Terminal'
+			},
 			// These two configure a method rather than a provider, so they have no manifest entry.
 			{
 				href: '/admin/pos-payments',
@@ -281,6 +286,7 @@ const POS_MENU: Array<{ section: string; hrefs: string[] }> = [
 			'/admin/blink',
 			'/admin/bitcoin-nodeless',
 			'/admin/stripe',
+			'/admin/stripe-terminal',
 			'/admin/taler',
 			'/admin/paypal'
 		]

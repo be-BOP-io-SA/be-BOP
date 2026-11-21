@@ -1062,6 +1062,51 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					}
 				}
 			},
+			'/api/v1/pos/stripe/connection-token': {
+				post: {
+					tags: ['pos'],
+					summary: 'Stripe Terminal connection token',
+					description:
+						'A short-lived connection token for the Stripe Terminal SDK of a be-BOP-pos terminal, made ' +
+						"from the shop's Stripe settings, with the Stripe Location the terminal connects to. The " +
+						'device never holds a Stripe credential.',
+					operationId: 'createPosStripeConnectionToken',
+					security: [{ BearerAuth: ['pos:write'] }, { ApiKeyAuth: ['pos:write'] }],
+					responses: {
+						'200': {
+							description: 'A connection token and the Location.',
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['secret', 'location'],
+										properties: {
+											secret: { type: 'string', description: 'The connection token.' },
+											location: { type: 'string', description: 'The Stripe Location id.' }
+										}
+									}
+								}
+							}
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'403': {
+							description: 'Missing required scope',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'501': {
+							description: 'Stripe or its Terminal Location is not set up on this shop',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'500': {
+							description: 'Internal error',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
 			'/api/v1/pos/orders/stream': {
 				get: {
 					tags: ['pos'],

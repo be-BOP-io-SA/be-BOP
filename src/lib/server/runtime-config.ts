@@ -90,6 +90,8 @@ const baseConfig = {
 	orderNumber: 0,
 	/** Numbers the payments taken on terminals, apart from the orders. */
 	posPaymentNumber: 0,
+	/** The Stripe Terminal Location of the shop, that its Tap to Pay terminals connect to. */
+	stripeTerminalLocationId: '',
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
 	/**

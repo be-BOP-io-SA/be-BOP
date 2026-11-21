@@ -2245,6 +2245,19 @@
 			"noRef": "sans réf. caisse",
 			"refChange": "{from} → {to}, le {date}, par {by}",
 			"empty": "Aucun paiement terminal pour l'instant."
+		},
+		"stripeTerminal": {
+			"title": "Stripe Terminal",
+			"intro": "La Location Stripe à laquelle vos terminaux Tap to Pay se connectent : une par établissement.",
+			"stripeFirst": "Configurez d'abord Stripe, dans Payment Settings > Stripe.",
+			"listFailed": "Les Locations Stripe n'ont pas pu être lues.",
+			"location": "Location de cet établissement",
+			"none": "Aucune",
+			"createTitle": "Créer une Location à l'adresse de la boutique",
+			"name": "Nom",
+			"create": "Créer",
+			"addressFirst": "Renseignez d'abord l'adresse de la boutique, dans Settings > Identity.",
+			"createFailed": "Stripe a refusé de créer la Location."
 		}
 	},
 	"ageWarning": {
@@ -3225,7 +3238,12 @@
 			},
 			"continue": "Continuer",
 			"enterTip": "Saisir le pourboire",
-			"noProcessor": "Configurez un mode de paiement"
+			"noProcessor": "Configurez un mode de paiement",
+			"cancel": "Annuler",
+			"cancelConfirm": "Annuler ce paiement ? Un paiement envoyé après ne sera pas enregistré.",
+			"canceled": "Le paiement a été annulé.",
+			"collectCard": "Encaisser la carte",
+			"cardNeedsApp": "Le paiement par carte se fait avec l'app be-BOP-pos."
 		}
 	},
 	"product": {

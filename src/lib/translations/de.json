@@ -2245,6 +2245,19 @@
 			"noRef": "ohne Kassenreferenz",
 			"refChange": "{from} → {to}, am {date}, von {by}",
 			"empty": "Noch keine Terminal-Zahlung."
+		},
+		"stripeTerminal": {
+			"title": "Stripe Terminal",
+			"intro": "Der Stripe-Standort, mit dem sich Ihre Tap-to-Pay-Terminals verbinden: einer pro Betrieb.",
+			"stripeFirst": "Richten Sie zuerst Stripe ein, unter Payment Settings > Stripe.",
+			"listFailed": "Die Stripe-Standorte konnten nicht gelesen werden.",
+			"location": "Standort dieses Betriebs",
+			"none": "Keiner",
+			"createTitle": "Einen Standort an der Adresse des Shops anlegen",
+			"name": "Name",
+			"create": "Anlegen",
+			"addressFirst": "Tragen Sie zuerst die Adresse des Shops ein, unter Settings > Identity.",
+			"createFailed": "Stripe hat das Anlegen des Standorts abgelehnt."
 		}
 	},
 	"ageWarning": {
@@ -3225,7 +3238,12 @@
 			},
 			"continue": "Weiter",
 			"enterTip": "Trinkgeld eingeben",
-			"noProcessor": "Richten Sie eine Zahlungsart ein"
+			"noProcessor": "Richten Sie eine Zahlungsart ein",
+			"cancel": "Abbrechen",
+			"cancelConfirm": "Diese Zahlung abbrechen? Eine danach gesendete Zahlung wird nicht erfasst.",
+			"canceled": "Die Zahlung wurde abgebrochen.",
+			"collectCard": "Karte kassieren",
+			"cardNeedsApp": "Kartenzahlungen erfolgen mit der App be-BOP-pos."
 		}
 	},
 	"product": {

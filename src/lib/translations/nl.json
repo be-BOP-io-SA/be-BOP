@@ -2245,6 +2245,19 @@
 			"noRef": "zonder kassareferentie",
 			"refChange": "{from} → {to}, op {date}, door {by}",
 			"empty": "Nog geen terminalbetaling."
+		},
+		"stripeTerminal": {
+			"title": "Stripe Terminal",
+			"intro": "De Stripe-locatie waarmee uw Tap to Pay-terminals verbinden: één per vestiging.",
+			"stripeFirst": "Stel eerst Stripe in, onder Payment Settings > Stripe.",
+			"listFailed": "De Stripe-locaties konden niet worden gelezen.",
+			"location": "Locatie van deze vestiging",
+			"none": "Geen",
+			"createTitle": "Een locatie aanmaken op het adres van de winkel",
+			"name": "Naam",
+			"create": "Aanmaken",
+			"addressFirst": "Vul eerst het adres van de winkel in, onder Settings > Identity.",
+			"createFailed": "Stripe weigerde de locatie aan te maken."
 		}
 	},
 	"ageWarning": {
@@ -3225,7 +3238,12 @@
 			},
 			"continue": "Doorgaan",
 			"enterTip": "Fooi invoeren",
-			"noProcessor": "Stel een betaalmethode in"
+			"noProcessor": "Stel een betaalmethode in",
+			"cancel": "Annuleren",
+			"cancelConfirm": "Deze betaling annuleren? Een betaling die daarna wordt verstuurd, wordt niet geregistreerd.",
+			"canceled": "De betaling is geannuleerd.",
+			"collectCard": "Kaart afrekenen",
+			"cardNeedsApp": "Kaartbetalingen gaan via de app be-BOP-pos."
 		}
 	},
 	"product": {

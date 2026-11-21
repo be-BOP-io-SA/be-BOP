@@ -2,7 +2,7 @@ import { error, fail } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { terminalKeyOf } from '$lib/server/api/pos-terminal';
 import { collections } from '$lib/server/database';
-import { checkPosPayment, settleOverpayment } from '$lib/server/pos-payments';
+import { cancelPosPayment, checkPosPayment, settleOverpayment } from '$lib/server/pos-payments';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
 import { ORIGIN } from '$lib/server/env-config';
 import type { RequestEvent } from '@sveltejs/kit';
@@ -37,6 +37,8 @@ export async function load(event) {
 		price: payment.price,
 		status: payment.status,
 		address: payment.address,
+		// Only to this terminal: what its Tap to Pay module collects the card payment with.
+		cardClientSecret: payment.method === 'card' ? payment.clientSecret : undefined,
 		awaitingConfirmation: payment.awaitingConfirmation ?? false,
 		confirmationBlocks: payment.method === 'bitcoin' ? getConfirmationBlocks(payment.price) : 0,
 		overpayment: posPayment.overpayment,
@@ -45,6 +47,9 @@ export async function load(event) {
 }
 
 export const actions = {
+	async cancel(event) {
+		await cancelPosPayment(await ownPayment(event));
+	},
 	async overpayment(event) {
 		const posPayment = await ownPayment(event);
 		const treatment = (await event.request.formData()).get('treatment');

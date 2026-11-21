@@ -30,6 +30,23 @@
 	// The value to copy, without the scheme a wallet link adds in front of it.
 	$: copyValue = (data.address ?? '').replace(/^(bitcoin|lightning|zcash):/i, '');
 
+	// The be-BOP-pos app exposes its Tap to Pay module to the page; a browser has none.
+	type CardBridge = { collectCardPayment(clientSecret: string): Promise<unknown> };
+	let cardBridge: CardBridge | undefined;
+	let cardError = '';
+	onMount(() => {
+		cardBridge = (window as unknown as { bebopPos?: CardBridge }).bebopPos;
+	});
+	async function collectCard() {
+		cardError = '';
+		try {
+			await cardBridge?.collectCardPayment(data.cardClientSecret ?? '');
+		} catch (err) {
+			cardError = err instanceof Error ? err.message : String(err);
+		}
+		invalidateAll();
+	}
+
 	let receiptQrSvg = '';
 	$: if (data.status === 'paid' && !receiptQrSvg) {
 		import('qrcode').then(async ({ default: qrcode }) => {
@@ -48,7 +65,30 @@
 		currency={data.price.currency}
 	/>
 
-	{#if data.status === 'pending'}
+	{#if data.status === 'pending' && data.method === 'card'}
+		{#if cardBridge}
+			<button
+				type="button"
+				class="btn body-mainCTA w-full max-w-sm text-xl py-4"
+				on:click={collectCard}
+			>
+				{t('pos.terminal.collectCard')}
+			</button>
+			{#if cardError}
+				<p class="text-red-500" role="alert">{cardError}</p>
+			{/if}
+		{:else}
+			<p>{t('pos.terminal.cardNeedsApp')}</p>
+		{/if}
+		<p>{t('pos.terminal.waiting')}</p>
+		<form
+			method="post"
+			action="?/cancel"
+			on:submit={(e) => (confirm(t('pos.terminal.cancelConfirm')) ? true : e.preventDefault())}
+		>
+			<button type="submit" class="btn btn-red">{t('pos.terminal.cancel')}</button>
+		</form>
+	{:else if data.status === 'pending'}
 		<a href={data.address} class="w-72 h-72 bg-white block">
 			<img src="{$page.url.pathname}/qrcode" alt="QR code" class="w-full h-full" />
 		</a>
@@ -68,6 +108,13 @@
 		{:else}
 			<p>{t('pos.terminal.waiting')}</p>
 		{/if}
+		<form
+			method="post"
+			action="?/cancel"
+			on:submit={(e) => (confirm(t('pos.terminal.cancelConfirm')) ? true : e.preventDefault())}
+		>
+			<button type="submit" class="btn btn-red">{t('pos.terminal.cancel')}</button>
+		</form>
 	{:else if data.status === 'paid'}
 		<p class="text-3xl text-green-600 font-semibold">{t('pos.terminal.paid')}</p>
 		{#if data.overpayment && !data.overpayment.treatment}
@@ -103,7 +150,11 @@
 		{/if}
 	{:else}
 		<p class="text-2xl text-red-600">
-			{data.status === 'expired' ? t('pos.terminal.expired') : t('pos.terminal.failed')}
+			{data.status === 'expired'
+				? t('pos.terminal.expired')
+				: data.status === 'canceled'
+				? t('pos.terminal.canceled')
+				: t('pos.terminal.failed')}
 		</p>
 		<a href="/pos/terminal" class="btn body-mainCTA w-full max-w-sm text-xl py-4">
 			{t('pos.terminal.newPayment')}

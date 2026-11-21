@@ -9,6 +9,7 @@ import type { Order, OrderPayment, Price } from '$lib/types/Order';
 import type { PosPayment } from '$lib/types/PosPayment';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
+import { createCardPresentIntent, isStripeTerminalReady } from './stripe-terminal';
 
 /**
  * The methods a terminal offers, in this order, when a processor serves them with a QR code. Card
@@ -21,7 +22,15 @@ const TERMINAL_METHODS = [
 ] as const satisfies readonly PaymentMethod[];
 
 export function terminalPaymentMethods(): PaymentMethod[] {
-	return TERMINAL_METHODS.filter((method) => resolveProcessor(method)?.presentation?.kind === 'qr');
+	const qrMethods: PaymentMethod[] = TERMINAL_METHODS.filter(
+		(method) => resolveProcessor(method)?.presentation?.kind === 'qr'
+	);
+	// A card is taken with Tap to Pay on the device, through the shop's Stripe account.
+	return isCardOnTerminalReady() ? [...qrMethods, 'card'] : qrMethods;
+}
+
+function isCardOnTerminalReady(): boolean {
+	return !!getProcessor('stripe')?.isEnabled() && isStripeTerminalReady();
 }
 
 async function nextPosPaymentNumber(): Promise<number> {
@@ -67,7 +76,7 @@ export async function createPosPayment(params: {
 	if (!terminalPaymentMethods().includes(params.method)) {
 		throw new PosPaymentError(`Payment method ${params.method} is not available on terminals`);
 	}
-	const pp = resolveProcessor(params.method);
+	const pp = params.method === 'card' ? getProcessor('stripe') : resolveProcessor(params.method);
 	if (!pp) {
 		throw new PosPaymentError(`No payment processor available for ${params.method}`);
 	}
@@ -84,13 +93,21 @@ export async function createPosPayment(params: {
 	const paymentId = new ObjectId();
 	const number = await nextPosPaymentNumber();
 	const expiresAt = paymentMethodExpiration(params.method);
-	const result = await pp.createPayment({
-		orderId: _id.toHexString(),
-		orderNumber: number,
-		paymentId: paymentId.toHexString(),
-		toPay: price,
-		expiresAt
-	});
+	const result =
+		params.method === 'card'
+			? await createCardPresentIntent({
+					amountMinor: Math.round(price.amount / CURRENCY_UNIT[price.currency]),
+					currency: price.currency,
+					metadata: { posPaymentId: _id.toHexString(), paymentId: paymentId.toHexString() },
+					description: `PoS payment ${number}`
+			  }).then((intent) => ({ checkoutId: intent.id, clientSecret: intent.clientSecret }))
+			: await pp.createPayment({
+					orderId: _id.toHexString(),
+					orderNumber: number,
+					paymentId: paymentId.toHexString(),
+					toPay: price,
+					expiresAt
+			  });
 
 	const now = new Date();
 	const externalRef = params.externalRef?.trim();
@@ -111,11 +128,12 @@ export async function createPosPayment(params: {
 			processor: pp.meta.processor,
 			...(expiresAt && { expiresAt }),
 			createdAt: now,
-			...(result.address && { address: result.address }),
-			...(result.invoiceId && { invoiceId: result.invoiceId }),
+			...('address' in result && result.address && { address: result.address }),
+			...('invoiceId' in result && result.invoiceId && { invoiceId: result.invoiceId }),
 			...(result.checkoutId && { checkoutId: result.checkoutId }),
-			...(result.wallet && { wallet: result.wallet }),
-			...(result.label && { label: result.label })
+			...(result.clientSecret && { clientSecret: result.clientSecret }),
+			...('wallet' in result && result.wallet && { wallet: result.wallet }),
+			...('label' in result && result.label && { label: result.label })
 		},
 		createdAt: now,
 		updatedAt: now
@@ -256,6 +274,14 @@ export async function settleOverpayment(
 				updatedAt: now
 			}
 		}
+	);
+}
+
+/** The operator gives up on a payment still waiting: the terminal can take a new one. */
+export async function cancelPosPayment(posPayment: PosPayment): Promise<void> {
+	await collections.posPayments.updateOne(
+		{ _id: posPayment._id, 'payment.status': 'pending' },
+		{ $set: { 'payment.status': 'canceled', updatedAt: new Date() } }
 	);
 }
 

@@ -2245,6 +2245,19 @@
 			"noRef": "no till reference",
 			"refChange": "{from} → {to}, {date}, {by}",
 			"empty": "No terminal payment yet."
+		},
+		"stripeTerminal": {
+			"title": "Stripe Terminal",
+			"intro": "The Stripe Location your Tap to Pay terminals connect to: one per establishment.",
+			"stripeFirst": "Set up Stripe first, in Payment Settings > Stripe.",
+			"listFailed": "The Stripe Locations could not be read.",
+			"location": "Location of this establishment",
+			"none": "None",
+			"createTitle": "Create a Location at the shop address",
+			"name": "Name",
+			"create": "Create",
+			"addressFirst": "Fill in the shop address first, in Settings > Identity.",
+			"createFailed": "Stripe refused to create the Location."
 		}
 	},
 	"ageWarning": {
@@ -3225,7 +3238,12 @@
 			},
 			"continue": "Continue",
 			"enterTip": "Enter a tip",
-			"noProcessor": "Set up a payment method"
+			"noProcessor": "Set up a payment method",
+			"cancel": "Cancel",
+			"cancelConfirm": "Cancel this payment? A payment sent after this will not be recorded.",
+			"canceled": "The payment was canceled.",
+			"collectCard": "Take the card",
+			"cardNeedsApp": "Card payments are taken with the be-BOP-pos app."
 		}
 	},
 	"product": {

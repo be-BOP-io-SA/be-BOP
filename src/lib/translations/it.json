@@ -2245,6 +2245,19 @@
 			"noRef": "senza riferimento cassa",
 			"refChange": "{from} → {to}, il {date}, da {by}",
 			"empty": "Ancora nessun pagamento dal terminale."
+		},
+		"stripeTerminal": {
+			"title": "Stripe Terminal",
+			"intro": "La sede Stripe a cui si collegano i vostri terminali Tap to Pay: una per esercizio.",
+			"stripeFirst": "Configurate prima Stripe, in Payment Settings > Stripe.",
+			"listFailed": "Non è stato possibile leggere le sedi Stripe.",
+			"location": "Sede di questo esercizio",
+			"none": "Nessuna",
+			"createTitle": "Creare una sede all'indirizzo del negozio",
+			"name": "Nome",
+			"create": "Crea",
+			"addressFirst": "Inserite prima l'indirizzo del negozio, in Settings > Identity.",
+			"createFailed": "Stripe ha rifiutato di creare la sede."
 		}
 	},
 	"ageWarning": {
@@ -3225,7 +3238,12 @@
 			},
 			"continue": "Continua",
 			"enterTip": "Inserisci la mancia",
-			"noProcessor": "Configurate un metodo di pagamento"
+			"noProcessor": "Configurate un metodo di pagamento",
+			"cancel": "Annulla",
+			"cancelConfirm": "Annullare questo pagamento? Un pagamento inviato dopo non sarà registrato.",
+			"canceled": "Il pagamento è stato annullato.",
+			"collectCard": "Incassa con carta",
+			"cardNeedsApp": "Il pagamento con carta si fa con l'app be-BOP-pos."
 		}
 	},
 	"product": {
