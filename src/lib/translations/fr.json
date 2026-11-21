@@ -372,7 +372,8 @@
 				"galleries": "Galeries",
 				"schedules": "Agendas",
 				"leaderboards": "Classements",
-				"searchlists": "Listes de recherche"
+				"searchlists": "Listes de recherche",
+				"terminal-payments": "Paiements terminal"
 			},
 			"closeMenu": "Fermer le menu",
 			"brandHome": "Admin",
@@ -2225,6 +2226,25 @@
 				"labelColorCss": "Déclaration CSS dans une couleur de label"
 			},
 			"pairingQr": "Scannez ce QR code avec l'app be-BOP-pos pour appairer l'appareil avec cette clé."
+		},
+		"terminalPayments": {
+			"title": "Paiements terminal",
+			"intro": "Les paiements encaissés sur les terminaux appairés, sans commande. Les 200 plus récents sont affichés.",
+			"showAll": "Afficher tous les paiements",
+			"showNoRef": "Afficher seulement les paiements à rapprocher (sans réf. caisse)",
+			"date": "Date",
+			"sale": "Vente",
+			"tip": "Pourboire",
+			"method": "Moyen",
+			"status": "État",
+			"ref": "Référence caisse",
+			"device": "Terminal",
+			"overpaid": "Trop-perçu :",
+			"overpaidTip": "gardé en pourboire",
+			"overpaidRefund": "remboursé",
+			"noRef": "sans réf. caisse",
+			"refChange": "{from} → {to}, le {date}, par {by}",
+			"empty": "Aucun paiement terminal pour l'instant."
 		}
 	},
 	"ageWarning": {
@@ -3114,8 +3134,24 @@
 			"afterDiscount": "APRÈS REMISE"
 		},
 		"receipt": {
-			"ticket": "Reçu (ticket)",
-			"invoice": "Facture (A4)"
+			"title": "Reçu de paiement",
+			"customerCopy": "Exemplaire client",
+			"vatNumber": "N° de TVA : {number}",
+			"notPaid": "Ce paiement n'est pas réglé.",
+			"number": "Numéro",
+			"date": "Date",
+			"type": "Type",
+			"payment": "Paiement",
+			"sale": "Vente",
+			"tip": "Pourboire",
+			"total": "Total",
+			"method": "Moyen de paiement",
+			"transactionId": "Identifiant de transaction",
+			"sats": "Montant en sats",
+			"rate": "1 BTC =",
+			"ref": "Référence caisse",
+			"noRef": "sans réf. caisse",
+			"device": "Terminal"
 		},
 		"staffNotes": "Notes du personnel",
 		"discount": {
@@ -3160,7 +3196,36 @@
 			"amount": "Montant",
 			"erase": "Effacer",
 			"next": "Suivant",
-			"notPaired": "Cet appareil n'est pas appairé à la boutique, ou il a été révoqué."
+			"notPaired": "Cet appareil n'est pas appairé à la boutique, ou il a été révoqué.",
+			"tip": "Pourboire",
+			"noTip": "Sans pourboire",
+			"amountRecall": "Montant : {amount}",
+			"ref": "Référence de la commande caisse",
+			"tillDown": "Caisse indisponible",
+			"totalLine": "Total : {amount}",
+			"noMethod": "Aucun moyen de paiement n'est configuré pour les terminaux.",
+			"back": "Retour",
+			"copied": "Copié",
+			"waiting": "En attente du paiement…",
+			"paid": "Paiement reçu",
+			"overpaid": "Trop-perçu :",
+			"overpaidQuestion": "Pourboire ou remboursement du trop-perçu ?",
+			"keepAsTip": "Pourboire",
+			"refundOverpayment": "Remboursement",
+			"refundToDo": "Remboursez le trop-perçu au client : il est noté sur le paiement.",
+			"receiptScan": "Le client peut scanner ce QR code pour obtenir son reçu.",
+			"newPayment": "Nouveau paiement",
+			"expired": "Le paiement a expiré.",
+			"failed": "Le paiement a échoué.",
+			"errors": {
+				"notPaired": "Cet appareil n'est pas appairé à la boutique, ou il a été révoqué.",
+				"invalid": "Le montant n'est pas valide.",
+				"unavailable": "Ce moyen de paiement n'est pas disponible sur les terminaux.",
+				"failed": "Le paiement n'a pas pu être créé. Réessayez, ou choisissez un autre moyen."
+			},
+			"continue": "Continuer",
+			"enterTip": "Saisir le pourboire",
+			"noProcessor": "Configurez un mode de paiement"
 		}
 	},
 	"product": {

@@ -372,7 +372,8 @@
 				"galleries": "Galerien",
 				"schedules": "Zeitpläne",
 				"leaderboards": "Ranglisten",
-				"searchlists": "Suchlisten"
+				"searchlists": "Suchlisten",
+				"terminal-payments": "Terminal-Zahlungen"
 			},
 			"closeMenu": "Menü schließen",
 			"brandHome": "Admin",
@@ -2225,6 +2226,25 @@
 				"labelColorCss": "CSS-Deklaration in einer Label-Farbe"
 			},
 			"pairingQr": "Scannen Sie diesen QR-Code mit der App be-BOP-pos, um das Gerät mit diesem Schlüssel zu koppeln."
+		},
+		"terminalPayments": {
+			"title": "Terminal-Zahlungen",
+			"intro": "Die auf gekoppelten Terminals kassierten Zahlungen, ohne Bestellung. Die 200 neuesten werden angezeigt.",
+			"showAll": "Alle Zahlungen anzeigen",
+			"showNoRef": "Nur abzugleichende Zahlungen anzeigen (ohne Kassenreferenz)",
+			"date": "Datum",
+			"sale": "Verkauf",
+			"tip": "Trinkgeld",
+			"method": "Zahlungsart",
+			"status": "Status",
+			"ref": "Kassenreferenz",
+			"device": "Terminal",
+			"overpaid": "Überzahlung:",
+			"overpaidTip": "als Trinkgeld behalten",
+			"overpaidRefund": "erstattet",
+			"noRef": "ohne Kassenreferenz",
+			"refChange": "{from} → {to}, am {date}, von {by}",
+			"empty": "Noch keine Terminal-Zahlung."
 		}
 	},
 	"ageWarning": {
@@ -3114,8 +3134,24 @@
 			"afterDiscount": "NACH RABATT"
 		},
 		"receipt": {
-			"ticket": "Beleg (Ticket)",
-			"invoice": "Rechnung (A4)"
+			"title": "Zahlungsbeleg",
+			"customerCopy": "Exemplar für den Kunden",
+			"vatNumber": "USt-IdNr.: {number}",
+			"notPaid": "Diese Zahlung ist nicht beglichen.",
+			"number": "Nummer",
+			"date": "Datum",
+			"type": "Art",
+			"payment": "Zahlung",
+			"sale": "Verkauf",
+			"tip": "Trinkgeld",
+			"total": "Summe",
+			"method": "Zahlungsart",
+			"transactionId": "Transaktions-ID",
+			"sats": "Betrag in Sats",
+			"rate": "1 BTC =",
+			"ref": "Kassenreferenz",
+			"noRef": "ohne Kassenreferenz",
+			"device": "Terminal"
 		},
 		"staffNotes": "Mitarbeiternotizen",
 		"discount": {
@@ -3160,7 +3196,36 @@
 			"amount": "Betrag",
 			"erase": "Löschen",
 			"next": "Weiter",
-			"notPaired": "Dieses Gerät ist nicht mit dem Shop gekoppelt oder wurde widerrufen."
+			"notPaired": "Dieses Gerät ist nicht mit dem Shop gekoppelt oder wurde widerrufen.",
+			"tip": "Trinkgeld",
+			"noTip": "Kein Trinkgeld",
+			"amountRecall": "Betrag: {amount}",
+			"ref": "Bestellreferenz der Kasse",
+			"tillDown": "Kasse nicht verfügbar",
+			"totalLine": "Summe: {amount}",
+			"noMethod": "Für Terminals ist keine Zahlungsart eingerichtet.",
+			"back": "Zurück",
+			"copied": "Kopiert",
+			"waiting": "Warten auf die Zahlung…",
+			"paid": "Zahlung erhalten",
+			"overpaid": "Überzahlung:",
+			"overpaidQuestion": "Trinkgeld oder Rückerstattung der Überzahlung?",
+			"keepAsTip": "Trinkgeld",
+			"refundOverpayment": "Rückerstattung",
+			"refundToDo": "Erstatten Sie dem Kunden die Überzahlung: Sie ist bei der Zahlung vermerkt.",
+			"receiptScan": "Der Kunde kann diesen QR-Code scannen, um den Beleg zu erhalten.",
+			"newPayment": "Neue Zahlung",
+			"expired": "Die Zahlung ist abgelaufen.",
+			"failed": "Die Zahlung ist fehlgeschlagen.",
+			"errors": {
+				"notPaired": "Dieses Gerät ist nicht mit dem Shop gekoppelt oder wurde widerrufen.",
+				"invalid": "Der Betrag ist ungültig.",
+				"unavailable": "Diese Zahlungsart ist auf Terminals nicht verfügbar.",
+				"failed": "Die Zahlung konnte nicht erstellt werden. Versuchen Sie es erneut oder wählen Sie eine andere Zahlungsart."
+			},
+			"continue": "Weiter",
+			"enterTip": "Trinkgeld eingeben",
+			"noProcessor": "Richten Sie eine Zahlungsart ein"
 		}
 	},
 	"product": {

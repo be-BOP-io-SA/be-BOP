@@ -372,7 +372,8 @@
 				"galleries": "Galleries",
 				"schedules": "Schedules",
 				"leaderboards": "Leaderboards",
-				"searchlists": "Searchlists"
+				"searchlists": "Searchlists",
+				"terminal-payments": "Terminal payments"
 			},
 			"closeMenu": "Close menu",
 			"brandHome": "Admin",
@@ -2225,6 +2226,25 @@
 				"labelColorCss": "CSS declaration in a label color"
 			},
 			"pairingQr": "Scan this QR code with the be-BOP-pos app to pair the device with this key."
+		},
+		"terminalPayments": {
+			"title": "Terminal payments",
+			"intro": "Payments taken on paired terminals, without an order. The 200 most recent are shown.",
+			"showAll": "Show all payments",
+			"showNoRef": "Show only payments to reconcile (no till reference)",
+			"date": "Date",
+			"sale": "Sale",
+			"tip": "Tip",
+			"method": "Method",
+			"status": "Status",
+			"ref": "Till reference",
+			"device": "Terminal",
+			"overpaid": "Overpaid:",
+			"overpaidTip": "kept as tip",
+			"overpaidRefund": "refunded",
+			"noRef": "no till reference",
+			"refChange": "{from} → {to}, {date}, {by}",
+			"empty": "No terminal payment yet."
 		}
 	},
 	"ageWarning": {
@@ -3085,8 +3105,24 @@
 			"afterDiscount": "AFTER DISCOUNT"
 		},
 		"receipt": {
-			"ticket": "Receipt (ticket)",
-			"invoice": "Invoice (A4)"
+			"title": "Payment receipt",
+			"customerCopy": "Customer copy",
+			"vatNumber": "VAT number: {number}",
+			"notPaid": "This payment is not settled.",
+			"number": "Number",
+			"date": "Date",
+			"type": "Type",
+			"payment": "Payment",
+			"sale": "Sale",
+			"tip": "Tip",
+			"total": "Total",
+			"method": "Payment method",
+			"transactionId": "Transaction ID",
+			"sats": "Amount in sats",
+			"rate": "1 BTC =",
+			"ref": "Till reference",
+			"noRef": "no till reference",
+			"device": "Terminal"
 		},
 		"staffNotes": "Staff notes",
 		"btn": {
@@ -3160,7 +3196,36 @@
 			"amount": "Amount",
 			"erase": "Erase",
 			"next": "Next",
-			"notPaired": "This device is not paired with the shop, or it was revoked."
+			"notPaired": "This device is not paired with the shop, or it was revoked.",
+			"tip": "Tip",
+			"noTip": "No tip",
+			"amountRecall": "Amount: {amount}",
+			"ref": "Till order reference",
+			"tillDown": "Till unavailable",
+			"totalLine": "Total: {amount}",
+			"noMethod": "No payment method is set up for terminals.",
+			"back": "Back",
+			"copied": "Copied",
+			"waiting": "Waiting for the payment…",
+			"paid": "Payment received",
+			"overpaid": "Overpaid:",
+			"overpaidQuestion": "Tip, or refund of the overpayment?",
+			"keepAsTip": "Tip",
+			"refundOverpayment": "Refund",
+			"refundToDo": "Refund the overpayment to the customer: it is recorded on the payment.",
+			"receiptScan": "The customer can scan this QR code to get the receipt.",
+			"newPayment": "New payment",
+			"expired": "The payment expired.",
+			"failed": "The payment failed.",
+			"errors": {
+				"notPaired": "This device is not paired with the shop, or it was revoked.",
+				"invalid": "The amount is not valid.",
+				"unavailable": "This payment method is not available on terminals.",
+				"failed": "The payment could not be created. Try again, or choose another method."
+			},
+			"continue": "Continue",
+			"enterTip": "Enter a tip",
+			"noProcessor": "Set up a payment method"
 		}
 	},
 	"product": {

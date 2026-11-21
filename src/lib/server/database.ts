@@ -29,6 +29,7 @@ import type { CMSPage } from '$lib/types/CmsPage';
 import type { Challenge } from '$lib/types/Challenge';
 import type { EmailNotification } from '$lib/types/EmailNotification';
 import type { Role } from '$lib/types/Role';
+import type { PosPayment } from '$lib/types/PosPayment';
 import type { User } from '$lib/types/User';
 import type { Discount } from '$lib/types/Discount';
 import type { Session } from '$lib/types/Session';
@@ -124,6 +125,7 @@ const genCollection = () => ({
 	posPaymentSubtypes: db.collection<PosPaymentSubtype>('posPaymentSubtypes'),
 	checkoutFieldConfigs: db.collection<CheckoutFieldConfig>('checkoutFieldConfigs'),
 	posSessions: db.collection<PosSession>('posSessions'),
+	posPayments: db.collection<PosPayment>('posPayments'),
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
 
 	apiKeys: db.collection<ApiKey>('apiKeys'),
@@ -265,6 +267,10 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.checkoutFieldConfigs, { disabled: 1 }],
 	[collections.posSessions, { status: 1, openedAt: -1 }],
 	[collections.posSessions, { closedAt: -1 }],
+	[collections.posPayments, { receiptToken: 1 }, { unique: true }],
+	[collections.posPayments, { 'payment.status': 1 }],
+	[collections.posPayments, { createdAt: -1 }],
+	[collections.posPayments, { externalRef: 1 }],
 	[collections.orderTabs, { slug: 1 }, { unique: true }],
 	[collections.pendingZaps, { processedAt: 1 }],
 	[collections.pendingZaps, { invoiceId: 1 }, { unique: true }],

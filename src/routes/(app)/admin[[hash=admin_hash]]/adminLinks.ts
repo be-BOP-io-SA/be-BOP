@@ -177,6 +177,11 @@ export const adminLinks: AdminLinks = [
 				label: 'Reporting'
 			},
 			{
+				// Taken on paired terminals, without an order.
+				href: '/admin/terminal-payments',
+				label: 'Terminal payments'
+			},
+			{
 				href: '/admin/sales-logs',
 				label: 'Sales Logs'
 			}
@@ -280,7 +285,10 @@ const POS_MENU: Array<{ section: string; hrefs: string[] }> = [
 			'/admin/paypal'
 		]
 	},
-	{ section: 'Transaction', hrefs: ['/admin/reporting', '/admin/sales-logs'] },
+	{
+		section: 'Transaction',
+		hrefs: ['/admin/terminal-payments', '/admin/reporting', '/admin/sales-logs']
+	},
 	{ section: 'Node Management', hrefs: ['/admin/smtp', '/admin/email', '/admin/nostr'] }
 ];
 

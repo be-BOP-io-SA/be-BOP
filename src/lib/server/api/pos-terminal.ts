@@ -26,3 +26,25 @@ export async function posTerminalKey(secret: string | undefined): Promise<ApiKey
 	void touchApiKey(apiKey._id).catch(() => undefined);
 	return apiKey;
 }
+
+/**
+ * The API key of the terminal behind a request of its pages: sent once as a bearer header, then
+ * kept in a cookie that this sets.
+ */
+export async function terminalKeyOf(event: {
+	request: Request;
+	cookies: import('@sveltejs/kit').Cookies;
+}): Promise<ApiKey | null> {
+	const headerSecret = bearerSecret(event.request);
+	const apiKey = await posTerminalKey(headerSecret ?? event.cookies.get(POS_TERMINAL_COOKIE));
+	if (apiKey && headerSecret) {
+		event.cookies.set(POS_TERMINAL_COOKIE, headerSecret, {
+			path: '/',
+			httpOnly: true,
+			secure: true,
+			sameSite: 'strict',
+			maxAge: 60 * 60 * 24 * 365
+		});
+	}
+	return apiKey;
+}

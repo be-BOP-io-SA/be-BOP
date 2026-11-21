@@ -372,7 +372,8 @@
 				"galleries": "Galerijen",
 				"schedules": "Schema's",
 				"leaderboards": "Scoreborden",
-				"searchlists": "Zoeklijsten"
+				"searchlists": "Zoeklijsten",
+				"terminal-payments": "Terminalbetalingen"
 			},
 			"closeMenu": "Menu sluiten",
 			"brandHome": "Admin",
@@ -2225,6 +2226,25 @@
 				"labelColorCss": "CSS-declaratie in een labelkleur"
 			},
 			"pairingQr": "Scan deze QR-code met de app be-BOP-pos om het apparaat aan deze sleutel te koppelen."
+		},
+		"terminalPayments": {
+			"title": "Terminalbetalingen",
+			"intro": "De betalingen op gekoppelde terminals, zonder bestelling. De 200 meest recente worden getoond.",
+			"showAll": "Alle betalingen tonen",
+			"showNoRef": "Alleen af te stemmen betalingen tonen (zonder kassareferentie)",
+			"date": "Datum",
+			"sale": "Verkoop",
+			"tip": "Fooi",
+			"method": "Methode",
+			"status": "Status",
+			"ref": "Kassareferentie",
+			"device": "Terminal",
+			"overpaid": "Te veel betaald:",
+			"overpaidTip": "als fooi gehouden",
+			"overpaidRefund": "terugbetaald",
+			"noRef": "zonder kassareferentie",
+			"refChange": "{from} → {to}, op {date}, door {by}",
+			"empty": "Nog geen terminalbetaling."
 		}
 	},
 	"ageWarning": {
@@ -3113,8 +3133,24 @@
 			"afterDiscount": "NA KORTING"
 		},
 		"receipt": {
-			"ticket": "Bon (ticket)",
-			"invoice": "Factuur (A4)"
+			"title": "Betalingsbewijs",
+			"customerCopy": "Exemplaar voor de klant",
+			"vatNumber": "Btw-nummer: {number}",
+			"notPaid": "Deze betaling is niet voldaan.",
+			"number": "Nummer",
+			"date": "Datum",
+			"type": "Soort",
+			"payment": "Betaling",
+			"sale": "Verkoop",
+			"tip": "Fooi",
+			"total": "Totaal",
+			"method": "Betaalmethode",
+			"transactionId": "Transactie-ID",
+			"sats": "Bedrag in sats",
+			"rate": "1 BTC =",
+			"ref": "Kassareferentie",
+			"noRef": "zonder kassareferentie",
+			"device": "Terminal"
 		},
 		"staffNotes": "Personeelsnotities",
 		"discount": {
@@ -3160,7 +3196,36 @@
 			"amount": "Bedrag",
 			"erase": "Wissen",
 			"next": "Volgende",
-			"notPaired": "Dit apparaat is niet aan de winkel gekoppeld, of het is ingetrokken."
+			"notPaired": "Dit apparaat is niet aan de winkel gekoppeld, of het is ingetrokken.",
+			"tip": "Fooi",
+			"noTip": "Geen fooi",
+			"amountRecall": "Bedrag: {amount}",
+			"ref": "Bestelreferentie van de kassa",
+			"tillDown": "Kassa niet beschikbaar",
+			"totalLine": "Totaal: {amount}",
+			"noMethod": "Er is geen betaalmethode ingesteld voor terminals.",
+			"back": "Terug",
+			"copied": "Gekopieerd",
+			"waiting": "Wachten op de betaling…",
+			"paid": "Betaling ontvangen",
+			"overpaid": "Te veel betaald:",
+			"overpaidQuestion": "Fooi of terugbetaling van het teveel?",
+			"keepAsTip": "Fooi",
+			"refundOverpayment": "Terugbetaling",
+			"refundToDo": "Betaal het teveel terug aan de klant: het staat bij de betaling genoteerd.",
+			"receiptScan": "De klant kan deze QR-code scannen om het bonnetje te krijgen.",
+			"newPayment": "Nieuwe betaling",
+			"expired": "De betaling is verlopen.",
+			"failed": "De betaling is mislukt.",
+			"errors": {
+				"notPaired": "Dit apparaat is niet aan de winkel gekoppeld, of het is ingetrokken.",
+				"invalid": "Het bedrag is ongeldig.",
+				"unavailable": "Deze betaalmethode is niet beschikbaar op terminals.",
+				"failed": "De betaling kon niet worden aangemaakt. Probeer het opnieuw of kies een andere methode."
+			},
+			"continue": "Doorgaan",
+			"enterTip": "Fooi invoeren",
+			"noProcessor": "Stel een betaalmethode in"
 		}
 	},
 	"product": {

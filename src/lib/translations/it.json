@@ -372,7 +372,8 @@
 				"galleries": "Gallerie",
 				"schedules": "Programmi",
 				"leaderboards": "Classifiche",
-				"searchlists": "Liste di ricerca"
+				"searchlists": "Liste di ricerca",
+				"terminal-payments": "Pagamenti terminale"
 			},
 			"closeMenu": "Chiudi menu",
 			"brandHome": "Admin",
@@ -2225,6 +2226,25 @@
 				"labelColorCss": "Dichiarazione CSS in un colore di label"
 			},
 			"pairingQr": "Scansionate questo codice QR con l'app be-BOP-pos per associare il dispositivo a questa chiave."
+		},
+		"terminalPayments": {
+			"title": "Pagamenti terminale",
+			"intro": "I pagamenti incassati sui terminali associati, senza ordine. Sono mostrati i 200 più recenti.",
+			"showAll": "Mostra tutti i pagamenti",
+			"showNoRef": "Mostra solo i pagamenti da riconciliare (senza riferimento cassa)",
+			"date": "Data",
+			"sale": "Vendita",
+			"tip": "Mancia",
+			"method": "Metodo",
+			"status": "Stato",
+			"ref": "Riferimento cassa",
+			"device": "Terminale",
+			"overpaid": "Pagato in eccesso:",
+			"overpaidTip": "tenuto come mancia",
+			"overpaidRefund": "rimborsato",
+			"noRef": "senza riferimento cassa",
+			"refChange": "{from} → {to}, il {date}, da {by}",
+			"empty": "Ancora nessun pagamento dal terminale."
 		}
 	},
 	"ageWarning": {
@@ -3113,8 +3133,24 @@
 			"afterDiscount": "DOPO LO SCONTO"
 		},
 		"receipt": {
-			"ticket": "Ricevuta (ticket)",
-			"invoice": "Fattura (A4)"
+			"title": "Ricevuta di pagamento",
+			"customerCopy": "Copia per il cliente",
+			"vatNumber": "Partita IVA: {number}",
+			"notPaid": "Questo pagamento non è saldato.",
+			"number": "Numero",
+			"date": "Data",
+			"type": "Tipo",
+			"payment": "Pagamento",
+			"sale": "Vendita",
+			"tip": "Mancia",
+			"total": "Totale",
+			"method": "Metodo di pagamento",
+			"transactionId": "ID della transazione",
+			"sats": "Importo in sats",
+			"rate": "1 BTC =",
+			"ref": "Riferimento cassa",
+			"noRef": "senza riferimento cassa",
+			"device": "Terminale"
 		},
 		"staffNotes": "Note del personale",
 		"discount": {
@@ -3160,7 +3196,36 @@
 			"amount": "Importo",
 			"erase": "Cancella",
 			"next": "Avanti",
-			"notPaired": "Questo dispositivo non è associato al negozio, oppure è stato revocato."
+			"notPaired": "Questo dispositivo non è associato al negozio, oppure è stato revocato.",
+			"tip": "Mancia",
+			"noTip": "Nessuna mancia",
+			"amountRecall": "Importo: {amount}",
+			"ref": "Riferimento dell'ordine di cassa",
+			"tillDown": "Cassa non disponibile",
+			"totalLine": "Totale: {amount}",
+			"noMethod": "Nessun metodo di pagamento è configurato per i terminali.",
+			"back": "Indietro",
+			"copied": "Copiato",
+			"waiting": "In attesa del pagamento…",
+			"paid": "Pagamento ricevuto",
+			"overpaid": "Pagato in eccesso:",
+			"overpaidQuestion": "Mancia o rimborso dell'eccedenza?",
+			"keepAsTip": "Mancia",
+			"refundOverpayment": "Rimborso",
+			"refundToDo": "Rimborsate l'eccedenza al cliente: è annotata sul pagamento.",
+			"receiptScan": "Il cliente può scansionare questo codice QR per ottenere la ricevuta.",
+			"newPayment": "Nuovo pagamento",
+			"expired": "Il pagamento è scaduto.",
+			"failed": "Il pagamento non è riuscito.",
+			"errors": {
+				"notPaired": "Questo dispositivo non è associato al negozio, oppure è stato revocato.",
+				"invalid": "L'importo non è valido.",
+				"unavailable": "Questo metodo di pagamento non è disponibile sui terminali.",
+				"failed": "Non è stato possibile creare il pagamento. Riprovate o scegliete un altro metodo."
+			},
+			"continue": "Continua",
+			"enterTip": "Inserisci la mancia",
+			"noProcessor": "Configurate un metodo di pagamento"
 		}
 	},
 	"product": {

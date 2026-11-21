@@ -327,8 +327,8 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 	}
 
 	const isPosUrl = guardPath.startsWith('/pos/') || guardPath === '/pos';
-	// A paired terminal opens its amount entry screen with its device key, not an employee login.
-	const isPosDeviceUrl = guardPath === '/pos/terminal';
+	// A paired terminal opens its screens with its API key, not an employee login.
+	const isPosDeviceUrl = guardPath === '/pos/terminal' || guardPath.startsWith('/pos/terminal/');
 	if (isPosUrl && !isPosDeviceUrl) {
 		if (!event.locals.user) {
 			throw redirect(303, '/admin/login');

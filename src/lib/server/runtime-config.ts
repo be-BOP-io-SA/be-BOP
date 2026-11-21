@@ -88,6 +88,8 @@ const baseConfig = {
 	priceReferenceCurrency: 'SAT' as Currency,
 	accountingCurrency: null as Currency | null,
 	orderNumber: 0,
+	/** Numbers the payments taken on terminals, apart from the orders. */
+	posPaymentNumber: 0,
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
 	/**

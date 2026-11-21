@@ -372,7 +372,8 @@
 				"galleries": "Galerías",
 				"schedules": "Horarios",
 				"leaderboards": "Clasificaciones",
-				"searchlists": "Listas de búsqueda"
+				"searchlists": "Listas de búsqueda",
+				"terminal-payments": "Pagos del terminal"
 			},
 			"closeMenu": "Cerrar menú",
 			"brandHome": "Admin",
@@ -2225,6 +2226,25 @@
 				"labelColorCss": "Declaración CSS en un color de label"
 			},
 			"pairingQr": "Escanee este código QR con la app be-BOP-pos para vincular el dispositivo con esta clave."
+		},
+		"terminalPayments": {
+			"title": "Pagos del terminal",
+			"intro": "Los pagos cobrados en los terminales vinculados, sin pedido. Se muestran los 200 más recientes.",
+			"showAll": "Mostrar todos los pagos",
+			"showNoRef": "Mostrar solo los pagos por conciliar (sin referencia de caja)",
+			"date": "Fecha",
+			"sale": "Venta",
+			"tip": "Propina",
+			"method": "Medio",
+			"status": "Estado",
+			"ref": "Referencia de caja",
+			"device": "Terminal",
+			"overpaid": "Pago en exceso:",
+			"overpaidTip": "guardado como propina",
+			"overpaidRefund": "reembolsado",
+			"noRef": "sin referencia de caja",
+			"refChange": "{from} → {to}, el {date}, por {by}",
+			"empty": "Todavía no hay ningún pago del terminal."
 		}
 	},
 	"ageWarning": {
@@ -3113,8 +3133,24 @@
 			"afterDiscount": "DESPUÉS DEL DESCUENTO"
 		},
 		"receipt": {
-			"ticket": "Recibo (ticket)",
-			"invoice": "Factura (A4)"
+			"title": "Recibo de pago",
+			"customerCopy": "Copia para el cliente",
+			"vatNumber": "N.º de IVA: {number}",
+			"notPaid": "Este pago no está liquidado.",
+			"number": "Número",
+			"date": "Fecha",
+			"type": "Tipo",
+			"payment": "Pago",
+			"sale": "Venta",
+			"tip": "Propina",
+			"total": "Total",
+			"method": "Medio de pago",
+			"transactionId": "ID de transacción",
+			"sats": "Importe en sats",
+			"rate": "1 BTC =",
+			"ref": "Referencia de caja",
+			"noRef": "sin referencia de caja",
+			"device": "Terminal"
 		},
 		"staffNotes": "Notas del personal",
 		"discount": {
@@ -3160,7 +3196,36 @@
 			"amount": "Importe",
 			"erase": "Borrar",
 			"next": "Siguiente",
-			"notPaired": "Este dispositivo no está vinculado a la tienda, o ha sido revocado."
+			"notPaired": "Este dispositivo no está vinculado a la tienda, o ha sido revocado.",
+			"tip": "Propina",
+			"noTip": "Sin propina",
+			"amountRecall": "Importe: {amount}",
+			"ref": "Referencia del pedido de caja",
+			"tillDown": "Caja no disponible",
+			"totalLine": "Total: {amount}",
+			"noMethod": "No hay ningún medio de pago configurado para los terminales.",
+			"back": "Volver",
+			"copied": "Copiado",
+			"waiting": "Esperando el pago…",
+			"paid": "Pago recibido",
+			"overpaid": "Pago en exceso:",
+			"overpaidQuestion": "¿Propina o reembolso del exceso?",
+			"keepAsTip": "Propina",
+			"refundOverpayment": "Reembolso",
+			"refundToDo": "Reembolse el exceso al cliente: queda anotado en el pago.",
+			"receiptScan": "El cliente puede escanear este código QR para obtener su recibo.",
+			"newPayment": "Nuevo pago",
+			"expired": "El pago ha caducado.",
+			"failed": "El pago ha fallado.",
+			"errors": {
+				"notPaired": "Este dispositivo no está vinculado a la tienda, o ha sido revocado.",
+				"invalid": "El importe no es válido.",
+				"unavailable": "Este medio de pago no está disponible en los terminales.",
+				"failed": "No se ha podido crear el pago. Inténtelo de nuevo o elija otro medio."
+			},
+			"continue": "Continuar",
+			"enterTip": "Introducir propina",
+			"noProcessor": "Configure un medio de pago"
 		}
 	},
 	"product": {

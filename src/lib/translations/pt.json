@@ -372,7 +372,8 @@
 				"galleries": "Galerias",
 				"schedules": "Agendas",
 				"leaderboards": "Classificações",
-				"searchlists": "Listas de pesquisa"
+				"searchlists": "Listas de pesquisa",
+				"terminal-payments": "Pagamentos do terminal"
 			},
 			"closeMenu": "Fechar menu",
 			"brandHome": "Admin",
@@ -2225,6 +2226,25 @@
 				"labelColorCss": "Declaração CSS numa cor de label"
 			},
 			"pairingQr": "Leia este código QR com a app be-BOP-pos para associar o dispositivo a esta chave."
+		},
+		"terminalPayments": {
+			"title": "Pagamentos do terminal",
+			"intro": "Os pagamentos cobrados nos terminais associados, sem pedido. São mostrados os 200 mais recentes.",
+			"showAll": "Mostrar todos os pagamentos",
+			"showNoRef": "Mostrar só os pagamentos a conciliar (sem referência da caixa)",
+			"date": "Data",
+			"sale": "Venda",
+			"tip": "Gorjeta",
+			"method": "Meio",
+			"status": "Estado",
+			"ref": "Referência da caixa",
+			"device": "Terminal",
+			"overpaid": "Pago em excesso:",
+			"overpaidTip": "guardado como gorjeta",
+			"overpaidRefund": "reembolsado",
+			"noRef": "sem referência da caixa",
+			"refChange": "{from} → {to}, em {date}, por {by}",
+			"empty": "Ainda não há nenhum pagamento do terminal."
 		}
 	},
 	"ageWarning": {
@@ -3114,8 +3134,24 @@
 			"afterDiscount": "APÓS O DESCONTO"
 		},
 		"receipt": {
-			"ticket": "Recibo (ticket)",
-			"invoice": "Fatura (A4)"
+			"title": "Recibo de pagamento",
+			"customerCopy": "Exemplar do cliente",
+			"vatNumber": "N.º de IVA: {number}",
+			"notPaid": "Este pagamento não está liquidado.",
+			"number": "Número",
+			"date": "Data",
+			"type": "Tipo",
+			"payment": "Pagamento",
+			"sale": "Venda",
+			"tip": "Gorjeta",
+			"total": "Total",
+			"method": "Meio de pagamento",
+			"transactionId": "ID da transação",
+			"sats": "Montante em sats",
+			"rate": "1 BTC =",
+			"ref": "Referência da caixa",
+			"noRef": "sem referência da caixa",
+			"device": "Terminal"
 		},
 		"staffNotes": "Notas da equipe",
 		"discount": {
@@ -3160,7 +3196,36 @@
 			"amount": "Montante",
 			"erase": "Apagar",
 			"next": "Seguinte",
-			"notPaired": "Este dispositivo não está associado à loja, ou foi revogado."
+			"notPaired": "Este dispositivo não está associado à loja, ou foi revogado.",
+			"tip": "Gorjeta",
+			"noTip": "Sem gorjeta",
+			"amountRecall": "Montante: {amount}",
+			"ref": "Referência do pedido da caixa",
+			"tillDown": "Caixa indisponível",
+			"totalLine": "Total: {amount}",
+			"noMethod": "Não há nenhum meio de pagamento configurado para os terminais.",
+			"back": "Voltar",
+			"copied": "Copiado",
+			"waiting": "A aguardar o pagamento…",
+			"paid": "Pagamento recebido",
+			"overpaid": "Pago em excesso:",
+			"overpaidQuestion": "Gorjeta ou reembolso do excesso?",
+			"keepAsTip": "Gorjeta",
+			"refundOverpayment": "Reembolso",
+			"refundToDo": "Reembolse o excesso ao cliente: fica registado no pagamento.",
+			"receiptScan": "O cliente pode ler este código QR para obter o recibo.",
+			"newPayment": "Novo pagamento",
+			"expired": "O pagamento expirou.",
+			"failed": "O pagamento falhou.",
+			"errors": {
+				"notPaired": "Este dispositivo não está associado à loja, ou foi revogado.",
+				"invalid": "O montante não é válido.",
+				"unavailable": "Este meio de pagamento não está disponível nos terminais.",
+				"failed": "Não foi possível criar o pagamento. Tente novamente ou escolha outro meio."
+			},
+			"continue": "Continuar",
+			"enterTip": "Introduzir gorjeta",
+			"noProcessor": "Configure um meio de pagamento"
 		}
 	},
 	"product": {
