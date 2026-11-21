@@ -3296,7 +3296,11 @@
 			"switchOperator": "Switch operator",
 			"xTitle": "X report",
 			"noSession": "No till session is open.",
-			"badges": "Badges"
+			"badges": "Badges",
+			"sendReceipt": "Send the receipt",
+			"sendBySms": "SMS",
+			"scan": "Scan",
+			"receiptSent": "Receipt sent."
 		}
 	},
 	"product": {

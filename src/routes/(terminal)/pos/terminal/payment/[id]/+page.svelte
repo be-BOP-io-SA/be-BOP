@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, tick } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n';
+	import NotificationAddressInput from '$lib/components/NotificationAddressInput.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 
 	export let data;
+	export let form;
 
 	const { t } = useI18n();
 
@@ -30,12 +32,49 @@
 	// The value to copy, without the scheme a wallet link adds in front of it.
 	$: copyValue = (data.address ?? '').replace(/^(bitcoin|lightning|zcash):/i, '');
 
-	// The be-BOP-pos app exposes its Tap to Pay module to the page; a browser has none.
-	type CardBridge = { collectCardPayment(clientSecret: string): Promise<unknown> };
+	// The be-BOP-pos app exposes its native modules to the page; a browser has none.
+	type CardBridge = {
+		collectCardPayment(clientSecret: string): Promise<unknown>;
+		scanQr?(): Promise<string>;
+		sendSms?(phone: string, text: string): Promise<unknown>;
+		info?(): Promise<{ smsAvailable?: boolean }>;
+	};
+	// The app says whether the device has a SIM ready: the SMS receipt is offered only then.
+	let smsAvailable = false;
 	let cardBridge: CardBridge | undefined;
+	// The customer's npub is never typed: it is scanned from their QR and sent at once.
+	let scannedNpub = '';
+	let nostrReceiptForm: HTMLFormElement | null = null;
+	let phone = '';
+	let smsStatus = '';
+	async function scanNpub() {
+		try {
+			scannedNpub = ((await cardBridge?.scanQr?.()) ?? '').trim();
+		} catch {
+			// Cancelled or no camera: nothing is sent.
+			return;
+		}
+		if (scannedNpub) {
+			await tick();
+			nostrReceiptForm?.requestSubmit();
+		}
+	}
+	async function sendSms() {
+		smsStatus = '';
+		try {
+			await cardBridge?.sendSms?.(phone, `${t('pos.receipt.title')}: ${data.receiptUrl}`);
+			smsStatus = t('pos.terminal.receiptSent');
+		} catch (err) {
+			smsStatus = err instanceof Error ? err.message : String(err);
+		}
+	}
 	let cardError = '';
 	onMount(() => {
 		cardBridge = (window as unknown as { bebopPos?: CardBridge }).bebopPos;
+		cardBridge
+			?.info?.()
+			.then((info) => (smsAvailable = !!info.smsAvailable))
+			.catch(() => (smsAvailable = false));
 	});
 	async function collectCard() {
 		cardError = '';
@@ -150,6 +189,58 @@
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html receiptQrSvg}
 			</div>
+			<section class="flex flex-col gap-2 w-full max-w-sm">
+				<p class="font-semibold">{t('pos.terminal.sendReceipt')}</p>
+				{#if form && 'receiptSent' in form}
+					<p class="text-green-600">{t('pos.terminal.receiptSent')}</p>
+				{:else if form && 'receiptError' in form}
+					<p class="text-red-500">{t(`login.error.${form.receiptError}`)}</p>
+				{/if}
+				<div class="flex items-end gap-2">
+					{#if $page.data.availableContactModes.includes('email')}
+						<form method="post" action="?/receipt" class="flex items-end gap-2 grow">
+							<NotificationAddressInput
+								class="form-label grow text-left"
+								modes={['email']}
+								required
+							/>
+							<button
+								type="submit"
+								class="btn body-mainCTA text-xl"
+								title={t('pos.terminal.sendReceipt')}
+								aria-label={t('pos.terminal.sendReceipt')}>📤</button
+							>
+						</form>
+					{/if}
+					{#if cardBridge?.scanQr && $page.data.availableContactModes.includes('nostr')}
+						<form method="post" action="?/receipt" bind:this={nostrReceiptForm}>
+							<input type="hidden" name="address" value={scannedNpub} />
+							<button
+								type="button"
+								class="btn btn-gray text-xl"
+								title={t('pos.terminal.scan')}
+								aria-label={t('pos.terminal.scan')}
+								on:click={scanNpub}>📷</button
+							>
+						</form>
+					{/if}
+				</div>
+				{#if cardBridge?.sendSms && smsAvailable}
+					<form class="flex gap-2" on:submit|preventDefault={sendSms}>
+						<input
+							type="tel"
+							class="form-input grow"
+							placeholder="+33…"
+							bind:value={phone}
+							required
+						/>
+						<button type="submit" class="btn btn-gray">{t('pos.terminal.sendBySms')}</button>
+					</form>
+					{#if smsStatus}
+						<p>{smsStatus}</p>
+					{/if}
+				{/if}
+			</section>
 			<a href="/pos/terminal" class="btn body-mainCTA w-full max-w-sm text-xl py-4">
 				{t('pos.terminal.newPayment')}
 			</a>

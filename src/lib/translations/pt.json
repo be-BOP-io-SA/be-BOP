@@ -3296,7 +3296,11 @@
 			"switchOperator": "Mudar de operador",
 			"xTitle": "Relatório X",
 			"noSession": "Não há nenhuma sessão de caixa aberta.",
-			"badges": "Crachás"
+			"badges": "Crachás",
+			"sendReceipt": "Enviar o recibo",
+			"sendBySms": "SMS",
+			"scan": "Ler",
+			"receiptSent": "Recibo enviado."
 		}
 	},
 	"product": {

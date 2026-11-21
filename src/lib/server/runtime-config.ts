@@ -469,6 +469,12 @@ Amount: {{amount}} {{currency}}</p>`,
 <p>Order <a href="{{orderLink}}">#{{orderNumber}}</a> is fully paid!</p>`,
 			default: true as boolean
 		},
+		'pos.receipt': {
+			subject: '{{brandName}} - Payment receipt #{{number}}',
+			html: `<p>Thank you for your payment of {{amount}}.</p>
+<p>Your receipt: <a href="{{receiptLink}}">{{receiptLink}}</a></p>`,
+			default: true as boolean
+		},
 		'order.payment.paid': {
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is paid, see <a href="{{orderLink}}">{{orderLink}}</a></p>

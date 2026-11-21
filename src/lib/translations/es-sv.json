@@ -3296,7 +3296,11 @@
 			"switchOperator": "Cambiar de operador",
 			"xTitle": "Informe X",
 			"noSession": "No hay ninguna sesión de caja abierta.",
-			"badges": "Credenciales"
+			"badges": "Credenciales",
+			"sendReceipt": "Enviar el recibo",
+			"sendBySms": "SMS",
+			"scan": "Escanear",
+			"receiptSent": "Recibo enviado."
 		}
 	},
 	"product": {

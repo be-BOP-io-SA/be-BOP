@@ -3,9 +3,17 @@ import { ObjectId } from 'mongodb';
 import { POS_OPERATOR_COOKIE, terminalKeyOf } from '$lib/server/api/pos-terminal';
 import { operatorOfSession } from '$lib/server/arm-pos';
 import { collections } from '$lib/server/database';
-import { cancelPosPayment, checkPosPayment, settleOverpayment } from '$lib/server/pos-payments';
+import {
+	cancelPosPayment,
+	checkPosPayment,
+	posReceiptUrl,
+	sendPosReceiptByEmail,
+	sendPosReceiptByNostr,
+	settleOverpayment
+} from '$lib/server/pos-payments';
+import { validateEmailOrNpub } from '$lib/server/nostr';
+import { availableContactModes } from '$lib/server/contact-modes';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
-import { ORIGIN } from '$lib/server/env-config';
 import type { RequestEvent } from '@sveltejs/kit';
 
 /** The payment, if this terminal took it. */
@@ -57,11 +65,31 @@ export async function load(event) {
 		overpayment: posPayment.overpayment,
 		canCancel: actions.includes('cancel'),
 		canRefund: actions.includes('refund'),
-		receiptUrl: `${ORIGIN.replace(/\/+$/, '')}/pos-receipt/${posPayment.receiptToken}`
+		receiptUrl: posReceiptUrl(posPayment)
 	};
 }
 
 export const actions = {
+	async receipt(event) {
+		const { posPayment } = await ownPayment(event);
+		if (posPayment.payment.status !== 'paid') {
+			throw error(400, 'Payment is not paid');
+		}
+		// One field, as on the shop: an e-mail or an npub, among the shop's contact modes.
+		const address = validateEmailOrNpub(
+			(await event.request.formData()).get('address'),
+			availableContactModes()
+		);
+		if ('error' in address) {
+			return fail(400, { receiptError: address.error });
+		}
+		if (address.kind === 'email') {
+			await sendPosReceiptByEmail(posPayment, address.address);
+		} else {
+			await sendPosReceiptByNostr(posPayment, address.address);
+		}
+		return { receiptSent: true };
+	},
 	async cancel(event) {
 		const { posPayment, apiKey } = await ownPayment(event);
 		const operator = await operatorOn(event, apiKey._id);

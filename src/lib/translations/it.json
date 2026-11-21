@@ -3296,7 +3296,11 @@
 			"switchOperator": "Cambia operatore",
 			"xTitle": "Report X",
 			"noSession": "Nessuna sessione di cassa è aperta.",
-			"badges": "Badge"
+			"badges": "Badge",
+			"sendReceipt": "Inviare la ricevuta",
+			"sendBySms": "SMS",
+			"scan": "Scansiona",
+			"receiptSent": "Ricevuta inviata."
 		}
 	},
 	"product": {

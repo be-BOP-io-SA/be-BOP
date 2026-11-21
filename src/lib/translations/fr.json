@@ -3296,7 +3296,11 @@
 			"switchOperator": "Changer d'opérateur",
 			"xTitle": "X",
 			"noSession": "Aucune session de caisse n'est ouverte.",
-			"badges": "Badges"
+			"badges": "Badges",
+			"sendReceipt": "Envoyer le reçu",
+			"sendBySms": "SMS",
+			"scan": "Scanner",
+			"receiptSent": "Reçu envoyé."
 		}
 	},
 	"product": {

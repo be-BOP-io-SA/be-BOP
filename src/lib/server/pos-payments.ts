@@ -7,7 +7,10 @@ import { coversPayment, getProcessor, resolveProcessor } from './sdk/pp';
 import type { PaymentMethod } from './payment-methods';
 import type { Order, OrderPayment, Price } from '$lib/types/Order';
 import type { PosPayment } from '$lib/types/PosPayment';
-import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
+import { CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
+import { Kind } from 'nostr-tools';
+import { ORIGIN } from './env-config';
+import { queueEmail } from './email';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { createCardPresentIntent, isStripeTerminalReady } from './stripe-terminal';
 import { logAccountingEvent } from './accounting-log';
@@ -401,5 +404,41 @@ export async function setExternalRef(
 		objectType: 'posPayment',
 		origin: 'pos',
 		...(employee && { employee })
+	});
+}
+
+/** The public address of a payment's receipt, the one its QR code gives the customer. */
+export function posReceiptUrl(posPayment: Pick<PosPayment, 'receiptToken'>): string {
+	return `${ORIGIN.replace(/\/+$/, '')}/pos-receipt/${posPayment.receiptToken}`;
+}
+
+function receiptAmount(posPayment: PosPayment): string {
+	const total = posPayment.amount.amount + posPayment.tip.amount;
+	return `${total.toLocaleString('en', {
+		maximumFractionDigits: FRACTION_DIGITS_PER_CURRENCY[posPayment.amount.currency]
+	})} ${posPayment.amount.currency}`;
+}
+
+/** Sends the receipt link by e-mail, with the shop's e-mail settings and templates. */
+export async function sendPosReceiptByEmail(posPayment: PosPayment, email: string): Promise<void> {
+	await queueEmail(email, 'pos.receipt', {
+		number: String(posPayment.number),
+		amount: receiptAmount(posPayment),
+		receiptLink: posReceiptUrl(posPayment)
+	});
+}
+
+/** Sends the receipt link as a Nostr direct message, the way be-BOP sends its other messages. */
+export async function sendPosReceiptByNostr(posPayment: PosPayment, npub: string): Promise<void> {
+	const now = new Date();
+	await collections.nostrNotifications.insertOne({
+		_id: new ObjectId(),
+		createdAt: now,
+		updatedAt: now,
+		kind: Kind.EncryptedDirectMessage,
+		dest: npub,
+		content: `${runtimeConfig.brandName}: receipt of your payment of ${receiptAmount(
+			posPayment
+		)} (#${posPayment.number}): ${posReceiptUrl(posPayment)}`
 	});
 }

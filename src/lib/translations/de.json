@@ -3296,7 +3296,11 @@
 			"switchOperator": "Bediener wechseln",
 			"xTitle": "X-Bericht",
 			"noSession": "Keine Kassensitzung ist geöffnet.",
-			"badges": "Badges"
+			"badges": "Badges",
+			"sendReceipt": "Beleg senden",
+			"sendBySms": "SMS",
+			"scan": "Scannen",
+			"receiptSent": "Beleg gesendet."
 		}
 	},
 	"product": {

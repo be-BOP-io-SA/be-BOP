@@ -3296,7 +3296,11 @@
 			"switchOperator": "Andere medewerker",
 			"xTitle": "X-rapport",
 			"noSession": "Er is geen kassasessie geopend.",
-			"badges": "Badges"
+			"badges": "Badges",
+			"sendReceipt": "Bonnetje versturen",
+			"sendBySms": "SMS",
+			"scan": "Scannen",
+			"receiptSent": "Bonnetje verstuurd."
 		}
 	},
 	"product": {
