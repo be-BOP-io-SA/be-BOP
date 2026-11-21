@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n';
 	import PriceTag from '$lib/components/PriceTag.svelte';
+	import { page } from '$app/stores';
 
 	export let data;
 
@@ -10,6 +11,28 @@
 <h1 class="text-3xl">{t('admin.terminalPayments.title')}</h1>
 
 <p>{t('admin.terminalPayments.intro')}</p>
+
+<form method="get" action="{$page.url.pathname}/export" class="flex flex-wrap gap-2 items-end">
+	<label class="form-label">
+		{t('admin.terminalPayments.exportFrom')}
+		<input type="datetime-local" step="1" name="from" class="form-input" required />
+	</label>
+	<label class="form-label">
+		{t('admin.terminalPayments.exportTo')}
+		<input type="datetime-local" step="1" name="to" class="form-input" required />
+	</label>
+	<label class="form-label">
+		{t('admin.terminalPayments.exportFormat')}
+		<select name="format" class="form-input">
+			<option value="csv">CSV</option>
+			<option value="camt053">camt.053</option>
+			<option value="camt054">camt.054</option>
+			<option value="cfonb120">CFONB 120</option>
+			<option value="bai2">BAI2</option>
+		</select>
+	</label>
+	<button type="submit" class="btn btn-black">{t('admin.terminalPayments.export')}</button>
+</form>
 
 <a href={data.onlyNoRef ? '?' : '?noRef=1'} class="underline self-start">
 	{data.onlyNoRef ? t('admin.terminalPayments.showAll') : t('admin.terminalPayments.showNoRef')}

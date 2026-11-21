@@ -51,20 +51,29 @@
 	let pinDigits = '';
 	let badgeForm: HTMLFormElement;
 	let badgeInput: HTMLInputElement;
-	onMount(() => {
-		// The be-BOP-pos app calls this when it reads an operator badge on the locked screen.
-		(window as unknown as { bebopTerminal?: unknown }).bebopTerminal = {
-			badge(identifier: string) {
-				if (data.paired && data.locked && badgeForm) {
-					badgeInput.value = identifier;
-					badgeForm.requestSubmit();
+	// The be-BOP-pos app listens for NFC only while the page defines this, and calls it with each
+	// badge read: so it exists on the locked screen only, and NFC stays off everywhere else.
+	type TerminalHooks = { bebopTerminal?: { badge?: (identifier: string) => void } };
+	let mounted = false;
+	onMount(() => (mounted = true));
+	$: if (mounted) {
+		const hooks = window as unknown as TerminalHooks;
+		if (data.paired && data.locked) {
+			hooks.bebopTerminal = {
+				badge(identifier: string) {
+					if (badgeForm) {
+						badgeInput.value = identifier;
+						badgeForm.requestSubmit();
+					}
 				}
-			}
-		};
-	});
+			};
+		} else {
+			delete hooks.bebopTerminal;
+		}
+	}
 	onDestroy(() => {
 		if (typeof window !== 'undefined') {
-			delete (window as unknown as { bebopTerminal?: unknown }).bebopTerminal;
+			delete (window as unknown as TerminalHooks).bebopTerminal;
 		}
 	});
 	function pressPin(key: string) {
@@ -152,6 +161,7 @@
 	{:else}
 		<div class="flex items-center gap-3 text-sm opacity-70">
 			<span>{data.deviceName} · {data.operator.alias}</span>
+			<a href="/admin/arm-pos" class="underline">{t('pos.terminal.badges')}</a>
 			{#if data.operator.actions.includes('xReport')}
 				<a href="/pos/terminal/x" class="underline">{t('pos.terminal.xTitle')}</a>
 			{/if}

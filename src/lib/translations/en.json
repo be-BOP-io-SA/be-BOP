@@ -2229,7 +2229,7 @@
 			"suspiciousEvents": {
 				"labelColorCss": "CSS declaration in a label color"
 			},
-			"pairingQr": "Scan this QR code with the be-BOP-pos app to pair the device with this key."
+			"pairingQr": "Scan this QR code with the be-BOP-pos app to pair the device with this key. To take cards with Tap to Pay, the key also needs the pos:write scope."
 		},
 		"terminalPayments": {
 			"title": "Terminal payments",
@@ -2248,7 +2248,11 @@
 			"overpaidRefund": "refunded",
 			"noRef": "no till reference",
 			"refChange": "{from} → {to}, {date}, {by}",
-			"empty": "No terminal payment yet."
+			"empty": "No terminal payment yet.",
+			"exportFrom": "From",
+			"exportTo": "To",
+			"exportFormat": "Format",
+			"export": "Export for reconciliation"
 		},
 		"stripeTerminal": {
 			"title": "Stripe Terminal",
@@ -2291,7 +2295,10 @@
 				"xReport": "X report",
 				"zReport": "Z report",
 				"unlock": "Leave locked mode"
-			}
+			},
+			"writeBadge": "Write it on the badge",
+			"badgePresent": "Hold the badge against the device…",
+			"badgeWritten": "Badge written."
 		}
 	},
 	"ageWarning": {
@@ -3288,7 +3295,8 @@
 			"signIn": "Sign in",
 			"switchOperator": "Switch operator",
 			"xTitle": "X report",
-			"noSession": "No till session is open."
+			"noSession": "No till session is open.",
+			"badges": "Badges"
 		}
 	},
 	"product": {

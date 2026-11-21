@@ -1,10 +1,28 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { useI18n } from '$lib/i18n';
 
 	export let data;
 	export let form;
 
 	const { t, locale } = useI18n();
+
+	// Inside the be-BOP-pos app, the identifier is written on the badge with its NFC module.
+	type NfcBridge = { writeNfc(text: string): Promise<unknown> };
+	let nfc: NfcBridge | undefined;
+	let writeStatus = '';
+	onMount(() => {
+		nfc = (window as unknown as { bebopPos?: NfcBridge }).bebopPos;
+	});
+	async function writeBadge(identifier: string) {
+		writeStatus = t('admin.armPos.badgePresent');
+		try {
+			await nfc?.writeNfc(identifier);
+			writeStatus = t('admin.armPos.badgeWritten');
+		} catch (err) {
+			writeStatus = err instanceof Error ? err.message : String(err);
+		}
+	}
 </script>
 
 <h1 class="text-3xl">{t('admin.armPos.title')}</h1>
@@ -15,6 +33,18 @@
 	<section class="border border-amber-400 bg-amber-50 rounded p-4 flex flex-col gap-2">
 		<p class="font-semibold">{t('admin.armPos.badgeWrite')}</p>
 		<code class="break-all">{form.badgeIdentifier}</code>
+		{#if nfc}
+			<button
+				type="button"
+				class="btn btn-black self-start"
+				on:click={() => form && 'badgeIdentifier' in form && writeBadge(form.badgeIdentifier ?? '')}
+			>
+				{t('admin.armPos.writeBadge')}
+			</button>
+			{#if writeStatus}
+				<p>{writeStatus}</p>
+			{/if}
+		{/if}
 	</section>
 {/if}
 

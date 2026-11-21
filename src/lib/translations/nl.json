@@ -2229,7 +2229,7 @@
 			"suspiciousEvents": {
 				"labelColorCss": "CSS-declaratie in een labelkleur"
 			},
-			"pairingQr": "Scan deze QR-code met de app be-BOP-pos om het apparaat aan deze sleutel te koppelen."
+			"pairingQr": "Scan deze QR-code met de app be-BOP-pos om het apparaat aan deze sleutel te koppelen. Om kaarten af te rekenen met Tap to Pay heeft de sleutel ook de machtiging pos:write nodig."
 		},
 		"terminalPayments": {
 			"title": "Terminalbetalingen",
@@ -2248,7 +2248,11 @@
 			"overpaidRefund": "terugbetaald",
 			"noRef": "zonder kassareferentie",
 			"refChange": "{from} → {to}, op {date}, door {by}",
-			"empty": "Nog geen terminalbetaling."
+			"empty": "Nog geen terminalbetaling.",
+			"exportFrom": "Van",
+			"exportTo": "Tot",
+			"exportFormat": "Formaat",
+			"export": "Exporteren voor afstemming"
 		},
 		"stripeTerminal": {
 			"title": "Stripe Terminal",
@@ -2291,7 +2295,10 @@
 				"xReport": "X-rapport",
 				"zReport": "Z-rapport",
 				"unlock": "Vergrendelde modus verlaten"
-			}
+			},
+			"writeBadge": "Op de badge schrijven",
+			"badgePresent": "Houd de badge tegen het toestel…",
+			"badgeWritten": "Badge geschreven."
 		}
 	},
 	"ageWarning": {
@@ -3288,7 +3295,8 @@
 			"signIn": "Inloggen",
 			"switchOperator": "Andere medewerker",
 			"xTitle": "X-rapport",
-			"noSession": "Er is geen kassasessie geopend."
+			"noSession": "Er is geen kassasessie geopend.",
+			"badges": "Badges"
 		}
 	},
 	"product": {

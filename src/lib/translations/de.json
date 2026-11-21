@@ -2229,7 +2229,7 @@
 			"suspiciousEvents": {
 				"labelColorCss": "CSS-Deklaration in einer Label-Farbe"
 			},
-			"pairingQr": "Scannen Sie diesen QR-Code mit der App be-BOP-pos, um das Gerät mit diesem Schlüssel zu koppeln."
+			"pairingQr": "Scannen Sie diesen QR-Code mit der App be-BOP-pos, um das Gerät mit diesem Schlüssel zu koppeln. Für Kartenzahlungen mit Tap to Pay braucht der Schlüssel zusätzlich die Berechtigung pos:write."
 		},
 		"terminalPayments": {
 			"title": "Terminal-Zahlungen",
@@ -2248,7 +2248,11 @@
 			"overpaidRefund": "erstattet",
 			"noRef": "ohne Kassenreferenz",
 			"refChange": "{from} → {to}, am {date}, von {by}",
-			"empty": "Noch keine Terminal-Zahlung."
+			"empty": "Noch keine Terminal-Zahlung.",
+			"exportFrom": "Von",
+			"exportTo": "Bis",
+			"exportFormat": "Format",
+			"export": "Für den Abgleich exportieren"
 		},
 		"stripeTerminal": {
 			"title": "Stripe Terminal",
@@ -2291,7 +2295,10 @@
 				"xReport": "X-Bericht",
 				"zReport": "Z-Bericht",
 				"unlock": "Gesperrten Modus verlassen"
-			}
+			},
+			"writeBadge": "Auf den Badge schreiben",
+			"badgePresent": "Halten Sie den Badge an das Gerät…",
+			"badgeWritten": "Badge geschrieben."
 		}
 	},
 	"ageWarning": {
@@ -3288,7 +3295,8 @@
 			"signIn": "Anmelden",
 			"switchOperator": "Bediener wechseln",
 			"xTitle": "X-Bericht",
-			"noSession": "Keine Kassensitzung ist geöffnet."
+			"noSession": "Keine Kassensitzung ist geöffnet.",
+			"badges": "Badges"
 		}
 	},
 	"product": {

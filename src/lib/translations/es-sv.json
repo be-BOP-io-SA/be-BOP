@@ -2229,7 +2229,7 @@
 			"suspiciousEvents": {
 				"labelColorCss": "Declaración CSS en un color de label"
 			},
-			"pairingQr": "Escanee este código QR con la app be-BOP-pos para vincular el dispositivo con esta clave."
+			"pairingQr": "Escanee este código QR con la app be-BOP-pos para vincular el dispositivo con esta clave. Para cobrar con tarjeta con Tap to Pay, la clave también necesita el permiso pos:write."
 		},
 		"terminalPayments": {
 			"title": "Pagos del terminal",
@@ -2248,7 +2248,11 @@
 			"overpaidRefund": "reembolsado",
 			"noRef": "sin referencia de caja",
 			"refChange": "{from} → {to}, el {date}, por {by}",
-			"empty": "Todavía no hay ningún pago del terminal."
+			"empty": "Todavía no hay ningún pago del terminal.",
+			"exportFrom": "Desde",
+			"exportTo": "Hasta",
+			"exportFormat": "Formato",
+			"export": "Exportar para la conciliación"
 		},
 		"stripeTerminal": {
 			"title": "Stripe Terminal",
@@ -2291,7 +2295,10 @@
 				"xReport": "Informe X",
 				"zReport": "Informe Z",
 				"unlock": "Salir del modo bloqueado"
-			}
+			},
+			"writeBadge": "Escribirlo en la credencial",
+			"badgePresent": "Acerque la credencial al dispositivo…",
+			"badgeWritten": "Credencial escrita."
 		}
 	},
 	"ageWarning": {
@@ -3288,7 +3295,8 @@
 			"signIn": "Entrar",
 			"switchOperator": "Cambiar de operador",
 			"xTitle": "Informe X",
-			"noSession": "No hay ninguna sesión de caja abierta."
+			"noSession": "No hay ninguna sesión de caja abierta.",
+			"badges": "Credenciales"
 		}
 	},
 	"product": {
