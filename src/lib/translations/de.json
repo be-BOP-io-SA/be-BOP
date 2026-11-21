@@ -384,7 +384,9 @@
 			"removeBookmark": "Lesezeichen entfernen",
 			"addBookmark": "Lesezeichen hinzufügen",
 			"posSession": "Kassensitzung",
-			"toggleMenu": "Admin-Menü umschalten"
+			"toggleMenu": "Admin-Menü umschalten",
+			"fullMode": "Vollständig",
+			"posMode": "PoS"
 		},
 		"ageRetriction": {
 			"title": "Altersbeschränkung",
@@ -2221,7 +2223,8 @@
 			"suspiciousEmpty": "Kein verdächtiger Aufruf festgehalten.",
 			"suspiciousEvents": {
 				"labelColorCss": "CSS-Deklaration in einer Label-Farbe"
-			}
+			},
+			"pairingQr": "Scannen Sie diesen QR-Code mit der App be-BOP-pos, um das Gerät mit diesem Schlüssel zu koppeln."
 		}
 	},
 	"ageWarning": {
@@ -3152,6 +3155,12 @@
 			"print": "Drucken",
 			"copy": "Kopieren",
 			"copied": "Kopiert"
+		},
+		"terminal": {
+			"amount": "Betrag",
+			"erase": "Löschen",
+			"next": "Weiter",
+			"notPaired": "Dieses Gerät ist nicht mit dem Shop gekoppelt oder wurde widerrufen."
 		}
 	},
 	"product": {

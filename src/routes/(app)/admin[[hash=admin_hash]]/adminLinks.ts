@@ -117,6 +117,12 @@ export const adminLinks: AdminLinks = [
 				label: 'POS'
 			},
 			{
+				// Where the switch between the full and the PoS back office is saved.
+				href: '/admin/back-office-mode',
+				label: 'Back office mode',
+				hidden: true
+			},
+			{
 				href: '/admin/age-retriction',
 				label: 'Age restriction'
 			},
@@ -241,3 +247,48 @@ export const adminLinks: AdminLinks = [
 		]
 	}
 ];
+
+/**
+ * The menu of the PoS back office, for a shop that only takes payments on its terminals. Every
+ * entry is one of the full menu, so the role permissions read from it cover this menu too.
+ */
+const POS_MENU: Array<{ section: string; hrefs: string[] }> = [
+	{
+		section: 'Settings',
+		hrefs: [
+			'/admin/config',
+			'/admin/arm',
+			'/admin/identity',
+			'/admin/physical-shop',
+			'/admin/template',
+			'/admin/pos',
+			// The keys a be-BOP-pos terminal pairs with.
+			'/admin/api-keys',
+			'/admin/back-office-mode'
+		]
+	},
+	{
+		section: 'Payment Settings',
+		hrefs: [
+			'/admin/phoenixd',
+			'/admin/swiss-bitcoin-pay',
+			'/admin/btcpay-server',
+			'/admin/blink',
+			'/admin/bitcoin-nodeless',
+			'/admin/stripe',
+			'/admin/taler',
+			'/admin/paypal'
+		]
+	},
+	{ section: 'Transaction', hrefs: ['/admin/reporting', '/admin/sales-logs'] },
+	{ section: 'Node Management', hrefs: ['/admin/smtp', '/admin/email', '/admin/nostr'] }
+];
+
+export const posAdminLinks: AdminLinks = POS_MENU.map(({ section, hrefs }) => {
+	const fullSection = adminLinks.find((s) => s.section === section);
+	return {
+		section,
+		icon: fullSection?.icon ?? IconSetting,
+		links: hrefs.flatMap((href) => fullSection?.links.filter((link) => link.href === href) ?? [])
+	};
+});
