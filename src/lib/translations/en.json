@@ -3260,7 +3260,6 @@
 			"totalLine": "Total: {amount}",
 			"noMethod": "No payment method is set up for terminals.",
 			"back": "Back",
-			"copied": "Copied",
 			"waiting": "Waiting for the payment…",
 			"paid": "Payment received",
 			"overpaid": "Overpaid:",

@@ -22,16 +22,6 @@
 	});
 	onDestroy(() => clearInterval(timer));
 
-	let copied = false;
-	async function copy(value: string) {
-		await navigator.clipboard.writeText(value);
-		copied = true;
-		setTimeout(() => (copied = false), 2000);
-	}
-
-	// The value to copy, without the scheme a wallet link adds in front of it.
-	$: copyValue = (data.address ?? '').replace(/^(bitcoin|lightning|zcash):/i, '');
-
 	// The be-BOP-pos app exposes its native modules to the page; a browser has none.
 	type CardBridge = {
 		collectCardPayment(clientSecret: string): Promise<unknown>;
@@ -130,18 +120,8 @@
 			</form>
 		{/if}
 	{:else if data.status === 'pending'}
-		<a href={data.address} class="w-72 h-72 bg-white block">
-			<img src="{$page.url.pathname}/qrcode" alt="QR code" class="w-full h-full" />
-		</a>
-		{#if copyValue}
-			<button
-				type="button"
-				class="btn btn-gray max-w-sm break-all text-xs"
-				on:click={() => copy(copyValue)}
-			>
-				{copied ? t('pos.terminal.copied') : copyValue}
-			</button>
-		{/if}
+		<!-- Shown for the customer's wallet to scan: the device itself never pays. -->
+		<img src="{$page.url.pathname}/qrcode" alt="QR code" class="w-72 h-72 bg-white" />
 		{#if data.awaitingConfirmation}
 			<p class="text-green-600">
 				{t('order.awaitingConfirmationBitcoin', { count: data.confirmationBlocks })}

@@ -3260,7 +3260,6 @@
 			"totalLine": "Summe: {amount}",
 			"noMethod": "Für Terminals ist keine Zahlungsart eingerichtet.",
 			"back": "Zurück",
-			"copied": "Kopiert",
 			"waiting": "Warten auf die Zahlung…",
 			"paid": "Zahlung erhalten",
 			"overpaid": "Überzahlung:",

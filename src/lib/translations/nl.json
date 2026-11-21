@@ -3260,7 +3260,6 @@
 			"totalLine": "Totaal: {amount}",
 			"noMethod": "Er is geen betaalmethode ingesteld voor terminals.",
 			"back": "Terug",
-			"copied": "Gekopieerd",
 			"waiting": "Wachten op de betaling…",
 			"paid": "Betaling ontvangen",
 			"overpaid": "Te veel betaald:",
