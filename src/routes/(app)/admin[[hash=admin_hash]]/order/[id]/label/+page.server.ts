@@ -47,7 +47,7 @@ export const actions = {
 			{
 				$set: {
 					...(result.orderLabelIds !== undefined && { orderLabelIds: result.orderLabelIds }),
-					updatedAt: new Date()
+					annotatedAt: new Date()
 				},
 				$unset: {
 					...(result.orderLabelIds === undefined && { orderLabelIds: '' })

@@ -23,6 +23,7 @@ import {
 	subSeconds
 } from 'date-fns';
 import { runtimeConfig } from './runtime-config';
+import { eraseOrderPersonalDataFromApiV1Logs } from './api/v1/log';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import {
 	buildPricingScheduleSnapshot,
@@ -375,7 +376,12 @@ export async function onOrderPaymentFailed(
 	order: Order,
 	payment: Order['payments'][0],
 	reason: Extract<OrderPaymentStatus, 'canceled' | 'expired' | 'failed'>,
-	opts?: { preserveOrderStatus?: boolean; session?: ClientSession }
+	/**
+	 * `terminal` says this failure closes the matter. A card payment that fails in the shop does
+	 * not: the customer retries on the same order, so the order stays pending. A till reporting an
+	 * outcome after the fact is the other case — nothing more will happen on that order.
+	 */
+	opts?: { preserveOrderStatus?: boolean; terminal?: boolean; session?: ClientSession }
 ): Promise<Order> {
 	if (!order.payments.includes(payment)) {
 		throw new Error('Sync broken between order and payment');
@@ -392,8 +398,12 @@ export async function onOrderPaymentFailed(
 		{
 			$set: {
 				'payments.$.status': reason,
+				updatedAt: new Date(),
 				...(order.payments.every(
-					(payment) => payment.status === 'canceled' || payment.status === 'expired'
+					(payment) =>
+						payment.status === 'canceled' ||
+						payment.status === 'expired' ||
+						(opts?.terminal && payment.status === 'failed')
 				) &&
 					order.status === 'pending' &&
 					!opts?.preserveOrderStatus && {
@@ -509,7 +519,7 @@ export async function anonymizeOrderData(orderId: string): Promise<boolean> {
 
 	const $set: Record<string, unknown> = {
 		dataAnonymized: true,
-		updatedAt: new Date()
+		annotatedAt: new Date()
 	};
 	if (order.shippingAddress) {
 		$set.shippingAddress = {
@@ -564,7 +574,18 @@ export async function anonymizeOrderData(orderId: string): Promise<boolean> {
 			}
 		}
 	);
-	return result.modifiedCount > 0;
+	if (!result.modifiedCount) {
+		return false;
+	}
+
+	// The API call journal keeps copies of what the API sent and answered about this order.
+	const personalSlugs = (order.customCheckoutFields ?? [])
+		.filter((field) => field.isPersonalData)
+		.map((field) => field.slug);
+	await eraseOrderPersonalDataFromApiV1Logs(orderId, personalSlugs).catch((err) =>
+		console.error(`[api/v1] could not erase order ${orderId} from the call log`, err)
+	);
+	return true;
 }
 
 export async function lastInvoiceNumber(): Promise<number | undefined> {
@@ -698,11 +719,26 @@ export async function createOrder(
 		onLocation?: boolean;
 		paymentTimeOut?: number;
 		posSubtype?: string;
+		/** Optional Face A / PoS stable payment id persisted on the first payment row. */
+		externalPaymentId?: string;
 		customPaymentMethodId?: string;
 		peopleCountFromPosUi?: number;
 		session?: ClientSession;
 		promoCode?: string;
 		channel?: import('$lib/types/Discount').DiscountChannel;
+		/**
+		 * When true, skip shop auto percentage discounts (Face A / external PoS already priced lines).
+		 * Manual `params.discount` (POS employee discount) is unaffected.
+		 */
+		skipAutoDiscounts?: boolean;
+		/** Reference the public API caller gave for this order, kept on it as sent. */
+		externalOrderId?: string;
+		externalSourceApiKeyId?: ObjectId;
+		orderLabelIds?: string[];
+		/** Notify nobody about this order's payments, neither the customer nor the shop. */
+		skipNotifications?: boolean;
+		/** When provided, used as Order.createdAt at insert instead of new Date(). */
+		createdAt?: Date;
 	}
 ): Promise<Order['_id']> {
 	// Every channel creates orders through here, so none can forget a product's restriction.
@@ -819,9 +855,10 @@ export async function createOrder(
 	};
 
 	if (!isDigital) {
-		if (!params.shippingAddress) {
+		// onLocation (Face A PoS / pickup): do not require shippingAddress even for shippable SKUs.
+		if (!params.shippingAddress && !params.onLocation) {
 			throw error(400, 'Shipping address is required');
-		} else {
+		} else if (params.shippingAddress) {
 			const { country } = params.shippingAddress;
 			if (!params.reasonOfferDeliveryFees) {
 				shippingPrice.amount = computeDeliveryFees(
@@ -855,34 +892,40 @@ export async function createOrder(
 			paidUntil: { $gt: new Date() }
 		})
 		.toArray();
-	// Pick the best applicable auto discount based on the order's conditions
-	const activeDiscounts = await getActivePercentageDiscounts();
-	const bestAutoDiscount = selectBestDiscount(activeDiscounts, items, {
-		userSubscriptionIds: paidSubs.map((s) => s.productId),
-		promoCode: params.promoCode,
-		channel: params.channel,
-		paymentMethod: paymentMethod ?? undefined,
-		deliveryCountry: params.userVatCountry,
-		billingCountry: params.billingAddress?.country,
-		userContactAddresses: collectUserAddresses(params.user),
-		cartItems: items.map((i) => ({
-			productId: i.product._id,
-			quantity: i.quantity,
-			tagIds: i.product.tagIds
-		})),
-		isLoggedIn: isAuthenticated(params.user)
-	});
+	// Pick the best applicable auto discount based on the order's conditions.
+	// Face A / external API passes skipAutoDiscounts so PoS-priced totals are not rewritten.
+	let usedSubIds: string[] = [];
+	// Read again when the order is written, to record which auto discount it got.
+	let bestAutoDiscount: ReturnType<typeof selectBestDiscount> | undefined;
+	if (!params.skipAutoDiscounts) {
+		const activeDiscounts = await getActivePercentageDiscounts();
+		bestAutoDiscount = selectBestDiscount(activeDiscounts, items, {
+			userSubscriptionIds: paidSubs.map((s) => s.productId),
+			promoCode: params.promoCode,
+			channel: params.channel,
+			paymentMethod: paymentMethod ?? undefined,
+			deliveryCountry: params.userVatCountry,
+			billingCountry: params.billingAddress?.country,
+			userContactAddresses: collectUserAddresses(params.user),
+			cartItems: items.map((i) => ({
+				productId: i.product._id,
+				quantity: i.quantity,
+				tagIds: i.product.tagIds
+			})),
+			isLoggedIn: isAuthenticated(params.user)
+		});
 
-	const bestDiscountSubIds = bestAutoDiscount?.discount.subscriptionIds;
-	const usedSubIds = bestDiscountSubIds?.length
-		? paidSubs
-				.filter((sub) => bestDiscountSubIds.includes(sub.productId))
-				.map((sub) => sub.productId)
-		: [];
+		const bestDiscountSubIds = bestAutoDiscount?.discount.subscriptionIds;
+		usedSubIds = bestDiscountSubIds?.length
+			? paidSubs
+					.filter((sub) => bestDiscountSubIds.includes(sub.productId))
+					.map((sub) => sub.productId)
+			: [];
 
-	for (const item of items) {
-		// POS per-item manual discount has highest priority — preserve it via ??=
-		item.discountPercentage ??= bestAutoDiscount?.discountByProduct.get(item.product._id);
+		for (const item of items) {
+			// POS per-item manual discount has highest priority — preserve it via ??=
+			item.discountPercentage ??= bestAutoDiscount?.discountByProduct.get(item.product._id);
+		}
 	}
 
 	// Subscription pricing schedule: override the billed amount with the current phase price
@@ -1062,7 +1105,12 @@ export async function createOrder(
 	}
 	const billingAddress = params.billingAddress || params.shippingAddress;
 
-	if (runtimeConfig.isBillingAddressMandatory && !params.billingAddress) {
+	// A counter sale has no address form and no address to collect: the buyer is at the till, and the
+	// shop's own country is the one that applies. `/pos/touch` and `/api/v1` both create their orders
+	// without a billing address, so the mandatory-billing rule cannot reach them. `nostr-bot` is the
+	// third channel without a form, and refuses the whole checkout upfront instead.
+	const collectsBillingAddress = params.channel !== 'pos-touch' && params.channel !== 'api';
+	if (runtimeConfig.isBillingAddressMandatory && !params.billingAddress && collectsBillingAddress) {
 		throw error(400, 'Missing billing address for deliveryless order');
 	}
 
@@ -1081,7 +1129,11 @@ export async function createOrder(
 			throw error(400, 'error matching on variations choice');
 		}
 		if (!item.product.payWhatYouWant) {
-			item.customPrice = {
+			// Only when the caller priced nothing. A line that already carries a price was priced by
+			// whoever knows what was charged — the cart when the line was added, the till when it was
+			// rung up. This runs after the order total is computed, so overwriting it cannot correct
+			// the total: it only leaves the line contradicting the order it belongs to.
+			item.customPrice ??= {
 				amount: productPriceWithVariations(item.product, item.chosenVariations),
 				currency: item.product.price.currency
 			};
@@ -1446,7 +1498,7 @@ export async function createOrder(
 			locale: params.locale,
 			number: orderNumber,
 			bebopVersion: PUBLIC_VERSION,
-			createdAt: new Date(),
+			createdAt: params.createdAt ?? new Date(),
 			updatedAt: new Date(),
 			status: 'pending',
 			sellerIdentity: runtimeConfig.sellerIdentity,
@@ -1784,7 +1836,13 @@ export async function createOrder(
 			}),
 			...(params.peopleCountFromPosUi !== undefined && {
 				peopleCountFromPosUi: params.peopleCountFromPosUi
-			})
+			}),
+			...(params.externalOrderId && { externalOrderId: params.externalOrderId }),
+			...(params.externalSourceApiKeyId && {
+				externalSourceApiKeyId: params.externalSourceApiKeyId
+			}),
+			...(params.orderLabelIds?.length && { orderLabelIds: params.orderLabelIds }),
+			...(params.skipNotifications && { skipNotifications: true })
 		};
 		await collections.orders.insertOne(order, { session });
 
@@ -1803,6 +1861,7 @@ export async function createOrder(
 					expiresAt,
 					...(paymentMethod === 'point-of-sale' &&
 						params.posSubtype && { posSubtype: params.posSubtype }),
+					...(params.externalPaymentId && { externalPaymentId: params.externalPaymentId }),
 					...(paymentMethod === 'custom' &&
 						params.customPaymentMethodId && {
 							customPaymentMethodId: params.customPaymentMethodId
@@ -1994,6 +2053,7 @@ export async function addOrderPayment(
 		expiresAt?: Date | null;
 		session?: ClientSession;
 		posSubtype?: string;
+		externalPaymentId?: string;
 		customPaymentMethodId?: string;
 		ignorePendingPayments?: boolean;
 	}
@@ -2064,6 +2124,7 @@ export async function addOrderPayment(
 		method: paymentMethod,
 		price: toPay,
 		...(paymentMethod === 'point-of-sale' && opts?.posSubtype && { posSubtype: opts.posSubtype }),
+		...(opts?.externalPaymentId && { externalPaymentId: opts.externalPaymentId }),
 		...(customPaymentMethod && { customPaymentMethod }),
 		currencySnapshot: paymentPriceSnapshot(bookCurrencies, priceToPay),
 		...(expiresAt && { expiresAt }),
@@ -2083,7 +2144,8 @@ export async function addOrderPayment(
 		{
 			$push: {
 				payments: payment
-			}
+			},
+			$set: { updatedAt: new Date() }
 		},
 		{ session: opts?.session }
 	);

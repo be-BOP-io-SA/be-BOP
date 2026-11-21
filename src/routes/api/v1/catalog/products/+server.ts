@@ -1,0 +1,63 @@
+import type { RequestHandler } from '@sveltejs/kit';
+import { apiV1Handler, apiV1OptionsHandler } from '$lib/server/api/v1/handler';
+import { requireApiKey } from '$lib/server/api/v1/auth';
+import { apiError } from '$lib/server/api/v1/errors';
+import { jsonWithETag } from '$lib/server/api/v1/validators';
+import { listCatalogProducts } from '$lib/server/api/v1/catalog/listProducts';
+import { CATALOG_LISTING_QUERY } from '$lib/server/api/v1/catalog/listingQuery';
+import { parseApiQuery } from '$lib/server/api/v1/query';
+import { parsePictureOptions } from '$lib/server/api/v1/catalog/pictureOptions';
+import { checkRateLimit } from '$lib/server/rateLimit';
+import { runtimeConfig } from '$lib/server/runtime-config';
+import type { LanguageKey } from '$lib/translations';
+
+export const OPTIONS: RequestHandler = apiV1OptionsHandler;
+
+export const GET: RequestHandler = apiV1Handler(async (event) => {
+	const apiKeyOrError = await requireApiKey(event, 'catalog:read');
+	if (apiKeyOrError instanceof Response) {
+		return apiKeyOrError;
+	}
+	const apiKey = apiKeyOrError;
+
+	const limit = checkRateLimit(apiKey._id.toString(), 'api.v1.catalog.read', 120, { minutes: 1 });
+	if (limit.limited) {
+		return apiError(429, 'RATE_LIMITED', 'Too many requests for this API key', undefined, {
+			'Retry-After': String(limit.retryAfterSeconds)
+		});
+	}
+
+	const url = event.url;
+	const picture = parsePictureOptions(
+		url.searchParams.get('picture') ?? undefined,
+		url.searchParams.get('sizes') ?? undefined
+	);
+	if ('error' in picture) {
+		return apiError(400, 'VALIDATION_ERROR', picture.error.message, {
+			field: picture.error.field
+		});
+	}
+
+	const query = parseApiQuery(url, CATALOG_LISTING_QUERY);
+	if ('error' in query) {
+		return query.error;
+	}
+
+	const result = await listCatalogProducts(
+		{
+			...query.data,
+			picture: picture.options
+		},
+		runtimeConfig.defaultLanguage as LanguageKey
+	);
+
+	return jsonWithETag(
+		{
+			ok: true,
+			language: result.language,
+			products: result.products,
+			page: result.page
+		},
+		event.request
+	);
+});
