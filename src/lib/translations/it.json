@@ -3301,7 +3301,8 @@
 			"scan": "Scansiona",
 			"receiptSent": "Ricevuta inviata.",
 			"nfcDisabled": "Attiva l'NFC nelle impostazioni del dispositivo per incassare la carta.",
-			"nfcUnavailable": "Questo dispositivo non ha l'NFC: non può incassare carte."
+			"nfcUnavailable": "Questo dispositivo non ha l'NFC: non può incassare carte.",
+			"methodCardStripe": "Carta Stripe"
 		}
 	},
 	"product": {

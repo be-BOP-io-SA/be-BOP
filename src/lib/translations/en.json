@@ -3301,7 +3301,8 @@
 			"scan": "Scan",
 			"receiptSent": "Receipt sent.",
 			"nfcDisabled": "Switch NFC on in the device settings to take the card.",
-			"nfcUnavailable": "This device has no NFC: it cannot take cards."
+			"nfcUnavailable": "This device has no NFC: it cannot take cards.",
+			"methodCardStripe": "Stripe card"
 		}
 	},
 	"product": {

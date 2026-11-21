@@ -292,7 +292,9 @@
 							value={method}
 							class="btn body-mainCTA text-xl py-4"
 						>
-							{t(`checkout.paymentMethod.${method}`)}
+							{method === 'card'
+								? t('pos.terminal.methodCardStripe')
+								: t(`checkout.paymentMethod.${method}`)}
 						</button>
 					{/each}
 				</form>

@@ -3301,7 +3301,8 @@
 			"scan": "Scannen",
 			"receiptSent": "Beleg gesendet.",
 			"nfcDisabled": "Schalten Sie NFC in den Geräteeinstellungen ein, um die Karte zu kassieren.",
-			"nfcUnavailable": "Dieses Gerät hat kein NFC: Es kann keine Karten kassieren."
+			"nfcUnavailable": "Dieses Gerät hat kein NFC: Es kann keine Karten kassieren.",
+			"methodCardStripe": "Stripe-Karte"
 		}
 	},
 	"product": {
