@@ -10,6 +10,14 @@ import type { PosPayment } from '$lib/types/PosPayment';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { createCardPresentIntent, isStripeTerminalReady } from './stripe-terminal';
+import { logAccountingEvent } from './accounting-log';
+import type { AccountingLog } from '$lib/types/AccountingLog';
+
+/** The operator of a payment, as the accounting journal names its employee. */
+const employeeOf = (posPayment: Pick<PosPayment, 'operator'>): Pick<AccountingLog, 'employee'> =>
+	posPayment.operator
+		? { employee: { userId: posPayment.operator.userId, alias: posPayment.operator.alias } }
+		: {};
 
 /**
  * The methods a terminal offers, in this order, when a processor serves them with a QR code. Card
@@ -141,6 +149,25 @@ export async function createPosPayment(params: {
 		updatedAt: now
 	};
 	await collections.posPayments.insertOne(posPayment);
+	await logAccountingEvent({
+		eventType: 'paymentCall',
+		before: null,
+		after: {
+			number,
+			method: params.method,
+			processor: pp.meta.processor,
+			paymentId: paymentId.toString(),
+			amount: posPayment.amount,
+			tip: posPayment.tip,
+			price,
+			externalRef: posPayment.externalRef ?? null,
+			device: params.device.name
+		},
+		objectId: _id.toString(),
+		objectType: 'posPayment',
+		origin: 'pos',
+		...employeeOf(posPayment)
+	});
 	return posPayment;
 }
 
@@ -205,10 +232,31 @@ export async function checkPosPayment(posPayment: PosPayment): Promise<PosPaymen
 				}),
 				updatedAt: now
 			};
-			await collections.posPayments.updateOne(
+			const settled = await collections.posPayments.updateOne(
 				{ _id: posPayment._id, 'payment.status': 'pending' },
 				{ $set: update }
 			);
+			if (settled.modifiedCount) {
+				await logAccountingEvent({
+					eventType: 'paymentDone',
+					before: { status: 'pending' },
+					after: {
+						status: 'paid',
+						number: posPayment.number,
+						method: payment.method,
+						paymentId: payment._id.toString(),
+						amount: posPayment.amount,
+						tip: posPayment.tip,
+						received: result.received,
+						...(update.overpayment && { overpayment: update.overpayment.amount }),
+						transactionId: result.transactions?.[0]?.id ?? payment.invoiceId ?? null
+					},
+					objectId: posPayment._id.toString(),
+					objectType: 'posPayment',
+					origin: 'pos',
+					...employeeOf(posPayment)
+				});
+			}
 			return { ...posPayment, ...update };
 		}
 		case 'expired':
@@ -261,7 +309,7 @@ export async function settleOverpayment(
 		return;
 	}
 	const now = new Date();
-	await collections.posPayments.updateOne(
+	const settled = await collections.posPayments.updateOne(
 		{ _id: posPayment._id, 'overpayment.treatment': { $exists: false } },
 		{
 			$set: {
@@ -277,18 +325,58 @@ export async function settleOverpayment(
 			}
 		}
 	);
+	if (settled.modifiedCount) {
+		await logAccountingEvent({
+			eventType: 'posPaymentUpdate',
+			before: { tip: posPayment.tip },
+			after: {
+				tip:
+					treatment === 'tip'
+						? {
+								amount: posPayment.tip.amount + posPayment.overpayment.amount.amount,
+								currency: posPayment.tip.currency
+						  }
+						: posPayment.tip,
+				overpayment: posPayment.overpayment.amount,
+				treatment
+			},
+			objectId: posPayment._id.toString(),
+			objectType: 'posPayment',
+			origin: 'pos',
+			...employeeOf(posPayment)
+		});
+	}
 }
 
 /** The operator gives up on a payment still waiting: the terminal can take a new one. */
-export async function cancelPosPayment(posPayment: PosPayment): Promise<void> {
-	await collections.posPayments.updateOne(
+export async function cancelPosPayment(
+	posPayment: PosPayment,
+	by?: PosPayment['operator']
+): Promise<void> {
+	const canceled = await collections.posPayments.updateOne(
 		{ _id: posPayment._id, 'payment.status': 'pending' },
 		{ $set: { 'payment.status': 'canceled', updatedAt: new Date() } }
 	);
+	if (canceled.modifiedCount) {
+		await logAccountingEvent({
+			eventType: 'paymentCancel',
+			before: { status: 'pending' },
+			after: { status: 'canceled', number: posPayment.number },
+			objectId: posPayment._id.toString(),
+			objectType: 'posPayment',
+			origin: 'pos',
+			...employeeOf({ operator: by ?? posPayment.operator })
+		});
+	}
 }
 
 /** Attaches, or corrects, the till's reference after the payment, keeping the previous one. */
-export async function setExternalRef(id: ObjectId, ref: string, by?: string): Promise<void> {
+export async function setExternalRef(
+	id: ObjectId,
+	ref: string,
+	by?: string,
+	employee?: AccountingLog['employee']
+): Promise<void> {
 	const posPayment = await collections.posPayments.findOne({ _id: id });
 	const to = ref.trim();
 	if (!posPayment || !to || posPayment.externalRef === to) {
@@ -305,4 +393,13 @@ export async function setExternalRef(id: ObjectId, ref: string, by?: string): Pr
 			}
 		}
 	);
+	await logAccountingEvent({
+		eventType: 'posPaymentUpdate',
+		before: { externalRef: posPayment.externalRef ?? null },
+		after: { externalRef: to },
+		objectId: id.toString(),
+		objectType: 'posPayment',
+		origin: 'pos',
+		...(employee && { employee })
+	});
 }

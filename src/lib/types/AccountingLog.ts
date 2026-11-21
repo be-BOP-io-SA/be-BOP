@@ -10,6 +10,9 @@ export const ACCOUNTING_EVENT_TYPES = [
 	'paymentCall',
 	'paymentDone',
 	'paymentReplace',
+	'paymentCancel',
+	// A payment taken on a terminal changed after the fact: its till reference, or its tip.
+	'posPaymentUpdate',
 	'orderPaid',
 	'stockUpdate',
 	'stockDeduction',
@@ -34,7 +37,12 @@ export interface AccountingLog {
 	before: AccountingLogValue;
 	after: AccountingLogValue;
 	objectId: string;
-	objectType: 'product' | 'vatProfile' | 'order' | 'setting' | 'discount';
+	objectType: 'product' | 'vatProfile' | 'order' | 'setting' | 'discount' | 'posPayment';
+	/**
+	 * Where the transaction comes from: `pos` for a payment taken on a paired terminal (PoS mode).
+	 * Absent on every other entry, the orders of the shop included.
+	 */
+	origin?: 'pos';
 	createdAt: Date;
 	employee?: {
 		userId: ObjectId;

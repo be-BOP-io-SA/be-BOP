@@ -1402,7 +1402,10 @@
 			"columnBefore": "Before",
 			"columnAfter": "After",
 			"columnEmployee": "Employee",
-			"noEntries": "No entries found for the selected period."
+			"noEntries": "No entries found for the selected period.",
+			"columnOrigin": "Origin",
+			"originPos": "PoS mode",
+			"originShop": "Not PoS mode"
 		},
 		"seo": {
 			"title": "SEO Config",

@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import { collections } from '$lib/server/database';
 import { setExternalRef } from '$lib/server/pos-payments';
+import { employeeFromLocals } from '$lib/server/accounting-log';
 
 /** The payments taken on terminals, newest first. */
 export async function load({ url }) {
@@ -41,6 +42,11 @@ export const actions = {
 		if (!parsed.success || !ObjectId.isValid(parsed.data.id)) {
 			throw error(400, 'Invalid reference');
 		}
-		await setExternalRef(new ObjectId(parsed.data.id), parsed.data.ref, locals.user?.login);
+		await setExternalRef(
+			new ObjectId(parsed.data.id),
+			parsed.data.ref,
+			locals.user?.login,
+			employeeFromLocals(locals).employee
+		);
 	}
 };

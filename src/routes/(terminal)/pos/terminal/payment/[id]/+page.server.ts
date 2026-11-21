@@ -24,9 +24,14 @@ async function ownPayment(event: RequestEvent<{ id: string }>) {
 	return { posPayment, apiKey };
 }
 
+/** The operator signed in on this terminal, if any. */
+function operatorOn(event: RequestEvent<{ id: string }>, apiKeyId: ObjectId) {
+	return operatorOfSession(event.cookies.get(POS_OPERATOR_COOKIE), apiKeyId);
+}
+
 /** What the operator signed in on this terminal may do, or nothing. */
 async function operatorActions(event: RequestEvent<{ id: string }>, apiKeyId: ObjectId) {
-	return (await operatorOfSession(event.cookies.get(POS_OPERATOR_COOKIE), apiKeyId))?.actions ?? [];
+	return (await operatorOn(event, apiKeyId))?.actions ?? [];
 }
 
 export async function load(event) {
@@ -59,10 +64,11 @@ export async function load(event) {
 export const actions = {
 	async cancel(event) {
 		const { posPayment, apiKey } = await ownPayment(event);
-		if (!(await operatorActions(event, apiKey._id)).includes('cancel')) {
+		const operator = await operatorOn(event, apiKey._id);
+		if (!operator?.actions.includes('cancel')) {
 			return fail(403, {});
 		}
-		await cancelPosPayment(posPayment);
+		await cancelPosPayment(posPayment, { userId: operator._id, alias: operator.alias });
 	},
 	async overpayment(event) {
 		const { posPayment, apiKey } = await ownPayment(event);

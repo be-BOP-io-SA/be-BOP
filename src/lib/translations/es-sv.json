@@ -1402,7 +1402,10 @@
 			"columnBefore": "Antes",
 			"columnAfter": "Después",
 			"columnEmployee": "Empleado",
-			"noEntries": "No se encontraron entradas para el período seleccionado."
+			"noEntries": "No se encontraron entradas para el período seleccionado.",
+			"columnOrigin": "Origen",
+			"originPos": "Modo PoS",
+			"originShop": "Fuera del modo PoS"
 		},
 		"seo": {
 			"title": "Configuración de SEO",

@@ -71,7 +71,8 @@ export async function logProductCreationEvents(
 }
 
 export function accountingLogsToCSV(logs: AccountingLog[]): string {
-	const header = 'id,eventType,objectId,objectType,before,after,employeeId,employeeAlias,createdAt';
+	const header =
+		'id,eventType,objectId,objectType,before,after,employeeId,employeeAlias,createdAt,origin';
 	const rows = logs.map((log) =>
 		[
 			log._id.toString(),
@@ -82,7 +83,8 @@ export function accountingLogsToCSV(logs: AccountingLog[]): string {
 			csvCell(JSON.stringify(log.after ?? null)),
 			log.employee?.userId?.toString() ?? '',
 			csvCell(log.employee?.alias ?? ''),
-			log.createdAt.toISOString()
+			log.createdAt.toISOString(),
+			log.origin ?? 'shop'
 		].join(',')
 	);
 	return [header, ...rows].join('\n');

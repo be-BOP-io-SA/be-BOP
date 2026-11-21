@@ -1402,7 +1402,10 @@
 			"columnBefore": "Voor",
 			"columnAfter": "Na",
 			"columnEmployee": "Medewerker",
-			"noEntries": "Geen items gevonden voor de geselecteerde periode."
+			"noEntries": "Geen items gevonden voor de geselecteerde periode.",
+			"columnOrigin": "Herkomst",
+			"originPos": "PoS-modus",
+			"originShop": "Buiten PoS-modus"
 		},
 		"seo": {
 			"title": "SEO-configuratie",
