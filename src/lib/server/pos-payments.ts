@@ -64,22 +64,31 @@ async function nextPosPaymentNumber(): Promise<number> {
 }
 
 /** The amount in each of the shop's currencies, at the rate of the moment. */
-function snapshotOf(price: Price): OrderPayment['currencySnapshot'] {
+function snapshotOf(price: Price, fiat: boolean): OrderPayment['currencySnapshot'] {
 	const at = (currency: Currency): Price => ({
 		amount: toCurrency(currency, price.amount, price.currency),
 		currency
 	});
+	// A fiat payment books nothing in SATs: the currencies the shop keeps in SATs hold the amount
+	// of the payment itself, or are left out when the snapshot does not need them.
+	const inSats = (currency: Currency) => fiat && (currency === 'SAT' || currency === 'BTC');
+	const { secondaryCurrency, accountingCurrency } = runtimeConfig;
 	return {
-		main: { price: at(runtimeConfig.mainCurrency) },
-		priceReference: { price: at(runtimeConfig.priceReferenceCurrency) },
-		...(runtimeConfig.secondaryCurrency && {
-			secondary: { price: at(runtimeConfig.secondaryCurrency) }
-		}),
-		...(runtimeConfig.accountingCurrency && {
-			accounting: { price: at(runtimeConfig.accountingCurrency) }
-		})
+		main: { price: inSats(runtimeConfig.mainCurrency) ? price : at(runtimeConfig.mainCurrency) },
+		priceReference: {
+			price: inSats(runtimeConfig.priceReferenceCurrency)
+				? price
+				: at(runtimeConfig.priceReferenceCurrency)
+		},
+		...(secondaryCurrency &&
+			!inSats(secondaryCurrency) && { secondary: { price: at(secondaryCurrency) } }),
+		...(accountingCurrency &&
+			!inSats(accountingCurrency) && { accounting: { price: at(accountingCurrency) } })
 	};
 }
+
+/** Card and PayPal are fiat; the other methods of a terminal are Bitcoin ones, or Taler. */
+const FIAT_METHODS: readonly PaymentMethod[] = ['card', 'paypal'];
 
 export class PosPaymentError extends Error {}
 
@@ -157,7 +166,7 @@ export async function createPosPayment(params: {
 			_id: paymentId,
 			status: 'pending',
 			price,
-			currencySnapshot: snapshotOf(price),
+			currencySnapshot: snapshotOf(price, FIAT_METHODS.includes(params.method)),
 			method: params.method,
 			processor,
 			...(expiresAt && { expiresAt }),
