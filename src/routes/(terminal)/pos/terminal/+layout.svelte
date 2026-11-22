@@ -4,6 +4,7 @@
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n';
 	import theme from '$lib/stores/theme';
+	import { languageNames, type LanguageKey } from '$lib/translations';
 	import IconModeLight from '$lib/components/icons/IconModeLight.svelte';
 	import IconModeDark from '$lib/components/icons/IconModeDark.svelte';
 	import IconSystem from '$lib/components/icons/IconSystem.svelte';
@@ -23,6 +24,12 @@
 		{ value: 'dark', label: 'pos.terminal.themeDark', icon: IconModeDark },
 		{ value: 'system', label: 'pos.terminal.themeSystem', icon: IconSystem }
 	] as const;
+
+	// The languages of the shop by their own name, in alphabetical order. The one selected is the one the
+	// server chose: the language of the phone if the shop has it, else the default one of the shop.
+	$: languageOptions = (data.menu?.locales ?? [])
+		.map((code) => ({ code, name: languageNames[code as LanguageKey] ?? code }))
+		.sort((a, b) => a.name.localeCompare(b.name, $locale));
 
 	const HOME = '/pos/terminal';
 	let menuOpen = false;
@@ -126,8 +133,8 @@
 						window.location.reload();
 					}}
 				>
-					{#each data.menu.locales as code}
-						<option value={code}>{code}</option>
+					{#each languageOptions as option}
+						<option value={option.code}>{option.name}</option>
 					{/each}
 				</select>
 			</label>
