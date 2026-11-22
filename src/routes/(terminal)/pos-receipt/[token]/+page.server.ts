@@ -33,7 +33,8 @@ export async function load({ params, setHeaders }) {
 		total: { amount: total, currency: posPayment.amount.currency },
 		method: payment.method,
 		processor: payment.processor ? PROCESSORS[payment.processor]?.label ?? payment.processor : '',
-		transactionId: payment.transactions?.[0]?.id ?? payment.invoiceId,
+		// Only a real transaction: the invoice of a Lightning payment is not one.
+		transactionId: payment.transactions?.[0]?.id,
 		sats: Math.round(sats),
 		// The rate of the payment: what one bitcoin was worth in the main currency.
 		rate:
