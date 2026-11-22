@@ -3280,7 +3280,6 @@
 			"refundOverpayment": "Rückerstattung",
 			"refundToDo": "Erstatten Sie dem Kunden die Überzahlung: Sie ist bei der Zahlung vermerkt.",
 			"receiptScan": "Der Kunde kann diesen QR-Code scannen, um den Beleg zu erhalten.",
-			"newPayment": "Neue Zahlung",
 			"expired": "Die Zahlung ist abgelaufen.",
 			"failed": "Die Zahlung ist fehlgeschlagen.",
 			"errors": {

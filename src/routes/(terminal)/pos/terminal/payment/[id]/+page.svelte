@@ -296,7 +296,7 @@
 				{/if}
 			</section>
 			<a href="/pos/terminal" class="btn pos-cta w-full max-w-sm text-xl py-4">
-				{t('pos.terminal.newPayment')}
+				{t('pos.terminal.continue')}
 			</a>
 		{/if}
 	{:else}
@@ -311,7 +311,7 @@
 			{t('pos.terminal.changeMethod')}
 		</a>
 		<a href="/pos/terminal" class="btn pos-secondary w-full max-w-sm text-xl py-4">
-			{t('pos.terminal.newPayment')}
+			{t('pos.terminal.continue')}
 		</a>
 	{/if}
 </main>

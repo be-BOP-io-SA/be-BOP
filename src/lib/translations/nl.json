@@ -3280,7 +3280,6 @@
 			"refundOverpayment": "Terugbetaling",
 			"refundToDo": "Betaal het teveel terug aan de klant: het staat bij de betaling genoteerd.",
 			"receiptScan": "De klant kan deze QR-code scannen om het bonnetje te krijgen.",
-			"newPayment": "Nieuwe betaling",
 			"expired": "De betaling is verlopen.",
 			"failed": "De betaling is mislukt.",
 			"errors": {

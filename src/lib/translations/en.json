@@ -3280,7 +3280,6 @@
 			"refundOverpayment": "Refund",
 			"refundToDo": "Refund the overpayment to the customer: it is recorded on the payment.",
 			"receiptScan": "The customer can scan this QR code to get the receipt.",
-			"newPayment": "New payment",
 			"expired": "The payment expired.",
 			"failed": "The payment failed.",
 			"errors": {

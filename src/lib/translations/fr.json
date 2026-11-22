@@ -3280,7 +3280,6 @@
 			"refundOverpayment": "Remboursement",
 			"refundToDo": "Remboursez le trop-perçu au client : il est noté sur le paiement.",
 			"receiptScan": "Le client peut scanner ce QR code pour obtenir son reçu.",
-			"newPayment": "Nouveau paiement",
 			"expired": "Le paiement a expiré.",
 			"failed": "Le paiement a échoué.",
 			"errors": {

@@ -3280,7 +3280,6 @@
 			"refundOverpayment": "Rimborso",
 			"refundToDo": "Rimborsate l'eccedenza al cliente: è annotata sul pagamento.",
 			"receiptScan": "Il cliente può scansionare questo codice QR per ottenere la ricevuta.",
-			"newPayment": "Nuovo pagamento",
 			"expired": "Il pagamento è scaduto.",
 			"failed": "Il pagamento non è riuscito.",
 			"errors": {

@@ -3280,7 +3280,6 @@
 			"refundOverpayment": "Reembolso",
 			"refundToDo": "Reembolse o excesso ao cliente: fica registado no pagamento.",
 			"receiptScan": "O cliente pode ler este código QR para obter o recibo.",
-			"newPayment": "Novo pagamento",
 			"expired": "O pagamento expirou.",
 			"failed": "O pagamento falhou.",
 			"errors": {
