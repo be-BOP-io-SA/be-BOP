@@ -374,7 +374,8 @@
 				"leaderboards": "Ranglisten",
 				"searchlists": "Suchlisten",
 				"terminal-payments": "Terminal-Zahlungen",
-				"arm-pos": "ARM PoS"
+				"arm-pos": "ARM PoS",
+				"certification": "Zertifizierung"
 			},
 			"closeMenu": "Menü schließen",
 			"brandHome": "Admin",
@@ -2300,6 +2301,16 @@
 			"badgePresent": "Halten Sie den Badge an das Gerät…",
 			"badgeWritten": "Badge geschrieben.",
 			"generatePin": "Generieren"
+		},
+		"certification": {
+			"title": "Zertifizierung",
+			"version": "be-BOP-Version",
+			"shop": "Shop",
+			"address": "Adresse",
+			"download": "Zertifikat herunterladen (PDF)",
+			"certificateTitle": "be-BOP-Zertifikat",
+			"placeholder": "Vorläufiges Dokument: Der Inhalt des Zertifikats wird später festgelegt.",
+			"generatedAt": "Ausgestellt am"
 		}
 	},
 	"ageWarning": {

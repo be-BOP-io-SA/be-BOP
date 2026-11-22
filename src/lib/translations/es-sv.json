@@ -374,7 +374,8 @@
 				"leaderboards": "Clasificaciones",
 				"searchlists": "Listas de búsqueda",
 				"terminal-payments": "Pagos del terminal",
-				"arm-pos": "ARM PoS"
+				"arm-pos": "ARM PoS",
+				"certification": "Certificación"
 			},
 			"closeMenu": "Cerrar menú",
 			"brandHome": "Admin",
@@ -2300,6 +2301,16 @@
 			"badgePresent": "Acerque la credencial al dispositivo…",
 			"badgeWritten": "Credencial escrita.",
 			"generatePin": "Generar"
+		},
+		"certification": {
+			"title": "Certificación",
+			"version": "Versión de be-BOP",
+			"shop": "Tienda",
+			"address": "Dirección",
+			"download": "Descargar el certificado (PDF)",
+			"certificateTitle": "Certificado be-BOP",
+			"placeholder": "Documento provisional: el contenido del certificado se definirá más adelante.",
+			"generatedAt": "Emitido el"
 		}
 	},
 	"ageWarning": {

@@ -143,6 +143,11 @@ export const adminLinks: AdminLinks = [
 				href: '/admin/api-keys',
 				label: 'API Keys',
 				superAdminOnly: true
+			},
+			{
+				// Version information, and the certificate of this be-BOP to download.
+				href: '/admin/certification',
+				label: 'Certification'
 			}
 		]
 	},
@@ -280,6 +285,7 @@ const POS_MENU: Array<{ section: string; hrefs: string[] }> = [
 			'/admin/pos',
 			// The keys a be-BOP-pos terminal pairs with.
 			'/admin/api-keys',
+			'/admin/certification',
 			'/admin/back-office-mode'
 		]
 	},

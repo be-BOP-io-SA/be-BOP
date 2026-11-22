@@ -374,7 +374,8 @@
 				"leaderboards": "Scoreborden",
 				"searchlists": "Zoeklijsten",
 				"terminal-payments": "Terminalbetalingen",
-				"arm-pos": "ARM PoS"
+				"arm-pos": "ARM PoS",
+				"certification": "Certificering"
 			},
 			"closeMenu": "Menu sluiten",
 			"brandHome": "Admin",
@@ -2300,6 +2301,16 @@
 			"badgePresent": "Houd de badge tegen het toestel…",
 			"badgeWritten": "Badge geschreven.",
 			"generatePin": "Genereren"
+		},
+		"certification": {
+			"title": "Certificering",
+			"version": "be-BOP-versie",
+			"shop": "Winkel",
+			"address": "Adres",
+			"download": "Certificaat downloaden (PDF)",
+			"certificateTitle": "be-BOP-certificaat",
+			"placeholder": "Voorlopig document: de inhoud van het certificaat wordt later vastgelegd.",
+			"generatedAt": "Uitgegeven op"
 		}
 	},
 	"ageWarning": {
