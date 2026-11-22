@@ -11,6 +11,11 @@
 
 <p>{t('admin.stripeTerminal.intro')}</p>
 
+<!-- The Location saved here stays shown, whatever the Stripe account lists today. -->
+{#if data.locationId}
+	<p>{t('admin.stripeTerminal.location')} : <code>{data.locationId}</code></p>
+{/if}
+
 {#if !data.stripeConfigured}
 	<p>{t('admin.stripeTerminal.stripeFirst')}</p>
 {:else}
@@ -22,6 +27,9 @@
 				{t('admin.stripeTerminal.location')}
 				<select name="locationId" class="form-input" value={data.locationId}>
 					<option value="">{t('admin.stripeTerminal.none')}</option>
+					{#if data.locationId && !data.locations.some((location) => location.id === data.locationId)}
+						<option value={data.locationId}>{data.locationId}</option>
+					{/if}
 					{#each data.locations as location}
 						<option value={location.id}>{location.displayName} ({location.id})</option>
 					{/each}
