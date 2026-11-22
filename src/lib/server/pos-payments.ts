@@ -13,6 +13,7 @@ import { ORIGIN } from './env-config';
 import { queueEmail } from './email';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { createCardPresentIntent, isStripeTerminalReady } from './stripe-terminal';
+import { checkPaypalPosCheckout, createPaypalPosCheckout, isPaypalPosReady } from './paypal-pos';
 import { logAccountingEvent } from './accounting-log';
 import type { AccountingLog } from '$lib/types/AccountingLog';
 
@@ -36,8 +37,10 @@ export function terminalPaymentMethods(): PaymentMethod[] {
 	const qrMethods: PaymentMethod[] = TERMINAL_METHODS.filter(
 		(method) => resolveProcessor(method)?.presentation?.kind === 'qr'
 	);
+	// PayPal shows the QR of its approval page, paid on the customer's phone (see paypal-pos).
+	const withPaypal: PaymentMethod[] = isPaypalPosReady() ? [...qrMethods, 'paypal'] : qrMethods;
 	// A card is taken with Tap to Pay on the device, through the shop's Stripe account.
-	return isCardOnTerminalReady() ? [...qrMethods, 'card'] : qrMethods;
+	return isCardOnTerminalReady() ? [...withPaypal, 'card'] : withPaypal;
 }
 
 function isCardOnTerminalReady(): boolean {
@@ -88,7 +91,12 @@ export async function createPosPayment(params: {
 	if (!terminalPaymentMethods().includes(params.method)) {
 		throw new PosPaymentError(`Payment method ${params.method} is not available on terminals`);
 	}
-	const pp = params.method === 'card' ? getProcessor('stripe') : resolveProcessor(params.method);
+	const pp =
+		params.method === 'card'
+			? getProcessor('stripe')
+			: params.method === 'paypal'
+			? getProcessor('paypal')
+			: resolveProcessor(params.method);
 	if (!pp) {
 		throw new PosPaymentError(`No payment processor available for ${params.method}`);
 	}
@@ -105,8 +113,15 @@ export async function createPosPayment(params: {
 	const paymentId = new ObjectId();
 	const number = await nextPosPaymentNumber();
 	const expiresAt = paymentMethodExpiration(params.method);
+	const receiptToken = randomBytes(16).toString('base64url');
 	const result =
-		params.method === 'card'
+		params.method === 'paypal'
+			? await createPaypalPosCheckout({
+					toPay: price,
+					number,
+					returnUrl: posReceiptUrl({ receiptToken })
+			  })
+			: params.method === 'card'
 			? await createCardPresentIntent({
 					amountMinor: Math.round(price.amount / CURRENCY_UNIT[price.currency]),
 					currency: price.currency,
@@ -126,7 +141,7 @@ export async function createPosPayment(params: {
 	const posPayment: PosPayment = {
 		_id,
 		number,
-		receiptToken: randomBytes(16).toString('base64url'),
+		receiptToken,
 		amount: { amount: params.amount, currency: main },
 		tip: { amount: params.tip, currency: main },
 		...(externalRef ? { externalRef } : { noExternalRef: true }),
@@ -144,7 +159,7 @@ export async function createPosPayment(params: {
 			...('address' in result && result.address && { address: result.address }),
 			...('invoiceId' in result && result.invoiceId && { invoiceId: result.invoiceId }),
 			...(result.checkoutId && { checkoutId: result.checkoutId }),
-			...(result.clientSecret && { clientSecret: result.clientSecret }),
+			...('clientSecret' in result && result.clientSecret && { clientSecret: result.clientSecret }),
 			...('wallet' in result && result.wallet && { wallet: result.wallet }),
 			...('label' in result && result.label && { label: result.label })
 		},
@@ -189,7 +204,10 @@ export async function checkPosPayment(posPayment: PosPayment): Promise<PosPaymen
 	}
 
 	const carrier = { _id: posPayment._id.toHexString(), createdAt: posPayment.createdAt };
-	const result = await pp.checkPayment(payment, carrier as unknown as Order);
+	const result =
+		payment.method === 'paypal'
+			? await checkPaypalPosCheckout(payment)
+			: await pp.checkPayment(payment, carrier as unknown as Order);
 	const now = new Date();
 
 	switch (result.status) {
