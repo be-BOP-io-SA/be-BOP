@@ -62,6 +62,8 @@
 		}
 	}
 	let cardError = '';
+	// Where and why the app stopped: the step it reached and its error code.
+	let cardErrorDetail = '';
 	// Tap to Pay reads the card with the device's NFC: it must be there, and switched on.
 	let nfc: 'ready' | 'disabled' | 'unavailable' = 'ready';
 	async function readDevice() {
@@ -79,8 +81,10 @@
 		}
 	}
 	// Coming back from the Android settings, where NFC was switched on: listen for the card again.
+	// Only then: the Stripe screen also hides this page while it reads the card, and coming back from
+	// it must not start another reading.
 	function onVisible() {
-		if (document.visibilityState === 'visible') {
+		if (document.visibilityState === 'visible' && nfc !== 'ready') {
 			collectCard();
 		}
 	}
@@ -115,10 +119,13 @@
 		}
 		collecting = true;
 		cardError = '';
+		cardErrorDetail = '';
 		try {
 			await cardBridge.collectCardPayment(data.cardClientSecret ?? '');
 		} catch (err) {
 			cardError = err instanceof Error ? err.message : String(err);
+			const { code, step } = err as { code?: string; step?: string };
+			cardErrorDetail = [step, code].filter(Boolean).join(' · ');
 		}
 		collecting = false;
 		invalidateAll();
@@ -153,7 +160,10 @@
 				<p class="text-xl">{t('pos.terminal.presentCard')}</p>
 			{/if}
 			{#if cardError}
-				<p class="text-red-500" role="alert">{cardError}</p>
+				<p class="text-red-500" role="alert">
+					{cardError}
+					{#if cardErrorDetail}<span class="block text-sm">{cardErrorDetail}</span>{/if}
+				</p>
 				<button
 					type="button"
 					class="btn body-mainCTA w-full max-w-sm text-xl py-4"
