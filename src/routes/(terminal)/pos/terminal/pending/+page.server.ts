@@ -9,7 +9,8 @@ export async function load(event) {
 	if (!apiKey) {
 		throw error(401, 'This device is not paired with the shop, or it was revoked.');
 	}
-	if (!(await operatorOfSession(event.cookies.get(POS_OPERATOR_COOKIE), apiKey._id))) {
+	const operator = await operatorOfSession(event.cookies.get(POS_OPERATOR_COOKIE), apiKey._id);
+	if (!operator) {
 		throw error(403, 'Sign in on the terminal first.');
 	}
 
@@ -20,6 +21,7 @@ export async function load(event) {
 		.toArray();
 
 	return {
+		canCancel: operator.actions.includes('cancel'),
 		pending: pending.map((p) => ({
 			id: p._id.toHexString(),
 			number: p.number,
