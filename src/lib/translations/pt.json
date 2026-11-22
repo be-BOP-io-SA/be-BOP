@@ -3278,7 +3278,8 @@
 				"failed": "Não foi possível criar o pagamento. Tente novamente ou escolha outro meio.",
 				"wrongCredentials": "PIN errado, ou crachá desconhecido ou suspenso.",
 				"notAllowed": "Não tem permissão para fazer isto.",
-				"tillClosed": "Caixa fechada: abra a caixa para cobrar."
+				"tillClosed": "Caixa fechada: abra a caixa para cobrar.",
+				"amountTooLow": "Montante demasiado baixo, escolha outro meio de pagamento."
 			},
 			"continue": "Continuar",
 			"enterTip": "Introduzir gorjeta",
@@ -3326,7 +3327,10 @@
 				}
 			},
 			"presentCard": "Aproxime o cartão da parte de trás do dispositivo.",
-			"retryCard": "Tentar novamente"
+			"retryCard": "Tentar novamente",
+			"menu": "Menu",
+			"closeMenu": "Fechar o menu",
+			"noPendingPayments": "Nenhum pagamento em espera."
 		}
 	},
 	"product": {

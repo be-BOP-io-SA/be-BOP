@@ -3278,7 +3278,8 @@
 				"failed": "Non è stato possibile creare il pagamento. Riprovate o scegliete un altro metodo.",
 				"wrongCredentials": "PIN errato, o badge sconosciuto o sospeso.",
 				"notAllowed": "Non avete il diritto di farlo.",
-				"tillClosed": "Cassa chiusa: apri la cassa per incassare."
+				"tillClosed": "Cassa chiusa: apri la cassa per incassare.",
+				"amountTooLow": "Importo troppo basso, scegli un altro metodo di pagamento."
 			},
 			"continue": "Continua",
 			"enterTip": "Inserisci la mancia",
@@ -3326,7 +3327,10 @@
 				}
 			},
 			"presentCard": "Avvicina la carta al retro del dispositivo.",
-			"retryCard": "Riprova"
+			"retryCard": "Riprova",
+			"menu": "Menu",
+			"closeMenu": "Chiudi il menu",
+			"noPendingPayments": "Nessun pagamento in attesa."
 		}
 	},
 	"product": {

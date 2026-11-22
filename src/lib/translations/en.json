@@ -3278,7 +3278,8 @@
 				"failed": "The payment could not be created. Try again, or choose another method.",
 				"wrongCredentials": "Wrong PIN, or unknown or suspended badge.",
 				"notAllowed": "You are not allowed to do this.",
-				"tillClosed": "Till closed: open the till to take payments."
+				"tillClosed": "Till closed: open the till to take payments.",
+				"amountTooLow": "Amount too low, please choose another payment method."
 			},
 			"continue": "Continue",
 			"enterTip": "Enter a tip",
@@ -3326,7 +3327,10 @@
 				}
 			},
 			"presentCard": "Hold the card against the back of the device.",
-			"retryCard": "Try again"
+			"retryCard": "Try again",
+			"menu": "Menu",
+			"closeMenu": "Close the menu",
+			"noPendingPayments": "No waiting payment."
 		}
 	},
 	"product": {

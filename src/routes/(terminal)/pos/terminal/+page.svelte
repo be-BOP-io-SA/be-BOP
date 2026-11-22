@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
+	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n';
-	import PriceTag from '$lib/components/PriceTag.svelte';
+	import IconMenu from '~icons/ant-design/menu-outlined';
+	import IconClose from '~icons/ant-design/close-outlined';
+	import IconClock from '~icons/ant-design/clock-circle-outlined';
+	import IconWallet from '~icons/ant-design/wallet-outlined';
+	import IconTicket from '~icons/ant-design/file-text-outlined';
+	import IconSwitch from '~icons/ant-design/user-switch-outlined';
 	import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 
 	export let data;
@@ -43,6 +49,8 @@
 			amountDigits = next;
 		}
 	}
+
+	let menuOpen = false;
 
 	// Continue skips the tip: going back from the reference then returns to the amount.
 	let tipSkipped = false;
@@ -90,7 +98,9 @@
 	}
 </script>
 
-<main class="min-h-screen flex flex-col items-center justify-center gap-6 p-4 body-mainPlan">
+<main
+	class="relative min-h-screen flex flex-col items-center justify-center gap-6 p-4 body-mainPlan"
+>
 	{#if !data.paired}
 		<p class="text-xl text-center">{t('pos.terminal.notPaired')}</p>
 	{:else if data.locked}
@@ -98,10 +108,6 @@
 		<form method="post" action="?/unlock" bind:this={badgeForm} class="hidden">
 			<input type="hidden" name="badge" bind:this={badgeInput} />
 		</form>
-		{#if data.tillClosed}
-			<p class="text-red-500 text-center" role="alert">{t('pos.terminal.errors.tillClosed')}</p>
-		{/if}
-
 		{#if form?.error}
 			<p class="text-red-500 text-center" role="alert">{t(`pos.terminal.errors.${form.error}`)}</p>
 		{/if}
@@ -112,7 +118,7 @@
 					{#each data.operators as operator}
 						<button
 							type="button"
-							class="btn btn-gray text-xl py-4"
+							class="btn bg-white text-black border border-gray-300 disabled:opacity-30 text-xl py-4"
 							on:click={() => {
 								operatorId = operator.id;
 								pinDigits = '';
@@ -142,7 +148,7 @@
 					{#each KEYS as key}
 						<button
 							type="button"
-							class="btn btn-gray text-2xl py-4"
+							class="btn bg-white text-black border border-gray-300 text-2xl py-4"
 							on:click={() => pressPin(key)}
 							disabled={key === '00'}
 							aria-label={key === 'erase' ? t('pos.terminal.erase') : key}
@@ -153,7 +159,7 @@
 				</div>
 				<button
 					type="submit"
-					class="btn body-mainCTA w-full text-xl py-4"
+					class="btn body-mainCTA disabled:opacity-30 w-full text-xl py-4"
 					disabled={pinDigits.length < 4}
 				>
 					{t('pos.terminal.signIn')}
@@ -164,36 +170,80 @@
 			</form>
 		{/if}
 	{:else}
-		<div class="flex items-center gap-3 text-sm opacity-70">
-			<span>{data.deviceName} · {data.operator.alias}</span>
-			<a href="/admin/arm-pos" class="underline">{t('pos.terminal.badges')}</a>
-			{#if data.tillLink}
-				<a href="/pos/terminal/till" class="underline">{t('pos.terminal.till.title')}</a>
-			{/if}
-			{#if data.operator.actions.includes('xReport')}
-				<a href="/pos/terminal/x" class="underline">{t('pos.terminal.xTitle')}</a>
-			{/if}
-			<form method="post" action="?/lock">
-				<button type="submit" class="underline">{t('pos.terminal.switchOperator')}</button>
-			</form>
-		</div>
+		<header class="absolute top-0 inset-x-0 flex items-center justify-between p-4">
+			<span class="text-sm opacity-70">{data.deviceName} · {data.operator.alias}</span>
+			<button
+				type="button"
+				class="relative"
+				aria-label={t('pos.terminal.menu')}
+				aria-expanded={menuOpen}
+				on:click={() => (menuOpen = true)}
+			>
+				<IconMenu class="w-8 h-8" />
+				{#if data.pendingCount}
+					<span class="absolute -top-1 -right-1 rounded-full bg-red-600 text-white text-xs px-1.5"
+						>{data.pendingCount}</span
+					>
+				{/if}
+			</button>
+		</header>
+
+		{#if menuOpen}
+			<nav class="fixed inset-0 z-10 flex flex-col gap-3 p-4 body-mainPlan">
+				<button
+					type="button"
+					class="self-end"
+					aria-label={t('pos.terminal.closeMenu')}
+					on:click={() => (menuOpen = false)}
+				>
+					<IconClose class="w-8 h-8" />
+				</button>
+				<a
+					href="/pos/terminal/pending"
+					class="btn bg-white text-black border border-gray-300 disabled:opacity-30 flex items-center gap-3 text-xl py-4"
+				>
+					<IconClock class="w-6 h-6" />
+					<span class="grow text-left">{t('pos.terminal.pendingPayments')}</span>
+					{#if data.pendingCount}<span>{data.pendingCount}</span>{/if}
+				</a>
+				{#if data.tillLink}
+					<a
+						href="/pos/terminal/till"
+						class="btn bg-white text-black border border-gray-300 disabled:opacity-30 flex items-center gap-3 text-xl py-4"
+					>
+						<IconWallet class="w-6 h-6" />
+						<span class="grow text-left">{t('pos.terminal.till.title')}</span>
+					</a>
+				{/if}
+				{#if data.operator.actions.includes('xReport')}
+					<a
+						href="/pos/terminal/x"
+						class="btn bg-white text-black border border-gray-300 disabled:opacity-30 flex items-center gap-3 text-xl py-4"
+					>
+						<IconTicket class="w-6 h-6" />
+						<span class="grow text-left">{t('pos.terminal.xTitle')}</span>
+					</a>
+				{/if}
+				<form method="post" action="?/lock">
+					<button
+						type="submit"
+						class="btn bg-white text-black border border-gray-300 disabled:opacity-30 w-full flex items-center gap-3 text-xl py-4"
+					>
+						<IconSwitch class="w-6 h-6" />
+						<span class="grow text-left">{t('pos.terminal.switchOperator')}</span>
+					</button>
+				</form>
+			</nav>
+		{/if}
+
+		{#if data.tillClosed}
+			<p class="text-red-500 text-center" role="alert">{t('pos.terminal.errors.tillClosed')}</p>
+		{/if}
 
 		{#if form?.error}
 			<p class="text-red-500 text-center" role="alert">
 				{t(`pos.terminal.errors.${form.error}`)}
 			</p>
-		{/if}
-
-		{#if step === 'amount' && data.pending.length}
-			<section class="flex flex-col gap-2 w-full max-w-sm">
-				<p class="font-semibold">{t('pos.terminal.pendingPayments')}</p>
-				{#each data.pending as pending}
-					<a href="/pos/terminal/payment/{pending.id}" class="btn btn-gray flex justify-between">
-						<span>#{pending.number}{pending.externalRef ? ` · ${pending.externalRef}` : ''}</span>
-						<PriceTag inline amount={pending.price.amount} currency={pending.price.currency} />
-					</a>
-				{/each}
-			</section>
 		{/if}
 
 		{#if step === 'amount' || step === 'tip'}
@@ -217,7 +267,7 @@
 				{#each KEYS as key}
 					<button
 						type="button"
-						class="btn btn-gray text-2xl py-4"
+						class="btn bg-white text-black border border-gray-300 text-2xl py-4"
 						on:click={() => press(key)}
 						aria-label={key === 'erase' ? t('pos.terminal.erase') : key}
 					>
@@ -228,7 +278,7 @@
 			{#if step === 'amount'}
 				<button
 					type="button"
-					class="btn body-mainCTA w-full max-w-sm text-xl py-4"
+					class="btn body-mainCTA disabled:opacity-30 w-full max-w-sm text-xl py-4"
 					disabled={amount <= 0 || !data.methods.length}
 					on:click={() => {
 						tipDigits = '';
@@ -240,7 +290,7 @@
 				</button>
 				<button
 					type="button"
-					class="btn btn-gray w-full max-w-sm text-xl py-4"
+					class="btn bg-white text-black border border-gray-300 disabled:opacity-30 w-full max-w-sm text-xl py-4"
 					disabled={amount <= 0 || !data.methods.length}
 					on:click={() => {
 						tipSkipped = false;
@@ -257,7 +307,7 @@
 			{:else}
 				<button
 					type="button"
-					class="btn body-mainCTA w-full max-w-sm text-xl py-4"
+					class="btn body-mainCTA disabled:opacity-30 w-full max-w-sm text-xl py-4"
 					on:click={() => (step = 'ref')}
 				>
 					{tip === 0 ? t('pos.terminal.noTip') : t('pos.terminal.next')}
@@ -276,7 +326,7 @@
 			</label>
 			<button
 				type="button"
-				class="btn body-mainCTA w-full max-w-sm text-xl py-4"
+				class="btn body-mainCTA disabled:opacity-30 w-full max-w-sm text-xl py-4"
 				disabled={!externalRef.trim()}
 				on:click={() => (step = 'method')}
 			>
@@ -285,7 +335,7 @@
 			{#if data.operator.actions.includes('tillDown')}
 				<button
 					type="button"
-					class="btn btn-gray w-full max-w-sm text-xl py-4"
+					class="btn bg-white text-black border border-gray-300 disabled:opacity-30 w-full max-w-sm text-xl py-4"
 					on:click={() => {
 						externalRef = '';
 						step = 'method';
@@ -299,7 +349,15 @@
 				{t('pos.terminal.totalLine', { amount: `${format(amount + tip)} ${data.currency}` })}
 			</p>
 			{#if data.methods.length}
-				<form method="post" action="?/pay" class="flex flex-col gap-3 w-full max-w-sm">
+				<!-- Enhanced: a refusal (amount too low for a card…) keeps the amount, to choose another method. -->
+				<form
+					method="post"
+					action="?/pay"
+					class="flex flex-col gap-3 w-full max-w-sm"
+					use:enhance={() =>
+						({ update }) =>
+							update({ reset: false })}
+				>
 					<input type="hidden" name="amount" value={amount} />
 					<input type="hidden" name="tip" value={tip} />
 					{#if externalRef.trim()}
@@ -310,7 +368,7 @@
 							type="submit"
 							name="method"
 							value={method}
-							class="btn body-mainCTA text-xl py-4"
+							class="btn body-mainCTA disabled:opacity-30 text-xl py-4"
 						>
 							{method === 'card'
 								? t('pos.terminal.methodCardStripe')

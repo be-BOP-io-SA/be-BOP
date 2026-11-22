@@ -3278,7 +3278,8 @@
 				"failed": "De betaling kon niet worden aangemaakt. Probeer het opnieuw of kies een andere methode.",
 				"wrongCredentials": "Verkeerde pincode, of onbekende of geblokkeerde badge.",
 				"notAllowed": "U mag dit niet doen.",
-				"tillClosed": "Kassa gesloten: open de kassa om af te rekenen."
+				"tillClosed": "Kassa gesloten: open de kassa om af te rekenen.",
+				"amountTooLow": "Bedrag te laag, kies een andere betaalmethode."
 			},
 			"continue": "Doorgaan",
 			"enterTip": "Fooi invoeren",
@@ -3326,7 +3327,10 @@
 				}
 			},
 			"presentCard": "Houd de kaart tegen de achterkant van het toestel.",
-			"retryCard": "Opnieuw proberen"
+			"retryCard": "Opnieuw proberen",
+			"menu": "Menu",
+			"closeMenu": "Menu sluiten",
+			"noPendingPayments": "Geen wachtende betaling."
 		}
 	},
 	"product": {

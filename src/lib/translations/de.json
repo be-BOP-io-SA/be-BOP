@@ -3278,7 +3278,8 @@
 				"failed": "Die Zahlung konnte nicht erstellt werden. Versuchen Sie es erneut oder wählen Sie eine andere Zahlungsart.",
 				"wrongCredentials": "Falsche PIN oder unbekannter bzw. gesperrter Badge.",
 				"notAllowed": "Dazu sind Sie nicht berechtigt.",
-				"tillClosed": "Kasse geschlossen: Öffnen Sie die Kasse, um zu kassieren."
+				"tillClosed": "Kasse geschlossen: Öffnen Sie die Kasse, um zu kassieren.",
+				"amountTooLow": "Betrag zu niedrig, bitte wählen Sie eine andere Zahlungsart."
 			},
 			"continue": "Weiter",
 			"enterTip": "Trinkgeld eingeben",
@@ -3326,7 +3327,10 @@
 				}
 			},
 			"presentCard": "Halten Sie die Karte an die Rückseite des Geräts.",
-			"retryCard": "Erneut versuchen"
+			"retryCard": "Erneut versuchen",
+			"menu": "Menü",
+			"closeMenu": "Menü schließen",
+			"noPendingPayments": "Keine ausstehende Zahlung."
 		}
 	},
 	"product": {

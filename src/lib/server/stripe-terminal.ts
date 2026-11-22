@@ -18,9 +18,25 @@ async function stripe(path: string, init?: { method?: 'POST'; body?: Record<stri
 		...(init?.body && { body: toUrlEncoded(init.body) })
 	});
 	if (!response.ok) {
-		throw new Error(`Stripe ${path} failed (${response.status}): ${await response.text()}`);
+		const text = await response.text();
+		// https://docs.stripe.com/error-codes#amount-too-small: below Stripe's minimum charge amount.
+		if (stripeErrorCode(text) === 'amount_too_small') {
+			throw new StripeAmountTooSmallError(text);
+		}
+		throw new Error(`Stripe ${path} failed (${response.status}): ${text}`);
 	}
 	return response.json();
+}
+
+/** The amount is below the minimum Stripe charges in the currency of the shop's Stripe account. */
+export class StripeAmountTooSmallError extends Error {}
+
+function stripeErrorCode(body: string): string | undefined {
+	try {
+		return z.object({ error: z.object({ code: z.string() }) }).parse(JSON.parse(body)).error.code;
+	} catch {
+		return undefined;
+	}
 }
 
 export function isStripeTerminalReady(): boolean {

@@ -22,6 +22,7 @@ import {
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { collections } from '$lib/server/database';
 import { getCurrentPosSession } from '$lib/server/pos-sessions';
+import { StripeAmountTooSmallError } from '$lib/server/stripe-terminal';
 import { ALL_PAYMENT_METHODS } from '$lib/server/payment-methods';
 
 /**
@@ -49,12 +50,11 @@ export async function load(event) {
 		};
 	}
 
-	// A payment left waiting when its screen was quit: the terminal can go back to it.
-	const pending = await collections.posPayments
-		.find({ 'device.apiKeyId': apiKey._id, 'payment.status': 'pending' })
-		.sort({ createdAt: -1 })
-		.limit(20)
-		.toArray();
+	// Payments left waiting when their screen was quit, listed on /pos/terminal/pending.
+	const pendingCount = await collections.posPayments.countDocuments({
+		'device.apiKeyId': apiKey._id,
+		'payment.status': 'pending'
+	});
 
 	const tillClosed = await isTillClosedForTerminals();
 
@@ -64,13 +64,7 @@ export async function load(event) {
 		locked: false as const,
 		tillClosed,
 		tillLink: runtimeConfig.posSession.enabled && operator.actions.includes('zReport'),
-		pending: pending.map((p) => ({
-			id: p._id.toHexString(),
-			number: p.number,
-			price: p.payment.price,
-			method: p.payment.method,
-			externalRef: p.externalRef
-		})),
+		pendingCount,
 		operator: { alias: operator.alias, actions: operator.actions },
 		currency: runtimeConfig.mainCurrency,
 		methods: operator.actions.includes('charge') && !tillClosed ? terminalPaymentMethods() : []
@@ -153,6 +147,9 @@ export const actions = {
 			});
 			id = posPayment._id.toHexString();
 		} catch (err) {
+			if (err instanceof StripeAmountTooSmallError) {
+				return fail(400, { error: 'amountTooLow' as const });
+			}
 			console.error('[pos terminal] payment creation failed', err);
 			return fail(502, {
 				error: err instanceof PosPaymentError ? ('unavailable' as const) : ('failed' as const)

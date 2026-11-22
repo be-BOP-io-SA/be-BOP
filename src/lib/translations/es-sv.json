@@ -3278,7 +3278,8 @@
 				"failed": "No se ha podido crear el pago. Inténtelo de nuevo o elija otro medio.",
 				"wrongCredentials": "PIN incorrecto, o credencial desconocida o suspendida.",
 				"notAllowed": "No tiene derecho a hacer esto.",
-				"tillClosed": "Caja cerrada: abra la caja para cobrar."
+				"tillClosed": "Caja cerrada: abra la caja para cobrar.",
+				"amountTooLow": "Importe demasiado bajo, elija otro medio de pago."
 			},
 			"continue": "Continuar",
 			"enterTip": "Introducir propina",
@@ -3326,7 +3327,10 @@
 				}
 			},
 			"presentCard": "Acerque la tarjeta a la parte trasera del dispositivo.",
-			"retryCard": "Reintentar"
+			"retryCard": "Reintentar",
+			"menu": "Menú",
+			"closeMenu": "Cerrar el menú",
+			"noPendingPayments": "Ningún pago en espera."
 		}
 	},
 	"product": {
