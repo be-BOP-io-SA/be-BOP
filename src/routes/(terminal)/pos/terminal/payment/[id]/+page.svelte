@@ -165,11 +165,10 @@
 			<p>{t('pos.terminal.cardNeedsApp')}</p>
 		{/if}
 		<p>{t('pos.terminal.waiting')}</p>
+		<!-- A payment that is not canceled has no way back: cancelling is the only way out. -->
 		{#if data.canCancel}
 			<CancelPayment />
 		{/if}
-		<!-- The payment stays waiting, listed on the home screen of the terminal. -->
-		<a href="/pos/terminal" class="underline">{t('pos.terminal.back')}</a>
 	{:else if data.status === 'pending'}
 		<!-- Shown for the customer's wallet to scan: the device itself never pays. -->
 		<img src="{$page.url.pathname}/qrcode" alt="QR code" class="w-72 h-72 bg-white" />
@@ -180,11 +179,10 @@
 		{:else}
 			<p>{t('pos.terminal.waiting')}</p>
 		{/if}
+		<!-- A payment that is not canceled has no way back: cancelling is the only way out. -->
 		{#if data.canCancel}
 			<CancelPayment />
 		{/if}
-		<!-- The payment stays waiting, listed on the home screen of the terminal. -->
-		<a href="/pos/terminal" class="underline">{t('pos.terminal.back')}</a>
 	{:else if data.status === 'paid'}
 		<p class="text-3xl text-green-600 font-semibold">{t('pos.terminal.paid')}</p>
 		{#if data.overpayment && !data.overpayment.treatment}
