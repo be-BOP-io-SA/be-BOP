@@ -3360,7 +3360,8 @@
 			"language": "Langue",
 			"errorOccurred": "Une erreur est survenue",
 			"errorNoDetail": "Aucun détail disponible.",
-			"errorClose": "Fermer"
+			"errorClose": "Fermer",
+			"menuCharge": "Encaisser"
 		}
 	},
 	"product": {

@@ -3360,7 +3360,8 @@
 			"language": "Language",
 			"errorOccurred": "An error occurred",
 			"errorNoDetail": "No detail available.",
-			"errorClose": "Close"
+			"errorClose": "Close",
+			"menuCharge": "Take a payment"
 		}
 	},
 	"product": {

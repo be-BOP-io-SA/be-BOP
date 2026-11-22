@@ -3360,7 +3360,8 @@
 			"language": "Sprache",
 			"errorOccurred": "Ein Fehler ist aufgetreten",
 			"errorNoDetail": "Keine Details verfügbar.",
-			"errorClose": "Schließen"
+			"errorClose": "Schließen",
+			"menuCharge": "Kassieren"
 		}
 	},
 	"product": {

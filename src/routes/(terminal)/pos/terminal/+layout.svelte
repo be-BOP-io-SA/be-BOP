@@ -11,6 +11,7 @@
 	import IconMenu from '~icons/ant-design/menu-outlined';
 	import IconClose from '~icons/ant-design/close-outlined';
 	import IconWallet from '~icons/ant-design/wallet-outlined';
+	import IconCharge from '~icons/ant-design/dollar-outlined';
 	import IconInfo from '~icons/ant-design/info-circle-outlined';
 	import IconList from '~icons/ant-design/unordered-list-outlined';
 	import IconSwitch from '~icons/ant-design/user-switch-outlined';
@@ -87,6 +88,10 @@
 		>
 			<IconClose class="w-8 h-8" />
 		</button>
+		<a href={HOME} class={link}>
+			<IconCharge class="w-6 h-6" />
+			<span class="grow text-left">{t('pos.terminal.menuCharge')}</span>
+		</a>
 		{#if data.menu.session}
 			<a href="{HOME}/till" class={link}>
 				<IconWallet class="w-6 h-6" />

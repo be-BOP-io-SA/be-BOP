@@ -3360,7 +3360,8 @@
 			"language": "Taal",
 			"errorOccurred": "Er is een fout opgetreden",
 			"errorNoDetail": "Geen details beschikbaar.",
-			"errorClose": "Sluiten"
+			"errorClose": "Sluiten",
+			"menuCharge": "Betalen"
 		}
 	},
 	"product": {

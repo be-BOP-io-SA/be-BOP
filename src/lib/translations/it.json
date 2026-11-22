@@ -3360,7 +3360,8 @@
 			"language": "Lingua",
 			"errorOccurred": "Si è verificato un errore",
 			"errorNoDetail": "Nessun dettaglio disponibile.",
-			"errorClose": "Chiudi"
+			"errorClose": "Chiudi",
+			"menuCharge": "Incassa"
 		}
 	},
 	"product": {
