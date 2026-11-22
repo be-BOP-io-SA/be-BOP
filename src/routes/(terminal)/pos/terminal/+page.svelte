@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n';
 	import TerminalBrand from './TerminalBrand.svelte';
+	import ErrorNotice from './ErrorNotice.svelte';
 	import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 	import { PAYMENT_METHOD_EMOJI } from '$lib/types/Order';
 
@@ -205,10 +206,13 @@
 
 		<!-- A refused payment is explained where the method is chosen, and only there. -->
 		{#if form?.error && step === 'method'}
-			<p class="text-red-500 text-center" role="alert">
-				{t(`pos.terminal.errors.${form.error}`)}
-				{#if 'detail' in form && form.detail}<span class="block text-sm">{form.detail}</span>{/if}
-			</p>
+			{#if form.error === 'failed'}
+				<ErrorNotice detail={'detail' in form ? form.detail ?? '' : ''} />
+			{:else}
+				<p class="text-red-500 text-center" role="alert">
+					{t(`pos.terminal.errors.${form.error}`)}
+				</p>
+			{/if}
 		{/if}
 
 		{#if step === 'amount' || step === 'tip'}

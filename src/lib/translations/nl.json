@@ -3357,7 +3357,10 @@
 			"themeLight": "Licht",
 			"themeDark": "Donker",
 			"themeSystem": "Systeem",
-			"language": "Taal"
+			"language": "Taal",
+			"errorOccurred": "Er is een fout opgetreden",
+			"errorNoDetail": "Geen details beschikbaar.",
+			"errorClose": "Sluiten"
 		}
 	},
 	"product": {

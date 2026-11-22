@@ -3357,7 +3357,10 @@
 			"themeLight": "Hell",
 			"themeDark": "Dunkel",
 			"themeSystem": "System",
-			"language": "Sprache"
+			"language": "Sprache",
+			"errorOccurred": "Ein Fehler ist aufgetreten",
+			"errorNoDetail": "Keine Details verfügbar.",
+			"errorClose": "Schließen"
 		}
 	},
 	"product": {

@@ -3357,7 +3357,10 @@
 			"themeLight": "Clair",
 			"themeDark": "Sombre",
 			"themeSystem": "Système",
-			"language": "Langue"
+			"language": "Langue",
+			"errorOccurred": "Une erreur est survenue",
+			"errorNoDetail": "Aucun détail disponible.",
+			"errorClose": "Fermer"
 		}
 	},
 	"product": {

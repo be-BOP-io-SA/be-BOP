@@ -190,8 +190,12 @@ export const actions = {
 				// The code Stripe gave, shown as is: it says what to fix. Never the body, which can quote a key.
 				return fail(502, { error: 'failed' as const, detail: err.summary });
 			}
+			if (err instanceof PosPaymentError) {
+				return fail(502, { error: 'unavailable' as const });
+			}
 			return fail(502, {
-				error: err instanceof PosPaymentError ? ('unavailable' as const) : ('failed' as const)
+				error: 'failed' as const,
+				detail: (err instanceof Error ? err.message : String(err)).slice(0, 300)
 			});
 		}
 

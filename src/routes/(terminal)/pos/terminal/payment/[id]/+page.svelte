@@ -5,6 +5,7 @@
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n';
 	import CancelPayment from './CancelPayment.svelte';
+	import ErrorNotice from '../../ErrorNotice.svelte';
 	import ChangeMethod from './ChangeMethod.svelte';
 	import NotificationAddressInput from '$lib/components/NotificationAddressInput.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
@@ -42,6 +43,7 @@
 	let nostrReceiptForm: HTMLFormElement | null = null;
 	let phone = '';
 	let smsStatus = '';
+	let smsError = '';
 	async function scanNpub() {
 		try {
 			scannedNpub = ((await cardBridge?.scanQr?.()) ?? '').trim();
@@ -56,12 +58,13 @@
 	}
 	async function sendSms() {
 		smsStatus = '';
+		smsError = '';
 		try {
 			await cardBridge?.sendSms?.(phone, `${t('pos.receipt.title')}: ${data.receiptUrl}`);
 			smsStatus = t('pos.terminal.receiptSent');
 		} catch (err) {
 			// The code of a refused permission is the app's, not a text for the operator.
-			smsStatus =
+			smsError =
 				(err as { code?: string }).code === 'sms_denied'
 					? t('pos.terminal.smsDenied')
 					: err instanceof Error
@@ -166,10 +169,7 @@
 				<p class="text-xl">{t('pos.terminal.presentCard')}</p>
 			{/if}
 			{#if cardError}
-				<p class="text-red-500" role="alert">
-					{cardError}
-					{#if cardErrorDetail}<span class="block text-sm">{cardErrorDetail}</span>{/if}
-				</p>
+				<ErrorNotice detail={[cardError, cardErrorDetail].filter(Boolean).join('\n')} />
 				<button
 					type="button"
 					class="btn pos-cta w-full max-w-sm text-xl py-4"
@@ -293,6 +293,9 @@
 					</form>
 					{#if smsStatus}
 						<p>{smsStatus}</p>
+					{/if}
+					{#if smsError}
+						<ErrorNotice detail={smsError} />
 					{/if}
 				{/if}
 			</section>
