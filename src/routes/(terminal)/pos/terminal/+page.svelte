@@ -3,8 +3,8 @@
 	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n';
 	import TerminalBrand from './TerminalBrand.svelte';
-	import MethodIcon from './MethodIcon.svelte';
 	import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+	import { PAYMENT_METHOD_EMOJI } from '$lib/types/Order';
 
 	export let data;
 	export let form;
@@ -335,7 +335,7 @@
 							value={method}
 							class="btn pos-cta disabled:opacity-30 flex flex-col items-center gap-2 text-lg py-5"
 						>
-							<MethodIcon {method} />
+							<span class="text-4xl">{PAYMENT_METHOD_EMOJI[method]}</span>
 							{method === 'card'
 								? t('pos.terminal.methodCardStripe')
 								: t(`checkout.paymentMethod.${method}`)}
