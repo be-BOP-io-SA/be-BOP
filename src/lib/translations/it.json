@@ -2275,11 +2275,11 @@
 			"superAdminNote": "Il super-admin ha tutti i diritti.",
 			"operatorsTitle": "Operatori",
 			"disabled": "disattivato",
-			"setPin": "Impostare un PIN (da 4 a 8 cifre)",
-			"changePin": "Cambiare il PIN (da 4 a 8 cifre)",
+			"setPin": "Impostare un PIN (da 4 a 12 cifre)",
+			"changePin": "Cambiare il PIN (da 4 a 12 cifre)",
 			"clearPin": "Rimuovere il PIN",
 			"addBadge": "Aggiungere un badge",
-			"pinInvalid": "Un PIN ha da 4 a 8 cifre.",
+			"pinInvalid": "Un PIN ha da 4 a 12 cifre.",
 			"suspended": "sospeso",
 			"active": "attivo",
 			"reactivate": "Riattivare",
@@ -2298,7 +2298,8 @@
 			},
 			"writeBadge": "Scriverlo sul badge",
 			"badgePresent": "Avvicinate il badge al dispositivo…",
-			"badgeWritten": "Badge scritto."
+			"badgeWritten": "Badge scritto.",
+			"generatePin": "Genera"
 		}
 	},
 	"ageWarning": {

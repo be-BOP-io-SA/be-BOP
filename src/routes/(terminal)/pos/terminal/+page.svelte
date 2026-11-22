@@ -88,7 +88,7 @@
 	function pressPin(key: string) {
 		if (key === 'erase') {
 			pinDigits = pinDigits.slice(0, -1);
-		} else if (pinDigits.length < 8 && key !== '00') {
+		} else if (pinDigits.length < 12 && key !== '00') {
 			pinDigits += key;
 		}
 	}

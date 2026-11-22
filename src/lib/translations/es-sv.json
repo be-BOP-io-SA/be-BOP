@@ -2275,11 +2275,11 @@
 			"superAdminNote": "El superadministrador tiene todos los derechos.",
 			"operatorsTitle": "Operadores",
 			"disabled": "desactivado",
-			"setPin": "Definir un PIN (4 a 8 cifras)",
-			"changePin": "Cambiar el PIN (4 a 8 cifras)",
+			"setPin": "Definir un PIN (4 a 12 cifras)",
+			"changePin": "Cambiar el PIN (4 a 12 cifras)",
 			"clearPin": "Quitar el PIN",
 			"addBadge": "Añadir una credencial",
-			"pinInvalid": "Un PIN tiene de 4 a 8 cifras.",
+			"pinInvalid": "Un PIN tiene de 4 a 12 cifras.",
 			"suspended": "suspendida",
 			"active": "activa",
 			"reactivate": "Reactivar",
@@ -2298,7 +2298,8 @@
 			},
 			"writeBadge": "Escribirlo en la credencial",
 			"badgePresent": "Acerque la credencial al dispositivo…",
-			"badgeWritten": "Credencial escrita."
+			"badgeWritten": "Credencial escrita.",
+			"generatePin": "Generar"
 		}
 	},
 	"ageWarning": {

@@ -2275,11 +2275,11 @@
 			"superAdminNote": "De super-admin heeft alle rechten.",
 			"operatorsTitle": "Medewerkers",
 			"disabled": "uitgeschakeld",
-			"setPin": "Pincode instellen (4 tot 8 cijfers)",
-			"changePin": "Pincode wijzigen (4 tot 8 cijfers)",
+			"setPin": "Pincode instellen (4 tot 12 cijfers)",
+			"changePin": "Pincode wijzigen (4 tot 12 cijfers)",
 			"clearPin": "Pincode verwijderen",
 			"addBadge": "Badge toevoegen",
-			"pinInvalid": "Een pincode heeft 4 tot 8 cijfers.",
+			"pinInvalid": "Een pincode heeft 4 tot 12 cijfers.",
 			"suspended": "geblokkeerd",
 			"active": "actief",
 			"reactivate": "Opnieuw activeren",
@@ -2298,7 +2298,8 @@
 			},
 			"writeBadge": "Op de badge schrijven",
 			"badgePresent": "Houd de badge tegen het toestel…",
-			"badgeWritten": "Badge geschreven."
+			"badgeWritten": "Badge geschreven.",
+			"generatePin": "Genereren"
 		}
 	},
 	"ageWarning": {

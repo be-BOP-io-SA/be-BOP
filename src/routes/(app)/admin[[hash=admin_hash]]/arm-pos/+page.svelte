@@ -7,6 +7,15 @@
 
 	const { t, locale } = useI18n();
 
+	// A PIN drawn at random, shown in clear so that it can be given to the operator.
+	let pins: Record<string, string> = {};
+	let generatedPins: Record<string, boolean> = {};
+	function generatePin(userId: string) {
+		const digits = crypto.getRandomValues(new Uint32Array(6));
+		pins[userId] = Array.from(digits, (n) => String(n % 10)).join('');
+		generatedPins[userId] = true;
+	}
+
 	// Inside the be-BOP-pos app, the identifier is written on the badge with its NFC module.
 	type NfcBridge = { writeNfc(text: string): Promise<unknown> };
 	let nfc: NfcBridge | undefined;
@@ -91,15 +100,20 @@
 				<label class="form-label">
 					{user.hasPin ? t('admin.armPos.changePin') : t('admin.armPos.setPin')}
 					<input
-						type="password"
+						type={generatedPins[user._id] ? 'text' : 'password'}
 						name="pin"
 						class="form-input"
 						inputmode="numeric"
-						pattern="\d{'{'}4,8{'}'}"
+						pattern="\d{'{'}4,12{'}'}"
+						maxlength="12"
 						autocomplete="new-password"
+						bind:value={pins[user._id]}
 						required
 					/>
 				</label>
+				<button type="button" class="btn btn-gray" on:click={() => generatePin(user._id)}>
+					{t('admin.armPos.generatePin')}
+				</button>
 				<button type="submit" class="btn btn-black">{t('admin.action.save')}</button>
 			</form>
 			{#if user.hasPin}

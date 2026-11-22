@@ -11,8 +11,13 @@ import type { User } from '$lib/types/User';
  * terminal actions they may take, and they sign in on the terminal with a PIN or an NFC badge.
  */
 
-const BADGE_PREFIX = 'bebop_badge_';
-const PIN_PATTERN = /^\d{4,8}$/;
+/** A PIN is typed on the terminal's keypad: digits only. */
+const PIN_PATTERN = /^\d{4,12}$/;
+/** What a badge holds: a random string be-BOP draws, of letters, either case, and digits. */
+const BADGE_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const NEW_BADGE_LENGTH = 64;
+const BADGE_PATTERN = /^[A-Za-z0-9]{64}$/;
+const PREFIX_LENGTH = 6;
 /** An operator stays signed in on a terminal this long without using it. */
 const SESSION_IDLE_MS = 12 * 60 * 60 * 1000;
 
@@ -57,7 +62,7 @@ export async function setPosPin(userId: ObjectId, pin: string | null): Promise<v
 		return;
 	}
 	if (!isValidPin(pin)) {
-		throw new Error('A PIN is 4 to 8 digits');
+		throw new Error('A PIN is 4 to 12 digits');
 	}
 	await collections.users.updateOne(
 		{ _id: userId },
@@ -65,9 +70,23 @@ export async function setPosPin(userId: ObjectId, pin: string | null): Promise<v
 	);
 }
 
+/** A new badge content, drawn evenly from the badge alphabet. */
+function newBadgeIdentifier(): string {
+	let identifier = '';
+	while (identifier.length < NEW_BADGE_LENGTH) {
+		for (const byte of randomBytes(NEW_BADGE_LENGTH)) {
+			// 248 is the largest multiple of 62 under 256: above it, a byte would favour some letters.
+			if (byte < 248 && identifier.length < NEW_BADGE_LENGTH) {
+				identifier += BADGE_ALPHABET[byte % BADGE_ALPHABET.length];
+			}
+		}
+	}
+	return identifier;
+}
+
 /** A new badge: its identifier is shown once, for the app to write on the badge. */
 export async function addPosBadge(userId: ObjectId): Promise<string> {
-	const identifier = BADGE_PREFIX + randomBytes(16).toString('base64url');
+	const identifier = newBadgeIdentifier();
 	await collections.users.updateOne(
 		{ _id: userId },
 		{
@@ -75,7 +94,7 @@ export async function addPosBadge(userId: ObjectId): Promise<string> {
 				posBadges: {
 					_id: new ObjectId(),
 					hash: sha256(identifier),
-					prefix: identifier.slice(0, BADGE_PREFIX.length + 6),
+					prefix: identifier.slice(0, PREFIX_LENGTH),
 					createdAt: new Date()
 				}
 			}
@@ -86,13 +105,13 @@ export async function addPosBadge(userId: ObjectId): Promise<string> {
 
 /** Gives a badge a new identifier, to write on it again: the old one stops working. */
 export async function renewPosBadge(userId: ObjectId, badgeId: ObjectId): Promise<string> {
-	const identifier = BADGE_PREFIX + randomBytes(16).toString('base64url');
+	const identifier = newBadgeIdentifier();
 	await collections.users.updateOne(
 		{ _id: userId, 'posBadges._id': badgeId },
 		{
 			$set: {
 				'posBadges.$.hash': sha256(identifier),
-				'posBadges.$.prefix': identifier.slice(0, BADGE_PREFIX.length + 6),
+				'posBadges.$.prefix': identifier.slice(0, PREFIX_LENGTH),
 				'posBadges.$.createdAt': new Date()
 			},
 			$unset: { 'posBadges.$.suspendedAt': 1 }
@@ -127,7 +146,7 @@ export async function operatorFromPin(userId: ObjectId, pin: string): Promise<Po
 }
 
 export async function operatorFromBadge(identifier: string): Promise<PosOperator | null> {
-	if (!identifier.startsWith(BADGE_PREFIX) || identifier.length > 100) {
+	if (!BADGE_PATTERN.test(identifier)) {
 		return null;
 	}
 	const hash = sha256(identifier);

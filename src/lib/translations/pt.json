@@ -2275,11 +2275,11 @@
 			"superAdminNote": "O super-administrador tem todos os direitos.",
 			"operatorsTitle": "Operadores",
 			"disabled": "desativado",
-			"setPin": "Definir um PIN (4 a 8 algarismos)",
-			"changePin": "Alterar o PIN (4 a 8 algarismos)",
+			"setPin": "Definir um PIN (4 a 12 algarismos)",
+			"changePin": "Alterar o PIN (4 a 12 algarismos)",
 			"clearPin": "Remover o PIN",
 			"addBadge": "Adicionar um crachá",
-			"pinInvalid": "Um PIN tem 4 a 8 algarismos.",
+			"pinInvalid": "Um PIN tem 4 a 12 algarismos.",
 			"suspended": "suspenso",
 			"active": "ativo",
 			"reactivate": "Reativar",
@@ -2298,7 +2298,8 @@
 			},
 			"writeBadge": "Escrevê-lo no crachá",
 			"badgePresent": "Aproxime o crachá do dispositivo…",
-			"badgeWritten": "Crachá escrito."
+			"badgeWritten": "Crachá escrito.",
+			"generatePin": "Gerar"
 		}
 	},
 	"ageWarning": {
