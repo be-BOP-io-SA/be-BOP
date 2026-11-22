@@ -39,29 +39,9 @@
 		{/if}
 		{#if !data.session}
 			<form method="post" action="?/open" class="flex flex-col gap-3 w-full max-w-sm">
-				{#if data.lastClosing}
-					<p class="text-sm opacity-70">
-						{t('pos.terminal.till.lastClosing')}
-						<PriceTag
-							inline
-							amount={data.lastClosing.amount}
-							currency={data.lastClosing.currency}
-						/>
-					</p>
+				{#if data.forbidTouchWhenClosed}
+					<p class="text-center" role="alert">{t('pos.terminal.errors.tillClosed')}</p>
 				{/if}
-				<label class="form-label">
-					{t('pos.terminal.till.openingCash')} ({data.currency})
-					<input
-						type="number"
-						inputmode="decimal"
-						step="0.01"
-						min="0"
-						name="amount"
-						class="form-input text-xl"
-						value={data.lastClosing?.amount ?? 0}
-						required
-					/>
-				</label>
 				<button type="submit" class="btn body-mainCTA text-xl py-4">
 					{t('pos.terminal.till.open')}
 				</button>
@@ -131,7 +111,9 @@
 		{/if}
 	{/if}
 
-	<a href="/pos/terminal" class="btn btn-gray w-full max-w-sm text-xl py-4"
-		>{t('pos.terminal.back')}</a
-	>
+	{#if !(data.enabled && !data.session && data.forbidTouchWhenClosed)}
+		<a href="/pos/terminal" class="btn btn-gray w-full max-w-sm text-xl py-4"
+			>{t('pos.terminal.back')}</a
+		>
+	{/if}
 </main>

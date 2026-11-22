@@ -3322,7 +3322,6 @@
 			"till": {
 				"title": "Caja",
 				"notEnabled": "La gestión de sesiones de caja no está activada (Settings > POS).",
-				"lastClosing": "Cierre anterior:",
 				"openingCash": "Fondo de caja",
 				"open": "Abrir la caja",
 				"bankDeposit": "Depósito bancario",

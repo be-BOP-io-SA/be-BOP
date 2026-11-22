@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import type { RequestEvent } from '@sveltejs/kit';
 import { POS_OPERATOR_COOKIE, terminalKeyOf } from '$lib/server/api/pos-terminal';
@@ -44,12 +44,12 @@ export async function load(event) {
 
 	const session = await getCurrentPosSession();
 	if (!session) {
-		const last = await getLastClosedSession();
 		return {
 			enabled: true as const,
 			currency,
 			session: null,
-			lastClosing: last?.cashClosing ?? null
+			// While it is closed, the payment screen sends everyone here: no way back from this page.
+			forbidTouchWhenClosed: runtimeConfig.posSession.forbidTouchWhenSessionClosed
 		};
 	}
 
@@ -73,17 +73,15 @@ export async function load(event) {
 export const actions = {
 	async open(event) {
 		const user = await tillOperator(event);
-		const amount = z
-			.number({ coerce: true })
-			.nonnegative()
-			.safeParse((await event.request.formData()).get('amount'));
-		if (!amount.success) {
-			return fail(400, { tillError: 'amount' as const });
-		}
+		// A terminal takes no cash, so it asks for no opening float: the till opens on the cash the
+		// last closing left, which is also what keeps the cash mismatch alert quiet.
+		const last = await getLastClosedSession();
 		await openPosSession({
-			cashOpening: { amount: amount.data, currency: runtimeConfig.mainCurrency },
+			cashOpening: last?.cashClosing ?? { amount: 0, currency: runtimeConfig.mainCurrency },
 			user
 		});
+		// The till is open: back to the payment screen.
+		throw redirect(303, '/pos/terminal');
 	},
 
 	async close(event) {

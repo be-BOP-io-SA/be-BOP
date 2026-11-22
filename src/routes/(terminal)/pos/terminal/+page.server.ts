@@ -66,6 +66,12 @@ export async function load(event) {
 	});
 
 	const tillClosed = await isTillClosedForTerminals();
+	const mayOpenTill = runtimeConfig.posSession.enabled && operator.actions.includes('zReport');
+
+	// A closed till cannot take payments: whoever may open it goes straight to the opening page.
+	if (tillClosed && mayOpenTill) {
+		throw redirect(303, '/pos/terminal/till');
+	}
 
 	return {
 		paired: true as const,
@@ -73,7 +79,7 @@ export async function load(event) {
 		deviceName: apiKey.name,
 		locked: false as const,
 		tillClosed,
-		tillLink: runtimeConfig.posSession.enabled && operator.actions.includes('zReport'),
+		tillLink: mayOpenTill,
 		pendingCount,
 		operator: { alias: operator.alias, actions: operator.actions },
 		currency: runtimeConfig.mainCurrency,

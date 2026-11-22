@@ -3322,7 +3322,6 @@
 			"till": {
 				"title": "Till",
 				"notEnabled": "Till session management is not enabled (Settings > POS).",
-				"lastClosing": "Previous closing:",
 				"openingCash": "Opening cash",
 				"open": "Open the till",
 				"bankDeposit": "Bank deposit",

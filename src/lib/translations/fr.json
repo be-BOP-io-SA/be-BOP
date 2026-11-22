@@ -3322,7 +3322,6 @@
 			"till": {
 				"title": "Caisse",
 				"notEnabled": "La gestion des sessions de caisse n'est pas activée (Settings > POS).",
-				"lastClosing": "Clôture précédente :",
 				"openingCash": "Fond de caisse",
 				"open": "Ouvrir la caisse",
 				"bankDeposit": "Dépôt en banque",

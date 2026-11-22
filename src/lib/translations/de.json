@@ -3322,7 +3322,6 @@
 			"till": {
 				"title": "Kasse",
 				"notEnabled": "Die Verwaltung der Kassensitzungen ist nicht aktiviert (Settings > POS).",
-				"lastClosing": "Letzter Abschluss:",
 				"openingCash": "Wechselgeld",
 				"open": "Kasse öffnen",
 				"bankDeposit": "Bankeinzahlung",
