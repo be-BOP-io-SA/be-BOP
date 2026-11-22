@@ -45,7 +45,7 @@
 			"title": "POS",
 			"tapToPaySettingsMoved": "Le impostazioni Tap-to-pay sono state spostate in <0>Impostazioni di pagamento → Pagamenti PoS</0>",
 			"sessionManagementTitle": "Gestione sessioni POS (sistema scontrino Z)",
-			"forbidTouchWhenClosed": "Vieta l'uso di /pos/touch quando la sessione PoS non è aperta",
+			"forbidTouchWhenClosed": "Vieta l'incasso su /pos/touch e sui terminali associati quando la sessione PoS non è aperta",
 			"enableZTicketManagement": "Attiva la gestione degli scontrini Z",
 			"allowXTicketEditing": "Consenti la modifica degli scontrini X",
 			"cashDeltaJustificationMandatory": "Rendi obbligatoria la giustificazione dello scarto di cassa",

@@ -45,7 +45,7 @@
 			"title": "POS",
 			"tapToPaySettingsMoved": "As definições de Tap-to-pay foram movidas para <0>Definições de pagamento → Pagamentos PoS</0>",
 			"sessionManagementTitle": "Gestão de sessões POS (sistema de talão Z)",
-			"forbidTouchWhenClosed": "Proibir o uso de /pos/touch quando a sessão PoS não estiver aberta",
+			"forbidTouchWhenClosed": "Proibir a cobrança em /pos/touch e nos terminais emparelhados quando a sessão PoS não estiver aberta",
 			"enableZTicketManagement": "Ativar a gestão de talões Z",
 			"allowXTicketEditing": "Permitir a edição de talões X",
 			"cashDeltaJustificationMandatory": "Tornar obrigatória a justificação da diferença de caixa",

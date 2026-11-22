@@ -45,7 +45,7 @@
 			"title": "POS",
 			"tapToPaySettingsMoved": "Les paramètres du paiement sans contact ont été déplacés vers <0>Paramètres de paiement → Paiements PoS</0>",
 			"sessionManagementTitle": "Gestion des sessions POS (système de ticket Z)",
-			"forbidTouchWhenClosed": "Interdire l'utilisation de /pos/touch lorsque la session PoS n'est pas ouverte",
+			"forbidTouchWhenClosed": "Interdire l'encaissement sur /pos/touch et sur les terminaux appairés lorsque la session PoS n'est pas ouverte",
 			"enableZTicketManagement": "Activer la gestion des tickets Z",
 			"allowXTicketEditing": "Autoriser la modification des tickets X",
 			"cashDeltaJustificationMandatory": "Rendre obligatoire la justification de l'écart de caisse",

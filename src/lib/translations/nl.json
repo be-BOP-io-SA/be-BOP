@@ -45,7 +45,7 @@
 			"title": "POS",
 			"tapToPaySettingsMoved": "De tap-to-pay-instellingen zijn verplaatst naar <0>Betaalinstellingen → PoS-betalingen</0>",
 			"sessionManagementTitle": "POS-sessiebeheer (Z-bonsysteem)",
-			"forbidTouchWhenClosed": "Gebruik van /pos/touch verbieden wanneer de PoS-sessie niet geopend is",
+			"forbidTouchWhenClosed": "Afrekenen via /pos/touch en op gekoppelde terminals verbieden wanneer de PoS-sessie niet geopend is",
 			"enableZTicketManagement": "Z-bonbeheer inschakelen",
 			"allowXTicketEditing": "Bewerken van X-bonnen toestaan",
 			"cashDeltaJustificationMandatory": "Verantwoording van het kasverschil verplicht maken",

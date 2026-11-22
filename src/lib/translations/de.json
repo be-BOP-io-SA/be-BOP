@@ -45,7 +45,7 @@
 			"title": "POS",
 			"tapToPaySettingsMoved": "Die Tap-to-Pay-Einstellungen wurden verschoben nach <0>Zahlungseinstellungen → PoS-Zahlungen</0>",
 			"sessionManagementTitle": "POS-Sitzungsverwaltung (Z-Bon-System)",
-			"forbidTouchWhenClosed": "Nutzung von /pos/touch verbieten, wenn die PoS-Sitzung nicht geöffnet ist",
+			"forbidTouchWhenClosed": "Kassieren über /pos/touch und auf gekoppelten Terminals verbieten, wenn die PoS-Sitzung nicht geöffnet ist",
 			"enableZTicketManagement": "Z-Bon-Verwaltung aktivieren",
 			"allowXTicketEditing": "Bearbeitung von X-Bons erlauben",
 			"cashDeltaJustificationMandatory": "Begründung der Kassendifferenz verpflichtend machen",

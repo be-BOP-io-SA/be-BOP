@@ -45,7 +45,7 @@
 			"title": "POS",
 			"tapToPaySettingsMoved": "Tap-to-pay settings have been moved to <0>Payment Settings → PoS Payments</0>",
 			"sessionManagementTitle": "POS Session Management (Z-Ticket System)",
-			"forbidTouchWhenClosed": "Forbid use of /pos/touch when PoS Session is not opened",
+			"forbidTouchWhenClosed": "Forbid taking payments on /pos/touch and on paired terminals when PoS Session is not opened",
 			"enableZTicketManagement": "Enable Z-ticket management",
 			"allowXTicketEditing": "Allow X ticket editing",
 			"cashDeltaJustificationMandatory": "Make cash delta justification mandatory",
