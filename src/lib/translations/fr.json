@@ -3322,18 +3322,10 @@
 			"till": {
 				"title": "Caisse",
 				"notEnabled": "La gestion des sessions de caisse n'est pas activée (Settings > POS).",
-				"openingCash": "Fond de caisse",
 				"open": "Ouvrir la caisse",
-				"bankDeposit": "Dépôt en banque",
-				"cashCounted": "Espèces comptées dans le tiroir",
-				"expected": "Espèces attendues :",
-				"delta": "Écart :",
-				"justification": "Justification de l'écart (facultative)",
-				"justificationRequired": "Justification de l'écart (obligatoire)",
 				"close": "Clôturer la caisse et éditer le ticket Z",
 				"closed": "Caisse clôturée.",
 				"errors": {
-					"amount": "Montant invalide.",
 					"noSession": "Aucune session de caisse n'est ouverte."
 				}
 			},

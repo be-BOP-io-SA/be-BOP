@@ -3322,18 +3322,10 @@
 			"till": {
 				"title": "Kasse",
 				"notEnabled": "Die Verwaltung der Kassensitzungen ist nicht aktiviert (Settings > POS).",
-				"openingCash": "Wechselgeld",
 				"open": "Kasse öffnen",
-				"bankDeposit": "Bankeinzahlung",
-				"cashCounted": "In der Schublade gezähltes Bargeld",
-				"expected": "Erwartetes Bargeld:",
-				"delta": "Differenz:",
-				"justification": "Begründung der Differenz (optional)",
-				"justificationRequired": "Begründung der Differenz (Pflicht)",
 				"close": "Kasse abschließen und Z-Bon erstellen",
 				"closed": "Kasse abgeschlossen.",
 				"errors": {
-					"amount": "Ungültiger Betrag.",
 					"noSession": "Keine Kassensitzung ist geöffnet."
 				}
 			},

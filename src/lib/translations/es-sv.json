@@ -3322,18 +3322,10 @@
 			"till": {
 				"title": "Caja",
 				"notEnabled": "La gestión de sesiones de caja no está activada (Settings > POS).",
-				"openingCash": "Fondo de caja",
 				"open": "Abrir la caja",
-				"bankDeposit": "Depósito bancario",
-				"cashCounted": "Efectivo contado en el cajón",
-				"expected": "Efectivo esperado:",
-				"delta": "Diferencia:",
-				"justification": "Justificación de la diferencia (opcional)",
-				"justificationRequired": "Justificación de la diferencia (obligatoria)",
 				"close": "Cerrar la caja y emitir el ticket Z",
 				"closed": "Caja cerrada.",
 				"errors": {
-					"amount": "Importe no válido.",
 					"noSession": "No hay ninguna sesión de caja abierta."
 				}
 			},

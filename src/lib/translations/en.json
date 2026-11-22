@@ -3322,18 +3322,10 @@
 			"till": {
 				"title": "Till",
 				"notEnabled": "Till session management is not enabled (Settings > POS).",
-				"openingCash": "Opening cash",
 				"open": "Open the till",
-				"bankDeposit": "Bank deposit",
-				"cashCounted": "Cash counted in the drawer",
-				"expected": "Expected cash:",
-				"delta": "Difference:",
-				"justification": "Justification of the difference (optional)",
-				"justificationRequired": "Justification of the difference (required)",
 				"close": "Close the till and print the Z ticket",
 				"closed": "Till closed.",
 				"errors": {
-					"amount": "Invalid amount.",
 					"noSession": "No till session is open."
 				}
 			},

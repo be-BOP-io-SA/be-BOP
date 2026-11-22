@@ -3322,18 +3322,10 @@
 			"till": {
 				"title": "Cassa",
 				"notEnabled": "La gestione delle sessioni di cassa non è attivata (Settings > POS).",
-				"openingCash": "Fondo cassa",
 				"open": "Apri la cassa",
-				"bankDeposit": "Versamento in banca",
-				"cashCounted": "Contanti contati nel cassetto",
-				"expected": "Contanti attesi:",
-				"delta": "Differenza:",
-				"justification": "Giustificazione della differenza (facoltativa)",
-				"justificationRequired": "Giustificazione della differenza (obbligatoria)",
 				"close": "Chiudi la cassa ed emetti lo scontrino Z",
 				"closed": "Cassa chiusa.",
 				"errors": {
-					"amount": "Importo non valido.",
 					"noSession": "Nessuna sessione di cassa è aperta."
 				}
 			},
