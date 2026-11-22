@@ -14,6 +14,8 @@ import {
 import { validateEmailOrNpub } from '$lib/server/nostr';
 import { availableContactModes } from '$lib/server/contact-modes';
 import { getConfirmationBlocks } from '$lib/server/getConfirmationBlocks';
+import { BoltCardError, payInvoiceWithBoltCard } from '$lib/server/boltcard';
+import { toSatoshis } from '$lib/utils/toSatoshis';
 import type { RequestEvent } from '@sveltejs/kit';
 
 /** The payment, if this terminal took it. */
@@ -86,6 +88,31 @@ export const actions = {
 			await sendPosReceiptByNostr(posPayment, address.address);
 		}
 		return { receiptSent: true, channel };
+	},
+	async boltcard(event) {
+		const { posPayment, apiKey } = await ownPayment(event);
+		if (!(await operatorOn(event, apiKey._id))) {
+			return fail(403, {});
+		}
+		const { payment } = posPayment;
+		if (payment.status !== 'pending' || payment.method !== 'lightning' || !payment.address) {
+			throw error(400, 'Payment is not a pending Lightning payment');
+		}
+		const link = String((await event.request.formData()).get('link') ?? '');
+		try {
+			await payInvoiceWithBoltCard({
+				link,
+				invoice: payment.address,
+				amountSat: toSatoshis(payment.price)
+			});
+		} catch (err) {
+			// The provider's reason is for the operator, behind the "An error occurred" notice.
+			if (!(err instanceof BoltCardError)) {
+				throw err;
+			}
+			return fail(400, { boltCardError: err.message.slice(0, 300) });
+		}
+		return { boltCardSent: true };
 	},
 	async cancel(event) {
 		const { posPayment, apiKey } = await ownPayment(event);

@@ -34,6 +34,8 @@
 		scanQr?(): Promise<string>;
 		sendSms?(phone: string, text: string): Promise<unknown>;
 		info?(): Promise<{ smsAvailable?: boolean; nfcAvailable?: boolean; nfcEnabled?: boolean }>;
+		readNfc?(): Promise<{ uid: string; text: string | null; uri?: string | null }>;
+		cancelNfc?(): Promise<unknown>;
 	};
 	// The app says whether the device has a SIM ready: the SMS receipt is offered only then.
 	let smsAvailable = false;
@@ -152,6 +154,50 @@
 		invalidateAll();
 	}
 
+	// A Bolt Card gives the link to its holder's account; the server hands it the invoice to pay.
+	let boltCardReading = false;
+	let boltCardSending = false;
+	let boltCardLink = '';
+	let boltCardNotice = '';
+	let boltCardForm: HTMLFormElement | null = null;
+	async function readBoltCard() {
+		boltCardNotice = '';
+		boltCardReading = true;
+		let tag: Awaited<ReturnType<NonNullable<CardBridge['readNfc']>>> | undefined;
+		try {
+			tag = await cardBridge?.readNfc?.();
+		} catch (err) {
+			const { code } = err as { code?: string };
+			boltCardNotice =
+				code === 'nfc_disabled'
+					? t('pos.terminal.nfcDisabled')
+					: code === 'nfc_unavailable'
+					? t('pos.terminal.nfcUnavailable')
+					: '';
+			return;
+		} finally {
+			boltCardReading = false;
+		}
+		const link = tag?.uri?.trim() ?? '';
+		if (!/^lnurlw:\/\//i.test(link)) {
+			boltCardNotice = t('pos.terminal.boltCardNotRecognized');
+			return;
+		}
+		boltCardLink = link;
+		boltCardSending = true;
+		await tick();
+		boltCardForm?.requestSubmit();
+	}
+	// Paid, canceled or left: the device stops listening for the card.
+	$: if (data.status !== 'pending' && boltCardReading) {
+		cardBridge?.cancelNfc?.().catch(() => undefined);
+	}
+	onDestroy(() => {
+		if (boltCardReading) {
+			cardBridge?.cancelNfc?.().catch(() => undefined);
+		}
+	});
+
 	let receiptQrSvg = '';
 	$: if (data.status === 'paid' && !receiptQrSvg) {
 		import('qrcode').then(async ({ default: qrcode }) => {
@@ -213,6 +259,39 @@
 			</p>
 		{:else}
 			<p>{t('pos.terminal.waiting')}</p>
+		{/if}
+		{#if data.method === 'lightning' && cardBridge?.readNfc}
+			<form
+				method="post"
+				action="?/boltcard"
+				bind:this={boltCardForm}
+				use:enhance={() =>
+					async ({ update }) => {
+						boltCardSending = false;
+						await update();
+					}}
+			>
+				<input type="hidden" name="link" value={boltCardLink} />
+			</form>
+			{#if boltCardReading}
+				<p class="text-xl">{t('pos.terminal.presentCard')}</p>
+			{:else if boltCardSending || (form && 'boltCardSent' in form)}
+				<p class="text-xl">{t('pos.terminal.boltCardSent')}</p>
+			{:else}
+				<button
+					type="button"
+					class="btn pos-cta w-full max-w-sm text-xl py-4"
+					on:click={readBoltCard}
+				>
+					⚡ {t('pos.terminal.boltCard')}
+				</button>
+			{/if}
+			{#if boltCardNotice}
+				<p class="text-red-500" role="alert">{boltCardNotice}</p>
+			{/if}
+			{#if !boltCardSending && form && 'boltCardError' in form}
+				<ErrorNotice detail={form.boltCardError} />
+			{/if}
 		{/if}
 		<!-- A payment that is not canceled has no way back: cancelling is the only way out. -->
 		<ChangeMethod />

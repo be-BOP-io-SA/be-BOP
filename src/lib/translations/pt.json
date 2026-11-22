@@ -3361,7 +3361,10 @@
 			"errorOccurred": "Ocorreu um erro",
 			"errorNoDetail": "Sem detalhes disponíveis.",
 			"errorClose": "Fechar",
-			"menuCharge": "Cobrar"
+			"menuCharge": "Cobrar",
+			"boltCard": "Cartão Bolt",
+			"boltCardSent": "Cartão lido, pagamento em curso…",
+			"boltCardNotRecognized": "Este cartão não é um cartão Bolt."
 		}
 	},
 	"product": {

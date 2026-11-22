@@ -3361,7 +3361,10 @@
 			"errorOccurred": "An error occurred",
 			"errorNoDetail": "No detail available.",
 			"errorClose": "Close",
-			"menuCharge": "Take a payment"
+			"menuCharge": "Take a payment",
+			"boltCard": "Bolt Card",
+			"boltCardSent": "Card read, payment in progress…",
+			"boltCardNotRecognized": "This card is not a Bolt Card."
 		}
 	},
 	"product": {

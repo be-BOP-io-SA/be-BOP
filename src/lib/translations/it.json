@@ -3361,7 +3361,10 @@
 			"errorOccurred": "Si è verificato un errore",
 			"errorNoDetail": "Nessun dettaglio disponibile.",
 			"errorClose": "Chiudi",
-			"menuCharge": "Incassa"
+			"menuCharge": "Incassa",
+			"boltCard": "Carta Bolt",
+			"boltCardSent": "Carta letta, pagamento in corso…",
+			"boltCardNotRecognized": "Questa carta non è una carta Bolt."
 		}
 	},
 	"product": {

@@ -3361,7 +3361,10 @@
 			"errorOccurred": "Er is een fout opgetreden",
 			"errorNoDetail": "Geen details beschikbaar.",
 			"errorClose": "Sluiten",
-			"menuCharge": "Betalen"
+			"menuCharge": "Betalen",
+			"boltCard": "Bolt Card",
+			"boltCardSent": "Kaart gelezen, betaling bezig…",
+			"boltCardNotRecognized": "Deze kaart is geen Bolt Card."
 		}
 	},
 	"product": {

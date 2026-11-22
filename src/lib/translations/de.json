@@ -3361,7 +3361,10 @@
 			"errorOccurred": "Ein Fehler ist aufgetreten",
 			"errorNoDetail": "Keine Details verfügbar.",
 			"errorClose": "Schließen",
-			"menuCharge": "Kassieren"
+			"menuCharge": "Kassieren",
+			"boltCard": "Bolt Card",
+			"boltCardSent": "Karte gelesen, Zahlung läuft…",
+			"boltCardNotRecognized": "Diese Karte ist keine Bolt Card."
 		}
 	},
 	"product": {
