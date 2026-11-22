@@ -3318,7 +3318,6 @@
 			"methodCardStripe": "Tarjeta Stripe",
 			"cancelYes": "Sí, cancelar",
 			"cancelKeep": "No cancelar",
-			"pendingPayments": "Pagos en espera",
 			"till": {
 				"title": "Caja",
 				"notEnabled": "La gestión de sesiones de caja no está activada (Settings > POS).",
@@ -3333,9 +3332,9 @@
 			"retryCard": "Reintentar",
 			"menu": "Menú",
 			"closeMenu": "Cerrar el menú",
-			"noPendingPayments": "Ningún pago en espera.",
 			"appVersion": "App {version}",
-			"serverVersion": "Servidor {version}"
+			"serverVersion": "Servidor {version}",
+			"changeMethod": "Cambiar de método"
 		}
 	},
 	"product": {

@@ -19,11 +19,12 @@ async function stripe(path: string, init?: { method?: 'POST'; body?: Record<stri
 	});
 	if (!response.ok) {
 		const text = await response.text();
+		const { code, type } = stripeErrorOf(text);
 		// https://docs.stripe.com/error-codes#amount-too-small: below Stripe's minimum charge amount.
-		if (stripeErrorCode(text) === 'amount_too_small') {
+		if (code === 'amount_too_small') {
 			throw new StripeAmountTooSmallError(text);
 		}
-		throw new Error(`Stripe ${path} failed (${response.status}): ${text}`);
+		throw new StripeApiError(path, response.status, text, code ?? type);
 	}
 	return response.json();
 }
@@ -31,11 +32,31 @@ async function stripe(path: string, init?: { method?: 'POST'; body?: Record<stri
 /** The amount is below the minimum Stripe charges in the currency of the shop's Stripe account. */
 export class StripeAmountTooSmallError extends Error {}
 
-function stripeErrorCode(body: string): string | undefined {
+/** Stripe refused a call. `reason` is its error code, or its error type when it gives no code. */
+export class StripeApiError extends Error {
+	constructor(
+		path: string,
+		readonly status: number,
+		body: string,
+		readonly reason?: string
+	) {
+		super(`Stripe ${path} failed (${status}): ${body}`);
+	}
+
+	/** What may be shown on a screen: the HTTP status and Stripe's code, never the body. */
+	get summary(): string {
+		return ['Stripe', this.status, this.reason].filter(Boolean).join(' ');
+	}
+}
+
+function stripeErrorOf(body: string): { code?: string; type?: string } {
 	try {
-		return z.object({ error: z.object({ code: z.string() }) }).parse(JSON.parse(body)).error.code;
+		const parsed = z
+			.object({ error: z.object({ code: z.string().optional(), type: z.string().optional() }) })
+			.safeParse(JSON.parse(body));
+		return parsed.success ? parsed.data.error : {};
 	} catch {
-		return undefined;
+		return {};
 	}
 }
 

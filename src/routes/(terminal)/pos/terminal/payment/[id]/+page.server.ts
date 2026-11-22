@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { POS_OPERATOR_COOKIE, terminalKeyOf } from '$lib/server/api/pos-terminal';
 import { operatorOfSession } from '$lib/server/arm-pos';
@@ -50,6 +50,7 @@ export async function load(event) {
 	const actions = await operatorActions(event, own.apiKey._id);
 
 	return {
+		id: posPayment._id.toHexString(),
 		number: posPayment.number,
 		amount: posPayment.amount,
 		tip: posPayment.tip,
@@ -63,7 +64,6 @@ export async function load(event) {
 		awaitingConfirmation: payment.awaitingConfirmation ?? false,
 		confirmationBlocks: payment.method === 'bitcoin' ? getConfirmationBlocks(payment.price) : 0,
 		overpayment: posPayment.overpayment,
-		canCancel: actions.includes('cancel'),
 		canRefund: actions.includes('refund'),
 		receiptUrl: posReceiptUrl(posPayment)
 	};
@@ -92,11 +92,17 @@ export const actions = {
 	},
 	async cancel(event) {
 		const { posPayment, apiKey } = await ownPayment(event);
+		// Any operator signed in on the terminal: a waiting payment is the only screen it has, and
+		// leaving it without a way out would leave it waiting for good.
 		const operator = await operatorOn(event, apiKey._id);
-		if (!operator?.actions.includes('cancel')) {
+		if (!operator) {
 			return fail(403, {});
 		}
 		await cancelPosPayment(posPayment, { userId: operator._id, alias: operator.alias });
+		// Another method for the same sale.
+		if ((await event.request.formData()).get('substitute')) {
+			throw redirect(303, `/pos/terminal?retry=${posPayment._id.toHexString()}`);
+		}
 	},
 	async overpayment(event) {
 		const { posPayment, apiKey } = await ownPayment(event);

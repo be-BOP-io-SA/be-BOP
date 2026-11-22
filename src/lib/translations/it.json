@@ -3318,7 +3318,6 @@
 			"methodCardStripe": "Carta Stripe",
 			"cancelYes": "Sì, annulla",
 			"cancelKeep": "Non annullare",
-			"pendingPayments": "Pagamenti in attesa",
 			"till": {
 				"title": "Cassa",
 				"notEnabled": "La gestione delle sessioni di cassa non è attivata (Settings > POS).",
@@ -3333,9 +3332,9 @@
 			"retryCard": "Riprova",
 			"menu": "Menu",
 			"closeMenu": "Chiudi il menu",
-			"noPendingPayments": "Nessun pagamento in attesa.",
 			"appVersion": "App {version}",
-			"serverVersion": "Server {version}"
+			"serverVersion": "Server {version}",
+			"changeMethod": "Cambia metodo"
 		}
 	},
 	"product": {

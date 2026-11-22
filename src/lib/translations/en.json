@@ -3318,7 +3318,6 @@
 			"methodCardStripe": "Stripe card",
 			"cancelYes": "Yes, cancel",
 			"cancelKeep": "Do not cancel",
-			"pendingPayments": "Waiting payments",
 			"till": {
 				"title": "Till",
 				"notEnabled": "Till session management is not enabled (Settings > POS).",
@@ -3333,9 +3332,9 @@
 			"retryCard": "Try again",
 			"menu": "Menu",
 			"closeMenu": "Close the menu",
-			"noPendingPayments": "No waiting payment.",
 			"appVersion": "App {version}",
-			"serverVersion": "Server {version}"
+			"serverVersion": "Server {version}",
+			"changeMethod": "Change method"
 		}
 	},
 	"product": {

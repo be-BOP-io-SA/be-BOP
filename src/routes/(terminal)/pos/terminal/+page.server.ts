@@ -22,7 +22,7 @@ import {
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { collections } from '$lib/server/database';
 import { getCurrentPosSession } from '$lib/server/pos-sessions';
-import { StripeAmountTooSmallError } from '$lib/server/stripe-terminal';
+import { StripeAmountTooSmallError, StripeApiError } from '$lib/server/stripe-terminal';
 import { ALL_PAYMENT_METHODS } from '$lib/server/payment-methods';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { ORIGIN } from '$lib/server/env-config';
@@ -59,11 +59,26 @@ export async function load(event) {
 		};
 	}
 
-	// Payments left waiting when their screen was quit, listed on /pos/terminal/pending.
-	const pendingCount = await collections.posPayments.countDocuments({
-		'device.apiKeyId': apiKey._id,
-		'payment.status': 'pending'
-	});
+	// A payment is paid, canceled or replaced by another method: never left. While one of this
+	// terminal is waiting, its screen is the only one.
+	const waiting = await collections.posPayments.findOne(
+		{ 'device.apiKeyId': apiKey._id, 'payment.status': 'pending' },
+		{ sort: { createdAt: -1 } }
+	);
+	if (waiting) {
+		throw redirect(303, `/pos/terminal/payment/${waiting._id.toHexString()}`);
+	}
+
+	// A payment that failed or was canceled, to take again with another method.
+	const retryId = event.url.searchParams.get('retry');
+	const retried =
+		retryId && ObjectId.isValid(retryId)
+			? await collections.posPayments.findOne({
+					_id: new ObjectId(retryId),
+					'device.apiKeyId': apiKey._id,
+					'payment.status': { $in: ['failed', 'expired', 'canceled'] }
+			  })
+			: null;
 
 	const tillClosed = await isTillClosedForTerminals();
 	const mayOpenTill = runtimeConfig.posSession.enabled && operator.actions.includes('zReport');
@@ -80,7 +95,11 @@ export async function load(event) {
 		locked: false as const,
 		tillClosed,
 		tillLink: mayOpenTill,
-		pendingCount,
+		retry: retried && {
+			amount: retried.amount.amount,
+			tip: retried.tip.amount,
+			externalRef: retried.externalRef ?? ''
+		},
 		operator: { alias: operator.alias, actions: operator.actions },
 		currency: runtimeConfig.mainCurrency,
 		methods: operator.actions.includes('charge') && !tillClosed ? terminalPaymentMethods() : []
@@ -167,6 +186,10 @@ export const actions = {
 				return fail(400, { error: 'amountTooLow' as const });
 			}
 			console.error('[pos terminal] payment creation failed', err);
+			if (err instanceof StripeApiError) {
+				// The code Stripe gave, shown as is: it says what to fix. Never the body, which can quote a key.
+				return fail(502, { error: 'failed' as const, detail: err.summary });
+			}
 			return fail(502, {
 				error: err instanceof PosPaymentError ? ('unavailable' as const) : ('failed' as const)
 			});

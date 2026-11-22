@@ -3318,7 +3318,6 @@
 			"methodCardStripe": "CB Stripe",
 			"cancelYes": "Oui, annuler",
 			"cancelKeep": "Ne pas annuler",
-			"pendingPayments": "Paiements en attente",
 			"till": {
 				"title": "Caisse",
 				"notEnabled": "La gestion des sessions de caisse n'est pas activée (Settings > POS).",
@@ -3333,9 +3332,9 @@
 			"retryCard": "Réessayer",
 			"menu": "Menu",
 			"closeMenu": "Fermer le menu",
-			"noPendingPayments": "Aucun paiement en attente.",
 			"appVersion": "App {version}",
-			"serverVersion": "Serveur {version}"
+			"serverVersion": "Serveur {version}",
+			"changeMethod": "Changer de méthode"
 		}
 	},
 	"product": {

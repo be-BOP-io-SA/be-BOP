@@ -4,6 +4,7 @@
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n';
 	import CancelPayment from './CancelPayment.svelte';
+	import ChangeMethod from './ChangeMethod.svelte';
 	import NotificationAddressInput from '$lib/components/NotificationAddressInput.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 
@@ -166,9 +167,8 @@
 		{/if}
 		<p>{t('pos.terminal.waiting')}</p>
 		<!-- A payment that is not canceled has no way back: cancelling is the only way out. -->
-		{#if data.canCancel}
-			<CancelPayment />
-		{/if}
+		<ChangeMethod />
+		<CancelPayment />
 	{:else if data.status === 'pending'}
 		<!-- Shown for the customer's wallet to scan: the device itself never pays. -->
 		<img src="{$page.url.pathname}/qrcode" alt="QR code" class="w-72 h-72 bg-white" />
@@ -180,9 +180,8 @@
 			<p>{t('pos.terminal.waiting')}</p>
 		{/if}
 		<!-- A payment that is not canceled has no way back: cancelling is the only way out. -->
-		{#if data.canCancel}
-			<CancelPayment />
-		{/if}
+		<ChangeMethod />
+		<CancelPayment />
 	{:else if data.status === 'paid'}
 		<p class="text-3xl text-green-600 font-semibold">{t('pos.terminal.paid')}</p>
 		{#if data.overpayment && !data.overpayment.treatment}
@@ -278,7 +277,10 @@
 				? t('pos.terminal.canceled')
 				: t('pos.terminal.failed')}
 		</p>
-		<a href="/pos/terminal" class="btn body-mainCTA w-full max-w-sm text-xl py-4">
+		<a href="/pos/terminal?retry={data.id}" class="btn body-mainCTA w-full max-w-sm text-xl py-4">
+			{t('pos.terminal.changeMethod')}
+		</a>
+		<a href="/pos/terminal" class="btn btn-gray w-full max-w-sm text-xl py-4">
 			{t('pos.terminal.newPayment')}
 		</a>
 	{/if}

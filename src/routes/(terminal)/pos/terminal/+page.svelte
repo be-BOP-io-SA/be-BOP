@@ -5,7 +5,6 @@
 	import TerminalBrand from './TerminalBrand.svelte';
 	import IconMenu from '~icons/ant-design/menu-outlined';
 	import IconClose from '~icons/ant-design/close-outlined';
-	import IconClock from '~icons/ant-design/clock-circle-outlined';
 	import IconWallet from '~icons/ant-design/wallet-outlined';
 	import IconTicket from '~icons/ant-design/file-text-outlined';
 	import IconSwitch from '~icons/ant-design/user-switch-outlined';
@@ -17,12 +16,20 @@
 	const { t, locale } = useI18n();
 
 	type Step = 'amount' | 'tip' | 'ref' | 'method';
-	let step: Step = 'amount';
+
+	// A payment that failed or was canceled comes back with its amount, tip and reference, at the
+	// choice of the method: the sale is taken again with another one.
+	const retry = data.paired && !data.locked ? data.retry : null;
+	const digitsOf = (value: number) =>
+		data.paired && !data.locked && value > 0
+			? String(Math.round(value * 10 ** FRACTION_DIGITS_PER_CURRENCY[data.currency]))
+			: '';
+	let step: Step = retry ? 'method' : 'amount';
 
 	// Typed as on a card terminal: each digit shifts in from the right, the last ones are decimals.
-	let amountDigits = '';
-	let tipDigits = '';
-	let externalRef = '';
+	let amountDigits = retry ? digitsOf(retry.amount) : '';
+	let tipDigits = retry ? digitsOf(retry.tip) : '';
+	let externalRef = retry?.externalRef ?? '';
 	const MAX_DIGITS = 12;
 	const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', 'erase'];
 
@@ -54,7 +61,7 @@
 	let menuOpen = false;
 
 	// Continue skips the tip: going back from the reference then returns to the amount.
-	let tipSkipped = false;
+	let tipSkipped = !retry?.tip;
 
 	// Lock screen (arm-pos): the operator picks their name, then types their PIN, or taps a badge.
 	let operatorId = '';
@@ -181,17 +188,11 @@
 			<span class="text-sm opacity-70">{data.deviceName} · {data.operator.alias}</span>
 			<button
 				type="button"
-				class="relative"
 				aria-label={t('pos.terminal.menu')}
 				aria-expanded={menuOpen}
 				on:click={() => (menuOpen = true)}
 			>
 				<IconMenu class="w-8 h-8" />
-				{#if data.pendingCount}
-					<span class="absolute -top-1 -right-1 rounded-full bg-red-600 text-white text-xs px-1.5"
-						>{data.pendingCount}</span
-					>
-				{/if}
 			</button>
 		</header>
 
@@ -205,14 +206,6 @@
 				>
 					<IconClose class="w-8 h-8" />
 				</button>
-				<a
-					href="/pos/terminal/pending"
-					class="btn bg-white text-black border border-gray-300 disabled:opacity-30 flex items-center gap-3 text-xl py-4"
-				>
-					<IconClock class="w-6 h-6" />
-					<span class="grow text-left">{t('pos.terminal.pendingPayments')}</span>
-					{#if data.pendingCount}<span>{data.pendingCount}</span>{/if}
-				</a>
 				{#if data.tillLink}
 					<a
 						href="/pos/terminal/till"
@@ -251,6 +244,7 @@
 		{#if form?.error && step === 'method'}
 			<p class="text-red-500 text-center" role="alert">
 				{t(`pos.terminal.errors.${form.error}`)}
+				{#if 'detail' in form && form.detail}<span class="block text-sm">{form.detail}</span>{/if}
 			</p>
 		{/if}
 

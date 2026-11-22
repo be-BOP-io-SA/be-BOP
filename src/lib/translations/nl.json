@@ -3318,7 +3318,6 @@
 			"methodCardStripe": "Stripe-kaart",
 			"cancelYes": "Ja, annuleren",
 			"cancelKeep": "Niet annuleren",
-			"pendingPayments": "Wachtende betalingen",
 			"till": {
 				"title": "Kassa",
 				"notEnabled": "Het beheer van kassasessies is niet ingeschakeld (Settings > POS).",
@@ -3333,9 +3332,9 @@
 			"retryCard": "Opnieuw proberen",
 			"menu": "Menu",
 			"closeMenu": "Menu sluiten",
-			"noPendingPayments": "Geen wachtende betaling.",
 			"appVersion": "App {version}",
-			"serverVersion": "Server {version}"
+			"serverVersion": "Server {version}",
+			"changeMethod": "Methode wijzigen"
 		}
 	},
 	"product": {
