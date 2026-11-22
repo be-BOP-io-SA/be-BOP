@@ -130,11 +130,8 @@ export async function createPosPayment(params: {
 	const receiptToken = crypto.randomUUID();
 	const result =
 		params.method === 'paypal'
-			? await createPaypalPosCheckout({
-					toPay: price,
-					number,
-					returnUrl: posReceiptUrl({ receiptToken })
-			  })
+			? // The PayPal order is made at the first scan, with the user agent of the customer's phone.
+			  { address: posPayUrl({ receiptToken }) }
 			: params.method === 'card'
 			? await createCardPresentIntent({
 					amountMinor: Math.round(price.amount / CURRENCY_UNIT[price.currency]),
@@ -172,7 +169,7 @@ export async function createPosPayment(params: {
 			createdAt: now,
 			...('address' in result && result.address && { address: result.address }),
 			...('invoiceId' in result && result.invoiceId && { invoiceId: result.invoiceId }),
-			...(result.checkoutId && { checkoutId: result.checkoutId }),
+			...('checkoutId' in result && result.checkoutId && { checkoutId: result.checkoutId }),
 			...('clientSecret' in result && result.clientSecret && { clientSecret: result.clientSecret }),
 			...('wallet' in result && result.wallet && { wallet: result.wallet }),
 			...('label' in result && result.label && { label: result.label })
@@ -452,6 +449,44 @@ export async function setExternalRef(
 /** The public address of a payment's receipt, the one its QR code gives the customer. */
 export function posReceiptUrl(posPayment: Pick<PosPayment, 'receiptToken'>): string {
 	return `${ORIGIN.replace(/\/+$/, '')}/pos-receipt/${posPayment.receiptToken}`;
+}
+
+/** The address in the QR code of a PayPal payment: it sends the customer who scans it to PayPal. */
+export function posPayUrl(posPayment: Pick<PosPayment, 'receiptToken'>): string {
+	return `${ORIGIN.replace(/\/+$/, '')}/pos-pay/${posPayment.receiptToken}`;
+}
+
+/**
+ * Where the customer who scanned the QR code of a PayPal payment goes to pay. The PayPal order is
+ * made at the first scan, with the user agent of the customer's phone, which is what lets PayPal
+ * open its app there. The next scans go to the same order.
+ */
+export async function paypalPosApprovalUrl(
+	posPayment: PosPayment,
+	buyerUserAgent?: string
+): Promise<string> {
+	if (posPayment.paypalApprovalUrl) {
+		return posPayment.paypalApprovalUrl;
+	}
+	const { checkoutId, address } = await createPaypalPosCheckout({
+		toPay: posPayment.payment.price,
+		number: posPayment.number,
+		returnUrl: posReceiptUrl(posPayment),
+		buyerUserAgent
+	});
+	const stored = await collections.posPayments.updateOne(
+		{ _id: posPayment._id, 'payment.checkoutId': { $exists: false } },
+		{
+			$set: { 'payment.checkoutId': checkoutId, paypalApprovalUrl: address, updatedAt: new Date() }
+		}
+	);
+	if (stored.modifiedCount) {
+		return address;
+	}
+	// Another scan made the order first: this one follows it.
+	return (
+		(await collections.posPayments.findOne({ _id: posPayment._id }))?.paypalApprovalUrl ?? address
+	);
 }
 
 function receiptAmount(posPayment: PosPayment): string {

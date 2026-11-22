@@ -115,6 +115,8 @@ export async function createPaypalPosCheckout(params: {
 	number: number;
 	/** Where the customer lands after paying, or cancelling, on PayPal. */
 	returnUrl: string;
+	/** The user agent of the customer's phone, as received: PayPal needs it to open its app there. */
+	buyerUserAgent?: string;
 }): Promise<{ checkoutId: string; address: string }> {
 	const { amount, currency } = params.toPay;
 	const response = await fetch(`${paypalApiOrigin()}/v2/checkout/orders`, {
@@ -141,9 +143,14 @@ export async function createPaypalPosCheckout(params: {
 						shipping_preference: 'NO_SHIPPING',
 						return_url: params.returnUrl,
 						cancel_url: params.returnUrl,
-						// The customer scans the QR code with their own phone: PayPal opens its app there
-						// when it is installed, then sends the customer back to the receipt.
-						app_switch_context: { mobile_web: { return_flow: 'AUTO' } }
+						// With the user agent of the customer's phone, PayPal opens its app there when it is
+						// installed, then sends the customer back to the receipt.
+						app_switch_context: {
+							mobile_web: {
+								return_flow: 'AUTO',
+								...(params.buyerUserAgent && { buyer_user_agent: params.buyerUserAgent })
+							}
+						}
 					}
 				}
 			}

@@ -35,6 +35,8 @@ export interface PosPayment extends Timestamps {
 	 * Its price is the sale plus the tip, in the processor's settlement currency.
 	 */
 	payment: OrderPayment;
+	/** PayPal: where the customer who scanned the QR code pays. The order is made at the first scan. */
+	paypalApprovalUrl?: string;
 	/** More arrived than asked: what the terminal decided to do with the difference. */
 	overpayment?: { amount: Price; treatment?: 'tip' | 'refund'; decidedAt?: Date };
 }
