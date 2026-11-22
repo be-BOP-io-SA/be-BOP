@@ -104,7 +104,17 @@
 		// Choosing the card is enough: the device listens for it as soon as this screen opens.
 		collectCard();
 		document.addEventListener('visibilitychange', onVisible);
-		return () => document.removeEventListener('visibilitychange', onVisible);
+		// While the NFC is off, it is looked at again every two seconds: switching it on in the
+		// settings of the phone is enough, there is no payment to cancel and take again.
+		const nfcTimer = setInterval(() => {
+			if (nfc === 'disabled' && data.status === 'pending' && data.method === 'card') {
+				collectCard();
+			}
+		}, 2000);
+		return () => {
+			document.removeEventListener('visibilitychange', onVisible);
+			clearInterval(nfcTimer);
+		};
 	});
 	let collecting = false;
 	// Canceled, expired or paid elsewhere, or the screen is left: the device stops listening.
@@ -164,6 +174,15 @@
 				<p class="text-red-500" role="alert">
 					{nfc === 'disabled' ? t('pos.terminal.nfcDisabled') : t('pos.terminal.nfcUnavailable')}
 				</p>
+				{#if nfc === 'disabled'}
+					<button
+						type="button"
+						class="btn pos-cta w-full max-w-sm text-xl py-4"
+						on:click={collectCard}
+					>
+						{t('pos.terminal.retryCard')}
+					</button>
+				{/if}
 			{/if}
 			{#if nfc === 'ready' && collecting}
 				<p class="text-xl">{t('pos.terminal.presentCard')}</p>
