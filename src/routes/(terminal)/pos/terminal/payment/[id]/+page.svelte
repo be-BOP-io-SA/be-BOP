@@ -171,7 +171,7 @@
 				</p>
 				<button
 					type="button"
-					class="btn body-mainCTA w-full max-w-sm text-xl py-4"
+					class="btn pos-cta w-full max-w-sm text-xl py-4"
 					on:click={collectCard}
 				>
 					{t('pos.terminal.retryCard')}
@@ -215,7 +215,7 @@
 					/>
 				</p>
 				<p>{t('pos.terminal.overpaidQuestion')}</p>
-				<button type="submit" name="treatment" value="tip" class="btn body-mainCTA text-xl py-4">
+				<button type="submit" name="treatment" value="tip" class="btn pos-cta text-xl py-4">
 					{t('pos.terminal.keepAsTip')}
 				</button>
 				{#if data.canRefund}
@@ -223,7 +223,7 @@
 						type="submit"
 						name="treatment"
 						value="refund"
-						class="btn bg-white text-black border border-gray-300 text-xl py-4"
+						class="btn pos-secondary text-xl py-4"
 					>
 						{t('pos.terminal.refundOverpayment')}
 					</button>
@@ -255,7 +255,7 @@
 							/>
 							<button
 								type="submit"
-								class="btn body-mainCTA text-xl"
+								class="btn pos-cta text-xl"
 								title={t('pos.terminal.sendReceipt')}
 								aria-label={t('pos.terminal.sendReceipt')}>📤</button
 							>
@@ -266,7 +266,7 @@
 							<input type="hidden" name="address" value={scannedNpub} />
 							<button
 								type="button"
-								class="btn bg-white text-black border border-gray-300 text-xl"
+								class="btn pos-secondary text-xl"
 								title={t('pos.terminal.scan')}
 								aria-label={t('pos.terminal.scan')}
 								on:click={scanNpub}>📷</button
@@ -285,7 +285,7 @@
 						/>
 						<button
 							type="submit"
-							class="btn bg-white text-black border border-gray-300 text-xl"
+							class="btn pos-secondary text-xl"
 							title={t('pos.terminal.sendBySms')}
 							aria-label={t('pos.terminal.sendBySms')}>💬</button
 						>
@@ -295,7 +295,7 @@
 					{/if}
 				{/if}
 			</section>
-			<a href="/pos/terminal" class="btn body-mainCTA w-full max-w-sm text-xl py-4">
+			<a href="/pos/terminal" class="btn pos-cta w-full max-w-sm text-xl py-4">
 				{t('pos.terminal.newPayment')}
 			</a>
 		{/if}
@@ -307,13 +307,10 @@
 				? t('pos.terminal.canceled')
 				: t('pos.terminal.failed')}
 		</p>
-		<a href="/pos/terminal?retry={data.id}" class="btn body-mainCTA w-full max-w-sm text-xl py-4">
+		<a href="/pos/terminal?retry={data.id}" class="btn pos-cta w-full max-w-sm text-xl py-4">
 			{t('pos.terminal.changeMethod')}
 		</a>
-		<a
-			href="/pos/terminal"
-			class="btn bg-white text-black border border-gray-300 w-full max-w-sm text-xl py-4"
-		>
+		<a href="/pos/terminal" class="btn pos-secondary w-full max-w-sm text-xl py-4">
 			{t('pos.terminal.newPayment')}
 		</a>
 	{/if}

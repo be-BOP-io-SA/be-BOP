@@ -28,7 +28,7 @@
 				{#if data.forbidTouchWhenClosed}
 					<p class="text-center" role="alert">{t('pos.terminal.errors.tillClosed')}</p>
 				{/if}
-				<button type="submit" class="btn body-mainCTA text-xl py-4">
+				<button type="submit" class="btn pos-cta text-xl py-4">
 					{t('pos.terminal.till.open')}
 				</button>
 			</form>
@@ -40,7 +40,7 @@
 				</button>
 				<button
 					type="button"
-					class="btn bg-white text-black border border-gray-300 text-xl py-4"
+					class="btn pos-secondary text-xl py-4"
 					on:click={() => (confirmingClose = false)}
 				>
 					{t('pos.terminal.till.closeKeep')}
@@ -49,7 +49,7 @@
 		{:else}
 			<button
 				type="button"
-				class="btn body-mainCTA w-full max-w-sm text-xl py-4"
+				class="btn pos-cta w-full max-w-sm text-xl py-4"
 				on:click={() => (confirmingClose = true)}
 			>
 				{t('pos.terminal.till.close')}
@@ -58,9 +58,7 @@
 	{/if}
 
 	{#if !(data.enabled && !data.session && data.forbidTouchWhenClosed)}
-		<a
-			href="/pos/terminal"
-			class="btn bg-white text-black border border-gray-300 w-full max-w-sm text-xl py-4"
+		<a href="/pos/terminal" class="btn pos-secondary w-full max-w-sm text-xl py-4"
 			>{t('pos.terminal.back')}</a
 		>
 	{/if}

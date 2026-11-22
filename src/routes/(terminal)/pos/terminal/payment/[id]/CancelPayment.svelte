@@ -12,11 +12,7 @@
 	<form method="post" action="?/cancel" class="flex flex-col gap-2 w-full max-w-sm" use:enhance>
 		<p>{t('pos.terminal.cancelConfirm')}</p>
 		<button type="submit" class="btn btn-red text-xl py-4">{t('pos.terminal.cancelYes')}</button>
-		<button
-			type="button"
-			class="btn bg-white text-black border border-gray-300"
-			on:click={() => (confirming = false)}
-		>
+		<button type="button" class="btn pos-secondary" on:click={() => (confirming = false)}>
 			{t('pos.terminal.cancelKeep')}
 		</button>
 	</form>

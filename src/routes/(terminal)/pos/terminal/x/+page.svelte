@@ -13,7 +13,7 @@
 	{:else}
 		<p>{t('pos.terminal.noSession')}</p>
 	{/if}
-	<a href="/pos/terminal" class="btn body-mainCTA w-full max-w-sm text-xl py-4"
+	<a href="/pos/terminal" class="btn pos-cta w-full max-w-sm text-xl py-4"
 		>{t('pos.terminal.back')}</a
 	>
 </main>

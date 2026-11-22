@@ -36,8 +36,7 @@
 		menuOpen = false;
 	}
 
-	const link =
-		'btn bg-white text-black border border-gray-300 flex items-center gap-3 text-xl py-4';
+	const link = 'btn pos-secondary flex items-center gap-3 text-xl py-4';
 </script>
 
 <div class="min-h-screen flex flex-col body-mainPlan">
@@ -102,3 +101,32 @@
 		</form>
 	</nav>
 {/if}
+
+<style>
+	/* The colors of the be-BOP logo: navy for the keys, light blue for what validates. */
+	:global(.btn.pos-key) {
+		background-color: #003760;
+		color: #ffffff;
+		border: 0;
+	}
+	:global(.btn.pos-key:active) {
+		background-color: #31a5dc;
+	}
+	:global(.btn.pos-cta) {
+		background-color: #31a5dc;
+		color: #ffffff;
+		border: 0;
+	}
+	:global(.btn.pos-cta:active) {
+		background-color: #003760;
+	}
+	:global(.btn.pos-secondary) {
+		background-color: #ffffff;
+		color: #003760;
+		border: 2px solid #31a5dc;
+	}
+	:global(.btn.pos-secondary:active) {
+		background-color: #31a5dc;
+		color: #ffffff;
+	}
+</style>

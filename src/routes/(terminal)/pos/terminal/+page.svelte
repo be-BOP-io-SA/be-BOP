@@ -145,7 +145,7 @@
 					{#each data.operators as operator}
 						<button
 							type="button"
-							class="btn bg-white text-black border border-gray-300 disabled:opacity-30 text-xl py-4"
+							class="btn pos-secondary disabled:opacity-30 text-xl py-4"
 							on:click={() => {
 								operatorId = operator.id;
 								pinDigits = '';
@@ -176,7 +176,7 @@
 					{#each KEYS as key}
 						<button
 							type="button"
-							class="btn bg-white text-black border border-gray-300 text-2xl py-4"
+							class="btn pos-key text-2xl py-4"
 							on:click={() => pressPin(key)}
 							disabled={key === '00'}
 							aria-label={key === 'erase' ? t('pos.terminal.erase') : key}
@@ -187,7 +187,7 @@
 				</div>
 				<button
 					type="submit"
-					class="btn body-mainCTA disabled:opacity-30 w-full text-xl py-4"
+					class="btn pos-cta disabled:opacity-30 w-full text-xl py-4"
 					disabled={pinDigits.length < 4}
 				>
 					{t('pos.terminal.signIn')}
@@ -231,7 +231,7 @@
 				{#each KEYS as key}
 					<button
 						type="button"
-						class="btn bg-white text-black border border-gray-300 text-2xl py-4"
+						class="btn pos-key text-2xl py-4"
 						on:click={() => press(key)}
 						aria-label={key === 'erase' ? t('pos.terminal.erase') : key}
 					>
@@ -242,7 +242,7 @@
 			{#if step === 'amount'}
 				<button
 					type="button"
-					class="btn body-mainCTA disabled:opacity-30 w-full max-w-sm text-xl py-4"
+					class="btn pos-cta disabled:opacity-30 w-full max-w-sm text-xl py-4"
 					disabled={amount <= 0 || !methods.length}
 					on:click={() => {
 						tipDigits = '';
@@ -254,7 +254,7 @@
 				</button>
 				<button
 					type="button"
-					class="btn bg-white text-black border border-gray-300 disabled:opacity-30 w-full max-w-sm text-xl py-4"
+					class="btn pos-secondary disabled:opacity-30 w-full max-w-sm text-xl py-4"
 					disabled={amount <= 0 || !methods.length}
 					on:click={() => {
 						tipSkipped = false;
@@ -271,7 +271,7 @@
 			{:else}
 				<button
 					type="button"
-					class="btn body-mainCTA disabled:opacity-30 w-full max-w-sm text-xl py-4"
+					class="btn pos-cta disabled:opacity-30 w-full max-w-sm text-xl py-4"
 					on:click={() => (step = 'ref')}
 				>
 					{tip === 0 ? t('pos.terminal.noTip') : t('pos.terminal.next')}
@@ -290,7 +290,7 @@
 			</label>
 			<button
 				type="button"
-				class="btn body-mainCTA disabled:opacity-30 w-full max-w-sm text-xl py-4"
+				class="btn pos-cta disabled:opacity-30 w-full max-w-sm text-xl py-4"
 				disabled={!externalRef.trim()}
 				on:click={() => (step = 'method')}
 			>
@@ -299,7 +299,7 @@
 			{#if data.operator.actions.includes('tillDown')}
 				<button
 					type="button"
-					class="btn bg-white text-black border border-gray-300 disabled:opacity-30 w-full max-w-sm text-xl py-4"
+					class="btn pos-secondary disabled:opacity-30 w-full max-w-sm text-xl py-4"
 					on:click={() => {
 						externalRef = '';
 						step = 'method';
@@ -332,7 +332,7 @@
 							type="submit"
 							name="method"
 							value={method}
-							class="btn body-mainCTA disabled:opacity-30 text-xl py-4"
+							class="btn pos-cta disabled:opacity-30 text-xl py-4"
 						>
 							{method === 'card'
 								? t('pos.terminal.methodCardStripe')
