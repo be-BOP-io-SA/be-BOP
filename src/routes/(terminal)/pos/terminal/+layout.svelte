@@ -103,14 +103,11 @@
 {/if}
 
 <style>
-	/* The colors of the be-BOP logo: navy for the keys, light blue for what validates. */
+	/* The colors of the be-BOP logo: light blue for the main action, navy for the second one and the keys' lines. */
 	:global(.btn.pos-key) {
-		background-color: #003760;
-		color: #ffffff;
-		border: 0;
-	}
-	:global(.btn.pos-key:active) {
-		background-color: #31a5dc;
+		background-color: #ffffff;
+		color: #003760;
+		border: 2px solid #003760;
 	}
 	:global(.btn.pos-cta) {
 		background-color: #31a5dc;
@@ -119,6 +116,11 @@
 	}
 	:global(.btn.pos-cta:active) {
 		background-color: #003760;
+	}
+	:global(.btn.pos-cta2) {
+		background-color: #003760;
+		color: #ffffff;
+		border: 0;
 	}
 	:global(.btn.pos-secondary) {
 		background-color: #ffffff;

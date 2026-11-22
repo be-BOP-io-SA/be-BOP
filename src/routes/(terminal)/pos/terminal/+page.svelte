@@ -254,7 +254,7 @@
 				</button>
 				<button
 					type="button"
-					class="btn pos-secondary disabled:opacity-30 w-full max-w-sm text-xl py-4"
+					class="btn pos-cta2 disabled:opacity-30 w-full max-w-sm text-xl py-4"
 					disabled={amount <= 0 || !methods.length}
 					on:click={() => {
 						tipSkipped = false;
