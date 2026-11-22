@@ -12,7 +12,13 @@
 
 <p>{t('admin.terminalPayments.intro')}</p>
 
-<form method="get" action="{$page.url.pathname}/export" class="flex flex-wrap gap-2 items-end">
+<!-- The export is a file, not a page: the browser downloads it, the router of the app must not. -->
+<form
+	method="get"
+	action="{$page.url.pathname}/export"
+	class="flex flex-wrap gap-2 items-end"
+	data-sveltekit-reload
+>
 	<label class="form-label">
 		{t('admin.terminalPayments.exportFrom')}
 		<input type="datetime-local" step="1" name="from" class="form-input" required />
