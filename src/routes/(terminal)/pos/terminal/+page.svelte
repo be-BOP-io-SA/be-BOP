@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n';
 	import TerminalBrand from './TerminalBrand.svelte';
+	import MethodIcon from './MethodIcon.svelte';
 	import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 
 	export let data;
@@ -317,7 +318,7 @@
 				<form
 					method="post"
 					action="?/pay"
-					class="flex flex-col gap-3 w-full max-w-sm"
+					class="grid grid-cols-2 gap-3 w-full max-w-sm"
 					use:enhance={() =>
 						({ update }) =>
 							update({ reset: false })}
@@ -332,8 +333,9 @@
 							type="submit"
 							name="method"
 							value={method}
-							class="btn pos-cta disabled:opacity-30 text-xl py-4"
+							class="btn pos-cta disabled:opacity-30 flex flex-col items-center gap-2 text-lg py-5"
 						>
+							<MethodIcon {method} />
 							{method === 'card'
 								? t('pos.terminal.methodCardStripe')
 								: t(`checkout.paymentMethod.${method}`)}
