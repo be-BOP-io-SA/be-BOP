@@ -162,17 +162,20 @@ export async function createPaypalPosCheckout(params: {
 		);
 	}
 
-	const json = z
-		.object({ id: z.string(), links: z.array(z.object({ rel: z.string(), href: z.string() })) })
-		.parse(await response.json());
-	// With `payment_source`, PayPal names the link `payer-action`; `approve` is its older name.
-	const approveLink =
-		json.links.find((link) => link.rel === 'payer-action') ??
-		json.links.find((link) => link.rel === 'approve');
-	if (!approveLink) {
-		throw new Error(`PayPal returned no approve link for PoS payment ${params.number}`);
-	}
-	return { checkoutId: json.id, address: approveLink.href };
+	const { id } = z.object({ id: z.string() }).parse(await response.json());
+	return { checkoutId: id, address: paypalAppSwitchUrl(id) };
+}
+
+/**
+ * Where the customer pays an order, written the way PayPal writes the link of an order that is
+ * eligible for the app switch: that path is the one the PayPal app opens on, and the browser
+ * shows the payment page of PayPal when the app is not there.
+ */
+function paypalAppSwitchUrl(orderId: string): string {
+	const origin = runtimeConfig.paypalPos.sandbox
+		? 'https://www.sandbox.paypal.com'
+		: 'https://www.paypal.com';
+	return `${origin}/app-switch-checkout?token=${encodeURIComponent(orderId)}`;
 }
 
 /** Where the PayPal checkout of a terminal payment stands, as the PayPal processor reads it. */
