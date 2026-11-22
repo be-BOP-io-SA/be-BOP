@@ -3285,7 +3285,6 @@
 			"cancel": "Annuler",
 			"cancelConfirm": "Annuler ce paiement ? Un paiement envoyé après ne sera pas enregistré.",
 			"canceled": "Le paiement a été annulé.",
-			"collectCard": "Encaisser la carte",
 			"cardNeedsApp": "Le paiement par carte se fait avec l'app be-BOP-pos.",
 			"whoAreYou": "Qui encaisse ?",
 			"noOperator": "Aucun opérateur ne peut encore se connecter : donnez des droits terminal à un rôle et un PIN ou un badge dans ARM PoS.",
@@ -3305,7 +3304,9 @@
 			"methodCardStripe": "CB Stripe",
 			"cancelYes": "Oui, annuler",
 			"cancelKeep": "Ne pas annuler",
-			"pendingPayments": "Paiements en attente"
+			"pendingPayments": "Paiements en attente",
+			"presentCard": "Présentez la carte au dos de l’appareil.",
+			"retryCard": "Réessayer"
 		}
 	},
 	"product": {

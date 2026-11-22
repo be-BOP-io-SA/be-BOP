@@ -3285,7 +3285,6 @@
 			"cancel": "Cancel",
 			"cancelConfirm": "Cancel this payment? A payment sent after this will not be recorded.",
 			"canceled": "The payment was canceled.",
-			"collectCard": "Take the card",
 			"cardNeedsApp": "Card payments are taken with the be-BOP-pos app.",
 			"whoAreYou": "Who is taking payments?",
 			"noOperator": "No operator can sign in yet: give a role terminal rights and a PIN or a badge in ARM PoS.",
@@ -3305,7 +3304,9 @@
 			"methodCardStripe": "Stripe card",
 			"cancelYes": "Yes, cancel",
 			"cancelKeep": "Do not cancel",
-			"pendingPayments": "Waiting payments"
+			"pendingPayments": "Waiting payments",
+			"presentCard": "Hold the card against the back of the device.",
+			"retryCard": "Try again"
 		}
 	},
 	"product": {

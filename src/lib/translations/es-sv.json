@@ -3285,7 +3285,6 @@
 			"cancel": "Cancelar",
 			"cancelConfirm": "¿Cancelar este pago? Un pago enviado después no quedará registrado.",
 			"canceled": "El pago ha sido cancelado.",
-			"collectCard": "Cobrar con tarjeta",
 			"cardNeedsApp": "El pago con tarjeta se hace con la app be-BOP-pos.",
 			"whoAreYou": "¿Quién cobra?",
 			"noOperator": "Ningún operador puede conectarse todavía: dé derechos de terminal a un rol y un PIN o una credencial en ARM PoS.",
@@ -3305,7 +3304,9 @@
 			"methodCardStripe": "Tarjeta Stripe",
 			"cancelYes": "Sí, cancelar",
 			"cancelKeep": "No cancelar",
-			"pendingPayments": "Pagos en espera"
+			"pendingPayments": "Pagos en espera",
+			"presentCard": "Acerque la tarjeta a la parte trasera del dispositivo.",
+			"retryCard": "Reintentar"
 		}
 	},
 	"product": {

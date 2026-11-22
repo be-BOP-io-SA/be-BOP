@@ -76,29 +76,39 @@
 			smsAvailable = false;
 		}
 	}
-	// Coming back from the Android settings, where NFC was switched on.
+	// Coming back from the Android settings, where NFC was switched on: listen for the card again.
 	function onVisible() {
 		if (document.visibilityState === 'visible') {
-			readDevice();
+			collectCard();
 		}
 	}
 	onMount(() => {
 		cardBridge = (window as unknown as { bebopPos?: CardBridge }).bebopPos;
-		readDevice();
+		// Choosing the card is enough: the device listens for it as soon as this screen opens.
+		collectCard();
 		document.addEventListener('visibilitychange', onVisible);
 		return () => document.removeEventListener('visibilitychange', onVisible);
 	});
+	let collecting = false;
 	async function collectCard() {
-		cardError = '';
 		await readDevice();
-		if (nfc !== 'ready') {
+		if (
+			collecting ||
+			nfc !== 'ready' ||
+			!cardBridge ||
+			data.status !== 'pending' ||
+			data.method !== 'card'
+		) {
 			return;
 		}
+		collecting = true;
+		cardError = '';
 		try {
-			await cardBridge?.collectCardPayment(data.cardClientSecret ?? '');
+			await cardBridge.collectCardPayment(data.cardClientSecret ?? '');
 		} catch (err) {
 			cardError = err instanceof Error ? err.message : String(err);
 		}
+		collecting = false;
 		invalidateAll();
 	}
 
@@ -127,16 +137,18 @@
 					{nfc === 'disabled' ? t('pos.terminal.nfcDisabled') : t('pos.terminal.nfcUnavailable')}
 				</p>
 			{/if}
-			<button
-				type="button"
-				class="btn body-mainCTA w-full max-w-sm text-xl py-4"
-				disabled={nfc !== 'ready'}
-				on:click={collectCard}
-			>
-				{t('pos.terminal.collectCard')}
-			</button>
+			{#if nfc === 'ready' && collecting}
+				<p class="text-xl">{t('pos.terminal.presentCard')}</p>
+			{/if}
 			{#if cardError}
 				<p class="text-red-500" role="alert">{cardError}</p>
+				<button
+					type="button"
+					class="btn body-mainCTA w-full max-w-sm text-xl py-4"
+					on:click={collectCard}
+				>
+					{t('pos.terminal.retryCard')}
+				</button>
 			{/if}
 		{:else}
 			<p>{t('pos.terminal.cardNeedsApp')}</p>
@@ -145,6 +157,8 @@
 		{#if data.canCancel}
 			<CancelPayment />
 		{/if}
+		<!-- The payment stays waiting, listed on the home screen of the terminal. -->
+		<a href="/pos/terminal" class="underline">{t('pos.terminal.back')}</a>
 	{:else if data.status === 'pending'}
 		<!-- Shown for the customer's wallet to scan: the device itself never pays. -->
 		<img src="{$page.url.pathname}/qrcode" alt="QR code" class="w-72 h-72 bg-white" />
@@ -158,6 +172,8 @@
 		{#if data.canCancel}
 			<CancelPayment />
 		{/if}
+		<!-- The payment stays waiting, listed on the home screen of the terminal. -->
+		<a href="/pos/terminal" class="underline">{t('pos.terminal.back')}</a>
 	{:else if data.status === 'paid'}
 		<p class="text-3xl text-green-600 font-semibold">{t('pos.terminal.paid')}</p>
 		{#if data.overpayment && !data.overpayment.treatment}

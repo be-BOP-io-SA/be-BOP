@@ -3285,7 +3285,6 @@
 			"cancel": "Annuleren",
 			"cancelConfirm": "Deze betaling annuleren? Een betaling die daarna wordt verstuurd, wordt niet geregistreerd.",
 			"canceled": "De betaling is geannuleerd.",
-			"collectCard": "Kaart afrekenen",
 			"cardNeedsApp": "Kaartbetalingen gaan via de app be-BOP-pos.",
 			"whoAreYou": "Wie rekent af?",
 			"noOperator": "Nog geen enkele medewerker kan inloggen: geef een rol terminalrechten en een pincode of badge in ARM PoS.",
@@ -3305,7 +3304,9 @@
 			"methodCardStripe": "Stripe-kaart",
 			"cancelYes": "Ja, annuleren",
 			"cancelKeep": "Niet annuleren",
-			"pendingPayments": "Wachtende betalingen"
+			"pendingPayments": "Wachtende betalingen",
+			"presentCard": "Houd de kaart tegen de achterkant van het toestel.",
+			"retryCard": "Opnieuw proberen"
 		}
 	},
 	"product": {

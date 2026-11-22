@@ -3285,7 +3285,6 @@
 			"cancel": "Abbrechen",
 			"cancelConfirm": "Diese Zahlung abbrechen? Eine danach gesendete Zahlung wird nicht erfasst.",
 			"canceled": "Die Zahlung wurde abgebrochen.",
-			"collectCard": "Karte kassieren",
 			"cardNeedsApp": "Kartenzahlungen erfolgen mit der App be-BOP-pos.",
 			"whoAreYou": "Wer kassiert?",
 			"noOperator": "Noch kann sich kein Bediener anmelden: Geben Sie einer Rolle Terminalrechte und eine PIN oder einen Badge in ARM PoS.",
@@ -3305,7 +3304,9 @@
 			"methodCardStripe": "Stripe-Karte",
 			"cancelYes": "Ja, stornieren",
 			"cancelKeep": "Nicht stornieren",
-			"pendingPayments": "Ausstehende Zahlungen"
+			"pendingPayments": "Ausstehende Zahlungen",
+			"presentCard": "Halten Sie die Karte an die Rückseite des Geräts.",
+			"retryCard": "Erneut versuchen"
 		}
 	},
 	"product": {
