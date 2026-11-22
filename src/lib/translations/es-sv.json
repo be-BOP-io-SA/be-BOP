@@ -3331,7 +3331,9 @@
 			"retryCard": "Reintentar",
 			"menu": "Menú",
 			"closeMenu": "Cerrar el menú",
-			"noPendingPayments": "Ningún pago en espera."
+			"noPendingPayments": "Ningún pago en espera.",
+			"appVersion": "App {version}",
+			"serverVersion": "Servidor {version}"
 		}
 	},
 	"product": {

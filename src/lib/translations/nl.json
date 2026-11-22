@@ -3331,7 +3331,9 @@
 			"retryCard": "Opnieuw proberen",
 			"menu": "Menu",
 			"closeMenu": "Menu sluiten",
-			"noPendingPayments": "Geen wachtende betaling."
+			"noPendingPayments": "Geen wachtende betaling.",
+			"appVersion": "App {version}",
+			"serverVersion": "Server {version}"
 		}
 	},
 	"product": {

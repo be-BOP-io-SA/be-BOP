@@ -24,6 +24,8 @@ import { collections } from '$lib/server/database';
 import { getCurrentPosSession } from '$lib/server/pos-sessions';
 import { StripeAmountTooSmallError } from '$lib/server/stripe-terminal';
 import { ALL_PAYMENT_METHODS } from '$lib/server/payment-methods';
+import { PUBLIC_VERSION } from '$env/static/public';
+import { ORIGIN } from '$lib/server/env-config';
 
 /**
  * The payment screen of a paired terminal: amount, tip, the till's reference, then how the
@@ -32,15 +34,22 @@ import { ALL_PAYMENT_METHODS } from '$lib/server/payment-methods';
  */
 export async function load(event) {
 	const apiKey = await terminalKeyOf(event);
+	// Shown on the home screen, under the be-BOP logo.
+	const server = {
+		version: PUBLIC_VERSION ? PUBLIC_VERSION.slice(0, 7) : '—',
+		name: runtimeConfig.brandName,
+		host: new URL(ORIGIN).host
+	};
 
 	if (!apiKey) {
-		return { paired: false as const };
+		return { paired: false as const, server };
 	}
 
 	const operator = await operatorOfSession(event.cookies.get(POS_OPERATOR_COOKIE), apiKey._id);
 	if (!operator) {
 		return {
 			paired: true as const,
+			server,
 			deviceName: apiKey.name,
 			locked: true as const,
 			operators: (await terminalOperators()).map((o) => ({
@@ -60,6 +69,7 @@ export async function load(event) {
 
 	return {
 		paired: true as const,
+		server,
 		deviceName: apiKey.name,
 		locked: false as const,
 		tillClosed,

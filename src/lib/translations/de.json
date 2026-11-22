@@ -3331,7 +3331,9 @@
 			"retryCard": "Erneut versuchen",
 			"menu": "Menü",
 			"closeMenu": "Menü schließen",
-			"noPendingPayments": "Keine ausstehende Zahlung."
+			"noPendingPayments": "Keine ausstehende Zahlung.",
+			"appVersion": "App {version}",
+			"serverVersion": "Server {version}"
 		}
 	},
 	"product": {

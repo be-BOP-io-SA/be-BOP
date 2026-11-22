@@ -2,6 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n';
+	import TerminalBrand from './TerminalBrand.svelte';
 	import IconMenu from '~icons/ant-design/menu-outlined';
 	import IconClose from '~icons/ant-design/close-outlined';
 	import IconClock from '~icons/ant-design/clock-circle-outlined';
@@ -102,8 +103,10 @@
 	class="relative min-h-screen flex flex-col items-center justify-center gap-6 p-4 body-mainPlan"
 >
 	{#if !data.paired}
+		<TerminalBrand server={data.server} />
 		<p class="text-xl text-center">{t('pos.terminal.notPaired')}</p>
 	{:else if data.locked}
+		<TerminalBrand server={data.server} />
 		<p class="text-sm opacity-70">{data.deviceName}</p>
 		<form method="post" action="?/unlock" bind:this={badgeForm} class="hidden">
 			<input type="hidden" name="badge" bind:this={badgeInput} />
