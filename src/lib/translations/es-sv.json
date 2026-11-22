@@ -3290,7 +3290,7 @@
 				"failed": "No se ha podido crear el pago. Inténtelo de nuevo o elija otro medio.",
 				"wrongCredentials": "PIN incorrecto, o credencial desconocida o suspendida.",
 				"notAllowed": "No tiene derecho a hacer esto.",
-				"tillClosed": "Caja cerrada: abra la caja para cobrar.",
+				"tillClosed": "Sesión cerrada: abra la sesión para cobrar.",
 				"amountTooLow": "Importe demasiado bajo, elija otro medio de pago."
 			},
 			"continue": "Continuar",
@@ -3306,8 +3306,8 @@
 			"pin": "PIN",
 			"signIn": "Entrar",
 			"switchOperator": "Cambiar de operador",
-			"xTitle": "Informe X",
-			"noSession": "No hay ninguna sesión de caja abierta.",
+			"xTitle": "🧾 Estado de la sesión",
+			"noSession": "Ninguna sesión está abierta.",
 			"badges": "Credenciales",
 			"sendReceipt": "Enviar el recibo",
 			"sendBySms": "SMS",
@@ -3319,14 +3319,17 @@
 			"cancelYes": "Sí, cancelar",
 			"cancelKeep": "No cancelar",
 			"till": {
-				"title": "Caja",
-				"notEnabled": "La gestión de sesiones de caja no está activada (Settings > POS).",
-				"open": "Abrir la caja",
-				"close": "Cerrar la caja y emitir el ticket Z",
-				"closed": "Caja cerrada.",
+				"title": "Sesión",
+				"notEnabled": "La gestión de sesiones no está activada (Settings > POS).",
+				"open": "Abrir la sesión",
+				"close": "Cerrar la sesión",
+				"closed": "Sesión cerrada.",
 				"errors": {
-					"noSession": "No hay ninguna sesión de caja abierta."
-				}
+					"noSession": "Ninguna sesión está abierta."
+				},
+				"closeConfirm": "¿Cerrar la sesión? Terminará definitivamente.",
+				"closeYes": "Sí, cerrar la sesión",
+				"closeKeep": "Mantener la sesión abierta"
 			},
 			"presentCard": "Acerque la tarjeta a la parte trasera del dispositivo.",
 			"retryCard": "Reintentar",
@@ -3336,7 +3339,20 @@
 			"serverVersion": "Servidor {version}",
 			"changeMethod": "Cambiar de método",
 			"developerMode": "El modo desarrollador está activado: los pagos con tarjeta no están disponibles, el Tap to Pay de Stripe no funciona con él. Desactívelo en los ajustes del teléfono (Opciones de desarrollador).",
-			"smsDenied": "La aplicación no tiene permiso para enviar SMS. Permítalo en los ajustes del teléfono (permisos de la app)."
+			"smsDenied": "La aplicación no tiene permiso para enviar SMS. Permítalo en los ajustes del teléfono (permisos de la app).",
+			"about": {
+				"title": "Acerca de",
+				"beBop": "Versión de be-BOP",
+				"app": "Versión de la app",
+				"server": "Servidor",
+				"terminal": "Terminal",
+				"currency": "Moneda",
+				"methods": "Métodos de pago",
+				"sessions": "Sesiones",
+				"sessionRequired": "Sesión obligatoria para cobrar",
+				"yes": "Sí",
+				"no": "No"
+			}
 		}
 	},
 	"product": {

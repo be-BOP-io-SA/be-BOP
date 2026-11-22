@@ -9,7 +9,8 @@ import {
 	closePosSession,
 	getCurrentPosSession,
 	getLastClosedSession,
-	openPosSession
+	openPosSession,
+	terminalTicketText
 } from '$lib/server/pos-sessions';
 import { runtimeConfig } from '$lib/server/runtime-config';
 
@@ -80,12 +81,13 @@ export const actions = {
 			.reduce((sum, income) => sum + income.amount, 0);
 		const expected =
 			session.cashOpening.amount + cashIncome - (await calculateTotalCashback(session)).amount;
-		const { zTicketText } = await closePosSession({
+		const { session: closed } = await closePosSession({
 			sessionId: session._id,
 			cashClosing: { amount: Math.round(expected * 100) / 100, currency },
 			outcomes: [{ category: 'bank-deposit', amount: 0, currency }],
 			user
 		});
-		return { zTicket: zTicketText };
+		// The ticket of the terminals, not the one of the shop's tills, which counts cash.
+		return { zTicket: await terminalTicketText(closed, 'Z') };
 	}
 };

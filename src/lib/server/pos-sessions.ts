@@ -127,6 +127,67 @@ export async function calculateTerminalReconciliation(
 	return reconciliation;
 }
 
+/**
+ * The X ticket (during the session) or the Z ticket (at its closing) of the terminals: what they
+ * took, by payment method, with the tips and the till references. A terminal takes no cash, so
+ * there is no cash, bank deposit or outcome in it; the tickets of the shop's own tills keep theirs.
+ */
+export async function terminalTicketText(session: PosSession, kind: 'X' | 'Z'): Promise<string> {
+	const currency = runtimeConfig.accountingCurrency ?? runtimeConfig.mainCurrency;
+	const digits = FRACTION_DIGITS_PER_CURRENCY[currency];
+	const payments = await sessionTerminalPayments(session);
+	const reconciliation = await calculateTerminalReconciliation(session);
+
+	let total = 0;
+	const methods = new Map<string, { amount: number; count: number }>();
+	for (const posPayment of payments) {
+		const { payment } = posPayment;
+		const price = payment.currencySnapshot.main.price;
+		const amount = toCurrency(currency, price.amount, price.currency);
+		total += amount;
+		const label =
+			payment.processor && payment.processor !== payment.method
+				? `${payment.method} / ${payment.processor}`
+				: payment.method;
+		const entry = methods.get(label) ?? { amount: 0, count: 0 };
+		entry.amount += amount;
+		entry.count += 1;
+		methods.set(label, entry);
+	}
+
+	const by = (user: PosSessionUser) => user.userAlias || user.userLogin || user.userId;
+	const methodLines = [...methods.entries()]
+		.map(
+			([label, entry]) =>
+				`  - ${label} : ${entry.amount.toFixed(digits)} ${currency} (${entry.count})`
+		)
+		.join('\n');
+	const refLines = reconciliation.refs
+		.map((r) => `  - ${r.ref} : ${r.amount.toFixed(digits)} ${currency} (${r.count})`)
+		.join('\n');
+
+	return `${runtimeConfig.brandName} terminal ${kind} ticket
+Opening time : ${session.openedAt.toLocaleString()} by ${by(session.openedBy)}
+${
+	kind === 'Z' && session.closedAt && session.closedBy
+		? `Closing time : ${session.closedAt.toLocaleString()} by ${by(session.closedBy)}`
+		: `Generated at : ${new Date().toLocaleString()}`
+}
+
+Payments : ${payments.length}
+Total taken : ${total.toFixed(digits)} ${currency}
+  - of which tips : ${reconciliation.tips.toFixed(digits)} ${currency}
+
+By payment method :
+${methodLines || '  - none'}
+
+By till reference :
+${refLines || '  - none'}
+To reconcile (no till reference) : ${
+		reconciliation.toReconcile.count
+	}, ${reconciliation.toReconcile.amount.toFixed(digits)} ${currency}`;
+}
+
 function terminalReconciliationText(reconciliation: PosSessionTerminalReconciliation): string {
 	const { currency } = reconciliation;
 	const digits = FRACTION_DIGITS_PER_CURRENCY[currency];
@@ -343,6 +404,8 @@ export async function closePosSession(params: {
 export async function generateXTicket(params: {
 	sessionId: ObjectId;
 	user: PosSessionUser;
+	/** The ticket of the terminals, without cash, instead of the one of the shop's tills. */
+	terminal?: boolean;
 }): Promise<string> {
 	const session = await collections.posSessions.findOne({ _id: params.sessionId });
 
@@ -371,6 +434,10 @@ export async function generateXTicket(params: {
 			}
 		}
 	);
+
+	if (params.terminal) {
+		return await terminalTicketText(session, 'X');
+	}
 
 	return (
 		generateXTicketText(session, dailyIncomes) + terminalReconciliationText(terminalReconciliation)

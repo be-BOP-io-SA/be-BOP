@@ -3290,7 +3290,7 @@
 				"failed": "Non è stato possibile creare il pagamento. Riprovate o scegliete un altro metodo.",
 				"wrongCredentials": "PIN errato, o badge sconosciuto o sospeso.",
 				"notAllowed": "Non avete il diritto di farlo.",
-				"tillClosed": "Cassa chiusa: apri la cassa per incassare.",
+				"tillClosed": "Sessione chiusa: apri la sessione per incassare.",
 				"amountTooLow": "Importo troppo basso, scegli un altro metodo di pagamento."
 			},
 			"continue": "Continua",
@@ -3306,8 +3306,8 @@
 			"pin": "PIN",
 			"signIn": "Accedi",
 			"switchOperator": "Cambia operatore",
-			"xTitle": "Report X",
-			"noSession": "Nessuna sessione di cassa è aperta.",
+			"xTitle": "🧾 Stato della sessione",
+			"noSession": "Nessuna sessione è aperta.",
 			"badges": "Badge",
 			"sendReceipt": "Inviare la ricevuta",
 			"sendBySms": "SMS",
@@ -3319,14 +3319,17 @@
 			"cancelYes": "Sì, annulla",
 			"cancelKeep": "Non annullare",
 			"till": {
-				"title": "Cassa",
-				"notEnabled": "La gestione delle sessioni di cassa non è attivata (Settings > POS).",
-				"open": "Apri la cassa",
-				"close": "Chiudi la cassa ed emetti lo scontrino Z",
-				"closed": "Cassa chiusa.",
+				"title": "Sessione",
+				"notEnabled": "La gestione delle sessioni non è attivata (Settings > POS).",
+				"open": "Apri la sessione",
+				"close": "Chiudi la sessione",
+				"closed": "Sessione chiusa.",
 				"errors": {
-					"noSession": "Nessuna sessione di cassa è aperta."
-				}
+					"noSession": "Nessuna sessione è aperta."
+				},
+				"closeConfirm": "Chiudere la sessione? Terminerà definitivamente.",
+				"closeYes": "Sì, chiudi la sessione",
+				"closeKeep": "Mantieni la sessione aperta"
 			},
 			"presentCard": "Avvicina la carta al retro del dispositivo.",
 			"retryCard": "Riprova",
@@ -3336,7 +3339,20 @@
 			"serverVersion": "Server {version}",
 			"changeMethod": "Cambia metodo",
 			"developerMode": "La modalità sviluppatore è attiva: i pagamenti con carta non sono disponibili, il Tap to Pay di Stripe non funziona con essa. Disattivala nelle impostazioni del telefono (Opzioni sviluppatore).",
-			"smsDenied": "L'app non è autorizzata a inviare SMS. Consenti l'accesso nelle impostazioni del telefono (autorizzazioni dell'app)."
+			"smsDenied": "L'app non è autorizzata a inviare SMS. Consenti l'accesso nelle impostazioni del telefono (autorizzazioni dell'app).",
+			"about": {
+				"title": "Informazioni",
+				"beBop": "Versione di be-BOP",
+				"app": "Versione dell'app",
+				"server": "Server",
+				"terminal": "Terminale",
+				"currency": "Valuta",
+				"methods": "Metodi di pagamento",
+				"sessions": "Sessioni",
+				"sessionRequired": "Sessione obbligatoria per incassare",
+				"yes": "Sì",
+				"no": "No"
+			}
 		}
 	},
 	"product": {

@@ -3290,7 +3290,7 @@
 				"failed": "The payment could not be created. Try again, or choose another method.",
 				"wrongCredentials": "Wrong PIN, or unknown or suspended badge.",
 				"notAllowed": "You are not allowed to do this.",
-				"tillClosed": "Till closed: open the till to take payments.",
+				"tillClosed": "Session closed: open the session to take payments.",
 				"amountTooLow": "Amount too low, please choose another payment method."
 			},
 			"continue": "Continue",
@@ -3306,8 +3306,8 @@
 			"pin": "PIN",
 			"signIn": "Sign in",
 			"switchOperator": "Switch operator",
-			"xTitle": "X report",
-			"noSession": "No till session is open.",
+			"xTitle": "🧾 Session status",
+			"noSession": "No session is open.",
 			"badges": "Badges",
 			"sendReceipt": "Send the receipt",
 			"sendBySms": "SMS",
@@ -3319,14 +3319,17 @@
 			"cancelYes": "Yes, cancel",
 			"cancelKeep": "Do not cancel",
 			"till": {
-				"title": "Till",
-				"notEnabled": "Till session management is not enabled (Settings > POS).",
-				"open": "Open the till",
-				"close": "Close the till and print the Z ticket",
-				"closed": "Till closed.",
+				"title": "Session",
+				"notEnabled": "Session management is not enabled (Settings > POS).",
+				"open": "Open the session",
+				"close": "Close the session",
+				"closed": "Session closed.",
 				"errors": {
-					"noSession": "No till session is open."
-				}
+					"noSession": "No session is open."
+				},
+				"closeConfirm": "Close the session? It will end for good.",
+				"closeYes": "Yes, close the session",
+				"closeKeep": "Keep the session open"
 			},
 			"presentCard": "Hold the card against the back of the device.",
 			"retryCard": "Try again",
@@ -3336,7 +3339,20 @@
 			"serverVersion": "Server {version}",
 			"changeMethod": "Change method",
 			"developerMode": "Developer mode is on: card payments are unavailable, Stripe's Tap to Pay does not work with it. Turn it off in the phone settings (Developer options).",
-			"smsDenied": "The app is not allowed to send SMS. Allow it in the phone settings (app permissions)."
+			"smsDenied": "The app is not allowed to send SMS. Allow it in the phone settings (app permissions).",
+			"about": {
+				"title": "About",
+				"beBop": "be-BOP version",
+				"app": "App version",
+				"server": "Server",
+				"terminal": "Terminal",
+				"currency": "Currency",
+				"methods": "Payment methods",
+				"sessions": "Sessions",
+				"sessionRequired": "Session required to take payments",
+				"yes": "Yes",
+				"no": "No"
+			}
 		}
 	},
 	"product": {

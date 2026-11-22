@@ -22,7 +22,8 @@ export async function load(event) {
 	return {
 		ticket: await generateXTicket({
 			sessionId: session._id,
-			user: { userId: operator._id, userLogin: operator.alias, userAlias: operator.alias }
+			user: { userId: operator._id, userLogin: operator.alias, userAlias: operator.alias },
+			terminal: true
 		})
 	};
 }

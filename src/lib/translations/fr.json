@@ -3290,7 +3290,7 @@
 				"failed": "Le paiement n'a pas pu être créé. Réessayez, ou choisissez un autre moyen.",
 				"wrongCredentials": "PIN erroné, ou badge inconnu ou suspendu.",
 				"notAllowed": "Vous n'avez pas le droit de faire cela.",
-				"tillClosed": "Caisse fermée : ouvrez la caisse pour encaisser.",
+				"tillClosed": "Session fermée : ouvrez la session pour encaisser.",
 				"amountTooLow": "Montant trop faible, merci de changer de mode de paiement."
 			},
 			"continue": "Continuer",
@@ -3306,8 +3306,8 @@
 			"pin": "PIN",
 			"signIn": "Se connecter",
 			"switchOperator": "Changer d'opérateur",
-			"xTitle": "X",
-			"noSession": "Aucune session de caisse n'est ouverte.",
+			"xTitle": "🧾 État de la session",
+			"noSession": "Aucune session n'est ouverte.",
 			"badges": "Badges",
 			"sendReceipt": "Envoyer le reçu",
 			"sendBySms": "SMS",
@@ -3319,14 +3319,17 @@
 			"cancelYes": "Oui, annuler",
 			"cancelKeep": "Ne pas annuler",
 			"till": {
-				"title": "Caisse",
-				"notEnabled": "La gestion des sessions de caisse n'est pas activée (Settings > POS).",
-				"open": "Ouvrir la caisse",
-				"close": "Clôturer la caisse et éditer le ticket Z",
-				"closed": "Caisse clôturée.",
+				"title": "Session",
+				"notEnabled": "La gestion des sessions n'est pas activée (Settings > POS).",
+				"open": "Ouvrir la session",
+				"close": "Clôturer la session",
+				"closed": "Session clôturée.",
 				"errors": {
-					"noSession": "Aucune session de caisse n'est ouverte."
-				}
+					"noSession": "Aucune session n'est ouverte."
+				},
+				"closeConfirm": "Clôturer la session ? Elle sera terminée, sans retour possible.",
+				"closeYes": "Oui, clôturer la session",
+				"closeKeep": "Garder la session ouverte"
 			},
 			"presentCard": "Présentez la carte au dos de l’appareil.",
 			"retryCard": "Réessayer",
@@ -3336,7 +3339,20 @@
 			"serverVersion": "Serveur {version}",
 			"changeMethod": "Changer de méthode",
 			"developerMode": "Le mode développeur est activé : le paiement par carte est indisponible, le Tap to Pay de Stripe ne fonctionne pas avec. Désactivez-le dans les réglages du téléphone (Options pour les développeurs).",
-			"smsDenied": "L'application n'a pas l'autorisation d'envoyer des SMS. Autorisez-la dans les réglages du téléphone (autorisations de l'app)."
+			"smsDenied": "L'application n'a pas l'autorisation d'envoyer des SMS. Autorisez-la dans les réglages du téléphone (autorisations de l'app).",
+			"about": {
+				"title": "À propos",
+				"beBop": "Version de be-BOP",
+				"app": "Version de l'app",
+				"server": "Serveur",
+				"terminal": "Terminal",
+				"currency": "Devise",
+				"methods": "Moyens de paiement",
+				"sessions": "Sessions",
+				"sessionRequired": "Session obligatoire pour encaisser",
+				"yes": "Oui",
+				"no": "Non"
+			}
 		}
 	},
 	"product": {

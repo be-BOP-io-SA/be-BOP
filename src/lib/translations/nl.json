@@ -3290,7 +3290,7 @@
 				"failed": "De betaling kon niet worden aangemaakt. Probeer het opnieuw of kies een andere methode.",
 				"wrongCredentials": "Verkeerde pincode, of onbekende of geblokkeerde badge.",
 				"notAllowed": "U mag dit niet doen.",
-				"tillClosed": "Kassa gesloten: open de kassa om af te rekenen.",
+				"tillClosed": "Sessie afgesloten: open de sessie om te betalen.",
 				"amountTooLow": "Bedrag te laag, kies een andere betaalmethode."
 			},
 			"continue": "Doorgaan",
@@ -3306,8 +3306,8 @@
 			"pin": "Pincode",
 			"signIn": "Inloggen",
 			"switchOperator": "Andere medewerker",
-			"xTitle": "X-rapport",
-			"noSession": "Er is geen kassasessie geopend.",
+			"xTitle": "🧾 Sessiestatus",
+			"noSession": "Er is geen sessie geopend.",
 			"badges": "Badges",
 			"sendReceipt": "Bonnetje versturen",
 			"sendBySms": "SMS",
@@ -3319,14 +3319,17 @@
 			"cancelYes": "Ja, annuleren",
 			"cancelKeep": "Niet annuleren",
 			"till": {
-				"title": "Kassa",
-				"notEnabled": "Het beheer van kassasessies is niet ingeschakeld (Settings > POS).",
-				"open": "Kassa openen",
-				"close": "Kassa afsluiten en Z-ticket maken",
-				"closed": "Kassa afgesloten.",
+				"title": "Sessie",
+				"notEnabled": "Het sessiebeheer is niet geactiveerd (Settings > POS).",
+				"open": "Sessie openen",
+				"close": "Sessie afsluiten",
+				"closed": "Sessie afgesloten.",
 				"errors": {
-					"noSession": "Er is geen kassasessie geopend."
-				}
+					"noSession": "Er is geen sessie geopend."
+				},
+				"closeConfirm": "Sessie afsluiten? Ze wordt definitief beëindigd.",
+				"closeYes": "Ja, sessie afsluiten",
+				"closeKeep": "Sessie open houden"
 			},
 			"presentCard": "Houd de kaart tegen de achterkant van het toestel.",
 			"retryCard": "Opnieuw proberen",
@@ -3336,7 +3339,20 @@
 			"serverVersion": "Server {version}",
 			"changeMethod": "Methode wijzigen",
 			"developerMode": "De ontwikkelaarsmodus staat aan: kaartbetalingen zijn niet beschikbaar, Stripe's Tap to Pay werkt er niet mee. Zet hem uit in de telefooninstellingen (Ontwikkelaarsopties).",
-			"smsDenied": "De app mag geen sms'jes versturen. Sta het toe in de telefooninstellingen (app-machtigingen)."
+			"smsDenied": "De app mag geen sms'jes versturen. Sta het toe in de telefooninstellingen (app-machtigingen).",
+			"about": {
+				"title": "Over",
+				"beBop": "be-BOP-versie",
+				"app": "App-versie",
+				"server": "Server",
+				"terminal": "Terminal",
+				"currency": "Valuta",
+				"methods": "Betaalmethoden",
+				"sessions": "Sessies",
+				"sessionRequired": "Sessie vereist om te betalen",
+				"yes": "Ja",
+				"no": "Nee"
+			}
 		}
 	},
 	"product": {

@@ -3290,7 +3290,7 @@
 				"failed": "Die Zahlung konnte nicht erstellt werden. Versuchen Sie es erneut oder wählen Sie eine andere Zahlungsart.",
 				"wrongCredentials": "Falsche PIN oder unbekannter bzw. gesperrter Badge.",
 				"notAllowed": "Dazu sind Sie nicht berechtigt.",
-				"tillClosed": "Kasse geschlossen: Öffnen Sie die Kasse, um zu kassieren.",
+				"tillClosed": "Sitzung beendet: Öffnen Sie die Sitzung, um zu kassieren.",
 				"amountTooLow": "Betrag zu niedrig, bitte wählen Sie eine andere Zahlungsart."
 			},
 			"continue": "Weiter",
@@ -3306,8 +3306,8 @@
 			"pin": "PIN",
 			"signIn": "Anmelden",
 			"switchOperator": "Bediener wechseln",
-			"xTitle": "X-Bericht",
-			"noSession": "Keine Kassensitzung ist geöffnet.",
+			"xTitle": "🧾 Sitzungsstatus",
+			"noSession": "Keine Sitzung ist geöffnet.",
 			"badges": "Badges",
 			"sendReceipt": "Beleg senden",
 			"sendBySms": "SMS",
@@ -3319,14 +3319,17 @@
 			"cancelYes": "Ja, stornieren",
 			"cancelKeep": "Nicht stornieren",
 			"till": {
-				"title": "Kasse",
-				"notEnabled": "Die Verwaltung der Kassensitzungen ist nicht aktiviert (Settings > POS).",
-				"open": "Kasse öffnen",
-				"close": "Kasse abschließen und Z-Bon erstellen",
-				"closed": "Kasse abgeschlossen.",
+				"title": "Sitzung",
+				"notEnabled": "Die Sitzungsverwaltung ist nicht aktiviert (Settings > POS).",
+				"open": "Sitzung öffnen",
+				"close": "Sitzung beenden",
+				"closed": "Sitzung beendet.",
 				"errors": {
-					"noSession": "Keine Kassensitzung ist geöffnet."
-				}
+					"noSession": "Keine Sitzung ist geöffnet."
+				},
+				"closeConfirm": "Sitzung beenden? Sie wird endgültig beendet.",
+				"closeYes": "Ja, Sitzung beenden",
+				"closeKeep": "Sitzung offen lassen"
 			},
 			"presentCard": "Halten Sie die Karte an die Rückseite des Geräts.",
 			"retryCard": "Erneut versuchen",
@@ -3336,7 +3339,20 @@
 			"serverVersion": "Server {version}",
 			"changeMethod": "Methode ändern",
 			"developerMode": "Der Entwicklermodus ist aktiv: Kartenzahlungen sind nicht verfügbar, Stripes Tap to Pay funktioniert damit nicht. Deaktivieren Sie ihn in den Telefoneinstellungen (Entwickleroptionen).",
-			"smsDenied": "Die App darf keine SMS senden. Erlauben Sie es in den Telefoneinstellungen (App-Berechtigungen)."
+			"smsDenied": "Die App darf keine SMS senden. Erlauben Sie es in den Telefoneinstellungen (App-Berechtigungen).",
+			"about": {
+				"title": "Über",
+				"beBop": "be-BOP-Version",
+				"app": "App-Version",
+				"server": "Server",
+				"terminal": "Terminal",
+				"currency": "Währung",
+				"methods": "Zahlungsarten",
+				"sessions": "Sitzungen",
+				"sessionRequired": "Sitzung zum Kassieren erforderlich",
+				"yes": "Ja",
+				"no": "Nein"
+			}
 		}
 	},
 	"product": {

@@ -6,7 +6,7 @@
 	const { t } = useI18n();
 </script>
 
-<main class="min-h-screen flex flex-col items-center gap-4 p-4 body-mainPlan">
+<main class="flex-1 flex flex-col items-center gap-4 p-4 body-mainPlan">
 	<h1 class="text-2xl">{t('pos.terminal.xTitle')}</h1>
 	{#if data.ticket}
 		<pre class="whitespace-pre-wrap text-sm w-full max-w-md">{data.ticket}</pre>
