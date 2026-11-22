@@ -3,11 +3,6 @@
 	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n';
 	import TerminalBrand from './TerminalBrand.svelte';
-	import IconMenu from '~icons/ant-design/menu-outlined';
-	import IconClose from '~icons/ant-design/close-outlined';
-	import IconWallet from '~icons/ant-design/wallet-outlined';
-	import IconTicket from '~icons/ant-design/file-text-outlined';
-	import IconSwitch from '~icons/ant-design/user-switch-outlined';
 	import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 
 	export let data;
@@ -57,8 +52,6 @@
 			amountDigits = next;
 		}
 	}
-
-	let menuOpen = false;
 
 	// Tap to Pay does not work on a phone in developer mode: the app says whether it is on, and the
 	// card is then not offered.
@@ -128,9 +121,7 @@
 	}
 </script>
 
-<main
-	class="relative min-h-screen flex flex-col items-center justify-center gap-6 p-4 body-mainPlan"
->
+<main class="flex-1 flex flex-col items-center justify-center gap-6 p-4 body-mainPlan">
 	{#if developerMode && data.paired && data.cardConfigured}
 		<p class="text-red-500 text-center max-w-sm" role="alert">{t('pos.terminal.developerMode')}</p>
 	{/if}
@@ -141,7 +132,7 @@
 	{:else if data.locked}
 		<TerminalBrand server={data.server} />
 		<p class="text-sm opacity-70">{data.deviceName}</p>
-		<form method="post" action="?/unlock" bind:this={badgeForm} class="hidden">
+		<form method="post" action="?/unlock" bind:this={badgeForm} class="hidden" use:enhance>
 			<input type="hidden" name="badge" bind:this={badgeInput} />
 		</form>
 		{#if form?.error}
@@ -173,6 +164,7 @@
 				method="post"
 				action="?/unlock"
 				class="flex flex-col items-center gap-4 w-full max-w-sm"
+				use:enhance
 			>
 				<p class="text-xl">{data.operators.find((o) => o.id === operatorId)?.alias}</p>
 				<input type="hidden" name="operatorId" value={operatorId} />
@@ -206,58 +198,6 @@
 			</form>
 		{/if}
 	{:else}
-		<header class="absolute top-0 inset-x-0 flex items-center justify-between p-4">
-			<span class="text-sm opacity-70">{data.deviceName} · {data.operator.alias}</span>
-			<button
-				type="button"
-				aria-label={t('pos.terminal.menu')}
-				aria-expanded={menuOpen}
-				on:click={() => (menuOpen = true)}
-			>
-				<IconMenu class="w-8 h-8" />
-			</button>
-		</header>
-
-		{#if menuOpen}
-			<nav class="fixed inset-0 z-10 flex flex-col gap-3 p-4 body-mainPlan">
-				<button
-					type="button"
-					class="self-end"
-					aria-label={t('pos.terminal.closeMenu')}
-					on:click={() => (menuOpen = false)}
-				>
-					<IconClose class="w-8 h-8" />
-				</button>
-				{#if data.tillLink}
-					<a
-						href="/pos/terminal/till"
-						class="btn bg-white text-black border border-gray-300 disabled:opacity-30 flex items-center gap-3 text-xl py-4"
-					>
-						<IconWallet class="w-6 h-6" />
-						<span class="grow text-left">{t('pos.terminal.till.title')}</span>
-					</a>
-				{/if}
-				{#if data.operator.actions.includes('xReport')}
-					<a
-						href="/pos/terminal/x"
-						class="btn bg-white text-black border border-gray-300 disabled:opacity-30 flex items-center gap-3 text-xl py-4"
-					>
-						<IconTicket class="w-6 h-6" />
-						<span class="grow text-left">{t('pos.terminal.xTitle')}</span>
-					</a>
-				{/if}
-				<form method="post" action="?/lock">
-					<button
-						type="submit"
-						class="btn bg-white text-black border border-gray-300 disabled:opacity-30 w-full flex items-center gap-3 text-xl py-4"
-					>
-						<IconSwitch class="w-6 h-6" />
-						<span class="grow text-left">{t('pos.terminal.switchOperator')}</span>
-					</button>
-				</form>
-			</nav>
-		{/if}
-
 		{#if data.tillClosed}
 			<p class="text-red-500 text-center" role="alert">{t('pos.terminal.errors.tillClosed')}</p>
 		{/if}

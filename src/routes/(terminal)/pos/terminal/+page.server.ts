@@ -96,7 +96,6 @@ export async function load(event) {
 		locked: false as const,
 		cardConfigured: terminalPaymentMethods().includes('card'),
 		tillClosed,
-		tillLink: mayOpenTill,
 		retry: retried && {
 			amount: retried.amount.amount,
 			tip: retried.tip.amount,

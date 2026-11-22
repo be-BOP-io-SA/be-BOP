@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount, tick } from 'svelte';
+	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n';
@@ -145,9 +146,7 @@
 	}
 </script>
 
-<main
-	class="min-h-screen flex flex-col items-center justify-center gap-4 p-4 body-mainPlan text-center"
->
+<main class="flex-1 flex flex-col items-center justify-center gap-4 p-4 body-mainPlan text-center">
 	<p class="text-sm opacity-70">#{data.number}{data.externalRef ? ` · ${data.externalRef}` : ''}</p>
 	<PriceTag
 		class="text-4xl font-semibold"
@@ -201,7 +200,12 @@
 	{:else if data.status === 'paid'}
 		<p class="text-3xl text-green-600 font-semibold">{t('pos.terminal.paid')}</p>
 		{#if data.overpayment && !data.overpayment.treatment}
-			<form method="post" action="?/overpayment" class="flex flex-col gap-3 w-full max-w-sm">
+			<form
+				method="post"
+				action="?/overpayment"
+				class="flex flex-col gap-3 w-full max-w-sm"
+				use:enhance
+			>
 				<p class="text-lg">
 					{t('pos.terminal.overpaid')}
 					<PriceTag
@@ -215,7 +219,12 @@
 					{t('pos.terminal.keepAsTip')}
 				</button>
 				{#if data.canRefund}
-					<button type="submit" name="treatment" value="refund" class="btn btn-gray text-xl py-4">
+					<button
+						type="submit"
+						name="treatment"
+						value="refund"
+						class="btn bg-white text-black border border-gray-300 text-xl py-4"
+					>
 						{t('pos.terminal.refundOverpayment')}
 					</button>
 				{/if}
@@ -238,7 +247,7 @@
 				{/if}
 				<div class="flex items-end gap-2">
 					{#if $page.data.availableContactModes.includes('email')}
-						<form method="post" action="?/receipt" class="flex items-end gap-2 grow">
+						<form method="post" action="?/receipt" class="flex items-end gap-2 grow" use:enhance>
 							<NotificationAddressInput
 								class="form-label grow text-left"
 								modes={['email']}
@@ -253,11 +262,11 @@
 						</form>
 					{/if}
 					{#if cardBridge?.scanQr && $page.data.availableContactModes.includes('nostr')}
-						<form method="post" action="?/receipt" bind:this={nostrReceiptForm}>
+						<form method="post" action="?/receipt" bind:this={nostrReceiptForm} use:enhance>
 							<input type="hidden" name="address" value={scannedNpub} />
 							<button
 								type="button"
-								class="btn btn-gray text-xl"
+								class="btn bg-white text-black border border-gray-300 text-xl"
 								title={t('pos.terminal.scan')}
 								aria-label={t('pos.terminal.scan')}
 								on:click={scanNpub}>📷</button
@@ -276,7 +285,7 @@
 						/>
 						<button
 							type="submit"
-							class="btn btn-gray text-xl"
+							class="btn bg-white text-black border border-gray-300 text-xl"
 							title={t('pos.terminal.sendBySms')}
 							aria-label={t('pos.terminal.sendBySms')}>💬</button
 						>
@@ -301,7 +310,10 @@
 		<a href="/pos/terminal?retry={data.id}" class="btn body-mainCTA w-full max-w-sm text-xl py-4">
 			{t('pos.terminal.changeMethod')}
 		</a>
-		<a href="/pos/terminal" class="btn btn-gray w-full max-w-sm text-xl py-4">
+		<a
+			href="/pos/terminal"
+			class="btn bg-white text-black border border-gray-300 w-full max-w-sm text-xl py-4"
+		>
 			{t('pos.terminal.newPayment')}
 		</a>
 	{/if}
