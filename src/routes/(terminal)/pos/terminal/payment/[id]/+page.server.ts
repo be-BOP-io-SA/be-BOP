@@ -33,6 +33,9 @@ function takesBoltCard(payment: { method: string; processor?: string; address?: 
 	);
 }
 
+/** How long the screen waits for the processor before it shows the payment as last known. */
+const CHECK_TIMEOUT_MS = 5000;
+
 /** The payment, if this terminal took it. */
 async function ownPayment(event: RequestEvent<{ id: string }>) {
 	const apiKey = await terminalKeyOf(event);
@@ -59,7 +62,13 @@ async function operatorActions(event: RequestEvent<{ id: string }>, apiKeyId: Ob
 export async function load(event) {
 	// Asked again on each refresh of the screen, so the terminal does not wait for the poller.
 	const own = await ownPayment(event);
-	const posPayment = await checkPosPayment(own.posPayment).catch(() => own.posPayment);
+	// A processor that does not answer must not hold the screen: it then shows what is known.
+	const posPayment = await Promise.race([
+		checkPosPayment(own.posPayment),
+		new Promise<never>((_, reject) =>
+			setTimeout(() => reject(new Error('timeout')), CHECK_TIMEOUT_MS)
+		)
+	]).catch(() => own.posPayment);
 	const { payment } = posPayment;
 	const actions = await operatorActions(event, own.apiKey._id);
 
