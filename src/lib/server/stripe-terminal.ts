@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { runtimeConfig } from './runtime-config';
+import { persistConfigElement } from './utils/persistConfig';
 import { toUrlEncoded } from '$lib/utils/toUrlEncoded';
 
 /**
@@ -60,17 +61,69 @@ function stripeErrorOf(body: string): { code?: string; type?: string } {
 	}
 }
 
+/**
+ * Cards can be taken once the shop has a Stripe key and either a Location or the address to make
+ * one at: the Location is created when a terminal first asks for it.
+ */
 export function isStripeTerminalReady(): boolean {
-	return !!runtimeConfig.stripe.secretKey && !!runtimeConfig.stripeTerminalLocationId;
+	return (
+		!!runtimeConfig.stripe.secretKey &&
+		(!!runtimeConfig.stripeTerminalLocationId || !!runtimeConfig.sellerIdentity?.address)
+	);
 }
 
-/** A short-lived token the Stripe Terminal SDK of the device connects with. */
-export async function createConnectionToken(): Promise<string> {
+/** The shop has no address to make a Stripe Location at: it is filled in under Identity. */
+export class StripeLocationAddressMissingError extends Error {}
+
+let ensuringLocation: Promise<string> | undefined;
+
+/**
+ * The Location the terminals connect to. The saved one if the Stripe account has it; else the
+ * only Location of the account; else a new one at the address of the shop. Locations belong to a
+ * Stripe account, so changing the keys leaves the saved one unknown to the new account.
+ */
+export function ensureLocation(): Promise<string> {
+	ensuringLocation ??= resolveLocation().finally(() => {
+		ensuringLocation = undefined;
+	});
+	return ensuringLocation;
+}
+
+async function resolveLocation(): Promise<string> {
+	const locations = await listLocations();
+	const saved = runtimeConfig.stripeTerminalLocationId;
+	if (saved && locations.some((location) => location.id === saved)) {
+		return saved;
+	}
+
+	let id: string;
+	if (locations.length === 1) {
+		id = locations[0].id;
+	} else {
+		const address = runtimeConfig.sellerIdentity?.address;
+		if (!address) {
+			throw new StripeLocationAddressMissingError();
+		}
+		id = await createLocation({
+			displayName: runtimeConfig.sellerIdentity?.businessName || runtimeConfig.brandName,
+			address: {
+				line1: address.street,
+				city: address.city,
+				postalCode: address.zip,
+				country: address.country
+			}
+		});
+	}
+	runtimeConfig.stripeTerminalLocationId = id;
+	await persistConfigElement('stripeTerminalLocationId', id);
+	return id;
+}
+
+/** A short-lived token the Stripe Terminal SDK of the device connects with, for a Location. */
+export async function createConnectionToken(location: string): Promise<string> {
 	const json = await stripe('terminal/connection_tokens', {
 		method: 'POST',
-		body: runtimeConfig.stripeTerminalLocationId
-			? { location: runtimeConfig.stripeTerminalLocationId }
-			: {}
+		body: { location }
 	});
 	return z.object({ secret: z.string() }).parse(json).secret;
 }
