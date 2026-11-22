@@ -241,13 +241,9 @@
 			</div>
 			<section class="flex flex-col gap-2 w-full max-w-sm">
 				<p class="font-semibold">{t('pos.terminal.sendReceipt')}</p>
-				{#if form && 'receiptSent' in form}
-					<p class="text-green-600">{t('pos.terminal.receiptSent')}</p>
-				{:else if form && 'receiptError' in form}
-					<p class="text-red-500">{t(`login.error.${form.receiptError}`)}</p>
-				{/if}
 				{#if $page.data.availableContactModes.includes('email')}
 					<form method="post" action="?/receipt" class="flex items-end gap-2" use:enhance>
+						<input type="hidden" name="channel" value="email" />
 						<NotificationAddressInput
 							class="form-label grow text-left"
 							modes={['email']}
@@ -260,10 +256,18 @@
 							aria-label={t('pos.terminal.sendReceipt')}>📤</button
 						>
 					</form>
+					{#if form && 'channel' in form && form.channel === 'email'}
+						{#if 'receiptSent' in form}
+							<p class="text-green-600" role="status">{t('pos.terminal.receiptSent')}</p>
+						{:else if 'receiptError' in form}
+							<p class="text-red-500">{t(`login.error.${form.receiptError}`)}</p>
+						{/if}
+					{/if}
 				{/if}
 				<!-- Its own button: it opens the camera on the QR of the customer's Nostr profile, and sends. -->
 				{#if cardBridge?.scanQr && $page.data.availableContactModes.includes('nostr')}
 					<form method="post" action="?/receipt" bind:this={nostrReceiptForm} use:enhance>
+						<input type="hidden" name="channel" value="nostr" />
 						<input type="hidden" name="address" value={scannedNpub} />
 						<button
 							type="button"
@@ -274,6 +278,13 @@
 							{t('pos.terminal.sendByNostr')}
 						</button>
 					</form>
+					{#if form && 'channel' in form && form.channel === 'nostr'}
+						{#if 'receiptSent' in form}
+							<p class="text-green-600" role="status">{t('pos.terminal.receiptSent')}</p>
+						{:else if 'receiptError' in form}
+							<p class="text-red-500">{t(`login.error.${form.receiptError}`)}</p>
+						{/if}
+					{/if}
 				{/if}
 				{#if cardBridge?.sendSms && smsAvailable}
 					<form class="flex gap-2" on:submit|preventDefault={sendSms}>

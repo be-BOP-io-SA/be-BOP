@@ -72,20 +72,20 @@ export const actions = {
 		if (posPayment.payment.status !== 'paid') {
 			throw error(400, 'Payment is not paid');
 		}
+		const data = await event.request.formData();
+		// Which button sent it, so that the answer shows under that button.
+		const channel = data.get('channel') === 'nostr' ? ('nostr' as const) : ('email' as const);
 		// One field, as on the shop: an e-mail or an npub, among the shop's contact modes.
-		const address = validateEmailOrNpub(
-			(await event.request.formData()).get('address'),
-			availableContactModes()
-		);
+		const address = validateEmailOrNpub(data.get('address'), availableContactModes());
 		if ('error' in address) {
-			return fail(400, { receiptError: address.error });
+			return fail(400, { receiptError: address.error, channel });
 		}
 		if (address.kind === 'email') {
 			await sendPosReceiptByEmail(posPayment, address.address);
 		} else {
 			await sendPosReceiptByNostr(posPayment, address.address);
 		}
-		return { receiptSent: true };
+		return { receiptSent: true, channel };
 	},
 	async cancel(event) {
 		const { posPayment, apiKey } = await ownPayment(event);
