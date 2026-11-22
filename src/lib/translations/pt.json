@@ -3351,7 +3351,9 @@
 				"sessionRequired": "Sessão obrigatória para cobrar",
 				"yes": "Sim",
 				"no": "Não"
-			}
+			},
+			"paidPayments": "Pagamentos realizados",
+			"noPaidPayments": "Nenhum pagamento realizado."
 		}
 	},
 	"product": {

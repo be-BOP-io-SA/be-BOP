@@ -7,6 +7,7 @@
 	import IconClose from '~icons/ant-design/close-outlined';
 	import IconWallet from '~icons/ant-design/wallet-outlined';
 	import IconInfo from '~icons/ant-design/info-circle-outlined';
+	import IconList from '~icons/ant-design/unordered-list-outlined';
 	import IconSwitch from '~icons/ant-design/user-switch-outlined';
 
 	export let data;
@@ -80,6 +81,10 @@
 				<span class="grow text-left">{t('pos.terminal.xTitle')}</span>
 			</a>
 		{/if}
+		<a href="{HOME}/payments" class={link}>
+			<IconList class="w-6 h-6" />
+			<span class="grow text-left">{t('pos.terminal.paidPayments')}</span>
+		</a>
 		<a href="{HOME}/about" class={link}>
 			<IconInfo class="w-6 h-6" />
 			<span class="grow text-left">{t('pos.terminal.about.title')}</span>
