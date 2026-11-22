@@ -268,7 +268,12 @@
 							bind:value={phone}
 							required
 						/>
-						<button type="submit" class="btn btn-gray">{t('pos.terminal.sendBySms')}</button>
+						<button
+							type="submit"
+							class="btn btn-gray text-xl"
+							title={t('pos.terminal.sendBySms')}
+							aria-label={t('pos.terminal.sendBySms')}>💬</button
+						>
 					</form>
 					{#if smsStatus}
 						<p>{smsStatus}</p>
