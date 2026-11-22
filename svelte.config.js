@@ -8,7 +8,12 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
-		adapter: adapter()
+		adapter: adapter(),
+		csrf: {
+			// The check against cross-site form submissions is made in hooks.server.ts instead
+			// (src/lib/server/csrf.ts), every route but the API v1, which authenticates with a header.
+			trustedOrigins: ['*']
+		}
 	}
 };
 
