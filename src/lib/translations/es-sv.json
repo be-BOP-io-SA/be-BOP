@@ -3310,7 +3310,6 @@
 			"badges": "Credenciales",
 			"sendReceipt": "Enviar el recibo",
 			"sendBySms": "SMS",
-			"scan": "Escanear",
 			"receiptSent": "Recibo enviado.",
 			"nfcDisabled": "Active el NFC en los ajustes del dispositivo para cobrar la tarjeta.",
 			"nfcUnavailable": "Este dispositivo no tiene NFC: no puede cobrar tarjetas.",
@@ -3353,7 +3352,8 @@
 				"no": "No"
 			},
 			"paidPayments": "Pagos realizados",
-			"noPaidPayments": "Ningún pago realizado."
+			"noPaidPayments": "Ningún pago realizado.",
+			"sendByNostr": "Enviar por Nostr"
 		}
 	},
 	"product": {

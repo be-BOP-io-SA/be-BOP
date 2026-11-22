@@ -3310,7 +3310,6 @@
 			"badges": "Badges",
 			"sendReceipt": "Beleg senden",
 			"sendBySms": "SMS",
-			"scan": "Scannen",
 			"receiptSent": "Beleg gesendet.",
 			"nfcDisabled": "Schalten Sie NFC in den Geräteeinstellungen ein, um die Karte zu kassieren.",
 			"nfcUnavailable": "Dieses Gerät hat kein NFC: Es kann keine Karten kassieren.",
@@ -3353,7 +3352,8 @@
 				"no": "Nein"
 			},
 			"paidPayments": "Abgeschlossene Zahlungen",
-			"noPaidPayments": "Keine abgeschlossene Zahlung."
+			"noPaidPayments": "Keine abgeschlossene Zahlung.",
+			"sendByNostr": "Per Nostr senden"
 		}
 	},
 	"product": {

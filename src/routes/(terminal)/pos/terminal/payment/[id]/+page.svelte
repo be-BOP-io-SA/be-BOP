@@ -8,6 +8,7 @@
 	import ChangeMethod from './ChangeMethod.svelte';
 	import NotificationAddressInput from '$lib/components/NotificationAddressInput.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
+	import NOSTR_LOGO from '$lib/assets/nostr.png';
 
 	export let data;
 	export let form;
@@ -245,35 +246,35 @@
 				{:else if form && 'receiptError' in form}
 					<p class="text-red-500">{t(`login.error.${form.receiptError}`)}</p>
 				{/if}
-				<div class="flex items-end gap-2">
-					{#if $page.data.availableContactModes.includes('email')}
-						<form method="post" action="?/receipt" class="flex items-end gap-2 grow" use:enhance>
-							<NotificationAddressInput
-								class="form-label grow text-left"
-								modes={['email']}
-								required
-							/>
-							<button
-								type="submit"
-								class="btn pos-cta text-xl"
-								title={t('pos.terminal.sendReceipt')}
-								aria-label={t('pos.terminal.sendReceipt')}>📤</button
-							>
-						</form>
-					{/if}
-					{#if cardBridge?.scanQr && $page.data.availableContactModes.includes('nostr')}
-						<form method="post" action="?/receipt" bind:this={nostrReceiptForm} use:enhance>
-							<input type="hidden" name="address" value={scannedNpub} />
-							<button
-								type="button"
-								class="btn pos-secondary text-xl"
-								title={t('pos.terminal.scan')}
-								aria-label={t('pos.terminal.scan')}
-								on:click={scanNpub}>📷</button
-							>
-						</form>
-					{/if}
-				</div>
+				{#if $page.data.availableContactModes.includes('email')}
+					<form method="post" action="?/receipt" class="flex items-end gap-2" use:enhance>
+						<NotificationAddressInput
+							class="form-label grow text-left"
+							modes={['email']}
+							required
+						/>
+						<button
+							type="submit"
+							class="btn pos-cta text-xl"
+							title={t('pos.terminal.sendReceipt')}
+							aria-label={t('pos.terminal.sendReceipt')}>📤</button
+						>
+					</form>
+				{/if}
+				<!-- Its own button: it opens the camera on the QR of the customer's Nostr profile, and sends. -->
+				{#if cardBridge?.scanQr && $page.data.availableContactModes.includes('nostr')}
+					<form method="post" action="?/receipt" bind:this={nostrReceiptForm} use:enhance>
+						<input type="hidden" name="address" value={scannedNpub} />
+						<button
+							type="button"
+							class="btn pos-secondary w-full flex items-center justify-center gap-3 text-xl py-3"
+							on:click={scanNpub}
+						>
+							<img src={NOSTR_LOGO} alt="" class="h-8" />
+							{t('pos.terminal.sendByNostr')}
+						</button>
+					</form>
+				{/if}
 				{#if cardBridge?.sendSms && smsAvailable}
 					<form class="flex gap-2" on:submit|preventDefault={sendSms}>
 						<input
