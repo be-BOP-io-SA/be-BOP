@@ -161,7 +161,6 @@
 	let boltCardNotice = '';
 	let boltCardForm: HTMLFormElement | null = null;
 	async function readBoltCard() {
-		boltCardNotice = '';
 		boltCardReading = true;
 		let tag: Awaited<ReturnType<NonNullable<CardBridge['readNfc']>>> | undefined;
 		try {
@@ -178,6 +177,7 @@
 		} finally {
 			boltCardReading = false;
 		}
+		boltCardNotice = '';
 		const link = tag?.uri?.trim() ?? '';
 		if (!/^lnurlw:\/\//i.test(link)) {
 			boltCardNotice = t('pos.terminal.boltCardNotRecognized');
@@ -188,6 +188,24 @@
 		await tick();
 		boltCardForm?.requestSubmit();
 	}
+	// The screen listens for a card as soon as it opens, and again after each card read, until the
+	// card's provider has the invoice: in the app, a card is never handed to another one.
+	function listenForBoltCard() {
+		if (
+			data.boltCard &&
+			data.status === 'pending' &&
+			cardBridge?.readNfc &&
+			!boltCardReading &&
+			!boltCardSending &&
+			!(form && 'boltCardSent' in form)
+		) {
+			readBoltCard();
+		}
+	}
+	onMount(() => {
+		const boltCardTimer = setInterval(listenForBoltCard, 1000);
+		return () => clearInterval(boltCardTimer);
+	});
 	// Paid, canceled or left: the device stops listening for the card.
 	$: if (data.status !== 'pending' && boltCardReading) {
 		cardBridge?.cancelNfc?.().catch(() => undefined);
@@ -273,18 +291,10 @@
 			>
 				<input type="hidden" name="link" value={boltCardLink} />
 			</form>
-			{#if boltCardReading}
-				<p class="text-xl">{t('pos.terminal.presentCard')}</p>
-			{:else if boltCardSending || (form && 'boltCardSent' in form)}
+			{#if boltCardSending || (form && 'boltCardSent' in form)}
 				<p class="text-xl">{t('pos.terminal.boltCardSent')}</p>
 			{:else}
-				<button
-					type="button"
-					class="btn pos-cta w-full max-w-sm text-xl py-4"
-					on:click={readBoltCard}
-				>
-					⚡ {t('pos.terminal.boltCard')}
-				</button>
+				<p class="text-xl">⚡ {t('pos.terminal.boltCardListening')}</p>
 			{/if}
 			{#if boltCardNotice}
 				<p class="text-red-500" role="alert">{boltCardNotice}</p>

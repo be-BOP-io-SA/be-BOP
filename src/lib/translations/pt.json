@@ -3362,9 +3362,9 @@
 			"errorNoDetail": "Sem detalhes disponíveis.",
 			"errorClose": "Fechar",
 			"menuCharge": "Cobrar",
-			"boltCard": "Cartão Bolt",
 			"boltCardSent": "Cartão lido, pagamento em curso…",
-			"boltCardNotRecognized": "Este cartão não é um cartão Bolt."
+			"boltCardNotRecognized": "Este cartão não é um cartão Bolt.",
+			"boltCardListening": "Ou aproxime um cartão Bolt da parte de trás do dispositivo."
 		}
 	},
 	"product": {

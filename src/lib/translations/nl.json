@@ -3362,9 +3362,9 @@
 			"errorNoDetail": "Geen details beschikbaar.",
 			"errorClose": "Sluiten",
 			"menuCharge": "Betalen",
-			"boltCard": "Bolt Card",
 			"boltCardSent": "Kaart gelezen, betaling bezig…",
-			"boltCardNotRecognized": "Deze kaart is geen Bolt Card."
+			"boltCardNotRecognized": "Deze kaart is geen Bolt Card.",
+			"boltCardListening": "Of houd een Bolt Card tegen de achterkant van het toestel."
 		}
 	},
 	"product": {
