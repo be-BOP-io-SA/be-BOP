@@ -3277,7 +3277,8 @@
 				"unavailable": "This payment method is not available on terminals.",
 				"failed": "The payment could not be created. Try again, or choose another method.",
 				"wrongCredentials": "Wrong PIN, or unknown or suspended badge.",
-				"notAllowed": "You are not allowed to do this."
+				"notAllowed": "You are not allowed to do this.",
+				"tillClosed": "Till closed: open the till to take payments."
 			},
 			"continue": "Continue",
 			"enterTip": "Enter a tip",
@@ -3305,6 +3306,25 @@
 			"cancelYes": "Yes, cancel",
 			"cancelKeep": "Do not cancel",
 			"pendingPayments": "Waiting payments",
+			"till": {
+				"title": "Till",
+				"notEnabled": "Till session management is not enabled (Settings > POS).",
+				"lastClosing": "Previous closing:",
+				"openingCash": "Opening cash",
+				"open": "Open the till",
+				"bankDeposit": "Bank deposit",
+				"cashCounted": "Cash counted in the drawer",
+				"expected": "Expected cash:",
+				"delta": "Difference:",
+				"justification": "Justification of the difference (optional)",
+				"justificationRequired": "Justification of the difference (required)",
+				"close": "Close the till and print the Z ticket",
+				"closed": "Till closed.",
+				"errors": {
+					"amount": "Invalid amount.",
+					"noSession": "No till session is open."
+				}
+			},
 			"presentCard": "Hold the card against the back of the device.",
 			"retryCard": "Try again"
 		}

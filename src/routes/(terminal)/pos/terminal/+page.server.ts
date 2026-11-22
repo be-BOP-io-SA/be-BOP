@@ -21,6 +21,7 @@ import {
 } from '$lib/server/pos-payments';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { collections } from '$lib/server/database';
+import { getCurrentPosSession } from '$lib/server/pos-sessions';
 import { ALL_PAYMENT_METHODS } from '$lib/server/payment-methods';
 
 /**
@@ -55,10 +56,14 @@ export async function load(event) {
 		.limit(20)
 		.toArray();
 
+	const tillClosed = await isTillClosedForTerminals();
+
 	return {
 		paired: true as const,
 		deviceName: apiKey.name,
 		locked: false as const,
+		tillClosed,
+		tillLink: runtimeConfig.posSession.enabled && operator.actions.includes('zReport'),
 		pending: pending.map((p) => ({
 			id: p._id.toHexString(),
 			number: p.number,
@@ -68,8 +73,14 @@ export async function load(event) {
 		})),
 		operator: { alias: operator.alias, actions: operator.actions },
 		currency: runtimeConfig.mainCurrency,
-		methods: operator.actions.includes('charge') ? terminalPaymentMethods() : []
+		methods: operator.actions.includes('charge') && !tillClosed ? terminalPaymentMethods() : []
 	};
+}
+
+/** The shop forbids taking payments while no till session is open (Settings > POS). */
+async function isTillClosedForTerminals(): Promise<boolean> {
+	const { enabled, forbidTouchWhenSessionClosed } = runtimeConfig.posSession;
+	return enabled && forbidTouchWhenSessionClosed && !(await getCurrentPosSession());
 }
 
 export const actions = {
@@ -110,6 +121,9 @@ export const actions = {
 		const operator = await operatorOfSession(event.cookies.get(POS_OPERATOR_COOKIE), apiKey._id);
 		if (!operator?.actions.includes('charge')) {
 			return fail(403, { error: 'notAllowed' as const });
+		}
+		if (await isTillClosedForTerminals()) {
+			return fail(403, { error: 'tillClosed' as const });
 		}
 
 		const parsed = z

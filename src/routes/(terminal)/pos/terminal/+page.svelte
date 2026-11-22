@@ -98,6 +98,10 @@
 		<form method="post" action="?/unlock" bind:this={badgeForm} class="hidden">
 			<input type="hidden" name="badge" bind:this={badgeInput} />
 		</form>
+		{#if data.tillClosed}
+			<p class="text-red-500 text-center" role="alert">{t('pos.terminal.errors.tillClosed')}</p>
+		{/if}
+
 		{#if form?.error}
 			<p class="text-red-500 text-center" role="alert">{t(`pos.terminal.errors.${form.error}`)}</p>
 		{/if}
@@ -163,6 +167,9 @@
 		<div class="flex items-center gap-3 text-sm opacity-70">
 			<span>{data.deviceName} · {data.operator.alias}</span>
 			<a href="/admin/arm-pos" class="underline">{t('pos.terminal.badges')}</a>
+			{#if data.tillLink}
+				<a href="/pos/terminal/till" class="underline">{t('pos.terminal.till.title')}</a>
+			{/if}
 			{#if data.operator.actions.includes('xReport')}
 				<a href="/pos/terminal/x" class="underline">{t('pos.terminal.xTitle')}</a>
 			{/if}
@@ -244,7 +251,7 @@
 				</button>
 				{#if !data.operator.actions.includes('charge')}
 					<p class="text-center" role="alert">{t('pos.terminal.errors.notAllowed')}</p>
-				{:else if !data.methods.length}
+				{:else if !data.methods.length && !data.tillClosed}
 					<p class="text-center" role="alert">{t('pos.terminal.noProcessor')}</p>
 				{/if}
 			{:else}

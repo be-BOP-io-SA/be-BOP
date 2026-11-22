@@ -3277,7 +3277,8 @@
 				"unavailable": "Deze betaalmethode is niet beschikbaar op terminals.",
 				"failed": "De betaling kon niet worden aangemaakt. Probeer het opnieuw of kies een andere methode.",
 				"wrongCredentials": "Verkeerde pincode, of onbekende of geblokkeerde badge.",
-				"notAllowed": "U mag dit niet doen."
+				"notAllowed": "U mag dit niet doen.",
+				"tillClosed": "Kassa gesloten: open de kassa om af te rekenen."
 			},
 			"continue": "Doorgaan",
 			"enterTip": "Fooi invoeren",
@@ -3305,6 +3306,25 @@
 			"cancelYes": "Ja, annuleren",
 			"cancelKeep": "Niet annuleren",
 			"pendingPayments": "Wachtende betalingen",
+			"till": {
+				"title": "Kassa",
+				"notEnabled": "Het beheer van kassasessies is niet ingeschakeld (Settings > POS).",
+				"lastClosing": "Vorige afsluiting:",
+				"openingCash": "Wisselgeld",
+				"open": "Kassa openen",
+				"bankDeposit": "Storting bij de bank",
+				"cashCounted": "Contant geld geteld in de lade",
+				"expected": "Verwacht contant geld:",
+				"delta": "Verschil:",
+				"justification": "Verklaring van het verschil (optioneel)",
+				"justificationRequired": "Verklaring van het verschil (verplicht)",
+				"close": "Kassa afsluiten en Z-ticket maken",
+				"closed": "Kassa afgesloten.",
+				"errors": {
+					"amount": "Ongeldig bedrag.",
+					"noSession": "Er is geen kassasessie geopend."
+				}
+			},
 			"presentCard": "Houd de kaart tegen de achterkant van het toestel.",
 			"retryCard": "Opnieuw proberen"
 		}

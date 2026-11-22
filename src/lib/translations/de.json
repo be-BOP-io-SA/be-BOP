@@ -3277,7 +3277,8 @@
 				"unavailable": "Diese Zahlungsart ist auf Terminals nicht verfügbar.",
 				"failed": "Die Zahlung konnte nicht erstellt werden. Versuchen Sie es erneut oder wählen Sie eine andere Zahlungsart.",
 				"wrongCredentials": "Falsche PIN oder unbekannter bzw. gesperrter Badge.",
-				"notAllowed": "Dazu sind Sie nicht berechtigt."
+				"notAllowed": "Dazu sind Sie nicht berechtigt.",
+				"tillClosed": "Kasse geschlossen: Öffnen Sie die Kasse, um zu kassieren."
 			},
 			"continue": "Weiter",
 			"enterTip": "Trinkgeld eingeben",
@@ -3305,6 +3306,25 @@
 			"cancelYes": "Ja, stornieren",
 			"cancelKeep": "Nicht stornieren",
 			"pendingPayments": "Ausstehende Zahlungen",
+			"till": {
+				"title": "Kasse",
+				"notEnabled": "Die Verwaltung der Kassensitzungen ist nicht aktiviert (Settings > POS).",
+				"lastClosing": "Letzter Abschluss:",
+				"openingCash": "Wechselgeld",
+				"open": "Kasse öffnen",
+				"bankDeposit": "Bankeinzahlung",
+				"cashCounted": "In der Schublade gezähltes Bargeld",
+				"expected": "Erwartetes Bargeld:",
+				"delta": "Differenz:",
+				"justification": "Begründung der Differenz (optional)",
+				"justificationRequired": "Begründung der Differenz (Pflicht)",
+				"close": "Kasse abschließen und Z-Bon erstellen",
+				"closed": "Kasse abgeschlossen.",
+				"errors": {
+					"amount": "Ungültiger Betrag.",
+					"noSession": "Keine Kassensitzung ist geöffnet."
+				}
+			},
 			"presentCard": "Halten Sie die Karte an die Rückseite des Geräts.",
 			"retryCard": "Erneut versuchen"
 		}

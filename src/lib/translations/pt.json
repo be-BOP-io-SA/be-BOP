@@ -3277,7 +3277,8 @@
 				"unavailable": "Este meio de pagamento não está disponível nos terminais.",
 				"failed": "Não foi possível criar o pagamento. Tente novamente ou escolha outro meio.",
 				"wrongCredentials": "PIN errado, ou crachá desconhecido ou suspenso.",
-				"notAllowed": "Não tem permissão para fazer isto."
+				"notAllowed": "Não tem permissão para fazer isto.",
+				"tillClosed": "Caixa fechada: abra a caixa para cobrar."
 			},
 			"continue": "Continuar",
 			"enterTip": "Introduzir gorjeta",
@@ -3305,6 +3306,25 @@
 			"cancelYes": "Sim, cancelar",
 			"cancelKeep": "Não cancelar",
 			"pendingPayments": "Pagamentos em espera",
+			"till": {
+				"title": "Caixa",
+				"notEnabled": "A gestão das sessões de caixa não está ativada (Settings > POS).",
+				"lastClosing": "Fecho anterior:",
+				"openingCash": "Fundo de caixa",
+				"open": "Abrir a caixa",
+				"bankDeposit": "Depósito bancário",
+				"cashCounted": "Numerário contado na gaveta",
+				"expected": "Numerário esperado:",
+				"delta": "Diferença:",
+				"justification": "Justificação da diferença (opcional)",
+				"justificationRequired": "Justificação da diferença (obrigatória)",
+				"close": "Fechar a caixa e emitir o talão Z",
+				"closed": "Caixa fechada.",
+				"errors": {
+					"amount": "Montante inválido.",
+					"noSession": "Nenhuma sessão de caixa está aberta."
+				}
+			},
 			"presentCard": "Aproxime o cartão da parte de trás do dispositivo.",
 			"retryCard": "Tentar novamente"
 		}

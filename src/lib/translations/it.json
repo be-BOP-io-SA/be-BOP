@@ -3277,7 +3277,8 @@
 				"unavailable": "Questo metodo di pagamento non è disponibile sui terminali.",
 				"failed": "Non è stato possibile creare il pagamento. Riprovate o scegliete un altro metodo.",
 				"wrongCredentials": "PIN errato, o badge sconosciuto o sospeso.",
-				"notAllowed": "Non avete il diritto di farlo."
+				"notAllowed": "Non avete il diritto di farlo.",
+				"tillClosed": "Cassa chiusa: apri la cassa per incassare."
 			},
 			"continue": "Continua",
 			"enterTip": "Inserisci la mancia",
@@ -3305,6 +3306,25 @@
 			"cancelYes": "Sì, annulla",
 			"cancelKeep": "Non annullare",
 			"pendingPayments": "Pagamenti in attesa",
+			"till": {
+				"title": "Cassa",
+				"notEnabled": "La gestione delle sessioni di cassa non è attivata (Settings > POS).",
+				"lastClosing": "Chiusura precedente:",
+				"openingCash": "Fondo cassa",
+				"open": "Apri la cassa",
+				"bankDeposit": "Versamento in banca",
+				"cashCounted": "Contanti contati nel cassetto",
+				"expected": "Contanti attesi:",
+				"delta": "Differenza:",
+				"justification": "Giustificazione della differenza (facoltativa)",
+				"justificationRequired": "Giustificazione della differenza (obbligatoria)",
+				"close": "Chiudi la cassa ed emetti lo scontrino Z",
+				"closed": "Cassa chiusa.",
+				"errors": {
+					"amount": "Importo non valido.",
+					"noSession": "Nessuna sessione di cassa è aperta."
+				}
+			},
 			"presentCard": "Avvicina la carta al retro del dispositivo.",
 			"retryCard": "Riprova"
 		}

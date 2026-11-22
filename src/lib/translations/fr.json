@@ -3277,7 +3277,8 @@
 				"unavailable": "Ce moyen de paiement n'est pas disponible sur les terminaux.",
 				"failed": "Le paiement n'a pas pu être créé. Réessayez, ou choisissez un autre moyen.",
 				"wrongCredentials": "PIN erroné, ou badge inconnu ou suspendu.",
-				"notAllowed": "Vous n'avez pas le droit de faire cela."
+				"notAllowed": "Vous n'avez pas le droit de faire cela.",
+				"tillClosed": "Caisse fermée : ouvrez la caisse pour encaisser."
 			},
 			"continue": "Continuer",
 			"enterTip": "Saisir le pourboire",
@@ -3305,6 +3306,25 @@
 			"cancelYes": "Oui, annuler",
 			"cancelKeep": "Ne pas annuler",
 			"pendingPayments": "Paiements en attente",
+			"till": {
+				"title": "Caisse",
+				"notEnabled": "La gestion des sessions de caisse n'est pas activée (Settings > POS).",
+				"lastClosing": "Clôture précédente :",
+				"openingCash": "Fond de caisse",
+				"open": "Ouvrir la caisse",
+				"bankDeposit": "Dépôt en banque",
+				"cashCounted": "Espèces comptées dans le tiroir",
+				"expected": "Espèces attendues :",
+				"delta": "Écart :",
+				"justification": "Justification de l'écart (facultative)",
+				"justificationRequired": "Justification de l'écart (obligatoire)",
+				"close": "Clôturer la caisse et éditer le ticket Z",
+				"closed": "Caisse clôturée.",
+				"errors": {
+					"amount": "Montant invalide.",
+					"noSession": "Aucune session de caisse n'est ouverte."
+				}
+			},
 			"presentCard": "Présentez la carte au dos de l’appareil.",
 			"retryCard": "Réessayer"
 		}

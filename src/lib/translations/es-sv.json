@@ -3277,7 +3277,8 @@
 				"unavailable": "Este medio de pago no está disponible en los terminales.",
 				"failed": "No se ha podido crear el pago. Inténtelo de nuevo o elija otro medio.",
 				"wrongCredentials": "PIN incorrecto, o credencial desconocida o suspendida.",
-				"notAllowed": "No tiene derecho a hacer esto."
+				"notAllowed": "No tiene derecho a hacer esto.",
+				"tillClosed": "Caja cerrada: abra la caja para cobrar."
 			},
 			"continue": "Continuar",
 			"enterTip": "Introducir propina",
@@ -3305,6 +3306,25 @@
 			"cancelYes": "Sí, cancelar",
 			"cancelKeep": "No cancelar",
 			"pendingPayments": "Pagos en espera",
+			"till": {
+				"title": "Caja",
+				"notEnabled": "La gestión de sesiones de caja no está activada (Settings > POS).",
+				"lastClosing": "Cierre anterior:",
+				"openingCash": "Fondo de caja",
+				"open": "Abrir la caja",
+				"bankDeposit": "Depósito bancario",
+				"cashCounted": "Efectivo contado en el cajón",
+				"expected": "Efectivo esperado:",
+				"delta": "Diferencia:",
+				"justification": "Justificación de la diferencia (opcional)",
+				"justificationRequired": "Justificación de la diferencia (obligatoria)",
+				"close": "Cerrar la caja y emitir el ticket Z",
+				"closed": "Caja cerrada.",
+				"errors": {
+					"amount": "Importe no válido.",
+					"noSession": "No hay ninguna sesión de caja abierta."
+				}
+			},
 			"presentCard": "Acerque la tarjeta a la parte trasera del dispositivo.",
 			"retryCard": "Reintentar"
 		}
