@@ -3353,7 +3353,11 @@
 			},
 			"paidPayments": "Pagamentos realizados",
 			"noPaidPayments": "Nenhum pagamento realizado.",
-			"sendByNostr": "Enviar por Nostr"
+			"sendByNostr": "Enviar por Nostr",
+			"themeLight": "Claro",
+			"themeDark": "Escuro",
+			"themeSystem": "Sistema",
+			"language": "Idioma"
 		}
 	},
 	"product": {

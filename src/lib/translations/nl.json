@@ -3353,7 +3353,11 @@
 			},
 			"paidPayments": "Voltooide betalingen",
 			"noPaidPayments": "Geen voltooide betaling.",
-			"sendByNostr": "Verstuur via Nostr"
+			"sendByNostr": "Verstuur via Nostr",
+			"themeLight": "Licht",
+			"themeDark": "Donker",
+			"themeSystem": "Systeem",
+			"language": "Taal"
 		}
 	},
 	"product": {

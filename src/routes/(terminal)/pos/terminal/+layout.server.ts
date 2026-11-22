@@ -15,7 +15,8 @@ export async function load(event) {
 		menu: {
 			who: `${apiKey.name} · ${operator.alias}`,
 			session: runtimeConfig.posSession.enabled && operator.actions.includes('zReport'),
-			statusTicket: operator.actions.includes('xReport')
+			statusTicket: operator.actions.includes('xReport'),
+			locales: runtimeConfig.languages
 		}
 	};
 }

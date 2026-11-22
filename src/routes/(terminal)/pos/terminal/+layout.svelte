@@ -3,6 +3,10 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n';
+	import theme from '$lib/stores/theme';
+	import IconModeLight from '$lib/components/icons/IconModeLight.svelte';
+	import IconModeDark from '$lib/components/icons/IconModeDark.svelte';
+	import IconSystem from '$lib/components/icons/IconSystem.svelte';
 	import IconMenu from '~icons/ant-design/menu-outlined';
 	import IconClose from '~icons/ant-design/close-outlined';
 	import IconWallet from '~icons/ant-design/wallet-outlined';
@@ -12,7 +16,13 @@
 
 	export let data;
 
-	const { t } = useI18n();
+	const { t, locale } = useI18n();
+
+	const themes = [
+		{ value: 'light', label: 'pos.terminal.themeLight', icon: IconModeLight },
+		{ value: 'dark', label: 'pos.terminal.themeDark', icon: IconModeDark },
+		{ value: 'system', label: 'pos.terminal.themeSystem', icon: IconSystem }
+	] as const;
 
 	const HOME = '/pos/terminal';
 	let menuOpen = false;
@@ -61,7 +71,7 @@
 </div>
 
 {#if menuOpen && data.menu}
-	<nav class="fixed inset-0 z-10 flex flex-col gap-3 p-4 body-mainPlan">
+	<nav class="fixed inset-0 z-10 flex flex-col gap-3 p-4 overflow-y-auto body-mainPlan">
 		<button
 			type="button"
 			class="self-end"
@@ -89,6 +99,39 @@
 			<IconInfo class="w-6 h-6" />
 			<span class="grow text-left">{t('pos.terminal.about.title')}</span>
 		</a>
+		<div class="flex gap-2">
+			{#each themes as option}
+				<button
+					type="button"
+					class="btn pos-secondary grow flex flex-col items-center gap-1 py-3 {$theme ===
+					option.value
+						? 'ring-4 ring-[#31a5dc]'
+						: ''}"
+					aria-pressed={$theme === option.value}
+					on:click={() => ($theme = option.value)}
+				>
+					<svelte:component this={option.icon} class="w-6 h-6" />
+					<span class="text-sm">{t(option.label)}</span>
+				</button>
+			{/each}
+		</div>
+		{#if data.menu.locales.length > 1}
+			<label class="form-label text-lg">
+				{t('pos.terminal.language')}
+				<select
+					class="form-input text-xl"
+					bind:value={$locale}
+					on:change={() => {
+						document.cookie = `lang=${$locale};path=/;max-age=31536000`;
+						window.location.reload();
+					}}
+				>
+					{#each data.menu.locales as code}
+						<option value={code}>{code}</option>
+					{/each}
+				</select>
+			</label>
+		{/if}
 		<form
 			method="post"
 			action="{HOME}?/lock"
@@ -134,6 +177,15 @@
 	}
 	:global(.btn.pos-secondary:active) {
 		background-color: #31a5dc;
+		color: #ffffff;
+	}
+	:global(html.dark .btn.pos-key) {
+		background-color: #003760;
+		color: #ffffff;
+		border: 2px solid #31a5dc;
+	}
+	:global(html.dark .btn.pos-secondary) {
+		background-color: transparent;
 		color: #ffffff;
 	}
 </style>
