@@ -290,7 +290,7 @@
 				<p class="text-red-500" role="alert">{boltCardNotice}</p>
 			{/if}
 			{#if !boltCardSending && form && 'boltCardError' in form}
-				<ErrorNotice detail={form.boltCardError} />
+				<ErrorNotice detail={String(form.boltCardError)} />
 			{/if}
 		{/if}
 		<!-- A payment that is not canceled has no way back: cancelling is the only way out. -->
