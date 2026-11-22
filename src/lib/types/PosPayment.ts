@@ -7,7 +7,8 @@ import type { Timestamps } from './Timestamps';
  * an amount, a tip and, when the till is up, the till's own order reference.
  */
 export interface PosPayment extends Timestamps {
-	_id: ObjectId;
+	/** A string, a crypto UUID, as for the orders: anyone having access to it can reach the payment. */
+	_id: string;
 	/** Its own sequence, apart from the orders' numbers: shown on the receipt and in the wallet. */
 	number: number;
 	/** Unguessable: the address of the public receipt the customer scans. */

@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { runtimeConfig } from './runtime-config';
@@ -124,11 +123,11 @@ export async function createPosPayment(params: {
 		currency: settlement
 	};
 
-	const _id = new ObjectId();
+	const _id = crypto.randomUUID();
 	const paymentId = new ObjectId();
 	const number = await nextPosPaymentNumber();
 	const expiresAt = paymentMethodExpiration(params.method);
-	const receiptToken = randomBytes(16).toString('base64url');
+	const receiptToken = crypto.randomUUID();
 	const result =
 		params.method === 'paypal'
 			? await createPaypalPosCheckout({
@@ -140,11 +139,11 @@ export async function createPosPayment(params: {
 			? await createCardPresentIntent({
 					amountMinor: Math.round(price.amount / CURRENCY_UNIT[price.currency]),
 					currency: price.currency,
-					metadata: { posPaymentId: _id.toHexString(), paymentId: paymentId.toHexString() },
+					metadata: { posPaymentId: _id, paymentId: paymentId.toHexString() },
 					description: `PoS payment ${number}`
 			  }).then((intent) => ({ checkoutId: intent.id, clientSecret: intent.clientSecret }))
 			: await (pp as NonNullable<typeof pp>).createPayment({
-					orderId: _id.toHexString(),
+					orderId: _id,
 					orderNumber: number,
 					paymentId: paymentId.toHexString(),
 					toPay: price,
@@ -219,7 +218,7 @@ export async function checkPosPayment(posPayment: PosPayment): Promise<PosPaymen
 		return posPayment;
 	}
 
-	const carrier = { _id: posPayment._id.toHexString(), createdAt: posPayment.createdAt };
+	const carrier = { _id: posPayment._id, createdAt: posPayment.createdAt };
 	const result = pp?.checkPayment
 		? await pp.checkPayment(payment, carrier as unknown as Order)
 		: await checkPaypalPosCheckout(payment);
@@ -418,7 +417,7 @@ export async function cancelPosPayment(
 
 /** Attaches, or corrects, the till's reference after the payment, keeping the previous one. */
 export async function setExternalRef(
-	id: ObjectId,
+	id: string,
 	ref: string,
 	by?: string,
 	employee?: AccountingLog['employee']

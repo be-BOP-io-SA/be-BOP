@@ -67,19 +67,18 @@ export async function load(event) {
 		{ sort: { createdAt: -1 } }
 	);
 	if (waiting) {
-		throw redirect(303, `/pos/terminal/payment/${waiting._id.toHexString()}`);
+		throw redirect(303, `/pos/terminal/payment/${waiting._id}`);
 	}
 
 	// A payment that failed or was canceled, to take again with another method.
 	const retryId = event.url.searchParams.get('retry');
-	const retried =
-		retryId && ObjectId.isValid(retryId)
-			? await collections.posPayments.findOne({
-					_id: new ObjectId(retryId),
-					'device.apiKeyId': apiKey._id,
-					'payment.status': { $in: ['failed', 'expired', 'canceled'] }
-			  })
-			: null;
+	const retried = retryId
+		? await collections.posPayments.findOne({
+				_id: retryId,
+				'device.apiKeyId': apiKey._id,
+				'payment.status': { $in: ['failed', 'expired', 'canceled'] }
+		  })
+		: null;
 
 	const tillClosed = await isTillClosedForTerminals();
 	const mayOpenTill = runtimeConfig.posSession.enabled && operator.actions.includes('zReport');
@@ -181,7 +180,7 @@ export const actions = {
 				method: parsed.data.method,
 				externalRef: parsed.data.externalRef
 			});
-			id = posPayment._id.toHexString();
+			id = posPayment._id;
 		} catch (err) {
 			if (err instanceof StripeAmountTooSmallError) {
 				return fail(400, { error: 'amountTooLow' as const });

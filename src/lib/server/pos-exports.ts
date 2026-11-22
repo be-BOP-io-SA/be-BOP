@@ -42,7 +42,7 @@ export async function posExportEntries(from: Date, to: Date): Promise<ExportEntr
 		const sale = toCurrency(currency, p.amount.amount, p.amount.currency);
 		const tip = toCurrency(currency, p.tip.amount, p.tip.currency);
 		return {
-			id: p._id.toHexString(),
+			id: p._id,
 			number: p.number,
 			paidAt: p.payment.paidAt ?? p.createdAt,
 			ref: p.externalRef ?? null,

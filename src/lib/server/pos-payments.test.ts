@@ -8,9 +8,9 @@ import type { PosPayment } from '$lib/types/PosPayment';
 function posPayment(overrides: Partial<PosPayment> = {}): PosPayment {
 	const now = new Date();
 	return {
-		_id: new ObjectId(),
+		_id: crypto.randomUUID(),
 		number: 1,
-		receiptToken: new ObjectId().toHexString(),
+		receiptToken: crypto.randomUUID(),
 		amount: { amount: 10, currency: 'EUR' },
 		tip: { amount: 1, currency: 'EUR' },
 		noExternalRef: true,

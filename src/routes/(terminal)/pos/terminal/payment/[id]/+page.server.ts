@@ -22,10 +22,7 @@ async function ownPayment(event: RequestEvent<{ id: string }>) {
 	if (!apiKey) {
 		throw error(401, 'This device is not paired with the shop, or it was revoked.');
 	}
-	if (!ObjectId.isValid(event.params.id)) {
-		throw error(404, 'Payment not found');
-	}
-	const posPayment = await collections.posPayments.findOne({ _id: new ObjectId(event.params.id) });
+	const posPayment = await collections.posPayments.findOne({ _id: event.params.id });
 	if (!posPayment || !posPayment.device.apiKeyId.equals(apiKey._id)) {
 		throw error(404, 'Payment not found');
 	}
@@ -50,7 +47,7 @@ export async function load(event) {
 	const actions = await operatorActions(event, own.apiKey._id);
 
 	return {
-		id: posPayment._id.toHexString(),
+		id: posPayment._id,
 		number: posPayment.number,
 		amount: posPayment.amount,
 		tip: posPayment.tip,
@@ -101,7 +98,7 @@ export const actions = {
 		await cancelPosPayment(posPayment, { userId: operator._id, alias: operator.alias });
 		// Another method for the same sale.
 		if ((await event.request.formData()).get('substitute')) {
-			throw redirect(303, `/pos/terminal?retry=${posPayment._id.toHexString()}`);
+			throw redirect(303, `/pos/terminal?retry=${posPayment._id}`);
 		}
 	},
 	async overpayment(event) {

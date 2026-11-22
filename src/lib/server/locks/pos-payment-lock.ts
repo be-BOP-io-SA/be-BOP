@@ -33,7 +33,7 @@ async function maintainPosPayments() {
 				return [];
 			});
 
-		const pendingIds = new Set(pending.map((posPayment) => posPayment._id.toHexString()));
+		const pendingIds = new Set(pending.map((posPayment) => posPayment._id));
 		for (const id of failing.keys()) {
 			if (!pendingIds.has(id)) {
 				failing.delete(id);
@@ -41,7 +41,7 @@ async function maintainPosPayments() {
 		}
 
 		for (const posPayment of pending) {
-			const id = posPayment._id.toHexString();
+			const id = posPayment._id;
 			const previous = failing.get(id);
 			if (previous && previous.retryAt > Date.now()) {
 				continue;
