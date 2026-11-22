@@ -52,6 +52,7 @@ export async function load(event) {
 			server,
 			deviceName: apiKey.name,
 			locked: true as const,
+			cardConfigured: terminalPaymentMethods().includes('card'),
 			operators: (await terminalOperators()).map((o) => ({
 				id: o._id.toHexString(),
 				alias: o.alias
@@ -93,6 +94,7 @@ export async function load(event) {
 		server,
 		deviceName: apiKey.name,
 		locked: false as const,
+		cardConfigured: terminalPaymentMethods().includes('card'),
 		tillClosed,
 		tillLink: mayOpenTill,
 		retry: retried && {

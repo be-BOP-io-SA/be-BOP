@@ -3334,7 +3334,8 @@
 			"closeMenu": "Close the menu",
 			"appVersion": "App {version}",
 			"serverVersion": "Server {version}",
-			"changeMethod": "Change method"
+			"changeMethod": "Change method",
+			"developerMode": "Developer mode is on: card payments are unavailable, Stripe's Tap to Pay does not work with it. Turn it off in the phone settings (Developer options)."
 		}
 	},
 	"product": {

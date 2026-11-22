@@ -60,6 +60,24 @@
 
 	let menuOpen = false;
 
+	// Tap to Pay does not work on a phone in developer mode: the app says whether it is on, and the
+	// card is then not offered.
+	let developerMode = false;
+	onMount(async () => {
+		const bridge = (
+			window as unknown as { bebopPos?: { info?(): Promise<{ developerMode?: boolean }> } }
+		).bebopPos;
+		try {
+			developerMode = !!(await bridge?.info?.())?.developerMode;
+		} catch {
+			developerMode = false;
+		}
+	});
+	$: methods =
+		data.paired && !data.locked
+			? data.methods.filter((method) => !(developerMode && method === 'card'))
+			: [];
+
 	// Continue skips the tip: going back from the reference then returns to the amount.
 	let tipSkipped = !retry?.tip;
 
@@ -113,6 +131,10 @@
 <main
 	class="relative min-h-screen flex flex-col items-center justify-center gap-6 p-4 body-mainPlan"
 >
+	{#if developerMode && data.paired && data.cardConfigured}
+		<p class="text-red-500 text-center max-w-sm" role="alert">{t('pos.terminal.developerMode')}</p>
+	{/if}
+
 	{#if !data.paired}
 		<TerminalBrand server={data.server} />
 		<p class="text-xl text-center">{t('pos.terminal.notPaired')}</p>
@@ -281,7 +303,7 @@
 				<button
 					type="button"
 					class="btn body-mainCTA disabled:opacity-30 w-full max-w-sm text-xl py-4"
-					disabled={amount <= 0 || !data.methods.length}
+					disabled={amount <= 0 || !methods.length}
 					on:click={() => {
 						tipDigits = '';
 						tipSkipped = true;
@@ -293,7 +315,7 @@
 				<button
 					type="button"
 					class="btn bg-white text-black border border-gray-300 disabled:opacity-30 w-full max-w-sm text-xl py-4"
-					disabled={amount <= 0 || !data.methods.length}
+					disabled={amount <= 0 || !methods.length}
 					on:click={() => {
 						tipSkipped = false;
 						step = 'tip';
@@ -303,7 +325,7 @@
 				</button>
 				{#if !data.operator.actions.includes('charge')}
 					<p class="text-center" role="alert">{t('pos.terminal.errors.notAllowed')}</p>
-				{:else if !data.methods.length && !data.tillClosed}
+				{:else if !methods.length && !data.tillClosed}
 					<p class="text-center" role="alert">{t('pos.terminal.noProcessor')}</p>
 				{/if}
 			{:else}
@@ -350,7 +372,7 @@
 			<p class="text-lg">
 				{t('pos.terminal.totalLine', { amount: `${format(amount + tip)} ${data.currency}` })}
 			</p>
-			{#if data.methods.length}
+			{#if methods.length}
 				<!-- Enhanced: a refusal (amount too low for a card…) keeps the amount, to choose another method. -->
 				<form
 					method="post"
@@ -365,7 +387,7 @@
 					{#if externalRef.trim()}
 						<input type="hidden" name="externalRef" value={externalRef.trim()} />
 					{/if}
-					{#each data.methods as method}
+					{#each methods as method}
 						<button
 							type="submit"
 							name="method"

@@ -3334,7 +3334,8 @@
 			"closeMenu": "Fermer le menu",
 			"appVersion": "App {version}",
 			"serverVersion": "Serveur {version}",
-			"changeMethod": "Changer de méthode"
+			"changeMethod": "Changer de méthode",
+			"developerMode": "Le mode développeur est activé : le paiement par carte est indisponible, le Tap to Pay de Stripe ne fonctionne pas avec. Désactivez-le dans les réglages du téléphone (Options pour les développeurs)."
 		}
 	},
 	"product": {

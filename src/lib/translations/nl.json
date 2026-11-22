@@ -3334,7 +3334,8 @@
 			"closeMenu": "Menu sluiten",
 			"appVersion": "App {version}",
 			"serverVersion": "Server {version}",
-			"changeMethod": "Methode wijzigen"
+			"changeMethod": "Methode wijzigen",
+			"developerMode": "De ontwikkelaarsmodus staat aan: kaartbetalingen zijn niet beschikbaar, Stripe's Tap to Pay werkt er niet mee. Zet hem uit in de telefooninstellingen (Ontwikkelaarsopties)."
 		}
 	},
 	"product": {
