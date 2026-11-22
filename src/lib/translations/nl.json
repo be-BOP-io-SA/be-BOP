@@ -3335,7 +3335,8 @@
 			"appVersion": "App {version}",
 			"serverVersion": "Server {version}",
 			"changeMethod": "Methode wijzigen",
-			"developerMode": "De ontwikkelaarsmodus staat aan: kaartbetalingen zijn niet beschikbaar, Stripe's Tap to Pay werkt er niet mee. Zet hem uit in de telefooninstellingen (Ontwikkelaarsopties)."
+			"developerMode": "De ontwikkelaarsmodus staat aan: kaartbetalingen zijn niet beschikbaar, Stripe's Tap to Pay werkt er niet mee. Zet hem uit in de telefooninstellingen (Ontwikkelaarsopties).",
+			"smsDenied": "De app mag geen sms'jes versturen. Sta het toe in de telefooninstellingen (app-machtigingen)."
 		}
 	},
 	"product": {

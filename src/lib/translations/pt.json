@@ -3335,7 +3335,8 @@
 			"appVersion": "App {version}",
 			"serverVersion": "Servidor {version}",
 			"changeMethod": "Mudar de método",
-			"developerMode": "O modo de programador está ativado: os pagamentos por cartão não estão disponíveis, o Tap to Pay da Stripe não funciona com ele. Desative-o nas definições do telefone (Opções de programador)."
+			"developerMode": "O modo de programador está ativado: os pagamentos por cartão não estão disponíveis, o Tap to Pay da Stripe não funciona com ele. Desative-o nas definições do telefone (Opções de programador).",
+			"smsDenied": "A aplicação não tem permissão para enviar SMS. Permita-o nas definições do telefone (permissões da app)."
 		}
 	},
 	"product": {

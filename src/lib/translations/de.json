@@ -3335,7 +3335,8 @@
 			"appVersion": "App {version}",
 			"serverVersion": "Server {version}",
 			"changeMethod": "Methode ändern",
-			"developerMode": "Der Entwicklermodus ist aktiv: Kartenzahlungen sind nicht verfügbar, Stripes Tap to Pay funktioniert damit nicht. Deaktivieren Sie ihn in den Telefoneinstellungen (Entwickleroptionen)."
+			"developerMode": "Der Entwicklermodus ist aktiv: Kartenzahlungen sind nicht verfügbar, Stripes Tap to Pay funktioniert damit nicht. Deaktivieren Sie ihn in den Telefoneinstellungen (Entwickleroptionen).",
+			"smsDenied": "Die App darf keine SMS senden. Erlauben Sie es in den Telefoneinstellungen (App-Berechtigungen)."
 		}
 	},
 	"product": {

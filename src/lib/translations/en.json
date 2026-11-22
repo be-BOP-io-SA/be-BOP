@@ -3335,7 +3335,8 @@
 			"appVersion": "App {version}",
 			"serverVersion": "Server {version}",
 			"changeMethod": "Change method",
-			"developerMode": "Developer mode is on: card payments are unavailable, Stripe's Tap to Pay does not work with it. Turn it off in the phone settings (Developer options)."
+			"developerMode": "Developer mode is on: card payments are unavailable, Stripe's Tap to Pay does not work with it. Turn it off in the phone settings (Developer options).",
+			"smsDenied": "The app is not allowed to send SMS. Allow it in the phone settings (app permissions)."
 		}
 	},
 	"product": {

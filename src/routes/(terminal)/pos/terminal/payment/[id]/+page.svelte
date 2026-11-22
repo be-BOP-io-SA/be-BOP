@@ -58,7 +58,13 @@
 			await cardBridge?.sendSms?.(phone, `${t('pos.receipt.title')}: ${data.receiptUrl}`);
 			smsStatus = t('pos.terminal.receiptSent');
 		} catch (err) {
-			smsStatus = err instanceof Error ? err.message : String(err);
+			// The code of a refused permission is the app's, not a text for the operator.
+			smsStatus =
+				(err as { code?: string }).code === 'sms_denied'
+					? t('pos.terminal.smsDenied')
+					: err instanceof Error
+					? err.message
+					: String(err);
 		}
 	}
 	let cardError = '';
