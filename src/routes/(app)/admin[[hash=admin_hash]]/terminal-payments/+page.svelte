@@ -55,7 +55,14 @@
 		<tbody>
 			{#each data.payments as payment}
 				<tr class="align-top">
-					<td>{payment.number}</td>
+					<td>
+						<a
+							href={payment.receiptPath}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="underline">{payment.number}</a
+						>
+					</td>
 					<td>{new Date(payment.createdAt).toLocaleString($locale)}</td>
 					<td
 						><PriceTag

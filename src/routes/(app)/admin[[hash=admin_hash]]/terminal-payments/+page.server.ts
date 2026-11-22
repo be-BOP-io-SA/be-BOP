@@ -19,6 +19,8 @@ export async function load({ url }) {
 		payments: payments.map((p) => ({
 			_id: p._id.toHexString(),
 			number: p.number,
+			// The public receipt of the payment, the ticket the customer scans.
+			receiptPath: `/pos-receipt/${p.receiptToken}`,
 			createdAt: p.createdAt,
 			amount: p.amount,
 			tip: p.tip,
