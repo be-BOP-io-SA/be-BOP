@@ -1,4 +1,4 @@
-import { defaultConfig, runtimeConfig } from '$lib/server/runtime-config';
+import { defaultConfig, runtimeConfig, type RuntimeConfig } from '$lib/server/runtime-config';
 import { rateLimit } from '$lib/server/rateLimit';
 import { configSchemaFromFields } from '$lib/server/sdk/config-fields';
 import { testPaypalPosConnection } from '$lib/server/sdk/test-connection';
@@ -26,7 +26,10 @@ export function load({ locals }) {
 
 export const actions = {
 	async save({ request }) {
-		const paypalPos = schema.parse(Object.fromEntries(await request.formData()));
+		// The schema is built from the fields PayPal declares, which `paypalPos` has too.
+		const paypalPos = schema.parse(
+			Object.fromEntries(await request.formData())
+		) as RuntimeConfig['paypalPos'];
 
 		await persistConfigElement('paypalPos', paypalPos);
 		runtimeConfig.paypalPos = paypalPos;
