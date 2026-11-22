@@ -2311,6 +2311,14 @@
 			"certificateTitle": "be-BOP-certificaat",
 			"placeholder": "Voorlopig document: de inhoud van het certificaat wordt later vastgelegd.",
 			"generatedAt": "Uitgegeven op"
+		},
+		"paypalPos": {
+			"title": "PayPal POS",
+			"intro": "PayPal op gekoppelde terminals, los van de PayPal van de winkel: de terminal toont de QR-code van de PayPal-betaalpagina en de klant betaalt op zijn telefoon. Vul de gegevens in van de PayPal-app die gebruikt wordt.",
+			"currency": "Valuta",
+			"secretKept": "Leeg laten om het opgeslagen secret te behouden",
+			"saved": "Instellingen opgeslagen.",
+			"reset": "Instellingen verwijderen"
 		}
 	},
 	"ageWarning": {

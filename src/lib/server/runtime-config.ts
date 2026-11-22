@@ -92,6 +92,8 @@ const baseConfig = {
 	posPaymentNumber: 0,
 	/** The Stripe Terminal Location of the shop, that its Tap to Pay terminals connect to. */
 	stripeTerminalLocationId: '',
+	/** PayPal on paired terminals, apart from the shop's PayPal (Payment Settings > PayPal POS). */
+	paypalPos: { clientId: '', secret: '', sandbox: false, currency: 'EUR' as Currency },
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
 	/**

@@ -168,6 +168,11 @@ export const adminLinks: AdminLinks = [
 				href: '/admin/stripe-terminal',
 				label: 'Stripe Terminal'
 			},
+			{
+				// PayPal on the terminals, apart from the shop's PayPal.
+				href: '/admin/paypal-pos',
+				label: 'PayPal POS'
+			},
 			// These two configure a method rather than a provider, so they have no manifest entry.
 			{
 				href: '/admin/pos-payments',
@@ -300,7 +305,8 @@ const POS_MENU: Array<{ section: string; hrefs: string[] }> = [
 			'/admin/stripe',
 			'/admin/stripe-terminal',
 			'/admin/taler',
-			'/admin/paypal'
+			'/admin/paypal',
+			'/admin/paypal-pos'
 		]
 	},
 	{

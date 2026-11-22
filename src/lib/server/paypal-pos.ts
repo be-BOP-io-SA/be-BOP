@@ -1,7 +1,7 @@
 import { addSeconds } from 'date-fns';
 import { z } from 'zod';
 import { runtimeConfig } from './runtime-config';
-import { getProcessor, type CheckPaymentResult } from './sdk/pp';
+import type { CheckPaymentResult } from './sdk/pp';
 import { CURRENCIES, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
 import type { OrderPayment, Price } from '$lib/types/Order';
 import { typedInclude } from '$lib/utils/typedIncludes';
@@ -11,24 +11,25 @@ import { sumCurrency } from '$lib/utils/sumCurrency';
  * PayPal for a terminal payment, which has no order: the customer scans the QR of the PayPal
  * approval page and pays on their phone, then comes back to the public receipt of the payment.
  *
- * A copy of the PayPal processor (payment-processors/paypal) with the shop's PayPal settings,
- * because the processor sends the customer back to an order page. To merge back into it once
- * the processor lets its caller say where the customer pays and comes back.
+ * A fork of the PayPal processor (payment-processors/paypal), with its own settings (Payment
+ * Settings > PayPal POS), because the processor sends the customer back to an order page. To
+ * merge back into it once the processor lets its caller say where the customer pays and comes back.
  */
 
+/** Set up in Payment Settings > PayPal POS, apart from the shop's PayPal. */
 export function isPaypalPosReady(): boolean {
-	return !!getProcessor('paypal')?.isEnabled();
+	return !!runtimeConfig.paypalPos.clientId && !!runtimeConfig.paypalPos.secret;
 }
 
 const paypalApiOrigin = () =>
-	runtimeConfig.paypal.sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api.paypal.com';
+	runtimeConfig.paypalPos.sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api.paypal.com';
 
 let cachedToken: string | null = null;
 let tokenExpiresAt: Date | null = null;
 let credentialsUsedForToken: string | null = null;
 
 async function paypalAccessToken(): Promise<string> {
-	const credentials = `${runtimeConfig.paypal.clientId}:${runtimeConfig.paypal.secret}`;
+	const credentials = `${runtimeConfig.paypalPos.clientId}:${runtimeConfig.paypalPos.secret}`;
 	if (
 		cachedToken &&
 		tokenExpiresAt &&

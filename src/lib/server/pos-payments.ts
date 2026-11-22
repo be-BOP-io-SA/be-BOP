@@ -4,7 +4,7 @@ import { collections } from './database';
 import { runtimeConfig } from './runtime-config';
 import { paymentMethodExpiration } from './orders';
 import { coversPayment, getProcessor, resolveProcessor } from './sdk/pp';
-import type { PaymentMethod } from './payment-methods';
+import type { PaymentMethod, PaymentProcessor } from './payment-methods';
 import type { Order, OrderPayment, Price } from '$lib/types/Order';
 import type { PosPayment } from '$lib/types/PosPayment';
 import { CURRENCY_UNIT, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
@@ -95,19 +95,21 @@ export async function createPosPayment(params: {
 	if (!terminalPaymentMethods().includes(params.method)) {
 		throw new PosPaymentError(`Payment method ${params.method} is not available on terminals`);
 	}
-	const pp =
-		params.method === 'card'
-			? getProcessor('stripe')
-			: params.method === 'paypal'
-			? getProcessor('paypal')
-			: resolveProcessor(params.method);
-	if (!pp) {
+	// PayPal POS has its own settings (Payment Settings > PayPal POS), apart from the processors.
+	const isPaypal = params.method === 'paypal';
+	const pp = isPaypal
+		? undefined
+		: params.method === 'card'
+		? getProcessor('stripe')
+		: resolveProcessor(params.method);
+	if (!isPaypal && !pp) {
 		throw new PosPaymentError(`No payment processor available for ${params.method}`);
 	}
 
 	const main = runtimeConfig.mainCurrency;
 	const total: Price = { amount: params.amount + params.tip, currency: main };
-	const settlement = pp.settlementCurrency();
+	const settlement = pp ? pp.settlementCurrency() : runtimeConfig.paypalPos.currency;
+	const processor: PaymentProcessor = pp ? pp.meta.processor : 'paypal';
 	const price: Price = {
 		amount: toCurrency(settlement, total.amount, total.currency),
 		currency: settlement
@@ -132,7 +134,7 @@ export async function createPosPayment(params: {
 					metadata: { posPaymentId: _id.toHexString(), paymentId: paymentId.toHexString() },
 					description: `PoS payment ${number}`
 			  }).then((intent) => ({ checkoutId: intent.id, clientSecret: intent.clientSecret }))
-			: await pp.createPayment({
+			: await (pp as NonNullable<typeof pp>).createPayment({
 					orderId: _id.toHexString(),
 					orderNumber: number,
 					paymentId: paymentId.toHexString(),
@@ -157,7 +159,7 @@ export async function createPosPayment(params: {
 			price,
 			currencySnapshot: snapshotOf(price),
 			method: params.method,
-			processor: pp.meta.processor,
+			processor,
 			...(expiresAt && { expiresAt }),
 			createdAt: now,
 			...('address' in result && result.address && { address: result.address }),
@@ -177,7 +179,7 @@ export async function createPosPayment(params: {
 		after: {
 			number,
 			method: params.method,
-			processor: pp.meta.processor,
+			processor,
 			paymentId: paymentId.toString(),
 			amount: posPayment.amount,
 			tip: posPayment.tip,
@@ -202,21 +204,25 @@ export async function checkPosPayment(posPayment: PosPayment): Promise<PosPaymen
 	if (payment.status !== 'pending' || !payment.processor) {
 		return posPayment;
 	}
-	const pp = getProcessor(payment.processor);
-	if (!pp?.checkPayment || !pp.isEnabled()) {
+	const isPaypal = payment.method === 'paypal';
+	const pp = isPaypal ? undefined : getProcessor(payment.processor);
+	if (isPaypal ? !isPaypalPosReady() : !pp?.checkPayment || !pp.isEnabled()) {
 		return posPayment;
 	}
 
 	const carrier = { _id: posPayment._id.toHexString(), createdAt: posPayment.createdAt };
-	const result =
-		payment.method === 'paypal'
-			? await checkPaypalPosCheckout(payment)
-			: await pp.checkPayment(payment, carrier as unknown as Order);
+	const result = pp?.checkPayment
+		? await pp.checkPayment(payment, carrier as unknown as Order)
+		: await checkPaypalPosCheckout(payment);
 	const now = new Date();
 
 	switch (result.status) {
 		case 'paid': {
-			if (!coversPayment(pp, payment, result.received, result.fees)) {
+			const covered = pp
+				? coversPayment(pp, payment, result.received, result.fees)
+				: toCurrency(payment.price.currency, result.received.amount, result.received.currency) >=
+				  payment.price.amount - CURRENCY_UNIT[payment.price.currency];
+			if (!covered) {
 				return posPayment;
 			}
 			const receivedInPrice = toCurrency(
