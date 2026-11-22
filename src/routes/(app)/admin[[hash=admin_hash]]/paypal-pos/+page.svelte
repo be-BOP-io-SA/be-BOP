@@ -1,53 +1,53 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n';
-	import { CURRENCIES } from '$lib/types/Currency';
+	import ConfigForm from '$lib/payment-processors/ConfigForm.svelte';
+	import paypal from '$lib/payment-processors/paypal/declaration';
 
 	export let data;
 	export let form;
 
 	const { t } = useI18n();
+
+	let testInFlight = false;
+	let testCooldownUntil = 0;
+	$: testDisabled = testInFlight || Date.now() < testCooldownUntil;
 </script>
 
-<h1 class="text-3xl">{t('admin.paypalPos.title')}</h1>
+<h1 class="text-3xl">{data.label}</h1>
 
-<p>{t('admin.paypalPos.intro')}</p>
-
-<form method="post" action="?/save" class="flex flex-col gap-4 max-w-xl">
-	<label class="form-label">
-		Client ID
-		<input type="text" name="clientId" class="form-input" value={data.clientId} required />
-	</label>
-	<label class="form-label">
-		Secret
-		<input
-			type="password"
-			name="secret"
-			class="form-input"
-			autocomplete="off"
-			placeholder={data.hasSecret ? t('admin.paypalPos.secretKept') : ''}
-			required={!data.hasSecret}
-		/>
-	</label>
-	<label class="checkbox-label">
-		<input type="checkbox" name="sandbox" class="form-checkbox" checked={data.sandbox} />
-		Sandbox
-	</label>
-	<label class="form-label">
-		{t('admin.paypalPos.currency')}
-		<select name="currency" class="form-input" value={data.currency}>
-			{#each CURRENCIES as currency}
-				<option value={currency}>{currency}</option>
-			{/each}
-		</select>
-	</label>
-	{#if form && 'saved' in form}
-		<p class="text-green-600">{t('admin.paypalPos.saved')}</p>
+<form class="contents" method="post" action="?/save">
+	{#if data.front?.settings && data.front.settings !== 'custom'}
+		<ConfigForm fields={paypal.config.fields} settings={data.front.settings} config={data.config} />
 	{/if}
-	<button type="submit" class="btn btn-black self-start">{t('admin.action.save')}</button>
-</form>
 
-{#if data.clientId}
-	<form method="post" action="?/reset">
-		<button type="submit" class="btn btn-red">{t('admin.paypalPos.reset')}</button>
-	</form>
-{/if}
+	<div class="flex justify-between">
+		<button class="btn btn-black" type="submit">{t('admin.action.save')}</button>
+		<button class="btn btn-red" type="submit" form="delete-form">{t('admin.action.reset')}</button>
+	</div>
+</form>
+<form class="contents" method="post" action="?/delete" id="delete-form"></form>
+
+<form
+	method="post"
+	action="?/testConnection"
+	use:enhance={() => {
+		testInFlight = true;
+		return async ({ update }) => {
+			await update({ reset: false });
+			testInFlight = false;
+			// 10s debounce to throttle accidental hammering on top of the server-side rateLimit.
+			testCooldownUntil = Date.now() + 10_000;
+		};
+	}}
+	class="flex flex-col gap-2"
+>
+	<button class="btn btn-blue self-start" type="submit" disabled={testDisabled}>
+		{testInFlight ? t('admin.action.testing') : t('admin.action.testConnection')}
+	</button>
+	{#if form?.ok}
+		<div class="alert-success">{t('admin.action.testSuccess', { provider: data.label })}</div>
+	{:else if form?.reason}
+		<div class="alert-error">{t('admin.action.testFailed', { reason: form.reason })}</div>
+	{/if}
+</form>

@@ -2311,14 +2311,6 @@
 			"certificateTitle": "Certificato be-BOP",
 			"placeholder": "Documento provvisorio: il contenuto del certificato sarà definito in seguito.",
 			"generatedAt": "Emesso il"
-		},
-		"paypalPos": {
-			"title": "PayPal POS",
-			"intro": "PayPal sui terminali associati, separato dal PayPal del negozio: il terminale mostra il QR della pagina di pagamento PayPal e il cliente paga sul suo telefono. Inserisci le credenziali dell'app PayPal da usare.",
-			"currency": "Valuta",
-			"secretKept": "Lascia vuoto per mantenere il secret salvato",
-			"saved": "Impostazioni salvate.",
-			"reset": "Elimina le impostazioni"
 		}
 	},
 	"ageWarning": {

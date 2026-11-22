@@ -1,43 +1,47 @@
-import { fail } from '@sveltejs/kit';
-import { z } from 'zod';
-import { runtimeConfig } from '$lib/server/runtime-config';
+import { defaultConfig, runtimeConfig } from '$lib/server/runtime-config';
+import { rateLimit } from '$lib/server/rateLimit';
+import { configSchemaFromFields } from '$lib/server/sdk/config-fields';
+import { testPaypalPosConnection } from '$lib/server/sdk/test-connection';
 import { persistConfigElement } from '$lib/server/utils/persistConfig';
-import { CURRENCIES } from '$lib/types/Currency';
+import paypal from '$lib/payment-processors/paypal/declaration';
+import { isAllowedOnPage } from '$lib/types/Role';
 
-/** PayPal on paired terminals: its own PayPal app, apart from the shop's PayPal. */
-export function load() {
-	const { clientId, secret, sandbox, currency } = runtimeConfig.paypalPos;
-	return { clientId, hasSecret: !!secret, sandbox, currency };
+/**
+ * PayPal on paired terminals: its own PayPal app, apart from the shop's PayPal, with the same
+ * fields as the PayPal processor.
+ */
+const schema = configSchemaFromFields(paypal.config.fields);
+
+export function load({ locals }) {
+	const mayEdit =
+		!!locals.user?.role && isAllowedOnPage(locals.user.role, '/admin/paypal-pos', 'write');
+	const config = runtimeConfig.paypalPos;
+
+	return {
+		label: 'PayPal POS',
+		// A role that may only read this page has no use for the secret.
+		config: mayEdit ? config : { ...config, secret: '' }
+	};
 }
 
 export const actions = {
 	async save({ request }) {
-		const parsed = z
-			.object({
-				clientId: z.string().trim(),
-				// Left empty, the saved secret is kept: the page never shows it.
-				secret: z.string().trim(),
-				sandbox: z.boolean({ coerce: true }).default(false),
-				currency: z.enum(CURRENCIES)
-			})
-			.safeParse(Object.fromEntries(await request.formData()));
-		if (!parsed.success) {
-			return fail(400, { error: true });
-		}
-		const paypalPos = {
-			clientId: parsed.data.clientId,
-			secret: parsed.data.secret || runtimeConfig.paypalPos.secret,
-			sandbox: parsed.data.sandbox,
-			currency: parsed.data.currency
-		};
-		runtimeConfig.paypalPos = paypalPos;
+		const paypalPos = schema.parse(Object.fromEntries(await request.formData()));
+
 		await persistConfigElement('paypalPos', paypalPos);
-		return { saved: true };
+		runtimeConfig.paypalPos = paypalPos;
 	},
 
-	async reset() {
-		const paypalPos = { clientId: '', secret: '', sandbox: false, currency: 'EUR' as const };
-		runtimeConfig.paypalPos = paypalPos;
+	async delete() {
+		const paypalPos = structuredClone(defaultConfig.paypalPos);
+
 		await persistConfigElement('paypalPos', paypalPos);
+		runtimeConfig.paypalPos = paypalPos;
+	},
+
+	async testConnection({ locals, url }) {
+		rateLimit(locals.clientIp, 'pp.test.paypal-pos', 5, { minutes: 1 });
+
+		return await testPaypalPosConnection(url.origin);
 	}
 };
