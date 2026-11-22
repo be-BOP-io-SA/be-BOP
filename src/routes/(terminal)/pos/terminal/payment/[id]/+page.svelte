@@ -26,6 +26,7 @@
 	// The be-BOP-pos app exposes its native modules to the page; a browser has none.
 	type CardBridge = {
 		collectCardPayment(clientSecret: string): Promise<unknown>;
+		cancelCardPayment?(): Promise<unknown>;
 		scanQr?(): Promise<string>;
 		sendSms?(phone: string, text: string): Promise<unknown>;
 		info?(): Promise<{ smsAvailable?: boolean; nfcAvailable?: boolean; nfcEnabled?: boolean }>;
@@ -90,6 +91,16 @@
 		return () => document.removeEventListener('visibilitychange', onVisible);
 	});
 	let collecting = false;
+	// Canceled, expired or paid elsewhere, or the screen is left: the device stops listening.
+	function stopCollecting() {
+		if (collecting) {
+			cardBridge?.cancelCardPayment?.().catch(() => undefined);
+		}
+	}
+	$: if (data.status !== 'pending') {
+		stopCollecting();
+	}
+	onDestroy(stopCollecting);
 	async function collectCard() {
 		await readDevice();
 		if (

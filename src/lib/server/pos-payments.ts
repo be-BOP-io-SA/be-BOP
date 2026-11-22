@@ -12,7 +12,11 @@ import { Kind } from 'nostr-tools';
 import { ORIGIN } from './env-config';
 import { queueEmail } from './email';
 import { toCurrency } from '$lib/utils/toCurrency';
-import { createCardPresentIntent, isStripeTerminalReady } from './stripe-terminal';
+import {
+	cancelCardPresentIntent,
+	createCardPresentIntent,
+	isStripeTerminalReady
+} from './stripe-terminal';
 import { checkPaypalPosCheckout, createPaypalPosCheckout, isPaypalPosReady } from './paypal-pos';
 import { logAccountingEvent } from './accounting-log';
 import type { AccountingLog } from '$lib/types/AccountingLog';
@@ -379,6 +383,12 @@ export async function cancelPosPayment(
 		{ $set: { 'payment.status': 'canceled', updatedAt: new Date() } }
 	);
 	if (canceled.modifiedCount) {
+		// A card the customer taps after this would still be charged by Stripe otherwise.
+		if (posPayment.payment.method === 'card' && posPayment.payment.checkoutId) {
+			await cancelCardPresentIntent(posPayment.payment.checkoutId).catch((err) =>
+				console.error(`Stripe PaymentIntent of PoS payment ${posPayment.number} not canceled`, err)
+			);
+		}
 		await logAccountingEvent({
 			eventType: 'paymentCancel',
 			before: { status: 'pending' },

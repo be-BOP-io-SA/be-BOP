@@ -103,3 +103,8 @@ export async function createCardPresentIntent(params: {
 	const parsed = z.object({ id: z.string(), client_secret: z.string() }).parse(json);
 	return { id: parsed.id, clientSecret: parsed.client_secret };
 }
+
+/** Cancels a card PaymentIntent of a terminal: once canceled, Stripe refuses to collect it. */
+export async function cancelCardPresentIntent(id: string): Promise<void> {
+	await stripe(`payment_intents/${encodeURIComponent(id)}/cancel`, { method: 'POST', body: {} });
+}

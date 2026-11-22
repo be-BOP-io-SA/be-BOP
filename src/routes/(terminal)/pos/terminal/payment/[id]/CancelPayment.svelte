@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { useI18n } from '$lib/i18n';
 
 	const { t } = useI18n();
@@ -8,7 +9,7 @@
 </script>
 
 {#if confirming}
-	<form method="post" action="?/cancel" class="flex flex-col gap-2 w-full max-w-sm">
+	<form method="post" action="?/cancel" class="flex flex-col gap-2 w-full max-w-sm" use:enhance>
 		<p>{t('pos.terminal.cancelConfirm')}</p>
 		<button type="submit" class="btn btn-red text-xl py-4">{t('pos.terminal.cancelYes')}</button>
 		<button type="button" class="btn btn-gray" on:click={() => (confirming = false)}>
