@@ -50,21 +50,6 @@ async function maintainPosPayments() {
 				await checkPosPayment(posPayment);
 				failing.delete(id);
 			} catch (err) {
-				// A payment must not stay pending for good: past its deadline it ends, even when the
-				// processor cannot be read.
-				const { expiresAt } = posPayment.payment;
-				if (expiresAt && expiresAt < new Date()) {
-					await collections.posPayments.updateOne(
-						{ _id: posPayment._id, 'payment.status': 'pending' },
-						{ $set: { 'payment.status': 'expired', updatedAt: new Date() } }
-					);
-					failing.delete(id);
-					console.error(
-						`PoS payment ${id} expired without the processor answering:`,
-						err instanceof Error ? err.message : inspect(err, { depth: 10 })
-					);
-					continue;
-				}
 				const failures = (previous?.failures ?? 0) + 1;
 				failing.set(id, {
 					failures,
