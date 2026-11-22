@@ -18,6 +18,21 @@ import { BoltCardError, payInvoiceWithBoltCard } from '$lib/server/boltcard';
 import { toSatoshis } from '$lib/utils/toSatoshis';
 import type { RequestEvent } from '@sveltejs/kit';
 
+/**
+ * The Lightning processors whose invoices a Bolt Card was seen paying. With phoenixd, the provider of
+ * the card found no route to the shop's node.
+ */
+const BOLT_CARD_PROCESSORS: readonly string[] = ['swiss-bitcoin-pay', 'btcpay-server', 'blink'];
+
+function takesBoltCard(payment: { method: string; processor?: string; address?: string }) {
+	return (
+		payment.method === 'lightning' &&
+		!!payment.address &&
+		!!payment.processor &&
+		BOLT_CARD_PROCESSORS.includes(payment.processor)
+	);
+}
+
 /** The payment, if this terminal took it. */
 async function ownPayment(event: RequestEvent<{ id: string }>) {
 	const apiKey = await terminalKeyOf(event);
@@ -63,6 +78,7 @@ export async function load(event) {
 		awaitingConfirmation: payment.awaitingConfirmation ?? false,
 		confirmationBlocks: payment.method === 'bitcoin' ? getConfirmationBlocks(payment.price) : 0,
 		overpayment: posPayment.overpayment,
+		boltCard: takesBoltCard(payment),
 		canRefund: actions.includes('refund'),
 		receiptUrl: posReceiptUrl(posPayment)
 	};
@@ -95,8 +111,8 @@ export const actions = {
 			return fail(403, {});
 		}
 		const { payment } = posPayment;
-		if (payment.status !== 'pending' || payment.method !== 'lightning' || !payment.address) {
-			throw error(400, 'Payment is not a pending Lightning payment');
+		if (payment.status !== 'pending' || !payment.address || !takesBoltCard(payment)) {
+			throw error(400, 'Payment does not take a Bolt Card');
 		}
 		const link = String((await event.request.formData()).get('link') ?? '');
 		try {

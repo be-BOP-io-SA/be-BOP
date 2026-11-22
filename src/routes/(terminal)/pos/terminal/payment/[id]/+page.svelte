@@ -260,7 +260,7 @@
 		{:else}
 			<p>{t('pos.terminal.waiting')}</p>
 		{/if}
-		{#if data.method === 'lightning' && cardBridge?.readNfc}
+		{#if data.boltCard && cardBridge?.readNfc}
 			<form
 				method="post"
 				action="?/boltcard"
