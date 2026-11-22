@@ -95,6 +95,10 @@
 	}
 
 	function back() {
+		if (step === 'method') {
+			// Leaving the choice of the method forgets the refusal of the last attempt.
+			form = null;
+		}
 		step = step === 'method' ? 'ref' : step === 'ref' && !tipSkipped ? 'tip' : 'amount';
 	}
 </script>
@@ -243,7 +247,8 @@
 			<p class="text-red-500 text-center" role="alert">{t('pos.terminal.errors.tillClosed')}</p>
 		{/if}
 
-		{#if form?.error}
+		<!-- A refused payment is explained where the method is chosen, and only there. -->
+		{#if form?.error && step === 'method'}
 			<p class="text-red-500 text-center" role="alert">
 				{t(`pos.terminal.errors.${form.error}`)}
 			</p>
