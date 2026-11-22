@@ -134,11 +134,18 @@ export async function createPaypalPosCheckout(params: {
 					description: `PoS payment ${params.number}`
 				}
 			],
-			application_context: {
-				user_action: 'PAY_NOW',
-				shipping_preference: 'NO_SHIPPING',
-				return_url: params.returnUrl,
-				cancel_url: params.returnUrl
+			payment_source: {
+				paypal: {
+					experience_context: {
+						user_action: 'PAY_NOW',
+						shipping_preference: 'NO_SHIPPING',
+						return_url: params.returnUrl,
+						cancel_url: params.returnUrl,
+						// The customer scans the QR code with their own phone: PayPal opens its app there
+						// when it is installed, then sends the customer back to the receipt.
+						app_switch_context: { mobile_web: { return_flow: 'AUTO' } }
+					}
+				}
 			}
 		})
 	});
@@ -151,7 +158,10 @@ export async function createPaypalPosCheckout(params: {
 	const json = z
 		.object({ id: z.string(), links: z.array(z.object({ rel: z.string(), href: z.string() })) })
 		.parse(await response.json());
-	const approveLink = json.links.find((link) => link.rel === 'approve');
+	// With `payment_source`, PayPal names the link `payer-action`; `approve` is its older name.
+	const approveLink =
+		json.links.find((link) => link.rel === 'payer-action') ??
+		json.links.find((link) => link.rel === 'approve');
 	if (!approveLink) {
 		throw new Error(`PayPal returned no approve link for PoS payment ${params.number}`);
 	}
