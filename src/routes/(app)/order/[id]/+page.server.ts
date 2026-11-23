@@ -179,7 +179,7 @@ export const actions = {
 			if (!order.payments.length) {
 				await collections.orders.updateOne(
 					{ _id: order._id, status: 'pending' },
-					{ $set: { status: 'canceled' } }
+					{ $set: { status: 'canceled', updatedAt: new Date() } }
 				);
 			}
 		}
