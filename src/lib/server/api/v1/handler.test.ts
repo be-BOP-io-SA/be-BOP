@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { ObjectId } from 'mongodb';
 import { apiError } from './errors';
-import { runtimeConfig } from '$lib/server/runtime-config';
+import { defaultConfig, runtimeConfig } from '$lib/server/runtime-config';
 import type { AuthenticatedApiKey } from '$lib/types/ApiV1';
 import { apiV1Handler, apiV1OptionsHandler } from './handler';
 import * as logModule from './log';
@@ -166,8 +166,14 @@ describe('apiV1Handler call journal', () => {
 		expect(await journaled(notFound, apiKey)).toBe(false);
 	});
 
-	it('leaves calls without a valid key out by default', async () => {
+	it('leaves calls without a valid key out when the shop turned them off', async () => {
 		expect(await journaled(unauthorized)).toBe(false);
+	});
+
+	it('keeps calls without a valid key by default', async () => {
+		runtimeConfig.apiV1Log = structuredClone(defaultConfig.apiV1Log);
+
+		expect(await journaled(unauthorized)).toBe(true);
 	});
 
 	it('names the orders a call concerns, so that their anonymization reaches it', async () => {
