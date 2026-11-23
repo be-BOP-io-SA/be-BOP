@@ -96,17 +96,6 @@ export function orderStreamCursor(order: Order, feed: OrderFeed = 'paid'): PaidS
 	return { ms: at.getTime(), orderId: order._id };
 }
 
-/** Total order over (ms, orderId) so a resume can skip exactly what was already delivered. */
-export function compareCursors(a: PaidStreamCursor, b: PaidStreamCursor): number {
-	if (a.ms !== b.ms) {
-		return a.ms < b.ms ? -1 : 1;
-	}
-	if (a.orderId === b.orderId) {
-		return 0;
-	}
-	return a.orderId < b.orderId ? -1 : 1;
-}
-
 /**
  * Dedupe key for at-least-once delivery. Equal for a re-delivery of an unchanged order, different
  * when a further payment moves the amount.
@@ -200,38 +189,39 @@ export async function* iteratePaidOrderBacklog(opts: {
 }): AsyncGenerator<PaidStreamFrame> {
 	const feed = opts.feed ?? 'paid';
 	const field = feedDateField(feed);
-	const floor = Math.max(opts.since?.getTime() ?? 0, opts.after?.ms ?? 0);
-	let lowerBoundMs = floor;
+	const since = new Date(opts.since?.getTime() ?? 0);
 	let after = opts.after;
 
 	for (;;) {
+		// Paged on (date, id): any number of orders can share one millisecond, a batch cannot.
+		const position = after
+			? {
+					$or: [
+						{ [field]: { $gt: new Date(after.ms) } },
+						{ [field]: new Date(after.ms), _id: { $gt: after.orderId } }
+					]
+			  }
+			: {};
 		const docs = await collections.orders
 			.find({
 				...(feed === 'paid' && { 'payments.status': 'paid' }),
 				...(opts.ordersOfKey && { externalSourceApiKeyId: opts.ordersOfKey }),
-				[field]: { $gte: new Date(lowerBoundMs) }
+				[field]: { $gte: since },
+				...position
 			})
 			.sort({ [field]: 1, _id: 1 })
 			.limit(BACKFILL_BATCH)
 			.toArray();
 
-		let advanced = false;
 		for (const doc of docs) {
 			const order = doc as Order;
 			const cursor = orderStreamCursor(order, feed);
-			if (after && compareCursors(cursor, after) <= 0) {
-				continue;
-			}
 			after = cursor;
-			advanced = true;
 			yield { cursor, order };
 		}
 
 		if (docs.length < BACKFILL_BATCH) {
 			return;
 		}
-		// A full batch with nothing new means every row tied on the cursor's millisecond. Stepping
-		// past it is the only exit, and can only skip rows already delivered.
-		lowerBoundMs = advanced ? after?.ms ?? lowerBoundMs : lowerBoundMs + 1;
 	}
 }
