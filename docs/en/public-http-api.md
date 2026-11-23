@@ -76,7 +76,7 @@ If-None-Match: "9f2b…"
 → 304  ETag: "9f2b…"   (empty body)
 ```
 
-`304` still counts against the rate limit. Browser callers read `ETag` through `Access-Control-Expose-Headers`. Writes take no ETag precondition: `POST /api/v1/orders` is idempotent on `(apiKey, externalOrderId)` instead.
+`304` still counts against the rate limit. Browser callers read `ETag` through `Access-Control-Expose-Headers`. Writes take no ETag precondition. `POST /api/v1/orders` is not idempotent: an order whose `externalOrderId` the API key already sent is refused with `DUPLICATE_EXTERNAL_ORDER_ID`, and the existing order is left as it was, unless the key accepts several orders per external id.
 
 ## Variations, and the identifier a link carries (`?key=`)
 

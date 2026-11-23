@@ -76,7 +76,7 @@ If-None-Match: "9f2b…"
 → 304  ETag: "9f2b…"   (corps vide)
 ```
 
-Un `304` compte quand même dans la limite de débit. Les appels navigateur lisent l’`ETag` via `Access-Control-Expose-Headers`. Les écritures n’acceptent aucune précondition ETag : `POST /api/v1/orders` reste idempotent sur `(apiKey, externalOrderId)`.
+Un `304` compte quand même dans la limite de débit. Les appels navigateur lisent l’`ETag` via `Access-Control-Expose-Headers`. Les écritures n’acceptent aucune précondition ETag. `POST /api/v1/orders` n’est pas idempotent : une commande dont l’`externalOrderId` a déjà été envoyé par la clé API est refusée avec `DUPLICATE_EXTERNAL_ORDER_ID`, et la commande existante n’est pas touchée, sauf si la clé accepte plusieurs commandes par identifiant externe.
 
 ## Variations, et l’identifiant porté par un lien (`?key=`)
 
