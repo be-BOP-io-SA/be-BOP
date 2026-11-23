@@ -155,36 +155,16 @@ export function shouldLogApiV1Call(
 export function logApiV1Event(draft: ApiV1LogDraft): void {
 	void collections.apiV1Logs
 		.insertOne({ _id: new ObjectId(), createdAt: new Date(), ...draft })
-		.then(() => scheduleApiV1LogPrune())
 		.catch((err) => console.error('[api/v1] could not write the call log', err));
 }
 
-/** How often, at most, a server trims the journal back to its ceiling. */
-export const PRUNE_INTERVAL_MS = 60_000;
-
-let lastPruneAt = 0;
-let pruning = false;
-
 /**
- * Trim after a write, once a minute at most: trimming on every call would double the cost of
- * journaling. Between two trims the journal may run over its ceiling by a minute of calls.
+ * Trim the journal back to the ceiling the shop set, if it set one, and return how many entries
+ * went. Run by the cleanup lock, so one server of the cluster trims rather than each of them.
  */
-function scheduleApiV1LogPrune(): void {
-	const now = Date.now();
-	if (pruning || now - lastPruneAt < PRUNE_INTERVAL_MS) {
-		return;
-	}
+export async function trimApiV1LogToCeiling(): Promise<number> {
 	const maxSizeMb = runtimeConfig.apiV1Log.maxSizeMb ?? null;
-	if (maxSizeMb === null) {
-		return;
-	}
-	pruning = true;
-	lastPruneAt = now;
-	void pruneApiV1Logs(maxSizeMb * 1024 * 1024)
-		.catch((err) => console.error('[api/v1] could not trim the call log', err))
-		.finally(() => {
-			pruning = false;
-		});
+	return maxSizeMb === null ? 0 : pruneApiV1Logs(maxSizeMb * 1024 * 1024);
 }
 
 /**

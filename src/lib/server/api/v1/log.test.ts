@@ -1,12 +1,13 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
 
 vi.mock('$lib/server/database', () => ({ collections: { apiV1Logs: {} } }));
 vi.mock('$lib/server/runtime-config', () => ({
-	runtimeConfig: { apiV1Log: { maxSizeMb: null } }
+	runtimeConfig: { apiV1Log: { maxSizeMb: null as number | null } }
 }));
 
 import { collections } from '$lib/server/database';
+import { runtimeConfig } from '$lib/server/runtime-config';
 import {
 	MAX_LOGGED_BODY_CHARS,
 	eraseOrderPersonalDataFromApiV1Logs,
@@ -18,6 +19,7 @@ import {
 	pruneApiV1Logs,
 	readBodyForLog,
 	shouldLogApiV1Call,
+	trimApiV1LogToCeiling,
 	truncateBody
 } from './log';
 
@@ -124,6 +126,28 @@ describe('pruneApiV1Logs', () => {
 
 		await expect(pruneApiV1Logs(1000)).resolves.toBe(0);
 		expect(deleteMany).not.toHaveBeenCalled();
+	});
+});
+
+describe('trimApiV1LogToCeiling', () => {
+	afterEach(() => {
+		runtimeConfig.apiV1Log.maxSizeMb = null;
+	});
+
+	it('leaves the journal alone when the shop set no ceiling', async () => {
+		const { deleteMany } = fakeJournal(12);
+
+		await expect(trimApiV1LogToCeiling()).resolves.toBe(0);
+		expect(deleteMany).not.toHaveBeenCalled();
+	});
+
+	it('trims the journal back to the ceiling the shop set', async () => {
+		// 12 entries of 100 bytes against a ceiling of 1000 bytes.
+		runtimeConfig.apiV1Log.maxSizeMb = 1000 / (1024 * 1024);
+		const { ids, deleteMany } = fakeJournal(12);
+
+		await expect(trimApiV1LogToCeiling()).resolves.toBe(2);
+		expect(deleteMany).toHaveBeenCalledWith({ _id: { $lte: ids[1] } });
 	});
 });
 
