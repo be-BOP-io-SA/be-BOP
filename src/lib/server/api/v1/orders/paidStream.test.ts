@@ -11,7 +11,6 @@ vi.mock('$lib/server/runtime-config', () => ({
 }));
 
 import {
-	compareCursors,
 	encodeStreamCursor,
 	iteratePaidOrderBacklog,
 	orderStreamCursor,
@@ -107,13 +106,6 @@ describe('stream cursors', () => {
 			ms: new Date('2026-08-01T10:05:00Z').getTime(),
 			orderId: 'zzz'
 		});
-	});
-
-	it('orders on the millisecond first and breaks ties on the order id', () => {
-		expect(compareCursors({ ms: 1, orderId: 'b' }, { ms: 2, orderId: 'a' })).toBe(-1);
-		expect(compareCursors({ ms: 2, orderId: 'a' }, { ms: 1, orderId: 'b' })).toBe(1);
-		expect(compareCursors({ ms: 2, orderId: 'a' }, { ms: 2, orderId: 'b' })).toBe(-1);
-		expect(compareCursors({ ms: 2, orderId: 'a' }, { ms: 2, orderId: 'a' })).toBe(0);
 	});
 });
 
@@ -230,22 +222,30 @@ describe('iteratePaidOrderBacklog', () => {
 		});
 	});
 
-	it('skips everything already delivered before the resume cursor', async () => {
+	it('asks only for what comes after the resume cursor, by date then by order id', async () => {
 		const first = makeOrder({ id: 'a', updatedAt: '2026-08-01T10:00:00Z' });
-		const second = makeOrder({ id: 'b', updatedAt: '2026-08-01T10:01:00Z' });
-		find.mockReturnValue(cursorOf([first, second]));
-		const frames = await drain({ since: null, after: orderStreamCursor(first) });
-		expect(frames.map((f) => f.order._id)).toEqual(['b']);
+		find.mockReturnValue(cursorOf([]));
+		await drain({ since: null, after: orderStreamCursor(first) });
+		expect(find.mock.calls[0][0]).toMatchObject({
+			$or: [
+				{ updatedAt: { $gt: new Date('2026-08-01T10:00:00Z') } },
+				{ updatedAt: new Date('2026-08-01T10:00:00Z'), _id: { $gt: 'a' } }
+			]
+		});
 	});
 
-	it('starts from the later of since and the resume cursor', async () => {
+	it('keeps both since and the resume cursor, so the later of the two applies', async () => {
 		find.mockReturnValue(cursorOf([]));
 		await drain({
 			since: new Date('2026-08-01T09:00:00Z'),
 			after: { ms: new Date('2026-08-01T10:00:00Z').getTime(), orderId: 'a' }
 		});
 		expect(find.mock.calls[0][0]).toMatchObject({
-			updatedAt: { $gte: new Date('2026-08-01T10:00:00Z') }
+			updatedAt: { $gte: new Date('2026-08-01T09:00:00Z') },
+			$or: [
+				{ updatedAt: { $gt: new Date('2026-08-01T10:00:00Z') } },
+				{ updatedAt: new Date('2026-08-01T10:00:00Z'), _id: { $gt: 'a' } }
+			]
 		});
 	});
 
