@@ -1,5 +1,9 @@
 import { createApiKey } from '$lib/server/api/keys';
-import { isStreamLifetimeTooLong, optionalStreamSetting } from '$lib/server/api/stream-settings';
+import {
+	optionalStreamSetting,
+	streamLifetimeSetting,
+	streamSettingsRefusal
+} from '$lib/server/api/stream-settings';
 import { parseExpiresAtFormValue } from '$lib/server/api/expires-at';
 import { setApiKeyRevealCookie } from '$lib/server/api/reveal-flash';
 import { adminPrefix } from '$lib/server/admin';
@@ -45,7 +49,7 @@ export const actions: Actions = {
 				name: z.string().trim().min(1).max(200),
 				scopes: z.array(z.enum(API_V1_SCOPES)).min(1),
 				maxConcurrentStreams: optionalStreamSetting,
-				streamLifetimeSeconds: optionalStreamSetting
+				streamLifetimeSeconds: streamLifetimeSetting
 			})
 			.safeParse({
 				name: formData.get('name'),
@@ -55,13 +59,7 @@ export const actions: Actions = {
 			});
 
 		if (!parsed.success) {
-			return fail(400, { error: parsed.error.flatten() });
-		}
-		if (isStreamLifetimeTooLong(parsed.data.streamLifetimeSeconds)) {
-			return fail(400, {
-				error: { formErrors: [], fieldErrors: {} },
-				streamLifetimeTooLong: true
-			});
+			return fail(400, streamSettingsRefusal(parsed.error));
 		}
 
 		const { apiKey, secret } = await createApiKey({
