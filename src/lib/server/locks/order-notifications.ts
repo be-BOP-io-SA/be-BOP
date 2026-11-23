@@ -3,7 +3,6 @@ import {
 	ObjectId,
 	type ChangeStreamDocument,
 	Timestamp,
-	MongoServerError,
 	ChangeStream,
 	type ClientSession
 } from 'mongodb';
@@ -21,7 +20,7 @@ import { isOrderFullyPaid } from '../orders';
 import { FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
 import { queueEmail } from '../email';
 import { useI18n } from '$lib/i18n';
-import { typedInclude } from '$lib/utils/typedIncludes';
+import { isChangeStreamPositionLost } from '../utils/isChangeStreamPositionLost';
 import type { PaymentMethod } from '../payment-methods';
 
 /**
@@ -91,10 +90,7 @@ async function watch(opts?: { operationTime?: Timestamp }) {
 			changeStream?.close().catch(console.error);
 			changeStream = null;
 
-			if (
-				err instanceof MongoServerError &&
-				typedInclude(['ChangeStreamHistoryLost', 'ChangeStreamFatalError'], err.codeName)
-			) {
+			if (isChangeStreamPositionLost(err)) {
 				watch({ operationTime: Timestamp.fromBits(0, getUnixTime(subHours(new Date(), 1))) });
 			} else {
 				watch();

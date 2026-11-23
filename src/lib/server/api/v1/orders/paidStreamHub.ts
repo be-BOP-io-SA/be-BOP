@@ -1,5 +1,6 @@
 import { collections } from '$lib/server/database';
 import type { Order } from '$lib/types/Order';
+import { isChangeStreamPositionLost } from '$lib/server/utils/isChangeStreamPositionLost';
 import type { ChangeStream, ChangeStreamDocument, ResumeToken } from 'mongodb';
 
 /**
@@ -117,6 +118,10 @@ function openStream(): void {
 	changeStream.on('error', (err) => {
 		console.error('[api/v1] order change stream error', err);
 		closeStream();
+		// The server no longer holds that position: asking for it again would fail the same way.
+		if (isChangeStreamPositionLost(err)) {
+			resumeToken = null;
+		}
 		if (totalListeners() && !reopenTimer) {
 			reopenTimer = setTimeout(() => {
 				reopenTimer = null;
