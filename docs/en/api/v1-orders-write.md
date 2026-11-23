@@ -71,7 +71,7 @@ Rate limiting remains in-process memory only (no Redis).
 Example JSON shape:
 
 - orders: array of order commands
-- each order: externalOrderId, currency, optional createdAt, items[], payment, optional customFields
+- each order: externalOrderId, currency, optional createdAt, items[], payment, optional customFields, optional notifications
 - each item: productId, quantity, optional customPrice { amountMinor, currency }
 - payment / payments[]: method point-of-sale, status, amountMinor, currency, optional posLabel, **strongly recommended `externalPaymentId` on every payment** (safe PoS retries, reordered `payments[]`, split/add matching)
 
@@ -87,6 +87,7 @@ Example JSON shape:
 | Items            | At least one item; productId + quantity (>= 1) required                                                                                                     |
 | customPrice      | Optional per line; authoritative over catalogue price (D8, lot D). `customPrice.currency` and `payment.currency` must equal `order.currency`                |
 | customFields     | Optional map; ≤ 50 keys; each key ≤ 100 chars                                                                                                               |
+| notifications    | Optional boolean. `false`: be-BOP notifies nobody about this order, neither the customer nor the shop. Webhooks and event streams still carry the order     |
 | createdAt        | Optional ISO datetime; rejected if outside ±365 days from server now (`VALIDATION_ERROR`)                                                                   |
 
 ## Response (D1 — frozen)

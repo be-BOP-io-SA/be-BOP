@@ -84,7 +84,7 @@ POST /orders
        for each order:
          writeOne → external id already sent by the key? refuse (DUPLICATE_EXTERNAL_ORDER_ID)
                     | else resolve products | createOrder
-                    | labels | syncExternalPayment (onOrderPayment / onOrderPaymentFailed)
+                    | labels | settleCreatedPayments (onOrderPayment / onOrderPaymentFailed)
                     | map errors → created | failed + warnings
   → HTTP 200 { ok, status, results }
 ```
@@ -214,7 +214,7 @@ They differ in vocabulary, not in machinery:
 
 |                 | `/api/v1`                              | `/api/v1/pos`                                    |
 | --------------- | -------------------------------------- | ------------------------------------------------ |
-| Amounts         | `amountMinor`, integer                 | be-BOP `Price`, major units                      |
+| Amounts         | `amountMinor`, integer                 | `amountMinor`, integer                           |
 | Product key     | `id` + `alias[]`                       | `slug` (which _is_ the be-BOP product `_id`)     |
 | Order reference | `externalOrderId`                      | `saleRef`                                        |
 | Catalog         | paginated envelope, `?lang=`           | whole document, default language                 |
