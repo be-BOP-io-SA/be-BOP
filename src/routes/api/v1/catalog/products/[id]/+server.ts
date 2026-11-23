@@ -3,7 +3,7 @@ import { apiV1Handler, apiV1OptionsHandler } from '$lib/server/api/v1/handler';
 import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { jsonWithETag } from '$lib/server/api/v1/validators';
-import { getCatalogProduct, parseCatalogLanguage } from '$lib/server/api/v1/catalog/listProducts';
+import { getCatalogProduct } from '$lib/server/api/v1/catalog/listProducts';
 import { catalogLanguageParam } from '$lib/server/api/v1/catalog/listingQuery';
 import { parseApiQuery } from '$lib/server/api/v1/query';
 import { parsePictureOptions } from '$lib/server/api/v1/catalog/pictureOptions';
@@ -31,10 +31,7 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 	if ('error' in query) {
 		return query.error;
 	}
-	const language = parseCatalogLanguage(
-		query.data.lang,
-		runtimeConfig.defaultLanguage as LanguageKey
-	);
+	const language = query.data.lang ?? (runtimeConfig.defaultLanguage as LanguageKey);
 	// apiV1Handler hands back a generic RequestEvent, so params are Partial — the router
 	// never matches this route without an id, but narrow it instead of asserting.
 	const picture = parsePictureOptions(

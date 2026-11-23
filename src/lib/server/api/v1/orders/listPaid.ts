@@ -1,7 +1,5 @@
-import { ORDER_LISTING_MAX_LIMIT } from './listingQuery';
 import { collections } from '$lib/server/database';
 import {
-	ORDER_PAYMENT_STATUSES,
 	orderIndividualItemPrice,
 	type Order,
 	type OrderAddress,
@@ -9,25 +7,25 @@ import {
 } from '$lib/types/Order';
 import type { Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
-import { typedInclude } from '$lib/utils/typedIncludes';
 import type { ObjectId } from 'mongodb';
 import { amountToMinor } from './money';
 import { toOrderNoteDto, type OrderNoteDto } from './addNote';
 
-const MAX_LIMIT = ORDER_LISTING_MAX_LIMIT;
 const DEFAULT_LIMIT = 20;
 
+/** Values as `parseApiQuery` hands them over: already checked, already typed. */
 export type PaidOrdersQuery = {
-	since?: string;
-	until?: string;
-	limit?: string;
-	cursor?: string;
+	since?: Date;
+	until?: Date;
+	limit?: number;
+	/** Order number of the last row of the previous page. */
+	cursor?: number;
 	/** Orders containing this product id on at least one line. */
 	productId?: string;
 	/** Order-level status (`pending`, `paid`, `expired`, `canceled`, `failed`). */
-	status?: string;
+	status?: OrderPaymentStatus;
 	/** Exact order number. */
-	number?: string;
+	number?: number;
 	/** Orders carrying this order label id. */
 	label?: string;
 	/** Seller alias, as the read returns it. `null` selects the orders the admin labels "System". */
@@ -132,32 +130,6 @@ function orderNotes(order: Order) {
 	return notes.length ? { notes } : {};
 }
 
-function parseLimit(raw: string | undefined): number {
-	const n = raw ? Number.parseInt(raw, 10) : DEFAULT_LIMIT;
-	if (!Number.isFinite(n) || n < 1) {
-		return DEFAULT_LIMIT;
-	}
-	return Math.min(n, MAX_LIMIT);
-}
-
-function parseIsoDate(raw: string | undefined): Date | undefined {
-	if (!raw) {
-		return undefined;
-	}
-	const d = new Date(raw);
-	return Number.isNaN(d.getTime()) ? undefined : d;
-}
-
-/** Strict positive-integer parse: rejects `+1`, `12abc`, `1.5` and anything out of safe range. */
-function parsePositiveInt(raw: string): number | null {
-	const trimmed = raw.trim();
-	const n = Number.parseInt(trimmed, 10);
-	if (!Number.isSafeInteger(n) || n < 1 || String(n) !== trimmed) {
-		return null;
-	}
-	return n;
-}
-
 /**
  * Build the Mongo filter shared by both order listings.
  *
@@ -165,10 +137,6 @@ function parsePositiveInt(raw: string): number | null {
  * `createdAt`, `{ 'items.product._id', status }`, `{ status, 'payments.status' }`,
  * `number` (unique), `orderLabelIds` (sparse), `user.userAlias` (sparse),
  * `{ externalSourceApiKeyId, externalOrderId }`.
- *
- * Unlike `limit` and the date bounds — which fall back silently for backwards compatibility —
- * a malformed filter is rejected. Dropping a filter silently widens the result set, and on an
- * order listing that means handing back rows the caller never asked for.
  */
 function buildOrderFilter(
 	query: PaidOrdersQuery
@@ -176,13 +144,11 @@ function buildOrderFilter(
 	const filter: Record<string, unknown> = {};
 
 	const createdAt: Record<string, Date> = {};
-	const since = parseIsoDate(query.since);
-	const until = parseIsoDate(query.until);
-	if (since) {
-		createdAt.$gte = since;
+	if (query.since) {
+		createdAt.$gte = query.since;
 	}
-	if (until) {
-		createdAt.$lte = until;
+	if (query.until) {
+		createdAt.$lte = query.until;
 	}
 	if (Object.keys(createdAt).length) {
 		filter.createdAt = createdAt;
@@ -193,20 +159,12 @@ function buildOrderFilter(
 	// arbitrary order, not the newest-first the callers rely on.
 	const number: Record<string, number> = {};
 
-	if (query.cursor) {
-		const c = parsePositiveInt(query.cursor);
-		if (c === null) {
-			return { error: { field: 'cursor', message: 'cursor must be a positive integer' } };
-		}
-		number.$lt = c;
+	if (query.cursor !== undefined) {
+		number.$lt = query.cursor;
 	}
 
 	if (query.number !== undefined) {
-		const n = parsePositiveInt(query.number);
-		if (n === null) {
-			return { error: { field: 'number', message: 'number must be a positive integer' } };
-		}
-		number.$eq = n;
+		number.$eq = query.number;
 	}
 
 	if (Object.keys(number).length) {
@@ -218,15 +176,7 @@ function buildOrderFilter(
 	}
 
 	if (query.status) {
-		if (!typedInclude(ORDER_PAYMENT_STATUSES, query.status)) {
-			return {
-				error: {
-					field: 'status',
-					message: `status must be one of: ${ORDER_PAYMENT_STATUSES.join(', ')}`
-				}
-			};
-		}
-		filter.status = query.status satisfies OrderPaymentStatus;
+		filter.status = query.status;
 	}
 
 	if (query.label) {
@@ -392,7 +342,7 @@ export async function listPaidOrders(query: PaidOrdersQuery): Promise<
 	  }
 	| { error: OrderQueryError }
 > {
-	const limit = parseLimit(query.limit);
+	const limit = query.limit ?? DEFAULT_LIMIT;
 
 	const built = buildOrderFilter(query);
 	if ('error' in built) {
@@ -461,7 +411,7 @@ export async function listOrders(query: PaidOrdersQuery): Promise<
 	  }
 	| { error: OrderQueryError }
 > {
-	const limit = parseLimit(query.limit);
+	const limit = query.limit ?? DEFAULT_LIMIT;
 
 	const built = buildOrderFilter(query);
 	if ('error' in built) {

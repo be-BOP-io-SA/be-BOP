@@ -1,6 +1,6 @@
 import { collections } from '$lib/server/database';
-import { CATALOG_LISTING_MAX_LIMIT, CATALOG_PRODUCT_TYPES } from './listingQuery';
-import { locales, type LanguageKey } from '$lib/translations';
+import type { CATALOG_PRODUCT_TYPES } from './listingQuery';
+import type { LanguageKey } from '$lib/translations';
 import type { Product } from '$lib/types/Product';
 import { toCatalogProductDto, type CatalogProductDto } from './dto';
 import { loadCatalogPictures } from './pictures';
@@ -8,16 +8,15 @@ import { catalogVisibilityFilter } from '$lib/server/product-visibility';
 import { loadCatalogVatRates } from './vat';
 import type { PictureOptions } from './pictureOptions';
 
-const MAX_LIMIT = CATALOG_LISTING_MAX_LIMIT;
 const DEFAULT_LIMIT = 20;
-const PRODUCT_TYPES = CATALOG_PRODUCT_TYPES;
 
+/** Values as `parseApiQuery` hands them over: already checked, already typed. */
 export type CatalogListQuery = {
-	type?: string;
+	type?: (typeof CATALOG_PRODUCT_TYPES)[number];
 	tags?: string;
-	limit?: string;
+	limit?: number;
 	cursor?: string;
-	lang?: string;
+	lang?: LanguageKey;
 	picture?: PictureOptions;
 };
 
@@ -27,30 +26,15 @@ export type CatalogListResult = {
 	language: LanguageKey;
 };
 
-function parseLimit(raw: string | undefined): number {
-	const n = raw ? Number.parseInt(raw, 10) : DEFAULT_LIMIT;
-	if (!Number.isFinite(n) || n < 1) {
-		return DEFAULT_LIMIT;
-	}
-	return Math.min(n, MAX_LIMIT);
-}
-
-export function parseCatalogLanguage(raw: string | undefined, fallback: LanguageKey): LanguageKey {
-	if (raw && (locales as readonly string[]).includes(raw)) {
-		return raw as LanguageKey;
-	}
-	return fallback;
-}
-
 export async function listCatalogProducts(
 	query: CatalogListQuery,
 	fallbackLanguage: LanguageKey
 ): Promise<CatalogListResult> {
-	const language = parseCatalogLanguage(query.lang, fallbackLanguage);
-	const limit = parseLimit(query.limit);
+	const language = query.lang ?? fallbackLanguage;
+	const limit = query.limit ?? DEFAULT_LIMIT;
 	const filter: Record<string, unknown> = { ...catalogVisibilityFilter() };
 
-	if (query.type && (PRODUCT_TYPES as readonly string[]).includes(query.type)) {
+	if (query.type) {
 		filter.type = query.type;
 	}
 

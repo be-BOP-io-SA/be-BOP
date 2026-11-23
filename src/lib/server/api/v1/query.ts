@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { apiError } from './errors';
 
 /**
- * The query parameters of the public API, each defined once.
+ * The query parameters of the public API, each defined once, and handed over as the value it
+ * stands for: a number, a date, one of a list. Nothing downstream reads a raw string again.
  *
  * Every route reads the parameters it takes through one of these, so a given value is answered the
  * same way wherever it is sent: accepted everywhere, or refused everywhere with the same 400. A
@@ -17,7 +18,8 @@ export const positiveIntParam = z
 	.refine(
 		(raw) => /^[1-9]\d*$/.test(raw) && Number.isSafeInteger(Number(raw)),
 		'must be a positive integer'
-	);
+	)
+	.transform(Number);
 
 /** A page size, from 1 to `max`. */
 export function limitParam(max: number) {
@@ -27,14 +29,16 @@ export function limitParam(max: number) {
 		.refine(
 			(raw) => /^[1-9]\d*$/.test(raw) && Number(raw) <= max,
 			`must be a whole number between 1 and ${max}`
-		);
+		)
+		.transform(Number);
 }
 
 /** An ISO 8601 date-time. */
 export const isoDateParam = z
 	.string()
 	.trim()
-	.refine((raw) => !Number.isNaN(new Date(raw).getTime()), 'must be an ISO 8601 date-time');
+	.refine((raw) => !Number.isNaN(new Date(raw).getTime()), 'must be an ISO 8601 date-time')
+	.transform((raw) => new Date(raw));
 
 /** Seconds since the Unix epoch, as a whole number. */
 export const epochSecondsParam = z
@@ -43,17 +47,21 @@ export const epochSecondsParam = z
 	.refine(
 		(raw) => /^(0|[1-9]\d*)$/.test(raw) && Number.isSafeInteger(Number(raw)),
 		'must be a whole number of seconds since the Unix epoch'
-	);
+	)
+	.transform(Number);
 
 /** Free text: an id, a label, a tag. */
 export const textParam = z.string().trim();
 
 /** One of a closed list of values, case insensitive. */
-export function oneOfParam(values: readonly string[]) {
+export function oneOfParam<Value extends string>(values: readonly Value[]) {
 	return z
 		.string()
 		.transform((raw) => raw.trim().toLowerCase())
-		.refine((value) => values.includes(value), `must be one of: ${values.join(', ')}`);
+		.refine(
+			(value): value is Value => (values as readonly string[]).includes(value),
+			`must be one of: ${values.join(', ')}`
+		);
 }
 
 export type ApiQueryShape = Record<string, z.ZodTypeAny>;
