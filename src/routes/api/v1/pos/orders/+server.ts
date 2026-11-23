@@ -19,10 +19,10 @@ const MAX_BODY_BYTES = 2 * 1024 * 1024;
 /**
  * Paid orders, one page at a time. The primary transport.
  *
- * Same feed and same `since_ts` / `last_event_id` vocabulary as the stream on
- * `/api/v1/pos/orders/stream`: a client that cannot hold a connection open polls here instead,
- * without relearning anything. `nextCursor` is the last order id of the page — feed it back as
- * `last_event_id` — and is null once the page is the tail.
+ * Same feed and same `last_event_id` as the stream on `/api/v1/pos/orders/stream`: a client that
+ * cannot hold a connection open polls here instead. Only this route takes `since_ts`, to start from
+ * a date; the stream starts at the live edge. `nextCursor` is the last order id of the page — feed
+ * it back as `last_event_id` — and is null once the page is the tail.
  */
 const DEFAULT_PAGE = 100;
 const MAX_PAGE = 500;

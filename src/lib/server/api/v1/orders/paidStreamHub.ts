@@ -93,10 +93,11 @@ function closeStream(): void {
 /**
  * One watch over every order, shared by every connection, open as long as anyone listens.
  *
- * It is never narrowed nor reopened as subscribers come and go: a watch that closes and opens again
- * misses whatever is written in between, and nothing would ever send it. Each subscriber picks its
- * own share of the events instead. When the watch fails, it reopens where it stopped, from the last
- * event it saw.
+ * While someone listens it is never narrowed nor reopened as subscribers come and go: a watch that
+ * closes and opens again misses whatever is written in between, and nothing would ever send it.
+ * Each subscriber picks its own share of the events instead. It closes when the last listener
+ * leaves. When the watch fails, it reopens from the last event it saw, or at the live edge once the
+ * server no longer holds that position.
  */
 function openStream(): void {
 	if (changeStream || reopenTimer || !totalListeners()) {
