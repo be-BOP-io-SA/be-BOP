@@ -11,8 +11,7 @@ vi.mock('$lib/server/rateLimit', () => ({
 	checkRateLimit: (...args: unknown[]) => checkRateLimit(...args)
 }));
 vi.mock('$lib/server/api/v1/catalog/listProducts', () => ({
-	getCatalogProduct: (...args: unknown[]) => getCatalogProduct(...args),
-	parseCatalogLanguage: (lang: string | undefined, fallback: string) => lang ?? fallback
+	getCatalogProduct: (...args: unknown[]) => getCatalogProduct(...args)
 }));
 vi.mock('$lib/server/runtime-config', () => ({
 	runtimeConfig: { defaultLanguage: 'en', apiV1: { corsOrigins: [] } }

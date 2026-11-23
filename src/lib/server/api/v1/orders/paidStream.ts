@@ -3,7 +3,7 @@ import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { Order } from '$lib/types/Order';
 import type { ObjectId } from 'mongodb';
-import type { OrderQueryError, PaidOrderDto } from './listPaid';
+import type { PaidOrderDto } from './listPaid';
 
 /** Heartbeat cadence. Must stay under the 30s the seam allows between comment frames. */
 export const SSE_HEARTBEAT_MS = 25_000;
@@ -126,34 +126,11 @@ function clampToNow(date: Date): Date {
 }
 
 /**
- * `since_ts` is epoch seconds, `since` is ISO 8601. Null means no backfill: start at the live edge.
- * Either is clamped to the server's clock — see `clampToNow`.
+ * The date `since_ts` (epoch seconds) stands for, clamped to the server's clock — see
+ * `clampToNow`. Null when it was not sent: no backfill, start at the live edge.
  */
-export function parseStreamSince(
-	sinceTs: string | undefined,
-	sinceIso: string | undefined
-): { date: Date | null } | { error: OrderQueryError } {
-	if (sinceTs !== undefined && sinceTs.trim() !== '') {
-		const trimmed = sinceTs.trim();
-		const seconds = Number.parseInt(trimmed, 10);
-		if (!Number.isSafeInteger(seconds) || seconds < 0 || String(seconds) !== trimmed) {
-			return {
-				error: {
-					field: 'since_ts',
-					message: 'since_ts must be a whole number of seconds since the Unix epoch'
-				}
-			};
-		}
-		return { date: clampToNow(new Date(seconds * 1000)) };
-	}
-	if (sinceIso !== undefined && sinceIso.trim() !== '') {
-		const date = new Date(sinceIso);
-		if (Number.isNaN(date.getTime())) {
-			return { error: { field: 'since', message: 'since must be an ISO 8601 date-time' } };
-		}
-		return { date: clampToNow(date) };
-	}
-	return { date: null };
+export function streamSinceDate(sinceTs: number | undefined): Date | null {
+	return sinceTs === undefined ? null : clampToNow(new Date(sinceTs * 1000));
 }
 
 export type PaidStreamFrame = { cursor: PaidStreamCursor; order: Order };

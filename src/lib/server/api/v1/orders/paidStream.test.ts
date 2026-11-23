@@ -16,9 +16,9 @@ import {
 	orderStreamCursor,
 	paidOrderFingerprint,
 	parseStreamCursor,
-	parseStreamSince,
 	sseComment,
-	sseEvent
+	sseEvent,
+	streamSinceDate
 } from './paidStream';
 import { toPaidOrderDto } from './listPaid';
 import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
@@ -109,56 +109,28 @@ describe('stream cursors', () => {
 	});
 });
 
-describe('parseStreamSince', () => {
+describe('streamSinceDate', () => {
 	it('reads since_ts as epoch seconds', () => {
-		expect(parseStreamSince('1735689600', undefined)).toEqual({
-			date: new Date('2025-01-01T00:00:00Z')
-		});
-	});
-
-	it('rejects a non-integer or negative since_ts', () => {
-		for (const raw of ['1735689600.5', '-1', 'now', '1e9']) {
-			const res = parseStreamSince(raw, undefined);
-			expect('error' in res && res.error.field).toBe('since_ts');
-		}
-	});
-
-	it('falls back to the ISO since of the JSON poll, and since_ts wins', () => {
-		expect(parseStreamSince(undefined, '2026-08-01T10:00:00Z')).toEqual({
-			date: new Date('2026-08-01T10:00:00Z')
-		});
-		expect(parseStreamSince('0', '2026-08-01T10:00:00Z')).toEqual({ date: new Date(0) });
-	});
-
-	it('rejects a malformed ISO since', () => {
-		const res = parseStreamSince(undefined, 'yesterday');
-		expect('error' in res && res.error.field).toBe('since');
+		expect(streamSinceDate(1735689600)).toEqual(new Date('2025-01-01T00:00:00Z'));
+		expect(streamSinceDate(0)).toEqual(new Date(0));
 	});
 
 	it('clamps a resume point ahead of the clock, rather than replaying nothing', () => {
 		// A till whose clock runs fast would otherwise skip every event until someone fixes it.
 		vi.useFakeTimers({ now: new Date('2026-08-27T12:00:00Z') });
 		const ahead = Math.floor(new Date('2026-08-28T12:00:00Z').getTime() / 1000);
-		expect(parseStreamSince(String(ahead), undefined)).toEqual({
-			date: new Date('2026-08-27T12:00:00Z')
-		});
-		expect(parseStreamSince(undefined, '2026-09-01T00:00:00Z')).toEqual({
-			date: new Date('2026-08-27T12:00:00Z')
-		});
+		expect(streamSinceDate(ahead)).toEqual(new Date('2026-08-27T12:00:00Z'));
 		vi.useRealTimers();
 	});
 
 	it('leaves a resume point in the past exactly where it was', () => {
 		vi.useFakeTimers({ now: new Date('2026-08-27T12:00:00Z') });
-		expect(parseStreamSince('1735689600', undefined)).toEqual({
-			date: new Date('2025-01-01T00:00:00Z')
-		});
+		expect(streamSinceDate(1735689600)).toEqual(new Date('2025-01-01T00:00:00Z'));
 		vi.useRealTimers();
 	});
 
-	it('means "live edge only" when neither is given', () => {
-		expect(parseStreamSince(undefined, undefined)).toEqual({ date: null });
-		expect(parseStreamSince('', '')).toEqual({ date: null });
+	it('means "live edge only" when it is not given', () => {
+		expect(streamSinceDate(undefined)).toBeNull();
 	});
 });
 

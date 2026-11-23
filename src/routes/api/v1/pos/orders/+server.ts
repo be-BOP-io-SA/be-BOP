@@ -4,7 +4,7 @@ import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { jsonWithETag } from '$lib/server/api/v1/validators';
 import { checkRateLimit } from '$lib/server/rateLimit';
-import { findOrderCursor, parseStreamSince } from '$lib/server/api/v1/orders/paidStream';
+import { findOrderCursor, streamSinceDate } from '$lib/server/api/v1/orders/paidStream';
 import { listPosPaidOrders } from '$lib/server/api/v1/pos/paidEvents';
 import { ingestPosSales } from '$lib/server/api/v1/pos/sales';
 import { posSalesRequestSchema } from '$lib/server/api/v1/pos/schemas';
@@ -52,17 +52,13 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 	if ('error' in query) {
 		return query.error;
 	}
-	const since = parseStreamSince(query.data.since_ts, undefined);
-	if ('error' in since) {
-		return apiError(400, 'VALIDATION_ERROR', since.error.message, { field: since.error.field });
-	}
 	const after = query.data.last_event_id ? await findOrderCursor(query.data.last_event_id) : null;
 	const tag = query.data.tag;
 
 	const page = await listPosPaidOrders({
-		since: since.date,
+		since: streamSinceDate(query.data.since_ts),
 		after,
-		limit: query.data.limit ? Number(query.data.limit) : DEFAULT_PAGE,
+		limit: query.data.limit ?? DEFAULT_PAGE,
 		tag,
 		...(apiKey.ownOrdersOnly && { ordersOfKey: apiKey._id })
 	});

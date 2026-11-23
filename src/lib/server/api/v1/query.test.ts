@@ -29,7 +29,29 @@ describe('parseApiQuery', () => {
 			limit: limitParam(100),
 			cursor: positiveIntParam
 		});
-		expect(result).toEqual({ data: { limit: '5' } });
+		expect(result).toEqual({ data: { limit: 5 } });
+	});
+
+	it('hands each value over as what it stands for, not as the text that was sent', () => {
+		const result = parseApiQuery(
+			url('?limit=5&cursor=20&since=2026-08-01T00:00:00Z&since_ts=1735689600&status=PAID'),
+			{
+				limit: limitParam(100),
+				cursor: positiveIntParam,
+				since: isoDateParam,
+				since_ts: epochSecondsParam,
+				status: oneOfParam(['paid', 'pending'])
+			}
+		);
+		expect(result).toEqual({
+			data: {
+				limit: 5,
+				cursor: 20,
+				since: new Date('2026-08-01T00:00:00Z'),
+				since_ts: 1735689600,
+				status: 'paid'
+			}
+		});
 	});
 
 	it('counts a parameter sent empty as not sent', () => {
@@ -68,14 +90,16 @@ describe('query parameters', () => {
 
 	it('takes a positive integer written plainly', () => {
 		expect(positiveIntParam.safeParse('42').success).toBe(true);
-		for (const raw of ['0', '+1', '01', '1.5', '1e3']) {
+		for (const raw of ['0', '-1', '+1', '01', '1.5', '1e3', '12abc', 'abc']) {
 			expect(positiveIntParam.safeParse(raw).success).toBe(false);
 		}
 	});
 
 	it('takes seconds since the epoch as a whole number', () => {
 		expect(epochSecondsParam.safeParse('1735689600').success).toBe(true);
-		expect(epochSecondsParam.safeParse('yesterday').success).toBe(false);
+		for (const raw of ['1735689600.5', '-1', 'now', '1e9', 'yesterday']) {
+			expect(epochSecondsParam.safeParse(raw).success).toBe(false);
+		}
 	});
 
 	it('takes a value of a closed list whatever its case', () => {

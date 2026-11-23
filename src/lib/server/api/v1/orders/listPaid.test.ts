@@ -315,7 +315,7 @@ describe('listPaidOrders pagination', () => {
 		];
 		find.mockReturnValue(cursorOf(page));
 
-		const res = await listPaidOk({ limit: '2' });
+		const res = await listPaidOk({ limit: 2 });
 		// One row dropped, so a single order comes back — but a third row exists behind it and
 		// the cursor must still advance, otherwise the poller stops with orders unread.
 		expect(res.orders).toHaveLength(1);
@@ -324,7 +324,7 @@ describe('listPaidOrders pagination', () => {
 
 	it('closes the page when the query returns no extra row', async () => {
 		find.mockReturnValue(cursorOf([{ ...makeOrder({ paid: true }), number: 30 }]));
-		const res = await listPaidOk({ limit: '2' });
+		const res = await listPaidOk({ limit: 2 });
 		expect(res.orders).toHaveLength(1);
 		expect(res.page.nextCursor).toBeNull();
 	});
@@ -351,20 +351,9 @@ describe('order filters', () => {
 		expect(lastFilter().status).toBe('pending');
 	});
 
-	it('rejects an unknown status instead of ignoring it', async () => {
-		const res = await listPaidOrders({ status: 'shipped' });
-		expect('error' in res && res.error.field).toBe('status');
-		expect(find).not.toHaveBeenCalled();
-	});
-
-	it('coerces number and rejects anything that is not a positive integer', async () => {
-		await listPaidOk({ number: '42' });
+	it('filters on the exact order number', async () => {
+		await listPaidOk({ number: 42 });
 		expect(lastFilter().number).toEqual({ $eq: 42 });
-
-		for (const bad of ['0', '-1', '1.5', '12abc', 'abc']) {
-			const res = await listPaidOrders({ number: bad });
-			expect('error' in res && res.error.field).toBe('number');
-		}
 	});
 
 	it('scopes externalOrderId to the calling key', async () => {
@@ -407,20 +396,13 @@ describe('order filters', () => {
 	it('combines a filter with the cursor and the date window', async () => {
 		await listPaidOk({
 			productId: 'cafe',
-			cursor: '20',
-			since: '2026-08-01T00:00:00Z'
+			cursor: 20,
+			since: new Date('2026-08-01T00:00:00Z')
 		});
 		const filter = lastFilter();
 		expect(filter['items.product._id']).toBe('cafe');
 		expect(filter.number).toEqual({ $lt: 20 });
 		expect(filter.createdAt).toEqual({ $gte: new Date('2026-08-01T00:00:00Z') });
-	});
-
-	it('rejects a cursor that is not a positive integer', async () => {
-		for (const bad of ['ord_b', '0', '-1', '1.5', '12abc']) {
-			const res = await listPaidOrders({ cursor: bad });
-			expect('error' in res && res.error.field).toBe('cursor');
-		}
 	});
 
 	it('applies no filter when none is given', async () => {
