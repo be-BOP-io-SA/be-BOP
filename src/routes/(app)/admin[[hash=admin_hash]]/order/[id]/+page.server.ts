@@ -144,7 +144,8 @@ export const actions = {
 			},
 			{
 				$set: {
-					status: 'canceled'
+					status: 'canceled',
+					updatedAt: new Date()
 				}
 			},
 			{ returnDocument: 'after' }
