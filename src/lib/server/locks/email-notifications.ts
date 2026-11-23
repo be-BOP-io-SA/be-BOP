@@ -6,7 +6,7 @@ import { isEmailConfigured, sendEmail } from '../email';
 import { building } from '$app/environment';
 import { rateLimit } from '../rateLimit';
 import { getUnixTime, subHours } from 'date-fns';
-import { typedInclude } from '$lib/utils/typedIncludes';
+import { isChangeStreamPositionLost } from '../utils/isChangeStreamPositionLost';
 
 const lock = new Lock('notifications.email');
 
@@ -92,10 +92,7 @@ async function watch(opts?: { requestChangesSince?: Timestamp }) {
 				changeStream?.close().catch(console.error);
 				changeStream = null;
 
-				if (
-					err instanceof MongoServerError &&
-					typedInclude(['ChangeStreamHistoryLost', 'ChangeStreamFatalError'], err.codeName)
-				) {
+				if (isChangeStreamPositionLost(err)) {
 					// Restart from 1 hour ago if history was lost
 					return watch({
 						requestChangesSince: Timestamp.fromBits(0, getUnixTime(subHours(new Date(), 1)))
