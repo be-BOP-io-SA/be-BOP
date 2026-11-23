@@ -43,6 +43,20 @@ describe('changeKind', () => {
 		expect(changeKind(update({ annotatedAt: new Date() }, ['orderLabelIds']))).toBe('annotation');
 	});
 
+	it('reads an erasure that also removes who bought as an annotation', () => {
+		expect(
+			changeKind(
+				update({ dataAnonymized: true, annotatedAt: new Date() }, [
+					'clientIp',
+					'notes',
+					'user.email',
+					'user.sessionId',
+					'notifications.paymentStatus.email'
+				])
+			)
+		).toBe('annotation');
+	});
+
 	it('reads a write that touches the sale as well as a note as a change of the order', () => {
 		expect(changeKind(update({ 'notes.0': {}, updatedAt: new Date() }))).toBe('order');
 	});

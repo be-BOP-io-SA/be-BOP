@@ -39,23 +39,30 @@ function hasPaidPayment(order: Order): boolean {
 }
 
 /**
- * An update is an annotation when every field it wrote or removed belongs to one. An insert, a
- * replace, or an update that touched anything else is a change of the order.
+ * An update is an annotation when it dated the order as annotated and not as changed, or when every
+ * field it wrote or removed belongs to an annotation. An insert, a replace, or any other update is
+ * a change of the order.
  */
 export function changeKind(changeEvent: ChangeStreamDocument<Order>): OrderChangeKind {
 	if (changeEvent.operationType !== 'update') {
 		return 'order';
 	}
 	const description = changeEvent.updateDescription;
-	const paths = [
-		...Object.keys(description?.updatedFields ?? {}),
-		...(description?.removedFields ?? []),
-		...(description?.truncatedArrays ?? []).map((array) => array.field)
-	];
-	if (!paths.length) {
+	const fields = new Set(
+		[
+			...Object.keys(description?.updatedFields ?? {}),
+			...(description?.removedFields ?? []),
+			...(description?.truncatedArrays ?? []).map((array) => array.field)
+		].map((path) => path.split('.')[0])
+	);
+	if (!fields.size) {
 		return 'order';
 	}
-	return paths.every((path) => ANNOTATION_FIELDS.has(path.split('.')[0])) ? 'annotation' : 'order';
+	// An erasure also removes fields of the sale (who bought, from which address) without changing it.
+	if (fields.has('annotatedAt') && !fields.has('updatedAt')) {
+		return 'annotation';
+	}
+	return [...fields].every((field) => ANNOTATION_FIELDS.has(field)) ? 'annotation' : 'order';
 }
 
 function fanOut(order: Order, kind: OrderChangeKind): void {
