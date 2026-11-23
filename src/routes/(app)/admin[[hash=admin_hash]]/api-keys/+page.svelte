@@ -151,7 +151,7 @@
 					class="form-input w-32"
 					type="number"
 					name="logMaxSizeMb"
-					min="0"
+					min="0.01"
 					step="any"
 					value={data.logSettings.maxSizeMb ?? ''}
 				/>
