@@ -4,7 +4,14 @@ import type { PosPaidOrderEvent } from '$lib/types/ApiV1Pos';
 import { orderVatBreakdown, paidAmount } from '../orders/listPaid';
 import { amountToMinor } from '../orders/money';
 import { findTaggedLine } from './taggedLine';
-import { iteratePaidOrderBacklog, type PaidStreamCursor } from '../orders/paidStream';
+import {
+	encodeStreamCursor,
+	findOrderCursor,
+	iteratePaidOrderBacklog,
+	parseStreamCursor,
+	type PaidStreamCursor,
+	type StreamCursorScope
+} from '../orders/paidStream';
 
 /**
  * One paid order on the wire.
@@ -74,23 +81,54 @@ export function toPosPaidOrderEvent(order: Order, tag?: string): PosPaidOrderEve
 	};
 }
 
+/** The resume points of the point-of-sale feed belong to the key they were given to. */
+export function posCursorScope(keyId: string): StreamCursorScope {
+	return { keyId, feed: 'pos' };
+}
+
+/**
+ * Where a till resumes from what it sends back as `last_event_id`.
+ *
+ * A resume point be-BOP issued says exactly where the feed stood. An order id, which is what the
+ * feed gave before it issued resume points, still works: the feed resumes after that order as it is
+ * dated now, so a till that has not been updated keeps running. Anything else starts at the live
+ * edge.
+ */
+export async function posResumePoint(
+	lastEventId: string | undefined,
+	keyId: string
+): Promise<PaidStreamCursor | null> {
+	if (!lastEventId) {
+		return null;
+	}
+	return parseStreamCursor(lastEventId, posCursorScope(keyId)) ?? findOrderCursor(lastEventId);
+}
+
 /**
  * One page of paid orders, in the same vocabulary the stream uses.
  *
- * `nextCursor` is the last order id of the page, which the caller feeds back as `last_event_id` —
- * the same token the stream resumes on, so a client that falls back to polling relearns nothing.
- * Null when the page is the tail.
+ * `lastEventId` is the resume point after the last order read, which the caller feeds back as
+ * `last_event_id` — the same token the stream resumes on, so a client that falls back to polling
+ * relearns nothing. A page that read nothing gives back the point it was called with; it is null
+ * only for a call that named none and found no order. `nextCursor` is that same point while more is waiting, and null when the page
+ * is the tail: a till that stops there keeps `lastEventId` for its next call.
  */
 export async function listPosPaidOrders(opts: {
+	/** The API key the page is for: the resume point it gets only works for that key. */
+	keyId: string;
 	since: Date | null;
 	after: PaidStreamCursor | null;
 	limit: number;
 	tag?: string;
 	/** Only the orders written with this API key, for a key restricted to its own orders. */
 	ordersOfKey?: ObjectId;
-}): Promise<{ orders: PosPaidOrderEvent[]; nextCursor: string | null }> {
+}): Promise<{
+	orders: PosPaidOrderEvent[];
+	nextCursor: string | null;
+	lastEventId: string | null;
+}> {
 	const orders: PosPaidOrderEvent[] = [];
-	let lastId: string | null = null;
+	let lastRead: PaidStreamCursor | null = null;
 	let reachedTail = true;
 
 	for await (const frame of iteratePaidOrderBacklog({
@@ -102,12 +140,18 @@ export async function listPosPaidOrders(opts: {
 			reachedTail = false;
 			break;
 		}
+		// An order that announces nothing was read all the same: the next page starts after it.
+		lastRead = frame.cursor;
 		const event = toPosPaidOrderEvent(frame.order, opts.tag);
 		if (event) {
 			orders.push(event);
-			lastId = event.orderId;
 		}
 	}
 
-	return { orders, nextCursor: reachedTail ? null : lastId };
+	// Nothing read: the till is still where it was, and must be told so or it starts over.
+	const resumeFrom = lastRead ?? opts.after;
+	const lastEventId = resumeFrom
+		? encodeStreamCursor(resumeFrom, posCursorScope(opts.keyId))
+		: null;
+	return { orders, nextCursor: reachedTail ? null : lastEventId, lastEventId };
 }

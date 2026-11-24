@@ -37,6 +37,7 @@ vi.mock('$lib/server/api/v1/orders/paidStream', async () => {
 });
 
 import { GET } from './+server';
+import { parseStreamCursor } from '$lib/server/api/v1/orders/paidStream';
 import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
 
 const openConnections: AbortController[] = [];
@@ -96,7 +97,7 @@ function paidOrder(opts?: { id?: string; amount?: number }): Order {
 	} as unknown as Order;
 }
 
-function callGet(opts?: { query?: string; lastEventId?: string }) {
+function callGet(opts?: { query?: string; lastEventId?: string; apiKey?: unknown }) {
 	const controller = new AbortController();
 	openConnections.push(controller);
 	const headers = new Headers();
@@ -107,7 +108,7 @@ function callGet(opts?: { query?: string; lastEventId?: string }) {
 	return GET({
 		request: new Request(url, { method: 'GET', headers, signal: controller.signal }),
 		url: new URL(url),
-		locals: locals()
+		locals: { ...locals(), ...(opts?.apiKey ? { apiKey: opts.apiKey } : {}) }
 	} as unknown as Parameters<typeof GET>[0]);
 }
 
@@ -172,14 +173,38 @@ describe('GET /api/v1/pos/orders/stream', () => {
 		expect(res.headers.get('content-type')).toMatch(/^text\/event-stream/);
 	});
 
-	it('puts the order id on the id: line, as the seam specifies', async () => {
+	it('puts on the id: line the resume point of the event, good for this key only', async () => {
 		const res = await callGet();
 		await readFrames(res, 2);
+		const order = paidOrder({ id: '3f2a0c' });
+		for (const listener of subscribers) {
+			listener(order);
+		}
+		const [frame] = await readFrames(res, 1);
+		const id = frame.split('\n')[0].slice('id: '.length);
+		const keyId = requireApiKey.mock.calls[0][0].locals.apiKey._id.toString();
+
+		expect(parseStreamCursor(id, { keyId, feed: 'pos' })).toEqual({
+			ms: order.updatedAt.getTime(),
+			orderId: '3f2a0c'
+		});
+		expect(parseStreamCursor(id, { keyId: new ObjectId().toString(), feed: 'pos' })).toBeNull();
+	});
+
+	it('resumes from a resume point it gave, without looking the order up', async () => {
+		const first = await callGet();
+		await readFrames(first, 2);
 		for (const listener of subscribers) {
 			listener(paidOrder({ id: '3f2a0c' }));
 		}
-		const [frame] = await readFrames(res, 1);
-		expect(frame.split('\n')[0]).toBe('id: 3f2a0c');
+		const [frame] = await readFrames(first, 1);
+		const id = frame.split('\n')[0].slice('id: '.length);
+		const apiKey = requireApiKey.mock.calls[0][0].locals.apiKey;
+
+		const res = await callGet({ lastEventId: id, apiKey });
+
+		expect(res.status).toBe(200);
+		expect(findOrderCursor).not.toHaveBeenCalled();
 	});
 
 	it('sends the seam payload: orderId, amount in minor units, nothing else', async () => {
