@@ -80,6 +80,10 @@ test('one Save button saves every setting of a key, and stays in view with Revok
 	await page.getByLabel('Concurrent streams allowed').fill('3');
 	await page.getByLabel('Restrict this key to its own orders').check();
 	await page.getByLabel('Accept several orders with the same external id').check();
+	// Off until the shop says otherwise.
+	const mayTurnOff = page.getByLabel('May turn notifications off');
+	await expect(mayTurnOff).not.toBeChecked();
+	await mayTurnOff.check();
 	await save.click();
 	await expect(page.getByText('Changes saved.')).toBeVisible();
 
@@ -87,7 +91,8 @@ test('one Save button saves every setting of a key, and stays in view with Revok
 		streamLifetimeSeconds: 600,
 		maxConcurrentStreams: 3,
 		ownOrdersOnly: true,
-		acceptDuplicateExternalOrderIds: true
+		acceptDuplicateExternalOrderIds: true,
+		canDisableNotifications: true
 	});
 });
 
@@ -102,6 +107,22 @@ test.describe('in French', () => {
 		await expect(save).toHaveCount(1);
 		await save.click();
 		await expect(page.getByText('Modifications enregistrées.')).toBeVisible();
+	});
+
+	test('a key may be allowed to turn notifications off, off by default', async ({ page }) => {
+		const name = `e2e-cle-notif-${Date.now()}`;
+		await createKey(page, name);
+
+		const mayTurnOff = page.getByLabel('Peut couper les notifications');
+		await expect(mayTurnOff).not.toBeChecked();
+		await expect(page.getByText('Décochée, cette demande est ignorée')).toBeVisible();
+		expect((await storedKey(name))?.canDisableNotifications).toBeUndefined();
+
+		await mayTurnOff.check();
+		await page.getByRole('button', { name: 'Enregistrer', exact: true }).click();
+		await expect(page.getByText('Modifications enregistrées.')).toBeVisible();
+		await expect(page.getByLabel('Peut couper les notifications')).toBeChecked();
+		expect((await storedKey(name))?.canDisableNotifications).toBe(true);
 	});
 
 	test('the creation form describes the stream and point-of-sale rights', async ({ page }) => {

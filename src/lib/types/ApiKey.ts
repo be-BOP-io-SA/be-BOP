@@ -73,6 +73,11 @@ export interface ApiKey extends Timestamps {
 	 * received is refused, and the order it names is left untouched.
 	 */
 	acceptDuplicateExternalOrderIds?: boolean;
+	/**
+	 * When true, an order this key writes with `notifications: false` notifies nobody. Undefined or
+	 * false, the request is ignored: be-BOP notifies as for any order, and says so in its answer.
+	 */
+	canDisableNotifications?: boolean;
 	expiresAt?: Date;
 	revokedAt?: Date;
 	/**

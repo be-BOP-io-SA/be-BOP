@@ -2206,6 +2206,8 @@
 			"orderWritingTitle": "Schreiben von Bestellungen",
 			"acceptDuplicateExternalOrderIds": "Mehrere Bestellungen mit derselben externen Kennung akzeptieren",
 			"acceptDuplicateExternalOrderIdsHint": "Nicht angehakt wird eine Bestellung, deren externe Kennung dieser Schlüssel bereits gesendet hat, mit einem Duplikatfehler abgelehnt, und die bestehende Bestellung bleibt unverändert. Angehakt erzeugt jeder Aufruf seine eigene Bestellung, die die empfangene externe Kennung behält.",
+			"canDisableNotifications": "Darf Benachrichtigungen abschalten",
+			"canDisableNotificationsHint": "Angehakt benachrichtigt eine Bestellung, die dieser Schlüssel mit notifications: false schreibt, niemanden, weder den Kunden noch den Shop. Nicht angehakt wird diese Anfrage ignoriert: be-BOP benachrichtigt wie bei jeder Bestellung und meldet es in seiner Antwort.",
 			"statusSuspended": "Gesperrt",
 			"suspendedAt": "Gesperrt am",
 			"suspensionTitle": "Sperre",

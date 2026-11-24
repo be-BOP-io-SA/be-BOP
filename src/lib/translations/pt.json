@@ -2206,6 +2206,8 @@
 			"orderWritingTitle": "Escrita de encomendas",
 			"acceptDuplicateExternalOrderIds": "Aceitar várias encomendas com o mesmo identificador externo",
 			"acceptDuplicateExternalOrderIdsHint": "Desmarcada, uma encomenda enviada com um identificador externo que esta chave já enviou é recusada com um erro de duplicado, e a encomenda existente fica como está. Marcada, cada chamada cria a sua própria encomenda, que mantém o identificador externo recebido.",
+			"canDisableNotifications": "Pode desligar as notificações",
+			"canDisableNotificationsHint": "Assinalada, uma encomenda que esta chave escreve com notifications: false não avisa ninguém, nem o cliente nem a loja. Por assinalar, esse pedido é ignorado: o be-BOP avisa como para qualquer encomenda e indica-o na sua resposta.",
 			"statusSuspended": "Suspensa",
 			"suspendedAt": "Suspensa em",
 			"suspensionTitle": "Suspensão",

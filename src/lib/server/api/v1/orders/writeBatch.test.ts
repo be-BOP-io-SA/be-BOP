@@ -490,9 +490,28 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		});
 	});
 
-	it('writes an order nobody is notified about when notifications is false', async () => {
+	it('ignores notifications: false from a key that may not turn notifications off, and says so', async () => {
 		const res = await writeBatch({
 			apiKey,
+			orders: [
+				paidCommand({ externalOrderId: 'not-silent-1', notifications: false }),
+				paidCommand({ externalOrderId: 'usual-1' })
+			]
+		});
+
+		expect(res.status).toBe('ok_with_warnings');
+		expect(res.results[0].status).toBe('created');
+		expect(res.results[0].warnings?.map((w) => w.code)).toEqual(['NOTIFICATIONS_NOT_DISABLED']);
+		expect(res.results[1].warnings).toBeUndefined();
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		// Written and paid as any other, and notified as any other.
+		expect(order?.status).toBe('paid');
+		expect(order?.skipNotifications).toBeUndefined();
+	});
+
+	it('writes an order nobody is notified about when a key that may turn notifications off asks for it', async () => {
+		const res = await writeBatch({
+			apiKey: { ...apiKey, canDisableNotifications: true },
 			orders: [
 				paidCommand({ externalOrderId: 'silent-1', notifications: false }),
 				paidCommand({ externalOrderId: 'default-1' }),
@@ -504,6 +523,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 			res.results.map((r) => collections.orders.findOne({ _id: requireOrderId(r) }))
 		);
 		expect(silent?.skipNotifications).toBe(true);
+		expect(res.results[0].warnings).toBeUndefined();
 		// The order itself is written and paid as any other: only its notifications are off.
 		expect(silent?.status).toBe('paid');
 		expect(byDefault?.skipNotifications).toBeUndefined();

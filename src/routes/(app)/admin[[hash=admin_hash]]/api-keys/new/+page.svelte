@@ -210,6 +210,12 @@
 		</label>
 		<p class="text-sm opacity-70">{t('admin.apiKeys.acceptDuplicateExternalOrderIdsHint')}</p>
 
+		<label class="checkbox-label">
+			<input type="checkbox" name="canDisableNotifications" class="form-checkbox" />
+			{t('admin.apiKeys.canDisableNotifications')}
+		</label>
+		<p class="text-sm opacity-70">{t('admin.apiKeys.canDisableNotificationsHint')}</p>
+
 		{#if form?.error}
 			<p class="text-red-600">{t('admin.apiKeys.createError')}</p>
 			{#each form.error.formErrors ?? [] as formError}

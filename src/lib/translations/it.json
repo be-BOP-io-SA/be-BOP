@@ -2206,6 +2206,8 @@
 			"orderWritingTitle": "Scrittura degli ordini",
 			"acceptDuplicateExternalOrderIds": "Accetta più ordini con lo stesso identificativo esterno",
 			"acceptDuplicateExternalOrderIdsHint": "Non selezionata, un ordine inviato con un identificativo esterno già inviato da questa chiave viene rifiutato con un errore di duplicato, e l'ordine esistente resta invariato. Selezionata, ogni chiamata crea il proprio ordine, che conserva l'identificativo esterno ricevuto.",
+			"canDisableNotifications": "Può disattivare le notifiche",
+			"canDisableNotificationsHint": "Selezionata, un ordine che questa chiave scrive con notifications: false non avvisa nessuno, né il cliente né il negozio. Non selezionata, la richiesta viene ignorata: be-BOP avvisa come per qualsiasi ordine e lo segnala nella sua risposta.",
 			"statusSuspended": "Sospesa",
 			"suspendedAt": "Sospesa il",
 			"suspensionTitle": "Sospensione",

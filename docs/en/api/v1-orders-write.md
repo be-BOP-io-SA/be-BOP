@@ -143,6 +143,12 @@ Limits of this version: one payment per order. Deposits and several payments on 
 
 On the point-of-sale surface, `POST /api/v1/pos/orders` answers `success` for a sale whose order is paid and `pending` otherwise, never `success` for an order that is not paid.
 
+## Notifications
+
+`notifications: false` asks be-BOP to notify nobody about the order. It is only followed for an API key with "May turn notifications off" ticked, a setting of the key that is off by default. For any other key the request is ignored: the order is written, be-BOP notifies as for any order, and the result carries a `NOTIFICATIONS_NOT_DISABLED` warning.
+
+The mails the shop gets when a sale moves a challenge or a leaderboard are internal alerts of the admin, not notifications of the order: they are sent whatever this setting says.
+
 ## External order id (D2, D3)
 
 One call creates one order. The `externalOrderId` is kept on the order, and it is not unique: by default, an order whose `externalOrderId` this API key already sent is refused — status `failed`, error `DUPLICATE_EXTERNAL_ORDER_ID`, with the existing be-BOP `orderId` in `details` — and the existing order is left exactly as it was. Nothing is reconciled onto it: a failed order is never turned paid by a later call, and a paid payment is never discarded without a signal.

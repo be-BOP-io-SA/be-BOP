@@ -66,7 +66,8 @@ export async function authenticateApiV1(
 		maxConcurrentStreams: apiKey.maxConcurrentStreams,
 		streamLifetimeSeconds: apiKey.streamLifetimeSeconds,
 		...(apiKey.ownOrdersOnly && { ownOrdersOnly: true }),
-		...(apiKey.acceptDuplicateExternalOrderIds && { acceptDuplicateExternalOrderIds: true })
+		...(apiKey.acceptDuplicateExternalOrderIds && { acceptDuplicateExternalOrderIds: true }),
+		...(apiKey.canDisableNotifications && { canDisableNotifications: true })
 	};
 	event.locals.apiKey = authenticated;
 

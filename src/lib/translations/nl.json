@@ -2206,6 +2206,8 @@
 			"orderWritingTitle": "Schrijven van bestellingen",
 			"acceptDuplicateExternalOrderIds": "Meerdere bestellingen met dezelfde externe ID accepteren",
 			"acceptDuplicateExternalOrderIdsHint": "Niet aangevinkt wordt een bestelling met een externe ID die deze sleutel al heeft verzonden geweigerd met een duplicaatfout, en blijft de bestaande bestelling ongewijzigd. Aangevinkt maakt elke aanroep een eigen bestelling aan, die de ontvangen externe ID behoudt.",
+			"canDisableNotifications": "Mag meldingen uitschakelen",
+			"canDisableNotificationsHint": "Aangevinkt verwittigt een bestelling die deze sleutel met notifications: false schrijft niemand, noch de klant noch de winkel. Niet aangevinkt wordt dat verzoek genegeerd: be-BOP verwittigt zoals bij elke bestelling en meldt het in zijn antwoord.",
 			"statusSuspended": "Opgeschort",
 			"suspendedAt": "Opgeschort op",
 			"suspensionTitle": "Opschorting",

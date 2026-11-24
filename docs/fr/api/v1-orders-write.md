@@ -10,7 +10,7 @@ Version courte. Contrat detaille : [EN](../../en/api/v1-orders-write.md) + [ADR 
 - `externalOrderId` conservé sur la commande, sans unicité ; `createdAt` client écrit à l'insert `createOrder`.
 - Gates e-shop (`isBillingAddressMandatory`, `collectIPOnDeliverylessOrders`) → `DOMAIN_ERROR` par commande ; canal Face A = `api` + `skipAutoDiscounts` (pas de remise auto boutique). **D11 :** commandes Face A `onLocation` — pas d'adresse de livraison exigee, meme pour des SKU `shipping: true`.
 - Montants en unites mineures ; payment.method = point-of-sale ; pas de currencySnapshot client
-- `notifications: false` sur une commande : be-BOP ne notifie personne à son sujet, ni le client ni la boutique. Les webhooks et les flux d'événements la transmettent quand même.
+- `notifications: false` sur une commande : be-BOP ne notifie personne à son sujet, ni le client ni la boutique. Les webhooks et les flux d'événements la transmettent quand même. La demande n'est suivie que pour une clé dont la case « Peut couper les notifications » est cochée (décochée par défaut) ; sinon be-BOP prévient comme pour toute commande et le signale par l'avertissement `NOTIFICATIONS_NOT_DISABLED`. Les alertes de challenge et de classement envoyées à la boutique sont des alertes internes à l'admin : elles partent quel que soit ce réglage.
 - Clés créées et révoquées via UI admin (Settings → API Keys, super-admin)
 - OpenAPI public : GET /api/v1/openapi.json ; Swagger UI : GET /api/v1/docs
 - CORS allowlist admin `apiV1.corsOrigins`, stockee en base sans repli env, jamais wildcard
