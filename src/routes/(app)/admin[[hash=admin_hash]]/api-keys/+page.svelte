@@ -61,7 +61,8 @@
 				<p class="mt-1">{t('admin.apiKeys.emptyHint')}</p>
 			</div>
 		{:else}
-			<div class="overflow-x-auto">
+			<!-- w-0 min-w-full: the table scrolls here instead of widening the whole admin page. -->
+			<div class="overflow-x-auto w-0 min-w-full">
 				<table class="w-full text-left text-sm">
 					<thead>
 						<tr class="border-b border-gray-200 opacity-70">
