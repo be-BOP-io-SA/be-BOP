@@ -64,11 +64,13 @@ async function recordCall(
 		// Read from the whole bodies: a body cut to fit the journal is no longer JSON.
 		const orderIds = orderIdsOfCall(event.params.orderId, [requestBody, responseBody]);
 
+		// A suspended key is refused like no key at all, and still named: the shop sees who calls.
+		const namedKey = apiKey ?? event.locals.suspendedApiKey;
 		logApiV1Event({
-			...(apiKey && {
-				apiKeyId: apiKey._id,
-				keyPrefix: apiKey.keyPrefix,
-				keyName: apiKey.name
+			...(namedKey && {
+				apiKeyId: namedKey._id,
+				keyPrefix: namedKey.keyPrefix,
+				keyName: namedKey.name
 			}),
 			method: event.request.method,
 			path: event.url.pathname,

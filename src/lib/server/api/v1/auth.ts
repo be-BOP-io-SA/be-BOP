@@ -47,6 +47,14 @@ export async function authenticateApiV1(
 
 	const apiKey = await findApiKeyBySecret(secret);
 	if (!apiKey || !isApiKeyUsable(apiKey)) {
+		// The shop suspended this key itself: it wants to see that the key keeps calling.
+		if (apiKey?.suspendedAt) {
+			event.locals.suspendedApiKey = {
+				_id: apiKey._id,
+				name: apiKey.name,
+				keyPrefix: apiKey.keyPrefix
+			};
+		}
 		return apiError(401, 'UNAUTHORIZED', 'Invalid or revoked API key');
 	}
 
