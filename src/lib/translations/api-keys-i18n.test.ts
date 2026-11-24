@@ -60,9 +60,14 @@ const KEYS = [
 	'admin.apiKeys.openStreamsNow',
 	'admin.apiKeys.streamLifetimeSeconds',
 	'admin.apiKeys.streamLifetimeSecondsHint',
-	'admin.apiKeys.streamsSave',
-	'admin.apiKeys.streamsSaved',
-	'admin.apiKeys.streamsResetDone'
+	'admin.apiKeys.save',
+	'admin.apiKeys.saved',
+	'admin.apiKeys.streamsResetDone',
+	'admin.apiKeys.resetStreamsConfirm',
+	'admin.apiKeys.scopeHint.ordersStream',
+	'admin.apiKeys.scopeHint.posRead',
+	'admin.apiKeys.scopeHint.posWrite',
+	'admin.apiKeys.scopeHint.posStream'
 ];
 
 describe('admin api-keys scope hint translations', () => {

@@ -66,7 +66,7 @@ export const actions: Actions = {
 			// Already revoked — stay on page
 			return {
 				alreadyRevoked: true,
-				streamSettingsSaved: false,
+				saved: false,
 				streamsReset: false,
 				error: null
 			};
@@ -122,7 +122,12 @@ export const actions: Actions = {
 		throw redirect(303, `${adminPrefix()}/api-keys/${params.id}`);
 	},
 
-	saveStreamSettings: async ({ locals, params, request }) => {
+	/**
+	 * Save everything the page lets the shop set on a key, from its one Save button: the stream
+	 * settings, whether the key only reaches its own orders, and whether it may send an external id
+	 * twice. Nothing is saved when a field is refused.
+	 */
+	save: async ({ locals, params, request }) => {
 		assertSuperAdmin(locals);
 
 		if (!ObjectId.isValid(params.id)) {
@@ -143,7 +148,7 @@ export const actions: Actions = {
 		if (!parsed.success) {
 			return fail(400, {
 				alreadyRevoked: false,
-				streamSettingsSaved: false,
+				saved: false,
 				streamsReset: false,
 				...streamSettingsRefusal(parsed.error)
 			});
@@ -154,67 +159,25 @@ export const actions: Actions = {
 			throw error(404, 'API key not found');
 		}
 
-		return {
-			alreadyRevoked: false,
-			streamSettingsSaved: true,
-			streamsReset: false,
-			error: null
-		};
-	},
-
-	/**
-	 * Restrict the key to its own orders, or open every order to it again.
-	 *
-	 * The streams already open were filtered by the rule they opened under, so a change closes them:
-	 * they reconnect under the new one.
-	 */
-	saveOrderAccess: async ({ locals, params, request }) => {
-		assertSuperAdmin(locals);
-
-		if (!ObjectId.isValid(params.id)) {
-			throw error(404, 'API key not found');
-		}
-
-		const formData = await request.formData();
-		const changed = await updateApiKeyOwnOrdersOnly(params.id, !!formData.get('ownOrdersOnly'));
-		if (changed === null) {
-			throw error(404, 'API key not found');
-		}
-		if (changed) {
+		const orderAccessChanged = await updateApiKeyOwnOrdersOnly(
+			params.id,
+			!!formData.get('ownOrdersOnly')
+		);
+		// The streams already open were filtered by the rule they opened under: they reconnect
+		// under the new one.
+		if (orderAccessChanged) {
 			closeStreamsOfKey(params.id);
 		}
 
-		return {
-			alreadyRevoked: false,
-			streamSettingsSaved: false,
-			streamsReset: false,
-			orderAccessSaved: true,
-			error: null
-		};
-	},
-
-	/** Let the key create several orders with the same external id, or refuse a repeated id again. */
-	saveOrderWriting: async ({ locals, params, request }) => {
-		assertSuperAdmin(locals);
-
-		if (!ObjectId.isValid(params.id)) {
-			throw error(404, 'API key not found');
-		}
-
-		const formData = await request.formData();
-		const updated = await updateApiKeyAcceptDuplicateExternalOrderIds(
+		await updateApiKeyAcceptDuplicateExternalOrderIds(
 			params.id,
 			!!formData.get('acceptDuplicateExternalOrderIds')
 		);
-		if (!updated) {
-			throw error(404, 'API key not found');
-		}
 
 		return {
 			alreadyRevoked: false,
-			streamSettingsSaved: false,
+			saved: true,
 			streamsReset: false,
-			orderWritingSaved: true,
 			error: null
 		};
 	},
@@ -237,7 +200,7 @@ export const actions: Actions = {
 
 		return {
 			alreadyRevoked: false,
-			streamSettingsSaved: false,
+			saved: false,
 			streamsReset: true,
 			error: null
 		};
