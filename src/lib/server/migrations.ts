@@ -1101,30 +1101,95 @@ export const migrations = [
 		}
 	},
 	{
-		_id: new ObjectId('0295fdf30e394bdf3fc015b1'),
-		name: 'Fix items.vatRate wrongly stored as an array by the VAT-to-array migration',
+		_id: new ObjectId('6b05c3cc75b8f6a0ff250099'),
+		name: 'Restore items.vatRate and unwrap order.vat and currencySnapshot vat lists damaged by the VAT-to-array migration',
 		run: async (session: ClientSession) => {
-			// The 'Convert VAT rate to array in orders' migration referenced '$vat.rate' after
-			// already reassigning 'vat' to an array in the same $set stage, so it picked up the
-			// array-wrapped rate ([rate]) instead of the scalar rate.
-			for await (const order of collections.orders.find(
+			const damaged = [
 				{ 'items.vatRate': { $type: 'array' } },
-				{ session }
-			)) {
-				for (const item of order.items) {
-					if (Array.isArray(item.vatRate)) {
-						item.vatRate = item.vatRate[0];
+				{ 'vat.0': { $type: 'array' } },
+				...VAT_SNAPSHOTS.map((key) => ({ [`currencySnapshot.${key}.vat.0`]: { $type: 'array' } }))
+			];
+			for await (const order of collections.orders.find({ $or: damaged }, { session })) {
+				const set: Record<string, unknown> = {};
+				const vatLists: Array<unknown[] | undefined> = [
+					order.vat,
+					...VAT_SNAPSHOTS.map((key) => order.currencySnapshot?.[key]?.vat)
+				];
+				const wrappedRateCounts = vatLists.flatMap((lines) =>
+					lines && unwrapVatList(lines) !== lines ? [unwrapVatList(lines).length] : []
+				);
+
+				const listedRates = order.items.filter((item) => Array.isArray(item.vatRate));
+				// Item rates already plain numbers beside a wrapped list were cut to one rate per item
+				// by an earlier repair: the other rates are gone, the wrapped list still counts them.
+				const ratesToTell = listedRates.length
+					? listedRates.some((item) => onlyRate(item.vatRate) === undefined)
+					: wrappedRateCounts.length
+					? wrappedRateCounts.some((count) => count !== 1)
+					: undefined;
+				if (ratesToTell) {
+					warnVatRepair(order, 'byHand');
+				} else if (ratesToTell === false) {
+					if (listedRates.length) {
+						set.items = order.items.map((item) =>
+							Array.isArray(item.vatRate) ? { ...item, vatRate: onlyRate(item.vatRate) } : item
+						);
+					}
+					// An item that ships, or does not say, may have been VAT-exempt for a buyer abroad,
+					// which the order does not record.
+					if (
+						order.items.some(
+							(item) => onlyRate(item.vatRate) !== 0 && item.product?.shipping !== false
+						)
+					) {
+						warnVatRepair(order, 'check');
 					}
 				}
-				await collections.orders.updateOne(
-					{ _id: order._id },
-					{ $set: { items: order.items } },
-					{ session }
-				);
+
+				const vat = unwrapVatList(order.vat ?? []);
+				if (order.vat && vat !== order.vat) {
+					// Same reduction as the migration dropping the SAT amounts, which skipped these lists.
+					set.vat = vat.map(({ rate, country }) => ({ rate, country }));
+				}
+				for (const key of VAT_SNAPSHOTS) {
+					const lines = order.currencySnapshot?.[key]?.vat;
+					if (lines && unwrapVatList(lines) !== lines) {
+						set[`currencySnapshot.${key}.vat`] = unwrapVatList(lines);
+					}
+				}
+
+				if (Object.keys(set).length) {
+					await collections.orders.updateOne({ _id: order._id }, { $set: set }, { session });
+				}
 			}
 		}
 	}
 ];
+
+const VAT_SNAPSHOTS = ['main', 'priceReference', 'secondary'] as const;
+
+const VAT_REPAIR_ADVICE = {
+	byHand: 'item VAT rates could not be restored, set them by hand',
+	check: "item VAT rate is the order's only rate, check its shipping items for a VAT exemption"
+};
+
+/** Names an order for a fix by hand or a check; the number only, as the id opens the order page. */
+function warnVatRepair(order: { number: number }, advice: keyof typeof VAT_REPAIR_ADVICE) {
+	console.warn(`Order number ${order.number}: ${VAT_REPAIR_ADVICE[advice]}`);
+}
+
+/** The rate itself, or the only rate of a list; undefined when the list holds none or several. */
+function onlyRate(vatRate: unknown): number | undefined {
+	const rates = new Set<unknown>(Array.isArray(vatRate) ? vatRate : [vatRate]);
+	const [rate] = rates;
+	return rates.size === 1 && typeof rate === 'number' ? rate : undefined;
+}
+
+/** A list wrapped in a second one gets back to one level; any other list is returned as is. */
+function unwrapVatList<T>(list: T[]): T[] {
+	const [first] = list;
+	return list.length === 1 && Array.isArray(first) ? (first as T[]) : list;
+}
 
 /**
  * Migrations cannot import runtimeConfig: runtime-config.ts imports runMigrations, which
