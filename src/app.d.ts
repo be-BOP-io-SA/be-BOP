@@ -44,6 +44,8 @@ declare global {
 			clientIp?: string;
 			/** Set by /api/v1 auth middleware when a valid API key is presented. */
 			apiKey?: AuthenticatedApiKey;
+			/** Set instead of `apiKey` when the key presented is suspended: refused, but named in the journal. */
+			suspendedApiKey?: Pick<AuthenticatedApiKey, '_id' | 'name' | 'keyPrefix'>;
 			acceptAgeLimitation?: boolean;
 			language: LanguageKey;
 		}

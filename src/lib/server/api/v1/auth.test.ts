@@ -167,6 +167,29 @@ describe('authenticateApiV1', () => {
 		expect(touchApiKey).not.toHaveBeenCalled();
 	});
 
+	it('names a suspended key for the journal, without letting it in', async () => {
+		findApiKeyBySecret.mockResolvedValue({ ...usableKey, suspendedAt: new Date() });
+		const event = makeEvent({ 'x-api-key': 'bebop_ak_test_secret' });
+
+		await expectUnauthorized(await authenticateApiV1(event, 'orders:write'));
+
+		expect(event.locals.apiKey).toBeUndefined();
+		expect(event.locals.suspendedApiKey).toEqual({
+			_id: usableKey._id,
+			name: usableKey.name,
+			keyPrefix: usableKey.keyPrefix
+		});
+	});
+
+	it('names no key for a revoked one', async () => {
+		findApiKeyBySecret.mockResolvedValue({ ...usableKey, revokedAt: new Date(Date.now() - 1000) });
+		const event = makeEvent({ 'x-api-key': 'bebop_ak_test_secret' });
+
+		await expectUnauthorized(await authenticateApiV1(event, 'orders:write'));
+
+		expect(event.locals.suspendedApiKey).toBeUndefined();
+	});
+
 	it('rejects expired keys', async () => {
 		findApiKeyBySecret.mockResolvedValue({
 			...usableKey,

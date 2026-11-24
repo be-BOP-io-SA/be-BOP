@@ -184,6 +184,30 @@ describe('apiV1Handler call journal', () => {
 		expect(write).toHaveBeenCalledWith(expect.objectContaining({ orderIds: ['o-1', 'o-2'] }));
 	});
 
+	it('files the calls of a suspended key under its name, as calls without a valid key', async () => {
+		const suspendedApiKey = { _id: apiKey._id, name: apiKey.name, keyPrefix: apiKey.keyPrefix };
+		const handler = apiV1Handler(async () => unauthorized());
+		const callWith = async (logUnauthenticated: boolean) => {
+			write.mockClear();
+			runtimeConfig.apiV1Log.logUnauthenticated = logUnauthenticated;
+			await handler({
+				request: new Request('http://localhost/api/v1/orders'),
+				url: new URL('http://localhost/api/v1/orders'),
+				params: {},
+				locals: { suspendedApiKey }
+			} as unknown as Parameters<typeof handler>[0]);
+			await new Promise((resolve) => setTimeout(resolve, 10));
+		};
+
+		await callWith(true);
+		expect(write).toHaveBeenCalledWith(
+			expect.objectContaining({ apiKeyId: apiKey._id, keyName: 'till', status: 401 })
+		);
+
+		await callWith(false);
+		expect(write).not.toHaveBeenCalled();
+	});
+
 	it('keeps calls without a valid key when asked, even with errors turned off', async () => {
 		runtimeConfig.apiV1Log.logUnauthenticated = true;
 		runtimeConfig.apiV1Log.logErrors = false;
