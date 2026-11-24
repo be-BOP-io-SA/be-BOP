@@ -1946,6 +1946,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 										type: 'string',
 										format: 'uri',
 										description: 'URL of the be-BOP order.'
+									},
+									warnings: {
+										type: 'array',
+										items: { $ref: '#/components/schemas/ApiV1Warning' },
+										description:
+											'What writing this sale warned about, as `POST /api/v1/orders` reports it, ' +
+											'for instance `NOTIFICATIONS_NOT_DISABLED`. Present only when there is ' +
+											'something to report.'
 									}
 								}
 							}

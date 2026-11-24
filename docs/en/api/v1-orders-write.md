@@ -141,7 +141,7 @@ An order becomes paid only through the payment routine, when the payment covers 
 
 Limits of this version: one payment per order. Deposits and several payments on one order are not handled by this rule, and a further payment cannot be added through the API to an order that already exists.
 
-On the point-of-sale surface, `POST /api/v1/pos/orders` answers `success` for a sale whose order is paid and `pending` otherwise, never `success` for an order that is not paid.
+On the point-of-sale surface, `POST /api/v1/pos/orders` answers `success` for a sale whose order is paid and `pending` otherwise, never `success` for an order that is not paid. Each sale result also carries `warnings`, in the same form as `POST /api/v1/orders`, when its write warned about something (such as `NOTIFICATIONS_NOT_DISABLED`); the field is absent otherwise.
 
 ## Notifications
 

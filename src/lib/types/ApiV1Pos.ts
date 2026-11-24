@@ -7,6 +7,7 @@
  * minor units, as everywhere else in `/api/v1`.
  */
 
+import type { ApiV1Warning } from './ApiV1';
 import type { Product } from './Product';
 
 /** A price on the wire: an integer amount in minor units (`1250` in CHF is 12.50 CHF). */
@@ -135,6 +136,8 @@ export type PosSaleResult = {
 	/** The order this sale produced. Given plainly so a caller never has to parse `orderUrl`. */
 	orderId: string;
 	orderUrl: string;
+	/** What the write of this sale warned about, as `POST /api/v1/orders` gives it. Absent when empty. */
+	warnings?: ApiV1Warning[];
 };
 
 export type PosSalesResponse = { results: PosSaleResult[] };

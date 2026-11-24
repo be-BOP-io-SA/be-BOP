@@ -148,7 +148,8 @@ export async function ingestPosSales(params: {
 					// for a sale whose payment be-BOP did not record.
 					status: duplicate ? 'conflict' : result.orderStatus === 'paid' ? 'success' : 'pending',
 					orderId,
-					orderUrl: orderUrl(orderId)
+					orderUrl: orderUrl(orderId),
+					...(result.warnings?.length && { warnings: result.warnings })
 				};
 			})
 		}
