@@ -7,6 +7,7 @@ import {
 	API_V1_WARNING_CODES
 } from '$lib/types/ApiV1';
 import { ORDER_PAYMENT_STATUSES } from '$lib/types/Order';
+import { POS_SALE_STATUSES } from '$lib/types/ApiV1Pos';
 
 /**
  * Hand-maintained OpenAPI 3.0 document aligned with Zod schemas in
@@ -178,6 +179,15 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 			externalOrderId: { type: 'string' },
 			status: { type: 'string', enum: [...API_V1_RESULT_STATUSES] },
 			orderId: { type: 'string' },
+			orderStatus: {
+				type: 'string',
+				enum: [...ORDER_PAYMENT_STATUSES],
+				description:
+					'Where the order stands once written. `created` only says an order exists. It is ' +
+					'`paid` when the payment sent as `paid` covers the amount be-BOP expected. When the ' +
+					'amount sent is lower, nothing is recorded as paid: the order and its payment stay ' +
+					'`pending`, and an `AMOUNT_MISMATCH` warning gives both amounts.'
+			},
 			warnings: {
 				type: 'array',
 				items: { $ref: '#/components/schemas/ApiV1Warning' }
@@ -1914,9 +1924,12 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 									externalOrderId: { type: 'string' },
 									status: {
 										type: 'string',
-										enum: ['success', 'conflict'],
+										enum: [...POS_SALE_STATUSES],
 										description:
-											'`success`: an order was written for this sale. `conflict`: the reference was ' +
+											'`success`: an order was written for this sale, and it is paid. `pending`: an ' +
+											'order was written and it is not paid, because the amount sent does not cover ' +
+											'what be-BOP expected or its payment could not be recorded; `orderUrl` points ' +
+											'at it. `conflict`: the reference was ' +
 											'already received from this key; nothing was written, and `orderUrl` points at ' +
 											'the order that holds it.'
 									},

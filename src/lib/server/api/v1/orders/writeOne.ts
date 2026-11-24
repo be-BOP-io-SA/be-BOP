@@ -1,3 +1,4 @@
+import { addMinutes } from 'date-fns';
 import { ObjectId } from 'mongodb';
 import { collections } from '$lib/server/database';
 import {
@@ -8,6 +9,8 @@ import {
 } from '$lib/server/orders';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { reserve } from '$lib/server/lock';
+import { bookSet, commonBookCurrencies } from '$lib/server/orderBookkeeping';
+import { coversPayment } from '$lib/server/sdk/pp';
 import { toCurrency } from '$lib/utils/toCurrency';
 import {
 	API_V1_DUPLICATE_EXTERNAL_ORDER_ID,
@@ -74,7 +77,32 @@ async function applyMatchedPaymentStatus(
 		return order;
 	}
 	if (payment.status === 'paid') {
-		return onOrderPayment(order, existingPayment, existingPayment.price);
+		// What the till says it received, never what be-BOP expected: a payment is only recorded
+		// as paid once it covers the amount it was created for, by the rule every payment follows.
+		// Short of that it stays pending, and the order with it.
+		const received = minorToPrice(payment.amountMinor, payment.currency);
+		if (!coversPayment(undefined, existingPayment, received)) {
+			// Given the shop's payment deadline, and marked for the order routine to enforce it:
+			// nothing else would ever close this payment. What the till received is kept on the
+			// payment, where a paid one carries it; the order's total received is left alone.
+			await collections.orders.updateOne(
+				{ _id: order._id, 'payments._id': existingPayment._id },
+				{
+					$set: {
+						'payments.$.expiresAt': addMinutes(new Date(), runtimeConfig.desiredPaymentTimeout),
+						'payments.$.expireAtDeadline': true,
+						...bookSet(
+							commonBookCurrencies(order, existingPayment),
+							'payments.$.currencySnapshot',
+							'received',
+							received
+						)
+					}
+				}
+			);
+			return order;
+		}
+		return onOrderPayment(order, existingPayment, received);
 	}
 	if (payment.status === 'pending') {
 		return order;
@@ -422,10 +450,16 @@ async function writeNewOrder(
 			});
 		}
 
+		// Read back rather than assumed: the caller must know whether what it sent settled the order.
+		const written = await collections.orders
+			.findOne({ _id: orderId }, { projection: { status: 1 } })
+			.catch(() => null);
+
 		return {
 			externalOrderId: cmd.externalOrderId,
 			status: 'created',
 			orderId,
+			orderStatus: written?.status ?? order.status,
 			...(warnings.length && { warnings })
 		};
 	} catch (err) {

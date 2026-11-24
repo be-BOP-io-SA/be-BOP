@@ -98,7 +98,7 @@ import { isEmptyObject } from '$lib/utils/is-empty-object';
 import { binaryFindAround } from '$lib/utils/binary-find';
 import { toZonedTime } from 'date-fns-tz';
 import type { PaidSubscription } from '$lib/types/PaidSubscription';
-import { resolveProcessor } from './sdk/pp';
+import { getProcessor, resolveProcessor, type PaymentProcessorDefinition } from './sdk/pp';
 import { pojo } from './pojo';
 import { logAccountingEvent } from './accounting-log';
 import { orderCurrencyAmounts, orderVatAccountingSnapshot } from './orderVatSnapshot';
@@ -506,6 +506,50 @@ export async function cancelPayment(
 
 	await onOrderPaymentFailed(order, payment, 'canceled');
 	throw redirect(303, redirectUrl);
+}
+
+type PollingProcessor = PaymentProcessorDefinition &
+	Required<Pick<PaymentProcessorDefinition, 'checkPayment'>>;
+
+/**
+ * The processor the order routine asks about a pending payment, if one follows it.
+ *
+ * Processor and method must both match: a tap-to-pay payment is 'point-of-sale' with a card
+ * processor, and is not that processor's to settle. One without checkPayment settles out of band.
+ */
+export function processorFollowing(payment: Order['payments'][number]): PollingProcessor | null {
+	const pp = payment.processor ? getProcessor(payment.processor) : undefined;
+	return pp?.checkPayment && pp.meta.method === payment.method && pp.isEnabled()
+		? (pp as PollingProcessor)
+		: null;
+}
+
+/**
+ * Expire a pending payment marked `expireAtDeadline` whose deadline is past: no processor follows
+ * it, so nothing else would ever close it, nor the order waiting on it. Returns the order as it
+ * stands afterwards, or null when the payment is left as it is.
+ *
+ * The mark is required: bank transfers and other payments carry a deadline that was never
+ * enforced, and must not start expiring.
+ */
+export async function expireUnfollowedPayment(
+	order: Order,
+	payment: Order['payments'][number],
+	now = new Date()
+): Promise<Order | null> {
+	if (
+		!payment.expireAtDeadline ||
+		payment.status !== 'pending' ||
+		!payment.expiresAt ||
+		payment.expiresAt >= now
+	) {
+		return null;
+	}
+	// A processor that can be asked decides on its own payments, deadline included.
+	if (processorFollowing(payment)) {
+		return null;
+	}
+	return onOrderPaymentFailed(order, payment, 'expired');
 }
 
 export async function anonymizeOrderData(orderId: string): Promise<boolean> {

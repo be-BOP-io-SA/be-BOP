@@ -255,7 +255,8 @@ export function definePaymentProcessor<
  * Providers report in their own currency, so the comparison happens in the payment's.
  */
 export function coversPayment(
-	pp: PaymentProcessorDefinition,
+	/** Undefined for a payment no provider settles, as one a till reports: the default tolerance. */
+	pp: Pick<PaymentProcessorDefinition, 'underpaymentTolerance'> | undefined,
 	payment: Order['payments'][number],
 	received: Price,
 	/** A fee the provider took out of `received`, as phoenixd does with its channel fee. */
@@ -265,7 +266,7 @@ export function coversPayment(
 	const settled =
 		toCurrency(currency, received.amount, received.currency) +
 		(fees ? toCurrency(currency, fees.amount, fees.currency) : 0);
-	const tolerance = pp.underpaymentTolerance?.(currency) ?? CURRENCY_UNIT[currency];
+	const tolerance = pp?.underpaymentTolerance?.(currency) ?? CURRENCY_UNIT[currency];
 
 	return settled >= payment.price.amount - tolerance;
 }

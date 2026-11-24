@@ -13,6 +13,7 @@ import {
 import type { AuthenticatedApiKey } from '$lib/types/ApiV1';
 import { writeBatch } from './writeBatch';
 import { writeOne } from './writeOne';
+import { paidAmount } from './listPaid';
 import { API_ORDER_SELLER_ALIAS } from './seller';
 import { amountToMinor } from './money';
 import {
@@ -578,7 +579,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(order?.status).toBe('pending');
 	});
 
-	it('warns AMOUNT_MISMATCH and POS_LABEL_UNKNOWN without failing', async () => {
+	it('warns POS_LABEL_UNKNOWN without failing', async () => {
 		const res = await writeBatch({
 			apiKey,
 			orders: [
@@ -587,7 +588,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 					payment: {
 						method: 'point-of-sale',
 						status: 'paid',
-						amountMinor: 1,
+						amountMinor: amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR'),
 						currency: 'EUR',
 						posLabel: 'does-not-exist'
 					}
@@ -596,11 +597,171 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		});
 		expect(res.status).toBe('ok_with_warnings');
 		expect(res.results[0].status).toBe('created');
-		const codes = res.results[0].warnings?.map((w) => w.code) ?? [];
-		expect(codes).toEqual(expect.arrayContaining(['AMOUNT_MISMATCH', 'POS_LABEL_UNKNOWN']));
+		expect(res.results[0].warnings?.map((w) => w.code)).toEqual(['POS_LABEL_UNKNOWN']);
 		const order = await collections.orders.findOne({ _id: res.results[0].orderId });
 		expect(order?.status).toBe('paid');
 		expect(order?.payments[0]?.posSubtype).toBeUndefined();
+	});
+
+	describe('an order is only paid by a payment that covers it', () => {
+		const expectedMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+
+		async function writePaid(externalOrderId: string, amountMinor: number) {
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId,
+						payment: { method: 'point-of-sale', status: 'paid', amountMinor, currency: 'EUR' }
+					})
+				]
+			});
+			const result = res.results[0];
+			const order = await collections.orders.findOne({ _id: requireOrderId(result) });
+			if (!order) {
+				throw new Error('expected the order to be written');
+			}
+			return { result, order };
+		}
+
+		it('writes the order paid when the amount sent is the amount expected', async () => {
+			const { result, order } = await writePaid('covered-1', expectedMinor);
+
+			expect(result).toMatchObject({ status: 'created', orderStatus: 'paid' });
+			expect(result.warnings).toBeUndefined();
+			expect(order.status).toBe('paid');
+			expect(order.payments.map((payment) => payment.status)).toEqual(['paid']);
+			expect(order.currencySnapshot.main.totalReceived?.amount).toBe(
+				TEST_DIGITAL_PRODUCT.price.amount
+			);
+		});
+
+		it('writes the order paid when the amount sent is one cent under, as be-BOP does for any payment', async () => {
+			const { result, order } = await writePaid('one-cent-under-1', expectedMinor - 1);
+
+			expect(order.status).toBe('paid');
+			expect(result).toMatchObject({ status: 'created', orderStatus: 'paid' });
+			expect(order.payments.map((payment) => payment.status)).toEqual(['paid']);
+			expect(order.payments[0].expiresAt).toBeUndefined();
+		});
+
+		it('writes the order pending, and its payment too, when the amount sent is lower', async () => {
+			const { result, order } = await writePaid('short-1', expectedMinor - 2);
+
+			expect(result).toMatchObject({ status: 'created', orderStatus: 'pending' });
+			expect(result.warnings?.map((w) => w.code)).toEqual(['AMOUNT_MISMATCH']);
+			expect(order.status).toBe('pending');
+			// Nothing is recorded as received: no payment is paid, no invoice is numbered.
+			expect(order.payments.map((payment) => payment.status)).toEqual(['pending']);
+			expect(order.payments[0].invoice).toBeUndefined();
+			expect(order.currencySnapshot.main.totalReceived).toBeUndefined();
+		});
+
+		it('keeps the short amount the till sent on the pending payment, counted nowhere as paid', async () => {
+			const { result, order } = await writePaid('short-kept-1', 4000);
+
+			expect(JSON.stringify(order)).toMatch(/"amount":40[,}]/);
+			expect(order.payments[0].currencySnapshot.main.received).toEqual({
+				amount: 40,
+				currency: 'EUR'
+			});
+			// Still an order nobody paid: nothing the shop or the API reads as money in.
+			expect(result).toMatchObject({ status: 'created', orderStatus: 'pending' });
+			expect(order.status).toBe('pending');
+			expect(order.payments.map((payment) => payment.status)).toEqual(['pending']);
+			expect(order.payments[0].paidAt).toBeUndefined();
+			expect(order.payments[0].invoice).toBeUndefined();
+			expect(order.currencySnapshot.main.totalReceived).toBeUndefined();
+			expect(ordersModule.isOrderFullyPaid(order)).toBe(false);
+			expect(paidAmount(order)).toBeNull();
+		});
+
+		it('lets an order written pending for a short amount expire at the shop payment deadline', async () => {
+			const before = Date.now();
+			const { order } = await writePaid('short-expires-1', expectedMinor - 2);
+			// The mark is what lets the order routine enforce the deadline.
+			expect(order.payments[0].expireAtDeadline).toBe(true);
+			const deadline = order.payments[0].expiresAt?.getTime() ?? 0;
+			const timeoutMs = runtimeConfig.desiredPaymentTimeout * 60_000;
+			expect(deadline).toBeGreaterThanOrEqual(before + timeoutMs);
+			expect(deadline).toBeLessThanOrEqual(Date.now() + timeoutMs);
+
+			// Not yet due: the routine leaves it alone.
+			await expect(
+				ordersModule.expireUnfollowedPayment(order, order.payments[0])
+			).resolves.toBeNull();
+
+			const afterDeadline = new Date(deadline + 1);
+			const expiredFrom = Date.now();
+			const expired = await ordersModule.expireUnfollowedPayment(
+				order,
+				order.payments[0],
+				afterDeadline
+			);
+
+			expect(expired?.status).toBe('expired');
+			expect(expired?.payments.map((payment) => payment.status)).toEqual(['expired']);
+			// The date a stream resumes on moves with it.
+			expect(expired?.updatedAt.getTime()).toBeGreaterThanOrEqual(expiredFrom);
+		});
+
+		it('never expires a point-of-sale payment that carries no deadline', async () => {
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'till-pending-forever',
+						payment: {
+							method: 'point-of-sale',
+							status: 'pending',
+							amountMinor: expectedMinor,
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+			const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+			if (!order) {
+				throw new Error('expected the order to be written');
+			}
+			expect(order.payments[0].expiresAt).toBeUndefined();
+
+			const inTenYears = new Date(Date.now() + 10 * 365 * 24 * 3600 * 1000);
+			await expect(
+				ordersModule.expireUnfollowedPayment(order, order.payments[0], inTenYears)
+			).resolves.toBeNull();
+			expect((await collections.orders.findOne({ _id: order._id }))?.status).toBe('pending');
+		});
+
+		it('records what the till received, not what be-BOP expected, when it sent more', async () => {
+			const { result, order } = await writePaid('over-1', expectedMinor + 250);
+
+			expect(result).toMatchObject({ status: 'created', orderStatus: 'paid' });
+			expect(result.warnings?.map((w) => w.code)).toEqual(['AMOUNT_MISMATCH']);
+			expect(order.status).toBe('paid');
+			expect(order.currencySnapshot.main.totalReceived?.amount).toBe(
+				TEST_DIGITAL_PRODUCT.price.amount + 2.5
+			);
+		});
+
+		it('says pending for an order the till itself sent as pending', async () => {
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'till-pending-1',
+						payment: {
+							method: 'point-of-sale',
+							status: 'pending',
+							amountMinor: expectedMinor,
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+
+			expect(res.results[0]).toMatchObject({ status: 'created', orderStatus: 'pending' });
+		});
 	});
 
 	it('fails the command when order currency differs from mainCurrency', async () => {

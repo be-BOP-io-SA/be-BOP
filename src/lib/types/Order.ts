@@ -142,6 +142,12 @@ export interface OrderPayment {
 	 * Can be unset for cash or bank transfer payments for example.
 	 */
 	expiresAt?: Date;
+	/**
+	 * The order routine expires this payment itself once `expiresAt` is past, because no processor
+	 * follows it. Only set by what writes such a payment; without it a deadline is never enforced
+	 * this way.
+	 */
+	expireAtDeadline?: true;
 	/** Bitcoin / LN address, payment link */
 	address?: string;
 	paidAt?: Date;
