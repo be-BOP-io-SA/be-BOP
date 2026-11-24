@@ -813,7 +813,8 @@
 			"delete": "Delete",
 			"selectLanguage": "Select Language",
 			"editLabelTab": "Edit Label",
-			"translationsTab": "Translations"
+			"translationsTab": "Translations",
+			"vatRateToCheck": "VAT rate to check"
 		},
 		"lnd": {
 			"title": "Lightning node",

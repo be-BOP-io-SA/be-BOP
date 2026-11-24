@@ -813,7 +813,8 @@
 			"delete": "Elimina",
 			"selectLanguage": "Seleziona lingua",
 			"editLabelTab": "Modifica label",
-			"translationsTab": "Traduzioni"
+			"translationsTab": "Traduzioni",
+			"vatRateToCheck": "Aliquota IVA da verificare"
 		},
 		"lnd": {
 			"title": "Nodo Lightning",
