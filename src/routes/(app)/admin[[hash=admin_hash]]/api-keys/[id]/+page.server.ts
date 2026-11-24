@@ -71,6 +71,8 @@ export const actions: Actions = {
 				error: null
 			};
 		}
+		// A revoked key is gone for good: what it still had open stops with it, at once.
+		closeStreamsOfKey(params.id);
 
 		throw redirect(303, `${adminPrefix()}/api-keys/${params.id}`);
 	},
