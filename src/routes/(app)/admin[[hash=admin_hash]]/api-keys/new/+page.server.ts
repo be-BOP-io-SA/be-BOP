@@ -1,7 +1,7 @@
 import { createApiKey } from '$lib/server/api/keys';
 import {
-	optionalStreamSetting,
-	streamLifetimeSetting,
+	apiKeySettingsInput,
+	apiKeySettingsShape,
 	streamSettingsRefusal
 } from '$lib/server/api/stream-settings';
 import { parseExpiresAtFormValue } from '$lib/server/api/expires-at';
@@ -48,30 +48,25 @@ export const actions: Actions = {
 			.object({
 				name: z.string().trim().min(1).max(200),
 				scopes: z.array(z.enum(API_V1_SCOPES)).min(1),
-				maxConcurrentStreams: optionalStreamSetting,
-				streamLifetimeSeconds: streamLifetimeSetting
+				...apiKeySettingsShape
 			})
 			.safeParse({
 				name: formData.get('name'),
 				scopes: scopesRaw,
-				maxConcurrentStreams: String(formData.get('maxConcurrentStreams') ?? ''),
-				streamLifetimeSeconds: String(formData.get('streamLifetimeSeconds') ?? '')
+				...apiKeySettingsInput(formData)
 			});
 
 		if (!parsed.success) {
 			return fail(400, streamSettingsRefusal(parsed.error));
 		}
 
+		const { name, scopes, ...settings } = parsed.data;
 		const { apiKey, secret } = await createApiKey({
-			name: parsed.data.name,
-			scopes: parsed.data.scopes as ApiV1Scope[],
+			name,
+			scopes: scopes as ApiV1Scope[],
 			expiresAt: expiresParsed.value,
 			createdBy: locals.user?._id?.toString(),
-			maxConcurrentStreams: parsed.data.maxConcurrentStreams,
-			streamLifetimeSeconds: parsed.data.streamLifetimeSeconds,
-			ownOrdersOnly: !!formData.get('ownOrdersOnly'),
-			acceptDuplicateExternalOrderIds: !!formData.get('acceptDuplicateExternalOrderIds'),
-			canDisableNotifications: !!formData.get('canDisableNotifications')
+			...settings
 		});
 
 		// PRG: stash secret in a short-lived signed httpOnly cookie, then redirect.

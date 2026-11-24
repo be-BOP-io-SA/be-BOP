@@ -2,6 +2,7 @@ import { listApiKeys, serializeApiKeyPublic } from '$lib/server/api/keys';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { persistConfigElement } from '$lib/server/utils/persistConfig';
 import { normalizeApiV1CorsOrigins } from '$lib/server/api/v1/cors';
+import { API_LOG_MIN_SIZE_MB } from '$lib/types/ApiKey';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -66,7 +67,7 @@ export const actions = {
 		const parsed = z
 			.object({
 				// Empty means no limit.
-				maxSizeMb: z.union([z.literal(''), z.number({ coerce: true }).positive()]),
+				maxSizeMb: z.union([z.literal(''), z.number({ coerce: true }).min(API_LOG_MIN_SIZE_MB)]),
 				logSuccesses: z.boolean({ coerce: true }),
 				logErrors: z.boolean({ coerce: true }),
 				logUnauthenticated: z.boolean({ coerce: true })

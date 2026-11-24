@@ -13,6 +13,19 @@ export const STREAM_SETTINGS_PREFILL = { maxConcurrentStreams: 4, streamLifetime
 export const MAX_STREAM_LIFETIME_SECONDS = 2_147_483;
 
 /**
+ * Bounds of the two stream settings. The admin inputs take their `min`, `max` and `step` from here
+ * and the server checks against the same values, so a browser never lets through what the server
+ * refuses, nor the reverse.
+ */
+export const STREAM_SETTING_BOUNDS = {
+	maxConcurrentStreams: { min: 1, step: 1 },
+	streamLifetimeSeconds: { min: 1, max: MAX_STREAM_LIFETIME_SECONDS, step: 1 }
+} as const;
+
+/** Smallest size the API call journal can be capped at, in MB: the input's `min` and the server's. */
+export const API_LOG_MIN_SIZE_MB = 0.01;
+
+/**
  * Kinds of doubtful call be-BOP watches for. Each one flags the key that made it as suspicious and
  * is written to that key's own journal; a new kind is one more entry here and one more check.
  *

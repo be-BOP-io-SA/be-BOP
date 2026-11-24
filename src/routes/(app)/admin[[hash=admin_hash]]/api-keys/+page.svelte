@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n.js';
+	import { API_LOG_MIN_SIZE_MB } from '$lib/types/ApiKey';
 
 	export let data;
 	export let form;
@@ -151,7 +152,7 @@
 					class="form-input w-32"
 					type="number"
 					name="logMaxSizeMb"
-					min="0.01"
+					min={API_LOG_MIN_SIZE_MB}
 					step="any"
 					value={data.logSettings.maxSizeMb ?? ''}
 				/>

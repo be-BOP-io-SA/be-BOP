@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n.js';
-	import { MAX_STREAM_LIFETIME_SECONDS } from '$lib/types/ApiKey';
+	import { MAX_STREAM_LIFETIME_SECONDS, STREAM_SETTING_BOUNDS } from '$lib/types/ApiKey';
 
 	export let data;
 	export let form;
@@ -42,6 +42,11 @@
 			</span>
 		{/if}
 	</header>
+
+	<!-- At the top: the page reopens there once the form is posted. -->
+	{#if form?.saved}
+		<div class="alert alert-success">{t('admin.apiKeys.saved')}</div>
+	{/if}
 
 	<section class="rounded-lg border border-gray-200 p-5">
 		<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
@@ -97,8 +102,7 @@
 					class="form-input w-32"
 					type="number"
 					name="maxConcurrentStreams"
-					min="1"
-					step="1"
+					{...STREAM_SETTING_BOUNDS.maxConcurrentStreams}
 					value={data.key.maxConcurrentStreams ?? ''}
 				/>
 				<span class="text-sm opacity-70">
@@ -124,9 +128,7 @@
 				class="form-input w-32"
 				type="number"
 				name="streamLifetimeSeconds"
-				min="1"
-				max={MAX_STREAM_LIFETIME_SECONDS}
-				step="1"
+				{...STREAM_SETTING_BOUNDS.streamLifetimeSeconds}
 				value={data.key.streamLifetimeSeconds ?? ''}
 			/>
 			<span class="text-sm opacity-70">{t('admin.apiKeys.streamLifetimeSecondsHint')}</span>
@@ -263,14 +265,10 @@
 		</section>
 	{/if}
 
-	{#if form?.saved}
-		<p class="text-sm text-green-700">{t('admin.apiKeys.saved')}</p>
-	{/if}
-
 	<!-- The admin keeps this row in view while the page scrolls: Save and Revoke stay together. -->
 	<div class="flex flex-wrap items-center gap-3">
 		<button type="submit" class="btn btn-blue text-white w-auto text-base">
-			{t('admin.apiKeys.save')}
+			{t('admin.action.save')}
 		</button>
 		{#if !data.key.revokedAt}
 			<button

@@ -3,15 +3,12 @@ import {
 	revokeApiKey,
 	serializeApiKeyPublic,
 	setApiKeySuspended,
-	updateApiKeyAcceptDuplicateExternalOrderIds,
-	updateApiKeyCanDisableNotifications,
-	updateApiKeyOwnOrdersOnly,
-	updateApiKeyStreamSettings
+	updateApiKeySettings
 } from '$lib/server/api/keys';
 import { clearSuspiciousFlag, listSuspiciousEvents } from '$lib/server/api/suspicious';
 import {
-	optionalStreamSetting,
-	streamLifetimeSetting,
+	apiKeySettingsInput,
+	apiKeySettingsSchema,
 	streamSettingsRefusal
 } from '$lib/server/api/stream-settings';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
@@ -19,7 +16,6 @@ import { adminPrefix } from '$lib/server/admin';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { ObjectId } from 'mongodb';
-import { z } from 'zod';
 import {
 	closeStreamsOfKey,
 	countOpenStreams
@@ -124,9 +120,10 @@ export const actions: Actions = {
 	},
 
 	/**
-	 * Save everything the page lets the shop set on a key, from its one Save button: the stream
-	 * settings, whether the key only reaches its own orders, and whether it may send an external id
-	 * twice. Nothing is saved when a field is refused.
+	 * Save everything the page lets the shop set on a key, from its one Save button: the two
+	 * stream settings, whether the key only reaches its own orders, whether it may send an
+	 * external id twice, and whether it may turn notifications off. Nothing is saved when a field
+	 * is refused, and all of it is written at once.
 	 */
 	save: async ({ locals, params, request }) => {
 		assertSuperAdmin(locals);
@@ -135,16 +132,7 @@ export const actions: Actions = {
 			throw error(404, 'API key not found');
 		}
 
-		const formData = await request.formData();
-		const parsed = z
-			.object({
-				maxConcurrentStreams: optionalStreamSetting,
-				streamLifetimeSeconds: streamLifetimeSetting
-			})
-			.safeParse({
-				maxConcurrentStreams: String(formData.get('maxConcurrentStreams') ?? ''),
-				streamLifetimeSeconds: String(formData.get('streamLifetimeSeconds') ?? '')
-			});
+		const parsed = apiKeySettingsSchema.safeParse(apiKeySettingsInput(await request.formData()));
 
 		if (!parsed.success) {
 			return fail(400, {
@@ -155,26 +143,15 @@ export const actions: Actions = {
 			});
 		}
 
-		const updated = await updateApiKeyStreamSettings(params.id, parsed.data);
+		const updated = await updateApiKeySettings(params.id, parsed.data);
 		if (!updated) {
 			throw error(404, 'API key not found');
 		}
-
-		const orderAccessChanged = await updateApiKeyOwnOrdersOnly(
-			params.id,
-			!!formData.get('ownOrdersOnly')
-		);
 		// The streams already open were filtered by the rule they opened under: they reconnect
 		// under the new one.
-		if (orderAccessChanged) {
+		if (updated.ownOrdersOnlyChanged) {
 			closeStreamsOfKey(params.id);
 		}
-
-		await updateApiKeyAcceptDuplicateExternalOrderIds(
-			params.id,
-			!!formData.get('acceptDuplicateExternalOrderIds')
-		);
-		await updateApiKeyCanDisableNotifications(params.id, !!formData.get('canDisableNotifications'));
 
 		return {
 			alreadyRevoked: false,

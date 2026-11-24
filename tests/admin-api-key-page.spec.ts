@@ -1,15 +1,8 @@
-import { MongoClient } from 'mongodb';
 import { expect, test, type Page } from './client-ip.js';
+import { withDb } from './pending-order.js';
 
-const E2E_DB = 'bebop-e2e';
-
-async function storedKey(name: string) {
-	const client = await MongoClient.connect(process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017');
-	try {
-		return await client.db(E2E_DB).collection('apiKeys').findOne({ name });
-	} finally {
-		await client.close();
-	}
+function storedKey(name: string) {
+	return withDb((db) => db.collection('apiKeys').findOne({ name }));
 }
 
 /** Creates a key through the admin and opens its page. */
@@ -91,7 +84,8 @@ test('one Save button saves every setting of a key, and stays in view with Revok
 	await expect(mayTurnOff).not.toBeChecked();
 	await mayTurnOff.check();
 	await save.click();
-	await expect(page.getByText('Changes saved.')).toBeVisible();
+	// Said where the page reopens, not below a screen of settings.
+	await expect(page.getByText('Changes saved.')).toBeInViewport();
 
 	expect(await storedKey(name)).toMatchObject({
 		streamLifetimeSeconds: 600,
@@ -112,7 +106,7 @@ test.describe('in French', () => {
 		const save = page.getByRole('button', { name: 'Enregistrer', exact: true });
 		await expect(save).toHaveCount(1);
 		await save.click();
-		await expect(page.getByText('Modifications enregistrées.')).toBeVisible();
+		await expect(page.getByText('Modifications enregistrées.')).toBeInViewport();
 	});
 
 	test('a key may be allowed to turn notifications off, off by default', async ({ page }) => {
