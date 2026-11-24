@@ -2,7 +2,11 @@
 	import { onMount } from 'svelte';
 	import { useI18n } from '$lib/i18n.js';
 	import { groupScopesByCategory } from '$lib/types/ApiV1';
-	import { MAX_STREAM_LIFETIME_SECONDS, STREAM_SETTINGS_PREFILL } from '$lib/types/ApiKey';
+	import {
+		MAX_STREAM_LIFETIME_SECONDS,
+		STREAM_SETTING_BOUNDS,
+		STREAM_SETTINGS_PREFILL
+	} from '$lib/types/ApiKey';
 
 	export let data;
 	export let form;
@@ -177,8 +181,7 @@
 				class="form-input w-32"
 				type="number"
 				name="maxConcurrentStreams"
-				min="1"
-				step="1"
+				{...STREAM_SETTING_BOUNDS.maxConcurrentStreams}
 				value={STREAM_SETTINGS_PREFILL.maxConcurrentStreams}
 			/>
 			<span class="text-sm opacity-70">{t('admin.apiKeys.maxConcurrentStreamsHint')}</span>
@@ -190,9 +193,7 @@
 				class="form-input w-32"
 				type="number"
 				name="streamLifetimeSeconds"
-				min="1"
-				max={MAX_STREAM_LIFETIME_SECONDS}
-				step="1"
+				{...STREAM_SETTING_BOUNDS.streamLifetimeSeconds}
 				value={STREAM_SETTINGS_PREFILL.streamLifetimeSeconds}
 			/>
 			<span class="text-sm opacity-70">{t('admin.apiKeys.streamLifetimeSecondsHint')}</span>

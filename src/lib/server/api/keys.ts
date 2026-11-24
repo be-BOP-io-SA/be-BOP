@@ -8,6 +8,7 @@ import {
 	hashApiKeySecret,
 	parseApiKeySecret
 } from './key-crypto';
+import { apiKeySettingsShape, type ApiKeySettings } from './stream-settings';
 
 export {
 	apiKeyPrefixFromSecret,
@@ -127,92 +128,36 @@ export async function setApiKeySuspended(
 }
 
 /**
- * Set — or clear — the two stream settings of one key. Returns false when no key carries that id.
+ * Write every setting of one key in a single update, so a save lands whole or not at all. Returns
+ * whether the key's reach over orders changed, or null when no key carries that id.
  *
- * Clearing stores nothing rather than zero: "no ceiling" and "a ceiling of zero" are opposite
- * answers, and zero would refuse every stream the key opens.
+ * A setting left empty or switched off is stored as absent rather than as zero or false: "no
+ * ceiling" and "a ceiling of zero" are opposite answers, and zero would refuse every stream.
  */
-export async function updateApiKeyStreamSettings(
+export async function updateApiKeySettings(
 	id: ObjectId | string,
-	settings: { maxConcurrentStreams: number | null; streamLifetimeSeconds: number | null }
-): Promise<boolean> {
+	settings: ApiKeySettings
+): Promise<{ ownOrdersOnlyChanged: boolean } | null> {
 	const _id = typeof id === 'string' ? new ObjectId(id) : id;
 	const toSet: Record<string, unknown> = { updatedAt: new Date() };
 	const toUnset: Record<string, ''> = {};
-	for (const field of ['maxConcurrentStreams', 'streamLifetimeSeconds'] as const) {
+	for (const field of Object.keys(apiKeySettingsShape) as Array<keyof ApiKeySettings>) {
 		const value = settings[field];
-		if (value === null) {
-			toUnset[field] = '';
-		} else {
+		if (value) {
 			toSet[field] = value;
+		} else {
+			toUnset[field] = '';
 		}
 	}
-	const result = await collections.apiKeys.updateOne(
+	const before = await collections.apiKeys.findOneAndUpdate(
 		{ _id },
-		Object.keys(toUnset).length ? { $set: toSet, $unset: toUnset } : { $set: toSet }
+		Object.keys(toUnset).length ? { $set: toSet, $unset: toUnset } : { $set: toSet },
+		{ returnDocument: 'before', projection: { ownOrdersOnly: 1 } }
 	);
-	return result.matchedCount > 0;
-}
-
-/**
- * Restrict one key to its own orders, or open every order to it again. Returns whether the setting
- * changed, and null when no key carries that id.
- */
-export async function updateApiKeyOwnOrdersOnly(
-	id: ObjectId | string,
-	ownOrdersOnly: boolean
-): Promise<boolean | null> {
-	const _id = typeof id === 'string' ? new ObjectId(id) : id;
-	// Matching on the current state tells a change apart from a save that changes nothing.
-	const result = ownOrdersOnly
-		? await collections.apiKeys.updateOne(
-				{ _id, ownOrdersOnly: { $ne: true } },
-				{ $set: { ownOrdersOnly: true, updatedAt: new Date() } }
-		  )
-		: await collections.apiKeys.updateOne(
-				{ _id, ownOrdersOnly: true },
-				{ $unset: { ownOrdersOnly: '' }, $set: { updatedAt: new Date() } }
-		  );
-	if (result.modifiedCount) {
-		return true;
+	if (!before.value) {
+		return null;
 	}
-	return (await collections.apiKeys.countDocuments({ _id }, { limit: 1 })) ? false : null;
-}
-
-/**
- * Let one key create several orders with the same external id, or refuse a repeated id again.
- * Returns false when no key carries that id.
- */
-export async function updateApiKeyAcceptDuplicateExternalOrderIds(
-	id: ObjectId | string,
-	accept: boolean
-): Promise<boolean> {
-	const _id = typeof id === 'string' ? new ObjectId(id) : id;
-	const result = await collections.apiKeys.updateOne(
-		{ _id },
-		accept
-			? { $set: { acceptDuplicateExternalOrderIds: true, updatedAt: new Date() } }
-			: { $unset: { acceptDuplicateExternalOrderIds: '' }, $set: { updatedAt: new Date() } }
-	);
-	return result.matchedCount > 0;
-}
-
-/**
- * Let one key write orders nobody is notified about, or have be-BOP notify for all of them again.
- * Returns false when no key carries that id.
- */
-export async function updateApiKeyCanDisableNotifications(
-	id: ObjectId | string,
-	allowed: boolean
-): Promise<boolean> {
-	const _id = typeof id === 'string' ? new ObjectId(id) : id;
-	const result = await collections.apiKeys.updateOne(
-		{ _id },
-		allowed
-			? { $set: { canDisableNotifications: true, updatedAt: new Date() } }
-			: { $unset: { canDisableNotifications: '' }, $set: { updatedAt: new Date() } }
-	);
-	return result.matchedCount > 0;
+	return { ownOrdersOnlyChanged: !!before.value.ownOrdersOnly !== settings.ownOrdersOnly };
 }
 
 export async function touchApiKey(id: ObjectId, at = new Date()): Promise<void> {
