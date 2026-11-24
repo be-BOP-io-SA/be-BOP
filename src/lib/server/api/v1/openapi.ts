@@ -95,7 +95,9 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					'(`details.orderId` names the order that holds it, which is left untouched). A reference ' +
 					'another call is still writing is refused with `EXTERNAL_ORDER_ID_IN_PROGRESS` instead: ' +
 					'no order is known for it yet, send the command again. A key set to accept several ' +
-					'orders with the same external id creates a new order for each command.'
+					'orders with the same external id creates a new order for each command, except for a ' +
+					'command sent again with the same `createdAt`, which is the same sale and is refused as ' +
+					'above.'
 			},
 			currency: { type: 'string', enum: currencyEnum },
 			createdAt: {
