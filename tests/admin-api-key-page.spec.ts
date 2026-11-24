@@ -67,6 +67,12 @@ test('one Save button saves every setting of a key, and stays in view with Revok
 	await expect(save).toBeInViewport();
 	await expect(revoke).toBeInViewport();
 
+	// A button whose colour the theme does not have would be white on white.
+	const suspend = page.getByRole('button', { name: 'Suspend key' });
+	expect(await suspend.evaluate((button) => getComputedStyle(button).backgroundColor)).not.toMatch(
+		/rgba\(0, 0, 0, 0\)|transparent/
+	);
+
 	// The browser refuses what the server would refuse, before anything is posted.
 	const lifetime = page.getByLabel('Close each stream after (seconds)');
 	await lifetime.fill('0');
