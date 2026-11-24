@@ -133,6 +133,8 @@ Shape: { error: { code, message, details? } }
 
 One call creates one order. The `externalOrderId` is kept on the order, and it is not unique: by default, an order whose `externalOrderId` this API key already sent is refused — status `failed`, error `DUPLICATE_EXTERNAL_ORDER_ID`, with the existing be-BOP `orderId` in `details` — and the existing order is left exactly as it was. Nothing is reconciled onto it: a failed order is never turned paid by a later call, and a paid payment is never discarded without a signal.
 
+Two calls carrying the same `externalOrderId` at once write one order: the second waits a few seconds for the first, then gets `DUPLICATE_EXTERNAL_ORDER_ID` naming the order written. If the first is still running after that wait, the second is `failed` with `EXTERNAL_ORDER_ID_IN_PROGRESS` and `details.retryable: true`: no order is known for the id yet, and none may ever be if the first write fails, so the caller sends the command again. On the point-of-sale surface that case fails the request with a 500, which a till retries.
+
 The option "Accept several orders with the same external id" on the API key lifts the refusal: every call then creates its own order, each keeping the `externalOrderId` it was sent with.
 
 ## Decisions D1-D10

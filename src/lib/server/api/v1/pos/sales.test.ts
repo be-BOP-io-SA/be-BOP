@@ -172,7 +172,11 @@ describe('ingestPosSales', () => {
 				{
 					externalOrderId: 'sale-1',
 					status: 'failed',
-					error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', message: 'in flight' }
+					error: {
+						code: 'EXTERNAL_ORDER_ID_IN_PROGRESS',
+						message: 'in flight',
+						details: { retryable: true }
+					}
 				}
 			]
 		});
