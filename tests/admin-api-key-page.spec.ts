@@ -96,6 +96,23 @@ test('one Save button saves every setting of a key, and stays in view with Revok
 	});
 });
 
+test('the key list fits a phone: the table scrolls inside the page, not the page', async ({
+	page
+}) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	const name = `e2e-key-list-${Date.now()}`;
+	await createKey(page, name);
+
+	await page.goto('/admin/api-keys');
+	await expect(page.getByText(name)).toBeVisible();
+
+	const widths = await page.evaluate(() => ({
+		page: document.documentElement.scrollWidth,
+		viewport: document.documentElement.clientWidth
+	}));
+	expect(widths.page).toBeLessThanOrEqual(widths.viewport);
+});
+
 test.describe('in French', () => {
 	test.use({ locale: 'fr-FR' });
 
