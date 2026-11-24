@@ -189,8 +189,9 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 				enum: [...ORDER_PAYMENT_STATUSES],
 				description:
 					'Where the order stands once written. `created` only says an order exists. It is ' +
-					'`paid` when the payment sent as `paid` covers the amount be-BOP expected. When the ' +
-					'amount sent is lower, nothing is recorded as paid: the order and its payment stay ' +
+					'`paid` when the payment sent as `paid` covers the amount be-BOP expected, within the ' +
+					'one currency unit be-BOP tolerates on any payment. When the amount sent is lower ' +
+					'than that, nothing is recorded as paid: the order and its payment stay ' +
 					'`pending`, and an `AMOUNT_MISMATCH` warning gives both amounts.'
 			},
 			warnings: {
@@ -1233,12 +1234,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						'One sale, one order. By default a reference (`externalOrderId`, the seam calls it ' +
 						'`saleRef`) this key already sent is a `conflict`: nothing is written, and `orderUrl` ' +
 						'points at the order that already holds the reference. A key set to accept several ' +
-						'orders with the same external id writes a new order for every sale. A malformed batch ' +
+						'orders with the same external id writes a new order for every sale, except a sale ' +
+						'sent again with the same reference and the same `soldAt`: that one is the same sale, ' +
+						'and is a `conflict` too. A malformed batch ' +
 						'is rejected whole and nothing is ingested. A sale that cannot be ingested at all has no ' +
 						'order to point at and so no representable outcome here: the request fails rather than ' +
 						'inventing a status — 400 when the shop refuses it for good, 500 when a retry may still ' +
-						'clear it. Retrying the batch never writes a sale twice under the default rule — what ' +
-						'already landed comes back as a `conflict`.',
+						'clear it. Retrying the batch never writes a sale twice — what already landed comes ' +
+						'back as a `conflict`.',
 					operationId: 'pushPosSales',
 					security: [{ BearerAuth: ['pos:write'] }, { ApiKeyAuth: ['pos:write'] }],
 					requestBody: {

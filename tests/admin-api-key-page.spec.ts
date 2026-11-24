@@ -109,6 +109,18 @@ test.describe('in French', () => {
 		await expect(page.getByText('Modifications enregistrées.')).toBeInViewport();
 	});
 
+	test('the key page says what a repeated external id does when it is accepted', async ({
+		page
+	}) => {
+		await createKey(page, `e2e-cle-doublon-${Date.now()}`);
+
+		await expect(
+			page.getByText(
+				'seule une commande renvoyée avec le même identifiant externe et la même date est refusée'
+			)
+		).toBeVisible();
+	});
+
 	test('a key may be allowed to turn notifications off, off by default', async ({ page }) => {
 		const name = `e2e-cle-notif-${Date.now()}`;
 		await createKey(page, name);

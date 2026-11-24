@@ -18,7 +18,8 @@ export type PosPrice = {
 /**
  * One paid order, as a `data:` line of the paid-order stream.
  *
- * Delivery is at-least-once; consumers deduplicate on `orderId`, which is also the SSE `id:`.
+ * Delivery is at-least-once; consumers deduplicate on `orderId`. The SSE `id:` line is not the
+ * order id: it is the resume point be-BOP gives for the event.
  *
  * No order is flagged as belonging to a particular integration. An integration that needs to act
  * on some orders and ignore the rest identifies them itself, by the tags their lines carry.
@@ -122,7 +123,8 @@ export type PosSaleStatus = (typeof POS_SALE_STATUSES)[number];
  * expected, or its payment could not be recorded. `orderUrl` points at it.
  * `conflict`: the reference was already received from this API key. Nothing was written, and
  * `orderUrl` points at the order that holds the reference. A key that accepts several orders with
- * the same external id never gets one: each of its sales is written as its own order.
+ * the same external id gets one only for a sale sent again with the same `soldAt`, which is the
+ * same sale: any other sale is written as its own order.
  *
  * A sale that produced no order has none of these: they all require an `orderUrl`. It fails the whole
  * request instead, as a `PosSaleRejection` when the shop refused it and as a 500 otherwise.
