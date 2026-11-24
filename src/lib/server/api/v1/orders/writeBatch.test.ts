@@ -419,6 +419,77 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(firstOrder?.notes?.some((n) => n.content === 'second sale')).toBeFalsy();
 	});
 
+	describe('a key that accepts several orders per external id, when a sale is sent again', () => {
+		const soldAt = '2026-07-29T14:03:00.000Z';
+		const soldLater = '2026-07-29T14:09:00.000Z';
+		const acceptingKey = () => ({ ...apiKey, acceptDuplicateExternalOrderIds: true });
+		const sale = (externalOrderId: string, createdAt?: string) =>
+			paidCommand({ externalOrderId, ...(createdAt && { createdAt }) });
+		const ordersOf = (externalOrderId: string) =>
+			collections.orders.countDocuments({ externalSourceApiKeyId: apiKey._id, externalOrderId });
+
+		it('writes only what was missing when a batch that partly landed is sent again', async () => {
+			const first = await writeBatch({
+				apiKey: acceptingKey(),
+				orders: [sale('batch-a', soldAt)]
+			});
+			const landedId = requireOrderId(first.results[0]);
+
+			const replay = await writeBatch({
+				apiKey: acceptingKey(),
+				orders: [sale('batch-a', soldAt), sale('batch-b', soldAt)]
+			});
+
+			expect(replay.results.map((result) => result.status)).toEqual(['failed', 'created']);
+			expect(replay.results[0].error).toMatchObject({
+				code: 'DUPLICATE_EXTERNAL_ORDER_ID',
+				details: { orderId: landedId }
+			});
+			expect(await ordersOf('batch-a')).toBe(1);
+			expect(await ordersOf('batch-b')).toBe(1);
+		});
+
+		it('still writes two sales that share an external id and were made at different dates', async () => {
+			const res = await writeBatch({
+				apiKey: acceptingKey(),
+				orders: [sale('same-ref', soldAt), sale('same-ref', soldLater)]
+			});
+
+			expect(res.results.map((result) => result.status)).toEqual(['created', 'created']);
+			expect(await ordersOf('same-ref')).toBe(2);
+		});
+
+		it('writes one order when the same sale is sent twice at once', async () => {
+			const [a, b] = await Promise.all([
+				writeOne({ apiKey: acceptingKey(), order: sale('race-sale', soldAt) }),
+				writeOne({ apiKey: acceptingKey(), order: sale('race-sale', soldAt) })
+			]);
+
+			expect([a.status, b.status].sort()).toEqual(['created', 'failed']);
+			expect(await ordersOf('race-sale')).toBe(1);
+		});
+
+		it('cannot tell a sale sent again from a new one when no date is sent, and writes both', async () => {
+			await writeBatch({ apiKey: acceptingKey(), orders: [sale('undated')] });
+			const again = await writeBatch({ apiKey: acceptingKey(), orders: [sale('undated')] });
+
+			expect(again.results[0].status).toBe('created');
+			expect(await ordersOf('undated')).toBe(2);
+		});
+
+		it('leaves a key without the option as it was: the external id alone is refused', async () => {
+			await writeBatch({ apiKey, orders: [sale('plain-key', soldAt)] });
+			const again = await writeBatch({ apiKey, orders: [sale('plain-key', soldLater)] });
+
+			expect(again.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID' }
+			});
+			expect(again.results[0].error?.message).toContain('Accept several orders');
+			expect(await ordersOf('plain-key')).toBe(1);
+		});
+	});
+
 	it('writes an order nobody is notified about when notifications is false', async () => {
 		const res = await writeBatch({
 			apiKey,

@@ -135,17 +135,23 @@ async function settleCreatedPayments(order: Order, payments: OrderPaymentWrite[]
 	return current;
 }
 
-function duplicateRefusal(cmd: OrderWriteCommand, orderId: string): ApiV1OrderResult {
+/** `soldAt` is set when the key accepts several orders per external id: the date made the match. */
+function duplicateRefusal(
+	cmd: OrderWriteCommand,
+	match: { orderId: string; soldAt?: Date }
+): ApiV1OrderResult {
 	return {
 		externalOrderId: cmd.externalOrderId,
 		status: 'failed',
 		error: {
 			code: API_V1_DUPLICATE_EXTERNAL_ORDER_ID,
-			message:
-				`externalOrderId ${cmd.externalOrderId} was already received from this API key. ` +
-				'Each call creates one order: send a new externalOrderId, or tick "Accept several ' +
-				'orders with the same external id" on the key in Admin -> API Keys.',
-			details: { orderId }
+			message: match.soldAt
+				? `externalOrderId ${cmd.externalOrderId} was already received from this API key ` +
+				  `with the same date (${match.soldAt.toISOString()}): it is the same sale sent again.`
+				: `externalOrderId ${cmd.externalOrderId} was already received from this API key. ` +
+				  'Each call creates one order: send a new externalOrderId, or tick "Accept several ' +
+				  'orders with the same external id" on the key in Admin -> API Keys.',
+			details: { orderId: match.orderId }
 		}
 	};
 }
@@ -234,20 +240,35 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 
 	// One call, one order. By default an external id this key already sent is refused, and the
 	// order it names is left as it is: payments are never reconciled onto an existing order.
+	//
+	// A key that accepts several orders per external id must still not write the same sale twice
+	// when a batch is sent again: there, the sale is the external id together with the date it
+	// was made at. Sent without a date, nothing tells a new sale from the same one resent.
+	const soldAt = cmd.createdAt ? new Date(cmd.createdAt) : undefined;
+	const alreadySent = !apiKey.acceptDuplicateExternalOrderIds
+		? { claim: cmd.externalOrderId, order: {} }
+		: soldAt
+		? { claim: `${cmd.externalOrderId}@${soldAt.getTime()}`, order: { createdAt: soldAt }, soldAt }
+		: null;
+
 	let release: (() => Promise<void>) | null = null;
-	if (!apiKey.acceptDuplicateExternalOrderIds) {
-		const claim = await claimExternalOrderId(apiKey._id, cmd.externalOrderId);
+	if (alreadySent) {
+		const claim = await claimExternalOrderId(apiKey._id, alreadySent.claim);
 		if (!claim) {
 			return writeInProgressRefusal(cmd);
 		}
 		release = claim.release;
 		const existing = await collections.orders.findOne(
-			{ externalSourceApiKeyId: apiKey._id, externalOrderId: cmd.externalOrderId },
+			{
+				externalSourceApiKeyId: apiKey._id,
+				externalOrderId: cmd.externalOrderId,
+				...alreadySent.order
+			},
 			{ projection: { _id: 1 } }
 		);
 		if (existing) {
 			await release();
-			return duplicateRefusal(cmd, existing._id);
+			return duplicateRefusal(cmd, { orderId: existing._id, soldAt: alreadySent.soldAt });
 		}
 	}
 
