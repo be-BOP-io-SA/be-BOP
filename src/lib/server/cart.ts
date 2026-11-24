@@ -3,6 +3,7 @@ import { collections, withTransaction } from './database';
 import {
 	checkProductVariationsIntegrity,
 	DEFAULT_MAX_QUANTITY_PER_ORDER,
+	exceedsMaximumPrice,
 	productPriceWithVariations,
 	type Product
 } from '$lib/types/Product';
@@ -228,11 +229,7 @@ export async function addToCartInDb(
 		params.customPrice &&
 		product.payWhatYouWant &&
 		product.maximumPrice &&
-		toCurrency(
-			params.customPrice.currency,
-			product.maximumPrice.amount,
-			product.maximumPrice.currency
-		) < params.customPrice.amount
+		exceedsMaximumPrice(product, params.customPrice)
 	) {
 		cartError(
 			'MAX_PRICE_EXCEEDED',

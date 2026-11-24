@@ -186,6 +186,84 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 			expect(order?.status).toBe('paid');
 		});
 
+		describe('for a pay-what-you-want product, from 5 to 50 EUR', () => {
+			const donation = {
+				...TEST_DIGITAL_PRODUCT,
+				_id: 'pwyw-donation',
+				alias: ['pwyw-donation'],
+				price: { amount: 5, currency: 'EUR' as const },
+				payWhatYouWant: true,
+				maximumPrice: { amount: 50, currency: 'EUR' as const }
+			};
+
+			/** Sends one donation at `amount` EUR, paid in full, and returns what be-BOP wrote. */
+			async function donate(externalOrderId: string, amount: number, charged = amount) {
+				const res = await writeBatch({
+					apiKey,
+					orders: [
+						paidCommand({
+							externalOrderId,
+							items: [
+								{
+									productId: donation._id,
+									quantity: 1,
+									customPrice: { amountMinor: amount * 100, currency: 'EUR' }
+								}
+							],
+							payment: {
+								method: 'point-of-sale',
+								status: 'paid',
+								amountMinor: charged * 100,
+								currency: 'EUR'
+							}
+						})
+					]
+				});
+				const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+				return {
+					total: order?.currencySnapshot.main.totalPrice.amount,
+					warnings: res.results[0].warnings?.map((w) => w.code) ?? []
+				};
+			}
+
+			beforeEach(async () => {
+				await collections.products.insertOne(donation);
+			});
+
+			it.each([false, true])(
+				'charges an amount the shop allows as sent (third party as source of truth: %s)',
+				async (trustExternalPricing) => {
+					runtimeConfig.apiV1.trustExternalPricing = trustExternalPricing;
+
+					await expect(donate('pwyw-allowed', 20)).resolves.toEqual({ total: 20, warnings: [] });
+				}
+			);
+
+			it.each([
+				['under the minimum', 1],
+				['over the maximum', 80]
+			])(
+				'brings an amount %s back to the minimum, and says so, when be-BOP prices the line',
+				async (_where, sent) => {
+					runtimeConfig.apiV1.trustExternalPricing = false;
+
+					await expect(donate('pwyw-out-of-bounds', sent, 5)).resolves.toEqual({
+						total: 5,
+						warnings: ['PRICE_OVERRIDE']
+					});
+				}
+			);
+
+			it('records an amount over the maximum as sent, and says so, when the third party is the source of truth', async () => {
+				runtimeConfig.apiV1.trustExternalPricing = true;
+
+				await expect(donate('pwyw-trusted', 80)).resolves.toEqual({
+					total: 80,
+					warnings: ['PRICE_OVERRIDE']
+				});
+			});
+		});
+
 		it('charges the variation price of a line sent at zero, instead of leaving it pending', async () => {
 			runtimeConfig.apiV1.trustExternalPricing = false;
 			await collections.products.insertOne({
