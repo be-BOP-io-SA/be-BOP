@@ -18,6 +18,7 @@ import { rateLimit } from '../rateLimit';
 import { computePriceInfo } from '$lib/cart';
 import { filterNullish } from '$lib/utils/fillterNullish';
 import type { Price } from '$lib/types/Order';
+import { exceedsMaximumPrice } from '$lib/types/Product';
 import { sendAuthentificationlink } from '../sendNotification';
 import { freeProductsForUser } from '../subscriptions';
 
@@ -407,7 +408,7 @@ export const commands: Record<
 					currency: 'SAT'
 				};
 
-				if (product.maximumPrice && toSatoshis(customPrice) > toSatoshis(product.maximumPrice)) {
+				if (product.maximumPrice && exceedsMaximumPrice(product, customPrice)) {
 					await send(
 						`Product price must be less than ${toSatoshis(product.maximumPrice).toLocaleString(
 							'en-US'

@@ -2,12 +2,14 @@ import { collections } from '$lib/server/database';
 import type { Currency } from '$lib/types/Currency';
 import {
 	checkProductVariationsIntegrity,
+	exceedsMaximumPrice,
 	productPriceWithVariations,
 	type Product
 } from '$lib/types/Product';
 import type { Price } from '$lib/types/Order';
 import type { ApiV1Warning } from '$lib/types/ApiV1';
 import type { OrderWriteCommand } from '$lib/server/api/v1/schemas/orders-write';
+import { toCurrency } from '$lib/utils/toCurrency';
 import { minorToPrice } from './money';
 
 export type ResolvedLine = {
@@ -61,6 +63,18 @@ function samePrice(a: Price, b: Price): boolean {
 	return a.currency === b.currency && Math.abs(a.amount - b.amount) < 1e-9;
 }
 
+/**
+ * Whether the shop lets a buyer pay this much for a pay-what-you-want product: at least its price,
+ * which is the minimum, and at most its maximum price when it has one.
+ */
+function isAllowedPayWhatYouWantPrice(product: Product, sent: Price): boolean {
+	if (!product.payWhatYouWant) {
+		return false;
+	}
+	const minimum = toCurrency(sent.currency, product.price.amount, product.price.currency);
+	return sent.amount >= minimum && !exceedsMaximumPrice(product, sent);
+}
+
 export async function resolveProducts(
 	items: OrderWriteCommand['items'],
 	orderCurrency: Currency,
@@ -95,10 +109,13 @@ export async function resolveProducts(
 		// records what was actually charged, and a batch uploaded hours later must not be repriced
 		// by a catalogue that moved in between. Otherwise be-BOP prices the line from its own
 		// catalogue and the price sent is ignored. Either way, a divergence is reported.
-		const honoursClientPrice = opts.trustExternalPricing || !existing;
+		// A pay-what-you-want amount the shop allows is no divergence: the buyer chose it.
+		const chosenByBuyer =
+			!!existing && !!clientPrice && isAllowedPayWhatYouWantPrice(existing, clientPrice);
+		const honoursClientPrice = opts.trustExternalPricing || !existing || chosenByBuyer;
 		const customPrice = (honoursClientPrice ? clientPrice : undefined) ?? variationPrice;
 		const expectedPrice = variationPrice ?? existing?.price;
-		if (clientPrice && expectedPrice && !samePrice(clientPrice, expectedPrice)) {
+		if (clientPrice && expectedPrice && !chosenByBuyer && !samePrice(clientPrice, expectedPrice)) {
 			warnings.push({
 				code: 'PRICE_OVERRIDE',
 				message: honoursClientPrice

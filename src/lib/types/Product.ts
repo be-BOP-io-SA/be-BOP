@@ -7,6 +7,7 @@ import type { Tag } from './Tag';
 import type { Timestamps } from './Timestamps';
 import type { PaymentMethod } from '$lib/server/payment-methods';
 import { sumCurrency } from '$lib/utils/sumCurrency';
+import { toCurrency } from '$lib/utils/toCurrency';
 import type { PickDeep } from 'type-fest';
 import type { SubscriptionDuration } from './SubscriptionDuration';
 
@@ -224,6 +225,18 @@ export function oneMaxPerLine(
 	p: PickDeep<Product, 'standalone' | 'type' | 'bookingSpec.slotMinutes'>
 ) {
 	return p.standalone || p.type === 'subscription' || p.bookingSpec;
+}
+
+/** Whether an amount a buyer chose is over the most the shop accepts for the product, if it set one. */
+export function exceedsMaximumPrice(
+	product: Pick<Product, 'maximumPrice'>,
+	chosen: Price
+): boolean {
+	return (
+		!!product.maximumPrice &&
+		toCurrency(chosen.currency, product.maximumPrice.amount, product.maximumPrice.currency) <
+			chosen.amount
+	);
 }
 export function productPriceWithVariations(
 	product: Pick<Product, 'name' | '_id' | 'price' | 'variations'>,
