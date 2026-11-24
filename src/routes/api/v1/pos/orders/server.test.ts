@@ -6,6 +6,7 @@ const checkRateLimit = vi.fn();
 const findOrderCursor = vi.fn();
 const ingestPosSales = vi.fn();
 const listPosPaidOrders = vi.fn();
+const posResumePoint = vi.fn();
 
 vi.mock('$lib/server/api/v1/auth', () => ({
 	requireApiKey: (...args: unknown[]) => requireApiKey(...args)
@@ -33,7 +34,8 @@ vi.mock('$lib/server/api/v1/pos/sales', () => ({
 	ingestPosSales: (...args: unknown[]) => ingestPosSales(...args)
 }));
 vi.mock('$lib/server/api/v1/pos/paidEvents', () => ({
-	listPosPaidOrders: (...args: unknown[]) => listPosPaidOrders(...args)
+	listPosPaidOrders: (...args: unknown[]) => listPosPaidOrders(...args),
+	posResumePoint: (...args: unknown[]) => posResumePoint(...args)
 }));
 
 import { GET, POST } from './+server';
@@ -95,7 +97,9 @@ describe('/api/v1/pos/orders', () => {
 		ingestPosSales.mockReset();
 		ingestPosSales.mockResolvedValue({ response: { results: [] } });
 		listPosPaidOrders.mockReset();
-		listPosPaidOrders.mockResolvedValue({ orders: [], nextCursor: null });
+		listPosPaidOrders.mockResolvedValue({ orders: [], nextCursor: null, lastEventId: null });
+		posResumePoint.mockReset();
+		posResumePoint.mockResolvedValue(null);
 		requireApiKey.mockImplementation(async (event: { locals: { apiKey?: unknown } }) => {
 			if (!event.locals.apiKey) {
 				const { apiError } = await import('$lib/server/api/v1/errors');
@@ -115,7 +119,11 @@ describe('/api/v1/pos/orders', () => {
 			const res = await callGet();
 			expect(res.status).toBe(200);
 			expect(res.headers.get('content-type')).toMatch(/^application\/json/);
-			await expect(res.json()).resolves.toEqual({ orders: [], nextCursor: null });
+			await expect(res.json()).resolves.toEqual({
+				orders: [],
+				nextCursor: null,
+				lastEventId: null
+			});
 		});
 
 		it('carries a validator, so an unchanged page costs a bodyless 304', async () => {
@@ -125,10 +133,12 @@ describe('/api/v1/pos/orders', () => {
 		});
 
 		it('resumes on the same last_event_id the stream uses', async () => {
-			findOrderCursor.mockResolvedValue({ ms: 1735689600000, orderId: 'ord-a' });
+			posResumePoint.mockResolvedValue({ ms: 1735689600000, orderId: 'ord-a' });
 			await callGet({ query: '?last_event_id=ord-a' });
-			expect(findOrderCursor).toHaveBeenCalledWith('ord-a');
+			const keyId = requireApiKey.mock.calls[0][0].locals.apiKey._id.toString();
+			expect(posResumePoint).toHaveBeenCalledWith('ord-a', keyId);
 			expect(listPosPaidOrders).toHaveBeenCalledWith({
+				keyId,
 				since: null,
 				after: { ms: 1735689600000, orderId: 'ord-a' },
 				limit: 100

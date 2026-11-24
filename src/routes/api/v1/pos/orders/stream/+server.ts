@@ -4,9 +4,13 @@ import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { checkRateLimit } from '$lib/server/rateLimit';
 import { openPaidOrderStream } from '$lib/server/api/v1/orders/paidStreamConnection';
-import { findOrderCursor } from '$lib/server/api/v1/orders/paidStream';
+import { encodeStreamCursor } from '$lib/server/api/v1/orders/paidStream';
 import { parseApiQuery, textParam } from '$lib/server/api/v1/query';
-import { toPosPaidOrderEvent } from '$lib/server/api/v1/pos/paidEvents';
+import {
+	posCursorScope,
+	posResumePoint,
+	toPosPaidOrderEvent
+} from '$lib/server/api/v1/pos/paidEvents';
 
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
@@ -17,8 +21,10 @@ export const OPTIONS: RequestHandler = apiV1OptionsHandler;
  * vocabulary. A stream carries what happens from now on: it resumes after the last event the
  * client received, and history, from a date, is read from the poll.
  *
- * The `id:` line carries the order id, which is what a consumer deduplicates on. The resume hint is
- * advisory: an unknown `Last-Event-ID` starts the stream at the live edge rather than failing.
+ * The `id:` line carries the resume point be-BOP gives for that event; the order id a consumer
+ * deduplicates on is in the event. The resume hint is advisory: an order id, as the feed gave
+ * before, still resumes after that order, and anything unknown starts the stream at the live edge
+ * rather than failing.
  */
 export const GET: RequestHandler = apiV1Handler(async (event) => {
 	const apiKeyOrError = await requireApiKey(event, 'pos:stream');
@@ -51,24 +57,25 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 	}
 	const lastEventId =
 		event.request.headers.get('last-event-id')?.trim() || query.data.last_event_id;
-	const after = lastEventId ? await findOrderCursor(lastEventId) : null;
+	const keyId = apiKey._id.toString();
+	const after = await posResumePoint(lastEventId, keyId);
 	const tag = query.data.tag;
 
 	return openPaidOrderStream({
-		keyId: apiKey._id.toString(),
+		keyId,
 		maxConcurrentStreams: apiKey.maxConcurrentStreams,
 		lifetimeSeconds: apiKey.streamLifetimeSeconds,
 		...(apiKey.ownOrdersOnly && { ordersOfKey: apiKey._id }),
 		signal: event.request.signal,
 		after,
 		feed: 'paid',
-		render: (order) => {
+		render: (order, cursor) => {
 			const paidEvent = toPosPaidOrderEvent(order, tag);
 			if (!paidEvent) {
 				return null;
 			}
 			return {
-				id: paidEvent.orderId,
+				id: encodeStreamCursor(cursor, posCursorScope(keyId)),
 				data: paidEvent,
 				// The payload is small enough to be its own dedupe key.
 				fingerprint: JSON.stringify(paidEvent)

@@ -1021,14 +1021,16 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					summary: 'Stream paid PoS orders (SSE)',
 					description:
 						'Server-sent events for orders that transitioned to paid. The `id:` line carries the ' +
-						'order id, which is also in the payload and is what consumers deduplicate on — delivery ' +
-						'is at-least-once. A `:heartbeat` comment is emitted at least every 30 seconds. ' +
+						'resume point be-BOP gives for that event: send it back as `Last-Event-ID` to resume ' +
+						'exactly after it. The order id is in the payload and is what consumers deduplicate on — ' +
+						'delivery is at-least-once. A `:heartbeat` comment is emitted at least every 30 seconds. ' +
 						'No order is flagged as belonging to a particular integration — see `PosPaidOrderEvent`. ' +
 						'A sale is announced once: a note, a label or the erasure of personal data added to the ' +
 						'order later does not announce it again. The stream carries what happens from the moment ' +
-						'it opens and resumes after the last order id received; the history, from a date, is read ' +
-						'from `GET /api/v1/pos/orders`. The resume hint is advisory: an unknown `Last-Event-ID` ' +
-						'starts the stream at the live edge rather than failing. ' +
+						'it opens and resumes after the last event received; the history, from a date, is read ' +
+						'from `GET /api/v1/pos/orders`. The resume hint is advisory: an order id is still ' +
+						'accepted and resumes after that order as it is dated now, and an unknown ' +
+						'`Last-Event-ID` starts the stream at the live edge rather than failing. ' +
 						'Authentication uses the usual Bearer header, so a browser `EventSource` (which cannot ' +
 						'set headers) is not a supported client — drive the stream over fetch.',
 					operationId: 'streamPaidPosOrders',
@@ -1039,8 +1041,8 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							in: 'header',
 							schema: { type: 'string' },
 							description:
-								'Standard SSE resume header carrying the last order id seen; advisory. Unknown ids ' +
-								'are ignored rather than rejected.'
+								'Standard SSE resume header carrying the last `id:` received (or, as before, the ' +
+								'last order id seen); advisory. Unknown values are ignored rather than rejected.'
 						},
 						{
 							name: 'last_event_id',
@@ -1112,8 +1114,10 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						'as the SSE stream on /api/v1/pos/orders/stream, so a client that cannot hold a ' +
 						'connection open polls here without relearning anything; `since_ts` reads the history ' +
 						'from a date, which the stream does not. ' +
-						'`nextCursor` is the last order id of the page — feed it back as `last_event_id` — and ' +
-						'is null once the page is the tail. Delivery is at-least-once: deduplicate on `orderId`.',
+						'`lastEventId` is the resume point after the last order read: feed it back as ' +
+						'`last_event_id` to get what follows, even after a long pause. `nextCursor` is that same ' +
+						'point while more is waiting, and is null once the page is the tail. Delivery is ' +
+						'at-least-once: deduplicate on `orderId`.',
 					operationId: 'listPaidPosOrders',
 					security: [{ BearerAuth: ['pos:read'] }, { ApiKeyAuth: ['pos:read'] }],
 					parameters: [
@@ -1128,8 +1132,9 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							in: 'query',
 							schema: { type: 'string' },
 							description:
-								'The last order id seen — from a previous `nextCursor`, or from the stream. Unknown ' +
-								'ids are ignored rather than rejected.'
+								'A resume point be-BOP gave — a previous `lastEventId` or `nextCursor`, or an `id:` ' +
+								'of the stream. An order id is still accepted and resumes after that order as it is ' +
+								'dated now. Unknown values are ignored rather than rejected.'
 						},
 						{
 							name: 'tag',
@@ -1160,13 +1165,18 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 								'application/json': {
 									schema: {
 										type: 'object',
-										required: ['orders', 'nextCursor'],
+										required: ['orders', 'nextCursor', 'lastEventId'],
 										properties: {
 											orders: {
 												type: 'array',
 												items: { $ref: '#/components/schemas/PosPaidOrderEvent' }
 											},
-											nextCursor: { type: 'string', nullable: true }
+											nextCursor: { type: 'string', nullable: true },
+											lastEventId: {
+												type: 'string',
+												nullable: true,
+												description: 'Null only when the page read no order at all.'
+											}
 										}
 									}
 								}

@@ -218,7 +218,7 @@ They differ in vocabulary, not in machinery:
 | Product key     | `id` + `alias[]`                       | `slug` (which _is_ the be-BOP product `_id`)     |
 | Order reference | `externalOrderId`                      | `saleRef`                                        |
 | Catalog         | paginated envelope, `?lang=`           | whole document, default language                 |
-| SSE `id:`       | opaque resume cursor                   | the order id                                     |
+| SSE `id:`       | opaque resume cursor                   | opaque resume cursor                             |
 | SSE resume      | strict — an unknown validator is a 400 | advisory — an unknown id starts at the live edge |
 
 Making one surface serve both would force one of the two to bend, and the one that would bend is whichever has a live consumer. So the seam gets its own DTOs (`$lib/types/ApiV1Pos`) and its own mappers (`api/v1/pos/`), and everything underneath is shared: the same key store, the same rate limiter, the same change-stream hub, the same picture pipeline, the same `writeBatch`.
@@ -315,7 +315,7 @@ POST /api/v1/pos/orders            sale ingestion
 
 The **poll is the primary transport**. A till on a bad link cannot be assumed to hold a connection open, and a surface that only streams leaves it with nothing. The stream is the optimisation you reach for when the link allows it.
 
-Both carry the same events and the same `last_event_id`, so falling back costs nothing: the poll's `nextCursor` is the last order id of the page, which is exactly what the stream resumes on. A client can stream, drop, poll, and go back to streaming without relearning anything. Only the poll reads the history from a date (`since_ts`): a stream carries what happens from the moment it opens, and resumes after the last event it sent.
+Both carry the same events and the same `last_event_id`, so falling back costs nothing: the poll's `lastEventId` is the resume point after the page, which is exactly what the stream puts on its `id:` line and resumes on. A client can stream, drop, poll, and go back to streaming without relearning anything. Only the poll reads the history from a date (`since_ts`): a stream carries what happens from the moment it opens, and resumes after the last event it sent.
 
 Separate routes rather than content negotiation on one path. An `Accept` header that changes the nature of a response is invisible in a log, in a cache, and in a URL pasted into a ticket — and the two transports want opposite cache headers, one an ETag and the other `no-transform`. This departs from the seam, which puts SSE on `GET /api/pos/orders`; the poll it has no shape for at all.
 

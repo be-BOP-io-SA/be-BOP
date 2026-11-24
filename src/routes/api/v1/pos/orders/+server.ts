@@ -4,8 +4,8 @@ import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { jsonWithETag } from '$lib/server/api/v1/validators';
 import { checkRateLimit } from '$lib/server/rateLimit';
-import { findOrderCursor, streamSinceDate } from '$lib/server/api/v1/orders/paidStream';
-import { listPosPaidOrders } from '$lib/server/api/v1/pos/paidEvents';
+import { streamSinceDate } from '$lib/server/api/v1/orders/paidStream';
+import { listPosPaidOrders, posResumePoint } from '$lib/server/api/v1/pos/paidEvents';
 import { ingestPosSales } from '$lib/server/api/v1/pos/sales';
 import { posSalesRequestSchema } from '$lib/server/api/v1/pos/schemas';
 import { ZodError } from 'zod';
@@ -21,8 +21,8 @@ const MAX_BODY_BYTES = 2 * 1024 * 1024;
  *
  * Same feed and same `last_event_id` as the stream on `/api/v1/pos/orders/stream`: a client that
  * cannot hold a connection open polls here instead. Only this route takes `since_ts`, to start from
- * a date; the stream starts at the live edge. `nextCursor` is the last order id of the page — feed
- * it back as `last_event_id` — and is null once the page is the tail.
+ * a date; the stream starts at the live edge. `nextCursor` is the resume point after the page —
+ * feed it back as `last_event_id` — and is null once the page is the tail.
  */
 const DEFAULT_PAGE = 100;
 const MAX_PAGE = 500;
@@ -52,10 +52,12 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 	if ('error' in query) {
 		return query.error;
 	}
-	const after = query.data.last_event_id ? await findOrderCursor(query.data.last_event_id) : null;
+	const keyId = apiKey._id.toString();
+	const after = await posResumePoint(query.data.last_event_id, keyId);
 	const tag = query.data.tag;
 
 	const page = await listPosPaidOrders({
+		keyId,
 		since: streamSinceDate(query.data.since_ts),
 		after,
 		limit: query.data.limit ?? DEFAULT_PAGE,

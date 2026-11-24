@@ -36,8 +36,11 @@ function feedDateField(feed: OrderFeed): 'updatedAt' | 'annotatedAt' {
  */
 export type PaidStreamCursor = { ms: number; orderId: string };
 
-/** Whom a cursor was issued to: it only resumes the same feed, for the same API key. */
-export type StreamCursorScope = { keyId: string; feed: OrderFeed };
+/**
+ * Whom a cursor was issued to: it only resumes the same feed, for the same API key. `pos` is the
+ * point-of-sale feed, which frames the paid orders its own way.
+ */
+export type StreamCursorScope = { keyId: string; feed: OrderFeed | 'pos' };
 
 const CURSOR_SIGNING_PURPOSE = 'bebop-api-v1-stream-cursor-v1';
 /** Stands in until the shop has its signing key: cursors then hold for the life of the process. */
