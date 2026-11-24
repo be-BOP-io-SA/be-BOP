@@ -114,7 +114,7 @@ export type AuthenticatedApiKey = {
 	streamLifetimeSeconds?: number;
 	/** The key only reaches the orders it wrote itself. Undefined means every order. */
 	ownOrdersOnly?: boolean;
-	/** Each write creates its own order, even on an `externalOrderId` already received. */
+	/** A write on an `externalOrderId` already received creates its own order, unless its date is the same too. */
 	acceptDuplicateExternalOrderIds?: boolean;
 	/** An order written with `notifications: false` notifies nobody. Undefined: the request is ignored. */
 	canDisableNotifications?: boolean;

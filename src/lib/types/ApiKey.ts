@@ -81,9 +81,10 @@ export interface ApiKey extends Timestamps {
 	 */
 	ownOrdersOnly?: boolean;
 	/**
-	 * When true, every order write creates its own order, even when its `externalOrderId` was already
-	 * received from this key; the orders share the reference. Undefined or false, a reference already
-	 * received is refused, and the order it names is left untouched.
+	 * When true, an order write creates its own order even when its `externalOrderId` was already
+	 * received from this key; the orders share the reference. Only a write sent again with the same
+	 * reference and the same date is refused, as the same sale. Undefined or false, a reference
+	 * already received is refused, and the order it names is left untouched.
 	 */
 	acceptDuplicateExternalOrderIds?: boolean;
 	/**

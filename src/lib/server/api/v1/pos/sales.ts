@@ -84,7 +84,8 @@ function duplicateOf(result: ApiV1OrderResult): string | null {
  *
  * Every sale goes through `writeBatch`, under the API key's rule for external references: by default
  * a reference already received writes nothing and is answered `conflict`, pointing at the order that
- * holds it; a key that accepts several orders per reference gets a new order for every sale.
+ * holds it; a key that accepts several orders per reference gets a new order for every sale, except
+ * one sent again with the same reference and the same `soldAt`, answered `conflict` as well.
  */
 export async function ingestPosSales(params: {
 	apiKey: AuthenticatedApiKey;

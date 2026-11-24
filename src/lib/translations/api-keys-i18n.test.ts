@@ -60,7 +60,6 @@ const KEYS = [
 	'admin.apiKeys.openStreamsNow',
 	'admin.apiKeys.streamLifetimeSeconds',
 	'admin.apiKeys.streamLifetimeSecondsHint',
-	'admin.apiKeys.save',
 	'admin.apiKeys.saved',
 	'admin.apiKeys.streamsResetDone',
 	'admin.apiKeys.resetStreamsConfirm',
