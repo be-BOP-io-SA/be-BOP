@@ -111,18 +111,20 @@ export type PosCatalogResponse = {
 	tags: PosCatalogTag[];
 };
 
-export const POS_SALE_STATUSES = ['success', 'conflict'] as const;
+export const POS_SALE_STATUSES = ['success', 'pending', 'conflict'] as const;
 export type PosSaleStatus = (typeof POS_SALE_STATUSES)[number];
 
 /**
  * Outcome of one pushed sale.
  *
- * `success`: an order was created for this sale.
+ * `success`: an order was created for this sale, and it is paid.
+ * `pending`: an order was created, and it is not paid: the amount sent does not cover what be-BOP
+ * expected, or its payment could not be recorded. `orderUrl` points at it.
  * `conflict`: the reference was already received from this API key. Nothing was written, and
  * `orderUrl` points at the order that holds the reference. A key that accepts several orders with
  * the same external id never gets one: each of its sales is written as its own order.
  *
- * A sale that produced no order has neither status: both require an `orderUrl`. It fails the whole
+ * A sale that produced no order has none of these: they all require an `orderUrl`. It fails the whole
  * request instead, as a `PosSaleRejection` when the shop refused it and as a 500 otherwise.
  */
 export type PosSaleResult = {

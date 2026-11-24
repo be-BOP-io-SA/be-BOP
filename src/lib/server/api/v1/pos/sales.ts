@@ -143,7 +143,9 @@ export async function ingestPosSales(params: {
 				const orderId = duplicate ?? (result.orderId as string);
 				return {
 					externalOrderId: result.externalOrderId,
-					status: duplicate ? 'conflict' : 'success',
+					// Only an order that is paid is a success: the till must not hand over goods
+					// for a sale whose payment be-BOP did not record.
+					status: duplicate ? 'conflict' : result.orderStatus === 'paid' ? 'success' : 'pending',
 					orderId,
 					orderUrl: orderUrl(orderId)
 				};

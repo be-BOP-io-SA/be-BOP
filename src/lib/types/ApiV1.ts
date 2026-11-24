@@ -4,6 +4,8 @@
  * without a server → types import inversion.
  */
 
+import type { OrderPaymentStatus } from './Order';
+
 /**
  * Two axes, neither implying the other.
  *
@@ -79,6 +81,11 @@ export type ApiV1OrderResult = {
 	externalOrderId: string;
 	status: ApiV1ResultStatus;
 	orderId?: string;
+	/**
+	 * Where the order stands once written. `created` only says an order exists: it is `paid` when
+	 * the payment sent covers what be-BOP expected, and `pending` otherwise.
+	 */
+	orderStatus?: OrderPaymentStatus;
 	warnings?: ApiV1Warning[];
 	error?: {
 		code: string;

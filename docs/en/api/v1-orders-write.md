@@ -109,12 +109,12 @@ HTTP status is 200 for a successfully authenticated and validated batch that was
 
 ### Warning codes
 
-| Code                | Meaning                                                                                                                               |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| PRODUCT_MISSING     | Product id unknown / deleted — order still created with stub + catalog-integrity-warning label                                        |
-| AMOUNT_MISMATCH     | `payment.amountMinor` differs from order total computed from lines (truth = lines; not a fail)                                        |
-| POS_LABEL_UNKNOWN   | `payment.posLabel` did not match a `posPaymentSubtypes.slug` (order still created)                                                    |
-| PAYMENT_SYNC_FAILED | Payment settle/sync threw a domain error after the order row exists — status stays `created` with `orderId`; see `details.domainCode` |
+| Code                | Meaning                                                                                                                                 |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| PRODUCT_MISSING     | Product id unknown / deleted — order still created with stub + catalog-integrity-warning label                                          |
+| AMOUNT_MISMATCH     | `payment.amountMinor` differs from order total computed from lines (truth = lines; not a fail). A lower amount leaves the order pending |
+| POS_LABEL_UNKNOWN   | `payment.posLabel` did not match a `posPaymentSubtypes.slug` (order still created)                                                      |
+| PAYMENT_SYNC_FAILED | Payment settle/sync threw a domain error after the order row exists — status stays `created` with `orderId`; see `details.domainCode`   |
 
 ## Error envelope (non-200)
 
@@ -128,6 +128,20 @@ Shape: { error: { code, message, details? } }
 | 429  | RATE_LIMITED                                                                                              |
 | 503  | MAINTENANCE (all authenticated `/api/v1` routes; only health / openapi.json / docs GET + OPTIONS stay up) |
 | 500  | INTERNAL_ERROR                                                                                            |
+
+## When an order is paid
+
+`created` only says an order exists. Each result also carries `orderStatus`, where the order stands once written.
+
+An order becomes paid only through the payment routine, when the payment covers the amount be-BOP expected. Nobody sets an order paid by hand, even when the third-party system is the source of truth for prices.
+
+- A payment sent as `paid` for the expected amount, or more, is recorded as paid for the amount sent, and the order is `paid`.
+- A payment sent as `paid` for less is not recorded as paid. The order and its payment stay `pending`, an `AMOUNT_MISMATCH` warning gives both amounts, and the order expires at the shop's payment deadline if nothing completes it.
+- A payment sent as `pending` leaves the order `pending`, as before, with no deadline.
+
+Limits of this version: one payment per order. Deposits and several payments on one order are not handled by this rule, and a further payment cannot be added through the API to an order that already exists.
+
+On the point-of-sale surface, `POST /api/v1/pos/orders` answers `success` for a sale whose order is paid and `pending` otherwise, never `success` for an order that is not paid.
 
 ## External order id (D2, D3)
 

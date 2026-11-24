@@ -113,7 +113,9 @@ describe('ingestPosSales', () => {
 		writeBatch.mockResolvedValue({
 			ok: true,
 			status: 'ok',
-			results: [{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1' }]
+			results: [
+				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1', orderStatus: 'paid' }
+			]
 		});
 		const res = await ingestOk({ apiKey, sales: [sale()] });
 		expect(res.results).toEqual([
@@ -126,11 +128,54 @@ describe('ingestPosSales', () => {
 		]);
 	});
 
+	it('answers pending, never success, for a sale whose order is not paid', async () => {
+		writeBatch.mockResolvedValue({
+			ok: true,
+			status: 'ok_with_warnings',
+			results: [
+				{
+					externalOrderId: 'sale-1',
+					status: 'created',
+					orderId: 'ord-1',
+					orderStatus: 'pending',
+					warnings: [{ code: 'AMOUNT_MISMATCH', message: 'payment differs from order total' }]
+				},
+				{
+					externalOrderId: 'sale-2',
+					status: 'created',
+					orderId: 'ord-2',
+					orderStatus: 'pending',
+					warnings: [{ code: 'PAYMENT_SYNC_FAILED', message: 'payment could not be recorded' }]
+				}
+			]
+		});
+		const res = await ingestOk({
+			apiKey,
+			sales: [sale(), sale({ externalOrderId: 'sale-2' })]
+		});
+		expect(res.results).toEqual([
+			{
+				externalOrderId: 'sale-1',
+				status: 'pending',
+				orderId: 'ord-1',
+				orderUrl: 'https://shop.example/order/ord-1'
+			},
+			{
+				externalOrderId: 'sale-2',
+				status: 'pending',
+				orderId: 'ord-2',
+				orderUrl: 'https://shop.example/order/ord-2'
+			}
+		]);
+	});
+
 	it('hands every sale to the order write, under the calling key', async () => {
 		writeBatch.mockResolvedValue({
 			ok: true,
 			status: 'ok',
-			results: [{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1' }]
+			results: [
+				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1', orderStatus: 'paid' }
+			]
 		});
 		await ingestOk({ apiKey, sales: [sale()], clientIp: '203.0.113.50' });
 		expect(writeBatch).toHaveBeenCalledTimes(1);
@@ -188,7 +233,7 @@ describe('ingestPosSales', () => {
 			ok: false,
 			status: 'ok_with_errors',
 			results: [
-				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1' },
+				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1', orderStatus: 'paid' },
 				{
 					externalOrderId: 'sale-1',
 					status: 'failed',
@@ -212,8 +257,8 @@ describe('ingestPosSales', () => {
 			ok: true,
 			status: 'ok',
 			results: [
-				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1' },
-				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-2' }
+				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1', orderStatus: 'paid' },
+				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-2', orderStatus: 'paid' }
 			]
 		});
 		const res = await ingestOk({
@@ -328,13 +373,13 @@ describe('ingestPosSales', () => {
 			ok: false,
 			status: 'ok_with_errors',
 			results: [
-				{ externalOrderId: 'sale-a', status: 'created', orderId: 'ord-a' },
+				{ externalOrderId: 'sale-a', status: 'created', orderId: 'ord-a', orderStatus: 'paid' },
 				{
 					externalOrderId: 'sale-b',
 					status: 'failed',
 					error: { code: 'CURRENCY_UNSUPPORTED', message: 'nope' }
 				},
-				{ externalOrderId: 'sale-c', status: 'created', orderId: 'ord-c' }
+				{ externalOrderId: 'sale-c', status: 'created', orderId: 'ord-c', orderStatus: 'paid' }
 			]
 		});
 		const rejection = await ingestRejected({
@@ -379,7 +424,7 @@ describe('ingestPosSales', () => {
 			ok: false,
 			status: 'ok_with_errors',
 			results: [
-				{ externalOrderId: 'sale-new', status: 'created', orderId: 'ord-2' },
+				{ externalOrderId: 'sale-new', status: 'created', orderId: 'ord-2', orderStatus: 'paid' },
 				{
 					externalOrderId: 'sale-known',
 					status: 'failed',
