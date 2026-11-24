@@ -158,13 +158,15 @@ describe('ingestPosSales', () => {
 				externalOrderId: 'sale-1',
 				status: 'pending',
 				orderId: 'ord-1',
-				orderUrl: 'https://shop.example/order/ord-1'
+				orderUrl: 'https://shop.example/order/ord-1',
+				warnings: [{ code: 'AMOUNT_MISMATCH', message: 'payment differs from order total' }]
 			},
 			{
 				externalOrderId: 'sale-2',
 				status: 'pending',
 				orderId: 'ord-2',
-				orderUrl: 'https://shop.example/order/ord-2'
+				orderUrl: 'https://shop.example/order/ord-2',
+				warnings: [{ code: 'PAYMENT_SYNC_FAILED', message: 'payment could not be recorded' }]
 			}
 		]);
 	});
