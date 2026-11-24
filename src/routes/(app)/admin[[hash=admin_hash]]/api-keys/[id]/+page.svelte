@@ -255,7 +255,7 @@
 					type="submit"
 					form="key-actions"
 					formaction="?/suspend"
-					class="btn bg-orange-600 text-white self-start w-auto text-base"
+					class="btn btn-orange self-start w-auto text-base"
 				>
 					{t('admin.apiKeys.suspend')}
 				</button>
