@@ -37,6 +37,7 @@ export async function createApiKey(opts: {
 	streamLifetimeSeconds?: number | null;
 	ownOrdersOnly?: boolean;
 	acceptDuplicateExternalOrderIds?: boolean;
+	canDisableNotifications?: boolean;
 }): Promise<{ apiKey: ApiKey; secret: string }> {
 	assertScopes(opts.scopes);
 	const secret = generateApiKeySecret();
@@ -53,6 +54,7 @@ export async function createApiKey(opts: {
 		...(opts.streamLifetimeSeconds && { streamLifetimeSeconds: opts.streamLifetimeSeconds }),
 		...(opts.ownOrdersOnly && { ownOrdersOnly: true }),
 		...(opts.acceptDuplicateExternalOrderIds && { acceptDuplicateExternalOrderIds: true }),
+		...(opts.canDisableNotifications && { canDisableNotifications: true }),
 		createdAt: now,
 		updatedAt: now
 	};
@@ -195,6 +197,24 @@ export async function updateApiKeyAcceptDuplicateExternalOrderIds(
 	return result.matchedCount > 0;
 }
 
+/**
+ * Let one key write orders nobody is notified about, or have be-BOP notify for all of them again.
+ * Returns false when no key carries that id.
+ */
+export async function updateApiKeyCanDisableNotifications(
+	id: ObjectId | string,
+	allowed: boolean
+): Promise<boolean> {
+	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	const result = await collections.apiKeys.updateOne(
+		{ _id },
+		allowed
+			? { $set: { canDisableNotifications: true, updatedAt: new Date() } }
+			: { $unset: { canDisableNotifications: '' }, $set: { updatedAt: new Date() } }
+	);
+	return result.matchedCount > 0;
+}
+
 export async function touchApiKey(id: ObjectId, at = new Date()): Promise<void> {
 	await collections.apiKeys.updateOne({ _id: id }, { $set: { lastUsedAt: at, updatedAt: at } });
 }
@@ -214,6 +234,7 @@ const API_KEY_PUBLIC_PROJECTION = {
 	streamLifetimeSeconds: 1,
 	ownOrdersOnly: 1,
 	acceptDuplicateExternalOrderIds: 1,
+	canDisableNotifications: 1,
 	expiresAt: 1,
 	revokedAt: 1,
 	suspendedAt: 1,
@@ -255,6 +276,7 @@ export function serializeApiKeyPublic(k: ApiKeyPublic) {
 		streamLifetimeSeconds: k.streamLifetimeSeconds ?? null,
 		ownOrdersOnly: !!k.ownOrdersOnly,
 		acceptDuplicateExternalOrderIds: !!k.acceptDuplicateExternalOrderIds,
+		canDisableNotifications: !!k.canDisableNotifications,
 		expiresAt: k.expiresAt ?? null,
 		revokedAt: k.revokedAt ?? null,
 		suspendedAt: k.suspendedAt ?? null,

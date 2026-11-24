@@ -144,7 +144,10 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 				description:
 					'`false`: be-BOP notifies nobody about this order — neither the customer nor the shop, ' +
 					'whatever notifications the shop has turned on. Absent: the shop’s usual notifications. ' +
-					'Webhooks and event streams are not notifications and still carry the order.'
+					'Webhooks and event streams are not notifications and still carry the order. ' +
+					'Only followed for an API key that may turn notifications off, a setting of the key. ' +
+					'For any other key the order is written, be-BOP notifies as usual, and the result ' +
+					'carries a `NOTIFICATIONS_NOT_DISABLED` warning.'
 			}
 		}
 	};
@@ -1908,7 +1911,8 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 							type: 'boolean',
 							description:
 								'`false`: be-BOP notifies nobody about this sale, neither the customer nor the ' +
-								'shop. Absent: the shop’s usual notifications.'
+								'shop. Absent: the shop’s usual notifications. Only followed for an API key ' +
+								'that may turn notifications off; for any other key be-BOP notifies as usual.'
 						}
 					}
 				},

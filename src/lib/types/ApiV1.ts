@@ -36,7 +36,9 @@ export const API_V1_WARNING_CODES = [
 	/** The till sent a price that differs from what be-BOP would have charged. */
 	'PRICE_OVERRIDE',
 	/** A label the payload asked for does not exist in the shop. The order is written without it. */
-	'LABEL_MISSING'
+	'LABEL_MISSING',
+	/** `notifications: false` was sent by a key that may not turn notifications off. */
+	'NOTIFICATIONS_NOT_DISABLED'
 ] as const;
 export type ApiV1WarningCode = (typeof API_V1_WARNING_CODES)[number];
 
@@ -114,6 +116,8 @@ export type AuthenticatedApiKey = {
 	ownOrdersOnly?: boolean;
 	/** Each write creates its own order, even on an `externalOrderId` already received. */
 	acceptDuplicateExternalOrderIds?: boolean;
+	/** An order written with `notifications: false` notifies nobody. Undefined: the request is ignored. */
+	canDisableNotifications?: boolean;
 };
 
 /** Resource prefix of a scope (`orders:read` → `orders`). */

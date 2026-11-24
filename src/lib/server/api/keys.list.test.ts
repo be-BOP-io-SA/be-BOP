@@ -49,6 +49,7 @@ describe('listApiKeys', () => {
 			[
 				'_id',
 				'acceptDuplicateExternalOrderIds',
+				'canDisableNotifications',
 				'createdAt',
 				'createdBy',
 				'expiresAt',

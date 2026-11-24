@@ -2206,6 +2206,8 @@
 			"orderWritingTitle": "Écriture des commandes",
 			"acceptDuplicateExternalOrderIds": "Accepter plusieurs commandes avec le même identifiant externe",
 			"acceptDuplicateExternalOrderIdsHint": "Décochée, une commande envoyée avec un identifiant externe que cette clé a déjà envoyé est refusée avec une erreur de doublon, et la commande existante reste telle quelle. Cochée, chaque appel crée sa propre commande, qui garde l'identifiant externe reçu.",
+			"canDisableNotifications": "Peut couper les notifications",
+			"canDisableNotificationsHint": "Cochée, une commande que cette clé écrit avec notifications: false ne prévient personne, ni le client ni la boutique. Décochée, cette demande est ignorée : be-BOP prévient comme pour toute commande et le signale dans sa réponse.",
 			"statusSuspended": "Suspendue",
 			"suspendedAt": "Suspendue le",
 			"suspensionTitle": "Suspension",

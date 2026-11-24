@@ -70,7 +70,8 @@ export const actions: Actions = {
 			maxConcurrentStreams: parsed.data.maxConcurrentStreams,
 			streamLifetimeSeconds: parsed.data.streamLifetimeSeconds,
 			ownOrdersOnly: !!formData.get('ownOrdersOnly'),
-			acceptDuplicateExternalOrderIds: !!formData.get('acceptDuplicateExternalOrderIds')
+			acceptDuplicateExternalOrderIds: !!formData.get('acceptDuplicateExternalOrderIds'),
+			canDisableNotifications: !!formData.get('canDisableNotifications')
 		});
 
 		// PRG: stash secret in a short-lived signed httpOnly cookie, then redirect.

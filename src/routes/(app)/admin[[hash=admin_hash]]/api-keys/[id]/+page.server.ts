@@ -4,6 +4,7 @@ import {
 	serializeApiKeyPublic,
 	setApiKeySuspended,
 	updateApiKeyAcceptDuplicateExternalOrderIds,
+	updateApiKeyCanDisableNotifications,
 	updateApiKeyOwnOrdersOnly,
 	updateApiKeyStreamSettings
 } from '$lib/server/api/keys';
@@ -173,6 +174,7 @@ export const actions: Actions = {
 			params.id,
 			!!formData.get('acceptDuplicateExternalOrderIds')
 		);
+		await updateApiKeyCanDisableNotifications(params.id, !!formData.get('canDisableNotifications'));
 
 		return {
 			alreadyRevoked: false,

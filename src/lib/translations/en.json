@@ -2206,6 +2206,8 @@
 			"orderWritingTitle": "Order writing",
 			"acceptDuplicateExternalOrderIds": "Accept several orders with the same external id",
 			"acceptDuplicateExternalOrderIdsHint": "Left unticked, an order sent with an external id this key already sent is refused with a duplicate error, and the existing order is left as it is. Ticked, every call creates its own order, which keeps the external id it was sent with.",
+			"canDisableNotifications": "May turn notifications off",
+			"canDisableNotificationsHint": "Ticked, an order this key writes with notifications: false notifies nobody, neither the customer nor the shop. Left unticked, that request is ignored: be-BOP notifies as for any order and says so in its answer.",
 			"statusSuspended": "Suspended",
 			"suspendedAt": "Suspended at",
 			"suspensionTitle": "Suspension",

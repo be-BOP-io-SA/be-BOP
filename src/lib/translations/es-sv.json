@@ -2206,6 +2206,8 @@
 			"orderWritingTitle": "Escritura de pedidos",
 			"acceptDuplicateExternalOrderIds": "Aceptar varios pedidos con el mismo identificador externo",
 			"acceptDuplicateExternalOrderIdsHint": "Sin marcar, un pedido enviado con un identificador externo que esta clave ya envió se rechaza con un error de duplicado, y el pedido existente queda como está. Marcada, cada llamada crea su propio pedido, que conserva el identificador externo recibido.",
+			"canDisableNotifications": "Puede desactivar las notificaciones",
+			"canDisableNotificationsHint": "Marcada, un pedido que esta clave escribe con notifications: false no avisa a nadie, ni al cliente ni a la tienda. Sin marcar, esa solicitud se ignora: be-BOP avisa como para cualquier pedido y lo indica en su respuesta.",
 			"statusSuspended": "Suspendida",
 			"suspendedAt": "Suspendida el",
 			"suspensionTitle": "Suspensión",

@@ -361,6 +361,18 @@ async function writeNewOrder(
 				: null
 			: ('point-of-sale' as const);
 
+		// Turning notifications off is a right of the key. Without it the order is written, be-BOP
+		// notifies as for any other, and the caller is told its request was not followed.
+		const silent = cmd.notifications === false && !!apiKey.canDisableNotifications;
+		if (cmd.notifications === false && !silent) {
+			warnings.push({
+				code: 'NOTIFICATIONS_NOT_DISABLED',
+				message:
+					'This API key may not turn notifications off: the order was written and be-BOP ' +
+					'notifies as usual. Tick "May turn notifications off" on the key in Admin -> API Keys.'
+			});
+		}
+
 		const requestedLabels = await resolveOrderLabels(cmd.labels);
 		for (const missingLabel of requestedLabels.missing) {
 			warnings.push({
@@ -403,7 +415,7 @@ async function writeNewOrder(
 				externalOrderId: cmd.externalOrderId,
 				externalSourceApiKeyId: apiKey._id,
 				...(orderLabelIds && { orderLabelIds }),
-				...(cmd.notifications === false && { skipNotifications: true }),
+				...(silent && { skipNotifications: true }),
 				...(cmd.createdAt && { createdAt: new Date(cmd.createdAt) }),
 				...(clientIp && { clientIp }),
 				...(cmd.notes && { note: cmd.notes }),

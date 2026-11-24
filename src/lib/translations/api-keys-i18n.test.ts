@@ -67,7 +67,9 @@ const KEYS = [
 	'admin.apiKeys.scopeHint.ordersStream',
 	'admin.apiKeys.scopeHint.posRead',
 	'admin.apiKeys.scopeHint.posWrite',
-	'admin.apiKeys.scopeHint.posStream'
+	'admin.apiKeys.scopeHint.posStream',
+	'admin.apiKeys.canDisableNotifications',
+	'admin.apiKeys.canDisableNotificationsHint'
 ];
 
 describe('admin api-keys scope hint translations', () => {

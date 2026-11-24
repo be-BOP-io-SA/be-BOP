@@ -221,6 +221,16 @@
 			{t('admin.apiKeys.acceptDuplicateExternalOrderIds')}
 		</label>
 		<p class="text-sm opacity-70">{t('admin.apiKeys.acceptDuplicateExternalOrderIdsHint')}</p>
+		<label class="checkbox-label">
+			<input
+				type="checkbox"
+				name="canDisableNotifications"
+				class="form-checkbox"
+				checked={data.key.canDisableNotifications}
+			/>
+			{t('admin.apiKeys.canDisableNotifications')}
+		</label>
+		<p class="text-sm opacity-70">{t('admin.apiKeys.canDisableNotificationsHint')}</p>
 	</section>
 
 	{#if form?.alreadyRevoked}
