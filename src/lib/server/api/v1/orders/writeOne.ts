@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import { collections } from '$lib/server/database';
 import {
 	addOrderPayment,
@@ -6,9 +7,11 @@ import {
 	onOrderPaymentFailed
 } from '$lib/server/orders';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { reserve } from '$lib/server/lock';
 import { toCurrency } from '$lib/utils/toCurrency';
 import {
 	API_V1_DUPLICATE_EXTERNAL_ORDER_ID,
+	API_V1_EXTERNAL_ORDER_ID_IN_PROGRESS,
 	type AuthenticatedApiKey,
 	type ApiV1OrderResult,
 	type ApiV1Warning
@@ -104,7 +107,7 @@ async function settleCreatedPayments(order: Order, payments: OrderPaymentWrite[]
 	return current;
 }
 
-function duplicateRefusal(cmd: OrderWriteCommand, orderId?: string): ApiV1OrderResult {
+function duplicateRefusal(cmd: OrderWriteCommand, orderId: string): ApiV1OrderResult {
 	return {
 		externalOrderId: cmd.externalOrderId,
 		status: 'failed',
@@ -114,7 +117,35 @@ function duplicateRefusal(cmd: OrderWriteCommand, orderId?: string): ApiV1OrderR
 				`externalOrderId ${cmd.externalOrderId} was already received from this API key. ` +
 				'Each call creates one order: send a new externalOrderId, or tick "Accept several ' +
 				'orders with the same external id" on the key in Admin -> API Keys.',
-			...(orderId && { details: { orderId } })
+			details: { orderId }
+		}
+	};
+}
+
+/** How long a write waits for another one carrying the same external id to finish. */
+const EXTERNAL_ORDER_ID_WAIT_MS = 3_000;
+
+/**
+ * Hold an external order id for the time of one write, so that two calls carrying it at once cannot
+ * both find it free and both create an order. Null when another write still holds it after the wait.
+ */
+function claimExternalOrderId(apiKeyId: ObjectId, externalOrderId: string) {
+	return reserve(`api-v1-order:${apiKeyId.toString()}:${externalOrderId}`, {
+		waitMs: EXTERNAL_ORDER_ID_WAIT_MS
+	});
+}
+
+/** No order is known yet for this id, and none may ever be: the caller must send it again. */
+function writeInProgressRefusal(cmd: OrderWriteCommand): ApiV1OrderResult {
+	return {
+		externalOrderId: cmd.externalOrderId,
+		status: 'failed',
+		error: {
+			code: API_V1_EXTERNAL_ORDER_ID_IN_PROGRESS,
+			message:
+				`Another write carrying externalOrderId ${cmd.externalOrderId} is still in progress ` +
+				'for this API key. No order is known for it yet: send it again.',
+			details: { retryable: true }
 		}
 	};
 }
@@ -175,17 +206,28 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 
 	// One call, one order. By default an external id this key already sent is refused, and the
 	// order it names is left as it is: payments are never reconciled onto an existing order.
+	let release: (() => Promise<void>) | null = null;
 	if (!apiKey.acceptDuplicateExternalOrderIds) {
+		const claim = await claimExternalOrderId(apiKey._id, cmd.externalOrderId);
+		if (!claim) {
+			return writeInProgressRefusal(cmd);
+		}
+		release = claim.release;
 		const existing = await collections.orders.findOne(
 			{ externalSourceApiKeyId: apiKey._id, externalOrderId: cmd.externalOrderId },
 			{ projection: { _id: 1 } }
 		);
 		if (existing) {
+			await release();
 			return duplicateRefusal(cmd, existing._id);
 		}
 	}
 
-	return writeNewOrder(params, payments);
+	try {
+		return await writeNewOrder(params, payments);
+	} finally {
+		await release?.();
+	}
 }
 
 async function writeNewOrder(

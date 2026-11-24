@@ -12,6 +12,7 @@ import {
 } from '$lib/server/seed/product';
 import type { AuthenticatedApiKey } from '$lib/types/ApiV1';
 import { writeBatch } from './writeBatch';
+import { writeOne } from './writeOne';
 import { API_ORDER_SELLER_ALIAS } from './seller';
 import { amountToMinor } from './money';
 import {
@@ -780,6 +781,78 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 			expect(order?.status).toBe('pending');
 		});
 	});
+
+	it('creates one order when the same external id is sent twice at once, and refuses the other', async () => {
+		const cmd = paidCommand({ externalOrderId: 'race-ext-1' });
+		const [a, b] = await Promise.all([
+			writeOne({ apiKey, order: cmd }),
+			writeOne({ apiKey, order: cmd })
+		]);
+		expect([a.status, b.status].sort()).toEqual(['created', 'failed']);
+		const [refused, created] = a.status === 'failed' ? [a, b] : [b, a];
+		expect(refused.error).toMatchObject({
+			code: 'DUPLICATE_EXTERNAL_ORDER_ID',
+			details: { orderId: created.orderId }
+		});
+		expect(await collections.orders.countDocuments({ externalOrderId: 'race-ext-1' })).toBe(1);
+	});
+
+	it('frees the external id once the write is over, so a later call is told which order holds it', async () => {
+		const cmd = paidCommand({ externalOrderId: 'race-ext-2' });
+		const first = await writeOne({ apiKey, order: cmd });
+		const replay = await writeOne({ apiKey, order: cmd });
+
+		expect(replay.error?.details).toEqual({ orderId: first.orderId });
+		expect(await collections.locks.countDocuments({ _id: /^api-v1-order:/ })).toBe(0);
+	});
+
+	it('does not say an order exists while another write of the same external id is still running', async () => {
+		// What a write leaves when it holds the id and has not finished, or never will.
+		const now = new Date();
+		await collections.locks.insertOne({
+			_id: `api-v1-order:${apiKey._id.toString()}:held-ext-1`,
+			ownerId: new ObjectId(),
+			instanceId: new ObjectId(),
+			createdAt: now,
+			updatedAt: now
+		});
+
+		const result = await writeOne({
+			apiKey,
+			order: paidCommand({ externalOrderId: 'held-ext-1' })
+		});
+
+		expect(await collections.orders.countDocuments({ externalOrderId: 'held-ext-1' })).toBe(0);
+		expect(result.status).toBe('failed');
+		expect(result.error?.code).not.toBe('DUPLICATE_EXTERNAL_ORDER_ID');
+		expect(result.error).toMatchObject({
+			code: 'EXTERNAL_ORDER_ID_IN_PROGRESS',
+			details: { retryable: true }
+		});
+		// The hold is the other write's: giving up must not free it.
+		expect(await collections.locks.countDocuments({ _id: /held-ext-1$/ })).toBe(1);
+	}, 15_000);
+
+	it('writes one order for eight identical calls at once, and names it to the seven others', async () => {
+		const cmd = paidCommand({ externalOrderId: 'race-ext-8' });
+		const results = await Promise.all(
+			Array.from({ length: 8 }, () => writeOne({ apiKey, order: cmd }))
+		);
+
+		const created = results.filter((result) => result.status === 'created');
+		expect(created).toHaveLength(1);
+		expect(
+			results.filter((result) => result.status === 'failed').map((result) => result.error)
+		).toEqual(
+			Array.from({ length: 7 }, () =>
+				expect.objectContaining({
+					code: 'DUPLICATE_EXTERNAL_ORDER_ID',
+					details: { orderId: created[0].orderId }
+				})
+			)
+		);
+		expect(await collections.orders.countDocuments({ externalOrderId: 'race-ext-8' })).toBe(1);
+	}, 15_000);
 
 	it('P2: same externalOrderId twice in one batch → created then refused', async () => {
 		const res = await writeBatch({

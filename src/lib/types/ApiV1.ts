@@ -46,6 +46,11 @@ export const API_V1_RESULT_STATUSES = ['created', 'failed'] as const;
 
 /** Per-command error code of an order write whose `externalOrderId` this key already sent. */
 export const API_V1_DUPLICATE_EXTERNAL_ORDER_ID = 'DUPLICATE_EXTERNAL_ORDER_ID';
+/**
+ * Per-command error code of an order write that met another write of the same `externalOrderId`
+ * still running: no order exists for it yet, so the caller sends it again.
+ */
+export const API_V1_EXTERNAL_ORDER_ID_IN_PROGRESS = 'EXTERNAL_ORDER_ID_IN_PROGRESS';
 export type ApiV1ResultStatus = (typeof API_V1_RESULT_STATUSES)[number];
 
 export const API_V1_BATCH_STATUSES = ['ok', 'ok_with_warnings', 'ok_with_errors'] as const;
