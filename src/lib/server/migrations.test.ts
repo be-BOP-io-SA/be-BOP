@@ -142,16 +142,11 @@ describe('built-in searchlists seeding', () => {
 	});
 });
 
-function migrationVatArray() {
-	const migration = migrations.find((m) => m._id.equals(new ObjectId('65bd8fc40914f6a599ede07d')));
-	if (!migration) {
-		throw new Error('migration "Convert VAT rate to array in orders" not found');
-	}
-	return migration;
-}
+const MIGRATION_VAT_ARRAY = '65bd8fc40914f6a599ede07d';
 
 describe('migration — Convert VAT rate to array in orders', () => {
-	it('stores a scalar vatRate on each item, not an array', async () => {
+	// Guards the historical path: it passes with or without the filter fix below.
+	it('still converts an order whose vat is a single object', async () => {
 		await cleanDb();
 
 		const _id = 'legacy-order-vat-array';
@@ -161,7 +156,7 @@ describe('migration — Convert VAT rate to array in orders', () => {
 			items: [{ quantity: 1 }, { quantity: 2 }]
 		} as never);
 
-		await withTransaction((session) => migrationVatArray().run(session));
+		await withTransaction((session) => migrationById(MIGRATION_VAT_ARRAY).run(session));
 
 		const migrated = await collections.orders.findOne({ _id });
 		expect(migrated?.vat).toEqual([
@@ -170,6 +165,30 @@ describe('migration — Convert VAT rate to array in orders', () => {
 		for (const item of migrated?.items ?? []) {
 			expect(item.vatRate).toBe(8.1);
 		}
+	});
+
+	it('leaves an order whose vat is already a list untouched', async () => {
+		await cleanDb();
+
+		const _id = 'order-already-in-list-format';
+		const order = {
+			_id,
+			vat: [{ price: { amount: 100, currency: 'EUR' }, rate: 8.1, country: 'CH' }],
+			items: [
+				{ quantity: 1, vatRate: 8.1 },
+				{ quantity: 2, vatRate: 2.6 }
+			],
+			currencySnapshot: {
+				main: { vat: [{ amount: 100, currency: 'EUR' }] },
+				priceReference: { vat: [{ amount: 100, currency: 'EUR' }] },
+				secondary: { vat: [{ amount: 0.001, currency: 'BTC' }] }
+			}
+		};
+		await collections.orders.insertOne(order as never);
+
+		await withTransaction((session) => migrationById(MIGRATION_VAT_ARRAY).run(session));
+
+		expect(await collections.orders.findOne({ _id })).toEqual(order);
 	});
 });
 

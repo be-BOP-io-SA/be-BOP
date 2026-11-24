@@ -17,6 +17,11 @@ import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './dis
 import { defaultLanguageText } from './i18n-defaults';
 import { languages, type LanguageKey } from '$lib/translations';
 
+/** Matches an order whose VAT field is still one object, not yet the list the order now stores. */
+function holdsSingleVat(path: string) {
+	return { $expr: { $eq: [{ $type: `$${path}` }, 'object'] } };
+}
+
 // An upsert rather than find-then-insert: every instance seeds at start-up, and two starting
 // together on an empty database would otherwise both insert and one would hit a duplicate key.
 export async function ensureDefaultSearchlist(session?: ClientSession): Promise<void> {
@@ -410,14 +415,11 @@ export const migrations = [
 		_id: new ObjectId('65bd8fc40914f6a599ede07d'),
 		run: async (session: ClientSession) => {
 			await collections.orders.updateMany(
-				{ 'vat.price.currency': { $type: 'string' } },
+				holdsSingleVat('vat'),
 				[
 					{
 						$set: {
-							// items must be computed before vat is reassigned below: $set fields
-							// evaluate sequentially, so referencing '$vat.rate' after 'vat' has
-							// already been turned into an array would read the array, not the
-							// original scalar rate.
+							vat: ['$vat'],
 							items: {
 								$map: {
 									input: '$items',
@@ -431,15 +433,14 @@ export const migrations = [
 										]
 									}
 								}
-							},
-							vat: ['$vat']
+							}
 						}
 					}
 				],
 				{ session }
 			);
 			await collections.orders.updateMany(
-				{ 'currencySnapshot.main.vat.currency': { $type: 'string' } },
+				holdsSingleVat('currencySnapshot.main.vat'),
 				[
 					{
 						$set: {
@@ -450,7 +451,7 @@ export const migrations = [
 				{ session }
 			);
 			await collections.orders.updateMany(
-				{ 'currencySnapshot.priceReference.vat.currency': { $type: 'string' } },
+				holdsSingleVat('currencySnapshot.priceReference.vat'),
 				[
 					{
 						$set: {
@@ -461,7 +462,7 @@ export const migrations = [
 				{ session }
 			);
 			await collections.orders.updateMany(
-				{ 'currencySnapshot.secondary.vat.currency': { $type: 'string' } },
+				holdsSingleVat('currencySnapshot.secondary.vat'),
 				[
 					{
 						$set: {
