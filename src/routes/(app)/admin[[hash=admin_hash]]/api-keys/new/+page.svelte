@@ -30,7 +30,11 @@
 	const SCOPE_HINT_KEYS: Record<string, string> = {
 		'orders:write': 'admin.apiKeys.scopeHint.ordersWrite',
 		'catalog:read': 'admin.apiKeys.scopeHint.catalogRead',
-		'orders:read': 'admin.apiKeys.scopeHint.ordersRead'
+		'orders:read': 'admin.apiKeys.scopeHint.ordersRead',
+		'orders:stream': 'admin.apiKeys.scopeHint.ordersStream',
+		'pos:read': 'admin.apiKeys.scopeHint.posRead',
+		'pos:write': 'admin.apiKeys.scopeHint.posWrite',
+		'pos:stream': 'admin.apiKeys.scopeHint.posStream'
 	};
 
 	function setScopes(scopes: string[], value: boolean) {

@@ -13,7 +13,7 @@
 	}
 
 	function confirmResetStreams(event: Event) {
-		if (!confirm('Hand back every stream place held by this key?')) {
+		if (!confirm(t('admin.apiKeys.resetStreamsConfirm'))) {
 			event.preventDefault();
 		}
 	}
@@ -26,7 +26,10 @@
 	}
 </script>
 
-<div class="flex flex-col gap-6 max-w-2xl">
+<!-- The buttons that do something else than save belong to this form, so that Enter in a field saves. -->
+<form id="key-actions" method="post" hidden></form>
+
+<form method="post" action="?/save" class="flex flex-col gap-6 max-w-2xl">
 	<a href="{data.adminPrefix}/api-keys" class="underline body-hyperlink self-start">
 		{t('admin.apiKeys.backToList')}
 	</a>
@@ -87,75 +90,63 @@
 			<p class="text-sm opacity-80">{t('admin.apiKeys.streamsHelp')}</p>
 		</header>
 
-		<form method="post" action="?/saveStreamSettings" class="flex flex-col gap-4">
-			<label class="form-label">
-				{t('admin.apiKeys.maxConcurrentStreams')}
-				<span class="flex items-center gap-3 flex-wrap">
-					<input
-						class="form-input w-32"
-						type="number"
-						name="maxConcurrentStreams"
-						min="1"
-						step="1"
-						value={data.key.maxConcurrentStreams ?? ''}
-					/>
-					<span class="text-sm opacity-70">
-						{t('admin.apiKeys.openStreamsNow', { count: data.openStreams })}
-					</span>
-					<!-- Recovery button: skips field validation so a half-typed form cannot block it. -->
-					<button
-						type="submit"
-						formaction="?/resetStreams"
-						formnovalidate
-						class="btn bg-red-600 text-white w-auto text-base"
-						title={t('admin.apiKeys.resetStreamsTitle')}
-						on:click={confirmResetStreams}
-					>
-						☢
-					</button>
-				</span>
-				<span class="text-sm opacity-70">{t('admin.apiKeys.maxConcurrentStreamsHint')}</span>
-			</label>
-
-			<label class="form-label">
-				{t('admin.apiKeys.streamLifetimeSeconds')}
+		<label class="form-label">
+			{t('admin.apiKeys.maxConcurrentStreams')}
+			<span class="flex items-center gap-3 flex-wrap">
 				<input
 					class="form-input w-32"
 					type="number"
-					name="streamLifetimeSeconds"
+					name="maxConcurrentStreams"
 					min="1"
-					max={MAX_STREAM_LIFETIME_SECONDS}
 					step="1"
-					value={data.key.streamLifetimeSeconds ?? ''}
+					value={data.key.maxConcurrentStreams ?? ''}
 				/>
-				<span class="text-sm opacity-70">{t('admin.apiKeys.streamLifetimeSecondsHint')}</span>
-			</label>
+				<span class="text-sm opacity-70">
+					{t('admin.apiKeys.openStreamsNow', { count: data.openStreams })}
+				</span>
+				<button
+					type="submit"
+					form="key-actions"
+					formaction="?/resetStreams"
+					class="btn bg-red-600 text-white w-auto text-base"
+					title={t('admin.apiKeys.resetStreamsTitle')}
+					on:click={confirmResetStreams}
+				>
+					☢
+				</button>
+			</span>
+			<span class="text-sm opacity-70">{t('admin.apiKeys.maxConcurrentStreamsHint')}</span>
+		</label>
 
-			{#each form?.error?.formErrors ?? [] as formError}
-				<p class="text-red-600 text-sm">{formError}</p>
-			{/each}
-			{#each Object.values(form?.error?.fieldErrors ?? {}).flat() as fieldError}
-				<p class="text-red-600 text-sm">{fieldError}</p>
-			{/each}
-			{#if form?.streamLifetimeTooLong}
-				<p class="text-red-600 text-sm">
-					{t('admin.apiKeys.streamLifetimeTooLong', { max: MAX_STREAM_LIFETIME_SECONDS })}
-				</p>
-			{/if}
-
-			{#if form?.streamSettingsSaved}
-				<p class="text-sm text-green-700">{t('admin.apiKeys.streamsSaved')}</p>
-			{/if}
-			{#if form?.streamsReset}
-				<p class="text-sm text-green-700">{t('admin.apiKeys.streamsResetDone')}</p>
-			{/if}
-
+		<label class="form-label">
+			{t('admin.apiKeys.streamLifetimeSeconds')}
 			<input
-				type="submit"
-				class="btn btn-blue self-start w-auto text-white text-base"
-				value={t('admin.apiKeys.streamsSave')}
+				class="form-input w-32"
+				type="number"
+				name="streamLifetimeSeconds"
+				min="1"
+				max={MAX_STREAM_LIFETIME_SECONDS}
+				step="1"
+				value={data.key.streamLifetimeSeconds ?? ''}
 			/>
-		</form>
+			<span class="text-sm opacity-70">{t('admin.apiKeys.streamLifetimeSecondsHint')}</span>
+		</label>
+
+		{#each form?.error?.formErrors ?? [] as formError}
+			<p class="text-red-600 text-sm">{formError}</p>
+		{/each}
+		{#each Object.values(form?.error?.fieldErrors ?? {}).flat() as fieldError}
+			<p class="text-red-600 text-sm">{fieldError}</p>
+		{/each}
+		{#if form?.streamLifetimeTooLong}
+			<p class="text-red-600 text-sm">
+				{t('admin.apiKeys.streamLifetimeTooLong', { max: MAX_STREAM_LIFETIME_SECONDS })}
+			</p>
+		{/if}
+
+		{#if form?.streamsReset}
+			<p class="text-sm text-green-700">{t('admin.apiKeys.streamsResetDone')}</p>
+		{/if}
 	</section>
 
 	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-4">
@@ -167,13 +158,14 @@
 			<p class="text-sm text-red-700">
 				{t('admin.apiKeys.suspiciousSince', { date: fmt(data.key.suspiciousAt) })}
 			</p>
-			<form method="post" action="?/clearSuspicious">
-				<input
-					type="submit"
-					class="btn btn-gray self-start w-auto text-base"
-					value={t('admin.apiKeys.clearSuspicious')}
-				/>
-			</form>
+			<button
+				type="submit"
+				form="key-actions"
+				formaction="?/clearSuspicious"
+				class="btn btn-gray self-start w-auto text-base"
+			>
+				{t('admin.apiKeys.clearSuspicious')}
+			</button>
 		{/if}
 		{#if data.suspiciousEvents.length}
 			<div class="overflow-x-auto">
@@ -205,50 +197,30 @@
 
 	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-4">
 		<h2 class="text-2xl">{t('admin.apiKeys.orderAccessTitle')}</h2>
-		<form method="post" action="?/saveOrderAccess" class="flex flex-col gap-3">
-			<label class="checkbox-label">
-				<input
-					type="checkbox"
-					name="ownOrdersOnly"
-					class="form-checkbox"
-					checked={data.key.ownOrdersOnly}
-				/>
-				{t('admin.apiKeys.ownOrdersOnly')}
-			</label>
-			<p class="text-sm opacity-70">{t('admin.apiKeys.ownOrdersOnlyHint')}</p>
-			{#if form?.orderAccessSaved}
-				<p class="text-sm text-green-700">{t('admin.apiKeys.orderAccessSaved')}</p>
-			{/if}
+		<label class="checkbox-label">
 			<input
-				type="submit"
-				class="btn btn-blue self-start w-auto text-white text-base"
-				value={t('admin.apiKeys.orderAccessSave')}
+				type="checkbox"
+				name="ownOrdersOnly"
+				class="form-checkbox"
+				checked={data.key.ownOrdersOnly}
 			/>
-		</form>
+			{t('admin.apiKeys.ownOrdersOnly')}
+		</label>
+		<p class="text-sm opacity-70">{t('admin.apiKeys.ownOrdersOnlyHint')}</p>
 	</section>
 
 	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-4">
 		<h2 class="text-2xl">{t('admin.apiKeys.orderWritingTitle')}</h2>
-		<form method="post" action="?/saveOrderWriting" class="flex flex-col gap-3">
-			<label class="checkbox-label">
-				<input
-					type="checkbox"
-					name="acceptDuplicateExternalOrderIds"
-					class="form-checkbox"
-					checked={data.key.acceptDuplicateExternalOrderIds}
-				/>
-				{t('admin.apiKeys.acceptDuplicateExternalOrderIds')}
-			</label>
-			<p class="text-sm opacity-70">{t('admin.apiKeys.acceptDuplicateExternalOrderIdsHint')}</p>
-			{#if form?.orderWritingSaved}
-				<p class="text-sm text-green-700">{t('admin.apiKeys.orderWritingSaved')}</p>
-			{/if}
+		<label class="checkbox-label">
 			<input
-				type="submit"
-				class="btn btn-blue self-start w-auto text-white text-base"
-				value={t('admin.apiKeys.orderWritingSave')}
+				type="checkbox"
+				name="acceptDuplicateExternalOrderIds"
+				class="form-checkbox"
+				checked={data.key.acceptDuplicateExternalOrderIds}
 			/>
-		</form>
+			{t('admin.apiKeys.acceptDuplicateExternalOrderIds')}
+		</label>
+		<p class="text-sm opacity-70">{t('admin.apiKeys.acceptDuplicateExternalOrderIdsHint')}</p>
 	</section>
 
 	{#if form?.alreadyRevoked}
@@ -260,31 +232,46 @@
 			<h2 class="text-2xl">{t('admin.apiKeys.suspensionTitle')}</h2>
 			<p class="text-sm opacity-80">{t('admin.apiKeys.suspensionHelp')}</p>
 			{#if data.key.suspendedAt}
-				<form method="post" action="?/reactivate">
-					<input
-						type="submit"
-						class="btn btn-blue text-white self-start w-auto text-base"
-						value={t('admin.apiKeys.reactivate')}
-					/>
-				</form>
+				<button
+					type="submit"
+					form="key-actions"
+					formaction="?/reactivate"
+					class="btn btn-blue text-white self-start w-auto text-base"
+				>
+					{t('admin.apiKeys.reactivate')}
+				</button>
 			{:else}
-				<form method="post" action="?/suspend">
-					<input
-						type="submit"
-						class="btn bg-orange-600 text-white self-start w-auto text-base"
-						value={t('admin.apiKeys.suspend')}
-					/>
-				</form>
+				<button
+					type="submit"
+					form="key-actions"
+					formaction="?/suspend"
+					class="btn bg-orange-600 text-white self-start w-auto text-base"
+				>
+					{t('admin.apiKeys.suspend')}
+				</button>
 			{/if}
 		</section>
-
-		<form method="post" action="?/revoke">
-			<input
-				type="submit"
-				class="btn btn-red text-white self-start w-auto text-base"
-				value={t('admin.apiKeys.revoke')}
-				on:click={confirmRevoke}
-			/>
-		</form>
 	{/if}
-</div>
+
+	{#if form?.saved}
+		<p class="text-sm text-green-700">{t('admin.apiKeys.saved')}</p>
+	{/if}
+
+	<!-- The admin keeps this row in view while the page scrolls: Save and Revoke stay together. -->
+	<div class="flex flex-wrap items-center gap-3">
+		<button type="submit" class="btn btn-blue text-white w-auto text-base">
+			{t('admin.apiKeys.save')}
+		</button>
+		{#if !data.key.revokedAt}
+			<button
+				type="submit"
+				form="key-actions"
+				formaction="?/revoke"
+				class="btn btn-red text-white w-auto text-base"
+				on:click={confirmRevoke}
+			>
+				{t('admin.apiKeys.revoke')}
+			</button>
+		{/if}
+	</div>
+</form>
