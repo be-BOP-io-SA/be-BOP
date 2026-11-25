@@ -20,7 +20,7 @@ import {
 	type ApiV1Warning
 } from '$lib/types/ApiV1';
 import { mayAcceptRepeatedExternalOrderIds } from '$lib/types/ApiKey';
-import type { Order } from '$lib/types/Order';
+import type { Order, Price } from '$lib/types/Order';
 import {
 	normalizeOrderPayments,
 	type OrderPaymentWrite,
@@ -68,6 +68,56 @@ export async function resolvePosSubtype(
 	};
 }
 
+/**
+ * Leave a payment pending with the shop's payment deadline, marked for the order routine to enforce
+ * it: nothing else would ever close this payment. What the till received, when it sent an amount,
+ * is kept on the payment, where a paid one carries it; the order's total received is left alone.
+ */
+async function leavePendingWithDeadline(
+	order: Order,
+	existingPayment: Order['payments'][number],
+	received?: Price
+): Promise<void> {
+	await collections.orders.updateOne(
+		{ _id: order._id, 'payments._id': existingPayment._id },
+		{
+			$set: {
+				'payments.$.expiresAt': addMinutes(new Date(), runtimeConfig.desiredPaymentTimeout),
+				'payments.$.expireAtDeadline': true,
+				...(received &&
+					bookSet(
+						commonBookCurrencies(order, existingPayment),
+						'payments.$.currencySnapshot',
+						'received',
+						received
+					))
+			}
+		}
+	);
+}
+
+/**
+ * After a payment could not be recorded the order stays pending, and like any pending order it
+ * expires with the shop's payment deadline unless the shop confirms the payment before. The write
+ * may meet the same fault as the one that just failed: that is logged and never raised, so the
+ * caller is still told the order is pending.
+ */
+async function expireWithShopDeadline(orderId: string): Promise<void> {
+	try {
+		const stuck = await collections.orders.findOne({ _id: orderId });
+		for (const row of stuck?.payments ?? []) {
+			if (stuck && row.status === 'pending' && !row.expireAtDeadline) {
+				await leavePendingWithDeadline(stuck, row);
+			}
+		}
+	} catch (err) {
+		console.error('[api/v1] could not give the shop deadline to a payment left pending', {
+			orderId,
+			message: err instanceof Error ? err.message : String(err)
+		});
+	}
+}
+
 async function applyMatchedPaymentStatus(
 	order: Order,
 	existingPayment: Order['payments'][number],
@@ -83,29 +133,13 @@ async function applyMatchedPaymentStatus(
 		// Short of that it stays pending, and the order with it.
 		const received = minorToPrice(payment.amountMinor, payment.currency);
 		if (!coversPayment(undefined, existingPayment, received)) {
-			// Given the shop's payment deadline, and marked for the order routine to enforce it:
-			// nothing else would ever close this payment. What the till received is kept on the
-			// payment, where a paid one carries it; the order's total received is left alone.
-			await collections.orders.updateOne(
-				{ _id: order._id, 'payments._id': existingPayment._id },
-				{
-					$set: {
-						'payments.$.expiresAt': addMinutes(new Date(), runtimeConfig.desiredPaymentTimeout),
-						'payments.$.expireAtDeadline': true,
-						...bookSet(
-							commonBookCurrencies(order, existingPayment),
-							'payments.$.currencySnapshot',
-							'received',
-							received
-						)
-					}
-				}
-			);
+			await leavePendingWithDeadline(order, existingPayment, received);
 			return order;
 		}
 		return onOrderPayment(order, existingPayment, received);
 	}
 	if (payment.status === 'pending') {
+		await leavePendingWithDeadline(order, existingPayment);
 		return order;
 	}
 	// Terminal: canceled | failed | expired — same helpers as cancelPayment / locks.
@@ -516,6 +550,7 @@ async function writeNewOrder(
 					...(mapped.details ?? {})
 				}
 			});
+			await expireWithShopDeadline(orderId);
 		}
 
 		// Read back rather than assumed: the caller must know whether what it sent settled the order.
