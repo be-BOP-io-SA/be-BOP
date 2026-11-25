@@ -9,6 +9,7 @@ import { ORDER_LISTING_QUERY } from '$lib/server/api/v1/orders/listingQuery';
 import { parseApiQuery } from '$lib/server/api/v1/query';
 import { checkRateLimit } from '$lib/server/rateLimit';
 
+export { trailingSlash } from '$lib/server/api/v1/trailing-slash';
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 export const GET: RequestHandler = apiV1Handler(async (event) => {

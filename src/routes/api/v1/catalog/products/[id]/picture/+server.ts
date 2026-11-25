@@ -9,6 +9,7 @@ import { parsePictureOptions } from '$lib/server/api/v1/catalog/pictureOptions';
 import { collections } from '$lib/server/database';
 import { checkRateLimit } from '$lib/server/rateLimit';
 
+export { trailingSlash } from '$lib/server/api/v1/trailing-slash';
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 /**

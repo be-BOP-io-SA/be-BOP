@@ -7,6 +7,7 @@ import { catalogVisibilityFilter } from '$lib/server/product-visibility';
 import { respondWithFormat } from '$lib/server/serve-picture';
 import type { Picture } from '$lib/types/Picture';
 
+export { trailingSlash } from '$lib/server/api/v1/trailing-slash';
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 /**

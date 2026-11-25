@@ -1,6 +1,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { apiV1Handler, apiV1OptionsHandler } from '$lib/server/api/v1/handler';
 
+export { trailingSlash } from '$lib/server/api/v1/trailing-slash';
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 const SWAGGER_HTML = `<!DOCTYPE html>

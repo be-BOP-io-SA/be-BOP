@@ -6,6 +6,7 @@ import { checkRateLimit } from '$lib/server/rateLimit';
 import { addOrderNote } from '$lib/server/api/v1/orders/addNote';
 import { z } from 'zod';
 
+export { trailingSlash } from '$lib/server/api/v1/trailing-slash';
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 const addNoteSchema = z

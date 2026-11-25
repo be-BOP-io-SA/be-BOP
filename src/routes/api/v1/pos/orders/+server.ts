@@ -11,6 +11,7 @@ import { posSalesRequestSchema } from '$lib/server/api/v1/pos/schemas';
 import { ZodError } from 'zod';
 import { epochSecondsParam, limitParam, parseApiQuery, textParam } from '$lib/server/api/v1/query';
 
+export { trailingSlash } from '$lib/server/api/v1/trailing-slash';
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 /** The seam caps a batch at what one till can push in a round; the schema caps it again at 100. */

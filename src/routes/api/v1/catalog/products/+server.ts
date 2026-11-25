@@ -11,6 +11,7 @@ import { checkRateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import type { LanguageKey } from '$lib/translations';
 
+export { trailingSlash } from '$lib/server/api/v1/trailing-slash';
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 export const GET: RequestHandler = apiV1Handler(async (event) => {

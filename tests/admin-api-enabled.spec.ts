@@ -36,8 +36,14 @@ test('the API is off until the shop ticks the box: the public address is a 404, 
 	for (const encoded of ['/api/v%31/health', '/%61pi/v1/openapi.json', '/api/%76%31/docs']) {
 		expect((await page.request.get(encoded)).status(), encoded).toBe(404);
 	}
+	// A trailing slash must not make the router redirect before the switch has answered.
+	for (const slashed of ['/api/v1/health/', '/api/v%31/health/', '/api/v1/docs/']) {
+		const res = await page.request.get(slashed, { maxRedirects: 0 });
+		expect(res.status(), slashed).toBe(404);
+	}
 
 	await setSwitch(page, true);
+	expect((await page.request.get('/api/v1/health/', { maxRedirects: 0 })).status()).toBe(200);
 	for (const encoded of ['/api/v%31/health', '/%61pi/v1/openapi.json']) {
 		expect((await page.request.get(encoded)).status(), encoded).toBe(200);
 	}

@@ -12,6 +12,7 @@ import {
 	toPosPaidOrderEvent
 } from '$lib/server/api/v1/pos/paidEvents';
 
+export { trailingSlash } from '$lib/server/api/v1/trailing-slash';
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 /**

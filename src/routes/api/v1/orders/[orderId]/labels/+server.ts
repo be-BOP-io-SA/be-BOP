@@ -9,6 +9,7 @@ import { reportSuspiciousCall } from '$lib/server/api/suspicious';
 import { carriesCssDeclaration, isLabelColor } from '$lib/utils/labelColor';
 import { z } from 'zod';
 
+export { trailingSlash } from '$lib/server/api/v1/trailing-slash';
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 const addLabelSchema = z

@@ -8,6 +8,7 @@ import { openPaidOrderStream } from '$lib/server/api/v1/orders/paidStreamConnect
 import { parseApiQuery, textParam } from '$lib/server/api/v1/query';
 import { encodeStreamCursor, parseStreamCursor } from '$lib/server/api/v1/orders/paidStream';
 
+export { trailingSlash } from '$lib/server/api/v1/trailing-slash';
 export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 /**
