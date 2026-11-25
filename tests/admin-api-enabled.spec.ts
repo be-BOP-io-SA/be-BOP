@@ -32,8 +32,15 @@ test('the API is off until the shop ticks the box: the public address is a 404, 
 	// Nothing in the answer says why: the shop looks like one without an API.
 	expect(await off.json()).toEqual({ error: { code: 'NOT_FOUND', message: 'Not found' } });
 	expect((await page.request.fetch('/api/v1/orders', { method: 'OPTIONS' })).status()).toBe(404);
+	// The router decodes an address before it picks the route: the switch must read it that way.
+	for (const encoded of ['/api/v%31/health', '/%61pi/v1/openapi.json', '/api/%76%31/docs']) {
+		expect((await page.request.get(encoded)).status(), encoded).toBe(404);
+	}
 
 	await setSwitch(page, true);
+	for (const encoded of ['/api/v%31/health', '/%61pi/v1/openapi.json']) {
+		expect((await page.request.get(encoded)).status(), encoded).toBe(200);
+	}
 	await expect(page.getByText('API disabled', { exact: true })).toHaveCount(0);
 	const on = await page.request.get('/api/v1/health');
 	expect(on.status()).toBe(200);

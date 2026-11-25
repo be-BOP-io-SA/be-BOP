@@ -21,7 +21,7 @@ vi.mock('$lib/server/utils/toIPv4Maybe', () => ({
 	toIPv4Maybe: (ip: string) => ip
 }));
 
-import { handleApiV1 } from './middleware';
+import { handleApiV1, isApiV1Path } from './middleware';
 
 function makeEvent(opts: { method?: string; path?: string; origin?: string; ip?: string }) {
 	const method = opts.method ?? 'GET';
@@ -285,6 +285,94 @@ describe('handleApiV1', () => {
 
 			expect(res.status).toBe(200);
 			expect(resolve).toHaveBeenCalled();
+		});
+	});
+
+	// The router decodes an address before it picks the route, so these reach the API routes.
+	describe('an address written with encoded characters', () => {
+		const reachesTheApi = [
+			'/api/v%31/health',
+			'/api/v%31',
+			'/api/v%31/',
+			'/%61pi/v1/health',
+			'/ap%69/v1/orders',
+			'/api/%76%31/orders',
+			'/api/v1/%6frders',
+			'/api/v1/%6Frders',
+			'/api/v%31/catalog/products',
+			'/%61%70%69/%76%31/docs'
+		];
+		const notTheApi = [
+			'/api/v10/health',
+			'/api/v2/health',
+			'/api/v1x',
+			'/apiv1/health',
+			'/api//v1/health',
+			'/API/v1/health',
+			// An encoded slash or percent stays encoded for the router, which matches no route.
+			'/api%2Fv1/health',
+			'/api/v1%2Fhealth',
+			'/%2561pi/v1/health',
+			'/api/v%2531/health',
+			// Not decodable at all: no route either.
+			'/api/v%zz/health'
+		];
+
+		it.each(reachesTheApi)('%s is read as the API by the hook', (path) => {
+			expect(isApiV1Path(path)).toBe(true);
+		});
+
+		it.each(notTheApi)('%s is not the API, as the router agrees', (path) => {
+			expect(isApiV1Path(path)).toBe(false);
+		});
+
+		it('is read as a public meta address during maintenance, as the plain one is', async () => {
+			runtimeConfig.isMaintenance = true;
+			const resolve = vi.fn(async () => new Response('ok'));
+
+			const res = await handleApiV1({
+				event: makeEvent({ path: '/api/v%31/health' }) as never,
+				resolve: resolve as never
+			});
+
+			expect(res.status).toBe(200);
+			expect(checkRateLimit).not.toHaveBeenCalled();
+		});
+
+		it('gets the 503 of maintenance on a keyed route, as the plain address does', async () => {
+			runtimeConfig.isMaintenance = true;
+
+			const res = await handleApiV1({
+				event: makeEvent({ method: 'POST', path: '/api/v%31/orders' }) as never,
+				resolve: vi.fn() as never
+			});
+
+			expect(res.status).toBe(503);
+		});
+
+		it('is counted by the IP limiter on a keyed route, as the plain address is', async () => {
+			checkRateLimit.mockReturnValue({ limited: true, retryAfterSeconds: 5 });
+
+			const res = await handleApiV1({
+				event: makeEvent({ method: 'POST', path: '/api/v%31/orders', ip: '198.51.100.7' }) as never,
+				resolve: vi.fn() as never
+			});
+
+			expect(res.status).toBe(429);
+			expect(checkRateLimit).toHaveBeenCalledWith('198.51.100.7', 'api.v1.ip', 120, {
+				minutes: 1
+			});
+		});
+
+		it('is cut by the switch, like the plain address', async () => {
+			runtimeConfig.apiV1.enabled = false;
+
+			const res = await handleApiV1({
+				event: makeEvent({ path: '/api/v%31/health' }) as never,
+				resolve: vi.fn() as never
+			});
+
+			expect(res.status).toBe(404);
 		});
 	});
 });

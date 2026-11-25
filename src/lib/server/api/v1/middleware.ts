@@ -7,14 +7,37 @@ import type { LanguageKey } from '$lib/translations';
 import { applyApiV1CorsHeaders } from './cors';
 import { apiError } from './errors';
 import { isApiV1Enabled } from './enabled';
+import { routedPathname } from '$lib/server/admin';
+
+/**
+ * Whether an address is the API's, read the way the router reads it. The router decodes before it
+ * matches, so `/api/v%31/health` reaches the health route while a check on the raw address would
+ * read it as another page and skip the switch, maintenance, the limiter and the journal.
+ *
+ * The one place that decides it: the hook that sends a request here, and the checks below.
+ */
+export function isApiV1Path(pathname: string): boolean {
+	const routed = routedApiV1Pathname(pathname);
+	return routed === '/api/v1' || routed.startsWith('/api/v1/');
+}
+
+/** The address as the router sees it. One the router cannot decode never reaches a route. */
+function routedApiV1Pathname(pathname: string): string {
+	try {
+		return routedPathname(pathname);
+	} catch {
+		return pathname;
+	}
+}
 
 /** Public meta endpoints kept up during maintenance (health / contract / docs only). */
 export function isApiV1PublicReadGet(pathname: string): boolean {
+	const routed = routedApiV1Pathname(pathname);
 	return (
-		pathname === '/api/v1/health' ||
-		pathname === '/api/v1/openapi.json' ||
-		pathname === '/api/v1/docs' ||
-		pathname === '/api/v1/docs/'
+		routed === '/api/v1/health' ||
+		routed === '/api/v1/openapi.json' ||
+		routed === '/api/v1/docs' ||
+		routed === '/api/v1/docs/'
 	);
 }
 
