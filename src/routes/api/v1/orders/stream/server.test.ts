@@ -15,7 +15,7 @@ vi.mock('$lib/server/rateLimit', () => ({
 	checkRateLimit: (...args: unknown[]) => checkRateLimit(...args)
 }));
 vi.mock('$lib/server/runtime-config', () => ({
-	runtimeConfig: { apiV1: { corsOrigins: [] } }
+	runtimeConfig: { apiV1: { enabled: true, corsOrigins: [] } }
 }));
 vi.mock('$lib/server/database', () => ({ collections: { orders: { find: vi.fn() } } }));
 vi.mock('$lib/server/api/v1/orders/paidStreamHub', () => ({

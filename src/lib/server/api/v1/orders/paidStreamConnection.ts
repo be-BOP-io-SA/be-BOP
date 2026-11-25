@@ -1,4 +1,5 @@
 import { apiError } from '../errors';
+import { isApiV1Enabled } from '../enabled';
 import type { Order } from '$lib/types/Order';
 import type { ObjectId } from 'mongodb';
 import {
@@ -47,6 +48,13 @@ export function closeStreamsOfKey(keyId: string): void {
 		close();
 	}
 	activeStreamsByKey.delete(keyId);
+}
+
+/** Close every open stream, whatever the key: the API was switched off. */
+export function closeAllStreams(): void {
+	for (const keyId of [...activeStreamsByKey.keys()]) {
+		closeStreamsOfKey(keyId);
+	}
 }
 
 /** What one paid order looks like on the wire, for the surface asking. */
@@ -280,6 +288,11 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 	})();
 
 	heartbeat = setInterval(() => {
+		// Switched off on another server of the shop: this one learns it here, at the latest.
+		if (!isApiV1Enabled()) {
+			cleanup();
+			return;
+		}
 		void push(sseComment('heartbeat'));
 	}, SSE_HEARTBEAT_MS);
 

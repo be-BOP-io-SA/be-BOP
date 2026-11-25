@@ -39,6 +39,29 @@
 		<p class="text-sm opacity-80 max-w-2xl">{t('admin.apiKeys.listIntro')}</p>
 	</header>
 
+	{#if !data.apiEnabled}
+		<div class="alert-warning" role="status">{t('admin.apiKeys.disabledBanner')}</div>
+	{/if}
+
+	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-3">
+		<h2 class="text-xl">{t('admin.apiKeys.enabledTitle')}</h2>
+		{#if form?.enabledSuccess}
+			<div class="alert alert-success">{t('admin.apiKeys.enabledSaved')}</div>
+		{/if}
+		<form method="post" action="?/updateEnabled" class="flex flex-col gap-3">
+			<label class="checkbox-label">
+				<input type="checkbox" name="enabled" class="form-checkbox" checked={data.apiEnabled} />
+				{t('admin.apiKeys.enabledLabel')}
+			</label>
+			<p class="text-xs opacity-70">{t('admin.apiKeys.enabledHint')}</p>
+			<input
+				type="submit"
+				class="btn body-mainCTA self-start w-auto text-base"
+				value={t('admin.action.save')}
+			/>
+		</form>
+	</section>
+
 	<section class="rounded-lg border border-gray-200 p-5 flex flex-col gap-4">
 		<div class="flex flex-wrap items-start justify-between gap-3">
 			<div class="flex flex-col gap-1 min-w-0">

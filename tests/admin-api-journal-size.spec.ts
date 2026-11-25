@@ -5,6 +5,8 @@ test('the journal size field holds back a zero the server would refuse', async (
 	const size = page.getByLabel('Maximum size (MB)');
 	const save = page.getByRole('button', { name: 'Save journal settings' });
 
+	// Hydration resets a field filled before it ends: wait for the page to settle first.
+	await page.waitForLoadState('networkidle');
 	await size.fill('0');
 	await save.click();
 
