@@ -89,6 +89,29 @@ describe('saving an API key', () => {
 		});
 	});
 
+	it('refuses the option on a key with a point-of-sale right, and saves nothing', async () => {
+		const { apiKey } = await createApiKey({ name: 'till', scopes: ['pos:write'] });
+		const till = apiKey._id.toString();
+
+		const refused = await actions.save(
+			saving(till, { maxConcurrentStreams: '3', acceptDuplicateExternalOrderIds: 'on' })
+		);
+
+		expect(refused).toMatchObject({ status: 400, data: { repeatedIdsOnPosKey: true } });
+		const key = await collections.apiKeys.findOne({ _id: apiKey._id });
+		expect(key?.acceptDuplicateExternalOrderIds).toBeUndefined();
+		expect(key?.maxConcurrentStreams).toBeUndefined();
+	});
+
+	it('saves the option on a key without a point-of-sale right', async () => {
+		const { apiKey } = await createApiKey({ name: 'integration', scopes: ['orders:write'] });
+
+		await actions.save(saving(apiKey._id.toString(), { acceptDuplicateExternalOrderIds: 'on' }));
+
+		const key = await collections.apiKeys.findOne({ _id: apiKey._id });
+		expect(key?.acceptDuplicateExternalOrderIds).toBe(true);
+	});
+
 	it('saves nothing when a field is refused', async () => {
 		const refused = await actions.save(
 			saving(keyId, { ...everySetting, streamLifetimeSeconds: '0' })

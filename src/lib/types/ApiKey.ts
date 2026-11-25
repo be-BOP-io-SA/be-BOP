@@ -22,6 +22,11 @@ export const STREAM_SETTING_BOUNDS = {
 	streamLifetimeSeconds: { min: 1, max: MAX_STREAM_LIFETIME_SECONDS, step: 1 }
 } as const;
 
+/** A till never needs several orders under one external id, so the option stays off its keys. */
+export function mayAcceptRepeatedExternalOrderIds(scopes: readonly string[]): boolean {
+	return !scopes.some((scope) => scope.startsWith('pos:'));
+}
+
 /** Smallest size the API call journal can be capped at, in MB: the input's `min` and the server's. */
 export const API_LOG_MIN_SIZE_MB = 0.01;
 
@@ -85,6 +90,9 @@ export interface ApiKey extends Timestamps {
 	 * received from this key; the orders share the reference. Only a write sent again with the same
 	 * reference and the same date is refused, as the same sale. Undefined or false, a reference
 	 * already received is refused, and the order it names is left untouched.
+	 *
+	 * Only for a key without a point-of-sale (`pos:*`) right: see mayAcceptRepeatedExternalOrderIds.
+	 * A key that holds both all the same is written for as if the option were off.
 	 */
 	acceptDuplicateExternalOrderIds?: boolean;
 	/**

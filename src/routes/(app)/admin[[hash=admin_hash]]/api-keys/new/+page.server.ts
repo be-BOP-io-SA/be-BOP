@@ -2,6 +2,7 @@ import { createApiKey } from '$lib/server/api/keys';
 import {
 	apiKeySettingsInput,
 	apiKeySettingsShape,
+	repeatedExternalIdsRule,
 	streamSettingsRefusal
 } from '$lib/server/api/stream-settings';
 import { parseExpiresAtFormValue } from '$lib/server/api/expires-at';
@@ -50,6 +51,7 @@ export const actions: Actions = {
 				scopes: z.array(z.enum(API_V1_SCOPES)).min(1),
 				...apiKeySettingsShape
 			})
+			.refine(...repeatedExternalIdsRule)
 			.safeParse({
 				name: formData.get('name'),
 				scopes: scopesRaw,

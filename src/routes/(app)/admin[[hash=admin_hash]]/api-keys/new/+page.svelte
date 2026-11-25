@@ -4,6 +4,7 @@
 	import { groupScopesByCategory } from '$lib/types/ApiV1';
 	import {
 		MAX_STREAM_LIFETIME_SECONDS,
+		mayAcceptRepeatedExternalOrderIds,
 		STREAM_SETTING_BOUNDS,
 		STREAM_SETTINGS_PREFILL
 	} from '$lib/types/ApiKey';
@@ -30,6 +31,13 @@
 	);
 
 	$: groups = groupScopesByCategory(data.scopes);
+
+	let acceptRepeatedIds = false;
+	$: repeatedIdsRefused =
+		acceptRepeatedIds &&
+		!mayAcceptRepeatedExternalOrderIds(
+			data.scopes.filter((scope: string) => selectedScopes[scope])
+		);
 
 	const SCOPE_HINT_KEYS: Record<string, string> = {
 		'orders:write': 'admin.apiKeys.scopeHint.ordersWrite',
@@ -206,10 +214,18 @@
 		<p class="text-sm opacity-70">{t('admin.apiKeys.ownOrdersOnlyHint')}</p>
 
 		<label class="checkbox-label">
-			<input type="checkbox" name="acceptDuplicateExternalOrderIds" class="form-checkbox" />
+			<input
+				type="checkbox"
+				name="acceptDuplicateExternalOrderIds"
+				class="form-checkbox"
+				bind:checked={acceptRepeatedIds}
+			/>
 			{t('admin.apiKeys.acceptDuplicateExternalOrderIds')}
 		</label>
 		<p class="text-sm opacity-70">{t('admin.apiKeys.acceptDuplicateExternalOrderIdsHint')}</p>
+		{#if repeatedIdsRefused || (form && 'repeatedIdsOnPosKey' in form && form.repeatedIdsOnPosKey)}
+			<p class="text-red-600 text-sm">{t('admin.apiKeys.repeatedExternalIdsOnPosKey')}</p>
+		{/if}
 
 		<label class="checkbox-label">
 			<input type="checkbox" name="canDisableNotifications" class="form-checkbox" />
@@ -233,6 +249,7 @@
 			type="submit"
 			class="btn btn-blue self-start w-auto text-white text-base"
 			value={t('admin.apiKeys.create')}
+			disabled={repeatedIdsRefused}
 		/>
 	</form>
 </div>

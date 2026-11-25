@@ -1,10 +1,17 @@
 <script lang="ts">
 	import { useI18n } from '$lib/i18n.js';
-	import { MAX_STREAM_LIFETIME_SECONDS, STREAM_SETTING_BOUNDS } from '$lib/types/ApiKey';
+	import {
+		MAX_STREAM_LIFETIME_SECONDS,
+		mayAcceptRepeatedExternalOrderIds,
+		STREAM_SETTING_BOUNDS
+	} from '$lib/types/ApiKey';
 
 	export let data;
 	export let form;
 	const { t } = useI18n();
+
+	let acceptRepeatedIds = !!data.key.acceptDuplicateExternalOrderIds;
+	$: repeatedIdsRefused = acceptRepeatedIds && !mayAcceptRepeatedExternalOrderIds(data.key.scopes);
 
 	function confirmRevoke(event: Event) {
 		if (!confirm(t('admin.apiKeys.revokeConfirm'))) {
@@ -218,11 +225,14 @@
 				type="checkbox"
 				name="acceptDuplicateExternalOrderIds"
 				class="form-checkbox"
-				checked={data.key.acceptDuplicateExternalOrderIds}
+				bind:checked={acceptRepeatedIds}
 			/>
 			{t('admin.apiKeys.acceptDuplicateExternalOrderIds')}
 		</label>
 		<p class="text-sm opacity-70">{t('admin.apiKeys.acceptDuplicateExternalOrderIdsHint')}</p>
+		{#if repeatedIdsRefused || form?.repeatedIdsOnPosKey}
+			<p class="text-red-600 text-sm">{t('admin.apiKeys.repeatedExternalIdsOnPosKey')}</p>
+		{/if}
 		<label class="checkbox-label">
 			<input
 				type="checkbox"
@@ -267,7 +277,11 @@
 
 	<!-- The admin keeps this row in view while the page scrolls: Save and Revoke stay together. -->
 	<div class="flex flex-wrap items-center gap-3">
-		<button type="submit" class="btn btn-blue text-white w-auto text-base">
+		<button
+			type="submit"
+			class="btn btn-blue text-white w-auto text-base"
+			disabled={repeatedIdsRefused}
+		>
 			{t('admin.action.save')}
 		</button>
 		{#if !data.key.revokedAt}

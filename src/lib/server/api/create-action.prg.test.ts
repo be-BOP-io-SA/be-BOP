@@ -131,6 +131,24 @@ describe('api key create PRG + reveal one-shot', () => {
 		expect(jar.has(API_KEY_REVEAL_COOKIE)).toBe(false);
 	});
 
+	it('refuses several orders per external id on a key with a point-of-sale right', async () => {
+		const { cookies } = mockCookies();
+		const body = new FormData();
+		body.set('name', 'till');
+		body.append('scopes', 'pos:write');
+		body.set('acceptDuplicateExternalOrderIds', 'on');
+
+		const res = (await actions.createApiKey({
+			request: new Request('http://localhost/admin/api-keys/new', { method: 'POST', body }),
+			locals: { user: { roleId: SUPER_ADMIN_ROLE_ID, _id: new ObjectId() } },
+			cookies
+		} as never)) as { status: number; data: { repeatedIdsOnPosKey?: boolean } };
+
+		expect(res.status).toBe(400);
+		expect(res.data.repeatedIdsOnPosKey).toBe(true);
+		expect(createApiKey).not.toHaveBeenCalled();
+	});
+
 	it('refuses a stream lifetime longer than a stream can be given', async () => {
 		const { cookies } = mockCookies();
 		const body = new FormData();

@@ -8,7 +8,12 @@ import {
 	hashApiKeySecret,
 	parseApiKeySecret
 } from './key-crypto';
-import { apiKeySettingsShape, type ApiKeySettings } from './stream-settings';
+import {
+	apiKeySettingsShape,
+	REPEATED_EXTERNAL_IDS_ON_POS_KEY,
+	repeatedExternalIdsRule,
+	type ApiKeySettings
+} from './stream-settings';
 
 export {
 	apiKeyPrefixFromSecret,
@@ -17,6 +22,13 @@ export {
 	parseApiKeySecret,
 	timingSafeEqualHex
 } from './key-crypto';
+
+/** The write-side guard of the rule the admin forms apply, for any caller that skips them. */
+function assertRepeatedExternalIdsAllowed(scopes: readonly string[], accepted: boolean) {
+	if (!repeatedExternalIdsRule[0]({ scopes, acceptDuplicateExternalOrderIds: accepted })) {
+		throw new Error(REPEATED_EXTERNAL_IDS_ON_POS_KEY);
+	}
+}
 
 function assertScopes(scopes: ApiV1Scope[]) {
 	for (const scope of scopes) {
@@ -41,6 +53,7 @@ export async function createApiKey(opts: {
 	canDisableNotifications?: boolean;
 }): Promise<{ apiKey: ApiKey; secret: string }> {
 	assertScopes(opts.scopes);
+	assertRepeatedExternalIdsAllowed(opts.scopes, !!opts.acceptDuplicateExternalOrderIds);
 	const secret = generateApiKeySecret();
 	const now = new Date();
 	const apiKey: ApiKey = {
@@ -139,6 +152,11 @@ export async function updateApiKeySettings(
 	settings: ApiKeySettings
 ): Promise<{ ownOrdersOnlyChanged: boolean } | null> {
 	const _id = typeof id === 'string' ? new ObjectId(id) : id;
+	const key = await collections.apiKeys.findOne({ _id }, { projection: { scopes: 1 } });
+	if (!key) {
+		return null;
+	}
+	assertRepeatedExternalIdsAllowed(key.scopes, settings.acceptDuplicateExternalOrderIds);
 	const toSet: Record<string, unknown> = { updatedAt: new Date() };
 	const toUnset: Record<string, ''> = {};
 	for (const field of Object.keys(apiKeySettingsShape) as Array<keyof ApiKeySettings>) {

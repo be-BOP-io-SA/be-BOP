@@ -8,7 +8,7 @@ import {
 import { clearSuspiciousFlag, listSuspiciousEvents } from '$lib/server/api/suspicious';
 import {
 	apiKeySettingsInput,
-	apiKeySettingsSchema,
+	apiKeySettingsOfKeySchema,
 	streamSettingsRefusal
 } from '$lib/server/api/stream-settings';
 import { SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
@@ -132,7 +132,14 @@ export const actions: Actions = {
 			throw error(404, 'API key not found');
 		}
 
-		const parsed = apiKeySettingsSchema.safeParse(apiKeySettingsInput(await request.formData()));
+		const key = await getApiKeyPublic(params.id);
+		if (!key) {
+			throw error(404, 'API key not found');
+		}
+		const parsed = apiKeySettingsOfKeySchema.safeParse({
+			...apiKeySettingsInput(await request.formData()),
+			scopes: key.scopes
+		});
 
 		if (!parsed.success) {
 			return fail(400, {

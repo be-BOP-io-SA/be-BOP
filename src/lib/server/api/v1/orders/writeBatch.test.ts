@@ -488,6 +488,19 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 			expect(again.results[0].error?.message).toContain('Accept several orders');
 			expect(await ordersOf('plain-key')).toBe(1);
 		});
+
+		it('ignores the option on a key that has a point-of-sale right and holds it all the same', async () => {
+			const tillKey = { ...acceptingKey(), scopes: ['pos:write' as const] };
+
+			const res = await writeBatch({
+				apiKey: tillKey,
+				orders: [sale('till-key', soldAt), sale('till-key', soldLater)]
+			});
+
+			expect(res.results.map((result) => result.status)).toEqual(['created', 'failed']);
+			expect(res.results[1].error).toMatchObject({ code: 'DUPLICATE_EXTERNAL_ORDER_ID' });
+			expect(await ordersOf('till-key')).toBe(1);
+		});
 	});
 
 	it('ignores notifications: false from a key that may not turn notifications off, and says so', async () => {
