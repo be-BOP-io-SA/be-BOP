@@ -10,7 +10,7 @@ import {
 
 describe('api v1 cors', () => {
 	beforeEach(() => {
-		runtimeConfig.apiV1 = { corsOrigins: [], trustExternalPricing: false };
+		runtimeConfig.apiV1 = { enabled: true, corsOrigins: [], trustExternalPricing: false };
 	});
 
 	it('collapses to the wildcard, which makes any origin beside it meaningless', () => {
@@ -44,6 +44,7 @@ describe('api v1 cors', () => {
 	it('reads allowlist from runtimeConfig.apiV1.corsOrigins', () => {
 		runtimeConfig.apiV1 = {
 			corsOrigins: ['https://a.example', 'https://b.example'],
+			enabled: true,
 			trustExternalPricing: false
 		};
 		expect(getApiV1AllowedOrigins()).toEqual(['https://a.example', 'https://b.example']);
@@ -85,6 +86,7 @@ describe('api v1 cors', () => {
 	it('OPTIONS preflight returns 204 and never echoes wildcard ACAO', () => {
 		runtimeConfig.apiV1 = {
 			corsOrigins: ['https://allowed.example'],
+			enabled: true,
 			trustExternalPricing: false
 		};
 		const denied = apiV1OptionsResponse(

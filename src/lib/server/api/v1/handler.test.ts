@@ -10,6 +10,7 @@ describe('apiV1Handler', () => {
 	beforeEach(() => {
 		runtimeConfig.apiV1 = {
 			corsOrigins: ['https://allowed.example'],
+			enabled: true,
 			trustExternalPricing: false
 		};
 	});
@@ -88,6 +89,7 @@ describe('apiV1OptionsHandler', () => {
 	beforeEach(() => {
 		runtimeConfig.apiV1 = {
 			corsOrigins: ['https://allowed.example'],
+			enabled: true,
 			trustExternalPricing: false
 		};
 	});

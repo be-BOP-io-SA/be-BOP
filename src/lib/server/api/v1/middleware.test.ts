@@ -4,7 +4,7 @@ const { checkRateLimit, runtimeConfig } = vi.hoisted(() => ({
 	runtimeConfig: {
 		isMaintenance: false,
 		defaultLanguage: 'en',
-		apiV1: { corsOrigins: ['https://allowed.example'] }
+		apiV1: { enabled: true as boolean | undefined, corsOrigins: ['https://allowed.example'] }
 	}
 }));
 
@@ -43,6 +43,7 @@ describe('handleApiV1', () => {
 		checkRateLimit.mockReset();
 		checkRateLimit.mockReturnValue({ limited: false });
 		runtimeConfig.isMaintenance = false;
+		runtimeConfig.apiV1.enabled = true;
 	});
 
 	it('keeps GET /api/v1/health up during maintenance', async () => {
@@ -196,5 +197,94 @@ describe('handleApiV1', () => {
 		expect(resolve).toHaveBeenCalled();
 		expect(res.status).toBe(200);
 		expect(checkRateLimit).not.toHaveBeenCalled();
+	});
+	describe('when the shop has not switched the API on', () => {
+		const NOT_FOUND = { error: { code: 'NOT_FOUND', message: 'Not found' } };
+		const routes: Array<[string, string]> = [
+			['POST', '/api/v1/orders'],
+			['GET', '/api/v1/orders/paid'],
+			['GET', '/api/v1/orders/paid/stream'],
+			['GET', '/api/v1/health'],
+			['GET', '/api/v1/openapi.json'],
+			['GET', '/api/v1/docs'],
+			['GET', '/api/v1/docs/'],
+			['GET', '/api/v1/catalog/products/some-id/picture/400'],
+			['OPTIONS', '/api/v1/orders'],
+			['OPTIONS', '/api/v1/health']
+		];
+
+		it.each(routes)('answers a plain 404 to %s %s, with no CORS header', async (method, path) => {
+			runtimeConfig.apiV1.enabled = false;
+			const resolve = vi.fn();
+			const event = makeEvent({ method, path, origin: 'https://allowed.example' });
+
+			const res = await handleApiV1({ event: event as never, resolve: resolve as never });
+
+			expect(res.status).toBe(404);
+			await expect(res.json()).resolves.toEqual(NOT_FOUND);
+			expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
+			expect(resolve).not.toHaveBeenCalled();
+		});
+
+		it('never says it is switched off', async () => {
+			runtimeConfig.apiV1.enabled = false;
+			const res = await handleApiV1({
+				event: makeEvent({ path: '/api/v1/health' }) as never,
+				resolve: vi.fn() as never
+			});
+
+			expect(JSON.stringify(await res.json())).not.toMatch(
+				/disabled|off|activ|enable|maintenance/i
+			);
+		});
+
+		it('takes a setting stored before the switch existed, with no field, as off', async () => {
+			runtimeConfig.apiV1.enabled = undefined;
+			const resolve = vi.fn(async () => new Response('ok'));
+
+			const res = await handleApiV1({
+				event: makeEvent({ path: '/api/v1/health' }) as never,
+				resolve: resolve as never
+			});
+
+			expect(res.status).toBe(404);
+			expect(resolve).not.toHaveBeenCalled();
+		});
+
+		it('answers before maintenance does', async () => {
+			runtimeConfig.apiV1.enabled = false;
+			runtimeConfig.isMaintenance = true;
+
+			const res = await handleApiV1({
+				event: makeEvent({ method: 'POST', path: '/api/v1/orders' }) as never,
+				resolve: vi.fn() as never
+			});
+
+			expect(res.status).toBe(404);
+		});
+
+		it('does not touch the rate limiter', async () => {
+			runtimeConfig.apiV1.enabled = false;
+
+			await handleApiV1({
+				event: makeEvent({ method: 'POST', path: '/api/v1/orders', ip: '198.51.100.9' }) as never,
+				resolve: vi.fn() as never
+			});
+
+			expect(checkRateLimit).not.toHaveBeenCalled();
+		});
+
+		it('is the only thing that changes when it is switched back on', async () => {
+			runtimeConfig.apiV1.enabled = true;
+			const resolve = vi.fn(async () => new Response('ok'));
+
+			const res = await handleApiV1({
+				event: makeEvent({ path: '/api/v1/health' }) as never,
+				resolve: resolve as never
+			});
+
+			expect(res.status).toBe(200);
+			expect(resolve).toHaveBeenCalled();
+		});
 	});
 });

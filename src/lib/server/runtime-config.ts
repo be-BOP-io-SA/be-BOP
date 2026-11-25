@@ -309,6 +309,12 @@ const baseConfig = {
 	 * Empty = no cross-origin access. Persisted in DB; edited in Admin -> API Keys.
 	 */
 	apiV1: {
+		/**
+		 * General switch of the API. Off, every /api/v1 route answers as if it did not exist, the
+		 * public ones and CORS preflights included. Off by default: the shop turns it on in Admin ->
+		 * API Keys. Read through isApiV1Enabled, which only takes an explicit `true`.
+		 */
+		enabled: false,
 		// Open by default. This API authenticates on the X-API-Key header alone and never reads a
 		// cookie, so an origin allowlist closes nothing a key holder could not already do — while
 		// being unworkable for the callers it would apply to: local applications on changing

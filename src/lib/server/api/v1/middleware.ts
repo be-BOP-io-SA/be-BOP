@@ -6,6 +6,7 @@ import { toIPv4Maybe } from '$lib/server/utils/toIPv4Maybe';
 import type { LanguageKey } from '$lib/translations';
 import { applyApiV1CorsHeaders } from './cors';
 import { apiError } from './errors';
+import { isApiV1Enabled } from './enabled';
 
 /** Public meta endpoints kept up during maintenance (health / contract / docs only). */
 export function isApiV1PublicReadGet(pathname: string): boolean {
@@ -20,11 +21,18 @@ export function isApiV1PublicReadGet(pathname: string): boolean {
 /**
  * Public HTTP API v1 handle — isolated from SSO/session handlers.
  *
+ * Switched off (the default), everything is a 404, whatever the route or method.
  * Maintenance: GET health / openapi.json / docs and OPTIONS stay up.
  * All other /api/v1 routes (authenticated writes/reads) → 503.
  * IP safety net skips those same public meta GETs and OPTIONS.
  */
 export const handleApiV1: Handle = async ({ event, resolve }) => {
+	// First, before anything is read or counted: a shop that did not switch the API on must look
+	// like a shop without one, so no preflight header, no limiter bucket, no journal line.
+	if (!isApiV1Enabled()) {
+		return apiError(404, 'NOT_FOUND', 'Not found');
+	}
+
 	try {
 		event.locals.clientIp = toIPv4Maybe(event.getClientAddress());
 	} catch {

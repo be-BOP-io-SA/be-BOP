@@ -7,6 +7,7 @@ describe('GET /api/v1/openapi.json', () => {
 	beforeEach(() => {
 		runtimeConfig.apiV1 = {
 			corsOrigins: ['https://allowed.example'],
+			enabled: true,
 			trustExternalPricing: false
 		};
 	});

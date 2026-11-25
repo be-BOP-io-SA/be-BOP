@@ -61,6 +61,7 @@ describe('POST /api/v1/orders (lot D adapter)', () => {
 	beforeEach(() => {
 		runtimeConfig.apiV1 = {
 			corsOrigins: ['https://allowed.example'],
+			enabled: true,
 			trustExternalPricing: false
 		};
 		requireApiKey.mockReset();
